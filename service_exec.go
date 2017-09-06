@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/ssh"
-	"regexp"
 	"strings"
 )
 
@@ -22,11 +21,6 @@ type CloseSession struct {
 	Name string
 }
 
-type DataExtraction struct {
-	Name     string
-	RegExpr  string
-	StateKey string
-}
 
 type ExecutionOptions struct {
 	SystemPaths []string //path that will be added to the system paths
@@ -52,7 +46,7 @@ type ManagedCommand struct {
 type Execution struct {
 	MatchOutput string
 	Command    string
-	Extraction []*DataExtraction
+	Extraction DataExtractions
 	Error      []string //fragments that will terminate execution with error if matched with standard output
 	Success    []string //if specified absence of all of the these fragment will terminate execution with error.
 }
@@ -213,7 +207,6 @@ func match(stdout string, candidates ... string) string {
 }
 
 func (s *execService) executeCommand(context *Context, session *ClientSession,  execution *Execution, options *ExecutionOptions, result *CommandResult, request *CommandRequest) error {
-	var state = context.State()
 	command := context.Expand(execution.Command)
 	result.Commands = append(result.Commands, command)
 
@@ -233,34 +226,10 @@ func (s *execService) executeCommand(context *Context, session *ClientSession,  
 			return  fmt.Errorf("Fail to match any fragment: (%v) execution (%v); ouput: (%v), %v", strings.Join(execution.Success, ","), execution.Command, stdout, options.Directory)
 		}
 	}
-
-	if len(execution.Extraction) > 0 {
-		for _, extract := range execution.Extraction {
-			compiledExpression, err := regexp.Compile(extract.RegExpr)
-			if err != nil {
-				return  err
-			}
-
-			for _, line := range strings.Split(stdout, "\r\n") {
-				if len(line) == 0 {
-					return nil
-				}
-				if compiledExpression.MatchString(line) {
-
-					matched := compiledExpression.FindStringSubmatch(line)
-					if extract.StateKey != "" {
-						state.Put(extract.StateKey, matched[1])
-						if extract.Name == "" {
-							extract.Name = extract.StateKey
-						}
-					}
-					result.Extracted[extract.Name] = matched[1]
-
-				}
-			}
-		}
+	err = execution.Extraction.Extract(context, result.Extracted, strings.Split(stdout, "\r\n")...)
+	if err != nil {
+		return err
 	}
-
 	if len(stdout) > 0 {
 		for _,execution := range request.MangedCommand	.Executions {
 			if execution.MatchOutput != "" && strings.Contains(stdout, execution.MatchOutput) {
