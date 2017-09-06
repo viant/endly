@@ -93,5 +93,6 @@ func NewServiceManager() (ServiceManager) {
 	_serviceManager.Register(NewTransferService())
 	_serviceManager.Register(NewDeploymentService())
 	_serviceManager.Register(NewScriptService())
+	_serviceManager.Register(NewHttpRunnerService())
 	return _serviceManager
 }
