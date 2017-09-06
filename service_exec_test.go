@@ -1,10 +1,10 @@
 package endly_test
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
-	"github.com/viant/toolbox"
 	"github.com/viant/endly"
+	"github.com/viant/toolbox"
+	"testing"
 )
 
 func TestNewExecService(t *testing.T) {

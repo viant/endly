@@ -1,14 +1,11 @@
 package endly_test
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
-	"github.com/viant/toolbox"
 	"github.com/viant/endly"
+	"github.com/viant/toolbox"
+	"testing"
 )
-
-
-
 
 func TestNewServiceManager(t *testing.T) {
 
@@ -21,23 +18,19 @@ func TestNewServiceManager(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
 
-	_, err= manager.Service("cc")
+	_, err = manager.Service("cc")
 	assert.NotNil(t, err)
 
-	file, err:= manager.CredentialFile("abc")
+	file, err := manager.CredentialFile("abc")
 	assert.Nil(t, err)
 	assert.Equal(t, "/Users/awitas/secret/abc.json", file)
 
-
-	_, err= manager.CredentialFile("cc")
+	_, err = manager.CredentialFile("cc")
 	assert.NotNil(t, err)
-
-
 
 	manager2, err := context.ServiceManager()
 	assert.Nil(t, err)
 	assert.Equal(t, manager2, manager)
-
 
 	{
 		service, err := manager2.Service("testService")
@@ -65,12 +58,9 @@ func TestNewServiceManager(t *testing.T) {
 
 }
 
-
-
 type testService struct {
 	*endly.AbstractService
 }
-
 
 func (t *testService) Run(context *endly.Context, request interface{}) *endly.Response {
 	return &endly.Response{}

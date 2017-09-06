@@ -1,9 +1,9 @@
 package endly
 
 import (
-	"unicode"
-	"strings"
 	"github.com/viant/endly/common"
+	"strings"
+	"unicode"
 )
 
 const (
@@ -22,7 +22,7 @@ func extractState(state common.Map, name string) (string, bool) {
 	}
 
 	if string(name[0:1]) == "{" {
-		name = name[1:len(name)-1]
+		name = name[1 : len(name)-1]
 	}
 	if strings.Contains(name, ".") {
 		fragments := strings.Split(name, ".")
@@ -58,20 +58,20 @@ func Expand(state common.Map, text string) string {
 		return result + variableName
 	}
 
-	var variableName = "";
+	var variableName = ""
 	var parsingState = expectVariableStart
 	var result = ""
 
 	for i, rune := range text {
 
-		aChar := string(text[i:i+1])
+		aChar := string(text[i : i+1])
 
 		switch parsingState {
 		case expectVariableStart:
 			if aChar == "$" {
 				variableName += aChar
 				if i+1 < len(text) {
-					nextChar := string(text[i+1:i+2])
+					nextChar := string(text[i+1 : i+2])
 					if nextChar == "{" {
 						parsingState = expectVariableNameEnclosureEnd
 						continue

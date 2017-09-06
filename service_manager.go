@@ -1,8 +1,8 @@
 package endly
 
 import (
-	"github.com/viant/toolbox"
 	"fmt"
+	"github.com/viant/toolbox"
 	"sync"
 )
 
@@ -73,7 +73,7 @@ func (s *serviceManager) NewContext(ctx toolbox.Context) *Context {
 var _serviceManager ServiceManager
 var _serviceManagerMux = &sync.Mutex{}
 
-func NewServiceManager() (ServiceManager) {
+func NewServiceManager() ServiceManager {
 	if _serviceManager != nil {
 		return _serviceManager
 	}

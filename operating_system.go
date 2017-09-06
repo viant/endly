@@ -1,10 +1,9 @@
 package endly
 
 import (
-	"strings"
 	"github.com/viant/toolbox"
+	"strings"
 )
-
 
 type OperatingSystem struct {
 	Name    string
@@ -15,7 +14,7 @@ type OperatingSystem struct {
 func normalizeVersion(version string) int {
 	var result = 0
 	if strings.Contains(version, ".") {
-		var fragments = strings.Split(version,".")
+		var fragments = strings.Split(version, ".")
 		for i, fragment := range fragments {
 			factor := 10 ^ (len(fragments) - i + 1)
 			result += toolbox.AsInt(fragment) * factor
@@ -47,15 +46,14 @@ func (s *OperatingSystem) Matches(target *OperatingSystemTarget) bool {
 	return actualVersion > maxAllowedVersion
 }
 
-
 type SystemPath struct {
 	index      map[string]bool
 	SystemPath []string
 	Path       []string
 }
 
-func (p *SystemPath) Push(paths ... string) {
-	for _, path:= range paths {
+func (p *SystemPath) Push(paths ...string) {
+	for _, path := range paths {
 		if _, has := p.index[path]; has {
 			return
 		}
@@ -74,5 +72,3 @@ type OperatingSystemTarget struct {
 	MinRequiredVersion string
 	MaxAllowedVersion  string
 }
-
-

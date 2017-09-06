@@ -2,9 +2,9 @@ package endly_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"testing"
-	"github.com/viant/endly"
 )
 
 func TestNewDeploymentService(t *testing.T) {
@@ -44,9 +44,9 @@ func TestNewDeploymentService(t *testing.T) {
 		},
 		After: &endly.ManagedCommand{
 			Options: &endly.ExecutionOptions{
-				Directory:       "/urs/local",
+				Directory: "/urs/local",
 			},
-			Executions:[]*endly.Execution{
+			Executions: []*endly.Execution{
 				{
 					Command: "tar xvzf apache-maven-3.5.0-bin.tar.gz",
 					Error:   []string{"Error"},
@@ -55,7 +55,6 @@ func TestNewDeploymentService(t *testing.T) {
 					Command: "mv apache-maven-3.5.0 maven",
 					Error:   []string{"No"},
 				},
-
 			},
 		},
 	})

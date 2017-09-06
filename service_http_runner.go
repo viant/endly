@@ -1,18 +1,18 @@
 package endly
 
 import (
-	"net/http"
-	"time"
-	"fmt"
-	"github.com/viant/toolbox"
 	"bytes"
-	"strings"
+	"encoding/base64"
+	"fmt"
+	"github.com/viant/endly/common"
+	"github.com/viant/toolbox"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
-	"encoding/base64"
-	"github.com/viant/endly/common"
 )
 
 const HttpRunnerServiceId = " http/runner"
@@ -23,14 +23,14 @@ func (c *Cookies) SetHeader(header http.Header) {
 	if len(*c) == 0 {
 		return
 	}
-	for _, cookie := range (*c) {
+	for _, cookie := range *c {
 		if v := cookie.String(); v != "" {
 			header.Add("Cookie", v)
 		}
 	}
 }
 
-func (c *Cookies) IndexByName() (map[string]*http.Cookie) {
+func (c *Cookies) IndexByName() map[string]*http.Cookie {
 
 	var result = make(map[string]*http.Cookie)
 
@@ -40,7 +40,7 @@ func (c *Cookies) IndexByName() (map[string]*http.Cookie) {
 	return result
 }
 
-func (c *Cookies) IndexByPosition() (map[string]int) {
+func (c *Cookies) IndexByPosition() map[string]int {
 	var result = make(map[string]int)
 	for i, cookie := range *c {
 		result[cookie.Name] = i
@@ -64,6 +64,7 @@ func (c *Cookies) AddCookies(cookies ...*http.Cookie) {
 }
 
 type HttpRequest struct {
+	MatchBody  string //only run this execution is output from a previous command is matched
 	Method     string
 	URL        string
 	Header     http.Header
@@ -107,65 +108,79 @@ func isBinary(input []byte) bool {
 	return false
 }
 
+func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, req *HttpRequest, sessionCookies *Cookies, request *SendRequest, result *SendResponse) error {
+	var state = context.State()
+	cookies := state.GetMap("cookies")
+	var reader io.Reader
+	if len(req.Body) > 0 {
+		reader = strings.NewReader(req.Body)
+	}
+	httpRequest, err := http.NewRequest(strings.ToUpper(req.Method), req.URL, reader)
+	if err != nil {
+		return err
+	}
+	httpRequest.Header = make(map[string][]string)
+	copyHeaders(req.Header, httpRequest.Header)
+	sessionCookies.SetHeader(httpRequest.Header)
+	req.Cookies.SetHeader(httpRequest.Header)
+	response := &HttpResponse{
+		Request: req,
+	}
+	result.Responses = append(result.Responses, response)
+
+	startTime := time.Now()
+	httpResponse, err := client.Do(httpRequest)
+	if err != nil {
+		response.Error = fmt.Sprintf("%v", err)
+		return nil
+	}
+	endTime := time.Now()
+	response.Header = make(map[string][]string)
+	copyHeaders(httpResponse.Header, response.Header)
+	readBody(httpResponse, response)
+	req.Extraction.Extract(context, result.Extracted, response.Body)
+	var responseCookies Cookies = httpResponse.Cookies()
+
+	response.Cookies = responseCookies.IndexByName()
+	for k, cookie := range response.Cookies {
+		cookies.Put(k, cookie.Value)
+	}
+	sessionCookies.AddCookies(responseCookies...)
+
+	response.Code = httpResponse.StatusCode
+	response.TimeTakenMs = int((endTime.UnixNano() - startTime.UnixNano()) / int64(time.Millisecond))
+
+	for _, candidate := range request.Requests {
+		if candidate.MatchBody != "" && strings.Contains(response.Body, candidate.MatchBody) {
+			return s.sendRequest(context, client, candidate, sessionCookies, request, result)
+		}
+	}
+	return nil
+}
+
 func (s *httpRunnerService) send(context *Context, request *SendRequest) (*SendResponse, error) {
 	client, err := toolbox.NewHttpClient(request.Options...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to send req: %v", err)
 	}
-
 	var result = &SendResponse{
 		Responses: make([]*HttpResponse, 0),
 		Extracted: make(map[string]string),
 	}
-
 	var sessionCookies Cookies = make([]*http.Cookie, 0)
 	var state = context.State()
-
-	if ! state.Has("cookies") {
+	if !state.Has("cookies") {
 		state.Put("cookies", common.NewMap())
 	}
-	cookies := state.GetMap("cookies")
-	for _, req := range request.Requests {
 
-		var reader io.Reader;
-		if len(req.Body) > 0 {
-			reader = strings.NewReader(req.Body)
+	for _, req := range request.Requests {
+		if req.MatchBody != "" {
+			continue
 		}
-		httpRequest, err := http.NewRequest(strings.ToUpper(req.Method), req.URL, reader)
+		err = s.sendRequest(context, client, req, &sessionCookies, request, result)
 		if err != nil {
 			return nil, err
 		}
-		httpRequest.Header = make(map[string][]string)
-		copyHeaders(req.Header, httpRequest.Header)
-		sessionCookies.SetHeader(httpRequest.Header)
-		req.Cookies.SetHeader(httpRequest.Header)
-
-		response := &HttpResponse{
-			Request: req,
-		}
-		result.Responses = append(result.Responses, response)
-
-		startTime := time.Now()
-		httpResponse, err := client.Do(httpRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("%v", err)
-			break
-		}
-		endTime := time.Now()
-		response.Header = make(map[string][]string)
-		copyHeaders(httpResponse.Header, response.Header)
-		readBody(httpResponse, response)
-		req.Extraction.Extract(context, result.Extracted, response.Body)
-		var responseCookies Cookies = httpResponse.Cookies()
-
-
-		response.Cookies = responseCookies.IndexByName()
-		for k, cookie := range response.Cookies {
-			cookies.Put(k, cookie.Value)
-		}
-		sessionCookies.AddCookies(responseCookies...)
-		response.Code = httpResponse.StatusCode
-		response.TimeTakenMs = int((endTime.UnixNano() - startTime.UnixNano()) / int64(time.Millisecond))
 	}
 	return result, nil
 
@@ -178,7 +193,7 @@ func readBody(httpResponse *http.Response, response *HttpResponse) {
 		return
 	}
 	httpResponse.Body.Close()
-	if (isBinary(body)) {
+	if isBinary(body) {
 		buf := new(bytes.Buffer)
 		encoder := base64.NewEncoder(base64.StdEncoding, buf)
 		encoder.Write(body)
@@ -191,7 +206,7 @@ func readBody(httpResponse *http.Response, response *HttpResponse) {
 }
 func copyHeaders(source http.Header, target http.Header) {
 	for key, values := range source {
-		if _, has:=target[key];!has {
+		if _, has := target[key]; !has {
 			target[key] = make([]string, 0)
 		}
 		if len(values) == 1 {

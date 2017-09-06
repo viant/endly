@@ -11,26 +11,22 @@ const jsStdCode = "function getOrFail(s,n){if(n||(n=0),s.length>1&&s[s.length-1]
 
 const ScriptServiceId = "script"
 
-
 type ScriptCommand struct {
 	Libraries []*Resource
-	Code string
+	Code      string
 }
-
 
 type scriptService struct {
 	*AbstractService
 }
 
-
-
-func (t *scriptService) loadLibraries(context *Context,request *ScriptCommand) (string, error) {
+func (t *scriptService) loadLibraries(context *Context, request *ScriptCommand) (string, error) {
 	if len(request.Libraries) == 0 {
 		return "", nil
 	}
 	result := ""
 	for _, resource := range request.Libraries {
-		resource,err := context.ExpandResource(resource)
+		resource, err := context.ExpandResource(resource)
 		if err != nil {
 			return "", err
 		}
@@ -49,7 +45,7 @@ func (t *scriptService) loadLibraries(context *Context,request *ScriptCommand) (
 		if err != nil {
 			return "", err
 		}
-		content, err :=  ioutil.ReadAll(reader)
+		content, err := ioutil.ReadAll(reader)
 		if err != nil {
 			return "", err
 		}
@@ -58,30 +54,23 @@ func (t *scriptService) loadLibraries(context *Context,request *ScriptCommand) (
 	return result, nil
 }
 
-
-
-
-
-func (s *scriptService) runScriptCommand(context *Context,request *ScriptCommand) (interface{}, error) {
+func (s *scriptService) runScriptCommand(context *Context, request *ScriptCommand) (interface{}, error) {
 	vm := otto.New()
 	vm.Set("context", &JsContext{context})
 	vm.Set("DeploymentServiceId", DeploymentServiceId)
 	vm.Set("TransferServiceId", TransferServiceId)
 	vm.Set("ExecServiceId", ExecServiceId)
-	libraries, err :=  s.loadLibraries(context, request)
+	libraries, err := s.loadLibraries(context, request)
 	if err != nil {
-		return nil,  err
+		return nil, err
 	}
 	var code = jsStdCode + libraries + request.Code
 	result, err := vm.Run(code)
 	if err != nil {
-		return nil,  err
+		return nil, err
 	}
-	return result.String(),nil
+	return result.String(), nil
 }
-
-
-
 
 func (s *scriptService) Run(context *Context, request interface{}) *Response {
 	var response = &Response{Status: "ok"}
@@ -97,8 +86,6 @@ func (s *scriptService) Run(context *Context, request interface{}) *Response {
 	return response
 }
 
-
-
 func (s *scriptService) NewRequest(name string) (interface{}, error) {
 	switch name {
 	case "command":
@@ -107,9 +94,6 @@ func (s *scriptService) NewRequest(name string) (interface{}, error) {
 	return nil, fmt.Errorf("Unsupported name: %v", name)
 }
 
-
-
-
 func NewScriptService() Service {
 	var result = &scriptService{
 		AbstractService: NewAbstractService(ScriptServiceId),
@@ -117,7 +101,6 @@ func NewScriptService() Service {
 	result.AbstractService.Service = result
 	return result
 }
-
 
 type JsContext struct {
 	*Context

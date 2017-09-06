@@ -60,18 +60,17 @@ func (s *deploymentService) deploy(context *Context, request *DeploymenConfig) (
 		return nil, err
 	}
 
-
-	target, err  := context.ExpandResource(request.Transfer.Target)
+	target, err := context.ExpandResource(request.Transfer.Target)
 	if err != nil {
 		return nil, err
 	}
 	response := execService.Run(context, &OpenSession{
 		Target: target,
-	});
+	})
 	if response.Error != nil {
 		return nil, response.Error
 	}
-	defer execService.Run(context, CloseSession{Name: target.Session() });
+	defer execService.Run(context, CloseSession{Name: target.Session()})
 	parsedURL, err := url.Parse(target.URL)
 	if err != nil {
 		return nil, err
@@ -85,13 +84,13 @@ func (s *deploymentService) deploy(context *Context, request *DeploymenConfig) (
 	if err != nil {
 		return "", fmt.Errorf("Failed to deploy app to %v: %v", target, err)
 	}
-	if ! request.Force && request.VersionCheck != nil {
+	if !request.Force && request.VersionCheck != nil {
 		version, err := s.extractVersion(context, request, execService, parsedURL)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to check version: %v", err)
 		}
 		if version == target.Version {
-			return nil, nil;
+			return nil, nil
 		}
 	}
 	_, err = context.Transfer(request.Transfer)
@@ -109,12 +108,11 @@ func (s *deploymentService) deploy(context *Context, request *DeploymenConfig) (
 			return nil, fmt.Errorf("Failed to check version: %v", err)
 		}
 		if version != target.Version {
-			return nil, fmt.Errorf("Failed to deploy %v: invalud version expected: %v, but had: %v ", target.Session() , target.Version, version);
+			return nil, fmt.Errorf("Failed to deploy %v: invalud version expected: %v, but had: %v ", target.Session(), target.Version, version)
 		}
 	}
 	return nil, err
 }
-
 
 func (s *deploymentService) Run(context *Context, request interface{}) *Response {
 	var response = &Response{
@@ -131,7 +129,6 @@ func (s *deploymentService) Run(context *Context, request interface{}) *Response
 	}
 	return response
 }
-
 
 func (s *deploymentService) NewRequest(name string) (interface{}, error) {
 	switch name {

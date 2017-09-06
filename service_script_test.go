@@ -1,14 +1,13 @@
 package endly_test
 
 import (
-	"testing"
-	"github.com/viant/toolbox"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"path"
+	"github.com/viant/toolbox"
 	"io/ioutil"
+	"path"
+	"testing"
 )
-
 
 func TestScriptService_Run(t *testing.T) {
 	manager := endly.NewServiceManager()
@@ -19,10 +18,10 @@ func TestScriptService_Run(t *testing.T) {
 	content, err := ioutil.ReadFile(scriptFile)
 	assert.Nil(t, err)
 
-	scripService, err :=context.Service(endly.ScriptServiceId)
+	scripService, err := context.Service(endly.ScriptServiceId)
 	assert.Nil(t, err)
 	response := scripService.Run(context, &endly.ScriptCommand{
-		Code:string(content),
+		Code: string(content),
 	})
 	assert.Equal(t, "ok", response.Status)
 	assert.Nil(t, response.Error)

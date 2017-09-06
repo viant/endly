@@ -1,11 +1,11 @@
 package endly
 
 import (
-	"github.com/viant/toolbox"
 	"fmt"
 	"github.com/viant/endly/common"
-	"net/url"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
+	"net/url"
 	"strings"
 )
 
@@ -32,7 +32,7 @@ func (r *Resource) Session() string {
 	if r.ParsedURL.User != nil {
 		result = r.ParsedURL.User.Username() + "@" + result
 	}
-	return result;
+	return result
 }
 
 func (r *Resource) LoadCredential() (string, string, error) {
@@ -60,16 +60,14 @@ func (r *Resource) AuthURL() (string, error) {
 	return strings.Replace(r.URL, "//", "//"+username+"@"+password, 1), nil
 }
 
-
 type Context struct {
 	toolbox.Context
 }
 
 func reportError(err error) error {
-	fileName, funcName, line:= toolbox.CallerInfo(4)
+	fileName, funcName, line := toolbox.CallerInfo(4)
 	return fmt.Errorf("%v at %v:%v -> %v", err, fileName, line, funcName)
 }
-
 
 func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 	var err error
@@ -108,15 +106,15 @@ func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 
 func (c *Context) ServiceManager() (ServiceManager, error) {
 	var manager = &serviceManager{}
-	if ! c.GetInto(serviceManagerKey, &manager) {
+	if !c.GetInto(serviceManagerKey, &manager) {
 		return nil, reportError(fmt.Errorf("Failed to lookup ServiceManager"))
 	}
 	return manager, nil
 }
 
-func (c *Context) Sessions() (ClientSessions) {
+func (c *Context) Sessions() ClientSessions {
 	var result *ClientSessions
-	if ! c.Contains(clientSessionKey) {
+	if !c.Contains(clientSessionKey) {
 		var sessions ClientSessions = make(map[string]*ClientSession)
 		result = &sessions
 		c.Put(clientSessionKey, result)
@@ -134,9 +132,9 @@ func (c *Context) Service(name string) (Service, error) {
 	return manager.Service(name)
 }
 
-func (c *Context) Deffer(functions ... func()) []func() {
+func (c *Context) Deffer(functions ...func()) []func() {
 	var result *[]func()
-	if ! c.Contains(deferFunctionsKey) {
+	if !c.Contains(deferFunctionsKey) {
 		var functions = make([]func(), 0)
 		result = &functions
 		c.Put(deferFunctionsKey, result)
@@ -151,7 +149,7 @@ func (c *Context) Deffer(functions ... func()) []func() {
 
 func (c *Context) State() common.Map {
 	var result *common.Map
-	if ! c.Contains(stateKey) {
+	if !c.Contains(stateKey) {
 		aMap := common.NewMap()
 		result = &aMap
 		c.Put(stateKey, result)

@@ -1,10 +1,10 @@
 package endly
 
 import (
-	"regexp"
-	"strings"
 	"fmt"
 	"github.com/viant/endly/common"
+	"regexp"
+	"strings"
 )
 
 type DataExtraction struct {
@@ -15,11 +15,11 @@ type DataExtraction struct {
 
 type DataExtractions []*DataExtraction
 
-func (d *DataExtractions) Extract(context *Context, extracted map[string]string, input ...string, ) error {
+func (d *DataExtractions) Extract(context *Context, extracted map[string]string, input ...string) error {
 	if len(*d) == 0 || len(input) == 0 {
-		return  nil
+		return nil
 	}
-	for _, extract := range (*d) {
+	for _, extract := range *d {
 		compiledExpression, err := regexp.Compile(extract.RegExpr)
 		if err != nil {
 			return fmt.Errorf("Failed to extract data - invlid regexpr: %v,  %v", extract.RegExpr, err)
@@ -41,7 +41,7 @@ func (d *DataExtractions) Extract(context *Context, extracted map[string]string,
 							continue
 						}
 
-						if ! state.Has(keyFragment) {
+						if !state.Has(keyFragment) {
 							state.Put(keyFragment, common.NewMap())
 						}
 						state = state.GetMap(keyFragment)

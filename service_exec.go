@@ -21,7 +21,6 @@ type CloseSession struct {
 	Name string
 }
 
-
 type ExecutionOptions struct {
 	SystemPaths []string //path that will be added to the system paths
 	Terminators []string //fragment that helps identify that command has been completed - the best is to leave it empty, which is the detected bash prompt
@@ -44,11 +43,11 @@ type ManagedCommand struct {
 }
 
 type Execution struct {
-	MatchOutput string
-	Command    string
-	Extraction DataExtractions
-	Error      []string //fragments that will terminate execution with error if matched with standard output
-	Success    []string //if specified absence of all of the these fragment will terminate execution with error.
+	MatchOutput string //only run this execution is output from a previous command is matched
+	Command     string
+	Extraction  DataExtractions
+	Error       []string //fragments that will terminate execution with error if matched with standard output
+	Success     []string //if specified absence of all of the these fragment will terminate execution with error.
 }
 
 type CommandRequest struct {
@@ -76,7 +75,7 @@ type ClientSession struct {
 type ClientSessions map[string]*ClientSession
 
 func (s *ClientSessions) Has(name string) bool {
-	_, has := (*s)[name];
+	_, has := (*s)[name]
 	return has
 }
 
@@ -137,7 +136,7 @@ func (s *execService) openSession(context *Context, request *OpenSession) (inter
 		return nil, err
 	}
 
-	if ! request.Transient {
+	if !request.Transient {
 		context.Deffer(func() {
 			clientSession.Connection.Close()
 		})
@@ -147,7 +146,7 @@ func (s *execService) openSession(context *Context, request *OpenSession) (inter
 	if err != nil {
 		return nil, err
 	}
-	if ! request.Transient {
+	if !request.Transient {
 		context.Deffer(func() {
 			clientSession.MultiCommandSession.Close()
 		})
@@ -166,9 +165,9 @@ func (s *execService) openSession(context *Context, request *OpenSession) (inter
 	return clientSession, nil
 }
 
-func (s *execService) applyCommandOptions(context *Context, options *ExecutionOptions, sesssion *ClientSession) (error) {
+func (s *execService) applyCommandOptions(context *Context, options *ExecutionOptions, sesssion *ClientSession) error {
 
-	operatingSystem := sesssion.OperatingSystem;
+	operatingSystem := sesssion.OperatingSystem
 	if options == nil {
 		return nil
 	}
@@ -194,7 +193,7 @@ func (s *execService) applyCommandOptions(context *Context, options *ExecutionOp
 	return nil
 }
 
-func match(stdout string, candidates ... string) string {
+func match(stdout string, candidates ...string) string {
 	if len(candidates) == 0 {
 		return ""
 	}
@@ -206,7 +205,7 @@ func match(stdout string, candidates ... string) string {
 	return ""
 }
 
-func (s *execService) executeCommand(context *Context, session *ClientSession,  execution *Execution, options *ExecutionOptions, result *CommandResult, request *CommandRequest) error {
+func (s *execService) executeCommand(context *Context, session *ClientSession, execution *Execution, options *ExecutionOptions, result *CommandResult, request *CommandRequest) error {
 	command := context.Expand(execution.Command)
 	result.Commands = append(result.Commands, command)
 
@@ -223,7 +222,7 @@ func (s *execService) executeCommand(context *Context, session *ClientSession,  
 	if len(execution.Success) > 0 {
 		sucessMatch := match(stdout, execution.Success...)
 		if sucessMatch == "" {
-			return  fmt.Errorf("Fail to match any fragment: (%v) execution (%v); ouput: (%v), %v", strings.Join(execution.Success, ","), execution.Command, stdout, options.Directory)
+			return fmt.Errorf("Fail to match any fragment: (%v) execution (%v); ouput: (%v), %v", strings.Join(execution.Success, ","), execution.Command, stdout, options.Directory)
 		}
 	}
 	err = execution.Extraction.Extract(context, result.Extracted, strings.Split(stdout, "\r\n")...)
@@ -231,14 +230,13 @@ func (s *execService) executeCommand(context *Context, session *ClientSession,  
 		return err
 	}
 	if len(stdout) > 0 {
-		for _,execution := range request.MangedCommand	.Executions {
+		for _, execution := range request.MangedCommand.Executions {
 			if execution.MatchOutput != "" && strings.Contains(stdout, execution.MatchOutput) {
 				return s.executeCommand(context, session, execution, options, result, request)
 			}
 		}
 
 	}
-
 
 	return nil
 }
@@ -271,7 +269,7 @@ func (s *execService) runCommands(context *Context, request *CommandRequest) (*C
 		return nil, err
 	}
 
-	operatingSystem := session.OperatingSystem;
+	operatingSystem := session.OperatingSystem
 	var systemPath = fmt.Sprintf("export PATH=\"%v\"", operatingSystem.Path.EnvValue())
 	_, err = session.Run(systemPath, 0)
 	if err != nil {

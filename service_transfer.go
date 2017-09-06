@@ -2,10 +2,10 @@ package endly
 
 import (
 	"fmt"
-	"io"
-	"github.com/viant/toolbox/storage"
 	"github.com/viant/endly/common"
+	"github.com/viant/toolbox/storage"
 	_ "github.com/viant/toolbox/storage/scp"
+	"io"
 )
 
 const TransferServiceId = "transfer"
@@ -24,7 +24,7 @@ type transferService struct {
 	*AbstractService
 }
 
-func (s *transferService) run(context *Context, transfers ... *Transfer) (interface{}, error) {
+func (s *transferService) run(context *Context, transfers ...*Transfer) (interface{}, error) {
 	for _, transfer := range transfers {
 
 		source, err := context.ExpandResource(transfer.Source)
