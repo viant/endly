@@ -83,7 +83,6 @@ func (s *scriptService) Run(context *Context, request interface{}) *Response {
 		response.Status = "err"
 	}
 	return response
-	return response
 }
 
 func (s *scriptService) NewRequest(name string) (interface{}, error) {

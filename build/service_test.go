@@ -27,7 +27,7 @@ func TestBuildService_Run(t *testing.T) {
 		t.FailNow()
 	}
 	assert.NotNil(t, service)
-	manager := endly.NewServiceManager()
+	manager := endly.NewManager()
 	manager.Register(service)
 
 	context := manager.NewContext(toolbox.NewContext())

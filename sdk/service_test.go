@@ -10,7 +10,7 @@ import (
 
 func TestSdkService_Run(t *testing.T) {
 
-	manager := endly.NewServiceManager()
+	manager := endly.NewManager()
 	service, err := manager.Service(sdk.JsdServiceId)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)

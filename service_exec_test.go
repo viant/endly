@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewExecService(t *testing.T) {
-	manager := endly.NewServiceManager()
+	manager := endly.NewManager()
 	srv, err := manager.Service(endly.ExecServiceId)
 	assert.Nil(t, err)
 	assert.NotNil(t, srv)

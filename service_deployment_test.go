@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewDeploymentService(t *testing.T) {
-	manager := endly.NewServiceManager()
+	manager := endly.NewManager()
 	srv, err := manager.Service(endly.DeploymentServiceId)
 	assert.Nil(t, err)
 	assert.NotNil(t, srv)
@@ -16,7 +16,7 @@ func TestNewDeploymentService(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 	defer context.Close()
 
-	response := srv.Run(context, &endly.DeploymenConfig{
+	response := srv.Run(context, &endly.DeploymentConfig{
 		Transfer: &endly.Transfer{
 			Source: &endly.Resource{
 				URL: "http://mirrors.gigenet.com/apache/maven/maven-3/3.5.0/binaries/apache-maven-3.5.0-bin.tar.gz",

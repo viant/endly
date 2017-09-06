@@ -7,7 +7,7 @@ import (
 
 const DeploymentServiceId = "deployment"
 
-type DeploymenConfig struct {
+type DeploymentConfig struct {
 	Before       *ManagedCommand
 	Transfer     *Transfer
 	After        *ManagedCommand
@@ -21,7 +21,7 @@ type deploymentService struct {
 	*AbstractService
 }
 
-func (r *DeploymenConfig) Validate() error {
+func (r *DeploymentConfig) Validate() error {
 	if r.Transfer.Target == nil {
 		return fmt.Errorf("Failed to deploy app, target was not specified")
 	}
@@ -34,7 +34,7 @@ func (r *DeploymenConfig) Validate() error {
 	return nil
 }
 
-func (s *deploymentService) extractVersion(context *Context, request *DeploymenConfig, exec Service, parsedURL *url.URL) (string, error) {
+func (s *deploymentService) extractVersion(context *Context, request *DeploymentConfig, exec Service, parsedURL *url.URL) (string, error) {
 	result, err := context.Execute(request.Transfer.Target, request.VersionCheck)
 	if err != nil {
 		return "", err
@@ -50,7 +50,7 @@ func (s *deploymentService) extractVersion(context *Context, request *DeploymenC
 	return "", nil
 }
 
-func (s *deploymentService) deploy(context *Context, request *DeploymenConfig) (interface{}, error) {
+func (s *deploymentService) deploy(context *Context, request *DeploymentConfig) (interface{}, error) {
 	err := request.Validate()
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func (s *deploymentService) Run(context *Context, request interface{}) *Response
 		Status: "ok",
 	}
 	switch castedRequest := request.(type) {
-	case *DeploymenConfig:
+	case *DeploymentConfig:
 		response.Response, response.Error = s.deploy(context, castedRequest)
 	default:
 		response.Error = fmt.Errorf("Unsupported request type: %T", request)
@@ -133,7 +133,7 @@ func (s *deploymentService) Run(context *Context, request interface{}) *Response
 func (s *deploymentService) NewRequest(name string) (interface{}, error) {
 	switch name {
 	case "deploy":
-		return &DeploymenConfig{}, nil
+		return &DeploymentConfig{}, nil
 	}
 	return nil, fmt.Errorf("Unsupported request: %v", name)
 }

@@ -17,7 +17,7 @@ const BuildServiceId = "build"
 
 type OperatingSystemDeployment struct {
 	OsTarget *endly.OperatingSystemTarget
-	Config   *endly.DeploymenConfig
+	Config   *endly.DeploymentConfig
 }
 
 

@@ -13,7 +13,7 @@ import (
 
 var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
 
-var serviceManagerKey = (*serviceManager)(nil)
+var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
 var stateKey = (*common.Map)(nil)
 
@@ -104,10 +104,10 @@ func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 	return result, nil
 }
 
-func (c *Context) ServiceManager() (ServiceManager, error) {
-	var manager = &serviceManager{}
+func (c *Context) ServiceManager() (Manager, error) {
+	var manager = &manager{}
 	if !c.GetInto(serviceManagerKey, &manager) {
-		return nil, reportError(fmt.Errorf("Failed to lookup ServiceManager"))
+		return nil, reportError(fmt.Errorf("Failed to lookup Manager"))
 	}
 	return manager, nil
 }

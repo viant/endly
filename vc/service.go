@@ -201,5 +201,5 @@ func NewVersionControlService() endly.Service {
 }
 
 func init() {
-	endly.NewServiceManager().Register(NewVersionControlService())
+	endly.NewManager().Register(NewVersionControlService())
 }

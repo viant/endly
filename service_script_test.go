@@ -10,7 +10,7 @@ import (
 )
 
 func TestScriptService_Run(t *testing.T) {
-	manager := endly.NewServiceManager()
+	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
 	fileName, _, _ := toolbox.CallerInfo(2)
 	parent, _ := path.Split(fileName)

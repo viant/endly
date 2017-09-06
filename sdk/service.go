@@ -66,5 +66,5 @@ func NewJdkService() endly.Service {
 
 
 func init() {
-	endly.NewServiceManager().Register(NewJdkService())
+	endly.NewManager().Register(NewJdkService())
 }

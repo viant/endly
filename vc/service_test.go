@@ -16,7 +16,7 @@ func TestService_RunStatusRequest(t *testing.T) {
 	parent, _ := path.Split(fileName)
 	testProject := fmt.Sprintf("ssh://%vtest/project1", parent)
 
-	manager := endly.NewServiceManager()
+	manager := endly.NewManager()
 	service, err := manager.Service(vc.VersionControlServiceId)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
@@ -51,7 +51,7 @@ func TestService_RunCheckout(t *testing.T) {
 	assert.Nil(t, err)
 
 
-	manager := endly.NewServiceManager()
+	manager := endly.NewManager()
 	service, err := manager.Service(vc.VersionControlServiceId)
 	assert.Nil(t, err)
 
