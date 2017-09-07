@@ -55,6 +55,66 @@ type CommandRequest struct {
 	MangedCommand *ManagedCommand
 }
 
+type SuperUserCommandRequest struct {
+	Target        *Resource
+	MangedCommand *ManagedCommand
+}
+
+func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*CommandRequest, error) {
+	target, err := context.ExpandResource(r.Target)
+	if err != nil {
+		return nil, err
+	}
+	var result = &CommandRequest{
+		Target: target,
+		MangedCommand: &ManagedCommand{
+			Executions: make([]*Execution, 0),
+		},
+	}
+	var executionOptions = &ExecutionOptions{
+		Terminators: []string{"Password"},
+	}
+	if r.MangedCommand.Options != nil {
+		executionOptions.Terminators = append(executionOptions.Terminators, r.MangedCommand.Options.Terminators...)
+		executionOptions.TimeoutMs = r.MangedCommand.Options.TimeoutMs
+		executionOptions.Directory = r.MangedCommand.Options.Directory
+		executionOptions.SystemPaths = r.MangedCommand.Options.SystemPaths
+	}
+
+	var errors = make([]string, 0)
+	var extractions = make([]*DataExtraction, 0)
+	for _, execution := range r.MangedCommand.Executions {
+		if execution.Command == "" {
+			continue
+		}
+		newExecution := &Execution{
+			Command:     "sudo " + execution.Command,
+			Error:       execution.Error,
+			Extraction:  execution.Extraction,
+			Success:     execution.Success,
+			MatchOutput: execution.MatchOutput,
+		}
+		if len(execution.Error) > 0 {
+			errors = append(errors, execution.Error...)
+		}
+		if len(execution.Extraction) > 0 {
+			extractions = append(extractions, execution.Extraction...)
+		}
+		result.MangedCommand.Executions = append(result.MangedCommand.Executions, newExecution)
+	}
+
+	_, password, err := target.LoadCredential()
+	execution := &Execution{
+		MatchOutput: "Password",
+		Command:     password,
+		Error:       []string{"Password"},
+		Extraction:  extractions,
+	}
+	execution.Error = append(execution.Error, errors...)
+	result.MangedCommand.Executions = append(result.MangedCommand.Executions, execution)
+	return result, nil
+}
+
 func NewCommandRequest(target *Resource, execution *ManagedCommand) *CommandRequest {
 	return &CommandRequest{
 		Target:        target,
@@ -209,7 +269,19 @@ func (s *execService) executeCommand(context *Context, session *ClientSession, e
 	command := context.Expand(execution.Command)
 	result.Commands = append(result.Commands, command)
 
-	output, err := session.Run(command, options.TimeoutMs, options.Terminators...)
+	var terminators = append([]string{}, options.Terminators...)
+	terminators = append(terminators, "$ ")
+	terminators = append(terminators, session.ShellPrompt)
+
+	superUserPrompt := string(strings.Replace(session.ShellPrompt, "$", "#", 1))
+	if strings.Contains(superUserPrompt, "bash") {
+		superUserPrompt = string(superUserPrompt[2:])
+	}
+	terminators = append(terminators, superUserPrompt)
+
+	terminators = append(terminators, execution.Error...)
+
+	output, err := session.Run(command, options.TimeoutMs, terminators...)
 	if err != nil {
 		return err
 	}
@@ -235,9 +307,7 @@ func (s *execService) executeCommand(context *Context, session *ClientSession, e
 				return s.executeCommand(context, session, execution, options, result, request)
 			}
 		}
-
 	}
-
 	return nil
 }
 
@@ -310,6 +380,14 @@ func (s *execService) Run(context *Context, request interface{}) *Response {
 		response.Response, response.Error = s.openSession(context, castedRequest)
 	case *CommandRequest:
 		response.Response, response.Error = s.runCommands(context, castedRequest)
+	case *SuperUserCommandRequest:
+		commandRequest, err := castedRequest.AsCommandRequest(context)
+		if err == nil {
+			response.Response, response.Error = s.runCommands(context, commandRequest)
+		} else {
+			response.Error = err
+		}
+
 	case *CloseSession:
 		response.Response, response.Error = s.closeSession(context, castedRequest)
 

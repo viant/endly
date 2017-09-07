@@ -26,7 +26,7 @@ type ProcessInfo struct {
 	Arguments []string
 }
 
-type CheckProcessRequest struct {
+type StatusProcessRequest struct {
 	Target  *Resource
 	Command string
 }
@@ -53,7 +53,7 @@ func (s *processService) Run(context *Context, request interface{}) *Response {
 	return response
 }
 
-func (s *processService) checkProcess(context *Context, request *CheckProcessRequest) ([]*ProcessInfo, error) {
+func (s *processService) checkProcess(context *Context, request *StatusProcessRequest) ([]*ProcessInfo, error) {
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
@@ -113,7 +113,7 @@ func indexProcesses(processes ...*ProcessInfo) map[int]*ProcessInfo {
 }
 
 func (s *processService) startProcess(context *Context, request *StartProcessRequest) (*ProcessInfo, error) {
-	origProcesses, err := s.checkProcess(context, &CheckProcessRequest{
+	origProcesses, err := s.checkProcess(context, &StatusProcessRequest{
 		Target:  request.Target,
 		Command: request.Command,
 	})
@@ -147,7 +147,7 @@ func (s *processService) startProcess(context *Context, request *StartProcessReq
 		return nil, err
 	}
 	time.Sleep(time.Second)
-	newProcesses, err := s.checkProcess(context, &CheckProcessRequest{
+	newProcesses, err := s.checkProcess(context, &StatusProcessRequest{
 		Target:  request.Target,
 		Command: request.Command,
 	})
@@ -178,7 +178,7 @@ func (s *processService) NewRequest(name string) (interface{}, error) {
 	case "start":
 		return &StartProcessRequest{}, nil
 	case "check":
-		return &CheckProcessRequest{}, nil
+		return &StatusProcessRequest{}, nil
 	case "stop":
 		return &StopProcessRequest{}, nil
 

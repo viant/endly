@@ -167,6 +167,18 @@ func (c *Context) OperatingSystem(sessionName string) *OperatingSystem {
 	return nil
 }
 
+func (c *Context) ExecuteAsSuperUser(target *Resource, command *ManagedCommand) (*CommandResult, error) {
+	superUserRequest := SuperUserCommandRequest{
+		Target:        target,
+		MangedCommand: command,
+	}
+	request, err := superUserRequest.AsCommandRequest(c)
+	if err != nil {
+		return nil, err
+	}
+	return c.Execute(target, request.MangedCommand)
+}
+
 func (c *Context) Execute(target *Resource, command *ManagedCommand) (*CommandResult, error) {
 	if command == nil {
 		return nil, nil
