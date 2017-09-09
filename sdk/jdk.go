@@ -1,8 +1,8 @@
 package sdk
 
 import (
-	"github.com/viant/endly"
 	"fmt"
+	"github.com/viant/endly"
 )
 
 type jdkService struct {
@@ -34,32 +34,27 @@ func (s *jdkService) setSdk(context *endly.Context, request *SetSdkRequest) (*Se
 						RegExpr: fmt.Sprintf("\"(%v[^\"]+)", request.Version),
 						Name:    "build",
 					},
-
 				},
 			},
-
 		},
 	})
 	if err != nil {
 		return nil, err
 	}
 
-
-	if home, ok:=commandResponse.Extracted["JAVA_HOME"];ok {
-		response.Home = home;
+	if home, ok := commandResponse.Extracted["JAVA_HOME"]; ok {
+		response.Home = home
 	}
 
-	if build, ok:=commandResponse.Extracted["build"];ok {
-		response.Build = build;
+	if build, ok := commandResponse.Extracted["build"]; ok {
+		response.Build = build
 
 	}
 	_, err = context.Execute(request.Target, &endly.ManagedCommand{
 		Executions: []*endly.Execution{
 			{
 				Command: fmt.Sprintf("export JAVA_HOME='%v'", response.Home),
-
 			},
-
 		},
 	})
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 
 const ProcessServiceId = "process"
 
-type StartProcessRequest struct {
+type ProcessStartRequest struct {
 	Name          string
 	Target        *Resource
 	Options       *ExecutionOptions
@@ -26,12 +26,12 @@ type ProcessInfo struct {
 	Arguments []string
 }
 
-type StatusProcessRequest struct {
+type ProcessStatusRequest struct {
 	Target  *Resource
 	Command string
 }
 
-type StopProcessRequest struct {
+type ProcessStopRequest struct {
 	Target *Resource
 	Pid    int
 }
@@ -44,7 +44,7 @@ func (s *processService) Run(context *Context, request interface{}) *Response {
 	var response = &Response{Status: "ok"}
 
 	switch actualRequest := request.(type) {
-	case *StartProcessRequest:
+	case *ProcessStartRequest:
 		response.Response, response.Error = s.startProcess(context, actualRequest)
 	}
 	if response.Error != nil {
@@ -53,7 +53,7 @@ func (s *processService) Run(context *Context, request interface{}) *Response {
 	return response
 }
 
-func (s *processService) checkProcess(context *Context, request *StatusProcessRequest) ([]*ProcessInfo, error) {
+func (s *processService) checkProcess(context *Context, request *ProcessStatusRequest) ([]*ProcessInfo, error) {
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
@@ -65,7 +65,7 @@ func (s *processService) checkProcess(context *Context, request *StatusProcessRe
 		return nil, err
 	}
 	var result = make([]*ProcessInfo, 0)
-	for _, line := range strings.Split(commandResponse.Stdout[0], "\r\n") {
+	for _, line := range strings.Split(commandResponse.Stdout(0), "\r\n") {
 		if strings.Contains(line, "grep") {
 			continue
 		}
@@ -89,7 +89,7 @@ func (s *processService) checkProcess(context *Context, request *StatusProcessRe
 	return result, nil
 }
 
-func (s *processService) stopProcess(context *Context, request *StopProcessRequest) (*CommandResult, error) {
+func (s *processService) stopProcess(context *Context, request *ProcessStopRequest) (*CommandInfo, error) {
 	commandResult, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
@@ -112,8 +112,8 @@ func indexProcesses(processes ...*ProcessInfo) map[int]*ProcessInfo {
 	return result
 }
 
-func (s *processService) startProcess(context *Context, request *StartProcessRequest) (*ProcessInfo, error) {
-	origProcesses, err := s.checkProcess(context, &StatusProcessRequest{
+func (s *processService) startProcess(context *Context, request *ProcessStartRequest) (*ProcessInfo, error) {
+	origProcesses, err := s.checkProcess(context, &ProcessStatusRequest{
 		Target:  request.Target,
 		Command: request.Command,
 	})
@@ -123,7 +123,7 @@ func (s *processService) startProcess(context *Context, request *StartProcessReq
 	for _, process := range origProcesses {
 
 		if strings.Join(process.Arguments, " ") == strings.Join(request.Arguments, " ") {
-			_, err := s.stopProcess(context, &StopProcessRequest{
+			_, err := s.stopProcess(context, &ProcessStopRequest{
 				Pid:    process.Pid,
 				Target: request.Target,
 			})
@@ -147,7 +147,7 @@ func (s *processService) startProcess(context *Context, request *StartProcessReq
 		return nil, err
 	}
 	time.Sleep(time.Second)
-	newProcesses, err := s.checkProcess(context, &StatusProcessRequest{
+	newProcesses, err := s.checkProcess(context, &ProcessStatusRequest{
 		Target:  request.Target,
 		Command: request.Command,
 	})
@@ -176,11 +176,11 @@ func (s *processService) startProcess(context *Context, request *StartProcessReq
 func (s *processService) NewRequest(name string) (interface{}, error) {
 	switch name {
 	case "start":
-		return &StartProcessRequest{}, nil
+		return &ProcessStartRequest{}, nil
 	case "check":
-		return &StatusProcessRequest{}, nil
+		return &ProcessStatusRequest{}, nil
 	case "stop":
-		return &StopProcessRequest{}, nil
+		return &ProcessStopRequest{}, nil
 
 	}
 	return nil, fmt.Errorf("Unsupported name: %v", name)

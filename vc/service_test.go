@@ -1,14 +1,14 @@
 package vc_test
 
 import (
-	"testing"
-	"github.com/viant/toolbox"
-	"path"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/vc"
-	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
 	"os/exec"
+	"path"
+	"testing"
 )
 
 func TestService_RunStatusRequest(t *testing.T) {
@@ -23,15 +23,15 @@ func TestService_RunStatusRequest(t *testing.T) {
 
 	context := manager.NewContext(toolbox.NewContext())
 	response := service.Run(context, &vc.StatusRequest{
-		Target:&endly.Resource{
-			URL:testProject,
-			Type:"git",
+		Target: &endly.Resource{
+			URL:  testProject,
+			Type: "git",
 		},
 	})
 	assert.NotNil(t, response)
 
 	assert.Nil(t, response.Error)
-	info, ok:= response.Response.(*vc.InfoResponse)
+	info, ok := response.Response.(*vc.InfoResponse)
 	assert.True(t, ok)
 	assert.Equal(t, "master", info.Branch)
 	assert.Equal(t, "68a240190783eacdeb510098e9cc3b5a4b58d1d8", info.Revision)
@@ -46,10 +46,9 @@ func TestService_RunCheckout(t *testing.T) {
 
 	testProject1 := fmt.Sprintf("%vtest/project1", parent)
 	testProject2 := fmt.Sprintf("%vtest/project2", parent)
-	command := exec.Command("/bin/cp",  "-rf", testProject1, testProject2)
+	command := exec.Command("/bin/cp", "-rf", testProject1, testProject2)
 	_, err := command.CombinedOutput()
 	assert.Nil(t, err)
-
 
 	manager := endly.NewManager()
 	service, err := manager.Service(vc.VersionControlServiceId)
@@ -57,12 +56,12 @@ func TestService_RunCheckout(t *testing.T) {
 
 	context := manager.NewContext(toolbox.NewContext())
 	response := service.Run(context, &vc.CheckoutRequest{
-		Origin:&endly.Resource{
-			URL:"https://github.com/adranwit/p",
+		Origin: &endly.Resource{
+			URL: "https://github.com/adranwit/p",
 		},
-		Target:&endly.Resource{
-			URL:"scp://" + testProject2,
-			Type:"git",
+		Target: &endly.Resource{
+			URL:  "scp://" + testProject2,
+			Type: "git",
 		},
 	})
 	assert.Nil(t, response.Error)

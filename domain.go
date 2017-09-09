@@ -23,9 +23,6 @@ type UseCase struct {
 
 type TestStep map[string]interface{}
 
-type Datastore struct {
-}
-
 type ApplicationService struct {
 	URL                string
 	HttpMethod         string

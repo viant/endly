@@ -105,7 +105,7 @@ type JsContext struct {
 	*Context
 }
 
-func (c *JsContext) Execute(targetMap map[string]interface{}, commandMap map[string]interface{}) (*CommandResult, error) {
+func (c *JsContext) Execute(targetMap map[string]interface{}, commandMap map[string]interface{}) (*CommandInfo, error) {
 
 	var target = &Resource{}
 	err := converter.AssignConverted(target, targetMap)

@@ -1,15 +1,14 @@
 package sdk
 
 import (
-	"github.com/viant/endly"
 	"fmt"
+	"github.com/viant/endly"
 )
 
-const JsdServiceId = "jdkService";
-
+const JsdServiceId = "jdkService"
 
 type SetSdkResponse struct {
-	Home string
+	Home  string
 	Build string
 }
 
@@ -40,16 +39,14 @@ func (s *sdkService) Run(context *endly.Context, request interface{}) *endly.Res
 	return response
 }
 
-
 func (t *sdkService) NewRequest(name string) (interface{}, error) {
 	return &SetSdkRequest{}, nil
 }
 
-
 func (s *sdkService) setSdk(context *endly.Context, request *SetSdkRequest) (*SetSdkResponse, error) {
 	switch request.Sdk {
 	case "jdk":
-		return s.jdkService.setSdk(context, request);
+		return s.jdkService.setSdk(context, request)
 	}
 	return nil, fmt.Errorf("Unsupported jdk: %v\n", request.Sdk)
 }
@@ -62,8 +59,6 @@ func NewJdkService() endly.Service {
 	result.AbstractService.Service = result
 	return result
 }
-
-
 
 func init() {
 	endly.NewManager().Register(NewJdkService())

@@ -16,6 +16,7 @@ var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
 var stateKey = (*common.Map)(nil)
+var debugKey = (*Debug)(nil)
 
 type Resource struct {
 	Name           string
@@ -159,6 +160,18 @@ func (c *Context) State() common.Map {
 	return *result
 }
 
+func (c *Context) Debug() *Debug {
+	var result *Debug
+	if !c.Contains(debugKey) {
+
+		result = &Debug{}
+		c.Put(stateKey, result)
+	} else {
+		c.GetInto(debugKey, &result)
+	}
+	return result
+}
+
 func (c *Context) OperatingSystem(sessionName string) *OperatingSystem {
 	var sessions = c.Sessions()
 	if session, has := sessions[sessionName]; has {
@@ -167,7 +180,7 @@ func (c *Context) OperatingSystem(sessionName string) *OperatingSystem {
 	return nil
 }
 
-func (c *Context) ExecuteAsSuperUser(target *Resource, command *ManagedCommand) (*CommandResult, error) {
+func (c *Context) ExecuteAsSuperUser(target *Resource, command *ManagedCommand) (*CommandInfo, error) {
 	superUserRequest := SuperUserCommandRequest{
 		Target:        target,
 		MangedCommand: command,
@@ -179,7 +192,7 @@ func (c *Context) ExecuteAsSuperUser(target *Resource, command *ManagedCommand) 
 	return c.Execute(target, request.MangedCommand)
 }
 
-func (c *Context) Execute(target *Resource, command *ManagedCommand) (*CommandResult, error) {
+func (c *Context) Execute(target *Resource, command *ManagedCommand) (*CommandInfo, error) {
 	if command == nil {
 		return nil, nil
 	}
@@ -192,13 +205,13 @@ func (c *Context) Execute(target *Resource, command *ManagedCommand) (*CommandRe
 	if response.Error != nil {
 		return nil, response.Error
 	}
-	if commandResult, ok := response.Response.(*CommandResult); ok {
+	if commandResult, ok := response.Response.(*CommandInfo); ok {
 		return commandResult, nil
 	}
 	return nil, nil
 }
 
-func (c *Context) Transfer(transfers ...*Transfer) (interface{}, error) {
+func (c *Context) Transfer(transfers ...*TransferRequest) (interface{}, error) {
 	if transfers == nil {
 		return nil, nil
 	}
@@ -206,11 +219,16 @@ func (c *Context) Transfer(transfers ...*Transfer) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	response := transferService.Run(c, &Transfers{Transfers: transfers})
+	response := transferService.Run(c, &TransfersRequest{Transfers: transfers})
 	if response.Error != nil {
 		return nil, response.Error
 	}
 	return nil, nil
+}
+
+func (c *Context) Log(logEntry interface{}) error {
+	debug := c.Debug()
+	return debug.Log(logEntry)
 }
 
 func (c *Context) Expand(text string) string {
@@ -236,3 +254,4 @@ func (c *Context) Close() {
 		function()
 	}
 }
+

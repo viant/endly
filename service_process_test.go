@@ -19,7 +19,7 @@ func TestProcessService_Run(t *testing.T) {
 		context := manager.NewContext(toolbox.NewContext())
 		defer context.Close()
 
-		response := srv.Run(context, &endly.StartProcessRequest{
+		response := srv.Run(context, &endly.ProcessStartRequest{
 			Target: &endly.Resource{
 				URL: "scp://127.0.0.1/",
 			},
@@ -34,7 +34,7 @@ func TestProcessService_Run(t *testing.T) {
 		assert.True(t, ok)
 		assert.True(t, info.Pid > 0)
 
-		response = srv.Run(context, &endly.StopProcessRequest{
+		response = srv.Run(context, &endly.ProcessStopRequest{
 			Target: &endly.Resource{
 				URL: "scp://127.0.0.1/",
 			},

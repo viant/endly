@@ -5,21 +5,16 @@ import (
 	"github.com/viant/toolbox/ssh"
 )
 
-
-
-
-
 type Map map[string]interface{}
+
 func (s *Map) Put(key string, value interface{}) {
 	(*s)[key] = value
 }
 
-
 func (s *Map) Has(key string) bool {
-	 _, found := (*s)[key];
+	_, found := (*s)[key]
 	return found
 }
-
 
 func (s *Map) Get(key string) interface{} {
 	if result, found := (*s)[key]; found {
@@ -35,7 +30,6 @@ func (s *Map) GetString(key string) string {
 	}
 	return ""
 }
-
 
 func (s *Map) GetCommandSession(key string) *ssh.MultiCommandSession {
 	if result, found := (*s)[key]; found {
@@ -67,7 +61,6 @@ func (s *Map) GetBoolean(key string) bool {
 	return false
 }
 
-
 func (s *Map) GetCollection(key string) *Collection {
 	if result, found := (*s)[key]; found {
 		collection, ok := result.(*Collection)
@@ -79,7 +72,6 @@ func (s *Map) GetCollection(key string) *Collection {
 
 }
 
-
 func (s *Map) GetMap(key string) Map {
 	if result, found := (*s)[key]; found {
 		aMap, ok := result.(Map)
@@ -90,6 +82,20 @@ func (s *Map) GetMap(key string) Map {
 	return nil
 
 }
+
+
+func (s *Map) Clone() Map {
+	var result = NewMap()
+	for key, value := range *s {
+		if aMap, casted := value.(Map); casted {
+			result[key] = aMap.Clone()
+		} else {
+			result[key] = value
+		}
+	}
+	return result
+}
+
 
 
 

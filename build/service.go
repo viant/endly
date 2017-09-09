@@ -2,16 +2,14 @@ package build
 
 import (
 	"fmt"
-	"github.com/viant/endly/common"
-	"net/url"
-	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox"
 	"github.com/viant/endly"
+	"github.com/viant/endly/common"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/storage"
+	"net/url"
 )
 
-
 //Add global request with map context parameters
-
 
 const BuildServiceId = "build"
 
@@ -20,16 +18,12 @@ type OperatingSystemDeployment struct {
 	Config   *endly.DeploymentConfig
 }
 
-
 type Goal struct {
 	Name                string
 	Command             *endly.ManagedCommand
-	Transfers           *endly.Transfers
+	Transfers           *endly.TransfersRequest
 	VerificationCommand *endly.ManagedCommand
 }
-
-
-
 
 type Meta struct {
 	Name             string
@@ -37,7 +31,6 @@ type Meta struct {
 	goalsIndex       map[string]*Goal
 	BuildDeployments []*OperatingSystemDeployment //defines deployment of the build app itself, i.e how to get maven installed
 }
-
 
 func (m *Meta) Validate() error {
 	if m.Name == "" {
@@ -84,17 +77,16 @@ func (r *BuildMetaRegistry) Register(meta *Meta) {
 }
 
 type BuildSpec struct {
-	Name string //build name  like go, mvn, node, yarn
+	Name    string //build name  like go, mvn, node, yarn
 	Version string
-	Goal string //actual build target, like clean, test
-	Args string // additional build arguments , that can be expanded with $build.args
+	Goal    string //actual build target, like clean, test
+	Args    string // additional build arguments , that can be expanded with $build.args
 }
 
 type BuildRequest struct {
-	BuildSpec *BuildSpec//build specification
-	Target *endly.Resource //path to application to be build, Note that command may use $build.target variable. that expands to Target URL path
+	BuildSpec *BuildSpec      //build specification
+	Target    *endly.Resource //path to application to be build, Note that command may use $build.target variable. that expands to Target URL path
 }
-
 
 type buildService struct {
 	*endly.AbstractService
@@ -115,7 +107,6 @@ func (s *buildService) build(context *endly.Context, request *BuildRequest) (int
 	if !has {
 		return nil, fmt.Errorf("Failed to lookup build: %v", buildSepc.Name)
 	}
-
 
 	goal, has := buildMeta.goalsIndex[buildSepc.Goal]
 	if !has {
@@ -182,8 +173,8 @@ func (s *buildService) build(context *endly.Context, request *BuildRequest) (int
 	}
 	return nil, nil
 }
-func setBuildState(buildSepc *BuildSpec, parsedUrl *url.URL, request *BuildRequest, context *endly.Context)  error {
-	target, err  := context.ExpandResource(request.Target)
+func setBuildState(buildSepc *BuildSpec, parsedUrl *url.URL, request *BuildRequest, context *endly.Context) error {
+	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return err
 	}
@@ -213,16 +204,14 @@ func (s *buildService) Run(context *endly.Context, request interface{}) *endly.R
 	return response
 }
 
-
 func (t *buildService) NewRequest(name string) (interface{}, error) {
-		return &BuildRequest{}, nil
+	return &BuildRequest{}, nil
 }
-
 
 func loadRegistry(config *Config) (BuildMetaRegistry, error) {
 	var result BuildMetaRegistry = make(map[string]*Meta)
 	if len(config.URL) > 0 {
-		for _, url :=  range config.URL {
+		for _, url := range config.URL {
 			service, err := storage.NewServiceForURL(url, "")
 			if err != nil {
 				return nil, err
@@ -242,7 +231,7 @@ func loadRegistry(config *Config) (BuildMetaRegistry, error) {
 				if err != nil {
 					return nil, err
 				}
-				err =  buildMeta.Validate()
+				err = buildMeta.Validate()
 				if err != nil {
 					return nil, err
 				}
@@ -252,7 +241,6 @@ func loadRegistry(config *Config) (BuildMetaRegistry, error) {
 	}
 	return result, nil
 }
-
 
 func NewBuildService(config *Config) (endly.Service, error) {
 	registry, err := loadRegistry(config)

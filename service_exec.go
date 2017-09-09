@@ -7,7 +7,6 @@ import (
 	"strings"
 )
 
-const commandNotFound = "command not found"
 const ExecServiceId = "exec"
 
 type OpenSession struct {
@@ -43,6 +42,7 @@ type ManagedCommand struct {
 }
 
 type Execution struct {
+	Secure      bool
 	MatchOutput string //only run this execution is output from a previous command is matched
 	Command     string
 	Extraction  DataExtractions
@@ -105,6 +105,7 @@ func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*CommandRe
 
 	_, password, err := target.LoadCredential()
 	execution := &Execution{
+		Secure:      true,
 		MatchOutput: "Password",
 		Command:     password,
 		Error:       []string{"Password"},
@@ -122,14 +123,83 @@ func NewCommandRequest(target *Resource, execution *ManagedCommand) *CommandRequ
 	}
 }
 
+type CommandStream struct {
+	Stdin  string
+	Stdout string
+	Error  string
+}
+
+func NewCommandStream(stdin, stdout string, err error) *CommandStream {
+	result := &CommandStream{
+		Stdin: stdin,
+	}
+	if err != nil {
+		result.Error = fmt.Sprintf("%v", err)
+	} else {
+		result.Stdout = stdout
+	}
+	return result
+}
+
+type CommandInfo struct {
+	Session   string
+	Commands  []*CommandStream
+	Extracted map[string]string
+	Error     string
+}
+
+func (i *CommandInfo) Add(stream *CommandStream) {
+	if len(i.Commands) == 0 {
+		i.Commands = make([]*CommandStream, 0)
+	}
+	i.Commands = append(i.Commands, stream)
+}
+
+func (i *CommandInfo) Stdout(indexes ...int) string {
+	if len(indexes) == 0 {
+		var result = make([]string, len(i.Commands))
+		for j, stream := range i.Commands {
+			result[j] = stream.Stdout
+		}
+		return strings.Join(result, "\n")
+	}
+	var result = make([]string, len(indexes))
+	for _, index := range indexes {
+		if index < len(i.Commands) {
+			result = append(result, i.Commands[index].Stdout)
+		}
+	}
+	return strings.Join(result, "\n")
+}
+
+func NewCommandInfo(session string) *CommandInfo {
+	return &CommandInfo{
+		Session:   session,
+		Commands:  make([]*CommandStream, 0),
+		Extracted: make(map[string]string),
+	}
+}
+
 type execService struct {
 	*AbstractService
 }
 
 type ClientSession struct {
+	name string
 	*ssh.MultiCommandSession
 	Connection      *ssh.Client
 	OperatingSystem *OperatingSystem
+	envVariables    map[string]string
+	path            string
+}
+
+func NewClientSession(name string, connection *ssh.Client) (*ClientSession, error) {
+
+	return &ClientSession{
+		name:         name,
+		Connection:   connection,
+		envVariables: make(map[string]string),
+	}, nil
 }
 
 type ClientSessions map[string]*ClientSession
@@ -139,113 +209,123 @@ func (s *ClientSessions) Has(name string) bool {
 	return has
 }
 
-type CommandResult struct {
-	Commands  []string
-	Stdout    []string
-	Extracted map[string]string
-}
-
 var clientSessionKey = (*ClientSessions)(nil)
 
-func (s *execService) openSession(context *Context, request *OpenSession) (interface{}, error) {
+func (s *execService) openSession(context *Context, request *OpenSession) (*ClientSession, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
+
 	if !(target.ParsedURL.Scheme == "ssh" || target.ParsedURL.Scheme == "scp") {
-		return nil, fmt.Errorf("Failed to open session: invalid schema: %v", target.ParsedURL.Scheme)
+		return nil, fmt.Errorf("Failed to open sessionName: invalid schema: %v", target.ParsedURL.Scheme)
 	}
-	clientSessions := context.Sessions()
-	var session = target.Session()
-	if clientSessions.Has(session) {
-		clientSession := clientSessions[session]
-		_, err = clientSession.Run(fmt.Sprintf("cd %v", target.ParsedURL.Path), 0)
-		if err != nil {
-			return nil, err
-		}
-		return clientSessions[session], nil
-	}
-	clientSession := &ClientSession{}
+	sessions := context.Sessions()
 
-	manager, err := context.ServiceManager()
-	if err != nil {
-		return nil, err
+	var sessionName = target.Session()
+	if sessions.Has(sessionName) {
+		session := sessions[sessionName]
+		err = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
+		return sessions[sessionName], err
 	}
-
-	var file = ""
 	var authConfig = &ssh.AuthConfig{}
-	targetCredential := target.Credential
-	if targetCredential != "" {
-		targetCredential = context.Expand(targetCredential)
-		file, err = manager.CredentialFile(targetCredential)
-		if err != nil {
-			return nil, err
-		}
-		authConfig, err = ssh.NewAuthConfigFromURL(fmt.Sprintf("file://%v", file))
+	if target.CredentialFile != "" {
+		authConfig, err = ssh.NewAuthConfigFromURL(fmt.Sprintf("file://%v", target.CredentialFile))
 		if err != nil {
 			return nil, err
 		}
 	}
-
 	port := toolbox.AsInt(target.ParsedURL.Port())
 	if port == 0 {
 		port = 22
 	}
-	clientSession.Connection, err = ssh.NewClient(target.ParsedURL.Hostname(), port, authConfig)
+
+	connection, err := ssh.NewClient(target.ParsedURL.Hostname(), port, authConfig)
 	if err != nil {
 		return nil, err
 	}
-
-	if !request.Transient {
-		context.Deffer(func() {
-			clientSession.Connection.Close()
-		})
-	}
-
-	clientSession.MultiCommandSession, err = clientSession.Connection.OpenMultiCommandSession(request.Config)
+	session, err := NewClientSession(sessionName, connection)
 	if err != nil {
 		return nil, err
 	}
 	if !request.Transient {
 		context.Deffer(func() {
-			clientSession.MultiCommandSession.Close()
+			connection.Close()
 		})
 	}
 
-	_, err = clientSession.Run(fmt.Sprintf("cd %v", target.ParsedURL.Path), 0)
+	session.MultiCommandSession, err = session.Connection.OpenMultiCommandSession(request.Config)
 	if err != nil {
 		return nil, err
 	}
-
-	clientSessions[session] = clientSession
-	clientSession.OperatingSystem, err = s.detectOperatingSystem(clientSession)
+	if !request.Transient {
+		context.Deffer(func() {
+			session.MultiCommandSession.Close()
+		})
+	}
+	err = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
 	if err != nil {
 		return nil, err
 	}
-	return clientSession, nil
+	sessions[sessionName] = session
+	session.OperatingSystem, err = s.detectOperatingSystem(session)
+	if err != nil {
+		return nil, err
+	}
+	return session, nil
 }
 
-func (s *execService) applyCommandOptions(context *Context, options *ExecutionOptions, sesssion *ClientSession) error {
+func (s *execService) setEnvVariable(context *Context, session *ClientSession, info *CommandInfo, name, value string) error {
+	if val, has := session.envVariables[name]; has {
+		if value == val {
+			return nil
+		}
+		session.envVariables[name] = value
+	}
+	return s.rumCommandTemplate(context, session, info, "export %v='%v'", name, value)
+}
 
-	operatingSystem := sesssion.OperatingSystem
+func (s *execService) changeDirectory(context *Context, session *ClientSession, commandInfo *CommandInfo, directory string) error {
+	if session.path == directory {
+		return nil
+	}
+	session.path = directory
+	return s.rumCommandTemplate(context, session, commandInfo, "cd %v", directory)
+}
+
+func (s *execService) rumCommandTemplate(context *Context, session *ClientSession, info *CommandInfo, commandTemplate string, arguments ...string) error {
+	if info == nil {
+		info = NewCommandInfo(session.name)
+		context.Debug().Log(info)
+	}
+	command := fmt.Sprintf(commandTemplate, arguments)
+	output, err := session.Run(command, 0)
+	info.Add(NewCommandStream(command, output, err))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *execService) applyCommandOptions(context *Context, options *ExecutionOptions, session *ClientSession, info *CommandInfo) error {
+
+	operatingSystem := session.OperatingSystem
 	if options == nil {
 		return nil
 	}
 
-	var timeoutMs = options.TimeoutMs
 	if len(options.SystemPaths) > 0 {
 		operatingSystem.Path.Push(options.SystemPaths...)
 	}
-
 	for k, v := range options.Env {
-		_, err := sesssion.Run(fmt.Sprintf("export %v='%v'", k, v), timeoutMs)
+		err := s.setEnvVariable(context, session, info, k, v)
 		if err != nil {
 			return err
 		}
 	}
 	if options.Directory != "" {
 		directory := context.Expand(options.Directory)
-		_, err := sesssion.Run(fmt.Sprintf("cd %v", directory), timeoutMs)
+		err := s.changeDirectory(context, session, info, directory)
 		if err != nil {
 			return err
 		}
@@ -265,28 +345,19 @@ func match(stdout string, candidates ...string) string {
 	return ""
 }
 
-func (s *execService) executeCommand(context *Context, session *ClientSession, execution *Execution, options *ExecutionOptions, result *CommandResult, request *CommandRequest) error {
+func (s *execService) executeCommand(context *Context, session *ClientSession, execution *Execution, options *ExecutionOptions, commandInfo *CommandInfo, request *CommandRequest) error {
 	command := context.Expand(execution.Command)
-	result.Commands = append(result.Commands, command)
+	terminators := getTerminators(options, session, execution)
 
-	var terminators = append([]string{}, options.Terminators...)
-	terminators = append(terminators, "$ ")
-	terminators = append(terminators, session.ShellPrompt)
-
-	superUserPrompt := string(strings.Replace(session.ShellPrompt, "$", "#", 1))
-	if strings.Contains(superUserPrompt, "bash") {
-		superUserPrompt = string(superUserPrompt[2:])
+	stdout, err := session.Run(command, options.TimeoutMs, terminators...)
+	if execution.Secure {
+		command = "****"
 	}
-	terminators = append(terminators, superUserPrompt)
 
-	terminators = append(terminators, execution.Error...)
-
-	output, err := session.Run(command, options.TimeoutMs, terminators...)
+	commandInfo.Add(NewCommandStream(command, stdout, err))
 	if err != nil {
 		return err
 	}
-	stdout := string(output)
-	result.Stdout = append(result.Stdout, stdout)
 	errorMatch := match(stdout, execution.Error...)
 	if errorMatch != "" {
 		return fmt.Errorf("Encounter error fragment: (%v) execution (%v); ouput: (%v), %v", errorMatch, execution.Command, stdout, options.Directory)
@@ -297,28 +368,34 @@ func (s *execService) executeCommand(context *Context, session *ClientSession, e
 			return fmt.Errorf("Fail to match any fragment: (%v) execution (%v); ouput: (%v), %v", strings.Join(execution.Success, ","), execution.Command, stdout, options.Directory)
 		}
 	}
-	err = execution.Extraction.Extract(context, result.Extracted, strings.Split(stdout, "\r\n")...)
+	err = execution.Extraction.Extract(context, commandInfo.Extracted, strings.Split(stdout, "\r\n")...)
 	if err != nil {
 		return err
 	}
 	if len(stdout) > 0 {
 		for _, execution := range request.MangedCommand.Executions {
 			if execution.MatchOutput != "" && strings.Contains(stdout, execution.MatchOutput) {
-				return s.executeCommand(context, session, execution, options, result, request)
+				return s.executeCommand(context, session, execution, options, commandInfo, request)
 			}
 		}
 	}
 	return nil
 }
-
-func (s *execService) runCommands(context *Context, request *CommandRequest) (*CommandResult, error) {
-	clientSessions := context.Sessions()
-	result := &CommandResult{
-		Commands:  make([]string, 0),
-		Stdout:    make([]string, 0),
-		Extracted: make(map[string]string),
+func getTerminators(options *ExecutionOptions, session *ClientSession, execution *Execution) []string {
+	var terminators = append([]string{}, options.Terminators...)
+	terminators = append(terminators, "$ ")
+	terminators = append(terminators, session.ShellPrompt)
+	superUserPrompt := string(strings.Replace(session.ShellPrompt, "$", "#", 1))
+	if strings.Contains(superUserPrompt, "bash") {
+		superUserPrompt = string(superUserPrompt[2:])
 	}
+	terminators = append(terminators, superUserPrompt)
+	terminators = append(terminators, execution.Error...)
+	return terminators
+}
 
+func (s *execService) runCommands(context *Context, request *CommandRequest) (*CommandInfo, error) {
+	clientSessions := context.Sessions()
 	var target, err = context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -334,30 +411,38 @@ func (s *execService) runCommands(context *Context, request *CommandRequest) (*C
 	if options == nil {
 		options = NewExecutionOptions()
 	}
-	err = s.applyCommandOptions(context, options, session)
+	info := NewCommandInfo(sessionName)
+	context.Debug().Log(info)
+	err = s.applyCommandOptions(context, options, session, info)
 	if err != nil {
 		return nil, err
 	}
 
 	operatingSystem := session.OperatingSystem
-	var systemPath = fmt.Sprintf("export PATH=\"%v\"", operatingSystem.Path.EnvValue())
-	_, err = session.Run(systemPath, 0)
-	if err != nil {
-		return nil, err
+	if session.path != operatingSystem.Path.EnvValue() {
+		session.path = operatingSystem.Path.EnvValue()
+		err := s.setEnvVariable(context, session, info, "PATH", session.path)
+		if err != nil {
+			return nil, err
+		}
 	}
-
 	for _, execution := range request.MangedCommand.Executions {
-
 		if execution.MatchOutput != "" {
 			continue
 		}
-		err = s.executeCommand(context, session, execution, options, result, request)
+		if strings.HasPrefix(execution.Command, "cd ") {
+			session.path = "" //reset path
+		}
+		if strings.HasPrefix(execution.Command, "export ") {
+			session.envVariables = make(map[string]string) //reset env variables
+		}
+		err = s.executeCommand(context, session, execution, options, info, request)
 		if err != nil {
 			return nil, err
 		}
 
 	}
-	return result, nil
+	return info, nil
 }
 
 func (s *execService) closeSession(context *Context, closeSession *CloseSession) (interface{}, error) {
@@ -433,7 +518,7 @@ func (s *execService) detectOperatingSystem(session *ClientSession) (*OperatingS
 			return nil, err
 		}
 		stdout = string(output)
-		if !strings.Contains(stdout, commandNotFound) {
+		if !CheckCommandNotFound(stdout) {
 			break
 		}
 	}

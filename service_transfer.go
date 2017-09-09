@@ -10,21 +10,47 @@ import (
 
 const TransferServiceId = "transfer"
 
-type Transfers struct {
-	Transfers []*Transfer
+type TransfersRequest struct {
+	Transfers []*TransferRequest
 }
 
-type Transfer struct {
+type TransferRequest struct {
 	Source   *Resource
 	Target   *Resource
 	Parsable bool
 }
 
+type TransferInfo struct {
+	Source string
+	Target string
+	Error string
+	Parsable string
+	State common.Map
+}
+
+func NewTransferInfo(context *Context, source, target string, err error, parsable bool) *TransferInfo {
+	result := &TransferInfo{
+		Source:source,
+		Target:target,
+	}
+	if parsable {
+		var state = context.State()
+		result.State = state.Clone()
+	}
+	if err != nil {
+		result.Error = fmt.Sprintf("%v", err)
+	}
+	return result
+}
+
+
 type transferService struct {
 	*AbstractService
 }
 
-func (s *transferService) run(context *Context, transfers ...*Transfer) (interface{}, error) {
+func (s *transferService) run(context *Context, transfers ...*TransferRequest) ([]*TransferInfo, error) {
+	var result = make([]*TransferInfo, 0)
+	debug := context.Debug()
 	for _, transfer := range transfers {
 
 		source, err := context.ExpandResource(transfer.Source)
@@ -47,19 +73,24 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (interfa
 		if transfer.Parsable {
 			handler = common.NewHandler(context.Context)
 		}
-		err = storage.Copy(sourceService, transfer.Source.URL, targetService, target.URL, handler)
+		err = storage.Copy(sourceService, source.URL, targetService, target.URL, handler)
+		info := NewTransferInfo(context, source.URL, target.URL, err, transfer.Parsable)
+		debug.Log(info)
 		if err != nil {
-			return nil, err
+			return result, err
 		}
 	}
-	return nil, nil
+	return result, nil
 }
 
 func (s *transferService) Run(context *Context, request interface{}) *Response {
 	var response = &Response{Status: "ok"}
-	switch typeRequest := request.(type) {
-	case *Transfers:
-		response.Response, response.Error = s.run(context, typeRequest.Transfers...)
+	switch actualRequest := request.(type) {
+	case *TransfersRequest:
+		response.Response, response.Error = s.run(context, actualRequest.Transfers...)
+	case *TransferRequest:
+		response.Response, response.Error = s.run(context, actualRequest)
+
 	default:
 		response.Error = fmt.Errorf("Unsupported request type: %T", request)
 	}
@@ -72,8 +103,8 @@ func (s *transferService) Run(context *Context, request interface{}) *Response {
 func (s *transferService) NewRequest(name string) (interface{}, error) {
 	switch name {
 	case "run":
-		return &Transfers{
-			Transfers: make([]*Transfer, 0),
+		return &TransfersRequest{
+			Transfers: make([]*TransferRequest, 0),
 		}, nil
 	}
 	return nil, fmt.Errorf("Unsupported name: %v", name)

@@ -1,8 +1,8 @@
 package vc
 
 import (
-	"github.com/viant/endly"
 	"fmt"
+	"github.com/viant/endly"
 	"strings"
 )
 
@@ -29,7 +29,7 @@ func addIfMatched(line, fragment string, result *[]string) {
 
 func extractGitStatus(stdout string, response *InfoResponse) {
 	if strings.Contains(stdout, "nothing to commit") {
-		response.IsUptoDate = true;
+		response.IsUptoDate = true
 	}
 
 	response.New = make([]string, 0)
@@ -75,8 +75,7 @@ func (s *gitService) checkInfo(context *endly.Context, request *StatusRequest) (
 	if err != nil {
 		return nil, err
 	}
-	var result = &InfoResponse{
-	}
+	var result = &InfoResponse{}
 
 	response, err := context.Execute(request.Target, &endly.ManagedCommand{
 		Executions: []*endly.Execution{
@@ -89,8 +88,6 @@ func (s *gitService) checkInfo(context *endly.Context, request *StatusRequest) (
 					RegExpr: "On branch[\\s\\t]+([^\\s]+)",
 					Name:    "branch",
 				}},
-
-
 			},
 			{
 				Command: fmt.Sprintf("git remote -v"),
@@ -117,15 +114,14 @@ func (s *gitService) checkInfo(context *endly.Context, request *StatusRequest) (
 	if strings.Contains(response.Stdout[1], "Not a git") {
 		return result, nil
 	}
-	result.IsVersionControlManaged = true;
+	result.IsVersionControlManaged = true
 	extractGitStatus(response.Stdout[1], result)
 	extractRevision(response.Stdout[3], result)
 	return result, nil
 }
 
-
 func (s *gitService) checkout(context *endly.Context, request *CheckoutRequest) (*InfoResponse, error) {
-	target, err :=  context.ExpandResource(request.Target)
+	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
@@ -133,21 +129,21 @@ func (s *gitService) checkout(context *endly.Context, request *CheckoutRequest) 
 		Executions: []*endly.Execution{
 			{
 				Command: fmt.Sprintf("git clone %v %v", request.Origin.URL, target.ParsedURL.Path),
-				Error:[]string{"No such file or directory"},
+				Error:   []string{"No such file or directory"},
 			},
 		},
 	})
 	if err != nil {
-		return nil,  err
+		return nil, err
 	}
 	return s.checkInfo(context, &StatusRequest{
-		Target:target,
+		Target: target,
 	})
 }
 
 func (s *gitService) commit(context *endly.Context, request *CommitRequest) (*InfoResponse, error) {
 	checkInfo, err := s.checkInfo(context, &StatusRequest{
-		Target:request.Target,
+		Target: request.Target,
 	})
 	if err != nil {
 		return nil, err
@@ -159,7 +155,7 @@ func (s *gitService) commit(context *endly.Context, request *CommitRequest) (*In
 				Executions: []*endly.Execution{
 					{
 						Command: fmt.Sprintf("git add %v ", file),
-						Error:[]string{"No such file or directory", "Error"},
+						Error:   []string{"No such file or directory", "Error"},
 					},
 				},
 			})
@@ -169,17 +165,15 @@ func (s *gitService) commit(context *endly.Context, request *CommitRequest) (*In
 		}
 	}
 
-	message :=strings.Replace(request.Message, "\"", "'", len(request.Message))
+	message := strings.Replace(request.Message, "\"", "'", len(request.Message))
 	_, err = context.Execute(request.Target, &endly.ManagedCommand{
 		Executions: []*endly.Execution{
 			{
 				Command: fmt.Sprintf("git commit -m \"%v\" -a", message),
-				Error:[]string{"No such file or directory", "Error"},
+				Error:   []string{"No such file or directory", "Error"},
 			},
 		},
 	})
-
-
 
 	//TODO add branch push
 	_, err = context.Execute(request.Target, &endly.ManagedCommand{
@@ -190,6 +184,6 @@ func (s *gitService) commit(context *endly.Context, request *CommitRequest) (*In
 		},
 	})
 	return s.checkInfo(context, &StatusRequest{
-		Target:request.Target,
+		Target: request.Target,
 	})
 }

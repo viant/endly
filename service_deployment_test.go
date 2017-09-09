@@ -17,7 +17,7 @@ func TestNewDeploymentService(t *testing.T) {
 	defer context.Close()
 
 	response := srv.Run(context, &endly.DeploymentConfig{
-		Transfer: &endly.Transfer{
+		Transfer: &endly.TransferRequest{
 			Source: &endly.Resource{
 				URL: "http://mirrors.gigenet.com/apache/maven/maven-3/3.5.0/binaries/apache-maven-3.5.0-bin.tar.gz",
 			},

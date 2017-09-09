@@ -1,11 +1,11 @@
 package sdk_test
 
 import (
-	"testing"
+	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/sdk"
-	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
+	"testing"
 )
 
 func TestSdkService_Run(t *testing.T) {
@@ -15,15 +15,14 @@ func TestSdkService_Run(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
 
-
 	context := manager.NewContext(toolbox.NewContext())
 
 	response := service.Run(context, &sdk.SetSdkRequest{
-		Target:&endly.Resource{
-			URL:"scp://127.0.0.1/",
+		Target: &endly.Resource{
+			URL: "scp://127.0.0.1/",
 		},
-		Sdk:"jdk",
-		Version:"1.7",
+		Sdk:     "jdk",
+		Version: "1.7",
 	})
 	if response.Error != nil {
 		info, ok := response.Response.(*sdk.SetSdkResponse)

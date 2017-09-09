@@ -16,17 +16,17 @@ const (
 	serviceTypeSystemctl
 )
 
-type StartServiceRequest struct {
+type ServiceStartRequest struct {
 	Target  *Resource
 	Service string
 }
 
-type StopServiceRequest struct {
+type ServiceStopRequest struct {
 	Target  *Resource
 	Service string
 }
 
-type StatusServiceRequest struct {
+type ServiceStatusRequest struct {
 	Target  *Resource
 	Service string
 }
@@ -52,11 +52,11 @@ func (s *systemService) Run(context *Context, request interface{}) *Response {
 	var response = &Response{Status: "ok"}
 
 	switch actualRequest := request.(type) {
-	case *StartServiceRequest:
+	case *ServiceStartRequest:
 		response.Response, response.Error = s.startService(context, actualRequest)
-	case *StopServiceRequest:
+	case *ServiceStopRequest:
 		response.Response, response.Error = s.stopService(context, actualRequest)
-	case *StatusServiceRequest:
+	case *ServiceStatusRequest:
 		response.Response, response.Error = s.checkService(context, actualRequest)
 	}
 	if response.Error != nil {
@@ -76,8 +76,8 @@ func (s *systemService) determineServiceType(context *Context, service string, t
 	if err != nil {
 		return 0, "", err
 	}
-	if !CheckNoSuchFileOrDirectory(commandResult.Stdout) {
-		file := strings.TrimSpace(commandResult.Stdout[0])
+	if !CheckNoSuchFileOrDirectory(commandResult.Stdout()) {
+		file := strings.TrimSpace(commandResult.Stdout())
 		if len(file) > 0 {
 			servicePath := path.Join("/Library/LaunchDaemons/", file)
 			return serviceTypeLaunchCtl, servicePath, nil
@@ -94,7 +94,7 @@ func (s *systemService) determineServiceType(context *Context, service string, t
 	if err != nil {
 		return 0, "", err
 	}
-	if !CheckCommandNotFound(commandResult.Stdout) {
+	if !CheckCommandNotFound(commandResult.Stdout()) {
 		return serviceTypeStdService, service, nil
 	}
 	commandResult, err = context.ExecuteAsSuperUser(target, &ManagedCommand{
@@ -108,7 +108,7 @@ func (s *systemService) determineServiceType(context *Context, service string, t
 		return 0, "", err
 	}
 
-	if !CheckCommandNotFound(commandResult.Stdout) {
+	if !CheckCommandNotFound(commandResult.Stdout()) {
 		return serviceTypeSystemctl, service, nil
 	}
 
@@ -132,7 +132,7 @@ func extractServiceInfo(state map[string]string, info *ServiceInfo) {
 	}
 }
 
-func (s *systemService) checkService(context *Context, request *StatusServiceRequest) (*ServiceInfo, error) {
+func (s *systemService) checkService(context *Context, request *ServiceStatusRequest) (*ServiceInfo, error) {
 	serviceType, serviceInit, err := s.determineServiceType(context, request.Service, request.Target)
 	if err != nil {
 		return nil, err
@@ -226,8 +226,8 @@ func (s *systemService) checkService(context *Context, request *StatusServiceReq
 
 }
 
-func (s *systemService) stopService(context *Context, request *StopServiceRequest) (*ServiceInfo, error) {
-	serviceInfo, err := s.checkService(context, &StatusServiceRequest{
+func (s *systemService) stopService(context *Context, request *ServiceStopRequest) (*ServiceInfo, error) {
+	serviceInfo, err := s.checkService(context, &ServiceStatusRequest{
 		Target:  request.Target,
 		Service: request.Service,
 	})
@@ -262,17 +262,17 @@ func (s *systemService) stopService(context *Context, request *StopServiceReques
 			},
 		},
 	})
-	if CheckCommandNotFound(commandResult.Stdout) {
+	if CheckCommandNotFound(commandResult.Stdout()) {
 		return nil, fmt.Errorf("%v", commandResult.Stdout)
 	}
-	return s.checkService(context, &StatusServiceRequest{
+	return s.checkService(context, &ServiceStatusRequest{
 		Target:  request.Target,
 		Service: request.Service,
 	})
 }
 
-func (s *systemService) startService(context *Context, request *StartServiceRequest) (*ServiceInfo, error) {
-	serviceInfo, err := s.checkService(context, &StatusServiceRequest{
+func (s *systemService) startService(context *Context, request *ServiceStartRequest) (*ServiceInfo, error) {
+	serviceInfo, err := s.checkService(context, &ServiceStatusRequest{
 		Target:  request.Target,
 		Service: request.Service,
 	})
@@ -307,10 +307,10 @@ func (s *systemService) startService(context *Context, request *StartServiceRequ
 			},
 		},
 	})
-	if CheckCommandNotFound(commandResult.Stdout) {
+	if CheckCommandNotFound(commandResult.Stdout()) {
 		return nil, fmt.Errorf("%v", commandResult.Stdout)
 	}
-	return s.checkService(context, &StatusServiceRequest{
+	return s.checkService(context, &ServiceStatusRequest{
 		Target:  request.Target,
 		Service: request.Service,
 	})

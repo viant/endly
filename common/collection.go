@@ -8,16 +8,14 @@ func (s *Collection) Push(value interface{}) {
 	(*s) = append(*s, value)
 }
 
-
-
 func (s *Collection) Range(handler func(item interface{}, index int) (bool, error)) error {
 	for i, elem := range *s {
 		next, err := handler(elem, i)
 		if err != nil {
 			return err
 		}
-		if ! next {
-			break;
+		if !next {
+			break
 		}
 
 	}
@@ -30,8 +28,8 @@ func (s *Collection) RangeString(handler func(item interface{}, index int) (bool
 		if err != nil {
 			return err
 		}
-		if ! next {
-			break;
+		if !next {
+			break
 		}
 
 	}
@@ -39,15 +37,14 @@ func (s *Collection) RangeString(handler func(item interface{}, index int) (bool
 
 }
 
-
 func (s *Collection) RangeInt(handler func(item interface{}, index int) (bool, error)) error {
 	for i, elem := range *s {
 		next, err := handler(toolbox.AsInt(elem), i)
 		if err != nil {
 			return err
 		}
-		if ! next {
-			break;
+		if !next {
+			break
 		}
 
 	}

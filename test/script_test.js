@@ -6,7 +6,7 @@ var response = getOrFail(context.Execute({URL: "ssh://127.0.0.1:22/etc"}, {
 }));
 
 
-var stdout = response.Stdout[0];
+var stdout = response.Stdout();
 var lines = stdout.split("\r\n")
 var state = context.State();
 for (var i = 0; i < lines.length; i++) {
@@ -25,7 +25,7 @@ var response = getOrFail(context.Execute({URL: "ssh://127.0.0.1:22/etc"}, {
         }
     ]
 }));
-var stdout = response.Stdout[0];
+var stdout = response.Stdout();
 console.log(stdout)
 var result = "ok";
 result;

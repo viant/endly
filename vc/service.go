@@ -2,8 +2,8 @@ package vc
 
 import (
 	"fmt"
-	"github.com/viant/toolbox/storage"
 	"github.com/viant/endly"
+	"github.com/viant/toolbox/storage"
 	"path"
 )
 
@@ -87,7 +87,6 @@ func (s *service) commit(context *endly.Context, request *CommitRequest) (interf
 	return nil, fmt.Errorf("Unsupported type: %v -> %v", target.Type, target.URL)
 }
 
-
 func (s *service) checkOut(context *endly.Context, request *CheckoutRequest) (interface{}, error) {
 	if err := request.Validate(); err != nil {
 		return nil, err
@@ -97,7 +96,6 @@ func (s *service) checkOut(context *endly.Context, request *CheckoutRequest) (in
 	if err != nil {
 		return nil, err
 	}
-
 
 	storageService, err := storage.NewServiceForURL(target.URL, target.CredentialFile)
 	if err != nil {
@@ -109,7 +107,6 @@ func (s *service) checkOut(context *endly.Context, request *CheckoutRequest) (in
 		return nil, err
 	}
 
-
 	origin, err := context.ExpandResource(request.Origin)
 	if err != nil {
 		return nil, err
@@ -120,7 +117,7 @@ func (s *service) checkOut(context *endly.Context, request *CheckoutRequest) (in
 		if err != nil {
 			return nil, err
 		}
-		if origin.URL == response.Origin && response.IsUptoDate && ! response.HasPendingChanges() {
+		if origin.URL == response.Origin && response.IsUptoDate && !response.HasPendingChanges() {
 			return response, nil
 		}
 
@@ -144,9 +141,8 @@ func (s *service) checkOut(context *endly.Context, request *CheckoutRequest) (in
 				Command: fmt.Sprintf("mkdir -p %v", parent),
 			},
 			{
-				Command: fmt.Sprintf("cd  %v", parent),
+				Command: fmt.Sprintf("cd %v", parent),
 			},
-
 		},
 	})
 	if err != nil {

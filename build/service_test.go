@@ -1,13 +1,13 @@
 package build_test
 
 import (
-	"github.com/viant/endly"
-	"github.com/stretchr/testify/assert"
-	"github.com/viant/toolbox"
-	"testing"
-	"path"
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly"
 	"github.com/viant/endly/build"
+	"github.com/viant/toolbox"
+	"path"
+	"testing"
 )
 
 func TestBuildService_Run(t *testing.T) {
@@ -16,14 +16,13 @@ func TestBuildService_Run(t *testing.T) {
 	parent, _ := path.Split(fileName)
 	url := fmt.Sprintf("file://%v/meta/", parent)
 
-
 	fmt.Printf("D: %v\n", url)
 
 	service, err := build.NewBuildService(&build.Config{
 		URL: []string{url},
 	})
 
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		t.FailNow()
 	}
 	assert.NotNil(t, service)

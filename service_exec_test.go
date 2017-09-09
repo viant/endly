@@ -8,6 +8,7 @@ import (
 )
 
 func TestNewExecService(t *testing.T) {
+
 	manager := endly.NewManager()
 	srv, err := manager.Service(endly.ExecServiceId)
 	assert.Nil(t, err)
@@ -15,12 +16,12 @@ func TestNewExecService(t *testing.T) {
 
 	context := manager.NewContext(toolbox.NewContext())
 	defer context.Close()
-
 	request := &endly.OpenSession{
 		Target: &endly.Resource{
 			URL: "ssh://127.0.0.1:22/etc",
 		},
 	}
+
 	response := srv.Run(context, request)
 	assert.NotNil(t, response)
 	assert.Nil(t, response.Error)

@@ -1,18 +1,17 @@
 package common
 
 import (
-	"io"
-	"github.com/viant/toolbox"
-	"io/ioutil"
 	"fmt"
+	"github.com/viant/toolbox"
+	"io"
+	"io/ioutil"
 	"strings"
 )
-
 
 func NewHandler(context toolbox.Context) func(reader io.Reader) (io.Reader, error) {
 	var evaluator toolbox.MacroEvaluator
 	return func(reader io.Reader) (io.Reader, error) {
-		if ! context.GetInto(macroEvaluatorKey, evaluator) {
+		if !context.GetInto(macroEvaluatorKey, evaluator) {
 			return nil, fmt.Errorf("Failed to lookup MacroEvaluator")
 		}
 		content, err := ioutil.ReadAll(reader)
