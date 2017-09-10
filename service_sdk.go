@@ -1,8 +1,7 @@
-package sdk
+package endly
 
 import (
 	"fmt"
-	"github.com/viant/endly"
 )
 
 const JsdServiceId = "jdkService"
@@ -15,16 +14,16 @@ type SetSdkResponse struct {
 type SetSdkRequest struct {
 	Sdk     string
 	Version string
-	Target  *endly.Resource
+	Target  *Resource
 }
 
 type sdkService struct {
-	*endly.AbstractService
+	*AbstractService
 	jdkService *jdkService
 }
 
-func (s *sdkService) Run(context *endly.Context, request interface{}) *endly.Response {
-	var response = &endly.Response{
+func (s *sdkService) Run(context *Context, request interface{}) *Response {
+	var response = &Response{
 		Status: "ok",
 	}
 	switch castedRequest := request.(type) {
@@ -43,7 +42,7 @@ func (t *sdkService) NewRequest(name string) (interface{}, error) {
 	return &SetSdkRequest{}, nil
 }
 
-func (s *sdkService) setSdk(context *endly.Context, request *SetSdkRequest) (*SetSdkResponse, error) {
+func (s *sdkService) setSdk(context *Context, request *SetSdkRequest) (*SetSdkResponse, error) {
 	switch request.Sdk {
 	case "jdk":
 		return s.jdkService.setSdk(context, request)
@@ -51,15 +50,12 @@ func (s *sdkService) setSdk(context *endly.Context, request *SetSdkRequest) (*Se
 	return nil, fmt.Errorf("Unsupported jdk: %v\n", request.Sdk)
 }
 
-func NewJdkService() endly.Service {
+func NewJdkService() Service {
 	var result = &sdkService{
 		jdkService:      &jdkService{},
-		AbstractService: endly.NewAbstractService(JsdServiceId),
+		AbstractService: NewAbstractService(JsdServiceId),
 	}
 	result.AbstractService.Service = result
 	return result
 }
 
-func init() {
-	endly.NewManager().Register(NewJdkService())
-}

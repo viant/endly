@@ -73,7 +73,7 @@ func (s *manager) NewContext(ctx toolbox.Context) *Context {
 var _manager Manager
 var _managerMux = &sync.Mutex{}
 
-func NewManager() Manager {
+func GetManager() Manager {
 	if _manager != nil {
 		return _manager
 	}
@@ -96,6 +96,8 @@ func NewManager() Manager {
 	_manager.Register(NewHttpRunnerService())
 	_manager.Register(NewProcessService())
 	_manager.Register(NewSystemService())
-
+	_manager.Register(GetTaskService())
+	_manager.Register(NewVersionControlService())
+	_manager.Register(NewJdkService())
 	return _manager
 }

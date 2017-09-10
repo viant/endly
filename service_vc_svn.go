@@ -1,29 +1,28 @@
-package vc
+package endly
 
 import (
 	"fmt"
-	"github.com/viant/endly"
 	"path"
 	"strings"
 )
 
 type svnService struct{}
 
-func (s *svnService) checkInfo(context *endly.Context, request *StatusRequest) (*InfoResponse, error) {
+func (s *svnService) checkInfo(context *Context, request *StatusRequest) (*InfoResponse, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
 	var result = &InfoResponse{}
 
-	response, err := context.Execute(request.Target, &endly.ManagedCommand{
-		Executions: []*endly.Execution{
+	response, err := context.Execute(request.Target, &ManagedCommand{
+		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("cd %v", target.ParsedURL.Path),
 			},
 			{
 				Command: fmt.Sprintf("svn info"),
-				Extraction: []*endly.DataExtraction{{
+				Extraction: []*DataExtraction{{
 					RegExpr: "URL: ([^\\s]+)",
 					Name:    "origin",
 				},
@@ -47,7 +46,7 @@ func (s *svnService) checkInfo(context *endly.Context, request *StatusRequest) (
 		result.Origin = origin
 		_, result.Branch = path.Split(origin)
 	}
-	if strings.Contains(response.Stdout[1], "is not a working copy") {
+	if strings.Contains(response.Stdout(1), "is not a working copy") {
 		return result, nil
 	}
 	result.IsVersionControlManaged = true
@@ -56,12 +55,12 @@ func (s *svnService) checkInfo(context *endly.Context, request *StatusRequest) (
 	return result, nil
 }
 
-func readSvnStatus(commandResult *endly.CommandInfo, response *InfoResponse) {
+func readSvnStatus(commandResult *CommandInfo, response *InfoResponse) {
 	response.New = make([]string, 0)
 	response.Modified = make([]string, 0)
 	response.Deleted = make([]string, 0)
 	response.Untracked = make([]string, 0)
-	for _, line := range strings.Split(commandResult.Stdout[2], "\r\n") {
+	for _, line := range strings.Split(commandResult.Stdout(2), "\r\n") {
 		if len(line) == 0 {
 			continue
 		}
@@ -83,7 +82,7 @@ func readSvnStatus(commandResult *endly.CommandInfo, response *InfoResponse) {
 	}
 }
 
-func (s *svnService) checkout(context *endly.Context, request *CheckoutRequest) (*InfoResponse, error) {
+func (s *svnService) checkout(context *Context, request *CheckoutRequest) (*InfoResponse, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -94,12 +93,12 @@ func (s *svnService) checkout(context *endly.Context, request *CheckoutRequest) 
 		return nil, err
 	}
 
-	_, err = context.Execute(request.Target, &endly.ManagedCommand{
-		Options: &endly.ExecutionOptions{
+	_, err = context.Execute(request.Target, &ManagedCommand{
+		Options: &ExecutionOptions{
 			TimeoutMs:   1000 * 30,
 			Terminators: []string{"Username", "Password for", "(yes/no)?", "Checked out revision"},
 		},
-		Executions: []*endly.Execution{
+		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("svn co --username=%v %v  %v", username, request.Origin.URL, target.ParsedURL.Path),
 				Error:   []string{"No such file or directory", "event not found"},
@@ -124,18 +123,21 @@ func (s *svnService) checkout(context *endly.Context, request *CheckoutRequest) 
 	})
 }
 
-func (s *svnService) commit(context *endly.Context, request *CommitRequest) (*InfoResponse, error) {
+func (s *svnService) commit(context *Context, request *CommitRequest) (*InfoResponse, error) {
 
-	_, err := context.Execute(request.Target, &endly.ManagedCommand{
-		Executions: []*endly.Execution{
+	response, err := context.Execute(request.Target, &ManagedCommand{
+		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("svn ci -m \"%v\" ", strings.Replace(request.Message, "\"", "'", len(request.Message))),
-				Error:   []string{"No such file or directory", "Error"},
 			},
 		},
 	})
 	if err != nil {
 		return nil, err
+	}
+	fmt.Printf("%v", response.Stdout())
+	if CheckNoSuchFileOrDirectory(response.Stdout()) {
+		return nil, fmt.Errorf("Failed to commit %v", response.Stdout())
 	}
 	return s.checkInfo(context, &StatusRequest{
 		Target: request.Target,

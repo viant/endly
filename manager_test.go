@@ -9,7 +9,7 @@ import (
 
 func TestNewManager(t *testing.T) {
 
-	manager := endly.NewManager()
+	manager := endly.GetManager()
 	context := manager.NewContext(toolbox.NewContext())
 	manager.Register(newTestService())
 	manager.RegisterCredentialFile("abc", "/Users/awitas/secret/abc.json")

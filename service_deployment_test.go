@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewDeploymentService(t *testing.T) {
-	manager := endly.NewManager()
+	manager := endly.GetManager()
 	srv, err := manager.Service(endly.DeploymentServiceId)
 	assert.Nil(t, err)
 	assert.NotNil(t, srv)

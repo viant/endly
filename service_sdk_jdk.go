@@ -1,22 +1,21 @@
-package sdk
+package endly
 
 import (
 	"fmt"
-	"github.com/viant/endly"
 )
 
 type jdkService struct {
 }
 
-func (s *jdkService) setSdk(context *endly.Context, request *SetSdkRequest) (*SetSdkResponse, error) {
+func (s *jdkService) setSdk(context *Context, request *SetSdkRequest) (*SetSdkResponse, error) {
 	var response = &SetSdkResponse{}
 
-	commandResponse, err := context.Execute(request.Target, &endly.ManagedCommand{
-		Executions: []*endly.Execution{
+	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
+		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("/usr/libexec/java_home -v%v", request.Version),
 				Error:   []string{"command not found"},
-				Extraction: []*endly.DataExtraction{
+				Extraction: []*DataExtraction{
 					{
 						RegExpr:  "(.+jdk.+)",
 						StateKey: "JAVA_HOME",
@@ -29,7 +28,7 @@ func (s *jdkService) setSdk(context *endly.Context, request *SetSdkRequest) (*Se
 			},
 			{
 				Command: "${JAVA_HOME}/bin/java -version",
-				Extraction: []*endly.DataExtraction{
+				Extraction: []*DataExtraction{
 					{
 						RegExpr: fmt.Sprintf("\"(%v[^\"]+)", request.Version),
 						Name:    "build",
@@ -50,8 +49,8 @@ func (s *jdkService) setSdk(context *endly.Context, request *SetSdkRequest) (*Se
 		response.Build = build
 
 	}
-	_, err = context.Execute(request.Target, &endly.ManagedCommand{
-		Executions: []*endly.Execution{
+	_, err = context.Execute(request.Target, &ManagedCommand{
+		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("export JAVA_HOME='%v'", response.Home),
 			},

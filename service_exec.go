@@ -161,7 +161,7 @@ func (i *CommandInfo) Stdout(indexes ...int) string {
 		for j, stream := range i.Commands {
 			result[j] = stream.Stdout
 		}
-		return strings.Join(result, "\n")
+		return strings.Join(result, "\r\n")
 	}
 	var result = make([]string, len(indexes))
 	for _, index := range indexes {
@@ -169,7 +169,7 @@ func (i *CommandInfo) Stdout(indexes ...int) string {
 			result = append(result, i.Commands[index].Stdout)
 		}
 	}
-	return strings.Join(result, "\n")
+	return strings.Join(result, "\r\n")
 }
 
 func NewCommandInfo(session string) *CommandInfo {
@@ -293,12 +293,12 @@ func (s *execService) changeDirectory(context *Context, session *ClientSession, 
 	return s.rumCommandTemplate(context, session, commandInfo, "cd %v", directory)
 }
 
-func (s *execService) rumCommandTemplate(context *Context, session *ClientSession, info *CommandInfo, commandTemplate string, arguments ...string) error {
+func (s *execService) rumCommandTemplate(context *Context, session *ClientSession, info *CommandInfo, commandTemplate string, arguments ...interface{}) error {
 	if info == nil {
 		info = NewCommandInfo(session.name)
 		context.Debug().Log(info)
 	}
-	command := fmt.Sprintf(commandTemplate, arguments)
+	command := fmt.Sprintf(commandTemplate, arguments...)
 	output, err := session.Run(command, 0)
 	info.Add(NewCommandStream(command, output, err))
 	if err != nil {

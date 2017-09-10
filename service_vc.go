@@ -1,23 +1,22 @@
-package vc
+package endly
 
 import (
 	"fmt"
-	"github.com/viant/endly"
 	"github.com/viant/toolbox/storage"
 	"path"
 )
 
 var VersionControlServiceId = "VcServiceId"
 
-type service struct {
-	*endly.AbstractService
+type versionControlService struct {
+	*AbstractService
 	*gitService
 	*svnService
 }
 
 type CheckoutRequest struct {
-	Origin *endly.Resource
-	Target *endly.Resource
+	Origin *Resource
+	Target *Resource
 }
 
 func (r *CheckoutRequest) Validate() error {
@@ -25,12 +24,12 @@ func (r *CheckoutRequest) Validate() error {
 }
 
 type CommitRequest struct {
-	Target  *endly.Resource
+	Target  *Resource
 	Message string
 }
 
 type StatusRequest struct {
-	Target *endly.Resource
+	Target *Resource
 }
 
 type InfoResponse struct {
@@ -49,7 +48,7 @@ func (r *InfoResponse) HasPendingChanges() bool {
 	return len(r.New) > 0 || len(r.Untracked) > 0 || len(r.Deleted) > 0 || len(r.Modified) > 0
 }
 
-func (s *service) checkInfo(context *endly.Context, request *StatusRequest) (*InfoResponse, error) {
+func (s *versionControlService) checkInfo(context *Context, request *StatusRequest) (*InfoResponse, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -63,13 +62,13 @@ func (s *service) checkInfo(context *endly.Context, request *StatusRequest) (*In
 	return nil, fmt.Errorf("Unsupported type: %v -> ", target.Type, target.URL)
 }
 
-func (s *service) commit(context *endly.Context, request *CommitRequest) (interface{}, error) {
+func (s *versionControlService) commit(context *Context, request *CommitRequest) (interface{}, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-	_, err = context.Execute(target, &endly.ManagedCommand{
-		Executions: []*endly.Execution{
+	_, err = context.Execute(target, &ManagedCommand{
+		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("cd  %v", target.ParsedURL.Path),
 			},
@@ -87,7 +86,7 @@ func (s *service) commit(context *endly.Context, request *CommitRequest) (interf
 	return nil, fmt.Errorf("Unsupported type: %v -> %v", target.Type, target.URL)
 }
 
-func (s *service) checkOut(context *endly.Context, request *CheckoutRequest) (interface{}, error) {
+func (s *versionControlService) checkOut(context *Context, request *CheckoutRequest) (interface{}, error) {
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
@@ -121,8 +120,8 @@ func (s *service) checkOut(context *endly.Context, request *CheckoutRequest) (in
 			return response, nil
 		}
 
-		_, err = context.Execute(target, &endly.ManagedCommand{
-			Executions: []*endly.Execution{
+		_, err = context.Execute(target, &ManagedCommand{
+			Executions: []*Execution{
 				{
 					Command: fmt.Sprintf("rm -rf %v", target.ParsedURL.Path),
 				},
@@ -135,8 +134,8 @@ func (s *service) checkOut(context *endly.Context, request *CheckoutRequest) (in
 	}
 
 	parent, _ := path.Split(target.ParsedURL.Path)
-	_, err = context.Execute(target, &endly.ManagedCommand{
-		Executions: []*endly.Execution{
+	_, err = context.Execute(target, &ManagedCommand{
+		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("mkdir -p %v", parent),
 			},
@@ -158,8 +157,8 @@ func (s *service) checkOut(context *endly.Context, request *CheckoutRequest) (in
 	return nil, nil
 }
 
-func (s *service) Run(context *endly.Context, request interface{}) *endly.Response {
-	var response = &endly.Response{Status: "ok"}
+func (s *versionControlService) Run(context *Context, request interface{}) *Response {
+	var response = &Response{Status: "ok"}
 
 	switch actualRequest := request.(type) {
 	case *StatusRequest:
@@ -178,17 +177,17 @@ func (s *service) Run(context *endly.Context, request interface{}) *endly.Respon
 	return response
 }
 
-func (s *service) NewRequest(name string) (interface{}, error) {
+func (s *versionControlService) NewRequest(name string) (interface{}, error) {
 	switch name {
 	case "command":
-		return &endly.ScriptCommand{}, nil
+		return &ScriptCommand{}, nil
 	}
 	return nil, fmt.Errorf("Unsupported name: %v", name)
 }
 
-func NewVersionControlService() endly.Service {
-	var result = &service{
-		AbstractService: endly.NewAbstractService(VersionControlServiceId),
+func NewVersionControlService() Service {
+	var result = &versionControlService{
+		AbstractService: NewAbstractService(VersionControlServiceId),
 		gitService:      &gitService{},
 		svnService:      &svnService{},
 	}
@@ -196,6 +195,3 @@ func NewVersionControlService() endly.Service {
 	return result
 }
 
-func init() {
-	endly.NewManager().Register(NewVersionControlService())
-}

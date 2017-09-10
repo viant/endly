@@ -11,7 +11,7 @@ func TestProcessService_Run(t *testing.T) {
 
 	if toolbox.FileExists("/usr/local/Cellar/mongodb/3.4.4/bin/mongod") {
 
-		manager := endly.NewManager()
+		manager := endly.GetManager()
 		srv, err := manager.Service(endly.ProcessServiceId)
 		assert.Nil(t, err)
 		assert.NotNil(t, srv)

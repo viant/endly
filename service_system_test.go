@@ -15,7 +15,7 @@ func TestSystemService_Run(t *testing.T) {
 	var credentialFile = path.Join(os.Getenv("HOME"), "secret/scp.json")
 
 	if toolbox.FileExists("/Library/LaunchDaemons/com.oracle.oss.mysql.mysqld.plist") && toolbox.FileExists(credentialFile) {
-		manager := endly.NewManager()
+		manager := endly.GetManager()
 		context := manager.NewContext(toolbox.NewContext())
 		defer context.Close()
 		systemService, err := context.Service(endly.SystemServiceId)

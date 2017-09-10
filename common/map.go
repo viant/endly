@@ -24,6 +24,12 @@ func (s *Map) Get(key string) interface{} {
 
 }
 
+func (s *Map) Apply(source map[string]interface{}) {
+	for k, v:= range source {
+		(*s)[k] = v
+	}
+}
+
 func (s *Map) GetString(key string) string {
 	if result, found := (*s)[key]; found {
 		return toolbox.AsString(result)
