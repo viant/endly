@@ -99,5 +99,6 @@ func GetManager() Manager {
 	_manager.Register(GetTaskService())
 	_manager.Register(NewVersionControlService())
 	_manager.Register(NewJdkService())
+	_manager.Register(GetBuildService())
 	return _manager
 }

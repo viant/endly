@@ -1,13 +1,13 @@
-package build
+package endly
 
 import (
 	"fmt"
-	"github.com/viant/endly"
+	"github.com/pkg/errors"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"net/url"
-	"github.com/pkg/errors"
+	"sync"
 )
 
 //Add global request with map context parameters
@@ -15,15 +15,15 @@ import (
 const BuildServiceId = "build"
 
 type OperatingSystemDeployment struct {
-	OsTarget *endly.OperatingSystemTarget
-	Config   *endly.DeploymentConfig
+	OsTarget *OperatingSystemTarget
+	Config   *DeploymentConfig
 }
 
 type Goal struct {
 	Name                string
-	Command             *endly.ManagedCommand
-	Transfers           *endly.TransfersRequest
-	VerificationCommand *endly.ManagedCommand
+	Command             *ManagedCommand
+	Transfers           *TransfersRequest
+	VerificationCommand *ManagedCommand
 }
 
 type Meta struct {
@@ -44,7 +44,7 @@ func (m *Meta) Validate() error {
 	return nil
 }
 
-func (m *Meta) Match(operatingSystem *endly.OperatingSystem, version string) *OperatingSystemDeployment {
+func (m *Meta) Match(operatingSystem *OperatingSystem, version string) *OperatingSystemDeployment {
 	for _, candidate := range m.BuildDeployments {
 		osTarget := candidate.OsTarget
 		if version != "" {
@@ -84,16 +84,16 @@ type BuildSpec struct {
 }
 
 type BuildRequest struct {
-	BuildSpec *BuildSpec      //build specification
-	Target    *endly.Resource //path to application to be build, Note that command may use $build.target variable. that expands to Target URL path
+	BuildSpec *BuildSpec //build specification
+	Target    *Resource  //path to application to be build, Note that command may use $build.target variable. that expands to Target URL path
 }
 
-type buildService struct {
-	*endly.AbstractService
+type BuildService struct {
+	*AbstractService
 	registry BuildMetaRegistry
 }
 
-func (s *buildService) build(context *endly.Context, request *BuildRequest) (interface{}, error) {
+func (s *BuildService) build(context *Context, request *BuildRequest) (interface{}, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -122,11 +122,11 @@ func (s *buildService) build(context *endly.Context, request *BuildRequest) (int
 	if err != nil {
 		return nil, err
 	}
-	execService, err := context.Service(endly.ExecServiceId)
+	execService, err := context.Service(ExecServiceId)
 	if err != nil {
 		return nil, err
 	}
-	response := execService.Run(context, &endly.OpenSession{
+	response := execService.Run(context, &OpenSession{
 		Target: target,
 	})
 
@@ -140,13 +140,11 @@ func (s *buildService) build(context *endly.Context, request *BuildRequest) (int
 		return nil, fmt.Errorf("Failed to find a build for provided operating system: %v %v", operatingSystem.Name, operatingSystem.Version)
 	}
 
-	deploymentService, err := context.Service(endly.DeploymentServiceId)
+	deploymentService, err := context.Service(DeploymentServiceId)
 
 	if err != nil {
 		return nil, err
 	}
-
-
 
 	response = deploymentService.Run(context, buildDeployment.Config)
 	if response.Error != "" {
@@ -173,7 +171,7 @@ func (s *buildService) build(context *endly.Context, request *BuildRequest) (int
 	}
 	return nil, nil
 }
-func setBuildState(buildSepc *BuildSpec, parsedUrl *url.URL, request *BuildRequest, context *endly.Context) error {
+func setBuildState(buildSepc *BuildSpec, parsedUrl *url.URL, request *BuildRequest, context *Context) error {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return err
@@ -188,14 +186,14 @@ func setBuildState(buildSepc *BuildSpec, parsedUrl *url.URL, request *BuildReque
 	return nil
 }
 
-func (s *buildService) Run(context *endly.Context, request interface{}) *endly.ServiceResponse {
-	var response = &endly.ServiceResponse{
+func (s *BuildService) Run(context *Context, request interface{}) *ServiceResponse {
+	var response = &ServiceResponse{
 		Status: "ok",
 	}
 	var err error
 	switch actualRequest := request.(type) {
 	case *BuildRequest:
-		response.Response,  err = s.build(context, actualRequest)
+		response.Response, err = s.build(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to build: %v %v", actualRequest.Target.URL, err)
 		}
@@ -208,53 +206,60 @@ func (s *buildService) Run(context *endly.Context, request interface{}) *endly.S
 	return response
 }
 
-func (t *buildService) NewRequest(name string) (interface{}, error) {
+func (s *BuildService) NewRequest(name string) (interface{}, error) {
 	return &BuildRequest{}, nil
 }
 
-func loadRegistry(config *Config) (BuildMetaRegistry, error) {
-	var result BuildMetaRegistry = make(map[string]*Meta)
+func (s *BuildService) Load(config *BuildConfig) error {
 	if len(config.URL) > 0 {
-		for _, url := range config.URL {
-			service, err := storage.NewServiceForURL(url, "")
+		for _, URL := range config.URL {
+			service, err := storage.NewServiceForURL(URL, "")
 			if err != nil {
-				return nil, err
+				return err
 			}
-			objects, err := service.List(url)
+			objects, err := service.List(URL)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			for _, object := range objects {
 				reader, err := service.Download(object)
 				if err != nil {
-					return nil, err
+					return err
 				}
 				var buildMeta = &Meta{}
 
 				err = toolbox.NewJSONDecoderFactory().Create(reader).Decode(buildMeta)
 				if err != nil {
-					return nil, err
+					return err
 				}
 				err = buildMeta.Validate()
 				if err != nil {
-					return nil, err
+					return err
 				}
-				result.Register(buildMeta)
+				s.registry.Register(buildMeta)
 			}
 		}
 	}
-	return result, nil
+	return nil
 }
 
-func NewBuildService(config *Config) (endly.Service, error) {
-	registry, err := loadRegistry(config)
-	if err != nil {
-		return nil, err
+var _buildService *BuildService
+var _buildServiceMux = &sync.Mutex{}
+
+func GetBuildService() *BuildService {
+	if _buildService != nil {
+		return _buildService
 	}
-	var result = &buildService{
-		registry:        registry,
-		AbstractService: endly.NewAbstractService(BuildServiceId),
+
+	_buildServiceMux.Lock()
+	defer _buildServiceMux.Unlock()
+	if _buildService != nil {
+		return _buildService
 	}
-	result.AbstractService.Service = result
-	return result, nil
+	_buildService = &BuildService{
+		registry:        make(map[string]*Meta),
+		AbstractService: NewAbstractService(BuildServiceId),
+	}
+	_buildService.AbstractService.Service = _buildService
+	return _buildService
 }

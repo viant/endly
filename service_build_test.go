@@ -1,10 +1,9 @@
-package build_test
+package endly_test
 
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/endly/build"
 	"github.com/viant/toolbox"
 	"path"
 	"testing"
@@ -14,13 +13,12 @@ func TestBuildService_Run(t *testing.T) {
 
 	fileName, _, _ := toolbox.CallerInfo(2)
 	parent, _ := path.Split(fileName)
-	url := fmt.Sprintf("file://%v/meta/", parent)
+	url := fmt.Sprintf("file://%v/build/meta/", parent)
 
-
-	service, err := build.NewBuildService(&build.Config{
+	service := endly.GetBuildService()
+	err := service.Load(&endly.BuildConfig{
 		URL: []string{url},
 	})
-
 	if !assert.Nil(t, err) {
 		t.FailNow()
 	}
@@ -31,17 +29,17 @@ func TestBuildService_Run(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 	assert.NotNil(t, context)
 
-	buildService, err := manager.Service(build.BuildServiceId)
+	buildService, err := manager.Service(endly.BuildServiceId)
 	assert.Nil(t, err)
 
-	response := buildService.Run(context, &build.BuildRequest{
-		BuildSpec: &build.BuildSpec{
+	response := buildService.Run(context, &endly.BuildRequest{
+		BuildSpec: &endly.BuildSpec{
 			Name: "maven",
 			Goal: "package",
 			Args: "-Dmvn.test.skip",
 		},
 		Target: &endly.Resource{
-			URL: fmt.Sprintf("scp://127.0.0.1/%v/test/project1", parent),
+			URL: fmt.Sprintf("scp://127.0.0.1/%v/test/build/project1", parent),
 		},
 	})
 	assert.Equal(t, "ok", response.Status)
