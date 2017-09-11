@@ -48,18 +48,28 @@ type systemService struct {
 	*AbstractService
 }
 
-func (s *systemService) Run(context *Context, request interface{}) *Response {
-	var response = &Response{Status: "ok"}
+func (s *systemService) Run(context *Context, request interface{}) *ServiceResponse {
+	var response = &ServiceResponse{Status: "ok"}
 
+	var err error
 	switch actualRequest := request.(type) {
 	case *ServiceStartRequest:
-		response.Response, response.Error = s.startService(context, actualRequest)
+		response.Response, err = s.startService(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to start service: %v, %v", actualRequest.Service, err)
+		}
 	case *ServiceStopRequest:
-		response.Response, response.Error = s.stopService(context, actualRequest)
+		response.Response, err = s.stopService(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to stop service: %v, %v", actualRequest.Service, err)
+		}
 	case *ServiceStatusRequest:
-		response.Response, response.Error = s.checkService(context, actualRequest)
+		response.Response, err = s.checkService(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to check status service: %v, %v", actualRequest.Service, err)
+		}
 	}
-	if response.Error != nil {
+	if response.Error != "" {
 		response.Status = "err"
 	}
 	return response

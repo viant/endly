@@ -59,6 +59,6 @@ func TestNewDeploymentService(t *testing.T) {
 		},
 	})
 
-	assert.Nil(t, response.Error)
+	assert.Equal(t, "", response.Error)
 
 }

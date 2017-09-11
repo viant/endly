@@ -220,18 +220,21 @@ func copyHeaders(source http.Header, target http.Header) {
 	}
 }
 
-func (s *httpRunnerService) Run(context *Context, request interface{}) *Response {
-	var response = &Response{
+func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceResponse {
+	var response = &ServiceResponse{
 		Status: "ok",
 	}
-	switch castedRequest := request.(type) {
+	var err error
+	switch actualRequest := request.(type) {
 	case *SendRequest:
-		response.Response, response.Error = s.send(context, castedRequest)
+		response.Response, err = s.send(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to send request: %v, %v", actualRequest, err)
+		}
 	default:
-		response.Error = fmt.Errorf("Unsupported request type: %T", request)
+		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 	}
-
-	if response.Error != nil {
+	if response.Error != "" {
 		response.Status = "error"
 	}
 	return response

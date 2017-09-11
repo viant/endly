@@ -4,17 +4,17 @@ import (
 	"github.com/viant/endly/common"
 )
 
-type Response struct {
+type ServiceResponse struct {
 	Status   string
-	Error    error
+	Error    string
 	Response interface{}
 }
 
 type Service interface {
 	Id() string
 	State() common.Map
-	Run(context *Context, request interface{}) *Response
-	NewRequest(name string) (interface{}, error)
+	Run(context *Context, request interface{}) *ServiceResponse
+	NewRequest(method string) (interface{}, error)
 }
 
 type AbstractService struct {

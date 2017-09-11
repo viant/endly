@@ -27,9 +27,9 @@ func TestProcessService_Run(t *testing.T) {
 				SystemPaths: []string{"/usr/local/Cellar/mongodb/3.4.4/bin"},
 			},
 			Command:   "mongod",
-			Arguments: []string{"--dbpath", "/tmp/mongodb"},
+			Arguments: []string{"--dbpath", "/tmp"},
 		})
-		assert.Nil(t, response.Error)
+		assert.Equal(t, "", response.Error)
 		info, ok := response.Response.(*endly.ProcessInfo)
 		assert.True(t, ok)
 		assert.True(t, info.Pid > 0)
@@ -40,6 +40,6 @@ func TestProcessService_Run(t *testing.T) {
 			},
 			Pid: info.Pid,
 		})
-		assert.Nil(t, response.Error)
+		assert.Equal(t, "", response.Error)
 	}
 }

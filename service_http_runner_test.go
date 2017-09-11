@@ -91,7 +91,7 @@ func TestHttpRunnerService_Run(t *testing.T) {
 			},
 		},
 	})
-	assert.Nil(t, response.Error)
+	assert.Equal(t, "", response.Error)
 	sendResponse, ok := response.Response.(*endly.SendResponse)
 	assert.True(t, ok)
 	path1, _ := sendResponse.Extracted["path1"]

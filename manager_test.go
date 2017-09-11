@@ -62,8 +62,8 @@ type testService struct {
 	*endly.AbstractService
 }
 
-func (t *testService) Run(context *endly.Context, request interface{}) *endly.Response {
-	return &endly.Response{}
+func (t *testService) Run(context *endly.Context, request interface{}) *endly.ServiceResponse {
+	return &endly.ServiceResponse{}
 }
 
 func newTestService() endly.Service {

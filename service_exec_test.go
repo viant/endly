@@ -24,7 +24,7 @@ func TestNewExecService(t *testing.T) {
 
 	response := srv.Run(context, request)
 	assert.NotNil(t, response)
-	assert.Nil(t, response.Error)
+	assert.Equal(t, "", response.Error)
 	assert.Equal(t, "ok", response.Status)
 
 	os := context.OperatingSystem("127.0.0.1:22")

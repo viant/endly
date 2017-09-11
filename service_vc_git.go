@@ -8,13 +8,12 @@ import (
 type gitService struct{}
 
 const (
-	newFile      = "new file:"
-	deletedFile  = "deleted:"
-	modifiedFile = "modified:"
+	newFile          = "new file:"
+	deletedFile      = "deleted:"
+	modifiedFile     = "modified:"
 	expectChangeType = iota
 	expectedUnTrackedFile
 )
-
 
 func addIfMatched(line, fragment string, result *[]string) {
 	matchedPosition := strings.Index(line, fragment)

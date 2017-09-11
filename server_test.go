@@ -1,11 +1,11 @@
 package endly_test
 
 import (
-	"testing"
-	"github.com/viant/endly"
-	"time"
-	"github.com/viant/toolbox"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly"
+	"github.com/viant/toolbox"
+	"testing"
+	"time"
 )
 
 func TestServer_Start(t *testing.T) {
@@ -14,14 +14,14 @@ func TestServer_Start(t *testing.T) {
 	go server.Start()
 
 	time.Sleep(500 * time.Millisecond)
-	target := &endly.Resource{URL:"ssh://127.0.0.1/etc"}
+	target := &endly.Resource{URL: "ssh://127.0.0.1/etc"}
 	request := &endly.Request{
-		ServiceRequest:endly.NewSimpleCommandRequest(target,"ls -al"),
+		ServiceRequest: endly.NewSimpleCommandRequest(target, "ls -al"),
 	}
 	response := &endly.Response{
-		Response:&endly.CommandInfo{},
+		Response: &endly.CommandInfo{},
 	}
-	toolbox.RouteToService("post", "http://127.0.0.1:8432/v1/endly/api/exec/command/", request, response)
+	toolbox.RouteToService("post", "http://127.0.0.1:8432/v1/endly/service/exec/command/", request, response)
 	time.Sleep(1000 * time.Millisecond)
 	assert.Equal(t, "", response.Error)
 	assert.NotNil(t, response.Response)

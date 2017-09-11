@@ -1,7 +1,6 @@
 package endly_test
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
@@ -14,7 +13,7 @@ func TestSystemService_Run(t *testing.T) {
 
 	var credentialFile = path.Join(os.Getenv("HOME"), "secret/scp.json")
 
-	if toolbox.FileExists("/Library/LaunchDaemons/com.oracle.oss.mysql.mysqld.plist") && toolbox.FileExists(credentialFile) {
+	if toolbox.FileExists("/Library/LaunchDaemons/com.docker.vmnetd.plist") && toolbox.FileExists(credentialFile) {
 		manager := endly.GetManager()
 		context := manager.NewContext(toolbox.NewContext())
 		defer context.Close()
@@ -27,29 +26,27 @@ func TestSystemService_Run(t *testing.T) {
 					URL:            "scp://127.0.0.1/",
 					CredentialFile: credentialFile,
 				},
-				Service: "docker.vmnetd",
+				Service: "docker",
 			})
 
-			assert.Nil(t, response.Error)
+			assert.Equal(t, "", response.Error)
 			info, ok := response.Response.(*endly.ServiceInfo)
 			assert.True(t, ok)
 			assert.True(t, info.IsActive())
-			fmt.Printf("%v\n", info)
 		}
 		{
-			response := systemService.Run(context, &endly.ServiceStopRequest{
+			response := systemService.Run(context, &endly.ServiceStatusRequest{
 				Target: &endly.Resource{
 					URL:            "scp://127.0.0.1/",
 					CredentialFile: credentialFile,
 				},
-				Service: "docker.vmnetd",
+				Service: "docker",
 			})
 
-			assert.Nil(t, response.Error)
+			assert.Equal(t, "", response.Error)
 			info, ok := response.Response.(*endly.ServiceInfo)
 			assert.True(t, ok)
 			assert.True(t, info.IsActive())
-			fmt.Printf("%v\n", info)
 		}
 
 		//{
@@ -61,8 +58,8 @@ func TestSystemService_Run(t *testing.T) {
 		//		Service: "mysql",
 		//	})
 		//
-		//	assert.Nil(t, response.Error)
-		//	info, ok := response.Response.(*endly.ServiceInfo)
+		//	assert.Equal(t, "", response.Error)
+		//	info, ok := response.ServiceResponse.(*endly.ServiceInfo)
 		//	assert.True(t, ok)
 		//	assert.True(t, info.IsActive())
 		//
@@ -76,8 +73,8 @@ func TestSystemService_Run(t *testing.T) {
 		//		Service: "mysql",
 		//	})
 		//
-		//	assert.Nil(t, response.Error)
-		//	info, ok := response.Response.(*endly.ServiceInfo)
+		//	assert.Equal(t, "", response.Error)
+		//	info, ok := response.ServiceResponse.(*endly.ServiceInfo)
 		//	assert.True(t, ok)
 		//	assert.True(t, info.IsActive())
 		//}

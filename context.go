@@ -2,6 +2,7 @@ package endly
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
@@ -16,7 +17,7 @@ var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
 var stateKey = (*common.Map)(nil)
-var debugKey = (*Debug)(nil)
+var sessionInfoKey = (*SessionInfo)(nil)
 
 type Resource struct {
 	Name           string
@@ -160,14 +161,14 @@ func (c *Context) State() common.Map {
 	return *result
 }
 
-func (c *Context) Debug() *Debug {
-	var result *Debug
-	if !c.Contains(debugKey) {
+func (c *Context) SessionInfo() *SessionInfo {
+	var result *SessionInfo
+	if !c.Contains(sessionInfoKey) {
 
-		result = &Debug{}
-		c.Put(stateKey, result)
+		result = &SessionInfo{}
+		c.Put(sessionInfoKey, result)
 	} else {
-		c.GetInto(debugKey, &result)
+		c.GetInto(sessionInfoKey, &result)
 	}
 	return result
 }
@@ -202,8 +203,8 @@ func (c *Context) Execute(target *Resource, command *ManagedCommand) (*CommandIn
 	}
 	commandRequest := NewCommandRequest(target, command)
 	response := execService.Run(c, commandRequest)
-	if response.Error != nil {
-		return nil, response.Error
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
 	}
 	if commandResult, ok := response.Response.(*CommandInfo); ok {
 		return commandResult, nil
@@ -220,15 +221,15 @@ func (c *Context) Transfer(transfers ...*TransferRequest) (interface{}, error) {
 		return nil, err
 	}
 	response := transferService.Run(c, &TransfersRequest{Transfers: transfers})
-	if response.Error != nil {
-		return nil, response.Error
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
 	}
 	return nil, nil
 }
 
 func (c *Context) Log(logEntry interface{}) error {
-	debug := c.Debug()
-	return debug.Log(logEntry)
+	sessionInfo := c.SessionInfo()
+	return sessionInfo.Log(logEntry)
 }
 
 func (c *Context) Expand(text string) string {
@@ -254,4 +255,3 @@ func (c *Context) Close() {
 		function()
 	}
 }
-

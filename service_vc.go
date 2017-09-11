@@ -157,21 +157,32 @@ func (s *versionControlService) checkOut(context *Context, request *CheckoutRequ
 	return nil, nil
 }
 
-func (s *versionControlService) Run(context *Context, request interface{}) *Response {
-	var response = &Response{Status: "ok"}
+func (s *versionControlService) Run(context *Context, request interface{}) *ServiceResponse {
+	var response = &ServiceResponse{Status: "ok"}
 
+	var err error
 	switch actualRequest := request.(type) {
 	case *StatusRequest:
-		response.Response, response.Error = s.checkInfo(context, actualRequest)
+		response.Response, err = s.checkInfo(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to check version: %vL%v, %v", actualRequest.Target.URL, actualRequest.Target.Type, err)
+		}
 
 	case *CheckoutRequest:
-		response.Response, response.Error = s.checkOut(context, actualRequest)
+		response.Response, err = s.checkOut(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to checkout version: %vL%v, %v", actualRequest.Target.URL, actualRequest.Target.Type, err)
+		}
 
 	case *CommitRequest:
-		response.Response, response.Error = s.commit(context, actualRequest)
+		response.Response, err = s.commit(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to commit version: %vL%v, %v", actualRequest.Target.URL, actualRequest.Target.Type, err)
+		}
+
 	}
 
-	if response.Error != nil {
+	if response.Error != "" {
 		response.Status = "err"
 	}
 	return response
@@ -194,4 +205,3 @@ func NewVersionControlService() Service {
 	result.AbstractService.Service = result
 	return result
 }
-

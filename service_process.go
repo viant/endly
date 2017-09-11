@@ -24,6 +24,8 @@ type ProcessInfo struct {
 	Pid       int
 	Command   string
 	Arguments []string
+	Stdin     string
+	Stdout    string
 }
 
 type ProcessStatusRequest struct {
@@ -40,20 +42,24 @@ type processService struct {
 	*AbstractService
 }
 
-func (s *processService) Run(context *Context, request interface{}) *Response {
-	var response = &Response{Status: "ok"}
-
+func (s *processService) Run(context *Context, request interface{}) *ServiceResponse {
+	var response = &ServiceResponse{Status: "ok"}
+	var err error
 	switch actualRequest := request.(type) {
 	case *ProcessStartRequest:
-		response.Response, response.Error = s.startProcess(context, actualRequest)
+		response.Response, err = s.startProcess(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to start process: %v, %v", actualRequest.Name, err)
+		}
 	}
-	if response.Error != nil {
+	if response.Error != "" {
 		response.Status = "err"
 	}
 	return response
 }
 
 func (s *processService) checkProcess(context *Context, request *ProcessStatusRequest) ([]*ProcessInfo, error) {
+
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
@@ -61,18 +67,21 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 			},
 		},
 	})
+
 	if err != nil {
 		return nil, err
 	}
 	var result = make([]*ProcessInfo, 0)
-	for _, line := range strings.Split(commandResponse.Stdout(0), "\r\n") {
+
+	for _, line := range strings.Split(commandResponse.Stdout(), "\r\n") {
 		if strings.Contains(line, "grep") {
 			continue
 		}
-		spaceIndex := strings.Index(line, " ")
-		if spaceIndex < 2 {
+		pid, ok := ExtractColumn(line, 0)
+		if !ok {
 			continue
 		}
+
 		argumentsIndex := strings.Index(line, request.Command)
 		var arguments []string
 		if argumentsIndex != -1 {
@@ -80,9 +89,10 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 			arguments = strings.Split(args, " ")
 		}
 		info := &ProcessInfo{
-			Pid:       toolbox.AsInt(string(line[:spaceIndex])),
+			Pid:       toolbox.AsInt(pid),
 			Command:   request.Command,
 			Arguments: arguments,
+			Stdout:    line,
 		}
 		result = append(result, info)
 	}
@@ -100,7 +110,6 @@ func (s *processService) stopProcess(context *Context, request *ProcessStopReque
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("kill %v\n", commandResult.Stdout)
 	return commandResult, err
 }
 
@@ -132,14 +141,16 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 			}
 		}
 	}
-	_, err = context.Execute(request.Target, &ManagedCommand{
+	changeDirCommand := fmt.Sprintf("cd %v ", request.Directory)
+	startCommand := fmt.Sprintf("nohup %v %v &", request.Command, strings.Join(request.Arguments, " "))
+	commandInfo, err := context.Execute(request.Target, &ManagedCommand{
 		Options: request.Options,
 		Executions: []*Execution{
 			{
-				Command: fmt.Sprintf("cd %v ", request.Directory),
+				Command: changeDirCommand,
 			},
 			{
-				Command: fmt.Sprintf("nohup %v %v &", request.Command, strings.Join(request.Arguments, " ")),
+				Command: startCommand,
 			},
 		},
 	})
@@ -170,6 +181,8 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 	if result == nil {
 		return nil, fmt.Errorf("Failed to get info about prorcess %v", request.Command)
 	}
+	result.Stdout = commandInfo.Stdout()
+	result.Stdin = fmt.Sprintf("%v && %v", changeDirCommand, startCommand)
 	return result, nil
 }
 

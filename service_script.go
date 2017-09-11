@@ -72,14 +72,17 @@ func (s *scriptService) runScriptCommand(context *Context, request *ScriptComman
 	return result.String(), nil
 }
 
-func (s *scriptService) Run(context *Context, request interface{}) *Response {
-	var response = &Response{Status: "ok"}
-
+func (s *scriptService) Run(context *Context, request interface{}) *ServiceResponse {
+	var response = &ServiceResponse{Status: "ok"}
+	var err error
 	switch actualRequest := request.(type) {
 	case *ScriptCommand:
-		response.Response, response.Error = s.runScriptCommand(context, actualRequest)
+		response.Response, err = s.runScriptCommand(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to run script: %v, %v", actualRequest.Code, err)
+		}
 	}
-	if response.Error != nil {
+	if response.Error != "" {
 		response.Status = "err"
 	}
 	return response

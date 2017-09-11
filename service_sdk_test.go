@@ -23,7 +23,7 @@ func TestSdkService_Run(t *testing.T) {
 		Sdk:     "jdk",
 		Version: "1.7",
 	})
-	if response.Error != nil {
+	if response.Error != "" {
 		info, ok := response.Response.(*endly.SetSdkResponse)
 		assert.True(t, ok)
 		assert.True(t, len(info.Build) > 0)

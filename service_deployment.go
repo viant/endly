@@ -1,6 +1,7 @@
 package endly
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 )
@@ -67,8 +68,8 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentConfig) 
 	response := execService.Run(context, &OpenSession{
 		Target: target,
 	})
-	if response.Error != nil {
-		return nil, response.Error
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
 	}
 	defer execService.Run(context, CloseSession{Name: target.Session()})
 	parsedURL, err := url.Parse(target.URL)
@@ -114,17 +115,21 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentConfig) 
 	return nil, err
 }
 
-func (s *deploymentService) Run(context *Context, request interface{}) *Response {
-	var response = &Response{
+func (s *deploymentService) Run(context *Context, request interface{}) *ServiceResponse {
+	var response = &ServiceResponse{
 		Status: "ok",
 	}
 	switch castedRequest := request.(type) {
 	case *DeploymentConfig:
-		response.Response, response.Error = s.deploy(context, castedRequest)
+		var err error
+		response.Response, err = s.deploy(context, castedRequest)
+		if err != nil {
+			response.Response = fmt.Sprintf("%v", err)
+		}
 	default:
-		response.Error = fmt.Errorf("Unsupported request type: %T", request)
+		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 	}
-	if response.Error != nil {
+	if response.Error != "" {
 		response.Status = "error"
 	}
 	return response

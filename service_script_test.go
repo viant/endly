@@ -24,7 +24,7 @@ func TestScriptService_Run(t *testing.T) {
 		Code: string(content),
 	})
 	assert.Equal(t, "ok", response.Status)
-	assert.Nil(t, response.Error)
+	assert.Equal(t, "", response.Error)
 	var state = context.State()
 	assert.True(t, state.Has("127.0.0.1"))
 

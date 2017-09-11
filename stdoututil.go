@@ -53,5 +53,3 @@ func ExtractColumn(stdout string, columnIndex int) (string, bool) {
 	}
 	return result, true
 }
-
-

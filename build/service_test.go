@@ -16,7 +16,6 @@ func TestBuildService_Run(t *testing.T) {
 	parent, _ := path.Split(fileName)
 	url := fmt.Sprintf("file://%v/meta/", parent)
 
-	fmt.Printf("D: %v\n", url)
 
 	service, err := build.NewBuildService(&build.Config{
 		URL: []string{url},
@@ -46,6 +45,6 @@ func TestBuildService_Run(t *testing.T) {
 		},
 	})
 	assert.Equal(t, "ok", response.Status)
-	assert.Nil(t, response.Error)
+	assert.Equal(t, "", response.Error)
 
 }

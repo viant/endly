@@ -1,11 +1,11 @@
 package endly
 
 import (
-	"github.com/viant/toolbox"
+	"encoding/json"
 	"fmt"
+	"github.com/viant/toolbox"
 	"log"
 	"net/http"
-	"encoding/json"
 )
 
 type Request struct {
@@ -72,11 +72,11 @@ func (s *Server) routeHandler(serviceRouting *toolbox.ServiceRouting, httpReques
 	}()
 
 	serviceName, ok := uriParameters["service"]
-	if ! ok {
+	if !ok {
 		return fmt.Errorf("Service name was missing %v", uriParameters)
 	}
 	method, ok := uriParameters["method"]
-	if ! ok {
+	if !ok {
 		return fmt.Errorf("method was missing %v", uriParameters)
 	}
 
@@ -100,7 +100,7 @@ func (s *Server) Start() error {
 	router := toolbox.NewServiceRouter(
 		toolbox.ServiceRouting{
 			HTTPMethod:     "POST",
-			URI:            "/v1/endly/api/{service}/{method}/",
+			URI:            "/v1/endly/service/{service}/{method}/",
 			Handler:        s.requestService,
 			HandlerInvoker: s.routeHandler,
 			Parameters:     []string{"service", "method", "@httpRequest", "@httpResponseWriter"},

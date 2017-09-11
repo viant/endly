@@ -22,17 +22,21 @@ type sdkService struct {
 	jdkService *jdkService
 }
 
-func (s *sdkService) Run(context *Context, request interface{}) *Response {
-	var response = &Response{
+func (s *sdkService) Run(context *Context, request interface{}) *ServiceResponse {
+	var response = &ServiceResponse{
 		Status: "ok",
 	}
-	switch castedRequest := request.(type) {
+	var err error
+	switch actualRequest := request.(type) {
 	case *SetSdkRequest:
-		response.Response, response.Error = s.setSdk(context, castedRequest)
+		response.Response, err = s.setSdk(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to run sdk: %v, %v", actualRequest.Sdk, err)
+		}
 	default:
-		response.Error = fmt.Errorf("Unsupported request type: %T", request)
+		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 	}
-	if response.Error != nil {
+	if response.Error != "" {
 		response.Status = "error"
 	}
 	return response
@@ -58,4 +62,3 @@ func NewJdkService() Service {
 	result.AbstractService.Service = result
 	return result
 }
-

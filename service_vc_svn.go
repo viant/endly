@@ -135,7 +135,6 @@ func (s *svnService) commit(context *Context, request *CommitRequest) (*InfoResp
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("%v", response.Stdout())
 	if CheckNoSuchFileOrDirectory(response.Stdout()) {
 		return nil, fmt.Errorf("Failed to commit %v", response.Stdout())
 	}

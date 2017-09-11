@@ -123,6 +123,21 @@ func NewCommandRequest(target *Resource, execution *ManagedCommand) *CommandRequ
 	}
 }
 
+func NewSimpleCommandRequest(target *Resource, commands ...string) *CommandRequest {
+	var result = &CommandRequest{
+		Target: target,
+		MangedCommand: &ManagedCommand{
+			Executions: make([]*Execution, 0),
+		},
+	}
+	for _, command := range commands {
+		result.MangedCommand.Executions = append(result.MangedCommand.Executions, &Execution{
+			Command: command,
+		})
+	}
+	return result
+}
+
 type CommandStream struct {
 	Stdin  string
 	Stdout string
@@ -296,7 +311,7 @@ func (s *execService) changeDirectory(context *Context, session *ClientSession, 
 func (s *execService) rumCommandTemplate(context *Context, session *ClientSession, info *CommandInfo, commandTemplate string, arguments ...interface{}) error {
 	if info == nil {
 		info = NewCommandInfo(session.name)
-		context.Debug().Log(info)
+		context.SessionInfo().Log(info)
 	}
 	command := fmt.Sprintf(commandTemplate, arguments...)
 	output, err := session.Run(command, 0)
@@ -412,7 +427,7 @@ func (s *execService) runCommands(context *Context, request *CommandRequest) (*C
 		options = NewExecutionOptions()
 	}
 	info := NewCommandInfo(sessionName)
-	context.Debug().Log(info)
+	context.SessionInfo().Log(info)
 	err = s.applyCommandOptions(context, options, session, info)
 	if err != nil {
 		return nil, err
@@ -426,6 +441,8 @@ func (s *execService) runCommands(context *Context, request *CommandRequest) (*C
 			return nil, err
 		}
 	}
+	info = NewCommandInfo(sessionName)
+	context.SessionInfo().Log(info)
 	for _, execution := range request.MangedCommand.Executions {
 		if execution.MatchOutput != "" {
 			continue
@@ -456,31 +473,42 @@ func (s *execService) closeSession(context *Context, closeSession *CloseSession)
 	return nil, nil
 }
 
-func (s *execService) Run(context *Context, request interface{}) *Response {
-	var response = &Response{
+func (s *execService) Run(context *Context, request interface{}) *ServiceResponse {
+	var response = &ServiceResponse{
 		Status: "ok",
 	}
-	switch castedRequest := request.(type) {
+	var err error
+	switch actualRequest := request.(type) {
 	case *OpenSession:
-		response.Response, response.Error = s.openSession(context, castedRequest)
+		response.Response, err = s.openSession(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to open session: %v, %v", actualRequest.Target, err)
+		}
 	case *CommandRequest:
-		response.Response, response.Error = s.runCommands(context, castedRequest)
+		response.Response, err = s.runCommands(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to run command: %v, %v", actualRequest.MangedCommand, err)
+		}
 	case *SuperUserCommandRequest:
-		commandRequest, err := castedRequest.AsCommandRequest(context)
+		commandRequest, err := actualRequest.AsCommandRequest(context)
 		if err == nil {
-			response.Response, response.Error = s.runCommands(context, commandRequest)
-		} else {
-			response.Error = err
+			response.Response, err = s.runCommands(context, commandRequest)
+		}
+		if err != nil {
+			response.Error = fmt.Sprintf("%v", err)
 		}
 
 	case *CloseSession:
-		response.Response, response.Error = s.closeSession(context, castedRequest)
+		response.Response, err = s.closeSession(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to close session: %v, %v", actualRequest.Name, err)
+		}
 
 	default:
-		response.Error = fmt.Errorf("Unsupported request type: %T", request)
+		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 	}
 
-	if response.Error != nil {
+	if response.Error != "" {
 		response.Status = "error"
 	}
 	return response

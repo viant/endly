@@ -2,6 +2,7 @@ package endly
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"sync"
 )
 
@@ -15,26 +16,24 @@ type TaskStep struct {
 }
 
 type RunTaskRequest struct {
-	Name         string
+	Name   string
 	Params map[string]interface{}
 }
 
 type RunTaskResponse struct {
-	Name string
+	Name  string
 	Steps []*TaskStepInfo
 }
 
 type TaskStepInfo struct {
-	Request interface{}
+	Request  interface{}
 	Response interface{}
 }
-
 
 type Task struct {
 	Name  string
 	Steps []*TaskStep
 }
-
 
 type TaskService struct {
 	*AbstractService
@@ -46,21 +45,20 @@ func (s *TaskService) Register(task *Task) {
 }
 
 func (s *TaskService) Task(name string) (*Task, error) {
-	if result, found:= s.registry[name];found {
+	if result, found := s.registry[name]; found {
 		return result, nil
 	}
 	return nil, fmt.Errorf("Failed to lookup task: %v", name)
 }
 
-
 func (s *TaskService) runTask(context *Context, request *RunTaskRequest) (*RunTaskResponse, error) {
 
-	task, err :=  s.Task(request.Name)
+	task, err := s.Task(request.Name)
 	if err != nil {
 		return nil, err
 	}
 	var response = &RunTaskResponse{
-		Steps:make([]*TaskStepInfo, 0),
+		Steps: make([]*TaskStepInfo, 0),
 	}
 	var state = context.State()
 	state.Apply(request.Params)
@@ -80,8 +78,9 @@ func (s *TaskService) runTask(context *Context, request *RunTaskRequest) (*RunTa
 			return nil, err
 		}
 		serviceResponse := service.Run(context, serviceRequest)
-		if serviceResponse.Error != nil {
-			return nil, serviceResponse.Error
+
+		if serviceResponse.Error != "" {
+			return nil, errors.New(serviceResponse.Error)
 		}
 		stepInfo := &TaskStepInfo{
 			Request:  serviceRequest,
@@ -93,15 +92,17 @@ func (s *TaskService) runTask(context *Context, request *RunTaskRequest) (*RunTa
 	return response, nil
 }
 
-
-func (s *TaskService) Run(context *Context, request interface{}) *Response {
-	var response = &Response{Status: "ok"}
-
+func (s *TaskService) Run(context *Context, request interface{}) *ServiceResponse {
+	var response = &ServiceResponse{Status: "ok"}
+	var err error
 	switch actualRequest := request.(type) {
 	case *RunTaskRequest:
-		response.Response, response.Error = s.runTask(context, actualRequest)
+		response.Response, err = s.runTask(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to run task: %v, %v", actualRequest.Name, err)
+		}
 	}
-	if response.Error != nil {
+	if response.Error != "" {
 		response.Status = "err"
 	}
 	return response
@@ -114,7 +115,6 @@ func (s *TaskService) NewRequest(name string) (interface{}, error) {
 	}
 	return nil, fmt.Errorf("Unsupported name: %v", name)
 }
-
 
 var _taskService *TaskService
 var _taskServiceMutex = &sync.Mutex{}

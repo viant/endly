@@ -7,6 +7,7 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"net/url"
+	"github.com/pkg/errors"
 )
 
 //Add global request with map context parameters
@@ -66,7 +67,6 @@ func indexBuildGoals(goals []*Goal, index map[string]*Goal) {
 	}
 	for _, goal := range goals {
 		index[goal.Name] = goal
-		fmt.Printf("!!%v\n", goal.Name)
 	}
 }
 
@@ -130,8 +130,8 @@ func (s *buildService) build(context *endly.Context, request *BuildRequest) (int
 		Target: target,
 	})
 
-	if response.Error != nil {
-		return nil, response.Error
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
 	}
 
 	operatingSystem := context.OperatingSystem(target.Session())
@@ -146,11 +146,11 @@ func (s *buildService) build(context *endly.Context, request *BuildRequest) (int
 		return nil, err
 	}
 
-	fmt.Printf("buildDeployment: %v\n", buildDeployment)
+
 
 	response = deploymentService.Run(context, buildDeployment.Config)
-	if response.Error != nil {
-		return nil, response.Error
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
 
 	}
 
@@ -188,17 +188,21 @@ func setBuildState(buildSepc *BuildSpec, parsedUrl *url.URL, request *BuildReque
 	return nil
 }
 
-func (s *buildService) Run(context *endly.Context, request interface{}) *endly.Response {
-	var response = &endly.Response{
+func (s *buildService) Run(context *endly.Context, request interface{}) *endly.ServiceResponse {
+	var response = &endly.ServiceResponse{
 		Status: "ok",
 	}
-	switch castedRequest := request.(type) {
+	var err error
+	switch actualRequest := request.(type) {
 	case *BuildRequest:
-		response.Response, response.Error = s.build(context, castedRequest)
+		response.Response,  err = s.build(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to build: %v %v", actualRequest.Target.URL, err)
+		}
 	default:
-		response.Error = fmt.Errorf("Unsupported request type: %T", request)
+		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 	}
-	if response.Error != nil {
+	if response.Error != "" {
 		response.Status = "error"
 	}
 	return response

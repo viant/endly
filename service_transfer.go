@@ -21,17 +21,17 @@ type TransferRequest struct {
 }
 
 type TransferInfo struct {
-	Source string
-	Target string
-	Error string
+	Source   string
+	Target   string
+	Error    string
 	Parsable string
-	State common.Map
+	State    common.Map
 }
 
 func NewTransferInfo(context *Context, source, target string, err error, parsable bool) *TransferInfo {
 	result := &TransferInfo{
-		Source:source,
-		Target:target,
+		Source: source,
+		Target: target,
 	}
 	if parsable {
 		var state = context.State()
@@ -43,14 +43,13 @@ func NewTransferInfo(context *Context, source, target string, err error, parsabl
 	return result
 }
 
-
 type transferService struct {
 	*AbstractService
 }
 
 func (s *transferService) run(context *Context, transfers ...*TransferRequest) ([]*TransferInfo, error) {
 	var result = make([]*TransferInfo, 0)
-	debug := context.Debug()
+	sessionInfo := context.SessionInfo()
 	for _, transfer := range transfers {
 
 		source, err := context.ExpandResource(transfer.Source)
@@ -75,7 +74,7 @@ func (s *transferService) run(context *Context, transfers ...*TransferRequest) (
 		}
 		err = storage.Copy(sourceService, source.URL, targetService, target.URL, handler)
 		info := NewTransferInfo(context, source.URL, target.URL, err, transfer.Parsable)
-		debug.Log(info)
+		sessionInfo.Log(info)
 		if err != nil {
 			return result, err
 		}
@@ -83,18 +82,25 @@ func (s *transferService) run(context *Context, transfers ...*TransferRequest) (
 	return result, nil
 }
 
-func (s *transferService) Run(context *Context, request interface{}) *Response {
-	var response = &Response{Status: "ok"}
+func (s *transferService) Run(context *Context, request interface{}) *ServiceResponse {
+	var response = &ServiceResponse{Status: "ok"}
+	var err error
 	switch actualRequest := request.(type) {
 	case *TransfersRequest:
-		response.Response, response.Error = s.run(context, actualRequest.Transfers...)
+		response.Response, err = s.run(context, actualRequest.Transfers...)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to tranfer resources: %v, %v", actualRequest.Transfers, err)
+		}
 	case *TransferRequest:
-		response.Response, response.Error = s.run(context, actualRequest)
+		response.Response, err = s.run(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to tranfer resources: %v, %v", actualRequest, err)
+		}
 
 	default:
-		response.Error = fmt.Errorf("Unsupported request type: %T", request)
+		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 	}
-	if response.Error != nil {
+	if response.Error != "" {
 		response.Status = "err"
 	}
 	return response
