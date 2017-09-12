@@ -28,7 +28,7 @@ func TestNewManager(t *testing.T) {
 	_, err = manager.CredentialFile("cc")
 	assert.NotNil(t, err)
 
-	manager2, err := context.ServiceManager()
+	manager2, err := context.Manager()
 	assert.Nil(t, err)
 	assert.Equal(t, manager2, manager)
 
