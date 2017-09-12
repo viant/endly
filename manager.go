@@ -100,5 +100,6 @@ func GetManager() Manager {
 	_manager.Register(NewVersionControlService())
 	_manager.Register(NewJdkService())
 	_manager.Register(GetBuildService())
+	_manager.Register(GetDockerService())
 	return _manager
 }
