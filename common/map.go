@@ -11,6 +11,13 @@ func (s *Map) Put(key string, value interface{}) {
 	(*s)[key] = value
 }
 
+func (s *Map) Delete(keys ... string) {
+	for _, key := range keys {
+		delete(*s, key)
+	}
+}
+
+
 func (s *Map) Has(key string) bool {
 	_, found := (*s)[key]
 	return found
