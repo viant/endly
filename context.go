@@ -41,11 +41,10 @@ func (r *Resource) LoadCredential() (string, string, error) {
 	if r.CredentialFile == "" {
 		return "", "", nil
 	}
-
 	credential := &storage.PasswordCredential{}
-	err := toolbox.LoadConfigFromUrl("file://"+r.CredentialFile, credential)
+	err := LoadCredential(r.CredentialFile, credential)
 	if err != nil {
-		return "", "", reportError(fmt.Errorf("Failed to auth URL: %v", err))
+		return "", "", reportError(fmt.Errorf("Failed to load credentail: %v %v", r.CredentialFile, err))
 	}
 	return credential.Username, credential.Password, nil
 }
@@ -54,7 +53,6 @@ func (r *Resource) AuthURL() (string, error) {
 	if r.CredentialFile == "" {
 		return r.URL, nil
 	}
-
 	username, password, err := r.LoadCredential()
 	if err != nil {
 		return "", err
@@ -69,6 +67,18 @@ type Context struct {
 func reportError(err error) error {
 	fileName, funcName, line := toolbox.CallerInfo(4)
 	return fmt.Errorf("%v at %v:%v -> %v", err, fileName, line, funcName)
+}
+
+func (c *Context) CredentialFile(name string) string {
+	manager, err := c.Manager()
+	if err != nil {
+		return name
+	}
+	result, err := manager.CredentialFile(name)
+	if err != nil {
+		return name
+	}
+	return result
 }
 
 func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
@@ -93,20 +103,13 @@ func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 		return nil, reportError(err)
 	}
 	if result.CredentialFile == "" && result.Credential != "" {
-		manager, err := c.ServiceManager()
-		if err != nil {
-			return nil, reportError(err)
-		}
-		result.CredentialFile, err = manager.CredentialFile(result.Credential)
-		if err != nil {
-			return nil, reportError(err)
-		}
+		result.CredentialFile = c.CredentialFile(result.Credential)
 	}
 
 	return result, nil
 }
 
-func (c *Context) ServiceManager() (Manager, error) {
+func (c *Context) Manager() (Manager, error) {
 	var manager = &manager{}
 	if !c.GetInto(serviceManagerKey, &manager) {
 		return nil, reportError(fmt.Errorf("Failed to lookup Manager"))
@@ -127,7 +130,7 @@ func (c *Context) Sessions() ClientSessions {
 }
 
 func (c *Context) Service(name string) (Service, error) {
-	manager, err := c.ServiceManager()
+	manager, err := c.Manager()
 	if err != nil {
 		return nil, err
 	}
@@ -251,6 +254,7 @@ func (c *Context) AsRequest(serviceName, requestName string, source map[string]i
 }
 
 func (c *Context) Close() {
+
 	for _, function := range c.Deffer() {
 		function()
 	}

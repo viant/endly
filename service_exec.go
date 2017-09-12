@@ -42,7 +42,7 @@ type ManagedCommand struct {
 }
 
 type Execution struct {
-	Secure      bool
+	Secure      string
 	MatchOutput string //only run this execution is output from a previous command is matched
 	Command     string
 	Extraction  DataExtractions
@@ -105,9 +105,9 @@ func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*CommandRe
 
 	_, password, err := target.LoadCredential()
 	execution := &Execution{
-		Secure:      true,
+		Secure:      password,
 		MatchOutput: "Password",
-		Command:     password,
+		Command:     "****",
 		Error:       []string{"Password"},
 		Extraction:  extractions,
 	}
@@ -244,11 +244,9 @@ func (s *execService) openSession(context *Context, request *OpenSession) (*Clie
 		return sessions[sessionName], err
 	}
 	var authConfig = &ssh.AuthConfig{}
-	if target.CredentialFile != "" {
-		authConfig, err = ssh.NewAuthConfigFromURL(fmt.Sprintf("file://%v", target.CredentialFile))
-		if err != nil {
-			return nil, err
-		}
+	_ = LoadCredential(target.CredentialFile, authConfig)
+	if err != nil {
+		return nil, err
 	}
 	port := toolbox.AsInt(target.ParsedURL.Port())
 	if port == 0 {
@@ -364,11 +362,14 @@ func (s *execService) executeCommand(context *Context, session *ClientSession, e
 	command := context.Expand(execution.Command)
 	terminators := getTerminators(options, session, execution)
 
-	stdout, err := session.Run(command, options.TimeoutMs, terminators...)
-	if execution.Secure {
-		command = "****"
+	var cmd = command
+	if execution.Secure != "" {
+		cmd = strings.Replace(command, "****", execution.Secure, 1)
 	}
 
+	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
+
+	//fmt.Printf("IN: %v\nOUT:%v\n", cmd, stdout)
 	commandInfo.Add(NewCommandStream(command, stdout, err))
 	if err != nil {
 		return err
@@ -410,17 +411,20 @@ func getTerminators(options *ExecutionOptions, session *ClientSession, execution
 }
 
 func (s *execService) runCommands(context *Context, request *CommandRequest) (*CommandInfo, error) {
-	clientSessions := context.Sessions()
+	//clientSessions := context.Sessions()
 	var target, err = context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-	s.openSession(context, &OpenSession{Target: target})
-	var sessionName = target.Session()
-	session, has := clientSessions[sessionName]
-	if !has {
-		return nil, fmt.Errorf("Failed to lookup sessionName: %v", sessionName)
+	session, err := s.openSession(context, &OpenSession{Target: target})
+	if err != nil {
+		return nil, err
 	}
+	var sessionName = target.Session()
+	//session, has := clientSessions[sessionName]
+	//if !has {
+	//	return nil, fmt.Errorf("Failed to lookup sessionName: %v", sessionName)
+	//}
 
 	var options = request.MangedCommand.Options
 	if options == nil {
