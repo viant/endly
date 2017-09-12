@@ -23,33 +23,37 @@ func CheckCommandNotFound(stdout ...string) bool {
 	return strings.Contains(candidate, commandNotFound)
 }
 
-func ExtractColumn(stdout string, columnIndex int) (string, bool) {
-	if stdout == "" {
-		return "", false
+func ExtractColumn(line string, columnIndex int) (string, bool) {
+	var columns, has = ExtractColumns(line)
+	if !has {
+		return "", has
 	}
-	var result = ""
+	if columnIndex < len(columns) {
+		return columns[columnIndex], true
+	}
+	return "", false
+}
+
+func ExtractColumns(line string) ([]string, bool) {
+	if line == "" {
+		return []string{}, false
+	}
 	var index = -1
 	var expectColumn = true
+	var result = make([]string, 0)
 
-	for i := 0; i < len(stdout); i++ {
-		var aChar = string(stdout[i : i+1])
+	for i := 0; i < len(line); i++ {
+		var aChar = string(line[i : i+1])
 		if aChar == " " || aChar == "\t" {
 			expectColumn = true
 			continue
 		}
 		if expectColumn {
 			index++
+			result = append(result, "")
 			expectColumn = false
 		}
-		if columnIndex == index {
-			result += aChar
-		}
-		if index > columnIndex {
-			break
-		}
-	}
-	if result == "" {
-		return "", false
+		result[index] += aChar
 	}
 	return result, true
 }
