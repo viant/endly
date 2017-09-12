@@ -2,14 +2,15 @@ package endly
 
 import (
 	"fmt"
+	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"strings"
 	"time"
-	"github.com/viant/endly/common"
 )
 
 const ProcessServiceId = "process"
 const processesKey = "pid"
+
 type ProcessStartRequest struct {
 	Name          string
 	Target        *Resource
@@ -79,7 +80,7 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 	}
 
 	var state = context.State()
-	if ! state.Has(processesKey) {
+	if !state.Has(processesKey) {
 		state.Put(processesKey, common.NewMap())
 	}
 	var processes = state.GetMap(processesKey)
@@ -124,14 +125,14 @@ func (s *processService) stopProcess(context *Context, request *ProcessStopReque
 		return nil, err
 	}
 	state := context.State()
-	if ! state.Has(processesKey) {
+	if !state.Has(processesKey) {
 		state.Put(processesKey, common.NewMap())
 	}
 	var processes = state.GetMap(processesKey)
 	for k, pid := range processes {
 		if toolbox.AsInt(pid) == request.Pid {
 			state[k] = 0
-			break;
+			break
 		}
 	}
 	return commandResult, err
@@ -195,7 +196,7 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 	existingProcesses := indexProcesses(origProcesses...)
 	var result *ProcessInfo
 	for _, candidate := range newProcesses {
-			if _, has := existingProcesses[candidate.Pid]; !has {
+		if _, has := existingProcesses[candidate.Pid]; !has {
 			result = candidate
 			break
 		}
