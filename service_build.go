@@ -35,7 +35,7 @@ type Meta struct {
 
 func (m *Meta) Validate() error {
 	if m.Name == "" {
-		return fmt.Errorf("MetaBuild.Name %v", m.Name)
+		return fmt.Errorf("MetaBuild.Names %v", m.Name)
 
 	}
 	if len(m.Goals) == 0 {
