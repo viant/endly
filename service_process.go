@@ -5,10 +5,11 @@ import (
 	"github.com/viant/toolbox"
 	"strings"
 	"time"
+	"github.com/viant/endly/common"
 )
 
 const ProcessServiceId = "process"
-
+const processesKey = "pid"
 type ProcessStartRequest struct {
 	Name          string
 	Target        *Resource
@@ -51,6 +52,12 @@ func (s *processService) Run(context *Context, request interface{}) *ServiceResp
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to start process: %v, %v", actualRequest.Name, err)
 		}
+	case *ProcessStopRequest:
+		response.Response, err = s.stopProcess(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to stop process: %v, %v", actualRequest.Pid, err)
+		}
+
 	}
 	if response.Error != "" {
 		response.Status = "err"
@@ -59,7 +66,6 @@ func (s *processService) Run(context *Context, request interface{}) *ServiceResp
 }
 
 func (s *processService) checkProcess(context *Context, request *ProcessStatusRequest) ([]*ProcessInfo, error) {
-
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
@@ -71,6 +77,13 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 	if err != nil {
 		return nil, err
 	}
+
+	var state = context.State()
+	if ! state.Has(processesKey) {
+		state.Put(processesKey, common.NewMap())
+	}
+	var processes = state.GetMap(processesKey)
+	processes.Put(request.Command, 0)
 	var result = make([]*ProcessInfo, 0)
 
 	for _, line := range strings.Split(commandResponse.Stdout(), "\r\n") {
@@ -81,7 +94,6 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 		if !ok {
 			continue
 		}
-
 		argumentsIndex := strings.Index(line, request.Command)
 		var arguments []string
 		if argumentsIndex != -1 {
@@ -95,6 +107,7 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 			Stdout:    line,
 		}
 		result = append(result, info)
+		processes.Put(request.Command, info.Pid)
 	}
 	return result, nil
 }
@@ -109,6 +122,17 @@ func (s *processService) stopProcess(context *Context, request *ProcessStopReque
 	})
 	if err != nil {
 		return nil, err
+	}
+	state := context.State()
+	if ! state.Has(processesKey) {
+		state.Put(processesKey, common.NewMap())
+	}
+	var processes = state.GetMap(processesKey)
+	for k, pid := range processes {
+		if toolbox.AsInt(pid) == request.Pid {
+			state[k] = 0
+			break;
+		}
 	}
 	return commandResult, err
 }
@@ -130,7 +154,6 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 		return nil, err
 	}
 	for _, process := range origProcesses {
-
 		if strings.Join(process.Arguments, " ") == strings.Join(request.Arguments, " ") {
 			_, err := s.stopProcess(context, &ProcessStopRequest{
 				Pid:    process.Pid,
@@ -172,8 +195,7 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 	existingProcesses := indexProcesses(origProcesses...)
 	var result *ProcessInfo
 	for _, candidate := range newProcesses {
-
-		if _, has := existingProcesses[candidate.Pid]; !has {
+			if _, has := existingProcesses[candidate.Pid]; !has {
 			result = candidate
 			break
 		}
