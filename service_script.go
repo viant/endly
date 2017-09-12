@@ -60,6 +60,7 @@ func (s *scriptService) runScriptCommand(context *Context, request *ScriptComman
 	vm.Set("DeploymentServiceId", DeploymentServiceId)
 	vm.Set("TransferServiceId", TransferServiceId)
 	vm.Set("ExecServiceId", ExecServiceId)
+	vm.Set("ExtractColumns", ExtractColumns)
 	libraries, err := s.loadLibraries(context, request)
 	if err != nil {
 		return nil, err
@@ -81,6 +82,8 @@ func (s *scriptService) Run(context *Context, request interface{}) *ServiceRespo
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to run script: %v, %v", actualRequest.Code, err)
 		}
+	default:
+		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 	}
 	if response.Error != "" {
 		response.Status = "err"
