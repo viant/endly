@@ -130,7 +130,6 @@ func (s *versionControlService) checkOut(context *Context, request *CheckoutRequ
 		if err != nil {
 			return nil, err
 		}
-
 	}
 
 	parent, _ := path.Split(target.ParsedURL.Path)
@@ -179,7 +178,6 @@ func (s *versionControlService) Run(context *Context, request interface{}) *Serv
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to commit version: %vL%v, %v", actualRequest.Target.URL, actualRequest.Target.Type, err)
 		}
-
 	}
 
 	if response.Error != "" {

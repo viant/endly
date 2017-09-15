@@ -22,14 +22,16 @@ func (s *svnService) checkInfo(context *Context, request *StatusRequest) (*InfoR
 			},
 			{
 				Command: fmt.Sprintf("svn info"),
-				Extraction: []*DataExtraction{{
-					RegExpr: "URL: ([^\\s]+)",
-					Name:    "origin",
-				},
+				Extraction: []*DataExtraction{
+					{
+						RegExpr: "URL: ([^\\s]+)",
+						Key:     "origin",
+					},
 					{
 						RegExpr: "Revision: ([^\\s]+)",
-						Name:    "revision",
-					}},
+						Key:     "revision",
+					},
+				},
 			},
 			{
 				Command: fmt.Sprintf("svn stat"),

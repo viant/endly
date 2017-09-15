@@ -52,7 +52,6 @@ func (s *TaskService) Task(name string) (*Task, error) {
 }
 
 func (s *TaskService) runTask(context *Context, request *RunTaskRequest) (*RunTaskResponse, error) {
-
 	task, err := s.Task(request.Name)
 	if err != nil {
 		return nil, err
@@ -64,7 +63,6 @@ func (s *TaskService) runTask(context *Context, request *RunTaskRequest) (*RunTa
 	state.Apply(request.Params)
 
 	for _, step := range task.Steps {
-
 		service, err := context.Service(step.Service)
 		if err != nil {
 			return nil, err
@@ -87,7 +85,6 @@ func (s *TaskService) runTask(context *Context, request *RunTaskRequest) (*RunTa
 			Response: serviceResponse,
 		}
 		response.Steps = append(response.Steps, stepInfo)
-
 	}
 	return response, nil
 }

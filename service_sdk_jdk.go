@@ -17,12 +17,12 @@ func (s *jdkService) setSdk(context *Context, request *SetSdkRequest) (*SetSdkRe
 				Error:   []string{"command not found"},
 				Extraction: []*DataExtraction{
 					{
-						RegExpr:  "(.+jdk.+)",
-						StateKey: "JAVA_HOME",
+						RegExpr: "(.+jdk.+)",
+						Key:     "JAVA_HOME",
 					},
 					{
-						RegExpr:  "(.+jvm.+)",
-						StateKey: "JAVA_HOME",
+						RegExpr: "(.+jvm.+)",
+						Key:     "JAVA_HOME",
 					},
 				},
 			},
@@ -31,7 +31,7 @@ func (s *jdkService) setSdk(context *Context, request *SetSdkRequest) (*SetSdkRe
 				Extraction: []*DataExtraction{
 					{
 						RegExpr: fmt.Sprintf("\"(%v[^\"]+)", request.Version),
-						Name:    "build",
+						Key:    "build",
 					},
 				},
 			},

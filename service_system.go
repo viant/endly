@@ -170,8 +170,8 @@ func (s *systemService) checkService(context *Context, request *ServiceStatusReq
 					Command: fmt.Sprintf("launchctl list | grep %v", request.Service),
 					Extraction: DataExtractions{
 						{
-							StateKey: "pid",
-							RegExpr:  "(\\d+).+",
+							Key:     "pid",
+							RegExpr: "(\\d+).+",
 						},
 					},
 					Error: []string{"Unrecognized"},
@@ -180,12 +180,12 @@ func (s *systemService) checkService(context *Context, request *ServiceStatusReq
 					Command: "launchctl procinfo $pid",
 					Extraction: DataExtractions{
 						{
-							StateKey: "path",
-							RegExpr:  "program path[\\s|\\t]+=[\\s|\\t]+([^\\s]+)",
+							Key:     "path",
+							RegExpr: "program path[\\s|\\t]+=[\\s|\\t]+([^\\s]+)",
 						},
 						{
-							StateKey: "state",
-							RegExpr:  "[\\s|\\t]+state[\\s|\\t]+=[\\s|\\t]+([^s]+)",
+							Key:     "state",
+							RegExpr: "[\\s|\\t]+state[\\s|\\t]+=[\\s|\\t]+([^s]+)",
 						},
 					},
 					Error: []string{"Unrecognized"},
@@ -212,16 +212,16 @@ func (s *systemService) checkService(context *Context, request *ServiceStatusReq
 				Command: command,
 				Extraction: DataExtractions{
 					{
-						StateKey: "pid",
-						RegExpr:  "[^└]+└─(\\d+).+",
+						Key:     "pid",
+						RegExpr: "[^└]+└─(\\d+).+",
 					},
 					{
-						StateKey: "state",
-						RegExpr:  "[\\s|\\t]+Active:\\s+(\\S+)",
+						Key:     "state",
+						RegExpr: "[\\s|\\t]+Active:\\s+(\\S+)",
 					},
 					{
-						StateKey: "path",
-						RegExpr:  "[^└]+└─\\d+[\\s\\t].(.+)",
+						Key:     "path",
+						RegExpr: "[^└]+└─\\d+[\\s\\t].(.+)",
 					},
 				},
 			},
