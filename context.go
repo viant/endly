@@ -5,9 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/storage"
 	"net/url"
-	"strings"
 )
 
 //TODO Execution detail Tracking of all run (time taken, request, response)
@@ -18,47 +16,6 @@ var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
 var stateKey = (*common.Map)(nil)
 var sessionInfoKey = (*SessionInfo)(nil)
-
-type Resource struct {
-	Name           string
-	Version        string
-	URL            string
-	Type           string
-	Credential     string
-	CredentialFile string
-	ParsedURL      *url.URL
-}
-
-func (r *Resource) Session() string {
-	result := r.ParsedURL.Hostname() + ":" + r.ParsedURL.Port()
-	if r.ParsedURL.User != nil {
-		result = r.ParsedURL.User.Username() + "@" + result
-	}
-	return result
-}
-
-func (r *Resource) LoadCredential() (string, string, error) {
-	if r.CredentialFile == "" {
-		return "", "", nil
-	}
-	credential := &storage.PasswordCredential{}
-	err := LoadCredential(r.CredentialFile, credential)
-	if err != nil {
-		return "", "", reportError(fmt.Errorf("Failed to load credentail: %v %v", r.CredentialFile, err))
-	}
-	return credential.Username, credential.Password, nil
-}
-
-func (r *Resource) AuthURL() (string, error) {
-	if r.CredentialFile == "" {
-		return r.URL, nil
-	}
-	username, password, err := r.LoadCredential()
-	if err != nil {
-		return "", err
-	}
-	return strings.Replace(r.URL, "//", "//"+username+"@"+password, 1), nil
-}
 
 type Context struct {
 	toolbox.Context
