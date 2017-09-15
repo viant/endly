@@ -326,12 +326,12 @@ func (s *systemService) startService(context *Context, request *ServiceStartRequ
 	})
 }
 
-func (s *systemService) NewRequest(name string) (interface{}, error) {
-	switch name {
+func (s *systemService) NewRequest(action string) (interface{}, error) {
+	switch action {
 	case "command":
 		return &ScriptCommand{}, nil
 	}
-	return nil, fmt.Errorf("Unsupported name: %v", name)
+	return s.AbstractService.NewRequest(action)
 }
 
 func NewSystemService() Service {

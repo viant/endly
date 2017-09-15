@@ -1,0 +1,6 @@
+Workflow,,,Name,Description,Variables,Tasks,,
+,,,Simple Test,My description,"[{""name"":""v1""}]",%WorkflowTasks,,
+[]WorkflowTasks,Seq,,Name,Description,Variables,,,
+,1,,Simple Http Test,This will test abc,"[{""name"":""v10""}]",,,
+,2,,Simple Http Test,This will test xyz,#var2.json,,,
+,3,,Simple Http Test,This will test xyz,"[{""name"":""v30""}]",,,

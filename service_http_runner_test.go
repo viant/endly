@@ -29,7 +29,7 @@ func StartTestServer(port string) {
 
 func TestHttpRunnerService_Run(t *testing.T) {
 	go StartTestServer("8766")
-	manager := endly.GetManager()
+	manager := endly.NewManager()
 	service, err := manager.Service(endly.HttpRunnerServiceId)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)

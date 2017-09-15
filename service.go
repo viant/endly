@@ -2,6 +2,7 @@ package endly
 
 import (
 	"github.com/viant/endly/common"
+	"fmt"
 )
 
 type ServiceResponse struct {
@@ -14,8 +15,9 @@ type Service interface {
 	Id() string
 	State() common.Map
 	Run(context *Context, request interface{}) *ServiceResponse
-	NewRequest(method string) (interface{}, error)
+	NewRequest(action string) (interface{}, error)
 }
+
 
 type AbstractService struct {
 	Service
@@ -29,6 +31,10 @@ func (s *AbstractService) Id() string {
 
 func (s *AbstractService) State() common.Map {
 	return s.state
+}
+
+func (s *AbstractService) NewRequest(action string) (interface{}, error) {
+	return nil, fmt.Errorf("Unsupported action: %v", action)
 }
 
 func NewAbstractService(id string) *AbstractService {

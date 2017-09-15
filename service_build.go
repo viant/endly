@@ -4,13 +4,9 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/endly/common"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/storage"
 	"net/url"
-	"sync"
 )
 
-//Add global request with map context parameters
 
 const BuildServiceId = "build"
 
@@ -19,21 +15,23 @@ type OperatingSystemDeployment struct {
 	Config   *DeploymentConfig
 }
 
-type Goal struct {
+
+type BuildGoal struct {
 	Name                string
 	Command             *ManagedCommand
 	Transfers           *TransfersRequest
 	VerificationCommand *ManagedCommand
 }
 
-type Meta struct {
+
+type BuildMeta struct {
 	Name             string
-	Goals            []*Goal
-	goalsIndex       map[string]*Goal
+	Goals            []*BuildGoal
+	goalsIndex       map[string]*BuildGoal
 	BuildDeployments []*OperatingSystemDeployment //defines deployment of the build app itself, i.e how to get maven installed
 }
 
-func (m *Meta) Validate() error {
+func (m *BuildMeta) Validate() error {
 	if m.Name == "" {
 		return fmt.Errorf("MetaBuild.Names %v", m.Name)
 
@@ -44,7 +42,7 @@ func (m *Meta) Validate() error {
 	return nil
 }
 
-func (m *Meta) Match(operatingSystem *OperatingSystem, version string) *OperatingSystemDeployment {
+func (m *BuildMeta) Match(operatingSystem *OperatingSystem, version string) *OperatingSystemDeployment {
 	for _, candidate := range m.BuildDeployments {
 		osTarget := candidate.OsTarget
 		if version != "" {
@@ -59,22 +57,6 @@ func (m *Meta) Match(operatingSystem *OperatingSystem, version string) *Operatin
 	return nil
 }
 
-type BuildMetaRegistry map[string]*Meta
-
-func indexBuildGoals(goals []*Goal, index map[string]*Goal) {
-	if len(goals) == 0 {
-		return
-	}
-	for _, goal := range goals {
-		index[goal.Name] = goal
-	}
-}
-
-func (r *BuildMetaRegistry) Register(meta *Meta) {
-	meta.goalsIndex = make(map[string]*Goal)
-	indexBuildGoals(meta.Goals, meta.goalsIndex)
-	(*r)[meta.Name] = meta
-}
 
 type BuildSpec struct {
 	Name    string //build name  like go, mvn, node, yarn
@@ -86,6 +68,16 @@ type BuildSpec struct {
 type BuildRequest struct {
 	BuildSpec *BuildSpec //build specification
 	Target    *Resource  //path to application to be build, Note that command may use $build.target variable. that expands to Target URL path
+}
+
+
+type BuildRegisterMeta struct {
+	Meta *BuildMeta
+}
+
+
+type BuildLoadMeta struct {
+	Resource *Resource
 }
 
 type BuildService struct {
@@ -197,6 +189,9 @@ func (s *BuildService) Run(context *Context, request interface{}) *ServiceRespon
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to build: %v %v", actualRequest.Target.URL, err)
 		}
+	case *BuildRegisterMeta:
+		s.registry.Register(actualRequest.Meta)
+
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 	}
@@ -206,60 +201,41 @@ func (s *BuildService) Run(context *Context, request interface{}) *ServiceRespon
 	return response
 }
 
-func (s *BuildService) NewRequest(name string) (interface{}, error) {
+func (s *BuildService) NewRequest(action string) (interface{}, error) {
 	return &BuildRequest{}, nil
 }
 
-func (s *BuildService) Load(config *BuildConfig) error {
-	if len(config.URL) > 0 {
-		for _, URL := range config.URL {
-			service, err := storage.NewServiceForURL(URL, "")
-			if err != nil {
-				return err
-			}
-			objects, err := service.List(URL)
-			if err != nil {
-				return err
-			}
-			for _, object := range objects {
-				reader, err := service.Download(object)
-				if err != nil {
-					return err
-				}
-				var buildMeta = &Meta{}
 
-				err = toolbox.NewJSONDecoderFactory().Create(reader).Decode(buildMeta)
-				if err != nil {
-					return err
-				}
-				err = buildMeta.Validate()
-				if err != nil {
-					return err
-				}
-				s.registry.Register(buildMeta)
-			}
-		}
-	}
-	return nil
-}
-
-var _buildService *BuildService
-var _buildServiceMux = &sync.Mutex{}
-
-func GetBuildService() *BuildService {
-	if _buildService != nil {
-		return _buildService
-	}
-
-	_buildServiceMux.Lock()
-	defer _buildServiceMux.Unlock()
-	if _buildService != nil {
-		return _buildService
-	}
-	_buildService = &BuildService{
-		registry:        make(map[string]*Meta),
+func NewBuildService() Service {
+	var result  = &BuildService{
+		registry:        make(map[string]*BuildMeta),
 		AbstractService: NewAbstractService(BuildServiceId),
 	}
-	_buildService.AbstractService.Service = _buildService
-	return _buildService
+	result.AbstractService.Service = result
+	return result
+}
+
+
+
+
+
+type BuildMetaRegistry map[string]*BuildMeta
+func indexBuildGoals(goals []*BuildGoal, index map[string]*BuildGoal) {
+	if len(goals) == 0 {
+		return
+	}
+	for _, goal := range goals {
+		index[goal.Name] = goal
+	}
+}
+
+func (r *BuildMetaRegistry) Register(meta *BuildMeta) error {
+	err := meta.Validate()
+	if err != nil {
+		return nil
+	}
+	meta.goalsIndex = make(map[string]*BuildGoal)
+	indexBuildGoals(meta.Goals, meta.goalsIndex)
+	(*r)[meta.Name] = meta
+	return nil
 }

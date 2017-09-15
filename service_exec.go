@@ -518,8 +518,8 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 	return response
 }
 
-func (s *execService) NewRequest(name string) (interface{}, error) {
-	switch name {
+func (s *execService) NewRequest(action string) (interface{}, error) {
+	switch action {
 	case "open":
 		return &OpenSession{}, nil
 	case "command":
@@ -528,7 +528,7 @@ func (s *execService) NewRequest(name string) (interface{}, error) {
 		return &CloseSession{}, nil
 
 	}
-	return nil, fmt.Errorf("Unsupported request: %v", name)
+	return nil, fmt.Errorf("Unsupported action: %v", action)
 }
 
 func (s *execService) detectOperatingSystem(session *ClientSession) (*OperatingSystem, error) {

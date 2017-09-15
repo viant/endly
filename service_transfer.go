@@ -106,14 +106,14 @@ func (s *transferService) Run(context *Context, request interface{}) *ServiceRes
 	return response
 }
 
-func (s *transferService) NewRequest(name string) (interface{}, error) {
-	switch name {
+func (s *transferService) NewRequest(action string) (interface{}, error) {
+	switch action {
 	case "run":
 		return &TransfersRequest{
 			Transfers: make([]*TransferRequest, 0),
 		}, nil
 	}
-	return nil, fmt.Errorf("Unsupported name: %v", name)
+	return s.AbstractService.NewRequest(action)
 }
 
 func NewTransferService() Service {

@@ -5,7 +5,6 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"strings"
-	"sync"
 )
 
 const DockerServiceId = "docker"
@@ -13,6 +12,10 @@ const containerInUse = "is already in use by container"
 
 var dockerErrors = []string{"Error"}
 var dockerIgnoreErrors = []string{}
+
+type DockerSystemPathRequest struct {
+	SysPath []string
+}
 
 type DockerPullRequest struct {
 	Target     *Resource
@@ -81,8 +84,10 @@ type DockerService struct {
 	SysPath []string
 }
 
-func (s *DockerService) NewRequest(name string) (interface{}, error) {
-	switch name {
+func (s *DockerService) NewRequest(action string) (interface{}, error) {
+	switch action {
+	case "syspath":
+		return &DockerSystemPathRequest{},nil
 	case "images":
 		return &DockerImagesRequest{}, nil
 	case "pull":
@@ -99,13 +104,17 @@ func (s *DockerService) NewRequest(name string) (interface{}, error) {
 		return &DockerContainerStopRequest{}, nil
 
 	}
-	return nil, fmt.Errorf("Unsupported name: %v", name)
+	return s.AbstractService.NewRequest(action)
 }
 
 func (s *DockerService) Run(context *Context, request interface{}) *ServiceResponse {
 	var response = &ServiceResponse{Status: "ok"}
 	var err error
 	switch actualRequest := request.(type) {
+
+	case *DockerSystemPathRequest:
+		s.SysPath = actualRequest.SysPath
+
 	case *DockerImagesRequest:
 		response.Response, err = s.checkImages(context, actualRequest)
 		if err != nil {
@@ -414,21 +423,10 @@ func (s *DockerService) executeSecureDockerCommand(secure string, context *Conte
 
 }
 
-var _dockerService *DockerService
-var _dockerServiceMutext = &sync.Mutex{}
-
-func GetDockerService() *DockerService {
-	if _dockerService != nil {
-		return _dockerService
-	}
-	_dockerServiceMutext.Lock()
-	defer _dockerServiceMutext.Unlock()
-	if _dockerService != nil {
-		return _dockerService
-	}
-	var _dockerService = &DockerService{
+func NewDockerService() Service {
+	var result = &DockerService{
 		AbstractService: NewAbstractService(DockerServiceId),
 	}
-	_dockerService.AbstractService.Service = _dockerService
-	return _dockerService
+	result.AbstractService.Service = result
+	return result
 }

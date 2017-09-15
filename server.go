@@ -18,7 +18,7 @@ type Response struct {
 	Error    string
 	Response interface{}
 	Info     *SessionInfo
-	State    map[string]interface{}
+	Data     map[string]interface{}
 }
 
 type Server struct {
@@ -26,7 +26,7 @@ type Server struct {
 	manager Manager
 }
 
-func (s *Server) requestService(serviceName, method string, httpRequest *http.Request, httpResponse http.ResponseWriter) (*Response, error) {
+func (s *Server) requestService(serviceName, action string, httpRequest *http.Request, httpResponse http.ResponseWriter) (*Response, error) {
 	var service Service
 	var serviceRequest interface{}
 	var err error
@@ -34,7 +34,7 @@ func (s *Server) requestService(serviceName, method string, httpRequest *http.Re
 	if err != nil {
 		return nil, err
 	}
-	serviceRequest, err = service.NewRequest(toolbox.AsString(method))
+	serviceRequest, err = service.NewRequest(toolbox.AsString(action))
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func (s *Server) requestService(serviceName, method string, httpRequest *http.Re
 		Error:    serviceResponse.Error,
 		Response: serviceResponse.Response,
 		Info:     sessionInfo,
-		State:    context.State(),
+		Data:     context.State(),
 	}
 	return response, nil
 }
@@ -76,13 +76,13 @@ func (s *Server) routeHandler(serviceRouting *toolbox.ServiceRouting, httpReques
 	if !ok {
 		return fmt.Errorf("Service name was missing %v", uriParameters)
 	}
-	method, ok := uriParameters["method"]
+	action, ok := uriParameters["action"]
 	if !ok {
-		return fmt.Errorf("method was missing %v", uriParameters)
+		return fmt.Errorf("action was missing %v", uriParameters)
 	}
 
 	var response *Response
-	response, err = s.requestService(toolbox.AsString(serviceName), toolbox.AsString(method), httpRequest, httpResponse)
+	response, err = s.requestService(toolbox.AsString(serviceName), toolbox.AsString(action), httpRequest, httpResponse)
 	if err != nil {
 		return err
 	}
@@ -101,10 +101,10 @@ func (s *Server) Start() error {
 	router := toolbox.NewServiceRouter(
 		toolbox.ServiceRouting{
 			HTTPMethod:     "POST",
-			URI:            "/v1/endly/service/{service}/{method}/",
+			URI:            "/v1/endly/service/{service}/{action}/",
 			Handler:        s.requestService,
 			HandlerInvoker: s.routeHandler,
-			Parameters:     []string{"service", "method", "@httpRequest", "@httpResponseWriter"},
+			Parameters:     []string{"service", "action", "@httpRequest", "@httpResponseWriter"},
 		})
 
 	http.HandleFunc("/v1/", func(response http.ResponseWriter, reader *http.Request) {
@@ -121,6 +121,6 @@ func (s *Server) Start() error {
 func NewServer(port string) *Server {
 	return &Server{
 		port:    port,
-		manager: GetManager(),
+		manager: NewManager(),
 	}
 }

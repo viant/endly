@@ -3,6 +3,7 @@ package common
 import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/ssh"
+	"strings"
 )
 
 type Map map[string]interface{}
@@ -30,6 +31,81 @@ func (s *Map) Get(key string) interface{} {
 	return nil
 
 }
+
+
+func (s *Map) GetValue(expr string) (interface{}, bool) {
+	if expr == "" {
+		return nil, false
+	}
+	state := *s
+	if string(expr[0:1]) == "{" {
+		expr = expr[1 : len(expr)-1]
+	}
+	if strings.Contains(expr, ".") {
+		fragments := strings.Split(expr, ".")
+		for i, fragment := range fragments {
+			isLast := i+1 == len(fragments)
+			if isLast {
+				expr = fragment
+			} else {
+				hasKey := state.Has(fragment)
+				state = state.GetMap(fragment)
+				if state == nil {
+					if hasKey {
+						value, _ := state.GetValue(fragment)
+						if f, ok := value.(func(key string)interface{});ok {
+							return f(fragments[i+1]), true
+						}
+					}
+					return "", false
+				}
+			}
+
+		}
+	}
+	if state.Has(expr) {
+		var result  = state.Get(expr)
+		if f, ok := result.(func()interface{});ok {
+			return f(), true
+		}
+		return result,  true
+	}
+	return nil, false
+}
+
+
+func (s *Map) SetValue(expr string, value interface{})  {
+	if expr == "" {
+		return
+	}
+	state := *s
+	if string(expr[0:1]) == "{" {
+		expr = expr[1 : len(expr)-1]
+	}
+	if strings.Contains(expr, ".") {
+		fragments := strings.Split(expr, ".")
+		for i, fragment := range fragments {
+			isLast := i+1 == len(fragments)
+			if isLast {
+				expr = fragment
+			} else {
+
+				subState := state.GetMap(fragment)
+				if subState == nil {
+
+					subState = NewMap()
+					state.Put(fragment, subState)
+					state = subState
+				}
+			}
+
+		}
+	}
+	state.Put(expr, value)
+}
+
+
+
 
 func (s *Map) Apply(source map[string]interface{}) {
 	for k, v:= range source {

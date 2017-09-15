@@ -9,7 +9,7 @@ import (
 
 func TestSdkService_Run(t *testing.T) {
 
-	manager := endly.GetManager()
+	manager := endly.NewManager()
 	service, err := manager.Service(endly.JsdServiceId)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)

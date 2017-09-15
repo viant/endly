@@ -3,7 +3,6 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/toolbox"
-	"sync"
 )
 
 const AppName = "endly - End To End Functional Testing "
@@ -70,36 +69,25 @@ func (s *manager) NewContext(ctx toolbox.Context) *Context {
 	return result
 }
 
-var _manager Manager
-var _managerMux = &sync.Mutex{}
 
-func GetManager() Manager {
-	if _manager != nil {
-		return _manager
-	}
-	_managerMux.Lock()
-	defer _managerMux.Unlock()
-
-	if _manager != nil {
-		return _manager
-	}
-	_manager = &manager{
+func NewManager() Manager {
+	var result = &manager{
 		name:            AppName,
 		version:         AppVersion,
 		services:        make(map[string]Service),
 		credentialFiles: make(map[string]string),
 	}
-	_manager.Register(NewExecService())
-	_manager.Register(NewTransferService())
-	_manager.Register(NewDeploymentService())
-	_manager.Register(NewScriptService())
-	_manager.Register(NewHttpRunnerService())
-	_manager.Register(NewProcessService())
-	_manager.Register(NewSystemService())
-	_manager.Register(GetTaskService())
-	_manager.Register(NewVersionControlService())
-	_manager.Register(NewJdkService())
-	_manager.Register(GetBuildService())
-	_manager.Register(GetDockerService())
-	return _manager
+	result.Register(NewExecService())
+	result.Register(NewTransferService())
+	result.Register(NewDeploymentService())
+	result.Register(NewScriptService())
+	result.Register(NewHttpRunnerService())
+	result.Register(NewProcessService())
+	result.Register(NewSystemService())
+	result.Register(NewWorkflowService())
+	result.Register(NewVersionControlService())
+	result.Register(NewJdkService())
+	result.Register(NewBuildService())
+	result.Register(NewDockerService())
+	return result
 }

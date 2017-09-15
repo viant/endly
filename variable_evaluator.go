@@ -4,68 +4,32 @@ import (
 	"github.com/viant/endly/common"
 	"strings"
 	"unicode"
+	"github.com/viant/toolbox"
 )
 
 const (
 	expectVariableStart = iota
 	expectVariableName
-
 	expectVariableNameEnclosureEnd
 )
-
-func extractState(state common.Map, name string) (string, bool) {
-
-	name = string(name[1:])
-
-	if name == "" {
-		return "", false
-	}
-
-	if string(name[0:1]) == "{" {
-		name = name[1 : len(name)-1]
-	}
-	if strings.Contains(name, ".") {
-		fragments := strings.Split(name, ".")
-		for i, fragment := range fragments {
-			isLast := i+1 == len(fragments)
-			if isLast {
-				name = fragment
-			} else {
-				state = state.GetMap(fragment)
-				if state == nil {
-					return "", false
-				}
-			}
-
-		}
-	}
-	if state.Has(name) {
-		return state.GetString(name), true
-	}
-	return "", false
-}
 
 func Expand(state common.Map, text string) string {
 	if strings.Index(text, "$") == -1 {
 		return text
 	}
-
 	var expandVariable = func(variableName, result string) string {
-		value, has := extractState(state, variableName)
+		value, has := state.GetValue(string(variableName[1:]))
 		if has {
-			return result + value
+			return result + toolbox.AsString(value)
 		}
 		return result + variableName
 	}
-
 	var variableName = ""
 	var parsingState = expectVariableStart
 	var result = ""
 
 	for i, rune := range text {
-
 		aChar := string(text[i : i+1])
-
 		switch parsingState {
 		case expectVariableStart:
 			if aChar == "$" {

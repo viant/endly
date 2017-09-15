@@ -240,7 +240,7 @@ func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceR
 	return response
 }
 
-func (s *httpRunnerService) NewRequest(name string) (interface{}, error) {
+func (s *httpRunnerService) NewRequest(action string) (interface{}, error) {
 	return &SendRequest{}, nil
 }
 

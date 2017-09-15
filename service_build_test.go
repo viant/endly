@@ -15,19 +15,19 @@ func TestBuildService_Run(t *testing.T) {
 	parent, _ := path.Split(fileName)
 	url := fmt.Sprintf("file://%v/build/meta/", parent)
 
-	service := endly.GetBuildService()
-	err := service.Load(&endly.BuildConfig{
-		URL: []string{url},
-	})
+
+	manager := endly.NewManager()
+	service, err := manager.Service(endly.BuildServiceId)
 	if !assert.Nil(t, err) {
 		t.FailNow()
 	}
-	assert.NotNil(t, service)
-	manager := endly.GetManager()
-	manager.Register(service)
-
 	context := manager.NewContext(toolbox.NewContext())
 	assert.NotNil(t, context)
+	service.Run(context, &endly.BuildLoadMeta{
+		Resource:&endly.Resource{
+			URL:url,
+		},
+	})
 
 	buildService, err := manager.Service(endly.BuildServiceId)
 	assert.Nil(t, err)

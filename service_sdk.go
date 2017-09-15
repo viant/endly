@@ -42,7 +42,7 @@ func (s *sdkService) Run(context *Context, request interface{}) *ServiceResponse
 	return response
 }
 
-func (t *sdkService) NewRequest(name string) (interface{}, error) {
+func (t *sdkService) NewRequest(action string) (interface{}, error) {
 	return &SetSdkRequest{}, nil
 }
 

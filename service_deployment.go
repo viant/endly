@@ -35,6 +35,8 @@ func (r *DeploymentConfig) Validate() error {
 	return nil
 }
 
+
+
 func (s *deploymentService) extractVersion(context *Context, request *DeploymentConfig, exec Service, parsedURL *url.URL) (string, error) {
 	result, err := context.Execute(request.Transfer.Target, request.VersionCheck)
 	if err != nil {
@@ -135,12 +137,13 @@ func (s *deploymentService) Run(context *Context, request interface{}) *ServiceR
 	return response
 }
 
-func (s *deploymentService) NewRequest(name string) (interface{}, error) {
-	switch name {
+
+func (s *deploymentService) NewRequest(action string) (interface{}, error) {
+	switch action {
 	case "deploy":
 		return &DeploymentConfig{}, nil
 	}
-	return nil, fmt.Errorf("Unsupported request: %v", name)
+	return s.AbstractService.NewRequest(action)
 }
 
 func NewDeploymentService() Service {

@@ -6,7 +6,13 @@ import (
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"net/url"
+	"math/rand"
+	"time"
+	"os"
 )
+
+
+
 
 //TODO Execution detail Tracking of all run (time taken, request, response)
 
@@ -112,7 +118,7 @@ func (c *Context) Deffer(functions ...func()) []func() {
 func (c *Context) State() common.Map {
 	var result *common.Map
 	if !c.Contains(stateKey) {
-		aMap := common.NewMap()
+		aMap := NewDefaultState()
 		result = &aMap
 		c.Put(stateKey, result)
 	} else {
@@ -211,8 +217,23 @@ func (c *Context) AsRequest(serviceName, requestName string, source map[string]i
 }
 
 func (c *Context) Close() {
-
 	for _, function := range c.Deffer() {
 		function()
 	}
+}
+
+
+
+func NewDefaultState() common.Map {
+	var result = common.NewMap()
+	var now = time.Now()
+	source := rand.NewSource(now.UnixNano())
+	result.Put("rand", source.Int63())
+	result.Put("date", now.Format(toolbox.DateFormatToLayout("yyyy-MM-dd")))
+	result.Put("time", now.Format(toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss")))
+	result.Put("ts", now.Format(toolbox.DateFormatToLayout("yyyyMMddhhmmSSS")))
+	result.Put("env", func(key string) interface{} {
+		return os.Getenv(key)
+	})
+	return result
 }

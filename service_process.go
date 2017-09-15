@@ -209,8 +209,8 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 	return result, nil
 }
 
-func (s *processService) NewRequest(name string) (interface{}, error) {
-	switch name {
+func (s *processService) NewRequest(action string) (interface{}, error) {
+	switch action {
 	case "start":
 		return &ProcessStartRequest{}, nil
 	case "check":
@@ -219,7 +219,7 @@ func (s *processService) NewRequest(name string) (interface{}, error) {
 		return &ProcessStopRequest{}, nil
 
 	}
-	return nil, fmt.Errorf("Unsupported name: %v", name)
+	return s.AbstractService.NewRequest(action)
 }
 
 func NewProcessService() Service {

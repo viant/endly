@@ -186,12 +186,12 @@ func (s *versionControlService) Run(context *Context, request interface{}) *Serv
 	return response
 }
 
-func (s *versionControlService) NewRequest(name string) (interface{}, error) {
-	switch name {
+func (s *versionControlService) NewRequest(action string) (interface{}, error) {
+	switch action {
 	case "command":
 		return &ScriptCommand{}, nil
 	}
-	return nil, fmt.Errorf("Unsupported name: %v", name)
+	return s.AbstractService.NewRequest(action)
 }
 
 func NewVersionControlService() Service {

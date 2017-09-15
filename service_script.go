@@ -91,12 +91,12 @@ func (s *scriptService) Run(context *Context, request interface{}) *ServiceRespo
 	return response
 }
 
-func (s *scriptService) NewRequest(name string) (interface{}, error) {
-	switch name {
+func (s *scriptService) NewRequest(action string) (interface{}, error) {
+	switch action {
 	case "command":
 		return &ScriptCommand{}, nil
 	}
-	return nil, fmt.Errorf("Unsupported name: %v", name)
+	return s.AbstractService.NewRequest(action)
 }
 
 func NewScriptService() Service {
