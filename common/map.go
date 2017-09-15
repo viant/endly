@@ -87,7 +87,12 @@ func (s *Map) GetCollection(key string) *Collection {
 
 func (s *Map) GetMap(key string) Map {
 	if result, found := (*s)[key]; found {
+
 		aMap, ok := result.(Map)
+		if ok {
+			return aMap
+		}
+		aMap, ok = result.(map[string]interface{})
 		if ok {
 			return aMap
 		}
