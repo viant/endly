@@ -8,9 +8,8 @@ import (
 )
 
 type DataExtraction struct {
-	Name     string
-	RegExpr  string
-	StateKey string
+	RegExpr string
+	Key     string
 }
 
 type DataExtractions []*DataExtraction
@@ -31,12 +30,12 @@ func (d *DataExtractions) Extract(context *Context, extracted map[string]string,
 			if compiledExpression.MatchString(line) {
 
 				matched := compiledExpression.FindStringSubmatch(line)
-				if extract.StateKey != "" {
+				if extract.Key != "" {
 					var state = context.State()
-					var keyFragments = strings.Split(extract.StateKey, ".")
+					var keyFragments = strings.Split(extract.Key, ".")
 					for i, keyFragment := range keyFragments {
 						if i+1 == len(keyFragments) {
-							state.Put(extract.StateKey, matched[1])
+							state.Put(extract.Key, matched[1])
 							continue
 						}
 
@@ -46,12 +45,8 @@ func (d *DataExtractions) Extract(context *Context, extracted map[string]string,
 						state = state.GetMap(keyFragment)
 
 					}
-					if extract.Name == "" {
-						extract.Name = extract.StateKey
-					}
-
 				}
-				extracted[extract.Name] = matched[1]
+				extracted[extract.Key] = matched[1]
 
 			}
 		}
