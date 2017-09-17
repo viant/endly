@@ -6,6 +6,7 @@ type ServiceAction struct {
 	Action    string
 	Variables Variables
 	Request   interface{}
+	SleepInMs int
 }
 
 type WorkflowTask struct {
@@ -15,6 +16,7 @@ type WorkflowTask struct {
 	Description string
 	Actions     []*ServiceAction
 	Variables   Variables
+	SleepInMs int
 }
 
 type Workflow struct {

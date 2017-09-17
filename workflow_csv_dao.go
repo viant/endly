@@ -19,8 +19,6 @@ type WorkflowDao struct {
 	factory toolbox.DecoderFactory
 }
 
-
-
 func (d *WorkflowDao) Load(context *Context, source *Resource) (*Workflow, error) {
 	resource, err := context.ExpandResource(source)
 	if err != nil {
@@ -40,6 +38,7 @@ func (d *WorkflowDao) Load(context *Context, source *Resource) (*Workflow, error
 	return result, err
 }
 
+//processTag create data structure in the result map, it also check if the reference for tag was used before unless it is the first tag (result tag)
 func (d *WorkflowDao) processTag(context *Context, tag *Tag, result common.Map, isResultKey bool, deferredReferences map[string]func(value interface{})) error {
 	if result.Has(tag.Name) {
 		return nil
@@ -71,13 +70,13 @@ func (d *WorkflowDao) importWorkflow(context *Context, resource *Resource, sourc
 	resourceDetail := strings.TrimSpace(source)
 	resource, err := d.getExternalResource(context, resource, resourceDetail)
 	if err != nil {
-		return  fmt.Errorf("Failed to import workflow: %v %v", resourceDetail,  err)
+		return fmt.Errorf("Failed to import workflow: %v %v", resourceDetail, err)
 	}
-	workflow, err :=d.Load(context, resource)
+	workflow, err := d.Load(context, resource)
 	if err != nil {
-		return fmt.Errorf("Failed to import workflow: %v %v", resourceDetail,  err)
+		return fmt.Errorf("Failed to import workflow: %v %v", resourceDetail, err)
 	}
-	manager ,err := context.Manager()
+	manager, err := context.Manager()
 	if err != nil {
 		return err
 	}
@@ -86,28 +85,126 @@ func (d *WorkflowDao) importWorkflow(context *Context, resource *Resource, sourc
 		return err
 	}
 	serviceResponse := service.Run(context, &WorkflowRegisterRequest{
-		Workflow:workflow,
+		Workflow: workflow,
 	})
 	if serviceResponse.Error != "" {
 		return errors.New(serviceResponse.Error)
 	}
 	if err != nil {
-		return  fmt.Errorf("Failed to import workflow: %v %v", resourceDetail,  err)
+		return fmt.Errorf("Failed to import workflow: %v %v", resourceDetail, err)
 	}
 	return nil
 }
 
+type FieldExpression struct {
+	expression        string
+	Field             string
+	Child             *FieldExpression
+	IsArray           bool
+	HasSubPath        bool
+	HasArrayComponent bool
+}
+
+func (f *FieldExpression) Set(value interface{}, target common.Map, indexes ... int) {
+	var index = 0
+	if ! target.Has(f.Field) {
+		if f.IsArray {
+			target.Put(f.Field, common.NewCollection())
+		} else if f.HasSubPath {
+			target.Put(f.Field, common.NewMap())
+		}
+	}
+
+	var data common.Map
+
+	var action func(data common.Map, indexes ... int)
+	if ! f.HasSubPath {
+		action = func(data common.Map, indexes ... int) {
+			data.Put(f.Field, value)
+		}
+
+	} else {
+		action = func(data common.Map, indexes ... int) {
+			f.Child.Set(value, data, indexes...)
+		}
+	}
+
+	if f.IsArray {
+		index, indexes = shiftIndex(indexes...)
+		collection := target.GetCollection(f.Field)
+		collection.ExpandWithMap(index + 1)
+		data, _ = (*collection)[index].(common.Map)
+	} else if f.HasSubPath {
+		data = target.GetMap(f.Field)
+	} else {
+		data = target
+	}
+	action(data, indexes ...)
+}
+
+func shiftIndex(indexes ...int) (int, []int) {
+	var index int
+	if len(indexes) > 0 {
+		index = indexes[0]
+		indexes = indexes[1:]
+	}
+	return index, indexes
+}
+
+func NewFieldExpression(expression string) *FieldExpression {
+	var result = &FieldExpression{
+		expression:        expression,
+		HasArrayComponent: strings.Contains(expression, "[]"),
+		IsArray:           strings.HasPrefix(expression, "[]"),
+		HasSubPath:        strings.Contains(expression, "."),
+		Field:             expression,
+	}
+	if result.HasSubPath {
+		dotPosition := strings.Index(expression, ".")
+		result.Field = string(result.Field[:dotPosition])
+		if result.IsArray {
+			result.Field = string(result.Field[2:])
+		}
+		result.Child = NewFieldExpression(string(expression[dotPosition+1:]))
+	}
+	return result
+}
+
+//processHeaderLine extract from line a tag from column[0], add deferredRefences for a tag, decodes fields from remaining column,
+func (d *WorkflowDao) processHeaderLine(context *Context, result common.Map, decoder toolbox.Decoder, resultTag string, deferredReferences map[string]func(value interface{})) (*toolbox.DelimiteredRecord, *Tag, string, error) {
+	record := &toolbox.DelimiteredRecord{Delimiter: ","}
+	err := decoder.Decode(record)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	tag := NewTag(record.Columns[0])
+	var isResultTag = resultTag == "";
+	if isResultTag {
+		resultTag = tag.Name
+	}
+	err = d.processTag(context, tag, result, isResultTag, deferredReferences)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	return record, tag, resultTag, nil
+}
 
 func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.Scanner) (map[string]interface{}, error) {
 	var result = common.NewMap()
 	var record *toolbox.DelimiteredRecord
 	var deferredReferences = make(map[string]func(value interface{}))
 	var referenceUsed = make(map[string]bool)
-	var resultKey string
+	var resultTag string
 	var tag *Tag
-	var data common.Map
+	var object common.Map
+	var err error
+	var lines = make([]string, 0)
 	for scanner.Scan() {
-		line := scanner.Text()
+		lines = append(lines, scanner.Text())
+	}
+	for i := 0; i < len(lines); i++ {
+		var recordHeight = 0;
+		line := lines[i];
 		if strings.HasPrefix(line, "import") {
 			err := d.importWorkflow(context, resource, strings.TrimSpace(string(line[5:])))
 			if err != nil {
@@ -115,81 +212,125 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 			}
 			continue
 		}
-		isHeaderLine := isLetter(line[0])
-		decoder := d.factory.Create(strings.NewReader(line))
-		if isHeaderLine {
-			record = &toolbox.DelimiteredRecord{
-				Delimiter: ",",
-			}
-			err := decoder.Decode(record)
-			if err != nil {
-				return nil, err
-			}
-			tag = NewTag(record.Columns[0])
-			var isResultKey = resultKey == "";
-			if isResultKey {
-				resultKey = tag.Name
-			}
-			err = d.processTag(context, tag, result, isResultKey, deferredReferences)
-			if err != nil {
-				return nil, err
-			}
+		if strings.HasPrefix(line, "//") {
 			continue
 		}
 
+		isHeaderLine := isLetter(line[0])
+		decoder := d.factory.Create(strings.NewReader(line))
+		if isHeaderLine {
+			record, tag, resultTag, err = d.processHeaderLine(context, result, decoder, resultTag, deferredReferences)
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
 		if tag == nil {
 			continue
 		}
-		if tag.IsArray {
-			data = common.NewMap()
-			result.GetCollection(tag.Name).Push(data)
-		} else {
-			data = result.GetMap(tag.Name)
-		}
+
+		record.Record = make(map[string]interface{})
 		err := decoder.Decode(record)
 		if err != nil {
 			return nil, err
 		}
-		for i := 1; i < len(record.Columns); i++ {
-			column := record.Columns[i]
-			if column == "" {
+		if record.IsEmpty() {
+			continue
+		}
+		object = getObject(tag, result)
+		for j := 1; j < len(record.Columns); j++ {
+			fieldExpressions := record.Columns[j]
+			if fieldExpressions == "" {
 				continue
 			}
-			value, has := record.Record[column];
-			if !has || value == nil ||  toolbox.AsString(value) == "" {
+
+			value, has := record.Record[fieldExpressions];
+			if !has || value == nil || toolbox.AsString(value) == "" {
 				continue
 			}
+			field := NewFieldExpression(fieldExpressions)
 			textValue := toolbox.AsString(value)
 			val, isReference, err := d.normalizeValue(context, resource, textValue)
 			if err != nil {
 				return nil, err
 			}
-
 			if isReference {
 				referenceKey := toolbox.AsString(val)
 				deferredReferences[referenceKey] = func(reference interface{}) {
-					data.Put(column, reference)
+					object.Put(fieldExpressions, reference)
 					referenceUsed[referenceKey] = true
 				}
 			} else {
-				data.Put(column, val)
+				field.Set(val, object)
+				if field.HasArrayComponent {
+					recordHeight = d.setArrayValues(field, i, lines, record, fieldExpressions, object, recordHeight)
+				}
 			}
 		}
+		i += recordHeight
 	}
-	for k, _ := range referenceUsed {
-		delete(deferredReferences, k)
+	err = checkedUnsuedReferences(referenceUsed, deferredReferences)
+	if err != nil {
+		return nil, err
 	}
-	if len(deferredReferences) > 0 {
-		var pendingKeys = make([]string, 0)
-		for k, _ := range deferredReferences {
-			pendingKeys = append(pendingKeys, k)
-		}
-		return nil, fmt.Errorf("Unresolved references: %v", strings.Join(pendingKeys, ","))
-	}
-	var workflowObject = result.GetMap(resultKey)
+	var workflowObject = result.GetMap(resultTag)
 	return workflowObject, nil
 }
 
+
+func checkedUnsuedReferences(referenceUsed map[string]bool, deferredReferences map[string]func(value interface{})) error {
+	for k, _ := range referenceUsed {
+		delete(deferredReferences, k)
+	}
+	if len(deferredReferences) == 0 {
+		return nil
+	}
+	var pendingKeys = make([]string, 0)
+	for k, _ := range deferredReferences {
+		pendingKeys = append(pendingKeys, k)
+	}
+	return fmt.Errorf("Unresolved references: %v", strings.Join(pendingKeys, ","))
+}
+
+
+
+
+
+func getObject(tag *Tag, result common.Map) (common.Map) {
+	var data common.Map
+	if tag.IsArray {
+		data = common.NewMap()
+		result.GetCollection(tag.Name).Push(data)
+	} else {
+		data = result.GetMap(tag.Name)
+	}
+	return data
+}
+
+func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []string, record *toolbox.DelimiteredRecord, fieldExpressions string, data common.Map, recordHeight int) (int) {
+	if field.HasArrayComponent {
+		var itemCount = 0;
+
+		for k := i + 1; k < len(lines); k++ {
+			arrayValueDecoder := d.factory.Create(strings.NewReader(lines[k]))
+			arrayItemRecord := &toolbox.DelimiteredRecord{
+				Columns:   record.Columns,
+				Delimiter: record.Delimiter,
+			}
+			arrayValueDecoder.Decode(arrayItemRecord)
+			itemValue := arrayItemRecord.Record[fieldExpressions]
+			if itemValue == nil || toolbox.AsString(itemValue)== "" {
+				break
+			}
+			itemCount++
+			field.Set(itemValue, data, itemCount)
+		}
+		if recordHeight < itemCount {
+			recordHeight = itemCount
+		}
+	}
+	return recordHeight
+}
 
 func isLetter(b byte) bool {
 	return (b >= 65 && b <= 93) || (b >= 97 && b <= 122 )
@@ -198,7 +339,7 @@ func isLetter(b byte) bool {
 func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, resourceDetail string) (*Resource, error) {
 	var URL, credentailFile string
 	if strings.Contains(resourceDetail, ",") {
-		var pair= strings.Split(resourceDetail, ",")
+		var pair = strings.Split(resourceDetail, ",")
 		URL = strings.TrimSpace(pair[0])
 		credentailFile = strings.TrimSpace(pair[1])
 	} else if strings.Contains(resourceDetail, "://") {
@@ -215,7 +356,6 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 		CredentialFile: credentailFile,
 	}, nil
 }
-
 
 func (d *WorkflowDao) normalizeValue(context *Context, resource *Resource, value string) (interface{}, bool, error) {
 

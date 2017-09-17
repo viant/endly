@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strings"
 	"github.com/viant/toolbox/storage"
+	"github.com/viant/toolbox"
+	"path"
 )
-
 
 type Resource struct {
 	Name           string
@@ -50,7 +51,6 @@ func (r *Resource) AuthURL() (string, error) {
 	return strings.Replace(r.URL, "//", "//"+username+"@"+password, 1), nil
 }
 
-
 func (r *Resource) DownloadText() (string, error) {
 	var result, err = r.Download()
 	if err != nil {
@@ -58,7 +58,6 @@ func (r *Resource) DownloadText() (string, error) {
 	}
 	return string(result), err
 }
-
 
 func (r *Resource) Download() ([]byte, error) {
 	service, err := storage.NewServiceForURL(r.URL, r.CredentialFile)
@@ -78,4 +77,15 @@ func (r *Resource) Download() ([]byte, error) {
 		return nil, err
 	}
 	return content, err
+}
+
+func NewFileResource(resource string) *Resource {
+	if ! strings.HasPrefix(resource, "/") {
+		fileName, _, _ := toolbox.CallerInfo(2)
+		parent, _ := path.Split(fileName)
+		resource = path.Join(parent, resource)
+	}
+	return &Resource{
+		URL: toolbox.FileSchema + resource,
+	}
 }

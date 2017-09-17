@@ -15,7 +15,7 @@ import (
 	"unicode/utf8"
 )
 
-const HttpRunnerServiceId = " http/runner"
+const HttpRunnerServiceId = "http/runner"
 
 type Cookies []*http.Cookie
 
@@ -73,6 +73,20 @@ type HttpRequest struct {
 	Extraction DataExtractions
 }
 
+func (r *HttpRequest) Expand(context *Context) *HttpRequest {
+	header := make(map[string][]string)
+
+	copyExpandedHeaders(r.Header, header, context)
+	return &HttpRequest{
+		MatchBody:context.Expand(r.MatchBody),
+		Method:r.Method,
+		URL:context.Expand(r.URL),
+		Body:context.Expand(r.Body),
+		Header:header,
+		Extraction:r.Extraction,
+	}
+}
+
 type HttpResponse struct {
 	Request     *HttpRequest
 	Code        int
@@ -112,6 +126,8 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, r
 	var state = context.State()
 	cookies := state.GetMap("cookies")
 	var reader io.Reader
+
+	req = req.Expand(context)
 	if len(req.Body) > 0 {
 		reader = strings.NewReader(req.Body)
 	}
@@ -127,13 +143,13 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, r
 		Request: req,
 	}
 	result.Responses = append(result.Responses, response)
-
 	startTime := time.Now()
 	httpResponse, err := client.Do(httpRequest)
 	if err != nil {
 		response.Error = fmt.Sprintf("%v", err)
 		return nil
 	}
+
 	endTime := time.Now()
 	response.Header = make(map[string][]string)
 	copyHeaders(httpResponse.Header, response.Header)
@@ -149,7 +165,6 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, r
 
 	response.Code = httpResponse.StatusCode
 	response.TimeTakenMs = int((endTime.UnixNano() - startTime.UnixNano()) / int64(time.Millisecond))
-
 	for _, candidate := range request.Requests {
 		if candidate.MatchBody != "" && strings.Contains(response.Body, candidate.MatchBody) {
 			return s.sendRequest(context, client, candidate, sessionCookies, request, result)
@@ -204,6 +219,7 @@ func readBody(httpResponse *http.Response, response *HttpResponse) {
 		response.Body = string(body)
 	}
 }
+
 func copyHeaders(source http.Header, target http.Header) {
 	for key, values := range source {
 		if _, has := target[key]; !has {
@@ -220,6 +236,23 @@ func copyHeaders(source http.Header, target http.Header) {
 	}
 }
 
+
+func copyExpandedHeaders(source http.Header, target http.Header, context *Context) {
+	for key, values := range source {
+		if _, has := target[key]; !has {
+			target[key] = make([]string, 0)
+		}
+		if len(values) == 1 {
+			target.Set(key, context.Expand(values[0]))
+		} else {
+
+			for _, value := range values {
+				target.Add(key, context.Expand(value))
+			}
+		}
+	}
+}
+
 func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceResponse {
 	var response = &ServiceResponse{
 		Status: "ok",
@@ -231,6 +264,10 @@ func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceR
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to send request: %v, %v", actualRequest, err)
 		}
+
+
+		fmt.Printf("Response: %v\n", response.Response)
+
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 	}

@@ -1,0 +1,13 @@
+Workflow,,,Name,Description,Variables,Tasks,,
+,,,simple,Simple http request and response test,#simple/variables.json,%Tasks,,
+[]Tasks,Seq,,Name,Description,,Actions,,
+,1,,First Set of requestss,This will test abc,,%Action1,,
+[]Action1,,Service ,Action ,Description,Variables,Request.[]Requests.URL,Request.[]Requests.Method,
+,,http/runner,send,,"[{""name"":""httpResponses"", ""source"":""Responses""}]",$appServer/path1,GET,
+,,,,,,$appServer/path2,GET,
+,,,,,,$appServer/path3,GET,
+,,,,,,,,
+[]Action1,,Service ,Action ,,,Request.[]Expected.Body,Request.[]Expected.Headers,Request.Actual
+,,validator,assert,,,path1,,$httpResponses
+"assert.True(t, ok)",,,,,,path2,,
+,,,,,,path3,,

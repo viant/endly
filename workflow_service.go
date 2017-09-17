@@ -143,6 +143,7 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 			if err != nil {
 				return response, err
 			}
+
 			serviceResponse := service.Run(context, serviceRequest)
 			serviceActivity.ServiceResponse = serviceResponse
 			if serviceResponse.Error != "" {
@@ -177,10 +178,11 @@ func (s *WorkflowService) Run(context *Context, request interface{}) *ServiceRes
 		workflow, err := s.dao.Load(context, actualRequest.Source)
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to load workflow: %v, %v", actualRequest.Source, err)
-		}
-		err = s.Register(workflow)
-		if err != nil {
-			response.Error = fmt.Sprintf("Failed to register workflow: %v, %v", actualRequest.Source, err)
+		} else {
+			err = s.Register(workflow)
+			if err != nil {
+				response.Error = fmt.Sprintf("Failed to register workflow: %v, %v", actualRequest.Source, err)
+			}
 		}
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
@@ -208,6 +210,7 @@ func NewWorkflowService() Service {
 	var result = &WorkflowService{
 		AbstractService: NewAbstractService(WorkflowServiceId),
 		dao:             NewWorkflowDao(),
+		registry:        make(map[string]*Workflow),
 	}
 	result.AbstractService.Service = result
 	return result

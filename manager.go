@@ -3,6 +3,7 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/toolbox"
+	"strings"
 )
 
 const AppName = "endly - End To End Functional Testing "
@@ -43,7 +44,11 @@ func (s *manager) Service(name string) (Service, error) {
 	if result, found := s.services[name]; found {
 		return result, nil
 	}
-	return nil, fmt.Errorf("Failed to lookup app: %v", name)
+	var available = make([]string, 0)
+	for candidate, _ := range s.services {
+		available = append(available, candidate)
+	}
+	return nil, fmt.Errorf("Failed to lookup service: '%v' in [%v]", name, strings.Join(available, ","))
 }
 
 func (s *manager) Register(service Service) {
@@ -84,6 +89,7 @@ func NewManager() Manager {
 	result.Register(NewHttpRunnerService())
 	result.Register(NewProcessService())
 	result.Register(NewSystemService())
+	result.Register(NewValidatorService())
 	result.Register(NewWorkflowService())
 	result.Register(NewVersionControlService())
 	result.Register(NewJdkService())
