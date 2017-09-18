@@ -9,7 +9,7 @@ import (
 
 const SystemServiceId = "system"
 const (
-	serviceTypeError = iota
+	serviceTypeError      = iota
 	serviceTypeInitDaemon
 	serviceTypeLaunchCtl
 	serviceTypeStdService
@@ -17,18 +17,21 @@ const (
 )
 
 type ServiceStartRequest struct {
-	Target  *Resource
-	Service string
+	Target    *Resource
+	Service   string
+	Exclusion string
 }
 
 type ServiceStopRequest struct {
-	Target  *Resource
-	Service string
+	Target    *Resource
+	Service   string
+	Exclusion string
 }
 
 type ServiceStatusRequest struct {
-	Target  *Resource
-	Service string
+	Target    *Resource
+	Service   string
+	Exclusion string
 }
 
 type ServiceInfo struct {
@@ -75,11 +78,27 @@ func (s *systemService) Run(context *Context, request interface{}) *ServiceRespo
 	return response
 }
 
-func (s *systemService) determineServiceType(context *Context, service string, target *Resource) (int, string, error) {
+func (s *systemService) NewRequest(action string) (interface{}, error) {
+	switch action {
+	case "status":
+		return &ServiceStatusRequest{}, nil
+	case "start":
+		return &ServiceStartRequest{}, nil
+	case "stop":
+		return &ServiceStopRequest{}, nil
+
+	}
+	return s.AbstractService.NewRequest(action)
+}
+
+func (s *systemService) determineServiceType(context *Context, service, exclusion string, target *Resource) (int, string, error) {
+	if exclusion != "" {
+		exclusion = " | grep -v " + exclusion
+	}
 	commandResult, err := context.Execute(target, &ManagedCommand{
 		Executions: []*Execution{
 			{
-				Command: "ls /Library/LaunchDaemons/ | grep " + service,
+				Command: fmt.Sprintf("ls /Library/LaunchDaemons/ | grep %v %v", service, exclusion),
 			},
 		},
 	})
@@ -143,10 +162,15 @@ func extractServiceInfo(state map[string]string, info *ServiceInfo) {
 }
 
 func (s *systemService) checkService(context *Context, request *ServiceStatusRequest) (*ServiceInfo, error) {
-	serviceType, serviceInit, err := s.determineServiceType(context, request.Service, request.Target)
+
+	if request.Service == "" {
+		return nil, fmt.Errorf("Service was empty")
+	}
+	serviceType, serviceInit, err := s.determineServiceType(context, request.Service, request.Exclusion, request.Target)
 	if err != nil {
 		return nil, err
 	}
+
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -164,10 +188,15 @@ func (s *systemService) checkService(context *Context, request *ServiceStatusReq
 		return nil, fmt.Errorf("Unknown daemon service type")
 	case serviceTypeLaunchCtl:
 
+		exclusion := request.Exclusion
+		if exclusion != "" {
+			exclusion = " | grep -v " + exclusion
+		}
+
 		commandResult, err := context.ExecuteAsSuperUser(target, &ManagedCommand{
 			Executions: []*Execution{
 				{
-					Command: fmt.Sprintf("launchctl list | grep %v", request.Service),
+					Command: fmt.Sprintf("launchctl list | grep %v %v", request.Service, exclusion),
 					Extraction: DataExtractions{
 						{
 							Key:     "pid",
@@ -240,6 +269,7 @@ func (s *systemService) stopService(context *Context, request *ServiceStopReques
 	serviceInfo, err := s.checkService(context, &ServiceStatusRequest{
 		Target:  request.Target,
 		Service: request.Service,
+		Exclusion:request.Exclusion,
 	})
 	if err != nil {
 		return nil, err
@@ -278,6 +308,7 @@ func (s *systemService) stopService(context *Context, request *ServiceStopReques
 	return s.checkService(context, &ServiceStatusRequest{
 		Target:  request.Target,
 		Service: request.Service,
+		Exclusion:request.Exclusion,
 	})
 }
 
@@ -285,6 +316,7 @@ func (s *systemService) startService(context *Context, request *ServiceStartRequ
 	serviceInfo, err := s.checkService(context, &ServiceStatusRequest{
 		Target:  request.Target,
 		Service: request.Service,
+		Exclusion:request.Exclusion,
 	})
 	if err != nil {
 		return nil, err
@@ -323,15 +355,8 @@ func (s *systemService) startService(context *Context, request *ServiceStartRequ
 	return s.checkService(context, &ServiceStatusRequest{
 		Target:  request.Target,
 		Service: request.Service,
+		Exclusion:request.Exclusion,
 	})
-}
-
-func (s *systemService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case "command":
-		return &ScriptCommand{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
 }
 
 func NewSystemService() Service {
