@@ -18,6 +18,9 @@ func Expand(state common.Map, text string) string {
 		return text
 	}
 	var expandVariable = func(variableName, result string) string {
+
+
+
 		value, has := state.GetValue(string(variableName[1:]))
 		if has {
 			return result + toolbox.AsString(value)
@@ -57,7 +60,7 @@ func Expand(state common.Map, text string) string {
 			parsingState = expectVariableStart
 
 		case expectVariableName:
-			if unicode.IsLetter(rune) || unicode.IsDigit(rune) || aChar == "." {
+			if unicode.IsLetter(rune) || unicode.IsDigit(rune) || aChar == "." || aChar == "_" {
 				variableName += aChar
 				continue
 			}
