@@ -19,7 +19,7 @@ type OperatingSystemDeployment struct {
 type BuildGoal struct {
 	Name                string
 	Command             *ManagedCommand
-	Transfers           *TransfersRequest
+	Transfers           *TransferCopyRequest
 	VerificationCommand *ManagedCommand
 }
 
