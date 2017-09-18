@@ -81,8 +81,8 @@ func TestNewDockerService_Run(t *testing.T) {
 				Name: "testmysql",
 			},
 			Image: "mysql:5.6",
-			MappedPort: map[int]int{
-				3306: 3306,
+			MappedPort: map[string]string{
+				"3306": "3306",
 			},
 			Env: map[string]string{
 				"MYSQL_ROOT_PASSWORD": "****",

@@ -37,13 +37,14 @@ type DockerImageInfo struct {
 }
 
 type DockerRunRequest struct {
+	SysPath []string
 	Target     *Resource
 	Image      string
 	Port       string
 	Credential string
 	Env        map[string]string
 	Mount      map[string]string
-	MappedPort map[int]int
+	MappedPort map[string]string
 	Workdir    string
 }
 
@@ -86,6 +87,8 @@ type DockerService struct {
 
 func (s *DockerService) NewRequest(action string) (interface{}, error) {
 	switch action {
+	case "run":
+		return &DockerRunRequest{}, nil
 	case "syspath":
 		return &DockerSystemPathRequest{}, nil
 	case "images":
@@ -193,6 +196,12 @@ func (s *DockerService) runContainer(context *Context, request *DockerRunRequest
 		return nil, fmt.Errorf("Image was empty for %v", request.Target.URL)
 	}
 
+	if len(request.SysPath) > 0 {
+		s.SysPath = request.SysPath
+	}
+
+
+
 	var secure = ""
 	if request.Credential != "" {
 		credential := &storage.PasswordCredential{}
@@ -207,13 +216,13 @@ func (s *DockerService) runContainer(context *Context, request *DockerRunRequest
 		args += fmt.Sprintf("-e %v=%v ", k, context.Expand(v))
 	}
 	for k, v := range request.Mount {
-		args += fmt.Sprintf("-v %v:%v ", k, context.Expand(v))
+		args += fmt.Sprintf("-v %v:%v ", context.Expand(k), context.Expand(v))
 	}
 	for k, v := range request.MappedPort {
-		args += fmt.Sprintf("-p %v:%v ", k, v)
+		args += fmt.Sprintf("-p %v:%v ", context.Expand(toolbox.AsString(k)), context.Expand(toolbox.AsString(v)))
 	}
 	if request.Workdir != "" {
-		args += fmt.Sprintf("-w %v ", request.Workdir)
+		args += fmt.Sprintf("-w %v ", context.Expand(request.Workdir))
 	}
 	commandInfo, err := s.executeSecureDockerCommand(secure, context, request.Target, dockerIgnoreErrors, "docker run --name %v %v -d %v", request.Target.Name, args, request.Image)
 	if err != nil {
@@ -416,7 +425,7 @@ func (s *DockerService) executeSecureDockerCommand(secure string, context *Conte
 			{
 				Secure:  secure,
 				Command: command,
-				Error:   errors,
+				Error:   append(errors, []string{commandNotFound}...),
 			},
 		},
 	})
