@@ -7,8 +7,8 @@ import (
 type jdkService struct {
 }
 
-func (s *jdkService) setSdk(context *Context, request *SetSdkRequest) (*SetSdkResponse, error) {
-	var response = &SetSdkResponse{}
+func (s *jdkService) setSdk(context *Context, request *SdkSetRequest) (*SdkSetResponse, error) {
+	var response = &SdkSetResponse{}
 
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
