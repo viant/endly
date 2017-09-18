@@ -232,7 +232,7 @@ func (s *execService) openSession(context *Context, request *OpenSession) (*Clie
 		return nil, err
 	}
 
-	if !(target.ParsedURL.Scheme == "ssh" || target.ParsedURL.Scheme == "scp") {
+	if !(target.ParsedURL.Scheme == "ssh" || target.ParsedURL.Scheme == "scp" || target.ParsedURL.Scheme == "file") {
 		return nil, fmt.Errorf("Failed to open sessionName: invalid schema: %v", target.ParsedURL.Scheme)
 	}
 	sessions := context.Sessions()
@@ -248,12 +248,8 @@ func (s *execService) openSession(context *Context, request *OpenSession) (*Clie
 	if err != nil {
 		return nil, err
 	}
-	port := toolbox.AsInt(target.ParsedURL.Port())
-	if port == 0 {
-		port = 22
-	}
-
-	connection, err := ssh.NewClient(target.ParsedURL.Hostname(), port, authConfig)
+	hostname, port := getHostAndSSHPort(target)
+	connection, err := ssh.NewClient(hostname, port, authConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -286,6 +282,18 @@ func (s *execService) openSession(context *Context, request *OpenSession) (*Clie
 		return nil, err
 	}
 	return session, nil
+}
+
+func getHostAndSSHPort(target *Resource) (string, int) {
+	port := toolbox.AsInt(target.ParsedURL.Port())
+	if port == 0 {
+		port = 22
+	}
+	hostname := target.ParsedURL.Hostname()
+	if hostname == "" {
+		hostname = "127.0.0.1"
+	}
+	return hostname, port
 }
 
 func (s *execService) setEnvVariable(context *Context, session *ClientSession, info *CommandInfo, name, value string) error {
@@ -420,7 +428,7 @@ func (s *execService) runCommands(context *Context, request *CommandRequest) (*C
 	if err != nil {
 		return nil, err
 	}
-	var sessionName = target.Session()
+
 	//session, has := clientSessions[sessionName]
 	//if !has {
 	//	return nil, fmt.Errorf("Failed to lookup sessionName: %v", sessionName)
@@ -430,7 +438,7 @@ func (s *execService) runCommands(context *Context, request *CommandRequest) (*C
 	if options == nil {
 		options = NewExecutionOptions()
 	}
-	info := NewCommandInfo(sessionName)
+	info := NewCommandInfo(session.name)
 	context.SessionInfo().Log(info)
 	err = s.applyCommandOptions(context, options, session, info)
 	if err != nil {
@@ -445,7 +453,7 @@ func (s *execService) runCommands(context *Context, request *CommandRequest) (*C
 			return nil, err
 		}
 	}
-	info = NewCommandInfo(sessionName)
+	info = NewCommandInfo(session.name)
 	context.SessionInfo().Log(info)
 	for _, execution := range request.MangedCommand.Executions {
 		if execution.MatchOutput != "" {
@@ -478,6 +486,7 @@ func (s *execService) closeSession(context *Context, closeSession *CloseSession)
 }
 
 func (s *execService) Run(context *Context, request interface{}) *ServiceResponse {
+
 	var response = &ServiceResponse{
 		Status: "ok",
 	}
