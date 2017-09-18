@@ -119,8 +119,15 @@ func (f *FieldExpression) Set(value interface{}, target common.Map, indexes ...i
 
 	var action func(data common.Map, indexes ...int)
 	if !f.HasSubPath {
-		action = func(data common.Map, indexes ...int) {
-			data.Put(f.Field, value)
+		if f.IsArray {
+			action = func(data common.Map, indexes ...int) {
+				collection := target.GetCollection(f.Field)
+				(*collection)[index] = value
+			}
+		} else {
+			action = func(data common.Map, indexes ...int) {
+				data.Put(f.Field, value)
+			}
 		}
 
 	} else {
@@ -129,11 +136,12 @@ func (f *FieldExpression) Set(value interface{}, target common.Map, indexes ...i
 		}
 	}
 
-	if f.IsArray {
+	if f.IsArray  {
 		index, indexes = shiftIndex(indexes...)
 		collection := target.GetCollection(f.Field)
 		collection.ExpandWithMap(index + 1)
 		data, _ = (*collection)[index].(common.Map)
+
 	} else if f.HasSubPath {
 		data = target.GetMap(f.Field)
 	} else {
@@ -162,11 +170,12 @@ func NewFieldExpression(expression string) *FieldExpression {
 	if result.HasSubPath {
 		dotPosition := strings.Index(expression, ".")
 		result.Field = string(result.Field[:dotPosition])
-		if result.IsArray {
-			result.Field = string(result.Field[2:])
-		}
 		result.Child = NewFieldExpression(string(expression[dotPosition+1:]))
 	}
+	if result.IsArray {
+		result.Field = string(result.Field[2:])
+	}
+
 	return result
 }
 
@@ -269,7 +278,7 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 		}
 		i += recordHeight
 	}
-	err = checkedUnsuedReferences(referenceUsed, deferredReferences)
+	err = checkeUnsuedReferences(referenceUsed, deferredReferences)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +286,7 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 	return workflowObject, nil
 }
 
-func checkedUnsuedReferences(referenceUsed map[string]bool, deferredReferences map[string]func(value interface{})) error {
+func checkeUnsuedReferences(referenceUsed map[string]bool, deferredReferences map[string]func(value interface{})) error {
 	for k := range referenceUsed {
 		delete(deferredReferences, k)
 	}
@@ -314,7 +323,7 @@ func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []stri
 			}
 			arrayValueDecoder.Decode(arrayItemRecord)
 			itemValue := arrayItemRecord.Record[fieldExpressions]
-			if itemValue == nil || toolbox.AsString(itemValue) == "" {
+			if itemValue == nil || toolbox.AsString(itemValue) == "" || (! strings.HasPrefix(lines[k], ",")) {
 				break
 			}
 			itemCount++
@@ -371,14 +380,14 @@ func (d *WorkflowDao) normalizeValue(context *Context, resource *Resource, value
 		var jsonObject = make(map[string]interface{})
 		err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(value)).Decode(&jsonObject)
 		if err != nil {
-			return nil, false, err
+			return nil, false, fmt.Errorf("Failed to decode: %v %v", value, err)
 		}
 		return jsonObject, false, nil
 	case jsonArrayPrefix:
-		var jsonArray = make([]map[string]interface{}, 0)
+		var jsonArray = make([]interface{}, 0)
 		err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(value)).Decode(&jsonArray)
 		if err != nil {
-			return nil, false, err
+			return nil, false, fmt.Errorf("Failed to decode: %v %v", value, err)
 		}
 		return jsonArray, false, nil
 

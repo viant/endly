@@ -31,6 +31,14 @@ func TestNewFieldExpression(t *testing.T) {
 		assert.False(t, expr.IsArray)
 		assert.Equal(t, "Headers", expr.Field)
 	}
+
+	expr = endly.NewFieldExpression("[]Arr")
+	{
+		assert.False(t, expr.HasSubPath)
+		assert.True(t, expr.HasArrayComponent)
+		assert.True(t, expr.IsArray)
+		assert.Equal(t, "Arr", expr.Field)
+	}
 }
 
 func TestFieldExpression_Set(t *testing.T) {

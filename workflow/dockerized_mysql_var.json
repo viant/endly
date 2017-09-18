@@ -1,0 +1,41 @@
+[
+  {
+    "name": "serviceInstanceName",
+    "type": "const",
+    "source": "$params.serviceInstanceName"
+  },
+  {
+    "name": "remoteTarget",
+    "type": "const",
+    "scope": "in",
+    "source": {
+      "Name": "$params.serviceInstanceName",
+      "URL": "$params.url",
+      "Credential": "$params.credential"
+    }
+  },
+  {
+    "name": "serviceInstanceName",
+    "type": "const",
+    "source": "$params.serviceInstanceName"
+  },
+  {
+    "name": "mycnfFile",
+    "type": "const",
+    "source": "/tmp/my${serviceInstanceName}.cnf"
+  },
+  {
+    "name": "mycnfTransfer",
+    "type": "const",
+    "scope": "in",
+    "source": {
+      "Source": {
+        "URL": "$params.mycnfUrl",
+        "Credential": "$params.mycnfUrlCredential"
+      },
+      "Target": {
+        "URL": "file://$mycnfFile"
+      }
+    }
+  }
+]

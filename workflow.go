@@ -1,18 +1,20 @@
 package endly
 
 type ServiceAction struct {
-	Enabled   bool
-	Service   string
-	Action    string
-	Variables Variables
-	Request   interface{}
-	SleepInMs int
+	RunCriteria string
+	Service     string
+	Action      string
+	Description string
+	Variables   Variables
+	Request     interface{}
+	SleepInMs   int
+	IgnoreError bool
 }
 
 type WorkflowTask struct {
+	RunCriteria string
 	Seq         int
 	Name        string
-	UseCase     string
 	Description string
 	Actions     []*ServiceAction
 	Variables   Variables
@@ -20,7 +22,6 @@ type WorkflowTask struct {
 }
 
 type Workflow struct {
-	Workflows   map[string]*Workflow
 	Name        string
 	Description string
 	Variables   Variables
