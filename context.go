@@ -183,7 +183,7 @@ func (c *Context) Transfer(transfers ...*Transfer) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	response := transferService.Run(c, &TransfersRequest{Transfers: transfers})
+	response := transferService.Run(c, &TransferCopyRequest{Transfers: transfers})
 	if response.Error != "" {
 		return nil, errors.New(response.Error)
 	}
