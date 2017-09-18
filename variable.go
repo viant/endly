@@ -3,6 +3,7 @@ package endly
 import (
 	"github.com/viant/endly/common"
 	"strings"
+	"github.com/viant/toolbox"
 )
 
 var VariableDefaultScope = "inout"
@@ -11,7 +12,7 @@ var VariableConstant = "const"
 type Variable struct {
 	Name   string
 	Type   string //const,var
-	Source string
+	Source interface{}
 	Scope  string //init, in, out
 }
 
@@ -40,10 +41,14 @@ func (v *Variables) Apply(in, out common.Map, scope string) {
 			continue
 		}
 		if variable.IsConstantType() {
-			out.SetValue(variable.Name, Expand(in, variable.Source))
+			if toolbox.IsMap(variable.Source){
+				out.SetValue(variable.Name, expandMap(variable.Source, in))
+			} else {
+				out.SetValue(variable.Name, Expand(in, toolbox.AsString(variable.Source)))
+			}
 		}
 
-		if value, has := in.GetValue(variable.Source); has {
+		if value, has := in.GetValue(toolbox.AsString(variable.Source)); has {
 			out.SetValue(variable.Name, value)
 		}
 	}
