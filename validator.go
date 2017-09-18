@@ -12,6 +12,16 @@ type Validator struct {
 	SkipFields map[string]bool
 }
 
+//Check checks expected vs actual value, and returns true if all assertion passes.
+func (s *Validator) Check(expected, actual interface{})(bool, error) {
+	var response = &ValidatorAssertResponse{}
+	err := s.Assert(expected, actual, response, "")
+	if err != nil {
+		return false, err
+	}
+	return !response.HasFailure(), nil
+}
+
 func (s *Validator) Assert(expected, actual interface{}, response *ValidatorAssertResponse, path string) error {
 	if toolbox.IsValueOfKind(actual, reflect.Slice) {
 		if toolbox.IsValueOfKind(expected, reflect.Map) { //convert actual slice to map using expected indexBy directive
