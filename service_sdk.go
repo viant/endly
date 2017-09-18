@@ -4,14 +4,14 @@ import (
 	"fmt"
 )
 
-const JsdServiceId = "jdkService"
+const SdkServiceId = "sdkService"
 
-type SetSdkResponse struct {
+type SdkSetResponse struct {
 	Home  string
 	Build string
 }
 
-type SetSdkRequest struct {
+type SdkSetRequest struct {
 	Sdk     string
 	Version string
 	Target  *Resource
@@ -28,7 +28,7 @@ func (s *sdkService) Run(context *Context, request interface{}) *ServiceResponse
 	}
 	var err error
 	switch actualRequest := request.(type) {
-	case *SetSdkRequest:
+	case *SdkSetRequest:
 		response.Response, err = s.setSdk(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to run sdk: %v, %v", actualRequest.Sdk, err)
@@ -43,10 +43,10 @@ func (s *sdkService) Run(context *Context, request interface{}) *ServiceResponse
 }
 
 func (t *sdkService) NewRequest(action string) (interface{}, error) {
-	return &SetSdkRequest{}, nil
+	return &SdkSetRequest{}, nil
 }
 
-func (s *sdkService) setSdk(context *Context, request *SetSdkRequest) (*SetSdkResponse, error) {
+func (s *sdkService) setSdk(context *Context, request *SdkSetRequest) (*SdkSetResponse, error) {
 	switch request.Sdk {
 	case "jdk":
 		return s.jdkService.setSdk(context, request)
@@ -57,7 +57,7 @@ func (s *sdkService) setSdk(context *Context, request *SetSdkRequest) (*SetSdkRe
 func NewJdkService() Service {
 	var result = &sdkService{
 		jdkService:      &jdkService{},
-		AbstractService: NewAbstractService(JsdServiceId),
+		AbstractService: NewAbstractService(SdkServiceId),
 	}
 	result.AbstractService.Service = result
 	return result
