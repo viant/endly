@@ -30,15 +30,15 @@ func TestProcessService_Run(t *testing.T) {
 			Arguments: []string{"--dbpath", "/tmp"},
 		})
 		assert.Equal(t, "", response.Error)
-		info, ok := response.Response.(*endly.ProcessInfo)
+		serviceResponse, ok := response.Response.(*endly.ProcessStartResponse)
 		assert.True(t, ok)
-		assert.True(t, info.Pid > 0)
+		assert.True(t, serviceResponse.Info[0].Pid > 0)
 
 		response = srv.Run(context, &endly.ProcessStopRequest{
 			Target: &endly.Resource{
 				URL: "scp://127.0.0.1/",
 			},
-			Pid: info.Pid,
+			Pid: serviceResponse.Info[0].Pid,
 		})
 		assert.Equal(t, "", response.Error)
 	}

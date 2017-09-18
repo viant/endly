@@ -21,6 +21,11 @@ type ProcessStartRequest struct {
 	Arguments     []string
 }
 
+type ProcessStartResponse struct {
+	Command string
+	Info []*ProcessInfo
+}
+
 type ProcessInfo struct {
 	Name      string
 	Pid       int
@@ -146,11 +151,13 @@ func indexProcesses(processes ...*ProcessInfo) map[int]*ProcessInfo {
 	return result
 }
 
-func (s *processService) startProcess(context *Context, request *ProcessStartRequest) (*ProcessInfo, error) {
+func (s *processService) startProcess(context *Context, request *ProcessStartRequest) (*ProcessStartResponse, error) {
 	origProcesses, err := s.checkProcess(context, &ProcessStatusRequest{
 		Target:  request.Target,
 		Command: request.Command,
 	})
+
+	var result = &ProcessStartResponse{}
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +174,7 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 	}
 	changeDirCommand := fmt.Sprintf("cd %v ", request.Directory)
 	startCommand := fmt.Sprintf("nohup %v %v &", request.Command, strings.Join(request.Arguments, " "))
-	commandInfo, err := context.Execute(request.Target, &ManagedCommand{
+	 _, err = context.Execute(request.Target, &ManagedCommand{
 		Options: request.Options,
 		Executions: []*Execution{
 			{
@@ -190,24 +197,18 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 		return nil, err
 	}
 
-	if len(newProcesses) == 1 {
-		return newProcesses[0], nil
-	}
+	result.Info = make([]*ProcessInfo, 0)
 	existingProcesses := indexProcesses(origProcesses...)
-	var result *ProcessInfo
+
 	for _, candidate := range newProcesses {
 		if _, has := existingProcesses[candidate.Pid]; !has {
-			result = candidate
+			result.Info = append(result.Info, candidate)
 			break
 		}
 	}
-	if result == nil {
-		return nil, fmt.Errorf("Failed to get info about prorcess %v", request.Command)
-	}
-	result.Stdout = commandInfo.Stdout()
-	result.Stdin = fmt.Sprintf("%v && %v", changeDirCommand, startCommand)
 	return result, nil
 }
+
 
 func (s *processService) NewRequest(action string) (interface{}, error) {
 	switch action {
