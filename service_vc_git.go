@@ -24,7 +24,7 @@ func addIfMatched(line, fragment string, result *[]string) {
 
 }
 
-func extractGitStatus(stdout string, response *InfoResponse) {
+func extractGitStatus(stdout string, response *VcInfoResponse) {
 	if strings.Contains(stdout, "nothing to commit") {
 		response.IsUptoDate = true
 	}
@@ -58,7 +58,7 @@ func extractGitStatus(stdout string, response *InfoResponse) {
 	}
 }
 
-func extractRevision(stdout string, response *InfoResponse) {
+func extractRevision(stdout string, response *VcInfoResponse) {
 	if strings.Contains(stdout, "unknown revision") {
 		response.IsVersionControlManaged = true
 		return
@@ -67,12 +67,12 @@ func extractRevision(stdout string, response *InfoResponse) {
 
 }
 
-func (s *gitService) checkInfo(context *Context, request *StatusRequest) (*InfoResponse, error) {
+func (s *gitService) checkInfo(context *Context, request *VcStatusRequest) (*VcInfoResponse, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-	var result = &InfoResponse{}
+	var result = &VcInfoResponse{}
 
 	response, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
@@ -117,7 +117,31 @@ func (s *gitService) checkInfo(context *Context, request *StatusRequest) (*InfoR
 	return result, nil
 }
 
-func (s *gitService) checkout(context *Context, request *CheckoutRequest) (*InfoResponse, error) {
+func (s *gitService) pull(context *Context, request *VcPullRequest) (*VcInfoResponse, error) {
+	target, err := context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, err
+	}
+	response, err := context.Execute(request.Target, &ManagedCommand{
+		Executions: []*Execution{
+			{
+				Command: "git pull",
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if CheckNoSuchFileOrDirectory(response.Stdout()) {
+		return nil, fmt.Errorf("Failed to checkout %v", response.Stdout())
+	}
+
+	return s.checkInfo(context, &VcStatusRequest{
+		Target: target,
+	})
+}
+
+func (s *gitService) checkout(context *Context, request *VcCheckoutRequest) (*VcInfoResponse, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -136,13 +160,13 @@ func (s *gitService) checkout(context *Context, request *CheckoutRequest) (*Info
 		return nil, fmt.Errorf("Failed to checkout %v", response.Stdout())
 	}
 
-	return s.checkInfo(context, &StatusRequest{
+	return s.checkInfo(context, &VcStatusRequest{
 		Target: target,
 	})
 }
 
-func (s *gitService) commit(context *Context, request *CommitRequest) (*InfoResponse, error) {
-	checkInfo, err := s.checkInfo(context, &StatusRequest{
+func (s *gitService) commit(context *Context, request *VcCommitRequest) (*VcInfoResponse, error) {
+	checkInfo, err := s.checkInfo(context, &VcStatusRequest{
 		Target: request.Target,
 	})
 	if err != nil {
@@ -183,7 +207,7 @@ func (s *gitService) commit(context *Context, request *CommitRequest) (*InfoResp
 			},
 		},
 	})
-	return s.checkInfo(context, &StatusRequest{
+	return s.checkInfo(context, &VcStatusRequest{
 		Target: request.Target,
 	})
 }

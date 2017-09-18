@@ -20,7 +20,7 @@ func TestService_RunStatusRequest(t *testing.T) {
 	assert.NotNil(t, service)
 
 	context := manager.NewContext(toolbox.NewContext())
-	response := service.Run(context, &endly.StatusRequest{
+	response := service.Run(context, &endly.VcStatusRequest{
 		Target: &endly.Resource{
 			URL:  testProject,
 			Type: "git",
@@ -29,7 +29,7 @@ func TestService_RunStatusRequest(t *testing.T) {
 	assert.NotNil(t, response)
 
 	assert.Equal(t, "", response.Error)
-	info, ok := response.Response.(*endly.InfoResponse)
+	info, ok := response.Response.(*endly.VcInfoResponse)
 	assert.True(t, ok)
 	assert.Equal(t, "master", info.Branch)
 	assert.Equal(t, "3d764da443b3852260666d2c527872e2629e40e2", info.Revision)
@@ -54,7 +54,7 @@ func TestService_RunStatusRequest(t *testing.T) {
 //	assert.Nil(t, err)
 //
 //	context := manager.NewContext(toolbox.NewContext())
-//	response := service.Run(context, &endly.CheckoutRequest{
+//	response := service.Run(context, &endly.VcCheckoutRequest{
 //		Origin: &endly.Resource{
 //			URL: "https://github.com/adranwit/p",
 //		},

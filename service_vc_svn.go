@@ -8,12 +8,12 @@ import (
 
 type svnService struct{}
 
-func (s *svnService) checkInfo(context *Context, request *StatusRequest) (*InfoResponse, error) {
+func (s *svnService) checkInfo(context *Context, request *VcStatusRequest) (*VcInfoResponse, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-	var result = &InfoResponse{}
+	var result = &VcInfoResponse{}
 
 	response, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
@@ -57,7 +57,7 @@ func (s *svnService) checkInfo(context *Context, request *StatusRequest) (*InfoR
 	return result, nil
 }
 
-func readSvnStatus(commandResult *CommandInfo, response *InfoResponse) {
+func readSvnStatus(commandResult *CommandInfo, response *VcInfoResponse) {
 	response.New = make([]string, 0)
 	response.Modified = make([]string, 0)
 	response.Deleted = make([]string, 0)
@@ -84,30 +84,42 @@ func readSvnStatus(commandResult *CommandInfo, response *InfoResponse) {
 	}
 }
 
-func (s *svnService) checkout(context *Context, request *CheckoutRequest) (*InfoResponse, error) {
+func (s *svnService) pull(context *Context, request *VcPullRequest) (*VcInfoResponse, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
+	return s.runSecureSvnCommand(context, target, request.Origin, "up")
+}
 
-	username, password, err := request.Origin.LoadCredential()
+func (s *svnService) checkout(context *Context, request *VcCheckoutRequest) (*VcInfoResponse, error) {
+	target, err := context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, err
+	}
+	return s.runSecureSvnCommand(context, target, request.Origin, "co", request.Origin.URL, target.ParsedURL.Path)
+}
+
+func (s *svnService) runSecureSvnCommand(context *Context, target *Resource, origin *Resource, command string, arguments ...string) (*VcInfoResponse, error) {
+	username, password, err := origin.LoadCredential()
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = context.Execute(request.Target, &ManagedCommand{
+	_, err = context.Execute(target, &ManagedCommand{
 		Options: &ExecutionOptions{
 			TimeoutMs:   1000 * 30,
 			Terminators: []string{"Username", "Password for", "(yes/no)?", "Checked out revision"},
 		},
 		Executions: []*Execution{
 			{
-				Command: fmt.Sprintf("svn co --username=%v %v  %v", username, request.Origin.URL, target.ParsedURL.Path),
+				Command: fmt.Sprintf("svn %v --username=%v %v", username, strings.Join(arguments, " ")),
 				Error:   []string{"No such file or directory", "event not found"},
 			},
 			{
+				Secure:      password,
 				MatchOutput: "Password for",
-				Command:     fmt.Sprintf("%v", password),
+				Command:     "****",
 				Error:       []string{"No such file or directory", "event not found"},
 			},
 			{
@@ -120,12 +132,12 @@ func (s *svnService) checkout(context *Context, request *CheckoutRequest) (*Info
 	if err != nil {
 		return nil, err
 	}
-	return s.checkInfo(context, &StatusRequest{
+	return s.checkInfo(context, &VcStatusRequest{
 		Target: target,
 	})
 }
 
-func (s *svnService) commit(context *Context, request *CommitRequest) (*InfoResponse, error) {
+func (s *svnService) commit(context *Context, request *VcCommitRequest) (*VcInfoResponse, error) {
 
 	response, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
@@ -140,7 +152,7 @@ func (s *svnService) commit(context *Context, request *CommitRequest) (*InfoResp
 	if CheckNoSuchFileOrDirectory(response.Stdout()) {
 		return nil, fmt.Errorf("Failed to commit %v", response.Stdout())
 	}
-	return s.checkInfo(context, &StatusRequest{
+	return s.checkInfo(context, &VcStatusRequest{
 		Target: request.Target,
 	})
 }
