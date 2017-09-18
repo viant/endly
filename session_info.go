@@ -13,7 +13,7 @@ func (d *SessionInfo) Log(logEntry interface{}) error {
 
 	case *CommandInfo:
 		d.Logs = append(d.Logs, &SessionLog{Command: entry})
-	case *TransferRequest:
+	case *Transfer:
 		d.Logs = append(d.Logs, &SessionLog{Transfer: entry})
 	default:
 		return fmt.Errorf("Unsupported log entry: %T", logEntry)
@@ -29,5 +29,5 @@ func NewSessionInfo() *SessionInfo {
 
 type SessionLog struct {
 	Command  *CommandInfo
-	Transfer *TransferRequest
+	Transfer *Transfer
 }

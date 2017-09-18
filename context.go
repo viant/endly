@@ -175,7 +175,7 @@ func (c *Context) Execute(target *Resource, command *ManagedCommand) (*CommandIn
 	return nil, nil
 }
 
-func (c *Context) Transfer(transfers ...*TransferRequest) (interface{}, error) {
+func (c *Context) Transfer(transfers ...*Transfer) (interface{}, error) {
 	if transfers == nil {
 		return nil, nil
 	}
@@ -197,7 +197,6 @@ func (c *Context) Log(logEntry interface{}) error {
 
 func (c *Context) Expand(text string) string {
 	state := c.State()
-
 	return Expand(state, text)
 }
 

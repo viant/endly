@@ -10,7 +10,7 @@ const DeploymentServiceId = "deployment"
 
 type DeploymentConfig struct {
 	Before       *ManagedCommand
-	Transfer     *TransferRequest
+	Transfer     *Transfer
 	After        *ManagedCommand
 	VersionCheck *ManagedCommand
 	AppName      string
