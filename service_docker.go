@@ -87,7 +87,7 @@ type DockerService struct {
 func (s *DockerService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case "syspath":
-		return &DockerSystemPathRequest{},nil
+		return &DockerSystemPathRequest{}, nil
 	case "images":
 		return &DockerImagesRequest{}, nil
 	case "pull":

@@ -5,14 +5,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
-	"net/url"
 	"math/rand"
-	"time"
+	"net/url"
 	"os"
+	"time"
 )
-
-
-
 
 //TODO Execution detail Tracking of all run (time taken, request, response)
 
@@ -200,6 +197,7 @@ func (c *Context) Log(logEntry interface{}) error {
 
 func (c *Context) Expand(text string) string {
 	state := c.State()
+
 	return Expand(state, text)
 }
 
@@ -221,8 +219,6 @@ func (c *Context) Close() {
 		function()
 	}
 }
-
-
 
 func NewDefaultState() common.Map {
 	var result = common.NewMap()

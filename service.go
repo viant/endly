@@ -1,8 +1,8 @@
 package endly
 
 import (
-	"github.com/viant/endly/common"
 	"fmt"
+	"github.com/viant/endly/common"
 )
 
 type ServiceResponse struct {
@@ -17,7 +17,6 @@ type Service interface {
 	Run(context *Context, request interface{}) *ServiceResponse
 	NewRequest(action string) (interface{}, error)
 }
-
 
 type AbstractService struct {
 	Service

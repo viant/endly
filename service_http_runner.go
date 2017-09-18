@@ -78,12 +78,12 @@ func (r *HttpRequest) Expand(context *Context) *HttpRequest {
 
 	copyExpandedHeaders(r.Header, header, context)
 	return &HttpRequest{
-		MatchBody:context.Expand(r.MatchBody),
-		Method:r.Method,
-		URL:context.Expand(r.URL),
-		Body:context.Expand(r.Body),
-		Header:header,
-		Extraction:r.Extraction,
+		MatchBody:  context.Expand(r.MatchBody),
+		Method:     r.Method,
+		URL:        context.Expand(r.URL),
+		Body:       context.Expand(r.Body),
+		Header:     header,
+		Extraction: r.Extraction,
 	}
 }
 
@@ -236,7 +236,6 @@ func copyHeaders(source http.Header, target http.Header) {
 	}
 }
 
-
 func copyExpandedHeaders(source http.Header, target http.Header, context *Context) {
 	for key, values := range source {
 		if _, has := target[key]; !has {
@@ -264,9 +263,6 @@ func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceR
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to send request: %v, %v", actualRequest, err)
 		}
-
-
-		fmt.Printf("Response: %v\n", response.Response)
 
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)

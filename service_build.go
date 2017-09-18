@@ -7,7 +7,6 @@ import (
 	"net/url"
 )
 
-
 const BuildServiceId = "build"
 
 type OperatingSystemDeployment struct {
@@ -15,14 +14,12 @@ type OperatingSystemDeployment struct {
 	Config   *DeploymentConfig
 }
 
-
 type BuildGoal struct {
 	Name                string
 	Command             *ManagedCommand
 	Transfers           *TransfersRequest
 	VerificationCommand *ManagedCommand
 }
-
 
 type BuildMeta struct {
 	Name             string
@@ -57,7 +54,6 @@ func (m *BuildMeta) Match(operatingSystem *OperatingSystem, version string) *Ope
 	return nil
 }
 
-
 type BuildSpec struct {
 	Name    string //build name  like go, mvn, node, yarn
 	Version string
@@ -70,11 +66,9 @@ type BuildRequest struct {
 	Target    *Resource  //path to application to be build, Note that command may use $build.target variable. that expands to Target URL path
 }
 
-
 type BuildRegisterMeta struct {
 	Meta *BuildMeta
 }
-
 
 type BuildLoadMeta struct {
 	Resource *Resource
@@ -205,9 +199,8 @@ func (s *BuildService) NewRequest(action string) (interface{}, error) {
 	return &BuildRequest{}, nil
 }
 
-
 func NewBuildService() Service {
-	var result  = &BuildService{
+	var result = &BuildService{
 		registry:        make(map[string]*BuildMeta),
 		AbstractService: NewAbstractService(BuildServiceId),
 	}
@@ -215,11 +208,8 @@ func NewBuildService() Service {
 	return result
 }
 
-
-
-
-
 type BuildMetaRegistry map[string]*BuildMeta
+
 func indexBuildGoals(goals []*BuildGoal, index map[string]*BuildGoal) {
 	if len(goals) == 0 {
 		return

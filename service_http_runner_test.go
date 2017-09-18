@@ -47,11 +47,11 @@ func TestHttpRunnerService_Run(t *testing.T) {
 				},
 				Extraction: []*endly.DataExtraction{
 					{
-						Key:    "path1",
+						Key:     "path1",
 						RegExpr: "Path:([^;]+)",
 					},
 					{
-						Key:    "cookie1",
+						Key:     "cookie1",
 						RegExpr: "Cookie:([^;]+)",
 					},
 				},
@@ -60,11 +60,11 @@ func TestHttpRunnerService_Run(t *testing.T) {
 				URL: "http://127.0.0.1:8766/xyz",
 				Extraction: []*endly.DataExtraction{
 					{
-						Key:    "path2",
+						Key:     "path2",
 						RegExpr: "Path:([^;]+)",
 					},
 					{
-						Key:    "cookie2",
+						Key:     "cookie2",
 						RegExpr: "Cookie:([^;]+)",
 					},
 				},
@@ -80,11 +80,11 @@ func TestHttpRunnerService_Run(t *testing.T) {
 				},
 				Extraction: []*endly.DataExtraction{
 					{
-						Key:    "path3",
+						Key:     "path3",
 						RegExpr: "Path:([^;]+)",
 					},
 					{
-						Key:    "cookie3",
+						Key:     "cookie3",
 						RegExpr: "Cookie:([^;]+)",
 					},
 				},

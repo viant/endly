@@ -37,6 +37,9 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 	if expr == "" {
 		return nil, false
 	}
+	if strings.HasPrefix(expr, "$") {
+		expr = string(expr[1:])
+	}
 	state := *s
 	if string(expr[0:1]) == "{" {
 		expr = expr[1 : len(expr)-1]

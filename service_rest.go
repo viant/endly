@@ -1,8 +1,8 @@
 package endly
 
 import (
-	"github.com/viant/toolbox"
 	"fmt"
+	"github.com/viant/toolbox"
 )
 
 const RestServiceId = "transfer"
@@ -11,19 +11,15 @@ type restService struct {
 	*AbstractService
 }
 
-
 type RestSendRequest struct {
-	URL string
-	Method string
+	URL     string
+	Method  string
 	Request interface{}
 }
-
 
 type RestSendResponse struct {
 	Response interface{}
 }
-
-
 
 func (s *restService) Run(context *Context, request interface{}) *ServiceResponse {
 	var response = &ServiceResponse{Status: "ok"}
@@ -31,7 +27,7 @@ func (s *restService) Run(context *Context, request interface{}) *ServiceRespons
 	var err error
 	switch actualReuest := request.(type) {
 	case *RestSendRequest:
-		response.Response, err  =s.sendRequest(actualReuest)
+		response.Response, err = s.sendRequest(actualReuest)
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to send %v %v", actualReuest.URL, err)
 		}
@@ -42,15 +38,14 @@ func (s *restService) Run(context *Context, request interface{}) *ServiceRespons
 	return response
 }
 
-
 func (s *restService) sendRequest(request *RestSendRequest) (*RestSendResponse, error) {
-	var resetResponse  = make(map[string]interface{})
+	var resetResponse = make(map[string]interface{})
 	err := toolbox.RouteToService(request.Method, request.URL, request.Request, &resetResponse)
 	if err != nil {
 		return nil, err
 	}
 	return &RestSendResponse{
-		Response:resetResponse,
+		Response: resetResponse,
 	}, nil
 
 }
@@ -71,4 +66,3 @@ func NewRestService() Service {
 	return result
 
 }
-

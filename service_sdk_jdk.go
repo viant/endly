@@ -31,7 +31,7 @@ func (s *jdkService) setSdk(context *Context, request *SetSdkRequest) (*SetSdkRe
 				Extraction: []*DataExtraction{
 					{
 						RegExpr: fmt.Sprintf("\"(%v[^\"]+)", request.Version),
-						Key:    "build",
+						Key:     "build",
 					},
 				},
 			},

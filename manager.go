@@ -45,7 +45,7 @@ func (s *manager) Service(name string) (Service, error) {
 		return result, nil
 	}
 	var available = make([]string, 0)
-	for candidate, _ := range s.services {
+	for candidate := range s.services {
 		available = append(available, candidate)
 	}
 	return nil, fmt.Errorf("Failed to lookup service: '%v' in [%v]", name, strings.Join(available, ","))
@@ -73,7 +73,6 @@ func (s *manager) NewContext(ctx toolbox.Context) *Context {
 	result.Put(serviceManagerKey, s)
 	return result
 }
-
 
 func NewManager() Manager {
 	var result = &manager{

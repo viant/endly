@@ -15,7 +15,6 @@ func TestBuildService_Run(t *testing.T) {
 	parent, _ := path.Split(fileName)
 	url := fmt.Sprintf("file://%v/build/meta/", parent)
 
-
 	manager := endly.NewManager()
 	service, err := manager.Service(endly.BuildServiceId)
 	if !assert.Nil(t, err) {
@@ -24,8 +23,8 @@ func TestBuildService_Run(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 	assert.NotNil(t, context)
 	service.Run(context, &endly.BuildLoadMeta{
-		Resource:&endly.Resource{
-			URL:url,
+		Resource: &endly.Resource{
+			URL: url,
 		},
 	})
 

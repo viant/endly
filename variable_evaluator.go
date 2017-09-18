@@ -2,9 +2,9 @@ package endly
 
 import (
 	"github.com/viant/endly/common"
+	"github.com/viant/toolbox"
 	"strings"
 	"unicode"
-	"github.com/viant/toolbox"
 )
 
 const (

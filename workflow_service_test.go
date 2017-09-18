@@ -1,17 +1,13 @@
 package endly_test
 
 import (
-	"testing"
-	"github.com/viant/endly"
-	"github.com/stretchr/testify/assert"
-	"github.com/viant/toolbox"
 	"errors"
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly"
+	"github.com/viant/toolbox"
+	"testing"
 	"time"
 )
-
-
-
-
 
 func getServiceWithWorkflow(path string) (endly.Manager, endly.Service, error) {
 	manager := endly.NewManager()
@@ -20,7 +16,7 @@ func getServiceWithWorkflow(path string) (endly.Manager, endly.Service, error) {
 	if err == nil {
 		context := manager.NewContext(toolbox.NewContext())
 		response := service.Run(context, &endly.WorkflowLoadRequest{
-			Source:endly.NewFileResource("test/workflow/simple.csv"),
+			Source: endly.NewFileResource("test/workflow/simple.csv"),
 		})
 		if response.Error != "" {
 			return nil, nil, errors.New(response.Error)
@@ -29,17 +25,13 @@ func getServiceWithWorkflow(path string) (endly.Manager, endly.Service, error) {
 	return manager, service, err
 }
 
-
-
-
 func TestRunWorfklow(t *testing.T) {
 
 	go StartTestServer("8765")
 	time.Sleep(500 * time.Millisecond)
 
-
 	manager, service, err := getServiceWithWorkflow("test/workflow/simple.csv")
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		return
 	}
 	assert.NotNil(t, manager)
@@ -47,13 +39,14 @@ func TestRunWorfklow(t *testing.T) {
 
 	context := manager.NewContext(toolbox.NewContext())
 	response := service.Run(context, &endly.WorkflowRunRequest{
-		Name:"simple",
-		Params:map[string]interface{}{
-			"port":"8765",
+		Name: "simple",
+		Params: map[string]interface{}{
+			"port": "8765",
 		},
 	})
 	assert.Equal(t, "", response.Error)
-	assert.True(t, false)
-
+	serviceResponse, ok := response.Response.(*endly.RunWorkflowRunResponse)
+	assert.True(t, ok)
+	assert.NotNil(t, serviceResponse)
 
 }

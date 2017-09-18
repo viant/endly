@@ -1,8 +1,8 @@
 package endly
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"strings"
@@ -16,7 +16,7 @@ type WorkflowRunRequest struct {
 	Tasks  map[string]string
 }
 
-type RunWorkflowResponse struct {
+type RunWorkflowRunResponse struct {
 	Name            string
 	Data            map[string]interface{}
 	SessionInfo     *SessionInfo
@@ -66,15 +66,15 @@ func (s *WorkflowService) Workflow(name string) (*Workflow, error) {
 	return nil, fmt.Errorf("Failed to lookup workflow: %v", name)
 }
 
-func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequest) (*RunWorkflowResponse, error) {
+func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequest) (*RunWorkflowRunResponse, error) {
 	workflow, err := s.Workflow(request.Name)
 	if err != nil {
 		return nil, err
 	}
 	var state = context.State()
-	var response = &RunWorkflowResponse{
+	var response = &RunWorkflowRunResponse{
 		TasksActivities: make([]*WorkflowTaskActivity, 0),
-		Data:            state,
+		Data:            make(map[string]interface{}),
 	}
 	var params = common.NewMap()
 	if len(request.Params) > 0 {
@@ -86,18 +86,19 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 			}
 		}
 	}
-	state.Put("workflow", workflow.Name)
+	var workflowData = common.Map(response.Data)
+	state.Put("workflow", workflowData)
+	workflowData.Put("name", workflow.Name)
 	state.Put("params", request.Params)
-	workflow.Variables.Eval(state)
+	workflow.Variables.Apply(state, state, "in") // -> state to state
 
 	var hasAllowedTasks = len(request.Tasks) > 0
-
 	for _, task := range workflow.Tasks {
 		var allowedServiceActions map[int]bool
 
 		if hasAllowedTasks {
-			allowedActionIndexes, ok := request.Tasks[task.Name];
-			if ! ok {
+			allowedActionIndexes, ok := request.Tasks[task.Name]
+			if !ok {
 				continue
 			}
 			allowedServiceActions = make(map[int]bool)
@@ -110,21 +111,23 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 		}
 		var hasAllowedActions = len(allowedServiceActions) > 0
 
-		state.Put("task", task.Name)
-		task.Variables.Eval(state)
 		var taskActivity = &WorkflowTaskActivity{
 			ServiceActivities: make([]*WorkflowServiceActivity, 0),
 			Data:              make(map[string]interface{}),
 		}
 		response.TasksActivities = append(response.TasksActivities, taskActivity)
+		var taskState = common.Map(taskActivity.Data)
+		state.Put("task", taskState)
+		taskState.Put("name", task.Name)
+		task.Variables.Apply(state, state, "in") // -> state to task state
+
 		for i, action := range task.Actions {
-			if hasAllowedActions && ! allowedServiceActions[i] {
+			if hasAllowedActions && !allowedServiceActions[i] {
 				continue
 			}
 			state.Put("service", action.Service)
 			state.Put("action", action.Action)
-			action.Variables.Eval(state)
-			action.Variables.Apply(common.Map(taskActivity.Data), state, true)
+			action.Variables.Apply(state, state, "in") // task state to state
 			service, err := context.Service(action.Service)
 			if err != nil {
 				return nil, err
@@ -152,11 +155,15 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 			var responseMap = make(map[string]interface{})
 			if serviceResponse.Response != nil {
 				converter.AssignConverted(responseMap, serviceResponse.Response)
-				action.Variables.Apply(common.Map(responseMap), common.Map(taskActivity.Data), false)
 			}
+
+			action.Variables.Apply(common.Map(responseMap), state, "out") //result to task  state
+
 		}
-		task.Variables.Apply(common.Map(taskActivity.Data), common.Map(response.Data), false)
+		task.Variables.Apply(state, state, "out") //task state to result state
 	}
+	workflow.Variables.Apply(state, state, "out") //task state to result state
+
 	return response, nil
 }
 
@@ -195,6 +202,7 @@ func (s *WorkflowService) Run(context *Context, request interface{}) *ServiceRes
 
 func (s *WorkflowService) NewRequest(action string) (interface{}, error) {
 	switch action {
+
 	case "run":
 		return &WorkflowRunRequest{}, nil
 	case "register":

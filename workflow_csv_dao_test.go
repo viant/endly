@@ -1,11 +1,11 @@
 package endly_test
 
 import (
-	"testing"
-	"github.com/viant/endly"
-	"github.com/viant/toolbox"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly"
 	"github.com/viant/endly/common"
+	"github.com/viant/toolbox"
+	"testing"
 )
 
 func TestNewFieldExpression(t *testing.T) {
@@ -89,8 +89,6 @@ func TestFieldExpression_Set(t *testing.T) {
 
 }
 
-
-
 func TestNewWorkflowDao(t *testing.T) {
 
 	{
@@ -116,16 +114,16 @@ func TestNewWorkflowDao(t *testing.T) {
 		workflow, err := dao.Load(conext, endly.NewFileResource("test/workflow/simple.csv"))
 		assert.Nil(t, err)
 		assert.NotNil(t, workflow)
-		task :=  workflow.Tasks[0]
+		task := workflow.Tasks[0]
 		assert.Equal(t, "First Set of requestss", task.Name)
 		assert.Equal(t, 2, len(task.Actions))
 
-		action :=task.Actions[0]
+		action := task.Actions[0]
 		assert.Equal(t, "send", action.Action)
 		var request, ok = action.Request.(common.Map)
 		assert.True(t, ok)
 		assert.NotNil(t, request["Requests"])
-		requests , ok :=  request["Requests"].(*common.Collection)
+		requests, ok := request["Requests"].(*common.Collection)
 		assert.True(t, ok)
 
 		assert.Equal(t, 3, len(*requests))

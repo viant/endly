@@ -1,13 +1,13 @@
 package endly
 
 import (
+	"fmt"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/storage"
 	"io/ioutil"
 	"net/url"
-	"fmt"
-	"strings"
-	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox"
 	"path"
+	"strings"
 )
 
 type Resource struct {
@@ -80,7 +80,7 @@ func (r *Resource) Download() ([]byte, error) {
 }
 
 func NewFileResource(resource string) *Resource {
-	if ! strings.HasPrefix(resource, "/") {
+	if !strings.HasPrefix(resource, "/") {
 		fileName, _, _ := toolbox.CallerInfo(2)
 		parent, _ := path.Split(fileName)
 		resource = path.Join(parent, resource)

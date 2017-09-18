@@ -1,13 +1,13 @@
 package endly
 
 import (
+	"bufio"
+	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
-	"strings"
-	"fmt"
-	"bufio"
 	"path"
-	"github.com/pkg/errors"
+	"strings"
 )
 
 var internalReferencePrefix = []byte("%")[0]
@@ -47,7 +47,7 @@ func (d *WorkflowDao) processTag(context *Context, tag *Tag, result common.Map, 
 		var collection = common.NewCollection()
 		result.Put(tag.Name, collection)
 		setter, has := deferredReferences[tag.Name]
-		if ! has {
+		if !has {
 			return fmt.Errorf("Missing reference %v in the previous rows", tag.Name)
 		}
 		setter(collection)
@@ -57,7 +57,7 @@ func (d *WorkflowDao) processTag(context *Context, tag *Tag, result common.Map, 
 		result.Put(tag.Name, object)
 		if !isResultKey {
 			setter, has := deferredReferences[tag.Name]
-			if ! has {
+			if !has {
 				return fmt.Errorf("Missing reference %v in the previous rows", tag.Name)
 			}
 			setter(object)
@@ -105,9 +105,9 @@ type FieldExpression struct {
 	HasArrayComponent bool
 }
 
-func (f *FieldExpression) Set(value interface{}, target common.Map, indexes ... int) {
+func (f *FieldExpression) Set(value interface{}, target common.Map, indexes ...int) {
 	var index = 0
-	if ! target.Has(f.Field) {
+	if !target.Has(f.Field) {
 		if f.IsArray {
 			target.Put(f.Field, common.NewCollection())
 		} else if f.HasSubPath {
@@ -117,14 +117,14 @@ func (f *FieldExpression) Set(value interface{}, target common.Map, indexes ... 
 
 	var data common.Map
 
-	var action func(data common.Map, indexes ... int)
-	if ! f.HasSubPath {
-		action = func(data common.Map, indexes ... int) {
+	var action func(data common.Map, indexes ...int)
+	if !f.HasSubPath {
+		action = func(data common.Map, indexes ...int) {
 			data.Put(f.Field, value)
 		}
 
 	} else {
-		action = func(data common.Map, indexes ... int) {
+		action = func(data common.Map, indexes ...int) {
 			f.Child.Set(value, data, indexes...)
 		}
 	}
@@ -139,7 +139,7 @@ func (f *FieldExpression) Set(value interface{}, target common.Map, indexes ... 
 	} else {
 		data = target
 	}
-	action(data, indexes ...)
+	action(data, indexes...)
 }
 
 func shiftIndex(indexes ...int) (int, []int) {
@@ -178,7 +178,7 @@ func (d *WorkflowDao) processHeaderLine(context *Context, result common.Map, dec
 		return nil, nil, "", err
 	}
 	tag := NewTag(record.Columns[0])
-	var isResultTag = resultTag == "";
+	var isResultTag = resultTag == ""
 	if isResultTag {
 		resultTag = tag.Name
 	}
@@ -203,8 +203,8 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 		lines = append(lines, scanner.Text())
 	}
 	for i := 0; i < len(lines); i++ {
-		var recordHeight = 0;
-		line := lines[i];
+		var recordHeight = 0
+		line := lines[i]
 		if strings.HasPrefix(line, "import") {
 			err := d.importWorkflow(context, resource, strings.TrimSpace(string(line[5:])))
 			if err != nil {
@@ -244,7 +244,7 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 				continue
 			}
 
-			value, has := record.Record[fieldExpressions];
+			value, has := record.Record[fieldExpressions]
 			if !has || value == nil || toolbox.AsString(value) == "" {
 				continue
 			}
@@ -277,26 +277,21 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 	return workflowObject, nil
 }
 
-
 func checkedUnsuedReferences(referenceUsed map[string]bool, deferredReferences map[string]func(value interface{})) error {
-	for k, _ := range referenceUsed {
+	for k := range referenceUsed {
 		delete(deferredReferences, k)
 	}
 	if len(deferredReferences) == 0 {
 		return nil
 	}
 	var pendingKeys = make([]string, 0)
-	for k, _ := range deferredReferences {
+	for k := range deferredReferences {
 		pendingKeys = append(pendingKeys, k)
 	}
 	return fmt.Errorf("Unresolved references: %v", strings.Join(pendingKeys, ","))
 }
 
-
-
-
-
-func getObject(tag *Tag, result common.Map) (common.Map) {
+func getObject(tag *Tag, result common.Map) common.Map {
 	var data common.Map
 	if tag.IsArray {
 		data = common.NewMap()
@@ -307,9 +302,9 @@ func getObject(tag *Tag, result common.Map) (common.Map) {
 	return data
 }
 
-func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []string, record *toolbox.DelimiteredRecord, fieldExpressions string, data common.Map, recordHeight int) (int) {
+func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []string, record *toolbox.DelimiteredRecord, fieldExpressions string, data common.Map, recordHeight int) int {
 	if field.HasArrayComponent {
-		var itemCount = 0;
+		var itemCount = 0
 
 		for k := i + 1; k < len(lines); k++ {
 			arrayValueDecoder := d.factory.Create(strings.NewReader(lines[k]))
@@ -319,7 +314,7 @@ func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []stri
 			}
 			arrayValueDecoder.Decode(arrayItemRecord)
 			itemValue := arrayItemRecord.Record[fieldExpressions]
-			if itemValue == nil || toolbox.AsString(itemValue)== "" {
+			if itemValue == nil || toolbox.AsString(itemValue) == "" {
 				break
 			}
 			itemCount++
@@ -333,7 +328,7 @@ func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []stri
 }
 
 func isLetter(b byte) bool {
-	return (b >= 65 && b <= 93) || (b >= 97 && b <= 122 )
+	return (b >= 65 && b <= 93) || (b >= 97 && b <= 122)
 }
 
 func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, resourceDetail string) (*Resource, error) {

@@ -35,7 +35,7 @@ func TestNewDeploymentService(t *testing.T) {
 				{
 					Command: "mvn -version",
 					Extraction: []*endly.DataExtraction{{
-						Key:    "Version",
+						Key:     "Version",
 						RegExpr: "Apache Maven (\\d+\\.\\d+\\.\\d+)",
 					},
 					},

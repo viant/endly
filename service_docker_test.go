@@ -10,17 +10,14 @@ import (
 	"testing"
 )
 
-
-
 func getDockerService(manager endly.Manager) endly.Service {
 	context := manager.NewContext(toolbox.NewContext())
 	service := endly.NewDockerService()
 	service.Run(context, &endly.DockerSystemPathRequest{
-		SysPath:[]string{"/usr/local/bin"},
+		SysPath: []string{"/usr/local/bin"},
 	})
 	return service
 }
-
 
 func TestNewDockerService(t *testing.T) {
 
@@ -28,7 +25,6 @@ func TestNewDockerService(t *testing.T) {
 
 	context := manager.NewContext(toolbox.NewContext())
 	service := getDockerService(manager)
-
 
 	response := service.Run(context, &endly.DockerImagesRequest{
 		Target: &endly.Resource{
@@ -47,8 +43,6 @@ func TestNewDockerService_Pull(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 	service := getDockerService(manager)
 
-
-
 	response := service.Run(context, &endly.DockerPullRequest{
 		Target: &endly.Resource{
 			URL: "ssh://127.0.0.1/",
@@ -66,8 +60,6 @@ func TestNewDockerService_Pull(t *testing.T) {
 
 func TestNewDockerService_Run(t *testing.T) {
 
-
-
 	credential := path.Join(os.Getenv("HOME"), "secret/mysql.json")
 	if toolbox.FileExists(credential) {
 		fileName, _, _ := toolbox.CallerInfo(2)
@@ -82,7 +74,6 @@ func TestNewDockerService_Run(t *testing.T) {
 		manager := endly.NewManager()
 		context := manager.NewContext(toolbox.NewContext())
 		service := getDockerService(manager)
-
 
 		response := service.Run(context, &endly.DockerRunRequest{
 			Target: &endly.Resource{

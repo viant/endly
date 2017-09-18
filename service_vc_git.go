@@ -83,14 +83,14 @@ func (s *gitService) checkInfo(context *Context, request *StatusRequest) (*InfoR
 				Command: fmt.Sprintf("git status"),
 				Extraction: []*DataExtraction{{
 					RegExpr: "On branch[\\s\\t]+([^\\s]+)",
-					Key:    "branch",
+					Key:     "branch",
 				}},
 			},
 			{
 				Command: fmt.Sprintf("git remote -v"),
 				Extraction: []*DataExtraction{{
 					RegExpr: "origin[\\s\\t]+([^\\s]+)\\s+\\(fetch\\)",
-					Key:    "origin",
+					Key:     "origin",
 				}},
 			},
 			{

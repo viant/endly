@@ -16,7 +16,7 @@ type WorkflowTask struct {
 	Description string
 	Actions     []*ServiceAction
 	Variables   Variables
-	SleepInMs int
+	SleepInMs   int
 }
 
 type Workflow struct {
