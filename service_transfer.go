@@ -13,11 +13,11 @@ import (
 
 const TransferServiceId = "transfer"
 
-type TransfersRequest struct {
+type TransferCopyRequest struct {
 	Transfers []*Transfer
 }
 
-type TransfersResponse struct {
+type TransferCopyResponse struct {
 	Transfered []*TransferInfo
 }
 
@@ -69,8 +69,8 @@ func NewExpandedContentHandler(context *Context) func(reader io.Reader) (io.Read
 }
 
 
-func (s *transferService) run(context *Context, transfers ...*Transfer) (*TransfersResponse, error) {
-	var result = &TransfersResponse{
+func (s *transferService) run(context *Context, transfers ...*Transfer) (*TransferCopyResponse, error) {
+	var result = &TransferCopyResponse{
 		Transfered:make([]*TransferInfo, 0),
 	}
 	sessionInfo := context.SessionInfo()
@@ -111,7 +111,7 @@ func (s *transferService) Run(context *Context, request interface{}) *ServiceRes
 	var response = &ServiceResponse{Status: "ok"}
 	var err error
 	switch actualRequest := request.(type) {
-	case *TransfersRequest:
+	case *TransferCopyRequest:
 		response.Response, err = s.run(context, actualRequest.Transfers...)
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to tranfer resources: %v, %v", actualRequest.Transfers, err)
@@ -127,8 +127,8 @@ func (s *transferService) Run(context *Context, request interface{}) *ServiceRes
 
 func (s *transferService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "run":
-		return &TransfersRequest{
+	case "copy":
+		return &TransferCopyRequest{
 			Transfers: make([]*Transfer, 0),
 		}, nil
 	}

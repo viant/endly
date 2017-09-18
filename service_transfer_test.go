@@ -31,7 +31,7 @@ func TestNewTransferService(t *testing.T) {
 		state.Put("endpoint", endpointMap)
 
 		{
-			response := service.Run(context, &endly.TransfersRequest{
+			response := service.Run(context, &endly.TransferCopyRequest{
 				Transfers: []*endly.Transfer{
 					{
 						Source:   endly.NewFileResource("test/transfer/config.json"),
@@ -41,7 +41,7 @@ func TestNewTransferService(t *testing.T) {
 				},
 			})
 			assert.Equal(t, "", response.Error)
-			serviceResponse, ok := response.Response.(*endly.TransfersResponse)
+			serviceResponse, ok := response.Response.(*endly.TransferCopyResponse)
 			assert.True(t, ok)
 			assert.Equal(t, 1, len(serviceResponse.Transfered))
 			assert.Equal(t, "file:///tmp/transfered.json", serviceResponse.Transfered[0].Target)
@@ -55,7 +55,7 @@ func TestNewTransferService(t *testing.T) {
 			assert.Equal(t, "8080", config.Endpoint.Port)
 		}
 		{
-			response := service.Run(context, &endly.TransfersRequest{
+			response := service.Run(context, &endly.TransferCopyRequest{
 				Transfers: []*endly.Transfer{
 					{
 						Source:   endly.NewFileResource("test/transfer/config.json"),
@@ -64,7 +64,7 @@ func TestNewTransferService(t *testing.T) {
 				},
 			})
 			assert.Equal(t, "", response.Error)
-			serviceResponse, ok := response.Response.(*endly.TransfersResponse)
+			serviceResponse, ok := response.Response.(*endly.TransferCopyResponse)
 			assert.True(t, ok)
 			assert.Equal(t, 1, len(serviceResponse.Transfered))
 			assert.Equal(t, "file:///tmp/transfered.json", serviceResponse.Transfered[0].Target)
