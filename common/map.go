@@ -37,6 +37,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 	if expr == "" {
 		return nil, false
 	}
+
 	if strings.HasPrefix(expr, "$") {
 		expr = string(expr[1:])
 	}
@@ -44,6 +45,8 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 	if string(expr[0:1]) == "{" {
 		expr = expr[1 : len(expr)-1]
 	}
+
+
 	if strings.Contains(expr, ".") {
 		fragments := strings.Split(expr, ".")
 		for i, fragment := range fragments {
@@ -52,8 +55,12 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 				expr = fragment
 			} else {
 				hasKey := state.Has(fragment)
-				state = state.GetMap(fragment)
-				if state == nil {
+
+				newState := state.GetMap(fragment)
+				if newState != nil {
+					state = newState
+				}
+				if newState == nil {
 					if hasKey {
 						value, _ := state.GetValue(fragment)
 						if f, ok := value.(func(key string)interface{});ok {
@@ -63,7 +70,6 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 					return "", false
 				}
 			}
-
 		}
 	}
 	if state.Has(expr) {
