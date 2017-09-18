@@ -233,7 +233,7 @@ func (s *execService) openSession(context *Context, request *OpenSession) (*Clie
 	}
 
 	if !(target.ParsedURL.Scheme == "ssh" || target.ParsedURL.Scheme == "scp" || target.ParsedURL.Scheme == "file") {
-		return nil, fmt.Errorf("Failed to open sessionName: invalid schema: %v", target.ParsedURL.Scheme)
+		return nil, fmt.Errorf("Failed to open sessionName: invalid schema: %v in url: %v", target.ParsedURL.Scheme, target.URL)
 	}
 	sessions := context.Sessions()
 
