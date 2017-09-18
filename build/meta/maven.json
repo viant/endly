@@ -1,5 +1,7 @@
 {
   "Name": "maven",
+  "Sdk":"$build.sdk",
+  "SdkVersion":"$build.sdkVersion",
   "Goals": [
     {
       "Name": "package",

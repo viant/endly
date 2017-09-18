@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/endly/common"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/storage"
 	"net/url"
 )
 
@@ -22,6 +24,8 @@ type BuildGoal struct {
 }
 
 type BuildMeta struct {
+	Sdk              string
+	SdkVersion       string
 	Name             string
 	Goals            []*BuildGoal
 	goalsIndex       map[string]*BuildGoal
@@ -55,10 +59,12 @@ func (m *BuildMeta) Match(operatingSystem *OperatingSystem, version string) *Ope
 }
 
 type BuildSpec struct {
-	Name    string //build name  like go, mvn, node, yarn
-	Version string
-	Goal    string //actual build target, like clean, test
-	Args    string // additional build arguments , that can be expanded with $build.args
+	Name       string //build name  like go, mvn, node, yarn
+	Version    string
+	Goal       string //actual build target, like clean, test
+	Args       string // additional build arguments , that can be expanded with $build.args
+	Sdk        string
+	SdkVersion string
 }
 
 type BuildRequest struct {
@@ -66,12 +72,21 @@ type BuildRequest struct {
 	Target    *Resource  //path to application to be build, Note that command may use $build.target variable. that expands to Target URL path
 }
 
-type BuildRegisterMeta struct {
+type BuildResponse struct {
+	SdkResponse *SdkSetResponse
+	CommandInfo *CommandInfo
+}
+
+type BuildRegisterMetaRequest struct {
 	Meta *BuildMeta
 }
 
-type BuildLoadMeta struct {
+type BuildLoadMetaRequest struct {
 	Resource *Resource
+}
+
+type BuildLoadMetaResponse struct {
+	Loaded map[string]*BuildMeta //url to size
 }
 
 type BuildService struct {
@@ -80,38 +95,52 @@ type BuildService struct {
 }
 
 func (s *BuildService) build(context *Context, request *BuildRequest) (interface{}, error) {
+	var result = &BuildResponse{}
+	state := context.State()
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-	buildSepc := request.BuildSpec
+	buildSpec := request.BuildSpec
 
-	if buildSepc == nil {
-		return nil, fmt.Errorf("BuildSepc was empty")
+	if buildSpec == nil {
+		return nil, fmt.Errorf("BuildSpec was empty")
 	}
-	buildMeta, has := s.registry[buildSepc.Name]
+	buildMeta, has := s.registry[buildSpec.Name]
 	if !has {
-		return nil, fmt.Errorf("Failed to lookup build: %v", buildSepc.Name)
+		return nil, fmt.Errorf("Failed to lookup build: %v", buildSpec.Name)
 	}
 
-	goal, has := buildMeta.goalsIndex[buildSepc.Goal]
+	goal, has := buildMeta.goalsIndex[buildSpec.Goal]
 	if !has {
-		return nil, fmt.Errorf("Failed to lookup build %v goal: %v", buildSepc.Name, buildSepc.Goal)
+		return nil, fmt.Errorf("Failed to lookup build %v goal: %v", buildSpec.Name, buildSpec.Goal)
 	}
 
-	parsedUrl, err := url.Parse(target.URL)
+	buildState, err := newBuildState(buildSpec, target.ParsedURL, request, context)
 	if err != nil {
 		return nil, err
 	}
-
-	err = setBuildState(buildSepc, parsedUrl, request, context)
-	if err != nil {
-		return nil, err
+	if buildMeta.Sdk != "" {
+		state.Put("build", buildState)
+		sdkService, err := context.Service(SdkServiceId)
+		if err != nil {
+			return nil, err
+		}
+		serviceResponse := sdkService.Run(context, &SdkSetRequest{Target: request.Target,
+			Sdk:     context.Expand(buildMeta.Sdk),
+			Version: context.Expand(buildMeta.SdkVersion),
+		})
+		if serviceResponse.Error != "" {
+			return nil, errors.New(serviceResponse.Error)
+		}
+		result.SdkResponse, _ = serviceResponse.Response.(*SdkSetResponse)
 	}
+
 	execService, err := context.Service(ExecServiceId)
 	if err != nil {
 		return nil, err
 	}
+	state.Put("build", buildState)
 	response := execService.Run(context, &OpenSession{
 		Target: target,
 	})
@@ -121,7 +150,7 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 	}
 
 	operatingSystem := context.OperatingSystem(target.Session())
-	buildDeployment := buildMeta.Match(operatingSystem, buildSepc.Version)
+	buildDeployment := buildMeta.Match(operatingSystem, buildSpec.Version)
 	if buildDeployment == nil {
 		return nil, fmt.Errorf("Failed to find a build for provided operating system: %v %v", operatingSystem.Name, operatingSystem.Version)
 	}
@@ -138,11 +167,11 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 
 	}
 
-	_, err = context.Execute(target, goal.Command)
+	commandInfo, err := context.Execute(target, goal.Command)
 	if err != nil {
 		return nil, err
 	}
-
+	result.CommandInfo = commandInfo
 	if goal.Transfers != nil {
 		_, err = context.Transfer(goal.Transfers.Transfers...)
 		if err != nil {
@@ -155,21 +184,21 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 			return nil, err
 		}
 	}
-	return nil, nil
+	return result, nil
 }
-func setBuildState(buildSepc *BuildSpec, parsedUrl *url.URL, request *BuildRequest, context *Context) error {
+func newBuildState(buildSepc *BuildSpec, parsedUrl *url.URL, request *BuildRequest, context *Context) (common.Map, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	build := common.NewMap()
 	build.Put("args", buildSepc.Args)
 	build.Put("target", parsedUrl.Path)
 	build.Put("host", parsedUrl.Host)
 	build.Put("credential", target.Credential)
-	var state = context.State()
-	state.Put("build", build)
-	return nil
+	build.Put("sdk", buildSepc.Sdk)
+	build.Put("sdkVersion", buildSepc.SdkVersion)
+	return build, nil
 }
 
 func (s *BuildService) Run(context *Context, request interface{}) *ServiceResponse {
@@ -183,8 +212,11 @@ func (s *BuildService) Run(context *Context, request interface{}) *ServiceRespon
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to build: %v %v", actualRequest.Target.URL, err)
 		}
-	case *BuildRegisterMeta:
+	case *BuildRegisterMetaRequest:
 		s.registry.Register(actualRequest.Meta)
+
+	case *BuildLoadMetaRequest:
+		s.load(context, actualRequest)
 
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
@@ -195,8 +227,54 @@ func (s *BuildService) Run(context *Context, request interface{}) *ServiceRespon
 	return response
 }
 
+func (s *BuildService) load(context *Context, request *BuildLoadMetaRequest) (*BuildLoadMetaResponse, error) {
+	var result = &BuildLoadMetaResponse{
+		Loaded: make(map[string]*BuildMeta),
+	}
+	target, err := context.ExpandResource(request.Resource)
+	if err != nil {
+		return nil, err
+	}
+
+	service, err := storage.NewServiceForURL(target.URL, "")
+	if err != nil {
+		return nil, err
+	}
+	objects, err := service.List(target.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, object := range objects {
+		reader, err := service.Download(object)
+		if err != nil {
+			return nil, err
+		}
+		var buildMeta = &BuildMeta{}
+		err = toolbox.NewJSONDecoderFactory().Create(reader).Decode(buildMeta)
+		if err != nil {
+			return nil, err
+		}
+		err = s.registry.Register(buildMeta)
+		if err != nil {
+			return nil, err
+		}
+		result.Loaded[object.URL()] = buildMeta
+	}
+	return result, nil
+}
+
 func (s *BuildService) NewRequest(action string) (interface{}, error) {
-	return &BuildRequest{}, nil
+	switch action {
+	case "build":
+		return &BuildRequest{}, nil
+	case "load":
+		return &BuildLoadMetaRequest{}, nil
+	case "register":
+		return &BuildRegisterMetaRequest{}, nil
+	}
+	return s.AbstractService.NewRequest(action)
+
 }
 
 func NewBuildService() Service {
