@@ -94,5 +94,6 @@ func NewManager() Manager {
 	result.Register(NewJdkService())
 	result.Register(NewBuildService())
 	result.Register(NewDockerService())
+	result.Register(NewDataStoreUnitService())
 	return result
 }
