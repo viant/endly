@@ -137,9 +137,8 @@ func TestRunWorfklowAerospike(t *testing.T) {
 	}
 	assert.NotNil(t, manager)
 	assert.NotNil(t, service)
-	credential := path.Join(os.Getenv("HOME"), "secret/mysql.json")
+	credential := path.Join(os.Getenv("HOME"), "secret/scp.json")
 	if toolbox.FileExists(credential) {
-
 		context := manager.NewContext(toolbox.NewContext())
 		response := service.Run(context, &endly.WorkflowRunRequest{
 			Name: "dockerized_aerospike",
