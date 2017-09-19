@@ -117,6 +117,8 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 	workflowData.Put("name", workflow.Name)
 	workflow.Variables.Apply(state, state, "in") // -> state to state
 
+	//TODO throw errors did there any any unexpanded params to easier troubleshoting
+
 	var hasAllowedTasks = len(request.Tasks) > 0
 	for _, task := range workflow.Tasks {
 

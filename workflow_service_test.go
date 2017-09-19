@@ -103,8 +103,8 @@ func TestRunWorfklowMysql(t *testing.T) {
 				"url":             "scp://127.0.0.1/",
 				"credential":      path.Join(os.Getenv("HOME"), "/secret/scp.json"),
 				"stopSystemMysql": true,
-				"mycnfUrl": endly.NewFileResource("test/docker/my.cnf").URL,
-				"mycnfUrlCredential":"",
+				"configUrl": endly.NewFileResource("test/docker/my.cnf").URL,
+				"confifUrlCredential":"",
 				"serviceInstanceName":"dockerizedMysql1",
 			},
 		})
@@ -124,6 +124,41 @@ func TestRunWorfklowMysql(t *testing.T) {
 			assert.Equal(t, "start", serviceResponse.TasksActivities[1].ServiceActivities[1].Action)
 		}
 
+
+	}
+
+}
+
+func TestRunWorfklowAerospike(t *testing.T) {
+
+	manager, service, err := getServiceWithWorkflow("workflow/dockerized_aerospike.csv")
+	if !assert.Nil(t, err) {
+		return
+	}
+	assert.NotNil(t, manager)
+	assert.NotNil(t, service)
+	credential := path.Join(os.Getenv("HOME"), "secret/mysql.json")
+	if toolbox.FileExists(credential) {
+
+		context := manager.NewContext(toolbox.NewContext())
+		response := service.Run(context, &endly.WorkflowRunRequest{
+			Name: "dockerized_aerospike",
+			Params: map[string]interface{}{
+				"url":             "scp://127.0.0.1/",
+				"credential":      path.Join(os.Getenv("HOME"), "/secret/scp.json"),
+				"configUrl": endly.NewFileResource("test/workflow/aerospike.conf").URL,
+				"confifUrlCredential":"",
+				"serviceInstanceName":"dockerizedAerospike1",
+			},
+		})
+		if assert.Equal(t, "", response.Error) {
+			serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
+			assert.True(t, ok)
+			assert.NotNil(t, serviceResponse)
+			assert.Equal(t, "system_start_docker", serviceResponse.TasksActivities[0].Task)
+			assert.Equal(t, "prepare_config", serviceResponse.TasksActivities[1].Task)
+			assert.Equal(t, "docker_run_aerospike", serviceResponse.TasksActivities[2].Task)
+		}
 
 	}
 

@@ -22,7 +22,7 @@
   {
     "name": "configFile",
     "type": "const",
-    "source": "/tmp/my${serviceInstanceName}.cnf"
+    "source": "/tmp/aerospike${serviceInstanceName}.conf"
   },
   {
     "name": "configTransfer",

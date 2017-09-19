@@ -13,8 +13,8 @@ Workflow,,Name,Description,Tasks,,,Variables,,,
 []Tasks,Step,Name,Description,Actions,,RunCriteria,,,,
 ,3,prepare_config,This task will create my.cnf mysql configuration file ($params.mycnfURL),%Actions3,,,,,,
 []Actions3,Service,Action,Description,Request.[]Transfers,,RunCriteria,Variables,,,
-,transfer,copy,This action will copy template my.cnf to the temp folder,$mycnfTransfer,,$params.mycnfUrl:/!params.mycnfUrl/,,,,
+,transfer,copy,This action will copy template config file to the temp folder,$configTransfer,,$params.configUrl:/!params.configUrl/,,,,
 []Tasks,Step,Name,Description,Actions,,RunCriteria,,,,
 ,4,docker_run_mysql,This task will start docker mysql instance,%Actions4,,,,,,
 []Actions4,Service,Action,Description,Request.Image,Request.Target,Request.MappedPort,Request.Env,Request.Credential,Request.Mount,Request.SysPath
-,docker,run,Start docker mysql service,mysql:5.6,$remoteTarget,"{""3306"":""3306""}","{""MYSQL_ROOT_PASSWORD"": ""****""}",${env.HOME}/secret/mysql.json,"{""$mycnfFile"":""/etc/my.cnf""}","[""/usr/local/bin""]"
+,docker,run,Start docker mysql service,mysql:5.6,$remoteTarget,"{""3306"":""3306""}","{""MYSQL_ROOT_PASSWORD"": ""****""}",${env.HOME}/secret/mysql.json,"{""$configFile"":""/etc/my.cnf""}","[""/usr/local/bin""]"
