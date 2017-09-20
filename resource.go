@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"bytes"
 )
 
 type Resource struct {
@@ -58,6 +59,17 @@ func (r *Resource) DownloadText() (string, error) {
 	}
 	return string(result), err
 }
+
+
+func (r *Resource) JsonDecode(target interface{}) error {
+	var content, err =  r.Download()
+	if err != nil {
+		return err
+	}
+	return toolbox.NewJSONDecoderFactory().Create(bytes.NewReader(content)).Decode(target)
+}
+
+
 
 func (r *Resource) Download() ([]byte, error) {
 	service, err := storage.NewServiceForURL(r.URL, r.CredentialFile)
