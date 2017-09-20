@@ -12,22 +12,16 @@ import (
 	"github.com/viant/dsunit"
 )
 
-func TestSdUnitService(t *testing.T) {
-
+func TestDsUnitService(t *testing.T) {
 
 
 	manager := endly.NewManager()
-
 	context := manager.NewContext(toolbox.NewContext())
 	service, err := manager.Service(endly.DataStoreUnitServiceId)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
 
-
-
 	if toolbox.FileExists(path.Join(os.Getenv("HOME"), "secret/mysql.json")) {
-
-
 		response := service.Run(context, &endly.DsUnitRegisterRequest{
 			Datastore: "mydb1",
 			Config: &dsc.Config{
@@ -66,9 +60,16 @@ func TestSdUnitService(t *testing.T) {
 		assert.Equal(t, 2, verifyResponse.DatasetChecked["ACCOUNT"])
 		assert.Equal(t, 2, verifyResponse.DatasetChecked["USER"])
 
+
+		response = service.Run(context, &endly.DsUnitVerifyRequest{
+			Datasets:&dsunit.DatasetResource{
+				Datastore:"mydb1",
+				Prefix:"err_",
+				URL:endly.NewFileResource("test/dsunit/dataset1").URL,
+			},
+
+		})
+		assert.True(t, response.Error != "")
 	}
-
-
-
 
 }
