@@ -159,6 +159,8 @@ func (s *DockerService) Run(context *Context, request interface{}) *ServiceRespo
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to run: %v(%v), %v", actualRequest.Target.Name, actualRequest.Image, err)
 		}
+	default:
+		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 
 	}
 	if response.Error != "" {
