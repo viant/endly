@@ -33,7 +33,9 @@ func (d *WorkflowDao) Load(context *Context, source *Resource) (*Workflow, error
 	if err != nil {
 		return nil, err
 	}
-	var result = &Workflow{}
+	var result = &Workflow{
+		source:source,
+	}
 	err = converter.AssignConverted(result, workflowMap)
 	return result, err
 }
