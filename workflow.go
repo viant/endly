@@ -22,6 +22,7 @@ type WorkflowTask struct {
 }
 
 type Workflow struct {
+	source      *Resource
 	Name        string
 	Description string
 	Variables   Variables
