@@ -26,7 +26,7 @@ func TestSystemService_Run(t *testing.T) {
 					URL:            "scp://127.0.0.1/",
 					CredentialFile: credentialFile,
 				},
-				Service: "docker",
+				Service: "mysql",
 			})
 
 			assert.Equal(t, "", response.Error)
@@ -40,7 +40,7 @@ func TestSystemService_Run(t *testing.T) {
 					URL:            "scp://127.0.0.1/",
 					CredentialFile: credentialFile,
 				},
-				Service: "docker",
+				Service: "mysql",
 			})
 
 			assert.Equal(t, "", response.Error)
