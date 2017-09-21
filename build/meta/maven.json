@@ -7,7 +7,8 @@
       "Name": "package",
       "Command": {
         "Options": {
-          "Directory": "$build.target"
+          "Directory": "$build.target",
+          "TimeoutMs": 360000
         },
         "Executions": [
           {
@@ -21,7 +22,89 @@
             "Success": ["BUILD SUCCESS"],
             "Extraction": [
               {
-                "StateKey":"Artifact",
+                "Key":"Artifact",
+                "RegExpr": "Building jar:[^\/]+(.+)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "Name": "install",
+      "Command": {
+        "Options": {
+          "Directory": "$build.target",
+          "TimeoutMs": 360000
+        },
+        "Executions": [
+          {
+            "Command": "mvn clean",
+            "Errors": [
+              "Error","command not found"
+            ]
+          },
+          {
+            "Command": "mvn install $build.args",
+            "Success": ["BUILD SUCCESS"],
+            "Extraction": [
+              {
+                "Key":"Artifact",
+                "RegExpr": "Building jar:[^\/]+(.+)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "Name": "test",
+      "Command": {
+        "Options": {
+          "Directory": "$build.target",
+          "TimeoutMs": 360000
+        },
+        "Executions": [
+          {
+            "Command": "mvn clean",
+            "Errors": [
+              "Error","command not found"
+            ]
+          },
+          {
+            "Command": "mvn test $build.args",
+            "Success": ["BUILD SUCCESS"],
+            "Extraction": [
+              {
+                "Key":"Artifact",
+                "RegExpr": "Building jar:[^\/]+(.+)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "Name": "deploy",
+      "Command": {
+        "Options": {
+          "Directory": "$build.target",
+          "TimeoutMs": 360000
+
+        },
+        "Executions": [
+          {
+            "Command": "mvn clean",
+            "Errors": [
+              "Error","command not found"
+            ]
+          },
+          {
+            "Command": "mvn deploy $build.args",
+            "Success": ["BUILD SUCCESS"],
+            "Extraction": [
+              {
+                "Key":"Artifact",
                 "RegExpr": "Building jar:[^\/]+(.+)"
               }
             ]
@@ -54,7 +137,7 @@
               "Command": "mvn -version",
               "Extraction": [
                 {
-                  "Name": "Version",
+                  "Key": "Version",
                   "RegExpr": "Apache Maven (\\d+\\.\\d+\\.\\d+)"
                 }
               ]
