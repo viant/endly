@@ -161,9 +161,14 @@ func (s *Map) GetBoolean(key string) bool {
 
 func (s *Map) GetCollection(key string) *Collection {
 	if result, found := (*s)[key]; found {
-		collection, ok := result.(*Collection)
+		collectionPoiner, ok := result.(*Collection)
 		if ok {
-			return collection
+			return collectionPoiner
+		}
+		aSlice, ok := result.([]interface{})
+		collection := Collection(aSlice)
+		if ok {
+			return &collection
 		}
 	}
 	return nil

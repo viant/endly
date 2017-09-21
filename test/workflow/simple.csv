@@ -6,7 +6,6 @@ Workflow,,,Name,Description,Variables,Tasks,,
 ,,http/runner,send,,"[{""name"":""httpResponses"", ""source"":""Responses"", ""scope"":""out""}]",$appServer/path1,GET,
 ,,,,,,$appServer/path2,GET,
 ,,,,,,$appServer/path3,GET,
-,,,,,,,,
 []Action1,,Service ,Action ,,,Request.[]Expected.Body,Request.[]Expected.Headers,Request.Actual
 ,,validator,assert,,,/path1/,,$httpResponses
 ,,,,,,/path2/,,

@@ -22,9 +22,9 @@ type TransferCopyResponse struct {
 }
 
 type Transfer struct {
-	Source   *Resource
-	Target   *Resource
-	Parsable bool
+	Source *Resource
+	Target *Resource
+	Expand bool
 }
 
 type TransferInfo struct {
@@ -93,11 +93,11 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 			return nil, fmt.Errorf("Failed to lookup target storageService for %v: %v", target.URL, err)
 		}
 		var handler func(reader io.Reader) (io.Reader, error)
-		if transfer.Parsable {
+		if transfer.Expand {
 			handler = NewExpandedContentHandler(context)
 		}
 		err = storage.Copy(sourceService, source.URL, targetService, target.URL, handler)
-		info := NewTransferInfo(context, source.URL, target.URL, err, transfer.Parsable)
+		info := NewTransferInfo(context, source.URL, target.URL, err, transfer.Expand)
 		result.Transfered = append(result.Transfered, info)
 		sessionInfo.Log(info)
 		if err != nil {

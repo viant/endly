@@ -52,7 +52,7 @@ func (s *restService) sendRequest(request *RestSendRequest) (*RestSendResponse, 
 
 func (s *restService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "semd":
+	case "send":
 		return &RestSendRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)

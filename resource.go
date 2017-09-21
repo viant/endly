@@ -29,8 +29,14 @@ func (r *Resource) Session() string {
 	return result
 }
 
-func (r *Resource) LoadCredential() (string, string, error) {
+func (r *Resource) LoadCredential(errorIsEmpty bool) (string, string, error) {
 	if r.CredentialFile == "" {
+		r.CredentialFile = r.Credential
+	}
+	if r.CredentialFile == "" {
+		if errorIsEmpty {
+			return "", "", fmt.Errorf("Credentail was empty: %v", r.Credential)
+		}
 		return "", "", nil
 	}
 	credential := &storage.PasswordCredential{}
@@ -45,7 +51,7 @@ func (r *Resource) AuthURL() (string, error) {
 	if r.CredentialFile == "" {
 		return r.URL, nil
 	}
-	username, password, err := r.LoadCredential()
+	username, password, err := r.LoadCredential(true)
 	if err != nil {
 		return "", err
 	}
@@ -91,13 +97,29 @@ func (r *Resource) Download() ([]byte, error) {
 	return content, err
 }
 
+
+func NeResource(URL string) (*Resource, error) {
+	parsedURL, err := url.Parse(URL)
+	if err != nil {
+		return nil, err
+	}
+	return &Resource{
+		ParsedURL:parsedURL,
+		URL: URL,
+	}, nil
+}
+
+
 func NewFileResource(resource string) *Resource {
 	if !strings.HasPrefix(resource, "/") {
 		fileName, _, _ := toolbox.CallerInfo(2)
 		parent, _ := path.Split(fileName)
 		resource = path.Join(parent, resource)
 	}
+	var URL  = toolbox.FileSchema + resource
+	parsedURL, _ := url.Parse(URL)
 	return &Resource{
-		URL: toolbox.FileSchema + resource,
+		ParsedURL:parsedURL,
+		URL: URL,
 	}
 }

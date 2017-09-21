@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 	"time"
+	"path"
+	"os/exec"
 )
 
 //TODO Execution detail Tracking of all run (time taken, request, response)
@@ -19,6 +21,7 @@ var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
 var stateKey = (*common.Map)(nil)
 var sessionInfoKey = (*SessionInfo)(nil)
+var workflowKey = (*Workflow)(nil)
 
 type Context struct {
 	toolbox.Context
@@ -136,6 +139,17 @@ func (c *Context) SessionInfo() *SessionInfo {
 	return result
 }
 
+
+func (c *Context) Workflow() *Workflow {
+	var result *Workflow
+	if !c.Contains(sessionInfoKey) {
+		return nil
+	} else {
+		c.GetInto(workflowKey, &result)
+	}
+	return result
+}
+
 func (c *Context) OperatingSystem(sessionName string) *OperatingSystem {
 	var sessions = c.Sessions()
 	if session, has := sessions[sessionName]; has {
@@ -174,6 +188,15 @@ func (c *Context) Execute(target *Resource, command *ManagedCommand) (*CommandIn
 	}
 	return nil, nil
 }
+
+
+func (c *Context) Copy(expand bool, source, target *Resource) (interface{}, error) {
+	return c.Transfer([]*Transfer{{
+		Source: source,
+		Target: target,
+		Expand: expand,}}...)
+}
+
 
 func (c *Context) Transfer(transfers ...*Transfer) (interface{}, error) {
 	if transfers == nil {
@@ -223,10 +246,19 @@ func NewDefaultState() common.Map {
 	var result = common.NewMap()
 	var now = time.Now()
 	source := rand.NewSource(now.UnixNano())
+	result.Put("endlyURL", "http://github.com/viant/endly")
 	result.Put("rand", source.Int63())
 	result.Put("date", now.Format(toolbox.DateFormatToLayout("yyyy-MM-dd")))
 	result.Put("time", now.Format(toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss")))
 	result.Put("ts", now.Format(toolbox.DateFormatToLayout("yyyyMMddhhmmSSS")))
+
+	result.Put("tmpDir", func(key string) interface{} {
+		tempPath := path.Join(os.TempDir(), key)
+		exec.Command("mkdir -p " + tempPath)
+		return tempPath
+	})
+
+
 	result.Put("env", func(key string) interface{} {
 		return os.Getenv(key)
 	})

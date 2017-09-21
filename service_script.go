@@ -93,7 +93,7 @@ func (s *scriptService) Run(context *Context, request interface{}) *ServiceRespo
 
 func (s *scriptService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "command":
+	case "run":
 		return &ScriptCommand{}, nil
 	}
 	return s.AbstractService.NewRequest(action)

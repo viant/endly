@@ -103,7 +103,7 @@ func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*CommandRe
 		result.MangedCommand.Executions = append(result.MangedCommand.Executions, newExecution)
 	}
 
-	_, password, err := target.LoadCredential()
+	_, password, err := target.LoadCredential(true)
 	execution := &Execution{
 		Secure:      password,
 		MatchOutput: "Password",

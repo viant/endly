@@ -7,13 +7,15 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"net/url"
+	"strings"
 )
 
+const defaultBuildMetaRepo = "https://raw.githubusercontent.com/viant/endly/master/build/meta/%v.json"
 const BuildServiceId = "build"
 
 type OperatingSystemDeployment struct {
 	OsTarget *OperatingSystemTarget
-	Config   *DeploymentConfig
+	Config   *DeploymentDeployRequest
 }
 
 type BuildGoal struct {
@@ -68,8 +70,9 @@ type BuildSpec struct {
 }
 
 type BuildRequest struct {
-	BuildSpec *BuildSpec //build specification
-	Target    *Resource  //path to application to be build, Note that command may use $build.target variable. that expands to Target URL path
+	BuildMetaURL string
+	BuildSpec    *BuildSpec //build specification
+	Target       *Resource  //path to application to be build, Note that command may use $build.target variable. that expands to Target URL path
 }
 
 type BuildResponse struct {
@@ -94,6 +97,39 @@ type BuildService struct {
 	registry BuildMetaRegistry
 }
 
+func (s *BuildService) loadBuildMeta(context *Context, buildMeta string) error {
+	if buildMeta == "" {
+		return fmt.Errorf("buildMeta was empty")
+	}
+	var buildMetaURL = buildMeta
+	if !(strings.Contains(buildMeta, ":") || strings.Contains(buildMeta, "/")) {
+		localResource := NewFileResource(fmt.Sprintf("build/meta/%v.json", buildMeta))
+		metaFile := localResource.ParsedURL.Path
+		if ! toolbox.FileExists(metaFile) {
+			remoteResource := &Resource{
+				URL: fmt.Sprintf(defaultBuildMetaRepo, buildMeta),
+			}
+			_, err := context.Copy(false, remoteResource, localResource)
+			if err != nil {
+				return err
+			}
+
+		}
+		buildMetaURL = localResource.URL
+	}
+	resource, err := NeResource(buildMetaURL)
+	if err != nil {
+		return err
+	}
+
+	meta := &BuildMeta{}
+	err = resource.JsonDecode(meta)
+	if err != nil {
+		return err
+	}
+	return s.registry.Register(meta)
+}
+
 func (s *BuildService) build(context *Context, request *BuildRequest) (interface{}, error) {
 	var result = &BuildResponse{}
 	state := context.State()
@@ -102,6 +138,17 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 		return nil, err
 	}
 	buildSpec := request.BuildSpec
+	_, hasMeta := s.registry[buildSpec.Name]
+	if !hasMeta {
+		var buildMetaURL = request.BuildMetaURL
+		if buildMetaURL == "" {
+			buildMetaURL = buildSpec.Name
+		}
+		err = s.loadBuildMeta(context, buildMetaURL)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	if buildSpec == nil {
 		return nil, fmt.Errorf("BuildSpec was empty")
@@ -127,8 +174,8 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 			return nil, err
 		}
 		serviceResponse := sdkService.Run(context, &SdkSetRequest{Target: request.Target,
-			Sdk:     context.Expand(buildMeta.Sdk),
-			Version: context.Expand(buildMeta.SdkVersion),
+			Sdk:                                                      context.Expand(buildMeta.Sdk),
+			Version:                                                  context.Expand(buildMeta.SdkVersion),
 		})
 		if serviceResponse.Error != "" {
 			return nil, errors.New(serviceResponse.Error)
