@@ -39,10 +39,7 @@ func (s *manager) Service(name string) (Service, error) {
 	if result, found := s.services[name]; found {
 		return result, nil
 	}
-	var available = make([]string, 0)
-	for candidate := range s.services {
-		available = append(available, candidate)
-	}
+	var available =toolbox.MapKeysToStringSlice(s.services)
 	return nil, fmt.Errorf("Failed to lookup service: '%v' in [%v]", name, strings.Join(available, ","))
 }
 

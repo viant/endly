@@ -6,6 +6,7 @@ import (
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"testing"
+	"strings"
 )
 
 func TestNewFieldExpression(t *testing.T) {
@@ -100,29 +101,37 @@ func TestFieldExpression_Set(t *testing.T) {
 func TestNewWorkflowDao(t *testing.T) {
 
 	{
+		endly.UdfRegistry["udf1"] = func(source interface{}) (interface{}, error) {
+			text := toolbox.AsString(source)
+			return strings.ToUpper(text), nil
+		}
 		dao := endly.NewWorkflowDao()
 		conext := &endly.Context{Context: toolbox.NewContext()}
 		workflow, err := dao.Load(conext, endly.NewFileResource("test/workflow/w1.csv"))
+
+
 		assert.Nil(t, err)
-		assert.NotNil(t, workflow)
-		assert.Equal(t, "Simple Test", workflow.Name)
-		assert.Equal(t, "My description", workflow.Description)
+		if assert.NotNil(t, workflow) {
+			assert.Equal(t, "Simple Test", workflow.Name)
+			assert.Equal(t, "My description", workflow.Description)
 
-		assert.Equal(t, 3, len(workflow.Tasks))
-		assert.Equal(t, "Simple Http Test", workflow.Tasks[0].Name)
-		assert.Equal(t, 1, len(workflow.Tasks[0].Variables))
-		assert.Equal(t, "v10", workflow.Tasks[0].Variables[0].Name)
-		assert.Equal(t, 2, len(workflow.Tasks[1].Variables))
+			assert.Equal(t, 3, len(workflow.Tasks))
+			assert.Equal(t, "Simple Http Test", workflow.Tasks[0].Name)
+			assert.Equal(t, 1, len(workflow.Tasks[0].Variables))
+			assert.Equal(t, "v10", workflow.Tasks[0].Variables[0].Name)
+			assert.Equal(t, 2, len(workflow.Tasks[1].Variables))
 
-		assert.Equal(t, "v30", workflow.Tasks[2].Variables[0].Name)
+			assert.Equal(t, "v30", workflow.Tasks[2].Variables[0].Name)
 
-		assert.Equal(t, "v1", workflow.Data.GetString("k1"))
-		assert.Equal(t, "v2", workflow.Data.GetString("k2"))
-		assert.Equal(t, "v3", workflow.Data.GetString("k3"))
+			assert.Equal(t, "v1", workflow.Data.GetString("k1"))
+			assert.Equal(t, "v2", workflow.Data.GetString("k2"))
+			assert.Equal(t, "v3", workflow.Data.GetString("k3"))
 
-		if assert.True(t, workflow.Data.Has("Arr")) {
-			var collection= toolbox.AsSlice(workflow.Data.GetCollection("Arr"))
-			assert.Equal(t, []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0}, collection)
+			if assert.True(t, workflow.Data.Has("Arr")) {
+				var collection = toolbox.AsSlice(workflow.Data.GetCollection("Arr"))
+				assert.Equal(t, []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0}, collection)
+			}
+			assert.Equal(t, "ABC", workflow.Data.GetString("Udf"))
 		}
 	}
 	{
