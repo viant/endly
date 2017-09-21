@@ -1,8 +1,8 @@
-Workflow,,Name,Description,Tasks,,Variables,,,
-,,vc_maven_build,Workflow check outs/pulls latest change from vc to maven build it,%Tasks,,#vc_maven_build_var.json,,,
-[]Tasks,Step,Name,Description,Actions,,,,,
-,1,vc_checkout,This task wil get the latest code and build it,%Actions1,,,,,
-[]Actions1,Service,Action,Description,Request.Target,Request.Origin,,,,
-,versionControl,checkout,Check out the latest code,$buildTarget,$origin,,,,
-[]Actions1,Service,Action,Description,Request.Target,Request.BuildSpec.Sdk,Request.BuildSpec.SdkVersion,Request.BuildSpec.Name,Request.BuildSpec.Goal,Request.BuildSpec.Args
-,build,build,Build maven artifact,$buildTarget,jdk,$jdkVersion,maven,$buidGoal,$buildArgs
+Workflow,,Name,Description,Tasks,,Variables,,,,
+,,vc_maven_build,Workflow check outs/pulls latest change from vc to maven build it,%Tasks,,#vc_maven_build_var.json,,,,
+[]Tasks,Step,Name,Description,Actions,,,,,,
+,1,vc_checkout,This task wil get the latest code and build it,%Actions1,,,,,,
+[]Actions1,Service,Action,Description,Request.Target,Request.Origin,,,,,
+,versionControl,checkout,Check out the latest code,$buildTarget,$origin,,,,,
+[]Actions1,Service,Action,Description,Request.Target,Request.BuildSpec.Sdk,Request.BuildSpec.SdkVersion,Request.BuildSpec.Name,Request.BuildSpec.Goal,Request.BuildSpec.BuildGoal,Request.BuildSpec.Args
+,build,build,Build maven artifact,$buildTarget,jdk,$jdkVersion,maven,build,$buidGoal,$buildArgs

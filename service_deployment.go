@@ -8,11 +8,17 @@ import (
 
 const DeploymentServiceId = "deployment"
 
+type DeploymentAddition struct {
+	Commands  []string
+	Transfers []*Transfer
+}
+
 type DeploymentDeployRequest struct {
-	Before       *ManagedCommand
+	Pre          *DeploymentAddition
 	Transfer     *Transfer
-	After        *ManagedCommand
+	Command      *ManagedCommand
 	VersionCheck *ManagedCommand
+	Post         *DeploymentAddition
 	AppName      string
 	Force        bool
 }
@@ -23,6 +29,9 @@ type deploymentService struct {
 }
 
 func (r *DeploymentDeployRequest) Validate() error {
+	if r.Transfer == nil {
+		return fmt.Errorf("Failed to deploy app, transfer was nil")
+	}
 	if r.Transfer.Target == nil {
 		return fmt.Errorf("Failed to deploy app, target was not specified")
 	}
@@ -51,6 +60,24 @@ func (s *deploymentService) extractVersion(context *Context, request *Deployment
 	return "", nil
 }
 
+func (s *deploymentService) deployAddition(context *Context, target *Resource, addition *DeploymentAddition) (err error) {
+	if addition != nil {
+		if len(addition.Commands) > 0 {
+			_, err = context.Execute(target, addition.Commands)
+			if err != nil {
+				return fmt.Errorf("Failed to init deploy app to %v: %v", target, err)
+			}
+		}
+		if len(addition.Transfers) > 0 {
+			_, err = context.Transfer(addition.Transfers...)
+			if err != nil {
+				return fmt.Errorf("Failed to init deploy: %v", err)
+			}
+		}
+	}
+	return nil
+}
+
 func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRequest) (interface{}, error) {
 	err := request.Validate()
 	if err != nil {
@@ -76,15 +103,6 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	if err != nil {
 		return nil, err
 	}
-
-	_, err = context.Execute(target, request.Before)
-	if err != nil {
-		return nil, err
-	}
-
-	if err != nil {
-		return "", fmt.Errorf("Failed to deploy app to %v: %v", target, err)
-	}
 	if !request.Force && request.VersionCheck != nil {
 		version, err := s.extractVersion(context, request, execService, parsedURL)
 		if err != nil {
@@ -94,15 +112,15 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 			return nil, nil
 		}
 	}
+
+	err = s.deployAddition(context, target, request.Pre)
+	if err != nil {
+		return nil, err
+	}
 	_, err = context.Transfer(request.Transfer)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to deploy: %v", err)
 	}
-	_, err = context.Execute(target, request.After)
-	if err != nil {
-		return nil, err
-	}
-
 	if request.VersionCheck != nil {
 		version, err := s.extractVersion(context, request, execService, parsedURL)
 		if err != nil {
@@ -112,6 +130,13 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 			return nil, fmt.Errorf("Failed to deploy %v: invalud version expected: %v, but had: %v ", target.Session(), target.Version, version)
 		}
 	}
+	if request.Command != nil {
+		_, err = context.Execute(target, request.Command)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to init deploy app to %v: %v", target, err)
+		}
+	}
+	err = s.deployAddition(context, target, request.Post)
 	return nil, err
 }
 

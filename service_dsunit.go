@@ -15,9 +15,9 @@ const DataStoreUnitServiceId = "dsunit"
 
 type DsUnitRegisterRequest struct {
 	Datastore       string
-	Config          *dsc.Config //make sure Config.Parameters have database name key
+	Config          *dsc.Config //make sure Deploy.Parameters have database name key
 	Credential      string
-	adminConfig     *dsc.Config //make sure Config.Parameters have database name key
+	adminConfig     *dsc.Config //make sure Deploy.Parameters have database name key
 	AdminDatastore  string      //name of admin db
 	AdminCredential string
 	ClearDatastore  bool

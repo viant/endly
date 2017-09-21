@@ -15,7 +15,7 @@ const BuildServiceId = "build"
 
 type OperatingSystemDeployment struct {
 	OsTarget *OperatingSystemTarget
-	Config   *DeploymentDeployRequest
+	Deploy   *DeploymentDeployRequest
 }
 
 type BuildGoal struct {
@@ -49,7 +49,7 @@ func (m *BuildMeta) Match(operatingSystem *OperatingSystem, version string) *Ope
 	for _, candidate := range m.BuildDeployments {
 		osTarget := candidate.OsTarget
 		if version != "" {
-			if candidate.Config.Transfer.Target.Version != version {
+			if candidate.Deploy.Transfer.Target.Version != version {
 				continue
 			}
 		}
@@ -63,7 +63,8 @@ func (m *BuildMeta) Match(operatingSystem *OperatingSystem, version string) *Ope
 type BuildSpec struct {
 	Name       string //build name  like go, mvn, node, yarn
 	Version    string
-	Goal       string //actual build target, like clean, test
+	Goal       string //lookup for BuildMeta goal
+	BuildGoal  string //actual build target, like clean, test
 	Args       string // additional build arguments , that can be expanded with $build.args
 	Sdk        string
 	SdkVersion string
@@ -208,7 +209,7 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 		return nil, err
 	}
 
-	response = deploymentService.Run(context, buildDeployment.Config)
+	response = deploymentService.Run(context, buildDeployment.Deploy)
 	if response.Error != "" {
 		return nil, errors.New(response.Error)
 
@@ -240,6 +241,7 @@ func newBuildState(buildSepc *BuildSpec, parsedUrl *url.URL, request *BuildReque
 	}
 	build := common.NewMap()
 	build.Put("args", buildSepc.Args)
+	build.Put("goal", buildSepc.BuildGoal)
 	build.Put("target", parsedUrl.Path)
 	build.Put("host", parsedUrl.Host)
 	build.Put("credential", target.Credential)

@@ -154,15 +154,34 @@ func (c *Context) ExecuteAsSuperUser(target *Resource, command *ManagedCommand) 
 	return c.Execute(target, request.MangedCommand)
 }
 
-func (c *Context) Execute(target *Resource, command *ManagedCommand) (*CommandInfo, error) {
+func (c *Context) Execute(target *Resource, command interface{}) (*CommandInfo, error) {
 	if command == nil {
 		return nil, nil
+	}
+	var commandRequest *ManagedCommandRequest
+	switch actualCommand:= command.(type) {
+		case *ManagedCommand:
+			commandRequest = NewCommandRequest(target, actualCommand)
+		case string:
+			request := CommandRequest{
+				Target:target,
+				Commands:[]string{actualCommand},
+			}
+			commandRequest = request.AsManagedCommandRequest()
+		case []string:
+			request := CommandRequest{
+				Target:target,
+				Commands:actualCommand,
+			}
+			commandRequest = request.AsManagedCommandRequest()
+
+	default:
+		return nil, fmt.Errorf("Unsupported command: %T", command)
 	}
 	execService, err := c.Service(ExecServiceId)
 	if err != nil {
 		return nil, err
 	}
-	commandRequest := NewCommandRequest(target, command)
 	response := execService.Run(c, commandRequest)
 	if response.Error != "" {
 		return nil, errors.New(response.Error)

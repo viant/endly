@@ -42,7 +42,7 @@ func TestNewDeploymentService(t *testing.T) {
 				},
 			},
 		},
-		After: &endly.ManagedCommand{
+		Command: &endly.ManagedCommand{
 			Options: &endly.ExecutionOptions{
 				Directory: "/urs/local",
 			},

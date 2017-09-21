@@ -4,88 +4,7 @@
   "SdkVersion":"$build.sdkVersion",
   "Goals": [
     {
-      "Name": "package",
-      "Command": {
-        "Options": {
-          "Directory": "$build.target",
-          "TimeoutMs": 360000
-        },
-        "Executions": [
-          {
-            "Command": "mvn clean",
-            "Errors": [
-              "Error","command not found"
-            ]
-          },
-          {
-            "Command": "mvn package $build.args",
-            "Success": ["BUILD SUCCESS"],
-            "Extraction": [
-              {
-                "Key":"Artifact",
-                "RegExpr": "Building jar:[^\/]+(.+)"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "Name": "install",
-      "Command": {
-        "Options": {
-          "Directory": "$build.target",
-          "TimeoutMs": 360000
-        },
-        "Executions": [
-          {
-            "Command": "mvn clean",
-            "Errors": [
-              "Error","command not found"
-            ]
-          },
-          {
-            "Command": "mvn install $build.args",
-            "Success": ["BUILD SUCCESS"],
-            "Extraction": [
-              {
-                "Key":"Artifact",
-                "RegExpr": "Building jar:[^\/]+(.+)"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "Name": "test",
-      "Command": {
-        "Options": {
-          "Directory": "$build.target",
-          "TimeoutMs": 360000
-        },
-        "Executions": [
-          {
-            "Command": "mvn clean",
-            "Errors": [
-              "Error","command not found"
-            ]
-          },
-          {
-            "Command": "mvn test $build.args",
-            "Success": ["BUILD SUCCESS"],
-            "Extraction": [
-              {
-                "Key":"Artifact",
-                "RegExpr": "Building jar:[^\/]+(.+)"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "Name": "deploy",
+      "Name": "build",
       "Command": {
         "Options": {
           "Directory": "$build.target",
@@ -100,7 +19,7 @@
             ]
           },
           {
-            "Command": "mvn deploy $build.args",
+            "Command": "mvn $build.goal $build.args",
             "Success": ["BUILD SUCCESS"],
             "Extraction": [
               {
@@ -115,7 +34,7 @@
   ],
   "BuildDeployments": [
     {
-      "Config": {
+      "Deploy": {
         "Transfer": {
           "Source": {
             "URL": "http://mirrors.gigenet.com/apache/maven/maven-3/3.5.0/binaries/apache-maven-3.5.0-bin.tar.gz"
@@ -144,7 +63,7 @@
             }
           ]
         },
-        "After": {
+        "Command": {
           "Options": {
             "Directory": "/urs/local"
           },

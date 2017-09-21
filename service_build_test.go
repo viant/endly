@@ -19,7 +19,8 @@ func TestBuildService_Run(t *testing.T) {
 	response := buildService.Run(context, &endly.BuildRequest{
 		BuildSpec: &endly.BuildSpec{
 			Name:       "maven",
-			Goal:       "package",
+			Goal:       "build",
+			BuildGoal:  "package",
 			Args:       "-Dmvn.test.skip",
 			Sdk:        "jdk",
 			SdkVersion: "1.7",

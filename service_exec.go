@@ -51,6 +51,28 @@ type Execution struct {
 }
 
 type CommandRequest struct {
+	SuperUser bool
+	Target    *Resource
+	Commands  []string
+}
+
+func (r *CommandRequest) AsManagedCommandRequest() *ManagedCommandRequest {
+	var managedCommand = &ManagedCommand{
+		Executions: make([]*Execution, 0),
+	}
+	for _, command := range r.Commands {
+		managedCommand.Executions = append(managedCommand.Executions, &Execution{
+			Command: command,
+			Error:[]string{commandNotFound, noSuchFileOrDirectory},
+		})
+	}
+	return &ManagedCommandRequest{
+		Target:        r.Target,
+		MangedCommand: managedCommand,
+	}
+}
+
+type ManagedCommandRequest struct {
 	Target        *Resource
 	MangedCommand *ManagedCommand
 }
@@ -60,12 +82,12 @@ type SuperUserCommandRequest struct {
 	MangedCommand *ManagedCommand
 }
 
-func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*CommandRequest, error) {
+func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCommandRequest, error) {
 	target, err := context.ExpandResource(r.Target)
 	if err != nil {
 		return nil, err
 	}
-	var result = &CommandRequest{
+	var result = &ManagedCommandRequest{
 		Target: target,
 		MangedCommand: &ManagedCommand{
 			Executions: make([]*Execution, 0),
@@ -116,15 +138,15 @@ func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*CommandRe
 	return result, nil
 }
 
-func NewCommandRequest(target *Resource, execution *ManagedCommand) *CommandRequest {
-	return &CommandRequest{
+func NewCommandRequest(target *Resource, execution *ManagedCommand) *ManagedCommandRequest {
+	return &ManagedCommandRequest{
 		Target:        target,
 		MangedCommand: execution,
 	}
 }
 
-func NewSimpleCommandRequest(target *Resource, commands ...string) *CommandRequest {
-	var result = &CommandRequest{
+func NewSimpleCommandRequest(target *Resource, commands ...string) *ManagedCommandRequest {
+	var result = &ManagedCommandRequest{
 		Target: target,
 		MangedCommand: &ManagedCommand{
 			Executions: make([]*Execution, 0),
@@ -200,7 +222,7 @@ type execService struct {
 }
 
 type ClientSession struct {
-	name string
+	name            string
 	*ssh.MultiCommandSession
 	Connection      *ssh.Client
 	OperatingSystem *OperatingSystem
@@ -369,7 +391,7 @@ func match(stdout string, candidates ...string) string {
 	return ""
 }
 
-func (s *execService) executeCommand(context *Context, session *ClientSession, execution *Execution, options *ExecutionOptions, commandInfo *CommandInfo, request *CommandRequest) error {
+func (s *execService) executeCommand(context *Context, session *ClientSession, execution *Execution, options *ExecutionOptions, commandInfo *CommandInfo, request *ManagedCommandRequest) error {
 	command := context.Expand(execution.Command)
 	terminators := getTerminators(options, session, execution)
 
@@ -421,7 +443,7 @@ func getTerminators(options *ExecutionOptions, session *ClientSession, execution
 	return terminators
 }
 
-func (s *execService) runCommands(context *Context, request *CommandRequest) (*CommandInfo, error) {
+func (s *execService) runCommands(context *Context, request *ManagedCommandRequest) (*CommandInfo, error) {
 	//clientSessions := context.Sessions()
 	var target, err = context.ExpandResource(request.Target)
 
@@ -497,12 +519,27 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 	}
 	var err error
 	switch actualRequest := request.(type) {
+	case *CommandRequest:
+		var mangedCommandRequest = actualRequest.AsManagedCommandRequest()
+		if actualRequest.SuperUser {
+			superCommandRequest := SuperUserCommandRequest{
+				Target:        actualRequest.Target,
+				MangedCommand: mangedCommandRequest.MangedCommand,
+			}
+			mangedCommandRequest, err = superCommandRequest.AsCommandRequest(context)
+		}
+		if err == nil {
+			response.Response, err = s.runCommands(context, mangedCommandRequest)
+		} else {
+			response.Error = fmt.Sprintf("Failed to run command: %v, %v", actualRequest, err)
+		}
+
 	case *OpenSession:
 		response.Response, err = s.openSession(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to open session: %v, %v", actualRequest.Target, err)
 		}
-	case *CommandRequest:
+	case *ManagedCommandRequest:
 		response.Response, err = s.runCommands(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to run command: %v, %v", actualRequest.MangedCommand, err)
@@ -536,8 +573,11 @@ func (s *execService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case "open":
 		return &OpenSession{}, nil
+	case "managedCommand":
+		return &ManagedCommandRequest{}, nil
 	case "command":
 		return &CommandRequest{}, nil
+
 	case "close":
 		return &CloseSession{}, nil
 
