@@ -12,17 +12,20 @@ import (
 	"strings"
 )
 
-func getServiceWithWorkflow(path string) (endly.Manager, endly.Service, error) {
+func getServiceWithWorkflow(paths ... string) (endly.Manager, endly.Service, error) {
 	manager := endly.NewManager()
 	service, err := manager.Service(endly.WorkflowServiceId)
 
 	if err == nil {
-		context := manager.NewContext(toolbox.NewContext())
-		response := service.Run(context, &endly.WorkflowLoadRequest{
-			Source: endly.NewFileResource(path),
-		})
-		if response.Error != "" {
-			return nil, nil, errors.New(response.Error)
+
+		for _, workflowPath := range paths {
+			context := manager.NewContext(toolbox.NewContext())
+			response := service.Run(context, &endly.WorkflowLoadRequest{
+				Source: endly.NewFileResource(workflowPath),
+			})
+			if response.Error != "" {
+				return nil, nil, errors.New(response.Error)
+			}
 		}
 	}
 	return manager, service, err
@@ -32,26 +35,41 @@ func TestRunWorfklow(t *testing.T) {
 
 	go StartTestServer("8765")
 	time.Sleep(500 * time.Millisecond)
-
-	manager, service, err := getServiceWithWorkflow("test/workflow/simple.csv")
+	manager, service, err := getServiceWithWorkflow("test/workflow/simple.csv", "test/workflow/simple_call.csv")
 	if !assert.Nil(t, err) {
 		return
 	}
 	assert.NotNil(t, manager)
 	assert.NotNil(t, service)
 
-	context := manager.NewContext(toolbox.NewContext())
-	response := service.Run(context, &endly.WorkflowRunRequest{
-		Name: "simple",
-		Params: map[string]interface{}{
-			"port": "8765",
-		},
-	})
-	assert.Equal(t, "", response.Error)
-	serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
-	assert.True(t, ok)
-	assert.NotNil(t, serviceResponse)
+	{
+		context := manager.NewContext(toolbox.NewContext())
+		response := service.Run(context, &endly.WorkflowRunRequest{
+			Name: "simple",
+			Params: map[string]interface{}{
+				"port": "8765",
+			},
+		})
+		assert.Equal(t, "", response.Error)
+		serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
+		assert.True(t, ok)
+		assert.NotNil(t, serviceResponse)
+	}
 
+
+	{
+		context := manager.NewContext(toolbox.NewContext())
+		response := service.Run(context, &endly.WorkflowRunRequest{
+			Name: "simple_call",
+			Params: map[string]interface{}{
+				"port": "8765",
+			},
+		})
+		assert.Equal(t, "", response.Error)
+		serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
+		assert.True(t, ok)
+		assert.NotNil(t, serviceResponse)
+	}
 }
 
 func TestRunWorfklowMysql(t *testing.T) {
