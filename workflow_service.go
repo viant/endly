@@ -94,12 +94,18 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 	if err != nil {
 		return nil, err
 	}
-	var state = context.State()
 
+	var state = context.State()
 	var response = &WorkflowRunResponse{
 		TasksActivities: make([]*WorkflowTaskActivity, 0),
 		Data:            make(map[string]interface{}),
 	}
+	previousWorkflow := context.Workflow()
+	if previousWorkflow != nil {
+		defer context.Put(workflowKey, previousWorkflow)
+	}
+	context.Put(workflowKey, workflow)
+
 	var params = common.NewMap()
 	state.Put("params", params)
 	if len(request.Params) > 0 {
@@ -112,13 +118,9 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 		}
 	}
 
-	var workflowData = common.Map(response.Data)
+	var workflowData = common.Map(workflow.Data)
 	state.Put("workflow", workflowData)
-	workflowData.Put("name", workflow.Name)
 	workflow.Variables.Apply(state, state, "in") // -> state to state
-
-	//TODO throw errors did there any any unexpanded params to easier troubleshoting
-
 	var hasAllowedTasks = len(request.Tasks) > 0
 	for _, task := range workflow.Tasks {
 
@@ -146,7 +148,6 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 		response.TasksActivities = append(response.TasksActivities, taskActivity)
 		var taskState = common.Map(taskActivity.Data)
 		state.Put("task", taskState)
-		taskState.Put("name", task.Name)
 		task.Variables.Apply(state, state, "in") // -> state to task state
 
 		canRun, err := s.evaluateRunCriteria(context, task.RunCriteria)

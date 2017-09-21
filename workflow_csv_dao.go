@@ -28,13 +28,13 @@ func (d *WorkflowDao) Load(context *Context, source *Resource) (*Workflow, error
 	if err != nil {
 		return nil, err
 	}
-	scanner := bufio.NewScanner(strings.NewReader(context.Expand(content)))
+	scanner := bufio.NewScanner(strings.NewReader(content))
 	workflowMap, err := d.load(context, resource, scanner)
 	if err != nil {
 		return nil, err
 	}
 	var result = &Workflow{
-		source:source,
+		source: source,
 	}
 	err = converter.AssignConverted(result, workflowMap)
 	return result, err
@@ -105,6 +105,7 @@ type FieldExpression struct {
 	IsArray           bool
 	HasSubPath        bool
 	HasArrayComponent bool
+	IsRoot            bool
 }
 
 func (f *FieldExpression) Set(value interface{}, target common.Map, indexes ...int) {
@@ -128,7 +129,30 @@ func (f *FieldExpression) Set(value interface{}, target common.Map, indexes ...i
 			}
 		} else {
 			action = func(data common.Map, indexes ...int) {
-				data.Put(f.Field, value)
+				var isValueSet = false
+				if data.Has(f.Field) {
+					existingValue := data.Get(f.Field)
+					if toolbox.IsMap(existingValue) && toolbox.IsMap(value) { //is existing value is a map and existing value is map
+						// then add keys to existing map
+						existingMap := data.GetMap(f.Field)
+						existingMap.Apply(toolbox.AsMap(value))
+						isValueSet = true
+					} else if toolbox.IsSlice(existingValue) {//is existing value is a slice append elements
+						existingSlice := data.GetCollection(f.Field)
+						if toolbox.IsSlice(value) {
+							for _, item := range toolbox.AsSlice(value) {
+								existingSlice.Push(item)
+							}
+						} else {
+							existingSlice.Push(value)
+						}
+						data.Put(f.Field, existingSlice)
+						isValueSet = true
+					}
+				}
+				if ! isValueSet {
+					data.Put(f.Field, value)
+				}
 			}
 		}
 
@@ -138,7 +162,7 @@ func (f *FieldExpression) Set(value interface{}, target common.Map, indexes ...i
 		}
 	}
 
-	if f.IsArray  {
+	if f.IsArray {
 		index, indexes = shiftIndex(indexes...)
 		collection := target.GetCollection(f.Field)
 		collection.ExpandWithMap(index + 1)
@@ -162,12 +186,18 @@ func shiftIndex(indexes ...int) (int, []int) {
 }
 
 func NewFieldExpression(expression string) *FieldExpression {
+
+	isRoot := strings.HasPrefix(expression, "/")
+	if isRoot {
+		expression = string(expression[1:])
+	}
 	var result = &FieldExpression{
 		expression:        expression,
 		HasArrayComponent: strings.Contains(expression, "[]"),
 		IsArray:           strings.HasPrefix(expression, "[]"),
 		HasSubPath:        strings.Contains(expression, "."),
 		Field:             expression,
+		IsRoot:            isRoot,
 	}
 	if result.HasSubPath {
 		dotPosition := strings.Index(expression, ".")
@@ -208,6 +238,7 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 	var resultTag string
 	var tag *Tag
 	var object common.Map
+	var rootObject common.Map
 	var err error
 	var lines = make([]string, 0)
 	for scanner.Scan() {
@@ -226,13 +257,15 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 		if strings.HasPrefix(line, "//") {
 			continue
 		}
-
-		isHeaderLine := isLetter(line[0])
+		isHeaderLine := isHeaderByte(line[0])
 		decoder := d.factory.Create(strings.NewReader(line))
 		if isHeaderLine {
 			record, tag, resultTag, err = d.processHeaderLine(context, result, decoder, resultTag, deferredReferences)
 			if err != nil {
 				return nil, err
+			}
+			if rootObject == nil {
+				rootObject = result.GetMap(resultTag)
 			}
 			continue
 		}
@@ -272,9 +305,18 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 					referenceUsed[referenceKey] = true
 				}
 			} else {
-				field.Set(val, object)
-				if field.HasArrayComponent {
-					recordHeight = d.setArrayValues(field, i, lines, record, fieldExpressions, object, recordHeight)
+				if field.IsRoot {
+					field.Set(val, rootObject)
+					if field.HasArrayComponent {
+						recordHeight = d.setArrayValues(field, i, lines, record, fieldExpressions, rootObject, recordHeight)
+					}
+
+				} else {
+
+					field.Set(val, object)
+					if field.HasArrayComponent {
+						recordHeight = d.setArrayValues(field, i, lines, record, fieldExpressions, object, recordHeight)
+					}
 				}
 			}
 		}
@@ -318,6 +360,10 @@ func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []stri
 		var itemCount = 0
 
 		for k := i + 1; k < len(lines); k++ {
+
+			if (! strings.HasPrefix(lines[k], ",")) {
+				break
+			}
 			arrayValueDecoder := d.factory.Create(strings.NewReader(lines[k]))
 			arrayItemRecord := &toolbox.DelimiteredRecord{
 				Columns:   record.Columns,
@@ -325,7 +371,7 @@ func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []stri
 			}
 			arrayValueDecoder.Decode(arrayItemRecord)
 			itemValue := arrayItemRecord.Record[fieldExpressions]
-			if itemValue == nil || toolbox.AsString(itemValue) == "" || (! strings.HasPrefix(lines[k], ",")) {
+			if itemValue == nil || toolbox.AsString(itemValue) == ""  {
 				break
 			}
 			itemCount++
@@ -338,7 +384,7 @@ func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []stri
 	return recordHeight
 }
 
-func isLetter(b byte) bool {
+func isHeaderByte(b byte) bool {
 	return (b >= 65 && b <= 93) || (b >= 97 && b <= 122)
 }
 

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "jdkVersion",
+    "type": "const",
+    "scope": "in",
+    "source": "$params.jdkVersion",
+    "default": "1.7"
+  },
+  {
+    "name": "origin",
+    "type": "const",
+    "scope": "in",
+    "source": {
+      "Type": "$params.originType",
+      "URL": "$params.originUrl",
+      "Credential": "$params.originCredential"
+    }
+  },
+  {
+    "name": "buildTarget",
+    "type": "const",
+    "scope": "in",
+    "source": {
+      "URL": "$params.targetUrl",
+      "Credential": "$params.targetCredential"
+    }
+  },
+  {
+    "name": "buidGoal",
+    "type": "const",
+    "scope": "in",
+    "source": "$params.buildGoal",
+    "default": "install"
+  },
+  {
+    "name": "buildArgs",
+    "type": "const",
+    "scope": "in",
+    "default": "",
+    "source": "$params.buildArgs"
+  }
+]

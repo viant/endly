@@ -1,5 +1,7 @@
 package endly
 
+import "github.com/viant/endly/common"
+
 type ServiceAction struct {
 	RunCriteria string
 	Service     string
@@ -23,6 +25,7 @@ type WorkflowTask struct {
 
 type Workflow struct {
 	source      *Resource
+	Data 	    common.Map
 	Name        string
 	Description string
 	Variables   Variables

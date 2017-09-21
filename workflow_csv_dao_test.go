@@ -115,6 +115,15 @@ func TestNewWorkflowDao(t *testing.T) {
 		assert.Equal(t, 2, len(workflow.Tasks[1].Variables))
 
 		assert.Equal(t, "v30", workflow.Tasks[2].Variables[0].Name)
+
+		assert.Equal(t, "v1", workflow.Data.GetString("k1"))
+		assert.Equal(t, "v2", workflow.Data.GetString("k2"))
+		assert.Equal(t, "v3", workflow.Data.GetString("k3"))
+
+		if assert.True(t, workflow.Data.Has("Arr")) {
+			var collection= toolbox.AsSlice(workflow.Data.GetCollection("Arr"))
+			assert.Equal(t, []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0}, collection)
+		}
 	}
 	{
 		dao := endly.NewWorkflowDao()

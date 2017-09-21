@@ -9,6 +9,7 @@ import (
 	"time"
 	"path"
 	"os"
+	"strings"
 )
 
 func getServiceWithWorkflow(path string) (endly.Manager, endly.Service, error) {
@@ -70,9 +71,9 @@ func TestRunWorfklowMysql(t *testing.T) {
 				"url":        "scp://127.0.0.1/",
 				"credential": path.Join(os.Getenv("HOME"), "/secret/scp.json"),
 			},
-			Tasks:map[string]string{
-				"system_stop_mysql":"0,1",
-				"system_start_docker":"0",
+			Tasks: map[string]string{
+				"system_stop_mysql":   "0,1",
+				"system_start_docker": "0",
 			},
 
 		})
@@ -100,12 +101,12 @@ func TestRunWorfklowMysql(t *testing.T) {
 		response := service.Run(context, &endly.WorkflowRunRequest{
 			Name: "dockerized_mysql",
 			Params: map[string]interface{}{
-				"url":             "scp://127.0.0.1/",
-				"credential":      path.Join(os.Getenv("HOME"), "/secret/scp.json"),
-				"stopSystemMysql": true,
-				"configUrl": endly.NewFileResource("test/docker/my.cnf").URL,
-				"confifUrlCredential":"",
-				"serviceInstanceName":"dockerizedMysql1",
+				"url":                 "scp://127.0.0.1/",
+				"credential":          path.Join(os.Getenv("HOME"), "/secret/scp.json"),
+				"stopSystemMysql":     true,
+				"configUrl":           endly.NewFileResource("test/docker/my.cnf").URL,
+				"confifUrlCredential": "",
+				"serviceInstanceName": "dockerizedMysql1",
 			},
 		})
 		if assert.Equal(t, "", response.Error) {
@@ -123,7 +124,6 @@ func TestRunWorfklowMysql(t *testing.T) {
 			assert.Equal(t, "status", serviceResponse.TasksActivities[1].ServiceActivities[0].Action)
 			assert.Equal(t, "start", serviceResponse.TasksActivities[1].ServiceActivities[1].Action)
 		}
-
 
 	}
 
@@ -143,11 +143,11 @@ func TestRunWorfklowAerospike(t *testing.T) {
 		response := service.Run(context, &endly.WorkflowRunRequest{
 			Name: "dockerized_aerospike",
 			Params: map[string]interface{}{
-				"url":             "scp://127.0.0.1/",
-				"credential":      path.Join(os.Getenv("HOME"), "/secret/scp.json"),
-				"configUrl": endly.NewFileResource("test/workflow/aerospike.conf").URL,
-				"confifUrlCredential":"",
-				"serviceInstanceName":"dockerizedAerospike1",
+				"url":                 "scp://127.0.0.1/",
+				"credential":          path.Join(os.Getenv("HOME"), "/secret/scp.json"),
+				"configUrl":           endly.NewFileResource("test/workflow/aerospike.conf").URL,
+				"confifUrlCredential": "",
+				"serviceInstanceName": "dockerizedAerospike1",
 			},
 		})
 		if assert.Equal(t, "", response.Error) {
@@ -157,6 +157,47 @@ func TestRunWorfklowAerospike(t *testing.T) {
 			assert.Equal(t, "system_start_docker", serviceResponse.TasksActivities[0].Task)
 			assert.Equal(t, "prepare_config", serviceResponse.TasksActivities[1].Task)
 			assert.Equal(t, "docker_run_aerospike", serviceResponse.TasksActivities[2].Task)
+		}
+
+	}
+
+}
+
+func TestRunWorfkloVCMavenwBuild(t *testing.T) {
+
+	manager, service, err := getServiceWithWorkflow("workflow/vc_maven_build.csv")
+	if !assert.Nil(t, err) {
+		return
+	}
+	assert.NotNil(t, manager)
+	assert.NotNil(t, service)
+	credential := path.Join(os.Getenv("HOME"), "secret/scp.json")
+	if toolbox.FileExists(credential) {
+		baseSvnUrlFile := path.Join(os.Getenv("HOME"), "baseSvnUrl")
+		if toolbox.FileExists(baseSvnUrlFile) {
+			baseSvnUrl, err := endly.NewFileResource(path.Join(os.Getenv("HOME"), "baseSvnUrl")).DownloadText()
+			baseSvnUrl = strings.Trim(baseSvnUrl, " \r\n")
+			assert.Nil(t, err)
+			context := manager.NewContext(toolbox.NewContext())
+			response := service.Run(context, &endly.WorkflowRunRequest{
+				Name: "vc_maven_build",
+				Params: map[string]interface{}{
+					"jdkVersion":       "1.7",
+					"originUrl":        baseSvnUrl + "/common",
+					"originCredential": path.Join(os.Getenv("HOME"), "/secret/svn_ci.json"),
+					"originType":       "svn",
+					"targetUrl":        "file:///tmp/ci_common",
+					"targetCredential":  "",
+					"buildGoal":        "install",
+					"buildArgs":        "-Dmvn.test.skip",
+				},
+			})
+			if assert.Equal(t, "", response.Error) {
+				serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
+				assert.True(t, ok)
+				assert.NotNil(t, serviceResponse)
+
+			}
 		}
 
 	}
