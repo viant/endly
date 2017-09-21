@@ -24,11 +24,11 @@ func (s *svnService) checkInfo(context *Context, request *VcStatusRequest) (*VcI
 				Command: fmt.Sprintf("svn info"),
 				Extraction: []*DataExtraction{
 					{
-						RegExpr: "URL: ([^\\s]+)",
+						RegExpr: "^URL: ([^\\s]+)",
 						Key:     "origin",
 					},
 					{
-						RegExpr: "Revision: ([^\\s]+)",
+						RegExpr: "^Revision: ([^\\s]+)",
 						Key:     "revision",
 					},
 				},
@@ -101,9 +101,13 @@ func (s *svnService) checkout(context *Context, request *VcCheckoutRequest) (*Vc
 }
 
 func (s *svnService) runSecureSvnCommand(context *Context, target *Resource, origin *Resource, command string, arguments ...string) (*VcInfoResponse, error) {
-	username, password, err := origin.LoadCredential()
+	username, password, err := origin.LoadCredential(true)
 	if err != nil {
 		return nil, err
+	}
+
+	if username == "" {
+		return nil, fmt.Errorf("User name was empty for %v (%v)", origin.URL, origin.Credential)
 	}
 
 	_, err = context.Execute(target, &ManagedCommand{
@@ -113,7 +117,7 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *Resource, ori
 		},
 		Executions: []*Execution{
 			{
-				Command: fmt.Sprintf("svn %v --username=%v %v", username, strings.Join(arguments, " ")),
+				Command: fmt.Sprintf("svn %v --username=%v %v", command, username, strings.Join(arguments, " ")),
 				Error:   []string{"No such file or directory", "event not found"},
 			},
 			{

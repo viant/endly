@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"github.com/viant/toolbox/storage"
 	"path"
+	"strings"
 )
 
-var VersionControlServiceId = "VcServiceId"
+var VersionControlServiceId = "versionControl"
 
 type versionControlService struct {
 	*AbstractService
@@ -21,6 +22,27 @@ type VcCheckoutRequest struct {
 }
 
 func (r *VcCheckoutRequest) Validate() error {
+
+	if r.Origin == nil {
+		return fmt.Errorf("Origin type was empty")
+	}
+
+	if r.Target == nil {
+		return fmt.Errorf("Target type was empty")
+	}
+
+	if r.Origin.Type == "" {
+		if strings.Contains(r.Origin.URL, "/svn/") {
+			r.Origin.Type = "svn"
+		} else if strings.Contains(r.Origin.URL, "git") {
+			r.Origin.Type = "git"
+		} else {
+			return fmt.Errorf("Origin type was empty for %v", r.Origin.URL)
+		}
+	}
+	if r.Target.Type == "" {
+		r.Target.Type = r.Origin.Type
+	}
 	return nil
 }
 
@@ -126,6 +148,7 @@ func (s *versionControlService) checkOut(context *Context, request *VcCheckoutRe
 		return nil, err
 	}
 
+
 	storageService, err := storage.NewServiceForURL(target.URL, target.CredentialFile)
 	if err != nil {
 		return nil, err
@@ -188,11 +211,14 @@ func (s *versionControlService) checkOut(context *Context, request *VcCheckoutRe
 		return nil, err
 	}
 
-	switch target.Type {
+	switch origin.Type {
 	case "git":
 		return s.gitService.checkout(context, request)
 	case "svn":
 		return s.svnService.checkout(context, request)
+
+	default:
+		return nil, fmt.Errorf("Unsupproted version control type: '%v'", target.Type)
 	}
 	return nil, nil
 }
@@ -205,24 +231,25 @@ func (s *versionControlService) Run(context *Context, request interface{}) *Serv
 	case *VcStatusRequest:
 		response.Response, err = s.checkInfo(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to check version: %vL%v, %v", actualRequest.Target.URL, actualRequest.Target.Type, err)
+			response.Error = fmt.Sprintf("Failed to check version: %v(%v), %v", actualRequest.Target.URL, actualRequest.Target.Type, err)
 		}
 
 	case *VcCheckoutRequest:
 		response.Response, err = s.checkOut(context, actualRequest)
+
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to checkout version: %vL%v, %v", actualRequest.Target.URL, actualRequest.Target.Type, err)
+			response.Error = fmt.Sprintf("Failed to checkout version: %v -> %v, %v", actualRequest.Origin.URL, actualRequest.Target.URL, err)
 		}
 
 	case *VcCommitRequest:
 		response.Response, err = s.commit(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to commit version: %vL%v, %v", actualRequest.Target.URL, actualRequest.Target.Type, err)
+			response.Error = fmt.Sprintf("Failed to commit version: %v(%v), %v", actualRequest.Target.URL, actualRequest.Target.Type, err)
 		}
 	case *VcPullRequest:
 		response.Response, err = s.pull(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to commit version: %vL%v, %v", actualRequest.Target.URL, actualRequest.Target.Type, err)
+			response.Error = fmt.Sprintf("Failed to commit version: %v -> %v, %v", actualRequest.Origin.URL, actualRequest.Target.URL, err)
 		}
 	}
 
