@@ -13,6 +13,7 @@ type Variable struct {
 	Name   string
 	Type   string //const,var
 	Source interface{}
+	Default string
 	Scope  string //init, in, out
 }
 
@@ -44,6 +45,10 @@ func (v *Variables) Apply(in, out common.Map, scope string) {
 			if toolbox.IsMap(variable.Source){
 				out.SetValue(variable.Name, expandMap(variable.Source, in))
 			} else {
+				var value = Expand(in, toolbox.AsString(variable.Source))
+				if value == "" {
+					value = variable.Default
+				}
 				out.SetValue(variable.Name, Expand(in, toolbox.AsString(variable.Source)))
 			}
 		}
