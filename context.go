@@ -32,17 +32,6 @@ func reportError(err error) error {
 	return fmt.Errorf("%v at %v:%v -> %v", err, fileName, line, funcName)
 }
 
-func (c *Context) CredentialFile(name string) string {
-	manager, err := c.Manager()
-	if err != nil {
-		return name
-	}
-	result, err := manager.CredentialFile(name)
-	if err != nil {
-		return name
-	}
-	return result
-}
 
 func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 	var err error
@@ -58,17 +47,12 @@ func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 		Name:           c.Expand(resource.Name),
 		Version:        resource.Version,
 		Type:           c.Expand(resource.Type),
-		CredentialFile: c.Expand(resource.CredentialFile),
 	}
 
 	result.ParsedURL, err = url.Parse(result.URL)
 	if err != nil {
 		return nil, reportError(err)
 	}
-	if result.CredentialFile == "" && result.Credential != "" {
-		result.CredentialFile = c.CredentialFile(result.Credential)
-	}
-
 	return result, nil
 }
 

@@ -207,7 +207,7 @@ func (s *DockerService) runContainer(context *Context, request *DockerRunRequest
 	var secure = ""
 	if request.Credential != "" {
 		credential := &storage.PasswordCredential{}
-		err := LoadCredential(context.CredentialFile(request.Credential), credential)
+		err := NewFileResource(request.Credential).JsonDecode(credential)
 		if err != nil {
 			return nil, err
 		}

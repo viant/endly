@@ -16,8 +16,7 @@ type Resource struct {
 	Version        string
 	URL            string
 	Type           string
-	Credential     string
-	CredentialFile string
+	Credential     string//name of file or alias to the file defined via credential service
 	ParsedURL      *url.URL
 }
 
@@ -30,25 +29,24 @@ func (r *Resource) Session() string {
 }
 
 func (r *Resource) LoadCredential(errorIsEmpty bool) (string, string, error) {
-	if r.CredentialFile == "" {
-		r.CredentialFile = r.Credential
-	}
-	if r.CredentialFile == "" {
+	if r.Credential == "" {
 		if errorIsEmpty {
 			return "", "", fmt.Errorf("Credentail was empty: %v", r.Credential)
 		}
 		return "", "", nil
 	}
 	credential := &storage.PasswordCredential{}
-	err := LoadCredential(r.CredentialFile, credential)
+	credentialResource := NewFileResource(r.Credential)
+	err := credentialResource.JsonDecode(credential)
 	if err != nil {
-		return "", "", reportError(fmt.Errorf("Failed to load credentail: %v %v", r.CredentialFile, err))
+		return "", "", reportError(fmt.Errorf("Failed to load credentail: %v %v", r.Credential, err))
 	}
 	return credential.Username, credential.Password, nil
 }
 
+
 func (r *Resource) AuthURL() (string, error) {
-	if r.CredentialFile == "" {
+	if r.Credential == "" {
 		return r.URL, nil
 	}
 	username, password, err := r.LoadCredential(true)
@@ -68,6 +66,9 @@ func (r *Resource) DownloadText() (string, error) {
 
 
 func (r *Resource) JsonDecode(target interface{}) error {
+	if r == nil {
+		return reportError(fmt.Errorf("Fail to json decode on empty resource"))
+	}
 	var content, err =  r.Download()
 	if err != nil {
 		return err
@@ -78,7 +79,10 @@ func (r *Resource) JsonDecode(target interface{}) error {
 
 
 func (r *Resource) Download() ([]byte, error) {
-	service, err := storage.NewServiceForURL(r.URL, r.CredentialFile)
+	if r == nil {
+		return nil, fmt.Errorf("Fail to download content on empty resource")
+	}
+	service, err := storage.NewServiceForURL(r.URL, r.Credential)
 	if err != nil {
 		return nil, err
 	}
@@ -111,6 +115,9 @@ func NeResource(URL string) (*Resource, error) {
 
 
 func NewFileResource(resource string) *Resource {
+	if resource == "" {
+		return nil
+	}
 	if !strings.HasPrefix(resource, "/") {
 		fileName, _, _ := toolbox.CallerInfo(2)
 		parent, _ := path.Split(fileName)

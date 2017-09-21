@@ -30,7 +30,7 @@ func (t *scriptService) loadLibraries(context *Context, request *ScriptCommand) 
 		if err != nil {
 			return "", err
 		}
-		service, err := storage.NewServiceForURL(resource.URL, resource.CredentialFile)
+		service, err := storage.NewServiceForURL(resource.URL, resource.Credential)
 		if err != nil {
 			return "", err
 		}

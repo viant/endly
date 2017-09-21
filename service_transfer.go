@@ -80,7 +80,7 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 		if err != nil {
 			return nil, err
 		}
-		sourceService, err := storage.NewServiceForURL(source.URL, source.CredentialFile)
+		sourceService, err := storage.NewServiceForURL(source.URL, source.Credential)
 		if err != nil {
 			return nil, err
 		}
@@ -88,7 +88,7 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 		if err != nil {
 			return nil, err
 		}
-		targetService, err := storage.NewServiceForURL(target.URL, target.CredentialFile)
+		targetService, err := storage.NewServiceForURL(target.URL, target.Credential)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to lookup target storageService for %v: %v", target.URL, err)
 		}

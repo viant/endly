@@ -18,10 +18,6 @@ type Manager interface {
 
 	Register(service Service)
 
-	CredentialFile(name string) (string, error)
-
-	RegisterCredentialFile(name, file string)
-
 	NewContext(context toolbox.Context) *Context
 }
 
@@ -29,7 +25,6 @@ type manager struct {
 	name            string
 	version         string
 	services        map[string]Service
-	credentialFiles map[string]string
 }
 
 func (s *manager) Name() string {
@@ -55,16 +50,6 @@ func (s *manager) Register(service Service) {
 	s.services[service.Id()] = service
 }
 
-func (s *manager) CredentialFile(name string) (string, error) {
-	if result, found := s.credentialFiles[name]; found {
-		return result, nil
-	}
-	return "", fmt.Errorf("Failed to lookup credential: %v", name)
-}
-
-func (s *manager) RegisterCredentialFile(name, file string) {
-	s.credentialFiles[name] = file
-}
 
 func (s *manager) NewContext(ctx toolbox.Context) *Context {
 	var result = &Context{
@@ -79,7 +64,6 @@ func NewManager() Manager {
 		name:            AppName,
 		version:         AppVersion,
 		services:        make(map[string]Service),
-		credentialFiles: make(map[string]string),
 	}
 	result.Register(NewExecService())
 	result.Register(NewTransferService())
@@ -95,6 +79,5 @@ func NewManager() Manager {
 	result.Register(NewBuildService())
 	result.Register(NewDockerService())
 	result.Register(NewDataStoreUnitService())
-	result.Register(NewCredentialService())
 	return result
 }

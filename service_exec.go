@@ -244,9 +244,12 @@ func (s *execService) openSession(context *Context, request *OpenSession) (*Clie
 		return sessions[sessionName], err
 	}
 	var authConfig = &ssh.AuthConfig{}
-	_ = LoadCredential(target.CredentialFile, authConfig)
-	if err != nil {
-		return nil, err
+
+	if target.Credential != "" {
+		err = NewFileResource(target.Credential).JsonDecode(authConfig)
+		if err != nil {
+			return nil, err
+		}
 	}
 	hostname, port := getHostAndSSHPort(target)
 	connection, err := ssh.NewClient(hostname, port, authConfig)
@@ -377,7 +380,7 @@ func (s *execService) executeCommand(context *Context, session *ClientSession, e
 
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
 
-	//fmt.Printf("IN: %v\nOUT:%v\n", cmd, stdout)
+	fmt.Printf("IN: %v\nOUT:%v\n", cmd, stdout)
 	commandInfo.Add(NewCommandStream(command, stdout, err))
 	if err != nil {
 		return err
@@ -421,6 +424,8 @@ func getTerminators(options *ExecutionOptions, session *ClientSession, execution
 func (s *execService) runCommands(context *Context, request *CommandRequest) (*CommandInfo, error) {
 	//clientSessions := context.Sessions()
 	var target, err = context.ExpandResource(request.Target)
+
+	fmt.Printf("%v %v %v")
 	if err != nil {
 		return nil, err
 	}

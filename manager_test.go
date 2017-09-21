@@ -12,7 +12,7 @@ func TestNewManager(t *testing.T) {
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
 	manager.Register(newTestService())
-	manager.RegisterCredentialFile("abc", "/Users/awitas/secret/abc.json")
+
 
 	service, err := manager.Service("testService")
 	assert.Nil(t, err)
@@ -21,12 +21,6 @@ func TestNewManager(t *testing.T) {
 	_, err = manager.Service("cc")
 	assert.NotNil(t, err)
 
-	file, err := manager.CredentialFile("abc")
-	assert.Nil(t, err)
-	assert.Equal(t, "/Users/awitas/secret/abc.json", file)
-
-	_, err = manager.CredentialFile("cc")
-	assert.NotNil(t, err)
 
 	manager2, err := context.Manager()
 	assert.Nil(t, err)

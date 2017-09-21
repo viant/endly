@@ -12,6 +12,7 @@ import (
 const WorkflowServiceId = "workflow"
 
 type WorkflowRunRequest struct {
+	WorkflowURL string
 	Name   string
 	Params map[string]interface{}
 	Tasks  map[string]string
@@ -123,9 +124,7 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 	workflow.Variables.Apply(state, state, "in") // -> state to state
 	var hasAllowedTasks = len(request.Tasks) > 0
 	for _, task := range workflow.Tasks {
-
 		var allowedServiceActions map[int]bool
-
 		if hasAllowedTasks {
 			allowedActionIndexes, ok := request.Tasks[task.Name]
 			if !ok {

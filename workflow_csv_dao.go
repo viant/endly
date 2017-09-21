@@ -388,12 +388,13 @@ func isHeaderByte(b byte) bool {
 	return (b >= 65 && b <= 93) || (b >= 97 && b <= 122)
 }
 
+
 func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, resourceDetail string) (*Resource, error) {
-	var URL, credentailFile string
+	var URL, credential string
 	if strings.Contains(resourceDetail, ",") {
 		var pair = strings.Split(resourceDetail, ",")
 		URL = strings.TrimSpace(pair[0])
-		credentailFile = strings.TrimSpace(pair[1])
+		credential = strings.TrimSpace(pair[1])
 	} else if strings.Contains(resourceDetail, "://") {
 		URL = resourceDetail
 	} else if strings.HasPrefix(resourceDetail, "/") {
@@ -401,11 +402,11 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 	} else {
 		parent, _ := path.Split(resource.ParsedURL.Path)
 		URL = string(resource.URL[:strings.Index(resource.URL, "://")]) + fmt.Sprintf("://%v", path.Join(parent, resourceDetail))
-		credentailFile = resource.CredentialFile
+		credential = resource.Credential
 	}
 	return &Resource{
 		URL:            URL,
-		CredentialFile: credentailFile,
+		Credential: credential,
 	}, nil
 }
 

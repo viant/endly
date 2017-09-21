@@ -124,14 +124,14 @@ func (s *dsataStoreUnitService) Run(context *Context, request interface{}) *Serv
 	return response
 }
 
-func (s *dsataStoreUnitService) registerDsManager(context *Context, datastoreName, credentialInfo string,  config *dsc.Config) error {
-	credential := &storage.PasswordCredential{}
-	err := LoadCredential(context.CredentialFile(credentialInfo), credential)
+func (s *dsataStoreUnitService) registerDsManager(context *Context, datastoreName, credential string,  config *dsc.Config) error {
+	passwordCredential := &storage.PasswordCredential{}
+	err := NewFileResource(credential).JsonDecode(passwordCredential)
 	if err != nil {
 		return  err
 	}
-	config.Parameters["username"] = credential.Username
-	config.Parameters["password"] = credential.Password
+	config.Parameters["username"] = passwordCredential.Username
+	config.Parameters["password"] = passwordCredential.Password
 	config.Init()
 
 	dsManager, err := dsc.NewManagerFactory().Create(config)
