@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"reflect"
-	"strings"
 	"regexp"
+	"strings"
 )
 
 type Validator struct {
@@ -13,7 +13,7 @@ type Validator struct {
 }
 
 //Check checks expected vs actual value, and returns true if all assertion passes.
-func (s *Validator) Check(expected, actual interface{})(bool, error) {
+func (s *Validator) Check(expected, actual interface{}) (bool, error) {
 	var response = &ValidatorAssertResponse{}
 	err := s.Assert(expected, actual, response, "")
 	if err != nil {
@@ -74,8 +74,18 @@ func (s *Validator) assertText(expected, actual string, response *ValidatorAsser
 	isContains := strings.HasPrefix(expected, "/") && strings.HasSuffix(expected, "/")
 
 	if !isRegExpr && !isContains {
-		if expected != actual {
+
+		isReversed := strings.HasPrefix(expected, "!")
+		if isReversed {
+			expected = string(expected[1:])
+		}
+		if expected != actual && !isReversed {
 			response.AddFailure(fmt.Sprintf("actual(%T):  '%v' was not equal (%T) '%v' in path '%v'", actual, actual, expected, expected, path))
+			return nil
+		}
+		if expected == actual && isReversed {
+			response.AddFailure(fmt.Sprintf("actual(%T):  '%v' was not equal (%T) '%v' in path '%v'", actual, actual, expected, expected, path))
+			return nil
 		}
 		response.TestPassed++
 		return nil
@@ -167,4 +177,3 @@ func (s *Validator) assertSlice(expectedSlice []interface{}, actualSlice []inter
 	}
 	return nil
 }
-
