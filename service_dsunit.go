@@ -2,16 +2,15 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/dsunit"
+	"github.com/pkg/errors"
 	"github.com/viant/dsc"
+	"github.com/viant/dsunit"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"strings"
-	"github.com/viant/toolbox"
-	"github.com/pkg/errors"
 )
 
 const DataStoreUnitServiceId = "dsunit"
-
 
 type DsUnitRegisterRequest struct {
 	Datastore       string
@@ -25,13 +24,10 @@ type DsUnitRegisterRequest struct {
 	DatasetMapping  *Resource
 }
 
-
-
 //DatasetMapping represnts dataset mappings
 type DatasetMappings struct {
 	Views map[string]*dsunit.DatasetMapping
 }
-
 
 func (r *DsUnitRegisterRequest) Validate() error {
 	if r.Config == nil {
@@ -44,7 +40,7 @@ func (r *DsUnitRegisterRequest) Validate() error {
 		r.AdminCredential = r.Credential
 	}
 	if r.AdminDatastore != "" {
-		var parameters= make(map[string]string)
+		var parameters = make(map[string]string)
 		toolbox.CopyMapEntries(r.Config.Parameters, parameters)
 		r.adminConfig = &dsc.Config{
 			DriverName: r.Config.DriverName,
@@ -53,7 +49,7 @@ func (r *DsUnitRegisterRequest) Validate() error {
 		}
 		r.adminConfig.Parameters["dbname"] = r.AdminDatastore
 	}
-	if _, exists := r.Config.Parameters["dbname"];! exists {
+	if _, exists := r.Config.Parameters["dbname"]; !exists {
 		r.Config.Parameters["dbname"] = r.Datastore
 	}
 	return nil
@@ -63,31 +59,24 @@ type DsUnitRegisterResponse struct {
 	Modified int
 }
 
-
-
-
-
 type DsUnitPrepareRequest struct {
 	Datasets *dsunit.DatasetResource
 }
 
-
-
 type DsUnitPrepareResponse struct {
-	Added int
+	Added    int
 	Modified int
-	Deleted int
+	Deleted  int
 }
 
 type DsUnitVerifyRequest struct {
-	Datasets *dsunit.DatasetResource
+	Datasets    *dsunit.DatasetResource
 	CheckPolicy int
 }
 
 type DsUnitVerifyResponse struct {
 	DatasetChecked map[string]int
 }
-
 
 type dsataStoreUnitService struct {
 	*AbstractService
@@ -124,11 +113,11 @@ func (s *dsataStoreUnitService) Run(context *Context, request interface{}) *Serv
 	return response
 }
 
-func (s *dsataStoreUnitService) registerDsManager(context *Context, datastoreName, credential string,  config *dsc.Config) error {
+func (s *dsataStoreUnitService) registerDsManager(context *Context, datastoreName, credential string, config *dsc.Config) error {
 	passwordCredential := &storage.PasswordCredential{}
 	err := NewFileResource(credential).JsonDecode(passwordCredential)
 	if err != nil {
-		return  err
+		return err
 	}
 	config.Parameters["username"] = passwordCredential.Username
 	config.Parameters["password"] = passwordCredential.Password
@@ -142,11 +131,9 @@ func (s *dsataStoreUnitService) registerDsManager(context *Context, datastoreNam
 	return nil
 }
 
-
-
 func (s *dsataStoreUnitService) runScript(context *Context, datastore string, source *Resource) (int, error) {
 	var err error
-	source,err  = context.ExpandResource(source)
+	source, err = context.ExpandResource(source)
 	if err != nil {
 		return 0, err
 	}
@@ -161,16 +148,14 @@ func (s *dsataStoreUnitService) runScript(context *Context, datastore string, so
 	return s.Manager.Execute(scriptRequest)
 }
 
-
-
 func (s *dsataStoreUnitService) register(context *Context, request *DsUnitRegisterRequest) (interface{}, error) {
-	 err := request.Validate();
+	err := request.Validate()
 	if err != nil {
 		return nil, err
 	}
 	var result = &DsUnitRegisterResponse{}
 	s.registerDsManager(context, request.Datastore, request.Credential, request.Config)
-	var adminDatastore= "admin_" + request.Datastore
+	var adminDatastore = "admin_" + request.Datastore
 	if request.adminConfig != nil {
 		s.registerDsManager(context, adminDatastore, request.AdminCredential, request.adminConfig)
 	}
@@ -192,7 +177,7 @@ func (s *dsataStoreUnitService) register(context *Context, request *DsUnitRegist
 		if err != nil {
 			return nil, err
 		}
-		var datasetMapping =&DatasetMappings{}
+		var datasetMapping = &DatasetMappings{}
 		err = mappingResource.JsonDecode(datasetMapping)
 		if err != nil {
 			return nil, err
@@ -203,7 +188,6 @@ func (s *dsataStoreUnitService) register(context *Context, request *DsUnitRegist
 	}
 	return result, nil
 }
-
 
 func (s *dsataStoreUnitService) prepare(context *Context, request *DsUnitPrepareRequest) (interface{}, error) {
 	var response = &DsUnitPrepareResponse{}
@@ -237,7 +221,6 @@ func (s *dsataStoreUnitService) verify(context *Context, request *DsUnitVerifyRe
 	}
 	return response, err
 }
-
 
 func (s *dsataStoreUnitService) NewRequest(action string) (interface{}, error) {
 	switch action {

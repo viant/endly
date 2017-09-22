@@ -13,9 +13,10 @@ const WorkflowServiceId = "workflow"
 
 type WorkflowRunRequest struct {
 	WorkflowURL string
-	Name   string
-	Params map[string]interface{}
-	Tasks  map[string]string
+	Name        string
+	Params      map[string]interface{}
+	Tasks       map[string]string
+	Task        string
 }
 
 type WorkflowRunResponse struct {
@@ -90,6 +91,25 @@ func (s *WorkflowService) evaluateRunCriteria(context *Context, criteria string)
 	return result, err
 }
 
+func isTaskAllowed(candidate *WorkflowTask, request *WorkflowRunRequest) (bool, map[int]bool) {
+
+	if (len(request.Tasks) == 0 && request.Task == "") || request.Task == candidate.Name {
+		return true, map[int]bool{}
+	}
+
+	if allowedActions, has := request.Tasks[candidate.Name]; has {
+		var allowedActionIndexes = make(map[int]bool)
+		for _, index := range strings.Split(allowedActions, ",") {
+			if index == "" {
+				continue
+			}
+			allowedActionIndexes[toolbox.AsInt(index)] = true
+		}
+		return true, allowedActionIndexes
+	}
+	return false, nil
+}
+
 func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequest) (*WorkflowRunResponse, error) {
 	workflow, err := s.Workflow(request.Name)
 	if err != nil {
@@ -122,22 +142,13 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 	var workflowData = common.Map(workflow.Data)
 	state.Put("workflow", workflowData)
 	workflow.Variables.Apply(state, state, "in") // -> state to state
-	var hasAllowedTasks = len(request.Tasks) > 0
+
 	for _, task := range workflow.Tasks {
-		var allowedServiceActions map[int]bool
-		if hasAllowedTasks {
-			allowedActionIndexes, ok := request.Tasks[task.Name]
-			if !ok {
-				continue
-			}
-			allowedServiceActions = make(map[int]bool)
-			for _, index := range strings.Split(allowedActionIndexes, ",") {
-				if index == "" {
-					continue
-				}
-				allowedServiceActions[toolbox.AsInt(index)] = true
-			}
+		var taskAllowed, allowedServiceActions = isTaskAllowed(task, request)
+		if !taskAllowed {
+			continue
 		}
+
 		var hasAllowedActions = len(allowedServiceActions) > 0
 		var taskActivity = &WorkflowTaskActivity{
 			Task:              task.Name,
@@ -153,7 +164,7 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 		if err != nil {
 			return nil, err
 		}
-		if ! canRun {
+		if !canRun {
 			taskActivity.Skipped = fmt.Sprintf("Does not match run criteria: %v", context.Expand(task.RunCriteria))
 			continue
 		}
@@ -171,7 +182,7 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 			if err != nil {
 				return nil, err
 			}
-			if ! canRun {
+			if !canRun {
 				serviceActivity.Skipped = fmt.Sprintf("Does not match run criteria: %v", context.Expand(action.RunCriteria))
 				continue
 			}
@@ -185,7 +196,10 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 				return nil, err
 			}
 
-			requestMap := expandMap(action.Request, state)
+			requestMap, err := ExpandAsMap(action.Request, state)
+			if err != nil {
+				return nil, err
+			}
 			serviceRequest, err := service.NewRequest(action.Action)
 			if err != nil {
 				return nil, err
@@ -219,56 +233,6 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 	workflow.Variables.Apply(state, state, "out") //task state to result state
 	return response, nil
 }
-
-
-
-
-
-func expandMap(sourceMap interface{}, state common.Map) (map[string]interface{}) {
-	var requestMap = make(map[string]interface{})
-
-
-	for k, v := range toolbox.AsMap(sourceMap) {
-
-		if toolbox.IsString(v) {
-			if actualValue, ok := state.GetValue(toolbox.AsString(v)); ok {
-				requestMap[k] = actualValue
-				continue
-			}
-
-			requestMap[k] = Expand(state, toolbox.AsString(v))
-		} else if toolbox.IsMap(v) {
-			value := expandMap(toolbox.AsMap(v), state)
-			requestMap[k] = value
-			continue
-		} else if toolbox.IsSlice(v) {
-			slice := toolbox.AsSlice(v)
-
-			var newSlice = make([]interface{}, len(slice))
-
-			for i, item := range slice {
-				if toolbox.IsString(item) {
-					if actualValue, ok := state.GetValue(toolbox.AsString(item)); ok {
-						newSlice[i] = actualValue
-						continue
-					}
-					newSlice[i] = Expand(state, toolbox.AsString(item))
-					continue
-				} else if  toolbox.IsMap(item) {
-					newSlice[i] = expandMap(toolbox.AsMap(item), state)
-					continue
-				}
-				newSlice[i] = item
-			}
-			requestMap[k] = newSlice
-			continue
-		}
-		requestMap[k] = v
-	}
-	return requestMap
-}
-
-
 
 func (s *WorkflowService) Run(context *Context, request interface{}) *ServiceResponse {
 	var response = &ServiceResponse{Status: "ok"}
@@ -326,3 +290,5 @@ func NewWorkflowService() Service {
 	result.AbstractService.Service = result
 	return result
 }
+
+//7.0.81

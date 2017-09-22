@@ -1,6 +1,7 @@
 package endly
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
@@ -8,16 +9,15 @@ import (
 	"net/url"
 	"path"
 	"strings"
-	"bytes"
 )
 
 type Resource struct {
-	Name           string
-	Version        string
-	URL            string
-	Type           string
-	Credential     string//name of file or alias to the file defined via credential service
-	ParsedURL      *url.URL
+	Name       string
+	Version    string
+	URL        string
+	Type       string
+	Credential string //name of file or alias to the file defined via credential service
+	ParsedURL  *url.URL
 }
 
 func (r *Resource) Session() string {
@@ -44,7 +44,6 @@ func (r *Resource) LoadCredential(errorIsEmpty bool) (string, string, error) {
 	return credential.Username, credential.Password, nil
 }
 
-
 func (r *Resource) AuthURL() (string, error) {
 	if r.Credential == "" {
 		return r.URL, nil
@@ -64,19 +63,16 @@ func (r *Resource) DownloadText() (string, error) {
 	return string(result), err
 }
 
-
 func (r *Resource) JsonDecode(target interface{}) error {
 	if r == nil {
 		return reportError(fmt.Errorf("Fail to json decode on empty resource"))
 	}
-	var content, err =  r.Download()
+	var content, err = r.Download()
 	if err != nil {
 		return err
 	}
 	return toolbox.NewJSONDecoderFactory().Create(bytes.NewReader(content)).Decode(target)
 }
-
-
 
 func (r *Resource) Download() ([]byte, error) {
 	if r == nil {
@@ -101,18 +97,16 @@ func (r *Resource) Download() ([]byte, error) {
 	return content, err
 }
 
-
 func NeResource(URL string) (*Resource, error) {
 	parsedURL, err := url.Parse(URL)
 	if err != nil {
 		return nil, err
 	}
 	return &Resource{
-		ParsedURL:parsedURL,
-		URL: URL,
+		ParsedURL: parsedURL,
+		URL:       URL,
 	}, nil
 }
-
 
 func NewFileResource(resource string) *Resource {
 	if resource == "" {
@@ -123,10 +117,10 @@ func NewFileResource(resource string) *Resource {
 		parent, _ := path.Split(fileName)
 		resource = path.Join(parent, resource)
 	}
-	var URL  = toolbox.FileSchema + resource
+	var URL = toolbox.FileSchema + resource
 	parsedURL, _ := url.Parse(URL)
 	return &Resource{
-		ParsedURL:parsedURL,
-		URL: URL,
+		ParsedURL: parsedURL,
+		URL:       URL,
 	}
 }

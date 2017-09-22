@@ -5,14 +5,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
+	"os"
+	"path"
+	"strings"
 	"testing"
 	"time"
-	"path"
-	"os"
-	"strings"
 )
 
-func getServiceWithWorkflow(paths ... string) (endly.Manager, endly.Service, error) {
+func getServiceWithWorkflow(paths ...string) (endly.Manager, endly.Service, error) {
 	manager := endly.NewManager()
 	service, err := manager.Service(endly.WorkflowServiceId)
 
@@ -56,7 +56,6 @@ func TestRunWorfklow(t *testing.T) {
 		assert.NotNil(t, serviceResponse)
 	}
 
-
 	{
 		context := manager.NewContext(toolbox.NewContext())
 		response := service.Run(context, &endly.WorkflowRunRequest{
@@ -93,7 +92,6 @@ func TestRunWorfklowMysql(t *testing.T) {
 				"system_stop_mysql":   "0,1",
 				"system_start_docker": "0",
 			},
-
 		})
 		if assert.Equal(t, "", response.Error) {
 			serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
@@ -205,7 +203,7 @@ func TestRunWorfkloVCMavenwBuild(t *testing.T) {
 					"originCredential": path.Join(os.Getenv("HOME"), "/secret/svn_ci.json"),
 					"originType":       "svn",
 					"targetUrl":        "file:///tmp/ci_common",
-					"targetCredential":  "",
+					"targetCredential": "",
 					"buildGoal":        "install",
 					"buildArgs":        "-Dmvn.test.skip",
 				},
@@ -215,6 +213,89 @@ func TestRunWorfkloVCMavenwBuild(t *testing.T) {
 				assert.True(t, ok)
 				assert.NotNil(t, serviceResponse)
 
+			}
+		}
+
+	}
+
+}
+
+func TestRunWorfkloTomcatApp(t *testing.T) {
+
+	manager, service, err := getServiceWithWorkflow("workflow/tomcat.csv")
+	if !assert.Nil(t, err) {
+		return
+	}
+	assert.NotNil(t, manager)
+	assert.NotNil(t, service)
+	credential := path.Join(os.Getenv("HOME"), "secret/scp.json")
+	if toolbox.FileExists(credential) {
+		baseSvnUrlFile := path.Join(os.Getenv("HOME"), "baseSvnUrl")
+		if toolbox.FileExists(baseSvnUrlFile) {
+			baseSvnUrl, err := endly.NewFileResource(path.Join(os.Getenv("HOME"), "baseSvnUrl")).DownloadText()
+			baseSvnUrl = strings.Trim(baseSvnUrl, " \r\n")
+			assert.Nil(t, err)
+			context := manager.NewContext(toolbox.NewContext())
+
+			{
+				response := service.Run(context, &endly.WorkflowRunRequest{
+					Name: "tomcat",
+					Params: map[string]interface{}{
+						"jdkVersion":         "1.7",
+						"targetHost":         "127.0.0.1",
+						"targetCredential":   path.Join(os.Getenv("HOME"), "/secret/scp.json"),
+						"appDirectory":       "/tmp/app1",
+						"tomcatVersion":      "7.0.81",
+						"tomcatMajorVersion": "7",
+					},
+					Task: "install",
+				})
+				if assert.Equal(t, "", response.Error) {
+					serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
+					assert.True(t, ok)
+					assert.NotNil(t, serviceResponse)
+
+				}
+			}
+			{
+				response := service.Run(context, &endly.WorkflowRunRequest{
+					Name: "tomcat",
+					Params: map[string]interface{}{
+						"jdkVersion":       "1.7",
+						"targetHost":       "127.0.0.1",
+						"targetCredential": path.Join(os.Getenv("HOME"), "/secret/scp.json"),
+						"appDirectory":     "/tmp/app1",
+						"catalinaOpts":     "-Xms2g -Xmx6g -XX:MaxPermSize=512m",
+					},
+					Task: "start",
+				})
+				if assert.Equal(t, "", response.Error) {
+					serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
+					assert.True(t, ok)
+					assert.NotNil(t, serviceResponse)
+
+				}
+			}
+
+			time.Sleep(2 * time.Second)
+			{
+				response := service.Run(context, &endly.WorkflowRunRequest{
+					Name: "tomcat",
+					Params: map[string]interface{}{
+						"jdkVersion":       "1.7",
+						"targetHost":       "127.0.0.1",
+						"targetCredential": path.Join(os.Getenv("HOME"), "/secret/scp.json"),
+						"appDirectory":     "/tmp/app1",
+						"catalinaOpts":     "-Xms2g -Xmx6g -XX:MaxPermSize=512m",
+					},
+					Task: "stop",
+				})
+				if assert.Equal(t, "", response.Error) {
+					serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
+					assert.True(t, ok)
+					assert.NotNil(t, serviceResponse)
+
+				}
 			}
 		}
 

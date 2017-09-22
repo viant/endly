@@ -3,12 +3,12 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/endly/common"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	_ "github.com/viant/toolbox/storage/scp"
 	"io"
 	"io/ioutil"
 	"strings"
-	"github.com/viant/toolbox"
 )
 
 const TransferServiceId = "transfer"
@@ -68,10 +68,9 @@ func NewExpandedContentHandler(context *Context) func(reader io.Reader) (io.Read
 	}
 }
 
-
 func (s *transferService) run(context *Context, transfers ...*Transfer) (*TransferCopyResponse, error) {
 	var result = &TransferCopyResponse{
-		Transfered:make([]*TransferInfo, 0),
+		Transfered: make([]*TransferInfo, 0),
 	}
 	sessionInfo := context.SessionInfo()
 	for _, transfer := range transfers {

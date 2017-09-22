@@ -13,14 +13,12 @@ func TestNewManager(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 	manager.Register(newTestService())
 
-
 	service, err := manager.Service("testService")
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
 
 	_, err = manager.Service("cc")
 	assert.NotNil(t, err)
-
 
 	manager2, err := context.Manager()
 	assert.Nil(t, err)

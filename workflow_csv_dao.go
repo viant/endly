@@ -151,7 +151,7 @@ func (f *FieldExpression) Set(value interface{}, target common.Map, indexes ...i
 						isValueSet = true
 					}
 				}
-				if ! isValueSet {
+				if !isValueSet {
 					data.Put(f.Field, value)
 				}
 			}
@@ -362,7 +362,7 @@ func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []stri
 
 		for k := i + 1; k < len(lines); k++ {
 
-			if (! strings.HasPrefix(lines[k], ",")) {
+			if !strings.HasPrefix(lines[k], ",") {
 				break
 			}
 			arrayValueDecoder := d.factory.Create(strings.NewReader(lines[k]))
@@ -429,11 +429,11 @@ func (d *WorkflowDao) normalizeValue(context *Context, resource *Resource, value
 			var has bool
 			udfFunction, has = UdfRegistry[udfName]
 
-			if ! has {
+			if !has {
 				var available = toolbox.MapKeysToStringSlice(UdfRegistry)
 				return nil, false, fmt.Errorf("Failed to lookup udf function %v on %v, avaialbe:[%v]", udfName, value, strings.Join(available, ","))
 			}
-			value = string(value[startArgumentPosition+1: endArgumentPosition])
+			value = string(value[startArgumentPosition+1 : endArgumentPosition])
 		}
 
 	}

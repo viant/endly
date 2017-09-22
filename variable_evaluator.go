@@ -1,6 +1,7 @@
 package endly
 
 import (
+	"fmt"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"strings"
@@ -18,8 +19,6 @@ func Expand(state common.Map, text string) string {
 		return text
 	}
 	var expandVariable = func(variableName, result string) string {
-
-
 
 		value, has := state.GetValue(string(variableName[1:]))
 		if has {
@@ -75,4 +74,46 @@ func Expand(state common.Map, text string) string {
 		result = expandVariable(variableName, result)
 	}
 	return result
+}
+
+func ExpandValue(source interface{}, state common.Map) interface{} {
+	switch value := source.(type) {
+	case string:
+		if strings.HasPrefix(value, "$") {
+			if state.Has(string(value[1:])) {
+				return state.Get(string(value[1:]))
+			}
+		}
+		return Expand(state, value)
+	case map[string]interface{}:
+		var resultMap = make(map[string]interface{})
+		for k, v := range value {
+			resultMap[Expand(state, k)] = ExpandValue(v, state)
+		}
+		return resultMap
+	case []interface{}:
+		var resultSlice = make([]interface{}, len(value))
+		for i, value := range value {
+			resultSlice[i] = ExpandValue(value, state)
+		}
+		return resultSlice
+	default:
+		if toolbox.IsMap(source) {
+			return ExpandValue(toolbox.AsMap(value), state)
+		} else if toolbox.IsSlice(source) {
+			return ExpandValue(toolbox.AsSlice(value), state)
+		} else {
+			return ExpandValue(toolbox.AsString(value), state)
+		}
+	}
+	return source
+}
+
+func ExpandAsMap(source interface{}, state common.Map) (map[string]interface{}, error) {
+	var candidate = ExpandValue(source, state)
+	if result, ok := candidate.(map[string]interface{}); ok {
+		return result, nil
+	}
+	available := toolbox.MapKeysToStringSlice(state)
+	return nil, fmt.Errorf("Expected a map but had %T in '%v', avaiable var [%v]", source, source, strings.Join(available, ","))
 }

@@ -63,18 +63,30 @@ func (r *CommandRequest) AsManagedCommandRequest() *ManagedCommandRequest {
 	for _, command := range r.Commands {
 		managedCommand.Executions = append(managedCommand.Executions, &Execution{
 			Command: command,
-			Error:[]string{commandNotFound, noSuchFileOrDirectory},
+			Error:   []string{commandNotFound, noSuchFileOrDirectory},
 		})
 	}
 	return &ManagedCommandRequest{
-		Target:        r.Target,
-		MangedCommand: managedCommand,
+		SuperUser:      r.SuperUser,
+		Target:         r.Target,
+		ManagedCommand: managedCommand,
 	}
 }
 
 type ManagedCommandRequest struct {
-	Target        *Resource
-	MangedCommand *ManagedCommand
+	SuperUser      bool
+	Target         *Resource
+	ManagedCommand *ManagedCommand
+}
+
+func (r *ManagedCommandRequest) Validate() error {
+	if r.Target == nil {
+		return fmt.Errorf("Target was empty")
+	}
+	if r.ManagedCommand == nil {
+		return fmt.Errorf("ManagedCommand was empty")
+	}
+	return nil
 }
 
 type SuperUserCommandRequest struct {
@@ -89,7 +101,7 @@ func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 	}
 	var result = &ManagedCommandRequest{
 		Target: target,
-		MangedCommand: &ManagedCommand{
+		ManagedCommand: &ManagedCommand{
 			Executions: make([]*Execution, 0),
 		},
 	}
@@ -122,7 +134,7 @@ func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 		if len(execution.Extraction) > 0 {
 			extractions = append(extractions, execution.Extraction...)
 		}
-		result.MangedCommand.Executions = append(result.MangedCommand.Executions, newExecution)
+		result.ManagedCommand.Executions = append(result.ManagedCommand.Executions, newExecution)
 	}
 
 	_, password, err := target.LoadCredential(true)
@@ -134,26 +146,26 @@ func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 		Extraction:  extractions,
 	}
 	execution.Error = append(execution.Error, errors...)
-	result.MangedCommand.Executions = append(result.MangedCommand.Executions, execution)
+	result.ManagedCommand.Executions = append(result.ManagedCommand.Executions, execution)
 	return result, nil
 }
 
 func NewCommandRequest(target *Resource, execution *ManagedCommand) *ManagedCommandRequest {
 	return &ManagedCommandRequest{
-		Target:        target,
-		MangedCommand: execution,
+		Target:         target,
+		ManagedCommand: execution,
 	}
 }
 
 func NewSimpleCommandRequest(target *Resource, commands ...string) *ManagedCommandRequest {
 	var result = &ManagedCommandRequest{
 		Target: target,
-		MangedCommand: &ManagedCommand{
+		ManagedCommand: &ManagedCommand{
 			Executions: make([]*Execution, 0),
 		},
 	}
 	for _, command := range commands {
-		result.MangedCommand.Executions = append(result.MangedCommand.Executions, &Execution{
+		result.ManagedCommand.Executions = append(result.ManagedCommand.Executions, &Execution{
 			Command: command,
 		})
 	}
@@ -222,7 +234,7 @@ type execService struct {
 }
 
 type ClientSession struct {
-	name            string
+	name string
 	*ssh.MultiCommandSession
 	Connection      *ssh.Client
 	OperatingSystem *OperatingSystem
@@ -402,7 +414,7 @@ func (s *execService) executeCommand(context *Context, session *ClientSession, e
 
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
 
-	fmt.Printf("IN: %v\nOUT:%v\n", cmd, stdout)
+	//fmt.Printf("IN: %v\nOUT:%v\n", cmd, stdout)
 	commandInfo.Add(NewCommandStream(command, stdout, err))
 	if err != nil {
 		return err
@@ -422,7 +434,7 @@ func (s *execService) executeCommand(context *Context, session *ClientSession, e
 		return err
 	}
 	if len(stdout) > 0 {
-		for _, execution := range request.MangedCommand.Executions {
+		for _, execution := range request.ManagedCommand.Executions {
 			if execution.MatchOutput != "" && strings.Contains(stdout, execution.MatchOutput) {
 				return s.executeCommand(context, session, execution, options, commandInfo, request)
 			}
@@ -444,10 +456,12 @@ func getTerminators(options *ExecutionOptions, session *ClientSession, execution
 }
 
 func (s *execService) runCommands(context *Context, request *ManagedCommandRequest) (*CommandInfo, error) {
-	//clientSessions := context.Sessions()
-	var target, err = context.ExpandResource(request.Target)
 
-	fmt.Printf("%v %v %v")
+	err := request.Validate()
+	if err != nil {
+		return nil, err
+	}
+	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
@@ -456,12 +470,7 @@ func (s *execService) runCommands(context *Context, request *ManagedCommandReque
 		return nil, err
 	}
 
-	//session, has := clientSessions[sessionName]
-	//if !has {
-	//	return nil, fmt.Errorf("Failed to lookup sessionName: %v", sessionName)
-	//}
-
-	var options = request.MangedCommand.Options
+	var options = request.ManagedCommand.Options
 	if options == nil {
 		options = NewExecutionOptions()
 	}
@@ -482,7 +491,7 @@ func (s *execService) runCommands(context *Context, request *ManagedCommandReque
 	}
 	info = NewCommandInfo(session.name)
 	context.SessionInfo().Log(info)
-	for _, execution := range request.MangedCommand.Executions {
+	for _, execution := range request.ManagedCommand.Executions {
 		if execution.MatchOutput != "" {
 			continue
 		}
@@ -524,7 +533,7 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 		if actualRequest.SuperUser {
 			superCommandRequest := SuperUserCommandRequest{
 				Target:        actualRequest.Target,
-				MangedCommand: mangedCommandRequest.MangedCommand,
+				MangedCommand: mangedCommandRequest.ManagedCommand,
 			}
 			mangedCommandRequest, err = superCommandRequest.AsCommandRequest(context)
 		}
@@ -542,7 +551,7 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 	case *ManagedCommandRequest:
 		response.Response, err = s.runCommands(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run command: %v, %v", actualRequest.MangedCommand, err)
+			response.Error = fmt.Sprintf("Failed to run command: %v, %v", actualRequest.ManagedCommand, err)
 		}
 	case *SuperUserCommandRequest:
 		commandRequest, err := actualRequest.AsCommandRequest(context)

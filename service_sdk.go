@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-const SdkServiceId = "sdkService"
+const SdkServiceId = "sdk"
 
 type SdkSetResponse struct {
 	Home  string

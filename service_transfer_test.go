@@ -1,17 +1,17 @@
 package endly_test
 
 import (
-	"testing"
-	"github.com/viant/endly"
-	"github.com/viant/toolbox"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly"
 	"github.com/viant/endly/common"
+	"github.com/viant/toolbox"
+	"testing"
 )
 
 type TestConfig struct {
 	Endpoint struct {
 		Hostname string
-		Port string
+		Port     string
 	}
 }
 
@@ -20,7 +20,6 @@ func TestNewTransferService(t *testing.T) {
 	manager := endly.NewManager()
 	service, err := manager.Service(endly.TransferServiceId)
 	if assert.Nil(t, err) {
-
 
 		context := manager.NewContext(toolbox.NewContext())
 
@@ -58,8 +57,8 @@ func TestNewTransferService(t *testing.T) {
 			response := service.Run(context, &endly.TransferCopyRequest{
 				Transfers: []*endly.Transfer{
 					{
-						Source:   endly.NewFileResource("test/transfer/config.json"),
-						Target:   endly.NewFileResource("/tmp/transfered.json"),
+						Source: endly.NewFileResource("test/transfer/config.json"),
+						Target: endly.NewFileResource("/tmp/transfered.json"),
 					},
 				},
 			})

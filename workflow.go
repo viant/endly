@@ -25,7 +25,7 @@ type WorkflowTask struct {
 
 type Workflow struct {
 	source      *Resource
-	Data 	    common.Map
+	Data        common.Map
 	Name        string
 	Description string
 	Variables   Variables

@@ -5,8 +5,8 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestNewFieldExpression(t *testing.T) {
@@ -108,7 +108,6 @@ func TestNewWorkflowDao(t *testing.T) {
 		dao := endly.NewWorkflowDao()
 		conext := &endly.Context{Context: toolbox.NewContext()}
 		workflow, err := dao.Load(conext, endly.NewFileResource("test/workflow/w1.csv"))
-
 
 		assert.Nil(t, err)
 		if assert.NotNil(t, workflow) {

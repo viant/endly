@@ -23,8 +23,8 @@ func TestSystemService_Run(t *testing.T) {
 		{
 			response := systemService.Run(context, &endly.ServiceStartRequest{
 				Target: &endly.Resource{
-					URL:            "scp://127.0.0.1/",
-					 Credential: credentialFile,
+					URL:        "scp://127.0.0.1/",
+					Credential: credentialFile,
 				},
 				Service: "mysql",
 			})
@@ -37,8 +37,8 @@ func TestSystemService_Run(t *testing.T) {
 		{
 			response := systemService.Run(context, &endly.ServiceStatusRequest{
 				Target: &endly.Resource{
-					URL:            "scp://127.0.0.1/",
-					 Credential: credentialFile,
+					URL:        "scp://127.0.0.1/",
+					Credential: credentialFile,
 				},
 				Service: "mysql",
 			})

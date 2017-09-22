@@ -22,9 +22,9 @@ type Manager interface {
 }
 
 type manager struct {
-	name            string
-	version         string
-	services        map[string]Service
+	name     string
+	version  string
+	services map[string]Service
 }
 
 func (s *manager) Name() string {
@@ -39,14 +39,13 @@ func (s *manager) Service(name string) (Service, error) {
 	if result, found := s.services[name]; found {
 		return result, nil
 	}
-	var available =toolbox.MapKeysToStringSlice(s.services)
+	var available = toolbox.MapKeysToStringSlice(s.services)
 	return nil, fmt.Errorf("Failed to lookup service: '%v' in [%v]", name, strings.Join(available, ","))
 }
 
 func (s *manager) Register(service Service) {
 	s.services[service.Id()] = service
 }
-
 
 func (s *manager) NewContext(ctx toolbox.Context) *Context {
 	var result = &Context{
@@ -58,9 +57,9 @@ func (s *manager) NewContext(ctx toolbox.Context) *Context {
 
 func NewManager() Manager {
 	var result = &manager{
-		name:            AppName,
-		version:         AppVersion,
-		services:        make(map[string]Service),
+		name:     AppName,
+		version:  AppVersion,
+		services: make(map[string]Service),
 	}
 	result.Register(NewExecService())
 	result.Register(NewTransferService())

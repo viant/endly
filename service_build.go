@@ -106,7 +106,7 @@ func (s *BuildService) loadBuildMeta(context *Context, buildMeta string) error {
 	if !(strings.Contains(buildMeta, ":") || strings.Contains(buildMeta, "/")) {
 		localResource := NewFileResource(fmt.Sprintf("build/meta/%v.json", buildMeta))
 		metaFile := localResource.ParsedURL.Path
-		if ! toolbox.FileExists(metaFile) {
+		if !toolbox.FileExists(metaFile) {
 			remoteResource := &Resource{
 				URL: fmt.Sprintf(defaultBuildMetaRepo, buildMeta),
 			}
@@ -175,8 +175,8 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 			return nil, err
 		}
 		serviceResponse := sdkService.Run(context, &SdkSetRequest{Target: request.Target,
-			Sdk:                                                      context.Expand(buildMeta.Sdk),
-			Version:                                                  context.Expand(buildMeta.SdkVersion),
+			Sdk:     context.Expand(buildMeta.Sdk),
+			Version: context.Expand(buildMeta.SdkVersion),
 		})
 		if serviceResponse.Error != "" {
 			return nil, errors.New(serviceResponse.Error)

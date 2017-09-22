@@ -8,9 +8,9 @@ import (
 	"math/rand"
 	"net/url"
 	"os"
-	"time"
-	"path"
 	"os/exec"
+	"path"
+	"time"
 )
 
 //TODO Execution detail Tracking of all run (time taken, request, response)
@@ -32,7 +32,6 @@ func reportError(err error) error {
 	return fmt.Errorf("%v at %v:%v -> %v", err, fileName, line, funcName)
 }
 
-
 func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 	var err error
 	if resource == nil {
@@ -42,11 +41,11 @@ func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 		return nil, reportError(fmt.Errorf("URL was empty"))
 	}
 	var result = &Resource{
-		URL:            c.Expand(resource.URL),
-		Credential:     c.Expand(resource.Credential),
-		Name:           c.Expand(resource.Name),
-		Version:        resource.Version,
-		Type:           c.Expand(resource.Type),
+		URL:        c.Expand(resource.URL),
+		Credential: c.Expand(resource.Credential),
+		Name:       c.Expand(resource.Name),
+		Version:    resource.Version,
+		Type:       c.Expand(resource.Type),
 	}
 
 	result.ParsedURL, err = url.Parse(result.URL)
@@ -123,7 +122,6 @@ func (c *Context) SessionInfo() *SessionInfo {
 	return result
 }
 
-
 func (c *Context) Workflow() *Workflow {
 	var result *Workflow
 	if !c.Contains(sessionInfoKey) {
@@ -151,7 +149,7 @@ func (c *Context) ExecuteAsSuperUser(target *Resource, command *ManagedCommand) 
 	if err != nil {
 		return nil, err
 	}
-	return c.Execute(target, request.MangedCommand)
+	return c.Execute(target, request.ManagedCommand)
 }
 
 func (c *Context) Execute(target *Resource, command interface{}) (*CommandInfo, error) {
@@ -159,21 +157,24 @@ func (c *Context) Execute(target *Resource, command interface{}) (*CommandInfo, 
 		return nil, nil
 	}
 	var commandRequest *ManagedCommandRequest
-	switch actualCommand:= command.(type) {
-		case *ManagedCommand:
-			commandRequest = NewCommandRequest(target, actualCommand)
-		case string:
-			request := CommandRequest{
-				Target:target,
-				Commands:[]string{actualCommand},
-			}
-			commandRequest = request.AsManagedCommandRequest()
-		case []string:
-			request := CommandRequest{
-				Target:target,
-				Commands:actualCommand,
-			}
-			commandRequest = request.AsManagedCommandRequest()
+	switch actualCommand := command.(type) {
+	case *CommandRequest:
+		actualCommand.Target = target
+		commandRequest = actualCommand.AsManagedCommandRequest()
+	case *ManagedCommand:
+		commandRequest = NewCommandRequest(target, actualCommand)
+	case string:
+		request := CommandRequest{
+			Target:   target,
+			Commands: []string{actualCommand},
+		}
+		commandRequest = request.AsManagedCommandRequest()
+	case []string:
+		request := CommandRequest{
+			Target:   target,
+			Commands: actualCommand,
+		}
+		commandRequest = request.AsManagedCommandRequest()
 
 	default:
 		return nil, fmt.Errorf("Unsupported command: %T", command)
@@ -192,14 +193,12 @@ func (c *Context) Execute(target *Resource, command interface{}) (*CommandInfo, 
 	return nil, nil
 }
 
-
 func (c *Context) Copy(expand bool, source, target *Resource) (interface{}, error) {
 	return c.Transfer([]*Transfer{{
 		Source: source,
 		Target: target,
-		Expand: expand,}}...)
+		Expand: expand}}...)
 }
-
 
 func (c *Context) Transfer(transfers ...*Transfer) (interface{}, error) {
 	if transfers == nil {
@@ -260,7 +259,6 @@ func NewDefaultState() common.Map {
 		exec.Command("mkdir -p " + tempPath)
 		return tempPath
 	})
-
 
 	result.Put("env", func(key string) interface{} {
 		return os.Getenv(key)

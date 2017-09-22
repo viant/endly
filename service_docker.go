@@ -37,7 +37,7 @@ type DockerImageInfo struct {
 }
 
 type DockerRunRequest struct {
-	SysPath []string
+	SysPath    []string
 	Target     *Resource
 	Image      string
 	Port       string
@@ -201,8 +201,6 @@ func (s *DockerService) runContainer(context *Context, request *DockerRunRequest
 	if len(request.SysPath) > 0 {
 		s.SysPath = request.SysPath
 	}
-
-
 
 	var secure = ""
 	if request.Credential != "" {

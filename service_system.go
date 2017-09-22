@@ -9,7 +9,7 @@ import (
 
 const SystemServiceId = "system"
 const (
-	serviceTypeError      = iota
+	serviceTypeError = iota
 	serviceTypeInitDaemon
 	serviceTypeLaunchCtl
 	serviceTypeStdService
@@ -267,9 +267,9 @@ func (s *systemService) checkService(context *Context, request *ServiceStatusReq
 
 func (s *systemService) stopService(context *Context, request *ServiceStopRequest) (*ServiceInfo, error) {
 	serviceInfo, err := s.checkService(context, &ServiceStatusRequest{
-		Target:  request.Target,
-		Service: request.Service,
-		Exclusion:request.Exclusion,
+		Target:    request.Target,
+		Service:   request.Service,
+		Exclusion: request.Exclusion,
 	})
 	if err != nil {
 		return nil, err
@@ -306,17 +306,17 @@ func (s *systemService) stopService(context *Context, request *ServiceStopReques
 		return nil, fmt.Errorf("%v", commandResult.Stdout)
 	}
 	return s.checkService(context, &ServiceStatusRequest{
-		Target:  request.Target,
-		Service: request.Service,
-		Exclusion:request.Exclusion,
+		Target:    request.Target,
+		Service:   request.Service,
+		Exclusion: request.Exclusion,
 	})
 }
 
 func (s *systemService) startService(context *Context, request *ServiceStartRequest) (*ServiceInfo, error) {
 	serviceInfo, err := s.checkService(context, &ServiceStatusRequest{
-		Target:  request.Target,
-		Service: request.Service,
-		Exclusion:request.Exclusion,
+		Target:    request.Target,
+		Service:   request.Service,
+		Exclusion: request.Exclusion,
 	})
 	if err != nil {
 		return nil, err
@@ -353,9 +353,9 @@ func (s *systemService) startService(context *Context, request *ServiceStartRequ
 		return nil, fmt.Errorf("%v", commandResult.Stdout)
 	}
 	return s.checkService(context, &ServiceStatusRequest{
-		Target:  request.Target,
-		Service: request.Service,
-		Exclusion:request.Exclusion,
+		Target:    request.Target,
+		Service:   request.Service,
+		Exclusion: request.Exclusion,
 	})
 }
 

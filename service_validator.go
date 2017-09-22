@@ -60,7 +60,6 @@ func (s *ValidatorService) Run(context *Context, request interface{}) *ServiceRe
 	return response
 }
 
-
 func (s *ValidatorService) Assert(context *Context, request *ValidatorAssertRequest) (*ValidatorAssertResponse, error) {
 	var response = &ValidatorAssertResponse{}
 	var state = context.State()
@@ -72,7 +71,7 @@ func (s *ValidatorService) Assert(context *Context, request *ValidatorAssertRequ
 		}
 	}
 	validator := &Validator{
-		SkipFields:make(map[string]bool),
+		SkipFields: make(map[string]bool),
 	}
 	err := validator.Assert(expected, actual, response, "/")
 	if err != nil {
@@ -80,8 +79,6 @@ func (s *ValidatorService) Assert(context *Context, request *ValidatorAssertRequ
 	}
 	return response, nil
 }
-
-
 
 func (s *ValidatorService) NewRequest(action string) (interface{}, error) {
 	switch action {

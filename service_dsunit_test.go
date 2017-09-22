@@ -1,19 +1,18 @@
 package endly_test
 
 import (
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/dsc"
+	"github.com/viant/dsunit"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
-	"github.com/stretchr/testify/assert"
-	"testing"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/viant/dsc"
-	"path"
 	"os"
-	"github.com/viant/dsunit"
+	"path"
+	"testing"
 )
 
 func TestDsUnitService(t *testing.T) {
-
 
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
@@ -36,23 +35,20 @@ func TestDsUnitService(t *testing.T) {
 		assert.Equal(t, "", response.Error)
 
 		response = service.Run(context, &endly.DsUnitPrepareRequest{
-			Datasets:&dsunit.DatasetResource{
-				Datastore:"mydb1",
-				Prefix:"prepare_",
-				URL:endly.NewFileResource("test/dsunit/dataset1").URL,
+			Datasets: &dsunit.DatasetResource{
+				Datastore: "mydb1",
+				Prefix:    "prepare_",
+				URL:       endly.NewFileResource("test/dsunit/dataset1").URL,
 			},
-
 		})
 		assert.Equal(t, "", response.Error)
 
-
 		response = service.Run(context, &endly.DsUnitVerifyRequest{
-			Datasets:&dsunit.DatasetResource{
-				Datastore:"mydb1",
-				Prefix:"verify_",
-				URL:endly.NewFileResource("test/dsunit/dataset1").URL,
+			Datasets: &dsunit.DatasetResource{
+				Datastore: "mydb1",
+				Prefix:    "verify_",
+				URL:       endly.NewFileResource("test/dsunit/dataset1").URL,
 			},
-
 		})
 		assert.Equal(t, "", response.Error)
 		verifyResponse, ok := response.Response.(*endly.DsUnitVerifyResponse)
@@ -60,14 +56,12 @@ func TestDsUnitService(t *testing.T) {
 		assert.Equal(t, 2, verifyResponse.DatasetChecked["ACCOUNT"])
 		assert.Equal(t, 2, verifyResponse.DatasetChecked["USER"])
 
-
 		response = service.Run(context, &endly.DsUnitVerifyRequest{
-			Datasets:&dsunit.DatasetResource{
-				Datastore:"mydb1",
-				Prefix:"err_",
-				URL:endly.NewFileResource("test/dsunit/dataset1").URL,
+			Datasets: &dsunit.DatasetResource{
+				Datastore: "mydb1",
+				Prefix:    "err_",
+				URL:       endly.NewFileResource("test/dsunit/dataset1").URL,
 			},
-
 		})
 		assert.True(t, response.Error != "")
 	}

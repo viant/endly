@@ -148,7 +148,6 @@ func (s *versionControlService) checkOut(context *Context, request *VcCheckoutRe
 		return nil, err
 	}
 
-
 	storageService, err := storage.NewServiceForURL(target.URL, target.Credential)
 	if err != nil {
 		return nil, err
