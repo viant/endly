@@ -23,7 +23,7 @@ type ProcessStartRequest struct {
 
 type ProcessStartResponse struct {
 	Command string
-	Info []*ProcessInfo
+	Info    []*ProcessInfo
 }
 
 type ProcessInfo struct {
@@ -33,6 +33,11 @@ type ProcessInfo struct {
 	Arguments []string
 	Stdin     string
 	Stdout    string
+}
+
+type ProcessStatusResponse struct {
+	Processes []*ProcessInfo
+	Pid       int
 }
 
 type ProcessStatusRequest struct {
@@ -63,6 +68,14 @@ func (s *processService) Run(context *Context, request interface{}) *ServiceResp
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to stop process: %v, %v", actualRequest.Pid, err)
 		}
+	case *ProcessStatusRequest:
+		response.Response, err = s.checkProcess(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to stop process: %v, %v", actualRequest, err)
+		}
+
+	default:
+		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 
 	}
 	if response.Error != "" {
@@ -71,7 +84,10 @@ func (s *processService) Run(context *Context, request interface{}) *ServiceResp
 	return response
 }
 
-func (s *processService) checkProcess(context *Context, request *ProcessStatusRequest) ([]*ProcessInfo, error) {
+func (s *processService) checkProcess(context *Context, request *ProcessStatusRequest) (*ProcessStatusResponse, error) {
+	var response = &ProcessStatusResponse{
+		Processes: make([]*ProcessInfo, 0),
+	}
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
@@ -90,8 +106,6 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 	}
 	var processes = state.GetMap(processesKey)
 	processes.Put(request.Command, 0)
-	var result = make([]*ProcessInfo, 0)
-
 	for _, line := range strings.Split(commandResponse.Stdout(), "\r\n") {
 		if strings.Contains(line, "grep") {
 			continue
@@ -112,10 +126,13 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 			Arguments: arguments,
 			Stdout:    line,
 		}
-		result = append(result, info)
+		response.Processes = append(response.Processes, info)
 		processes.Put(request.Command, info.Pid)
 	}
-	return result, nil
+	if len(response.Processes) > 0 {
+		response.Pid = response.Processes[0].Pid
+	}
+	return response, nil
 }
 
 func (s *processService) stopProcess(context *Context, request *ProcessStopRequest) (*CommandInfo, error) {
@@ -161,7 +178,7 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 	if err != nil {
 		return nil, err
 	}
-	for _, process := range origProcesses {
+	for _, process := range origProcesses.Processes {
 		if strings.Join(process.Arguments, " ") == strings.Join(request.Arguments, " ") {
 			_, err := s.stopProcess(context, &ProcessStopRequest{
 				Pid:    process.Pid,
@@ -174,7 +191,7 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 	}
 	changeDirCommand := fmt.Sprintf("cd %v ", request.Directory)
 	startCommand := fmt.Sprintf("nohup %v %v &", request.Command, strings.Join(request.Arguments, " "))
-	 _, err = context.Execute(request.Target, &ManagedCommand{
+	_, err = context.Execute(request.Target, &ManagedCommand{
 		Options: request.Options,
 		Executions: []*Execution{
 			{
@@ -198,9 +215,9 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 	}
 
 	result.Info = make([]*ProcessInfo, 0)
-	existingProcesses := indexProcesses(origProcesses...)
+	existingProcesses := indexProcesses(origProcesses.Processes...)
 
-	for _, candidate := range newProcesses {
+	for _, candidate := range newProcesses.Processes {
 		if _, has := existingProcesses[candidate.Pid]; !has {
 			result.Info = append(result.Info, candidate)
 			break
@@ -208,7 +225,6 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 	}
 	return result, nil
 }
-
 
 func (s *processService) NewRequest(action string) (interface{}, error) {
 	switch action {
