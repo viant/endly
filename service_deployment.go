@@ -9,11 +9,21 @@ import (
 const DeploymentServiceId = "deployment"
 
 type DeploymentAddition struct {
+	SuperUser bool
 	Commands  []string
 	Transfers []*Transfer
 }
 
+func (a *DeploymentAddition) AsCommandRequest() *CommandRequest {
+	return &CommandRequest{
+		Commands:  a.Commands,
+		SuperUser: a.SuperUser,
+	}
+}
+
 type DeploymentDeployRequest struct {
+	Sdk          string
+	SdkVersion   string
 	Pre          *DeploymentAddition
 	Transfer     *Transfer
 	Command      *ManagedCommand
@@ -63,7 +73,7 @@ func (s *deploymentService) extractVersion(context *Context, request *Deployment
 func (s *deploymentService) deployAddition(context *Context, target *Resource, addition *DeploymentAddition) (err error) {
 	if addition != nil {
 		if len(addition.Commands) > 0 {
-			_, err = context.Execute(target, addition.Commands)
+			_, err = context.Execute(target, addition.AsCommandRequest())
 			if err != nil {
 				return fmt.Errorf("Failed to init deploy app to %v: %v", target, err)
 			}
@@ -98,6 +108,22 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	if response.Error != "" {
 		return nil, errors.New(response.Error)
 	}
+
+	if request.Sdk != "" {
+		sdkService, err := context.Service(SdkServiceId)
+		if err != nil {
+			return nil, err
+		}
+		response = sdkService.Run(context, &SdkSetRequest{
+			Sdk:     request.Sdk,
+			Version: request.SdkVersion,
+			Target:  request.Transfer.Target,
+		})
+		if response.Error != "" {
+			return nil, errors.New(response.Error)
+		}
+	}
+
 	defer execService.Run(context, CloseSession{Name: target.Session()})
 	parsedURL, err := url.Parse(target.URL)
 	if err != nil {
@@ -121,6 +147,13 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	if err != nil {
 		return nil, fmt.Errorf("Failed to deploy: %v", err)
 	}
+
+	if request.Command != nil {
+		_, err = context.Execute(target, request.Command)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to init deploy app to %v: %v", target, err)
+		}
+	}
 	if request.VersionCheck != nil {
 		version, err := s.extractVersion(context, request, execService, parsedURL)
 		if err != nil {
@@ -128,12 +161,6 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 		}
 		if version != target.Version {
 			return nil, fmt.Errorf("Failed to deploy %v: invalud version expected: %v, but had: %v ", target.Session(), target.Version, version)
-		}
-	}
-	if request.Command != nil {
-		_, err = context.Execute(target, request.Command)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to init deploy app to %v: %v", target, err)
 		}
 	}
 	err = s.deployAddition(context, target, request.Post)
@@ -149,7 +176,7 @@ func (s *deploymentService) Run(context *Context, request interface{}) *ServiceR
 		var err error
 		response.Response, err = s.deploy(context, castedRequest)
 		if err != nil {
-			response.Response = fmt.Sprintf("%v", err)
+			response.Error = fmt.Sprintf("%v", err)
 		}
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
