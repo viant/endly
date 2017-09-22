@@ -1,0 +1,199 @@
+[
+  {
+    "name": "targetHost",
+    "type": "const",
+    "scope": "in",
+    "source": "$params.targetHost"
+  },
+  {
+    "name": "tomcat",
+    "type": "const",
+    "scope": "in",
+    "source": "apache-tomcat-${params.tomcatVersion}"
+  },
+  {
+    "name": "jdkVersion",
+    "type": "const",
+    "scope": "in",
+    "default": "1.7",
+    "source": "$params.jdkVersion"
+  },
+  {
+    "name": "tomcatVersion",
+    "type": "const",
+    "scope": "in",
+    "source": "$params.tomcatVersion"
+  },
+  {
+    "name": "appDirectory",
+    "type": "const",
+    "scope": "in",
+    "source": "$params.appDirectory"
+  },
+  {
+    "name": "setRequest",
+    "type": "const",
+    "scope": "in",
+    "source": {
+      "Target": {
+        "URL": "ssh://${targetHost}/${appDirectory}/",
+        "Credentail": "$targetCredential"
+      },
+      "Sdk": "jdk",
+      "Version": "$params.jdkVersion"
+    }
+  },
+  {
+    "name": "checkRequest",
+    "type": "const",
+    "scope": "in",
+    "source": {
+      "Target": {
+        "URL": "ssh://${targetHost}/${appDirectory}/",
+        "Credentail": "$targetCredential"
+      },
+      "Command": "catalina | grep ${appDirectory}/tomcat"
+    }
+  },
+  {
+    "name": "killRequest",
+    "type": "const",
+    "scope": "in",
+    "source": {
+      "Target": {
+        "URL": "ssh://${targetHost}/${appDirectory}/",
+        "Credentail": "$targetCredential"
+      },
+      "Pid": "$tomcatPid"
+    }
+  },
+  {
+    "name": "startRequest",
+    "type": "const",
+    "scope": "in",
+    "source": {
+      "Target": {
+        "URL": "ssh://${targetHost}/${appDirectory}/",
+        "Credentail": "$targetCredential"
+      },
+      "ManagedCommand": {
+        "Options": {
+          "Env": {
+            "CATALINA_OPTS": "$params.catalinaOpts"
+          },
+          "Directory": [
+            "$appDirectory"
+          ]
+        },
+        "Executions": [
+          {
+            "Command": "tomcat/bin/catalina.sh start",
+            "Success": [
+              "Tomcat started."
+            ],
+            "Extraction": [
+              {
+                "Key": "Version",
+                "RegExpr": "Server number: (\\d+\\.\\d+\\.\\d+)"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "stopRequest",
+    "type": "const",
+    "scope": "in",
+    "source": {
+      "Target": {
+        "URL": "ssh://${targetHost}/${appDirectory}/",
+        "Credentail": "$targetCredential"
+      },
+      "ManagedCommand": {
+        "Options": {
+          "Directory": [
+            "$appDirectory"
+          ]
+        },
+        "Executions": [
+          {
+            "Command": "tomcat/bin/shutdown.sh"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "deployRequest",
+    "type": "const",
+    "scope": "in",
+    "source": {
+      "Sdk": "jdk",
+      "SdkVersion": "$jdkVersion",
+      "Pre": {
+        "SuperUser": "true",
+        "Commands": [
+          "rm -rf ${params.appDirectory}",
+          "mkdir -p  ${params.appDirectory}",
+          "mkdir -p  ${params.appDirectory}/conf",
+          "mkdir -p  ${params.appDirectory}/logs",
+          "mkdir -p  ${params.appDirectory}/plugins",
+          "mkdir -p  ${params.appDirectory}/data"
+        ]
+      },
+      "Transfer": {
+        "Source": {
+          "URL": "http://mirror.metrocast.net/apache/tomcat/tomcat-${params.tomcatMajorVersion}/v${params.tomcatVersion}/bin/${tomcat}.tar.gz"
+        },
+        "Target": {
+          "Name": "tomcat",
+          "Version": "$tomcatVersion",
+          "URL": "scp://${targetHost}/${appDirectory}/",
+          "Credentail": "$targetCredential"
+        }
+      },
+      "Command": {
+        "Options": {
+          "Directory": "$appDirectory"
+        },
+        "Executions": [
+          {
+            "Command": "tar xvzf ${tomcat}.tar.gz",
+            "Error": [
+              "Error"
+            ]
+          },
+          {
+            "Command": "mv ${tomcat} tomcat",
+            "Error": [
+              "No"
+            ]
+          }
+        ]
+      },
+      "VersionCheck": {
+        "Executions": [
+          {
+            "Command": "sh tomcat/bin/version.sh",
+            "Extraction": [
+              {
+                "Key": "Version",
+                "RegExpr": "Apache Tomcat/(\\d+\\.\\d+\\.\\d+)"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "Post": {
+      "SuperUser": "true",
+      "Commands": [
+        "chmod a+w  $appDirectory/logs",
+        "mkdir -p  ${params.appDirectory}/tomcat/logs",
+        "chmod a+w  $appDirectory/tomcat/logs"
+      ]
+    }
+  }
+]
