@@ -2,19 +2,19 @@ package endly
 
 import (
 	"github.com/viant/endly/common"
-	"strings"
 	"github.com/viant/toolbox"
+	"strings"
 )
 
 var VariableDefaultScope = "inout"
 var VariableConstant = "const"
 
 type Variable struct {
-	Name   string
-	Type   string //const,var
-	Source interface{}
+	Name    string
+	Type    string //const,var
+	Source  interface{}
 	Default string
-	Scope  string //init, in, out
+	Scope   string //init, in, out
 }
 
 func (v *Variable) IsConstantType() bool {
@@ -23,14 +23,14 @@ func (v *Variable) IsConstantType() bool {
 
 type Variables []*Variable
 
-func (v *Variables) Apply(in, out common.Map, scope string) {
+func (v *Variables) Apply(in, out common.Map, scope string) error {
 
 	if out == nil {
-		return
+		return nil
 	}
 
 	if v == nil || len(*v) == 0 {
-		return
+		return nil
 	}
 	scope = strings.ToLower(scope)
 	for _, variable := range *v {
@@ -42,8 +42,13 @@ func (v *Variables) Apply(in, out common.Map, scope string) {
 			continue
 		}
 		if variable.IsConstantType() {
-			if toolbox.IsMap(variable.Source){
-				out.SetValue(variable.Name, expandMap(variable.Source, in))
+			if toolbox.IsMap(variable.Source) {
+
+				aMap, err := ExpandAsMap(variable.Source, in)
+				if err != nil {
+					return err
+				}
+				out.SetValue(variable.Name, aMap)
 			} else {
 				var value = Expand(in, toolbox.AsString(variable.Source))
 				if value == "" {
@@ -57,4 +62,5 @@ func (v *Variables) Apply(in, out common.Map, scope string) {
 			out.SetValue(variable.Name, value)
 		}
 	}
+	return nil
 }
