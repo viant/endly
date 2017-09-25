@@ -1,42 +1,53 @@
 [
   {
-    "name": "jdkVersion",
-    "type": "const",
-    "scope": "in",
-    "source": "$params.jdkVersion",
-    "default": "1.7"
+    "Name": "jdkVersion",
+    "From": "$params.jdkVersion",
+    "Value": "1.7"
   },
   {
-    "name": "origin",
-    "type": "const",
-    "scope": "in",
-    "source": {
+    "Name": "origin",
+    "Value": {
       "Type": "$params.originType",
       "URL": "$params.originUrl",
       "Credential": "$params.originCredential"
     }
   },
   {
-    "name": "buildTarget",
-    "type": "const",
-    "scope": "in",
-    "source": {
+    "Name": "buildTarget",
+    "Value": {
       "URL": "$params.targetUrl",
       "Credential": "$params.targetCredential"
     }
   },
   {
-    "name": "buidGoal",
-    "type": "const",
-    "scope": "in",
-    "source": "$params.buildGoal",
-    "default": "install"
+    "Name": "buidGoal",
+    "From": "params.buildGoal",
+    "Value": "install"
   },
   {
-    "name": "buildArgs",
-    "type": "const",
-    "scope": "in",
-    "default": "",
-    "source": "$params.buildArgs"
+    "Name": "buildArgs",
+    "From": "params.buildArgs",
+    "Value": ""
+  },
+  {
+    "Name": "checkoutRequest",
+    "Value": {
+      "Origin": "$origin",
+      "Target": "buildTarget"
+    }
+  },
+  {
+    "Name": "buildRequest",
+    "Value": {
+      "BuildSpec": {
+        "Name": "maven",
+        "Goal": "build",
+        "BuildGoal": "$buidGoal",
+        "Args": "buildArgs",
+        "Sdk": "jdk",
+        "SdkVersion": "$jdkVersion"
+      },
+      "Target": "$buildTarget"
+    }
   }
 ]

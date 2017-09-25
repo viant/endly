@@ -7,7 +7,8 @@ type ServiceAction struct {
 	Service     string
 	Action      string
 	Description string
-	Variables   Variables
+	Init        Variables
+	Post        Variables
 	Request     interface{}
 	SleepInMs   int
 	IgnoreError bool
@@ -19,8 +20,10 @@ type WorkflowTask struct {
 	Name        string
 	Description string
 	Actions     []*ServiceAction
-	Variables   Variables
-	SleepInMs   int
+	Init        Variables
+	Post        Variables
+
+	SleepInMs int
 }
 
 type Workflow struct {
@@ -28,7 +31,8 @@ type Workflow struct {
 	Data        common.Map
 	Name        string
 	Description string
-	Variables   Variables
+	Init        Variables
+	Post        Variables
 	Tasks       []*WorkflowTask
 }
 

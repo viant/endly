@@ -116,11 +116,11 @@ func TestNewWorkflowDao(t *testing.T) {
 
 			assert.Equal(t, 3, len(workflow.Tasks))
 			assert.Equal(t, "Simple Http Test", workflow.Tasks[0].Name)
-			assert.Equal(t, 1, len(workflow.Tasks[0].Variables))
-			assert.Equal(t, "v10", workflow.Tasks[0].Variables[0].Name)
-			assert.Equal(t, 2, len(workflow.Tasks[1].Variables))
+			assert.Equal(t, 1, len(workflow.Tasks[0].Init))
+			assert.Equal(t, "v10", workflow.Tasks[0].Init[0].Name)
+			assert.Equal(t, 2, len(workflow.Tasks[1].Init))
 
-			assert.Equal(t, "v30", workflow.Tasks[2].Variables[0].Name)
+			assert.Equal(t, "v30", workflow.Tasks[2].Init[0].Name)
 
 			assert.Equal(t, "v1", workflow.Data.GetString("k1"))
 			assert.Equal(t, "v2", workflow.Data.GetString("k2"))

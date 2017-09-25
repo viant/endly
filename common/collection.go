@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"github.com/viant/toolbox"
 	"strings"
 )
@@ -16,7 +17,6 @@ func (s *Collection) ExpandWithMap(size int) {
 		s.Push(NewMap())
 	}
 }
-
 
 func (s *Collection) Range(handler func(item interface{}, index int) (bool, error)) error {
 	for i, elem := range *s {
@@ -36,8 +36,8 @@ func (s *Collection) RangeMap(handler func(item Map, index int) (bool, error)) e
 	var next bool
 	var err error
 	for i, elem := range *s {
-		var aMap, ok  = elem.(Map)
-		if ! ok {
+		var aMap, ok = elem.(Map)
+		if !ok {
 			next, err = handler(nil, i)
 		} else {
 			next, err = handler(aMap, i)
@@ -54,13 +54,14 @@ func (s *Collection) RangeMap(handler func(item Map, index int) (bool, error)) e
 }
 
 func (s *Collection) String() string {
+
+	fmt.Printf("S: %v\n", *s)
 	var items = make([]string, 0)
 	for _, item := range *s {
 		items = append(items, toolbox.AsString(item))
 	}
 	return "[" + strings.Join(items, ",") + "]"
 }
-
 
 func (s *Collection) RangeString(handler func(item interface{}, index int) (bool, error)) error {
 	for i, elem := range *s {

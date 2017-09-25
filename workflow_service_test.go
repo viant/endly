@@ -125,6 +125,7 @@ func TestRunWorfklowMysql(t *testing.T) {
 				"serviceInstanceName": "dockerizedMysql1",
 			},
 		})
+
 		if assert.Equal(t, "", response.Error) {
 			serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
 			assert.True(t, ok)

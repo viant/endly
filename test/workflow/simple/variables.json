@@ -2,8 +2,7 @@
 
   {
     "Name": "appServer",
-    "Type":"const",
-    "Source":"http://127.0.0.1:${params.port}/"
+    "Value":"http://127.0.0.1:${params.port}/"
   }
 
 ]

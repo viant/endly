@@ -1,53 +1,39 @@
 [
   {
-    "name": "targetHost",
-    "type": "const",
-    "scope": "in",
-    "source": "$params.targetHost"
+    "Name": "targetHost",
+    "Value": "$params.targetHost"
   },
   {
-    "name": "tomcat",
-    "type": "const",
-    "scope": "in",
-    "source": "apache-tomcat-${params.tomcatVersion}"
+    "Name": "tomcat",
+    "Value": "apache-tomcat-${params.tomcatVersion}"
   },
   {
-    "name": "jdkVersion",
-    "type": "const",
-    "scope": "in",
-    "default": "1.7",
-    "source": "$params.jdkVersion"
+    "Name": "jdkVersion",
+    "From": "params.jdkVersion",
+    "Value": "1.7"
   },
   {
-    "name": "tomcatVersion",
-    "type": "const",
-    "scope": "in",
-    "source": "$params.tomcatVersion"
+    "Name": "tomcatVersion",
+    "From": "params.tomcatVersion"
   },
   {
-    "name": "appDirectory",
-    "type": "const",
-    "scope": "in",
-    "source": "$params.appDirectory"
+    "Name": "appDirectory",
+    "Value": "$params.appDirectory"
   },
   {
-    "name": "setRequest",
-    "type": "const",
-    "scope": "in",
-    "source": {
+    "Name": "setRequest",
+    "Value": {
       "Target": {
         "URL": "ssh://${targetHost}/${appDirectory}/",
-        "Credentail": "$targetCredential"
+        "Credential": "$targetCredential"
       },
       "Sdk": "jdk",
       "Version": "$params.jdkVersion"
     }
   },
   {
-    "name": "checkRequest",
-    "type": "const",
-    "scope": "in",
-    "source": {
+    "Name": "checkRequest",
+    "Value": {
       "Target": {
         "URL": "ssh://${targetHost}/${appDirectory}/",
         "Credentail": "$targetCredential"
@@ -56,10 +42,8 @@
     }
   },
   {
-    "name": "killRequest",
-    "type": "const",
-    "scope": "in",
-    "source": {
+    "Name": "killRequest",
+    "Value": {
       "Target": {
         "URL": "ssh://${targetHost}/${appDirectory}/",
         "Credentail": "$targetCredential"
@@ -68,10 +52,8 @@
     }
   },
   {
-    "name": "startRequest",
-    "type": "const",
-    "scope": "in",
-    "source": {
+    "Name": "startRequest",
+    "Value": {
       "Target": {
         "URL": "ssh://${targetHost}/${appDirectory}/",
         "Credentail": "$targetCredential"
@@ -103,10 +85,8 @@
     }
   },
   {
-    "name": "stopRequest",
-    "type": "const",
-    "scope": "in",
-    "source": {
+    "Name": "stopRequest",
+    "Value": {
       "Target": {
         "URL": "ssh://${targetHost}/${appDirectory}/",
         "Credentail": "$targetCredential"
@@ -126,10 +106,8 @@
     }
   },
   {
-    "name": "deployRequest",
-    "type": "const",
-    "scope": "in",
-    "source": {
+    "Name": "deployRequest",
+    "Value": {
       "Sdk": "jdk",
       "SdkVersion": "$jdkVersion",
       "Pre": {

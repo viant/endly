@@ -1,7 +1,6 @@
 package endly
 
 import (
-	"fmt"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"strings"
@@ -19,7 +18,6 @@ func Expand(state common.Map, text string) string {
 		return text
 	}
 	var expandVariable = func(variableName, result string) string {
-
 		value, has := state.GetValue(string(variableName[1:]))
 		if has {
 			return result + toolbox.AsString(value)
@@ -59,7 +57,7 @@ func Expand(state common.Map, text string) string {
 			parsingState = expectVariableStart
 
 		case expectVariableName:
-			if unicode.IsLetter(rune) || unicode.IsDigit(rune) || aChar == "." || aChar == "_" {
+			if unicode.IsLetter(rune) || unicode.IsDigit(rune) || aChar == "." || aChar == "_" || aChar == "+" || aChar == "<" || aChar == "-" {
 				variableName += aChar
 				continue
 			}
@@ -98,6 +96,10 @@ func ExpandValue(source interface{}, state common.Map) interface{} {
 		}
 		return resultSlice
 	default:
+		if source == nil {
+			return nil
+		}
+
 		if toolbox.IsMap(source) {
 			return ExpandValue(toolbox.AsMap(value), state)
 		} else if toolbox.IsSlice(source) {
@@ -107,13 +109,4 @@ func ExpandValue(source interface{}, state common.Map) interface{} {
 		}
 	}
 	return source
-}
-
-func ExpandAsMap(source interface{}, state common.Map) (map[string]interface{}, error) {
-	var candidate = ExpandValue(source, state)
-	if result, ok := candidate.(map[string]interface{}); ok {
-		return result, nil
-	}
-	available := toolbox.MapKeysToStringSlice(state)
-	return nil, fmt.Errorf("Expected a map but had %T in '%v', avaiable var [%v]", source, source, strings.Join(available, ","))
 }

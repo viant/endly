@@ -141,7 +141,7 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 
 	var workflowData = common.Map(workflow.Data)
 	state.Put("workflow", workflowData)
-	workflow.Variables.Apply(state, state, "in") // -> state to state
+	workflow.Init.Apply(state, state)
 
 	for _, task := range workflow.Tasks {
 		var taskAllowed, allowedServiceActions = isTaskAllowed(task, request)
@@ -158,7 +158,7 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 		response.TasksActivities = append(response.TasksActivities, taskActivity)
 		var taskState = common.Map(taskActivity.Data)
 		state.Put("task", taskState)
-		task.Variables.Apply(state, state, "in") // -> state to task state
+		task.Init.Apply(state, state)
 
 		canRun, err := s.evaluateRunCriteria(context, task.RunCriteria)
 		if err != nil {
@@ -186,25 +186,28 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 				serviceActivity.Skipped = fmt.Sprintf("Does not match run criteria: %v", context.Expand(action.RunCriteria))
 				continue
 			}
-
-			state.Put("service", action.Service)
-			state.Put("action", action.Action)
-			action.Variables.Apply(state, state, "in") // task state to state
+			action.Init.Apply(state, state)
 			service, err := context.Service(action.Service)
 
 			if err != nil {
 				return nil, err
 			}
 
-			requestMap, err := ExpandAsMap(action.Request, state)
-			if err != nil {
-				return nil, err
+			expandedRequest := ExpandValue(action.Request, state)
+			if !toolbox.IsMap(expandedRequest) {
+				return nil, fmt.Errorf("Failed to exaluate request: %v, expected map but had: %T", expandedRequest, expandedRequest)
 			}
+
+			home, ok := state.GetValue("{env.HONE}")
+			fmt.Printf("Expanded: %v %v %v\n", expandedRequest, home, ok)
+
+			requestMap := toolbox.AsMap(expandedRequest)
 			serviceRequest, err := service.NewRequest(action.Action)
 			if err != nil {
 				return nil, err
 			}
-			serviceActivity.ServiceResponse = serviceRequest
+
+			serviceActivity.ServiceRequest = serviceRequest
 			err = converter.AssignConverted(serviceRequest, requestMap)
 			if err != nil {
 				return response, err
@@ -223,14 +226,16 @@ func (s *WorkflowService) runWorkflow(context *Context, request *WorkflowRunRequ
 			if serviceResponse.Response != nil {
 				converter.AssignConverted(responseMap, serviceResponse.Response)
 			}
-			action.Variables.Apply(common.Map(responseMap), state, "out") //result to task  state
+			action.Post.Apply(common.Map(responseMap), state) //result to task  state
 			if action.SleepInMs > 0 {
 				time.Sleep(time.Millisecond * time.Duration(action.SleepInMs))
 			}
 		}
-		task.Variables.Apply(state, state, "out") //task state to result state
+		task.Post.Apply(state, state)
+
 	}
-	workflow.Variables.Apply(state, state, "out") //task state to result state
+	workflow.Post.Apply(state, state)
+
 	return response, nil
 }
 
@@ -269,12 +274,10 @@ func (s *WorkflowService) Run(context *Context, request interface{}) *ServiceRes
 
 func (s *WorkflowService) NewRequest(action string) (interface{}, error) {
 	switch action {
-
 	case "run":
 		return &WorkflowRunRequest{}, nil
 	case "register":
 		return &WorkflowRegisterRequest{}, nil
-
 	case "load":
 		return &WorkflowLoadRequest{}, nil
 	}

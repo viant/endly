@@ -1,34 +1,27 @@
 [
   {
-    "name": "serviceInstanceName",
-    "type": "const",
-    "source": "$params.serviceInstanceName"
+    "Name": "serviceInstanceName",
+    "Value": "$params.serviceInstanceName"
   },
   {
-    "name": "remoteTarget",
-    "type": "const",
-    "scope": "in",
-    "source": {
+    "Name": "remoteTarget",
+    "Value": {
       "Name": "$params.serviceInstanceName",
       "URL": "$params.url",
       "Credential": "$params.credential"
     }
   },
   {
-    "name": "serviceInstanceName",
-    "type": "const",
-    "source": "$params.serviceInstanceName"
+    "Name": "serviceInstanceName",
+    "Value": "$params.serviceInstanceName"
   },
   {
-    "name": "configFile",
-    "type": "const",
-    "source": "/tmp/my${serviceInstanceName}.cnf"
+    "Name": "configFile",
+    "Value": "/tmp/my${serviceInstanceName}.cnf"
   },
   {
-    "name": "configTransfer",
-    "type": "const",
-    "scope": "in",
-    "source": {
+    "Name": "configTransfer",
+    "Value": {
       "Source": {
         "URL": "$params.configUrl",
         "Credential": "$params.configUrlCredential"
@@ -36,7 +29,58 @@
       "Target": {
         "URL": "file://$configFile"
       },
-      "Parsable": true
+      "Expand": true
+    }
+  },
+  {
+    "Name": "systemDockerRequest",
+    "Value": {
+      "Service": "docker",
+      "Target": "$remoteTarget"
+    }
+  },
+  {
+    "Name": "systemMysqlRequest",
+    "Value": {
+      "Service": "mysql",
+      "Target": "$remoteTarget"
+    }
+  },
+  {
+    "Name": "transferRequest",
+    "Value": {
+      "Transfers": [
+        {
+          "Source": {
+            "URL": "$params.configUrl",
+            "Credential": "$params.configUrlCredential"
+          },
+          "Target": {
+            "URL": "file://$configFile"
+          },
+          "Expand": true
+        }
+      ]
+    }
+  },
+  {
+    "Name": "dockerRunRequest",
+    "Env": {
+      "MYSQL_ROOT_PASSWORD": "****"
+    },
+    "Value": {
+      "SysPath": [
+        "/usr/local/bin"
+      ],
+      "Target": "$remoteTarget",
+      "Credential": "${env.HOME}/secret/mysql.json",
+      "Image": "mysql:5.6",
+      "Mount": {
+        "$configFile": "/etc/my.cnf"
+      },
+      "MappedPort": {
+        "3306": "3306"
+      }
     }
   }
 ]

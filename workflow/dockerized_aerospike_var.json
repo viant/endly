@@ -1,42 +1,66 @@
 [
   {
-    "name": "serviceInstanceName",
-    "type": "const",
-    "source": "$params.serviceInstanceName"
+    "Name": "serviceInstanceName",
+    "Value": "$params.serviceInstanceName"
   },
   {
-    "name": "remoteTarget",
-    "type": "const",
-    "scope": "in",
-    "source": {
+    "Name": "remoteTarget",
+    "Value": {
       "Name": "$params.serviceInstanceName",
       "URL": "$params.url",
       "Credential": "$params.credential"
     }
   },
   {
-    "name": "serviceInstanceName",
-    "type": "const",
-    "source": "$params.serviceInstanceName"
+    "Name": "serviceInstanceName",
+    "Value": "$params.serviceInstanceName"
   },
   {
-    "name": "configFile",
-    "type": "const",
-    "source": "/tmp/aerospike${serviceInstanceName}.conf"
+    "Name": "configFile",
+    "Value": "/tmp/aerospike${serviceInstanceName}.conf"
   },
   {
-    "name": "configTransfer",
-    "type": "const",
-    "scope": "in",
-    "source": {
-      "Source": {
-        "URL": "$params.configUrl",
-        "Credential": "$params.configUrlCredential"
+    "Name": "systemDockerRequest",
+    "Value": {
+      "Service": "docker",
+      "Target": "$remoteTarget"
+    }
+  },
+  {
+    "Name": "transferRequest",
+    "Value": {
+      "Transfers": [
+        {
+          "Source": {
+            "URL": "$params.configUrl",
+            "Credential": "$params.configUrlCredential"
+          },
+          "Target": {
+            "URL": "file://$configFile"
+          },
+          "Expand": true
+        }
+      ]
+    }
+  },
+  {
+    "Name": "dockerRunRequest",
+    "Value": {
+      "SysPath": [
+        "/usr/local/bin"
+      ],
+      "Target": "$remoteTarget",
+      "Image": "aerospike/aerospike-server:latest",
+      "Mount": {
+        "$configFile": "/etc/aerospike/aerospike.conf"
       },
-      "Target": {
-        "URL": "file://$configFile"
-      },
-      "Parsable": true
+      "MappedPort": {
+        "3000": "3000",
+        "3001": "3001",
+        "3002": "3002",
+        "3004": "3004",
+        "8081": "8081"
+      }
     }
   }
 ]
