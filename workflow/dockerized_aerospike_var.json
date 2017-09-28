@@ -4,7 +4,7 @@
     "Value": "$params.serviceInstanceName"
   },
   {
-    "Name": "remoteTarget",
+    "Name": "dockerTarget",
     "Value": {
       "Name": "$params.serviceInstanceName",
       "URL": "$params.url",
@@ -20,21 +20,34 @@
     "Value": "/tmp/aerospike${serviceInstanceName}.conf"
   },
   {
+    "Name": "sourceConfig",
+    "Value": {
+      "URL": "$params.configUrl",
+      "Credential": "$params.configUrlCredential"
+    }
+  },
+
+  {
+    "Name": "dockerRequest",
+    "Value": {
+      "Target": "$dockerTarget"
+    }
+  },
+
+  {
     "Name": "systemDockerRequest",
     "Value": {
       "Service": "docker",
-      "Target": "$remoteTarget"
+      "Target": "$dockerTarget"
     }
   },
+
   {
     "Name": "transferRequest",
     "Value": {
       "Transfers": [
         {
-          "Source": {
-            "URL": "$params.configUrl",
-            "Credential": "$params.configUrlCredential"
-          },
+          "Source": "$sourceConfig",
           "Target": {
             "URL": "file://$configFile"
           },
@@ -49,7 +62,7 @@
       "SysPath": [
         "/usr/local/bin"
       ],
-      "Target": "$remoteTarget",
+      "Target": "$dockerTarget",
       "Image": "aerospike/aerospike-server:latest",
       "Mount": {
         "$configFile": "/etc/aerospike/aerospike.conf"

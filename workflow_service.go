@@ -15,8 +15,7 @@ type WorkflowRunRequest struct {
 	WorkflowURL string
 	Name        string
 	Params      map[string]interface{}
-	Tasks       map[string]string
-	Task        string
+	Tasks       string
 }
 
 type WorkflowRunResponse struct {
@@ -100,19 +99,28 @@ func (s *WorkflowService) evaluateRunCriteria(context *Context, criteria string)
 
 func isTaskAllowed(candidate *WorkflowTask, request *WorkflowRunRequest) (bool, map[int]bool) {
 
-	if (len(request.Tasks) == 0 && request.Task == "") || request.Task == candidate.Name {
-		return true, map[int]bool{}
+	if request.Tasks == "" {
+		return true, nil
 	}
-
-	if allowedActions, has := request.Tasks[candidate.Name]; has {
-		var allowedActionIndexes = make(map[int]bool)
-		for _, index := range strings.Split(allowedActions, ",") {
-			if index == "" {
-				continue
-			}
-			allowedActionIndexes[toolbox.AsInt(index)] = true
+	var actions map[int]bool
+	var encodedTask []string
+	tasks := strings.Split(request.Tasks, ";")
+	for _, task := range tasks {
+		encodedTask = nil
+		var taskName = task
+		if ! strings.Contains(task, ":") {
+			encodedTask= strings.Split(task, ":")
+			taskName = encodedTask[0]
 		}
-		return true, allowedActionIndexes
+		if taskName ==  candidate.Name {
+			if len(encodedTask) == 2 {
+				actions = make(map[int]bool)
+				for _, allowedIndex := range strings.Split(encodedTask[1], ",") {
+					actions[toolbox.AsInt(allowedIndex)] = true
+				}
+			}
+			return true, actions
+		}
 	}
 	return false, nil
 }

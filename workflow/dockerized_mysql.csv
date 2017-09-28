@@ -1,20 +1,15 @@
 Workflow,,Name,Description,Tasks,,Init
 ,,dockerized_mysql,This workflow will setup and start mysql as docker service,%Tasks,,#dockerized_mysql_var.json
-[]Tasks,Step,Name,Description,Actions,RunCriteria,
-,1,system_stop_mysql,"This task will stop system mysql if it is running, it only run if  $param.stopSystemMysql is true",%Actions1,$params.stopSystemMysql:true,
-[]Actions1,Service,Action,Description,Request,RunCriteria,Post
-,system,status,Check if system mysql service is running,$systemMysqlRequest,,"[{""name"":""mysqlSystemStatus"", ""from"":""State""}]"
+[]Tasks,,Name,Description,Actions,,
+,,start,"This task will stop system mysql if it is running, it only run if  $param.stopSystemMysql is true",%Start,,
+[]Start,Service,Action,Description,Request,RunCriteria,Post
+,system,status,Check if system mysql service is running,$systemMysqlRequest,$params.stopSystemMysql:true,"[{""name"":""mysqlSystemStatus"", ""from"":""State""}]"
 ,system,stop,Stop system mysql service,$systemMysqlRequest,$mysqlSystemStatus:running,
-[]Tasks,Step,Name,Description,Actions,RunCriteria,
-,2,system_start_docker,This task wil start system docker service it it is not running,%Actions2,,
-[]Actions2,Service,Action,Description,Request,RunCriteria,Post
 ,system,status,Check if system docker service is running,$systemDockerRequest,,"[{""name"":""dockerSystemStatus"", ""from"":""State""}]"
 ,system,start,Start docker service,$systemDockerRequest,$dockerSystemStatus:/!running/,
-[]Tasks,Step,Name,Description,Actions,RunCriteria,
-,3,prepare_config,This task will create my.cnf mysql configuration file ($params.mycnfURL),%Actions3,,
-[]Actions3,Service,Action,Description,Request,RunCriteria,
 ,transfer,copy,This action will copy template config file to the temp folder,$transferRequest,$params.configUrl:/!params.configUrl/,
-[]Tasks,Step,Name,Description,Actions,,
-,4,docker_run_mysql,This task will start docker mysql instance,%Actions4,,
-[]Actions4,Service,Action,Description,Request,,
 ,docker,run,Start docker mysql service,$dockerRunRequest,,
+[]Tasks,,Name,Description,Actions,,
+,,stop,This task will stop docker mysql,%Stop,,
+[]Stop,Service,Action,Description,Request,,
+,docker,container-stop,Stop docker mysql service,$dockerRequest,,

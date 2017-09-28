@@ -71,9 +71,6 @@ func TestRunWorkflow(t *testing.T) {
 	}
 }
 
-
-
-
 func TestRunWorkflowMysql(t *testing.T) {
 
 	manager, service, err := getServiceWithWorkflow("workflow/dockerized_mysql.csv")
@@ -83,69 +80,60 @@ func TestRunWorkflowMysql(t *testing.T) {
 	assert.NotNil(t, manager)
 	assert.NotNil(t, service)
 
-	{
-		context := manager.NewContext(toolbox.NewContext())
-		response := service.Run(context, &endly.WorkflowRunRequest{
-			Name: "dockerized_mysql",
-			Params: map[string]interface{}{
-				"url":        "scp://127.0.0.1/",
-				"credential": path.Join(os.Getenv("HOME"), "/secret/scp.json"),
-			},
-			Tasks: map[string]string{
-				"system_stop_mysql":   "0,1",
-				"system_start_docker": "0",
-			},
-		})
-		if assert.Equal(t, "", response.Error) {
-			serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
-			assert.True(t, ok)
-			assert.NotNil(t, serviceResponse)
+	targetCredential := path.Join(os.Getenv("HOME"), "/secret/scp.json")
+	mysqlCredential := path.Join(os.Getenv("HOME"), "secret/mysql.json")
 
-			assert.Equal(t, "system_stop_mysql", serviceResponse.TasksActivities[0].Task)
-			assert.Equal(t, "Does not match run criteria: $params.stopSystemMysql:true", serviceResponse.TasksActivities[0].Skipped)
+	if toolbox.FileExists(mysqlCredential) {
 
-			if len(serviceResponse.TasksActivities[0].ServiceActivities) > 0 {
-				assert.Equal(t, "status", serviceResponse.TasksActivities[0].ServiceActivities[0].Action)
-				assert.Equal(t, "", serviceResponse.TasksActivities[0].ServiceActivities[0].Skipped)
+		{ //start docker
 
-				assert.Equal(t, "stop", serviceResponse.TasksActivities[0].ServiceActivities[1].Action)
-				assert.Equal(t, "", serviceResponse.TasksActivities[0].ServiceActivities[1].Skipped)
+			context := manager.NewContext(toolbox.NewContext())
+			response := service.Run(context, &endly.WorkflowRunRequest{
+				Name: "dockerized_mysql",
+				Params: map[string]interface{}{
+					"url":                 "scp://127.0.0.1/",
+					"credential":          targetCredential,
+					"mysqlCredential":     mysqlCredential,
+					"stopSystemMysql":     true,
+					"configUrl":           endly.NewFileResource("test/docker/my.cnf").URL,
+					"configUrlCredential": path.Join(os.Getenv("HOME"), "/secret/scp.json"),
+					"serviceInstanceName": "dockerizedMysql1",
+				},
+				Tasks: "start",
+			})
+
+			if assert.Equal(t, "", response.Error) {
+				serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
+				assert.True(t, ok)
+				assert.NotNil(t, serviceResponse)
 			}
-		}
-	}
 
-	credential := path.Join(os.Getenv("HOME"), "secret/mysql.json")
-	if toolbox.FileExists(credential) {
-		context := manager.NewContext(toolbox.NewContext())
-		response := service.Run(context, &endly.WorkflowRunRequest{
-			Name: "dockerized_mysql",
-			Params: map[string]interface{}{
-				"url":                 "scp://127.0.0.1/",
-				"credential":          path.Join(os.Getenv("HOME"), "/secret/scp.json"),
-				"stopSystemMysql":     true,
-				"configUrl":           endly.NewFileResource("test/docker/my.cnf").URL,
-				"confifUrlCredential": "",
-				"serviceInstanceName": "dockerizedMysql1",
-			},
-		})
-
-
-		if assert.Equal(t, "", response.Error) {
-			serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
-			assert.True(t, ok)
-			assert.NotNil(t, serviceResponse)
-
-			assert.Equal(t, "system_stop_mysql", serviceResponse.TasksActivities[0].Task)
-			assert.Equal(t, "", serviceResponse.TasksActivities[0].Skipped)
-
-			assert.Equal(t, "status", serviceResponse.TasksActivities[0].ServiceActivities[0].Action)
-			assert.Equal(t, "", serviceResponse.TasksActivities[0].ServiceActivities[0].Skipped)
-			assert.Equal(t, "stop", serviceResponse.TasksActivities[0].ServiceActivities[1].Action)
-
-			assert.Equal(t, "status", serviceResponse.TasksActivities[1].ServiceActivities[0].Action)
-			assert.Equal(t, "start", serviceResponse.TasksActivities[1].ServiceActivities[1].Action)
 		}
 
+		{ //start docker
+
+			context := manager.NewContext(toolbox.NewContext())
+			response := service.Run(context, &endly.WorkflowRunRequest{
+				Name: "dockerized_mysql",
+				Params: map[string]interface{}{
+					"url":                 "scp://127.0.0.1/",
+					"credential":          targetCredential,
+					"mysqlCredential":     mysqlCredential,
+					"stopSystemMysql":     true,
+					"configUrl":           endly.NewFileResource("test/docker/my.cnf").URL,
+					"configUrlCredential": path.Join(os.Getenv("HOME"), "/secret/scp.json"),
+					"serviceInstanceName": "dockerizedMysql1",
+				},
+				Tasks: "stop",
+			})
+
+			if assert.Equal(t, "", response.Error) {
+				serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
+				assert.True(t, ok)
+				assert.NotNil(t, serviceResponse)
+			}
+
+		}
 	}
 
 }
@@ -160,26 +148,42 @@ func TestRunWorkflowAerospike(t *testing.T) {
 	assert.NotNil(t, service)
 	credential := path.Join(os.Getenv("HOME"), "secret/scp.json")
 	if toolbox.FileExists(credential) {
+		aerospikeConfigUrl := endly.NewFileResource("test/workflow/aerospike.conf").URL
+
 		context := manager.NewContext(toolbox.NewContext())
 		response := service.Run(context, &endly.WorkflowRunRequest{
 			Name: "dockerized_aerospike",
 			Params: map[string]interface{}{
 				"url":                 "scp://127.0.0.1/",
-				"credential":          path.Join(os.Getenv("HOME"), "/secret/scp.json"),
-				"configUrl":           endly.NewFileResource("test/workflow/aerospike.conf").URL,
+				"credential":          credential,
+				"configUrl":           aerospikeConfigUrl,
 				"confifUrlCredential": "",
 				"serviceInstanceName": "dockerizedAerospike1",
 			},
+			Tasks: "start",
 		})
 		if assert.Equal(t, "", response.Error) {
 			serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
 			assert.True(t, ok)
 			assert.NotNil(t, serviceResponse)
-			assert.Equal(t, "system_start_docker", serviceResponse.TasksActivities[0].Task)
-			assert.Equal(t, "prepare_config", serviceResponse.TasksActivities[1].Task)
-			assert.Equal(t, "docker_run_aerospike", serviceResponse.TasksActivities[2].Task)
 		}
 
+		response = service.Run(context, &endly.WorkflowRunRequest{
+			Name: "dockerized_aerospike",
+			Params: map[string]interface{}{
+				"url":                 "scp://127.0.0.1/",
+				"credential":          credential,
+				"configUrl":           aerospikeConfigUrl,
+				"confifUrlCredential": "",
+				"serviceInstanceName": "dockerizedAerospike1",
+			},
+			Tasks: "stop",
+		})
+		if assert.Equal(t, "", response.Error) {
+			serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
+			assert.True(t, ok)
+			assert.NotNil(t, serviceResponse)
+		}
 	}
 
 }
@@ -233,8 +237,11 @@ func TestRunWorfklowTomcatApp(t *testing.T) {
 	}
 	assert.NotNil(t, manager)
 	assert.NotNil(t, service)
-	credential := path.Join(os.Getenv("HOME"), "secret/scp.json")
-	if toolbox.FileExists(credential) {
+	targetCredential := path.Join(os.Getenv("HOME"), "secret/scp.json")
+
+	if toolbox.FileExists(targetCredential) {
+		configUrl := endly.NewFileResource("test/workflow/tomcat-server.xml").URL
+
 		baseSvnUrlFile := path.Join(os.Getenv("HOME"), "baseSvnUrl")
 		if toolbox.FileExists(baseSvnUrlFile) {
 			baseSvnUrl, err := endly.NewFileResource(path.Join(os.Getenv("HOME"), "baseSvnUrl")).DownloadText()
@@ -246,17 +253,15 @@ func TestRunWorfklowTomcatApp(t *testing.T) {
 				response := service.Run(context, &endly.WorkflowRunRequest{
 					Name: "tomcat",
 					Params: map[string]interface{}{
-						"jdkVersion":         "1.7",
-						"targetHost":         "127.0.0.1",
-						"targetCredential":   path.Join(os.Getenv("HOME"), "/secret/scp.json"),
-						"appDirectory":       "/tmp/app1",
-						"tomcatVersion":      "7.0.81",
-						"tomcatMajorVersion": "7",
-						"configUrl": endly.NewFileResource("test/workflow/tomcat-server.xml").URL,
-						"tomcatPort":"8881",
-						"forceDeploy":true,
+						"targetHost":       "127.0.0.1",
+						"targetCredential": targetCredential,
+						"appDirectory":     "/tmp/app1",
+						"configUrl":        configUrl,
+						"configUrlCredential":targetCredential,
+						"tomcatPort":       "8881",
+						"forceDeploy":      true,
 					},
-					Task: "install",
+					Tasks: "install",
 				})
 				if assert.Equal(t, "", response.Error) {
 					serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
@@ -271,11 +276,11 @@ func TestRunWorfklowTomcatApp(t *testing.T) {
 					Params: map[string]interface{}{
 						"jdkVersion":       "1.7",
 						"targetHost":       "127.0.0.1",
-						"targetCredential": path.Join(os.Getenv("HOME"), "/secret/scp.json"),
+						"targetCredential": targetCredential,
 						"appDirectory":     "/tmp/app1",
-						"catalinaOpts":     "-Xms2g -Xmx6g -XX:MaxPermSize=512m",
+
 					},
-					Task: "start",
+					Tasks: "start",
 				})
 				if assert.Equal(t, "", response.Error) {
 					serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
@@ -292,11 +297,10 @@ func TestRunWorfklowTomcatApp(t *testing.T) {
 					Params: map[string]interface{}{
 						"jdkVersion":       "1.7",
 						"targetHost":       "127.0.0.1",
-						"targetCredential": path.Join(os.Getenv("HOME"), "/secret/scp.json"),
+						"targetCredential": targetCredential,
 						"appDirectory":     "/tmp/app1",
-						"catalinaOpts":     "-Xms2g -Xmx6g -XX:MaxPermSize=512m",
 					},
-					Task: "stop",
+					Tasks: "stop",
 				})
 				if assert.Equal(t, "", response.Error) {
 					serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)

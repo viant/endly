@@ -3,14 +3,30 @@
     "Name": "serviceInstanceName",
     "Value": "$params.serviceInstanceName"
   },
+
   {
-    "Name": "remoteTarget",
+    "Name": "mysqlCredential",
+    "Value": "$params.mysqlCredential"
+  },
+
+
+
+  {
+    "Name": "dockerTarget",
     "Value": {
       "Name": "$params.serviceInstanceName",
       "URL": "$params.url",
       "Credential": "$params.credential"
     }
   },
+  {
+    "Name": "sourceConfig",
+    "Value": {
+      "URL": "$params.configUrl",
+      "Credential": "$params.configUrlCredential"
+    }
+  },
+
   {
     "Name": "serviceInstanceName",
     "Value": "$params.serviceInstanceName"
@@ -19,31 +35,29 @@
     "Name": "configFile",
     "Value": "/tmp/my${serviceInstanceName}.cnf"
   },
-  {
-    "Name": "configTransfer",
-    "Value": {
-      "Source": {
-        "URL": "$params.configUrl",
-        "Credential": "$params.configUrlCredential"
-      },
-      "Target": {
-        "URL": "file://$configFile"
-      },
-      "Expand": true
-    }
-  },
+
+
+
+
   {
     "Name": "systemDockerRequest",
     "Value": {
       "Service": "docker",
-      "Target": "$remoteTarget"
+      "Target": "$dockerTarget"
+    }
+  },
+
+  {
+    "Name": "dockerRequest",
+    "Value": {
+      "Target": "$dockerTarget"
     }
   },
   {
     "Name": "systemMysqlRequest",
     "Value": {
       "Service": "mysql",
-      "Target": "$remoteTarget"
+      "Target": "$dockerTarget"
     }
   },
   {
@@ -51,10 +65,7 @@
     "Value": {
       "Transfers": [
         {
-          "Source": {
-            "URL": "$params.configUrl",
-            "Credential": "$params.configUrlCredential"
-          },
+          "Source": "$sourceConfig",
           "Target": {
             "URL": "file://$configFile"
           },
@@ -73,8 +84,8 @@
       "SysPath": [
         "/usr/local/bin"
       ],
-      "Target": "$remoteTarget",
-      "Credential": "${env.HOME}/secret/mysql.json",
+      "Target": "$dockerTarget",
+      "Credential": "$mysqlCredential",
       "Image": "mysql:5.6",
       "Mount": {
         "$configFile": "/etc/my.cnf"

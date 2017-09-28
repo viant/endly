@@ -1,11 +1,13 @@
 {
   "Name": "dockerized_mysql",
+  "Tasks":"$task",
   "Params": {
     "stopSystemMysql": true,
     "url": "scp://$targetHost/",
     "credential": "$targetCredential",
     "configUrl": "config/my.cnf",
-    "configUrlCredential": "",
+    "mysqlCredential":"$mysqlCredential",
+    "configUrlCredential": "$configUrlCredential",
     "serviceInstanceName": "$instance"
   }
 }

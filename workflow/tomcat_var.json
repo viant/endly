@@ -1,18 +1,27 @@
 [
   {
     "Name": "targetHost",
-    "Value": "$params.targetHost"
+    "From": "params.targetHost"
   },
   {
-    "Name": "tomcat",
-    "Value": "apache-tomcat-${params.tomcatVersion}"
+    "Name":"targetCredential",
+    "From": "params.targetCredential"
   },
   {
-    "Name":"app",
-    "From":"params.app"
+    "Name":"tomcatMajorVersion",
+    "From": "params.tomcatMajorVersion",
+    "Value":"7"
   },
-
-
+  {
+    "Name":"tomcatVersion",
+    "From": "params.tomcatVersion",
+    "Value":"7.0.81"
+  },
+  {
+    "Name":"catalinaOpts",
+    "From":"params.catalinaOpts",
+    "Value":"-Xms512m -Xmx1g -XX:MaxPermSize=256m"
+  },
   {
     "Name":"tomcatPort",
     "From":"params.tomcatPort",
@@ -33,26 +42,38 @@
     "From":"params.tomcatPort",
     "Value":"8443"
   },
-
   {
     "Name": "jdkVersion",
     "From": "params.jdkVersion",
     "Value": "1.7"
   },
   {
-    "Name": "tomcatVersion",
-    "From": "params.tomcatVersion"
-  },
-  {
     "Name": "appDirectory",
     "Value": "$params.appDirectory"
   },
-
   {
     "Name":"forceDeploy",
     "From":"params.forceDeploy",
     "Value":false
   },
+  {
+    "Name":"configUrl",
+    "From":"params.configUrl"
+  },
+  {
+    "Name":"configUrlCredential",
+    "From":"params.configUrlCredential",
+    "Value":""
+  },
+
+
+
+  {
+    "Name": "tomcat",
+    "Value": "apache-tomcat-${tomcatVersion}"
+  },
+
+
 
   {
     "Name": "setRequest",
@@ -62,7 +83,7 @@
         "Credential": "$targetCredential"
       },
       "Sdk": "jdk",
-      "Version": "$params.jdkVersion"
+      "Version": "$jdkVersion"
     }
   },
   {
@@ -95,7 +116,7 @@
       "ManagedCommand": {
         "Options": {
           "Env": {
-            "CATALINA_OPTS": "$params.catalinaOpts"
+            "CATALINA_OPTS": "$catalinaOpts"
           },
           "Directory": [
             "$appDirectory"
@@ -155,13 +176,13 @@
       },
       "Transfer": {
         "Source": {
-          "URL": "http://mirror.metrocast.net/apache/tomcat/tomcat-${params.tomcatMajorVersion}/v${params.tomcatVersion}/bin/${tomcat}.tar.gz"
+          "URL": "http://mirror.metrocast.net/apache/tomcat/tomcat-${tomcatMajorVersion}/v${tomcatVersion}/bin/${tomcat}.tar.gz"
         },
         "Target": {
           "Name": "tomcat",
           "Version": "$tomcatVersion",
-          "URL": "scp://${targetHost}${appDirectory}/",
-          "Credentail": "$targetCredential"
+          "URL": "scp://${targetHost}${appDirectory}",
+          "Credential": "$targetCredential"
         }
       },
       "Command": {
@@ -205,8 +226,8 @@
         "Transfers":[
           {
             "Source": {
-              "URL": "$params.configUrl",
-              "Credential": "$params.configUrlCredential"
+              "URL": "$configUrl",
+              "Credential": "$configUrlCredential"
             },
             "Target": {
               "URL": "scp://${targetHost}${appDirectory}/tomcat/config/server.xml",
