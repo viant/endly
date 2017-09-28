@@ -1,0 +1,18 @@
+{
+  "Name": "tomcat",
+  "Task":"$task",
+  "Params": {
+    "catalinaOpts": "$catalinaOpts",
+    "jdkVersion": "$jdkVersion",
+    "targetHost": "$targetHost",
+    "targetCredential": "$targetCredential",
+    "appDirectory": "${appRootDirectory}/${app}",
+    "tomcatVersion": "7.0.81",
+    "tomcatMajorVersion": "7",
+    "configUrl": "config/tomcat-server.xml",
+    "tomcatPort": "$port",
+    "tomcatShutdownPort": "$killPort",
+    "tomcatAJPConnectorPort": "$connectorPort",
+    "tomcatRedirectPort": "$redirectPort"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "Name": "dockerized_mysql",
+  "Params": {
+    "stopSystemMysql": true,
+    "url": "scp://$targetHost/",
+    "credential": "$targetCredential",
+    "configUrl": "config/my.cnf",
+    "configUrlCredential": "",
+    "serviceInstanceName": "$instance"
+  }
+}
