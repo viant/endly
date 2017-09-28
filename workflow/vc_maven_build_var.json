@@ -33,7 +33,7 @@
     "Name": "checkoutRequest",
     "Value": {
       "Origin": "$origin",
-      "Target": "buildTarget"
+      "Target": "$buildTarget"
     }
   },
   {
@@ -43,7 +43,7 @@
         "Name": "maven",
         "Goal": "build",
         "BuildGoal": "$buidGoal",
-        "Args": "buildArgs",
+        "Args": "$buildArgs",
         "Sdk": "jdk",
         "SdkVersion": "$jdkVersion"
       },

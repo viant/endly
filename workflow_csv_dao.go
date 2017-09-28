@@ -12,6 +12,8 @@ import (
 
 var internalReferencePrefix = []byte("%")[0]
 var externalReferencePrefix = []byte("#")[0]
+var expandPrefix = []byte("^")[0]
+
 var jsonObjectPrefix = []byte("{")[0]
 var jsonArrayPrefix = []byte("[")[0]
 var udfPrefix = []byte("!")[0]
@@ -34,10 +36,9 @@ func (d *WorkflowDao) Load(context *Context, source *Resource) (*Workflow, error
 	if err != nil {
 		return nil, err
 	}
-	var result = &Workflow{
-		source: source,
-	}
+	var result = &Workflow{}
 	err = converter.AssignConverted(result, workflowMap)
+	result.source = source
 	return result, err
 }
 
@@ -296,6 +297,7 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 			field := NewFieldExpression(fieldExpressions)
 			textValue := toolbox.AsString(value)
 			val, isReference, err := d.normalizeValue(context, resource, textValue)
+
 			if err != nil {
 				return nil, err
 			}
@@ -309,15 +311,18 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 				if field.IsRoot {
 					field.Set(val, rootObject)
 					if field.HasArrayComponent {
-						recordHeight = d.setArrayValues(field, i, lines, record, fieldExpressions, rootObject, recordHeight)
+						recordHeight ,err = d.setArrayValues(field, i, lines, record, fieldExpressions, rootObject, recordHeight, resource, context)
 					}
 
 				} else {
 
 					field.Set(val, object)
 					if field.HasArrayComponent {
-						recordHeight = d.setArrayValues(field, i, lines, record, fieldExpressions, object, recordHeight)
+						recordHeight, err = d.setArrayValues(field, i, lines, record, fieldExpressions, object, recordHeight, resource, context)
 					}
+				}
+				if err != nil {
+					return nil, err
 				}
 			}
 		}
@@ -356,7 +361,7 @@ func getObject(tag *Tag, result common.Map) common.Map {
 	return data
 }
 
-func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []string, record *toolbox.DelimiteredRecord, fieldExpressions string, data common.Map, recordHeight int) int {
+func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []string, record *toolbox.DelimiteredRecord, fieldExpressions string, data common.Map, recordHeight int, resource *Resource, context *Context) (int, error) {
 	if field.HasArrayComponent {
 		var itemCount = 0
 
@@ -376,13 +381,17 @@ func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []stri
 				break
 			}
 			itemCount++
-			field.Set(itemValue, data, itemCount)
+			val, _, err := d.normalizeValue(context, resource, toolbox.AsString(itemValue))
+			if err != nil {
+				return 0, err
+			}
+			field.Set(val, data, itemCount)
 		}
 		if recordHeight < itemCount {
 			recordHeight = itemCount
 		}
 	}
-	return recordHeight
+	return recordHeight, nil
 }
 
 func isHeaderByte(b byte) bool {
@@ -409,35 +418,68 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 		Credential: credential,
 	}, nil
 }
+func (d *WorkflowDao) loadExternalResource(context *Context, resource *Resource, value string) (string, error) {
+	resource, err := d.getExternalResource(context, resource, value)
+	var result string
+	if err == nil {
+		result, err = resource.DownloadText()
+	}
+	return result, err
+}
 
-func (d *WorkflowDao) normalizeValue(context *Context, resource *Resource, value string) (interface{}, bool, error) {
-	var udfFunction func(interface{}) (interface{}, error)
-	if value[0] == externalReferencePrefix {
-		resource, err := d.getExternalResource(context, resource, string(value[1:]))
-		if err == nil {
-			value, err = resource.DownloadText()
+func applyUdf(expression string) (func(interface{}, common.Map) (interface{}, error), string, error) {
+	if ! strings.HasPrefix(expression, "!") {
+		return nil, "", nil
+	}
+	startArgumentPosition := strings.Index(expression, "(")
+	endArgumentPosition := strings.LastIndex(expression, ")")
+	if startArgumentPosition != -1 && endArgumentPosition > startArgumentPosition {
+		udfName := string(expression[1:startArgumentPosition])
+		var has bool
+		udfFunction, has := UdfRegistry[udfName]
+		if !has {
+			var available = toolbox.MapKeysToStringSlice(UdfRegistry)
+			return nil, "", fmt.Errorf("Failed to lookup udf function %v on %v, avaialbe:[%v]", udfName, expression, strings.Join(available, ","))
 		}
+		value := string(expression[startArgumentPosition+1: endArgumentPosition])
+		return udfFunction, value, nil
+	}
+	return nil, "", nil
+}
+
+func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource, value string) (interface{}, bool, error) {
+	var err error
+	var state = context.State()
+	if value[0] == expandPrefix {
+		var endOfResources = strings.Index(value, "/")
+		if endOfResources != -1 {
+			resourceValue, err := d.loadExternalResource(context, parentResource, string(value[2:endOfResources]))
+			if err != nil {
+				return nil, false, err
+			}
+			var aMap = make(map[string]interface{})
+
+			err = toolbox.NewJSONDecoderFactory().Create(strings.NewReader(value[endOfResources+1:])).Decode(&aMap)
+			if err != nil {
+				return nil, false, err
+			}
+			value = ExpandAsText(common.Map(aMap), resourceValue)
+		}
+	}
+
+	if value[0] == externalReferencePrefix {
+		value, err = d.loadExternalResource(context, parentResource, string(value[1:]))
 		if err != nil {
 			return nil, false, err
 		}
 	}
-	if value[0] == udfPrefix {
-		startArgumentPosition := strings.Index(value, "(")
-		endArgumentPosition := strings.Index(value, ")")
-		if startArgumentPosition != -1 && endArgumentPosition > startArgumentPosition {
-			udfName := string(value[1:startArgumentPosition])
-			var has bool
-			udfFunction, has = UdfRegistry[udfName]
-
-			if !has {
-				var available = toolbox.MapKeysToStringSlice(UdfRegistry)
-				return nil, false, fmt.Errorf("Failed to lookup udf function %v on %v, avaialbe:[%v]", udfName, value, strings.Join(available, ","))
-			}
-			value = string(value[startArgumentPosition+1 : endArgumentPosition])
-		}
-
+	udfFunction, udfValue, err := applyUdf(value)
+	if err != nil {
+		return nil, false, err
 	}
-
+	if udfFunction != nil {
+		value = udfValue
+	}
 	switch value[0] {
 	case internalReferencePrefix:
 		return string(value[1:]), true, nil
@@ -459,7 +501,7 @@ func (d *WorkflowDao) normalizeValue(context *Context, resource *Resource, value
 	}
 
 	if udfFunction != nil {
-		udfTransformed, err := udfFunction(value)
+		udfTransformed, err := udfFunction(value, state)
 		if err != nil {
 			return nil, false, fmt.Errorf("Failed to tranform value with udf: %v %v", value, err)
 		}

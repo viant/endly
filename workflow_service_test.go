@@ -31,7 +31,7 @@ func getServiceWithWorkflow(paths ...string) (endly.Manager, endly.Service, erro
 	return manager, service, err
 }
 
-func TestRunWorfklow(t *testing.T) {
+func TestRunWorkflow(t *testing.T) {
 
 	go StartTestServer("8765")
 	time.Sleep(500 * time.Millisecond)
@@ -71,7 +71,10 @@ func TestRunWorfklow(t *testing.T) {
 	}
 }
 
-func TestRunWorfklowMysql(t *testing.T) {
+
+
+
+func TestRunWorkflowMysql(t *testing.T) {
 
 	manager, service, err := getServiceWithWorkflow("workflow/dockerized_mysql.csv")
 	if !assert.Nil(t, err) {
@@ -126,6 +129,7 @@ func TestRunWorfklowMysql(t *testing.T) {
 			},
 		})
 
+
 		if assert.Equal(t, "", response.Error) {
 			serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)
 			assert.True(t, ok)
@@ -146,7 +150,7 @@ func TestRunWorfklowMysql(t *testing.T) {
 
 }
 
-func TestRunWorfklowAerospike(t *testing.T) {
+func TestRunWorkflowAerospike(t *testing.T) {
 
 	manager, service, err := getServiceWithWorkflow("workflow/dockerized_aerospike.csv")
 	if !assert.Nil(t, err) {
@@ -180,7 +184,7 @@ func TestRunWorfklowAerospike(t *testing.T) {
 
 }
 
-func TestRunWorfkloVCMavenwBuild(t *testing.T) {
+func TestRunWorfklowVCMavenwBuild(t *testing.T) {
 
 	manager, service, err := getServiceWithWorkflow("workflow/vc_maven_build.csv")
 	if !assert.Nil(t, err) {
@@ -221,7 +225,7 @@ func TestRunWorfkloVCMavenwBuild(t *testing.T) {
 
 }
 
-func TestRunWorfkloTomcatApp(t *testing.T) {
+func TestRunWorfklowTomcatApp(t *testing.T) {
 
 	manager, service, err := getServiceWithWorkflow("workflow/tomcat.csv")
 	if !assert.Nil(t, err) {
@@ -248,6 +252,9 @@ func TestRunWorfkloTomcatApp(t *testing.T) {
 						"appDirectory":       "/tmp/app1",
 						"tomcatVersion":      "7.0.81",
 						"tomcatMajorVersion": "7",
+						"configUrl": endly.NewFileResource("test/workflow/tomcat-server.xml").URL,
+						"tomcatPort":"8881",
+						"forceDeploy":true,
 					},
 					Task: "install",
 				})

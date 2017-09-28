@@ -65,10 +65,11 @@
   },
   {
     "Name": "dockerRunRequest",
-    "Env": {
-      "MYSQL_ROOT_PASSWORD": "****"
-    },
+   
     "Value": {
+    	"Env": {
+     	 "MYSQL_ROOT_PASSWORD": "****"
+    	},
       "SysPath": [
         "/usr/local/bin"
       ],

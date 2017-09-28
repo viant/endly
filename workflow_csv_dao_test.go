@@ -101,7 +101,7 @@ func TestFieldExpression_Set(t *testing.T) {
 func TestNewWorkflowDao(t *testing.T) {
 
 	{
-		endly.UdfRegistry["udf1"] = func(source interface{}) (interface{}, error) {
+		endly.UdfRegistry["udf1"] = func(source interface{}, state common.Map) (interface{}, error) {
 			text := toolbox.AsString(source)
 			return strings.ToUpper(text), nil
 		}
@@ -114,7 +114,7 @@ func TestNewWorkflowDao(t *testing.T) {
 			assert.Equal(t, "Simple Test", workflow.Name)
 			assert.Equal(t, "My description", workflow.Description)
 
-			assert.Equal(t, 3, len(workflow.Tasks))
+			assert.Equal(t, 4, len(workflow.Tasks))
 			assert.Equal(t, "Simple Http Test", workflow.Tasks[0].Name)
 			assert.Equal(t, 1, len(workflow.Tasks[0].Init))
 			assert.Equal(t, "v10", workflow.Tasks[0].Init[0].Name)
@@ -131,6 +131,8 @@ func TestNewWorkflowDao(t *testing.T) {
 				assert.Equal(t, []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0}, collection)
 			}
 			assert.Equal(t, "ABC", workflow.Data.GetString("Udf"))
+			//test expansion ^
+			assert.Equal(t, "123", workflow.Tasks[3].Init[0].Value)
 		}
 	}
 	{
