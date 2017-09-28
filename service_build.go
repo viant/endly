@@ -7,10 +7,9 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"net/url"
-	"strings"
 )
 
-const defaultBuildMetaRepo = "https://raw.githubusercontent.com/viant/endly/master/build/meta/%v.json"
+
 const BuildServiceId = "build"
 
 type OperatingSystemDeployment struct {
@@ -98,27 +97,11 @@ type BuildService struct {
 	registry BuildMetaRegistry
 }
 
-func (s *BuildService) loadBuildMeta(context *Context, buildMeta string) error {
-	if buildMeta == "" {
+func (s *BuildService) loadBuildMeta(context *Context, buildMetaURL string) error {
+	if buildMetaURL == "" {
 		return fmt.Errorf("buildMeta was empty")
 	}
-	var buildMetaURL = buildMeta
-	if !(strings.Contains(buildMeta, ":") || strings.Contains(buildMeta, "/")) {
-		localResource := NewFileResource(fmt.Sprintf("build/meta/%v.json", buildMeta))
-		metaFile := localResource.ParsedURL.Path
-		if !toolbox.FileExists(metaFile) {
-			remoteResource := &Resource{
-				URL: fmt.Sprintf(defaultBuildMetaRepo, buildMeta),
-			}
-			_, err := context.Copy(false, remoteResource, localResource)
-			if err != nil {
-				return err
-			}
-
-		}
-		buildMetaURL = localResource.URL
-	}
-	resource, err := NeResource(buildMetaURL)
+	resource, err := NewResource(buildMetaURL)
 	if err != nil {
 		return err
 	}
@@ -143,7 +126,11 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 	if !hasMeta {
 		var buildMetaURL = request.BuildMetaURL
 		if buildMetaURL == "" {
-			buildMetaURL = buildSpec.Name
+			endlyResource, err :=NewEndlyRepoResource(context, fmt.Sprintf("build/meta/%v.json", buildSpec.Name))
+			if err != nil {
+				return nil, err
+			}
+			buildMetaURL = endlyResource.URL
 		}
 		err = s.loadBuildMeta(context, buildMetaURL)
 		if err != nil {

@@ -334,6 +334,7 @@ func getHostAndSSHPort(target *Resource) (string, int) {
 }
 
 func (s *execService) setEnvVariable(context *Context, session *ClientSession, info *CommandInfo, name, value string) error {
+	value = context.Expand(value)
 	if val, has := session.envVariables[name]; has {
 		if value == val {
 			return nil
@@ -408,13 +409,15 @@ func (s *execService) executeCommand(context *Context, session *ClientSession, e
 	terminators := getTerminators(options, session, execution)
 
 	var cmd = command
+
+
+
 	if execution.Secure != "" {
 		cmd = strings.Replace(command, "****", execution.Secure, 1)
 	}
-
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
 
-	//fmt.Printf("IN: %v\nOUT:%v\n", cmd, stdout)
+
 	commandInfo.Add(NewCommandStream(command, stdout, err))
 	if err != nil {
 		return err
@@ -477,6 +480,8 @@ func (s *execService) runCommands(context *Context, request *ManagedCommandReque
 	info := NewCommandInfo(session.name)
 	context.SessionInfo().Log(info)
 	err = s.applyCommandOptions(context, options, session, info)
+
+
 	if err != nil {
 		return nil, err
 	}
@@ -492,6 +497,7 @@ func (s *execService) runCommands(context *Context, request *ManagedCommandReque
 	info = NewCommandInfo(session.name)
 	context.SessionInfo().Log(info)
 	for _, execution := range request.ManagedCommand.Executions {
+
 		if execution.MatchOutput != "" {
 			continue
 		}
@@ -537,9 +543,11 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 			}
 			mangedCommandRequest, err = superCommandRequest.AsCommandRequest(context)
 		}
+
 		if err == nil {
 			response.Response, err = s.runCommands(context, mangedCommandRequest)
-		} else {
+		}
+		if err != nil{
 			response.Error = fmt.Sprintf("Failed to run command: %v, %v", actualRequest, err)
 		}
 

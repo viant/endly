@@ -113,7 +113,7 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *Resource, ori
 	_, err = context.Execute(target, &ManagedCommand{
 		Options: &ExecutionOptions{
 			TimeoutMs:   1000 * 30,
-			Terminators: []string{"Username", "Password for", "(yes/no)?", "Checked out revision"},
+			Terminators: []string{"Password for", "(yes/no)?"},
 		},
 		Executions: []*Execution{
 			{

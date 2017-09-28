@@ -1,0 +1,37 @@
+{
+  "Name": "USER_ACCOUNT",
+  "Value": {
+    "Table": "USER",
+    "Columns": [
+      {
+        "Name": "ID",
+        "FromColumn": "USER_ID",
+        "Required": true
+      },
+      {
+        "Name": "EMAIL"
+      },
+      {
+        "Name": "ACCOUNT_ID"
+      }
+    ],
+    "Associations": [
+      {
+        "Table": "ACCOUNT",
+        "Columns": [
+          {
+            "Name": "ID",
+            "FromColumn": "ACCOUNT_ID",
+            "Required": true
+          },
+          {
+            "Name": "NAME"
+          },
+          {
+            "Name": "TYPE"
+          }
+        ]
+      }
+    ]
+  }
+}

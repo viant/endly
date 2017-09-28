@@ -2,14 +2,12 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"strings"
 	"time"
 )
 
 const ProcessServiceId = "process"
-const processesKey = "pid"
 
 type ProcessStartRequest struct {
 	Name          string
@@ -100,12 +98,6 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 		return nil, err
 	}
 
-	var state = context.State()
-	if !state.Has(processesKey) {
-		state.Put(processesKey, common.NewMap())
-	}
-	var processes = state.GetMap(processesKey)
-	processes.Put(request.Command, 0)
 	for _, line := range strings.Split(commandResponse.Stdout(), "\r\n") {
 		if strings.Contains(line, "grep") {
 			continue
@@ -127,7 +119,6 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 			Stdout:    line,
 		}
 		response.Processes = append(response.Processes, info)
-		processes.Put(request.Command, info.Pid)
 	}
 	if len(response.Processes) > 0 {
 		response.Pid = response.Processes[0].Pid
@@ -145,17 +136,6 @@ func (s *processService) stopProcess(context *Context, request *ProcessStopReque
 	})
 	if err != nil {
 		return nil, err
-	}
-	state := context.State()
-	if !state.Has(processesKey) {
-		state.Put(processesKey, common.NewMap())
-	}
-	var processes = state.GetMap(processesKey)
-	for k, pid := range processes {
-		if toolbox.AsInt(pid) == request.Pid {
-			state[k] = 0
-			break
-		}
 	}
 	return commandResult, err
 }

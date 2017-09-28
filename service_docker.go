@@ -10,7 +10,8 @@ import (
 const DockerServiceId = "docker"
 const containerInUse = "is already in use by container"
 
-var dockerErrors = []string{"Error"}
+
+var dockerErrors = []string{"Error", "failed"}
 var dockerIgnoreErrors = []string{}
 
 type DockerSystemPathRequest struct {
@@ -150,7 +151,7 @@ func (s *DockerService) Run(context *Context, request interface{}) *ServiceRespo
 			response.Error = fmt.Sprintf("Failed to pull images: %v, %v", actualRequest, err)
 		}
 	case *DockerContainerRemoveRequest:
-		response.Response, err = s.remoteContainer(context, actualRequest)
+		response.Response, err = s.removeContainer(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to pull images: %v, %v", actualRequest, err)
 		}
@@ -230,7 +231,7 @@ func (s *DockerService) runContainer(context *Context, request *DockerRunRequest
 	}
 	if strings.Contains(commandInfo.Stdout(), containerInUse) {
 		s.stopContainer(context, &DockerContainerStopRequest{Target: request.Target})
-		s.remoteContainer(context, &DockerContainerRemoveRequest{Target: request.Target})
+		s.removeContainer(context, &DockerContainerRemoveRequest{Target: request.Target})
 		commandInfo, err = s.executeSecureDockerCommand(secure, context, request.Target, dockerErrors, "docker run --name %v %v -d %v", request.Target.Name, args, request.Image)
 		if err != nil {
 			return nil, err
@@ -291,7 +292,7 @@ func (s *DockerService) stopContainer(context *Context, request *DockerContainer
 	return info, nil
 }
 
-func (s *DockerService) remoteContainer(context *Context, request *DockerContainerRemoveRequest) (*CommandInfo, error) {
+func (s *DockerService) removeContainer(context *Context, request *DockerContainerRemoveRequest) (*CommandInfo, error) {
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("Target name was empty for %v and command %v", request.Target.URL)
 	}

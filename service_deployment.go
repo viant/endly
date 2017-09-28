@@ -73,10 +73,19 @@ func (s *deploymentService) extractVersion(context *Context, request *Deployment
 func (s *deploymentService) deployAddition(context *Context, target *Resource, addition *DeploymentAddition) (err error) {
 	if addition != nil {
 		if len(addition.Commands) > 0 {
-			_, err = context.Execute(target, addition.AsCommandRequest())
-			if err != nil {
-				return fmt.Errorf("Failed to init deploy app to %v: %v", target, err)
+			if addition.SuperUser {
+				_, err = context.ExecuteAsSuperUser(target, addition.AsCommandRequest().AsManagedCommandRequest().ManagedCommand)
+				if err != nil {
+					return fmt.Errorf("Failed to init deploy app to %v: %v", target, err)
+				}
+
+			} else {
+				_, err = context.Execute(target, addition.AsCommandRequest())
+				if err != nil {
+					return fmt.Errorf("Failed to init deploy app to %v: %v", target, err)
+				}
 			}
+
 		}
 		if len(addition.Transfers) > 0 {
 			_, err = context.Transfer(addition.Transfers...)

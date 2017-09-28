@@ -25,6 +25,7 @@ type Transfer struct {
 	Source *Resource
 	Target *Resource
 	Expand bool
+	Replace map[string]string
 }
 
 type TransferInfo struct {
@@ -35,12 +36,12 @@ type TransferInfo struct {
 	State    common.Map
 }
 
-func NewTransferInfo(context *Context, source, target string, err error, parsable bool) *TransferInfo {
+func NewTransferInfo(context *Context, source, target string, err error, expand bool) *TransferInfo {
 	result := &TransferInfo{
 		Source: source,
 		Target: target,
 	}
-	if parsable {
+	if expand {
 		var state = context.State()
 		result.State = state.Clone()
 	}
@@ -54,17 +55,23 @@ type transferService struct {
 	*AbstractService
 }
 
-func NewExpandedContentHandler(context *Context) func(reader io.Reader) (io.Reader, error) {
+func NewExpandedContentHandler(context *Context, replaceMap map[string]string, expand bool) func(reader io.Reader) (io.Reader, error) {
 	return func(reader io.Reader) (io.Reader, error) {
 		content, err := ioutil.ReadAll(reader)
 		if err != nil {
 			return nil, err
 		}
-		expanded := context.Expand(string(content))
-		if err != nil {
-			return nil, err
+		var result = string(content)
+		if expand {
+			result = context.Expand(result)
+			if err != nil {
+				return nil, err
+			}
 		}
-		return strings.NewReader(toolbox.AsString(expanded)), nil
+		for k, v :=  range replaceMap {
+			result = strings.Replace(result, k, v, len(result))
+		}
+		return strings.NewReader(toolbox.AsString(result)), nil
 	}
 }
 
@@ -74,7 +81,6 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 	}
 	sessionInfo := context.SessionInfo()
 	for _, transfer := range transfers {
-
 		source, err := context.ExpandResource(transfer.Source)
 		if err != nil {
 			return nil, err
@@ -92,9 +98,16 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 			return nil, fmt.Errorf("Failed to lookup target storageService for %v: %v", target.URL, err)
 		}
 		var handler func(reader io.Reader) (io.Reader, error)
-		if transfer.Expand {
-			handler = NewExpandedContentHandler(context)
+		if transfer.Expand || len(transfer.Replace) > 0 {
+			handler = NewExpandedContentHandler(context, transfer.Replace, transfer.Expand)
 		}
+
+		if _, err := sourceService.StorageObject(source.URL);err != nil {
+			return nil, fmt.Errorf("Failed to copy: %v %v - source does not exists", source.URL, target.URL)
+		}
+
+
+
 		err = storage.Copy(sourceService, source.URL, targetService, target.URL, handler)
 		info := NewTransferInfo(context, source.URL, target.URL, err, transfer.Expand)
 		result.Transfered = append(result.Transfered, info)
