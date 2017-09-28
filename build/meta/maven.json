@@ -8,7 +8,7 @@
       "Command": {
         "Options": {
           "Directory": "$build.target",
-          "TimeoutMs": 360000
+          "TimeoutMs": 720000
 
         },
         "Executions": [
