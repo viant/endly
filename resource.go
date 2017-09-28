@@ -97,7 +97,7 @@ func (r *Resource) Download() ([]byte, error) {
 	return content, err
 }
 
-func NeResource(URL string) (*Resource, error) {
+func NewResource(URL string) (*Resource, error) {
 	parsedURL, err := url.Parse(URL)
 	if err != nil {
 		return nil, err
@@ -123,4 +123,23 @@ func NewFileResource(resource string) *Resource {
 		ParsedURL: parsedURL,
 		URL:       URL,
 	}
+}
+
+
+const endlyRepo = "https://raw.githubusercontent.com/viant/endly/master/%v"
+
+func NewEndlyRepoResource(context *Context, URI string) (*Resource, error) {
+	localResource := NewFileResource(URI)
+	if toolbox.FileExists(localResource.ParsedURL.Path) {
+		return localResource, nil
+	}
+	remoteResource, err := NewResource(fmt.Sprintf(endlyRepo, URI))
+	if err != nil {
+		return nil, err
+	}
+	_, err = context.Copy(false, remoteResource, localResource)
+	if err != nil {
+		return nil, err
+	}
+	return localResource, nil
 }
