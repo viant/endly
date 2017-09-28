@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path"
 	"time"
+	"strings"
 )
 
 //TODO Execution detail Tracking of all run (time taken, request, response)
@@ -40,6 +41,14 @@ func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 	if resource.URL == "" {
 		return nil, reportError(fmt.Errorf("URL was empty"))
 	}
+
+	if ! strings.Contains(resource.URL, "://") {
+		if workflow := c.Workflow(); workflow != nil && workflow.source != nil {
+			baseURL, _ := toolbox.URLSplit(workflow.source.URL)
+			resource.URL = toolbox.URLPathJoin(baseURL, resource.URL)
+		}
+	}
+
 	var result = &Resource{
 		URL:        c.Expand(resource.URL),
 		Credential: c.Expand(resource.Credential),
@@ -50,7 +59,7 @@ func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 
 	result.ParsedURL, err = url.Parse(result.URL)
 	if err != nil {
-		return nil, reportError(err)
+		return nil, reportError(fmt.Errorf("Failed to parse URL: %v %v", result.URL, err))
 	}
 	return result, nil
 }
@@ -124,7 +133,7 @@ func (c *Context) SessionInfo() *SessionInfo {
 
 func (c *Context) Workflow() *Workflow {
 	var result *Workflow
-	if !c.Contains(sessionInfoKey) {
+	if !c.Contains(workflowKey) {
 		return nil
 	} else {
 		c.GetInto(workflowKey, &result)
@@ -222,7 +231,7 @@ func (c *Context) Log(logEntry interface{}) error {
 
 func (c *Context) Expand(text string) string {
 	state := c.State()
-	return Expand(state, text)
+	return ExpandAsText(state, text)
 }
 
 func (c *Context) AsRequest(serviceName, requestName string, source map[string]interface{}) (interface{}, error) {
