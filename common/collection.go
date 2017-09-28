@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fmt"
 	"github.com/viant/toolbox"
 	"strings"
 )
@@ -55,7 +54,6 @@ func (s *Collection) RangeMap(handler func(item Map, index int) (bool, error)) e
 
 func (s *Collection) String() string {
 
-	fmt.Printf("S: %v\n", *s)
 	var items = make([]string, 0)
 	for _, item := range *s {
 		items = append(items, toolbox.AsString(item))

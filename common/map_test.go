@@ -11,6 +11,25 @@ func TestMap_GetValue(t *testing.T) {
 	aMap := NewMap()
 
 	{
+		metaMap := make(map[string]int)
+		metaMap["USER"] =7
+		aMap.Put("meta", metaMap)
+
+		value, ok := aMap.GetValue("meta.USER")
+		assert.True(t, ok)
+		if ! assert.Equal(t, 7, value) {
+			return
+		}
+		aMap.SetValue("meta.USER", toolbox.AsInt(value)+1)
+		value, ok = aMap.GetValue("meta.USER")
+		assert.True(t, ok)
+		if ! assert.Equal(t, 8, value) {
+			return
+		}
+
+	}
+
+	{
 		var collection = NewCollection()
 		collection.Push("1")
 		collection.Push("20")
@@ -72,6 +91,8 @@ func TestMap_GetValue(t *testing.T) {
 		assert.Equal(t, "20", value)
 
 	}
+
+
 }
 
 func TestMap_SetValue(t *testing.T) {

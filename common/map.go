@@ -75,6 +75,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 			if isLast {
 				expr = fragment
 			} else if toolbox.IsMap(candidate) {
+
 				newState := state.GetMap(fragment)
 				if newState != nil {
 					state = newState
@@ -162,6 +163,8 @@ func (s *Map) SetValue(expr string, value interface{}) {
 		state.Put(expr, collection)
 		return
 	}
+
+
 	state.Put(expr, value)
 }
 
@@ -234,6 +237,9 @@ func (s *Map) GetMap(key string) Map {
 		if ok {
 			return aMap
 		}
+		var result =  toolbox.AsMap(result)
+		(*s)[key] = result
+		return result
 	}
 	return nil
 

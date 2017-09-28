@@ -5,37 +5,68 @@ import (
 	"github.com/viant/toolbox"
 	"strings"
 	"unicode"
+	"bytes"
 )
 
 const (
-	expectVariableStart = iota
+	expectVariableStart            = iota
 	expectVariableName
 	expectVariableNameEnclosureEnd
 )
 
-func Expand(state common.Map, text string) string {
+func ExpandAsText(state common.Map, text string) string {
+	result := Expand(state, text)
+
+	if toolbox.IsSlice(result) || toolbox.IsMap(result) {
+		buf := new(bytes.Buffer)
+		err := toolbox.NewJSONEncoderFactory().Create(buf).Encode(result)
+		if err == nil {
+			return buf.String()
+		}
+	}
+	return toolbox.AsString(result)
+}
+
+
+
+func asExpandedText(source interface{}) string {
+	if toolbox.IsSlice(source) || toolbox.IsMap(source) {
+		buf := new(bytes.Buffer)
+		err := toolbox.NewJSONEncoderFactory().Create(buf).Encode(source)
+		if err == nil {
+			return buf.String()
+		}
+	}
+	return toolbox.AsString(source)
+}
+
+
+
+func Expand(state common.Map, text string) interface{} {
 	if strings.Index(text, "$") == -1 {
 		return text
 	}
-	var expandVariable = func(variableName, result string) string {
+	var expandVariable = func(variableName string) interface{} {
 		value, has := state.GetValue(string(variableName[1:]))
 		if has {
-			return result + toolbox.AsString(value)
+			return value
 		}
-		return result + variableName
+		return variableName
 	}
+
 	var variableName = ""
 	var parsingState = expectVariableStart
 	var result = ""
 
 	for i, rune := range text {
-		aChar := string(text[i : i+1])
+		aChar := string(text[i: i+1])
+		var isLast = i + 1 == len(text)
 		switch parsingState {
 		case expectVariableStart:
 			if aChar == "$" {
 				variableName += aChar
 				if i+1 < len(text) {
-					nextChar := string(text[i+1 : i+2])
+					nextChar := string(text[i+1: i+2])
 					if nextChar == "{" {
 						parsingState = expectVariableNameEnclosureEnd
 						continue
@@ -52,7 +83,11 @@ func Expand(state common.Map, text string) string {
 			if aChar != "}" {
 				continue
 			}
-			result = expandVariable(variableName, result)
+			var expanded = expandVariable(variableName)
+			if isLast && result == "" {
+				return expanded
+			}
+			result += asExpandedText(expanded)
 			variableName = ""
 			parsingState = expectVariableStart
 
@@ -61,7 +96,11 @@ func Expand(state common.Map, text string) string {
 				variableName += aChar
 				continue
 			}
-			result = expandVariable(variableName, result)
+			var expanded = expandVariable(variableName)
+			if isLast && result == "" {
+				return expanded
+			}
+			result += asExpandedText(expanded)
 			result += aChar
 			variableName = ""
 			parsingState = expectVariableStart
@@ -69,7 +108,11 @@ func Expand(state common.Map, text string) string {
 		}
 	}
 	if len(variableName) > 0 {
-		result = expandVariable(variableName, result)
+		var expanded = expandVariable(variableName)
+		if result == "" {
+			return expanded
+		}
+		result += asExpandedText(expanded)
 	}
 	return result
 }
@@ -78,15 +121,13 @@ func ExpandValue(source interface{}, state common.Map) interface{} {
 	switch value := source.(type) {
 	case string:
 		if strings.HasPrefix(value, "$") {
-			if state.Has(string(value[1:])) {
-				return state.Get(string(value[1:]))
-			}
+			return Expand(state, value)
 		}
-		return Expand(state, value)
+		return ExpandAsText(state, value)
 	case map[string]interface{}:
 		var resultMap = make(map[string]interface{})
 		for k, v := range value {
-			resultMap[Expand(state, k)] = ExpandValue(v, state)
+			resultMap[ExpandAsText(state, k)] = ExpandValue(v, state)
 		}
 		return resultMap
 	case []interface{}:
