@@ -5,12 +5,29 @@
     "Value": "1.7"
   },
   {
-    "Name": "origin",
-    "Value": {
-      "Type": "$params.originType",
-      "URL": "$params.originUrl",
-      "Credential": "$params.originCredential"
-    }
+    "Name": "buildGoal",
+    "From": "params.buildGoal",
+    "Value": "install"
+  },
+  {
+    "Name": "buildArgs",
+    "From": "params.buildArgs",
+    "Value": ""
+  },
+  {
+    "Name": "originType",
+    "From": "params.originType",
+    "Required": true
+  },
+  {
+    "Name": "originUrl",
+    "From": "params.originUrl",
+    "Required": true
+  },
+  {
+    "Name": "originCredential",
+    "From": "params.originCredential",
+    "Required": true
   },
   {
     "Name": "buildTarget",
@@ -20,14 +37,12 @@
     }
   },
   {
-    "Name": "buidGoal",
-    "From": "params.buildGoal",
-    "Value": "install"
-  },
-  {
-    "Name": "buildArgs",
-    "From": "params.buildArgs",
-    "Value": ""
+    "Name": "origin",
+    "Value": {
+      "Type": "$originType",
+      "URL": "$originUrl",
+      "Credential": "$originCredential"
+    }
   },
   {
     "Name": "checkoutRequest",
@@ -42,7 +57,7 @@
       "BuildSpec": {
         "Name": "maven",
         "Goal": "build",
-        "BuildGoal": "$buidGoal",
+        "BuildGoal": "$buildGoal",
         "Args": "$buildArgs",
         "Sdk": "jdk",
         "SdkVersion": "$jdkVersion"

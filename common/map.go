@@ -163,8 +163,6 @@ func (s *Map) SetValue(expr string, value interface{}) {
 		state.Put(expr, collection)
 		return
 	}
-
-
 	state.Put(expr, value)
 }
 

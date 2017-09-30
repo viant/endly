@@ -13,7 +13,7 @@
         },
         "Executions": [
           {
-            "Command": "mvn clean",
+            "Command": "mvn clean $build.args",
             "Errors": [
               "Error","command not found"
             ]

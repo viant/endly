@@ -112,7 +112,6 @@ func TestDsUnitService(t *testing.T) {
 						"ACCOUNT_ID": lastAccountId,
 						"EMAIL":      "a3@wrwe.pl",
 					},
-
 				},
 			},
 		})
@@ -137,10 +136,8 @@ func TestDsUnitService(t *testing.T) {
 	{
 		context := manager.NewContext(toolbox.NewContext())
 		response := service.Run(context, &endly.WorkflowRunRequest{
-			Name: "dsunit",
-			Params: map[string]interface{}{
-
-			},
+			Name:   "dsunit",
+			Params: map[string]interface{}{},
 		})
 		assert.Equal(t, "", response.Error)
 		serviceResponse, ok := response.Response.(*endly.WorkflowRunResponse)

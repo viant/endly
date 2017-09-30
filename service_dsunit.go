@@ -5,10 +5,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/dsc"
 	"github.com/viant/dsunit"
+	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"strings"
-	"github.com/viant/endly/common"
 )
 
 const DataStoreUnitServiceId = "dsunit"
@@ -83,19 +83,18 @@ type DsUnitPrepareRequest struct {
 	Credential string
 	Prefix     string //apply prefix
 	Postfix    string //apply suffix
-	Data map[string][]map[string]interface{}
+	Data       map[string][]map[string]interface{}
 
 	Expand bool
 }
 
-
 func (r *DsUnitPrepareRequest) AsDatasetResource() *dsunit.DatasetResource {
 	var result = &dsunit.DatasetResource{
-		Datastore  : r.Datastore,
-		URL        :r.URL,
-		Credential :r.Credential,
-		Prefix     :r.Prefix,
-		Postfix    : r.Postfix,
+		Datastore:  r.Datastore,
+		URL:        r.URL,
+		Credential: r.Credential,
+		Prefix:     r.Prefix,
+		Postfix:    r.Postfix,
 	}
 	if len(r.Data) > 0 {
 		result.TableRows = make([]*dsunit.TableRows, 0)
@@ -129,7 +128,7 @@ type DsUnitPrepareResponse struct {
 type DsUnitVerifyRequest struct {
 	Datasets *dsunit.DatasetResource
 	//table to table rows data
-	Data map[string][]map[string]interface{}
+	Data        map[string][]map[string]interface{}
 	Expand      bool
 	CheckPolicy int
 }
@@ -221,7 +220,7 @@ func (s *dsataStoreUnitService) getSequences(context *Context, request *DsUnitTa
 	dialect := dsc.GetDatastoreDialect(dbConfig.DriverName)
 	for _, table := range request.Tables {
 		sequence, _ := dialect.GetSequence(manager, table)
-		response.Sequences[table] = int(sequence) + 1
+		response.Sequences[table] = int(sequence)
 	}
 	return response, nil
 }
@@ -327,7 +326,17 @@ func (s *dsataStoreUnitService) prepare(context *Context, request *DsUnitPrepare
 	if err != nil {
 		return nil, err
 	}
-	datasets, err := s.Manager.DatasetFactory().CreateDatasets(request.AsDatasetResource())
+
+	datasetResource := request.AsDatasetResource()
+
+	if datasetResource.URL != "" {
+		resource, err := context.ExpandResource(&Resource{URL: datasetResource.URL})
+		if err != nil {
+			return nil, err
+		}
+		datasetResource.URL = resource.URL
+	}
+	datasets, err := s.Manager.DatasetFactory().CreateDatasets(datasetResource)
 	if err != nil {
 		return nil, err
 	}
@@ -395,33 +404,28 @@ func AsTableRecords(source interface{}, state common.Map) (interface{}, error) {
 	if source == nil {
 		return nil, fmt.Errorf("Source was nil")
 	}
-	if ! state.Has(DataStoreUnitServiceId) {
+	if !state.Has(DataStoreUnitServiceId) {
 		state.Put(DataStoreUnitServiceId, common.NewMap())
 	}
 	dataStoreState := state.GetMap(DataStoreUnitServiceId)
-
-
-
 
 	if toolbox.IsSlice(source) {
 		for _, item := range toolbox.AsSlice(source) {
 
 			if toolbox.IsMap(item) {
 				aMap := toolbox.AsMap(item)
-				tableValue, ok := aMap["Table"];
-				if ! ok {
+				tableValue, ok := aMap["Table"]
+				if !ok {
 					return nil, fmt.Errorf("Table was missing in %v", aMap)
 				}
-				dataValue, ok := aMap["Value"];
-				if ! ok {
+				dataValue, ok := aMap["Value"]
+				if !ok {
 					return nil, fmt.Errorf("Value was missing in %v", aMap)
 				}
-				if ! toolbox.IsMap(dataValue) {
+				if !toolbox.IsMap(dataValue) {
 					return nil, fmt.Errorf("Value is not map in %T, %v", dataValue, dataValue)
 
 				}
-
-
 
 				value := toolbox.AsMap(ExpandValue(dataValue, state))
 				for k, v := range value {
@@ -434,24 +438,24 @@ func AsTableRecords(source interface{}, state common.Map) (interface{}, error) {
 				}
 				table := toolbox.AsString(tableValue)
 
-				if ! dataStoreState.Has(table) {
+				if !dataStoreState.Has(table) {
 					dataStoreState.Put(table, common.NewCollection())
 				}
 				records := dataStoreState.GetCollection(table)
 				records.Push(value)
 
 				_, ok = result[table]
-				if ! ok {
+				if !ok {
 					result[table] = make([]map[string]interface{}, 0)
 				}
 				result[table] = append(result[table], value)
-				autoincrementValue, ok := aMap["Autoincrement"];
+				autoincrementValue, ok := aMap["Autoincrement"]
 				if ok {
 					if toolbox.IsSlice(autoincrementValue) {
 						for _, key := range toolbox.AsSlice(autoincrementValue) {
 							keyText := toolbox.AsString(key)
 							value, has := state.GetValue(keyText)
-							if ! has {
+							if !has {
 								value = 0
 							}
 							state.SetValue(keyText, toolbox.AsInt(value)+1)
@@ -463,10 +467,6 @@ func AsTableRecords(source interface{}, state common.Map) (interface{}, error) {
 	}
 	return result, nil
 }
-
-
-
-
 
 func NewDataStoreUnitService() Service {
 	var result = &dsataStoreUnitService{

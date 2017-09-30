@@ -10,8 +10,8 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"time"
 	"strings"
+	"time"
 )
 
 //TODO Execution detail Tracking of all run (time taken, request, response)
@@ -42,7 +42,7 @@ func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 		return nil, reportError(fmt.Errorf("URL was empty"))
 	}
 
-	if ! strings.Contains(resource.URL, "://") {
+	if !strings.Contains(resource.URL, "://") {
 		if workflow := c.Workflow(); workflow != nil && workflow.source != nil {
 			baseURL, _ := toolbox.URLSplit(workflow.source.URL)
 			resource.URL = toolbox.URLPathJoin(baseURL, resource.URL)
@@ -50,13 +50,14 @@ func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 	}
 
 	var result = &Resource{
-		URL:        c.Expand(resource.URL),
-		Credential: c.Expand(resource.Credential),
-		Name:       c.Expand(resource.Name),
-		Version:    resource.Version,
-		Type:       c.Expand(resource.Type),
+		URL:         c.Expand(resource.URL),
+		Credential:  c.Expand(resource.Credential),
+		Name:        c.Expand(resource.Name),
+		Version:     resource.Version,
+		Type:        c.Expand(resource.Type),
+		Cache:       c.Expand(resource.Cache),
+		CacheExpiry: resource.CacheExpiry,
 	}
-
 	result.ParsedURL, err = url.Parse(result.URL)
 	if err != nil {
 		return nil, reportError(fmt.Errorf("Failed to parse URL: %v %v", result.URL, err))

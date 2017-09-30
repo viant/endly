@@ -22,9 +22,9 @@ type TransferCopyResponse struct {
 }
 
 type Transfer struct {
-	Source *Resource
-	Target *Resource
-	Expand bool
+	Source  *Resource
+	Target  *Resource
+	Expand  bool
 	Replace map[string]string
 }
 
@@ -68,7 +68,7 @@ func NewExpandedContentHandler(context *Context, replaceMap map[string]string, e
 				return nil, err
 			}
 		}
-		for k, v :=  range replaceMap {
+		for k, v := range replaceMap {
 			result = strings.Replace(result, k, v, len(result))
 		}
 		return strings.NewReader(toolbox.AsString(result)), nil
@@ -102,13 +102,12 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 			handler = NewExpandedContentHandler(context, transfer.Replace, transfer.Expand)
 		}
 
-		if _, err := sourceService.StorageObject(source.URL);err != nil {
+		if _, err := sourceService.StorageObject(source.URL); err != nil {
 			return nil, fmt.Errorf("Failed to copy: %v %v - source does not exists", source.URL, target.URL)
 		}
 
-
-
 		err = storage.Copy(sourceService, source.URL, targetService, target.URL, handler)
+		//fmt.Printf("COPY: %v %v %v\n", source.URL, target.URL, err)
 		info := NewTransferInfo(context, source.URL, target.URL, err, transfer.Expand)
 		result.Transfered = append(result.Transfered, info)
 		sessionInfo.Log(info)

@@ -253,13 +253,13 @@ func TestRunWorfklowTomcatApp(t *testing.T) {
 				response := service.Run(context, &endly.WorkflowRunRequest{
 					Name: "tomcat",
 					Params: map[string]interface{}{
-						"targetHost":       "127.0.0.1",
-						"targetCredential": targetCredential,
-						"appDirectory":     "/tmp/app1",
-						"configUrl":        configUrl,
-						"configUrlCredential":targetCredential,
-						"tomcatPort":       "8881",
-						"forceDeploy":      true,
+						"targetHost":          "127.0.0.1",
+						"targetCredential":    targetCredential,
+						"appDirectory":        "/tmp/app1",
+						"configUrl":           configUrl,
+						"configUrlCredential": targetCredential,
+						"tomcatPort":          "8881",
+						"forceDeploy":         true,
 					},
 					Tasks: "install",
 				})
@@ -278,7 +278,6 @@ func TestRunWorfklowTomcatApp(t *testing.T) {
 						"targetHost":       "127.0.0.1",
 						"targetCredential": targetCredential,
 						"appDirectory":     "/tmp/app1",
-
 					},
 					Tasks: "start",
 				})

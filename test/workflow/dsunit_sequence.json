@@ -1,4 +1,4 @@
 {
   "Datastore": "mydb1",
-  "Tables":$tables
+  "Tables":"$tables"
 }

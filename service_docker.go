@@ -10,7 +10,6 @@ import (
 const DockerServiceId = "docker"
 const containerInUse = "is already in use by container"
 
-
 var dockerErrors = []string{"Error", "failed"}
 var dockerIgnoreErrors = []string{}
 

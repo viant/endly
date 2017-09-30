@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/storage"
 	"path"
 	"strings"
 )
@@ -311,7 +312,7 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 				if field.IsRoot {
 					field.Set(val, rootObject)
 					if field.HasArrayComponent {
-						recordHeight ,err = d.setArrayValues(field, i, lines, record, fieldExpressions, rootObject, recordHeight, resource, context)
+						recordHeight, err = d.setArrayValues(field, i, lines, record, fieldExpressions, rootObject, recordHeight, resource, context)
 					}
 
 				} else {
@@ -399,10 +400,14 @@ func isHeaderByte(b byte) bool {
 }
 
 func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, resourceDetail string) (*Resource, error) {
+	if resourceDetail == "" {
+		return nil, reportError(fmt.Errorf("Resource was empty"))
+	}
 	var URL, credential string
 	if strings.Contains(resourceDetail, ",") {
 		var pair = strings.Split(resourceDetail, ",")
 		URL = strings.TrimSpace(pair[0])
+
 		credential = strings.TrimSpace(pair[1])
 	} else if strings.Contains(resourceDetail, "://") {
 		URL = resourceDetail
@@ -411,6 +416,20 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 	} else {
 		parent, _ := path.Split(resource.ParsedURL.Path)
 		URL = string(resource.URL[:strings.Index(resource.URL, "://")]) + fmt.Sprintf("://%v", path.Join(parent, resourceDetail))
+
+		service, err := storage.NewServiceForURL(URL, credential)
+		if err != nil {
+			return nil, err
+		}
+
+		if exists, _ := service.Exists(URL); !exists {
+			endlyResource, err := NewEndlyRepoResource(context, resourceDetail)
+			if err == nil {
+				if exists, _ := service.Exists(endlyResource.URL); exists {
+					URL = endlyResource.URL
+				}
+			}
+		}
 		credential = resource.Credential
 	}
 	return &Resource{
@@ -428,7 +447,7 @@ func (d *WorkflowDao) loadExternalResource(context *Context, resource *Resource,
 }
 
 func applyUdf(expression string) (func(interface{}, common.Map) (interface{}, error), string, error) {
-	if ! strings.HasPrefix(expression, "!") {
+	if !strings.HasPrefix(expression, "!") {
 		return nil, "", nil
 	}
 	startArgumentPosition := strings.Index(expression, "(")
@@ -441,7 +460,7 @@ func applyUdf(expression string) (func(interface{}, common.Map) (interface{}, er
 			var available = toolbox.MapKeysToStringSlice(UdfRegistry)
 			return nil, "", fmt.Errorf("Failed to lookup udf function %v on %v, avaialbe:[%v]", udfName, expression, strings.Join(available, ","))
 		}
-		value := string(expression[startArgumentPosition+1: endArgumentPosition])
+		value := string(expression[startArgumentPosition+1 : endArgumentPosition])
 		return udfFunction, value, nil
 	}
 	return nil, "", nil
@@ -451,8 +470,9 @@ func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource,
 	var err error
 	var state = context.State()
 	if value[0] == expandPrefix {
-		var endOfResources = strings.Index(value, "/")
+		var endOfResources = strings.LastIndex(value, "/")
 		if endOfResources != -1 {
+
 			resourceValue, err := d.loadExternalResource(context, parentResource, string(value[2:endOfResources]))
 			if err != nil {
 				return nil, false, err
@@ -470,7 +490,7 @@ func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource,
 	if value[0] == externalReferencePrefix {
 		value, err = d.loadExternalResource(context, parentResource, string(value[1:]))
 		if err != nil {
-			return nil, false, err
+			return nil, false, fmt.Errorf("Failed to load external resource :%v, %v", value, err)
 		}
 	}
 	udfFunction, udfValue, err := applyUdf(value)

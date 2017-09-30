@@ -65,7 +65,7 @@ func (s *WorkflowService) Register(workflow *Workflow) error {
 }
 
 func (s *WorkflowService) HasWorkflow(name string) bool {
-	_, found := s.registry[name];
+	_, found := s.registry[name]
 	return found
 }
 
@@ -88,8 +88,6 @@ func (s *WorkflowService) evaluateRunCriteria(context *Context, criteria string)
 	}
 	fragments := strings.Split(criteria, ":")
 
-
-
 	actualOperand := context.Expand(strings.TrimSpace(fragments[0]))
 	expectedOperand := context.Expand(strings.TrimSpace(fragments[1]))
 	validator := &Validator{}
@@ -108,11 +106,11 @@ func isTaskAllowed(candidate *WorkflowTask, request *WorkflowRunRequest) (bool, 
 	for _, task := range tasks {
 		encodedTask = nil
 		var taskName = task
-		if ! strings.Contains(task, ":") {
-			encodedTask= strings.Split(task, ":")
+		if !strings.Contains(task, ":") {
+			encodedTask = strings.Split(task, ":")
 			taskName = encodedTask[0]
 		}
-		if taskName ==  candidate.Name {
+		if taskName == candidate.Name {
 			if len(encodedTask) == 2 {
 				actions = make(map[int]bool)
 				for _, allowedIndex := range strings.Split(encodedTask[1], ",") {
@@ -125,14 +123,13 @@ func isTaskAllowed(candidate *WorkflowTask, request *WorkflowRunRequest) (bool, 
 	return false, nil
 }
 
-
-func (s *WorkflowService) loadWorkflowIfNeeded(context *Context, name string,  URL string) (err error) {
-	if ! s.HasWorkflow(name) {
+func (s *WorkflowService) loadWorkflowIfNeeded(context *Context, name string, URL string) (err error) {
+	if !s.HasWorkflow(name) {
 		var workflowResource *Resource
 		if URL != "" {
 			workflowResource, err = NewResource(URL)
 			if err != nil {
-				return  err
+				return err
 			}
 		} else {
 			workflowResource, err = NewEndlyRepoResource(context, fmt.Sprintf("workflow/%v.csv", name))
@@ -141,15 +138,14 @@ func (s *WorkflowService) loadWorkflowIfNeeded(context *Context, name string,  U
 			}
 		}
 		if err == nil {
-			err = s.loadWorkflow(context, &WorkflowLoadRequest{Source:workflowResource})
+			err = s.loadWorkflow(context, &WorkflowLoadRequest{Source: workflowResource})
 		}
 		if err != nil {
-			return  err
+			return err
 		}
 	}
 	return nil
 }
-
 
 func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *WorkflowRunRequest) (*WorkflowRunResponse, error) {
 	var err = s.loadWorkflowIfNeeded(upstreamContext, request.Name, request.WorkflowURL)
@@ -157,7 +153,7 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 		return nil, err
 	}
 
-	manager, err:= upstreamContext.Manager()
+	manager, err := upstreamContext.Manager()
 	if err != nil {
 		return nil, err
 	}
@@ -178,24 +174,20 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 		upstreamContext.Put(workflowKey, workflow)
 	}
 
-
-
 	context := manager.NewContext(upstreamContext.Context.Clone())
 	state := context.State()
 	state.Apply(upstreamContext.State())
 
-
-
-
-
-	params:= buildParamsMap(request, context)
+	params := buildParamsMap(request, context)
 	state.Put("params", params)
 
 	var workflowData = common.Map(workflow.Data)
 	state.Put("workflow", workflowData)
 
-	workflow.Init.Apply(state, state)
-
+	err = workflow.Init.Apply(state, state)
+	if err != nil {
+		return nil, err
+	}
 	for _, task := range workflow.Tasks {
 		var taskAllowed, allowedServiceActions = isTaskAllowed(task, request)
 		if !taskAllowed {
@@ -211,7 +203,10 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 		response.TasksActivities = append(response.TasksActivities, taskActivity)
 		var taskState = common.Map(taskActivity.Data)
 		state.Put("task", taskState)
-		task.Init.Apply(state, state)
+		err = task.Init.Apply(state, state)
+		if err != nil {
+			return nil, err
+		}
 
 		canRun, err := s.evaluateRunCriteria(context, task.RunCriteria)
 		if err != nil {
@@ -226,10 +221,6 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 			if hasAllowedActions && !allowedServiceActions[i] {
 				continue
 			}
-			//state.Put("params", params)
-			//workflow.Init.Apply(state, state)
-			//task.Init.Apply(state, state)
-
 			serviceActivity := &WorkflowServiceActivity{
 				Action:  action.Action,
 				Service: action.Service,
@@ -243,7 +234,10 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 				serviceActivity.Skipped = fmt.Sprintf("Does not match run criteria: %v", context.Expand(action.RunCriteria))
 				continue
 			}
-			action.Init.Apply(state, state)
+			err = action.Init.Apply(state, state)
+			if err != nil {
+				return nil, err
+			}
 			service, err := context.Service(action.Service)
 
 			if err != nil {
@@ -265,7 +259,6 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 			if err != nil {
 				return response, fmt.Errorf("Failed to create request %v on %v.%v, %v", requestMap, action.Service, action.Action, err)
 			}
-			//fmt.Printf("=============\n\t\t%v.%v (%v)\n=============\n", action.Service, action.Action, action.Description)
 			serviceResponse := service.Run(context, serviceRequest)
 			serviceActivity.ServiceResponse = serviceResponse
 			if serviceResponse.Error != "" {
@@ -280,15 +273,21 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 				converter.AssignConverted(responseMap, serviceResponse.Response)
 			}
 
-			action.Post.Apply(common.Map(responseMap), state) //result to task  state
+			err = action.Post.Apply(common.Map(responseMap), state) //result to task  state
+			if err != nil {
+				return nil, err
+			}
 			if action.SleepInMs > 0 {
 				time.Sleep(time.Millisecond * time.Duration(action.SleepInMs))
 			}
 		}
-		task.Post.Apply(state, state)
+		err = task.Post.Apply(state, state)
+		if err != nil {
+			return nil, err
+		}
 
 	}
-	workflow.Post.Apply(state, response.Data)//context -> workflow output
+	workflow.Post.Apply(state, response.Data) //context -> workflow output
 	return response, nil
 }
 func buildParamsMap(request *WorkflowRunRequest, context *Context) common.Map {

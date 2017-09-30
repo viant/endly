@@ -137,6 +137,9 @@ func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 		result.ManagedCommand.Executions = append(result.ManagedCommand.Executions, newExecution)
 	}
 
+	if target.Credential == "" {
+		return nil, fmt.Errorf("Can not run as superuser, credential were empty for target: %v", target.URL)
+	}
 	_, password, err := target.LoadCredential(true)
 	execution := &Execution{
 		Secure:      password,
@@ -359,6 +362,7 @@ func (s *execService) rumCommandTemplate(context *Context, session *ClientSessio
 	}
 	command := fmt.Sprintf(commandTemplate, arguments...)
 	output, err := session.Run(command, 0)
+	//fmt.Printf("---\n%v\n\t\t%v", command, output)
 	info.Add(NewCommandStream(command, output, err))
 	if err != nil {
 		return err
@@ -409,15 +413,12 @@ func (s *execService) executeCommand(context *Context, session *ClientSession, e
 	terminators := getTerminators(options, session, execution)
 
 	var cmd = command
-
-
-
 	if execution.Secure != "" {
 		cmd = strings.Replace(command, "****", execution.Secure, 1)
 	}
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
 
-
+	//fmt.Printf("%v\n\t\t%v", command, stdout)
 	commandInfo.Add(NewCommandStream(command, stdout, err))
 	if err != nil {
 		return err
@@ -480,7 +481,6 @@ func (s *execService) runCommands(context *Context, request *ManagedCommandReque
 	info := NewCommandInfo(session.name)
 	context.SessionInfo().Log(info)
 	err = s.applyCommandOptions(context, options, session, info)
-
 
 	if err != nil {
 		return nil, err
@@ -547,7 +547,7 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 		if err == nil {
 			response.Response, err = s.runCommands(context, mangedCommandRequest)
 		}
-		if err != nil{
+		if err != nil {
 			response.Error = fmt.Sprintf("Failed to run command: %v, %v", actualRequest, err)
 		}
 
