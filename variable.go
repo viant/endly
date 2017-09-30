@@ -1,14 +1,16 @@
 package endly
 
 import (
-	"github.com/viant/endly/common"
 	"fmt"
+	"github.com/viant/endly/common"
+	"github.com/viant/toolbox"
 )
 
 type Variable struct {
-	Name  string
-	Value interface{}
-	From  string
+	Name     string
+	Value    interface{}
+	From     string
+	Required bool
 }
 
 type Variables []*Variable
@@ -40,7 +42,13 @@ func (v *Variables) Apply(in, out common.Map) error {
 
 		if value == nil {
 			value = variable.Value
-			value = ExpandValue(value, in)
+			if value != nil {
+				value = ExpandValue(value, in)
+			}
+		}
+
+		if value == nil && variable.Required || toolbox.AsString(value) == "" {
+			return fmt.Errorf("Variable %v is required, but was empty, %v", variable.Name, in)
 		}
 		out.SetValue(variable.Name, value)
 	}
