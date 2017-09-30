@@ -1,15 +1,15 @@
 package endly
 
 import (
+	"bytes"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"strings"
 	"unicode"
-	"bytes"
 )
 
 const (
-	expectVariableStart            = iota
+	expectVariableStart = iota
 	expectVariableName
 	expectVariableNameEnclosureEnd
 )
@@ -27,8 +27,6 @@ func ExpandAsText(state common.Map, text string) string {
 	return toolbox.AsString(result)
 }
 
-
-
 func asExpandedText(source interface{}) string {
 	if toolbox.IsSlice(source) || toolbox.IsMap(source) {
 		buf := new(bytes.Buffer)
@@ -39,8 +37,6 @@ func asExpandedText(source interface{}) string {
 	}
 	return toolbox.AsString(source)
 }
-
-
 
 func Expand(state common.Map, text string) interface{} {
 	if strings.Index(text, "$") == -1 {
@@ -59,14 +55,14 @@ func Expand(state common.Map, text string) interface{} {
 	var result = ""
 
 	for i, rune := range text {
-		aChar := string(text[i: i+1])
-		var isLast = i + 1 == len(text)
+		aChar := string(text[i : i+1])
+		var isLast = i+1 == len(text)
 		switch parsingState {
 		case expectVariableStart:
 			if aChar == "$" {
 				variableName += aChar
 				if i+1 < len(text) {
-					nextChar := string(text[i+1: i+2])
+					nextChar := string(text[i+1 : i+2])
 					if nextChar == "{" {
 						parsingState = expectVariableNameEnclosureEnd
 						continue
@@ -121,13 +117,18 @@ func ExpandValue(source interface{}, state common.Map) interface{} {
 	switch value := source.(type) {
 	case string:
 		if strings.HasPrefix(value, "$") {
-			return Expand(state, value)
+			result := Expand(state, value)
+			if toolbox.IsMap(result) || toolbox.IsSlice(result) {
+				return ExpandValue(result, state)
+			}
+			return result
 		}
 		return ExpandAsText(state, value)
 	case map[string]interface{}:
 		var resultMap = make(map[string]interface{})
 		for k, v := range value {
-			resultMap[ExpandAsText(state, k)] = ExpandValue(v, state)
+			var expanded = ExpandValue(v, state)
+			resultMap[ExpandAsText(state, k)] = expanded
 		}
 		return resultMap
 	case []interface{}:
