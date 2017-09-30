@@ -24,7 +24,7 @@ func addIfMatched(line, fragment string, result *[]string) {
 
 }
 
-func extractGitStatus(stdout string, response *VcInfoResponse) {
+func extractGitStatus(stdout string, response *VcInfo) {
 	if strings.Contains(stdout, "nothing to commit") {
 		response.IsUptoDate = true
 	}
@@ -58,7 +58,7 @@ func extractGitStatus(stdout string, response *VcInfoResponse) {
 	}
 }
 
-func extractRevision(stdout string, response *VcInfoResponse) {
+func extractRevision(stdout string, response *VcInfo) {
 	if strings.Contains(stdout, "unknown revision") {
 		response.IsVersionControlManaged = true
 		return
@@ -67,12 +67,12 @@ func extractRevision(stdout string, response *VcInfoResponse) {
 
 }
 
-func (s *gitService) checkInfo(context *Context, request *VcStatusRequest) (*VcInfoResponse, error) {
+func (s *gitService) checkInfo(context *Context, request *VcStatusRequest) (*VcInfo, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-	var result = &VcInfoResponse{}
+	var result = &VcInfo{}
 
 	response, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
@@ -117,7 +117,7 @@ func (s *gitService) checkInfo(context *Context, request *VcStatusRequest) (*VcI
 	return result, nil
 }
 
-func (s *gitService) pull(context *Context, request *VcPullRequest) (*VcInfoResponse, error) {
+func (s *gitService) pull(context *Context, request *VcPullRequest) (*VcInfo, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func (s *gitService) pull(context *Context, request *VcPullRequest) (*VcInfoResp
 	})
 }
 
-func (s *gitService) checkout(context *Context, request *VcCheckoutRequest) (*VcInfoResponse, error) {
+func (s *gitService) checkout(context *Context, request *VcCheckoutRequest) (*VcInfo, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -165,7 +165,7 @@ func (s *gitService) checkout(context *Context, request *VcCheckoutRequest) (*Vc
 	})
 }
 
-func (s *gitService) commit(context *Context, request *VcCommitRequest) (*VcInfoResponse, error) {
+func (s *gitService) commit(context *Context, request *VcCommitRequest) (*VcInfo, error) {
 	checkInfo, err := s.checkInfo(context, &VcStatusRequest{
 		Target: request.Target,
 	})

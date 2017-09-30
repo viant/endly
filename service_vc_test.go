@@ -29,7 +29,7 @@ func TestService_RunStatusRequest(t *testing.T) {
 	assert.NotNil(t, response)
 
 	assert.Equal(t, "", response.Error)
-	info, ok := response.Response.(*endly.VcInfoResponse)
+	info, ok := response.Response.(*endly.VcInfo)
 	assert.True(t, ok)
 	assert.Equal(t, "master", info.Branch)
 	assert.Equal(t, "3d764da443b3852260666d2c527872e2629e40e2", info.Revision)

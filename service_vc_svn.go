@@ -8,12 +8,12 @@ import (
 
 type svnService struct{}
 
-func (s *svnService) checkInfo(context *Context, request *VcStatusRequest) (*VcInfoResponse, error) {
+func (s *svnService) checkInfo(context *Context, request *VcStatusRequest) (*VcInfo, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-	var result = &VcInfoResponse{}
+	var result = &VcInfo{}
 
 	response, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
@@ -57,7 +57,7 @@ func (s *svnService) checkInfo(context *Context, request *VcStatusRequest) (*VcI
 	return result, nil
 }
 
-func readSvnStatus(commandResult *CommandInfo, response *VcInfoResponse) {
+func readSvnStatus(commandResult *CommandInfo, response *VcInfo) {
 	response.New = make([]string, 0)
 	response.Modified = make([]string, 0)
 	response.Deleted = make([]string, 0)
@@ -84,7 +84,7 @@ func readSvnStatus(commandResult *CommandInfo, response *VcInfoResponse) {
 	}
 }
 
-func (s *svnService) pull(context *Context, request *VcPullRequest) (*VcInfoResponse, error) {
+func (s *svnService) pull(context *Context, request *VcPullRequest) (*VcInfo, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (s *svnService) pull(context *Context, request *VcPullRequest) (*VcInfoResp
 	return s.runSecureSvnCommand(context, target, request.Origin, "up")
 }
 
-func (s *svnService) checkout(context *Context, request *VcCheckoutRequest) (*VcInfoResponse, error) {
+func (s *svnService) checkout(context *Context, request *VcCheckoutRequest) (*VcInfo, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -100,7 +100,7 @@ func (s *svnService) checkout(context *Context, request *VcCheckoutRequest) (*Vc
 	return s.runSecureSvnCommand(context, target, request.Origin, "co", request.Origin.URL, target.ParsedURL.Path)
 }
 
-func (s *svnService) runSecureSvnCommand(context *Context, target *Resource, origin *Resource, command string, arguments ...string) (*VcInfoResponse, error) {
+func (s *svnService) runSecureSvnCommand(context *Context, target *Resource, origin *Resource, command string, arguments ...string) (*VcInfo, error) {
 	username, password, err := origin.LoadCredential(true)
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *Resource, ori
 	})
 }
 
-func (s *svnService) commit(context *Context, request *VcCommitRequest) (*VcInfoResponse, error) {
+func (s *svnService) commit(context *Context, request *VcCommitRequest) (*VcInfo, error) {
 
 	response, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
