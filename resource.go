@@ -7,17 +7,34 @@ import (
 	"github.com/viant/toolbox/storage"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"path"
 	"strings"
+	"time"
 )
 
 type Resource struct {
-	Name       string
-	Version    string
-	URL        string
-	Type       string
-	Credential string //name of file or alias to the file defined via credential service
-	ParsedURL  *url.URL
+	Name        string
+	Version     string
+	URL         string
+	Type        string
+	Credential  string //name of file or alias to the file defined via credential service
+	ParsedURL   *url.URL
+	Cache       string
+	CacheExpiry int
+}
+
+func (r *Resource) Clone() *Resource {
+	return &Resource{
+		Name:        r.Name,
+		Version:     r.Version,
+		URL:         r.URL,
+		Type:        r.Type,
+		Credential:  r.Credential,
+		ParsedURL:   r.ParsedURL,
+		Cache:       r.Cache,
+		CacheExpiry: r.CacheExpiry,
+	}
 }
 
 func (r *Resource) Session() string {
@@ -74,10 +91,39 @@ func (r *Resource) JsonDecode(target interface{}) error {
 	return toolbox.NewJSONDecoderFactory().Create(bytes.NewReader(content)).Decode(target)
 }
 
+//TODO support cache as dir
+func (r *Resource) readFromCache() []byte {
+	if toolbox.FileExists(r.Cache) {
+		info, err := os.Stat(r.Cache)
+		var isExpired = false
+		if err == nil && r.CacheExpiry > 0 {
+			elapsed := time.Now().Sub(info.ModTime())
+			isExpired = elapsed > time.Second*time.Duration(r.CacheExpiry)
+		}
+		content, err := ioutil.ReadFile(r.Cache)
+		if err == nil && !isExpired {
+			return content
+		}
+	}
+	return nil
+}
+
+func (r *Resource) Cachable() bool {
+	return r.Cache != ""
+}
+
 func (r *Resource) Download() ([]byte, error) {
 	if r == nil {
 		return nil, fmt.Errorf("Fail to download content on empty resource")
 	}
+
+	if r.Cachable() {
+		content := r.readFromCache()
+		if content != nil {
+			return content, nil
+		}
+	}
+
 	service, err := storage.NewServiceForURL(r.URL, r.Credential)
 	if err != nil {
 		return nil, err
@@ -93,6 +139,9 @@ func (r *Resource) Download() ([]byte, error) {
 	content, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return nil, err
+	}
+	if r.Cachable() {
+		_ = ioutil.WriteFile(r.Cache, content, 0666)
 	}
 	return content, err
 }
@@ -113,7 +162,7 @@ func NewFileResource(resource string) *Resource {
 		return nil
 	}
 	if !strings.HasPrefix(resource, "/") {
-		fileName, _, _ := toolbox.CallerInfo(2)
+		fileName, _, _ := toolbox.CallerInfo(3)
 		parent, _ := path.Split(fileName)
 		resource = path.Join(parent, resource)
 	}
@@ -124,7 +173,6 @@ func NewFileResource(resource string) *Resource {
 		URL:       URL,
 	}
 }
-
 
 const endlyRepo = "https://raw.githubusercontent.com/viant/endly/master/%v"
 
