@@ -9,7 +9,6 @@ import (
 	"net/url"
 )
 
-
 const BuildServiceId = "build"
 
 type OperatingSystemDeployment struct {
@@ -19,8 +18,9 @@ type OperatingSystemDeployment struct {
 
 type BuildGoal struct {
 	Name                string
+	InitTransfers       *TransferCopyRequest
 	Command             *ManagedCommand
-	Transfers           *TransferCopyRequest
+	PostTransfers       *TransferCopyRequest
 	VerificationCommand *ManagedCommand
 }
 
@@ -126,7 +126,7 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 	if !hasMeta {
 		var buildMetaURL = request.BuildMetaURL
 		if buildMetaURL == "" {
-			endlyResource, err :=NewEndlyRepoResource(context, fmt.Sprintf("build/meta/%v.json", buildSpec.Name))
+			endlyResource, err := NewEndlyRepoResource(context, fmt.Sprintf("build/meta/%v.json", buildSpec.Name))
 			if err != nil {
 				return nil, err
 			}
@@ -206,9 +206,16 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 	if err != nil {
 		return nil, err
 	}
+
+	if goal.InitTransfers != nil {
+		_, err = context.Transfer(goal.InitTransfers.Transfers...)
+		if err != nil {
+			return nil, err
+		}
+	}
 	result.CommandInfo = commandInfo
-	if goal.Transfers != nil {
-		_, err = context.Transfer(goal.Transfers.Transfers...)
+	if goal.PostTransfers != nil {
+		_, err = context.Transfer(goal.PostTransfers.Transfers...)
 		if err != nil {
 			return nil, err
 		}
