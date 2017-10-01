@@ -34,12 +34,12 @@
   },
   {
     "Name":"tomcatAJPConnectorPort",
-    "From":"params.tomcatPort",
+    "From":"params.tomcatAJPConnectorPort",
     "Value":"8009"
   },
   {
     "Name":"tomcatRedirectPort",
-    "From":"params.tomcatPort",
+    "From":"params.tomcatRedirectPort",
     "Value":"8443"
   },
   {
@@ -230,7 +230,7 @@
               "Credential": "$configUrlCredential"
             },
             "Target": {
-              "URL": "scp://${targetHost}${appDirectory}/tomcat/config/server.xml",
+              "URL": "scp://${targetHost}${appDirectory}/tomcat/conf/server.xml",
               "Credentail": "$targetCredential"
             },
             "Expand": true
