@@ -127,7 +127,7 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 }
 
 func (s *processService) stopProcess(context *Context, request *ProcessStopRequest) (*CommandInfo, error) {
-	commandResult, err := context.Execute(request.Target, &ManagedCommand{
+	commandResult, err := context.ExecuteAsSuperUser(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("kill -9 %v", request.Pid),
