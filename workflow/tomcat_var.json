@@ -4,43 +4,43 @@
     "From": "params.targetHost"
   },
   {
-    "Name":"targetCredential",
+    "Name": "targetCredential",
     "From": "params.targetCredential"
   },
   {
-    "Name":"tomcatMajorVersion",
+    "Name": "tomcatMajorVersion",
     "From": "params.tomcatMajorVersion",
-    "Value":"7"
+    "Value": "7"
   },
   {
-    "Name":"tomcatVersion",
+    "Name": "tomcatVersion",
     "From": "params.tomcatVersion",
-    "Value":"7.0.81"
+    "Value": "7.0.81"
   },
   {
-    "Name":"catalinaOpts",
-    "From":"params.catalinaOpts",
-    "Value":"-Xms512m -Xmx1g -XX:MaxPermSize=256m"
+    "Name": "catalinaOpts",
+    "From": "params.catalinaOpts",
+    "Value": "-Xms512m -Xmx1g -XX:MaxPermSize=256m"
   },
   {
-    "Name":"tomcatPort",
-    "From":"params.tomcatPort",
-    "Value":"8080"
+    "Name": "tomcatPort",
+    "From": "params.tomcatPort",
+    "Value": "8080"
   },
   {
-    "Name":"tomcatShutdownPort",
-    "From":"params.tomcatShutdownPort",
-    "Value":"8005"
+    "Name": "tomcatShutdownPort",
+    "From": "params.tomcatShutdownPort",
+    "Value": "8005"
   },
   {
-    "Name":"tomcatAJPConnectorPort",
-    "From":"params.tomcatAJPConnectorPort",
-    "Value":"8009"
+    "Name": "tomcatAJPConnectorPort",
+    "From": "params.tomcatAJPConnectorPort",
+    "Value": "8009"
   },
   {
-    "Name":"tomcatRedirectPort",
-    "From":"params.tomcatRedirectPort",
-    "Value":"8443"
+    "Name": "tomcatRedirectPort",
+    "From": "params.tomcatRedirectPort",
+    "Value": "8443"
   },
   {
     "Name": "jdkVersion",
@@ -52,29 +52,23 @@
     "Value": "$params.appDirectory"
   },
   {
-    "Name":"forceDeploy",
-    "From":"params.forceDeploy",
-    "Value":false
+    "Name": "forceDeploy",
+    "From": "params.forceDeploy",
+    "Value": false
   },
   {
-    "Name":"configUrl",
-    "From":"params.configUrl"
+    "Name": "configUrl",
+    "From": "params.configUrl"
   },
   {
-    "Name":"configUrlCredential",
-    "From":"params.configUrlCredential",
-    "Value":""
+    "Name": "configUrlCredential",
+    "From": "params.configUrlCredential",
+    "Value": ""
   },
-
-
-
   {
     "Name": "tomcat",
     "Value": "apache-tomcat-${tomcatVersion}"
   },
-
-
-
   {
     "Name": "setRequest",
     "Value": {
@@ -91,7 +85,7 @@
     "Value": {
       "Target": {
         "URL": "ssh://${targetHost}${appDirectory}/",
-        "Credentail": "$targetCredential"
+        "Credential": "$targetCredential"
       },
       "Command": "catalina | grep ${appDirectory}/tomcat"
     }
@@ -101,7 +95,7 @@
     "Value": {
       "Target": {
         "URL": "ssh://${targetHost}${appDirectory}/",
-        "Credentail": "$targetCredential"
+        "Credential": "$targetCredential"
       },
       "Pid": "$tomcatPid"
     }
@@ -111,16 +105,14 @@
     "Value": {
       "Target": {
         "URL": "ssh://${targetHost}${appDirectory}/",
-        "Credentail": "$targetCredential"
+        "Credential": "$targetCredential"
       },
       "ManagedCommand": {
         "Options": {
           "Env": {
             "CATALINA_OPTS": "$catalinaOpts"
           },
-          "Directory": [
-            "$appDirectory"
-          ]
+          "Directory": "$appDirectory"
         },
         "Executions": [
           {
@@ -144,13 +136,11 @@
     "Value": {
       "Target": {
         "URL": "ssh://${targetHost}${appDirectory}/",
-        "Credentail": "$targetCredential"
+        "Credential": "$targetCredential"
       },
       "ManagedCommand": {
         "Options": {
-          "Directory": [
-            "$appDirectory"
-          ]
+          "Directory": "$appDirectory"
         },
         "Executions": [
           {
@@ -163,7 +153,7 @@
   {
     "Name": "deployRequest",
     "Value": {
-      "Force":"$forceDeploy",
+      "Force": "$forceDeploy",
       "Sdk": "jdk",
       "SdkVersion": "$jdkVersion",
       "Pre": {
@@ -223,7 +213,7 @@
           "mkdir -p $appDirectory/tomcat/logs",
           "chmod -R a+w  $appDirectory"
         ],
-        "Transfers":[
+        "Transfers": [
           {
             "Source": {
               "URL": "$configUrl",
@@ -231,7 +221,7 @@
             },
             "Target": {
               "URL": "scp://${targetHost}${appDirectory}/tomcat/conf/server.xml",
-              "Credentail": "$targetCredential"
+              "Credential": "$targetCredential"
             },
             "Expand": true
           }
@@ -239,5 +229,4 @@
       }
     }
   }
-
 ]

@@ -234,6 +234,8 @@ func (d *WorkflowDao) processHeaderLine(context *Context, result common.Map, dec
 }
 
 func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.Scanner) (map[string]interface{}, error) {
+
+
 	var result = common.NewMap()
 	var record *toolbox.DelimiteredRecord
 	var deferredReferences = make(map[string]func(value interface{}))
@@ -297,7 +299,13 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 			}
 			field := NewFieldExpression(fieldExpressions)
 			textValue := toolbox.AsString(value)
+
+
+
+
 			val, isReference, err := d.normalizeValue(context, resource, textValue)
+
+
 
 			if err != nil {
 				return nil, err
@@ -478,10 +486,19 @@ func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource,
 				return nil, false, err
 			}
 			var aMap = make(map[string]interface{})
-
 			err = toolbox.NewJSONDecoderFactory().Create(strings.NewReader(value[endOfResources+1:])).Decode(&aMap)
 			if err != nil {
 				return nil, false, err
+			}
+
+			for k, v := range aMap {
+
+				if toolbox.IsString(v) {
+					textValue := toolbox.AsString(v)
+					if strings.Contains(textValue, "\"") {
+						aMap[k] = strings.Replace(textValue, "\"", "\\\"", len(textValue))
+					}
+				}
 			}
 			value = ExpandAsText(common.Map(aMap), resourceValue)
 		}
@@ -507,7 +524,7 @@ func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource,
 		var jsonObject = make(map[string]interface{})
 		err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(value)).Decode(&jsonObject)
 		if err != nil {
-			return nil, false, fmt.Errorf("Failed to decode: %v %v", value, err)
+			return nil, false, fmt.Errorf("Failed to decode: %v %T, %v", value,value,  err)
 		}
 		return jsonObject, false, nil
 	case jsonArrayPrefix:

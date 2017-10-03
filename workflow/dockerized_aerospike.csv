@@ -1,5 +1,5 @@
 Workflow,,Name,Description,Tasks,,Init,
-,,dockerized_aerospike,This workflow will setup and start aeropsike as docker service,%Tasks,,#dockerized_aerospike_var.json,
+,,dockerized_aerospike,This workflow managed aeropsike docker service,%Tasks,,#dockerized_aerospike_var.json,
 []Tasks,,Name,Description,Actions,RunCriteria,,
 ,,start,Start aerospike contaner,%Start,,,
 []Start,Service,Action,Description,Request,RunCriteria,,Post

@@ -16,6 +16,7 @@ type WorkflowRunRequest struct {
 	Name        string
 	Params      map[string]interface{}
 	Tasks       string
+	PublishParameters bool//publishes parameters name into context state
 }
 
 type WorkflowRunResponse struct {
@@ -28,9 +29,9 @@ type WorkflowRunResponse struct {
 type WorkflowTaskActivity struct {
 	Task              string
 	ServiceActivities []*WorkflowServiceActivity
-	Data              map[string]interface{}
 	Skipped           string
 }
+
 
 type WorkflowServiceActivity struct {
 	Service         string
@@ -102,18 +103,18 @@ func isTaskAllowed(candidate *WorkflowTask, request *WorkflowRunRequest) (bool, 
 	}
 	var actions map[int]bool
 	var encodedTask []string
-	tasks := strings.Split(request.Tasks, ";")
+	tasks := strings.Split(request.Tasks, ",")
 	for _, task := range tasks {
 		encodedTask = nil
 		var taskName = task
-		if !strings.Contains(task, ":") {
-			encodedTask = strings.Split(task, ":")
+		if !strings.Contains(task, "=") {
+			encodedTask = strings.Split(task, "=")
 			taskName = encodedTask[0]
 		}
 		if taskName == candidate.Name {
 			if len(encodedTask) == 2 {
 				actions = make(map[int]bool)
-				for _, allowedIndex := range strings.Split(encodedTask[1], ",") {
+				for _, allowedIndex := range strings.Split(encodedTask[1], ":") {
 					actions[toolbox.AsInt(allowedIndex)] = true
 				}
 			}
@@ -175,14 +176,23 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	}
 
 	context := manager.NewContext(upstreamContext.Context.Clone())
-	state := context.State()
+	state := NewDefaultState()
+	context.Put(stateKey, &state)
 	state.Apply(upstreamContext.State())
 
-	params := buildParamsMap(request, context)
-	state.Put("params", params)
 
 	var workflowData = common.Map(workflow.Data)
 	state.Put("workflow", workflowData)
+
+	params := buildParamsMap(request, context)
+
+	if request.PublishParameters {
+		for key, value := range params {
+			state.Put(key, ExpandValue(value, state))
+		}
+	}
+	state.Put("params", params)
+
 
 	err = workflow.Init.Apply(state, state)
 	if err != nil {
@@ -198,11 +208,8 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 		var taskActivity = &WorkflowTaskActivity{
 			Task:              task.Name,
 			ServiceActivities: make([]*WorkflowServiceActivity, 0),
-			Data:              make(map[string]interface{}),
 		}
 		response.TasksActivities = append(response.TasksActivities, taskActivity)
-		var taskState = common.Map(taskActivity.Data)
-		state.Put("task", taskState)
 		err = task.Init.Apply(state, state)
 		if err != nil {
 			return nil, err
@@ -234,6 +241,7 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 				serviceActivity.Skipped = fmt.Sprintf("Does not match run criteria: %v", context.Expand(action.RunCriteria))
 				continue
 			}
+
 			err = action.Init.Apply(state, state)
 			if err != nil {
 				return nil, err
@@ -243,6 +251,8 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 			if err != nil {
 				return nil, err
 			}
+
+
 
 			expandedRequest := ExpandValue(action.Request, state)
 			if !toolbox.IsMap(expandedRequest) {
@@ -254,11 +264,13 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 				return nil, err
 			}
 
+
 			serviceActivity.ServiceRequest = serviceRequest
 			err = converter.AssignConverted(serviceRequest, requestMap)
 			if err != nil {
 				return response, fmt.Errorf("Failed to create request %v on %v.%v, %v", requestMap, action.Service, action.Action, err)
 			}
+			fmt.Printf("=============\n\t\t%v.%v (%v)\n=============\n", action.Service, action.Action, action.Description)
 			serviceResponse := service.Run(context, serviceRequest)
 			serviceActivity.ServiceResponse = serviceResponse
 			if serviceResponse.Error != "" {
@@ -272,6 +284,7 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 			if serviceResponse.Response != nil {
 				converter.AssignConverted(responseMap, serviceResponse.Response)
 			}
+
 
 			err = action.Post.Apply(common.Map(responseMap), state) //result to task  state
 			if err != nil {
