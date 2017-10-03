@@ -84,9 +84,9 @@ type DsUnitPrepareRequest struct {
 	Prefix     string //apply prefix
 	Postfix    string //apply suffix
 	Data       map[string][]map[string]interface{}
-
 	Expand bool
 }
+
 
 func (r *DsUnitPrepareRequest) AsDatasetResource() *dsunit.DatasetResource {
 	var result = &dsunit.DatasetResource{
@@ -431,7 +431,7 @@ func AsTableRecords(source interface{}, state common.Map) (interface{}, error) {
 				for k, v := range value {
 					var textValue = toolbox.AsString(v)
 					if strings.HasPrefix(textValue, "$") {
-						value[k] = ""
+						delete(value, k)
 					} else if strings.HasPrefix(textValue, "\\$") {
 						value[k] = string(textValue[1:])
 					}
