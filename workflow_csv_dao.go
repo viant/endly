@@ -2,6 +2,7 @@ package endly
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/endly/common"
@@ -13,7 +14,6 @@ import (
 
 var internalReferencePrefix = []byte("%")[0]
 var externalReferencePrefix = []byte("#")[0]
-var expandPrefix = []byte("^")[0]
 
 var jsonObjectPrefix = []byte("{")[0]
 var jsonArrayPrefix = []byte("[")[0]
@@ -72,14 +72,14 @@ func (d *WorkflowDao) processTag(context *Context, tag *Tag, result common.Map, 
 }
 
 func (d *WorkflowDao) importWorkflow(context *Context, resource *Resource, source string) error {
-	resourceDetail := strings.TrimSpace(source)
-	resource, err := d.getExternalResource(context, resource, resourceDetail)
+	asset := strings.TrimSpace(source)
+	resource, err := d.getExternalResource(context, resource, "", asset)
 	if err != nil {
-		return fmt.Errorf("Failed to import workflow: %v %v", resourceDetail, err)
+		return fmt.Errorf("Failed to import workflow: %v %v", asset, err)
 	}
 	workflow, err := d.Load(context, resource)
 	if err != nil {
-		return fmt.Errorf("Failed to import workflow: %v %v", resourceDetail, err)
+		return fmt.Errorf("Failed to import workflow: %v %v", asset, err)
 	}
 	manager, err := context.Manager()
 	if err != nil {
@@ -96,7 +96,7 @@ func (d *WorkflowDao) importWorkflow(context *Context, resource *Resource, sourc
 		return errors.New(serviceResponse.Error)
 	}
 	if err != nil {
-		return fmt.Errorf("Failed to import workflow: %v %v", resourceDetail, err)
+		return fmt.Errorf("Failed to import workflow: %v %v", asset, err)
 	}
 	return nil
 }
@@ -235,7 +235,6 @@ func (d *WorkflowDao) processHeaderLine(context *Context, result common.Map, dec
 
 func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.Scanner) (map[string]interface{}, error) {
 
-
 	var result = common.NewMap()
 	var record *toolbox.DelimiteredRecord
 	var deferredReferences = make(map[string]func(value interface{}))
@@ -243,6 +242,7 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 	var resultTag string
 	var tag *Tag
 	var object common.Map
+	var subPath = ""
 	var rootObject common.Map
 	var err error
 	var lines = make([]string, 0)
@@ -286,6 +286,9 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 		if record.IsEmpty() {
 			continue
 		}
+		if relativeSubPath, ok := record.Record["Subpath"]; ok {
+			subPath = toolbox.AsString(relativeSubPath)
+		}
 		object = getObject(tag, result)
 		for j := 1; j < len(record.Columns); j++ {
 			fieldExpressions := record.Columns[j]
@@ -300,15 +303,9 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 			field := NewFieldExpression(fieldExpressions)
 			textValue := toolbox.AsString(value)
 
-
-
-
-			val, isReference, err := d.normalizeValue(context, resource, textValue)
-
-
-
+			val, isReference, err := d.normalizeValue(context, resource, subPath, textValue)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("Failed to normalizeValue: %v, %v", textValue, err)
 			}
 			if isReference {
 				referenceKey := toolbox.AsString(val)
@@ -320,14 +317,14 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 				if field.IsRoot {
 					field.Set(val, rootObject)
 					if field.HasArrayComponent {
-						recordHeight, err = d.setArrayValues(field, i, lines, record, fieldExpressions, rootObject, recordHeight, resource, context)
+						recordHeight, err = d.setArrayValues(field, i, lines, record, fieldExpressions, rootObject, recordHeight, resource, context, subPath)
 					}
 
 				} else {
 
 					field.Set(val, object)
 					if field.HasArrayComponent {
-						recordHeight, err = d.setArrayValues(field, i, lines, record, fieldExpressions, object, recordHeight, resource, context)
+						recordHeight, err = d.setArrayValues(field, i, lines, record, fieldExpressions, object, recordHeight, resource, context, subPath)
 					}
 				}
 				if err != nil {
@@ -337,6 +334,7 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 		}
 		i += recordHeight
 	}
+
 	err = checkeUnsuedReferences(referenceUsed, deferredReferences)
 	if err != nil {
 		return nil, err
@@ -370,7 +368,7 @@ func getObject(tag *Tag, result common.Map) common.Map {
 	return data
 }
 
-func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []string, record *toolbox.DelimiteredRecord, fieldExpressions string, data common.Map, recordHeight int, resource *Resource, context *Context) (int, error) {
+func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []string, record *toolbox.DelimiteredRecord, fieldExpressions string, data common.Map, recordHeight int, resource *Resource, context *Context, subpath string) (int, error) {
 	if field.HasArrayComponent {
 		var itemCount = 0
 
@@ -390,7 +388,7 @@ func (d *WorkflowDao) setArrayValues(field *FieldExpression, i int, lines []stri
 				break
 			}
 			itemCount++
-			val, _, err := d.normalizeValue(context, resource, toolbox.AsString(itemValue))
+			val, _, err := d.normalizeValue(context, resource, subpath, toolbox.AsString(itemValue))
 			if err != nil {
 				return 0, err
 			}
@@ -407,31 +405,45 @@ func isHeaderByte(b byte) bool {
 	return (b >= 65 && b <= 93) || (b >= 97 && b <= 122)
 }
 
-func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, resourceDetail string) (*Resource, error) {
-	if resourceDetail == "" {
+func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, subpath, asset string) (*Resource, error) {
+	if asset == "" {
 		return nil, reportError(fmt.Errorf("Resource was empty"))
 	}
+	if strings.HasPrefix(asset, "#") {
+		asset = string(asset[1:])
+	}
+	fmt.Printf(" %v %v\n", subpath, asset)
+
 	var URL, credential string
-	if strings.Contains(resourceDetail, ",") {
-		var pair = strings.Split(resourceDetail, ",")
+	if strings.Contains(asset, ",") {
+		var pair = strings.Split(asset, ",")
 		URL = strings.TrimSpace(pair[0])
 
 		credential = strings.TrimSpace(pair[1])
-	} else if strings.Contains(resourceDetail, "://") {
-		URL = resourceDetail
-	} else if strings.HasPrefix(resourceDetail, "/") {
-		URL = fmt.Sprintf("file://%v", resourceDetail)
+	} else if strings.Contains(asset, "://") {
+		URL = asset
+	} else if strings.HasPrefix(asset, "/") {
+		URL = fmt.Sprintf("file://%v", asset)
 	} else {
+
 		parent, _ := path.Split(resource.ParsedURL.Path)
-		URL = string(resource.URL[:strings.Index(resource.URL, "://")]) + fmt.Sprintf("://%v", path.Join(parent, resourceDetail))
+		if subpath != "" {
+			fileCandidate := path.Join(parent, subpath, asset)
+			if toolbox.FileExists(fileCandidate) {
+				URL = fmt.Sprintf("file://%v", fileCandidate)
+			}
+		}
+
+		if URL == "" {
+			URL = string(resource.URL[:strings.Index(resource.URL, "://")]) + fmt.Sprintf("://%v", path.Join(parent, asset))
+		}
 
 		service, err := storage.NewServiceForURL(URL, credential)
 		if err != nil {
 			return nil, err
 		}
-
 		if exists, _ := service.Exists(URL); !exists {
-			endlyResource, err := NewEndlyRepoResource(context, resourceDetail)
+			endlyResource, err := NewEndlyRepoResource(context, asset)
 			if err == nil {
 				if exists, _ := service.Exists(endlyResource.URL); exists {
 					URL = endlyResource.URL
@@ -445,18 +457,66 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 		Credential: credential,
 	}, nil
 }
-func (d *WorkflowDao) loadExternalResource(context *Context, resource *Resource, value string) (string, error) {
-	resource, err := d.getExternalResource(context, resource, value)
+
+func (d *WorkflowDao) loadMap(context *Context, parentResource *Resource, subpath, asset string, escapeQuotes bool) (common.Map, error) {
+	var aMap = make(map[string]interface{})
+	if !strings.HasPrefix(asset, "#") {
+		err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(asset)).Decode(&aMap)
+		if err != nil {
+			err = fmt.Errorf("Failed to decode json as map: %v, %v, correct json or load it with '#' ", asset, err)
+		}
+	} else {
+		resource, err := d.getExternalResource(context, parentResource, subpath, asset)
+		if err != nil {
+			return nil, err
+		}
+		err = resource.JsonDecode(&aMap)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to decode json from %v %v", asset, err)
+		}
+	}
+
+	if escapeQuotes {
+		for k, v := range aMap {
+
+			if toolbox.IsMap(v) || toolbox.IsSlice(v) {
+				buf := new(bytes.Buffer)
+				err := toolbox.NewJSONEncoderFactory().Create(buf).Encode(v)
+				if err != nil {
+					return nil, err
+				}
+				v = buf.String()
+			}
+
+			if toolbox.IsString(v) {
+				textValue := toolbox.AsString(v)
+				if strings.Contains(textValue, "\"") {
+					textValue = strings.Replace(textValue, "\"", "\\\"", len(textValue))
+					textValue = strings.Replace(textValue, "\n", "", len(textValue))
+					aMap[k] = textValue
+				}
+			}
+		}
+	}
+	return common.Map(aMap), nil
+}
+
+func (d *WorkflowDao) loadExternalResource(context *Context, parentResource *Resource, subpath, asset string) (string, error) {
+
+	resource, err := d.getExternalResource(context, parentResource, subpath, asset)
 	var result string
 	if err == nil {
 		result, err = resource.DownloadText()
 	}
+	if err != nil {
+		return "", fmt.Errorf("Failed to load external resource: %v %v", asset, err)
+	}
 	return result, err
 }
 
-func applyUdf(expression string) (func(interface{}, common.Map) (interface{}, error), string, error) {
+func getUdfIfDefined(expression string) (func(interface{}, common.Map) (interface{}, error), string, error) {
 	if !strings.HasPrefix(expression, "!") {
-		return nil, "", nil
+		return nil, expression, nil
 	}
 	startArgumentPosition := strings.Index(expression, "(")
 	endArgumentPosition := strings.LastIndex(expression, ")")
@@ -471,52 +531,14 @@ func applyUdf(expression string) (func(interface{}, common.Map) (interface{}, er
 		value := string(expression[startArgumentPosition+1 : endArgumentPosition])
 		return udfFunction, value, nil
 	}
-	return nil, "", nil
+	return nil, expression, nil
 }
 
-func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource, value string) (interface{}, bool, error) {
-	var err error
-	var state = context.State()
-	if value[0] == expandPrefix {
-		var endOfResources = strings.LastIndex(value, "/")
-		if endOfResources != -1 {
-
-			resourceValue, err := d.loadExternalResource(context, parentResource, string(value[2:endOfResources]))
-			if err != nil {
-				return nil, false, err
-			}
-			var aMap = make(map[string]interface{})
-			err = toolbox.NewJSONDecoderFactory().Create(strings.NewReader(value[endOfResources+1:])).Decode(&aMap)
-			if err != nil {
-				return nil, false, err
-			}
-
-			for k, v := range aMap {
-
-				if toolbox.IsString(v) {
-					textValue := toolbox.AsString(v)
-					if strings.Contains(textValue, "\"") {
-						aMap[k] = strings.Replace(textValue, "\"", "\\\"", len(textValue))
-					}
-				}
-			}
-			value = ExpandAsText(common.Map(aMap), resourceValue)
-		}
+func (d *WorkflowDao) contextualizeValue(context *Context, value string) (interface{}, bool, error) {
+	if len(value) == 0 {
+		return nil, false, nil
 	}
 
-	if value[0] == externalReferencePrefix {
-		value, err = d.loadExternalResource(context, parentResource, string(value[1:]))
-		if err != nil {
-			return nil, false, fmt.Errorf("Failed to load external resource :%v, %v", value, err)
-		}
-	}
-	udfFunction, udfValue, err := applyUdf(value)
-	if err != nil {
-		return nil, false, err
-	}
-	if udfFunction != nil {
-		value = udfValue
-	}
 	switch value[0] {
 	case internalReferencePrefix:
 		return string(value[1:]), true, nil
@@ -524,7 +546,7 @@ func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource,
 		var jsonObject = make(map[string]interface{})
 		err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(value)).Decode(&jsonObject)
 		if err != nil {
-			return nil, false, fmt.Errorf("Failed to decode: %v %T, %v", value,value,  err)
+			return nil, false, fmt.Errorf("Failed to decode: %v %T, %v", value, value, err)
 		}
 		return jsonObject, false, nil
 	case jsonArrayPrefix:
@@ -534,17 +556,43 @@ func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource,
 			return nil, false, fmt.Errorf("Failed to decode: %v %v", value, err)
 		}
 		return jsonArray, false, nil
-
-	}
-
-	if udfFunction != nil {
-		udfTransformed, err := udfFunction(value, state)
-		if err != nil {
-			return nil, false, fmt.Errorf("Failed to tranform value with udf: %v %v", value, err)
-		}
-		return udfTransformed, false, nil
 	}
 	return value, false, nil
+}
+
+func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource, subpath, value string) (interface{}, bool, error) {
+	//TODO refactor to simplify and extend functionaliy
+	var err error
+	var state = context.State()
+
+	if strings.HasPrefix(value, "#") {
+		var assets = strings.Split(value, "|")
+		mainAsset, err := d.loadExternalResource(context, parentResource, subpath, assets[0])
+		if err != nil {
+			return nil, false, err
+		}
+		mainAsset = strings.TrimSpace(mainAsset)
+		escapeQuotes := strings.HasPrefix(mainAsset, "{") || strings.HasPrefix(mainAsset, "[")
+		fmt.Printf("escapeQuotes:%v\n", escapeQuotes)
+		for i := 1; i < len(assets); i++ {
+			aMap, err := d.loadMap(context, parentResource, subpath, assets[i], escapeQuotes)
+			if err != nil {
+				return nil, false, err
+			}
+			mainAsset = ExpandAsText(aMap, mainAsset)
+		}
+		value = mainAsset
+	}
+	udfFunction, value, err := getUdfIfDefined(value)
+	if err != nil {
+		return nil, false, err
+	}
+	resultValue, isReference, err := d.contextualizeValue(context, value)
+	if udfFunction != nil {
+		resultValue, err = udfFunction(resultValue, state)
+	}
+
+	return resultValue, isReference, err
 }
 
 func NewWorkflowDao() *WorkflowDao {
