@@ -72,9 +72,14 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 				return nil, false
 			}
 			var candidate = state.Get(fragment)
+			if !isLast &&  candidate == nil {
+				return nil, false
+			}
 			if isLast {
 				expr = fragment
 			} else if toolbox.IsMap(candidate) {
+
+
 
 				newState := state.GetMap(fragment)
 				if newState != nil {
