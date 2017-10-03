@@ -412,8 +412,6 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 	if strings.HasPrefix(asset, "#") {
 		asset = string(asset[1:])
 	}
-	fmt.Printf(" %v %v\n", subpath, asset)
-
 	var URL, credential string
 	if strings.Contains(asset, ",") {
 		var pair = strings.Split(asset, ",")
@@ -573,7 +571,6 @@ func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource,
 		}
 		mainAsset = strings.TrimSpace(mainAsset)
 		escapeQuotes := strings.HasPrefix(mainAsset, "{") || strings.HasPrefix(mainAsset, "[")
-		fmt.Printf("escapeQuotes:%v\n", escapeQuotes)
 		for i := 1; i < len(assets); i++ {
 			aMap, err := d.loadMap(context, parentResource, subpath, assets[i], escapeQuotes)
 			if err != nil {
