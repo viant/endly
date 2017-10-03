@@ -107,7 +107,7 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 		}
 
 		err = storage.Copy(sourceService, source.URL, targetService, target.URL, handler)
-		//fmt.Printf("COPY: %v %v %v\n", source.URL, target.URL, err)
+		fmt.Printf("[COPY]: %v %v\n", source.URL, target.URL)
 		info := NewTransferInfo(context, source.URL, target.URL, err, transfer.Expand)
 		result.Transfered = append(result.Transfered, info)
 		sessionInfo.Log(info)

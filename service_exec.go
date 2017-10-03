@@ -361,8 +361,11 @@ func (s *execService) rumCommandTemplate(context *Context, session *ClientSessio
 		context.SessionInfo().Log(info)
 	}
 	command := fmt.Sprintf(commandTemplate, arguments...)
+	fmt.Printf("[%v  stdin]: %v\n", session.name, command)
 	output, err := session.Run(command, 0)
-	//fmt.Printf("---\n%v\n\t\t%v", command, output)
+	fmt.Printf("[%v stdout]: %v\n", session.name, output)
+
+
 	info.Add(NewCommandStream(command, output, err))
 	if err != nil {
 		return err
@@ -416,9 +419,10 @@ func (s *execService) executeCommand(context *Context, session *ClientSession, e
 	if execution.Secure != "" {
 		cmd = strings.Replace(command, "****", execution.Secure, 1)
 	}
+	fmt.Printf("[%v  stdin]: %v\n", session.name, cmd)
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
+	fmt.Printf("[%v stdout]: %v\n", session.name, stdout)
 
-	//fmt.Printf("%v\n\t\t%v", command, stdout)
 	commandInfo.Add(NewCommandStream(command, stdout, err))
 	if err != nil {
 		return err
