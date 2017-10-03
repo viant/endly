@@ -80,11 +80,11 @@ func (s *Validator) assertText(expected, actual string, response *ValidatorAsser
 			expected = string(expected[1:])
 		}
 		if expected != actual && !isReversed {
-			response.AddFailure(fmt.Sprintf("actual(%T):  '%v' was not equal (%T) '%v' in path '%v'", actual, actual, expected, expected, path))
+			response.AddFailure(fmt.Sprintf("[%v]: actual(%T):  '%v' was not equal (%T) '%v'", path, actual, actual, expected, expected))
 			return nil
 		}
 		if expected == actual && isReversed {
-			response.AddFailure(fmt.Sprintf("actual(%T):  '%v' was not equal (%T) '%v' in path '%v'", actual, actual, expected, expected, path))
+			response.AddFailure(fmt.Sprintf("[%v]: actual(%T):  '%v' was not equal (%T) '%v'", path, actual, actual, expected, expected))
 			return nil
 		}
 		response.TestPassed++
@@ -100,9 +100,9 @@ func (s *Validator) assertText(expected, actual string, response *ValidatorAsser
 
 		var doesContain = strings.Contains(actual, expected)
 		if !doesContain && !isReversed {
-			response.AddFailure(fmt.Sprintf("actual '%v' does not contain: '%v' in path '%v'", actual, expected, path))
+			response.AddFailure(fmt.Sprintf("[%v]: actual '%v' does not contain: '%v'", path, actual, expected))
 		} else if isReversed && doesContain {
-			response.AddFailure(fmt.Sprintf("actual '%v' shold not contain: '%v' in path '%v'", actual, expected, path))
+			response.AddFailure(fmt.Sprintf("[%v]: actual '%v' shold not contain: '%v'", path, actual, expected))
 		}
 		response.TestPassed++
 		return nil
@@ -121,14 +121,14 @@ func (s *Validator) assertText(expected, actual string, response *ValidatorAsser
 	pattern += expected
 	compiled, err := regexp.Compile(pattern)
 	if err != nil {
-		return fmt.Errorf("Failed to validate '%v' and '%v', in path '%v' due to %v", expected, actual, pattern, path, err)
+		return fmt.Errorf("[%v]: failed to validate '%v' and '%v' due to %v", path, expected, actual, pattern, err)
 	}
 	var matches = compiled.Match(([]byte)(actual))
 
 	if !matches && !isReversed {
-		response.AddFailure(fmt.Sprintf("actual: '%v' was not matched %v in path '%v'", actual, expected, path))
+		response.AddFailure(fmt.Sprintf("[%v]: actual: '%v' was not matched %v", path, actual, expected))
 	} else if matches && isReversed {
-		response.AddFailure(fmt.Sprintf("actual: '%v' should not be matched %v in path '%v'", actual, expected, path))
+		response.AddFailure(fmt.Sprintf("[%v]: actual: '%v' should not be matched %v", path, actual, expected))
 	}
 	response.TestPassed++
 	return nil
