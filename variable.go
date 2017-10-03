@@ -47,7 +47,7 @@ func (v *Variables) Apply(in, out common.Map) error {
 			}
 		}
 
-		if value == nil && variable.Required || toolbox.AsString(value) == "" {
+		if variable.Required  && (value == nil  || toolbox.AsString(value) == "") {
 			return fmt.Errorf("Variable %v is required, but was empty, %v", variable.Name, in)
 		}
 		out.SetValue(variable.Name, value)

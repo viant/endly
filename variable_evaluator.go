@@ -45,6 +45,9 @@ func Expand(state common.Map, text string) interface{} {
 	var expandVariable = func(variableName string) interface{} {
 		value, has := state.GetValue(string(variableName[1:]))
 		if has {
+			if toolbox.IsMap(value) || toolbox.IsSlice(value) {
+				return ExpandValue(value, state)
+			}
 			return value
 		}
 		return variableName
@@ -118,9 +121,6 @@ func ExpandValue(source interface{}, state common.Map) interface{} {
 	case string:
 		if strings.HasPrefix(value, "$") {
 			result := Expand(state, value)
-			if toolbox.IsMap(result) || toolbox.IsSlice(result) {
-				return ExpandValue(result, state)
-			}
 			return result
 		}
 		return ExpandAsText(state, value)
