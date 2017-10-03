@@ -45,6 +45,7 @@ type DockerRunRequest struct {
 	Env        map[string]string
 	Mount      map[string]string
 	MappedPort map[string]string
+	Params     map[string]string
 	Workdir    string
 }
 
@@ -224,7 +225,11 @@ func (s *DockerService) runContainer(context *Context, request *DockerRunRequest
 	if request.Workdir != "" {
 		args += fmt.Sprintf("-w %v ", context.Expand(request.Workdir))
 	}
-	commandInfo, err := s.executeSecureDockerCommand(secure, context, request.Target, dockerIgnoreErrors, "docker run --name %v %v -d %v", request.Target.Name, args, request.Image)
+	var params = ""
+	for k, v:= range request.Params {
+		params += fmt.Sprintf("%v %v", k, v)
+	}
+	commandInfo, err := s.executeSecureDockerCommand(secure, context, request.Target, dockerIgnoreErrors, "docker run --name %v %v -d %v %v", request.Target.Name, args, request.Image, params)
 	if err != nil {
 		return nil, err
 	}
