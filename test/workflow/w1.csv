@@ -7,4 +7,4 @@ Workflow,,,,,,Name,Description,Init,Tasks
 ,,,,,,,,,
 ,3,"[7,8,9]","[7,8,9]",,"{""k3"":""v3""}",Simple Http Test,This will test xyz,"[{""name"":""v30""}]",
 ,,,,,,,,,
-,4,,,,,Simple Http Test,This will test xyz,"^#var3.json/{""v1"":123}",
+,4,,,,,Simple Http Test,This will test xyz,"#var3.json|{""v1"":123}",

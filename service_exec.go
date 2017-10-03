@@ -365,7 +365,6 @@ func (s *execService) rumCommandTemplate(context *Context, session *ClientSessio
 	output, err := session.Run(command, 0)
 	fmt.Printf("[%v stdout]: %v\n", session.name, output)
 
-
 	info.Add(NewCommandStream(command, output, err))
 	if err != nil {
 		return err

@@ -84,9 +84,8 @@ type DsUnitPrepareRequest struct {
 	Prefix     string //apply prefix
 	Postfix    string //apply suffix
 	Data       map[string][]map[string]interface{}
-	Expand bool
+	Expand     bool
 }
-
 
 func (r *DsUnitPrepareRequest) AsDatasetResource() *dsunit.DatasetResource {
 	var result = &dsunit.DatasetResource{

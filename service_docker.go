@@ -226,7 +226,7 @@ func (s *DockerService) runContainer(context *Context, request *DockerRunRequest
 		args += fmt.Sprintf("-w %v ", context.Expand(request.Workdir))
 	}
 	var params = ""
-	for k, v:= range request.Params {
+	for k, v := range request.Params {
 		params += fmt.Sprintf("%v %v", k, v)
 	}
 	commandInfo, err := s.executeSecureDockerCommand(secure, context, request.Target, dockerIgnoreErrors, "docker run --name %v %v -d %v %v", request.Target.Name, args, request.Image, params)

@@ -12,11 +12,11 @@ import (
 const WorkflowServiceId = "workflow"
 
 type WorkflowRunRequest struct {
-	WorkflowURL string
-	Name        string
-	Params      map[string]interface{}
-	Tasks       string
-	PublishParameters bool//publishes parameters name into context state
+	WorkflowURL       string
+	Name              string
+	Params            map[string]interface{}
+	Tasks             string
+	PublishParameters bool //publishes parameters name into context state
 }
 
 type WorkflowRunResponse struct {
@@ -31,7 +31,6 @@ type WorkflowTaskActivity struct {
 	ServiceActivities []*WorkflowServiceActivity
 	Skipped           string
 }
-
 
 type WorkflowServiceActivity struct {
 	Service         string
@@ -180,7 +179,6 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	context.Put(stateKey, &state)
 	state.Apply(upstreamContext.State())
 
-
 	var workflowData = common.Map(workflow.Data)
 	state.Put("workflow", workflowData)
 
@@ -192,7 +190,6 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 		}
 	}
 	state.Put("params", params)
-
 
 	err = workflow.Init.Apply(state, state)
 	if err != nil {
@@ -252,8 +249,6 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 				return nil, err
 			}
 
-
-
 			expandedRequest := ExpandValue(action.Request, state)
 			if !toolbox.IsMap(expandedRequest) {
 				return nil, fmt.Errorf("Failed to exaluate request: %v, expected map but had: %T", expandedRequest, expandedRequest)
@@ -264,7 +259,6 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 				return nil, err
 			}
 
-
 			serviceActivity.ServiceRequest = serviceRequest
 			err = converter.AssignConverted(serviceRequest, requestMap)
 			if err != nil {
@@ -272,7 +266,9 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 			}
 			fmt.Printf("=============\n\t\t%v.%v (%v)\n=============\n", action.Service, action.Action, action.Description)
 			serviceResponse := service.Run(context, serviceRequest)
+
 			serviceActivity.ServiceResponse = serviceResponse
+
 			if serviceResponse.Error != "" {
 				if action.IgnoreError {
 					serviceActivity.Error = serviceResponse.Error
@@ -284,7 +280,7 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 			if serviceResponse.Response != nil {
 				converter.AssignConverted(responseMap, serviceResponse.Response)
 			}
-
+			fmt.Printf("%v \n\t=> %v", requestMap, responseMap)
 
 			err = action.Post.Apply(common.Map(responseMap), state) //result to task  state
 			if err != nil {

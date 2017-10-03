@@ -7,7 +7,7 @@ Workflow,,Name,Description,Tasks,,,
 ,,,,,,,"{""Table"":""USER_ACCOUNT"", ""Value"":{ ""USER_ID"":""$meta.USER"", ""ACCOUNT_ID"":""$meta.ACCOUNT"",   ""NAME"":""abc2"", ""EMAIL"":""@ere""}, ""Autoincrement"": [""meta.USER""] }}"
 ,,,,,,,"{""Table"":""USER_ACCOUNT"", ""Value"":{ ""USER_ID"":""$meta.USER"", ""ACCOUNT_ID"":""$meta.ACCOUNT"",   ""NAME"":""abc3""}, ""Autoincrement"": [""meta.USER"", ""meta.ACCOUNT""] }}"
 ,dsunit,mapping,Register mapping,#dsunit_mapping.json,,"[{""Name"":""metaTables"", ""From"":""Tables""}]",
-,dsunit,sequence,Get the latest tables id values,"^#dsunit_sequence.json/{""tables"":""$metaTables""}",,"[{""Name"":""meta"", ""From"":""Sequences""}]",
+,dsunit,sequence,Get the latest tables id values,"#dsunit_sequence.json|{""tables"":""$metaTables""}",,"[{""Name"":""meta"", ""From"":""Sequences""}]",
 ,dsunit,prepare,Prepare database,#dsunit_prepare.json,"[{""Name"":""tablesData"", ""From"":""!AsTableRecords(workflow.dsunit.TestData)"" }]",,
 ,validator,assert,Assert,"{""Actual"":""$rowData"", ""Expected"":{ ""USER_ID"":7  }}","[{""Name"":""rowData"", ""From"":""<-dsunit.USER_ACCOUNT"" }]",,
 ,validator,assert,Assert,"{""Actual"":""$rowData"", ""Expected"":{ ""USER_ID"":8  }}","[{""Name"":""rowData"", ""From"":""<-dsunit.USER_ACCOUNT"" }]",,

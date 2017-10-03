@@ -131,6 +131,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, r
 	if len(req.Body) > 0 {
 		reader = strings.NewReader(req.Body)
 	}
+
 	httpRequest, err := http.NewRequest(strings.ToUpper(req.Method), req.URL, reader)
 	if err != nil {
 		return err

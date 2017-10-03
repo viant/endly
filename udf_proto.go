@@ -1,21 +1,21 @@
 package endly
 
 import (
-	"github.com/golang/protobuf/proto"
-	"github.com/viant/toolbox"
-	"fmt"
 	"bytes"
 	"encoding/base64"
-	"strings"
-	"io/ioutil"
+	"fmt"
+	"github.com/golang/protobuf/proto"
 	"github.com/viant/endly/common"
+	"github.com/viant/toolbox"
+	"io/ioutil"
+	"strings"
 )
 
 //AsProtobufMessage generic method for converting a map into a proto message
 func AsProtobufMessage(source interface{}, state common.Map, target proto.Message) (interface{}, error) {
 	var requestMap = toolbox.AsMap(source)
 	converter := toolbox.NewColumnConverter("")
-	err :=converter.AssignConverted(target, requestMap)
+	err := converter.AssignConverted(target, requestMap)
 	if err != nil {
 		return nil, err
 	}
@@ -31,15 +31,12 @@ func AsProtobufMessage(source interface{}, state common.Map, target proto.Messag
 	return fmt.Sprintf("base64:%v", string(buf.Bytes())), nil
 }
 
-
-
 //AsProtobufMessage generic method for converting a proto message into a map
 func FromProtobufMessage(source interface{}, state common.Map, sourceMessage proto.Message) (interface{}, error) {
 	if toolbox.IsString(source) {
-		textSource := toolbox.AsString(source);
+		textSource := toolbox.AsString(source)
 		if strings.HasPrefix(textSource, "base64:") {
 			textSource = string(textSource[7:])
-
 
 			decoder := base64.NewDecoder(base64.StdEncoding, strings.NewReader(textSource))
 			data, err := ioutil.ReadAll(decoder)
@@ -56,7 +53,7 @@ func FromProtobufMessage(source interface{}, state common.Map, sourceMessage pro
 			}
 
 			var resultMap = make(map[string]interface{})
-			err =converter.AssignConverted(&resultMap, sourceMessage)
+			err = converter.AssignConverted(&resultMap, sourceMessage)
 			if err != nil {
 				return nil, err
 			}
@@ -66,5 +63,3 @@ func FromProtobufMessage(source interface{}, state common.Map, sourceMessage pro
 	}
 	return nil, fmt.Errorf("Expected string but had:%T", source)
 }
-
-

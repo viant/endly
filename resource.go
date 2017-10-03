@@ -48,7 +48,7 @@ func (r *Resource) Session() string {
 func (r *Resource) LoadCredential(errorIsEmpty bool) (string, string, error) {
 	if r.Credential == "" {
 		if errorIsEmpty {
-			return "", "", fmt.Errorf("Credentail was empty: %v", r.Credential)
+			return "", "", fmt.Errorf("Credential was empty: %v", r.Credential)
 		}
 		return "", "", nil
 	}
@@ -56,7 +56,7 @@ func (r *Resource) LoadCredential(errorIsEmpty bool) (string, string, error) {
 	credentialResource := NewFileResource(r.Credential)
 	err := credentialResource.JsonDecode(credential)
 	if err != nil {
-		return "", "", reportError(fmt.Errorf("Failed to load credentail: %v %v", r.Credential, err))
+		return "", "", reportError(fmt.Errorf("Failed to load Credential: %v %v", r.Credential, err))
 	}
 	return credential.Username, credential.Password, nil
 }

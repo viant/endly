@@ -25,7 +25,7 @@ func (v *Variables) Apply(in, out common.Map) error {
 		}
 		var value interface{}
 		if variable.From != "" {
-			udfFunction, fromKey, err := applyUdf(variable.From)
+			udfFunction, fromKey, err := getUdfIfDefined(variable.From)
 			if err != nil {
 				return err
 			}
@@ -47,7 +47,7 @@ func (v *Variables) Apply(in, out common.Map) error {
 			}
 		}
 
-		if variable.Required  && (value == nil  || toolbox.AsString(value) == "") {
+		if variable.Required && (value == nil || toolbox.AsString(value) == "") {
 			return fmt.Errorf("Variable %v is required, but was empty, %v", variable.Name, in)
 		}
 		out.SetValue(variable.Name, value)
