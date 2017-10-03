@@ -418,7 +418,7 @@ func (s *execService) executeCommand(context *Context, session *ClientSession, e
 	if execution.Secure != "" {
 		cmd = strings.Replace(command, "****", execution.Secure, 1)
 	}
-	fmt.Printf("[%v  stdin]: %v\n", session.name, cmd)
+	fmt.Printf("[%v  stdin]: %v\n", session.name, command)
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
 	fmt.Printf("[%v stdout]: %v\n", session.name, stdout)
 
