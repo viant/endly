@@ -50,6 +50,9 @@
   {
     "Name": "dockerRequest",
     "Value": {
+      "SysPath": [
+        "/usr/local/bin"
+      ],
       "Target": "$dockerTarget"
     }
   },
