@@ -1,0 +1,10 @@
+{
+  "Name": "dockerized_memcached",
+  "Tasks":"$task",
+  "Params": {
+    "url": "scp://${targetHost}/",
+    "credential": "$targetCredential",
+    "serviceInstanceName": "$instance",
+    "maxMemory":"$maxMemory"
+  }
+}
