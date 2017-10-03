@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	uuid "github.com/satori/go.uuid"
 	"path"
 	"strings"
 	"time"
@@ -270,6 +271,16 @@ func NewDefaultState() common.Map {
 		return tempPath
 	})
 
+	var cachedUUID uuid.UUID
+	result.Put("uuid", func(key string) interface{} {
+		if key == "new" {
+			cachedUUID = uuid.NewV1()
+		}
+		if len(cachedUUID) > 0 {
+			return cachedUUID.String()
+		}
+		return ""
+	})
 	result.Put("env", func(key string) interface{} {
 		return os.Getenv(key)
 	})
