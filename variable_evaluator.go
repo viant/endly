@@ -113,14 +113,24 @@ func Expand(state common.Map, text string) interface{} {
 		}
 		result += asExpandedText(expanded)
 	}
+
 	return result
 }
 
 func ExpandValue(source interface{}, state common.Map) interface{} {
+
 	switch value := source.(type) {
 	case string:
+		udf, value, _ := getUdfIfDefined(value)
 		if strings.HasPrefix(value, "$") {
+			_, has := state.GetValue(string(value[1:]))
 			result := Expand(state, value)
+			if has && udf != nil {
+				transformed, err := udf(result, state)
+				if err == nil {
+					result = transformed
+				}
+			}
 			return result
 		}
 		return ExpandAsText(state, value)
