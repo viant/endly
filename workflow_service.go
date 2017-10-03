@@ -280,7 +280,7 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 			if serviceResponse.Response != nil {
 				converter.AssignConverted(responseMap, serviceResponse.Response)
 			}
-			fmt.Printf("%v \n\t=> %v", requestMap, responseMap)
+			
 
 			err = action.Post.Apply(common.Map(responseMap), state) //result to task  state
 			if err != nil {
