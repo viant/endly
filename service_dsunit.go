@@ -339,7 +339,6 @@ func (s *dsataStoreUnitService) prepare(context *Context, request *DsUnitPrepare
 	if err != nil {
 		return nil, err
 	}
-
 	if request.Expand {
 		var state = context.State()
 		for _, data := range datasets.Datasets {
@@ -406,6 +405,9 @@ func AsTableRecords(source interface{}, state common.Map) (interface{}, error) {
 	if !state.Has(DataStoreUnitServiceId) {
 		state.Put(DataStoreUnitServiceId, common.NewMap())
 	}
+
+
+
 	dataStoreState := state.GetMap(DataStoreUnitServiceId)
 
 	if toolbox.IsSlice(source) {
@@ -463,6 +465,16 @@ func AsTableRecords(source interface{}, state common.Map) (interface{}, error) {
 				}
 			}
 		}
+	}
+
+	var variable = &Variable{
+		Name:DataStoreUnitServiceId,
+		Persist:true,
+		Value:dataStoreState,
+	}
+	err := variable.PersistValue()
+	if err != nil {
+		return nil, err
 	}
 	return result, nil
 }
