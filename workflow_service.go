@@ -270,6 +270,8 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 			serviceActivity.ServiceResponse = serviceResponse
 
 			if serviceResponse.Error != "" {
+				fmt.Printf("[error] %v\n", serviceResponse.Error)
+
 				if action.IgnoreError {
 					serviceActivity.Error = serviceResponse.Error
 				} else {
@@ -287,6 +289,7 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 				return nil, err
 			}
 			if action.SleepInMs > 0 {
+				fmt.Printf("[sleeping]: %v ms\n", action.SleepInMs)
 				time.Sleep(time.Millisecond * time.Duration(action.SleepInMs))
 			}
 		}
