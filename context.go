@@ -19,13 +19,15 @@ import (
 
 var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
 
+type StateKey *common.Map
+
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
-var stateKey = (*common.Map)(nil)
 var sessionInfoKey = (*SessionInfo)(nil)
 var workflowKey = (*Workflow)(nil)
 
 type Context struct {
+	state common.Map
 	toolbox.Context
 }
 
@@ -110,15 +112,14 @@ func (c *Context) Deffer(functions ...func()) []func() {
 }
 
 func (c *Context) State() common.Map {
-	var result *common.Map
-	if !c.Contains(stateKey) {
-		aMap := NewDefaultState()
-		result = &aMap
-		c.Put(stateKey, result)
-	} else {
-		c.GetInto(stateKey, &result)
+	if c.state == nil {
+		c.state = NewDefaultState()
 	}
-	return *result
+	return c.state
+}
+
+func (c *Context) SetState(state common.Map) {
+	c.state = state
 }
 
 func (c *Context) SessionInfo() *SessionInfo {
