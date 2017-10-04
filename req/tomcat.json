@@ -13,7 +13,8 @@
     "tomcatPort": "$port",
     "tomcatShutdownPort": "$killPort",
     "tomcatAJPConnectorPort": "$connectorPort",
-    "tomcatRedirectPort": "$redirectPort"
+    "tomcatRedirectPort": "$redirectPort",
+    "tomcatVersion":"$tomcatVersion"
   }
 }
 
