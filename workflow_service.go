@@ -175,9 +175,13 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	}
 
 	context := manager.NewContext(upstreamContext.Context.Clone())
-	state := NewDefaultState()
-	context.Put(stateKey, &state)
+
+	context.SetState(NewDefaultState())
+	var state = context.State()
 	state.Apply(upstreamContext.State())
+
+
+
 
 	var workflowData = common.Map(workflow.Data)
 	state.Put("workflow", workflowData)
@@ -195,6 +199,10 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	if err != nil {
 		return nil, err
 	}
+
+
+
+
 	for _, task := range workflow.Tasks {
 		var taskAllowed, allowedServiceActions = isTaskAllowed(task, request)
 		if !taskAllowed {
@@ -264,7 +272,7 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 			if err != nil {
 				return response, fmt.Errorf("Failed to create request %v on %v.%v, %v", requestMap, action.Service, action.Action, err)
 			}
-			fmt.Printf("=============\n\t\t%v.%v (%v)\n=============\n", action.Service, action.Action, action.Description)
+			fmt.Printf("=============\n\t\t[%v] %v.%v (%v)\n=============\n",workflow.Name, action.Service, action.Action, action.Description)
 			serviceResponse := service.Run(context, serviceRequest)
 
 			serviceActivity.ServiceResponse = serviceResponse
