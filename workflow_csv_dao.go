@@ -316,9 +316,9 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 			} else {
 				if field.IsRoot {
 					field.Set(val, rootObject)
-					if field.HasArrayComponent {
-						recordHeight, err = d.setArrayValues(field, i, lines, record, fieldExpressions, rootObject, recordHeight, resource, context, subPath)
-					}
+					//if field.HasArrayComponent {
+					//	recordHeight, err = d.setArrayValues(field, i, lines, record, fieldExpressions, rootObject, recordHeight, resource, context, subPath)
+					//}
 
 				} else {
 
