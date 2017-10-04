@@ -14,7 +14,8 @@
     "tomcatShutdownPort": "$killPort",
     "tomcatAJPConnectorPort": "$connectorPort",
     "tomcatRedirectPort": "$redirectPort",
-    "tomcatVersion":"$tomcatVersion"
+    "tomcatVersion":"$tomcatVersion",
+    "forceDeploy":"$forceDeploy"
   }
 }
 
