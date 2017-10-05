@@ -113,7 +113,6 @@ func (f *FieldExpression) Set(value interface{}, target common.Map, indexes ...i
 	var index = 0
 	if !target.Has(f.Field) {
 		if f.IsArray {
-			fmt.Printf("NEW ARRAY: %v\n", f.Field)
 			target.Put(f.Field, common.NewCollection())
 		} else if f.HasSubPath {
 			target.Put(f.Field, common.NewMap())
@@ -303,8 +302,6 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 		if relativeSubPath, ok := record.Record["Subpath"]; ok {
 			subPath = toolbox.AsString(relativeSubPath)
 		}
-
-		fmt.Printf("subPath: %v\n", subPath)
 
 
 		object = getObject(tag, result)
