@@ -258,7 +258,7 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 			}
 
 			expandedRequest := ExpandValue(action.Request, state)
-			if expandedRequest == nil && !toolbox.IsMap(expandedRequest) {
+			if expandedRequest == nil || !toolbox.IsMap(expandedRequest) {
 				return nil, fmt.Errorf("Failed to exaluate request: %v, expected map but had: %T", expandedRequest, expandedRequest)
 			}
 			requestMap := toolbox.AsMap(expandedRequest)
