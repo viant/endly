@@ -13,11 +13,9 @@ import (
 )
 
 var internalReferencePrefix = []byte("%")[0]
-var externalReferencePrefix = []byte("#")[0]
 
 var jsonObjectPrefix = []byte("{")[0]
 var jsonArrayPrefix = []byte("[")[0]
-var udfPrefix = []byte("!")[0]
 
 type WorkflowDao struct {
 	factory toolbox.DecoderFactory
@@ -115,6 +113,7 @@ func (f *FieldExpression) Set(value interface{}, target common.Map, indexes ...i
 	var index = 0
 	if !target.Has(f.Field) {
 		if f.IsArray {
+			fmt.Printf("NEW ARRAY: %v\n", f.Field)
 			target.Put(f.Field, common.NewCollection())
 		} else if f.HasSubPath {
 			target.Put(f.Field, common.NewMap())
@@ -252,6 +251,12 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 	for i := 0; i < len(lines); i++ {
 		var recordHeight = 0
 		line := lines[i]
+
+
+		var hasActiveIterator = tag.HasActiveIterator()
+		if hasActiveIterator {
+			line = strings.Replace(line, "${index}", tag.Iterator.Index(),len(line))
+		}
 		if strings.HasPrefix(line, "import") {
 			err := d.importWorkflow(context, resource, strings.TrimSpace(string(line[5:])))
 			if err != nil {
@@ -264,8 +269,17 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 		}
 		isHeaderLine := isHeaderByte(line[0])
 		decoder := d.factory.Create(strings.NewReader(line))
+
+
 		if isHeaderLine {
+			if hasActiveIterator {
+				if tag.Iterator.Next() {
+					i = tag.line
+					continue
+				}
+			}
 			record, tag, resultTag, err = d.processHeaderLine(context, result, decoder, resultTag, deferredReferences)
+			tag.line = i
 			if err != nil {
 				return nil, err
 			}
@@ -289,6 +303,10 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 		if relativeSubPath, ok := record.Record["Subpath"]; ok {
 			subPath = toolbox.AsString(relativeSubPath)
 		}
+
+		fmt.Printf("subPath: %v\n", subPath)
+
+
 		object = getObject(tag, result)
 		for j := 1; j < len(record.Columns); j++ {
 			fieldExpressions := record.Columns[j]
@@ -315,7 +333,13 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 				}
 			} else {
 				if field.IsRoot {
-					field.Set(val, rootObject)
+					var expr = strings.Replace(field.expression, "[]", "", 1)
+					bucket, has := rootObject.GetValue(expr)
+					if has && toolbox.IsSlice(bucket) {
+						field.Set(val, rootObject, len(toolbox.AsSlice(bucket)))
+					} else {
+						field.Set(val, rootObject)
+					}
 					//if field.HasArrayComponent {
 					//	recordHeight, err = d.setArrayValues(field, i, lines, record, fieldExpressions, rootObject, recordHeight, resource, context, subPath)
 					//}
@@ -333,6 +357,15 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 			}
 		}
 		i += recordHeight
+
+		if i+ 1 == len(lines) && hasActiveIterator {
+			if tag.Iterator.Next() {
+				i = tag.line
+				continue
+			}
+
+		}
+
 	}
 
 	err = checkeUnsuedReferences(referenceUsed, deferredReferences)
@@ -413,6 +446,7 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 		asset = string(asset[1:])
 	}
 	var URL, credential string
+	var useSubpath = false
 	if strings.Contains(asset, ",") {
 		var pair = strings.Split(asset, ",")
 		URL = strings.TrimSpace(pair[0])
@@ -426,6 +460,7 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 
 		parent, _ := path.Split(resource.ParsedURL.Path)
 		if subpath != "" {
+			useSubpath = true
 			fileCandidate := path.Join(parent, subpath, asset)
 			if toolbox.FileExists(fileCandidate) {
 				URL = fmt.Sprintf("file://%v", fileCandidate)
@@ -435,7 +470,6 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 		if URL == "" {
 			URL = string(resource.URL[:strings.Index(resource.URL, "://")]) + fmt.Sprintf("://%v", path.Join(parent, asset))
 		}
-
 		service, err := storage.NewServiceForURL(URL, credential)
 		if err != nil {
 			return nil, err
@@ -446,6 +480,9 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 				if exists, _ := service.Exists(endlyResource.URL); exists {
 					URL = endlyResource.URL
 				}
+			} else if useSubpath  {
+				fileCandidate := path.Join(parent, subpath, asset)
+				URL = fmt.Sprintf("file://%v", fileCandidate)
 			}
 		}
 		credential = resource.Credential
@@ -598,21 +635,77 @@ func NewWorkflowDao() *WorkflowDao {
 	}
 }
 
+
+type TagIterator  struct {
+	Template string
+	Min int
+	Max int
+	index int
+}
+
+func (i *TagIterator) Has() bool {
+	return i.index <= i.Max
+}
+
+func (i *TagIterator) Next()  bool {
+	i.index++
+	return i.Has()
+}
+
+func (i *TagIterator) Index() string  {
+	return fmt.Sprintf(i.Template, i.index)
+}
+
+
+
+
 type Tag struct {
 	Name    string
 	IsArray bool
+	Iterator *TagIterator
+	line int
+}
+
+func (t *Tag) HasActiveIterator() bool {
+	if t == nil {
+		return false
+	}
+	return  t.Iterator != nil && t.Iterator.Has()
 }
 
 func NewTag(key string) *Tag {
-	var name = key
-	var isArray = false
-	if string(name[0:2]) == "[]" {
-		name = string(key[2:])
-		isArray = true
+	var result = &Tag{
+		Name:key,
+	}
+	key = decodeIteratrIfPresent(key, result)
+	if string(key[0:2]) == "[]" {
+		result.Name = string(key[2:])
+		result.IsArray = true
+	}
 
-	}
-	return &Tag{
-		Name:    name,
-		IsArray: isArray,
-	}
+	return result
 }
+func decodeIteratrIfPresent(key string, result *Tag) string {
+	iteratorStartPosition := strings.Index(key, "{")
+	if iteratorStartPosition != -1 {
+		iteratorEndPosition := strings.Index(key, "}")
+		if iteratorEndPosition != -1 {
+			iteratorConstrain := key[iteratorStartPosition+1:iteratorEndPosition]
+			pair := strings.Split(iteratorConstrain, "..")
+			for i, value := range pair {
+				pair[i] = strings.TrimSpace(value)
+			}
+			if len(pair) == 2 {
+				result.Iterator = &TagIterator{
+					Min:      toolbox.AsInt(pair[0]),
+					Max:      toolbox.AsInt(pair[1]),
+					Template: "%0" + toolbox.AsString(len(pair[1])) + "d",
+				}
+				result.Iterator.index = result.Iterator.Min
+				key = string(key[:iteratorStartPosition])
+			}
+		}
+	}
+	return key
+}
+

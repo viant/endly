@@ -9,6 +9,15 @@ import (
 	"testing"
 )
 
+func Test_Tag(t *testing.T) {
+	var tag = endly.NewTag("[]Test{1 .. 003}")
+	assert.True(t, tag.IsArray)
+	assert.Equal(t, "Test", tag.Name)
+	assert.Equal(t, 1, tag.Iterator.Min)
+	assert.Equal(t, 3,  tag.Iterator.Max)
+	assert.Equal(t, "%03d",  tag.Iterator.Template)
+}
+
 func TestNewFieldExpression(t *testing.T) {
 
 	expr := endly.NewFieldExpression("Request.[]Expected.Headers")
