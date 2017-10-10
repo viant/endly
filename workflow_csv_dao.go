@@ -523,9 +523,11 @@ func (d *WorkflowDao) loadMap(context *Context, parentResource *Resource, subpat
 			if toolbox.IsString(v) {
 				textValue := toolbox.AsString(v)
 				if strings.Contains(textValue, "\"") {
+					textValue = strings.Replace(textValue, "\\", "\\\\\"", len(textValue))
 					textValue = strings.Replace(textValue, "\"", "\\\"", len(textValue))
 					textValue = strings.Replace(textValue, "\n", "", len(textValue))
 					aMap[k] = textValue
+
 				}
 			}
 		}
