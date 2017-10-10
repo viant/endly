@@ -17,23 +17,23 @@ type ValidatorAssertRequest struct {
 	Expected interface{}
 }
 
-type ValidatorAssertResponse struct {
+type ValidatorAssertionInfo struct {
 	TestPassed int
 	TestFailed []string
 }
 
-func (ar *ValidatorAssertResponse) AddFailure(message string) {
+func (ar *ValidatorAssertionInfo) AddFailure(message string) {
 	if len(ar.TestFailed) == 0 {
 		ar.TestFailed = make([]string, 0)
 	}
 	ar.TestFailed = append(ar.TestFailed, message)
 }
 
-func (ar *ValidatorAssertResponse) HasFailure() bool {
+func (ar *ValidatorAssertionInfo) HasFailure() bool {
 	return len(ar.TestFailed) > 0
 }
 
-func (ar *ValidatorAssertResponse) Message() string {
+func (ar *ValidatorAssertionInfo) Message() string {
 	return fmt.Sprintf("Passed: %v\nFailed:%v\n-----\n\t%v\n",
 		ar.TestPassed,
 		len(ar.TestFailed),
@@ -60,8 +60,8 @@ func (s *ValidatorService) Run(context *Context, request interface{}) *ServiceRe
 	return response
 }
 
-func (s *ValidatorService) Assert(context *Context, request *ValidatorAssertRequest) (*ValidatorAssertResponse, error) {
-	var response = &ValidatorAssertResponse{}
+func (s *ValidatorService) Assert(context *Context, request *ValidatorAssertRequest) (*ValidatorAssertionInfo, error) {
+	var response = &ValidatorAssertionInfo{}
 	var state = context.State()
 	var actual = request.Actual
 	var expected = request.Expected

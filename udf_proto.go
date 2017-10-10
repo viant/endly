@@ -37,7 +37,6 @@ func FromProtobufMessage(source interface{}, state common.Map, sourceMessage pro
 		textSource := toolbox.AsString(source)
 		if strings.HasPrefix(textSource, "base64:") {
 			textSource = string(textSource[7:])
-
 			decoder := base64.NewDecoder(base64.StdEncoding, strings.NewReader(textSource))
 			data, err := ioutil.ReadAll(decoder)
 

@@ -49,7 +49,7 @@ func (r *DeploymentDeployRequest) Validate() error {
 		return fmt.Errorf("Failed to deploy app, target URL was empty")
 	}
 	if r.Transfer.Source.URL == "" {
-		return fmt.Errorf("Failed to deploy app, source URL was empty")
+		return fmt.Errorf("Failed to deploy app, Source URL was empty")
 	}
 	return nil
 }

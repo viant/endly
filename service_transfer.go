@@ -103,7 +103,7 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 		}
 
 		if _, err := sourceService.StorageObject(source.URL); err != nil {
-			return nil, fmt.Errorf("Failed to copy: %v %v - source does not exists", source.URL, target.URL)
+			return nil, fmt.Errorf("Failed to copy: %v %v - Source does not exists", source.URL, target.URL)
 		}
 
 		err = storage.Copy(sourceService, source.URL, targetService, target.URL, handler)

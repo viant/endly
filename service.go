@@ -11,6 +11,7 @@ type ServiceResponse struct {
 	Response interface{}
 }
 
+
 type Service interface {
 	Id() string
 	State() common.Map

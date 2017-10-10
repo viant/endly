@@ -11,4 +11,5 @@ func TestNewDefaultState(t *testing.T) {
 	state := endly.NewDefaultState()
 	var expanded = endly.ExpandAsText(state, "home = ${env.HOME} ")
 	assert.False(t, strings.Contains(expanded, "${env.HOME}"))
+
 }

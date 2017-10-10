@@ -14,7 +14,7 @@ type Validator struct {
 
 //Check checks expected vs actual value, and returns true if all assertion passes.
 func (s *Validator) Check(expected, actual interface{}) (bool, error) {
-	var response = &ValidatorAssertResponse{}
+	var response = &ValidatorAssertionInfo{}
 	err := s.Assert(expected, actual, response, "")
 	if err != nil {
 		return false, err
@@ -22,7 +22,7 @@ func (s *Validator) Check(expected, actual interface{}) (bool, error) {
 	return !response.HasFailure(), nil
 }
 
-func (s *Validator) Assert(expected, actual interface{}, response *ValidatorAssertResponse, path string) error {
+func (s *Validator) Assert(expected, actual interface{}, assertionInfo *ValidatorAssertionInfo, path string) error {
 	if toolbox.IsValueOfKind(actual, reflect.Slice) {
 		if toolbox.IsValueOfKind(expected, reflect.Map) { //convert actual slice to map using expected indexBy directive
 			expectedMap := toolbox.AsMap(expected)
@@ -36,16 +36,16 @@ func (s *Validator) Assert(expected, actual interface{}, response *ValidatorAsse
 						actualMap[toolbox.AsString(key)] = itemMap
 					}
 				}
-				return s.Assert(expected, actualMap, response, path)
+				return s.Assert(expected, actualMap, assertionInfo, path)
 			}
 		}
 
 		if !toolbox.IsValueOfKind(expected, reflect.Slice) {
-			response.AddFailure(fmt.Sprintf("Incompatbile types, expected %T but had %v", expected, actual))
+			assertionInfo.AddFailure(fmt.Sprintf("Incompatbile types, expected %T but had %v", expected, actual))
 			return nil
 		}
 
-		err := s.assertSlice(toolbox.AsSlice(expected), toolbox.AsSlice(actual), response, path)
+		err := s.assertSlice(toolbox.AsSlice(expected), toolbox.AsSlice(actual), assertionInfo, path)
 		if err != nil {
 			return err
 		}
@@ -54,10 +54,10 @@ func (s *Validator) Assert(expected, actual interface{}, response *ValidatorAsse
 	}
 	if toolbox.IsValueOfKind(actual, reflect.Map) {
 		if !toolbox.IsValueOfKind(expected, reflect.Map) {
-			response.AddFailure(fmt.Sprintf("Incompatbile types, expected %T but had %v", expected, actual))
+			assertionInfo.AddFailure(fmt.Sprintf("Incompatbile types, expected %T but had %v", expected, actual))
 			return nil
 		}
-		err := s.assertMap(toolbox.AsMap(expected), toolbox.AsMap(actual), response, path)
+		err := s.assertMap(toolbox.AsMap(expected), toolbox.AsMap(actual), assertionInfo, path)
 		if err != nil {
 			return err
 		}
@@ -65,11 +65,11 @@ func (s *Validator) Assert(expected, actual interface{}, response *ValidatorAsse
 	}
 	expectedText := toolbox.AsString(expected)
 	actualText := toolbox.AsString(actual)
-	s.assertText(expectedText, actualText, response, path)
+	s.assertText(expectedText, actualText, assertionInfo, path)
 	return nil
 }
 
-func (s *Validator) assertText(expected, actual string, response *ValidatorAssertResponse, path string) error {
+func (s *Validator) assertText(expected, actual string, response *ValidatorAssertionInfo, path string) error {
 	isRegExpr := strings.HasPrefix(expected, "~/") && strings.HasSuffix(expected, "/")
 	isContains := strings.HasPrefix(expected, "/") && strings.HasSuffix(expected, "/")
 
@@ -134,7 +134,7 @@ func (s *Validator) assertText(expected, actual string, response *ValidatorAsser
 	return nil
 }
 
-func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[string]interface{}, response *ValidatorAssertResponse, path string) error {
+func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[string]interface{}, response *ValidatorAssertionInfo, path string) error {
 	for key, expected := range expectedMap {
 		if s.SkipFields[key] {
 			continue
@@ -162,7 +162,7 @@ func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[
 	return nil
 }
 
-func (s *Validator) assertSlice(expectedSlice []interface{}, actualSlice []interface{}, response *ValidatorAssertResponse, path string) error {
+func (s *Validator) assertSlice(expectedSlice []interface{}, actualSlice []interface{}, response *ValidatorAssertionInfo, path string) error {
 	for index, expected := range expectedSlice {
 		keyPath := fmt.Sprintf("%v[%v]", path, index)
 		if !(index < len(actualSlice)) {
