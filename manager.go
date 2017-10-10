@@ -76,5 +76,6 @@ func NewManager() Manager {
 	result.Register(NewDockerService())
 	result.Register(NewDataStoreUnitService())
 	result.Register(NewNopService())
+	result.Register(NewLogValidatorService())
 	return result
 }
