@@ -282,6 +282,24 @@ func NewDefaultState() common.Map {
 		}
 		return ""
 	})
+
+	result.Put("timestamp", func(key string) interface{} {
+		var timeDiffProvider = toolbox.NewTimeDiffProvider()
+		switch key {
+		case "now":
+			result, _ := timeDiffProvider.Get(nil, "now", 0, "day", "timestamp")
+			return result
+		case "tomorrow":
+			result, _ := timeDiffProvider.Get(nil, "now", 1, "day", "timestamp")
+			return result
+		case "yesterday":
+			result, _ := timeDiffProvider.Get(nil, "now", -1, "day", "timestamp")
+			return result
+		}
+		return nil
+	})
+
+
 	result.Put("env", func(key string) interface{} {
 		return os.Getenv(key)
 	})
