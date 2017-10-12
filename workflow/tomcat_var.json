@@ -1,17 +1,20 @@
 [
   {
     "Name": "targetHost",
-    "From": "params.targetHost"
+    "From": "params.targetHost",
+    "Required":true
   },
   {
     "Name": "targetCredential",
-    "From": "params.targetCredential"
+    "From": "params.targetCredential",
+    "Required":true
   },
   {
     "Name": "tomcatMajorVersion",
     "From": "params.tomcatMajorVersion",
     "Value": "7"
   },
+
   {
     "Name": "tomcatVersion",
     "From": "params.tomcatVersion",
@@ -26,6 +29,11 @@
     "Name": "tomcatPort",
     "From": "params.tomcatPort",
     "Value": "8080"
+  },
+  {
+    "Name": "jpdaAddress",
+    "From": "params.jpdaAddress",
+    "Value": "5000"
   },
   {
     "Name": "tomcatShutdownPort",
@@ -110,13 +118,15 @@
       "ManagedCommand": {
         "Options": {
           "Env": {
-            "CATALINA_OPTS": "$catalinaOpts"
+            "CATALINA_OPTS": "$catalinaOpts",
+            "JPDA_ADDRESS":"$jpdaAddress"
           },
+
           "Directory": "$appDirectory"
         },
         "Executions": [
           {
-            "Command": "tomcat/bin/catalina.sh start",
+            "Command": "tomcat/bin/catalina.sh jpda start",
             "Success": [
               "Tomcat started."
             ],

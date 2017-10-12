@@ -15,7 +15,8 @@
     "tomcatAJPConnectorPort": "$connectorPort",
     "tomcatRedirectPort": "$redirectPort",
     "tomcatVersion":"$tomcatVersion",
-    "forceDeploy":"$forceDeploy"
+    "forceDeploy":"$forceDeploy",
+    "jpdaAddress":"$jpdaAddress"
   }
 }
 
