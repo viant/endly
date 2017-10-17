@@ -4,7 +4,11 @@ import (
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"bytes"
-)
+	"crypto/md5"
+	"io"
+	"fmt"
+
+	)
 
 func AsMap(source interface{}, state common.Map) (interface{}, error) {
 	if source == nil || toolbox.IsMap(source) {
@@ -29,4 +33,10 @@ func AsMap(source interface{}, state common.Map) (interface{}, error) {
 
 func AsInt(source interface{}, state common.Map) (interface{}, error) {
 	return toolbox.AsInt(source), nil
+}
+
+func Md5(source interface{}, state common.Map) (interface{}, error) {
+	hash := md5.New()
+	io.WriteString(hash, toolbox.AsString(source))
+	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }

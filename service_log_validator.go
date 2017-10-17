@@ -151,7 +151,9 @@ type LogValidatorAssertRequest struct {
 }
 
 func (s *logValidatorService) Run(context *Context, request interface{}) *ServiceResponse {
+	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
+	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
 	switch actualRequest := request.(type) {
 	case *LogValidatorListenRequest:
@@ -187,7 +189,8 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 	}
 	var expectedIndex = 0
 	var response = &ValidatorAssertionInfo{}
-
+	startEvent := s.Begin(context, request, Pairs("logType", request.Type, "expected", request.Data), Info)
+	defer s.End(context)(startEvent, Pairs("response", response))
 	err = logTypeMeta.Range(initialLogTypeMeta, func(url string, lineIndex int, line string) (bool, error) {
 		if expectedIndex >= len(request.Data) {
 			return false, nil
@@ -218,6 +221,7 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }
 

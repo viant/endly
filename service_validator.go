@@ -42,7 +42,11 @@ func (ar *ValidatorAssertionInfo) Message() string {
 }
 
 func (s *ValidatorService) Run(context *Context, request interface{}) *ServiceResponse {
+	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
+	defer s.End(context)(startEvent, Pairs("response", response))
+
+
 	switch actualReuest := request.(type) {
 	case *ValidatorAssertRequest:
 		assertResponse, err := s.Assert(context, actualReuest)
@@ -50,9 +54,6 @@ func (s *ValidatorService) Run(context *Context, request interface{}) *ServiceRe
 			response.Error = fmt.Sprintf("%v", err)
 		}
 		response.Response = assertResponse
-		if assertResponse.HasFailure() {
-			response.Error = assertResponse.Message()
-		}
 	}
 	if response.Error != "" {
 		response.Status = "err"

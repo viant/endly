@@ -35,7 +35,7 @@ func TestHttpRunnerService_Run(t *testing.T) {
 	assert.NotNil(t, service)
 	time.Sleep(500 * time.Millisecond)
 	context := manager.NewContext(toolbox.NewContext())
-	response := service.Run(context, &endly.SendRequest{
+	response := service.Run(context, &endly.SendHttpRequest{
 		Requests: []*endly.HttpRequest{
 			{
 				URL: "http://127.0.0.1:8766/abc",
@@ -92,7 +92,7 @@ func TestHttpRunnerService_Run(t *testing.T) {
 		},
 	})
 	assert.Equal(t, "", response.Error)
-	sendResponse, ok := response.Response.(*endly.SendResponse)
+	sendResponse, ok := response.Response.(*endly.SendHttpResponse)
 	assert.True(t, ok)
 	path1, _ := sendResponse.Extracted["path1"]
 	assert.Equal(t, "/abc", path1)

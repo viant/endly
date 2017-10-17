@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"github.com/viant/toolbox"
+	"strings"
 )
 
 const DeploymentServiceId = "deployment"
@@ -39,6 +41,7 @@ type deploymentService struct {
 }
 
 func (r *DeploymentDeployRequest) Validate() error {
+
 	if r.Transfer == nil {
 		return fmt.Errorf("Failed to deploy app, transfer was nil")
 	}
@@ -51,6 +54,15 @@ func (r *DeploymentDeployRequest) Validate() error {
 	if r.Transfer.Source.URL == "" {
 		return fmt.Errorf("Failed to deploy app, Source URL was empty")
 	}
+	if r.AppName == "" {
+		_, appName :=toolbox.URLSplit(r.Transfer.Source.URL)
+		var versionPosition = strings.LastIndex(appName, "-")
+		if versionPosition != -1 {
+			appName = string(appName[:versionPosition])
+		}
+		r.AppName = appName
+	}
+
 	return nil
 }
 
@@ -177,9 +189,9 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 }
 
 func (s *deploymentService) Run(context *Context, request interface{}) *ServiceResponse {
-	var response = &ServiceResponse{
-		Status: "ok",
-	}
+	startEvent := s.Begin(context, request, Pairs("request", request))
+	var response = &ServiceResponse{Status: "ok"}
+	defer s.End(context)(startEvent, Pairs("response", response))
 	switch castedRequest := request.(type) {
 	case *DeploymentDeployRequest:
 		var err error

@@ -74,7 +74,9 @@ func (s *scriptService) runScriptCommand(context *Context, request *ScriptComman
 }
 
 func (s *scriptService) Run(context *Context, request interface{}) *ServiceResponse {
+	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
+	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
 	switch actualRequest := request.(type) {
 	case *ScriptCommand:

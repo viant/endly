@@ -17,7 +17,6 @@ type Response struct {
 	Status   string
 	Error    string
 	Response interface{}
-	Info     *SessionInfo
 	Data     map[string]interface{}
 }
 
@@ -50,12 +49,10 @@ func (s *Server) requestService(serviceName, action string, httpRequest *http.Re
 	state := context.State()
 	state.Apply(request.Data)
 	serviceResponse := service.Run(context, request.ServiceRequest)
-	var sessionInfo = context.SessionInfo()
 	var response = &Response{
 		Status:   serviceResponse.Status,
 		Error:    serviceResponse.Error,
 		Response: serviceResponse.Response,
-		Info:     sessionInfo,
 		Data:     context.State(),
 	}
 	return response, nil

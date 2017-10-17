@@ -83,8 +83,8 @@ type DsUnitPrepareRequest struct {
 	Credential string
 	Prefix     string //apply prefix
 	Postfix    string //apply suffix
-	Data       map[string][]map[string]interface{}
-	Expand     bool
+	Data map[string][]map[string]interface{}
+	Expand bool
 }
 
 func (r *DsUnitPrepareRequest) AsDatasetResource() *dsunit.DatasetResource {
@@ -127,7 +127,7 @@ type DsUnitPrepareResponse struct {
 type DsUnitVerifyRequest struct {
 	Datasets *dsunit.DatasetResource
 	//table to table rows data
-	Data        map[string][]map[string]interface{}
+	Data map[string][]map[string]interface{}
 	Expand      bool
 	CheckPolicy int
 }
@@ -166,7 +166,9 @@ type dsataStoreUnitService struct {
 }
 
 func (s *dsataStoreUnitService) Run(context *Context, request interface{}) *ServiceResponse {
+	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
+	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
 	switch actualRequest := request.(type) {
 	case *DsUnitRegisterRequest:
@@ -226,9 +228,12 @@ func (s *dsataStoreUnitService) getSequences(context *Context, request *DsUnitTa
 
 func (s *dsataStoreUnitService) registerDsManager(context *Context, datastoreName, credential string, config *dsc.Config) error {
 	passwordCredential := &storage.PasswordCredential{}
-	err := NewFileResource(credential).JsonDecode(passwordCredential)
-	if err != nil {
-		return err
+
+	if credential != "" {
+		err := NewFileResource(credential).JsonDecode(passwordCredential)
+		if err != nil {
+			return err
+		}
 	}
 	config.Parameters["username"] = passwordCredential.Username
 	config.Parameters["password"] = passwordCredential.Password
@@ -308,6 +313,7 @@ func (s *dsataStoreUnitService) register(context *Context, request *DsUnitRegist
 
 	if len(request.Scripts) > 0 {
 		for _, script := range request.Scripts {
+			s.AddEvent(context, "SQLScript", Pairs("datastore", request.Datastore, "url", script.URL), Info)
 			result.Modified, err = s.runScript(context, request.Datastore, script)
 
 			if err != nil {
@@ -339,6 +345,7 @@ func (s *dsataStoreUnitService) prepare(context *Context, request *DsUnitPrepare
 	if err != nil {
 		return nil, err
 	}
+
 	if request.Expand {
 		var state = context.State()
 		for _, data := range datasets.Datasets {
@@ -347,6 +354,10 @@ func (s *dsataStoreUnitService) prepare(context *Context, request *DsUnitPrepare
 				row.Values = toolbox.AsMap(expanded)
 			}
 		}
+	}
+
+	for _, data := range datasets.Datasets {
+		s.AddEvent(context, "PopulateDatastore", Pairs("datastore", request.Datastore, "table", data.Table, "rows", len(data.Rows)), Info)
 	}
 
 	response.Added, response.Modified, response.Deleted, err = s.Manager.PrepareDatastore(datasets)
@@ -397,6 +408,97 @@ func (s *dsataStoreUnitService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+type DsUnitPrepareTableData struct {
+	Table         string
+	Value         interface{}
+	AutoGenerate  map[string]string `json:",omitempty"`
+	PostIncrement []string          `json:",omitempty"`
+	Key           string
+}
+
+func (d *DsUnitPrepareTableData) AuotGenerateIfNeeded(state common.Map) error {
+	for k, v := range d.AutoGenerate {
+		value, has := state.GetValue(v)
+		if ! has {
+			return fmt.Errorf("Failed to autogenerate value for %v - unable to eval: %v \n", k, v)
+		}
+		state.SetValue(k, value)
+	}
+	return nil
+}
+
+func (d *DsUnitPrepareTableData) PostIncrementIfNeeded(state common.Map) {
+	for _, key := range d.PostIncrement {
+		keyText := toolbox.AsString(key)
+		value, has := state.GetValue(keyText)
+		if !has {
+			value = 0
+		}
+		state.SetValue(keyText, toolbox.AsInt(value)+1)
+	}
+}
+
+func (d *DsUnitPrepareTableData) GetValues(state common.Map) []map[string]interface{} {
+	if toolbox.IsMap(d.Value) {
+		return []map[string]interface{}{
+			d.GetValue(state, d.Value),
+		}
+	}
+	var result = make([]map[string]interface{}, 0)
+	if toolbox.IsSlice(d.Value) {
+		var aSlice = toolbox.AsSlice(d.Value)
+		for _, item := range aSlice {
+			value := d.GetValue(state, item)
+			result = append(result, value)
+		}
+	}
+	return result
+}
+
+func (d *DsUnitPrepareTableData) expandThis(textValue string, value map[string]interface{}) interface{} {
+	if strings.Contains(textValue, "this.") {
+		var thisState = common.NewMap()
+		for subKey, subValue := range value {
+			if toolbox.IsString(subValue) {
+				subKeyTextValue := toolbox.AsString(subValue)
+				if ! strings.Contains(subKeyTextValue, "this") {
+					thisState.SetValue(fmt.Sprintf("this.%v", subKey), subKeyTextValue)
+				}
+			}
+		}
+		return ExpandValue(textValue, thisState)
+	}
+	return textValue
+}
+
+func (d *DsUnitPrepareTableData) GetValue(state common.Map, source interface{}) map[string]interface{} {
+	value := toolbox.AsMap(ExpandValue(source, state))
+	for k, v := range value {
+		var textValue = toolbox.AsString(v)
+		if strings.Contains(textValue, "this") {
+			value[k] = d.expandThis(textValue, value)
+		} else
+		if strings.HasPrefix(textValue, "$") {
+			delete(value, k)
+		} else if strings.HasPrefix(textValue, "\\$") {
+			value[k] = string(textValue[1:])
+		}
+	}
+
+	dataStoreState := state.GetMap(DataStoreUnitServiceId)
+
+	var key = d.Key
+	if key == "" {
+		key = d.Table
+	}
+	if !dataStoreState.Has(key) {
+		dataStoreState.Put(key, common.NewCollection())
+	}
+	records := dataStoreState.GetCollection(key)
+	records.Push(value)
+	return value
+}
+
 func AsTableRecords(source interface{}, state common.Map) (interface{}, error) {
 	var result = make(map[string][]map[string]interface{})
 	if source == nil {
@@ -406,73 +508,27 @@ func AsTableRecords(source interface{}, state common.Map) (interface{}, error) {
 		state.Put(DataStoreUnitServiceId, common.NewMap())
 	}
 
-
-
-	dataStoreState := state.GetMap(DataStoreUnitServiceId)
-
-	if toolbox.IsSlice(source) {
-		for _, item := range toolbox.AsSlice(source) {
-
-			if toolbox.IsMap(item) {
-				aMap := toolbox.AsMap(item)
-				tableValue, ok := aMap["Table"]
-				if !ok {
-					return nil, fmt.Errorf("Table was missing in %v", aMap)
-				}
-				dataValue, ok := aMap["Value"]
-				if !ok {
-					return nil, fmt.Errorf("Value was missing in %v", aMap)
-				}
-				if !toolbox.IsMap(dataValue) {
-					return nil, fmt.Errorf("Value is not map in %T, %v", dataValue, dataValue)
-
-				}
-
-				value := toolbox.AsMap(ExpandValue(dataValue, state))
-				for k, v := range value {
-					var textValue = toolbox.AsString(v)
-					if strings.HasPrefix(textValue, "$") {
-						delete(value, k)
-					} else if strings.HasPrefix(textValue, "\\$") {
-						value[k] = string(textValue[1:])
-					}
-				}
-				table := toolbox.AsString(tableValue)
-
-				if !dataStoreState.Has(table) {
-					dataStoreState.Put(table, common.NewCollection())
-				}
-				records := dataStoreState.GetCollection(table)
-				records.Push(value)
-
-				_, ok = result[table]
-				if !ok {
-					result[table] = make([]map[string]interface{}, 0)
-				}
-				result[table] = append(result[table], value)
-				autoincrementValue, ok := aMap["Autoincrement"]
-				if ok {
-					if toolbox.IsSlice(autoincrementValue) {
-						for _, key := range toolbox.AsSlice(autoincrementValue) {
-							keyText := toolbox.AsString(key)
-							value, has := state.GetValue(keyText)
-							if !has {
-								value = 0
-							}
-							state.SetValue(keyText, toolbox.AsInt(value)+1)
-						}
-					}
-				}
-			}
+	var prepareTableData = []*DsUnitPrepareTableData{}
+	err := converter.AssignConverted(&prepareTableData, source)
+	if err != nil {
+		return nil, err
+	}
+	for _, tableData := range prepareTableData {
+		var table = tableData.Table
+		err = tableData.AuotGenerateIfNeeded(state)
+		if err != nil {
+			return nil, err
 		}
+		result[table] = append(result[table], tableData.GetValues(state)...)
+		tableData.PostIncrementIfNeeded(state)
 	}
-
+	dataStoreState := state.GetMap(DataStoreUnitServiceId)
 	var variable = &Variable{
-		Name:DataStoreUnitServiceId,
-		Persist:true,
-		Value:dataStoreState,
+		Name:    DataStoreUnitServiceId,
+		Persist: true,
+		Value:   dataStoreState,
 	}
-	err := variable.PersistValue()
+	err = variable.PersistValue()
 	if err != nil {
 		return nil, err
 	}

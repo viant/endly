@@ -118,18 +118,18 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *Resource, ori
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("svn %v --username=%v %v", command, username, strings.Join(arguments, " ")),
-				Error:   []string{"No such file or directory", "event not found"},
+				Error:   []string{"No such file or directory", "Event not found"},
 			},
 			{
 				Secure:      password,
 				MatchOutput: "Password for",
 				Command:     "****",
-				Error:       []string{"No such file or directory", "event not found"},
+				Error:       []string{"No such file or directory", "Event not found"},
 			},
 			{
 				MatchOutput: "Store password unencrypted",
 				Command:     "no",
-				Error:       []string{"No such file or directory", "event not found"},
+				Error:       []string{"No such file or directory", "Event not found"},
 			},
 		},
 	})

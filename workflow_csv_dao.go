@@ -133,7 +133,7 @@ func (f *FieldExpression) Set(value interface{}, target common.Map, indexes ...i
 				var isValueSet = false
 				if data.Has(f.Field) {
 					existingValue := data.Get(f.Field)
-					if toolbox.IsMap(existingValue) && toolbox.IsMap(value) { //is existing value is a map and existing value is map
+					if toolbox.IsMap(existingValue) && toolbox.IsMap(value) { //is existing Value is a map and existing Value is map
 						// then add keys to existing map
 						existingMap := data.GetMap(f.Field)
 						existingMap.Apply(toolbox.AsMap(value))
@@ -251,10 +251,11 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 		var recordHeight = 0
 		line := lines[i]
 
-
 		var hasActiveIterator = tag.HasActiveIterator()
 		if hasActiveIterator {
-			line = strings.Replace(line, "${index}", tag.Iterator.Index(),len(line))
+			state := context.State()
+			state.Put("index", tag.Iterator.Index())
+			line = d.expandIteratorIndex(context, line)
 		}
 		if strings.HasPrefix(line, "import") {
 			err := d.importWorkflow(context, resource, strings.TrimSpace(string(line[5:])))
@@ -268,7 +269,6 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 		}
 		isHeaderLine := isHeaderByte(line[0])
 		decoder := d.factory.Create(strings.NewReader(line))
-
 
 		if isHeaderLine {
 			if hasActiveIterator {
@@ -299,12 +299,18 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 		if record.IsEmpty() {
 			continue
 		}
+
+
 		if relativeSubPath, ok := record.Record["Subpath"]; ok {
 			subPath = toolbox.AsString(relativeSubPath)
 		}
 
-
 		object = getObject(tag, result)
+		if hasActiveIterator {
+			object["Group"]= tag.Iterator.Index()
+		}
+
+
 		for j := 1; j < len(record.Columns); j++ {
 			fieldExpressions := record.Columns[j]
 			if fieldExpressions == "" {
@@ -330,10 +336,24 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 				}
 			} else {
 				if field.IsRoot {
-					var expr = strings.Replace(field.expression, "[]", "", 1)
-					bucket, has := rootObject.GetValue(expr)
-					if has && toolbox.IsSlice(bucket) {
-						field.Set(val, rootObject, len(toolbox.AsSlice(bucket)))
+
+
+					if field.HasArrayComponent {
+						var expr = strings.Replace(field.expression, "[]", "", 1)
+						bucket, has := rootObject.GetValue(expr)
+						if ! has {
+							bucket = common.NewCollection()
+						}
+						var bucketSlice = toolbox.AsSlice(bucket)
+						if toolbox.IsSlice(val) {
+							aSlice := toolbox.AsSlice(val)
+							for _, item := range aSlice {
+								bucketSlice = append(bucketSlice, item)
+							}
+						} else {
+							bucketSlice = append(bucketSlice, val)
+						}
+						rootObject.SetValue(expr, bucketSlice)
 					} else {
 						field.Set(val, rootObject)
 					}
@@ -353,9 +373,13 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 				}
 			}
 		}
+
+		if _, has := object["SubPath"];!has {
+			object["SubPath"] = subPath
+		}
 		i += recordHeight
 
-		if i+ 1 == len(lines) && hasActiveIterator {
+		if i+1 == len(lines) && hasActiveIterator {
 			if tag.Iterator.Next() {
 				i = tag.line
 				continue
@@ -477,7 +501,7 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 				if exists, _ := service.Exists(endlyResource.URL); exists {
 					URL = endlyResource.URL
 				}
-			} else if useSubpath  {
+			} else if useSubpath {
 				fileCandidate := path.Join(parent, subpath, asset)
 				URL = fmt.Sprintf("file://%v", fileCandidate)
 			}
@@ -490,27 +514,36 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 	}, nil
 }
 
-func (d *WorkflowDao) loadMap(context *Context, parentResource *Resource, subpath, asset string, escapeQuotes bool) (common.Map, error) {
+
+
+
+
+func (d *WorkflowDao) loadMap(context *Context, parentResource *Resource, subpath, asset string, escapeQuotes bool, index int) (common.Map, error) {
 	var aMap = make(map[string]interface{})
-	if !strings.HasPrefix(asset, "#") {
-		err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(asset)).Decode(&aMap)
-		if err != nil {
-			err = fmt.Errorf("Failed to decode json as map: %v, %v, correct json or load it with '#' ", asset, err)
-		}
-	} else {
+	var assetContent = asset
+	if strings.HasPrefix(asset, "#") {
 		resource, err := d.getExternalResource(context, parentResource, subpath, asset)
 		if err != nil {
 			return nil, err
 		}
-		err = resource.JsonDecode(&aMap)
+		assetContent, err = resource.DownloadText()
 		if err != nil {
-			return nil, fmt.Errorf("Failed to decode json from %v %v", asset, err)
+			return nil, err
+		}
+	}
+
+
+	assetContent = d.expandIteratorIndex(context, assetContent)
+	assetContent = strings.Trim(assetContent, " \t\n\r")
+	if strings.HasPrefix(assetContent, "{")  {
+		err:= toolbox.NewJSONDecoderFactory().Create(strings.NewReader(assetContent)).Decode(&aMap)
+		if err != nil {
+			return nil, err
 		}
 	}
 
 	if escapeQuotes {
 		for k, v := range aMap {
-
 			if toolbox.IsMap(v) || toolbox.IsSlice(v) {
 				buf := new(bytes.Buffer)
 				err := toolbox.NewJSONEncoderFactory().Create(buf).Encode(v)
@@ -519,19 +552,24 @@ func (d *WorkflowDao) loadMap(context *Context, parentResource *Resource, subpat
 				}
 				v = buf.String()
 			}
-
 			if toolbox.IsString(v) {
 				textValue := toolbox.AsString(v)
 				if strings.Contains(textValue, "\"") {
-					textValue = strings.Replace(textValue, "\\", "\\\\\"", len(textValue))
-					textValue = strings.Replace(textValue, "\"", "\\\"", len(textValue))
+					textValue = strings.Replace(textValue, "\\", "\\\\", len(textValue))
+
 					textValue = strings.Replace(textValue, "\n", "", len(textValue))
+
+					textValue = strings.Replace(textValue, "\"", "\\\"", len(textValue))
+					//fmt.Printf(textValue)
+
 					aMap[k] = textValue
 
 				}
 			}
 		}
 	}
+	aMap[fmt.Sprintf("arg%v", index)] = assetContent
+	aMap[fmt.Sprintf("args%v", index)] = string(assetContent[1:len(assetContent)-1])
 	return common.Map(aMap), nil
 }
 
@@ -562,7 +600,7 @@ func getUdfIfDefined(expression string) (func(interface{}, common.Map) (interfac
 			var available = toolbox.MapKeysToStringSlice(UdfRegistry)
 			return nil, "", fmt.Errorf("Failed to lookup udf function %v on %v, avaialbe:[%v]", udfName, expression, strings.Join(available, ","))
 		}
-		value := string(expression[startArgumentPosition+1 : endArgumentPosition])
+		value := string(expression[startArgumentPosition+1: endArgumentPosition])
 		return udfFunction, value, nil
 	}
 	return nil, expression, nil
@@ -594,6 +632,16 @@ func (d *WorkflowDao) contextualizeValue(context *Context, value string) (interf
 	return value, false, nil
 }
 
+
+func  (d *WorkflowDao) expandIteratorIndex(context *Context, data string) string {
+	var state = context.State()
+	var index = state.GetString("index")
+	data = strings.Replace(data, "${index}", toolbox.AsString(index), len(data))
+	data = strings.Replace(data, "$index", toolbox.AsString(index), len(data))
+	return data
+}
+
+
 func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource, subpath, value string) (interface{}, bool, error) {
 	//TODO refactor to simplify and extend functionaliy
 	var err error
@@ -606,9 +654,11 @@ func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource,
 			return nil, false, err
 		}
 		mainAsset = strings.TrimSpace(mainAsset)
+		mainAsset = d.expandIteratorIndex(context, mainAsset)
+
 		escapeQuotes := strings.HasPrefix(mainAsset, "{") || strings.HasPrefix(mainAsset, "[")
 		for i := 1; i < len(assets); i++ {
-			aMap, err := d.loadMap(context, parentResource, subpath, assets[i], escapeQuotes)
+			aMap, err := d.loadMap(context, parentResource, subpath, assets[i], escapeQuotes, i-1)
 			if err != nil {
 				return nil, false, err
 			}
@@ -634,47 +684,43 @@ func NewWorkflowDao() *WorkflowDao {
 	}
 }
 
-
-type TagIterator  struct {
+type TagIterator struct {
 	Template string
-	Min int
-	Max int
-	index int
+	Min      int
+	Max      int
+	index    int
 }
 
 func (i *TagIterator) Has() bool {
 	return i.index <= i.Max
 }
 
-func (i *TagIterator) Next()  bool {
+func (i *TagIterator) Next() bool {
 	i.index++
 	return i.Has()
 }
 
-func (i *TagIterator) Index() string  {
+func (i *TagIterator) Index() string {
 	return fmt.Sprintf(i.Template, i.index)
 }
 
-
-
-
 type Tag struct {
-	Name    string
-	IsArray bool
+	Name     string
+	IsArray  bool
 	Iterator *TagIterator
-	line int
+	line     int
 }
 
 func (t *Tag) HasActiveIterator() bool {
 	if t == nil {
 		return false
 	}
-	return  t.Iterator != nil && t.Iterator.Has()
+	return t.Iterator != nil && t.Iterator.Has()
 }
 
 func NewTag(key string) *Tag {
 	var result = &Tag{
-		Name:key,
+		Name: key,
 	}
 	key = decodeIteratrIfPresent(key, result)
 	if string(key[0:2]) == "[]" {
@@ -707,4 +753,3 @@ func decodeIteratrIfPresent(key string, result *Tag) string {
 	}
 	return key
 }
-

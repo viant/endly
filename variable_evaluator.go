@@ -6,6 +6,7 @@ import (
 	"github.com/viant/toolbox"
 	"strings"
 	"unicode"
+	"time"
 )
 
 const (
@@ -16,7 +17,6 @@ const (
 
 func ExpandAsText(state common.Map, text string) string {
 	result := Expand(state, text)
-
 	if toolbox.IsSlice(result) || toolbox.IsMap(result) {
 		buf := new(bytes.Buffer)
 		err := toolbox.NewJSONEncoderFactory().Create(buf).Encode(result)
@@ -45,7 +45,7 @@ func Expand(state common.Map, text string) interface{} {
 	var expandVariable = func(variableName string) interface{} {
 		value, has := state.GetValue(string(variableName[1:]))
 		if has {
-			if toolbox.IsMap(value) || toolbox.IsSlice(value) {
+			if value != nil && (toolbox.IsMap(value) || toolbox.IsSlice(value)) {
 				return ExpandValue(value, state)
 			}
 			return value
@@ -120,7 +120,10 @@ func Expand(state common.Map, text string) interface{} {
 func ExpandValue(source interface{}, state common.Map) interface{} {
 
 	switch value := source.(type) {
+	case bool, []byte, int, uint, int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64, time.Time:
+		return source
 	case string:
+
 		udf, value, _ := getUdfIfDefined(value)
 		if strings.HasPrefix(value, "$") {
 			_, has := state.GetValue(string(value[1:]))
@@ -132,6 +135,11 @@ func ExpandValue(source interface{}, state common.Map) interface{} {
 				}
 			}
 			return result
+		} else if udf != nil {
+			transformed, err := udf(value, state)
+			if err == nil {
+				return transformed
+			}
 		}
 		return ExpandAsText(state, value)
 	case map[string]interface{}:

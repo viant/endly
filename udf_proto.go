@@ -11,23 +11,37 @@ import (
 	"strings"
 )
 
-//AsProtobufMessage generic method for converting a map into a proto message
+//AsProtobufMessage generic method for converting a map, or json string into a proto message
 func AsProtobufMessage(source interface{}, state common.Map, target proto.Message) (interface{}, error) {
-	var requestMap = toolbox.AsMap(source)
+	var requestMap map[string]interface{}
+	if toolbox.IsString(source) {
+		requestMap = make(map[string]interface{})
+		err :=toolbox.NewJSONDecoderFactory().Create(strings.NewReader(toolbox.AsString(source))).Decode(&requestMap)
+		if err != nil {
+			fmt.Printf("Failed to run udf: %v %v\n", source, err)
+			return nil, err
+		}
+	} else {
+		requestMap = toolbox.AsMap(source)
+	}
 	converter := toolbox.NewColumnConverter("")
 	err := converter.AssignConverted(target, requestMap)
 	if err != nil {
+		fmt.Printf("Failed to run udf: unable convert: %v %v\n", source, err)
 		return nil, err
 	}
 
 	protodata, err := proto.Marshal(target)
 	if err != nil {
+		fmt.Printf("Failed to run udf: unable Marshal %v %v\n", source, err)
 		return nil, fmt.Errorf("Failed to encode: %v, %v", requestMap, err)
 	}
 	buf := new(bytes.Buffer)
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)
 	encoder.Write(protodata)
 	encoder.Close()
+
+	fmt.Printf("ENCODED: %v\n", fmt.Sprintf("base64:%v", string(buf.Bytes())))
 	return fmt.Sprintf("base64:%v", string(buf.Bytes())), nil
 }
 

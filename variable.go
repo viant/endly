@@ -120,7 +120,7 @@ func (v *Variables) Apply(in, out common.Map) error {
 		//		}
 		//	}
 		//	if udfFunction != nil {
-		//		value, err = udfFunction(value, in)
+		//		Value, err = udfFunction(Value, in)
 		//		if err != nil {
 		//			return err
 		//		}

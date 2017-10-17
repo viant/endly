@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"time"
 	"unicode"
 	"unicode/utf8"
 )
@@ -97,12 +96,14 @@ type HttpResponse struct {
 	Error       string
 }
 
-type SendRequest struct {
+type SendHttpRequest struct {
 	Options  []*toolbox.HttpOptions
 	Requests []*HttpRequest
+	RequestUdf string
+	ResponseUdf string
 }
 
-type SendResponse struct {
+type SendHttpResponse struct {
 	Responses []*HttpResponse
 	Extracted map[string]string
 }
@@ -122,40 +123,83 @@ func isBinary(input []byte) bool {
 	return false
 }
 
-func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, req *HttpRequest, sessionCookies *Cookies, request *SendRequest, result *SendResponse) error {
+func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, sendHttpRequest *HttpRequest, sessionCookies *Cookies, sendRequest *SendHttpRequest, result *SendHttpResponse) error {
+	var err error
 	var state = context.State()
 	cookies := state.GetMap("cookies")
 	var reader io.Reader
+	var isBase64Encoded = false
+	sendHttpRequest = sendHttpRequest.Expand(context)
+	var body []byte
+	if len(sendHttpRequest.Body) > 0 {
+		body = []byte(sendHttpRequest.Body)
+		if strings.HasPrefix(sendHttpRequest.Body, "text:") {
+			body = []byte(sendHttpRequest.Body[5:])
+		}
 
-	req = req.Expand(context)
-	if len(req.Body) > 0 {
-		reader = strings.NewReader(req.Body)
+		if sendRequest.RequestUdf != "" {
+			var udf, has = UdfRegistry[sendRequest.RequestUdf]
+			if ! has {
+				return fmt.Errorf("Failed to lookup udf: %v for: %v\n", sendRequest.RequestUdf, sendHttpRequest.URL)
+			}
+			transformed, err := udf(sendHttpRequest.Body, state)
+			if err != nil {
+				return fmt.Errorf("Failed to send sendRequest unable to run udf: %v\n", err)
+			}
+			body = []byte(toolbox.AsString(transformed))
+		}
+
+		if strings.HasPrefix(string(body), "base64:") {
+			isBase64Encoded = true
+			reader = base64.NewDecoder(base64.StdEncoding, bytes.NewReader(body[7:]))
+			body, err = ioutil.ReadAll(reader)
+			if err != nil {
+				return fmt.Errorf("Failed to decode base64 sendRequest: %v, %v", sendHttpRequest.URL, err)
+			}
+		}
+		reader = bytes.NewReader(body)
 	}
 
-	httpRequest, err := http.NewRequest(strings.ToUpper(req.Method), req.URL, reader)
+	httpRequest, err := http.NewRequest(strings.ToUpper(sendHttpRequest.Method), sendHttpRequest.URL, reader)
 	if err != nil {
 		return err
 	}
-	httpRequest.Header = make(map[string][]string)
-	copyHeaders(req.Header, httpRequest.Header)
+
+	copyHeaders(httpRequest.Header, httpRequest.Header)
 	sessionCookies.SetHeader(httpRequest.Header)
-	req.Cookies.SetHeader(httpRequest.Header)
+	sendHttpRequest.Cookies.SetHeader(httpRequest.Header)
 	response := &HttpResponse{
-		Request: req,
+		Request: sendHttpRequest,
 	}
 	result.Responses = append(result.Responses, response)
-	startTime := time.Now()
+	startEvent := s.Begin(context, sendHttpRequest, Pairs("request", sendHttpRequest))
 	httpResponse, err := client.Do(httpRequest)
+
 	if err != nil {
 		response.Error = fmt.Sprintf("%v", err)
 		return nil
 	}
 
-	endTime := time.Now()
 	response.Header = make(map[string][]string)
 	copyHeaders(httpResponse.Header, response.Header)
-	readBody(httpResponse, response)
-	req.Extraction.Extract(context, result.Extracted, response.Body)
+
+	readBody(httpResponse, response, isBase64Encoded)
+
+	if sendRequest.ResponseUdf != "" {
+		var udf, has = UdfRegistry[sendRequest.ResponseUdf]
+		if ! has {
+			return fmt.Errorf("Failed to lookup udf: %v for: %v\n", sendRequest.ResponseUdf, sendHttpRequest.URL)
+		}
+		transformed, err := udf(response.Body, state)
+		if err != nil {
+			return fmt.Errorf("Failed to send sendRequest unable to run udf: %v\n", err)
+		}
+		fmt.Printf("Transformed:%v\n", transformed)
+		response.Body = toolbox.AsString(transformed)
+	}
+	endEvent := s.End(context)(startEvent, Pairs("response", response))
+
+	sendHttpRequest.Extraction.Extract(context, result.Extracted, response.Body)
 	var responseCookies Cookies = httpResponse.Cookies()
 
 	response.Cookies = responseCookies.IndexByName()
@@ -165,21 +209,21 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, r
 	sessionCookies.AddCookies(responseCookies...)
 
 	response.Code = httpResponse.StatusCode
-	response.TimeTakenMs = int((endTime.UnixNano() - startTime.UnixNano()) / int64(time.Millisecond))
-	for _, candidate := range request.Requests {
+	response.TimeTakenMs = endEvent.TimeTakenMs
+	for _, candidate := range sendRequest.Requests {
 		if candidate.MatchBody != "" && strings.Contains(response.Body, candidate.MatchBody) {
-			return s.sendRequest(context, client, candidate, sessionCookies, request, result)
+			return s.sendRequest(context, client, candidate, sessionCookies, sendRequest, result)
 		}
 	}
 	return nil
 }
 
-func (s *httpRunnerService) send(context *Context, request *SendRequest) (*SendResponse, error) {
+func (s *httpRunnerService) send(context *Context, request *SendHttpRequest) (*SendHttpResponse, error) {
 	client, err := toolbox.NewHttpClient(request.Options...)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to send req: %v", err)
 	}
-	var result = &SendResponse{
+	var result = &SendHttpResponse{
 		Responses: make([]*HttpResponse, 0),
 		Extracted: make(map[string]string),
 	}
@@ -201,7 +245,7 @@ func (s *httpRunnerService) send(context *Context, request *SendRequest) (*SendR
 	return result, nil
 
 }
-func readBody(httpResponse *http.Response, response *HttpResponse) {
+func readBody(httpResponse *http.Response, response *HttpResponse, expectBased64Encoded bool) {
 
 	body, err := ioutil.ReadAll(httpResponse.Body)
 	if err != nil {
@@ -209,7 +253,7 @@ func readBody(httpResponse *http.Response, response *HttpResponse) {
 		return
 	}
 	httpResponse.Body.Close()
-	if isBinary(body) {
+	if expectBased64Encoded {
 		buf := new(bytes.Buffer)
 		encoder := base64.NewEncoder(base64.StdEncoding, buf)
 		encoder.Write(body)
@@ -254,12 +298,12 @@ func copyExpandedHeaders(source http.Header, target http.Header, context *Contex
 }
 
 func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceResponse {
-	var response = &ServiceResponse{
-		Status: "ok",
-	}
+	startEvent := s.Begin(context, request, Pairs("request", request))
+	var response = &ServiceResponse{Status: "ok"}
+	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
 	switch actualRequest := request.(type) {
-	case *SendRequest:
+	case *SendHttpRequest:
 		response.Response, err = s.send(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to send request: %v, %v", actualRequest, err)
@@ -275,7 +319,7 @@ func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceR
 }
 
 func (s *httpRunnerService) NewRequest(action string) (interface{}, error) {
-	return &SendRequest{}, nil
+	return &SendHttpRequest{}, nil
 }
 
 func NewHttpRunnerService() Service {

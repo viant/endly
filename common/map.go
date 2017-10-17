@@ -17,6 +17,12 @@ func (s *Map) Delete(keys ...string) {
 		delete(*s, key)
 	}
 }
+func (s *Map) DeleteSync(keys ...string) {
+	for _, key := range keys {
+		delete(*s, key)
+	}
+}
+
 
 func (s *Map) Has(key string) bool {
 	_, found := (*s)[key]

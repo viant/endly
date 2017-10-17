@@ -79,7 +79,6 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 	var result = &TransferCopyResponse{
 		Transfered: make([]*TransferInfo, 0),
 	}
-	sessionInfo := context.SessionInfo()
 	for _, transfer := range transfers {
 		source, err := context.ExpandResource(transfer.Source)
 		if err != nil {
@@ -101,16 +100,14 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 		if transfer.Expand || len(transfer.Replace) > 0 {
 			handler = NewExpandedContentHandler(context, transfer.Replace, transfer.Expand)
 		}
-
 		if _, err := sourceService.StorageObject(source.URL); err != nil {
 			return nil, fmt.Errorf("Failed to copy: %v %v - Source does not exists", source.URL, target.URL)
 		}
-
+		startEvent := s.Begin(context, transfer, Pairs("source", source.URL, "target", target.URL, "expand", transfer.Expand || len(transfer.Replace) > 0), Info)
 		err = storage.Copy(sourceService, source.URL, targetService, target.URL, handler)
-		fmt.Printf("[COPY]: %v %v\n", source.URL, target.URL)
+		s.End(context)(startEvent, Pairs())
 		info := NewTransferInfo(context, source.URL, target.URL, err, transfer.Expand)
 		result.Transfered = append(result.Transfered, info)
-		sessionInfo.Log(info)
 		if err != nil {
 			return result, err
 		}
@@ -119,7 +116,9 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 }
 
 func (s *transferService) Run(context *Context, request interface{}) *ServiceResponse {
+	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
+	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
 	switch actualRequest := request.(type) {
 	case *TransferCopyRequest:

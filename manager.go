@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"strings"
+	"sync"
+	"github.com/satori/go.uuid"
 )
 
 const AppName = "endly - End To End Functional Testing "
@@ -48,8 +50,16 @@ func (s *manager) Register(service Service) {
 }
 
 func (s *manager) NewContext(ctx toolbox.Context) *Context {
+	sessionId := uuid.NewV1()
+	var workflowStack = make([]*Workflow, 0)
 	var result = &Context{
-		Context: ctx,
+		SessionId: sessionId.String(),
+		Context:   ctx,
+		Events: &Events{
+			mutex:  &sync.Mutex{},
+			Events: make([]*Event, 0),
+		},
+		workflowStack: &workflowStack,
 	}
 	result.Put(serviceManagerKey, s)
 	return result
@@ -77,5 +87,6 @@ func NewManager() Manager {
 	result.Register(NewDataStoreUnitService())
 	result.Register(NewNopService())
 	result.Register(NewLogValidatorService())
+	result.Register(NewEventReporterService())
 	return result
 }

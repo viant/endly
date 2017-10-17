@@ -116,7 +116,9 @@ func (s *DockerService) NewRequest(action string) (interface{}, error) {
 }
 
 func (s *DockerService) Run(context *Context, request interface{}) *ServiceResponse {
+	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
+	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
 	switch actualRequest := request.(type) {
 

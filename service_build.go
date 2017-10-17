@@ -245,9 +245,9 @@ func newBuildState(buildSepc *BuildSpec, parsedUrl *url.URL, request *BuildReque
 }
 
 func (s *BuildService) Run(context *Context, request interface{}) *ServiceResponse {
-	var response = &ServiceResponse{
-		Status: "ok",
-	}
+	startEvent := s.Begin(context, request, Pairs("request", request))
+	var response = &ServiceResponse{Status: "ok"}
+	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
 	switch actualRequest := request.(type) {
 	case *BuildRequest:
@@ -256,7 +256,10 @@ func (s *BuildService) Run(context *Context, request interface{}) *ServiceRespon
 			response.Error = fmt.Sprintf("Failed to build: %v %v", actualRequest.Target.URL, err)
 		}
 	case *BuildRegisterMetaRequest:
-		s.registry.Register(actualRequest.Meta)
+		err = s.registry.Register(actualRequest.Meta)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to register: %v",actualRequest.Meta.Name, err)
+		}
 
 	case *BuildLoadMetaRequest:
 		s.load(context, actualRequest)

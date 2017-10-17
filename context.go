@@ -23,17 +23,51 @@ type StateKey *common.Map
 
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
-var sessionInfoKey = (*SessionInfo)(nil)
 var workflowKey = (*Workflow)(nil)
 
 type Context struct {
-	state common.Map
+	SessionId     string
+	state         common.Map
 	toolbox.Context
+	Events        *Events
+	workflowStack *[]*Workflow
+}
+
+func (c *Context) PushWorkflow(workflow *Workflow) {
+	*c.workflowStack = append(*c.workflowStack, workflow)
+}
+
+func (c *Context) ShiftWorkflow() *Workflow {
+	var result = (*c.workflowStack)[0]
+	(*c.workflowStack) = (*c.workflowStack)[1:]
+	return result
+}
+
+func (c *Context) CurrentWorkflow() *Workflow {
+	if c.workflowStack == nil {
+		return nil
+	}
+	var workflowCount = len(*c.workflowStack)
+	if workflowCount == 0 {
+		return nil
+	}
+	return (*c.workflowStack)[workflowCount-1]
 }
 
 func reportError(err error) error {
 	fileName, funcName, line := toolbox.CallerInfo(4)
 	return fmt.Errorf("%v at %v:%v -> %v", err, fileName, line, funcName)
+}
+
+func (c *Context) Clone() *Context {
+	result := &Context{}
+	result.Context = c.Context.Clone()
+	result.Events = c.Events
+	result.state = NewDefaultState()
+	result.state.Apply(c.state)
+	result.SessionId = c.SessionId
+	result.workflowStack = c.workflowStack
+	return result
 }
 
 func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
@@ -122,17 +156,6 @@ func (c *Context) SetState(state common.Map) {
 	c.state = state
 }
 
-func (c *Context) SessionInfo() *SessionInfo {
-	var result *SessionInfo
-	if !c.Contains(sessionInfoKey) {
-
-		result = &SessionInfo{}
-		c.Put(sessionInfoKey, result)
-	} else {
-		c.GetInto(sessionInfoKey, &result)
-	}
-	return result
-}
 
 func (c *Context) Workflow() *Workflow {
 	var result *Workflow
@@ -227,10 +250,6 @@ func (c *Context) Transfer(transfers ...*Transfer) (interface{}, error) {
 	return nil, nil
 }
 
-func (c *Context) Log(logEntry interface{}) error {
-	sessionInfo := c.SessionInfo()
-	return sessionInfo.Log(logEntry)
-}
 
 func (c *Context) Expand(text string) string {
 	state := c.State()
@@ -298,7 +317,6 @@ func NewDefaultState() common.Map {
 		}
 		return nil
 	})
-
 
 	result.Put("env", func(key string) interface{} {
 		return os.Getenv(key)

@@ -23,9 +23,10 @@ type sdkService struct {
 }
 
 func (s *sdkService) Run(context *Context, request interface{}) *ServiceResponse {
-	var response = &ServiceResponse{
-		Status: "ok",
-	}
+	startEvent := s.Begin(context, request, Pairs("request", request))
+	var response = &ServiceResponse{Status: "ok"}
+	defer s.End(context)(startEvent, Pairs("response", response))
+
 	var err error
 	switch actualRequest := request.(type) {
 	case *SdkSetRequest:

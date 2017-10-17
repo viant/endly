@@ -336,7 +336,7 @@ func getHostAndSSHPort(target *Resource) (string, int) {
 	return hostname, port
 }
 
-func (s *execService) setEnvVariable(context *Context, session *ClientSession, info *CommandInfo, name, value string) error {
+func (s *execService) setEnvVariable(context *Context, session *ClientSession, name, value string) error {
 	value = context.Expand(value)
 	if val, has := session.envVariables[name]; has {
 		if value == val {
@@ -344,7 +344,7 @@ func (s *execService) setEnvVariable(context *Context, session *ClientSession, i
 		}
 		session.envVariables[name] = value
 	}
-	return s.rumCommandTemplate(context, session, info, "export %v='%v'", name, value)
+	return s.rumCommandTemplate(context, session, "export %v='%v'", name, value)
 }
 
 func (s *execService) changeDirectory(context *Context, session *ClientSession, commandInfo *CommandInfo, directory string) error {
@@ -352,20 +352,14 @@ func (s *execService) changeDirectory(context *Context, session *ClientSession, 
 		return nil
 	}
 	session.path = directory
-	return s.rumCommandTemplate(context, session, commandInfo, "cd %v", directory)
+	return s.rumCommandTemplate(context, session, "cd %v", directory)
 }
 
-func (s *execService) rumCommandTemplate(context *Context, session *ClientSession, info *CommandInfo, commandTemplate string, arguments ...interface{}) error {
-	if info == nil {
-		info = NewCommandInfo(session.name)
-		context.SessionInfo().Log(info)
-	}
+func (s *execService) rumCommandTemplate(context *Context, session *ClientSession, commandTemplate string, arguments ...interface{}) error {
 	command := fmt.Sprintf(commandTemplate, arguments...)
-	fmt.Printf("[%v  stdin]: %v\n", session.name, command)
-	output, err := session.Run(command, 0)
-	fmt.Printf("[%v stdout]: %v\n", session.name, output)
-
-	info.Add(NewCommandStream(command, output, err))
+	startEvent := s.Begin(context, &Execution{}, Pairs("stdin", command, "session", session.name), Info)
+	stdout, err := session.Run(command, 0)
+	s.End(context)(startEvent, Pairs("stdout", stdout, "session", session.name))
 	if err != nil {
 		return err
 	}
@@ -383,7 +377,7 @@ func (s *execService) applyCommandOptions(context *Context, options *ExecutionOp
 		operatingSystem.Path.Push(options.SystemPaths...)
 	}
 	for k, v := range options.Env {
-		err := s.setEnvVariable(context, session, info, k, v)
+		err := s.setEnvVariable(context, session, k, v)
 		if err != nil {
 			return err
 		}
@@ -418,9 +412,9 @@ func (s *execService) executeCommand(context *Context, session *ClientSession, e
 	if execution.Secure != "" {
 		cmd = strings.Replace(command, "****", execution.Secure, 1)
 	}
-	fmt.Printf("[%v  stdin]: %v\n", session.name, command)
+	startEvent := s.Begin(context, execution, Pairs("stdin", command, "session", session.name), Info)
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
-	fmt.Printf("[%v stdout]: %v\n", session.name, stdout)
+	s.End(context)(startEvent, Pairs("stdout", stdout, "session", session.name))
 
 	commandInfo.Add(NewCommandStream(command, stdout, err))
 	if err != nil {
@@ -482,7 +476,6 @@ func (s *execService) runCommands(context *Context, request *ManagedCommandReque
 		options = NewExecutionOptions()
 	}
 	info := NewCommandInfo(session.name)
-	context.SessionInfo().Log(info)
 	err = s.applyCommandOptions(context, options, session, info)
 
 	if err != nil {
@@ -492,13 +485,12 @@ func (s *execService) runCommands(context *Context, request *ManagedCommandReque
 	operatingSystem := session.OperatingSystem
 	if session.path != operatingSystem.Path.EnvValue() {
 		session.path = operatingSystem.Path.EnvValue()
-		err := s.setEnvVariable(context, session, info, "PATH", session.path)
+		err := s.setEnvVariable(context, session, "PATH", session.path)
 		if err != nil {
 			return nil, err
 		}
 	}
 	info = NewCommandInfo(session.name)
-	context.SessionInfo().Log(info)
 	for _, execution := range request.ManagedCommand.Executions {
 
 		if execution.MatchOutput != "" {
@@ -531,10 +523,9 @@ func (s *execService) closeSession(context *Context, closeSession *CloseSession)
 }
 
 func (s *execService) Run(context *Context, request interface{}) *ServiceResponse {
-
-	var response = &ServiceResponse{
-		Status: "ok",
-	}
+	startEvent := s.Begin(context, request, Pairs("request", request))
+	var response = &ServiceResponse{Status: "ok"}
+	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
 	switch actualRequest := request.(type) {
 	case *CommandRequest:

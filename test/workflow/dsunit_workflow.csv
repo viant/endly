@@ -4,8 +4,8 @@ Workflow,,Name,Description,Tasks,,,
 ,,prepare,Prepare database,%Prepare,,,
 []Prepare,Service,Action,Description,Request,Init,Post,/Data.dsunit.[]TestData
 ,dsunit,register,Register database,#dsunit_register.json,,,"{""Table"":""USER_ACCOUNT"", ""Value"":{ ""USER_ID"":""$meta.USER"", ""ACCOUNT_ID"":""$meta.ACCOUNT"",   ""NAME"":""abc""}, ""Autoincrement"": [""meta.USER"", ""meta.ACCOUNT""] }}"
-,,,,,,,"{""Table"":""USER_ACCOUNT"", ""Value"":{ ""USER_ID"":""$meta.USER"", ""ACCOUNT_ID"":""$meta.ACCOUNT"",   ""NAME"":""abc2"", ""EMAIL"":""@ere""}, ""Autoincrement"": [""meta.USER""] }}"
-,,,,,,,"{""Table"":""USER_ACCOUNT"", ""Value"":{ ""USER_ID"":""$meta.USER"", ""ACCOUNT_ID"":""$meta.ACCOUNT"",   ""NAME"":""abc3""}, ""Autoincrement"": [""meta.USER"", ""meta.ACCOUNT""] }}"
+,,,,,,,"{""Table"":""USER_ACCOUNT"", ""Value"":{ ""USER_ID"":""$meta.USER"", ""ACCOUNT_ID"":""$meta.ACCOUNT"",   ""NAME"":""abc2"", ""EMAIL"":""@ere""}, ""PostIncrement"": [""meta.USER""] }}"
+,,,,,,,"{""Table"":""USER_ACCOUNT"", ""Value"":{ ""USER_ID"":""$meta.USER"", ""ACCOUNT_ID"":""$meta.ACCOUNT"",   ""NAME"":""abc3""}, ""PostIncrement"": [""meta.USER"", ""meta.ACCOUNT""] }}"
 ,dsunit,mapping,Register mapping,#dsunit_mapping.json,,"[{""Name"":""metaTables"", ""From"":""Tables""}]",
 ,dsunit,sequence,Get the latest tables id values,"#dsunit_sequence.json|{""tables"":""$metaTables""}",,"[{""Name"":""meta"", ""From"":""Sequences""}]",
 ,dsunit,prepare,Prepare database,#dsunit_prepare.json,"[{""Name"":""tablesData"", ""From"":""!AsTableRecords(workflow.dsunit.TestData)"" }]",,

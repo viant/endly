@@ -22,8 +22,9 @@ type RestSendResponse struct {
 }
 
 func (s *restService) Run(context *Context, request interface{}) *ServiceResponse {
+	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
-
+	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
 	switch actualReuest := request.(type) {
 	case *RestSendRequest:
