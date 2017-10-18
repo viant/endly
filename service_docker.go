@@ -3,8 +3,8 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/storage"
 	"strings"
+	"github.com/viant/toolbox/cred"
 )
 
 const DockerServiceId = "docker"
@@ -211,8 +211,7 @@ func (s *DockerService) runContainer(context *Context, request *DockerRunRequest
 
 	var secure = ""
 	if request.Credential != "" {
-		credential := &storage.PasswordCredential{}
-		err := NewFileResource(request.Credential).JsonDecode(credential)
+		credential, err := cred.NewConfig(request.Credential)
 		if err != nil {
 			return nil, err
 		}

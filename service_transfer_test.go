@@ -47,6 +47,7 @@ func TestNewTransferService(t *testing.T) {
 
 			reader, _, err := toolbox.OpenReaderFromURL("file:///tmp/transfered.json")
 			assert.Nil(t, err)
+			defer reader.Close()
 			config := &TestConfig{}
 			err = toolbox.NewJSONDecoderFactory().Create(reader).Decode(config)
 			assert.Nil(t, err)
@@ -70,6 +71,7 @@ func TestNewTransferService(t *testing.T) {
 
 			reader, _, err := toolbox.OpenReaderFromURL("file:///tmp/transfered.json")
 			assert.Nil(t, err)
+			reader.Close()
 			config := &TestConfig{}
 			err = toolbox.NewJSONDecoderFactory().Create(reader).Decode(config)
 			assert.Nil(t, err)

@@ -7,8 +7,8 @@ import (
 	"github.com/viant/dsunit"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/storage"
 	"strings"
+	"github.com/viant/toolbox/cred"
 )
 
 const DataStoreUnitServiceId = "dsunit"
@@ -227,16 +227,16 @@ func (s *dsataStoreUnitService) getSequences(context *Context, request *DsUnitTa
 }
 
 func (s *dsataStoreUnitService) registerDsManager(context *Context, datastoreName, credential string, config *dsc.Config) error {
-	passwordCredential := &storage.PasswordCredential{}
+	credentialConfig := &cred.Config{}
 
 	if credential != "" {
-		err := NewFileResource(credential).JsonDecode(passwordCredential)
+		err := credentialConfig.Load(credential)
 		if err != nil {
 			return err
 		}
 	}
-	config.Parameters["username"] = passwordCredential.Username
-	config.Parameters["password"] = passwordCredential.Password
+	config.Parameters["username"] = credentialConfig.Username
+	config.Parameters["password"] = credentialConfig.Password
 	config.Init()
 
 	dsManager, err := dsc.NewManagerFactory().Create(config)

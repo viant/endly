@@ -5,6 +5,7 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/ssh"
 	"strings"
+	"github.com/viant/toolbox/cred"
 )
 
 const ExecServiceId = "exec"
@@ -280,10 +281,10 @@ func (s *execService) openSession(context *Context, request *OpenSession) (*Clie
 		err = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
 		return sessions[sessionName], err
 	}
-	var authConfig = &ssh.AuthConfig{}
+	var authConfig = &cred.Config{}
 
 	if target.Credential != "" {
-		err = NewFileResource(target.Credential).JsonDecode(authConfig)
+		err = authConfig.Load(target.Credential)
 		if err != nil {
 			return nil, err
 		}

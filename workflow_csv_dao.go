@@ -544,6 +544,10 @@ func (d *WorkflowDao) loadMap(context *Context, parentResource *Resource, subpat
 
 	if escapeQuotes {
 		for k, v := range aMap {
+			if v == nil {
+				fmt.Printf("MAP WAS NIL %v %v\n", asset, aMap)
+				continue
+			}
 			if toolbox.IsMap(v) || toolbox.IsSlice(v) {
 				buf := new(bytes.Buffer)
 				err := toolbox.NewJSONEncoderFactory().Create(buf).Encode(v)

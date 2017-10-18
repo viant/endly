@@ -11,6 +11,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	"github.com/viant/toolbox/cred"
 )
 
 type Resource struct {
@@ -52,9 +53,7 @@ func (r *Resource) LoadCredential(errorIsEmpty bool) (string, string, error) {
 		}
 		return "", "", nil
 	}
-	credential := &storage.PasswordCredential{}
-	credentialResource := NewFileResource(r.Credential)
-	err := credentialResource.JsonDecode(credential)
+	credential, err  := cred.NewConfig(r.Credential)
 	if err != nil {
 		return "", "", reportError(fmt.Errorf("Failed to load Credential: %v %v", r.Credential, err))
 	}
