@@ -38,10 +38,9 @@ func AsProtobufMessage(source interface{}, state common.Map, target proto.Messag
 	}
 	buf := new(bytes.Buffer)
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)
+	defer encoder.Close()
 	encoder.Write(protodata)
-	encoder.Close()
 
-	fmt.Printf("ENCODED: %v\n", fmt.Sprintf("base64:%v", string(buf.Bytes())))
 	return fmt.Sprintf("base64:%v", string(buf.Bytes())), nil
 }
 
@@ -53,7 +52,6 @@ func FromProtobufMessage(source interface{}, state common.Map, sourceMessage pro
 			textSource = string(textSource[7:])
 			decoder := base64.NewDecoder(base64.StdEncoding, strings.NewReader(textSource))
 			data, err := ioutil.ReadAll(decoder)
-
 			if err != nil {
 				return nil, err
 			}
