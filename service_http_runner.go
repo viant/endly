@@ -194,7 +194,6 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		if err != nil {
 			return fmt.Errorf("Failed to send sendRequest unable to run udf: %v\n", err)
 		}
-		fmt.Printf("Transformed:%v\n", transformed)
 		response.Body = toolbox.AsString(transformed)
 	}
 	endEvent := s.End(context)(startEvent, Pairs("response", response))
