@@ -294,7 +294,7 @@ func NewDefaultState() common.Map {
 	var cachedUUID uuid.UUID
 	result.Put("uuid", func(key string) interface{} {
 		if key == "next" {
-			cachedUUID = uuid.NewV1()
+			cachedUUID = uuid.NewV4()
 		}
 		if len(cachedUUID) > 0 {
 			return cachedUUID.String()
