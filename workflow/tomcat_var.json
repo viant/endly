@@ -66,12 +66,13 @@
   },
   {
     "Name": "configUrl",
-    "From": "params.configUrl"
+    "From": "params.configUrl",
+    "Required":true
   },
   {
     "Name": "configUrlCredential",
     "From": "params.configUrlCredential",
-    "Value": ""
+    "Required":true
   },
   {
     "Name": "tomcat",
