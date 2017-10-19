@@ -194,12 +194,7 @@ func (s *WorkflowService) runAction(context *Context, action *ServiceAction) err
 
 	if serviceResponse.Error != "" {
 		var err = reportError(errors.New(serviceResponse.Error))
-		s.AddEvent(context, ErrorEventType, Pairs("error", err), Info)
-		//if action.IgnoreError {
-		//	serviceActivity.Error = serviceResponse.Error
-		//} else {
 			return err
-		//}
 	}
 
 
@@ -370,21 +365,27 @@ func (s *WorkflowService) isAsyncRequest(request interface{}) bool {
 	return false
 }
 
+func (s *WorkflowService) reportErrorIfNeeded(context *Context, response *ServiceResponse) {
+	if response.Error != "" {
+		s.AddEvent(context, ErrorEventType, Pairs("error", response.Error), Info)
+	}
+}
+
 func (s *WorkflowService) Run(context *Context, request interface{}) *ServiceResponse {
 	startedSession := s.startSession(context)
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	if ! s.isAsyncRequest(request) {
+		defer s.reportErrorIfNeeded(context, response)
 		defer s.End(context)(startEvent, Pairs("response", response))
 	}
-
-
 	var err error
 	switch actualRequest := request.(type) {
 	case *WorkflowRunRequest:
 		if actualRequest.Async {
 			go func() {
 				if startedSession {
+					defer s.reportErrorIfNeeded(context, response)
 					defer s.removeSession(context)
 				}
 				_, err:= s.runWorkflow(context, actualRequest)

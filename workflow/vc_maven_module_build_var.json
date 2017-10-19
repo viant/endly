@@ -2,7 +2,7 @@
   {
     "Name": "jdkVersion",
     "From": "params.jdkVersion",
-    "Value": "1.7"
+    "Required": true
   },
   {
     "Name": "buildGoal",
