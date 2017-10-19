@@ -43,7 +43,8 @@
           "Target": {
             "Name": "apache-maven",
             "Version": "3.5.0",
-            "URL": "scp://$build.host/usr/local/"
+            "URL": "scp://$build.host/usr/local/",
+            "Credential":"$build.credential"
           }
         },
         "VersionCheck": {
