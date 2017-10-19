@@ -29,7 +29,6 @@ func getServiceWithWorkflow(paths ...string) (endly.Manager, endly.Service, erro
 	return manager, service, err
 }
 
-
 func TestRunWorkflow(t *testing.T) {
 	go StartTestServer("8765")
 	time.Sleep(500 * time.Millisecond)

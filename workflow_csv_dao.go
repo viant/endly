@@ -301,16 +301,14 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 			continue
 		}
 
-
 		if relativeSubPath, ok := record.Record["Subpath"]; ok {
 			subPath = toolbox.AsString(relativeSubPath)
 		}
 
 		object = getObject(tag, result)
 		if hasActiveIterator {
-			object["Group"]= tag.Iterator.Index()
+			object["Group"] = tag.Iterator.Index()
 		}
-
 
 		for j := 1; j < len(record.Columns); j++ {
 			fieldExpressions := record.Columns[j]
@@ -338,11 +336,10 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 			} else {
 				if field.IsRoot {
 
-
 					if field.HasArrayComponent {
 						var expr = strings.Replace(field.expression, "[]", "", 1)
 						bucket, has := rootObject.GetValue(expr)
-						if ! has {
+						if !has {
 							bucket = common.NewCollection()
 						}
 						var bucketSlice = toolbox.AsSlice(bucket)
@@ -375,7 +372,7 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 			}
 		}
 
-		if _, has := object["SubPath"];!has {
+		if _, has := object["SubPath"]; !has {
 			object["SubPath"] = subPath
 		}
 		i += recordHeight
@@ -492,9 +489,6 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 			}
 		}
 
-
-
-
 		if URL == "" {
 			URL = toolbox.URLPathJoin(parentURL, asset)
 		}
@@ -502,8 +496,8 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 		if err != nil {
 			return nil, err
 		}
-		exists, err := service.Exists(URL);
-		if  !exists {
+		exists, err := service.Exists(URL)
+		if !exists {
 			endlyResource, err := NewEndlyRepoResource(context, asset)
 			if err == nil {
 				service, _ = storage.NewServiceForURL(endlyResource.URL, "")
@@ -523,10 +517,6 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 	}, nil
 }
 
-
-
-
-
 func (d *WorkflowDao) loadMap(context *Context, parentResource *Resource, subpath, asset string, escapeQuotes bool, index int) (common.Map, error) {
 	var aMap = make(map[string]interface{})
 	var assetContent = asset
@@ -541,11 +531,10 @@ func (d *WorkflowDao) loadMap(context *Context, parentResource *Resource, subpat
 		}
 	}
 
-
 	assetContent = d.expandIteratorIndex(context, assetContent)
 	assetContent = strings.Trim(assetContent, " \t\n\r")
-	if strings.HasPrefix(assetContent, "{")  {
-		err:= toolbox.NewJSONDecoderFactory().Create(strings.NewReader(assetContent)).Decode(&aMap)
+	if strings.HasPrefix(assetContent, "{") {
+		err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(assetContent)).Decode(&aMap)
 		if err != nil {
 			return nil, err
 		}
@@ -578,7 +567,7 @@ func (d *WorkflowDao) loadMap(context *Context, parentResource *Resource, subpat
 		}
 	}
 	aMap[fmt.Sprintf("arg%v", index)] = assetContent
-	aMap[fmt.Sprintf("args%v", index)] = string(assetContent[1:len(assetContent)-1])
+	aMap[fmt.Sprintf("args%v", index)] = string(assetContent[1 : len(assetContent)-1])
 	return common.Map(aMap), nil
 }
 
@@ -609,7 +598,7 @@ func getUdfIfDefined(expression string) (func(interface{}, common.Map) (interfac
 			var available = toolbox.MapKeysToStringSlice(UdfRegistry)
 			return nil, "", fmt.Errorf("Failed to lookup udf function %v on %v, avaialbe:[%v]", udfName, expression, strings.Join(available, ","))
 		}
-		value := string(expression[startArgumentPosition+1: endArgumentPosition])
+		value := string(expression[startArgumentPosition+1 : endArgumentPosition])
 		return udfFunction, value, nil
 	}
 	return nil, expression, nil
@@ -641,15 +630,13 @@ func (d *WorkflowDao) contextualizeValue(context *Context, value string) (interf
 	return value, false, nil
 }
 
-
-func  (d *WorkflowDao) expandIteratorIndex(context *Context, data string) string {
+func (d *WorkflowDao) expandIteratorIndex(context *Context, data string) string {
 	var state = context.State()
 	var index = state.GetString("index")
 	data = strings.Replace(data, "${index}", toolbox.AsString(index), len(data))
 	data = strings.Replace(data, "$index", toolbox.AsString(index), len(data))
 	return data
 }
-
 
 func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource, subpath, value string) (interface{}, bool, error) {
 	//TODO refactor to simplify and extend functionaliy
@@ -744,7 +731,7 @@ func decodeIteratrIfPresent(key string, result *Tag) string {
 	if iteratorStartPosition != -1 {
 		iteratorEndPosition := strings.Index(key, "}")
 		if iteratorEndPosition != -1 {
-			iteratorConstrain := key[iteratorStartPosition+1:iteratorEndPosition]
+			iteratorConstrain := key[iteratorStartPosition+1 : iteratorEndPosition]
 			pair := strings.Split(iteratorConstrain, "..")
 			for i, value := range pair {
 				pair[i] = strings.TrimSpace(value)

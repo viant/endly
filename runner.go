@@ -1,13 +1,13 @@
 package endly
 
 import (
-	"github.com/viant/toolbox"
+	"bytes"
+	"errors"
 	"fmt"
 	"github.com/logrusorgru/aurora"
-	"errors"
-	"time"
+	"github.com/viant/toolbox"
 	"strings"
-	"bytes"
+	"time"
 )
 
 var reportingEventSleep = 250 * time.Millisecond
@@ -54,8 +54,8 @@ func (c *UseCase) AddEvent(event *Event) {
 }
 
 type CliRunner struct {
-	manager  Manager
-	useCases []*UseCase
+	manager    Manager
+	useCases   []*UseCase
 	ErrorEvent *Event
 }
 
@@ -220,7 +220,7 @@ func (r *CliRunner) reportWorkflowActionEnd(event *Event) {
 }
 
 func (r *CliRunner) reportTransfer(event *Event) {
-	expand, _ := event.Value["expand"];
+	expand, _ := event.Value["expand"]
 	var expandInfo = fmt.Sprintf("expand:%v", expand)
 	var formattedEvent = formatStartEvent("Copy", expandInfo, event)
 	fmt.Printf("%v\n", formattedEvent)
@@ -445,90 +445,90 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 	switch event.Type {
 
 	case "WorkflowRunRequest.Start":
-		if ! filter.Workflow {
+		if !filter.Workflow {
 			return nil
 		}
 		r.reportWorkflowStart(event)
 	case "WorkflowRunRequest.End":
-		if ! filter.Workflow {
+		if !filter.Workflow {
 			return nil
 		}
 		r.reportWorkflowEnd(event)
 
 	case "ServiceAction.Start":
-		if ! filter.Action {
+		if !filter.Action {
 			return nil
 		}
 		r.reportWorkflowActionStart(event)
 	case "ServiceAction.End":
-		if ! filter.Action {
+		if !filter.Action {
 			return nil
 		}
 		r.reportWorkflowActionEnd(event)
 	case "WorkflowTask.Start":
-		if ! filter.Task {
+		if !filter.Task {
 			return nil
 		}
 		r.reportTaskStart(event)
 	case "WorkflowTask.End":
-		if ! filter.Task {
+		if !filter.Task {
 			return nil
 		}
 		r.reportTaskEnd(event)
 
 	case "Execution.Start":
-		if ! filter.Stdin {
+		if !filter.Stdin {
 			return nil
 		}
 		r.reportStdin(event)
 	case "Execution.End":
-		if ! filter.Stdout {
+		if !filter.Stdout {
 			return nil
 		}
 		r.reportStdout(event)
 
 	case "Transfer.Start":
-		if ! filter.Transfer {
+		if !filter.Transfer {
 			return nil
 		}
 		r.reportTransfer(event)
 	case "Transfer.End":
 
 	case "DeploymentDeployRequest.Start":
-		if ! filter.Deployment {
+		if !filter.Deployment {
 			return nil
 		}
 		r.reportDeploymentStart(event)
 
 	case "DeploymentDeployRequest.End":
-		if ! filter.Deployment {
+		if !filter.Deployment {
 			return nil
 		}
 		r.reportDeploymentEnd(event)
 
 	case "DsUnitRegisterRequest.Start":
-		if ! filter.RegisterDatastore {
+		if !filter.RegisterDatastore {
 			return nil
 		}
 		r.reportDsUnitRegister(event)
 	case "DsUnitMappingRequest.Start":
-		if ! filter.DataMapping {
+		if !filter.DataMapping {
 			return nil
 		}
 		r.reportDsUnitMapping(event)
 	case "DsUnitTableSequenceRequest.End":
-		if ! filter.Sequence {
+		if !filter.Sequence {
 			return nil
 		}
 		r.reportDsUnitSequence(event)
 	case "PopulateDatastore":
 		r.reportPopulateDatestore(event)
-		if ! filter.PopulateDatastore {
+		if !filter.PopulateDatastore {
 			return nil
 		}
 
 	case "SQLScript":
-		if ! filter.SQLScript {
+		if !filter.SQLScript {
 			return nil
 		}
 		r.reportSQLScript(event)
@@ -536,13 +536,13 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 	case "ActionGroup":
 		r.reportActionGroup(event, filter)
 	case "HttpRequest.Start":
-		if ! filter.HttpTrip {
+		if !filter.HttpTrip {
 			return nil
 		}
 		r.reportHttpRequestStart(event)
 
 	case "HttpRequest.End":
-		if ! filter.HttpTrip {
+		if !filter.HttpTrip {
 			return nil
 		}
 		r.reportHttpRequestEnd(event)
@@ -553,7 +553,7 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 	case "Sleep":
 		r.reportSleep(event)
 	case "ValidatorAssertRequest.Start":
-		if ! filter.Assert {
+		if !filter.Assert {
 			return nil
 		}
 		r.reportValidatorStart(event)
@@ -604,11 +604,10 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 	var firstEvent *Event
 	var lastEvent *Event
 
-
 	if context.Workflow() != nil {
 		fmt.Printf("%v\n", aurora.Bold(fmt.Sprintf("[Started: %68v]", context.Workflow().Name)))
 	}
-	for ; ; {
+	for {
 		response := service.Run(context, &EventReporterRequest{
 			SessionId: sessionId,
 		})
@@ -618,11 +617,11 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 		}
 
 		reporterResponse, ok := response.Response.(*EventReporterResponse)
-		if ! ok {
+		if !ok {
 			return fmt.Errorf("Failed to check event - unexpected reponse type: %T", response.Response)
 		}
 		if len(reporterResponse.Events) == 0 {
-			if ! r.hasActiveSession(context, sessionId) {
+			if !r.hasActiveSession(context, sessionId) {
 				break
 			}
 			time.Sleep(reportingEventSleep)
@@ -642,8 +641,8 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 
 	}
 
-	var totalUseCaseFailed = 0;
-	var totalUseCasePassed = 0;
+	var totalUseCaseFailed = 0
+	var totalUseCasePassed = 0
 	for _, useCase := range r.useCases {
 		if useCase.FailedCount > 0 {
 			totalUseCaseFailed++
@@ -677,8 +676,6 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 	r.reportSummary(firstEvent, lastEvent, totalUseCaseFailed)
 	return nil
 }
-
-
 
 func (r *CliRunner) reportSummary(firstEvent *Event, lastEvent *Event, totalUseCaseFailed int) {
 	for _, useCase := range r.useCases {
@@ -723,7 +720,7 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 		return errors.New(response.Error)
 	}
 	workflowResponse, ok := response.Response.(*WorkflowRunResponse)
-	if ! ok {
+	if !ok {
 		return fmt.Errorf("Failed to run workflow: %v invalid response type %T", workflowRunRequestURL, response.Response)
 	}
 	return r.reportEvents(context, workflowResponse.SessionId, runnerOption.Filter)

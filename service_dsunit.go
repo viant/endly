@@ -7,8 +7,8 @@ import (
 	"github.com/viant/dsunit"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
-	"strings"
 	"github.com/viant/toolbox/cred"
+	"strings"
 )
 
 const DataStoreUnitServiceId = "dsunit"
@@ -83,8 +83,8 @@ type DsUnitPrepareRequest struct {
 	Credential string
 	Prefix     string //apply prefix
 	Postfix    string //apply suffix
-	Data map[string][]map[string]interface{}
-	Expand bool
+	Data       map[string][]map[string]interface{}
+	Expand     bool
 }
 
 func (r *DsUnitPrepareRequest) AsDatasetResource() *dsunit.DatasetResource {
@@ -127,7 +127,7 @@ type DsUnitPrepareResponse struct {
 type DsUnitVerifyRequest struct {
 	Datasets *dsunit.DatasetResource
 	//table to table rows data
-	Data map[string][]map[string]interface{}
+	Data        map[string][]map[string]interface{}
 	Expand      bool
 	CheckPolicy int
 }
@@ -419,7 +419,7 @@ type DsUnitPrepareTableData struct {
 func (d *DsUnitPrepareTableData) AuotGenerateIfNeeded(state common.Map) error {
 	for k, v := range d.AutoGenerate {
 		value, has := state.GetValue(v)
-		if ! has {
+		if !has {
 			return fmt.Errorf("Failed to autogenerate value for %v - unable to eval: %v \n", k, v)
 		}
 		state.SetValue(k, value)
@@ -461,7 +461,7 @@ func (d *DsUnitPrepareTableData) expandThis(textValue string, value map[string]i
 		for subKey, subValue := range value {
 			if toolbox.IsString(subValue) {
 				subKeyTextValue := toolbox.AsString(subValue)
-				if ! strings.Contains(subKeyTextValue, "this") {
+				if !strings.Contains(subKeyTextValue, "this") {
 					thisState.SetValue(fmt.Sprintf("this.%v", subKey), subKeyTextValue)
 				}
 			}
@@ -477,8 +477,7 @@ func (d *DsUnitPrepareTableData) GetValue(state common.Map, source interface{}) 
 		var textValue = toolbox.AsString(v)
 		if strings.Contains(textValue, "this") {
 			value[k] = d.expandThis(textValue, value)
-		} else
-		if strings.HasPrefix(textValue, "$") {
+		} else if strings.HasPrefix(textValue, "$") {
 			delete(value, k)
 		} else if strings.HasPrefix(textValue, "\\$") {
 			value[k] = string(textValue[1:])

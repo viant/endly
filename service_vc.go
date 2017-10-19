@@ -259,7 +259,6 @@ func (s *versionControlService) Run(context *Context, request interface{}) *Serv
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
 
-
 	var err error
 	switch actualRequest := request.(type) {
 	case *VcStatusRequest:

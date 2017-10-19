@@ -254,7 +254,7 @@ func (s *BuildService) Run(context *Context, request interface{}) *ServiceRespon
 	case *BuildRegisterMetaRequest:
 		err = s.registry.Register(actualRequest.Meta)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to register: %v",actualRequest.Meta.Name, err)
+			response.Error = fmt.Sprintf("Failed to register: %v", actualRequest.Meta.Name, err)
 		}
 
 	case *BuildLoadMetaRequest:

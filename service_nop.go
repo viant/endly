@@ -1,11 +1,8 @@
 package endly
 
-
 const NopService = "nop"
 
-
-
-type Nop struct {}
+type Nop struct{}
 
 //no operation service
 type nopService struct {
@@ -21,7 +18,7 @@ func (s *nopService) Run(context *Context, request interface{}) *ServiceResponse
 
 func (s *nopService) NewRequest(action string) (interface{}, error) {
 
-		return &Nop{}, nil
+	return &Nop{}, nil
 }
 
 func NewNopService() Service {

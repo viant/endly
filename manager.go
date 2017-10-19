@@ -2,10 +2,10 @@ package endly
 
 import (
 	"fmt"
+	"github.com/satori/go.uuid"
 	"github.com/viant/toolbox"
 	"strings"
 	"sync"
-	"github.com/satori/go.uuid"
 )
 
 const AppName = "endly - End To End Functional Testing "

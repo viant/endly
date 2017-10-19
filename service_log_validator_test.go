@@ -1,17 +1,17 @@
 package endly_test
 
 import (
-	"testing"
-	"github.com/viant/endly"
-	"github.com/stretchr/testify/assert"
-	"path"
-	"os"
-	"time"
-	"github.com/viant/toolbox"
 	"bytes"
-	"strings"
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly"
+	"github.com/viant/toolbox"
 	"io/ioutil"
+	"os"
+	"path"
+	"strings"
+	"testing"
+	"time"
 )
 
 var templateLog = map[string]interface{}{
@@ -64,12 +64,12 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	}
 
 	var response = service.Run(context, &endly.LogValidatorListenRequest{
-		Source:endly.NewResource(tempPath),
-		Types:[]*endly.LogType{
+		Source: endly.NewResource(tempPath),
+		Types: []*endly.LogType{
 			{
-				Name: "t",
-				Format:"json",
-				Mask : "*.log",
+				Name:   "t",
+				Format: "json",
+				Mask:   "*.log",
 			},
 		},
 	})
@@ -78,15 +78,14 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	assert.True(t, ok)
 	assert.NotNil(t, listenResponse)
 
-	logTypeMeta, ok:=listenResponse.Meta["t"]
+	logTypeMeta, ok := listenResponse.Meta["t"]
 	assert.True(t, ok)
 	assert.NotNil(t, logTypeMeta)
 	assert.True(t, strings.HasSuffix(logTypeMeta.Source.URL, tempPath))
 	assert.Equal(t, 2, len(logTypeMeta.Info))
 
-
 	response = service.Run(context, &endly.LogValidatorAssertRequest{
-		Type:"t",
+		Type: "t",
 		Data: []map[string]interface{}{
 			{
 				"k5": "10",
@@ -109,10 +108,8 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	assert.NotNil(t, assertionInfo)
 	assert.Equal(t, 0, len(assertionInfo.TestFailed))
 
-
-
 	response = service.Run(context, &endly.LogValidatorAssertRequest{
-		Type:"t",
+		Type: "t",
 		Data: []map[string]interface{}{
 			{
 				"k5": "20",
@@ -120,7 +117,6 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 			{
 				"k5": "30",
 			},
-
 		},
 	})
 
@@ -130,7 +126,4 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	assert.NotNil(t, assertionInfo)
 	assert.Equal(t, 0, len(assertionInfo.TestFailed))
 
-
 }
-
-

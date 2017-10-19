@@ -3,8 +3,8 @@ package endly
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"github.com/viant/toolbox"
+	"net/url"
 	"strings"
 )
 
@@ -55,7 +55,7 @@ func (r *DeploymentDeployRequest) Validate() error {
 		return fmt.Errorf("Failed to deploy app, Source URL was empty")
 	}
 	if r.AppName == "" {
-		_, appName :=toolbox.URLSplit(r.Transfer.Source.URL)
+		_, appName := toolbox.URLSplit(r.Transfer.Source.URL)
 		var versionPosition = strings.LastIndex(appName, "-")
 		if versionPosition != -1 {
 			appName = string(appName[:versionPosition])

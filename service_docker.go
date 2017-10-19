@@ -3,8 +3,8 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/toolbox"
-	"strings"
 	"github.com/viant/toolbox/cred"
+	"strings"
 )
 
 const DockerServiceId = "docker"
@@ -50,25 +50,25 @@ type DockerRunRequest struct {
 }
 
 type DockerContainerCheckRequest struct {
-	Target *Resource
-	SysPath    []string
-	Names  string
-	Image  string
+	Target  *Resource
+	SysPath []string
+	Names   string
+	Image   string
 }
 
 type DockerContainerStartRequest struct {
-	SysPath    []string
-	Target *Resource
+	SysPath []string
+	Target  *Resource
 }
 
 type DockerContainerRemoveRequest struct {
-	SysPath    []string
-	Target *Resource
+	SysPath []string
+	Target  *Resource
 }
 
 type DockerContainerStopRequest struct {
-	SysPath    []string
-	Target *Resource
+	SysPath []string
+	Target  *Resource
 }
 
 type DockerContainerCommandRequest struct {
@@ -247,9 +247,9 @@ func (s *DockerService) runContainer(context *Context, request *DockerRunRequest
 		}
 	}
 	return s.checkContainerProcess(context, &DockerContainerCheckRequest{
-		Target: request.Target,
-		Names:  request.Target.Name,
-		SysPath:request.SysPath,
+		Target:  request.Target,
+		Names:   request.Target.Name,
+		SysPath: request.SysPath,
 	})
 }
 
@@ -281,9 +281,9 @@ func (s *DockerService) startContainer(context *Context, request *DockerContaine
 		return nil, err
 	}
 	return s.checkContainerProcess(context, &DockerContainerCheckRequest{
-		Target: request.Target,
-		Names:  request.Target.Name,
-		SysPath:request.SysPath,
+		Target:  request.Target,
+		Names:   request.Target.Name,
+		SysPath: request.SysPath,
 	})
 
 }
@@ -297,9 +297,9 @@ func (s *DockerService) stopContainer(context *Context, request *DockerContainer
 	}
 
 	info, err := s.checkContainerProcess(context, &DockerContainerCheckRequest{
-		Target: request.Target,
-		Names:  request.Target.Name,
-		SysPath:request.SysPath,
+		Target:  request.Target,
+		Names:   request.Target.Name,
+		SysPath: request.SysPath,
 	})
 	if err != nil {
 		return nil, err
@@ -323,7 +323,6 @@ func (s *DockerService) removeContainer(context *Context, request *DockerContain
 	if len(request.SysPath) > 0 {
 		s.SysPath = request.SysPath
 	}
-
 
 	commandInfo, err := s.executeDockerCommand(context, request.Target, dockerErrors, "docker rm %v", request.Target.Name)
 	if err != nil {

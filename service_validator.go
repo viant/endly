@@ -46,7 +46,6 @@ func (s *ValidatorService) Run(context *Context, request interface{}) *ServiceRe
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
 
-
 	switch actualReuest := request.(type) {
 	case *ValidatorAssertRequest:
 		assertResponse, err := s.Assert(context, actualReuest)

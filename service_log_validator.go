@@ -2,14 +2,14 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/toolbox/storage"
-	"time"
-	"strings"
-	"regexp"
 	"github.com/viant/toolbox"
-	"sort"
+	"github.com/viant/toolbox/storage"
 	"io"
 	"io/ioutil"
+	"regexp"
+	"sort"
+	"strings"
+	"time"
 )
 
 const LogValidatorServiceId = "validator/log"
@@ -61,7 +61,7 @@ func (f *LogFile) processLog(reader io.Reader, handler func(url string, lineInde
 	var line = ""
 	var dataProcessed = 0
 	for i := 0; i < len(data); i++ {
-		dataProcessed++;
+		dataProcessed++
 		aChar := string(data[i])
 		if aChar != "\n" && aChar != "\r" {
 			line += aChar
@@ -74,7 +74,7 @@ func (f *LogFile) processLog(reader io.Reader, handler func(url string, lineInde
 		if err != nil {
 			return false, err
 		}
-		if ! next {
+		if !next {
 			return next, nil
 		}
 		f.ProcessingState.Line = lineIndex
@@ -97,7 +97,7 @@ func (m *LogTypeMeta) Range(initial *LogTypeMeta, handler func(url string, index
 	for name, info := range m.Info {
 		var initialInfo, has = initial.Info[name]
 		if has {
-			if info.Size == initialInfo.Size && ! initialInfo.HasPendingLogs() { //size has not change, and all data has been processed, fully processed
+			if info.Size == initialInfo.Size && !initialInfo.HasPendingLogs() { //size has not change, and all data has been processed, fully processed
 				continue
 			}
 			info.ProcessingState = initialInfo.ProcessingState
@@ -124,7 +124,7 @@ func (m *LogTypeMeta) Range(initial *LogTypeMeta, handler func(url string, index
 		if err != nil {
 			return err
 		}
-		if ! next {
+		if !next {
 			return nil
 		}
 	}
@@ -178,7 +178,7 @@ func (s *logValidatorService) Run(context *Context, request interface{}) *Servic
 func (s *logValidatorService) assert(context *Context, request *LogValidatorAssertRequest) (*ValidatorAssertionInfo, error) {
 	var key = LogTypeMetaKey(request.Type)
 	var state = s.State()
-	if ! state.Has(key) {
+	if !state.Has(key) {
 		return nil, fmt.Errorf("Failed to assert, unknown type:%v, please call listen function with requested log type", request.Type)
 	}
 	initialLogTypeMeta := state.Get(key).(*LogTypeMeta)
@@ -233,7 +233,7 @@ func (s *logValidatorService) loadLogTypeMeta(context *Context, source *Resource
 	return logTypesMeta[logType.Name], nil
 }
 
-func (s *logValidatorService) loadLogTypesMeta(context *Context, source *Resource, logTypes ... *LogType) (LogTypesMeta, error) {
+func (s *logValidatorService) loadLogTypesMeta(context *Context, source *Resource, logTypes ...*LogType) (LogTypesMeta, error) {
 	var err error
 	source, err = context.ExpandResource(source)
 	if err != nil {
@@ -262,13 +262,11 @@ func (s *logValidatorService) loadLogTypesMeta(context *Context, source *Resourc
 				}
 				logTypeMeta := response[logType.Name]
 				logInfo := &LogFile{
-					Name:         name,
-					URL:          candidate.URL(),
-					LastModified: candidate.LastModified(),
-					Size:         int(candidate.Size()),
-					ProcessingState: &LogProcessingState{
-
-					},
+					Name:            name,
+					URL:             candidate.URL(),
+					LastModified:    candidate.LastModified(),
+					Size:            int(candidate.Size()),
+					ProcessingState: &LogProcessingState{},
 				}
 				logTypeMeta.Info[logInfo.Name] = logInfo
 			}
@@ -289,7 +287,7 @@ func (s *logValidatorService) listen(context *Context, request *LogValidatorList
 	for _, logType := range request.Types {
 
 		logMeta, ok := loadLogTypeMeta[logType.Name]
-		if ! ok {
+		if !ok {
 			logMeta = NewLogTypeMeta(source, logType)
 			loadLogTypeMeta[logType.Name] = logMeta
 		}

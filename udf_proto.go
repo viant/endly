@@ -16,7 +16,7 @@ func AsProtobufMessage(source interface{}, state common.Map, target proto.Messag
 	var requestMap map[string]interface{}
 	if toolbox.IsString(source) {
 		requestMap = make(map[string]interface{})
-		err :=toolbox.NewJSONDecoderFactory().Create(strings.NewReader(toolbox.AsString(source))).Decode(&requestMap)
+		err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(toolbox.AsString(source))).Decode(&requestMap)
 		if err != nil {
 			fmt.Printf("Failed to run udf: %v %v\n", source, err)
 			return nil, err

@@ -1,12 +1,11 @@
 package endly
 
 import (
-	"sync"
-	"time"
 	"fmt"
 	"github.com/viant/toolbox"
+	"sync"
+	"time"
 )
-
 
 const (
 	All = iota
@@ -38,34 +37,30 @@ func (e *Events) Shift() *Event {
 	if len(e.Events) == 0 {
 		return nil
 	}
-	var result = e.Events[0];
+	var result = e.Events[0]
 	e.Events = e.Events[1:]
 	return result
 }
 
 type Event struct {
-	StartEvent *Event
-	Timestamp time.Time
+	StartEvent  *Event
+	Timestamp   time.Time
 	TimeTakenMs int
-	Workflow  string
-	Task      *WorkflowTask
-	Activity  *WorkflowServiceActivity
-	Level     int
-	Type      string
-	Value     map[string]interface{}
+	Workflow    string
+	Task        *WorkflowTask
+	Activity    *WorkflowServiceActivity
+	Level       int
+	Type        string
+	Value       map[string]interface{}
 }
-
-
-
 
 func (e *Event) Info() string {
 	var name = ""
-	if value, ok := e.Value["name"];ok {
+	if value, ok := e.Value["name"]; ok {
 		name = toolbox.AsString(value)
 	}
 	return fmt.Sprintf("%v", name)
 }
-
 
 func (e *Event) ElapsedInfo() string {
 	if e.TimeTakenMs == 0 {

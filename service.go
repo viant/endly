@@ -3,10 +3,10 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/endly/common"
-	"time"
 	"github.com/viant/toolbox"
-	"sync"
 	"strings"
+	"sync"
+	"time"
 )
 
 type ServiceResponse struct {
@@ -30,7 +30,7 @@ type AbstractService struct {
 	mutex *sync.RWMutex
 }
 
-func Pairs(params ... interface{}) map[string]interface{} {
+func Pairs(params ...interface{}) map[string]interface{} {
 	var result = make(map[string]interface{})
 	for i := 0; i < len(params); i += 2 {
 		var key = toolbox.AsString(params[i])
@@ -39,7 +39,7 @@ func Pairs(params ... interface{}) map[string]interface{} {
 	return result
 }
 
-func (s *AbstractService) AddEvent(context *Context, eventType string, value map[string]interface{}, level ... int) *Event {
+func (s *AbstractService) AddEvent(context *Context, eventType string, value map[string]interface{}, level ...int) *Event {
 	if len(level) == 0 {
 		level = []int{Info}
 	}
@@ -70,7 +70,7 @@ func (s *AbstractService) AddEvent(context *Context, eventType string, value map
 	return event
 }
 
-func (s *AbstractService) Begin(context *Context, source interface{}, value map[string]interface{}, level ... int) *Event {
+func (s *AbstractService) Begin(context *Context, source interface{}, value map[string]interface{}, level ...int) *Event {
 	if len(level) == 0 {
 		level = []int{Debug}
 	}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/storage"
 	"io/ioutil"
 	"net/url"
@@ -11,7 +12,6 @@ import (
 	"path"
 	"strings"
 	"time"
-	"github.com/viant/toolbox/cred"
 )
 
 type Resource struct {
@@ -53,7 +53,7 @@ func (r *Resource) LoadCredential(errorIsEmpty bool) (string, string, error) {
 		}
 		return "", "", nil
 	}
-	credential, err  := cred.NewConfig(r.Credential)
+	credential, err := cred.NewConfig(r.Credential)
 	if err != nil {
 		return "", "", reportError(fmt.Errorf("Failed to load Credential: %v %v", r.Credential, err))
 	}
@@ -145,7 +145,7 @@ func (r *Resource) Download() ([]byte, error) {
 	return content, err
 }
 
-func NewResource(URL string) (*Resource) {
+func NewResource(URL string) *Resource {
 	URL = normalizeURL(URL)
 	parsedURL, _ := url.Parse(URL)
 	return &Resource{
@@ -153,8 +153,6 @@ func NewResource(URL string) (*Resource) {
 		URL:       URL,
 	}
 }
-
-
 
 func normalizeURL(URL string) string {
 	if strings.Contains(URL, "://") {
@@ -169,13 +167,11 @@ func normalizeURL(URL string) string {
 			}
 		}
 	}
-	return  toolbox.FileSchema + URL
+	return toolbox.FileSchema + URL
 }
 
-
-
-
 const endlyRemoteRepo = "https://raw.githubusercontent.com/viant/endly/master/%v"
+
 var endlyLocalRepo = fmt.Sprintf("file://%v/src/github.com/viant/endly/%v", os.Getenv("GOPATH"), "%v")
 
 func NewEndlyRepoResource(context *Context, URI string) (*Resource, error) {

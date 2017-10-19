@@ -1,13 +1,13 @@
 package endly
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
+	"io/ioutil"
 	"os"
 	"path"
-	"io/ioutil"
-	"bytes"
 	"strings"
 )
 
@@ -40,7 +40,7 @@ func (v *Variable) PersistValue() error {
 func (v *Variable) Load() error {
 	if v.Value == nil {
 		var filename = v.tempfile()
-		if ! toolbox.FileExists(filename) {
+		if !toolbox.FileExists(filename) {
 			return nil
 		}
 		data, err := ioutil.ReadFile(filename)
@@ -83,7 +83,7 @@ func (v *Variables) Apply(in, out common.Map) error {
 			var has bool
 			if udfFunction == nil {
 				value, has = in.GetValue(variable.From)
-				if ! has {
+				if !has {
 
 					fromVariable := variable.fromVariable()
 					err = fromVariable.Load()

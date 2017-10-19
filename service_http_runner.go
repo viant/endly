@@ -97,9 +97,9 @@ type HttpResponse struct {
 }
 
 type SendHttpRequest struct {
-	Options  []*toolbox.HttpOptions
-	Requests []*HttpRequest
-	RequestUdf string
+	Options     []*toolbox.HttpOptions
+	Requests    []*HttpRequest
+	RequestUdf  string
 	ResponseUdf string
 }
 
@@ -139,7 +139,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 
 		if sendRequest.RequestUdf != "" {
 			var udf, has = UdfRegistry[sendRequest.RequestUdf]
-			if ! has {
+			if !has {
 				return fmt.Errorf("Failed to lookup udf: %v for: %v\n", sendRequest.RequestUdf, sendHttpRequest.URL)
 			}
 			transformed, err := udf(sendHttpRequest.Body, state)
@@ -187,7 +187,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 
 	if sendRequest.ResponseUdf != "" {
 		var udf, has = UdfRegistry[sendRequest.ResponseUdf]
-		if ! has {
+		if !has {
 			return fmt.Errorf("Failed to lookup udf: %v for: %v\n", sendRequest.ResponseUdf, sendHttpRequest.URL)
 		}
 		transformed, err := udf(response.Body, state)

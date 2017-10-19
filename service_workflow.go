@@ -183,7 +183,7 @@ func (s *WorkflowService) runAction(context *Context, action *ServiceAction) err
 		return fmt.Errorf("Failed to create request %v on %v.%v, %v", requestMap, action.Service, action.Action, err)
 	}
 	var responseMap = make(map[string]interface{})
-	startEvent := s.Begin(context, action, Pairs("service",  action.Service, "action", action.Action, "group", action.Group, "subPath", action.Subpath, "description", action.Description, "request", requestMap), Info)
+	startEvent := s.Begin(context, action, Pairs("service", action.Service, "action", action.Action, "group", action.Group, "subPath", action.Subpath, "description", action.Description, "request", requestMap), Info)
 
 	defer s.End(context)(startEvent, Pairs("response", responseMap))
 	serviceResponse := service.Run(context, serviceRequest)
@@ -191,9 +191,8 @@ func (s *WorkflowService) runAction(context *Context, action *ServiceAction) err
 
 	if serviceResponse.Error != "" {
 		var err = reportError(errors.New(serviceResponse.Error))
-			return err
+		return err
 	}
-
 
 	if serviceResponse.Response != nil {
 		converter.AssignConverted(responseMap, serviceResponse.Response)
@@ -208,8 +207,6 @@ func (s *WorkflowService) runAction(context *Context, action *ServiceAction) err
 	}
 	return nil
 }
-
-
 
 func (s *WorkflowService) runTask(context *Context, task *WorkflowTask, request *WorkflowRunRequest) error {
 	var state = context.state
@@ -241,7 +238,7 @@ func (s *WorkflowService) runTask(context *Context, task *WorkflowTask, request 
 		}
 		if action.Group != "" {
 			if group != action.Group {
-				s.AddEvent(context, "ActionGroup", Pairs( "name", action.Group, "description", action.Description, "subPath", action.Subpath), Info)
+				s.AddEvent(context, "ActionGroup", Pairs("name", action.Group, "description", action.Description, "subPath", action.Subpath), Info)
 			}
 			group = action.Group
 		}
@@ -307,7 +304,6 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	return response, nil
 }
 
-
 func buildParamsMap(request *WorkflowRunRequest, context *Context) common.Map {
 	var params = common.NewMap()
 	if len(request.Params) > 0 {
@@ -358,7 +354,7 @@ func (s *WorkflowService) startSession(context *Context) bool {
 }
 
 func (s *WorkflowService) isAsyncRequest(request interface{}) bool {
-	if runRequest, ok := request.(*WorkflowRunRequest);ok {
+	if runRequest, ok := request.(*WorkflowRunRequest); ok {
 		return runRequest.Async
 	}
 	return false
@@ -376,7 +372,7 @@ func (s *WorkflowService) Run(context *Context, request interface{}) *ServiceRes
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.reportErrorIfNeeded(context, response)
 
-	if ! s.isAsyncRequest(request) {
+	if !s.isAsyncRequest(request) {
 		defer s.End(context)(startEvent, Pairs("response", response))
 	}
 	var err error
@@ -388,7 +384,7 @@ func (s *WorkflowService) Run(context *Context, request interface{}) *ServiceRes
 					defer s.reportErrorIfNeeded(context, response)
 					defer s.removeSession(context)
 				}
-				_, err:= s.runWorkflow(context, actualRequest)
+				_, err := s.runWorkflow(context, actualRequest)
 				if err != nil {
 					s.AddEvent(context, ErrorEventType, Pairs("error", err), Info)
 				}

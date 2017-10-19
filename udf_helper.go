@@ -1,14 +1,13 @@
 package endly
 
 import (
-	"github.com/viant/endly/common"
-	"github.com/viant/toolbox"
 	"bytes"
 	"crypto/md5"
-	"io"
 	"fmt"
-
-	)
+	"github.com/viant/endly/common"
+	"github.com/viant/toolbox"
+	"io"
+)
 
 func AsMap(source interface{}, state common.Map) (interface{}, error) {
 	if source == nil || toolbox.IsMap(source) {

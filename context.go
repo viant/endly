@@ -3,17 +3,17 @@ package endly
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	uuid "github.com/satori/go.uuid"
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/storage"
 	"math/rand"
 	"net/url"
 	"os"
 	"os/exec"
-	uuid "github.com/satori/go.uuid"
 	"path"
 	"strings"
 	"time"
-	"github.com/viant/toolbox/storage"
 )
 
 //TODO Execution detail Tracking of all run (time taken, request, response)
@@ -27,8 +27,8 @@ var deferFunctionsKey = (*[]func())(nil)
 var workflowKey = (*Workflow)(nil)
 
 type Context struct {
-	SessionId     string
-	state         common.Map
+	SessionId string
+	state     common.Map
 	toolbox.Context
 	Events        *Events
 	workflowStack *[]*Workflow
@@ -75,11 +75,11 @@ func (c *Context) parentURLCandidates() []string {
 	var result = make([]string, 0)
 	if workflow := c.Workflow(); workflow != nil && workflow.source != nil {
 		baseURL, _ := toolbox.URLSplit(workflow.source.URL)
-		result  = append(result, baseURL)
+		result = append(result, baseURL)
 	}
 	currentDirectory, err := os.Getwd()
 	if err == nil {
-		result  = append(result, toolbox.FileSchema + currentDirectory)
+		result = append(result, toolbox.FileSchema+currentDirectory)
 	}
 
 	return result
@@ -96,12 +96,12 @@ func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 
 	if !strings.Contains(resource.URL, "://") {
 		for _, parentCandidate := range c.parentURLCandidates() {
-			service, err :=storage.NewServiceForURL(parentCandidate, "")
+			service, err := storage.NewServiceForURL(parentCandidate, "")
 			if err != nil {
 				continue
 			}
 			var candidateURL = toolbox.URLPathJoin(parentCandidate, resource.URL)
-			if exists, err := service.Exists(candidateURL);exists && err == nil {
+			if exists, err := service.Exists(candidateURL); exists && err == nil {
 				resource.URL = candidateURL
 			}
 		}
@@ -176,7 +176,6 @@ func (c *Context) State() common.Map {
 func (c *Context) SetState(state common.Map) {
 	c.state = state
 }
-
 
 func (c *Context) Workflow() *Workflow {
 	var result *Workflow
@@ -270,7 +269,6 @@ func (c *Context) Transfer(transfers ...*Transfer) (interface{}, error) {
 	}
 	return nil, nil
 }
-
 
 func (c *Context) Expand(text string) string {
 	state := c.State()

@@ -3,21 +3,19 @@ package endly
 import "github.com/viant/endly/common"
 
 type ServiceAction struct {
-	RunCriteria   string
-	Service       string
-	Action        string
-	Group 		 string
-	Name          string
-	Description   string
-	Subpath       string
-	Init          Variables
-	Post          Variables
-	Request       interface{}
-	SleepInMs     int
-	IgnoreError   bool
+	RunCriteria string
+	Service     string
+	Action      string
+	Group       string
+	Name        string
+	Description string
+	Subpath     string
+	Init        Variables
+	Post        Variables
+	Request     interface{}
+	SleepInMs   int
+	IgnoreError bool
 }
-
-
 
 type WorkflowTask struct {
 	RunCriteria string
@@ -27,9 +25,8 @@ type WorkflowTask struct {
 	Actions     []*ServiceAction
 	Init        Variables
 	Post        Variables
-	SleepInMs int
+	SleepInMs   int
 }
-
 
 type Workflow struct {
 	source      *Resource

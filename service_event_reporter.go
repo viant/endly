@@ -41,7 +41,7 @@ func (s *eventReporterService) getWorkFlowContext(context *Context, sessionId st
 		return nil, nil
 	}
 	workflowContext, _ := value.(*Context)
-	return workflowContext,nil
+	return workflowContext, nil
 
 }
 
@@ -56,7 +56,7 @@ func (s *eventReporterService) report(context *Context, request *EventReporterRe
 		return response, nil
 	}
 	var eventCount = len(workflowContext.Events.Events)
-	for i := 0 ; i < eventCount; i++ {
+	for i := 0; i < eventCount; i++ {
 		var event = workflowContext.Events.Shift()
 		if event == nil {
 			break
