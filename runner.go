@@ -56,6 +56,7 @@ func (c *UseCase) AddEvent(event *Event) {
 type CliRunner struct {
 	manager  Manager
 	useCases []*UseCase
+	ErrorEvent *Event
 }
 
 func (r *CliRunner) AddUseCase(useCases *UseCase) {
@@ -548,6 +549,7 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 
 	case "Error":
 		r.reportError(event)
+		r.ErrorEvent = event
 	case "Sleep":
 		r.reportSleep(event)
 	case "ValidatorAssertRequest.Start":
@@ -677,7 +679,7 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 		var elapsed = fmt.Sprintf("%9.3f ", float64(timeTaken)/float64(time.Millisecond)/1000)
 		fmt.Printf("%v\n", aurora.Bold(fmt.Sprintf("[Elapsed: %70vs.]", elapsed)))
 	}
-	if totalUseCaseFailed > 0 {
+	if totalUseCaseFailed > 0 || r.ErrorEvent != nil {
 		fmt.Printf("%v\n", aurora.Red(fmt.Sprintf("[Status: %73v]", "ERROR")))
 	} else {
 		fmt.Printf("%v\n", aurora.Green(fmt.Sprintf("[Status: %73v]", "SUCCESS")))
