@@ -32,7 +32,7 @@ func TestDsUnitService(t *testing.T) {
 			AdminDatastore: "mysql",
 			ClearDatastore: true,
 			Scripts: []*endly.Resource{
-				endly.NewFileResource("test/dsunit/mydb1.sql"),
+				endly.NewResource("test/dsunit/mydb1.sql"),
 			},
 		})
 
@@ -40,7 +40,7 @@ func TestDsUnitService(t *testing.T) {
 		response = service.Run(context, &endly.DsUnitPrepareRequest{
 			Datastore: "mydb1",
 			Prefix:    "prepare_",
-			URL:       endly.NewFileResource("test/dsunit/dataset1").URL,
+			URL:       endly.NewResource("test/dsunit/dataset1").URL,
 		})
 		assert.Equal(t, "", response.Error)
 
@@ -48,7 +48,7 @@ func TestDsUnitService(t *testing.T) {
 			Datasets: &dsunit.DatasetResource{
 				Datastore: "mydb1",
 				Prefix:    "verify_",
-				URL:       endly.NewFileResource("test/dsunit/dataset1").URL,
+				URL:       endly.NewResource("test/dsunit/dataset1").URL,
 			},
 		})
 		assert.Equal(t, "", response.Error)
@@ -61,7 +61,7 @@ func TestDsUnitService(t *testing.T) {
 			Datasets: &dsunit.DatasetResource{
 				Datastore: "mydb1",
 				Prefix:    "err_",
-				URL:       endly.NewFileResource("test/dsunit/dataset1").URL,
+				URL:       endly.NewResource("test/dsunit/dataset1").URL,
 			},
 		})
 		assert.True(t, response.Error != "")
@@ -69,7 +69,7 @@ func TestDsUnitService(t *testing.T) {
 		response = service.Run(context, &endly.DsUnitMappingRequest{
 			Mappings: []*endly.Resource{
 
-				endly.NewFileResource("test/workflow/mapping.json"),
+				endly.NewResource("test/workflow/mapping.json"),
 			},
 		})
 		assert.Equal(t, "", response.Error)

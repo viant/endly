@@ -101,13 +101,9 @@ func (s *BuildService) loadBuildMeta(context *Context, buildMetaURL string) erro
 	if buildMetaURL == "" {
 		return fmt.Errorf("buildMeta was empty")
 	}
-	resource, err := NewResource(buildMetaURL)
-	if err != nil {
-		return err
-	}
-
+	resource := NewResource(buildMetaURL)
 	meta := &BuildMeta{}
-	err = resource.JsonDecode(meta)
+	err := resource.JsonDecode(meta)
 	if err != nil {
 		return err
 	}

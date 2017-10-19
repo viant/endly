@@ -19,7 +19,7 @@ func getServiceWithWorkflow(paths ...string) (endly.Manager, endly.Service, erro
 		for _, workflowPath := range paths {
 			context := manager.NewContext(toolbox.NewContext())
 			response := service.Run(context, &endly.WorkflowLoadRequest{
-				Source: endly.NewFileResource(workflowPath),
+				Source: endly.NewResource(workflowPath),
 			})
 			if response.Error != "" {
 				return nil, nil, errors.New(response.Error)
@@ -93,7 +93,7 @@ func TestRunWorkflowMysql(t *testing.T) {
 					"credential":          targetCredential,
 					"mysqlCredential":     mysqlCredential,
 					"stopSystemMysql":     true,
-					"configUrl":           endly.NewFileResource("test/docker/my.cnf").URL,
+					"configUrl":           endly.NewResource("test/docker/my.cnf").URL,
 					"configUrlCredential": path.Join(os.Getenv("HOME"), "/secret/scp.json"),
 					"serviceInstanceName": "dockerizedMysql1",
 				},
@@ -118,7 +118,7 @@ func TestRunWorkflowMysql(t *testing.T) {
 					"credential":          targetCredential,
 					"mysqlCredential":     mysqlCredential,
 					"stopSystemMysql":     true,
-					"configUrl":           endly.NewFileResource("test/docker/my.cnf").URL,
+					"configUrl":           endly.NewResource("test/docker/my.cnf").URL,
 					"configUrlCredential": path.Join(os.Getenv("HOME"), "/secret/scp.json"),
 					"serviceInstanceName": "dockerizedMysql1",
 				},
@@ -146,7 +146,7 @@ func TestRunWorkflowAerospike(t *testing.T) {
 	assert.NotNil(t, service)
 	credential := path.Join(os.Getenv("HOME"), "secret/scp.json")
 	if toolbox.FileExists(credential) {
-		aerospikeConfigUrl := endly.NewFileResource("test/workflow/aerospike.conf").URL
+		aerospikeConfigUrl := endly.NewResource("test/workflow/aerospike.conf").URL
 
 		context := manager.NewContext(toolbox.NewContext())
 		response := service.Run(context, &endly.WorkflowRunRequest{
@@ -198,7 +198,7 @@ func TestRunWorfklowVCMavenwBuild(t *testing.T) {
 	if toolbox.FileExists(credential) {
 		baseSvnUrlFile := path.Join(os.Getenv("HOME"), "baseSvnUrl")
 		if toolbox.FileExists(baseSvnUrlFile) {
-			baseSvnUrl, err := endly.NewFileResource(path.Join(os.Getenv("HOME"), "baseSvnUrl")).DownloadText()
+			baseSvnUrl, err := endly.NewResource(path.Join(os.Getenv("HOME"), "baseSvnUrl")).DownloadText()
 			baseSvnUrl = strings.Trim(baseSvnUrl, " \r\n")
 			assert.Nil(t, err)
 			context := manager.NewContext(toolbox.NewContext())
@@ -238,11 +238,11 @@ func TestRunWorfklowTomcatApp(t *testing.T) {
 	targetCredential := path.Join(os.Getenv("HOME"), "secret/scp.json")
 
 	if toolbox.FileExists(targetCredential) {
-		configUrl := endly.NewFileResource("test/workflow/tomcat-server.xml").URL
+		configUrl := endly.NewResource("test/workflow/tomcat-server.xml").URL
 
 		baseSvnUrlFile := path.Join(os.Getenv("HOME"), "baseSvnUrl")
 		if toolbox.FileExists(baseSvnUrlFile) {
-			baseSvnUrl, err := endly.NewFileResource(path.Join(os.Getenv("HOME"), "baseSvnUrl")).DownloadText()
+			baseSvnUrl, err := endly.NewResource(path.Join(os.Getenv("HOME"), "baseSvnUrl")).DownloadText()
 			baseSvnUrl = strings.Trim(baseSvnUrl, " \r\n")
 			assert.Nil(t, err)
 			context := manager.NewContext(toolbox.NewContext())

@@ -33,8 +33,8 @@ func TestNewTransferService(t *testing.T) {
 			response := service.Run(context, &endly.TransferCopyRequest{
 				Transfers: []*endly.Transfer{
 					{
-						Source: endly.NewFileResource("test/transfer/config.json"),
-						Target: endly.NewFileResource("/tmp/transfered.json"),
+						Source: endly.NewResource("test/transfer/config.json"),
+						Target: endly.NewResource("/tmp/transfered.json"),
 						Expand: true,
 					},
 				},
@@ -58,8 +58,8 @@ func TestNewTransferService(t *testing.T) {
 			response := service.Run(context, &endly.TransferCopyRequest{
 				Transfers: []*endly.Transfer{
 					{
-						Source: endly.NewFileResource("test/transfer/config.json"),
-						Target: endly.NewFileResource("/tmp/transfered.json"),
+						Source: endly.NewResource("test/transfer/config.json"),
+						Target: endly.NewResource("/tmp/transfered.json"),
 					},
 				},
 			})

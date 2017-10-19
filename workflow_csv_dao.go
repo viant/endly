@@ -26,6 +26,7 @@ func (d *WorkflowDao) Load(context *Context, source *Resource) (*Workflow, error
 	if err != nil {
 		return nil, err
 	}
+
 	content, err := resource.DownloadText()
 	if err != nil {
 		return nil, err
@@ -471,38 +472,46 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 	if strings.Contains(asset, ",") {
 		var pair = strings.Split(asset, ",")
 		URL = strings.TrimSpace(pair[0])
-
 		credential = strings.TrimSpace(pair[1])
-	} else if strings.Contains(asset, "://") {
+	}
+
+	var parentURL = ""
+
+	if strings.Contains(asset, "://") {
 		URL = asset
 	} else if strings.HasPrefix(asset, "/") {
 		URL = fmt.Sprintf("file://%v", asset)
 	} else {
 
-		parent, _ := path.Split(resource.ParsedURL.Path)
+		parentURL, _ = toolbox.URLSplit(resource.URL)
 		if subpath != "" {
 			useSubpath = true
-			fileCandidate := path.Join(parent, subpath, asset)
+			fileCandidate := path.Join(parentURL, subpath, asset)
 			if toolbox.FileExists(fileCandidate) {
 				URL = fmt.Sprintf("file://%v", fileCandidate)
 			}
 		}
 
+
+
+
 		if URL == "" {
-			URL = string(resource.URL[:strings.Index(resource.URL, "://")]) + fmt.Sprintf("://%v", path.Join(parent, asset))
+			URL = toolbox.URLPathJoin(parentURL, asset)
 		}
 		service, err := storage.NewServiceForURL(URL, credential)
 		if err != nil {
 			return nil, err
 		}
-		if exists, _ := service.Exists(URL); !exists {
+		exists, err := service.Exists(URL);
+		if  !exists {
 			endlyResource, err := NewEndlyRepoResource(context, asset)
 			if err == nil {
+				service, _ = storage.NewServiceForURL(endlyResource.URL, "")
 				if exists, _ := service.Exists(endlyResource.URL); exists {
 					URL = endlyResource.URL
 				}
 			} else if useSubpath {
-				fileCandidate := path.Join(parent, subpath, asset)
+				fileCandidate := path.Join(parentURL, subpath, asset)
 				URL = fmt.Sprintf("file://%v", fileCandidate)
 			}
 		}
@@ -545,7 +554,6 @@ func (d *WorkflowDao) loadMap(context *Context, parentResource *Resource, subpat
 	if escapeQuotes {
 		for k, v := range aMap {
 			if v == nil {
-				fmt.Printf("MAP WAS NIL %v %v\n", asset, aMap)
 				continue
 			}
 			if toolbox.IsMap(v) || toolbox.IsSlice(v) {
@@ -560,12 +568,9 @@ func (d *WorkflowDao) loadMap(context *Context, parentResource *Resource, subpat
 				textValue := toolbox.AsString(v)
 				if strings.Contains(textValue, "\"") {
 					textValue = strings.Replace(textValue, "\\", "\\\\", len(textValue))
-
 					textValue = strings.Replace(textValue, "\n", "", len(textValue))
-
 					textValue = strings.Replace(textValue, "\"", "\\\"", len(textValue))
 					//fmt.Printf(textValue)
-
 					aMap[k] = textValue
 
 				}

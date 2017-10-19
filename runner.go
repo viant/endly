@@ -604,8 +604,10 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 	var firstEvent *Event
 	var lastEvent *Event
 
-	fmt.Printf("%v\n", aurora.Bold(fmt.Sprintf("[Started: %68v]", context.Workflow().Name)))
 
+	if context.Workflow() != nil {
+		fmt.Printf("%v\n", aurora.Bold(fmt.Sprintf("[Started: %68v]", context.Workflow().Name)))
+	}
 	for ; ; {
 		response := service.Run(context, &EventReporterRequest{
 			SessionId: sessionId,
@@ -645,7 +647,6 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 	for _, useCase := range r.useCases {
 		if useCase.FailedCount > 0 {
 			totalUseCaseFailed++
-			fmt.Printf("%v\n", aurora.Red(fmt.Sprintf("[%-6v %13v: %59v]", useCase.ActionGroup, useCase.Syspath, "Failed")))
 		} else if useCase.PassedCount > 0 {
 			totalUseCasePassed++
 		}
@@ -673,7 +674,18 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 			}
 		}
 	}
+	r.reportSummary(firstEvent, lastEvent, totalUseCaseFailed)
+	return nil
+}
 
+
+
+func (r *CliRunner) reportSummary(firstEvent *Event, lastEvent *Event, totalUseCaseFailed int) {
+	for _, useCase := range r.useCases {
+		if useCase.FailedCount > 0 {
+			fmt.Printf("%v\n", aurora.Red(fmt.Sprintf("[%-6v %13v: %59v]", useCase.ActionGroup, useCase.Syspath, "Failed")))
+		}
+	}
 	if firstEvent != nil {
 		var timeTaken = lastEvent.Timestamp.UnixNano() - firstEvent.Timestamp.UnixNano()
 		var elapsed = fmt.Sprintf("%9.3f ", float64(timeTaken)/float64(time.Millisecond)/1000)
@@ -684,17 +696,12 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 	} else {
 		fmt.Printf("%v\n", aurora.Green(fmt.Sprintf("[Status: %73v]", "SUCCESS")))
 	}
-
-	return nil
 }
 
 func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	request := &WorkflowRunRequest{}
-	resource, err := NewResource(workflowRunRequestURL)
-	if err != nil {
-		return err
-	}
-	err = resource.JsonDecode(request)
+	resource := NewResource(workflowRunRequestURL)
+	err := resource.JsonDecode(request)
 	if err != nil {
 		return err
 	}
@@ -708,6 +715,8 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	if err != nil {
 		return err
 	}
+	fmt.Printf("RUN %v %v\n", request.Name, request.Tasks)
+
 	request.Async = true
 	response := service.Run(context, request)
 	if response.Error != "" {

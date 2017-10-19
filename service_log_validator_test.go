@@ -64,7 +64,7 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	}
 
 	var response = service.Run(context, &endly.LogValidatorListenRequest{
-		Source:endly.NewFileResource(tempPath),
+		Source:endly.NewResource(tempPath),
 		Types:[]*endly.LogType{
 			{
 				Name: "t",

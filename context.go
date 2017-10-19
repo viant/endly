@@ -13,6 +13,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	"github.com/viant/toolbox/storage"
 )
 
 //TODO Execution detail Tracking of all run (time taken, request, response)
@@ -70,6 +71,20 @@ func (c *Context) Clone() *Context {
 	return result
 }
 
+func (c *Context) parentURLCandidates() []string {
+	var result = make([]string, 0)
+	if workflow := c.Workflow(); workflow != nil && workflow.source != nil {
+		baseURL, _ := toolbox.URLSplit(workflow.source.URL)
+		result  = append(result, baseURL)
+	}
+	currentDirectory, err := os.Getwd()
+	if err == nil {
+		result  = append(result, toolbox.FileSchema + currentDirectory)
+	}
+
+	return result
+}
+
 func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 	var err error
 	if resource == nil {
@@ -80,9 +95,15 @@ func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 	}
 
 	if !strings.Contains(resource.URL, "://") {
-		if workflow := c.Workflow(); workflow != nil && workflow.source != nil {
-			baseURL, _ := toolbox.URLSplit(workflow.source.URL)
-			resource.URL = toolbox.URLPathJoin(baseURL, resource.URL)
+		for _, parentCandidate := range c.parentURLCandidates() {
+			service, err :=storage.NewServiceForURL(parentCandidate, "")
+			if err != nil {
+				continue
+			}
+			var candidateURL = toolbox.URLPathJoin(parentCandidate, resource.URL)
+			if exists, err := service.Exists(candidateURL);exists && err == nil {
+				resource.URL = candidateURL
+			}
 		}
 	}
 

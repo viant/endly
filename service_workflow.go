@@ -123,10 +123,7 @@ func (s *WorkflowService) loadWorkflowIfNeeded(context *Context, name string, UR
 	if !s.HasWorkflow(name) {
 		var workflowResource *Resource
 		if URL != "" {
-			workflowResource, err = NewResource(URL)
-			if err != nil {
-				return err
-			}
+			workflowResource = NewResource(URL)
 		} else {
 			workflowResource, err = NewEndlyRepoResource(context, fmt.Sprintf("workflow/%v.csv", name))
 			if err != nil {
@@ -339,10 +336,12 @@ func (s *WorkflowService) loadWorkflow(context *Context, request *WorkflowLoadRe
 }
 
 func (s *WorkflowService) removeSession(context *Context) {
-	time.Sleep(1 * time.Second)
-	s.Mutex().Lock()
-	defer s.Mutex().Unlock()
-	s.state.Delete(context.SessionId)
+	go func() {
+		time.Sleep(2 * time.Second)
+		s.Mutex().Lock()
+		defer s.Mutex().Unlock()
+		s.state.Delete(context.SessionId)
+	}()
 }
 
 func (s *WorkflowService) startSession(context *Context) bool {
@@ -375,8 +374,9 @@ func (s *WorkflowService) Run(context *Context, request interface{}) *ServiceRes
 	startedSession := s.startSession(context)
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
+	defer s.reportErrorIfNeeded(context, response)
+
 	if ! s.isAsyncRequest(request) {
-		defer s.reportErrorIfNeeded(context, response)
 		defer s.End(context)(startEvent, Pairs("response", response))
 	}
 	var err error
@@ -389,7 +389,6 @@ func (s *WorkflowService) Run(context *Context, request interface{}) *ServiceRes
 					defer s.removeSession(context)
 				}
 				_, err:= s.runWorkflow(context, actualRequest)
-				fmt.Printf("Completed async workflow\n")
 				if err != nil {
 					s.AddEvent(context, ErrorEventType, Pairs("error", err), Info)
 				}

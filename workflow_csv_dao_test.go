@@ -116,7 +116,7 @@ func TestNewWorkflowDao(t *testing.T) {
 		}
 		dao := endly.NewWorkflowDao()
 		conext := &endly.Context{Context: toolbox.NewContext()}
-		workflow, err := dao.Load(conext, endly.NewFileResource("test/workflow/w1.csv"))
+		workflow, err := dao.Load(conext, endly.NewResource("test/workflow/w1.csv"))
 
 		assert.Nil(t, err)
 		if assert.NotNil(t, workflow) {
@@ -147,7 +147,7 @@ func TestNewWorkflowDao(t *testing.T) {
 	{
 		dao := endly.NewWorkflowDao()
 		conext := &endly.Context{Context: toolbox.NewContext()}
-		workflow, err := dao.Load(conext, endly.NewFileResource("test/workflow/simple.csv"))
+		workflow, err := dao.Load(conext, endly.NewResource("test/workflow/simple.csv"))
 		assert.Nil(t, err)
 		assert.NotNil(t, workflow)
 		task := workflow.Tasks[0]

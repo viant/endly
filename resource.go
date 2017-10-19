@@ -145,27 +145,8 @@ func (r *Resource) Download() ([]byte, error) {
 	return content, err
 }
 
-func NewResource(URL string) (*Resource, error) {
-	parsedURL, err := url.Parse(URL)
-	if err != nil {
-		return nil, err
-	}
-	return &Resource{
-		ParsedURL: parsedURL,
-		URL:       URL,
-	}, nil
-}
-
-func NewFileResource(resource string) *Resource {
-	if resource == "" {
-		return nil
-	}
-	if !strings.HasPrefix(resource, "/") {
-		fileName, _, _ := toolbox.CallerInfo(3)
-		parent, _ := path.Split(fileName)
-		resource = path.Join(parent, resource)
-	}
-	var URL = toolbox.FileSchema + resource
+func NewResource(URL string) (*Resource) {
+	URL = normalizeURL(URL)
 	parsedURL, _ := url.Parse(URL)
 	return &Resource{
 		ParsedURL: parsedURL,
@@ -173,18 +154,38 @@ func NewFileResource(resource string) *Resource {
 	}
 }
 
-const endlyRepo = "https://raw.githubusercontent.com/viant/endly/master/%v"
+
+
+func normalizeURL(URL string) string {
+	if strings.Contains(URL, "://") {
+		return URL
+	}
+	if !strings.HasPrefix(URL, "/") {
+		currentDirectory, err := os.Getwd()
+		if err == nil {
+			candidate := path.Join(currentDirectory, URL)
+			if toolbox.FileExists(candidate) {
+				URL = candidate
+			}
+		}
+	}
+	return  toolbox.FileSchema + URL
+}
+
+
+
+
+const endlyRemoteRepo = "https://raw.githubusercontent.com/viant/endly/master/%v"
+var endlyLocalRepo = fmt.Sprintf("file://%v/src/github.com/viant/endly/%v", os.Getenv("GOPATH"), "%v")
 
 func NewEndlyRepoResource(context *Context, URI string) (*Resource, error) {
-	localResource := NewFileResource(URI)
+	var endlyLocalResource = fmt.Sprintf(endlyLocalRepo, URI)
+	var localResource = NewResource(endlyLocalResource)
+	var remoteResource = NewResource(fmt.Sprintf(endlyRemoteRepo, URI))
 	if toolbox.FileExists(localResource.ParsedURL.Path) {
-		return localResource, nil
+		return NewResource(endlyLocalResource), nil
 	}
-	remoteResource, err := NewResource(fmt.Sprintf(endlyRepo, URI))
-	if err != nil {
-		return nil, err
-	}
-	_, err = context.Copy(false, remoteResource, localResource)
+	_, err := context.Copy(false, remoteResource, localResource)
 	if err != nil {
 		return nil, err
 	}
