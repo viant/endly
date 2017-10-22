@@ -87,7 +87,7 @@ func (r *HttpRequest) Expand(context *Context) *HttpRequest {
 }
 
 type HttpResponse struct {
-	Request     *HttpRequest
+	//Request     *HttpRequest
 	Code        int
 	Header      http.Header
 	Cookies     map[string]*http.Cookie
@@ -169,7 +169,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 	sessionCookies.SetHeader(httpRequest.Header)
 	sendHttpRequest.Cookies.SetHeader(httpRequest.Header)
 	response := &HttpResponse{
-		Request: sendHttpRequest,
+		//Request: sendHttpRequest,
 	}
 	result.Responses = append(result.Responses, response)
 	startEvent := s.Begin(context, sendHttpRequest, Pairs("request", sendHttpRequest))

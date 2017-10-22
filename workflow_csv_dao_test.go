@@ -20,7 +20,7 @@ func Test_Tag(t *testing.T) {
 
 func TestNewFieldExpression(t *testing.T) {
 
-	expr := endly.NewFieldExpression("Request.[]Expected.Headers")
+	expr := endly.NewFieldExpression("Request.[]ExpectedLogRecords.Headers")
 	{
 		assert.True(t, expr.HasSubPath)
 		assert.True(t, expr.HasArrayComponent)
@@ -32,7 +32,7 @@ func TestNewFieldExpression(t *testing.T) {
 		assert.True(t, expr.HasSubPath)
 		assert.True(t, expr.HasArrayComponent)
 		assert.True(t, expr.IsArray)
-		assert.Equal(t, "Expected", expr.Field)
+		assert.Equal(t, "ExpectedLogRecords", expr.Field)
 	}
 	{
 		expr = expr.Child

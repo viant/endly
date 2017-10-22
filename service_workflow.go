@@ -7,6 +7,7 @@ import (
 	"github.com/viant/toolbox"
 	"strings"
 	"time"
+	"path"
 )
 
 const (
@@ -15,6 +16,8 @@ const (
 )
 
 type WorkflowRunRequest struct {
+	EnableLogging     bool
+	LoggingDirectory  string
 	WorkflowURL       string
 	Name              string
 	Params            map[string]interface{}
@@ -79,7 +82,7 @@ func (s *WorkflowService) evaluateRunCriteria(context *Context, criteria string)
 
 	colonPosition := strings.Index(criteria, ":")
 	if colonPosition == -1 {
-		return true, nil
+		return false, fmt.Errorf("Run criteria needs to have colon: but had: %v", criteria)
 	}
 	fragments := strings.Split(criteria, ":")
 
@@ -117,6 +120,19 @@ func isTaskAllowed(candidate *WorkflowTask, request *WorkflowRunRequest) (bool, 
 		}
 	}
 	return false, nil
+}
+
+func (s *WorkflowService) addVariableEvent(name string, variables Variables, context *Context, state common.Map) {
+	if len(variables) == 0 {
+		return
+	}
+	var values = make(map[string]interface{})
+	for _, variable := range variables {
+		var name = variable.Name
+		name = strings.Replace(name, "->", "", 1)
+		values[name], _ = state.GetValue(name)
+	}
+	s.AddEvent(context, name, Pairs("variables", variables, "values", values), Debug)
 }
 
 func (s *WorkflowService) loadWorkflowIfNeeded(context *Context, name string, URL string) (err error) {
@@ -158,6 +174,7 @@ func (s *WorkflowService) runAction(context *Context, action *ServiceAction) err
 	}
 
 	err = action.Init.Apply(state, state)
+	s.addVariableEvent("Action.Init", action.Init, context, state)
 	if err != nil {
 		return err
 	}
@@ -183,7 +200,7 @@ func (s *WorkflowService) runAction(context *Context, action *ServiceAction) err
 		return fmt.Errorf("Failed to create request %v on %v.%v, %v", requestMap, action.Service, action.Action, err)
 	}
 	var responseMap = make(map[string]interface{})
-	startEvent := s.Begin(context, action, Pairs("service", action.Service, "action", action.Action, "group", action.Group, "subPath", action.Subpath, "description", action.Description, "request", requestMap), Info)
+	startEvent := s.Begin(context, action, Pairs("service", action.Service, "action", action.Action, "tag", action.Tag, "subPath", action.Subpath, "description", action.Description, "request", requestMap), Info)
 
 	defer s.End(context)(startEvent, Pairs("response", responseMap))
 	serviceResponse := service.Run(context, serviceRequest)
@@ -198,6 +215,7 @@ func (s *WorkflowService) runAction(context *Context, action *ServiceAction) err
 		converter.AssignConverted(responseMap, serviceResponse.Response)
 	}
 	err = action.Post.Apply(common.Map(responseMap), state) //result to task  state
+	s.addVariableEvent("Action.Post", action.Post, context, state)
 	if err != nil {
 		return err
 	}
@@ -208,15 +226,16 @@ func (s *WorkflowService) runAction(context *Context, action *ServiceAction) err
 	return nil
 }
 
-func (s *WorkflowService) runTask(context *Context, task *WorkflowTask, request *WorkflowRunRequest) error {
+func (s *WorkflowService) runTask(context *Context, workflow *Workflow, task *WorkflowTask, request *WorkflowRunRequest) error {
 	var state = context.state
-	state.Put("task", task)
+	state.Put(":task", task)
 	var taskAllowed, allowedServiceActions = isTaskAllowed(task, request)
 	if !taskAllowed {
 		return nil
 	}
 	var hasAllowedActions = len(allowedServiceActions) > 0
 	err := task.Init.Apply(state, state)
+	s.addVariableEvent("Task.Init", task.Init, context, state)
 	if err != nil {
 		return err
 	}
@@ -231,26 +250,36 @@ func (s *WorkflowService) runTask(context *Context, task *WorkflowTask, request 
 	startEvent := s.Begin(context, task, Pairs("name", task.Name))
 	defer s.End(context)(startEvent, Pairs())
 
-	var group = ""
+	var tag = ""
 	for i, action := range task.Actions {
 		if hasAllowedActions && !allowedServiceActions[i] {
 			continue
 		}
-		if action.Group != "" {
-			if group != action.Group {
-				s.AddEvent(context, "ActionGroup", Pairs("name", action.Group, "description", action.Description, "subPath", action.Subpath), Info)
+		if action.Tag != "" {
+			if tag != action.Tag {
+				var subpath = action.Subpath
+				if subpath == "" {
+					subpath = action.Tag
+				}
+				s.AddEvent(context, "Tag", Pairs("name", workflow.Name, "tag", action.Tag, "description", action.Description, "subPath", subpath), Info)
 			}
-			group = action.Group
+			tag = action.Tag
 		}
 		err = s.runAction(context, action)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to run action:%v %v", action.Tag, err)
 		}
 	}
-	return task.Post.Apply(state, state)
+	err = task.Post.Apply(state, state)
+	s.addVariableEvent("Task.Post", task.Post, context, state)
+	return err
 }
 
 func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *WorkflowRunRequest) (*WorkflowRunResponse, error) {
+	if request.EnableLogging {
+		upstreamContext.EventLogger = NewEventLogger(path.Join(request.LoggingDirectory, upstreamContext.SessionId))
+	}
+
 	var err = s.loadWorkflowIfNeeded(upstreamContext, request.Name, request.WorkflowURL)
 	if err != nil {
 		return nil, err
@@ -278,6 +307,7 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	var state = context.State()
 
 	var workflowData = common.Map(workflow.Data)
+	state.Put("parentURL", workflow.source.URL)
 	state.Put("workflow", workflowData)
 
 	params := buildParamsMap(request, context)
@@ -289,18 +319,19 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	}
 	state.Put("params", params)
 	err = workflow.Init.Apply(state, state)
+	s.addVariableEvent("Workflow.Init", workflow.Init, context, state)
 	if err != nil {
 		return nil, err
 	}
-
+	s.AddEvent(context, "State.Init", Pairs("state", state.AsEncodableMap()), Debug)
 	for _, task := range workflow.Tasks {
-		err = s.runTask(context, task, request)
+		err = s.runTask(context, workflow, task, request)
 		if err != nil {
 			return nil, err
 		}
 	}
-	state.Delete("activity")
 	workflow.Post.Apply(state, response.Data) //context -> workflow output
+	s.addVariableEvent("Workflow.Post", workflow.Post, context, state)
 	return response, nil
 }
 

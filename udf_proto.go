@@ -72,5 +72,5 @@ func FromProtobufMessage(source interface{}, state common.Map, sourceMessage pro
 		}
 
 	}
-	return nil, fmt.Errorf("Expected string but had:%T", source)
+	return nil, fmt.Errorf("ExpectedLogRecords string but had:%T", source)
 }

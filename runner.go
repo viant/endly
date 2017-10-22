@@ -37,16 +37,16 @@ type RunnerReportingOption struct {
 	Filter *RunnerReportingFilter
 }
 
-type UseCase struct {
+type ReportingTag struct {
 	Description string
-	ActionGroup string
-	Syspath     string
+	Tag         string
+	subPath     string
 	Events      []*Event
 	PassedCount int
 	FailedCount int
 }
 
-func (c *UseCase) AddEvent(event *Event) {
+func (c *ReportingTag) AddEvent(event *Event) {
 	if len(c.Events) == 0 {
 		c.Events = make([]*Event, 0)
 	}
@@ -55,20 +55,20 @@ func (c *UseCase) AddEvent(event *Event) {
 
 type CliRunner struct {
 	manager    Manager
-	useCases   []*UseCase
+	tags       []*ReportingTag
 	ErrorEvent *Event
 }
 
-func (r *CliRunner) AddUseCase(useCases *UseCase) {
-	r.useCases = append(r.useCases, useCases)
+func (r *CliRunner) AddUseCase(useCases *ReportingTag) {
+	r.tags = append(r.tags, useCases)
 }
 
-func (r *CliRunner) CurrentUseCase() *UseCase {
-	if len(r.useCases) == 0 {
-		useCase := &UseCase{}
+func (r *CliRunner) ReportingTag() *ReportingTag {
+	if len(r.tags) == 0 {
+		useCase := &ReportingTag{}
 		r.AddUseCase(useCase)
 	}
-	return r.useCases[len(r.useCases)-1]
+	return r.tags[len(r.tags)-1]
 }
 
 func (r *CliRunner) hasActiveSession(context *Context, sessionId string) bool {
@@ -170,6 +170,9 @@ func (r *CliRunner) reportWorkflowStart(event *Event) {
 			var task = "*"
 			if runRequest.Tasks != "" {
 				task = runRequest.Tasks
+				if len(task) > 100 {
+					task  = string(task[:100])
+				}
 			}
 			var formattedText = formatStartEvent("Workflow", fmt.Sprintf("%v:%v", runRequest.Name, task), event)
 			fmt.Printf("%v\n", formattedText)
@@ -304,22 +307,21 @@ func (r *CliRunner) reportSleep(event *Event) {
 	}
 }
 
-func (r *CliRunner) reportActionGroup(event *Event, filter *RunnerReportingFilter) {
-	if name, ok := event.Value["name"]; ok {
-
+func (r *CliRunner) reportTag(event *Event, filter *RunnerReportingFilter) {
+	if tag, ok := event.Value["tag"]; ok {
 		//remove this use vcase from previous use case
-		previousUseCase := r.CurrentUseCase()
-		previousUseCase.Events = previousUseCase.Events[:len(previousUseCase.Events)-1]
+		previousTag := r.ReportingTag()
+		previousTag.Events = previousTag.Events[:len(previousTag.Events)-1]
 
-		useCase := &UseCase{
+		tag := &ReportingTag{
 			Description: fmt.Sprintf(" %v", event.Value["description"]),
-			ActionGroup: fmt.Sprintf("%v", name),
-			Syspath:     fmt.Sprintf("%v ", event.Value["subPath"]),
+			Tag:         fmt.Sprintf("%v", tag),
+			subPath:     fmt.Sprintf("%v ", event.Value["subPath"]),
 		}
-		useCase.AddEvent(event)
-		r.AddUseCase(useCase)
+		tag.AddEvent(event)
+		r.AddUseCase(tag)
 		if filter.UseCase {
-			printGenericEvent(fmt.Sprintf("UseCase %v ", useCase.ActionGroup), useCase.Syspath, useCase.Description, event, 10, 49)
+			printGenericEvent(fmt.Sprintf("%v ", tag.Tag), tag.subPath, tag.Description, event, 10, 49)
 		}
 	}
 }
@@ -366,6 +368,7 @@ func (r *CliRunner) reportHttpRequestEnd(event *Event) {
 }
 
 func (r *CliRunner) reportValidatorStart(event *Event) {
+	return
 	if request, ok := event.Value["request"]; ok {
 		if assertRequest, ok := request.(*ValidatorAssertRequest); ok {
 			var expected = assertRequest.Expected
@@ -390,7 +393,7 @@ func (r *CliRunner) reportValidatorStart(event *Event) {
 }
 
 func (r *CliRunner) reportAssertionInfo(event *Event, filter *RunnerReportingFilter) {
-	useCase := r.CurrentUseCase()
+	useCase := r.ReportingTag()
 	if serviceResponse, ok := event.Value["response"]; ok {
 		if response, ok := serviceResponse.(*ServiceResponse); ok {
 
@@ -431,7 +434,7 @@ func (r *CliRunner) reportCheckout(event *Event, filter *RunnerReportingFilter) 
 }
 
 func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerReportingFilter) error {
-	useCase := r.CurrentUseCase()
+	useCase := r.ReportingTag()
 	useCase.AddEvent(event)
 
 	if event.Level > Debug {
@@ -533,8 +536,8 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 		}
 		r.reportSQLScript(event)
 
-	case "ActionGroup":
-		r.reportActionGroup(event, filter)
+	case "Tag":
+		r.reportTag(event, filter)
 	case "HttpRequest.Start":
 		if !filter.HttpTrip {
 			return nil
@@ -557,7 +560,7 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 			return nil
 		}
 		r.reportValidatorStart(event)
-	case "ValidatorAssertRequest.End":
+	case "ValidatorAssertRequest.End", "LogValidatorAssertRequest.End":
 		r.reportAssertionInfo(event, filter)
 
 	case "VcCheckoutRequest.Start":
@@ -582,6 +585,11 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 		"SendHttpRequest.Start", "SendHttpRequest.End",
 		"Nop.Start", "Nop.End",
 		"ProcessStopRequest.Start", "ProcessStopRequest.End",
+		"Workflow.Init","Workflow.Post",
+		"Task.Init", "Task.Post",
+		"Action.Init", "Action.Post",
+		"State.Init",
+		"LogValidatorAssertRequest.Start",
 		"ProcessStatusRequest.Start", "ProcessStatusRequest.End":
 		//ignore
 
@@ -643,7 +651,7 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 
 	var totalUseCaseFailed = 0
 	var totalUseCasePassed = 0
-	for _, useCase := range r.useCases {
+	for _, useCase := range r.tags {
 		if useCase.FailedCount > 0 {
 			totalUseCaseFailed++
 		} else if useCase.PassedCount > 0 {
@@ -658,7 +666,7 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 	}
 
 	if totalUseCaseFailed > 0 && filter.OnFailureFilter != nil {
-		for _, useCase := range r.useCases {
+		for _, useCase := range r.tags {
 			if useCase.FailedCount > 0 {
 				for _, event := range useCase.Events {
 					err = r.reportEvent(context, event, filter.OnFailureFilter)
@@ -678,9 +686,9 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 }
 
 func (r *CliRunner) reportSummary(firstEvent *Event, lastEvent *Event, totalUseCaseFailed int) {
-	for _, useCase := range r.useCases {
+	for _, useCase := range r.tags {
 		if useCase.FailedCount > 0 {
-			fmt.Printf("%v\n", aurora.Red(fmt.Sprintf("[%-6v %13v: %59v]", useCase.ActionGroup, useCase.Syspath, "Failed")))
+			fmt.Printf("%v\n", aurora.Red(fmt.Sprintf("[%-6v %13v: %59v]", useCase.Tag, useCase.subPath, "Failed")))
 		}
 	}
 	if firstEvent != nil {
@@ -703,6 +711,7 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 		return err
 	}
 	context := r.manager.NewContext(toolbox.NewContext())
+	defer context.Close()
 	service, err := context.Service(WorkflowServiceId)
 	if err != nil {
 		return err
@@ -728,7 +737,7 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 
 func NewCliRunner() *CliRunner {
 	return &CliRunner{
-		manager:  NewManager(),
-		useCases: make([]*UseCase, 0),
+		manager: NewManager(),
+		tags:    make([]*ReportingTag, 0),
 	}
 }

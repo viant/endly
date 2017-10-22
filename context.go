@@ -14,6 +14,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	"sync/atomic"
 )
 
 //TODO Execution detail Tracking of all run (time taken, request, response)
@@ -31,7 +32,15 @@ type Context struct {
 	state     common.Map
 	toolbox.Context
 	Events        *Events
+	EventLogger   *EventLogger
 	workflowStack *[]*Workflow
+	cloned []*Context
+	closed int32
+}
+
+
+func (c *Context) IsClosed() bool {
+	return atomic.LoadInt32(&c.closed) == 1
 }
 
 func (c *Context) PushWorkflow(workflow *Workflow) {
@@ -61,6 +70,9 @@ func reportError(err error) error {
 }
 
 func (c *Context) Clone() *Context {
+	if len(c.cloned) == 0 {
+		c.cloned = make([]*Context, 0)
+	}
 	result := &Context{}
 	result.Context = c.Context.Clone()
 	result.Events = c.Events
@@ -68,6 +80,8 @@ func (c *Context) Clone() *Context {
 	result.state.Apply(c.state)
 	result.SessionId = c.SessionId
 	result.workflowStack = c.workflowStack
+	result.EventLogger = c.EventLogger
+	c.cloned = append(c.cloned, result)
 	return result
 }
 
@@ -289,10 +303,15 @@ func (c *Context) AsRequest(serviceName, requestName string, source map[string]i
 }
 
 func (c *Context) Close() {
+	atomic.StoreInt32(&c.closed,  1)
+	for _, context := range c.cloned {
+		context.Close()
+	}
 	for _, function := range c.Deffer() {
 		function()
 	}
 }
+
 
 func NewDefaultState() common.Map {
 	var result = common.NewMap()

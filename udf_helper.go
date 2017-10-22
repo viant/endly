@@ -7,6 +7,8 @@ import (
 	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"io"
+	"strings"
+	"path"
 )
 
 func AsMap(source interface{}, state common.Map) (interface{}, error) {
@@ -38,4 +40,17 @@ func Md5(source interface{}, state common.Map) (interface{}, error) {
 	hash := md5.New()
 	io.WriteString(hash, toolbox.AsString(source))
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
+}
+
+
+
+func HasResource(source interface{}, state common.Map) (interface{}, error) {
+	var parentDirecotry = ""
+	if state.Has("parentURL") {
+		var workflowPath = strings.Replace(state.GetString("parentURL"), toolbox.FileSchema, "", 1)
+		parentDirecotry, _ = path.Split(workflowPath)
+	}
+	filename := path.Join(parentDirecotry, toolbox.AsString(source))
+	var result =  toolbox.FileExists(filename)
+	return result, nil
 }

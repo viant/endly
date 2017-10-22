@@ -501,7 +501,7 @@ func (d *DsUnitPrepareTableData) GetValue(state common.Map, source interface{}) 
 func AsTableRecords(source interface{}, state common.Map) (interface{}, error) {
 	var result = make(map[string][]map[string]interface{})
 	if source == nil {
-		return nil, fmt.Errorf("Source was nil")
+		return nil, reportError(fmt.Errorf("Source was nil"))
 	}
 	if !state.Has(DataStoreUnitServiceId) {
 		state.Put(DataStoreUnitServiceId, common.NewMap())

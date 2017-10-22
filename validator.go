@@ -12,6 +12,10 @@ type Validator struct {
 	SkipFields map[string]bool
 }
 
+
+
+
+
 //Check checks expected vs actual value, and returns true if all assertion passes.
 func (s *Validator) Check(expected, actual interface{}) (bool, error) {
 	var response = &ValidatorAssertionInfo{}
@@ -69,9 +73,12 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Validato
 	return nil
 }
 
+
 func (s *Validator) assertText(expected, actual string, response *ValidatorAssertionInfo, path string) error {
 	isRegExpr := strings.HasPrefix(expected, "~/") && strings.HasSuffix(expected, "/")
 	isContains := strings.HasPrefix(expected, "/") && strings.HasSuffix(expected, "/")
+
+
 
 	if !isRegExpr && !isContains {
 
@@ -98,6 +105,37 @@ func (s *Validator) assertText(expected, actual string, response *ValidatorAsser
 			expected = string(expected[1:])
 		}
 
+		if strings.HasPrefix(expected,"[") && strings.HasSuffix(expected,"]") {
+			expected = string(expected[1:len(expected)-1])
+			if strings.Contains(expected, "..") {
+				var rangeValue = strings.Split(expected, "..")
+				var minExpected = toolbox.AsFloat(rangeValue[0])
+				var maxExpected = toolbox.AsFloat(rangeValue[1])
+				var actualNumber = toolbox.AsFloat(actual)
+
+				if actualNumber >= minExpected && actualNumber <= maxExpected && !isReversed {
+					response.TestPassed++
+					return nil
+				}
+				response.AddFailure(fmt.Sprintf("[%v]: actual '%v' is not between'%v and %v'", path, actual, minExpected, maxExpected))
+
+			} else if strings.Contains(expected, ",") {
+				var alternatives = strings.Split(expected, ",")
+				var doesContain = false
+				for _, expectedCandidate := range alternatives {
+					if strings.Contains(actual, expectedCandidate) {
+						doesContain = true
+						break
+					}
+				}
+				if !doesContain && !isReversed {
+					response.AddFailure(fmt.Sprintf("[%v]: actual '%v' does not contain: '%v'", path, actual, alternatives))
+				} else if isReversed && doesContain {
+					response.AddFailure(fmt.Sprintf("[%v]: actual '%v' shold not contain: '%v'", path, actual, alternatives))
+				}
+				response.TestPassed++
+			}
+		}
 		var doesContain = strings.Contains(actual, expected)
 		if !doesContain && !isReversed {
 			response.AddFailure(fmt.Sprintf("[%v]: actual '%v' does not contain: '%v'", path, actual, expected))

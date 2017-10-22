@@ -43,7 +43,7 @@ func NewTransferInfo(context *Context, source, target string, err error, expand 
 	}
 	if expand {
 		var state = context.State()
-		result.State = state.Clone()
+		result.State = state.AsEncodableMap()
 	}
 	if err != nil {
 		result.Error = fmt.Sprintf("%v", err)

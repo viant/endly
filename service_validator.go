@@ -12,10 +12,14 @@ type ValidatorService struct {
 	*AbstractService
 }
 
+
+
 type ValidatorAssertRequest struct {
+	Name string
 	Actual   interface{}
 	Expected interface{}
 }
+
 
 type ValidatorAssertionInfo struct {
 	TestPassed int

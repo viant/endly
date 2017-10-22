@@ -46,11 +46,27 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
 	context := manager.NewContext(toolbox.NewContext())
+	defer context.Close()
 	tempPath := path.Join(os.TempDir(), toolbox.AsString(time.Now().Unix()))
 	err = os.Mkdir(tempPath, 0755)
 	assert.Nil(t, err)
 	var template = GetMapAsString(templateLog)
 
+
+
+
+	var response = service.Run(context, &endly.LogValidatorListenRequest{
+		Source: endly.NewResource(tempPath),
+		Types: []*endly.LogType{
+			{
+				Name:   "t",
+				Format: "json",
+				Mask:   "*.log",
+			},
+		},
+	})
+
+	time.Sleep(time.Second)
 	for i := 0; i < 2; i++ {
 		var logName = fmt.Sprintf("test%v.log", i)
 		var fullLogname = path.Join(tempPath, logName)
@@ -63,16 +79,7 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 		}
 	}
 
-	var response = service.Run(context, &endly.LogValidatorListenRequest{
-		Source: endly.NewResource(tempPath),
-		Types: []*endly.LogType{
-			{
-				Name:   "t",
-				Format: "json",
-				Mask:   "*.log",
-			},
-		},
-	})
+	time.Sleep(time.Second)
 	assert.Equal(t, "", response.Error)
 	var listenResponse, ok = response.Response.(*endly.LogValidatorListenResponse)
 	assert.True(t, ok)
@@ -82,24 +89,30 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	assert.True(t, ok)
 	assert.NotNil(t, logTypeMeta)
 	assert.True(t, strings.HasSuffix(logTypeMeta.Source.URL, tempPath))
-	assert.Equal(t, 2, len(logTypeMeta.Info))
+	assert.Equal(t, 2, len(logTypeMeta.LogFiles))
 
 	response = service.Run(context, &endly.LogValidatorAssertRequest{
-		Type: "t",
-		Data: []map[string]interface{}{
+		ExpectedLogRecords:[]*endly.ExpectedLogRecord{
+
 			{
-				"k5": "10",
-			},
-			{
-				"k5": "20",
-			},
-			{
-				"k5": "30",
-			},
-			{
-				"k5": "10",
+				Type: "t",
+				Records: []map[string]interface{}{
+					{
+						"k5": "10",
+					},
+					{
+						"k5": "20",
+					},
+					{
+						"k5": "30",
+					},
+					{
+						"k5": "10",
+					},
+				},
 			},
 		},
+
 	})
 
 	assert.Equal(t, "", response.Error)
@@ -109,13 +122,19 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	assert.Equal(t, 0, len(assertionInfo.TestFailed))
 
 	response = service.Run(context, &endly.LogValidatorAssertRequest{
-		Type: "t",
-		Data: []map[string]interface{}{
+		ExpectedLogRecords:[]*endly.ExpectedLogRecord{
+
 			{
-				"k5": "20",
-			},
-			{
-				"k5": "30",
+
+				Type: "t",
+				Records: []map[string]interface{}{
+					{
+						"k5": "20",
+					},
+					{
+						"k5": "30",
+					},
+				},
 			},
 		},
 	})
@@ -125,5 +144,10 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	assert.True(t, ok)
 	assert.NotNil(t, assertionInfo)
 	assert.Equal(t, 0, len(assertionInfo.TestFailed))
+
+
+
+
+
 
 }

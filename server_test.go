@@ -31,5 +31,4 @@ func TestServer_Start(t *testing.T) {
 	if ok {
 		assert.True(t, len(commandInfo.Stdout(0)) > 0)
 	}
-	assert.Equal(t, "ls -al", response.Info.Logs[len(response.Info.Logs)-1].Command.Commands[0].Stdin)
 }

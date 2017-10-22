@@ -23,6 +23,42 @@ func (s *Map) DeleteSync(keys ...string) {
 	}
 }
 
+func (s *Map) AsEncodableMap() map[string]interface{} {
+	var result = make(map[string]interface{})
+	for k, v:= range *s {
+		if v == nil {
+			continue
+		}
+		result[k] = encodableValue(v)
+	}
+	return result
+}
+
+
+func encodableValue(v interface{}) interface{} {
+	if v == nil {
+		return nil
+	}
+	var value interface{} = v
+
+	_, isFunction := v.(func(string) interface {})
+	if isFunction {
+		return "func()"
+	}
+	if toolbox.IsMap(v) {
+		var aMap = Map(toolbox.AsMap(v))
+		value = aMap.AsEncodableMap()
+	} else if toolbox.IsSlice(v) {
+		var aSlice = make([]interface{}, 0)
+		for _, item := range toolbox.AsSlice(aSlice) {
+			aSlice = append(aSlice, encodableValue(item))
+		}
+		value = aSlice
+	} else if toolbox.IsString(v) || toolbox.IsInt(v) || toolbox.IsFloat(v)  {
+		value = toolbox.AsString(v)
+	}
+	return value
+}
 
 func (s *Map) Has(key string) bool {
 	_, found := (*s)[key]

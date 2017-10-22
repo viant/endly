@@ -55,7 +55,7 @@ func (s *AbstractService) AddEvent(context *Context, eventType string, value map
 		activity, _ = state.Get("activity").(*WorkflowServiceActivity)
 	}
 	if state.Has("task") {
-		task, _ = state.Get("task").(*WorkflowTask)
+		task, _ = state.Get(":task").(*WorkflowTask)
 	}
 	var event = &Event{
 		Timestamp: time.Now(),
@@ -67,6 +67,13 @@ func (s *AbstractService) AddEvent(context *Context, eventType string, value map
 		Value:     value,
 	}
 	context.Events.Push(event)
+
+	if context.EventLogger != nil {
+		err := context.EventLogger.Log(event)
+		if err != nil {
+			fmt.Printf("Failed to log event: %v\n", err)
+		}
+	}
 	return event
 }
 

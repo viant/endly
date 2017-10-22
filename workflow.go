@@ -1,12 +1,15 @@
 package endly
 
-import "github.com/viant/endly/common"
+import (
+	"github.com/viant/endly/common"
+)
 
 type ServiceAction struct {
 	RunCriteria string
 	Service     string
 	Action      string
-	Group       string
+	Tag         string
+	TagIndex    string
 	Name        string
 	Description string
 	Subpath     string
