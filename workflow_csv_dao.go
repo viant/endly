@@ -304,10 +304,11 @@ func (d *WorkflowDao) load(context *Context, resource *Resource, scanner *bufio.
 		if relativeSubPath, ok := record.Record["Subpath"]; ok {
 			subPath = toolbox.AsString(relativeSubPath)
 		}
-
 		object = getObject(tag, result)
+		object["Tag"] = tag.Name
 		if hasActiveIterator {
-			object["Group"] = tag.Iterator.Index()
+			object["TagIndex"] = tag.Iterator.Index()
+			object["Tag"] = fmt.Sprintf("%v%v", tag.Name, tag.Iterator.Index())
 		}
 
 		for j := 1; j < len(record.Columns); j++ {
@@ -483,7 +484,8 @@ func (d *WorkflowDao) getExternalResource(context *Context, resource *Resource, 
 		parentURL, _ = toolbox.URLSplit(resource.URL)
 		if subpath != "" {
 			useSubpath = true
-			fileCandidate := path.Join(parentURL, subpath, asset)
+			fileCandidate := toolbox.URLPathJoin(parentURL, path.Join(subpath, asset))
+			fileCandidate = strings.Replace(fileCandidate, "file://", "", 1)
 			if toolbox.FileExists(fileCandidate) {
 				URL = fmt.Sprintf("file://%v", fileCandidate)
 			}
@@ -584,9 +586,9 @@ func (d *WorkflowDao) loadExternalResource(context *Context, parentResource *Res
 	return result, err
 }
 
-func getUdfIfDefined(expression string) (func(interface{}, common.Map) (interface{}, error), string, error) {
+func getUdfIfDefined(expression string) (func(interface{}, common.Map) (interface{}, error), string, string, error) {
 	if !strings.HasPrefix(expression, "!") {
-		return nil, expression, nil
+		return nil, expression, "", nil
 	}
 	startArgumentPosition := strings.Index(expression, "(")
 	endArgumentPosition := strings.LastIndex(expression, ")")
@@ -596,12 +598,16 @@ func getUdfIfDefined(expression string) (func(interface{}, common.Map) (interfac
 		udfFunction, has := UdfRegistry[udfName]
 		if !has {
 			var available = toolbox.MapKeysToStringSlice(UdfRegistry)
-			return nil, "", fmt.Errorf("Failed to lookup udf function %v on %v, avaialbe:[%v]", udfName, expression, strings.Join(available, ","))
+			return nil, "", "", fmt.Errorf("Failed to lookup udf function %v on %v, avaialbe:[%v]", udfName, expression, strings.Join(available, ","))
 		}
 		value := string(expression[startArgumentPosition+1 : endArgumentPosition])
-		return udfFunction, value, nil
+		remaining := ""
+		if ! strings.HasSuffix(expression, ")") {
+			remaining = expression[endArgumentPosition+1:]
+		}
+		return udfFunction, value, remaining, nil
 	}
-	return nil, expression, nil
+	return nil, expression, "", nil
 }
 
 func (d *WorkflowDao) contextualizeValue(context *Context, value string) (interface{}, bool, error) {
@@ -643,6 +649,12 @@ func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource,
 	var err error
 	var state = context.State()
 
+	var originalURL = state.GetString("parentURL")
+	state.Put("parentURL", parentResource.URL)
+	if originalURL != parentResource.URL {
+		defer state.Put("parentURL", originalURL)
+	}
+
 	if strings.HasPrefix(value, "#") {
 		var assets = strings.Split(value, "|")
 		mainAsset, err := d.loadExternalResource(context, parentResource, subpath, assets[0])
@@ -662,13 +674,16 @@ func (d *WorkflowDao) normalizeValue(context *Context, parentResource *Resource,
 		}
 		value = mainAsset
 	}
-	udfFunction, value, err := getUdfIfDefined(value)
+	udfFunction, value, sufix, err := getUdfIfDefined(value)
 	if err != nil {
 		return nil, false, err
 	}
 	resultValue, isReference, err := d.contextualizeValue(context, value)
 	if udfFunction != nil {
 		resultValue, err = udfFunction(resultValue, state)
+		if sufix != "" {
+			resultValue = toolbox.AsString(resultValue) + sufix
+		}
 	}
 
 	return resultValue, isReference, err

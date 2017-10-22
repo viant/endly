@@ -124,7 +124,7 @@ func ExpandValue(source interface{}, state common.Map) interface{} {
 		return source
 	case string:
 
-		udf, value, _ := getUdfIfDefined(value)
+		udf, value, suffix, _ := getUdfIfDefined(value)
 		if strings.HasPrefix(value, "$") {
 			_, has := state.GetValue(string(value[1:]))
 			result := Expand(state, value)
@@ -134,10 +134,16 @@ func ExpandValue(source interface{}, state common.Map) interface{} {
 					result = transformed
 				}
 			}
+			if suffix != "" {
+				result = toolbox.AsString(result) + suffix
+			}
 			return result
 		} else if udf != nil {
 			transformed, err := udf(value, state)
 			if err == nil {
+				if suffix != "" {
+					transformed = toolbox.AsString(transformed) + suffix
+				}
 				return transformed
 			}
 		}
@@ -150,6 +156,7 @@ func ExpandValue(source interface{}, state common.Map) interface{} {
 		}
 		return resultMap
 	case []interface{}:
+
 		var resultSlice = make([]interface{}, len(value))
 		for i, value := range value {
 			resultSlice[i] = ExpandValue(value, state)

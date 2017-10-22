@@ -76,7 +76,7 @@ func (v *Variables) Apply(in, out common.Map) error {
 		}
 		var value interface{}
 		if variable.From != "" {
-			udfFunction, fromKey, err := getUdfIfDefined(variable.From)
+			udfFunction, fromKey, sufix, err := getUdfIfDefined(variable.From)
 			if err != nil {
 				return err
 			}
@@ -100,33 +100,15 @@ func (v *Variables) Apply(in, out common.Map) error {
 				value, _ = in.GetValue(fromKey)
 				value, err = udfFunction(value, in)
 				if err != nil {
-					return err
+					return reportError(fmt.Errorf("Failed to run udf with %v, %v", fromKey,  err))
 				}
 			}
+
+			if sufix != "" {
+				value = toolbox.AsString(value) + sufix
+			}
+
 		}
-
-		//if variable.From != "" {
-		//	udfFunction, fromKey, err := getUdfIfDefined(variable.From)
-		//	if err != nil {
-		//		return err
-		//	}
-		//	value, has := in.GetValue(fromKey)
-		//	if ! has {
-		//		fromVariable := variable.fromVariable()
-		//		err = fromVariable.Load()
-		//		fmt.Printf("VAL: %v %v %v\n", fromKey, fromVariable.Value, err)
-		//		if err != nil {
-		//			return err
-		//		}
-		//	}
-		//	if udfFunction != nil {
-		//		Value, err = udfFunction(Value, in)
-		//		if err != nil {
-		//			return err
-		//		}
-		//	}
-		//}
-
 		if value == nil {
 			value = variable.Value
 			if value != nil {
