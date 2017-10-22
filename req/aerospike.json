@@ -1,6 +1,6 @@
 {
   "Name": "dockerized_aerospike",
-  "Tasks":"$task",
+  "Tasks":"$tasks",
   "Params": {
     "url": "scp://${targetHost}/",
     "credential": "$targetCredential",

@@ -1,6 +1,6 @@
 {
   "Name": "tomcat",
-  "Tasks":"$task",
+  "Tasks":"$tasks",
   "Params": {
     "app": "$app",
     "catalinaOpts": "$catalinaOpts",

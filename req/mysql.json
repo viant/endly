@@ -1,6 +1,6 @@
 {
   "Name": "dockerized_mysql",
-  "Tasks":"$task",
+  "Tasks":"$tasks",
   "Params": {
     "stopSystemMysql": true,
     "url": "scp://$targetHost/",
