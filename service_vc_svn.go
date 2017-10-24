@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"github.com/viant/toolbox/url"
 )
 
 type svnService struct{}
@@ -100,7 +101,7 @@ func (s *svnService) checkout(context *Context, request *VcCheckoutRequest) (*Vc
 	return s.runSecureSvnCommand(context, target, request.Origin, "co", request.Origin.URL, target.ParsedURL.Path)
 }
 
-func (s *svnService) runSecureSvnCommand(context *Context, target *Resource, origin *Resource, command string, arguments ...string) (*VcInfo, error) {
+func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource, origin *url.Resource, command string, arguments ...string) (*VcInfo, error) {
 	username, password, err := origin.LoadCredential(true)
 	if err != nil {
 		return nil, err

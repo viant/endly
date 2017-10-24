@@ -2,11 +2,11 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/endly/common"
-	"github.com/viant/toolbox"
 	"strings"
 	"sync"
 	"time"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 )
 
 type ServiceResponse struct {
@@ -17,7 +17,7 @@ type ServiceResponse struct {
 
 type Service interface {
 	Id() string
-	State() common.Map
+	State() data.Map
 	Run(context *Context, request interface{}) *ServiceResponse
 	NewRequest(action string) (interface{}, error)
 	Mutex() *sync.RWMutex
@@ -26,7 +26,7 @@ type Service interface {
 type AbstractService struct {
 	Service
 	id    string
-	state common.Map
+	state data.Map
 	mutex *sync.RWMutex
 }
 
@@ -109,7 +109,7 @@ func (s *AbstractService) Mutex() *sync.RWMutex {
 	return s.mutex
 }
 
-func (s *AbstractService) State() common.Map {
+func (s *AbstractService) State() data.Map {
 	return s.state
 }
 
@@ -121,6 +121,6 @@ func NewAbstractService(id string) *AbstractService {
 	return &AbstractService{
 		id:    id,
 		mutex: &sync.RWMutex{},
-		state: common.NewMap(),
+		state: data.NewMap(),
 	}
 }

@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"github.com/viant/toolbox/url"
 )
 
 func TestDsUnitService(t *testing.T) {
@@ -31,8 +32,8 @@ func TestDsUnitService(t *testing.T) {
 			Credential:     path.Join(os.Getenv("HOME"), "secret/mysql.json"),
 			AdminDatastore: "mysql",
 			ClearDatastore: true,
-			Scripts: []*endly.Resource{
-				endly.NewResource("test/dsunit/mydb1.sql"),
+			Scripts: []*url.Resource{
+				url.NewResource("test/dsunit/mydb1.sql"),
 			},
 		})
 
@@ -40,7 +41,7 @@ func TestDsUnitService(t *testing.T) {
 		response = service.Run(context, &endly.DsUnitPrepareRequest{
 			Datastore: "mydb1",
 			Prefix:    "prepare_",
-			URL:       endly.NewResource("test/dsunit/dataset1").URL,
+			URL:       url.NewResource("test/dsunit/dataset1").URL,
 		})
 		assert.Equal(t, "", response.Error)
 
@@ -48,7 +49,7 @@ func TestDsUnitService(t *testing.T) {
 			Datasets: &dsunit.DatasetResource{
 				Datastore: "mydb1",
 				Prefix:    "verify_",
-				URL:       endly.NewResource("test/dsunit/dataset1").URL,
+				URL:       url.NewResource("test/dsunit/dataset1").URL,
 			},
 		})
 		assert.Equal(t, "", response.Error)
@@ -61,15 +62,15 @@ func TestDsUnitService(t *testing.T) {
 			Datasets: &dsunit.DatasetResource{
 				Datastore: "mydb1",
 				Prefix:    "err_",
-				URL:       endly.NewResource("test/dsunit/dataset1").URL,
+				URL:       url.NewResource("test/dsunit/dataset1").URL,
 			},
 		})
 		assert.True(t, response.Error != "")
 
 		response = service.Run(context, &endly.DsUnitMappingRequest{
-			Mappings: []*endly.Resource{
+			Mappings: []*url.Resource{
 
-				endly.NewResource("test/workflow/mapping.json"),
+				url.NewResource("test/workflow/mapping.json"),
 			},
 		})
 		assert.Equal(t, "", response.Error)

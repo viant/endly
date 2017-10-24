@@ -3,7 +3,7 @@ package endly
 import (
 	"bytes"
 	"fmt"
-	"github.com/viant/endly/common"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox"
 	"io/ioutil"
 	"os"
@@ -66,7 +66,7 @@ func (v *Variable) fromVariable() *Variable {
 	}
 }
 
-func (v *Variables) Apply(in, out common.Map) error {
+func (v *Variables) Apply(in, out data.Map) error {
 	if v == nil || out == nil || in == nil || len(*v) == 0 {
 		return nil
 	}
@@ -75,44 +75,34 @@ func (v *Variables) Apply(in, out common.Map) error {
 			continue
 		}
 		var value interface{}
+
 		if variable.From != "" {
-			udfFunction, fromKey, sufix, err := getUdfIfDefined(variable.From)
-			if err != nil {
-				return err
-			}
 			var has bool
-			if udfFunction == nil {
-				value, has = in.GetValue(variable.From)
-				if !has {
-
-					fromVariable := variable.fromVariable()
-					err = fromVariable.Load()
-					if fromVariable.Value != nil {
-						in.SetValue(fromVariable.Name, fromVariable.Value)
-						value, _ = in.GetValue(variable.From)
-					}
-					if err != nil {
-						return err
-					}
-				}
-
+			var key = variable.From
+			if strings.HasPrefix(key, "!") {
+				key = strings.Replace(key, "(", "($", 1)
+				value = in.Expand(key)
 			} else {
-				value, _ = in.GetValue(fromKey)
-				value, err = udfFunction(value, in)
+				value, has = in.GetValue(key)
+			}
+
+			if !has {
+				fromVariable := variable.fromVariable()
+				err := fromVariable.Load()
+				if fromVariable.Value != nil {
+					in.SetValue(fromVariable.Name, fromVariable.Value)
+					value, _ = in.GetValue(key)
+				}
 				if err != nil {
-					return reportError(fmt.Errorf("Failed to run udf with %v, %v", fromKey,  err))
+					return err
 				}
 			}
-
-			if sufix != "" {
-				value = toolbox.AsString(value) + sufix
-			}
-
 		}
+
 		if value == nil {
 			value = variable.Value
 			if value != nil {
-				value = ExpandValue(value, in)
+				value = in.Expand(value)
 			}
 		}
 

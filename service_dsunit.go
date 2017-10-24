@@ -5,10 +5,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/dsc"
 	"github.com/viant/dsunit"
-	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
+	"github.com/viant/toolbox/data"
 	"strings"
+	"github.com/viant/toolbox/url"
 )
 
 const DataStoreUnitServiceId = "dsunit"
@@ -21,7 +22,7 @@ type DsUnitRegisterRequest struct {
 	AdminDatastore  string      //name of admin db
 	AdminCredential string
 	ClearDatastore  bool
-	Scripts         []*Resource
+	Scripts         []*url.Resource
 }
 
 //DatasetMapping represnts dataset mappings
@@ -31,7 +32,7 @@ type DatasetMappings struct {
 }
 
 type DsUnitMappingRequest struct {
-	Mappings []*Resource
+	Mappings []*url.Resource
 }
 
 type DsUnitMappingResonse struct {
@@ -269,7 +270,7 @@ func (s *dsataStoreUnitService) addMapping(context *Context, request *DsUnitMapp
 	return response, nil
 }
 
-func (s *dsataStoreUnitService) runScript(context *Context, datastore string, source *Resource) (int, error) {
+func (s *dsataStoreUnitService) runScript(context *Context, datastore string, source *url.Resource) (int, error) {
 	var err error
 
 	source, err = context.ExpandResource(source)
@@ -335,7 +336,7 @@ func (s *dsataStoreUnitService) prepare(context *Context, request *DsUnitPrepare
 	datasetResource := request.AsDatasetResource()
 
 	if datasetResource.URL != "" {
-		resource, err := context.ExpandResource(&Resource{URL: datasetResource.URL})
+		resource, err := context.ExpandResource(&url.Resource{URL: datasetResource.URL})
 		if err != nil {
 			return nil, err
 		}
@@ -350,7 +351,7 @@ func (s *dsataStoreUnitService) prepare(context *Context, request *DsUnitPrepare
 		var state = context.State()
 		for _, data := range datasets.Datasets {
 			for _, row := range data.Rows {
-				expanded := ExpandValue(row.Values, state)
+				expanded := state.Expand(row.Values)
 				row.Values = toolbox.AsMap(expanded)
 			}
 		}
@@ -416,7 +417,7 @@ type DsUnitPrepareTableData struct {
 	Key           string
 }
 
-func (d *DsUnitPrepareTableData) AuotGenerateIfNeeded(state common.Map) error {
+func (d *DsUnitPrepareTableData) AuotGenerateIfNeeded(state data.Map) error {
 	for k, v := range d.AutoGenerate {
 		value, has := state.GetValue(v)
 		if !has {
@@ -427,7 +428,7 @@ func (d *DsUnitPrepareTableData) AuotGenerateIfNeeded(state common.Map) error {
 	return nil
 }
 
-func (d *DsUnitPrepareTableData) PostIncrementIfNeeded(state common.Map) {
+func (d *DsUnitPrepareTableData) PostIncrementIfNeeded(state data.Map) {
 	for _, key := range d.PostIncrement {
 		keyText := toolbox.AsString(key)
 		value, has := state.GetValue(keyText)
@@ -438,7 +439,7 @@ func (d *DsUnitPrepareTableData) PostIncrementIfNeeded(state common.Map) {
 	}
 }
 
-func (d *DsUnitPrepareTableData) GetValues(state common.Map) []map[string]interface{} {
+func (d *DsUnitPrepareTableData) GetValues(state data.Map) []map[string]interface{} {
 	if toolbox.IsMap(d.Value) {
 		return []map[string]interface{}{
 			d.GetValue(state, d.Value),
@@ -457,7 +458,7 @@ func (d *DsUnitPrepareTableData) GetValues(state common.Map) []map[string]interf
 
 func (d *DsUnitPrepareTableData) expandThis(textValue string, value map[string]interface{}) interface{} {
 	if strings.Contains(textValue, "this.") {
-		var thisState = common.NewMap()
+		var thisState = data.NewMap()
 		for subKey, subValue := range value {
 			if toolbox.IsString(subValue) {
 				subKeyTextValue := toolbox.AsString(subValue)
@@ -466,13 +467,13 @@ func (d *DsUnitPrepareTableData) expandThis(textValue string, value map[string]i
 				}
 			}
 		}
-		return ExpandValue(textValue, thisState)
+		return thisState.Expand(textValue)
 	}
 	return textValue
 }
 
-func (d *DsUnitPrepareTableData) GetValue(state common.Map, source interface{}) map[string]interface{} {
-	value := toolbox.AsMap(ExpandValue(source, state))
+func (d *DsUnitPrepareTableData) GetValue(state data.Map, source interface{}) map[string]interface{} {
+	value := toolbox.AsMap(state.Expand(source))
 	for k, v := range value {
 		var textValue = toolbox.AsString(v)
 		if strings.Contains(textValue, "this") {
@@ -491,20 +492,20 @@ func (d *DsUnitPrepareTableData) GetValue(state common.Map, source interface{}) 
 		key = d.Table
 	}
 	if !dataStoreState.Has(key) {
-		dataStoreState.Put(key, common.NewCollection())
+		dataStoreState.Put(key, data.NewCollection())
 	}
 	records := dataStoreState.GetCollection(key)
 	records.Push(value)
 	return value
 }
 
-func AsTableRecords(source interface{}, state common.Map) (interface{}, error) {
+func AsTableRecords(source interface{}, state data.Map) (interface{}, error) {
 	var result = make(map[string][]map[string]interface{})
 	if source == nil {
 		return nil, reportError(fmt.Errorf("Source was nil"))
 	}
 	if !state.Has(DataStoreUnitServiceId) {
-		state.Put(DataStoreUnitServiceId, common.NewMap())
+		state.Put(DataStoreUnitServiceId, data.NewMap())
 	}
 
 	var prepareTableData = []*DsUnitPrepareTableData{}

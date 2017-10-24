@@ -3,9 +3,10 @@ package endly_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/endly/common"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox"
 	"testing"
+	"github.com/viant/toolbox/url"
 )
 
 type TestConfig struct {
@@ -23,7 +24,7 @@ func TestNewTransferService(t *testing.T) {
 
 		context := manager.NewContext(toolbox.NewContext())
 
-		endpointMap := common.NewMap()
+		endpointMap := data.NewMap()
 		endpointMap.Put("host", "127.0.0.1")
 		endpointMap.Put("port", "8080")
 		var state = context.State()
@@ -33,8 +34,8 @@ func TestNewTransferService(t *testing.T) {
 			response := service.Run(context, &endly.TransferCopyRequest{
 				Transfers: []*endly.Transfer{
 					{
-						Source: endly.NewResource("test/transfer/config.json"),
-						Target: endly.NewResource("/tmp/transfered.json"),
+						Source: url.NewResource("test/transfer/config.json"),
+						Target: url.NewResource("/tmp/transfered.json"),
 						Expand: true,
 					},
 				},
@@ -58,8 +59,8 @@ func TestNewTransferService(t *testing.T) {
 			response := service.Run(context, &endly.TransferCopyRequest{
 				Transfers: []*endly.Transfer{
 					{
-						Source: endly.NewResource("test/transfer/config.json"),
-						Target: endly.NewResource("/tmp/transfered.json"),
+						Source: url.NewResource("test/transfer/config.json"),
+						Target: url.NewResource("/tmp/transfered.json"),
 					},
 				},
 			})

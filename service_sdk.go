@@ -2,6 +2,7 @@ package endly
 
 import (
 	"fmt"
+	"github.com/viant/toolbox/url"
 )
 
 const SdkServiceId = "sdk"
@@ -14,7 +15,7 @@ type SdkSetResponse struct {
 type SdkSetRequest struct {
 	Sdk     string
 	Version string
-	Target  *Resource
+	Target  *url.Resource
 }
 
 type sdkService struct {

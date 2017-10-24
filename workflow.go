@@ -1,7 +1,8 @@
 package endly
 
 import (
-	"github.com/viant/endly/common"
+	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/url"
 )
 
 type ServiceAction struct {
@@ -32,8 +33,8 @@ type WorkflowTask struct {
 }
 
 type Workflow struct {
-	source      *Resource
-	Data        common.Map
+	Source      *url.Resource
+	Data        data.Map
 	Name        string
 	Description string
 	Init        Variables

@@ -5,6 +5,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"testing"
+	"github.com/viant/toolbox/url"
 )
 
 func TestProcessService_Run(t *testing.T) {
@@ -20,7 +21,7 @@ func TestProcessService_Run(t *testing.T) {
 		defer context.Close()
 
 		response := srv.Run(context, &endly.ProcessStartRequest{
-			Target: &endly.Resource{
+			Target: &url.Resource{
 				URL: "scp://127.0.0.1/",
 			},
 			Options: &endly.ExecutionOptions{
@@ -35,7 +36,7 @@ func TestProcessService_Run(t *testing.T) {
 		assert.True(t, serviceResponse.Info[0].Pid > 0)
 
 		response = srv.Run(context, &endly.ProcessStopRequest{
-			Target: &endly.Resource{
+			Target: &url.Resource{
 				URL: "scp://127.0.0.1/",
 			},
 			Pid: serviceResponse.Info[0].Pid,

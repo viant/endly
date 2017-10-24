@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"github.com/viant/toolbox/url"
 )
 
 var templateLog = map[string]interface{}{
@@ -56,7 +57,7 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 
 
 	var response = service.Run(context, &endly.LogValidatorListenRequest{
-		Source: endly.NewResource(tempPath),
+		Source: url.NewResource(tempPath),
 		Types: []*endly.LogType{
 			{
 				Name:   "t",

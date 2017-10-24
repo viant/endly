@@ -13,7 +13,8 @@ import (
 	"sync"
 	"log"
 	"bytes"
-	"github.com/viant/endly/common"
+	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/url"
 )
 
 const LogValidatorServiceId = "validator/log"
@@ -31,7 +32,7 @@ type LogType struct {
 
 type LogValidatorListenRequest struct {
 	FrequencyMs int
-	Source      *Resource
+	Source      *url.Resource
 	Types       []*LogType
 }
 
@@ -166,7 +167,7 @@ func (f *LogFile) readLogRecords(reader io.Reader) (error) {
 }
 
 type LogTypeMeta struct {
-	Source   *Resource
+	Source   *url.Resource
 	LogType  *LogType
 	LogFiles map[string]*LogFile
 }
@@ -242,7 +243,7 @@ func (m *LogTypeMeta) LogRecordIterator() toolbox.Iterator {
 	}
 }
 
-func NewLogTypeMeta(source *Resource, logType *LogType) *LogTypeMeta {
+func NewLogTypeMeta(source *url.Resource, logType *LogType) *LogTypeMeta {
 	return &LogTypeMeta{
 		Source:   source,
 		LogType:  logType,
@@ -389,7 +390,7 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 	}
 	return response, nil
 }
-func (s *logValidatorService) getLogTypeMeta(expectedLogRecords *ExpectedLogRecord, state common.Map) (*LogTypeMeta, error) {
+func (s *logValidatorService) getLogTypeMeta(expectedLogRecords *ExpectedLogRecord, state data.Map) (*LogTypeMeta, error) {
 	var key = LogTypeMetaKey(expectedLogRecords.Type)
 	s.Mutex().Lock()
 	defer s.Mutex().Unlock()
@@ -400,7 +401,7 @@ func (s *logValidatorService) getLogTypeMeta(expectedLogRecords *ExpectedLogReco
 	return logTypeMeta, nil
 }
 
-func (s *logValidatorService) loadLogTypeMeta(context *Context, source *Resource, logType *LogType) (*LogTypeMeta, error) {
+func (s *logValidatorService) loadLogTypeMeta(context *Context, source *url.Resource, logType *LogType) (*LogTypeMeta, error) {
 	var logTypesMeta, err = s.readLogFiles(context, source, logType)
 	if err != nil {
 		return nil, err
@@ -408,7 +409,7 @@ func (s *logValidatorService) loadLogTypeMeta(context *Context, source *Resource
 	return logTypesMeta[logType.Name], nil
 }
 
-func (s *logValidatorService) readLogFile(context *Context, source *Resource, service storage.Service, candidate storage.Object, logType *LogType) (*LogTypeMeta, error) {
+func (s *logValidatorService) readLogFile(context *Context, source *url.Resource, service storage.Service, candidate storage.Object, logType *LogType) (*LogTypeMeta, error) {
 	var result *LogTypeMeta
 	var key = LogTypeMetaKey(logType.Name)
 	s.Mutex().Lock()
@@ -483,7 +484,7 @@ func (s *logValidatorService) readLogFile(context *Context, source *Resource, se
 	return result, nil
 }
 
-func (s *logValidatorService) readLogFiles(context *Context, source *Resource, logTypes ...*LogType) (LogTypesMeta, error) {
+func (s *logValidatorService) readLogFiles(context *Context, source *url.Resource, logTypes ...*LogType) (LogTypesMeta, error) {
 	var err error
 	source, err = context.ExpandResource(source)
 	if err != nil {

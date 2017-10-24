@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/viant/toolbox"
-	"net/url"
 	"strings"
+	"github.com/viant/toolbox/url"
 )
 
 const DeploymentServiceId = "deployment"
@@ -66,7 +66,7 @@ func (r *DeploymentDeployRequest) Validate() error {
 	return nil
 }
 
-func (s *deploymentService) extractVersion(context *Context, request *DeploymentDeployRequest, exec Service, parsedURL *url.URL) (string, error) {
+func (s *deploymentService) extractVersion(context *Context, request *DeploymentDeployRequest, exec Service) (string, error) {
 	result, err := context.Execute(request.Transfer.Target, request.VersionCheck)
 	if err != nil {
 		return "", err
@@ -82,7 +82,7 @@ func (s *deploymentService) extractVersion(context *Context, request *Deployment
 	return "", nil
 }
 
-func (s *deploymentService) deployAddition(context *Context, target *Resource, addition *DeploymentAddition) (err error) {
+func (s *deploymentService) deployAddition(context *Context, target *url.Resource, addition *DeploymentAddition) (err error) {
 	if addition != nil {
 		if len(addition.Commands) > 0 {
 			if addition.SuperUser {
@@ -118,7 +118,6 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	if err != nil {
 		return nil, err
 	}
-
 	target, err := context.ExpandResource(request.Transfer.Target)
 	if err != nil {
 		return nil, err
@@ -145,13 +144,9 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 		}
 	}
 
-	defer execService.Run(context, CloseSession{Name: target.Session()})
-	parsedURL, err := url.Parse(target.URL)
-	if err != nil {
-		return nil, err
-	}
+	defer execService.Run(context, CloseSession{Name: target.Host()})
 	if !request.Force && request.VersionCheck != nil {
-		version, err := s.extractVersion(context, request, execService, parsedURL)
+		version, err := s.extractVersion(context, request, execService)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to check version: %v", err)
 		}
@@ -176,12 +171,12 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 		}
 	}
 	if request.VersionCheck != nil {
-		version, err := s.extractVersion(context, request, execService, parsedURL)
+		version, err := s.extractVersion(context, request, execService)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to check version: %v", err)
 		}
 		if version != target.Version {
-			return nil, fmt.Errorf("Failed to deploy %v: invalud version expected: %v, but had: %v ", target.Session(), target.Version, version)
+			return nil, fmt.Errorf("Failed to deploy %v: invalud version expected: %v, but had: %v ", target.Host(), target.Version, version)
 		}
 	}
 	err = s.deployAddition(context, target, request.Post)

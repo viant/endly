@@ -4,40 +4,39 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
-	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"math/rand"
-	"net/url"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
 	"time"
 	"sync/atomic"
+	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/url"
 )
 
 //TODO Execution detail Tracking of all run (time taken, request, response)
 
 var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
 
-type StateKey *common.Map
+type StateKey *data.Map
 
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
 var workflowKey = (*Workflow)(nil)
 
 type Context struct {
-	SessionId string
-	state     common.Map
+	SessionId     string
+	state         data.Map
 	toolbox.Context
 	Events        *Events
 	EventLogger   *EventLogger
 	workflowStack *[]*Workflow
-	cloned []*Context
-	closed int32
+	cloned        []*Context
+	closed        int32
 }
-
 
 func (c *Context) IsClosed() bool {
 	return atomic.LoadInt32(&c.closed) == 1
@@ -87,8 +86,8 @@ func (c *Context) Clone() *Context {
 
 func (c *Context) parentURLCandidates() []string {
 	var result = make([]string, 0)
-	if workflow := c.Workflow(); workflow != nil && workflow.source != nil {
-		baseURL, _ := toolbox.URLSplit(workflow.source.URL)
+	if workflow := c.Workflow(); workflow != nil && workflow.Source != nil {
+		baseURL, _ := toolbox.URLSplit(workflow.Source.URL)
 		result = append(result, baseURL)
 	}
 	currentDirectory, err := os.Getwd()
@@ -99,8 +98,7 @@ func (c *Context) parentURLCandidates() []string {
 	return result
 }
 
-func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
-	var err error
+func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) {
 	if resource == nil {
 		return nil, reportError(fmt.Errorf("Resource was empty"))
 	}
@@ -120,20 +118,15 @@ func (c *Context) ExpandResource(resource *Resource) (*Resource, error) {
 			}
 		}
 	}
-
-	var result = &Resource{
-		URL:         c.Expand(resource.URL),
-		Credential:  c.Expand(resource.Credential),
-		Name:        c.Expand(resource.Name),
-		Version:     resource.Version,
-		Type:        c.Expand(resource.Type),
-		Cache:       c.Expand(resource.Cache),
-		CacheExpiry: resource.CacheExpiry,
+	var result = url.NewResource(c.Expand(resource.URL), c.Expand(resource.Credential))
+	if result.ParsedURL == nil {
+		return nil, fmt.Errorf("Failed to parse URL %v", result.URL)
 	}
-	result.ParsedURL, err = url.Parse(result.URL)
-	if err != nil {
-		return nil, reportError(fmt.Errorf("Failed to parse URL: %v %v", result.URL, err))
-	}
+	result.Name = c.Expand(resource.Name)
+	result.Version = resource.Version
+	result.Type = c.Expand(resource.Type)
+	result.Cache = c.Expand(resource.Cache)
+	result.CacheExpiryMs = resource.CacheExpiryMs
 	return result, nil
 }
 
@@ -180,14 +173,14 @@ func (c *Context) Deffer(functions ...func()) []func() {
 	return *result
 }
 
-func (c *Context) State() common.Map {
+func (c *Context) State() data.Map {
 	if c.state == nil {
 		c.state = NewDefaultState()
 	}
 	return c.state
 }
 
-func (c *Context) SetState(state common.Map) {
+func (c *Context) SetState(state data.Map) {
 	c.state = state
 }
 
@@ -209,7 +202,7 @@ func (c *Context) OperatingSystem(sessionName string) *OperatingSystem {
 	return nil
 }
 
-func (c *Context) ExecuteAsSuperUser(target *Resource, command *ManagedCommand) (*CommandInfo, error) {
+func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ManagedCommand) (*CommandInfo, error) {
 	superUserRequest := SuperUserCommandRequest{
 		Target:        target,
 		MangedCommand: command,
@@ -221,7 +214,7 @@ func (c *Context) ExecuteAsSuperUser(target *Resource, command *ManagedCommand) 
 	return c.Execute(target, request.ManagedCommand)
 }
 
-func (c *Context) Execute(target *Resource, command interface{}) (*CommandInfo, error) {
+func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandInfo, error) {
 	if command == nil {
 		return nil, nil
 	}
@@ -262,7 +255,7 @@ func (c *Context) Execute(target *Resource, command interface{}) (*CommandInfo, 
 	return nil, nil
 }
 
-func (c *Context) Copy(expand bool, source, target *Resource) (interface{}, error) {
+func (c *Context) Copy(expand bool, source, target *url.Resource) (interface{}, error) {
 	return c.Transfer([]*Transfer{{
 		Source: source,
 		Target: target,
@@ -286,7 +279,7 @@ func (c *Context) Transfer(transfers ...*Transfer) (interface{}, error) {
 
 func (c *Context) Expand(text string) string {
 	state := c.State()
-	return ExpandAsText(state, text)
+	return state.ExpandAsText(text)
 }
 
 func (c *Context) AsRequest(serviceName, requestName string, source map[string]interface{}) (interface{}, error) {
@@ -303,7 +296,7 @@ func (c *Context) AsRequest(serviceName, requestName string, source map[string]i
 }
 
 func (c *Context) Close() {
-	atomic.StoreInt32(&c.closed,  1)
+	atomic.StoreInt32(&c.closed, 1)
 	for _, context := range c.cloned {
 		context.Close()
 	}
@@ -312,9 +305,8 @@ func (c *Context) Close() {
 	}
 }
 
-
-func NewDefaultState() common.Map {
-	var result = common.NewMap()
+func NewDefaultState() data.Map {
+	var result = data.NewMap()
 	var now = time.Now()
 	source := rand.NewSource(now.UnixNano())
 	result.Put("endlyURL", "http://github.com/viant/endly")
@@ -359,5 +351,10 @@ func NewDefaultState() common.Map {
 	result.Put("env", func(key string) interface{} {
 		return os.Getenv(key)
 	})
+
+	for k, v := range UdfRegistry {
+		result.Put(k, v)
+	}
+
 	return result
 }

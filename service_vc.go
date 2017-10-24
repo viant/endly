@@ -6,6 +6,7 @@ import (
 	"github.com/viant/toolbox/storage"
 	"path"
 	"strings"
+	"github.com/viant/toolbox/url"
 )
 
 var VersionControlServiceId = "versionControl"
@@ -17,8 +18,8 @@ type versionControlService struct {
 }
 
 type VcCheckoutRequest struct {
-	Origin             *Resource
-	Target             *Resource
+	Origin             *url.Resource
+	Target             *url.Resource
 	Modules            []string //vc path to project
 	RemoveLocalChanges bool
 }
@@ -53,17 +54,17 @@ func (r *VcCheckoutRequest) Validate() error {
 }
 
 type VcPullRequest struct {
-	Target *Resource
-	Origin *Resource
+	Target *url.Resource
+	Origin *url.Resource
 }
 
 type VcCommitRequest struct {
-	Target  *Resource
+	Target  *url.Resource
 	Message string
 }
 
 type VcStatusRequest struct {
-	Target *Resource
+	Target *url.Resource
 }
 
 type VcInfo struct {
@@ -182,7 +183,7 @@ func (s *versionControlService) checkOut(context *Context, request *VcCheckoutRe
 	return response, nil
 }
 
-func (s *versionControlService) checkoutArtifact(context *Context, origin, target *Resource, removeLocalChanges bool) (*VcInfo, error) {
+func (s *versionControlService) checkoutArtifact(context *Context, origin, target *url.Resource, removeLocalChanges bool) (*VcInfo, error) {
 	var parent, _ = path.Split(target.ParsedURL.Path)
 	context.Execute(target, fmt.Sprintf("cd %v", parent))
 	storageService, err := storage.NewServiceForURL(target.URL, target.Credential)

@@ -1,6 +1,6 @@
 package endly
 
-import "github.com/viant/endly/common"
+import "github.com/viant/toolbox/data"
 
 //UdfRegistry represents a udf registry
-var UdfRegistry = make(map[string]func(source interface{}, state common.Map) (interface{}, error))
+var UdfRegistry = make(map[string]func(source interface{}, state data.Map) (interface{}, error))

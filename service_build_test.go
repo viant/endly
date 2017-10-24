@@ -5,6 +5,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"testing"
+	"github.com/viant/toolbox/url"
 )
 
 func TestBuildService_Run(t *testing.T) {
@@ -25,7 +26,7 @@ func TestBuildService_Run(t *testing.T) {
 			Sdk:        "jdk",
 			SdkVersion: "1.7",
 		},
-		Target: endly.NewResource("test/build/project1"),
+		Target: url.NewResource("test/build/project1"),
 	})
 	assert.Equal(t, "ok", response.Status)
 	assert.Equal(t, "", response.Error)

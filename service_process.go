@@ -5,13 +5,14 @@ import (
 	"github.com/viant/toolbox"
 	"strings"
 	"time"
+	"github.com/viant/toolbox/url"
 )
 
 const ProcessServiceId = "process"
 
 type ProcessStartRequest struct {
 	Name          string
-	Target        *Resource
+	Target        *url.Resource
 	Options       *ExecutionOptions
 	SystemService bool
 	Directory     string
@@ -39,12 +40,12 @@ type ProcessStatusResponse struct {
 }
 
 type ProcessStatusRequest struct {
-	Target  *Resource
+	Target  *url.Resource
 	Command string
 }
 
 type ProcessStopRequest struct {
-	Target *Resource
+	Target *url.Resource
 	Pid    int
 }
 

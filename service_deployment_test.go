@@ -5,6 +5,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"testing"
+	"github.com/viant/toolbox/url"
 )
 
 func TestNewDeploymentService(t *testing.T) {
@@ -18,10 +19,10 @@ func TestNewDeploymentService(t *testing.T) {
 
 	response := srv.Run(context, &endly.DeploymentDeployRequest{
 		Transfer: &endly.Transfer{
-			Source: &endly.Resource{
+			Source: &url.Resource{
 				URL: "http://mirrors.gigenet.com/apache/maven/maven-3/3.5.0/binaries/apache-maven-3.5.0-bin.tar.gz",
 			},
-			Target: &endly.Resource{
+			Target: &url.Resource{
 				Name:    "apache-maven",
 				Version: "3.5.0",
 				URL:     "scp://127.0.0.1:22/usr/local/",

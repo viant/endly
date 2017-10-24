@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"github.com/viant/toolbox/url"
 )
 
 func TestSystemService_Run(t *testing.T) {
@@ -22,7 +23,7 @@ func TestSystemService_Run(t *testing.T) {
 
 		{
 			response := systemService.Run(context, &endly.ServiceStartRequest{
-				Target: &endly.Resource{
+				Target: &url.Resource{
 					URL:        "scp://127.0.0.1/",
 					Credential: credentialFile,
 				},
@@ -36,7 +37,7 @@ func TestSystemService_Run(t *testing.T) {
 		}
 		{
 			response := systemService.Run(context, &endly.ServiceStatusRequest{
-				Target: &endly.Resource{
+				Target: &url.Resource{
 					URL:        "scp://127.0.0.1/",
 					Credential: credentialFile,
 				},
@@ -51,7 +52,7 @@ func TestSystemService_Run(t *testing.T) {
 
 		//{
 		//	response := systemService.Run(context, &endly.ServiceStartRequest{
-		//		Target: &endly.Resource{
+		//		Target: &url.Resource{
 		//			URL:            "scp://127.0.0.1/",
 		//			 Credential: "/Users/awitas/secret/scp.json",
 		//		},
@@ -66,7 +67,7 @@ func TestSystemService_Run(t *testing.T) {
 		//}
 		//{
 		//	response := systemService.Run(context, &endly.ServiceStatusRequest{
-		//		Target: &endly.Resource{
+		//		Target: &url.Resource{
 		//			URL:            "scp://127.0.0.1/",
 		//			 Credential: credentialFile,
 		//		},

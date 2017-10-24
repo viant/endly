@@ -5,14 +5,14 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"github.com/viant/endly/common"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox"
 	"io/ioutil"
 	"strings"
 )
 
 //AsProtobufMessage generic method for converting a map, or json string into a proto message
-func AsProtobufMessage(source interface{}, state common.Map, target proto.Message) (interface{}, error) {
+func AsProtobufMessage(source interface{}, state data.Map, target proto.Message) (interface{}, error) {
 	var requestMap map[string]interface{}
 	if toolbox.IsString(source) {
 		requestMap = make(map[string]interface{})
@@ -45,7 +45,7 @@ func AsProtobufMessage(source interface{}, state common.Map, target proto.Messag
 }
 
 //AsProtobufMessage generic method for converting a proto message into a map
-func FromProtobufMessage(source interface{}, state common.Map, sourceMessage proto.Message) (interface{}, error) {
+func FromProtobufMessage(source interface{}, state data.Map, sourceMessage proto.Message) (interface{}, error) {
 	if toolbox.IsString(source) {
 		textSource := toolbox.AsString(source)
 		if strings.HasPrefix(textSource, "base64:") {

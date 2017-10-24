@@ -8,6 +8,7 @@ import (
 	"github.com/viant/toolbox"
 	"strings"
 	"time"
+	"github.com/viant/toolbox/url"
 )
 
 var reportingEventSleep = 250 * time.Millisecond
@@ -705,7 +706,7 @@ func (r *CliRunner) reportSummary(firstEvent *Event, lastEvent *Event, totalUseC
 
 func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	request := &WorkflowRunRequest{}
-	resource := NewResource(workflowRunRequestURL)
+	resource := url.NewResource(workflowRunRequestURL)
 	err := resource.JsonDecode(request)
 	if err != nil {
 		return err

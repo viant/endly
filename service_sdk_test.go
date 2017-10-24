@@ -5,6 +5,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"testing"
+	"github.com/viant/toolbox/url"
 )
 
 func TestSdkService_Run(t *testing.T) {
@@ -17,7 +18,7 @@ func TestSdkService_Run(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 
 	response := service.Run(context, &endly.SdkSetRequest{
-		Target: &endly.Resource{
+		Target: &url.Resource{
 			URL: "scp://127.0.0.1/",
 		},
 		Sdk:     "jdk",

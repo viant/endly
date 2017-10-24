@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"github.com/viant/toolbox/url"
 )
 
 func getDockerService(manager endly.Manager) endly.Service {
@@ -27,9 +28,7 @@ func TestNewDockerService(t *testing.T) {
 	service := getDockerService(manager)
 
 	response := service.Run(context, &endly.DockerImagesRequest{
-		Target: &endly.Resource{
-			URL: "ssh://127.0.0.1/",
-		},
+		Target: url.NewResource("ssh://127.0.0.1/"),
 	})
 
 	assert.Equal(t, "", response.Error)
@@ -44,7 +43,7 @@ func TestNewDockerService_Pull(t *testing.T) {
 	service := getDockerService(manager)
 
 	response := service.Run(context, &endly.DockerPullRequest{
-		Target: &endly.Resource{
+		Target: &url.Resource{
 			URL: "ssh://127.0.0.1/",
 		},
 		Repository: "mysql",
@@ -76,7 +75,7 @@ func TestNewDockerService_Run(t *testing.T) {
 		service := getDockerService(manager)
 
 		response := service.Run(context, &endly.DockerRunRequest{
-			Target: &endly.Resource{
+			Target: &url.Resource{
 				URL:  "ssh://127.0.0.1/",
 				Name: "testmysql",
 			},
@@ -101,7 +100,7 @@ func TestNewDockerService_Run(t *testing.T) {
 		}
 
 		response = service.Run(context, &endly.DockerContainerStopRequest{
-			Target: &endly.Resource{
+			Target: &url.Resource{
 				URL:  "ssh://127.0.0.1/",
 				Name: "testmysql",
 			},

@@ -2,9 +2,9 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/endly/common"
 	"regexp"
 	"strings"
+	"github.com/viant/toolbox/data"
 )
 
 type DataExtraction struct {
@@ -40,7 +40,7 @@ func (d *DataExtractions) Extract(context *Context, extracted map[string]string,
 						}
 
 						if !state.Has(keyFragment) {
-							state.Put(keyFragment, common.NewMap())
+							state.Put(keyFragment, data.NewMap())
 						}
 						state = state.GetMap(keyFragment)
 

@@ -2,8 +2,9 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/endly/common"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
 	"github.com/viant/toolbox/storage"
 	_ "github.com/viant/toolbox/storage/scp"
 	"io"
@@ -22,8 +23,8 @@ type TransferCopyResponse struct {
 }
 
 type Transfer struct {
-	Source  *Resource
-	Target  *Resource
+	Source  *url.Resource
+	Target  *url.Resource
 	Expand  bool
 	Replace map[string]string
 }
@@ -33,7 +34,7 @@ type TransferInfo struct {
 	Target   string
 	Error    string
 	Parsable string
-	State    common.Map
+	State    data.Map
 }
 
 func NewTransferInfo(context *Context, source, target string, err error, expand bool) *TransferInfo {

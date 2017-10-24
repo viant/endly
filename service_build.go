@@ -3,11 +3,12 @@ package endly
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/viant/endly/common"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/storage"
-	"net/url"
+	"github.com/viant/toolbox/url"
 )
+
 
 const BuildServiceId = "build"
 
@@ -72,7 +73,7 @@ type BuildSpec struct {
 type BuildRequest struct {
 	BuildMetaURL string
 	BuildSpec    *BuildSpec //build specification
-	Target       *Resource  //path to application to be build, Note that command may use $build.target variable. that expands to Target URL path
+	Target       *url.Resource  //path to application to be build, Note that command may use $build.target variable. that expands to Target URL path
 }
 
 type BuildResponse struct {
@@ -85,7 +86,7 @@ type BuildRegisterMetaRequest struct {
 }
 
 type BuildLoadMetaRequest struct {
-	Resource *Resource
+	Resource *url.Resource
 }
 
 type BuildLoadMetaResponse struct {
@@ -101,7 +102,7 @@ func (s *BuildService) loadBuildMeta(context *Context, buildMetaURL string) erro
 	if buildMetaURL == "" {
 		return fmt.Errorf("buildMeta was empty")
 	}
-	resource := NewResource(buildMetaURL)
+	resource := url.NewResource(buildMetaURL)
 	meta := &BuildMeta{}
 	err := resource.JsonDecode(meta)
 	if err != nil {
@@ -122,11 +123,18 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 	if !hasMeta {
 		var buildMetaURL = request.BuildMetaURL
 		if buildMetaURL == "" {
-			endlyResource, err := NewEndlyRepoResource(context, fmt.Sprintf("build/meta/%v.json", buildSpec.Name))
+			service, err := context.Service(WorkflowServiceId)
 			if err != nil {
 				return nil, err
 			}
-			buildMetaURL = endlyResource.URL
+			if workflowService, ok := service.(*WorkflowService); ok {
+				workflowResource, err := workflowService.Dao.NewRepoResource(state, fmt.Sprintf("build/meta/%v.json", buildSpec.Name))
+				if err != nil {
+					return nil, err
+				}
+				buildMetaURL = workflowResource.URL
+
+			}
 		}
 		err = s.loadBuildMeta(context, buildMetaURL)
 		if err != nil {
@@ -147,7 +155,7 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 		return nil, fmt.Errorf("Failed to lookup build %v goal: %v", buildSpec.Name, buildSpec.Goal)
 	}
 
-	buildState, err := newBuildState(buildSpec, target.ParsedURL, request, context)
+	buildState, err := newBuildState(buildSpec, target, request, context)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +188,7 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 		return nil, errors.New(response.Error)
 	}
 
-	operatingSystem := context.OperatingSystem(target.Session())
+	operatingSystem := context.OperatingSystem(target.Host())
 	buildDeployment := buildMeta.Match(operatingSystem, buildSpec.Version)
 	if buildDeployment == nil {
 		return nil, fmt.Errorf("Failed to find a build for provided operating system: %v %v", operatingSystem.Name, operatingSystem.Version)
@@ -224,16 +232,16 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 	}
 	return result, nil
 }
-func newBuildState(buildSepc *BuildSpec, parsedUrl *url.URL, request *BuildRequest, context *Context) (common.Map, error) {
+func newBuildState(buildSepc *BuildSpec, target *url.Resource, request *BuildRequest, context *Context) (data.Map, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-	build := common.NewMap()
+	build := data.NewMap()
 	build.Put("args", buildSepc.Args)
 	build.Put("goal", buildSepc.BuildGoal)
-	build.Put("target", parsedUrl.Path)
-	build.Put("host", parsedUrl.Host)
+	build.Put("target", target.ParsedURL.Path)
+	build.Put("host", target.ParsedURL.Host)
 	build.Put("credential", target.Credential)
 	build.Put("sdk", buildSepc.Sdk)
 	build.Put("sdkVersion", buildSepc.SdkVersion)

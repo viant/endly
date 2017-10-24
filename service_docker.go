@@ -5,6 +5,7 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"strings"
+	"github.com/viant/toolbox/url"
 )
 
 const DockerServiceId = "docker"
@@ -18,13 +19,13 @@ type DockerSystemPathRequest struct {
 }
 
 type DockerPullRequest struct {
-	Target     *Resource
+	Target     *url.Resource
 	Repository string
 	Tag        string
 }
 
 type DockerImagesRequest struct {
-	Target     *Resource
+	Target     *url.Resource
 	Repository string
 	Tag        string
 }
@@ -38,7 +39,7 @@ type DockerImageInfo struct {
 
 type DockerRunRequest struct {
 	SysPath    []string
-	Target     *Resource
+	Target     *url.Resource
 	Image      string
 	Port       string
 	Credential string
@@ -50,7 +51,7 @@ type DockerRunRequest struct {
 }
 
 type DockerContainerCheckRequest struct {
-	Target  *Resource
+	Target  *url.Resource
 	SysPath []string
 	Names   string
 	Image   string
@@ -58,21 +59,21 @@ type DockerContainerCheckRequest struct {
 
 type DockerContainerStartRequest struct {
 	SysPath []string
-	Target  *Resource
+	Target  *url.Resource
 }
 
 type DockerContainerRemoveRequest struct {
 	SysPath []string
-	Target  *Resource
+	Target  *url.Resource
 }
 
 type DockerContainerStopRequest struct {
 	SysPath []string
-	Target  *Resource
+	Target  *url.Resource
 }
 
 type DockerContainerCommandRequest struct {
-	Target  *Resource
+	Target  *url.Resource
 	Command string
 }
 
@@ -439,11 +440,11 @@ func (s *DockerService) checkImages(context *Context, request *DockerImagesReque
 
 }
 
-func (s *DockerService) executeDockerCommand(context *Context, target *Resource, errors []string, template string, arguments ...interface{}) (*CommandInfo, error) {
+func (s *DockerService) executeDockerCommand(context *Context, target *url.Resource, errors []string, template string, arguments ...interface{}) (*CommandInfo, error) {
 	return s.executeSecureDockerCommand("", context, target, errors, template, arguments...)
 }
 
-func (s *DockerService) executeSecureDockerCommand(secure string, context *Context, target *Resource, errors []string, template string, arguments ...interface{}) (*CommandInfo, error) {
+func (s *DockerService) executeSecureDockerCommand(secure string, context *Context, target *url.Resource, errors []string, template string, arguments ...interface{}) (*CommandInfo, error) {
 	command := fmt.Sprintf(template, arguments...)
 	return context.Execute(target, &ManagedCommand{
 		Options: &ExecutionOptions{

@@ -7,6 +7,7 @@ import (
 	"github.com/viant/toolbox"
 	"path"
 	"testing"
+	"github.com/viant/toolbox/url"
 )
 
 func TestService_RunStatusRequest(t *testing.T) {
@@ -21,7 +22,7 @@ func TestService_RunStatusRequest(t *testing.T) {
 
 	context := manager.NewContext(toolbox.NewContext())
 	response := service.Run(context, &endly.VcStatusRequest{
-		Target: &endly.Resource{
+		Target: &url.Resource{
 			URL:  testProject,
 			Type: "git",
 		},
@@ -55,10 +56,10 @@ func TestService_RunStatusRequest(t *testing.T) {
 //
 //	context := manager.NewContext(toolbox.NewContext())
 //	response := service.Run(context, &endly.VcCheckoutRequest{
-//		Origin: &endly.Resource{
+//		Origin: &url.Resource{
 //			URL: "https://github.com/adranwit/p",
 //		},
-//		Target: &endly.Resource{
+//		Target: &url.Resource{
 //			URL:  "scp://" + testProject2,
 //			Type: "git",
 //		},

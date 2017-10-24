@@ -3,11 +3,13 @@ package endly
 import (
 	"errors"
 	"fmt"
-	"github.com/viant/endly/common"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox"
 	"strings"
 	"time"
 	"path"
+	"github.com/viant/toolbox/url"
+	"github.com/viant/neatly"
 )
 
 const (
@@ -45,12 +47,12 @@ type WorkflowRegisterRequest struct {
 }
 
 type WorkflowLoadRequest struct {
-	Source *Resource
+	Source *url.Resource
 }
 
 type WorkflowService struct {
 	*AbstractService
-	dao      *WorkflowDao
+	Dao      *WorkflowDao
 	registry map[string]*Workflow
 }
 
@@ -122,7 +124,7 @@ func isTaskAllowed(candidate *WorkflowTask, request *WorkflowRunRequest) (bool, 
 	return false, nil
 }
 
-func (s *WorkflowService) addVariableEvent(name string, variables Variables, context *Context, state common.Map) {
+func (s *WorkflowService) addVariableEvent(name string, variables Variables, context *Context, state data.Map) {
 	if len(variables) == 0 {
 		return
 	}
@@ -137,18 +139,16 @@ func (s *WorkflowService) addVariableEvent(name string, variables Variables, con
 
 func (s *WorkflowService) loadWorkflowIfNeeded(context *Context, name string, URL string) (err error) {
 	if !s.HasWorkflow(name) {
-		var workflowResource *Resource
-		if URL != "" {
-			workflowResource = NewResource(URL)
-		} else {
-			workflowResource, err = NewEndlyRepoResource(context, fmt.Sprintf("workflow/%v.csv", name))
+		var workflowResource *url.Resource
+		if URL == "" {
+			workflowResource, err= s.Dao.NewRepoResource(context.state, fmt.Sprintf("workflow/%v.csv", name))
 			if err != nil {
 				return err
 			}
+		} else {
+			workflowResource = url.NewResource(URL)
 		}
-		if err == nil {
-			err = s.loadWorkflow(context, &WorkflowLoadRequest{Source: workflowResource})
-		}
+		err = s.loadWorkflow(context, &WorkflowLoadRequest{Source: workflowResource})
 		if err != nil {
 			return err
 		}
@@ -184,7 +184,7 @@ func (s *WorkflowService) runAction(context *Context, action *ServiceAction) err
 		return err
 	}
 
-	expandedRequest := ExpandValue(action.Request, state)
+	expandedRequest := state.Expand(action.Request)
 	if expandedRequest == nil || !toolbox.IsMap(expandedRequest) {
 		return fmt.Errorf("Failed to exaluate request: %v, expected map but had: %T", expandedRequest, expandedRequest)
 	}
@@ -199,6 +199,7 @@ func (s *WorkflowService) runAction(context *Context, action *ServiceAction) err
 	if err != nil {
 		return fmt.Errorf("Failed to create request %v on %v.%v, %v", requestMap, action.Service, action.Action, err)
 	}
+
 	var responseMap = make(map[string]interface{})
 	startEvent := s.Begin(context, action, Pairs("service", action.Service, "action", action.Action, "tag", action.Tag, "subPath", action.Subpath, "description", action.Description, "request", requestMap), Info)
 
@@ -214,7 +215,7 @@ func (s *WorkflowService) runAction(context *Context, action *ServiceAction) err
 	if serviceResponse.Response != nil {
 		converter.AssignConverted(responseMap, serviceResponse.Response)
 	}
-	err = action.Post.Apply(common.Map(responseMap), state) //result to task  state
+	err = action.Post.Apply(data.Map(responseMap), state) //result to task  state
 	s.addVariableEvent("Action.Post", action.Post, context, state)
 	if err != nil {
 		return err
@@ -306,15 +307,20 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	context := upstreamContext.Clone()
 	var state = context.State()
 
-	var workflowData = common.Map(workflow.Data)
-	state.Put("parentURL", workflow.source.URL)
+
+	if workflow.Source.URL == "" {
+		return nil, fmt.Errorf("workflow.Source was empty %v", workflow.Name)
+	}
+
+	var workflowData = data.Map(workflow.Data)
+	state.Put(neatly.OwnerURL, workflow.Source.URL)
 	state.Put("workflow", workflowData)
 
 	params := buildParamsMap(request, context)
 
 	if request.PublishParameters {
 		for key, value := range params {
-			state.Put(key, ExpandValue(value, state))
+			state.Put(key, state.Expand(value))
 		}
 	}
 	state.Put("params", params)
@@ -335,8 +341,8 @@ func (s *WorkflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	return response, nil
 }
 
-func buildParamsMap(request *WorkflowRunRequest, context *Context) common.Map {
-	var params = common.NewMap()
+func buildParamsMap(request *WorkflowRunRequest, context *Context) data.Map {
+	var params = data.NewMap()
 	if len(request.Params) > 0 {
 		for k, v := range request.Params {
 			if toolbox.IsString(v) {
@@ -350,7 +356,7 @@ func buildParamsMap(request *WorkflowRunRequest, context *Context) common.Map {
 }
 
 func (s *WorkflowService) loadWorkflow(context *Context, request *WorkflowLoadRequest) error {
-	workflow, err := s.dao.Load(context, request.Source)
+	workflow, err := s.Dao.Load(context, request.Source)
 	if err != nil {
 		return fmt.Errorf("Failed to load workflow: %v, %v", request.Source, err)
 	} else {
@@ -465,7 +471,7 @@ func (s *WorkflowService) NewRequest(action string) (interface{}, error) {
 func NewWorkflowService() Service {
 	var result = &WorkflowService{
 		AbstractService: NewAbstractService(WorkflowServiceId),
-		dao:             NewWorkflowDao(),
+		Dao:             NewWorkflowDao(),
 		registry:        make(map[string]*Workflow),
 	}
 	result.AbstractService.Service = result

@@ -6,12 +6,13 @@ import (
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/ssh"
 	"strings"
+	"github.com/viant/toolbox/url"
 )
 
 const ExecServiceId = "exec"
 
 type OpenSession struct {
-	Target      *Resource //target name creates a named session
+	Target      *url.Resource //target name creates a named session
 	Config      *ssh.SessionConfig
 	SystemPaths []string
 	Transient   bool
@@ -53,7 +54,7 @@ type Execution struct {
 
 type CommandRequest struct {
 	SuperUser bool
-	Target    *Resource
+	Target    *url.Resource
 	Commands  []string
 }
 
@@ -76,7 +77,7 @@ func (r *CommandRequest) AsManagedCommandRequest() *ManagedCommandRequest {
 
 type ManagedCommandRequest struct {
 	SuperUser      bool
-	Target         *Resource
+	Target         *url.Resource
 	ManagedCommand *ManagedCommand
 }
 
@@ -91,7 +92,7 @@ func (r *ManagedCommandRequest) Validate() error {
 }
 
 type SuperUserCommandRequest struct {
-	Target        *Resource
+	Target        *url.Resource
 	MangedCommand *ManagedCommand
 }
 
@@ -154,14 +155,14 @@ func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 	return result, nil
 }
 
-func NewCommandRequest(target *Resource, execution *ManagedCommand) *ManagedCommandRequest {
+func NewCommandRequest(target *url.Resource, execution *ManagedCommand) *ManagedCommandRequest {
 	return &ManagedCommandRequest{
 		Target:         target,
 		ManagedCommand: execution,
 	}
 }
 
-func NewSimpleCommandRequest(target *Resource, commands ...string) *ManagedCommandRequest {
+func NewSimpleCommandRequest(target *url.Resource, commands ...string) *ManagedCommandRequest {
 	var result = &ManagedCommandRequest{
 		Target: target,
 		ManagedCommand: &ManagedCommand{
@@ -275,7 +276,7 @@ func (s *execService) openSession(context *Context, request *OpenSession) (*Clie
 	}
 	sessions := context.Sessions()
 
-	var sessionName = target.Session()
+	var sessionName = target.Host()
 	if sessions.Has(sessionName) {
 		session := sessions[sessionName]
 		err = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
@@ -325,7 +326,7 @@ func (s *execService) openSession(context *Context, request *OpenSession) (*Clie
 	return session, nil
 }
 
-func getHostAndSSHPort(target *Resource) (string, int) {
+func getHostAndSSHPort(target *url.Resource) (string, int) {
 	port := toolbox.AsInt(target.ParsedURL.Port())
 	if port == 0 {
 		port = 22

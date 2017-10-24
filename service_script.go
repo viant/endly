@@ -5,6 +5,7 @@ import (
 	"github.com/robertkrimen/otto"
 	"github.com/viant/toolbox/storage"
 	"io/ioutil"
+	"github.com/viant/toolbox/url"
 )
 
 const jsStdCode = "function getOrFail(s,n){if(n||(n=0),s.length>1&&s[s.length-1])throw s[s.length-1];return s[n]}\n"
@@ -12,7 +13,7 @@ const jsStdCode = "function getOrFail(s,n){if(n||(n=0),s.length>1&&s[s.length-1]
 const ScriptServiceId = "script"
 
 type ScriptCommand struct {
-	Libraries []*Resource
+	Libraries []*url.Resource
 	Code      string
 }
 
@@ -114,8 +115,7 @@ type JsContext struct {
 }
 
 func (c *JsContext) Execute(targetMap map[string]interface{}, commandMap map[string]interface{}) (*CommandInfo, error) {
-
-	var target = &Resource{}
+	var target = &url.Resource{}
 	err := converter.AssignConverted(target, targetMap)
 	if err != nil {
 		return nil, err

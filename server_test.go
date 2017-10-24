@@ -6,6 +6,7 @@ import (
 	"github.com/viant/toolbox"
 	"testing"
 	"time"
+	"github.com/viant/toolbox/url"
 )
 
 func TestServer_Start(t *testing.T) {
@@ -14,7 +15,7 @@ func TestServer_Start(t *testing.T) {
 	go server.Start()
 
 	time.Sleep(500 * time.Millisecond)
-	target := &endly.Resource{URL: "ssh://127.0.0.1/etc"}
+	target := url.NewResource("ssh://127.0.0.1/etc")
 	request := &endly.Request{
 		ServiceRequest: endly.NewSimpleCommandRequest(target, "ls -al"),
 	}

@@ -5,6 +5,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"testing"
+	"github.com/viant/toolbox/url"
 )
 
 func TestNewExecService(t *testing.T) {
@@ -17,7 +18,7 @@ func TestNewExecService(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 	defer context.Close()
 	request := &endly.OpenSession{
-		Target: &endly.Resource{
+		Target: &url.Resource{
 			URL: "ssh://127.0.0.1:22/etc",
 		},
 	}

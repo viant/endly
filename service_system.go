@@ -5,6 +5,7 @@ import (
 	"github.com/viant/toolbox"
 	"path"
 	"strings"
+	"github.com/viant/toolbox/url"
 )
 
 const SystemServiceId = "system"
@@ -17,19 +18,19 @@ const (
 )
 
 type ServiceStartRequest struct {
-	Target    *Resource
+	Target    *url.Resource
 	Service   string
 	Exclusion string
 }
 
 type ServiceStopRequest struct {
-	Target    *Resource
+	Target    *url.Resource
 	Service   string
 	Exclusion string
 }
 
 type ServiceStatusRequest struct {
-	Target    *Resource
+	Target    *url.Resource
 	Service   string
 	Exclusion string
 }
@@ -92,7 +93,7 @@ func (s *systemService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
-func (s *systemService) determineServiceType(context *Context, service, exclusion string, target *Resource) (int, string, error) {
+func (s *systemService) determineServiceType(context *Context, service, exclusion string, target *url.Resource) (int, string, error) {
 	if exclusion != "" {
 		exclusion = " | grep -v " + exclusion
 	}

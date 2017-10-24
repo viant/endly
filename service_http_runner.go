@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/viant/endly/common"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox"
 	"io"
 	"io/ioutil"
@@ -229,7 +229,7 @@ func (s *httpRunnerService) send(context *Context, request *SendHttpRequest) (*S
 	var sessionCookies Cookies = make([]*http.Cookie, 0)
 	var state = context.State()
 	if !state.Has("cookies") {
-		state.Put("cookies", common.NewMap())
+		state.Put("cookies", data.NewMap())
 	}
 
 	for _, req := range request.Requests {

@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"crypto/md5"
 	"fmt"
-	"github.com/viant/endly/common"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox"
 	"io"
 	"strings"
 	"path"
 )
 
-func AsMap(source interface{}, state common.Map) (interface{}, error) {
+func AsMap(source interface{}, state data.Map) (interface{}, error) {
 	if source == nil || toolbox.IsMap(source) {
 		return source, nil
 	}
@@ -32,11 +32,11 @@ func AsMap(source interface{}, state common.Map) (interface{}, error) {
 	return source, nil
 }
 
-func AsInt(source interface{}, state common.Map) (interface{}, error) {
+func AsInt(source interface{}, state data.Map) (interface{}, error) {
 	return toolbox.AsInt(source), nil
 }
 
-func Md5(source interface{}, state common.Map) (interface{}, error) {
+func Md5(source interface{}, state data.Map) (interface{}, error) {
 	hash := md5.New()
 	io.WriteString(hash, toolbox.AsString(source))
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
@@ -44,7 +44,7 @@ func Md5(source interface{}, state common.Map) (interface{}, error) {
 
 
 
-func HasResource(source interface{}, state common.Map) (interface{}, error) {
+func HasResource(source interface{}, state data.Map) (interface{}, error) {
 	var parentDirecotry = ""
 	if state.Has("parentURL") {
 		var workflowPath = strings.Replace(state.GetString("parentURL"), toolbox.FileSchema, "", 1)
