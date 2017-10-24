@@ -19,27 +19,6 @@ const (
 	WorkflowEvalRunCriteriaEventType = "EvalRunCriteria"
 )
 
-//WorkflowRunRequest represents workflow run request
-/*
-<a name="WorkflowRunRequest"></a>
- */
-type WorkflowRunRequest struct {
-	EnableLogging     bool //Enable logging
-	LoggingDirectory  string//Logging directory
-	WorkflowURL       string//Workflow URL if workflow is not found in the registry, it will be loaded
-	Name              string//name of the workflow to run
-	Params            map[string]interface{} //workflow parameters
-	Tasks             string//tasks to run with coma separated list or '*', or empty string for all tasks
-	PublishParameters bool //publishes parameters name into context state
-	Async             bool //flag to run it asynchronously. Do not set it yourself runner only sets the first workflow asyn
-}
-
-
-//WorkflowRunResponse represents workflow run response
-type WorkflowRunResponse struct {
-	Data      map[string]interface{}
-	SessionID string
-}
 
 //WorkflowServiceActivity represents workflow activity
 type WorkflowServiceActivity struct {
@@ -51,15 +30,6 @@ type WorkflowServiceActivity struct {
 	ServiceResponse interface{}
 }
 
-//WorkflowRegisterRequest represents workflow register request
-type WorkflowRegisterRequest struct {
-	Workflow *Workflow
-}
-
-//WorkflowLoadRequest represents workflow load request from the specified source
-type WorkflowLoadRequest struct {
-	Source *url.Resource
-}
 
 type workflowService struct {
 	*AbstractService
@@ -370,16 +340,18 @@ func buildParamsMap(request *WorkflowRunRequest, context *Context) data.Map {
 	return params
 }
 
-func (s *workflowService) loadWorkflow(context *Context, request *WorkflowLoadRequest) error {
+func (s *workflowService) loadWorkflow(context *Context, request *WorkflowLoadRequest) (*WorkflowLoadResponse, error) {
 	workflow, err := s.Dao.Load(context, request.Source)
 	if err != nil {
-		return fmt.Errorf("Failed to load workflow: %v, %v", request.Source, err)
+		return nil, fmt.Errorf("Failed to load workflow: %v, %v", request.Source, err)
 	}
 	err = s.Register(workflow)
 	if err != nil {
-		return fmt.Errorf("Failed to register workflow: %v, %v", request.Source, err)
+		return nil, fmt.Errorf("Failed to register workflow: %v, %v", request.Source, err)
 	}
-	return nil
+	return &WorkflowLoadResponse{
+		Workflow:workflow,
+	},nil
 }
 
 func (s *workflowService) removeSession(context *Context) {

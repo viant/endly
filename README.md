@@ -79,16 +79,29 @@ The following expression are supported:
 ## 
 
 
-## Workflow Services Action
+
+
+## Workflow Services Actions
+
 
 ### Workflow Service
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| workflow | load | Loads workflow from provided path |  |  |
-| workflow | register | Register provide workflow in registry |  |  |
-| workflow | run | run workflow with specified tasks and parameters | [WorkflowRunRequest](service_workflow.go#WorkflowRunRequest)
-README.md |  |
+| workflow | load | Loads workflow from provided path | [WorkflowLoadRequest](service_workflow_load.go) | [WorkflowLoadRequest](service_workflow_load.go)  |
+| workflow | register | Register provide workflow in registry | [WorkflowLoadRequest](service_workflow_register.go) |  |
+| workflow | run | run workflow with specified tasks and parameters | [WorkflowRunRequest](service_workflow_run.go) | [WorkflowRunResponse]((service_workflow_run.go) |
+
+
+### Version Control Service
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| version/control | status | Runs version control check on provided URL | [VcStatusRequest](service_vc_status.go) | [VcInfo](service_vc_info.go)  |
+| version/control | checkout | If target directory already  exist with matching origin URL, this action only pulls the latest changes without overriding local ones, otherwise full checkout | [VcCheckoutRequest](service_vc_checkout.go) | [VcInfo](service_vc_info.go)   |
+| version/control | commit | commit commits local changes to the version control | [VcCommitRequest](service_vc_commit.go) | [VcInfo](service_vc_info.go)   |
+| version/control | pull | retrieves the latest changes from the origin | [VcPullRequest](service_vc_pull.go) | [VcInfo](service_vc_info.go)   |
+
 
 
 

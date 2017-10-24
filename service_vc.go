@@ -9,8 +9,10 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
+
+
 //VersionControlServiceID version control service id
-var VersionControlServiceID = "versionControl"
+var VersionControlServiceID = "version/control"
 
 type versionControlService struct {
 	*AbstractService
@@ -18,80 +20,7 @@ type versionControlService struct {
 	*svnService
 }
 
-//VcCheckoutRequest represents checkout request. If target directory exist and contains matching origin URL,
-// only taking the latest changes without overriding local if performed, otherwise full checkout
-type VcCheckoutRequest struct {
-	Origin             *url.Resource//version control origin
-	Target             *url.Resource//local code destination
-	Modules            []string //vc path to project
-	RemoveLocalChanges bool//flag to remove local changes
-}
-
-//VcCheckoutResponse represents checkout response
-type VcCheckoutResponse struct {
-	Checkouts map[string]*VcInfo
-}
-
-//Validate validates request
-func (r *VcCheckoutRequest) Validate() error {
-
-	if r.Origin == nil {
-		return fmt.Errorf("Origin type was empty")
-	}
-	if r.Target == nil {
-		return fmt.Errorf("Target type was empty")
-	}
-
-	if r.Origin.Type == "" {
-		if strings.Contains(r.Origin.URL, "/svn/") {
-			r.Origin.Type = "svn"
-		} else if strings.Contains(r.Origin.URL, "git") {
-			r.Origin.Type = "git"
-		} else {
-			return fmt.Errorf("Origin type was empty for %v", r.Origin.URL)
-		}
-	}
-	if r.Target.Type == "" {
-		r.Target.Type = r.Origin.Type
-	}
-	return nil
-}
-
-//VcPullRequest represents a pull request
-type VcPullRequest struct {
-	Target *url.Resource//local code destination
-	Origin *url.Resource//version control origin
-}
-
-//VcCommitRequest represents a commit request
-type VcCommitRequest struct {
-	Target  *url.Resource //local code source repo
-	Message string//commit message
-}
-
-//VcStatusRequest represents version control status
-type VcStatusRequest struct {
-	Target *url.Resource//local code source repo
-}
-
-//VcInfo represents version control info
-type VcInfo struct {
-	IsVersionControlManaged bool
-	Origin                  string
-	Revision                string
-	Branch                  string
-	IsUptoDate              bool
-	New                     []string
-	Untracked               []string
-	Modified                []string
-	Deleted                 []string
-}
-
-//HasPendingChanges returns true if there are any untracked, new, modified, deleted files.
-func (r *VcInfo) HasPendingChanges() bool {
-	return len(r.New) > 0 || len(r.Untracked) > 0 || len(r.Deleted) > 0 || len(r.Modified) > 0
-}
-
+//checkInfo returns version control info
 func (s *versionControlService) checkInfo(context *Context, request *VcStatusRequest) (*VcInfo, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
@@ -106,6 +35,8 @@ func (s *versionControlService) checkInfo(context *Context, request *VcStatusReq
 	return nil, fmt.Errorf("Unsupported type: %v -> ", target.Type, target.URL)
 }
 
+
+//commit commits local changes to the version control
 func (s *versionControlService) commit(context *Context, request *VcCommitRequest) (interface{}, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
@@ -130,6 +61,8 @@ func (s *versionControlService) commit(context *Context, request *VcCommitReques
 	return nil, fmt.Errorf("Unsupported type: %v -> %v", target.Type, target.URL)
 }
 
+
+//pull retrieves the latest changes from the origin
 func (s *versionControlService) pull(context *Context, request *VcPullRequest) (*VcInfo, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
@@ -154,7 +87,8 @@ func (s *versionControlService) pull(context *Context, request *VcPullRequest) (
 	return nil, fmt.Errorf("Unsupported type: %v -> %v", target.Type, target.URL)
 }
 
-func (s *versionControlService) checkOut(context *Context, request *VcCheckoutRequest) (*VcCheckoutResponse, error) {
+//checkout If target directory exist and already contains matching origin URL, only taking the latest changes without overriding local if performed, otherwise full checkout
+func (s *versionControlService) checkout(context *Context, request *VcCheckoutRequest) (*VcCheckoutResponse, error) {
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
@@ -278,7 +212,7 @@ func (s *versionControlService) Run(context *Context, request interface{}) *Serv
 		}
 
 	case *VcCheckoutRequest:
-		response.Response, err = s.checkOut(context, actualRequest)
+		response.Response, err = s.checkout(context, actualRequest)
 
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to checkout version: %v -> %v, %v", actualRequest.Origin.URL, actualRequest.Target.URL, err)
@@ -307,8 +241,6 @@ func (s *versionControlService) NewRequest(action string) (interface{}, error) {
 	case "status":
 		return &VcStatusRequest{}, nil
 	case "checkout":
-		return &VcCheckoutRequest{}, nil
-	case "module_checkout":
 		return &VcCheckoutRequest{}, nil
 	case "commit":
 		return &VcCommitRequest{}, nil
