@@ -81,6 +81,16 @@ The following expression are supported:
 
 ## Workflow Services Action
 
+### Workflow Service
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| workflow | load | Loads workflow from provided path |  |  |
+| workflow | register | Register provide workflow in registry |  |  |
+| workflow | run | run workflow with specified tasks and parameters | [WorkflowRunRequest](blob/master/service_workflow.go#WorkflowRunRequest)
+README.md |  |
+
+
 
 ## Predefined workflows
 

@@ -20,16 +20,20 @@ const (
 )
 
 //WorkflowRunRequest represents workflow run request
+/*
+<a name="WorkflowRunRequest"></a>
+ */
 type WorkflowRunRequest struct {
-	EnableLogging     bool
-	LoggingDirectory  string
-	WorkflowURL       string
-	Name              string
-	Params            map[string]interface{}
-	Tasks             string
+	EnableLogging     bool //Enable logging
+	LoggingDirectory  string//Logging directory
+	WorkflowURL       string//Workflow URL if workflow is not found in the registry, it will be loaded
+	Name              string//name of the workflow to run
+	Params            map[string]interface{} //workflow parameters
+	Tasks             string//tasks to run with coma separated list or '*', or empty string for all tasks
 	PublishParameters bool //publishes parameters name into context state
-	Async             bool //flag to run it asynchronously
+	Async             bool //flag to run it asynchronously. Do not set it yourself runner only sets the first workflow asyn
 }
+
 
 //WorkflowRunResponse represents workflow run response
 type WorkflowRunResponse struct {
@@ -104,7 +108,7 @@ func (s *workflowService) evaluateRunCriteria(context *Context, criteria string)
 }
 
 func isTaskAllowed(candidate *WorkflowTask, request *WorkflowRunRequest) (bool, map[int]bool) {
-	if request.Tasks == "" {
+	if request.Tasks == ""  || request.Tasks == "*" {
 		return true, nil
 	}
 	var actions map[int]bool
