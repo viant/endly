@@ -8,18 +8,27 @@ import (
 	"sync"
 )
 
-const AppName = "endly - End To End Functional Testing "
-const AppVersion = "0.0.1"
 
+const AppName = "endly - End To End Functional Testing "//AppName application name
+const AppVersion = "0.0.1" //AppVersion application version
+
+
+//Manager represnets a workflow manager
 type Manager interface {
+
+	//Name returns an application name
 	Name() string
 
+	//Version returns an application version
 	Version() string
 
+	//Service return a workflow service for provided name or error
 	Service(name string) (Service, error)
 
+	//Register register service in this manager
 	Register(service Service)
 
+	//NewContext returns new workflow context.
 	NewContext(context toolbox.Context) *Context
 }
 
@@ -53,7 +62,7 @@ func (s *manager) NewContext(ctx toolbox.Context) *Context {
 	sessionId := uuid.NewV1()
 	var workflowStack = make([]*Workflow, 0)
 	var result = &Context{
-		SessionId: sessionId.String(),
+		SessionID: sessionId.String(),
 		Context:   ctx,
 		Events: &Events{
 			mutex:  &sync.Mutex{},
@@ -65,6 +74,7 @@ func (s *manager) NewContext(ctx toolbox.Context) *Context {
 	return result
 }
 
+//NewManager returns a new manager.
 func NewManager() Manager {
 	var result = &manager{
 		name:     AppName,

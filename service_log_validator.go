@@ -24,10 +24,10 @@ type logValidatorService struct {
 }
 
 type LogType struct {
-	Name           string
-	Format         string
-	Mask           string
-	SkipExpression string
+	Name    string
+	Format  string
+	Mask    string
+	Exclude string
 }
 
 type LogValidatorListenRequest struct {
@@ -329,7 +329,7 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 	var response = &ValidatorAssertionInfo{}
 	var state = s.State()
 	validator := &Validator{
-		SkipFields: make(map[string]bool),
+		ExcludedFields: make(map[string]bool),
 	}
 	if len(request.ExpectedLogRecords) == 0 {
 		return response, nil
@@ -429,7 +429,7 @@ func (s *logValidatorService) readLogFile(context *Context, source *url.Resource
 		isNewLogFile = true
 		logFile = &LogFile{
 			Name:            name,
-			SkipExpression:  logType.SkipExpression,
+			SkipExpression:  logType.Exclude,
 			URL:             candidate.URL(),
 			LastModified:    candidate.LastModified(),
 			Size:            int(candidate.Size()),

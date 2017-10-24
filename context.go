@@ -17,18 +17,16 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//TODO Execution detail Tracking of all run (time taken, request, response)
-
 var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
 
-type StateKey *data.Map
 
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
 var workflowKey = (*Workflow)(nil)
 
+//Context represents a workflow session context/state
 type Context struct {
-	SessionId     string
+	SessionID     string
 	state         data.Map
 	toolbox.Context
 	Events        *Events
@@ -38,20 +36,24 @@ type Context struct {
 	closed        int32
 }
 
+//IsClosed returns true if it is closed.
 func (c *Context) IsClosed() bool {
 	return atomic.LoadInt32(&c.closed) == 1
 }
 
+//PushWorkflow adds a workflow to the workflow stack.
 func (c *Context) PushWorkflow(workflow *Workflow) {
 	*c.workflowStack = append(*c.workflowStack, workflow)
 }
 
+//ShiftWorkflow removes the first workflow from the workflow stack.
 func (c *Context) ShiftWorkflow() *Workflow {
 	var result = (*c.workflowStack)[0]
 	(*c.workflowStack) = (*c.workflowStack)[1:]
 	return result
 }
 
+//CurrentWorkflow returns the last workflow from the workflow stack.
 func (c *Context) CurrentWorkflow() *Workflow {
 	if c.workflowStack == nil {
 		return nil
@@ -68,6 +70,7 @@ func reportError(err error) error {
 	return fmt.Errorf("%v at %v:%v -> %v", err, fileName, line, funcName)
 }
 
+//Clone clones the context.
 func (c *Context) Clone() *Context {
 	if len(c.cloned) == 0 {
 		c.cloned = make([]*Context, 0)
@@ -77,7 +80,7 @@ func (c *Context) Clone() *Context {
 	result.Events = c.Events
 	result.state = NewDefaultState()
 	result.state.Apply(c.state)
-	result.SessionId = c.SessionId
+	result.SessionID = c.SessionID
 	result.workflowStack = c.workflowStack
 	result.EventLogger = c.EventLogger
 	c.cloned = append(c.cloned, result)
@@ -98,6 +101,7 @@ func (c *Context) parentURLCandidates() []string {
 	return result
 }
 
+//ExpandResource substitutes any $ expression with the key value from the state map if it is present.
 func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) {
 	if resource == nil {
 		return nil, reportError(fmt.Errorf("Resource was empty"))
@@ -130,6 +134,7 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 	return result, nil
 }
 
+//Manager returns workflow manager or error
 func (c *Context) Manager() (Manager, error) {
 	var manager = &manager{}
 	if !c.GetInto(serviceManagerKey, &manager) {
@@ -138,6 +143,7 @@ func (c *Context) Manager() (Manager, error) {
 	return manager, nil
 }
 
+//Sessions returns client sessions
 func (c *Context) Sessions() ClientSessions {
 	var result *ClientSessions
 	if !c.Contains(clientSessionKey) {
@@ -150,6 +156,7 @@ func (c *Context) Sessions() ClientSessions {
 	return *result
 }
 
+//Service returns a service fo provided id or error.
 func (c *Context) Service(name string) (Service, error) {
 	manager, err := c.Manager()
 	if err != nil {
@@ -158,6 +165,7 @@ func (c *Context) Service(name string) (Service, error) {
 	return manager.Service(name)
 }
 
+//Deffer add function to be executed if context closes. If returns currently registered functions.
 func (c *Context) Deffer(functions ...func()) []func() {
 	var result *[]func()
 	if !c.Contains(deferFunctionsKey) {
@@ -173,6 +181,7 @@ func (c *Context) Deffer(functions ...func()) []func() {
 	return *result
 }
 
+//State returns a context state map.
 func (c *Context) State() data.Map {
 	if c.state == nil {
 		c.state = NewDefaultState()
@@ -180,20 +189,22 @@ func (c *Context) State() data.Map {
 	return c.state
 }
 
+//SetState sets a new state map
 func (c *Context) SetState(state data.Map) {
 	c.state = state
 }
 
+//Workflow returns the master workflow
 func (c *Context) Workflow() *Workflow {
 	var result *Workflow
 	if !c.Contains(workflowKey) {
 		return nil
-	} else {
-		c.GetInto(workflowKey, &result)
 	}
+	c.GetInto(workflowKey, &result)
 	return result
 }
 
+//OperatingSystem returns operating system for provide session
 func (c *Context) OperatingSystem(sessionName string) *OperatingSystem {
 	var sessions = c.Sessions()
 	if session, has := sessions[sessionName]; has {
@@ -202,6 +213,7 @@ func (c *Context) OperatingSystem(sessionName string) *OperatingSystem {
 	return nil
 }
 
+//ExecuteAsSuperUser executes provided command as super user.
 func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ManagedCommand) (*CommandInfo, error) {
 	superUserRequest := SuperUserCommandRequest{
 		Target:        target,
@@ -214,6 +226,7 @@ func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ManagedComma
 	return c.Execute(target, request.ManagedCommand)
 }
 
+//Execute execute shell command
 func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandInfo, error) {
 	if command == nil {
 		return nil, nil
@@ -255,6 +268,8 @@ func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandIn
 	return nil, nil
 }
 
+
+//Copy transfer source into target url, it takes also exand flag to indicate variable substitution.
 func (c *Context) Copy(expand bool, source, target *url.Resource) (interface{}, error) {
 	return c.Transfer([]*Transfer{{
 		Source: source,
@@ -262,6 +277,7 @@ func (c *Context) Copy(expand bool, source, target *url.Resource) (interface{}, 
 		Expand: expand}}...)
 }
 
+//Transfer transfer data for provided transfer definition.
 func (c *Context) Transfer(transfers ...*Transfer) (interface{}, error) {
 	if transfers == nil {
 		return nil, nil
@@ -277,17 +293,19 @@ func (c *Context) Transfer(transfers ...*Transfer) (interface{}, error) {
 	return nil, nil
 }
 
+//Expand substitute $ expression if present in the text and state map.
 func (c *Context) Expand(text string) string {
 	state := c.State()
 	return state.ExpandAsText(text)
 }
 
-func (c *Context) AsRequest(serviceName, requestName string, source map[string]interface{}) (interface{}, error) {
+//AsRequest converts a source map into request for provided service and action.
+func (c *Context) AsRequest(serviceName, action string, source map[string]interface{}) (interface{}, error) {
 	service, err := c.Service(serviceName)
 	if err != nil {
 		return nil, err
 	}
-	request, err := service.NewRequest(requestName)
+	request, err := service.NewRequest(action)
 	if err != nil {
 		return nil, err
 	}
@@ -295,6 +313,7 @@ func (c *Context) AsRequest(serviceName, requestName string, source map[string]i
 	return request, err
 }
 
+//Close closes this context, it executes all deferred function and set closed flag.
 func (c *Context) Close() {
 	atomic.StoreInt32(&c.closed, 1)
 	for _, context := range c.cloned {
@@ -305,15 +324,32 @@ func (c *Context) Close() {
 	}
 }
 
+
+/*
+NewDefaultState returns a new default state.
+It comes with the following registered keys:
+	* rand - random int64
+	*  date -  current date formatted as yyyy-MM-dd
+	* time - current time formatted as yyyy-MM-dd hh:mm:ss
+	* ts - current timestamp formatted  as yyyyMMddhhmmSSS
+	* timestamp.yesterday - timestamp in ms
+	* timestamp.now - timestamp in ms
+	* timestamp.tomorrow - timestamp in ms
+	* tmpDir - temp directory
+	* uuid.next - generate unique id
+	* uuid.get - returns previously generated unique id, or generate new
+	*.end.XXX where XXX is the name of the env variable to return
+	* all UFD registry functions
+ */
 func NewDefaultState() data.Map {
 	var result = data.NewMap()
 	var now = time.Now()
 	source := rand.NewSource(now.UnixNano())
-	result.Put("endlyURL", "http://github.com/viant/endly")
 	result.Put("rand", source.Int63())
 	result.Put("date", now.Format(toolbox.DateFormatToLayout("yyyy-MM-dd")))
 	result.Put("time", now.Format(toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss")))
 	result.Put("ts", now.Format(toolbox.DateFormatToLayout("yyyyMMddhhmmSSS")))
+
 
 	result.Put("tmpDir", func(key string) interface{} {
 		tempPath := path.Join(os.TempDir(), key)

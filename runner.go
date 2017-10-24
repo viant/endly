@@ -13,10 +13,11 @@ import (
 
 var reportingEventSleep = 250 * time.Millisecond
 
+//RunnerReportingFilter runner reporting fiter
 type RunnerReportingFilter struct {
-	Stdin                   bool
-	Stdout                  bool
-	Transfer                bool
+	Stdin                   bool//log stdin
+	Stdout                  bool//log stdout
+	Transfer                bool//log transfer
 	Task                    bool
 	UseCase                 bool
 	Action                  bool
@@ -73,7 +74,7 @@ func (r *CliRunner) ReportingTag() *ReportingTag {
 }
 
 func (r *CliRunner) hasActiveSession(context *Context, sessionId string) bool {
-	service, err := context.Service(WorkflowServiceId)
+	service, err := context.Service(WorkflowServiceID)
 	if err != nil {
 		return false
 	}
@@ -308,15 +309,21 @@ func (r *CliRunner) reportSleep(event *Event) {
 	}
 }
 
+
+
 func (r *CliRunner) reportTag(event *Event, filter *RunnerReportingFilter) {
-	if tag, ok := event.Value["tag"]; ok {
+	if valueTag, ok := event.Value["tag"]; ok {
+
+		var tagIndex = toolbox.AsString(event.Value["tagIndex"])
+		if tagIndex != "" {
+			valueTag = fmt.Sprintf("%v%v", valueTag, tagIndex)
+		}
 		//remove this use vcase from previous use case
 		previousTag := r.ReportingTag()
 		previousTag.Events = previousTag.Events[:len(previousTag.Events)-1]
-
 		tag := &ReportingTag{
 			Description: fmt.Sprintf(" %v", event.Value["description"]),
-			Tag:         fmt.Sprintf("%v", tag),
+			Tag:         fmt.Sprintf("%v", valueTag),
 			subPath:     fmt.Sprintf("%v ", event.Value["subPath"]),
 		}
 		tag.AddEvent(event)
@@ -591,6 +598,11 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 		"Action.Init", "Action.Post",
 		"State.Init",
 		"LogValidatorAssertRequest.Start",
+		"EvalRunCriteria",
+		"LogValidatorListenRequest.Start",
+		"LogValidatorListenRequest.End",
+		"LogValidatorResetRequest.Start",
+		"LogValidatorResetRequest.End",
 		"ProcessStatusRequest.Start", "ProcessStatusRequest.End":
 		//ignore
 
@@ -660,12 +672,6 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 		}
 	}
 
-	fmt.Printf("totalUseCasePassed: %v %v\n", totalUseCasePassed, totalUseCaseFailed)
-	if totalUseCasePassed > 0 || totalUseCaseFailed > 0 {
-		printGenericColoredEvent("Summary", "UseCases Passed", toolbox.AsString(totalUseCasePassed), nil, 20, 51, aurora.Green, aurora.Bold)
-		printGenericColoredEvent("Summary", "UseCases Failed", toolbox.AsString(totalUseCaseFailed), nil, 20, 51, aurora.Red, aurora.Bold)
-	}
-
 	if totalUseCaseFailed > 0 && filter.OnFailureFilter != nil {
 		for _, useCase := range r.tags {
 			if useCase.FailedCount > 0 {
@@ -682,9 +688,18 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 			}
 		}
 	}
+
+	fmt.Printf("totalUseCasePassed: %v %v\n", totalUseCasePassed, totalUseCaseFailed)
+	if totalUseCasePassed > 0 || totalUseCaseFailed > 0 {
+		printGenericColoredEvent("Summary", "UseCases Passed", toolbox.AsString(totalUseCasePassed), nil, 20, 51, aurora.Green, aurora.Bold)
+		printGenericColoredEvent("Summary", "UseCases Failed", toolbox.AsString(totalUseCaseFailed), nil, 20, 51, aurora.Red, aurora.Bold)
+	}
 	r.reportSummary(firstEvent, lastEvent, totalUseCaseFailed)
 	return nil
 }
+
+
+
 
 func (r *CliRunner) reportSummary(firstEvent *Event, lastEvent *Event, totalUseCaseFailed int) {
 	for _, useCase := range r.tags {
@@ -692,6 +707,8 @@ func (r *CliRunner) reportSummary(firstEvent *Event, lastEvent *Event, totalUseC
 			fmt.Printf("%v\n", aurora.Red(fmt.Sprintf("[%-6v %13v: %59v]", useCase.Tag, useCase.subPath, "Failed")))
 		}
 	}
+
+
 	if firstEvent != nil {
 		var timeTaken = lastEvent.Timestamp.UnixNano() - firstEvent.Timestamp.UnixNano()
 		var elapsed = fmt.Sprintf("%9.3f ", float64(timeTaken)/float64(time.Millisecond)/1000)
@@ -713,7 +730,7 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	}
 	context := r.manager.NewContext(toolbox.NewContext())
 	defer context.Close()
-	service, err := context.Service(WorkflowServiceId)
+	service, err := context.Service(WorkflowServiceID)
 	if err != nil {
 		return err
 	}
@@ -722,8 +739,6 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("RUN %v %v\n", request.Name, request.Tasks)
-
 	request.Async = true
 	response := service.Run(context, request)
 	if response.Error != "" {
@@ -733,7 +748,7 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	if !ok {
 		return fmt.Errorf("Failed to run workflow: %v invalid response type %T", workflowRunRequestURL, response.Response)
 	}
-	return r.reportEvents(context, workflowResponse.SessionId, runnerOption.Filter)
+	return r.reportEvents(context, workflowResponse.SessionID, runnerOption.Filter)
 }
 
 func NewCliRunner() *CliRunner {

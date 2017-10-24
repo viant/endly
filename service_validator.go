@@ -75,7 +75,7 @@ func (s *ValidatorService) Assert(context *Context, request *ValidatorAssertRequ
 		}
 	}
 	validator := &Validator{
-		SkipFields: make(map[string]bool),
+		ExcludedFields: make(map[string]bool),
 	}
 	err := validator.Assert(expected, actual, response, "/")
 	if err != nil {

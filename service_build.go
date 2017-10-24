@@ -123,11 +123,11 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 	if !hasMeta {
 		var buildMetaURL = request.BuildMetaURL
 		if buildMetaURL == "" {
-			service, err := context.Service(WorkflowServiceId)
+			service, err := context.Service(WorkflowServiceID)
 			if err != nil {
 				return nil, err
 			}
-			if workflowService, ok := service.(*WorkflowService); ok {
+			if workflowService, ok := service.(*workflowService); ok {
 				workflowResource, err := workflowService.Dao.NewRepoResource(state, fmt.Sprintf("build/meta/%v.json", buildSpec.Name))
 				if err != nil {
 					return nil, err

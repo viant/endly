@@ -11,18 +11,21 @@ import (
 	"strings"
 )
 
+
+//Variable represents a variable
 type Variable struct {
-	Name     string
-	Value    interface{}
-	From     string
+	Name     string//name
+	Value    interface{}//default value
+	From     string//context state map key to pull data
 	Persist  bool //stores in tmp directory to be used as backup if data is not in the cotnext
-	Required bool
+	Required bool//flag that validates that from returns non empty value or error is generated
 }
 
 func (v *Variable) tempfile() string {
 	return path.Join(os.Getenv("TMPDIR"), v.Name+".var")
 }
 
+//PersistValue persist variable
 func (v *Variable) PersistValue() error {
 	if v.Value != nil {
 		var filename = v.tempfile()
@@ -37,6 +40,7 @@ func (v *Variable) PersistValue() error {
 	return nil
 }
 
+//Load loads persisted variable value.
 func (v *Variable) Load() error {
 	if v.Value == nil {
 		var filename = v.tempfile()
@@ -52,6 +56,7 @@ func (v *Variable) Load() error {
 	return nil
 }
 
+//Variables a slice of variables
 type Variables []*Variable
 
 func (v *Variable) fromVariable() *Variable {
@@ -66,6 +71,7 @@ func (v *Variable) fromVariable() *Variable {
 	}
 }
 
+//Apply evaluates all variable from in map to out map
 func (v *Variables) Apply(in, out data.Map) error {
 	if v == nil || out == nil || in == nil || len(*v) == 0 {
 		return nil
@@ -114,6 +120,7 @@ func (v *Variables) Apply(in, out data.Map) error {
 	return nil
 }
 
+//String returns a variable info
 func (v Variables) String() string {
 	var result = ""
 	for _, item := range v {

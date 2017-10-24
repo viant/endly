@@ -8,20 +8,21 @@ import (
 )
 
 const (
-	All = iota
-	Error
-	Info
-	Debug
-	Finest
+	All            = iota //event logging level all
+	Error                 //event logging level error
+	Info                  //event logging level info
+	Debug                 //event logging level debug
 	ErrorEventType = "Error"
 	SleepEventType = "Sleep"
 )
 
+//Events represents sychronized slice of Events
 type Events struct {
 	Events []*Event
 	mutex  *sync.Mutex
 }
 
+//Push appends an event to the events slice
 func (e *Events) Push(event *Event) {
 	e.mutex.Lock()
 	defer e.mutex.Unlock()
@@ -31,6 +32,7 @@ func (e *Events) Push(event *Event) {
 	e.Events = append(e.Events, event)
 }
 
+//Shift removes the first event from the  events slice
 func (e *Events) Shift() *Event {
 	e.mutex.Lock()
 	defer e.mutex.Unlock()
@@ -42,18 +44,21 @@ func (e *Events) Shift() *Event {
 	return result
 }
 
+//Event represents a workflow event
 type Event struct {
-	StartEvent  *Event
-	Timestamp   time.Time
-	TimeTakenMs int
-	Workflow    string
-	Task        *WorkflowTask
-	Activity    *WorkflowServiceActivity
-	Level       int
-	Type        string
-	Value       map[string]interface{}
+	StartEvent  *Event                   //starting event
+	Timestamp   time.Time                //start time
+	TimeTakenMs int                      //time taken
+	Workflow    string                   //workflow name
+	Task        *WorkflowTask            //task
+	Activity    *WorkflowServiceActivity //activity details
+	Level       int                      //logging level
+	Type        string                   //event type
+	Value       map[string]interface{}   //event value
 }
 
+
+//Info returns basic event info
 func (e *Event) Info() string {
 	var name = ""
 	if value, ok := e.Value["name"]; ok {
@@ -62,6 +67,7 @@ func (e *Event) Info() string {
 	return fmt.Sprintf("%v", name)
 }
 
+//ElapsedInfo returns elapsed info if time taken is present
 func (e *Event) ElapsedInfo() string {
 	if e.TimeTakenMs == 0 {
 		return ""

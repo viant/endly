@@ -16,7 +16,7 @@ func TestService_RunStatusRequest(t *testing.T) {
 	testProject := fmt.Sprintf("ssh://%vtest/vc/project1", parent)
 
 	manager := endly.NewManager()
-	service, err := manager.Service(endly.VersionControlServiceId)
+	service, err := manager.Service(endly.VersionControlServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
 
@@ -51,7 +51,7 @@ func TestService_RunStatusRequest(t *testing.T) {
 //	assert.Nil(t, err)
 //
 //	manager := endly.NewManager()
-//	service, err := manager.Service(endly.VersionControlServiceId)
+//	service, err := manager.Service(endly.VersionControlServiceID)
 //	assert.Nil(t, err)
 //
 //	context := manager.NewContext(toolbox.NewContext())

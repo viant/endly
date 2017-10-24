@@ -7,13 +7,16 @@ import (
 	"github.com/viant/toolbox/data"
 )
 
+//DataExtraction represents a data extraction
 type DataExtraction struct {
-	RegExpr string
-	Key     string
+	RegExpr string	//regular expression
+	Key     string  //state key to place a match
 }
 
+//DataExtractions a slice of DataExtractions
 type DataExtractions []*DataExtraction
 
+//Extract extract data from provided inputs, the result is placed to extracted map, or error
 func (d *DataExtractions) Extract(context *Context, extracted map[string]string, input ...string) error {
 	if len(*d) == 0 || len(input) == 0 {
 		return nil
@@ -53,7 +56,7 @@ func (d *DataExtractions) Extract(context *Context, extracted map[string]string,
 	}
 	return nil
 }
-
+//NewDataExtractions creates a new NewDataExtractions
 func NewDataExtractions() DataExtractions {
 	return make([]*DataExtraction, 0)
 }

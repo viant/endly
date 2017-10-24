@@ -7,6 +7,7 @@ import (
 const commandNotFound = "command not found"
 const noSuchFileOrDirectory = "no such file or directory"
 
+//CheckNoSuchFileOrDirectory checks for no such file or directory message in the provided stdout.
 func CheckNoSuchFileOrDirectory(stdout ...string) bool {
 	if len(stdout) == 0 {
 		return false
@@ -14,7 +15,7 @@ func CheckNoSuchFileOrDirectory(stdout ...string) bool {
 	candidate := strings.ToLower(strings.Join(stdout, "\n"))
 	return strings.Contains(candidate, noSuchFileOrDirectory)
 }
-
+//CheckCommandNotFound checks for command not found message in the provided stdout.
 func CheckCommandNotFound(stdout ...string) bool {
 	if len(stdout) == 0 {
 		return false
@@ -23,6 +24,7 @@ func CheckCommandNotFound(stdout ...string) bool {
 	return strings.Contains(candidate, commandNotFound)
 }
 
+//ExtractColumn extract a column from the line for provided index
 func ExtractColumn(line string, columnIndex int) (string, bool) {
 	var columns, has = ExtractColumns(line)
 	if !has {
@@ -34,6 +36,7 @@ func ExtractColumn(line string, columnIndex int) (string, bool) {
 	return "", false
 }
 
+//ExtractColumns extract all column from the line
 func ExtractColumns(line string) ([]string, bool) {
 	if line == "" {
 		return []string{}, false

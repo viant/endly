@@ -9,7 +9,8 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-var VersionControlServiceId = "versionControl"
+//VersionControlServiceID version control service id
+var VersionControlServiceID = "versionControl"
 
 type versionControlService struct {
 	*AbstractService
@@ -17,23 +18,26 @@ type versionControlService struct {
 	*svnService
 }
 
+//VcCheckoutRequest represents checkout request. If target directory exist and contains matching origin URL,
+// only taking the latest changes without overriding local if performed, otherwise full checkout
 type VcCheckoutRequest struct {
-	Origin             *url.Resource
-	Target             *url.Resource
+	Origin             *url.Resource//version control origin
+	Target             *url.Resource//local code destination
 	Modules            []string //vc path to project
-	RemoveLocalChanges bool
+	RemoveLocalChanges bool//flag to remove local changes
 }
 
+//VcCheckoutResponse represents checkout response
 type VcCheckoutResponse struct {
 	Checkouts map[string]*VcInfo
 }
 
+//Validate validates request
 func (r *VcCheckoutRequest) Validate() error {
 
 	if r.Origin == nil {
 		return fmt.Errorf("Origin type was empty")
 	}
-
 	if r.Target == nil {
 		return fmt.Errorf("Target type was empty")
 	}
@@ -53,20 +57,24 @@ func (r *VcCheckoutRequest) Validate() error {
 	return nil
 }
 
+//VcPullRequest represents a pull request
 type VcPullRequest struct {
-	Target *url.Resource
-	Origin *url.Resource
+	Target *url.Resource//local code destination
+	Origin *url.Resource//version control origin
 }
 
+//VcCommitRequest represents a commit request
 type VcCommitRequest struct {
-	Target  *url.Resource
-	Message string
+	Target  *url.Resource //local code source repo
+	Message string//commit message
 }
 
+//VcStatusRequest represents version control status
 type VcStatusRequest struct {
-	Target *url.Resource
+	Target *url.Resource//local code source repo
 }
 
+//VcInfo represents version control info
 type VcInfo struct {
 	IsVersionControlManaged bool
 	Origin                  string
@@ -79,6 +87,7 @@ type VcInfo struct {
 	Deleted                 []string
 }
 
+//HasPendingChanges returns true if there are any untracked, new, modified, deleted files.
 func (r *VcInfo) HasPendingChanges() bool {
 	return len(r.New) > 0 || len(r.Untracked) > 0 || len(r.Deleted) > 0 || len(r.Modified) > 0
 }
@@ -309,9 +318,10 @@ func (s *versionControlService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+//NewVersionControlService creates a new version control
 func NewVersionControlService() Service {
 	var result = &versionControlService{
-		AbstractService: NewAbstractService(VersionControlServiceId),
+		AbstractService: NewAbstractService(VersionControlServiceID),
 		gitService:      &gitService{},
 		svnService:      &svnService{},
 	}

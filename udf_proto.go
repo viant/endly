@@ -44,7 +44,7 @@ func AsProtobufMessage(source interface{}, state data.Map, target proto.Message)
 	return fmt.Sprintf("base64:%v", string(buf.Bytes())), nil
 }
 
-//AsProtobufMessage generic method for converting a proto message into a map
+//FromProtobufMessage generic method for converting a proto message into a map
 func FromProtobufMessage(source interface{}, state data.Map, sourceMessage proto.Message) (interface{}, error) {
 	if toolbox.IsString(source) {
 		textSource := toolbox.AsString(source)

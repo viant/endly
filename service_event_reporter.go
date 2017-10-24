@@ -29,7 +29,7 @@ type eventReporterService struct {
 }
 
 func (s *eventReporterService) getWorkFlowContext(context *Context, sessionId string) (*Context, error) {
-	service, err := context.Service(WorkflowServiceId)
+	service, err := context.Service(WorkflowServiceID)
 	if err != nil {
 		return nil, err
 	}

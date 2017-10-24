@@ -15,7 +15,7 @@ import (
 
 func getServiceWithWorkflow(paths ...string) (endly.Manager, endly.Service, error) {
 	manager := endly.NewManager()
-	service, err := manager.Service(endly.WorkflowServiceId)
+	service, err := manager.Service(endly.WorkflowServiceID)
 	if err == nil {
 		for _, workflowPath := range paths {
 			context := manager.NewContext(toolbox.NewContext())

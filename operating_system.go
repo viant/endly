@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+//OperatingSystem represents an OperatingSystem
 type OperatingSystem struct {
 	Name    string
 	Version string
@@ -23,6 +24,7 @@ func normalizeVersion(version string) int {
 	return result
 }
 
+//Matches returns true if operating system matches provided target
 func (s *OperatingSystem) Matches(target *OperatingSystemTarget) bool {
 	if target == nil {
 		return true
@@ -46,12 +48,14 @@ func (s *OperatingSystem) Matches(target *OperatingSystemTarget) bool {
 	return actualVersion > maxAllowedVersion
 }
 
+//SystemPath represents a system path
 type SystemPath struct {
 	index      map[string]bool
 	SystemPath []string
 	Path       []string
 }
 
+//Push appends path to the system paths
 func (p *SystemPath) Push(paths ...string) {
 	for _, path := range paths {
 		if _, has := p.index[path]; has {
@@ -62,11 +66,13 @@ func (p *SystemPath) Push(paths ...string) {
 	}
 }
 
+//EnvValue returns evn values
 func (p *SystemPath) EnvValue() string {
 	var directories = append(p.Path, p.SystemPath...)
 	return strings.Join(directories, ":")
 }
 
+//OperatingSystemTarget represents operating system target
 type OperatingSystemTarget struct {
 	Name               string
 	MinRequiredVersion string

@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+//EventLogger represent event logger to drop event details in the provied directory.
 type EventLogger struct {
 	directory string
 	subPath   string
@@ -16,8 +17,7 @@ type EventLogger struct {
 	tagIndex  int
 }
 
-
-
+//Log logs an event
 func (l *EventLogger) Log(event *Event) error {
 	if event.Type == "Tag" {
 		l.tagIndex++
@@ -43,6 +43,7 @@ func (l *EventLogger) Log(event *Event) error {
 		return err
 	}
 	defer file.Close()
+
 	buf, err := json.MarshalIndent(event.Value, "", "\t")
 	if err != nil {
 		return fmt.Errorf("Failed to log %v, %v", event.Type, err)
@@ -55,11 +56,13 @@ func (l *EventLogger) Log(event *Event) error {
 
 func (l *EventLogger) updateSubPath(event *Event) {
 	if tag, ok := event.Value["tag"]; ok {
+		var tagIndex = event.Value["tagIndex"]
+		tag = fmt.Sprintf("%v%v",tag, tagIndex)
 		l.subPath = strings.ToLower(fmt.Sprintf("%03d_%v_%v", l.tagIndex, event.Value["name"], tag))
 	}
 }
 
-
+//NewEventLogger creates a new event logger
 func NewEventLogger(directory string) *EventLogger {
 	return &EventLogger{
 		directory: directory,

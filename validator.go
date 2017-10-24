@@ -8,8 +8,9 @@ import (
 	"strings"
 )
 
+//Validator represents a validator
 type Validator struct {
-	SkipFields map[string]bool
+	ExcludedFields map[string]bool
 }
 
 
@@ -26,6 +27,7 @@ func (s *Validator) Check(expected, actual interface{}) (bool, error) {
 	return !response.HasFailure(), nil
 }
 
+//Assert check if actual matches expected value, in any case it update assert info with provided validation path.
 func (s *Validator) Assert(expected, actual interface{}, assertionInfo *ValidatorAssertionInfo, path string) error {
 	if toolbox.IsValueOfKind(actual, reflect.Slice) {
 		if toolbox.IsValueOfKind(expected, reflect.Map) { //convert actual slice to map using expected indexBy directive
@@ -174,7 +176,7 @@ func (s *Validator) assertText(expected, actual string, response *ValidatorAsser
 
 func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[string]interface{}, response *ValidatorAssertionInfo, path string) error {
 	for key, expected := range expectedMap {
-		if s.SkipFields[key] {
+		if s.ExcludedFields[key] {
 			continue
 		}
 		keyPath := fmt.Sprintf("%v[%v]", path, key)
