@@ -87,7 +87,7 @@ The following expression are supported:
 | --- | --- | --- | --- | --- |
 | workflow | load | Loads workflow from provided path |  |  |
 | workflow | register | Register provide workflow in registry |  |  |
-| workflow | run | run workflow with specified tasks and parameters | [WorkflowRunRequest](blob/master/service_workflow.go#WorkflowRunRequest)
+| workflow | run | run workflow with specified tasks and parameters | [WorkflowRunRequest](service_workflow.go#WorkflowRunRequest)
 README.md |  |
 
 
