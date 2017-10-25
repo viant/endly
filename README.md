@@ -420,10 +420,9 @@ See for more filter option: [RunnerReportingFilter](runner_filter.go).
 
 1) Delegate a new workflow request to dedicated req/ folder
 2) Variables in  Init, Post should only define state not requests
-3) Flag variable Required or provide fallback Value
-4) Create pull request for common workflow that other can reuse.
-5) Use [Tag Iterators](../neatly) to group similar class of the tests 
-6) Since JSON inside tabular cell is not too elegant try to use [Virtual object](../neatly) instead.
+3) Flag variable as Required or provide a fallback Value
+4) Use [Tag Iterators](../neatly) to group similar class of the tests 
+5) Since JSON inside tabular cell is not too elegant try to use [Virtual object](../neatly) instead.
 6) Organize  workflows and data by  grouping system, datastore, test functionality together. 
 
 
@@ -452,6 +451,8 @@ Here is an example directory layout.
     
 ```
   
+  
+  Finally contribute bycreating a  pull request with a new common workflows so that other can use them.
 
 
 ## Examples
