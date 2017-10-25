@@ -45,6 +45,33 @@ go get -u github.com/viant/endly
 <a name="Introduction"></a>
 ## Introduction
 
+
+Typical web application automated functional test will require the following steps. 
+
+1) System preparation 
+    1) System services initialization.  (RDBM, NoSQL, Caching 3rd Party API)
+    2) Application container initializtion if application uses it (Application server)
+2) Application build and deployment
+    1) Application code checkout.
+    2) Application build
+    3) Application deployment
+3) Testing    
+    1) Preparing test data
+    2) Actual application testing
+        1) Http runner
+        2) Reset runner
+        3) Selenium runner
+    3) Application output verification
+    4) Application modified data verification
+    5) Application produced log verification    
+4) Cleanup
+    1) Data cleanup 
+    2) Application shutdown
+    3) Application system services shutdown 
+    
+
+
+
 This testing framework uses [Neatly](https://github.com/viant/neatly) format to represent a workflow.
 
 
@@ -456,7 +483,7 @@ Here is an example directory layout.
 ```
   
   
-  Finally contribute bycreating a  pull request with a new common workflows so that other can use them.
+  Finally contribute by creating a  pull request with a new common workflows so that other can use them.
 
 
 ## Examples
