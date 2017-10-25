@@ -285,7 +285,7 @@ To simplify setup/verification data process [DsUnitTableData](service_dsunit_dat
 
 
 <a name="Workfowservice"></a>
-## Workfow service
+## Workflow service
 
 
 **Workflow Service**
@@ -470,7 +470,7 @@ Here is an example directory layout.
         |       | - <use_case_groupN> / 1 ... 00Y (Tag Iterator)/ <test assets>
         | - config /
         |       
-        | -  <your app related workflow> / //to build, deploy, init, start, stop 
+        | -  <your app name for related workflow> / //with build, deploy, init, start and stop tasks 
                 | <app>.csv
                 | init.json 
         
