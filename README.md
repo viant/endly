@@ -38,7 +38,9 @@ that expected output has been produced.
 <a name="Installation"></a>
 ## Installation
 
-TODO add me
+export GOPATH=/Projects/go
+go get -u github.com/viant/endly
+
 
 <a name="Introduction"></a>
 ## Introduction
@@ -325,7 +327,7 @@ Workflow service provide capability to run task, action from any defined workflo
 
      
 <a name="Usage"></a>
-#Usage
+##Usage
 
 The following template can be used to run a workflow from a command line 
 
@@ -451,6 +453,10 @@ Here is an example directory layout.
 ```
   
 
+
+## Examples
+
+TODO add some here
 
          	
 <a name="License"></a>
