@@ -52,7 +52,7 @@ This testing framework uses [Neatly](https://github.com/viant/neatly) format to 
 
 **Task** an abstraction to logically group one or more action, for example, init,test.
 
-**Action** an abstraction defining a call to a neatly service action. 
+**Action** an abstraction defining a call to a service. 
 An action does actual job, like starting service, building and deploying app etc, 
 
 **ActionRequest** an abstraction representing a service request.
