@@ -46,7 +46,7 @@ go get -u github.com/viant/endly
 ## Introduction
 
 
-Typical web application automated functional test will require the following steps. 
+Typical web application automated functional can be broken down as follow:
 
 1) System preparation 
     1) System services initialization.  (RDBM, NoSQL, Caching 3rd Party API)
