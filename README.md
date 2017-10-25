@@ -14,8 +14,8 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Build and deployment services](#Buildservices)
 - [Testing services](#Testingservices)
 - [Workfow Service](#Workfowservice)
-
 - [Usage](#Usage)
+- [Best Practice](#BestPractice)
 - [Examples](#Examples)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
@@ -35,7 +35,7 @@ This framework provide end to end capability to eun test from preparing system w
 that expected output has been produced.
 
 
-<a name="Installation></a>
+<a name="Installation"></a>
 ## Installation
 
 TODO add me
@@ -273,18 +273,185 @@ Workflow service provide capability to run task, action from any defined workflo
 
 **Workflow Lifecycle**
 
+1) New context with a new state map is created after inheriting values from a caller. (Caller will not see any context/state changes)
+2) **workflow** key is published to the state map with defined workflow.data
+2) **params** key is published to state map with the caller parameters
+3) Workflow initialization stage executes, applying variables defined in Workflow.Init (input: state, output: state)
+4) Tasks Execution 
+    1) Task eligibility determination: 
+        1) If specified tasks are '*' or empty, all task defined in the workflow will run sequentially, otherwise only specified
+        2) Evaluate RunCriteria if specified
+    2) Task initialization stage executes, applying variables defined in Task.Init (input: state, output: state)
+    
+    3) Executes all eligible actions:
+        1) Action eligibility determination:
+            1) Evaluate RunCriteria if specified
+        2) Action initialization stage executes,  applying variables defined in Action.Init (input: state, output: state)
+        3) Executing action on specified service
+        4) Action post stage executes applying variables defined in Action.Post (input: action.response, output: state)
+    4) Task post stage executes, applying variables defined in Task.Post (input: state, output: state)   
+5) Workflow post stage executes, applying variables defined in Workflow.Init (input: state, output: workflow.response)
+
 
 **Predefined workflows**
 
-
-
+| Name | Task |Description | 
+| --- | --- | --- |
+| dokerized_mysql| start | start mysql docker container  |
+| dokerized_mysql| stop | stop mysql docker container 
+| dockerized_aerospike| start | aerospike mysql docker container |
+| dockerized_aerospike| stop | stop aerospike docker container |
+| dockerized_memcached| start | aerospike memcached docker container |
+| dockerized_memcached| stop | stop memcached docker container |
+| tomcat| install | install tomcat |
+| tomcat| start | start tomcat instance|
+| tomcat| stop | stop tomcat instance |
+| vc_maven_build | checkout | checkout the latest code from version control |
+| vc_maven_build | build | build the checked out code |
+| vc_maven_module_build | checkout | check out all required projects to build a module |
+| vc_maven_module_build | build | build module |
  
- #Good practises:
+ 
+ **Predefined workflow run requests**
+ 
+ | Name | Workflow | 
+ | --- | --- | 
+ | [tomcat.json](req/tomcat.json) | tomcat | 
+ | [aerospike.json](req/aerospike.json)| dockerized_aerospike |
+ | [mysql.json](req/mysql.json)| dockerized_mysql |
+ | [memcached.json](req/memcached.json)| dockerized_memcached|
+   
+    
 
-    Test datastructure:
-       
+     
+<a name="Usage"></a>
+#Usage
 
+The following template can be used to run a workflow from a command line 
+
+Note that by default this program will look for run.json
+
+\#endly.go
+```go
+
+import (
+	"flag"
+	"github.com/viant/endly"
+	"log"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/viant/asc"//	aerospike
+	"time"
+)
+
+//TODO add more database drivers import if needed
+
+var workflow = flag.String("workflow", "run.json", "path to workflow run request json file")
+
+func main() {
+	flag.Parse()
+	runner := endly.NewCliRunner()
+	err := runner.Run(*workflow)
+	if err != nil {
+		log.Fatal(err)
+	}
+	time.Sleep(time.Second)
+}
+
+
+```       
+
+
+Example of run json
+
+```json
+{
+  "WorkflowURL": "manager.csv",
+  "Name": "manager",
+  "PublishParameters":false,
+  "EnableLogging":true,
+  "LoggingDirectory":"/tmp/myapp/",
+  "Tasks":"init,test",
+  "Params": {
+    "jdkVersion":"1.7",
+    "buildGoal": "install",
+    "baseSvnUrl":"https://mysvn.com/trunk/ci",
+    "buildRoot":"/build",
+    "targetHost": "127.0.0.1",
+    "targetCredential": "${env.HOME}/secret/scp.json",
+    "svnCredential": "${env.HOME}/secret/adelphic_svn.json",
+    "configUrlCredential":"${env.HOME}/secret/scp.json",
+    "mysqlCredential": "${env.HOME}/secret/mysql.json",
+    "catalinaOpts": "-Xms512m -Xmx1g -XX:MaxPermSize=256m",
+
+    "appRootDirectory":"/use/local",
+    "tomcatVersion":"7.0.82",
+    "appHost":"127.0.0.1:9880",
+    "tomcatForceDeploy":true
+  },
+
+  "Filter": {
+    "Workflow":true,
+    "UseCase":true,
+    "SQLScript":true,
+    "PopulateDatastore":true,
+    "Sequence": true,
+    "RegisterDatastore":true,
+    "DataMapping":true,
+    "FirstUseCaseFailureOnly":false,
+    "OnFailureFilter": {
+      "UseCase":true,
+      "HttpTrip":true,
+      "Assert":true
+    }
+
+  }
+}
+
+```
+
+See for more filter option: [RunnerReportingFilter](runner_filter.go).
          
+         
+         
+<a name="BestPractice"></a>
+## Best Practice
+
+1) Delegate a new workflow request to dedicated req/ folder
+2) Variables in  Init, Post should only define state not requests
+3) Flag variable Required or provide fallback Value
+4) Create pull request for common workflow that other can reuse.
+5) Use [Tag Iterators](../neatly) to group similar class of the tests 
+6) Since JSON inside tabular cell is not too elegant try to use [Virtual object](../neatly) instead.
+6) Organize  workflows and data by  grouping system, datastore, test functionality together. 
+
+
+Here is an example directory layout.
+
+```text
+
+    manager.csv
+        |- system / 
+        |      | - system.csv
+        |      | - init.json (workflow init variables)
+        |      | - req/         
+        | - regression /
+        |       | - regression.csv
+        |       | - init.json (workflow init variables)
+        |       | - <use_case_group1> / 1 ... 00X (Tag Iterator)/ <test assets>
+        |       | 
+        |       | - <use_case_groupN> / 1 ... 00Y (Tag Iterator)/ <test assets>
+        | - config /
+        |       
+        | - datastore /
+                 | - datastore.csv
+                 | - init.json
+                 | - dictionary /
+                 | - schema.ddl
+    
+```
+  
+
+
          	
 <a name="License"></a>
 ## License
