@@ -443,6 +443,10 @@ Here is an example directory layout.
         |       | - <use_case_groupN> / 1 ... 00Y (Tag Iterator)/ <test assets>
         | - config /
         |       
+        | -  <your app related workflow> / //to build, deploy, init, start, stop 
+                | <app>.csv
+                | init.json 
+        
         | - datastore /
                  | - datastore.csv
                  | - init.json
