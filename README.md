@@ -173,8 +173,16 @@ Transfer service is responsible for transferring data from the source to the tar
 
 
 
-### Testing services
+**Deployment service** 
+Deployment service check if target path resource, the app has been installed with requested version, if not it will transfer it and run all defined commands/transfers.
+Maven, tomcat use this service.
 
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| deployment | deploy | run deployment | [DeploymentDeployRequest](service_deployment_deploy.go) | [DeploymentDeployResponse](service_deployment_deploy.go) |
+
+
+### Testing services
 
 **Http Runner** 
 
@@ -186,7 +194,7 @@ Http runner sends one or more http request to the specified endpoint, it manages
 | http/runner | send | Sends one or more http request to the specified endpoint. | [SendHttpRequest](service_http_runner_send.go) | [SendHttpResponse](service_http_runner_send.go) |
 
 
-** Rest Runner**
+**Rest Runner**
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
@@ -194,11 +202,7 @@ Http runner sends one or more http request to the specified endpoint, it manages
 
 
 
-
-
 TODO add Selenium/WebDriver runner
-
-
 
 
 **Generic validation service**
@@ -225,7 +229,20 @@ In order to get log validation,
 
 **Datastore services**
 
+The first action that needs to be run is to register database name with dsc connection config, and optionally init scripts.
 
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| dsunit | register | register database connection, and optionally executes init scripts |  [DsUnitRegisterRequest](service_dsunit_register.go) | [DsUnitRegisterResponse](service_dsunit_register.go)  |
+| dsunit | mapping |  register virtual mapping between a virtual table and dozen actual tables to simplify setup. |  [DsUnitMappingRequest](service_dsunit_mapping.go) | [DsUnitMappingResponse](service_dsunit_mapping.go)  |
+| dsunit | register | register database connection, and optionally executes init scripts |  [DsUnitRegisterRequest](service_dsunit_register.go) | [DsUnitRegisterResponse](service_dsunit_register.go)  |
+| dsunit | sequence | takes current sequences for specified tables |  [DsUnitTableSequenceRequest](service_dsunit_sequence.go) | [DsUnitTableSequenceResponse](service_dsunit_sequence.go)  |
+| dsunit | prepare | populates database with setup data |  [DsUnitTablePrepareRequest](service_dsunit_prepare.go) | [DsUnitTablePrepareResponse](service_dsunit_prepare.go)  |
+| dsunit | expect | verifies database content with expected data |  [DsUnitTableExpectRequest](service_dsunit_prepare.go) | [DsUnitTableExpectResponse](service_dsunit_prepare.go)  |
+
+
+To simplify setup/verification data process [DsUnitTableData](service_dsunit_data.go) has been introduce, so that data can be push into state, and then transform to the dsunit expected data with AsTableRecords udf function.
 
 
 ## End to end functional test orchestration 
@@ -245,11 +262,10 @@ Workflow service provide capability to run task, action from any defined workflo
 
 
 
-User Defined Function
-
-
  
  #Good practises:
 
     Test datastructure:
+         
+
          

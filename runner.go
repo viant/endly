@@ -28,7 +28,7 @@ type RunnerReportingFilter struct {
 	RegisterDatastore       bool
 	Assert                  bool
 	DataMapping             bool
-	HttpTrip                bool
+	HTTPTrip                bool
 	Workflow                bool
 	WorkflowParams          bool
 	OnFailureFilter         *RunnerReportingFilter
@@ -58,7 +58,6 @@ func (c *EventTag) AddEvent(event *Event) {
 	c.Events = append(c.Events, event)
 }
 
-
 //CliRunner represents command line runner
 type CliRunner struct {
 	manager    Manager
@@ -80,7 +79,7 @@ func (r *CliRunner) EventTag() *EventTag {
 	return r.tags[len(r.tags)-1]
 }
 
-func (r *CliRunner) hasActiveSession(context *Context, sessionId string) bool {
+func (r *CliRunner) hasActiveSession(context *Context, sessionID string) bool {
 	service, err := context.Service(WorkflowServiceID)
 	if err != nil {
 		return false
@@ -88,7 +87,7 @@ func (r *CliRunner) hasActiveSession(context *Context, sessionId string) bool {
 	var state = service.State()
 	service.Mutex().RLock()
 	defer service.Mutex().RUnlock()
-	return state.Has(sessionId)
+	return state.Has(sessionID)
 }
 
 var reportDataLayout = toolbox.DateFormatToLayout("hh:mm:ss.SSS")
@@ -339,7 +338,7 @@ func (r *CliRunner) reportTag(event *Event, filter *RunnerReportingFilter) {
 	}
 }
 
-func asJsonText(source interface{}) string {
+func asJSONText(source interface{}) string {
 	if source == nil {
 		return ""
 	}
@@ -353,7 +352,7 @@ func (r *CliRunner) reportHTTPRequestStart(event *Event) {
 		if httpRequest, ok := request.(*HTTPRequest); ok {
 			printGenericEvent("HTTPRequest ", httpRequest.Method, httpRequest.URL, event, 10, 49)
 			if len(httpRequest.Header) > 0 {
-				var formattedBody = formatInput("headers", asJsonText(httpRequest.Header), event)
+				var formattedBody = formatInput("headers", asJSONText(httpRequest.Header), event)
 				fmt.Printf("%v\n", formattedBody)
 			}
 			var formattedBody = formatInput("body", httpRequest.Body, event)
@@ -370,7 +369,7 @@ func (r *CliRunner) reportHTTPRequestEnd(event *Event) {
 
 			printGenericEvent("HTTPResponse ", fmt.Sprintf("%v", httpResponse.Code), "", event, 10, 49)
 			if len(httpResponse.Header) > 0 {
-				var formattedBody = formatOutput("headers", asJsonText(httpResponse.Header), event)
+				var formattedBody = formatOutput("headers", asJSONText(httpResponse.Header), event)
 				fmt.Printf("%v\n", formattedBody)
 			}
 			var formattedBody = formatOutput("body", httpResponse.Body, event)
@@ -386,12 +385,12 @@ func (r *CliRunner) reportValidatorStart(event *Event) {
 		if assertRequest, ok := request.(*ValidatorAssertRequest); ok {
 			var expected = assertRequest.Expected
 			if toolbox.IsSlice(expected) || toolbox.IsMap(expected) {
-				expected = asJsonText(expected)
+				expected = asJSONText(expected)
 				expected = strings.Trim(toolbox.AsString(expected), " \n")
 			}
 			var actual = assertRequest.Actual
 			if toolbox.IsSlice(actual) || toolbox.IsMap(actual) {
-				actual = asJsonText(actual)
+				actual = asJSONText(actual)
 				actual = strings.Trim(toolbox.AsString(actual), " \n")
 			}
 			var formattedExpected = formatInput("Assert expected", fmt.Sprintf("%v", expected), event)
@@ -552,13 +551,13 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 	case "Tag":
 		r.reportTag(event, filter)
 	case "HTTPRequest.Start":
-		if !filter.HttpTrip {
+		if !filter.HTTPTrip {
 			return nil
 		}
 		r.reportHTTPRequestStart(event)
 
 	case "HTTPRequest.End":
-		if !filter.HttpTrip {
+		if !filter.HTTPTrip {
 			return nil
 		}
 		r.reportHTTPRequestEnd(event)
@@ -753,7 +752,6 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	}
 	return r.reportEvents(context, workflowResponse.SessionID, runnerOption.Filter)
 }
-
 
 //NewCliRunner creates a new command line runner
 func NewCliRunner() *CliRunner {

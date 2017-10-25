@@ -7,159 +7,12 @@ import (
 	"github.com/viant/dsunit"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
-	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"strings"
 )
 
-const DataStoreUnitServiceId = "dsunit"
-
-type DsUnitRegisterRequest struct {
-	Datastore       string
-	Config          *dsc.Config //make sure Deploy.Parameters have database Id key
-	Credential      string
-	adminConfig     *dsc.Config //make sure Deploy.Parameters have database Id key
-	AdminDatastore  string      //Id of admin db
-	AdminCredential string
-	ClearDatastore  bool
-	Scripts         []*url.Resource
-}
-
-//DatasetMapping represnts dataset mappings
-type DatasetMappings struct {
-	Name  string                 //mapping Id
-	Value *dsunit.DatasetMapping //actual mappings
-}
-
-type DsUnitMappingRequest struct {
-	Mappings []*url.Resource
-}
-
-type DsUnitMappingResonse struct {
-	Tables []string
-}
-
-type DsUnitTableSequenceRequest struct {
-	Datastore string
-	Tables    []string
-}
-
-type DsUnitTableSequenceResponse struct {
-	Sequences map[string]int
-}
-
-func (r *DsUnitRegisterRequest) Validate() error {
-	if r.Config == nil {
-		return fmt.Errorf("Datastore config was nil")
-	}
-	if r.Config.Parameters == nil {
-		r.Config.Parameters = make(map[string]string)
-	}
-	if r.AdminCredential == "" {
-		r.AdminCredential = r.Credential
-	}
-	if r.AdminDatastore != "" {
-		var parameters = make(map[string]string)
-		toolbox.CopyMapEntries(r.Config.Parameters, parameters)
-		r.adminConfig = &dsc.Config{
-			DriverName: r.Config.DriverName,
-			Descriptor: r.Config.Descriptor,
-			Parameters: parameters,
-		}
-		r.adminConfig.Parameters["dbname"] = r.AdminDatastore
-	}
-	if _, exists := r.Config.Parameters["dbname"]; !exists {
-		r.Config.Parameters["dbname"] = r.Datastore
-	}
-	return nil
-}
-
-type DsUnitRegisterResponse struct {
-	Modified int
-}
-
-type DsUnitPrepareRequest struct {
-	Datastore  string
-	URL        string
-	Credential string
-	Prefix     string //apply prefix
-	Postfix    string //apply suffix
-	Data       map[string][]map[string]interface{}
-	Expand     bool
-}
-
-func (r *DsUnitPrepareRequest) AsDatasetResource() *dsunit.DatasetResource {
-	var result = &dsunit.DatasetResource{
-		Datastore:  r.Datastore,
-		URL:        r.URL,
-		Credential: r.Credential,
-		Prefix:     r.Prefix,
-		Postfix:    r.Postfix,
-	}
-	if len(r.Data) > 0 {
-		result.TableRows = make([]*dsunit.TableRows, 0)
-		for table, data := range r.Data {
-			var tableRows = &dsunit.TableRows{
-				Table: table,
-				Rows:  data,
-			}
-			result.TableRows = append(result.TableRows, tableRows)
-		}
-	}
-	return result
-}
-
-func (r *DsUnitPrepareRequest) Validate() error {
-	if r.Datastore == "" {
-		return fmt.Errorf("Datasets.Datastore was empty")
-	}
-	if r.URL == "" && len(r.Data) == 0 {
-		return fmt.Errorf("Missing data: Datasets.URL/Datasets.TableRows were empty")
-	}
-	return nil
-}
-
-type DsUnitPrepareResponse struct {
-	Added    int
-	Modified int
-	Deleted  int
-}
-
-type DsUnitVerifyRequest struct {
-	Datasets *dsunit.DatasetResource
-	//table to table rows data
-	Data        map[string][]map[string]interface{}
-	Expand      bool
-	CheckPolicy int
-}
-
-func (r *DsUnitVerifyRequest) Validate() error {
-	if len(r.Data) > 0 && r.Datasets != nil {
-		r.Datasets.TableRows = make([]*dsunit.TableRows, 0)
-		for table, data := range r.Data {
-			var tableRows = &dsunit.TableRows{
-				Table: table,
-				Rows:  data,
-			}
-			r.Datasets.TableRows = append(r.Datasets.TableRows, tableRows)
-		}
-	}
-	if r.Datasets == nil {
-		return fmt.Errorf("Datasets was nil")
-	}
-	if r.Datasets.Datastore == "" {
-		return fmt.Errorf("Datasets.Datastore was empty")
-	}
-
-	if r.Datasets.URL == "" && len(r.Datasets.TableRows) == 0 {
-		return fmt.Errorf("Missing data: Datasets.URL/Datasets.TableRows were empty")
-	}
-	return nil
-}
-
-type DsUnitVerifyResponse struct {
-	DatasetChecked map[string]int
-}
+//DataStoreUnitServiceID represents a data store unit service id
+const DataStoreUnitServiceID = "dsunit"
 
 type dsataStoreUnitService struct {
 	*AbstractService
@@ -183,7 +36,7 @@ func (s *dsataStoreUnitService) Run(context *Context, request interface{}) *Serv
 		if err != nil {
 			response.Error = fmt.Sprintf("%v", err)
 		}
-	case *DsUnitVerifyRequest:
+	case *DsUnitExpectRequest:
 		response.Response, err = s.verify(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("%v", err)
@@ -248,8 +101,8 @@ func (s *dsataStoreUnitService) registerDsManager(context *Context, datastoreNam
 	return nil
 }
 
-func (s *dsataStoreUnitService) addMapping(context *Context, request *DsUnitMappingRequest) (*DsUnitMappingResonse, error) {
-	var response = &DsUnitMappingResonse{
+func (s *dsataStoreUnitService) addMapping(context *Context, request *DsUnitMappingRequest) (*DsUnitMappingResponse, error) {
+	var response = &DsUnitMappingResponse{
 		Tables: make([]string, 0),
 	}
 	if request.Mappings != nil {
@@ -258,7 +111,7 @@ func (s *dsataStoreUnitService) addMapping(context *Context, request *DsUnitMapp
 			if err != nil {
 				return nil, err
 			}
-			var datasetMapping = &DatasetMappings{}
+			var datasetMapping = &DatasetMapping{}
 			err = mappingResource.JsonDecode(datasetMapping)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to decode: %v %v", mappingResource.URL, err)
@@ -365,12 +218,12 @@ func (s *dsataStoreUnitService) prepare(context *Context, request *DsUnitPrepare
 	return response, err
 }
 
-func (s *dsataStoreUnitService) verify(context *Context, request *DsUnitVerifyRequest) (interface{}, error) {
+func (s *dsataStoreUnitService) verify(context *Context, request *DsUnitExpectRequest) (interface{}, error) {
 	err := request.Validate()
 	if err != nil {
 		return nil, err
 	}
-	var response = &DsUnitVerifyResponse{
+	var response = &DsUnitExpectResponse{
 		DatasetChecked: make(map[string]int),
 	}
 
@@ -396,148 +249,22 @@ func (s *dsataStoreUnitService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case "register":
 		return &DsUnitRegisterRequest{}, nil
-	case "prepare":
-		return &DsUnitPrepareRequest{}, nil
-
 	case "mapping":
 		return &DsUnitMappingRequest{}, nil
+	case "prepare":
+		return &DsUnitPrepareRequest{}, nil
 	case "sequence":
 		return &DsUnitTableSequenceRequest{}, nil
-	case "verify":
-		return &DsUnitVerifyRequest{}, nil
+	case "expect":
+		return &DsUnitExpectRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
 }
 
-type DsUnitPrepareTableData struct {
-	Table         string
-	Value         interface{}
-	AutoGenerate  map[string]string `json:",omitempty"`
-	PostIncrement []string          `json:",omitempty"`
-	Key           string
-}
-
-func (d *DsUnitPrepareTableData) AuotGenerateIfNeeded(state data.Map) error {
-	for k, v := range d.AutoGenerate {
-		value, has := state.GetValue(v)
-		if !has {
-			return fmt.Errorf("Failed to autogenerate value for %v - unable to eval: %v \n", k, v)
-		}
-		state.SetValue(k, value)
-	}
-	return nil
-}
-
-func (d *DsUnitPrepareTableData) PostIncrementIfNeeded(state data.Map) {
-	for _, key := range d.PostIncrement {
-		keyText := toolbox.AsString(key)
-		value, has := state.GetValue(keyText)
-		if !has {
-			value = 0
-		}
-		state.SetValue(keyText, toolbox.AsInt(value)+1)
-	}
-}
-
-func (d *DsUnitPrepareTableData) GetValues(state data.Map) []map[string]interface{} {
-	if toolbox.IsMap(d.Value) {
-		return []map[string]interface{}{
-			d.GetValue(state, d.Value),
-		}
-	}
-	var result = make([]map[string]interface{}, 0)
-	if toolbox.IsSlice(d.Value) {
-		var aSlice = toolbox.AsSlice(d.Value)
-		for _, item := range aSlice {
-			value := d.GetValue(state, item)
-			result = append(result, value)
-		}
-	}
-	return result
-}
-
-func (d *DsUnitPrepareTableData) expandThis(textValue string, value map[string]interface{}) interface{} {
-	if strings.Contains(textValue, "this.") {
-		var thisState = data.NewMap()
-		for subKey, subValue := range value {
-			if toolbox.IsString(subValue) {
-				subKeyTextValue := toolbox.AsString(subValue)
-				if !strings.Contains(subKeyTextValue, "this") {
-					thisState.SetValue(fmt.Sprintf("this.%v", subKey), subKeyTextValue)
-				}
-			}
-		}
-		return thisState.Expand(textValue)
-	}
-	return textValue
-}
-
-func (d *DsUnitPrepareTableData) GetValue(state data.Map, source interface{}) map[string]interface{} {
-	value := toolbox.AsMap(state.Expand(source))
-	for k, v := range value {
-		var textValue = toolbox.AsString(v)
-		if strings.Contains(textValue, "this") {
-			value[k] = d.expandThis(textValue, value)
-		} else if strings.HasPrefix(textValue, "$") {
-			delete(value, k)
-		} else if strings.HasPrefix(textValue, "\\$") {
-			value[k] = string(textValue[1:])
-		}
-	}
-
-	dataStoreState := state.GetMap(DataStoreUnitServiceId)
-
-	var key = d.Key
-	if key == "" {
-		key = d.Table
-	}
-	if !dataStoreState.Has(key) {
-		dataStoreState.Put(key, data.NewCollection())
-	}
-	records := dataStoreState.GetCollection(key)
-	records.Push(value)
-	return value
-}
-
-func AsTableRecords(source interface{}, state data.Map) (interface{}, error) {
-	var result = make(map[string][]map[string]interface{})
-	if source == nil {
-		return nil, reportError(fmt.Errorf("Source was nil"))
-	}
-	if !state.Has(DataStoreUnitServiceId) {
-		state.Put(DataStoreUnitServiceId, data.NewMap())
-	}
-
-	var prepareTableData = []*DsUnitPrepareTableData{}
-	err := converter.AssignConverted(&prepareTableData, source)
-	if err != nil {
-		return nil, err
-	}
-	for _, tableData := range prepareTableData {
-		var table = tableData.Table
-		err = tableData.AuotGenerateIfNeeded(state)
-		if err != nil {
-			return nil, err
-		}
-		result[table] = append(result[table], tableData.GetValues(state)...)
-		tableData.PostIncrementIfNeeded(state)
-	}
-	dataStoreState := state.GetMap(DataStoreUnitServiceId)
-	var variable = &Variable{
-		Name:    DataStoreUnitServiceId,
-		Persist: true,
-		Value:   dataStoreState,
-	}
-	err = variable.PersistValue()
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
+//NewDataStoreUnitService creates a new datastore unit service
 func NewDataStoreUnitService() Service {
 	var result = &dsataStoreUnitService{
-		AbstractService: NewAbstractService(DataStoreUnitServiceId),
+		AbstractService: NewAbstractService(DataStoreUnitServiceID),
 		Manager:         dsunit.NewDatasetTestManager(),
 	}
 	result.Manager.SafeMode(false)

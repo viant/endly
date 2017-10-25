@@ -17,7 +17,7 @@ func TestDsUnitService(t *testing.T) {
 
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
-	service, err := manager.Service(endly.DataStoreUnitServiceId)
+	service, err := manager.Service(endly.DataStoreUnitServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
 
@@ -45,7 +45,7 @@ func TestDsUnitService(t *testing.T) {
 		})
 		assert.Equal(t, "", response.Error)
 
-		response = service.Run(context, &endly.DsUnitVerifyRequest{
+		response = service.Run(context, &endly.DsUnitExpectRequest{
 			Datasets: &dsunit.DatasetResource{
 				Datastore: "mydb1",
 				Prefix:    "verify_",
@@ -53,12 +53,12 @@ func TestDsUnitService(t *testing.T) {
 			},
 		})
 		assert.Equal(t, "", response.Error)
-		verifyResponse, ok := response.Response.(*endly.DsUnitVerifyResponse)
+		verifyResponse, ok := response.Response.(*endly.DsUnitExpectResponse)
 		assert.True(t, ok)
 		assert.Equal(t, 2, verifyResponse.DatasetChecked["ACCOUNT"])
 		assert.Equal(t, 2, verifyResponse.DatasetChecked["USER"])
 
-		response = service.Run(context, &endly.DsUnitVerifyRequest{
+		response = service.Run(context, &endly.DsUnitExpectRequest{
 			Datasets: &dsunit.DatasetResource{
 				Datastore: "mydb1",
 				Prefix:    "err_",
@@ -74,7 +74,7 @@ func TestDsUnitService(t *testing.T) {
 			},
 		})
 		assert.Equal(t, "", response.Error)
-		mappingResponse, ok := response.Response.(*endly.DsUnitMappingResonse)
+		mappingResponse, ok := response.Response.(*endly.DsUnitMappingResponse)
 		if assert.True(t, ok) {
 			assert.Equal(t, []string{"USER", "ACCOUNT"}, mappingResponse.Tables)
 

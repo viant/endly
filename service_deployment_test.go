@@ -10,7 +10,7 @@ import (
 
 func TestNewDeploymentService(t *testing.T) {
 	manager := endly.NewManager()
-	srv, err := manager.Service(endly.DeploymentServiceId)
+	srv, err := manager.Service(endly.DeploymentServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, srv)
 

@@ -60,7 +60,7 @@ func (s *scriptService) loadLibraries(context *Context, request *ScriptCommand) 
 func (s *scriptService) runScriptCommand(context *Context, request *ScriptCommand) (interface{}, error) {
 	vm := otto.New()
 	vm.Set("context", &JsContextBridge{context})
-	vm.Set("DeploymentServiceId", DeploymentServiceId)
+	vm.Set("DeploymentServiceID", DeploymentServiceID)
 	vm.Set("TransferServiceID", TransferServiceID)
 	vm.Set("SystemExecServiceID", SystemExecServiceID)
 	vm.Set("ExtractColumns", ExtractColumns)

@@ -8,8 +8,11 @@ import (
 	"sync"
 )
 
-const AppName = "endly - End To End Functional Testing " //AppName application Id
-const AppVersion = "0.0.1"                               //AppVersion application version
+//AppName represents endly application name
+const AppName = "endly - End To End Functional Testing "
+
+//AppVersion represents endly application version
+const AppVersion = "0.0.1"
 
 //Manager represnets a workflow manager
 type Manager interface {

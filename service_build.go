@@ -113,7 +113,7 @@ func (s *buildService) build(context *Context, request *BuildRequest) (*BuildRes
 		return nil, fmt.Errorf("Failed to find a build for provided operating system: %v %v", operatingSystem.Name, operatingSystem.Version)
 	}
 
-	deploymentService, err := context.Service(DeploymentServiceId)
+	deploymentService, err := context.Service(DeploymentServiceID)
 
 	if err != nil {
 		return nil, err

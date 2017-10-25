@@ -3,67 +3,14 @@ package endly
 import (
 	"errors"
 	"fmt"
-	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
-	"strings"
 )
 
-const DeploymentServiceId = "deployment"
+//DeploymentServiceID represents a deployment service id.
+const DeploymentServiceID = "deployment"
 
-type DeploymentAddition struct {
-	SuperUser bool
-	Commands  []string
-	Transfers []*Transfer
-}
-
-func (a *DeploymentAddition) AsCommandRequest() *CommandRequest {
-	return &CommandRequest{
-		Commands:  a.Commands,
-		SuperUser: a.SuperUser,
-	}
-}
-
-type DeploymentDeployRequest struct {
-	Sdk          string
-	SdkVersion   string
-	Pre          *DeploymentAddition
-	Transfer     *Transfer
-	Command      *ManagedCommand
-	VersionCheck *ManagedCommand
-	Post         *DeploymentAddition
-	AppName      string
-	Force        bool
-}
-
-//TODO add global path in the target
 type deploymentService struct {
 	*AbstractService
-}
-
-func (r *DeploymentDeployRequest) Validate() error {
-
-	if r.Transfer == nil {
-		return fmt.Errorf("Failed to deploy app, transfer was nil")
-	}
-	if r.Transfer.Target == nil {
-		return fmt.Errorf("Failed to deploy app, target was not specified")
-	}
-	if r.Transfer.Target.URL == "" {
-		return fmt.Errorf("Failed to deploy app, target URL was empty")
-	}
-	if r.Transfer.Source.URL == "" {
-		return fmt.Errorf("Failed to deploy app, Source URL was empty")
-	}
-	if r.AppName == "" {
-		_, appName := toolbox.URLSplit(r.Transfer.Source.URL)
-		var versionPosition = strings.LastIndex(appName, "-")
-		if versionPosition != -1 {
-			appName = string(appName[:versionPosition])
-		}
-		r.AppName = appName
-	}
-
-	return nil
 }
 
 func (s *deploymentService) extractVersion(context *Context, request *DeploymentDeployRequest, exec Service) (string, error) {
@@ -109,7 +56,7 @@ func (s *deploymentService) deployAddition(context *Context, target *url.Resourc
 	return nil
 }
 
-func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRequest) (interface{}, error) {
+func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRequest) (*DeploymentDeployResponse, error) {
 	err := request.Validate()
 	if err != nil {
 		return nil, err
@@ -122,11 +69,11 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	if err != nil {
 		return nil, err
 	}
-	response := execService.Run(context, &OpenSessionRequest{
+	openSessionResponse := execService.Run(context, &OpenSessionRequest{
 		Target: target,
 	})
-	if response.Error != "" {
-		return nil, errors.New(response.Error)
+	if openSessionResponse.Error != "" {
+		return nil, errors.New(openSessionResponse.Error)
 	}
 
 	if request.Sdk != "" {
@@ -134,13 +81,13 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 		if err != nil {
 			return nil, err
 		}
-		response = sdkService.Run(context, &SystemSdkSetRequest{
+		openSessionResponse = sdkService.Run(context, &SystemSdkSetRequest{
 			Sdk:     request.Sdk,
 			Version: request.SdkVersion,
 			Target:  request.Transfer.Target,
 		})
-		if response.Error != "" {
-			return nil, errors.New(response.Error)
+		if openSessionResponse.Error != "" {
+			return nil, errors.New(openSessionResponse.Error)
 		}
 	}
 
@@ -170,8 +117,9 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 			return nil, fmt.Errorf("Failed to init deploy app to %v: %v", target, err)
 		}
 	}
+	var version string
 	if request.VersionCheck != nil {
-		version, err := s.extractVersion(context, request, execService)
+		version, err = s.extractVersion(context, request, execService)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to check version: %v", err)
 		}
@@ -180,7 +128,10 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 		}
 	}
 	err = s.deployAddition(context, target, request.Post)
-	return nil, err
+	var response = &DeploymentDeployResponse{
+		Version: version,
+	}
+	return response, err
 }
 
 func (s *deploymentService) Run(context *Context, request interface{}) *ServiceResponse {
@@ -211,9 +162,10 @@ func (s *deploymentService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+//NewDeploymentService returns new deployment service
 func NewDeploymentService() Service {
 	var result = &deploymentService{
-		AbstractService: NewAbstractService(DeploymentServiceId),
+		AbstractService: NewAbstractService(DeploymentServiceID),
 	}
 	result.AbstractService.Service = result
 	return result

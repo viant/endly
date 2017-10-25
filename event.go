@@ -8,13 +8,18 @@ import (
 )
 
 const (
-	//event logging level all
-	All            = iota
-	Error                    //event logging level error
-	Info                     //event logging level info
-	Debug                    //event logging level debug
-	ErrorEventType = "Error" //Error event type
-	SleepEventType = "Sleep" //Sleep event type
+	//All logging level.
+	All = iota
+	//Error loging level
+	Error
+	//Info logging level
+	Info
+	//Debug logging level
+	Debug
+	//ErrorEventType represents an error event type
+	ErrorEventType = "Error"
+	//SleepEventType repesents a sleep event type
+	SleepEventType = "Sleep"
 )
 
 //Events represents sychronized slice of Events
