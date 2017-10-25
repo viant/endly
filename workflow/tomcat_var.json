@@ -96,7 +96,7 @@
         "URL": "ssh://${targetHost}${appDirectory}/",
         "Credential": "$targetCredential"
       },
-      "Command": "catalina | grep ${appDirectory}/tomcat"
+      "Name": "catalina | grep ${appDirectory}/tomcat"
     }
   },
   {
