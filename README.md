@@ -139,8 +139,8 @@ Sdk service sets active terminal session with requested sdk version.
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- | 
 | docker | run | run requested docker service | [DockerRunRequest](service_docker_run.go) | [DockerContainerInfo](service_docker_container.go) | 
-| docker | images | check docker image| [DockerImagesRequest](service_docker_run.go) | [DockerImagesResponse](service_docker_image.go) | 
-| docker | pull | pull requested docker image| [DockerPullRequest](service_docker_run.go) | [DockerImageInfo](service_docker_image.go) | 
+| docker | images | check docker image| [DockerImagesRequest](service_docker_image.go) | [DockerImagesResponse](service_docker_image.go) | 
+| docker | pull | pull requested docker image| [DockerPullRequest](service_docker_pull.go) | [DockerImageInfo](service_docker_image.go) | 
 | docker | process | check docker container processes | [DockerContainerCheckRequest](service_docker_container.go) | [DockerContainerCheckResponse](service_docker_container.go) | 
 | docker | container-start | start specified docker container | [DockerContainerStartRequest](service_docker_container.go) | [DockerContainerInfo](service_docker_container.go) | 
 | docker | container-command | run command within specified docker container | [DockerContainerCommandRequest](service_docker_container.go) | [CommandResponse](exec_command_response.go) | 
