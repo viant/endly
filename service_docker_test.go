@@ -4,17 +4,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
-	"github.com/viant/toolbox/url"
 )
 
 func getDockerService(manager endly.Manager) endly.Service {
 	context := manager.NewContext(toolbox.NewContext())
 	service := endly.NewDockerService()
-	service.Run(context, &endly.DockerSystemPathRequest{
+	service.Run(context, &endly.dockerSystemPathRequest{
 		SysPath: []string{"/usr/local/bin"},
 	})
 	return service

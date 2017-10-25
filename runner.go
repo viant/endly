@@ -6,18 +6,18 @@ import (
 	"fmt"
 	"github.com/logrusorgru/aurora"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
 	"strings"
 	"time"
-	"github.com/viant/toolbox/url"
 )
 
 var reportingEventSleep = 250 * time.Millisecond
 
 //RunnerReportingFilter runner reporting fiter
 type RunnerReportingFilter struct {
-	Stdin                   bool//log stdin
-	Stdout                  bool//log stdout
-	Transfer                bool//log transfer
+	Stdin                   bool //log stdin
+	Stdout                  bool //log stdout
+	Transfer                bool //log transfer
 	Task                    bool
 	UseCase                 bool
 	Action                  bool
@@ -35,11 +35,13 @@ type RunnerReportingFilter struct {
 	FirstUseCaseFailureOnly bool
 }
 
+//RunnerReportingOption represnets runner reporting options
 type RunnerReportingOption struct {
 	Filter *RunnerReportingFilter
 }
 
-type ReportingTag struct {
+//EventTag represents a events group by the same  tag  and tagIndex (see Nearly for more details).
+type EventTag struct {
 	Description string
 	Tag         string
 	subPath     string
@@ -48,27 +50,32 @@ type ReportingTag struct {
 	FailedCount int
 }
 
-func (c *ReportingTag) AddEvent(event *Event) {
+//AddEvent add provided event
+func (c *EventTag) AddEvent(event *Event) {
 	if len(c.Events) == 0 {
 		c.Events = make([]*Event, 0)
 	}
 	c.Events = append(c.Events, event)
 }
 
+
+//CliRunner represents command line runner
 type CliRunner struct {
 	manager    Manager
-	tags       []*ReportingTag
+	tags       []*EventTag
 	ErrorEvent *Event
 }
 
-func (r *CliRunner) AddUseCase(useCases *ReportingTag) {
+//AddTag adds reporting tag
+func (r *CliRunner) AddTag(useCases *EventTag) {
 	r.tags = append(r.tags, useCases)
 }
 
-func (r *CliRunner) ReportingTag() *ReportingTag {
+//EventTag returns an event tag
+func (r *CliRunner) EventTag() *EventTag {
 	if len(r.tags) == 0 {
-		useCase := &ReportingTag{}
-		r.AddUseCase(useCase)
+		useCase := &EventTag{}
+		r.AddTag(useCase)
 	}
 	return r.tags[len(r.tags)-1]
 }
@@ -173,7 +180,7 @@ func (r *CliRunner) reportWorkflowStart(event *Event) {
 			if runRequest.Tasks != "" {
 				task = runRequest.Tasks
 				if len(task) > 100 {
-					task  = string(task[:100])
+					task = string(task[:100])
 				}
 			}
 			var formattedText = formatStartEvent("Workflow", fmt.Sprintf("%v:%v", runRequest.Name, task), event)
@@ -193,7 +200,7 @@ func (r *CliRunner) reportWorkflowEnd(event *Event) {
 }
 
 func (r *CliRunner) reportTaskStart(event *Event) {
-	if taskName, ok := event.Value["name"]; ok {
+	if taskName, ok := event.Value["Id"]; ok {
 		var formattedText = formatStartEvent("Workflow Task", toolbox.AsString(taskName), event)
 		fmt.Printf("%v\n", formattedText)
 	}
@@ -201,7 +208,7 @@ func (r *CliRunner) reportTaskStart(event *Event) {
 
 func (r *CliRunner) reportTaskEnd(event *Event) {
 	startEvent := event.StartEvent
-	if taskName, ok := startEvent.Value["name"]; ok {
+	if taskName, ok := startEvent.Value["Id"]; ok {
 		var formattedText = formatEndEvent("Workflow Task", toolbox.AsString(taskName), event)
 		fmt.Printf("%v\n", formattedText)
 	}
@@ -266,7 +273,7 @@ func (r *CliRunner) reportDsUnitRegister(event *Event) {
 	}
 }
 
-func (runner *CliRunner) reportDsUnitMapping(event *Event) {
+func (r *CliRunner) reportDsUnitMapping(event *Event) {
 	if value, ok := event.Value["request"]; ok {
 		if request, ok := value.(*DsUnitMappingRequest); ok {
 			for _, mapping := range request.Mappings {
@@ -276,7 +283,7 @@ func (runner *CliRunner) reportDsUnitMapping(event *Event) {
 	}
 }
 
-func (runner *CliRunner) reportDsUnitSequence(event *Event) {
+func (r *CliRunner) reportDsUnitSequence(event *Event) {
 	if value, ok := event.Value["response"]; ok {
 		if serviceResponse, ok := value.(*ServiceResponse); ok {
 			if response, ok := serviceResponse.Response.(*DsUnitTableSequenceResponse); ok {
@@ -309,8 +316,6 @@ func (r *CliRunner) reportSleep(event *Event) {
 	}
 }
 
-
-
 func (r *CliRunner) reportTag(event *Event, filter *RunnerReportingFilter) {
 	if valueTag, ok := event.Value["tag"]; ok {
 
@@ -319,15 +324,15 @@ func (r *CliRunner) reportTag(event *Event, filter *RunnerReportingFilter) {
 			valueTag = fmt.Sprintf("%v%v", valueTag, tagIndex)
 		}
 		//remove this use vcase from previous use case
-		previousTag := r.ReportingTag()
+		previousTag := r.EventTag()
 		previousTag.Events = previousTag.Events[:len(previousTag.Events)-1]
-		tag := &ReportingTag{
+		tag := &EventTag{
 			Description: fmt.Sprintf(" %v", event.Value["description"]),
 			Tag:         fmt.Sprintf("%v", valueTag),
 			subPath:     fmt.Sprintf("%v ", event.Value["subPath"]),
 		}
 		tag.AddEvent(event)
-		r.AddUseCase(tag)
+		r.AddTag(tag)
 		if filter.UseCase {
 			printGenericEvent(fmt.Sprintf("%v ", tag.Tag), tag.subPath, tag.Description, event, 10, 49)
 		}
@@ -343,10 +348,10 @@ func asJsonText(source interface{}) string {
 	return buf.String()
 }
 
-func (r *CliRunner) reportHttpRequestStart(event *Event) {
+func (r *CliRunner) reportHTTPRequestStart(event *Event) {
 	if request, ok := event.Value["request"]; ok {
-		if httpRequest, ok := request.(*HttpRequest); ok {
-			printGenericEvent("HttpRequest ", httpRequest.Method, httpRequest.URL, event, 10, 49)
+		if httpRequest, ok := request.(*HTTPRequest); ok {
+			printGenericEvent("HTTPRequest ", httpRequest.Method, httpRequest.URL, event, 10, 49)
 			if len(httpRequest.Header) > 0 {
 				var formattedBody = formatInput("headers", asJsonText(httpRequest.Header), event)
 				fmt.Printf("%v\n", formattedBody)
@@ -358,12 +363,12 @@ func (r *CliRunner) reportHttpRequestStart(event *Event) {
 	}
 }
 
-func (r *CliRunner) reportHttpRequestEnd(event *Event) {
+func (r *CliRunner) reportHTTPRequestEnd(event *Event) {
 
 	if response, ok := event.Value["response"]; ok {
-		if httpResponse, ok := response.(*HttpResponse); ok {
+		if httpResponse, ok := response.(*HTTPResponse); ok {
 
-			printGenericEvent("HttpResponse ", fmt.Sprintf("%v", httpResponse.Code), "", event, 10, 49)
+			printGenericEvent("HTTPResponse ", fmt.Sprintf("%v", httpResponse.Code), "", event, 10, 49)
 			if len(httpResponse.Header) > 0 {
 				var formattedBody = formatOutput("headers", asJsonText(httpResponse.Header), event)
 				fmt.Printf("%v\n", formattedBody)
@@ -401,11 +406,11 @@ func (r *CliRunner) reportValidatorStart(event *Event) {
 }
 
 func (r *CliRunner) reportAssertionInfo(event *Event, filter *RunnerReportingFilter) {
-	useCase := r.ReportingTag()
+	useCase := r.EventTag()
 	if serviceResponse, ok := event.Value["response"]; ok {
 		if response, ok := serviceResponse.(*ServiceResponse); ok {
 
-			if assertionInfo, ok := response.Response.(*ValidatorAssertionInfo); ok {
+			if assertionInfo, ok := response.Response.(*AssertionInfo); ok {
 				useCase.PassedCount += assertionInfo.TestPassed
 				useCase.FailedCount += len(assertionInfo.TestFailed)
 
@@ -442,7 +447,7 @@ func (r *CliRunner) reportCheckout(event *Event, filter *RunnerReportingFilter) 
 }
 
 func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerReportingFilter) error {
-	useCase := r.ReportingTag()
+	useCase := r.EventTag()
 	useCase.AddEvent(event)
 
 	if event.Level > Debug {
@@ -546,17 +551,17 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 
 	case "Tag":
 		r.reportTag(event, filter)
-	case "HttpRequest.Start":
+	case "HTTPRequest.Start":
 		if !filter.HttpTrip {
 			return nil
 		}
-		r.reportHttpRequestStart(event)
+		r.reportHTTPRequestStart(event)
 
-	case "HttpRequest.End":
+	case "HTTPRequest.End":
 		if !filter.HttpTrip {
 			return nil
 		}
-		r.reportHttpRequestEnd(event)
+		r.reportHTTPRequestEnd(event)
 
 	case "Error":
 		r.reportError(event)
@@ -577,12 +582,12 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 		r.reportBuild(event, filter)
 
 	case "ManagedCommandRequest.Start", "ManagedCommandRequest.End",
-		"ServiceStatusRequest.Start", "ServiceStatusRequest.End",
+		"DaemonStatusRequest.Start", "DaemonStatusRequest.End",
 		"DockerRunRequest.Start", "DockerRunRequest.End",
-		"SdkSetRequest.Start", "SdkSetRequest.End",
+		"SystemSdkSetRequest.Start", "SystemSdkSetRequest.End",
 		"TransferCopyRequest.Start", "TransferCopyRequest.End",
-		"OpenSession.Start", "OpenSession.End",
-		"CloseSession.Start", "CloseSession.End",
+		"OpenSessionRequest.Start", "OpenSessionRequest.End",
+		"CloseSessionRequest.Start", "CloseSessionRequest.End",
 		"DsUnitRegisterRequest.End",
 		"VcCheckoutRequest.End",
 		"CommandRequest.Start", "CommandRequest.End",
@@ -590,10 +595,10 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 		"DsUnitPrepareRequest.Start",
 		"DsUnitPrepareRequest.End",
 		"DsUnitTableSequenceRequest.Start",
-		"SendHttpRequest.Start", "SendHttpRequest.End",
+		"SendHTTPRequest.Start", "SendHTTPRequest.End",
 		"Nop.Start", "Nop.End",
 		"ProcessStopRequest.Start", "ProcessStopRequest.End",
-		"Workflow.Init","Workflow.Post",
+		"Workflow.Init", "Workflow.Post",
 		"Task.Init", "Task.Post",
 		"Action.Init", "Action.Post",
 		"State.Init",
@@ -603,6 +608,7 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 		"LogValidatorListenRequest.End",
 		"LogValidatorResetRequest.Start",
 		"LogValidatorResetRequest.End",
+		"Workflow.Loaded",
 		"ProcessStatusRequest.Start", "ProcessStatusRequest.End":
 		//ignore
 
@@ -615,8 +621,8 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 
 }
 
-func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *RunnerReportingFilter) error {
-	service, err := context.Service(EventReporterServiceId)
+func (r *CliRunner) reportEvents(context *Context, sessionID string, filter *RunnerReportingFilter) error {
+	service, err := context.Service(EventReporterServiceID)
 	if err != nil {
 		return err
 	}
@@ -630,7 +636,7 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 	}
 	for {
 		response := service.Run(context, &EventReporterRequest{
-			SessionId: sessionId,
+			SessionID: sessionID,
 		})
 
 		if response.Error != "" {
@@ -642,7 +648,7 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 			return fmt.Errorf("Failed to check event - unexpected reponse type: %T", response.Response)
 		}
 		if len(reporterResponse.Events) == 0 {
-			if !r.hasActiveSession(context, sessionId) {
+			if !r.hasActiveSession(context, sessionID) {
 				break
 			}
 			time.Sleep(reportingEventSleep)
@@ -698,16 +704,12 @@ func (r *CliRunner) reportEvents(context *Context, sessionId string, filter *Run
 	return nil
 }
 
-
-
-
 func (r *CliRunner) reportSummary(firstEvent *Event, lastEvent *Event, totalUseCaseFailed int) {
 	for _, useCase := range r.tags {
 		if useCase.FailedCount > 0 {
 			fmt.Printf("%v\n", aurora.Red(fmt.Sprintf("[%-6v %13v: %59v]", useCase.Tag, useCase.subPath, "Failed")))
 		}
 	}
-
 
 	if firstEvent != nil {
 		var timeTaken = lastEvent.Timestamp.UnixNano() - firstEvent.Timestamp.UnixNano()
@@ -721,6 +723,7 @@ func (r *CliRunner) reportSummary(firstEvent *Event, lastEvent *Event, totalUseC
 	}
 }
 
+//Run run workflow for the specified URL
 func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	request := &WorkflowRunRequest{}
 	resource := url.NewResource(workflowRunRequestURL)
@@ -751,9 +754,11 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	return r.reportEvents(context, workflowResponse.SessionID, runnerOption.Filter)
 }
 
+
+//NewCliRunner creates a new command line runner
 func NewCliRunner() *CliRunner {
 	return &CliRunner{
 		manager: NewManager(),
-		tags:    make([]*ReportingTag, 0),
+		tags:    make([]*EventTag, 0),
 	}
 }

@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
-	"path"
-	"strings"
 	"github.com/viant/toolbox/url"
+	"path"
 )
-
-
 
 //VersionControlServiceID version control service id
 var VersionControlServiceID = "version/control"
@@ -35,7 +32,6 @@ func (s *versionControlService) checkInfo(context *Context, request *VcStatusReq
 	return nil, fmt.Errorf("Unsupported type: %v -> ", target.Type, target.URL)
 }
 
-
 //commit commits local changes to the version control
 func (s *versionControlService) commit(context *Context, request *VcCommitRequest) (interface{}, error) {
 	target, err := context.ExpandResource(request.Target)
@@ -60,7 +56,6 @@ func (s *versionControlService) commit(context *Context, request *VcCommitReques
 	}
 	return nil, fmt.Errorf("Unsupported type: %v -> %v", target.Type, target.URL)
 }
-
 
 //pull retrieves the latest changes from the origin
 func (s *versionControlService) pull(context *Context, request *VcPullRequest) (*VcInfo, error) {

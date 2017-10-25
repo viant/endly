@@ -4,8 +4,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
-	"testing"
 	"github.com/viant/toolbox/url"
+	"testing"
 )
 
 func TestBuildService_Run(t *testing.T) {
@@ -14,7 +14,7 @@ func TestBuildService_Run(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 	assert.NotNil(t, context)
 
-	buildService, err := manager.Service(endly.BuildServiceId)
+	buildService, err := manager.Service(endly.BuildServiceID)
 	assert.Nil(t, err)
 
 	response := buildService.Run(context, &endly.BuildRequest{

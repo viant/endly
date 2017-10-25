@@ -3,8 +3,8 @@ Workflow,,Name,Description,Tasks,,Init
 []Tasks,,Name,Description,Actions,,
 ,,start,This task will start memcached docker service,%Start,,
 []Start,Service,Action,Description,Request,RunCriteria,Post
-,system,status,Check if system docker service is running,$systemDockerRequest,,"[{""name"":""dockerSystemStatus"", ""from"":""State""}]"
-,system,start,Start docker service,$systemDockerRequest,$dockerSystemStatus:/!running/,
+,daemon,status,Check if system docker service is running,$systemDockerRequest,,"[{""name"":""dockerSystemStatus"", ""from"":""State""}]"
+,daemon,start,Start docker service,$systemDockerRequest,$dockerSystemStatus:/!running/,
 ,docker,run,Start docker memcached service,$dockerRunRequest,,
 []Tasks,,Name,Description,Actions,,
 ,,stop,This task will stop docker mysql,%Stop,,

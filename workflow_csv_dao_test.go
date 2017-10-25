@@ -4,10 +4,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
-	"strings"
-	"testing"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
+	"strings"
+	"testing"
 )
 
 func TestNewWorkflowDao(t *testing.T) {
@@ -39,7 +39,7 @@ func TestNewWorkflowDao(t *testing.T) {
 				assert.Equal(t, "v3", workflow.Data.GetString("k3"))
 
 				if assert.True(t, workflow.Data.Has("Arr")) {
-					var collection= toolbox.AsSlice(workflow.Data.GetCollection("Arr"))
+					var collection = toolbox.AsSlice(workflow.Data.GetCollection("Arr"))
 					assert.Equal(t, []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0}, collection)
 				}
 				assert.Equal(t, "ABC", workflow.Data.GetString("Udf"))
@@ -60,7 +60,7 @@ func TestNewWorkflowDao(t *testing.T) {
 
 			action := task.Actions[0]
 			assert.Equal(t, "send", action.Action)
-			var request, ok= action.Request.(data.Map)
+			var request, ok = action.Request.(data.Map)
 			assert.True(t, ok)
 			assert.NotNil(t, request["Requests"])
 			requests, ok := request["Requests"].(*data.Collection)

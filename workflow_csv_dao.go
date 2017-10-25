@@ -3,9 +3,9 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/neatly"
-	"os"
-	"github.com/viant/toolbox/url"
 	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/url"
+	"os"
 )
 
 var endlyRemoteRepo = "https://raw.githubusercontent.com/viant/endly/master/%v"

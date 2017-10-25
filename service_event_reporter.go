@@ -4,8 +4,10 @@ import (
 	"fmt"
 )
 
-const EventReporterServiceId = "event/reporter"
+//EventReporterServiceID represents event reporter service id
+const EventReporterServiceID = "event/reporter"
 
+//EventReporterFilter represents event reporter fitler
 type EventReporterFilter struct {
 	EventType string
 	Workflow  string
@@ -14,12 +16,14 @@ type EventReporterFilter struct {
 	Level     int
 }
 
+//EventReporterRequest represents  an event reporter request
 type EventReporterRequest struct {
-	SessionId string
+	SessionID string
 	Level     int
 	Filters   []*EventReporterFilter
 }
 
+//EventReporterResponse represents an event reporter response
 type EventReporterResponse struct {
 	Events []*Event
 }
@@ -28,7 +32,7 @@ type eventReporterService struct {
 	*AbstractService
 }
 
-func (s *eventReporterService) getWorkFlowContext(context *Context, sessionId string) (*Context, error) {
+func (s *eventReporterService) getWorkFlowContext(context *Context, sessionID string) (*Context, error) {
 	service, err := context.Service(WorkflowServiceID)
 	if err != nil {
 		return nil, err
@@ -36,7 +40,7 @@ func (s *eventReporterService) getWorkFlowContext(context *Context, sessionId st
 	service.Mutex().RLock()
 	defer service.Mutex().RUnlock()
 	var serviceState = service.State()
-	value := serviceState.Get(sessionId)
+	value := serviceState.Get(sessionID)
 	if value == nil {
 		return nil, nil
 	}
@@ -48,7 +52,7 @@ func (s *eventReporterService) getWorkFlowContext(context *Context, sessionId st
 func (s *eventReporterService) report(context *Context, request *EventReporterRequest) (interface{}, error) {
 	var response = &EventReporterResponse{}
 	var events = make([]*Event, 0)
-	workflowContext, err := s.getWorkFlowContext(context, request.SessionId)
+	workflowContext, err := s.getWorkFlowContext(context, request.SessionID)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +78,7 @@ func (s *eventReporterService) Run(context *Context, request interface{}) *Servi
 	case *EventReporterRequest:
 		response.Response, err = s.report(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run eventReporter: %v, %v", actualRequest.SessionId, err)
+			response.Error = fmt.Sprintf("Failed to run eventReporter: %v, %v", actualRequest.SessionID, err)
 		}
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
@@ -93,9 +97,10 @@ func (s *eventReporterService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+//NewEventReporterService creates a new event reporter service.
 func NewEventReporterService() Service {
 	var result = &eventReporterService{
-		AbstractService: NewAbstractService(EventReporterServiceId),
+		AbstractService: NewAbstractService(EventReporterServiceID),
 	}
 	result.AbstractService.Service = result
 	return result

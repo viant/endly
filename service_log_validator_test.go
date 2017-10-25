@@ -6,13 +6,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
 	"testing"
 	"time"
-	"github.com/viant/toolbox/url"
 )
 
 var templateLog = map[string]interface{}{
@@ -43,7 +43,7 @@ func BuildLogContent(from, to, multiplier int, template string) string {
 func TestLogValidatorService_NewRequest(t *testing.T) {
 
 	manager := endly.NewManager()
-	service, err := manager.Service(endly.LogValidatorServiceId)
+	service, err := manager.Service(endly.LogValidatorServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
 	context := manager.NewContext(toolbox.NewContext())
@@ -52,9 +52,6 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	err = os.Mkdir(tempPath, 0755)
 	assert.Nil(t, err)
 	var template = GetMapAsString(templateLog)
-
-
-
 
 	var response = service.Run(context, &endly.LogValidatorListenRequest{
 		Source: url.NewResource(tempPath),
@@ -93,7 +90,7 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	assert.Equal(t, 2, len(logTypeMeta.LogFiles))
 
 	response = service.Run(context, &endly.LogValidatorAssertRequest{
-		ExpectedLogRecords:[]*endly.ExpectedLogRecord{
+		ExpectedLogRecords: []*endly.ExpectedLogRecord{
 
 			{
 				Type: "t",
@@ -113,17 +110,16 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 				},
 			},
 		},
-
 	})
 
 	assert.Equal(t, "", response.Error)
-	assertionInfo, ok := response.Response.(*endly.ValidatorAssertionInfo)
+	assertionInfo, ok := response.Response.(*endly.AssertionInfo)
 	assert.True(t, ok)
 	assert.NotNil(t, assertionInfo)
 	assert.Equal(t, 0, len(assertionInfo.TestFailed))
 
 	response = service.Run(context, &endly.LogValidatorAssertRequest{
-		ExpectedLogRecords:[]*endly.ExpectedLogRecord{
+		ExpectedLogRecords: []*endly.ExpectedLogRecord{
 
 			{
 
@@ -141,14 +137,9 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	})
 
 	assert.Equal(t, "", response.Error)
-	assertionInfo, ok = response.Response.(*endly.ValidatorAssertionInfo)
+	assertionInfo, ok = response.Response.(*endly.AssertionInfo)
 	assert.True(t, ok)
 	assert.NotNil(t, assertionInfo)
 	assert.Equal(t, 0, len(assertionInfo.TestFailed))
-
-
-
-
-
 
 }

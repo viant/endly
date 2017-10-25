@@ -13,13 +13,9 @@ type Validator struct {
 	ExcludedFields map[string]bool
 }
 
-
-
-
-
 //Check checks expected vs actual value, and returns true if all assertion passes.
 func (s *Validator) Check(expected, actual interface{}) (bool, error) {
-	var response = &ValidatorAssertionInfo{}
+	var response = &AssertionInfo{}
 	err := s.Assert(expected, actual, response, "")
 	if err != nil {
 		return false, err
@@ -28,7 +24,7 @@ func (s *Validator) Check(expected, actual interface{}) (bool, error) {
 }
 
 //Assert check if actual matches expected value, in any case it update assert info with provided validation path.
-func (s *Validator) Assert(expected, actual interface{}, assertionInfo *ValidatorAssertionInfo, path string) error {
+func (s *Validator) Assert(expected, actual interface{}, assertionInfo *AssertionInfo, path string) error {
 	if toolbox.IsValueOfKind(actual, reflect.Slice) {
 		if toolbox.IsValueOfKind(expected, reflect.Map) { //convert actual slice to map using expected indexBy directive
 			expectedMap := toolbox.AsMap(expected)
@@ -75,12 +71,9 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Validato
 	return nil
 }
 
-
-func (s *Validator) assertText(expected, actual string, response *ValidatorAssertionInfo, path string) error {
+func (s *Validator) assertText(expected, actual string, response *AssertionInfo, path string) error {
 	isRegExpr := strings.HasPrefix(expected, "~/") && strings.HasSuffix(expected, "/")
 	isContains := strings.HasPrefix(expected, "/") && strings.HasSuffix(expected, "/")
-
-
 
 	if !isRegExpr && !isContains {
 
@@ -107,8 +100,8 @@ func (s *Validator) assertText(expected, actual string, response *ValidatorAsser
 			expected = string(expected[1:])
 		}
 
-		if strings.HasPrefix(expected,"[") && strings.HasSuffix(expected,"]") {
-			expected = string(expected[1:len(expected)-1])
+		if strings.HasPrefix(expected, "[") && strings.HasSuffix(expected, "]") {
+			expected = string(expected[1 : len(expected)-1])
 			if strings.Contains(expected, "..") {
 				var rangeValue = strings.Split(expected, "..")
 				var minExpected = toolbox.AsFloat(rangeValue[0])
@@ -174,7 +167,7 @@ func (s *Validator) assertText(expected, actual string, response *ValidatorAsser
 	return nil
 }
 
-func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[string]interface{}, response *ValidatorAssertionInfo, path string) error {
+func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[string]interface{}, response *AssertionInfo, path string) error {
 	for key, expected := range expectedMap {
 		if s.ExcludedFields[key] {
 			continue
@@ -202,7 +195,7 @@ func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[
 	return nil
 }
 
-func (s *Validator) assertSlice(expectedSlice []interface{}, actualSlice []interface{}, response *ValidatorAssertionInfo, path string) error {
+func (s *Validator) assertSlice(expectedSlice []interface{}, actualSlice []interface{}, response *AssertionInfo, path string) error {
 	for index, expected := range expectedSlice {
 		keyPath := fmt.Sprintf("%v[%v]", path, index)
 		if !(index < len(actualSlice)) {

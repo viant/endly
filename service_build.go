@@ -9,96 +9,15 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
+//BuildServiceID represent build service id
+const BuildServiceID = "build"
 
-const BuildServiceId = "build"
-
-type OperatingSystemDeployment struct {
-	OsTarget *OperatingSystemTarget
-	Deploy   *DeploymentDeployRequest
-}
-
-type BuildGoal struct {
-	Name                string
-	InitTransfers       *TransferCopyRequest
-	Command             *ManagedCommand
-	PostTransfers       *TransferCopyRequest
-	VerificationCommand *ManagedCommand
-}
-
-type BuildMeta struct {
-	Sdk              string
-	SdkVersion       string
-	Name             string
-	Goals            []*BuildGoal
-	goalsIndex       map[string]*BuildGoal
-	BuildDeployments []*OperatingSystemDeployment //defines deployment of the build app itself, i.e how to get maven installed
-}
-
-func (m *BuildMeta) Validate() error {
-	if m.Name == "" {
-		return fmt.Errorf("MetaBuild.Names %v", m.Name)
-
-	}
-	if len(m.Goals) == 0 {
-		return fmt.Errorf("MetaBuild.Goals were empty %v", m.Name)
-	}
-	return nil
-}
-
-func (m *BuildMeta) Match(operatingSystem *OperatingSystem, version string) *OperatingSystemDeployment {
-	for _, candidate := range m.BuildDeployments {
-		osTarget := candidate.OsTarget
-		if version != "" {
-			if candidate.Deploy.Transfer.Target.Version != version {
-				continue
-			}
-		}
-		if operatingSystem.Matches(osTarget) {
-			return candidate
-		}
-	}
-	return nil
-}
-
-type BuildSpec struct {
-	Name       string //build name  like go, mvn, node, yarn
-	Version    string
-	Goal       string //lookup for BuildMeta goal
-	BuildGoal  string //actual build target, like clean, test
-	Args       string // additional build arguments , that can be expanded with $build.args
-	Sdk        string
-	SdkVersion string
-}
-
-type BuildRequest struct {
-	BuildMetaURL string
-	BuildSpec    *BuildSpec //build specification
-	Target       *url.Resource  //path to application to be build, Note that command may use $build.target variable. that expands to Target URL path
-}
-
-type BuildResponse struct {
-	SdkResponse *SdkSetResponse
-	CommandInfo *CommandInfo
-}
-
-type BuildRegisterMetaRequest struct {
-	Meta *BuildMeta
-}
-
-type BuildLoadMetaRequest struct {
-	Resource *url.Resource
-}
-
-type BuildLoadMetaResponse struct {
-	Loaded map[string]*BuildMeta //url to size
-}
-
-type BuildService struct {
+type buildService struct {
 	*AbstractService
 	registry BuildMetaRegistry
 }
 
-func (s *BuildService) loadBuildMeta(context *Context, buildMetaURL string) error {
+func (s *buildService) loadBuildMeta(context *Context, buildMetaURL string) error {
 	if buildMetaURL == "" {
 		return fmt.Errorf("buildMeta was empty")
 	}
@@ -111,7 +30,7 @@ func (s *BuildService) loadBuildMeta(context *Context, buildMetaURL string) erro
 	return s.registry.Register(meta)
 }
 
-func (s *BuildService) build(context *Context, request *BuildRequest) (interface{}, error) {
+func (s *buildService) build(context *Context, request *BuildRequest) (*BuildResponse, error) {
 	var result = &BuildResponse{}
 	state := context.State()
 	target, err := context.ExpandResource(request.Target)
@@ -161,26 +80,26 @@ func (s *BuildService) build(context *Context, request *BuildRequest) (interface
 	}
 	if buildMeta.Sdk != "" {
 		state.Put("build", buildState)
-		sdkService, err := context.Service(SdkServiceId)
+		sdkService, err := context.Service(SdkServiceID)
 		if err != nil {
 			return nil, err
 		}
-		serviceResponse := sdkService.Run(context, &SdkSetRequest{Target: request.Target,
+		serviceResponse := sdkService.Run(context, &SystemSdkSetRequest{Target: request.Target,
 			Sdk:     context.Expand(buildMeta.Sdk),
 			Version: context.Expand(buildMeta.SdkVersion),
 		})
 		if serviceResponse.Error != "" {
 			return nil, errors.New(serviceResponse.Error)
 		}
-		result.SdkResponse, _ = serviceResponse.Response.(*SdkSetResponse)
+		result.SdkResponse, _ = serviceResponse.Response.(*SystemSdkSetResponse)
 	}
 
-	execService, err := context.Service(ExecServiceId)
+	execService, err := context.Service(SystemExecServiceID)
 	if err != nil {
 		return nil, err
 	}
 	state.Put("build", buildState)
-	response := execService.Run(context, &OpenSession{
+	response := execService.Run(context, &OpenSessionRequest{
 		Target: target,
 	})
 
@@ -248,7 +167,7 @@ func newBuildState(buildSepc *BuildSpec, target *url.Resource, request *BuildReq
 	return build, nil
 }
 
-func (s *BuildService) Run(context *Context, request interface{}) *ServiceResponse {
+func (s *buildService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
@@ -264,6 +183,9 @@ func (s *BuildService) Run(context *Context, request interface{}) *ServiceRespon
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to register: %v", actualRequest.Meta.Name, err)
 		}
+		response.Response = &BuildRegisterMetaResponse{
+			Name: actualRequest.Meta.Name,
+		}
 
 	case *BuildLoadMetaRequest:
 		s.load(context, actualRequest)
@@ -277,7 +199,7 @@ func (s *BuildService) Run(context *Context, request interface{}) *ServiceRespon
 	return response
 }
 
-func (s *BuildService) load(context *Context, request *BuildLoadMetaRequest) (*BuildLoadMetaResponse, error) {
+func (s *buildService) load(context *Context, request *BuildLoadMetaRequest) (*BuildLoadMetaResponse, error) {
 	var result = &BuildLoadMetaResponse{
 		Loaded: make(map[string]*BuildMeta),
 	}
@@ -314,28 +236,31 @@ func (s *BuildService) load(context *Context, request *BuildLoadMetaRequest) (*B
 	return result, nil
 }
 
-func (s *BuildService) NewRequest(action string) (interface{}, error) {
+func (s *buildService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "build":
-		return &BuildRequest{}, nil
 	case "load":
 		return &BuildLoadMetaRequest{}, nil
 	case "register":
 		return &BuildRegisterMetaRequest{}, nil
+	case "build":
+		return &BuildRequest{}, nil
+
 	}
 	return s.AbstractService.NewRequest(action)
 
 }
 
+//NewBuildService creates a new build service
 func NewBuildService() Service {
-	var result = &BuildService{
+	var result = &buildService{
 		registry:        make(map[string]*BuildMeta),
-		AbstractService: NewAbstractService(BuildServiceId),
+		AbstractService: NewAbstractService(BuildServiceID),
 	}
 	result.AbstractService.Service = result
 	return result
 }
 
+//BuildMetaRegistry represents a build meta registry
 type BuildMetaRegistry map[string]*BuildMeta
 
 func indexBuildGoals(goals []*BuildGoal, index map[string]*BuildGoal) {
@@ -347,6 +272,7 @@ func indexBuildGoals(goals []*BuildGoal, index map[string]*BuildGoal) {
 	}
 }
 
+//Register register build meta into registry, if passes validation
 func (r *BuildMetaRegistry) Register(meta *BuildMeta) error {
 	err := meta.Validate()
 	if err != nil {

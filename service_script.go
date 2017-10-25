@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"github.com/robertkrimen/otto"
 	"github.com/viant/toolbox/storage"
-	"io/ioutil"
 	"github.com/viant/toolbox/url"
+	"io/ioutil"
 )
 
 const jsStdCode = "function getOrFail(s,n){if(n||(n=0),s.length>1&&s[s.length-1])throw s[s.length-1];return s[n]}\n"
 
-const ScriptServiceId = "script"
+//ScriptServiceID represents java script service id
+const ScriptServiceID = "script"
 
+//ScriptCommand represnets a script command
 type ScriptCommand struct {
 	Libraries []*url.Resource
 	Code      string
@@ -21,7 +23,7 @@ type scriptService struct {
 	*AbstractService
 }
 
-func (t *scriptService) loadLibraries(context *Context, request *ScriptCommand) (string, error) {
+func (s *scriptService) loadLibraries(context *Context, request *ScriptCommand) (string, error) {
 	if len(request.Libraries) == 0 {
 		return "", nil
 	}
@@ -57,10 +59,10 @@ func (t *scriptService) loadLibraries(context *Context, request *ScriptCommand) 
 
 func (s *scriptService) runScriptCommand(context *Context, request *ScriptCommand) (interface{}, error) {
 	vm := otto.New()
-	vm.Set("context", &JsContext{context})
+	vm.Set("context", &JsContextBridge{context})
 	vm.Set("DeploymentServiceId", DeploymentServiceId)
-	vm.Set("TransferServiceId", TransferServiceId)
-	vm.Set("ExecServiceId", ExecServiceId)
+	vm.Set("TransferServiceID", TransferServiceID)
+	vm.Set("SystemExecServiceID", SystemExecServiceID)
 	vm.Set("ExtractColumns", ExtractColumns)
 	libraries, err := s.loadLibraries(context, request)
 	if err != nil {
@@ -94,6 +96,7 @@ func (s *scriptService) Run(context *Context, request interface{}) *ServiceRespo
 	return response
 }
 
+//NewRequest creates a new request for an action (run).
 func (s *scriptService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case "run":
@@ -102,19 +105,22 @@ func (s *scriptService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+//NewScriptService creates a new script service
 func NewScriptService() Service {
 	var result = &scriptService{
-		AbstractService: NewAbstractService(ScriptServiceId),
+		AbstractService: NewAbstractService(ScriptServiceID),
 	}
 	result.AbstractService.Service = result
 	return result
 }
 
-type JsContext struct {
+//JsContextBridge represent java script context bridge.
+type JsContextBridge struct {
 	*Context
 }
 
-func (c *JsContext) Execute(targetMap map[string]interface{}, commandMap map[string]interface{}) (*CommandInfo, error) {
+//Execute executes command
+func (c *JsContextBridge) Execute(targetMap map[string]interface{}, commandMap map[string]interface{}) (*CommandResponse, error) {
 	var target = &url.Resource{}
 	err := converter.AssignConverted(target, targetMap)
 	if err != nil {

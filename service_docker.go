@@ -4,99 +4,29 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
-	"strings"
 	"github.com/viant/toolbox/url"
+	"strings"
 )
 
-const DockerServiceId = "docker"
+//DockerServiceID represents docker service id
+const DockerServiceID = "docker"
 const containerInUse = "is already in use by container"
 
 var dockerErrors = []string{"Error", "failed"}
 var dockerIgnoreErrors = []string{}
 
-type DockerSystemPathRequest struct {
-	SysPath []string
-}
-
-type DockerPullRequest struct {
-	Target     *url.Resource
-	Repository string
-	Tag        string
-}
-
-type DockerImagesRequest struct {
-	Target     *url.Resource
-	Repository string
-	Tag        string
-}
-
-type DockerImageInfo struct {
-	Repository string
-	Tag        string
-	ImageId    string
-	Size       int
-}
-
-type DockerRunRequest struct {
-	SysPath    []string
-	Target     *url.Resource
-	Image      string
-	Port       string
-	Credential string
-	Env        map[string]string
-	Mount      map[string]string
-	MappedPort map[string]string
-	Params     map[string]string
-	Workdir    string
-}
-
-type DockerContainerCheckRequest struct {
-	Target  *url.Resource
-	SysPath []string
-	Names   string
-	Image   string
-}
-
-type DockerContainerStartRequest struct {
-	SysPath []string
-	Target  *url.Resource
-}
-
-type DockerContainerRemoveRequest struct {
-	SysPath []string
-	Target  *url.Resource
-}
-
-type DockerContainerStopRequest struct {
-	SysPath []string
-	Target  *url.Resource
-}
-
-type DockerContainerCommandRequest struct {
-	Target  *url.Resource
-	Command string
-}
-
-type DockerContainerInfo struct {
-	ContainerId string
-	Image       string
-	Command     string
-	Status      string
-	Port        string
-	Names       string
-}
-
-type DockerService struct {
+type dockerService struct {
 	*AbstractService
 	SysPath []string
 }
 
-func (s *DockerService) NewRequest(action string) (interface{}, error) {
+func (s *dockerService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case "run":
 		return &DockerRunRequest{}, nil
 	case "syspath":
 		return &DockerSystemPathRequest{}, nil
+
 	case "images":
 		return &DockerImagesRequest{}, nil
 	case "pull":
@@ -110,13 +40,13 @@ func (s *DockerService) NewRequest(action string) (interface{}, error) {
 	case "container-stop":
 		return &DockerContainerStopRequest{}, nil
 	case "container-remove":
-		return &DockerContainerStopRequest{}, nil
+		return &DockerContainerRemoveRequest{}, nil
 
 	}
 	return s.AbstractService.NewRequest(action)
 }
 
-func (s *DockerService) Run(context *Context, request interface{}) *ServiceResponse {
+func (s *dockerService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
@@ -181,8 +111,8 @@ func (s *DockerService) Run(context *Context, request interface{}) *ServiceRespo
 	https://docs.docker.com/compose/reference/run/
 Options:
     -d                    Detached mode: Run container in the background, print
-                          new container name.
-    --name NAME           Assign a name to the container
+                          new container Id.
+    --Id NAME           Assign a Id to the container
     --entrypoint CMD      Override the entrypoint of the image.
     -e KEY=VAL            Set an environment variable (can be used multiple times)
     -u, --user=""         Run as specified username or uid
@@ -198,7 +128,7 @@ Options:
 
 */
 
-func (s *DockerService) runContainer(context *Context, request *DockerRunRequest) (*DockerContainerInfo, error) {
+func (s *dockerService) runContainer(context *Context, request *DockerRunRequest) (*DockerContainerInfo, error) {
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("Target name was empty for %v", request.Target.URL)
 	}
@@ -254,22 +184,23 @@ func (s *DockerService) runContainer(context *Context, request *DockerRunRequest
 	})
 }
 
-func (s *DockerService) checkContainerProcess(context *Context, request *DockerContainerCheckRequest) (*DockerContainerInfo, error) {
+func (s *dockerService) checkContainerProcess(context *Context, request *DockerContainerCheckRequest) (*DockerContainerInfo, error) {
 	if len(request.SysPath) > 0 {
 		s.SysPath = request.SysPath
 	}
 
-	info, err := s.checkContainerProcesses(context, request)
+	checkResponse, err := s.checkContainerProcesses(context, request)
 	if err != nil {
 		return nil, err
 	}
-	if len(info) == 1 {
-		return info[0], nil
+
+	if len(checkResponse.Containers) == 1 {
+		return checkResponse.Containers[0], nil
 	}
 	return nil, nil
 }
 
-func (s *DockerService) startContainer(context *Context, request *DockerContainerStartRequest) (*DockerContainerInfo, error) {
+func (s *dockerService) startContainer(context *Context, request *DockerContainerStartRequest) (*DockerContainerInfo, error) {
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("Target name was empty for %v and command %v", request.Target.URL)
 	}
@@ -289,7 +220,7 @@ func (s *DockerService) startContainer(context *Context, request *DockerContaine
 
 }
 
-func (s *DockerService) stopContainer(context *Context, request *DockerContainerStopRequest) (*DockerContainerInfo, error) {
+func (s *dockerService) stopContainer(context *Context, request *DockerContainerStopRequest) (*DockerContainerInfo, error) {
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("Target name was empty for %v and command %v", request.Target.URL)
 	}
@@ -317,7 +248,7 @@ func (s *DockerService) stopContainer(context *Context, request *DockerContainer
 	return info, nil
 }
 
-func (s *DockerService) removeContainer(context *Context, request *DockerContainerRemoveRequest) (*CommandInfo, error) {
+func (s *dockerService) removeContainer(context *Context, request *DockerContainerRemoveRequest) (*CommandResponse, error) {
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("Target name was empty for %v and command %v", request.Target.URL)
 	}
@@ -332,20 +263,20 @@ func (s *DockerService) removeContainer(context *Context, request *DockerContain
 	return commandInfo, nil
 }
 
-func (s *DockerService) runInContainer(context *Context, request *DockerContainerCommandRequest) (*CommandInfo, error) {
+func (s *dockerService) runInContainer(context *Context, request *DockerContainerCommandRequest) (*CommandResponse, error) {
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("Target name was empty for %v and command %v", request.Target.URL, request.Command)
 	}
 	return s.executeDockerCommand(context, request.Target, dockerErrors, "docker exec %v /bin/sh -c \"%v\"", request.Target.Name, request.Command)
 }
 
-func (s *DockerService) checkContainerProcesses(context *Context, request *DockerContainerCheckRequest) ([]*DockerContainerInfo, error) {
+func (s *dockerService) checkContainerProcesses(context *Context, request *DockerContainerCheckRequest) (*DockerContainerCheckResponse, error) {
 	info, err := s.executeDockerCommand(context, request.Target, dockerErrors, "docker ps")
 	if err != nil {
 		return nil, err
 	}
 	stdout := info.Stdout()
-	var result = make([]*DockerContainerInfo, 0)
+	var containers = make([]*DockerContainerInfo, 0)
 	var lines = strings.Split(stdout, "\r\n")
 	for i := 1; i < len(lines); i++ {
 		columns, ok := ExtractColumns(lines[i])
@@ -357,7 +288,7 @@ func (s *DockerService) checkContainerProcesses(context *Context, request *Docke
 			status = "up"
 		}
 		info := &DockerContainerInfo{
-			ContainerId: columns[0],
+			ContainerID: columns[0],
 			Image:       columns[1],
 			Command:     columns[2],
 			Status:      status,
@@ -370,12 +301,12 @@ func (s *DockerService) checkContainerProcesses(context *Context, request *Docke
 		if request.Names != "" && request.Names != info.Names {
 			continue
 		}
-		result = append(result, info)
+		containers = append(containers, info)
 	}
-	return result, nil
+	return &DockerContainerCheckResponse{Containers: containers}, nil
 }
 
-func (s *DockerService) pullImage(context *Context, request *DockerPullRequest) (*DockerImageInfo, error) {
+func (s *dockerService) pullImage(context *Context, request *DockerPullRequest) (*DockerImageInfo, error) {
 	if request.Tag == "" {
 		request.Tag = "latest"
 	}
@@ -387,23 +318,23 @@ func (s *DockerService) pullImage(context *Context, request *DockerPullRequest) 
 	if strings.Contains(stdout, "not found") {
 		return nil, fmt.Errorf("Failed to pull docker image,  %v", stdout)
 	}
-	images, err := s.checkImages(context, &DockerImagesRequest{Target: request.Target, Repository: request.Repository, Tag: request.Tag})
+	imageResponse, err := s.checkImages(context, &DockerImagesRequest{Target: request.Target, Repository: request.Repository, Tag: request.Tag})
 	if err != nil {
 		return nil, err
 	}
-	if len(images) == 1 {
-		return images[0], nil
+	if len(imageResponse.Images) == 1 {
+		return imageResponse.Images[0], nil
 	}
-	return nil, fmt.Errorf("Failed to check image status: %v:%v found: %v", request.Repository, request.Tag, len(images))
+	return nil, fmt.Errorf("Failed to check image status: %v:%v found: %v", request.Repository, request.Tag, len(imageResponse.Images))
 }
 
-func (s *DockerService) checkImages(context *Context, request *DockerImagesRequest) ([]*DockerImageInfo, error) {
+func (s *dockerService) checkImages(context *Context, request *DockerImagesRequest) (*DockerImagesResponse, error) {
 	info, err := s.executeDockerCommand(context, request.Target, dockerErrors, "docker images")
 	if err != nil {
 		return nil, err
 	}
 	stdout := info.Stdout()
-	var result = make([]*DockerImageInfo, 0)
+	var images = make([]*DockerImageInfo, 0)
 	for _, line := range strings.Split(stdout, "\r\n") {
 		columns, ok := ExtractColumns(line)
 		if !ok || len(columns) < 4 {
@@ -421,7 +352,7 @@ func (s *DockerService) checkImages(context *Context, request *DockerImagesReque
 		info := &DockerImageInfo{
 			Repository: columns[0],
 			Tag:        columns[1],
-			ImageId:    columns[2],
+			ImageID:    columns[2],
 			Size:       toolbox.AsInt(columns[len(columns)-2]) * sizeFactor,
 		}
 		if request.Repository != "" {
@@ -434,17 +365,17 @@ func (s *DockerService) checkImages(context *Context, request *DockerImagesReque
 				continue
 			}
 		}
-		result = append(result, info)
+		images = append(images, info)
 	}
-	return result, nil
+	return &DockerImagesResponse{Images: images}, nil
 
 }
 
-func (s *DockerService) executeDockerCommand(context *Context, target *url.Resource, errors []string, template string, arguments ...interface{}) (*CommandInfo, error) {
+func (s *dockerService) executeDockerCommand(context *Context, target *url.Resource, errors []string, template string, arguments ...interface{}) (*CommandResponse, error) {
 	return s.executeSecureDockerCommand("", context, target, errors, template, arguments...)
 }
 
-func (s *DockerService) executeSecureDockerCommand(secure string, context *Context, target *url.Resource, errors []string, template string, arguments ...interface{}) (*CommandInfo, error) {
+func (s *dockerService) executeSecureDockerCommand(secure string, context *Context, target *url.Resource, errors []string, template string, arguments ...interface{}) (*CommandResponse, error) {
 	command := fmt.Sprintf(template, arguments...)
 	return context.Execute(target, &ManagedCommand{
 		Options: &ExecutionOptions{
@@ -461,10 +392,16 @@ func (s *DockerService) executeSecureDockerCommand(secure string, context *Conte
 
 }
 
+//NewDockerService returns a new docker service.
 func NewDockerService() Service {
-	var result = &DockerService{
-		AbstractService: NewAbstractService(DockerServiceId),
+	var result = &dockerService{
+		AbstractService: NewAbstractService(DockerServiceID),
 	}
 	result.AbstractService.Service = result
 	return result
+}
+
+//DockerSystemPathRequest represents system path request to set docker in the path
+type DockerSystemPathRequest struct {
+	SysPath []string
 }

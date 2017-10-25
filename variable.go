@@ -3,22 +3,21 @@ package endly
 import (
 	"bytes"
 	"fmt"
-	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
 )
 
-
 //Variable represents a variable
 type Variable struct {
-	Name     string//name
-	Value    interface{}//default value
-	From     string//context state map key to pull data
-	Persist  bool //stores in tmp directory to be used as backup if data is not in the cotnext
-	Required bool//flag that validates that from returns non empty value or error is generated
+	Name     string      //name
+	Value    interface{} //default value
+	From     string      //context state map key to pull data
+	Persist  bool        //stores in tmp directory to be used as backup if data is not in the cotnext
+	Required bool        //flag that validates that from returns non empty value or error is generated
 }
 
 func (v *Variable) tempfile() string {

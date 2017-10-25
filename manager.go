@@ -8,21 +8,19 @@ import (
 	"sync"
 )
 
-
-const AppName = "endly - End To End Functional Testing "//AppName application name
-const AppVersion = "0.0.1" //AppVersion application version
-
+const AppName = "endly - End To End Functional Testing " //AppName application Id
+const AppVersion = "0.0.1"                               //AppVersion application version
 
 //Manager represnets a workflow manager
 type Manager interface {
 
-	//Name returns an application name
+	//Name returns an application Id
 	Name() string
 
 	//Version returns an application version
 	Version() string
 
-	//Service return a workflow service for provided name or error
+	//Service return a workflow service for provided Id or error
 	Service(name string) (Service, error)
 
 	//Register register service in this manager
@@ -59,10 +57,10 @@ func (s *manager) Register(service Service) {
 }
 
 func (s *manager) NewContext(ctx toolbox.Context) *Context {
-	sessionId := uuid.NewV1()
+	sessionID := uuid.NewV1()
 	var workflowStack = make([]*Workflow, 0)
 	var result = &Context{
-		SessionID: sessionId.String(),
+		SessionID: sessionID.String(),
 		Context:   ctx,
 		Events: &Events{
 			mutex:  &sync.Mutex{},
@@ -81,17 +79,19 @@ func NewManager() Manager {
 		version:  AppVersion,
 		services: make(map[string]Service),
 	}
+
 	result.Register(NewExecService())
 	result.Register(NewTransferService())
 	result.Register(NewDeploymentService())
 	result.Register(NewScriptService())
-	result.Register(NewHttpRunnerService())
+	result.Register(NewHTTPpRunnerService())
+	result.Register(NewRestService())
 	result.Register(NewProcessService())
-	result.Register(NewSystemService())
+	result.Register(NewDaemonService())
 	result.Register(NewValidatorService())
 	result.Register(NewWorkflowService())
 	result.Register(NewVersionControlService())
-	result.Register(NewJdkService())
+	result.Register(NewSystemJdkService())
 	result.Register(NewBuildService())
 	result.Register(NewDockerService())
 	result.Register(NewDataStoreUnitService())

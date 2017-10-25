@@ -2,60 +2,21 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"github.com/viant/toolbox/storage"
-	_ "github.com/viant/toolbox/storage/scp"
 	"io"
 	"io/ioutil"
 	"strings"
 )
 
-const TransferServiceId = "transfer"
-
-type TransferCopyRequest struct {
-	Transfers []*Transfer
-}
-
-type TransferCopyResponse struct {
-	Transfered []*TransferInfo
-}
-
-type Transfer struct {
-	Source  *url.Resource
-	Target  *url.Resource
-	Expand  bool
-	Replace map[string]string
-}
-
-type TransferInfo struct {
-	Source   string
-	Target   string
-	Error    string
-	Parsable string
-	State    data.Map
-}
-
-func NewTransferInfo(context *Context, source, target string, err error, expand bool) *TransferInfo {
-	result := &TransferInfo{
-		Source: source,
-		Target: target,
-	}
-	if expand {
-		var state = context.State()
-		result.State = state.AsEncodableMap()
-	}
-	if err != nil {
-		result.Error = fmt.Sprintf("%v", err)
-	}
-	return result
-}
+//TransferServiceID represents transfer service id
+const TransferServiceID = "transfer"
 
 type transferService struct {
 	*AbstractService
 }
 
+//NewExpandedContentHandler return a new reader that can substitude content with state map, replacement data provided in replacement map.
 func NewExpandedContentHandler(context *Context, replaceMap map[string]string, expand bool) func(reader io.Reader) (io.Reader, error) {
 	return func(reader io.Reader) (io.Reader, error) {
 		content, err := ioutil.ReadAll(reader)
@@ -78,7 +39,7 @@ func NewExpandedContentHandler(context *Context, replaceMap map[string]string, e
 
 func (s *transferService) run(context *Context, transfers ...*Transfer) (*TransferCopyResponse, error) {
 	var result = &TransferCopyResponse{
-		Transfered: make([]*TransferInfo, 0),
+		Transferred: make([]*TransferLog, 0),
 	}
 	for _, transfer := range transfers {
 		source, err := context.ExpandResource(transfer.Source)
@@ -107,8 +68,8 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 		startEvent := s.Begin(context, transfer, Pairs("source", source.URL, "target", target.URL, "expand", transfer.Expand || len(transfer.Replace) > 0), Info)
 		err = storage.Copy(sourceService, source.URL, targetService, target.URL, handler)
 		s.End(context)(startEvent, Pairs())
-		info := NewTransferInfo(context, source.URL, target.URL, err, transfer.Expand)
-		result.Transfered = append(result.Transfered, info)
+		info := NewTransferLog(context, source.URL, target.URL, err, transfer.Expand)
+		result.Transferred = append(result.Transferred, info)
 		if err != nil {
 			return result, err
 		}
@@ -146,9 +107,10 @@ func (s *transferService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+//NewTransferService creates a new transfer service
 func NewTransferService() Service {
 	var result = &transferService{
-		AbstractService: NewAbstractService(TransferServiceId),
+		AbstractService: NewAbstractService(TransferServiceID),
 	}
 	result.AbstractService.Service = result
 	return result

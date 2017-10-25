@@ -3,22 +3,21 @@ package endly
 import (
 	"errors"
 	"fmt"
-	"github.com/viant/toolbox/data"
+	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/url"
+	"path"
 	"strings"
 	"time"
-	"path"
-	"github.com/viant/toolbox/url"
-	"github.com/viant/neatly"
 )
 
 const (
 	//WorkflowServiceID represent workflow service id
 	WorkflowServiceID = "workflow"
-	//WorkflowEvalRunCriteriaEventType event name
+	//WorkflowEvalRunCriteriaEventType event Id
 	WorkflowEvalRunCriteriaEventType = "EvalRunCriteria"
 )
-
 
 //WorkflowServiceActivity represents workflow activity
 type WorkflowServiceActivity struct {
@@ -29,7 +28,6 @@ type WorkflowServiceActivity struct {
 	ServiceRequest  interface{}
 	ServiceResponse interface{}
 }
-
 
 type workflowService struct {
 	*AbstractService
@@ -78,7 +76,7 @@ func (s *workflowService) evaluateRunCriteria(context *Context, criteria string)
 }
 
 func isTaskAllowed(candidate *WorkflowTask, request *WorkflowRunRequest) (bool, map[int]bool) {
-	if request.Tasks == ""  || request.Tasks == "*" {
+	if request.Tasks == "" || request.Tasks == "*" {
 		return true, nil
 	}
 	var actions map[int]bool
@@ -128,7 +126,8 @@ func (s *workflowService) loadWorkflowIfNeeded(context *Context, name string, UR
 		} else {
 			workflowResource = url.NewResource(URL)
 		}
-		err = s.loadWorkflow(context, &WorkflowLoadRequest{Source: workflowResource})
+
+		_, err := s.loadWorkflow(context, &WorkflowLoadRequest{Source: workflowResource})
 		if err != nil {
 			return err
 		}
@@ -228,7 +227,7 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 	if !canRun {
 		return nil
 	}
-	startEvent := s.Begin(context, task, Pairs("name", task.Name))
+	startEvent := s.Begin(context, task, Pairs("Id", task.Name))
 	defer s.End(context)(startEvent, Pairs())
 
 	var tagWithIndex = ""
@@ -245,7 +244,7 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 			if subpath == "" {
 				subpath = tagWithIndexCandidate
 			}
-			s.AddEvent(context, "Tag", Pairs("name", workflow.Name, "tagIndex", action.TagIndex, "tag", action.Tag, "description", action.TagDescription, "subPath", subpath), Info)
+			s.AddEvent(context, "Tag", Pairs("Id", workflow.Name, "tagIndex", action.TagIndex, "tag", action.Tag, "description", action.TagDescription, "subPath", subpath), Info)
 			tagWithIndex = tagWithIndexCandidate
 		}
 
@@ -269,12 +268,11 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 		return nil, err
 	}
 
-
 	workflow, err := s.Workflow(request.Name)
 	if err != nil {
 		return nil, err
 	}
-	s.AddEvent(upstreamContext,"Workflow.Loaded", Pairs("workflow", workflow))
+	s.AddEvent(upstreamContext, "Workflow.Loaded", Pairs("workflow", workflow))
 	upstreamContext.PushWorkflow(workflow)
 	defer upstreamContext.ShiftWorkflow()
 
@@ -350,8 +348,8 @@ func (s *workflowService) loadWorkflow(context *Context, request *WorkflowLoadRe
 		return nil, fmt.Errorf("Failed to register workflow: %v, %v", request.Source, err)
 	}
 	return &WorkflowLoadResponse{
-		Workflow:workflow,
-	},nil
+		Workflow: workflow,
+	}, nil
 }
 
 func (s *workflowService) removeSession(context *Context) {
@@ -429,7 +427,7 @@ func (s *workflowService) Run(context *Context, request interface{}) *ServiceRes
 			response.Error = fmt.Sprintf("Failed to register workflow: %v, %v", actualRequest.Workflow.Name, err)
 		}
 	case *WorkflowLoadRequest:
-		err := s.loadWorkflow(context, actualRequest)
+		response.Response, err = s.loadWorkflow(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("%v", err)
 		}

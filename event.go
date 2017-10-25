@@ -8,12 +8,13 @@ import (
 )
 
 const (
-	All            = iota //event logging level all
-	Error                 //event logging level error
-	Info                  //event logging level info
-	Debug                 //event logging level debug
-	ErrorEventType = "Error"
-	SleepEventType = "Sleep"
+	//event logging level all
+	All            = iota
+	Error                    //event logging level error
+	Info                     //event logging level info
+	Debug                    //event logging level debug
+	ErrorEventType = "Error" //Error event type
+	SleepEventType = "Sleep" //Sleep event type
 )
 
 //Events represents sychronized slice of Events
@@ -49,7 +50,7 @@ type Event struct {
 	StartEvent  *Event                   //starting event
 	Timestamp   time.Time                //start time
 	TimeTakenMs int                      //time taken
-	Workflow    string                   //workflow name
+	Workflow    string                   //workflow Id
 	Task        *WorkflowTask            //task
 	Activity    *WorkflowServiceActivity //activity details
 	Level       int                      //logging level
@@ -57,11 +58,10 @@ type Event struct {
 	Value       map[string]interface{}   //event value
 }
 
-
 //Info returns basic event info
 func (e *Event) Info() string {
 	var name = ""
-	if value, ok := e.Value["name"]; ok {
+	if value, ok := e.Value["Id"]; ok {
 		name = toolbox.AsString(value)
 	}
 	return fmt.Sprintf("%v", name)

@@ -30,13 +30,13 @@ func StartTestServer(port string) {
 func TestHttpRunnerService_Run(t *testing.T) {
 	go StartTestServer("8766")
 	manager := endly.NewManager()
-	service, err := manager.Service(endly.HttpRunnerServiceId)
+	service, err := manager.Service(endly.HTTPRunnerServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
 	time.Sleep(500 * time.Millisecond)
 	context := manager.NewContext(toolbox.NewContext())
-	response := service.Run(context, &endly.SendHttpRequest{
-		Requests: []*endly.HttpRequest{
+	response := service.Run(context, &endly.SendHTTPRequest{
+		Requests: []*endly.HTTPRequest{
 			{
 				URL: "http://127.0.0.1:8766/abc",
 				Cookies: []*http.Cookie{
@@ -92,7 +92,7 @@ func TestHttpRunnerService_Run(t *testing.T) {
 		},
 	})
 	assert.Equal(t, "", response.Error)
-	sendResponse, ok := response.Response.(*endly.SendHttpResponse)
+	sendResponse, ok := response.Response.(*endly.SendHTTPResponse)
 	assert.True(t, ok)
 	path1, _ := sendResponse.Extracted["path1"]
 	assert.Equal(t, "/abc", path1)

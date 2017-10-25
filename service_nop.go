@@ -1,7 +1,9 @@
 package endly
 
-const NopService = "nop"
+//NopServiceID represents nop service id.
+const NopServiceID = "nop"
 
+//Nop represent no operation
 type Nop struct{}
 
 //no operation service
@@ -21,9 +23,10 @@ func (s *nopService) NewRequest(action string) (interface{}, error) {
 	return &Nop{}, nil
 }
 
+//NewNopService creates a new NoOperation service.
 func NewNopService() Service {
 	var result = &nopService{
-		AbstractService: NewAbstractService(NopService),
+		AbstractService: NewAbstractService(NopServiceID),
 	}
 	result.AbstractService.Service = result
 	return result

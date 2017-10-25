@@ -15,6 +15,7 @@ func CheckNoSuchFileOrDirectory(stdout ...string) bool {
 	candidate := strings.ToLower(strings.Join(stdout, "\n"))
 	return strings.Contains(candidate, noSuchFileOrDirectory)
 }
+
 //CheckCommandNotFound checks for command not found message in the provided stdout.
 func CheckCommandNotFound(stdout ...string) bool {
 	if len(stdout) == 0 {

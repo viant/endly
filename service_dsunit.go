@@ -8,18 +8,18 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/data"
-	"strings"
 	"github.com/viant/toolbox/url"
+	"strings"
 )
 
 const DataStoreUnitServiceId = "dsunit"
 
 type DsUnitRegisterRequest struct {
 	Datastore       string
-	Config          *dsc.Config //make sure Deploy.Parameters have database name key
+	Config          *dsc.Config //make sure Deploy.Parameters have database Id key
 	Credential      string
-	adminConfig     *dsc.Config //make sure Deploy.Parameters have database name key
-	AdminDatastore  string      //name of admin db
+	adminConfig     *dsc.Config //make sure Deploy.Parameters have database Id key
+	AdminDatastore  string      //Id of admin db
 	AdminCredential string
 	ClearDatastore  bool
 	Scripts         []*url.Resource
@@ -27,7 +27,7 @@ type DsUnitRegisterRequest struct {
 
 //DatasetMapping represnts dataset mappings
 type DatasetMappings struct {
-	Name  string                 //mapping name
+	Name  string                 //mapping Id
 	Value *dsunit.DatasetMapping //actual mappings
 }
 

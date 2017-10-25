@@ -2,9 +2,9 @@ package endly
 
 import (
 	"fmt"
+	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
-	"github.com/viant/toolbox/url"
 )
 
 type svnService struct{}
@@ -58,7 +58,7 @@ func (s *svnService) checkInfo(context *Context, request *VcStatusRequest) (*VcI
 	return result, nil
 }
 
-func readSvnStatus(commandResult *CommandInfo, response *VcInfo) {
+func readSvnStatus(commandResult *CommandResponse, response *VcInfo) {
 	response.New = make([]string, 0)
 	response.Modified = make([]string, 0)
 	response.Deleted = make([]string, 0)

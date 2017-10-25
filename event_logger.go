@@ -1,11 +1,11 @@
 package endly
 
 import (
-	"github.com/viant/toolbox"
-	"fmt"
-	"path"
-	"os"
 	"encoding/json"
+	"fmt"
+	"github.com/viant/toolbox"
+	"os"
+	"path"
 	"strings"
 )
 
@@ -24,7 +24,7 @@ func (l *EventLogger) Log(event *Event) error {
 		l.updateSubPath(event)
 	}
 
-	if _, has:= l.tagCount[l.subPath];!has {
+	if _, has := l.tagCount[l.subPath]; !has {
 		l.tagCount[l.subPath] = 0
 	}
 	l.tagCount[l.subPath]++
@@ -32,7 +32,7 @@ func (l *EventLogger) Log(event *Event) error {
 	var counter = l.tagCount[l.subPath]
 	filename := path.Join(l.directory, l.subPath, fmt.Sprintf("%04d_%v.json", counter, event.Type))
 	parent, _ := path.Split(filename)
-	if ! toolbox.FileExists(parent) {
+	if !toolbox.FileExists(parent) {
 		err := os.MkdirAll(parent, 0744)
 		if err != nil {
 			return err
@@ -52,12 +52,10 @@ func (l *EventLogger) Log(event *Event) error {
 	return err
 }
 
-
-
 func (l *EventLogger) updateSubPath(event *Event) {
 	if tag, ok := event.Value["tag"]; ok {
 		var tagIndex = event.Value["tagIndex"]
-		tag = fmt.Sprintf("%v%v",tag, tagIndex)
+		tag = fmt.Sprintf("%v%v", tag, tagIndex)
 		l.subPath = strings.ToLower(fmt.Sprintf("%03d_%v_%v", l.tagIndex, event.Value["name"], tag))
 	}
 }

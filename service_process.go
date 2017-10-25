@@ -5,49 +5,10 @@ import (
 	"github.com/viant/toolbox"
 	"strings"
 	"time"
-	"github.com/viant/toolbox/url"
 )
 
-const ProcessServiceId = "process"
-
-type ProcessStartRequest struct {
-	Name          string
-	Target        *url.Resource
-	Options       *ExecutionOptions
-	SystemService bool
-	Directory     string
-	Command       string
-	Arguments     []string
-}
-
-type ProcessStartResponse struct {
-	Command string
-	Info    []*ProcessInfo
-}
-
-type ProcessInfo struct {
-	Name      string
-	Pid       int
-	Command   string
-	Arguments []string
-	Stdin     string
-	Stdout    string
-}
-
-type ProcessStatusResponse struct {
-	Processes []*ProcessInfo
-	Pid       int
-}
-
-type ProcessStatusRequest struct {
-	Target  *url.Resource
-	Command string
-}
-
-type ProcessStopRequest struct {
-	Target *url.Resource
-	Pid    int
-}
+//ProcessServiceID represents a system process service id
+const ProcessServiceID = "process"
 
 type processService struct {
 	*AbstractService
@@ -92,7 +53,7 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
-				Command: "ps -ev | grep " + request.Command,
+				Command: "ps -ev | grep " + request.Name,
 			},
 		},
 	})
@@ -109,15 +70,15 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 		if !ok {
 			continue
 		}
-		argumentsIndex := strings.Index(line, request.Command)
+		argumentsIndex := strings.Index(line, request.Name)
 		var arguments []string
 		if argumentsIndex != -1 {
-			args := strings.Trim(line[argumentsIndex+len(request.Command)+1:], " &\t")
+			args := strings.Trim(line[argumentsIndex+len(request.Name)+1:], " &\t")
 			arguments = strings.Split(args, " ")
 		}
 		info := &ProcessInfo{
 			Pid:       toolbox.AsInt(pid),
-			Command:   request.Command,
+			Command:   request.Name,
 			Arguments: arguments,
 			Stdout:    line,
 		}
@@ -129,7 +90,7 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 	return response, nil
 }
 
-func (s *processService) stopProcess(context *Context, request *ProcessStopRequest) (*CommandInfo, error) {
+func (s *processService) stopProcess(context *Context, request *ProcessStopRequest) (*CommandResponse, error) {
 	commandResult, err := context.ExecuteAsSuperUser(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
@@ -153,8 +114,8 @@ func indexProcesses(processes ...*ProcessInfo) map[int]*ProcessInfo {
 
 func (s *processService) startProcess(context *Context, request *ProcessStartRequest) (*ProcessStartResponse, error) {
 	origProcesses, err := s.checkProcess(context, &ProcessStatusRequest{
-		Target:  request.Target,
-		Command: request.Command,
+		Target: request.Target,
+		Name:   request.Name,
 	})
 
 	var result = &ProcessStartResponse{}
@@ -173,7 +134,7 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 		}
 	}
 	changeDirCommand := fmt.Sprintf("cd %v ", request.Directory)
-	startCommand := fmt.Sprintf("nohup %v %v &", request.Command, strings.Join(request.Arguments, " "))
+	startCommand := fmt.Sprintf("nohup %v %v &", request.Name, strings.Join(request.Arguments, " "))
 	_, err = context.Execute(request.Target, &ManagedCommand{
 		Options: request.Options,
 		Executions: []*Execution{
@@ -190,8 +151,8 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 	}
 	time.Sleep(time.Second)
 	newProcesses, err := s.checkProcess(context, &ProcessStatusRequest{
-		Target:  request.Target,
-		Command: request.Command,
+		Target: request.Target,
+		Name:   request.Name,
 	})
 	if err != nil {
 		return nil, err
@@ -222,9 +183,10 @@ func (s *processService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+//NewProcessService returns a new system process service.
 func NewProcessService() Service {
 	var result = &processService{
-		AbstractService: NewAbstractService(ProcessServiceId),
+		AbstractService: NewAbstractService(ProcessServiceID),
 	}
 	result.AbstractService.Service = result
 	return result

@@ -2,27 +2,40 @@ package endly
 
 import (
 	"fmt"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"strings"
 	"sync"
 	"time"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/data"
 )
 
+//Service represents a  service, that is capable of running certain actions.
+type Service interface {
+
+	//service id
+	Id() string
+
+	//service state map
+	State() data.Map
+
+	//Run service action for supported request types.
+	Run(context *Context, request interface{}) *ServiceResponse
+
+	//NewRequest creates a new supported request for this service for the supplied action.
+	NewRequest(action string) (interface{}, error)
+
+	//Mutex to sync access to the state if needed.
+	Mutex() *sync.RWMutex
+}
+
+//ServiceResponse service response
 type ServiceResponse struct {
 	Status   string
 	Error    string
 	Response interface{}
 }
 
-type Service interface {
-	Id() string
-	State() data.Map
-	Run(context *Context, request interface{}) *ServiceResponse
-	NewRequest(action string) (interface{}, error)
-	Mutex() *sync.RWMutex
-}
-
+//AbstractService represenst an abstract service.
 type AbstractService struct {
 	Service
 	id    string
@@ -30,6 +43,7 @@ type AbstractService struct {
 	mutex *sync.RWMutex
 }
 
+//Pairs returns map for pairs.
 func Pairs(params ...interface{}) map[string]interface{} {
 	var result = make(map[string]interface{})
 	for i := 0; i < len(params); i += 2 {
@@ -39,6 +53,7 @@ func Pairs(params ...interface{}) map[string]interface{} {
 	return result
 }
 
+//AddEvent add event
 func (s *AbstractService) AddEvent(context *Context, eventType string, value map[string]interface{}, level ...int) *Event {
 	if len(level) == 0 {
 		level = []int{Info}
@@ -77,6 +92,7 @@ func (s *AbstractService) AddEvent(context *Context, eventType string, value map
 	return event
 }
 
+//Begin add starting event
 func (s *AbstractService) Begin(context *Context, source interface{}, value map[string]interface{}, level ...int) *Event {
 	if len(level) == 0 {
 		level = []int{Debug}
@@ -91,6 +107,7 @@ func (s *AbstractService) Begin(context *Context, source interface{}, value map[
 	return event
 }
 
+//End adds finishing event.
 func (s *AbstractService) End(context *Context) func(*Event, map[string]interface{}) *Event {
 	return func(startEvent *Event, value map[string]interface{}) *Event {
 		var eventType = strings.Replace(startEvent.Type, ".Start", ".End", 1)
@@ -101,22 +118,27 @@ func (s *AbstractService) End(context *Context) func(*Event, map[string]interfac
 	}
 }
 
+//Id returns this service id.
 func (s *AbstractService) Id() string {
 	return s.id
 }
 
+//Mutex returns a mutex
 func (s *AbstractService) Mutex() *sync.RWMutex {
 	return s.mutex
 }
 
+//State returns this service state map.
 func (s *AbstractService) State() data.Map {
 	return s.state
 }
 
+//NewRequest returns error for supplied action
 func (s *AbstractService) NewRequest(action string) (interface{}, error) {
 	return nil, fmt.Errorf("Unsupported action: %v", action)
 }
 
+//NewAbstractService creates a new abstract service.
 func NewAbstractService(id string) *AbstractService {
 	return &AbstractService{
 		id:    id,

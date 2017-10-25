@@ -4,8 +4,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
-	"testing"
 	"github.com/viant/toolbox/url"
+	"testing"
 )
 
 func TestProcessService_Run(t *testing.T) {
@@ -13,7 +13,7 @@ func TestProcessService_Run(t *testing.T) {
 	if toolbox.FileExists("/usr/local/Cellar/mongodb/3.4.4/bin/mongod") {
 
 		manager := endly.NewManager()
-		srv, err := manager.Service(endly.ProcessServiceId)
+		srv, err := manager.Service(endly.ProcessServiceID)
 		assert.Nil(t, err)
 		assert.NotNil(t, srv)
 

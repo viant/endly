@@ -3,10 +3,10 @@ package endly_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox"
-	"testing"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
+	"testing"
 )
 
 type TestConfig struct {
@@ -19,7 +19,7 @@ type TestConfig struct {
 func TestNewTransferService(t *testing.T) {
 
 	manager := endly.NewManager()
-	service, err := manager.Service(endly.TransferServiceId)
+	service, err := manager.Service(endly.TransferServiceID)
 	if assert.Nil(t, err) {
 
 		context := manager.NewContext(toolbox.NewContext())
@@ -43,8 +43,8 @@ func TestNewTransferService(t *testing.T) {
 			assert.Equal(t, "", response.Error)
 			serviceResponse, ok := response.Response.(*endly.TransferCopyResponse)
 			assert.True(t, ok)
-			assert.Equal(t, 1, len(serviceResponse.Transfered))
-			assert.Equal(t, "file:///tmp/transfered.json", serviceResponse.Transfered[0].Target)
+			assert.Equal(t, 1, len(serviceResponse.Transferred))
+			assert.Equal(t, "file:///tmp/transfered.json", serviceResponse.Transferred[0].Target)
 
 			reader, _, err := toolbox.OpenReaderFromURL("file:///tmp/transfered.json")
 			assert.Nil(t, err)
@@ -67,8 +67,8 @@ func TestNewTransferService(t *testing.T) {
 			assert.Equal(t, "", response.Error)
 			serviceResponse, ok := response.Response.(*endly.TransferCopyResponse)
 			assert.True(t, ok)
-			assert.Equal(t, 1, len(serviceResponse.Transfered))
-			assert.Equal(t, "file:///tmp/transfered.json", serviceResponse.Transfered[0].Target)
+			assert.Equal(t, 1, len(serviceResponse.Transferred))
+			assert.Equal(t, "file:///tmp/transfered.json", serviceResponse.Transferred[0].Target)
 
 			reader, _, err := toolbox.OpenReaderFromURL("file:///tmp/transfered.json")
 			assert.Nil(t, err)

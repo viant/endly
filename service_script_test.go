@@ -18,7 +18,7 @@ func TestScriptService_Run(t *testing.T) {
 	content, err := ioutil.ReadFile(scriptFile)
 	assert.Nil(t, err)
 
-	scripService, err := context.Service(endly.ScriptServiceId)
+	scripService, err := context.Service(endly.ScriptServiceID)
 	assert.Nil(t, err)
 	response := scripService.Run(context, &endly.ScriptCommand{
 		Code: string(content),

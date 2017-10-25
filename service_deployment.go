@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/viant/toolbox"
-	"strings"
 	"github.com/viant/toolbox/url"
+	"strings"
 )
 
 const DeploymentServiceId = "deployment"
@@ -114,7 +114,7 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	if err != nil {
 		return nil, err
 	}
-	execService, err := context.Service(ExecServiceId)
+	execService, err := context.Service(SystemExecServiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	if err != nil {
 		return nil, err
 	}
-	response := execService.Run(context, &OpenSession{
+	response := execService.Run(context, &OpenSessionRequest{
 		Target: target,
 	})
 	if response.Error != "" {
@@ -130,11 +130,11 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	}
 
 	if request.Sdk != "" {
-		sdkService, err := context.Service(SdkServiceId)
+		sdkService, err := context.Service(SdkServiceID)
 		if err != nil {
 			return nil, err
 		}
-		response = sdkService.Run(context, &SdkSetRequest{
+		response = sdkService.Run(context, &SystemSdkSetRequest{
 			Sdk:     request.Sdk,
 			Version: request.SdkVersion,
 			Target:  request.Transfer.Target,
@@ -144,7 +144,7 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 		}
 	}
 
-	defer execService.Run(context, CloseSession{Name: target.Host()})
+	defer execService.Run(context, CloseSessionRequest{SessionID: target.Host()})
 	if !request.Force && request.VersionCheck != nil {
 		version, err := s.extractVersion(context, request, execService)
 		if err != nil {

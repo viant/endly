@@ -5,20 +5,11 @@ import (
 	"github.com/viant/toolbox"
 )
 
-const RestServiceId = "transfer"
+//RestServiceID represents rest service id.
+const RestServiceID = "rest/runner"
 
 type restService struct {
 	*AbstractService
-}
-
-type RestSendRequest struct {
-	URL     string
-	Method  string
-	Request interface{}
-}
-
-type RestSendResponse struct {
-	Response interface{}
 }
 
 func (s *restService) Run(context *Context, request interface{}) *ServiceResponse {
@@ -59,9 +50,10 @@ func (s *restService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+//NewRestService creates a new reset service
 func NewRestService() Service {
 	var result = &restService{
-		AbstractService: NewAbstractService(TransferServiceId),
+		AbstractService: NewAbstractService(RestServiceID),
 	}
 	result.AbstractService.Service = result
 	return result

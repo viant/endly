@@ -5,9 +5,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
 	"path"
 	"testing"
-	"github.com/viant/toolbox/url"
 )
 
 func TestService_RunStatusRequest(t *testing.T) {

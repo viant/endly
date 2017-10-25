@@ -2,15 +2,15 @@ package endly
 
 import (
 	"fmt"
+	"github.com/viant/toolbox/data"
 	"regexp"
 	"strings"
-	"github.com/viant/toolbox/data"
 )
 
 //DataExtraction represents a data extraction
 type DataExtraction struct {
-	RegExpr string	//regular expression
-	Key     string  //state key to place a match
+	RegExpr string //regular expression
+	Key     string //state key to place a match
 }
 
 //DataExtractions a slice of DataExtractions
@@ -56,6 +56,7 @@ func (d *DataExtractions) Extract(context *Context, extracted map[string]string,
 	}
 	return nil
 }
+
 //NewDataExtractions creates a new NewDataExtractions
 func NewDataExtractions() DataExtractions {
 	return make([]*DataExtraction, 0)

@@ -4,12 +4,19 @@ import (
 	"fmt"
 )
 
-type jdkService struct {
-}
+type systemJdkService struct{}
 
-func (s *jdkService) setSdk(context *Context, request *SdkSetRequest) (*SdkSetResponse, error) {
-	var response = &SdkSetResponse{}
+func (s *systemJdkService) setSdk(context *Context, request *SystemSdkSetRequest) (*SystemSdkSetResponse, error) {
+	var response = &SystemSdkSetResponse{}
 
+	if context.Contains(response) {
+		var ok bool
+		if response, ok = context.GetOptional(response).(*SystemSdkSetResponse); ok {
+			if response.Version == request.Version && response.Sdk == request.Sdk && response.SessionID == request.Target.Host() {
+				return response, nil
+			}
+		}
+	}
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
@@ -56,8 +63,10 @@ func (s *jdkService) setSdk(context *Context, request *SdkSetRequest) (*SdkSetRe
 			},
 		},
 	})
+
 	if err != nil {
 		return nil, err
 	}
+	context.Put(response, response)
 	return response, nil
 }

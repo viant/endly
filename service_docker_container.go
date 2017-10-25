@@ -1,0 +1,52 @@
+package endly
+
+import (
+	"github.com/viant/toolbox/url"
+)
+
+//DockerContainerCheckRequest represents a docker check container status request
+type DockerContainerCheckRequest struct {
+	Target  *url.Resource
+	SysPath []string
+	Names   string
+	Image   string
+}
+
+//DockerContainerCheckResponse represents a docker container check response
+type DockerContainerCheckResponse struct {
+	Containers []*DockerContainerInfo
+}
+
+//DockerContainerStartRequest represents a docker container start request.
+type DockerContainerStartRequest struct {
+	SysPath []string
+	Target  *url.Resource
+}
+
+//DockerContainerRemoveRequest represents a docker remove container request
+type DockerContainerRemoveRequest struct {
+	SysPath []string
+	Target  *url.Resource
+}
+
+//DockerContainerStopRequest represents a docker stop container request.
+type DockerContainerStopRequest struct {
+	SysPath []string
+	Target  *url.Resource
+}
+
+//DockerContainerCommandRequest represents a docker run command in the container.
+type DockerContainerCommandRequest struct {
+	Target  *url.Resource
+	Command string
+}
+
+//DockerContainerInfo represents a docker container info
+type DockerContainerInfo struct {
+	ContainerID string
+	Image       string
+	Command     string
+	Status      string
+	Port        string
+	Names       string
+}

@@ -2,17 +2,17 @@ package endly
 
 import (
 	"fmt"
-	"strings"
 	"github.com/viant/toolbox/url"
+	"strings"
 )
 
 //VcCheckoutRequest represents checkout request. If target directory exist and contains matching origin URL,
 // only taking the latest changes without overriding local if performed, otherwise full checkout
 type VcCheckoutRequest struct {
-	Origin             *url.Resource//version control origin
-	Target             *url.Resource//local code destination
-	Modules            []string //vc path to project
-	RemoveLocalChanges bool//flag to remove local changes
+	Origin             *url.Resource //version control origin
+	Target             *url.Resource //local code destination
+	Modules            []string      //vc path to project
+	RemoveLocalChanges bool          //flag to remove local changes
 }
 
 //VcCheckoutResponse represents checkout response
@@ -44,4 +44,3 @@ func (r *VcCheckoutRequest) Validate() error {
 	}
 	return nil
 }
-

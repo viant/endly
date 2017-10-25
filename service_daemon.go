@@ -3,12 +3,14 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
-	"github.com/viant/toolbox/url"
 )
 
-const SystemServiceId = "system"
+//DaemonServiceID represents system daemon service
+const DaemonServiceID = "daemon"
+
 const (
 	serviceTypeError = iota
 	serviceTypeInitDaemon
@@ -17,58 +19,27 @@ const (
 	serviceTypeSystemctl
 )
 
-type ServiceStartRequest struct {
-	Target    *url.Resource
-	Service   string
-	Exclusion string
-}
-
-type ServiceStopRequest struct {
-	Target    *url.Resource
-	Service   string
-	Exclusion string
-}
-
-type ServiceStatusRequest struct {
-	Target    *url.Resource
-	Service   string
-	Exclusion string
-}
-
-type ServiceInfo struct {
-	Service string
-	Path    string
-	Pid     int
-	Type    int
-	Init    string
-	State   string
-}
-
-func (s *ServiceInfo) IsActive() bool {
-	return s.State == "running"
-}
-
-type systemService struct {
+type daemonService struct {
 	*AbstractService
 }
 
-func (s *systemService) Run(context *Context, request interface{}) *ServiceResponse {
+func (s *daemonService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
 	switch actualRequest := request.(type) {
-	case *ServiceStartRequest:
+	case *DaemonStartRequest:
 		response.Response, err = s.startService(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to start service: %v, %v", actualRequest.Service, err)
 		}
-	case *ServiceStopRequest:
+	case *DaemonStopRequest:
 		response.Response, err = s.stopService(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to stop service: %v, %v", actualRequest.Service, err)
 		}
-	case *ServiceStatusRequest:
+	case *DaemonStatusRequest:
 		response.Response, err = s.checkService(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to check status service: %v, %v", actualRequest.Service, err)
@@ -80,20 +51,19 @@ func (s *systemService) Run(context *Context, request interface{}) *ServiceRespo
 	return response
 }
 
-func (s *systemService) NewRequest(action string) (interface{}, error) {
+func (s *daemonService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case "status":
-		return &ServiceStatusRequest{}, nil
+		return &DaemonStatusRequest{}, nil
 	case "start":
-		return &ServiceStartRequest{}, nil
+		return &DaemonStartRequest{}, nil
 	case "stop":
-		return &ServiceStopRequest{}, nil
-
+		return &DaemonStopRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
 }
 
-func (s *systemService) determineServiceType(context *Context, service, exclusion string, target *url.Resource) (int, string, error) {
+func (s *daemonService) determineServiceType(context *Context, service, exclusion string, target *url.Resource) (int, string, error) {
 	if exclusion != "" {
 		exclusion = " | grep -v " + exclusion
 	}
@@ -146,7 +116,7 @@ func (s *systemService) determineServiceType(context *Context, service, exclusio
 	return serviceTypeError, "", nil
 }
 
-func extractServiceInfo(state map[string]string, info *ServiceInfo) {
+func extractServiceInfo(state map[string]string, info *DaemonInfo) {
 	if pid, ok := state["pid"]; ok {
 		info.Pid = toolbox.AsInt(pid)
 	}
@@ -163,7 +133,7 @@ func extractServiceInfo(state map[string]string, info *ServiceInfo) {
 	}
 }
 
-func (s *systemService) checkService(context *Context, request *ServiceStatusRequest) (*ServiceInfo, error) {
+func (s *daemonService) checkService(context *Context, request *DaemonStatusRequest) (*DaemonInfo, error) {
 
 	if request.Service == "" {
 		return nil, fmt.Errorf("Service was empty")
@@ -178,7 +148,7 @@ func (s *systemService) checkService(context *Context, request *ServiceStatusReq
 		return nil, err
 	}
 
-	var result = &ServiceInfo{
+	var result = &DaemonInfo{
 		Service: request.Service,
 		Type:    serviceType,
 		Init:    serviceInit,
@@ -267,8 +237,8 @@ func (s *systemService) checkService(context *Context, request *ServiceStatusReq
 
 }
 
-func (s *systemService) stopService(context *Context, request *ServiceStopRequest) (*ServiceInfo, error) {
-	serviceInfo, err := s.checkService(context, &ServiceStatusRequest{
+func (s *daemonService) stopService(context *Context, request *DaemonStopRequest) (*DaemonInfo, error) {
+	serviceInfo, err := s.checkService(context, &DaemonStatusRequest{
 		Target:    request.Target,
 		Service:   request.Service,
 		Exclusion: request.Exclusion,
@@ -307,15 +277,15 @@ func (s *systemService) stopService(context *Context, request *ServiceStopReques
 	if CheckCommandNotFound(commandResult.Stdout()) {
 		return nil, fmt.Errorf("%v", commandResult.Stdout)
 	}
-	return s.checkService(context, &ServiceStatusRequest{
+	return s.checkService(context, &DaemonStatusRequest{
 		Target:    request.Target,
 		Service:   request.Service,
 		Exclusion: request.Exclusion,
 	})
 }
 
-func (s *systemService) startService(context *Context, request *ServiceStartRequest) (*ServiceInfo, error) {
-	serviceInfo, err := s.checkService(context, &ServiceStatusRequest{
+func (s *daemonService) startService(context *Context, request *DaemonStartRequest) (*DaemonInfo, error) {
+	serviceInfo, err := s.checkService(context, &DaemonStatusRequest{
 		Target:    request.Target,
 		Service:   request.Service,
 		Exclusion: request.Exclusion,
@@ -354,16 +324,17 @@ func (s *systemService) startService(context *Context, request *ServiceStartRequ
 	if CheckCommandNotFound(commandResult.Stdout()) {
 		return nil, fmt.Errorf("%v", commandResult.Stdout)
 	}
-	return s.checkService(context, &ServiceStatusRequest{
+	return s.checkService(context, &DaemonStatusRequest{
 		Target:    request.Target,
 		Service:   request.Service,
 		Exclusion: request.Exclusion,
 	})
 }
 
-func NewSystemService() Service {
-	var result = &systemService{
-		AbstractService: NewAbstractService(SystemServiceId),
+//NewDaemonService creates a new system service.
+func NewDaemonService() Service {
+	var result = &daemonService{
+		AbstractService: NewAbstractService(DaemonServiceID),
 	}
 	result.AbstractService.Service = result
 	return result

@@ -3,10 +3,10 @@ Workflow,,Name,Description,Tasks,,Init
 []Tasks,,Name,Description,Actions,,
 ,,start,"This task will stop system mysql if it is running, it only run if  $param.stopSystemMysql is true",%Start,,
 []Start,Service,Action,Description,Request,RunCriteria,Post
-,system,status,Check if system mysql service is running,$systemMysqlRequest,$params.stopSystemMysql:true,"[{""name"":""mysqlSystemStatus"", ""from"":""State""}]"
-,system,stop,Stop system mysql service,$systemMysqlRequest,$mysqlSystemStatus:running,
-,system,status,Check if system docker service is running,$systemDockerRequest,,"[{""name"":""dockerSystemStatus"", ""from"":""State""}]"
-,system,start,Start docker service,$systemDockerRequest,$dockerSystemStatus:/!running/,
+,daemon,status,Check if system mysql service is running,$systemMysqlRequest,$params.stopSystemMysql:true,"[{""name"":""mysqlSystemStatus"", ""from"":""State""}]"
+,daemon,stop,Stop system mysql service,$systemMysqlRequest,$mysqlSystemStatus:running,
+,daemon,status,Check if system docker service is running,$systemDockerRequest,,"[{""name"":""dockerSystemStatus"", ""from"":""State""}]"
+,daemon,start,Start docker service,$systemDockerRequest,$dockerSystemStatus:/!running/,
 ,transfer,copy,This action will copy template config file to the temp folder,$transferRequest,$params.configUrl:/!params.configUrl/,
 ,docker,run,Start docker mysql service,$dockerRunRequest,,
 []Tasks,,Name,Description,Actions,,

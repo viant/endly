@@ -4,20 +4,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
-	"testing"
 	"github.com/viant/toolbox/url"
+	"testing"
 )
 
 func TestNewExecService(t *testing.T) {
 
 	manager := endly.NewManager()
-	srv, err := manager.Service(endly.ExecServiceId)
+	srv, err := manager.Service(endly.SystemExecServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, srv)
 
 	context := manager.NewContext(toolbox.NewContext())
 	defer context.Close()
-	request := &endly.OpenSession{
+	request := &endly.OpenSessionRequest{
 		Target: &url.Resource{
 			URL: "ssh://127.0.0.1:22/etc",
 		},

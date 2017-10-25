@@ -2,35 +2,24 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/toolbox/url"
 )
 
-const SdkServiceId = "sdk"
+//SdkServiceID represents system sdk
+const SdkServiceID = "sdk"
 
-type SdkSetResponse struct {
-	Home  string
-	Build string
-}
-
-type SdkSetRequest struct {
-	Sdk     string
-	Version string
-	Target  *url.Resource
-}
-
-type sdkService struct {
+type systemSdkService struct {
 	*AbstractService
-	jdkService *jdkService
+	jdkService *systemJdkService
 }
 
-func (s *sdkService) Run(context *Context, request interface{}) *ServiceResponse {
+func (s *systemSdkService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
 
 	var err error
 	switch actualRequest := request.(type) {
-	case *SdkSetRequest:
+	case *SystemSdkSetRequest:
 		response.Response, err = s.setSdk(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to run sdk: %v, %v", actualRequest.Sdk, err)
@@ -44,22 +33,28 @@ func (s *sdkService) Run(context *Context, request interface{}) *ServiceResponse
 	return response
 }
 
-func (t *sdkService) NewRequest(action string) (interface{}, error) {
-	return &SdkSetRequest{}, nil
+func (s *systemSdkService) NewRequest(action string) (interface{}, error) {
+	switch action {
+	case "set":
+		return &SystemSdkSetRequest{}, nil
+	}
+	return s.AbstractService.NewRequest(action)
+
 }
 
-func (s *sdkService) setSdk(context *Context, request *SdkSetRequest) (*SdkSetResponse, error) {
+func (s *systemSdkService) setSdk(context *Context, request *SystemSdkSetRequest) (*SystemSdkSetResponse, error) {
 	switch request.Sdk {
 	case "jdk":
 		return s.jdkService.setSdk(context, request)
 	}
-	return nil, fmt.Errorf("Unsupported jdk: %v\n", request.Sdk)
+	return nil, fmt.Errorf("Unsupported jdk: %v", request.Sdk)
 }
 
-func NewJdkService() Service {
-	var result = &sdkService{
-		jdkService:      &jdkService{},
-		AbstractService: NewAbstractService(SdkServiceId),
+//NewSystemJdkService creates a new system jdk service.
+func NewSystemJdkService() Service {
+	var result = &systemSdkService{
+		jdkService:      &systemJdkService{},
+		AbstractService: NewAbstractService(SdkServiceID),
 	}
 	result.AbstractService.Service = result
 	return result

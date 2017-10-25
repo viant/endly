@@ -3,49 +3,16 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/toolbox"
-	"strings"
 )
 
-const ValidatorServiceId = "validator"
+//ValidatorServiceID validator service id
+const ValidatorServiceID = "validator"
 
-type ValidatorService struct {
+type validatorService struct {
 	*AbstractService
 }
 
-
-
-type ValidatorAssertRequest struct {
-	Name string
-	Actual   interface{}
-	Expected interface{}
-}
-
-
-type ValidatorAssertionInfo struct {
-	TestPassed int
-	TestFailed []string
-}
-
-func (ar *ValidatorAssertionInfo) AddFailure(message string) {
-	if len(ar.TestFailed) == 0 {
-		ar.TestFailed = make([]string, 0)
-	}
-	ar.TestFailed = append(ar.TestFailed, message)
-}
-
-func (ar *ValidatorAssertionInfo) HasFailure() bool {
-	return len(ar.TestFailed) > 0
-}
-
-func (ar *ValidatorAssertionInfo) Message() string {
-	return fmt.Sprintf("Passed: %v\nFailed:%v\n-----\n\t%v\n",
-		ar.TestPassed,
-		len(ar.TestFailed),
-		strings.Join(ar.TestFailed, "\n\t"),
-	)
-}
-
-func (s *ValidatorService) Run(context *Context, request interface{}) *ServiceResponse {
+func (s *validatorService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
@@ -64,8 +31,8 @@ func (s *ValidatorService) Run(context *Context, request interface{}) *ServiceRe
 	return response
 }
 
-func (s *ValidatorService) Assert(context *Context, request *ValidatorAssertRequest) (*ValidatorAssertionInfo, error) {
-	var response = &ValidatorAssertionInfo{}
+func (s *validatorService) Assert(context *Context, request *ValidatorAssertRequest) (*AssertionInfo, error) {
+	var response = &AssertionInfo{}
 	var state = context.State()
 	var actual = request.Actual
 	var expected = request.Expected
@@ -84,7 +51,7 @@ func (s *ValidatorService) Assert(context *Context, request *ValidatorAssertRequ
 	return response, nil
 }
 
-func (s *ValidatorService) NewRequest(action string) (interface{}, error) {
+func (s *validatorService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case "assert":
 		return &ValidatorAssertRequest{}, nil
@@ -92,9 +59,10 @@ func (s *ValidatorService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+//NewValidatorService creates a new validation service
 func NewValidatorService() Service {
-	var result = &ValidatorService{
-		AbstractService: NewAbstractService(ValidatorServiceId),
+	var result = &validatorService{
+		AbstractService: NewAbstractService(ValidatorServiceID),
 	}
 	result.AbstractService.Service = result
 	return result

@@ -5,20 +5,19 @@ import (
 	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/storage"
+	"github.com/viant/toolbox/url"
 	"math/rand"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
-	"time"
 	"sync/atomic"
-	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
+	"time"
 )
 
 var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
-
 
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
@@ -26,8 +25,8 @@ var workflowKey = (*Workflow)(nil)
 
 //Context represents a workflow session context/state
 type Context struct {
-	SessionID     string
-	state         data.Map
+	SessionID string
+	state     data.Map
 	toolbox.Context
 	Events        *Events
 	EventLogger   *EventLogger
@@ -143,11 +142,11 @@ func (c *Context) Manager() (Manager, error) {
 	return manager, nil
 }
 
-//Sessions returns client sessions
-func (c *Context) Sessions() ClientSessions {
-	var result *ClientSessions
+//TerminalSessions returns client sessions
+func (c *Context) TerminalSessions() SystemTerminalSessions {
+	var result *SystemTerminalSessions
 	if !c.Contains(clientSessionKey) {
-		var sessions ClientSessions = make(map[string]*ClientSession)
+		var sessions SystemTerminalSessions = make(map[string]*SystemTerminalSession)
 		result = &sessions
 		c.Put(clientSessionKey, result)
 	} else {
@@ -206,7 +205,7 @@ func (c *Context) Workflow() *Workflow {
 
 //OperatingSystem returns operating system for provide session
 func (c *Context) OperatingSystem(sessionName string) *OperatingSystem {
-	var sessions = c.Sessions()
+	var sessions = c.TerminalSessions()
 	if session, has := sessions[sessionName]; has {
 		return session.OperatingSystem
 	}
@@ -214,8 +213,8 @@ func (c *Context) OperatingSystem(sessionName string) *OperatingSystem {
 }
 
 //ExecuteAsSuperUser executes provided command as super user.
-func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ManagedCommand) (*CommandInfo, error) {
-	superUserRequest := SuperUserCommandRequest{
+func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ManagedCommand) (*CommandResponse, error) {
+	superUserRequest := superUserCommandRequest{
 		Target:        target,
 		MangedCommand: command,
 	}
@@ -227,7 +226,7 @@ func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ManagedComma
 }
 
 //Execute execute shell command
-func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandInfo, error) {
+func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandResponse, error) {
 	if command == nil {
 		return nil, nil
 	}
@@ -237,7 +236,7 @@ func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandIn
 		actualCommand.Target = target
 		commandRequest = actualCommand.AsManagedCommandRequest()
 	case *ManagedCommand:
-		commandRequest = NewCommandRequest(target, actualCommand)
+		commandRequest = NewManagedCommandRequest(target, actualCommand)
 	case string:
 		request := CommandRequest{
 			Target:   target,
@@ -254,7 +253,7 @@ func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandIn
 	default:
 		return nil, fmt.Errorf("Unsupported command: %T", command)
 	}
-	execService, err := c.Service(ExecServiceId)
+	execService, err := c.Service(SystemExecServiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -262,12 +261,11 @@ func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandIn
 	if response.Error != "" {
 		return nil, errors.New(response.Error)
 	}
-	if commandResult, ok := response.Response.(*CommandInfo); ok {
+	if commandResult, ok := response.Response.(*CommandResponse); ok {
 		return commandResult, nil
 	}
 	return nil, nil
 }
-
 
 //Copy transfer source into target url, it takes also exand flag to indicate variable substitution.
 func (c *Context) Copy(expand bool, source, target *url.Resource) (interface{}, error) {
@@ -282,7 +280,7 @@ func (c *Context) Transfer(transfers ...*Transfer) (interface{}, error) {
 	if transfers == nil {
 		return nil, nil
 	}
-	transferService, err := c.Service(TransferServiceId)
+	transferService, err := c.Service(TransferServiceID)
 	if err != nil {
 		return nil, err
 	}
@@ -324,7 +322,6 @@ func (c *Context) Close() {
 	}
 }
 
-
 /*
 NewDefaultState returns a new default state.
 It comes with the following registered keys:
@@ -338,9 +335,9 @@ It comes with the following registered keys:
 	* tmpDir - temp directory
 	* uuid.next - generate unique id
 	* uuid.get - returns previously generated unique id, or generate new
-	*.end.XXX where XXX is the name of the env variable to return
+	*.end.XXX where XXX is the Id of the env variable to return
 	* all UFD registry functions
- */
+*/
 func NewDefaultState() data.Map {
 	var result = data.NewMap()
 	var now = time.Now()
@@ -349,7 +346,6 @@ func NewDefaultState() data.Map {
 	result.Put("date", now.Format(toolbox.DateFormatToLayout("yyyy-MM-dd")))
 	result.Put("time", now.Format(toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss")))
 	result.Put("ts", now.Format(toolbox.DateFormatToLayout("yyyyMMddhhmmSSS")))
-
 
 	result.Put("tmpDir", func(key string) interface{} {
 		tempPath := path.Join(os.TempDir(), key)
