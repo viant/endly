@@ -575,6 +575,7 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 		"Task.Init", "Task.Post",
 		"Action.Init", "Action.Post",
 		"State.Init",
+		"Assert",
 		"LogValidatorAssertRequest.Start",
 		"EvalRunCriteria",
 		"LogValidatorListenRequest.Start",
