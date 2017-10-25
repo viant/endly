@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-//Service represents a  service, that is capable of running certain actions.
+//Service represents a set of capabilities per supported actions/request.
 type Service interface {
 
 	//service id
@@ -28,12 +28,16 @@ type Service interface {
 	Mutex() *sync.RWMutex
 }
 
+
+
 //ServiceResponse service response
 type ServiceResponse struct {
 	Status   string
 	Error    string
 	Response interface{}
 }
+
+
 
 //AbstractService represenst an abstract service.
 type AbstractService struct {

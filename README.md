@@ -8,11 +8,14 @@ This library is compatible with Go 1.8+
 Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes.
 
 - [Motivation](#Motivation)
-- [Usage](#Usage)
-- [Prerequisites](#Prerequisites)
 - [Installation](#Installation)
-- [API Documentaion](#API-Documentation)
-- [Tests](#Tests)
+- [Introduction](#Introduction)
+- [System services](#Systemservices)
+- [Build and deployment services](#Buildservices)
+- [Testing services](#Testingservices)
+- [Workfow Service](#Workfowservice)
+
+- [Usage](#Usage)
 - [Examples](#Examples)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
@@ -32,13 +35,18 @@ This framework provide end to end capability to eun test from preparing system w
 that expected output has been produced.
 
 
-## Basic
+<a name="Installation></a>
+## Installation
+
+TODO add me
+
+<a name="Introduction></a>
+## Introduction
 
 This testing framework uses [Neatly](https://github.com/viant/neatly) format to represent a workflow.
 
- 
 
-**Workflow** an abstraction to define a set of task with its action.
+**[Workflow](workflow.go)** an abstraction to define a set of task with its action.
 
 **Task** an abstraction to logically group one or more action, for example, init,test.
 
@@ -49,18 +57,20 @@ An action does actual job, like starting service, building and deploying app etc
         
 **ActionResponse** an abstraction representing a service response.
 
+**[Service](service.go)** an abstraction providing set of functionalities triggered by specified action/request.
+
 **State** key/value pair map that is used to mange state during the workflow run. 
 The state can be change by providing variable definition.
 The workflow content, data structures, can use dollar '$' sign followed by variable name 
 to get its expanded to its corresponding state value if the key has been present.
 
-**Variables** an abstraction defining key to be store in the state map.
+**[Variables](variable.go)** an abstraction having capabilities to change a state map.
+
 Variable has the following attributes
-* Name 
-Name can be defined as key to be stored in state map or expression with the key
+* **Name**: name can be defined as key to be stored in state map or expression with the key
 The following expression are supported:
 
-* Value any type value that is used when from value is empty
+* **Value**: any type value that is used when from value is empty
 * From  name of a key state key, or expression with key.    
 The following expression are supported:
     * number increments  **++**, for example  counter++, where counter is a key in the state
@@ -69,9 +79,8 @@ The following expression are supported:
     evaluated as value stored in key pointed by content of ref variable
     
 
-**Workflow Lifecycle**
 
-
+<a name="Systemservices></a>
 
 
 ## System services
@@ -140,7 +149,20 @@ Sdk service sets active terminal session with requested sdk version.
 TODO add stop (with names of running images to stop in one go)
 
 
-## Build services
+<a name="Buildservices"></a>
+## Build and deployment services
+
+
+
+**Transfer service**
+
+Transfer service is responsible for transferring data from the source to the target destination, optionally it supports transferred content data substitution. 
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| transfer | copy | copy one or more resources from the source to target destination | [TransferCopyRequest](service_transfer_copy.go) | [TransferCopyResponse](service_transfer_copy.go) |
+
+
 
 **Version Control Service**
 
@@ -161,18 +183,6 @@ TODO add stop (with names of running images to stop in one go)
 | build | build | Run build for provided specification | [BuildRequest](service_build_build.go) | [BuildResponse](service_build_build.go)  |
 
 
-## Deployment services
-
-**Transfer service**
-
-Transfer service is responsible for transferring data from the source to the target destination, optionally it supports transferred content data substitution. 
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| transfer | copy | copy one or more resources from the source to target destination | [TransferCopyRequest](service_transfer_copy.go) | [TransferCopyResponse](service_transfer_copy.go) |
-
-
-
 **Deployment service** 
 Deployment service check if target path resource, the app has been installed with requested version, if not it will transfer it and run all defined commands/transfers.
 Maven, tomcat use this service.
@@ -182,6 +192,7 @@ Maven, tomcat use this service.
 | deployment | deploy | run deployment | [DeploymentDeployRequest](service_deployment_deploy.go) | [DeploymentDeployResponse](service_deployment_deploy.go) |
 
 
+<a name="Testingservices"></a>
 ### Testing services
 
 **Http Runner** 
@@ -245,7 +256,8 @@ The first action that needs to be run is to register database name with dsc conn
 To simplify setup/verification data process [DsUnitTableData](service_dsunit_data.go) has been introduce, so that data can be push into state, and then transform to the dsunit expected data with AsTableRecords udf function.
 
 
-## End to end functional test orchestration 
+<a name="Workfowservice"></a>
+## Workfow service
 
 
 **Workflow Service**
@@ -260,12 +272,33 @@ Workflow service provide capability to run task, action from any defined workflo
 
 
 
+**Workflow Lifecycle**
+
+
+**Predefined workflows**
+
 
 
  
  #Good practises:
 
     Test datastructure:
-         
+       
 
          
+         	
+<a name="License"></a>
+## License
+
+The source code is made available under the terms of the Apache License, Version 2, as stated in the file `LICENSE`.
+
+Individual files may be made available under their own specific license,
+all compatible with Apache License, Version 2. Please see individual files for details.
+
+
+<a name="Credits-and-Acknowledgements"></a>
+
+##  Credits and Acknowledgements
+
+**Library Author:** Adrian Witas
+

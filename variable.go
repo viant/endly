@@ -20,6 +20,7 @@ type Variable struct {
 	Required bool        //flag that validates that from returns non empty value or error is generated
 }
 
+
 func (v *Variable) tempfile() string {
 	return path.Join(os.Getenv("TMPDIR"), v.Name+".var")
 }
