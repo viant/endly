@@ -112,7 +112,7 @@ func (s *dsataStoreUnitService) addMapping(context *Context, request *DsUnitMapp
 				return nil, err
 			}
 			var datasetMapping = &DatasetMapping{}
-			err = mappingResource.JsonDecode(datasetMapping)
+			err = mappingResource.JSONDecode(datasetMapping)
 			if err != nil {
 				return nil, fmt.Errorf("Failed to decode: %v %v", mappingResource.URL, err)
 			}

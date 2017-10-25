@@ -700,7 +700,7 @@ func (r *CliRunner) reportSummary(firstEvent *Event, lastEvent *Event, totalUseC
 func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	request := &WorkflowRunRequest{}
 	resource := url.NewResource(workflowRunRequestURL)
-	err := resource.JsonDecode(request)
+	err := resource.JSONDecode(request)
 	if err != nil {
 		return err
 	}
@@ -711,7 +711,7 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 		return err
 	}
 	runnerOption := &RunnerReportingOption{}
-	err = resource.JsonDecode(runnerOption)
+	err = resource.JSONDecode(runnerOption)
 	if err != nil {
 		return err
 	}

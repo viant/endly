@@ -23,7 +23,7 @@ func (s *buildService) loadBuildMeta(context *Context, buildMetaURL string) erro
 	}
 	resource := url.NewResource(buildMetaURL)
 	meta := &BuildMeta{}
-	err := resource.JsonDecode(meta)
+	err := resource.JSONDecode(meta)
 	if err != nil {
 		return err
 	}
