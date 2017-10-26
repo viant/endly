@@ -31,7 +31,7 @@ or to process in the required by a business way. Other services used by an appli
 The typical application output could be data in datastore persisted by UI, logs produced by application, performance counters,
 or profile data based on used activity.
 Finally application needs to be build and deployed with the required service into a system in automated fashion to be tested.
-This framework provide end to end capability to eun test from preparing system with its service, building and deploying application to verification 
+This framework provide end to end capability to test from system preparation with its service, building and deploying application to verification 
 that expected output has been produced.
 
 
