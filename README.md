@@ -321,6 +321,7 @@ If expected keys have not been specified but exists in actual data structure the
 
 
 | Equal |  actual | expected |
+| --- | --- | --- |
 | Not Equal |  actual | !expected |
 | Contains | actual | /expected/|
 | Not Contains | actual | /!expected/|
