@@ -50,7 +50,7 @@ Typical web application automated functional can be broken down as follow:
 
 1) System preparation 
     1) System services initialization.  (RDBM, NoSQL, Caching 3rd Party API)
-    2) Application container initializtion if application uses it (Application server)
+    2) Application container initialization if application uses it (Application server)
 2) Application build and deployment
     1) Application code checkout.
     2) Application build
@@ -95,9 +95,13 @@ to get its expanded to its corresponding state value if the key has been present
 
 **[Variables](variable.go)** an abstraction having capabilities to change a state map.
 
+A workflow variable defines data transition between input and output state map.
+
+
 Variable has the following attributes
-* **Name**: name can be defined as key to be stored in state map or expression with the key
-The following expression are supported:
+* **Name**: name can be defined as key to be stored in state map or expression 
+     * array element push **->**, for instance ->collection, where collection is a key in the state map      
+    * reference **$** for example $ref, where ref is the key in the state, in this case the value will be 
 
 * **Value**: any type value that is used when from value is empty
 * From  name of a key state key, or expression with key.    
@@ -107,6 +111,45 @@ The following expression are supported:
     * reference **$** for example $ref, where ref is the key in the state, in this case the value will be 
     evaluated as value stored in key pointed by content of ref variable
     
+
+**Variable in actions:**
+
+
+| Operation | Variable.Name | Variable.Value | Variable.From | Input State Before | Input State After | Out State Before | Out State  After |
+| --- | --- | --- | ---- | --- | --- | --- | --- |
+| Assignment | key1 | [1,2,3] | n/a | n/a | n/a | { } |{"key1":[1,2,3]}|
+| Assignment by reference | $key1  | 1 | n/a| {"key1":"a"} | n/a | { } | {"a":1} |
+| Assignment | key1 | n/a | params.k1 | {"params":{"k1":100}} | n/a | { } | {"key1":100} |
+| Assignment by reference | key1  | n/a | $k | {"k":"a", "a":100} |n/a |  { } | {"key1":100} |
+| Push | ->key1 | 1 | n/a | n/a | n/a | { } | {"key1":[1]} | 
+| Push | ->key1 | 2 | n/a | n/a | n/a | {"key1":[1]} | {"key1":[1,2]} | 
+| Shift | item | n/a  | <-key1 | n/a | n/a | {"key1":[1, 2]} | {"key1":[2], "item":1} | 
+| Pre increment | key | n/a | ++i |  {"i":100} |  {"i":101}   | {} | {"key":101} } 
+| Post increment | key | n/a | i++ | {"i":100} |  {"i":101}   | {} | {"key":100} } 
+
+
+
+**Workflow Lifecycle**
+
+1) New context with a new state map is created after inheriting values from a caller. (Caller will not see any context/state changes from downstream workflow)
+2) **workflow** key is published to the state map with defined workflow.data
+2) **params** key is published to state map with the caller parameters
+3) Workflow initialization stage executes, applying variables defined in Workflow.Init (input: state, output: state)
+4) Tasks Execution 
+    1) Task eligibility determination: 
+        1) If specified tasks are '*' or empty, all task defined in the workflow will run sequentially, otherwise only specified
+        2) Evaluate RunCriteria if specified
+    2) Task initialization stage executes, applying variables defined in Task.Init (input: state, output: state)
+    
+    3) Executes all eligible actions:
+        1) Action eligibility determination:
+            1) Evaluate RunCriteria if specified
+        2) Action initialization stage executes,  applying variables defined in Action.Init (input: state, output: state)
+        3) Executing action on specified service
+        4) Action post stage executes applying variables defined in Action.Post (input: action.response, output: state)
+    4) Task post stage executes, applying variables defined in Task.Post (input: state, output: state)   
+5) Workflow post stage executes, applying variables defined in Workflow.Init (input: state, output: workflow.response)
+
 
 
 
@@ -167,19 +210,20 @@ Sdk service sets active terminal session with requested sdk version.
 | --- | --- | --- | --- | --- | 
 | docker | run | run requested docker service | [DockerRunRequest](service_docker_run.go) | [DockerContainerInfo](service_docker_container.go) | 
 | docker | images | check docker image| [DockerImagesRequest](service_docker_image.go) | [DockerImagesResponse](service_docker_image.go) | 
+| docker | stop-images | stop docker containers matching specified images | [DockerStopImagesRequest](service_docker_stop.go) | [DockerStopImagesResponse](service_docker_stop.go) |
 | docker | pull | pull requested docker image| [DockerPullRequest](service_docker_pull.go) | [DockerImageInfo](service_docker_image.go) | 
 | docker | process | check docker container processes | [DockerContainerCheckRequest](service_docker_container.go) | [DockerContainerCheckResponse](service_docker_container.go) | 
 | docker | container-start | start specified docker container | [DockerContainerStartRequest](service_docker_container.go) | [DockerContainerInfo](service_docker_container.go) | 
 | docker | container-command | run command within specified docker container | [DockerContainerCommandRequest](service_docker_container.go) | [CommandResponse](exec_command_response.go) | 
 | docker | container-stop | stop specified docker container | [DockerContainerStopRequest](service_docker_container.go) | [DockerContainerInfo](service_docker_container.go) | 
-| docker | container-remove | remove specified docker contaienr | [DockerContainerRemoveRequest](service_docker_container.go) | [CommandResponse](exec_command_response.go) | 
+| docker | container-remove | remove specified docker container | [DockerContainerRemoveRequest](service_docker_container.go) | [CommandResponse](exec_command_response.go) | 
+
 
 TODO add stop (with names of running images to stop in one go)
 
 
 <a name="Buildservices"></a>
 ## Build and deployment services
-
 
 
 **Transfer service**
@@ -266,6 +310,51 @@ In order to get log validation,
 | validator/log | assert | performs validation on provided expected log records against actual log file records. | [LogValidatorAssertRequest](service_log_validator_assert.go) | [LogValidatorAssertResponse](service_log_validator_assert.go)  |
 
 
+** Validation expressions **
+Generic validation service and log validator, Task or Action RunCritera share undelying validator, 
+During assertion validator traverses expected data structure to compare it with expected.
+If expected keys have not been specified but exists in actual data structure they are being skipped from assertion.
+
+
+
+| Equal |  actual | expected |
+| Not Equal |  actual | !expected |
+| Contains | actual | /expected/|
+| Not Contains | actual | /!expected/|
+| RegExpr | actual | ~/expected/ |
+| Not RegExpr | actual | ~/!expected/ |
+| Between | actual | /[minExpected..maxExpected]/ |
+| exists | n/a | { "key": "@exists@" }
+
+
+**Array of object vs expected map assertion transformation:**
+
+It is possible to convert actual array of object to map, 
+with "@indexBy@ directive.
+
+Take as example the following actual and expected data structure.
+
+\#actual
+```json
+[
+{"id":1, "name":"name1"},
+{"id":2, "name":"name2"}
+]
+
+```
+
+\#expected
+```json
+{
+"@indexBy@":"id",
+"1" :{"id":1, "name":"name1"},
+"2" :{"id":2, "name":"name2"}
+}
+
+```
+	
+
+
 **Datastore services**
 
 The first action that needs to be run is to register database name with dsc connection config, and optionally init scripts.
@@ -284,6 +373,9 @@ The first action that needs to be run is to register database name with dsc conn
 To simplify setup/verification data process [DsUnitTableData](service_dsunit_data.go) has been introduce, so that data can be push into state, and then transform to the dsunit expected data with AsTableRecords udf function.
 
 
+DsUnit uses its own predicate and macro system to perform advanced validation see [Macros And Predicates](../dsunit/docs/)
+
+
 <a name="Workfowservice"></a>
 ## Workflow service
 
@@ -299,27 +391,6 @@ Workflow service provide capability to run task, action from any defined workflo
 | workflow | run | run workflow with specified tasks and parameters | [WorkflowRunRequest](service_workflow_run.go) | [WorkflowRunResponse]((service_workflow_run.go) |
 
 
-
-**Workflow Lifecycle**
-
-1) New context with a new state map is created after inheriting values from a caller. (Caller will not see any context/state changes)
-2) **workflow** key is published to the state map with defined workflow.data
-2) **params** key is published to state map with the caller parameters
-3) Workflow initialization stage executes, applying variables defined in Workflow.Init (input: state, output: state)
-4) Tasks Execution 
-    1) Task eligibility determination: 
-        1) If specified tasks are '*' or empty, all task defined in the workflow will run sequentially, otherwise only specified
-        2) Evaluate RunCriteria if specified
-    2) Task initialization stage executes, applying variables defined in Task.Init (input: state, output: state)
-    
-    3) Executes all eligible actions:
-        1) Action eligibility determination:
-            1) Evaluate RunCriteria if specified
-        2) Action initialization stage executes,  applying variables defined in Action.Init (input: state, output: state)
-        3) Executing action on specified service
-        4) Action post stage executes applying variables defined in Action.Post (input: action.response, output: state)
-    4) Task post stage executes, applying variables defined in Task.Post (input: state, output: state)   
-5) Workflow post stage executes, applying variables defined in Workflow.Init (input: state, output: workflow.response)
 
 
 **Predefined workflows**

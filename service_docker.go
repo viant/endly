@@ -26,7 +26,8 @@ func (s *dockerService) NewRequest(action string) (interface{}, error) {
 		return &DockerRunRequest{}, nil
 	case "syspath":
 		return &DockerSystemPathRequest{}, nil
-
+	case "stop-images":
+		return &DockerStopImagesRequest{}, nil
 	case "images":
 		return &DockerImagesRequest{}, nil
 	case "pull":
@@ -97,6 +98,12 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to run: %v(%v), %v", actualRequest.Target.Name, actualRequest.Image, err)
 		}
+	case *DockerStopImagesRequest:
+		response.Response, err = s.stopImages(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to run: %v(%v), %v", actualRequest.Target.Name, actualRequest.Images, err)
+		}
+
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 
@@ -106,6 +113,40 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 	}
 	return response
 }
+
+func (s *dockerService) stopImages(context *Context, request *DockerStopImagesRequest) (*DockerStopImagesResponse, error) {
+	if len(request.SysPath) > 0 {
+		s.SysPath = request.SysPath
+	}
+	var response = &DockerStopImagesResponse{
+		StoppedImages: make([]string, 0),
+	}
+	processResponse, err := s.checkContainerProcesses(context, &DockerContainerCheckRequest{
+		Target: request.Target,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, image := range request.Images {
+		for _, container := range processResponse.Containers {
+			if strings.Contains(container.Image, image) {
+
+				var containerTarget = request.Target.Clone()
+				containerTarget.Name = strings.Split(container.Names, ",")[0]
+				_, err = s.stopContainer(context, &DockerContainerStopRequest{
+					Target: containerTarget,
+				})
+				if err != nil {
+					return nil, err
+				}
+				response.StoppedImages = append(response.StoppedImages, container.Image)
+			}
+		}
+	}
+	return response, nil
+}
+
 
 /**
 	https://docs.docker.com/compose/reference/run/

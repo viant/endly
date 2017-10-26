@@ -14,7 +14,7 @@ import (
 func getDockerService(manager endly.Manager) endly.Service {
 	context := manager.NewContext(toolbox.NewContext())
 	service := endly.NewDockerService()
-	service.Run(context, &endly.dockerSystemPathRequest{
+	service.Run(context, &endly.DockerSystemPathRequest{
 		SysPath: []string{"/usr/local/bin"},
 	})
 	return service
