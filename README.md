@@ -225,9 +225,6 @@ Sdk service sets active terminal session with requested sdk version.
 | docker | container-remove | remove specified docker container | [DockerContainerRemoveRequest](service_docker_container.go) | [CommandResponse](exec_command_response.go) | 
 
 
-TODO add stop (with names of running images to stop in one go)
-
-
 <a name="Buildservices"></a>
 ## Build and deployment services
 
