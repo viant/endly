@@ -38,8 +38,14 @@ that expected output has been produced.
 <a name="Installation"></a>
 ## Installation
 
+```text
+#optionally set GOPATH directory
 export GOPATH=/Projects/go
+
 go get -u github.com/viant/endly
+
+
+```
 
 
 <a name="Introduction"></a>
