@@ -49,3 +49,30 @@ type Workflow struct {
 func (w *Workflow) Validate() error {
 	return nil
 }
+
+//Workflows  represents workflows
+type Workflows []*Workflow
+
+//Push adds a workflow to the workflow stack.
+func (w *Workflows) Push(workflow *Workflow) {
+	*w = append(*w, workflow)
+}
+
+//Pop removes the first workflow from the workflow stack.
+func (w *Workflows) Pop() *Workflow {
+	var result = (*w)[len(*w)-1]
+	(*w) = (*w)[0 : len(*w)-1]
+	return result
+}
+
+//Last returns the last workflow from the workflow stack.
+func (w *Workflows) Last() *Workflow {
+	if w == nil {
+		return nil
+	}
+	var workflowCount = len(*w)
+	if workflowCount == 0 {
+		return nil
+	}
+	return (*w)[workflowCount-1]
+}

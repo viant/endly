@@ -28,16 +28,12 @@ type Service interface {
 	Mutex() *sync.RWMutex
 }
 
-
-
 //ServiceResponse service response
 type ServiceResponse struct {
 	Status   string
 	Error    string
 	Response interface{}
 }
-
-
 
 //AbstractService represenst an abstract service.
 type AbstractService struct {
@@ -58,11 +54,14 @@ func Pairs(params ...interface{}) map[string]interface{} {
 }
 
 //AddEvent add event
-func (s *AbstractService) AddEvent(context *Context, eventType string, value map[string]interface{}, level ...int) *Event {
+func (s *AbstractService) AddEvent(context *Context, eventType interface{}, value map[string]interface{}, level ...int) *Event {
 	if len(level) == 0 {
 		level = []int{Info}
 	}
-	var workflow = context.CurrentWorkflow()
+	if !toolbox.IsString(eventType) {
+		eventType = getSimpleTypeName(eventType)
+	}
+	var workflow = context.Workflows.Last()
 	var workflowName = ""
 	if workflow != nil {
 		workflowName = workflow.Name
@@ -81,7 +80,7 @@ func (s *AbstractService) AddEvent(context *Context, eventType string, value map
 		Workflow:  workflowName,
 		Task:      task,
 		Activity:  activity,
-		Type:      eventType,
+		Type:      toolbox.AsString(eventType),
 		Level:     level[0],
 		Value:     value,
 	}
@@ -101,14 +100,19 @@ func (s *AbstractService) Begin(context *Context, source interface{}, value map[
 	if len(level) == 0 {
 		level = []int{Debug}
 	}
+	simpleTypeName := getSimpleTypeName(source)
+	var eventType = fmt.Sprintf("%v.Start", simpleTypeName)
+	event := s.AddEvent(context, eventType, value, level...)
+	return event
+}
+
+func getSimpleTypeName(source interface{}) string {
 	var simpleTypeName = toolbox.DereferenceType(source).Name()
 	lastDotPosition := strings.LastIndex(simpleTypeName, ".")
 	if lastDotPosition != -1 {
 		simpleTypeName = string(simpleTypeName[lastDotPosition:])
 	}
-	var eventType = fmt.Sprintf("%v.Start", simpleTypeName)
-	event := s.AddEvent(context, eventType, value, level...)
-	return event
+	return simpleTypeName
 }
 
 //End adds finishing event.

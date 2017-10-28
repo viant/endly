@@ -8,7 +8,7 @@ import (
 //DsUnitExpectRequest represent verification request.
 type DsUnitExpectRequest struct {
 	Datasets *dsunit.DatasetResource
-	//table to table rows data
+	//Table to Table Rows data
 	Data        map[string][]map[string]interface{}
 	Expand      bool
 	CheckPolicy int

@@ -31,8 +31,10 @@ func (s *validatorService) Run(context *Context, request interface{}) *ServiceRe
 	return response
 }
 
-func (s *validatorService) Assert(context *Context, request *ValidatorAssertRequest) (*AssertionInfo, error) {
-	var response = &AssertionInfo{}
+func (s *validatorService) Assert(context *Context, request *ValidatorAssertRequest) (*ValidationInfo, error) {
+	var response = &ValidationInfo{
+		Name: request.Name,
+	}
 	var state = context.State()
 	var actual = request.Actual
 	var expected = request.Expected

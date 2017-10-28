@@ -495,8 +495,6 @@ Example of run json
   },
 
   "Filter": {
-    "Workflow":true,
-    "UseCase":true,
     "SQLScript":true,
     "PopulateDatastore":true,
     "Sequence": true,

@@ -15,7 +15,7 @@ type Validator struct {
 
 //Check checks expected vs actual value, and returns true if all assertion passes.
 func (s *Validator) Check(expected, actual interface{}) (bool, error) {
-	var response = &AssertionInfo{}
+	var response = &ValidationInfo{}
 	err := s.Assert(expected, actual, response, "")
 	if err != nil {
 		return false, err
@@ -24,7 +24,7 @@ func (s *Validator) Check(expected, actual interface{}) (bool, error) {
 }
 
 //Assert check if actual matches expected value, in any case it update assert info with provided validation path.
-func (s *Validator) Assert(expected, actual interface{}, assertionInfo *AssertionInfo, path string) error {
+func (s *Validator) Assert(expected, actual interface{}, assertionInfo *ValidationInfo, path string) error {
 	if toolbox.IsValueOfKind(actual, reflect.Slice) {
 		if toolbox.IsValueOfKind(expected, reflect.Map) { //convert actual slice to map using expected indexBy directive
 			expectedMap := toolbox.AsMap(expected)
@@ -43,7 +43,7 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Assertio
 		}
 
 		if !toolbox.IsValueOfKind(expected, reflect.Slice) {
-			assertionInfo.AddFailure(fmt.Sprintf("Incompatbile types, expected %T but had %v", expected, actual))
+			assertionInfo.AddFailure(NewFailedTest(path, fmt.Sprintf("Incompatbile types, expected %T but had %v", expected, actual), expected, actual))
 			return nil
 		}
 
@@ -56,7 +56,7 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Assertio
 	}
 	if toolbox.IsValueOfKind(actual, reflect.Map) {
 		if !toolbox.IsValueOfKind(expected, reflect.Map) {
-			assertionInfo.AddFailure(fmt.Sprintf("Incompatbile types, expected %T but had %v", expected, actual))
+			assertionInfo.AddFailure(NewFailedTest(path, fmt.Sprintf("Incompatbile types, expected %T but had %v", expected, actual), expected, actual))
 			return nil
 		}
 		err := s.assertMap(toolbox.AsMap(expected), toolbox.AsMap(actual), assertionInfo, path)
@@ -71,7 +71,7 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Assertio
 	return nil
 }
 
-func (s *Validator) assertText(expected, actual string, response *AssertionInfo, path string) error {
+func (s *Validator) assertText(expected, actual string, response *ValidationInfo, path string) error {
 	isRegExpr := strings.HasPrefix(expected, "~/") && strings.HasSuffix(expected, "/")
 	isContains := strings.HasPrefix(expected, "/") && strings.HasSuffix(expected, "/")
 
@@ -82,11 +82,11 @@ func (s *Validator) assertText(expected, actual string, response *AssertionInfo,
 			expected = string(expected[1:])
 		}
 		if expected != actual && !isReversed {
-			response.AddFailure(fmt.Sprintf("[%v]: actual(%T):  '%v' was not equal (%T) '%v'", path, actual, actual, expected, expected))
+			response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual(%T):  '%v' was not equal (%T) '%v'", actual, actual, expected, expected), expected, actual))
 			return nil
 		}
 		if expected == actual && isReversed {
-			response.AddFailure(fmt.Sprintf("[%v]: actual(%T):  '%v' was not equal (%T) '%v'", path, actual, actual, expected, expected))
+			response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual(%T):  '%v' was not equal (%T) '%v'", actual, actual, expected, expected), expected, actual))
 			return nil
 		}
 		response.TestPassed++
@@ -112,7 +112,7 @@ func (s *Validator) assertText(expected, actual string, response *AssertionInfo,
 					response.TestPassed++
 					return nil
 				}
-				response.AddFailure(fmt.Sprintf("[%v]: actual '%v' is not between'%v and %v'", path, actual, minExpected, maxExpected))
+				response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' is not between'%v and %v'", actual, minExpected, maxExpected), minExpected, actual))
 
 			} else if strings.Contains(expected, ",") {
 				var alternatives = strings.Split(expected, ",")
@@ -124,18 +124,18 @@ func (s *Validator) assertText(expected, actual string, response *AssertionInfo,
 					}
 				}
 				if !doesContain && !isReversed {
-					response.AddFailure(fmt.Sprintf("[%v]: actual '%v' does not contain: '%v'", path, actual, alternatives))
+					response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' does not contain: '%v'", actual, alternatives), alternatives, actual))
 				} else if isReversed && doesContain {
-					response.AddFailure(fmt.Sprintf("[%v]: actual '%v' shold not contain: '%v'", path, actual, alternatives))
+					response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' shold not contain: '%v'", actual, alternatives), alternatives, actual))
 				}
 				response.TestPassed++
 			}
 		}
 		var doesContain = strings.Contains(actual, expected)
 		if !doesContain && !isReversed {
-			response.AddFailure(fmt.Sprintf("[%v]: actual '%v' does not contain: '%v'", path, actual, expected))
+			response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' does not contain: '%v'", actual, expected), actual, expected))
 		} else if isReversed && doesContain {
-			response.AddFailure(fmt.Sprintf("[%v]: actual '%v' shold not contain: '%v'", path, actual, expected))
+			response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' shold not contain: '%v'", actual, expected), actual, expected))
 		}
 		response.TestPassed++
 		return nil
@@ -154,20 +154,20 @@ func (s *Validator) assertText(expected, actual string, response *AssertionInfo,
 	pattern += expected
 	compiled, err := regexp.Compile(pattern)
 	if err != nil {
-		return fmt.Errorf("[%v]: failed to validate '%v' and '%v' due to %v", path, expected, actual, pattern, err)
+		return fmt.Errorf("failed to validate '%v' and '%v' due to %v", expected, actual, pattern, err)
 	}
 	var matches = compiled.Match(([]byte)(actual))
 
 	if !matches && !isReversed {
-		response.AddFailure(fmt.Sprintf("[%v]: actual: '%v' was not matched %v", path, actual, expected))
+		response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual: '%v' was not matched %v", actual, expected), expected, actual))
 	} else if matches && isReversed {
-		response.AddFailure(fmt.Sprintf("[%v]: actual: '%v' should not be matched %v", path, actual, expected))
+		response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual: '%v' should not be matched %v", actual, expected), expected, actual))
 	}
 	response.TestPassed++
 	return nil
 }
 
-func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[string]interface{}, response *AssertionInfo, path string) error {
+func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[string]interface{}, response *ValidationInfo, path string) error {
 	for key, expected := range expectedMap {
 		if s.ExcludedFields[key] {
 			continue
@@ -175,7 +175,8 @@ func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[
 		keyPath := fmt.Sprintf("%v[%v]", path, key)
 		actual, ok := actualMap[key]
 		if !ok {
-			response.AddFailure(fmt.Sprintf("%v was missing", keyPath))
+			response.AddFailure(NewFailedTest(path, fmt.Sprintf("%v was missing", keyPath), expected, actual))
+
 			continue
 		}
 		if toolbox.AsString(expected) == "@exists@" {
@@ -183,7 +184,7 @@ func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[
 			continue
 		}
 		if toolbox.AsString(expected) == "@!exists@" {
-			response.AddFailure(fmt.Sprintf("'%v' should not exists but was present: %v", keyPath, actual))
+			response.AddFailure(NewFailedTest(path, fmt.Sprintf("'%v' should not exists but was present: %v", keyPath, actual), expected, actual))
 			continue
 		}
 
@@ -195,11 +196,11 @@ func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[
 	return nil
 }
 
-func (s *Validator) assertSlice(expectedSlice []interface{}, actualSlice []interface{}, response *AssertionInfo, path string) error {
+func (s *Validator) assertSlice(expectedSlice []interface{}, actualSlice []interface{}, response *ValidationInfo, path string) error {
 	for index, expected := range expectedSlice {
 		keyPath := fmt.Sprintf("%v[%v]", path, index)
 		if !(index < len(actualSlice)) {
-			response.AddFailure(fmt.Sprintf("[%v+] were missing, expected size: %v, actual size: %v", keyPath, len(expectedSlice), len(actualSlice)))
+			response.AddFailure(NewFailedTest(keyPath, fmt.Sprintf("[%v] were missing, expected size: %v, actual size: %v", len(expectedSlice), len(actualSlice)), len(expectedSlice), len(actualSlice)))
 			return nil
 		}
 		actual := actualSlice[index]

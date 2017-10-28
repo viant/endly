@@ -44,7 +44,7 @@ func TestNewTransferService(t *testing.T) {
 			serviceResponse, ok := response.Response.(*endly.TransferCopyResponse)
 			assert.True(t, ok)
 			assert.Equal(t, 1, len(serviceResponse.Transferred))
-			assert.Equal(t, "file:///tmp/transfered.json", serviceResponse.Transferred[0].Target)
+			assert.Equal(t, "file:///tmp/transfered.json", serviceResponse.Transferred[0].TargetURL)
 
 			reader, _, err := toolbox.OpenReaderFromURL("file:///tmp/transfered.json")
 			assert.Nil(t, err)
@@ -68,7 +68,7 @@ func TestNewTransferService(t *testing.T) {
 			serviceResponse, ok := response.Response.(*endly.TransferCopyResponse)
 			assert.True(t, ok)
 			assert.Equal(t, 1, len(serviceResponse.Transferred))
-			assert.Equal(t, "file:///tmp/transfered.json", serviceResponse.Transferred[0].Target)
+			assert.Equal(t, "file:///tmp/transfered.json", serviceResponse.Transferred[0].TargetURL)
 
 			reader, _, err := toolbox.OpenReaderFromURL("file:///tmp/transfered.json")
 			assert.Nil(t, err)

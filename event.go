@@ -3,6 +3,7 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/toolbox"
+	"reflect"
 	"sync"
 	"time"
 )
@@ -16,11 +17,17 @@ const (
 	Info
 	//Debug logging level
 	Debug
-	//ErrorEventType represents an error event type
-	ErrorEventType = "Error"
-	//SleepEventType repesents a sleep event type
-	SleepEventType = "Sleep"
 )
+
+//SleepEventType represents a sleep
+type SleepEventType struct {
+	SleepTimeMs int
+}
+
+//ErrorEventType represents a sleep
+type ErrorEventType struct {
+	Error string
+}
 
 //Events represents sychronized slice of Events
 type Events struct {
@@ -78,4 +85,30 @@ func (e *Event) ElapsedInfo() string {
 		return ""
 	}
 	return fmt.Sprintf("%v ms", e.TimeTakenMs)
+}
+
+func (e *Event) filterByType(candidate interface{}, expectedType reflect.Type) interface{} {
+	if reflect.TypeOf(candidate) == expectedType {
+		return candidate
+	}
+	switch casted := candidate.(type) {
+	case *ServiceResponse:
+		if casted.Response != nil {
+			result := e.filterByType(casted.Response, expectedType)
+			if result != nil {
+				return result
+			}
+		}
+	}
+	return nil
+}
+
+func (e *Event) get(expectedType reflect.Type) interface{} {
+	for _, value := range e.Value {
+		result := e.filterByType(value, expectedType)
+		if result != nil {
+			return result
+		}
+	}
+	return nil
 }

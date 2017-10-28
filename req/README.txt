@@ -1,0 +1,1 @@
+This directory stores workflow run request that can be used as reference in any workflow if the local req with the same name does not exist.
