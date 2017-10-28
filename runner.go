@@ -7,50 +7,121 @@ import (
 	"github.com/logrusorgru/aurora"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
+	"os/exec"
+	"reflect"
+	"strconv"
 	"strings"
 	"time"
 )
 
+const (
+	messageTypeAction = iota
+	messageTypeTagDescription
+	messageTypeError
+	messageTypeSuccess
+	messageTypeGeneric
+)
+
 var reportingEventSleep = 250 * time.Millisecond
 
-
-//EventTag represents a events group by the same  tag  and tagIndex (see Nearly for more details).
+//EventTag represents an event tag
 type EventTag struct {
-	Description string
-	Tag         string
-	subPath     string
-	Events      []*Event
-	PassedCount int
-	FailedCount int
+	Description    string
+	Workflow       string
+	Tag            string
+	TagIndex       string
+	subPath        string
+	Events         []*Event
+	ValidationInfo []*ValidationInfo
+	PassedCount    int
+	FailedCount    int
+}
+
+//Key returns key for this event tag build from workflow name, tag and tag index.
+func (e *EventTag) Key() string {
+	return fmt.Sprintf("%v%v%v", e.Workflow, e.Tag, e.TagIndex)
 }
 
 //AddEvent add provided event
-func (c *EventTag) AddEvent(event *Event) {
-	if len(c.Events) == 0 {
-		c.Events = make([]*Event, 0)
+func (e *EventTag) AddEvent(event *Event) {
+	if len(e.Events) == 0 {
+		e.Events = make([]*Event, 0)
 	}
-	c.Events = append(c.Events, event)
+	e.Events = append(e.Events, event)
+}
+
+var colors = map[string]func(arg interface{}) aurora.Value{
+	"red":     aurora.Red,
+	"green":   aurora.Green,
+	"blue":    aurora.Blue,
+	"bold":    aurora.Bold,
+	"brown":   aurora.Brown,
+	"gray":    aurora.Gray,
+	"cyan":    aurora.Cyan,
+	"magenta": aurora.Magenta,
+	"inverse": aurora.Inverse,
+}
+
+//ReportSummaryEvent represents event summary
+type ReportSummaryEvent struct {
+	ElapsedMs      int
+	TotalTagPassed int
+	TotalTagFailed int
+	Error          bool
 }
 
 //CliRunner represents command line runner
 type CliRunner struct {
 	manager    Manager
 	tags       []*EventTag
-	ErrorEvent *Event
+	indexedTag map[string]*EventTag
+	activities *Activities
+	eventTag   *EventTag
+	report     *ReportSummaryEvent
+	activity   *WorkflowServiceActivity
+
+	lines              int
+	lineRefreshCount   int
+	ErrorEvent         *Event
+	InputColor         string
+	OutputColor        string
+	PathColor          string
+	TagColor           string
+	InverseTag         bool
+	ServiceActionColor string
+	MessageTypeColor   map[int]string
+	SuccessColor       string
+	ErrorColor         string
 }
 
 //AddTag adds reporting tag
-func (r *CliRunner) AddTag(useCases *EventTag) {
-	r.tags = append(r.tags, useCases)
+func (r *CliRunner) AddTag(eventTag *EventTag) {
+	r.tags = append(r.tags, eventTag)
+	r.indexedTag[eventTag.Key()] = eventTag
 }
 
 //EventTag returns an event tag
 func (r *CliRunner) EventTag() *EventTag {
-	if len(r.tags) == 0 {
-		useCase := &EventTag{}
-		r.AddTag(useCase)
+	if len(*r.activities) == 0 {
+		if r.eventTag == nil {
+			r.eventTag = &EventTag{}
+			r.tags = append(r.tags, r.eventTag)
+		}
+		return r.eventTag
 	}
-	return r.tags[len(r.tags)-1]
+
+	activity := r.activities.Last()
+	var key = fmt.Sprintf("%v%v%v", activity.Workflow, activity.Tag, activity.TagIndex)
+	if _, has := r.indexedTag[key]; !has {
+		eventTag := &EventTag{
+			Workflow: activity.Workflow,
+			Tag:      activity.Tag,
+			TagIndex: activity.TagIndex,
+		}
+		r.AddTag(eventTag)
+	}
+
+	return r.indexedTag[key]
 }
 
 func (r *CliRunner) hasActiveSession(context *Context, sessionID string) bool {
@@ -64,535 +135,311 @@ func (r *CliRunner) hasActiveSession(context *Context, sessionID string) bool {
 	return state.Has(sessionID)
 }
 
-var reportDataLayout = toolbox.DateFormatToLayout("hh:mm:ss.SSS")
-
-func formatInput(tag, input string, event *Event) string {
-	sessionInfo := aurora.Gray(fmt.Sprintf("[%-17v]", tag)).Bold()
-	stdin := aurora.Blue(fmt.Sprintf(" %v", input))
-	return fmt.Sprintf("%v%v", sessionInfo, stdin)
+func (r *CliRunner) printInput(output string) {
+	fmt.Printf("%v\n", colorText(output, r.InputColor))
 }
 
-func formatOutput(tag, input string, event *Event) string {
-	sessionInfo := aurora.Gray(fmt.Sprintf("[%-18v]", tag)).Bold()
-	stdin := aurora.Green(fmt.Sprintf(" %v", input))
-	return fmt.Sprintf("%v%v", sessionInfo, stdin)
+func (r *CliRunner) printOutput(output string) {
+	fmt.Printf("%v\n", colorText(output, r.OutputColor))
 }
 
-var targetedLineLength = 80
-var tagLength = 16
-var tagFormat = "[%-" + toolbox.AsString(tagLength) + "v"
-
-func formatStageEvent(name, stage, argument string, event *Event) string {
-	eventType := aurora.Brown(fmt.Sprintf(tagFormat, name))
-	stageInfo := aurora.Gray(fmt.Sprintf(" %15v", stage))
-	argumentInfo := aurora.Brown(fmt.Sprintf("%40v]", argument))
-	return fmt.Sprintf("%v%v%v", eventType, stageInfo, argumentInfo)
+func (r *CliRunner) printShortMessage(messageType int, message string, messageInfoType int, messageInfo string) {
+	fmt.Printf("%v\n", r.formatShortMessage(messageType, message, messageInfoType, messageInfo))
 }
 
-func formatError(error interface{}, event *Event) string {
-	errorTag := aurora.Red("[error]").Bold()
-	errorInfo := aurora.Red(fmt.Sprintf(" %v", error))
-	return fmt.Sprintf("%v%v", errorTag, errorInfo)
-}
-
-func printGenericColoredEvent(eventType, name, argument string, event *Event, nameLength, argumentLength int, nameColor, argumentColor func(arg interface{}) aurora.Value) {
-	eventType = fmt.Sprintf(tagFormat, eventType)
-	formattedEventType := aurora.Brown(eventType)
-	name = fmt.Sprintf("%"+toolbox.AsString(nameLength)+"v", name)
-	argument = fmt.Sprintf("%"+toolbox.AsString(argumentLength)+"v]", argument)
-	if len(eventType)+len(argument)+len(name) > targetedLineLength {
-		var overflow = (len(eventType) + len(argument) + len(name)) - targetedLineLength + 1
-		name = strings.Replace(name, " ", "", overflow)
-	}
-	nameInfo := nameColor(name)
-	argumentInfo := argumentColor(argument)
-	fmt.Printf("%v%v%v\n", formattedEventType, nameInfo, argumentInfo)
-}
-func printGenericEvent(eventType, name, argument string, event *Event, nameLength, argumentLength int) {
-	printGenericColoredEvent(eventType, name, argument, event, nameLength, argumentLength, aurora.Brown, aurora.Bold)
-}
-
-func formatStartEvent(name, argument string, event *Event) string {
-	var stage = fmt.Sprintf("started:%v", event.Timestamp.Format(reportDataLayout))
-	return formatStageEvent(name, stage, argument, event)
-}
-
-func formatEndEvent(name, argument string, event *Event) string {
-	var elapsed = fmt.Sprintf("%9.3f ", float64(event.TimeTakenMs)/1000)
-	var stage = fmt.Sprintf("elapsed:%vs.", elapsed)
-	return formatStageEvent(name, stage, argument, event)
-}
-
-func (r *CliRunner) reportStdin(event *Event) {
-	if stdin, ok := event.Value["stdin"]; ok {
-		var session = event.Value["session"]
-		formattedText := formatInput(fmt.Sprintf("%-13v%7v", session, "stdin"), toolbox.AsString(stdin), event)
-		fmt.Printf("%v\n", formattedText)
-	}
-}
-
-func (r *CliRunner) reportStdout(event *Event) {
-	if stdout, ok := event.Value["stdout"]; ok {
-		var session = event.Value["session"]
-		formattedText := formatInput(fmt.Sprintf("%-13v%7v", session, "stdout"), toolbox.AsString(stdout), event)
-		fmt.Printf("%v\n", formattedText)
-	}
-}
-
-func (r *CliRunner) reportError(event *Event) {
-	if error, ok := event.Value["error"]; ok {
-		formattedText := formatError(error, event)
-		fmt.Printf("%v\n", formattedText)
-	}
-}
-
-func (r *CliRunner) reportWorkflowStart(event *Event) {
-	if request, ok := event.Value["request"]; ok {
-		if runRequest, ok := request.(*WorkflowRunRequest); ok {
-			var task = "*"
-			if runRequest.Tasks != "" {
-				task = runRequest.Tasks
-				if len(task) > 100 {
-					task = string(task[:100])
-				}
+func (r *CliRunner) reportEvenType(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) {
+	switch casted := serviceResponse.(type) {
+	case *ServiceResponse:
+		if casted.Response != nil {
+			r.reportEvenType(casted.Response, event, filter)
+		}
+	case *ValidationInfo:
+		r.reportValidationInfo(casted, event)
+	case *HTTPRequest:
+		if filter.HTTPTrip {
+			r.reportHTTPRequest(casted)
+		}
+	case *HTTPResponse:
+		if filter.HTTPTrip {
+			r.reportHTTPResponse(casted)
+		}
+	case *DeploymentDeployRequest:
+		if filter.Deployment {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("app: %v, sdk: %v%v, forced: %v", casted.AppName, casted.Sdk, casted.SdkVersion, casted.Force), messageTypeGeneric, "deploy")
+		}
+	case *DsUnitRegisterRequest:
+		if filter.RegisterDatastore {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("Datastore: %v, %v:%v", casted.Datastore, casted.Config.DriverName, casted.Config.Descriptor), messageTypeGeneric, "register")
+		}
+	case *DsUnitMappingRequest:
+		if filter.DataMapping {
+			for _, mapping := range casted.Mappings {
+				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v: %v", mapping.Name, mapping.URL), messageTypeGeneric, "mapping")
 			}
-			var formattedText = formatStartEvent("Workflow", fmt.Sprintf("%v:%v", runRequest.Name, task), event)
-			fmt.Printf("%v\n", formattedText)
 		}
-	}
-}
 
-func (r *CliRunner) reportWorkflowEnd(event *Event) {
-	startEvent := event.StartEvent
-	if request, ok := startEvent.Value["request"]; ok {
-		if runRequest, ok := request.(*WorkflowRunRequest); ok {
-			var formattedText = formatEndEvent("Workflow", runRequest.Name, event)
-			fmt.Printf("%v\n", formattedText)
+	case *DsUnitTableSequenceResponse:
+		if filter.Sequence {
+			for k, v := range casted.Sequences {
+				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v: %v", k, v), messageTypeGeneric, "sequence")
+			}
 		}
-	}
-}
-
-func (r *CliRunner) reportTaskStart(event *Event) {
-	if taskName, ok := event.Value["Id"]; ok {
-		var formattedText = formatStartEvent("Workflow Task", toolbox.AsString(taskName), event)
-		fmt.Printf("%v\n", formattedText)
-	}
-}
-
-func (r *CliRunner) reportTaskEnd(event *Event) {
-	startEvent := event.StartEvent
-	if taskName, ok := startEvent.Value["Id"]; ok {
-		var formattedText = formatEndEvent("Workflow Task", toolbox.AsString(taskName), event)
-		fmt.Printf("%v\n", formattedText)
-	}
-}
-
-func (r *CliRunner) reportWorkflowActionStart(event *Event) {
-	if action, ok := event.Value["action"]; ok {
-		service := event.Value["service"]
-		var formattedText = formatStartEvent("Workflow Action", fmt.Sprintf("%v.%v", service, action), event)
-		fmt.Printf("%v\n", formattedText)
-	}
-}
-
-func (r *CliRunner) reportWorkflowActionEnd(event *Event) {
-	startEvent := event.StartEvent
-	if action, ok := startEvent.Value["action"]; ok {
-		service := startEvent.Value["service"]
-		var formattedText = formatEndEvent("Workflow Action", fmt.Sprintf("%v.%v", service, action), event)
-		fmt.Printf("%v\n", formattedText)
-	}
-}
-
-func (r *CliRunner) reportTransfer(event *Event) {
-	expand, _ := event.Value["expand"]
-	var expandInfo = fmt.Sprintf("expand:%v", expand)
-	var formattedEvent = formatStartEvent("Copy", expandInfo, event)
-	fmt.Printf("%v\n", formattedEvent)
-
-	formattedSource := formatInput("SourceURL", toolbox.AsString(event.Value["source"]), event)
-	fmt.Printf("%v\n", formattedSource)
-
-	formattedTarget := formatOutput("TargetURL", toolbox.AsString(event.Value["target"]), event)
-	fmt.Printf("%v\n", formattedTarget)
-}
-
-func (r *CliRunner) reportDeploymentStart(event *Event) {
-	if request, ok := event.Value["request"]; ok {
-
-		if deploymentRequest, ok := request.(*DeploymentDeployRequest); ok {
-			var formattedText = formatStartEvent(fmt.Sprintf("Deploy %v", deploymentRequest.AppName), fmt.Sprintf("sdk:%v:%v, force:%v", deploymentRequest.Sdk, deploymentRequest.SdkVersion, deploymentRequest.Force), event)
-			fmt.Printf("%v\n", formattedText)
+	case *PopulateDatastoreEvent:
+		if filter.PopulateDatastore {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v: %v", casted.Datastore, casted.Table, casted.Rows), messageTypeGeneric, "populate")
 		}
-	}
-}
-
-func (r *CliRunner) reportDeploymentEnd(event *Event) {
-	var startEvent = event.StartEvent
-	if request, ok := startEvent.Value["request"]; ok {
-		if deploymentRequest, ok := request.(*DeploymentDeployRequest); ok {
-			var formattedText = formatEndEvent(fmt.Sprintf("Deploy %v", deploymentRequest.AppName), fmt.Sprintf("sdk:%v:%v, force:%v", deploymentRequest.Sdk, deploymentRequest.SdkVersion, deploymentRequest.Force), event)
-			fmt.Printf("%v\n", formattedText)
+	case *RunSQLScriptEvent:
+		if filter.SQLScript {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v", casted.Datastore, casted.URL), messageTypeGeneric, "sql")
 		}
-	}
-}
 
-func (r *CliRunner) reportDsUnitRegister(event *Event) {
-	if value, ok := event.Value["request"]; ok {
-		if request, ok := value.(*DsUnitRegisterRequest); ok {
-			printGenericEvent(fmt.Sprintf("Datastore %v", request.Datastore), "", fmt.Sprintf("%v:%v", request.Config.DriverName, request.Config.Descriptor), event, 1, 59)
+	case *ErrorEventType:
+		r.report.Error = true
+		r.printShortMessage(messageTypeError, fmt.Sprintf("%v", casted.Error), messageTypeError, "error")
+	case *SleepEventType:
+		r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v ms", casted.SleepTimeMs), messageTypeGeneric, "sleep")
+	case *VcCheckoutRequest:
+		if filter.Checkout {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", casted.Origin.URL, casted.Target.URL), messageTypeGeneric, "checkout")
+		}
+
+	case *BuildRequest:
+		if filter.Build {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", casted.BuildSpec.Name, casted.Target.URL), messageTypeGeneric, "build")
+		}
+
+	case *ExecutionStartEvent:
+		if filter.Stdin {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", casted.SessionID), messageTypeGeneric, "stdin")
+			r.printInput(casted.Stdin)
+		}
+	case *ExecutionEndEvent:
+		if filter.Stdout {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", casted.SessionID), messageTypeGeneric, "stdout")
+			r.printOutput(casted.Stdout)
 
 		}
+	case *CopyEventType:
+		if filter.Transfer {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("expand: %v", casted.Expand), messageTypeGeneric, "copy")
+			r.printInput(fmt.Sprintf("SourceURL: %v", casted.SourceURL))
+			r.printOutput(fmt.Sprintf("TargetURL: %v", casted.TargetURL))
+
+		}
+	case *WorkflowServiceActivity:
+		r.activities.Push(casted)
+		r.activity = casted
+		if casted.TagDescription != "" {
+			r.printShortMessage(messageTypeTagDescription, casted.TagDescription, messageTypeTagDescription, "")
+			eventTag := r.EventTag()
+			eventTag.Description = casted.TagDescription
+		}
+		var serviceAction = fmt.Sprintf("%v.%v", casted.Service, casted.Action)
+		r.printShortMessage(messageTypeAction, casted.Description, messageTypeAction, serviceAction)
+
+	case *LogValidatorAssertResponse:
+		r.reportLogValidationInfo(casted)
+
+	case *WorkflowServiceActivityEndEventType:
+		r.activity = r.activities.Pop()
+
+	case *ReportSummaryEvent:
+		r.reportSummaryEvent()
 	}
 }
 
-func (r *CliRunner) reportDsUnitMapping(event *Event) {
-	if value, ok := event.Value["request"]; ok {
-		if request, ok := value.(*DsUnitMappingRequest); ok {
-			for _, mapping := range request.Mappings {
-				printGenericEvent("Mapping", mapping.Name, mapping.URL, event, 10, 20)
+func (r *CliRunner) reportLogValidationInfo(response *LogValidatorAssertResponse) {
+	var passedCount, failedCount = 0, 0
+	for _, info := range response.ValidationInfo {
+		if info.HasFailure() {
+			failedCount++
+		} else if info.TestPassed > 0 {
+			passedCount++
+		}
+		if r.activity != nil {
+			var key = r.activity.Workflow + info.Tag + info.TagIndex
+			if eventTag, ok := r.indexedTag[key]; ok {
+				eventTag.AddEvent(&Event{Type: "LogValidation", Value: Pairs("value", info)})
 			}
 		}
 	}
+	var total = passedCount + failedCount
+	messageType := messageTypeSuccess
+	messageInfo := "OK"
+	var message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, response.Description)
+	if failedCount > 0 {
+		messageType = messageTypeError
+		message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, response.Description)
+		messageInfo = "FAILED"
+	}
+	r.printShortMessage(messageType, message, messageType, messageInfo)
 }
 
-func (r *CliRunner) reportDsUnitSequence(event *Event) {
-	if value, ok := event.Value["response"]; ok {
-		if serviceResponse, ok := value.(*ServiceResponse); ok {
-			if response, ok := serviceResponse.Response.(*DsUnitTableSequenceResponse); ok {
-				for k, v := range response.Sequences {
-					printGenericEvent("Sequence", k, toolbox.AsString(v), event, 46, 15)
-				}
+func (r *CliRunner) extractHTTPTrips(eventCandidates []*Event) ([]*HTTPRequest, []*HTTPResponse) {
+	var requests = make([]*HTTPRequest, 0)
+	var responses = make([]*HTTPResponse, 0)
+	for _, event := range eventCandidates {
+		request := event.get(reflect.TypeOf(&HTTPRequest{}))
+		if request != nil {
+			if httpRequest, ok := request.(*HTTPRequest); ok {
+				requests = append(requests, httpRequest)
 			}
 		}
-	}
-}
-
-func (r *CliRunner) reportPopulateDatestore(event *Event) {
-	if datastore, ok := event.Value["datastore"]; ok {
-		printGenericEvent(fmt.Sprintf("Populate  %v", datastore), fmt.Sprintf("%v", event.Value["table"]), fmt.Sprintf("%v rows", event.Value["rows"]), event, 46, 15)
-
-	}
-}
-
-func (r *CliRunner) reportSQLScript(event *Event) {
-	if datastore, ok := event.Value["datastore"]; ok {
-		printGenericEvent(fmt.Sprintf("SQLScript %v", datastore), "", fmt.Sprintf("%v", event.Value["url"]), event, 1, 59)
-	}
-	//	s.AddEvent(context, "SQLScript", Pairs("datasore", request.Datastore, "url", script.URL), Info)
-}
-
-func (r *CliRunner) reportSleep(event *Event) {
-	if value, ok := event.Value["sleepTime"]; ok {
-		var formattedText = formatStartEvent("Sleep", fmt.Sprintf("%v ms", value), event)
-		fmt.Printf("%v\n", formattedText)
-	}
-}
-
-func (r *CliRunner) reportTag(event *Event, filter *RunnerReportingFilter) {
-	if valueTag, ok := event.Value["tag"]; ok {
-
-		var tagIndex = toolbox.AsString(event.Value["tagIndex"])
-		if tagIndex != "" {
-			valueTag = fmt.Sprintf("%v%v", valueTag, tagIndex)
-		}
-		//remove this use vcase from previous use case
-		previousTag := r.EventTag()
-		previousTag.Events = previousTag.Events[:len(previousTag.Events)-1]
-		tag := &EventTag{
-			Description: fmt.Sprintf(" %v", event.Value["description"]),
-			Tag:         fmt.Sprintf("%v", valueTag),
-			subPath:     fmt.Sprintf("%v ", event.Value["subPath"]),
-		}
-		tag.AddEvent(event)
-		r.AddTag(tag)
-		if filter.UseCase {
-			printGenericEvent(fmt.Sprintf("%v ", tag.Tag), tag.subPath, tag.Description, event, 10, 49)
-		}
-	}
-}
-
-func asJSONText(source interface{}) string {
-	if source == nil {
-		return ""
-	}
-	var buf = new(bytes.Buffer)
-	toolbox.NewJSONEncoderFactory().Create(buf).Encode(source)
-	return buf.String()
-}
-
-func (r *CliRunner) reportHTTPRequestStart(event *Event) {
-	if request, ok := event.Value["request"]; ok {
-		if httpRequest, ok := request.(*HTTPRequest); ok {
-			printGenericEvent("HTTPRequest ", httpRequest.Method, httpRequest.URL, event, 10, 49)
-			if len(httpRequest.Header) > 0 {
-				var formattedBody = formatInput("headers", asJSONText(httpRequest.Header), event)
-				fmt.Printf("%v\n", formattedBody)
+		response := event.get(reflect.TypeOf(&HTTPResponse{}))
+		if response != nil {
+			if httpResponse, ok := response.(*HTTPResponse); ok {
+				responses = append(responses, httpResponse)
 			}
-			var formattedBody = formatInput("body", httpRequest.Body, event)
-			fmt.Printf("%v\n", formattedBody)
-
-		}
-	}
-}
-
-func (r *CliRunner) reportHTTPRequestEnd(event *Event) {
-
-	if response, ok := event.Value["response"]; ok {
-		if httpResponse, ok := response.(*HTTPResponse); ok {
-
-			printGenericEvent("HTTPResponse ", fmt.Sprintf("%v", httpResponse.Code), "", event, 10, 49)
-			if len(httpResponse.Header) > 0 {
-				var formattedBody = formatOutput("headers", asJSONText(httpResponse.Header), event)
-				fmt.Printf("%v\n", formattedBody)
-			}
-			var formattedBody = formatOutput("body", httpResponse.Body, event)
-			fmt.Printf("%v\n", formattedBody)
-
-		}
-	}
-}
-
-func (r *CliRunner) reportValidatorStart(event *Event) {
-	return
-	if request, ok := event.Value["request"]; ok {
-		if assertRequest, ok := request.(*ValidatorAssertRequest); ok {
-			var expected = assertRequest.Expected
-			if toolbox.IsSlice(expected) || toolbox.IsMap(expected) {
-				expected = asJSONText(expected)
-				expected = strings.Trim(toolbox.AsString(expected), " \n")
-			}
-			var actual = assertRequest.Actual
-			if toolbox.IsSlice(actual) || toolbox.IsMap(actual) {
-				actual = asJSONText(actual)
-				actual = strings.Trim(toolbox.AsString(actual), " \n")
-			}
-			var formattedExpected = formatInput("Assert expected", fmt.Sprintf("%v", expected), event)
-			fmt.Printf("%v\n", formattedExpected)
-
-			var formattedActual = formatOutput("Assert actual", fmt.Sprintf("%v", actual), event)
-			fmt.Printf("%v\n", formattedActual)
 		}
 
 	}
 
+	return requests, responses
 }
 
-func (r *CliRunner) reportAssertionInfo(event *Event, filter *RunnerReportingFilter) {
-	useCase := r.EventTag()
-	if serviceResponse, ok := event.Value["response"]; ok {
-		if response, ok := serviceResponse.(*ServiceResponse); ok {
+func (r *CliRunner) reportFailureWithMatchSource(tag *EventTag, info *ValidationInfo, eventCandidates []*Event) {
+	var theFirstFailure = info.FailedTests[0]
+	var requests []*HTTPRequest
+	var responses []*HTTPResponse
 
-			if assertionInfo, ok := response.Response.(*AssertionInfo); ok {
-				useCase.PassedCount += assertionInfo.TestPassed
-				useCase.FailedCount += len(assertionInfo.TestFailed)
+	if theFirstFailure.PathIndex != -1 && (strings.Contains(theFirstFailure.Path, "Body") || strings.Contains(theFirstFailure.Path, "Code") || strings.Contains(theFirstFailure.Path, "Cookie") || strings.Contains(theFirstFailure.Path, "Header")) {
+		requests, responses = r.extractHTTPTrips(eventCandidates)
+		if theFirstFailure.PathIndex < len(requests) {
+			r.reportHTTPRequest(requests[theFirstFailure.PathIndex])
+		}
+		if theFirstFailure.PathIndex < len(responses) {
+			r.reportHTTPResponse(responses[theFirstFailure.PathIndex])
+		}
+	}
 
-				if filter.Assert {
-					printGenericColoredEvent("Assertion", "Passed", fmt.Sprintf("%v", assertionInfo.TestPassed), event, 20, 59, aurora.Green, aurora.Bold)
-					printGenericColoredEvent("Assertion", "Failed", fmt.Sprintf("%v", len(assertionInfo.TestFailed)), event, 20, 59, aurora.Red, aurora.Bold)
+	for _, failure := range info.FailedTests {
+		path := failure.Path
+		if failure.PathIndex != -1 {
+			path = fmt.Sprintf("%v:%v", failure.PathIndex, failure.Path)
+		}
+		r.printMessage(path, len(path), messageTypeError, failure.Message, messageTypeError, "Failed")
+		if theFirstFailure.PathIndex != failure.PathIndex {
+			break
+		}
+	}
+}
 
-					for _, failed := range assertionInfo.TestFailed {
-						printGenericColoredEvent("Failure", "", failed, event, 1, 69, aurora.Red, aurora.Gray)
+func (r *CliRunner) reportSummaryEvent() {
+	r.reportTagSummary()
+	contextMessage := "STATUS: "
+	var contextMessageColor = "green"
+	contextMessageStatus := "SUCCESS"
+	if r.report.Error || r.report.TotalTagFailed > 0 {
+		contextMessageColor = "red"
+		contextMessageStatus = "FAILED"
+	}
+	var contextMessageLength = len(contextMessage) + len(contextMessageStatus)
+	contextMessage = fmt.Sprintf("%v%v", contextMessage, colorText(contextMessageStatus, contextMessageColor))
+	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed+r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
+}
+
+func (r *CliRunner) reportTagSummary() {
+	for _, tag := range r.tags {
+		if tag.FailedCount > 0 {
+			var eventTag = fmt.Sprintf("%v%v", tag.Tag, tag.TagIndex)
+			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("Failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
+
+			var minRange = 0
+			for i, event := range tag.Events {
+				candidate := event.get(reflect.TypeOf(&ValidationInfo{}))
+				if info, ok := candidate.(*ValidationInfo); ok && info.HasFailure() {
+					var failureSourceEvent = []*Event{}
+					if i-minRange > 0 {
+						failureSourceEvent = tag.Events[minRange : i-1]
 					}
+					r.reportFailureWithMatchSource(tag, info, failureSourceEvent)
+					minRange = i + 1
 				}
 			}
 
 		}
-
 	}
 }
 
-func (r *CliRunner) reportBuild(event *Event, filter *RunnerReportingFilter) {
-	if serviceResponse, ok := event.Value["request"]; ok {
-		if buildRequest, ok := serviceResponse.(*BuildRequest); ok {
-			printGenericEvent("Build ", fmt.Sprintf("%v", buildRequest.BuildSpec.Name), buildRequest.Target.URL, event, 10, 51)
-		}
+func (r *CliRunner) reportHTTPResponse(response *HTTPResponse) {
+	r.printShortMessage(messageTypeGeneric, fmt.Sprintf("StatusCode: %v", response.Code), messageTypeGeneric, "HttpResponse")
+	if len(response.Header) > 0 {
+		r.printShortMessage(messageTypeGeneric, "Headers", messageTypeGeneric, "HttpResponse")
+		r.printOutput(asJSONText(response.Header))
 	}
-
+	r.printShortMessage(messageTypeGeneric, "Body", messageTypeGeneric, "HttpResponse")
+	r.printOutput(response.Body)
 }
 
-func (r *CliRunner) reportCheckout(event *Event, filter *RunnerReportingFilter) {
-	if serviceResponse, ok := event.Value["request"]; ok {
-		if checkoutRequest, ok := serviceResponse.(*VcCheckoutRequest); ok {
-			printGenericEvent("Checkout ", fmt.Sprintf("%v", checkoutRequest.Origin.URL), checkoutRequest.Target.URL, event, 30, 31)
-		}
+func (r *CliRunner) reportHTTPRequest(request *HTTPRequest) {
+	r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", request.Method, request.URL), messageTypeGeneric, "HttpRequest")
+	if len(request.Header) > 0 {
+		r.printShortMessage(messageTypeGeneric, "Headers", messageTypeGeneric, "HttpRequest")
+		r.printInput(asJSONText(request.Header))
 	}
+	if len(request.Cookies) > 0 {
+		r.printShortMessage(messageTypeGeneric, "Cookies", messageTypeGeneric, "HttpRequest")
+		r.printInput(asJSONText(request.Cookies))
+	}
+	r.printShortMessage(messageTypeGeneric, "Body", messageTypeGeneric, "HttpRequest")
+	r.printInput(request.Body)
+}
+
+func (r *CliRunner) reportValidationInfo(info *ValidationInfo, event *Event) {
+	var total = info.TestPassed + len(info.FailedTests)
+	var name = info.Name
+
+	var activity = r.activities.Last()
+	if activity != nil {
+		eventTag, ok := r.indexedTag[info.Tag+info.TagIndex]
+		if !ok {
+			eventTag = r.EventTag()
+		}
+		eventTag.FailedCount += len(info.FailedTests)
+		eventTag.PassedCount += info.TestPassed
+
+	}
+	messageType := messageTypeSuccess
+	messageInfo := "OK"
+	var message = fmt.Sprintf("Passed %v/%v %v", info.TestPassed, total, name)
+	if len(info.FailedTests) > 0 {
+		messageType = messageTypeError
+		message = fmt.Sprintf("Passed %v/%v %v", info.TestPassed, total, name)
+		messageInfo = "FAILED"
+	}
+	r.printShortMessage(messageType, message, messageType, messageInfo)
 }
 
 func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerReportingFilter) error {
-	useCase := r.EventTag()
-	useCase.AddEvent(event)
-
+	defer func() {
+		eventTag := r.EventTag()
+		eventTag.AddEvent(event)
+	}()
 	if event.Level > Debug {
 		return nil
 	}
-
-	if strings.HasPrefix(event.Type, "ManagedCommandRequest") {
-		return nil
-	}
-
-	switch event.Type {
-
-	case "WorkflowRunRequest.Start":
-		if !filter.Workflow {
-			return nil
-		}
-		r.reportWorkflowStart(event)
-	case "WorkflowRunRequest.End":
-		if !filter.Workflow {
-			return nil
-		}
-		r.reportWorkflowEnd(event)
-
-	case "ServiceAction.Start":
-		if !filter.Action {
-			return nil
-		}
-		r.reportWorkflowActionStart(event)
-	case "ServiceAction.End":
-		if !filter.Action {
-			return nil
-		}
-		r.reportWorkflowActionEnd(event)
-	case "WorkflowTask.Start":
-		if !filter.Task {
-			return nil
-		}
-		r.reportTaskStart(event)
-	case "WorkflowTask.End":
-		if !filter.Task {
-			return nil
-		}
-		r.reportTaskEnd(event)
-
-	case "Execution.Start":
-		if !filter.Stdin {
-			return nil
-		}
-		r.reportStdin(event)
-	case "Execution.End":
-		if !filter.Stdout {
-			return nil
-		}
-		r.reportStdout(event)
-
-	case "Transfer.Start":
-		if !filter.Transfer {
-			return nil
-		}
-		r.reportTransfer(event)
-	case "Transfer.End":
-
-	case "DeploymentDeployRequest.Start":
-		if !filter.Deployment {
-			return nil
-		}
-		r.reportDeploymentStart(event)
-
-	case "DeploymentDeployRequest.End":
-		if !filter.Deployment {
-			return nil
-		}
-		r.reportDeploymentEnd(event)
-
-	case "DsUnitRegisterRequest.Start":
-		if !filter.RegisterDatastore {
-			return nil
-		}
-		r.reportDsUnitRegister(event)
-	case "DsUnitMappingRequest.Start":
-		if !filter.DataMapping {
-			return nil
-		}
-		r.reportDsUnitMapping(event)
-	case "DsUnitTableSequenceRequest.End":
-		if !filter.Sequence {
-			return nil
-		}
-		r.reportDsUnitSequence(event)
-	case "PopulateDatastore":
-		r.reportPopulateDatestore(event)
-		if !filter.PopulateDatastore {
-			return nil
-		}
-
-	case "SQLScript":
-		if !filter.SQLScript {
-			return nil
-		}
-		r.reportSQLScript(event)
-
-	case "Tag":
-		r.reportTag(event, filter)
-	case "HTTPRequest.Start":
-		if !filter.HTTPTrip {
-			return nil
-		}
-		r.reportHTTPRequestStart(event)
-
-	case "HTTPRequest.End":
-		if !filter.HTTPTrip {
-			return nil
-		}
-		r.reportHTTPRequestEnd(event)
-
-	case "Error":
-		r.reportError(event)
-		r.ErrorEvent = event
-	case "Sleep":
-		r.reportSleep(event)
-	case "ValidatorAssertRequest.Start":
-		if !filter.Assert {
-			return nil
-		}
-		r.reportValidatorStart(event)
-	case "ValidatorAssertRequest.End", "LogValidatorAssertRequest.End":
-		r.reportAssertionInfo(event, filter)
-
-	case "VcCheckoutRequest.Start":
-		r.reportCheckout(event, filter)
-	case "BuildRequest.Start":
-		r.reportBuild(event, filter)
-
-	case "ManagedCommandRequest.Start", "ManagedCommandRequest.End",
-		"DaemonStatusRequest.Start", "DaemonStatusRequest.End",
-		"DockerRunRequest.Start", "DockerRunRequest.End",
-		"SystemSdkSetRequest.Start", "SystemSdkSetRequest.End",
-		"TransferCopyRequest.Start", "TransferCopyRequest.End",
-		"OpenSessionRequest.Start", "OpenSessionRequest.End",
-		"CloseSessionRequest.Start", "CloseSessionRequest.End",
-		"DsUnitRegisterRequest.End",
-		"VcCheckoutRequest.End",
-		"CommandRequest.Start", "CommandRequest.End",
-		"DsUnitMappingRequest.End",
-		"DsUnitPrepareRequest.Start",
-		"DsUnitPrepareRequest.End",
-		"DsUnitTableSequenceRequest.Start",
-		"SendHTTPRequest.Start", "SendHTTPRequest.End",
-		"Nop.Start", "Nop.End",
-		"ProcessStopRequest.Start", "ProcessStopRequest.End",
-		"Workflow.Init", "Workflow.Post",
-		"Task.Init", "Task.Post",
-		"Action.Init", "Action.Post",
-		"State.Init",
-		"Assert",
-		"LogValidatorAssertRequest.Start",
-		"EvalRunCriteria",
-		"LogValidatorListenRequest.Start",
-		"LogValidatorListenRequest.End",
-		"LogValidatorResetRequest.Start",
-		"LogValidatorResetRequest.End",
-		"Workflow.Loaded",
-		"ProcessStatusRequest.Start", "ProcessStatusRequest.End":
-		//ignore
-
-	default:
-		fmt.Printf("[%v]%v\n", event.Type, event.Info())
-
-	}
-
+	r.processEvents(event, filter)
 	return nil
+}
 
+func (r *CliRunner) processEvents(event *Event, filter *RunnerReportingFilter) {
+	for _, value := range event.Value {
+		r.reportEvenType(value, event, filter)
+	}
+}
+
+func (r *CliRunner) getReportedEvents(context *Context, service Service, sessionID string) (*EventReporterResponse, error) {
+	response := service.Run(context, &EventReporterRequest{
+		SessionID: sessionID,
+	})
+	if response.Error != "" {
+		return nil, errors.New(response.Error)
+	}
+	reporterResponse, ok := response.Response.(*EventReporterResponse)
+	if !ok {
+		return nil, fmt.Errorf("Failed to check event - unexpected reponse type: %T", response.Response)
+	}
+	return reporterResponse, nil
 }
 
 func (r *CliRunner) reportEvents(context *Context, sessionID string, filter *RunnerReportingFilter) error {
@@ -601,25 +448,21 @@ func (r *CliRunner) reportEvents(context *Context, sessionID string, filter *Run
 		return err
 	}
 
+	r.report = &ReportSummaryEvent{}
+	defer r.reportEvent(context, &Event{Type: "ReportSummaryEvent", Value: Pairs("value", r.report)}, filter)
 	time.Sleep(time.Second)
 	var firstEvent *Event
 	var lastEvent *Event
 
 	if context.Workflow() != nil {
-		fmt.Printf("%v\n", aurora.Bold(fmt.Sprintf("[Started: %68v]", context.Workflow().Name)))
+		var workflow = context.Workflow().Name
+		var workflowLength = len(workflow)
+		r.printMessage(colorText(workflow, r.TagColor), workflowLength, messageTypeGeneric, fmt.Sprintf("%v", time.Now()), messageTypeGeneric, "started")
 	}
 	for {
-		response := service.Run(context, &EventReporterRequest{
-			SessionID: sessionID,
-		})
-
-		if response.Error != "" {
-			return errors.New(response.Error)
-		}
-
-		reporterResponse, ok := response.Response.(*EventReporterResponse)
-		if !ok {
-			return fmt.Errorf("Failed to check event - unexpected reponse type: %T", response.Response)
+		reporterResponse, err := r.getReportedEvents(context, service, sessionID)
+		if err != nil {
+			return err
 		}
 		if len(reporterResponse.Events) == 0 {
 			if !r.hasActiveSession(context, sessionID) {
@@ -632,8 +475,10 @@ func (r *CliRunner) reportEvents(context *Context, sessionID string, filter *Run
 		for _, event := range reporterResponse.Events {
 			if firstEvent == nil {
 				firstEvent = event
+			} else {
+				lastEvent = event
+				r.report.ElapsedMs = int(lastEvent.Timestamp.UnixNano()-firstEvent.Timestamp.UnixNano()) / int(time.Millisecond)
 			}
-			lastEvent = event
 			err = r.reportEvent(context, event, filter)
 			if err != nil {
 				return err
@@ -641,59 +486,17 @@ func (r *CliRunner) reportEvents(context *Context, sessionID string, filter *Run
 		}
 
 	}
-
-	var totalUseCaseFailed = 0
-	var totalUseCasePassed = 0
-	for _, useCase := range r.tags {
-		if useCase.FailedCount > 0 {
-			totalUseCaseFailed++
-		} else if useCase.PassedCount > 0 {
-			totalUseCasePassed++
-		}
-	}
-
-	if totalUseCaseFailed > 0 && filter.OnFailureFilter != nil {
-		for _, useCase := range r.tags {
-			if useCase.FailedCount > 0 {
-				for _, event := range useCase.Events {
-					err = r.reportEvent(context, event, filter.OnFailureFilter)
-					if err != nil {
-						return err
-					}
-				}
-				if filter.FirstUseCaseFailureOnly {
-					break
-				}
-
-			}
-		}
-	}
-
-	fmt.Printf("totalUseCasePassed: %v %v\n", totalUseCasePassed, totalUseCaseFailed)
-	if totalUseCasePassed > 0 || totalUseCaseFailed > 0 {
-		printGenericColoredEvent("Summary", "UseCases Passed", toolbox.AsString(totalUseCasePassed), nil, 20, 51, aurora.Green, aurora.Bold)
-		printGenericColoredEvent("Summary", "UseCases Failed", toolbox.AsString(totalUseCaseFailed), nil, 20, 51, aurora.Red, aurora.Bold)
-	}
-	r.reportSummary(firstEvent, lastEvent, totalUseCaseFailed)
+	r.processEventTags()
 	return nil
 }
 
-func (r *CliRunner) reportSummary(firstEvent *Event, lastEvent *Event, totalUseCaseFailed int) {
-	for _, useCase := range r.tags {
-		if useCase.FailedCount > 0 {
-			fmt.Printf("%v\n", aurora.Red(fmt.Sprintf("[%-6v %13v: %59v]", useCase.Tag, useCase.subPath, "Failed")))
+func (r *CliRunner) processEventTags() {
+	for _, eventTag := range r.tags {
+		if eventTag.FailedCount > 0 {
+			r.report.TotalTagFailed++
+		} else if eventTag.PassedCount > 0 {
+			r.report.TotalTagPassed++
 		}
-	}
-
-	if firstEvent != nil {
-		var timeTaken = lastEvent.Timestamp.UnixNano() - firstEvent.Timestamp.UnixNano()
-		var elapsed = fmt.Sprintf("%9.3f ", float64(timeTaken)/float64(time.Millisecond)/1000)
-		fmt.Printf("%v\n", aurora.Bold(fmt.Sprintf("[Elapsed: %70vs.]", elapsed)))
-	}
-	if totalUseCaseFailed > 0 || r.ErrorEvent != nil {
-		fmt.Printf("%v\n", aurora.Red(fmt.Sprintf("[Status: %73v]", "ERROR")))
-	} else {
-		fmt.Printf("%v\n", aurora.Green(fmt.Sprintf("[Status: %73v]", "SUCCESS")))
 	}
 }
 
@@ -728,10 +531,90 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	return r.reportEvents(context, workflowResponse.SessionID, runnerOption.Filter)
 }
 
+func colorText(text, color string) string {
+	if color, has := colors[color]; has {
+		return fmt.Sprintf("%v", color(text))
+	}
+	return text
+}
+
+func (r *CliRunner) columns() int {
+	output, err := exec.Command("tput", "cols").Output()
+	if err == nil {
+		r.lines, err = strconv.Atoi(strings.TrimSpace(string(output)))
+		if err != nil {
+			r.lines = 80
+		}
+	}
+	return r.lines
+}
+
+func (r *CliRunner) printMessage(contextMessage string, contextMessageLength int, messageType int, message string, messageInfoType int, messageInfo string) {
+	fmt.Printf("%v\n", r.formatMessage(contextMessage, contextMessageLength, messageType, message, messageInfoType, messageInfo))
+}
+
+func (r *CliRunner) formatMessage(contextMessage string, contextMessageLength int, messageType int, message string, messageInfoType int, messageInfo string) string {
+	var columns = r.columns() - 5
+	var infoLength = len(messageInfo)
+	var messageLength = columns - contextMessageLength - infoLength
+
+	if messageLength < len(message) {
+		if messageLength > 1 {
+			message = message[:messageLength]
+		} else {
+			message = "."
+		}
+	}
+	message = fmt.Sprintf("%-"+toolbox.AsString(messageLength)+"v", message)
+	messageInfo = fmt.Sprintf("%"+toolbox.AsString(infoLength)+"v", messageInfo)
+
+	if messageColor, ok := r.MessageTypeColor[messageType]; ok {
+		message = colorText(message, messageColor)
+	}
+
+	messageInfo = colorText(messageInfo, "bold")
+	if messageInfoColor, ok := r.MessageTypeColor[messageInfoType]; ok {
+		messageInfo = colorText(messageInfo, messageInfoColor)
+	}
+	return fmt.Sprintf("[%v %v %v]", contextMessage, message, messageInfo)
+}
+
+func (r *CliRunner) formatShortMessage(messageType int, message string, messageInfoType int, messageInfo string) string {
+	var fullPath = !(messageType == messageTypeTagDescription || messageInfoType == messageTypeAction)
+	var path, pathLength = "", 0
+	if len(*r.activities) > 0 {
+		path, pathLength = r.activities.GetPath(r, fullPath)
+	}
+	return r.formatMessage(path, pathLength, messageType, message, messageInfoType, messageInfo)
+}
+
 //NewCliRunner creates a new command line runner
 func NewCliRunner() *CliRunner {
+	var activities Activities = make([]*WorkflowServiceActivity, 0)
 	return &CliRunner{
-		manager: NewManager(),
-		tags:    make([]*EventTag, 0),
+		manager:            NewManager(),
+		tags:               make([]*EventTag, 0),
+		indexedTag:         make(map[string]*EventTag),
+		activities:         &activities,
+		InputColor:         "blue",
+		OutputColor:        "green",
+		PathColor:          "brown",
+		TagColor:           "brown",
+		InverseTag:         true,
+		ServiceActionColor: "gray",
+		MessageTypeColor: map[int]string{
+			messageTypeTagDescription: "cyan",
+			messageTypeError:          "red",
+			messageTypeSuccess:        "green",
+		},
 	}
+}
+
+func asJSONText(source interface{}) string {
+	if source == nil {
+		return ""
+	}
+	var buf = new(bytes.Buffer)
+	toolbox.NewJSONEncoderFactory().Create(buf).Encode(source)
+	return buf.String()
 }

@@ -6,9 +6,9 @@ import (
 
 //DockerStopImagesRequest represents docker stop running images request
 type DockerStopImagesRequest struct {
-	Target     *url.Resource
-	SysPath    []string
-	Images []string
+	Target  *url.Resource
+	SysPath []string
+	Images  []string
 }
 
 //DockerStopImagesResponse represents docker stop images response

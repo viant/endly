@@ -12,6 +12,19 @@ import (
 //SystemExecServiceID represent system executor service id
 const SystemExecServiceID = "exec"
 
+//ExecutionStartEvent represents an execution event start
+type ExecutionStartEvent struct {
+	SessionID string
+	Stdin     string
+}
+
+//ExecutionEndEvent represents an execution event end
+type ExecutionEndEvent struct {
+	SessionID string
+	Stdout    string
+	Error     string
+}
+
 type execService struct {
 	*AbstractService
 }
@@ -121,9 +134,17 @@ func (s *execService) changeDirectory(context *Context, session *SystemTerminalS
 
 func (s *execService) rumCommandTemplate(context *Context, session *SystemTerminalSession, commandTemplate string, arguments ...interface{}) error {
 	command := fmt.Sprintf(commandTemplate, arguments...)
-	startEvent := s.Begin(context, &Execution{}, Pairs("stdin", command, "session", session.ID), Info)
+	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
+	startEvent := s.Begin(context, executionStartEvent, Pairs("value", executionStartEvent), Info)
 	stdout, err := session.Run(command, 0)
-	s.End(context)(startEvent, Pairs("stdout", stdout, "session", session.ID))
+	var executionEndEvent = &ExecutionEndEvent{
+		SessionID: session.ID,
+		Stdout:    stdout,
+	}
+	s.End(context)(startEvent, Pairs("value", executionEndEvent))
+	if err != nil {
+		executionEndEvent.Error = fmt.Sprintf("%v", err)
+	}
 	if err != nil {
 		return err
 	}
@@ -176,10 +197,18 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 	if execution.Secure != "" {
 		cmd = strings.Replace(command, "****", execution.Secure, 1)
 	}
-	startEvent := s.Begin(context, execution, Pairs("stdin", command, "session", session.ID), Info)
-	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
-	s.End(context)(startEvent, Pairs("stdout", stdout, "session", session.ID))
 
+	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
+	startEvent := s.Begin(context, executionStartEvent, Pairs("value", executionStartEvent), Info)
+	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
+	var executionEndEvent = &ExecutionEndEvent{
+		SessionID: session.ID,
+		Stdout:    stdout,
+	}
+	if err != nil {
+		executionEndEvent.Error = fmt.Sprintf("%v", err)
+	}
+	s.End(context)(startEvent, Pairs("value", executionEndEvent))
 	commandInfo.Add(NewCommandLog(command, stdout, err))
 	if err != nil {
 		return err

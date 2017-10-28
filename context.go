@@ -28,40 +28,16 @@ type Context struct {
 	SessionID string
 	state     data.Map
 	toolbox.Context
-	Events        *Events
-	EventLogger   *EventLogger
-	workflowStack *[]*Workflow
-	cloned        []*Context
-	closed        int32
+	Events      *Events
+	EventLogger *EventLogger
+	Workflows   *Workflows
+	cloned      []*Context
+	closed      int32
 }
 
 //IsClosed returns true if it is closed.
 func (c *Context) IsClosed() bool {
 	return atomic.LoadInt32(&c.closed) == 1
-}
-
-//PushWorkflow adds a workflow to the workflow stack.
-func (c *Context) PushWorkflow(workflow *Workflow) {
-	*c.workflowStack = append(*c.workflowStack, workflow)
-}
-
-//ShiftWorkflow removes the first workflow from the workflow stack.
-func (c *Context) ShiftWorkflow() *Workflow {
-	var result = (*c.workflowStack)[0]
-	(*c.workflowStack) = (*c.workflowStack)[1:]
-	return result
-}
-
-//CurrentWorkflow returns the last workflow from the workflow stack.
-func (c *Context) CurrentWorkflow() *Workflow {
-	if c.workflowStack == nil {
-		return nil
-	}
-	var workflowCount = len(*c.workflowStack)
-	if workflowCount == 0 {
-		return nil
-	}
-	return (*c.workflowStack)[workflowCount-1]
 }
 
 func reportError(err error) error {
@@ -80,7 +56,7 @@ func (c *Context) Clone() *Context {
 	result.state = NewDefaultState()
 	result.state.Apply(c.state)
 	result.SessionID = c.SessionID
-	result.workflowStack = c.workflowStack
+	result.Workflows = c.Workflows
 	result.EventLogger = c.EventLogger
 	c.cloned = append(c.cloned, result)
 	return result

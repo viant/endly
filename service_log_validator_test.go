@@ -113,10 +113,10 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	})
 
 	assert.Equal(t, "", response.Error)
-	assertionInfo, ok := response.Response.(*endly.AssertionInfo)
+	assertionInfo, ok := response.Response.(*endly.ValidationInfo)
 	assert.True(t, ok)
 	assert.NotNil(t, assertionInfo)
-	assert.Equal(t, 0, len(assertionInfo.TestFailed))
+	assert.Equal(t, 0, len(assertionInfo.FailedTests))
 
 	response = service.Run(context, &endly.LogValidatorAssertRequest{
 		ExpectedLogRecords: []*endly.ExpectedLogRecord{
@@ -137,9 +137,9 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	})
 
 	assert.Equal(t, "", response.Error)
-	assertionInfo, ok = response.Response.(*endly.AssertionInfo)
+	assertionInfo, ok = response.Response.(*endly.ValidationInfo)
 	assert.True(t, ok)
 	assert.NotNil(t, assertionInfo)
-	assert.Equal(t, 0, len(assertionInfo.TestFailed))
+	assert.Equal(t, 0, len(assertionInfo.FailedTests))
 
 }

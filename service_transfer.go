@@ -12,6 +12,13 @@ import (
 //TransferServiceID represents transfer service id
 const TransferServiceID = "transfer"
 
+//CopyEventType represents CopyEventType
+type CopyEventType struct {
+	SourceURL string
+	TargetURL string
+	Expand    bool
+}
+
 type transferService struct {
 	*AbstractService
 }
@@ -65,7 +72,12 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 		if _, err := sourceService.StorageObject(source.URL); err != nil {
 			return nil, fmt.Errorf("Failed to copy: %v %v - Source does not exists", source.URL, target.URL)
 		}
-		startEvent := s.Begin(context, transfer, Pairs("source", source.URL, "target", target.URL, "expand", transfer.Expand || len(transfer.Replace) > 0), Info)
+		var copyEventType = &CopyEventType{
+			SourceURL: source.URL,
+			TargetURL: target.URL,
+			Expand:    transfer.Expand || len(transfer.Replace) > 0,
+		}
+		startEvent := s.Begin(context, copyEventType, Pairs("value", copyEventType), Info)
 		err = storage.Copy(sourceService, source.URL, targetService, target.URL, handler)
 		s.End(context)(startEvent, Pairs())
 		info := NewTransferLog(context, source.URL, target.URL, err, transfer.Expand)

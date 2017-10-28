@@ -24,7 +24,7 @@ func assertWithService(expected, actual interface{}) (int, error) {
 		return 0, errors.New(respone.Error)
 	}
 
-	validationResponse, ok := respone.Response.(*endly.AssertionInfo)
+	validationResponse, ok := respone.Response.(*endly.ValidationInfo)
 	if !ok {
 		return 0, nil
 	}

@@ -6,30 +6,56 @@ import (
 	"github.com/viant/toolbox"
 	"os"
 	"path"
-	"strings"
+	"reflect"
 )
 
 //EventLogger represent event logger to drop event details in the provied directory.
 type EventLogger struct {
-	directory string
-	subPath   string
-	tagCount  map[string]int
-	tagIndex  int
+	activities *Activities
+	directory  string
+
+	workflowTag      string
+	workflowTagCount int
+	subPath          string
+
+	tagCount map[string]int
+}
+
+func (l *EventLogger) processEvent(event *Event) {
+
+	var canidate = event.get(reflect.TypeOf(&WorkflowServiceActivity{}))
+	if canidate != nil {
+		activity, _ := canidate.(*WorkflowServiceActivity)
+		l.activities.Push(activity)
+		l.updateSubpath()
+	}
+	canidate = event.get(reflect.TypeOf(&WorkflowServiceActivityEndEventType{}))
+	if canidate != nil {
+		l.activities.Pop()
+		l.updateSubpath()
+	}
+}
+func (l *EventLogger) updateSubpath() {
+	if len(*l.activities) == 0 {
+		return
+	}
+	if l.workflowTag != l.activities.Last().WorkflowFormatTag() {
+		l.workflowTagCount++
+		l.workflowTag = l.activities.Last().WorkflowFormatTag()
+		l.subPath = fmt.Sprintf("%03d_%v", l.workflowTagCount, l.activities.Last().WorkflowFormatTag())
+	}
 }
 
 //Log logs an event
 func (l *EventLogger) Log(event *Event) error {
-	if event.Type == "Tag" {
-		l.tagIndex++
-		l.updateSubPath(event)
-	}
-
+	l.processEvent(event)
 	if _, has := l.tagCount[l.subPath]; !has {
 		l.tagCount[l.subPath] = 0
 	}
 	l.tagCount[l.subPath]++
 
 	var counter = l.tagCount[l.subPath]
+
 	filename := path.Join(l.directory, l.subPath, fmt.Sprintf("%04d_%v.json", counter, event.Type))
 	parent, _ := path.Split(filename)
 	if !toolbox.FileExists(parent) {
@@ -52,19 +78,13 @@ func (l *EventLogger) Log(event *Event) error {
 	return err
 }
 
-func (l *EventLogger) updateSubPath(event *Event) {
-	if tag, ok := event.Value["tag"]; ok {
-		var tagIndex = event.Value["tagIndex"]
-		tag = fmt.Sprintf("%v%v", tag, tagIndex)
-		l.subPath = strings.ToLower(fmt.Sprintf("%03d_%v_%v", l.tagIndex, event.Value["name"], tag))
-	}
-}
-
 //NewEventLogger creates a new event logger
 func NewEventLogger(directory string) *EventLogger {
+	var activities Activities = make([]*WorkflowServiceActivity, 0)
 	return &EventLogger{
-		directory: directory,
-		tagCount:  make(map[string]int),
-		subPath:   "000_main",
+		directory:  directory,
+		activities: &activities,
+		tagCount:   make(map[string]int),
+		subPath:    "000_main",
 	}
 }

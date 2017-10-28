@@ -14,6 +14,19 @@ import (
 //DataStoreUnitServiceID represents a data store unit service id
 const DataStoreUnitServiceID = "dsunit"
 
+//PopulateDatastoreEvent represents a populate Datastore event
+type PopulateDatastoreEvent struct {
+	Datastore string
+	Table     string
+	Rows      int
+}
+
+//RunSQLScriptEvent represents run script event
+type RunSQLScriptEvent struct {
+	Datastore string
+	URL       string
+}
+
 type dsataStoreUnitService struct {
 	*AbstractService
 	Manager dsunit.DatasetTestManager
@@ -66,7 +79,7 @@ func (s *dsataStoreUnitService) Run(context *Context, request interface{}) *Serv
 func (s *dsataStoreUnitService) getSequences(context *Context, request *DsUnitTableSequenceRequest) (*DsUnitTableSequenceResponse, error) {
 	manager := s.Manager.ManagerRegistry().Get(request.Datastore)
 	if manager == nil {
-		return nil, fmt.Errorf("Unknown datastore: %v", request.Datastore)
+		return nil, fmt.Errorf("Unknown Datastore: %v", request.Datastore)
 	}
 	var response = &DsUnitTableSequenceResponse{
 		Sequences: make(map[string]int),
@@ -167,9 +180,9 @@ func (s *dsataStoreUnitService) register(context *Context, request *DsUnitRegist
 
 	if len(request.Scripts) > 0 {
 		for _, script := range request.Scripts {
-			s.AddEvent(context, "SQLScript", Pairs("datastore", request.Datastore, "url", script.URL), Info)
+			var event = &RunSQLScriptEvent{Datastore: request.Datastore, URL: script.URL}
+			s.AddEvent(context, event, Pairs("value", event), Info)
 			result.Modified, err = s.runScript(context, request.Datastore, script)
-
 			if err != nil {
 				return nil, err
 			}
@@ -211,7 +224,8 @@ func (s *dsataStoreUnitService) prepare(context *Context, request *DsUnitPrepare
 	}
 
 	for _, data := range datasets.Datasets {
-		s.AddEvent(context, "PopulateDatastore", Pairs("datastore", request.Datastore, "table", data.Table, "rows", len(data.Rows)), Info)
+		var populateDatastoreEvent = &PopulateDatastoreEvent{Datastore: request.Datastore, Table: data.Table, Rows: len(data.Rows)}
+		s.AddEvent(context, populateDatastoreEvent, Pairs("value", populateDatastoreEvent), Info)
 	}
 
 	response.Added, response.Modified, response.Deleted, err = s.Manager.PrepareDatastore(datasets)
@@ -261,7 +275,7 @@ func (s *dsataStoreUnitService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
-//NewDataStoreUnitService creates a new datastore unit service
+//NewDataStoreUnitService creates a new Datastore unit service
 func NewDataStoreUnitService() Service {
 	var result = &dsataStoreUnitService{
 		AbstractService: NewAbstractService(DataStoreUnitServiceID),

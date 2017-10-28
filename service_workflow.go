@@ -21,12 +21,35 @@ const (
 
 //WorkflowServiceActivity represents workflow activity
 type WorkflowServiceActivity struct {
+	Workflow        string
 	Service         string
 	Action          string
+	Tag             string
+	TagIndex        string
+	Description     string
+	TagDescription  string
 	Error           string
-	Skipped         string
+	StartTime       time.Time
+	Ineligible      bool
 	ServiceRequest  interface{}
 	ServiceResponse interface{}
+}
+
+//WorkflowFormatTag returns a workflow format tag
+func (a *WorkflowServiceActivity) WorkflowFormatTag() string {
+	return fmt.Sprintf("%v%v%v", a.Workflow, a.Tag, a.TagIndex)
+}
+
+//FormatTag return a formatted tag
+func (a *WorkflowServiceActivity) FormatTag() string {
+	if a.TagIndex != "" {
+		return "[" + a.Tag + a.TagIndex + "]"
+	}
+	return "[" + a.Tag + "]"
+}
+
+//WorkflowServiceActivityEndEventType represents activity end event type.
+type WorkflowServiceActivityEndEventType struct {
 }
 
 type workflowService struct {
@@ -138,17 +161,27 @@ func (s *workflowService) loadWorkflowIfNeeded(context *Context, name string, UR
 func (s *workflowService) runAction(context *Context, action *ServiceAction) error {
 	var state = context.state
 	serviceActivity := &WorkflowServiceActivity{
-		Action:  action.Action,
-		Service: action.Service,
+		Workflow:       context.Workflows.Last().Name,
+		Action:         action.Action,
+		Service:        action.Service,
+		TagIndex:       action.TagIndex,
+		Description:    action.Description,
+		TagDescription: action.TagDescription,
+		Tag:            action.Tag,
+		ServiceRequest: action.Request,
+		StartTime:      time.Now(),
 	}
 	state.Put("activity", serviceActivity)
-
+	var responseMap = make(map[string]interface{})
+	serviceActivity.ServiceResponse = responseMap
+	startEvent := s.Begin(context, action, Pairs("activity", serviceActivity), Info)
+	defer s.End(context)(startEvent, Pairs("value", &WorkflowServiceActivityEndEventType{}, "response", responseMap))
 	canRun, err := s.evaluateRunCriteria(context, action.RunCriteria)
 	if err != nil {
 		return err
 	}
 	if !canRun {
-		serviceActivity.Skipped = fmt.Sprintf("Does not match run criteria: %v", context.Expand(action.RunCriteria))
+		serviceActivity.Ineligible = true
 		return nil
 	}
 
@@ -179,10 +212,6 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) err
 		return fmt.Errorf("Failed to create request %v on %v.%v, %v", requestMap, action.Service, action.Action, err)
 	}
 
-	var responseMap = make(map[string]interface{})
-	startEvent := s.Begin(context, action, Pairs("service", action.Service, "action", action.Action, "tag", action.Tag, "subPath", action.Subpath, "description", action.Description, "request", requestMap), Info)
-
-	defer s.End(context)(startEvent, Pairs("response", responseMap))
 	serviceResponse := service.Run(context, serviceRequest)
 	serviceActivity.ServiceResponse = serviceResponse
 
@@ -200,7 +229,8 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) err
 		return err
 	}
 	if action.SleepInMs > 0 {
-		s.AddEvent(context, SleepEventType, Pairs("sleepTime", action.SleepInMs), Info)
+		var sleepEventType = &SleepEventType{SleepTimeMs: action.SleepInMs}
+		s.AddEvent(context, sleepEventType, Pairs("value", sleepEventType), Info)
 		time.Sleep(time.Millisecond * time.Duration(action.SleepInMs))
 	}
 	return nil
@@ -229,25 +259,10 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 	}
 	startEvent := s.Begin(context, task, Pairs("Id", task.Name))
 	defer s.End(context)(startEvent, Pairs())
-
-	var tagWithIndex = ""
 	for i, action := range task.Actions {
 		if hasAllowedActions && !allowedServiceActions[i] {
 			continue
 		}
-
-		var tagWithIndexCandidate = action.Tag + action.TagIndex
-
-		if tagWithIndex != tagWithIndexCandidate {
-			var tagWithIndexCandidate = fmt.Sprintf("%v%v", action.Tag, action.TagIndex)
-			var subpath = action.Subpath
-			if subpath == "" {
-				subpath = tagWithIndexCandidate
-			}
-			s.AddEvent(context, "Tag", Pairs("Id", workflow.Name, "tagIndex", action.TagIndex, "tag", action.Tag, "description", action.TagDescription, "subPath", subpath), Info)
-			tagWithIndex = tagWithIndexCandidate
-		}
-
 		err = s.runAction(context, action)
 		if err != nil {
 			return fmt.Errorf("Failed to run action:%v %v", action.Tag, err)
@@ -273,8 +288,8 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 		return nil, err
 	}
 	s.AddEvent(upstreamContext, "Workflow.Loaded", Pairs("workflow", workflow))
-	upstreamContext.PushWorkflow(workflow)
-	defer upstreamContext.ShiftWorkflow()
+	upstreamContext.Workflows.Push(workflow)
+	defer upstreamContext.Workflows.Pop()
 
 	var response = &WorkflowRunResponse{
 		SessionID: upstreamContext.SessionID,
@@ -383,7 +398,8 @@ func (s *workflowService) isAsyncRequest(request interface{}) bool {
 
 func (s *workflowService) reportErrorIfNeeded(context *Context, response *ServiceResponse) {
 	if response.Error != "" {
-		s.AddEvent(context, ErrorEventType, Pairs("error", response.Error), Info)
+		var errorEventType = &ErrorEventType{Error: response.Error}
+		s.AddEvent(context, errorEventType, Pairs("value", errorEventType), Info)
 	}
 }
 
@@ -407,7 +423,8 @@ func (s *workflowService) Run(context *Context, request interface{}) *ServiceRes
 				}
 				_, err := s.runWorkflow(context, actualRequest)
 				if err != nil {
-					s.AddEvent(context, ErrorEventType, Pairs("error", err), Info)
+					var eventType = &ErrorEventType{Error: fmt.Sprintf("%v", err)}
+					s.AddEvent(context, eventType, Pairs("value", eventType), Info)
 				}
 				s.End(context)(startEvent, Pairs("response", response))
 			}()

@@ -147,7 +147,6 @@ func (s *dockerService) stopImages(context *Context, request *DockerStopImagesRe
 	return response, nil
 }
 
-
 /**
 	https://docs.docker.com/compose/reference/run/
 Options:

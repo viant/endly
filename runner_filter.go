@@ -1,24 +1,20 @@
 package endly
 
-
 //RunnerReportingFilter runner reporting fiter
 type RunnerReportingFilter struct {
 	Stdin                   bool //log stdin
 	Stdout                  bool //log stdout
 	Transfer                bool //log transfer
-	Task                    bool
-	UseCase                 bool
-	Action                  bool
 	Deployment              bool
-	SQLScript               bool
-	PopulateDatastore       bool
-	Sequence                bool
+	Checkout                bool
+	Build                   bool
 	RegisterDatastore       bool
+	SQLScript               bool
+	Sequence                bool
+	PopulateDatastore       bool
 	Assert                  bool
 	DataMapping             bool
 	HTTPTrip                bool
-	Workflow                bool
-	WorkflowParams          bool
 	OnFailureFilter         *RunnerReportingFilter
 	FirstUseCaseFailureOnly bool
 }

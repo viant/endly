@@ -241,8 +241,12 @@ func (s *logValidatorService) reset(context *Context, request *LogValidatorReset
 	return response, nil
 }
 
-func (s *logValidatorService) assert(context *Context, request *LogValidatorAssertRequest) (*AssertionInfo, error) {
-	var response = &AssertionInfo{}
+func (s *logValidatorService) assert(context *Context, request *LogValidatorAssertRequest) (*LogValidatorAssertResponse, error) {
+
+	var response = &LogValidatorAssertResponse{
+		Description:    request.Description,
+		ValidationInfo: make([]*ValidationInfo, 0),
+	}
 	var state = s.State()
 	validator := &Validator{
 		ExcludedFields: make(map[string]bool),
@@ -268,18 +272,23 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 		logWaitDuration := time.Duration(request.LogWaitTimeMs) * time.Millisecond
 
 		for _, expectedLogRecord := range expectedLogRecords.Records {
-
+			var validationInfo = &ValidationInfo{
+				Name:     fmt.Sprintf("Log Validation: %v", expectedLogRecords.Type),
+				TagIndex: expectedLogRecords.TagIndex,
+				Tag:      expectedLogRecords.Tag,
+			}
+			response.ValidationInfo = append(response.ValidationInfo, validationInfo)
 			for j := 0; j < logWaitRetryCount; j++ {
 				if logRecordIterator.HasNext() {
 					break
 				}
-				s.AddEvent(context, SleepEventType, Pairs("sleepTime", logWaitDuration))
+				var sleepEventType = &SleepEventType{SleepTimeMs: int(logWaitDuration) / int(time.Millisecond)}
+				s.AddEvent(context, sleepEventType, Pairs("value", sleepEventType))
 				time.Sleep(logWaitDuration)
 			}
 
 			if !logRecordIterator.HasNext() {
-				s.AddEvent(context, "Assert", Pairs("actual", nil, "expected", expectedLogRecord, "tag", expectedLogRecords.Tag))
-				response.AddFailure(fmt.Sprintf("Missing log record expectedLogRecord :%v", expectedLogRecord))
+				validationInfo.AddFailure(NewFailedTest(fmt.Sprintf("[%v]", expectedLogRecords.Tag), "Missing log record", expectedLogRecord, nil))
 				return response, nil
 			}
 
@@ -290,22 +299,15 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 			if err != nil {
 				return nil, err
 			}
-
-			var assertInfo = &AssertionInfo{}
-			err = validator.Assert(expectedLogRecord, actualLogRecord, assertInfo, fmt.Sprintf("[%v:%v]", filename, logRecord.Number))
-			s.AddEvent(context, "Assert", Pairs("actual", actualLogRecord, "expected", expectedLogRecord, "tag", expectedLogRecords.Tag, "assertInfo", assertInfo))
-			response.TestPassed += assertInfo.TestPassed
-			if len(assertInfo.TestFailed) > 0 {
-				response.TestFailed = append(response.TestFailed, assertInfo.TestFailed...)
-			}
+			err = validator.Assert(expectedLogRecord, actualLogRecord, validationInfo, fmt.Sprintf("[%v:%v]", filename, logRecord.Number))
 			if err != nil {
 				return nil, err
 			}
-
 		}
 	}
 	return response, nil
 }
+
 func (s *logValidatorService) getLogTypeMeta(expectedLogRecords *ExpectedLogRecord, state data.Map) (*LogTypeMeta, error) {
 	var key = logTypeMetaKey(expectedLogRecords.Type)
 	s.Mutex().Lock()

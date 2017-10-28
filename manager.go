@@ -61,7 +61,7 @@ func (s *manager) Register(service Service) {
 
 func (s *manager) NewContext(ctx toolbox.Context) *Context {
 	sessionID := uuid.NewV1()
-	var workflowStack = make([]*Workflow, 0)
+	var workflowStack Workflows = make([]*Workflow, 0)
 	var result = &Context{
 		SessionID: sessionID.String(),
 		Context:   ctx,
@@ -69,7 +69,7 @@ func (s *manager) NewContext(ctx toolbox.Context) *Context {
 			mutex:  &sync.Mutex{},
 			Events: make([]*Event, 0),
 		},
-		workflowStack: &workflowStack,
+		Workflows: &workflowStack,
 	}
 	result.Put(serviceManagerKey, s)
 	return result
