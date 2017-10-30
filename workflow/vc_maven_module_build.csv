@@ -3,7 +3,7 @@ Workflow,,Name,Description,Tasks,Init
 []Tasks,Step,Name,Description,Actions,
 ,1,checkout,This task wil get the latest code and build it,%Checkout,
 []Checkout,Service,Action,Description,Request,
-,versionControl,checkout,Check out the latest code,$checkoutRequest,
+,version/control,checkout,Check out the latest code,$checkoutRequest,
 ,transfer,copy,Copy module pom file,$transferPomRequest,
 []Tasks,Step,Name,Description,Actions,
 ,1,build,This task wil build the checked out code,%Build,
