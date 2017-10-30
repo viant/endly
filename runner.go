@@ -262,6 +262,9 @@ func (r *CliRunner) reportLogValidationInfo(response *LogValidatorAssertResponse
 			var key = r.activity.Workflow + info.Tag + info.TagIndex
 			if eventTag, ok := r.indexedTag[key]; ok {
 				eventTag.AddEvent(&Event{Type: "LogValidation", Value: Pairs("value", info)})
+				eventTag.PassedCount += info.TestPassed
+				eventTag.FailedCount += len(info.FailedTests)
+
 			}
 		}
 	}
@@ -540,13 +543,18 @@ func colorText(text, color string) string {
 	return text
 }
 
+var minColumns = 160
+
 func (r *CliRunner) columns() int {
 	output, err := exec.Command("tput", "cols").Output()
 	if err == nil {
 		r.lines, err = strconv.Atoi(strings.TrimSpace(string(output)))
 		if err != nil {
-			r.lines = 80
+			r.lines = minColumns
 		}
+	}
+	if r.lines < minColumns {
+		r.lines = minColumns
 	}
 	return r.lines
 }
