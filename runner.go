@@ -196,6 +196,10 @@ func (r *CliRunner) reportEvenType(serviceResponse interface{}, event *Event, fi
 	case *ErrorEventType:
 		r.report.Error = true
 		r.printShortMessage(messageTypeError, fmt.Sprintf("%v", casted.Error), messageTypeError, "error")
+		var error  = "ERROR"
+		var errorLength = len(error)
+		r.printMessage(colorText(error, "ref"), errorLength, messageTypeError, casted.Error, messageTypeGeneric, "")
+
 	case *SleepEventType:
 		r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v ms", casted.SleepTimeMs), messageTypeGeneric, "sleep")
 	case *VcCheckoutRequest:
