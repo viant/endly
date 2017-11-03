@@ -10,6 +10,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	"sync"
 )
 
 const (
@@ -21,11 +22,13 @@ const (
 
 //WorkflowServiceActivity represents workflow activity
 type WorkflowServiceActivity struct {
-	Workflow        string
-	Service         string
-	Action          string
-	Tag             string
-	TagIndex        string
+	Workflow string
+	Service  string
+	Action   string
+	Tag      string
+	TagIndex string
+	TagId    string
+
 	Description     string
 	TagDescription  string
 	Error           string
@@ -35,9 +38,8 @@ type WorkflowServiceActivity struct {
 	ServiceResponse interface{}
 }
 
-//WorkflowFormatTag returns a workflow format tag
-func (a *WorkflowServiceActivity) WorkflowFormatTag() string {
-	return fmt.Sprintf("%v%v%v", a.Workflow, a.Tag, a.TagIndex)
+func TagId(workflow, tag, index, subpath string) string {
+	return fmt.Sprintf("%v%v%v%v", workflow, tag, index, subpath)
 }
 
 //FormatTag return a formatted tag
@@ -73,6 +75,8 @@ func (s *workflowService) HasWorkflow(name string) bool {
 }
 
 func (s *workflowService) Workflow(name string) (*Workflow, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	if result, found := s.registry[name]; found {
 		return result, nil
 	}
@@ -158,13 +162,30 @@ func (s *workflowService) loadWorkflowIfNeeded(context *Context, name string, UR
 	return nil
 }
 
+func (s *workflowService) asServiceRequest(action *ServiceAction, serviceRequest interface{}, requestMap map[string]interface{}) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("Failed to cast %v into %T, due to %v", requestMap, serviceRequest, r)
+		}
+	}()
+
+	err = converter.AssignConverted(serviceRequest, requestMap)
+	if err != nil {
+		return fmt.Errorf("Failed to create request %v on %v.%v, %v", requestMap, action.Service, action.Action, err)
+	}
+	return err
+
+}
+
 func (s *workflowService) runAction(context *Context, action *ServiceAction) error {
 	var state = context.state
+
 	serviceActivity := &WorkflowServiceActivity{
 		Workflow:       context.Workflows.Last().Name,
 		Action:         action.Action,
 		Service:        action.Service,
 		TagIndex:       action.TagIndex,
+		TagId:          action.TagId,
 		Description:    action.Description,
 		TagDescription: action.TagDescription,
 		Tag:            action.Tag,
@@ -207,11 +228,11 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) err
 	}
 
 	serviceActivity.ServiceRequest = serviceRequest
-	err = converter.AssignConverted(serviceRequest, requestMap)
-	if err != nil {
-		return fmt.Errorf("Failed to create request %v on %v.%v, %v", requestMap, action.Service, action.Action, err)
-	}
 
+	err = s.asServiceRequest(action, serviceRequest, requestMap)
+	if err != nil {
+		return err
+	}
 	serviceResponse := service.Run(context, serviceRequest)
 	serviceActivity.ServiceResponse = serviceResponse
 
@@ -228,11 +249,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) err
 	if err != nil {
 		return err
 	}
-	if action.SleepInMs > 0 {
-		var sleepEventType = &SleepEventType{SleepTimeMs: action.SleepInMs}
-		s.AddEvent(context, sleepEventType, Pairs("value", sleepEventType), Info)
-		time.Sleep(time.Millisecond * time.Duration(action.SleepInMs))
-	}
+	s.Sleep(context, int(action.SleepInMs))
 	return nil
 }
 
@@ -259,7 +276,14 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 	}
 	startEvent := s.Begin(context, task, Pairs("Id", task.Name))
 	defer s.End(context)(startEvent, Pairs())
+
+	var asyncActions = make([]*ServiceAction, 0)
+
 	for i, action := range task.Actions {
+		if action.Async {
+			asyncActions = append(asyncActions, action)
+			continue
+		}
 		if hasAllowedActions && !allowedServiceActions[i] {
 			continue
 		}
@@ -268,9 +292,66 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 			return fmt.Errorf("Failed to run action:%v %v", action.Tag, err)
 		}
 	}
+
+	err = s.runAsyncActions(context, workflow, task, request, asyncActions)
+	if err != nil {
+		return err
+	}
 	err = task.Post.Apply(state, state)
 	s.addVariableEvent("Task.Post", task.Post, context, state)
 	return err
+}
+
+func (s *workflowService) runAsyncActions(context *Context, workflow *Workflow, task *WorkflowTask, request *WorkflowRunRequest, asyncAction []*ServiceAction) error {
+	var err error
+	if len(asyncAction) > 0 {
+		group := sync.WaitGroup{}
+		group.Add(len(asyncAction))
+		var groupErr error
+		for _, action := range asyncAction {
+
+			var asyncEvent = &AsyncServiceActionEvent{
+				Workflow:    workflow.Name,
+				Task:        task.Name,
+				Description: action.Description,
+				Service:     action.Service,
+				Action:      action.Action,
+				TagId:      action.TagId,
+			}
+			s.AddEvent(context, asyncEvent, Pairs("value", asyncEvent))
+
+			go func(actionContext *Context, action *ServiceAction) {
+				defer group.Done()
+				defer s.publishEvents(context, actionContext.Events.Events)
+				defer actionContext.Clone()
+				actionContext.MakeAsyncSafe()
+				err = s.runAction(actionContext, action)
+				if err != nil {
+					groupErr = fmt.Errorf("Failed to run action:%v %v", action.Tag, err)
+				}
+
+			}(context.Clone(), action)
+		}
+
+		group.Wait()
+
+		if groupErr != nil {
+			return groupErr
+		}
+	}
+	return err
+}
+func (s *workflowService) publishEvents(context *Context, events []*Event) {
+	if len(events) > 0 {
+		s.mutex.Lock()
+		defer s.mutex.Unlock()
+		for _, event := range events {
+			context.Events.Push(event)
+			if context.EventLogger != nil {
+				context.EventLogger.Log(event)
+			}
+		}
+	}
 }
 
 func (s *workflowService) runWorkflow(upstreamContext *Context, request *WorkflowRunRequest) (*WorkflowRunResponse, error) {
@@ -329,9 +410,15 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	}
 	s.AddEvent(context, "State.Init", Pairs("state", state.AsEncodableMap()), Debug)
 	for _, task := range workflow.Tasks {
+		var startTime = time.Now()
 		err = s.runTask(context, workflow, task, request)
 		if err != nil {
 			return nil, err
+		}
+		if task.TimeSpentMs > 0 {
+			var elapsed = (time.Now().UnixNano() - startTime.UnixNano()) / int64(time.Millisecond)
+			var remainingExecutionTime = time.Duration(task.TimeSpentMs - int(elapsed))
+			s.Sleep(context, int(remainingExecutionTime))
 		}
 	}
 	workflow.Post.Apply(state, response.Data) //context -> workflow output

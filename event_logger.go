@@ -7,18 +7,18 @@ import (
 	"os"
 	"path"
 	"reflect"
+	"sync"
 )
 
 //EventLogger represent event logger to drop event details in the provied directory.
 type EventLogger struct {
 	activities *Activities
 	directory  string
-
 	workflowTag      string
 	workflowTagCount int
 	subPath          string
-
 	tagCount map[string]int
+	mutex *sync.Mutex
 }
 
 func (l *EventLogger) processEvent(event *Event) {
@@ -29,25 +29,29 @@ func (l *EventLogger) processEvent(event *Event) {
 		l.activities.Push(activity)
 		l.updateSubpath()
 	}
-	canidate = event.get(reflect.TypeOf(&WorkflowServiceActivityEndEventType{}))
-	if canidate != nil {
-		l.activities.Pop()
-		l.updateSubpath()
+
+	if event.Type == "WorkflowRunRequest.End" {
+		if len(*l.activities) > 0 {
+			l.activities.Pop()
+			l.updateSubpath()
+		}
 	}
 }
 func (l *EventLogger) updateSubpath() {
 	if len(*l.activities) == 0 {
 		return
 	}
-	if l.workflowTag != l.activities.Last().WorkflowFormatTag() {
+	if l.workflowTag != l.activities.Last().TagId {
 		l.workflowTagCount++
-		l.workflowTag = l.activities.Last().WorkflowFormatTag()
-		l.subPath = fmt.Sprintf("%03d_%v", l.workflowTagCount, l.activities.Last().WorkflowFormatTag())
+		l.workflowTag = l.activities.Last().TagId
+		l.subPath = fmt.Sprintf("%03d_%v", l.workflowTagCount, l.activities.Last().TagId)
 	}
 }
 
 //Log logs an event
 func (l *EventLogger) Log(event *Event) error {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
 	l.processEvent(event)
 	if _, has := l.tagCount[l.subPath]; !has {
 		l.tagCount[l.subPath] = 0
@@ -82,6 +86,7 @@ func (l *EventLogger) Log(event *Event) error {
 func NewEventLogger(directory string) *EventLogger {
 	var activities Activities = make([]*WorkflowServiceActivity, 0)
 	return &EventLogger{
+		mutex:&sync.Mutex{},
 		directory:  directory,
 		activities: &activities,
 		tagCount:   make(map[string]int),

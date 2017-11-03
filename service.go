@@ -53,6 +53,16 @@ func Pairs(params ...interface{}) map[string]interface{} {
 	return result
 }
 
+//Sleep sleeps for provided time in ms
+func (s *workflowService) Sleep(context *Context, sleepTimeMs int) {
+	if sleepTimeMs > 0 {
+		var sleepEventType = &SleepEventType{SleepTimeMs: sleepTimeMs}
+		s.AddEvent(context, sleepEventType, Pairs("value", sleepEventType), Info)
+		time.Sleep(time.Millisecond * time.Duration(sleepTimeMs))
+	}
+}
+
+
 //AddEvent add event
 func (s *AbstractService) AddEvent(context *Context, eventType interface{}, value map[string]interface{}, level ...int) *Event {
 	if len(level) == 0 {

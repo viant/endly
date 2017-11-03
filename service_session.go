@@ -32,4 +32,5 @@ func (s *SystemTerminalSessions) Has(id string) bool {
 	return has
 }
 
-var clientSessionKey = (*SystemTerminalSessions)(nil)
+var systemTerminalSessionsKey = (*SystemTerminalSessions)(nil)
+

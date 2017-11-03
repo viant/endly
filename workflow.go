@@ -12,14 +12,15 @@ type ServiceAction struct {
 	Action         string      //Id of the action used to create service request
 	Tag            string      //neatly tag
 	TagIndex       string      //neatly tag index
+	TagId          string      //neatly tag id
 	TagDescription string      //tag description
 	Name           string      //Id of the service action
 	Description    string      //description
-	Subpath        string      //subpath
 	Init           Variables   //variables to initialise state before action runs
 	Post           Variables   //variable to update state after action completes
 	Request        interface{} //service request
-	SleepInMs      int         //optional sleep time
+	SleepInMs      int         //optional Sleep time
+	Async		   bool
 }
 
 //WorkflowTask represents a group of action
@@ -31,7 +32,7 @@ type WorkflowTask struct {
 	Actions     []*ServiceAction //actions
 	Init        Variables        //variables to initialise state before this taks runs
 	Post        Variables        //variable to update state after this task completes
-	SleepInMs   int              //optional sleep time
+	TimeSpentMs int              //optional min required time spent in this task, reamining will force Sleep
 }
 
 //Workflow repesents a workflow

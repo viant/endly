@@ -40,11 +40,12 @@ func (s *execService) open(context *Context, request *OpenSessionRequest) (*Open
 }
 
 func (s *execService) openSession(context *Context, request *OpenSessionRequest) (*SystemTerminalSession, error) {
+	s.Mutex().Lock()
+	defer s.Mutex().Unlock()
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-
 	if !(target.ParsedURL.Scheme == "ssh" || target.ParsedURL.Scheme == "scp" || target.ParsedURL.Scheme == "file") {
 		return nil, fmt.Errorf("Failed to open sessionName: invalid schema: %v in url: %v", target.ParsedURL.Scheme, target.URL)
 	}
