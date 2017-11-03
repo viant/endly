@@ -9,7 +9,8 @@ type LogType struct {
 	Name    string
 	Format  string
 	Mask    string
-	Exclude string
+	Exclusion string
+	Inclusion string
 }
 
 //LogValidatorListenRequest represents listen for a logs request.

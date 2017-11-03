@@ -62,7 +62,8 @@ type LogFile struct {
 	URL             string
 	Content         string
 	Name            string
-	SkipExpression  string
+	Exclusion       string
+	Inclusion       string
 	ProcessingState *LogProcessingState
 	LastModified    *time.Time
 	Size            int
@@ -135,8 +136,14 @@ func (f *LogFile) readLogRecords(reader io.Reader) error {
 
 		line = strings.Trim(line, " \r\t")
 		lineIndex++
-		if f.SkipExpression != "" {
-			if strings.Contains(line, f.SkipExpression) {
+		if f.Exclusion != "" {
+			if strings.Contains(line, f.Exclusion) {
+				line, dataProcessed = f.ProcessingState.Update(dataProcessed, lineIndex)
+				continue
+			}
+		}
+		if f.Inclusion != "" {
+			if ! strings.Contains(line, f.Inclusion) {
 				line, dataProcessed = f.ProcessingState.Update(dataProcessed, lineIndex)
 				continue
 			}
@@ -273,9 +280,8 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 
 		for _, expectedLogRecord := range expectedLogRecords.Records {
 			var validationInfo = &ValidationInfo{
-				Name:     fmt.Sprintf("Log Validation: %v", expectedLogRecords.Type),
-				TagIndex: expectedLogRecords.TagIndex,
-				Tag:      expectedLogRecords.Tag,
+				TagId:	expectedLogRecords.TagId,
+				Description:     fmt.Sprintf("Log Validation: %v", expectedLogRecords.Type),
 			}
 			response.ValidationInfo = append(response.ValidationInfo, validationInfo)
 			for j := 0; j < logWaitRetryCount; j++ {
@@ -288,7 +294,7 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 			}
 
 			if !logRecordIterator.HasNext() {
-				validationInfo.AddFailure(NewFailedTest(fmt.Sprintf("[%v]", expectedLogRecords.Tag), "Missing log record", expectedLogRecord, nil))
+				validationInfo.AddFailure(NewFailedTest(fmt.Sprintf("[%v]", expectedLogRecords.TagId), "Missing log record", expectedLogRecord, nil))
 				return response, nil
 			}
 
@@ -347,7 +353,8 @@ func (s *logValidatorService) readLogFile(context *Context, source *url.Resource
 		isNewLogFile = true
 		logFile = &LogFile{
 			Name:            name,
-			SkipExpression:  logType.Exclude,
+			Exclusion:       logType.Exclusion,
+			Inclusion: 		 logType.Inclusion,
 			URL:             candidate.URL(),
 			LastModified:    candidate.LastModified(),
 			Size:            int(candidate.Size()),
@@ -441,8 +448,8 @@ func (s *logValidatorService) readLogFiles(context *Context, source *url.Resourc
 func (s *logValidatorService) listenForChanges(context *Context, request *LogValidatorListenRequest) {
 	go func() {
 		frequency := time.Duration(request.FrequencyMs) * time.Millisecond
-		if frequency == 0 {
-			frequency = 250 * time.Millisecond
+		if request.FrequencyMs <= 0 {
+			frequency = 400 * time.Millisecond
 		}
 		for !context.IsClosed() {
 			_, err := s.readLogFiles(context, request.Source, request.Types...)
