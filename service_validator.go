@@ -33,7 +33,7 @@ func (s *validatorService) Run(context *Context, request interface{}) *ServiceRe
 
 func (s *validatorService) Assert(context *Context, request *ValidatorAssertRequest) (*ValidationInfo, error) {
 	var response = &ValidationInfo{
-		Name: request.Name,
+		Description: request.Description,
 	}
 	var state = context.State()
 	var actual = request.Actual
