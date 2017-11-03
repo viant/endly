@@ -58,9 +58,8 @@ func NewFailedTest(path, message string, expected, actual interface{}) *FailedTe
 
 //ValidationInfo represents assertion info
 type ValidationInfo struct {
-	Name        string
-	Tag         string
-	TagIndex    string
+	Description string
+	TagId       string
 	TestPassed  int
 	FailedTests []*FailedTest
 }

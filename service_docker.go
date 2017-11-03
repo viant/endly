@@ -49,6 +49,8 @@ func (s *dockerService) NewRequest(action string) (interface{}, error) {
 
 func (s *dockerService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error

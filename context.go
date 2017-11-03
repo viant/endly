@@ -15,6 +15,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+	"sync"
 )
 
 var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
@@ -61,6 +62,8 @@ func (c *Context) Clone() *Context {
 	c.cloned = append(c.cloned, result)
 	return result
 }
+
+
 
 func (c *Context) parentURLCandidates() []string {
 	var result = make([]string, 0)
@@ -121,15 +124,31 @@ func (c *Context) Manager() (Manager, error) {
 //TerminalSessions returns client sessions
 func (c *Context) TerminalSessions() SystemTerminalSessions {
 	var result *SystemTerminalSessions
-	if !c.Contains(clientSessionKey) {
+	if !c.Contains(systemTerminalSessionsKey) {
 		var sessions SystemTerminalSessions = make(map[string]*SystemTerminalSession)
 		result = &sessions
-		c.Put(clientSessionKey, result)
+		c.Put(systemTerminalSessionsKey, result)
 	} else {
-		c.GetInto(clientSessionKey, &result)
+		c.GetInto(systemTerminalSessionsKey, &result)
 	}
 	return *result
 }
+
+
+//TerminalSessions returns client sessions
+func (c *Context) SeleniumSessions() SeleniumSessions {
+	var result *SeleniumSessions
+	if !c.Contains(systemTerminalSessionsKey) {
+		var sessions SeleniumSessions = make(map[string]*SeleniumSession)
+		result = &sessions
+		c.Put(seleniumSessionsKey, result)
+	} else {
+		c.GetInto(seleniumSessionsKey, &result)
+	}
+	return *result
+}
+
+
 
 //Service returns a service fo provided id or error.
 func (c *Context) Service(name string) (Service, error) {
@@ -296,6 +315,17 @@ func (c *Context) Close() {
 	for _, function := range c.Deffer() {
 		function()
 	}
+}
+
+//MakeAsyncSafe makes this contex async safe
+func (c *Context) MakeAsyncSafe() {
+	c.Context.Remove(seleniumSessionsKey)
+	c.Context.Remove(systemTerminalSessionsKey)
+	c.Events = &Events{
+		mutex:  &sync.Mutex{},
+		Events: make([]*Event, 0),
+	}
+	c.EventLogger = nil
 }
 
 /*

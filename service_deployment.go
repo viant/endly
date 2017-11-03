@@ -124,7 +124,7 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 			return nil, fmt.Errorf("Failed to check version: %v", err)
 		}
 		if version != target.Version {
-			return nil, fmt.Errorf("Failed to deploy %v: invalud version expected: %v, but had: %v ", target.Host(), target.Version, version)
+			return nil, fmt.Errorf("Failed to deploy %v: invalid version expected: %v, but had: %v ", target.Host(), target.Version, version)
 		}
 	}
 	err = s.deployAddition(context, target, request.Post)

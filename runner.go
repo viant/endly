@@ -12,10 +12,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"context"
 )
 
 const (
-	messageTypeAction = iota
+	messageTypeAction         = iota
 	messageTypeTagDescription
 	messageTypeError
 	messageTypeSuccess
@@ -28,19 +29,14 @@ var reportingEventSleep = 250 * time.Millisecond
 type EventTag struct {
 	Description    string
 	Workflow       string
-	Tag            string
-	TagIndex       string
-	subPath        string
+	TagId          string
 	Events         []*Event
 	ValidationInfo []*ValidationInfo
 	PassedCount    int
 	FailedCount    int
 }
 
-//Key returns key for this event tag build from workflow name, tag and tag index.
-func (e *EventTag) Key() string {
-	return fmt.Sprintf("%v%v%v", e.Workflow, e.Tag, e.TagIndex)
-}
+
 
 //AddEvent add provided event
 func (e *EventTag) AddEvent(event *Event) {
@@ -97,7 +93,7 @@ type CliRunner struct {
 //AddTag adds reporting tag
 func (r *CliRunner) AddTag(eventTag *EventTag) {
 	r.tags = append(r.tags, eventTag)
-	r.indexedTag[eventTag.Key()] = eventTag
+	r.indexedTag[eventTag.TagId] = eventTag
 }
 
 //EventTag returns an event tag
@@ -111,17 +107,16 @@ func (r *CliRunner) EventTag() *EventTag {
 	}
 
 	activity := r.activities.Last()
-	var key = fmt.Sprintf("%v%v%v", activity.Workflow, activity.Tag, activity.TagIndex)
-	if _, has := r.indexedTag[key]; !has {
+
+	if _, has := r.indexedTag[activity.TagId]; !has {
 		eventTag := &EventTag{
 			Workflow: activity.Workflow,
-			Tag:      activity.Tag,
-			TagIndex: activity.TagIndex,
+			TagId:      activity.TagId,
 		}
 		r.AddTag(eventTag)
 	}
 
-	return r.indexedTag[key]
+	return r.indexedTag[activity.TagId]
 }
 
 func (r *CliRunner) hasActiveSession(context *Context, sessionID string) bool {
@@ -199,7 +194,7 @@ func (r *CliRunner) reportEvenType(serviceResponse interface{}, event *Event, fi
 		fmt.Println(colorText(fmt.Sprintf("ERROR: %v\n", casted.Error), "red"))
 
 	case *SleepEventType:
-		r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v ms", casted.SleepTimeMs), messageTypeGeneric, "sleep")
+		r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v ms", casted.SleepTimeMs), messageTypeGeneric, "Sleep")
 	case *VcCheckoutRequest:
 		if filter.Checkout {
 			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", casted.Origin.URL, casted.Target.URL), messageTypeGeneric, "checkout")
@@ -228,6 +223,10 @@ func (r *CliRunner) reportEvenType(serviceResponse interface{}, event *Event, fi
 			r.printOutput(fmt.Sprintf("TargetURL: %v", casted.TargetURL))
 
 		}
+
+	case *AsyncServiceActionEvent:
+		r.printShortMessage(messageTypeTagDescription, fmt.Sprintf("%v[%v] %v", casted.TagId, casted.Task,  casted.Description), messageTypeTagDescription, "scheduled")
+
 	case *WorkflowServiceActivity:
 		r.activities.Push(casted)
 		r.activity = casted
@@ -243,8 +242,8 @@ func (r *CliRunner) reportEvenType(serviceResponse interface{}, event *Event, fi
 		r.reportLogValidationInfo(casted)
 
 	case *WorkflowServiceActivityEndEventType:
-		r.activity = r.activities.Pop()
 
+		r.activity = r.activities.Pop()
 	case *ReportSummaryEvent:
 		r.reportSummaryEvent()
 	}
@@ -259,8 +258,8 @@ func (r *CliRunner) reportLogValidationInfo(response *LogValidatorAssertResponse
 			passedCount++
 		}
 		if r.activity != nil {
-			var key = r.activity.Workflow + info.Tag + info.TagIndex
-			if eventTag, ok := r.indexedTag[key]; ok {
+			var tagId = info.TagId
+			if eventTag, ok := r.indexedTag[tagId]; ok {
 				eventTag.AddEvent(&Event{Type: "LogValidation", Value: Pairs("value", info)})
 				eventTag.PassedCount += info.TestPassed
 				eventTag.FailedCount += len(info.FailedTests)
@@ -317,15 +316,17 @@ func (r *CliRunner) reportFailureWithMatchSource(tag *EventTag, info *Validation
 		}
 	}
 
+	var counter = 0
 	for _, failure := range info.FailedTests {
 		path := failure.Path
 		if failure.PathIndex != -1 {
 			path = fmt.Sprintf("%v:%v", failure.PathIndex, failure.Path)
 		}
 		r.printMessage(path, len(path), messageTypeError, failure.Message, messageTypeError, "Failed")
-		if theFirstFailure.PathIndex != failure.PathIndex {
+		if theFirstFailure.PathIndex != failure.PathIndex || counter >= 3 {
 			break
 		}
+		counter++
 	}
 }
 
@@ -340,14 +341,14 @@ func (r *CliRunner) reportSummaryEvent() {
 	}
 	var contextMessageLength = len(contextMessage) + len(contextMessageStatus)
 	contextMessage = fmt.Sprintf("%v%v", contextMessage, colorText(contextMessageStatus, contextMessageColor))
-	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed+r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
+	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed + r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
 }
 
 func (r *CliRunner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if tag.FailedCount > 0 {
-			var eventTag = fmt.Sprintf("%v%v", tag.Tag, tag.TagIndex)
-			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("Failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
+			var eventTag = tag.TagId
+			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("Failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
 
 			var minRange = 0
 			for i, event := range tag.Events {
@@ -355,7 +356,7 @@ func (r *CliRunner) reportTagSummary() {
 				if info, ok := candidate.(*ValidationInfo); ok && info.HasFailure() {
 					var failureSourceEvent = []*Event{}
 					if i-minRange > 0 {
-						failureSourceEvent = tag.Events[minRange : i-1]
+						failureSourceEvent = tag.Events[minRange: i-1]
 					}
 					r.reportFailureWithMatchSource(tag, info, failureSourceEvent)
 					minRange = i + 1
@@ -378,6 +379,7 @@ func (r *CliRunner) reportHTTPResponse(response *HTTPResponse) {
 
 func (r *CliRunner) reportHTTPRequest(request *HTTPRequest) {
 	r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", request.Method, request.URL), messageTypeGeneric, "HttpRequest")
+	r.printInput(asJSONText(request.URL))
 	if len(request.Header) > 0 {
 		r.printShortMessage(messageTypeGeneric, "Headers", messageTypeGeneric, "HttpRequest")
 		r.printInput(asJSONText(request.Header))
@@ -392,11 +394,12 @@ func (r *CliRunner) reportHTTPRequest(request *HTTPRequest) {
 
 func (r *CliRunner) reportValidationInfo(info *ValidationInfo, event *Event) {
 	var total = info.TestPassed + len(info.FailedTests)
-	var name = info.Name
+	var description = info.Description
 
 	var activity = r.activities.Last()
 	if activity != nil {
-		eventTag, ok := r.indexedTag[info.Tag+info.TagIndex]
+		var tagId = info.TagId
+		eventTag, ok := r.indexedTag[tagId]
 		if !ok {
 			eventTag = r.EventTag()
 		}
@@ -406,10 +409,10 @@ func (r *CliRunner) reportValidationInfo(info *ValidationInfo, event *Event) {
 	}
 	messageType := messageTypeSuccess
 	messageInfo := "OK"
-	var message = fmt.Sprintf("Passed %v/%v %v", info.TestPassed, total, name)
+	var message = fmt.Sprintf("Passed %v/%v %v", info.TestPassed, total, description)
 	if len(info.FailedTests) > 0 {
 		messageType = messageTypeError
-		message = fmt.Sprintf("Passed %v/%v %v", info.TestPassed, total, name)
+		message = fmt.Sprintf("Passed %v/%v %v", info.TestPassed, total, description)
 		messageInfo = "FAILED"
 	}
 	r.printShortMessage(messageType, message, messageType, messageInfo)
@@ -543,10 +546,13 @@ func colorText(text, color string) string {
 	return text
 }
 
-var minColumns = 160
+var minColumns = 120
 
 func (r *CliRunner) columns() int {
-	output, err := exec.Command("tput", "cols").Output()
+
+	ctx := context.Background()
+	cmd := exec.CommandContext(ctx,"tput","cols")
+	output, err := cmd.CombinedOutput()
 	if err == nil {
 		r.lines, err = strconv.Atoi(strings.TrimSpace(string(output)))
 		if err != nil {
@@ -595,7 +601,11 @@ func (r *CliRunner) formatShortMessage(messageType int, message string, messageI
 	if len(*r.activities) > 0 {
 		path, pathLength = r.activities.GetPath(r, fullPath)
 	}
-	return r.formatMessage(path, pathLength, messageType, message, messageInfoType, messageInfo)
+	var result =  r.formatMessage(path, pathLength, messageType, message, messageInfoType, messageInfo)
+	if strings.Contains(result, message) {
+		return result
+	}
+	return fmt.Sprintf("%v\n%v",result, message)
 }
 
 //NewCliRunner creates a new command line runner

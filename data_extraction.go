@@ -10,7 +10,7 @@ import (
 //DataExtraction represents a data extraction
 type DataExtraction struct {
 	RegExpr string //regular expression
-	Key     string //state key to place a match
+	Key     string //state key to store a match
 }
 
 //DataExtractions a slice of DataExtractions

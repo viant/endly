@@ -19,12 +19,12 @@ const (
 	Debug
 )
 
-//SleepEventType represents a sleep
+//SleepEventType represents a Sleep
 type SleepEventType struct {
 	SleepTimeMs int
 }
 
-//ErrorEventType represents a sleep
+//ErrorEventType represents a Sleep
 type ErrorEventType struct {
 	Error string
 }

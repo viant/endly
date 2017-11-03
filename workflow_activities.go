@@ -12,6 +12,9 @@ func (a *Activities) Push(workflow *WorkflowServiceActivity) {
 
 //Pop removes the first workflow from the workflow stack.
 func (a *Activities) Pop() *WorkflowServiceActivity {
+	if len(*a) == 0 {
+		return nil
+	}
 	var result = (*a)[len(*a)-1]
 
 	if len(*a) > 0 {
@@ -60,4 +63,14 @@ func (a *Activities) GetPath(runner *CliRunner, fullPath bool) (string, int) {
 		pathLength += (len(*a) - 1)
 	}
 	return path, pathLength + 1
+}
+
+//AsyncServiceActionEvent represent async action
+type AsyncServiceActionEvent struct {
+	Workflow string
+	Task string
+	Service string
+	Action string
+	TagId string
+	Description string
 }
