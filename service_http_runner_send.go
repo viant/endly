@@ -21,7 +21,10 @@ type HTTPRequest struct {
 	Header     http.Header
 	Cookies    Cookies
 	Body       string
-	Extraction DataExtractions
+	Replace    map[string]string //replaces key with value if present
+	Extraction DataExtractions   //extraction
+	Variables  Variables         // input JSON body map, output state.httpPrevious
+	Repeat     int               //how many time send this request
 }
 
 //SendHTTPResponse represnets a send response
@@ -37,6 +40,7 @@ type HTTPResponse struct {
 	Header      http.Header
 	Cookies     map[string]*http.Cookie
 	Body        string
+	JSONBody    map[string]interface{}
 	TimeTakenMs int
 	Error       string
 }
@@ -102,5 +106,8 @@ func (r *HTTPRequest) Expand(context *Context) *HTTPRequest {
 		Body:       context.Expand(r.Body),
 		Header:     header,
 		Extraction: r.Extraction,
+		Variables:  r.Variables,
+		Replace:    r.Replace,
+		Repeat:     r.Repeat,
 	}
 }

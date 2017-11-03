@@ -32,7 +32,6 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		if strings.HasPrefix(sendHTTPRequest.Body, "text:") {
 			body = []byte(sendHTTPRequest.Body[5:])
 		}
-
 		if sendRequest.RequestUdf != "" {
 			var udf, has = UdfRegistry[sendRequest.RequestUdf]
 			if !has {
@@ -61,24 +60,31 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		return err
 	}
 
-	copyHeaders(httpRequest.Header, httpRequest.Header)
-	sessionCookies.SetHeader(httpRequest.Header)
+
+	copyHeaders(sendHTTPRequest.Header, httpRequest.Header)
+	sessionCookies.SetHeader(sendHTTPRequest.Header)
 	sendHTTPRequest.Cookies.SetHeader(httpRequest.Header)
-	response := &HTTPResponse{
-	//Request: sendHTTPRequest,
-	}
+
+
+	response := &HTTPResponse{}
 	result.Responses = append(result.Responses, response)
 	startEvent := s.Begin(context, sendHTTPRequest, Pairs("request", sendHTTPRequest))
-	httpResponse, err := client.Do(httpRequest)
 
-	if err != nil {
-		response.Error = fmt.Sprintf("%v", err)
-		return nil
+	var repeat = sendHTTPRequest.Repeat
+	if repeat == 0 {
+		repeat = 1
 	}
+	var httpResponse *http.Response
 
+	for i:=0;i<repeat;i++ {
+		httpResponse, err = client.Do(httpRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("%v", err)
+			return nil
+		}
+	}
 	response.Header = make(map[string][]string)
 	copyHeaders(httpResponse.Header, response.Header)
-
 	readBody(httpResponse, response, isBase64Encoded)
 
 	if sendRequest.ResponseUdf != "" {
@@ -94,23 +100,65 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 	}
 	endEvent := s.End(context)(startEvent, Pairs("response", response))
 
-	sendHTTPRequest.Extraction.Extract(context, result.Extracted, response.Body)
-	var responseCookies Cookies = httpResponse.Cookies()
 
+	var responseBody = replaceResponseBodyIfNeeded(sendHTTPRequest, response.Body)
+
+	sendHTTPRequest.Extraction.Extract(context, result.Extracted, responseBody)
+	var responseCookies Cookies = httpResponse.Cookies()
 	response.Cookies = responseCookies.IndexByName()
 	for k, cookie := range response.Cookies {
 		cookies.Put(k, cookie.Value)
 	}
 	sessionCookies.AddCookies(responseCookies...)
 
+
+	var previous = state.GetMap("previous")
+	if previous == nil {
+		previous = data.NewMap()
+	}
 	response.Code = httpResponse.StatusCode
 	response.TimeTakenMs = endEvent.TimeTakenMs
+	if strings.HasPrefix(responseBody, "{") {
+		response.JSONBody = make(map[string]interface{})
+		err = toolbox.NewJSONDecoderFactory().Create(strings.NewReader(responseBody)).Decode(&response.JSONBody)
+		if err == nil {
+			sendHTTPRequest.Variables.Apply(data.Map(response.JSONBody), previous)
+		}
+	}
+
+
+	for k, v := range result.Extracted {
+		var expanded = previous.Expand(v)
+		previous[k] = state.Expand(expanded)
+	}
+	sendHTTPRequest.Variables.Apply(previous, previous)
+
+	if len(previous) > 0 {
+		state.Put("previous", previous)
+	}
+
+	if sendHTTPRequest.MatchBody != "" {
+		return nil
+	}
 	for _, candidate := range sendRequest.Requests {
-		if candidate.MatchBody != "" && strings.Contains(response.Body, candidate.MatchBody) {
-			return s.sendRequest(context, client, candidate, sessionCookies, sendRequest, result)
+		if candidate.MatchBody!= "" && strings.Contains(response.Body, candidate.MatchBody) {
+			err = s.sendRequest(context, client, candidate, sessionCookies, sendRequest, result)
+			if err !=nil {
+				return err
+			}
 		}
 	}
 	return nil
+}
+
+
+func replaceResponseBodyIfNeeded(sendHTTPRequest *HTTPRequest, responseBody string) string {
+	if len(sendHTTPRequest.Replace) > 0 {
+		for k, v := range sendHTTPRequest.Replace {
+			responseBody = strings.Replace(responseBody, k, v, len(responseBody))
+		}
+	}
+	return responseBody
 }
 
 func (s *httpRunnerService) send(context *Context, request *SendHTTPRequest) (*SendHTTPResponse, error) {
@@ -127,7 +175,6 @@ func (s *httpRunnerService) send(context *Context, request *SendHTTPRequest) (*S
 	if !state.Has("cookies") {
 		state.Put("cookies", data.NewMap())
 	}
-
 	for _, req := range request.Requests {
 		if req.MatchBody != "" {
 			continue
