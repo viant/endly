@@ -146,10 +146,16 @@ func (s *gitService) checkout(context *Context, request *VcCheckoutRequest) (*Vc
 	if err != nil {
 		return nil, err
 	}
+
+	var origin = request.Origin.URL
+	if request.Origin.Credential != "" {
+
+	}
+
 	response, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
-				Command: fmt.Sprintf("git clone %v %v", request.Origin.URL, target.ParsedURL.Path),
+				Command: fmt.Sprintf("git clone %v %v", origin, target.ParsedURL.Path),
 			},
 		},
 	})

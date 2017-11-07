@@ -6,9 +6,9 @@ import (
 
 //LogType represents  a log type
 type LogType struct {
-	Name    string
-	Format  string
-	Mask    string
+	Name      string
+	Format    string
+	Mask      string
 	Exclusion string
 	Inclusion string
 }

@@ -20,7 +20,7 @@ type ServiceAction struct {
 	Post           Variables   //variable to update state after action completes
 	Request        interface{} //service request
 	SleepInMs      int         //optional Sleep time
-	Async		   bool
+	Async          bool
 }
 
 //WorkflowTask represents a group of action
@@ -61,6 +61,9 @@ func (w *Workflows) Push(workflow *Workflow) {
 
 //Pop removes the first workflow from the workflow stack.
 func (w *Workflows) Pop() *Workflow {
+	if len(*w) == 0 {
+		return nil
+	}
 	var result = (*w)[len(*w)-1]
 	(*w) = (*w)[0 : len(*w)-1]
 	return result

@@ -3,11 +3,14 @@
   "Tasks":"$tasks",
   "Params": {
     "stopSystemMysql": true,
-    "url": "scp://$targetHost/",
-    "credential": "$targetCredential",
-    "configUrl": "config/my.cnf",
+    "targetHost":"$targetHost",
+    "targetHostCredential": "$targetHostCredential",
+    "configURL": "config/my.cnf",
+    "configURLCredential": "$configURLCredential",
     "mysqlCredential":"$mysqlCredential",
-    "configUrlCredential": "$configUrlCredential",
-    "serviceInstanceName": "$instance"
+    "serviceInstanceName": "$instance",
+    "mysqlVersion":"$mysqlVersion",
+    "exportFile":"$exportFile",
+    "importFile":"$importFile"
   }
 }

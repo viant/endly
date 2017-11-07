@@ -4,12 +4,8 @@ import (
 	"fmt"
 )
 
-
-
 //TODO complete implementation
 type systemGoService struct{}
-
-
 
 func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest) (*SystemSdkSetResponse, error) {
 	var response = &SystemSdkSetResponse{}
@@ -32,7 +28,6 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 						Key:     "version",
 					},
 				},
-
 			},
 		},
 	})
@@ -41,10 +36,10 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 	}
 	var stdout = commandResponse.Stdout()
 	if CheckCommandNotFound(stdout) || CheckNoSuchFileOrDirectory(stdout) {
-			stdout = commandResponse.Stdout()
-			if CheckCommandNotFound(stdout) || CheckNoSuchFileOrDirectory(stdout) {
-				return nil, sdkNotFound
-			}
+		stdout = commandResponse.Stdout()
+		if CheckCommandNotFound(stdout) || CheckNoSuchFileOrDirectory(stdout) {
+			return nil, sdkNotFound
+		}
 	}
 	//
 	/////usr/local/go/

@@ -1,6 +1,7 @@
 package endly
 
 import (
+	"github.com/lunixbochs/vtclean"
 	"strings"
 )
 
@@ -60,4 +61,8 @@ func ExtractColumns(line string) ([]string, bool) {
 		result[index] += aChar
 	}
 	return result, true
+}
+
+func escapeStdout(stdout string) string {
+	return vtclean.Clean(stdout, true)
 }

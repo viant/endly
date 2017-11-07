@@ -78,7 +78,7 @@ func TestRunWorkflowMysql(t *testing.T) {
 	assert.NotNil(t, manager)
 	assert.NotNil(t, service)
 
-	targetCredential := path.Join(os.Getenv("HOME"), "/secret/scp.json")
+	targetHostCredential := path.Join(os.Getenv("HOME"), "/secret/scp.json")
 	mysqlCredential := path.Join(os.Getenv("HOME"), "secret/mysql.json")
 
 	if toolbox.FileExists(mysqlCredential) {
@@ -90,11 +90,11 @@ func TestRunWorkflowMysql(t *testing.T) {
 				Name: "dockerized_mysql",
 				Params: map[string]interface{}{
 					"url":                 "scp://127.0.0.1/",
-					"credential":          targetCredential,
+					"credential":          targetHostCredential,
 					"mysqlCredential":     mysqlCredential,
 					"stopSystemMysql":     true,
 					"configUrl":           url.NewResource("test/docker/my.cnf").URL,
-					"configUrlCredential": path.Join(os.Getenv("HOME"), "/secret/scp.json"),
+					"configURLCredential": path.Join(os.Getenv("HOME"), "/secret/scp.json"),
 					"serviceInstanceName": "dockerizedMysql1",
 				},
 				Tasks: "start",
@@ -115,11 +115,11 @@ func TestRunWorkflowMysql(t *testing.T) {
 				Name: "dockerized_mysql",
 				Params: map[string]interface{}{
 					"url":                 "scp://127.0.0.1/",
-					"credential":          targetCredential,
+					"credential":          targetHostCredential,
 					"mysqlCredential":     mysqlCredential,
 					"stopSystemMysql":     true,
 					"configUrl":           url.NewResource("test/docker/my.cnf").URL,
-					"configUrlCredential": path.Join(os.Getenv("HOME"), "/secret/scp.json"),
+					"configURLCredential": path.Join(os.Getenv("HOME"), "/secret/scp.json"),
 					"serviceInstanceName": "dockerizedMysql1",
 				},
 				Tasks: "stop",
@@ -205,14 +205,14 @@ func TestRunWorfklowVCMavenwBuild(t *testing.T) {
 			response := service.Run(context, &endly.WorkflowRunRequest{
 				Name: "vc_maven_build",
 				Params: map[string]interface{}{
-					"jdkVersion":       "1.7",
-					"originUrl":        baseSvnUrl + "/common",
-					"originCredential": path.Join(os.Getenv("HOME"), "/secret/svn_ci.json"),
-					"originType":       "svn",
-					"targetUrl":        "file:///tmp/ci_common",
-					"targetCredential": "",
-					"buildGoal":        "install",
-					"buildArgs":        "-Dmvn.test.skip",
+					"jdkVersion":           "1.7",
+					"originUrl":            baseSvnUrl + "/common",
+					"originCredential":     path.Join(os.Getenv("HOME"), "/secret/svn_ci.json"),
+					"originType":           "svn",
+					"targetUrl":            "file:///tmp/ci_common",
+					"targetHostCredential": "",
+					"buildGoal":            "install",
+					"buildArgs":            "-Dmvn.test.skip",
 				},
 			})
 			if assert.Equal(t, "", response.Error) {
@@ -235,9 +235,9 @@ func TestRunWorfklowTomcatApp(t *testing.T) {
 	}
 	assert.NotNil(t, manager)
 	assert.NotNil(t, service)
-	targetCredential := path.Join(os.Getenv("HOME"), "secret/scp.json")
+	targetHostCredential := path.Join(os.Getenv("HOME"), "secret/scp.json")
 
-	if toolbox.FileExists(targetCredential) {
+	if toolbox.FileExists(targetHostCredential) {
 		configUrl := url.NewResource("test/workflow/tomcat-server.xml").URL
 
 		baseSvnUrlFile := path.Join(os.Getenv("HOME"), "baseSvnUrl")
@@ -251,13 +251,13 @@ func TestRunWorfklowTomcatApp(t *testing.T) {
 				response := service.Run(context, &endly.WorkflowRunRequest{
 					Name: "tomcat",
 					Params: map[string]interface{}{
-						"targetHost":          "127.0.0.1",
-						"targetCredential":    targetCredential,
-						"appDirectory":        "/tmp/app1",
-						"configUrl":           configUrl,
-						"configUrlCredential": targetCredential,
-						"tomcatPort":          "8881",
-						"forceDeploy":         true,
+						"targetHost":           "127.0.0.1",
+						"targetHostCredential": targetHostCredential,
+						"appDirectory":         "/tmp/app1",
+						"configUrl":            configUrl,
+						"configURLCredential":  targetHostCredential,
+						"tomcatPort":           "8881",
+						"forceDeploy":          true,
 					},
 					Tasks: "install",
 				})
@@ -272,10 +272,10 @@ func TestRunWorfklowTomcatApp(t *testing.T) {
 				response := service.Run(context, &endly.WorkflowRunRequest{
 					Name: "tomcat",
 					Params: map[string]interface{}{
-						"jdkVersion":       "1.7",
-						"targetHost":       "127.0.0.1",
-						"targetCredential": targetCredential,
-						"appDirectory":     "/tmp/app1",
+						"jdkVersion":           "1.7",
+						"targetHost":           "127.0.0.1",
+						"targetHostCredential": targetHostCredential,
+						"appDirectory":         "/tmp/app1",
 					},
 					Tasks: "start",
 				})
@@ -292,10 +292,10 @@ func TestRunWorfklowTomcatApp(t *testing.T) {
 				response := service.Run(context, &endly.WorkflowRunRequest{
 					Name: "tomcat",
 					Params: map[string]interface{}{
-						"jdkVersion":       "1.7",
-						"targetHost":       "127.0.0.1",
-						"targetCredential": targetCredential,
-						"appDirectory":     "/tmp/app1",
+						"jdkVersion":           "1.7",
+						"targetHost":           "127.0.0.1",
+						"targetHostCredential": targetHostCredential,
+						"appDirectory":         "/tmp/app1",
 					},
 					Tasks: "stop",
 				})

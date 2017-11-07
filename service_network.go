@@ -2,15 +2,12 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/toolbox/ssh"
 	"github.com/viant/toolbox/cred"
+	"github.com/viant/toolbox/ssh"
 )
-
 
 //NetworkServiceID represents java network service id
 const NetworkServiceID = "network"
-
-
 
 type networkService struct {
 	*AbstractService
@@ -39,12 +36,10 @@ func (s *networkService) forward(context *Context, request *NetworkForwardReques
 		if err != nil {
 			return nil, err
 		}
-		response.Forwards = append(response.Forwards, &NetworkForward{Local:local, Remote:remote})
+		response.Forwards = append(response.Forwards, &NetworkForward{Local: local, Remote: remote})
 	}
 	return response, nil
 }
-
-
 
 func (s *networkService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
@@ -66,10 +61,6 @@ func (s *networkService) Run(context *Context, request interface{}) *ServiceResp
 	return response
 }
 
-
-
-
-
 //NewRequest creates a new request for an action (run).
 func (s *networkService) NewRequest(action string) (interface{}, error) {
 	switch action {
@@ -79,8 +70,6 @@ func (s *networkService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
-
-
 //NewNetworkService creates a new network service.
 func NewNetworkService() Service {
 	var result = &networkService{
@@ -89,4 +78,3 @@ func NewNetworkService() Service {
 	result.AbstractService.Service = result
 	return result
 }
-

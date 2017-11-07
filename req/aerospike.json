@@ -2,10 +2,10 @@
   "Name": "dockerized_aerospike",
   "Tasks":"$tasks",
   "Params": {
-    "url": "scp://${targetHost}/",
-    "credential": "$targetCredential",
-    "configUrl": "config/aerospike.conf",
-    "configUrlCredential": "",
+    "targetHost":"$targetHost",
+    "targetHostCredential": "$targetHostCredential",
+    "configURL": "config/aerospike.conf",
+    "configURLCredential": "$configURLCredential",
     "serviceInstanceName": "$instance"
   }
 }

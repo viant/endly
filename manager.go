@@ -101,5 +101,6 @@ func NewManager() Manager {
 	result.Register(NewNopService())
 	result.Register(NewLogValidatorService())
 	result.Register(NewEventReporterService())
+	result.Register(NewNetworkService())
 	return result
 }

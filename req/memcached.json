@@ -3,7 +3,10 @@
   "Tasks":"$tasks",
   "Params": {
     "url": "scp://${targetHost}/",
-    "credential": "$targetCredential",
+    "targetHost":"$targetHost",
+    "targetHostCredential": "$targetHostCredential",
+    "configURL": "config/aerospike.conf",
+    "configURLCredential": "$configURLCredential",
     "serviceInstanceName": "$instance",
     "maxMemory":"$maxMemory"
   }

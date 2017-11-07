@@ -3,6 +3,7 @@ package endly
 import (
 	"bytes"
 	"fmt"
+	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"io/ioutil"
@@ -112,7 +113,10 @@ func (v *Variables) Apply(in, out data.Map) error {
 		}
 
 		if variable.Required && (value == nil || toolbox.AsString(value) == "") {
-			return fmt.Errorf("Variable %v is required, but was empty, %v", variable.Name, in)
+
+			source := in.GetString(neatly.OwnerURL)
+
+			return fmt.Errorf("Variable %v is required by %v, but was empty, %v", variable.Name, source, toolbox.MapKeysToStringSlice(in))
 		}
 		out.SetValue(variable.Name, value)
 	}

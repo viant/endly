@@ -33,4 +33,3 @@ func (s *SystemTerminalSessions) Has(id string) bool {
 }
 
 var systemTerminalSessionsKey = (*SystemTerminalSessions)(nil)
-

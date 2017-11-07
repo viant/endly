@@ -138,7 +138,7 @@ The following expression are supported:
 **Workflow Lifecycle**
 
 1) New context with a new state map is created after inheriting values from a caller. (Caller will not see any context/state changes from downstream workflow)
-2) **workflow** key is published to the state map with defined workflow.data
+2) **data** key is published to the state map with defined workflow.data
 2) **params** key is published to state map with the caller parameters
 3) Workflow initialization stage executes, applying variables defined in Workflow.Init (input: state, output: state)
 4) Tasks Execution 
@@ -482,9 +482,9 @@ Example of run json
     "baseSvnUrl":"https://mysvn.com/trunk/ci",
     "buildRoot":"/build",
     "targetHost": "127.0.0.1",
-    "targetCredential": "${env.HOME}/secret/scp.json",
+    "targetHostCredential": "${env.HOME}/secret/scp.json",
     "svnCredential": "${env.HOME}/secret/adelphic_svn.json",
-    "configUrlCredential":"${env.HOME}/secret/scp.json",
+    "configURLCredential":"${env.HOME}/secret/scp.json",
     "mysqlCredential": "${env.HOME}/secret/mysql.json",
     "catalinaOpts": "-Xms512m -Xmx1g -XX:MaxPermSize=256m",
 

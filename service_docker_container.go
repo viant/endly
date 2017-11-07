@@ -37,8 +37,13 @@ type DockerContainerStopRequest struct {
 
 //DockerContainerCommandRequest represents a docker run command in the container.
 type DockerContainerCommandRequest struct {
-	Target  *url.Resource
-	Command string
+	Target             *url.Resource
+	SysPath            []string
+	Credential         string
+	Interactive        bool
+	AllocateTerminal   bool
+	RunInTheBackground bool
+	Command            string
 }
 
 //DockerContainerInfo represents a docker container info
