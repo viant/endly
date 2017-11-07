@@ -1,0 +1,16 @@
+{
+  "Target": {
+    "URL": "ssh://${targetHost}${appDirectory}/",
+    "Credential": "$targetHostCredential"
+  },
+  "ManagedCommand": {
+    "Options": {
+      "Directory": "$appDirectory"
+    },
+    "Executions": [
+      {
+        "Command": "tomcat/bin/shutdown.sh"
+      }
+    ]
+  }
+}

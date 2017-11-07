@@ -1,0 +1,7 @@
+{
+  "Target": {
+    "URL": "ssh://${targetHost}${appDirectory}/",
+    "Credential": "$targetHostCredential"
+  },
+  "Name": "catalina | grep ${appDirectory}/tomcat"
+}

@@ -1,0 +1,17 @@
+{
+  "Env": {
+    "MYSQL_ROOT_PASSWORD": "****"
+  },
+  "SysPath": [
+    "/usr/local/bin"
+  ],
+  "Target": "$dockerTarget",
+  "Credential": "$mysqlCredential",
+  "Image": "mysql:$mysqlVersion",
+  "Mount": {
+    "$configFile": "/etc/my.cnf"
+  },
+  "MappedPort": {
+    "3306": "3306"
+  }
+}

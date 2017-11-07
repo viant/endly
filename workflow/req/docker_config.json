@@ -1,0 +1,15 @@
+{
+  "Transfers": [
+    {
+      "Source": {
+        "URL": "$configURL",
+        "Credential": "$configURLCredential"
+      },
+      "Target": {
+        "URL": "scp://${targetHost}${configFile}",
+        "Credential":"$targetHostCredential"
+      },
+      "Expand": true
+    }
+  ]
+}

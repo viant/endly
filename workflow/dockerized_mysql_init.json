@@ -1,0 +1,59 @@
+[
+  {
+    "Name": "serviceInstanceName",
+    "From": "params.serviceInstanceName",
+    "Required": true
+  },
+  {
+    "Name": "targetHost",
+    "From": "params.targetHost",
+    "Required": true
+  },
+  {
+    "Name": "targetHostCredential",
+    "From": "params.targetHostCredential",
+    "Required": true
+  },
+  {
+    "Name": "configURL",
+    "From": "params.configURL"
+  },
+  {
+    "Name": "configURLCredential",
+    "From": "params.configURLCredential"
+  },
+  {
+    "Name": "mysqlCredential",
+    "Value": "$params.mysqlCredential",
+    "Required": true
+  },
+  {
+    "Name": "mysqlVersion",
+    "Value": "$params.mysqlVersion"
+  },
+  {
+    "Name": "exportFile",
+    "Value": "$params.exportFile"
+  },
+  {
+    "Name": "importFile",
+    "Value": "$params.importFile"
+  },
+  {
+    "Name": "mysqlVersion",
+    "Value": "$params.mysqlVersion",
+    "Required": true
+  },
+  {
+    "Name": "dockerTarget",
+    "Value": {
+      "Name": "$serviceInstanceName",
+      "URL": "scp://${targetHost}/",
+      "Credential": "$targetHostCredential"
+    }
+  },
+  {
+    "Name": "configFile",
+    "Value": "/tmp/my${serviceInstanceName}.cnf"
+  }
+]

@@ -1,0 +1,68 @@
+{
+  "Meta": {
+    "Sdk": "jdk",
+    "SdkVersion": "1.7",
+    "Deployments": [
+      {
+        "OsTarget": {
+          "Family": "Linux"
+        },
+
+        "Deploy": {
+          "AppName": "jdk",
+          "Transfer": {
+            "Source": {
+              "URL": "sdk/jdk-7u80-linux-x64.tar.gz"
+            },
+            "Target": {
+              "Name": "java",
+              "Version": "1.7",
+              "URL": "scp://${targetHost}/tmp/jvm/jdk-7u80-linux-x64.tar.gz",
+              "Credential": "${targetHostCredential}"
+            }
+          },
+          "VersionCheck": {
+            "Options": {
+              "SystemPaths": [
+                "/usr/lib/jvm/java-7-oracle/bin"
+              ]
+            },
+            "Executions": [
+              {
+                "Command": "java -version",
+                "Extraction": [
+                  {
+                    "Key": "Version",
+                    "RegExpr": "build (\\d\\.\\d).+"
+                  }
+                ]
+              }
+            ]
+          },
+          "Command": {
+            "Options": {
+              "Directory": "/tmp/jvm"
+            },
+            "Executions": [
+              {
+                "Command": "tar xvzf jdk-7u80-linux-x64.tar.gz",
+                "Error": [
+                  "Error"
+                ]
+                },
+              {
+                "Command": "mkdir -p /usr/lib/jvm/java-7-oracle"
+              },
+              {
+                "Command": "mv /tmp/jvm/jdk1.7.0_80/* /usr/lib/jvm/java-7-oracle/",
+                "Error": [
+                  "No"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

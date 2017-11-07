@@ -1,0 +1,13 @@
+{
+  "SysPath": [
+    "/usr/local/bin"
+  ],
+  "Target": "$dockerTarget",
+  "Image": "library/memcached:alpine",
+  "MappedPort": {
+    "11211": "11211"
+  },
+  "Params": {
+    "-m": "$maxMemory"
+  }
+}
