@@ -1,0 +1,10 @@
+{
+  "SysPath": [
+    "/usr/local/bin"
+  ],
+  "Target": "$dockerTarget",
+  "Credential": "$mysqlCredential",
+  "Interactive":true,
+  "AllocateTerminal":true,
+  "Command":"mysqldump  -uroot -p**** --all-databases --routines | grep -v 'Warning' > $exportFile"
+}

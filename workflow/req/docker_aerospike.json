@@ -1,0 +1,17 @@
+{
+  "SysPath": [
+    "/usr/local/bin"
+  ],
+  "Target": "$dockerTarget",
+  "Image": "aerospike/aerospike-server:latest",
+  "Mount": {
+    "$configFile": "/etc/aerospike/aerospike.conf"
+  },
+  "MappedPort": {
+    "3000": "3000",
+    "3001": "3001",
+    "3002": "3002",
+    "3004": "3004",
+    "8081": "8081"
+  }
+}

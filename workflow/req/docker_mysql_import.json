@@ -1,0 +1,9 @@
+{
+  "SysPath": [
+    "/usr/local/bin"
+  ],
+  "Target": "$dockerTarget",
+  "Credential": "$mysqlCredential",
+  "Interactive":true,
+  "Command":"mysql  -uroot -p**** < $importFile"
+}

@@ -1,0 +1,29 @@
+{
+  "Target": {
+    "URL": "ssh://${targetHost}${appDirectory}/",
+    "Credential": "$targetHostCredential"
+  },
+  "ManagedCommand": {
+    "Options": {
+      "Env": {
+        "CATALINA_OPTS": "$catalinaOpts",
+        "JPDA_ADDRESS": "$jpdaAddress"
+      },
+      "Directory": "$appDirectory"
+    },
+    "Executions": [
+      {
+        "Command": "tomcat/bin/catalina.sh jpda start",
+        "Success": [
+          "Tomcat started."
+        ],
+        "Extraction": [
+          {
+            "Key": "Version",
+            "RegExpr": "Server number: (\\d+\\.\\d+\\.\\d+)"
+          }
+        ]
+      }
+    ]
+  }
+}
