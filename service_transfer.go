@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
+	"github.com/viant/toolbox/url"
 	"io"
 	"io/ioutil"
+	"path"
 	"strings"
 )
 
@@ -72,21 +74,62 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 		if _, err := sourceService.StorageObject(source.URL); err != nil {
 			return nil, fmt.Errorf("Failed to copy: %v %v - Source does not exists", source.URL, target.URL)
 		}
+
+		compressed := transfer.Compress &&
+			(source.ParsedURL.Scheme == "scp" || source.ParsedURL.Scheme == "file") &&
+			(target.ParsedURL.Scheme == "scp" || target.ParsedURL.Scheme == "file")
+
 		var copyEventType = &CopyEventType{
 			SourceURL: source.URL,
 			TargetURL: target.URL,
 			Expand:    transfer.Expand || len(transfer.Replace) > 0,
 		}
 		startEvent := s.Begin(context, copyEventType, Pairs("value", copyEventType), Info)
+
+		if compressed {
+			err = s.compressSource(context, source, target)
+			if err != nil {
+				return nil, err
+			}
+		}
 		err = storage.Copy(sourceService, source.URL, targetService, target.URL, handler)
 		s.End(context)(startEvent, Pairs())
-		info := NewTransferLog(context, source.URL, target.URL, err, transfer.Expand)
-		result.Transferred = append(result.Transferred, info)
 		if err != nil {
 			return result, err
 		}
+		if compressed {
+			err = s.decompressTarget(context, target)
+			if err != nil {
+				return nil, err
+			}
+		}
+		info := NewTransferLog(context, source.URL, target.URL, err, transfer.Expand)
+		result.Transferred = append(result.Transferred, info)
+
 	}
 	return result, nil
+}
+
+func (s *transferService) compressSource(context *Context, source, target *url.Resource) error {
+	var parent, name = path.Split(source.ParsedURL.Path)
+	var sourceName = fmt.Sprintf("%v.gz", name)
+	_, err := context.Execute(source, fmt.Sprintf("cd %v\ntar cvzf %v %v", parent, sourceName, name))
+	if err != nil {
+		return err
+	}
+	err = source.Rename(sourceName)
+	if err != nil {
+		return err
+	}
+	_, name = toolbox.URLSplit(target.URL)
+	var targetName = fmt.Sprintf("%v.gz", name)
+	return source.Rename(targetName)
+}
+
+func (s *transferService) decompressTarget(context *Context, target *url.Resource) error {
+	var parent, name = path.Split(target.ParsedURL.Path)
+	_, err := context.Execute(target, fmt.Sprintf("cd %v\ntar xvzf %v", parent, name))
+	return err
 }
 
 func (s *transferService) Run(context *Context, request interface{}) *ServiceResponse {
