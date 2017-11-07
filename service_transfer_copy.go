@@ -18,10 +18,11 @@ type TransferCopyResponse struct {
 
 //Transfer represents copy instruction
 type Transfer struct {
-	Source  *url.Resource     //source URL with credential
-	Target  *url.Resource     //target URL with credential
-	Expand  bool              //flag to substitute content with state keys
-	Replace map[string]string //replacements map, if key if found in the conent it wil be replaced with corresponding value.
+	Source   *url.Resource     //source URL with credential
+	Target   *url.Resource     //target URL with credential
+	Expand   bool              //flag to substitute content with state keys
+	Compress bool              //flag to compress asset before sending over wirte and to decompress (this option is only supported on scp or file proto)
+	Replace  map[string]string //replacements map, if key if found in the conent it wil be replaced with corresponding value.
 }
 
 //TransferLog represents transfer log
