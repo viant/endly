@@ -6,6 +6,7 @@ import (
 	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 	"path"
+	"strings"
 )
 
 //VersionControlServiceID version control service id
@@ -137,7 +138,11 @@ func (s *versionControlService) checkoutArtifact(context *Context, origin, targe
 		if err != nil {
 			return nil, err
 		}
-		if origin.URL == response.Origin {
+
+		var originURL = strings.Replace(origin.URL, "https://", "http://", 1)
+		var actualURL = strings.Replace(response.Origin, "https://", "http://", 1)
+
+		if originURL == actualURL {
 			s.pull(context, &VcPullRequest{
 				Origin: origin,
 				Target: target,
