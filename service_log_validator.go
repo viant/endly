@@ -172,21 +172,25 @@ type LogTypeMeta struct {
 }
 
 type logRecordIterator struct {
-	logFileProvider func(blacklist ...*LogFile) []*LogFile
+	logFileProvider func() []*LogFile
 	logFiles        []*LogFile
 	logFileIndex    int
 }
 
 //HasNext returns true if iterator has next element.
 func (i *logRecordIterator) HasNext() bool {
-	if i.logFileIndex >= len(i.logFiles) {
-		i.logFiles = i.logFileProvider(i.logFiles...)
-		i.logFileIndex = 0
-		if i.logFileIndex < len(i.logFiles) {
-			return true
+	var logFileCount = len(i.logFiles)
+	if i.logFileIndex >= logFileCount {
+		i.logFiles = i.logFileProvider()
+		for j, candidate := range i.logFiles {
+			if candidate.HasPendingLogs() {
+				i.logFileIndex = j
+				return true
+			}
 		}
 		return false
 	}
+
 	logFile := i.logFiles[i.logFileIndex]
 	if !logFile.HasPendingLogs() {
 		i.logFileIndex++
@@ -274,6 +278,7 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 		if err != nil {
 			return nil, err
 		}
+
 		var logRecordIterator = logTypeMeta.LogRecordIterator()
 		logWaitRetryCount := request.LogWaitRetryCount
 		logWaitDuration := time.Duration(request.LogWaitTimeMs) * time.Millisecond
@@ -365,26 +370,23 @@ func (s *logValidatorService) readLogFile(context *Context, source *url.Resource
 		result.LogFiles[name] = logFile
 	}
 	s.Mutex().Unlock()
-
 	if !isNewLogFile && (logFile.Size == int(candidate.Size()) && logFile.LastModified.Unix() == candidate.LastModified().Unix()) {
 		return result, nil
 	}
-
 	reader, err := service.Download(candidate)
 	if err != nil {
 		return nil, err
 	}
-	data, err := ioutil.ReadAll(reader)
+	logContent, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}
-	var content = string(data)
-
-	var fileOverriden = false
+	var content = string(logContent)
+	var fileOverridden = false
 	if len(logFile.Content) > len(content) { //log shrink or rolled over case
 		logFile.Reset(candidate)
 		logFile.Content = content
-		fileOverriden = true
+		fileOverridden = true
 	}
 
 	var contentLength = len(logFile.Content)
@@ -392,16 +394,17 @@ func (s *logValidatorService) readLogFile(context *Context, source *url.Resource
 		contentLength = 50
 	}
 
-	if !fileOverriden && logFile.Size < int(candidate.Size()) && !strings.HasPrefix(content, string(logFile.Content)) {
+	if !fileOverridden && logFile.Size < int(candidate.Size()) && !strings.HasPrefix(content, string(logFile.Content)) {
 		if contentLength > len(content) {
 			contentLength = len(content)
 		}
 		logFile.Reset(candidate)
 	}
+
 	logFile.Content = content
-	logFile.Size = len(data)
-	if len(data) > 0 {
-		err = logFile.readLogRecords(bytes.NewReader(data))
+	logFile.Size = len(logContent)
+	if len(logContent) > 0 {
+		err = logFile.readLogRecords(bytes.NewReader(logContent))
 		if err != nil {
 			return nil, err
 		}
@@ -425,8 +428,8 @@ func (s *logValidatorService) readLogFiles(context *Context, source *url.Resourc
 		if candidate.IsFolder() {
 			continue
 		}
-		for _, logType := range logTypes {
 
+		for _, logType := range logTypes {
 			mask := strings.Replace(logType.Mask, "*", ".+", len(logType.Mask))
 			maskExpression, err := regexp.Compile("^" + mask + "$")
 			if err != nil {
@@ -536,21 +539,10 @@ func (i *logRecordIterator) Next(itemPointer interface{}) error {
 //LogRecordIterator returns log record iterator
 func (m *LogTypeMeta) LogRecordIterator() toolbox.Iterator {
 
-	logFileProvider := func(blacklistedLogFiles ...*LogFile) []*LogFile {
-
-		var blacklisted = make(map[string]bool)
-		for _, blacklistedFile := range blacklistedLogFiles {
-			blacklisted[blacklistedFile.Name] = true
-		}
+	logFileProvider := func() []*LogFile {
 		var result = make([]*LogFile, 0)
 		for _, logFile := range m.LogFiles {
-			if _, has := blacklisted[logFile.Name]; has {
-				continue
-			}
-
-			if logFile.HasPendingLogs() {
-				result = append(result, logFile)
-			}
+			result = append(result, logFile)
 		}
 		sort.Slice(result, func(i, j int) bool {
 			var left = result[i].LastModified
