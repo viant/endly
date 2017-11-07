@@ -30,6 +30,12 @@ func (s *processService) Run(context *Context, request interface{}) *ServiceResp
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to stop process: %v, %v", actualRequest.Pid, err)
 		}
+	case *ProcessStopAllRequest:
+		response.Response, err = s.stopAllProcesses(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to stop process: %v, %v", actualRequest.Input, err)
+		}
+
 	case *ProcessStatusRequest:
 		response.Response, err = s.checkProcess(context, actualRequest)
 		if err != nil {
@@ -44,6 +50,28 @@ func (s *processService) Run(context *Context, request interface{}) *ServiceResp
 		response.Status = "err"
 	}
 	return response
+}
+
+func (s *processService) stopAllProcesses(context *Context, request *ProcessStopAllRequest) (*CommandResponse, error) {
+	status, err := s.checkProcess(context, &ProcessStatusRequest{
+		Target: request.Target,
+		Name:   request.Input,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var respose *CommandResponse
+	for _, info := range status.Processes {
+		respose, err = s.stopProcess(context, &ProcessStopRequest{
+			Target: request.Target,
+			Pid:    info.Pid,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return respose, nil
 }
 
 func (s *processService) checkProcess(context *Context, request *ProcessStatusRequest) (*ProcessStatusResponse, error) {
@@ -178,6 +206,8 @@ func (s *processService) NewRequest(action string) (interface{}, error) {
 		return &ProcessStatusRequest{}, nil
 	case "stop":
 		return &ProcessStopRequest{}, nil
+	case "stop-all":
+		return &ProcessStopAllRequest{}, nil
 
 	}
 	return s.AbstractService.NewRequest(action)
