@@ -40,6 +40,10 @@ func BuildLogContent(from, to, multiplier int, template string) string {
 	return strings.Join(result, "")
 }
 
+
+
+
+
 func TestLogValidatorService_NewRequest(t *testing.T) {
 
 	manager := endly.NewManager()
@@ -53,8 +57,10 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	assert.Nil(t, err)
 	var template = GetMapAsString(templateLog)
 
+	var fileURL = strings.Replace(url.NewResource(tempPath).URL, "file://", "scp://127.0.0.1", 1)
+	credential :=path.Join(os.Getenv("HOME"), "secret/scp.json")
 	var response = service.Run(context, &endly.LogValidatorListenRequest{
-		Source: url.NewResource(tempPath),
+		Source: url.NewResource(fileURL , credential),
 		Types: []*endly.LogType{
 			{
 				Name:   "t",
@@ -64,7 +70,6 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 		},
 	})
 
-	time.Sleep(time.Second)
 	for i := 0; i < 2; i++ {
 		var logName = fmt.Sprintf("test%v.log", i)
 		var fullLogname = path.Join(tempPath, logName)
@@ -75,9 +80,10 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 		if err != nil {
 			assert.FailNow(t, fmt.Sprintf("%v", err))
 		}
+		time.Sleep(time.Second)
 	}
 
-	time.Sleep(time.Second)
+
 	assert.Equal(t, "", response.Error)
 	var listenResponse, ok = response.Response.(*endly.LogValidatorListenResponse)
 	assert.True(t, ok)
@@ -87,9 +93,12 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	assert.True(t, ok)
 	assert.NotNil(t, logTypeMeta)
 	assert.True(t, strings.HasSuffix(logTypeMeta.Source.URL, tempPath))
-	assert.Equal(t, 2, len(logTypeMeta.LogFiles))
+	assert.True(t,  len(logTypeMeta.LogFiles) >= 1)
+
 
 	response = service.Run(context, &endly.LogValidatorAssertRequest{
+		LogWaitTimeMs:3000,
+		LogWaitRetryCount:3,
 		ExpectedLogRecords: []*endly.ExpectedLogRecord{
 
 			{
@@ -113,33 +122,41 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	})
 
 	assert.Equal(t, "", response.Error)
-	assertionInfo, ok := response.Response.(*endly.ValidationInfo)
-	assert.True(t, ok)
-	assert.NotNil(t, assertionInfo)
-	assert.Equal(t, 0, len(assertionInfo.FailedTests))
+	logValidatorAssertResponse, ok := response.Response.(*endly.LogValidatorAssertResponse)
+	if assert.True(t, ok) {
+		assert.NotNil(t, logValidatorAssertResponse)
+		assert.Equal(t, 4, len(logValidatorAssertResponse.ValidationInfo))
+		for i:=0;i<4;i++ {
+			assert.Equal(t, 0, len(logValidatorAssertResponse.ValidationInfo[i].FailedTests))
+			if !assert.Nil(t, logValidatorAssertResponse.ValidationInfo[i].FailedTests) {
+				assert.FailNow(t,toolbox.AsString(i) +" "+ logValidatorAssertResponse.ValidationInfo[i].FailedTests[0].Message)
+			}
 
-	response = service.Run(context, &endly.LogValidatorAssertRequest{
-		ExpectedLogRecords: []*endly.ExpectedLogRecord{
+		}
+		response = service.Run(context, &endly.LogValidatorAssertRequest{
+			ExpectedLogRecords: []*endly.ExpectedLogRecord{
 
-			{
+				{
 
-				Type: "t",
-				Records: []map[string]interface{}{
-					{
-						"k5": "20",
-					},
-					{
-						"k5": "30",
+					Type: "t",
+					Records: []map[string]interface{}{
+						{
+							"k5": "20",
+						},
+						{
+							"k5": "30",
+						},
 					},
 				},
 			},
-		},
-	})
+		})
 
-	assert.Equal(t, "", response.Error)
-	assertionInfo, ok = response.Response.(*endly.ValidationInfo)
-	assert.True(t, ok)
-	assert.NotNil(t, assertionInfo)
-	assert.Equal(t, 0, len(assertionInfo.FailedTests))
+		assert.Equal(t, "", response.Error)
+		logValidatorAssertResponse, ok = response.Response.(*endly.LogValidatorAssertResponse)
+		assert.True(t, ok)
+		assert.NotNil(t, logValidatorAssertResponse)
+		assert.Equal(t, 0, len(logValidatorAssertResponse.ValidationInfo[0].FailedTests))
+
+	}
 
 }
