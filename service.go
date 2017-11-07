@@ -62,7 +62,6 @@ func (s *workflowService) Sleep(context *Context, sleepTimeMs int) {
 	}
 }
 
-
 //AddEvent add event
 func (s *AbstractService) AddEvent(context *Context, eventType interface{}, value map[string]interface{}, level ...int) *Event {
 	if len(level) == 0 {

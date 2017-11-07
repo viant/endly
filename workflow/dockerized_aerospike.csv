@@ -1,13 +1,13 @@
 Workflow,,Name,Description,Tasks,,Init,
-,,dockerized_aerospike,This workflow managed aeropsike docker service,%Tasks,,#dockerized_aerospike_var.json,
+,,dockerized_aerospike,This workflow managed aeropsike docker service,%Tasks,,#dockerized_aerospike_init.json,
 []Tasks,,Name,Description,Actions,RunCriteria,,
 ,,start,Start aerospike contaner,%Start,,,
 []Start,Service,Action,Description,Request,RunCriteria,,Post
-,daemon,status,Check if system docker service is running,$systemDockerRequest,,,"[{""name"":""dockerSystemStatus"", ""from"":""State""}]"
-,daemon,start,Start docker service,$systemDockerRequest,$dockerSystemStatus:/!running/,,
-,transfer,copy,This action will copy template config file to the temp folder,$transferRequest,$params.confgUrl:/!params.configUrl/,,
-,docker,run,Start docker aerospike service,$dockerRunRequest,,,
+,daemon,status,Check if system docker service is running,#req/docker_system.json,,,"[{""name"":""dockerSystemStatus"", ""from"":""State""}]"
+,daemon,start,Start docker service,#req/docker_system.json,$dockerSystemStatus:!running,,
+,transfer,copy,This action will copy template config file to the temp folder,#req/docker_config.json,$configURL:/!configURL/,,
+,docker,run,Start docker aerospike service,#req/docker_aerospike.json,,,
 []Tasks,,Name,Description,Actions,,,
 ,,stop,Stop aerospike container,%Stop,,,
 []Stop,Service,Action,Description,Request,,,
-,docker,container-stop,Start docker aerospike service,$dockerRequest,,,
+,docker,container-stop,Start docker aerospike service,#req/docker.json,,,

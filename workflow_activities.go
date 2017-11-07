@@ -67,10 +67,10 @@ func (a *Activities) GetPath(runner *CliRunner, fullPath bool) (string, int) {
 
 //AsyncServiceActionEvent represent async action
 type AsyncServiceActionEvent struct {
-	Workflow string
-	Task string
-	Service string
-	Action string
-	TagId string
+	Workflow    string
+	Task        string
+	Service     string
+	Action      string
+	TagId       string
 	Description string
 }

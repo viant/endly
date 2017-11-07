@@ -7,6 +7,7 @@ import (
 
 //OperatingSystem represents an OperatingSystem
 type OperatingSystem struct {
+	Family  string
 	Name    string
 	Version string
 	Path    *SystemPath
@@ -29,7 +30,10 @@ func (s *OperatingSystem) Matches(target *OperatingSystemTarget) bool {
 	if target == nil {
 		return true
 	}
-	if target.Name != s.Name {
+	if target.Name != "" && target.Name != s.Name {
+		return false
+	}
+	if target.Family != "" && target.Family != s.Family {
 		return false
 	}
 
@@ -58,6 +62,9 @@ type SystemPath struct {
 //Push appends path to the system paths
 func (p *SystemPath) Push(paths ...string) {
 	for _, path := range paths {
+		if strings.Contains(path, "\n") {
+			continue
+		}
 		if _, has := p.index[path]; has {
 			return
 		}
@@ -74,6 +81,7 @@ func (p *SystemPath) EnvValue() string {
 
 //OperatingSystemTarget represents operating system target
 type OperatingSystemTarget struct {
+	Family             string
 	Name               string
 	MinRequiredVersion string
 	MaxAllowedVersion  string

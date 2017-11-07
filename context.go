@@ -13,9 +13,9 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
-	"sync"
 )
 
 var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
@@ -62,8 +62,6 @@ func (c *Context) Clone() *Context {
 	c.cloned = append(c.cloned, result)
 	return result
 }
-
-
 
 func (c *Context) parentURLCandidates() []string {
 	var result = make([]string, 0)
@@ -134,7 +132,6 @@ func (c *Context) TerminalSessions() SystemTerminalSessions {
 	return *result
 }
 
-
 //TerminalSessions returns client sessions
 func (c *Context) SeleniumSessions() SeleniumSessions {
 	var result *SeleniumSessions
@@ -147,8 +144,6 @@ func (c *Context) SeleniumSessions() SeleniumSessions {
 	}
 	return *result
 }
-
-
 
 //Service returns a service fo provided id or error.
 func (c *Context) Service(name string) (Service, error) {
@@ -225,8 +220,15 @@ func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandRe
 	if command == nil {
 		return nil, nil
 	}
+	var err error
 	var commandRequest *ManagedCommandRequest
 	switch actualCommand := command.(type) {
+	case *superUserCommandRequest:
+		actualCommand.Target = target
+		commandRequest, err = actualCommand.AsCommandRequest(c)
+		if err != nil {
+			return nil, err
+		}
 	case *CommandRequest:
 		actualCommand.Target = target
 		commandRequest = actualCommand.AsManagedCommandRequest()

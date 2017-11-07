@@ -9,8 +9,8 @@ import (
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
-	"time"
 	"sync"
+	"time"
 )
 
 const (
@@ -93,7 +93,6 @@ func (s *workflowService) evaluateRunCriteria(context *Context, criteria string)
 		return false, fmt.Errorf("Run criteria needs to have colon: but had: %v", criteria)
 	}
 	fragments := strings.Split(criteria, ":")
-
 	actualOperand := context.Expand(strings.TrimSpace(fragments[0]))
 	expectedOperand := context.Expand(strings.TrimSpace(fragments[1]))
 	validator := &Validator{}
@@ -186,8 +185,8 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) err
 		Service:        action.Service,
 		TagIndex:       action.TagIndex,
 		TagId:          action.TagId,
-		Description:    action.Description,
-		TagDescription: action.TagDescription,
+		Description:    context.Expand(action.Description),
+		TagDescription: context.Expand(action.TagDescription),
 		Tag:            action.Tag,
 		ServiceRequest: action.Request,
 		StartTime:      time.Now(),
@@ -282,6 +281,16 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 	for i, action := range task.Actions {
 		if action.Async {
 			asyncActions = append(asyncActions, action)
+			var asyncEvent = &AsyncServiceActionEvent{
+				Workflow:    workflow.Name,
+				Task:        context.Expand(task.Name),
+				Description: context.Expand(action.Description),
+				Service:     action.Service,
+				Action:      action.Action,
+				TagId:       action.TagId,
+			}
+
+			s.AddEvent(context, asyncEvent, Pairs("value", asyncEvent))
 			continue
 		}
 		if hasAllowedActions && !allowedServiceActions[i] {
@@ -308,18 +317,8 @@ func (s *workflowService) runAsyncActions(context *Context, workflow *Workflow, 
 		group := sync.WaitGroup{}
 		group.Add(len(asyncAction))
 		var groupErr error
+		s.Sleep(context, 200)
 		for _, action := range asyncAction {
-
-			var asyncEvent = &AsyncServiceActionEvent{
-				Workflow:    workflow.Name,
-				Task:        task.Name,
-				Description: action.Description,
-				Service:     action.Service,
-				Action:      action.Action,
-				TagId:      action.TagId,
-			}
-			s.AddEvent(context, asyncEvent, Pairs("value", asyncEvent))
-
 			go func(actionContext *Context, action *ServiceAction) {
 				defer group.Done()
 				defer s.publishEvents(context, actionContext.Events.Events)
@@ -393,7 +392,7 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 
 	var workflowData = data.Map(workflow.Data)
 	state.Put(neatly.OwnerURL, workflow.Source.URL)
-	state.Put("workflow", workflowData)
+	state.Put("data", workflowData)
 
 	params := buildParamsMap(request, context)
 
@@ -410,6 +409,7 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	}
 	s.AddEvent(context, "State.Init", Pairs("state", state.AsEncodableMap()), Debug)
 	for _, task := range workflow.Tasks {
+
 		var startTime = time.Now()
 		err = s.runTask(context, workflow, task, request)
 		if err != nil {

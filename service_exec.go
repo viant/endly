@@ -228,6 +228,7 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 	if err != nil {
 		return err
 	}
+
 	if len(stdout) > 0 {
 		for _, execution := range request.ManagedCommand.Executions {
 			if execution.MatchOutput != "" && strings.Contains(stdout, execution.MatchOutput) {
@@ -431,11 +432,24 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 		}
 	}
 
-	output, err := session.Run("echo $PATH", 0)
+	output, err := session.Run("uname -a", 0)
+	if err != nil {
+		return nil, err
+	}
+	if family, has := ExtractColumn(string(output), 0); has {
+		operatingSystem.Family = family
+	}
+	//TODO add os architecure i.e.x64
+	output, err = session.Run("echo $PATH", 0)
 	if err != nil {
 		return nil, err
 	}
 	stdOut := string(output)
+
+	var newLine = strings.Index(stdOut, "\n")
+	if newLine != -1 {
+		stdOut = string(stdOut[:newLine])
+	}
 	operatingSystem.Path.SystemPath = strings.Split(stdOut, ":")
 	return operatingSystem, nil
 }
@@ -476,15 +490,19 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 		executionOptions.Directory = r.MangedCommand.Options.Directory
 		executionOptions.SystemPaths = r.MangedCommand.Options.SystemPaths
 	}
-
+	result.ManagedCommand.Options = executionOptions
 	var errors = make([]string, 0)
 	var extractions = make([]*DataExtraction, 0)
 	for _, execution := range r.MangedCommand.Executions {
 		if execution.Command == "" {
 			continue
 		}
+		sudo := ""
+		if len(execution.Command) > 1 {
+			sudo = "sudo "
+		}
 		newExecution := &Execution{
-			Command:     "sudo " + execution.Command,
+			Command:     sudo + execution.Command,
 			Error:       execution.Error,
 			Extraction:  execution.Extraction,
 			Success:     execution.Success,

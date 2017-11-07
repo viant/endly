@@ -143,7 +143,7 @@ func (f *LogFile) readLogRecords(reader io.Reader) error {
 			}
 		}
 		if f.Inclusion != "" {
-			if ! strings.Contains(line, f.Inclusion) {
+			if !strings.Contains(line, f.Inclusion) {
 				line, dataProcessed = f.ProcessingState.Update(dataProcessed, lineIndex)
 				continue
 			}
@@ -280,8 +280,8 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 
 		for _, expectedLogRecord := range expectedLogRecords.Records {
 			var validationInfo = &ValidationInfo{
-				TagId:	expectedLogRecords.TagId,
-				Description:     fmt.Sprintf("Log Validation: %v", expectedLogRecords.Type),
+				TagId:       expectedLogRecords.TagId,
+				Description: fmt.Sprintf("Log Validation: %v", expectedLogRecords.Type),
 			}
 			response.ValidationInfo = append(response.ValidationInfo, validationInfo)
 			for j := 0; j < logWaitRetryCount; j++ {
@@ -354,7 +354,7 @@ func (s *logValidatorService) readLogFile(context *Context, source *url.Resource
 		logFile = &LogFile{
 			Name:            name,
 			Exclusion:       logType.Exclusion,
-			Inclusion: 		 logType.Inclusion,
+			Inclusion:       logType.Inclusion,
 			URL:             candidate.URL(),
 			LastModified:    candidate.LastModified(),
 			Size:            int(candidate.Size()),

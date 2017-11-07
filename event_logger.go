@@ -12,13 +12,13 @@ import (
 
 //EventLogger represent event logger to drop event details in the provied directory.
 type EventLogger struct {
-	activities *Activities
-	directory  string
+	activities       *Activities
+	directory        string
 	workflowTag      string
 	workflowTagCount int
 	subPath          string
-	tagCount map[string]int
-	mutex *sync.Mutex
+	tagCount         map[string]int
+	mutex            *sync.Mutex
 }
 
 func (l *EventLogger) processEvent(event *Event) {
@@ -86,7 +86,7 @@ func (l *EventLogger) Log(event *Event) error {
 func NewEventLogger(directory string) *EventLogger {
 	var activities Activities = make([]*WorkflowServiceActivity, 0)
 	return &EventLogger{
-		mutex:&sync.Mutex{},
+		mutex:      &sync.Mutex{},
 		directory:  directory,
 		activities: &activities,
 		tagCount:   make(map[string]int),

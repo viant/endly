@@ -35,8 +35,8 @@
     "Required": true
   },
   {
-    "Name": "targetCredential",
-    "From": "params.targetCredential",
+    "Name": "targetHostCredential",
+    "From": "params.targetHostCredential",
     "Required": true
   },
   {
@@ -61,7 +61,7 @@
     "Name": "buildTarget",
     "Value": {
       "URL": "$targetUrl",
-      "Credential": "$targetCredential"
+      "Credential": "$targetHostCredential"
     }
   },
 
@@ -76,7 +76,7 @@
           },
           "Target": {
             "URL": "${targetUrl}",
-            "Credential": "$targetCredential"
+            "Credential": "$targetHostCredential"
           }
         }
       ]

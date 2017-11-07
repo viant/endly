@@ -1,15 +1,23 @@
 Workflow,,Name,Description,Tasks,,Init
-,,dockerized_mysql,This workflow manages mysql as docker service,%Tasks,,#dockerized_mysql_var.json
+,,dockerized_mysql,This workflow manages mysql as docker service,%Tasks,,#dockerized_mysql_init.json
 []Tasks,,Name,Description,Actions,,
 ,,start,"This task will stop system mysql if it is running, it only run if  $param.stopSystemMysql is true",%Start,,
 []Start,Service,Action,Description,Request,RunCriteria,Post
-,daemon,status,Check if system mysql service is running,$systemMysqlRequest,$params.stopSystemMysql:true,"[{""name"":""mysqlSystemStatus"", ""from"":""State""}]"
-,daemon,stop,Stop system mysql service,$systemMysqlRequest,$mysqlSystemStatus:running,
-,daemon,status,Check if system docker service is running,$systemDockerRequest,,"[{""name"":""dockerSystemStatus"", ""from"":""State""}]"
-,daemon,start,Start docker service,$systemDockerRequest,$dockerSystemStatus:/!running/,
-,transfer,copy,This action will copy template config file to the temp folder,$transferRequest,$params.configUrl:/!params.configUrl/,
-,docker,run,Start docker mysql service,$dockerRunRequest,,
+,daemon,status,Check if system mysql service is running,#req/mysql_system.json,$params.stopSystemMysql:true,"[{""name"":""mysqlSystemStatus"", ""from"":""State""}]"
+,daemon,stop,Stop system mysql service,#req/mysql_system.json,$mysqlSystemStatus:running,
+,daemon,status,Check if system docker service is running,#req/docker_system.json,,"[{""name"":""dockerSystemStatus"", ""from"":""State""}]"
+,daemon,start,Start docker service,#req/docker_system.json,$dockerSystemStatus:!running,
+,transfer,copy,This action will copy template config file to the temp folder,#req/docker_config.json,,
+,docker,run,Start docker mysql service,#req/docker_mysql.json,,
 []Tasks,,Name,Description,Actions,,
 ,,stop,This task will stop docker mysql,%Stop,,
 []Stop,Service,Action,Description,Request,,
-,docker,container-stop,Stop docker mysql service,$dockerRequest,,
+,docker,container-stop,Stop docker mysql service,#req/docker.json,,
+[]Tasks,,Name,Description,Actions,,
+,,export,Export mysql schema from docker,%Export,,
+[]Export,Service,Action,Description,Request,,
+,docker,container-command,Export all databases,#req/docker_mysql_export.json,,
+[]Tasks,,Name,Description,Actions,,
+,,import,Export mysql schema from docker,%Import,,
+[]Import,Service,Action,Description,Request,,
+,docker,container-command,Import mysql dump,#req/docker_mysql_import.json,,

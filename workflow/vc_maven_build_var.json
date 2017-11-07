@@ -33,7 +33,7 @@
     "Name": "buildTarget",
     "Value": {
       "URL": "$params.targetUrl",
-      "Credential": "$params.targetCredential"
+      "Credential": "$params.targetHostCredential"
     }
   },
   {

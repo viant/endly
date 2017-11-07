@@ -112,7 +112,9 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	}
 
 	if request.Command != nil {
-		_, err = context.Execute(target, request.Command)
+		_, err = context.Execute(target, &superUserCommandRequest{
+			MangedCommand: request.Command,
+		})
 		if err != nil {
 			return nil, fmt.Errorf("Failed to init deploy app to %v: %v", target, err)
 		}

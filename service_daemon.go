@@ -86,9 +86,17 @@ func (s *daemonService) determineServiceType(context *Context, service, exclusio
 	}
 
 	commandResult, err = context.ExecuteAsSuperUser(target, &ManagedCommand{
+		Options: &ExecutionOptions{
+			Terminators: []string{"(END)"},
+		},
 		Executions: []*Execution{
 			{
 				Command: "service " + service + " status",
+			},
+			{
+				Secure:      "",
+				MatchOutput: "(END)", //quite multiline mode
+				Command:     "Q",
 			},
 		},
 	})
@@ -190,7 +198,8 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 						},
 					},
 					Error: []string{"Unrecognized"},
-				}},
+				},
+			},
 		})
 		if err != nil {
 			return nil, err
@@ -208,13 +217,21 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 	}
 
 	commandResult, err := context.ExecuteAsSuperUser(target, &ManagedCommand{
+		Options: &ExecutionOptions{
+			Terminators: []string{"(END)"},
+		},
 		Executions: []*Execution{
+
 			{
 				Command: command,
 				Extraction: DataExtractions{
 					{
 						Key:     "pid",
 						RegExpr: "[^└]+└─(\\d+).+",
+					},
+					{
+						Key:     "pid",
+						RegExpr: " Main PID: (\\d+).+",
 					},
 					{
 						Key:     "state",
@@ -226,12 +243,17 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 					},
 				},
 			},
+			{
+				Secure:      "",
+				MatchOutput: "(END)", //quite multiline mode
+				Command:     "Q",
+			},
 		},
 	})
-
 	if err != nil {
 		return nil, err
 	}
+
 	extractServiceInfo(commandResult.Extracted, result)
 	return result, nil
 

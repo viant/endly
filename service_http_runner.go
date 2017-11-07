@@ -60,11 +60,9 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		return err
 	}
 
-
 	copyHeaders(sendHTTPRequest.Header, httpRequest.Header)
 	sessionCookies.SetHeader(sendHTTPRequest.Header)
 	sendHTTPRequest.Cookies.SetHeader(httpRequest.Header)
-
 
 	response := &HTTPResponse{}
 	result.Responses = append(result.Responses, response)
@@ -76,7 +74,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 	}
 	var httpResponse *http.Response
 
-	for i:=0;i<repeat;i++ {
+	for i := 0; i < repeat; i++ {
 		httpResponse, err = client.Do(httpRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("%v", err)
@@ -100,7 +98,6 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 	}
 	endEvent := s.End(context)(startEvent, Pairs("response", response))
 
-
 	var responseBody = replaceResponseBodyIfNeeded(sendHTTPRequest, response.Body)
 
 	sendHTTPRequest.Extraction.Extract(context, result.Extracted, responseBody)
@@ -110,7 +107,6 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		cookies.Put(k, cookie.Value)
 	}
 	sessionCookies.AddCookies(responseCookies...)
-
 
 	var previous = state.GetMap("previous")
 	if previous == nil {
@@ -126,7 +122,6 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		}
 	}
 
-
 	for k, v := range result.Extracted {
 		var expanded = previous.Expand(v)
 		previous[k] = state.Expand(expanded)
@@ -141,16 +136,15 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		return nil
 	}
 	for _, candidate := range sendRequest.Requests {
-		if candidate.MatchBody!= "" && strings.Contains(response.Body, candidate.MatchBody) {
+		if candidate.MatchBody != "" && strings.Contains(response.Body, candidate.MatchBody) {
 			err = s.sendRequest(context, client, candidate, sessionCookies, sendRequest, result)
-			if err !=nil {
+			if err != nil {
 				return err
 			}
 		}
 	}
 	return nil
 }
-
 
 func replaceResponseBodyIfNeeded(sendHTTPRequest *HTTPRequest, responseBody string) string {
 	if len(sendHTTPRequest.Replace) > 0 {
