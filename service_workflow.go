@@ -445,6 +445,8 @@ func (s *workflowService) loadWorkflow(context *Context, request *WorkflowLoadRe
 	if err != nil {
 		return nil, fmt.Errorf("Failed to load workflow: %v, %v", request.Source, err)
 	}
+	s.Mutex().Lock()
+	defer  s.Mutex().Unlock()
 	err = s.Register(workflow)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to register workflow: %v, %v", request.Source, err)
