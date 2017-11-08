@@ -7,6 +7,7 @@ import (
 	"github.com/viant/toolbox/ssh"
 	"github.com/viant/toolbox/url"
 	"strings"
+	"path"
 )
 
 //SystemExecServiceID represent system executor service id
@@ -126,6 +127,10 @@ func (s *execService) setEnvVariable(context *Context, session *SystemTerminalSe
 }
 
 func (s *execService) changeDirectory(context *Context, session *SystemTerminalSession, commandInfo *CommandResponse, directory string) error {
+	parent, name := path.Split(directory)
+	if path.Ext(name) != "" {
+		directory = parent
+	}
 	if session.path == directory {
 		return nil
 	}
