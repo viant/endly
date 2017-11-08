@@ -11,6 +11,9 @@ import (
 	"strings"
 )
 
+//TODO refactor compress with https://golangcode.com/create-zip-files-in-go/
+
+
 //TransferServiceID represents transfer service id
 const TransferServiceID = "transfer"
 
@@ -92,7 +95,7 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 				return nil, err
 			}
 		}
-		err = storage.Copy(sourceService, source.URL, targetService, target.URL, handler)
+		err = storage.Copy(sourceService, source.URL, targetService, target.URL, handler, nil)
 		s.End(context)(startEvent, Pairs())
 		if err != nil {
 			return result, err
