@@ -30,8 +30,6 @@ func (s *networkService) forward(context *Context, request *NetworkForwardReques
 	for _, forward := range request.Forwards {
 		var local = context.Expand(forward.Local)
 		var remote = context.Expand(forward.Remote)
-
-		fmt.Printf(" %v -> %v\n", local, remote)
 		err = client.Forward(local, remote)
 		if err != nil {
 			return nil, err
