@@ -30,7 +30,6 @@ func ExtractPathIndex(path string) (int, string) {
 	endPositionOfTheFirstPathSegment := len(indexSegment) + 1
 	startPathPosition = strings.LastIndex(indexSegment, "[")
 	if startPathPosition == -1 {
-		fmt.Printf("3\n")
 		return -1, path
 	}
 	var candidate = string(indexSegment[startPathPosition+1:])
