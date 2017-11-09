@@ -43,6 +43,7 @@ func ExtractColumns(line string) ([]string, bool) {
 	if line == "" {
 		return []string{}, false
 	}
+	line = vtclean.Clean(line, false)
 	var index = -1
 	var expectColumn = true
 	var result = make([]string, 0)

@@ -7,15 +7,15 @@ import (
 //SystemTerminalSession represents a system terminal session
 type SystemTerminalSession struct {
 	ID string
-	*ssh.MultiCommandSession
-	Connection      *ssh.Client
+	ssh.MultiCommandSession
+	Connection      ssh.Service
 	OperatingSystem *OperatingSystem
 	envVariables    map[string]string
 	path            string
 }
 
 //NewSystemTerminalSession create a new client session
-func NewSystemTerminalSession(id string, connection *ssh.Client) (*SystemTerminalSession, error) {
+func NewSystemTerminalSession(id string, connection ssh.Service) (*SystemTerminalSession, error) {
 	return &SystemTerminalSession{
 		ID:           id,
 		Connection:   connection,
