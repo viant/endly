@@ -20,7 +20,7 @@ func (s *networkService) forward(context *Context, request *NetworkForwardReques
 	var target, err = context.ExpandResource(request.Target)
 	var authConfig = &cred.Config{}
 	hostname, port := getHostAndSSHPort(target)
-	client, err := ssh.NewClient(hostname, port, authConfig)
+	client, err := ssh.NewService(hostname, port, authConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (s *networkService) forward(context *Context, request *NetworkForwardReques
 	for _, forward := range request.Forwards {
 		var local = context.Expand(forward.Local)
 		var remote = context.Expand(forward.Remote)
-		err = client.Forward(local, remote)
+		err = client.OpenTunnel(local, remote)
 		if err != nil {
 			return nil, err
 		}

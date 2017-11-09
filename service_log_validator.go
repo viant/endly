@@ -65,7 +65,7 @@ type LogFile struct {
 	Exclusion       string
 	Inclusion       string
 	ProcessingState *LogProcessingState
-	LastModified    *time.Time
+	LastModified    time.Time
 	Size            int
 	Records         []*LogRecord
 	Mutex           *sync.RWMutex
@@ -101,8 +101,8 @@ func (f *LogFile) PushLogRecord(record *LogRecord) {
 func (f *LogFile) Reset(object storage.Object) {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
-	f.Size = int(object.Size())
-	f.LastModified = object.LastModified()
+	f.Size = int(object.FileInfo().Size())
+	f.LastModified = object.FileInfo().ModTime()
 	f.ProcessingState.Reset()
 }
 
@@ -354,15 +354,17 @@ func (s *logValidatorService) readLogFile(context *Context, source *url.Resource
 
 	_, name := toolbox.URLSplit(candidate.URL())
 	logFile, has := result.LogFiles[name]
+	fileInfo := candidate.FileInfo()
 	if !has {
 		isNewLogFile = true
+
 		logFile = &LogFile{
 			Name:            name,
 			Exclusion:       logType.Exclusion,
 			Inclusion:       logType.Inclusion,
 			URL:             candidate.URL(),
-			LastModified:    candidate.LastModified(),
-			Size:            int(candidate.Size()),
+			LastModified:    fileInfo.ModTime(),
+			Size:            int(fileInfo.Size()),
 			ProcessingState: &LogProcessingState{},
 			Mutex:           &sync.RWMutex{},
 			Records:         make([]*LogRecord, 0),
@@ -370,7 +372,7 @@ func (s *logValidatorService) readLogFile(context *Context, source *url.Resource
 		result.LogFiles[name] = logFile
 	}
 	s.Mutex().Unlock()
-	if !isNewLogFile && (logFile.Size == int(candidate.Size()) && logFile.LastModified.Unix() == candidate.LastModified().Unix()) {
+	if !isNewLogFile && (logFile.Size == int(fileInfo.Size()) && logFile.LastModified.Unix() == fileInfo.ModTime().Unix()) {
 		return result, nil
 	}
 	reader, err := service.Download(candidate)
@@ -394,7 +396,7 @@ func (s *logValidatorService) readLogFile(context *Context, source *url.Resource
 		contentLength = 50
 	}
 
-	if !fileOverridden && logFile.Size < int(candidate.Size()) && !strings.HasPrefix(content, string(logFile.Content)) {
+	if !fileOverridden && logFile.Size < int(fileInfo.Size()) && !strings.HasPrefix(content, string(logFile.Content)) {
 		if contentLength > len(content) {
 			contentLength = len(content)
 		}
@@ -547,10 +549,10 @@ func (m *LogTypeMeta) LogRecordIterator() toolbox.Iterator {
 		sort.Slice(result, func(i, j int) bool {
 			var left = result[i].LastModified
 			var right = result[j].LastModified
-			if !left.After(*right) && !right.After(*left) {
+			if !left.After(right) && !right.After(left) {
 				return result[i].URL > result[j].URL
 			}
-			return left.After(*right)
+			return left.After(right)
 		})
 		return result
 	}

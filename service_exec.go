@@ -67,7 +67,7 @@ func (s *execService) openSession(context *Context, request *OpenSessionRequest)
 		}
 	}
 	hostname, port := getHostAndSSHPort(target)
-	connection, err := ssh.NewClient(hostname, port, authConfig)
+	connection, err := ssh.NewService(hostname, port, authConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -246,8 +246,8 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 func getTerminators(options *ExecutionOptions, session *SystemTerminalSession, execution *Execution) []string {
 	var terminators = append([]string{}, options.Terminators...)
 	terminators = append(terminators, "$ ")
-	terminators = append(terminators, session.ShellPrompt)
-	superUserPrompt := string(strings.Replace(session.ShellPrompt, "$", "#", 1))
+	terminators = append(terminators, session.ShellPrompt())
+	superUserPrompt := string(strings.Replace(session.ShellPrompt(), "$", "#", 1))
 	if strings.Contains(superUserPrompt, "bash") {
 		superUserPrompt = string(superUserPrompt[2:])
 	}
