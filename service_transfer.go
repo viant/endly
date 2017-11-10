@@ -112,7 +112,7 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 			return result, err
 		}
 		if compressed {
-			err = s.decompressTarget(context, source, target)
+			err = s.decompressTarget(context, source, target, object)
 			if err != nil {
 				return nil, err
 			}
@@ -148,6 +148,8 @@ func (s *transferService) 	compressSource(context *Context, source, target *url.
 	if err != nil {
 		return err
 	}
+
+
 	if sourceObject.IsFolder() {
 		source.URL = toolbox.URLPathJoin(source.URL, archiveName)
 		source.ParsedURL, _ = url2.Parse(source.URL)
@@ -160,12 +162,10 @@ func (s *transferService) 	compressSource(context *Context, source, target *url.
 	if err != nil {
 		return err
 	}
-	_, name = toolbox.URLSplit(target.URL)
-	var targetName = fmt.Sprintf("%v.tar.gz", name)
-	return source.Rename(targetName)
+	return target.Rename(archiveName)
 }
 
-func (s *transferService) decompressTarget(context *Context, source, target *url.Resource) error {
+func (s *transferService) decompressTarget(context *Context, source, target *url.Resource, sourceObject storage.Object) error {
 	var parent, name = path.Split(target.ParsedURL.Path)
 	_, err := context.Execute(target, &CommandRequest{
 		Commands:  []string{fmt.Sprintf("mkdir -p %v\ncd %v", parent, parent)},
@@ -173,18 +173,25 @@ func (s *transferService) decompressTarget(context *Context, source, target *url
 
 	if err == nil {
 		_, err = context.Execute(target, &CommandRequest{
-			Commands:  []string{fmt.Sprintf("tar xvzf %v", name), fmt.Sprintf("rm %v", name)},
+			Commands:  []string{fmt.Sprintf("tar xvzf %v", name)},
 			TimeoutMs: 120000,
 
 		})
 	}
-	if err == nil {
-		_, err = context.Execute(source, &CommandRequest{
+	if err == nil && sourceObject.IsFolder() {
+		_, err = context.Execute(target, &CommandRequest{
 			Commands:  []string{fmt.Sprintf("rm %v", name)},
 			TimeoutMs: 120000,
 
 		})
+		if err == nil {
+			_, err = context.Execute(source, &CommandRequest{
+				Commands:  []string{fmt.Sprintf("rm %v", name)},
+				TimeoutMs: 120000,
+			})
+		}
 	}
+
 	return err
 }
 

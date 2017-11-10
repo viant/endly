@@ -13,9 +13,9 @@ type networkService struct {
 	*AbstractService
 }
 
-func (s *networkService) forward(context *Context, request *NetworkForwardRequest) (*NetworkForwardResponse, error) {
-	var response = &NetworkForwardResponse{
-		Forwards: make([]*NetworkForward, 0),
+func (s *networkService) tunnel(context *Context, request *NetworkTunnelRequest) (*NetworkTunnelResponse, error) {
+	var response = &NetworkTunnelResponse{
+		Forwards: make([]*NetworkTunnel, 0),
 	}
 	var target, err = context.ExpandResource(request.Target)
 	var authConfig = &cred.Config{}
@@ -27,14 +27,14 @@ func (s *networkService) forward(context *Context, request *NetworkForwardReques
 	context.Deffer(func() {
 		client.Close()
 	})
-	for _, forward := range request.Forwards {
-		var local = context.Expand(forward.Local)
-		var remote = context.Expand(forward.Remote)
+	for _, tunnel := range request.Tunnels {
+		var local = context.Expand(tunnel.Local)
+		var remote = context.Expand(tunnel.Remote)
 		err = client.OpenTunnel(local, remote)
 		if err != nil {
 			return nil, err
 		}
-		response.Forwards = append(response.Forwards, &NetworkForward{Local: local, Remote: remote})
+		response.Forwards = append(response.Forwards, &NetworkTunnel{Local: local, Remote: remote})
 	}
 	return response, nil
 }
@@ -45,10 +45,10 @@ func (s *networkService) Run(context *Context, request interface{}) *ServiceResp
 	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
 	switch actualRequest := request.(type) {
-	case *NetworkForwardRequest:
-		response.Response, err = s.forward(context, actualRequest)
+	case *NetworkTunnelRequest:
+		response.Response, err = s.tunnel(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run forward: %v, %v", actualRequest.Target.URL, err)
+			response.Error = fmt.Sprintf("Failed to run tunnel: %v, %v", actualRequest.Target.URL, err)
 		}
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
@@ -62,8 +62,8 @@ func (s *networkService) Run(context *Context, request interface{}) *ServiceResp
 //NewRequest creates a new request for an action (run).
 func (s *networkService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "forward":
-		return &NetworkForwardRequest{}, nil
+	case "tunnel":
+		return &NetworkTunnelRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
 }
