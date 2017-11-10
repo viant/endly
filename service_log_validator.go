@@ -330,13 +330,6 @@ func (s *logValidatorService) getLogTypeMeta(expectedLogRecords *ExpectedLogReco
 	return logTypeMeta, nil
 }
 
-func (s *logValidatorService) loadLogTypeMeta(context *Context, source *url.Resource, logType *LogType) (*LogTypeMeta, error) {
-	var logTypesMeta, err = s.readLogFiles(context, source, logType)
-	if err != nil {
-		return nil, err
-	}
-	return logTypesMeta[logType.Name], nil
-}
 
 func (s *logValidatorService) readLogFile(context *Context, source *url.Resource, service storage.Service, candidate storage.Object, logType *LogType) (*LogTypeMeta, error) {
 	var result *LogTypeMeta
@@ -414,16 +407,13 @@ func (s *logValidatorService) readLogFile(context *Context, source *url.Resource
 	return result, nil
 }
 
-func (s *logValidatorService) readLogFiles(context *Context, source *url.Resource, logTypes ...*LogType) (LogTypesMeta, error) {
+func (s *logValidatorService) readLogFiles(context *Context, service storage.Service, source *url.Resource, logTypes ...*LogType) (LogTypesMeta, error) {
 	var err error
 	source, err = context.ExpandResource(source)
 	if err != nil {
 		return nil, err
 	}
-	service, err := storage.NewServiceForURL(source.URL, source.Credential)
-	if err != nil {
-		return nil, err
-	}
+
 	var response LogTypesMeta = make(map[string]*LogTypeMeta)
 	candidates, err := service.List(source.URL)
 	for _, candidate := range candidates {
@@ -450,22 +440,33 @@ func (s *logValidatorService) readLogFiles(context *Context, source *url.Resourc
 	return response, nil
 }
 
-func (s *logValidatorService) listenForChanges(context *Context, request *LogValidatorListenRequest) {
+func (s *logValidatorService) listenForChanges(context *Context, request *LogValidatorListenRequest) error {
+	service, err := storage.NewServiceForURL(request.Source.URL, request.Source.Credential)
+	if err != nil {
+		return err
+	}
+
 	go func() {
+		defer service.Close()
+
 		frequency := time.Duration(request.FrequencyMs) * time.Millisecond
 		if request.FrequencyMs <= 0 {
 			frequency = 400 * time.Millisecond
 		}
 		for !context.IsClosed() {
-			_, err := s.readLogFiles(context, request.Source, request.Types...)
+			_, err := s.readLogFiles(context, service, request.Source, request.Types...)
 			if err != nil {
 				log.Printf("Failed to load log types %v", err)
 				break
 			}
 			time.Sleep(frequency)
 		}
+
 	}()
+	return nil
 }
+
+
 
 func (s *logValidatorService) listen(context *Context, request *LogValidatorListenRequest) (*LogValidatorListenResponse, error) {
 	var source, err = context.ExpandResource(request.Source)
@@ -478,8 +479,12 @@ func (s *logValidatorService) listen(context *Context, request *LogValidatorList
 			return nil, fmt.Errorf("listener has been already register for %v", logType.Name)
 		}
 	}
-
-	logTypeMetas, err := s.readLogFiles(context, request.Source, request.Types...)
+	service, err := storage.NewServiceForURL(request.Source.URL, request.Source.Credential)
+	if err != nil {
+		return nil, err
+	}
+	defer service.Close()
+	logTypeMetas, err := s.readLogFiles(context, service, request.Source, request.Types...)
 	if err != nil {
 		return nil, err
 	}
@@ -496,8 +501,8 @@ func (s *logValidatorService) listen(context *Context, request *LogValidatorList
 		Meta: logTypeMetas,
 	}
 
-	defer s.listenForChanges(context, request)
-	return response, nil
+	err = s.listenForChanges(context, request)
+	return response, err
 }
 
 //NewRequest creates a new request for provided action, (listen, asset,reset)

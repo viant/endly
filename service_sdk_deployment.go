@@ -30,7 +30,7 @@ func (m *SdkDeploymentMeta) Match(os *OperatingSystem) (*DeploymentDeployRequest
 			return candidate.Deploy, nil
 		}
 	}
-	return nil, fmt.Errorf("Failed to lookup deploymeny for sdk %v %v for os: %v %v %v", m.Sdk, m.SdkVersion, os.Family, os.Name, os.Version)
+	return nil, fmt.Errorf("Failed to lookup deploymeny for sdk %v %v for os: %v %v %v", m.Sdk, m.SdkVersion, os.System, os.Name, os.Version)
 }
 
 //SdkDeploymentMetaRegistry alias map[string]*SdkDeploymentMeta type

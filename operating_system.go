@@ -7,7 +7,7 @@ import (
 
 //OperatingSystem represents an OperatingSystem
 type OperatingSystem struct {
-	Family  string
+	System  string
 	Name    string
 	Version string
 	Path    *SystemPath
@@ -33,7 +33,7 @@ func (s *OperatingSystem) Matches(target *OperatingSystemTarget) bool {
 	if target.Name != "" && target.Name != s.Name {
 		return false
 	}
-	if target.Family != "" && target.Family != s.Family {
+	if target.System != "" && target.System != s.System {
 		return false
 	}
 
@@ -81,7 +81,7 @@ func (p *SystemPath) EnvValue() string {
 
 //OperatingSystemTarget represents operating system target
 type OperatingSystemTarget struct {
-	Family             string
+	System             string
 	Name               string
 	MinRequiredVersion string
 	MaxAllowedVersion  string

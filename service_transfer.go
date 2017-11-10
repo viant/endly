@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"path"
 	"strings"
+	url2 "net/url"
 )
 
 //TODO refactor compress with https://golangcode.com/create-zip-files-in-go/
@@ -62,6 +63,7 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 		if err != nil {
 			return nil, err
 		}
+		defer sourceService.Close()
 		target, err := context.ExpandResource(transfer.Target)
 		if err != nil {
 			return nil, err
@@ -70,6 +72,7 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 		if err != nil {
 			return nil, fmt.Errorf("Failed to lookup target storageService for %v: %v", target.URL, err)
 		}
+		defer targetService.Close()
 		var handler func(reader io.Reader) (io.Reader, error)
 		if transfer.Expand || len(transfer.Replace) > 0 {
 			handler = NewExpandedContentHandler(context, transfer.Replace, transfer.Expand)
@@ -81,6 +84,7 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 		compressed := transfer.Compress &&
 			(source.ParsedURL.Scheme == "scp" || source.ParsedURL.Scheme == "file") &&
 			(target.ParsedURL.Scheme == "scp" || target.ParsedURL.Scheme == "file")
+
 
 		var copyEventType = &CopyEventType{
 			SourceURL: source.URL,
@@ -113,14 +117,31 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 	return result, nil
 }
 
-func (s *transferService) compressSource(context *Context, source, target *url.Resource) error {
+func (s *transferService) 	compressSource(context *Context, source, target *url.Resource) error {
 	var parent, name = path.Split(source.ParsedURL.Path)
-	var sourceName = fmt.Sprintf("%v.gz", name)
-	_, err := context.Execute(source, fmt.Sprintf("cd %v\ntar cvzf %v %v", parent, sourceName, name))
+	var archiveSource = name
+	var archiveName = fmt.Sprintf("%v.gz", name)
+	if name == "" {
+		lastDirPosition := strings.LastIndex(source.ParsedURL.Path, "/")
+		if lastDirPosition != -1 {
+			archiveName = string(source.ParsedURL.Path[lastDirPosition+1:])
+		}
+		archiveSource = "*"
+	}
+
+	_, err := context.Execute(source, fmt.Sprintf("cd %v\ntar cvzf %v %v", parent, archiveName, archiveSource))
 	if err != nil {
 		return err
 	}
-	err = source.Rename(sourceName)
+	if name == "" {
+		source.URL = toolbox.URLPathJoin(source.URL, archiveName)
+		source.ParsedURL, _ = url2.Parse(source.URL)
+		target.URL = toolbox.URLPathJoin(target.URL, archiveName)
+		target.ParsedURL, _ = url2.Parse(target.URL)
+		return nil
+	}
+
+	err = source.Rename(archiveName)
 	if err != nil {
 		return err
 	}

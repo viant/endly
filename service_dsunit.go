@@ -27,12 +27,12 @@ type RunSQLScriptEvent struct {
 	URL       string
 }
 
-type dsataStoreUnitService struct {
+type dataStoreUnitService struct {
 	*AbstractService
 	Manager dsunit.DatasetTestManager
 }
 
-func (s *dsataStoreUnitService) Run(context *Context, request interface{}) *ServiceResponse {
+func (s *dataStoreUnitService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
@@ -76,7 +76,7 @@ func (s *dsataStoreUnitService) Run(context *Context, request interface{}) *Serv
 	return response
 }
 
-func (s *dsataStoreUnitService) getSequences(context *Context, request *DsUnitTableSequenceRequest) (*DsUnitTableSequenceResponse, error) {
+func (s *dataStoreUnitService) getSequences(context *Context, request *DsUnitTableSequenceRequest) (*DsUnitTableSequenceResponse, error) {
 	manager := s.Manager.ManagerRegistry().Get(request.Datastore)
 	if manager == nil {
 		return nil, fmt.Errorf("Unknown Datastore: %v", request.Datastore)
@@ -93,7 +93,7 @@ func (s *dsataStoreUnitService) getSequences(context *Context, request *DsUnitTa
 	return response, nil
 }
 
-func (s *dsataStoreUnitService) registerDsManager(context *Context, datastoreName, credential string, config *dsc.Config) error {
+func (s *dataStoreUnitService) registerDsManager(context *Context, datastoreName, credential string, config *dsc.Config) error {
 	credentialConfig := &cred.Config{}
 
 	if credential != "" {
@@ -114,7 +114,7 @@ func (s *dsataStoreUnitService) registerDsManager(context *Context, datastoreNam
 	return nil
 }
 
-func (s *dsataStoreUnitService) addMapping(context *Context, request *DsUnitMappingRequest) (*DsUnitMappingResponse, error) {
+func (s *dataStoreUnitService) addMapping(context *Context, request *DsUnitMappingRequest) (*DsUnitMappingResponse, error) {
 	var response = &DsUnitMappingResponse{
 		Tables: make([]string, 0),
 	}
@@ -136,7 +136,7 @@ func (s *dsataStoreUnitService) addMapping(context *Context, request *DsUnitMapp
 	return response, nil
 }
 
-func (s *dsataStoreUnitService) runScript(context *Context, datastore string, source *url.Resource) (int, error) {
+func (s *dataStoreUnitService) runScript(context *Context, datastore string, source *url.Resource) (int, error) {
 	var err error
 
 	source, err = context.ExpandResource(source)
@@ -154,7 +154,7 @@ func (s *dsataStoreUnitService) runScript(context *Context, datastore string, so
 	return s.Manager.Execute(scriptRequest)
 }
 
-func (s *dsataStoreUnitService) register(context *Context, request *DsUnitRegisterRequest) (interface{}, error) {
+func (s *dataStoreUnitService) register(context *Context, request *DsUnitRegisterRequest) (interface{}, error) {
 	err := request.Validate()
 	if err != nil {
 		return nil, err
@@ -192,7 +192,7 @@ func (s *dsataStoreUnitService) register(context *Context, request *DsUnitRegist
 	return result, nil
 }
 
-func (s *dsataStoreUnitService) prepare(context *Context, request *DsUnitPrepareRequest) (interface{}, error) {
+func (s *dataStoreUnitService) prepare(context *Context, request *DsUnitPrepareRequest) (interface{}, error) {
 	var response = &DsUnitPrepareResponse{}
 	err := request.Validate()
 	if err != nil {
@@ -232,7 +232,7 @@ func (s *dsataStoreUnitService) prepare(context *Context, request *DsUnitPrepare
 	return response, err
 }
 
-func (s *dsataStoreUnitService) verify(context *Context, request *DsUnitExpectRequest) (interface{}, error) {
+func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectRequest) (interface{}, error) {
 	err := request.Validate()
 	if err != nil {
 		return nil, err
@@ -259,7 +259,7 @@ func (s *dsataStoreUnitService) verify(context *Context, request *DsUnitExpectRe
 	return response, err
 }
 
-func (s *dsataStoreUnitService) NewRequest(action string) (interface{}, error) {
+func (s *dataStoreUnitService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case "register":
 		return &DsUnitRegisterRequest{}, nil
@@ -277,7 +277,7 @@ func (s *dsataStoreUnitService) NewRequest(action string) (interface{}, error) {
 
 //NewDataStoreUnitService creates a new Datastore unit service
 func NewDataStoreUnitService() Service {
-	var result = &dsataStoreUnitService{
+	var result = &dataStoreUnitService{
 		AbstractService: NewAbstractService(DataStoreUnitServiceID),
 		Manager:         dsunit.NewDatasetTestManager(),
 	}

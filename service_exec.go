@@ -8,6 +8,7 @@ import (
 	"github.com/viant/toolbox/url"
 	"strings"
 	"path"
+	"github.com/lunixbochs/vtclean"
 )
 
 //SystemExecServiceID represent system executor service id
@@ -142,7 +143,7 @@ func (s *execService) rumCommandTemplate(context *Context, session *SystemTermin
 	command := fmt.Sprintf(commandTemplate, arguments...)
 	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
 	startEvent := s.Begin(context, executionStartEvent, Pairs("value", executionStartEvent), Info)
-	stdout, err := session.Run(command, 0)
+	stdout, err := session.Run(command, 1000)
 	var executionEndEvent = &ExecutionEndEvent{
 		SessionID: session.ID,
 		Stdout:    stdout,
@@ -204,6 +205,7 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 		cmd = strings.Replace(command, "****", execution.Secure, 1)
 	}
 
+
 	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
 	startEvent := s.Begin(context, executionStartEvent, Pairs("value", executionStartEvent), Info)
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
@@ -219,6 +221,8 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 	if err != nil {
 		return err
 	}
+
+	stdout = vtclean.Clean(stdout, false)
 	errorMatch := match(stdout, execution.Error...)
 	if errorMatch != "" {
 		return fmt.Errorf("Encounter error fragment: (%v) execution (%v); ouput: (%v), %v", errorMatch, execution.Command, stdout, options.Directory)
@@ -246,7 +250,6 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 func getTerminators(options *ExecutionOptions, session *SystemTerminalSession, execution *Execution) []string {
 	var terminators = append([]string{}, options.Terminators...)
 	terminators = append(terminators, "$ ")
-	terminators = append(terminators, session.ShellPrompt())
 	superUserPrompt := string(strings.Replace(session.ShellPrompt(), "$", "#", 1))
 	if strings.Contains(superUserPrompt, "bash") {
 		superUserPrompt = string(superUserPrompt[2:])
@@ -407,7 +410,6 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 		},
 	}
 	var releaseCommands = []string{
-		"sw_vers",
 		"lsb_release -a",
 	}
 	var stdout string
@@ -416,13 +418,15 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 		if err != nil {
 			return nil, err
 		}
-		stdout = string(output)
-		if !CheckCommandNotFound(stdout) {
-			break
+		if CheckCommandNotFound(string(output)) {
+			continue
 		}
+		stdout += string(output)
 	}
+
 	lines := strings.Split(stdout, "\r\n")
-	for _, line := range lines {
+	for i := 0; i < len(lines)-1; i++ {
+		line := lines[i]
 		pair := strings.Split(line, ":")
 		if len(pair) != 2 {
 			continue
@@ -437,20 +441,13 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 		}
 	}
 
-	output, err := session.Run("uname -a", 0)
-	if err != nil {
-		return nil, err
-	}
-	if family, has := ExtractColumn(string(output), 0); has {
-		operatingSystem.Family = family
-	}
+	operatingSystem.System = session.System()
 	//TODO add os architecure i.e.x64
-	output, err = session.Run("echo $PATH", 0)
+	output, err := session.Run("echo $PATH", 0)
 	if err != nil {
 		return nil, err
 	}
 	stdOut := string(output)
-
 	var newLine = strings.Index(stdOut, "\n")
 	if newLine != -1 {
 		stdOut = string(stdOut[:newLine])
