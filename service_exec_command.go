@@ -43,6 +43,7 @@ type CommandRequest struct {
 	SuperUser bool          //flag is command needs to run as super suer
 	Target    *url.Resource //target destination where to run a command.
 	Commands  []string      //list of commands to run
+	TimeoutMs int
 }
 
 //Validate validates managed command request
@@ -59,12 +60,16 @@ func (r *ManagedCommandRequest) Validate() error {
 //AsManagedCommandRequest returns ManagedCommandRequest for this requests
 func (r *CommandRequest) AsManagedCommandRequest() *ManagedCommandRequest {
 	var managedCommand = &ManagedCommand{
+		Options:NewExecutionOptions(),
 		Executions: make([]*Execution, 0),
+	}
+	if r.TimeoutMs > 0 {
+		managedCommand.Options.TimeoutMs = r.TimeoutMs
 	}
 	for _, command := range r.Commands {
 		managedCommand.Executions = append(managedCommand.Executions, &Execution{
 			Command: command,
-			Error:   []string{commandNotFound, noSuchFileOrDirectory},
+			Error:   []string{commandNotFound, noSuchFileOrDirectory, errorIsNotRecoverable},
 		})
 	}
 	return &ManagedCommandRequest{

@@ -44,6 +44,7 @@ type Workflow struct {
 	Init        Variables       //variables to initialise state before this workflow runs
 	Post        Variables       //variables to initialise state before this workflow runs
 	Tasks       []*WorkflowTask //workflow task
+	SleepInMs   int             //optional Sleep time
 }
 
 //Validate validates this workflow TODO add implementation.
@@ -65,7 +66,7 @@ func (w *Workflows) Pop() *Workflow {
 		return nil
 	}
 	var result = (*w)[len(*w)-1]
-	(*w) = (*w)[0 : len(*w)-1]
+	(*w) = (*w)[0: len(*w)-1]
 	return result
 }
 

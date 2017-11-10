@@ -5,7 +5,7 @@
     "Deployments": [
       {
         "OsTarget": {
-          "Family": "Linux"
+          "System": "linux"
         },
 
         "Deploy": {

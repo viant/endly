@@ -8,6 +8,7 @@ import (
 const commandNotFound = "command not found"
 const noSuchFileOrDirectory = "no such file or directory"
 const programCanBeFound = "can be found in the following packages"
+const errorIsNotRecoverable = "Error is not recoverable"
 
 //CheckNoSuchFileOrDirectory checks for no such file or directory message in the provided stdout.
 func CheckNoSuchFileOrDirectory(stdout ...string) bool {

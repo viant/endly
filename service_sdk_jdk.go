@@ -12,6 +12,8 @@ func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate strin
 	var response = &SystemSdkSetResponse{}
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 
+
+
 		Executions: []*Execution{
 			{
 				Command: jdkCandidate + "java -version",
@@ -44,7 +46,10 @@ func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate strin
 		if build, ok := commandResponse.Extracted["build"]; ok {
 			if build == request.Version {
 				response.Version = build
-				response.Home = javaHome
+				response.Home = strings.Replace(javaHome, "/jre", "", 1)
+				context.Execute(request.Target, fmt.Sprintf("export JAVA_HOME='%v'", response.Home))
+
+
 				return response, nil
 			}
 			return nil, fmt.Errorf("Invalid version was found expected: %v, but had: %v\n", request.Version, build)
@@ -92,6 +97,11 @@ func (s *systemJdkService) setSdk(context *Context, request *SystemSdkSetRequest
 			{
 				Command: jdkHomeCheckCommand,
 				Extraction: []*DataExtraction{
+
+					{
+						RegExpr: "(.+jdk.+)",
+						Key:     "JAVA_HOME",
+					},
 					{
 						RegExpr: "(.+jvm.+)",
 						Key:     "JAVA_HOME",
@@ -107,7 +117,7 @@ func (s *systemJdkService) setSdk(context *Context, request *SystemSdkSetRequest
 			return nil, sdkNotFound
 		}
 		var jdkCandidate = vtclean.Clean(home, false)
-		response, err = s.checkJavaVersion(context, jdkCandidate+"/bin", request)
+		response, err = s.checkJavaVersion(context, jdkCandidate+"/bin/", request)
 		if err == nil {
 			context.Put(response, response)
 			return response, nil
