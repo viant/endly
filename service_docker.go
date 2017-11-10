@@ -12,7 +12,7 @@ import (
 const DockerServiceID = "docker"
 const containerInUse = "is already in use by container"
 
-var dockerErrors = []string{"Error", "failed"}
+var dockerErrors = []string{"failed"}
 var dockerIgnoreErrors = []string{}
 
 type dockerService struct {

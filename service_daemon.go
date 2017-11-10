@@ -100,6 +100,7 @@ func (s *daemonService) determineServiceType(context *Context, service, exclusio
 			},
 		},
 	})
+
 	if err != nil {
 		return 0, "", err
 	}
