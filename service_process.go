@@ -81,7 +81,7 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
-				Command: "ps -ev | grep " + request.Name,
+				Command: "ps -ef | grep " + request.Name,
 			},
 		},
 	})
@@ -94,10 +94,12 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 		if strings.Contains(line, "grep") {
 			continue
 		}
-		pid, ok := ExtractColumn(line, 0)
-		if !ok {
+
+		columns, ok := ExtractColumns(line)
+		if len(columns) < 3 || ! ok {
 			continue
 		}
+
 		argumentsIndex := strings.Index(line, request.Name)
 		var arguments []string
 		if argumentsIndex != -1 {
@@ -105,7 +107,7 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 			arguments = strings.Split(args, " ")
 		}
 		info := &ProcessInfo{
-			Pid:       toolbox.AsInt(pid),
+			Pid:       toolbox.AsInt(columns[1]),
 			Command:   request.Name,
 			Arguments: arguments,
 			Stdout:    line,

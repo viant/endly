@@ -423,6 +423,10 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	}
 	workflow.Post.Apply(state, response.Data) //context -> workflow output
 	s.addVariableEvent("Workflow.Post", workflow.Post, context, state)
+
+	if workflow.SleepInMs > 0 {
+		s.Sleep(context, workflow.SleepInMs)
+	}
 	return response, nil
 }
 
