@@ -5,6 +5,7 @@ import (
 	"github.com/viant/toolbox/data"
 	"regexp"
 	"strings"
+	"github.com/lunixbochs/vtclean"
 )
 
 //DataExtraction represents a data extraction
@@ -30,6 +31,7 @@ func (d *DataExtractions) Extract(context *Context, extracted map[string]string,
 			if len(line) == 0 {
 				continue
 			}
+			line = vtclean.Clean(line, false)
 			if compiledExpression.MatchString(line) {
 
 				matched := compiledExpression.FindStringSubmatch(line)
