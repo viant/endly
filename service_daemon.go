@@ -83,6 +83,8 @@ func (s *daemonService) determineServiceType(context *Context, service, exclusio
 			servicePath := path.Join("/Library/LaunchDaemons/", file)
 			return serviceTypeLaunchCtl, servicePath, nil
 		}
+		return serviceTypeLaunchCtl, "", nil
+
 	}
 
 	commandResult, err = context.ExecuteAsSuperUser(target, &ManagedCommand{
@@ -163,6 +165,10 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 		Init:    serviceInit,
 	}
 	command := ""
+
+	if serviceInit == "" && serviceType == serviceTypeLaunchCtl {
+		return result, nil
+	}
 
 	switch serviceType {
 	case serviceTypeError:
