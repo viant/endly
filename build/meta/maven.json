@@ -43,14 +43,14 @@
           "Target": {
             "Name": "apache-maven",
             "Version": "3.5.0",
-            "URL": "scp://$build.host/usr/local/",
+            "URL": "scp://$build.host/tmp/local/",
             "Credential":"$build.credential"
           }
         },
         "VersionCheck": {
           "Options": {
             "SystemPaths": [
-              "/usr/local/maven/bin"
+              "/tmp/local/maven/bin"
             ]
           },
           "Executions": [
@@ -67,7 +67,7 @@
         },
         "Command": {
           "Options": {
-            "Directory": "/urs/local"
+            "Directory": "/tmp/local/"
           },
           "Executions": [
             {
