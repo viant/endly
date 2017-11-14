@@ -38,7 +38,7 @@
         "AppName":"maven",
         "Transfer": {
           "Source": {
-            "URL": "http://mirrors.gigenet.com/apache/maven/maven-3/3.5.0/binaries/apache-maven-3.5.0-bin.tar.gz"
+            "URL": "http://mirrors.gigenet.com/apache/maven/maven-3/3.5.2/binaries/apache-maven-3.5.2-bin.tar.gz"
           },
           "Target": {
             "Name": "apache-maven",
