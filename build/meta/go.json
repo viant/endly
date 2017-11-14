@@ -1,0 +1,35 @@
+{
+  "Name": "maven",
+  "Sdk":"$build.sdk",
+  "SdkVersion":"$build.sdkVersion",
+  "Goals": [
+    {
+      "Name": "build",
+      "Command": {
+        "Options": {
+          "Directory": "$build.target",
+          "TimeoutMs": 720000
+
+        },
+        "Executions": [
+          {
+            "Command": "go get -u .",
+            "Errors": [
+              "Error","command not found"
+            ]
+          },
+          {
+            "Command": "go $build.goal $build.args",
+            "Error": ["failed", "error"],
+            "Extraction": [
+              {
+                "Key":"Artifact",
+                "RegExpr": "Building jar:[^\/]+(.+)"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
