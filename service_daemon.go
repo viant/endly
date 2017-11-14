@@ -181,7 +181,7 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 					Extraction: DataExtractions{
 						{
 							Key:     "pid",
-							RegExpr: "(\\d+).+",
+							RegExpr: "(\\d+)[^\\d]+",
 						},
 					},
 					Error: []string{"Unrecognized"},

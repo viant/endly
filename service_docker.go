@@ -11,8 +11,8 @@ import (
 //DockerServiceID represents docker service id
 const DockerServiceID = "docker"
 const containerInUse = "is already in use by container"
-
-var dockerErrors = []string{"failed"}
+const unableToFindImage = "unable to find image"
+var dockerErrors = []string{"failed", unableToFindImage}
 var dockerIgnoreErrors = []string{}
 
 type dockerService struct {
@@ -132,7 +132,12 @@ func (s *dockerService) stopImages(context *Context, request *DockerStopImagesRe
 	}
 
 	for _, image := range request.Images {
+
+
 		for _, container := range processResponse.Containers {
+
+
+			fmt.Printf("checking top stop: %v %v %v\n", container.Image, image, container)
 			if strings.Contains(container.Image, image) {
 
 				var containerTarget = request.Target.Clone()
@@ -217,6 +222,8 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 	if err != nil {
 		return nil, err
 	}
+
+
 	if strings.Contains(commandInfo.Stdout(), containerInUse) {
 		s.stopContainer(context, &DockerContainerStopRequest{Target: request.Target})
 		s.removeContainer(context, &DockerContainerRemoveRequest{Target: request.Target})
@@ -225,6 +232,7 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 			return nil, err
 		}
 	}
+
 	return s.checkContainerProcess(context, &DockerContainerCheckRequest{
 		Target:  request.Target,
 		Names:   request.Target.Name,
@@ -351,6 +359,8 @@ func (s *dockerService) checkContainerProcesses(context *Context, request *Docke
 		return nil, err
 	}
 	stdout := info.Stdout()
+
+
 	var containers = make([]*DockerContainerInfo, 0)
 	var lines = strings.Split(stdout, "\r\n")
 	for i := 1; i < len(lines); i++ {

@@ -31,32 +31,38 @@ func (d *DataExtractions) Extract(context *Context, extracted map[string]string,
 			if len(line) == 0 {
 				continue
 			}
-			line = vtclean.Clean(line, false)
-			if compiledExpression.MatchString(line) {
-
-				matched := compiledExpression.FindStringSubmatch(line)
-				if extract.Key != "" {
-					var state = context.State()
-					var keyFragments = strings.Split(extract.Key, ".")
-					for i, keyFragment := range keyFragments {
-						if i+1 == len(keyFragments) {
-							state.Put(extract.Key, matched[1])
-							continue
-						}
-
-						if !state.Has(keyFragment) {
-							state.Put(keyFragment, data.NewMap())
-						}
-						state = state.GetMap(keyFragment)
-
-					}
-				}
-				extracted[extract.Key] = matched[1]
-
+			if !matchExpression(compiledExpression, line, extract, context, extracted) {
+				line = vtclean.Clean(line, false)
+				matchExpression(compiledExpression, line, extract, context, extracted)
 			}
 		}
 	}
 	return nil
+}
+func matchExpression(compiledExpression *regexp.Regexp, line string, extract *DataExtraction, context *Context, extracted map[string]string) bool {
+	if compiledExpression.MatchString(line) {
+
+		matched := compiledExpression.FindStringSubmatch(line)
+		if extract.Key != "" {
+			var state = context.State()
+			var keyFragments = strings.Split(extract.Key, ".")
+			for i, keyFragment := range keyFragments {
+				if i+1 == len(keyFragments) {
+					state.Put(extract.Key, matched[1])
+					continue
+				}
+
+				if !state.Has(keyFragment) {
+					state.Put(keyFragment, data.NewMap())
+				}
+				state = state.GetMap(keyFragment)
+
+			}
+		}
+		extracted[extract.Key] = matched[1]
+		return true
+	}
+	return false
 }
 
 //NewDataExtractions creates a new NewDataExtractions

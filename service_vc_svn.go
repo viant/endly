@@ -25,7 +25,7 @@ func (s *svnService) checkInfo(context *Context, request *VcStatusRequest) (*VcI
 				Command: fmt.Sprintf("svn info"),
 				Extraction: []*DataExtraction{
 					{
-						RegExpr: "URL:\\s+([^\\s]+)",
+						RegExpr: "^URL:[\\t\\s]+([^\\s]+)",
 						Key:     "origin",
 					},
 					{
