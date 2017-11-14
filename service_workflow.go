@@ -253,6 +253,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) err
 }
 
 func (s *workflowService) runTask(context *Context, workflow *Workflow, task *WorkflowTask, request *WorkflowRunRequest) error {
+	var startTime = time.Now()
 	var state = context.state
 	state.Put(":task", task)
 	var taskAllowed, allowedServiceActions = isTaskAllowed(task, request)
@@ -308,6 +309,11 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 	}
 	err = task.Post.Apply(state, state)
 	s.addVariableEvent("Task.Post", task.Post, context, state)
+	if task.TimeSpentMs > 0 {
+		var elapsed = (time.Now().UnixNano() - startTime.UnixNano()) / int64(time.Millisecond)
+		var remainingExecutionTime = time.Duration(task.TimeSpentMs - int(elapsed))
+		s.Sleep(context, int(remainingExecutionTime))
+	}
 	return err
 }
 
@@ -410,16 +416,11 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	s.AddEvent(context, "State.Init", Pairs("state", state.AsEncodableMap()), Debug)
 	for _, task := range workflow.Tasks {
 
-		var startTime = time.Now()
 		err = s.runTask(context, workflow, task, request)
 		if err != nil {
 			return nil, err
 		}
-		if task.TimeSpentMs > 0 {
-			var elapsed = (time.Now().UnixNano() - startTime.UnixNano()) / int64(time.Millisecond)
-			var remainingExecutionTime = time.Duration(task.TimeSpentMs - int(elapsed))
-			s.Sleep(context, int(remainingExecutionTime))
-		}
+
 	}
 	workflow.Post.Apply(state, response.Data) //context -> workflow output
 	s.addVariableEvent("Workflow.Post", workflow.Post, context, state)
