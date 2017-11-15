@@ -13,6 +13,15 @@
         },
         "Executions": [
           {
+            "Command": "cd $build.target"
+          },
+          {
+            "Command": "mvn clean $build.args",
+            "Errors": [
+              "Error","command not found"
+            ]
+          },
+          {
             "Command": "mvn clean $build.args",
             "Errors": [
               "Error","command not found"
