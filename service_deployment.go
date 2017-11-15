@@ -61,7 +61,7 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	if err != nil {
 		return nil, err
 	}
-	execService, err := context.Service(SystemExecServiceID)
+	execService, err := context.Service(ExecServiceID)
 	if err != nil {
 		return nil, err
 	}
