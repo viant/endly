@@ -62,7 +62,7 @@ func (s *scriptService) runScriptCommand(context *Context, request *ScriptComman
 	vm.Set("context", &JsContextBridge{context})
 	vm.Set("DeploymentServiceID", DeploymentServiceID)
 	vm.Set("TransferServiceID", TransferServiceID)
-	vm.Set("SystemExecServiceID", SystemExecServiceID)
+	vm.Set("ExecServiceID", ExecServiceID)
 	vm.Set("ExtractColumns", ExtractColumns)
 	libraries, err := s.loadLibraries(context, request)
 	if err != nil {

@@ -8,11 +8,10 @@ import (
 	"github.com/viant/toolbox/url"
 	"strings"
 	"path"
-	"github.com/lunixbochs/vtclean"
 )
 
-//SystemExecServiceID represent system executor service id
-const SystemExecServiceID = "exec"
+//ExecServiceID represent system executor service id
+const ExecServiceID = "exec"
 
 //ExecutionStartEvent represents an execution event start
 type ExecutionStartEvent struct {
@@ -57,6 +56,9 @@ func (s *execService) openSession(context *Context, request *OpenSessionRequest)
 	if sessions.Has(sessionName) {
 		session := sessions[sessionName]
 		err = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
+		for k, v := range request.Env {
+			session.envVariables[k] = v
+		}
 		return sessions[sessionName], err
 	}
 	var authConfig = &cred.Config{}
@@ -95,6 +97,9 @@ func (s *execService) openSession(context *Context, request *OpenSessionRequest)
 	err = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
 	if err != nil {
 		return nil, err
+	}
+	for k, v := range request.Env {
+		session.envVariables[k] = v
 	}
 	sessions[sessionName] = session
 	session.OperatingSystem, err = s.detectOperatingSystem(session)
@@ -205,7 +210,6 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 		cmd = strings.Replace(command, "****", execution.Secure, 1)
 	}
 
-
 	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
 	startEvent := s.Begin(context, executionStartEvent, Pairs("value", executionStartEvent), Info)
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
@@ -222,7 +226,6 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 		return err
 	}
 
-	stdout = vtclean.Clean(stdout, false)
 	errorMatch := match(stdout, execution.Error...)
 	if errorMatch != "" {
 		return fmt.Errorf("Encounter error fragment: (%v) execution (%v); ouput: (%v), %v", errorMatch, execution.Command, stdout, options.Directory)
@@ -233,7 +236,7 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 			return fmt.Errorf("Fail to match any fragment: (%v) execution (%v); ouput: (%v), %v", strings.Join(execution.Success, ","), execution.Command, stdout, options.Directory)
 		}
 	}
-	err = execution.Extraction.Extract(context, commandInfo.Extracted, strings.Split(stdout, "\r\n")...)
+	err = execution.Extraction.Extract(context, commandInfo.Extracted, strings.Split(stdout, "\n")...)
 	if err != nil {
 		return err
 	}
@@ -459,7 +462,7 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 //NewExecService creates a new execution service
 func NewExecService() Service {
 	var result = &execService{
-		AbstractService: NewAbstractService(SystemExecServiceID),
+		AbstractService: NewAbstractService(ExecServiceID),
 	}
 	result.AbstractService.Service = result
 	return result
