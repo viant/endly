@@ -20,7 +20,7 @@ func TestNewDeploymentService(t *testing.T) {
 	response := srv.Run(context, &endly.DeploymentDeployRequest{
 		Transfer: &endly.Transfer{
 			Source: &url.Resource{
-				URL: "http://mirrors.gigenet.com/apache/maven/maven-3/3.5.0/binaries/apache-maven-3.5.0-bin.tar.gz",
+				URL: "http://mirrors.gigenet.com/apache/maven/maven-3/3.5.2/binaries/apache-maven-3.5.2-bin.tar.gz",
 			},
 			Target: &url.Resource{
 				Name:    "apache-maven",
