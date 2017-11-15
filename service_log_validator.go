@@ -24,6 +24,18 @@ type logValidatorService struct {
 	*AbstractService
 }
 
+type LogRecordAssert struct{
+	TagId string
+	Expected interface{}
+	Actual interface{}
+}
+
+type LogAssertEvent struct {
+	Type string
+	Logs[]*LogRecordAssert
+}
+
+
 //LogProcessingState represents log processing state
 type LogProcessingState struct {
 	Line     int
@@ -273,11 +285,16 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 		request.LogWaitRetryCount = 3
 	}
 
+	var event = &LogAssertEvent{
+		Logs:make([]*LogRecordAssert, 0),
+	}
+
 	for _, expectedLogRecords := range request.ExpectedLogRecords {
 		logTypeMeta, err := s.getLogTypeMeta(expectedLogRecords, state)
 		if err != nil {
 			return nil, err
 		}
+		event.Type = expectedLogRecords.Type
 
 		var logRecordIterator = logTypeMeta.LogRecordIterator()
 		logWaitRetryCount := request.LogWaitRetryCount
@@ -310,11 +327,20 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 			if err != nil {
 				return nil, err
 			}
+
+			event.Logs = append(event.Logs, &LogRecordAssert{
+				TagId: expectedLogRecords.TagId,
+				Expected:expectedLogRecord,
+				Actual:actualLogRecord,
+			})
+
+
 			err = validator.Assert(expectedLogRecord, actualLogRecord, validationInfo, fmt.Sprintf("[%v:%v]", filename, logRecord.Number))
 			if err != nil {
 				return nil, err
 			}
 		}
+		s.AddEvent(context, event, Pairs("value", event))
 	}
 	return response, nil
 }
