@@ -1,6 +1,6 @@
 {
-  "Name": "maven",
-  "Sdk":"$build.sdk",
+  "Name": "go",
+  "Sdk":"go",
   "SdkVersion":"$build.sdkVersion",
   "Goals": [
     {
@@ -13,13 +13,22 @@
         },
         "Executions": [
           {
+            "Command": "cd $build.target"
+          },
+          {
+            "Command": "go clean",
+            "Errors": [
+              "Error","command not found"
+            ]
+          },
+          {
             "Command": "go get -u .",
             "Errors": [
               "Error","command not found"
             ]
           },
           {
-            "Command": "go $build.goal $build.args",
+            "Command": "go ${build.goal} ${build.args}",
             "Error": ["failed", "error"],
             "Extraction": [
               {
