@@ -127,6 +127,24 @@ func (s *systemSdkService) NewRequest(action string) (interface{}, error) {
 }
 
 func (s *systemSdkService) setSdk(context *Context, request *SystemSdkSetRequest) (*SystemSdkSetResponse, error) {
+	service, err := context.Service(ExecServiceID)
+	if err != nil {
+		return nil, err
+	}
+
+	target, err := context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, err
+	}
+
+	seriveResponse := service.Run(context, &OpenSessionRequest{
+		Target: target,
+		Env:    request.Env,
+	})
+
+	if seriveResponse.Error != "" {
+		return nil, fmt.Errorf("Failed to set sdk %v", seriveResponse.Error)
+	}
 	switch request.Sdk {
 	case "jdk":
 		return s.jdkService.setSdk(context, request)

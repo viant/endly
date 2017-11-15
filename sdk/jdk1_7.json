@@ -17,7 +17,7 @@
             "Target": {
               "Name": "java",
               "Version": "1.7",
-              "URL": "scp://${targetHost}/tmp/jvm/jdk-7u80-linux-x64.tar.gz",
+              "URL": "scp://${targetHost}/tmp/sdk/jdk-7u80-linux-x64.tar.gz",
               "Credential": "${targetHostCredential}"
             }
           },
@@ -41,7 +41,7 @@
           },
           "Command": {
             "Options": {
-              "Directory": "/tmp/jvm"
+              "Directory": "/tmp/sdk"
             },
             "Executions": [
               {
@@ -54,7 +54,7 @@
                 "Command": "mkdir -p /usr/lib/jvm/java-7-oracle"
               },
               {
-                "Command": "mv /tmp/jvm/jdk1.7.0_80/* /usr/lib/jvm/java-7-oracle/",
+                "Command": "mv /tmp/sdk/jdk1.7.0_80/* /usr/lib/jvm/java-7-oracle/",
                 "Error": [
                   "No"
                 ]

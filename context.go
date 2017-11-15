@@ -250,7 +250,7 @@ func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandRe
 	default:
 		return nil, fmt.Errorf("Unsupported command: %T", command)
 	}
-	execService, err := c.Service(SystemExecServiceID)
+	execService, err := c.Service(ExecServiceID)
 	if err != nil {
 		return nil, err
 	}

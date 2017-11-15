@@ -94,7 +94,7 @@ func (s *buildService) build(context *Context, request *BuildRequest) (*BuildRes
 		result.SdkResponse, _ = serviceResponse.Response.(*SystemSdkSetResponse)
 	}
 
-	execService, err := context.Service(SystemExecServiceID)
+	execService, err := context.Service(ExecServiceID)
 	if err != nil {
 		return nil, err
 	}

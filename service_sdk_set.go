@@ -4,8 +4,9 @@ import "github.com/viant/toolbox/url"
 
 //SystemSdkSetRequest represents sdk set request
 type SystemSdkSetRequest struct {
-	Sdk     string        //request sdk jdk, go
-	Version string        //requested version
+	Sdk     string //request sdk jdk, go
+	Version string //requested version
+	Env     map[string]string
 	Target  *url.Resource //target host
 }
 
