@@ -17,7 +17,6 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 			}
 		}
 	}
-
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
@@ -41,35 +40,7 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 			return nil, sdkNotFound
 		}
 	}
-	//
-	/////usr/local/go/
-	//if home, ok := commandResponse.Extracted["GOROOT"]; ok {
-	//	response.Home = vtclean.Clean(home, false)
-	//
-	//}
-	//fmt.Printf("JAVA HOMEEEEEE :!%v!\n", response.Home)
-	//
-	//
-	//
-	//
-	//
-	//if build, ok := commandResponse.Extracted["build"]; ok {
-	//	response.Build = build
-	//
-	//}
-	//
-	//
-	//
-	//
-	//_, err = context.Execute(request.Target, &ManagedCommand{
-	//	Executions: []*Execution{
-	//		{
-	//			Command: fmt.Sprintf("export JAVA_HOME='%v'", response.Home),
-	//		},
-	//	},
-	//})
-
-	if err != nil {
+if err != nil {
 		return nil, err
 	}
 	context.Put(response, response)

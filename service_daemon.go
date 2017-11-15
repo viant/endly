@@ -83,6 +83,8 @@ func (s *daemonService) determineServiceType(context *Context, service, exclusio
 			servicePath := path.Join("/Library/LaunchDaemons/", file)
 			return serviceTypeLaunchCtl, servicePath, nil
 		}
+		return serviceTypeLaunchCtl, "", nil
+
 	}
 
 	commandResult, err = context.ExecuteAsSuperUser(target, &ManagedCommand{
@@ -164,6 +166,10 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 	}
 	command := ""
 
+	if serviceInit == "" && serviceType == serviceTypeLaunchCtl {
+		return result, nil
+	}
+
 	switch serviceType {
 	case serviceTypeError:
 		return nil, fmt.Errorf("Unknown daemon service type")
@@ -181,7 +187,7 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 					Extraction: DataExtractions{
 						{
 							Key:     "pid",
-							RegExpr: "(\\d+).+",
+							RegExpr: "(\\d+)[^\\d]+",
 						},
 					},
 					Error: []string{"Unrecognized"},

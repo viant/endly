@@ -1,0 +1,11 @@
+{
+  "Target": {
+    "URL": "ssh://${targetHost}/",
+    "Credential": "$targetHostCredential"
+  },
+  "Sdk": "go",
+  "Version": "$goVersion",
+  "Env":{
+    "GOPATH":"$GOPATH"
+  }
+}

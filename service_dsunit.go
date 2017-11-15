@@ -44,6 +44,12 @@ func (s *dataStoreUnitService) Run(context *Context, request interface{}) *Servi
 			response.Error = fmt.Sprintf("%v", err)
 		}
 
+	case *DsUnitSQLScriptRequest:
+		response.Response, err = s.runScripts(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("%v", err)
+		}
+
 	case *DsUnitPrepareRequest:
 		response.Response, err = s.prepare(context, actualRequest)
 		if err != nil {
@@ -136,7 +142,34 @@ func (s *dataStoreUnitService) addMapping(context *Context, request *DsUnitMappi
 	return response, nil
 }
 
-func (s *dataStoreUnitService) runScript(context *Context, datastore string, source *url.Resource) (int, error) {
+func (s *dataStoreUnitService) runScripts(context *Context, request *DsUnitSQLScriptRequest) (*DsUnitSQLScriptResponse, error) {
+	var err error
+	var response = &DsUnitSQLScriptResponse{}
+	response.Modified, err = s.runSQLScripts(context, request.Datastore, request.Scripts)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func (s *dataStoreUnitService) runSQLScripts(context *Context, datastore string, scripts [] *url.Resource) (int, error) {
+	if len(scripts) == 0 {
+		return 0, nil
+	}
+	var totaModified = 0
+	for _, script := range scripts {
+		var event = &RunSQLScriptEvent{Datastore: datastore, URL: script.URL}
+		s.AddEvent(context, event, Pairs("value", event), Info)
+		modified, err := s.loadSQLAndRun(context, datastore, script)
+		if err != nil {
+			return 0, err
+		}
+		totaModified+=modified
+	}
+	return totaModified, nil
+}
+
+func (s *dataStoreUnitService) loadSQLAndRun(context *Context, datastore string, source *url.Resource) (int, error) {
 	var err error
 
 	source, err = context.ExpandResource(source)
@@ -178,17 +211,10 @@ func (s *dataStoreUnitService) register(context *Context, request *DsUnitRegiste
 		}
 	}
 
-	if len(request.Scripts) > 0 {
-		for _, script := range request.Scripts {
-			var event = &RunSQLScriptEvent{Datastore: request.Datastore, URL: script.URL}
-			s.AddEvent(context, event, Pairs("value", event), Info)
-			result.Modified, err = s.runScript(context, request.Datastore, script)
-			if err != nil {
-				return nil, err
-			}
-		}
+	result.Modified, err = s.runSQLScripts(context, request.Datastore, request.Scripts)
+	if err != nil {
+		return nil, err
 	}
-
 	return result, nil
 }
 
@@ -263,6 +289,8 @@ func (s *dataStoreUnitService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case "register":
 		return &DsUnitRegisterRequest{}, nil
+	case "sql":
+		return &DsUnitSQLScriptRequest{}, nil
 	case "mapping":
 		return &DsUnitMappingRequest{}, nil
 	case "prepare":
