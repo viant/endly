@@ -6,6 +6,7 @@ import (
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
+	"github.com/lunixbochs/vtclean"
 )
 
 //DaemonServiceID represents system daemon service
@@ -131,10 +132,11 @@ func extractServiceInfo(state map[string]string, info *DaemonInfo) {
 	if pid, ok := state["pid"]; ok {
 		info.Pid = toolbox.AsInt(pid)
 	}
-	if state, ok := state["state"]; ok {
+	if value, ok := state["state"]; ok {
+		state := vtclean.Clean(value, false)
 		if strings.Contains(state, "inactive") {
 			state = "not running"
-		} else if strings.Contains(state, "active") {
+		} else if strings.Contains(state, "active")   {
 			state = "running"
 		}
 		info.State = state
@@ -201,8 +203,9 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 						},
 						{
 							Key:     "state",
-							RegExpr: "[\\s|\\t]+state[\\s|\\t]+=[\\s|\\t]+([^s]+)",
+							RegExpr: "state = (running)",
 						},
+
 					},
 					Error: []string{"Unrecognized"},
 				},
