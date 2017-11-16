@@ -33,7 +33,7 @@
                 "Extraction": [
                   {
                     "Key": "Version",
-                    "RegExpr": "go(\\d\\.\\d)\\..+"
+                    "RegExpr": "go(\\d\\.\\d)"
                   }
                 ]
               }
@@ -90,7 +90,7 @@
                 "Extraction": [
                   {
                     "Key": "Version",
-                    "RegExpr": "go(\\d\\.\\d)\\..+"
+                    "RegExpr": "go(\\d\\.\\d)"
                   }
                 ]
               }
