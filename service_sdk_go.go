@@ -12,6 +12,8 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 	if context.Contains(response) {
 		var ok bool
 		if response, ok = context.GetOptional(response).(*SystemSdkSetResponse); ok {
+
+
 			if len(response.Version) > len(request.Version) {
 				response.Version = string(response.Version[:len(request.Version)])
 			}
@@ -33,6 +35,9 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 			},
 		},
 	})
+	fmt.Printf("extacted version %v\n stdout:%v\n", commandResponse.Extracted, commandResponse.Stdout())
+
+
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +48,7 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 			return nil, sdkNotFound
 		}
 	}
-if err != nil {
+	if err != nil {
 		return nil, err
 	}
 	context.Put(response, response)
