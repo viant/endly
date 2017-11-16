@@ -1,0 +1,36 @@
+[
+  {
+    "Name": "targetHost",
+    "Value": "$params.targetHost"
+  },
+  {
+    "Name": "targetHostCredential",
+    "From": "params.targetHostCredential",
+    "Required":true
+  },
+  {
+    "Name": "mysqlPort",
+    "From": "params.mysqlPort",
+    "Value":"3306"
+  },
+  {
+    "Name": "buildHost",
+    "From": "params.buildHost",
+    "Required":true
+  },
+  {
+    "Name": "buildHostCredential",
+    "From": "params.buildHostCredential",
+    "Required":true
+  },
+  {
+    "Name": "mysqlVersion",
+    "From": "params.mysqlVersion",
+    "Required":true
+  },
+  {
+    "Name": "mysqlCredential",
+    "From": "params.mysqlCredential",
+    "Required": true
+  }
+]

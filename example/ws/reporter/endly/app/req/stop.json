@@ -1,0 +1,7 @@
+{
+  "Target":{
+    "URL": "ssh://$targetHost",
+    "Credential": "$targetHostCredential"
+  },
+  "Input":"reporter"
+}

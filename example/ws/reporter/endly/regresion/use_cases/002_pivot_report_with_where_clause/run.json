@@ -1,0 +1,5 @@
+{
+  "Name":"report2",
+  "Datastore":"db1",
+  "Parameters":{"years":"2014,2016"}
+}
