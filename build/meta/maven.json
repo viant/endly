@@ -1,7 +1,7 @@
 {
   "Name": "maven",
-  "Sdk":"$build.sdk",
-  "SdkVersion":"$build.sdkVersion",
+  "Sdk": "$build.sdk",
+  "SdkVersion": "$build.sdkVersion",
   "Goals": [
     {
       "Name": "build",
@@ -9,7 +9,6 @@
         "Options": {
           "Directory": "$build.target",
           "TimeoutMs": 720000
-
         },
         "Executions": [
           {
@@ -18,21 +17,25 @@
           {
             "Command": "mvn clean $build.args",
             "Errors": [
-              "Error","command not found"
+              "Error",
+              "command not found"
             ]
           },
           {
             "Command": "mvn clean $build.args",
             "Errors": [
-              "Error","command not found"
+              "Error",
+              "command not found"
             ]
           },
           {
             "Command": "mvn $build.goal $build.args",
-            "Success": ["BUILD SUCCESS"],
+            "Success": [
+              "BUILD SUCCESS"
+            ],
             "Extraction": [
               {
-                "Key":"Artifact",
+                "Key": "Artifact",
                 "RegExpr": "Building jar:[^\/]+(.+)"
               }
             ]
@@ -44,7 +47,12 @@
   "BuildDeployments": [
     {
       "Deploy": {
-        "AppName":"maven",
+        "AppName": "maven",
+        "Pre": {
+          "Commands": [
+            "mkdir -p /tmp/local"
+          ]
+        },
         "Transfer": {
           "Source": {
             "URL": "http://mirrors.gigenet.com/apache/maven/maven-3/3.5.2/binaries/apache-maven-3.5.2-bin.tar.gz"
@@ -53,7 +61,7 @@
             "Name": "apache-maven",
             "Version": "3.5.2",
             "URL": "scp://$build.host/tmp/local/",
-            "Credential":"$build.credential"
+            "Credential": "$build.credential"
           }
         },
         "VersionCheck": {
