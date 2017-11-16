@@ -1,0 +1,29 @@
+{
+  "WorkflowURL":"${workflow}/${workflow}.csv",
+  "Name":"${workflow}",
+  "Tasks":"$tasks",
+  "Params":{
+    "buildGoal":"$buildGoal",
+    "buildArgs":"$buildArgs",
+
+
+    "mysqlPort":"$mysqlPort",
+    "mysqlVersion":"$mysqlVersion",
+    "mysqlCredential":"$mysqlCredential",
+
+    "buildHost": "$buildHost",
+    "buildHostCredential": "$buildHostCredential",
+
+    "targetHost":"$targetHost",
+    "targetHostCredential":"$targetHostCredential",
+
+    "localHostCredential":"$localHostCredential",
+    "goVersion":"$goVersion",
+
+
+    "buildDirectory":"$buildDirectory",
+    "appRootDirectory":"$appRootDirectory",
+
+    "GOPATH":"$GOPATH"
+  }
+}
