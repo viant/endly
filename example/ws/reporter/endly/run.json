@@ -4,7 +4,7 @@
   "PublishParameters": true,
   "EnableLogging": true,
   "LoggingDirectory": "/tmp/app/",
-  "Tasks": "test",
+  "Tasks": "init,test",
 
   "Params": {
     "goVersion":"1.8",
