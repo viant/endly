@@ -12,7 +12,10 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 	if context.Contains(response) {
 		var ok bool
 		if response, ok = context.GetOptional(response).(*SystemSdkSetResponse); ok {
-			if response.Version == request.Version && response.Sdk == request.Sdk && response.SessionID == request.Target.Host() {
+			if len(response.Version) > len(request.Version) {
+				response.Version = string(response.Version[:len(request.Version)])
+			}
+			if request.Version  == response.Version && response.Sdk == request.Sdk && response.SessionID == request.Target.Host() {
 				return response, nil
 			}
 		}
