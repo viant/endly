@@ -1,0 +1,15 @@
+{
+  "Target": {
+    "URL": "ssh://$targetHost",
+    "Credential": "$targetHostCredential"
+  },
+  "Directory": "$appDirectory",
+  "Name": "./reporter",
+  "Arguments": [
+    "-config",
+    "conf/config.json",
+    "-port",
+    "8085"
+  ],
+  "ImmuneToHangups": true
+}

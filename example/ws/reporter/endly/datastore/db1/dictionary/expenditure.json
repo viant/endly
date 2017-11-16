@@ -1,0 +1,94 @@
+[
+  {
+    "country": "US",
+    "year": 2014,
+    "category": "Food",
+    "expenditure": 6759
+  },
+  {
+    "country": "US",
+    "year": 2015,
+    "category": "Food",
+    "expenditure": 7023
+  },
+  {
+    "country": "US",
+    "year": 2016,
+    "category": "Food",
+    "expenditure": 7023
+  },
+
+  {
+    "country": "US",
+    "year": 2014,
+    "category": "Housing",
+    "expenditure": 17798
+  },
+  {
+    "country": "US",
+    "year": 2015,
+    "category": "Housing",
+    "expenditure": 18409
+  },
+  {
+    "country": "US",
+    "year": 2016,
+    "category": "Housing",
+    "expenditure": 18886
+  },
+  {
+    "country": "US",
+    "year": 2014,
+    "category": "Transportation",
+    "expenditure": 9073
+  },
+  {
+    "country": "US",
+    "year": 2015,
+    "category": "Transportation",
+    "expenditure": 9503
+  },
+  {
+    "country": "US",
+    "year": 2016,
+    "category": "Transportation",
+    "expenditure": 9049
+  },
+
+  {
+    "country": "US",
+    "year": 2014,
+    "category": "Healthcare",
+    "expenditure": 4290
+  },
+  {
+    "country": "US",
+    "year": 2015,
+    "category": "Healthcare",
+    "expenditure": 4342
+  },
+  {
+    "country": "US",
+    "year": 2016,
+    "category": "Healthcare",
+    "expenditure":  4612
+  },
+  {
+    "country": "US",
+    "year": 2014,
+    "category": "Other",
+    "expenditure": 3547
+  },
+  {
+    "country": "US",
+    "year": 2015,
+    "category": "Other",
+    "expenditure":  3845
+  },
+  {
+    "country": "US",
+    "year": 2016,
+    "category": "Other",
+    "expenditure":  3933
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "RepositoryDatastore":"db1",
+  "Datastores": [
+    {
+      "Name": "db1",
+      "Config": {
+        "PoolSize": 3,
+        "MaxPoolSize": 5,
+        "DriverName": "mysql",
+        "Descriptor": "root:dev@tcp(127.0.0.1:3306)/db1?parseTime=true"
+      }
+    }
+  ]
+}
