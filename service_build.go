@@ -30,6 +30,32 @@ func (s *buildService) loadBuildMeta(context *Context, buildMetaURL string) erro
 	return s.registry.Register(meta)
 }
 
+func (s *buildService) deployAppBuilderIfNeeded(context *Context, meta *BuildMeta, spec *BuildSpec, target *url.Resource) error {
+	if len(meta.BuildDeployments) == 0 {
+		return nil
+	}
+	operatingSystem := context.OperatingSystem(target.Host())
+
+	buildDeployment := meta.Match(operatingSystem, spec.Version)
+	if buildDeployment == nil {
+		return fmt.Errorf("Failed to find a build for provided operating system: %v %v", operatingSystem.Name, operatingSystem.Version)
+	}
+
+	deploymentService, err := context.Service(DeploymentServiceID)
+
+	if err != nil {
+		return err
+	}
+
+	response := deploymentService.Run(context, buildDeployment.Deploy)
+	if response.Error != "" {
+		return errors.New(response.Error)
+
+	}
+	return nil
+}
+
+
 func (s *buildService) build(context *Context, request *BuildRequest) (*BuildResponse, error) {
 	var result = &BuildResponse{}
 	state := context.State()
@@ -85,7 +111,7 @@ func (s *buildService) build(context *Context, request *BuildRequest) (*BuildRes
 			return nil, err
 		}
 		serviceResponse := sdkService.Run(context, &SystemSdkSetRequest{Target: request.Target,
-			Sdk:     context.Expand(buildMeta.Sdk),
+			Sdk: context.Expand(buildMeta.Sdk),
 			Version: context.Expand(buildMeta.SdkVersion),
 		})
 		if serviceResponse.Error != "" {
@@ -107,24 +133,7 @@ func (s *buildService) build(context *Context, request *BuildRequest) (*BuildRes
 		return nil, errors.New(response.Error)
 	}
 
-	operatingSystem := context.OperatingSystem(target.Host())
-	buildDeployment := buildMeta.Match(operatingSystem, buildSpec.Version)
-	if buildDeployment == nil {
-		return nil, fmt.Errorf("Failed to find a build for provided operating system: %v %v", operatingSystem.Name, operatingSystem.Version)
-	}
-
-	deploymentService, err := context.Service(DeploymentServiceID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	response = deploymentService.Run(context, buildDeployment.Deploy)
-	if response.Error != "" {
-		return nil, errors.New(response.Error)
-
-	}
-
+	s.deployAppBuilderIfNeeded(context, buildMeta, buildSpec, target)
 	commandInfo, err := context.Execute(target, goal.Command)
 	if err != nil {
 		return nil, err
