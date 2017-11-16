@@ -8,7 +8,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/viant/asc"
 	_ "github.com/viant/bgc"
-	_ "github.com/alexbrainman/odbc"
 	"time"
 )
 
