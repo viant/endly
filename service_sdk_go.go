@@ -26,7 +26,7 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 				Command: fmt.Sprintf("go version"),
 				Extraction: []*DataExtraction{
 					{
-						RegExpr: fmt.Sprintf("go version go(\\d\\.\\d)"),
+						RegExpr: fmt.Sprintf("go version go([^\\s]+)"),
 						Key:     "version",
 					},
 				},
