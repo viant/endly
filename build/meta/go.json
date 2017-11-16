@@ -29,13 +29,8 @@
           },
           {
             "Command": "go ${build.goal} ${build.args}",
-            "Error": ["failed", "error"],
-            "Extraction": [
-              {
-                "Key":"Artifact",
-                "RegExpr": "Building jar:[^\/]+(.+)"
-              }
-            ]
+            "Error": ["failed", "error", "imported and not used"]
+
           }
         ]
       }
