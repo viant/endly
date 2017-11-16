@@ -7,10 +7,9 @@ type ProcessStartRequest struct {
 	Name          string
 	Target        *url.Resource
 	Options       *ExecutionOptions
-	SystemService bool
 	Directory     string
-	Command       string
 	Arguments     []string
+	ImmuneToHangups bool //start process as nohup
 }
 
 //ProcessStartResponse represents a start response
