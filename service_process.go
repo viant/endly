@@ -164,7 +164,11 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 		}
 	}
 	changeDirCommand := fmt.Sprintf("cd %v ", request.Directory)
-	startCommand := fmt.Sprintf("nohup %v %v &", request.Name, strings.Join(request.Arguments, " "))
+
+	var startCommand  = request.Name + " " +  strings.Join(request.Arguments, " ") + " &"
+	if request.ImmuneToHangups {
+		startCommand = fmt.Sprintf("nohup  %v", startCommand)
+	}
 	_, err = context.Execute(request.Target, &ManagedCommand{
 		Options: request.Options,
 		Executions: []*Execution{
