@@ -58,7 +58,7 @@ Getting started enables you to run [example applications](example/)  vi endly wo
 3) build and deploy an app
 4) prepare test data
 5) run use case
-6) verify app functionality
+6) verify app functionality 
  
 
 Prerequisites:
@@ -84,6 +84,8 @@ export PATH=$PATH:$GOPATH/bin
 
 Generate secret keys with credential that endly will use to run the workflows.
 (**secret** binary should be compiled and build as result of get -u github.com/viant/toolbox/secret into GOPATH/bin)
+Secret generate a file that store encrypted credential in $HOME/.secret/ directory.
+
 
 Provide you user name and password you login to your box.
 ```text
