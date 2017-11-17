@@ -13,11 +13,10 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 		var ok bool
 		if response, ok = context.GetOptional(response).(*SystemSdkSetResponse); ok {
 
-
 			if len(response.Version) > len(request.Version) {
 				response.Version = string(response.Version[:len(request.Version)])
 			}
-			if request.Version  == response.Version && response.Sdk == request.Sdk && response.SessionID == request.Target.Host() {
+			if request.Version == response.Version && response.Sdk == request.Sdk && response.SessionID == request.Target.Host() {
 				return response, nil
 			}
 		}
@@ -35,9 +34,6 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 			},
 		},
 	})
-	fmt.Printf("extacted version %v\n stdout:%v\n", commandResponse.Extracted, commandResponse.Stdout())
-
-
 	if err != nil {
 		return nil, err
 	}
@@ -50,6 +46,10 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 	}
 	if err != nil {
 		return nil, err
+	}
+	
+	if goPath, ok := request.Env["GOPATH"]; ok {
+		context.Execute(request.Target, fmt.Sprintf("export GOPATH='%v'", goPath))
 	}
 	context.Put(response, response)
 	return response, nil
