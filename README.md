@@ -77,7 +77,7 @@ mkdir ~/Projects/go
 export GOPATH=~/Projects/go
 go get -u github.com/viant/endly
 go get -u github.com/viant/endly/endly
-get -u github.com/viant/toolbox/secret
+go get -u github.com/viant/toolbox/secret
 
 export PATH=$PATH:$GOPATH/bin
 ```
