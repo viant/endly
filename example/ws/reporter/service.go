@@ -52,7 +52,11 @@ func (s *service) Register(request *RegisterReportRequest) *RegisterReportRespon
 		setError(response.Response, fmt.Sprint("%v", err))
 		return response
 	}
-	s.reportDao.Persist(manager, report)
+	err = s.reportDao.Persist(manager, report)
+	if err != nil {
+		setError(response.Response, fmt.Sprint("Failed to persist report %v", err))
+		return response
+	}
 	s.reports[report.GetName()] = report
 	return response
 }
