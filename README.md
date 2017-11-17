@@ -73,7 +73,7 @@ Install [go lang](https://golang.org/doc/install) version 1.8+
 after installing go run the following command
 
 ```text
-mkdir ~/Projects/go
+mkdir -p ~/Projects/go
 export GOPATH=~/Projects/go
 go get -u github.com/viant/endly
 go get -u github.com/viant/endly/endly
