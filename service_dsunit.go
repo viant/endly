@@ -2,7 +2,6 @@ package endly
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"github.com/viant/dsc"
 	"github.com/viant/dsunit"
 	"github.com/viant/toolbox"
@@ -164,7 +163,7 @@ func (s *dataStoreUnitService) runSQLScripts(context *Context, datastore string,
 		if err != nil {
 			return 0, err
 		}
-		totaModified+=modified
+		totaModified += modified
 	}
 	return totaModified, nil
 }
@@ -258,31 +257,52 @@ func (s *dataStoreUnitService) prepare(context *Context, request *DsUnitPrepareR
 	return response, err
 }
 
-func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectRequest) (interface{}, error) {
+func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectRequest) (*ValidationInfo, error) {
 	err := request.Validate()
 	if err != nil {
 		return nil, err
-	}
-	var response = &DsUnitExpectResponse{
-		DatasetChecked: make(map[string]int),
 	}
 
 	datasets, err := s.Manager.DatasetFactory().CreateDatasets(request.Datasets)
 	if err != nil {
 		return nil, err
 	}
-	for _, dataset := range datasets.Datasets {
-		response.DatasetChecked[dataset.Table] = len(dataset.Rows)
-	}
-
-	voilations, err := s.Manager.ExpectDatasets(request.CheckPolicy, datasets)
+	var verificationFailures = make(map[string]bool)
+	violations, err := s.Manager.ExpectDatasets(request.CheckPolicy, datasets)
 	if err != nil {
 		return nil, err
 	}
-	if voilations.HasViolations() {
-		return nil, errors.New(voilations.String())
+
+	validationInfo := &ValidationInfo{}
+
+	if violations.HasViolations() {
+		for _, violation := range violations.Violations() {
+			verificationFailures[violation.Table] = true
+			var path = fmt.Sprintf("%v%v", violation.Table, violation.Key)
+			var message = ""
+
+			switch violation.Type  {
+			case dsunit.ViolationTypeInvalidRowCount:
+				message += fmt.Sprintf("expected %v rows but had %v\n\t", violation.Expected, violation.Actual)
+			case dsunit.ViolationTypeMissingActualRow:
+				message += "The following row was missing:\n\t\t"
+				message += fmt.Sprintf("[PK: %v]: %v \n\t\t", violation.Key, violation.Expected)
+			case dsunit.ViolationTypeRowNotEqual:
+				message += "\n\tThe following row was different:\n\t\t"
+				message += fmt.Sprintf("[PK: %v]:  %v !=  actual: %v \n\t\t", violation.Key, violation.Expected, violation.Actual)
+			}
+			validationInfo.AddFailure(NewFailedTest(path, message, violation.Expected, violation.Actual))
+		}
+
 	}
-	return response, err
+
+	for _, dataset := range datasets.Datasets {
+		if verificationFailures[dataset.Table] {
+			continue
+		}
+		validationInfo.TestPassed = len(dataset.Rows)
+	}
+	return validationInfo, err
 }
 
 func (s *dataStoreUnitService) NewRequest(action string) (interface{}, error) {
