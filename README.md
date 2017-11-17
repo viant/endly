@@ -9,6 +9,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 - [Motivation](#Motivation)
 - [Installation](#Installation)
+- [GettingStarted](#GettingStarted)
 - [Introduction](#Introduction)
 - [System services](#SystemServices)
 - [Build and deployment services](#Buildservices)
@@ -31,7 +32,7 @@ or to process in the required by a business way. Other services used by an appli
 The typical application output could be data in datastore persisted by UI, logs produced by application, performance counters,
 or profile data based on used activity.
 Finally application needs to be build and deployed with the required service into a system in automated fashion to be tested.
-This framework provide end to end capability to test from system preparation with its service, building and deploying application to verification 
+This framework provide end to end capability to test from system service preparation, building and deploying application to final verification 
 that expected output has been produced.
 
 
@@ -48,15 +49,79 @@ go get -u github.com/viant/endly
 ```
 
 
+<a name="GettingStarted"></a>
+## Getting Started
+
+Getting started enables you to run [example applications](example/)  vi endly workflows that will:
+1) prepare your system for an app
+2) prepare datastore(database) for an app
+3) build and deploy an app
+4) prepare test data
+5) run use case
+6) validate app run propertly
+ 
+
+Prerequisites:
+
+Enable ssh logic you your use on your machine (on osx System Preference / Sharing / Remote Login )
+ 
+Install [docker](https://docs.docker.com/engine/installation/) service
+
+Install [go lang](https://golang.org/doc/install) version 1.8+
+
+
+after installing go run the following command
+
+```text
+mkdir ~/Projects/go
+export GOPATH=~/Projects/go
+go get -u github.com/viant/endly
+go get -u github.com/viant/endly/endly
+get -u github.com/viant/toolbox/secret
+
+export PATH=$PATH:$GOPATH/bin
+```
+
+Generate secret keys with credential that endly will use to run the workflows.
+(**secret** binary should be compiled and build as result of get -u github.com/viant/toolbox/secret into GOPATH/bin)
+
+Provide you user name and password you login to your box.
+```text
+secret scp
+```
+Provide you **root** as user name and non empty password for docker mysqladmin
+```text
+secret mysql
+```
+
+Check that **'endly'** binary is created in $GOPATH/bin directory as result of 
+'go get -u github.com/viant/endly/endly'
+
+
+
+### Run reporter webservice workflow
+
+Run the following command:
+
+```text
+cd $GOPATH/src/github.com/viant/endly/example/ws/reporter/endly/
+endly
+```
+
+**'endly'** by default looks up a run.json file to bootstrap workflow.
+
+
+
+
+
 <a name="Introduction"></a>
 ## Introduction
 
-
-Typical web application automated functional can be broken down as follow:
+Endly as a comprehensive testing framework automate the following step:
 
 1) System preparation 
     1) System services initialization.  (RDBM, NoSQL, Caching 3rd Party API)
-    2) Application container initialization if application uses it (Application server)
+    2) Application container initialization if application uses it (Application server, i,e, tomcat)
 2) Application build and deployment
     1) Application code checkout.
     2) Application build
@@ -68,7 +133,7 @@ Typical web application automated functional can be broken down as follow:
         2) Reset runner
         3) Selenium runner
     3) Application output verification
-    4) Application modified data verification
+    4) Application persisted data verification
     5) Application produced log verification    
 4) Cleanup
     1) Data cleanup 
@@ -77,8 +142,8 @@ Typical web application automated functional can be broken down as follow:
     
 
 
-
-This testing framework uses [Neatly](https://github.com/viant/neatly) format to represent a workflow.
+It uses tabular [Neatly](https://github.com/viant/neatly) format to represent a workflow, that
+can be easily manged with either MS Excel, Apple Number or OpenOffice.
 
 
 **[Workflow](workflow.go)** an abstraction to define a set of task with its action.
