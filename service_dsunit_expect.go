@@ -38,8 +38,3 @@ func (r *DsUnitExpectRequest) Validate() error {
 	}
 	return nil
 }
-
-//DsUnitExpectResponse represents verification response
-type DsUnitExpectResponse struct {
-	DatasetChecked map[string]int
-}
