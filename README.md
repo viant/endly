@@ -84,7 +84,7 @@ export PATH=$PATH:$GOPATH/bin
 
 Generate secret keys with credential that endly will use to run the workflows.
 (**secret** binary should be compiled and build as result of get -u github.com/viant/toolbox/secret into GOPATH/bin)
-Secret generate a file that store encrypted credential in $HOME/.secret/ directory.
+Secret generate a file that store blowfish encrypted credential in $HOME/.secret/ directory.
 
 
 Provide you user name and password you login to your box.
@@ -95,6 +95,13 @@ Provide you **root** as user name and non empty password for docker mysqladmin
 ```text
 secret mysql
 ```
+
+Verify that secret file were created
+```text
+cat ~/.secret/scp.json
+cat ~/.secret/mysql.json
+```
+
 
 Check that **'endly'** binary is created in $GOPATH/bin directory as result of 
 'go get -u github.com/viant/endly/endly'
