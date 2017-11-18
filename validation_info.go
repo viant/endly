@@ -61,6 +61,7 @@ type ValidationInfo struct {
 	TagId       string
 	TestPassed  int
 	FailedTests []*FailedTest
+	TestFailed int
 }
 
 //AddFailure appends failure
@@ -69,6 +70,7 @@ func (ar *ValidationInfo) AddFailure(failedTest *FailedTest) {
 		ar.FailedTests = make([]*FailedTest, 0)
 	}
 	ar.FailedTests = append(ar.FailedTests, failedTest)
+	ar.TestFailed++
 }
 
 //HasFailure returns true if at least one failure has been registered
