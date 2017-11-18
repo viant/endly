@@ -8,6 +8,7 @@ import (
 //ServiceAction represents a workflow service action
 type ServiceAction struct {
 	RunCriteria    string      //criteria to run this action
+	SkipCriteria   string      //criteria to skip current action to continue to next tag id action
 	Service        string      //service Id
 	Action         string      //Id of the action used to create service request
 	Tag            string      //neatly tag

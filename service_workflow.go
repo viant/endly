@@ -17,17 +17,17 @@ const (
 	//WorkflowServiceID represent workflow service id
 	WorkflowServiceID = "workflow"
 	//WorkflowEvalRunCriteriaEventType event Id
-	WorkflowEvalRunCriteriaEventType = "EvalRunCriteria"
+	WorkflowEvalCriteriaEventType = "EvalCriteria"
 )
 
 //WorkflowServiceActivity represents workflow activity
 type WorkflowServiceActivity struct {
-	Workflow string
-	Service  string
-	Action   string
-	Tag      string
-	TagIndex string
-	TagId    string
+	Workflow        string
+	Service         string
+	Action          string
+	Tag             string
+	TagIndex        string
+	TagId           string
 
 	Description     string
 	TagDescription  string
@@ -83,11 +83,10 @@ func (s *workflowService) Workflow(name string) (*Workflow, error) {
 	return nil, fmt.Errorf("Failed to lookup workflow: %v", name)
 }
 
-func (s *workflowService) evaluateRunCriteria(context *Context, criteria string) (bool, error) {
+func (s *workflowService) evaluateCriteria(context *Context, criteria string, defaultValue bool) (bool, error) {
 	if criteria == "" {
-		return true, nil
+		return defaultValue, nil
 	}
-
 	colonPosition := strings.Index(criteria, ":")
 	if colonPosition == -1 {
 		return false, fmt.Errorf("Run criteria needs to have colon: but had: %v", criteria)
@@ -97,7 +96,7 @@ func (s *workflowService) evaluateRunCriteria(context *Context, criteria string)
 	expectedOperand := context.Expand(strings.TrimSpace(fragments[1]))
 	validator := &Validator{}
 	var result, err = validator.Check(expectedOperand, actualOperand)
-	s.AddEvent(context, WorkflowEvalRunCriteriaEventType, Pairs("actual", actualOperand, "expected", expectedOperand, "eligible", result), Debug)
+	s.AddEvent(context, WorkflowEvalCriteriaEventType, Pairs("defaultValue", defaultValue, "actual", actualOperand, "expected", expectedOperand, "eligible", result), Debug)
 	return result, err
 }
 
@@ -196,7 +195,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) err
 	serviceActivity.ServiceResponse = responseMap
 	startEvent := s.Begin(context, action, Pairs("activity", serviceActivity), Info)
 	defer s.End(context)(startEvent, Pairs("value", &WorkflowServiceActivityEndEventType{}, "response", responseMap))
-	canRun, err := s.evaluateRunCriteria(context, action.RunCriteria)
+	canRun, err := s.evaluateCriteria(context, action.RunCriteria, true)
 	if err != nil {
 		return err
 	}
@@ -267,7 +266,7 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 		return err
 	}
 
-	canRun, err := s.evaluateRunCriteria(context, task.RunCriteria)
+	canRun, err := s.evaluateCriteria(context, task.RunCriteria, true)
 	if err != nil {
 		return err
 	}
@@ -279,7 +278,8 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 
 	var asyncActions = make([]*ServiceAction, 0)
 
-	for i, action := range task.Actions {
+	for i := 0; i < len(task.Actions); i++ {
+		action := task.Actions[i]
 		if action.Async {
 			asyncActions = append(asyncActions, action)
 			var asyncEvent = &AsyncServiceActionEvent{
@@ -297,9 +297,19 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 		if hasAllowedActions && !allowedServiceActions[i] {
 			continue
 		}
+
 		err = s.runAction(context, action)
 		if err != nil {
 			return fmt.Errorf("Failed to run action:%v %v", action.Tag, err)
+		}
+		moveToNextTag, err := s.evaluateCriteria(context, action.SkipCriteria, false)
+		if err != nil {
+			return err
+		}
+		if moveToNextTag {
+			for j := i + 1; j < len(task.Actions) && action.TagId == task.Actions[j].TagId; j++ {
+				i++
+			}
 		}
 	}
 
@@ -451,7 +461,7 @@ func (s *workflowService) loadWorkflow(context *Context, request *WorkflowLoadRe
 		return nil, fmt.Errorf("Failed to load workflow: %v, %v", request.Source, err)
 	}
 	s.Mutex().Lock()
-	defer  s.Mutex().Unlock()
+	defer s.Mutex().Unlock()
 	err = s.Register(workflow)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to register workflow: %v, %v", request.Source, err)
