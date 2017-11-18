@@ -211,24 +211,24 @@ The following expression are supported:
 
 **Workflow Lifecycle**
 
-1) New context with a new state map is created after inheriting values from a caller. (Caller will not see any context/state changes from downstream workflow)
+1) New context with a new state map is created after inheriting values from a caller. (Caller will not see any state changes from downstream workflow)
 2) **data** key is published to the state map with defined workflow.data
 2) **params** key is published to state map with the caller parameters
-3) Workflow initialization stage executes, applying variables defined in Workflow.Init (input: state, output: state)
+3) Workflow initialization stage executes, applying variables defined in Workflow.Init (input: workflow state, output: workflow state)
 4) Tasks Execution 
     1) Task eligibility determination: 
         1) If specified tasks are '*' or empty, all task defined in the workflow will run sequentially, otherwise only specified
         2) Evaluate RunCriteria if specified
-    2) Task initialization stage executes, applying variables defined in Task.Init (input: state, output: state)
+    2) Task initialization stage executes, applying variables defined in Task.Init (input: workflow  state, output: workflow state)
     
     3) Executes all eligible actions:
         1) Action eligibility determination:
             1) Evaluate RunCriteria if specified
-        2) Action initialization stage executes,  applying variables defined in Action.Init (input: state, output: state)
+        2) Action initialization stage executes,  applying variables defined in Action.Init (input: workflow  state, output: workflow  state)
         3) Executing action on specified service
-        4) Action post stage executes applying variables defined in Action.Post (input: action.response, output: state)
+        4) Action post stage executes applying variables defined in Action.Post (input: action.response, output: workflow state)
     4) Task post stage executes, applying variables defined in Task.Post (input: state, output: state)   
-5) Workflow post stage executes, applying variables defined in Workflow.Init (input: state, output: workflow.response)
+5) Workflow post stage executes, applying variables defined in Workflow.Post (input: workflow  state, output: workflow.response)
 
 
 
