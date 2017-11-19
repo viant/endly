@@ -10,7 +10,7 @@ type DockerRunRequest struct {
 	Target     *url.Resource
 	Image      string
 	Port       string
-	Credential string
+	Credentials map[string]string //container credential, i,e mysql password
 	Env        map[string]string
 	Mount      map[string]string
 	MappedPort map[string]string
