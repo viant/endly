@@ -97,7 +97,6 @@ func (s *daemonService) determineServiceType(context *Context, service, exclusio
 				Command: "service " + service + " status",
 			},
 			{
-				Secure:      "",
 				MatchOutput: "(END)", //quite multiline mode
 				Command:     "Q",
 			},
@@ -254,7 +253,6 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 				},
 			},
 			{
-				Secure:      "",
 				MatchOutput: "(END)", //quite multiline mode
 				Command:     "Q",
 			},

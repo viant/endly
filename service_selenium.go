@@ -156,6 +156,7 @@ func (s *seleniumService) session(context *Context, sessionID string) (*Selenium
 	return nil, fmt.Errorf("Failed to lookup seleniun session id: %v, make sure you first run SeleniumOpenSessionRequest\n", sessionID)
 }
 
+
 func (s *seleniumService) openSession(context *Context, request *SeleniumOpenSessionRequest) (*SeleniumSession, error) {
 	resource, err := context.ExpandResource(request.RemoteSelenium)
 	if err != nil {

@@ -22,7 +22,7 @@ type ExecutionOptions struct {
 
 //Execution represents an execution instructions
 type Execution struct {
-	Secure string //actual secured details like password, etc..., if secure is not empty it will replace **** in command just before execution
+	Secure map[string]string //actual secured details as map { '***': password1, '###':password2  }like password, etc..., if secure is not empty it will replace **** in command just before execution
 	//for security Execution message should not be log in.
 	MatchOutput string          //only run this execution is output from a previous command is matched
 	Command     string          //command to be executed
