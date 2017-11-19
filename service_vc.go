@@ -9,6 +9,9 @@ import (
 	"strings"
 )
 
+const versionControlCredentailKey = "***vc***"
+
+
 //VersionControlServiceID version control service id
 var VersionControlServiceID = "version/control"
 

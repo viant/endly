@@ -9,7 +9,7 @@
   "Params": {
     "goVersion":"1.8",
     "buildGoal": "build",
-    "originURL": "https://github.com/viant/endly/example/ws/ui",
+    "originURL": "https://github.com/viant/endly/example/ws/reporter",
 
     "mysqlVersion": "5.7",
     "mysqlCredential": "${env.HOME}/.secret/mysql.json",

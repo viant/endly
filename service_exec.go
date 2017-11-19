@@ -8,10 +8,13 @@ import (
 	"github.com/viant/toolbox/url"
 	"strings"
 	"path"
+	"sort"
 )
 
 //ExecServiceID represent system executor service id
 const ExecServiceID = "exec"
+
+const sudoCredentialKey = "**sudo**"
 
 //ExecutionStartEvent represents an execution event start
 type ExecutionStartEvent struct {
@@ -206,10 +209,13 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 	terminators := getTerminators(options, session, execution)
 
 	var cmd = command
-	if execution.Secure != "" {
-		cmd = strings.Replace(command, "****", execution.Secure, 1)
+	if len(execution.Secure) > 0 {
+		var keys = toolbox.MapKeysToStringSlice(execution.Secure)
+		sort.Strings(keys)
+		for _, key := range keys {
+			cmd = strings.Replace(cmd, key, execution.Secure[key], len(command))
+		}
 	}
-
 	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
 	startEvent := s.Begin(context, executionStartEvent, Pairs("value", executionStartEvent), Info)
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
@@ -428,7 +434,7 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 	}
 
 	lines := strings.Split(stdout, "\r\n")
-	for i := 0; i < len(lines)-1; i++ {
+	for i := 0; i < len(lines) - 1; i++ {
 		line := lines[i]
 		pair := strings.Split(line, ":")
 		if len(pair) != 2 {
@@ -498,11 +504,21 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 	result.ManagedCommand.Options = executionOptions
 	var errors = make([]string, 0)
 	var extractions = make([]*DataExtraction, 0)
+
+	var secure = make(map[string]string)
+
 	for _, execution := range r.MangedCommand.Executions {
 		if execution.Command == "" {
 			continue
 		}
+		if len(execution.Secure) > 0 {
+			for k, v := range execution.Secure {
+				secure[k] = v
+			}
+		}
+
 		sudo := ""
+
 		if len(execution.Command) > 1 {
 			sudo = "sudo "
 		}
@@ -512,6 +528,7 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 			Extraction:  execution.Extraction,
 			Success:     execution.Success,
 			MatchOutput: execution.MatchOutput,
+			Secure:	secure,
 		}
 		if len(execution.Error) > 0 {
 			errors = append(errors, execution.Error...)
@@ -526,10 +543,12 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 		return nil, fmt.Errorf("Can not run as superuser, credential were empty for target: %v", target.URL)
 	}
 	_, password, err := target.LoadCredential(true)
+
+	secure[sudoCredentialKey] = password
 	execution := &Execution{
-		Secure:      password,
+		Secure:      secure,
 		MatchOutput: "Password",
-		Command:     "****",
+		Command:     sudoCredentialKey,
 		Error:       []string{"Password"},
 		Extraction:  extractions,
 	}

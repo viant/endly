@@ -39,7 +39,7 @@ type DockerContainerStopRequest struct {
 type DockerContainerCommandRequest struct {
 	Target             *url.Resource
 	SysPath            []string
-	Credential         string
+	Credentials         map[string]string
 	Interactive        bool
 	AllocateTerminal   bool
 	RunInTheBackground bool
