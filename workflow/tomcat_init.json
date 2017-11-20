@@ -10,14 +10,9 @@
     "Required":true
   },
   {
-    "Name": "tomcatMajorVersion",
-    "From": "params.tomcatMajorVersion",
-    "Value": "7"
-  },
-  {
     "Name": "tomcatVersion",
     "From": "params.tomcatVersion",
-    "Value": "7.0.81"
+    "Required":true
   },
   {
     "Name": "catalinaOpts",
@@ -56,7 +51,8 @@
   },
   {
     "Name": "appDirectory",
-    "Value": "$params.appDirectory"
+    "Value": "$params.appDirectory",
+    "Required":true
   },
   {
     "Name": "forceDeploy",

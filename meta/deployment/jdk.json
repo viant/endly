@@ -1,0 +1,73 @@
+{
+  "Name": "java",
+  "Targets": [
+    {
+      "Version": "1.7",
+      "OsTarget": {
+        "System": "linux"
+      },
+      "Deployment": {
+        "Pre": {
+          "SuperUser": true,
+          "Commands": [
+            "mkdir -p /opt/sdk/",
+            "chmod a+rw /opt/sdk/"
+          ]
+        },
+
+        "Transfer": {
+          "Source": {
+            "URL": "sdk/jdk-7u80-linux-x64.tar.gz"
+          },
+          "Target": {
+            "URL": "scp://${targetHost}/opt/sdk/jdk/jdk-7u80-linux-x64.tar.gz",
+            "Credential": "${targetHostCredential}"
+          }
+        },
+        "VersionCheck": {
+          "Options": {
+            "SystemPaths": [
+              "/usr/lib/jvm/java-7-oracle/bin"
+            ]
+          },
+          "Executions": [
+            {
+              "Command": "java -version",
+              "Extraction": [
+                {
+                  "Key": "Version",
+                  "RegExpr": "build (\\d\\.\\d).+"
+                }
+              ]
+            }
+          ]
+        },
+        "Command": {
+          "Options": {
+            "Directory": "/opt/sdk/jdk"
+          },
+          "Executions": [
+            {
+              "Command": "tar xvzf jdk-7u80-linux-x64.tar.gz",
+              "Error": [
+                "Error"
+              ]
+            },
+            {
+              "Command": "/bin/bash -c '[[ -e /usr/lib/jvm/java-7-oracle ]] && rm -rf /usr/lib/jvm/java-7-oracle'"
+            },
+            {
+              "Command": "mkdir -p /usr/lib/jvm/java-7-oracle"
+            },
+            {
+              "Command": "cp -rf /opt/sdk/jdk/jdk1.7.0_80/* /usr/lib/jvm/java-7-oracle/*",
+              "Error": [
+                "No"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

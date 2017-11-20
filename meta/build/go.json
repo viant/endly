@@ -1,19 +1,22 @@
 {
   "Name": "go",
-  "Sdk":"go",
-  "SdkVersion":"$build.sdkVersion",
+  "Dependencies":[{
+    "Name":"$buildSpec.sdk",
+    "Version":"$buildSpec.sdkVersion"
+  }],
+
   "Goals": [
     {
       "Name": "build",
       "Command": {
         "Options": {
-          "Directory": "$build.target",
+          "Directory": "$buildSpec.path",
           "TimeoutMs": 720000
 
         },
         "Executions": [
           {
-            "Command": "cd $build.target"
+            "Command": "cd $buildSpec.path"
           },
           {
             "Command": "go clean",
@@ -28,7 +31,7 @@
             ]
           },
           {
-            "Command": "go ${build.goal} ${build.args}",
+            "Command": "go ${buildSpec.goal} ${buildSpec.args}",
             "Error": ["failed", "error", "imported and not used"]
 
           }
