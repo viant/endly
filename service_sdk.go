@@ -18,6 +18,9 @@ type systemSdkService struct {
 }
 
 func (s *systemSdkService) updateSessionSdk(context *Context, target *url.Resource, sdkInfo *SystemSdkInfo) error {
+	if sdkInfo == nil {
+		return nil
+	}
 	session := context.TerminalSession(target)
 	if session == nil {
 		return fmt.Errorf("Failed to lookup session %v\n", target.Host())
