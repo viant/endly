@@ -190,7 +190,7 @@ func (s *deploymentService) discoverTransfer(context *Context, request *Deployme
 			artifact.Put(releaseFragmentKey, toolbox.AsString(i))
 			artifact.Put(versionKey, fmt.Sprintf("%v.%v", request.Version, i))
 			var sourceURL = context.Expand(source.URL)
-			exists, err := service.Exists(sourceURL);
+			exists, _ := service.Exists(sourceURL);
 			if exists {
 				source = url.NewResource(sourceURL, source.Credential)
 				break;

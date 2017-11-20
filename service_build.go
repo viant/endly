@@ -86,7 +86,6 @@ func (s *buildService) deployDependencyIfNeeded(context *Context, meta *BuildMet
 	for _, dependency := range meta.Dependencies {
 		var app = context.Expand(dependency.Name)
 		var version = context.Expand(dependency.Version)
-		var build = context.state.GetMap("buildSpec")
 		response := deploymentService.Run(context, &DeploymentDeployRequest{
 			AppName:app,
 			Version:version,
