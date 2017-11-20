@@ -1,0 +1,51 @@
+{
+  "Name": "maven",
+  "Dependencies": [
+    {
+      "Name": "maven",
+      "Version": "${buildSpec.version}"
+    }
+  ],
+  "Goals": [
+    {
+      "Name": "build",
+      "Command": {
+        "Options": {
+          "Directory": "$buildSpec.path",
+          "TimeoutMs": 720000
+        },
+        "Executions": [
+          {
+            "Command": "cd $buildSpec.path"
+          },
+          {
+            "Command": "mvn clean $buildSpec.args",
+            "Errors": [
+              "Error",
+              "command not found"
+            ]
+          },
+          {
+            "Command": "mvn clean $buildSpec.args",
+            "Errors": [
+              "Error",
+              "command not found"
+            ]
+          },
+          {
+            "Command": "mvn $buildSpec.goal $buildSpec.args",
+            "Success": [
+              "BUILD SUCCESS"
+            ],
+            "Extraction": [
+              {
+                "Key": "Artifact",
+                "RegExpr": "Building jar:[^\/]+(.+)"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

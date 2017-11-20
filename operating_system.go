@@ -7,10 +7,12 @@ import (
 
 //OperatingSystem represents an OperatingSystem
 type OperatingSystem struct {
-	System  string
-	Name    string
-	Version string
-	Path    *SystemPath
+	System       string
+	Name         string
+	Hardware     string
+	Architecture string
+	Version      string
+	Path         *SystemPath
 }
 
 func normalizeVersion(version string) int {

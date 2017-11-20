@@ -2,16 +2,20 @@ package endly
 
 import (
 	"github.com/viant/toolbox/ssh"
+	"sync"
 )
 
 //SystemTerminalSession represents a system terminal session
 type SystemTerminalSession struct {
-	ID string
+	ID              string
 	ssh.MultiCommandSession
 	Connection      ssh.Service
 	OperatingSystem *OperatingSystem
 	envVariables    map[string]string
 	path            string
+	Deployed        map[string]string
+	Sdk             map[string]*SystemSdkInfo
+	Mutex           *sync.RWMutex
 }
 
 //NewSystemTerminalSession create a new client session
@@ -20,6 +24,10 @@ func NewSystemTerminalSession(id string, connection ssh.Service) (*SystemTermina
 		ID:           id,
 		Connection:   connection,
 		envVariables: make(map[string]string),
+		Deployed:make(map[string]string),
+		Sdk:make(map[string]*SystemSdkInfo),
+		Mutex       :&sync.RWMutex{},
+
 	}, nil
 }
 

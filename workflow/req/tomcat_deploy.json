@@ -2,75 +2,10 @@
   "Force": "$forceDeploy",
   "Sdk": "jdk",
   "SdkVersion": "$jdkVersion",
-  "Pre": {
-    "SuperUser": true,
-    "Commands": [
-      "rm -rf $appDirectory",
-      "mkdir -p $appDirectory",
-      "chmod  -R a+rw $appDirectory"
-    ]
-  },
-  "Transfer": {
-    "Source": {
-      "URL": "http://mirror.metrocast.net/apache/tomcat/tomcat-${tomcatMajorVersion}/v${tomcatVersion}/bin/${tomcat}.tar.gz"
-    },
-    "Target": {
-      "Name": "tomcat",
-      "Version": "$tomcatVersion",
-      "URL": "scp://${targetHost}/${appDirectory}/${tomcat}.tar.gz",
-      "Credential": "$targetHostCredential"
-    }
-  },
-  "Command": {
-    "Options": {
-      "Directory": "$appDirectory"
-    },
-    "Executions": [
-      {
-        "Command": "tar xvzf ${tomcat}.tar.gz",
-        "Error": [
-          "Error"
-        ]
-      },
-      {
-        "Command": "mv ${tomcat} tomcat",
-        "Error": [
-          "No"
-        ]
-      }
-    ]
-  },
-  "VersionCheck": {
-    "Executions": [
-      {
-        "Command": "sh tomcat/bin/version.sh",
-        "Extraction": [
-          {
-            "Key": "Version",
-            "RegExpr": "Apache Tomcat/(\\d+\\.\\d+\\.\\d+)"
-          }
-        ]
-      }
-    ]
-  },
-  "Post": {
-    "SuperUser": true,
-    "Commands": [
-      "mkdir -p $appDirectory/tomcat/logs",
-      "chmod -R a+rw  $appDirectory"
-    ],
-    "Transfers": [
-      {
-        "Source": {
-          "URL": "$configUrl",
-          "Credential": "$configURLCredential"
-        },
-        "Target": {
-          "URL": "scp://${targetHost}${appDirectory}/tomcat/conf/server.xml",
-          "Credential": "$targetHostCredential"
-        },
-        "Expand": true
-      }
-    ]
+  "AppName": "tomcat",
+  "Version": "$tomcatVersion",
+  "Target": {
+    "URL": "scp://${targetHost}/${appDirectory}/",
+    "Credential": "$targetHostCredential"
   }
 }

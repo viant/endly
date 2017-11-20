@@ -10,8 +10,15 @@ type SystemSdkSetRequest struct {
 	Target  *url.Resource //target host
 }
 
+
+
 //SystemSdkSetResponse represents sdk response
 type SystemSdkSetResponse struct {
+	SdkInfo *SystemSdkInfo
+}
+
+//SystemSdkInfo represents a system sdk
+type SystemSdkInfo struct {
 	Home      string //sdk path
 	Build     string //sdk build version
 	SessionID string //session id of target host

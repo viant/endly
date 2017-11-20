@@ -418,24 +418,19 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 			index:      make(map[string]bool),
 		},
 	}
-	var releaseCommands = []string{
-		"lsb_release -a",
-	}
-	var stdout string
-	for _, command := range releaseCommands {
-		output, err := session.Run(command, 0)
-		if err != nil {
-			return nil, err
-		}
-		if CheckCommandNotFound(string(output)) {
-			continue
-		}
-		stdout += string(output)
+
+	output, err := session.Run("lsb_release -a", 0)
+	if err != nil {
+		return nil, err
 	}
 
-	lines := strings.Split(stdout, "\r\n")
-	for i := 0; i < len(lines) - 1; i++ {
+	lines := strings.Split(output, "\r\n")
+	for i := 0; i < len(lines); i++ {
 		line := lines[i]
+
+		if strings.Contains(line, "amd64") || strings.Contains(line, "x86_64") {
+			operatingSystem.Architecture = "amd64"
+		}
 		pair := strings.Split(line, ":")
 		if len(pair) != 2 {
 			continue
@@ -448,20 +443,30 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 		case "productversion", "release":
 			operatingSystem.Version = val
 		}
-	}
 
-	operatingSystem.System = session.System()
-	//TODO add os architecure i.e.x64
-	output, err := session.Run("echo $PATH", 0)
+	}
+	operatingSystem.Hardware, err = session.Run("uname -m", 0)
 	if err != nil {
 		return nil, err
 	}
-	stdOut := string(output)
-	var newLine = strings.Index(stdOut, "\n")
-	if newLine != -1 {
-		stdOut = string(stdOut[:newLine])
+	if strings.Contains(operatingSystem.Hardware, "amd64") || strings.Contains(operatingSystem.Hardware, "x86_64") {
+		operatingSystem.Architecture = "amd64"
 	}
-	operatingSystem.Path.SystemPath = strings.Split(stdOut, ":")
+
+	operatingSystem.System = session.System()
+	output, err = session.Run("echo $PATH", 0)
+	if err != nil {
+		return nil, err
+	}
+	lines = strings.Split(output, "\r\n")
+	for i := 0; i < len(lines) ; i++ {
+		var line = lines[i];
+		if !strings.Contains(line, ":") {
+			continue
+		}
+		operatingSystem.Path.SystemPath = strings.Split(line, ":")
+
+	}
 	return operatingSystem, nil
 }
 
@@ -528,7 +533,7 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 			Extraction:  execution.Extraction,
 			Success:     execution.Success,
 			MatchOutput: execution.MatchOutput,
-			Secure:	secure,
+			Secure:        secure,
 		}
 		if len(execution.Error) > 0 {
 			errors = append(errors, execution.Error...)

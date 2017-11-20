@@ -1,0 +1,82 @@
+{
+  "Name": "tomcat",
+  "Versioning": "MajorVersion.MinorVersion.ReleaseVersion",
+  "Targets": [
+    {
+      "MinReleaseVersion": {
+        "7.0": "82"
+      },
+      "Deployment": {
+        "Pre": {
+          "SuperUser": true,
+          "Commands": [
+            "rm -rf $appDirectory",
+            "mkdir -p $appDirectory",
+            "chmod  -R a+rw $appDirectory"
+          ]
+        },
+        "Transfer": {
+          "Source": {
+            "URL": "http://mirror.metrocast.net/apache/tomcat/tomcat-${artifact.MajorVersion}/v${artifact.Version}/bin/apache-tomcat-${artifact.Version}.tar.gz"
+          },
+          "Target": {
+            "Name": "tomcat",
+            "Version": "$tomcatVersion",
+            "URL": "scp://${targetHost}/${appDirectory}/apache-tomcat-${artifact.Version}.tar.gz",
+            "Credential": "$targetHostCredential"
+          }
+        },
+        "Command": {
+          "Options": {
+            "Directory": "$appDirectory"
+          },
+          "Executions": [
+            {
+              "Command": "tar xvzf apache-tomcat-${artifact.Version}.tar.gz",
+              "Error": [
+                "Error"
+              ]
+            },
+            {
+              "Command": "mv apache-tomcat-${artifact.Version} tomcat",
+              "Error": [
+                "No"
+              ]
+            }
+          ]
+        },
+        "VersionCheck": {
+          "Executions": [
+            {
+              "Command": "sh tomcat/bin/version.sh",
+              "Extraction": [
+                {
+                  "Key": "Version",
+                  "RegExpr": "Apache Tomcat/(\\d+\\.\\d+\\.\\d+)"
+                }
+              ]
+            }
+          ]
+        },
+        "Post": {
+          "Commands": [
+            "mkdir -p $appDirectory/tomcat/logs"
+          ],
+          "Transfers": [
+            {
+              "Source": {
+                "URL": "$configUrl",
+                "Credential": "$configURLCredential"
+              },
+              "Target": {
+                "URL": "scp://${targetHost}${appDirectory}/tomcat/conf/server.xml",
+                "Credential": "$targetHostCredential"
+              },
+              "Expand": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

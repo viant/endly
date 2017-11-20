@@ -229,7 +229,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) err
 
 	err = s.asServiceRequest(action, serviceRequest, requestMap)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to create service request: %v %v", requestMap, err)
 	}
 	serviceResponse := service.Run(context, serviceRequest)
 	serviceActivity.ServiceResponse = serviceResponse

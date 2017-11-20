@@ -36,6 +36,10 @@ type Context struct {
 	closed      int32
 }
 
+
+
+
+
 //IsClosed returns true if it is closed.
 func (c *Context) IsClosed() bool {
 	return atomic.LoadInt32(&c.closed) == 1
@@ -103,7 +107,6 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 		return nil, fmt.Errorf("Failed to parse URL %v", result.URL)
 	}
 	result.Name = c.Expand(resource.Name)
-	result.Version = resource.Version
 	result.Type = c.Expand(resource.Type)
 	result.Cache = c.Expand(resource.Cache)
 	result.CacheExpiryMs = resource.CacheExpiryMs
@@ -214,6 +217,25 @@ func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ManagedComma
 	}
 	return c.Execute(target, request.ManagedCommand)
 }
+
+
+
+func (c *Context) TerminalSession(target *url.Resource) *SystemTerminalSession {
+	sessions := c.TerminalSessions()
+	execService, err := c.Service(ExecServiceID)
+	if err != nil {
+		return nil
+	}
+	execService.Mutex().RLock()
+	defer execService.Mutex().RUnlock()
+	if ! sessions.Has(target.Host()) {
+		return nil
+	}
+	return sessions[target.Host()]
+}
+
+
+
 
 //Execute execute shell command
 func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandResponse, error) {

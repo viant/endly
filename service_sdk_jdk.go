@@ -4,16 +4,14 @@ import (
 	"fmt"
 	"github.com/lunixbochs/vtclean"
 	"strings"
+	"github.com/pkg/errors"
 )
 
 type systemJdkService struct{}
 
-func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate string, request *SystemSdkSetRequest) (*SystemSdkSetResponse, error) {
-	var response = &SystemSdkSetResponse{}
+func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate string, request *SystemSdkSetRequest) (*SystemSdkInfo, error) {
+	var result = &SystemSdkInfo{}
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
-
-
-
 		Executions: []*Execution{
 			{
 				Command: jdkCandidate + "java -version",
@@ -45,17 +43,17 @@ func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate strin
 	if javaHome, ok := commandResponse.Extracted["JAVA_HOME"]; ok {
 		if build, ok := commandResponse.Extracted["build"]; ok {
 			if build == request.Version {
-				response.Version = build
-				response.Home = strings.Replace(javaHome, "/jre", "", 1)
-				context.Execute(request.Target, fmt.Sprintf("export JAVA_HOME='%v'", response.Home))
+				result.Version = build
+				result.Home = strings.Replace(javaHome, "/jre", "", 1)
+				context.Execute(request.Target, fmt.Sprintf("export JAVA_HOME='%v'", result.Home))
 
 
-				return response, nil
+				return result, nil
 			}
 			return nil, fmt.Errorf("Invalid version was found expected: %v, but had: %v\n", request.Version, build)
 		}
 	}
-	return nil, fmt.Errorf("Failed to check java version")
+	return nil, errors.New("Failed to check java version")
 
 }
 
@@ -75,23 +73,14 @@ func (s *systemJdkService) getJavaHomeCheckCommand(context *Context, request *Sy
 
 
 
-func (s *systemJdkService) setSdk(context *Context, request *SystemSdkSetRequest) (*SystemSdkSetResponse, error) {
-	var response = &SystemSdkSetResponse{}
-	if context.Contains(response) {
-		var ok bool
-		if response, ok = context.GetOptional(response).(*SystemSdkSetResponse); ok {
-			if response.Version == request.Version && response.Sdk == request.Sdk && response.SessionID == request.Target.Host() {
-				return response, nil
-			}
-		}
-	}
-	response, err := s.checkJavaVersion(context, "", request)
+func (s *systemJdkService) setSdk(context *Context, request *SystemSdkSetRequest) (*SystemSdkInfo, error) {
+	var result = &SystemSdkInfo{}
+	result, err := s.checkJavaVersion(context, "", request)
 	if err == nil {
-		return response, nil
+		return result, nil
 	}
 
 	jdkHomeCheckCommand := s.getJavaHomeCheckCommand(context, request)
-
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
@@ -117,10 +106,9 @@ func (s *systemJdkService) setSdk(context *Context, request *SystemSdkSetRequest
 			return nil, sdkNotFound
 		}
 		var jdkCandidate = vtclean.Clean(home, false)
-		response, err = s.checkJavaVersion(context, jdkCandidate+"/bin/", request)
+		result, err = s.checkJavaVersion(context, jdkCandidate+"/bin/", request)
 		if err == nil {
-			context.Put(response, response)
-			return response, nil
+			return result, nil
 		}
 	}
 	return nil, sdkNotFound

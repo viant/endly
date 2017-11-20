@@ -7,27 +7,15 @@ import (
 //TODO complete implementation
 type systemGoService struct{}
 
-func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest) (*SystemSdkSetResponse, error) {
-	var response = &SystemSdkSetResponse{}
-	if context.Contains(response) {
-		var ok bool
-		if response, ok = context.GetOptional(response).(*SystemSdkSetResponse); ok {
-
-			if len(response.Version) > len(request.Version) {
-				response.Version = string(response.Version[:len(request.Version)])
-			}
-			if request.Version == response.Version && response.Sdk == request.Sdk && response.SessionID == request.Target.Host() {
-				return response, nil
-			}
-		}
-	}
+func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest) (*SystemSdkInfo, error) {
+	var result = &SystemSdkInfo{}
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
-				Command: fmt.Sprintf("go version"),
+				Command: "go version",
 				Extraction: []*DataExtraction{
 					{
-						RegExpr: fmt.Sprintf("go version go([^\\s]+)"),
+						RegExpr: "go version go([^\\s]+)",
 						Key:     "version",
 					},
 				},
@@ -47,10 +35,13 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 	if err != nil {
 		return nil, err
 	}
-	
+	result.Sdk = "go"
+	result.Version = commandResponse.Extracted["version"]
+	if result.Version == "" {
+		result.Version = request.Version
+	}
 	if goPath, ok := request.Env["GOPATH"]; ok {
 		context.Execute(request.Target, fmt.Sprintf("export GOPATH='%v'", goPath))
 	}
-	context.Put(response, response)
-	return response, nil
+	return result, nil
 }
