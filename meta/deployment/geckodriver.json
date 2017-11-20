@@ -1,0 +1,63 @@
+{
+  "Name": "geckodriver",
+  "Targets": [
+    {
+      "OsTarget": {
+        "System": "darwin"
+      },
+      "Deployment": {
+        "Transfer": {
+          "Source": {
+            "URL": "https://github.com/mozilla/geckodriver/releases/download/v0.19.1/geckodriver-v0.19.1-macos.tar.gz"
+          },
+          "Target": {
+            "URL": "scp://${targetHost}/opt/selenium/",
+            "Credential": "${targetHostCredential}"
+          }
+        },
+        "Command": {
+          "Options": {
+            "Directory": "/opt/selenium"
+          },
+          "Executions": [
+            {
+              "Command": "tar xvzf geckodriver-v0.19.1-macos.tar.gz",
+              "Error": [
+                "Error"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "OsTarget": {
+        "System": "linux"
+      },
+      "Deployment": {
+        "Transfer": {
+          "Source": {
+            "URL": "https://github.com/mozilla/geckodriver/releases/download/v0.19.1/geckodriver-v0.19.1-linux64.tar.gz"
+          },
+          "Target": {
+            "URL": "scp://${targetHost}/opt/selenium/",
+            "Credential": "${targetHostCredential}"
+          }
+        },
+        "Command": {
+          "Options": {
+            "Directory": "/opt/selenium"
+          },
+          "Executions": [
+            {
+              "Command": "tar xvzf geckodriver-v0.19.1-macos.tar.gz",
+              "Error": [
+                "Error"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

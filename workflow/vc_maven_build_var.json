@@ -2,7 +2,12 @@
   {
     "Name": "jdkVersion",
     "From": "$params.jdkVersion",
-    "Value": "1.7"
+    "Required": true
+  },
+  {
+    "Name":"mavenVersion",
+    "From":"params.mavenVersion",
+    "Required": true
   },
   {
     "Name": "buildGoal",
@@ -56,6 +61,7 @@
     "Value": {
       "BuildSpec": {
         "Name": "maven",
+        "Version":"$mavenVersion",
         "Goal": "build",
         "BuildGoal": "$buildGoal",
         "Args": "$buildArgs",

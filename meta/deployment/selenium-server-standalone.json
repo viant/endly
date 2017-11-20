@@ -1,0 +1,46 @@
+{
+  "Name": "selenium-server-standalone",
+  "Versioning":"MajorVersion.MinorVersion.ReleaseVersion",
+  "Targets": [
+    {
+
+      "MinReleaseVersion": {
+        "3.4": "0"
+      },
+      "Deployment": {
+
+        "Pre": {
+          "SuperUser": true,
+          "Commands": [
+            "mkdir -p /opt/selenium/",
+            "chmod a+rw /opt/selenium/"
+          ]
+        },
+
+        "Transfer": {
+          "Source": {
+            "URL": "http://selenium-release.storage.googleapis.com/${artifact.MajorVersion}.${artifact.MinorVersion}/selenium-java-${artifact.Version}.zip"
+          },
+          "Target": {
+            "URL": "scp://${targetHost}/opt/selenium/",
+            "Credential": "${targetHostCredential}"
+          }
+        }
+      },
+      "Command": {
+        "Options": {
+          "Directory": "/opt/selenium",
+          "TimeoutMs": 120000
+        },
+        "Executions": [
+          {
+            "Command": "gunzip selenium-java-${artifact.Version}.zip",
+            "Error": [
+              "Error"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

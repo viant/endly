@@ -158,7 +158,7 @@ func (r *CliRunner) reportEvenType(serviceResponse interface{}, event *Event, fi
 		}
 	case *DeploymentDeployRequest:
 		if filter.Deployment {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("app: %v, sdk: %v%v, forced: %v", casted.AppName, casted.Sdk, casted.SdkVersion, casted.Force), messageTypeGeneric, "deploy")
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("app: %v, forced: %v", casted.AppName, casted.Force), messageTypeGeneric, "deploy")
 		}
 	case *DsUnitRegisterRequest:
 		if filter.RegisterDatastore {

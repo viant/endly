@@ -3,7 +3,7 @@ package endly
 import (
 	"errors"
 	"fmt"
-	"strings"
+	"github.com/viant/toolbox/url"
 )
 
 var sdkNotFound = errors.New("SDK NOT FUND")
@@ -17,27 +17,14 @@ type systemSdkService struct {
 	goService  *systemGoService
 }
 
-func (s *systemSdkService) loadSdkMeta(context *Context, request *SystemSdkSetRequest) error {
-	service, err := context.Service(WorkflowServiceID)
-	if err != nil {
-		return err
+func (s *systemSdkService) updateSessionSdk(context *Context, target *url.Resource, sdkInfo *SystemSdkInfo) error {
+	session := context.TerminalSession(target)
+	if session == nil {
+		return fmt.Errorf("Failed to lookup session %v\n", target.Host())
 	}
-	if workflowService, ok := service.(*workflowService); ok {
-		var version = strings.Replace(request.Version, ".", "_", len(request.Version))
-		sdkResource, err := workflowService.Dao.NewRepoResource(context.state, fmt.Sprintf("sdk/%v%v.json", request.Sdk, version))
-		if err != nil {
-			return err
-		}
-		request := &SystemSdkRegisterMetaDeploymentRequest{}
-		err = sdkResource.JSONDecode(request)
-		if err != nil {
-			return err
-		}
-		_, err = s.registerMeta(context, request)
-		if err != nil {
-			return err
-		}
-	}
+	session.Mutex.Lock()
+	defer session.Mutex.Unlock()
+	session.Sdk[sdkInfo.Sdk] = sdkInfo
 	return nil
 }
 
@@ -46,26 +33,17 @@ func (s *systemSdkService) deploySdk(context *Context, request *SystemSdkSetRequ
 	if err != nil {
 		return nil
 	}
-	meta, err := sdkDeploymentMetaRegistry.Get(request.Sdk, request.Version)
-	if err != nil {
-		s.loadSdkMeta(context, request)
-		meta, err = sdkDeploymentMetaRegistry.Get(request.Sdk, request.Version)
-		if err != nil {
-			return err
-		}
-	}
-	operatingSystem := context.OperatingSystem(target.Host())
-	deploymentRequest, err := meta.Match(operatingSystem)
-	if err != nil {
-		return err
-	}
 	deploymentService, err := context.Service(DeploymentServiceID)
 	if err != nil {
 		return err
 	}
-	response := deploymentService.Run(context, deploymentRequest)
-	if response.Error != "" {
-		return fmt.Errorf("Failed to deploy sdk %v", response.Error)
+	serviceResponse := deploymentService.Run(context, &DeploymentDeployRequest{
+		Target:target,
+		AppName:request.Sdk,
+		Version: request.Version,
+	})
+	if serviceResponse.Error != "" {
+		return fmt.Errorf("Failed to deploy sdk: %v %v, %v", request.Sdk, request.Version, serviceResponse.Error)
 	}
 	return nil
 }
@@ -88,11 +66,6 @@ func (s *systemSdkService) Run(context *Context, request interface{}) *ServiceRe
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to run sdk: %v, %v", actualRequest.Sdk, err)
 		}
-	case *SystemSdkRegisterMetaDeploymentRequest:
-		response.Response, err = s.registerMeta(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run sdk: %v, %v", actualRequest.Meta, err)
-		}
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 	}
@@ -101,57 +74,83 @@ func (s *systemSdkService) Run(context *Context, request interface{}) *ServiceRe
 	}
 	return response
 }
-func (service *systemSdkService) registerMeta(context *Context, request *SystemSdkRegisterMetaDeploymentRequest) (*SystemSdkRegisterMetaDeploymentResponse, error) {
-	err := request.Validate()
-	if err != nil {
-		return nil, err
-	}
-	sdkDeploymentMetaRegistry.Register(request.Meta)
-	var response = &SystemSdkRegisterMetaDeploymentResponse{
-		Sdk:        request.Meta.Sdk,
-		SdkVersion: request.Meta.SdkVersion,
-	}
-	return response, nil
-}
 
 func (s *systemSdkService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case "set":
 		return &SystemSdkSetRequest{}, nil
-	case "register":
-		return &SystemSdkRegisterMetaDeploymentRequest{}, nil
 
 	}
 	return s.AbstractService.NewRequest(action)
 
 }
 
-func (s *systemSdkService) setSdk(context *Context, request *SystemSdkSetRequest) (*SystemSdkSetResponse, error) {
+
+func (s *systemSdkService) checkSdkOnSession(context *Context, target *url.Resource, request *SystemSdkSetRequest, response *SystemSdkSetResponse) bool {
+	session := context.TerminalSession(target)
+	if session == nil {
+		return false
+	}
+	session.Mutex.RLock()
+	defer session.Mutex.RUnlock()
+	sdkInfo, has := session.Sdk[request.Sdk]
+	if ! has {
+		return false
+	}
+	if sdkInfo.Version == "" && request.Version == "" {
+		response.SdkInfo = sdkInfo
+		return true
+	}
+	if MatchVersion(request.Version, sdkInfo.Version) {
+		response.SdkInfo = sdkInfo
+		return true
+	}
+	return false
+}
+
+
+func (s *systemSdkService) setSdk(context *Context, request *SystemSdkSetRequest) (response *SystemSdkSetResponse, err error) {
+	response = &SystemSdkSetResponse{}
 	service, err := context.Service(ExecServiceID)
 	if err != nil {
 		return nil, err
 	}
+
 
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
 
-	seriveResponse := service.Run(context, &OpenSessionRequest{
+	if s.checkSdkOnSession(context, target, request, response) {
+
+	}
+
+
+	serviceResponse := service.Run(context, &OpenSessionRequest{
 		Target: target,
 		Env:    request.Env,
 	})
 
-	if seriveResponse.Error != "" {
-		return nil, fmt.Errorf("Failed to set sdk %v", seriveResponse.Error)
+	if serviceResponse.Error != "" {
+		return nil, fmt.Errorf("Failed to set sdk %v", serviceResponse.Error)
 	}
+
+
+
+
 	switch request.Sdk {
 	case "jdk":
-		return s.jdkService.setSdk(context, request)
+		response.SdkInfo, err = s.jdkService.setSdk(context, request)
 	case "go":
-		return s.goService.setSdk(context, request)
+		response.SdkInfo, err = s.goService.setSdk(context, request)
+
+	default:
+		return nil, fmt.Errorf("Unsupported jdk: %v", request.Sdk)
 	}
-	return nil, fmt.Errorf("Unsupported jdk: %v", request.Sdk)
+
+	s.updateSessionSdk(context, target, response.SdkInfo)
+	return response, err
 }
 
 //NewSystemJdkService creates a new system jdk service.

@@ -2,11 +2,10 @@ package endly
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
-	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
+	"sync"
+	"github.com/pkg/errors"
 )
 
 //BuildServiceID represent build service id
@@ -14,88 +13,137 @@ const BuildServiceID = "build"
 
 type buildService struct {
 	*AbstractService
-	registry BuildMetaRegistry
+	mutex    *sync.RWMutex
+	registry map[string]*BuildMeta
 }
 
-func (s *buildService) loadBuildMeta(context *Context, buildMetaURL string) error {
-	if buildMetaURL == "" {
-		return fmt.Errorf("buildMeta was empty")
+func (s *buildService) getMeta(context *Context, request *BuildRequest) (*BuildMeta, error) {
+	s.mutex.RLock()
+	result, hasMeta := s.registry[request.BuildSpec.Name]
+	s.mutex.RUnlock()
+	var state = context.state
+	if !hasMeta {
+		var metaURL = request.MetaURL
+		if metaURL == "" {
+			service, err := context.Service(WorkflowServiceID)
+			if err != nil {
+				return nil, err
+			}
+			if workflowService, ok := service.(*workflowService); ok {
+				workflowResource, err := workflowService.Dao.NewRepoResource(state, fmt.Sprintf("meta/build/%v.json", request.BuildSpec.Name))
+				if err != nil {
+					return nil, err
+				}
+				metaURL = workflowResource.URL
+			}
+		}
+		var credential = ""
+		mainWorkflow := context.Workflow()
+		if mainWorkflow != nil {
+			credential = mainWorkflow.Source.Credential
+		}
+		response, err := s.loadMeta(context, &BuildLoadMetaRequest{
+			Source:url.NewResource(metaURL, credential),
+		})
+		if err != nil {
+			return nil, err
+		}
+		result = response.Meta
 	}
-	resource := url.NewResource(buildMetaURL)
-	meta := &BuildMeta{}
-	err := resource.JSONDecode(meta)
+	return result, nil
+}
+
+func (s *buildService) loadMeta(context *Context, request *BuildLoadMetaRequest) (*BuildLoadMetaResponse, error) {
+	source, err := context.ExpandResource(request.Source)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return s.registry.Register(meta)
+	meta := &BuildMeta{}
+	err = source.JSONDecode(meta)
+	if err != nil {
+		return nil, fmt.Errorf("unable to decode: %v, %v", source.URL, err)
+	}
+
+	meta.goalsIndex = make(map[string]*BuildGoal)
+	indexBuildGoals(meta.Goals, meta.goalsIndex)
+
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.registry[meta.Name] = meta
+	return &BuildLoadMetaResponse{
+		Meta:meta,
+	}, nil
 }
 
-func (s *buildService) deployAppBuilderIfNeeded(context *Context, meta *BuildMeta, spec *BuildSpec, target *url.Resource) error {
-	if len(meta.BuildDeployments) == 0 {
+func (s *buildService) deployDependencyIfNeeded(context *Context, meta *BuildMeta, spec *BuildSpec, target *url.Resource) error {
+	if len(meta.Dependencies) == 0 {
 		return nil
 	}
-	operatingSystem := context.OperatingSystem(target.Host())
-
-	buildDeployment := meta.Match(operatingSystem, spec.Version)
-	if buildDeployment == nil {
-		return fmt.Errorf("Failed to find a build for provided operating system: %v %v", operatingSystem.Name, operatingSystem.Version)
-	}
-
 	deploymentService, err := context.Service(DeploymentServiceID)
-
 	if err != nil {
 		return err
 	}
-
-	response := deploymentService.Run(context, buildDeployment.Deploy)
-	if response.Error != "" {
-		return errors.New(response.Error)
-
+	for _, dependency := range meta.Dependencies {
+		var app = context.Expand(dependency.Name)
+		var version = context.Expand(dependency.Version)
+		var build = context.state.GetMap("buildSpec")
+		response := deploymentService.Run(context, &DeploymentDeployRequest{
+			AppName:app,
+			Version:version,
+			Target:target,
+		})
+		if response.Error != "" {
+			return fmt.Errorf("Failed to build %v, %v", spec.Name, response.Error)
+		}
 	}
 	return nil
 }
 
+func indexBuildGoals(goals []*BuildGoal, index map[string]*BuildGoal) {
+	if len(goals) == 0 {
+		return
+	}
+	for _, goal := range goals {
+		index[goal.Name] = goal
+	}
+}
+
+func (s *buildService) setSdkIfNeeded(context *Context, request *BuildRequest) error {
+	if request.BuildSpec.Sdk == "" {
+		return nil
+	}
+	sdkService, err := context.Service(SdkServiceID)
+	if err != nil {
+		return err
+	}
+	serviceResponse := sdkService.Run(context, &SystemSdkSetRequest{
+		Target:request.Target,
+		Sdk:request.BuildSpec.Sdk,
+		Version:request.BuildSpec.SdkVersion,
+	})
+	if serviceResponse.Error != "" {
+		return errors.New(serviceResponse.Error)
+	}
+	return nil
+}
 
 func (s *buildService) build(context *Context, request *BuildRequest) (*BuildResponse, error) {
+	err := request.Validate()
+	if err != nil {
+		return nil, err
+	}
 	var result = &BuildResponse{}
 	state := context.State()
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
+	meta, err := s.getMeta(context, request)
+	if err != nil {
+		return nil, err
+	}
 	buildSpec := request.BuildSpec
-	_, hasMeta := s.registry[buildSpec.Name]
-	if !hasMeta {
-		var buildMetaURL = request.BuildMetaURL
-		if buildMetaURL == "" {
-			service, err := context.Service(WorkflowServiceID)
-			if err != nil {
-				return nil, err
-			}
-			if workflowService, ok := service.(*workflowService); ok {
-				workflowResource, err := workflowService.Dao.NewRepoResource(state, fmt.Sprintf("build/meta/%v.json", buildSpec.Name))
-				if err != nil {
-					return nil, err
-				}
-				buildMetaURL = workflowResource.URL
-
-			}
-		}
-		err = s.loadBuildMeta(context, buildMetaURL)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if buildSpec == nil {
-		return nil, fmt.Errorf("BuildSpec was empty")
-	}
-	buildMeta, has := s.registry[buildSpec.Name]
-	if !has {
-		return nil, fmt.Errorf("Failed to lookup build: %v", buildSpec.Name)
-	}
-
-	goal, has := buildMeta.goalsIndex[buildSpec.Goal]
+	goal, has := meta.goalsIndex[buildSpec.Goal]
 	if !has {
 		return nil, fmt.Errorf("Failed to lookup build %v goal: %v", buildSpec.Name, buildSpec.Goal)
 	}
@@ -104,41 +152,23 @@ func (s *buildService) build(context *Context, request *BuildRequest) (*BuildRes
 	if err != nil {
 		return nil, err
 	}
-	if buildMeta.Sdk != "" {
-		state.Put("build", buildState)
-		sdkService, err := context.Service(SdkServiceID)
-		if err != nil {
-			return nil, err
-		}
-		serviceResponse := sdkService.Run(context, &SystemSdkSetRequest{Target: request.Target,
-			Sdk: context.Expand(buildMeta.Sdk),
-			Version: context.Expand(buildMeta.SdkVersion),
-		})
-		if serviceResponse.Error != "" {
-			return nil, errors.New(serviceResponse.Error)
-		}
-		result.SdkResponse, _ = serviceResponse.Response.(*SystemSdkSetResponse)
-	}
-
-	execService, err := context.Service(ExecServiceID)
+	state.Put("buildSpec", buildState)
+	err = s.setSdkIfNeeded(context, request)
 	if err != nil {
 		return nil, err
 	}
-	state.Put("build", buildState)
-	response := execService.Run(context, &OpenSessionRequest{
-		Target: target,
-	})
 
-	if response.Error != "" {
-		return nil, errors.New(response.Error)
+	err = s.deployDependencyIfNeeded(context, meta, buildSpec, target)
+	if err != nil {
+		return nil, err
 	}
 
-	s.deployAppBuilderIfNeeded(context, buildMeta, buildSpec, target)
+
+
 	commandInfo, err := context.Execute(target, goal.Command)
 	if err != nil {
 		return nil, err
 	}
-
 	if goal.InitTransfers != nil {
 		_, err = context.Transfer(goal.InitTransfers.Transfers...)
 		if err != nil {
@@ -166,11 +196,14 @@ func newBuildState(buildSepc *BuildSpec, target *url.Resource, request *BuildReq
 		return nil, err
 	}
 	build := data.NewMap()
+	build.Put("name", buildSepc.Name)
+	build.Put("version", buildSepc.Version)
 	build.Put("args", buildSepc.Args)
 	build.Put("goal", buildSepc.BuildGoal)
-	build.Put("target", target.ParsedURL.Path)
+	build.Put("path", target.ParsedURL.Path)
 	build.Put("host", target.ParsedURL.Host)
 	build.Put("credential", target.Credential)
+	build.Put("target", target)
 	build.Put("sdk", buildSepc.Sdk)
 	build.Put("sdkVersion", buildSepc.SdkVersion)
 	return build, nil
@@ -187,18 +220,11 @@ func (s *buildService) Run(context *Context, request interface{}) *ServiceRespon
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to build: %v %v", actualRequest.Target.URL, err)
 		}
-	case *BuildRegisterMetaRequest:
-		err = s.registry.Register(actualRequest.Meta)
-		if err != nil {
-			response.Error = fmt.Sprintf("Failed to register: %v", actualRequest.Meta.Name, err)
-		}
-		response.Response = &BuildRegisterMetaResponse{
-			Name: actualRequest.Meta.Name,
-		}
-
 	case *BuildLoadMetaRequest:
-		s.load(context, actualRequest)
-
+		response.Response, err = s.loadMeta(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to load build meta: %v %v", actualRequest.Source, err)
+		}
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 	}
@@ -208,49 +234,10 @@ func (s *buildService) Run(context *Context, request interface{}) *ServiceRespon
 	return response
 }
 
-func (s *buildService) load(context *Context, request *BuildLoadMetaRequest) (*BuildLoadMetaResponse, error) {
-	var result = &BuildLoadMetaResponse{
-		Loaded: make(map[string]*BuildMeta),
-	}
-	target, err := context.ExpandResource(request.Resource)
-	if err != nil {
-		return nil, err
-	}
-
-	service, err := storage.NewServiceForURL(target.URL, "")
-	if err != nil {
-		return nil, err
-	}
-	objects, err := service.List(target.URL)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, object := range objects {
-		reader, err := service.Download(object)
-		if err != nil {
-			return nil, err
-		}
-		var buildMeta = &BuildMeta{}
-		err = toolbox.NewJSONDecoderFactory().Create(reader).Decode(buildMeta)
-		if err != nil {
-			return nil, err
-		}
-		err = s.registry.Register(buildMeta)
-		if err != nil {
-			return nil, err
-		}
-		result.Loaded[object.URL()] = buildMeta
-	}
-	return result, nil
-}
-
 func (s *buildService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case "load":
 		return &BuildLoadMetaRequest{}, nil
-	case "register":
-		return &BuildRegisterMetaRequest{}, nil
 	case "build":
 		return &BuildRequest{}, nil
 
@@ -263,32 +250,9 @@ func (s *buildService) NewRequest(action string) (interface{}, error) {
 func NewBuildService() Service {
 	var result = &buildService{
 		registry:        make(map[string]*BuildMeta),
+		mutex:    &sync.RWMutex{},
 		AbstractService: NewAbstractService(BuildServiceID),
 	}
 	result.AbstractService.Service = result
 	return result
-}
-
-//BuildMetaRegistry represents a build meta registry
-type BuildMetaRegistry map[string]*BuildMeta
-
-func indexBuildGoals(goals []*BuildGoal, index map[string]*BuildGoal) {
-	if len(goals) == 0 {
-		return
-	}
-	for _, goal := range goals {
-		index[goal.Name] = goal
-	}
-}
-
-//Register register build meta into registry, if passes validation
-func (r *BuildMetaRegistry) Register(meta *BuildMeta) error {
-	err := meta.Validate()
-	if err != nil {
-		return nil
-	}
-	meta.goalsIndex = make(map[string]*BuildGoal)
-	indexBuildGoals(meta.Goals, meta.goalsIndex)
-	(*r)[meta.Name] = meta
-	return nil
 }

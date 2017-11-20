@@ -1,0 +1,70 @@
+{
+  "Name": "maven",
+  "Versioning": "MajorVersion.MinorVersion.ReleaseVersion",
+  "Targets": [
+    {
+      "MinReleaseVersion": {
+        "3.5": "2"
+      },
+      "Deployment": {
+        "Pre": {
+          "SuperUser": true,
+          "Commands": [
+            "mkdir -p /opt/build/",
+            "chmod a+rw /opt/build/"
+          ]
+        },
+        "Transfer": {
+          "Source": {
+            "URL": "http://mirrors.gigenet.com/apache/maven/maven-${artifact.MajorVersion}/${artifact.Version}/binaries/apache-maven-${artifact.Version}-bin.tar.gz"
+          },
+          "Target": {
+            "Name": "apache-maven",
+            "URL": "scp://${buildSpec.host}/opt/build/",
+            "Credential": "$buildSpec.credential"
+          }
+        },
+        "VersionCheck": {
+          "Options": {
+            "SystemPaths": [
+              "/opt/build/maven/bin"
+            ]
+          },
+          "Executions": [
+            {
+              "Command": "mvn -version",
+              "Extraction": [
+                {
+                  "Key": "Version",
+                  "RegExpr": "Apache Maven (\\d+\\.\\d+\\.\\d+)"
+                }
+              ]
+            }
+          ]
+        },
+        "Command": {
+          "Options": {
+            "Directory": "/opt/build/"
+          },
+          "Executions": [
+            {
+              "Command": "tar xvzf apache-maven-${artifact.Version}-bin.tar.gz",
+              "Error": [
+                "Error"
+              ]
+            },
+            {
+              "Command": "/bin/bash -c '[[ -e /opt/build/maven ]] && rm -rf /opt/build/maven'"
+            },
+            {
+              "Command": "mv apache-maven-${artifact.Version} maven",
+              "Error": [
+                "No"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
