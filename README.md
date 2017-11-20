@@ -335,8 +335,7 @@ Transfer service is responsible for transferring data from the source to the tar
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| build | load | Loads BuildMeta for the supplied resource | [BuildLoadMetaRequest](service_build_load.go) | [BuildLoadMetaResponse](service_build_load.go)  |
-| build | register | Register BuildMeta in service repo | [BuildRegisterMetaRequest](service_build_register.go) | [BuildRegisterMetaResponse](service_build_register.go)  |
+| build | load | Loads meta build instruction | [BuildLoadMetaRequest](service_build_load.go) | [BuildLoadMetaResponse](service_build_load.go)  |
 | build | build | Run build for provided specification | [BuildRequest](service_build_build.go) | [BuildResponse](service_build_build.go)  |
 
 
@@ -346,6 +345,7 @@ Maven, tomcat use this service.
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
+| deployment | load | Loads meta deployment instruction | [DeploymentLoadMetaRequest](service_deployment_load.go) | [DeploymentLoadMetaResponse](service_deployment_load.go) |
 | deployment | deploy | run deployment | [DeploymentDeployRequest](service_deployment_deploy.go) | [DeploymentDeployResponse](service_deployment_deploy.go) |
 
 

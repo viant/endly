@@ -5,6 +5,11 @@
     "Required": true
   },
   {
+    "Name":"mavenVersion",
+    "From":"params.mavenVersion",
+    "Required": true
+  },
+  {
     "Name": "buildGoal",
     "From": "params.buildGoal",
     "Value": "install"
@@ -96,6 +101,7 @@
     "Value": {
       "BuildSpec": {
         "Name": "maven",
+        "Version": "$mavenVersion",
         "Goal": "build",
         "BuildGoal": "$buildGoal",
         "Args": "$buildArgs",

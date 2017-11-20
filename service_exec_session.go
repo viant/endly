@@ -10,7 +10,7 @@ type OpenSessionRequest struct {
 	Target      *url.Resource      //Session is created from target host (servername, port)
 	Config      *ssh.SessionConfig //ssh configuration
 	SystemPaths []string           //system path that are applied to the ssh session
-	Env			map[string]string
+	Env         map[string]string
 	Transient   bool               //if this flag is true, caller is responsible for closing session, othewise session is closed as context is closed
 }
 
