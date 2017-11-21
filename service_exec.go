@@ -204,18 +204,55 @@ func match(stdout string, candidates ...string) string {
 	return ""
 }
 
+
+
+//TODO caching this
+func (s *execService) credentialPassword(credential string) (string, error) {
+	var secure = ""
+	if credential != "" && toolbox.FileExists(credential) {
+		credential, err := cred.NewConfig(credential)
+		if err != nil {
+			return "", err
+		}
+		secure = credential.Password
+	}
+	return secure, nil
+}
+
+func (s *execService) credentialsToSecure(credentials map[string]string) (map[string]string, error) {
+	var secure = make(map[string]string)
+	if len(credentials) > 0 {
+		for k, v := range credentials {
+			secure[k] = v
+			var credential, err = s.credentialPassword(v)
+			if err != nil  {
+				return nil, err
+			}
+			secure[k] = credential
+		}
+	}
+	return secure, nil
+}
+
+
+
 func (s *execService) executeCommand(context *Context, session *SystemTerminalSession, execution *Execution, options *ExecutionOptions, commandInfo *CommandResponse, request *ManagedCommandRequest) error {
 	command := context.Expand(execution.Command)
 	terminators := getTerminators(options, session, execution)
 
 	var cmd = command
-	if len(execution.Secure) > 0 {
-		var keys = toolbox.MapKeysToStringSlice(execution.Secure)
+	if len(execution.Credentials) > 0 {
+		secure, err := s.credentialsToSecure(execution.Credentials)
+		if err != nil {
+			return fmt.Errorf("Failed to run commend: %v, invalid credential: %v %v ", command, execution.Credentials, err)
+		}
+		var keys = toolbox.MapKeysToStringSlice(secure)
 		sort.Strings(keys)
 		for _, key := range keys {
-			cmd = strings.Replace(cmd, key, execution.Secure[key], len(command))
+			cmd = strings.Replace(cmd, key,secure[key], len(command))
 		}
 	}
+
 	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
 	startEvent := s.Begin(context, executionStartEvent, Pairs("value", executionStartEvent), Info)
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
@@ -510,20 +547,18 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 	var errors = make([]string, 0)
 	var extractions = make([]*DataExtraction, 0)
 
-	var secure = make(map[string]string)
+	var credentials = make(map[string]string)
 
 	for _, execution := range r.MangedCommand.Executions {
 		if execution.Command == "" {
 			continue
 		}
-		if len(execution.Secure) > 0 {
-			for k, v := range execution.Secure {
-				secure[k] = v
+		if len(execution.Credentials) > 0 {
+			for k, v := range execution.Credentials {
+				credentials[k] = v
 			}
 		}
-
 		sudo := ""
-
 		if len(execution.Command) > 1 {
 			sudo = "sudo "
 		}
@@ -533,7 +568,7 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 			Extraction:  execution.Extraction,
 			Success:     execution.Success,
 			MatchOutput: execution.MatchOutput,
-			Secure:        secure,
+			Credentials:      execution.Credentials,
 		}
 		if len(execution.Error) > 0 {
 			errors = append(errors, execution.Error...)
@@ -547,11 +582,9 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 	if target.Credential == "" {
 		return nil, fmt.Errorf("Can not run as superuser, credential were empty for target: %v", target.URL)
 	}
-	_, password, err := target.LoadCredential(true)
-
-	secure[sudoCredentialKey] = password
+	credentials[sudoCredentialKey] =  target.Credential
 	execution := &Execution{
-		Secure:      secure,
+		Credentials:      credentials,
 		MatchOutput: "Password",
 		Command:     sudoCredentialKey,
 		Error:       []string{"Password"},

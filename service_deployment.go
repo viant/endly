@@ -289,8 +289,9 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 		return nil, fmt.Errorf("Failed to deploy: %v", err)
 	}
 	if deploymentTarget.Deployment.Command != nil {
-		_, err = context.Execute(target,
-			deploymentTarget.Deployment.Command,
+		_, err = context.Execute(target, &superUserCommandRequest{
+			MangedCommand: deploymentTarget.Deployment.Command,
+		},
 		)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to init deploy app to %v: %v", target, err)
@@ -319,7 +320,7 @@ func (s *deploymentService) Run(context *Context, request interface{}) *ServiceR
 		var err error
 		response.Response, err = s.deploy(context, castedRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run deployment: %v, %v", castedRequest.AppName,  err)
+			response.Error = fmt.Sprintf("Failed to run deployment: %v, %v", castedRequest.AppName, err)
 		}
 	case *DeploymentMetaRequest:
 		var err error

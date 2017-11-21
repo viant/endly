@@ -3,7 +3,6 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/url"
 	"strings"
 )
@@ -172,17 +171,10 @@ Options:
 
 */
 
-func (s *dockerService) credentialPassword(credential string) (string, error) {
-	var secure = ""
-	if credential != "" {
-		credential, err := cred.NewConfig(credential)
-		if err != nil {
-			return "", err
-		}
-		secure = credential.Password
-	}
-	return secure, nil
-}
+
+
+
+
 
 func (s *dockerService) runContainer(context *Context, request *DockerRunRequest) (*DockerContainerInfo, error) {
 	if request.Target.Name == "" {
@@ -196,14 +188,10 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 		s.SysPath = request.SysPath
 	}
 
-	var secure = make(map[string]string)
+	var credentials = make(map[string]string)
 	if len(request.Credentials) > 0 {
 		for k, v := range request.Credentials {
-			var credential, err = s.credentialPassword(v)
-			if err != nil {
-				return nil, err
-			}
-			secure[k] = credential
+			credentials[k] = v
 		}
 	}
 
@@ -224,7 +212,7 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 	for k, v := range request.Params {
 		params += fmt.Sprintf("%v %v", k, v)
 	}
-	commandInfo, err := s.executeSecureDockerCommand(secure, context, request.Target, dockerIgnoreErrors, "docker run --name %v %v -d %v %v", request.Target.Name, args, request.Image, params)
+	commandInfo, err := s.executeSecureDockerCommand(credentials, context, request.Target, dockerIgnoreErrors, "docker run --name %v %v -d %v %v", request.Target.Name, args, request.Image, params)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +220,7 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 	if strings.Contains(commandInfo.Stdout(), containerInUse) {
 		s.stopContainer(context, &DockerContainerStopRequest{Target: request.Target})
 		s.removeContainer(context, &DockerContainerRemoveRequest{Target: request.Target})
-		commandInfo, err = s.executeSecureDockerCommand(secure, context, request.Target, dockerErrors, "docker run --name %v %v -d %v", request.Target.Name, args, request.Image)
+		commandInfo, err = s.executeSecureDockerCommand(credentials, context, request.Target, dockerErrors, "docker run --name %v %v -d %v", request.Target.Name, args, request.Image)
 		if err != nil {
 			return nil, err
 		}
@@ -460,16 +448,10 @@ func (s *dockerService) executeDockerCommand(secure map[string]string, context *
 
 func (s *dockerService) executeSecureDockerCommand(secure map[string]string, context *Context, target *url.Resource, errors []string, template string, arguments ...interface{}) (*CommandResponse, error) {
 	command := fmt.Sprintf(template, arguments...)
-
 	if len(secure) == 0 {
 		secure = make(map[string]string)
 	}
-
-	targetSecure, err := s.credentialPassword(target.Credential)
-	if err != nil {
-		return nil, err
-	}
-	secure[sudoCredentialKey] = targetSecure
+	secure[sudoCredentialKey] = target.Credential
 	return context.Execute(target, &superUserCommandRequest{
 		MangedCommand: &ManagedCommand{
 			Options: &ExecutionOptions{
@@ -477,7 +459,7 @@ func (s *dockerService) executeSecureDockerCommand(secure map[string]string, con
 			},
 			Executions: []*Execution{
 				{
-					Secure:  secure,
+					Credentials:  secure,
 					Command: command,
 					Error:   append(errors, []string{commandNotFound}...),
 				},

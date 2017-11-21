@@ -60,7 +60,9 @@
         },
         "Post": {
           "Commands": [
-            "mkdir -p $appDirectory/tomcat/logs"
+            "mkdir -p $appDirectory/tomcat/logs",
+            "mkdir -p $appDirectory/tomcat/conf",
+            "chmod  -R a+rw $appDirectory"
           ],
           "Transfers": [
             {
