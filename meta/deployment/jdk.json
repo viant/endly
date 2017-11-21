@@ -10,11 +10,11 @@
         "Pre": {
           "SuperUser": true,
           "Commands": [
-            "mkdir -p /opt/sdk/",
-            "chmod a+rw /opt/sdk/"
+            "mkdir -p /opt/sdk/jdk",
+            "chmod a+rw /opt/sdk/jdk",
+            "chmod a+rw /usr/lib/jvm"
           ]
         },
-
         "Transfer": {
           "Source": {
             "URL": "sdk/jdk-7u80-linux-x64.tar.gz"
