@@ -3,8 +3,10 @@
     "/usr/local/bin"
   ],
   "Target": "$dockerTarget",
-  "Credential": "$mysqlCredential",
+  "Credentials": {
+    "***mysql***": "$mysqlCredential"
+  },
   "Interactive":true,
   "AllocateTerminal":true,
-  "Command":"mysqldump  -uroot -p**** --all-databases --routines | grep -v 'Warning' > $exportFile"
+  "Command":"mysqldump  -uroot -p***mysql*** --all-databases --routines | grep -v 'Warning' > $exportFile"
 }

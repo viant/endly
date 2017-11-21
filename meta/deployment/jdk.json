@@ -60,7 +60,7 @@
               "Command": "mkdir -p /usr/lib/jvm/java-7-oracle"
             },
             {
-              "Command": "cp -rf /opt/sdk/jdk/jdk1.7.0_80/* /usr/lib/jvm/java-7-oracle/*",
+              "Command": "cp -rf /opt/sdk/jdk/jdk1.7.0_80/* /usr/lib/jvm/java-7-oracle/",
               "Error": [
                 "No"
               ]

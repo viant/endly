@@ -22,7 +22,7 @@
             "URL": "http://selenium-release.storage.googleapis.com/${artifact.MajorVersion}.${artifact.MinorVersion}/selenium-java-${artifact.Version}.zip"
           },
           "Target": {
-            "URL": "scp://${targetHost}/opt/selenium/",
+            "URL": "scp://${targetHost}/opt/selenium/selenium-java.zip",
             "Credential": "${targetHostCredential}"
           }
         }
@@ -34,7 +34,7 @@
         },
         "Executions": [
           {
-            "Command": "gunzip selenium-java-${artifact.Version}.zip",
+            "Command": "gunzip selenium-java.zip",
             "Error": [
               "Error"
             ]
