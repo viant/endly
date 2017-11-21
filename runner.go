@@ -165,7 +165,9 @@ func (r *CliRunner) reportEvenType(serviceResponse interface{}, event *Event, fi
 
 			var descriptor = casted.Config.Descriptor
 			var password = casted.Config.Parameters["password"]
-			descriptor = strings.Replace(descriptor, password, "***", len(descriptor))
+			if len(password) > 0 {
+				descriptor = strings.Replace(descriptor, password, "***", len(descriptor))
+			}
 			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("Datastore: %v, %v:%v", casted.Datastore, casted.Config.DriverName, descriptor), messageTypeGeneric, "register")
 		}
 	case *DsUnitMappingRequest:

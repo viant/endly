@@ -102,7 +102,7 @@ func (s *svnService) checkout(context *Context, request *VcCheckoutRequest) (*Vc
 }
 
 func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource, origin *url.Resource, command string, arguments ...string) (*VcInfo, error) {
-	username, password, err := origin.LoadCredential(true)
+	username, _, err := origin.LoadCredential(true)
 	if err != nil {
 		return nil, err
 	}
@@ -111,8 +111,8 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource,
 		return nil, fmt.Errorf("User name was empty for %v (%v)", origin.URL, origin.Credential)
 	}
 
-	var secure = make(map[string]string)
-	secure[versionControlCredentailKey] = password
+	var credentials = make(map[string]string)
+	credentials[versionControlCredentailKey] = origin.Credential
 	_, err = context.Execute(target, &ManagedCommand{
 		Options: &ExecutionOptions{
 			TimeoutMs:   1000 * 300,
@@ -124,7 +124,7 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource,
 				Error:   []string{"No such file or directory", "Event not found", "Error validating server certificate"},
 			},
 			{
-				Secure:     secure,
+				Credentials:     credentials,
 				MatchOutput: "Password for",
 				Command:     versionControlCredentailKey,
 				Error:       []string{"No such file or directory", "Event not found", "Error validating server certificate"},
