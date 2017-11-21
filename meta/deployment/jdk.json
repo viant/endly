@@ -10,8 +10,10 @@
         "Pre": {
           "SuperUser": true,
           "Commands": [
+
             "mkdir -p /opt/sdk/jdk",
             "chmod a+rw /opt/sdk/jdk",
+            "mkdir -p /usr/lib/jvm",
             "chmod a+rw /usr/lib/jvm"
           ]
         },
