@@ -122,9 +122,11 @@ func (s *deploymentService) checkIfDeployedOnSystem(context *Context, target *ur
 		if err != nil || actualVersion == "" {
 			return false, err
 		}
+		if actualVersion == "" {
+			return false
+		}
 		return MatchVersion(request.Version, actualVersion), nil
 	}
-
 	transferTarget, err := context.ExpandResource(deploymentTarget.Deployment.Transfer.Target)
 	if err != nil {
 		return false, err
@@ -135,6 +137,7 @@ func (s *deploymentService) checkIfDeployedOnSystem(context *Context, target *ur
 	}
 	return service.Exists(transferTarget.URL)
 }
+
 
 func (s *deploymentService) updateSessionDeployment(context *Context, target *url.Resource, app, version string) error {
 	session := context.TerminalSession(target)
