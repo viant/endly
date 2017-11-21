@@ -10,6 +10,7 @@ const noSuchFileOrDirectory = "no such file or directory"
 const programCanBeFound = "can be found in the following packages"
 const errorIsNotRecoverable = "Error is not recoverable"
 const notInstalled = "not installed"
+const canNotOpen = "Can't open"
 
 //CheckNoSuchFileOrDirectory checks for no such file or directory message in the provided stdout.
 func CheckNoSuchFileOrDirectory(stdout ...string) bool {
@@ -26,7 +27,7 @@ func CheckCommandNotFound(stdout ...string) bool {
 		return false
 	}
 	candidate := strings.ToLower(strings.Join(stdout, "\n"))
-	return strings.Contains(candidate, commandNotFound) || strings.Contains(candidate, notInstalled)
+	return strings.Contains(candidate, commandNotFound) || strings.Contains(candidate, notInstalled) || strings.Contains(candidate, canNotOpen)
 }
 
 
