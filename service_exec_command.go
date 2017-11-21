@@ -22,13 +22,12 @@ type ExecutionOptions struct {
 
 //Execution represents an execution instructions
 type Execution struct {
-	Secure map[string]string //actual secured details as map { '***': password1, '###':password2  }like password, etc..., if secure is not empty it will replace **** in command just before execution
-	//for security Execution message should not be log in.
-	MatchOutput string          //only run this execution is output from a previous command is matched
-	Command     string          //command to be executed
-	Extraction  DataExtractions //Stdout data extraction instruction
-	Error       []string        //fragments that will terminate execution with error if matched with standard output
-	Success     []string        //if specified absence of all of the these fragment will terminate execution with error.
+	Credentials map[string]string //actual secured credential details as map { '**mysql**': 'path to credentail' }like password, etc..., if secure is not empty it will replace **** in command just before execution
+	MatchOutput string            //only run this execution is output from a previous command is matched
+	Command     string            //command to be executed
+	Extraction  DataExtractions   //Stdout data extraction instruction
+	Error       []string          //fragments that will terminate execution with error if matched with standard output
+	Success     []string          //if specified absence of all of the these fragment will terminate execution with error.
 }
 
 //ManagedCommandRequest represents managed command request
