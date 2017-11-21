@@ -116,6 +116,7 @@ func (s *deploymentService) checkIfDeployedOnSession(context *Context, target *u
 	return MatchVersion(request.Version, deployedVersion)
 }
 
+
 func (s *deploymentService) checkIfDeployedOnSystem(context *Context, target *url.Resource, deploymentTarget *DeploymentTargetMeta, request *DeploymentDeployRequest) (bool, error) {
 	if deploymentTarget.Deployment.VersionCheck != nil {
 		actualVersion, err := s.extractVersion(context, target, deploymentTarget.Deployment)
@@ -123,7 +124,7 @@ func (s *deploymentService) checkIfDeployedOnSystem(context *Context, target *ur
 			return false, err
 		}
 		if actualVersion == "" {
-			return false
+			return false, nil
 		}
 		return MatchVersion(request.Version, actualVersion), nil
 	}
