@@ -6,6 +6,13 @@
         "System": "darwin"
       },
       "Deployment": {
+        "Pre": {
+          "SuperUser": true,
+          "Commands": [
+            "mkdir -p /opt/selenium/",
+            "chmod a+rw /opt/selenium/"
+          ]
+        },
         "Transfer": {
           "Source": {
             "URL": "https://github.com/mozilla/geckodriver/releases/download/v0.19.1/geckodriver-v0.19.1-macos.tar.gz"
@@ -35,6 +42,13 @@
         "System": "linux"
       },
       "Deployment": {
+        "Pre": {
+          "SuperUser": true,
+          "Commands": [
+            "mkdir -p /opt/selenium/",
+            "chmod a+rw /opt/selenium/"
+          ]
+        },
         "Transfer": {
           "Source": {
             "URL": "https://github.com/mozilla/geckodriver/releases/download/v0.19.1/geckodriver-v0.19.1-linux64.tar.gz"
