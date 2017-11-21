@@ -223,7 +223,7 @@ func (s *execService) credentialPassword(credentialPath string) (string, error) 
 			return "", err
 		}
 		s.mutex.Lock()
-		defer s.mutex.RUnlock()
+		defer s.mutex.Unlock()
 		password = credential.Password
 		s.credentialPasswords[credentialPath] = password
 	}
