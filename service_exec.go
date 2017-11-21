@@ -213,7 +213,7 @@ func match(stdout string, candidates ...string) string {
 func (s *execService) credentialPassword(credentialPath string) (string, error) {
 	s.mutex.RLock()
 	password, has := s.credentialPasswords[credentialPath];
-	s.mutex.RLock()
+	s.mutex.RUnlock()
 	if has {
 		return password, nil
 	}
@@ -223,9 +223,10 @@ func (s *execService) credentialPassword(credentialPath string) (string, error) 
 			return "", err
 		}
 		s.mutex.Lock()
-		defer s.mutex.Unlock()
 		password = credential.Password
 		s.credentialPasswords[credentialPath] = password
+		s.mutex.Unlock()
+
 	}
 	return password, nil
 }
