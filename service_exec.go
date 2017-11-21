@@ -9,6 +9,7 @@ import (
 	"strings"
 	"path"
 	"sort"
+	"sync"
 )
 
 //ExecServiceID represent system executor service id
@@ -31,6 +32,8 @@ type ExecutionEndEvent struct {
 
 type execService struct {
 	*AbstractService
+	mutex               *sync.RWMutex
+	credentialPasswords map[string]string
 }
 
 func (s *execService) open(context *Context, request *OpenSessionRequest) (*OpenSessionResponse, error) {
@@ -207,17 +210,26 @@ func match(stdout string, candidates ...string) string {
 
 
 //TODO caching this
-func (s *execService) credentialPassword(credential string) (string, error) {
-	var secure = ""
-	if credential != "" && toolbox.FileExists(credential) {
-		credential, err := cred.NewConfig(credential)
+func (s *execService) credentialPassword(credentialPath string) (string, error) {
+	s.mutex.RLock()
+	password, has := s.credentialPasswords[credentialPath];
+	s.mutex.RLock()
+	if has {
+		return password, nil
+	}
+	if credentialPath != "" && toolbox.FileExists(credentialPath) {
+		credential, err := cred.NewConfig(credentialPath)
 		if err != nil {
 			return "", err
 		}
-		secure = credential.Password
+		s.mutex.Lock()
+		defer s.mutex.RUnlock()
+		password = credential.Password
+		s.credentialPasswords[credentialPath] = password
 	}
-	return secure, nil
+	return password, nil
 }
+
 
 func (s *execService) credentialsToSecure(credentials map[string]string) (map[string]string, error) {
 	var secure = make(map[string]string)
@@ -225,7 +237,7 @@ func (s *execService) credentialsToSecure(credentials map[string]string) (map[st
 		for k, v := range credentials {
 			secure[k] = v
 			var credential, err = s.credentialPassword(v)
-			if err != nil  {
+			if err != nil {
 				return nil, err
 			}
 			secure[k] = credential
@@ -233,8 +245,6 @@ func (s *execService) credentialsToSecure(credentials map[string]string) (map[st
 	}
 	return secure, nil
 }
-
-
 
 func (s *execService) executeCommand(context *Context, session *SystemTerminalSession, execution *Execution, options *ExecutionOptions, commandInfo *CommandResponse, request *ManagedCommandRequest) error {
 	command := context.Expand(execution.Command)
@@ -249,7 +259,7 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 		var keys = toolbox.MapKeysToStringSlice(secure)
 		sort.Strings(keys)
 		for _, key := range keys {
-			cmd = strings.Replace(cmd, key,secure[key], len(command))
+			cmd = strings.Replace(cmd, key, secure[key], len(command))
 		}
 	}
 
@@ -496,7 +506,7 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 		return nil, err
 	}
 	lines = strings.Split(output, "\r\n")
-	for i := 0; i < len(lines) ; i++ {
+	for i := 0; i < len(lines); i++ {
 		var line = lines[i];
 		if !strings.Contains(line, ":") {
 			continue
@@ -510,6 +520,8 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 //NewExecService creates a new execution service
 func NewExecService() Service {
 	var result = &execService{
+		mutex : &sync.RWMutex{},
+		credentialPasswords:make(map[string]string),
 		AbstractService: NewAbstractService(ExecServiceID),
 	}
 	result.AbstractService.Service = result
@@ -582,7 +594,7 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 	if target.Credential == "" {
 		return nil, fmt.Errorf("Can not run as superuser, credential were empty for target: %v", target.URL)
 	}
-	credentials[sudoCredentialKey] =  target.Credential
+	credentials[sudoCredentialKey] = target.Credential
 	execution := &Execution{
 		Credentials:      credentials,
 		MatchOutput: "Password",
