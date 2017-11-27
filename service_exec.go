@@ -46,6 +46,25 @@ func (s *execService) open(context *Context, request *OpenSessionRequest) (*Open
 	}, nil
 }
 
+func (s *execService) openSshService(context *Context, request *OpenSessionRequest) (ssh.Service, error) {
+	if request.ReplayService != nil {
+		return request.ReplayService, nil
+	}
+	target, err := context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, err
+	}
+	var authConfig = &cred.Config{}
+	if target.Credential != "" {
+		err = authConfig.Load(target.Credential)
+		if err != nil {
+			return nil, err
+		}
+	}
+	hostname, port := getHostAndSSHPort(target)
+	return ssh.NewService(hostname, port, authConfig)
+}
+
 func (s *execService) openSession(context *Context, request *OpenSessionRequest) (*SystemTerminalSession, error) {
 	s.Mutex().Lock()
 	defer s.Mutex().Unlock()
@@ -58,6 +77,14 @@ func (s *execService) openSession(context *Context, request *OpenSessionRequest)
 	}
 	sessions := context.TerminalSessions()
 
+	var replayCommands *ssh.ReplayCommands
+	if request.CommandsBasedir != "" {
+		replayCommands, err = ssh.NewReplayCommands(request.CommandsBasedir)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	var sessionName = target.Host()
 	if sessions.Has(sessionName) {
 		session := sessions[sessionName]
@@ -65,33 +92,30 @@ func (s *execService) openSession(context *Context, request *OpenSessionRequest)
 		for k, v := range request.Env {
 			session.envVariables[k] = v
 		}
+
 		return sessions[sessionName], err
 	}
-	var authConfig = &cred.Config{}
-
-	if target.Credential != "" {
-		err = authConfig.Load(target.Credential)
+	sshService, err := s.openSshService(context, request)
+	if replayCommands != nil {
+		err = replayCommands.Enable(sshService)
 		if err != nil {
 			return nil, err
 		}
+		context.Deffer(func() {
+			replayCommands.Store()
+		})
 	}
-	hostname, port := getHostAndSSHPort(target)
-	connection, err := ssh.NewService(hostname, port, authConfig)
+	session, err := NewSystemTerminalSession(sessionName, sshService)
 	if err != nil {
 		return nil, err
 	}
-	session, err := NewSystemTerminalSession(sessionName, connection)
-	if err != nil {
-		return nil, err
-	}
-
 	if !request.Transient {
 		context.Deffer(func() {
-			connection.Close()
+			sshService.Close()
 		})
 	}
 
-	session.MultiCommandSession, err = session.Connection.OpenMultiCommandSession(request.Config)
+	session.MultiCommandSession, err = session.Service.OpenMultiCommandSession(request.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -127,26 +151,44 @@ func getHostAndSSHPort(target *url.Resource) (string, int) {
 	return hostname, port
 }
 
-func (s *execService) setEnvVariable(context *Context, session *SystemTerminalSession, name, value string) error {
-	value = context.Expand(value)
-	if val, has := session.envVariables[name]; has {
-		if value == val {
-			return nil
+
+
+func (s *execService) setEnvVariables(context *Context, session *SystemTerminalSession, env map[string]string) error {
+	for k,v := range env {
+		err := s.setEnvVariable(context, session, k, v)
+		if err != nil {
+			return err
 		}
-		session.envVariables[name] = value
 	}
-	return s.rumCommandTemplate(context, session, "export %v='%v'", name, value)
+	return nil
 }
 
+
+
+func (s *execService) setEnvVariable(context *Context, session *SystemTerminalSession, name, newValue string) error {
+	newValue = context.Expand(newValue)
+	if actual, has := session.envVariables[name]; has {
+		if newValue == actual {
+			return nil
+		}
+	}
+	session.envVariables[name] = newValue
+	return s.rumCommandTemplate(context, session, "export %v='%v'", name, newValue)
+}
+
+
 func (s *execService) changeDirectory(context *Context, session *SystemTerminalSession, commandInfo *CommandResponse, directory string) error {
+	if directory == "" {
+		return nil
+	}
 	parent, name := path.Split(directory)
 	if path.Ext(name) != "" {
 		directory = parent
 	}
-	if session.path == directory {
+	if session.currentDirectory == directory {
 		return nil
 	}
-	session.path = directory
+	session.currentDirectory = directory
 	return s.rumCommandTemplate(context, session, "cd %v", directory)
 }
 
@@ -170,21 +212,14 @@ func (s *execService) rumCommandTemplate(context *Context, session *SystemTermin
 }
 
 func (s *execService) applyCommandOptions(context *Context, options *ExecutionOptions, session *SystemTerminalSession, info *CommandResponse) error {
-
 	operatingSystem := session.OperatingSystem
 	if options == nil {
 		return nil
 	}
-
 	if len(options.SystemPaths) > 0 {
 		operatingSystem.Path.Push(options.SystemPaths...)
 	}
-	for k, v := range options.Env {
-		err := s.setEnvVariable(context, session, k, v)
-		if err != nil {
-			return err
-		}
-	}
+	s.setEnvVariables(context, session, options.Env)
 	if options.Directory != "" {
 		directory := context.Expand(options.Directory)
 		err := s.changeDirectory(context, session, info, directory)
@@ -207,8 +242,6 @@ func match(stdout string, candidates ...string) string {
 	return ""
 }
 
-
-
 //TODO caching this
 func (s *execService) credentialPassword(credentialPath string) (string, error) {
 	s.mutex.RLock()
@@ -230,7 +263,6 @@ func (s *execService) credentialPassword(credentialPath string) (string, error) 
 	}
 	return password, nil
 }
-
 
 func (s *execService) credentialsToSecure(credentials map[string]string) (map[string]string, error) {
 	var secure = make(map[string]string)
@@ -343,13 +375,11 @@ func (s *execService) runCommands(context *Context, request *ManagedCommandReque
 	}
 
 	operatingSystem := session.OperatingSystem
-	if session.path != operatingSystem.Path.EnvValue() {
-		session.path = operatingSystem.Path.EnvValue()
-		err := s.setEnvVariable(context, session, "PATH", session.path)
-		if err != nil {
-			return nil, err
-		}
+	err = s.setEnvVariable(context, session, "PATH", operatingSystem.Path.EnvValue())
+	if err != nil {
+		return nil, err
 	}
+
 	response = NewCommandResponse(session.ID)
 	for _, execution := range request.ManagedCommand.Executions {
 
@@ -357,9 +387,25 @@ func (s *execService) runCommands(context *Context, request *ManagedCommandReque
 			continue
 		}
 		if strings.HasPrefix(execution.Command, "cd ") {
-			session.path = "" //reset path
+			if !  strings.Contains(execution.Command, "&&") {
+				var directory = strings.TrimSpace(string(execution.Command[3:]))
+				err = s.changeDirectory(context, session, response, directory)
+				return response, err
+			}
+			session.currentDirectory = "" //reset path
 		}
 		if strings.HasPrefix(execution.Command, "export ") {
+			if !  strings.Contains(execution.Command, "&&") {
+				envVariable := string(execution.Command[7:])
+				keyValuePair := strings.Split(envVariable, "=")
+				if len(keyValuePair) == 2 {
+					key := strings.TrimSpace(keyValuePair[0])
+					value := strings.TrimSpace(keyValuePair[1])
+					value = strings.Trim(value, "'\"")
+					err = s.setEnvVariable(context, session, key, value)
+					return response, err
+				}
+			}
 			session.envVariables = make(map[string]string) //reset env variables
 		}
 		err = s.executeCommand(context, session, execution, options, response, request)
@@ -467,7 +513,11 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 		},
 	}
 
-	output, err := session.Run("lsb_release -a", 0)
+	varsionCheckCommand := "lsb_release -a"
+	if session.MultiCommandSession.System() == "darwin" {
+		varsionCheckCommand = "sw_vers"
+	}
+	output, err := session.Run(varsionCheckCommand, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -475,7 +525,6 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 	lines := strings.Split(output, "\r\n")
 	for i := 0; i < len(lines); i++ {
 		line := lines[i]
-
 		if strings.Contains(line, "amd64") || strings.Contains(line, "x86_64") {
 			operatingSystem.Architecture = "amd64"
 		}
@@ -483,13 +532,14 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 		if len(pair) != 2 {
 			continue
 		}
+
 		var key = strings.Replace(strings.ToLower(pair[0]), " ", "", len(pair[0]))
 		var val = strings.Replace(strings.Trim(pair[1], " \t\r"), " ", "", len(line))
 		switch key {
 		case "productname", "distributorid":
-			operatingSystem.Name = val
+			operatingSystem.Name = strings.ToLower(val)
 		case "productversion", "release":
-			operatingSystem.Version = val
+			operatingSystem.Version = strings.ToLower(val)
 		}
 
 	}
@@ -521,9 +571,9 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 //NewExecService creates a new execution service
 func NewExecService() Service {
 	var result = &execService{
-		mutex : &sync.RWMutex{},
-		credentialPasswords:make(map[string]string),
-		AbstractService: NewAbstractService(ExecServiceID),
+		mutex:               &sync.RWMutex{},
+		credentialPasswords: make(map[string]string),
+		AbstractService:     NewAbstractService(ExecServiceID),
 	}
 	result.AbstractService.Service = result
 	return result
@@ -581,7 +631,7 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 			Extraction:  execution.Extraction,
 			Success:     execution.Success,
 			MatchOutput: execution.MatchOutput,
-			Credentials:      execution.Credentials,
+			Credentials: execution.Credentials,
 		}
 		if len(execution.Error) > 0 {
 			errors = append(errors, execution.Error...)
@@ -597,7 +647,7 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 	}
 	credentials[sudoCredentialKey] = target.Credential
 	execution := &Execution{
-		Credentials:      credentials,
+		Credentials: credentials,
 		MatchOutput: "Password",
 		Command:     sudoCredentialKey,
 		Error:       []string{"Password"},
