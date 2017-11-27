@@ -25,9 +25,9 @@ func TestSdkService_Run(t *testing.T) {
 		Version: "1.7",
 	})
 	if response.Error != "" {
-		info, ok := response.Response.(*endly.SystemSdkSetResponse)
+		sdkSetResponse, ok := response.Response.(*endly.SystemSdkSetResponse)
 		assert.True(t, ok)
-		assert.True(t, len(info.Build) > 0)
-		assert.True(t, len(info.Home) > 0)
+		assert.True(t, len(sdkSetResponse.SdkInfo.Build) > 0)
+		assert.True(t, len(sdkSetResponse.SdkInfo.Home) > 0)
 	}
 }
