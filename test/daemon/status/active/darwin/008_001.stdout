@@ -1,0 +1,8 @@
+com.actualtechnologies.odbcmanager.plist	com.oracle.oss.mysql.mysqld.plist
+com.adobe.fpsaud.plist				com.sophos.common.servicemanager.plist
+com.cisco.anyconnect.vpnagentd.plist		com.teamviewer.Helper.plist
+com.docker.vmnetd.plist				com.teamviewer.teamviewer_service.plist
+com.google.keystone.daemon.plist		inSyncDecommission.plist
+com.microsoft.autoupdate.helper.plist		limit.maxfiles.plist
+com.microsoft.office.licensingV2.helper.plist	org.macosforge.xquartz.privileged_startx.plist
+com.oracle.java.Helper-Tool.plist
