@@ -135,6 +135,8 @@ func (c *Context) TerminalSessions() SystemTerminalSessions {
 	return *result
 }
 
+
+
 //TerminalSessions returns client sessions
 func (c *Context) SeleniumSessions() SeleniumSessions {
 	var result *SeleniumSessions
@@ -199,6 +201,7 @@ func (c *Context) Workflow() *Workflow {
 //OperatingSystem returns operating system for provide session
 func (c *Context) OperatingSystem(sessionName string) *OperatingSystem {
 	var sessions = c.TerminalSessions()
+
 	if session, has := sessions[sessionName]; has {
 		return session.OperatingSystem
 	}
@@ -220,18 +223,24 @@ func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ManagedComma
 
 
 
-func (c *Context) TerminalSession(target *url.Resource) *SystemTerminalSession {
+func (c *Context) TerminalSession(target *url.Resource) (*SystemTerminalSession, error) {
 	sessions := c.TerminalSessions()
 	execService, err := c.Service(ExecServiceID)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	execService.Mutex().RLock()
 	defer execService.Mutex().RUnlock()
 	if ! sessions.Has(target.Host()) {
-		return nil
+
+		response := execService.Run(c, &OpenSessionRequest{
+			Target:target,
+		})
+		if response.Error == "" {
+			return nil, errors.New(response.Error)
+		}
 	}
-	return sessions[target.Host()]
+	return sessions[target.Host()], nil
 }
 
 

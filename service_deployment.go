@@ -100,8 +100,8 @@ func (s *deploymentService) matchDeployment(context *Context, version string, ta
 }
 
 func (s *deploymentService) checkIfDeployedOnSession(context *Context, target *url.Resource, request *DeploymentDeployRequest) bool {
-	session := context.TerminalSession(target)
-	if session == nil {
+	session, err := context.TerminalSession(target)
+	if err != nil {
 		return false
 	}
 	session.Mutex.RLock()
@@ -141,9 +141,9 @@ func (s *deploymentService) checkIfDeployedOnSystem(context *Context, target *ur
 
 
 func (s *deploymentService) updateSessionDeployment(context *Context, target *url.Resource, app, version string) error {
-	session := context.TerminalSession(target)
-	if session == nil {
-		return fmt.Errorf("Failed to lookup session %v\n", target.Host())
+	session, err := context.TerminalSession(target)
+	if err != nil {
+		return err
 	}
 	session.Mutex.Lock()
 	defer session.Mutex.Unlock()
