@@ -1,0 +1,187 @@
+program path = /Library/PrivilegedHelperTools/com.docker.vmnetd
+mach info = {
+	task-kernel port = 0xb03 (unknown)
+	task-host port = 0xc03 (host)
+	task-name port = 0xf03 (unknown)
+	task-bootstrap port = 0xf07 (unknown)
+	task-seatbelt port = 0x0 (unknown)
+	task-access port = 0xf0b (unknown)
+	task-debug control port = 0xf0f (unknown)
+}
+argument count = 1
+argument vector = {
+	[0] = /Library/PrivilegedHelperTools/com.docker.vmnetd
+}
+environment vector = {
+	PATH => /usr/bin:/bin:/usr/sbin:/sbin
+	XPC_SERVICE_NAME => com.docker.vmnetd
+	XPC_FLAGS => 0x1
+}
+bsd proc info = {
+	pid = 92
+	unique pid = 92
+	ppid = 1
+	pgid = 92
+	status = stopped
+	flags = 64-bit|session leader
+	uid = 0
+	svuid = 0
+	ruid = 0
+	gid = 0
+	svgid = 0
+	ruid = 0
+	comm name = com.docker.vmne
+	long name = com.docker.vmnetd
+	controlling tty devnode = 0xffffffff
+	controlling tty pgid = 0
+}
+audit info
+	session id = 100000
+	uid = 4294967295
+	success mask = 0x0
+	failure mask = 0x0
+	flags = is_initial
+sandboxed = no
+container = (no container)
+
+responsible pid = 92
+responsible unique pid = 92
+responsible path = /Library/PrivilegedHelperTools/com.docker.vmnetd
+
+pressured exit info = {
+	dirty state tracked = 0
+	dirty = 0
+	pressured-exit capable = 0
+}
+
+jetsam priority = 3: background
+jetsam memory limit = -1
+jetsam state = (normal memory state)
+
+entitlements = (no entitlements)
+
+code signing info = valid
+	platform dyld
+
+com.docker.vmnetd = {
+	active count = 1
+	path = /Library/LaunchDaemons/com.docker.vmnetd.plist
+	state = running
+
+	program = /Library/PrivilegedHelperTools/com.docker.vmnetd
+	arguments = {
+		/Library/PrivilegedHelperTools/com.docker.vmnetd
+	}
+
+	default environment = {
+		PATH => /usr/bin:/bin:/usr/sbin:/sbin
+	}
+
+	environment = {
+		XPC_SERVICE_NAME => com.docker.vmnetd
+	}
+
+	domain = com.apple.xpc.launchd.domain.system
+	minimum runtime = 10
+	exit timeout = 5
+	runs = 1
+	successive crashes = 0
+	excessive crashing = 0
+	pid = 92
+	immediate reason = speculative
+	forks = 5
+	execs = 1
+	trampolined = 1
+	started suspended = 0
+	proxy started suspended = 0
+	last exit code = (never exited)
+
+	event triggers = {
+	}
+
+	endpoints = {
+	}
+
+	dynamic endpoints = {
+	}
+
+	pid-local endpoints = {
+	}
+
+	instance-specific endpoints = {
+	}
+
+	event channels = {
+	}
+
+	sockets = {
+		"Listener" = {
+			type = stream
+			path = /var/tmp/com.docker.vmnetd.socket
+			mode = 666
+
+			sockets = {
+				47 (no bytes to read)
+			}
+
+			active = 1
+			passive = 1
+			bonjour = 0
+			ipv4v6 = 0
+		}
+	}
+
+	spawn type = daemon
+	spawn role = (null)
+	jetsam priority = 3
+	jetsam memory limit (active) = (unlimited)
+	jetsam memory limit (inactive) = (unlimited)
+	jetsamproperties category = daemon
+	cpumon = default
+
+	properties = {
+		partial import = 0
+		launchd bundle = 0
+		xpc bundle = 0
+		keepalive = 0
+		runatload = 1
+		dirty at shutdown = 0
+		low priority i/o = 0
+		low priority background i/o = 0
+		legacy timer behavior = 0
+		exception handler = 0
+		multiple instances = 0
+		supports transactions = 0
+		supports pressured exit = 0
+		enter kdp before kill = 0
+		wait for debugger = 0
+		app = 0
+		system app = 0
+		creates session = 0
+		inetd-compatible = 0
+		inetd listener = 0
+		abandon process group = 0
+		one-shot = 0
+		requires reap = 0
+		event monitor = 0
+		penalty box = 0
+		pended non-demand spawn = 1
+		role account = 0
+		launch only once = 0
+		system support = 0
+		app-like = 0
+		inferred program = 0
+		joins gui session = 0
+		joins host session = 0
+		parameterized sandbox = 0
+		resolve program = 0
+		abandon coalition = 0
+		extension = 0
+		nano allocator = 0
+		no initgroups = 0
+		start on fs mount = 0
+		endpoints initialized = 1
+		disallow all lookups = 0
+		system service = 1
+	}
+}

@@ -1,0 +1,23 @@
+[?1h=[0;1;32m●[0m docker.service - Docker Application Container Engine[m
+   Loaded: loaded (/lib/systemd/system/docker.service; enabled; vendor preset: enabled)[m
+   Active: [0;1;32mactive (running)[0m since Mon 2017-11-27 18:02:41 UTC; 5h 21min ago[m
+     Docs: https://docs.docker.com[m
+ Main PID: 1609 (dockerd)[m
+    Tasks: 26[m
+   Memory: 73.5M[m
+      CPU: 43.573s[m
+   CGroup: /system.slice/docker.service[m
+           ├─1609 /usr/bin/dockerd -H fd://[m
+           └─1724 docker-containerd -l unix:///var/run/docker/libcontainerd/docker-containerd.sock -[m
+[m
+Nov 27 18:02:41 endly-west-1 dockerd[1609]: time="2017-11-27T18:02:41.085818834Z" level=warning msg=[m
+Nov 27 18:02:41 endly-west-1 dockerd[1609]: time="2017-11-27T18:02:41.085879459Z" level=warning msg=[m
+Nov 27 18:02:41 endly-west-1 dockerd[1609]: time="2017-11-27T18:02:41.085887591Z" level=warning msg=[m
+Nov 27 18:02:41 endly-west-1 dockerd[1609]: time="2017-11-27T18:02:41.086284314Z" level=info msg="Lo[m
+Nov 27 18:02:41 endly-west-1 dockerd[1609]: time="2017-11-27T18:02:41.291746665Z" level=info msg="De[m
+Nov 27 18:02:41 endly-west-1 dockerd[1609]: time="2017-11-27T18:02:41.344824139Z" level=info msg="Lo[m
+Nov 27 18:02:41 endly-west-1 dockerd[1609]: time="2017-11-27T18:02:41.439477817Z" level=info msg="Do[m
+Nov 27 18:02:41 endly-west-1 dockerd[1609]: time="2017-11-27T18:02:41.443817268Z" level=info msg="Da[m
+Nov 27 18:02:41 endly-west-1 dockerd[1609]: time="2017-11-27T18:02:41.452909191Z" level=info msg="AP[m
+Nov 27 18:02:41 endly-west-1 systemd[1]: Started Docker Application Container Engine.[m
+[7mlines 1-22/22 (END)[27m[K
