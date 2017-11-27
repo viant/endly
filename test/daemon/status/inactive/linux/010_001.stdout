@@ -1,0 +1,11 @@
+[?1h=● mysql.service - MySQL Community Server[m
+   Loaded: loaded (/lib/systemd/system/mysql.service; enabled; vendor preset: enabled)[m
+   Active: inactive (dead) since Mon 2017-11-27 21:50:17 UTC; 1h 45min ago[m
+ Main PID: 16436 (code=exited, status=0/SUCCESS)[m
+      CPU: 281ms[m
+[m
+Nov 27 21:49:35 endly-west-1 systemd[1]: Starting MySQL Community Server...[m
+Nov 27 21:49:36 endly-west-1 systemd[1]: Started MySQL Community Server.[m
+Nov 27 21:50:15 endly-west-1 systemd[1]: Stopping MySQL Community Server...[m
+Nov 27 21:50:17 endly-west-1 systemd[1]: Stopped MySQL Community Server.[m
+[K[?1l>endly-west-1:awitas1511825734288926556$
