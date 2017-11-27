@@ -9,10 +9,11 @@ import (
 type SystemTerminalSession struct {
 	ID              string
 	ssh.MultiCommandSession
-	Connection      ssh.Service
+	DaemonType      int
+	Service         ssh.Service
 	OperatingSystem *OperatingSystem
 	envVariables    map[string]string
-	path            string
+	currentDirectory            string
 	Deployed        map[string]string
 	Sdk             map[string]*SystemSdkInfo
 	Mutex           *sync.RWMutex
@@ -22,12 +23,11 @@ type SystemTerminalSession struct {
 func NewSystemTerminalSession(id string, connection ssh.Service) (*SystemTerminalSession, error) {
 	return &SystemTerminalSession{
 		ID:           id,
-		Connection:   connection,
+		Service:      connection,
 		envVariables: make(map[string]string),
-		Deployed:make(map[string]string),
-		Sdk:make(map[string]*SystemSdkInfo),
-		Mutex       :&sync.RWMutex{},
-
+		Deployed:     make(map[string]string),
+		Sdk:          make(map[string]*SystemSdkInfo),
+		Mutex:        &sync.RWMutex{},
 	}, nil
 }
 
