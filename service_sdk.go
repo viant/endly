@@ -21,9 +21,9 @@ func (s *systemSdkService) updateSessionSdk(context *Context, target *url.Resour
 	if sdkInfo == nil {
 		return nil
 	}
-	session := context.TerminalSession(target)
-	if session == nil {
-		return fmt.Errorf("Failed to lookup session %v\n", target.Host())
+	session, err := context.TerminalSession(target)
+	if err != nil {
+		return err
 	}
 	session.Mutex.Lock()
 	defer session.Mutex.Unlock()
@@ -90,8 +90,8 @@ func (s *systemSdkService) NewRequest(action string) (interface{}, error) {
 
 
 func (s *systemSdkService) checkSdkOnSession(context *Context, target *url.Resource, request *SystemSdkSetRequest, response *SystemSdkSetResponse) bool {
-	session := context.TerminalSession(target)
-	if session == nil {
+	session, err := context.TerminalSession(target)
+	if err != nil {
 		return false
 	}
 	session.Mutex.RLock()
