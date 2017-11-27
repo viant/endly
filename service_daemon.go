@@ -13,14 +13,12 @@ import (
 const DaemonServiceID = "daemon"
 
 const (
-	serviceTypeError = iota
+	serviceTypeError      = iota
 	serviceTypeInitDaemon
 	serviceTypeLaunchCtl
 	serviceTypeStdService
 	serviceTypeSystemctl
 )
-
-
 
 type daemonService struct {
 	*AbstractService
@@ -66,7 +64,7 @@ func (s *daemonService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
-func (s *daemonService) determineServiceType(context *Context, service, exclusion string, target *url.Resource) (int, string, error) {
+func (s *daemonService) getDarwinLaunchServicePath(context *Context, target *url.Resource, service, exclusion string) (string, error) {
 	if exclusion != "" {
 		exclusion = " | grep -v " + exclusion
 	}
@@ -78,55 +76,52 @@ func (s *daemonService) determineServiceType(context *Context, service, exclusio
 		},
 	})
 	if err != nil {
-		return 0, "", err
+		return "", err
 	}
-	if !CheckNoSuchFileOrDirectory(commandResult.Stdout()) {
-		file := strings.TrimSpace(commandResult.Stdout())
-		if len(file) > 0 {
-			servicePath := path.Join("/Library/LaunchDaemons/", file)
-			return serviceTypeLaunchCtl, servicePath, nil
+	file := strings.TrimSpace(commandResult.Stdout())
+	if len(file) > 0 {
+		servicePath := path.Join("/Library/LaunchDaemons/", file)
+		return servicePath, nil
+	}
+	return "", nil
+}
+
+func (s *daemonService) determineServiceType(context *Context, service, exclusion string, target *url.Resource) (int, error) {
+	session, err := context.TerminalSession(target)
+	if err != nil {
+		return 0, err
+	}
+	if session.DaemonType > 0 {
+		return session.DaemonType, nil
+	}
+
+	var systemTypeCommands = []struct {
+		systemType int
+		command    string
+	}{
+		{serviceTypeLaunchCtl, "ls /Library/LaunchDaemons/"},
+		{serviceTypeStdService, "service --version"},
+		{serviceTypeSystemctl, "systemctl --version"},
+	}
+	var commandResult *CommandResponse
+	for _, candidate := range systemTypeCommands {
+		commandResult, err = context.Execute(target, &ManagedCommand{
+			Executions: []*Execution{
+				{
+					Command: candidate.command,
+				},
+			},
+		})
+		if err != nil {
+			break
 		}
-		return serviceTypeLaunchCtl, "", nil
-
+		var stdout = commandResult.Stdout()
+		if !CheckNoSuchFileOrDirectory(stdout) && !CheckCommandNotFound(stdout) {
+			session.DaemonType = candidate.systemType
+			return session.DaemonType, nil
+		}
 	}
-
-	commandResult, err = context.ExecuteAsSuperUser(target, &ManagedCommand{
-		Options: &ExecutionOptions{
-			Terminators: []string{"(END)"},
-		},
-		Executions: []*Execution{
-			{
-				Command: "service " + service + " status",
-			},
-			{
-				MatchOutput: "(END)", //quite multiline mode
-				Command:     "Q",
-			},
-		},
-	})
-
-	if err != nil {
-		return 0, "", err
-	}
-	if !CheckCommandNotFound(commandResult.Stdout()) {
-		return serviceTypeStdService, service, nil
-	}
-	commandResult, err = context.ExecuteAsSuperUser(target, &ManagedCommand{
-		Executions: []*Execution{
-			{
-				Command: "systemctl status " + service,
-			},
-		},
-	})
-	if err != nil {
-		return 0, "", err
-	}
-
-	if !CheckCommandNotFound(commandResult.Stdout()) {
-		return serviceTypeSystemctl, service, nil
-	}
-
-	return serviceTypeError, "", nil
+	return serviceTypeError, nil
 }
 
 func extractServiceInfo(state map[string]string, info *DaemonInfo) {
@@ -137,13 +132,13 @@ func extractServiceInfo(state map[string]string, info *DaemonInfo) {
 		state := vtclean.Clean(value, false)
 		if strings.Contains(state, "inactive") {
 			state = "not running"
-		} else if strings.Contains(state, "active")   {
+		} else if strings.Contains(state, "active") {
 			state = "running"
 		}
 		info.State = state
 	}
-	if path, ok := state["path"]; ok {
-		info.Path = path
+	if daemonPath, ok := state["path"]; ok {
+		info.Path = daemonPath
 	}
 }
 
@@ -152,9 +147,17 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 	if request.Service == "" {
 		return nil, fmt.Errorf("Service was empty")
 	}
-	serviceType, serviceInit, err := s.determineServiceType(context, request.Service, request.Exclusion, request.Target)
+	serviceType,  err := s.determineServiceType(context, request.Service, request.Exclusion, request.Target)
 	if err != nil {
 		return nil, err
+	}
+
+	serviceInit := request.Service
+	if serviceType == serviceTypeLaunchCtl {
+		serviceInit, err = s.getDarwinLaunchServicePath(context, request.Target, request.Service, request.Exclusion)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	target, err := context.ExpandResource(request.Target)
@@ -195,27 +198,41 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 					},
 					Error: []string{"Unrecognized"},
 				},
-				{
-					Command: "launchctl procinfo $pid",
-					Extraction: DataExtractions{
-						{
-							Key:     "path",
-							RegExpr: "program path[\\s|\\t]+=[\\s|\\t]+([^\\s]+)",
-						},
-						{
-							Key:     "state",
-							RegExpr: "state = (running)",
-						},
-
-					},
-					Error: []string{"Unrecognized"},
-				},
 			},
 		})
 		if err != nil {
 			return nil, err
 		}
 
+		if pid, ok := commandResult.Extracted["pid"]; ok && toolbox.AsInt(pid) > 0 {
+
+			stateResult, err := context.ExecuteAsSuperUser(target, &ManagedCommand{
+				Executions: []*Execution{
+					{
+						Command: "launchctl procinfo $pid",
+						Extraction: DataExtractions{
+							{
+								Key:     "path",
+								RegExpr: "program path[\\s|\\t]+=[\\s|\\t]+([^\\s]+)",
+							},
+							{
+								Key:     "state",
+								RegExpr: "state = (running)",
+							},
+						},
+						Error: []string{"Unrecognized"},
+					},
+				},
+			})
+
+			for k, v := range stateResult.Extracted {
+				commandResult.Extracted[k] = v
+			}
+			if err != nil {
+				return nil, err
+			}
+
+		}
 		extractServiceInfo(commandResult.Extracted, result)
 		return result, nil
 
