@@ -1,0 +1,9 @@
+{
+  "Port":"8888",
+  "StaticRoutes":[
+    {
+      "URI":"/",
+      "Directory":"static/"
+    }
+  ]
+}

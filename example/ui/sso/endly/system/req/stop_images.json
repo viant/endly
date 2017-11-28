@@ -1,0 +1,8 @@
+{
+  "Target" :{
+    "URL":"ssh://${targetHost}/",
+    "Credential":"$targetHostCredential"
+  },
+  "SysPath":["/usr/local/bin"],
+  "Images": $arg0
+}
