@@ -19,27 +19,13 @@
 
         "Transfer": {
           "Source": {
-            "URL": "http://selenium-release.storage.googleapis.com/${artifact.MajorVersion}.${artifact.MinorVersion}/selenium-java-${artifact.Version}.zip"
+            "URL": "http://selenium-release.storage.googleapis.com/${artifact.MajorVersion}.${artifact.MinorVersion}/selenium-server-standalone-${artifact.Version}.jar"
           },
           "Target": {
-            "URL": "scp://${targetHost}/opt/selenium/selenium-java.zip",
+            "URL": "scp://${targetHost}/opt/selenium/selenium-server-standalone.jar",
             "Credential": "${targetHostCredential}"
           }
         }
-      },
-      "Command": {
-        "Options": {
-          "Directory": "/opt/selenium",
-          "TimeoutMs": 120000
-        },
-        "Executions": [
-          {
-            "Command": "gunzip selenium-java.zip",
-            "Error": [
-              "Error"
-            ]
-          }
-        ]
       }
     }
   ]

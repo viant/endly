@@ -30,6 +30,7 @@ func TestNewExecService(t *testing.T) {
 		},
 	}
 
+
 	manager := endly.NewManager()
 	for _, useCase := range useCases{
 		service, err := GetReplayService(useCase.baseDir)

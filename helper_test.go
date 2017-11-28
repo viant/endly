@@ -7,8 +7,22 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/toolbox/url"
 	"errors"
+	"github.com/viant/toolbox/cred"
+	"os"
+	"fmt"
+	"time"
 )
 
+
+func GetDummyCredentail() (string, error) {
+	var credentialFile = path.Join(os.TempDir(), fmt.Sprintf("s%v.json", time.Now().Hour()))
+	authConfig := cred.Config{
+		Username:os.Getenv("USER"),
+		Password:"***",
+	}
+	err := authConfig.Save(credentialFile)
+	return credentialFile, err
+}
 
 
 func GetReplayService(basedir string) (ssh.Service, error) {
