@@ -1,0 +1,32 @@
+{
+  "Transfers": [
+    {
+      "Source": {
+        "URL": "config/config.json"
+      },
+      "Target": {
+        "URL": "scp://${targetHost}${appDirectory}/conf/config.json",
+        "Credential": "$targetHostCredential"
+      }
+    },
+    {
+      "Source": {
+        "URL": "!WorkingDirectory(../static)"
+      },
+      "Target": {
+        "URL": "scp://${targetHost}${appDirectory}/static",
+        "Credential": "$targetHostCredential"
+      }
+    },
+    {
+      "Source": {
+        "URL": "scp://$buildHost/$buildDirectory/${app}",
+        "Credential": "$buildHostCredential"
+      },
+      "Target": {
+        "URL": "scp://${targetHost}${appDirectory}/${app}",
+        "Credential": "$targetHostCredential"
+      }
+    }
+  ]
+}

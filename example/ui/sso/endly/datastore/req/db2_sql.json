@@ -1,0 +1,8 @@
+{
+  "Datastore": "db2",
+  "Scripts": [
+    {
+      "URL": "datastore/db2/schema.ddl"
+    }
+  ]
+}

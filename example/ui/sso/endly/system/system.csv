@@ -1,0 +1,12 @@
+Workflow,,Name,Description,Tasks,,Init,,
+,,system,Adelphic system init,%Tasks,,#init.json,,
+[]Tasks,,Name,Description,Actions,,,,
+,,init,Run app services,%Init,,,,
+[]Init,Service,Action,Description,Request,images,,,
+,docker,stop-images,Stops requested images,#req/stop_images.json|$images,"[""mysql""]",,,
+[]Init,Service,Action,Description,Request,run.instance,run.tasks,run.targetHost,SleepInMs
+,workflow,run,init mysql on $buildHost,#req/mysql.json|$run,db2_mysql,start,$params.buildHost,30000
+[]Tasks,,Name,Description,Actions,,,,
+,,destory,Stop adelphic services,%Destory,,,,
+[]Destory,Service,Action,Description,Request,run.instance,run.tasks,,
+,workflow,run,init mysql,#req/mysql.json|$run,report_mysql,stop,,
