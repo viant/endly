@@ -10,6 +10,22 @@ import (
 
 //represents a SeleniumServiceID
 const SeleniumServiceID = "selenium"
+const SeleniumServer = "selenium-server-standalone"
+const GeckoDriver = "geckodriver"
+
+type SeleniumServerStartRequest struct {
+	Target     *url.Resource
+	Port       int
+	Sdk        string
+	SdkVersion string
+	Version    string
+}
+
+type SeleniumServerStartResponse struct {
+	Pid                int
+	SeleniumServerPath string
+	GeckodriverPath    string
+}
 
 type SeleniumOpenSessionRequest struct {
 	Browser        string
@@ -74,20 +90,28 @@ func (s *seleniumService) Run(context *Context, request interface{}) *ServiceRes
 	var err error
 
 	switch actualRequest := request.(type) {
+
+	case *SeleniumServerStartRequest:
+		response.Response, err = s.start(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("Failed to start selenium %v", err)
+		}
+
+
 	case *SeleniumOpenSessionRequest:
 		response.Response, err = s.open(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("%v", err)
+			response.Error = fmt.Sprintf("Failed to open selenium session %v", err)
 		}
 	case *SeleniumWebDriverCallRequest:
 		response.Response, err = s.webDriverCall(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("%v", err)
+			response.Error = fmt.Sprintf("Failed to call web driver %v", err)
 		}
 	case *SeleniumWebElementCallRequest:
 		response.Response, err = s.webElementCall(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("%v", err)
+			response.Error = fmt.Sprintf("Failed to call web selement %v", err)
 		}
 
 	default:
@@ -148,6 +172,67 @@ func (s *seleniumService) open(context *Context, request *SeleniumOpenSessionReq
 	return response, nil
 }
 
+func (s *seleniumService) deployServerIfNeeded(context *Context, request *SeleniumServerStartRequest) (*SeleniumServerStartResponse, error) {
+	deploymentService, _ := context.Service(DeploymentServiceID)
+	deployServerResponse := deploymentService.Run(context, &DeploymentDeployRequest{
+		Target : request.Target,
+		AppName: SeleniumServer,
+		Version: request.Version,
+	})
+	if deployServerResponse.Error != "" {
+		return nil, errors.New(deployServerResponse.Error)
+	}
+	deployGeckoDriverResponse := deploymentService.Run(context, &DeploymentDeployRequest{
+		Target : request.Target,
+		AppName: GeckoDriver,
+	})
+	if deployGeckoDriverResponse.Error != "" {
+		return nil, errors.New(deployGeckoDriverResponse.Error)
+	}
+	var response = &SeleniumServerStartResponse{}
+	response.GeckodriverPath = "/opt/selenium/geckodriver"
+	response.SeleniumServerPath = "/opt/selenium/selenium-server-standalone.jar"
+	return response, nil
+}
+
+
+func (s *seleniumService) setJdk(context *Context, request *SeleniumServerStartRequest) error {
+	sdkService, _ := context.Service(SdkServiceID)
+	response := sdkService.Run(context, &SystemSdkSetRequest{
+		Sdk:request.Sdk,
+		Version:request.Version,
+		Target:request.Target,
+	})
+
+	if response.Error != "" {
+		return errors.New(response.Error)
+	}
+	return nil
+}
+
+
+
+func (s *seleniumService) start(context *Context, request *SeleniumServerStartRequest) (*SeleniumServerStartResponse, error) {
+	response, err := s.deployServerIfNeeded(context, request)
+	if err != nil {
+		return nil, err
+	}
+	err = s.setJdk(context, request)
+	if err != nil {
+		return nil, err
+	}
+
+	processService, _ := context.Service(ProcessServiceID)
+	processService.Run(context, &ProcessStartRequest{
+		Command:     "java",
+		Target        :request.Target,
+		Directory     :"/opt/selenium",
+		Arguments:     []string{"-jar", fmt.Sprintf("-Dwebdriver.gecko.driver=%v", response.GeckodriverPath), "-jar", response.GeckodriverPath, "-port",  toolbox.AsString(request.Port)},
+		ImmuneToHangups :true,
+	})
+	return response, nil
+}
+
 func (s *seleniumService) session(context *Context, sessionID string) (*SeleniumSession, error) {
 	sessions := context.SeleniumSessions()
 	if seleniumSession, ok := sessions[sessionID]; ok {
@@ -155,7 +240,6 @@ func (s *seleniumService) session(context *Context, sessionID string) (*Selenium
 	}
 	return nil, fmt.Errorf("Failed to lookup seleniun session id: %v, make sure you first run SeleniumOpenSessionRequest\n", sessionID)
 }
-
 
 func (s *seleniumService) openSession(context *Context, request *SeleniumOpenSessionRequest) (*SeleniumSession, error) {
 	resource, err := context.ExpandResource(request.RemoteSelenium)
@@ -180,8 +264,6 @@ func (s *seleniumService) openSession(context *Context, request *SeleniumOpenSes
 			Browser: resource.Name,
 		}
 	}
-
-	//TODO deploy and start remote selenium server if needed
 	caps := selenium.Capabilities{"browserName": resource.Name}
 	seleniumSession.driver, err = selenium.NewRemote(caps, fmt.Sprintf("http://%v:%v/webDriver/hub", resource.ParsedURL.Host, resource.ParsedURL.Port()))
 	if err != nil {
@@ -194,9 +276,14 @@ func (s *seleniumService) openSession(context *Context, request *SeleniumOpenSes
 	return seleniumSession, nil
 }
 
+
+
+
 //NewRequest creates a new request for the provided action (run).
 func (s *seleniumService) NewRequest(action string) (interface{}, error) {
 	switch action {
+	case "start":
+		return &SeleniumServerStartRequest{}, nil
 	case "open":
 		return &SeleniumOpenSessionRequest{}, nil
 	case "web-driver":

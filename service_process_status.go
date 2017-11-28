@@ -5,7 +5,7 @@ import "github.com/viant/toolbox/url"
 //ProcessStatusRequest represents a status check request
 type ProcessStatusRequest struct {
 	Target *url.Resource
-	Name   string
+	Command   string
 }
 
 //ProcessStatusResponse represents a status check response
