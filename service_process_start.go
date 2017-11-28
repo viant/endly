@@ -4,7 +4,7 @@ import "github.com/viant/toolbox/url"
 
 //ProcessStartRequest represents a start request
 type ProcessStartRequest struct {
-	Name          string
+	Command          string
 	Target        *url.Resource
 	Options       *ExecutionOptions
 	Directory     string
