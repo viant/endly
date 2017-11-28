@@ -11,7 +11,8 @@ import (
 
 func TestDaemonService_Status(t *testing.T) {
 
-	var credentialFile = path.Join(os.Getenv("HOME"), ".secret/scp.json")
+	var credentialFile, err = GetDummyCredentail()
+	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 	var manager = endly.NewManager()
 	var useCases = []struct {
@@ -21,17 +22,18 @@ func TestDaemonService_Status(t *testing.T) {
 		expected bool
 	}{
 		{
-			"test/daemon/status/active/linux",
-			target,
-			"docker",
-			true,
-		},
-		{
 			"test/daemon/status/active/darwin",
 			target,
 			"docker",
 			true,
 		},
+		{
+			"test/daemon/status/active/linux",
+			target,
+			"docker",
+			true,
+		},
+
 		{
 			"test/daemon/status/inactive/linux",
 			target,
@@ -57,7 +59,6 @@ func TestDaemonService_Status(t *testing.T) {
 			false,
 		},
 	}
-
 
 
 	for _, useCase := range useCases {
