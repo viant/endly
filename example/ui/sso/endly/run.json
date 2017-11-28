@@ -1,0 +1,46 @@
+{
+  "WorkflowURL": "manager.csv",
+  "Name": "manager",
+  "PublishParameters": true,
+  "EnableLogging": true,
+  "LoggingDirectory": "/tmp/app/",
+  "Tasks": "init,test",
+
+  "Params": {
+
+    "app":"sso",
+
+    "goVersion":"1.8",
+    "buildGoal": "build",
+    "originURL": "https://github.com/viant/endly/example/ws/ui",
+
+    "mysqlVersion": "5.7",
+    "mysqlCredential": "${env.HOME}/.secret/mysql.json",
+    "GOPATH":"$env.GOPATH",
+    "localHostCredential": "${env.HOME}/.secret/scp.json",
+    "targetHost": "127.0.0.1",
+
+    "targetHostCredential": "${env.HOME}/.secret/scp.json",
+    "buildHost": "127.0.0.1",
+    "buildHostCredential": "${env.HOME}/.secret/scp.json",
+
+    "buildDirectory" :"!WorkingDirectory(../app)",
+    "buildArgs":" -o sso",
+    "appRootDirectory":"/opt/"
+  },
+  "Filter": {
+    "Stdin":true,
+    "Stdout":true,
+    "Transfer": true,
+    "SQLScript": true,
+    "PopulateDatastore": true,
+    "Sequence": true,
+    "RegisterDatastore": true,
+    "DataMapping": true,
+    "OnFailureFilter": {
+      "HttpTrip": true,
+      "Stdin": true,
+      "Stdout": true
+    }
+  }
+}
