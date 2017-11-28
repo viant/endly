@@ -1,0 +1,13 @@
+{
+  "Target": {
+    "URL": "ssh://$targetHost",
+    "Credential": "$targetHostCredential"
+  },
+  "Directory": "$appDirectory",
+  "Name": "./${app}",
+  "Arguments": [
+    "-config",
+    "conf/config.json",
+  ],
+  "ImmuneToHangups": true
+}
