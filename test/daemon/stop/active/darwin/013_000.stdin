@@ -1,0 +1,1 @@
+launchctl stop  com.docker.docker.12096

@@ -1,0 +1,249 @@
+
+program path = /Applications/Docker.app/Contents/MacOS/Docker
+mach info = {
+	task-kernel port = 0xb03 (unknown)
+	task-host port = 0xe03 (unknown)
+	task-name port = 0x1003 (unknown)
+	task-bootstrap port = 0x1007 (unknown)
+	task-seatbelt port = 0x0 (unknown)
+	task-access port = 0x100b (unknown)
+	task-debug control port = 0x100f (unknown)
+	exception port = 0xc03 (unknown)
+		EXC_RESOURCE
+		EXC_GUARD
+		EXC_CORPSE_NOTIFY
+}
+argument count = 1
+argument vector = {
+	[0] = /Applications/Docker.app/Contents/MacOS/Docker
+}
+environment vector = {
+	TMPDIR => /var/folders/gl/5550g3kj6tn1rbz8chqx1c61ycmmm1/T/
+	__CF_USER_TEXT_ENCODING => 0x7CCA5281:0x0:0x0
+	HOME => /Users/awitas
+	SHELL => /bin/bash
+	Apple_PubSub_Socket_Render => /private/tmp/com.apple.launchd.z0mGieOitk/Render
+	SSH_AUTH_SOCK => /private/tmp/com.apple.launchd.w2enDqtYBM/Listeners
+	PATH => /usr/bin:/bin:/usr/sbin:/sbin
+	LOGNAME => awitas
+	DISPLAY => /private/tmp/com.apple.launchd.XY6tgOdipU/org.macosforge.xquartz:0
+	XPC_SERVICE_NAME => com.docker.docker.12096
+	USER => awitas
+	XPC_FLAGS => 0x1
+}
+bsd proc info = {
+	pid = 34524
+	unique pid = 134064
+	ppid = 1
+	pgid = 34524
+	status = stopped
+	flags = 64-bit|has thread with cwd
+	uid = 2093634177
+	svuid = 2093634177
+	ruid = 2093634177
+	gid = 1742120565
+	svgid = 1742120565
+	ruid = 1742120565
+	comm name = Docker
+	long name = Docker
+	controlling tty devnode = 0xffffffff
+	controlling tty pgid = 0
+}
+audit info
+	session id = 100007
+	uid = 2093634177
+	success mask = 0x3000
+	failure mask = 0x3000
+	flags = has_graphic_access,has_tty,has_console_access,has_authenticated
+sandboxed = no
+container = (no container)
+
+responsible pid = 34524
+responsible unique pid = 134064
+responsible path = /Applications/Docker.app/Contents/MacOS/Docker
+
+pressured exit info = {
+	dirty state tracked = 0
+	dirty = 0
+	pressured-exit capable = 0
+}
+
+jetsam priority = 3: background
+jetsam memory limit = -1
+jetsam state = (normal memory state)
+
+entitlements = {
+	"com.apple.security.app-sandbox" = false;
+	"com.apple.application-identifier" = "9BNSXJN65R.com.docker.docker";
+	"keychain-access-groups" = (
+		"9BNSXJN65R.com.docker.docker";
+	);
+	"com.apple.security.application-groups" = (
+		"group.com.docker";
+	);
+	"com.apple.security.files.user-selected.read-write" = true;
+	"com.apple.developer.team-identifier" = "9BNSXJN65R";
+};
+
+code signing info = valid
+	kill on invalid pages
+	allowed mach-o
+	platform dyld
+
+com.docker.docker.12096 = {
+	active count = 5
+	path = (submitted by CoreServicesUIA.31444)
+	state = running
+	bundle id = com.docker.docker
+
+	program = /Applications/Docker.app/Contents/MacOS/Docker
+	arguments = {
+		/Applications/Docker.app/Contents/MacOS/Docker
+	}
+
+	working directory = /
+
+	inherited environment = {
+		DISPLAY => /private/tmp/com.apple.launchd.XY6tgOdipU/org.macosforge.xquartz:0
+		SSH_AUTH_SOCK => /private/tmp/com.apple.launchd.w2enDqtYBM/Listeners
+		Apple_PubSub_Socket_Render => /private/tmp/com.apple.launchd.z0mGieOitk/Render
+	}
+
+	default environment = {
+		PATH => /usr/bin:/bin:/usr/sbin:/sbin
+	}
+
+	environment = {
+		USER => awitas
+		DISPLAY => /private/tmp/com.apple.launchd.XY6tgOdipU/org.macosforge.xquartz:0
+		LOGNAME => awitas
+		PATH => /usr/bin:/bin:/usr/sbin:/sbin
+		SSH_AUTH_SOCK => /private/tmp/com.apple.launchd.w2enDqtYBM/Listeners
+		Apple_PubSub_Socket_Render => /private/tmp/com.apple.launchd.z0mGieOitk/Render
+		SHELL => /bin/bash
+		HOME => /Users/awitas
+		__CF_USER_TEXT_ENCODING => 0x7CCA5281:0x0:0x0
+		TMPDIR => /var/folders/gl/5550g3kj6tn1rbz8chqx1c61ycmmm1/T/
+		XPC_SERVICE_NAME => com.docker.docker.12096
+	}
+
+	domain = com.apple.xpc.launchd.user.domain.2093634177.100007.Aqua
+	asid = 100007
+	minimum runtime = 10
+	exit timeout = 5
+	runs = 1
+	successive crashes = 0
+	excessive crashing = 0
+	pid = 34524
+	immediate reason = non-ipc demand
+	forks = 12
+	execs = 1
+	trampolined = 1
+	started suspended = 1
+	proxy started suspended = 0
+	last exit code = (never exited)
+
+	event triggers = {
+	}
+
+	endpoints = {
+	}
+
+	dynamic endpoints = {
+	}
+
+	pid-local endpoints = {
+		"com.apple.coredrag" = {
+			port = 0xbb237
+			active = 1
+			managed = 0
+			reset = 0
+			hide = 0
+		}
+		"com.apple.CFPasteboardClient" = {
+			port = 0xb35af
+			active = 1
+			managed = 0
+			reset = 0
+			hide = 0
+		}
+		"com.apple.tsm.portname" = {
+			port = 0xba237
+			active = 1
+			managed = 0
+			reset = 0
+			hide = 0
+		}
+		"com.apple.axserver" = {
+			port = 0xba667
+			active = 1
+			managed = 0
+			reset = 0
+			hide = 0
+		}
+	}
+
+	instance-specific endpoints = {
+	}
+
+	event channels = {
+	}
+
+	sockets = {
+	}
+
+	spawn type = app
+	spawn role = (null)
+	jetsam priority = 3
+	jetsam memory limit (active) = (unlimited)
+	jetsam memory limit (inactive) = (unlimited)
+	jetsamproperties category = app
+	submitted job. ignore execute allowed
+	cpumon = default
+
+	properties = {
+		partial import = 0
+		launchd bundle = 0
+		xpc bundle = 0
+		keepalive = 0
+		runatload = 0
+		dirty at shutdown = 0
+		low priority i/o = 0
+		low priority background i/o = 0
+		legacy timer behavior = 0
+		exception handler = 0
+		multiple instances = 0
+		supports transactions = 0
+		supports pressured exit = 0
+		enter kdp before kill = 0
+		wait for debugger = 1
+		app = 1
+		system app = 0
+		creates session = 0
+		inetd-compatible = 0
+		inetd listener = 0
+		abandon process group = 1
+		one-shot = 0
+		requires reap = 0
+		event monitor = 0
+		penalty box = 0
+		pended non-demand spawn = 0
+		role account = 0
+		launch only once = 1
+		system support = 0
+		app-like = 0
+		inferred program = 1
+		joins gui session = 0
+		joins host session = 0
+		parameterized sandbox = 0
+		resolve program = 0
+		abandon coalition = 0
+		extension = 0
+		nano allocator = 1
+		no initgroups = 0
+		start on fs mount = 0
+		endpoints initialized = 1
+		disallow all lookups = 0
+		system service = 0
+	}
+}
