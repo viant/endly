@@ -1,0 +1,18 @@
+[?1h=● docker.service - Docker Application Container Engine[m
+   Loaded: loaded (/lib/systemd/system/docker.service; enabled; vendor preset: enabled)[m
+   Active: inactive (dead) since Wed 2017-11-29 04:30:03 UTC; 1min 0s ago[m
+     Docs: https://docs.docker.com[m
+ Main PID: 5909 (code=exited, status=0/SUCCESS)[m
+      CPU: 313ms[m
+[m
+Nov 29 04:29:31 instance-1 dockerd[5909]: time="2017-11-29T04:29:31.057872403Z" level=info msg="Defa[m
+Nov 29 04:29:31 instance-1 dockerd[5909]: time="2017-11-29T04:29:31.089440952Z" level=info msg="Load[m
+Nov 29 04:29:31 instance-1 dockerd[5909]: time="2017-11-29T04:29:31.324063212Z" level=info msg="Dock[m
+Nov 29 04:29:31 instance-1 dockerd[5909]: time="2017-11-29T04:29:31.324788342Z" level=info msg="Daem[m
+Nov 29 04:29:31 instance-1 dockerd[5909]: time="2017-11-29T04:29:31.334779685Z" level=info msg="API [m
+Nov 29 04:29:31 instance-1 systemd[1]: Started Docker Application Container Engine.[m
+Nov 29 04:30:01 instance-1 systemd[1]: Stopping Docker Application Container Engine...[m
+Nov 29 04:30:01 instance-1 dockerd[5909]: time="2017-11-29T04:30:01.991459364Z" level=info msg="Proc[m
+Nov 29 04:30:02 instance-1 dockerd[5909]: time="2017-11-29T04:30:02.049793638Z" level=info msg="stop[m
+Nov 29 04:30:03 instance-1 systemd[1]: Stopped Docker Application Container Engine.[m
+[7mlines 1-17/17 (END)[27m[K
