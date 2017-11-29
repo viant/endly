@@ -3,6 +3,7 @@ package endly
 import (
 	"github.com/lunixbochs/vtclean"
 	"strings"
+	"unicode"
 )
 
 const commandNotFound = "command not found"
@@ -50,14 +51,11 @@ func ExtractColumns(line string) ([]string, bool) {
 	if line == "" {
 		return []string{}, false
 	}
-	line = vtclean.Clean(line, false)
 	var index = -1
 	var expectColumn = true
 	var result = make([]string, 0)
-
-	for i := 0; i < len(line); i++ {
-		var aChar = string(line[i : i+1])
-		if aChar == " " || aChar == "\t" {
+	for _, r  := range line {
+		if unicode.IsSpace(r) {
 			expectColumn = true
 			continue
 		}
@@ -66,7 +64,7 @@ func ExtractColumns(line string) ([]string, bool) {
 			result = append(result, "")
 			expectColumn = false
 		}
-		result[index] += aChar
+		result[index] += string(r)
 	}
 	return result, true
 }

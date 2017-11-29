@@ -18,8 +18,9 @@ type DaemonInfo struct {
 	Path    string //path
 	Pid     int    //process if
 	Type    int    //type
-	Init    string //command how service was launched
+	Domain    string //command how service was launched
 	State   string //state
+	Launched  bool
 }
 
 //IsActive returns true if service is running
