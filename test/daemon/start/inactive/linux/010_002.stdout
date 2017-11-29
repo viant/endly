@@ -1,0 +1,23 @@
+[?1h=[0;1;32m●[0m docker.service - Docker Application Container Engine[m
+   Loaded: loaded (/lib/systemd/system/docker.service; enabled; vendor preset: enabled)[m
+   Active: [0;1;32mactive (running)[0m since Wed 2017-11-29 04:31:05 UTC; 155ms ago[m
+     Docs: https://docs.docker.com[m
+ Main PID: 14124 (dockerd)[m
+    Tasks: 25[m
+   Memory: 23.8M[m
+      CPU: 181ms[m
+   CGroup: /system.slice/docker.service[m
+           ├─14124 /usr/bin/dockerd -H fd://[m
+           └─14144 docker-containerd -l unix:///var/run/docker/libcontainerd/docker-containerd.sock [m
+[m
+Nov 29 04:31:04 instance-1 dockerd[14124]: time="2017-11-29T04:31:04.926489655Z" level=warning msg="[m
+Nov 29 04:31:04 instance-1 dockerd[14124]: time="2017-11-29T04:31:04.926529914Z" level=warning msg="[m
+Nov 29 04:31:04 instance-1 dockerd[14124]: time="2017-11-29T04:31:04.926542655Z" level=warning msg="[m
+Nov 29 04:31:04 instance-1 dockerd[14124]: time="2017-11-29T04:31:04.926905973Z" level=info msg="Loa[m
+Nov 29 04:31:04 instance-1 dockerd[14124]: time="2017-11-29T04:31:04.999222102Z" level=info msg="Def[m
+Nov 29 04:31:05 instance-1 dockerd[14124]: time="2017-11-29T04:31:05.029475109Z" level=info msg="Loa[m
+Nov 29 04:31:05 instance-1 dockerd[14124]: time="2017-11-29T04:31:05.145822424Z" level=info msg="Doc[m
+Nov 29 04:31:05 instance-1 dockerd[14124]: time="2017-11-29T04:31:05.145880644Z" level=info msg="Dae[m
+Nov 29 04:31:05 instance-1 dockerd[14124]: time="2017-11-29T04:31:05.152850245Z" level=info msg="API[m
+Nov 29 04:31:05 instance-1 systemd[1]: Started Docker Application Container Engine.[m
+[7mlines 1-22/22 (END)[27m[K
