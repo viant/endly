@@ -4,16 +4,17 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//DockerContainerCheckRequest represents a docker check container status request
-type DockerContainerCheckRequest struct {
+//DockerContainerStatusRequest represents a docker check container status request
+type DockerContainerStatusRequest struct {
 	Target  *url.Resource
 	SysPath []string
 	Names   string
 	Image   string
 }
 
-//DockerContainerCheckResponse represents a docker container check response
-type DockerContainerCheckResponse struct {
+//DockerContainerStatusResponse represents a docker container check response
+type DockerContainerStatusResponse struct {
+	SysPath    []string
 	Containers []*DockerContainerInfo
 }
 
@@ -39,7 +40,7 @@ type DockerContainerStopRequest struct {
 type DockerContainerCommandRequest struct {
 	Target             *url.Resource
 	SysPath            []string
-	Credentials         map[string]string
+	Credentials        map[string]string
 	Interactive        bool
 	AllocateTerminal   bool
 	RunInTheBackground bool

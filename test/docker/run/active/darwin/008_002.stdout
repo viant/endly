@@ -1,0 +1,2 @@
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES
+98a28566ba7a        mysql:5.6           "docker-entrypoint..."   54 seconds ago      Up 53 seconds       0.0.0.0:3306->3306/tcp   testMysql

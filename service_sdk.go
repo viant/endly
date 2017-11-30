@@ -41,8 +41,8 @@ func (s *systemSdkService) deploySdk(context *Context, request *SystemSdkSetRequ
 		return err
 	}
 	serviceResponse := deploymentService.Run(context, &DeploymentDeployRequest{
-		Target:target,
-		AppName:request.Sdk,
+		Target:  target,
+		AppName: request.Sdk,
 		Version: request.Version,
 	})
 	if serviceResponse.Error != "" {
@@ -88,7 +88,6 @@ func (s *systemSdkService) NewRequest(action string) (interface{}, error) {
 
 }
 
-
 func (s *systemSdkService) checkSdkOnSession(context *Context, target *url.Resource, request *SystemSdkSetRequest, response *SystemSdkSetResponse) bool {
 	session, err := context.TerminalSession(target)
 	if err != nil {
@@ -97,7 +96,7 @@ func (s *systemSdkService) checkSdkOnSession(context *Context, target *url.Resou
 	session.Mutex.RLock()
 	defer session.Mutex.RUnlock()
 	sdkInfo, has := session.Sdk[request.Sdk]
-	if ! has {
+	if !has {
 		return false
 	}
 	if sdkInfo.Version == "" && request.Version == "" {
@@ -111,14 +110,12 @@ func (s *systemSdkService) checkSdkOnSession(context *Context, target *url.Resou
 	return false
 }
 
-
 func (s *systemSdkService) setSdk(context *Context, request *SystemSdkSetRequest) (response *SystemSdkSetResponse, err error) {
 	response = &SystemSdkSetResponse{}
 	service, err := context.Service(ExecServiceID)
 	if err != nil {
 		return nil, err
 	}
-
 
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
@@ -129,7 +126,6 @@ func (s *systemSdkService) setSdk(context *Context, request *SystemSdkSetRequest
 
 	}
 
-
 	serviceResponse := service.Run(context, &OpenSessionRequest{
 		Target: target,
 		Env:    request.Env,
@@ -138,9 +134,6 @@ func (s *systemSdkService) setSdk(context *Context, request *SystemSdkSetRequest
 	if serviceResponse.Error != "" {
 		return nil, fmt.Errorf("Failed to set sdk %v", serviceResponse.Error)
 	}
-
-
-
 
 	switch request.Sdk {
 	case "jdk":

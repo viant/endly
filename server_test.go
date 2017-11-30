@@ -32,4 +32,5 @@ func TestServer_Start(t *testing.T) {
 	if ok {
 		assert.True(t, len(commandInfo.Stdout(0)) > 0)
 	}
+
 }

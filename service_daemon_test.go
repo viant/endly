@@ -9,7 +9,7 @@ import (
 
 func TestDaemonService_Status(t *testing.T) {
 
-	var credentialFile, err = GetDummyCredentail()
+	var credentialFile, err = GetDummyCredential()
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 	var manager = endly.NewManager()
@@ -18,7 +18,7 @@ func TestDaemonService_Status(t *testing.T) {
 		target   *url.Resource
 		service  string
 		expected bool
-		pid int
+		pid      int
 	}{
 		{
 			"test/daemon/status/active/darwin",
@@ -65,7 +65,6 @@ func TestDaemonService_Status(t *testing.T) {
 		},
 	}
 
-
 	for _, useCase := range useCases {
 		execService, err := GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
@@ -80,12 +79,12 @@ func TestDaemonService_Status(t *testing.T) {
 					Target:  target,
 					Service: useCase.service,
 				})
-				var baseCase = useCase.baseDir + " " +  useCase.service
+				var baseCase = useCase.baseDir + " " + useCase.service
 				assert.Equal(t, "", response.Error, baseCase)
 				info, ok := response.Response.(*endly.DaemonInfo)
 				if assert.True(t, ok) && info != nil {
-					assert.Equal(t, useCase.expected, info.IsActive(), "is running " + baseCase)
-					assert.Equal(t, useCase.pid, info.Pid, "pid :" +  baseCase)
+					assert.Equal(t, useCase.expected, info.IsActive(), "is running "+baseCase)
+					assert.Equal(t, useCase.pid, info.Pid, "pid :"+baseCase)
 				}
 			}
 
@@ -94,10 +93,9 @@ func TestDaemonService_Status(t *testing.T) {
 	}
 }
 
-
 func TestDaemonService_Start(t *testing.T) {
 
-	var credentialFile, err = GetDummyCredentail()
+	var credentialFile, err = GetDummyCredential()
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 	var manager = endly.NewManager()
@@ -106,7 +104,8 @@ func TestDaemonService_Start(t *testing.T) {
 		target   *url.Resource
 		service  string
 		expected bool
-		pid int
+		pid      int
+		Error    string
 	}{
 
 		{
@@ -115,6 +114,7 @@ func TestDaemonService_Start(t *testing.T) {
 			"docker",
 			true,
 			14124,
+			"",
 		},
 		{
 			"test/daemon/start/inactive/darwin",
@@ -122,6 +122,7 @@ func TestDaemonService_Start(t *testing.T) {
 			"docker",
 			true,
 			34514,
+			"",
 		},
 		{
 			"test/daemon/start/active/darwin",
@@ -129,6 +130,7 @@ func TestDaemonService_Start(t *testing.T) {
 			"docker",
 			true,
 			35323,
+			"",
 		},
 		{
 			"test/daemon/start/active/linux",
@@ -136,6 +138,7 @@ func TestDaemonService_Start(t *testing.T) {
 			"docker",
 			true,
 			14124,
+			"",
 		},
 		{
 			"test/daemon/start/unknown/linux",
@@ -143,6 +146,7 @@ func TestDaemonService_Start(t *testing.T) {
 			"myabc",
 			false,
 			0,
+			"Failed to start service: myabc, service is inactive",
 		},
 		{
 			"test/daemon/start/unknown/darwin",
@@ -150,11 +154,9 @@ func TestDaemonService_Start(t *testing.T) {
 			"myabc",
 			false,
 			0,
+			"Failed to start service: myabc, service is inactive",
 		},
 	}
-
-
-
 
 	for _, useCase := range useCases {
 		execService, err := GetReplayService(useCase.baseDir)
@@ -170,25 +172,25 @@ func TestDaemonService_Start(t *testing.T) {
 					Target:  target,
 					Service: useCase.service,
 				})
-				var baseCase = useCase.baseDir + " " +  useCase.service
-				assert.Equal(t, "", response.Error, baseCase)
+				var baseCase = useCase.baseDir + " " + useCase.service
+
+				if !assert.Equal(t, useCase.Error, response.Error, baseCase) {
+					continue
+				}
+
 				info, ok := response.Response.(*endly.DaemonInfo)
 				if assert.True(t, ok) && info != nil {
-					assert.Equal(t, useCase.expected, info.IsActive(), "is running " + baseCase)
-					assert.Equal(t, useCase.pid, info.Pid, "pid :" +  baseCase)
+					assert.Equal(t, useCase.expected, info.IsActive(), "is running "+baseCase)
+					assert.Equal(t, useCase.pid, info.Pid, "pid :"+baseCase)
 				}
 			}
-
 		}
-
 	}
 }
 
-
-
 func TestDaemonService_Stop(t *testing.T) {
 
-	var credentialFile, err = GetDummyCredentail()
+	var credentialFile, err = GetDummyCredential()
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 	var manager = endly.NewManager()
@@ -197,7 +199,7 @@ func TestDaemonService_Stop(t *testing.T) {
 		target   *url.Resource
 		service  string
 		expected bool
-		pid int
+		pid      int
 	}{
 
 		{
@@ -244,9 +246,6 @@ func TestDaemonService_Stop(t *testing.T) {
 		},
 	}
 
-
-
-
 	for _, useCase := range useCases {
 		execService, err := GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
@@ -261,12 +260,12 @@ func TestDaemonService_Stop(t *testing.T) {
 					Target:  target,
 					Service: useCase.service,
 				})
-				var baseCase = useCase.baseDir + " " +  useCase.service
+				var baseCase = useCase.baseDir + " " + useCase.service
 				assert.Equal(t, "", response.Error, baseCase)
 				info, ok := response.Response.(*endly.DaemonInfo)
 				if assert.True(t, ok) && info != nil {
-					assert.Equal(t, useCase.expected, info.IsActive(), "is running " + baseCase)
-					assert.Equal(t, useCase.pid, info.Pid, "pid :" +  baseCase)
+					assert.Equal(t, useCase.expected, info.IsActive(), "is running "+baseCase)
+					assert.Equal(t, useCase.pid, info.Pid, "pid :"+baseCase)
 				}
 			}
 
@@ -274,34 +273,3 @@ func TestDaemonService_Stop(t *testing.T) {
 
 	}
 }
-
-
-//
-//func TestDaemonService_Run(t *testing.T) {
-//
-//	var credentialFile = path.Join(os.Getenv("HOME"), ".secret/scp.json")
-//
-//	//var target = url.NewResource("scp://35.197.115.53:22/", credentialFile) //
-//	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-//	manager := endly.NewManager()
-//
-//	context, err := OpenTestRecorderContext(manager, target, "test/daemon/start/unknown/darwin")
-//	///context := manager.NewContext(toolbox.NewContext())
-//
-//	defer context.Close()
-//
-//	systemService, err := context.Service(endly.DaemonServiceID)
-//	assert.Nil(t, err)
-//
-//	response := systemService.Run(context, &endly.DaemonStartRequest{
-//		Target:  target,
-//		Service: "myabc",
-//	})
-//
-//	assert.Equal(t, "", response.Error)
-//	info, ok := response.Response.(*endly.DaemonInfo)
-//	if assert.True(t, ok) && info != nil {
-//		assert.False(t, info.IsActive())
-//	}
-//
-//}

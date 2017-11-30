@@ -105,7 +105,7 @@ func (v *Variables) Apply(in, out data.Map) error {
 			}
 		}
 
-		if value == nil ||  (variable.Required && toolbox.AsString(value) == ""){
+		if value == nil || (variable.Required && toolbox.AsString(value) == "") {
 			value = variable.Value
 			if value != nil {
 				value = in.Expand(value)

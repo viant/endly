@@ -6,9 +6,9 @@ import (
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/ssh"
 	"github.com/viant/toolbox/url"
-	"strings"
 	"path"
 	"sort"
+	"strings"
 	"sync"
 )
 
@@ -151,10 +151,8 @@ func getHostAndSSHPort(target *url.Resource) (string, int) {
 	return hostname, port
 }
 
-
-
 func (s *execService) setEnvVariables(context *Context, session *SystemTerminalSession, env map[string]string) error {
-	for k,v := range env {
+	for k, v := range env {
 		err := s.setEnvVariable(context, session, k, v)
 		if err != nil {
 			return err
@@ -162,8 +160,6 @@ func (s *execService) setEnvVariables(context *Context, session *SystemTerminalS
 	}
 	return nil
 }
-
-
 
 func (s *execService) setEnvVariable(context *Context, session *SystemTerminalSession, name, newValue string) error {
 	newValue = context.Expand(newValue)
@@ -175,7 +171,6 @@ func (s *execService) setEnvVariable(context *Context, session *SystemTerminalSe
 	session.envVariables[name] = newValue
 	return s.rumCommandTemplate(context, session, "export %v='%v'", name, newValue)
 }
-
 
 func (s *execService) changeDirectory(context *Context, session *SystemTerminalSession, commandInfo *CommandResponse, directory string) error {
 	if directory == "" {
@@ -245,7 +240,7 @@ func match(stdout string, candidates ...string) string {
 //TODO caching this
 func (s *execService) credentialPassword(credentialPath string) (string, error) {
 	s.mutex.RLock()
-	password, has := s.credentialPasswords[credentialPath];
+	password, has := s.credentialPasswords[credentialPath]
 	s.mutex.RUnlock()
 	if has {
 		return password, nil
@@ -279,7 +274,7 @@ func (s *execService) credentialsToSecure(credentials map[string]string) (map[st
 	return secure, nil
 }
 
-func (s *execService) executeCommand(context *Context, session *SystemTerminalSession, execution *Execution, options *ExecutionOptions, commandInfo *CommandResponse, request *ManagedCommandRequest) error {
+func (s *execService) executeCommand(context *Context, session *SystemTerminalSession, execution *Execution, options *ExecutionOptions, response *CommandResponse, request *ManagedCommandRequest) error {
 	command := context.Expand(execution.Command)
 	terminators := getTerminators(options, session, execution)
 
@@ -299,15 +294,18 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
 	startEvent := s.Begin(context, executionStartEvent, Pairs("value", executionStartEvent), Info)
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
+
 	var executionEndEvent = &ExecutionEndEvent{
 		SessionID: session.ID,
 		Stdout:    stdout,
 	}
+
 	if err != nil {
 		executionEndEvent.Error = fmt.Sprintf("%v", err)
 	}
 	s.End(context)(startEvent, Pairs("value", executionEndEvent))
-	commandInfo.Add(NewCommandLog(command, stdout, err))
+
+	response.Add(NewCommandLog(command, stdout, err))
 	if err != nil {
 		return err
 	}
@@ -322,7 +320,7 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 			return fmt.Errorf("Fail to match any fragment: (%v) execution (%v); ouput: (%v), %v", strings.Join(execution.Success, ","), execution.Command, stdout, options.Directory)
 		}
 	}
-	err = execution.Extraction.Extract(context, commandInfo.Extracted, strings.Split(stdout, "\n")...)
+	err = execution.Extraction.Extract(context, response.Extracted, strings.Split(stdout, "\n")...)
 	if err != nil {
 		return err
 	}
@@ -330,7 +328,7 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 	if len(stdout) > 0 {
 		for _, execution := range request.ManagedCommand.Executions {
 			if execution.MatchOutput != "" && strings.Contains(stdout, execution.MatchOutput) {
-				return s.executeCommand(context, session, execution, options, commandInfo, request)
+				return s.executeCommand(context, session, execution, options, response, request)
 			}
 		}
 	}
@@ -387,7 +385,7 @@ func (s *execService) runCommands(context *Context, request *ManagedCommandReque
 			continue
 		}
 		if strings.HasPrefix(execution.Command, "cd ") {
-			if !  strings.Contains(execution.Command, "&&") {
+			if !strings.Contains(execution.Command, "&&") {
 				var directory = strings.TrimSpace(string(execution.Command[3:]))
 				err = s.changeDirectory(context, session, response, directory)
 				return response, err
@@ -395,7 +393,7 @@ func (s *execService) runCommands(context *Context, request *ManagedCommandReque
 			session.currentDirectory = "" //reset path
 		}
 		if strings.HasPrefix(execution.Command, "export ") {
-			if !  strings.Contains(execution.Command, "&&") {
+			if !strings.Contains(execution.Command, "&&") {
 				envVariable := string(execution.Command[7:])
 				keyValuePair := strings.Split(envVariable, "=")
 				if len(keyValuePair) == 2 {
@@ -558,7 +556,7 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 	}
 	lines = strings.Split(output, "\r\n")
 	for i := 0; i < len(lines); i++ {
-		var line = lines[i];
+		var line = lines[i]
 		if !strings.Contains(line, ":") {
 			continue
 		}

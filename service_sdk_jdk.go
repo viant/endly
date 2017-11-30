@@ -3,8 +3,8 @@ package endly
 import (
 	"fmt"
 	"github.com/lunixbochs/vtclean"
-	"strings"
 	"github.com/pkg/errors"
+	"strings"
 )
 
 type systemJdkService struct{}
@@ -47,7 +47,6 @@ func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate strin
 				result.Home = strings.Replace(javaHome, "/jre", "", 1)
 				context.Execute(request.Target, fmt.Sprintf("export JAVA_HOME='%v'", result.Home))
 
-
 				return result, nil
 			}
 			return nil, fmt.Errorf("Invalid version was found expected: %v, but had: %v\n", request.Version, build)
@@ -58,7 +57,7 @@ func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate strin
 }
 
 func (s *systemJdkService) getJavaHomeCheckCommand(context *Context, request *SystemSdkSetRequest) string {
-	target, err  := context.ExpandResource(request.Target)
+	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return ""
 	}
@@ -70,8 +69,6 @@ func (s *systemJdkService) getJavaHomeCheckCommand(context *Context, request *Sy
 	version = strings.Replace(version, "1.", "", 1)
 	return fmt.Sprintf("update-java-alternatives --list | grep %v", version)
 }
-
-
 
 func (s *systemJdkService) setSdk(context *Context, request *SystemSdkSetRequest) (*SystemSdkInfo, error) {
 	var result = &SystemSdkInfo{}

@@ -2,10 +2,10 @@ package endly
 
 import (
 	"fmt"
+	"github.com/lunixbochs/vtclean"
 	"github.com/viant/toolbox/data"
 	"regexp"
 	"strings"
-	"github.com/lunixbochs/vtclean"
 )
 
 //DataExtraction represents a data extraction
@@ -51,7 +51,6 @@ func matchExpression(compiledExpression *regexp.Regexp, line string, extract *Da
 					state.Put(extract.Key, matched[1])
 					continue
 				}
-
 				if !state.Has(keyFragment) {
 					state.Put(keyFragment, data.NewMap())
 				}

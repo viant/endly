@@ -80,7 +80,7 @@ func readSvnStatus(commandResult *CommandResponse, response *VcInfo) {
 			response.Modified = append(response.Modified, file)
 		}
 	}
-	if len(response.Modified) + len(response.Deleted) + len(response.New) == 0 {
+	if len(response.Modified)+len(response.Deleted)+len(response.New) == 0 {
 		response.IsUptoDate = true
 	}
 }
@@ -124,7 +124,7 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource,
 				Error:   []string{"No such file or directory", "Event not found", "Error validating server certificate"},
 			},
 			{
-				Credentials:     credentials,
+				Credentials: credentials,
 				MatchOutput: "Password for",
 				Command:     versionControlCredentailKey,
 				Error:       []string{"No such file or directory", "Event not found", "Error validating server certificate"},

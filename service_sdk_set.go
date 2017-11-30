@@ -10,8 +10,6 @@ type SystemSdkSetRequest struct {
 	Target  *url.Resource //target host
 }
 
-
-
 //SystemSdkSetResponse represents sdk response
 type SystemSdkSetResponse struct {
 	SdkInfo *SystemSdkInfo

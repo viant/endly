@@ -36,10 +36,6 @@ type Context struct {
 	closed      int32
 }
 
-
-
-
-
 //IsClosed returns true if it is closed.
 func (c *Context) IsClosed() bool {
 	return atomic.LoadInt32(&c.closed) == 1
@@ -135,8 +131,6 @@ func (c *Context) TerminalSessions() SystemTerminalSessions {
 	return *result
 }
 
-
-
 //TerminalSessions returns client sessions
 func (c *Context) SeleniumSessions() SeleniumSessions {
 	var result *SeleniumSessions
@@ -221,8 +215,6 @@ func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ManagedComma
 	return c.Execute(target, request.ManagedCommand)
 }
 
-
-
 func (c *Context) TerminalSession(target *url.Resource) (*SystemTerminalSession, error) {
 	sessions := c.TerminalSessions()
 	execService, err := c.Service(ExecServiceID)
@@ -231,10 +223,10 @@ func (c *Context) TerminalSession(target *url.Resource) (*SystemTerminalSession,
 	}
 	execService.Mutex().RLock()
 	defer execService.Mutex().RUnlock()
-	if ! sessions.Has(target.Host()) {
+	if !sessions.Has(target.Host()) {
 
 		response := execService.Run(c, &OpenSessionRequest{
-			Target:target,
+			Target: target,
 		})
 		if response.Error == "" {
 			return nil, errors.New(response.Error)
@@ -242,9 +234,6 @@ func (c *Context) TerminalSession(target *url.Resource) (*SystemTerminalSession,
 	}
 	return sessions[target.Host()], nil
 }
-
-
-
 
 //Execute execute shell command
 func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandResponse, error) {
