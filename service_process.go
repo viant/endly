@@ -54,8 +54,8 @@ func (s *processService) Run(context *Context, request interface{}) *ServiceResp
 
 func (s *processService) stopAllProcesses(context *Context, request *ProcessStopAllRequest) (*CommandResponse, error) {
 	status, err := s.checkProcess(context, &ProcessStatusRequest{
-		Target: request.Target,
-		Command:   request.Input,
+		Target:  request.Target,
+		Command: request.Input,
 	})
 	if err != nil {
 		return nil, err
@@ -78,14 +78,14 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 	var response = &ProcessStatusResponse{
 		Processes: make([]*ProcessInfo, 0),
 	}
+	command := "ps -ef | grep " + request.Command
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
-				Command: "ps -ef | grep " + request.Command,
+				Command: command,
 			},
 		},
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -94,24 +94,30 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 		if strings.Contains(line, "grep") {
 			continue
 		}
-
+		line = strings.TrimSpace(line)
 		columns, ok := ExtractColumns(line)
-		if len(columns) < 3 || ! ok {
+		if len(columns) < 3 || !ok {
 			continue
-		}
-
-		argumentsIndex := strings.Index(line, request.Command)
-		var arguments []string
-		if argumentsIndex != -1 {
-			args := strings.Trim(line[argumentsIndex+len(request.Command)+1:], " &\t")
-			arguments = strings.Split(args, " ")
 		}
 		info := &ProcessInfo{
 			Pid:       toolbox.AsInt(columns[1]),
 			Command:   request.Command,
-			Arguments: arguments,
+			Arguments: make([]string, 0),
+			Stdin:     command,
 			Stdout:    line,
 		}
+		var expectArgument = false
+		for _, column := range columns {
+			if expectArgument {
+				info.Arguments = append(info.Arguments, column)
+				continue
+			}
+			if strings.Contains(column, request.Command) {
+				info.Name = column
+				expectArgument = true
+			}
+		}
+		info.Stdout = strings.Join(columns, " ")
 		response.Processes = append(response.Processes, info)
 	}
 	if len(response.Processes) > 0 {
@@ -144,8 +150,8 @@ func indexProcesses(processes ...*ProcessInfo) map[int]*ProcessInfo {
 
 func (s *processService) startProcess(context *Context, request *ProcessStartRequest) (*ProcessStartResponse, error) {
 	origProcesses, err := s.checkProcess(context, &ProcessStatusRequest{
-		Target: request.Target,
-		Command:   request.Command,
+		Target:  request.Target,
+		Command: request.Command,
 	})
 
 	var result = &ProcessStartResponse{}
@@ -165,7 +171,7 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 	}
 	changeDirCommand := fmt.Sprintf("cd %v ", request.Directory)
 
-	var startCommand  = request.Command + " " +  strings.Join(request.Arguments, " ") + " &"
+	var startCommand = request.Command + " " + strings.Join(request.Arguments, " ") + " &"
 	if request.ImmuneToHangups {
 		startCommand = fmt.Sprintf("nohup  %v", startCommand)
 	}
@@ -185,8 +191,8 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 	}
 	time.Sleep(time.Second)
 	newProcesses, err := s.checkProcess(context, &ProcessStatusRequest{
-		Target: request.Target,
-		Command:   request.Command,
+		Target:  request.Target,
+		Command: request.Command,
 	})
 	if err != nil {
 		return nil, err

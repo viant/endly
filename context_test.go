@@ -9,7 +9,11 @@ import (
 
 func TestNewDefaultState(t *testing.T) {
 	state := endly.NewDefaultState()
-	var expanded = state.ExpandAsText("home = ${env.HOME} ")
-	assert.False(t, strings.Contains(expanded, "${env.HOME}"))
+
+	for _, expr := range []string{"$rand", "${env.HOME}", "$time", "$ts", "$tmpDir", "$uuid.get", "$uuid.next", "$timestamp.now", "$timestamp.tomorrow", "$timestamp.yesterday"} {
+		var expanded = state.ExpandAsText(expr)
+		assert.False(t, strings.Contains(expanded, expr))
+		assert.True(t, len(expr) > 0)
+	}
 
 }

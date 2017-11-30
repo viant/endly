@@ -2,10 +2,10 @@ package endly
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"sync"
-	"github.com/pkg/errors"
 )
 
 //BuildServiceID represent build service id
@@ -43,7 +43,7 @@ func (s *buildService) getMeta(context *Context, request *BuildRequest) (*BuildM
 			credential = mainWorkflow.Source.Credential
 		}
 		response, err := s.loadMeta(context, &BuildLoadMetaRequest{
-			Source:url.NewResource(metaURL, credential),
+			Source: url.NewResource(metaURL, credential),
 		})
 		if err != nil {
 			return nil, err
@@ -71,7 +71,7 @@ func (s *buildService) loadMeta(context *Context, request *BuildLoadMetaRequest)
 	defer s.mutex.Unlock()
 	s.registry[meta.Name] = meta
 	return &BuildLoadMetaResponse{
-		Meta:meta,
+		Meta: meta,
 	}, nil
 }
 
@@ -87,9 +87,9 @@ func (s *buildService) deployDependencyIfNeeded(context *Context, meta *BuildMet
 		var app = context.Expand(dependency.Name)
 		var version = context.Expand(dependency.Version)
 		response := deploymentService.Run(context, &DeploymentDeployRequest{
-			AppName:app,
-			Version:version,
-			Target:target,
+			AppName: app,
+			Version: version,
+			Target:  target,
 		})
 		if response.Error != "" {
 			return fmt.Errorf("Failed to build %v, %v", spec.Name, response.Error)
@@ -116,9 +116,9 @@ func (s *buildService) setSdkIfNeeded(context *Context, request *BuildRequest) e
 		return err
 	}
 	serviceResponse := sdkService.Run(context, &SystemSdkSetRequest{
-		Target:request.Target,
-		Sdk:request.BuildSpec.Sdk,
-		Version:request.BuildSpec.SdkVersion,
+		Target:  request.Target,
+		Sdk:     request.BuildSpec.Sdk,
+		Version: request.BuildSpec.SdkVersion,
 	})
 	if serviceResponse.Error != "" {
 		return errors.New(serviceResponse.Error)
@@ -161,8 +161,6 @@ func (s *buildService) build(context *Context, request *BuildRequest) (*BuildRes
 	if err != nil {
 		return nil, err
 	}
-
-
 
 	commandInfo, err := context.Execute(target, goal.Command)
 	if err != nil {
@@ -249,7 +247,7 @@ func (s *buildService) NewRequest(action string) (interface{}, error) {
 func NewBuildService() Service {
 	var result = &buildService{
 		registry:        make(map[string]*BuildMeta),
-		mutex:    &sync.RWMutex{},
+		mutex:           &sync.RWMutex{},
 		AbstractService: NewAbstractService(BuildServiceID),
 	}
 	result.AbstractService.Service = result

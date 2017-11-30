@@ -1,29 +1,31 @@
 package endly_test
 
 import (
-	"github.com/viant/toolbox"
-	"path"
-	"github.com/viant/toolbox/ssh"
-	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
 	"errors"
-	"github.com/viant/toolbox/cred"
-	"os"
 	"fmt"
+	"github.com/viant/endly"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/cred"
+	"github.com/viant/toolbox/ssh"
+	"github.com/viant/toolbox/url"
+	"os"
+	"path"
 	"time"
 )
 
+func GetDummyCredential() (string, error) {
+	return GetCredential("dummy", os.Getenv("USER"), "***")
+}
 
-func GetDummyCredentail() (string, error) {
-	var credentialFile = path.Join(os.TempDir(), fmt.Sprintf("s%v.json", time.Now().Hour()))
+func GetCredential(name, username, password string) (string, error) {
+	var credentialFile = path.Join(os.TempDir(), fmt.Sprintf("%v%v.json", name, time.Now().Hour()))
 	authConfig := cred.Config{
-		Username:os.Getenv("USER"),
-		Password:"***",
+		Username: username,
+		Password: password,
 	}
 	err := authConfig.Save(credentialFile)
 	return credentialFile, err
 }
-
 
 func GetReplayService(basedir string) (ssh.Service, error) {
 	fileName, _, _ := toolbox.CallerInfo(2)
@@ -40,14 +42,13 @@ func GetReplayService(basedir string) (ssh.Service, error) {
 	return service, nil
 }
 
-
 func openTestContext(manager endly.Manager, target *url.Resource, commandDirectory string, service ssh.Service) (*endly.Context, error) {
 	var err error
 	context := manager.NewContext(toolbox.NewContext())
 	request := &endly.OpenSessionRequest{
-		Target:target,
-		CommandsBasedir:commandDirectory,
-		ReplayService:service,
+		Target:          target,
+		CommandsBasedir: commandDirectory,
+		ReplayService:   service,
 	}
 	srv, err := manager.Service(endly.ExecServiceID)
 	if err != nil {
@@ -63,10 +64,10 @@ func openTestContext(manager endly.Manager, target *url.Resource, commandDirecto
 func OpenTestRecorderContext(manager endly.Manager, target *url.Resource, commandDirectory string) (*endly.Context, error) {
 	fileName, _, _ := toolbox.CallerInfo(2)
 	parent, _ := path.Split(fileName)
-	commandDirectory =path.Join(parent, commandDirectory)
+	commandDirectory = path.Join(parent, commandDirectory)
 	return openTestContext(manager, target, commandDirectory, nil)
 }
 
-func OpenTestContext(manager endly.Manager, target *url.Resource,  service ssh.Service) (*endly.Context, error) {
+func OpenTestContext(manager endly.Manager, target *url.Resource, service ssh.Service) (*endly.Context, error) {
 	return openTestContext(manager, target, "", service)
 }

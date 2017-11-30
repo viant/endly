@@ -2,6 +2,7 @@ package endly
 
 import (
 	"fmt"
+	"github.com/lunixbochs/vtclean"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"strings"
@@ -11,6 +12,7 @@ import (
 const DockerServiceID = "docker"
 const containerInUse = "is already in use by container"
 const unableToFindImage = "unable to find image"
+const dockerError = "Error response"
 
 var dockerErrors = []string{"failed", unableToFindImage}
 var dockerIgnoreErrors = []string{}
@@ -33,16 +35,17 @@ func (s *dockerService) NewRequest(action string) (interface{}, error) {
 	case "pull":
 		return &DockerPullRequest{}, nil
 	case "process":
-		return &DockerContainerCheckRequest{}, nil
+		return &DockerContainerStatusRequest{}, nil
 	case "container-command":
 		return &DockerContainerCommandRequest{}, nil
 	case "container-start":
 		return &DockerContainerStartRequest{}, nil
 	case "container-stop":
 		return &DockerContainerStopRequest{}, nil
+	case "container-status":
+		return &DockerContainerStatusRequest{}, nil
 	case "container-remove":
 		return &DockerContainerRemoveRequest{}, nil
-
 	}
 	return s.AbstractService.NewRequest(action)
 }
@@ -69,7 +72,7 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to pull images: %v, %v", actualRequest, err)
 		}
-	case *DockerContainerCheckRequest:
+	case *DockerContainerStatusRequest:
 		response.Response, err = s.checkContainerProcesses(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to check process: %v, %v", actualRequest, err)
@@ -98,7 +101,7 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 	case *DockerRunRequest:
 		response.Response, err = s.runContainer(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run: %v(%v), %v", actualRequest.Target.Name, actualRequest.Image, err)
+			response.Error = fmt.Sprintf("Failed to run docker container: %v(%v), %v", actualRequest.Target.Name, actualRequest.Image, err)
 		}
 	case *DockerStopImagesRequest:
 		response.Response, err = s.stopImages(context, actualRequest)
@@ -123,7 +126,7 @@ func (s *dockerService) stopImages(context *Context, request *DockerStopImagesRe
 	var response = &DockerStopImagesResponse{
 		StoppedImages: make([]string, 0),
 	}
-	processResponse, err := s.checkContainerProcesses(context, &DockerContainerCheckRequest{
+	processResponse, err := s.checkContainerProcesses(context, &DockerContainerStatusRequest{
 		Target:  request.Target,
 		SysPath: request.SysPath,
 	})
@@ -171,11 +174,6 @@ Options:
 
 */
 
-
-
-
-
-
 func (s *dockerService) runContainer(context *Context, request *DockerRunRequest) (*DockerContainerInfo, error) {
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("Target name was empty for %v", request.Target.URL)
@@ -192,6 +190,27 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 	if len(request.Credentials) > 0 {
 		for k, v := range request.Credentials {
 			credentials[k] = v
+		}
+	}
+
+	checkResponse, err := s.checkContainerProcesses(context, &DockerContainerStatusRequest{
+		Target: request.Target,
+		Names:  request.Target.Name,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	if len(checkResponse.Containers) > 0 {
+		_, err := s.stopContainer(context, &DockerContainerStopRequest{
+			Target: request.Target,
+		})
+		if err != nil {
+			return nil, err
+		}
+		_, err = s.removeContainer(context, &DockerContainerRemoveRequest{Target: request.Target})
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -226,14 +245,14 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 		}
 	}
 
-	return s.checkContainerProcess(context, &DockerContainerCheckRequest{
+	return s.checkContainerProcess(context, &DockerContainerStatusRequest{
 		Target:  request.Target,
 		Names:   request.Target.Name,
 		SysPath: request.SysPath,
 	})
 }
 
-func (s *dockerService) checkContainerProcess(context *Context, request *DockerContainerCheckRequest) (*DockerContainerInfo, error) {
+func (s *dockerService) checkContainerProcess(context *Context, request *DockerContainerStatusRequest) (*DockerContainerInfo, error) {
 	if len(request.SysPath) > 0 {
 		s.SysPath = request.SysPath
 	}
@@ -250,6 +269,7 @@ func (s *dockerService) checkContainerProcess(context *Context, request *DockerC
 }
 
 func (s *dockerService) startContainer(context *Context, request *DockerContainerStartRequest) (*DockerContainerInfo, error) {
+
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("Target name was empty for %v and command %v", request.Target.URL)
 	}
@@ -261,7 +281,7 @@ func (s *dockerService) startContainer(context *Context, request *DockerContaine
 	if err != nil {
 		return nil, err
 	}
-	return s.checkContainerProcess(context, &DockerContainerCheckRequest{
+	return s.checkContainerProcess(context, &DockerContainerStatusRequest{
 		Target:  request.Target,
 		Names:   request.Target.Name,
 		SysPath: request.SysPath,
@@ -277,7 +297,7 @@ func (s *dockerService) stopContainer(context *Context, request *DockerContainer
 		s.SysPath = request.SysPath
 	}
 
-	info, err := s.checkContainerProcess(context, &DockerContainerCheckRequest{
+	info, err := s.checkContainerProcess(context, &DockerContainerStatusRequest{
 		Target:  request.Target,
 		Names:   request.Target.Name,
 		SysPath: request.SysPath,
@@ -293,7 +313,9 @@ func (s *dockerService) stopContainer(context *Context, request *DockerContainer
 	if err != nil {
 		return nil, err
 	}
-
+	if info != nil {
+		info.Status = "down"
+	}
 	return info, nil
 }
 
@@ -336,11 +358,24 @@ func (s *dockerService) runInContainer(context *Context, request *DockerContaine
 		executionOptions = "-" + executionOptions
 	}
 
-	return s.executeDockerCommand(request.Credentials, context, request.Target, dockerErrors, "docker exec %v %v %v", executionOptions, request.Target.Name, command)
+	commandRespons, err := s.executeSecureDockerCommand(request.Credentials, context, request.Target, dockerErrors, "docker exec %v %v %v", executionOptions, request.Target.Name, command)
+	if err != nil {
+		return nil, err
+	}
+	if len(commandRespons.Commands) > 1 {
+		//Truncate password auth, to process vanila container output
+		var stdout = commandRespons.Commands[0].Stdout
+		if strings.Contains(stdout, "Password:") {
+			commandRespons.Commands = commandRespons.Commands[1:]
+		}
+	}
+	return commandRespons, err
 }
 
-func (s *dockerService) checkContainerProcesses(context *Context, request *DockerContainerCheckRequest) (*DockerContainerCheckResponse, error) {
-
+func (s *dockerService) checkContainerProcesses(context *Context, request *DockerContainerStatusRequest) (*DockerContainerStatusResponse, error) {
+	if len(request.SysPath) > 0 {
+		s.SysPath = request.SysPath
+	}
 	info, err := s.executeSecureDockerCommand(nil, context, request.Target, dockerErrors, "docker ps")
 	if err != nil {
 		return nil, err
@@ -361,10 +396,10 @@ func (s *dockerService) checkContainerProcesses(context *Context, request *Docke
 		info := &DockerContainerInfo{
 			ContainerID: columns[0],
 			Image:       columns[1],
-			Command:     columns[2],
+			Command:     strings.Trim(columns[2], "\""),
 			Status:      status,
-			Port:        columns[len(columns) - 2],
-			Names:       columns[len(columns) - 1],
+			Port:        columns[len(columns)-2],
+			Names:       columns[len(columns)-1],
 		}
 		if request.Image != "" && request.Image != info.Image {
 			continue
@@ -374,7 +409,7 @@ func (s *dockerService) checkContainerProcesses(context *Context, request *Docke
 		}
 		containers = append(containers, info)
 	}
-	return &DockerContainerCheckResponse{Containers: containers}, nil
+	return &DockerContainerStatusResponse{Containers: containers}, nil
 }
 
 func (s *dockerService) pullImage(context *Context, request *DockerPullRequest) (*DockerImageInfo, error) {
@@ -400,37 +435,55 @@ func (s *dockerService) pullImage(context *Context, request *DockerPullRequest) 
 }
 
 func (s *dockerService) checkImages(context *Context, request *DockerImagesRequest) (*DockerImagesResponse, error) {
+	if request.SysPath != nil {
+		s.SysPath = request.SysPath
+	}
+
 	info, err := s.executeDockerCommand(nil, context, request.Target, dockerErrors, "docker images")
 	if err != nil {
 		return nil, err
 	}
 	stdout := info.Stdout()
 	var images = make([]*DockerImageInfo, 0)
-	for _, line := range strings.Split(stdout, "\r\n") {
+
+	for _, line := range strings.Split(stdout, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "REPOSITORY") {
+			continue
+		}
 		columns, ok := ExtractColumns(line)
 		if !ok || len(columns) < 4 {
 			continue
 		}
-		var sizeUnit = columns[len(columns) - 1]
-		var sizeFactor = 1
-		switch strings.ToUpper(sizeUnit) {
-		case "MB":
-			sizeFactor = 1024 * 1024
-		case "KB":
-			sizeFactor = 1024
+
+		var size = ""
+		for j := len(columns) - 2; j < len(columns); j++ {
+			if strings.Contains(columns[j], "ago") {
+				continue
+			}
+			size += columns[j]
+		}
+		var sizeFactor = 1024
+		var sizeUnit = "KB"
+		if strings.Contains(line, "MB") {
+			sizeUnit = "MB"
+			sizeFactor *= 1024
 		}
 
+		size = strings.Replace(size, sizeUnit, "", 1)
 		info := &DockerImageInfo{
 			Repository: columns[0],
 			Tag:        columns[1],
 			ImageID:    columns[2],
-			Size:       toolbox.AsInt(columns[len(columns) - 2]) * sizeFactor,
+			Size:       toolbox.AsInt(size) * sizeFactor,
 		}
+
 		if request.Repository != "" {
 			if info.Repository != request.Repository {
 				continue
 			}
 		}
+
 		if request.Tag != "" {
 			if info.Tag != request.Tag {
 				continue
@@ -452,20 +505,32 @@ func (s *dockerService) executeSecureDockerCommand(secure map[string]string, con
 		secure = make(map[string]string)
 	}
 	secure[sudoCredentialKey] = target.Credential
-	return context.Execute(target, &superUserCommandRequest{
+	response, err := context.Execute(target, &superUserCommandRequest{
 		MangedCommand: &ManagedCommand{
 			Options: &ExecutionOptions{
 				SystemPaths: s.SysPath,
 			},
 			Executions: []*Execution{
 				{
-					Credentials:  secure,
-					Command: command,
-					Error:   append(errors, []string{commandNotFound}...),
+					Credentials: secure,
+					Command:     command,
+					Error:       append(errors, []string{commandNotFound}...),
 				},
 			},
 		},
 	})
+
+	if err != nil {
+		return nil, err
+	}
+	var stdout = response.Stdout()
+	if strings.Contains(stdout, containerInUse) {
+		return response, err
+	}
+	if strings.Contains(stdout, dockerError) {
+		return response, fmt.Errorf("Error executing %v, %v", command, vtclean.Clean(stdout, false))
+	}
+	return response, nil
 }
 
 //NewDockerService returns a new docker service.

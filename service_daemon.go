@@ -2,18 +2,18 @@ package endly
 
 import (
 	"fmt"
+	"github.com/lunixbochs/vtclean"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
-	"github.com/lunixbochs/vtclean"
 )
 
 //DaemonServiceID represents system daemon service
 const DaemonServiceID = "daemon"
 
 const (
-	serviceTypeError      = iota
+	serviceTypeError = iota
 	serviceTypeInitDaemon
 	serviceTypeLaunchCtl
 	serviceTypeStdService
@@ -31,10 +31,16 @@ func (s *daemonService) Run(context *Context, request interface{}) *ServiceRespo
 	var err error
 	switch actualRequest := request.(type) {
 	case *DaemonStartRequest:
-		response.Response, err = s.startService(context, actualRequest)
+
+		info, err := s.startService(context, actualRequest)
+		response.Response = info
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to start service: %v, %v", actualRequest.Service, err)
 		}
+		if !info.IsActive() {
+			response.Error = fmt.Sprintf("Failed to start service: %v, service is inactive", actualRequest.Service)
+		}
+
 	case *DaemonStopRequest:
 		response.Response, err = s.stopService(context, actualRequest)
 		if err != nil {
@@ -45,6 +51,8 @@ func (s *daemonService) Run(context *Context, request interface{}) *ServiceRespo
 		if err != nil {
 			response.Error = fmt.Sprintf("Failed to check status service: %v, %v", actualRequest.Service, err)
 		}
+	default:
+		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
 	}
 	if response.Error != "" {
 		response.Status = "err"
@@ -64,7 +72,7 @@ func (s *daemonService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
-func (s *daemonService) getDarwinLaunchServiceInfo(context *Context, target *url.Resource, request *DaemonStatusRequest, info *DaemonInfo) (error) {
+func (s *daemonService) getDarwinLaunchServiceInfo(context *Context, target *url.Resource, request *DaemonStatusRequest, info *DaemonInfo) error {
 
 	if request.Exclusion != "" {
 		request.Exclusion = " | grep -v " + request.Exclusion
@@ -97,7 +105,7 @@ func (s *daemonService) getDarwinLaunchServiceInfo(context *Context, target *url
 	stdout := commandResult.Stdout()
 	for _, line := range strings.Split(stdout, "\n") {
 		columns, ok := ExtractColumns(line)
-		if ! ok || len(columns) == 0 {
+		if !ok || len(columns) == 0 {
 			continue
 		}
 		var pid = toolbox.AsInt(columns[0])
@@ -141,7 +149,7 @@ func (s *daemonService) determineServiceType(context *Context, service, exclusio
 			break
 		}
 		var stdout = commandResult.Stdout()
-			if !CheckNoSuchFileOrDirectory(stdout) && !CheckCommandNotFound(stdout) {
+		if !CheckNoSuchFileOrDirectory(stdout) && !CheckCommandNotFound(stdout) {
 			session.DaemonType = candidate.systemType
 			return session.DaemonType, nil
 		}
@@ -201,7 +209,7 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 	}
 
 	command := ""
-	if (info.Path == "" || info.Domain == "" ) && serviceType == serviceTypeLaunchCtl {
+	if (info.Path == "" || info.Domain == "") && serviceType == serviceTypeLaunchCtl {
 		return info, nil
 	}
 
@@ -358,7 +366,7 @@ func (s *daemonService) startService(context *Context, request *DaemonStartReque
 	case serviceTypeError:
 		return nil, fmt.Errorf("Unknown daemon service type")
 	case serviceTypeLaunchCtl:
-		if ! serviceInfo.Launched {
+		if !serviceInfo.Launched {
 			command = fmt.Sprintf("launchctl load -F %v", serviceInfo.Path)
 			_, err = s.executeCommand(context, serviceInfo.Type, target, &ManagedCommand{
 				Executions: []*Execution{
@@ -371,7 +379,7 @@ func (s *daemonService) startService(context *Context, request *DaemonStartReque
 				return nil, err
 			}
 		}
-		serviceInfo, _= s.checkService(context, &DaemonStatusRequest{
+		serviceInfo, _ = s.checkService(context, &DaemonStatusRequest{
 			Target:    request.Target,
 			Service:   request.Service,
 			Exclusion: request.Exclusion,

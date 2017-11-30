@@ -151,7 +151,7 @@ func (s *dataStoreUnitService) runScripts(context *Context, request *DsUnitSQLSc
 	return response, nil
 }
 
-func (s *dataStoreUnitService) runSQLScripts(context *Context, datastore string, scripts [] *url.Resource) (int, error) {
+func (s *dataStoreUnitService) runSQLScripts(context *Context, datastore string, scripts []*url.Resource) (int, error) {
 	if len(scripts) == 0 {
 		return 0, nil
 	}
@@ -281,7 +281,7 @@ func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectReq
 			var path = fmt.Sprintf("%v%v", violation.Table, violation.Key)
 			var message = ""
 
-			switch violation.Type  {
+			switch violation.Type {
 			case dsunit.ViolationTypeInvalidRowCount:
 				message += fmt.Sprintf("expected %v rows but had %v\n\t", violation.Expected, violation.Actual)
 			case dsunit.ViolationTypeMissingActualRow:

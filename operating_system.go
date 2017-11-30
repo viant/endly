@@ -2,6 +2,7 @@ package endly
 
 import (
 	"github.com/viant/toolbox"
+	"math"
 	"strings"
 )
 
@@ -15,14 +16,12 @@ type OperatingSystem struct {
 	Path         *SystemPath
 }
 
-func normalizeVersion(version string) int {
+func normalizeVersion(version string, count int) int {
 	var result = 0
-	if strings.Contains(version, ".") {
-		var fragments = strings.Split(version, ".")
-		for i, fragment := range fragments {
-			factor := 10 ^ (len(fragments) - i + 1)
-			result += toolbox.AsInt(fragment) * factor
-		}
+	var fragments = strings.Split(version, ".")
+	for i, fragment := range fragments {
+		factor := math.Pow(10.0, (2.0 * float64(count-i)))
+		result += toolbox.AsInt(fragment) * int(factor)
 	}
 	return result
 }
@@ -42,16 +41,17 @@ func (s *OperatingSystem) Matches(target *OperatingSystemTarget) bool {
 	if target.MinRequiredVersion == "" && target.MaxAllowedVersion == "" {
 		return true
 	}
-	var actualVersion = normalizeVersion(s.Version)
+	var versionFragmentCount = strings.Count(s.Version, ".")
+	var actualVersion = normalizeVersion(s.Version, versionFragmentCount)
 
 	if target.MinRequiredVersion != "" {
-		var minRequiredVersion = normalizeVersion(target.MinRequiredVersion)
+		var minRequiredVersion = normalizeVersion(target.MinRequiredVersion, versionFragmentCount)
 		if actualVersion < minRequiredVersion {
 			return false
 		}
 	}
-	var maxAllowedVersion = normalizeVersion(target.MaxAllowedVersion)
-	return actualVersion > maxAllowedVersion
+	var maxAllowedVersion = normalizeVersion(target.MaxAllowedVersion, versionFragmentCount)
+	return actualVersion >= maxAllowedVersion
 }
 
 //SystemPath represents a system path

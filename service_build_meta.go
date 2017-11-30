@@ -2,10 +2,6 @@ package endly
 
 import "fmt"
 
-
-
-
-
 //BuildGoal builds goal represents a build goal
 type BuildGoal struct {
 	Name                string
@@ -15,16 +11,13 @@ type BuildGoal struct {
 	VerificationCommand *ManagedCommand
 }
 
-
-
 //BuildMeta build meta provides instruction how to build an app
 type BuildMeta struct {
-	Name             string
-	Goals            []*BuildGoal
-	Dependencies 	 []*DeploymentDependency
-	goalsIndex       map[string]*BuildGoal
+	Name         string
+	Goals        []*BuildGoal
+	Dependencies []*DeploymentDependency
+	goalsIndex   map[string]*BuildGoal
 }
-
 
 //Validate validates build meta.
 func (m *BuildMeta) Validate() error {
