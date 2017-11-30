@@ -24,17 +24,16 @@ type logValidatorService struct {
 	*AbstractService
 }
 
-type LogRecordAssert struct{
-	TagId string
+type LogRecordAssert struct {
+	TagId    string
 	Expected interface{}
-	Actual interface{}
+	Actual   interface{}
 }
 
 type LogAssertEvent struct {
 	Type string
-	Logs[]*LogRecordAssert
+	Logs []*LogRecordAssert
 }
-
 
 //LogProcessingState represents log processing state
 type LogProcessingState struct {
@@ -286,7 +285,7 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 	}
 
 	var event = &LogAssertEvent{
-		Logs:make([]*LogRecordAssert, 0),
+		Logs: make([]*LogRecordAssert, 0),
 	}
 
 	for _, expectedLogRecords := range request.ExpectedLogRecords {
@@ -329,11 +328,10 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 			}
 
 			event.Logs = append(event.Logs, &LogRecordAssert{
-				TagId: expectedLogRecords.TagId,
-				Expected:expectedLogRecord,
-				Actual:actualLogRecord,
+				TagId:    expectedLogRecords.TagId,
+				Expected: expectedLogRecord,
+				Actual:   actualLogRecord,
 			})
-
 
 			err = validator.Assert(expectedLogRecord, actualLogRecord, validationInfo, fmt.Sprintf("[%v:%v]", filename, logRecord.Number))
 			if err != nil {
@@ -355,7 +353,6 @@ func (s *logValidatorService) getLogTypeMeta(expectedLogRecords *ExpectedLogReco
 	logTypeMeta := state.Get(key).(*LogTypeMeta)
 	return logTypeMeta, nil
 }
-
 
 func (s *logValidatorService) readLogFile(context *Context, source *url.Resource, service storage.Service, candidate storage.Object, logType *LogType) (*LogTypeMeta, error) {
 	var result *LogTypeMeta
@@ -491,8 +488,6 @@ func (s *logValidatorService) listenForChanges(context *Context, request *LogVal
 	}()
 	return nil
 }
-
-
 
 func (s *logValidatorService) listen(context *Context, request *LogValidatorListenRequest) (*LogValidatorListenResponse, error) {
 	var source, err = context.ExpandResource(request.Source)

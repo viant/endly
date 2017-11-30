@@ -7,16 +7,16 @@ import (
 
 //SystemTerminalSession represents a system terminal session
 type SystemTerminalSession struct {
-	ID              string
+	ID string
 	ssh.MultiCommandSession
-	DaemonType      int
-	Service         ssh.Service
-	OperatingSystem *OperatingSystem
-	envVariables    map[string]string
-	currentDirectory            string
-	Deployed        map[string]string
-	Sdk             map[string]*SystemSdkInfo
-	Mutex           *sync.RWMutex
+	DaemonType       int
+	Service          ssh.Service
+	OperatingSystem  *OperatingSystem
+	envVariables     map[string]string
+	currentDirectory string
+	Deployed         map[string]string
+	Sdk              map[string]*SystemSdkInfo
+	Mutex            *sync.RWMutex
 }
 
 //NewSystemTerminalSession create a new client session
