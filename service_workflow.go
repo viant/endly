@@ -22,12 +22,12 @@ const (
 
 //WorkflowServiceActivity represents workflow activity
 type WorkflowServiceActivity struct {
-	Workflow        string
-	Service         string
-	Action          string
-	Tag             string
-	TagIndex        string
-	TagId           string
+	Workflow string
+	Service  string
+	Action   string
+	Tag      string
+	TagIndex string
+	TagId    string
 
 	Description     string
 	TagDescription  string

@@ -3,20 +3,18 @@ package endly
 import (
 	"errors"
 	"fmt"
-	"github.com/viant/toolbox/url"
-	"sync"
-	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox/data"
-	"strings"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/storage"
+	"github.com/viant/toolbox/url"
+	"strings"
+	"sync"
 )
 
 //DeploymentServiceID represents a deployment service id.
 const DeploymentServiceID = "deployment"
 const artifactKey = "artifact"
 const versionKey = "Version"
-
-
 
 //DeploymentDependency represents deployment dependency
 type DeploymentDependency struct {
@@ -107,7 +105,7 @@ func (s *deploymentService) checkIfDeployedOnSession(context *Context, target *u
 	session.Mutex.RLock()
 	defer session.Mutex.RUnlock()
 	deployedVersion, has := session.Deployed[request.AppName]
-	if ! has {
+	if !has {
 		return false
 	}
 	if deployedVersion == "" && request.Version == "" {
@@ -115,7 +113,6 @@ func (s *deploymentService) checkIfDeployedOnSession(context *Context, target *u
 	}
 	return MatchVersion(request.Version, deployedVersion)
 }
-
 
 func (s *deploymentService) checkIfDeployedOnSystem(context *Context, target *url.Resource, deploymentTarget *DeploymentTargetMeta, request *DeploymentDeployRequest) (bool, error) {
 	if deploymentTarget.Deployment.VersionCheck != nil {
@@ -139,7 +136,6 @@ func (s *deploymentService) checkIfDeployedOnSystem(context *Context, target *ur
 	return service.Exists(transferTarget.URL)
 }
 
-
 func (s *deploymentService) updateSessionDeployment(context *Context, target *url.Resource, app, version string) error {
 	session, err := context.TerminalSession(target)
 	if err != nil {
@@ -157,10 +153,10 @@ func (s *deploymentService) discoverTransfer(context *Context, request *Deployme
 		return deploymentTarget.Deployment.Transfer, nil
 	}
 	var transfer = &Transfer{
-		Target:deploymentTarget.Deployment.Transfer.Target,
-		Expand:deploymentTarget.Deployment.Transfer.Expand,
-		Replace:deploymentTarget.Deployment.Transfer.Replace,
-		Compress:deploymentTarget.Deployment.Transfer.Compress,
+		Target:   deploymentTarget.Deployment.Transfer.Target,
+		Expand:   deploymentTarget.Deployment.Transfer.Expand,
+		Replace:  deploymentTarget.Deployment.Transfer.Replace,
+		Compress: deploymentTarget.Deployment.Transfer.Compress,
 	}
 
 	var source = deploymentTarget.Deployment.Transfer.Source
@@ -179,12 +175,12 @@ func (s *deploymentService) discoverTransfer(context *Context, request *Deployme
 		if err != nil {
 			return nil, err
 		}
-		var releaseFragmentKey = versioningFragments[len(versioningFragments) - 1]
+		var releaseFragmentKey = versioningFragments[len(versioningFragments)-1]
 		for i, versionFragment := range requestedVersionFragment {
 			artifact.Put(versioningFragments[i], versionFragment)
 		}
 		minReleaseVersion, has := deploymentTarget.MinReleaseVersion[request.Version]
-		if ! has {
+		if !has {
 			return nil, fmt.Errorf("Failed to discover source - unable to determine minReleaseVersion for %v\n", request.Version)
 		}
 		var maxReleaseVersion = strings.Repeat("9", len(minReleaseVersion))
@@ -194,10 +190,10 @@ func (s *deploymentService) discoverTransfer(context *Context, request *Deployme
 			artifact.Put(releaseFragmentKey, toolbox.AsString(i))
 			artifact.Put(versionKey, fmt.Sprintf("%v.%v", request.Version, i))
 			var sourceURL = context.Expand(source.URL)
-			exists, _ := service.Exists(sourceURL);
+			exists, _ := service.Exists(sourceURL)
 			if exists {
 				source = url.NewResource(sourceURL, source.Credential)
-				break;
+				break
 			}
 		}
 	}
@@ -211,9 +207,9 @@ func (s *deploymentService) deployDependenciesIfNeeded(context *Context, target 
 	}
 	for _, dependency := range dependencies {
 		_, err = s.deploy(context, &DeploymentDeployRequest{
-			Target:target,
-			AppName:dependency.Name,
-			Version:dependency.Version,
+			Target:  target,
+			AppName: dependency.Name,
+			Version: dependency.Version,
 		})
 		if err != nil {
 			break
@@ -240,9 +236,9 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 		return nil, err
 	}
 	request = &DeploymentDeployRequest{
-		AppName:context.Expand(request.AppName),
-		Version:context.Expand(request.Version),
-		Target:request.Target,
+		AppName: context.Expand(request.AppName),
+		Version: context.Expand(request.Version),
+		Target:  request.Target,
 	}
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
@@ -269,7 +265,7 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	if err != nil {
 		return nil, err
 	}
-	if ! request.Force {
+	if !request.Force {
 		if deployed, _ := s.checkIfDeployedOnSystem(context, target, deploymentTarget, request); deployed {
 			return response, err
 		}
@@ -295,7 +291,6 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	if deploymentTarget.Deployment.Command != nil {
 		_, err = context.Execute(target,
 			deploymentTarget.Deployment.Command,
-
 		)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to init deploy app to %v: %v", target, err)
@@ -360,7 +355,7 @@ func (s *deploymentService) loadMeta(context *Context, request *DeploymentMetaRe
 	defer s.mutex.Unlock()
 	s.registry[meta.Name] = meta
 	return &DeploymentMetaResponse{
-		Meta:meta,
+		Meta: meta,
 	}, nil
 }
 
@@ -391,7 +386,7 @@ func (s *deploymentService) getMeta(context *Context, request *DeploymentDeployR
 			credential = mainWorkflow.Source.Credential
 		}
 		response, err := s.loadMeta(context, &DeploymentMetaRequest{
-			Source:url.NewResource(metaURL, credential),
+			Source: url.NewResource(metaURL, credential),
 		})
 		if err != nil {
 			return nil, err
@@ -415,8 +410,8 @@ func (s *deploymentService) NewRequest(action string) (interface{}, error) {
 func NewDeploymentService() Service {
 	var result = &deploymentService{
 		AbstractService: NewAbstractService(DeploymentServiceID),
-		mutex:    &sync.RWMutex{},
-		registry:make(map[string]*DeploymentMeta),
+		mutex:           &sync.RWMutex{},
+		registry:        make(map[string]*DeploymentMeta),
 	}
 	result.AbstractService.Service = result
 	return result

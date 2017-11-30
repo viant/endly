@@ -59,7 +59,7 @@ func (r *ManagedCommandRequest) Validate() error {
 //AsManagedCommandRequest returns ManagedCommandRequest for this requests
 func (r *CommandRequest) AsManagedCommandRequest() *ManagedCommandRequest {
 	var managedCommand = &ManagedCommand{
-		Options:NewExecutionOptions(),
+		Options:    NewExecutionOptions(),
 		Executions: make([]*Execution, 0),
 	}
 	if r.TimeoutMs > 0 {

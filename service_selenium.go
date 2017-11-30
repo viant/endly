@@ -97,7 +97,6 @@ func (s *seleniumService) Run(context *Context, request interface{}) *ServiceRes
 			response.Error = fmt.Sprintf("Failed to start selenium %v", err)
 		}
 
-
 	case *SeleniumOpenSessionRequest:
 		response.Response, err = s.open(context, actualRequest)
 		if err != nil {
@@ -175,7 +174,7 @@ func (s *seleniumService) open(context *Context, request *SeleniumOpenSessionReq
 func (s *seleniumService) deployServerIfNeeded(context *Context, request *SeleniumServerStartRequest) (*SeleniumServerStartResponse, error) {
 	deploymentService, _ := context.Service(DeploymentServiceID)
 	deployServerResponse := deploymentService.Run(context, &DeploymentDeployRequest{
-		Target : request.Target,
+		Target:  request.Target,
 		AppName: SeleniumServer,
 		Version: request.Version,
 	})
@@ -183,7 +182,7 @@ func (s *seleniumService) deployServerIfNeeded(context *Context, request *Seleni
 		return nil, errors.New(deployServerResponse.Error)
 	}
 	deployGeckoDriverResponse := deploymentService.Run(context, &DeploymentDeployRequest{
-		Target : request.Target,
+		Target:  request.Target,
 		AppName: GeckoDriver,
 	})
 	if deployGeckoDriverResponse.Error != "" {
@@ -195,13 +194,12 @@ func (s *seleniumService) deployServerIfNeeded(context *Context, request *Seleni
 	return response, nil
 }
 
-
 func (s *seleniumService) setJdk(context *Context, request *SeleniumServerStartRequest) error {
 	sdkService, _ := context.Service(SdkServiceID)
 	response := sdkService.Run(context, &SystemSdkSetRequest{
-		Sdk:request.Sdk,
-		Version:request.Version,
-		Target:request.Target,
+		Sdk:     request.Sdk,
+		Version: request.Version,
+		Target:  request.Target,
 	})
 
 	if response.Error != "" {
@@ -209,8 +207,6 @@ func (s *seleniumService) setJdk(context *Context, request *SeleniumServerStartR
 	}
 	return nil
 }
-
-
 
 func (s *seleniumService) start(context *Context, request *SeleniumServerStartRequest) (*SeleniumServerStartResponse, error) {
 	response, err := s.deployServerIfNeeded(context, request)
@@ -224,11 +220,11 @@ func (s *seleniumService) start(context *Context, request *SeleniumServerStartRe
 
 	processService, _ := context.Service(ProcessServiceID)
 	processService.Run(context, &ProcessStartRequest{
-		Command:     "java",
-		Target        :request.Target,
-		Directory     :"/opt/selenium",
-		Arguments:     []string{"-jar", fmt.Sprintf("-Dwebdriver.gecko.driver=%v", response.GeckodriverPath), "-jar", response.GeckodriverPath, "-port",  toolbox.AsString(request.Port)},
-		ImmuneToHangups :true,
+		Command:         "java",
+		Target:          request.Target,
+		Directory:       "/opt/selenium",
+		Arguments:       []string{"-jar", fmt.Sprintf("-Dwebdriver.gecko.driver=%v", response.GeckodriverPath), "-jar", response.GeckodriverPath, "-port", toolbox.AsString(request.Port)},
+		ImmuneToHangups: true,
 	})
 	return response, nil
 }
@@ -275,9 +271,6 @@ func (s *seleniumService) openSession(context *Context, request *SeleniumOpenSes
 	})
 	return seleniumSession, nil
 }
-
-
-
 
 //NewRequest creates a new request for the provided action (run).
 func (s *seleniumService) NewRequest(action string) (interface{}, error) {

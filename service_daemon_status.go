@@ -14,13 +14,13 @@ type DaemonStatusRequest struct {
 
 //DaemonInfo represents a service info
 type DaemonInfo struct {
-	Service string //requested service name
-	Path    string //path
-	Pid     int    //process if
-	Type    int    //type
-	Domain    string //command how service was launched
-	State   string //state
-	Launched  bool
+	Service  string //requested service name
+	Path     string //path
+	Pid      int    //process if
+	Type     int    //type
+	Domain   string //command how service was launched
+	State    string //state
+	Launched bool
 }
 
 //IsActive returns true if service is running

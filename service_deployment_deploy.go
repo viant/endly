@@ -5,10 +5,9 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-
 //DeploymentDeployRequest represent a deploy request
 type DeploymentDeployRequest struct {
-	Target *url.Resource
+	Target  *url.Resource
 	MetaURL string //deployment URL for meta deployment instruction
 	AppName string //app name
 	Version string //requested version
@@ -22,11 +21,7 @@ func (r *DeploymentDeployRequest) Validate() error {
 	return nil
 }
 
-
-
-
 //DeploymentDeployResponse represents a deploy response.
 type DeploymentDeployResponse struct {
 	Version string
 }
-

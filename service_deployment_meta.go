@@ -5,18 +5,15 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-
 //DeploymentRegisterRequest represents DeploymentMeta register request.
 type DeploymentMetaRequest struct {
 	Source *url.Resource
 }
 
-
 //DeploymentRegisterResponse represnets deployment response
 type DeploymentMetaResponse struct {
 	Meta *DeploymentMeta
 }
-
 
 //DeploymentMeta represents description of deployment instructions for various operating system
 type DeploymentMeta struct {
@@ -25,12 +22,10 @@ type DeploymentMeta struct {
 	Targets    []*DeploymentTargetMeta
 }
 
-
-
 //OperatingSystemDeployment represents specific instruction for given os deplyoment.
 type DeploymentTargetMeta struct {
 	Version           string                  //version of the software
-	MinReleaseVersion map[string]string	  //min release version, key is major.minor, value is release or update version
+	MinReleaseVersion map[string]string       //min release version, key is major.minor, value is release or update version
 	OsTarget          *OperatingSystemTarget  //if specified matches current os
 	Deployment        *Deployment             //actual deployment instruction
 	Dependencies      []*DeploymentDependency //app dependencies like sdk
@@ -43,8 +38,6 @@ type Deployment struct {
 	VersionCheck *ManagedCommand     //command to check version
 	Post         *DeploymentAddition //post deployment
 }
-
-
 
 //DeploymentAddition represents deployment additions.
 type DeploymentAddition struct {
@@ -72,7 +65,7 @@ func (d *Deployment) Validate() error {
 
 }
 
-func (m *DeploymentMeta)  Validate() error {
+func (m *DeploymentMeta) Validate() error {
 	if len(m.Targets) == 0 {
 		return errors.New("Targets were empty")
 	}
@@ -87,7 +80,6 @@ func (m *DeploymentMeta)  Validate() error {
 	}
 	return nil
 }
-
 
 //AsCommandRequest creates a command request.
 func (a *DeploymentAddition) AsCommandRequest() *CommandRequest {
@@ -115,12 +107,11 @@ func MatchVersion(expected, actual string) bool {
 	return expected == actual
 }
 
-
 //Match provides build instruction for matching os and version
 func (m *DeploymentMeta) Match(operatingSystem *OperatingSystem, requestedVersion string) *DeploymentTargetMeta {
 	for _, candidate := range m.Targets {
 		if candidate.Version != "" {
-			if ! MatchVersion(requestedVersion, candidate.Version) {
+			if !MatchVersion(requestedVersion, candidate.Version) {
 				continue
 			}
 		}

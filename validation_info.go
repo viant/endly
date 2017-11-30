@@ -61,7 +61,7 @@ type ValidationInfo struct {
 	TagId       string
 	TestPassed  int
 	FailedTests []*FailedTest
-	TestFailed int
+	TestFailed  int
 }
 
 //AddFailure appends failure

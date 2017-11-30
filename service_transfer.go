@@ -7,13 +7,12 @@ import (
 	"github.com/viant/toolbox/url"
 	"io"
 	"io/ioutil"
+	url2 "net/url"
 	"path"
 	"strings"
-	url2 "net/url"
 )
 
 //TODO refactor compress with https://golangcode.com/create-zip-files-in-go/
-
 
 //TransferServiceID represents transfer service id
 const TransferServiceID = "transfer"
@@ -86,14 +85,12 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 			(source.ParsedURL.Scheme == "scp" || source.ParsedURL.Scheme == "file") &&
 			(target.ParsedURL.Scheme == "scp" || target.ParsedURL.Scheme == "file")
 
-
 		var copyEventType = &CopyEventType{
 			SourceURL: source.URL,
 			TargetURL: target.URL,
 			Expand:    transfer.Expand || len(transfer.Replace) > 0,
 		}
 		startEvent := s.Begin(context, copyEventType, Pairs("value", copyEventType), Info)
-
 
 		object, err := sourceService.StorageObject(source.URL)
 		if err != nil {
@@ -124,20 +121,20 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 	return result, nil
 }
 
-func (s *transferService) 	compressSource(context *Context, source, target *url.Resource, sourceObject storage.Object) error {
+func (s *transferService) compressSource(context *Context, source, target *url.Resource, sourceObject storage.Object) error {
 	var parent, name = path.Split(source.ParsedURL.Path)
 	var archiveSource = name
 	var archiveName = fmt.Sprintf("%v.tar.gz", name)
 	if sourceObject.IsFolder() {
 		lastDirPosition := strings.LastIndex(source.ParsedURL.Path, "/")
 		if lastDirPosition != -1 {
-			archiveName = fmt.Sprintf("%v.tar.gz",string(source.ParsedURL.Path[lastDirPosition+1:]))
+			archiveName = fmt.Sprintf("%v.tar.gz", string(source.ParsedURL.Path[lastDirPosition+1:]))
 		}
 		archiveSource = "*"
 	}
 
 	_, err := context.Execute(source, &CommandRequest{
-		Commands:  []string{fmt.Sprintf("cd %v", parent)},
+		Commands: []string{fmt.Sprintf("cd %v", parent)},
 	})
 	if err == nil {
 		_, err = context.Execute(source, &CommandRequest{
@@ -148,7 +145,6 @@ func (s *transferService) 	compressSource(context *Context, source, target *url.
 	if err != nil {
 		return err
 	}
-
 
 	if sourceObject.IsFolder() {
 		source.URL = toolbox.URLPathJoin(source.URL, archiveName)
@@ -168,21 +164,19 @@ func (s *transferService) 	compressSource(context *Context, source, target *url.
 func (s *transferService) decompressTarget(context *Context, source, target *url.Resource, sourceObject storage.Object) error {
 	var parent, name = path.Split(target.ParsedURL.Path)
 	_, err := context.Execute(target, &CommandRequest{
-		Commands:  []string{fmt.Sprintf("mkdir -p %v\ncd %v", parent, parent)},
+		Commands: []string{fmt.Sprintf("mkdir -p %v\ncd %v", parent, parent)},
 	})
 
 	if err == nil {
 		_, err = context.Execute(target, &CommandRequest{
 			Commands:  []string{fmt.Sprintf("tar xvzf %v", name)},
 			TimeoutMs: 120000,
-
 		})
 	}
 	if err == nil && sourceObject.IsFolder() {
 		_, err = context.Execute(target, &CommandRequest{
 			Commands:  []string{fmt.Sprintf("rm %v", name)},
 			TimeoutMs: 120000,
-
 		})
 		if err == nil {
 			_, err = context.Execute(source, &CommandRequest{

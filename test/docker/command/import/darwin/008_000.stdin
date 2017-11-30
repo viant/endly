@@ -1,0 +1,1 @@
+sudo docker exec -i testMysql mysql  -uroot -pdev < /tmp/dump.sql

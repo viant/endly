@@ -31,9 +31,6 @@ func CheckCommandNotFound(stdout ...string) bool {
 	return strings.Contains(candidate, commandNotFound) || strings.Contains(candidate, notInstalled) || strings.Contains(candidate, canNotOpen)
 }
 
-
-
-
 //ExtractColumn extract a column from the line for provided index
 func ExtractColumn(line string, columnIndex int) (string, bool) {
 	var columns, has = ExtractColumns(line)
@@ -54,7 +51,7 @@ func ExtractColumns(line string) ([]string, bool) {
 	var index = -1
 	var expectColumn = true
 	var result = make([]string, 0)
-	for _, r  := range line {
+	for _, r := range line {
 		if unicode.IsSpace(r) {
 			expectColumn = true
 			continue
@@ -64,7 +61,7 @@ func ExtractColumns(line string) ([]string, bool) {
 			result = append(result, "")
 			expectColumn = false
 		}
-		result[index] += string(r)
+		result[index] += vtclean.Clean(string(r), false)
 	}
 	return result, true
 }

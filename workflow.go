@@ -67,7 +67,7 @@ func (w *Workflows) Pop() *Workflow {
 		return nil
 	}
 	var result = (*w)[len(*w)-1]
-	(*w) = (*w)[0: len(*w)-1]
+	(*w) = (*w)[0 : len(*w)-1]
 	return result
 }
 
