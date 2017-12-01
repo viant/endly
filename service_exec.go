@@ -491,7 +491,7 @@ func (s *execService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case "open":
 		return &OpenSessionRequest{}, nil
-	case "managedCommand":
+	case "managed-command":
 		return &ManagedCommandRequest{}, nil
 	case "command":
 		return &CommandRequest{}, nil

@@ -56,7 +56,7 @@ func (s *Server) requestService(serviceName, action string, httpRequest *http.Re
 		Status:   serviceResponse.Status,
 		Error:    serviceResponse.Error,
 		Response: serviceResponse.Response,
-		Data:     context.State(),
+		Data:     state.AsEncodableMap(),
 	}
 	return response, nil
 }
