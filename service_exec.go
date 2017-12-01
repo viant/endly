@@ -276,6 +276,7 @@ func (s *execService) credentialsToSecure(credentials map[string]string) (map[st
 
 func (s *execService) executeCommand(context *Context, session *SystemTerminalSession, execution *Execution, options *ExecutionOptions, response *CommandResponse, request *ManagedCommandRequest) error {
 	command := context.Expand(execution.Command)
+
 	terminators := getTerminators(options, session, execution)
 
 	var cmd = command
@@ -294,7 +295,6 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
 	startEvent := s.Begin(context, executionStartEvent, Pairs("value", executionStartEvent), Info)
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
-
 	var executionEndEvent = &ExecutionEndEvent{
 		SessionID: session.ID,
 		Stdout:    stdout,
@@ -347,7 +347,6 @@ func getTerminators(options *ExecutionOptions, session *SystemTerminalSession, e
 }
 
 func (s *execService) runCommands(context *Context, request *ManagedCommandRequest) (*CommandResponse, error) {
-
 	err := request.Validate()
 	if err != nil {
 		return nil, err
@@ -380,28 +379,28 @@ func (s *execService) runCommands(context *Context, request *ManagedCommandReque
 
 	response = NewCommandResponse(session.ID)
 	for _, execution := range request.ManagedCommand.Executions {
-
+		var command = context.Expand(execution.Command)
 		if execution.MatchOutput != "" {
 			continue
 		}
-		if strings.HasPrefix(execution.Command, "cd ") {
-			if !strings.Contains(execution.Command, "&&") {
-				var directory = strings.TrimSpace(string(execution.Command[3:]))
+		if strings.HasPrefix(command, "cd ") {
+			if !strings.Contains(command, "&&") {
+				var directory = strings.TrimSpace(string(command[3:]))
 				err = s.changeDirectory(context, session, response, directory)
-				return response, err
+				continue
 			}
 			session.currentDirectory = "" //reset path
 		}
-		if strings.HasPrefix(execution.Command, "export ") {
-			if !strings.Contains(execution.Command, "&&") {
-				envVariable := string(execution.Command[7:])
+		if strings.HasPrefix(command, "export ") {
+			if !strings.Contains(command, "&&") {
+				envVariable := string(command[7:])
 				keyValuePair := strings.Split(envVariable, "=")
 				if len(keyValuePair) == 2 {
 					key := strings.TrimSpace(keyValuePair[0])
 					value := strings.TrimSpace(keyValuePair[1])
 					value = strings.Trim(value, "'\"")
 					err = s.setEnvVariable(context, session, key, value)
-					return response, err
+					continue
 				}
 			}
 			session.envVariables = make(map[string]string) //reset env variables
