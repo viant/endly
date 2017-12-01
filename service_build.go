@@ -152,6 +152,10 @@ func (s *buildService) build(context *Context, request *BuildRequest) (*BuildRes
 		return nil, err
 	}
 	state.Put("buildSpec", buildState)
+	if ! state.Has("targetHost") {
+		state.Put("targetHost", target.ParsedURL.Host)
+		state.Put("targetHostCredential", target.Credential)
+	}
 	err = s.setSdkIfNeeded(context, request)
 	if err != nil {
 		return nil, err
