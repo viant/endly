@@ -31,6 +31,8 @@ func NewSystemTerminalSession(id string, connection ssh.Service) (*SystemTermina
 	}, nil
 }
 
+
+
 //SystemTerminalSessions represents a map of client sessions keyed by session id
 type SystemTerminalSessions map[string]*SystemTerminalSession
 
