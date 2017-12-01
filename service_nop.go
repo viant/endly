@@ -13,13 +13,12 @@ type nopService struct {
 
 func (s *nopService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
+	var response = &ServiceResponse{Status: "ok" , Response:request}
 	defer s.End(context)(startEvent, Pairs("response", response))
 	return response
 }
 
 func (s *nopService) NewRequest(action string) (interface{}, error) {
-
 	return &Nop{}, nil
 }
 
