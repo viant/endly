@@ -1,0 +1,1 @@
+/Library/Java/JavaVirtualMachines/jdk1.7.0_80.jdk/Contents/Home/bin/jrunscript -e 'java.lang.System.out.println(java.lang.System.getProperty("java.home"));'
