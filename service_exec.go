@@ -163,8 +163,9 @@ func (s *execService) setEnvVariables(context *Context, session *SystemTerminalS
 
 func (s *execService) setEnvVariable(context *Context, session *SystemTerminalSession, name, newValue string) error {
 	newValue = context.Expand(newValue)
+
 	if actual, has := session.envVariables[name]; has {
-		if newValue == actual {
+		if newValue == actual  {
 			return nil
 		}
 	}
@@ -556,10 +557,11 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 	lines = strings.Split(output, "\r\n")
 	for i := 0; i < len(lines); i++ {
 		var line = lines[i]
-		if !strings.Contains(line, ":") {
+		if !strings.Contains(line, ":")  || !strings.Contains(line, "/") {
 			continue
 		}
 		operatingSystem.Path.SystemPath = strings.Split(line, ":")
+		break
 
 	}
 	return operatingSystem, nil
