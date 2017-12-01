@@ -58,6 +58,7 @@ func openTestContext(manager endly.Manager, target *url.Resource, commandDirecto
 	if response.Error != "" {
 		return nil, errors.New(response.Error)
 	}
+	context.TerminalSessions()[":"] = context.TerminalSessions()["127.0.0.1:22"]
 	return context, nil
 }
 
