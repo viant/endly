@@ -225,7 +225,7 @@ func (c *Context) TerminalSession(target *url.Resource) (*SystemTerminalSession,
 		response := execService.Run(c, &OpenSessionRequest{
 			Target: target,
 		})
-		if response.Error == "" {
+		if response.Error != "" {
 			return nil, errors.New(response.Error)
 		}
 	}
