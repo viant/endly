@@ -61,7 +61,12 @@ func ExtractColumns(line string) ([]string, bool) {
 			result = append(result, "")
 			expectColumn = false
 		}
-		result[index] += vtclean.Clean(string(r), false)
+
+		result[index] += string(r)
+	}
+
+	for i, value := range result {
+		result[i] = vtclean.Clean(value, false)
 	}
 	return result, true
 }
