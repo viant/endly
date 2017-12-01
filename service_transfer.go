@@ -17,6 +17,9 @@ import (
 //TransferServiceID represents transfer service id
 const TransferServiceID = "transfer"
 
+//UseMemoryService flag in the context to ignore
+const UseMemoryService = "useMemoryService"
+
 //CopyEventType represents CopyEventType
 type CopyEventType struct {
 	SourceURL string
@@ -49,77 +52,83 @@ func NewExpandedContentHandler(context *Context, replaceMap map[string]string, e
 	}
 }
 
+
+func (s *transferService) getStorageService(context *Context, resource *url.Resource) (storage.Service, error) {
+	if context.state.Has(UseMemoryService) {
+		return storage.NewMemoryService(), nil
+	}
+	return storage.NewServiceForURL(resource.URL, resource.Credential)
+}
+
 func (s *transferService) run(context *Context, transfers ...*Transfer) (*TransferCopyResponse, error) {
 	var result = &TransferCopyResponse{
 		Transferred: make([]*TransferLog, 0),
 	}
 	for _, transfer := range transfers {
-		source, err := context.ExpandResource(transfer.Source)
+		sourceResource, err := context.ExpandResource(transfer.Source)
 		if err != nil {
 			return nil, err
 		}
-		sourceService, err := storage.NewServiceForURL(source.URL, source.Credential)
+		sourceService, err := s.getStorageService(context, sourceResource)
 		if err != nil {
 			return nil, err
 		}
 		defer sourceService.Close()
-		target, err := context.ExpandResource(transfer.Target)
+		targetResource, err := context.ExpandResource(transfer.Target)
 		if err != nil {
 			return nil, err
 		}
-		targetService, err := storage.NewServiceForURL(target.URL, target.Credential)
+		targetService, err := s.getStorageService(context, targetResource)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to lookup target storageService for %v: %v", target.URL, err)
+			return nil, fmt.Errorf("Failed to lookup targetResource storageService for %v: %v", targetResource.URL, err)
 		}
 		defer targetService.Close()
 		var handler func(reader io.Reader) (io.Reader, error)
 		if transfer.Expand || len(transfer.Replace) > 0 {
 			handler = NewExpandedContentHandler(context, transfer.Replace, transfer.Expand)
 		}
-
-		if has, _ := sourceService.Exists(source.URL); !has {
-			return nil, fmt.Errorf("Failed to copy: %v %v - Source does not exists", source.URL, target.URL)
+		if has, _ := sourceService.Exists(sourceResource.URL); !has {
+			return nil, fmt.Errorf("Failed to copy: %v %v - Source does not exists", sourceResource.URL, targetResource.URL)
 		}
 
 		compressed := transfer.Compress &&
-			(source.ParsedURL.Scheme == "scp" || source.ParsedURL.Scheme == "file") &&
-			(target.ParsedURL.Scheme == "scp" || target.ParsedURL.Scheme == "file")
+			(sourceResource.ParsedURL.Scheme == "scp" || sourceResource.ParsedURL.Scheme == "file") &&
+			(targetResource.ParsedURL.Scheme == "scp" || targetResource.ParsedURL.Scheme == "file")
 
 		var copyEventType = &CopyEventType{
-			SourceURL: source.URL,
-			TargetURL: target.URL,
+			SourceURL: sourceResource.URL,
+			TargetURL: targetResource.URL,
 			Expand:    transfer.Expand || len(transfer.Replace) > 0,
 		}
 		startEvent := s.Begin(context, copyEventType, Pairs("value", copyEventType), Info)
-
-		object, err := sourceService.StorageObject(source.URL)
+		object, err := sourceService.StorageObject(sourceResource.URL)
 		if err != nil {
 			return nil, err
 		}
-
 		if compressed {
-			err = s.compressSource(context, source, target, object)
+			err = s.compressSource(context, sourceResource, targetResource, object)
 			if err != nil {
 				return nil, err
 			}
 		}
-		err = storage.Copy(sourceService, source.URL, targetService, target.URL, handler, nil)
+		err = storage.Copy(sourceService, sourceResource.URL, targetService, targetResource.URL, handler, nil)
 		s.End(context)(startEvent, Pairs())
 		if err != nil {
 			return result, err
 		}
 		if compressed {
-			err = s.decompressTarget(context, source, target, object)
+			err = s.decompressTarget(context, sourceResource, targetResource, object)
 			if err != nil {
 				return nil, err
 			}
 		}
-		info := NewTransferLog(context, source.URL, target.URL, err, transfer.Expand)
+		info := NewTransferLog(context, sourceResource.URL, targetResource.URL, err, transfer.Expand)
 		result.Transferred = append(result.Transferred, info)
-
 	}
 	return result, nil
 }
+
+
 
 func (s *transferService) compressSource(context *Context, source, target *url.Resource, sourceObject storage.Object) error {
 	var parent, name = path.Split(source.ParsedURL.Path)

@@ -9,8 +9,16 @@ type systemGoService struct{}
 
 func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest) (*SystemSdkInfo, error) {
 	var result = &SystemSdkInfo{}
+
+
+	if goPath, ok := request.Env["GOPATH"]; ok {
+		context.Execute(request.Target, fmt.Sprintf("export GOPATH='%v'", goPath))
+	}
 	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
+			{
+				Command: "export GOROOT='/opt/sdk/go'",
+			},
 			{
 				Command: "go version",
 				Extraction: []*DataExtraction{
@@ -39,9 +47,6 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 	result.Version = commandResponse.Extracted["version"]
 	if result.Version == "" {
 		result.Version = request.Version
-	}
-	if goPath, ok := request.Env["GOPATH"]; ok {
-		context.Execute(request.Target, fmt.Sprintf("export GOPATH='%v'", goPath))
 	}
 	return result, nil
 }

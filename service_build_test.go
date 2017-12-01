@@ -7,23 +7,28 @@ import (
 	"github.com/viant/toolbox/url"
 	"strings"
 	"testing"
+	"github.com/viant/toolbox/storage"
+	"bytes"
 )
 
 func TestBuildService_Build(t *testing.T) {
 
 	var credentialFile, err = GetDummyCredential()
 	assert.Nil(t, err)
-	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 	var manager = endly.NewManager()
 	var useCases = []struct {
-		baseDir  string
-		target   *url.Resource
-		request  *endly.BuildRequest
-		expected string
+		baseDir     string
+		DataURL     string
+		DataPayload []byte
+		target      *url.Resource
+		request     *endly.BuildRequest
+		expected    string
 	}{
 		{
 			"test/build/mvn/darwin",
-			target,
+			"",
+			[]byte{},
+			url.NewResource("scp://127.0.0.1:22/tmp/project1", credentialFile),
 			&endly.BuildRequest{
 				BuildSpec: &endly.BuildSpec{
 					Name:       "maven",
@@ -36,20 +41,46 @@ func TestBuildService_Build(t *testing.T) {
 			},
 			"BUILD SUCCESS",
 		},
+
+		{
+			"test/build/go/linux",
+			"https://redirector.gvt1.com/edgedl/go/go1.8.5.linux-amd64.tar.gz",
+			[]byte("abc"),
+			url.NewResource("scp://127.0.0.1:22/tmp/app", credentialFile),
+			&endly.BuildRequest{
+				BuildSpec: &endly.BuildSpec{
+					Name:       "go",
+					Goal:       "build",
+					BuildGoal:  "build",
+					Args:       "-o app",
+					Sdk:        "go",
+					SdkVersion: "1.8",
+				},
+			},
+			"",
+		},
 	}
 
 	for _, useCase := range useCases {
 		execService, err := GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
 			context, err := OpenTestContext(manager, useCase.target, execService)
+			var state = context.State()
+
+			if useCase.DataURL != "" {
+				storageService := storage.NewMemoryService()
+				state.Put(endly.UseMemoryService, true)
+				err = storageService.Upload(useCase.DataURL, bytes.NewReader(useCase.DataPayload))
+				assert.Nil(t, err)
+			}
+
 			service, err := context.Service(endly.BuildServiceID)
 			assert.Nil(t, err)
 
 			defer context.Close()
 			if assert.Nil(t, err) {
-				var target = useCase.target
 				serviceResponse := service.Run(context, &endly.BuildRequest{
-					Target:    target,
+					Target:    useCase.target,
 					BuildSpec: useCase.request.BuildSpec,
 				})
 
@@ -66,35 +97,3 @@ func TestBuildService_Build(t *testing.T) {
 		}
 	}
 }
-
-//
-//func TestBuildService_Run(t *testing.T) {
-//
-//	var credentialFile = path.Join(os.Getenv("HOME"), ".secret/scp.json")
-//	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-//	manager := endly.NewManager()
-//
-//	context, err := OpenTestRecorderContext(manager, target, "test/build/svn/darwin")
-//	if ! assert.Nil(t, err) || ! assert.NotNil(t, context) {
-//		return
-//	}
-//	defer context.Close()
-//
-//	buildService, err := manager.Service(endly.BuildServiceID)
-//	assert.Nil(t, err)
-//
-//	response := buildService.Run(context, &endly.BuildRequest{
-//		BuildSpec: &endly.BuildSpec{
-//			Name:       "maven",
-//			Goal:       "build",
-//			BuildGoal:  "package",
-//			Args:       "-Dmvn.test.skip",
-//			Sdk:        "jdk",
-//			SdkVersion: "1.7",
-//		},
-//		Target: url.NewResource("test/build/project1"),
-//	})
-//	assert.Equal(t, "ok", response.Status)
-//	assert.Equal(t, "", response.Error)
-//
-//}
