@@ -221,10 +221,7 @@ func (c *Context) TerminalSession(target *url.Resource) (*SystemTerminalSession,
 	if err != nil {
 		return nil, err
 	}
-	execService.Mutex().RLock()
-	defer execService.Mutex().RUnlock()
 	if !sessions.Has(target.Host()) {
-
 		response := execService.Run(c, &OpenSessionRequest{
 			Target: target,
 		})
