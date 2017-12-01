@@ -161,24 +161,25 @@ func (s *buildService) build(context *Context, request *BuildRequest) (*BuildRes
 	if err != nil {
 		return nil, err
 	}
-
-	commandInfo, err := context.Execute(target, goal.Command)
-	if err != nil {
-		return nil, err
-	}
 	if goal.InitTransfers != nil {
 		_, err = context.Transfer(goal.InitTransfers.Transfers...)
 		if err != nil {
 			return nil, err
 		}
 	}
+	commandInfo, err := context.Execute(target, goal.Command)
+	if err != nil {
+		return nil, err
+	}
 	result.CommandInfo = commandInfo
+
 	if goal.PostTransfers != nil {
 		_, err = context.Transfer(goal.PostTransfers.Transfers...)
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	if goal.VerificationCommand != nil {
 		_, err = context.Execute(target, goal.VerificationCommand)
 		if err != nil {
