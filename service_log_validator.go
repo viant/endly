@@ -463,15 +463,26 @@ func (s *logValidatorService) readLogFiles(context *Context, service storage.Ser
 	return response, nil
 }
 
+func (s *logValidatorService) getStorageService(context *Context, resource *url.Resource) (storage.Service, error) {
+	var state = context.state
+	if state.Has(UseMemoryService) {
+		return storage.NewMemoryService(), nil
+	}
+	return storage.NewServiceForURL(resource.URL, resource.Credential)
+}
+
+
 func (s *logValidatorService) listenForChanges(context *Context, request *LogValidatorListenRequest) error {
-	service, err := storage.NewServiceForURL(request.Source.URL, request.Source.Credential)
+	var target, err = context.ExpandResource(request.Source)
 	if err != nil {
 		return err
 	}
-
+	service, err :=  s.getStorageService(context, target)
+	if err != nil {
+		return err
+	}
 	go func() {
 		defer service.Close()
-
 		frequency := time.Duration(request.FrequencyMs) * time.Millisecond
 		if request.FrequencyMs <= 0 {
 			frequency = 400 * time.Millisecond
