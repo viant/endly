@@ -188,11 +188,11 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 	if request.Service == "" {
 		return nil, fmt.Errorf("Service was empty")
 	}
-	serviceType, err := s.determineServiceType(context, request.Service, request.Exclusion, request.Target)
+	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-	target, err := context.ExpandResource(request.Target)
+	serviceType, err := s.determineServiceType(context, request.Service, request.Exclusion, target)
 	if err != nil {
 		return nil, err
 	}
