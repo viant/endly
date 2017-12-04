@@ -46,7 +46,7 @@ func (s *systemSdkService) deploySdk(context *Context, request *SystemSdkSetRequ
 		Version: request.Version,
 	})
 	if serviceResponse.Error != "" {
-		return fmt.Errorf("Failed to deploy sdk: %v %v, %v", request.Sdk, request.Version, serviceResponse.Error)
+		return fmt.Errorf("failed to deploy sdk: %v %v, %v", request.Sdk, request.Version, serviceResponse.Error)
 	}
 	return nil
 }
@@ -67,7 +67,7 @@ func (s *systemSdkService) Run(context *Context, request interface{}) *ServiceRe
 			}
 		}
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run sdk: %v, %v", actualRequest.Sdk, err)
+			response.Error = fmt.Sprintf("failed to run sdk: %v, %v", actualRequest.Sdk, err)
 		}
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
@@ -132,7 +132,7 @@ func (s *systemSdkService) setSdk(context *Context, request *SystemSdkSetRequest
 	})
 
 	if serviceResponse.Error != "" {
-		return nil, fmt.Errorf("Failed to set sdk %v", serviceResponse.Error)
+		return nil, fmt.Errorf("failed to set sdk %v", serviceResponse.Error)
 	}
 
 	switch request.Sdk {

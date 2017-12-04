@@ -18,7 +18,7 @@ func AsProtobufMessage(source interface{}, state data.Map, target proto.Message)
 		requestMap = make(map[string]interface{})
 		err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(toolbox.AsString(source))).Decode(&requestMap)
 		if err != nil {
-			fmt.Printf("Failed to run udf: %v %v\n", source, err)
+			fmt.Printf("failed to run udf: %v %v\n", source, err)
 			return nil, err
 		}
 	} else {
@@ -27,14 +27,14 @@ func AsProtobufMessage(source interface{}, state data.Map, target proto.Message)
 	converter := toolbox.NewColumnConverter("")
 	err := converter.AssignConverted(target, requestMap)
 	if err != nil {
-		fmt.Printf("Failed to run udf: unable convert: %v %v\n", source, err)
+		fmt.Printf("failed to run udf: unable convert: %v %v\n", source, err)
 		return nil, err
 	}
 
 	protodata, err := proto.Marshal(target)
 	if err != nil {
-		fmt.Printf("Failed to run udf: unable Marshal %v %v\n", source, err)
-		return nil, fmt.Errorf("Failed to encode: %v, %v", requestMap, err)
+		fmt.Printf("failed to run udf: unable Marshal %v %v\n", source, err)
+		return nil, fmt.Errorf("failed to encode: %v, %v", requestMap, err)
 	}
 	buf := new(bytes.Buffer)
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)

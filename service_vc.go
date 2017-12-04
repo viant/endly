@@ -126,7 +126,16 @@ func (s *versionControlService) checkout(context *Context, request *VcCheckoutRe
 
 func (s *versionControlService) checkoutArtifact(context *Context, origin, target *url.Resource, removeLocalChanges bool) (*VcInfo, error) {
 	var parent, _ = path.Split(target.ParsedURL.Path)
-	context.Execute(target, fmt.Sprintf("cd %v", parent))
+
+	_, err := context.Execute(target, fmt.Sprintf("mkdir -p %v", parent))
+	if err != nil {
+		return nil, err
+	}
+	_, err = context.Execute(target, fmt.Sprintf("cd %v", parent))
+	if err != nil {
+		return nil, err
+	}
+
 	storageService, err := storage.NewServiceForURL(target.URL, target.Credential)
 	if err != nil {
 		return nil, err
@@ -183,6 +192,7 @@ func (s *versionControlService) checkoutArtifact(context *Context, origin, targe
 		return nil, err
 	}
 
+
 	switch origin.Type {
 	case "git":
 		return s.gitService.checkout(context, &VcCheckoutRequest{
@@ -210,25 +220,25 @@ func (s *versionControlService) Run(context *Context, request interface{}) *Serv
 	case *VcStatusRequest:
 		response.Response, err = s.checkInfo(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to check version: %v(%v), %v", actualRequest.Target.URL, actualRequest.Target.Type, err)
+			response.Error = fmt.Sprintf("failed to check version: %v(%v), %v", actualRequest.Target.URL, actualRequest.Target.Type, err)
 		}
 
 	case *VcCheckoutRequest:
 		response.Response, err = s.checkout(context, actualRequest)
 
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to checkout version: %v -> %v, %v", actualRequest.Origin.URL, actualRequest.Target.URL, err)
+			response.Error = fmt.Sprintf("failed to checkout version: %v -> %v, %v", actualRequest.Origin.URL, actualRequest.Target.URL, err)
 		}
 
 	case *VcCommitRequest:
 		response.Response, err = s.commit(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to commit version: %v(%v), %v", actualRequest.Target.URL, actualRequest.Target.Type, err)
+			response.Error = fmt.Sprintf("failed to commit version: %v(%v), %v", actualRequest.Target.URL, actualRequest.Target.Type, err)
 		}
 	case *VcPullRequest:
 		response.Response, err = s.pull(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to commit version: %v -> %v, %v", actualRequest.Origin.URL, actualRequest.Target.URL, err)
+			response.Error = fmt.Sprintf("failed to commit version: %v -> %v, %v", actualRequest.Origin.URL, actualRequest.Target.URL, err)
 		}
 	}
 

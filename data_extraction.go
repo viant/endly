@@ -25,7 +25,7 @@ func (d *DataExtractions) Extract(context *Context, extracted map[string]string,
 	for _, extract := range *d {
 		compiledExpression, err := regexp.Compile(extract.RegExpr)
 		if err != nil {
-			return fmt.Errorf("Failed to extract data - invlid regexpr: %v,  %v", extract.RegExpr, err)
+			return fmt.Errorf("failed to extract data - invlid regexpr: %v,  %v", extract.RegExpr, err)
 		}
 		for _, line := range input {
 			if len(line) == 0 {

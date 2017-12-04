@@ -94,23 +94,23 @@ func (s *seleniumService) Run(context *Context, request interface{}) *ServiceRes
 	case *SeleniumServerStartRequest:
 		response.Response, err = s.start(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to start selenium %v", err)
+			response.Error = fmt.Sprintf("failed to start selenium %v", err)
 		}
 
 	case *SeleniumOpenSessionRequest:
 		response.Response, err = s.open(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to open selenium session %v", err)
+			response.Error = fmt.Sprintf("failed to open selenium session %v", err)
 		}
 	case *SeleniumWebDriverCallRequest:
 		response.Response, err = s.webDriverCall(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to call web driver %v", err)
+			response.Error = fmt.Sprintf("failed to call web driver %v", err)
 		}
 	case *SeleniumWebElementCallRequest:
 		response.Response, err = s.webElementCall(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to call web selement %v", err)
+			response.Error = fmt.Sprintf("failed to call web selement %v", err)
 		}
 
 	default:
@@ -156,7 +156,7 @@ func (s *seleniumService) webElementCall(context *Context, request *SeleniumWebE
 		return nil, err
 	}
 	if element == nil {
-		return nil, fmt.Errorf("Failed to lookup element: %v %v", selector.By, selector.Value)
+		return nil, fmt.Errorf("failed to lookup element: %v %v", selector.By, selector.Value)
 	}
 	return s.callMethod(element, request.Method, request.Parameters)
 }
@@ -234,7 +234,7 @@ func (s *seleniumService) session(context *Context, sessionID string) (*Selenium
 	if seleniumSession, ok := sessions[sessionID]; ok {
 		return seleniumSession, nil
 	}
-	return nil, fmt.Errorf("Failed to lookup seleniun session id: %v, make sure you first run SeleniumOpenSessionRequest\n", sessionID)
+	return nil, fmt.Errorf("failed to lookup seleniun session id: %v, make sure you first run SeleniumOpenSessionRequest\n", sessionID)
 }
 
 func (s *seleniumService) openSession(context *Context, request *SeleniumOpenSessionRequest) (*SeleniumSession, error) {

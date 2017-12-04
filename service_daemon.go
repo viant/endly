@@ -35,21 +35,21 @@ func (s *daemonService) Run(context *Context, request interface{}) *ServiceRespo
 		info, err := s.startService(context, actualRequest)
 		response.Response = info
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to start service: %v, %v", actualRequest.Service, err)
+			response.Error = fmt.Sprintf("failed to start service: %v, %v", actualRequest.Service, err)
 		}
 		if !info.IsActive() {
-			response.Error = fmt.Sprintf("Failed to start service: %v, service is inactive", actualRequest.Service)
+			response.Error = fmt.Sprintf("failed to start service: %v, service is inactive", actualRequest.Service)
 		}
 
 	case *DaemonStopRequest:
 		response.Response, err = s.stopService(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to stop service: %v, %v", actualRequest.Service, err)
+			response.Error = fmt.Sprintf("failed to stop service: %v, %v", actualRequest.Service, err)
 		}
 	case *DaemonStatusRequest:
 		response.Response, err = s.checkService(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to check status service: %v, %v", actualRequest.Service, err)
+			response.Error = fmt.Sprintf("failed to check status service: %v, %v", actualRequest.Service, err)
 		}
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)

@@ -31,9 +31,9 @@ func (r *VcCheckoutRequest) Validate() error {
 	}
 
 	if r.Origin.Type == "" {
-		if strings.Contains(r.Origin.URL, "/svn/") {
+		if strings.Contains(r.Origin.URL, "/svn") {
 			r.Origin.Type = "svn"
-		} else if strings.Contains(r.Origin.URL, "git") {
+		} else if strings.Contains(r.Origin.URL, "/git") {
 			r.Origin.Type = "git"
 		} else {
 			return fmt.Errorf("Origin type was empty for %v", r.Origin.URL)
@@ -42,5 +42,6 @@ func (r *VcCheckoutRequest) Validate() error {
 	if r.Target.Type == "" {
 		r.Target.Type = r.Origin.Type
 	}
+
 	return nil
 }

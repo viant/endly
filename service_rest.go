@@ -21,7 +21,7 @@ func (s *restService) Run(context *Context, request interface{}) *ServiceRespons
 	case *RestSendRequest:
 		response.Response, err = s.sendRequest(actualReuest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to send %v %v", actualReuest.URL, err)
+			response.Error = fmt.Sprintf("failed to send %v %v", actualReuest.URL, err)
 		}
 	}
 	if response.Error != "" {

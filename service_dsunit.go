@@ -132,7 +132,7 @@ func (s *dataStoreUnitService) addMapping(context *Context, request *DsUnitMappi
 			var datasetMapping = &DatasetMapping{}
 			err = mappingResource.JSONDecode(datasetMapping)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to decode: %v %v", mappingResource.URL, err)
+				return nil, fmt.Errorf("failed to decode: %v %v", mappingResource.URL, err)
 			}
 			response.Tables = append(response.Tables, datasetMapping.Value.Tables()...)
 			s.Manager.RegisterDatasetMapping(datasetMapping.Name, datasetMapping.Value)

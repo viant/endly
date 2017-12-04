@@ -15,7 +15,6 @@ func (s *svnService) checkInfo(context *Context, request *VcStatusRequest) (*VcI
 		return nil, err
 	}
 	var result = &VcInfo{}
-
 	response, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
@@ -39,6 +38,8 @@ func (s *svnService) checkInfo(context *Context, request *VcStatusRequest) (*VcI
 			},
 		},
 	})
+
+
 	if err != nil {
 		return nil, err
 	}
@@ -63,13 +64,16 @@ func readSvnStatus(commandResult *CommandResponse, response *VcInfo) {
 	response.Modified = make([]string, 0)
 	response.Deleted = make([]string, 0)
 	response.Untracked = make([]string, 0)
-	for _, line := range strings.Split(commandResult.Stdout(2), "\r\n") {
+	for _, line := range strings.Split(commandResult.Stdout(), "\n") {
 		if len(line) == 0 {
 			continue
 		}
-		fileStatus := string(line[0:1])
-		file := strings.Trim(string(line[1:]), " \t")
-		switch fileStatus {
+		columns, ok := ExtractColumns(line)
+		if ! ok  || len(columns) < 2 {
+			continue
+		}
+		file := columns[1]
+		switch columns[0] {
 		case "?":
 			response.Untracked = append(response.Untracked, file)
 		case "A":
@@ -115,7 +119,7 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource,
 	credentials[versionControlCredentailKey] = origin.Credential
 	_, err = context.Execute(target, &ManagedCommand{
 		Options: &ExecutionOptions{
-			TimeoutMs:   1000 * 300,
+			TimeoutMs:   1000 * 200,
 			Terminators: []string{"Password for", "(yes/no)?"},
 		},
 		Executions: []*Execution{
@@ -125,9 +129,9 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource,
 			},
 			{
 				Credentials: credentials,
-				MatchOutput: "Password for",
+				MatchOutput: "Password",
 				Command:     versionControlCredentailKey,
-				Error:       []string{"No such file or directory", "Event not found", "Error validating server certificate"},
+				Error:       []string{"No such file or directory", "Event not found", "Username:"},
 			},
 			{
 				MatchOutput: "Store password unencrypted",
@@ -136,9 +140,19 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource,
 			},
 		},
 	})
+
 	if err != nil {
+		errorMessage := err.Error()
+		if strings.Contains(errorMessage, "Error validating server certificate") {
+			return nil, fmt.Errorf("failed to validate svn certificate: %v", origin.URL)
+		}
+		if strings.Contains(errorMessage, "Username:") {
+			var _, file = path.Split(origin.Credential)
+			return nil, fmt.Errorf("failed to authenticate username: %v with %v secret",  username, file)
+		}
 		return nil, err
 	}
+
 	return s.checkInfo(context, &VcStatusRequest{
 		Target: target,
 	})
@@ -157,7 +171,7 @@ func (s *svnService) commit(context *Context, request *VcCommitRequest) (*VcInfo
 		return nil, err
 	}
 	if CheckNoSuchFileOrDirectory(response.Stdout()) {
-		return nil, fmt.Errorf("Failed to commit %v", response.Stdout())
+		return nil, fmt.Errorf("failed to commit %v", response.Stdout())
 	}
 	return s.checkInfo(context, &VcStatusRequest{
 		Target: request.Target,
