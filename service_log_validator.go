@@ -233,7 +233,7 @@ func (s *logValidatorService) Run(context *Context, request interface{}) *Servic
 		}
 
 	default:
-		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
+		response.Error = fmt.Sprintf("unsupported request type: %T", request)
 	}
 	if response.Error != "" {
 		response.Status = "err"

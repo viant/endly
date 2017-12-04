@@ -110,7 +110,7 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 		}
 
 	default:
-		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
+		response.Error = fmt.Sprintf("unsupported request type: %T", request)
 
 	}
 	if response.Error != "" {

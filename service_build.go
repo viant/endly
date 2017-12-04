@@ -228,7 +228,7 @@ func (s *buildService) Run(context *Context, request interface{}) *ServiceRespon
 			response.Error = fmt.Sprintf("failed to load build meta: %v %v", actualRequest.Source, err)
 		}
 	default:
-		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
+		response.Error = fmt.Sprintf("unsupported request type: %T", request)
 	}
 	if response.Error != "" {
 		response.Status = "error"
