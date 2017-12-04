@@ -28,6 +28,9 @@ func assertWithService(expected, actual interface{}) (int, error) {
 	if !ok {
 		return 0, nil
 	}
+	if len(validationResponse.FailedTests) > 0 {
+		return 0, errors.New(validationResponse.Message())
+	}
 	return validationResponse.TestPassed, nil
 }
 
@@ -39,8 +42,8 @@ func TestValidatorService_Assert(t *testing.T) {
 		assert.Equal(t, 1, passed)
 	}
 	{
-		passed, err := assertWithService("abc", "abcd")
-		assert.NotNil(t, err)
+		passed, _ := assertWithService("abc", "abcd")
+		assert.Equal(t, 0, passed)
 		assert.Equal(t, 0, passed)
 	}
 	{
