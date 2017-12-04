@@ -39,12 +39,12 @@ func (s *service) Register(request *RegisterReportRequest) *RegisterReportRespon
 	}
 	var provider, ok = s.providers[request.ReportType]
 	if ! ok {
-		setError(response.Response, fmt.Sprint("Failed to lookup report type: %v", request.ReportType))
+		setError(response.Response, fmt.Sprint("failed to lookup report type: %v", request.ReportType))
 		return response
 	}
 	var report, err = provider(request.Report)
 	if err != nil {
-		setError(response.Response, fmt.Sprint("Failed to create report: %v, %v", request.ReportType, err))
+		setError(response.Response, fmt.Sprint("failed to create report: %v, %v", request.ReportType, err))
 		return response
 	}
 	manager, err := s.manager(s.config.RepositoryDatastore)
@@ -54,7 +54,7 @@ func (s *service) Register(request *RegisterReportRequest) *RegisterReportRespon
 	}
 	err = s.reportDao.Persist(manager, report)
 	if err != nil {
-		setError(response.Response, fmt.Sprint("Failed to persist report %v", err))
+		setError(response.Response, fmt.Sprint("failed to persist report %v", err))
 		return response
 	}
 	s.reports[report.GetName()] = report
@@ -65,7 +65,7 @@ func (s *service) manager(datastore string) (dsc.Manager, error) {
 	manager, has := s.datastores[datastore]
 	if ! has {
 		var available = strings.Join(toolbox.MapKeysToStringSlice(s.datastores), ",")
-		return nil, fmt.Errorf("Failed to datastore : %v, available", datastore, available)
+		return nil, fmt.Errorf("failed to datastore : %v, available", datastore, available)
 	}
 	return manager, nil
 }
@@ -78,7 +78,7 @@ func (s *service) Run(request *RunReportRequest) *RunReportResponse {
 	}
 	report, has := s.reports[request.Name]
 	if ! has {
-		setError(response.Response, fmt.Sprint("Failed to lookup report: %v", request.Name))
+		setError(response.Response, fmt.Sprint("failed to lookup report: %v", request.Name))
 		return response
 	}
 
@@ -90,13 +90,13 @@ func (s *service) Run(request *RunReportRequest) *RunReportResponse {
 
 	SQL, err := report.SQL(manager, request.Parameters)
 	if err != nil {
-		setError(response.Response, fmt.Sprint("Failed to build SQL: %v", err))
+		setError(response.Response, fmt.Sprint("failed to build SQL: %v", err))
 		return response
 	}
 	response.Data = make([]map[string]interface{}, 0)
 	err = manager.ReadAll(&response.Data, SQL, nil, nil)
 	if err != nil {
-		setError(response.Response, fmt.Sprint("Failed run query: %v %v", SQL, err))
+		setError(response.Response, fmt.Sprint("failed run query: %v %v", SQL, err))
 		return response
 	}
 	return response

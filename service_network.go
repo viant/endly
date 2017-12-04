@@ -48,7 +48,7 @@ func (s *networkService) Run(context *Context, request interface{}) *ServiceResp
 	case *NetworkTunnelRequest:
 		response.Response, err = s.tunnel(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run tunnel: %v, %v", actualRequest.Target.URL, err)
+			response.Error = fmt.Sprintf("failed to run tunnel: %v, %v", actualRequest.Target.URL, err)
 		}
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)

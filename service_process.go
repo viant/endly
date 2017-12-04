@@ -23,23 +23,23 @@ func (s *processService) Run(context *Context, request interface{}) *ServiceResp
 	case *ProcessStartRequest:
 		response.Response, err = s.startProcess(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to start process: %v, %v", actualRequest.Command, err)
+			response.Error = fmt.Sprintf("failed to start process: %v, %v", actualRequest.Command, err)
 		}
 	case *ProcessStopRequest:
 		response.Response, err = s.stopProcess(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to stop process: %v, %v", actualRequest.Pid, err)
+			response.Error = fmt.Sprintf("failed to stop process: %v, %v", actualRequest.Pid, err)
 		}
 	case *ProcessStopAllRequest:
 		response.Response, err = s.stopAllProcesses(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to stop process: %v, %v", actualRequest.Input, err)
+			response.Error = fmt.Sprintf("failed to stop process: %v, %v", actualRequest.Input, err)
 		}
 
 	case *ProcessStatusRequest:
 		response.Response, err = s.checkProcess(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to stop process: %v, %v", actualRequest, err)
+			response.Error = fmt.Sprintf("failed to stop process: %v, %v", actualRequest, err)
 		}
 
 	default:

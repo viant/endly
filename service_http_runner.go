@@ -35,11 +35,11 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		if sendRequest.RequestUdf != "" {
 			var udf, has = UdfRegistry[sendRequest.RequestUdf]
 			if !has {
-				return fmt.Errorf("Failed to lookup udf: %v for: %v", sendRequest.RequestUdf, sendHTTPRequest.URL)
+				return fmt.Errorf("failed to lookup udf: %v for: %v", sendRequest.RequestUdf, sendHTTPRequest.URL)
 			}
 			transformed, err := udf(sendHTTPRequest.Body, state)
 			if err != nil {
-				return fmt.Errorf("Failed to send sendRequest unable to run udf: %v", err)
+				return fmt.Errorf("failed to send sendRequest unable to run udf: %v", err)
 			}
 			body = []byte(toolbox.AsString(transformed))
 		}
@@ -49,7 +49,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 			reader = base64.NewDecoder(base64.StdEncoding, bytes.NewReader(body[7:]))
 			body, err = ioutil.ReadAll(reader)
 			if err != nil {
-				return fmt.Errorf("Failed to decode base64 sendRequest: %v, %v", sendHTTPRequest.URL, err)
+				return fmt.Errorf("failed to decode base64 sendRequest: %v, %v", sendHTTPRequest.URL, err)
 			}
 		}
 		reader = bytes.NewReader(body)
@@ -88,11 +88,11 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 	if sendRequest.ResponseUdf != "" {
 		var udf, has = UdfRegistry[sendRequest.ResponseUdf]
 		if !has {
-			return fmt.Errorf("Failed to lookup udf: %v for: %v", sendRequest.ResponseUdf, sendHTTPRequest.URL)
+			return fmt.Errorf("failed to lookup udf: %v for: %v", sendRequest.ResponseUdf, sendHTTPRequest.URL)
 		}
 		transformed, err := udf(response.Body, state)
 		if err != nil {
-			return fmt.Errorf("Failed to send sendRequest unable to run udf: %v", err)
+			return fmt.Errorf("failed to send sendRequest unable to run udf: %v", err)
 		}
 		response.Body = toolbox.AsString(transformed)
 	}
@@ -158,7 +158,7 @@ func replaceResponseBodyIfNeeded(sendHTTPRequest *HTTPRequest, responseBody stri
 func (s *httpRunnerService) send(context *Context, request *SendHTTPRequest) (*SendHTTPResponse, error) {
 	client, err := toolbox.NewHttpClient(request.Options...)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to send req: %v", err)
+		return nil, fmt.Errorf("failed to send req: %v", err)
 	}
 	var result = &SendHTTPResponse{
 		Responses: make([]*HTTPResponse, 0),
@@ -242,7 +242,7 @@ func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceR
 	case *SendHTTPRequest:
 		response.Response, err = s.send(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to send request: %v, %v", actualRequest, err)
+			response.Error = fmt.Sprintf("failed to send request: %v, %v", actualRequest, err)
 		}
 
 	default:

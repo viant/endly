@@ -353,7 +353,7 @@ func (r *CliRunner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if tag.FailedCount > 0 {
 			var eventTag = tag.TagId
-			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("Failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
+			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
 
 			var minRange = 0
 			for i, event := range tag.Events {
@@ -450,7 +450,7 @@ func (r *CliRunner) getReportedEvents(context *Context, service Service, session
 	}
 	reporterResponse, ok := response.Response.(*EventReporterResponse)
 	if !ok {
-		return nil, fmt.Errorf("Failed to check event - unexpected reponse type: %T", response.Response)
+		return nil, fmt.Errorf("failed to check event - unexpected reponse type: %T", response.Response)
 	}
 	return reporterResponse, nil
 }
@@ -539,7 +539,7 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	}
 	workflowResponse, ok := response.Response.(*WorkflowRunResponse)
 	if !ok {
-		return fmt.Errorf("Failed to run workflow: %v invalid response type %T", workflowRunRequestURL, response.Response)
+		return fmt.Errorf("failed to run workflow: %v invalid response type %T", workflowRunRequestURL, response.Response)
 	}
 	return r.reportEvents(context, workflowResponse.SessionID, runnerOption.Filter)
 }
