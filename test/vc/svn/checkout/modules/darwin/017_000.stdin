@@ -1,0 +1,1 @@
+svn co --username=awitas http://svn.viant.com/svn/projects/project2/trunk /tmp/project3/trunk/project2/trunk

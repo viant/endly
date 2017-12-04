@@ -1,0 +1,5 @@
+?       .idea
+A       test.dep
+M       pom.xml
+M       src/main/java/com/viant/Dummy.java
+D       src/test/java/com/viant/DummyTest.java
