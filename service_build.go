@@ -92,7 +92,7 @@ func (s *buildService) deployDependencyIfNeeded(context *Context, meta *BuildMet
 			Target:  target,
 		})
 		if response.Error != "" {
-			return fmt.Errorf("Failed to build %v, %v", spec.Name, response.Error)
+			return fmt.Errorf("failed to build %v, %v", spec.Name, response.Error)
 		}
 	}
 	return nil
@@ -144,7 +144,7 @@ func (s *buildService) build(context *Context, request *BuildRequest) (*BuildRes
 	buildSpec := request.BuildSpec
 	goal, has := meta.goalsIndex[buildSpec.Goal]
 	if !has {
-		return nil, fmt.Errorf("Failed to lookup build %v goal: %v", buildSpec.Name, buildSpec.Goal)
+		return nil, fmt.Errorf("failed to lookup build %v goal: %v", buildSpec.Name, buildSpec.Goal)
 	}
 
 	buildState, err := newBuildState(buildSpec, target, request, context)
@@ -220,12 +220,12 @@ func (s *buildService) Run(context *Context, request interface{}) *ServiceRespon
 	case *BuildRequest:
 		response.Response, err = s.build(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to build: %v %v", actualRequest.Target.URL, err)
+			response.Error = fmt.Sprintf("failed to build: %v %v", actualRequest.Target.URL, err)
 		}
 	case *BuildLoadMetaRequest:
 		response.Response, err = s.loadMeta(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to load build meta: %v %v", actualRequest.Source, err)
+			response.Error = fmt.Sprintf("failed to load build meta: %v %v", actualRequest.Source, err)
 		}
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)

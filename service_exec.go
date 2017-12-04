@@ -73,7 +73,7 @@ func (s *execService) openSession(context *Context, request *OpenSessionRequest)
 		return nil, err
 	}
 	if !(target.ParsedURL.Scheme == "ssh" || target.ParsedURL.Scheme == "scp" || target.ParsedURL.Scheme == "file") {
-		return nil, fmt.Errorf("Failed to open sessionName: invalid schema: %v in url: %v", target.ParsedURL.Scheme, target.URL)
+		return nil, fmt.Errorf("failed to open sessionName: invalid schema: %v in url: %v", target.ParsedURL.Scheme, target.URL)
 	}
 	sessions := context.TerminalSessions()
 
@@ -170,7 +170,8 @@ func (s *execService) setEnvVariable(context *Context, session *SystemTerminalSe
 		}
 	}
 	session.envVariables[name] = newValue
-	return s.rumCommandTemplate(context, session, "export %v='%v'", name, newValue)
+	_, err := s.rumCommandTemplate(context, session, "export %v='%v'", name, newValue)
+	return err
 }
 
 func (s *execService) changeDirectory(context *Context, session *SystemTerminalSession, commandInfo *CommandResponse, directory string) error {
@@ -184,11 +185,19 @@ func (s *execService) changeDirectory(context *Context, session *SystemTerminalS
 	if session.currentDirectory == directory {
 		return nil
 	}
-	session.currentDirectory = directory
-	return s.rumCommandTemplate(context, session, "cd %v", directory)
+
+	result, err :=  s.rumCommandTemplate(context, session, "cd %v", directory)
+	if err != nil {
+		return err
+	}
+
+	if ! CheckNoSuchFileOrDirectory(result) {
+		session.currentDirectory = directory
+	}
+	return  err
 }
 
-func (s *execService) rumCommandTemplate(context *Context, session *SystemTerminalSession, commandTemplate string, arguments ...interface{}) error {
+func (s *execService) rumCommandTemplate(context *Context, session *SystemTerminalSession, commandTemplate string, arguments ...interface{}) (string, error) {
 	command := fmt.Sprintf(commandTemplate, arguments...)
 	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
 	startEvent := s.Begin(context, executionStartEvent, Pairs("value", executionStartEvent), Info)
@@ -202,9 +211,9 @@ func (s *execService) rumCommandTemplate(context *Context, session *SystemTermin
 		executionEndEvent.Error = fmt.Sprintf("%v", err)
 	}
 	if err != nil {
-		return err
+		return stdout, err
 	}
-	return nil
+	return stdout, nil
 }
 
 func (s *execService) applyCommandOptions(context *Context, options *ExecutionOptions, session *SystemTerminalSession, info *CommandResponse) error {
@@ -284,7 +293,7 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 	if len(execution.Credentials) > 0 {
 		secure, err := s.credentialsToSecure(execution.Credentials)
 		if err != nil {
-			return fmt.Errorf("Failed to run commend: %v, invalid credential: %v %v ", command, execution.Credentials, err)
+			return fmt.Errorf("failed to run commend: %v, invalid credential: %v %v ", command, execution.Credentials, err)
 		}
 		var keys = toolbox.MapKeysToStringSlice(secure)
 		sort.Strings(keys)
@@ -448,18 +457,18 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 			response.Response, err = s.runCommands(context, mangedCommandRequest)
 		}
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run command: %v, %v", actualRequest, err)
+			response.Error = fmt.Sprintf("failed to run command: %v, %v", actualRequest, err)
 		}
 
 	case *OpenSessionRequest:
 		response.Response, err = s.open(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to open session: %v, %v", actualRequest.Target, err)
+			response.Error = fmt.Sprintf("failed to open session: %v, %v", actualRequest.Target, err)
 		}
 	case *ManagedCommandRequest:
 		response.Response, err = s.runCommands(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run command: %v, %v", actualRequest.ManagedCommand, err)
+			response.Error = fmt.Sprintf("failed to run command: %v, %v", actualRequest.ManagedCommand, err)
 		}
 	case *superUserCommandRequest:
 		commandRequest, err := actualRequest.AsCommandRequest(context)
@@ -473,7 +482,7 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 	case *CloseSessionRequest:
 		response.Response, err = s.closeSession(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to close session: %v, %v", actualRequest.SessionID, err)
+			response.Error = fmt.Sprintf("failed to close session: %v, %v", actualRequest.SessionID, err)
 		}
 
 	default:

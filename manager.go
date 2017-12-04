@@ -52,7 +52,7 @@ func (s *manager) Service(name string) (Service, error) {
 		return result, nil
 	}
 	var available = toolbox.MapKeysToStringSlice(s.services)
-	return nil, fmt.Errorf("Failed to lookup service: '%v' in [%v]", name, strings.Join(available, ","))
+	return nil, fmt.Errorf("failed to lookup service: '%v' in [%v]", name, strings.Join(available, ","))
 }
 
 func (s *manager) Register(service Service) {

@@ -76,7 +76,7 @@ func (l *EventLogger) Log(event *Event) error {
 
 	buf, err := json.MarshalIndent(event.Value, "", "\t")
 	if err != nil {
-		return fmt.Errorf("Failed to log %v, %v", event.Type, err)
+		return fmt.Errorf("failed to log %v, %v", event.Type, err)
 	}
 	_, err = file.Write(buf)
 	return err

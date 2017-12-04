@@ -80,7 +80,7 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 		}
 		targetService, err := s.getStorageService(context, targetResource)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to lookup targetResource storageService for %v: %v", targetResource.URL, err)
+			return nil, fmt.Errorf("failed to lookup targetResource storageService for %v: %v", targetResource.URL, err)
 		}
 		defer targetService.Close()
 		var handler func(reader io.Reader) (io.Reader, error)
@@ -88,7 +88,7 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 			handler = NewExpandedContentHandler(context, transfer.Replace, transfer.Expand)
 		}
 		if has, _ := sourceService.Exists(sourceResource.URL); !has {
-			return nil, fmt.Errorf("Failed to copy: %v %v - Source does not exists", sourceResource.URL, targetResource.URL)
+			return nil, fmt.Errorf("failed to copy: %v %v - Source does not exists", sourceResource.URL, targetResource.URL)
 		}
 
 		compressed := transfer.Compress &&
@@ -207,7 +207,7 @@ func (s *transferService) Run(context *Context, request interface{}) *ServiceRes
 	case *TransferCopyRequest:
 		response.Response, err = s.run(context, actualRequest.Transfers...)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to tranfer resources: %v, %v", actualRequest.Transfers, err)
+			response.Error = fmt.Sprintf("failed to tranfer resources: %v, %v", actualRequest.Transfers, err)
 		}
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
