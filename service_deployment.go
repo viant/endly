@@ -329,7 +329,7 @@ func (s *deploymentService) Run(context *Context, request interface{}) *ServiceR
 		}
 
 	default:
-		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
+		response.Error = fmt.Sprintf("unsupported request type: %T", request)
 	}
 
 	if response.Error != "" {

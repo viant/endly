@@ -81,7 +81,7 @@ func (s *eventReporterService) Run(context *Context, request interface{}) *Servi
 			response.Error = fmt.Sprintf("failed to run eventReporter: %v, %v", actualRequest.SessionID, err)
 		}
 	default:
-		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
+		response.Error = fmt.Sprintf("unsupported request type: %T", request)
 	}
 	if response.Error != "" {
 		response.Status = "err"

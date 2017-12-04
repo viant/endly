@@ -70,7 +70,7 @@ func (s *systemSdkService) Run(context *Context, request interface{}) *ServiceRe
 			response.Error = fmt.Sprintf("failed to run sdk: %v, %v", actualRequest.Sdk, err)
 		}
 	default:
-		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
+		response.Error = fmt.Sprintf("unsupported request type: %T", request)
 	}
 	if response.Error != "" {
 		response.Status = "error"
@@ -142,7 +142,7 @@ func (s *systemSdkService) setSdk(context *Context, request *SystemSdkSetRequest
 		response.SdkInfo, err = s.goService.setSdk(context, request)
 
 	default:
-		return nil, fmt.Errorf("Unsupported jdk: %v", request.Sdk)
+		return nil, fmt.Errorf("unsupported jdk: %v", request.Sdk)
 	}
 
 	s.updateSessionSdk(context, target, response.SdkInfo)
