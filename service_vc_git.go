@@ -3,15 +3,18 @@ package endly
 import (
 	"fmt"
 	"strings"
+	"path"
+	"github.com/lunixbochs/vtclean"
+	"github.com/viant/toolbox/url"
 )
 
 type gitService struct{}
 
 const (
-	newFile          = "new file:"
-	deletedFile      = "deleted:"
-	modifiedFile     = "modified:"
-	expectChangeType = iota
+	newFile               = "new file:"
+	deletedFile           = "deleted:"
+	modifiedFile          = "modified:"
+	expectChangeType      = iota
 	expectedUnTrackedFile
 )
 
@@ -36,6 +39,7 @@ func extractGitStatus(stdout string, response *VcInfo) {
 	var state = expectChangeType
 
 	for _, line := range strings.Split(stdout, "\r\n") {
+		line = vtclean.Clean(line, false)
 		switch state {
 		case expectChangeType:
 			addIfMatched(line, newFile, &response.New)
@@ -77,7 +81,7 @@ func (s *gitService) checkInfo(context *Context, request *VcStatusRequest) (*VcI
 	response, err := context.Execute(request.Target, &ManagedCommand{
 		Executions: []*Execution{
 			{
-				Command: fmt.Sprintf("cd %v", target.ParsedURL.Path),
+				Command: fmt.Sprintf("cd %v", target.DirectoryPath()),
 			},
 			{
 				Command: fmt.Sprintf("git status"),
@@ -108,12 +112,12 @@ func (s *gitService) checkInfo(context *Context, request *VcStatusRequest) (*VcI
 		result.Origin = origin
 	}
 
-	if strings.Contains(response.Stdout(1), "Not a git") {
+	if strings.Contains(response.Stdout(), "Not a git") {
 		return result, nil
 	}
 	result.IsVersionControlManaged = true
-	extractGitStatus(response.Stdout(1), result)
-	extractRevision(response.Stdout(3), result)
+	extractGitStatus(response.Stdout(0), result)
+	extractRevision(response.Stdout(2), result)
 	return result, nil
 }
 
@@ -122,50 +126,69 @@ func (s *gitService) pull(context *Context, request *VcPullRequest) (*VcInfo, er
 	if err != nil {
 		return nil, err
 	}
-	response, err := context.Execute(request.Target, &ManagedCommand{
-		Executions: []*Execution{
-			{
-				Command: "git pull",
-			},
-		},
-	})
+	origin, err := context.ExpandResource(request.Origin)
 	if err != nil {
 		return nil, err
 	}
-	if CheckNoSuchFileOrDirectory(response.Stdout()) {
-		return nil, fmt.Errorf("failed to checkout %v", response.Stdout())
-	}
 
-	return s.checkInfo(context, &VcStatusRequest{
-		Target: target,
-	})
+	_, err = context.Execute(target, fmt.Sprintf("cd %v", target.DirectoryPath()))
+	if err != nil {
+		return nil, err
+	}
+	return s.runSecureCommand(context, origin, target, "git pull")
 }
 
+
 func (s *gitService) checkout(context *Context, request *VcCheckoutRequest) (*VcInfo, error) {
+	origin, err := context.ExpandResource(request.Origin)
+	if err != nil {
+		return nil, err
+	}
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-
-	var origin = request.Origin.URL
-	if request.Origin.Credential != "" {
-
+	var username, _, _ = origin.LoadCredential(false)
+	if origin.Credential != "" && username == "" {
+			return nil, fmt.Errorf("username was empty %v, %v", origin.URL, origin.Credential)
 	}
-
-	response, err := context.Execute(request.Target, &ManagedCommand{
-		Executions: []*Execution{
-			{
-				Command: fmt.Sprintf("git clone %v %v", origin, target.ParsedURL.Path),
-			},
-		},
-	})
+	var parent, projectDir = path.Split(target.DirectoryPath())
+	_, err = context.Execute(target, fmt.Sprintf("cd %v", parent))
 	if err != nil {
 		return nil, err
 	}
-	if CheckNoSuchFileOrDirectory(response.Stdout()) {
-		return nil, fmt.Errorf("failed to checkout %v", response.Stdout())
-	}
+	return s.runSecureCommand(context, origin, target, fmt.Sprintf("git clone %v %v", origin.CredentialURL(username, ""), projectDir))
+}
 
+
+func (s *gitService) runSecureCommand(context *Context, origin, target *url.Resource, command string) (info *VcInfo, err error) {
+	var credentials = make(map[string]string)
+	credentials[versionControlCredentailKey] = origin.Credential
+	_, err = context.Execute(target, &ManagedCommand{
+		Options: &ExecutionOptions{
+			TimeoutMs:   1000 * 200,
+			Terminators: []string{"Password"},
+		},
+		Executions: []*Execution{
+			{
+				Command: command,
+				Error:   []string{"No such file or directory", "Event not found", "Unable to connect"},
+			},
+			{
+				Credentials: credentials,
+				MatchOutput: "Password",
+				Command:     versionControlCredentailKey,
+				Error:       []string{"No such file or directory", "Event not found", "Authentication failed"},
+			},
+		},
+	})
+
+
+
+	err =  checkVersionControlAuthErrors(err, origin)
+	if err != nil {
+		return nil, err
+	}
 	return s.checkInfo(context, &VcStatusRequest{
 		Target: target,
 	})
