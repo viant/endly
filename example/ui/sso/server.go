@@ -28,8 +28,6 @@ func (s *Server) Start() {
 
 
 	http.HandleFunc("/api/", func(writer http.ResponseWriter, reader *http.Request) {
-
-		fmt.Printf("api %v\n", reader.URL)
 		err := s.serviceRouter.Route(writer, reader)
 		if err != nil {
 			log.Fatal(err)

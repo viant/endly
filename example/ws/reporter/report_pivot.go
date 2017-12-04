@@ -68,8 +68,6 @@ func (r *PivotReport) SQL(manager dsc.Manager, parameters map[string]interface{}
 		var SQL = fmt.Sprintf("SELECT %v AS name, COUNT(1) AS cnt  FROM %v %v GROUP BY 1 ORDER BY 2 DESC", column.Name, r.From, whereClause)
 		SQL = context.ExpandAsText(SQL)
 		columnValues := make([]*AggValue, 0)
-
-		fmt.Printf("SQL: %v\n", SQL)
 		err := manager.ReadAll(&columnValues, SQL, nil, nil)
 		if err != nil {
 			return "", err
