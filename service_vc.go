@@ -144,6 +144,7 @@ func (s *versionControlService) checkoutArtifact(context *Context, origin, targe
 	if err != nil {
 		return nil, err
 	}
+
 	if exists {
 		response, err := s.checkInfo(context, &VcStatusRequest{Target: target})
 		if err != nil {
