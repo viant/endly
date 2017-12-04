@@ -1,0 +1,17 @@
+*********
+
+
+-----------------------------------------------------------------------
+ATTENTION!  Your password for authentication realm:
+
+   <http://svn.specificmedia.com:80> Specific Media Subversion Repository
+
+can only be stored to disk unencrypted!  You are advised to configure
+your system so that Subversion can store passwords encrypted, if
+possible.  See the documentation for details.
+
+You can avoid future appearances of this warning by setting the value
+of the 'store-plaintext-passwords' option to either 'yes' or 'no' in
+'/Users/awitas/.subversion/servers'.
+-----------------------------------------------------------------------
+Store password unencrypted (yes/no)? 
