@@ -7,6 +7,7 @@ import (
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
+	"errors"
 )
 
 const versionControlCredentailKey = "***vc***"
@@ -32,7 +33,7 @@ func (s *versionControlService) checkInfo(context *Context, request *VcStatusReq
 	case "svn":
 		return s.svnService.checkInfo(context, request)
 	}
-	return nil, fmt.Errorf("Unsupported type: %v -> ", target.Type, target.URL)
+	return nil, fmt.Errorf("unsupported type: %v for URL %v", target.Type, target.URL)
 }
 
 //commit commits local changes to the version control
@@ -44,7 +45,7 @@ func (s *versionControlService) commit(context *Context, request *VcCommitReques
 	_, err = context.Execute(target, &ManagedCommand{
 		Executions: []*Execution{
 			{
-				Command: fmt.Sprintf("cd  %v", target.ParsedURL.Path),
+				Command: fmt.Sprintf("cd  %v", target.DirectoryPath()),
 			},
 		},
 	})
@@ -57,7 +58,7 @@ func (s *versionControlService) commit(context *Context, request *VcCommitReques
 	case "svn":
 		return s.svnService.commit(context, request)
 	}
-	return nil, fmt.Errorf("Unsupported type: %v -> %v", target.Type, target.URL)
+	return nil, fmt.Errorf("unsupported type: %v for URL %v", target.Type, target.URL)
 }
 
 //pull retrieves the latest changes from the origin
@@ -69,7 +70,7 @@ func (s *versionControlService) pull(context *Context, request *VcPullRequest) (
 	_, err = context.Execute(target, &ManagedCommand{
 		Executions: []*Execution{
 			{
-				Command: fmt.Sprintf("cd  %v", target.ParsedURL.Path),
+				Command: fmt.Sprintf("cd  %v", target.DirectoryPath()),
 			},
 		},
 	})
@@ -82,7 +83,7 @@ func (s *versionControlService) pull(context *Context, request *VcPullRequest) (
 	case "svn":
 		return s.svnService.pull(context, request)
 	}
-	return nil, fmt.Errorf("Unsupported type: %v -> %v", target.Type, target.URL)
+	return nil, fmt.Errorf("unsupported type: %v for URL %v", target.Type, target.URL)
 }
 
 //checkout If target directory exist and already contains matching origin URL, only taking the latest changes without overriding local if performed, otherwise full checkout
@@ -125,7 +126,8 @@ func (s *versionControlService) checkout(context *Context, request *VcCheckoutRe
 }
 
 func (s *versionControlService) checkoutArtifact(context *Context, origin, target *url.Resource, removeLocalChanges bool) (*VcInfo, error) {
-	var parent, _ = path.Split(target.ParsedURL.Path)
+	var directoryPath = target.DirectoryPath()
+	var parent, _ = path.Split(directoryPath)
 
 	_, err := context.Execute(target, fmt.Sprintf("mkdir -p %v", parent))
 	if err != nil {
@@ -151,10 +153,11 @@ func (s *versionControlService) checkoutArtifact(context *Context, origin, targe
 			return nil, err
 		}
 
-		var originURL = strings.Replace(origin.URL, "https://", "http://", 1)
-		var actualURL = strings.Replace(response.Origin, "https://", "http://", 1)
-
-		if originURL == actualURL {
+		var originURLResource = url.NewResource(origin.URL)
+		var actualURLResource = url.NewResource(response.Origin)
+		originPath := originURLResource.ParsedURL.Hostname() + originURLResource.DirectoryPath()
+		actualPath := actualURLResource.ParsedURL.Hostname() + originURLResource.DirectoryPath()
+		if originPath == actualPath {
 			s.pull(context, &VcPullRequest{
 				Origin: origin,
 				Target: target,
@@ -166,7 +169,7 @@ func (s *versionControlService) checkoutArtifact(context *Context, origin, targe
 			_, err = context.Execute(target, &ManagedCommand{
 				Executions: []*Execution{
 					{
-						Command: fmt.Sprintf("rm -rf %v", target.ParsedURL.Path),
+						Command: fmt.Sprintf("rm -rf %v",directoryPath),
 					},
 				},
 			})
@@ -174,11 +177,11 @@ func (s *versionControlService) checkoutArtifact(context *Context, origin, targe
 				return nil, err
 			}
 		} else {
-			return nil, fmt.Errorf("Directory containst different version: %v at rev: %v", response.Origin, response.Revision)
+			return nil, fmt.Errorf("directory contains incompatible repo: %v %v", response.Origin, origin.URL)
 		}
 	}
 
-	parent, _ = path.Split(target.ParsedURL.Path)
+
 	_, err = context.Execute(target, &ManagedCommand{
 		Executions: []*Execution{
 			{
@@ -207,7 +210,7 @@ func (s *versionControlService) checkoutArtifact(context *Context, origin, targe
 		})
 
 	default:
-		return nil, fmt.Errorf("Unsupproted version control type: '%v'", target.Type)
+		return nil, fmt.Errorf("unsupported version control type: '%v'", target.Type)
 	}
 }
 
@@ -248,6 +251,34 @@ func (s *versionControlService) Run(context *Context, request interface{}) *Serv
 	}
 	return response
 }
+
+
+var errorRewrites = map[string]func(*url.Resource) string {
+	"authentication failed":  func(resource *url.Resource) string{
+		username, _, _ := resource.LoadCredential(false)
+		return fmt.Sprintf("failed to authenticate username: %v with %v secret", username, resource.Credential)
+	},
+	"error validating server certificate":func(resource *url.Resource) string{
+		return fmt.Sprintf("failed to validate svn certificate: %v", resource.URL)
+	},
+	"username":func(resource *url.Resource) string{
+		username, _, _ := resource.LoadCredential(false)
+		return fmt.Sprintf("failed to authenticate username: %v with %v secret",  username, resource.Credential)
+	},
+}
+
+func checkVersionControlAuthErrors(err error, resource *url.Resource) error {
+	if err != nil {
+		errorMessage := strings.ToLower(err.Error())
+		for candidate, callback := range errorRewrites {
+			if strings.Contains(errorMessage, candidate) {
+				return errors.New(callback(resource))
+			}
+		}
+	}
+	return err
+}
+
 
 func (s *versionControlService) NewRequest(action string) (interface{}, error) {
 	switch action {
