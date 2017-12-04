@@ -98,7 +98,7 @@ func (s *AbstractService) AddEvent(context *Context, eventType interface{}, valu
 	if context.EventLogger != nil {
 		err := context.EventLogger.Log(event)
 		if err != nil {
-			fmt.Printf("Failed to log event: %v\n", err)
+			fmt.Printf("failed to log event: %v\n", err)
 		}
 	}
 	return event

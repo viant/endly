@@ -52,7 +52,7 @@ func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate strin
 			return nil, fmt.Errorf("Invalid version was found expected: %v, but had: %v\n", request.Version, build)
 		}
 	}
-	return nil, errors.New("Failed to check java version")
+	return nil, errors.New("failed to check java version")
 
 }
 

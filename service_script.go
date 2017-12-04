@@ -42,7 +42,7 @@ func (s *scriptService) loadLibraries(context *Context, request *ScriptCommand) 
 			return "", err
 		}
 		if len(objects) == 0 {
-			return "", fmt.Errorf("Failed to locate: %v", resource.URL)
+			return "", fmt.Errorf("failed to locate: %v", resource.URL)
 		}
 		reader, err := service.Download(objects[0])
 		if err != nil {
@@ -85,7 +85,7 @@ func (s *scriptService) Run(context *Context, request interface{}) *ServiceRespo
 	case *ScriptCommand:
 		response.Response, err = s.runScriptCommand(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run script: %v, %v", actualRequest.Code, err)
+			response.Error = fmt.Sprintf("failed to run script: %v, %v", actualRequest.Code, err)
 		}
 	default:
 		response.Error = fmt.Sprintf("Unsupported request type: %T", request)

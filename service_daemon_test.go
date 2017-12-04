@@ -146,7 +146,7 @@ func TestDaemonService_Start(t *testing.T) {
 			"myabc",
 			false,
 			0,
-			"Failed to start service: myabc, service is inactive",
+			"failed to start service: myabc, service is inactive",
 		},
 		{
 			"test/daemon/start/unknown/darwin",
@@ -154,7 +154,7 @@ func TestDaemonService_Start(t *testing.T) {
 			"myabc",
 			false,
 			0,
-			"Failed to start service: myabc, service is inactive",
+			"failed to start service: myabc, service is inactive",
 		},
 	}
 

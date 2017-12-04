@@ -65,48 +65,48 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 	case *DockerImagesRequest:
 		response.Response, err = s.checkImages(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to check images: %v, %v", actualRequest, err)
+			response.Error = fmt.Sprintf("failed to check images: %v, %v", actualRequest, err)
 		}
 	case *DockerPullRequest:
 		response.Response, err = s.pullImage(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to pull images: %v, %v", actualRequest, err)
+			response.Error = fmt.Sprintf("failed to pull images: %v, %v", actualRequest, err)
 		}
 	case *DockerContainerStatusRequest:
 		response.Response, err = s.checkContainerProcesses(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to check process: %v, %v", actualRequest, err)
+			response.Error = fmt.Sprintf("failed to check process: %v, %v", actualRequest, err)
 		}
 
 	case *DockerContainerCommandRequest:
 		response.Response, err = s.runInContainer(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run docker command: %v, %v", actualRequest, err)
+			response.Error = fmt.Sprintf("failed to run docker command: %v, %v", actualRequest, err)
 		}
 	case *DockerContainerStartRequest:
 		response.Response, err = s.startContainer(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed strart container: %v, %v", actualRequest, err)
+			response.Error = fmt.Sprintf("failed strart container: %v, %v", actualRequest, err)
 		}
 	case *DockerContainerStopRequest:
 		response.Response, err = s.stopContainer(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to start container: %v, %v", actualRequest, err)
+			response.Error = fmt.Sprintf("failed to start container: %v, %v", actualRequest, err)
 		}
 	case *DockerContainerRemoveRequest:
 		response.Response, err = s.removeContainer(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to remove container: %v, %v", actualRequest, err)
+			response.Error = fmt.Sprintf("failed to remove container: %v, %v", actualRequest, err)
 		}
 	case *DockerRunRequest:
 		response.Response, err = s.runContainer(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run docker container: %v(%v), %v", actualRequest.Target.Name, actualRequest.Image, err)
+			response.Error = fmt.Sprintf("failed to run docker container: %v(%v), %v", actualRequest.Target.Name, actualRequest.Image, err)
 		}
 	case *DockerStopImagesRequest:
 		response.Response, err = s.stopImages(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run: %v(%v), %v", actualRequest.Target.Name, actualRequest.Images, err)
+			response.Error = fmt.Sprintf("failed to run: %v(%v), %v", actualRequest.Target.Name, actualRequest.Images, err)
 		}
 
 	default:
@@ -422,7 +422,7 @@ func (s *dockerService) pullImage(context *Context, request *DockerPullRequest) 
 	}
 	stdout := info.Stdout()
 	if strings.Contains(stdout, "not found") {
-		return nil, fmt.Errorf("Failed to pull docker image,  %v", stdout)
+		return nil, fmt.Errorf("failed to pull docker image,  %v", stdout)
 	}
 	imageResponse, err := s.checkImages(context, &DockerImagesRequest{Target: request.Target, Repository: request.Repository, Tag: request.Tag})
 	if err != nil {
@@ -431,7 +431,7 @@ func (s *dockerService) pullImage(context *Context, request *DockerPullRequest) 
 	if len(imageResponse.Images) == 1 {
 		return imageResponse.Images[0], nil
 	}
-	return nil, fmt.Errorf("Failed to check image status: %v:%v found: %v", request.Repository, request.Tag, len(imageResponse.Images))
+	return nil, fmt.Errorf("failed to check image status: %v:%v found: %v", request.Repository, request.Tag, len(imageResponse.Images))
 }
 
 func (s *dockerService) checkImages(context *Context, request *DockerImagesRequest) (*DockerImagesResponse, error) {

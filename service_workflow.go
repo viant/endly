@@ -80,7 +80,7 @@ func (s *workflowService) Workflow(name string) (*Workflow, error) {
 	if result, found := s.registry[name]; found {
 		return result, nil
 	}
-	return nil, fmt.Errorf("Failed to lookup workflow: %v", name)
+	return nil, fmt.Errorf("failed to lookup workflow: %v", name)
 }
 
 func (s *workflowService) evaluateCriteria(context *Context, criteria string, defaultValue bool) (bool, error) {
@@ -163,13 +163,13 @@ func (s *workflowService) loadWorkflowIfNeeded(context *Context, name string, UR
 func (s *workflowService) asServiceRequest(action *ServiceAction, serviceRequest interface{}, requestMap map[string]interface{}) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("Failed to cast %v into %T, due to %v", requestMap, serviceRequest, r)
+			err = fmt.Errorf("failed to cast %v into %T, due to %v", requestMap, serviceRequest, r)
 		}
 	}()
 
 	err = converter.AssignConverted(serviceRequest, requestMap)
 	if err != nil {
-		return fmt.Errorf("Failed to create request %v on %v.%v, %v", requestMap, action.Service, action.Action, err)
+		return fmt.Errorf("failed to create request %v on %v.%v, %v", requestMap, action.Service, action.Action, err)
 	}
 	return err
 
@@ -217,7 +217,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) err
 
 	expandedRequest := state.Expand(action.Request)
 	if expandedRequest == nil || !toolbox.IsMap(expandedRequest) {
-		return fmt.Errorf("Failed to evaluate request: %v, expected map but had: %T", expandedRequest, expandedRequest)
+		return fmt.Errorf("failed to evaluate request: %v, expected map but had: %T", expandedRequest, expandedRequest)
 	}
 	requestMap := toolbox.AsMap(expandedRequest)
 	serviceRequest, err := service.NewRequest(action.Action)
@@ -229,7 +229,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) err
 
 	err = s.asServiceRequest(action, serviceRequest, requestMap)
 	if err != nil {
-		return fmt.Errorf("Failed to create service request: %v %v", requestMap, err)
+		return fmt.Errorf("failed to create service request: %v %v", requestMap, err)
 	}
 	serviceResponse := service.Run(context, serviceRequest)
 	serviceActivity.ServiceResponse = serviceResponse
@@ -300,7 +300,7 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 
 		err = s.runAction(context, action)
 		if err != nil {
-			return fmt.Errorf("Failed to run action:%v %v", action.Tag, err)
+			return fmt.Errorf("failed to run action:%v %v", action.Tag, err)
 		}
 		moveToNextTag, err := s.evaluateCriteria(context, action.SkipCriteria, false)
 		if err != nil {
@@ -342,7 +342,7 @@ func (s *workflowService) runAsyncActions(context *Context, workflow *Workflow, 
 				actionContext.MakeAsyncSafe()
 				err = s.runAction(actionContext, action)
 				if err != nil {
-					groupErr = fmt.Errorf("Failed to run action:%v %v", action.Tag, err)
+					groupErr = fmt.Errorf("failed to run action:%v %v", action.Tag, err)
 				}
 
 			}(context.Clone(), action)
@@ -458,13 +458,13 @@ func buildParamsMap(request *WorkflowRunRequest, context *Context) data.Map {
 func (s *workflowService) loadWorkflow(context *Context, request *WorkflowLoadRequest) (*WorkflowLoadResponse, error) {
 	workflow, err := s.Dao.Load(context, request.Source)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to load workflow: %v, %v", request.Source, err)
+		return nil, fmt.Errorf("failed to load workflow: %v, %v", request.Source, err)
 	}
 	s.Mutex().Lock()
 	defer s.Mutex().Unlock()
 	err = s.Register(workflow)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to register workflow: %v, %v", request.Source, err)
+		return nil, fmt.Errorf("failed to register workflow: %v, %v", request.Source, err)
 	}
 	return &WorkflowLoadResponse{
 		Workflow: workflow,
@@ -540,12 +540,12 @@ func (s *workflowService) Run(context *Context, request interface{}) *ServiceRes
 		}
 		response.Response, err = s.runWorkflow(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run workflow: %v, %v", actualRequest.Name, err)
+			response.Error = fmt.Sprintf("failed to run workflow: %v, %v", actualRequest.Name, err)
 		}
 	case *WorkflowRegisterRequest:
 		err := s.Register(actualRequest.Workflow)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to register workflow: %v, %v", actualRequest.Workflow.Name, err)
+			response.Error = fmt.Sprintf("failed to register workflow: %v, %v", actualRequest.Workflow.Name, err)
 		}
 	case *WorkflowLoadRequest:
 		response.Response, err = s.loadWorkflow(context, actualRequest)

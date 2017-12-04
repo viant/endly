@@ -21,7 +21,7 @@ func (d *DsUnitTableData) AuotGenerateIfNeeded(state data.Map) error {
 	for k, v := range d.AutoGenerate {
 		value, has := state.GetValue(v)
 		if !has {
-			return fmt.Errorf("Failed to autogenerate value for %v - unable to eval: %v", k, v)
+			return fmt.Errorf("failed to autogenerate value for %v - unable to eval: %v", k, v)
 		}
 		state.SetValue(k, value)
 	}

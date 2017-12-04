@@ -80,7 +80,7 @@ func (c *Context) parentURLCandidates() []string {
 //ExpandResource substitutes any $ expression with the key value from the state map if it is present.
 func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) {
 	if resource == nil {
-		return nil, reportError(fmt.Errorf("Resource was empty"))
+		return nil, reportError(fmt.Errorf("resource  was empty"))
 	}
 	if resource.URL == "" {
 		return nil, reportError(fmt.Errorf("URL was empty"))
@@ -100,7 +100,7 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 	}
 	var result = url.NewResource(c.Expand(resource.URL), c.Expand(resource.Credential))
 	if result.ParsedURL == nil {
-		return nil, fmt.Errorf("Failed to parse URL %v", result.URL)
+		return nil, fmt.Errorf("failed to parse URL %v", result.URL)
 	}
 	result.Name = c.Expand(resource.Name)
 	result.Type = c.Expand(resource.Type)
@@ -113,7 +113,7 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 func (c *Context) Manager() (Manager, error) {
 	var manager = &manager{}
 	if !c.GetInto(serviceManagerKey, &manager) {
-		return nil, reportError(fmt.Errorf("Failed to lookup Manager"))
+		return nil, reportError(fmt.Errorf("failed to lookup Manager"))
 	}
 	return manager, nil
 }

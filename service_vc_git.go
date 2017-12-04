@@ -133,7 +133,7 @@ func (s *gitService) pull(context *Context, request *VcPullRequest) (*VcInfo, er
 		return nil, err
 	}
 	if CheckNoSuchFileOrDirectory(response.Stdout()) {
-		return nil, fmt.Errorf("Failed to checkout %v", response.Stdout())
+		return nil, fmt.Errorf("failed to checkout %v", response.Stdout())
 	}
 
 	return s.checkInfo(context, &VcStatusRequest{
@@ -163,7 +163,7 @@ func (s *gitService) checkout(context *Context, request *VcCheckoutRequest) (*Vc
 		return nil, err
 	}
 	if CheckNoSuchFileOrDirectory(response.Stdout()) {
-		return nil, fmt.Errorf("Failed to checkout %v", response.Stdout())
+		return nil, fmt.Errorf("failed to checkout %v", response.Stdout())
 	}
 
 	return s.checkInfo(context, &VcStatusRequest{

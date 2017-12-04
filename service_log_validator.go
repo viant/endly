@@ -219,17 +219,17 @@ func (s *logValidatorService) Run(context *Context, request interface{}) *Servic
 	case *LogValidatorListenRequest:
 		response.Response, err = s.listen(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run logValidator: %v, %v", actualRequest.Source, err)
+			response.Error = fmt.Sprintf("failed to run logValidator: %v, %v", actualRequest.Source, err)
 		}
 	case *LogValidatorAssertRequest:
 		response.Response, err = s.assert(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run logValidator: %v, %v", actualRequest, err)
+			response.Error = fmt.Sprintf("failed to run logValidator: %v, %v", actualRequest, err)
 		}
 	case *LogValidatorResetRequest:
 		response.Response, err = s.reset(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("Failed to run logValidator: %v, %v", actualRequest, err)
+			response.Error = fmt.Sprintf("failed to run logValidator: %v, %v", actualRequest, err)
 		}
 
 	default:
@@ -348,7 +348,7 @@ func (s *logValidatorService) getLogTypeMeta(expectedLogRecords *ExpectedLogReco
 	s.Mutex().Lock()
 	defer s.Mutex().Unlock()
 	if !state.Has(key) {
-		return nil, fmt.Errorf("Failed to assert, unknown type:%v, please call listen function with requested log type", expectedLogRecords.Type)
+		return nil, fmt.Errorf("failed to assert, unknown type:%v, please call listen function with requested log type", expectedLogRecords.Type)
 	}
 	logTypeMeta := state.Get(key).(*LogTypeMeta)
 	return logTypeMeta, nil
@@ -490,7 +490,7 @@ func (s *logValidatorService) listenForChanges(context *Context, request *LogVal
 		for !context.IsClosed() {
 			_, err := s.readLogFiles(context, service, request.Source, request.Types...)
 			if err != nil {
-				log.Printf("Failed to load log types %v", err)
+				log.Printf("failed to load log types %v", err)
 				break
 			}
 			time.Sleep(frequency)
