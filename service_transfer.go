@@ -210,7 +210,7 @@ func (s *transferService) Run(context *Context, request interface{}) *ServiceRes
 			response.Error = fmt.Sprintf("failed to tranfer resources: %v, %v", actualRequest.Transfers, err)
 		}
 	default:
-		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
+		response.Error = fmt.Sprintf("unsupported request type: %T", request)
 	}
 	if response.Error != "" {
 		response.Status = "err"

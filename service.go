@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+
 //Service represents a set of capabilities per supported actions/request.
 type Service interface {
 
@@ -152,7 +153,7 @@ func (s *AbstractService) State() data.Map {
 
 //NewRequest returns error for supplied action
 func (s *AbstractService) NewRequest(action string) (interface{}, error) {
-	return nil, fmt.Errorf("Unsupported action: %v", action)
+	return nil, fmt.Errorf("unsupported action: %v", action)
 }
 
 //NewAbstractService creates a new abstract service.

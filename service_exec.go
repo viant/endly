@@ -486,7 +486,7 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 		}
 
 	default:
-		response.Error = fmt.Sprintf("Unsupported request type: %T", request)
+		response.Error = fmt.Sprintf("unsupported request type: %T", request)
 	}
 
 	if response.Error != "" {
@@ -508,7 +508,7 @@ func (s *execService) NewRequest(action string) (interface{}, error) {
 		return &CloseSessionRequest{}, nil
 
 	}
-	return nil, fmt.Errorf("Unsupported action: %v", action)
+	return nil, fmt.Errorf("unsupported action: %v", action)
 }
 
 func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*OperatingSystem, error) {
