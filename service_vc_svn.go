@@ -102,7 +102,7 @@ func (s *svnService) checkout(context *Context, request *VcCheckoutRequest) (*Vc
 	if err != nil {
 		return nil, err
 	}
-	return s.runSecureSvnCommand(context, target, request.Origin, "co", request.Origin.URL, target.ParsedURL.Path)
+	return s.runSecureSvnCommand(context, target, request.Origin, "co", request.Origin.URL, target.DirectoryPath())
 }
 
 func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource, origin *url.Resource, command string, arguments ...string) (*VcInfo, error) {
@@ -110,11 +110,6 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource,
 	if err != nil {
 		return nil, err
 	}
-
-	if username == "" {
-		return nil, fmt.Errorf("User name was empty for %v (%v)", origin.URL, origin.Credential)
-	}
-
 	var credentials = make(map[string]string)
 	credentials[versionControlCredentailKey] = origin.Credential
 	_, err = context.Execute(target, &ManagedCommand{
@@ -140,21 +135,10 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource,
 			},
 		},
 	})
-
-
-
+	err = checkVersionControlAuthErrors(err, origin)
 	if err != nil {
-		errorMessage := err.Error()
-		if strings.Contains(errorMessage, "Error validating server certificate") {
-			return nil, fmt.Errorf("failed to validate svn certificate: %v", origin.URL)
-		}
-		if strings.Contains(errorMessage, "Username:") {
-			var _, file = path.Split(origin.Credential)
-			return nil, fmt.Errorf("failed to authenticate username: %v with %v secret",  username, file)
-		}
 		return nil, err
 	}
-
 	return s.checkInfo(context, &VcStatusRequest{
 		Target: target,
 	})
