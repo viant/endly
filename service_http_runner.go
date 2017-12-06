@@ -10,13 +10,37 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 )
 
 //HTTPRunnerServiceID represents http runner service id.
 const HTTPRunnerServiceID = "http/runner"
+const HttpRunnerExitCriteriaEventType = "HttpExitEvaluation"
 
 type httpRunnerService struct {
 	*AbstractService
+}
+
+func (s *httpRunnerService) processResponse(context *Context, sendRequest *SendHTTPRequest, sendHTTPRequest *HTTPRequest, response *HTTPResponse, httpResponse *http.Response, isBase64Encoded bool, extracted map[string]string) (string, error) {
+	state := context.state
+	response.Header = make(map[string][]string)
+	copyHeaders(httpResponse.Header, response.Header)
+	readBody(httpResponse, response, isBase64Encoded)
+	if sendRequest.ResponseUdf != "" {
+		var udf, has = UdfRegistry[sendRequest.ResponseUdf]
+		if !has {
+			return "", fmt.Errorf("failed to lookup udf: %v for: %v", sendRequest.ResponseUdf, sendHTTPRequest.URL)
+		}
+		transformed, err := udf(response.Body, state)
+		if err != nil {
+			return "", fmt.Errorf("failed to send sendRequest unable to run udf: %v", err)
+		}
+		response.Body = toolbox.AsString(transformed)
+	}
+
+	var responseBody = replaceResponseBodyIfNeeded(sendHTTPRequest, response.Body)
+	sendHTTPRequest.Extraction.Extract(context, extracted, responseBody)
+	return responseBody, nil
 }
 
 func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, sendHTTPRequest *HTTPRequest, sessionCookies *Cookies, sendRequest *SendHTTPRequest, result *SendHTTPResponse) error {
@@ -73,40 +97,53 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		repeat = 1
 	}
 	var httpResponse *http.Response
+	var responseBody string
+	var bodyCache []byte
+	var useCachedBody = repeat > 1 && httpRequest.ContentLength > 0
+	if useCachedBody {
+		bodyCache, err = ioutil.ReadAll(httpRequest.Body)
+		if err != nil {
+			return err
+		}
+	}
 
 	for i := 0; i < repeat; i++ {
+		if useCachedBody {
+			httpRequest.Body = ioutil.NopCloser(bytes.NewReader(bodyCache))
+		}
 		httpResponse, err = client.Do(httpRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("%v", err)
 			return nil
 		}
-	}
-	response.Header = make(map[string][]string)
-	copyHeaders(httpResponse.Header, response.Header)
-	readBody(httpResponse, response, isBase64Encoded)
-
-	if sendRequest.ResponseUdf != "" {
-		var udf, has = UdfRegistry[sendRequest.ResponseUdf]
-		if !has {
-			return fmt.Errorf("failed to lookup udf: %v for: %v", sendRequest.ResponseUdf, sendHTTPRequest.URL)
+		responseBody, err = s.processResponse(context, sendRequest, sendHTTPRequest, response, httpResponse, isBase64Encoded, result.Extracted)
+		var extractedState = context.state.Clone()
+		for k, v := range result.Extracted {
+			extractedState[k] = v
 		}
-		transformed, err := udf(response.Body, state)
+		critera := extractedState.ExpandAsText(sendHTTPRequest.ExitCriteria)
+		canBreak, err := EvaluateCriteria(context, critera, HttpRunnerExitCriteriaEventType, false);
 		if err != nil {
-			return fmt.Errorf("failed to send sendRequest unable to run udf: %v", err)
+			return fmt.Errorf("failed to check http exit criteia: %v", err)
 		}
-		response.Body = toolbox.AsString(transformed)
+		if canBreak {
+			break;
+		}
+		if sendHTTPRequest.SleepTimeMs > 0 {
+			timeToSleep  := time.Millisecond * time.Duration(sendHTTPRequest.SleepTimeMs)
+			time.Sleep(timeToSleep)
+		}
 	}
-	endEvent := s.End(context)(startEvent, Pairs("response", response))
 
-	var responseBody = replaceResponseBodyIfNeeded(sendHTTPRequest, response.Body)
 
-	sendHTTPRequest.Extraction.Extract(context, result.Extracted, responseBody)
 	var responseCookies Cookies = httpResponse.Cookies()
 	response.Cookies = responseCookies.IndexByName()
 	for k, cookie := range response.Cookies {
 		cookies.Put(k, cookie.Value)
 	}
 	sessionCookies.AddCookies(responseCookies...)
+
+	endEvent := s.End(context)(startEvent, Pairs("response", response))
 
 	var previous = state.GetMap("previous")
 	if previous == nil {

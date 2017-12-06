@@ -11,6 +11,7 @@ type SendHTTPRequest struct {
 	Requests    []*HTTPRequest
 	RequestUdf  string
 	ResponseUdf string
+
 }
 
 //HTTPRequest represents an http request
@@ -25,6 +26,8 @@ type HTTPRequest struct {
 	Extraction DataExtractions   //extraction
 	Variables  Variables         // input JSON body map, output state.httpPrevious
 	Repeat     int               //how many time send this request
+	SleepTimeMs int			  //Sleep time after request send, this only makes sense with repeat option
+	ExitCriteria string		//Repeat exit criteria, it uses extracted variable to determine repeat termination
 }
 
 //SendHTTPResponse represnets a send response
@@ -109,5 +112,7 @@ func (r *HTTPRequest) Expand(context *Context) *HTTPRequest {
 		Variables:  r.Variables,
 		Replace:    r.Replace,
 		Repeat:     r.Repeat,
+		SleepTimeMs:r.SleepTimeMs,
+		ExitCriteria:r.ExitCriteria,
 	}
 }
