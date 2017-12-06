@@ -31,7 +31,7 @@ package endly_test
 	//}
 	//
 	//func TestRunWorkflow(t *testing.T) {
-	//	go StartTestServer("8765")
+	//	go StartHttpServer("8765")
 	//	time.Sleep(500 * time.Millisecond)
 	//	manager, service, err := getServiceWithWorkflow("test/workflow/simple.csv", "test/workflow/simple_call.csv")
 	//	if !assert.Nil(t, err) {
