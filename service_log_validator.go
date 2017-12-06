@@ -310,7 +310,7 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 					break
 				}
 				var sleepEventType = &SleepEventType{SleepTimeMs: int(logWaitDuration) / int(time.Millisecond)}
-				s.AddEvent(context, sleepEventType, Pairs("value", sleepEventType))
+				AddEvent(context, sleepEventType, Pairs("value", sleepEventType))
 				time.Sleep(logWaitDuration)
 			}
 
@@ -338,7 +338,7 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 				return nil, err
 			}
 		}
-		s.AddEvent(context, event, Pairs("value", event))
+		AddEvent(context, event, Pairs("value", event))
 	}
 	return response, nil
 }

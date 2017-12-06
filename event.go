@@ -112,3 +112,47 @@ func (e *Event) get(expectedType reflect.Type) interface{} {
 	}
 	return nil
 }
+
+
+
+//AddEvent add an event to the current context
+func AddEvent(context *Context, eventType interface{}, value map[string]interface{}, level ...int) *Event {
+	if len(level) == 0 {
+		level = []int{Info}
+	}
+	if !toolbox.IsString(eventType) {
+		eventType = getSimpleTypeName(eventType)
+	}
+	var workflow = context.Workflows.Last()
+	var workflowName = ""
+	if workflow != nil {
+		workflowName = workflow.Name
+	}
+	state := context.state
+	var activity *WorkflowServiceActivity
+	var task *WorkflowTask
+	if state.Has("activity") {
+		activity, _ = state.Get("activity").(*WorkflowServiceActivity)
+	}
+	if state.Has("task") {
+		task, _ = state.Get(":task").(*WorkflowTask)
+	}
+	var event = &Event{
+		Timestamp: time.Now(),
+		Workflow:  workflowName,
+		Task:      task,
+		Activity:  activity,
+		Type:      toolbox.AsString(eventType),
+		Level:     level[0],
+		Value:     value,
+	}
+	context.Events.Push(event)
+
+	if context.EventLogger != nil {
+		err := context.EventLogger.Log(event)
+		if err != nil {
+			fmt.Printf("failed to log event: %v\n", err)
+		}
+	}
+	return event
+}

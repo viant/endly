@@ -158,7 +158,7 @@ func (s *dataStoreUnitService) runSQLScripts(context *Context, datastore string,
 	var totaModified = 0
 	for _, script := range scripts {
 		var event = &RunSQLScriptEvent{Datastore: datastore, URL: script.URL}
-		s.AddEvent(context, event, Pairs("value", event), Info)
+		AddEvent(context, event, Pairs("value", event), Info)
 		modified, err := s.loadSQLAndRun(context, datastore, script)
 		if err != nil {
 			return 0, err
@@ -250,7 +250,7 @@ func (s *dataStoreUnitService) prepare(context *Context, request *DsUnitPrepareR
 
 	for _, data := range datasets.Datasets {
 		var populateDatastoreEvent = &PopulateDatastoreEvent{Datastore: request.Datastore, Table: data.Table, Rows: len(data.Rows)}
-		s.AddEvent(context, populateDatastoreEvent, Pairs("value", populateDatastoreEvent), Info)
+		AddEvent(context, populateDatastoreEvent, Pairs("value", populateDatastoreEvent), Info)
 	}
 
 	response.Added, response.Modified, response.Deleted, err = s.Manager.PrepareDatastore(datasets)
