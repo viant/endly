@@ -66,3 +66,20 @@ func newTestService() endly.Service {
 	return result
 
 }
+
+func Test_ServiceRequest(t *testing.T) {
+
+	manager := endly.NewManager()
+	context := manager.NewContext(toolbox.NewContext())
+	var services = endly.Services(manager)
+	for k, service := range services {
+		_, err := service.NewRequest("abc")
+		assert.NotNil(t, err, k)
+		response := service.Run(context, struct{}{})
+		assert.True(t, response.Error != "", k)
+
+	}
+
+
+}
+

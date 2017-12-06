@@ -23,6 +23,9 @@ func (s *restService) Run(context *Context, request interface{}) *ServiceRespons
 		if err != nil {
 			response.Error = fmt.Sprintf("failed to send %v %v", actualReuest.URL, err)
 		}
+	default:
+		response.Error = fmt.Sprintf("unsupported request type: %T", request)
+
 	}
 	if response.Error != "" {
 		response.Status = "err"
