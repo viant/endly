@@ -57,6 +57,7 @@ func (s *versionControlService) commit(context *Context, request *VcCommitReques
 		return s.gitService.commit(context, request)
 	case "svn":
 		return s.svnService.commit(context, request)
+
 	}
 	return nil, fmt.Errorf("unsupported type: %v for URL %v", target.Type, target.URL)
 }
@@ -244,6 +245,9 @@ func (s *versionControlService) Run(context *Context, request interface{}) *Serv
 		if err != nil {
 			response.Error = fmt.Sprintf("failed to commit version: %v -> %v, %v", actualRequest.Origin.URL, actualRequest.Target.URL, err)
 		}
+	default:
+		response.Error = fmt.Sprintf("unsupported request type: %T", request)
+
 	}
 
 	if response.Error != "" {
