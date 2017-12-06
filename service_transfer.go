@@ -20,6 +20,9 @@ const TransferServiceID = "transfer"
 //UseMemoryService flag in the context to ignore
 const UseMemoryService = "useMemoryService"
 
+//CompressionTimeout compression/decompression timeout
+var CompressionTimeout = 120000
+
 //CopyEventType represents CopyEventType
 type CopyEventType struct {
 	SourceURL string
@@ -52,12 +55,15 @@ func NewExpandedContentHandler(context *Context, replaceMap map[string]string, e
 	}
 }
 
-
 func (s *transferService) getStorageService(context *Context, resource *url.Resource) (storage.Service, error) {
 	if context.state.Has(UseMemoryService) {
 		return storage.NewMemoryService(), nil
 	}
 	return storage.NewServiceForURL(resource.URL, resource.Credential)
+}
+
+func IsShellCompressable(protScheme string) bool {
+	return protScheme == "scp" || protScheme == "file"
 }
 
 func (s *transferService) run(context *Context, transfers ...*Transfer) (*TransferCopyResponse, error) {
@@ -91,9 +97,9 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 			return nil, fmt.Errorf("failed to copy: %v %v - Source does not exists", sourceResource.URL, targetResource.URL)
 		}
 
-		compressed := transfer.Compress &&
-			(sourceResource.ParsedURL.Scheme == "scp" || sourceResource.ParsedURL.Scheme == "file") &&
-			(targetResource.ParsedURL.Scheme == "scp" || targetResource.ParsedURL.Scheme == "file")
+		//TODO add in memory compression for other protocols
+		compressed := transfer.Compress && IsShellCompressable(sourceResource.ParsedURL.Scheme) && IsShellCompressable(targetResource.ParsedURL.Scheme)
+
 
 		var copyEventType = &CopyEventType{
 			SourceURL: sourceResource.URL,
@@ -128,31 +134,29 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 	return result, nil
 }
 
-
-
 func (s *transferService) compressSource(context *Context, source, target *url.Resource, sourceObject storage.Object) error {
-	var parent, name = path.Split(source.ParsedURL.Path)
+	var baseDirectory, name = path.Split(source.ParsedURL.Path)
 	var archiveSource = name
-	var archiveName = fmt.Sprintf("%v.tar.gz", name)
+
 	if sourceObject.IsFolder() {
-		lastDirPosition := strings.LastIndex(source.ParsedURL.Path, "/")
-		if lastDirPosition != -1 {
-			archiveName = fmt.Sprintf("%v.tar.gz", string(source.ParsedURL.Path[lastDirPosition+1:]))
-		}
+		baseDirectory = source.DirectoryPath()
+		_, name = path.Split(baseDirectory)
 		archiveSource = "*"
 	}
-
-	_, err := context.Execute(source, &CommandRequest{
-		Commands: []string{fmt.Sprintf("cd %v", parent)},
+	var archiveName = fmt.Sprintf("%v.tar.gz", name)
+	response, err := context.Execute(source, &CommandRequest{
+		Commands: []string{
+			fmt.Sprintf("cd %v", baseDirectory),
+			fmt.Sprintf("tar cvzf %v %v", archiveName, archiveSource),
+		},
+		TimeoutMs: CompressionTimeout,
 	})
-	if err == nil {
-		_, err = context.Execute(source, &CommandRequest{
-			Commands:  []string{fmt.Sprintf("tar cvzf %v %v", archiveName, archiveSource)},
-			TimeoutMs: 120000,
-		})
-	}
+
 	if err != nil {
 		return err
+	}
+	if CheckNoSuchFileOrDirectory(response.Stdout()) {
+		return fmt.Errorf("faied to compress: %v, %v", fmt.Sprintf("tar cvzf %v %v", archiveName, archiveSource), response.Stdout())
 	}
 
 	if sourceObject.IsFolder() {
@@ -163,36 +167,44 @@ func (s *transferService) compressSource(context *Context, source, target *url.R
 		return nil
 	}
 
-	err = source.Rename(archiveName)
-	if err != nil {
-		return err
+	if err = source.Rename(archiveName); err == nil {
+		if path.Ext(target.ParsedURL.Path) != "" {
+			err = target.Rename(archiveName)
+		} else {
+			target.URL = toolbox.URLPathJoin(target.URL, archiveName)
+			target.ParsedURL, _ = url2.Parse(target.URL)
+		}
 	}
-	return target.Rename(archiveName)
+	return err
 }
 
 func (s *transferService) decompressTarget(context *Context, source, target *url.Resource, sourceObject storage.Object) error {
-	var parent, name = path.Split(target.ParsedURL.Path)
+
+	var baseDir, name = path.Split(target.ParsedURL.Path)
+
 	_, err := context.Execute(target, &CommandRequest{
-		Commands: []string{fmt.Sprintf("mkdir -p %v\ncd %v", parent, parent)},
+		Commands: []string{
+			fmt.Sprintf("mkdir -p %v", baseDir),
+			fmt.Sprintf("cd %v", baseDir),
+		},
 	})
 
 	if err == nil {
 		_, err = context.Execute(target, &CommandRequest{
-			Commands:  []string{fmt.Sprintf("tar xvzf %v", name)},
-			TimeoutMs: 120000,
+			Commands: []string{
+				fmt.Sprintf("tar xvzf %v", name),
+				fmt.Sprintf("rm %v", name),
+			},
+			TimeoutMs: CompressionTimeout,
 		})
 	}
-	if err == nil && sourceObject.IsFolder() {
+	if err == nil {
 		_, err = context.Execute(target, &CommandRequest{
-			Commands:  []string{fmt.Sprintf("rm %v", name)},
-			TimeoutMs: 120000,
+			Commands:  []string{
+				fmt.Sprintf("cd %v", source.DirectoryPath()),
+				fmt.Sprintf("rm %v", name),
+				},
 		})
-		if err == nil {
-			_, err = context.Execute(source, &CommandRequest{
-				Commands:  []string{fmt.Sprintf("rm %v", name)},
-				TimeoutMs: 120000,
-			})
-		}
 	}
 
 	return err
