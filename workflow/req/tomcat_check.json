@@ -3,5 +3,5 @@
     "URL": "ssh://${targetHost}${appDirectory}/",
     "Credential": "$targetHostCredential"
   },
-  "Name": "catalina | grep ${appDirectory}/tomcat"
+  "Command": "catalina | grep ${appDirectory}/tomcat"
 }
