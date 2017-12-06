@@ -58,52 +58,11 @@ func Pairs(params ...interface{}) map[string]interface{} {
 func (s *workflowService) Sleep(context *Context, sleepTimeMs int) {
 	if sleepTimeMs > 0 {
 		var sleepEventType = &SleepEventType{SleepTimeMs: sleepTimeMs}
-		s.AddEvent(context, sleepEventType, Pairs("value", sleepEventType), Info)
+		AddEvent(context, sleepEventType, Pairs("value", sleepEventType), Info)
 		time.Sleep(time.Millisecond * time.Duration(sleepTimeMs))
 	}
 }
 
-//AddEvent add event
-func (s *AbstractService) AddEvent(context *Context, eventType interface{}, value map[string]interface{}, level ...int) *Event {
-	if len(level) == 0 {
-		level = []int{Info}
-	}
-	if !toolbox.IsString(eventType) {
-		eventType = getSimpleTypeName(eventType)
-	}
-	var workflow = context.Workflows.Last()
-	var workflowName = ""
-	if workflow != nil {
-		workflowName = workflow.Name
-	}
-	state := context.state
-	var activity *WorkflowServiceActivity
-	var task *WorkflowTask
-	if state.Has("activity") {
-		activity, _ = state.Get("activity").(*WorkflowServiceActivity)
-	}
-	if state.Has("task") {
-		task, _ = state.Get(":task").(*WorkflowTask)
-	}
-	var event = &Event{
-		Timestamp: time.Now(),
-		Workflow:  workflowName,
-		Task:      task,
-		Activity:  activity,
-		Type:      toolbox.AsString(eventType),
-		Level:     level[0],
-		Value:     value,
-	}
-	context.Events.Push(event)
-
-	if context.EventLogger != nil {
-		err := context.EventLogger.Log(event)
-		if err != nil {
-			fmt.Printf("failed to log event: %v\n", err)
-		}
-	}
-	return event
-}
 
 //Begin add starting event
 func (s *AbstractService) Begin(context *Context, source interface{}, value map[string]interface{}, level ...int) *Event {
@@ -112,7 +71,7 @@ func (s *AbstractService) Begin(context *Context, source interface{}, value map[
 	}
 	simpleTypeName := getSimpleTypeName(source)
 	var eventType = fmt.Sprintf("%v.Start", simpleTypeName)
-	event := s.AddEvent(context, eventType, value, level...)
+	event := AddEvent(context, eventType, value, level...)
 	return event
 }
 
@@ -129,7 +88,7 @@ func getSimpleTypeName(source interface{}) string {
 func (s *AbstractService) End(context *Context) func(*Event, map[string]interface{}) *Event {
 	return func(startEvent *Event, value map[string]interface{}) *Event {
 		var eventType = strings.Replace(startEvent.Type, ".Start", ".End", 1)
-		event := s.AddEvent(context, eventType, value, startEvent.Level)
+		event := AddEvent(context, eventType, value, startEvent.Level)
 		event.StartEvent = startEvent
 		event.TimeTakenMs = int((event.Timestamp.UnixNano() - startEvent.Timestamp.UnixNano()) / int64(time.Millisecond))
 		return event
