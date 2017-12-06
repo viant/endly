@@ -84,21 +84,9 @@ func (s *workflowService) Workflow(name string) (*Workflow, error) {
 }
 
 func (s *workflowService) evaluateCriteria(context *Context, criteria string, defaultValue bool) (bool, error) {
-	if criteria == "" {
-		return defaultValue, nil
-	}
-	colonPosition := strings.Index(criteria, ":")
-	if colonPosition == -1 {
-		return false, fmt.Errorf("Run criteria needs to have colon: but had: %v", criteria)
-	}
-	fragments := strings.Split(criteria, ":")
-	actualOperand := context.Expand(strings.TrimSpace(fragments[0]))
-	expectedOperand := context.Expand(strings.TrimSpace(fragments[1]))
-	validator := &Validator{}
-	var result, err = validator.Check(expectedOperand, actualOperand)
-	s.AddEvent(context, WorkflowEvalCriteriaEventType, Pairs("defaultValue", defaultValue, "actual", actualOperand, "expected", expectedOperand, "eligible", result), Debug)
-	return result, err
+	return EvaluateCriteria(context, criteria, WorkflowEvalCriteriaEventType, defaultValue)
 }
+
 
 func isTaskAllowed(candidate *WorkflowTask, request *WorkflowRunRequest) (bool, map[int]bool) {
 	if request.Tasks == "" || request.Tasks == "*" {
@@ -137,7 +125,7 @@ func (s *workflowService) addVariableEvent(name string, variables Variables, con
 		name = strings.Replace(name, "->", "", 1)
 		values[name], _ = state.GetValue(name)
 	}
-	s.AddEvent(context, name, Pairs("variables", variables, "values", values), Debug)
+	AddEvent(context, name, Pairs("variables", variables, "values", values), Debug)
 }
 
 func (s *workflowService) loadWorkflowIfNeeded(context *Context, name string, URL string) (err error) {
@@ -291,7 +279,7 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 				TagId:       action.TagId,
 			}
 
-			s.AddEvent(context, asyncEvent, Pairs("value", asyncEvent))
+			AddEvent(context, asyncEvent, Pairs("value", asyncEvent))
 			continue
 		}
 		if hasAllowedActions && !allowedServiceActions[i] {
@@ -383,7 +371,7 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	if err != nil {
 		return nil, err
 	}
-	s.AddEvent(upstreamContext, "Workflow.Loaded", Pairs("workflow", workflow))
+	AddEvent(upstreamContext, "Workflow.Loaded", Pairs("workflow", workflow))
 	upstreamContext.Workflows.Push(workflow)
 	defer upstreamContext.Workflows.Pop()
 
@@ -423,7 +411,7 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	if err != nil {
 		return nil, err
 	}
-	s.AddEvent(context, "State.Init", Pairs("state", state.AsEncodableMap()), Debug)
+	AddEvent(context, "State.Init", Pairs("state", state.AsEncodableMap()), Debug)
 	for _, task := range workflow.Tasks {
 
 		err = s.runTask(context, workflow, task, request)
@@ -503,7 +491,7 @@ func (s *workflowService) isAsyncRequest(request interface{}) bool {
 func (s *workflowService) reportErrorIfNeeded(context *Context, response *ServiceResponse) {
 	if response.Error != "" {
 		var errorEventType = &ErrorEventType{Error: response.Error}
-		s.AddEvent(context, errorEventType, Pairs("value", errorEventType), Info)
+		AddEvent(context, errorEventType, Pairs("value", errorEventType), Info)
 	}
 }
 
@@ -528,7 +516,7 @@ func (s *workflowService) Run(context *Context, request interface{}) *ServiceRes
 				_, err := s.runWorkflow(context, actualRequest)
 				if err != nil {
 					var eventType = &ErrorEventType{Error: fmt.Sprintf("%v", err)}
-					s.AddEvent(context, eventType, Pairs("value", eventType), Info)
+					AddEvent(context, eventType, Pairs("value", eventType), Info)
 				}
 				s.End(context)(startEvent, Pairs("response", response))
 			}()
