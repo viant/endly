@@ -24,6 +24,9 @@ func (s *validatorService) Run(context *Context, request interface{}) *ServiceRe
 			response.Error = fmt.Sprintf("%v", err)
 		}
 		response.Response = assertResponse
+	default:
+		response.Error = fmt.Sprintf("unsupported request type: %T", request)
+
 	}
 	if response.Error != "" {
 		response.Status = "err"

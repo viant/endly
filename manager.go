@@ -104,3 +104,13 @@ func NewManager() Manager {
 	result.Register(NewNetworkService())
 	return result
 }
+
+
+//Services returns manager services or error
+func Services(mgr interface{}) map[string]Service {
+	var manager, ok = mgr.(*manager);
+	if !ok {
+		return nil
+	}
+	return manager.services
+}

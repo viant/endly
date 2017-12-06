@@ -290,7 +290,7 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 		if err != nil {
 			return fmt.Errorf("failed to run action:%v %v", action.Tag, err)
 		}
-		moveToNextTag, err := s.evaluateCriteria(context, action.SkipCriteria, false)
+		moveToNextTag, err := EvaluateCriteria(context, action.SkipCriteria,"TagIdSkipCriteria", false)
 		if err != nil {
 			return err
 		}
