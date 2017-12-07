@@ -298,6 +298,7 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 			for j := i + 1; j < len(task.Actions) && action.TagId == task.Actions[j].TagId; j++ {
 				i++
 			}
+
 		}
 	}
 
