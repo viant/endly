@@ -217,15 +217,8 @@ func (s *dataStoreUnitService) register(context *Context, request *DsUnitRegiste
 	return result, nil
 }
 
-func (s *dataStoreUnitService) prepare(context *Context, request *DsUnitPrepareRequest) (interface{}, error) {
-	var response = &DsUnitPrepareResponse{}
-	err := request.Validate()
-	if err != nil {
-		return nil, err
-	}
 
-	datasetResource := request.AsDatasetResource()
-
+func (s *dataStoreUnitService) buildDatasets(context *Context, datasetResource *dsunit.DatasetResource, expand bool) (*dsunit.Datasets, error) {
 	if datasetResource.URL != "" {
 		resource, err := context.ExpandResource(&url.Resource{URL: datasetResource.URL})
 		if err != nil {
@@ -238,7 +231,7 @@ func (s *dataStoreUnitService) prepare(context *Context, request *DsUnitPrepareR
 		return nil, err
 	}
 
-	if request.Expand {
+	if expand {
 		var state = context.State()
 		for _, data := range datasets.Datasets {
 			for _, row := range data.Rows {
@@ -247,7 +240,21 @@ func (s *dataStoreUnitService) prepare(context *Context, request *DsUnitPrepareR
 			}
 		}
 	}
+	return datasets, err
+}
 
+
+
+func (s *dataStoreUnitService) prepare(context *Context, request *DsUnitPrepareRequest) (interface{}, error) {
+	var response = &DsUnitPrepareResponse{}
+	err := request.Validate()
+	if err != nil {
+		return nil, err
+	}
+	datasets, err := s.buildDatasets(context, request.AsDatasetResource(), request.Expand)
+	if err != nil {
+		return nil, err
+	}
 	for _, data := range datasets.Datasets {
 		var populateDatastoreEvent = &PopulateDatastoreEvent{Datastore: request.Datastore, Table: data.Table, Rows: len(data.Rows)}
 		AddEvent(context, populateDatastoreEvent, Pairs("value", populateDatastoreEvent), Info)
@@ -262,8 +269,7 @@ func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectReq
 	if err != nil {
 		return nil, err
 	}
-
-	datasets, err := s.Manager.DatasetFactory().CreateDatasets(request.Datasets)
+	datasets, err := s.buildDatasets(context, request.AsDatasetResource(), request.Expand)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +278,6 @@ func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectReq
 	if err != nil {
 		return nil, err
 	}
-
 	validationInfo := &ValidationInfo{}
 
 	if violations.HasViolations() {
