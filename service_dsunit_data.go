@@ -112,14 +112,19 @@ func AsTableRecords(source interface{}, state data.Map) (interface{}, error) {
 		state.Put(DataStoreUnitServiceID, data.NewMap())
 	}
 
-	var prepareTableData = []*DsUnitTableData{}
-	err := converter.AssignConverted(&prepareTableData, source)
-	if err != nil {
-		return nil, err
+
+	var prepareTableData, ok  = source.([]*DsUnitTableData)
+
+	if ! ok {
+		prepareTableData = make([]*DsUnitTableData, 0)
+		err := converter.AssignConverted(&prepareTableData, source)
+		if err != nil {
+			return nil, err
+		}
 	}
 	for _, tableData := range prepareTableData {
 		var table = tableData.Table
-		err = tableData.AuotGenerateIfNeeded(state)
+		err := tableData.AuotGenerateIfNeeded(state)
 		if err != nil {
 			return nil, err
 		}
@@ -132,7 +137,7 @@ func AsTableRecords(source interface{}, state data.Map) (interface{}, error) {
 		Persist: true,
 		Value:   dataStoreState,
 	}
-	err = variable.PersistValue()
+	err := variable.PersistValue()
 	if err != nil {
 		return nil, err
 	}
