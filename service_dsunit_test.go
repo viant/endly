@@ -168,6 +168,7 @@ func TestDsUnitService(t *testing.T) {
 		serviceResponse = service.Run(context, &endly.DsUnitExpectRequest{
 			Datastore: "mydb1",
 			Data:      tableSetupData,
+			Expand:true,
 		})
 
 		if assert.Equal(t, "", serviceResponse.Error) {
@@ -179,73 +180,78 @@ func TestDsUnitService(t *testing.T) {
 
 	}
 
-	////assert.Equal(t, 2, verifyResponse.DatasetChecked["ACCOUNT"])
-	////assert.Equal(t, 2, verifyResponse.DatasetChecked["USER"])
-	//
-	//response = service.Run(context, &endly.DsUnitExpectRequest{
-	//	Datasets: &dsunit.DatasetResource{
-	//		Datastore: "mydb1",
-	//		Prefix:    "err_",
-	//		URL:       url.NewResource("test/dsunit/dataset1").URL,
-	//	},
-	//})
-	//assert.True(t, response.Error != "")
-	//
-	//response = service.Run(context, &endly.DsUnitMappingRequest{
-	//	Mappings: []*url.Resource{
-	//
-	//		url.NewResource("test/workflow/mapping.json"),
-	//	},
-	//})
-	//assert.Equal(t, "", response.Error)
-	//mappingResponse, ok := response.Response.(*endly.DsUnitMappingResponse)
-	//if assert.True(t, ok) {
-	//	assert.Equal(t, []string{"USER", "ACCOUNT"}, mappingResponse.Tables)
-	//
-	//}
-	//
-	//response = service.Run(context, &endly.DsUnitTableSequenceRequest{
-	//	Datastore: "mydb1",
-	//	Tables:    []string{"USER", "ACCOUNT"},
-	//})
-	//
-	//assert.Equal(t, "", response.Error)
-	//sequenceResponse, ok := response.Response.(*endly.DsUnitTableSequenceResponse)
-	//if assert.True(t, ok) {
-	//	assert.Equal(t, map[string]int{
-	//		"USER":    4,
-	//		"ACCOUNT": 4,
-	//	}, sequenceResponse.Sequences)
-	//
-	//}
-	//lastUserId := sequenceResponse.Sequences["USER"]
-	//lastAccountId := sequenceResponse.Sequences["ACCOUNT"]
-	//
-	//response = service.Run(context, &endly.DsUnitPrepareRequest{
-	//	Datastore: "mydb1",
-	//	Data: map[string][]map[string]interface{}{
-	//		"USER_ACCOUNT": {
-	//			{
-	//				"USER_ID":    lastUserId,
-	//				"ACCOUNT_ID": lastAccountId,
-	//				"NAME":       "TestUser",
-	//				"TYPE":       "Testtype",
-	//				"EMAIL":      "a2@wrwe.pl",
-	//			},
-	//			{
-	//				"USER_ID":    lastUserId + 1,
-	//				"ACCOUNT_ID": lastAccountId,
-	//				"EMAIL":      "a3@wrwe.pl",
-	//			},
-	//		},
-	//	},
-	//})
-	//assert.Equal(t, "", response.Error)
-	//prepareResponse, ok := response.Response.(*endly.DsUnitPrepareResponse)
-	//if assert.True(t, ok) {
-	//	assert.Equal(t, 3, prepareResponse.Added)
-	//	assert.Equal(t, 0, prepareResponse.Modified)
-	//
-	//}
+}
+
+
+func TestDsUnitService_Errors(t *testing.T) {
+	manager := endly.NewManager()
+	context := manager.NewContext(toolbox.NewContext())
+	service, err := getRegisteredDsUnitService(manager, context, "mydb1")
+	if ! assert.Nil(t, err) {
+		return
+	}
+	serviceResponse := service.Run(context, &endly.DsUnitRegisterRequest{})
+	assert.True(t, serviceResponse.Error != "")
+
+	serviceResponse = service.Run(context, &endly.DsUnitRegisterRequest{
+		Datastore:"dd",
+
+	})
+	assert.True(t, serviceResponse.Error != "")
+
+
+
+	serviceResponse = service.Run(context, &endly.DsUnitRegisterRequest{
+		Datastore:"dd",
+		Config: &dsc.Config{
+			DriverName: "dsads",
+			Descriptor: "[username]:[password]@tcp(127.0.0.1:3308)/[dbname]?parseTime=true",
+		},
+	})
+
+
+
+	serviceResponse = service.Run(context, &endly.DsUnitPrepareRequest{})
+	assert.True(t, serviceResponse.Error != "")
+
+	serviceResponse = service.Run(context, &endly.DsUnitPrepareRequest{Datastore:"dd"})
+	assert.True(t, serviceResponse.Error != "")
+
+	serviceResponse = service.Run(context, &endly.DsUnitPrepareRequest{
+		Datastore:"dd",
+		URL: url.NewResource("test/nonexisting").URL,
+	})
+	assert.True(t, serviceResponse.Error != "")
+
+
+
+	serviceResponse = service.Run(context, &endly.DsUnitSQLScriptRequest{})
+	assert.True(t, serviceResponse.Error != "")
+
+	serviceResponse = service.Run(context, &endly.DsUnitSQLScriptRequest{Datastore:"dd"})
+	assert.True(t, serviceResponse.Error != "")
+	serviceResponse = service.Run(context, &endly.DsUnitSQLScriptRequest{
+		Datastore: "dd",
+		Scripts: []*url.Resource{
+			url.NewResource("test/nonexisting"),
+		},
+		})
+	assert.True(t, serviceResponse.Error != "")
+
+
+
+	serviceResponse = service.Run(context, &endly.DsUnitTableSequenceRequest{})
+	assert.True(t, serviceResponse.Error != "")
+
+
+	serviceResponse = service.Run(context, &endly.DsUnitTableSequenceRequest{Datastore:"dd"})
+	assert.True(t, serviceResponse.Error != "")
+
+
+	serviceResponse = service.Run(context, &endly.DsUnitExpectRequest{})
+	assert.True(t, serviceResponse.Error != "")
+
+	serviceResponse = service.Run(context, &endly.DsUnitExpectRequest{Datastore:"dd"})
+	assert.True(t, serviceResponse.Error != "")
 
 }

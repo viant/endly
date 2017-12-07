@@ -82,18 +82,26 @@ func (s *dataStoreUnitService) Run(context *Context, request interface{}) *Servi
 }
 
 func (s *dataStoreUnitService) getSequences(context *Context, request *DsUnitTableSequenceRequest) (*DsUnitTableSequenceResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, err
+	}
 	manager := s.Manager.ManagerRegistry().Get(request.Datastore)
 	if manager == nil {
-		return nil, fmt.Errorf("Unknown Datastore: %v", request.Datastore)
+		return nil, fmt.Errorf("unknown Datastore: %v", request.Datastore)
 	}
 	var response = &DsUnitTableSequenceResponse{
 		Sequences: make(map[string]int),
 	}
 	dbConfig := manager.Config()
+	var sequence int64
+	var err error
 	dialect := dsc.GetDatastoreDialect(dbConfig.DriverName)
 	for _, table := range request.Tables {
-		sequence, _ := dialect.GetSequence(manager, table)
+		sequence, err = dialect.GetSequence(manager, table)
 		response.Sequences[table] = int(sequence)
+	}
+	if len(response.Sequences) == 0 {
+		return response, err
 	}
 	return response, nil
 }
@@ -142,6 +150,9 @@ func (s *dataStoreUnitService) addMapping(context *Context, request *DsUnitMappi
 }
 
 func (s *dataStoreUnitService) runScripts(context *Context, request *DsUnitSQLScriptRequest) (*DsUnitSQLScriptResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, err
+	}
 	var err error
 	var response = &DsUnitSQLScriptResponse{}
 	response.Modified, err = s.runSQLScripts(context, request.Datastore, request.Scripts)
