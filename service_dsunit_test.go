@@ -93,8 +93,8 @@ func TestDsUnitService(t *testing.T) {
 			response, ok := serviceResponse.Response.(*endly.DsUnitTableSequenceResponse)
 			if assert.True(t, ok) {
 				assert.EqualValues(t, map[string]int{
-					"USER":    2,
-					"ACCOUNT": 2,
+					"USER":    3,
+					"ACCOUNT": 3,
 				}, response.Sequences)
 			}
 			sequences = response.Sequences

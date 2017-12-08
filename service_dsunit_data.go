@@ -112,8 +112,7 @@ func AsTableRecords(source interface{}, state data.Map) (interface{}, error) {
 		state.Put(DataStoreUnitServiceID, data.NewMap())
 	}
 
-
-	var prepareTableData, ok  = source.([]*DsUnitTableData)
+	var prepareTableData, ok = source.([]*DsUnitTableData)
 
 	if ! ok {
 		prepareTableData = make([]*DsUnitTableData, 0)
