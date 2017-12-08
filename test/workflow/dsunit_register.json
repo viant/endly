@@ -1,9 +1,10 @@
 {
   "Datastore": "mydb1",
   "Config": {
-    "DriverName": "mysql",
-    "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
-  },
-  "Credential": "${env.HOME}/secret/mysql.json",
-  "AdminDatastore": "mysql"
+    "DriverName": "sqlite3",
+    "Descriptor": "[url]",
+    "Parameters":{
+      "url":"/tmp/endly/test/workflow/dsunit/mydb1"
+    }
+  }
 }
