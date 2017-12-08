@@ -86,7 +86,6 @@ func NewManager() Manager {
 	result.Register(NewExecService())
 	result.Register(NewTransferService())
 	result.Register(NewDeploymentService())
-	result.Register(NewScriptService())
 	result.Register(NewHTTPpRunnerService())
 	result.Register(NewRestService())
 	result.Register(NewProcessService())
