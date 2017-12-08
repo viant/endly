@@ -1,12 +1,14 @@
-Workflow,,,Name,Description,Init,,Tasks,,
-,,,simple,Simple http request and response test,#simple/variables.json,#simple/variables.json,%Tasks,,
-[]Tasks,Seq,,Name,Description,,,Actions,,
-,1,,First Set of requestss,This will test abc,,,%Action1,,
-[]Action1,,Service ,Action ,Description,,Post,Request.[]Requests.URL,Request.[]Requests.Method,
-,,http/runner,send,,,"[{""name"":""httpResponses"", ""from"":""Responses""}]",$appServer/path1,GET,
-,,,,,,,$appServer/path2,GET,
-,,,,,,,$appServer/path3,GET,
-[]Action1,,Service ,Action ,,,,Request.[]Expected.Body,Request.[]Expected.Headers,Request.Actual
-,,validator,assert,,,,/path1/,,$httpResponses
-,,,,,,,/path2/,,
-,,,,,,,/path3/,,
+Workflow,,,Name,Description,Tasks,,Post,var.Name,var.From
+,,,http_workflow,Sending and validating a smaple request/response,%Tasks,,[$arg0]|$var,httpResponses,httpResponses
+[]Tasks,,,Name,Description,Actions,,,,
+,,,send,This task will send a few http requests,%Send,,,,
+[]Send,,Service ,Action ,Description,Request.[]Requests.URL,Request.[]Requests.Method,Post,var.Name,var.From
+,,http/runner,send,Sending http requests,$appServer/path1,GET,[$arg0]|$var,httpResponses,Responses
+,,,,,$appServer/path2,GET,,,
+,,,,,$appServer/path3,GET,,,
+[]Tasks,,,Name,Description,Actions,,,,
+,,,validate,Validates http resposnes,%Validate,,,,
+[]Validate,,Service ,Action ,Description,Request.Actual,Request.[]Expected.Body,Request.[]Expected.Code,,
+,,validator,assert,Verify responses,$httpResponses,/path1/,200,,
+,,,,,,/path2/,200,,
+,,,,,,/path3/,200,,
