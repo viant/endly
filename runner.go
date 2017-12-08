@@ -521,9 +521,9 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	if err != nil {
 		return err
 	}
-	context := r.manager.NewContext(toolbox.NewContext())
-	defer context.Close()
-	service, err := context.Service(WorkflowServiceID)
+	ctx := r.manager.NewContext(toolbox.NewContext())
+	defer ctx.Close()
+	service, err := ctx.Service(WorkflowServiceID)
 	if err != nil {
 		return err
 	}
@@ -532,8 +532,11 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	if err != nil {
 		return err
 	}
+	if runnerOption.Filter == nil {
+		runnerOption.Filter = &RunnerReportingFilter{}
+	}
 	request.Async = true
-	response := service.Run(context, request)
+	response := service.Run(ctx, request)
 	if response.Error != "" {
 		return errors.New(response.Error)
 	}
@@ -541,7 +544,7 @@ func (r *CliRunner) Run(workflowRunRequestURL string) error {
 	if !ok {
 		return fmt.Errorf("failed to run workflow: %v invalid response type %T", workflowRunRequestURL, response.Response)
 	}
-	return r.reportEvents(context, workflowResponse.SessionID, runnerOption.Filter)
+	return r.reportEvents(ctx, workflowResponse.SessionID, runnerOption.Filter)
 }
 
 func colorText(text, color string) string {
