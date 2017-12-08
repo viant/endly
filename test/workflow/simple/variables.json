@@ -1,8 +1,0 @@
-[
-
-  {
-    "Name": "appServer",
-    "Value":"http://127.0.0.1:${params.port}/"
-  }
-
-]

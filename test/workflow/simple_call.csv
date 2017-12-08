@@ -1,6 +1,0 @@
-Workflow,,,Name,Description,Tasks,Tasks
-,,,simple_call,This workflow load another wokflow,%Tasks,%Tasks
-[]Tasks,Seq,,Name,Description,Actions,
-,1,,Load another workflow,This will test abc,%Action1,
-[]Action1,,Service ,Action ,Description,Request.Name,Request.Params.port
-,,workflow,run,Runs simple worfklow,simple,$params.port
