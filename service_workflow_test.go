@@ -9,6 +9,7 @@ import (
 	"errors"
 	"testing"
 	"github.com/stretchr/testify/assert"
+	"os/exec"
 )
 
 func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, error) {
@@ -30,6 +31,8 @@ func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, e
 
 
 func TestWorkflowService_Run(t *testing.T) {
+
+	exec.Command("rm", "-rf", "/tmp/endly/test/workflow/dsunit").CombinedOutput()
 	toolbox.CreateDirIfNotExist("/tmp/endly/test/workflow/dsunit")
 	manager, service, err := getServiceWithWorkflow("test/workflow/dsunit/workflow.csv")
 	if assert.Nil(t, err) {
@@ -41,13 +44,12 @@ func TestWorkflowService_Run(t *testing.T) {
 			Params:map[string]interface{}{
 				"param1":1,
 			},
-			EnableLogging:true,
-			LoggingDirectory:"/tmp/dsunit/",
 		})
 		assert.Equal(t, "", serviceResponse.Error)
 		response, ok := serviceResponse.Response.(*endly.WorkflowRunResponse)
-		if assert.True(t, ok) {
 
+		if assert.True(t, ok) {
+			assert.NotNil(t, response)
 			var dsunit = toolbox.AsMap(response.Data["dsunit"])
 			var records = toolbox.AsSlice(dsunit["USER_ACCOUNT"])
 			assert.EqualValues(t, 3, len(records))
@@ -67,6 +69,7 @@ func TestWorkflowService_Run(t *testing.T) {
 		assert.Equal(t, "", serviceResponse.Error)
 
 		response, ok = serviceResponse.Response.(*endly.WorkflowRunResponse)
+		assert.NotNil(t, response)
 		var dsunit = toolbox.AsMap(response.Data["dsunit"])
 		var records = toolbox.AsSlice(dsunit["USER_ACCOUNT"])
 		assert.EqualValues(t, 0, len(records)) //validate task shift elements from USER_ACCCOUNT array.

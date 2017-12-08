@@ -1,0 +1,8 @@
+{
+  "WorkflowURL":"test/workflow/dsunit/workflow.csv",
+   "Name":"workflow",
+   "Tasks":"*",
+    "Params":{
+        "param1":1
+    }
+}
