@@ -74,7 +74,7 @@ func (s *Server) routeHandler(serviceRouting *toolbox.ServiceRouting, httpReques
 
 	serviceName, ok := uriParameters["service"]
 	if !ok {
-		return fmt.Errorf("Service name was missing %v", uriParameters)
+		return fmt.Errorf("service name was missing %v", uriParameters)
 	}
 	action, ok := uriParameters["action"]
 	if !ok {
