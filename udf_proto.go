@@ -7,7 +7,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"io/ioutil"
 	"strings"
 )
 
@@ -40,7 +39,7 @@ func AsProtobufMessage(source interface{}, state data.Map, target proto.Message)
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)
 	defer encoder.Close()
 	encoder.Write(protodata)
-
+	encoder.Close()
 	return fmt.Sprintf("base64:%v", string(buf.Bytes())), nil
 }
 
@@ -48,29 +47,24 @@ func AsProtobufMessage(source interface{}, state data.Map, target proto.Message)
 func FromProtobufMessage(source interface{}, state data.Map, sourceMessage proto.Message) (interface{}, error) {
 	if toolbox.IsString(source) {
 		textSource := toolbox.AsString(source)
-		if strings.HasPrefix(textSource, "base64:") {
-			textSource = string(textSource[7:])
-			decoder := base64.NewDecoder(base64.StdEncoding, strings.NewReader(textSource))
-			data, err := ioutil.ReadAll(decoder)
-			if err != nil {
-				return nil, err
-			}
 
-			converter := toolbox.NewColumnConverter("")
-
-			err = proto.Unmarshal(data, sourceMessage)
-			if err != nil {
-				return nil, err
-			}
-
-			var resultMap = make(map[string]interface{})
-			err = converter.AssignConverted(&resultMap, sourceMessage)
-			if err != nil {
-				return nil, err
-			}
-			return toolbox.DereferenceValues(resultMap), nil
+		payload, err := FromPayload(textSource)
+		if err != nil {
+			return nil, err
+		}
+		converter := toolbox.NewColumnConverter("")
+		err = proto.Unmarshal(payload, sourceMessage)
+		if err != nil {
+			return nil, err
 		}
 
+		var resultMap = make(map[string]interface{})
+		err = converter.AssignConverted(&resultMap, sourceMessage)
+		if err != nil {
+			return nil, err
+		}
+		return toolbox.DereferenceValues(resultMap), nil
+
 	}
-	return nil, fmt.Errorf("ExpectedLogRecords string but had:%T", source)
+	return nil, fmt.Errorf("expected string but had:%T", source)
 }

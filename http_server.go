@@ -103,10 +103,7 @@ func StartHttpServer(port int, trips *HttpServerTrips) error {
 		}
 		writer.WriteHeader(response.Code)
 		if response.Body != "" {
-			var body []byte = ([]byte)(response.Body)
-			if strings.HasPrefix(response.Body, "text:") {
-				body = []byte(response.Body[5:])
-			}
+			var body, _ = FromPayload(response.Body)
 			writer.Write(body)
 		}
 		if responses.Index >= len(responses.Responses) {
@@ -189,10 +186,8 @@ func init() {
 	HttpRequestKeyProviders[BodyKey] = func(source interface{}) (string, error) {
 		switch request := source.(type) {
 		case *bridge.HttpRequest:
-			if strings.HasPrefix(request.Body, "text:") {
-				return string(request.Body[5:]), nil
-			}
-			return request.Body, nil
+			body, err := FromPayload(request.Body)
+			return string(body), err
 		case *http.Request:
 			if request.ContentLength == 0 {
 				return "", nil
