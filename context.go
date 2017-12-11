@@ -134,7 +134,7 @@ func (c *Context) TerminalSessions() SystemTerminalSessions {
 //TerminalSessions returns client sessions
 func (c *Context) SeleniumSessions() SeleniumSessions {
 	var result *SeleniumSessions
-	if !c.Contains(systemTerminalSessionsKey) {
+	if !c.Contains(seleniumSessionsKey) {
 		var sessions SeleniumSessions = make(map[string]*SeleniumSession)
 		result = &sessions
 		c.Put(seleniumSessionsKey, result)

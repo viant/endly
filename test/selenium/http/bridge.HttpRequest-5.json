@@ -1,0 +1,22 @@
+{
+	"Method": "POST",
+	"URL": "http://127.0.0.1:8117/wd/hub/session/b26483ae-c4e5-4dc5-babc-debc9f1a7659/element",
+	"Header": {
+		"Accept": [
+			"application/json"
+		],
+		"Accept-Encoding": [
+			"gzip"
+		],
+		"Content-Length": [
+			"40"
+		],
+		"User-Agent": [
+			"Go-http-client/1.1"
+		],
+		"X-Forwarded-For": [
+			"127.0.0.1"
+		]
+	},
+	"Body": "text:{\"using\":\"css selector\",\"value\":\"#code\"}"
+}

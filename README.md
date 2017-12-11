@@ -25,16 +25,17 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 ## Motivation
 
-This library was developed to enable simple automated declarative end to end functional testing.
-Usually an application takes and input to produce some output. Most software would
-uses a system to run on it with some services like datastore (rdbms, key-value stores) for application meta data, 
-or to process in the required by a business way. Other services used by an application can include caching layer or external API services.
-The typical application output could be data in datastore persisted by UI, logs produced by application, performance counters,
-or profile data based on used activity.
-Finally application needs to be build and deployed with the required service into a system in automated fashion to be tested.
-This framework provide end to end capability to test from system service preparation, building and deploying application to final verification 
-that expected output has been produced.
+This library was developed to enable simple automated declarative end to end functional testing 
+for web application developed in any language.
 
+It addresses all aspect of testing automation namely:
+- Local or remote system preparation including all services required by the application.
+- Checking out the application code
+- Building and deploying the application as a separate process, or in the container.
+- Data preparation including RDBMS, or key/value store
+- Test use cases with HTTP, REST or selenium runner.
+- Verification of responses, data in datastores or log produced.
+    
 
 <a name="Installation"></a>
 ## Installation
@@ -82,7 +83,7 @@ go get -u github.com/viant/toolbox/secret
 export PATH=$PATH:$GOPATH/bin
 ```
 
-Generate secret keys with credential that endly will use to run the workflows.
+Generate secret keys with a credential that endly will use to run the workflows.
 (**secret** binary should be compiled and build as result of get -u github.com/viant/toolbox/secret into GOPATH/bin)
 Secret generate a file that store blowfish encrypted credential in $HOME/.secret/ directory.
 
@@ -370,7 +371,19 @@ Http runner sends one or more http request to the specified endpoint, it manages
 
 
 
-TODO add Selenium/WebDriver runner
+**Selenium Runner** 
+
+Selenium runner open a web session to run various action on web driver or web elements.
+
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| selenium | start | Starts standalone selenium server | [SeleniumServerStartRequest](service_selenium_start.go) | [SeleniumServerStartResponse](service_selenium_start.go) |
+| selenium | stop | Stops standalone selenium server | [SeleniumServerStopRequest](service_selenium_start.go) | [SeleniumServerStopResponse](service_selenium_stop.go) |
+| selenium | open | Open a new browser with session id for further testing | [SeleniumOpenSessionRequest](service_selenium_session.go) | [SeleniumOpenSessionResponse](service_selenium_session.go) |
+| selenium | call-driver | Call a method on web driver, i.e wb.GET(url)| [SeleniumWebDriverCallRequest](service_selenium_call_web_driver.go) | [SeleniumServiceCallResponse](service_selenium_call_web_driver.go) |
+| selenium | call-element | Call a method on a web element, i.e. we.Click() | [SeleniumWebElementCallRequest](service_selenium_call_web_element.go) | [SeleniumWebElementCallResponse](service_selenium_call_web_element.go) |
+| selenium | run | Run set of action on a page | [SeleniumRunRequest](service_selenium_run.go) | [SeleniumRunResponse](service_selenium_run.go) |
 
 
 **Generic validation service**

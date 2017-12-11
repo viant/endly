@@ -235,6 +235,7 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	if err != nil {
 		return nil, err
 	}
+
 	request = &DeploymentDeployRequest{
 		AppName: context.Expand(request.AppName),
 		Version: context.Expand(request.Version),
@@ -244,6 +245,12 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	if err != nil {
 		return nil, err
 	}
+	state := context.state
+	if ! state.Has("targetHost") {
+		state.Put("targetHost", target.ParsedURL.Host)
+		state.Put("targetHostCredential", target.Credential)
+	}
+
 	var response = &DeploymentDeployResponse{}
 	if s.checkIfDeployedOnSession(context, target, request) {
 		response.Version = request.Version
@@ -274,7 +281,6 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	if err != nil {
 		return nil, err
 	}
-	var state = context.state
 	var artifact = state.GetMap(artifactKey)
 	if artifact != nil {
 		response.Version = artifact.GetString("")
