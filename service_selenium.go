@@ -6,6 +6,8 @@ import (
 	"github.com/tebeka/selenium"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
+	"time"
+	"github.com/viant/toolbox/data"
 )
 
 //represents a SeleniumServiceID
@@ -13,70 +15,19 @@ const SeleniumServiceID = "selenium"
 const SeleniumServer = "selenium-server-standalone"
 const GeckoDriver = "geckodriver"
 
-type SeleniumServerStartRequest struct {
-	Target     *url.Resource
-	Port       int
-	Sdk        string
-	SdkVersion string
-	Version    string
-}
 
-type SeleniumServerStartResponse struct {
-	Pid                int
-	SeleniumServerPath string
-	GeckodriverPath    string
-}
 
-type SeleniumOpenSessionRequest struct {
-	Browser        string
-	RemoteSelenium *url.Resource //remote selenium resource
-}
 
-func (r *SeleniumOpenSessionRequest) Validate() error {
-	if r.RemoteSelenium == nil {
-		return errors.New("Remote (remote selenium endpoint) was empty")
-	}
-	if r.RemoteSelenium.URL == "" {
-		return errors.New("Remote.URL (selenium resource URL) was empty")
-	}
-	if r.RemoteSelenium.Name == "" {
-		return errors.New("Remote.Name (selenium browser) was empty")
-	}
-	return nil
-}
 
-type SeleniumOpenSessionResponse struct {
-	SessionID string
-}
 
-type WebElementSelector struct {
-	By    string
-	Value string
-}
-
-type SeleniumWebElementCallRequest struct {
-	SessionID  string
-	Selector   *WebElementSelector
-	Method     string
-	Parameters []interface{}
-}
-
-type SeleniumCallResponse struct {
-	Result []interface{}
-}
-
-type SeleniumWebDriverCallRequest struct {
-	SessionID  string
-	Method     string
-	Parameters []interface{}
-}
-
+//SeleniumSession represents a selenium session
 type SeleniumSession struct {
 	ID      string
 	Browser string
 	driver  selenium.WebDriver
 }
 
+//SeleniumSessions reprents selenium sessions.
 type SeleniumSessions map[string]*SeleniumSession
 type seleniumService struct {
 	*AbstractService
@@ -97,6 +48,12 @@ func (s *seleniumService) Run(context *Context, request interface{}) *ServiceRes
 			response.Error = fmt.Sprintf("failed to start selenium %v", err)
 		}
 
+	case *SeleniumServerStopRequest:
+		response.Response, err = s.stop(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("failed to start selenium %v", err)
+		}
+
 	case *SeleniumOpenSessionRequest:
 		response.Response, err = s.open(context, actualRequest)
 		if err != nil {
@@ -110,9 +67,13 @@ func (s *seleniumService) Run(context *Context, request interface{}) *ServiceRes
 	case *SeleniumWebElementCallRequest:
 		response.Response, err = s.webElementCall(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("failed to call web selement %v", err)
+			response.Error = fmt.Sprintf("failed to call web element: %v", err)
 		}
-
+	case *SeleniumRunRequest:
+		response.Response, err = s.run(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("failed to call web element: %v", err)
+		}
 	default:
 		response.Error = fmt.Sprintf("unsupported request type: %T", request)
 	}
@@ -121,17 +82,95 @@ func (s *seleniumService) Run(context *Context, request interface{}) *ServiceRes
 		response.Status = "err"
 	}
 	return response
+
+
+	}
+
+
+
+func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*SeleniumRunResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, err
+	}
+	var response = &SeleniumRunResponse{
+		Data :make(map[string]*ElementResponse),
+	}
+
+
+	if request.SessionID == "" {
+		openResponse, err:= s.openSession(context, &SeleniumOpenSessionRequest{
+			RemoteSelenium:request.RemoteSelenium,
+			Browser:request.Browser,
+		})
+
+
+		if err != nil {
+			return nil, err
+		}
+		request.SessionID = openResponse.ID
+	}
+	response.SessionID = request.SessionID
+	if request.PageURL != "" {
+		seleniumSession, err := s.session(context, request.SessionID)
+		if err != nil {
+			return nil, err
+		}
+		err = seleniumSession.driver.Get(request.PageURL)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if len(request.Actions) == 0 {
+		return response, nil
+	}
+	for _, action := range request.Actions {
+		for _, call := range action.Calls {
+			callResponse, err := s.webElementCall(context, &SeleniumWebElementCallRequest{
+				SessionID:request.SessionID,
+				Selector: action.Selector,
+				Call:call,
+			})
+			if err != nil {
+				return nil,err
+			}
+
+			var responseData string
+			var has = false
+			for _, element := range callResponse.Result {
+				if element == nil || ! toolbox.IsString(element) {
+					continue
+				}
+				has  = true
+				responseData = toolbox.AsString(element)
+				break;
+			}
+			if ! has {
+				continue
+			}
+
+			if _, has := response.Data[action.Selector.Value]; ! has {
+				response.Data[action.Selector.Value] = &ElementResponse{
+					Selector:action.Selector,
+					Data:make(map[string]string),
+				}
+			}
+			response.Data[action.Selector.Value].Data[call.Method] = responseData
+
+		}
+	}
+	return response, nil
 }
 
-func (s *seleniumService) webDriverCall(context *Context, request *SeleniumWebDriverCallRequest) (*SeleniumCallResponse, error) {
+func (s *seleniumService) webDriverCall(context *Context, request *SeleniumWebDriverCallRequest) (*SeleniumServiceCallResponse, error) {
 	seleniumSession, err := s.session(context, request.SessionID)
 	if err != nil {
 		return nil, err
 	}
-	return s.callMethod(seleniumSession.driver, request.Method, request.Parameters)
+	return s.callMethod(seleniumSession.driver, request.Call.Method, request.Call.Parameters)
 }
 
-func (s *seleniumService) callMethod(owner interface{}, methodName string, parameters []interface{}) (*SeleniumCallResponse, error) {
+func (s *seleniumService) callMethod(owner interface{}, methodName string, parameters []interface{}) (*SeleniumServiceCallResponse, error) {
 	method, err := toolbox.GetFunction(owner, methodName)
 	if err != nil {
 		return nil, err
@@ -140,26 +179,57 @@ func (s *seleniumService) callMethod(owner interface{}, methodName string, param
 	if err != nil {
 		return nil, err
 	}
-	var response = &SeleniumCallResponse{}
-	response.Result = toolbox.CallFunction(method, parameters)
+	var response = &SeleniumServiceCallResponse{}
+	response.Result = toolbox.CallFunction(method, parameters...)
 	return response, nil
 }
 
-func (s *seleniumService) webElementCall(context *Context, request *SeleniumWebElementCallRequest) (interface{}, error) {
+func (s *seleniumService) webElementCall(context *Context, request *SeleniumWebElementCallRequest) (*SeleniumWebElementCallResponse, error) {
 	seleniumSession, err := s.session(context, request.SessionID)
 	if err != nil {
 		return nil, err
 	}
-	var selector = request.Selector
-	element, err := seleniumSession.driver.FindElement(selector.By, selector.Value)
+	var response = &SeleniumWebElementCallResponse{}
+	err = request.Selector.Validate()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid selector: %v",err)
 	}
-	if element == nil {
+	var selector = request.Selector
+
+	element, err := seleniumSession.driver.FindElement(selector.By, selector.Value)
+	if err != nil || element == nil {
 		return nil, fmt.Errorf("failed to lookup element: %v %v", selector.By, selector.Value)
 	}
-	return s.callMethod(element, request.Method, request.Parameters)
+
+	var callResponse *SeleniumServiceCallResponse
+	repeat, sleepMs, exitCriteria := request.Data()
+	for i := 0; i < repeat; i++ {
+		callResponse, err = s.callMethod(element, request.Call.Method, request.Call.Parameters)
+		if err != nil {
+			return nil, err
+		}
+		if sleepMs > 0 {
+			time.Sleep(sleepMs)
+		}
+		if exitCriteria != "" {
+			var criteriaState = data.NewMap()
+			if len(callResponse.Result) > 0 {
+				criteriaState.Put("value", callResponse.Result[0])
+			}
+			criteria := criteriaState.ExpandAsText(exitCriteria)
+			ok, err := EvaluateCriteria(context, criteria, "SeleniumWaitCriteria", true)
+			if err != nil {
+				return nil, err
+			}
+			if ok {
+				break
+			}
+		}
+	}
+	response.Result = callResponse.Result
+	return response, nil
 }
+
 
 func (s *seleniumService) open(context *Context, request *SeleniumOpenSessionRequest) (*SeleniumOpenSessionResponse, error) {
 	var response = &SeleniumOpenSessionResponse{}
@@ -171,10 +241,11 @@ func (s *seleniumService) open(context *Context, request *SeleniumOpenSessionReq
 	return response, nil
 }
 
-func (s *seleniumService) deployServerIfNeeded(context *Context, request *SeleniumServerStartRequest) (*SeleniumServerStartResponse, error) {
+func (s *seleniumService) deployServerIfNeeded(context *Context, request *SeleniumServerStartRequest, target *url.Resource) (*SeleniumServerStartResponse, error) {
 	deploymentService, _ := context.Service(DeploymentServiceID)
+
 	deployServerResponse := deploymentService.Run(context, &DeploymentDeployRequest{
-		Target:  request.Target,
+		Target:  target,
 		AppName: SeleniumServer,
 		Version: request.Version,
 	})
@@ -182,7 +253,7 @@ func (s *seleniumService) deployServerIfNeeded(context *Context, request *Seleni
 		return nil, errors.New(deployServerResponse.Error)
 	}
 	deployGeckoDriverResponse := deploymentService.Run(context, &DeploymentDeployRequest{
-		Target:  request.Target,
+		Target:  target,
 		AppName: GeckoDriver,
 	})
 	if deployGeckoDriverResponse.Error != "" {
@@ -198,7 +269,7 @@ func (s *seleniumService) setJdk(context *Context, request *SeleniumServerStartR
 	sdkService, _ := context.Service(SdkServiceID)
 	response := sdkService.Run(context, &SystemSdkSetRequest{
 		Sdk:     request.Sdk,
-		Version: request.Version,
+		Version: request.SdkVersion,
 		Target:  request.Target,
 	})
 
@@ -208,8 +279,32 @@ func (s *seleniumService) setJdk(context *Context, request *SeleniumServerStartR
 	return nil
 }
 
+func (s *seleniumService) stop(context *Context, request *SeleniumServerStopRequest) (*SeleniumServerStopResponse, error) {
+	var target, err = context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, err
+	}
+
+	processService, _ := context.Service(ProcessServiceID)
+	serviceResponse := processService.Run(context, &ProcessStopAllRequest{
+		Target: target,
+		Input:  fmt.Sprintf("selenium-server-standalone.jar -port %d", toolbox.AsString(request.Port)),
+	})
+	if serviceResponse.Error != "" {
+		return nil, errors.New(serviceResponse.Error)
+	}
+	return &SeleniumServerStopResponse{
+
+	}, nil
+}
+
 func (s *seleniumService) start(context *Context, request *SeleniumServerStartRequest) (*SeleniumServerStartResponse, error) {
-	response, err := s.deployServerIfNeeded(context, request)
+	var target, err = context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, err
+	}
+
+	response, err := s.deployServerIfNeeded(context, request, target)
 	if err != nil {
 		return nil, err
 	}
@@ -218,14 +313,24 @@ func (s *seleniumService) start(context *Context, request *SeleniumServerStartRe
 		return nil, err
 	}
 
+	s.Run(context, &SeleniumServerStopRequest{
+		Target:target,
+		Port:request.Port,
+	})
 	processService, _ := context.Service(ProcessServiceID)
-	processService.Run(context, &ProcessStartRequest{
+	serviceResponse := processService.Run(context, &ProcessStartRequest{
 		Command:         "java",
-		Target:          request.Target,
+		Target:          target,
 		Directory:       "/opt/selenium",
-		Arguments:       []string{"-jar", fmt.Sprintf("-Dwebdriver.gecko.driver=%v", response.GeckodriverPath), "-jar", response.GeckodriverPath, "-port", toolbox.AsString(request.Port)},
+		Arguments:       []string{"-jar", fmt.Sprintf("-Dwebdriver.gecko.driver=%v", response.GeckodriverPath), "-jar", response.SeleniumServerPath, "-port", toolbox.AsString(request.Port)},
 		ImmuneToHangups: true,
 	})
+	if serviceResponse.Error != "" {
+		return nil, errors.New(serviceResponse.Error)
+	}
+	if processResponse, ok := serviceResponse.Response.(*ProcessStartResponse); ok && len(processResponse.Info) > 0 {
+		response.Pid = processResponse.Info[0].Pid
+	}
 	return response, nil
 }
 
@@ -250,18 +355,20 @@ func (s *seleniumService) openSession(context *Context, request *SeleniumOpenSes
 	sessions := context.SeleniumSessions()
 	seleniumSession, ok := sessions[sessionID]
 	if ok {
-		if seleniumSession.Browser == resource.Name {
+		if seleniumSession.Browser == request.Browser {
 			return seleniumSession, nil
 		}
 		seleniumSession.driver.Close()
 	} else {
 		seleniumSession = &SeleniumSession{
 			ID:      sessionID,
-			Browser: resource.Name,
+			Browser: request.Browser,
 		}
 	}
-	caps := selenium.Capabilities{"browserName": resource.Name}
-	seleniumSession.driver, err = selenium.NewRemote(caps, fmt.Sprintf("http://%v:%v/webDriver/hub", resource.ParsedURL.Host, resource.ParsedURL.Port()))
+	caps := selenium.Capabilities{"browserName": request.Browser}
+	seleniumEndpoint := fmt.Sprintf("http://%v/wd/hub", resource.ParsedURL.Host)
+	seleniumSession.driver, err = selenium.NewRemote(caps, seleniumEndpoint)
+
 	if err != nil {
 		return nil, err
 	}
@@ -277,12 +384,16 @@ func (s *seleniumService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case "start":
 		return &SeleniumServerStartRequest{}, nil
+	case "stop":
+		return &SeleniumServerStopRequest{}, nil
 	case "open":
 		return &SeleniumOpenSessionRequest{}, nil
-	case "web-driver":
-		return &SeleniumOpenSessionRequest{}, nil
-	case "web-element":
-		return &SeleniumOpenSessionRequest{}, nil
+	case "call-driver":
+		return &SeleniumWebDriverCallRequest{}, nil
+	case "call-element":
+		return &SeleniumWebElementCallRequest{}, nil
+	case "run":
+		return SeleniumRunRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
 }
