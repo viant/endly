@@ -53,9 +53,6 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 	var body []byte
 	if len(sendHTTPRequest.Body) > 0 {
 		body = []byte(sendHTTPRequest.Body)
-		if strings.HasPrefix(sendHTTPRequest.Body, "text:") {
-			body = []byte(sendHTTPRequest.Body[5:])
-		}
 		if sendRequest.RequestUdf != "" {
 			var udf, has = UdfRegistry[sendRequest.RequestUdf]
 			if !has {
@@ -67,14 +64,9 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 			}
 			body = []byte(toolbox.AsString(transformed))
 		}
-
-		if strings.HasPrefix(string(body), "base64:") {
-			isBase64Encoded = true
-			reader = base64.NewDecoder(base64.StdEncoding, bytes.NewReader(body[7:]))
-			body, err = ioutil.ReadAll(reader)
-			if err != nil {
-				return fmt.Errorf("failed to decode base64 sendRequest: %v, %v", sendHTTPRequest.URL, err)
-			}
+		body, err = FromPayload(sendHTTPRequest.Body)
+		if err != nil {
+			return  err
 		}
 		reader = bytes.NewReader(body)
 	}

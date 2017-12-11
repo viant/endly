@@ -567,7 +567,7 @@ func logTypeMetaKey(name string) string {
 func (i *logRecordIterator) Next(itemPointer interface{}) error {
 	var logRecordPointer, ok = itemPointer.(**LogRecord)
 	if !ok {
-		return fmt.Errorf("ExpectedLogRecords *%T buy had %T", &LogRecord{}, itemPointer)
+		return fmt.Errorf("expected *%T buy had %T", &LogRecord{}, itemPointer)
 	}
 	logFile := i.logFiles[i.logFileIndex]
 	logRecord := logFile.ShiftLogRecord()
