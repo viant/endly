@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-
 const (
 	URLKey         = "URL"
 	CookieKey      = "Cookie"
@@ -21,6 +20,7 @@ const (
 
 //HttpRequestKeyProvider represents request key provider to extract a request field.
 type HttpRequestKeyProvider func(source interface{}) (string, error)
+
 //HttpRequestKeyProviders rerpresents key providers
 var HttpRequestKeyProviders = make(map[string]HttpRequestKeyProvider)
 
@@ -38,12 +38,15 @@ func (t *HttpServerTrips) LoadTripsIfNeeded() error {
 		if err != nil {
 			return err
 		}
+		if len(httpTrips) == 0 {
+			fmt.Errorf("Http capautre directory was empty %v", t.BaseDirectory)
+		}
 		for _, trip := range httpTrips {
 			key, _ := buildKeyValue(t.IndexKeys, trip.Request)
-			if _, has := t.Trips[key] ; ! has {
-				t.Trips[key]= &HttpResponses{
-					Request:trip.Request,
-					Responses:make([]*bridge.HttpResponse, 0),
+			if _, has := t.Trips[key]; ! has {
+				t.Trips[key] = &HttpResponses{
+					Request:   trip.Request,
+					Responses: make([]*bridge.HttpResponse, 0),
 				}
 			}
 			t.Trips[key].Responses = append(t.Trips[key].Responses, trip.Response)
@@ -59,12 +62,11 @@ type HttpResponses struct {
 	Index     int
 }
 
-
 type httpHandler struct {
 	handler func(writer http.ResponseWriter, request *http.Request)
 }
 
-func (h *httpHandler) ServeHTTP(writer http.ResponseWriter,request  *http.Request) {
+func (h *httpHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	h.handler(writer, request)
 }
 
@@ -79,34 +81,34 @@ func StartHttpServer(port int, trips *HttpServerTrips) error {
 	}
 	var httpServer *http.Server
 
-
-	var handler =  func(writer http.ResponseWriter, request *http.Request) {
+	var handler = func(writer http.ResponseWriter, request *http.Request) {
 		var key, err = buildKeyValue(trips.IndexKeys, request)
 		if err != nil {
-			writer.WriteHeader(500)
-			writer.Header().Set("error", fmt.Sprintf("%v", err))
+			http.Error(writer, fmt.Sprintf("%v", err), http.StatusInternalServerError)
 			return
 		}
 		responses, ok := trips.Trips[key]
 		if ! ok {
-
-			fmt.Printf("key not found: %v\n", key)
-			fmt.Printf("available: [%v]", strings.Join(toolbox.MapKeysToStringSlice(trips.Trips), ","))
-
-			writer.WriteHeader(404)
+			var errorMessage = fmt.Sprintf("key: %v not found: %v, available: [%v]", key, strings.Join(toolbox.MapKeysToStringSlice(trips.Trips), ","))
+			fmt.Println(errorMessage)
+			http.Error(writer, errorMessage, http.StatusNotFound)
 			return
 		}
 		response := responses.Responses[responses.Index]
 		responses.Index++
-
+		for k, headerValues := range response.Header {
+			for _, headerValue := range headerValues {
+				writer.Header().Set(k, headerValue)
+			}
+		}
 		writer.WriteHeader(response.Code)
-		for k, v := range response.Header {
-			writer.Header()[k] = v
-		}
 		if response.Body != "" {
-			writer.Write([]byte(response.Body))
+			var body []byte = ([]byte)(response.Body)
+			if strings.HasPrefix(response.Body, "text:") {
+				body = []byte(response.Body[5:])
+			}
+			writer.Write(body)
 		}
-
 		if responses.Index >= len(responses.Responses) {
 			delete(trips.Trips, key)
 		}
@@ -119,8 +121,7 @@ func StartHttpServer(port int, trips *HttpServerTrips) error {
 		}
 	}
 
-
-	httpServer = &http.Server{Addr: fmt.Sprintf(":%v", port), Handler:&httpHandler{handler}}
+	httpServer = &http.Server{Addr: fmt.Sprintf(":%v", port), Handler: &httpHandler{handler}}
 
 	errorNotification := make(chan bool, 1)
 	go func() {
@@ -134,8 +135,8 @@ func StartHttpServer(port int, trips *HttpServerTrips) error {
 
 	//if there is error in starting server quite immediately
 	select {
-		case <-errorNotification:
-		case <-time.After(time.Second * 2):
+	case <-errorNotification:
+	case <-time.After(time.Second * 2):
 	}
 	return err
 }
@@ -153,9 +154,8 @@ func HeaderProvider(header string) HttpRequestKeyProvider {
 	}
 }
 
-
 func stripProtoAndHost(URL string) string {
-	if index := strings.Index(URL, "://"); index !=-1 {
+	if index := strings.Index(URL, "://"); index != -1 {
 		URL = string(URL[index+3:])
 	}
 	if index := strings.Index(URL, "/"); index > 0 {
@@ -189,6 +189,9 @@ func init() {
 	HttpRequestKeyProviders[BodyKey] = func(source interface{}) (string, error) {
 		switch request := source.(type) {
 		case *bridge.HttpRequest:
+			if strings.HasPrefix(request.Body, "text:") {
+				return string(request.Body[5:]), nil
+			}
 			return request.Body, nil
 		case *http.Request:
 			if request.ContentLength == 0 {

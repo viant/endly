@@ -1,0 +1,26 @@
+{
+	"Code": 200,
+	"Header": {
+		"Cache-Control": [
+			"no-cache",
+			"no-cache"
+		],
+		"Content-Length": [
+			"158"
+		],
+		"Content-Type": [
+			"application/json;charset=utf-8"
+		],
+		"Date": [
+			"Mon, 11 Dec 2017 18:53:51 GMT"
+		],
+		"Expires": [
+			"Thu, 01 Jan 1970 00:00:00 GMT",
+			"Thu, 01 Jan 1970 00:00:00 GMT"
+		],
+		"Server": [
+			"Jetty(9.4.3.v20170317)"
+		]
+	},
+	"Body": "text:{\"state\":\"success\",\"sessionId\":\"b26483ae-c4e5-4dc5-babc-debc9f1a7659\",\"hCode\":291826013,\"value\":null,\"class\":\"org.openqa.selenium.remote.Response\",\"status\":0}"
+}
