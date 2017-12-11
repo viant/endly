@@ -101,6 +101,7 @@ func NewManager() Manager {
 	result.Register(NewLogValidatorService())
 	result.Register(NewEventReporterService())
 	result.Register(NewNetworkService())
+	result.Register(NewSeleniumService())
 	return result
 }
 
