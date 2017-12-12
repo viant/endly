@@ -10,8 +10,28 @@ import (
 	"strings"
 )
 
-//DataStoreUnitServiceID represents a data store unit service id
-const DataStoreUnitServiceID = "dsunit"
+const (
+	//DataStoreUnitServiceID represents a data store unit service id
+	DataStoreUnitServiceID = "dsunit"
+
+	//DataStoreUnitServiceRegisterAction represents datastore dsn register action
+	DataStoreUnitServiceRegisterAction = "register"
+
+	//DataStoreUnitServiceSQLAction represents sql run action
+	DataStoreUnitServiceSQLAction = "sql"
+
+	//DataStoreUnitServiceMappingAction represents tables mapping action
+	DataStoreUnitServiceMappingAction = "mapping"
+
+	//DataStoreUnitServicePrepareAction represents datastore data preparation action
+	DataStoreUnitServicePrepareAction = "prepare"
+
+	//DataStoreUnitServiceSequenceAction represents datastore reading sequence action
+	DataStoreUnitServiceSequenceAction = "sequence"
+
+	//DataStoreUnitServiceExpectAction represents datastore data verification action
+	DataStoreUnitServiceExpectAction = "expect"
+)
 
 //PopulateDatastoreEvent represents a populate Datastore event
 type PopulateDatastoreEvent struct {
@@ -228,7 +248,6 @@ func (s *dataStoreUnitService) register(context *Context, request *DsUnitRegiste
 	return result, nil
 }
 
-
 func (s *dataStoreUnitService) buildDatasets(context *Context, datasetResource *dsunit.DatasetResource, expand bool) (*dsunit.Datasets, error) {
 	if datasetResource.URL != "" {
 		resource, err := context.ExpandResource(&url.Resource{URL: datasetResource.URL})
@@ -253,8 +272,6 @@ func (s *dataStoreUnitService) buildDatasets(context *Context, datasetResource *
 	}
 	return datasets, err
 }
-
-
 
 func (s *dataStoreUnitService) prepare(context *Context, request *DsUnitPrepareRequest) (interface{}, error) {
 	var response = &DsUnitPrepareResponse{}
@@ -323,17 +340,17 @@ func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectReq
 
 func (s *dataStoreUnitService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "register":
+	case DataStoreUnitServiceRegisterAction:
 		return &DsUnitRegisterRequest{}, nil
-	case "sql":
+	case DataStoreUnitServiceSQLAction:
 		return &DsUnitSQLScriptRequest{}, nil
-	case "mapping":
+	case DataStoreUnitServiceMappingAction:
 		return &DsUnitMappingRequest{}, nil
-	case "prepare":
+	case DataStoreUnitServicePrepareAction:
 		return &DsUnitPrepareRequest{}, nil
-	case "sequence":
+	case DataStoreUnitServiceSequenceAction:
 		return &DsUnitTableSequenceRequest{}, nil
-	case "expect":
+	case DataStoreUnitServiceExpectAction:
 		return &DsUnitExpectRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
@@ -342,8 +359,15 @@ func (s *dataStoreUnitService) NewRequest(action string) (interface{}, error) {
 //NewDataStoreUnitService creates a new Datastore unit service
 func NewDataStoreUnitService() Service {
 	var result = &dataStoreUnitService{
-		AbstractService: NewAbstractService(DataStoreUnitServiceID),
-		Manager:         dsunit.NewDatasetTestManager(),
+		AbstractService: NewAbstractService(DataStoreUnitServiceID,
+			DataStoreUnitServiceRegisterAction,
+			DataStoreUnitServiceSQLAction,
+			DataStoreUnitServiceMappingAction,
+			DataStoreUnitServicePrepareAction,
+			DataStoreUnitServiceSequenceAction,
+			DataStoreUnitServiceExpectAction,
+		),
+		Manager: dsunit.NewDatasetTestManager(),
 	}
 	result.Manager.SafeMode(false)
 	result.AbstractService.Service = result

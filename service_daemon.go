@@ -12,8 +12,17 @@ import (
 //DaemonServiceID represents system daemon service
 const DaemonServiceID = "daemon"
 
+//DaemonServiceStartAction represents a daemon start action
+const DaemonServiceStartAction = "start"
+
+//DaemonServiceStatusAction represents a daemon start action
+const DaemonServiceStatusAction = "status"
+
+//DaemonServiceStopAction represents a daemon start action
+const DaemonServiceStopAction = "stop"
+
 const (
-	serviceTypeError = iota
+	serviceTypeError      = iota
 	serviceTypeInitDaemon
 	serviceTypeLaunchCtl
 	serviceTypeStdService
@@ -36,9 +45,10 @@ func (s *daemonService) Run(context *Context, request interface{}) *ServiceRespo
 		response.Response = info
 		if err != nil {
 			response.Error = fmt.Sprintf("failed to start service: %v, %v", actualRequest.Service, err)
-		}
-		if !info.IsActive() {
+
+		} else if info != nil &&  !info.IsActive() {
 			response.Error = fmt.Sprintf("failed to start service: %v, service is inactive", actualRequest.Service)
+
 		}
 
 	case *DaemonStopRequest:
@@ -62,11 +72,11 @@ func (s *daemonService) Run(context *Context, request interface{}) *ServiceRespo
 
 func (s *daemonService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "status":
+	case DaemonServiceStatusAction:
 		return &DaemonStatusRequest{}, nil
-	case "start":
+	case DaemonServiceStartAction:
 		return &DaemonStartRequest{}, nil
-	case "stop":
+	case DaemonServiceStopAction:
 		return &DaemonStopRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
@@ -77,7 +87,7 @@ func (s *daemonService) getDarwinLaunchServiceInfo(context *Context, target *url
 	if request.Exclusion != "" {
 		request.Exclusion = " | grep -v " + request.Exclusion
 	}
-	commandResult, err := context.Execute(target, &ManagedCommand{
+	commandResult, err := context.Execute(target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("ls /Library/LaunchDaemons/ | grep %v %v", request.Service, request.Exclusion),
@@ -92,7 +102,7 @@ func (s *daemonService) getDarwinLaunchServiceInfo(context *Context, target *url
 		info.Path = path.Join("/Library/LaunchDaemons/", file)
 	}
 
-	commandResult, err = context.Execute(target, &ManagedCommand{
+	commandResult, err = context.Execute(target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("launchctl list | grep %v %v", request.Service, request.Exclusion),
@@ -138,7 +148,7 @@ func (s *daemonService) determineServiceType(context *Context, service, exclusio
 	}
 	var commandResult *CommandResponse
 	for _, candidate := range systemTypeCommands {
-		commandResult, err = context.Execute(target, &ManagedCommand{
+		commandResult, err = context.Execute(target, &ExtractableCommand{
 			Executions: []*Execution{
 				{
 					Command: candidate.command,
@@ -177,7 +187,7 @@ func extractServiceInfo(state map[string]string, info *DaemonInfo) {
 	}
 }
 
-func (s *daemonService) executeCommand(context *Context, serviceType int, target *url.Resource, command *ManagedCommand) (*CommandResponse, error) {
+func (s *daemonService) executeCommand(context *Context, serviceType int, target *url.Resource, command *ExtractableCommand) (*CommandResponse, error) {
 	if serviceType == serviceTypeLaunchCtl {
 		return context.Execute(target, command)
 	}
@@ -220,7 +230,7 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 	case serviceTypeLaunchCtl:
 
 		if info.Pid > 0 {
-			commandResult, err := context.ExecuteAsSuperUser(target, &ManagedCommand{
+			commandResult, err := context.ExecuteAsSuperUser(target, &ExtractableCommand{
 				Executions: []*Execution{
 					{
 						Command: fmt.Sprintf("launchctl procinfo %v", info.Pid),
@@ -253,7 +263,7 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 		command = fmt.Sprintf("%v status", info.Service)
 	}
 
-	commandResult, err := s.executeCommand(context, serviceType, target, &ManagedCommand{
+	commandResult, err := s.executeCommand(context, serviceType, target, &ExtractableCommand{
 		Options: &ExecutionOptions{
 			Terminators: []string{"(END)"},
 		},
@@ -324,7 +334,7 @@ func (s *daemonService) stopService(context *Context, request *DaemonStopRequest
 	case serviceTypeInitDaemon:
 		command = fmt.Sprintf("%v stop", serviceInfo.Service)
 	}
-	commandResult, err := s.executeCommand(context, serviceInfo.Type, target, &ManagedCommand{
+	commandResult, err := s.executeCommand(context, serviceInfo.Type, target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: command,
@@ -368,7 +378,7 @@ func (s *daemonService) startService(context *Context, request *DaemonStartReque
 	case serviceTypeLaunchCtl:
 		if !serviceInfo.Launched {
 			command = fmt.Sprintf("launchctl load -F %v", serviceInfo.Path)
-			_, err = s.executeCommand(context, serviceInfo.Type, target, &ManagedCommand{
+			_, err = s.executeCommand(context, serviceInfo.Type, target, &ExtractableCommand{
 				Executions: []*Execution{
 					{
 						Command: command,
@@ -394,7 +404,7 @@ func (s *daemonService) startService(context *Context, request *DaemonStartReque
 		command = fmt.Sprintf("%v start", serviceInfo.Service)
 	}
 
-	commandResult, err := s.executeCommand(context, serviceInfo.Type, target, &ManagedCommand{
+	commandResult, err := s.executeCommand(context, serviceInfo.Type, target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: command,
@@ -417,7 +427,10 @@ func (s *daemonService) startService(context *Context, request *DaemonStartReque
 //NewDaemonService creates a new system service.
 func NewDaemonService() Service {
 	var result = &daemonService{
-		AbstractService: NewAbstractService(DaemonServiceID),
+		AbstractService: NewAbstractService(DaemonServiceID,
+			DaemonServiceStartAction,
+			DaemonServiceStatusAction,
+			DaemonServiceStopAction),
 	}
 	result.AbstractService.Service = result
 	return result

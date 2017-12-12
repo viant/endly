@@ -2,8 +2,13 @@ package endly
 
 import "fmt"
 
-//NopServiceID represents nop service id.
-const NopServiceID = "nop"
+const (
+	//NopServiceID represents nop service id.
+	NopServiceID = "nop"
+
+	//NopServiceNopService represents nop action
+	NopServiceNopAction = "nop"
+)
 
 //Nop represent no operation
 type Nop struct{}
@@ -27,7 +32,7 @@ func (s *nopService) Run(context *Context, request interface{}) *ServiceResponse
 }
 
 func (s *nopService) NewRequest(action string) (interface{}, error) {
-	if action == "nop" {
+	if action == NopServiceNopAction {
 		return &Nop{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
@@ -36,7 +41,8 @@ func (s *nopService) NewRequest(action string) (interface{}, error) {
 //NewNopService creates a new NoOperation service.
 func NewNopService() Service {
 	var result = &nopService{
-		AbstractService: NewAbstractService(NopServiceID),
+		AbstractService: NewAbstractService(NopServiceID,
+			NopServiceNopAction),
 	}
 	result.AbstractService.Service = result
 	return result

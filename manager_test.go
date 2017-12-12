@@ -5,6 +5,8 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"testing"
+	"reflect"
+	"github.com/viant/toolbox/url"
 )
 
 func TestNewManager(t *testing.T) {
@@ -69,6 +71,9 @@ func newTestService() endly.Service {
 
 func Test_ServiceRequest(t *testing.T) {
 
+
+	var invalidResourse = &url.Resource{URL:"a d:/sdwe/23/e"}
+
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
 	var services = endly.Services(manager)
@@ -78,8 +83,38 @@ func Test_ServiceRequest(t *testing.T) {
 		response := service.Run(context, struct{}{})
 		assert.True(t, response.Error != "", k)
 
+		for _, action :=  range service.Actions() {
+			request, err := service.NewRequest(action)
+			assert.Nil(t, err)
+			assert.NotNil(t, request)
+			if _, ok := request.(Validator);ok {
+				response = service.Run(context, request)
+				assert.True(t, response.Error != "")
+			}
+
+
+			var requestType = toolbox.DereferenceType(reflect.TypeOf(request))
+
+
+			if requestType.Kind() == reflect.Struct {
+				if _, has := requestType.FieldByName("Target"); has {
+					reflect.ValueOf(request).Elem().FieldByName("Target").Set(reflect.ValueOf(invalidResourse))
+
+					response = service.Run(context, request)
+					assert.True(t, response.Error != "")
+				}
+			}
+
+
+
+		}
+
 	}
 
 
+}
+
+type Validator interface {
+	Vaidate() error
 }
 
