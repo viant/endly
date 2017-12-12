@@ -196,6 +196,8 @@ func init() {
 			if err != nil {
 				return "", fmt.Errorf("failed to read body %v, %v", request.URL, err)
 			}
+
+
 			return string(content), nil
 
 		}
