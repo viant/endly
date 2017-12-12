@@ -3,7 +3,7 @@
     "URL": "ssh://${targetHost}${appDirectory}/",
     "Credential": "$targetHostCredential"
   },
-  "ManagedCommand": {
+  "ExtractableCommand": {
     "Options": {
       "Env": {
         "CATALINA_OPTS": "$catalinaOpts",

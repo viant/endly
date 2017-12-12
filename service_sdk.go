@@ -8,9 +8,15 @@ import (
 
 var sdkNotFound = errors.New("SDK NOT FUND")
 
-//SdkServiceID represents system sdk
-const SdkServiceID = "sdk"
 
+const (
+	//SdkServiceID represents system sdk
+	SdkServiceID = "sdk"
+
+	//SdkServiceSetAction represents sdk set action
+	SdkServiceSetAction = "set"
+
+)
 type systemSdkService struct {
 	*AbstractService
 	jdkService *systemJdkService
@@ -80,7 +86,7 @@ func (s *systemSdkService) Run(context *Context, request interface{}) *ServiceRe
 
 func (s *systemSdkService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "set":
+	case SdkServiceSetAction:
 		return &SystemSdkSetRequest{}, nil
 
 	}
@@ -123,7 +129,7 @@ func (s *systemSdkService) setSdk(context *Context, request *SystemSdkSetRequest
 	}
 
 	if s.checkSdkOnSession(context, target, request, response) {
-
+		return response, nil
 	}
 
 	serviceResponse := service.Run(context, &OpenSessionRequest{
@@ -154,7 +160,8 @@ func NewSystemJdkService() Service {
 	var result = &systemSdkService{
 		jdkService:      &systemJdkService{},
 		goService:       &systemGoService{},
-		AbstractService: NewAbstractService(SdkServiceID),
+		AbstractService: NewAbstractService(SdkServiceID,
+			SdkServiceSetAction),
 	}
 	result.AbstractService.Service = result
 	return result

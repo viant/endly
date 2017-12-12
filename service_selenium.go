@@ -10,15 +10,33 @@ import (
 	"github.com/viant/toolbox/data"
 )
 
-//represents a SeleniumServiceID
-const SeleniumServiceID = "selenium"
-const SeleniumServer = "selenium-server-standalone"
-const GeckoDriver = "geckodriver"
+const (
+	//SeleniumServiceID represents a SeleniumServiceID
+	SeleniumServiceID = "selenium"
 
+	//SeleniumServiceStartAction represents selenium server start action
+	SeleniumServiceStartAction = "start"
 
+	//SeleniumServiceStartAction represents selenium server stop action
+	SeleniumServiceStopAction = "stop"
 
+	//SeleniumServiceStartAction represents selenium browser open session action
+	SeleniumServiceOpenAction = "open"
 
+	//SeleniumServiceStartAction represents web driver call action
+	SeleniumServiceCallDriverAction = "call-driver"
 
+	//SeleniumServiceStartAction represents web element call action
+	SeleniumServiceCallElementAction = "call-element"
+
+	//SeleniumServiceStartAction represents group of calls action.
+	SeleniumServiceRunAction = "run"
+
+	//SeleniumServer represents name of selenium server
+	SeleniumServer = "selenium-server-standalone"
+	//GeckoDriver represents name of gecko driver
+	GeckoDriver = "geckodriver"
+)
 
 //SeleniumSession represents a selenium session
 type SeleniumSession struct {
@@ -83,26 +101,21 @@ func (s *seleniumService) Run(context *Context, request interface{}) *ServiceRes
 	}
 	return response
 
-
-	}
-
-
+}
 
 func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*SeleniumRunResponse, error) {
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
 	var response = &SeleniumRunResponse{
-		Data :make(map[string]*ElementResponse),
+		Data: make(map[string]*ElementResponse),
 	}
 
-
 	if request.SessionID == "" {
-		openResponse, err:= s.openSession(context, &SeleniumOpenSessionRequest{
-			RemoteSelenium:request.RemoteSelenium,
-			Browser:request.Browser,
+		openResponse, err := s.openSession(context, &SeleniumOpenSessionRequest{
+			RemoteSelenium: request.RemoteSelenium,
+			Browser:        request.Browser,
 		})
-
 
 		if err != nil {
 			return nil, err
@@ -127,12 +140,12 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 	for _, action := range request.Actions {
 		for _, call := range action.Calls {
 			callResponse, err := s.webElementCall(context, &SeleniumWebElementCallRequest{
-				SessionID:request.SessionID,
-				Selector: action.Selector,
-				Call:call,
+				SessionID: request.SessionID,
+				Selector:  action.Selector,
+				Call:      call,
 			})
 			if err != nil {
-				return nil,err
+				return nil, err
 			}
 
 			var responseData string
@@ -141,7 +154,7 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 				if element == nil || ! toolbox.IsString(element) {
 					continue
 				}
-				has  = true
+				has = true
 				responseData = toolbox.AsString(element)
 				break;
 			}
@@ -151,8 +164,8 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 
 			if _, has := response.Data[action.Selector.Value]; ! has {
 				response.Data[action.Selector.Value] = &ElementResponse{
-					Selector:action.Selector,
-					Data:make(map[string]string),
+					Selector: action.Selector,
+					Data:     make(map[string]string),
 				}
 			}
 			response.Data[action.Selector.Value].Data[call.Method] = responseData
@@ -192,7 +205,7 @@ func (s *seleniumService) webElementCall(context *Context, request *SeleniumWebE
 	var response = &SeleniumWebElementCallResponse{}
 	err = request.Selector.Validate()
 	if err != nil {
-		return nil, fmt.Errorf("invalid selector: %v",err)
+		return nil, fmt.Errorf("invalid selector: %v", err)
 	}
 	var selector = request.Selector
 
@@ -229,7 +242,6 @@ func (s *seleniumService) webElementCall(context *Context, request *SeleniumWebE
 	response.Result = callResponse.Result
 	return response, nil
 }
-
 
 func (s *seleniumService) open(context *Context, request *SeleniumOpenSessionRequest) (*SeleniumOpenSessionResponse, error) {
 	var response = &SeleniumOpenSessionResponse{}
@@ -314,8 +326,8 @@ func (s *seleniumService) start(context *Context, request *SeleniumServerStartRe
 	}
 
 	s.Run(context, &SeleniumServerStopRequest{
-		Target:target,
-		Port:request.Port,
+		Target: target,
+		Port:   request.Port,
 	})
 	processService, _ := context.Service(ProcessServiceID)
 	serviceResponse := processService.Run(context, &ProcessStartRequest{
@@ -382,17 +394,17 @@ func (s *seleniumService) openSession(context *Context, request *SeleniumOpenSes
 //NewRequest creates a new request for the provided action (run).
 func (s *seleniumService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "start":
+	case SeleniumServiceStartAction:
 		return &SeleniumServerStartRequest{}, nil
-	case "stop":
+	case SeleniumServiceStopAction:
 		return &SeleniumServerStopRequest{}, nil
-	case "open":
+	case SeleniumServiceOpenAction:
 		return &SeleniumOpenSessionRequest{}, nil
-	case "call-driver":
+	case SeleniumServiceCallDriverAction:
 		return &SeleniumWebDriverCallRequest{}, nil
-	case "call-element":
+	case SeleniumServiceCallElementAction:
 		return &SeleniumWebElementCallRequest{}, nil
-	case "run":
+	case SeleniumServiceRunAction:
 		return SeleniumRunRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
@@ -401,7 +413,14 @@ func (s *seleniumService) NewRequest(action string) (interface{}, error) {
 //NewScriptService creates a new selenium service
 func NewSeleniumService() Service {
 	var result = &seleniumService{
-		AbstractService: NewAbstractService(SeleniumServiceID),
+		AbstractService: NewAbstractService(SeleniumServiceID,
+			SeleniumServiceStartAction,
+			SeleniumServiceStopAction,
+			SeleniumServiceOpenAction,
+			SeleniumServiceCallDriverAction,
+			SeleniumServiceCallElementAction,
+			SeleniumServiceRunAction,
+		),
 	}
 	result.AbstractService.Service = result
 	return result

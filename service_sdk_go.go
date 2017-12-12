@@ -14,7 +14,7 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 	if goPath, ok := request.Env["GOPATH"]; ok {
 		context.Execute(request.Target, fmt.Sprintf("export GOPATH='%v'", goPath))
 	}
-	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
+	commandResponse, err := context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: "export GOROOT='/opt/sdk/go'",

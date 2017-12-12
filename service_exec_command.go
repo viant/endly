@@ -5,8 +5,8 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//ManagedCommand represent managed command, to execute and extract data, detect success or error state
-type ManagedCommand struct {
+//ExtractableCommand represent managed command, to execute and extract data, detect success or error state
+type ExtractableCommand struct {
 	Options    *ExecutionOptions //ExecutionOptions
 	Executions []*Execution      //actual execution instruction
 }
@@ -30,11 +30,11 @@ type Execution struct {
 	Success     []string          //if specified absence of all of the these fragment will terminate execution with error.
 }
 
-//ManagedCommandRequest represents managed command request
-type ManagedCommandRequest struct {
+//ExtractableCommandRequest represents managed command request
+type ExtractableCommandRequest struct {
 	SuperUser      bool            ///flag to run it as super user
 	Target         *url.Resource   //target destination where to run a command.
-	ManagedCommand *ManagedCommand //managed command
+	ExtractableCommand *ExtractableCommand //managed command
 }
 
 //CommandRequest represents a simple command
@@ -46,56 +46,56 @@ type CommandRequest struct {
 }
 
 //Validate validates managed command request
-func (r *ManagedCommandRequest) Validate() error {
+func (r *ExtractableCommandRequest) Validate() error {
 	if r.Target == nil {
 		return fmt.Errorf("Target was empty")
 	}
-	if r.ManagedCommand == nil {
-		return fmt.Errorf("ManagedCommand was empty")
+	if r.ExtractableCommand == nil {
+		return fmt.Errorf("ExtractableCommand was empty")
 	}
 	return nil
 }
 
-//AsManagedCommandRequest returns ManagedCommandRequest for this requests
-func (r *CommandRequest) AsManagedCommandRequest() *ManagedCommandRequest {
-	var managedCommand = &ManagedCommand{
+//AsExtractableCommandRequest returns ExtractableCommandRequest for this requests
+func (r *CommandRequest) AsExtractableCommandRequest() *ExtractableCommandRequest {
+	var extractableCommand = &ExtractableCommand{
 		Options:    NewExecutionOptions(),
 		Executions: make([]*Execution, 0),
 	}
 	if r.TimeoutMs > 0 {
-		managedCommand.Options.TimeoutMs = r.TimeoutMs
+		extractableCommand.Options.TimeoutMs = r.TimeoutMs
 	}
 	for _, command := range r.Commands {
-		managedCommand.Executions = append(managedCommand.Executions, &Execution{
+		extractableCommand.Executions = append(extractableCommand.Executions, &Execution{
 			Command: command,
 			Error:   []string{commandNotFound, noSuchFileOrDirectory, errorIsNotRecoverable},
 		})
 	}
-	return &ManagedCommandRequest{
+	return &ExtractableCommandRequest{
 		SuperUser:      r.SuperUser,
 		Target:         r.Target,
-		ManagedCommand: managedCommand,
+		ExtractableCommand: extractableCommand,
 	}
 }
 
-//NewManagedCommandRequest returns a new command request
-func NewManagedCommandRequest(target *url.Resource, execution *ManagedCommand) *ManagedCommandRequest {
-	return &ManagedCommandRequest{
+//NewExtractableCommandRequest returns a new command request
+func NewExtractableCommandRequest(target *url.Resource, execution *ExtractableCommand) *ExtractableCommandRequest {
+	return &ExtractableCommandRequest{
 		Target:         target,
-		ManagedCommand: execution,
+		ExtractableCommand: execution,
 	}
 }
 
-//NewSimpleCommandRequest a simple version of ManagedCommandRequest
-func NewSimpleCommandRequest(target *url.Resource, commands ...string) *ManagedCommandRequest {
-	var result = &ManagedCommandRequest{
+//NewSimpleCommandRequest a simple version of ExtractableCommandRequest
+func NewSimpleCommandRequest(target *url.Resource, commands ...string) *ExtractableCommandRequest {
+	var result = &ExtractableCommandRequest{
 		Target: target,
-		ManagedCommand: &ManagedCommand{
+		ExtractableCommand: &ExtractableCommand{
 			Executions: make([]*Execution, 0),
 		},
 	}
 	for _, command := range commands {
-		result.ManagedCommand.Executions = append(result.ManagedCommand.Executions, &Execution{
+		result.ExtractableCommand.Executions = append(result.ExtractableCommand.Executions, &Execution{
 			Command: command,
 		})
 	}

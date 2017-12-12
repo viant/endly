@@ -15,6 +15,11 @@ import (
 
 //HTTPRunnerServiceID represents http runner service id.
 const HTTPRunnerServiceID = "http/runner"
+
+//HTTPRunnerServiceSendAction represents a send action.
+const HTTPRunnerServiceSendAction = "send"
+
+//HttpRunnerExitCriteriaEventType represent HttpExitEvaluation event name
 const HttpRunnerExitCriteriaEventType = "HttpExitEvaluation"
 
 type httpRunnerService struct {
@@ -66,7 +71,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		}
 		body, err = FromPayload(sendHTTPRequest.Body)
 		if err != nil {
-			return  err
+			return err
 		}
 		reader = bytes.NewReader(body)
 	}
@@ -122,11 +127,10 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 			break;
 		}
 		if sendHTTPRequest.SleepTimeMs > 0 {
-			timeToSleep  := time.Millisecond * time.Duration(sendHTTPRequest.SleepTimeMs)
+			timeToSleep := time.Millisecond * time.Duration(sendHTTPRequest.SleepTimeMs)
 			time.Sleep(timeToSleep)
 		}
 	}
-
 
 	var responseCookies Cookies = httpResponse.Cookies()
 	response.Cookies = responseCookies.IndexByName()
@@ -285,7 +289,7 @@ func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceR
 
 func (s *httpRunnerService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "send":
+	case HTTPRunnerServiceSendAction:
 		return &SendHTTPRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
@@ -294,7 +298,8 @@ func (s *httpRunnerService) NewRequest(action string) (interface{}, error) {
 //NewHTTPpRunnerService creates a new http runner service
 func NewHTTPpRunnerService() Service {
 	var result = &httpRunnerService{
-		AbstractService: NewAbstractService(HTTPRunnerServiceID),
+		AbstractService: NewAbstractService(HTTPRunnerServiceID,
+			HTTPRunnerServiceSendAction),
 	}
 	result.AbstractService.Service = result
 	return result

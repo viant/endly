@@ -8,6 +8,10 @@ import (
 //RestServiceID represents rest service id.
 const RestServiceID = "rest/runner"
 
+
+//RestServiceSendAction represents send action
+const RestServiceSendAction = "send"
+
 type restService struct {
 	*AbstractService
 }
@@ -47,7 +51,7 @@ func (s *restService) sendRequest(request *RestSendRequest) (*RestSendResponse, 
 
 func (s *restService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "send":
+	case RestServiceSendAction:
 		return &RestSendRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
@@ -56,7 +60,8 @@ func (s *restService) NewRequest(action string) (interface{}, error) {
 //NewRestService creates a new reset service
 func NewRestService() Service {
 	var result = &restService{
-		AbstractService: NewAbstractService(RestServiceID),
+		AbstractService: NewAbstractService(RestServiceID,
+			RestServiceSendAction),
 	}
 	result.AbstractService.Service = result
 	return result

@@ -6,9 +6,9 @@ import "fmt"
 type BuildGoal struct {
 	Name                string
 	InitTransfers       *TransferCopyRequest
-	Command             *ManagedCommand
+	Command             *ExtractableCommand
 	PostTransfers       *TransferCopyRequest
-	VerificationCommand *ManagedCommand
+	VerificationCommand *ExtractableCommand
 }
 
 //BuildMeta build meta provides instruction how to build an app

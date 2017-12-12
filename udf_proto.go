@@ -37,10 +37,9 @@ func AsProtobufMessage(source interface{}, state data.Map, target proto.Message)
 	}
 	buf := new(bytes.Buffer)
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)
-	defer encoder.Close()
 	encoder.Write(protodata)
-	encoder.Close()
-	return fmt.Sprintf("base64:%v", string(buf.Bytes())), nil
+	err = encoder.Close()
+	return fmt.Sprintf("base64:%v", string(buf.Bytes())), err
 }
 
 //FromProtobufMessage generic method for converting a proto message into a map
