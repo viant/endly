@@ -6,20 +6,23 @@ import (
 	"github.com/viant/toolbox"
 	"testing"
 	"path"
+	"github.com/viant/toolbox/data"
+	"github.com/viant/endly/test/proto"
+	"strings"
 )
 
-func StartTestServer(port int) error {
+func StartTestServer(port int, basedir string) error {
 	baseDir := toolbox.CallerDirectory(3)
 	return endly.StartHttpServer(port, &endly.HttpServerTrips{
 		IndexKeys:[]string{endly.MethodKey, endly.URLKey, endly.BodyKey, endly.CookieKey, endly.ContentTypeKey},
-		BaseDirectory:path.Join(baseDir, "test/http/runner/send"),
+		BaseDirectory:path.Join(baseDir, basedir),
 	})
 }
 
 
 
 func TestHttpRunnerService_Run(t *testing.T) {
-	err := StartTestServer(8766)
+	err := StartTestServer(8766, "test/http/runner/send")
 	if ! assert.Nil(t, err) {
 		return
 	}
@@ -57,7 +60,6 @@ func TestHttpRunnerService_Run(t *testing.T) {
 				URL: "http://127.0.0.1:8766/send2",
 				Method:"POST",
 				Body:"xc",
-
 			},
 		},
 	})
@@ -78,7 +80,7 @@ func TestHttpRunnerService_Run(t *testing.T) {
 
 
 func TestHttpRunnerService_Repeat(t *testing.T) {
-	err := StartTestServer(8111)
+	err := StartTestServer(8111, "test/http/runner/send")
 	if ! assert.Nil(t, err) {
 		return
 	}
@@ -141,7 +143,7 @@ func TestHttpRunnerService_Repeat(t *testing.T) {
 
 
 func TestHttpRunnerService_RepeatWthExitCriteria(t *testing.T) {
-	err := StartTestServer(8112)
+	err := StartTestServer(8112, "test/http/runner/send")
 	if ! assert.Nil(t, err) {
 		return
 	}
@@ -178,6 +180,118 @@ func TestHttpRunnerService_RepeatWthExitCriteria(t *testing.T) {
 		assert.EqualValues(t, 200, response.Code)
 	}
 	assert.Equal(t, "content1-2", sendResponse.Extracted["var1"])
+
+
+}
+
+
+func AsTestMessage(source interface{}, state data.Map) (interface{}, error) {
+	return endly.AsProtobufMessage(source, state, &proto.Message{})
+}
+
+func FromTestMessage(source interface{}, state data.Map) (interface{}, error) {
+	return endly.FromProtobufMessage(source, state, &proto.Message{})
+}
+
+func init() {
+	endly.UdfRegistry["AsTestMessage"] = AsTestMessage
+	endly.UdfRegistry["FromTestMessage"] = FromTestMessage
+}
+
+
+
+
+
+
+func TestHttpRunnerService_RunUdf(t *testing.T) {
+	err := StartTestServer(8119, "test/http/runner/udf")
+	if ! assert.Nil(t, err) {
+		return
+	}
+
+	manager := endly.NewManager()
+	service, err := manager.Service(endly.HTTPRunnerServiceID)
+	assert.Nil(t, err)
+	assert.NotNil(t, service)
+
+
+	context := manager.NewContext(toolbox.NewContext())
+
+	response := service.Run(context, &endly.SendHTTPRequest{
+		RequestUdf:"AsTestBlah",
+		ResponseUdf:"AsTestBlah",
+		Requests: []*endly.HTTPRequest{
+			{
+				URL: "http://127.0.0.1:8119/udf1",
+				Method:"POST",
+				Body:"{\"id\":110, \"name\":\"test 1\"}",
+
+			},
+
+		},
+	})
+	assert.True(t, strings.Contains(response.Error, "failed to lookup udf: AsTestBlah"))
+
+	response = service.Run(context, &endly.SendHTTPRequest{
+		RequestUdf:"AsTestMessage",
+		ResponseUdf:"FromTestMessage",
+		Requests: []*endly.HTTPRequest{
+			{
+				URL: "http://127.0.0.1:8119/udf1",
+				Method:"POST",
+				Body:"{\"id:110, \"name\":\"test 1\"}",
+			},
+
+		},
+	})
+	assert.True(t, strings.Contains(response.Error, "unable to run udf"), response.Error)
+
+
+	response = service.Run(context, &endly.SendHTTPRequest{
+		RequestUdf:"AsTestMessage",
+		ResponseUdf:"FromTewewewswwtMessage",
+		Requests: []*endly.HTTPRequest{
+			{
+				URL: "http://127.0.0.1:8119/udf1",
+				Method:"POST",
+				Body:"{\"id\":110, \"name\":\"test 1\"}",
+
+			},
+
+		},
+	})
+	assert.EqualValues(t, true, strings.Contains(response.Error, "failed to lookup udf: FromTewewewswwtMessage"))
+
+	response = service.Run(context, &endly.SendHTTPRequest{
+		RequestUdf:"AsTestMessage",
+		ResponseUdf:"FromTestMessage",
+		Requests: []*endly.HTTPRequest{
+			{
+				URL: "http://127.0.0.1:8119/udf1",
+				Method:"POST",
+				Body:"{\"id\":110, \"name\":\"test 1\"}",
+
+			},
+			{
+				URL: "http://127.0.0.1:8119/udf2",
+				Method:"POST",
+				Body:"{\"id\":121, \"name\":\"test 2\"}",
+
+			},
+		},
+	})
+
+	if assert.Equal(t, "", response.Error) {
+		sendResponse, ok := response.Response.(*endly.SendHTTPResponse)
+		if assert.True(t, ok) {
+			assert.EqualValues(t, 2, len(sendResponse.Responses))
+			for _, response := range sendResponse.Responses {
+				assert.EqualValues(t, 200, response.Code)
+				assert.EqualValues(t, 1 ,response.JSONBody["Id"])
+				assert.EqualValues(t, "abc" ,response.JSONBody["Name"])
+			}
+		}
+	}
 
 
 }
