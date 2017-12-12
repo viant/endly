@@ -27,18 +27,23 @@ type Service interface {
 
 	//Mutex to sync access to the state if needed.
 	Mutex() *sync.RWMutex
+
+	Actions() []string
+
 }
 
 //ServiceResponse service response
 type ServiceResponse struct {
 	Status   string
 	Error    string
+
 	Response interface{}
 }
 
 //AbstractService represenst an abstract service.
 type AbstractService struct {
 	Service
+	actions  []string
 	id    string
 	state data.Map
 	mutex *sync.RWMutex
@@ -54,13 +59,18 @@ func Pairs(params ...interface{}) map[string]interface{} {
 	return result
 }
 
+
 //Sleep sleeps for provided time in ms
-func (s *workflowService) Sleep(context *Context, sleepTimeMs int) {
+func (s *AbstractService) Sleep(context *Context, sleepTimeMs int) {
 	if sleepTimeMs > 0 {
 		var sleepEventType = &SleepEventType{SleepTimeMs: sleepTimeMs}
 		AddEvent(context, sleepEventType, Pairs("value", sleepEventType), Info)
 		time.Sleep(time.Millisecond * time.Duration(sleepTimeMs))
 	}
+}
+//Actions returns service actions
+func (s *AbstractService) Actions() []string {
+	return s.actions
 }
 
 
@@ -116,9 +126,10 @@ func (s *AbstractService) NewRequest(action string) (interface{}, error) {
 }
 
 //NewAbstractService creates a new abstract service.
-func NewAbstractService(id string) *AbstractService {
+func NewAbstractService(id string, actions ... string) *AbstractService {
 	return &AbstractService{
 		id:    id,
+		actions:actions,
 		mutex: &sync.RWMutex{},
 		state: data.NewMap(),
 	}

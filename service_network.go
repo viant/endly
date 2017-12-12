@@ -6,8 +6,13 @@ import (
 	"github.com/viant/toolbox/ssh"
 )
 
-//NetworkServiceID represents java network service id
-const NetworkServiceID = "network"
+const (
+	//NetworkServiceID represents network service id
+	NetworkServiceID = "network"
+
+	//NetworkServiceTunnelAction represents opening ssh tunnel action
+	NetworkServiceTunnelAction = "tunnel"
+)
 
 type networkService struct {
 	*AbstractService
@@ -62,7 +67,7 @@ func (s *networkService) Run(context *Context, request interface{}) *ServiceResp
 //NewRequest creates a new request for an action (run).
 func (s *networkService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "tunnel":
+	case NetworkServiceTunnelAction:
 		return &NetworkTunnelRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
@@ -71,7 +76,7 @@ func (s *networkService) NewRequest(action string) (interface{}, error) {
 //NewNetworkService creates a new network service.
 func NewNetworkService() Service {
 	var result = &networkService{
-		AbstractService: NewAbstractService(NetworkServiceID),
+		AbstractService: NewAbstractService(NetworkServiceID, NetworkServiceTunnelAction),
 	}
 	result.AbstractService.Service = result
 	return result

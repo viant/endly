@@ -10,6 +10,18 @@ import (
 //ProcessServiceID represents a system process service id
 const ProcessServiceID = "process"
 
+//ProcessServiceStartAction represents a process start action
+const ProcessServiceStartAction = "start"
+
+//ProcessServiceStartAction represents a process status check
+const ProcessServiceStatusAction = "status"
+
+//ProcessServiceStartAction represents stop action
+const ProcessServiceStopAction = "stop"
+
+//ProcessServiceStartAction represents stop-all action
+const ProcessServiceStopAllAction = "stop-all"
+
 type processService struct {
 	*AbstractService
 }
@@ -79,7 +91,7 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 		Processes: make([]*ProcessInfo, 0),
 	}
 	command := "ps -ef | grep " + request.Command
-	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
+	commandResponse, err := context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: command,
@@ -127,7 +139,7 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 }
 
 func (s *processService) stopProcess(context *Context, request *ProcessStopRequest) (*CommandResponse, error) {
-	commandResult, err := context.ExecuteAsSuperUser(request.Target, &ManagedCommand{
+	commandResult, err := context.ExecuteAsSuperUser(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("kill -9 %v", request.Pid),
@@ -175,7 +187,7 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 	if request.ImmuneToHangups {
 		startCommand = fmt.Sprintf("nohup  %v", startCommand)
 	}
-	_, err = context.Execute(request.Target, &ManagedCommand{
+	_, err = context.Execute(request.Target, &ExtractableCommand{
 		Options: request.Options,
 		Executions: []*Execution{
 			{
@@ -212,13 +224,13 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 
 func (s *processService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "start":
+	case ProcessServiceStartAction:
 		return &ProcessStartRequest{}, nil
-	case "check":
+	case ProcessServiceStatusAction:
 		return &ProcessStatusRequest{}, nil
-	case "stop":
+	case ProcessServiceStopAction:
 		return &ProcessStopRequest{}, nil
-	case "stop-all":
+	case ProcessServiceStopAllAction:
 		return &ProcessStopAllRequest{}, nil
 
 	}
@@ -228,7 +240,11 @@ func (s *processService) NewRequest(action string) (interface{}, error) {
 //NewProcessService returns a new system process service.
 func NewProcessService() Service {
 	var result = &processService{
-		AbstractService: NewAbstractService(ProcessServiceID),
+		AbstractService: NewAbstractService(ProcessServiceID,
+			ProcessServiceStartAction,
+			ProcessServiceStatusAction,
+			ProcessServiceStopAction,
+			ProcessServiceStopAllAction),
 	}
 	result.AbstractService.Service = result
 	return result

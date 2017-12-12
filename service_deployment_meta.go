@@ -34,8 +34,8 @@ type DeploymentTargetMeta struct {
 type Deployment struct {
 	Pre          *DeploymentAddition
 	Transfer     *Transfer           //actual copy instruction
-	Command      *ManagedCommand     //post deployment command like tar xvzf
-	VersionCheck *ManagedCommand     //command to check version
+	Command      *ExtractableCommand     //post deployment command like tar xvzf
+	VersionCheck *ExtractableCommand     //command to check version
 	Post         *DeploymentAddition //post deployment
 }
 

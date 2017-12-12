@@ -28,7 +28,7 @@ package endly_test
 //				URL:     "scp://127.0.0.1:22/usr/local/",
 //			},
 //		},
-//		VersionCheck: &endly.ManagedCommand{
+//		VersionCheck: &endly.ExtractableCommand{
 //			Options: &endly.ExecutionOptions{
 //				SystemPaths: []string{"/usr/local/maven/bin"},
 //			},
@@ -43,7 +43,7 @@ package endly_test
 //				},
 //			},
 //		},
-//		Command: &endly.ManagedCommand{
+//		Command: &endly.ExtractableCommand{
 //			Options: &endly.ExecutionOptions{
 //				Directory: "/urs/local",
 //			},

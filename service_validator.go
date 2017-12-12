@@ -5,8 +5,11 @@ import (
 	"github.com/viant/toolbox"
 )
 
-//ValidatorServiceID validator service id
+//ValidatorServiceID represents validator service id
 const ValidatorServiceID = "validator"
+
+//ValidatorServiceAssertAction represents assert action
+const ValidatorServiceAssertAction = "assert"
 
 type validatorService struct {
 	*AbstractService
@@ -58,7 +61,7 @@ func (s *validatorService) Assert(context *Context, request *ValidatorAssertRequ
 
 func (s *validatorService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "assert":
+	case ValidatorServiceAssertAction:
 		return &ValidatorAssertRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
@@ -67,7 +70,8 @@ func (s *validatorService) NewRequest(action string) (interface{}, error) {
 //NewValidatorService creates a new validation service
 func NewValidatorService() Service {
 	var result = &validatorService{
-		AbstractService: NewAbstractService(ValidatorServiceID),
+		AbstractService: NewAbstractService(ValidatorServiceID,
+			ValidatorServiceAssertAction),
 	}
 	result.AbstractService.Service = result
 	return result

@@ -13,6 +13,16 @@ import (
 
 //DeploymentServiceID represents a deployment service id.
 const DeploymentServiceID = "deployment"
+
+
+//DeploymentServiceLoadAction represents a load deployment instruction action
+const DeploymentServiceLoadAction = "load"
+
+
+//DeploymentServiceDeployAction represents a deploy deployment instruction action
+const DeploymentServiceDeployAction = "deploy"
+
+
 const artifactKey = "artifact"
 const versionKey = "Version"
 
@@ -51,7 +61,7 @@ func (s *deploymentService) deployAddition(context *Context, target *url.Resourc
 	if addition != nil {
 		if len(addition.Commands) > 0 {
 			if addition.SuperUser {
-				_, err = context.ExecuteAsSuperUser(target, addition.AsCommandRequest().AsManagedCommandRequest().ManagedCommand)
+				_, err = context.ExecuteAsSuperUser(target, addition.AsCommandRequest().AsExtractableCommandRequest().ExtractableCommand)
 				if err != nil {
 					return fmt.Errorf("failed to init deploy app to %v: %v", target, err)
 				}
@@ -404,9 +414,9 @@ func (s *deploymentService) getMeta(context *Context, request *DeploymentDeployR
 
 func (s *deploymentService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "deploy":
+	case DeploymentServiceDeployAction:
 		return &DeploymentDeployRequest{}, nil
-	case "load":
+	case DeploymentServiceLoadAction:
 		return &DeploymentMetaRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
@@ -415,7 +425,9 @@ func (s *deploymentService) NewRequest(action string) (interface{}, error) {
 //NewDeploymentService returns new deployment service
 func NewDeploymentService() Service {
 	var result = &deploymentService{
-		AbstractService: NewAbstractService(DeploymentServiceID),
+		AbstractService: NewAbstractService(DeploymentServiceID,
+			DeploymentServiceDeployAction,
+			DeploymentServiceLoadAction),
 		mutex:           &sync.RWMutex{},
 		registry:        make(map[string]*DeploymentMeta),
 	}
