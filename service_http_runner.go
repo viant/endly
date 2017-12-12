@@ -38,9 +38,15 @@ func (s *httpRunnerService) processResponse(context *Context, sendRequest *SendH
 		}
 		transformed, err := udf(response.Body, state)
 		if err != nil {
-			return "", fmt.Errorf("failed to send sendRequest unable to run udf: %v", err)
+			return "", fmt.Errorf("failed to send send request, unable to run udf: %v %v", sendRequest.ResponseUdf, err)
 		}
-		response.Body = toolbox.AsString(transformed)
+		if toolbox.IsMap(transformed) {
+			bodyBuf := new(bytes.Buffer)
+			toolbox.NewJSONEncoderFactory().Create(bodyBuf).Encode(transformed)
+			response.Body = bodyBuf.String()
+		} else {
+			response.Body = toolbox.AsString(transformed)
+		}
 	}
 
 	var responseBody = replaceResponseBodyIfNeeded(sendHTTPRequest, response.Body)
@@ -65,11 +71,11 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 			}
 			transformed, err := udf(sendHTTPRequest.Body, state)
 			if err != nil {
-				return fmt.Errorf("failed to send sendRequest unable to run udf: %v", err)
+				return fmt.Errorf("failed to send request, unable to run udf: %v, %v", sendRequest.RequestUdf,  err)
 			}
 			body = []byte(toolbox.AsString(transformed))
 		}
-		body, err = FromPayload(sendHTTPRequest.Body)
+		body, err = FromPayload(string(body))
 		if err != nil {
 			return err
 		}
@@ -114,12 +120,15 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 			return nil
 		}
 		responseBody, err = s.processResponse(context, sendRequest, sendHTTPRequest, response, httpResponse, isBase64Encoded, result.Extracted)
+		if err != nil {
+			return err
+		}
 		var extractedState = context.state.Clone()
 		for k, v := range result.Extracted {
 			extractedState[k] = v
 		}
-		critera := extractedState.ExpandAsText(sendHTTPRequest.ExitCriteria)
-		canBreak, err := EvaluateCriteria(context, critera, HttpRunnerExitCriteriaEventType, false);
+		criteria := extractedState.ExpandAsText(sendHTTPRequest.ExitCriteria)
+		canBreak, err := EvaluateCriteria(context, criteria, HttpRunnerExitCriteriaEventType, false);
 		if err != nil {
 			return fmt.Errorf("failed to check http exit criteia: %v", err)
 		}
