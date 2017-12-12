@@ -8,11 +8,45 @@ import (
 	"strings"
 )
 
-//DockerServiceID represents docker service id
-const DockerServiceID = "docker"
-const containerInUse = "is already in use by container"
-const unableToFindImage = "unable to find image"
-const dockerError = "Error response"
+const
+(
+	//DockerServiceID represents docker service id
+	DockerServiceID = "docker"
+
+	//DockerServiceRunAction represents docker run action
+	DockerServiceRunAction              = "run"
+
+	//DockerServiceSysPathAction represents docker syspath action
+	DockerServiceSysPathAction          = "syspath"
+
+	//DockerServiceStopImagesAction represents docker stop-images" action
+	DockerServiceStopImagesAction       = "stop-images"
+
+	//DockerServiceImagesAction represents docker images action
+	DockerServiceImagesAction           = "images"
+
+	//DockerServicePullAction represents docker pull action
+	DockerServicePullAction             = "pull"
+
+	//DockerServiceContainerCommandAction represents docker container-command action
+	DockerServiceContainerCommandAction = "container-command"
+
+	//DockerServiceContainerStartAction represents docker container-start action
+	DockerServiceContainerStartAction   = "container-start"
+
+	//DockerServiceRunAction represents docker container-stop action
+	DockerServiceContainerStopAction    = "container-stop"
+
+	//DockerServiceRunAction represents docker container-status action
+	DockerServiceContainerStatusAction  = "container-status"
+
+	//DockerServiceRunAction represents docker container-remove action
+	DockerServiceContainerRemoveAction  = "container-remove"
+
+	containerInUse    = "is already in use by container"
+	unableToFindImage = "unable to find image"
+	dockerError       = "Error response"
+)
 
 var dockerErrors = []string{"failed", unableToFindImage}
 var dockerIgnoreErrors = []string{}
@@ -22,29 +56,28 @@ type dockerService struct {
 	SysPath []string
 }
 
+
 func (s *dockerService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "run":
+	case DockerServiceRunAction:
 		return &DockerRunRequest{}, nil
-	case "syspath":
+	case DockerServiceSysPathAction:
 		return &DockerSystemPathRequest{}, nil
-	case "stop-images":
+	case DockerServiceStopImagesAction:
 		return &DockerStopImagesRequest{}, nil
-	case "images":
+	case DockerServiceImagesAction:
 		return &DockerImagesRequest{}, nil
-	case "pull":
+	case DockerServicePullAction:
 		return &DockerPullRequest{}, nil
-	case "process":
-		return &DockerContainerStatusRequest{}, nil
-	case "container-command":
+	case DockerServiceContainerCommandAction:
 		return &DockerContainerCommandRequest{}, nil
-	case "container-start":
+	case DockerServiceContainerStartAction:
 		return &DockerContainerStartRequest{}, nil
-	case "container-stop":
+	case DockerServiceContainerStopAction:
 		return &DockerContainerStopRequest{}, nil
-	case "container-status":
+	case DockerServiceContainerStatusAction:
 		return &DockerContainerStatusRequest{}, nil
-	case "container-remove":
+	case DockerServiceContainerRemoveAction:
 		return &DockerContainerRemoveRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
@@ -506,7 +539,7 @@ func (s *dockerService) executeSecureDockerCommand(secure map[string]string, con
 	}
 	secure[sudoCredentialKey] = target.Credential
 	response, err := context.Execute(target, &superUserCommandRequest{
-		MangedCommand: &ManagedCommand{
+		MangedCommand: &ExtractableCommand{
 			Options: &ExecutionOptions{
 				SystemPaths: s.SysPath,
 			},
@@ -536,7 +569,18 @@ func (s *dockerService) executeSecureDockerCommand(secure map[string]string, con
 //NewDockerService returns a new docker service.
 func NewDockerService() Service {
 	var result = &dockerService{
-		AbstractService: NewAbstractService(DockerServiceID),
+		AbstractService: NewAbstractService(DockerServiceID,
+			DockerServiceRunAction,
+			DockerServiceSysPathAction,
+			DockerServiceStopImagesAction,
+			DockerServiceImagesAction,
+			DockerServicePullAction,
+			DockerServiceContainerCommandAction,
+			DockerServiceContainerStartAction,
+			DockerServiceContainerStopAction,
+			DockerServiceContainerStatusAction,
+			DockerServiceContainerRemoveAction,
+		),
 	}
 	result.AbstractService.Service = result
 	return result

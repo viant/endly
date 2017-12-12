@@ -78,7 +78,7 @@ func (s *gitService) checkInfo(context *Context, request *VcStatusRequest) (*VcI
 	}
 	var result = &VcInfo{}
 
-	response, err := context.Execute(request.Target, &ManagedCommand{
+	response, err := context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("cd %v", target.DirectoryPath()),
@@ -163,8 +163,8 @@ func (s *gitService) checkout(context *Context, request *VcCheckoutRequest) (*Vc
 
 func (s *gitService) runSecureCommand(context *Context, origin, target *url.Resource, command string) (info *VcInfo, err error) {
 	var credentials = make(map[string]string)
-	credentials[versionControlCredentailKey] = origin.Credential
-	_, err = context.Execute(target, &ManagedCommand{
+	credentials[versionControlCredentialKey] = origin.Credential
+	_, err = context.Execute(target, &ExtractableCommand{
 		Options: &ExecutionOptions{
 			TimeoutMs:   1000 * 200,
 			Terminators: []string{"Password"},
@@ -177,7 +177,7 @@ func (s *gitService) runSecureCommand(context *Context, origin, target *url.Reso
 			{
 				Credentials: credentials,
 				MatchOutput: "Password",
-				Command:     versionControlCredentailKey,
+				Command:     versionControlCredentialKey,
 				Error:       []string{"No such file or directory", "Event not found", "Authentication failed"},
 			},
 		},
@@ -204,7 +204,7 @@ func (s *gitService) commit(context *Context, request *VcCommitRequest) (*VcInfo
 
 	if len(checkInfo.Untracked) > 0 {
 		for _, file := range checkInfo.Untracked {
-			_, err = context.Execute(request.Target, &ManagedCommand{
+			_, err = context.Execute(request.Target, &ExtractableCommand{
 				Executions: []*Execution{
 					{
 						Command: fmt.Sprintf("git add %v ", file),
@@ -219,7 +219,7 @@ func (s *gitService) commit(context *Context, request *VcCommitRequest) (*VcInfo
 	}
 
 	message := strings.Replace(request.Message, "\"", "'", len(request.Message))
-	_, err = context.Execute(request.Target, &ManagedCommand{
+	_, err = context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("git commit -m \"%v\" -a", message),
@@ -229,7 +229,7 @@ func (s *gitService) commit(context *Context, request *VcCommitRequest) (*VcInfo
 	})
 
 	//TODO add branch push
-	_, err = context.Execute(request.Target, &ManagedCommand{
+	_, err = context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: "git push",

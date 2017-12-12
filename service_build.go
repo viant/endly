@@ -8,8 +8,18 @@ import (
 	"sync"
 )
 
-//BuildServiceID represent build service id
-const BuildServiceID = "build"
+
+const (
+	//BuildServiceID represent build service id
+	BuildServiceID = "build"
+
+	//BuildServiceBuildAction represent build action
+	BuildServiceBuildAction = "build"
+
+	//BuildServiceLoadAction represent load build instruction action
+	BuildServiceLoadAction = "load"
+)
+
 
 type buildService struct {
 	*AbstractService
@@ -234,9 +244,9 @@ func (s *buildService) Run(context *Context, request interface{}) *ServiceRespon
 
 func (s *buildService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "load":
+	case BuildServiceLoadAction:
 		return &BuildLoadMetaRequest{}, nil
-	case "build":
+	case BuildServiceBuildAction:
 		return &BuildRequest{}, nil
 
 	}
@@ -249,7 +259,9 @@ func NewBuildService() Service {
 	var result = &buildService{
 		registry:        make(map[string]*BuildMeta),
 		mutex:           &sync.RWMutex{},
-		AbstractService: NewAbstractService(BuildServiceID),
+		AbstractService: NewAbstractService(BuildServiceID,
+			BuildServiceBuildAction,
+			BuildServiceLoadAction),
 	}
 	result.AbstractService.Service = result
 	return result

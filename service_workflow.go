@@ -14,10 +14,22 @@ import (
 )
 
 const (
-	//WorkflowServiceID represent workflow service id
+	//WorkflowServiceID represents workflow service id
 	WorkflowServiceID = "workflow"
 	//WorkflowEvalRunCriteriaEventType event Id
 	WorkflowEvalCriteriaEventType = "EvalCriteria"
+
+	//WorkflowServiceRunAction represents workflow run action
+	WorkflowServiceRunAction = "run"
+
+	//WorkflowServiceRegisterAction represents workflow register action
+	WorkflowServiceRegisterAction = "register"
+
+	//WorkflowServiceLoadAction represents workflow load action
+	WorkflowServiceLoadAction = "load"
+
+
+
 )
 
 //WorkflowServiceActivity represents workflow activity
@@ -552,11 +564,11 @@ func (s *workflowService) Run(context *Context, request interface{}) *ServiceRes
 
 func (s *workflowService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "run":
+	case WorkflowServiceRunAction:
 		return &WorkflowRunRequest{}, nil
-	case "register":
+	case WorkflowServiceRegisterAction:
 		return &WorkflowRegisterRequest{}, nil
-	case "load":
+	case WorkflowServiceLoadAction:
 		return &WorkflowLoadRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
@@ -565,7 +577,10 @@ func (s *workflowService) NewRequest(action string) (interface{}, error) {
 //NewWorkflowService returns a new workflow service.
 func NewWorkflowService() Service {
 	var result = &workflowService{
-		AbstractService: NewAbstractService(WorkflowServiceID),
+		AbstractService: NewAbstractService(WorkflowServiceID,
+			WorkflowServiceRunAction,
+			WorkflowServiceRegisterAction,
+			WorkflowServiceLoadAction),
 		Dao:             NewWorkflowDao(),
 		registry:        make(map[string]*Workflow),
 	}

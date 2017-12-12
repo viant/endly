@@ -203,7 +203,7 @@ func (c *Context) OperatingSystem(sessionName string) *OperatingSystem {
 }
 
 //ExecuteAsSuperUser executes provided command as super user.
-func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ManagedCommand) (*CommandResponse, error) {
+func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ExtractableCommand) (*CommandResponse, error) {
 	superUserRequest := superUserCommandRequest{
 		Target:        target,
 		MangedCommand: command,
@@ -212,7 +212,7 @@ func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ManagedComma
 	if err != nil {
 		return nil, err
 	}
-	return c.Execute(target, request.ManagedCommand)
+	return c.Execute(target, request.ExtractableCommand)
 }
 
 func (c *Context) TerminalSession(target *url.Resource) (*SystemTerminalSession, error) {
@@ -238,7 +238,7 @@ func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandRe
 		return nil, nil
 	}
 	var err error
-	var commandRequest *ManagedCommandRequest
+	var commandRequest *ExtractableCommandRequest
 	switch actualCommand := command.(type) {
 	case *superUserCommandRequest:
 		actualCommand.Target = target
@@ -248,21 +248,21 @@ func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandRe
 		}
 	case *CommandRequest:
 		actualCommand.Target = target
-		commandRequest = actualCommand.AsManagedCommandRequest()
-	case *ManagedCommand:
-		commandRequest = NewManagedCommandRequest(target, actualCommand)
+		commandRequest = actualCommand.AsExtractableCommandRequest()
+	case *ExtractableCommand:
+		commandRequest = NewExtractableCommandRequest(target, actualCommand)
 	case string:
 		request := CommandRequest{
 			Target:   target,
 			Commands: []string{actualCommand},
 		}
-		commandRequest = request.AsManagedCommandRequest()
+		commandRequest = request.AsExtractableCommandRequest()
 	case []string:
 		request := CommandRequest{
 			Target:   target,
 			Commands: actualCommand,
 		}
-		commandRequest = request.AsManagedCommandRequest()
+		commandRequest = request.AsExtractableCommandRequest()
 
 	default:
 		return nil, fmt.Errorf("unsupported command: %T", command)

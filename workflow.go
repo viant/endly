@@ -17,7 +17,7 @@ type ServiceAction struct {
 	TagDescription string      //tag description
 	Name           string      //Id of the service action
 	Description    string      //description
-	Init           Variables   //variables to initialise state before action runs
+	Init            Variables   //variables to initialise state before action runs
 	Post           Variables   //variable to update state after action completes
 	Request        interface{} //service request
 	SleepInMs      int         //optional Sleep time
@@ -31,7 +31,7 @@ type WorkflowTask struct {
 	Name        string           //Id of the task
 	Description string           //description
 	Actions     []*ServiceAction //actions
-	Init        Variables        //variables to initialise state before this taks runs
+	Init         Variables        //variables to initialise state before this taks runs
 	Post        Variables        //variable to update state after this task completes
 	TimeSpentMs int              //optional min required time spent in this task, reamining will force Sleep
 }
@@ -42,7 +42,7 @@ type Workflow struct {
 	Data        data.Map        //workflow data
 	Name        string          //worfklow Id
 	Description string          //description
-	Init        Variables       //variables to initialise state before this workflow runs
+	Init         Variables       //variables to initialise state before this workflow runs
 	Post        Variables       //variables to initialise state before this workflow runs
 	Tasks       []*WorkflowTask //workflow task
 	SleepInMs   int             //optional Sleep time
@@ -67,7 +67,7 @@ func (w *Workflows) Pop() *Workflow {
 		return nil
 	}
 	var result = (*w)[len(*w)-1]
-	(*w) = (*w)[0 : len(*w)-1]
+	(*w) = (*w)[0: len(*w)-1]
 	return result
 }
 

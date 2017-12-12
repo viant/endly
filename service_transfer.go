@@ -17,6 +17,10 @@ import (
 //TransferServiceID represents transfer service id
 const TransferServiceID = "transfer"
 
+
+//TransferServiceCopyAction represents a copy action
+const TransferServiceCopyAction = "copy"
+
 //UseMemoryService flag in the context to ignore
 const UseMemoryService = "useMemoryService"
 
@@ -232,7 +236,7 @@ func (s *transferService) Run(context *Context, request interface{}) *ServiceRes
 
 func (s *transferService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "copy":
+	case TransferServiceCopyAction:
 		return &TransferCopyRequest{
 			Transfers: make([]*Transfer, 0),
 		}, nil
@@ -243,7 +247,8 @@ func (s *transferService) NewRequest(action string) (interface{}, error) {
 //NewTransferService creates a new transfer service
 func NewTransferService() Service {
 	var result = &transferService{
-		AbstractService: NewAbstractService(TransferServiceID),
+		AbstractService: NewAbstractService(TransferServiceID,
+			TransferServiceCopyAction),
 	}
 	result.AbstractService.Service = result
 	return result

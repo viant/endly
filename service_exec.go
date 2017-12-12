@@ -17,6 +17,19 @@ const ExecServiceID = "exec"
 
 const sudoCredentialKey = "**sudo**"
 
+
+//ExecServiceOpenAction represent open session action
+const ExecServiceOpenAction = "open"
+
+//ExecServiceCommandAction represent a command action
+const ExecServiceCommandAction = "command"
+
+//ExecServiceExtractableCommandAction represent extractable action
+const ExecServiceExtractableCommandAction = "extractable-command"
+
+//ExecServiceManagedCloseAction represent session close action
+const ExecServiceManagedCloseAction = "close"
+
 //ExecutionStartEvent represents an execution event start
 type ExecutionStartEvent struct {
 	SessionID string
@@ -140,6 +153,9 @@ func (s *execService) openSession(context *Context, request *OpenSessionRequest)
 }
 
 func getHostAndSSHPort(target *url.Resource) (string, int) {
+	if target == nil {
+		return "", 0
+	}
 	port := toolbox.AsInt(target.ParsedURL.Port())
 	if port == 0 {
 		port = 22
@@ -165,7 +181,7 @@ func (s *execService) setEnvVariable(context *Context, session *SystemTerminalSe
 	newValue = context.Expand(newValue)
 
 	if actual, has := session.envVariables[name]; has {
-		if newValue == actual  {
+		if newValue == actual {
 			return nil
 		}
 	}
@@ -186,7 +202,7 @@ func (s *execService) changeDirectory(context *Context, session *SystemTerminalS
 		return nil
 	}
 
-	result, err :=  s.rumCommandTemplate(context, session, "cd %v", directory)
+	result, err := s.rumCommandTemplate(context, session, "cd %v", directory)
 	if err != nil {
 		return err
 	}
@@ -194,7 +210,7 @@ func (s *execService) changeDirectory(context *Context, session *SystemTerminalS
 	if ! CheckNoSuchFileOrDirectory(result) {
 		session.currentDirectory = directory
 	}
-	return  err
+	return err
 }
 
 func (s *execService) rumCommandTemplate(context *Context, session *SystemTerminalSession, commandTemplate string, arguments ...interface{}) (string, error) {
@@ -284,7 +300,7 @@ func (s *execService) credentialsToSecure(credentials map[string]string) (map[st
 	return secure, nil
 }
 
-func (s *execService) executeCommand(context *Context, session *SystemTerminalSession, execution *Execution, options *ExecutionOptions, response *CommandResponse, request *ManagedCommandRequest) error {
+func (s *execService) executeCommand(context *Context, session *SystemTerminalSession, execution *Execution, options *ExecutionOptions, response *CommandResponse, request *ExtractableCommandRequest) error {
 	command := context.Expand(execution.Command)
 
 	terminators := getTerminators(options, session, execution)
@@ -336,7 +352,7 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 	}
 
 	if len(stdout) > 0 {
-		for _, execution := range request.ManagedCommand.Executions {
+		for _, execution := range request.ExtractableCommand.Executions {
 			if execution.MatchOutput != "" && strings.Contains(stdout, execution.MatchOutput) {
 				return s.executeCommand(context, session, execution, options, response, request)
 			}
@@ -356,7 +372,7 @@ func getTerminators(options *ExecutionOptions, session *SystemTerminalSession, e
 	return terminators
 }
 
-func (s *execService) runCommands(context *Context, request *ManagedCommandRequest) (*CommandResponse, error) {
+func (s *execService) runCommands(context *Context, request *ExtractableCommandRequest) (*CommandResponse, error) {
 	err := request.Validate()
 	if err != nil {
 		return nil, err
@@ -370,7 +386,7 @@ func (s *execService) runCommands(context *Context, request *ManagedCommandReque
 		return nil, err
 	}
 
-	var options = request.ManagedCommand.Options
+	var options = request.ExtractableCommand.Options
 	if options == nil {
 		options = NewExecutionOptions()
 	}
@@ -388,7 +404,7 @@ func (s *execService) runCommands(context *Context, request *ManagedCommandReque
 	}
 
 	response = NewCommandResponse(session.ID)
-	for _, execution := range request.ManagedCommand.Executions {
+	for _, execution := range request.ExtractableCommand.Executions {
 		var command = context.Expand(execution.Command)
 		if execution.MatchOutput != "" {
 			continue
@@ -445,11 +461,11 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 	var err error
 	switch actualRequest := request.(type) {
 	case *CommandRequest:
-		var mangedCommandRequest = actualRequest.AsManagedCommandRequest()
+		var mangedCommandRequest = actualRequest.AsExtractableCommandRequest()
 		if actualRequest.SuperUser {
 			superCommandRequest := superUserCommandRequest{
 				Target:        actualRequest.Target,
-				MangedCommand: mangedCommandRequest.ManagedCommand,
+				MangedCommand: mangedCommandRequest.ExtractableCommand,
 			}
 			mangedCommandRequest, err = superCommandRequest.AsCommandRequest(context)
 		}
@@ -465,10 +481,10 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 		if err != nil {
 			response.Error = fmt.Sprintf("failed to open session: %v, %v", actualRequest.Target, err)
 		}
-	case *ManagedCommandRequest:
+	case *ExtractableCommandRequest:
 		response.Response, err = s.runCommands(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("failed to run command: %v, %v", actualRequest.ManagedCommand, err)
+			response.Error = fmt.Sprintf("failed to run command: %v, %v", actualRequest.ExtractableCommand, err)
 		}
 	case *superUserCommandRequest:
 		commandRequest, err := actualRequest.AsCommandRequest(context)
@@ -495,16 +511,16 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 	return response
 }
 
-//NewRequest creates a new request for passed in action, the following is supported: open,close,command,managedCommand
+//NewRequest creates a new request for passed in action, the following is supported: open,close,command,extractableCommand
 func (s *execService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "open":
+	case ExecServiceOpenAction:
 		return &OpenSessionRequest{}, nil
-	case "managed-command", "managedCommand":
-		return &ManagedCommandRequest{}, nil
-	case "command":
+	case ExecServiceExtractableCommandAction:
+		return &ExtractableCommandRequest{}, nil
+	case ExecServiceCommandAction:
 		return &CommandRequest{}, nil
-	case "close":
+	case ExecServiceManagedCloseAction:
 		return &CloseSessionRequest{}, nil
 
 	}
@@ -566,7 +582,7 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 	lines = strings.Split(output, "\r\n")
 	for i := 0; i < len(lines); i++ {
 		var line = lines[i]
-		if !strings.Contains(line, ":")  || !strings.Contains(line, "/") {
+		if !strings.Contains(line, ":") || !strings.Contains(line, "/") {
 			continue
 		}
 		operatingSystem.Path.SystemPath = strings.Split(line, ":")
@@ -581,7 +597,12 @@ func NewExecService() Service {
 	var result = &execService{
 		mutex:               &sync.RWMutex{},
 		credentialPasswords: make(map[string]string),
-		AbstractService:     NewAbstractService(ExecServiceID),
+		AbstractService: NewAbstractService(ExecServiceID,
+			ExecServiceOpenAction,
+			ExecServiceCommandAction,
+			ExecServiceExtractableCommandAction,
+			ExecServiceManagedCloseAction,
+		),
 	}
 	result.AbstractService.Service = result
 	return result
@@ -589,19 +610,19 @@ func NewExecService() Service {
 
 //superUserCommandRequest represents a super user command,
 type superUserCommandRequest struct {
-	Target        *url.Resource   //target destination where to run a command.
-	MangedCommand *ManagedCommand //managed command
+	Target        *url.Resource       //target destination where to run a command.
+	MangedCommand *ExtractableCommand //managed command
 }
 
-//AsCommandRequest returns ManagedCommandRequest
-func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCommandRequest, error) {
+//AsCommandRequest returns ExtractableCommandRequest
+func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ExtractableCommandRequest, error) {
 	target, err := context.ExpandResource(r.Target)
 	if err != nil {
 		return nil, err
 	}
-	var result = &ManagedCommandRequest{
+	var result = &ExtractableCommandRequest{
 		Target: target,
-		ManagedCommand: &ManagedCommand{
+		ExtractableCommand: &ExtractableCommand{
 			Executions: make([]*Execution, 0),
 		},
 	}
@@ -614,7 +635,7 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 		executionOptions.Directory = r.MangedCommand.Options.Directory
 		executionOptions.SystemPaths = r.MangedCommand.Options.SystemPaths
 	}
-	result.ManagedCommand.Options = executionOptions
+	result.ExtractableCommand.Options = executionOptions
 	var errors = make([]string, 0)
 	var extractions = make([]*DataExtraction, 0)
 
@@ -647,7 +668,7 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 		if len(execution.Extraction) > 0 {
 			extractions = append(extractions, execution.Extraction...)
 		}
-		result.ManagedCommand.Executions = append(result.ManagedCommand.Executions, newExecution)
+		result.ExtractableCommand.Executions = append(result.ExtractableCommand.Executions, newExecution)
 	}
 
 	if target.Credential == "" {
@@ -662,6 +683,6 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ManagedCo
 		Extraction:  extractions,
 	}
 	execution.Error = append(execution.Error, errors...)
-	result.ManagedCommand.Executions = append(result.ManagedCommand.Executions, execution)
+	result.ExtractableCommand.Executions = append(result.ExtractableCommand.Executions, execution)
 	return result, nil
 }

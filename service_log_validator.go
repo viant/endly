@@ -17,8 +17,19 @@ import (
 	"time"
 )
 
-//LogValidatorServiceID represents log validator service id.
-const LogValidatorServiceID = "validator/log"
+const (
+	//LogValidatorServiceID represents log validator service id.
+	LogValidatorServiceID = "validator/log"
+
+	//LogValidatorServiceListenAction represents log listening action
+	LogValidatorServiceListenAction = "listen"
+
+	//LogValidatorServiceListenAction represents log verification action
+	LogValidatorServiceAssertAction = "assert"
+
+	//LogValidatorServiceListenAction represents verification pending logs reset action
+	LogValidatorServiceResetAction = "reset"
+)
 
 type logValidatorService struct {
 	*AbstractService
@@ -471,13 +482,12 @@ func (s *logValidatorService) getStorageService(context *Context, resource *url.
 	return storage.NewServiceForURL(resource.URL, resource.Credential)
 }
 
-
 func (s *logValidatorService) listenForChanges(context *Context, request *LogValidatorListenRequest) error {
 	var target, err = context.ExpandResource(request.Source)
 	if err != nil {
 		return err
 	}
-	service, err :=  s.getStorageService(context, target)
+	service, err := s.getStorageService(context, target)
 	if err != nil {
 		return err
 	}
@@ -540,11 +550,11 @@ func (s *logValidatorService) listen(context *Context, request *LogValidatorList
 //NewRequest creates a new request for provided action, (listen, asset,reset)
 func (s *logValidatorService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "listen":
+	case LogValidatorServiceListenAction:
 		return &LogValidatorListenRequest{}, nil
-	case "assert":
+	case LogValidatorServiceAssertAction:
 		return &LogValidatorAssertRequest{}, nil
-	case "reset":
+	case LogValidatorServiceResetAction:
 		return &LogValidatorResetRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
@@ -553,7 +563,11 @@ func (s *logValidatorService) NewRequest(action string) (interface{}, error) {
 //NewLogValidatorService creates a new log validator service.
 func NewLogValidatorService() Service {
 	var result = &logValidatorService{
-		AbstractService: NewAbstractService(LogValidatorServiceID),
+		AbstractService: NewAbstractService(LogValidatorServiceID,
+			LogValidatorServiceListenAction,
+			LogValidatorServiceAssertAction,
+			LogValidatorServiceResetAction,
+		),
 	}
 	result.AbstractService.Service = result
 	return result

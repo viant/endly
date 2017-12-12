@@ -15,7 +15,7 @@ func (s *svnService) checkInfo(context *Context, request *VcStatusRequest) (*VcI
 		return nil, err
 	}
 	var result = &VcInfo{}
-	response, err := context.Execute(request.Target, &ManagedCommand{
+	response, err := context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("cd %v", target.ParsedURL.Path),
@@ -111,8 +111,8 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource,
 		return nil, err
 	}
 	var credentials = make(map[string]string)
-	credentials[versionControlCredentailKey] = origin.Credential
-	_, err = context.Execute(target, &ManagedCommand{
+	credentials[versionControlCredentialKey] = origin.Credential
+	_, err = context.Execute(target, &ExtractableCommand{
 		Options: &ExecutionOptions{
 			TimeoutMs:   1000 * 200,
 			Terminators: []string{"Password for", "(yes/no)?"},
@@ -125,7 +125,7 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource,
 			{
 				Credentials: credentials,
 				MatchOutput: "Password",
-				Command:     versionControlCredentailKey,
+				Command:     versionControlCredentialKey,
 				Error:       []string{"No such file or directory", "Event not found", "Username:"},
 			},
 			{
@@ -146,7 +146,7 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource,
 
 func (s *svnService) commit(context *Context, request *VcCommitRequest) (*VcInfo, error) {
 
-	response, err := context.Execute(request.Target, &ManagedCommand{
+	response, err := context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("svn ci -m \"%v\" ", strings.Replace(request.Message, "\"", "'", len(request.Message))),

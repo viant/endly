@@ -11,7 +11,7 @@ type systemJdkService struct{}
 
 func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate string, request *SystemSdkSetRequest) (*SystemSdkInfo, error) {
 	var result = &SystemSdkInfo{}
-	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
+	commandResponse, err := context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: jdkCandidate + "java -version",
@@ -78,7 +78,7 @@ func (s *systemJdkService) setSdk(context *Context, request *SystemSdkSetRequest
 	}
 
 	jdkHomeCheckCommand := s.getJavaHomeCheckCommand(context, request)
-	commandResponse, err := context.Execute(request.Target, &ManagedCommand{
+	commandResponse, err := context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: jdkHomeCheckCommand,

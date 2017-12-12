@@ -4,9 +4,15 @@ import (
 	"fmt"
 )
 
-//EventReporterServiceID represents event reporter service id
-const EventReporterServiceID = "event/reporter"
 
+const (
+	//EventReporterServiceID represents event reporter service id
+	EventReporterServiceID = "event/reporter"
+
+	//EventReporterServiceReportAction represents a report action
+	EventReporterServiceReportAction = "report"
+
+)
 //EventReporterFilter represents event reporter fitler
 type EventReporterFilter struct {
 	EventType string
@@ -91,7 +97,7 @@ func (s *eventReporterService) Run(context *Context, request interface{}) *Servi
 
 func (s *eventReporterService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "report":
+	case EventReporterServiceReportAction:
 		return &EventReporterRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
@@ -100,7 +106,8 @@ func (s *eventReporterService) NewRequest(action string) (interface{}, error) {
 //NewEventReporterService creates a new event reporter service.
 func NewEventReporterService() Service {
 	var result = &eventReporterService{
-		AbstractService: NewAbstractService(EventReporterServiceID),
+		AbstractService: NewAbstractService(EventReporterServiceID,
+			EventReporterServiceReportAction),
 	}
 	result.AbstractService.Service = result
 	return result

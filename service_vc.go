@@ -10,10 +10,24 @@ import (
 	"errors"
 )
 
-const versionControlCredentailKey = "***vc***"
+const (
+	//VersionControlServiceID version control service id
+	VersionControlServiceID = "version/control"
 
-//VersionControlServiceID version control service id
-var VersionControlServiceID = "version/control"
+	//VersionControlServiceStatusAction represent version control status action
+	VersionControlServiceStatusAction = "status"
+
+	//VersionControlServiceCheckoutAction represent version control checkout action
+	VersionControlServiceCheckoutAction = "checkout"
+
+	//VersionControlServiceCommitAction represent version control commit action
+	VersionControlServiceCommitAction = "commit"
+
+	//VersionControlServicePullAction represent version control pull action
+	VersionControlServicePullAction = "pull"
+
+	versionControlCredentialKey = "***vc***"
+)
 
 type versionControlService struct {
 	*AbstractService
@@ -42,7 +56,7 @@ func (s *versionControlService) commit(context *Context, request *VcCommitReques
 	if err != nil {
 		return nil, err
 	}
-	_, err = context.Execute(target, &ManagedCommand{
+	_, err = context.Execute(target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("cd  %v", target.DirectoryPath()),
@@ -64,11 +78,14 @@ func (s *versionControlService) commit(context *Context, request *VcCommitReques
 
 //pull retrieves the latest changes from the origin
 func (s *versionControlService) pull(context *Context, request *VcPullRequest) (*VcInfo, error) {
+	if err := request.Validate(); err != nil {
+		return nil, err
+	}
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-	_, err = context.Execute(target, &ManagedCommand{
+	_, err = context.Execute(target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("cd  %v", target.DirectoryPath()),
@@ -167,10 +184,10 @@ func (s *versionControlService) checkoutArtifact(context *Context, origin, targe
 		}
 
 		if removeLocalChanges {
-			_, err = context.Execute(target, &ManagedCommand{
+			_, err = context.Execute(target, &ExtractableCommand{
 				Executions: []*Execution{
 					{
-						Command: fmt.Sprintf("rm -rf %v",directoryPath),
+						Command: fmt.Sprintf("rm -rf %v", directoryPath),
 					},
 				},
 			})
@@ -182,8 +199,7 @@ func (s *versionControlService) checkoutArtifact(context *Context, origin, targe
 		}
 	}
 
-
-	_, err = context.Execute(target, &ManagedCommand{
+	_, err = context.Execute(target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("mkdir -p %v", parent),
@@ -196,7 +212,6 @@ func (s *versionControlService) checkoutArtifact(context *Context, origin, targe
 	if err != nil {
 		return nil, err
 	}
-
 
 	switch origin.Type {
 	case "git":
@@ -243,7 +258,14 @@ func (s *versionControlService) Run(context *Context, request interface{}) *Serv
 	case *VcPullRequest:
 		response.Response, err = s.pull(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("failed to commit version: %v -> %v, %v", actualRequest.Origin.URL, actualRequest.Target.URL, err)
+			var originURL, targetURL string
+			if actualRequest.Origin != nil {
+				originURL = actualRequest.Origin.URL
+			}
+			if actualRequest.Target != nil {
+				originURL = actualRequest.Target.URL
+			}
+			response.Error = fmt.Sprintf("failed to commit version: %v -> %v, %v", originURL, targetURL, err)
 		}
 	default:
 		response.Error = fmt.Sprintf("unsupported request type: %T", request)
@@ -256,18 +278,17 @@ func (s *versionControlService) Run(context *Context, request interface{}) *Serv
 	return response
 }
 
-
-var errorRewrites = map[string]func(*url.Resource) string {
-	"authentication failed":  func(resource *url.Resource) string{
+var errorRewrites = map[string]func(*url.Resource) string{
+	"authentication failed": func(resource *url.Resource) string {
 		username, _, _ := resource.LoadCredential(false)
 		return fmt.Sprintf("failed to authenticate username: %v with %v secret", username, resource.Credential)
 	},
-	"error validating server certificate":func(resource *url.Resource) string{
+	"error validating server certificate": func(resource *url.Resource) string {
 		return fmt.Sprintf("failed to validate svn certificate: %v", resource.URL)
 	},
-	"username":func(resource *url.Resource) string{
+	"username": func(resource *url.Resource) string {
 		username, _, _ := resource.LoadCredential(false)
-		return fmt.Sprintf("failed to authenticate username: %v with %v secret",  username, resource.Credential)
+		return fmt.Sprintf("failed to authenticate username: %v with %v secret", username, resource.Credential)
 	},
 }
 
@@ -283,16 +304,15 @@ func checkVersionControlAuthErrors(err error, resource *url.Resource) error {
 	return err
 }
 
-
 func (s *versionControlService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case "status":
+	case VersionControlServiceStatusAction:
 		return &VcStatusRequest{}, nil
-	case "checkout":
+	case VersionControlServiceCheckoutAction:
 		return &VcCheckoutRequest{}, nil
-	case "commit":
+	case VersionControlServiceCommitAction:
 		return &VcCommitRequest{}, nil
-	case "pull":
+	case VersionControlServicePullAction:
 		return &VcPullRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
@@ -301,7 +321,12 @@ func (s *versionControlService) NewRequest(action string) (interface{}, error) {
 //NewVersionControlService creates a new version control
 func NewVersionControlService() Service {
 	var result = &versionControlService{
-		AbstractService: NewAbstractService(VersionControlServiceID),
+		AbstractService: NewAbstractService(VersionControlServiceID,
+			VersionControlServiceStatusAction,
+			VersionControlServiceStatusAction,
+			VersionControlServiceCommitAction,
+			VersionControlServicePullAction,
+	),
 		gitService:      &gitService{},
 		svnService:      &svnService{},
 	}
