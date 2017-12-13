@@ -220,5 +220,23 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to lookup service: 'aaa'"), serviceResponse.Error)
 		}
 	}
+
+	{
+		//calling invalid workflow
+
+		manager, service, err := getServiceWithWorkflow("test/workflow/broken/broken4.csv")
+		if assert.Nil(t, err) {
+			context := manager.NewContext(toolbox.NewContext())
+			serviceResponse := service.Run(context, &endly.WorkflowRunRequest{
+				Name:              "broken4",
+				Tasks:             "*",
+				Params:            map[string]interface{}{},
+				PublishParameters: true,
+			})
+			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to lookup service: 'aaa'"), serviceResponse.Error)
+		}
+	}
+
+
 }
 //TODO patch async task reporting
