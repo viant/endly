@@ -293,8 +293,12 @@ func TestSeleniumService_Run(t *testing.T) {
 	serviceResponse := service.Run(context, &endly.SeleniumRunRequest{
 		RemoteSelenium: target,
 		Browser:        "firefox",
-		PageURL:        "http://play.golang.org/?simple=1",
-		Actions:[]*endly.WebElementAction{
+		Actions:[]*endly.SeleniumAction{
+			{
+				Calls:[]*endly.SeleniumMethodCall{
+					endly.NewSeleniumMethodCall("Get", nil, "http://play.golang.org/?simple=1"),
+				},
+			},
 			{
 				Selector:endly.NewWebElementSelector("", "#code"),
 				Calls:[]*endly.SeleniumMethodCall{
@@ -329,23 +333,13 @@ func TestSeleniumService_Run(t *testing.T) {
 
 		runResponse, ok := serviceResponse.Response.(*endly.SeleniumRunResponse)
 		if assert.True(t, ok) {
-			var expectedResponses = map[string]map[string]string {
-				"#output":{
-					"Text":"Hello WebDriver!\n\n\nProgram exited.",
-				},
+			output, ok := runResponse.Data["#output"];
+			if assert.True(t, ok) {
+				ouputMap := toolbox.AsMap(output)
+				assert.EqualValues(t, "Hello WebDriver!\n\n\nProgram exited.", ouputMap["Text"])
 			}
-			for id, expectedResponse := range expectedResponses {
-				actualResponse, ok := runResponse.Data[id]
-				if assert.True(t, ok, id){
-					for key := range expectedResponse {
-						actual, hasKey := actualResponse.Data[key]
-						if assert.True(t, hasKey, key) {
-							assert.EqualValues(t, expectedResponse[key], actual)
-						}
-					}
 
-				}
-			}
+
 
 
 		}

@@ -10,14 +10,14 @@ type SeleniumRunRequest struct {
 	SessionID string
 	Browser        string
 	RemoteSelenium *url.Resource //remote selenium resource
-	PageURL   string
-	Actions   []*WebElementAction
+	Actions   []*SeleniumAction
 }
 
 //SeleniumRunResponse represents selenium call response
 type SeleniumRunResponse struct {
-	Data      map[string]*ElementResponse
-	SessionID string
+	SessionID	string
+	Data      map[string]interface{}
+
 }
 
 //SeleniumMethodCall represents selenium call.
@@ -27,8 +27,8 @@ type SeleniumMethodCall struct {
 	Wait       *SeleniumWait
 }
 
-//WebElementAction represents various calls on web element
-type WebElementAction struct {
+//SeleniumAction represents various calls on web element
+type SeleniumAction struct {
 	Selector *WebElementSelector
 	Calls    []*SeleniumMethodCall
 }

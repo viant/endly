@@ -27,18 +27,13 @@ type httpRunnerService struct {
 }
 
 func (s *httpRunnerService) processResponse(context *Context, sendRequest *SendHTTPRequest, sendHTTPRequest *HTTPRequest, response *HTTPResponse, httpResponse *http.Response, isBase64Encoded bool, extracted map[string]string) (string, error) {
-	state := context.state
 	response.Header = make(map[string][]string)
 	copyHeaders(httpResponse.Header, response.Header)
 	readBody(httpResponse, response, isBase64Encoded)
 	if sendRequest.ResponseUdf != "" {
-		var udf, has = UdfRegistry[sendRequest.ResponseUdf]
-		if !has {
-			return "", fmt.Errorf("failed to lookup udf: %v for: %v", sendRequest.ResponseUdf, sendHTTPRequest.URL)
-		}
-		transformed, err := udf(response.Body, state)
+		transformed, err := s.transformWithUDF(context, sendRequest.ResponseUdf, sendHTTPRequest.URL, response.Body)
 		if err != nil {
-			return "", fmt.Errorf("failed to send send request, unable to run udf: %v %v", sendRequest.ResponseUdf, err)
+			return "", err
 		}
 		if toolbox.IsMap(transformed) {
 			bodyBuf := new(bytes.Buffer)
@@ -54,6 +49,19 @@ func (s *httpRunnerService) processResponse(context *Context, sendRequest *SendH
 	return responseBody, nil
 }
 
+func (s *httpRunnerService) transformWithUDF(context *Context, udfName, URL string, payload interface{}) (interface{}, error) {
+	var state = context.state
+	var udf, has = UdfRegistry[udfName]
+	if !has {
+		return nil, fmt.Errorf("failed to lookup udf: %v for: %v", udfName, URL)
+	}
+	transformed, err := udf(payload, state)
+	if err != nil {
+		return nil, fmt.Errorf("failed to run udf: %v, %v", udfName, err)
+	}
+	return transformed, nil
+}
+
 func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, sendHTTPRequest *HTTPRequest, sessionCookies *Cookies, sendRequest *SendHTTPRequest, result *SendHTTPResponse) error {
 	var err error
 	var state = context.State()
@@ -62,19 +70,19 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 	var isBase64Encoded = false
 	sendHTTPRequest = sendHTTPRequest.Expand(context)
 	var body []byte
+	var ok bool
 	if len(sendHTTPRequest.Body) > 0 {
 		body = []byte(sendHTTPRequest.Body)
 		if sendRequest.RequestUdf != "" {
-			var udf, has = UdfRegistry[sendRequest.RequestUdf]
-			if !has {
-				return fmt.Errorf("failed to lookup udf: %v for: %v", sendRequest.RequestUdf, sendHTTPRequest.URL)
-			}
-			transformed, err := udf(sendHTTPRequest.Body, state)
+			transformed, err := s.transformWithUDF(context, sendRequest.RequestUdf, sendHTTPRequest.URL, string(body))
 			if err != nil {
-				return fmt.Errorf("failed to send request, unable to run udf: %v, %v", sendRequest.RequestUdf,  err)
+				return err
 			}
-			body = []byte(toolbox.AsString(transformed))
+			if body, ok = transformed.([]byte); ! ok {
+				body = []byte(toolbox.AsString(transformed))
+			}
 		}
+		isBase64Encoded = strings.HasPrefix(string(body), "base64:")
 		body, err = FromPayload(string(body))
 		if err != nil {
 			return err
@@ -267,7 +275,6 @@ func copyExpandedHeaders(source http.Header, target http.Header, context *Contex
 		if len(values) == 1 {
 			target.Set(key, context.Expand(values[0]))
 		} else {
-
 			for _, value := range values {
 				target.Add(key, context.Expand(value))
 			}
