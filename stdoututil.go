@@ -11,7 +11,7 @@ const noSuchFileOrDirectory = "no such file or directory"
 const programCanBeFound = "can be found in the following packages"
 const errorIsNotRecoverable = "Error is not recoverable"
 const notInstalled = "not installed"
-const canNotOpen = "Can't open"
+const canNotOpen = "can't open"
 
 //CheckNoSuchFileOrDirectory checks for no such file or directory message in the provided stdout.
 func CheckNoSuchFileOrDirectory(stdout ...string) bool {
