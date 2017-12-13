@@ -239,4 +239,3 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 
 
 }
-//TODO patch async task reporting

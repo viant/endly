@@ -333,13 +333,12 @@ func (s *workflowService) runAsyncActions(context *Context, workflow *Workflow, 
 	if len(asyncAction) > 0 {
 		group := sync.WaitGroup{}
 		group.Add(len(asyncAction))
+
 		var groupErr error
 		for _, action := range asyncAction {
 			go func(actionContext *Context, action *ServiceAction) {
 				defer group.Done()
 				actionContext.MakeAsyncSafe()
-				defer s.publishEvents(context, actionContext.Events.Events)
-
 				err = s.runAction(actionContext, action)
 				if err != nil {
 					groupErr = fmt.Errorf("failed to run action:%v %v", action.Tag, err)
@@ -351,6 +350,7 @@ func (s *workflowService) runAsyncActions(context *Context, workflow *Workflow, 
 						state.Put(variableName, actionState.Get(variableName))
 					}
 				}
+				s.publishEvents(context, actionContext.Events.Events)
 			}(context.Clone(), action)
 		}
 
