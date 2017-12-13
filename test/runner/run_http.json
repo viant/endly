@@ -3,7 +3,7 @@
   "Name": "http_workflow",
   "Tasks": "*",
   "Params": {
-    "appServer": "http://127.0.0.1:8114"
+    "appServer": "http://127.0.0.1:8120"
   },
   "PublishParameters": true,
   "Filter": {
