@@ -16,8 +16,12 @@ import (
 const (
 	//WorkflowServiceID represents workflow service id
 	WorkflowServiceID = "workflow"
-	//WorkflowEvalRunCriteriaEventType event Id
-	WorkflowEvalCriteriaEventType = "EvalCriteria"
+	//WorkflowTaskEvalCriteriaEventType event Id
+	WorkflowTaskEvalCriteriaEventType = "EvalTaskCriteria"
+
+
+	//WorkflowActionEvalCriteriaEventType event Id
+	WorkflowActionEvalCriteriaEventType = "EvalActionCriteria"
 
 	//WorkflowServiceRunAction represents workflow run action
 	WorkflowServiceRunAction = "run"
@@ -95,9 +99,6 @@ func (s *workflowService) Workflow(name string) (*Workflow, error) {
 	return nil, fmt.Errorf("failed to lookup workflow: %v", name)
 }
 
-func (s *workflowService) evaluateCriteria(context *Context, criteria string, defaultValue bool) (bool, error) {
-	return EvaluateCriteria(context, criteria, WorkflowEvalCriteriaEventType, defaultValue)
-}
 
 
 func isTaskAllowed(candidate *WorkflowTask, request *WorkflowRunRequest) (bool, map[int]bool) {
@@ -195,7 +196,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) err
 	serviceActivity.ServiceResponse = responseMap
 	startEvent := s.Begin(context, action, Pairs("activity", serviceActivity), Info)
 	defer s.End(context)(startEvent, Pairs("value", &WorkflowServiceActivityEndEventType{}, "response", responseMap))
-	canRun, err := s.evaluateCriteria(context, action.RunCriteria, true)
+	canRun, err := EvaluateCriteria(context, action.RunCriteria, WorkflowActionEvalCriteriaEventType, true)
 	if err != nil {
 		return err
 	}
@@ -203,7 +204,6 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) err
 		serviceActivity.Ineligible = true
 		return nil
 	}
-
 	err = action.Init.Apply(state, state)
 	s.addVariableEvent("Action.Init", action.Init, context, state)
 	if err != nil {
@@ -260,18 +260,17 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 		return nil
 	}
 	var hasAllowedActions = len(allowedServiceActions) > 0
-	err := task.Init.Apply(state, state)
-	s.addVariableEvent("Task.Init", task.Init, context, state)
-	if err != nil {
-		return err
-	}
-
-	canRun, err := s.evaluateCriteria(context, task.RunCriteria, true)
+	canRun, err := EvaluateCriteria(context, task.RunCriteria, WorkflowTaskEvalCriteriaEventType, true)
 	if err != nil {
 		return err
 	}
 	if !canRun {
 		return nil
+	}
+	err = task.Init.Apply(state, state)
+	s.addVariableEvent("Task.Init", task.Init, context, state)
+	if err != nil {
+		return err
 	}
 	startEvent := s.Begin(context, task, Pairs("Id", task.Name))
 	defer s.End(context)(startEvent, Pairs())
@@ -330,22 +329,28 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 
 func (s *workflowService) runAsyncActions(context *Context, workflow *Workflow, task *WorkflowTask, request *WorkflowRunRequest, asyncAction []*ServiceAction) error {
 	var err error
+	var state = context.state
 	if len(asyncAction) > 0 {
 		group := sync.WaitGroup{}
 		group.Add(len(asyncAction))
 		var groupErr error
-		s.Sleep(context, 200)
 		for _, action := range asyncAction {
 			go func(actionContext *Context, action *ServiceAction) {
 				defer group.Done()
-				defer s.publishEvents(context, actionContext.Events.Events)
-				defer actionContext.Clone()
 				actionContext.MakeAsyncSafe()
+				defer s.publishEvents(context, actionContext.Events.Events)
+
 				err = s.runAction(actionContext, action)
 				if err != nil {
 					groupErr = fmt.Errorf("failed to run action:%v %v", action.Tag, err)
 				}
-
+				if len(action.Post) > 0 {
+					var actionState = actionContext.state
+					for _, variable := range action.Post {
+						var variableName = context.Expand(variable.Name)
+						state.Put(variableName, actionState.Get(variableName))
+					}
+				}
 			}(context.Clone(), action)
 		}
 
