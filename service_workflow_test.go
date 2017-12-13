@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"os/exec"
 	"path"
+	"strings"
 )
 
 func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, error) {
@@ -99,6 +100,8 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 				"appServer": "http://127.0.0.1:8113",
 			},
 			PublishParameters: true,
+			EnableLogging:    true,
+			LoggingDirectory: "/tmp/http/",
 		})
 		assert.EqualValues(t, "", serviceResponse.Error)
 		response, ok := serviceResponse.Response.(*endly.WorkflowRunResponse)
@@ -113,3 +116,109 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 		}
 	}
 }
+
+
+func TestWorkflowService_RunLifeCycle(t *testing.T) {
+
+
+	manager, service, err := getServiceWithWorkflow("test/workflow/lifecycle/workflow.csv")
+	if assert.Nil(t, err) {
+
+		context := manager.NewContext(toolbox.NewContext())
+		serviceResponse := service.Run(context, &endly.WorkflowRunRequest{
+			Name:  "lifecycle",
+			Tasks: "*",
+			Params: map[string]interface{}{
+				"object": map[string]interface{}{
+					"key1":1,
+					"key2":"abc",
+				},
+			},
+			PublishParameters: true,
+			EnableLogging:    true,
+			LoggingDirectory: "/tmp/lifecycle/",
+		})
+
+		if assert.EqualValues(t, "", serviceResponse.Error) {
+			response, ok := serviceResponse.Response.(*endly.WorkflowRunResponse)
+			if assert.True(t, ok) {
+				assert.EqualValues(t, 2, response.Data["testPassed"])
+				var anArray  =toolbox.AsSlice(response.Data["array"])
+				assert.EqualValues(t, 2, anArray[0])
+				assert.EqualValues(t, 3, response.Data["counter"])
+				var anObject= toolbox.AsMap(response.Data["object"])
+				assert.EqualValues(t, 1, anObject["key1"])
+				assert.EqualValues(t, "200", anObject["shift"])
+			}
+		}
+	}
+}
+
+
+
+func TestWorkflowService_RunBroken(t *testing.T) {
+
+	{
+		//request empty error
+
+		manager, service, err := getServiceWithWorkflow("test/workflow/broken/broken1.csv")
+		if assert.Nil(t, err) {
+			context := manager.NewContext(toolbox.NewContext())
+			serviceResponse := service.Run(context, &endly.WorkflowRunRequest{
+				Name:              "broken1",
+				Tasks:             "*",
+				Params:            map[string]interface{}{},
+				PublishParameters: true,
+			})
+			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to evaluate request"), serviceResponse.Error)
+		}
+	}
+	{
+		//unsupported action error
+
+		manager, service, err := getServiceWithWorkflow("test/workflow/broken/broken2.csv")
+		if assert.Nil(t, err) {
+			context := manager.NewContext(toolbox.NewContext())
+			serviceResponse := service.Run(context, &endly.WorkflowRunRequest{
+				Name:              "broken2",
+				Tasks:             "*",
+				Params:            map[string]interface{}{},
+				PublishParameters: true,
+			})
+			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "unsupported action: aaa"), serviceResponse.Error)
+		}
+	}
+
+	{
+		//unsupported action error
+
+		manager, service, err := getServiceWithWorkflow("test/workflow/broken/broken2.csv")
+		if assert.Nil(t, err) {
+			context := manager.NewContext(toolbox.NewContext())
+			serviceResponse := service.Run(context, &endly.WorkflowRunRequest{
+				Name:              "broken2",
+				Tasks:             "*",
+				Params:            map[string]interface{}{},
+				PublishParameters: true,
+			})
+			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "unsupported action: aaa"), serviceResponse.Error)
+		}
+	}
+
+	{
+		//unsupported service error
+
+		manager, service, err := getServiceWithWorkflow("test/workflow/broken/broken3.csv")
+		if assert.Nil(t, err) {
+			context := manager.NewContext(toolbox.NewContext())
+			serviceResponse := service.Run(context, &endly.WorkflowRunRequest{
+				Name:              "broken3",
+				Tasks:             "*",
+				Params:            map[string]interface{}{},
+				PublishParameters: true,
+			})
+			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to lookup service: 'aaa'"), serviceResponse.Error)
+		}
+	}
+}
+//TODO patch async task reporting
