@@ -113,12 +113,13 @@ func (v *Variables) Apply(in, out data.Map) error {
 		}
 
 		if variable.Required && (value == nil || toolbox.AsString(value) == "") {
-
 			source := in.GetString(neatly.OwnerURL)
-
 			return fmt.Errorf("Variable %v is required by %v, but was empty, %v", variable.Name, source, toolbox.MapKeysToStringSlice(in))
 		}
-		out.SetValue(variable.Name, value)
+
+		if variable.Name != "" {
+			out.SetValue(variable.Name, value)
+		}
 	}
 	return nil
 }

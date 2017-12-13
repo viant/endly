@@ -9,6 +9,7 @@ import (
 	"github.com/viant/toolbox/bridge"
 	"time"
 	"sync"
+	"sync/atomic"
 )
 
 const (
@@ -30,7 +31,7 @@ type HttpServerTrips struct {
 	BaseDirectory string
 	Trips         map[string]*HttpResponses
 	IndexKeys     []string
-	Mutex    *sync.Mutex
+	Mutex         *sync.Mutex
 }
 
 func (t *HttpServerTrips) LoadTripsIfNeeded() error {
@@ -65,6 +66,7 @@ type HttpResponses struct {
 }
 
 type httpHandler struct {
+	running int32
 	handler func(writer http.ResponseWriter, request *http.Request)
 }
 
@@ -77,6 +79,7 @@ func StartHttpServer(port int, trips *HttpServerTrips) error {
 	if trips.Mutex == nil {
 		trips.Mutex = &sync.Mutex{}
 	}
+
 	err := trips.LoadTripsIfNeeded()
 	if err != nil {
 		return fmt.Errorf("failed to start http server :%v, %v", port, err)
@@ -85,16 +88,23 @@ func StartHttpServer(port int, trips *HttpServerTrips) error {
 		return fmt.Errorf("failed to start http server :%v, trips were empty", port)
 	}
 	var httpServer *http.Server
+	var httpHandler = &httpHandler{
+		running: 1,
+	}
 
 	var handler = func(writer http.ResponseWriter, request *http.Request) {
+
+		trips.Mutex.Lock()
+		defer trips.Mutex.Unlock()
+		if atomic.LoadInt32(&httpHandler.running) == 0 {
+			return
+		}
+
 		var key, err = buildKeyValue(trips.IndexKeys, request)
 		if err != nil {
 			http.Error(writer, fmt.Sprintf("%v", err), http.StatusInternalServerError)
 			return
 		}
-
-		trips.Mutex.Lock()
-		defer trips.Mutex.Unlock()
 
 		responses, ok := trips.Trips[key]
 		if ! ok {
@@ -103,8 +113,10 @@ func StartHttpServer(port int, trips *HttpServerTrips) error {
 			http.Error(writer, errorMessage, http.StatusNotFound)
 			return
 		}
+
+
 		response := responses.Responses[responses.Index]
-		responses.Index++
+		defer func() {responses.Index++}()
 		for k, headerValues := range response.Header {
 			for _, headerValue := range headerValues {
 				writer.Header().Set(k, headerValue)
@@ -119,20 +131,24 @@ func StartHttpServer(port int, trips *HttpServerTrips) error {
 			delete(trips.Trips, key)
 		}
 		if len(trips.Trips) == 0 {
+			httpServer.Close()
 			go func() {
-				time.Sleep(2 * time.Second)
-				httpServer.Shutdown(nil)
+				time.Sleep(time.Second)
+				if atomic.LoadInt32(&httpHandler.running) == 0 {
+					httpServer.Shutdown(nil)
+				}
 			}()
 
 		}
 	}
-
-	httpServer = &http.Server{Addr: fmt.Sprintf(":%v", port), Handler: &httpHandler{handler}}
+	httpHandler.handler = handler
+	httpServer = &http.Server{Addr: fmt.Sprintf(":%v", port), Handler: httpHandler}
 
 	errorNotification := make(chan bool, 1)
 	go func() {
 		fmt.Printf("Starting server on %v\n", port)
 		err = httpServer.ListenAndServe()
+		atomic.StoreInt32(&httpHandler.running, 0)
 		errorNotification <- true
 		if err != nil {
 			err = fmt.Errorf("failed to start http server on port %v, %v", port, err)
@@ -205,7 +221,6 @@ func init() {
 			if err != nil {
 				return "", fmt.Errorf("failed to read body %v, %v", request.URL, err)
 			}
-
 
 			return string(content), nil
 
