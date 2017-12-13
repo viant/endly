@@ -1,0 +1,17 @@
+Workflow,Name,Description,Tasks,,,,[]Init.Name,[]Init.Value,[]Init.From,[]Post.Name,[]Post.From,,,,
+,lifecycle,Data flow/lifecycle demo,%Tasks,,,,counter,1,,counter,counter,,,,
+,,,,,,,object,,params.object,object,object,,,,
+,,,,,,,array,[],,array,array,,,,
+,,,,,,,,,,testPassed,testPassed,,,,
+[]Tasks,Name,Description,Actions,,RunCriteria,,[]Init.Name,[]Init.Value,[]Init.From,[]Post.Name,[]Post.From,,,,
+,skip,Skip this task as counter is 0,%Skip,,$counter:0,,,,,,,,,,
+[]Skip,,Description,Service,Action,,Request,[]Init.Name,[]Init.Value,,,,,,,
+,,This action will not run,nop,nop,,{},->array,100,,,,,,,
+[]Tasks,Name,Description,Actions,,,RunCriteria,[]Init.Name,[]Init.Value,[]Init.From,[]Post.Name,[]Post.From,,,,
+,shift,shit value from array,%Shift,,,$counter:1,,,counter++,->array,counter,,,,
+,,,,,,,->array,200,,,counter++,,,,
+[]Shift,,Description,Service,Action,RunCriteria,Request,[]Init.Name,[]Init.Value,[]Init.From,[]Post.Name,[]Post.From,assert.Actual,assert.Expected,expected.counter,expected.shift
+,,remove first element from array,nop,nop,,{},object.shift,,<-array,,,,,,
+,,,,,,,object.counter,$counter,,,,,,,
+-,,validate object,validator,assert,,$assert,,,,testPassed,TestPassed,$object,$expected,2,200
+,,skip this action,nop,nop,$counter:0,,counter,,counter++,->array,counter,,,,
