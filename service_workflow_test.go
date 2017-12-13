@@ -233,7 +233,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
-			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to lookup service: 'aaa'"), serviceResponse.Error)
+			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to load workflow"), serviceResponse.Error)
 		}
 	}
 
