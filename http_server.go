@@ -8,6 +8,7 @@ import (
 	"strings"
 	"github.com/viant/toolbox/bridge"
 	"time"
+	"sync"
 )
 
 const (
@@ -29,6 +30,7 @@ type HttpServerTrips struct {
 	BaseDirectory string
 	Trips         map[string]*HttpResponses
 	IndexKeys     []string
+	Mutex    *sync.Mutex
 }
 
 func (t *HttpServerTrips) LoadTripsIfNeeded() error {
@@ -72,6 +74,9 @@ func (h *httpHandler) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 
 //StartHttpServer starts http request
 func StartHttpServer(port int, trips *HttpServerTrips) error {
+	if trips.Mutex == nil {
+		trips.Mutex = &sync.Mutex{}
+	}
 	err := trips.LoadTripsIfNeeded()
 	if err != nil {
 		return fmt.Errorf("failed to start http server :%v, %v", port, err)
@@ -87,6 +92,10 @@ func StartHttpServer(port int, trips *HttpServerTrips) error {
 			http.Error(writer, fmt.Sprintf("%v", err), http.StatusInternalServerError)
 			return
 		}
+
+		trips.Mutex.Lock()
+		defer trips.Mutex.Unlock()
+
 		responses, ok := trips.Trips[key]
 		if ! ok {
 			var errorMessage = fmt.Sprintf("key: %v not found: %v, available: [%v]", key, strings.Join(toolbox.MapKeysToStringSlice(trips.Trips), ","))
@@ -111,7 +120,7 @@ func StartHttpServer(port int, trips *HttpServerTrips) error {
 		}
 		if len(trips.Trips) == 0 {
 			go func() {
-				time.Sleep(1 * time.Second)
+				time.Sleep(2 * time.Second)
 				httpServer.Shutdown(nil)
 			}()
 

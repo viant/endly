@@ -10,9 +10,12 @@ import (
 
 
 
-//IsAsciiPrintable check supplied string does not have binary data
-func IsAsciiPrintable(s string) bool {
-	for _, r := range s {
+//IsASCIIText return true if supplied string does not have binary data
+func IsASCIIText(candidate string) bool {
+	for _, r := range candidate {
+		if r == '\n' || r == '\r' ||r == '\t' {
+			continue
+		}
 		if r > unicode.MaxASCII || !unicode.IsPrint(r) {
 			return false
 		}
