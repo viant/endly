@@ -8,6 +8,7 @@ import (
 	"github.com/viant/toolbox/url"
 	"time"
 	"github.com/viant/toolbox/data"
+	"strings"
 )
 
 const (
@@ -103,13 +104,33 @@ func (s *seleniumService) Run(context *Context, request interface{}) *ServiceRes
 
 }
 
+func (s *seleniumService) addResultIfPresent(callResult []interface{}, result data.Map, resultPath ... string) {
+	var responseData string
+	var has = false
+	for _, element := range callResult {
+		if element == nil || ! toolbox.IsString(element) {
+			continue
+		}
+		has = true
+		responseData = toolbox.AsString(element)
+		break;
+	}
+	if ! has {
+		return
+	}
+	var key = strings.Join(resultPath, ".")
+	result.SetValue(key, responseData)
+}
+
 func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*SeleniumRunResponse, error) {
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
+
 	var response = &SeleniumRunResponse{
-		Data: make(map[string]*ElementResponse),
+		Data: make(map[string]interface{}),
 	}
+	var result = data.Map(response.Data)
 
 	if request.SessionID == "" {
 		openResponse, err := s.openSession(context, &SeleniumOpenSessionRequest{
@@ -123,22 +144,24 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 		request.SessionID = openResponse.ID
 	}
 	response.SessionID = request.SessionID
-	if request.PageURL != "" {
-		seleniumSession, err := s.session(context, request.SessionID)
-		if err != nil {
-			return nil, err
-		}
-		err = seleniumSession.driver.Get(request.PageURL)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	if len(request.Actions) == 0 {
 		return response, nil
 	}
 	for _, action := range request.Actions {
 		for _, call := range action.Calls {
+			if action.Selector == nil {
+				callResponse, err := s.webDriverCall(context, &SeleniumWebDriverCallRequest{
+					SessionID: request.SessionID,
+					Call:      call,
+				})
+				if err != nil {
+					return nil, err
+				}
+				s.addResultIfPresent(callResponse.Result, result, call.Method)
+				continue
+
+			}
+
 			callResponse, err := s.webElementCall(context, &SeleniumWebElementCallRequest{
 				SessionID: request.SessionID,
 				Selector:  action.Selector,
@@ -147,29 +170,7 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 			if err != nil {
 				return nil, err
 			}
-
-			var responseData string
-			var has = false
-			for _, element := range callResponse.Result {
-				if element == nil || ! toolbox.IsString(element) {
-					continue
-				}
-				has = true
-				responseData = toolbox.AsString(element)
-				break;
-			}
-			if ! has {
-				continue
-			}
-
-			if _, has := response.Data[action.Selector.Value]; ! has {
-				response.Data[action.Selector.Value] = &ElementResponse{
-					Selector: action.Selector,
-					Data:     make(map[string]string),
-				}
-			}
-			response.Data[action.Selector.Value].Data[call.Method] = responseData
-
+			s.addResultIfPresent(callResponse.Result, result,  action.Selector.Value, call.Method)
 		}
 	}
 	return response, nil
