@@ -4,7 +4,7 @@
   "PublishParameters": true,
   "EnableLogging": true,
   "LoggingDirectory": "/tmp/app/",
-  "Tasks": "init,test",
+  "Tasks": "*",
 
   "Params": {
     "goVersion":"1.8",
@@ -14,10 +14,10 @@
     "mysqlVersion": "5.7",
     "mysqlCredential": "${env.HOME}/.secret/mysql.json",
     "GOPATH":"$env.GOPATH",
-    "localHostCredential": "${env.HOME}/.secret/scp.json",
-    "targetHost": "127.0.0.1",
 
+    "targetHost": "127.0.0.1",
     "targetHostCredential": "${env.HOME}/.secret/scp.json",
+
     "buildHost": "127.0.0.1",
     "buildHostCredential": "${env.HOME}/.secret/scp.json",
 
