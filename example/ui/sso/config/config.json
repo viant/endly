@@ -2,7 +2,19 @@
   "Port":"8888",
   "StaticRoutes":[
     {
-      "URI":"/",
+      "URI":"/css/",
+      "Directory":"static/"
+    },
+    {
+      "URI":"/js/",
+      "Directory":"static/"
+    },
+    {
+      "URI":"/signup/",
+      "Directory":"static/"
+    },
+    {
+      "URI":"/signin/",
       "Directory":"static/"
     }
   ]

@@ -3,49 +3,58 @@
 <head>
     <title>Sign up</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/main.css" />
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/tether.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/main.js"></script>
+
 </head>
-
-
-<form>
+<div class="wrapper">
+<form class="form-signup" action="/api/singup/" method="post" >
     <div class="container">
-        <h3 class="display-5">Sing up</h3>
+        <h2 class="form-signin-heading text-center">Please register</h2>
 
         <div class="row form-group">
             <label for="email" class="col-2 col-form-label">Email</label>
             <div class="col ">
                 <input class="form-control"  type="email" id="email">
+                <small class="form-text text-muted"></small>
             </div>
         </div>
         <div class="row form-group">
                 <label for="name" class="col-2 col-form-label">Name</label>
             <div class="col">
                 <input class="form-control" type="text" id="name">
+                <small class="form-text text-muted"></small>
             </div>
         </div>
         <div class="row form-group">
                 <label for="password" class="col-2 col-form-label">Password</label>
             <div class="col">
                 <input class="form-control"  type="password" id="password">
+                <small class="form-text text-muted"></small>
             </div>
         </div>
         <div class="row form-group">
                 <label for="retypedPassword" class="col-2 col-form-label">Retype password</label>
             <div class="col">
                 <input class="form-control"  type="password" id="retypedPassword">
+                <small class="form-text text-muted"></small>
             </div>
         </div>
         <div class="row form-group">
             <label for="dataOfBirth" class="col-2 col-form-label">Data of birth</label>
             <div class="col">
                 <input class="form-control" type="date" id="dataOfBirth">
+                <small class="form-text text-muted"></small>
             </div>
         </div>
-        <p>
-            <input type="submit" value="submit">
-        </p>
+        <div class="text-center">
+            <button class="btn btn-lg btn-primary" type="submit">Register</button>
+        </div>
     </div>
 </form>
-
+</div>
 </html>
