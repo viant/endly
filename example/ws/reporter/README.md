@@ -2,6 +2,10 @@
 
 This application was build to provide end to end testing example of web service application.
 
+Is uses mysql to register a pivot report definition, and to run reports.
+
+
+
 Prerequisites:
 
 Enable ssh logic you your use on your machine (on osx System Preference / Sharing / Remote Login )
