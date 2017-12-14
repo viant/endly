@@ -57,7 +57,7 @@ Getting started enables you to run [example applications](example/)  with **endl
 2) prepare datastore(database) for an app
 3) build and deploy an app
 4) prepare test data
-5) run use case
+5) run test use cases
 6) verify app functionality 
  
 
