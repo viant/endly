@@ -236,6 +236,4 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to load workflow"), serviceResponse.Error)
 		}
 	}
-
-
 }
