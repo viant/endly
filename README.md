@@ -52,7 +52,7 @@ go get -u github.com/viant/endly
 <a name="GettingStarted"></a>
 ## Getting Started
 
-Getting started enables you to run [example applications](example/)  vi endly workflows that will:
+Getting started enables you to run [example applications](example/)  with **endly** workflows to
 1) prepare your system for an app
 2) prepare datastore(database) for an app
 3) build and deploy an app
