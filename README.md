@@ -84,7 +84,7 @@ export PATH=$PATH:$GOPATH/bin
 
 Generate secret keys with a credential that endly will use to run the workflows.
 (**secret** binary should be compiled and build as result of get -u github.com/viant/toolbox/secret into GOPATH/bin)
-Secret generate a file that store blowfish encrypted credential in $HOME/.secret/ directory.
+**secret** command generates a file with encrypted credential in $HOME/.secret/ directory.
 
 
 Provide a user name and password to login to your box.
