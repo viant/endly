@@ -24,22 +24,18 @@ func handlerWrapper(handler http.Handler) http.Handler {
 	})
 }
 
+
 func (s *Server) Start() {
-
-
 	http.HandleFunc("/api/", func(writer http.ResponseWriter, reader *http.Request) {
 		err := s.serviceRouter.Route(writer, reader)
 		if err != nil {
 			log.Fatal(err)
 		}
 	})
-
-
 	for _, route := range s.config.StaticRoutes {
 		fileServer := http.FileServer(http.Dir(route.Directory))
 		http.Handle(route.URI, handlerWrapper(fileServer))
 	}
-
 	fmt.Printf("Started test server on port %v\n", s.config.Port)
 	log.Fatal(http.ListenAndServe(":" + s.config.Port, nil))
 }

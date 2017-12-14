@@ -1,18 +1,37 @@
 package sso
 
+import (
+	"errors"
+)
 
 type SignUpRequest struct {
-	Email string
-	Name string
-	Password string
+	*User
 	DataOfBirth string
+	Password string
 	LandingPage string
 }
 
 
 
-type SignUpResponse struct {
+type BaseResponse struct {
 	Status string
-	Message string
+	Error string
+	ErrorSource string
 	LandingPage string
+}
+
+func (r *SignUpRequest) Validate() (string, error) {
+	if r.Name == "" {
+		return "name", errors.New("name was empty")
+	}
+	if r.Email == "" {
+		return "email", errors.New("email was empty")
+	}
+	if r.Password == "" {
+		return "password", errors.New("password was empty")
+	}
+	if r.DataOfBirth == "" {
+		return "dataOfBirth", errors.New("data of birth was empty")
+	}
+	return "", nil
 }
