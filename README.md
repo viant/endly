@@ -17,7 +17,6 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Workfow Service](#Workfowservice)
 - [Usage](#Usage)
 - [Best Practice](#BestPractice)
-- [Examples](#Examples)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
 
@@ -88,11 +87,11 @@ Generate secret keys with a credential that endly will use to run the workflows.
 Secret generate a file that store blowfish encrypted credential in $HOME/.secret/ directory.
 
 
-Provide you user name and password you login to your box.
+Provide a user name and password to login to your box.
 ```text
 secret scp
 ```
-Provide you **root** as user name and non empty password for docker mysqladmin
+Provide  **root** as user name and non empty password for docker mysqladmin 
 ```text
 secret mysql
 ```
@@ -105,23 +104,26 @@ cat ~/.secret/mysql.json
 
 
 Check that **'endly'** binary is created in $GOPATH/bin directory as result of 
+```text
 'go get -u github.com/viant/endly/endly'
+```
 
 
+### End to end testing example application with endly
 
-### Run reporter webservice workflow
+#### Reporter webservice application
 
-Run the following command:
+Make sure the Getting Started prerequisites are met, then run the following command:
+
 
 ```text
 cd $GOPATH/src/github.com/viant/endly/example/ws/reporter/endly/
+
 endly
 ```
 
-**'endly'** by default looks up a run.json file to bootstrap workflow.
 
-
-
+**'endly'** by default looks up a run.json file to bootstrap the testing workflow.
 
 
 <a name="Introduction"></a>
@@ -653,10 +655,6 @@ Here is an example directory layout.
   
   Finally contribute by creating a  pull request with a new common workflows so that other can use them.
 
-
-## Examples
-
-TODO add some here
 
          	
 <a name="License"></a>
