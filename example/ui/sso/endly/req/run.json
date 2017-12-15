@@ -17,7 +17,6 @@
     "targetHost":"$targetHost",
     "targetHostCredential":"$targetHostCredential",
 
-    "localHostCredential":"$localHostCredential",
     "goVersion":"$goVersion",
 
 

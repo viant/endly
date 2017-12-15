@@ -9,13 +9,14 @@
     <script src="/js/tether.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
     <script src="/js/main.js"></script>
+    <script src="/js/signup.js"></script>
 
 </head>
 <div class="wrapper">
 <form class="form-signup" action="/api/singup/" method="post" >
     <div class="container">
         <h2 class="form-signin-heading text-center">Please register</h2>
-
+        <small class="form-text text-muted text-center" id="errorMessage"></small>
         <div class="row form-group">
             <label for="email" class="col-2 col-form-label">Email</label>
             <div class="col ">
@@ -45,9 +46,9 @@
             </div>
         </div>
         <div class="row form-group">
-            <label for="dataOfBirth" class="col-2 col-form-label">Data of birth</label>
+            <label for="dateOfBirth" class="col-2 col-form-label">Data of birth</label>
             <div class="col">
-                <input class="form-control" type="date" id="dataOfBirth">
+                <input class="form-control" type="date" id="dateOfBirth">
                 <small class="form-text text-muted"></small>
             </div>
         </div>
