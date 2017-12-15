@@ -1,0 +1,1 @@
+Test register checks empty fields in a user registration
