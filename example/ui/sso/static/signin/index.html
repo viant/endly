@@ -9,14 +9,17 @@
     <script src="/js/tether.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
     <script src="/js/main.js"></script>
+    <script src="/js/signin.js"></script>
 
 </head>
 
 <div class="wrapper">
     <form class="form-signin" action="/api/singin/" method="post" >
         <h2 class="form-signin-heading">Please login</h2>
-        <input type="text" class="form-control" name="email" placeholder="Email Address" required="" autofocus="" />
-        <input type="password" class="form-control" name="password" placeholder="Password" required=""/>
+        <input type="text" class="form-control" id="email" name="email" placeholder="Email Address" required="" autofocus="" />
+        <small class="form-text text-muted"></small>
+        <input type="password" class="form-control" id="password"  name="password" placeholder="Password" required=""/>
+        <small class="form-text text-muted"></small>
         <label class="checkbox">
             <input type="checkbox" value="remember-me" id="rememberMe" name="rememberMe"> Remember me
         </label>

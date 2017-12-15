@@ -1,5 +1,6 @@
 package sso
 
+import "github.com/viant/dsc"
 
 type StaticRoute struct {
 	URI string
@@ -9,6 +10,7 @@ type StaticRoute struct {
 type Config struct {
 	Port string
 	StaticRoutes []*StaticRoute
+	DsConfig *dsc.Config
 }
 
 

@@ -29,7 +29,8 @@ func (s *Server) Start() {
 	http.HandleFunc("/api/", func(writer http.ResponseWriter, reader *http.Request) {
 		err := s.serviceRouter.Route(writer, reader)
 		if err != nil {
-			log.Fatal(err)
+			http.Error(writer, fmt.Sprintf("%v", err), http.StatusInternalServerError)
+			return
 		}
 	})
 	for _, route := range s.config.StaticRoutes {
@@ -46,6 +47,12 @@ func NewServer(config *Config, service Service) (*Server, error) {
 			HTTPMethod: "POST",
 			URI:        "/api/singup/",
 			Handler:    service.SignUp,
+			Parameters: []string{"request"},
+		},
+		toolbox.ServiceRouting{
+			HTTPMethod: "POST",
+			URI:        "/api/signin/",
+			Handler:    service.SignIn,
 			Parameters: []string{"request"},
 		})
 	var result = &Server{

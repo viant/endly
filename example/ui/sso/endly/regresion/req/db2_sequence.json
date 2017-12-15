@@ -1,4 +1,0 @@
-{
-  "Datastore": "db1",
-  "Tables":["report", "report_performance"]
-}
