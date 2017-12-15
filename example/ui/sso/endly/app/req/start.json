@@ -4,10 +4,10 @@
     "Credential": "$targetHostCredential"
   },
   "Directory": "$appDirectory",
-  "Name": "./${app}",
+  "Command": "./${app}",
   "Arguments": [
     "-config",
-    "conf/config.json",
+    "conf/config.json"
   ],
   "ImmuneToHangups": true
 }

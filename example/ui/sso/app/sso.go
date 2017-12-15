@@ -5,6 +5,7 @@ import (
 	"log"
 	"github.com/viant/toolbox/url"
 	"github.com/viant/endly/example/ui/sso"
+	_ "github.com/viant/asc"
 )
 
 var configURI = flag.String("config", "config/config.json", "path to json config file")

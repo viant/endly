@@ -3,8 +3,8 @@ package sso
 import "time"
 
 type User struct {
-	Email string
-	Name string
-	EncryptedPassword string
-	DataOfBirth *time.Time
+	Email          string     `json:"email",column:"email"`
+	Name           string     `json:"name",column:"name"`
+	HashedPassword string     `json:"-",column:"hashedPassword"`
+	DataOfBirth    *time.Time `json:"dateOfBirth",column:"dateOfBirth"`
 }
