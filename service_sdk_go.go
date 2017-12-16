@@ -47,7 +47,7 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 	if CheckCommandNotFound(stdout) || CheckNoSuchFileOrDirectory(stdout) {
 		stdout = commandResponse.Stdout()
 		if CheckCommandNotFound(stdout) || CheckNoSuchFileOrDirectory(stdout) {
-			return nil, sdkNotFound
+			return nil, errSdkNotFound
 		}
 	}
 	if err != nil {

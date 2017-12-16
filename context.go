@@ -124,20 +124,20 @@ func (c *Context) TerminalSessions() SystemTerminalSessions {
 	if !c.Contains(systemTerminalSessionsKey) {
 		var sessions SystemTerminalSessions = make(map[string]*SystemTerminalSession)
 		result = &sessions
-		c.Put(systemTerminalSessionsKey, result)
+		_ = c.Put(systemTerminalSessionsKey, result)
 	} else {
 		c.GetInto(systemTerminalSessionsKey, &result)
 	}
 	return *result
 }
 
-//TerminalSessions returns client sessions
+//SeleniumSessions returns client sessions
 func (c *Context) SeleniumSessions() SeleniumSessions {
 	var result *SeleniumSessions
 	if !c.Contains(seleniumSessionsKey) {
 		var sessions SeleniumSessions = make(map[string]*SeleniumSession)
 		result = &sessions
-		c.Put(seleniumSessionsKey, result)
+		_ = c.Put(seleniumSessionsKey, result)
 	} else {
 		c.GetInto(seleniumSessionsKey, &result)
 	}
@@ -159,13 +159,13 @@ func (c *Context) Deffer(functions ...func()) []func() {
 	if !c.Contains(deferFunctionsKey) {
 		var functions = make([]func(), 0)
 		result = &functions
-		c.Put(deferFunctionsKey, result)
+		_ = c.Put(deferFunctionsKey, result)
 	} else {
 		c.GetInto(deferFunctionsKey, &result)
 	}
 
 	*result = append(*result, functions...)
-	c.Put(deferFunctionsKey, &result)
+	_ = c.Put(deferFunctionsKey, &result)
 	return *result
 }
 
@@ -215,6 +215,7 @@ func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ExtractableC
 	return c.Execute(target, request.ExtractableCommand)
 }
 
+//TerminalSession returns SystemTerminalSession for passed in target resource.
 func (c *Context) TerminalSession(target *url.Resource) (*SystemTerminalSession, error) {
 	sessions := c.TerminalSessions()
 	execService, err := c.Service(ExecServiceID)

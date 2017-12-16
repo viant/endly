@@ -13,7 +13,7 @@ import (
 
 func StartTestServer(port int, basedir string) error {
 	baseDir := toolbox.CallerDirectory(3)
-	return endly.StartHttpServer(port, &endly.HttpServerTrips{
+	return endly.StartHTTPServer(port, &endly.HTTPServerTrips{
 		IndexKeys:     []string{endly.MethodKey, endly.URLKey, endly.BodyKey, endly.CookieKey, endly.ContentTypeKey},
 		BaseDirectory: path.Join(baseDir, basedir),
 	})

@@ -10,7 +10,7 @@ import (
 
 func StartRestTestServer(port int) error {
 	baseDir := toolbox.CallerDirectory(3)
-	return endly.StartHttpServer(port, &endly.HttpServerTrips{
+	return endly.StartHTTPServer(port, &endly.HTTPServerTrips{
 		IndexKeys:[]string{endly.MethodKey, endly.URLKey, endly.BodyKey, endly.CookieKey, endly.ContentTypeKey},
 		BaseDirectory:path.Join(baseDir, "test/rest/send"),
 	})

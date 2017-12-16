@@ -19,8 +19,8 @@ const HTTPRunnerServiceID = "http/runner"
 //HTTPRunnerServiceSendAction represents a send action.
 const HTTPRunnerServiceSendAction = "send"
 
-//HttpRunnerExitCriteriaEventType represent HttpExitEvaluation event name
-const HttpRunnerExitCriteriaEventType = "HttpExitEvaluation"
+//HTTPRunnerExitCriteriaEventType represent HttpExitEvaluation event name
+const HTTPRunnerExitCriteriaEventType = "HttpExitEvaluation"
 
 type httpRunnerService struct {
 	*AbstractService
@@ -37,7 +37,7 @@ func (s *httpRunnerService) processResponse(context *Context, sendRequest *SendH
 		}
 		if toolbox.IsMap(transformed) {
 			bodyBuf := new(bytes.Buffer)
-			toolbox.NewJSONEncoderFactory().Create(bodyBuf).Encode(transformed)
+			_ = toolbox.NewJSONEncoderFactory().Create(bodyBuf).Encode(transformed)
 			response.Body = bodyBuf.String()
 		} else {
 			response.Body = toolbox.AsString(transformed)
@@ -45,8 +45,8 @@ func (s *httpRunnerService) processResponse(context *Context, sendRequest *SendH
 	}
 
 	var responseBody = replaceResponseBodyIfNeeded(sendHTTPRequest, response.Body)
-	sendHTTPRequest.Extraction.Extract(context, extracted, responseBody)
-	return responseBody, nil
+	err := sendHTTPRequest.Extraction.Extract(context, extracted, responseBody)
+	return responseBody, err
 }
 
 func (s *httpRunnerService) transformWithUDF(context *Context, udfName, URL string, payload interface{}) (interface{}, error) {
@@ -136,7 +136,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 			extractedState[k] = v
 		}
 		criteria := extractedState.ExpandAsText(sendHTTPRequest.ExitCriteria)
-		canBreak, err := EvaluateCriteria(context, criteria, HttpRunnerExitCriteriaEventType, false);
+		canBreak, err := EvaluateCriteria(context, criteria, HTTPRunnerExitCriteriaEventType, false);
 		if err != nil {
 			return fmt.Errorf("failed to check http exit criteia: %v", err)
 		}
@@ -168,7 +168,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		response.JSONBody = make(map[string]interface{})
 		err = toolbox.NewJSONDecoderFactory().Create(strings.NewReader(responseBody)).Decode(&response.JSONBody)
 		if err == nil {
-			sendHTTPRequest.Variables.Apply(data.Map(response.JSONBody), previous)
+			_ = sendHTTPRequest.Variables.Apply(data.Map(response.JSONBody), previous)
 		}
 	}
 
@@ -176,8 +176,10 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		var expanded = previous.Expand(v)
 		previous[k] = state.Expand(expanded)
 	}
-	sendHTTPRequest.Variables.Apply(previous, previous)
-
+	err = sendHTTPRequest.Variables.Apply(previous, previous)
+	if err != nil {
+		return err
+	}
 	if len(previous) > 0 {
 		state.Put("previous", previous)
 	}
@@ -242,8 +244,8 @@ func readBody(httpResponse *http.Response, response *HTTPResponse, expectBased64
 	if expectBased64Encoded {
 		buf := new(bytes.Buffer)
 		encoder := base64.NewEncoder(base64.StdEncoding, buf)
-		encoder.Write(body)
-		encoder.Close()
+		_, _ = encoder.Write(body)
+		_ = encoder.Close()
 		response.Body = "base64:" + string(buf.Bytes())
 
 	} else {

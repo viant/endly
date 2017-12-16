@@ -49,7 +49,7 @@ func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate strin
 
 				return result, nil
 			}
-			return nil, fmt.Errorf("Invalid version was found expected: %v, but had: %v\n", request.Version, build)
+			return nil, fmt.Errorf("invalid version was found expected: %v, but had: %v", request.Version, build)
 		}
 	}
 	return nil, errors.New("failed to check java version")
@@ -100,7 +100,7 @@ func (s *systemJdkService) setSdk(context *Context, request *SystemSdkSetRequest
 
 	if home, ok := commandResponse.Extracted["JAVA_HOME"]; ok {
 		if strings.Contains(home, "*") {
-			return nil, sdkNotFound
+			return nil, errSdkNotFound
 		}
 		var jdkCandidate = vtclean.Clean(home, false)
 		result, err = s.checkJavaVersion(context, jdkCandidate+"/bin/", request)
@@ -108,5 +108,5 @@ func (s *systemJdkService) setSdk(context *Context, request *SystemSdkSetRequest
 			return result, nil
 		}
 	}
-	return nil, sdkNotFound
+	return nil, errSdkNotFound
 }
