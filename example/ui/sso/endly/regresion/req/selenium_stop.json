@@ -1,0 +1,7 @@
+{
+  "Target": {
+    "URL": "$targetHost",
+    "Credential": "$targetHostCredential"
+  },
+  "Port": "$seleniumServerPort"
+}

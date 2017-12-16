@@ -17,19 +17,22 @@ const (
 	//SeleniumServiceStartAction represents selenium server start action
 	SeleniumServiceStartAction = "start"
 
-	//SeleniumServiceStartAction represents selenium server stop action
+	//SeleniumServiceStopAction represents selenium server stop action
 	SeleniumServiceStopAction = "stop"
 
-	//SeleniumServiceStartAction represents selenium browser open session action
+	//SeleniumServiceOpenAction represents selenium browser open session action
 	SeleniumServiceOpenAction = "open"
 
-	//SeleniumServiceStartAction represents web driver call action
+	//SeleniumServiceCloseAction represents selenium close session action
+	SeleniumServiceCloseAction = "close"
+
+	//SeleniumServiceCallDriverAction represents web driver call action
 	SeleniumServiceCallDriverAction = "call-driver"
 
-	//SeleniumServiceStartAction represents web element call action
+	//SeleniumServiceCallElementAction represents web element call action
 	SeleniumServiceCallElementAction = "call-element"
 
-	//SeleniumServiceStartAction represents group of calls action.
+	//SeleniumServiceRunAction represents group of calls action.
 	SeleniumServiceRunAction = "run"
 
 	//SeleniumServer represents name of selenium server
@@ -77,6 +80,12 @@ func (s *seleniumService) Run(context *Context, request interface{}) *ServiceRes
 		if err != nil {
 			response.Error = fmt.Sprintf("failed to open selenium session %v", err)
 		}
+	case *SeleniumCloseSessionRequest:
+		response.Response, err = s.close(context, actualRequest)
+		if err != nil {
+			response.Error = fmt.Sprintf("failed to open selenium session %v", err)
+		}
+
 	case *SeleniumWebDriverCallRequest:
 		response.Response, err = s.webDriverCall(context, actualRequest)
 		if err != nil {
@@ -127,8 +136,8 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 	}
 
 	var response = &SeleniumRunResponse{
-		Data: make(map[string]interface{}),
-		LookupErrors:make([]string, 0),
+		Data:         make(map[string]interface{}),
+		LookupErrors: make([]string, 0),
 	}
 	var result = data.Map(response.Data)
 
@@ -177,7 +186,7 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 			if elementKey == "" {
 				elementKey = action.Selector.Value
 			}
-			var elementPath =[]string{elementKey, call.Method}
+			var elementPath = []string{elementKey, call.Method}
 			if len(call.Parameters) == 1 && toolbox.IsString(call.Parameters[0]) {
 				elementPath[1] = strings.Replace(elementPath[1], "Get", "", 1)
 				elementPath[1] = strings.Replace(elementPath[1], "Property", "", 1)
@@ -188,7 +197,6 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 	}
 	return response, nil
 }
-
 
 func (s *seleniumService) callMethod(owner interface{}, methodName string, parameters []interface{}) (*SeleniumServiceCallResponse, error) {
 	method, err := toolbox.GetFunction(owner, methodName)
@@ -203,8 +211,6 @@ func (s *seleniumService) callMethod(owner interface{}, methodName string, param
 	response.Result = toolbox.CallFunction(method, parameters...)
 	return response, nil
 }
-
-
 
 func (s *seleniumService) webDriverCall(context *Context, request *SeleniumWebDriverCallRequest) (*SeleniumServiceCallResponse, error) {
 	seleniumSession, err := s.session(context, request.SessionID)
@@ -242,7 +248,6 @@ func (s *seleniumService) call(context *Context, caller interface{}, call *Selen
 	return callResponse, err
 }
 
-
 func (s *seleniumService) webElementCall(context *Context, request *SeleniumWebElementCallRequest) (*SeleniumWebElementCallResponse, error) {
 	seleniumSession, err := s.session(context, request.SessionID)
 	if err != nil {
@@ -268,9 +273,6 @@ func (s *seleniumService) webElementCall(context *Context, request *SeleniumWebE
 	return response, nil
 }
 
-
-
-
 func (s *seleniumService) open(context *Context, request *SeleniumOpenSessionRequest) (*SeleniumOpenSessionResponse, error) {
 	var response = &SeleniumOpenSessionResponse{}
 	seleniumSession, err := s.openSession(context, request)
@@ -280,6 +282,20 @@ func (s *seleniumService) open(context *Context, request *SeleniumOpenSessionReq
 	response.SessionID = seleniumSession.ID
 	return response, nil
 }
+
+func (s *seleniumService) close(context *Context, request *SeleniumCloseSessionRequest) (*SeleniumCloseSessionResponse, error) {
+	var response = &SeleniumCloseSessionResponse{
+		SessionID:request.SessionID,
+	}
+	seleniumSession, err := s.session(context, request.SessionID)
+	if err != nil {
+		return nil, err
+	}
+	err = seleniumSession.driver.Close()
+	return response, err
+}
+
+
 
 func (s *seleniumService) deployServerIfNeeded(context *Context, request *SeleniumServerStartRequest, target *url.Resource) (*SeleniumServerStartResponse, error) {
 	deploymentService, _ := context.Service(DeploymentServiceID)
@@ -379,7 +395,7 @@ func (s *seleniumService) session(context *Context, sessionID string) (*Selenium
 	if seleniumSession, ok := sessions[sessionID]; ok {
 		return seleniumSession, nil
 	}
-	return nil, fmt.Errorf("failed to lookup seleniun session id: %v, make sure you first run SeleniumOpenSessionRequest\n", sessionID)
+	return nil, fmt.Errorf("failed to lookup seleniun session id: %v, make sure you first run SeleniumOpenSessionRequest", sessionID)
 }
 
 func (s *seleniumService) openSession(context *Context, request *SeleniumOpenSessionRequest) (*SeleniumSession, error) {
@@ -428,6 +444,8 @@ func (s *seleniumService) NewRequest(action string) (interface{}, error) {
 		return &SeleniumServerStopRequest{}, nil
 	case SeleniumServiceOpenAction:
 		return &SeleniumOpenSessionRequest{}, nil
+	case SeleniumServiceCloseAction:
+		return &SeleniumCloseSessionRequest{}, nil
 	case SeleniumServiceCallDriverAction:
 		return &SeleniumWebDriverCallRequest{}, nil
 	case SeleniumServiceCallElementAction:
@@ -438,13 +456,14 @@ func (s *seleniumService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
-//NewScriptService creates a new selenium service
+//NewSeleniumService creates a new selenium service
 func NewSeleniumService() Service {
 	var result = &seleniumService{
 		AbstractService: NewAbstractService(SeleniumServiceID,
 			SeleniumServiceStartAction,
 			SeleniumServiceStopAction,
 			SeleniumServiceOpenAction,
+			SeleniumServiceCloseAction,
 			SeleniumServiceCallDriverAction,
 			SeleniumServiceCallElementAction,
 			SeleniumServiceRunAction,

@@ -1,7 +1,3 @@
 {
-  "SessionID": "$seleniumSessionID",
-  "Call": {
-    "Method": "Close",
-    "Parameters": []
-  }
+  "SessionID": "$SeleniumSessionID"
 }

@@ -11,11 +11,14 @@ func EvaluateCriteria(context *Context, criteria, eventType string, defaultValue
 	if criteria == "" {
 		return defaultValue, nil
 	}
-	colonPosition := strings.Index(criteria, ":")
+	colonPosition := strings.LastIndex(criteria, ":")
 	if colonPosition == -1 {
 		return false, fmt.Errorf("eval criteria needs to have colon: but had: %v", criteria)
 	}
-	fragments := strings.Split(criteria, ":")
+	fragments := []string{
+		string(criteria[:colonPosition]),
+		string(criteria[colonPosition+1:]),
+	}
 	var state = context.state
 	actualOperand := state.Expand(strings.TrimSpace(fragments[0]))
 	expectedOperand := state.Expand(strings.TrimSpace(fragments[1]))

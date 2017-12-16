@@ -10,33 +10,39 @@ import (
 	"time"
 	"sync"
 	"sync/atomic"
+	"log"
 )
 
 const (
-	URLKey         = "URL"
-	CookieKey      = "Cookie"
+	//URLKey represents url key
+	URLKey = "URL"
+	//CookieKey represents cookie header key
+	CookieKey = "Cookie"
+	//ContentTypeKey represents content type header key
 	ContentTypeKey = "Content-Type"
-	MethodKey      = "Method"
-	BodyKey        = "Body"
+	//MethodKey represents http method key
+	MethodKey = "Method"
+	//BodyKey represents http body key
+	BodyKey = "Body"
 )
 
-//HttpRequestKeyProvider represents request key provider to extract a request field.
-type HttpRequestKeyProvider func(source interface{}) (string, error)
+//HTTPRequestKeyProvider represents request key provider to extract a request field.
+type HTTPRequestKeyProvider func(source interface{}) (string, error)
 
-//HttpRequestKeyProviders rerpresents key providers
-var HttpRequestKeyProviders = make(map[string]HttpRequestKeyProvider)
+//HTTPRequestKeyProviders represents key providers
+var HTTPRequestKeyProviders = make(map[string]HTTPRequestKeyProvider)
 
-//HttpServerTrips represents http trips
-type HttpServerTrips struct {
+//HTTPServerTrips represents http trips
+type HTTPServerTrips struct {
 	BaseDirectory string
-	Trips         map[string]*HttpResponses
+	Trips         map[string]*HTTPResponses
 	IndexKeys     []string
 	Mutex         *sync.Mutex
 }
 
-func (t *HttpServerTrips) LoadTripsIfNeeded() error {
+func (t *HTTPServerTrips) loadTripsIfNeeded() error {
 	if t.BaseDirectory != "" {
-		t.Trips = make(map[string]*HttpResponses)
+		t.Trips = make(map[string]*HTTPResponses)
 		httpTrips, err := bridge.ReadRecordedHttpTrips(t.BaseDirectory)
 		if err != nil {
 			return err
@@ -47,7 +53,7 @@ func (t *HttpServerTrips) LoadTripsIfNeeded() error {
 		for _, trip := range httpTrips {
 			key, _ := buildKeyValue(t.IndexKeys, trip.Request)
 			if _, has := t.Trips[key]; ! has {
-				t.Trips[key] = &HttpResponses{
+				t.Trips[key] = &HTTPResponses{
 					Request:   trip.Request,
 					Responses: make([]*bridge.HttpResponse, 0),
 				}
@@ -58,8 +64,8 @@ func (t *HttpServerTrips) LoadTripsIfNeeded() error {
 	return nil
 }
 
-//HttpResponses represents HttpResponses
-type HttpResponses struct {
+//HTTPResponses represents HTTPResponses
+type HTTPResponses struct {
 	Request   *bridge.HttpRequest
 	Responses []*bridge.HttpResponse
 	Index     int
@@ -74,13 +80,13 @@ func (h *httpHandler) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 	h.handler(writer, request)
 }
 
-//StartHttpServer starts http request
-func StartHttpServer(port int, trips *HttpServerTrips) error {
+//StartHTTPServer starts http request
+func StartHTTPServer(port int, trips *HTTPServerTrips) error {
 	if trips.Mutex == nil {
 		trips.Mutex = &sync.Mutex{}
 	}
 
-	err := trips.LoadTripsIfNeeded()
+	err := trips.loadTripsIfNeeded()
 	if err != nil {
 		return fmt.Errorf("failed to start http server :%v, %v", port, err)
 	}
@@ -114,9 +120,8 @@ func StartHttpServer(port int, trips *HttpServerTrips) error {
 			return
 		}
 
-
 		response := responses.Responses[responses.Index]
-		defer func() {responses.Index++}()
+		defer func() { responses.Index++ }()
 		for k, headerValues := range response.Header {
 			for _, headerValue := range headerValues {
 				writer.Header().Set(k, headerValue)
@@ -125,17 +130,20 @@ func StartHttpServer(port int, trips *HttpServerTrips) error {
 		writer.WriteHeader(response.Code)
 		if response.Body != "" {
 			var body, _ = FromPayload(response.Body)
-			writer.Write(body)
+			_, err = writer.Write(body)
+			if err != nil {
+				log.Print(err)
+			}
 		}
 		if responses.Index >= len(responses.Responses) {
 			delete(trips.Trips, key)
 		}
 		if len(trips.Trips) == 0 {
-			httpServer.Close()
+			func() { _ = httpServer.Close() }()
 			go func() {
 				time.Sleep(time.Second)
 				if atomic.LoadInt32(&httpHandler.running) == 0 {
-					httpServer.Shutdown(nil)
+					_ = httpServer.Shutdown(nil)
 				}
 			}()
 
@@ -164,7 +172,7 @@ func StartHttpServer(port int, trips *HttpServerTrips) error {
 }
 
 //HeaderProvider return a header value for supplied source
-func HeaderProvider(header string) HttpRequestKeyProvider {
+func HeaderProvider(header string) HTTPRequestKeyProvider {
 	return func(source interface{}) (string, error) {
 		switch request := source.(type) {
 		case *bridge.HttpRequest:
@@ -187,7 +195,7 @@ func stripProtoAndHost(URL string) string {
 }
 
 func init() {
-	HttpRequestKeyProviders[URLKey] = func(source interface{}) (string, error) {
+	HTTPRequestKeyProviders[URLKey] = func(source interface{}) (string, error) {
 		switch request := source.(type) {
 		case *bridge.HttpRequest:
 
@@ -197,7 +205,7 @@ func init() {
 		}
 		return "", fmt.Errorf("unsupported request type %T", source)
 	}
-	HttpRequestKeyProviders[MethodKey] = func(source interface{}) (string, error) {
+	HTTPRequestKeyProviders[MethodKey] = func(source interface{}) (string, error) {
 		switch request := source.(type) {
 		case *bridge.HttpRequest:
 			return request.Method, nil
@@ -206,9 +214,9 @@ func init() {
 		}
 		return "", fmt.Errorf("unsupported request type %T", source)
 	}
-	HttpRequestKeyProviders[CookieKey] = HeaderProvider(CookieKey)
-	HttpRequestKeyProviders[ContentTypeKey] = HeaderProvider(ContentTypeKey)
-	HttpRequestKeyProviders[BodyKey] = func(source interface{}) (string, error) {
+	HTTPRequestKeyProviders[CookieKey] = HeaderProvider(CookieKey)
+	HTTPRequestKeyProviders[ContentTypeKey] = HeaderProvider(ContentTypeKey)
+	HTTPRequestKeyProviders[BodyKey] = func(source interface{}) (string, error) {
 		switch request := source.(type) {
 		case *bridge.HttpRequest:
 			body, err := FromPayload(request.Body)
@@ -233,9 +241,9 @@ func buildKeyValue(keys []string, request interface{}) (string, error) {
 	var values = make([]string, 0)
 	for _, key := range keys {
 
-		provider, has := HttpRequestKeyProviders[key]
+		provider, has := HTTPRequestKeyProviders[key]
 		if ! has {
-			return "", fmt.Errorf("unsupported key: %v, available, [%v]", key, strings.Join(toolbox.MapKeysToStringSlice(HttpRequestKeyProviders), ","))
+			return "", fmt.Errorf("unsupported key: %v, available, [%v]", key, strings.Join(toolbox.MapKeysToStringSlice(HTTPRequestKeyProviders), ","))
 		}
 		value, err := provider(request)
 		if err != nil {

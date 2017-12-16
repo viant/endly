@@ -24,10 +24,10 @@ const (
 	//LogValidatorServiceListenAction represents log listening action
 	LogValidatorServiceListenAction = "listen"
 
-	//LogValidatorServiceListenAction represents log verification action
+	//LogValidatorServiceAssertAction represents log verification action
 	LogValidatorServiceAssertAction = "assert"
 
-	//LogValidatorServiceListenAction represents verification pending logs reset action
+	//LogValidatorServiceResetAction represents verification pending logs reset action
 	LogValidatorServiceResetAction = "reset"
 )
 
@@ -35,12 +35,15 @@ type logValidatorService struct {
 	*AbstractService
 }
 
+//LogRecordAssert represents log record assert
 type LogRecordAssert struct {
-	TagId    string
+	TagID    string
 	Expected interface{}
 	Actual   interface{}
 }
 
+
+//LogAssertEvent represents log assert event
 type LogAssertEvent struct {
 	Type string
 	Logs []*LogRecordAssert
@@ -312,7 +315,7 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 
 		for _, expectedLogRecord := range expectedLogRecords.Records {
 			var validationInfo = &ValidationInfo{
-				TagId:       expectedLogRecords.TagId,
+				TagID:       expectedLogRecords.TagID,
 				Description: fmt.Sprintf("Log Validation: %v", expectedLogRecords.Type),
 			}
 			response.ValidationInfo = append(response.ValidationInfo, validationInfo)
@@ -326,7 +329,7 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 			}
 
 			if !logRecordIterator.HasNext() {
-				validationInfo.AddFailure(NewFailedTest(fmt.Sprintf("[%v]", expectedLogRecords.TagId), "Missing log record", expectedLogRecord, nil))
+				validationInfo.AddFailure(NewFailedTest(fmt.Sprintf("[%v]", expectedLogRecords.TagID), "Missing log record", expectedLogRecord, nil))
 				return response, nil
 			}
 
@@ -339,7 +342,7 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 			}
 
 			event.Logs = append(event.Logs, &LogRecordAssert{
-				TagId:    expectedLogRecords.TagId,
+				TagID:    expectedLogRecords.TagID,
 				Expected: expectedLogRecord,
 				Actual:   actualLogRecord,
 			})

@@ -66,6 +66,7 @@ func (s *transferService) getStorageService(context *Context, resource *url.Reso
 	return storage.NewServiceForURL(resource.URL, resource.Credential)
 }
 
+//IsShellCompressable returns true if resource can be compress via shell command.
 func IsShellCompressable(protScheme string) bool {
 	return protScheme == "scp" || protScheme == "file"
 }

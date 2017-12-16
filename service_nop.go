@@ -6,7 +6,7 @@ const (
 	//NopServiceID represents nop service id.
 	NopServiceID = "nop"
 
-	//NopServiceNopService represents nop action
+	//NopServiceNopAction represents nop action
 	NopServiceNopAction = "nop"
 )
 

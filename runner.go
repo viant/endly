@@ -29,7 +29,7 @@ var reportingEventSleep = 250 * time.Millisecond
 type EventTag struct {
 	Description    string
 	Workflow       string
-	TagId          string
+	TagID          string
 	Events         []*Event
 	ValidationInfo []*ValidationInfo
 	PassedCount    int
@@ -91,7 +91,7 @@ type CliRunner struct {
 //AddTag adds reporting tag
 func (r *CliRunner) AddTag(eventTag *EventTag) {
 	r.tags = append(r.tags, eventTag)
-	r.indexedTag[eventTag.TagId] = eventTag
+	r.indexedTag[eventTag.TagID] = eventTag
 }
 
 //EventTag returns an event tag
@@ -106,15 +106,15 @@ func (r *CliRunner) EventTag() *EventTag {
 
 	activity := r.activities.Last()
 
-	if _, has := r.indexedTag[activity.TagId]; !has {
+	if _, has := r.indexedTag[activity.TagID]; !has {
 		eventTag := &EventTag{
 			Workflow: activity.Workflow,
-			TagId:    activity.TagId,
+			TagID:    activity.TagID,
 		}
 		r.AddTag(eventTag)
 	}
 
-	return r.indexedTag[activity.TagId]
+	return r.indexedTag[activity.TagID]
 }
 
 func (r *CliRunner) hasActiveSession(context *Context, sessionID string) bool {
@@ -141,110 +141,113 @@ func (r *CliRunner) printShortMessage(messageType int, message string, messageIn
 }
 
 func (r *CliRunner) reportEvenType(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) {
-	switch casted := serviceResponse.(type) {
+	switch actual := serviceResponse.(type) {
 	case *ServiceResponse:
-		if casted.Response != nil {
-			r.reportEvenType(casted.Response, event, filter)
+		if actual.Response != nil {
+			r.reportEvenType(actual.Response, event, filter)
 		}
 	case *ValidationInfo:
-		r.reportValidationInfo(casted, event)
+		r.reportValidationInfo(actual, event)
 	case *HTTPRequest:
 		if filter.HTTPTrip {
-			r.reportHTTPRequest(casted)
+			r.reportHTTPRequest(actual)
 		}
 	case *HTTPResponse:
 		if filter.HTTPTrip {
-			r.reportHTTPResponse(casted)
+			r.reportHTTPResponse(actual)
 		}
 	case *DeploymentDeployRequest:
 		if filter.Deployment {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("app: %v, forced: %v", casted.AppName, casted.Force), messageTypeGeneric, "deploy")
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("app: %v, forced: %v", actual.AppName, actual.Force), messageTypeGeneric, "deploy")
 		}
 	case *DsUnitRegisterRequest:
 		if filter.RegisterDatastore {
 
-			var descriptor = casted.Config.Descriptor
-			var password = casted.Config.Parameters["password"]
+			var descriptor = actual.Config.Descriptor
+			var password = actual.Config.Parameters["password"]
 			if len(password) > 0 {
 				descriptor = strings.Replace(descriptor, password, "***", len(descriptor))
 			}
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("Datastore: %v, %v:%v", casted.Datastore, casted.Config.DriverName, descriptor), messageTypeGeneric, "register")
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("Datastore: %v, %v:%v", actual.Datastore, actual.Config.DriverName, descriptor), messageTypeGeneric, "register")
 		}
 	case *DsUnitMappingRequest:
 		if filter.DataMapping {
-			for _, mapping := range casted.Mappings {
+			for _, mapping := range actual.Mappings {
 				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v: %v", mapping.Name, mapping.URL), messageTypeGeneric, "mapping")
 			}
 		}
 
 	case *DsUnitTableSequenceResponse:
 		if filter.Sequence {
-			for k, v := range casted.Sequences {
+			for k, v := range actual.Sequences {
 				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v: %v", k, v), messageTypeGeneric, "sequence")
 			}
 		}
 	case *PopulateDatastoreEvent:
 		if filter.PopulateDatastore {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v: %v", casted.Datastore, casted.Table, casted.Rows), messageTypeGeneric, "populate")
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v: %v", actual.Datastore, actual.Table, actual.Rows), messageTypeGeneric, "populate")
 		}
 	case *RunSQLScriptEvent:
 		if filter.SQLScript {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v", casted.Datastore, casted.URL), messageTypeGeneric, "sql")
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v", actual.Datastore, actual.URL), messageTypeGeneric, "sql")
 		}
 
 	case *ErrorEventType:
 		r.report.Error = true
-		r.printShortMessage(messageTypeError, fmt.Sprintf("%v", casted.Error), messageTypeError, "error")
-		fmt.Println(colorText(fmt.Sprintf("ERROR: %v\n", casted.Error), "red"))
+		r.printShortMessage(messageTypeError, fmt.Sprintf("%v", actual.Error), messageTypeError, "error")
+		fmt.Println(colorText(fmt.Sprintf("ERROR: %v\n", actual.Error), "red"))
 
 	case *SleepEventType:
-		r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v ms", casted.SleepTimeMs), messageTypeGeneric, "Sleep")
+		r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v ms", actual.SleepTimeMs), messageTypeGeneric, "Sleep")
 	case *VcCheckoutRequest:
 		if filter.Checkout {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", casted.Origin.URL, casted.Target.URL), messageTypeGeneric, "checkout")
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", actual.Origin.URL, actual.Target.URL), messageTypeGeneric, "checkout")
 		}
 
 	case *BuildRequest:
 		if filter.Build {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", casted.BuildSpec.Name, casted.Target.URL), messageTypeGeneric, "build")
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", actual.BuildSpec.Name, actual.Target.URL), messageTypeGeneric, "build")
 		}
 
 	case *ExecutionStartEvent:
 		if filter.Stdin {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", casted.SessionID), messageTypeGeneric, "stdin")
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", actual.SessionID), messageTypeGeneric, "stdin")
 
-			r.printInput(escapeStdout(casted.Stdin))
+			r.printInput(escapeStdout(actual.Stdin))
 		}
 	case *ExecutionEndEvent:
 		if filter.Stdout {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", casted.SessionID), messageTypeGeneric, "stdout")
-			r.printOutput(escapeStdout(casted.Stdout))
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", actual.SessionID), messageTypeGeneric, "stdout")
+			r.printOutput(escapeStdout(actual.Stdout))
 
 		}
 	case *CopyEventType:
 		if filter.Transfer {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("expand: %v", casted.Expand), messageTypeGeneric, "copy")
-			r.printInput(fmt.Sprintf("SourceURL: %v", casted.SourceURL))
-			r.printOutput(fmt.Sprintf("TargetURL: %v", casted.TargetURL))
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("expand: %v", actual.Expand), messageTypeGeneric, "copy")
+			r.printInput(fmt.Sprintf("SourceURL: %v", actual.SourceURL))
+			r.printOutput(fmt.Sprintf("TargetURL: %v", actual.TargetURL))
 
 		}
 
 	case *AsyncServiceActionEvent:
-		r.printShortMessage(messageTypeTagDescription, fmt.Sprintf("%v[%v] %v", casted.TagId, casted.Task, casted.Description), messageTypeTagDescription, "scheduled")
+		r.printShortMessage(messageTypeTagDescription, fmt.Sprintf("%v[%v] %v", actual.TagID, actual.Task, actual.Description), messageTypeTagDescription, "scheduled")
 
 	case *WorkflowServiceActivity:
-		r.activities.Push(casted)
-		r.activity = casted
-		if casted.TagDescription != "" {
-			r.printShortMessage(messageTypeTagDescription, casted.TagDescription, messageTypeTagDescription, "")
+		r.activities.Push(actual)
+		r.activity = actual
+		if actual.TagDescription != "" {
+			r.printShortMessage(messageTypeTagDescription, actual.TagDescription, messageTypeTagDescription, "")
 			eventTag := r.EventTag()
-			eventTag.Description = casted.TagDescription
+			eventTag.Description = actual.TagDescription
 		}
-		var serviceAction = fmt.Sprintf("%v.%v", casted.Service, casted.Action)
-		r.printShortMessage(messageTypeAction, casted.Description, messageTypeAction, serviceAction)
+		var serviceAction = fmt.Sprintf("%v.%v", actual.Service, actual.Action)
+		r.printShortMessage(messageTypeAction, actual.Description, messageTypeAction, serviceAction)
+
+	case *SeleniumRunResponse:
+		r.reportLookupErrors(actual)
 
 	case *LogValidatorAssertResponse:
-		r.reportLogValidationInfo(casted)
+		r.reportLogValidationInfo(actual)
 
 	case *WorkflowServiceActivityEndEventType:
 
@@ -263,8 +266,8 @@ func (r *CliRunner) reportLogValidationInfo(response *LogValidatorAssertResponse
 			passedCount++
 		}
 		if r.activity != nil {
-			var tagId = info.TagId
-			if eventTag, ok := r.indexedTag[tagId]; ok {
+			var tagID = info.TagID
+			if eventTag, ok := r.indexedTag[tagID]; ok {
 				eventTag.AddEvent(&Event{Type: "LogValidation", Value: Pairs("value", info)})
 				eventTag.PassedCount += info.TestPassed
 				eventTag.FailedCount += len(info.FailedTests)
@@ -352,7 +355,7 @@ func (r *CliRunner) reportSummaryEvent() {
 func (r *CliRunner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if tag.FailedCount > 0 {
-			var eventTag = tag.TagId
+			var eventTag = tag.TagID
 			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
 
 			var minRange = 0
@@ -371,6 +374,16 @@ func (r *CliRunner) reportTagSummary() {
 		}
 	}
 }
+
+func (r *CliRunner) reportLookupErrors(response *SeleniumRunResponse) {
+	if len(response.LookupErrors) > 0 {
+		for _, errMessage := range response.LookupErrors {
+			r.printShortMessage(messageTypeError, errMessage, messageTypeGeneric, "Selenium")
+		}
+	}
+}
+
+
 
 func (r *CliRunner) reportHTTPResponse(response *HTTPResponse) {
 	r.printShortMessage(messageTypeGeneric, fmt.Sprintf("StatusCode: %v", response.Code), messageTypeGeneric, "HttpResponse")
@@ -403,8 +416,8 @@ func (r *CliRunner) reportValidationInfo(info *ValidationInfo, event *Event) {
 
 	var activity = r.activities.Last()
 	if activity != nil {
-		var tagId = info.TagId
-		eventTag, ok := r.indexedTag[tagId]
+		var tagID = info.TagID
+		eventTag, ok := r.indexedTag[tagID]
 		if !ok {
 			eventTag = r.EventTag()
 		}
@@ -462,7 +475,10 @@ func (r *CliRunner) reportEvents(context *Context, sessionID string, filter *Run
 	}
 
 	r.report = &ReportSummaryEvent{}
-	defer r.reportEvent(context, &Event{Type: "ReportSummaryEvent", Value: Pairs("value", r.report)}, filter)
+	defer func(){
+		_ = r.reportEvent(context, &Event{Type: "ReportSummaryEvent", Value: Pairs("value", r.report)}, filter)
+	}()
+
 	time.Sleep(time.Second)
 	var firstEvent *Event
 	var lastEvent *Event
