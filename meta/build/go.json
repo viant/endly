@@ -32,8 +32,7 @@
           },
           {
             "Command": "go ${buildSpec.goal} ${buildSpec.args}",
-            "Error": ["failed", "error", "imported and not used"]
-
+             "Error": ["failed", "error", "imported and not used", "package "]
           }
         ]
       }

@@ -103,7 +103,7 @@ func (s *execService) openSession(context *Context, request *OpenSessionRequest)
 		session := sessions[sessionName]
 		err = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
 		for k, v := range request.Env {
-			session.envVariables[k] = v
+			s.setEnvVariable(context, session, k, v)
 		}
 
 		return sessions[sessionName], err
@@ -217,6 +217,7 @@ func (s *execService) rumCommandTemplate(context *Context, session *SystemTermin
 	command := fmt.Sprintf(commandTemplate, arguments...)
 	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
 	startEvent := s.Begin(context, executionStartEvent, Pairs("value", executionStartEvent), Info)
+
 	stdout, err := session.Run(command, 1000)
 	var executionEndEvent = &ExecutionEndEvent{
 		SessionID: session.ID,

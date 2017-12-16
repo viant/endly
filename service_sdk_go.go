@@ -2,6 +2,7 @@ package endly
 
 import (
 	"fmt"
+	"os"
 )
 
 //TODO complete implementation
@@ -11,9 +12,18 @@ func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest)
 	var result = &SystemSdkInfo{}
 
 
-	if goPath, ok := request.Env["GOPATH"]; ok {
+
+
+
+	goPath, ok := request.Env["GOPATH"]
+	if !ok || goPath == ""  {
+		goPath = os.Getenv("GOPATH")
+	}
+
+	if goPath != "" {
 		context.Execute(request.Target, fmt.Sprintf("export GOPATH='%v'", goPath))
 	}
+
 	commandResponse, err := context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
