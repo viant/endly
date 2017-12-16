@@ -344,12 +344,12 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 
 	errorMatch := match(stdout, execution.Error...)
 	if errorMatch != "" {
-		return fmt.Errorf("Encounter error fragment: (%v) execution (%v); ouput: (%v), %v", errorMatch, execution.Command, stdout, options.Directory)
+		return fmt.Errorf("Encounter error fragment: (%v) execution (%v); output: (%v), %v", errorMatch, execution.Command, stdout, options.Directory)
 	}
 	if len(execution.Success) > 0 {
 		sucessMatch := match(stdout, execution.Success...)
 		if sucessMatch == "" {
-			return fmt.Errorf("Fail to match any fragment: (%v) execution (%v); ouput: (%v), %v", strings.Join(execution.Success, ","), execution.Command, stdout, options.Directory)
+			return fmt.Errorf("Fail to match any fragment: (%v) execution (%v); output: (%v), %v", strings.Join(execution.Success, ","), execution.Command, stdout, options.Directory)
 		}
 	}
 	err = execution.Extraction.Extract(context, response.Extracted, strings.Split(stdout, "\n")...)
