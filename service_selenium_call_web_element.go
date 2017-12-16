@@ -9,8 +9,9 @@ import (
 
 //WebElementSelector represents a web element selector
 type WebElementSelector struct {
-	By    string
-	Value string
+	By    string //selector type
+	Value string //selector value
+	Key   string //optional result key, otherwise value is used
 }
 
 
@@ -24,7 +25,7 @@ type SeleniumWebElementCallRequest struct {
 
 func (r *SeleniumWebElementCallRequest) Data() (int, time.Duration, string) {
 	var repeat = 1
-	var sleepMs = time.Millisecond * 0
+	var sleepInMs = time.Millisecond * 0
 	var exitCriteria = ""
 
 	var wait = r.Call.Wait
@@ -32,16 +33,16 @@ func (r *SeleniumWebElementCallRequest) Data() (int, time.Duration, string) {
 		if wait.Repeat > 0 {
 			repeat = wait.Repeat
 		}
-		sleepMs = time.Duration(wait.SleepMs) * time.Millisecond
+		sleepInMs = time.Duration(wait.SleepInMs) * time.Millisecond
 		exitCriteria = wait.ExitCriteria
 	}
-	return repeat, sleepMs, exitCriteria
+	return repeat, sleepInMs, exitCriteria
 }
 
 //SeleniumWait represents selenium wait data
 type SeleniumWait struct {
 	Repeat       int
-	SleepMs      int
+	SleepInMs    int
 	ExitCriteria string
 }
 

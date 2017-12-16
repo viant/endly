@@ -1,0 +1,1 @@
+This use case checks error message when email has been already registered.

@@ -63,7 +63,7 @@ function signup() {
         hasError = true;
     } else {
         if(retypedPassword.val() !== password.val()) {
-            setError(retypedPassword, "Password does not match")
+            setElementError(retypedPassword, "Password does not match")
         } else {
             clearElementError(retypedPassword);
         }

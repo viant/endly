@@ -1,0 +1,1 @@
+This use case register a new user without any errors, it check users in data store

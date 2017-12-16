@@ -2,8 +2,8 @@
   "WorkflowURL": "manager.csv",
   "Name": "manager",
   "PublishParameters": true,
-  "EnableLogging": true,
-  "LoggingDirectory": "/tmp/app/",
+  "EnableLogging": false,
+  "LoggingDirectory": "logs",
   "Tasks": "init,test",
 
   "Params": {
@@ -22,7 +22,10 @@
 
     "buildDirectory" :"!WorkingDirectory(../app)",
     "buildArgs":" -o sso",
-    "appRootDirectory":"/opt/"
+    "appRootDirectory":"/opt/",
+
+    "seleniumServerPort":8085
+
   },
   "Filter": {
     "Stdin":true,

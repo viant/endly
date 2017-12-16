@@ -43,6 +43,10 @@ func (d *DsUnitTableData) PostIncrementIfNeeded(state data.Map) {
 //GetValues a table records.
 func (d *DsUnitTableData) GetValues(state data.Map) []map[string]interface{} {
 	if toolbox.IsMap(d.Value) {
+		var value =d.GetValue(state, d.Value)
+		if len(value) == 0 {
+			return []map[string]interface{}{}
+		}
 		return []map[string]interface{}{
 			d.GetValue(state, d.Value),
 		}
@@ -52,7 +56,9 @@ func (d *DsUnitTableData) GetValues(state data.Map) []map[string]interface{} {
 		var aSlice = toolbox.AsSlice(d.Value)
 		for _, item := range aSlice {
 			value := d.GetValue(state, item)
-			result = append(result, value)
+			if len(value) > 0 {
+				result = append(result, value)
+			}
 		}
 	}
 	return result
@@ -127,8 +133,11 @@ func AsTableRecords(source interface{}, state data.Map) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		result[table] = append(result[table], tableData.GetValues(state)...)
-		tableData.PostIncrementIfNeeded(state)
+		var values = tableData.GetValues(state)
+		if len(values) > 0 {
+			result[table] = append(result[table], values...)
+			tableData.PostIncrementIfNeeded(state)
+		}
 	}
 	dataStoreState := state.GetMap(DataStoreUnitServiceID)
 	var variable = &Variable{

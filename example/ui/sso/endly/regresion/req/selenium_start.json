@@ -1,0 +1,10 @@
+{
+  "Target": {
+    "URL": "$targetHost",
+    "Credential": "$targetHostCredential"
+  },
+  "Sdk": "jdk",
+  "SdkVersion": "1.8",
+  "Version": "3.4",
+  "Port": "$seleniumServerPort"
+}

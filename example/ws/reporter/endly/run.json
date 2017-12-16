@@ -2,8 +2,8 @@
   "WorkflowURL": "manager.csv",
   "Name": "manager",
   "PublishParameters": true,
-  "EnableLogging": true,
-  "LoggingDirectory": "/tmp/app/",
+  "EnableLogging": false,
+  "LoggingDirectory": "logs",
   "Tasks": "*",
 
   "Params": {
