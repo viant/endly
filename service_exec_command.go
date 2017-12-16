@@ -32,8 +32,8 @@ type Execution struct {
 
 //ExtractableCommandRequest represents managed command request
 type ExtractableCommandRequest struct {
-	SuperUser      bool            ///flag to run it as super user
-	Target         *url.Resource   //target destination where to run a command.
+	SuperUser          bool                ///flag to run it as super user
+	Target             *url.Resource       //target destination where to run a command.
 	ExtractableCommand *ExtractableCommand //managed command
 }
 
@@ -72,8 +72,8 @@ func (r *CommandRequest) AsExtractableCommandRequest() *ExtractableCommandReques
 		})
 	}
 	return &ExtractableCommandRequest{
-		SuperUser:      r.SuperUser,
-		Target:         r.Target,
+		SuperUser:          r.SuperUser,
+		Target:             r.Target,
 		ExtractableCommand: extractableCommand,
 	}
 }
@@ -81,7 +81,7 @@ func (r *CommandRequest) AsExtractableCommandRequest() *ExtractableCommandReques
 //NewExtractableCommandRequest returns a new command request
 func NewExtractableCommandRequest(target *url.Resource, execution *ExtractableCommand) *ExtractableCommandRequest {
 	return &ExtractableCommandRequest{
-		Target:         target,
+		Target:             target,
 		ExtractableCommand: execution,
 	}
 }

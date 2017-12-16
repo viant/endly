@@ -4,15 +4,14 @@ import (
 	"fmt"
 )
 
-
 const (
 	//EventReporterServiceID represents event reporter service id
 	EventReporterServiceID = "event/reporter"
 
 	//EventReporterServiceReportAction represents a report action
 	EventReporterServiceReportAction = "report"
-
 )
+
 //EventReporterFilter represents event reporter fitler
 type EventReporterFilter struct {
 	EventType string

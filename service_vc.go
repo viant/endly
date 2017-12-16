@@ -1,13 +1,13 @@
 package endly
 
 import (
+	"errors"
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
-	"errors"
 )
 
 const (
@@ -326,9 +326,9 @@ func NewVersionControlService() Service {
 			VersionControlServiceStatusAction,
 			VersionControlServiceCommitAction,
 			VersionControlServicePullAction,
-	),
-		gitService:      &gitService{},
-		svnService:      &svnService{},
+		),
+		gitService: &gitService{},
+		svnService: &svnService{},
 	}
 	result.AbstractService.Service = result
 	return result

@@ -19,7 +19,6 @@ const (
 	//WorkflowTaskEvalCriteriaEventType event Id
 	WorkflowTaskEvalCriteriaEventType = "EvalTaskCriteria"
 
-
 	//WorkflowActionEvalCriteriaEventType event Id
 	WorkflowActionEvalCriteriaEventType = "EvalActionCriteria"
 
@@ -31,19 +30,16 @@ const (
 
 	//WorkflowServiceLoadAction represents workflow load action
 	WorkflowServiceLoadAction = "load"
-
-
-
 )
 
 //WorkflowServiceActivity represents workflow activity
 type WorkflowServiceActivity struct {
-	Workflow string
-	Service  string
-	Action   string
-	Tag      string
-	TagIndex string
-	TagID    string
+	Workflow        string
+	Service         string
+	Action          string
+	Tag             string
+	TagIndex        string
+	TagID           string
 	Description     string
 	TagDescription  string
 	Error           string
@@ -99,8 +95,6 @@ func (s *workflowService) Workflow(name string) (*Workflow, error) {
 	return nil, fmt.Errorf("failed to lookup workflow: %v", name)
 }
 
-
-
 func isTaskAllowed(candidate *WorkflowTask, request *WorkflowRunRequest) (bool, map[int]bool) {
 	if request.Tasks == "" || request.Tasks == "*" {
 		return true, nil
@@ -136,8 +130,8 @@ func (s *workflowService) addVariableEvent(name string, variables Variables, con
 	var values = make(map[string]interface{})
 	for _, variable := range variables {
 		if variable.From != "" {
-			from := strings.Replace(variable.From , "<-", "", 1)
-			from = strings.Replace(from , "++", "", 1)
+			from := strings.Replace(variable.From, "<-", "", 1)
+			from = strings.Replace(from, "++", "", 1)
 			sources[from], _ = state.GetValue(from)
 		}
 		var name = variable.Name
@@ -308,7 +302,7 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 		if err != nil {
 			return fmt.Errorf("failed to run action:%v %v", action.Tag, err)
 		}
-		moveToNextTag, err := EvaluateCriteria(context, action.SkipCriteria,"TagIdSkipCriteria", false)
+		moveToNextTag, err := EvaluateCriteria(context, action.SkipCriteria, "TagIdSkipCriteria", false)
 		if err != nil {
 			return err
 		}
@@ -593,8 +587,8 @@ func NewWorkflowService() Service {
 			WorkflowServiceRunAction,
 			WorkflowServiceRegisterAction,
 			WorkflowServiceLoadAction),
-		Dao:             NewWorkflowDao(),
-		registry:        make(map[string]*Workflow),
+		Dao:      NewWorkflowDao(),
+		registry: make(map[string]*Workflow),
 	}
 	result.AbstractService.Service = result
 	return result

@@ -1,19 +1,16 @@
 package endly
 
 import (
-	"strings"
 	"encoding/base64"
 	"io/ioutil"
+	"strings"
 	"unicode"
 )
-
-
-
 
 //IsASCIIText return true if supplied string does not have binary data
 func IsASCIIText(candidate string) bool {
 	for _, r := range candidate {
-		if r == '\n' || r == '\r' ||r == '\t' {
+		if r == '\n' || r == '\r' || r == '\t' {
 			continue
 		}
 		if r > unicode.MaxASCII || !unicode.IsPrint(r) {
@@ -22,9 +19,6 @@ func IsASCIIText(candidate string) bool {
 	}
 	return true
 }
-
-
-
 
 //FromPayload return bytes from
 func FromPayload(payload string) ([]byte, error) {

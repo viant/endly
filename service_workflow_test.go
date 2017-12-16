@@ -5,13 +5,13 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 
-	"github.com/viant/toolbox/url"
 	"errors"
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox/url"
 	"os/exec"
 	"path"
 	"strings"
+	"testing"
 )
 
 func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, error) {
@@ -84,7 +84,7 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 		BaseDirectory: path.Join(baseDir, "test/http/runner/http_workflow"),
 	})
 
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		return
 	}
 
@@ -99,15 +99,15 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 				"appServer": "http://127.0.0.1:8113",
 			},
 			PublishParameters: true,
-			EnableLogging:    true,
-			LoggingDirectory: "/tmp/http/",
+			EnableLogging:     true,
+			LoggingDirectory:  "/tmp/http/",
 		})
 		assert.EqualValues(t, "", serviceResponse.Error)
 		response, ok := serviceResponse.Response.(*endly.WorkflowRunResponse)
 		if assert.True(t, ok) {
 
 			httpResponses := toolbox.AsSlice(response.Data["httpResponses"])
-			assert.EqualValues(t, 3,len(httpResponses))
+			assert.EqualValues(t, 3, len(httpResponses))
 			for _, item := range httpResponses {
 				httpResponse := toolbox.AsMap(item)
 				assert.EqualValues(t, 200, httpResponse["Code"])
@@ -116,9 +116,7 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 	}
 }
 
-
 func TestWorkflowService_RunLifeCycle(t *testing.T) {
-
 
 	manager, service, err := getServiceWithWorkflow("test/workflow/lifecycle/workflow.csv")
 	if assert.Nil(t, err) {
@@ -129,31 +127,29 @@ func TestWorkflowService_RunLifeCycle(t *testing.T) {
 			Tasks: "*",
 			Params: map[string]interface{}{
 				"object": map[string]interface{}{
-					"key1":1,
-					"key2":"abc",
+					"key1": 1,
+					"key2": "abc",
 				},
 			},
 			PublishParameters: true,
-			EnableLogging:    true,
-			LoggingDirectory: "logs",
+			EnableLogging:     true,
+			LoggingDirectory:  "logs",
 		})
 
 		if assert.EqualValues(t, "", serviceResponse.Error) {
 			response, ok := serviceResponse.Response.(*endly.WorkflowRunResponse)
 			if assert.True(t, ok) {
 				assert.EqualValues(t, 2, response.Data["testPassed"])
-				var anArray  =toolbox.AsSlice(response.Data["array"])
+				var anArray = toolbox.AsSlice(response.Data["array"])
 				assert.EqualValues(t, 2, anArray[0])
 				assert.EqualValues(t, 3, response.Data["counter"])
-				var anObject= toolbox.AsMap(response.Data["object"])
+				var anObject = toolbox.AsMap(response.Data["object"])
 				assert.EqualValues(t, 1, anObject["key1"])
 				assert.EqualValues(t, "200", anObject["shift"])
 			}
 		}
 	}
 }
-
-
 
 func TestWorkflowService_RunBroken(t *testing.T) {
 

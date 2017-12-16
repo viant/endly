@@ -1,14 +1,11 @@
 package endly
 
-
-
 //SeleniumWait represents selenium wait data
 type SeleniumWait struct {
 	Repeat       int
 	SleepInMs    int
 	ExitCriteria string
 }
-
 
 //Data returns wait data with default fallback.
 func (r *SeleniumWait) Data() (int, int, string) {
@@ -24,4 +21,3 @@ func (r *SeleniumWait) Data() (int, int, string) {
 	}
 	return repeat, sleepInMs, exitCriteria
 }
-

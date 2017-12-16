@@ -1,9 +1,9 @@
 package endly
 
 import (
-	"github.com/viant/toolbox/url"
 	"errors"
 	"fmt"
+	"github.com/viant/toolbox/url"
 )
 
 //DsUnitSQLScriptRequest represents a SQL script request.
@@ -11,7 +11,6 @@ type DsUnitSQLScriptRequest struct {
 	Datastore string
 	Scripts   []*url.Resource
 }
-
 
 //Validate checks if request is valid
 func (r *DsUnitSQLScriptRequest) Validate() error {
@@ -28,5 +27,3 @@ func (r *DsUnitSQLScriptRequest) Validate() error {
 type DsUnitSQLScriptResponse struct {
 	Modified int
 }
-
-

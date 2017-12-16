@@ -4,9 +4,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
-	"testing"
-	"reflect"
 	"github.com/viant/toolbox/url"
+	"reflect"
+	"testing"
 )
 
 func TestNewManager(t *testing.T) {
@@ -71,8 +71,7 @@ func newTestService() endly.Service {
 
 func Test_ServiceRequest(t *testing.T) {
 
-
-	var invalidResourse = &url.Resource{URL:"a d:/sdwe/23/e"}
+	var invalidResourse = &url.Resource{URL: "a d:/sdwe/23/e"}
 
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
@@ -83,18 +82,16 @@ func Test_ServiceRequest(t *testing.T) {
 		response := service.Run(context, struct{}{})
 		assert.True(t, response.Error != "", k)
 
-		for _, action :=  range service.Actions() {
+		for _, action := range service.Actions() {
 			request, err := service.NewRequest(action)
 			assert.Nil(t, err)
 			assert.NotNil(t, request)
-			if _, ok := request.(Validator);ok {
+			if _, ok := request.(Validator); ok {
 				response = service.Run(context, request)
 				assert.True(t, response.Error != "")
 			}
 
-
 			var requestType = toolbox.DereferenceType(reflect.TypeOf(request))
-
 
 			if requestType.Kind() == reflect.Struct {
 				if _, has := requestType.FieldByName("Target"); has {
@@ -105,16 +102,12 @@ func Test_ServiceRequest(t *testing.T) {
 				}
 			}
 
-
-
 		}
 
 	}
-
 
 }
 
 type Validator interface {
 	Vaidate() error
 }
-
