@@ -461,7 +461,7 @@ func (r *CliRunner) getReportedEvents(context *Context, service Service, session
 	}
 	reporterResponse, ok := response.Response.(*EventReporterResponse)
 	if !ok {
-		return nil, fmt.Errorf("failed to check event - unexpected reponse type: %T", response.Response)
+		return nil, fmt.Errorf("failed to check event - unexpected response type: %T", response.Response)
 	}
 	return reporterResponse, nil
 }

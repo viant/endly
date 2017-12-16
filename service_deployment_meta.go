@@ -22,7 +22,7 @@ type DeploymentMeta struct {
 	Targets    []*DeploymentTargetMeta
 }
 
-//DeploymentTargetMeta represents specific instruction for given os deplyoment.
+//DeploymentTargetMeta represents specific instruction for given os deployment.
 type DeploymentTargetMeta struct {
 	Version           string                  //version of the software
 	MinReleaseVersion map[string]string       //min release version, key is major.minor, value is release or update version
