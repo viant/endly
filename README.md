@@ -657,6 +657,11 @@ Here is an example directory layout.
   Finally contribute by creating a  pull request with a new common workflows so that other can use them.
 
 
+## GoCover
+
+[![GoCover](https://gocover.io/github.com/viant/endly)](https://gocover.io/github.com/viant/endly)
+
+
          	
 <a name="License"></a>
 ## License
