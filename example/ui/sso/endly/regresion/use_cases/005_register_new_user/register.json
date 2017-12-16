@@ -1,0 +1,106 @@
+[
+  {
+    "Selector": {
+      "Value": "#email"
+    },
+    "Calls": [
+      {
+        "Method": "Clear"
+      },
+      {
+        "Method": "SendKeys",
+        "Parameters": [
+          "$email"
+        ]
+      }
+    ]
+  },
+  {
+    "Selector": {
+      "Value": "#name"
+    },
+    "Calls": [
+      {
+        "Method": "Clear"
+      },
+      {
+        "Method": "SendKeys",
+        "Parameters": [
+          "$name"
+        ]
+      }
+    ]
+  },
+  {
+    "Selector": {
+      "Value": "#password"
+    },
+    "Calls": [
+      {
+        "Method": "Clear"
+      },
+      {
+        "Method": "SendKeys",
+        "Parameters": [
+          "$password"
+        ]
+      }
+    ]
+  },
+  {
+    "Selector": {
+      "Value": "#retypedPassword"
+    },
+    "Calls": [
+      {
+        "Method": "Clear"
+      },
+      {
+        "Method": "SendKeys",
+        "Parameters": [
+          "$password"
+        ]
+      }
+    ]
+  },
+  {
+    "Selector": {
+      "Value": "#dateOfBirth"
+    },
+    "Calls": [
+      {
+        "Method": "Clear"
+      },
+      {
+        "Method": "SendKeys",
+        "Parameters": [
+          "$dateOfBirth"
+        ]
+      }
+    ]
+  },
+  {
+    "Selector": {
+      "Value": "#submit"
+    },
+    "Calls": [
+      {
+        "Method": "Click",
+        "Wait": {
+          "SleepInMs": 100
+        }
+      }
+    ]
+  },
+  {
+    "Calls": [
+      {
+        "Method": "CurrentURL",
+        "Wait": {
+          "Repeat": 5,
+          "SleepInMs": 1000,
+          "ExitCriteria": "$value:/singin/"
+        }
+      }]
+  }
+]

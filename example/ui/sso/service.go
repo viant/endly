@@ -36,7 +36,7 @@ func setResponseError(response *BaseResponse, errorSource, message string) {
 
 func (s *service) getUser(email string) (*User, error) {
 	var user = &User{}
-	success, err := s.dsManager.ReadSingle(user, "SELECT email, name, hashedPassword, dateOfBirth FROM users WHERE id = ?", []interface{}{email}, nil)
+	success, err := s.dsManager.ReadSingle(user, "SELECT email, name, hashedPassword, dateOfBirth FROM users WHERE email = ?", []interface{}{email}, nil)
 	if err != nil {
 		return nil,err
 	}
@@ -83,7 +83,7 @@ func (s *service) SignUp(request *SignUpRequest) *SignUpResponse {
 		return response
 	}
 	user.HashedPassword = string(hashedPassword)
-	user.DataOfBirth, err = toolbox.ToTime(request.DataOfBirth, toolbox.DateFormatToLayout("yyyy-MM-dd"))
+	user.DateOfBirth, err = toolbox.ToTime(request.DataOfBirth, toolbox.DateFormatToLayout("yyyy-MM-dd"))
 	if err != nil {
 		setResponseError(response.BaseResponse, "dataOfBirth", fmt.Sprintf("%v: %v", request.DataOfBirth,  err))
 		return response

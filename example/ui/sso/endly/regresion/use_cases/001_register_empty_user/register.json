@@ -1,0 +1,112 @@
+[
+  {
+    "Calls": [
+      {
+        "Method": "Get",
+        "Parameters": [
+          "http://127.0.0.1:8888/signup/"
+        ]
+      }
+    ]
+  },
+  {
+    "Selector": {
+      "Value": "#email"
+    },
+    "Calls": [
+      {
+        "Method": "Clear"
+      }
+    ]
+  },
+  {
+    "Selector": {
+      "Value": "#name"
+    },
+    "Calls": [
+      {
+        "Method": "Clear"
+      }
+    ]
+  },
+  {
+    "Selector": {
+      "Value": "#password"
+    },
+    "Calls": [
+      {
+        "Method": "Clear"
+      }
+    ]
+  },
+  {
+    "Selector": {
+      "Value": "#dateOfBirth"
+    },
+    "Calls": [
+      {
+        "Method": "Clear"
+      }
+    ]
+  },
+  {
+    "Selector": {
+      "Value": "#submit"
+    },
+    "Calls": [
+      {
+        "Method": "Click"
+      }
+    ]
+  },
+
+  {
+    "Selector": {
+      "By":"xpath",
+      "Value": "//SMALL[preceding-sibling::INPUT[@id='email']]",
+      "Key":"email"
+    },
+    "Calls": [
+      {
+        "Method": "Text"
+      }
+    ]
+  },
+  {
+    "Selector": {
+      "By":"xpath",
+      "Value": "//SMALL[preceding-sibling::INPUT[@id='name']]",
+      "Key":"name"
+    },
+    "Calls": [
+      {
+        "Method": "Text"
+      }
+    ]
+  },
+  {
+    "Selector": {
+      "By":"xpath",
+      "Value": "//SMALL[preceding-sibling::INPUT[@id='password']]",
+      "Key":"password"
+    },
+    "Calls": [
+      {
+        "Method": "Text"
+      }
+    ]
+  },
+  {
+    "Selector": {
+      "By":"xpath",
+      "Value": "//SMALL[preceding-sibling::INPUT[@id='dateOfBirth']]",
+      "Key":"dateOfBirth"
+    },
+    "Calls": [
+      {
+        "Method": "Text"
+      }
+    ]
+  }
+
+]

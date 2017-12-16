@@ -1,0 +1,8 @@
+{
+  "Table":"users",
+  "Value":{
+    "email":"abc@wp.pl",
+    "name":"abc",
+    "dateOfBirth":"2001-01-01"
+  }
+}
