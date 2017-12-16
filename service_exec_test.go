@@ -55,6 +55,12 @@ func TestNewExecService(t *testing.T) {
 
 }
 
+
+func Test_NewSimpleCommandRequest(t *testing.T) {
+	command := endly.NewSimpleCommandRequest(url.NewResource("scp://127.0.0.1"), "ls -al")
+	assert.EqualValues(t, "ls -al", command.ExtractableCommand.Executions[0].Command)
+}
+
 // Function template  to capture SSH conversation
 //func TestXXXXService_Run(t *testing.T) {
 //
