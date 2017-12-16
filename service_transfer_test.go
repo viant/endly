@@ -1,18 +1,18 @@
 package endly_test
 
 import (
-	"path"
-	"github.com/viant/endly"
+	"bytes"
+	"fmt"
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
 	"io/ioutil"
-	"bytes"
+	"path"
 	"strings"
-	"fmt"
+	"testing"
 )
 
 func updateContext(context *endly.Context) {
@@ -31,7 +31,7 @@ func TestTransferService_Copy(t *testing.T) {
 
 	parent := toolbox.CallerDirectory(3)
 	fileContent, err := ioutil.ReadFile(path.Join(parent, "test/transfer/config.json"))
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		return
 	}
 	memStorage := storage.NewMemoryService()
@@ -42,12 +42,9 @@ func TestTransferService_Copy(t *testing.T) {
 	memStorage.Upload("mem:///tmp/copy2_source/config1.json", bytes.NewReader(fileContent))
 	memStorage.Upload("mem:///tmp/copy2_source/config2.json", bytes.NewReader(fileContent))
 
-
-
 	memStorage.Upload("mem:///tmp/copy2_source/copy2_source.tar.gz", strings.NewReader("123"))
 	memStorage.Upload("mem:///tmp/copy2_source/config1.json.tar.gz", strings.NewReader("abc"))
 	memStorage.Upload("mem:///tmp/copy2_source/config2.json.tar.gz", strings.NewReader("xyz"))
-
 
 	var manager = endly.NewManager()
 	var useCases = []struct {
@@ -100,7 +97,7 @@ func TestTransferService_Copy(t *testing.T) {
 				},
 			},
 			map[string]string{
-				"mem:///tmp/copy2_target/copy2_source.tar.gz":"123",
+				"mem:///tmp/copy2_target/copy2_source.tar.gz": "123",
 			},
 			"",
 		},
@@ -116,7 +113,7 @@ func TestTransferService_Copy(t *testing.T) {
 				},
 			},
 			map[string]string{
-				"mem:///tmp/copy3_target/config1.json.tar.gz":"abc",
+				"mem:///tmp/copy3_target/config1.json.tar.gz": "abc",
 			},
 			"",
 		},
@@ -132,7 +129,7 @@ func TestTransferService_Copy(t *testing.T) {
 				},
 			},
 			map[string]string{
-				"mem:///tmp/copy4_target/config2.json.tar.gz":"xyz",
+				"mem:///tmp/copy4_target/config2.json.tar.gz": "xyz",
 			},
 			"",
 		},
@@ -145,7 +142,7 @@ func TestTransferService_Copy(t *testing.T) {
 			execService, err := GetReplayService(useCase.baseDir)
 			if assert.Nil(t, err) {
 				context, err = OpenTestContext(manager, target, execService)
-				if ! assert.Nil(t, err) {
+				if !assert.Nil(t, err) {
 					continue
 				}
 				var state = context.State()

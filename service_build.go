@@ -8,7 +8,6 @@ import (
 	"sync"
 )
 
-
 const (
 	//BuildServiceID represent build service id
 	BuildServiceID = "build"
@@ -19,7 +18,6 @@ const (
 	//BuildServiceLoadAction represent load build instruction action
 	BuildServiceLoadAction = "load"
 )
-
 
 type buildService struct {
 	*AbstractService
@@ -257,8 +255,8 @@ func (s *buildService) NewRequest(action string) (interface{}, error) {
 //NewBuildService creates a new build service
 func NewBuildService() Service {
 	var result = &buildService{
-		registry:        make(map[string]*BuildMeta),
-		mutex:           &sync.RWMutex{},
+		registry: make(map[string]*BuildMeta),
+		mutex:    &sync.RWMutex{},
 		AbstractService: NewAbstractService(BuildServiceID,
 			BuildServiceBuildAction,
 			BuildServiceLoadAction),

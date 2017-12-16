@@ -3,12 +3,12 @@ package endly_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox"
-	"testing"
-	"path"
-	"github.com/viant/toolbox/data"
 	"github.com/viant/endly/test/proto"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
+	"path"
 	"strings"
+	"testing"
 )
 
 func StartTestServer(port int, basedir string) error {
@@ -21,7 +21,7 @@ func StartTestServer(port int, basedir string) error {
 
 func TestHttpRunnerService_Run(t *testing.T) {
 	err := StartTestServer(8766, "test/http/runner/send")
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		return
 	}
 	manager := endly.NewManager()
@@ -75,7 +75,7 @@ func TestHttpRunnerService_Run(t *testing.T) {
 
 func TestHttpRunnerService_Repeat(t *testing.T) {
 	err := StartTestServer(8111, "test/http/runner/send")
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		return
 	}
 	manager := endly.NewManager()
@@ -131,7 +131,7 @@ func TestHttpRunnerService_Repeat(t *testing.T) {
 
 func TestHttpRunnerService_RepeatWthExitCriteria(t *testing.T) {
 	err := StartTestServer(8112, "test/http/runner/send")
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		return
 	}
 	manager := endly.NewManager()
@@ -182,11 +182,9 @@ func init() {
 	endly.UdfRegistry["FromTestMessage"] = FromTestMessage
 }
 
-
-
 func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 	err := StartTestServer(8119, "test/http/runner/udf")
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		return
 	}
 
@@ -227,7 +225,7 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 		assert.True(t, strings.Contains(response.Error, "failed to run udf"), response.Error)
 	}
 
-	{// invalid response UDF use case
+	{ // invalid response UDF use case
 		response := service.Run(context, &endly.SendHTTPRequest{
 			RequestUdf:  "AsTestMessage",
 			ResponseUdf: "FromTewewewswwtMessage",
@@ -242,7 +240,7 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 		assert.EqualValues(t, true, strings.Contains(response.Error, "failed to lookup udf: FromTewewewswwtMessage"))
 	}
 
-	{// valid udf use case
+	{ // valid udf use case
 		response := service.Run(context, &endly.SendHTTPRequest{
 			RequestUdf:  "AsTestMessage",
 			ResponseUdf: "FromTestMessage",
@@ -273,7 +271,7 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 		}
 
 	}
-	{	//base 64 use case
+	{ //base 64 use case
 		response := service.Run(context, &endly.SendHTTPRequest{
 			Requests: []*endly.HTTPRequest{
 				{
@@ -293,4 +291,3 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 		}
 	}
 }
-

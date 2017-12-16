@@ -10,5 +10,4 @@ type SeleniumServerStopRequest struct {
 
 //SeleniumServerStopResponse represents a selenium stop request
 type SeleniumServerStopResponse struct {
-
 }

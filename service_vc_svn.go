@@ -39,7 +39,6 @@ func (s *svnService) checkInfo(context *Context, request *VcStatusRequest) (*VcI
 		},
 	})
 
-
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +68,7 @@ func readSvnStatus(commandResult *CommandResponse, response *VcInfo) {
 			continue
 		}
 		columns, ok := ExtractColumns(line)
-		if ! ok  || len(columns) < 2 {
+		if !ok || len(columns) < 2 {
 			continue
 		}
 		file := columns[1]

@@ -1,8 +1,8 @@
 package endly
 
 import (
-	"strings"
 	"fmt"
+	"strings"
 )
 
 //EvaluateCriteria evaluates passed in critera, criteria format uses  <actual>:<expected>
@@ -27,4 +27,3 @@ func EvaluateCriteria(context *Context, criteria, eventType string, defaultValue
 	AddEvent(context, eventType, Pairs("defaultValue", defaultValue, "actual", actualOperand, "expected", expectedOperand, "eligible", result), Info)
 	return result, err
 }
-

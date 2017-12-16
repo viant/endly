@@ -8,15 +8,14 @@ import (
 
 var errSdkNotFound = errors.New("SDK NOT FUND")
 
-
 const (
 	//SdkServiceID represents system sdk
 	SdkServiceID = "sdk"
 
 	//SdkServiceSetAction represents sdk set action
 	SdkServiceSetAction = "set"
-
 )
+
 type systemSdkService struct {
 	*AbstractService
 	jdkService *systemJdkService
@@ -158,8 +157,8 @@ func (s *systemSdkService) setSdk(context *Context, request *SystemSdkSetRequest
 //NewSystemJdkService creates a new system jdk service.
 func NewSystemJdkService() Service {
 	var result = &systemSdkService{
-		jdkService:      &systemJdkService{},
-		goService:       &systemGoService{},
+		jdkService: &systemJdkService{},
+		goService:  &systemGoService{},
 		AbstractService: NewAbstractService(SdkServiceID,
 			SdkServiceSetAction),
 	}

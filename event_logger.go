@@ -72,7 +72,7 @@ func (l *EventLogger) Log(event *Event) error {
 	if err != nil {
 		return err
 	}
-	defer func(){_= file.Close()}()
+	defer func() { _ = file.Close() }()
 
 	buf, err := json.MarshalIndent(event.Value, "", "\t")
 	if err != nil {

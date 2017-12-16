@@ -1,25 +1,24 @@
 package endly
 
 import (
-	"github.com/viant/toolbox/url"
 	"fmt"
+	"github.com/viant/toolbox/url"
 )
 
 //SeleniumRunRequest represents group of selenium web elements calls
 type SeleniumRunRequest struct {
-	SessionID string
+	SessionID      string
 	Browser        string
 	RemoteSelenium *url.Resource //remote selenium resource
-	Actions   []*SeleniumAction
+	Actions        []*SeleniumAction
 }
 
 //SeleniumRunResponse represents selenium call response
 type SeleniumRunResponse struct {
-	SessionID	string
-	Data      map[string]interface{}
+	SessionID    string
+	Data         map[string]interface{}
 	LookupErrors []string
 }
-
 
 //SeleniumMethodCall represents selenium call.
 type SeleniumMethodCall struct {
@@ -34,11 +33,9 @@ type SeleniumAction struct {
 	Calls    []*SeleniumMethodCall
 }
 
-
-
 //Validate validates run request.
 func (r *SeleniumRunRequest) Validate() error {
-	if r.SessionID == ""  {
+	if r.SessionID == "" {
 		if r.RemoteSelenium == nil {
 			fmt.Errorf("both SessionID and RemoteSelenium were empty")
 		}
@@ -50,10 +47,10 @@ func (r *SeleniumRunRequest) Validate() error {
 }
 
 //NewSeleniumMethodCall creates a new method call
-func NewSeleniumMethodCall(method string, wait *SeleniumWait, parameters ... interface{}) *SeleniumMethodCall {
+func NewSeleniumMethodCall(method string, wait *SeleniumWait, parameters ...interface{}) *SeleniumMethodCall {
 	return &SeleniumMethodCall{
-		Method:method,
-		Wait:wait,
-		Parameters:parameters,
+		Method:     method,
+		Wait:       wait,
+		Parameters: parameters,
 	}
 }

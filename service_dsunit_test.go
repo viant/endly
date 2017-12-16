@@ -1,18 +1,18 @@
 package endly_test
 
 import (
+	"errors"
+	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/dsc"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
+	"os/exec"
 	"path"
 	"testing"
-	"os/exec"
-	"fmt"
-	"errors"
-	"github.com/viant/toolbox/data"
 )
 
 func getRegisteredDsUnitService(manager endly.Manager, context *endly.Context, dbname string) (endly.Service, error) {
@@ -168,7 +168,7 @@ func TestDsUnitService(t *testing.T) {
 		serviceResponse = service.Run(context, &endly.DsUnitExpectRequest{
 			Datastore: "mydb1",
 			Data:      tableSetupData,
-			Expand:true,
+			Expand:    true,
 		})
 
 		if assert.Equal(t, "", serviceResponse.Error) {
@@ -182,76 +182,64 @@ func TestDsUnitService(t *testing.T) {
 
 }
 
-
 func TestDsUnitService_Errors(t *testing.T) {
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
 	service, err := getRegisteredDsUnitService(manager, context, "mydb1")
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		return
 	}
 	serviceResponse := service.Run(context, &endly.DsUnitRegisterRequest{})
 	assert.True(t, serviceResponse.Error != "")
 
 	serviceResponse = service.Run(context, &endly.DsUnitRegisterRequest{
-		Datastore:"dd",
-
+		Datastore: "dd",
 	})
 	assert.True(t, serviceResponse.Error != "")
 
-
-
 	serviceResponse = service.Run(context, &endly.DsUnitRegisterRequest{
-		Datastore:"dd",
+		Datastore: "dd",
 		Config: &dsc.Config{
 			DriverName: "dsads",
 			Descriptor: "[username]:[password]@tcp(127.0.0.1:3308)/[dbname]?parseTime=true",
 		},
 	})
 
-
-
 	serviceResponse = service.Run(context, &endly.DsUnitPrepareRequest{})
 	assert.True(t, serviceResponse.Error != "")
 
-	serviceResponse = service.Run(context, &endly.DsUnitPrepareRequest{Datastore:"dd"})
+	serviceResponse = service.Run(context, &endly.DsUnitPrepareRequest{Datastore: "dd"})
 	assert.True(t, serviceResponse.Error != "")
 
 	serviceResponse = service.Run(context, &endly.DsUnitPrepareRequest{
-		Datastore:"dd",
-		URL: url.NewResource("test/nonexisting").URL,
+		Datastore: "dd",
+		URL:       url.NewResource("test/nonexisting").URL,
 	})
 	assert.True(t, serviceResponse.Error != "")
-
-
 
 	serviceResponse = service.Run(context, &endly.DsUnitSQLScriptRequest{})
 	assert.True(t, serviceResponse.Error != "")
 
-	serviceResponse = service.Run(context, &endly.DsUnitSQLScriptRequest{Datastore:"dd"})
+	serviceResponse = service.Run(context, &endly.DsUnitSQLScriptRequest{Datastore: "dd"})
 	assert.True(t, serviceResponse.Error != "")
 	serviceResponse = service.Run(context, &endly.DsUnitSQLScriptRequest{
 		Datastore: "dd",
 		Scripts: []*url.Resource{
 			url.NewResource("test/nonexisting"),
 		},
-		})
+	})
 	assert.True(t, serviceResponse.Error != "")
-
-
 
 	serviceResponse = service.Run(context, &endly.DsUnitTableSequenceRequest{})
 	assert.True(t, serviceResponse.Error != "")
 
-
-	serviceResponse = service.Run(context, &endly.DsUnitTableSequenceRequest{Datastore:"dd"})
+	serviceResponse = service.Run(context, &endly.DsUnitTableSequenceRequest{Datastore: "dd"})
 	assert.True(t, serviceResponse.Error != "")
-
 
 	serviceResponse = service.Run(context, &endly.DsUnitExpectRequest{})
 	assert.True(t, serviceResponse.Error != "")
 
-	serviceResponse = service.Run(context, &endly.DsUnitExpectRequest{Datastore:"dd"})
+	serviceResponse = service.Run(context, &endly.DsUnitExpectRequest{Datastore: "dd"})
 	assert.True(t, serviceResponse.Error != "")
 
 }

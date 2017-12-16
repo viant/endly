@@ -383,8 +383,6 @@ func (r *CliRunner) reportLookupErrors(response *SeleniumRunResponse) {
 	}
 }
 
-
-
 func (r *CliRunner) reportHTTPResponse(response *HTTPResponse) {
 	r.printShortMessage(messageTypeGeneric, fmt.Sprintf("StatusCode: %v", response.Code), messageTypeGeneric, "HttpResponse")
 	if len(response.Header) > 0 {
@@ -475,7 +473,7 @@ func (r *CliRunner) reportEvents(context *Context, sessionID string, filter *Run
 	}
 
 	r.report = &ReportSummaryEvent{}
-	defer func(){
+	defer func() {
 		_ = r.reportEvent(context, &Event{Type: "ReportSummaryEvent", Value: Pairs("value", r.report)}, filter)
 	}()
 

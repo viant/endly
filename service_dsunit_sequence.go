@@ -16,7 +16,6 @@ type DsUnitTableSequenceResponse struct {
 	Sequences map[string]int
 }
 
-
 //Validate validate sequence request
 func (r *DsUnitTableSequenceRequest) Validate() error {
 	if r.Datastore == "" {

@@ -17,7 +17,6 @@ const ExecServiceID = "exec"
 
 const sudoCredentialKey = "**sudo**"
 
-
 //ExecServiceOpenAction represent open session action
 const ExecServiceOpenAction = "open"
 
@@ -210,7 +209,7 @@ func (s *execService) changeDirectory(context *Context, session *SystemTerminalS
 		return err
 	}
 
-	if ! CheckNoSuchFileOrDirectory(result) {
+	if !CheckNoSuchFileOrDirectory(result) {
 		session.currentDirectory = directory
 	}
 	return err

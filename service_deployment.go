@@ -14,14 +14,11 @@ import (
 //DeploymentServiceID represents a deployment service id.
 const DeploymentServiceID = "deployment"
 
-
 //DeploymentServiceLoadAction represents a load deployment instruction action
 const DeploymentServiceLoadAction = "load"
 
-
 //DeploymentServiceDeployAction represents a deploy deployment instruction action
 const DeploymentServiceDeployAction = "deploy"
-
 
 const artifactKey = "artifact"
 const versionKey = "Version"
@@ -256,7 +253,7 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 		return nil, err
 	}
 	state := context.state
-	if ! state.Has("targetHost") {
+	if !state.Has("targetHost") {
 		state.Put("targetHost", target.ParsedURL.Host)
 		state.Put("targetHostCredential", target.Credential)
 	}
@@ -428,8 +425,8 @@ func NewDeploymentService() Service {
 		AbstractService: NewAbstractService(DeploymentServiceID,
 			DeploymentServiceDeployAction,
 			DeploymentServiceLoadAction),
-		mutex:           &sync.RWMutex{},
-		registry:        make(map[string]*DeploymentMeta),
+		mutex:    &sync.RWMutex{},
+		registry: make(map[string]*DeploymentMeta),
 	}
 	result.AbstractService.Service = result
 	return result

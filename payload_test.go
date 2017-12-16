@@ -1,9 +1,9 @@
 package endly_test
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"testing"
 )
 
 func Test_IsAsciiPrintable(t *testing.T) {
@@ -17,4 +17,3 @@ func Test_IsAsciiPrintable(t *testing.T) {
 	assert.True(t, endly.IsASCIIText("\""))
 
 }
-

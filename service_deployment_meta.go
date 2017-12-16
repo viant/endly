@@ -35,8 +35,8 @@ type DeploymentTargetMeta struct {
 type Deployment struct {
 	Pre          *DeploymentAddition
 	Transfer     *Transfer           //actual copy instruction
-	Command      *ExtractableCommand     //post deployment command like tar xvzf
-	VersionCheck *ExtractableCommand     //command to check version
+	Command      *ExtractableCommand //post deployment command like tar xvzf
+	VersionCheck *ExtractableCommand //command to check version
 	Post         *DeploymentAddition //post deployment
 }
 
@@ -65,6 +65,7 @@ func (d *Deployment) Validate() error {
 	return nil
 
 }
+
 //Validate checks is meta is valid.
 func (m *DeploymentMeta) Validate() error {
 	if len(m.Targets) == 0 {
