@@ -33,3 +33,17 @@ type SeleniumOpenSessionResponse struct {
 	SessionID string
 }
 
+
+
+
+//SeleniumCloseSessionRequest represents close session request.
+type SeleniumCloseSessionRequest struct {
+	SessionID string
+}
+
+
+//SeleniumCloseSessionResponse represents close session response.
+type SeleniumCloseSessionResponse struct {
+	SessionID string
+}
+

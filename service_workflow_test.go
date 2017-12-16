@@ -80,7 +80,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 
 	baseDir := toolbox.CallerDirectory(3)
-	err := endly.StartHttpServer(8113, &endly.HttpServerTrips{
+	err := endly.StartHTTPServer(8113, &endly.HTTPServerTrips{
 		IndexKeys:     []string{endly.MethodKey, endly.URLKey, endly.BodyKey, endly.CookieKey, endly.ContentTypeKey},
 		BaseDirectory: path.Join(baseDir, "test/http/runner/http_workflow"),
 	})

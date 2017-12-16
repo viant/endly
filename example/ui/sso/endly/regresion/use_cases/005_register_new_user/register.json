@@ -99,7 +99,7 @@
         "Wait": {
           "Repeat": 5,
           "SleepInMs": 1000,
-          "ExitCriteria": "$value:/singin/"
+          "ExitCriteria": "$value:/signin/"
         }
       }]
   }

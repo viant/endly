@@ -71,6 +71,6 @@ type AsyncServiceActionEvent struct {
 	Task        string
 	Service     string
 	Action      string
-	TagId       string
+	TagID       string
 	Description string
 }

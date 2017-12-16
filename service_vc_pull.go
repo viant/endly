@@ -11,13 +11,13 @@ type VcPullRequest struct {
 	Origin *url.Resource //version control origin
 }
 
-
+//Validate checks if request is valud
 func (r *VcPullRequest) Validate() error {
 	if r.Origin == nil {
-		return errors.New("Origin was empty")
+		return errors.New("origin was empty")
 	}
 	if r.Target == nil {
-		return errors.New("Target was empty")
+		return errors.New("target was empty")
 	}
 	return nil
 }

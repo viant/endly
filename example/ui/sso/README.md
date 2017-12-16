@@ -57,4 +57,12 @@ endly
 ```
 
 
+#Troubleshooting
+
+to check you aerospike just run
+
+docker exec -it db1_aerospike aql
+SELECT * FROM db1.users;
+
+
   

@@ -43,8 +43,7 @@ type WorkflowServiceActivity struct {
 	Action   string
 	Tag      string
 	TagIndex string
-	TagId    string
-
+	TagID    string
 	Description     string
 	TagDescription  string
 	Error           string
@@ -54,7 +53,8 @@ type WorkflowServiceActivity struct {
 	ServiceResponse interface{}
 }
 
-func TagId(workflow, tag, index, subpath string) string {
+//TagID returns a tag id
+func TagID(workflow, tag, index, subpath string) string {
 	return fmt.Sprintf("%v%v%v%v", workflow, tag, index, subpath)
 }
 
@@ -184,7 +184,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) err
 		Action:         action.Action,
 		Service:        action.Service,
 		TagIndex:       action.TagIndex,
-		TagId:          action.TagId,
+		TagID:          action.TagID,
 		Description:    context.Expand(action.Description),
 		TagDescription: context.Expand(action.TagDescription),
 		Tag:            action.Tag,
@@ -287,7 +287,7 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 				Description: context.Expand(action.Description),
 				Service:     action.Service,
 				Action:      action.Action,
-				TagId:       action.TagId,
+				TagID:       action.TagID,
 			}
 
 			AddEvent(context, asyncEvent, Pairs("value", asyncEvent))
@@ -306,7 +306,7 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 			return err
 		}
 		if moveToNextTag {
-			for j := i + 1; j < len(task.Actions) && action.TagId == task.Actions[j].TagId; j++ {
+			for j := i + 1; j < len(task.Actions) && action.TagID == task.Actions[j].TagID; j++ {
 				i++
 			}
 

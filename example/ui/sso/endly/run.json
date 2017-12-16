@@ -4,8 +4,7 @@
   "PublishParameters": true,
   "EnableLogging": false,
   "LoggingDirectory": "logs",
-  "Tasks": "init,test",
-
+  "Tasks": "*",
   "Params": {
     "app":"sso",
     "goVersion":"1.8",

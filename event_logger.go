@@ -41,10 +41,10 @@ func (l *EventLogger) updateSubpath() {
 	if len(*l.activities) == 0 {
 		return
 	}
-	if l.workflowTag != l.activities.Last().TagId {
+	if l.workflowTag != l.activities.Last().TagID {
 		l.workflowTagCount++
-		l.workflowTag = l.activities.Last().TagId
-		l.subPath = fmt.Sprintf("%03d_%v", l.workflowTagCount, l.activities.Last().TagId)
+		l.workflowTag = l.activities.Last().TagID
+		l.subPath = fmt.Sprintf("%03d_%v", l.workflowTagCount, l.activities.Last().TagID)
 	}
 }
 
@@ -72,7 +72,7 @@ func (l *EventLogger) Log(event *Event) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func(){_= file.Close()}()
 
 	buf, err := json.MarshalIndent(event.Value, "", "\t")
 	if err != nil {

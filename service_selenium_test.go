@@ -121,7 +121,7 @@ func StartSeleniumMockServer(port int) error {
 	baseDir := toolbox.CallerDirectory(3)
 	var sessionPath = path.Join(baseDir, "test/selenium/http/")
 
-	return endly.StartHttpServer(port, &endly.HttpServerTrips{
+	return endly.StartHTTPServer(port, &endly.HTTPServerTrips{
 		IndexKeys:     []string{endly.MethodKey, endly.URLKey, endly.BodyKey, endly.ContentTypeKey},
 		BaseDirectory: sessionPath,
 	})
@@ -345,12 +345,8 @@ func TestSeleniumService_Run(t *testing.T) {
 		}
 	}
 
-	serviceResponse = service.Run(context, &endly.SeleniumWebDriverCallRequest{
+	serviceResponse = service.Run(context, &endly.SeleniumCloseSessionRequest{
 		SessionID: targetHost,
-		Call: &endly.SeleniumMethodCall{
-			Method:     "Close",
-			Parameters: []interface{}{},
-		},
 	})
 
 }

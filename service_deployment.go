@@ -97,7 +97,7 @@ func (s *deploymentService) matchDeployment(context *Context, version string, ta
 	}
 	operatingSystem := context.OperatingSystem(target.Host())
 	if operatingSystem == nil {
-		return nil, fmt.Errorf("failed to detect operating system on %v\n", target.Host())
+		return nil, fmt.Errorf("failed to detect operating system on %v", target.Host())
 	}
 
 	deployment := meta.Match(operatingSystem, version)
@@ -191,7 +191,7 @@ func (s *deploymentService) discoverTransfer(context *Context, request *Deployme
 		}
 		minReleaseVersion, has := deploymentTarget.MinReleaseVersion[request.Version]
 		if !has {
-			return nil, fmt.Errorf("failed to discover source - unable to determine minReleaseVersion for %v\n", request.Version)
+			return nil, fmt.Errorf("failed to discover source - unable to determine minReleaseVersion for %v", request.Version)
 		}
 		var maxReleaseVersion = strings.Repeat("9", len(minReleaseVersion))
 		var min = toolbox.AsInt(minReleaseVersion)
@@ -319,7 +319,7 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 		if version == "" {
 			version = response.Version
 		}
-		s.updateSessionDeployment(context, target, request.AppName, version)
+		err = s.updateSessionDeployment(context, target, request.AppName, version)
 		return response, err
 	}
 

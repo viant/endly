@@ -1,5 +1,14 @@
 [
-
+  {
+    "Calls": [
+      {
+        "Method": "Get",
+        "Parameters": [
+          "http://127.0.0.1:8888/signin/"
+        ]
+      }
+    ]
+  },
   {
     "Selector": {
       "Value": "#email"

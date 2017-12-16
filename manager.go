@@ -71,7 +71,7 @@ func (s *manager) NewContext(ctx toolbox.Context) *Context {
 		},
 		Workflows: &workflowStack,
 	}
-	result.Put(serviceManagerKey, s)
+	_ = result.Put(serviceManagerKey, s)
 	return result
 }
 
