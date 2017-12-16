@@ -1,6 +1,6 @@
-# Declarative end to end functional testing (endly)
+#Endly - Declarative end to end functional testing
 
-[![Declarative funtional testing for Go.](https://goreportcard.com/badge/github.com/viant/endly)](https://goreportcard.com/report/github.com/viant/endly)
+[![Declarative end to end funtional testing for Go.](https://goreportcard.com/badge/github.com/viant/endly)](https://goreportcard.com/report/github.com/viant/endly)
 [![GoDoc](https://godoc.org/github.com/viant/endly?status.svg)](https://godoc.org/github.com/viant/endly)
 
 This library is compatible with Go 1.8+
