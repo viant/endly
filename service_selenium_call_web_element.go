@@ -1,7 +1,6 @@
 package endly
 
 import (
-	"time"
 	"fmt"
 	"strings"
 	"github.com/tebeka/selenium"
@@ -16,6 +15,8 @@ type WebElementSelector struct {
 
 
 
+
+
 //SeleniumWebElementCallRequest represents a web element call reqesut
 type SeleniumWebElementCallRequest struct {
 	SessionID string
@@ -23,33 +24,15 @@ type SeleniumWebElementCallRequest struct {
 	Call      *SeleniumMethodCall
 }
 
-func (r *SeleniumWebElementCallRequest) Data() (int, time.Duration, string) {
-	var repeat = 1
-	var sleepInMs = time.Millisecond * 0
-	var exitCriteria = ""
-
-	var wait = r.Call.Wait
-	if wait != nil {
-		if wait.Repeat > 0 {
-			repeat = wait.Repeat
-		}
-		sleepInMs = time.Duration(wait.SleepInMs) * time.Millisecond
-		exitCriteria = wait.ExitCriteria
-	}
-	return repeat, sleepInMs, exitCriteria
-}
-
-//SeleniumWait represents selenium wait data
-type SeleniumWait struct {
-	Repeat       int
-	SleepInMs    int
-	ExitCriteria string
-}
-
 //SeleniumWebElementCallResponse represents seleniun web element response
 type SeleniumWebElementCallResponse struct {
 	Result []interface{}
+	LookupError string
 }
+
+
+
+
 
 func (s *WebElementSelector) Validate() error {
 	if s.Value == "" {

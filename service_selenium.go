@@ -6,7 +6,6 @@ import (
 	"github.com/tebeka/selenium"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
-	"time"
 	"github.com/viant/toolbox/data"
 	"strings"
 )
@@ -129,6 +128,7 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 
 	var response = &SeleniumRunResponse{
 		Data: make(map[string]interface{}),
+		LookupErrors:make([]string, 0),
 	}
 	var result = data.Map(response.Data)
 
@@ -170,6 +170,9 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 			if err != nil {
 				return nil, err
 			}
+			if callResponse.LookupError != "" {
+				response.LookupErrors = append(response.LookupErrors, callResponse.LookupError)
+			}
 			var elementKey = action.Selector.Key
 			if elementKey == "" {
 				elementKey = action.Selector.Value
@@ -186,13 +189,6 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 	return response, nil
 }
 
-func (s *seleniumService) webDriverCall(context *Context, request *SeleniumWebDriverCallRequest) (*SeleniumServiceCallResponse, error) {
-	seleniumSession, err := s.session(context, request.SessionID)
-	if err != nil {
-		return nil, err
-	}
-	return s.callMethod(seleniumSession.driver, request.Call.Method, request.Call.Parameters)
-}
 
 func (s *seleniumService) callMethod(owner interface{}, methodName string, parameters []interface{}) (*SeleniumServiceCallResponse, error) {
 	method, err := toolbox.GetFunction(owner, methodName)
@@ -208,6 +204,45 @@ func (s *seleniumService) callMethod(owner interface{}, methodName string, param
 	return response, nil
 }
 
+
+
+func (s *seleniumService) webDriverCall(context *Context, request *SeleniumWebDriverCallRequest) (*SeleniumServiceCallResponse, error) {
+	seleniumSession, err := s.session(context, request.SessionID)
+	if err != nil {
+		return nil, err
+	}
+	return s.call(context, seleniumSession.driver, request.Call)
+}
+
+func (s *seleniumService) call(context *Context, caller interface{}, call *SeleniumMethodCall) (callResponse *SeleniumServiceCallResponse, err error) {
+	repeat, sleepInMs, exitCriteria := call.Wait.Data()
+	for i := 0; i < repeat; i++ {
+		callResponse, err = s.callMethod(caller, call.Method, call.Parameters)
+		if err != nil && exitCriteria == "" {
+			//if there is exit criteria error can be intermittent.
+			return nil, err
+		}
+		if sleepInMs > 0 {
+			s.Sleep(context, sleepInMs)
+		}
+		if exitCriteria != "" {
+			var criteria = exitCriteria
+			if len(callResponse.Result) > 0 {
+				criteria = strings.Replace(exitCriteria, "$value", toolbox.AsString(callResponse.Result[0]), 1)
+			}
+			ok, err := EvaluateCriteria(context, criteria, "SeleniumWaitCriteria", true)
+			if err != nil {
+				return nil, err
+			}
+			if ok {
+				break
+			}
+		}
+	}
+	return callResponse, err
+}
+
+
 func (s *seleniumService) webElementCall(context *Context, request *SeleniumWebElementCallRequest) (*SeleniumWebElementCallResponse, error) {
 	seleniumSession, err := s.session(context, request.SessionID)
 	if err != nil {
@@ -222,38 +257,19 @@ func (s *seleniumService) webElementCall(context *Context, request *SeleniumWebE
 
 	element, err := seleniumSession.driver.FindElement(selector.By, selector.Value)
 	if err != nil || element == nil {
-		return nil, fmt.Errorf("failed to lookup element: %v %v", selector.By, selector.Value)
+		response.LookupError = fmt.Sprintf("failed to lookup element: %v %v", selector.By, selector.Value)
+		return response, nil
 	}
-
-	var callResponse *SeleniumServiceCallResponse
-	repeat, sleepMs, exitCriteria := request.Data()
-	for i := 0; i < repeat; i++ {
-		callResponse, err = s.callMethod(element, request.Call.Method, request.Call.Parameters)
-		if err != nil && exitCriteria == "" {
-			//if there is exit criteria error can be intermittent.
-			return nil, err
-		}
-		if sleepMs > 0 {
-			time.Sleep(sleepMs)
-		}
-		if exitCriteria != "" {
-			var criteriaState = data.NewMap()
-			if len(callResponse.Result) > 0 {
-				criteriaState.Put("value", callResponse.Result[0])
-			}
-			criteria := criteriaState.ExpandAsText(exitCriteria)
-			ok, err := EvaluateCriteria(context, criteria, "SeleniumWaitCriteria", true)
-			if err != nil {
-				return nil, err
-			}
-			if ok {
-				break
-			}
-		}
+	callResponse, err := s.call(context, element, request.Call)
+	if err != nil {
+		return nil, err
 	}
 	response.Result = callResponse.Result
 	return response, nil
 }
+
+
+
 
 func (s *seleniumService) open(context *Context, request *SeleniumOpenSessionRequest) (*SeleniumOpenSessionResponse, error) {
 	var response = &SeleniumOpenSessionResponse{}
@@ -312,7 +328,7 @@ func (s *seleniumService) stop(context *Context, request *SeleniumServerStopRequ
 	processService, _ := context.Service(ProcessServiceID)
 	serviceResponse := processService.Run(context, &ProcessStopAllRequest{
 		Target: target,
-		Input:  fmt.Sprintf("selenium-server-standalone.jar -port %d", toolbox.AsString(request.Port)),
+		Input:  fmt.Sprintf("selenium-server-standalone.jar -port %v", toolbox.AsString(request.Port)),
 	})
 	if serviceResponse.Error != "" {
 		return nil, errors.New(serviceResponse.Error)
