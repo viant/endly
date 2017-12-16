@@ -1,0 +1,60 @@
+[
+
+  {
+    "Selector": {
+      "Value": "#email"
+    },
+    "Calls": [
+      {
+        "Method": "Clear"
+      },
+      {
+        "Method": "SendKeys",
+        "Parameters": [
+          "$email"
+        ]
+      }
+    ]
+  },
+
+  {
+    "Selector": {
+      "Value": "#password"
+    },
+    "Calls": [
+      {
+        "Method": "Clear"
+      },
+      {
+        "Method": "SendKeys",
+        "Parameters": [
+          "$password"
+        ]
+      }
+    ]
+  },
+   {
+    "Selector": {
+      "Value": "#submit"
+    },
+    "Calls": [
+      {
+        "Method": "Click",
+        "Wait": {
+          "SleepInMs": 100
+        }
+      }
+    ]
+  },
+  {
+    "Calls": [
+      {
+        "Method": "CurrentURL",
+        "Wait": {
+          "Repeat": 10,
+          "SleepInMs": 1000,
+          "ExitCriteria": "$value:/viant/"
+        }
+      }]
+  }
+]

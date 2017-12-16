@@ -1,0 +1,13 @@
+{
+  "Datastore": "db1",
+  "Data": {
+    "users": [
+      {
+        "email": "xyz@wp.pl",
+        "name": "abc",
+        "dateOfBirth": "2001-01-01"
+      }
+    ]
+  },
+  "CheckPolicy": 1
+}

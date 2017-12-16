@@ -16,8 +16,9 @@ func EvaluateCriteria(context *Context, criteria, eventType string, defaultValue
 		return false, fmt.Errorf("eval criteria needs to have colon: but had: %v", criteria)
 	}
 	fragments := strings.Split(criteria, ":")
-	actualOperand := context.Expand(strings.TrimSpace(fragments[0]))
-	expectedOperand := context.Expand(strings.TrimSpace(fragments[1]))
+	var state = context.state
+	actualOperand := state.Expand(strings.TrimSpace(fragments[0]))
+	expectedOperand := state.Expand(strings.TrimSpace(fragments[1]))
 	validator := &Validator{}
 	var result, err = validator.Check(expectedOperand, actualOperand)
 	AddEvent(context, eventType, Pairs("defaultValue", defaultValue, "actual", actualOperand, "expected", expectedOperand, "eligible", result), Info)

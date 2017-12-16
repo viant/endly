@@ -170,7 +170,17 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 			if err != nil {
 				return nil, err
 			}
-			s.addResultIfPresent(callResponse.Result, result,  action.Selector.Value, call.Method)
+			var elementKey = action.Selector.Key
+			if elementKey == "" {
+				elementKey = action.Selector.Value
+			}
+			var elementPath =[]string{elementKey, call.Method}
+			if len(call.Parameters) == 1 && toolbox.IsString(call.Parameters[0]) {
+				elementPath[1] = strings.Replace(elementPath[1], "Get", "", 1)
+				elementPath[1] = strings.Replace(elementPath[1], "Property", "", 1)
+				elementPath = append(elementPath, )
+			}
+			s.addResultIfPresent(callResponse.Result, result, elementPath...)
 		}
 	}
 	return response, nil
@@ -219,7 +229,8 @@ func (s *seleniumService) webElementCall(context *Context, request *SeleniumWebE
 	repeat, sleepMs, exitCriteria := request.Data()
 	for i := 0; i < repeat; i++ {
 		callResponse, err = s.callMethod(element, request.Call.Method, request.Call.Parameters)
-		if err != nil {
+		if err != nil && exitCriteria == "" {
+			//if there is exit criteria error can be intermittent.
 			return nil, err
 		}
 		if sleepMs > 0 {
@@ -406,7 +417,7 @@ func (s *seleniumService) NewRequest(action string) (interface{}, error) {
 	case SeleniumServiceCallElementAction:
 		return &SeleniumWebElementCallRequest{}, nil
 	case SeleniumServiceRunAction:
-		return SeleniumRunRequest{}, nil
+		return &SeleniumRunRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
 }

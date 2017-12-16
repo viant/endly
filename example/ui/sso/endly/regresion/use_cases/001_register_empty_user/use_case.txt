@@ -1,1 +1,1 @@
-Test register checks empty fields in a user registration
+This use case checks empty fields validation in a user registration.
