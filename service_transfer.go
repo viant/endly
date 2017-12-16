@@ -37,7 +37,7 @@ type transferService struct {
 	*AbstractService
 }
 
-//NewExpandedContentHandler return a new reader that can substitude content with state map, replacement data provided in replacement map.
+//NewExpandedContentHandler return a new reader that can substitute content with state map, replacement data provided in replacement map.
 func NewExpandedContentHandler(context *Context, replaceMap map[string]string, expand bool) func(reader io.Reader) (io.Reader, error) {
 	return func(reader io.Reader) (io.Reader, error) {
 		content, err := ioutil.ReadAll(reader)
