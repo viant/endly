@@ -138,9 +138,6 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 						{
 							"k5": "20",
 						},
-						{
-							"k5": "30",
-						},
 					},
 				},
 			},
@@ -152,6 +149,12 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 		assert.NotNil(t, logValidatorAssertResponse)
 		assert.Equal(t, 0, len(logValidatorAssertResponse.ValidationInfo[0].FailedTests))
 
+	}
+	{
+		response = service.Run(context, &endly.LogValidatorResetRequest{
+			LogTypes:[]string{"t"},
+		})
+		assert.Equal(t, "", response.Error)
 	}
 
 }
