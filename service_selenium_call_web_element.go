@@ -33,7 +33,7 @@ type SeleniumWebElementCallResponse struct {
 
 
 
-
+//Validate checks is selector is valid.
 func (s *WebElementSelector) Validate() error {
 	if s.Value == "" {
 		return fmt.Errorf("value was empty")

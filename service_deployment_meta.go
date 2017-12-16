@@ -5,12 +5,12 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//DeploymentRegisterRequest represents DeploymentMeta register request.
+//DeploymentMetaRequest represents DeploymentMeta register request.
 type DeploymentMetaRequest struct {
 	Source *url.Resource
 }
 
-//DeploymentRegisterResponse represnets deployment response
+//DeploymentMetaResponse represents deployment response
 type DeploymentMetaResponse struct {
 	Meta *DeploymentMeta
 }
@@ -22,7 +22,7 @@ type DeploymentMeta struct {
 	Targets    []*DeploymentTargetMeta
 }
 
-//OperatingSystemDeployment represents specific instruction for given os deplyoment.
+//DeploymentTargetMeta represents specific instruction for given os deplyoment.
 type DeploymentTargetMeta struct {
 	Version           string                  //version of the software
 	MinReleaseVersion map[string]string       //min release version, key is major.minor, value is release or update version
@@ -31,6 +31,7 @@ type DeploymentTargetMeta struct {
 	Dependencies      []*DeploymentDependency //app dependencies like sdk
 }
 
+//Deployment represents deployment instruction
 type Deployment struct {
 	Pre          *DeploymentAddition
 	Transfer     *Transfer           //actual copy instruction
@@ -64,7 +65,7 @@ func (d *Deployment) Validate() error {
 	return nil
 
 }
-
+//Validate checks is meta is valid.
 func (m *DeploymentMeta) Validate() error {
 	if len(m.Targets) == 0 {
 		return errors.New("Targets were empty")
@@ -89,6 +90,7 @@ func (a *DeploymentAddition) AsCommandRequest() *CommandRequest {
 	}
 }
 
+//MatchVersion checks expected and actual version returns true if matches.
 func MatchVersion(expected, actual string) bool {
 	var expectedLength = len(expected)
 	var actualLength = len(actual)

@@ -13,11 +13,11 @@ type ServiceAction struct {
 	Action         string      //Id of the action used to create service request
 	Tag            string      //neatly tag
 	TagIndex       string      //neatly tag index
-	TagId          string      //neatly tag id
+	TagID          string      //neatly tag id
 	TagDescription string      //tag description
 	Name           string      //Id of the service action
 	Description    string      //description
-	Init            Variables   //variables to initialise state before action runs
+	Init           Variables   //variables to initialise state before action runs
 	Post           Variables   //variable to update state after action completes
 	Request        interface{} //service request
 	SleepInMs      int         //optional Sleep time

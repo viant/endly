@@ -13,13 +13,13 @@ const ProcessServiceID = "process"
 //ProcessServiceStartAction represents a process start action
 const ProcessServiceStartAction = "start"
 
-//ProcessServiceStartAction represents a process status check
+//ProcessServiceStatusAction represents a process status check
 const ProcessServiceStatusAction = "status"
 
-//ProcessServiceStartAction represents stop action
+//ProcessServiceStopAction represents stop action
 const ProcessServiceStopAction = "stop"
 
-//ProcessServiceStartAction represents stop-all action
+//ProcessServiceStopAllAction represents stop-all action
 const ProcessServiceStopAllAction = "stop-all"
 
 type processService struct {
@@ -90,7 +90,7 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 	var response = &ProcessStatusResponse{
 		Processes: make([]*ProcessInfo, 0),
 	}
-	command := "ps -ef | grep " + request.Command
+	command := fmt.Sprintf("ps -ef | grep '%v'", request.Command)
 	commandResponse, err := context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{

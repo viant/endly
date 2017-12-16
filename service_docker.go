@@ -34,13 +34,13 @@ const
 	//DockerServiceContainerStartAction represents docker container-start action
 	DockerServiceContainerStartAction   = "container-start"
 
-	//DockerServiceRunAction represents docker container-stop action
+	//DockerServiceContainerStopAction represents docker container-stop action
 	DockerServiceContainerStopAction    = "container-stop"
 
-	//DockerServiceRunAction represents docker container-status action
+	//DockerServiceContainerStatusAction represents docker container-status action
 	DockerServiceContainerStatusAction  = "container-status"
 
-	//DockerServiceRunAction represents docker container-remove action
+	//DockerServiceContainerRemoveAction represents docker container-remove action
 	DockerServiceContainerRemoveAction  = "container-remove"
 
 	containerInUse    = "is already in use by container"
@@ -270,8 +270,8 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 	}
 
 	if strings.Contains(commandInfo.Stdout(), containerInUse) {
-		s.stopContainer(context, &DockerContainerStopRequest{Target: request.Target})
-		s.removeContainer(context, &DockerContainerRemoveRequest{Target: request.Target})
+		_, _ = s.stopContainer(context, &DockerContainerStopRequest{Target: request.Target})
+		_, _ = s.removeContainer(context, &DockerContainerRemoveRequest{Target: request.Target})
 		commandInfo, err = s.executeSecureDockerCommand(credentials, context, request.Target, dockerErrors, "docker run --name %v %v -d %v", request.Target.Name, args, request.Image)
 		if err != nil {
 			return nil, err

@@ -13,7 +13,7 @@ type DsUnitSQLScriptRequest struct {
 }
 
 
-
+//Validate checks if request is valid
 func (r *DsUnitSQLScriptRequest) Validate() error {
 	if r.Datastore == "" {
 		return errors.New("Datastore was empty")

@@ -59,7 +59,7 @@ func (s *execService) open(context *Context, request *OpenSessionRequest) (*Open
 	}, nil
 }
 
-func (s *execService) openSshService(context *Context, request *OpenSessionRequest) (ssh.Service, error) {
+func (s *execService) openSSHService(context *Context, request *OpenSessionRequest) (ssh.Service, error) {
 	if request.ReplayService != nil {
 		return request.ReplayService, nil
 	}
@@ -103,19 +103,22 @@ func (s *execService) openSession(context *Context, request *OpenSessionRequest)
 		session := sessions[sessionName]
 		err = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
 		for k, v := range request.Env {
-			s.setEnvVariable(context, session, k, v)
+			err := s.setEnvVariable(context, session, k, v)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		return sessions[sessionName], err
 	}
-	sshService, err := s.openSshService(context, request)
+	sshService, err := s.openSSHService(context, request)
 	if replayCommands != nil {
 		err = replayCommands.Enable(sshService)
 		if err != nil {
 			return nil, err
 		}
 		context.Deffer(func() {
-			replayCommands.Store()
+			_ = replayCommands.Store()
 		})
 	}
 	session, err := NewSystemTerminalSession(sessionName, sshService)
@@ -124,7 +127,7 @@ func (s *execService) openSession(context *Context, request *OpenSessionRequest)
 	}
 	if !request.Transient {
 		context.Deffer(func() {
-			sshService.Close()
+			_ = sshService.Close()
 		})
 	}
 
@@ -241,7 +244,10 @@ func (s *execService) applyCommandOptions(context *Context, options *ExecutionOp
 	if len(options.SystemPaths) > 0 {
 		operatingSystem.Path.Push(options.SystemPaths...)
 	}
-	s.setEnvVariables(context, session, options.Env)
+	err := s.setEnvVariables(context, session, options.Env)
+	if err != nil {
+		return err
+	}
 	if options.Directory != "" {
 		directory := context.Expand(options.Directory)
 		err := s.changeDirectory(context, session, info, directory)

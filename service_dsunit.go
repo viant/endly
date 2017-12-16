@@ -137,8 +137,10 @@ func (s *dataStoreUnitService) registerDsManager(context *Context, datastoreName
 	}
 	config.Parameters["username"] = credentialConfig.Username
 	config.Parameters["password"] = credentialConfig.Password
-	config.Init()
-
+	err := config.Init()
+	if err != nil {
+		return err
+	}
 	dsManager, err := dsc.NewManagerFactory().Create(config)
 	if err != nil {
 		return err

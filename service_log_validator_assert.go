@@ -10,7 +10,7 @@ type LogValidatorAssertRequest struct {
 
 //ExpectedLogRecord represents an expected log record.
 type ExpectedLogRecord struct {
-	TagId   string
+	TagID   string
 	Type    string
 	Records []map[string]interface{}
 }

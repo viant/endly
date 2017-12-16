@@ -14,6 +14,7 @@ type DeploymentDeployRequest struct {
 	Force   bool   //flag force deployment, by default if requested version (Transfer.Target.Version is the one from command version check. deployment is skipped.
 }
 
+//Validate check if request is valid otherwise returns error.
 func (r *DeploymentDeployRequest) Validate() error {
 	if r.AppName == "" {
 		return errors.New("App name was empty")

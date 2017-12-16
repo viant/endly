@@ -6,7 +6,7 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-var sdkNotFound = errors.New("SDK NOT FUND")
+var errSdkNotFound = errors.New("SDK NOT FUND")
 
 
 const (
@@ -66,7 +66,7 @@ func (s *systemSdkService) Run(context *Context, request interface{}) *ServiceRe
 	switch actualRequest := request.(type) {
 	case *SystemSdkSetRequest:
 		response.Response, err = s.setSdk(context, actualRequest)
-		if err == sdkNotFound {
+		if err == errSdkNotFound {
 			err = s.deploySdk(context, actualRequest)
 			if err == nil {
 				response.Response, err = s.setSdk(context, actualRequest)

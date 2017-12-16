@@ -10,7 +10,7 @@ type SeleniumWait struct {
 }
 
 
-
+//Data returns wait data with default fallback.
 func (r *SeleniumWait) Data() (int, int, string) {
 	var repeat = 1
 	var sleepInMs = 0

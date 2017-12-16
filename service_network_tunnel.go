@@ -8,7 +8,7 @@ type NetworkTunnel struct {
 	Remote string
 }
 
-//NetworkRequest represents a net forwarding request
+//NetworkTunnelRequest represents SSH tunnel request
 type NetworkTunnelRequest struct {
 	Target  *url.Resource
 	Tunnels []*NetworkTunnel
