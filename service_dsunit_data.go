@@ -48,7 +48,7 @@ func (d *DsUnitTableData) GetValues(state data.Map) []map[string]interface{} {
 			return []map[string]interface{}{}
 		}
 		return []map[string]interface{}{
-			d.GetValue(state, d.Value),
+			value,
 		}
 	}
 	var result = make([]map[string]interface{}, 0)
@@ -95,7 +95,6 @@ func (d *DsUnitTableData) GetValue(state data.Map, source interface{}) map[strin
 	}
 
 	dataStoreState := state.GetMap(DataStoreUnitServiceID)
-
 	var key = d.Key
 	if key == "" {
 		key = d.Table
@@ -103,6 +102,7 @@ func (d *DsUnitTableData) GetValue(state data.Map, source interface{}) map[strin
 	if !dataStoreState.Has(key) {
 		dataStoreState.Put(key, data.NewCollection())
 	}
+
 	records := dataStoreState.GetCollection(key)
 	records.Push(value)
 	return value
@@ -139,6 +139,7 @@ func AsTableRecords(source interface{}, state data.Map) (interface{}, error) {
 			tableData.PostIncrementIfNeeded(state)
 		}
 	}
+
 	dataStoreState := state.GetMap(DataStoreUnitServiceID)
 	var variable = &Variable{
 		Name:    DataStoreUnitServiceID,
