@@ -3,14 +3,14 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/bridge"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
-	"github.com/viant/toolbox/bridge"
-	"time"
 	"sync"
 	"sync/atomic"
-	"log"
+	"time"
 )
 
 const (
@@ -52,7 +52,7 @@ func (t *HTTPServerTrips) loadTripsIfNeeded() error {
 		}
 		for _, trip := range httpTrips {
 			key, _ := buildKeyValue(t.IndexKeys, trip.Request)
-			if _, has := t.Trips[key]; ! has {
+			if _, has := t.Trips[key]; !has {
 				t.Trips[key] = &HTTPResponses{
 					Request:   trip.Request,
 					Responses: make([]*bridge.HttpResponse, 0),
@@ -113,7 +113,7 @@ func StartHTTPServer(port int, trips *HTTPServerTrips) error {
 		}
 
 		responses, ok := trips.Trips[key]
-		if ! ok {
+		if !ok {
 			var errorMessage = fmt.Sprintf("key: %v not found: %v, available: [%v]", key, strings.Join(toolbox.MapKeysToStringSlice(trips.Trips), ","))
 			fmt.Println(errorMessage)
 			http.Error(writer, errorMessage, http.StatusNotFound)
@@ -242,7 +242,7 @@ func buildKeyValue(keys []string, request interface{}) (string, error) {
 	for _, key := range keys {
 
 		provider, has := HTTPRequestKeyProviders[key]
-		if ! has {
+		if !has {
 			return "", fmt.Errorf("unsupported key: %v, available, [%v]", key, strings.Join(toolbox.MapKeysToStringSlice(HTTPRequestKeyProviders), ","))
 		}
 		value, err := provider(request)

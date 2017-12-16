@@ -1,21 +1,18 @@
 package endly_test
 
-
-
 import (
-	"github.com/stretchr/testify/assert"
-	"testing"
-	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
 	"bytes"
 	"fmt"
-	"github.com/viant/toolbox/storage"
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/storage"
+	"github.com/viant/toolbox/url"
 	"strings"
+	"testing"
 
 	"path"
 )
-
 
 const code = `
 	package main
@@ -25,8 +22,6 @@ const code = `
 		fmt.Println("Hello WebDriver!\n")
 	}
 `
-
-
 
 func TestSeleniumService_Start(t *testing.T) {
 
@@ -95,7 +90,7 @@ func TestSeleniumService_Start(t *testing.T) {
 			}
 			service, err := context.Service(endly.SeleniumServiceID)
 			if !assert.Nil(t, err) {
-				break;
+				break
 			}
 
 			defer context.Close()
@@ -181,7 +176,7 @@ func TestSeleniumService_Calls(t *testing.T) {
 		},
 	})
 	response, ok := serviceResponse.Response.(*endly.SeleniumWebElementCallResponse)
-	if assert.True(t, ok ) {
+	if assert.True(t, ok) {
 		assert.Equal(t, "failed to lookup element: css selector #dummay", response.LookupError)
 	}
 	serviceResponse = service.Run(context, &endly.SeleniumWebElementCallRequest{
@@ -207,7 +202,6 @@ func TestSeleniumService_Calls(t *testing.T) {
 	serviceResponse = service.Run(context, &endly.SeleniumWebElementCallRequest{
 		SessionID: targetHost,
 
-
 		Selector: &endly.WebElementSelector{
 			By:    "css selector",
 			Value: "#code",
@@ -231,7 +225,7 @@ func TestSeleniumService_Calls(t *testing.T) {
 		Call: &endly.SeleniumMethodCall{
 			Method:     "Click",
 			Parameters: []interface{}{},
-			Wait:       &endly.SeleniumWait{SleepInMs: 1,},
+			Wait:       &endly.SeleniumWait{SleepInMs: 1},
 		},
 		Selector: &endly.WebElementSelector{
 			By:    "css selector",
@@ -295,34 +289,34 @@ func TestSeleniumService_Run(t *testing.T) {
 	serviceResponse := service.Run(context, &endly.SeleniumRunRequest{
 		RemoteSelenium: target,
 		Browser:        "firefox",
-		Actions:[]*endly.SeleniumAction{
+		Actions: []*endly.SeleniumAction{
 			{
-				Calls:[]*endly.SeleniumMethodCall{
+				Calls: []*endly.SeleniumMethodCall{
 					endly.NewSeleniumMethodCall("Get", nil, "http://play.golang.org/?simple=1"),
 				},
 			},
 			{
-				Selector:endly.NewWebElementSelector("", "#code"),
-				Calls:[]*endly.SeleniumMethodCall{
+				Selector: endly.NewWebElementSelector("", "#code"),
+				Calls: []*endly.SeleniumMethodCall{
 					endly.NewSeleniumMethodCall("Clear", nil),
 				},
 			},
 			{
-				Selector:endly.NewWebElementSelector("", "#code"),
-				Calls:[]*endly.SeleniumMethodCall{
+				Selector: endly.NewWebElementSelector("", "#code"),
+				Calls: []*endly.SeleniumMethodCall{
 					endly.NewSeleniumMethodCall("SendKeys", nil, code),
 				},
 			},
 			{
-				Selector:endly.NewWebElementSelector("", "#run"),
-				Calls:[]*endly.SeleniumMethodCall{
+				Selector: endly.NewWebElementSelector("", "#run"),
+				Calls: []*endly.SeleniumMethodCall{
 					endly.NewSeleniumMethodCall("Click", nil),
 				},
 			},
 			{
-				Selector:endly.NewWebElementSelector("", "#output"),
-				Calls:[]*endly.SeleniumMethodCall{
-					endly.NewSeleniumMethodCall("Text",  &endly.SeleniumWait{
+				Selector: endly.NewWebElementSelector("", "#output"),
+				Calls: []*endly.SeleniumMethodCall{
+					endly.NewSeleniumMethodCall("Text", &endly.SeleniumWait{
 						Repeat:       20,
 						SleepInMs:    100,
 						ExitCriteria: "$value:/WebDriver/",
@@ -335,14 +329,11 @@ func TestSeleniumService_Run(t *testing.T) {
 
 		runResponse, ok := serviceResponse.Response.(*endly.SeleniumRunResponse)
 		if assert.True(t, ok) {
-			output, ok := runResponse.Data["#output"];
+			output, ok := runResponse.Data["#output"]
 			if assert.True(t, ok) {
 				ouputMap := toolbox.AsMap(output)
 				assert.EqualValues(t, "Hello WebDriver!\n\n\nProgram exited.", ouputMap["Text"])
 			}
-
-
-
 
 		}
 	}
@@ -352,6 +343,3 @@ func TestSeleniumService_Run(t *testing.T) {
 	})
 
 }
-
-
-

@@ -4,22 +4,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
-	"testing"
 	"path"
+	"testing"
 )
 
 func StartRestTestServer(port int) error {
 	baseDir := toolbox.CallerDirectory(3)
 	return endly.StartHTTPServer(port, &endly.HTTPServerTrips{
-		IndexKeys:[]string{endly.MethodKey, endly.URLKey, endly.BodyKey, endly.CookieKey, endly.ContentTypeKey},
-		BaseDirectory:path.Join(baseDir, "test/rest/send"),
+		IndexKeys:     []string{endly.MethodKey, endly.URLKey, endly.BodyKey, endly.CookieKey, endly.ContentTypeKey},
+		BaseDirectory: path.Join(baseDir, "test/rest/send"),
 	})
 }
 
-
 func TestResetRunnerService_Run(t *testing.T) {
 	err := StartRestTestServer(8114)
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		return
 	}
 	manager := endly.NewManager()
@@ -28,9 +27,9 @@ func TestResetRunnerService_Run(t *testing.T) {
 	assert.NotNil(t, service)
 	context := manager.NewContext(toolbox.NewContext())
 	serviceResponse := service.Run(context, &endly.RestSendRequest{
-				URL: "http://127.0.0.1:8114/reverse",
-				Method:"POST",
-				Request:"{\"text\":\"abc\"}",
+		URL:     "http://127.0.0.1:8114/reverse",
+		Method:  "POST",
+		Request: "{\"text\":\"abc\"}",
 	})
 
 	assert.Equal(t, "", serviceResponse.Error)
@@ -43,9 +42,4 @@ func TestResetRunnerService_Run(t *testing.T) {
 		}
 	}
 
-
-
-
-
 }
-

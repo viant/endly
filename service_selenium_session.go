@@ -1,18 +1,15 @@
 package endly
 
 import (
-	"github.com/viant/toolbox/url"
 	"errors"
+	"github.com/viant/toolbox/url"
 )
-
 
 //SeleniumOpenSessionRequest represents open session request
 type SeleniumOpenSessionRequest struct {
 	Browser        string
 	RemoteSelenium *url.Resource //remote selenium resource
 }
-
-
 
 //Validate validate open session request
 func (r *SeleniumOpenSessionRequest) Validate() error {
@@ -33,17 +30,12 @@ type SeleniumOpenSessionResponse struct {
 	SessionID string
 }
 
-
-
-
 //SeleniumCloseSessionRequest represents close session request.
 type SeleniumCloseSessionRequest struct {
 	SessionID string
 }
 
-
 //SeleniumCloseSessionResponse represents close session response.
 type SeleniumCloseSessionResponse struct {
 	SessionID string
 }
-

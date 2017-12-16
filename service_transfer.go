@@ -17,7 +17,6 @@ import (
 //TransferServiceID represents transfer service id
 const TransferServiceID = "transfer"
 
-
 //TransferServiceCopyAction represents a copy action
 const TransferServiceCopyAction = "copy"
 
@@ -104,7 +103,6 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 
 		//TODO add in memory compression for other protocols
 		compressed := transfer.Compress && IsShellCompressable(sourceResource.ParsedURL.Scheme) && IsShellCompressable(targetResource.ParsedURL.Scheme)
-
 
 		var copyEventType = &CopyEventType{
 			SourceURL: sourceResource.URL,
@@ -205,10 +203,10 @@ func (s *transferService) decompressTarget(context *Context, source, target *url
 	}
 	if err == nil {
 		_, err = context.Execute(target, &CommandRequest{
-			Commands:  []string{
+			Commands: []string{
 				fmt.Sprintf("cd %v", source.DirectoryPath()),
 				fmt.Sprintf("rm %v", name),
-				},
+			},
 		})
 	}
 

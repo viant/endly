@@ -22,7 +22,7 @@ const DaemonServiceStatusAction = "status"
 const DaemonServiceStopAction = "stop"
 
 const (
-	serviceTypeError      = iota
+	serviceTypeError = iota
 	serviceTypeInitDaemon
 	serviceTypeLaunchCtl
 	serviceTypeStdService
@@ -46,7 +46,7 @@ func (s *daemonService) Run(context *Context, request interface{}) *ServiceRespo
 		if err != nil {
 			response.Error = fmt.Sprintf("failed to start service: %v, %v", actualRequest.Service, err)
 
-		} else if info != nil &&  !info.IsActive() {
+		} else if info != nil && !info.IsActive() {
 			response.Error = fmt.Sprintf("failed to start service: %v, service is inactive", actualRequest.Service)
 
 		}

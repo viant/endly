@@ -1,12 +1,12 @@
 package endly_test
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox/url"
-	"testing"
-	"fmt"
 	"strings"
+	"testing"
 )
 
 func TestVc_Status(t *testing.T) {
@@ -81,7 +81,7 @@ func TestVc_Status(t *testing.T) {
 
 func TestVc_Checkout(t *testing.T) {
 	credentialFile, err := GetDummyCredential()
-	gitCredentialFile, err := GetCredential("git.json","adrianwit", "***")
+	gitCredentialFile, err := GetCredential("git.json", "adrianwit", "***")
 	assert.Nil(t, err)
 	var target = url.NewResource("ssh://127.0.0.1/Projects/project1/trunk", credentialFile) //
 	target.Type = "svn"
@@ -98,8 +98,7 @@ func TestVc_Checkout(t *testing.T) {
 				Target: url.NewResource("scp://127.0.0.1:22/tmp/project2/trunk", credentialFile),
 				Origin: url.NewResource("http://svn.viant.com/svn/projects/project1/trunk", credentialFile),
 			},
-			&endly.VcCheckoutResponse{
-			},
+			&endly.VcCheckoutResponse{},
 			"failed to checkout version: http://svn.viant.com/svn/projects/project1/trunk -> scp://127.0.0.1:22/tmp/project2/trunk, failed to authenticate username: awitas with",
 		},
 		{
@@ -110,7 +109,7 @@ func TestVc_Checkout(t *testing.T) {
 			},
 			&endly.VcCheckoutResponse{
 				Checkouts: map[string]*endly.VcInfo{
-					"http://svn.viant.com/svn/projects/project1/trunk": &endly.VcInfo{
+					"http://svn.viant.com/svn/projects/project1/trunk": {
 						Origin:                  "http://svn.viant.com/svn/projects/project1/trunk",
 						IsVersionControlManaged: true,
 						IsUptoDate:              true,
@@ -129,7 +128,7 @@ func TestVc_Checkout(t *testing.T) {
 			},
 			&endly.VcCheckoutResponse{
 				Checkouts: map[string]*endly.VcInfo{
-					"http://svn.viant.com/svn/projects/project1/trunk": &endly.VcInfo{
+					"http://svn.viant.com/svn/projects/project1/trunk": {
 						Origin:                  "http://svn.viant.com/svn/projects/project1/trunk",
 						IsVersionControlManaged: true,
 						IsUptoDate:              false,
@@ -149,14 +148,14 @@ func TestVc_Checkout(t *testing.T) {
 			},
 			&endly.VcCheckoutResponse{
 				Checkouts: map[string]*endly.VcInfo{
-					"http://svn.viant.com/svn/projects/project1/trunk": &endly.VcInfo{
+					"http://svn.viant.com/svn/projects/project1/trunk": {
 						Origin:                  "http://svn.viant.com/svn/projects/project1/trunk",
 						IsVersionControlManaged: true,
 						IsUptoDate:              true,
 						Branch:                  "trunk",
 						Modified:                []string{},
 					},
-					"http://svn.viant.com/svn/projects/project2/trunk": &endly.VcInfo{
+					"http://svn.viant.com/svn/projects/project2/trunk": {
 						Origin:                  "http://svn.viant.com/svn/projects/project2/trunk",
 						IsVersionControlManaged: true,
 						IsUptoDate:              true,
@@ -170,29 +169,27 @@ func TestVc_Checkout(t *testing.T) {
 		{
 			"test/vc/git/checkout/private/error/linux",
 			&endly.VcCheckoutRequest{
-				Target:  url.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
-				Origin:  url.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
+				Target: url.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
+				Origin: url.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
 			},
-			&endly.VcCheckoutResponse{
-			},
+			&endly.VcCheckoutResponse{},
 			"failed to checkout version: https://github.com/adrianwit/projectA -> scp://127.0.0.1:22/tmp/myproj, failed to authenticate username: adrianwit with",
 		},
 		{
 			"test/vc/git/checkout/private/new/linux",
 			&endly.VcCheckoutRequest{
-				Target:  url.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
-				Origin:  url.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
+				Target: url.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
+				Origin: url.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
 			},
 			&endly.VcCheckoutResponse{
 				Checkouts: map[string]*endly.VcInfo{
-					"https://github.com/adrianwit/projectA": &endly.VcInfo{
+					"https://github.com/adrianwit/projectA": {
 						Origin:                  "https://adrianwit@github.com:443/adrianwit/projectA",
 						IsVersionControlManaged: true,
 						IsUptoDate:              true,
 						Branch:                  "master",
 						Modified:                []string{},
 					},
-
 				},
 			},
 			"",
@@ -200,25 +197,22 @@ func TestVc_Checkout(t *testing.T) {
 		{
 			"test/vc/git/checkout/private/existing/linux",
 			&endly.VcCheckoutRequest{
-				Target:  url.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
-				Origin:  url.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
+				Target: url.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
+				Origin: url.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
 			},
 			&endly.VcCheckoutResponse{
 				Checkouts: map[string]*endly.VcInfo{
-					"https://github.com/adrianwit/projectA": &endly.VcInfo{
+					"https://github.com/adrianwit/projectA": {
 						Origin:                  "https://adrianwit@github.com:443/adrianwit/projectA",
 						IsVersionControlManaged: true,
 						IsUptoDate:              false,
 						Branch:                  "master",
 						Modified:                []string{"README.md"},
 					},
-
 				},
 			},
 			"",
 		},
-
-
 	}
 
 	for _, useCase := range useCases {
@@ -235,7 +229,7 @@ func TestVc_Checkout(t *testing.T) {
 
 				var baseCase = useCase.baseDir + " "
 				if useCase.Error != "" {
-					assert.True(t, strings.HasPrefix(serviceResponse.Error, useCase.Error), baseCase + " " + serviceResponse.Error)
+					assert.True(t, strings.HasPrefix(serviceResponse.Error, useCase.Error), baseCase+" "+serviceResponse.Error)
 				}
 				response, ok := serviceResponse.Response.(*endly.VcCheckoutResponse)
 				if !ok {
@@ -254,11 +248,11 @@ func TestVc_Checkout(t *testing.T) {
 				for key, actual := range response.Checkouts {
 
 					expected, ok := useCase.Expected.Checkouts[key]
-					if ! assert.True(t, ok, "missing origin: "+key) {
+					if !assert.True(t, ok, "missing origin: "+key) {
 						continue
 					}
 					assert.Equal(t, expected.IsVersionControlManaged, actual.IsVersionControlManaged, "IsVersionControlManaged "+baseCase)
-					 assert.Equal(t, expected.IsUptoDate, actual.IsUptoDate, "IsUptoDate "+baseCase)
+					assert.Equal(t, expected.IsUptoDate, actual.IsUptoDate, "IsUptoDate "+baseCase)
 					assert.Equal(t, expected.Origin, actual.Origin, "Origin "+baseCase)
 					assert.Equal(t, expected.Branch, actual.Branch, "Branch "+baseCase)
 					assert.Equal(t, expected.Modified, actual.Modified, "Modified "+baseCase)
@@ -268,9 +262,6 @@ func TestVc_Checkout(t *testing.T) {
 		}
 	}
 }
-
-
-
 
 ////
 //func TestService_Run2StatusRequest(t *testing.T) {
@@ -314,4 +305,3 @@ func TestVc_Checkout(t *testing.T) {
 //	//assert.True(t, info.HasPendingChanges())
 //
 //}
-

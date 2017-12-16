@@ -11,12 +11,8 @@ type systemGoService struct{}
 func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest) (*SystemSdkInfo, error) {
 	var result = &SystemSdkInfo{}
 
-
-
-
-
 	goPath, ok := request.Env["GOPATH"]
-	if !ok || goPath == ""  {
+	if !ok || goPath == "" {
 		goPath = os.Getenv("GOPATH")
 	}
 

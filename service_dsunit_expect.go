@@ -7,13 +7,13 @@ import (
 
 //DsUnitExpectRequest represent verification request.
 type DsUnitExpectRequest struct {
-	Datastore  string                              // name of registered datastore
-	URL        string                              //if URL is provided then all files listed from the path are setup data candidates
-	Credential string                              // optional URL credential
-	Prefix     string                              //apply prefix
-	Postfix    string                              //apply suffix
-	Data       map[string][]map[string]interface{} //setup data, where the first map key is table name with value being records
-	Expand     bool                                //substitute dollar($) expression with the state map
+	Datastore   string                              // name of registered datastore
+	URL         string                              //if URL is provided then all files listed from the path are setup data candidates
+	Credential  string                              // optional URL credential
+	Prefix      string                              //apply prefix
+	Postfix     string                              //apply suffix
+	Data        map[string][]map[string]interface{} //setup data, where the first map key is table name with value being records
+	Expand      bool                                //substitute dollar($) expression with the state map
 	CheckPolicy int
 }
 
@@ -27,8 +27,6 @@ func (r *DsUnitExpectRequest) Validate() error {
 	}
 	return nil
 }
-
-
 
 //AsDatasetResource converts request as *dsunit.DatasetResource
 func (r *DsUnitExpectRequest) AsDatasetResource() *dsunit.DatasetResource {

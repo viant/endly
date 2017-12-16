@@ -1,11 +1,11 @@
 package endly_test
 
 import (
-	"testing"
+	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/test/proto"
-	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
+	"testing"
 )
 
 func Test_AsProtobufMessage(t *testing.T) {
@@ -20,7 +20,6 @@ func Test_AsProtobufMessage(t *testing.T) {
 	if assert.Nil(t, err) {
 		assert.EqualValues(t, "base64:CGUSA3h5eg==", encoded)
 	}
-
 
 	var inputMap = map[string]interface{}{
 		"id":   1,

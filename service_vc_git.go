@@ -2,19 +2,19 @@ package endly
 
 import (
 	"fmt"
-	"strings"
-	"path"
 	"github.com/lunixbochs/vtclean"
 	"github.com/viant/toolbox/url"
+	"path"
+	"strings"
 )
 
 type gitService struct{}
 
 const (
-	newFile               = "new file:"
-	deletedFile           = "deleted:"
-	modifiedFile          = "modified:"
-	expectChangeType      = iota
+	newFile          = "new file:"
+	deletedFile      = "deleted:"
+	modifiedFile     = "modified:"
+	expectChangeType = iota
 	expectedUnTrackedFile
 )
 
@@ -138,7 +138,6 @@ func (s *gitService) pull(context *Context, request *VcPullRequest) (*VcInfo, er
 	return s.runSecureCommand(context, origin, target, "git pull")
 }
 
-
 func (s *gitService) checkout(context *Context, request *VcCheckoutRequest) (*VcInfo, error) {
 	origin, err := context.ExpandResource(request.Origin)
 	if err != nil {
@@ -150,7 +149,7 @@ func (s *gitService) checkout(context *Context, request *VcCheckoutRequest) (*Vc
 	}
 	var username, _, _ = origin.LoadCredential(false)
 	if origin.Credential != "" && username == "" {
-			return nil, fmt.Errorf("username was empty %v, %v", origin.URL, origin.Credential)
+		return nil, fmt.Errorf("username was empty %v, %v", origin.URL, origin.Credential)
 	}
 	var parent, projectDir = path.Split(target.DirectoryPath())
 	_, err = context.Execute(target, fmt.Sprintf("cd %v", parent))
@@ -159,7 +158,6 @@ func (s *gitService) checkout(context *Context, request *VcCheckoutRequest) (*Vc
 	}
 	return s.runSecureCommand(context, origin, target, fmt.Sprintf("git clone %v %v", origin.CredentialURL(username, ""), projectDir))
 }
-
 
 func (s *gitService) runSecureCommand(context *Context, origin, target *url.Resource, command string) (info *VcInfo, err error) {
 	var credentials = make(map[string]string)
@@ -183,9 +181,7 @@ func (s *gitService) runSecureCommand(context *Context, origin, target *url.Reso
 		},
 	})
 
-
-
-	err =  checkVersionControlAuthErrors(err, origin)
+	err = checkVersionControlAuthErrors(err, origin)
 	if err != nil {
 		return nil, err
 	}
