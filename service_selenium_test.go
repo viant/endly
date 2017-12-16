@@ -104,8 +104,10 @@ func TestSeleniumService_Start(t *testing.T) {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
 				}
-				var actual = response.Pid
-				assert.Equal(t, actual, useCase.Pid, "PID "+baseCase)
+				if response != nil {
+					var actual= response.Pid
+					assert.Equal(t, actual, useCase.Pid, "PID "+baseCase)
+				}
 			}
 		}
 	}
