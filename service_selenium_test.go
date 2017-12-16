@@ -331,8 +331,8 @@ func TestSeleniumService_Run(t *testing.T) {
 		if assert.True(t, ok) {
 			output, ok := runResponse.Data["#output"]
 			if assert.True(t, ok) {
-				ouputMap := toolbox.AsMap(output)
-				assert.EqualValues(t, "Hello WebDriver!\n\n\nProgram exited.", ouputMap["Text"])
+				outputMap := toolbox.AsMap(output)
+				assert.EqualValues(t, "Hello WebDriver!\n\n\nProgram exited.", outputMap["Text"])
 			}
 
 		}
