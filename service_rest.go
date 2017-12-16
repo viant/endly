@@ -8,7 +8,6 @@ import (
 //RestServiceID represents rest service id.
 const RestServiceID = "rest/runner"
 
-
 //RestServiceSendAction represents send action
 const RestServiceSendAction = "send"
 

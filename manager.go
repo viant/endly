@@ -105,10 +105,9 @@ func NewManager() Manager {
 	return result
 }
 
-
 //Services returns manager services or error
 func Services(mgr interface{}) map[string]Service {
-	var manager, ok = mgr.(*manager);
+	var manager, ok = mgr.(*manager)
 	if !ok {
 		return nil
 	}

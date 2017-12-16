@@ -113,8 +113,6 @@ func (e *Event) get(expectedType reflect.Type) interface{} {
 	return nil
 }
 
-
-
 //AddEvent add an event to the current context
 func AddEvent(context *Context, eventType interface{}, value map[string]interface{}, level ...int) *Event {
 	if len(level) == 0 {

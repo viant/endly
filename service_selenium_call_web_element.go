@@ -2,8 +2,8 @@ package endly
 
 import (
 	"fmt"
-	"strings"
 	"github.com/tebeka/selenium"
+	"strings"
 )
 
 //WebElementSelector represents a web element selector
@@ -12,10 +12,6 @@ type WebElementSelector struct {
 	Value string //selector value
 	Key   string //optional result key, otherwise value is used
 }
-
-
-
-
 
 //SeleniumWebElementCallRequest represents a web element call reqesut
 type SeleniumWebElementCallRequest struct {
@@ -26,12 +22,9 @@ type SeleniumWebElementCallRequest struct {
 
 //SeleniumWebElementCallResponse represents seleniun web element response
 type SeleniumWebElementCallResponse struct {
-	Result []interface{}
+	Result      []interface{}
 	LookupError string
 }
-
-
-
 
 //Validate checks is selector is valid.
 func (s *WebElementSelector) Validate() error {
@@ -53,9 +46,9 @@ func (s *WebElementSelector) Validate() error {
 }
 
 //NewWebElementSelector creates a new instance of web element selector
-func NewWebElementSelector(by, value string) *WebElementSelector{
+func NewWebElementSelector(by, value string) *WebElementSelector {
 	return &WebElementSelector{
-		By:by,
-		Value:value,
+		By:    by,
+		Value: value,
 	}
 }

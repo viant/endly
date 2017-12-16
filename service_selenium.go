@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/tebeka/selenium"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/url"
 	"strings"
 )
 
@@ -112,18 +112,18 @@ func (s *seleniumService) Run(context *Context, request interface{}) *ServiceRes
 
 }
 
-func (s *seleniumService) addResultIfPresent(callResult []interface{}, result data.Map, resultPath ... string) {
+func (s *seleniumService) addResultIfPresent(callResult []interface{}, result data.Map, resultPath ...string) {
 	var responseData string
 	var has = false
 	for _, element := range callResult {
-		if element == nil || ! toolbox.IsString(element) {
+		if element == nil || !toolbox.IsString(element) {
 			continue
 		}
 		has = true
 		responseData = toolbox.AsString(element)
-		break;
+		break
 	}
-	if ! has {
+	if !has {
 		return
 	}
 	var key = strings.Join(resultPath, ".")
@@ -190,7 +190,7 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 			if len(call.Parameters) == 1 && toolbox.IsString(call.Parameters[0]) {
 				elementPath[1] = strings.Replace(elementPath[1], "Get", "", 1)
 				elementPath[1] = strings.Replace(elementPath[1], "Property", "", 1)
-				elementPath = append(elementPath, )
+				elementPath = append(elementPath)
 			}
 			s.addResultIfPresent(callResponse.Result, result, elementPath...)
 		}
@@ -285,7 +285,7 @@ func (s *seleniumService) open(context *Context, request *SeleniumOpenSessionReq
 
 func (s *seleniumService) close(context *Context, request *SeleniumCloseSessionRequest) (*SeleniumCloseSessionResponse, error) {
 	var response = &SeleniumCloseSessionResponse{
-		SessionID:request.SessionID,
+		SessionID: request.SessionID,
 	}
 	seleniumSession, err := s.session(context, request.SessionID)
 	if err != nil {
@@ -294,8 +294,6 @@ func (s *seleniumService) close(context *Context, request *SeleniumCloseSessionR
 	err = seleniumSession.driver.Close()
 	return response, err
 }
-
-
 
 func (s *seleniumService) deployServerIfNeeded(context *Context, request *SeleniumServerStartRequest, target *url.Resource) (*SeleniumServerStartResponse, error) {
 	deploymentService, _ := context.Service(DeploymentServiceID)
@@ -349,9 +347,7 @@ func (s *seleniumService) stop(context *Context, request *SeleniumServerStopRequ
 	if serviceResponse.Error != "" {
 		return nil, errors.New(serviceResponse.Error)
 	}
-	return &SeleniumServerStopResponse{
-
-	}, nil
+	return &SeleniumServerStopResponse{}, nil
 }
 
 func (s *seleniumService) start(context *Context, request *SeleniumServerStartRequest) (*SeleniumServerStartResponse, error) {

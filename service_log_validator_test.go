@@ -67,7 +67,6 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 		},
 	})
 
-
 	for i := 0; i < 2; i++ {
 		var logName = fmt.Sprintf("test%v.log", i)
 		var fullLogname = path.Join(tempPath, logName)

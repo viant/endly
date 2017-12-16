@@ -11,7 +11,6 @@ type SeleniumServerStartRequest struct {
 	Version    string
 }
 
-
 //SeleniumServerStartResponse repreents a selenium server stop request
 type SeleniumServerStartResponse struct {
 	Pid                int

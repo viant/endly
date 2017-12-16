@@ -78,7 +78,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 			if err != nil {
 				return err
 			}
-			if body, ok = transformed.([]byte); ! ok {
+			if body, ok = transformed.([]byte); !ok {
 				body = []byte(toolbox.AsString(transformed))
 			}
 		}
@@ -136,12 +136,12 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 			extractedState[k] = v
 		}
 		criteria := extractedState.ExpandAsText(sendHTTPRequest.ExitCriteria)
-		canBreak, err := EvaluateCriteria(context, criteria, HTTPRunnerExitCriteriaEventType, false);
+		canBreak, err := EvaluateCriteria(context, criteria, HTTPRunnerExitCriteriaEventType, false)
 		if err != nil {
 			return fmt.Errorf("failed to check http exit criteia: %v", err)
 		}
 		if canBreak {
-			break;
+			break
 		}
 		if sendHTTPRequest.SleepTimeMs > 0 {
 			timeToSleep := time.Millisecond * time.Duration(sendHTTPRequest.SleepTimeMs)

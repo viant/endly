@@ -8,40 +8,39 @@ import (
 	"strings"
 )
 
-const
-(
+const (
 	//DockerServiceID represents docker service id
 	DockerServiceID = "docker"
 
 	//DockerServiceRunAction represents docker run action
-	DockerServiceRunAction              = "run"
+	DockerServiceRunAction = "run"
 
 	//DockerServiceSysPathAction represents docker syspath action
-	DockerServiceSysPathAction          = "syspath"
+	DockerServiceSysPathAction = "syspath"
 
 	//DockerServiceStopImagesAction represents docker stop-images" action
-	DockerServiceStopImagesAction       = "stop-images"
+	DockerServiceStopImagesAction = "stop-images"
 
 	//DockerServiceImagesAction represents docker images action
-	DockerServiceImagesAction           = "images"
+	DockerServiceImagesAction = "images"
 
 	//DockerServicePullAction represents docker pull action
-	DockerServicePullAction             = "pull"
+	DockerServicePullAction = "pull"
 
 	//DockerServiceContainerCommandAction represents docker container-command action
 	DockerServiceContainerCommandAction = "container-command"
 
 	//DockerServiceContainerStartAction represents docker container-start action
-	DockerServiceContainerStartAction   = "container-start"
+	DockerServiceContainerStartAction = "container-start"
 
 	//DockerServiceContainerStopAction represents docker container-stop action
-	DockerServiceContainerStopAction    = "container-stop"
+	DockerServiceContainerStopAction = "container-stop"
 
 	//DockerServiceContainerStatusAction represents docker container-status action
-	DockerServiceContainerStatusAction  = "container-status"
+	DockerServiceContainerStatusAction = "container-status"
 
 	//DockerServiceContainerRemoveAction represents docker container-remove action
-	DockerServiceContainerRemoveAction  = "container-remove"
+	DockerServiceContainerRemoveAction = "container-remove"
 
 	containerInUse    = "is already in use by container"
 	unableToFindImage = "unable to find image"
@@ -55,7 +54,6 @@ type dockerService struct {
 	*AbstractService
 	SysPath []string
 }
-
 
 func (s *dockerService) NewRequest(action string) (interface{}, error) {
 	switch action {

@@ -43,7 +43,7 @@ func (d *DsUnitTableData) PostIncrementIfNeeded(state data.Map) {
 //GetValues a table records.
 func (d *DsUnitTableData) GetValues(state data.Map) []map[string]interface{} {
 	if toolbox.IsMap(d.Value) {
-		var value =d.GetValue(state, d.Value)
+		var value = d.GetValue(state, d.Value)
 		if len(value) == 0 {
 			return []map[string]interface{}{}
 		}
@@ -120,7 +120,7 @@ func AsTableRecords(source interface{}, state data.Map) (interface{}, error) {
 
 	var prepareTableData, ok = source.([]*DsUnitTableData)
 
-	if ! ok {
+	if !ok {
 		prepareTableData = make([]*DsUnitTableData, 0)
 		err := converter.AssignConverted(&prepareTableData, source)
 		if err != nil {

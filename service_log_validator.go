@@ -42,7 +42,6 @@ type LogRecordAssert struct {
 	Actual   interface{}
 }
 
-
 //LogAssertEvent represents log assert event
 type LogAssertEvent struct {
 	Type string
