@@ -132,13 +132,18 @@ func (s *workflowService) addVariableEvent(name string, variables Variables, con
 	if len(variables) == 0 {
 		return
 	}
+	var sources = make(map[string]interface{})
 	var values = make(map[string]interface{})
 	for _, variable := range variables {
+		if variable.From != "" {
+			from := strings.Replace(variable.From , "<-", "", 1)
+			sources[from], _ = state.GetValue(from)
+		}
 		var name = variable.Name
 		name = strings.Replace(name, "->", "", 1)
 		values[name], _ = state.GetValue(name)
 	}
-	AddEvent(context, name, Pairs("variables", variables, "values", values), Debug)
+	AddEvent(context, name, Pairs("variables", variables, "values", values, "sources", sources), Debug)
 }
 
 func (s *workflowService) loadWorkflowIfNeeded(context *Context, name string, URL string) (err error) {
