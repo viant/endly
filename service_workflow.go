@@ -137,10 +137,12 @@ func (s *workflowService) addVariableEvent(name string, variables Variables, con
 	for _, variable := range variables {
 		if variable.From != "" {
 			from := strings.Replace(variable.From , "<-", "", 1)
+			from = strings.Replace(from , "++", "", 1)
 			sources[from], _ = state.GetValue(from)
 		}
 		var name = variable.Name
 		name = strings.Replace(name, "->", "", 1)
+		name = strings.Replace(name, "++", "", 1)
 		values[name], _ = state.GetValue(name)
 	}
 	AddEvent(context, name, Pairs("variables", variables, "values", values, "sources", sources), Debug)
