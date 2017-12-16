@@ -180,8 +180,10 @@ func TestSeleniumService_Calls(t *testing.T) {
 			Parameters: []interface{}{},
 		},
 	})
-	assert.Equal(t, "failed to call web element: failed to lookup element: css selector #dummay", serviceResponse.Error)
-
+	response, ok := serviceResponse.Response.(*endly.SeleniumWebElementCallResponse)
+	if assert.True(t, ok ) {
+		assert.Equal(t, "failed to lookup element: css selector #dummay", response.LookupError)
+	}
 	serviceResponse = service.Run(context, &endly.SeleniumWebElementCallRequest{
 		SessionID: targetHost,
 
