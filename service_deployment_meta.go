@@ -59,6 +59,9 @@ func (d *Deployment) Validate() error {
 	if d.Transfer.Target.URL == "" {
 		return errors.New("Transfer.Target.URL was empty")
 	}
+	if d.Transfer.Source  == nil {
+		return errors.New("Transfer.Source was empty")
+	}
 	if d.Transfer.Source.URL == "" {
 		return errors.New("Transfer.Source.URL was empty")
 	}

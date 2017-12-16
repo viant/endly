@@ -8,6 +8,7 @@ import (
 	"github.com/viant/toolbox"
 	"fmt"
 	"github.com/viant/toolbox/url"
+	"github.com/viant/toolbox/storage"
 )
 
 func TestNewDefaultState(t *testing.T) {
@@ -19,7 +20,7 @@ func TestNewDefaultState(t *testing.T) {
 		assert.True(t, len(expr) > 0)
 	}
 
-	var expanded = state.ExpandAsText("${tmpdir.subdir}")
+	var expanded = state.ExpandAsText("${tmpDir.subdir}")
 	assert.Contains(t, expanded, "/subdir")
 
 }
@@ -56,5 +57,34 @@ func TestContext_TerminalSession(t *testing.T) {
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
 	_, err := context.TerminalSession(url.NewResource("mem:///"))
+	assert.NotNil(t, err)
+}
+
+
+func TestContext_Execute_WithError(t *testing.T) {
+	manager := endly.NewManager()
+	context := manager.NewContext(toolbox.NewContext())
+	_, err := context.Execute(url.NewResource("mem:///"), []string{"cd /etc","ls -al"})
+	assert.NotNil(t, err)
+}
+
+func TestContext_Copy(t *testing.T) {
+	manager := endly.NewManager()
+	context := manager.NewContext(toolbox.NewContext())
+	memService := storage.NewMemoryService()
+	memService.Upload("mem:///a.txt", strings.NewReader("abc"))
+	_, err := context.Copy(true, url.NewResource("mem:///a.txt"), url.NewResource("mem:///b.txt"))
+	assert.Nil(t, err)
+}
+
+func TestContext_Transfer(t *testing.T) {
+	manager := endly.NewManager()
+	context := manager.NewContext(toolbox.NewContext())
+	memService := storage.NewMemoryService()
+	memService.Upload("mem:///a.txt", strings.NewReader("abc"))
+	_, err := context.Transfer(&endly.Transfer{
+		Source:url.NewResource("mem:///aaa.txt"),
+		Target:url.NewResource("mem:///bbb.txt"),
+	})
 	assert.NotNil(t, err)
 }

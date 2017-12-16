@@ -1,65 +1,67 @@
 package endly_test
 
-//import (
-//	"github.com/stretchr/testify/assert"
-//	"github.com/viant/endly"
-//	"github.com/viant/toolbox"
-//	"github.com/viant/toolbox/url"
-//	"testing"
-//)
-//
-//func TestNewDeploymentService(t *testing.T) {
-//	manager := endly.NewManager()
-//	srv, err := manager.Service(endly.DeploymentServiceID)
-//	assert.Nil(t, err)
-//	assert.NotNil(t, srv)
-//
-//	context := manager.NewContext(toolbox.NewContext())
-//	defer context.Close()
-//
-//	response := srv.Run(context, &endly.DeploymentDeployRequest{
-//		Transfer: &endly.Transfer{
-//			Source: &url.Resource{
-//				URL: "http://mirrors.gigenet.com/apache/maven/maven-3/3.5.2/binaries/apache-maven-3.5.2-bin.tar.gz",
-//			},
-//			Target: &url.Resource{
-//				Name:    "apache-maven",
-//				Version: "3.5.0",
-//				URL:     "scp://127.0.0.1:22/usr/local/",
-//			},
-//		},
-//		VersionCheck: &endly.ExtractableCommand{
-//			Options: &endly.ExecutionOptions{
-//				SystemPaths: []string{"/usr/local/maven/bin"},
-//			},
-//			Executions: []*endly.Execution{
-//				{
-//					Command: "mvn -version",
-//					Extraction: []*endly.DataExtraction{{
-//						Key:     "Version",
-//						RegExpr: "Apache Maven (\\d+\\.\\d+\\.\\d+)",
-//					},
-//					},
-//				},
-//			},
-//		},
-//		Command: &endly.ExtractableCommand{
-//			Options: &endly.ExecutionOptions{
-//				Directory: "/urs/local",
-//			},
-//			Executions: []*endly.Execution{
-//				{
-//					Command: "tar xvzf apache-maven-3.5.0-bin.tar.gz",
-//					Error:   []string{"Error"},
-//				},
-//				{
-//					Command: "mv apache-maven-3.5.0 maven",
-//					Error:   []string{"No"},
-//				},
-//			},
-//		},
-//	})
-//
-//	assert.Equal(t, "", response.Error)
-//
-//}
+import (
+	"testing"
+	"github.com/viant/endly"
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox/url"
+)
+
+func Test_MatchVersion(t *testing.T) {
+	assert.True(t, endly.MatchVersion("10.2", "10.2.1"))
+	assert.True(t, endly.MatchVersion("10.2.1", "10.2"))
+
+	assert.False(t, endly.MatchVersion("10.1", "10.2.1"))
+
+	assert.True(t, endly.MatchVersion("10.2.1", "10.2.1"))
+
+}
+
+
+func Test_DeplymentValiate(t *testing.T) {
+
+	{
+		deployment := &endly.Deployment{}
+
+		err := deployment.Validate()
+		assert.NotNil(t, err)
+	}
+
+	{
+		deployment := &endly.Deployment{
+			Transfer:&endly.Transfer{},
+		}
+		err := deployment.Validate()
+		assert.NotNil(t, err)
+	}
+
+	{
+		deployment := &endly.Deployment{
+			Transfer:&endly.Transfer{
+				Target:&url.Resource{},
+			},
+		}
+		err := deployment.Validate()
+		assert.NotNil(t, err)
+	}
+	{
+		deployment := &endly.Deployment{
+			Transfer:&endly.Transfer{
+				Target:&url.Resource{URL:"mem:///123"},
+			},
+		}
+		err := deployment.Validate()
+		assert.NotNil(t, err)
+	}
+	{
+		deployment := &endly.Deployment{
+			Transfer:&endly.Transfer{
+				Target:&url.Resource{URL:"mem:///123"},
+				Source:&url.Resource{},
+			},
+		}
+		err := deployment.Validate()
+		assert.NotNil(t, err)
+	}
+
+}
