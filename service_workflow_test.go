@@ -64,7 +64,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 				"param1": 1,
 			},
 			EnableLogging:    true,
-			LoggingDirectory: "/tmp/dsunit/",
+			LoggingDirectory: "/tmp/endly/test/workflow/dsunit",
 		})
 		assert.Equal(t, "", serviceResponse.Error)
 
@@ -73,7 +73,6 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 		var dsunit = toolbox.AsMap(response.Data["dsunit"])
 		var records = toolbox.AsSlice(dsunit["USER_ACCOUNT"])
 		assert.EqualValues(t, 0, len(records)) //validate task shift elements from USER_ACCCOUNT array.
-
 	}
 }
 
@@ -136,7 +135,7 @@ func TestWorkflowService_RunLifeCycle(t *testing.T) {
 			},
 			PublishParameters: true,
 			EnableLogging:    true,
-			LoggingDirectory: "/tmp/lifecycle/",
+			LoggingDirectory: "logs",
 		})
 
 		if assert.EqualValues(t, "", serviceResponse.Error) {
