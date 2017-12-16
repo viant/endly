@@ -17,8 +17,9 @@ type SeleniumRunRequest struct {
 type SeleniumRunResponse struct {
 	SessionID	string
 	Data      map[string]interface{}
-
+	LookupErrors []string
 }
+
 
 //SeleniumMethodCall represents selenium call.
 type SeleniumMethodCall struct {
@@ -33,11 +34,6 @@ type SeleniumAction struct {
 	Calls    []*SeleniumMethodCall
 }
 
-//ElementResponse represents web element response
-type ElementResponse struct {
-	Selector *WebElementSelector
-	Data     map[string]string
-}
 
 
 //Validate validates run request.
