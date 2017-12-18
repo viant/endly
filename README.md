@@ -109,15 +109,27 @@ Check that **'endly'** binary is created in $GOPATH/bin directory as result of
 ```
 
 
-### End to end testing example application with endly
+### End to end application testing example with endly workflow.
+
+Make sure the Getting Started prerequisites are met.
 
 #### Reporter webservice application
 
-Make sure the Getting Started prerequisites are met, then run the following command:
 
+Run the following to prepare system, build, deploy and test the query builder app with REST runner and dsunit.
 
 ```text
 cd $GOPATH/src/github.com/viant/endly/example/ws/reporter/endly/
+
+endly
+```
+
+#### SSO UI application
+
+Run the following to prepare system, build, deploy and test sso app with selenium runner and dsunit.
+
+```text
+cd $GOPATH/src/github.com/viant/endly/example/ui/sso/endly/
 
 endly
 ```
