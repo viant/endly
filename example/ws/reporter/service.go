@@ -65,7 +65,7 @@ func (s *service) manager(datastore string) (dsc.Manager, error) {
 	manager, has := s.datastores[datastore]
 	if !has {
 		var available = strings.Join(toolbox.MapKeysToStringSlice(s.datastores), ",")
-		return nil, fmt.Errorf("failed to datastore : %v, available", datastore, available)
+		return nil, fmt.Errorf("failed to datastore : %v, available: %v", datastore, available)
 	}
 	return manager, nil
 }
