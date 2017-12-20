@@ -441,6 +441,9 @@ func (s *logValidatorService) readLogFiles(context *Context, service storage.Ser
 
 	var response LogTypesMeta = make(map[string]*LogTypeMeta)
 	candidates, err := service.List(source.URL)
+	if err != nil {
+		return nil, err
+	}
 	for _, candidate := range candidates {
 		if candidate.IsFolder() {
 			continue
