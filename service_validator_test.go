@@ -15,16 +15,16 @@ func assertWithService(expected, actual interface{}) (int, error) {
 		return 0, err
 	}
 	context := manager.NewContext(toolbox.NewContext())
-	respone := service.Run(context, &endly.ValidatorAssertRequest{
+	response := service.Run(context, &endly.ValidatorAssertRequest{
 		Expected: expected,
 		Actual:   actual,
 	})
 
-	if respone.Error != "" {
-		return 0, errors.New(respone.Error)
+	if response.Error != "" {
+		return 0, errors.New(response.Error)
 	}
 
-	validationResponse, ok := respone.Response.(*endly.ValidationInfo)
+	validationResponse, ok := response.Response.(*endly.ValidationInfo)
 	if !ok {
 		return 0, nil
 	}
