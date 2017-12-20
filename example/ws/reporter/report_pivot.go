@@ -41,13 +41,10 @@ type AggValue struct {
 	Cnt  int
 }
 
-
-
 //GetName returns a pivot name
 func (r *PivotReport) GetName() string {
 	return r.Name
 }
-
 
 //GetType returns a report  type.
 func (r *PivotReport) GetType() string {

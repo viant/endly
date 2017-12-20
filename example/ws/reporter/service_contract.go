@@ -1,6 +1,5 @@
 package reporter
 
-
 //Response represents generic response
 type Response struct {
 	Status string
@@ -24,7 +23,6 @@ type RunReportRequest struct {
 	Datastore  string
 	Parameters map[string]interface{}
 }
-
 
 //RunReportRequest represents run response
 type RunReportResponse struct {
