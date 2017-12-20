@@ -44,8 +44,8 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 			Params: map[string]interface{}{
 				"param1": 1,
 			},
-			EnableLogging:false,
-			LoggingDirectory:"logs",
+			EnableLogging:    false,
+			LoggingDirectory: "logs",
 		})
 		assert.Equal(t, "", serviceResponse.Error)
 		response, ok := serviceResponse.Response.(*endly.WorkflowRunResponse)

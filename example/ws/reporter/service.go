@@ -1,10 +1,10 @@
 package reporter
 
 import (
-	"github.com/viant/dsc"
 	"fmt"
-	"strings"
+	"github.com/viant/dsc"
 	"github.com/viant/toolbox"
+	"strings"
 )
 
 type Service interface {
@@ -22,7 +22,7 @@ type service struct {
 	providers  ReportProviders
 	reports    Reports
 	reportDao  *reportDao
-	config *Config
+	config     *Config
 }
 
 func setError(response *Response, errorMessage string) {
@@ -38,7 +38,7 @@ func (s *service) Register(request *RegisterReportRequest) *RegisterReportRespon
 		},
 	}
 	var provider, ok = s.providers[request.ReportType]
-	if ! ok {
+	if !ok {
 		setError(response.Response, fmt.Sprint("failed to lookup report type: %v", request.ReportType))
 		return response
 	}
@@ -63,7 +63,7 @@ func (s *service) Register(request *RegisterReportRequest) *RegisterReportRespon
 
 func (s *service) manager(datastore string) (dsc.Manager, error) {
 	manager, has := s.datastores[datastore]
-	if ! has {
+	if !has {
 		var available = strings.Join(toolbox.MapKeysToStringSlice(s.datastores), ",")
 		return nil, fmt.Errorf("failed to datastore : %v, available", datastore, available)
 	}
@@ -77,7 +77,7 @@ func (s *service) Run(request *RunReportRequest) *RunReportResponse {
 		},
 	}
 	report, has := s.reports[request.Name]
-	if ! has {
+	if !has {
 		setError(response.Response, fmt.Sprint("failed to lookup report: %v", request.Name))
 		return response
 	}
@@ -120,7 +120,7 @@ func NewService(config *Config) (Service, error) {
 		providers:  make(map[string]ReportProvider),
 		reports:    make(map[string]Report),
 		reportDao:  &reportDao{},
-		config:config,
+		config:     config,
 	}
 
 	for _, datastore := range config.Datastores {
@@ -131,7 +131,7 @@ func NewService(config *Config) (Service, error) {
 		result.datastores[datastore.Name] = manager
 	}
 	result.providers["pivot"] = PivotReportProvider
-	return result, nil;
+	return result, nil
 }
 
 var defaultReportProviders = make(map[string]ReportProvider)

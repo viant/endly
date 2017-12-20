@@ -2,14 +2,13 @@ package main
 
 import (
 	"flag"
-	"log"
-	"github.com/viant/toolbox/url"
-	"github.com/viant/endly/example/ui/sso"
 	_ "github.com/viant/asc"
+	"github.com/viant/endly/example/ui/sso"
+	"github.com/viant/toolbox/url"
+	"log"
 )
 
 var configURI = flag.String("config", "config/config.json", "path to json config file")
-
 
 func main() {
 	flag.Parse()
