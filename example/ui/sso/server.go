@@ -2,9 +2,9 @@ package sso
 
 import (
 	"fmt"
-	"net/http"
-	"log"
 	"github.com/viant/toolbox"
+	"log"
+	"net/http"
 )
 
 type Server struct {
@@ -12,8 +12,6 @@ type Server struct {
 	config        *Config
 	serviceRouter *toolbox.ServiceRouter
 }
-
-
 
 func handlerWrapper(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -23,7 +21,6 @@ func handlerWrapper(handler http.Handler) http.Handler {
 		handler.ServeHTTP(writer, request)
 	})
 }
-
 
 func (s *Server) Start() {
 	http.HandleFunc("/api/", func(writer http.ResponseWriter, reader *http.Request) {
@@ -38,7 +35,7 @@ func (s *Server) Start() {
 		http.Handle(route.URI, handlerWrapper(fileServer))
 	}
 	fmt.Printf("Started test server on port %v\n", s.config.Port)
-	log.Fatal(http.ListenAndServe(":" + s.config.Port, nil))
+	log.Fatal(http.ListenAndServe(":"+s.config.Port, nil))
 }
 
 func NewServer(config *Config, service Service) (*Server, error) {
@@ -56,9 +53,9 @@ func NewServer(config *Config, service Service) (*Server, error) {
 			Parameters: []string{"request"},
 		})
 	var result = &Server{
-		serviceRouter:serviceRouter,
-		service:service,
-		config:config,
+		serviceRouter: serviceRouter,
+		service:       service,
+		config:        config,
 	}
-	return result, nil;
+	return result, nil
 }

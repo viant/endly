@@ -1,10 +1,9 @@
 package reporter
 
 import (
-	"github.com/viant/dsc"
 	"fmt"
+	"github.com/viant/dsc"
 )
-
 
 //DatastoreRegistry represents a datastore datastores
 type DatastoreRegistry map[string]dsc.Manager
@@ -14,6 +13,6 @@ func (r *DatastoreRegistry) Register(config *DatastoreConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to create datastore manager for %v, %v", config.Name, err)
 	}
-	(*r)[config.Name]= manager
+	(*r)[config.Name] = manager
 	return nil
 }
