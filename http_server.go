@@ -48,7 +48,7 @@ func (t *HTTPServerTrips) loadTripsIfNeeded() error {
 			return err
 		}
 		if len(httpTrips) == 0 {
-			fmt.Errorf("Http capautre directory was empty %v", t.BaseDirectory)
+			return fmt.Errorf("http capautre directory was empty %v", t.BaseDirectory)
 		}
 		for _, trip := range httpTrips {
 			key, _ := buildKeyValue(t.IndexKeys, trip.Request)
@@ -114,7 +114,7 @@ func StartHTTPServer(port int, trips *HTTPServerTrips) error {
 
 		responses, ok := trips.Trips[key]
 		if !ok {
-			var errorMessage = fmt.Sprintf("key: %v not found: %v, available: [%v]", key, strings.Join(toolbox.MapKeysToStringSlice(trips.Trips), ","))
+			var errorMessage = fmt.Sprintf("key: %v not found, available: [%v]", key, strings.Join(toolbox.MapKeysToStringSlice(trips.Trips), ","))
 			fmt.Println(errorMessage)
 			http.Error(writer, errorMessage, http.StatusNotFound)
 			return

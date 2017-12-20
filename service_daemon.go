@@ -345,7 +345,7 @@ func (s *daemonService) stopService(context *Context, request *DaemonStopRequest
 		return nil, err
 	}
 	if CheckCommandNotFound(commandResult.Stdout()) {
-		return nil, fmt.Errorf("%v", commandResult.Stdout)
+		return nil, fmt.Errorf("%v", commandResult.Stdout())
 	}
 	return s.checkService(context, &DaemonStatusRequest{
 		Target:    request.Target,
@@ -415,7 +415,7 @@ func (s *daemonService) startService(context *Context, request *DaemonStartReque
 		return nil, err
 	}
 	if CheckCommandNotFound(commandResult.Stdout()) {
-		return nil, fmt.Errorf("%v", commandResult.Stdout)
+		return nil, fmt.Errorf("%v", commandResult.Stdout())
 	}
 	return s.checkService(context, &DaemonStatusRequest{
 		Target:    request.Target,
