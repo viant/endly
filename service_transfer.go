@@ -38,8 +38,9 @@ type transferService struct {
 }
 
 //NewExpandedContentHandler return a new reader that can substitute content with state map, replacement data provided in replacement map.
-func NewExpandedContentHandler(context *Context, replaceMap map[string]string, expand bool) func(reader io.Reader) (io.Reader, error) {
-	return func(reader io.Reader) (io.Reader, error) {
+func NewExpandedContentHandler(context *Context, replaceMap map[string]string, expand bool) func(reader io.ReadCloser) (io.ReadCloser, error) {
+	return func(reader io.ReadCloser) (io.ReadCloser, error) {
+		reader.Close()
 		content, err := ioutil.ReadAll(reader)
 		if err != nil {
 			return nil, err
@@ -54,7 +55,7 @@ func NewExpandedContentHandler(context *Context, replaceMap map[string]string, e
 		for k, v := range replaceMap {
 			result = strings.Replace(result, k, v, len(result))
 		}
-		return strings.NewReader(toolbox.AsString(result)), nil
+		return ioutil.NopCloser(strings.NewReader(toolbox.AsString(result))), nil
 	}
 }
 
@@ -93,7 +94,7 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 			return nil, fmt.Errorf("failed to lookup targetResource storageService for %v: %v", targetResource.URL, err)
 		}
 		defer targetService.Close()
-		var handler func(reader io.Reader) (io.Reader, error)
+		var handler func(reader io.ReadCloser) (io.ReadCloser, error)
 		if transfer.Expand || len(transfer.Replace) > 0 {
 			handler = NewExpandedContentHandler(context, transfer.Replace, transfer.Expand)
 		}

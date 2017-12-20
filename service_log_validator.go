@@ -408,6 +408,7 @@ func (s *logValidatorService) readLogFile(context *Context, source *url.Resource
 	if err != nil {
 		return nil, err
 	}
+	defer reader.Close()
 	logContent, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return nil, err
