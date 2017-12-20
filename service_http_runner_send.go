@@ -96,7 +96,7 @@ func (c *Cookies) AddCookies(cookies ...*http.Cookie) {
 	}
 }
 
-//Expand substitute request data with maching context map state.
+//Expand substitute request data with matching context map state.
 func (r *HTTPRequest) Expand(context *Context) *HTTPRequest {
 	header := make(map[string][]string)
 	copyExpandedHeaders(r.Header, header, context)

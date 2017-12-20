@@ -71,6 +71,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 		assert.Equal(t, "", serviceResponse.Error)
 
 		response, ok = serviceResponse.Response.(*endly.WorkflowRunResponse)
+		assert.True(t, ok)
 		assert.NotNil(t, response)
 		var dsunit = toolbox.AsMap(response.Data["dsunit"])
 		var records = toolbox.AsSlice(dsunit["USER_ACCOUNT"])
