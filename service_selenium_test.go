@@ -105,7 +105,7 @@ func TestSeleniumService_Start(t *testing.T) {
 					continue
 				}
 				if response != nil {
-					var actual= response.Pid
+					var actual = response.Pid
 					assert.Equal(t, actual, useCase.Pid, "PID "+baseCase)
 				}
 			}

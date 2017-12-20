@@ -1,20 +1,19 @@
 package reporter
 
 import (
+	"bytes"
 	"github.com/viant/dsc"
 	"github.com/viant/toolbox"
-	"bytes"
 )
 
 type ReportRecord struct {
-	Id  int `autoincrement:"true"`
-	Name string `column:"name"`
-	Type string `column:"type"`
+	Id     int    `autoincrement:"true"`
+	Name   string `column:"name"`
+	Type   string `column:"type"`
 	Report string `column:"report"`
 }
 
 type reportDao struct {
-
 }
 
 func (d *reportDao) Persist(manager dsc.Manager, report Report) error {

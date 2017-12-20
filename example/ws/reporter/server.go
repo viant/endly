@@ -3,16 +3,16 @@ package reporter
 import (
 	"fmt"
 	"github.com/viant/toolbox"
-	"net/http"
 	"log"
+	"net/http"
 )
 
 type Server struct {
-	port string
+	port          string
 	serviceRouter *toolbox.ServiceRouter
 }
 
-func (s *Server) Start()  {
+func (s *Server) Start() {
 
 	http.HandleFunc("/v1/", func(writer http.ResponseWriter, reader *http.Request) {
 		err := s.serviceRouter.Route(writer, reader)
@@ -25,7 +25,6 @@ func (s *Server) Start()  {
 }
 
 func NewServer(port string, service Service) *Server {
-
 
 	serviceRouter := toolbox.NewServiceRouter(
 		toolbox.ServiceRouting{
@@ -43,7 +42,7 @@ func NewServer(port string, service Service) *Server {
 		},
 	)
 	return &Server{
-		port: port,
+		port:          port,
 		serviceRouter: serviceRouter,
 	}
 }

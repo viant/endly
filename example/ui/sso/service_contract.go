@@ -17,7 +17,6 @@ type SignUpResponse struct {
 	LandingPage string `json:"landingPage"`
 }
 
-
 type SignInRequest struct {
 	Email       string `json:"email"`
 	Password    string `json:"password"`
