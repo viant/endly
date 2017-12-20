@@ -82,7 +82,7 @@ func (s *service) SignUp(request *SignUpRequest) *SignUpResponse {
 	}
 	err = s.persistUser(user)
 	if err != nil {
-		setResponseError(response.BaseResponse, "system", fmt.Sprintf("unable persist user", user.Email, err))
+		setResponseError(response.BaseResponse, "system", fmt.Sprintf("unable persist user %v, %v", user.Email, err))
 		return response
 	}
 	response.User = user
