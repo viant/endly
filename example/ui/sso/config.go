@@ -3,16 +3,12 @@ package sso
 import "github.com/viant/dsc"
 
 type StaticRoute struct {
-	URI string
+	URI       string
 	Directory string
 }
 
 type Config struct {
-	Port string
+	Port         string
 	StaticRoutes []*StaticRoute
-	DsConfig *dsc.Config
+	DsConfig     *dsc.Config
 }
-
-
-
-

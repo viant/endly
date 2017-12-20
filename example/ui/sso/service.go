@@ -1,31 +1,26 @@
 package sso
 
 import (
-	"github.com/viant/dsc"
-	"sync"
-	"fmt"
-	"golang.org/x/crypto/bcrypt"
-	"github.com/viant/toolbox"
 	"errors"
+	"fmt"
+	"github.com/viant/dsc"
+	"github.com/viant/toolbox"
+	"golang.org/x/crypto/bcrypt"
+	"sync"
 )
 
-
-
-type Service interface{
-
+type Service interface {
 	SignUp(*SignUpRequest) *SignUpResponse
 
 	SignIn(*SignUpRequest) *SignInResponse
-
 }
 
 type service struct {
-	config *Config
-	manager dsc.Manager
-	mutex *sync.Mutex
+	config    *Config
+	manager   dsc.Manager
+	mutex     *sync.Mutex
 	dsManager dsc.Manager
 }
-
 
 func setResponseError(response *BaseResponse, errorSource, message string) {
 	response.Status = "error"
@@ -33,12 +28,11 @@ func setResponseError(response *BaseResponse, errorSource, message string) {
 	response.Error = message
 }
 
-
 func (s *service) getUser(email string) (*User, error) {
 	var user = &User{}
 	success, err := s.dsManager.ReadSingle(user, "SELECT email, name, hashedPassword, dateOfBirth FROM users WHERE email = ?", []interface{}{email}, nil)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	if success {
 		return user, nil
@@ -46,12 +40,10 @@ func (s *service) getUser(email string) (*User, error) {
 	return nil, nil
 }
 
-
 func (s *service) persistUser(user *User) error {
 	_, _, err := s.dsManager.PersistSingle(user, "users", nil)
 	return err
 }
-
 
 func (s *service) SignUp(request *SignUpRequest) *SignUpResponse {
 	response := &SignUpResponse{
@@ -60,8 +52,8 @@ func (s *service) SignUp(request *SignUpRequest) *SignUpResponse {
 		},
 	}
 
-	 errorSource, err :=request.Validate();
-	 if err != nil {
+	errorSource, err := request.Validate()
+	if err != nil {
 		setResponseError(response.BaseResponse, errorSource, fmt.Sprintf("%v", err))
 		return response
 	}
@@ -85,12 +77,12 @@ func (s *service) SignUp(request *SignUpRequest) *SignUpResponse {
 	user.HashedPassword = string(hashedPassword)
 	user.DateOfBirth, err = toolbox.ToTime(request.DataOfBirth, toolbox.DateFormatToLayout("yyyy-MM-dd"))
 	if err != nil {
-		setResponseError(response.BaseResponse, "dataOfBirth", fmt.Sprintf("%v: %v", request.DataOfBirth,  err))
+		setResponseError(response.BaseResponse, "dataOfBirth", fmt.Sprintf("%v: %v", request.DataOfBirth, err))
 		return response
 	}
-	err =  s.persistUser(user)
+	err = s.persistUser(user)
 	if err != nil {
-		setResponseError(response.BaseResponse, "system", fmt.Sprintf("unable persist user", user.Email,  err))
+		setResponseError(response.BaseResponse, "system", fmt.Sprintf("unable persist user", user.Email, err))
 		return response
 	}
 	response.User = user
@@ -100,17 +92,17 @@ func (s *service) SignUp(request *SignUpRequest) *SignUpResponse {
 
 func (s service) SignIn(request *SignUpRequest) *SignInResponse {
 	var response = &SignInResponse{
-		BaseResponse:&BaseResponse{
-			Status:"ok",
+		BaseResponse: &BaseResponse{
+			Status: "ok",
 		},
 	}
-	user, err := s.getUser(request.Email);
+	user, err := s.getUser(request.Email)
 	if err != nil {
 		setResponseError(response.BaseResponse, "system", fmt.Sprintf("unable to get user %v", err))
 		return response
 	}
 
-	if user == nil ||bcrypt.CompareHashAndPassword([]byte(user.HashedPassword),[]byte(request.Password)) != nil {
+	if user == nil || bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(request.Password)) != nil {
 		setResponseError(response.BaseResponse, "email", "unable to find a user for provided credentials")
 		return response
 	}
@@ -119,7 +111,6 @@ func (s service) SignIn(request *SignUpRequest) *SignInResponse {
 	response.LandingPage = request.LandingPage
 	return response
 }
-
 
 func NewService(config *Config) (Service, error) {
 	if config.DsConfig == nil {
@@ -133,9 +124,7 @@ func NewService(config *Config) (Service, error) {
 
 	return &service{
 		dsManager: manager,
-		config:config,
-		mutex: &sync.Mutex{},
+		config:    config,
+		mutex:     &sync.Mutex{},
 	}, nil
 }
-
-

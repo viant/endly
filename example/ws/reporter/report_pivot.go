@@ -1,9 +1,9 @@
 package reporter
 
 import (
-	"github.com/viant/toolbox"
-	"github.com/viant/dsc"
 	"fmt"
+	"github.com/viant/dsc"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"strings"
 )
@@ -30,7 +30,6 @@ type PivotReport struct {
 	Groups []string
 
 	Where string
-
 }
 
 func (r *PivotReport) GetName() string {
@@ -41,11 +40,9 @@ func (r *PivotReport) GetType() string {
 	return "pivot"
 }
 
-
 func (r *PivotReport) Unwrap() interface{} {
 	return r
 }
-
 
 func (r *PivotReport) SQL(manager dsc.Manager, parameters map[string]interface{}) (string, error) {
 	var result = ""
@@ -85,7 +82,7 @@ func (r *PivotReport) SQL(manager dsc.Manager, parameters map[string]interface{}
 				if toolbox.AsInt(matchValue) == 0 && matchValue != "0" {
 					matchValue = fmt.Sprintf("'%v'", matchValue)
 				}
-				var column = fmt.Sprintf("%v(CASE WHEN %v = %v THEN %v ELSE %v END) AS %v%v", value.Function, column.Name, matchValue,   value.Column,  elseValue, column.Alias, columnValue.Name)
+				var column = fmt.Sprintf("%v(CASE WHEN %v = %v THEN %v ELSE %v END) AS %v%v", value.Function, column.Name, matchValue, value.Column, elseValue, column.Alias, columnValue.Name)
 				sqlColumns = append(sqlColumns, column)
 			}
 		}
@@ -96,10 +93,10 @@ func (r *PivotReport) SQL(manager dsc.Manager, parameters map[string]interface{}
 	if len(r.Groups) > 0 {
 		var groupByPosition = make([]string, 0)
 		var orderByPosition = make([]string, 0)
-		for i, _ := range r.Groups {
+		for i := range r.Groups {
 			groupByPosition = append(groupByPosition, toolbox.AsString(i+1))
 			if i > 0 {
-				orderByPosition = append(orderByPosition, fmt.Sprintf("%v DESC", 1 + len(r.Groups)-i))
+				orderByPosition = append(orderByPosition, fmt.Sprintf("%v DESC", 1+len(r.Groups)-i))
 			}
 		}
 		groupBy = "GROUP BY " + strings.Join(groupByPosition, ",")
@@ -115,11 +112,9 @@ func (r *PivotReport) SQL(manager dsc.Manager, parameters map[string]interface{}
 	return result, nil
 }
 
-
-
 type AggValue struct {
 	Name string
-	Cnt   int
+	Cnt  int
 }
 
 func PivotReportProvider(report interface{}) (Report, error) {

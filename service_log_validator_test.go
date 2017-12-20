@@ -152,7 +152,7 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	}
 	{
 		response = service.Run(context, &endly.LogValidatorResetRequest{
-			LogTypes:[]string{"t"},
+			LogTypes: []string{"t"},
 		})
 		assert.Equal(t, "", response.Error)
 	}

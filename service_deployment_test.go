@@ -1,10 +1,10 @@
 package endly_test
 
 import (
-	"testing"
-	"github.com/viant/endly"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly"
 	"github.com/viant/toolbox/url"
+	"testing"
 )
 
 func Test_MatchVersion(t *testing.T) {
@@ -17,7 +17,6 @@ func Test_MatchVersion(t *testing.T) {
 
 }
 
-
 func Test_DeplymentValiate(t *testing.T) {
 
 	{
@@ -29,7 +28,7 @@ func Test_DeplymentValiate(t *testing.T) {
 
 	{
 		deployment := &endly.Deployment{
-			Transfer:&endly.Transfer{},
+			Transfer: &endly.Transfer{},
 		}
 		err := deployment.Validate()
 		assert.NotNil(t, err)
@@ -37,8 +36,8 @@ func Test_DeplymentValiate(t *testing.T) {
 
 	{
 		deployment := &endly.Deployment{
-			Transfer:&endly.Transfer{
-				Target:&url.Resource{},
+			Transfer: &endly.Transfer{
+				Target: &url.Resource{},
 			},
 		}
 		err := deployment.Validate()
@@ -46,8 +45,8 @@ func Test_DeplymentValiate(t *testing.T) {
 	}
 	{
 		deployment := &endly.Deployment{
-			Transfer:&endly.Transfer{
-				Target:&url.Resource{URL:"mem:///123"},
+			Transfer: &endly.Transfer{
+				Target: &url.Resource{URL: "mem:///123"},
 			},
 		}
 		err := deployment.Validate()
@@ -55,9 +54,9 @@ func Test_DeplymentValiate(t *testing.T) {
 	}
 	{
 		deployment := &endly.Deployment{
-			Transfer:&endly.Transfer{
-				Target:&url.Resource{URL:"mem:///123"},
-				Source:&url.Resource{},
+			Transfer: &endly.Transfer{
+				Target: &url.Resource{URL: "mem:///123"},
+				Source: &url.Resource{},
 			},
 		}
 		err := deployment.Validate()
