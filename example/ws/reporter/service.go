@@ -7,11 +7,8 @@ import (
 	"strings"
 )
 
-
 //Service represents report service
 type Service interface {
-
-
 	Register(request *RegisterReportRequest) *RegisterReportResponse
 
 	Run(request *RunReportRequest) *RunReportResponse
