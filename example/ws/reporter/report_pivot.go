@@ -8,16 +8,19 @@ import (
 	"strings"
 )
 
+//AggregatedValue represents a pivtot report aggregated value
 type AggregatedValue struct {
 	Column   string
 	Function string
 }
 
+//AliasedColumn represents aliased column
 type AliasedColumn struct {
 	Name  string
 	Alias string
 }
 
+//PivotReport represents a pivot report
 type PivotReport struct {
 	Name string
 
@@ -32,18 +35,31 @@ type PivotReport struct {
 	Where string
 }
 
+//AggValue represents pivot aggregation value
+type AggValue struct {
+	Name string
+	Cnt  int
+}
+
+
+
+//GetName returns a pivot name
 func (r *PivotReport) GetName() string {
 	return r.Name
 }
 
+
+//GetType returns a report  type.
 func (r *PivotReport) GetType() string {
 	return "pivot"
 }
 
+//Unwrap unwraps pivot report
 func (r *PivotReport) Unwrap() interface{} {
 	return r
 }
 
+//SQL returns SQL
 func (r *PivotReport) SQL(manager dsc.Manager, parameters map[string]interface{}) (string, error) {
 	var result = ""
 	if len(parameters) == 0 {
@@ -112,11 +128,7 @@ func (r *PivotReport) SQL(manager dsc.Manager, parameters map[string]interface{}
 	return result, nil
 }
 
-type AggValue struct {
-	Name string
-	Cnt  int
-}
-
+//PivotReportProvider represents pivot report provider
 func PivotReportProvider(report interface{}) (Report, error) {
 	converter := toolbox.Converter{}
 	var result = &PivotReport{}
