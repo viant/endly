@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-//EvaluateCriteria evaluates passed in critera, criteria format uses  <actual>:<expected>
+//EvaluateCriteria evaluates passed in criteria, it uses  <actual>:<expected>
 //Assertion expression can be used for more complex criteria evaluation
 func EvaluateCriteria(context *Context, criteria, eventType string, defaultValue bool) (bool, error) {
 	if criteria == "" {
