@@ -39,22 +39,22 @@ func (s *service) Register(request *RegisterReportRequest) *RegisterReportRespon
 	}
 	var provider, ok = s.providers[request.ReportType]
 	if !ok {
-		setError(response.Response, fmt.Sprint("failed to lookup report type: %v", request.ReportType))
+		setError(response.Response, fmt.Sprintf("failed to lookup report type: %v", request.ReportType))
 		return response
 	}
 	var report, err = provider(request.Report)
 	if err != nil {
-		setError(response.Response, fmt.Sprint("failed to create report: %v, %v", request.ReportType, err))
+		setError(response.Response, fmt.Sprintf("failed to create report: %v, %v", request.ReportType, err))
 		return response
 	}
 	manager, err := s.manager(s.config.RepositoryDatastore)
 	if err != nil {
-		setError(response.Response, fmt.Sprint("%v", err))
+		setError(response.Response, fmt.Sprintf("%v", err))
 		return response
 	}
 	err = s.reportDao.Persist(manager, report)
 	if err != nil {
-		setError(response.Response, fmt.Sprint("failed to persist report %v", err))
+		setError(response.Response, fmt.Sprintf("failed to persist report %v", err))
 		return response
 	}
 	s.reports[report.GetName()] = report
@@ -78,25 +78,25 @@ func (s *service) Run(request *RunReportRequest) *RunReportResponse {
 	}
 	report, has := s.reports[request.Name]
 	if !has {
-		setError(response.Response, fmt.Sprint("failed to lookup report: %v", request.Name))
+		setError(response.Response, fmt.Sprintf("failed to lookup report: %v", request.Name))
 		return response
 	}
 
 	manager, err := s.manager(request.Datastore)
 	if err != nil {
-		setError(response.Response, fmt.Sprint("%v", err))
+		setError(response.Response, fmt.Sprintf("%v", err))
 		return response
 	}
 
 	SQL, err := report.SQL(manager, request.Parameters)
 	if err != nil {
-		setError(response.Response, fmt.Sprint("failed to build SQL: %v", err))
+		setError(response.Response, fmt.Sprintf("failed to build SQL: %v", err))
 		return response
 	}
 	response.Data = make([]map[string]interface{}, 0)
 	err = manager.ReadAll(&response.Data, SQL, nil, nil)
 	if err != nil {
-		setError(response.Response, fmt.Sprint("failed run query: %v %v", SQL, err))
+		setError(response.Response, fmt.Sprintf("failed run query: %v %v", SQL, err))
 		return response
 	}
 	return response
