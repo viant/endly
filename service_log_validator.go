@@ -114,10 +114,6 @@ func (f *LogFile) PushLogRecord(record *LogRecord) {
 	if len(f.Records) == 0 {
 		f.Records = make([]*LogRecord, 0)
 	}
-	var len = len(record.Line)
-	if len > 40 {
-		len = 40
-	}
 	f.Records = append(f.Records, record)
 }
 
@@ -421,15 +417,7 @@ func (s *logValidatorService) readLogFile(context *Context, source *url.Resource
 		fileOverridden = true
 	}
 
-	var contentLength = len(logFile.Content)
-	if contentLength > 50 {
-		contentLength = 50
-	}
-
 	if !fileOverridden && logFile.Size < int(fileInfo.Size()) && !strings.HasPrefix(content, string(logFile.Content)) {
-		if contentLength > len(content) {
-			contentLength = len(content)
-		}
 		logFile.Reset(candidate)
 	}
 

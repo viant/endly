@@ -33,7 +33,7 @@ type WorkflowTask struct {
 	Actions     []*ServiceAction //actions
 	Init        Variables        //variables to initialise state before this taks runs
 	Post        Variables        //variable to update state after this task completes
-	TimeSpentMs int              //optional min required time spent in this task, reamining will force Sleep
+	TimeSpentMs int              //optional min required time spent in this task, remaining will force Sleep
 }
 
 //Workflow repesents a workflow

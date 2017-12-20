@@ -232,6 +232,9 @@ func (s *gitService) commit(context *Context, request *VcCommitRequest) (*VcInfo
 			},
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
 	return s.checkInfo(context, &VcStatusRequest{
 		Target: request.Target,
 	})
