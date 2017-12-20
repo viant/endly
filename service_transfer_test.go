@@ -169,6 +169,7 @@ func TestTransferService_Copy(t *testing.T) {
 				if assert.Nil(t, err, URL) {
 					reader, err := memStorage.Download(object)
 					if assert.Nil(t, err) {
+						defer reader.Close()
 						content, err := ioutil.ReadAll(reader)
 						if assert.Nil(t, err) {
 							assert.EqualValues(t, expected, string(content), URL)
