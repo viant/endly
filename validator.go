@@ -154,7 +154,7 @@ func (s *Validator) assertText(expected, actual string, response *ValidationInfo
 	pattern += expected
 	compiled, err := regexp.Compile(pattern)
 	if err != nil {
-		return fmt.Errorf("failed to validate '%v' and '%v' due to %v", expected, actual, pattern, err)
+		return fmt.Errorf("failed to validate '%v' and '%v' with pattern: %v, due to %v", expected, actual, pattern, err)
 	}
 	var matches = compiled.Match(([]byte)(actual))
 
@@ -200,7 +200,7 @@ func (s *Validator) assertSlice(expectedSlice []interface{}, actualSlice []inter
 	for index, expected := range expectedSlice {
 		keyPath := fmt.Sprintf("%v[%v]", path, index)
 		if !(index < len(actualSlice)) {
-			response.AddFailure(NewFailedTest(keyPath, fmt.Sprintf("[%v] were missing, expected size: %v, actual size: %v", len(expectedSlice), len(actualSlice)), len(expectedSlice), len(actualSlice)))
+			response.AddFailure(NewFailedTest(keyPath, fmt.Sprintf("expected size: %v, actual size: %v", len(expectedSlice), len(actualSlice)), len(expectedSlice), len(actualSlice)))
 			return nil
 		}
 		actual := actualSlice[index]

@@ -302,7 +302,7 @@ func (s *dockerService) checkContainerProcess(context *Context, request *DockerC
 func (s *dockerService) startContainer(context *Context, request *DockerContainerStartRequest) (*DockerContainerInfo, error) {
 
 	if request.Target.Name == "" {
-		return nil, fmt.Errorf("Target name was empty for %v and command %v", request.Target.URL)
+		return nil, fmt.Errorf("target name was empty url: %v", request.Target.URL)
 	}
 	if len(request.SysPath) > 0 {
 		s.SysPath = request.SysPath
@@ -322,7 +322,7 @@ func (s *dockerService) startContainer(context *Context, request *DockerContaine
 
 func (s *dockerService) stopContainer(context *Context, request *DockerContainerStopRequest) (*DockerContainerInfo, error) {
 	if request.Target.Name == "" {
-		return nil, fmt.Errorf("Target name was empty for %v and command %v", request.Target.URL)
+		return nil, fmt.Errorf("target name was empty for %v", request.Target.URL)
 	}
 	if len(request.SysPath) > 0 {
 		s.SysPath = request.SysPath

@@ -1,8 +1,8 @@
 package main
 
 import (
-	_ "github.com/go-sql-driver/mysql"
 	"flag"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/viant/endly/example/ws/reporter"
 	"github.com/viant/toolbox/url"
 	"log"

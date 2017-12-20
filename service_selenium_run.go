@@ -37,10 +37,10 @@ type SeleniumAction struct {
 func (r *SeleniumRunRequest) Validate() error {
 	if r.SessionID == "" {
 		if r.RemoteSelenium == nil {
-			fmt.Errorf("both SessionID and RemoteSelenium were empty")
+			return fmt.Errorf("both SessionID and RemoteSelenium were empty")
 		}
 		if r.Browser == "" {
-			fmt.Errorf("both SessionID and Browser were empty")
+			return fmt.Errorf("both SessionID and Browser were empty")
 		}
 	}
 	return nil
