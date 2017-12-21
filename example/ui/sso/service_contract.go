@@ -4,6 +4,8 @@ import (
 	"errors"
 )
 
+
+//SignUpRequest represents signup request
 type SignUpRequest struct {
 	*User
 	DataOfBirth string `json:"dateOfBirth"`
@@ -11,12 +13,14 @@ type SignUpRequest struct {
 	LandingPage string `json:"landingPage"`
 }
 
+//SignUpResponse represents signup response
 type SignUpResponse struct {
 	*BaseResponse
 	*User
 	LandingPage string `json:"landingPage"`
 }
 
+//SignInRequest represents signin request
 type SignInRequest struct {
 	Email       string `json:"email"`
 	Password    string `json:"password"`
@@ -24,12 +28,14 @@ type SignInRequest struct {
 	LandingPage string `json:"landingPage"`
 }
 
+//SignInResponse represents signin response
 type SignInResponse struct {
 	*BaseResponse
 	*User
 	LandingPage string `json:"landingPage"`
 }
 
+//Status represents base response
 type BaseResponse struct {
 	Status      string `json:"status"`
 	Error       string `json:"error"`
