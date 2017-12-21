@@ -12,7 +12,7 @@ type RegisterReportRequest struct {
 	Report     interface{}
 }
 
-//RegisterReportRequest represents register response
+//RegisterReportResponse represents register response
 type RegisterReportResponse struct {
 	*Response
 }
@@ -24,7 +24,7 @@ type RunReportRequest struct {
 	Parameters map[string]interface{}
 }
 
-//RunReportRequest represents run response
+//RunReportResponse represents run response
 type RunReportResponse struct {
 	*Response
 	Name    string
