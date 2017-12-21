@@ -9,6 +9,8 @@ import (
 	"sync"
 )
 
+
+//Service represents sso service
 type Service interface {
 	SignUp(*SignUpRequest) *SignUpResponse
 
