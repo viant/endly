@@ -4,7 +4,6 @@ import (
 	"errors"
 )
 
-
 //SignUpRequest represents signup request
 type SignUpRequest struct {
 	*User
