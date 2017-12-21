@@ -92,7 +92,7 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 	}
 
 	command := fmt.Sprintf("ps -ef | grep %v", request.Command)
-	if strings.Contains(request.Command, " ") {
+	if strings.Contains(request.Command, " ") &&  ! strings.Contains(request.Command, "|") {
 		command = fmt.Sprintf("ps -ef | grep '%v'", request.Command)
 	}
 	commandResponse, err := context.Execute(request.Target, &ExtractableCommand{
