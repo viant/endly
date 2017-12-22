@@ -80,7 +80,7 @@ func TestVc_Status(t *testing.T) {
 }
 
 func TestVc_Checkout(t *testing.T) {
-	credentialFile, err := GetDummyCredential()
+	credentialFile, err := GetCredential("scp.json", "awitas", "***")
 	gitCredentialFile, err := GetCredential("git.json", "adrianwit", "***")
 	assert.Nil(t, err)
 	var target = url.NewResource("ssh://127.0.0.1/Projects/project1/trunk", credentialFile) //
