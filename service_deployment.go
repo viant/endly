@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 	"strings"
 	"sync"
@@ -136,7 +135,7 @@ func (s *deploymentService) checkIfDeployedOnSystem(context *Context, target *ur
 	if err != nil {
 		return false, err
 	}
-	service, err := storage.NewServiceForURL(transferTarget.URL, transferTarget.Credential)
+	service, err := getStorageService(context, transferTarget)
 	if err != nil {
 		return false, err
 	}
@@ -178,7 +177,7 @@ func (s *deploymentService) discoverTransfer(context *Context, request *Deployme
 		}
 
 	} else {
-		service, err := storage.NewServiceForURL(source.URL, source.Credential)
+		service, err := getStorageService(context, source)
 		if err != nil {
 			return nil, err
 		}
