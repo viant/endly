@@ -40,7 +40,7 @@ type transferService struct {
 //NewExpandedContentHandler return a new reader that can substitute content with state map, replacement data provided in replacement map.
 func NewExpandedContentHandler(context *Context, replaceMap map[string]string, expand bool) func(reader io.ReadCloser) (io.ReadCloser, error) {
 	return func(reader io.ReadCloser) (io.ReadCloser, error) {
-		reader.Close()
+		defer reader.Close()
 		content, err := ioutil.ReadAll(reader)
 		if err != nil {
 			return nil, err
