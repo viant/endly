@@ -13,7 +13,7 @@ import (
 type Service interface {
 	SignUp(*SignUpRequest) *SignUpResponse
 
-	SignIn(*SignUpRequest) *SignInResponse
+	SignIn(*SignInRequest) *SignInResponse
 }
 
 type service struct {
@@ -91,7 +91,7 @@ func (s *service) SignUp(request *SignUpRequest) *SignUpResponse {
 	return response
 }
 
-func (s service) SignIn(request *SignUpRequest) *SignInResponse {
+func (s service) SignIn(request *SignInRequest) *SignInResponse {
 	var response = &SignInResponse{
 		BaseResponse: &BaseResponse{
 			Status: "ok",
