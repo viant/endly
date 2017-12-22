@@ -223,7 +223,7 @@ func (s *transferService) Run(context *Context, request interface{}) *ServiceRes
 	case *TransferCopyRequest:
 		response.Response, err = s.run(context, actualRequest.Transfers...)
 		if err != nil {
-			response.Error = fmt.Sprintf("failed to tranfer resources: %v, %v", actualRequest.Transfers, err)
+			response.Error = fmt.Sprintf("unable transfer, %v", err)
 		}
 	default:
 		response.Error = fmt.Sprintf("unsupported request type: %T", request)

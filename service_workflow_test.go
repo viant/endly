@@ -37,45 +37,50 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 	manager, service, err := getServiceWithWorkflow("test/workflow/dsunit/workflow.csv")
 	if assert.Nil(t, err) {
 
-		context := manager.NewContext(toolbox.NewContext())
-		serviceResponse := service.Run(context, &endly.WorkflowRunRequest{
-			Name:  "workflow",
-			Tasks: "prepare",
-			Params: map[string]interface{}{
-				"param1": 1,
-			},
-			EnableLogging:    false,
-			LoggingDirectory: "logs",
-		})
-		assert.Equal(t, "", serviceResponse.Error)
-		response, ok := serviceResponse.Response.(*endly.WorkflowRunResponse)
+		{
+			context := manager.NewContext(toolbox.NewContext())
+			serviceResponse := service.Run(context, &endly.WorkflowRunRequest{
+				Name:  "workflow",
+				Tasks: "prepare",
+				Params: map[string]interface{}{
+					"param1": 1,
+				},
+				EnableLogging:    true,
+				LoggingDirectory: "/tmp/logs",
+			})
+			assert.Equal(t, "", serviceResponse.Error)
+			response, ok := serviceResponse.Response.(*endly.WorkflowRunResponse)
 
-		if assert.True(t, ok) {
+			if assert.True(t, ok) {
+				assert.NotNil(t, response)
+				var dsunit = toolbox.AsMap(response.Data["dsunit"])
+				var records = toolbox.AsSlice(dsunit["USER_ACCOUNT"])
+				assert.EqualValues(t, 3, len(records))
+
+			}
+		}
+
+		{
+			context := manager.NewContext(toolbox.NewContext())
+			serviceResponse := service.Run(context, &endly.WorkflowRunRequest{
+				Name:  "workflow",
+				Tasks: "*",
+				Params: map[string]interface{}{
+					"param1": 1,
+				},
+				EnableLogging:    true,
+				LoggingDirectory: "/tmp/logs",
+			})
+			assert.Equal(t, "", serviceResponse.Error)
+
+			response, ok := serviceResponse.Response.(*endly.WorkflowRunResponse)
+			assert.True(t, ok)
 			assert.NotNil(t, response)
 			var dsunit = toolbox.AsMap(response.Data["dsunit"])
 			var records = toolbox.AsSlice(dsunit["USER_ACCOUNT"])
-			assert.EqualValues(t, 3, len(records))
+			assert.EqualValues(t, 0, len(records)) //validate task shift elements from USER_ACCCOUNT array.
 
 		}
-
-		context = manager.NewContext(toolbox.NewContext())
-		serviceResponse = service.Run(context, &endly.WorkflowRunRequest{
-			Name:  "workflow",
-			Tasks: "*",
-			Params: map[string]interface{}{
-				"param1": 1,
-			},
-			EnableLogging:    true,
-			LoggingDirectory: "/tmp/endly/test/workflow/dsunit",
-		})
-		assert.Equal(t, "", serviceResponse.Error)
-
-		response, ok = serviceResponse.Response.(*endly.WorkflowRunResponse)
-		assert.True(t, ok)
-		assert.NotNil(t, response)
-		var dsunit = toolbox.AsMap(response.Data["dsunit"])
-		var records = toolbox.AsSlice(dsunit["USER_ACCOUNT"])
-		assert.EqualValues(t, 0, len(records)) //validate task shift elements from USER_ACCCOUNT array.
 	}
 }
 

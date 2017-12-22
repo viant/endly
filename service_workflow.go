@@ -465,13 +465,13 @@ func buildParamsMap(request *WorkflowRunRequest, context *Context) data.Map {
 func (s *workflowService) loadWorkflow(context *Context, request *WorkflowLoadRequest) (*WorkflowLoadResponse, error) {
 	workflow, err := s.Dao.Load(context, request.Source)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load workflow: %v, %v", request.Source, err)
+		return nil, fmt.Errorf("failed to load workflow: %v, %v", request.Source.URL, err)
 	}
 	s.Mutex().Lock()
 	defer s.Mutex().Unlock()
 	err = s.Register(workflow)
 	if err != nil {
-		return nil, fmt.Errorf("failed to register workflow: %v, %v", request.Source, err)
+		return nil, fmt.Errorf("failed to register workflow: %v, %v", request.Source.URL, err)
 	}
 	return &WorkflowLoadResponse{
 		Workflow: workflow,
