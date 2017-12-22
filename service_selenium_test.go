@@ -40,8 +40,10 @@ func TestSeleniumService_Start(t *testing.T) {
 		{
 			"test/selenium/start/inactive/darwin",
 			[]string{
+				"https://github.com/mozilla/geckodriver/releases/download/v0.19.1/geckodriver-v0.19.1-macos.tar.gz",
 				"https://github.com/mozilla/geckodriver/releases/download/v0.19.1/geckodriver-v0.19.1-linux64.tar.gz",
 				"http://selenium-release.storage.googleapis.com/3.4/selenium-server-standalone-3.4.0.jar",
+				"scp://127.0.0.1:22/opt/selenium/selenium-server-standalone.jar",
 			},
 			[]byte("test"),
 			url.NewResource("scp://127.0.0.1:22/", credentialFile),
@@ -57,8 +59,10 @@ func TestSeleniumService_Start(t *testing.T) {
 		{
 			"test/selenium/start/active/darwin",
 			[]string{
+				"https://github.com/mozilla/geckodriver/releases/download/v0.19.1/geckodriver-v0.19.1-macos.tar.gz",
 				"https://github.com/mozilla/geckodriver/releases/download/v0.19.1/geckodriver-v0.19.1-linux64.tar.gz",
 				"http://selenium-release.storage.googleapis.com/3.4/selenium-server-standalone-3.4.0.jar",
+				"scp://127.0.0.1:22/opt/selenium/selenium-server-standalone.jar",
 			},
 			[]byte("test"),
 			url.NewResource("scp://127.0.0.1:22/", credentialFile),

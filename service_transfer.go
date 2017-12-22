@@ -59,7 +59,7 @@ func NewExpandedContentHandler(context *Context, replaceMap map[string]string, e
 	}
 }
 
-func (s *transferService) getStorageService(context *Context, resource *url.Resource) (storage.Service, error) {
+func getStorageService(context *Context, resource *url.Resource) (storage.Service, error) {
 	if context.state.Has(UseMemoryService) {
 		return storage.NewMemoryService(), nil
 	}
@@ -80,7 +80,7 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 		if err != nil {
 			return nil, err
 		}
-		sourceService, err := s.getStorageService(context, sourceResource)
+		sourceService, err := getStorageService(context, sourceResource)
 		if err != nil {
 			return nil, err
 		}
@@ -89,7 +89,7 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 		if err != nil {
 			return nil, err
 		}
-		targetService, err := s.getStorageService(context, targetResource)
+		targetService, err := getStorageService(context, targetResource)
 		if err != nil {
 			return nil, fmt.Errorf("failed to lookup targetResource storageService for %v: %v", targetResource.URL, err)
 		}
