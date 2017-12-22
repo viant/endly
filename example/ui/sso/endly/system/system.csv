@@ -2,12 +2,12 @@ Workflow,,Name,Description,Tasks,,[]Init.Name,[]Init.From,[]Init.Required
 ,,system,Manages sso services,%Tasks,,targetHost,params.targetHost,TRUE
 ,,,,,,targetHostCredential,params.targetHostCredential,TRUE
 []Tasks,,Name,Description,Actions,,,,
-,,init,Run app services,%Init,,,,
+,,init,Init sso app services,%Init,,,,
 []Init,Service,Action,Description,Request,images,,,
 ,docker,stop-images,Stops requested images,#req/stop_images.json|$images,"[""aerospike""]",,,
 []Init,Service,Action,Description,Request,instance,tasks,SleepInMs,
-,workflow,run,init SSO services on $buildHost,#req/aerospike.json,db1_aerospike,start,30000,
+,workflow,run,start aerospike on $buildHost,#req/aerospike.json,db1_aerospike,start,30000,
 []Tasks,,Name,Description,Actions,,,,
 ,,destory,Stop sso services,%Destory,,,,
 []Destory,Service,Action,Description,Request,instance,tasks,,
-,workflow,run,init mysql,#req/aerospike.json,db1_aerospike,stop,,
+,workflow,run,stop aerospike,#req/aerospike.json,db1_aerospike,stop,,

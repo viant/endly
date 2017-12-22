@@ -1,5 +1,3 @@
-# Work in progress
-
 # SSO application - a simple ui application to register and sigin users.
 
 This application was build to provide end to end testing example of ui application.
