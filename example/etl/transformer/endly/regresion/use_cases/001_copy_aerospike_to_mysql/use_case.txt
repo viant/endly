@@ -1,0 +1,1 @@
+Copy user table from aerospike to mysql
