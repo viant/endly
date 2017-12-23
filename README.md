@@ -53,7 +53,7 @@ go get -u github.com/viant/endly
 ## Getting Started
 
 
-To get you familiar with endly workflows, as port of this project a few examples of fully functioning applications are included.
+To get you familiar with endly workflows, a few examples of fully functioning applications are included.
 You can build, deploy and test them end to end all with endly.
 
  
