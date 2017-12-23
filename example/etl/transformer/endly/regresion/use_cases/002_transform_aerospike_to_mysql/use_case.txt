@@ -1,0 +1,1 @@
+Transform user table from aerospike to mysql app_usage table

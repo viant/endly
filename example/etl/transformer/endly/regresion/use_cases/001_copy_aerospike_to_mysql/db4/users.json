@@ -1,0 +1,26 @@
+[
+  {
+    "id": 101,
+    "email": "abc@p1.pl"
+  },
+  {
+    "id": 102,
+    "email": "xyz@p1.pl"
+  },
+  {
+    "id": 103,
+    "email": "ijk@p1.pl"
+  },
+  {
+    "id": 201,
+    "email": "abc@p2.pl"
+  },
+  {
+    "id": 202,
+    "email": "xyz@p2.pl"
+  },
+  {
+    "id": 203,
+    "email": "ijk@p2.pl"
+  }
+]
