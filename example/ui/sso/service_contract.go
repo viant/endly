@@ -23,7 +23,7 @@ type SignUpResponse struct {
 type SignInRequest struct {
 	Email       string `json:"email"`
 	Password    string `json:"password"`
-	RememberMe  bool   `json:"rememberMe"`
+	RememberMe  string   `json:"rememberMe"`
 	LandingPage string `json:"landingPage"`
 }
 

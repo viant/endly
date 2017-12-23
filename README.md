@@ -52,91 +52,30 @@ go get -u github.com/viant/endly
 <a name="GettingStarted"></a>
 ## Getting Started
 
-Getting started enables you to run [example applications](example/)  with **endly** workflows to
-1) prepare your system for an app
-2) prepare datastore(database) for an app
-3) build and deploy an app
-4) prepare test data
-5) run test use cases
-6) verify app functionality 
+
+To get you familiar with endly workflows, as port of this project a few examples of fully functioning applications are included.
+You can build, deploy and test them end to end all with endly.
+
  
-
-Prerequisites:
-
-Enable ssh logic you your use on your machine (on osx System Preference / Sharing / Remote Login )
+1) **Web Service** 
+   * [Reporter](example/ws/reporter) - a pivot table report builder.
+        - Test with Rest Runner
+        - Data Preparation and Validation (mysql)
+2) **User Interface**
+   * [SSO](example/ui/sso)  - user registration and login application.
+        - Test with Selenium Runner
+        - Data Preparation and Validation (aersopike)
+        - Web Content validation
+3) **Extract, Transform and Load (ETL)** (TO BE ADDED)
+   * [Transformer](example/etl/transformer) - datastore to datastore transformer (i.e. aerospike to mysql)
+       - Test with Rest Runner
+       - Data Preparation and Validation (aersopike, mysql)
+4) **Runtime** (TO BE ADDED)
+   * [Logger](example/rt/logger)
+       - Test with HTTP Runner
+       - Log Validation
+       
  
-Install [docker](https://docs.docker.com/engine/installation/) service
-
-Install [go lang](https://golang.org/doc/install) version 1.8+
-
-
-after installing go run the following command
-
-```text
-mkdir -p ~/Projects/go
-export GOPATH=~/Projects/go
-go get -u github.com/viant/endly
-go get -u github.com/viant/endly/endly
-go get -u github.com/viant/toolbox/secret
-
-export PATH=$PATH:$GOPATH/bin
-```
-
-Generate secret keys with a credential that endly will use to run the workflows.
-(**secret** binary should be compiled and build as result of get -u github.com/viant/toolbox/secret into GOPATH/bin)
-**secret** command generates a file with encrypted credential in $HOME/.secret/ directory.
-
-
-Provide a user name and password to login to your box.
-```text
-secret scp
-```
-Provide  **root** as user name and non empty password for docker mysqladmin 
-```text
-secret mysql
-```
-
-Verify that secret file were created
-```text
-cat ~/.secret/scp.json
-cat ~/.secret/mysql.json
-```
-
-
-Check that **'endly'** binary is created in $GOPATH/bin directory as result of 
-```text
-'go get -u github.com/viant/endly/endly'
-```
-
-
-### End to end application testing example with endly workflow.
-
-Make sure the Getting Started prerequisites are met.
-
-#### Reporter webservice application
-
-
-Run the following to prepare system, build, deploy and test the query builder app with REST runner and dsunit.
-
-```text
-cd $GOPATH/src/github.com/viant/endly/example/ws/reporter/endly/
-
-endly
-```
-
-#### SSO UI application
-
-Run the following to prepare system, build, deploy and test sso app with selenium runner and dsunit.
-
-```text
-cd $GOPATH/src/github.com/viant/endly/example/ui/sso/endly/
-
-endly
-```
-
-
-**'endly'** by default looks up a run.json file to bootstrap the testing workflow.
-
 
 <a name="Introduction"></a>
 ## Introduction
@@ -145,12 +84,12 @@ Endly as a comprehensive testing framework automate the following step:
 
 1) System preparation 
     1) System services initialization.  (RDBM, NoSQL, Caching 3rd Party API)
-    2) Application container initialization if application uses it (Application server, i,e, tomcat)
+    2) Application container. (Application server, i,e, tomcat, glassfish)
 2) Application build and deployment
     1) Application code checkout.
     2) Application build
     3) Application deployment
-3) Testing    
+3) Testing
     1) Preparing test data
     2) Actual application testing
         1) Http runner
