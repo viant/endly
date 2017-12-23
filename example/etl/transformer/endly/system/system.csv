@@ -1,0 +1,15 @@
+Workflow,,Name,Description,Tasks,,[]Init.Name,[]Init.From,[]Init.Required
+,,system,Manages sso services,%Tasks,,targetHost,params.targetHost,TRUE
+,,,,,,targetHostCredential,params.targetHostCredential,TRUE
+[]Tasks,,Name,Description,Actions,,,,
+,,init,Initialises aerospike and mysql for transformer app,%Init,,,,
+[]Init,Service,Action,Description,Request,images,,,
+,docker,stop-images,Stops requested images,#req/stop_images.json|$images,"[""aerospike"", ""mysql""]",,,
+[]Init,Service,Action,Description,Request,instance,tasks,SleepInMs,
+,workflow,run,init mysql on $buildHost,#req/mysql.json,db3_mysql,start,,
+,workflow,run,init aerospikeon on $buildHost,#req/aerospike.json,db4_aerospike,start,30000,
+[]Tasks,,Name,Description,Actions,,,,
+,,destory,Stop sso services,%Destory,,,,
+[]Destory,Service,Action,Description,Request,instance,tasks,,
+,workflow,run,stop aerospike,#req/aerospike.json,db4_aerospike,stop,,
+,workflow,run,stop mysql,#req/mysql.json,db3_mysql,stop,,

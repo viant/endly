@@ -1,0 +1,45 @@
+{
+  "WorkflowURL": "manager.csv",
+  "Name": "manager",
+  "PublishParameters": true,
+  "EnableLogging": true,
+  "LoggingDirectory": "logs",
+  "Tasks": "init,test",
+  "Params": {
+    "app":"transformer",
+    "goVersion":"1.8",
+    "buildGoal": "build",
+    "originURL": "https://github.com/viant/endly/example/etl/transformer",
+
+    "GOPATH":"$env.GOPATH",
+    "targetHost": "127.0.0.1",
+    "targetHostCredential": "${env.HOME}/.secret/scp.json",
+
+
+    "buildHost": "127.0.0.1",
+    "buildHostCredential": "${env.HOME}/.secret/scp.json",
+
+    "buildDirectory" :"!WorkingDirectory(../app)",
+    "buildArgs":" -o transformer",
+    "appRootDirectory":"/opt/",
+
+    "mysqlVersion": "5.7",
+    "mysqlCredential": "${env.HOME}/.secret/mysql.json"
+
+  },
+  "Filter": {
+    "Stdin":true,
+    "Stdout":true,
+    "Transfer": true,
+    "SQLScript": true,
+    "PopulateDatastore": true,
+    "Sequence": true,
+    "RegisterDatastore": true,
+    "DataMapping": true,
+    "OnFailureFilter": {
+      "HttpTrip": true,
+      "Stdin": true,
+      "Stdout": true
+    }
+  }
+}

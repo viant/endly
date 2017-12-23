@@ -1,0 +1,8 @@
+{
+  "Datastore": "db3",
+  "Scripts": [
+    {
+      "URL": "datastore/db3/schema.ddl"
+    }
+  ]
+}
