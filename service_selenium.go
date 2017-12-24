@@ -91,7 +91,7 @@ func (s *seleniumService) Run(context *Context, request interface{}) *ServiceRes
 		err = fmt.Errorf("unsupported request type: %T", request)
 	}
 	if err != nil {
-		response.Status = "err"
+		response.Status = "error"
 		response.Error = fmt.Sprintf(errorTemplate, err)
 	}
 	return response

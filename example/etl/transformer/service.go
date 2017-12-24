@@ -72,6 +72,57 @@ func (s *service) appendRecords(transformer Transformer, record map[string]inter
 	return nil
 }
 
+func (s *service) fetchData(connection dsc.Connection, destinationManager dsc.Manager, dmlProvider dsc.DmlProvider, channel chan map[string]interface{}, transformer Transformer, fetchedCompleted *int32, request *CopyRequest, response *CopyResponse) (completed bool, err error) {
+	var batchSize = request.BatchSize
+	if batchSize == 0 {
+		batchSize++
+	}
+	var records = make([]interface{}, 0)
+	var count = len(channel)
+	if count == 0 {
+		select {
+		case record := <-channel:
+			err = s.appendRecords(transformer, record, records)
+			if err != nil {
+				return
+			}
+			count = len(channel)
+		case <-time.After(time.Millisecond):
+			count = len(channel)
+			completed = atomic.LoadInt32(fetchedCompleted) == 1
+			if completed {
+				if len(records) == 0 && count == 0 {
+					return true, nil
+				}
+			} else if len(records) < batchSize {
+				return
+			}
+		}
+	}
+	for i := 0; i < count; i++ {
+		record := <-channel
+		err = s.appendRecords(transformer, record, records)
+		if err != nil {
+			return
+		}
+	}
+	if len(records) > 0 {
+		if request.InsertMode {
+			parametrizedSQLProvider := func(item interface{}) *dsc.ParametrizedSQL {
+				return dmlProvider.Get(dsc.SQLTypeInsert, item)
+			}
+			_, err = destinationManager.PersistData(connection, records, request.Destination.Table, dmlProvider, parametrizedSQLProvider)
+
+		} else {
+			_, _, err = destinationManager.PersistAll(&records, request.Destination.Table, dmlProvider)
+		}
+	}
+	if err != nil || completed {
+		return true, nil
+	}
+	return false, nil
+}
+
 func (s *service) persist(destinationManager dsc.Manager, channel chan map[string]interface{}, request *CopyRequest, response *CopyResponse, fetchedCompleted *int32) *sync.WaitGroup {
 	var result = &sync.WaitGroup{}
 	result.Add(1)
@@ -81,16 +132,13 @@ func (s *service) persist(destinationManager dsc.Manager, channel chan map[strin
 		PkColumns: destination.PkColumns,
 		Columns:   destination.Columns,
 	}
-	var batchSize = request.BatchSize
-	if batchSize == 0 {
-		batchSize++
-	}
+
 	destinationManager.TableDescriptorRegistry().Register(tableDescriptor)
 
 	dmlProvider := dsc.NewMapDmlProvider(tableDescriptor)
 
 	transformer, _ := Transformers[request.Transformer]
-
+	var completed bool
 	go func() {
 		var err error
 		defer func() {
@@ -100,52 +148,17 @@ func (s *service) persist(destinationManager dsc.Manager, channel chan map[strin
 			result.Done()
 		}()
 		connection, err := destinationManager.ConnectionProvider().Get()
-		var fetchCompleted bool
 		for {
-			var records = make([]interface{}, 0)
-			var count = len(channel)
-			if count == 0 {
-				select {
-				case record := <-channel:
-					err = s.appendRecords(transformer, record, records)
-					if err != nil {
-						return
-					}
-					count = len(channel)
-				case <-time.After(time.Millisecond):
-					count = len(channel)
-					fetchCompleted = atomic.LoadInt32(fetchedCompleted) == 1
-					if fetchCompleted {
-						if len(records) == 0 && count == 0 {
-							return
-						}
-					} else if len(records) < batchSize {
-						continue
-					}
-				}
-			}
-			for i := 0; i < count; i++ {
-				record := <-channel
-				err = s.appendRecords(transformer, record, records)
-				if err != nil {
-					return
-				}
-			}
-			if len(records) > 0 {
-				if request.InsertMode {
-					parametrizedSQLProvider := func(item interface{}) *dsc.ParametrizedSQL {
-						return dmlProvider.Get(dsc.SQLTypeInsert, item)
-					}
-					_, err = destinationManager.PersistData(connection, records, request.Destination.Table, dmlProvider, parametrizedSQLProvider)
 
-				} else {
-					_, _, err = destinationManager.PersistAll(&records, request.Destination.Table, dmlProvider)
-				}
-			}
-			if err != nil || fetchCompleted {
+			completed, err = s.fetchData(connection, destinationManager, dmlProvider, channel, transformer, fetchedCompleted, request, response)
+			if err != nil {
+				response.BaseResponse.Status = "error"
+				response.Error = err.Error()
 				return
 			}
-
+			if completed {
+				return
+			}
 		}
 	}()
 	return result
