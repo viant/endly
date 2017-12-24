@@ -2,7 +2,6 @@ package endly
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/viant/toolbox/url"
 )
 
