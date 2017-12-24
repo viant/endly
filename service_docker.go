@@ -189,41 +189,50 @@ func (s *dockerService) applySysPathIfNeeded(sysPath []string) {
 	}
 }
 
-func (s *dockerService) runContainer(context *Context, request *DockerRunRequest) (*DockerContainerInfo, error) {
+func (s *dockerService) applyCredentialIfNeeded(credentials map[string]string) map[string]string {
+	var result = make(map[string]string)
+	if len(credentials) > 0 {
+		for k, v := range credentials {
+			result[k] = v
+		}
+	}
+	return result
+}
 
-	if err := request.Validate(); err != nil {
+func (s *dockerService) resetContainerIfNeeded(context *Context, target *url.Resource, statusResponse *DockerContainerStatusResponse) error {
+	if len(statusResponse.Containers) > 0 {
+		_, err := s.stopContainer(context, &DockerContainerStopRequest{
+			Target: target,
+		})
+		if err != nil {
+			return err
+		}
+		_, err = s.removeContainer(context, &DockerContainerRemoveRequest{Target: target})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *dockerService) runContainer(context *Context, request *DockerRunRequest) (*DockerContainerInfo, error) {
+	var err error
+	if err = request.Validate(); err != nil {
 		return nil, err
 	}
 	s.applySysPathIfNeeded(request.SysPath)
+	var credentials = s.applyCredentialIfNeeded(request.Credentials)
 
-	var credentials = make(map[string]string)
-	if len(request.Credentials) > 0 {
-		for k, v := range request.Credentials {
-			credentials[k] = v
-		}
-	}
-
-	checkResponse, err := s.checkContainerProcesses(context, &DockerContainerStatusRequest{
+	if checkResponse, err := s.checkContainerProcesses(context, &DockerContainerStatusRequest{
 		Target: request.Target,
 		Names:  request.Target.Name,
-	})
-
+	}); err == nil {
+		err = s.resetContainerIfNeeded(context, request.Target, checkResponse)
+	}
 	if err != nil {
 		return nil, err
 	}
-	if len(checkResponse.Containers) > 0 {
-		_, err := s.stopContainer(context, &DockerContainerStopRequest{
-			Target: request.Target,
-		})
-		if err != nil {
-			return nil, err
-		}
-		_, err = s.removeContainer(context, &DockerContainerRemoveRequest{Target: request.Target})
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	var args = ""
 	for k, v := range request.Env {
 		args += fmt.Sprintf("-e %v=%v ", k, context.Expand(v))
