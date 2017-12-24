@@ -77,6 +77,33 @@ func (s *execService) openSSHService(context *Context, request *OpenSessionReque
 	return ssh.NewService(hostname, port, authConfig)
 }
 
+func (s *execService) isSupportedScheme(target *url.Resource) bool {
+	return target.ParsedURL.Scheme == "ssh" || target.ParsedURL.Scheme == "scp" || target.ParsedURL.Scheme == "file"
+}
+
+func (s *execService) initSession(context *Context, target *url.Resource, session *SystemTerminalSession, env map[string]string) error {
+	_ = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
+	for k, v := range env {
+		if err := s.setEnvVariable(context, session, k, v); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *execService) captureCommandIfNeeded(context *Context, replayCommands *ssh.ReplayCommands, sshService ssh.Service) (err error) {
+	if replayCommands != nil {
+		err = replayCommands.Enable(sshService)
+		if err != nil {
+			return err
+		}
+		context.Deffer(func() {
+			_ = replayCommands.Store()
+		})
+	}
+	return err
+}
+
 func (s *execService) openSession(context *Context, request *OpenSessionRequest) (*SystemTerminalSession, error) {
 	s.Mutex().Lock()
 	defer s.Mutex().Unlock()
@@ -84,7 +111,7 @@ func (s *execService) openSession(context *Context, request *OpenSessionRequest)
 	if err != nil {
 		return nil, err
 	}
-	if !(target.ParsedURL.Scheme == "ssh" || target.ParsedURL.Scheme == "scp" || target.ParsedURL.Scheme == "file") {
+	if !s.isSupportedScheme(target) {
 		return nil, fmt.Errorf("failed to open sessionName: invalid schema: %v in url: %v", target.ParsedURL.Scheme, target.URL)
 	}
 	sessions := context.TerminalSessions()
@@ -96,29 +123,22 @@ func (s *execService) openSession(context *Context, request *OpenSessionRequest)
 			return nil, err
 		}
 	}
-
 	var sessionName = target.Host()
 	if sessions.Has(sessionName) {
 		session := sessions[sessionName]
-		err = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
-		for k, v := range request.Env {
-			err := s.setEnvVariable(context, session, k, v)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		return sessions[sessionName], err
-	}
-	sshService, err := s.openSSHService(context, request)
-	if replayCommands != nil {
-		err = replayCommands.Enable(sshService)
+		err = s.initSession(context, target, session, request.Env)
 		if err != nil {
 			return nil, err
 		}
-		context.Deffer(func() {
-			_ = replayCommands.Store()
-		})
+		return sessions[sessionName], err
+	}
+
+	sshService, err := s.openSSHService(context, request)
+	if err == nil {
+		err = s.captureCommandIfNeeded(context, replayCommands, sshService)
+	}
+	if err != nil {
+		return nil, err
 	}
 	session, err := NewSystemTerminalSession(sessionName, sshService)
 	if err != nil {
@@ -129,7 +149,6 @@ func (s *execService) openSession(context *Context, request *OpenSessionRequest)
 			_ = sshService.Close()
 		})
 	}
-
 	session.MultiCommandSession, err = session.Service.OpenMultiCommandSession(request.Config)
 	if err != nil {
 		return nil, err
@@ -139,12 +158,9 @@ func (s *execService) openSession(context *Context, request *OpenSessionRequest)
 			session.MultiCommandSession.Close()
 		})
 	}
-	err = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
+	err = s.initSession(context, target, session, request.Env)
 	if err != nil {
 		return nil, err
-	}
-	for k, v := range request.Env {
-		session.envVariables[k] = v
 	}
 	sessions[sessionName] = session
 	session.OperatingSystem, err = s.detectOperatingSystem(session)
@@ -533,6 +549,10 @@ func (s *execService) NewRequest(action string) (interface{}, error) {
 	return nil, fmt.Errorf("unsupported action: %v", action)
 }
 
+func isAmd64Architecture(candidate string) bool {
+	return strings.Contains(candidate, "amd64") || strings.Contains(candidate, "x86_64")
+}
+
 func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*OperatingSystem, error) {
 	operatingSystem := &OperatingSystem{
 		Path: &SystemPath{
@@ -554,7 +574,7 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 	lines := strings.Split(output, "\r\n")
 	for i := 0; i < len(lines); i++ {
 		line := lines[i]
-		if strings.Contains(line, "amd64") || strings.Contains(line, "x86_64") {
+		if isAmd64Architecture(line) {
 			operatingSystem.Architecture = "amd64"
 		}
 		pair := strings.Split(line, ":")
@@ -576,10 +596,9 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 	if err != nil {
 		return nil, err
 	}
-	if strings.Contains(operatingSystem.Hardware, "amd64") || strings.Contains(operatingSystem.Hardware, "x86_64") {
+	if isAmd64Architecture(operatingSystem.Hardware) {
 		operatingSystem.Architecture = "amd64"
 	}
-
 	operatingSystem.System = session.System()
 	output, err = session.Run("echo $PATH", 0)
 	if err != nil {
