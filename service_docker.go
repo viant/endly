@@ -88,64 +88,44 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
+	var errorMessage string
 	switch actualRequest := request.(type) {
 
 	case *DockerSystemPathRequest:
 		s.SysPath = actualRequest.SysPath
-
 	case *DockerImagesRequest:
 		response.Response, err = s.checkImages(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to check images: %v, %v", actualRequest, err)
-		}
+		errorMessage = fmt.Sprintf("failed to check images %v", actualRequest.Tag)
 	case *DockerPullRequest:
 		response.Response, err = s.pullImage(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to pull images: %v, %v", actualRequest, err)
-		}
+		errorMessage = fmt.Sprintf("failed to pull image %v", actualRequest.Tag)
 	case *DockerContainerStatusRequest:
 		response.Response, err = s.checkContainerProcesses(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to check process: %v, %v", actualRequest, err)
-		}
-
+		errorMessage = "failed to check process"
 	case *DockerContainerCommandRequest:
 		response.Response, err = s.runInContainer(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to run docker command: %v, %v", actualRequest, err)
-		}
+		errorMessage = fmt.Sprintf("failed to run docker command %v in %v", actualRequest.Command, actualRequest.Target.Name)
 	case *DockerContainerStartRequest:
 		response.Response, err = s.startContainer(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed strart container: %v, %v", actualRequest, err)
-		}
+		errorMessage = fmt.Sprintf("failed start container %v", actualRequest.Target.Name)
 	case *DockerContainerStopRequest:
 		response.Response, err = s.stopContainer(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to start container: %v, %v", actualRequest, err)
-		}
+		errorMessage = fmt.Sprintf("failed to stop container: %v", actualRequest.Target.Name)
 	case *DockerContainerRemoveRequest:
 		response.Response, err = s.removeContainer(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to remove container: %v, %v", actualRequest, err)
-		}
+		errorMessage = fmt.Sprintf("failed to remove container: %v", actualRequest.Target.Name)
 	case *DockerRunRequest:
 		response.Response, err = s.runContainer(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to run docker container: %v(%v), %v", actualRequest.Target.Name, actualRequest.Image, err)
-		}
+		errorMessage = fmt.Sprintf("failed to run container: %v", actualRequest.Target.Name)
 	case *DockerStopImagesRequest:
 		response.Response, err = s.stopImages(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to run: %v(%v), %v", actualRequest.Target.Name, actualRequest.Images, err)
-		}
-
+		errorMessage = fmt.Sprintf("failed to stop images: %v", actualRequest.Images)
 	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
-
+		err = fmt.Errorf("unsupported request type: %T", request)
 	}
-	if response.Error != "" {
-		response.Status = "err"
+	if err != nil {
+		response.Status = "error"
+		response.Error = errorMessage + ", " + err.Error()
 	}
 	return response
 }
