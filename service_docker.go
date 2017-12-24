@@ -131,9 +131,7 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 }
 
 func (s *dockerService) stopImages(context *Context, request *DockerStopImagesRequest) (*DockerStopImagesResponse, error) {
-	if len(request.SysPath) > 0 {
-		s.SysPath = request.SysPath
-	}
+	s.applySysPathIfNeeded(request.SysPath)
 	var response = &DockerStopImagesResponse{
 		StoppedImages: make([]string, 0),
 	}
@@ -185,17 +183,18 @@ Options:
 
 */
 
-func (s *dockerService) runContainer(context *Context, request *DockerRunRequest) (*DockerContainerInfo, error) {
-	if request.Target.Name == "" {
-		return nil, fmt.Errorf("Target name was empty for %v", request.Target.URL)
+func (s *dockerService) applySysPathIfNeeded(sysPath []string) {
+	if len(sysPath) > 0 {
+		s.SysPath = sysPath
 	}
-	if request.Image == "" {
-		return nil, fmt.Errorf("Image was empty for %v", request.Target.URL)
-	}
+}
 
-	if len(request.SysPath) > 0 {
-		s.SysPath = request.SysPath
+func (s *dockerService) runContainer(context *Context, request *DockerRunRequest) (*DockerContainerInfo, error) {
+
+	if err := request.Validate(); err != nil {
+		return nil, err
 	}
+	s.applySysPathIfNeeded(request.SysPath)
 
 	var credentials = make(map[string]string)
 	if len(request.Credentials) > 0 {
@@ -264,10 +263,7 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 }
 
 func (s *dockerService) checkContainerProcess(context *Context, request *DockerContainerStatusRequest) (*DockerContainerInfo, error) {
-	if len(request.SysPath) > 0 {
-		s.SysPath = request.SysPath
-	}
-
+	s.applySysPathIfNeeded(request.SysPath)
 	checkResponse, err := s.checkContainerProcesses(context, request)
 	if err != nil {
 		return nil, err
@@ -284,10 +280,7 @@ func (s *dockerService) startContainer(context *Context, request *DockerContaine
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("target name was empty url: %v", request.Target.URL)
 	}
-	if len(request.SysPath) > 0 {
-		s.SysPath = request.SysPath
-	}
-
+	s.applySysPathIfNeeded(request.SysPath)
 	_, err := s.executeDockerCommand(nil, context, request.Target, dockerErrors, "docker start %v", request.Target.Name)
 	if err != nil {
 		return nil, err
@@ -304,10 +297,7 @@ func (s *dockerService) stopContainer(context *Context, request *DockerContainer
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("target name was empty for %v", request.Target.URL)
 	}
-	if len(request.SysPath) > 0 {
-		s.SysPath = request.SysPath
-	}
-
+	s.applySysPathIfNeeded(request.SysPath)
 	info, err := s.checkContainerProcess(context, &DockerContainerStatusRequest{
 		Target:  request.Target,
 		Names:   request.Target.Name,
@@ -334,10 +324,7 @@ func (s *dockerService) removeContainer(context *Context, request *DockerContain
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("Target name was empty for %v", request.Target.URL)
 	}
-	if len(request.SysPath) > 0 {
-		s.SysPath = request.SysPath
-	}
-
+	s.applySysPathIfNeeded(request.SysPath)
 	commandInfo, err := s.executeDockerCommand(nil, context, request.Target, dockerErrors, "docker rm %v", request.Target.Name)
 	if err != nil {
 		return nil, err
@@ -349,9 +336,7 @@ func (s *dockerService) runInContainer(context *Context, request *DockerContaine
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("Target name was empty for %v and command %v", request.Target.URL, request.Command)
 	}
-	if len(request.SysPath) > 0 {
-		s.SysPath = request.SysPath
-	}
+	s.applySysPathIfNeeded(request.SysPath)
 
 	var executionOptions = ""
 	var command = context.Expand(request.Command)
@@ -384,9 +369,7 @@ func (s *dockerService) runInContainer(context *Context, request *DockerContaine
 }
 
 func (s *dockerService) checkContainerProcesses(context *Context, request *DockerContainerStatusRequest) (*DockerContainerStatusResponse, error) {
-	if len(request.SysPath) > 0 {
-		s.SysPath = request.SysPath
-	}
+	s.applySysPathIfNeeded(request.SysPath)
 	info, err := s.executeSecureDockerCommand(nil, context, request.Target, dockerErrors, "docker ps")
 	if err != nil {
 		return nil, err
