@@ -224,10 +224,11 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 	s.applySysPathIfNeeded(request.SysPath)
 	var credentials = s.applyCredentialIfNeeded(request.Credentials)
 
-	if checkResponse, err := s.checkContainerProcesses(context, &DockerContainerStatusRequest{
+	checkResponse, err := s.checkContainerProcesses(context, &DockerContainerStatusRequest{
 		Target: request.Target,
 		Names:  request.Target.Name,
-	}); err == nil {
+	})
+	if err == nil {
 		err = s.resetContainerIfNeeded(context, request.Target, checkResponse)
 	}
 	if err != nil {
