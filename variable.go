@@ -71,50 +71,69 @@ func (v *Variable) fromVariable() *Variable {
 	}
 }
 
+func (v *Variables) getValueFromInState(variable *Variable, in data.Map) (interface{}, error) {
+	var value interface{}
+	if variable.From != "" {
+		var has bool
+		var key = variable.From
+		if strings.HasPrefix(key, "!") {
+			key = strings.Replace(key, "(", "($", 1)
+			value = in.Expand(key)
+		} else {
+			value, has = in.GetValue(key)
+		}
+
+		if !has {
+			fromVariable := variable.fromVariable()
+			err := fromVariable.Load()
+			if fromVariable.Value != nil {
+				in.SetValue(fromVariable.Name, fromVariable.Value)
+				value, _ = in.GetValue(key)
+			}
+			if err != nil {
+				return err, nil
+			}
+		}
+	}
+	return value, nil
+}
+
+func (v *Variables) validateRequiredValueIfNeeded(variable *Variable, value interface{}, in data.Map) error {
+	if variable.Required && (value == nil || toolbox.AsString(value) == "") {
+		source := in.GetString(neatly.OwnerURL)
+		return fmt.Errorf("variable %v is required by %v, but was empty, %v", variable.Name, source, toolbox.MapKeysToStringSlice(in))
+	}
+	return nil
+}
+
+func (v *Variables) isContextEmpty(in, out data.Map) bool {
+	if v == nil || out == nil || in == nil || len(*v) == 0 {
+		return true
+	}
+	return false
+}
+
 //Apply evaluates all variable from in map to out map
 func (v *Variables) Apply(in, out data.Map) error {
-	if v == nil || out == nil || in == nil || len(*v) == 0 {
+	if v.isContextEmpty(in, out) {
 		return nil
 	}
 	for _, variable := range *v {
 		if variable == nil {
 			continue
 		}
-		var value interface{}
-
-		if variable.From != "" {
-			var has bool
-			var key = variable.From
-			if strings.HasPrefix(key, "!") {
-				key = strings.Replace(key, "(", "($", 1)
-				value = in.Expand(key)
-			} else {
-				value, has = in.GetValue(key)
-			}
-
-			if !has {
-				fromVariable := variable.fromVariable()
-				err := fromVariable.Load()
-				if fromVariable.Value != nil {
-					in.SetValue(fromVariable.Name, fromVariable.Value)
-					value, _ = in.GetValue(key)
-				}
-				if err != nil {
-					return err
-				}
-			}
+		value, err := v.getValueFromInState(variable, in)
+		if err != nil {
+			return err
 		}
-
 		if value == nil || (variable.Required && toolbox.AsString(value) == "") {
 			value = variable.Value
 			if value != nil {
 				value = in.Expand(value)
 			}
 		}
-
-		if variable.Required && (value == nil || toolbox.AsString(value) == "") {
-			source := in.GetString(neatly.OwnerURL)
-			return fmt.Errorf("Variable %v is required by %v, but was empty, %v", variable.Name, source, toolbox.MapKeysToStringSlice(in))
+		if err := v.validateRequiredValueIfNeeded(variable, value, in); err != nil {
+			return err
 		}
 
 		if variable.Name != "" {
