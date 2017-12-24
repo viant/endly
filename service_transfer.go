@@ -71,27 +71,33 @@ func IsShellCompressable(protScheme string) bool {
 	return protScheme == "scp" || protScheme == "file"
 }
 
+func (s *transferService) getServiceAndResource(context *Context, resource *url.Resource) (*url.Resource, storage.Service, error) {
+	expendedResource, err := context.ExpandResource(resource)
+	if err != nil {
+		return nil, nil, err
+	}
+	service, err := getStorageService(context, expendedResource)
+	if err != nil {
+		return nil, nil, err
+	}
+	return expendedResource, service, nil
+}
+
 func (s *transferService) run(context *Context, transfers ...*Transfer) (*TransferCopyResponse, error) {
 	var result = &TransferCopyResponse{
 		Transferred: make([]*TransferLog, 0),
 	}
+
 	for _, transfer := range transfers {
-		sourceResource, err := context.ExpandResource(transfer.Source)
-		if err != nil {
-			return nil, err
-		}
-		sourceService, err := getStorageService(context, sourceResource)
+
+		sourceResource, sourceService, err := s.getServiceAndResource(context, transfer.Source)
 		if err != nil {
 			return nil, err
 		}
 		defer sourceService.Close()
-		targetResource, err := context.ExpandResource(transfer.Target)
+		targetResource, targetService, err := s.getServiceAndResource(context, transfer.Target)
 		if err != nil {
 			return nil, err
-		}
-		targetService, err := getStorageService(context, targetResource)
-		if err != nil {
-			return nil, fmt.Errorf("failed to lookup targetResource storageService for %v: %v", targetResource.URL, err)
 		}
 		defer targetService.Close()
 		var handler func(reader io.ReadCloser) (io.ReadCloser, error)
@@ -104,7 +110,6 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 
 		//TODO add in memory compression for other protocols
 		compressed := transfer.Compress && IsShellCompressable(sourceResource.ParsedURL.Scheme) && IsShellCompressable(targetResource.ParsedURL.Scheme)
-
 		var copyEventType = &CopyEventType{
 			SourceURL: sourceResource.URL,
 			TargetURL: targetResource.URL,
