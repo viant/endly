@@ -78,6 +78,7 @@ type Task struct {
 	*TaskInfo
 }
 
+//Expired returns true if task expired
 func (t *Task) Expired(currentTime time.Time) bool {
 	if !t.EndTime.IsZero() {
 		return currentTime.Sub(t.EndTime) > time.Hour
