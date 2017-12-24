@@ -83,6 +83,14 @@ func (s *transferService) getServiceAndResource(context *Context, resource *url.
 	return expendedResource, service, nil
 }
 
+func (s *transferService) getModificationHandler(context *Context, transfer *Transfer) func(reader io.ReadCloser) (io.ReadCloser, error) {
+	var handler func(reader io.ReadCloser) (io.ReadCloser, error)
+	if transfer.Expand || len(transfer.Replace) > 0 {
+		handler = NewExpandedContentHandler(context, transfer.Replace, transfer.Expand)
+	}
+	return handler
+}
+
 func (s *transferService) run(context *Context, transfers ...*Transfer) (*TransferCopyResponse, error) {
 	var result = &TransferCopyResponse{
 		Transferred: make([]*TransferLog, 0),
@@ -100,10 +108,8 @@ func (s *transferService) run(context *Context, transfers ...*Transfer) (*Transf
 			return nil, err
 		}
 		defer targetService.Close()
-		var handler func(reader io.ReadCloser) (io.ReadCloser, error)
-		if transfer.Expand || len(transfer.Replace) > 0 {
-			handler = NewExpandedContentHandler(context, transfer.Replace, transfer.Expand)
-		}
+
+		var handler = s.getModificationHandler(context, transfer)
 		if has, _ := sourceService.Exists(sourceResource.URL); !has {
 			return nil, fmt.Errorf("failed to copy: %v %v - Source does not exists", sourceResource.URL, targetResource.URL)
 		}
