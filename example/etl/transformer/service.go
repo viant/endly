@@ -61,13 +61,24 @@ func (s *service) transformIfNeeded(transformer Transformer, source map[string]i
 	return transformer(source)
 }
 
-func (s *service) appendRecords(transformer Transformer, record map[string]interface{}, records []interface{}) error {
+func (s *service) appendRecords(transformer Transformer, record map[string]interface{}, records *[]interface{}) error {
 	transformed, err := s.transformIfNeeded(transformer, record)
 	if err != nil {
 		return err
 	}
 	for _, item := range transformed {
-		records = append(records, item)
+		*records = append(*records, item)
+	}
+	return nil
+}
+
+func (s *service) drainRecordsIfNeeded(count int, channel chan map[string]interface{}, records *[]interface{}, transformer Transformer) error {
+	for i := 0; i < count; i++ {
+		record := <-channel
+		err := s.appendRecords(transformer, record, records)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -82,7 +93,8 @@ func (s *service) fetchData(connection dsc.Connection, destinationManager dsc.Ma
 	if count == 0 {
 		select {
 		case record := <-channel:
-			err = s.appendRecords(transformer, record, records)
+			count = len(channel)
+			err = s.appendRecords(transformer, record, &records)
 			if err != nil {
 				return
 			}
@@ -99,12 +111,10 @@ func (s *service) fetchData(connection dsc.Connection, destinationManager dsc.Ma
 			}
 		}
 	}
-	for i := 0; i < count; i++ {
-		record := <-channel
-		err = s.appendRecords(transformer, record, records)
-		if err != nil {
-			return
-		}
+
+	err = s.drainRecordsIfNeeded(count, channel, &records, transformer)
+	if err != nil {
+		return true, nil
 	}
 	if len(records) > 0 {
 		if request.InsertMode {
