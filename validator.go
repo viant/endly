@@ -71,76 +71,76 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Validati
 	return nil
 }
 
-func (s *Validator) assertText(expected, actual string, response *ValidationInfo, path string) error {
-	isRegExpr := strings.HasPrefix(expected, "~/") && strings.HasSuffix(expected, "/")
-	isContains := strings.HasPrefix(expected, "/") && strings.HasSuffix(expected, "/")
-
-	if !isRegExpr && !isContains {
-
-		isReversed := strings.HasPrefix(expected, "!")
-		if isReversed {
-			expected = string(expected[1:])
-		}
-		if expected != actual && !isReversed {
-			response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual(%T):  '%v' was not equal (%T) '%v'", actual, actual, expected, expected), expected, actual))
-			return nil
-		}
-		if expected == actual && isReversed {
-			response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual(%T):  '%v' was not equal (%T) '%v'", actual, actual, expected, expected), expected, actual))
-			return nil
-		}
-		response.TestPassed++
+func (s *Validator) assertEqual(expected, actual string, response *ValidationInfo, path string) error {
+	isReversed := strings.HasPrefix(expected, "!")
+	if isReversed {
+		expected = string(expected[1:])
+	}
+	if expected != actual && !isReversed {
+		response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual(%T):  '%v' was not equal (%T) '%v'", actual, actual, expected, expected), expected, actual))
 		return nil
 	}
+	if expected == actual && isReversed {
+		response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual(%T):  '%v' was not equal (%T) '%v'", actual, actual, expected, expected), expected, actual))
+		return nil
+	}
+	response.TestPassed++
+	return nil
+}
 
-	if isContains {
-		expected = string(expected[1 : len(expected)-1])
-		isReversed := strings.HasPrefix(expected, "!")
-		if isReversed {
-			expected = string(expected[1:])
+func (s *Validator) assertRange(isReversed bool, expected, actual string, response *ValidationInfo, path string) error {
+	expected = string(expected[1 : len(expected)-1])
+	if strings.Contains(expected, "..") {
+		var rangeValue = strings.Split(expected, "..")
+		var minExpected = toolbox.AsFloat(rangeValue[0])
+		var maxExpected = toolbox.AsFloat(rangeValue[1])
+		var actualNumber = toolbox.AsFloat(actual)
+
+		if actualNumber >= minExpected && actualNumber <= maxExpected && !isReversed {
+			response.TestPassed++
+			return nil
 		}
+		response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' is not between'%v and %v'", actual, minExpected, maxExpected), minExpected, actual))
 
-		if strings.HasPrefix(expected, "[") && strings.HasSuffix(expected, "]") {
-			expected = string(expected[1 : len(expected)-1])
-			if strings.Contains(expected, "..") {
-				var rangeValue = strings.Split(expected, "..")
-				var minExpected = toolbox.AsFloat(rangeValue[0])
-				var maxExpected = toolbox.AsFloat(rangeValue[1])
-				var actualNumber = toolbox.AsFloat(actual)
-
-				if actualNumber >= minExpected && actualNumber <= maxExpected && !isReversed {
-					response.TestPassed++
-					return nil
-				}
-				response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' is not between'%v and %v'", actual, minExpected, maxExpected), minExpected, actual))
-
-			} else if strings.Contains(expected, ",") {
-				var alternatives = strings.Split(expected, ",")
-				var doesContain = false
-				for _, expectedCandidate := range alternatives {
-					if strings.Contains(actual, expectedCandidate) {
-						doesContain = true
-						break
-					}
-				}
-				if !doesContain && !isReversed {
-					response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' does not contain: '%v'", actual, alternatives), alternatives, actual))
-				} else if isReversed && doesContain {
-					response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' shold not contain: '%v'", actual, alternatives), alternatives, actual))
-				}
-				response.TestPassed++
+	} else if strings.Contains(expected, ",") {
+		var alternatives = strings.Split(expected, ",")
+		var doesContain = false
+		for _, expectedCandidate := range alternatives {
+			if strings.Contains(actual, expectedCandidate) {
+				doesContain = true
+				break
 			}
 		}
-		var doesContain = strings.Contains(actual, expected)
 		if !doesContain && !isReversed {
-			response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' does not contain: '%v'", actual, expected), actual, expected))
+			response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' does not contain: '%v'", actual, alternatives), alternatives, actual))
 		} else if isReversed && doesContain {
-			response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' shold not contain: '%v'", actual, expected), actual, expected))
+			response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' shold not contain: '%v'", actual, alternatives), alternatives, actual))
 		}
 		response.TestPassed++
-		return nil
 	}
+	return nil
+}
 
+func (s *Validator) assertContains(expected, actual string, response *ValidationInfo, path string) error {
+	expected = string(expected[1 : len(expected)-1])
+	isReversed := strings.HasPrefix(expected, "!")
+	if isReversed {
+		expected = string(expected[1:])
+	}
+	if strings.HasPrefix(expected, "[") && strings.HasSuffix(expected, "]") {
+		return s.assertRange(isReversed, expected, actual, response, path)
+	}
+	var doesContain = strings.Contains(actual, expected)
+	if !doesContain && !isReversed {
+		response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' does not contain: '%v'", actual, expected), actual, expected))
+	} else if isReversed && doesContain {
+		response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual '%v' shold not contain: '%v'", actual, expected), actual, expected))
+	}
+	response.TestPassed++
+	return nil
+}
+
+func (s *Validator) assertRegExpr(expected, actual string, response *ValidationInfo, path string) error {
 	expected = string(expected[2 : len(expected)-1])
 	isReversed := strings.HasPrefix(expected, "!")
 	if isReversed {
@@ -165,6 +165,20 @@ func (s *Validator) assertText(expected, actual string, response *ValidationInfo
 	}
 	response.TestPassed++
 	return nil
+}
+
+func (s *Validator) assertText(expected, actual string, response *ValidationInfo, path string) error {
+	isRegExpr := strings.HasPrefix(expected, "~/") && strings.HasSuffix(expected, "/")
+	isContains := strings.HasPrefix(expected, "/") && strings.HasSuffix(expected, "/")
+	var isEqual = !isRegExpr && !isContains
+	if isEqual {
+		return s.assertEqual(expected, actual, response, path)
+	}
+	if isContains {
+		return s.assertContains(expected, actual, response, path)
+	}
+
+	return s.assertRegExpr(expected, actual, response, path)
 }
 
 func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[string]interface{}, response *ValidationInfo, path string) error {

@@ -194,38 +194,14 @@ func (s *daemonService) executeCommand(context *Context, serviceType int, target
 	return context.ExecuteAsSuperUser(target, command)
 }
 
-func (s *daemonService) checkService(context *Context, request *DaemonStatusRequest) (*DaemonInfo, error) {
-	if request.Service == "" {
-		return nil, fmt.Errorf("Service was empty")
-	}
-	target, err := context.ExpandResource(request.Target)
-	if err != nil {
-		return nil, err
-	}
-	serviceType, err := s.determineServiceType(context, request.Service, request.Exclusion, target)
-	if err != nil {
-		return nil, err
-	}
-	var info = &DaemonInfo{
-		Service: request.Service,
-		Type:    serviceType,
-	}
+func (s *daemonService) isLaunchCtlDomainMissing(info *DaemonInfo) bool {
+	return (info.Path == "" || info.Domain == "") && info.Type == serviceTypeLaunchCtl
+}
 
-	if serviceType == serviceTypeLaunchCtl {
-		err = s.getDarwinLaunchServiceInfo(context, target, request, info)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	command := ""
-	if (info.Path == "" || info.Domain == "") && serviceType == serviceTypeLaunchCtl {
-		return info, nil
-	}
-
+func (s *daemonService) determineCheckCommand(context *Context, target *url.Resource, serviceType int, info *DaemonInfo) (command string, err error) {
 	switch serviceType {
 	case serviceTypeError:
-		return nil, fmt.Errorf("Unknown daemon service type")
+		return "", fmt.Errorf("unknown daemon service type")
 
 	case serviceTypeLaunchCtl:
 
@@ -249,11 +225,11 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 				},
 			})
 			if err != nil {
-				return nil, err
+				return "", err
 			}
 			extractServiceInfo(commandResult.Extracted, info)
 		}
-		return info, nil
+		return "", nil
 
 	case serviceTypeSystemctl:
 		command = fmt.Sprintf("systemctl status %v ", info.Service)
@@ -261,6 +237,45 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 		command = fmt.Sprintf("service %v status", info.Service)
 	case serviceTypeInitDaemon:
 		command = fmt.Sprintf("%v status", info.Service)
+	}
+	return command, nil
+}
+
+func (s *daemonService) checkService(context *Context, request *DaemonStatusRequest) (*DaemonInfo, error) {
+	if request.Service == "" {
+		return nil, fmt.Errorf("service was empty")
+	}
+	target, err := context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceType, err := s.determineServiceType(context, request.Service, request.Exclusion, target)
+	if err != nil {
+		return nil, err
+	}
+	var info = &DaemonInfo{
+		Service: request.Service,
+		Type:    serviceType,
+	}
+
+	if serviceType == serviceTypeLaunchCtl {
+		err = s.getDarwinLaunchServiceInfo(context, target, request, info)
+		if err != nil {
+			return nil, err
+		}
+	}
+	command := ""
+	if s.isLaunchCtlDomainMissing(info) {
+		return info, nil
+	}
+
+	command, err = s.determineCheckCommand(context, target, serviceType, info)
+	if err != nil {
+		return nil, err
+	}
+	if command == "" {
+		return info, err
 	}
 
 	commandResult, err := s.executeCommand(context, serviceType, target, &ExtractableCommand{
