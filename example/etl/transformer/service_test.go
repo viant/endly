@@ -3,7 +3,6 @@ package transformer_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/dsc"
-	"github.com/viant/endly/example/etl/transfer"
 	"github.com/viant/endly/example/etl/transformer"
 	"github.com/viant/toolbox"
 	"path"

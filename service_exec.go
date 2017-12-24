@@ -481,6 +481,7 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
+	var errorMessage string
 	switch actualRequest := request.(type) {
 	case *CommandRequest:
 		var mangedCommandRequest = actualRequest.AsExtractableCommandRequest()
@@ -494,41 +495,30 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 		if err == nil {
 			response.Response, err = s.runCommands(context, mangedCommandRequest)
 		}
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to run command, %v", err)
-		}
+		errorMessage = "failed to run command"
 
 	case *OpenSessionRequest:
 		response.Response, err = s.open(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to open session: %v, %v", actualRequest.Target, err)
-		}
+		errorMessage = fmt.Sprintf("failed to open session: %v", actualRequest.Target)
 	case *ExtractableCommandRequest:
 		response.Response, err = s.runCommands(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to run command: %v, %v", actualRequest.ExtractableCommand, err)
-		}
+		errorMessage = fmt.Sprintf("failed to run command: %v", actualRequest.ExtractableCommand)
 	case *superUserCommandRequest:
 		commandRequest, err := actualRequest.AsCommandRequest(context)
 		if err == nil {
 			response.Response, err = s.runCommands(context, commandRequest)
 		}
-		if err != nil {
-			response.Error = fmt.Sprintf("%v", err)
-		}
-
 	case *CloseSessionRequest:
 		response.Response, err = s.closeSession(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to close session: %v, %v", actualRequest.SessionID, err)
-		}
+		errorMessage = fmt.Sprintf("failed to close session: %v", actualRequest.SessionID)
 
 	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
+		err = fmt.Errorf("unsupported request type: %T", request)
 	}
 
-	if response.Error != "" {
+	if err != nil {
 		response.Status = "error"
+		response.Error = errorMessage +", " + err.Error()
 	}
 	return response
 }
