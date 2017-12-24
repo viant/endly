@@ -1,6 +1,8 @@
 package endly
 
 import (
+	"fmt"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/viant/toolbox/url"
 )
 
@@ -16,4 +18,15 @@ type DockerRunRequest struct {
 	MappedPort  map[string]string
 	Params      map[string]string
 	Workdir     string
+}
+
+//Validate checks if request is valid
+func (r *DockerRunRequest) Validate() error {
+	if r.Target.Name == "" {
+		return fmt.Errorf("target name was empty for %v", r.Target.URL)
+	}
+	if r.Image == "" {
+		return fmt.Errorf("image was empty for %v", r.Target.URL)
+	}
+	return nil
 }
