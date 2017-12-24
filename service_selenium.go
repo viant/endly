@@ -55,58 +55,44 @@ type seleniumService struct {
 }
 
 func (s *seleniumService) Run(context *Context, request interface{}) *ServiceResponse {
-
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
+	var errorTemplate string
 
 	switch actualRequest := request.(type) {
 
 	case *SeleniumServerStartRequest:
 		response.Response, err = s.start(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to start selenium %v", err)
-		}
-
+		errorTemplate = "failed to start selenium %v"
 	case *SeleniumServerStopRequest:
 		response.Response, err = s.stop(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to start selenium %v", err)
-		}
+		errorTemplate = "failed to start selenium %v"
 
 	case *SeleniumOpenSessionRequest:
 		response.Response, err = s.open(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to open selenium session %v", err)
-		}
+		errorTemplate = "failed to open selenium session %v"
 	case *SeleniumCloseSessionRequest:
 		response.Response, err = s.close(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to open selenium session %v", err)
-		}
+		errorTemplate = "failed to open selenium session %v"
 
 	case *SeleniumWebDriverCallRequest:
 		response.Response, err = s.webDriverCall(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to call web driver %v", err)
-		}
+		errorTemplate = "failed to call web driver %v"
 	case *SeleniumWebElementCallRequest:
 		response.Response, err = s.webElementCall(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to call web element: %v", err)
-		}
+		errorTemplate = "failed to call web element: %v"
 	case *SeleniumRunRequest:
 		response.Response, err = s.run(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to call web element: %v", err)
-		}
+		errorTemplate = "failed to call web element: %v"
 	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
+		errorTemplate = "%v"
+		err = fmt.Errorf("unsupported request type: %T", request)
 	}
-
-	if response.Error != "" {
+	if err != nil {
 		response.Status = "err"
+		response.Error = fmt.Sprintf(errorTemplate, err)
 	}
 	return response
 
