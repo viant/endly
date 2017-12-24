@@ -320,12 +320,16 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 	}
 	err = task.Post.Apply(state, state)
 	s.addVariableEvent("Task.Post", task.Post, context, state)
+	s.applyRemainingTaskSpentIfNeeded(context, task, startTime)
+	return err
+}
+
+func (s *workflowService) applyRemainingTaskSpentIfNeeded(context *Context, task *WorkflowTask, startTime time.Time) {
 	if task.TimeSpentMs > 0 {
 		var elapsed = (time.Now().UnixNano() - startTime.UnixNano()) / int64(time.Millisecond)
 		var remainingExecutionTime = time.Duration(task.TimeSpentMs - int(elapsed))
 		s.Sleep(context, int(remainingExecutionTime))
 	}
-	return err
 }
 
 func (s *workflowService) runAsyncActions(context *Context, workflow *Workflow, task *WorkflowTask, request *WorkflowRunRequest, asyncAction []*ServiceAction) error {
