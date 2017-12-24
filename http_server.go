@@ -65,6 +65,7 @@ func (t *HTTPServerTrips) loadTripsIfNeeded() error {
 	return nil
 }
 
+//Init initialises trips
 func (t *HTTPServerTrips) Init() error {
 	if t.Mutex == nil {
 		t.Mutex = &sync.Mutex{}
