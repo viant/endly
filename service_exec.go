@@ -518,7 +518,7 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 
 	if err != nil {
 		response.Status = "error"
-		response.Error = errorMessage +", " + err.Error()
+		response.Error = errorMessage + ", " + err.Error()
 	}
 	return response
 }
