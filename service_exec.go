@@ -504,7 +504,8 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 		response.Response, err = s.runCommands(context, actualRequest)
 		errorMessage = fmt.Sprintf("failed to run command: %v", actualRequest.ExtractableCommand)
 	case *superUserCommandRequest:
-		commandRequest, err := actualRequest.AsCommandRequest(context)
+		var commandRequest *ExtractableCommandRequest
+		commandRequest, err = actualRequest.AsCommandRequest(context)
 		if err == nil {
 			response.Response, err = s.runCommands(context, commandRequest)
 		}
