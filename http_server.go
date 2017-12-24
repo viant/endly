@@ -1,6 +1,7 @@
 package endly
 
 import (
+	"errors"
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/bridge"
@@ -64,6 +65,20 @@ func (t *HTTPServerTrips) loadTripsIfNeeded() error {
 	return nil
 }
 
+func (t *HTTPServerTrips) Init() error {
+	if t.Mutex == nil {
+		t.Mutex = &sync.Mutex{}
+	}
+	err := t.loadTripsIfNeeded()
+	if err != nil {
+		return fmt.Errorf("failed to load trips: %v", err)
+	}
+	if len(t.Trips) == 0 {
+		return errors.New("trips were empty")
+	}
+	return nil
+}
+
 //HTTPResponses represents HTTPResponses
 type HTTPResponses struct {
 	Request   *bridge.HttpRequest
@@ -80,25 +95,8 @@ func (h *httpHandler) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 	h.handler(writer, request)
 }
 
-//StartHTTPServer starts http request
-func StartHTTPServer(port int, trips *HTTPServerTrips) error {
-	if trips.Mutex == nil {
-		trips.Mutex = &sync.Mutex{}
-	}
-
-	err := trips.loadTripsIfNeeded()
-	if err != nil {
-		return fmt.Errorf("failed to start http server :%v, %v", port, err)
-	}
-	if len(trips.Trips) == 0 {
-		return fmt.Errorf("failed to start http server :%v, trips were empty", port)
-	}
-	var httpServer *http.Server
-	var httpHandler = &httpHandler{
-		running: 1,
-	}
-
-	var handler = func(writer http.ResponseWriter, request *http.Request) {
+func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *HTTPServerTrips) func(writer http.ResponseWriter, request *http.Request) {
+	return func(writer http.ResponseWriter, request *http.Request) {
 
 		trips.Mutex.Lock()
 		defer trips.Mutex.Unlock()
@@ -149,7 +147,20 @@ func StartHTTPServer(port int, trips *HTTPServerTrips) error {
 
 		}
 	}
-	httpHandler.handler = handler
+}
+
+//StartHTTPServer starts http request
+func StartHTTPServer(port int, trips *HTTPServerTrips) error {
+	err := trips.Init()
+	if err != nil {
+		return fmt.Errorf("failed to start http server :%v, %v", port, err)
+	}
+
+	var httpServer *http.Server
+	var httpHandler = &httpHandler{
+		running: 1,
+	}
+	httpHandler.handler = getServerHandler(httpServer, httpHandler, trips)
 	httpServer = &http.Server{Addr: fmt.Sprintf(":%v", port), Handler: httpHandler}
 
 	errorNotification := make(chan bool, 1)
