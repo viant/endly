@@ -140,29 +140,10 @@ func (r *CliRunner) printShortMessage(messageType int, message string, messageIn
 	fmt.Printf("%v\n", r.formatShortMessage(messageType, message, messageInfoType, messageInfo))
 }
 
-func (r *CliRunner) reportEvenType(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) {
+func (r *CliRunner) reportDsUnitEventTypes(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) bool {
 	switch actual := serviceResponse.(type) {
-	case *ServiceResponse:
-		if actual.Response != nil {
-			r.reportEvenType(actual.Response, event, filter)
-		}
-	case *ValidationInfo:
-		r.reportValidationInfo(actual, event)
-	case *HTTPRequest:
-		if filter.HTTPTrip {
-			r.reportHTTPRequest(actual)
-		}
-	case *HTTPResponse:
-		if filter.HTTPTrip {
-			r.reportHTTPResponse(actual)
-		}
-	case *DeploymentDeployRequest:
-		if filter.Deployment {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("app: %v, forced: %v", actual.AppName, actual.Force), messageTypeGeneric, "deploy")
-		}
 	case *DsUnitRegisterRequest:
 		if filter.RegisterDatastore {
-
 			var descriptor = actual.Config.Descriptor
 			var password = actual.Config.Parameters["password"]
 			if len(password) > 0 {
@@ -191,43 +172,44 @@ func (r *CliRunner) reportEvenType(serviceResponse interface{}, event *Event, fi
 		if filter.SQLScript {
 			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v", actual.Datastore, actual.URL), messageTypeGeneric, "sql")
 		}
+	default:
+		return false
+	}
+	return true
+}
 
-	case *ErrorEventType:
-		r.report.Error = true
-		r.printShortMessage(messageTypeError, fmt.Sprintf("%v", actual.Error), messageTypeError, "error")
-		fmt.Println(colorText(fmt.Sprintf("ERROR: %v\n", actual.Error), "red"))
-
-	case *SleepEventType:
-		r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v ms", actual.SleepTimeMs), messageTypeGeneric, "Sleep")
-	case *VcCheckoutRequest:
-		if filter.Checkout {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", actual.Origin.URL, actual.Target.URL), messageTypeGeneric, "checkout")
+func (r *CliRunner) reportHTTPEventTypes(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) bool {
+	switch actual := serviceResponse.(type) {
+	case *HTTPRequest:
+		if filter.HTTPTrip {
+			r.reportHTTPRequest(actual)
 		}
-
-	case *BuildRequest:
-		if filter.Build {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", actual.BuildSpec.Name, actual.Target.URL), messageTypeGeneric, "build")
+	case *HTTPResponse:
+		if filter.HTTPTrip {
+			r.reportHTTPResponse(actual)
 		}
+	default:
+		return false
+	}
+	return true
+}
 
-	case *ExecutionStartEvent:
-		if filter.Stdin {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", actual.SessionID), messageTypeGeneric, "stdin")
+func (r *CliRunner) reportValidationEventTypes(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) bool {
+	switch actual := serviceResponse.(type) {
+	case *ValidationInfo:
+		r.reportValidationInfo(actual, event)
+	case *LogValidatorAssertResponse:
+		r.reportLogValidationInfo(actual)
+	case *SeleniumRunResponse:
+		r.reportLookupErrors(actual)
+	default:
+		return false
+	}
+	return true
+}
 
-			r.printInput(escapeStdout(actual.Stdin))
-		}
-	case *ExecutionEndEvent:
-		if filter.Stdout {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", actual.SessionID), messageTypeGeneric, "stdout")
-			r.printOutput(escapeStdout(actual.Stdout))
-
-		}
-	case *CopyEventType:
-		if filter.Transfer {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("expand: %v", actual.Expand), messageTypeGeneric, "copy")
-			r.printInput(fmt.Sprintf("SourceURL: %v", actual.SourceURL))
-			r.printOutput(fmt.Sprintf("TargetURL: %v", actual.TargetURL))
-
-		}
+func (r *CliRunner) reportWorkflowEventTypes(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) bool {
+	switch actual := serviceResponse.(type) {
 
 	case *AsyncServiceActionEvent:
 		r.printShortMessage(messageTypeTagDescription, fmt.Sprintf("%v[%v] %v", actual.TagID, actual.Task, actual.Description), messageTypeTagDescription, "scheduled")
@@ -243,17 +225,95 @@ func (r *CliRunner) reportEvenType(serviceResponse interface{}, event *Event, fi
 		var serviceAction = fmt.Sprintf("%v.%v", actual.Service, actual.Action)
 		r.printShortMessage(messageTypeAction, actual.Description, messageTypeAction, serviceAction)
 
-	case *SeleniumRunResponse:
-		r.reportLookupErrors(actual)
-
-	case *LogValidatorAssertResponse:
-		r.reportLogValidationInfo(actual)
-
 	case *WorkflowServiceActivityEndEventType:
-
 		r.activity = r.activities.Pop()
+	case *ServiceResponse:
+		if actual.Response != nil {
+			r.reportEventType(actual.Response, event, filter)
+		}
+	default:
+		return false
+	}
+	return true
+}
+
+func (r *CliRunner) reportExecutionEvenType(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) bool {
+	switch actual := serviceResponse.(type) {
+	case *ExecutionStartEvent:
+		if filter.Stdin {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", actual.SessionID), messageTypeGeneric, "stdin")
+
+			r.printInput(escapeStdout(actual.Stdin))
+		}
+	case *ExecutionEndEvent:
+		if filter.Stdout {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", actual.SessionID), messageTypeGeneric, "stdout")
+			r.printOutput(escapeStdout(actual.Stdout))
+		}
+	default:
+		return false
+	}
+	return true
+}
+
+func (r *CliRunner) reportSystemEventType(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) bool {
+	switch actual := serviceResponse.(type) {
+	case *ErrorEventType:
+		r.report.Error = true
+		r.printShortMessage(messageTypeError, fmt.Sprintf("%v", actual.Error), messageTypeError, "error")
+		fmt.Println(colorText(fmt.Sprintf("ERROR: %v\n", actual.Error), "red"))
+	case *SleepEventType:
+		r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v ms", actual.SleepTimeMs), messageTypeGeneric, "Sleep")
 	case *ReportSummaryEvent:
 		r.reportSummaryEvent()
+	default:
+		return false
+	}
+	return true
+}
+
+func (r *CliRunner) reportEventType(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) {
+	if r.reportWorkflowEventTypes(serviceResponse, event, filter) {
+		return
+	}
+	if r.reportExecutionEvenType(serviceResponse, event, filter) {
+		return
+	}
+	if r.reportDsUnitEventTypes(serviceResponse, event, filter) {
+		return
+	}
+	if r.reportHTTPEventTypes(serviceResponse, event, filter) {
+		return
+	}
+	if r.reportValidationEventTypes(serviceResponse, event, filter) {
+		return
+	}
+	if r.reportSystemEventType(serviceResponse, event, filter) {
+		return
+	}
+	switch actual := serviceResponse.(type) {
+	case *DeploymentDeployRequest:
+		if filter.Deployment {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("app: %v, forced: %v", actual.AppName, actual.Force), messageTypeGeneric, "deploy")
+		}
+
+	case *VcCheckoutRequest:
+		if filter.Checkout {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", actual.Origin.URL, actual.Target.URL), messageTypeGeneric, "checkout")
+		}
+
+	case *BuildRequest:
+		if filter.Build {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", actual.BuildSpec.Name, actual.Target.URL), messageTypeGeneric, "build")
+		}
+
+	case *CopyEventType:
+		if filter.Transfer {
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("expand: %v", actual.Expand), messageTypeGeneric, "copy")
+			r.printInput(fmt.Sprintf("SourceURL: %v", actual.SourceURL))
+			r.printOutput(fmt.Sprintf("TargetURL: %v", actual.TargetURL))
+
+		}
 	}
 }
 
@@ -448,7 +508,7 @@ func (r *CliRunner) reportEvent(context *Context, event *Event, filter *RunnerRe
 
 func (r *CliRunner) processEvents(event *Event, filter *RunnerReportingFilter) {
 	for _, value := range event.Value {
-		r.reportEvenType(value, event, filter)
+		r.reportEventType(value, event, filter)
 	}
 }
 
