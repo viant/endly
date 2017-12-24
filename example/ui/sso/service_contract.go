@@ -23,7 +23,7 @@ type SignUpResponse struct {
 type SignInRequest struct {
 	Email       string `json:"email"`
 	Password    string `json:"password"`
-	RememberMe  string   `json:"rememberMe"`
+	RememberMe  string `json:"rememberMe"`
 	LandingPage string `json:"landingPage"`
 }
 
@@ -34,13 +34,14 @@ type SignInResponse struct {
 	LandingPage string `json:"landingPage"`
 }
 
-//Status represents base response
+//BaseResponse represents base response
 type BaseResponse struct {
 	Status      string `json:"status"`
 	Error       string `json:"error"`
 	ErrorSource string `json:"errorSource"`
 }
 
+//Validate check request all data if it is provided or valid.
 func (r *SignUpRequest) Validate() (string, error) {
 	if r.User == nil || r.Name == "" {
 		return "name", errors.New("name was empty")
