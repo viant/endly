@@ -157,13 +157,13 @@ func (s *service) copyData(sourceManager, destinationManager dsc.Manager, reques
 		batchSize = 1
 	}
 	var records = make(chan map[string]interface{}, batchSize+1)
-	var fetchCompleted int32 = 0
+	var fetchCompleted int32
 	waitGroup := s.persist(destinationManager, records, request, response, &fetchCompleted)
 
 	err := sourceManager.ReadAllWithHandler(request.Source.SQL, keys, func(scanner dsc.Scanner) (bool, error) {
 		var statusCode = atomic.LoadInt32(&response.StatusCode)
 		var record = make(map[string]interface{})
-		if statusCode == StatusCodeNotRunning {
+		if statusCode == StatusTaskNotRunning {
 			return false, nil
 		}
 		response.RecordCount++
@@ -210,7 +210,7 @@ func (s *service) openKeyFiles(keyPath string) ([]*os.File, error) {
 
 //Copy copy data from source to destination
 func (s *service) Copy(request *CopyRequest) *CopyResponse {
-	var response = &CopyResponse{BaseResponse: &BaseResponse{StartTime: time.Now()}, TaskInfo: &TaskInfo{StatusCode: StatusCodeRunning}}
+	var response = &CopyResponse{BaseResponse: &BaseResponse{StartTime: time.Now()}, TaskInfo: &TaskInfo{StatusCode: StatusTaskRunning}}
 	response.StatusCode = 1
 	var dataset = request.Source.Table
 	if dataset == "" {
@@ -255,7 +255,7 @@ func (s *service) KillTask(request *KillTaskRequest) *KillTaskResponse {
 	for _, candidate := range s.tasks {
 		if request.ID == candidate.ID {
 			response.Task = candidate
-			atomic.StoreInt32(&candidate.StatusCode, StatusCodeNotRunning)
+			atomic.StoreInt32(&candidate.StatusCode, StatusTaskNotRunning)
 			break
 		}
 	}

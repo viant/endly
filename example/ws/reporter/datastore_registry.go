@@ -8,6 +8,7 @@ import (
 //DatastoreRegistry represents a datastore datastores
 type DatastoreRegistry map[string]dsc.Manager
 
+//Register register datastore config with datastore connectivity config.
 func (r *DatastoreRegistry) Register(config *DatastoreConfig) error {
 	manager, err := dsc.NewManagerFactory().Create(config.Config)
 	if err != nil {

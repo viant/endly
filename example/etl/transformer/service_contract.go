@@ -6,8 +6,10 @@ import (
 )
 
 const (
-	StatusCodeNotRunning = iota
-	StatusCodeRunning
+	//StatusTaskNotRunning  represent terminated task
+	StatusTaskNotRunning = iota
+	//StatusTaskRunning represents active copy task
+	StatusTaskRunning
 )
 
 //BaseResponse represents a base response
