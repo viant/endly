@@ -9,8 +9,6 @@ import (
 type SendHTTPRequest struct {
 	Options     []*toolbox.HttpOptions
 	Requests    []*HTTPRequest
-	RequestUdf  string
-	ResponseUdf string
 }
 
 //HTTPRequest represents an http request
@@ -27,6 +25,8 @@ type HTTPRequest struct {
 	Repeat       int               //how many time send this request
 	SleepTimeMs  int               //Sleep time after request send, this only makes sense with repeat option
 	ExitCriteria string            //Repeat exit criteria, it uses extracted variable to determine repeat termination
+	RequestUdf  string
+	ResponseUdf string
 }
 
 //SendHTTPResponse represnets a send response
@@ -112,5 +112,7 @@ func (r *HTTPRequest) Expand(context *Context) *HTTPRequest {
 		Repeat:       r.Repeat,
 		SleepTimeMs:  r.SleepTimeMs,
 		ExitCriteria: r.ExitCriteria,
+		RequestUdf:   r.RequestUdf,
+		ResponseUdf:  r.ResponseUdf,
 	}
 }
