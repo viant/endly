@@ -7,9 +7,10 @@ Workflow,,,Name,Description,Tasks,,,,,,,
 ,,dsunit,register,Register database,#req/db4_register.json,127.0.0.1,,,,,,
 []Tasks,,,Name,Description,Actions,,,,,,,
 ,,,test,Defines test requests,%Test,,,,,,,
-[]Test{1..001},Subpath,Service,Action,Description,Request,url,datastore,Post,var.Name,var.From,rest.expected,TagDescription
+[]Test{1..003},Subpath,Service,Action,Description,Request,url,datastore,Post,var.Name,var.From,rest.expected,TagDescription
 ,use_cases/${index}*,dsunit,prepare,prepare mysql data,#req/prepare_data.json,${path}/db3,db3,,,,,#use_case.txt
 ,use_cases/${index}*,dsunit,prepare,prepare aerospike data,#req/prepare_data.json,${path}/db4,db4,,,,,
-,use_cases/${index}*,rest/runner,send,send copy request,#req/rest_send.json|#copy.json,/api/copy/,,[$arg0] | $var,rest.actual,Response.Data,,
-//,use_cases/${index}*,validator,assert,validate register respose,#req/rest_assert.json,,,,,,ok,
-//,use_cases/${index}*,dsunit,expect,validate report table in datastore,#req/db1_expect.json|#report.json,,,,,,,
+,use_cases/${index}*,rest/runner,send,send copy request,#req/rest_send.json|#copy.json,/api/copy/,,[$arg0] | $var,rest.actual,Response.Status,,
+,use_cases/${index}*,validator,assert,validate register respose,#req/rest_assert.json,,,,,,ok,
+,use_cases/${index}*,dsunit,expect,validate report table in datastore,#req/expect_data.json,${path}/db3,db3,,,,,
+,use_cases/${index}*,dsunit,expect,validate report table in datastore,#req/expect_data.json,${path}/db4,db4,,,,,

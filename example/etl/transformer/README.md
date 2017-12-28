@@ -1,5 +1,3 @@
-### This examples is still being worked on, come back later
-
 # Transformer application - simple data copy from one datastore to another, i.e. (aerospike to mysql)
 
 This application was build to provide end to end testing example of etl application.

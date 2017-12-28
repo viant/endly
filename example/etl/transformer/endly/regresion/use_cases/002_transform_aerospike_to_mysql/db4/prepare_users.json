@@ -1,0 +1,35 @@
+[
+  {},
+  {
+    "id": 101,
+    "email": "abc@p1.pl",
+    "dob":"1976-01-03",
+    "visits":[{"app_id":1,"date":"2017-01-02", "count":3},{"app_id":1,"date":"2017-01-01","count":1}, {"app_id":2,"date":"2017-02-06","count":10}]
+  },
+  {
+    "id": 102,
+    "email": "xyz@p1.pl",
+    "visits":[{"app_id":1,"date":"2017-03-16", "count":23},{"app_id":1,"date":"2017-07-21","count":4}, {"app_id":1,"date":"2017-08-01","count":5}]
+  },
+  {
+    "id": 103,
+    "email": "ijk@p1.pl",
+    "visits":[{"app_id":3,"date":"2017-03-16", "count":2}]
+  },
+  {
+    "id": 201,
+    "email": "abc@p2.pl",
+    "dob":"1973-05-03",
+    "visits":[{"app_id":1,"date":"2017-01-31", "count":5},{"app_id":2,"date":"2017-05-30","count":8}, {"app_id":2,"date":"2017-04-06","count":3}]
+  },
+  {
+    "id": 202,
+    "email": "xyz@p2.pl",
+    "visits":[{"app_id":1,"date":"2017-03-16", "count":4}]
+  },
+  {
+    "id": 203,
+    "email": "ijk@p2.pl",
+    "visits":[{"app_id":3,"date":"2017-12-30", "count":6},{"app_id":3,"date":"2017-11-30","count":2}, {"app_id":1,"date":"2017-08-12","count":6}]
+  }
+]
