@@ -15,7 +15,7 @@
         "optimizeLargeScan": "true"
       }
     },
-    "SQL": "SELECT id, email FROM users"
+    "SQL": "SELECT id, email, dob FROM users"
   },
   "Destination": {
     "DsConfig": {
@@ -23,10 +23,14 @@
       "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
       "Parameters": {
         "username": "dev",
-        "password": "dev"
+        "dateFormat": "yyyy-MM-dd hh:mm:ss",
+        "password": "dev",
+        "dbname":"db3"
       }
     },
-    "Table": "users"
+    "Table": "users",
+    "PkColumns":["id"],
+    "Columns":["id", "email", "dob"]
   },
   "Transformer": ""
 }

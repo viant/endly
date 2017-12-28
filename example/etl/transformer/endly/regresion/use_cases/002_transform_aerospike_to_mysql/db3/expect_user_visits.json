@@ -1,0 +1,16 @@
+[
+  { "user_id":202, "visit_app_id":1, "visit_date":"2017-03-16", "visit_count":4},
+  { "user_id":101, "visit_app_id":1, "visit_date":"2017-01-02", "visit_count":3},
+  { "user_id":101, "visit_app_id":1, "visit_date":"2017-01-01", "visit_count":1},
+  { "user_id":101, "visit_app_id":2, "visit_date":"2017-02-06", "visit_count":10},
+  { "user_id":201, "visit_app_id":1, "visit_date":"2017-01-31", "visit_count":5},
+  { "user_id":201, "visit_app_id":2, "visit_date":"2017-05-30", "visit_count":8},
+  { "user_id":201, "visit_app_id":2, "visit_date":"2017-04-06", "visit_count":3},
+  { "user_id":203, "visit_app_id":3, "visit_date":"2017-12-30", "visit_count":6},
+  { "user_id":203, "visit_app_id":3, "visit_date":"2017-11-30", "visit_count":2},
+  { "user_id":203, "visit_app_id":1, "visit_date":"2017-08-12", "visit_count":6},
+  { "user_id":103, "visit_app_id":3, "visit_date":"2017-03-16", "visit_count":2},
+  { "user_id":102, "visit_app_id":1, "visit_date":"2017-03-16", "visit_count":23},
+  { "user_id":102, "visit_app_id":1, "visit_date":"2017-07-21", "visit_count":4},
+  { "user_id":102, "visit_app_id":1, "visit_date":"2017-08-01", "visit_count":5}
+]

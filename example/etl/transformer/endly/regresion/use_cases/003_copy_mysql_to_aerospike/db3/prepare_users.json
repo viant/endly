@@ -1,0 +1,29 @@
+[
+  {},
+  {
+    "id": 101,
+    "email": "abc@p1.pl",
+    "dob": "1976-01-03"
+  },
+  {
+    "id": 102,
+    "email": "xyz@p1.pl"
+  },
+  {
+    "id": 103,
+    "email": "ijk@p1.pl"
+  },
+  {
+    "id": 201,
+    "email": "abc@p2.pl",
+    "dob": "1973-05-03"
+  },
+  {
+    "id": 202,
+    "email": "xyz@p2.pl"
+  },
+  {
+    "id": 203,
+    "email": "ijk@p2.pl"
+  }
+]

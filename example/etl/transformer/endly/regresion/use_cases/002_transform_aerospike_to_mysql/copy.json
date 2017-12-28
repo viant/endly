@@ -1,0 +1,37 @@
+{
+  "BatchSize": 8,
+  "InsertMode": true,
+  "Source": {
+    "DsConfig": {
+      "DriverName": "aerospike",
+      "Descriptor": "tcp([host]:3000)/[namespace]",
+      "Parameters": {
+        "dbname": "db4",
+        "namespace": "db4",
+        "host": "$targetHost",
+        "port": "3000",
+        "dateFormat": "yyyy-MM-dd hh:mm:ss",
+        "keyColumnName": "id",
+        "optimizeLargeScan": "true",
+        "inheritIdFromPK":"false"
+      }
+    },
+    "SQL": "SELECT id AS user_id, visits AS visit FROM users"
+  },
+  "Destination": {
+    "DsConfig": {
+      "DriverName": "mysql",
+      "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+      "Parameters": {
+        "username": "dev",
+        "dateFormat": "yyyy-MM-dd hh:mm:ss",
+        "password": "dev",
+        "dbname":"db3"
+      }
+    },
+    "Table": "user_visits",
+    "PkColumns":["user_id","visit_date", "visit_count", "visit_app_id"],
+    "Columns":["user_id","visit_date", "visit_count", "visit_app_id"]
+  },
+  "Transformer": "Flatten"
+}
