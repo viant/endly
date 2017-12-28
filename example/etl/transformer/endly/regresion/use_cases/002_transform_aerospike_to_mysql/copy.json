@@ -12,10 +12,11 @@
         "port": "3000",
         "dateFormat": "yyyy-MM-dd hh:mm:ss",
         "keyColumnName": "id",
-        "optimizeLargeScan": "true"
+        "optimizeLargeScan": "true",
+        "inheritIdFromPK":"false"
       }
     },
-    "SQL": "SELECT id, email, dob FROM users"
+    "SQL": "SELECT id AS user_id, visits AS visit FROM users"
   },
   "Destination": {
     "DsConfig": {
@@ -28,9 +29,9 @@
         "dbname":"db3"
       }
     },
-    "Table": "users",
-    "PkColumns":["id"],
-    "Columns":["id", "email", "dob"]
+    "Table": "user_visits",
+    "PkColumns":["user_id","visit_date", "visit_count", "visit_app_id"],
+    "Columns":["user_id","visit_date", "visit_count", "visit_app_id"]
   },
-  "Transformer": ""
+  "Transformer": "Flatten"
 }

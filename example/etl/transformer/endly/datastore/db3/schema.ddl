@@ -9,16 +9,17 @@ CREATE TABLE apps (
 DROP TABLE IF EXISTS users;
 CREATE TABLE users (
   id    INT AUTO_INCREMENT PRIMARY KEY,
-  email VARCHAR(255)
+  email VARCHAR(255),
+  dob  DATE
 );
 
-DROP TABLE IF EXISTS app_usage;
-CREATE TABLE app_usage (
-  id      INT AUTO_INCREMENT PRIMARY KEY,
-  date    DATE,
-  count   INT,
+DROP TABLE IF EXISTS user_visits;
+CREATE TABLE user_visits (
+  visit_date    DATE,
+  visit_count   INT,
+  visit_app_id  INT,
   user_id INT,
-  app_id  INT
+  PRIMARY KEY(user_id, visit_app_id, visit_date)
 );
 
 

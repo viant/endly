@@ -1,1 +1,1 @@
-Transform user table from aerospike to mysql app_usage table
+Transform user table from aerospike to mysql app_usage table with Flatten transformer

@@ -1,0 +1,42 @@
+{
+  "BatchSize": 8,
+  "InsertMode": true,
+  "Source": {
+    "DsConfig": {
+      "DriverName": "mysql",
+      "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+      "Parameters": {
+        "username": "dev",
+        "dateFormat": "yyyy-MM-dd hh:mm:ss",
+        "password": "dev",
+        "dbname": "db3"
+      }
+    },
+    "Table": "users",
+    "SQL": "SELECT id,email, dob FROM users"
+  },
+
+  "Destination": {
+    "DsConfig": {
+      "DriverName": "aerospike",
+      "Descriptor": "tcp([host]:3000)/[namespace]",
+      "Parameters": {
+        "dbname": "db4",
+        "namespace": "db4",
+        "host": "$targetHost",
+        "port": "3000",
+        "dateFormat": "yyyy-MM-dd hh:mm:ss",
+        "keyColumnName": "id"
+      }
+    },
+    "PkColumns": [
+      "id"
+    ],
+    "Table":"users",
+    "Columns": [
+      "id",
+      "email",
+      "dob"
+    ]
+  }
+}

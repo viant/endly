@@ -40,7 +40,6 @@ func (r *DatasetResource) AsTableDescription() *dsc.TableDescriptor {
 
 //TaskInfo represents processed record info
 type TaskInfo struct {
-	Status             string
 	StatusCode         int32
 	SkippedRecordCount int
 	EmptyRecordCount   int
