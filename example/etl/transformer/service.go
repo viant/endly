@@ -123,7 +123,6 @@ func (s *service) fetchData(connection dsc.Connection, destinationManager dsc.Ma
 				return dmlProvider.Get(dsc.SQLTypeInsert, item)
 			}
 
-
 			_, err = destinationManager.PersistData(connection, records, request.Destination.Table, dmlProvider, parametrizedSQLProvider)
 			if err != nil {
 				return false, err
@@ -211,7 +210,6 @@ func (s *service) copyData(sourceManager, destinationManager dsc.Manager, reques
 			return false, nil
 		}
 
-
 		response.RecordCount++
 		err := scanner.Scan(&record)
 		if err != nil {
@@ -255,7 +253,7 @@ func (s *service) openKeyFiles(keyPath string) ([]*os.File, error) {
 
 //Copy copy data from source to destination
 func (s *service) Copy(request *CopyRequest) *CopyResponse {
-	var response = &CopyResponse{BaseResponse: &BaseResponse{Status:"ok",StartTime: time.Now()}, TaskInfo: &TaskInfo{StatusCode: StatusTaskRunning}}
+	var response = &CopyResponse{BaseResponse: &BaseResponse{Status: "ok", StartTime: time.Now()}, TaskInfo: &TaskInfo{StatusCode: StatusTaskRunning}}
 	response.StatusCode = 1
 	var dataset = request.Source.Table
 	if dataset == "" {
