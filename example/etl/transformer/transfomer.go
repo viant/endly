@@ -1,6 +1,9 @@
 package transformer
 
-import "github.com/viant/toolbox"
+import (
+	"github.com/viant/toolbox"
+	"fmt"
+)
 
 //Transformer represents transformer function
 type Transformer func(source map[string]interface{}) ([]map[string]interface{}, error)
@@ -9,43 +12,39 @@ type Transformer func(source map[string]interface{}) ([]map[string]interface{}, 
 var Transformers = make(map[string]Transformer)
 
 func init() {
-	Transformers["MapToSlice"] = MapToSlice
+	Transformers["Flatten"] = Flatten
 }
 
 //MapToSlice converts map to slice
-func MapToSlice(source map[string]interface{}) ([]map[string]interface{}, error) {
-	var response = make(map[string]interface{})
-	for k, v := range source {
-		if toolbox.IsMap(v) {
-			response[k] = mapToSlice(v)
-			continue
+func Flatten(source map[string]interface{}) ([]map[string]interface{}, error) {
+	var result = make([]map[string]interface{}, 0)
+
+	var recordProvider = func() map[string]interface{} {
+		var result = make(map[string]interface{})
+		for k, v := range source {
+			if toolbox.IsMap(v) || toolbox.IsSlice(v) {
+				continue
+			}
+			result[k] = v
 		}
-		response[k] = v
+		return result
 	}
-	return []map[string]interface{}{response}, nil
-}
 
-//KeyValue represents a map entry
-type KeyValue struct {
-	Key   string
-	Value interface{}
-}
-
-func mapToSlice(source interface{}) []interface{} {
-	var result = make([]interface{}, 0)
-	for k, v := range toolbox.AsMap(source) {
-		if toolbox.IsMap(v) {
-			v = mapToSlice(v)
-		} else if toolbox.IsSlice(v) {
-			aSlice := toolbox.AsSlice(v)
-			for i, item := range toolbox.AsSlice(v) {
-				if toolbox.IsMap(item) {
-					aSlice[i] = mapToSlice(item)
+	for k, v := range source {
+		if toolbox.IsSlice(v) {
+			for _, item := range toolbox.AsSlice(v) {
+				var record = recordProvider()
+				var itemMap = toolbox.AsMap(item)
+				for j, v := range itemMap {
+					record[fmt.Sprintf("%v_%v", k, j)] = v
 				}
+				result = append(result, record)
 			}
 		}
-		var keyValue = &KeyValue{Key: k, Value: v}
-		result = append(result, keyValue)
 	}
-	return result
+	if len(result) == 0 {
+		var record = recordProvider()
+		result = append(result, record)
+	}
+	return result, nil
 }

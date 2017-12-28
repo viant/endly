@@ -96,7 +96,7 @@ func (s *service) fetchData(connection dsc.Connection, destinationManager dsc.Ma
 			count = len(channel)
 			err = s.appendRecords(transformer, record, &records)
 			if err != nil {
-				return
+				return false, err
 			}
 			count = len(channel)
 		case <-time.After(time.Millisecond):
@@ -114,17 +114,26 @@ func (s *service) fetchData(connection dsc.Connection, destinationManager dsc.Ma
 
 	err = s.drainRecordsIfNeeded(count, channel, &records, transformer)
 	if err != nil {
-		return true, nil
+		return false, err
 	}
+
 	if len(records) > 0 {
 		if request.InsertMode {
 			parametrizedSQLProvider := func(item interface{}) *dsc.ParametrizedSQL {
 				return dmlProvider.Get(dsc.SQLTypeInsert, item)
 			}
+
+
 			_, err = destinationManager.PersistData(connection, records, request.Destination.Table, dmlProvider, parametrizedSQLProvider)
+			if err != nil {
+				return false, err
+			}
 
 		} else {
 			_, _, err = destinationManager.PersistAll(&records, request.Destination.Table, dmlProvider)
+			if err != nil {
+				return false, err
+			}
 		}
 	}
 	if err != nil || completed {
@@ -133,9 +142,10 @@ func (s *service) fetchData(connection dsc.Connection, destinationManager dsc.Ma
 	return false, nil
 }
 
-func (s *service) persist(destinationManager dsc.Manager, channel chan map[string]interface{}, request *CopyRequest, response *CopyResponse, fetchedCompleted *int32) *sync.WaitGroup {
+func (s *service) persist(sourceManager, destinationManager dsc.Manager, channel chan map[string]interface{}, request *CopyRequest, response *CopyResponse, fetchedCompleted *int32) *sync.WaitGroup {
 	var result = &sync.WaitGroup{}
 	result.Add(1)
+
 	destination := request.Destination
 	tableDescriptor := &dsc.TableDescriptor{
 		Table:     destination.Table,
@@ -143,10 +153,21 @@ func (s *service) persist(destinationManager dsc.Manager, channel chan map[strin
 		Columns:   destination.Columns,
 	}
 
+	if len(tableDescriptor.Columns) == 0 {
+
+		var table = request.Source.Table
+		if table == "" {
+			table = request.Destination.Table
+		}
+		dialect := dsc.GetDatastoreDialect(sourceManager.Config().DriverName)
+		datastore, err := dialect.GetCurrentDatastore(sourceManager)
+		if err == nil {
+			columns := dialect.GetColumns(sourceManager, datastore, table)
+			tableDescriptor.Columns = columns
+		}
+	}
 	destinationManager.TableDescriptorRegistry().Register(tableDescriptor)
-
 	dmlProvider := dsc.NewMapDmlProvider(tableDescriptor)
-
 	transformer, _ := Transformers[request.Transformer]
 	var completed bool
 	go func() {
@@ -181,7 +202,7 @@ func (s *service) copyData(sourceManager, destinationManager dsc.Manager, reques
 	}
 	var records = make(chan map[string]interface{}, batchSize+1)
 	var fetchCompleted int32
-	waitGroup := s.persist(destinationManager, records, request, response, &fetchCompleted)
+	waitGroup := s.persist(sourceManager, destinationManager, records, request, response, &fetchCompleted)
 
 	err := sourceManager.ReadAllWithHandler(request.Source.SQL, keys, func(scanner dsc.Scanner) (bool, error) {
 		var statusCode = atomic.LoadInt32(&response.StatusCode)
@@ -189,9 +210,10 @@ func (s *service) copyData(sourceManager, destinationManager dsc.Manager, reques
 		if statusCode == StatusTaskNotRunning {
 			return false, nil
 		}
+
+
 		response.RecordCount++
 		err := scanner.Scan(&record)
-
 		if err != nil {
 			return false, fmt.Errorf("failed to scan:%v", err)
 		}
@@ -233,7 +255,7 @@ func (s *service) openKeyFiles(keyPath string) ([]*os.File, error) {
 
 //Copy copy data from source to destination
 func (s *service) Copy(request *CopyRequest) *CopyResponse {
-	var response = &CopyResponse{BaseResponse: &BaseResponse{StartTime: time.Now()}, TaskInfo: &TaskInfo{StatusCode: StatusTaskRunning}}
+	var response = &CopyResponse{BaseResponse: &BaseResponse{Status:"ok",StartTime: time.Now()}, TaskInfo: &TaskInfo{StatusCode: StatusTaskRunning}}
 	response.StatusCode = 1
 	var dataset = request.Source.Table
 	if dataset == "" {
@@ -242,7 +264,7 @@ func (s *service) Copy(request *CopyRequest) *CopyResponse {
 	s.registerTask(response.BaseResponse, response.TaskInfo, dataset, request)
 	var err error
 	var sourceManager, destinationManager dsc.Manager
-	defer s.updateResponse(response, err)
+	defer func() { s.updateResponse(response, err) }()
 	sourceManager, err = s.getManager(request.Source.DsConfig)
 	if err != nil {
 		return response

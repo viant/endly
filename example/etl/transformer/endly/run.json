@@ -4,7 +4,7 @@
   "PublishParameters": true,
   "EnableLogging": true,
   "LoggingDirectory": "logs",
-  "Tasks": "init,test",
+  "Tasks": "*",
   "Params": {
     "app":"transformer",
     "goVersion":"1.8",

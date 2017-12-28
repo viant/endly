@@ -66,7 +66,7 @@ You can build, deploy and test them end to end all with endly.
         - Test with Selenium Runner
         - Data Preparation and Validation (aersopike)
         - Web Content validation
-3) **Extract, Transform and Load (ETL)** (TO BE ADDED)
+3) **Extract, Transform and Load (ETL)**
    * [Transformer](example/etl/transformer) - datastore to datastore transformer (i.e. aerospike to mysql)
        - Test with Rest Runner
        - Data Preparation and Validation (aersopike, mysql)

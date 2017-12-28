@@ -7,6 +7,6 @@ Workflow,,Name,Description,Tasks,,Init,,
 []Init,Service,Action,Description,Request,run.instance,run.tasks,SleepInMs
 ,workflow,run,init mysql on $buildHost,#req/mysql.json|$run,db1_mysql,start,30000
 []Tasks,,Name,Description,Actions,,,,
-,,destory,Stop adelphic services,%Destory,,,,
-[]Destory,Service,Action,Description,Request,run.instance,run.tasks,,
+,,destroy,Stop adelphic services,%Destroy,,,,
+[]Destroy,Service,Action,Description,Request,run.instance,run.tasks,,
 ,workflow,run,init mysql,#req/mysql.json|$run,db1_mysql,stop,,

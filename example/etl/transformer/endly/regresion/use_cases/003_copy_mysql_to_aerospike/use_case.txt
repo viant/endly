@@ -1,1 +1,1 @@
-Test register and run a pivot report with where clause
+Copy user table from mysql to aerospike

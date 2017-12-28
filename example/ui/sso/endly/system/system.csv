@@ -8,6 +8,6 @@ Workflow,,Name,Description,Tasks,,[]Init.Name,[]Init.From,[]Init.Required
 []Init,Service,Action,Description,Request,instance,tasks,SleepInMs,
 ,workflow,run,start aerospike on $buildHost,#req/aerospike.json,db1_aerospike,start,30000,
 []Tasks,,Name,Description,Actions,,,,
-,,destory,Stop sso services,%Destory,,,,
-[]Destory,Service,Action,Description,Request,instance,tasks,,
+,,destroy,Stop sso services,%Destroy,,,,
+[]Destroy,Service,Action,Description,Request,instance,tasks,,
 ,workflow,run,stop aerospike,#req/aerospike.json,db1_aerospike,stop,,
