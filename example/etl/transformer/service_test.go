@@ -1,8 +1,8 @@
 package transformer_test
 
 import (
-	_ "github.com/viant/asc"
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/viant/asc"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/dsc"
@@ -66,8 +66,6 @@ func TestService_CopyWithTransformer(t *testing.T) {
 
 	assert.Equal(t, "", response.Error)
 }
-
-
 
 //
 //

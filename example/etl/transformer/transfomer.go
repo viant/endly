@@ -1,8 +1,8 @@
 package transformer
 
 import (
-	"github.com/viant/toolbox"
 	"fmt"
+	"github.com/viant/toolbox"
 )
 
 //Transformer represents transformer function
