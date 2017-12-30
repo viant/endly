@@ -12,6 +12,7 @@ import (
 type DataExtraction struct {
 	RegExpr string //regular expression
 	Key     string //state key to store a match
+	Reset   bool   //reset the key in the context before evaluating this data extraction rule
 }
 
 //DataExtractions a slice of DataExtractions
@@ -21,6 +22,12 @@ type DataExtractions []*DataExtraction
 func (d *DataExtractions) Extract(context *Context, extracted map[string]string, input ...string) error {
 	if len(*d) == 0 || len(input) == 0 {
 		return nil
+	}
+
+	for _, extract := range *d {
+		if extract.Reset {
+			delete(extracted, extract.Key)
+		}
 	}
 	for _, extract := range *d {
 		compiledExpression, err := regexp.Compile(extract.RegExpr)

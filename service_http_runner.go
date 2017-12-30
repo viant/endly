@@ -22,6 +22,8 @@ const HTTPRunnerServiceSendAction = "send"
 //HTTPRunnerExitCriteriaEventType represent HttpExitEvaluation event name
 const HTTPRunnerExitCriteriaEventType = "HttpExitEvaluation"
 
+const HTTPPreviousTripStateKey = "previous"
+
 type httpRunnerService struct {
 	*AbstractService
 }
@@ -158,7 +160,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 
 	endEvent := s.End(context)(startEvent, Pairs("response", response))
 
-	var previous = state.GetMap("previous")
+	var previous = state.GetMap(HTTPPreviousTripStateKey)
 	if previous == nil {
 		previous = data.NewMap()
 	}
@@ -181,7 +183,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		return err
 	}
 	if len(previous) > 0 {
-		state.Put("previous", previous)
+		state.Put(HTTPPreviousTripStateKey, previous)
 	}
 
 	if sendHTTPRequest.MatchBody != "" {
@@ -291,6 +293,8 @@ func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceR
 	var err error
 	switch actualRequest := request.(type) {
 	case *SendHTTPRequest:
+		state := context.state
+		state.Delete(HTTPPreviousTripStateKey)
 		response.Response, err = s.send(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("failed to send request: %v, %v", actualRequest, err)
