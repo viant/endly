@@ -294,7 +294,7 @@ func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceR
 	switch actualRequest := request.(type) {
 	case *SendHTTPRequest:
 		state := context.state
-		state.Delete(HTTPPreviousTripStateKey)
+		defer state.Delete(HTTPPreviousTripStateKey)
 		response.Response, err = s.send(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("failed to send request: %v, %v", actualRequest, err)
