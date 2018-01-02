@@ -15,7 +15,7 @@ func init() {
 	Transformers["Flatten"] = Flatten
 }
 
-//MapToSlice converts map to slice
+//Flatten converts map to slice
 func Flatten(source map[string]interface{}) ([]map[string]interface{}, error) {
 	var result = make([]map[string]interface{}, 0)
 
