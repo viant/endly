@@ -22,6 +22,7 @@ const HTTPRunnerServiceSendAction = "send"
 //HTTPRunnerExitCriteriaEventType represent HttpExitEvaluation event name
 const HTTPRunnerExitCriteriaEventType = "HttpExitEvaluation"
 
+//HTTPPreviousTripStateKey keys to store previous request details for multi trip HTTP Send request in context state
 const HTTPPreviousTripStateKey = "previous"
 
 type httpRunnerService struct {
@@ -286,7 +287,6 @@ func copyExpandedHeaders(source http.Header, target http.Header, context *Contex
 	}
 }
 
-
 //resetContext resets context for variables with Reset flag set, and removes HTTPPreviousTripStateKey
 func (s *httpRunnerService) resetContext(context *Context, request *SendHTTPRequest) {
 	state := context.state
@@ -297,7 +297,6 @@ func (s *httpRunnerService) resetContext(context *Context, request *SendHTTPRequ
 		}
 	}
 }
-
 
 func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
