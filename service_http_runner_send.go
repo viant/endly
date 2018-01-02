@@ -7,8 +7,8 @@ import (
 
 //SendHTTPRequest represents a send http request.
 type SendHTTPRequest struct {
-	Options     []*toolbox.HttpOptions
-	Requests    []*HTTPRequest
+	Options  []*toolbox.HttpOptions
+	Requests []*HTTPRequest
 }
 
 //HTTPRequest represents an http request
@@ -25,8 +25,8 @@ type HTTPRequest struct {
 	Repeat       int               //how many time send this request
 	SleepTimeMs  int               //Sleep time after request send, this only makes sense with repeat option
 	ExitCriteria string            //Repeat exit criteria, it uses extracted variable to determine repeat termination
-	RequestUdf  string
-	ResponseUdf string
+	RequestUdf   string
+	ResponseUdf  string
 }
 
 //SendHTTPResponse represnets a send response
