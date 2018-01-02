@@ -286,6 +286,19 @@ func copyExpandedHeaders(source http.Header, target http.Header, context *Contex
 	}
 }
 
+
+//resetContext resets context for variables with Reset flag set, and removes HTTPPreviousTripStateKey
+func (s *httpRunnerService) resetContext(context *Context, request *SendHTTPRequest) {
+	state := context.state
+	state.Delete(HTTPPreviousTripStateKey)
+	for _, request := range request.Requests {
+		if len(request.Extraction) > 0 {
+			request.Extraction.Reset(state)
+		}
+	}
+}
+
+
 func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
@@ -293,8 +306,7 @@ func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceR
 	var err error
 	switch actualRequest := request.(type) {
 	case *SendHTTPRequest:
-		state := context.state
-		defer state.Delete(HTTPPreviousTripStateKey)
+		defer s.resetContext(context, actualRequest)
 		response.Response, err = s.send(context, actualRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("failed to send request: %v, %v", actualRequest, err)
