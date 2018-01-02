@@ -47,7 +47,6 @@ func (d *DataExtractions) Extract(context *Context, extracted map[string]string,
 	return nil
 }
 
-
 //Reset removes key from supplied state map.
 func (d *DataExtractions) Reset(state data.Map) {
 	for _, extract := range *d {
@@ -56,7 +55,6 @@ func (d *DataExtractions) Reset(state data.Map) {
 		}
 	}
 }
-
 
 func matchExpression(compiledExpression *regexp.Regexp, line string, extract *DataExtraction, context *Context, extracted map[string]string) bool {
 	if compiledExpression.MatchString(line) {
