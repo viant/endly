@@ -141,6 +141,8 @@ func (s *service) fetchData(connection dsc.Connection, destinationManager dsc.Ma
 	return false, nil
 }
 
+
+
 func (s *service) persist(sourceManager, destinationManager dsc.Manager, channel chan map[string]interface{}, request *CopyRequest, response *CopyResponse, fetchedCompleted *int32) *sync.WaitGroup {
 	var result = &sync.WaitGroup{}
 	result.Add(1)

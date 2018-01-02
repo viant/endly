@@ -199,9 +199,9 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 		response := service.Run(context, &endly.SendHTTPRequest{
 			Requests: []*endly.HTTPRequest{
 				{
-					URL:    "http://127.0.0.1:8119/udf1",
-					Method: "POST",
-					Body:   "{\"id\":110, \"name\":\"test 1\"}",
+					URL:         "http://127.0.0.1:8119/udf1",
+					Method:      "POST",
+					Body:        "{\"id\":110, \"name\":\"test 1\"}",
 					RequestUdf:  "AsTestBlah",
 					ResponseUdf: "FromTestMessage",
 				},
@@ -214,9 +214,9 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 		response := service.Run(context, &endly.SendHTTPRequest{
 			Requests: []*endly.HTTPRequest{
 				{
-					URL:    "http://127.0.0.1:8119/udf1",
-					Method: "POST",
-					Body:   "{\"id:110, \"name\":\"test 1\"}",
+					URL:         "http://127.0.0.1:8119/udf1",
+					Method:      "POST",
+					Body:        "{\"id:110, \"name\":\"test 1\"}",
 					RequestUdf:  "AsTestMessage",
 					ResponseUdf: "FromTestMessage",
 				},
@@ -229,9 +229,9 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 		response := service.Run(context, &endly.SendHTTPRequest{
 			Requests: []*endly.HTTPRequest{
 				{
-					URL:    "http://127.0.0.1:8119/udf1",
-					Method: "POST",
-					Body:   "{\"id\":110, \"name\":\"test 1\"}",
+					URL:         "http://127.0.0.1:8119/udf1",
+					Method:      "POST",
+					Body:        "{\"id\":110, \"name\":\"test 1\"}",
 					RequestUdf:  "AsTestMessage",
 					ResponseUdf: "FromTewewewswwtMessage",
 				},
@@ -244,16 +244,16 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 		response := service.Run(context, &endly.SendHTTPRequest{
 			Requests: []*endly.HTTPRequest{
 				{
-					URL:    "http://127.0.0.1:8119/udf1",
-					Method: "POST",
-					Body:   "{\"id\":110, \"name\":\"test 1\"}",
+					URL:         "http://127.0.0.1:8119/udf1",
+					Method:      "POST",
+					Body:        "{\"id\":110, \"name\":\"test 1\"}",
 					RequestUdf:  "AsTestMessage",
 					ResponseUdf: "FromTestMessage",
 				},
 				{
-					URL:    "http://127.0.0.1:8119/udf2",
-					Method: "POST",
-					Body:   "{\"id\":121, \"name\":\"test 2\"}",
+					URL:         "http://127.0.0.1:8119/udf2",
+					Method:      "POST",
+					Body:        "{\"id\":121, \"name\":\"test 2\"}",
 					RequestUdf:  "AsTestMessage",
 					ResponseUdf: "FromTestMessage",
 				},
