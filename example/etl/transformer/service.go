@@ -111,12 +111,14 @@ func (s *service) fetchData(connection dsc.Connection, destinationManager dsc.Ma
 			}
 		}
 	}
-
 	err = s.drainRecordsIfNeeded(count, channel, &records, transformer)
 	if err != nil {
 		return false, err
 	}
+	return s.persist(records, connection, destinationManager, dmlProvider, request)
+}
 
+func (s *service) persist(records []interface{}, connection dsc.Connection, destinationManager dsc.Manager, dmlProvider dsc.DmlProvider, request *CopyRequest) (completed bool, err error) {
 	if len(records) > 0 {
 		if request.InsertMode {
 			parametrizedSQLProvider := func(item interface{}) *dsc.ParametrizedSQL {
@@ -141,9 +143,7 @@ func (s *service) fetchData(connection dsc.Connection, destinationManager dsc.Ma
 	return false, nil
 }
 
-
-
-func (s *service) persist(sourceManager, destinationManager dsc.Manager, channel chan map[string]interface{}, request *CopyRequest, response *CopyResponse, fetchedCompleted *int32) *sync.WaitGroup {
+func (s *service) persistInBackground(sourceManager, destinationManager dsc.Manager, channel chan map[string]interface{}, request *CopyRequest, response *CopyResponse, fetchedCompleted *int32) *sync.WaitGroup {
 	var result = &sync.WaitGroup{}
 	result.Add(1)
 
@@ -203,7 +203,7 @@ func (s *service) copyData(sourceManager, destinationManager dsc.Manager, reques
 	}
 	var records = make(chan map[string]interface{}, batchSize+1)
 	var fetchCompleted int32
-	waitGroup := s.persist(sourceManager, destinationManager, records, request, response, &fetchCompleted)
+	waitGroup := s.persistInBackground(sourceManager, destinationManager, records, request, response, &fetchCompleted)
 
 	err := sourceManager.ReadAllWithHandler(request.Source.SQL, keys, func(scanner dsc.Scanner) (bool, error) {
 		var statusCode = atomic.LoadInt32(&response.StatusCode)

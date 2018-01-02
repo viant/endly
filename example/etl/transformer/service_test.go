@@ -14,7 +14,12 @@ import (
 
 func TestService_Copy(t *testing.T) {
 	service := transformer.NewService()
+
 	var baseDirectory = path.Join(toolbox.CallerDirectory(3), "test")
+
+	var transformedBaseDirectory = path.Join(toolbox.CallerDirectory(3), "test/transformed")
+	toolbox.CreateDirIfNotExist(transformedBaseDirectory)
+
 	toolbox.RemoveFileIfExist(path.Join(baseDirectory, "transformed/apps_keys.json"))
 	defer toolbox.RemoveFileIfExist(path.Join(baseDirectory, "transformed/apps_keys.json"))
 	sourceConfig := dsc.NewConfig("csv", "[url]", "dateFormat:yyyy-MM-dd hh:mm:ss,ext:csv,url:"+"file://"+path.Join(baseDirectory, "data"))
