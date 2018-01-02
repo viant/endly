@@ -540,7 +540,6 @@ func (s *execService) NewRequest(action string) (interface{}, error) {
 	return nil, fmt.Errorf("unsupported action: %v", action)
 }
 
-
 func isAmd64Architecture(candidate string) bool {
 	return strings.Contains(candidate, "amd64") || strings.Contains(candidate, "x86_64")
 }
