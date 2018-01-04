@@ -276,7 +276,9 @@ Sdk service sets active terminal session with requested sdk version.
 
 **Storage service**
 
-Storage service is responsible for transferring data from the source to the target destination, optionally it supports transferred content data substitution. 
+Storage service represents a local or remote storage to provide unified storage operations.
+Remove storage could be any cloud storage i.e google cloud, amazon s3, or simple scp or http.
+ 
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
