@@ -19,9 +19,10 @@ type BuildSpec struct {
 
 //BuildRequest represents a build request.
 type BuildRequest struct {
-	MetaURL   string
-	BuildSpec *BuildSpec    //build specification
-	Target    *url.Resource //path to application to be build, Note that command may use $build.target variable. that expands to Target URL path
+	MetaURL     string
+	BuildSpec   *BuildSpec        //build specification
+	Credentials map[string]string //build credential
+	Target      *url.Resource     //path to application to be build, Note that command may use $build.target variable. that expands to Target URL path
 }
 
 //BuildResponse represents a build response.

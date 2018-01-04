@@ -175,6 +175,14 @@ func (s *buildService) build(context *Context, request *BuildRequest) (*BuildRes
 			return nil, err
 		}
 	}
+
+	if len(request.Credentials) > 0 {
+		for _, execution := range goal.Command.Executions {
+			if execution.MatchOutput != "" {
+				execution.Credentials = request.Credentials
+			}
+		}
+	}
 	commandInfo, err := context.Execute(target, goal.Command)
 	if err != nil {
 		return nil, err

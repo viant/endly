@@ -5,9 +5,9 @@ import "fmt"
 //BuildGoal builds goal represents a build goal
 type BuildGoal struct {
 	Name                string
-	InitTransfers       *TransferCopyRequest
+	InitTransfers       *StorageCopyRequest
 	Command             *ExtractableCommand
-	PostTransfers       *TransferCopyRequest
+	PostTransfers       *StorageCopyRequest
 	VerificationCommand *ExtractableCommand
 }
 

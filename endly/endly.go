@@ -2,7 +2,8 @@ package main
 
 import (
 	"flag"
-
+	_ "github.com/viant/toolbox/storage/aws"
+	_ "github.com/viant/toolbox/storage/gs"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/viant/asc"

@@ -1,18 +1,29 @@
 {
   "Name": "go",
-  "Dependencies":[{
-    "Name":"$buildSpec.sdk",
-    "Version":"$buildSpec.sdkVersion"
-  }],
-
+  "Dependencies": [
+    {
+      "Name": "$buildSpec.sdk",
+      "Version": "$buildSpec.sdkVersion"
+    }
+  ],
   "Goals": [
     {
       "Name": "build",
       "Command": {
         "Options": {
           "Directory": "$buildSpec.path",
-          "TimeoutMs": 720000
-
+          "TimeoutMs": 120000,
+          "Env": {
+            "GIT_TERMINAL_PROMPT": "1"
+          },
+          "Terminators": [
+            "Error",
+            "command not found",
+            "imported and not used",
+            "package ",
+            "Password",
+            "cannot use "
+          ]
         },
         "Executions": [
           {
@@ -21,18 +32,33 @@
           {
             "Command": "go clean",
             "Errors": [
-              "Error","command not found"
+              "Error",
+              "command not found"
             ]
           },
           {
             "Command": "go get -u .",
             "Errors": [
-              "Error","command not found"
+              "Error",
+              "command not found"
+            ]
+          },
+          {
+            "MatchOutput": "Password",
+            "Command": "**git**",
+            "Error": [
+              "Password"
             ]
           },
           {
             "Command": "go ${buildSpec.goal} ${buildSpec.args}",
-             "Error": ["failed", "error", "imported and not used", "package ", "cannot use "]
+            "Error": [
+              "failed",
+              "error",
+              "imported and not used",
+              "package ",
+              "cannot use "
+            ]
           }
         ]
       }
