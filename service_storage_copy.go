@@ -6,13 +6,13 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//TransferCopyRequest represents a resources copy request
-type TransferCopyRequest struct {
+//StorageCopyRequest represents a resources copy request
+type StorageCopyRequest struct {
 	Transfers []*Transfer // transfers
 }
 
-//TransferCopyResponse represents a resources copy response
-type TransferCopyResponse struct {
+//StorageCopyResponse represents a resources copy response
+type StorageCopyResponse struct {
 	Transferred []*TransferLog //transferred logs
 }
 
