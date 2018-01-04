@@ -69,7 +69,6 @@ func (s *seleniumService) Run(context *Context, request interface{}) *ServiceRes
 	case *SeleniumServerStopRequest:
 		response.Response, err = s.stop(context, actualRequest)
 		errorTemplate = "failed to start selenium %v"
-
 	case *SeleniumOpenSessionRequest:
 		response.Response, err = s.open(context, actualRequest)
 		errorTemplate = "failed to open selenium session %v"
