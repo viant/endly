@@ -109,6 +109,15 @@ It uses tabular [Neatly](https://github.com/viant/neatly) format to represent a 
 can be easily manged with either MS Excel, Apple Number or OpenOffice.
 
 
+Neatly is responsible for converting a tabular document (.csv) into workflow object tree as shown below.
+
+![Workflow diagram](workflow_diagram.png)
+
+
+
+
+
+
 **[Workflow](workflow.go)** an abstraction to define a set of task with its action.
 
 **Task** an abstraction to logically group one or more action, for example, init,test.
@@ -265,14 +274,16 @@ Sdk service sets active terminal session with requested sdk version.
 ## Build and deployment services
 
 
-**Transfer service**
+**Storage service**
 
-Transfer service is responsible for transferring data from the source to the target destination, optionally it supports transferred content data substitution. 
+Storage service is responsible for transferring data from the source to the target destination, optionally it supports transferred content data substitution. 
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| transfer | copy | copy one or more resources from the source to target destination | [TransferCopyRequest](service_transfer_copy.go) | [TransferCopyResponse](service_transfer_copy.go) |
-
+| storage | copy | copy one or more resources from the source to target destination | [StorgeCopyRequest](service_storage_copy.go) | [StorageCopyResponse](service_storage_copy.go) |
+| storage | remove | removes or more resources if exsit | [StorageRemoveRequest](service_storage_remove.go) | [StorageRemoveResponse](service_storage_remove.go) |
+| storage | upload | uploads content pointed by context state key to target destination. | [StorageUploadRequest](service_storage_copy.go) | [StorageUploadResponse](service_storage_upload.go) |
+| storage | download | copy source content into context state key | [StorageDownloadRequest](service_storage_download.go) | [StorageDownloadResponse](service_storage_download.go) |
 
 
 **Version Control Service**

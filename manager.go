@@ -84,7 +84,11 @@ func NewManager() Manager {
 	}
 
 	result.Register(NewExecService())
-	result.Register(NewTransferService())
+
+	var storageService = NewStorageService()
+	result.Register(storageService)
+	//backward compatibility name of service
+	result.services[TransferServiceID] = storageService
 	result.Register(NewDeploymentService())
 	result.Register(NewHTTPpRunnerService())
 	result.Register(NewRestService())
