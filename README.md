@@ -277,7 +277,7 @@ Sdk service sets active terminal session with requested sdk version.
 **Storage service**
 
 Storage service represents a local or remote storage to provide unified storage operations.
-Remove storage could be any cloud storage i.e google cloud, amazon s3, or simple scp or http.
+Remote storage could be any cloud storage i.e google cloud, amazon s3, or simple scp or http.
  
 
 | Service Id | Action | Description | Request | Response |
