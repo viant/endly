@@ -49,6 +49,19 @@ func (s *httpRunnerService) processResponse(context *Context, sendRequest *SendH
 
 	var responseBody = replaceResponseBodyIfNeeded(sendHTTPRequest, response.Body)
 	err := sendHTTPRequest.Extraction.Extract(context, extracted, responseBody)
+
+	if strings.HasPrefix(responseBody, "{") {
+		response.JSONBody = make(map[string]interface{})
+		err = toolbox.NewJSONDecoderFactory().Create(strings.NewReader(responseBody)).Decode(&response.JSONBody)
+		var extractedVariables = data.NewMap()
+		if err == nil {
+			_ = sendHTTPRequest.Variables.Apply(data.Map(response.JSONBody), extractedVariables)
+		}
+		for k, v := range extractedVariables {
+			extracted[k] = toolbox.AsString(v)
+		}
+	}
+
 	return responseBody, err
 }
 
@@ -174,7 +187,6 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 			_ = sendHTTPRequest.Variables.Apply(data.Map(response.JSONBody), previous)
 		}
 	}
-
 	for k, v := range result.Extracted {
 		var expanded = previous.Expand(v)
 		previous[k] = state.Expand(expanded)
