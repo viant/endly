@@ -22,6 +22,7 @@
             "imported and not used",
             "package ",
             "Password",
+            "in single-value context",
             "cannot use "
           ]
         },
@@ -56,6 +57,7 @@
               "failed",
               "error",
               "imported and not used",
+              "in single-value context",
               "package ",
               "cannot use "
             ]
