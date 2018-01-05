@@ -6,6 +6,7 @@ import (
 	"github.com/viant/toolbox"
 	"strings"
 	"sync"
+	"time"
 )
 
 //AppName represents endly application name
@@ -60,10 +61,13 @@ func (s *manager) Register(service Service) {
 }
 
 func (s *manager) NewContext(ctx toolbox.Context) *Context {
-	sessionID := uuid.NewV1()
+	sessionID := toolbox.AsString(time.Now().Unix())
+	if UUID, err := uuid.NewV1();err == nil {
+		sessionID = UUID.String()
+	}
 	var workflowStack Workflows = make([]*Workflow, 0)
 	var result = &Context{
-		SessionID: sessionID.String(),
+		SessionID: sessionID,
 		Context:   ctx,
 		Events: &Events{
 			mutex:  &sync.Mutex{},

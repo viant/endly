@@ -382,7 +382,11 @@ func NewDefaultState() data.Map {
 	var cachedUUID uuid.UUID
 	result.Put("uuid", func(key string) interface{} {
 		if key == "next" {
-			cachedUUID = uuid.NewV4()
+			var err error
+			cachedUUID, err = uuid.NewV4()
+			if err != nil {
+				return ""
+			}
 		}
 		if len(cachedUUID) > 0 {
 			return cachedUUID.String()
