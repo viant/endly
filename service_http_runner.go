@@ -34,7 +34,7 @@ func (s *httpRunnerService) processResponse(context *Context, sendRequest *SendH
 	copyHeaders(httpResponse.Header, response.Header)
 	readBody(httpResponse, response, isBase64Encoded)
 	if sendHTTPRequest.ResponseUdf != "" {
-		transformed, err := s.transformWithUDF(context, sendHTTPRequest.ResponseUdf, sendHTTPRequest.URL, response.Body)
+		transformed, err := transformWithUDF(context, sendHTTPRequest.ResponseUdf, sendHTTPRequest.URL, response.Body)
 		if err != nil {
 			return "", err
 		}
@@ -65,18 +65,7 @@ func (s *httpRunnerService) processResponse(context *Context, sendRequest *SendH
 	return responseBody, err
 }
 
-func (s *httpRunnerService) transformWithUDF(context *Context, udfName, URL string, payload interface{}) (interface{}, error) {
-	var state = context.state
-	var udf, has = UdfRegistry[udfName]
-	if !has {
-		return nil, fmt.Errorf("failed to lookup udf: %v for: %v", udfName, URL)
-	}
-	transformed, err := udf(payload, state)
-	if err != nil {
-		return nil, fmt.Errorf("failed to run udf: %v, %v", udfName, err)
-	}
-	return transformed, nil
-}
+
 
 func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, sendHTTPRequest *HTTPRequest, sessionCookies *Cookies, sendRequest *SendHTTPRequest, result *SendHTTPResponse) error {
 	var err error
@@ -90,7 +79,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 	if len(sendHTTPRequest.Body) > 0 {
 		body = []byte(sendHTTPRequest.Body)
 		if sendHTTPRequest.RequestUdf != "" {
-			transformed, err := s.transformWithUDF(context, sendHTTPRequest.RequestUdf, sendHTTPRequest.URL, string(body))
+			transformed, err := transformWithUDF(context, sendHTTPRequest.RequestUdf, sendHTTPRequest.URL, string(body))
 			if err != nil {
 				return err
 			}
