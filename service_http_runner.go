@@ -213,6 +213,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 	return nil
 }
 
+
 func replaceResponseBodyIfNeeded(sendHTTPRequest *HTTPRequest, responseBody string) string {
 	if len(sendHTTPRequest.Replace) > 0 {
 		for k, v := range sendHTTPRequest.Replace {
