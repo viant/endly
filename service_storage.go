@@ -328,10 +328,10 @@ func (s *transferService) download(context *Context, request *StorageDownloadReq
 		return nil, err
 	}
 	if request.Udf != "" {
-			response.Transformed, err = transformWithUDF(context, request.Udf, resource.URL, data)
-			if err != nil {
-				return nil, err
-			}
+		response.Transformed, err = transformWithUDF(context, request.Udf, resource.URL, data)
+		if err != nil {
+			return nil, err
+		}
 	}
 	response.Payload = AsPayload(data)
 	if request.TargetKey != "" {

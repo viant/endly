@@ -68,7 +68,6 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Validati
 	expectedText := toolbox.AsString(expected)
 	actualText := toolbox.AsString(actual)
 
-
 	s.assertText(expectedText, actualText, assertionInfo, path)
 	return nil
 }
@@ -174,7 +173,6 @@ func (s *Validator) assertText(expected, actual string, response *ValidationInfo
 	isRegExpr := strings.HasPrefix(expected, "~/") && strings.HasSuffix(expected, "/")
 	isContains := strings.HasPrefix(expected, "/") && strings.HasSuffix(expected, "/")
 	var isEqual = !isRegExpr && !isContains
-
 
 	if isEqual {
 		return s.assertEqual(expected, actual, response, path)

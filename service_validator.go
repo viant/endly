@@ -53,7 +53,6 @@ func (s *validatorService) Assert(context *Context, request *ValidatorAssertRequ
 		ExcludedFields: make(map[string]bool),
 	}
 
-
 	err := validator.Assert(expected, actual, response, "/")
 	if err != nil {
 		return nil, err
