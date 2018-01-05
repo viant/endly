@@ -17,3 +17,15 @@ func Test_IsAsciiPrintable(t *testing.T) {
 	assert.True(t, endly.IsASCIIText("\""))
 
 }
+
+func Test_AsPayload(t *testing.T) {
+
+	{
+		data := endly.AsPayload([]byte{0x1, 0x32})
+		assert.Equal(t, "base64:ATI=", data)
+	}
+	{
+		data := endly.AsPayload([]byte("abc\n\r "))
+		assert.Equal(t, "abc\n\r ", data)
+	}
+}

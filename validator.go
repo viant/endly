@@ -67,6 +67,8 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Validati
 	}
 	expectedText := toolbox.AsString(expected)
 	actualText := toolbox.AsString(actual)
+
+
 	s.assertText(expectedText, actualText, assertionInfo, path)
 	return nil
 }
@@ -76,6 +78,7 @@ func (s *Validator) assertEqual(expected, actual string, response *ValidationInf
 	if isReversed {
 		expected = string(expected[1:])
 	}
+
 	if expected != actual && !isReversed {
 		response.AddFailure(NewFailedTest(path, fmt.Sprintf("actual(%T):  '%v' was not equal (%T) '%v'", actual, actual, expected, expected), expected, actual))
 		return nil
@@ -171,6 +174,8 @@ func (s *Validator) assertText(expected, actual string, response *ValidationInfo
 	isRegExpr := strings.HasPrefix(expected, "~/") && strings.HasSuffix(expected, "/")
 	isContains := strings.HasPrefix(expected, "/") && strings.HasSuffix(expected, "/")
 	var isEqual = !isRegExpr && !isContains
+
+
 	if isEqual {
 		return s.assertEqual(expected, actual, response, path)
 	}
