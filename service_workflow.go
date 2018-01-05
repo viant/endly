@@ -49,7 +49,6 @@ type WorkflowServiceActivity struct {
 	ServiceResponse interface{}
 }
 
-
 //TagID returns a tag id
 func TagID(workflow, tag, index, subpath string) string {
 	return fmt.Sprintf("%v%v%v%v", workflow, tag, index, subpath)
