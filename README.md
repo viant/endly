@@ -192,26 +192,23 @@ The following expression are supported:
         4) Action post stage executes applying variables defined in Action.Post (input: action.response, output: workflow state)
     4) Task post stage executes, applying variables defined in Task.Post (input: state, output: state)   
 5) Workflow post stage executes, applying variables defined in Workflow.Post (input: workflow  state, output: workflow.response)
-
-
-Context state comes with the following reserved keys:
-
-* rand - random int64
-* date -  current date formatted as yyyy-MM-dd
-* time - current time formatted as yyyy-MM-dd hh:mm:ss
-* ts - current timestamp formatted  as yyyyMMddhhmmSSS
-* timestamp.yesterday - timestamp in ms
-* timestamp.now - timestamp in ms
-* timestamp.tomorrow - timestamp in ms
-* tmpDir - temp directory
-* uuid.next - generate unique id
-* uuid.get - returns previously generated unique id, or generate new
-*.env.XXX where XXX is the Id of the env variable to return
-* previous - http previous request used for multi request send
-* 
-* all UFD registered functions  
-    * [Neatly UDF](https://github.com/viant/neatly/#udf)
-    * AsTableRecords udf converting []*DsUnitTableData into map[string][]map[string]interface{} (used by dsunit service)
+6) Context state comes with the following build-in/reserved keys:
+    * rand - random int64
+    * date -  current date formatted as yyyy-MM-dd
+    * time - current time formatted as yyyy-MM-dd hh:mm:ss
+    * ts - current timestamp formatted  as yyyyMMddhhmmSSS
+    * timestamp.yesterday - timestamp in ms
+    * timestamp.now - timestamp in ms
+    * timestamp.tomorrow - timestamp in ms
+    * tmpDir - temp directory
+    * uuid.next - generate unique id
+    * uuid.get - returns previously generated unique id, or generate new
+    *.env.XXX where XXX is the Id of the env variable to return
+    * previous - http previous request used for multi request send
+    * 
+    * all UFD registered functions  
+        * [Neatly UDF](https://github.com/viant/neatly/#udf)
+        * AsTableRecords udf converting []*DsUnitTableData into map[string][]map[string]interface{} (used by dsunit service)
 	    
 
 <a name="SystemServices"></a>
