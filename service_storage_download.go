@@ -10,6 +10,7 @@ import (
 type StorageDownloadRequest struct {
 	Source    *url.Resource
 	TargetKey string
+	Udf string//name of udf function that will be used to transform payload
 }
 
 //Validate checks if request is valid
@@ -26,5 +27,6 @@ func (r *StorageDownloadRequest) Validate() error {
 //StorageDownloadResponse represents a download response
 type StorageDownloadResponse struct {
 	Info    toolbox.FileInfo
-	Payload string
+	Payload string//source conent, if binary then is will be prefixed base64: followed by based 64 encoded content.
+	Transformed interface{}
 }

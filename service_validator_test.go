@@ -158,3 +158,15 @@ func TestValidatorService_Assert(t *testing.T) {
 	}
 
 }
+
+
+func Test_AssertText(t *testing.T) {
+	validator := &endly.Validator{
+		ExcludedFields: make(map[string]bool),
+	}
+	assertInfo := &endly.ValidationInfo{}
+	err := validator.Assert("DONE", "Abc", assertInfo, "/")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, assertInfo.TestFailed)
+
+}
