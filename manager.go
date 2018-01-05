@@ -62,7 +62,7 @@ func (s *manager) Register(service Service) {
 
 func (s *manager) NewContext(ctx toolbox.Context) *Context {
 	sessionID := toolbox.AsString(time.Now().Unix())
-	if UUID, err := uuid.NewV1();err == nil {
+	if UUID, err := uuid.NewV1(); err == nil {
 		sessionID = UUID.String()
 	}
 	var workflowStack Workflows = make([]*Workflow, 0)
