@@ -1,11 +1,11 @@
 package endly
 
 import (
+	"bytes"
 	"encoding/base64"
 	"io/ioutil"
 	"strings"
 	"unicode"
-	"bytes"
 )
 
 //IsASCIIText return true if supplied string does not have binary data
@@ -38,8 +38,6 @@ func FromPayload(payload string) ([]byte, error) {
 	return []byte(payload), nil
 }
 
-
-
 //AsPayload return string optionally encoded as base64 data has binary data.
 func AsPayload(data []byte) string {
 	if IsASCIIText(string(data)) {
@@ -49,5 +47,5 @@ func AsPayload(data []byte) string {
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)
 	encoder.Write(data)
 	encoder.Close()
-	return "base64:"+buf.String()
+	return "base64:" + buf.String()
 }

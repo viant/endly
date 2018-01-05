@@ -65,8 +65,6 @@ func (s *httpRunnerService) processResponse(context *Context, sendRequest *SendH
 	return responseBody, err
 }
 
-
-
 func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, sendHTTPRequest *HTTPRequest, sessionCookies *Cookies, sendRequest *SendHTTPRequest, result *SendHTTPResponse) error {
 	var err error
 	var state = context.State()
@@ -201,7 +199,6 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 	}
 	return nil
 }
-
 
 func replaceResponseBodyIfNeeded(sendHTTPRequest *HTTPRequest, responseBody string) string {
 	if len(sendHTTPRequest.Replace) > 0 {
