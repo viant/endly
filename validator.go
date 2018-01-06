@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const ValidationIndexByDirective = "@indexBy@"
+
 //Validator represents a validator
 type Validator struct {
 	ExcludedFields map[string]bool
@@ -28,9 +30,9 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Validati
 	if toolbox.IsValueOfKind(actual, reflect.Slice) {
 		if toolbox.IsValueOfKind(expected, reflect.Map) { //convert actual slice to map using expected indexBy directive
 			expectedMap := toolbox.AsMap(expected)
-			if indexField, ok := expectedMap["@indexBy@"]; ok {
+			if indexField, ok := expectedMap[ValidationIndexByDirective]; ok {
 				var actualMap = make(map[string]interface{})
-				actualMap["@indexBy@"] = indexField
+				actualMap[ValidationIndexByDirective] = indexField
 				var actualSlice = toolbox.AsSlice(actual)
 				for _, item := range actualSlice {
 					var itemMap = toolbox.AsMap(item)
@@ -43,7 +45,7 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Validati
 		}
 
 		if !toolbox.IsValueOfKind(expected, reflect.Slice) {
-			assertionInfo.AddFailure(NewFailedTest(path, fmt.Sprintf("Incompatbile types, expected %T but had %v", expected, actual), expected, actual))
+			assertionInfo.AddFailure(NewFailedTest(path, fmt.Sprintf("incompatible types, expected %T but had %v", expected, actual), expected, actual))
 			return nil
 		}
 
@@ -56,7 +58,7 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Validati
 	}
 	if toolbox.IsValueOfKind(actual, reflect.Map) {
 		if !toolbox.IsValueOfKind(expected, reflect.Map) {
-			assertionInfo.AddFailure(NewFailedTest(path, fmt.Sprintf("Incompatbile types, expected %T but had %v", expected, actual), expected, actual))
+			assertionInfo.AddFailure(NewFailedTest(path, fmt.Sprintf("incompatible types, expected %T but had %v", expected, actual), expected, actual))
 			return nil
 		}
 		err := s.assertMap(toolbox.AsMap(expected), toolbox.AsMap(actual), assertionInfo, path)
@@ -65,11 +67,79 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Validati
 		}
 		return nil
 	}
-	expectedText := toolbox.AsString(expected)
-	actualText := toolbox.AsString(actual)
+	expectedText := strings.TrimSpace(toolbox.AsString(expected))
+	actualText := strings.TrimSpace(toolbox.AsString(actual))
 
+	if s.assertJSONIfConvertible(expectedText, actualText, assertionInfo, path) {
+		return nil
+	}
 	s.assertText(expectedText, actualText, assertionInfo, path)
 	return nil
+}
+
+//indexLines returns index or nil if at least one entry does not have index value
+func (s *Validator) indexLines(indexBy string, lines []string) map[string]map[string]interface{} {
+	var result = make(map[string]map[string]interface{})
+	for _, line := range lines {
+		aMap, err := toolbox.JSONToMap(line)
+		if err != nil {
+			return nil
+		}
+		if indexValue, has := aMap[indexBy]; has {
+			result[toolbox.AsString(indexValue)] = aMap
+		} else {
+			return nil
+		}
+	}
+	return result
+}
+
+func (s *Validator) assertIndexableJSON(indexBy string, expectedLines []string, actualLines []string, assertionInfo *ValidationInfo, path string) bool {
+	expectedIndex := s.indexLines(indexBy, expectedLines)
+	actualIndex := s.indexLines(indexBy, actualLines)
+	if expectedIndex == nil || actualIndex == nil {
+		return false
+	}
+	err := s.Assert(expectedIndex, actualIndex, assertionInfo, path)
+	return err == nil
+}
+
+func (s *Validator) assertJSONIfConvertible(expectedText string, actualText string, assertionInfo *ValidationInfo, path string) bool {
+	if toolbox.IsCompleteJSON(expectedText) {
+		if toolbox.IsNewLineDelimitedJSON(expectedText) {
+			expectedLines := strings.Split(expectedText, "\n")
+			actualLines := strings.Split(actualText, "\n")
+			if aMap, err := toolbox.JSONToMap(expectedLines[0]); err == nil {
+				if index, ok := aMap[ValidationIndexByDirective]; ok {
+					expectedLines = expectedLines[1:]
+					return s.assertIndexableJSON(toolbox.AsString(index), expectedLines, actualLines, assertionInfo, path)
+				}
+			}
+
+			if len(expectedLines) != len(actualLines) {
+				assertionInfo.AddFailure(NewFailedTest(path, fmt.Sprintf("missing lines, expected %v but had %v", len(expectedLines), len(actualLines)), len(expectedLines), len(actualLines)))
+			}
+			var length = len(expectedLines)
+			if length > len(actualLines) {
+				length = len(actualLines)
+			}
+
+			for i := 0; i < length; i++ {
+				_ = s.Assert(expectedLines[i], actualLines[i], assertionInfo, fmt.Sprintf("[%v]", i))
+			}
+			return true
+
+		} else {
+			if expectedMap, err := toolbox.JSONToMap(expectedText); err == nil {
+				if actualMap, err := toolbox.JSONToMap(actualText); err == nil {
+					if err = s.assertMap(expectedMap, actualMap, assertionInfo, path); err == nil {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }
 
 func (s *Validator) assertEqual(expected, actual string, response *ValidationInfo, path string) error {
