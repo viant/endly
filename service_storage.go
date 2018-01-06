@@ -333,6 +333,7 @@ func (s *transferService) download(context *Context, request *StorageDownloadReq
 			return nil, err
 		}
 	}
+
 	response.Payload = AsPayload(data)
 	if request.TargetKey != "" {
 		var state = context.state
