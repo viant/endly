@@ -446,7 +446,7 @@ The first action that needs to be run is to register database name with dsc conn
 | dsunit | register | register database connection, and optionally executes init scripts |  [DsUnitRegisterRequest](service_dsunit_register.go) | [DsUnitRegisterResponse](service_dsunit_register.go)  |
 | dsunit | mapping |  register virtual mapping between a virtual table and dozen actual tables to simplify setup. |  [DsUnitMappingRequest](service_dsunit_mapping.go) | [DsUnitMappingResponse](service_dsunit_mapping.go)  |
 | dsunit | sequence | takes current sequences for specified tables |  [DsUnitTableSequenceRequest](service_dsunit_sequence.go) | [DsUnitTableSequenceResponse](service_dsunit_sequence.go)  |
-| dsunit | sql | executes SQL from supplied URL |  [DsUnitSQLScriptRequest](service_dsunit_sql.go) | [DsUnitSQLScriptResponse](service_dsunit_sql.go)  |
+| dsunit | sql | executes SQL from supplied URL, or inline SQL |  [DsUnitSQLRequest](service_dsunit_sql.go) | [DsUnitSQLResponse](service_dsunit_sql.go)  |
 | dsunit | prepare | populates database with setup data |  [DsUnitTablePrepareRequest](service_dsunit_prepare.go) | [DsUnitTablePrepareResponse](service_dsunit_prepare.go)  |
 | dsunit | expect | verifies database content with expected data |  [DsUnitTableExpectRequest](service_dsunit_prepare.go) | [ValidationInfo](validation_info.go)  |
 

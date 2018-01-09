@@ -101,7 +101,7 @@ func TestDsUnitService(t *testing.T) {
 		}
 		assert.NotNil(t, sequences)
 
-		serviceResponse = service.Run(context, &endly.DsUnitSQLScriptRequest{
+		serviceResponse = service.Run(context, &endly.DsUnitSQLRequest{
 			Datastore: "mydb1",
 			Scripts: []*url.Resource{
 				url.NewResource("test/dsunit/mydb1.sql"),
@@ -217,12 +217,12 @@ func TestDsUnitService_Errors(t *testing.T) {
 	})
 	assert.True(t, serviceResponse.Error != "")
 
-	serviceResponse = service.Run(context, &endly.DsUnitSQLScriptRequest{})
+	serviceResponse = service.Run(context, &endly.DsUnitSQLRequest{})
 	assert.True(t, serviceResponse.Error != "")
 
-	serviceResponse = service.Run(context, &endly.DsUnitSQLScriptRequest{Datastore: "dd"})
+	serviceResponse = service.Run(context, &endly.DsUnitSQLRequest{Datastore: "dd"})
 	assert.True(t, serviceResponse.Error != "")
-	serviceResponse = service.Run(context, &endly.DsUnitSQLScriptRequest{
+	serviceResponse = service.Run(context, &endly.DsUnitSQLRequest{
 		Datastore: "dd",
 		Scripts: []*url.Resource{
 			url.NewResource("test/nonexisting"),
