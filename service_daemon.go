@@ -164,8 +164,6 @@ func (s *daemonService) determineServiceType(context *Context, service, exclusio
 			return session.DaemonType, nil
 		}
 	}
-	fmt.Printf("NOT FOUND\n")
-
 	return serviceTypeError, nil
 }
 
