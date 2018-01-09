@@ -10,7 +10,7 @@ import (
 type DsUnitSQLRequest struct {
 	Datastore string
 	Scripts   []*url.Resource
-	SQLs []string
+	SQLs      []string
 }
 
 //Validate checks if request is valid
