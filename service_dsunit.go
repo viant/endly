@@ -8,6 +8,7 @@ import (
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/url"
 	"strings"
+	"github.com/viant/toolbox/data"
 )
 
 const (
@@ -56,46 +57,31 @@ func (s *dataStoreUnitService) Run(context *Context, request interface{}) *Servi
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
 	var err error
+	var errTemplate = "%v"
 	switch actualRequest := request.(type) {
 	case *DsUnitRegisterRequest:
 		response.Response, err = s.register(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("%v", err)
-		}
 
-	case *DsUnitSQLScriptRequest:
+	case *DsUnitSQLRequest:
 		response.Response, err = s.runScripts(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("%v", err)
-		}
 
 	case *DsUnitPrepareRequest:
 		response.Response, err = s.prepare(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("%v", err)
-		}
 	case *DsUnitExpectRequest:
 		response.Response, err = s.verify(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("%v", err)
-		}
 
 	case *DsUnitTableSequenceRequest:
 		response.Response, err = s.getSequences(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("%v", err)
-		}
 
 	case *DsUnitMappingRequest:
 		response.Response, err = s.addMapping(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("%v", err)
-		}
 
 	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
+		err = fmt.Errorf("unsupported request type: %T", request)
 	}
-	if response.Error != "" {
+
+	if err != nil {
+		response.Error = fmt.Sprintf(errTemplate, err)
 		response.Status = "err"
 	}
 	return response
@@ -126,27 +112,27 @@ func (s *dataStoreUnitService) getSequences(context *Context, request *DsUnitTab
 	return response, nil
 }
 
-func (s *dataStoreUnitService) registerDsManager(context *Context, datastoreName, credential string, config *dsc.Config) error {
+func (s *dataStoreUnitService) registerDsManager(context *Context, datastoreName, credential string, config *dsc.Config) (dsc.Manager, error) {
 	credentialConfig := &cred.Config{}
 
 	if credential != "" {
 		err := credentialConfig.Load(credential)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	config.Parameters["username"] = credentialConfig.Username
 	config.Parameters["password"] = credentialConfig.Password
 	err := config.Init()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	dsManager, err := dsc.NewManagerFactory().Create(config)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	s.Manager.ManagerRegistry().Register(datastoreName, dsManager)
-	return nil
+	return dsManager, nil
 }
 
 func (s *dataStoreUnitService) addMapping(context *Context, request *DsUnitMappingRequest) (*DsUnitMappingResponse, error) {
@@ -171,7 +157,7 @@ func (s *dataStoreUnitService) addMapping(context *Context, request *DsUnitMappi
 	return response, nil
 }
 
-func (s *dataStoreUnitService) runScripts(context *Context, request *DsUnitSQLScriptRequest) (*DsUnitSQLScriptResponse, error) {
+func (s *dataStoreUnitService) runScripts(context *Context, request *DsUnitSQLRequest) (*DsUnitSQLScriptResponse, error) {
 	if err := request.Validate(); err != nil {
 		return nil, err
 	}
@@ -181,7 +167,25 @@ func (s *dataStoreUnitService) runScripts(context *Context, request *DsUnitSQLSc
 	if err != nil {
 		return nil, err
 	}
+
+	if len(request.SQLs) > 0 {
+		for _, SQL := range request.SQLs {
+			modified, err := s.runSQL(context, request.Datastore, SQL)
+			if err != nil {
+				return nil, err
+			}
+			response.Modified += modified
+		}
+	}
 	return response, nil
+}
+
+func (s *dataStoreUnitService) runSQL(context *Context, datastore string, SQLs string) (int, error) {
+	scriptRequest := &dsunit.Script{
+		Datastore: datastore,
+		Sqls:      dsunit.ParseSQLScript(strings.NewReader(SQLs)),
+	}
+	return s.Manager.Execute(scriptRequest)
 }
 
 func (s *dataStoreUnitService) runSQLScripts(context *Context, datastore string, scripts []*url.Resource) (int, error) {
@@ -212,11 +216,18 @@ func (s *dataStoreUnitService) loadSQLAndRun(context *Context, datastore string,
 	if err != nil {
 		return 0, err
 	}
-	scriptRequest := &dsunit.Script{
-		Datastore: datastore,
-		Sqls:      dsunit.ParseSQLScript(strings.NewReader(script)),
+	return s.runSQL(context, datastore, script)
+}
+
+func (s *dataStoreUnitService) registerTables(state data.Map, dsManger dsc.Manager, tables []*dsc.TableDescriptor) {
+	if len(tables) == 0 {
+		return
 	}
-	return s.Manager.Execute(scriptRequest)
+	for _, table := range tables {
+		table.Table = state.ExpandAsText(table.Table)
+		dsManger.TableDescriptorRegistry().Register(table)
+	}
+
 }
 
 func (s *dataStoreUnitService) register(context *Context, request *DsUnitRegisterRequest) (interface{}, error) {
@@ -224,18 +235,25 @@ func (s *dataStoreUnitService) register(context *Context, request *DsUnitRegiste
 	if err != nil {
 		return nil, err
 	}
+	var state = context.state
+	var dsManager dsc.Manager
 	var result = &DsUnitRegisterResponse{}
-	err = s.registerDsManager(context, request.Datastore, request.Credential, request.Config)
+	dsManager, err = s.registerDsManager(context, request.Datastore, request.Credential, request.Config)
 	if err != nil {
 		return nil, err
 	}
+
+	s.registerTables(state, dsManager, request.Tables)
+
 	var adminDatastore = "admin_" + request.Datastore
 	if request.adminConfig != nil {
-		err = s.registerDsManager(context, adminDatastore, request.AdminCredential, request.adminConfig)
+		dsManager, err = s.registerDsManager(context, adminDatastore, request.AdminCredential, request.adminConfig)
 		if err != nil {
 			return nil, err
 		}
+		s.registerTables(state, dsManager, request.Tables)
 	}
+
 	if request.ClearDatastore {
 		err := s.Manager.ClearDatastore(adminDatastore, request.Datastore)
 		if err != nil {
@@ -247,6 +265,7 @@ func (s *dataStoreUnitService) register(context *Context, request *DsUnitRegiste
 	if err != nil {
 		return nil, err
 	}
+
 	return result, nil
 }
 
@@ -266,6 +285,7 @@ func (s *dataStoreUnitService) buildDatasets(context *Context, datasetResource *
 	if expand {
 		var state = context.State()
 		for _, data := range datasets.Datasets {
+			data.Table = state.ExpandAsText(data.Table)
 			for _, row := range data.Rows {
 				expanded := state.Expand(row.Values)
 				row.Values = toolbox.AsMap(expanded)
@@ -285,8 +305,8 @@ func (s *dataStoreUnitService) prepare(context *Context, request *DsUnitPrepareR
 	if err != nil {
 		return nil, err
 	}
-	for _, data := range datasets.Datasets {
-		var populateDatastoreEvent = &PopulateDatastoreEvent{Datastore: request.Datastore, Table: data.Table, Rows: len(data.Rows)}
+	for _, dataSet := range datasets.Datasets {
+		var populateDatastoreEvent = &PopulateDatastoreEvent{Datastore: request.Datastore, Table: dataSet.Table, Rows: len(dataSet.Rows)}
 		AddEvent(context, populateDatastoreEvent, Pairs("value", populateDatastoreEvent), Info)
 	}
 
@@ -345,7 +365,7 @@ func (s *dataStoreUnitService) NewRequest(action string) (interface{}, error) {
 	case DataStoreUnitServiceRegisterAction:
 		return &DsUnitRegisterRequest{}, nil
 	case DataStoreUnitServiceSQLAction:
-		return &DsUnitSQLScriptRequest{}, nil
+		return &DsUnitSQLRequest{}, nil
 	case DataStoreUnitServiceMappingAction:
 		return &DsUnitMappingRequest{}, nil
 	case DataStoreUnitServicePrepareAction:

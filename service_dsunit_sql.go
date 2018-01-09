@@ -6,19 +6,20 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//DsUnitSQLScriptRequest represents a SQL script request.
-type DsUnitSQLScriptRequest struct {
+//DsUnitSQLRequest represents a SQL script request.
+type DsUnitSQLRequest struct {
 	Datastore string
 	Scripts   []*url.Resource
+	SQLs []string
 }
 
 //Validate checks if request is valid
-func (r *DsUnitSQLScriptRequest) Validate() error {
+func (r *DsUnitSQLRequest) Validate() error {
 	if r.Datastore == "" {
 		return errors.New("Datastore was empty")
 	}
-	if len(r.Scripts) == 0 {
-		return fmt.Errorf("Scripts was empty on %v", r.Datastore)
+	if len(r.Scripts) == 0 && len(r.SQLs) == 0 {
+		return fmt.Errorf("Scripts/SQLs were empty on %v", r.Datastore)
 	}
 	return nil
 }
