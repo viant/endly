@@ -469,6 +469,9 @@ func (r *CliRunner) reportHTTPRequest(request *HTTPRequest) {
 }
 
 func (r *CliRunner) reportValidationInfo(info *ValidationInfo, event *Event) {
+	if info == nil {
+		return
+	}
 	var total = info.TestPassed + len(info.FailedTests)
 	var description = info.Description
 

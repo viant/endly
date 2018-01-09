@@ -17,6 +17,7 @@ type DsUnitRegisterRequest struct {
 	AdminCredential string
 	ClearDatastore  bool
 	Scripts         []*url.Resource
+	Tables     []*dsc.TableDescriptor
 }
 
 //DsUnitRegisterResponse represents a register response.
