@@ -39,6 +39,8 @@ const (
 	SeleniumServer = "selenium-server-standalone"
 	//GeckoDriver represents name of gecko driver
 	GeckoDriver = "geckodriver"
+
+	seleniumRunnerCaller = "seleniumRunnerCaller"
 )
 
 //SeleniumSession represents a selenium session
@@ -77,10 +79,10 @@ func (s *seleniumService) Run(context *Context, request interface{}) *ServiceRes
 		errorTemplate = "failed to open selenium session %v"
 
 	case *SeleniumWebDriverCallRequest:
-		response.Response, err = s.webDriverCall(context, actualRequest)
+		response.Response, err = s.callWebDriver(context, actualRequest)
 		errorTemplate = "failed to call web driver %v"
 	case *SeleniumWebElementCallRequest:
-		response.Response, err = s.webElementCall(context, actualRequest)
+		response.Response, err = s.callWebElement(context, actualRequest)
 		errorTemplate = "failed to call web element: %v"
 	case *SeleniumRunRequest:
 		response.Response, err = s.run(context, actualRequest)
@@ -144,7 +146,7 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 	for _, action := range request.Actions {
 		for _, call := range action.Calls {
 			if action.Selector == nil {
-				callResponse, err := s.webDriverCall(context, &SeleniumWebDriverCallRequest{
+				callResponse, err := s.callWebDriver(context, &SeleniumWebDriverCallRequest{
 					SessionID: request.SessionID,
 					Call:      call,
 				})
@@ -156,7 +158,7 @@ func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*S
 
 			}
 
-			callResponse, err := s.webElementCall(context, &SeleniumWebElementCallRequest{
+			callResponse, err := s.callWebElement(context, &SeleniumWebElementCallRequest{
 				SessionID: request.SessionID,
 				Selector:  action.Selector,
 				Call:      call,
@@ -197,7 +199,7 @@ func (s *seleniumService) callMethod(owner interface{}, methodName string, param
 	return response, nil
 }
 
-func (s *seleniumService) webDriverCall(context *Context, request *SeleniumWebDriverCallRequest) (*SeleniumServiceCallResponse, error) {
+func (s *seleniumService) callWebDriver(context *Context, request *SeleniumWebDriverCallRequest) (*SeleniumServiceCallResponse, error) {
 	seleniumSession, err := s.session(context, request.SessionID)
 	if err != nil {
 		return nil, err
@@ -206,34 +208,22 @@ func (s *seleniumService) webDriverCall(context *Context, request *SeleniumWebDr
 }
 
 func (s *seleniumService) call(context *Context, caller interface{}, call *SeleniumMethodCall) (callResponse *SeleniumServiceCallResponse, err error) {
-	repeat, sleepInMs, exitCriteria := call.Wait.Data()
-	for i := 0; i < repeat; i++ {
+	callResponse = &SeleniumServiceCallResponse{
+		Extracted: make(map[string]string),
+	}
+	repeatable := call.Wait.Get()
+	var handler = func() (interface{}, error) {
 		callResponse, err = s.callMethod(caller, call.Method, call.Parameters)
-		if err != nil && exitCriteria == "" {
-			//if there is exit criteria error can be intermittent.
+		if err != nil {
 			return nil, err
 		}
-		if sleepInMs > 0 {
-			s.Sleep(context, sleepInMs)
-		}
-		if exitCriteria != "" {
-			var criteria = exitCriteria
-			if len(callResponse.Result) > 0 {
-				criteria = strings.Replace(exitCriteria, "$value", toolbox.AsString(callResponse.Result[0]), 1)
-			}
-			ok, err := EvaluateCriteria(context, criteria, "SeleniumWaitCriteria", true)
-			if err != nil {
-				return nil, err
-			}
-			if ok {
-				break
-			}
-		}
+		return callResponse.Result, nil
 	}
+	err = repeatable.Run(seleniumRunnerCaller, context, handler, callResponse.Extracted)
 	return callResponse, err
 }
 
-func (s *seleniumService) webElementCall(context *Context, request *SeleniumWebElementCallRequest) (*SeleniumWebElementCallResponse, error) {
+func (s *seleniumService) callWebElement(context *Context, request *SeleniumWebElementCallRequest) (*SeleniumWebElementCallResponse, error) {
 	seleniumSession, err := s.session(context, request.SessionID)
 	if err != nil {
 		return nil, err

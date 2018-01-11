@@ -1,0 +1,10 @@
+Workflow,Name,Tasks,OnErrorTask,,[]Post.Name,[]Post.From
+,recover,%Tasks,recover,,errorCaught,errorCaught
+[]Tasks,Name,Actions,,,,
+,fail,%Fail,,,,
+[]Fail,Name,Service,Action,Request.Message,,
+,fail,nop,fail,this is test error,,
+[]Tasks,Name,Actions,,,,
+,recover,%Recover,,,,
+[]Recover,Name,Service,Action,Request.In,[]Post.Name,[]Post.From
+,recover,nop,parrot,$error,errorCaught,value

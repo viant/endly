@@ -13,20 +13,16 @@ type SendHTTPRequest struct {
 
 //HTTPRequest represents an http request
 type HTTPRequest struct {
-	MatchBody    string //only run this execution is output from a previous command is matched
-	Method       string
-	URL          string
-	Header       http.Header
-	Cookies      Cookies
-	Body         string
-	Replace      map[string]string //replaces key with value if present
-	Extraction   DataExtractions   //extraction
-	Variables    Variables         // input JSON body map, output state.httpPrevious
-	Repeat       int               //how many time send this request
-	SleepTimeMs  int               //Sleep time after request send, this only makes sense with repeat option
-	ExitCriteria string            //Repeat exit criteria, it uses extracted variable to determine repeat termination
-	RequestUdf   string
-	ResponseUdf  string
+	*Repeatable
+	MatchBody   string //only run this execution is output from a previous command is matched
+	Method      string
+	URL         string
+	Header      http.Header
+	Cookies     Cookies
+	Body        string
+	Replace     map[string]string //replaces key with value if present
+	RequestUdf  string
+	ResponseUdf string
 }
 
 //SendHTTPResponse represnets a send response
@@ -101,18 +97,14 @@ func (r *HTTPRequest) Expand(context *Context) *HTTPRequest {
 	header := make(map[string][]string)
 	copyExpandedHeaders(r.Header, header, context)
 	return &HTTPRequest{
-		MatchBody:    context.Expand(r.MatchBody),
-		Method:       r.Method,
-		URL:          context.Expand(r.URL),
-		Body:         context.Expand(r.Body),
-		Header:       header,
-		Extraction:   r.Extraction,
-		Variables:    r.Variables,
-		Replace:      r.Replace,
-		Repeat:       r.Repeat,
-		SleepTimeMs:  r.SleepTimeMs,
-		ExitCriteria: r.ExitCriteria,
-		RequestUdf:   r.RequestUdf,
-		ResponseUdf:  r.ResponseUdf,
+		MatchBody:   context.Expand(r.MatchBody),
+		Method:      r.Method,
+		URL:         context.Expand(r.URL),
+		Body:        context.Expand(r.Body),
+		Header:      header,
+		Repeatable:  r.Repeatable,
+		Replace:     r.Replace,
+		RequestUdf:  r.RequestUdf,
+		ResponseUdf: r.ResponseUdf,
 	}
 }

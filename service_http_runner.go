@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"time"
 )
 
 //HTTPRunnerServiceID represents http runner service id.
@@ -19,8 +18,8 @@ const HTTPRunnerServiceID = "http/runner"
 //HTTPRunnerServiceSendAction represents a send action.
 const HTTPRunnerServiceSendAction = "send"
 
-//HTTPRunnerExitCriteriaEventType represent HttpExitEvaluation event name
-const HTTPRunnerExitCriteriaEventType = "HttpExitEvaluation"
+//HTTPRunner represent HttpExitEvaluation event name
+const HTTPRunner = "HttpRunner"
 
 //HTTPPreviousTripStateKey keys to store previous request details for multi trip HTTP Send request in context state
 const HTTPPreviousTripStateKey = "previous"
@@ -48,24 +47,10 @@ func (s *httpRunnerService) processResponse(context *Context, sendRequest *SendH
 	}
 
 	var responseBody = replaceResponseBodyIfNeeded(sendHTTPRequest, response.Body)
-	err := sendHTTPRequest.Extraction.Extract(context, extracted, responseBody)
-
-	if strings.HasPrefix(responseBody, "{") {
-		response.JSONBody = make(map[string]interface{})
-		err = toolbox.NewJSONDecoderFactory().Create(strings.NewReader(responseBody)).Decode(&response.JSONBody)
-		var extractedVariables = data.NewMap()
-		if err == nil {
-			_ = sendHTTPRequest.Variables.Apply(data.Map(response.JSONBody), extractedVariables)
-		}
-		for k, v := range extractedVariables {
-			extracted[k] = toolbox.AsString(v)
-		}
-	}
-
-	return responseBody, err
+	return responseBody, nil
 }
 
-func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, sendHTTPRequest *HTTPRequest, sessionCookies *Cookies, sendRequest *SendHTTPRequest, result *SendHTTPResponse) error {
+func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, sendHTTPRequest *HTTPRequest, sessionCookies *Cookies, sendGroupRequest *SendHTTPRequest, sendGroupResponse *SendHTTPResponse) error {
 	var err error
 	var state = context.State()
 	cookies := state.GetMap("cookies")
@@ -103,17 +88,15 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 	sendHTTPRequest.Cookies.SetHeader(httpRequest.Header)
 
 	response := &HTTPResponse{}
-	result.Responses = append(result.Responses, response)
+	sendGroupResponse.Responses = append(sendGroupResponse.Responses, response)
 	startEvent := s.Begin(context, sendHTTPRequest, Pairs("request", sendHTTPRequest))
 
-	var repeat = sendHTTPRequest.Repeat
-	if repeat == 0 {
-		repeat = 1
-	}
+	repeatable := sendHTTPRequest.Repeatable.Get()
+
 	var httpResponse *http.Response
 	var responseBody string
 	var bodyCache []byte
-	var useCachedBody = repeat > 1 && httpRequest.ContentLength > 0
+	var useCachedBody = repeatable.Repeat > 1 && httpRequest.ContentLength > 0
 	if useCachedBody {
 		bodyCache, err = ioutil.ReadAll(httpRequest.Body)
 		if err != nil {
@@ -121,37 +104,23 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		}
 	}
 
-	for i := 0; i < repeat; i++ {
+	handler := func() (interface{}, error) {
 		if useCachedBody {
 			httpRequest.Body = ioutil.NopCloser(bytes.NewReader(bodyCache))
 		}
 		httpResponse, err = client.Do(httpRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("%v", err)
-			return nil
+			return nil, nil
 		}
-		responseBody, err = s.processResponse(context, sendRequest, sendHTTPRequest, response, httpResponse, isBase64Encoded, result.Extracted)
-		if err != nil {
-			return err
-		}
-		var extractedState = context.state.Clone()
-		for k, v := range result.Extracted {
-			extractedState[k] = v
-		}
-		criteria := extractedState.ExpandAsText(sendHTTPRequest.ExitCriteria)
-		canBreak, err := EvaluateCriteria(context, criteria, HTTPRunnerExitCriteriaEventType, false)
-		if err != nil {
-			return fmt.Errorf("failed to check http exit criteia: %v", err)
-		}
-		if canBreak {
-			break
-		}
-		if sendHTTPRequest.SleepTimeMs > 0 {
-			timeToSleep := time.Millisecond * time.Duration(sendHTTPRequest.SleepTimeMs)
-			time.Sleep(timeToSleep)
-		}
+		responseBody, err = s.processResponse(context, sendGroupRequest, sendHTTPRequest, response, httpResponse, isBase64Encoded, sendGroupResponse.Extracted)
+		return responseBody, err
 	}
 
+	err = repeatable.Run(HTTPRunner, context, handler, sendGroupResponse.Extracted)
+	if err != nil {
+		return err
+	}
 	var responseCookies Cookies = httpResponse.Cookies()
 	response.Cookies = responseCookies.IndexByName()
 	for k, cookie := range response.Cookies {
@@ -167,31 +136,36 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 	}
 	response.Code = httpResponse.StatusCode
 	response.TimeTakenMs = endEvent.TimeTakenMs
-	if strings.HasPrefix(responseBody, "{") {
-		response.JSONBody = make(map[string]interface{})
-		err = toolbox.NewJSONDecoderFactory().Create(strings.NewReader(responseBody)).Decode(&response.JSONBody)
-		if err == nil {
+
+	if toolbox.IsCompleteJSON(responseBody) {
+		response.JSONBody, err = toolbox.JSONToMap(responseBody)
+		if err == nil && sendHTTPRequest.Repeatable != nil {
 			_ = sendHTTPRequest.Variables.Apply(data.Map(response.JSONBody), previous)
 		}
 	}
-	for k, v := range result.Extracted {
+
+	for k, v := range sendGroupResponse.Extracted {
 		var expanded = previous.Expand(v)
 		previous[k] = state.Expand(expanded)
 	}
-	err = sendHTTPRequest.Variables.Apply(previous, previous)
+
+	err = repeatable.Variables.Apply(previous, previous)
 	if err != nil {
 		return err
 	}
 	if len(previous) > 0 {
 		state.Put(HTTPPreviousTripStateKey, previous)
 	}
-
 	if sendHTTPRequest.MatchBody != "" {
 		return nil
 	}
-	for _, candidate := range sendRequest.Requests {
+
+	for _, candidate := range sendGroupRequest.Requests {
 		if candidate.MatchBody != "" && strings.Contains(response.Body, candidate.MatchBody) {
-			err = s.sendRequest(context, client, candidate, sessionCookies, sendRequest, result)
+
+			fmt.Printf("matched !!!! %v\n", candidate.MatchBody)
+
+			err = s.sendRequest(context, client, candidate, sessionCookies, sendGroupRequest, sendGroupResponse)
 			if err != nil {
 				return err
 			}
@@ -291,7 +265,7 @@ func (s *httpRunnerService) resetContext(context *Context, request *SendHTTPRequ
 	state := context.state
 	state.Delete(HTTPPreviousTripStateKey)
 	for _, request := range request.Requests {
-		if len(request.Extraction) > 0 {
+		if request.Repeatable != nil && len(request.Extraction) > 0 {
 			request.Extraction.Reset(state)
 		}
 	}
