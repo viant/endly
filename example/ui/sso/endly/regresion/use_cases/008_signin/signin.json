@@ -41,7 +41,7 @@
       {
         "Method": "Click",
         "Wait": {
-          "SleepInMs": 1000
+          "SleepTimeMs": 1000
         }
       }
     ]
@@ -52,7 +52,7 @@
         "Method": "CurrentURL",
         "Wait": {
           "Repeat": 10,
-          "SleepInMs": 2000,
+          "SleepTimeMs": 2000,
           "ExitCriteria": "$value:/viant/"
         }
       }]

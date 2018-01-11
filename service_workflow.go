@@ -200,7 +200,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) (*W
 	if err != nil {
 		return nil, err
 	}
-	s.Sleep(context, int(action.SleepInMs))
+	s.Sleep(context, int(action.SleepTimeMs))
 	return serviceActivity, nil
 }
 
@@ -399,8 +399,8 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	workflow.Post.Apply(state, response.Data) //context -> workflow output
 	s.addVariableEvent("Workflow.Post", workflow.Post, context, state)
 
-	if workflow.SleepInMs > 0 {
-		s.Sleep(context, workflow.SleepInMs)
+	if workflow.SleepTimeMs > 0 {
+		s.Sleep(context, workflow.SleepTimeMs)
 	}
 	return response, nil
 }

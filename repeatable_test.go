@@ -21,7 +21,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:       10,
-			SleepInMs:    100,
+			SleepTimeMs:  100,
 			ExitCriteria: "$status:!running",
 		}
 
@@ -58,7 +58,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:       10,
-			SleepInMs:    100,
+			SleepTimeMs:  100,
 			ExitCriteria: "$status:!running",
 		}
 
@@ -95,7 +95,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:       10,
-			SleepInMs:    100,
+			SleepTimeMs:  100,
 			ExitCriteria: "$status:!running",
 		}
 
@@ -132,7 +132,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:       10,
-			SleepInMs:    100,
+			SleepTimeMs:  100,
 			ExitCriteria: "$status:!running",
 		}
 
@@ -169,7 +169,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:       10,
-			SleepInMs:    100,
+			SleepTimeMs:  100,
 			ExitCriteria: "$value:/!running/", //this is contains
 		}
 
@@ -205,7 +205,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:       10,
-			SleepInMs:    100,
+			SleepTimeMs:  100,
 			ExitCriteria: "$value:/!running/", //this is contains
 		}
 
@@ -247,7 +247,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:       10,
-			SleepInMs:    100,
+			SleepTimeMs:  100,
 			ExitCriteria: "$status:/!running/", //this is contains
 		}
 
@@ -291,7 +291,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:       10,
-			SleepInMs:    100,
+			SleepTimeMs:  100,
 			ExitCriteria: "$value:/!running/", //this is contains
 		}
 
@@ -329,7 +329,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:       10,
-			SleepInMs:    100,
+			SleepTimeMs:  100,
 			ExitCriteria: "$status:!running",
 		}
 
@@ -362,7 +362,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:       10,
-			SleepInMs:    100,
+			SleepTimeMs:  100,
 			ExitCriteria: "$status:!running",
 		}
 
@@ -395,7 +395,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:       10,
-			SleepInMs:    100,
+			SleepTimeMs:  100,
 			ExitCriteria: "$status!=running",
 		}
 

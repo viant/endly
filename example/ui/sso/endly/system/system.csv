@@ -5,7 +5,7 @@ Workflow,,Name,Description,Tasks,,[]Init.Name,[]Init.From,[]Init.Required
 ,,init,Init sso app services,%Init,,,,
 []Init,Service,Action,Description,Request,images,,,
 ,docker,stop-images,Stops requested images,#req/stop_images.json|$images,"[""aerospike""]",,,
-[]Init,Service,Action,Description,Request,instance,tasks,SleepInMs,
+[]Init,Service,Action,Description,Request,instance,tasks,SleepTimeMs,
 ,workflow,run,start aerospike on $buildHost,#req/aerospike.json,db1_aerospike,start,30000,
 []Tasks,,Name,Description,Actions,,,,
 ,,destroy,Stop sso services,%Destroy,,,,
