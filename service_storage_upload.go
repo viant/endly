@@ -5,7 +5,7 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//StorageDownloadRequest represents a resources upload request, it takes context state key to upload to target destination.
+//StorageUploadRequest represents a resources upload request, it takes context state key to upload to target destination.
 type StorageUploadRequest struct {
 	SourceKey string
 	Target    *url.Resource

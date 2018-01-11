@@ -166,8 +166,8 @@ func (s *dockerService) stopImages(context *Context, request *DockerStopImagesRe
 	https://docs.docker.com/compose/reference/run/
 Options:
     -d                    Detached mode: Run container in the background, print
-                          new container Id.
-    --Id NAME           Assign a Id to the container
+                          new container ID.
+    --ID NAME           Assign a ID to the container
     --entrypoint CMD      Override the entrypoint of the image.
     -e KEY=VAL            Set an environment variable (can be used multiple times)
     -u, --user=""         Run as specified username or uid

@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+//ValidationIndexByDirective represent indexing directive
 const ValidationIndexByDirective = "@indexBy@"
 
 //Validator represents a validator
@@ -129,12 +130,11 @@ func (s *Validator) assertJSONIfConvertible(expectedText string, actualText stri
 			}
 			return true
 
-		} else {
-			if expectedMap, err := toolbox.JSONToMap(expectedText); err == nil {
-				if actualMap, err := toolbox.JSONToMap(actualText); err == nil {
-					if err = s.assertMap(expectedMap, actualMap, assertionInfo, path); err == nil {
-						return true
-					}
+		}
+		if expectedMap, err := toolbox.JSONToMap(expectedText); err == nil {
+			if actualMap, err := toolbox.JSONToMap(actualText); err == nil {
+				if err = s.assertMap(expectedMap, actualMap, assertionInfo, path); err == nil {
+					return true
 				}
 			}
 		}
