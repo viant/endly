@@ -29,6 +29,7 @@ func (d *DataExtractions) Extract(context *Context, extracted map[string]string,
 			delete(extracted, extract.Key)
 		}
 	}
+
 	for _, extract := range *d {
 		compiledExpression, err := regexp.Compile(extract.RegExpr)
 		if err != nil {

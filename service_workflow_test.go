@@ -277,11 +277,11 @@ func TestWorkflowService_OnErrorTask(t *testing.T) {
 
 	context := manager.NewContext(toolbox.NewContext())
 	serviceResponse := service.Run(context, &endly.WorkflowRunRequest{
-		Name:  "recover",
-		Tasks: "fail",
-		Params: map[string]interface{}{},
-		EnableLogging:     false,
-		LoggingDirectory:  "logs",
+		Name:             "recover",
+		Tasks:            "fail",
+		Params:           map[string]interface{}{},
+		EnableLogging:    false,
+		LoggingDirectory: "logs",
 	})
 
 	assert.EqualValues(t, "", serviceResponse.Error)
