@@ -1,0 +1,14 @@
+Workflow,Name,Tasks,Init,
+,nop,%Tasks,#init.json,
+[]Tasks,Name,Actions,,
+,task1,%Task1,,
+[]Task1,Name,Service,Action,Request
+,action 1,nop,nop,{}
+[]Tasks,Name,Actions,,
+,task2,%Task2,,
+[]Task2,Name,Service,Action,Request
+,action 2,nop,nop,{}
+[]Tasks,Name,Actions,,
+,task3,%Task3,,
+[]Task3,Name,Service,Action,Request
+,action 3,nop,nop,{}

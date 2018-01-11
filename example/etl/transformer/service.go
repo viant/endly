@@ -2,13 +2,13 @@ package transformer
 
 import (
 	"fmt"
-	"github.com/satori/go.uuid"
 	"github.com/viant/dsc"
 	"os"
 	"path"
 	"sync"
 	"sync/atomic"
 	"time"
+	"github.com/viant/toolbox"
 )
 
 //Service represents transformer service
@@ -27,7 +27,7 @@ type service struct {
 
 func (s *service) registerTask(baseResponse *BaseResponse, taskInfo *TaskInfo, dataset string, request interface{}) {
 	var task = &Task{
-		ID:           uuid.NewV4().String(),
+		ID:           toolbox.AsString(time.Now().Nanosecond()),
 		Table:        dataset,
 		BaseResponse: baseResponse,
 		TaskInfo:     taskInfo,
