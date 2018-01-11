@@ -386,9 +386,9 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 			if workflow.OnErrorTask == "" {
 				return nil, err
 			}
+			state.Put(workflowError, err.Error())
 			onErrorTask, err := workflow.Task(workflow.OnErrorTask)
 			if onErrorTask != nil {
-				state.Put(workflowError, err.Error())
 				_, err = s.runTask(context, workflow, onErrorTask)
 			}
 			if err != nil {
