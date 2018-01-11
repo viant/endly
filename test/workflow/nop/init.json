@@ -1,0 +1,6 @@
+[
+  {
+    "Name":"Var1",
+    "From":"$params.var1"
+  }
+]

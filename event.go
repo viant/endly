@@ -62,7 +62,7 @@ type Event struct {
 	StartEvent  *Event                   //starting event
 	Timestamp   time.Time                //start time
 	TimeTakenMs int                      //time taken
-	Workflow    string                   //workflow Id
+	Workflow    string                   //workflow ID
 	Task        *WorkflowTask            //task
 	Activity    *WorkflowServiceActivity //activity details
 	Level       int                      //logging level
@@ -73,7 +73,7 @@ type Event struct {
 //Info returns basic event info
 func (e *Event) Info() string {
 	var name = ""
-	if value, ok := e.Value["Id"]; ok {
+	if value, ok := e.Value["ID"]; ok {
 		name = toolbox.AsString(value)
 	}
 	return fmt.Sprintf("%v", name)

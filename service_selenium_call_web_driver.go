@@ -8,5 +8,6 @@ type SeleniumWebDriverCallRequest struct {
 
 //SeleniumServiceCallResponse represents selenium call response
 type SeleniumServiceCallResponse struct {
-	Result []interface{}
+	Result    []interface{}
+	Extracted map[string]string
 }
