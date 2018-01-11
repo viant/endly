@@ -35,10 +35,12 @@ func TestHttpRunnerService_Run(t *testing.T) {
 				URL:    "http://127.0.0.1:8766/send1",
 				Method: "POST",
 				Body:   "0123456789",
-				Extraction: []*endly.DataExtraction{
-					{
-						Key:     "send_arg1",
-						RegExpr: "send1 (.+)",
+				Repeatable: &endly.Repeatable{
+					Extraction: []*endly.DataExtraction{
+						{
+							Key:     "send_arg1",
+							RegExpr: "send1 (.+)",
+						},
 					},
 				},
 			},
@@ -46,10 +48,12 @@ func TestHttpRunnerService_Run(t *testing.T) {
 				URL:    "http://127.0.0.1:8766/send1",
 				Method: "POST",
 				Body:   "0123456789",
-				Extraction: []*endly.DataExtraction{
-					{
-						Key:     "send_arg2",
-						RegExpr: "send1 (.+)",
+				Repeatable: &endly.Repeatable{
+					Extraction: []*endly.DataExtraction{
+						{
+							Key:     "send_arg2",
+							RegExpr: "send1 (.+)",
+						},
 					},
 				},
 			},
@@ -89,17 +93,19 @@ func TestHttpRunnerService_Repeat(t *testing.T) {
 				URL:    "http://127.0.0.1:8111/send1",
 				Method: "POST",
 				Body:   "0123456789",
-				Extraction: []*endly.DataExtraction{
-					{
-						Key:     "send_arg1",
-						RegExpr: "send1 (.+)",
+				Repeatable: &endly.Repeatable{
+					Extraction: []*endly.DataExtraction{
+						{
+							Key:     "send_arg1",
+							RegExpr: "send1 (.+)",
+						},
+						{
+							Key:     "send_arg2",
+							RegExpr: "send1 (.+)",
+						},
 					},
-					{
-						Key:     "send_arg2",
-						RegExpr: "send1 (.+)",
-					},
+					Repeat: 2,
 				},
-				Repeat: 2,
 			},
 
 			{
@@ -145,15 +151,17 @@ func TestHttpRunnerService_RepeatWthExitCriteria(t *testing.T) {
 				URL:    "http://127.0.0.1:8112/send1",
 				Method: "POST",
 				Body:   "0123456789",
-				Extraction: []*endly.DataExtraction{
-					{
-						Key:     "var1",
-						RegExpr: "send1 (.+)",
+				Repeatable: &endly.Repeatable{
+					Extraction: []*endly.DataExtraction{
+						{
+							Key:     "var1",
+							RegExpr: "send1 (.+)",
+						},
 					},
+					Repeat:       1000,
+					SleepInMs:    500,
+					ExitCriteria: "$var1:content1-2",
 				},
-				Repeat:       1000,
-				SleepTimeMs:  500,
-				ExitCriteria: "$var1:content1-2",
 			},
 		},
 	})
@@ -194,6 +202,40 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 	assert.NotNil(t, service)
 
 	context := manager.NewContext(toolbox.NewContext())
+
+	{ // valid udf use case
+		response := service.Run(context, &endly.SendHTTPRequest{
+			Requests: []*endly.HTTPRequest{
+				{
+					URL:         "http://127.0.0.1:8119/udf1",
+					Method:      "POST",
+					Body:        "{\"id\":110, \"name\":\"test 1\"}",
+					RequestUdf:  "AsTestMessage",
+					ResponseUdf: "FromTestMessage",
+				},
+				{
+					URL:         "http://127.0.0.1:8119/udf2",
+					Method:      "POST",
+					Body:        "{\"id\":121, \"name\":\"test 2\"}",
+					RequestUdf:  "AsTestMessage",
+					ResponseUdf: "FromTestMessage",
+				},
+			},
+		})
+
+		if assert.Equal(t, "", response.Error) {
+			sendResponse, ok := response.Response.(*endly.SendHTTPResponse)
+			if assert.True(t, ok) {
+				assert.EqualValues(t, 2, len(sendResponse.Responses))
+				for _, response := range sendResponse.Responses {
+					assert.EqualValues(t, 200, response.Code)
+					assert.EqualValues(t, 1, response.JSONBody["ID"])
+					assert.EqualValues(t, "abc", response.JSONBody["Name"])
+				}
+			}
+		}
+
+	}
 
 	{ // invalid request UDF use case
 		response := service.Run(context, &endly.SendHTTPRequest{
@@ -240,39 +282,6 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 		assert.EqualValues(t, true, strings.Contains(response.Error, "failed to lookup udf: FromTewewewswwtMessage"))
 	}
 
-	{ // valid udf use case
-		response := service.Run(context, &endly.SendHTTPRequest{
-			Requests: []*endly.HTTPRequest{
-				{
-					URL:         "http://127.0.0.1:8119/udf1",
-					Method:      "POST",
-					Body:        "{\"id\":110, \"name\":\"test 1\"}",
-					RequestUdf:  "AsTestMessage",
-					ResponseUdf: "FromTestMessage",
-				},
-				{
-					URL:         "http://127.0.0.1:8119/udf2",
-					Method:      "POST",
-					Body:        "{\"id\":121, \"name\":\"test 2\"}",
-					RequestUdf:  "AsTestMessage",
-					ResponseUdf: "FromTestMessage",
-				},
-			},
-		})
-
-		if assert.Equal(t, "", response.Error) {
-			sendResponse, ok := response.Response.(*endly.SendHTTPResponse)
-			if assert.True(t, ok) {
-				assert.EqualValues(t, 2, len(sendResponse.Responses))
-				for _, response := range sendResponse.Responses {
-					assert.EqualValues(t, 200, response.Code)
-					assert.EqualValues(t, 1, response.JSONBody["Id"])
-					assert.EqualValues(t, "abc", response.JSONBody["Name"])
-				}
-			}
-		}
-
-	}
 	{ //base 64 use case
 		response := service.Run(context, &endly.SendHTTPRequest{
 			Requests: []*endly.HTTPRequest{
