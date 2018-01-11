@@ -6,6 +6,7 @@ import (
 	"github.com/viant/toolbox"
 
 	"errors"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox/url"
 	"os/exec"
@@ -26,8 +27,194 @@ func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, e
 		if response.Error != "" {
 			return nil, nil, errors.New(response.Error)
 		}
+
 	}
 	return manager, service, err
+}
+
+func getServiceWithWorkflowContext(workflowURI string) (*endly.Context, endly.Service, error) {
+	manager := endly.NewManager()
+	service, err := manager.Service(endly.WorkflowServiceID)
+	context := manager.NewContext(toolbox.NewContext())
+
+	if err == nil {
+		response := service.Run(context, &endly.WorkflowLoadRequest{
+			Source: url.NewResource(workflowURI),
+		})
+		if response.Error != "" {
+			return nil, nil, errors.New(response.Error)
+		}
+		if workflowLoadResponse, ok := response.Response.(*endly.WorkflowLoadResponse); ok {
+			context.Workflows.Push(workflowLoadResponse.Workflow)
+		} else {
+			fmt.Printf("unexpected reponse: %T\n", response.Response)
+		}
+	}
+	return context, service, err
+}
+
+func TestWorkflowService_RepeatTask(t *testing.T) {
+	context, service, err := getServiceWithWorkflowContext("test/workflow/nop/workflow.csv")
+	assert.Nil(t, err)
+	serviceResponse := service.Run(context, &endly.WorkflowRepeatTaskRequest{
+		Task: "task1",
+		Repeatable: &endly.Repeatable{
+			Repeat:      2,
+			SleepTimeMs: 1,
+		},
+	})
+	assert.EqualValues(t, "", serviceResponse.Error)
+
+	response, ok := serviceResponse.Response.(*endly.WorkflowRepeatTaskResponse)
+	if assert.True(t, ok, fmt.Sprintf("expected %T but had %T", &endly.WorkflowRepeatTaskResponse{}, serviceResponse.Response)) {
+		assert.EqualValues(t, 2, response.Repeated)
+	}
+
+}
+
+func TestWorkflowService_RepeatAction(t *testing.T) {
+	context, service, err := getServiceWithWorkflowContext("test/workflow/nop/workflow.csv")
+	assert.Nil(t, err)
+	serviceResponse := service.Run(context, &endly.WorkflowRepeatActionRequest{
+		ActionRequest: &endly.ActionRequest{
+			Service: "nop",
+			Action:  "nop",
+			Request: map[string]interface{}{},
+		},
+		Repeatable: &endly.Repeatable{
+			Repeat:      2,
+			SleepTimeMs: 1,
+		},
+	})
+	assert.EqualValues(t, "", serviceResponse.Error)
+
+	response, ok := serviceResponse.Response.(*endly.WorkflowRepeatActionResponse)
+	if assert.True(t, ok, fmt.Sprintf("expected %T but had %T", &endly.WorkflowRepeatActionResponse{}, serviceResponse.Response)) {
+		assert.EqualValues(t, 2, response.Repeated)
+	}
+}
+
+func TestWorkflowService_SwitchTask(t *testing.T) {
+	context, service, err := getServiceWithWorkflowContext("test/workflow/nop/workflow.csv")
+	assert.Nil(t, err)
+
+	request := &endly.WorkflowSwitchTaskRequest{
+		SourceKey: "goto",
+		Cases: []*endly.WorkflowSwitchTaskCase{
+			{
+				Value: "task1",
+				Task:  "task1",
+			},
+			{
+				Value: "task2",
+				Task:  "task2",
+			},
+		},
+		DefaultTask: "task3",
+	}
+
+	var state = context.State()
+
+	type useCase struct {
+		SourceKey    string
+		ExpectedTask string
+	}
+
+	for _, testCase := range []useCase{
+		{
+			SourceKey:    "task1",
+			ExpectedTask: "task1",
+		},
+		{
+			SourceKey:    "task2",
+			ExpectedTask: "task2",
+		},
+		{
+			SourceKey:    "unknown",
+			ExpectedTask: "task3",
+		},
+	} {
+		state.Put("goto", testCase.SourceKey)
+		serviceResponse := service.Run(context, request)
+		assert.EqualValues(t, "", serviceResponse.Error)
+		response := serviceResponse.Response.(*endly.WorkflowSwitchTaskResponse)
+		assert.EqualValues(t, testCase.ExpectedTask, response.Task)
+	}
+
+}
+
+func TestWorkflowService_SwitchAction(t *testing.T) {
+	context, service, err := getServiceWithWorkflowContext("test/workflow/nop/workflow.csv")
+	assert.Nil(t, err)
+
+	request := &endly.WorkflowSwitchActionRequest{
+		SourceKey: "run",
+		Cases: []*endly.WorkflowSwitchActionCase{
+			{
+				Value: "action1",
+				ActionRequest: &endly.ActionRequest{
+					Service: "nop",
+					Action:  "parrot",
+					Request: map[string]interface{}{
+						"In": map[string]interface{}{"r": "test 1"},
+					},
+				},
+			},
+			{
+				Value: "action2",
+				ActionRequest: &endly.ActionRequest{
+					Service: "nop",
+					Action:  "parrot",
+					Request: map[string]interface{}{
+						"In": map[string]interface{}{"r": "test 2"},
+					},
+				},
+			},
+		},
+		Default: &endly.ActionRequest{
+			Service: "nop",
+			Action:  "parrot",
+			Request: map[string]interface{}{
+				"In": map[string]interface{}{"r": "test 3"},
+			},
+		},
+	}
+
+	var state = context.State()
+
+	type useCase struct {
+		SourceKey string
+		Expected  interface{}
+	}
+
+	for _, testCase := range []useCase{
+		{
+			SourceKey: "action1",
+			Expected:  "test 1",
+		},
+		{
+			SourceKey: "action2",
+			Expected:  "test 2",
+		},
+		{
+			SourceKey: "unknown",
+			Expected:  "test 3",
+		},
+	} {
+		state.Put("run", testCase.SourceKey)
+		serviceResponse := service.Run(context, request)
+		assert.EqualValues(t, "", serviceResponse.Error)
+		response, ok := serviceResponse.Response.(*endly.WorkflowSwitchActionResponse)
+		if assert.True(t, ok) {
+			assert.EqualValues(t, "parrot", response.Action)
+			if assert.True(t, ok) {
+				responseMap := toolbox.AsMap(response.Response)
+				//fmt.Printf(" %T\n", response.Response)
+				assert.EqualValues(t, testCase.Expected, responseMap["r"])
+			}
+		}
+	}
+
 }
 
 func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
@@ -81,6 +268,27 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 			assert.EqualValues(t, 0, len(records)) //validate task shift elements from USER_ACCCOUNT array.
 
 		}
+	}
+}
+
+func TestWorkflowService_OnErrorTask(t *testing.T) {
+
+	manager, service, _ := getServiceWithWorkflow("test/workflow/recover/workflow.csv")
+
+	context := manager.NewContext(toolbox.NewContext())
+	serviceResponse := service.Run(context, &endly.WorkflowRunRequest{
+		Name:             "recover",
+		Tasks:            "fail",
+		Params:           map[string]interface{}{},
+		EnableLogging:    false,
+		LoggingDirectory: "logs",
+	})
+
+	assert.EqualValues(t, "", serviceResponse.Error)
+	response, ok := serviceResponse.Response.(*endly.WorkflowRunResponse)
+	if assert.True(t, ok) {
+		errorCaught := toolbox.AsString(response.Data["errorCaught"])
+		assert.True(t, strings.Contains(errorCaught, "Fail this is test error at"))
 	}
 }
 
@@ -173,7 +381,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
-			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to evaluate request"), serviceResponse.Error)
+			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to run action:Broken request was nil for nop.nop"), serviceResponse.Error)
 		}
 	}
 	{

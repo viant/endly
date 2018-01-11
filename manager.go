@@ -18,13 +18,13 @@ const AppVersion = "0.0.1"
 //Manager represnets a workflow manager
 type Manager interface {
 
-	//Name returns an application Id
+	//Name returns an application ID
 	Name() string
 
 	//Version returns an application version
 	Version() string
 
-	//Service return a workflow service for provided Id or error
+	//Service return a workflow service for provided ID or error
 	Service(name string) (Service, error)
 
 	//Register register service in this manager
@@ -57,7 +57,7 @@ func (s *manager) Service(name string) (Service, error) {
 }
 
 func (s *manager) Register(service Service) {
-	s.services[service.Id()] = service
+	s.services[service.ID()] = service
 }
 
 func (s *manager) NewContext(ctx toolbox.Context) *Context {
@@ -110,6 +110,7 @@ func NewManager() Manager {
 	result.Register(NewEventReporterService())
 	result.Register(NewNetworkService())
 	result.Register(NewSeleniumService())
+	result.Register(NewEc2Service())
 	return result
 }
 
