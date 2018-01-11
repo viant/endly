@@ -186,13 +186,16 @@ func extractServiceInfo(stdout string, state map[string]string, info *DaemonInfo
 
 	//deal with service deamon		info.Pid = docker start/running, process 48628
 	if info.State == "" {
-		if strings.Contains(stdout, "start") || strings.Contains(stdout, "running") {
+		candidate := vtclean.Clean(stdout, false)
+		if strings.Contains(candidate, "start/running") {
 			info.State = "running"
 			if columns, ok :=  ExtractColumns(info.State);ok {
 				if len(columns) > 0 {
 					info.Pid = toolbox.AsInt(columns[len(columns)-1])
 				}
 			}
+		} else if  strings.Contains(candidate, "stop/waiting") {
+			info.State = "not running"
 		}
 	}
 }
