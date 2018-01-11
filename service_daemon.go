@@ -22,7 +22,7 @@ const DaemonServiceStatusAction = "status"
 const DaemonServiceStopAction = "stop"
 
 const (
-	serviceTypeError = iota
+	serviceTypeError      = iota
 	serviceTypeInitDaemon
 	serviceTypeLaunchCtl
 	serviceTypeStdService
@@ -167,7 +167,7 @@ func (s *daemonService) determineServiceType(context *Context, service, exclusio
 	return serviceTypeError, nil
 }
 
-func extractServiceInfo(state map[string]string, info *DaemonInfo) {
+func extractServiceInfo(stdout string, state map[string]string, info *DaemonInfo) {
 	if pid, ok := state["pid"]; ok {
 		info.Pid = toolbox.AsInt(pid)
 	}
@@ -182,6 +182,18 @@ func extractServiceInfo(state map[string]string, info *DaemonInfo) {
 	}
 	if daemonPath, ok := state["path"]; ok {
 		info.Path = daemonPath
+	}
+
+	//deal with service deamon		info.Pid = docker start/running, process 48628
+	if info.State == "" {
+		if strings.Contains(stdout, "start") || strings.Contains(stdout, "running") {
+			info.State = "running"
+			if columns, ok :=  ExtractColumns(info.State);ok {
+				if len(columns) > 0 {
+					info.Pid = toolbox.AsInt(columns[len(columns)-1])
+				}
+			}
+		}
 	}
 }
 
@@ -313,7 +325,7 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 		return nil, err
 	}
 
-	extractServiceInfo(commandResult.Extracted, info)
+	extractServiceInfo(commandResult.Stdout(), commandResult.Extracted, info)
 	return info, nil
 
 }
