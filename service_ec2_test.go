@@ -80,6 +80,36 @@ func startInstance(awsCredential, instance string) (string, error) {
 	return "", nil
 }
 
+
+func stopInstance(awsCredential, instance string) (string, error) {
+	manager := endly.NewManager()
+	context := manager.NewContext(toolbox.NewContext())
+	service, _ := context.Service(endly.Ec2ServiceID)
+	serviceResponse := service.Run(context, &endly.Ec2CallRequest{
+		Credential: awsCredential,
+		Method:     "StopInstances",
+		Input: map[string]interface{}{
+			"InstanceIds": []interface{}{
+				instance,
+			},
+		},
+	})
+	if serviceResponse.Error != "" {
+		return "", errors.New(serviceResponse.Error)
+	}
+
+	response, ok := serviceResponse.Response.(*endly.Ec2CallResponse)
+	if !ok {
+		return "", fmt.Errorf("expected %T but had %T", &endly.Ec2CallResponse{}, serviceResponse.Response)
+	}
+
+	_, ok = response.Response.(*ec2.StopInstancesOutput)
+	if !ok {
+		return "", fmt.Errorf("expected %T but had %T", &ec2.StopInstancesOutput{}, response.Response)
+	}
+	return "", nil
+}
+
 func TestEc2Service_Run(t *testing.T) {
 
 	os.Setenv("awsTestInstanceId", "i-0ef8d9260eaf47fdf")
@@ -90,9 +120,12 @@ func TestEc2Service_Run(t *testing.T) {
 		if assert.Nil(t, err) {
 			if status == "stopped" {
 				startInstance(awsCredential, testInstanceId)
+			} else {
+				stopInstance(awsCredential, testInstanceId)
 			}
 
-		}
+		}//use WorkflowRepeatAction Request
+		stopInstance(awsCredential, testInstanceId)
 	}
 
 }
