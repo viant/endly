@@ -162,9 +162,6 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 
 	for _, candidate := range sendGroupRequest.Requests {
 		if candidate.MatchBody != "" && strings.Contains(response.Body, candidate.MatchBody) {
-
-			fmt.Printf("matched !!!! %v\n", candidate.MatchBody)
-
 			err = s.sendRequest(context, client, candidate, sessionCookies, sendGroupRequest, sendGroupResponse)
 			if err != nil {
 				return err

@@ -59,8 +59,8 @@ func TestWorkflowService_RepeatTask(t *testing.T) {
 	serviceResponse := service.Run(context, &endly.WorkflowRepeatTaskRequest{
 		Task: "task1",
 		Repeatable: &endly.Repeatable{
-			Repeat:    2,
-			SleepInMs: 1,
+			Repeat:      2,
+			SleepTimeMs: 1,
 		},
 	})
 	assert.EqualValues(t, "", serviceResponse.Error)
@@ -82,8 +82,8 @@ func TestWorkflowService_RepeatAction(t *testing.T) {
 			Request: map[string]interface{}{},
 		},
 		Repeatable: &endly.Repeatable{
-			Repeat:    2,
-			SleepInMs: 1,
+			Repeat:      2,
+			SleepTimeMs: 1,
 		},
 	})
 	assert.EqualValues(t, "", serviceResponse.Error)
