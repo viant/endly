@@ -159,7 +159,7 @@ func TestHttpRunnerService_RepeatWthExitCriteria(t *testing.T) {
 						},
 					},
 					Repeat:       1000,
-					SleepInMs:    500,
+					SleepTimeMs:  500,
 					ExitCriteria: "$var1:content1-2",
 				},
 			},
@@ -229,7 +229,7 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 				assert.EqualValues(t, 2, len(sendResponse.Responses))
 				for _, response := range sendResponse.Responses {
 					assert.EqualValues(t, 200, response.Code)
-					assert.EqualValues(t, 1, response.JSONBody["ID"])
+					assert.EqualValues(t, 1, response.JSONBody["Id"])
 					assert.EqualValues(t, "abc", response.JSONBody["Name"])
 				}
 			}
