@@ -175,7 +175,7 @@ The following expression are supported:
 **Workflow Lifecycle**
 
 1) New context with a new state map is created after inheriting values from a caller. (Caller will not see any state changes from downstream workflow)
-2) **data** key is published to the state map with defined workflow.data
+2) **data** key is published to the state map with defined workflow.data. Workflow data field would stores complex nested data structure lika a setup data.
 2) **params** key is published to state map with the caller parameters
 3) Workflow initialization stage executes, applying variables defined in Workflow.Pre (input: workflow state, output: workflow state)
 4) Tasks Execution 
@@ -214,9 +214,7 @@ The following expression are supported:
 <a name="SystemServices"></a>
 ## System services
 
-
 All services are running on the system referred as target and defined as [Resource](https://raw.githubusercontent.com/viant/toolbox/master/url/resource.go)
-
 
 **Execution services**
 
@@ -228,7 +226,6 @@ The execution service is responsible for opening, managing terminal session, wit
 | exec | close | closes SSH session | [CloseSessionRequest](service_exec_session.go) | [CloseSessionResponse](service_exec_session.go) |
 | exec | command | executes basic commands | [CommandRequest](service_exec_command.go) | [CommandResponse](service_exec_command_response.go) |
 | exec | managed-command | executes commands with ability to extract data, define error or success state | [ExtractableCommandRequest](service_exec_command.go) | [SystemCommandResponse](service_system_exec_command_response.go) |
-
 
 
 **Daemon service.**
@@ -331,6 +328,23 @@ Maven, tomcat use this service.
 | deployment | deploy | run deployment | [DeploymentDeployRequest](service_deployment_deploy.go) | [DeploymentDeployResponse](service_deployment_deploy.go) |
 
 
+### Cloud services
+
+
+**AWC Ec2 Service**
+
+Ec2 service - amazon computing service management. 
+
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| aws/ec2 | call | Run ec2 operation | [Ec2CallRequest](service_ec2_call.go) | [Ec2CallResponse](service_ec2_call.go)  |
+
+'call' action's method and input are proxied to [Ec2 client](github.com/aws/aws-sdk-go/service/ec2)
+
+
+
+
 <a name="Testingservices"></a>
 ### Testing services
 
@@ -351,11 +365,9 @@ Http runner sends one or more http request to the specified endpoint, it manages
 | rest/runner | send | Sends one rest request to the endpoint. | [RestSendRequest](service_rest_send.go) | [RestSendResponse](service_rest_send.go) |
 
 
-
 **Selenium Runner** 
 
 Selenium runner open a web session to run various action on web driver or web elements.
-
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
@@ -367,6 +379,7 @@ Selenium runner open a web session to run various action on web driver or web el
 | selenium | call-element | Call a method on a web element, i.e. we.Click() | [SeleniumWebElementCallRequest](service_selenium_call_web_element.go) | [SeleniumWebElementCallResponse](service_selenium_call_web_element.go) |
 | selenium | run | Run set of action on a page | [SeleniumRunRequest](service_selenium_run.go) | [SeleniumRunResponse](service_selenium_run.go) |
 
+call-driver and call-element actions's method and parameters are proxied to stand along selenium server via [selenium client](github.com/tebeka/selenium)
 
 **Generic validation service**
 
@@ -435,6 +448,7 @@ Take as example the following actual and expected data structure.
 ```
 	
 
+TODO: unify endly and dsunit validation with macro expression. 
 
 **Datastore services**
 
@@ -459,7 +473,6 @@ DsUnit uses its own predicate and macro system to perform advanced validation se
 <a name="Workfowservice"></a>
 ## Workflow service
 
-
 **Workflow Service**
 
 Workflow service provide capability to run task, action from any defined workflow.
@@ -469,10 +482,13 @@ Workflow service provide capability to run task, action from any defined workflo
 | workflow | load | Loads workflow from provided path | [WorkflowLoadRequest](service_workflow_load.go) | [WorkflowLoadRequest](service_workflow_load.go)  |
 | workflow | register | Register provide workflow in registry | [WorkflowLoadRequest](service_workflow_register.go) |  |
 | workflow | run | run workflow with specified tasks and parameters | [WorkflowRunRequest](service_workflow_run.go) | [WorkflowRunResponse]((service_workflow_run.go) |
+| workflow | switch-task | Runs matched task with provided switch/case sourceKey and value | [WorkflowSwitchTaskRequest](service_workflow_repeat_task.go) | [WorkflowSwitchTaskResponse](service_workflow_repeat_task.go) |
+| workflow | switch-action | Runs matched service action with provided switch/case sourceKey and value  | [WorkflowSwitchActionRequest](service_workflow_repeat_task.go) | [WorkflowSwitchActionResponse](service_workflow_repeat_task.go) |
+| workflow | repeat-task |  Repeats specified task n times or till exit criteria is met | [WorkflowRepeatActionRequest](service_workflow_repeat_task.go) | [WorkflowRepeatActionResponse](service_workflow_repeat_task.go) |
+| workflow | repeat-action | Repeats specified service action n times or till exit criteria is met| [WorkflowRepeatTaskRequest](service_workflow_repeat_task.go) | [WorkflowRepeatTaskResponse](service_workflow_repeat_task.go) |
 
 
-
-
+	
 **Predefined workflows**
 
 | Name | Task |Description | 

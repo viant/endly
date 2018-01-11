@@ -50,7 +50,7 @@
       {
         "Method": "Click",
         "Wait": {
-          "SleepInMs": 100
+          "SleepTimeMs": 100
         }
       }
     ]

@@ -87,7 +87,7 @@
       {
         "Method": "Click",
         "Wait": {
-          "SleepInMs": 100
+          "SleepTimeMs": 100
         }
       }
     ]
@@ -98,7 +98,7 @@
         "Method": "CurrentURL",
         "Wait": {
           "Repeat": 5,
-          "SleepInMs": 1000,
+          "SleepTimeMs": 1000,
           "ExitCriteria": "$value:/signin/"
         }
       }]

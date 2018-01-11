@@ -361,7 +361,7 @@ It comes with the following registered keys:
 	* tmpDir - temp directory
 	* uuid.next - generate unique id
 	* uuid.get - returns previously generated unique id, or generate new
-	*.end.XXX where XXX is the Id of the env variable to return
+	*.end.XXX where XXX is the ID of the env variable to return
 	* all UFD registry functions
 */
 func NewDefaultState() data.Map {

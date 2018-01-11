@@ -8,6 +8,12 @@ const (
 
 	//NopServiceNopAction represents nop action
 	NopServiceNopAction = "nop"
+
+	//NopServiceFailAction represents fail action
+	NopServiceFailAction = "fail"
+
+	//NopServiceParrotAction represents parrot action
+	NopServiceParrotAction = "parrot"
 )
 
 //Nop represent no operation
@@ -21,10 +27,18 @@ type nopService struct {
 func (s *nopService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok", Response: request}
-	switch request.(type) {
+	switch actualRequest := request.(type) {
 	case *Nop:
+	case *NopFailRequest:
+		response.Error = context.Expand(actualRequest.Message)
+	case *NopParrotRequest:
+		response.Response = actualRequest.In
 	default:
 		response.Error = fmt.Sprintf("unsupported request type: %T", request)
+	}
+
+	if response.Error != "" {
+		response.Status = "error"
 	}
 
 	defer s.End(context)(startEvent, Pairs("response", response))
@@ -32,8 +46,14 @@ func (s *nopService) Run(context *Context, request interface{}) *ServiceResponse
 }
 
 func (s *nopService) NewRequest(action string) (interface{}, error) {
-	if action == NopServiceNopAction {
+
+	switch action {
+	case NopServiceNopAction:
 		return &Nop{}, nil
+	case NopServiceFailAction:
+		return &NopFailRequest{}, nil
+	case NopServiceParrotAction:
+		return &NopParrotRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
 }
@@ -42,7 +62,9 @@ func (s *nopService) NewRequest(action string) (interface{}, error) {
 func NewNopService() Service {
 	var result = &nopService{
 		AbstractService: NewAbstractService(NopServiceID,
-			NopServiceNopAction),
+			NopServiceNopAction,
+			NopServiceFailAction,
+			NopServiceParrotAction),
 	}
 	result.AbstractService.Service = result
 	return result
