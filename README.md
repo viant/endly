@@ -115,9 +115,6 @@ Neatly is responsible for converting a tabular document (.csv) into workflow obj
 
 
 
-
-
-
 **[Workflow](workflow.go)** an abstraction to define a set of task with its action.
 
 **Task** an abstraction to logically group one or more action, for example, init,test.
@@ -129,12 +126,26 @@ An action does actual job, like starting service, building and deploying app etc
         
 **ActionResponse** an abstraction representing a service response.
 
+To execute action:
+1) workflow service looks up a service by id, in workflow manager registry.
+2) workflow service creates a new request for corresponding action on the selected service.
+3) Action.Request  is first expanded with context.State ($variable substitution), to converted to service request.
+4) Context with its state it is passed into every action so that it can be modified for state control, future data substitution. 
+5) Service executes Run method for provided action to return ServiceResponse 
+
+
 **[Service](service.go)** an abstraction providing set of functionalities triggered by specified action/request.
 
 **State** key/value pair map that is used to mange state during the workflow run. 
 The state can be change by providing variable definition.
 The workflow content, data structures, can use dollar '$' sign followed by variable name 
 to get its expanded to its corresponding state value if the key has been present.
+ 
+The following diagram shows service with its component.
+![Service diagram](service_diagram.png)
+
+
+
 
 **[Variables](variable.go)** an abstraction having capabilities to change a state map.
 
