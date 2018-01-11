@@ -351,7 +351,7 @@ Ec2 service - amazon computing service management.
 | --- | --- | --- | --- | --- |
 | aws/ec2 | call | Run ec2 operation | [Ec2CallRequest](service_ec2_call.go) | [Ec2CallResponse](service_ec2_call.go)  |
 
-'call' action's method and input are proxied to [Ec2 client](github.com/aws/aws-sdk-go/service/ec2)
+'call' action's method and input are proxied to [Ec2 client](http://github.com/aws/aws-sdk-go/service/ec2)
 
 
 
@@ -390,7 +390,7 @@ Selenium runner open a web session to run various action on web driver or web el
 | selenium | call-element | Call a method on a web element, i.e. we.Click() | [SeleniumWebElementCallRequest](service_selenium_call_web_element.go) | [SeleniumWebElementCallResponse](service_selenium_call_web_element.go) |
 | selenium | run | Run set of action on a page | [SeleniumRunRequest](service_selenium_run.go) | [SeleniumRunResponse](service_selenium_run.go) |
 
-call-driver and call-element actions's method and parameters are proxied to stand along selenium server via [selenium client](github.com/tebeka/selenium)
+call-driver and call-element actions's method and parameters are proxied to stand along selenium server via [selenium client](http://github.com/tebeka/selenium)
 
 **Generic validation service**
 
