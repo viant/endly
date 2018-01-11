@@ -115,9 +115,6 @@ Neatly is responsible for converting a tabular document (.csv) into workflow obj
 
 
 
-
-
-
 **[Workflow](workflow.go)** an abstraction to define a set of task with its action.
 
 **Task** an abstraction to logically group one or more action, for example, init,test.
@@ -129,12 +126,26 @@ An action does actual job, like starting service, building and deploying app etc
         
 **ActionResponse** an abstraction representing a service response.
 
+To execute action:
+1) workflow service looks up a service by id, in workflow manager registry.
+2) workflow service creates a new request for corresponding action on the selected service.
+3) Action.Request  is first expanded with context.State ($variable substitution), to converted to service request.
+4) Context with its state it is passed into every action so that it can be modified for state control, future data substitution. 
+5) Service executes Run method for provided action to return ServiceResponse 
+
+
 **[Service](service.go)** an abstraction providing set of functionalities triggered by specified action/request.
 
 **State** key/value pair map that is used to mange state during the workflow run. 
 The state can be change by providing variable definition.
 The workflow content, data structures, can use dollar '$' sign followed by variable name 
 to get its expanded to its corresponding state value if the key has been present.
+ 
+The following diagram shows service with its component.
+![Service diagram](service_diagram.png)
+
+
+
 
 **[Variables](variable.go)** an abstraction having capabilities to change a state map.
 
@@ -340,7 +351,7 @@ Ec2 service - amazon computing service management.
 | --- | --- | --- | --- | --- |
 | aws/ec2 | call | Run ec2 operation | [Ec2CallRequest](service_ec2_call.go) | [Ec2CallResponse](service_ec2_call.go)  |
 
-'call' action's method and input are proxied to [Ec2 client](github.com/aws/aws-sdk-go/service/ec2)
+'call' action's method and input are proxied to [Ec2 client](http://github.com/aws/aws-sdk-go/service/ec2)
 
 
 
@@ -379,7 +390,7 @@ Selenium runner open a web session to run various action on web driver or web el
 | selenium | call-element | Call a method on a web element, i.e. we.Click() | [SeleniumWebElementCallRequest](service_selenium_call_web_element.go) | [SeleniumWebElementCallResponse](service_selenium_call_web_element.go) |
 | selenium | run | Run set of action on a page | [SeleniumRunRequest](service_selenium_run.go) | [SeleniumRunResponse](service_selenium_run.go) |
 
-call-driver and call-element actions's method and parameters are proxied to stand along selenium server via [selenium client](github.com/tebeka/selenium)
+call-driver and call-element actions's method and parameters are proxied to stand along selenium server via [selenium client](http://github.com/tebeka/selenium)
 
 **Generic validation service**
 
