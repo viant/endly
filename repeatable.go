@@ -86,21 +86,28 @@ func (r *Repeatable) Run(callerInfo string, context *Context, handler func() (in
 		if err != nil {
 			return err
 		}
+
 		extractableOutput, structuredOutput := r.AsExtractable(context, out)
-		if extractableOutput != "" {
-			extracted["value"] = extractableOutput //string output is published as $value
-			err := r.Extraction.Extract(context, extracted, extractableOutput)
-			if err != nil {
-				return err
-			}
-		}
 		if len(structuredOutput) > 0 {
 			var extractedVariables = data.NewMap()
 			_ = r.Variables.Apply(structuredOutput, extractedVariables)
 			for k, v := range extractedVariables {
 				extracted[k] = toolbox.AsString(v)
 			}
+			if extractableOutput == "" {
+				extractableOutput = asJSONText(structuredOutput)
+			}
 		}
+
+		err = r.Extraction.Extract(context, extracted, extractableOutput)
+		if err != nil {
+			return err
+		}
+
+		if extractableOutput != "" {
+			extracted["value"] = extractableOutput //string output is published as $value
+		}
+
 		if r.ExitCriteria != "" {
 			if canBreak, err := r.EvaluateExitCriteria(callerInfo+"ExitEvaluation", context, extracted); canBreak || err != nil {
 				return err
