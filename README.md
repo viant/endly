@@ -351,7 +351,7 @@ Ec2 service - amazon computing service management.
 | --- | --- | --- | --- | --- |
 | aws/ec2 | call | Run ec2 operation | [Ec2CallRequest](service_ec2_call.go) | [Ec2CallResponse](service_ec2_call.go)  |
 
-'call' action's method and input are proxied to [Ec2 client](http://github.com/aws/aws-sdk-go/service/ec2)
+'call' action's method and input are proxied to [Ec2 client](https://github.com/aws/aws-sdk-go/tree/master/service/ec2)
 
 
 
