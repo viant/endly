@@ -240,7 +240,7 @@ func (s *daemonService) determineCheckCommand(context *Context, target *url.Reso
 			if err != nil {
 				return "", err
 			}
-			extractServiceInfo(commandResult.Extracted, info)
+			extractServiceInfo(commandResult.Stdout(),commandResult.Extracted, info)
 		}
 		return "", nil
 
