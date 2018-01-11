@@ -22,9 +22,9 @@ type SeleniumRunResponse struct {
 
 //SeleniumMethodCall represents selenium call.
 type SeleniumMethodCall struct {
+	Wait       *Repeatable
 	Method     string
 	Parameters []interface{}
-	Wait       *SeleniumWait
 }
 
 //SeleniumAction represents various calls on web element
@@ -47,10 +47,10 @@ func (r *SeleniumRunRequest) Validate() error {
 }
 
 //NewSeleniumMethodCall creates a new method call
-func NewSeleniumMethodCall(method string, wait *SeleniumWait, parameters ...interface{}) *SeleniumMethodCall {
+func NewSeleniumMethodCall(method string, repeatable *Repeatable, parameters ...interface{}) *SeleniumMethodCall {
 	return &SeleniumMethodCall{
+		Wait:       repeatable,
 		Method:     method,
-		Wait:       wait,
 		Parameters: parameters,
 	}
 }

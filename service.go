@@ -13,7 +13,7 @@ import (
 type Service interface {
 
 	//service id
-	Id() string
+	ID() string
 
 	//service state map
 	State() data.Map
@@ -102,8 +102,8 @@ func (s *AbstractService) End(context *Context) func(*Event, map[string]interfac
 	}
 }
 
-//Id returns this service id.
-func (s *AbstractService) Id() string {
+//ID returns this service id.
+func (s *AbstractService) ID() string {
 	return s.id
 }
 

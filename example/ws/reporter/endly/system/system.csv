@@ -4,7 +4,7 @@ Workflow,,Name,Description,Tasks,,Init,,
 ,,init,Run app services,%Init,,,,
 []Init,Service,Action,Description,Request,images,,,
 ,docker,stop-images,Stops requested images,#req/stop_images.json|$images,"[""mysql""]",,,
-[]Init,Service,Action,Description,Request,run.instance,run.tasks,SleepInMs
+[]Init,Service,Action,Description,Request,run.instance,run.tasks,SleepTimeMs
 ,workflow,run,init mysql on $buildHost,#req/mysql.json|$run,db1_mysql,start,30000
 []Tasks,,Name,Description,Actions,,,,
 ,,destroy,Stop adelphic services,%Destroy,,,,
