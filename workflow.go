@@ -94,7 +94,6 @@ func (w *Workflow) Task(name string) (*WorkflowTask, error) {
 	return nil, fmt.Errorf("failed to lookup task: %v on %v", name, w.Name)
 }
 
-
 func (w *Workflow) FilterTasks(filter string) ([]*WorkflowTask, error) {
 	if filter == "" || filter == "*" {
 		return w.Tasks, nil
@@ -102,10 +101,10 @@ func (w *Workflow) FilterTasks(filter string) ([]*WorkflowTask, error) {
 	var taskNames = strings.Split(filter, ",")
 	var result = make([]*WorkflowTask, 0)
 	for _, taskName := range taskNames {
-		 task, err := w.Task(taskName)
-		 if err != nil {
-		 	return nil, err
-		 }
+		task, err := w.Task(taskName)
+		if err != nil {
+			return nil, err
+		}
 		result = append(result, task)
 	}
 	return result, nil
@@ -125,7 +124,7 @@ func (w *Workflows) Pop() *Workflow {
 		return nil
 	}
 	var result = (*w)[len(*w)-1]
-	(*w) = (*w)[0: len(*w)-1]
+	(*w) = (*w)[0 : len(*w)-1]
 	return result
 }
 

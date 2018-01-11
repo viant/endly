@@ -48,7 +48,7 @@ const (
 	WorkflowServiceActivityKey = "activity"
 
 	workflowServiceCaller = "Workflow"
-	workflowError = "error"
+	workflowError         = "error"
 )
 
 //WorkflowServiceActivityEndEventType represents activity end event type.
@@ -204,21 +204,21 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) (*W
 	return serviceActivity, nil
 }
 
-func (s *workflowService) runTask(context *Context, workflow *Workflow, task *WorkflowTask) error {
+func (s *workflowService) runTask(context *Context, workflow *Workflow, task *WorkflowTask) (data.Map, error) {
 	var startTime = time.Now()
 	var state = context.state
 	state.Put(":task", task)
 	canRun, err := EvaluateCriteria(context, task.RunCriteria, WorkflowTaskEvalCriteriaEventType, true)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !canRun {
-		return nil
+		return nil, nil
 	}
 	err = task.Init.Apply(state, state)
 	s.addVariableEvent("Task.Init", task.Init, context, state)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	startEvent := s.Begin(context, task, Pairs("ID", task.Name))
 	defer s.End(context)(startEvent, Pairs())
@@ -242,12 +242,12 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 
 		_, err = s.runAction(context, action)
 		if err != nil {
-			return fmt.Errorf("failed to run action:%v %v", action.Tag, err)
+			return nil, fmt.Errorf("failed to run action:%v %v", action.Tag, err)
 		}
 
 		moveToNextTag, err := EvaluateCriteria(context, action.SkipCriteria, "TagIdSkipCriteria", false)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if moveToNextTag {
 			for j := i + 1; j < len(task.Actions) && action.TagID == task.Actions[j].TagID; j++ {
@@ -257,14 +257,15 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 	}
 	err = s.runAsyncActions(context, workflow, task, asyncActions)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	err = task.Post.Apply(state, state)
-	s.addVariableEvent("Task.Post", task.Post, context, state)
+	var taskPostState = data.NewMap()
+	err = task.Post.Apply(state, taskPostState)
+	s.addVariableEvent("Task.Post", task.Post, context, taskPostState)
+	state.Apply(taskPostState)
 	s.applyRemainingTaskSpentIfNeeded(context, task, startTime)
-	return err
+	return taskPostState, err
 }
-
 
 func (s *workflowService) applyRemainingTaskSpentIfNeeded(context *Context, task *WorkflowTask, startTime time.Time) {
 	if task.TimeSpentMs > 0 {
@@ -380,15 +381,15 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 		return nil, err
 	}
 	for _, task := range filteredTask {
-		err = s.runTask(context, workflow, task)
+		_, err = s.runTask(context, workflow, task)
 		if err != nil {
 			if workflow.OnErrorTask == "" {
-				return nil , err
+				return nil, err
 			}
 			onErrorTask, err := workflow.Task(workflow.OnErrorTask)
 			if onErrorTask != nil {
 				state.Put(workflowError, err.Error())
-				err = s.runTask(context, workflow, onErrorTask);
+				_, err = s.runTask(context, workflow, onErrorTask)
 			}
 			if err != nil {
 				return nil, err
@@ -624,11 +625,11 @@ func (s *workflowService) repeatTask(context *Context, request *WorkflowRepeatTa
 	}
 	var handler = func() (interface{}, error) {
 		response.Repeated++
-		err := s.runTask(context, workflow, task)
+		postState, err := s.runTask(context, workflow, task)
 		if err != nil {
 			return nil, err
 		}
-		return context.state, nil
+		return postState, nil
 	}
 	repetable := request.Repeatable.Get()
 	err = repetable.Run(workflowServiceCaller, context, handler, response.Extracted)
@@ -671,7 +672,7 @@ func (s *workflowService) switchTask(context *Context, request *WorkflowSwitchTa
 	if err != nil {
 		return nil, err
 	}
-	err = s.runTask(context, workflow, task)
+	_, err = s.runTask(context, workflow, task)
 	if err != nil {
 		return nil, err
 	}

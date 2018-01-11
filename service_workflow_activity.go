@@ -25,8 +25,7 @@ func (a *WorkflowServiceActivity) FormatTag() string {
 	return "[" + a.Tag + "]"
 }
 
-
-func NewWorkflowServiceActivity (context *Context, action *ServiceAction) *WorkflowServiceActivity {
+func NewWorkflowServiceActivity(context *Context, action *ServiceAction) *WorkflowServiceActivity {
 	return &WorkflowServiceActivity{
 		Workflow:    context.Workflows.Last().Name,
 		Action:      action.Action,
