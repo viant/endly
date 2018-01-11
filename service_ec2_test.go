@@ -80,7 +80,6 @@ func startInstance(awsCredential, instance string) (string, error) {
 	return "", nil
 }
 
-
 func stopInstance(awsCredential, instance string) (string, error) {
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
@@ -124,7 +123,7 @@ func TestEc2Service_Run(t *testing.T) {
 				stopInstance(awsCredential, testInstanceId)
 			}
 
-		}//use WorkflowRepeatAction Request
+		} //use WorkflowRepeatAction Request
 		stopInstance(awsCredential, testInstanceId)
 	}
 

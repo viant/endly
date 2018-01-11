@@ -25,7 +25,7 @@ type ServiceAction struct {
 	Description  string    //description
 	Init         Variables //variables to initialise state before action runs
 	Post         Variables //variable to update state after action completes
-	SleepInMs    int       //optional Sleep time
+	SleepTimeMs  int       //optional Sleep time
 	Async        bool
 }
 
@@ -51,7 +51,7 @@ type Workflow struct {
 	Post        Variables       //variables to initialise state before this workflow runs
 	Tasks       []*WorkflowTask //workflow task
 	OnErrorTask string          //task that will run if error occur, the final workflow will return this task response
-	SleepInMs   int             //optional Sleep time
+	SleepTimeMs int             //optional Sleep time
 }
 
 //NeatlyTag represent a neatly tag

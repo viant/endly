@@ -33,7 +33,7 @@ func Test_AsProtobufMessage(t *testing.T) {
 	message, err := endly.FromProtobufMessage(encoded, nil, &proto.Message{})
 	if assert.Nil(t, err) {
 		aMap := toolbox.AsMap(message)
-		assert.EqualValues(t, 1, aMap["ID"])
+		assert.EqualValues(t, 1, aMap["Id"])
 		assert.EqualValues(t, "abc", aMap["Name"])
 	}
 

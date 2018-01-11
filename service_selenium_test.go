@@ -231,7 +231,7 @@ func TestSeleniumService_Calls(t *testing.T) {
 		Call: &endly.SeleniumMethodCall{
 			Method:     "Click",
 			Parameters: []interface{}{},
-			Wait:       &endly.Repeatable{SleepInMs: 1},
+			Wait:       &endly.Repeatable{SleepTimeMs: 1},
 		},
 		Selector: &endly.WebElementSelector{
 			By:    "css selector",
@@ -257,7 +257,7 @@ func TestSeleniumService_Calls(t *testing.T) {
 			Parameters: []interface{}{},
 			Wait: &endly.Repeatable{
 				Repeat:       20,
-				SleepInMs:    100,
+				SleepTimeMs:  100,
 				ExitCriteria: "$value:/WebDriver/",
 			},
 		},
@@ -324,7 +324,7 @@ func TestSeleniumService_Run(t *testing.T) {
 				Calls: []*endly.SeleniumMethodCall{
 					endly.NewSeleniumMethodCall("Text", &endly.Repeatable{
 						Repeat:       20,
-						SleepInMs:    100,
+						SleepTimeMs:  100,
 						ExitCriteria: "$value:/WebDriver/",
 					}),
 				},

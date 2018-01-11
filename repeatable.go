@@ -12,7 +12,7 @@ type Repeatable struct {
 	Extraction   DataExtractions //data extraction
 	Variables    Variables       // input JSON body map, output state.httpPrevious
 	Repeat       int             //how many time send this request
-	SleepInMs    int             //Sleep time after request send, this only makes sense with repeat option
+	SleepTimeMs  int             //Sleep time after request send, this only makes sense with repeat option
 	ExitCriteria string          //Repeat exit criteria, it uses extracted variable to determine repeat termination
 }
 
@@ -113,8 +113,8 @@ func (r *Repeatable) Run(callerInfo string, context *Context, handler func() (in
 				return err
 			}
 		}
-		if r.SleepInMs > 0 {
-			timeToSleep := time.Millisecond * time.Duration(r.SleepInMs)
+		if r.SleepTimeMs > 0 {
+			timeToSleep := time.Millisecond * time.Duration(r.SleepTimeMs)
 			time.Sleep(timeToSleep)
 		}
 	}
