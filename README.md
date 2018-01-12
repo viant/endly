@@ -71,7 +71,7 @@ You can build, deploy and test them end to end all with endly.
        - Test with Rest Runner
        - Data Preparation and Validation (aersopike, mysql)
 4) **Runtime** (TO BE ADDED)
-   * [Logger](example/rt/logger)
+   * [Logger](example/rt/elogger)
        - Test with HTTP Runner
        - Log Validation
        

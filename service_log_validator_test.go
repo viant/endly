@@ -1,7 +1,6 @@
 package endly_test
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
@@ -26,12 +25,6 @@ var templateLog = map[string]interface{}{
 	"k5": "%v",
 }
 
-func GetMapAsString(source interface{}) string {
-	buf := new(bytes.Buffer)
-	toolbox.NewJSONEncoderFactory().Create(buf).Encode(source)
-	return buf.String()
-}
-
 func BuildLogContent(from, to, multiplier int, template string) string {
 	var result = make([]string, 0)
 	for i := from; i <= to; i++ {
@@ -41,7 +34,6 @@ func BuildLogContent(from, to, multiplier int, template string) string {
 }
 
 func TestLogValidatorService_NewRequest(t *testing.T) {
-
 	manager := endly.NewManager()
 	service, err := manager.Service(endly.LogValidatorServiceID)
 	assert.Nil(t, err)
@@ -51,7 +43,7 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	tempPath := path.Join(os.TempDir(), toolbox.AsString(time.Now().Unix()))
 	err = os.Mkdir(tempPath, 0755)
 	assert.Nil(t, err)
-	var template = GetMapAsString(templateLog)
+	var template, _ = toolbox.AsJSONText(templateLog)
 
 	var fileURL = strings.Replace(url.NewResource(tempPath).URL, "file://", "scp://127.0.0.1", 1)
 	credential, err := GetDummyCredential()
@@ -98,17 +90,17 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 
 			{
 				Type: "t",
-				Records: []map[string]interface{}{
-					{
+				Records: []interface{}{
+					map[string]interface{}{
 						"k5": "10",
 					},
-					{
+					map[string]interface{}{
 						"k5": "20",
 					},
-					{
+					map[string]interface{}{
 						"k5": "30",
 					},
-					{
+					map[string]interface{}{
 						"k5": "10",
 					},
 				},
@@ -130,12 +122,10 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 		}
 		response = service.Run(context, &endly.LogValidatorAssertRequest{
 			ExpectedLogRecords: []*endly.ExpectedLogRecord{
-
 				{
-
 					Type: "t",
-					Records: []map[string]interface{}{
-						{
+					Records: []interface{}{
+						map[string]interface{}{
 							"k5": "20",
 						},
 					},
@@ -155,6 +145,87 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 			LogTypes: []string{"t"},
 		})
 		assert.Equal(t, "", response.Error)
+	}
+
+}
+
+var indexedLogRecords = `{"Timestamp":"2018-01-12T14:07:09.120207-08:00","EventType":"event1","EventID":"eeed0b0c-f7e4-11e7-b54f-784f438e6f38","ClientIP":"127.0.0.1:52141","ServerIP":"127.0.0.1:8777","Request":{"Method":"GET","URL":"http://127.0.0.1:8777/event1/?k1=v1\u0026k2=v2","Header":{"Accept-Encoding":["gzip"],"User-Agent":["Go-http-client/1.1"]}},"Error":""}
+{"Timestamp":"2018-01-12T14:07:09.122259-08:00","EventType":"event1","EventID":"eeed4c70-f7e4-11e7-b54f-784f438e6f38","ClientIP":"127.0.0.1:52141","ServerIP":"127.0.0.1:8777","Request":{"Method":"GET","URL":"http://127.0.0.1:8777/event1/?k10=v1\u0026k2=v2","Header":{"Accept-Encoding":["gzip"],"User-Agent":["Go-http-client/1.1"]}},"Error":""}
+{"Timestamp":"2018-01-12T14:07:09.123185-08:00","EventType":"event2","EventID":"eeed709c-f7e4-11e7-b54f-784f438e6f38","ClientIP":"127.0.0.1:52141","ServerIP":"127.0.0.1:8777","Request":{"Method":"GET","URL":"http://127.0.0.1:8777/event2/?k1=v1\u0026k2=v2","Header":{"Accept-Encoding":["gzip"],"User-Agent":["Go-http-client/1.1"]}},"Error":""}
+{"Timestamp":"2018-01-12T14:07:09.123199-08:00","EventType":"event2","EventID":"eeed709c-f7e4-11e7-b54f-784f438e6f30","ClientIP":"127.0.0.1:52141","ServerIP":"127.0.0.1:8777","Request":{"Method":"GET","URL":"http://127.0.0.1:8777/event2/?k1=v1\u0026k2=v2","Header":{"Accept-Encoding":["gzip"],"User-Agent":["Go-http-client/1.1"]}},"Error":""}
+`
+
+func TestLogValidatorService_TestIndexedRecord(t *testing.T) {
+	manager := endly.NewManager()
+	service, err := manager.Service(endly.LogValidatorServiceID)
+	assert.Nil(t, err)
+	assert.NotNil(t, service)
+	context := manager.NewContext(toolbox.NewContext())
+	defer context.Close()
+	tempLog := path.Join(os.TempDir(), "endly_test_indexed.log")
+	toolbox.RemoveFileIfExist(tempLog)
+	err = ioutil.WriteFile(tempLog, []byte(indexedLogRecords), 0644)
+	assert.Nil(t, err)
+
+	var response = service.Run(context, &endly.LogValidatorListenRequest{
+		Source: url.NewResource(tempLog),
+		Types: []*endly.LogType{
+			{
+				Name:   "t",
+				Format: "json",
+				Mask:   "endly_test_indexed.log",
+				IndexRegExpr:"\"EventID\":\"([^\"]+)\"",
+			},
+		},
+	})
+	assert.EqualValues(t, "", response.Error)
+
+	response = service.Run(context, &endly.LogValidatorAssertRequest{
+		LogWaitTimeMs:     3000,
+		LogWaitRetryCount: 3,
+		ExpectedLogRecords: []*endly.ExpectedLogRecord{
+
+			{
+				Type: "t",
+				Records: []interface{}{
+					map[string]interface{}{
+						"EventType":"event1",
+						"EventID":"eeed4c70-f7e4-11e7-b54f-784f438e6f38",
+						"Timestamp":"2018-01-12T14:07:09.122259-08:00",
+					},
+					map[string]interface{}{
+						"EventType":"event1",
+						"EventID":"eeed0b0c-f7e4-11e7-b54f-784f438e6f38",
+						"Timestamp":"2018-01-12T14:07:09.120207-08:00",
+					},
+					map[string]interface{}{
+						"Timestamp":"2018-01-12T14:07:09.123185-08:00",
+						"EventType":"event2",
+
+					},
+					map[string]interface{}{
+						"Timestamp":"2018-01-12T14:07:09.123185-08:00",
+						"EventType":"event2",
+						"EventID":"eeed709c-f7e4-11e7-b54f-784f438e6f30",
+					},
+				},
+			},
+		},
+	})
+
+	assert.Equal(t, "", response.Error)
+	logValidatorAssertResponse, ok := response.Response.(*endly.LogValidatorAssertResponse)
+	if assert.True(t, ok) {
+		if assert.NotNil(t, logValidatorAssertResponse) {
+			assert.EqualValues(t, 4, len(logValidatorAssertResponse.ValidationInfo))
+			for i := 0;i<3;i++{
+				if ! assert.EqualValues(t, 0, logValidatorAssertResponse.ValidationInfo[i].TestFailed) {
+					assert.Fail(t, logValidatorAssertResponse.ValidationInfo[i].FailedTests[0].Message)
+				}
+			}
+			assert.EqualValues(t, 1, logValidatorAssertResponse.ValidationInfo[3].TestFailed)
+
+		}
 	}
 
 }
