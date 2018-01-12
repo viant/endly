@@ -1,4 +1,4 @@
-#Endly - Declarative end to end functional testing
+#Endly - Declarative end to end functional testing and automation framework.
 
 [![Declarative end to end funtional testing for Go.](https://goreportcard.com/badge/github.com/viant/endly)](https://goreportcard.com/report/github.com/viant/endly)
 [![GoDoc](https://godoc.org/github.com/viant/endly?status.svg)](https://godoc.org/github.com/viant/endly)
@@ -625,8 +625,8 @@ See for more filter option: [RunnerReportingFilter](runner_filter.go).
 1) Delegate a new workflow request to dedicated req/ folder
 2) Variables in  Init, Post should only define state not requests
 3) Flag variable as Required or provide a fallback Value
-4) Use [Tag Iterators](../neatly) to group similar class of the tests 
-5) Since JSON inside tabular cell is not too elegant try to use [Virtual object](../neatly) instead.
+4) Use [Tag Iterators](https://github.com/viant/neatly#tagiterator) to group similar class of the tests 
+5) Since JSON inside tabular cell is not too elegant try to use [Virtual object](https://github.com/viant/neatly#vobject) instead.
 6) Organize  workflows and data by  grouping system, datastore, test functionality together. 
 
 
