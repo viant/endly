@@ -70,7 +70,7 @@ You can build, deploy and test them end to end all with endly.
    * [Transformer](example/etl/transformer) - datastore to datastore transformer (i.e. aerospike to mysql)
        - Test with Rest Runner
        - Data Preparation and Validation (aersopike, mysql)
-4) **Runtime** (TO BE ADDED)
+4) **Runtime**  - simple http request event logger
    * [Logger](example/rt/elogger)
        - Test with HTTP Runner
        - Log Validation
