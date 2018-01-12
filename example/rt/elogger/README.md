@@ -1,10 +1,8 @@
-# Reporter application - a simple report builder web service.
+# Logger - simple http request event logger
 
-This application was build to provide end to end testing example of web service application.
+This application was build to provide end to end testing example of etl application.
 
-Is uses mysql to register a pivot report definition, and to run reports.
-
-
+The end to end test provide uses to test aerospike to mysql backup with and without transformation.
 
 Prerequisites:
 
@@ -34,16 +32,11 @@ Provide a user name and password to login to your box.
 ```text
 secret scp
 ```
-
-Provide  **root** as user name and non empty password for docker mysqladmin
-```text
-secret mysql
 ```
 
 Verify that secret file were created
 ```text
 cat ~/.secret/scp.json
-cat ~/.secret/mysql.json
 ```
 
 
@@ -51,14 +44,11 @@ Check that **'endly'** binary is created in $GOPATH/bin directory as result of
 'go get -u github.com/viant/endly/endly'
 
 
-
-#### Run reporter webservice workflow
+#### Run logger workflow
 
 Run the following command:
 
 ```text
-cd $GOPATH/src/github.com/viant/endly/example/ws/reporter/endly/
+cd $GOPATH/src/github.com/viant/endly/example/ws/rt/elogger/endly/
 endly
 ```
-
-
