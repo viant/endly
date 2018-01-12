@@ -2,15 +2,18 @@ package endly
 
 import (
 	"github.com/viant/toolbox/url"
+	"regexp"
 )
 
 //LogType represents  a log type
 type LogType struct {
-	Name      string
-	Format    string
-	Mask      string
-	Exclusion string
-	Inclusion string
+	Name         string
+	Format       string
+	Mask         string
+	Exclusion    string
+	Inclusion    string
+	IndexRegExpr string //provide expression for indexing log message, in this case position based logging will not apply
+	indexExpr    *regexp.Regexp
 }
 
 //LogValidatorListenRequest represents listen for a logs request.
@@ -27,3 +30,17 @@ type LogValidatorListenResponse struct {
 
 //LogTypesMeta represents log type meta details
 type LogTypesMeta map[string]*LogTypeMeta
+
+
+func (t *LogType) UseIndex() bool {
+	return t.IndexRegExpr != ""
+}
+
+func (t *LogType) GetIndexExpr() (*regexp.Regexp, error) {
+	if t.indexExpr != nil {
+			return t.indexExpr, nil
+	}
+	var err error
+	t.indexExpr, err = regexp.Compile(t.IndexRegExpr)
+	return t.indexExpr, err
+}

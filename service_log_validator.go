@@ -74,6 +74,12 @@ type LogRecord struct {
 	Line   string
 }
 
+//IndexedLogRecord represents indexed log record
+type IndexedLogRecord struct {
+	*LogRecord
+	IndexValue string
+}
+
 //AsMap returns log records as map
 func (r *LogRecord) AsMap() (map[string]interface{}, error) {
 	var result = make(map[string]interface{})
@@ -86,12 +92,12 @@ type LogFile struct {
 	URL             string
 	Content         string
 	Name            string
-	Exclusion       string
-	Inclusion       string
+	*LogType
 	ProcessingState *LogProcessingState
 	LastModified    time.Time
 	Size            int
 	Records         []*LogRecord
+	IndexedRecords  map[string]*LogRecord
 	Mutex           *sync.RWMutex
 }
 
@@ -107,6 +113,32 @@ func (f *LogFile) ShiftLogRecord() *LogRecord {
 	return result
 }
 
+//ShiftLogRecord returns and remove the first log record if present
+func (f *LogFile) ShiftLogRecordByIndex(value string) *LogRecord {
+	f.Mutex.Lock()
+	defer f.Mutex.Unlock()
+	if len(f.Records) == 0 {
+		return nil
+	}
+	result, has  := f.IndexedRecords[value]
+	if ! has {
+		result = f.Records[0]
+		f.Records = f.Records[1:]
+	} else {
+		var records = make([]*LogRecord, 0)
+		for _, candidate := range f.Records {
+			if candidate == result {
+				continue
+			}
+			records = append(records, candidate)
+		}
+		f.Records = records
+	}
+	return result
+}
+
+
+
 //PushLogRecord appends provided log record to the records.
 func (f *LogFile) PushLogRecord(record *LogRecord) {
 	f.Mutex.Lock()
@@ -115,6 +147,24 @@ func (f *LogFile) PushLogRecord(record *LogRecord) {
 		f.Records = make([]*LogRecord, 0)
 	}
 	f.Records = append(f.Records, record)
+	if f.UseIndex()  {
+		if expr, err := f.GetIndexExpr();err == nil {
+			var indexValue = matchLogIndex(expr, record.Line)
+			if indexValue != "" {
+				f.IndexedRecords[indexValue] = record
+			}
+		}
+	}
+}
+
+func matchLogIndex(expr *regexp.Regexp, input string) string {
+	if expr.MatchString(input) {
+		matches := expr.FindStringSubmatch(input)
+		if len(matches) >  1  {
+			return matches[1]
+		}
+	}
+	return ""
 }
 
 //Reset resets processing state
@@ -329,11 +379,42 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 			}
 
 			var logRecord = &LogRecord{}
-			logRecordIterator.Next(&logRecord)
-			_, filename := toolbox.URLSplit(logRecord.URL)
-			var actualLogRecord, err = logRecord.AsMap()
-			if err != nil {
-				return nil, err
+			var isLogStructured = toolbox.IsMap(expectedLogRecord)
+			var calledNext = false
+			if logTypeMeta.LogType.UseIndex() {
+				if expr, err := logTypeMeta.LogType.GetIndexExpr();err == nil {
+					var expectedTextRecord = toolbox.AsString(expectedLogRecord);
+					if toolbox.IsMap(expectedLogRecord) || toolbox.IsSlice(expectedLogRecord) || toolbox.IsStruct(expectedLogRecord)  {
+						expectedTextRecord, _ = toolbox.AsJSONText(expectedLogRecord)
+					}
+					var indexValue = matchLogIndex(expr, expectedTextRecord)
+					if indexValue != "" {
+						indexedLogRecord := &IndexedLogRecord{
+							IndexValue:indexValue,
+						}
+						err = logRecordIterator.Next(indexedLogRecord)
+						if err != nil {
+							return nil, err
+						}
+						calledNext = true
+						logRecord = indexedLogRecord.LogRecord
+					}
+				}
+			}
+
+			if ! calledNext {
+				err = logRecordIterator.Next(&logRecord)
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			var actualLogRecord interface{}= logRecord.Line
+			if isLogStructured {
+				actualLogRecord, err = logRecord.AsMap()
+				if err != nil {
+					return nil, err
+				}
 			}
 
 			event.Logs = append(event.Logs, &LogRecordAssert{
@@ -342,6 +423,7 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 				Actual:   actualLogRecord,
 			})
 
+			_, filename := toolbox.URLSplit(logRecord.URL)
 			err = validator.Assert(expectedLogRecord, actualLogRecord, validationInfo, fmt.Sprintf("[%v:%v]", filename, logRecord.Number))
 			if err != nil {
 				return nil, err
@@ -384,15 +466,15 @@ func (s *logValidatorService) readLogFile(context *Context, source *url.Resource
 		isNewLogFile = true
 
 		logFile = &LogFile{
+			LogType:         logType,
 			Name:            name,
-			Exclusion:       logType.Exclusion,
-			Inclusion:       logType.Inclusion,
 			URL:             candidate.URL(),
 			LastModified:    fileInfo.ModTime(),
 			Size:            int(fileInfo.Size()),
 			ProcessingState: &LogProcessingState{},
 			Mutex:           &sync.RWMutex{},
 			Records:         make([]*LogRecord, 0),
+			IndexedRecords:  make(map[string]*LogRecord),
 		}
 		result.LogFiles[name] = logFile
 	}
@@ -573,7 +655,15 @@ func logTypeMetaKey(name string) string {
 
 //Next sets item pointer with next element.
 func (i *logRecordIterator) Next(itemPointer interface{}) error {
-	var logRecordPointer, ok = itemPointer.(**LogRecord)
+	var indexRecordPointer, ok = itemPointer.(*IndexedLogRecord)
+	if ok {
+		logFile := i.logFiles[i.logFileIndex]
+		logRecord := logFile.ShiftLogRecordByIndex(indexRecordPointer.IndexValue)
+		indexRecordPointer.LogRecord = logRecord
+		return nil
+	}
+
+	logRecordPointer, ok := itemPointer.(**LogRecord)
 	if !ok {
 		return fmt.Errorf("expected *%T buy had %T", &LogRecord{}, itemPointer)
 	}
@@ -582,6 +672,9 @@ func (i *logRecordIterator) Next(itemPointer interface{}) error {
 	*logRecordPointer = logRecord
 	return nil
 }
+
+
+
 
 //LogRecordIterator returns log record iterator
 func (m *LogTypeMeta) LogRecordIterator() toolbox.Iterator {
