@@ -34,6 +34,13 @@ secret scp
 ```
 ```
 
+
+Provide  **root** as user name and non empty password for docker mysqladmin
+```text
+secret mysql
+```
+
+
 Verify that secret file were created
 ```text
 cat ~/.secret/scp.json
