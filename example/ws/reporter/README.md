@@ -34,6 +34,7 @@ Provide a user name and password to login to your box.
 ```text
 secret scp
 ```
+
 Provide  **root** as user name and non empty password for docker mysqladmin
 ```text
 secret mysql
