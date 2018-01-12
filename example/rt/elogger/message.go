@@ -1,11 +1,11 @@
 package elogger
 
 import (
-	"time"
+	"github.com/satori/go.uuid"
 	"github.com/viant/toolbox/bridge"
 	"net/http"
-	"github.com/satori/go.uuid"
 	"strings"
+	"time"
 )
 
 //Message represent event log message
@@ -20,7 +20,7 @@ type Message struct {
 }
 
 //NewMessage creates a new message for provided request.
-func NewMessage(request *http.Request) (*Message) {
+func NewMessage(request *http.Request) *Message {
 	var scheme = "http"
 	var result = &Message{
 		Timestamp: time.Now(),
