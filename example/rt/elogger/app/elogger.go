@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"log"
-	"github.com/viant/toolbox/url"
 	"github.com/viant/endly/example/rt/elogger"
+	"github.com/viant/toolbox/url"
+	"log"
 )
 
 var configURI = flag.String("config", "", "path to json config file")

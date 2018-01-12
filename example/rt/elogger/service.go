@@ -1,8 +1,8 @@
 package elogger
 
 import (
-	"net/http"
 	"github.com/viant/toolbox"
+	"net/http"
 )
 
 //Service represents a service event logger
