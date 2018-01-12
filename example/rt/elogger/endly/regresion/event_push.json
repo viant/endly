@@ -1,0 +1,11 @@
+[
+  {
+    "Name":"->eventLogs",
+    "Value":{
+      "Type":"$eventType",
+      "TagId":"$tagId",
+      "Records": [$args0]
+    }
+  }
+]
+

@@ -1,0 +1,13 @@
+{
+  "Port": "8777",
+  "LogTypes": [
+    {
+      "LogType": "elog",
+      "FileTemplate": "/opt/elogger/logs/elog[yyyyMMdd-hhmm].log",
+      "QueueFlashCount": 250,
+      "FlushFrequencyInMs": 1000,
+      "MaxQueueSize": 500,
+      "MaxIddleTimeInSec": 1
+    }
+  ]
+}

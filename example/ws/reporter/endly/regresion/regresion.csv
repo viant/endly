@@ -1,5 +1,5 @@
 Workflow,,,Name,Description,Tasks,,Init,,,,,
-,,,regresion,Adelphic system test,%Tasks,,#init.json,,,,,
+,,,regresion,Regression test,%Tasks,,#init.json,,,,,
 []Tasks,,,Name,Description,Actions,,,,,,,
 ,,,prepare,Prepare data for test use cases,%Prepare,,,,,,,
 []Prepare,,Service,Action,Description,Request,targetHost,Init,Post,var.Name,var.From,,

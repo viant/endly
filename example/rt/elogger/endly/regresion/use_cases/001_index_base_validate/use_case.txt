@@ -1,0 +1,2 @@
+Generate both event1 end event2 events and validate with index based expression since EventID is present in expected logs
+In order to validate index position of the logs in event1.json is switched.

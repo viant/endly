@@ -29,13 +29,10 @@ func (d *reportDao) Persist(manager dsc.Manager, report Report) error {
 
 	records[0].Name = report.GetName()
 	records[0].Type = report.GetType()
-
-	var buf = new(bytes.Buffer)
-	err = toolbox.NewJSONEncoderFactory().Create(buf).Encode(report.Unwrap())
+	records[0].Report, err  =toolbox.AsJSONText(report.Unwrap())
 	if err != nil {
 		return err
 	}
-	records[0].Report = buf.String()
 	_, _, err = manager.PersistAll(&records, "report", nil)
 	if err != nil {
 		return err

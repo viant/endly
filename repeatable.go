@@ -95,7 +95,7 @@ func (r *Repeatable) Run(callerInfo string, context *Context, handler func() (in
 				extracted[k] = toolbox.AsString(v)
 			}
 			if extractableOutput == "" {
-				extractableOutput = asJSONText(structuredOutput)
+				extractableOutput , _ = toolbox.AsJSONText(structuredOutput)
 			}
 		}
 
