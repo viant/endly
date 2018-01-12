@@ -4,8 +4,6 @@ import "github.com/viant/toolbox"
 
 //Config represents a logger config
 type Config struct {
-	Port string
+	Port     string
 	LogTypes []toolbox.FileLoggerConfig
 }
-
-
