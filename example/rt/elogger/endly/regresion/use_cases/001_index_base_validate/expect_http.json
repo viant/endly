@@ -1,0 +1,15 @@
+{
+	"Name":"Http Response Validation",
+	"Actual": "$httpResponses",
+	"Expected": [
+		{
+			"Code": 200
+		},
+		{
+			"Code": 200
+		},
+		{
+			"Code": 200
+		}
+	]
+}
