@@ -1,0 +1,15 @@
+{
+  "Source": {
+    "URL":"scp://${targetHost}${appDirectory}/logs/",
+    "Credential":"$targetHostCredential"
+  },
+  "Types": [
+    {
+      "Inclusion":"/event1/",
+      "Name": "event1",
+      "Format": "json",
+      "Mask": "elog*.log",
+      "IndexRegExpr":"\"EventID\":\"([^\"]+)\""
+    }
+  ]
+}

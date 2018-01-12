@@ -6,9 +6,6 @@
     "app": "$app",
     "buildGoal": "$buildGoal",
     "buildArgs": "$buildArgs",
-    "mysqlPort": "$mysqlPort",
-    "mysqlVersion": "$mysqlVersion",
-    "mysqlCredential": "$mysqlCredential",
     "buildHost": "$buildHost",
     "buildHostCredential": "$buildHostCredential",
     "targetHost": "$targetHost",
@@ -16,6 +13,7 @@
     "goVersion": "$goVersion",
     "buildDirectory": "$buildDirectory",
     "appRootDirectory": "$appRootDirectory",
-    "GOPATH": "$GOPATH"
+    "GOPATH": "$GOPATH",
+    "eLoggerHost":"$eLoggerHost"
   }
 }

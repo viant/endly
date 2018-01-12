@@ -1,0 +1,10 @@
+{
+  "SuperUser":false,
+  "Target":{
+    "URL": "ssh://$targetHost",
+    "Credential": "$targetHostCredential"
+  },
+  "Commands":[
+    "chmod  a+x ${appDirectory}/${app}"
+  ]
+}
