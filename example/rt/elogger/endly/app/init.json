@@ -1,0 +1,70 @@
+[
+
+
+  {
+    "Name": "app",
+    "From": "params.app",
+    "Required":true
+  },
+  {
+    "Name": "buildHost",
+    "From": "params.buildHost",
+    "Required":true
+  },
+  {
+    "Name": "buildHostCredential",
+    "From": "params.buildHostCredential",
+    "Required":true
+  },
+  {
+    "Name": "buildDirectory",
+    "From": "params.buildDirectory",
+    "Required":true
+  },
+  {
+    "Name":"buildTarget",
+    "Value":{
+      "URL":"scp://$buildHost/$buildDirectory",
+      "Credential":"$buildHostCredential"
+    }
+  },
+  {
+    "Name": "targetHost",
+    "From": "params.targetHost",
+    "Required":true
+  },
+  {
+    "Name": "targetHostCredential",
+    "From": "params.targetHostCredential",
+    "Required":true
+  },
+
+  {
+    "Name":"buildGoal",
+    "From":"params.buildGoal",
+    "Required":true
+  },
+
+  {
+    "Name":"goVersion",
+    "From": "params.goVersion",
+    "Required":true
+  },
+
+  {
+    "Name":"appRootDirectory",
+    "From":"params.appRootDirectory",
+    "Required":true
+  },
+  {
+    "Name": "appDirectory",
+    "Value": "/${appRootDirectory}/${app}"
+  },
+
+
+  {
+    "Name": "buildArgs",
+    "From": "params.buildArgs",
+    "Value": " "
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "BuildSpec": {
+    "Name": "go",
+    "Goal": "build",
+    "BuildGoal": "$buildGoal",
+    "Args": "$buildArgs",
+    "Sdk": "go",
+    "SdkVersion": "$goVersion"
+  },
+  "Target": "$buildTarget"
+}
