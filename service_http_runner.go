@@ -38,9 +38,7 @@ func (s *httpRunnerService) processResponse(context *Context, sendRequest *SendH
 			return "", err
 		}
 		if toolbox.IsMap(transformed) {
-			bodyBuf := new(bytes.Buffer)
-			_ = toolbox.NewJSONEncoderFactory().Create(bodyBuf).Encode(transformed)
-			response.Body = bodyBuf.String()
+			response.Body, _ = toolbox.AsJSONText(transformed)
 		} else {
 			response.Body = toolbox.AsString(transformed)
 		}
@@ -110,8 +108,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		}
 		httpResponse, err = client.Do(httpRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("%v", err)
-			return nil, nil
+			return  nil, err
 		}
 		responseBody, err = s.processResponse(context, sendGroupRequest, sendHTTPRequest, response, httpResponse, isBase64Encoded, sendGroupResponse.Extracted)
 		return responseBody, err

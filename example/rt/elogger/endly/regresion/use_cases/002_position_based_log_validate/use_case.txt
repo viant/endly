@@ -1,0 +1,1 @@
+Generate both event1 end event2 events and validate with position based method since EventId is not present in expected logs

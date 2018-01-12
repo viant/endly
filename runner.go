@@ -1,7 +1,6 @@
 package endly
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -16,7 +15,7 @@ import (
 )
 
 const (
-	messageTypeAction = iota
+	messageTypeAction         = iota
 	messageTypeTagDescription
 	messageTypeError
 	messageTypeSuccess
@@ -319,6 +318,9 @@ func (r *CliRunner) reportEventType(serviceResponse interface{}, event *Event, f
 
 func (r *CliRunner) reportLogValidationInfo(response *LogValidatorAssertResponse) {
 	var passedCount, failedCount = 0, 0
+	if response == nil {
+		return
+	}
 	for _, info := range response.ValidationInfo {
 		if info.HasFailure() {
 			failedCount++
@@ -409,14 +411,14 @@ func (r *CliRunner) reportSummaryEvent() {
 	}
 	var contextMessageLength = len(contextMessage) + len(contextMessageStatus)
 	contextMessage = fmt.Sprintf("%v%v", contextMessage, colorText(contextMessageStatus, contextMessageColor))
-	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed+r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
+	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed + r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
 }
 
 func (r *CliRunner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if tag.FailedCount > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
+			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
 
 			var minRange = 0
 			for i, event := range tag.Events {
@@ -424,7 +426,7 @@ func (r *CliRunner) reportTagSummary() {
 				if info, ok := candidate.(*ValidationInfo); ok && info.HasFailure() {
 					var failureSourceEvent = []*Event{}
 					if i-minRange > 0 {
-						failureSourceEvent = tag.Events[minRange : i-1]
+						failureSourceEvent = tag.Events[minRange: i-1]
 					}
 					r.reportFailureWithMatchSource(tag, info, failureSourceEvent)
 					minRange = i + 1
@@ -443,10 +445,16 @@ func (r *CliRunner) reportLookupErrors(response *SeleniumRunResponse) {
 	}
 }
 
+func asJSONText(source interface{}) string {
+	text, _ := toolbox.AsJSONText(source)
+	return text
+}
+
 func (r *CliRunner) reportHTTPResponse(response *HTTPResponse) {
 	r.printShortMessage(messageTypeGeneric, fmt.Sprintf("StatusCode: %v", response.Code), messageTypeGeneric, "HttpResponse")
 	if len(response.Header) > 0 {
 		r.printShortMessage(messageTypeGeneric, "Headers", messageTypeGeneric, "HttpResponse")
+
 		r.printOutput(asJSONText(response.Header))
 	}
 	r.printShortMessage(messageTypeGeneric, "Body", messageTypeGeneric, "HttpResponse")
@@ -713,13 +721,4 @@ func NewCliRunner() *CliRunner {
 			messageTypeSuccess:        "green",
 		},
 	}
-}
-
-func asJSONText(source interface{}) string {
-	if source == nil {
-		return ""
-	}
-	var buf = new(bytes.Buffer)
-	toolbox.NewJSONEncoderFactory().Create(buf).Encode(source)
-	return buf.String()
 }

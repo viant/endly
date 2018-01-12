@@ -1,0 +1,13 @@
+{
+  "SuperUser":true,
+  "Target":{
+    "URL": "ssh://$targetHost",
+    "Credential": "$targetHostCredential"
+  },
+  "Commands":[
+    "/bin/bash -c '[[ -e ${appDirectory}/conf ]] && rm -rf ${appDirectory}/conf/*'",
+    "mkdir -p $appDirectory/conf",
+    "mkdir -p $appDirectory/logs",
+    "chmod -R a+w $appDirectory"
+  ]
+}

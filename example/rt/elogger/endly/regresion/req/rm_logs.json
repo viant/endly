@@ -1,0 +1,9 @@
+{
+  "Target":{
+    "URL": "ssh://$targetHost",
+    "Credential": "$targetHostCredential"
+  },
+  "Commands":[
+    "rm -f $appDirectory/logs/*"
+  ]
+}

@@ -16,7 +16,6 @@
     "goVersion": "$goVersion",
     "buildDirectory": "$buildDirectory",
     "appRootDirectory": "$appRootDirectory",
-    "GOPATH": "$GOPATH",
-    "seleniumServerPort": "$seleniumServerPort"
+    "GOPATH": "$GOPATH"
   }
 }

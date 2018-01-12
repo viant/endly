@@ -96,7 +96,7 @@ func (s *Server) routeHandler(serviceRouting *toolbox.ServiceRouting, httpReques
 
 }
 
-//Start start server
+//Start starts server
 func (s *Server) Start() error {
 
 	router := toolbox.NewServiceRouter(
