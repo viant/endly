@@ -1,8 +1,8 @@
 # Logger - simple http request event logger
 
-This application was build to provide end to end testing example of etl application.
+This application was build to provide end to end testing example of runtime application.
 
-The end to end test provide uses to test aerospike to mysql backup with and without transformation.
+The end to end test provide uses cases testing log both with index and position based methodology.
 
 Prerequisites:
 
@@ -44,7 +44,7 @@ Check that **'endly'** binary is created in $GOPATH/bin directory as result of
 'go get -u github.com/viant/endly/endly'
 
 
-#### Run logger workflow
+#### Run elogger workflow
 
 Run the following command:
 

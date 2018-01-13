@@ -2,7 +2,7 @@
 
 This application was build to provide end to end testing example of etl application.
 
-The end to end test provide uses to test aerospike to mysql backup with and without transformation.
+The end to end test provide use cases to test aerospike to mysql backup with and without transformation.
 
 Prerequisites:
 
