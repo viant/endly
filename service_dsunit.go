@@ -228,6 +228,7 @@ func (s *dataStoreUnitService) registerTables(state data.Map, dsManger dsc.Manag
 }
 
 func (s *dataStoreUnitService) register(context *Context, request *DsUnitRegisterRequest) (interface{}, error) {
+	request.Init()
 	var state = context.state
 	var dsManager dsc.Manager
 	var result = &DsUnitRegisterResponse{}

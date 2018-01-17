@@ -116,6 +116,7 @@ func (s *AbstractService) Validate(source interface{}, response *ServiceResponse
 		if err != nil {
 			response.Status = "error"
 			response.Error =fmt.Sprintf("failed to validate %T, %v", source,  err)
+			return err
 		}
 	}
 	return nil

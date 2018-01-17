@@ -94,6 +94,7 @@ func TestNewGceService_WithError(t *testing.T) {
 		zone := "us-west1-b"
 		instance := "instance-1"
 		serviceResponse := service.Run(context, &endly.GCECallRequest{
+			Credential:credential,
 			Service:    "Instances",
 			Method:     "List",
 			Parameters: []interface{}{project, zone, instance},
@@ -118,7 +119,7 @@ func TestGCEService_NewRequest(t *testing.T) {
 
 func Test_NewComputeService(t *testing.T) {
 	parent := toolbox.CallerDirectory(3)
-	credential := path.Join(parent, "test/gce/secret.json")
+	credential := path.Join(parent, "test/gce/asecret.json")
 	_, _, err := endly.NewComputeService(credential)
 	assert.NotNil(t, err)
 
