@@ -113,6 +113,7 @@ func NewManager() Manager {
 	result.Register(NewEc2Service())
 	result.Register(NewGceService())
 	result.Register(NewHTTPEndpointService())
+	result.Register(NewSMTPService())
 	return result
 }
 
