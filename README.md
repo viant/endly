@@ -342,18 +342,26 @@ Maven, tomcat use this service.
 ### Cloud services
 
 
-**AWC Ec2 Service**
+**Amazon Elastic Compute Cloud Service**
 
-Ec2 service - amazon computing service management. 
-
+Provides ability to call operations on  [EC2 client](https://github.com/aws/aws-sdk-go/tree/master/service/ec2)
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| aws/ec2 | call | Run ec2 operation | [Ec2CallRequest](service_ec2_call.go) | [Ec2CallResponse](service_ec2_call.go)  |
+| aws/ec2 | call | Run ec2 operation | [EC2CallRequest](service_ec2_call.go) | [EC2CallResponse](service_ec2_call.go)  |
 
-'call' action's method and input are proxied to [Ec2 client](https://github.com/aws/aws-sdk-go/tree/master/service/ec2)
+'call' action's method and input are proxied to [EC2 client](https://github.com/aws/aws-sdk-go/tree/master/service/ec2)
 
 
+**Google Compute Engine Service**
+
+Provides ability to call operations on  [*compute.Service client](https://cloud.google.com/compute/docs/reference/latest/)
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| gce | call | Run gce operation | [GCECallRequest](service_gce_call.go) | [GCECallResponse](service_gce_call.go)  |
+
+'call' action's service, method and paramters are proxied to [GCE client](https://cloud.google.com/compute/docs/reference/latest/)
 
 
 <a name="Testingservices"></a>

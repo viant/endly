@@ -111,6 +111,7 @@ func NewManager() Manager {
 	result.Register(NewNetworkService())
 	result.Register(NewSeleniumService())
 	result.Register(NewEc2Service())
+	result.Register(NewGceService())
 	return result
 }
 
