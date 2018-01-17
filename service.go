@@ -102,9 +102,23 @@ func (s *AbstractService) End(context *Context) func(*Event, map[string]interfac
 	}
 }
 
+
+
 //ID returns this service id.
 func (s *AbstractService) ID() string {
 	return s.id
+}
+
+
+func (s *AbstractService) Validate(source interface{}, response *ServiceResponse) error {
+	if validator, ok := source.(Validateable);ok {
+		err := validator.Validate()
+		if err != nil {
+			response.Status = "error"
+			response.Error =fmt.Sprintf("failed to validate %T, %v", source,  err)
+		}
+	}
+	return nil
 }
 
 //Mutex returns a mutex
@@ -130,4 +144,10 @@ func NewAbstractService(id string, actions ...string) *AbstractService {
 		mutex:   &sync.RWMutex{},
 		state:   data.NewMap(),
 	}
+}
+
+
+//Validateable represets validator interface
+type Validateable interface {
+	Validate() error
 }
