@@ -260,14 +260,6 @@ Process service is responsible for starting, stopping and checking status of cus
 | process | start | start provided application | [ProcessStartRequest](service_process_start.go) | [ProcessStartResponse](service_process_start.go) | 
 | process | stop | kill requested application | [ProcessStopRequest](service_process_stop.go) | [CommandResponse](exec_command_response.go) | 
 
-**Netowrk service**
-
-Process service is responsible for starting, stopping and checking status of custom application.
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- | 
-| network | tunnel | Tunnel ports between local and remote host | [NetworkTunnelRequest](service_network_tunnel.go) | [NetworkTunnelResponse](service_network_tunnel.go) | 
-
 
 **Sdk Service**
 
@@ -362,6 +354,28 @@ Provides ability to call operations on  [*compute.Service client](https://cloud.
 | gce | call | Run gce operation | [GCECallRequest](service_gce_call.go) | [GCECallResponse](service_gce_call.go)  |
 
 'call' action's service, method and paramters are proxied to [GCE client](https://cloud.google.com/compute/docs/reference/latest/)
+
+
+### Network services
+
+**Network service**
+
+Network service is responsible opening tunnel vi SSH between client and target host.
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- | 
+| network | tunnel | Tunnel ports between local and remote host | [NetworkTunnelRequest](service_network_tunnel.go) | [NetworkTunnelResponse](service_network_tunnel.go) | 
+
+
+**Http Endpoint Service**
+
+Http Endpoint Service is reponsible for creating HTTP endpoint serving previously recorded HTTP conversation.
+
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- | 
+| http/endpoint | listen | Starts HTTP endpoint with supplied HTTP trips recording | [HTTPEndpointListenRequest](service_http_ednpoint_listen.go) | [HTTPEndpointListenResponse](service_http_ednpoint_listen.go) | 
+
 
 
 <a name="Testingservices"></a>
