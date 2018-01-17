@@ -231,7 +231,7 @@ func (s *dataStoreUnitService) register(context *Context, request *DsUnitRegiste
 	var state = context.state
 	var dsManager dsc.Manager
 	var result = &DsUnitRegisterResponse{}
-	dsManager, err = s.registerDsManager(context, request.Datastore, request.Credential, request.Config)
+	dsManager, err := s.registerDsManager(context, request.Datastore, request.Credential, request.Config)
 	if err != nil {
 		return nil, err
 	}
