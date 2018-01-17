@@ -56,7 +56,10 @@ func (s *dataStoreUnitService) Run(context *Context, request interface{}) *Servi
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
-	var err error
+	var err = s.Validate(request, response)
+	if err != nil {
+		return response
+	}
 	var errTemplate = "%v"
 	switch actualRequest := request.(type) {
 	case *DsUnitRegisterRequest:
@@ -88,9 +91,6 @@ func (s *dataStoreUnitService) Run(context *Context, request interface{}) *Servi
 }
 
 func (s *dataStoreUnitService) getSequences(context *Context, request *DsUnitTableSequenceRequest) (*DsUnitTableSequenceResponse, error) {
-	if err := request.Validate(); err != nil {
-		return nil, err
-	}
 	manager := s.Manager.ManagerRegistry().Get(request.Datastore)
 	if manager == nil {
 		return nil, fmt.Errorf("unknown Datastore: %v", request.Datastore)
@@ -158,9 +158,6 @@ func (s *dataStoreUnitService) addMapping(context *Context, request *DsUnitMappi
 }
 
 func (s *dataStoreUnitService) runScripts(context *Context, request *DsUnitSQLRequest) (*DsUnitSQLScriptResponse, error) {
-	if err := request.Validate(); err != nil {
-		return nil, err
-	}
 	var err error
 	var response = &DsUnitSQLScriptResponse{}
 	response.Modified, err = s.runSQLScripts(context, request.Datastore, request.Scripts)
@@ -231,10 +228,6 @@ func (s *dataStoreUnitService) registerTables(state data.Map, dsManger dsc.Manag
 }
 
 func (s *dataStoreUnitService) register(context *Context, request *DsUnitRegisterRequest) (interface{}, error) {
-	err := request.Validate()
-	if err != nil {
-		return nil, err
-	}
 	var state = context.state
 	var dsManager dsc.Manager
 	var result = &DsUnitRegisterResponse{}
@@ -297,10 +290,6 @@ func (s *dataStoreUnitService) buildDatasets(context *Context, datasetResource *
 
 func (s *dataStoreUnitService) prepare(context *Context, request *DsUnitPrepareRequest) (interface{}, error) {
 	var response = &DsUnitPrepareResponse{}
-	err := request.Validate()
-	if err != nil {
-		return nil, err
-	}
 	datasets, err := s.buildDatasets(context, request.AsDatasetResource(), request.Expand)
 	if err != nil {
 		return nil, err
@@ -315,10 +304,6 @@ func (s *dataStoreUnitService) prepare(context *Context, request *DsUnitPrepareR
 }
 
 func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectRequest) (*ValidationInfo, error) {
-	err := request.Validate()
-	if err != nil {
-		return nil, err
-	}
 	datasets, err := s.buildDatasets(context, request.AsDatasetResource(), request.Expand)
 	if err != nil {
 		return nil, err
