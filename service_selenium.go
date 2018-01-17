@@ -60,9 +60,11 @@ func (s *seleniumService) Run(context *Context, request interface{}) *ServiceRes
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
-	var err error
+	var err = s.Validate(request, response)
+	if err != nil {
+		return response
+	}
 	var errorTemplate string
-
 	switch actualRequest := request.(type) {
 
 	case *SeleniumServerStartRequest:
@@ -118,10 +120,6 @@ func (s *seleniumService) addResultIfPresent(callResult []interface{}, result da
 }
 
 func (s *seleniumService) run(context *Context, request *SeleniumRunRequest) (*SeleniumRunResponse, error) {
-	if err := request.Validate(); err != nil {
-		return nil, err
-	}
-
 	var response = &SeleniumRunResponse{
 		Data:         make(map[string]interface{}),
 		LookupErrors: make([]string, 0),
@@ -371,10 +369,6 @@ func (s *seleniumService) session(context *Context, sessionID string) (*Selenium
 
 func (s *seleniumService) openSession(context *Context, request *SeleniumOpenSessionRequest) (*SeleniumSession, error) {
 	resource, err := context.ExpandResource(request.RemoteSelenium)
-	if err != nil {
-		return nil, err
-	}
-	err = request.Validate()
 	if err != nil {
 		return nil, err
 	}

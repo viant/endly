@@ -86,12 +86,13 @@ func (r *Repeatable) Run(callerInfo string, context *Context, handler func() (in
 		if err != nil {
 			return err
 		}
-
+		var state = context.state
 		extractableOutput, structuredOutput := r.AsExtractable(context, out)
 		if len(structuredOutput) > 0 {
 			var extractedVariables = data.NewMap()
 			_ = r.Variables.Apply(structuredOutput, extractedVariables)
 			for k, v := range extractedVariables {
+				state.Put(k, v)
 				extracted[k] = toolbox.AsString(v)
 			}
 			if extractableOutput == "" {
