@@ -369,12 +369,23 @@ Network service is responsible opening tunnel vi SSH between client and target h
 
 **Http Endpoint Service**
 
-Http Endpoint Service is reponsible for creating HTTP endpoint serving previously recorded HTTP conversation.
+Http Endpoint Service is responsible for creating HTTP endpoint serving previously recorded HTTP conversation.
 
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- | 
 | http/endpoint | listen | Starts HTTP endpoint with supplied HTTP trips recording | [HTTPEndpointListenRequest](service_http_ednpoint_listen.go) | [HTTPEndpointListenResponse](service_http_ednpoint_listen.go) | 
+
+
+
+**SMTP Service**
+
+SMTP service is responsible for sending emails.
+Mail body is being substitute with the context state variables.
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- | 
+| smtp | send | Send an email to supplied recipients | [SMTPSendRequest](service_smtp_send.go#L10) | [SMTPSendResponse](service_smtp_send.go#L17) | 
 
 
 
