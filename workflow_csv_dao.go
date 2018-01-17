@@ -1,15 +1,13 @@
 package endly
 
 import (
-	"fmt"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
-	"os"
 )
 
 var endlyRemoteRepo = "https://raw.githubusercontent.com/viant/endly/master/%v"
-var endlyLocalRepo = fmt.Sprintf("file://%v/src/github.com/viant/endly/%v", os.Getenv("GOPATH"), "%v")
+var endlyLocalRepo = "mem://github.com/viant/endly/%v"
 
 //WorkflowDao represents a workflow loader
 type WorkflowDao struct {
