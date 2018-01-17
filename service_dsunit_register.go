@@ -25,11 +25,9 @@ type DsUnitRegisterResponse struct {
 	Modified int
 }
 
-//Validate check fi request is valid, otherwise returns an error.
-func (r *DsUnitRegisterRequest) Validate() error {
-	if r.Config == nil {
-		return fmt.Errorf("Datastore config was nil")
-	}
+
+//Init initialises request
+func (r *DsUnitRegisterRequest) Init() {
 	if r.Config.Parameters == nil {
 		r.Config.Parameters = make(map[string]string)
 	}
@@ -48,6 +46,13 @@ func (r *DsUnitRegisterRequest) Validate() error {
 	}
 	if _, exists := r.Config.Parameters["dbname"]; !exists {
 		r.Config.Parameters["dbname"] = r.Datastore
+	}
+}
+
+//Validate check fi request is valid, otherwise returns an error.
+func (r *DsUnitRegisterRequest) Validate() error {
+	if r.Config == nil {
+		return fmt.Errorf("Datastore config was nil")
 	}
 	return nil
 }

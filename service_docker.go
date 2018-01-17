@@ -556,17 +556,22 @@ func (s *dockerService) executeSecureDockerCommand(secure map[string]string, con
 }
 
 func (s *dockerService) build(context *Context, request *DockerBuildRequest) (*DockerBuildResponse, error) {
+	request.Init()
 	var response = &DockerBuildResponse{}
 	s.applySysPathIfNeeded(request.SysPath)
 	var target, err = context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
+
 	var args = ""
 	for k, v := range request.Arguments {
 		args += fmt.Sprintf("%v %v ", k, context.Expand(v))
 	}
-	commandInfo, err := s.executeDockerCommand(nil, context, target, dockerIgnoreErrors, fmt.Sprintf("docker build %v", args))
+	if request.Path == "" {
+		request.Path = "."
+	}
+	commandInfo, err := s.executeDockerCommand(nil, context, target, dockerIgnoreErrors, fmt.Sprintf("docker build %v %v", args, request.Path))
 	if err != nil {
 		return nil, err
 	}
