@@ -99,6 +99,9 @@ func (s *gCEService) fetchInstanceList(request *GCECallRequest) (*GCECallRespons
 }
 
 func (s *gCEService) call(request *GCECallRequest) (*GCECallResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, err
+	}
 	if request.Service == "Instances" && request.Method == "List" {
 		return s.fetchInstanceList(request)
 	}

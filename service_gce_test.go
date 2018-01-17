@@ -89,6 +89,21 @@ func TestNewGceService_WithError(t *testing.T) {
 		}
 	}
 
+	{ //missing credentials
+		project := "dummy"
+		zone := "us-west1-b"
+		instance := "instance-1"
+		serviceResponse := service.Run(context, &endly.GCECallRequest{
+			Service:    "Instances",
+			Method:     "List",
+			Parameters: []interface{}{project, zone, instance},
+		})
+		assert.Equal(t, "", serviceResponse.Error)
+		if gceResponse, ok := serviceResponse.Response.(*endly.GCECallResponse); ok && gceResponse != nil {
+			assert.True(t, gceResponse.Error != "")
+		}
+	}
+
 }
 
 func TestGCEService_NewRequest(t *testing.T) {
