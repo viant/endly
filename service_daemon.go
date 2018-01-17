@@ -22,7 +22,7 @@ const DaemonServiceStatusAction = "status"
 const DaemonServiceStopAction = "stop"
 
 const (
-	serviceTypeError      = iota
+	serviceTypeError = iota
 	serviceTypeInitDaemon
 	serviceTypeLaunchCtl
 	serviceTypeStdService
@@ -189,12 +189,12 @@ func extractServiceInfo(stdout string, state map[string]string, info *DaemonInfo
 		candidate := vtclean.Clean(stdout, false)
 		if strings.Contains(candidate, "start/running") {
 			info.State = "running"
-			if columns, ok :=  ExtractColumns(info.State);ok {
+			if columns, ok := ExtractColumns(info.State); ok {
 				if len(columns) > 0 {
 					info.Pid = toolbox.AsInt(columns[len(columns)-1])
 				}
 			}
-		} else if  strings.Contains(candidate, "stop/waiting") {
+		} else if strings.Contains(candidate, "stop/waiting") {
 			info.State = "not running"
 		}
 	}
@@ -240,7 +240,7 @@ func (s *daemonService) determineCheckCommand(context *Context, target *url.Reso
 			if err != nil {
 				return "", err
 			}
-			extractServiceInfo(commandResult.Stdout(),commandResult.Extracted, info)
+			extractServiceInfo(commandResult.Stdout(), commandResult.Extracted, info)
 		}
 		return "", nil
 

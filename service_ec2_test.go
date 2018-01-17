@@ -16,7 +16,7 @@ func getInstanceStatus(awsCredential, instance string) (string, error) {
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(endly.Ec2ServiceID)
-	serviceResponse := service.Run(context, &endly.Ec2CallRequest{
+	serviceResponse := service.Run(context, &endly.EC2CallRequest{
 		Credential: awsCredential,
 		Method:     "DescribeInstances",
 		Input: map[string]interface{}{
@@ -29,9 +29,9 @@ func getInstanceStatus(awsCredential, instance string) (string, error) {
 		return "", errors.New(serviceResponse.Error)
 	}
 
-	response, ok := serviceResponse.Response.(*endly.Ec2CallResponse)
+	response, ok := serviceResponse.Response.(*endly.EC2CallResponse)
 	if !ok {
-		return "", fmt.Errorf("expected %T but had %T", &endly.Ec2CallResponse{}, serviceResponse.Response)
+		return "", fmt.Errorf("expected %T but had %T", &endly.EC2CallResponse{}, serviceResponse.Response)
 	}
 
 	awsResponse, ok := response.Response.(*ec2.DescribeInstancesOutput)
@@ -55,7 +55,7 @@ func startInstance(awsCredential, instance string) (string, error) {
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(endly.Ec2ServiceID)
-	serviceResponse := service.Run(context, &endly.Ec2CallRequest{
+	serviceResponse := service.Run(context, &endly.EC2CallRequest{
 		Credential: awsCredential,
 		Method:     "StartInstances",
 		Input: map[string]interface{}{
@@ -68,9 +68,9 @@ func startInstance(awsCredential, instance string) (string, error) {
 		return "", errors.New(serviceResponse.Error)
 	}
 
-	response, ok := serviceResponse.Response.(*endly.Ec2CallResponse)
+	response, ok := serviceResponse.Response.(*endly.EC2CallResponse)
 	if !ok {
-		return "", fmt.Errorf("expected %T but had %T", &endly.Ec2CallResponse{}, serviceResponse.Response)
+		return "", fmt.Errorf("expected %T but had %T", &endly.EC2CallResponse{}, serviceResponse.Response)
 	}
 
 	_, ok = response.Response.(*ec2.StartInstancesOutput)
@@ -84,7 +84,7 @@ func stopInstance(awsCredential, instance string) (string, error) {
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(endly.Ec2ServiceID)
-	serviceResponse := service.Run(context, &endly.Ec2CallRequest{
+	serviceResponse := service.Run(context, &endly.EC2CallRequest{
 		Credential: awsCredential,
 		Method:     "StopInstances",
 		Input: map[string]interface{}{
@@ -97,9 +97,9 @@ func stopInstance(awsCredential, instance string) (string, error) {
 		return "", errors.New(serviceResponse.Error)
 	}
 
-	response, ok := serviceResponse.Response.(*endly.Ec2CallResponse)
+	response, ok := serviceResponse.Response.(*endly.EC2CallResponse)
 	if !ok {
-		return "", fmt.Errorf("expected %T but had %T", &endly.Ec2CallResponse{}, serviceResponse.Response)
+		return "", fmt.Errorf("expected %T but had %T", &endly.EC2CallResponse{}, serviceResponse.Response)
 	}
 
 	_, ok = response.Response.(*ec2.StopInstancesOutput)
