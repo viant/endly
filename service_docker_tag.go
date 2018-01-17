@@ -27,21 +27,23 @@ type DockerServiceTagResponse struct {
 }
 
 func (r *DockerServiceTagRequest) Validate() error {
+	if r.Target == nil {
+		return errors.New("target was empty")
+	}
 	if r.SourceTag == nil {
 		return errors.New("sourceImage was empty")
 	}
 	if r.TargetTag == nil {
 		return errors.New("sourceImage was empty")
 	}
-	if err := r.SourceTag.Validate();err != nil {
+	if err := r.SourceTag.Validate(); err != nil {
 		return err
 	}
-	if err := r.TargetTag.Validate();err != nil {
+	if err := r.TargetTag.Validate(); err != nil {
 		return err
 	}
 	return nil
 }
-
 
 func (t *DockerTag) Validate() error {
 	if t.Image == "" {
