@@ -139,7 +139,7 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 		errorMessage = fmt.Sprintf("failed to stop images: %v", actualRequest.Arguments)
 	case *DockerServiceTagRequest:
 		response.Response, err = s.tag(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to stop images: %v, %v", actualRequest.SourceImage, actualRequest.TargetImage)
+		errorMessage = fmt.Sprintf("failed to stop images: %v, %v", actualRequest.SourceTag, actualRequest.TargetTag)
 
 	default:
 		err = fmt.Errorf("unsupported request type: %T", request)
