@@ -78,9 +78,6 @@ func (s *versionControlService) commit(context *Context, request *VcCommitReques
 
 //pull retrieves the latest changes from the origin
 func (s *versionControlService) pull(context *Context, request *VcPullRequest) (*VcInfo, error) {
-	if err := request.Validate(); err != nil {
-		return nil, err
-	}
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -106,9 +103,6 @@ func (s *versionControlService) pull(context *Context, request *VcPullRequest) (
 
 //checkout If target directory exist and already contains matching origin URL, only taking the latest changes without overriding local if performed, otherwise full checkout
 func (s *versionControlService) checkout(context *Context, request *VcCheckoutRequest) (*VcCheckoutResponse, error) {
-	if err := request.Validate(); err != nil {
-		return nil, err
-	}
 	var response = &VcCheckoutResponse{
 		Checkouts: make(map[string]*VcInfo),
 	}
@@ -234,8 +228,10 @@ func (s *versionControlService) Run(context *Context, request interface{}) *Serv
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
-
-	var err error
+	var err = s.Validate(request, response)
+	if err != nil {
+		return response
+	}
 	switch actualRequest := request.(type) {
 	case *VcStatusRequest:
 		response.Response, err = s.checkInfo(context, actualRequest)

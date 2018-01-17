@@ -28,7 +28,10 @@ type gCEService struct {
 func (s *gCEService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok", Response: request}
-	var err error
+	var err = s.Validate(request, response)
+	if err != nil {
+		return response
+	}
 	switch actualRequest := request.(type) {
 	case *GCECallRequest:
 		response.Response, err = s.call(actualRequest)
@@ -99,9 +102,6 @@ func (s *gCEService) fetchInstanceList(request *GCECallRequest) (*GCECallRespons
 }
 
 func (s *gCEService) call(request *GCECallRequest) (*GCECallResponse, error) {
-	if err := request.Validate(); err != nil {
-		return nil, err
-	}
 	if request.Service == "Instances" && request.Method == "List" {
 		return s.fetchInstanceList(request)
 	}

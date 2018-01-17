@@ -135,10 +135,6 @@ func (s *buildService) setSdkIfNeeded(context *Context, request *BuildRequest) e
 }
 
 func (s *buildService) build(context *Context, request *BuildRequest) (*BuildResponse, error) {
-	err := request.Validate()
-	if err != nil {
-		return nil, err
-	}
 	var result = &BuildResponse{}
 	state := context.State()
 	target, err := context.ExpandResource(request.Target)
@@ -227,7 +223,10 @@ func (s *buildService) Run(context *Context, request interface{}) *ServiceRespon
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
-	var err error
+	var err = s.Validate(request, response)
+	if err != nil {
+		return response
+	}
 	switch actualRequest := request.(type) {
 	case *BuildRequest:
 		response.Response, err = s.build(context, actualRequest)

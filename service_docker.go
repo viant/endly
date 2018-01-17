@@ -27,6 +27,12 @@ const (
 	//DockerServicePullAction represents docker pull action
 	DockerServicePullAction = "pull"
 
+	//DockerServiceBuildAction represents docker build action
+	DockerServiceBuildAction = "build"
+
+	//DockerServiceTagAction represents docker tag action
+	DockerServiceTagAction = "tag"
+
 	//DockerServiceContainerCommandAction represents docker container-command action
 	DockerServiceContainerCommandAction = "container-command"
 
@@ -77,6 +83,11 @@ func (s *dockerService) NewRequest(action string) (interface{}, error) {
 		return &DockerContainerStatusRequest{}, nil
 	case DockerServiceContainerRemoveAction:
 		return &DockerContainerRemoveRequest{}, nil
+	case DockerServiceBuildAction:
+		return &DockerBuildRequest{}, nil
+	case DockerServiceTagAction:
+		return &DockerServiceTagRequest{}, nil
+
 	}
 	return s.AbstractService.NewRequest(action)
 }
@@ -87,7 +98,10 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 	defer s.mutex.Unlock()
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
-	var err error
+	var err = s.Validate(request, response)
+	if err != nil {
+		return response
+	}
 	var errorMessage string
 	switch actualRequest := request.(type) {
 
@@ -120,6 +134,13 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 	case *DockerStopImagesRequest:
 		response.Response, err = s.stopImages(context, actualRequest)
 		errorMessage = fmt.Sprintf("failed to stop images: %v", actualRequest.Images)
+	case *DockerBuildRequest:
+		response.Response, err = s.build(context, actualRequest)
+		errorMessage = fmt.Sprintf("failed to stop images: %v", actualRequest.Arguments)
+	case *DockerServiceTagRequest:
+		response.Response, err = s.tag(context, actualRequest)
+		errorMessage = fmt.Sprintf("failed to stop images: %v, %v", actualRequest.SourceImage, actualRequest.TargetImage)
+
 	default:
 		err = fmt.Errorf("unsupported request type: %T", request)
 	}
@@ -218,9 +239,6 @@ func (s *dockerService) resetContainerIfNeeded(context *Context, target *url.Res
 
 func (s *dockerService) runContainer(context *Context, request *DockerRunRequest) (*DockerContainerInfo, error) {
 	var err error
-	if err = request.Validate(); err != nil {
-		return nil, err
-	}
 	s.applySysPathIfNeeded(request.SysPath)
 	var credentials = s.applyCredentialIfNeeded(request.Credentials)
 
@@ -532,10 +550,45 @@ func (s *dockerService) executeSecureDockerCommand(secure map[string]string, con
 		return response, err
 	}
 	if strings.Contains(stdout, dockerError) {
-		return response, fmt.Errorf("Error executing %v, %v", command, vtclean.Clean(stdout, false))
+		return response, fmt.Errorf("error executing %v, %v", command, vtclean.Clean(stdout, false))
 	}
 	return response, nil
 }
+
+func (s *dockerService) build(context *Context, request *DockerBuildRequest) (*DockerBuildResponse, error) {
+	var response = &DockerBuildResponse{}
+	s.applySysPathIfNeeded(request.SysPath)
+	var target, err = context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, err
+	}
+	var args = ""
+	for k, v := range request.Arguments {
+		args += fmt.Sprintf("%v %v ", k, context.Expand(v))
+	}
+	commandInfo, err := s.executeDockerCommand(nil, context, target, dockerIgnoreErrors, fmt.Sprintf("docker build %v", args))
+	if err != nil {
+		return nil, err
+	}
+	response.Stdout = commandInfo.Stdout()
+	return response, nil
+}
+func (s *dockerService) tag(context *Context, request *DockerServiceTagRequest) (*DockerServiceTagResponse, error) {
+	var response = &DockerServiceTagResponse{}
+	s.applySysPathIfNeeded(request.SysPath)
+	var target, err = context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, err
+	}
+	commandInfo, err := s.executeDockerCommand(nil, context, target, dockerIgnoreErrors, fmt.Sprintf("docker tag %v %v", request.SourceTag, request.TargetTag))
+	if err != nil {
+		return nil, err
+	}
+	response.Stdout = commandInfo.Stdout()
+	return response, nil
+}
+
+
 
 //NewDockerService returns a new docker service.
 func NewDockerService() Service {
@@ -551,6 +604,8 @@ func NewDockerService() Service {
 			DockerServiceContainerStopAction,
 			DockerServiceContainerStatusAction,
 			DockerServiceContainerRemoveAction,
+			DockerServiceBuildAction,
+			DockerServiceTagAction,
 		),
 	}
 	result.AbstractService.Service = result

@@ -237,11 +237,6 @@ func (s *deploymentService) updateOperatingSystem(context *Context, target *url.
 }
 
 func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRequest) (*DeploymentDeployResponse, error) {
-	err := request.Validate()
-	if err != nil {
-		return nil, err
-	}
-
 	request = &DeploymentDeployRequest{
 		AppName: context.Expand(request.AppName),
 		Version: context.Expand(request.Version),
@@ -326,15 +321,18 @@ func (s *deploymentService) Run(context *Context, request interface{}) *ServiceR
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
+	var err = s.Validate(request, response)
+	if err != nil {
+		return response
+	}
+
 	switch castedRequest := request.(type) {
 	case *DeploymentDeployRequest:
-		var err error
 		response.Response, err = s.deploy(context, castedRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("failed to run deployment: %v, %v", castedRequest.AppName, err)
 		}
 	case *DeploymentMetaRequest:
-		var err error
 		response.Response, err = s.loadMeta(context, castedRequest)
 		if err != nil {
 			response.Error = fmt.Sprintf("failed to load meta deployment: %v, %v", castedRequest.Source.URL, err)
@@ -361,7 +359,7 @@ func (s *deploymentService) loadMeta(context *Context, request *DeploymentMetaRe
 		return nil, fmt.Errorf("unable to decode: %v, %v", source.URL, err)
 	}
 	if err = meta.Validate(); err != nil {
-		return nil, fmt.Errorf("Faild to validate deployment meta: %v %v", source.URL, err)
+		return nil, fmt.Errorf("failed to validate deployment meta: %v %v", source.URL, err)
 	}
 	s.mutex.Lock()
 	defer s.mutex.Unlock()

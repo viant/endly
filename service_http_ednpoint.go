@@ -22,7 +22,10 @@ type hTTPEndpointService struct {
 func (s *hTTPEndpointService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok", Response: request}
-	var err error
+	var err = s.Validate(request, response)
+	if err != nil {
+		return response
+	}
 	switch actualRequest := request.(type) {
 	case *HTTPEndpointListenRequest:
 		response.Response, err = s.listen(actualRequest)
@@ -49,9 +52,6 @@ func (s *hTTPEndpointService) NewRequest(action string) (interface{}, error) {
 }
 
 func (s *hTTPEndpointService) listen(request *HTTPEndpointListenRequest) (*HTTPEndpointListenResponse, error) {
-	if err := request.Validate(); err != nil {
-		return nil, err
-	}
 	trips := request.AsHTTPServerTrips()
 	err := StartHTTPServer(request.Port, trips)
 	if err != nil {
