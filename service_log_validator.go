@@ -89,9 +89,9 @@ func (r *LogRecord) AsMap() (map[string]interface{}, error) {
 
 //LogFile represents a log file
 type LogFile struct {
-	URL             string
-	Content         string
-	Name            string
+	URL     string
+	Content string
+	Name    string
 	*LogType
 	ProcessingState *LogProcessingState
 	LastModified    time.Time
@@ -120,8 +120,8 @@ func (f *LogFile) ShiftLogRecordByIndex(value string) *LogRecord {
 	if len(f.Records) == 0 {
 		return nil
 	}
-	result, has  := f.IndexedRecords[value]
-	if ! has {
+	result, has := f.IndexedRecords[value]
+	if !has {
 		result = f.Records[0]
 		f.Records = f.Records[1:]
 	} else {
@@ -137,8 +137,6 @@ func (f *LogFile) ShiftLogRecordByIndex(value string) *LogRecord {
 	return result
 }
 
-
-
 //PushLogRecord appends provided log record to the records.
 func (f *LogFile) PushLogRecord(record *LogRecord) {
 	f.Mutex.Lock()
@@ -147,8 +145,8 @@ func (f *LogFile) PushLogRecord(record *LogRecord) {
 		f.Records = make([]*LogRecord, 0)
 	}
 	f.Records = append(f.Records, record)
-	if f.UseIndex()  {
-		if expr, err := f.GetIndexExpr();err == nil {
+	if f.UseIndex() {
+		if expr, err := f.GetIndexExpr(); err == nil {
 			var indexValue = matchLogIndex(expr, record.Line)
 			if indexValue != "" {
 				f.IndexedRecords[indexValue] = record
@@ -160,7 +158,7 @@ func (f *LogFile) PushLogRecord(record *LogRecord) {
 func matchLogIndex(expr *regexp.Regexp, input string) string {
 	if expr.MatchString(input) {
 		matches := expr.FindStringSubmatch(input)
-		if len(matches) >  1  {
+		if len(matches) > 1 {
 			return matches[1]
 		}
 	}
@@ -382,15 +380,15 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 			var isLogStructured = toolbox.IsMap(expectedLogRecord)
 			var calledNext = false
 			if logTypeMeta.LogType.UseIndex() {
-				if expr, err := logTypeMeta.LogType.GetIndexExpr();err == nil {
-					var expectedTextRecord = toolbox.AsString(expectedLogRecord);
-					if toolbox.IsMap(expectedLogRecord) || toolbox.IsSlice(expectedLogRecord) || toolbox.IsStruct(expectedLogRecord)  {
+				if expr, err := logTypeMeta.LogType.GetIndexExpr(); err == nil {
+					var expectedTextRecord = toolbox.AsString(expectedLogRecord)
+					if toolbox.IsMap(expectedLogRecord) || toolbox.IsSlice(expectedLogRecord) || toolbox.IsStruct(expectedLogRecord) {
 						expectedTextRecord, _ = toolbox.AsJSONText(expectedLogRecord)
 					}
 					var indexValue = matchLogIndex(expr, expectedTextRecord)
 					if indexValue != "" {
 						indexedLogRecord := &IndexedLogRecord{
-							IndexValue:indexValue,
+							IndexValue: indexValue,
 						}
 						err = logRecordIterator.Next(indexedLogRecord)
 						if err != nil {
@@ -402,14 +400,14 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 				}
 			}
 
-			if ! calledNext {
+			if !calledNext {
 				err = logRecordIterator.Next(&logRecord)
 				if err != nil {
 					return nil, err
 				}
 			}
 
-			var actualLogRecord interface{}= logRecord.Line
+			var actualLogRecord interface{} = logRecord.Line
 			if isLogStructured {
 				actualLogRecord, err = logRecord.AsMap()
 				if err != nil {
@@ -672,9 +670,6 @@ func (i *logRecordIterator) Next(itemPointer interface{}) error {
 	*logRecordPointer = logRecord
 	return nil
 }
-
-
-
 
 //LogRecordIterator returns log record iterator
 func (m *LogTypeMeta) LogRecordIterator() toolbox.Iterator {
