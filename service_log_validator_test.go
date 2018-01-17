@@ -171,10 +171,10 @@ func TestLogValidatorService_TestIndexedRecord(t *testing.T) {
 		Source: url.NewResource(tempLog),
 		Types: []*endly.LogType{
 			{
-				Name:   "t",
-				Format: "json",
-				Mask:   "endly_test_indexed.log",
-				IndexRegExpr:"\"EventID\":\"([^\"]+)\"",
+				Name:         "t",
+				Format:       "json",
+				Mask:         "endly_test_indexed.log",
+				IndexRegExpr: "\"EventID\":\"([^\"]+)\"",
 			},
 		},
 	})
@@ -189,24 +189,23 @@ func TestLogValidatorService_TestIndexedRecord(t *testing.T) {
 				Type: "t",
 				Records: []interface{}{
 					map[string]interface{}{
-						"EventType":"event1",
-						"EventID":"eeed4c70-f7e4-11e7-b54f-784f438e6f38",
-						"Timestamp":"2018-01-12T14:07:09.122259-08:00",
+						"EventType": "event1",
+						"EventID":   "eeed4c70-f7e4-11e7-b54f-784f438e6f38",
+						"Timestamp": "2018-01-12T14:07:09.122259-08:00",
 					},
 					map[string]interface{}{
-						"EventType":"event1",
-						"EventID":"eeed0b0c-f7e4-11e7-b54f-784f438e6f38",
-						"Timestamp":"2018-01-12T14:07:09.120207-08:00",
+						"EventType": "event1",
+						"EventID":   "eeed0b0c-f7e4-11e7-b54f-784f438e6f38",
+						"Timestamp": "2018-01-12T14:07:09.120207-08:00",
 					},
 					map[string]interface{}{
-						"Timestamp":"2018-01-12T14:07:09.123185-08:00",
-						"EventType":"event2",
-
+						"Timestamp": "2018-01-12T14:07:09.123185-08:00",
+						"EventType": "event2",
 					},
 					map[string]interface{}{
-						"Timestamp":"2018-01-12T14:07:09.123185-08:00",
-						"EventType":"event2",
-						"EventID":"eeed709c-f7e4-11e7-b54f-784f438e6f30",
+						"Timestamp": "2018-01-12T14:07:09.123185-08:00",
+						"EventType": "event2",
+						"EventID":   "eeed709c-f7e4-11e7-b54f-784f438e6f30",
 					},
 				},
 			},
@@ -218,8 +217,8 @@ func TestLogValidatorService_TestIndexedRecord(t *testing.T) {
 	if assert.True(t, ok) {
 		if assert.NotNil(t, logValidatorAssertResponse) {
 			assert.EqualValues(t, 4, len(logValidatorAssertResponse.ValidationInfo))
-			for i := 0;i<3;i++{
-				if ! assert.EqualValues(t, 0, logValidatorAssertResponse.ValidationInfo[i].TestFailed) {
+			for i := 0; i < 3; i++ {
+				if !assert.EqualValues(t, 0, logValidatorAssertResponse.ValidationInfo[i].TestFailed) {
 					assert.Fail(t, logValidatorAssertResponse.ValidationInfo[i].FailedTests[0].Message)
 				}
 			}

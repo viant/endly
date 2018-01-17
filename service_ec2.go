@@ -11,8 +11,8 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//Ec2Call represents ec2 call.
-type Ec2Call struct {
+//EC2Call represents ec2 call.
+type EC2Call struct {
 	Method     string
 	Parameters []interface{}
 }
@@ -41,7 +41,7 @@ func (s *ec2Service) Run(context *Context, request interface{}) *ServiceResponse
 	var response = &ServiceResponse{Status: "ok", Response: request}
 	var err error
 	switch actualRequest := request.(type) {
-	case *Ec2CallRequest:
+	case *EC2CallRequest:
 		response.Response, err = s.run(context, actualRequest)
 	default:
 		err = fmt.Errorf("unsupported request type: %T", request)
@@ -58,7 +58,7 @@ func (s *ec2Service) Run(context *Context, request interface{}) *ServiceResponse
 
 func (s *ec2Service) NewRequest(action string) (interface{}, error) {
 	if action == Ec2ServiceCallAction {
-		return &Ec2CallRequest{}, nil
+		return &EC2CallRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
 }
@@ -90,7 +90,7 @@ func GetEc2Client(credential string) (*ec2.EC2, error) {
 	return ec2.New(ec2Session, config), nil
 }
 
-func (s *ec2Service) run(context *Context, request *Ec2CallRequest) (*Ec2CallResponse, error) {
+func (s *ec2Service) run(context *Context, request *EC2CallRequest) (*EC2CallResponse, error) {
 	client, err := GetEc2Client(request.Credential)
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (s *ec2Service) run(context *Context, request *Ec2CallRequest) (*Ec2CallRes
 	return s.call(context, client, request)
 }
 
-func (s *ec2Service) call(context *Context, caller interface{}, request *Ec2CallRequest) (callResponse *Ec2CallResponse, err error) {
+func (s *ec2Service) call(context *Context, caller interface{}, request *EC2CallRequest) (callResponse *EC2CallResponse, err error) {
 	call := request.AsEc2Call()
 	callResponse, err = s.callMethod(caller, call.Method, call.Parameters)
 	if err != nil {
@@ -108,8 +108,8 @@ func (s *ec2Service) call(context *Context, caller interface{}, request *Ec2Call
 	return callResponse, err
 }
 
-func (s *ec2Service) callMethod(owner interface{}, methodName string, parameters []interface{}) (*Ec2CallResponse, error) {
-	var response = &Ec2CallResponse{}
+func (s *ec2Service) callMethod(owner interface{}, methodName string, parameters []interface{}) (*EC2CallResponse, error) {
+	var response = &EC2CallResponse{}
 	method, err := toolbox.GetFunction(owner, methodName)
 	if err != nil {
 		return nil, err

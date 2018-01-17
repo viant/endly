@@ -1,21 +1,21 @@
 package endly
 
-//Ec2CallRequest represents a aws EC2 run request to execute method on ec2 client with provided input.
-type Ec2CallRequest struct {
+//EC2CallRequest represents a aws EC2 run request to execute method on ec2 client with provided input.
+type EC2CallRequest struct {
 	Credential string
 	Method     string
 	Input      interface{}
 }
 
-//Ec2CallResponse represents EC2 run response
-type Ec2CallResponse struct {
+//EC2CallResponse represents EC2 run response
+type EC2CallResponse struct {
 	Error    string
 	Response interface{}
 }
 
 //AsEc2Call converts request as Ec2 call
-func (r *Ec2CallRequest) AsEc2Call() *Ec2Call {
-	var result = &Ec2Call{
+func (r *EC2CallRequest) AsEc2Call() *EC2Call {
+	var result = &EC2Call{
 		Method:     r.Method,
 		Parameters: make([]interface{}, 0),
 	}
