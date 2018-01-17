@@ -1,5 +1,7 @@
 package endly
 
+import "fmt"
+
 //GCECallRequest represents GCE call request, it operates on *cloud.Service client (https://cloud.google.com/compute/docs/reference/latest/)
 type GCECallRequest struct {
 	Credential string        //path to secret json file.
@@ -12,4 +14,19 @@ type GCECallRequest struct {
 type GCECallResponse struct {
 	Error    string
 	Response interface{}
+}
+
+//Validate checks if request is valid
+func (r *GCECallRequest) Validate() error {
+	if r.Credential == "" {
+		return fmt.Errorf("credentials were empty for GCE %v.%v", r.Service, r.Method)
+	}
+	if r.Credential == "" {
+		return fmt.Errorf("service was empty for GCE %v", r.Method)
+	}
+	if r.Credential == "" {
+		return fmt.Errorf("method was empty for GCE %v", r.Service)
+	}
+
+	return nil
 }
