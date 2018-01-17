@@ -150,7 +150,7 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 	}
 }
 
-//StartHTTPServer starts http request
+//StartHTTPServer starts http request, the server has ability to replay recorded  HTTP trips with https://github.com/viant/toolbox/blob/master/bridge/http_bridge_recording_util.go#L82
 func StartHTTPServer(port int, trips *HTTPServerTrips) error {
 	err := trips.Init()
 	if err != nil {

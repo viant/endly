@@ -45,7 +45,6 @@ func (s *gCEService) Run(context *Context, request interface{}) *ServiceResponse
 }
 
 func (s *gCEService) NewRequest(action string) (interface{}, error) {
-
 	switch action {
 	case GCEServiceCallAction:
 		return &GCECallRequest{}, nil
