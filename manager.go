@@ -112,6 +112,7 @@ func NewManager() Manager {
 	result.Register(NewSeleniumService())
 	result.Register(NewEc2Service())
 	result.Register(NewGceService())
+	result.Register(NewHTTPEndpointService())
 	return result
 }
 
