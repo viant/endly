@@ -21,12 +21,11 @@ func (r *GCECallRequest) Validate() error {
 	if r.Credential == "" {
 		return fmt.Errorf("credentials were empty for GCE %v.%v", r.Service, r.Method)
 	}
-	if r.Credential == "" {
+	if r.Service == "" {
 		return fmt.Errorf("service was empty for GCE %v", r.Method)
 	}
-	if r.Credential == "" {
+	if r.Method == "" {
 		return fmt.Errorf("method was empty for GCE %v", r.Service)
 	}
-
 	return nil
 }
