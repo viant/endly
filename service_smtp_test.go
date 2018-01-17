@@ -58,7 +58,9 @@ func TestSmtpService_Run(t *testing.T) {
 		assert.EqualValues(t, "", serviceResponse.Error)
 		response, ok := serviceResponse.Response.(*endly.SMTPSendResponse)
 		if assert.True(t, ok) {
-			assert.EqualValues(t, 185, response.SendPayloadSize)
+			if response != nil {
+				assert.EqualValues(t, 185, response.SendPayloadSize)
+			}
 
 		}
 	}
