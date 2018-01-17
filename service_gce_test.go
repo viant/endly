@@ -58,7 +58,7 @@ func TestNewGceService_WithError(t *testing.T) {
 		assert.True(t, serviceResponse.Error != "")
 	}
 
-	{
+	{ //test auth isseue
 		project := "dummy"
 		zone := "us-west1-b"
 		instance := "instance-1"
@@ -66,6 +66,21 @@ func TestNewGceService_WithError(t *testing.T) {
 			Credential: credential,
 			Service:    "Instances",
 			Method:     "Get",
+			Parameters: []interface{}{project, zone, instance},
+		})
+		assert.Equal(t, "", serviceResponse.Error)
+		if gceResponse, ok := serviceResponse.Response.(*endly.GCECallResponse); ok && gceResponse != nil {
+			assert.True(t, gceResponse.Error != "")
+		}
+	}
+	{ //test auth isseue
+		project := "dummy"
+		zone := "us-west1-b"
+		instance := "instance-1"
+		serviceResponse := service.Run(context, &endly.GCECallRequest{
+			Credential: credential,
+			Service:    "Instances",
+			Method:     "List",
 			Parameters: []interface{}{project, zone, instance},
 		})
 		assert.Equal(t, "", serviceResponse.Error)
@@ -83,5 +98,13 @@ func TestGCEService_NewRequest(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
 	assert.NotNil(t, ctx)
+
+}
+
+func Test_NewComputeService(t *testing.T) {
+	parent := toolbox.CallerDirectory(3)
+	credential := path.Join(parent, "test/gce/secret.json")
+	_, _, err := endly.NewComputeService(credential)
+	assert.NotNil(t, err)
 
 }
