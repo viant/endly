@@ -108,7 +108,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		}
 		httpResponse, err = client.Do(httpRequest)
 		if err != nil {
-			return  nil, err
+			return nil, err
 		}
 		responseBody, err = s.processResponse(context, sendGroupRequest, sendHTTPRequest, response, httpResponse, isBase64Encoded, sendGroupResponse.Extracted)
 		return responseBody, err
