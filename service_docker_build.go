@@ -1,8 +1,8 @@
 package endly
 
 import (
-	"github.com/viant/toolbox/url"
 	"github.com/pkg/errors"
+	"github.com/viant/toolbox/url"
 )
 
 //DockerBuildRequest represents docker build request
@@ -14,12 +14,10 @@ type DockerBuildRequest struct {
 	Arguments map[string]string //https://docs.docker.com/engine/reference/commandline/build/#description
 }
 
-
 //DockerBuildResponse represents docker build response
 type DockerBuildResponse struct {
 	Stdout string
 }
-
 
 //Init initialises default values
 func (r *DockerBuildRequest) Init() {
@@ -30,7 +28,6 @@ func (r *DockerBuildRequest) Init() {
 		r.Arguments["-t"] = r.Tag.String()
 	}
 }
-
 
 //Vaidate check if request is valid
 func (r *DockerBuildRequest) Vaidate() error {

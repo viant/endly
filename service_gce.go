@@ -16,7 +16,7 @@ const (
 	//GCEServiceID represents cce service id.
 	GCEServiceID = "gce"
 
-	//GceServiceGceAction represents cce action
+	//GCEServiceCallAction represents cce action
 	GCEServiceCallAction = "call"
 )
 
@@ -55,6 +55,7 @@ func (s *gCEService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+//NewComputeService creates a new compute service.
 func NewComputeService(credentialsFile string) (*compute.Service, netcontext.Context, error) {
 	resource := url.NewResource(credentialsFile)
 	config := &cred.Config{}
@@ -72,6 +73,7 @@ func NewComputeService(credentialsFile string) (*compute.Service, netcontext.Con
 	return cilent, ctx, err
 }
 
+//GetComputeService returns specialised compute service for provided service name.
 func GetComputeService(client *compute.Service, service string) (interface{}, error) {
 	_, found := reflect.TypeOf(*client).FieldByName(service)
 	if !found {

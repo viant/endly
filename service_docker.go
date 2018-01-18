@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/lunixbochs/vtclean"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/url"
 	"strings"
 )
@@ -12,8 +13,8 @@ const (
 	//DockerServiceID represents docker service id
 	DockerServiceID = "docker"
 
-	//DockerServiceRunAction represents docker run action
-	DockerServiceRunAction = "run"
+	//DockerRunAction represents docker run action
+	DockerRunAction = "run"
 
 	//DockerServiceSysPathAction represents docker syspath action
 	DockerServiceSysPathAction = "syspath"
@@ -33,6 +34,15 @@ const (
 	//DockerServiceTagAction represents docker tag action
 	DockerServiceTagAction = "tag"
 
+	//DockerServiceLoginAction represents docker login action
+	DockerServiceLoginAction = "login"
+
+	//DockerServiceLogoutAction represents docker logout action
+	DockerServiceLogoutAction = "logout"
+
+	//DockerServicePushAction represents docker push action
+	DockerServicePushAction = "push"
+
 	//DockerServiceContainerCommandAction represents docker container-command action
 	DockerServiceContainerCommandAction = "container-command"
 
@@ -51,9 +61,10 @@ const (
 	containerInUse    = "is already in use by container"
 	unableToFindImage = "unable to find image"
 	dockerError       = "Error response"
+	dockerSyntaxError = "syntax error near"
 )
 
-var dockerErrors = []string{"failed", unableToFindImage}
+var dockerErrors = []string{"failed", unableToFindImage, dockerSyntaxError}
 var dockerIgnoreErrors = []string{}
 
 type dockerService struct {
@@ -63,7 +74,7 @@ type dockerService struct {
 
 func (s *dockerService) NewRequest(action string) (interface{}, error) {
 	switch action {
-	case DockerServiceRunAction:
+	case DockerRunAction:
 		return &DockerRunRequest{}, nil
 	case DockerServiceSysPathAction:
 		return &DockerSystemPathRequest{}, nil
@@ -86,7 +97,13 @@ func (s *dockerService) NewRequest(action string) (interface{}, error) {
 	case DockerServiceBuildAction:
 		return &DockerBuildRequest{}, nil
 	case DockerServiceTagAction:
-		return &DockerServiceTagRequest{}, nil
+		return &DockerTagRequest{}, nil
+	case DockerServiceLoginAction:
+		return &DockerLoginRequest{}, nil
+	case DockerServiceLogoutAction:
+		return &DockerLogoutRequest{}, nil
+	case DockerServicePushAction:
+		return &DockerPushRequest{}, nil
 
 	}
 	return s.AbstractService.NewRequest(action)
@@ -137,9 +154,19 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 	case *DockerBuildRequest:
 		response.Response, err = s.build(context, actualRequest)
 		errorMessage = fmt.Sprintf("failed to stop images: %v", actualRequest.Arguments)
-	case *DockerServiceTagRequest:
+	case *DockerTagRequest:
 		response.Response, err = s.tag(context, actualRequest)
 		errorMessage = fmt.Sprintf("failed to stop images: %v, %v", actualRequest.SourceTag, actualRequest.TargetTag)
+	case *DockerLoginRequest:
+		response.Response, err = s.login(context, actualRequest)
+		errorMessage = fmt.Sprintf("failed to login: %v", actualRequest.Credential)
+	case *DockerLogoutRequest:
+		response.Response, err = s.logout(context, actualRequest)
+		errorMessage = fmt.Sprintf("failed to logout:  %v", actualRequest.Target)
+
+	case *DockerPushRequest:
+		response.Response, err = s.push(context, actualRequest)
+		errorMessage = fmt.Sprintf("failed to push: %v", actualRequest.Tag)
 
 	default:
 		err = fmt.Errorf("unsupported request type: %T", request)
@@ -269,7 +296,7 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 	for k, v := range request.Params {
 		params += fmt.Sprintf("%v %v", k, v)
 	}
-	commandInfo, err := s.executeSecureDockerCommand(credentials, context, request.Target, dockerIgnoreErrors, "docker run --name %v %v -d %v %v", request.Target.Name, args, request.Image, params)
+	commandInfo, err := s.executeSecureDockerCommand(true, credentials, context, request.Target, dockerIgnoreErrors, "docker run --name %v %v -d %v %v", request.Target.Name, args, request.Image, params)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +304,7 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 	if strings.Contains(commandInfo.Stdout(), containerInUse) {
 		_, _ = s.stopContainer(context, &DockerContainerStopRequest{Target: request.Target})
 		_, _ = s.removeContainer(context, &DockerContainerRemoveRequest{Target: request.Target})
-		commandInfo, err = s.executeSecureDockerCommand(credentials, context, request.Target, dockerErrors, "docker run --name %v %v -d %v", request.Target.Name, args, request.Image)
+		commandInfo, err = s.executeSecureDockerCommand(true, credentials, context, request.Target, dockerErrors, "docker run --name %v %v -d %v", request.Target.Name, args, request.Image)
 		if err != nil {
 			return nil, err
 		}
@@ -350,7 +377,7 @@ func (s *dockerService) stopContainer(context *Context, request *DockerContainer
 
 func (s *dockerService) removeContainer(context *Context, request *DockerContainerRemoveRequest) (*CommandResponse, error) {
 	if request.Target.Name == "" {
-		return nil, fmt.Errorf("Target name was empty for %v", request.Target.URL)
+		return nil, fmt.Errorf("target name was empty for %v", request.Target.URL)
 	}
 	s.applySysPathIfNeeded(request.SysPath)
 	commandInfo, err := s.executeDockerCommand(nil, context, request.Target, dockerErrors, "docker rm %v", request.Target.Name)
@@ -362,7 +389,7 @@ func (s *dockerService) removeContainer(context *Context, request *DockerContain
 
 func (s *dockerService) runInContainer(context *Context, request *DockerContainerCommandRequest) (*CommandResponse, error) {
 	if request.Target.Name == "" {
-		return nil, fmt.Errorf("Target name was empty for %v and command %v", request.Target.URL, request.Command)
+		return nil, fmt.Errorf("target name was empty for %v and command %v", request.Target.URL, request.Command)
 	}
 	s.applySysPathIfNeeded(request.SysPath)
 
@@ -382,7 +409,7 @@ func (s *dockerService) runInContainer(context *Context, request *DockerContaine
 		executionOptions = "-" + executionOptions
 	}
 
-	commandRespons, err := s.executeSecureDockerCommand(request.Credentials, context, request.Target, dockerErrors, "docker exec %v %v %v", executionOptions, request.Target.Name, command)
+	commandRespons, err := s.executeSecureDockerCommand(true, request.Credentials, context, request.Target, dockerErrors, "docker exec %v %v %v", executionOptions, request.Target.Name, command)
 	if err != nil {
 		return nil, err
 	}
@@ -398,7 +425,7 @@ func (s *dockerService) runInContainer(context *Context, request *DockerContaine
 
 func (s *dockerService) checkContainerProcesses(context *Context, request *DockerContainerStatusRequest) (*DockerContainerStatusResponse, error) {
 	s.applySysPathIfNeeded(request.SysPath)
-	info, err := s.executeSecureDockerCommand(nil, context, request.Target, dockerErrors, "docker ps")
+	info, err := s.executeSecureDockerCommand(true, nil, context, request.Target, dockerErrors, "docker ps")
 	if err != nil {
 		return nil, err
 	}
@@ -518,30 +545,35 @@ func (s *dockerService) checkImages(context *Context, request *DockerImagesReque
 }
 
 func (s *dockerService) executeDockerCommand(secure map[string]string, context *Context, target *url.Resource, errors []string, template string, arguments ...interface{}) (*CommandResponse, error) {
-	return s.executeSecureDockerCommand(secure, context, target, errors, template, arguments...)
+	return s.executeSecureDockerCommand(false, secure, context, target, errors, template, arguments...)
 }
 
-func (s *dockerService) executeSecureDockerCommand(secure map[string]string, context *Context, target *url.Resource, errors []string, template string, arguments ...interface{}) (*CommandResponse, error) {
+func (s *dockerService) executeSecureDockerCommand(asRoot bool, secure map[string]string, context *Context, target *url.Resource, errors []string, template string, arguments ...interface{}) (*CommandResponse, error) {
 	command := fmt.Sprintf(template, arguments...)
 	if len(secure) == 0 {
 		secure = make(map[string]string)
 	}
 	secure[sudoCredentialKey] = target.Credential
-	response, err := context.Execute(target, &superUserCommandRequest{
-		MangedCommand: &ExtractableCommand{
-			Options: &ExecutionOptions{
-				SystemPaths: s.SysPath,
-			},
-			Executions: []*Execution{
-				{
-					Credentials: secure,
-					Command:     command,
-					Error:       append(errors, []string{commandNotFound}...),
-				},
+
+	var extractableCommand = &ExtractableCommand{
+		Options: &ExecutionOptions{
+			SystemPaths: s.SysPath,
+		},
+		Executions: []*Execution{
+			{
+				Credentials: secure,
+				Command:     command,
+				Error:       append(errors, []string{commandNotFound}...),
 			},
 		},
-	})
-
+	}
+	var commandRequest interface{} = extractableCommand
+	if asRoot {
+		commandRequest = &superUserCommandRequest{
+			MangedCommand: extractableCommand,
+		}
+	}
+	response, err := context.Execute(target, commandRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -576,10 +608,13 @@ func (s *dockerService) build(context *Context, request *DockerBuildRequest) (*D
 		return nil, err
 	}
 	response.Stdout = commandInfo.Stdout()
+	if !escapedContains(response.Stdout, "Successfully built") {
+		return nil, fmt.Errorf("failed to build: %v, stdout:%v", request.Tag, response.Stdout)
+	}
 	return response, nil
 }
-func (s *dockerService) tag(context *Context, request *DockerServiceTagRequest) (*DockerServiceTagResponse, error) {
-	var response = &DockerServiceTagResponse{}
+func (s *dockerService) tag(context *Context, request *DockerTagRequest) (*DockerTagResponse, error) {
+	var response = &DockerTagResponse{}
 	s.applySysPathIfNeeded(request.SysPath)
 	var target, err = context.ExpandResource(request.Target)
 	if err != nil {
@@ -593,13 +628,99 @@ func (s *dockerService) tag(context *Context, request *DockerServiceTagRequest) 
 	return response, nil
 }
 
+//IsGoogleCloudRegistry returns true if url is google docker cloud registry
+func IsGoogleCloudRegistry(URL string) bool {
+	return strings.Contains(URL, "gcr.io")
+}
 
+func (s *dockerService) getGoogleCloudCredential(context *Context, credential string, config *cred.Config) *cred.Config {
+	var result = &cred.Config{
+		Username: "oauth2accesstoken",
+		Password: "$(gcloud auth application-default print-access-token)",
+	}
+	if config.PrivateKeyID != "" && config.PrivateKey != "" {
+		content, _ := url.NewResource(credential).DownloadText()
+		result.Username = "_json_key"
+		result.Password = strings.Replace(content, "\n", " ", len(content))
+	}
+	return result
+}
+
+func (s *dockerService) login(context *Context, request *DockerLoginRequest) (*DockerLoginResponse, error) {
+	target, err := context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, err
+	}
+	s.applySysPathIfNeeded(request.SysPath)
+	var response = &DockerLoginResponse{}
+	credential := context.Expand(request.Credential)
+	credConfig, err := cred.NewConfig(credential)
+	repository := context.Expand(request.Repository)
+	if IsGoogleCloudRegistry(repository) {
+		credConfig = s.getGoogleCloudCredential(context, credential, credConfig)
+		credential = credConfig.Password
+	}
+	if credConfig.Username == "" {
+		return nil, fmt.Errorf("username was empty: %v", credential)
+	}
+	if credConfig.Password == "" {
+		return nil, fmt.Errorf("password was empty: %v", credential)
+	}
+	credentials := map[string]string{
+		"**docker-secret**": credential,
+	}
+	commandResponse, err := s.executeDockerCommand(credentials, context, target, dockerErrors, `echo '**docker-secret**' | docker login -u %v  %v --password-stdin`, credConfig.Username, repository)
+	if err != nil {
+		return nil, err
+	}
+
+	stdout := commandResponse.Stdout()
+	if !escapedContains(stdout, "Login Succeeded") {
+		return nil, fmt.Errorf("failed to authenticate: %v, stdout: %v", response.Username, stdout)
+	}
+	response.Username = credConfig.Username
+	response.Stdout = stdout
+	return response, nil
+}
+
+func (s *dockerService) logout(context *Context, request *DockerLogoutRequest) (*DockerLogoutResponse, error) {
+	var response = &DockerLogoutResponse{}
+	target, err := context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, err
+	}
+	s.applySysPathIfNeeded(request.SysPath)
+	repository := context.Expand(request.Repository)
+	_, err = s.executeDockerCommand(nil, context, target, dockerErrors, `docker logout %v`, repository)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func (s *dockerService) push(context *Context, request *DockerPushRequest) (*DockerPushResponse, error) {
+	var response = &DockerPushResponse{}
+	target, err := context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, err
+	}
+	s.applySysPathIfNeeded(request.SysPath)
+	commandResponse, err := s.executeDockerCommand(nil, context, target, dockerErrors, `docker push %v`, request.Tag)
+	if err != nil {
+		return nil, err
+	}
+	stdout := commandResponse.Stdout()
+	if !escapedContains(stdout, "Pushed") {
+		return nil, fmt.Errorf("failed to push tag: %v, stdout: %v", request.Tag, stdout)
+	}
+	return response, nil
+}
 
 //NewDockerService returns a new docker service.
 func NewDockerService() Service {
 	var result = &dockerService{
 		AbstractService: NewAbstractService(DockerServiceID,
-			DockerServiceRunAction,
+			DockerRunAction,
 			DockerServiceSysPathAction,
 			DockerServiceStopImagesAction,
 			DockerServiceImagesAction,
@@ -611,6 +732,9 @@ func NewDockerService() Service {
 			DockerServiceContainerRemoveAction,
 			DockerServiceBuildAction,
 			DockerServiceTagAction,
+			DockerServiceLoginAction,
+			DockerServiceLogoutAction,
+			DockerServicePushAction,
 		),
 	}
 	result.AbstractService.Service = result

@@ -12,7 +12,7 @@ const (
 	//SMTPServiceID represents smtp service id.
 	SMTPServiceID = "smtp"
 
-	//SMTPServiceSMTPAction represents smtp action
+	//SMTPServiceSendAction represents smtp action
 	SMTPServiceSendAction = "send"
 )
 
@@ -49,6 +49,7 @@ func (s *smtpService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+//NewSMTPClient creates a new SMTP client.
 func NewSMTPClient(target *url.Resource, credentialsFile string) (*smtp.Client, error) {
 	credential, err := cred.NewConfig(credentialsFile)
 	if err != nil {

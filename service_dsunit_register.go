@@ -25,7 +25,6 @@ type DsUnitRegisterResponse struct {
 	Modified int
 }
 
-
 //Init initialises request
 func (r *DsUnitRegisterRequest) Init() {
 	if r.Config.Parameters == nil {

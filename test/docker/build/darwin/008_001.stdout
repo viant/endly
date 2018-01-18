@@ -1,0 +1,32 @@
+Sending build context to Docker daemon  557.1kBSending build context to Docker daemon  7.242MBSending build context to Docker daemon  21.17MBSending build context to Docker daemon  29.52MBSending build context to Docker daemon   31.2MBSending build context to Docker daemon  33.84MB
+Step 1/10 : FROM alpine:latest
+ ---> 3fd9065eaf02
+Step 2/10 : LABEL maintainer "Core-Adserer <dist-core-adserver@viantinc.com>"
+ ---> Using cache
+ ---> 6894414d5a1e
+Step 3/10 : RUN apk add --no-cache ca-certificates
+ ---> Using cache
+ ---> b06d8b731aae
+Step 4/10 : RUN apk add --update tzdata curl && rm -rf /var/cache/apk/*
+ ---> Using cache
+ ---> 403d2826e312
+Step 5/10 : RUN mkdir /app
+ ---> Using cache
+ ---> c53c4b0e41ec
+Step 6/10 : ADD app/site_profile_backup /app/
+ ---> Using cache
+ ---> c13f5398573a
+Step 7/10 : ADD config/config.json /app/
+ ---> Using cache
+ ---> bcbca3f4fd46
+Step 8/10 : ADD config/transfer.json /app/
+ ---> Using cache
+ ---> b066715ceb53
+Step 9/10 : WORKDIR /app
+ ---> Using cache
+ ---> 0950a0d89adc
+Step 10/10 : CMD ./site_profile_backup -t transfer.json -c config.json
+ ---> Using cache
+ ---> 0019c18d07c9
+Successfully built 0019c18d07c9
+Successfully tagged viant/site_profile_backup:0.1
