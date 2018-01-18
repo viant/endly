@@ -102,20 +102,18 @@ func (s *AbstractService) End(context *Context) func(*Event, map[string]interfac
 	}
 }
 
-
-
 //ID returns this service id.
 func (s *AbstractService) ID() string {
 	return s.id
 }
 
-
+//Validate checks if supplied source can be validated and if so checks it.
 func (s *AbstractService) Validate(source interface{}, response *ServiceResponse) error {
-	if validator, ok := source.(Validateable);ok {
+	if validator, ok := source.(Validateable); ok {
 		err := validator.Validate()
 		if err != nil {
 			response.Status = "error"
-			response.Error =fmt.Sprintf("failed to validate %T, %v", source,  err)
+			response.Error = fmt.Sprintf("failed to validate %T, %v", source, err)
 			return err
 		}
 	}
@@ -146,7 +144,6 @@ func NewAbstractService(id string, actions ...string) *AbstractService {
 		state:   data.NewMap(),
 	}
 }
-
 
 //Validateable represets validator interface
 type Validateable interface {

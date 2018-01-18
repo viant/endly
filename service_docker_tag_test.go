@@ -1,52 +1,44 @@
 package endly_test
 
 import (
-	"testing"
-	"github.com/viant/endly"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly"
 	"github.com/viant/toolbox/url"
+	"testing"
 )
 
 func TestDockerTag_Validate(t *testing.T) {
 
 	{
-		request := &endly.DockerServiceTagRequest{}
+		request := &endly.DockerTagRequest{}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &endly.DockerServiceTagRequest{
+		request := &endly.DockerTagRequest{
 			Target: url.NewResource("abc"),
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &endly.DockerServiceTagRequest{
-			Target: url.NewResource("abc"),
-			SourceTag: &endly.DockerTag{
-
-			},
+		request := &endly.DockerTagRequest{
+			Target:    url.NewResource("abc"),
+			SourceTag: &endly.DockerTag{},
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &endly.DockerServiceTagRequest{
-			Target: url.NewResource("abc"),
-			SourceTag: &endly.DockerTag{
-
-			},
-			TargetTag: &endly.DockerTag{
-
-			},
+		request := &endly.DockerTagRequest{
+			Target:    url.NewResource("abc"),
+			SourceTag: &endly.DockerTag{},
+			TargetTag: &endly.DockerTag{},
 		}
 		assert.NotNil(t, request.Validate())
 	}
 
 	{
-		request := &endly.DockerServiceTagRequest{
-			Target: url.NewResource("abc"),
-			SourceTag: &endly.DockerTag{
-
-			},
+		request := &endly.DockerTagRequest{
+			Target:    url.NewResource("abc"),
+			SourceTag: &endly.DockerTag{},
 			TargetTag: &endly.DockerTag{
 				Image: "abc",
 			},
@@ -54,19 +46,17 @@ func TestDockerTag_Validate(t *testing.T) {
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &endly.DockerServiceTagRequest{
+		request := &endly.DockerTagRequest{
 			Target: url.NewResource("abc"),
 			SourceTag: &endly.DockerTag{
 				Image: "abc",
 			},
-			TargetTag: &endly.DockerTag{
-
-			},
+			TargetTag: &endly.DockerTag{},
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &endly.DockerServiceTagRequest{
+		request := &endly.DockerTagRequest{
 			Target: url.NewResource("abc"),
 			SourceTag: &endly.DockerTag{
 				Image: "abc",
@@ -89,24 +79,24 @@ func TestDockerTag_String(t *testing.T) {
 	}
 	{
 		tag := &endly.DockerTag{
-			Image: "abc",
-			Version:"latest",
+			Image:   "abc",
+			Version: "latest",
 		}
 		assert.EqualValues(t, "abc:latest", tag.String())
 	}
 	{
 		tag := &endly.DockerTag{
-			Registry:"reg.org",
-			Image: "abc",
-			Version:"latest",
+			Registry: "reg.org",
+			Image:    "abc",
+			Version:  "latest",
 		}
 		assert.EqualValues(t, "reg.org/abc:latest", tag.String())
 	}
 	{
 		tag := &endly.DockerTag{
-			Username:"reg.org",
-			Image: "abc",
-			Version:"latest",
+			Username: "reg.org",
+			Image:    "abc",
+			Version:  "latest",
 		}
 		assert.EqualValues(t, "reg.org/abc:latest", tag.String())
 	}

@@ -31,10 +31,12 @@ type LogValidatorListenResponse struct {
 //LogTypesMeta represents log type meta details
 type LogTypesMeta map[string]*LogTypeMeta
 
+//UseIndex returns true if index can be used.
 func (t *LogType) UseIndex() bool {
 	return t.IndexRegExpr != ""
 }
 
+//GetIndexExpr returns index expression.
 func (t *LogType) GetIndexExpr() (*regexp.Regexp, error) {
 	if t.indexExpr != nil {
 		return t.indexExpr, nil

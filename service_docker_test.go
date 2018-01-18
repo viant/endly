@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
+	"os"
+	"path"
 	"testing"
 )
 
@@ -687,5 +690,181 @@ func TestDockerService_Remove(t *testing.T) {
 
 		}
 
+	}
+}
+
+func TestDockerService_Login(t *testing.T) {
+
+	parent := toolbox.CallerDirectory(3)
+	gcrKeyDockerCredentials := path.Join(parent, "test/docker/gcr_key.json")
+	keyDockerCredentials := path.Join(parent, "test/docker/key.json")
+
+	credentialFile, err := GetDummyCredential()
+	assert.Nil(t, err)
+	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
+
+	var manager = endly.NewManager()
+	var useCases = []struct {
+		baseDir          string
+		Request          *endly.DockerLoginRequest
+		ExpectedUserName string
+		ExpectedStdout   string
+		Error            bool
+	}{
+		{
+			"test/docker/login/gcr_key/darwin",
+			&endly.DockerLoginRequest{
+				SysPath:    []string{"/usr/local/bin"},
+				Target:     target,
+				Repository: "us.gcr.io/myproj",
+				Credential: gcrKeyDockerCredentials,
+			},
+			"_json_key",
+			"Login Succeeded",
+			false,
+		},
+		{
+			"test/docker/login/gcr/darwin",
+			&endly.DockerLoginRequest{
+				SysPath:    []string{"/usr/local/bin"},
+				Target:     target,
+				Repository: "us.gcr.io/myproj",
+				Credential: keyDockerCredentials,
+			},
+			"oauth2accesstoken",
+			"Login Succeeded",
+			false,
+		},
+		{
+			"test/docker/login/std/darwin",
+			&endly.DockerLoginRequest{
+				SysPath:    []string{"/usr/local/bin"},
+				Target:     target,
+				Repository: "repo.com/myproj",
+				Credential: keyDockerCredentials,
+			},
+			"",
+			"",
+			true,
+		},
+	}
+
+	for _, useCase := range useCases {
+		var target = useCase.Request.Target
+		execService, err := GetReplayService(useCase.baseDir)
+		if assert.Nil(t, err) {
+			context, err := OpenTestContext(manager, target, execService)
+			service, err := context.Service(endly.DockerServiceID)
+			defer context.Close()
+
+			if assert.Nil(t, err) {
+
+				serviceResponse := service.Run(context, useCase.Request)
+
+				if useCase.Error {
+					assert.True(t, serviceResponse.Error != "")
+					serviceResponse = service.Run(context, &endly.DockerLogoutRequest{
+						Target:     useCase.Request.Target,
+						Repository: useCase.Request.Repository,
+					})
+					continue
+				}
+				if assert.EqualValues(t, "", serviceResponse.Error) {
+					response, ok := serviceResponse.Response.(*endly.DockerLoginResponse)
+					if assert.True(t, ok) {
+						assert.EqualValues(t, useCase.ExpectedUserName, response.Username)
+						assert.EqualValues(t, useCase.ExpectedStdout, response.Stdout)
+					}
+					serviceResponse = service.Run(context, &endly.DockerLogoutRequest{
+						Target:     useCase.Request.Target,
+						Repository: useCase.Request.Repository,
+					})
+					assert.EqualValues(t, "", serviceResponse.Error)
+				}
+			}
+		}
+	}
+
+}
+
+func TestDockerService_Build(t *testing.T) {
+	credentialFile, err := GetDummyCredential()
+	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
+	manager := endly.NewManager()
+
+	execService, err := GetReplayService("test/docker/build/darwin")
+	if !assert.Nil(t, err) {
+		return
+	}
+	context, err := OpenTestContext(manager, target, execService)
+	if !assert.Nil(t, err) {
+		return
+	}
+	defer context.Close()
+	service, _ := context.Service(endly.DockerServiceID)
+
+	response := service.Run(context, &endly.DockerBuildRequest{
+		SysPath: []string{"/usr/local/bin"},
+		Target:  target,
+		Tag: &endly.DockerTag{
+			Username: "viant",
+			Image:    "site_profile_backup",
+			Version:  "0.1",
+		},
+		Path: "/Users/awitas/go/src/github.vianttech.com/etl/site_profile_backup",
+	})
+	assert.EqualValues(t, "", response.Error)
+
+}
+
+func TestDockerService_Push(t *testing.T) {
+	credentialFile, err := GetDummyCredential()
+	if err != nil {
+		return
+	}
+	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
+	manager := endly.NewManager()
+
+	var useCases = []struct {
+		baseDir string
+		Error   bool
+	}{
+		{
+			baseDir: "test/docker/push/error/darwin",
+			Error:   true,
+		},
+		{
+			baseDir: "test/docker/push/success/darwin",
+			Error:   false,
+		},
+	}
+
+	for _, useCase := range useCases {
+		execService, err := GetReplayService(useCase.baseDir)
+		if !assert.Nil(t, err, useCase.baseDir) {
+			return
+		}
+		context, err := OpenTestContext(manager, target, execService)
+		if !assert.Nil(t, err) {
+			return
+		}
+		defer context.Close()
+		service, _ := context.Service(endly.DockerServiceID)
+
+		response := service.Run(context, &endly.DockerPushRequest{
+			SysPath: []string{"/usr/local/bin"},
+			Target:  target,
+			Tag: &endly.DockerTag{
+				Username: "viant",
+				Image:    "site_profile_backup",
+				Version:  "0.1",
+			},
+		})
+		if useCase.Error {
+			assert.True(t, response.Error != "")
+		} else {
+			assert.EqualValues(t, "", response.Error)
+
+		}
 	}
 }

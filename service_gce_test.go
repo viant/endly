@@ -94,7 +94,7 @@ func TestNewGceService_WithError(t *testing.T) {
 		zone := "us-west1-b"
 		instance := "instance-1"
 		serviceResponse := service.Run(context, &endly.GCECallRequest{
-			Credential:credential,
+			Credential: credential,
 			Service:    "Instances",
 			Method:     "List",
 			Parameters: []interface{}{project, zone, instance},
