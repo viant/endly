@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/logrusorgru/aurora"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"os/exec"
 	"reflect"
@@ -599,13 +600,28 @@ func (r *CliRunner) processEventTags() {
 }
 
 //Run run workflow for the specified URL
-func (r *CliRunner) Run(workflowRunRequestURL string) error {
+func (r *CliRunner) Run(workflowRunRequestURL string, arguments ...interface{}) error {
 	request := &WorkflowRunRequest{}
 	resource := url.NewResource(workflowRunRequestURL)
-	err := resource.JSONDecode(request)
-	if err != nil {
-		return err
+
+	if len(arguments) > 0 {
+		text, err := resource.DownloadText()
+		if err != nil {
+			return err
+		}
+		parametersMap := data.Map(Pairs(arguments...))
+		text = parametersMap.ExpandAsText(text)
+		err = toolbox.NewJSONDecoderFactory().Create(strings.NewReader(text)).Decode(request)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := resource.JSONDecode(request)
+		if err != nil {
+			return err
+		}
 	}
+
 	ctx := r.manager.NewContext(toolbox.NewContext())
 	defer ctx.Close()
 	service, err := ctx.Service(WorkflowServiceID)

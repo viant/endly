@@ -7,7 +7,6 @@ import (
 
 //DockerRunRequest represents a docker run request
 type DockerRunRequest struct {
-	SysPath     []string
 	Target      *url.Resource
 	Image       string
 	Port        string

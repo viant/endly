@@ -12,14 +12,25 @@ import (
 	_ "github.com/viant/toolbox/storage/gs"
 	"log"
 	"time"
+	"os"
 )
 
-var workflow = flag.String("workflow", "run.json", "path to workflow run request json file")
+var workflow = flag.String("r", "run.json", "path to workflow run request json file")
 
 func main() {
 	flag.Parse()
 	runner := endly.NewCliRunner()
-	err := runner.Run(*workflow)
+	var arguments = make([]interface{}, 0)
+	if len(os.Args) > 1 {
+		for i := 1;i<len(os.Args);i++{
+			if os.Args[i] == "-r" {
+				i++
+				continue
+			}
+			arguments = append(arguments, os.Args[i])
+		}
+	}
+	err := runner.Run(*workflow, arguments...)
 	if err != nil {
 		log.Fatal(err)
 	}
