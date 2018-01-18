@@ -6,7 +6,6 @@ import (
 
 //DockerImagesRequest represents docker check image request
 type DockerImagesRequest struct {
-	SysPath    []string
 	Target     *url.Resource
 	Repository string
 	Tag        string

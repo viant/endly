@@ -6,10 +6,9 @@ import (
 
 //DockerContainerStatusRequest represents a docker check container status request
 type DockerContainerStatusRequest struct {
-	Target  *url.Resource
-	SysPath []string
-	Names   string
-	Image   string
+	Target *url.Resource
+	Names  string
+	Image  string
 }
 
 //DockerContainerStatusResponse represents a docker container check response

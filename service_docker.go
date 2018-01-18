@@ -43,6 +43,9 @@ const (
 	//DockerServicePushAction represents docker push action
 	DockerServicePushAction = "push"
 
+	//DockerServiceInspectAction represents docker inspect action
+	DockerServiceInspectAction = "inspect"
+
 	//DockerServiceContainerCommandAction represents docker container-command action
 	DockerServiceContainerCommandAction = "container-command"
 
@@ -104,7 +107,8 @@ func (s *dockerService) NewRequest(action string) (interface{}, error) {
 		return &DockerLogoutRequest{}, nil
 	case DockerServicePushAction:
 		return &DockerPushRequest{}, nil
-
+	case DockerServiceInspectAction:
+		return &DockerInspectRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
 }
@@ -168,6 +172,10 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 		response.Response, err = s.push(context, actualRequest)
 		errorMessage = fmt.Sprintf("failed to push: %v", actualRequest.Tag)
 
+	case *DockerInspectRequest:
+		response.Response, err = s.inspect(context, actualRequest)
+		errorMessage = fmt.Sprintf("failed to push: %v", actualRequest.Target)
+
 	default:
 		err = fmt.Errorf("unsupported request type: %T", request)
 	}
@@ -179,13 +187,11 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 }
 
 func (s *dockerService) stopImages(context *Context, request *DockerStopImagesRequest) (*DockerStopImagesResponse, error) {
-	s.applySysPathIfNeeded(request.SysPath)
 	var response = &DockerStopImagesResponse{
 		StoppedImages: make([]string, 0),
 	}
 	processResponse, err := s.checkContainerProcesses(context, &DockerContainerStatusRequest{
-		Target:  request.Target,
-		SysPath: request.SysPath,
+		Target: request.Target,
 	})
 	if err != nil {
 		return nil, err
@@ -235,6 +241,9 @@ func (s *dockerService) applySysPathIfNeeded(sysPath []string) {
 	if len(sysPath) > 0 {
 		s.SysPath = sysPath
 	}
+	if len(s.SysPath) == 0 {
+		s.SysPath = []string{"/usr/local/bin"}
+	}
 }
 
 func (s *dockerService) applyCredentialIfNeeded(credentials map[string]string) map[string]string {
@@ -266,7 +275,7 @@ func (s *dockerService) resetContainerIfNeeded(context *Context, target *url.Res
 
 func (s *dockerService) runContainer(context *Context, request *DockerRunRequest) (*DockerContainerInfo, error) {
 	var err error
-	s.applySysPathIfNeeded(request.SysPath)
+
 	var credentials = s.applyCredentialIfNeeded(request.Credentials)
 
 	checkResponse, err := s.checkContainerProcesses(context, &DockerContainerStatusRequest{
@@ -311,14 +320,13 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 	}
 
 	return s.checkContainerProcess(context, &DockerContainerStatusRequest{
-		Target:  request.Target,
-		Names:   request.Target.Name,
-		SysPath: request.SysPath,
+		Target: request.Target,
+		Names:  request.Target.Name,
 	})
 }
 
 func (s *dockerService) checkContainerProcess(context *Context, request *DockerContainerStatusRequest) (*DockerContainerInfo, error) {
-	s.applySysPathIfNeeded(request.SysPath)
+
 	checkResponse, err := s.checkContainerProcesses(context, request)
 	if err != nil {
 		return nil, err
@@ -335,15 +343,14 @@ func (s *dockerService) startContainer(context *Context, request *DockerContaine
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("target name was empty url: %v", request.Target.URL)
 	}
-	s.applySysPathIfNeeded(request.SysPath)
+
 	_, err := s.executeDockerCommand(nil, context, request.Target, dockerErrors, "docker start %v", request.Target.Name)
 	if err != nil {
 		return nil, err
 	}
 	return s.checkContainerProcess(context, &DockerContainerStatusRequest{
-		Target:  request.Target,
-		Names:   request.Target.Name,
-		SysPath: request.SysPath,
+		Target: request.Target,
+		Names:  request.Target.Name,
 	})
 
 }
@@ -352,11 +359,10 @@ func (s *dockerService) stopContainer(context *Context, request *DockerContainer
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("target name was empty for %v", request.Target.URL)
 	}
-	s.applySysPathIfNeeded(request.SysPath)
+
 	info, err := s.checkContainerProcess(context, &DockerContainerStatusRequest{
-		Target:  request.Target,
-		Names:   request.Target.Name,
-		SysPath: request.SysPath,
+		Target: request.Target,
+		Names:  request.Target.Name,
 	})
 	if err != nil {
 		return nil, err
@@ -379,7 +385,7 @@ func (s *dockerService) removeContainer(context *Context, request *DockerContain
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("target name was empty for %v", request.Target.URL)
 	}
-	s.applySysPathIfNeeded(request.SysPath)
+
 	commandInfo, err := s.executeDockerCommand(nil, context, request.Target, dockerErrors, "docker rm %v", request.Target.Name)
 	if err != nil {
 		return nil, err
@@ -391,7 +397,6 @@ func (s *dockerService) runInContainer(context *Context, request *DockerContaine
 	if request.Target.Name == "" {
 		return nil, fmt.Errorf("target name was empty for %v and command %v", request.Target.URL, request.Command)
 	}
-	s.applySysPathIfNeeded(request.SysPath)
 
 	var executionOptions = ""
 	var command = context.Expand(request.Command)
@@ -424,7 +429,7 @@ func (s *dockerService) runInContainer(context *Context, request *DockerContaine
 }
 
 func (s *dockerService) checkContainerProcesses(context *Context, request *DockerContainerStatusRequest) (*DockerContainerStatusResponse, error) {
-	s.applySysPathIfNeeded(request.SysPath)
+
 	info, err := s.executeSecureDockerCommand(true, nil, context, request.Target, dockerErrors, "docker ps")
 	if err != nil {
 		return nil, err
@@ -484,10 +489,6 @@ func (s *dockerService) pullImage(context *Context, request *DockerPullRequest) 
 }
 
 func (s *dockerService) checkImages(context *Context, request *DockerImagesRequest) (*DockerImagesResponse, error) {
-	if request.SysPath != nil {
-		s.SysPath = request.SysPath
-	}
-
 	info, err := s.executeDockerCommand(nil, context, request.Target, dockerErrors, "docker images")
 	if err != nil {
 		return nil, err
@@ -549,6 +550,7 @@ func (s *dockerService) executeDockerCommand(secure map[string]string, context *
 }
 
 func (s *dockerService) executeSecureDockerCommand(asRoot bool, secure map[string]string, context *Context, target *url.Resource, errors []string, template string, arguments ...interface{}) (*CommandResponse, error) {
+	s.applySysPathIfNeeded([]string{})
 	command := fmt.Sprintf(template, arguments...)
 	if len(secure) == 0 {
 		secure = make(map[string]string)
@@ -558,6 +560,7 @@ func (s *dockerService) executeSecureDockerCommand(asRoot bool, secure map[strin
 	var extractableCommand = &ExtractableCommand{
 		Options: &ExecutionOptions{
 			SystemPaths: s.SysPath,
+			TimeoutMs:   120000,
 		},
 		Executions: []*Execution{
 			{
@@ -590,12 +593,10 @@ func (s *dockerService) executeSecureDockerCommand(asRoot bool, secure map[strin
 func (s *dockerService) build(context *Context, request *DockerBuildRequest) (*DockerBuildResponse, error) {
 	request.Init()
 	var response = &DockerBuildResponse{}
-	s.applySysPathIfNeeded(request.SysPath)
 	var target, err = context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-
 	var args = ""
 	for k, v := range request.Arguments {
 		args += fmt.Sprintf("%v %v ", k, context.Expand(v))
@@ -615,7 +616,7 @@ func (s *dockerService) build(context *Context, request *DockerBuildRequest) (*D
 }
 func (s *dockerService) tag(context *Context, request *DockerTagRequest) (*DockerTagResponse, error) {
 	var response = &DockerTagResponse{}
-	s.applySysPathIfNeeded(request.SysPath)
+
 	var target, err = context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -651,7 +652,7 @@ func (s *dockerService) login(context *Context, request *DockerLoginRequest) (*D
 	if err != nil {
 		return nil, err
 	}
-	s.applySysPathIfNeeded(request.SysPath)
+
 	var response = &DockerLoginResponse{}
 	credential := context.Expand(request.Credential)
 	credConfig, err := cred.NewConfig(credential)
@@ -689,7 +690,7 @@ func (s *dockerService) logout(context *Context, request *DockerLogoutRequest) (
 	if err != nil {
 		return nil, err
 	}
-	s.applySysPathIfNeeded(request.SysPath)
+
 	repository := context.Expand(request.Repository)
 	_, err = s.executeDockerCommand(nil, context, target, dockerErrors, `docker logout %v`, repository)
 	if err != nil {
@@ -704,15 +705,32 @@ func (s *dockerService) push(context *Context, request *DockerPushRequest) (*Doc
 	if err != nil {
 		return nil, err
 	}
-	s.applySysPathIfNeeded(request.SysPath)
+
 	commandResponse, err := s.executeDockerCommand(nil, context, target, dockerErrors, `docker push %v`, request.Tag)
 	if err != nil {
 		return nil, err
 	}
 	stdout := commandResponse.Stdout()
-	if !escapedContains(stdout, "Pushed") {
+	if !(escapedContains(stdout, "Pushed") || escapedContains(stdout, "Layer already exists")) {
 		return nil, fmt.Errorf("failed to push tag: %v, stdout: %v", request.Tag, stdout)
 	}
+	return response, nil
+}
+
+func (s *dockerService) inspect(context *Context, request *DockerInspectRequest) (*DockerInspectResponse, error) {
+	target, err := context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, err
+	}
+	var response = &DockerInspectResponse{}
+	commandResponse, err := s.executeDockerCommand(nil, context, target, dockerErrors, `docker inspect %v`, target.Name)
+	if err != nil {
+		return nil, err
+	}
+	stdout := commandResponse.Stdout()
+	output, structured := AsExtractable(stdout)
+	response.Output = output
+	response.Info = structured[sliceKey]
 	return response, nil
 }
 
@@ -735,6 +753,7 @@ func NewDockerService() Service {
 			DockerServiceLoginAction,
 			DockerServiceLogoutAction,
 			DockerServicePushAction,
+			DockerServiceInspectAction,
 		),
 	}
 	result.AbstractService.Service = result

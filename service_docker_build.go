@@ -8,7 +8,6 @@ import (
 //DockerBuildRequest represents docker build request
 type DockerBuildRequest struct {
 	Target    *url.Resource
-	SysPath   []string
 	Tag       *DockerTag
 	Path      string
 	Arguments map[string]string //https://docs.docker.com/engine/reference/commandline/build/#description

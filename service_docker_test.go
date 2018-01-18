@@ -5,7 +5,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
+	"os"
 	"path"
 	"testing"
 )
@@ -83,7 +85,7 @@ func TestDockerService_Images(t *testing.T) {
 			if assert.Nil(t, err) {
 				var target = useCase.target
 				serviceResponse := service.Run(context, &endly.DockerImagesRequest{
-					SysPath:    []string{"/usr/local/bin"},
+
 					Target:     target,
 					Tag:        useCase.Tag,
 					Repository: useCase.Repository,
@@ -141,9 +143,8 @@ func TestDockerService_Run(t *testing.T) {
 		{
 			"test/docker/run/existing/darwin",
 			&endly.DockerRunRequest{
-				SysPath: []string{"/usr/local/bin"},
-				Target:  target,
-				Image:   "mysql:5.6",
+				Target: target,
+				Image:  "mysql:5.6",
 				MappedPort: map[string]string{
 					"3306": "3306",
 				},
@@ -168,9 +169,9 @@ func TestDockerService_Run(t *testing.T) {
 		{
 			"test/docker/run/new/darwin",
 			&endly.DockerRunRequest{
-				SysPath: []string{"/usr/local/bin"},
-				Target:  target,
-				Image:   "mysql:5.6",
+
+				Target: target,
+				Image:  "mysql:5.6",
 				MappedPort: map[string]string{
 					"3306": "3306",
 				},
@@ -195,9 +196,8 @@ func TestDockerService_Run(t *testing.T) {
 		{
 			"test/docker/run/error/darwin",
 			&endly.DockerRunRequest{
-				SysPath: []string{"/usr/local/bin"},
-				Target:  target,
-				Image:   "mysql:5.6",
+				Target: target,
+				Image:  "mysql:5.6",
 				MappedPort: map[string]string{
 					"3306": "3306",
 				},
@@ -218,9 +218,8 @@ func TestDockerService_Run(t *testing.T) {
 		{
 			"test/docker/run/active/darwin",
 			&endly.DockerRunRequest{
-				SysPath: []string{"/usr/local/bin"},
-				Target:  target,
-				Image:   "mysql:5.6",
+				Target: target,
+				Image:  "mysql:5.6",
 				MappedPort: map[string]string{
 					"3306": "3306",
 				},
@@ -444,8 +443,7 @@ func TestDockerService_Status(t *testing.T) {
 		{
 			"test/docker/status/up/linux",
 			&endly.DockerContainerStatusRequest{
-				SysPath: []string{"/usr/local/bin"},
-				Target:  target,
+				Target: target,
 			},
 			&endly.DockerContainerStatusResponse{
 				Containers: []*endly.DockerContainerInfo{
@@ -713,7 +711,7 @@ func TestDockerService_Login(t *testing.T) {
 		{
 			"test/docker/login/gcr_key/darwin",
 			&endly.DockerLoginRequest{
-				SysPath:    []string{"/usr/local/bin"},
+
 				Target:     target,
 				Repository: "us.gcr.io/myproj",
 				Credential: gcrKeyDockerCredentials,
@@ -725,7 +723,7 @@ func TestDockerService_Login(t *testing.T) {
 		{
 			"test/docker/login/gcr/darwin",
 			&endly.DockerLoginRequest{
-				SysPath:    []string{"/usr/local/bin"},
+
 				Target:     target,
 				Repository: "us.gcr.io/myproj",
 				Credential: keyDockerCredentials,
@@ -737,7 +735,7 @@ func TestDockerService_Login(t *testing.T) {
 		{
 			"test/docker/login/std/darwin",
 			&endly.DockerLoginRequest{
-				SysPath:    []string{"/usr/local/bin"},
+
 				Target:     target,
 				Repository: "repo.com/myproj",
 				Credential: keyDockerCredentials,
@@ -803,8 +801,7 @@ func TestDockerService_Build(t *testing.T) {
 	service, _ := context.Service(endly.DockerServiceID)
 
 	response := service.Run(context, &endly.DockerBuildRequest{
-		SysPath: []string{"/usr/local/bin"},
-		Target:  target,
+		Target: target,
 		Tag: &endly.DockerTag{
 			Username: "viant",
 			Image:    "site_profile_backup",
@@ -823,7 +820,6 @@ func TestDockerService_Push(t *testing.T) {
 	}
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 	manager := endly.NewManager()
-
 	var useCases = []struct {
 		baseDir string
 		Error   bool
@@ -851,8 +847,7 @@ func TestDockerService_Push(t *testing.T) {
 		service, _ := context.Service(endly.DockerServiceID)
 
 		response := service.Run(context, &endly.DockerPushRequest{
-			SysPath: []string{"/usr/local/bin"},
-			Target:  target,
+			Target: target,
 			Tag: &endly.DockerTag{
 				Username: "viant",
 				Image:    "site_profile_backup",
@@ -867,3 +862,65 @@ func TestDockerService_Push(t *testing.T) {
 		}
 	}
 }
+
+func TestDockerService_Inspect(t *testing.T) {
+	credentialFile, err := GetDummyCredential()
+	if err != nil {
+		return
+	}
+	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
+	manager := endly.NewManager()
+	execService, err := GetReplayService("test/docker/inspect/darwin")
+	context, err := OpenTestContext(manager, target, execService)
+	if !assert.Nil(t, err) {
+		return
+	}
+	defer context.Close()
+	service, _ := context.Service(endly.DockerServiceID)
+	target.Name = "site_backup"
+	serviceResponse := service.Run(context, &endly.DockerInspectRequest{
+		Target: target,
+	})
+	assert.EqualValues(t, "", serviceResponse.Error)
+	response, ok := serviceResponse.Response.(*endly.DockerInspectResponse)
+	if assert.True(t, ok) {
+		assert.True(t, response.Output != "")
+		assert.NotNil(t, response.Info)
+		var aMap = data.NewMap()
+		aMap.Put("Output", toolbox.AsSlice(response.Info))
+		ip, has := aMap.GetValue("Output[0].NetworkSettings.IPAddress")
+		if assert.True(t, has) {
+			assert.EqualValues(t, "172.17.0.2", ip)
+		}
+	}
+}
+
+//
+//func TestDockerService_RecorderTemplate(t *testing.T) {
+//
+//	parent := toolbox.CallerDirectory(3)
+//	dockerCredentials := path.Join(parent, "test/docker/gcr_key.json")
+//
+//	var credentialFile = path.Join(os.Getenv("HOME"), ".secret/scp.json")
+//
+//	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
+//	manager := endly.NewManager()
+//	context, _ := OpenTestRecorderContext(manager, target, "test/docker/inspect/darwin")
+//	///context := manager.NewContext(toolbox.NewContext())
+//
+//	defer context.Close()
+//
+//	service, _ := manager.Service(endly.DockerServiceID)
+//
+//	fmt.Printf("%v\n", dockerCredentials)
+//
+//	target.Name = "site_backup"
+//	response := service.Run(context, &endly.DockerInspectRequest{
+//		Target:     target,
+//
+//	})
+//	assert.EqualValues(t, "", response.Error)
+//
+//
+//}
+//

@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"strings"
 	"time"
 )
+
+const sliceKey = "data"
 
 //Repeatable represent repetable execution
 type Repeatable struct {
@@ -31,7 +34,7 @@ func asStructureData(source interface{}) data.Map {
 }
 
 //AsExtractable returns extractable text and struct
-func (r *Repeatable) AsExtractable(context *Context, input interface{}) (string, map[string]interface{}) {
+func AsExtractable(input interface{}) (string, map[string]interface{}) {
 	var extractableOutput string
 	var structuredOutput data.Map
 	switch value := input.(type) {
@@ -50,10 +53,14 @@ func (r *Repeatable) AsExtractable(context *Context, input interface{}) (string,
 	default:
 		structuredOutput = asStructureData(value)
 	}
-
 	if extractableOutput != "" {
 		if toolbox.IsCompleteJSON(extractableOutput) {
-			if aMap, err := toolbox.JSONToMap(extractableOutput); err == nil {
+			if strings.HasPrefix(strings.Trim(extractableOutput, " \r\n"), "[") {
+				structuredOutput = data.NewMap()
+				if aSlice, err := toolbox.JSONToSlice(extractableOutput); err == nil {
+					structuredOutput.Put(sliceKey, aSlice)
+				}
+			} else if aMap, err := toolbox.JSONToMap(extractableOutput); err == nil {
 				structuredOutput = data.Map(aMap)
 			}
 		}
@@ -87,7 +94,7 @@ func (r *Repeatable) Run(callerInfo string, context *Context, handler func() (in
 			return err
 		}
 
-		extractableOutput, structuredOutput := r.AsExtractable(context, out)
+		extractableOutput, structuredOutput := AsExtractable(out)
 		if len(structuredOutput) > 0 {
 			var extractedVariables = data.NewMap()
 			_ = r.Variables.Apply(structuredOutput, extractedVariables)
