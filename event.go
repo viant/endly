@@ -11,7 +11,7 @@ import (
 const (
 	//All logging level.
 	All = iota
-	//Error loging level
+	//Error logging level
 	Error
 	//Info logging level
 	Info
@@ -70,8 +70,8 @@ type Event struct {
 	Value       map[string]interface{}   //event value
 }
 
-//Info returns basic event info
-func (e *Event) Info() string {
+//Output returns basic event info
+func (e *Event) Output() string {
 	var name = ""
 	if value, ok := e.Value["ID"]; ok {
 		name = toolbox.AsString(value)

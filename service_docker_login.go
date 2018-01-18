@@ -7,7 +7,6 @@ import (
 
 //DockerLoginRequest represents a docker pull request
 type DockerLoginRequest struct {
-	SysPath    []string
 	Target     *url.Resource
 	Credential string
 	Repository string

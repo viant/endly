@@ -8,7 +8,6 @@ import (
 //DockerTagRequest represents docker tag request
 type DockerTagRequest struct {
 	Target    *url.Resource
-	SysPath   []string
 	SourceTag *DockerTag
 	TargetTag *DockerTag
 }
