@@ -286,25 +286,26 @@ func match(stdout string, candidates ...string) string {
 }
 
 //TODO caching this
-func (s *execService) credentialPassword(credentialPath string) (string, error) {
+func (s *execService) credentialPassword(credentialURI string) (string, error) {
 	s.mutex.RLock()
-	password, has := s.credentialPasswords[credentialPath]
+	result, has := s.credentialPasswords[credentialURI]
 	s.mutex.RUnlock()
 	if has {
-		return password, nil
+		return result, nil
 	}
-	if credentialPath != "" && toolbox.FileExists(credentialPath) {
-		credential, err := cred.NewConfig(credentialPath)
+	result = credentialURI
+	if credentialURI != "" && toolbox.FileExists(credentialURI) {
+		credential, err := cred.NewConfig(credentialURI)
 		if err != nil {
 			return "", err
 		}
 		s.mutex.Lock()
-		password = credential.Password
-		s.credentialPasswords[credentialPath] = password
+		result = credential.Password
+		s.credentialPasswords[credentialURI] = result
 		s.mutex.Unlock()
 
 	}
-	return password, nil
+	return result, nil
 }
 
 func (s *execService) credentialsToSecure(credentials map[string]string) (map[string]string, error) {
@@ -312,6 +313,9 @@ func (s *execService) credentialsToSecure(credentials map[string]string) (map[st
 	if len(credentials) > 0 {
 		for k, v := range credentials {
 			secure[k] = v
+			if toolbox.IsCompleteJSON(v) {
+				continue
+			}
 			var credential, err = s.credentialPassword(v)
 			if err != nil {
 				return nil, err
@@ -342,6 +346,7 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 
 	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
 	startEvent := s.Begin(context, executionStartEvent, Pairs("value", executionStartEvent), Info)
+
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
 	var executionEndEvent = &ExecutionEndEvent{
 		SessionID: session.ID,
@@ -643,7 +648,7 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*Extractab
 		},
 	}
 	var executionOptions = &ExecutionOptions{
-		Terminators: []string{"Password"},
+		Terminators: []string{"Password", commandNotFound},
 	}
 	if r.MangedCommand.Options != nil {
 		executionOptions.Terminators = append(executionOptions.Terminators, r.MangedCommand.Options.Terminators...)
@@ -695,7 +700,7 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*Extractab
 		Credentials: credentials,
 		MatchOutput: "Password",
 		Command:     sudoCredentialKey,
-		Error:       []string{"Password"},
+		Error:       []string{"Password", commandNotFound},
 		Extraction:  extractions,
 	}
 	execution.Error = append(execution.Error, errors...)

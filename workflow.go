@@ -84,6 +84,7 @@ func (w *Workflow) Validate() error {
 	return nil
 }
 
+//Task returns a task for supplied name
 func (w *Workflow) Task(name string) (*WorkflowTask, error) {
 	name = strings.TrimSpace(name)
 	for _, candidate := range w.Tasks {
@@ -94,6 +95,7 @@ func (w *Workflow) Task(name string) (*WorkflowTask, error) {
 	return nil, fmt.Errorf("failed to lookup task: %v on %v", name, w.Name)
 }
 
+//FilterTasks returns filter tasked for provided filter.
 func (w *Workflow) FilterTasks(filter string) ([]*WorkflowTask, error) {
 	if filter == "" || filter == "*" {
 		return w.Tasks, nil

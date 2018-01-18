@@ -74,3 +74,7 @@ func ExtractColumns(line string) ([]string, bool) {
 func escapeStdout(stdout string) string {
 	return vtclean.Clean(stdout, true)
 }
+
+func escapedContains(stdout, match string) bool {
+	return strings.Contains(stdout, match) || strings.Contains(escapeStdout(stdout), match)
+}

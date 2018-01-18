@@ -1,12 +1,12 @@
 package endly
 
 import (
-	"github.com/viant/toolbox/url"
 	"github.com/pkg/errors"
+	"github.com/viant/toolbox/url"
 )
 
-//DockerServiceTagRequest represents docker tag request
-type DockerServiceTagRequest struct {
+//DockerTagRequest represents docker tag request
+type DockerTagRequest struct {
 	Target    *url.Resource
 	SysPath   []string
 	SourceTag *DockerTag
@@ -21,12 +21,13 @@ type DockerTag struct {
 	Version  string
 }
 
-//DockerServiceTagResponse represents docker tag response
-type DockerServiceTagResponse struct {
+//DockerTagResponse represents docker tag response
+type DockerTagResponse struct {
 	Stdout string
 }
 
-func (r *DockerServiceTagRequest) Validate() error {
+//Validate checks if request valid
+func (r *DockerTagRequest) Validate() error {
 	if r.Target == nil {
 		return errors.New("target was empty")
 	}
@@ -39,12 +40,10 @@ func (r *DockerServiceTagRequest) Validate() error {
 	if err := r.SourceTag.Validate(); err != nil {
 		return err
 	}
-	if err := r.TargetTag.Validate(); err != nil {
-		return err
-	}
-	return nil
+	return r.TargetTag.Validate()
 }
 
+//Validate checks if tag is valid
 func (t *DockerTag) Validate() error {
 	if t.Image == "" {
 		return errors.New("image was empty")

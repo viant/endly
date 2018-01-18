@@ -113,7 +113,7 @@ func (f *LogFile) ShiftLogRecord() *LogRecord {
 	return result
 }
 
-//ShiftLogRecord returns and remove the first log record if present
+//ShiftLogRecordByIndex returns and remove the first log record if present
 func (f *LogFile) ShiftLogRecordByIndex(value string) *LogRecord {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
