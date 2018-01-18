@@ -17,6 +17,7 @@ type HTTPEndpointListenResponse struct {
 	Trips map[string]*HTTPResponses
 }
 
+//Validate checks if request is valid.
 func (r HTTPEndpointListenRequest) Validate() error {
 	if r.BaseDirectory == "" {
 		return errors.New("BaseDirectory was empty")
@@ -27,6 +28,7 @@ func (r HTTPEndpointListenRequest) Validate() error {
 	return nil
 }
 
+//AsHTTPServerTrips return a new HTTP trips.
 func (r HTTPEndpointListenRequest) AsHTTPServerTrips() *HTTPServerTrips {
 	if len(r.IndexKeys) == 0 {
 		r.IndexKeys = []string{MethodKey, URLKey, BodyKey, CookieKey, ContentTypeKey}

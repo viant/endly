@@ -285,11 +285,13 @@ Sdk service sets active terminal session with requested sdk version.
 | docker | container-remove | remove specified docker container | [DockerContainerRemoveRequest](service_docker_container.go) | [CommandResponse](exec_command_response.go) | 
 | docker | build | build docker image| [DockerBuildRequest](service_docker_build.go) | [DockerBuildResponse](service_docker_build.go) |
 | docker | tag | create a target image that referes to source docker image| [DockerBuildRequest](service_docker_tag.go) | [DockerBuildResponse](service_docker_tag.go) |
+| docker | login | store supplied credential for provided repository in local docker store| [DockerLoginRequest](service_docker_login.go) | [DockerLoginResponse](service_docker_login.go) |
+| docker | logout | remove credential for supplied repository | [DockerLogoutRequest](service_docker_logout.go) | [DockerLogoutResponse](service_docker_logout.go) |
+| docker | push | copy image to supplied repository| [DockerPushRequest](service_docker_push.go) | [DockerPushResponse](service_docker_push.go) |
 
 
 <a name="Buildservices"></a>
 ## Build and deployment services
-
 
 **Storage service**
 
