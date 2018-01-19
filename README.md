@@ -558,6 +558,7 @@ Workflow service provide capability to run task, action from any defined workflo
 | vc_maven_module_build | build | build module |
 | ec2 | start | start ec2 instance |
 | ec2 | stop | stop  ec2 instance |
+| notify_error | notify | send error |
  
  
  **Predefined workflow run requests**
@@ -569,7 +570,18 @@ Workflow service provide capability to run task, action from any defined workflo
  | [mysql.json](req/mysql.json)| dockerized_mysql |
  | [memcached.json](req/memcached.json)| dockerized_memcached|
  | [ec2.json](req/ec2.json)| ec2 |
+ | [notify_erro.json](req/notify_error.json)| notify_error |
  
+ 
+ Notify error can be use in conjunction with Workflow.OnTaskError, see below workflow snippet
+ 
+ | Workflow | Name | Tasks | OnErrorTask | | | |
+ |---|---|---|---|---|---|---|
+ |---|test|%Tasks|onError  | |  | |
+ |[]Tasks|Name|Description|Actions| | | |
+ | | onError|On error task|%OnError| | | |
+ |[]OnError|Description|Service|Action|Request|args.error|args.[]receivers|
+  | |send error notification | workflow | run | #req/notify_error.json &#124; $args | $error |	abc@somewehre.com |
 
      
 <a name="Usage"></a>

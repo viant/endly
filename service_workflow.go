@@ -332,7 +332,7 @@ func (s *workflowService) publishEvents(context *Context, events []*Event) {
 	}
 }
 
-func (s *workflowService) runWorkflowTasks(context *Context, workflow *WorkflowControl, tasks ... *WorkflowTask) error {
+func (s *workflowService) runWorkflowTasks(context *Context, workflow *WorkflowControl, tasks ...*WorkflowTask) error {
 	for _, task := range tasks {
 		if workflow.IsTerminated() {
 			break
@@ -412,7 +412,15 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 			return nil, err
 		}
 		control.Error = err.Error()
-		state.Put(workflowError, control.WorkflowError)
+
+		var errorMap = toolbox.AsMap(control.WorkflowError)
+		if control.WorkflowError.Request != nil {
+			errorMap["Request"], _ = toolbox.AsJSONText(control.WorkflowError.Request)
+		}
+		if control.WorkflowError.Response != nil {
+			errorMap["Response"], _ = toolbox.AsJSONText(control.WorkflowError.Response)
+		}
+		state.Put(workflowError, errorMap)
 		onErrorTask, err := workflow.Task(workflow.OnErrorTask)
 		if err == nil {
 			err = s.runWorkflowTasks(context, control, onErrorTask)
