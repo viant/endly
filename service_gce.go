@@ -82,8 +82,8 @@ func GetComputeService(client *compute.Service, service string) (interface{}, er
 	return reflect.ValueOf(*client).FieldByName(service).Interface(), nil
 }
 
-func (s *gCEService) fetchInstanceList(request *GCECallRequest) (*GCECallResponse, error) {
-	var response = &GCECallResponse{}
+func (s *gCEService) fetchInstanceList(request *GCECallRequest) (GCECallResponse, error) {
+	var response interface{}
 	computeClient, ctx, err := NewComputeService(request.Credential)
 	if err != nil {
 		return nil, err
@@ -97,18 +97,17 @@ func (s *gCEService) fetchInstanceList(request *GCECallRequest) (*GCECallRespons
 		return nil
 	})
 	if err != nil {
-		response.Error = err.Error()
+		return nil, err
 	}
-	response.Response = instances
+	response = instances
 	return response, nil
 }
 
-func (s *gCEService) call(request *GCECallRequest) (*GCECallResponse, error) {
+func (s *gCEService) call(request *GCECallRequest) (GCECallResponse, error) {
 	if request.Service == "Instances" && request.Method == "List" {
 		return s.fetchInstanceList(request)
 	}
-
-	var response = &GCECallResponse{}
+	var response interface{}
 	computeClient, ctx, err := NewComputeService(request.Credential)
 	if err != nil {
 		return nil, err
@@ -141,9 +140,9 @@ func (s *gCEService) call(request *GCECallRequest) (*GCECallResponse, error) {
 		doResult := toolbox.CallFunction(doFunction)
 		if len(doResult) > 0 {
 			if err, ok := doResult[len(doResult)-1].(error); ok {
-				response.Error = err.Error()
+				return nil, err
 			}
-			response.Response = doResult[0]
+			response = doResult[0]
 			return response, nil
 		}
 	}
