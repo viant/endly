@@ -1,0 +1,12 @@
+[
+  {
+    "Name":"awsCredential",
+    "From":"params.awsCredential",
+    "Required":true
+  },
+  {
+    "Name":"ec2InstanceId",
+    "From":"params.ec2InstanceId",
+    "Required":true
+  }
+]

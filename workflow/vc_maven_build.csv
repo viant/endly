@@ -1,5 +1,5 @@
 Workflow,,Name,Description,Tasks,Init
-,,vc_maven_build,Workflow check outs/pulls latest change from vc to maven build it,%Tasks,#vc_maven_build_var.json
+,,vc_maven_build,Workflow check outs/pulls latest change from vc to maven build it,%Tasks,#vc_maven_build_var
 []Tasks,Step,Name,Description,Actions,
 ,1,checkout,This task wil get the latest code,%Checkout,
 []Checkout,Service,Action,Description,Request,

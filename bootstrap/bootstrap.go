@@ -7,7 +7,6 @@ import (
 	_ "github.com/viant/asc"
 	_ "github.com/viant/bgc"
 	"github.com/viant/endly"
-	_ "github.com/viant/endly/static"
 	_ "github.com/viant/toolbox/storage/aws"
 	_ "github.com/viant/toolbox/storage/gs"
 	"log"

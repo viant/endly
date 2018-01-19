@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	var memStorage = storage.NewMemoryService();
+	var memStorage = storage.NewMemoryService()
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/meta/deployment/maven.json", bytes.NewReader([]byte(`{
   "Name": "maven",

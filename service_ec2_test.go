@@ -4,12 +4,8 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
-	"os"
-	"path"
-	"testing"
 )
 
 func getInstanceStatus(awsCredential, instance string) (string, error) {
@@ -29,14 +25,14 @@ func getInstanceStatus(awsCredential, instance string) (string, error) {
 		return "", errors.New(serviceResponse.Error)
 	}
 
-	response, ok := serviceResponse.Response.(*endly.EC2CallResponse)
+	response, ok := serviceResponse.Response.(endly.EC2CallResponse)
 	if !ok {
-		return "", fmt.Errorf("expected %T but had %T", &endly.EC2CallResponse{}, serviceResponse.Response)
+		return "", fmt.Errorf("expected endly.EC2CallResponse but had %T", serviceResponse.Response)
 	}
 
-	awsResponse, ok := response.Response.(*ec2.DescribeInstancesOutput)
+	awsResponse, ok := response.(ec2.DescribeInstancesOutput)
 	if !ok {
-		return "", fmt.Errorf("expected %T but had %T", &ec2.DescribeInstancesOutput{}, response.Response)
+		return "", fmt.Errorf("expected %T but had %T", &ec2.DescribeInstancesOutput{}, response)
 	}
 
 	if len(awsResponse.Reservations) > 0 {
@@ -68,14 +64,14 @@ func startInstance(awsCredential, instance string) (string, error) {
 		return "", errors.New(serviceResponse.Error)
 	}
 
-	response, ok := serviceResponse.Response.(*endly.EC2CallResponse)
+	response, ok := serviceResponse.Response.(endly.EC2CallResponse)
 	if !ok {
-		return "", fmt.Errorf("expected %T but had %T", &endly.EC2CallResponse{}, serviceResponse.Response)
+		return "", fmt.Errorf("expected endly.EC2CallResponse but had %T", serviceResponse.Response)
 	}
 
-	_, ok = response.Response.(*ec2.StartInstancesOutput)
+	_, ok = response.(*ec2.StartInstancesOutput)
 	if !ok {
-		return "", fmt.Errorf("expected %T but had %T", &ec2.StartInstancesOutput{}, response.Response)
+		return "", fmt.Errorf("expected %T but had %T", &ec2.StartInstancesOutput{}, response)
 	}
 	return "", nil
 }
@@ -97,34 +93,14 @@ func stopInstance(awsCredential, instance string) (string, error) {
 		return "", errors.New(serviceResponse.Error)
 	}
 
-	response, ok := serviceResponse.Response.(*endly.EC2CallResponse)
+	response, ok := serviceResponse.Response.(endly.EC2CallResponse)
 	if !ok {
-		return "", fmt.Errorf("expected %T but had %T", &endly.EC2CallResponse{}, serviceResponse.Response)
+		return "", fmt.Errorf("expected endly.EC2CallResponse,  but had %T", serviceResponse.Response)
 	}
 
-	_, ok = response.Response.(*ec2.StopInstancesOutput)
+	_, ok = response.(*ec2.StopInstancesOutput)
 	if !ok {
-		return "", fmt.Errorf("expected %T but had %T", &ec2.StopInstancesOutput{}, response.Response)
+		return "", fmt.Errorf("expected %T but had %T", &ec2.StopInstancesOutput{}, response)
 	}
 	return "", nil
-}
-
-func TestEc2Service_Run(t *testing.T) {
-
-	os.Setenv("awsTestInstanceId", "i-0ef8d9260eaf47fdf")
-	awsCredential := path.Join(os.Getenv("HOME"), ".secret/aws.json")
-	if toolbox.FileExists(awsCredential) {
-		var testInstanceId = os.Getenv("awsTestInstanceId")
-		status, err := getInstanceStatus(awsCredential, testInstanceId)
-		if assert.Nil(t, err) {
-			if status == "stopped" {
-				startInstance(awsCredential, testInstanceId)
-			} else {
-				stopInstance(awsCredential, testInstanceId)
-			}
-
-		} //use WorkflowRepeatAction Request
-		stopInstance(awsCredential, testInstanceId)
-	}
-
 }
