@@ -9,8 +9,8 @@ import (
 
 //SMTPSendRequest represents send request.
 type SMTPSendRequest struct {
-	Target     *url.Resource
-	Mail       *MailMessage
+	Target *url.Resource
+	Mail   *MailMessage
 }
 
 //SMTPSendResponse represents send response.
