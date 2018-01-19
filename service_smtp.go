@@ -83,7 +83,7 @@ func (s *smtpService) send(context *Context, request *SMTPSendRequest) (*SMTPSen
 		return nil, err
 	}
 
-	client, err := NewSMTPClient(target, request.Credential)
+	client, err := NewSMTPClient(target, target.Credential)
 	if err != nil {
 		return nil, err
 	}

@@ -9,7 +9,7 @@ import (
 )
 
 func TestRepeatable_Run(t *testing.T) {
-
+	var abstractService = GetAbstractService()
 	{ //Test exit criteria with variable extraction from a map
 
 		repeataable := &endly.Repeatable{
@@ -30,7 +30,7 @@ func TestRepeatable_Run(t *testing.T) {
 		var extracted = make(map[string]string)
 
 		var counter = 0
-		err := repeataable.Run("test1", context, func() (interface{}, error) {
+		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
 			counter++
 			if counter < 3 {
 				return map[string]interface{}{
@@ -67,7 +67,7 @@ func TestRepeatable_Run(t *testing.T) {
 		var extracted = make(map[string]string)
 
 		var counter = 0
-		err := repeataable.Run("test1", context, func() (interface{}, error) {
+		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
 			counter++
 			if counter < 3 {
 				return map[string]interface{}{
@@ -104,7 +104,7 @@ func TestRepeatable_Run(t *testing.T) {
 		var extracted = make(map[string]string)
 
 		var counter = 0
-		err := repeataable.Run("test1", context, func() (interface{}, error) {
+		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
 			counter++
 			if counter < 3 {
 				return `{
@@ -141,7 +141,7 @@ func TestRepeatable_Run(t *testing.T) {
 		var extracted = make(map[string]string)
 
 		var counter = 0
-		err := repeataable.Run("test1", context, func() (interface{}, error) {
+		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
 			counter++
 			if counter < 3 {
 				return []byte(`{
@@ -178,7 +178,7 @@ func TestRepeatable_Run(t *testing.T) {
 		var extracted = make(map[string]string)
 
 		var counter = 0
-		err := repeataable.Run("test1", context, func() (interface{}, error) {
+		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
 			counter++
 			if counter < 3 {
 				return `{
@@ -214,7 +214,7 @@ func TestRepeatable_Run(t *testing.T) {
 		var extracted = make(map[string]string)
 
 		var counter = 0
-		err := repeataable.Run("test1", context, func() (interface{}, error) {
+		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
 			counter++
 			if counter < 3 {
 				return `{
@@ -256,7 +256,7 @@ func TestRepeatable_Run(t *testing.T) {
 		var extracted = make(map[string]string)
 
 		var counter = 0
-		err := repeataable.Run("test1", context, func() (interface{}, error) {
+		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
 			counter++
 			if counter < 3 {
 				return map[string]interface{}{
@@ -300,7 +300,7 @@ func TestRepeatable_Run(t *testing.T) {
 		var extracted = make(map[string]string)
 
 		var counter = 0
-		err := repeataable.Run("test1", context, func() (interface{}, error) {
+		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
 			counter++
 			if counter < 3 {
 				return []interface{}{`{
@@ -337,7 +337,7 @@ func TestRepeatable_Run(t *testing.T) {
 		context := manager.NewContext(toolbox.NewContext())
 		var extracted = make(map[string]string)
 
-		err := repeataable.Run("test1", context, func() (interface{}, error) {
+		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
 			return nil, fmt.Errorf("failed to run test")
 		}, extracted)
 		assert.NotNil(t, err)
@@ -370,7 +370,7 @@ func TestRepeatable_Run(t *testing.T) {
 		context := manager.NewContext(toolbox.NewContext())
 		var extracted = make(map[string]string)
 
-		err := repeataable.Run("test1", context, func() (interface{}, error) {
+		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
 			return "abc", nil
 		}, extracted)
 		assert.NotNil(t, err)
@@ -403,7 +403,7 @@ func TestRepeatable_Run(t *testing.T) {
 		context := manager.NewContext(toolbox.NewContext())
 		var extracted = make(map[string]string)
 
-		err := repeataable.Run("test1", context, func() (interface{}, error) {
+		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
 			return "abc", nil
 		}, extracted)
 		assert.NotNil(t, err)

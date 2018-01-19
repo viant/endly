@@ -9,6 +9,8 @@ import (
 	"github.com/viant/endly"
 	_ "github.com/viant/toolbox/storage/aws"
 	_ "github.com/viant/toolbox/storage/gs"
+	_ "github.com/viant/endly/static" //load external file to mem storage
+
 	"log"
 	"os"
 	"time"
