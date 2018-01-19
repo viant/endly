@@ -53,103 +53,13 @@ func getServiceWithWorkflowContext(workflowURI string) (*endly.Context, endly.Se
 	return context, service, err
 }
 
-func TestWorkflowService_RepeatTask(t *testing.T) {
-	context, service, err := getServiceWithWorkflowContext("test/workflow/nop/workflow.csv")
-	assert.Nil(t, err)
-	serviceResponse := service.Run(context, &endly.WorkflowRepeatTaskRequest{
-		Task: "task1",
-		Repeatable: &endly.Repeatable{
-			Repeat:      2,
-			SleepTimeMs: 1,
-		},
-	})
-	assert.EqualValues(t, "", serviceResponse.Error)
-
-	response, ok := serviceResponse.Response.(*endly.WorkflowRepeatTaskResponse)
-	if assert.True(t, ok, fmt.Sprintf("expected %T but had %T", &endly.WorkflowRepeatTaskResponse{}, serviceResponse.Response)) {
-		assert.EqualValues(t, 2, response.Repeated)
-	}
-
-}
-
-func TestWorkflowService_RepeatAction(t *testing.T) {
-	context, service, err := getServiceWithWorkflowContext("test/workflow/nop/workflow.csv")
-	assert.Nil(t, err)
-	serviceResponse := service.Run(context, &endly.WorkflowRepeatActionRequest{
-		ActionRequest: &endly.ActionRequest{
-			Service: "nop",
-			Action:  "nop",
-			Request: map[string]interface{}{},
-		},
-		Repeatable: &endly.Repeatable{
-			Repeat:      2,
-			SleepTimeMs: 1,
-		},
-	})
-	assert.EqualValues(t, "", serviceResponse.Error)
-
-	response, ok := serviceResponse.Response.(*endly.WorkflowRepeatActionResponse)
-	if assert.True(t, ok, fmt.Sprintf("expected %T but had %T", &endly.WorkflowRepeatActionResponse{}, serviceResponse.Response)) {
-		assert.EqualValues(t, 2, response.Repeated)
-	}
-}
-
-func TestWorkflowService_SwitchTask(t *testing.T) {
-	context, service, err := getServiceWithWorkflowContext("test/workflow/nop/workflow.csv")
-	assert.Nil(t, err)
-
-	request := &endly.WorkflowSwitchTaskRequest{
-		SourceKey: "goto",
-		Cases: []*endly.WorkflowSwitchTaskCase{
-			{
-				Value: "task1",
-				Task:  "task1",
-			},
-			{
-				Value: "task2",
-				Task:  "task2",
-			},
-		},
-		DefaultTask: "task3",
-	}
-
-	var state = context.State()
-
-	type useCase struct {
-		SourceKey    string
-		ExpectedTask string
-	}
-
-	for _, testCase := range []useCase{
-		{
-			SourceKey:    "task1",
-			ExpectedTask: "task1",
-		},
-		{
-			SourceKey:    "task2",
-			ExpectedTask: "task2",
-		},
-		{
-			SourceKey:    "unknown",
-			ExpectedTask: "task3",
-		},
-	} {
-		state.Put("goto", testCase.SourceKey)
-		serviceResponse := service.Run(context, request)
-		assert.EqualValues(t, "", serviceResponse.Error)
-		response := serviceResponse.Response.(*endly.WorkflowSwitchTaskResponse)
-		assert.EqualValues(t, testCase.ExpectedTask, response.Task)
-	}
-
-}
-
 func TestWorkflowService_SwitchAction(t *testing.T) {
 	context, service, err := getServiceWithWorkflowContext("test/workflow/nop/workflow.csv")
 	assert.Nil(t, err)
 
 	request := &endly.WorkflowSwitchActionRequest{
 		SourceKey: "run",
-		Cases: []*endly.WorkflowSwitchActionCase{
+		Cases: []*endly.WorkflowSwitchCase{
 			{
 				Value: "action1",
 				ActionRequest: &endly.ActionRequest{
@@ -171,11 +81,13 @@ func TestWorkflowService_SwitchAction(t *testing.T) {
 				},
 			},
 		},
-		Default: &endly.ActionRequest{
-			Service: "nop",
-			Action:  "parrot",
-			Request: map[string]interface{}{
-				"In": map[string]interface{}{"r": "test 3"},
+		Default: &endly.WorkflowSwitchCase{
+			ActionRequest: &endly.ActionRequest{
+				Service: "nop",
+				Action:  "parrot",
+				Request: map[string]interface{}{
+					"In": map[string]interface{}{"r": "test 3"},
+				},
 			},
 		},
 	}
@@ -204,15 +116,8 @@ func TestWorkflowService_SwitchAction(t *testing.T) {
 		state.Put("run", testCase.SourceKey)
 		serviceResponse := service.Run(context, request)
 		assert.EqualValues(t, "", serviceResponse.Error)
-		response, ok := serviceResponse.Response.(*endly.WorkflowSwitchActionResponse)
-		if assert.True(t, ok) {
-			assert.EqualValues(t, "parrot", response.Action)
-			if assert.True(t, ok) {
-				responseMap := toolbox.AsMap(response.Response)
-				//fmt.Printf(" %T\n", response.Response)
-				assert.EqualValues(t, testCase.Expected, responseMap["r"])
-			}
-		}
+		response := toolbox.AsMap(serviceResponse.Response)
+		assert.EqualValues(t, testCase.Expected, response["r"])
 	}
 
 }
