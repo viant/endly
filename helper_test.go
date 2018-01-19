@@ -13,6 +13,13 @@ import (
 	"time"
 )
 
+func GetAbstractService() *endly.AbstractService {
+	manager := endly.NewManager()
+	nop, _ := manager.Service(endly.NopServiceID)
+	nopService := nop.(*endly.NopService)
+	return nopService.AbstractService
+}
+
 func GetDummyCredential() (string, error) {
 	return GetCredential("dummy", os.Getenv("USER"), "***")
 }

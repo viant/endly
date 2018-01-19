@@ -217,7 +217,7 @@ func (s *seleniumService) call(context *Context, caller interface{}, call *Selen
 		}
 		return callResponse.Result, nil
 	}
-	err = repeatable.Run(seleniumRunnerCaller, context, handler, callResponse.Extracted)
+	err = repeatable.Run(s.AbstractService, seleniumRunnerCaller, context, handler, callResponse.Extracted)
 	return callResponse, err
 }
 
