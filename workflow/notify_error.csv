@@ -1,0 +1,6 @@
+Workflow,,,Name,Description,Tasks,Init
+,,,notify_error,Send email with error message,%Tasks,#notify_error_init
+[]Tasks,,,Name,Description,Actions,
+,,,notify,Error notification task,%Notify,
+[]Notify,,Service,Action,Description,Request,
+,,smtp,send,send error notification,#req/notify_error,

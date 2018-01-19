@@ -1,0 +1,11 @@
+{
+  "Target": "$SMTPResource",
+  "Mail": {
+    "From": "$from",
+    "Subject": "$subject",
+    "To": "$receivers",
+    "ContentType": "text/html",
+    "Body": "$body"
+  }
+}
+
