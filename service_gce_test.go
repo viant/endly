@@ -30,8 +30,8 @@ func TestNewGceService(t *testing.T) {
 			Parameters: []interface{}{project, zone, instance},
 		})
 		assert.Equal(t, "", serviceResponse.Error)
-		if gceResponse, ok := serviceResponse.Response.(*endly.GCECallResponse); ok && gceResponse != nil {
-			if instance, ok := gceResponse.Response.(*compute.Instance); ok {
+		if gceResponse, ok := serviceResponse.Response.(endly.GCECallResponse); ok && gceResponse != nil {
+			if instance, ok := gceResponse.(*compute.Instance); ok {
 				assert.EqualValues(t, "instance-1", instance.Name)
 			}
 		}
@@ -68,10 +68,8 @@ func TestNewGceService_WithError(t *testing.T) {
 			Method:     "Get",
 			Parameters: []interface{}{project, zone, instance},
 		})
-		assert.Equal(t, "", serviceResponse.Error)
-		if gceResponse, ok := serviceResponse.Response.(*endly.GCECallResponse); ok && gceResponse != nil {
-			assert.True(t, gceResponse.Error != "")
-		}
+		assert.True(t, serviceResponse.Error != "")
+
 	}
 	{ //test auth isseue
 		project := "dummy"
@@ -83,10 +81,7 @@ func TestNewGceService_WithError(t *testing.T) {
 			Method:     "List",
 			Parameters: []interface{}{project, zone, instance},
 		})
-		assert.Equal(t, "", serviceResponse.Error)
-		if gceResponse, ok := serviceResponse.Response.(*endly.GCECallResponse); ok && gceResponse != nil {
-			assert.True(t, gceResponse.Error != "")
-		}
+		assert.True(t, serviceResponse.Error != "")
 	}
 
 	{ //missing credentials
@@ -99,10 +94,7 @@ func TestNewGceService_WithError(t *testing.T) {
 			Method:     "List",
 			Parameters: []interface{}{project, zone, instance},
 		})
-		assert.Equal(t, "", serviceResponse.Error)
-		if gceResponse, ok := serviceResponse.Response.(*endly.GCECallResponse); ok && gceResponse != nil {
-			assert.True(t, gceResponse.Error != "")
-		}
+		assert.True(t, serviceResponse.Error != "")
 	}
 
 }
