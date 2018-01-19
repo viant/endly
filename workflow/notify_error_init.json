@@ -1,0 +1,33 @@
+[
+  {
+    "Name": "error",
+    "From": "params.error",
+    "Required": true
+  },
+  {
+    "Name": "from",
+    "From": "params.from",
+    "Value": "viantendly@gmail.com",
+    "Required": true
+  },
+  {
+    "Name": "receivers",
+    "From": "params.receivers",
+    "Required": true
+  },
+  {
+    "Name": "SMTPResource",
+    "From": "params.SMTPResource",
+    "Required": true
+  },
+  {
+    "Name": "subject",
+    "From": "params.subject",
+    "Value": "Failed to run workflow ${error.WorkflowName} ${error.TaskName}  ${error.ActionRequest.Service}. ${error.ActionRequest.Action}",
+    "Required": true
+  },
+  {
+    "Name": "body",
+    "Value": "!Markdown(notify_error_body.md)"
+  }
+]

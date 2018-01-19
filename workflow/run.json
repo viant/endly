@@ -1,0 +1,28 @@
+{
+  "WorkflowURL": "ec2.csv",
+  "Name": "ec2",
+  "Tasks": "$tasks",
+  "Params": {
+    "awsCredential": "${env.HOME}/.secret/aws.json",
+    "ec2InstanceId": "i-0ef8d9260eaf47fdf"
+  },
+  "EnableLogging": true,
+  "LoggingDirectory": "logs",
+  "PublishParameters": true,
+  "Filter": {
+    "HTTPTrip": true,
+    "Stdin": true,
+    "Stdout": true,
+    "Transfer": true,
+    "SQLScript": true,
+    "PopulateDatastore": true,
+    "Sequence": true,
+    "RegisterDatastore": true,
+    "DataMapping": true,
+    "OnFailureFilter": {
+      "HttpTrip": true,
+      "Stdin": true,
+      "Stdout": true
+    }
+  }
+}
