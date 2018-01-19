@@ -16,17 +16,19 @@ type ActionRequest struct {
 	Request interface{} //service request
 }
 
+
+
 //ServiceAction represents a workflow service action
 type ServiceAction struct {
 	*ActionRequest
 	*NeatlyTag
+	*Repeatable
 	RunCriteria  string    //criteria to run this action
 	SkipCriteria string    //criteria to skip current action to continue to next tag id action
 	Name         string    //Id of the service action
 	Description  string    //description
 	Init         Variables //variables to initialise state before action runs
 	Post         Variables //variable to update state after action completes
-	SleepTimeMs  int       //optional Sleep time
 	Async        bool
 }
 
@@ -113,15 +115,33 @@ func (w *Workflow) FilterTasks(filter string) ([]*WorkflowTask, error) {
 	return result, nil
 }
 
+//WorkflowError represent workflow error
+type WorkflowError struct {
+	Error string
+	WorkflowName string
+	TaskName string
+	*ActionRequest
+	Request interface{}
+	Response interface{}
+}
+
+
 //WorkflowControl control workflow execution
 type WorkflowControl struct {
 	*Workflow
-	Terminated int32
+	Terminated    int32
+	ScheduledTask *WorkflowTask
+	*WorkflowError
 }
 
 //Terminate flags current workflow as terminated
 func (c *WorkflowControl) Terminate() {
 	atomic.StoreInt32(&c.Terminated, 1)
+}
+
+//IsTerminated returns true if current workflow has been terminated
+func (c *WorkflowControl) CanRun() bool {
+	return !(c.IsTerminated() || c.ScheduledTask != nil)
 }
 
 //IsTerminated returns true if current workflow has been terminated
@@ -134,7 +154,7 @@ type Workflows []*WorkflowControl
 
 //Push adds a workflow to the workflow stack.
 func (w *Workflows) Push(workflow *Workflow) *WorkflowControl {
-	var result = &WorkflowControl{Workflow: workflow}
+	var result = &WorkflowControl{Workflow: workflow, WorkflowError:&WorkflowError{WorkflowName:workflow.Name}}
 	*w = append(*w, result)
 	return result
 }

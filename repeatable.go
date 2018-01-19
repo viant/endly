@@ -5,7 +5,6 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"strings"
-	"time"
 )
 
 const sliceKey = "data"
@@ -86,43 +85,50 @@ func (r *Repeatable) EvaluateExitCriteria(callerInfo string, context *Context, e
 
 }
 
+func (r *Repeatable) runOnce(service *AbstractService, callerInfo string, context *Context, handler func() (interface{}, error), extracted map[string]string) (bool, error) {
+	defer service.Sleep(context, r.SleepTimeMs)
+	out, err := handler()
+	if err != nil {
+		return false, err
+	}
+	if out == nil {
+		return true, nil
+	}
+	extractableOutput, structuredOutput := AsExtractable(out)
+	if len(structuredOutput) > 0 {
+		var extractedVariables = data.NewMap()
+		_ = r.Variables.Apply(structuredOutput, extractedVariables)
+		for k, v := range extractedVariables {
+			extracted[k] = toolbox.AsString(v)
+		}
+		if extractableOutput == "" {
+			extractableOutput, _ = toolbox.AsJSONText(structuredOutput)
+		}
+	}
+
+	err = r.Extraction.Extract(context, extracted, extractableOutput)
+	if err != nil {
+		return false, err
+	}
+
+	if extractableOutput != "" {
+		extracted["value"] = extractableOutput //string output is published as $value
+	}
+
+	if r.ExitCriteria != "" {
+		if shouldBreak, err := r.EvaluateExitCriteria(callerInfo+"ExitEvaluation", context, extracted); shouldBreak || err != nil {
+			return !shouldBreak, err
+		}
+	}
+	return true, nil
+}
+
 //Run repeats x times supplied handler
-func (r *Repeatable) Run(callerInfo string, context *Context, handler func() (interface{}, error), extracted map[string]string) error {
+func (r *Repeatable) Run(service *AbstractService, callerInfo string, context *Context, handler func() (interface{}, error), extracted map[string]string) error {
 	for i := 0; i < r.Repeat; i++ {
-		out, err := handler()
-		if err != nil {
+		shouldContinue, err := r.runOnce(service, callerInfo, context, handler, extracted)
+		if err != nil || !shouldContinue {
 			return err
-		}
-
-		extractableOutput, structuredOutput := AsExtractable(out)
-		if len(structuredOutput) > 0 {
-			var extractedVariables = data.NewMap()
-			_ = r.Variables.Apply(structuredOutput, extractedVariables)
-			for k, v := range extractedVariables {
-				extracted[k] = toolbox.AsString(v)
-			}
-			if extractableOutput == "" {
-				extractableOutput, _ = toolbox.AsJSONText(structuredOutput)
-			}
-		}
-
-		err = r.Extraction.Extract(context, extracted, extractableOutput)
-		if err != nil {
-			return err
-		}
-
-		if extractableOutput != "" {
-			extracted["value"] = extractableOutput //string output is published as $value
-		}
-
-		if r.ExitCriteria != "" {
-			if canBreak, err := r.EvaluateExitCriteria(callerInfo+"ExitEvaluation", context, extracted); canBreak || err != nil {
-				return err
-			}
-		}
-		if r.SleepTimeMs > 0 {
-			timeToSleep := time.Millisecond * time.Duration(r.SleepTimeMs)
-			time.Sleep(timeToSleep)
 		}
 	}
 	return nil

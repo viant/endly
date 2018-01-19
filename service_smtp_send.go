@@ -10,7 +10,6 @@ import (
 //SMTPSendRequest represents send request.
 type SMTPSendRequest struct {
 	Target     *url.Resource
-	Credential string
 	Mail       *MailMessage
 }
 
@@ -24,7 +23,7 @@ func (r *SMTPSendRequest) Validate() error {
 	if r.Target == nil {
 		return errors.New("target was nil")
 	}
-	if r.Credential == "" {
+	if r.Target.Credential == "" {
 		return errors.New("credential was empty")
 	}
 	if r.Mail == nil {

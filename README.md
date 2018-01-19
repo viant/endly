@@ -533,12 +533,8 @@ Workflow service provide capability to run task, action from any defined workflo
 | workflow | load | Loads workflow from provided path | [WorkflowLoadRequest](service_workflow_load.go) | [WorkflowLoadRequest](service_workflow_load.go)  |
 | workflow | register | Register provide workflow in registry | [WorkflowLoadRequest](service_workflow_register.go) |  |
 | workflow | run | run workflow with specified tasks and parameters | [WorkflowRunRequest](service_workflow_run.go) | [WorkflowRunResponse]((service_workflow_run.go) |
-| workflow | task | run specified task on active workflow | [WorkflowRunRequest](service_workflow_run.go) | [WorkflowRunResponse]((service_workflow_run.go) 
-
-| workflow | switch-task | Runs matched task with provided switch/case sourceKey and value | [WorkflowSwitchTaskRequest](service_workflow_repeat_task.go) | [WorkflowSwitchTaskResponse](service_workflow_repeat_task.go) |
-| workflow | switch-action | Runs matched service action with provided switch/case sourceKey and value  | [WorkflowSwitchActionRequest](service_workflow_repeat_task.go) | [WorkflowSwitchActionResponse](service_workflow_repeat_task.go) |
-| workflow | repeat-task |  Repeats specified task n times or till exit criteria is met | [WorkflowRepeatActionRequest](service_workflow_repeat_task.go) | [WorkflowRepeatActionResponse](service_workflow_repeat_task.go) |
-| workflow | repeat-action | Repeats specified service action n times or till exit criteria is met| [WorkflowRepeatTaskRequest](service_workflow_repeat_task.go) | [WorkflowRepeatTaskResponse](service_workflow_repeat_task.go) |
+| workflow | goto | switches current execution to the specified task on current workflow | [WorkflowGotoRequest](service_workflow_goto.go) | [WorkflowGotoResponse]((service_workflow_goto.go) 
+| workflow | switch | Runs matched  case action or task  | [WorkflowSwitchRequest](service_workflow_switch.go) | [WorkflowSwitchResponse](service_workflow_switch.go) |
 | workflow | exit | terminates execution of active workflow (caller) | n/a | n/a |
 
 

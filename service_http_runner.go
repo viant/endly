@@ -114,7 +114,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		return responseBody, err
 	}
 
-	err = repeatable.Run(HTTPRunner, context, handler, sendGroupResponse.Extracted)
+	err = repeatable.Run(s.AbstractService, HTTPRunner, context, handler, sendGroupResponse.Extracted)
 	if err != nil {
 		return err
 	}

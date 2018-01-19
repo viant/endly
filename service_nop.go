@@ -19,12 +19,13 @@ const (
 //Nop represent no operation
 type Nop struct{}
 
-//no operation service
-type nopService struct {
+//NopService represents no operation service
+type NopService struct {
 	*AbstractService
 }
 
-func (s *nopService) Run(context *Context, request interface{}) *ServiceResponse {
+//Run run supplied request
+func (s *NopService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok", Response: request}
 	switch actualRequest := request.(type) {
@@ -45,7 +46,8 @@ func (s *nopService) Run(context *Context, request interface{}) *ServiceResponse
 	return response
 }
 
-func (s *nopService) NewRequest(action string) (interface{}, error) {
+//NewRequest returns a new request for supplied action
+func (s *NopService) NewRequest(action string) (interface{}, error) {
 
 	switch action {
 	case NopServiceNopAction:
@@ -60,7 +62,7 @@ func (s *nopService) NewRequest(action string) (interface{}, error) {
 
 //NewNopService creates a new NoOperation service.
 func NewNopService() Service {
-	var result = &nopService{
+	var result = &NopService{
 		AbstractService: NewAbstractService(NopServiceID,
 			NopServiceNopAction,
 			NopServiceFailAction,
