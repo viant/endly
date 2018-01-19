@@ -1,0 +1,11 @@
+{
+  "Name": "notify_eror",
+  "Tasks":"notify",
+  "Params": {
+      "SMTPResource":"$SMTPResource",
+      $args0
+  }
+}
+
+
+
