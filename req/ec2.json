@@ -3,7 +3,7 @@
   "Tasks": "$tasks",
   "Params": {
     "awsCredential": "$awsCredential",
-    "ec2InstanceId": "ec2InstanceId"
+    "ec2InstanceId": "$ec2InstanceId"
   }
 }
 
