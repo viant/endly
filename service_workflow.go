@@ -29,8 +29,8 @@ const (
 	//WorkflowServiceSwitchTaskAction represents workflow switch task action
 	WorkflowServiceSwitchTaskAction = "switch-task"
 
-	//WorkflowServiceSwitcActionAction represents workflow switch action
-	WorkflowServiceSwitcActionAction = "switch-action"
+	//WorkflowServiceSwitchActionAction represents workflow switch action
+	WorkflowServiceSwitchActionAction = "switch-action"
 
 	//WorkflowServiceRepeatTaskAction represents workflow repeat task action
 	WorkflowServiceRepeatTaskAction = "repeat-task"
@@ -43,6 +43,12 @@ const (
 
 	//WorkflowServiceLoadAction represents workflow load action
 	WorkflowServiceLoadAction = "load"
+
+	//WorkflowServiceExitAction represents exit action
+	WorkflowServiceExitAction = "exit"
+
+	//WorkflowServiceTaskAction represents run a task action
+	WorkflowServiceTaskAction = "run-task"
 
 	//WorkflowServiceActivityKey activity key
 	WorkflowServiceActivityKey = "activity"
@@ -154,8 +160,9 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) (*W
 	}
 	if !canRun {
 		serviceActivity.Ineligible = true
-		return nil, nil
+		return serviceActivity, nil
 	}
+
 	err = action.Init.Apply(state, state)
 	s.addVariableEvent("Action.Init", action.Init, context, state)
 	if err != nil {
@@ -172,6 +179,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) (*W
 	}
 
 	requestMap := toolbox.AsMap(expandedRequest)
+
 	serviceRequest, err := service.NewRequest(action.Action)
 	if err != nil {
 		return nil, err
@@ -181,6 +189,12 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) (*W
 	if err != nil {
 		return nil, fmt.Errorf("failed to create service request: %v %v", requestMap, err)
 	}
+
+	if serviceActivity.Exit {
+		s.Sleep(context, int(action.SleepTimeMs))
+		return serviceActivity, nil
+	}
+
 	serviceResponse := service.Run(context, serviceRequest)
 	serviceActivity.ServiceResponse = serviceResponse
 
@@ -195,6 +209,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) (*W
 	} else {
 		serviceActivity.Response["value"] = response
 	}
+
 	err = action.Post.Apply(data.Map(serviceActivity.Response), state) //result to task  state
 	s.addVariableEvent("Action.Post", action.Post, context, state)
 	if err != nil {
@@ -204,7 +219,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction) (*W
 	return serviceActivity, nil
 }
 
-func (s *workflowService) runTask(context *Context, workflow *Workflow, task *WorkflowTask) (data.Map, error) {
+func (s *workflowService) runTask(context *Context, workflow *WorkflowControl, task *WorkflowTask) (data.Map, error) {
 	var startTime = time.Now()
 	var state = context.state
 	state.Put(":task", task)
@@ -239,12 +254,17 @@ func (s *workflowService) runTask(context *Context, workflow *Workflow, task *Wo
 			AddEvent(context, asyncEvent, Pairs("value", asyncEvent))
 			continue
 		}
-
-		_, err = s.runAction(context, action)
+		if workflow.IsTerminated() {
+			break
+		}
+		serviceActivity, err := s.runAction(context, action)
 		if err != nil {
 			return nil, fmt.Errorf("failed to run action:%v %v", action.Tag, err)
 		}
-
+		if serviceActivity.Exit {
+			defer s.Run(context, serviceActivity.Request)
+			break
+		}
 		moveToNextTag, err := EvaluateCriteria(context, action.SkipCriteria, "TagIdSkipCriteria", false)
 		if err != nil {
 			return nil, err
@@ -275,7 +295,10 @@ func (s *workflowService) applyRemainingTaskSpentIfNeeded(context *Context, task
 	}
 }
 
-func (s *workflowService) runAsyncActions(context *Context, workflow *Workflow, task *WorkflowTask, asyncAction []*ServiceAction) error {
+func (s *workflowService) runAsyncActions(context *Context, workflow *WorkflowControl, task *WorkflowTask, asyncAction []*ServiceAction) error {
+	if workflow.IsTerminated() {
+		return nil
+	}
 	var err error
 	var state = context.state
 	if len(asyncAction) > 0 {
@@ -338,7 +361,7 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 		return nil, err
 	}
 	AddEvent(upstreamContext, "Workflow.Loaded", Pairs("workflow", workflow))
-	upstreamContext.Workflows.Push(workflow)
+	control := upstreamContext.Workflows.Push(workflow)
 	defer upstreamContext.Workflows.Pop()
 	var response = &WorkflowRunResponse{
 		SessionID: upstreamContext.SessionID,
@@ -380,8 +403,13 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	if err != nil {
 		return nil, err
 	}
+
 	for _, task := range filteredTask {
-		_, err = s.runTask(context, workflow, task)
+		if control.IsTerminated() {
+			break
+		}
+		_, err = s.runTask(context, control, task)
+
 		if err != nil {
 			if workflow.OnErrorTask == "" {
 				return nil, err
@@ -389,7 +417,7 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 			state.Put(workflowError, err.Error())
 			onErrorTask, err := workflow.Task(workflow.OnErrorTask)
 			if onErrorTask != nil {
-				_, err = s.runTask(context, workflow, onErrorTask)
+				_, err = s.runTask(context, control, onErrorTask)
 			}
 			if err != nil {
 				return nil, err
@@ -476,7 +504,6 @@ func (s *workflowService) Run(context *Context, request interface{}) *ServiceRes
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.reportErrorIfNeeded(context, response)
-
 	if !s.isAsyncRequest(request) {
 		defer s.End(context)(startEvent, Pairs("response", response))
 	}
@@ -527,6 +554,23 @@ func (s *workflowService) Run(context *Context, request interface{}) *ServiceRes
 	case *WorkflowSwitchTaskRequest:
 		response.Response, err = s.switchTask(context, actualRequest)
 		errorTemplate = "%v"
+	case *WorkflowExitRequest:
+		control := context.Workflows.LastControl()
+		if control != nil {
+			control.Terminate()
+		}
+		response.Response = &WorkflowExitResponse{}
+	case *WorkflowRunTaskRequest:
+		if len(*context.Workflows) == 0 {
+			err = fmt.Errorf("no active workflow")
+		} else {
+			workflow := context.Workflows.LastControl()
+			var task *WorkflowTask
+			task, err = workflow.Task(actualRequest.Task)
+			if err == nil {
+				_, err = s.runTask(context, workflow, task)
+			}
+		}
 
 	default:
 		err = fmt.Errorf("unsupported request type: %T", request)
@@ -548,7 +592,7 @@ func (s *workflowService) NewRequest(action string) (interface{}, error) {
 		return &WorkflowRegisterRequest{}, nil
 	case WorkflowServiceLoadAction:
 		return &WorkflowLoadRequest{}, nil
-	case WorkflowServiceSwitcActionAction:
+	case WorkflowServiceSwitchActionAction:
 		return &WorkflowSwitchActionRequest{}, nil
 	case WorkflowServiceSwitchTaskAction:
 		return &WorkflowSwitchTaskRequest{}, nil
@@ -556,6 +600,10 @@ func (s *workflowService) NewRequest(action string) (interface{}, error) {
 		return &WorkflowRepeatActionRequest{}, nil
 	case WorkflowServiceRepeatTaskAction:
 		return &WorkflowRepeatTaskRequest{}, nil
+	case WorkflowServiceExitAction:
+		return &WorkflowExitRequest{}, nil
+	case WorkflowServiceTaskAction:
+		return &WorkflowRunTaskRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
 }
@@ -618,8 +666,8 @@ func (s *workflowService) repeatTask(context *Context, request *WorkflowRepeatTa
 	var response = &WorkflowRepeatTaskResponse{
 		Extracted: make(map[string]string),
 	}
-	workflow := context.Workflows.Last()
-	task, err := getServiceTask(workflow, request.Task)
+	workflow := context.Workflows.LastControl()
+	task, err := getServiceTask(workflow.Workflow, request.Task)
 	if err != nil {
 		return nil, err
 	}
@@ -639,7 +687,11 @@ func (s *workflowService) repeatTask(context *Context, request *WorkflowRepeatTa
 func getSwitchSource(context *Context, sourceKey string) interface{} {
 	sourceKey = context.Expand(sourceKey)
 	var state = context.state
-	return state.Get(sourceKey)
+	var result = state.Get(sourceKey)
+	if result == nil {
+		return nil
+	}
+	return toolbox.DereferenceValue(result)
 }
 
 func (s *workflowService) switchAction(context *Context, request *WorkflowSwitchActionRequest) (*WorkflowSwitchActionResponse, error) {
@@ -654,6 +706,9 @@ func (s *workflowService) switchAction(context *Context, request *WorkflowSwitch
 		if err != nil {
 			return nil, err
 		}
+		if activity.Exit {
+			defer s.Run(context, activity.Request)
+		}
 		response.Response = activity.Response
 	}
 	return response, nil
@@ -667,8 +722,8 @@ func (s *workflowService) switchTask(context *Context, request *WorkflowSwitchTa
 		return response, nil
 	}
 	response.Task = taskName
-	workflow := context.Workflows.Last()
-	task, err := getServiceTask(workflow, taskName)
+	workflow := context.Workflows.LastControl()
+	task, err := getServiceTask(workflow.Workflow, taskName)
 	if err != nil {
 		return nil, err
 	}
@@ -686,10 +741,12 @@ func NewWorkflowService() Service {
 			WorkflowServiceRunAction,
 			WorkflowServiceRegisterAction,
 			WorkflowServiceLoadAction,
-			WorkflowServiceSwitcActionAction,
+			WorkflowServiceSwitchActionAction,
 			WorkflowServiceSwitchTaskAction,
 			WorkflowServiceRepeatTaskAction,
 			WorkflowServiceRepeatActionAction,
+			WorkflowServiceExitAction,
+			WorkflowServiceTaskAction,
 		),
 		Dao:      NewWorkflowDao(),
 		registry: make(map[string]*Workflow),

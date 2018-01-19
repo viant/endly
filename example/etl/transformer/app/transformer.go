@@ -7,8 +7,8 @@ import (
 	"flag"
 	"github.com/viant/endly/example/etl/transformer"
 
-	"log"
 	"github.com/viant/toolbox/url"
+	"log"
 )
 
 var configURI = flag.String("config", "", "path to json config file")

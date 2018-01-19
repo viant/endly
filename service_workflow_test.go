@@ -448,3 +448,38 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		}
 	}
 }
+
+func TestWorkflowService_Ec2(t *testing.T) {
+
+	manager, service, err := getServiceWithWorkflow("workflow/ec2.csv")
+	if assert.Nil(t, err) {
+
+		context := manager.NewContext(toolbox.NewContext())
+		serviceResponse := service.Run(context, &endly.WorkflowRunRequest{
+			Name:  "lifecycle",
+			Tasks: "*",
+			Params: map[string]interface{}{
+				"object": map[string]interface{}{
+					"key1": 1,
+					"key2": "abc",
+				},
+			},
+			PublishParameters: true,
+			EnableLogging:     true,
+			LoggingDirectory:  "logs",
+		})
+
+		if assert.EqualValues(t, "", serviceResponse.Error) {
+			response, ok := serviceResponse.Response.(*endly.WorkflowRunResponse)
+			if assert.True(t, ok) {
+				assert.EqualValues(t, 2, response.Data["testPassed"])
+				var anArray = toolbox.AsSlice(response.Data["array"])
+				assert.EqualValues(t, 2, anArray[0])
+				assert.EqualValues(t, 3, response.Data["counter"])
+				var anObject = toolbox.AsMap(response.Data["object"])
+				assert.EqualValues(t, 1, anObject["key1"])
+				assert.EqualValues(t, "200", anObject["shift"])
+			}
+		}
+	}
+}

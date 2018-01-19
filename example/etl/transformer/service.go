@@ -3,12 +3,12 @@ package transformer
 import (
 	"fmt"
 	"github.com/viant/dsc"
+	"github.com/viant/toolbox"
 	"os"
 	"path"
 	"sync"
 	"sync/atomic"
 	"time"
-	"github.com/viant/toolbox"
 )
 
 //Service represents transformer service

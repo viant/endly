@@ -1,0 +1,9 @@
+{
+  "Credential": "$awsCredential",
+  "Method": "StopInstances",
+  "Input": {
+    "InstanceIds": [
+      "$ec2InstanceId"
+    ]
+  }
+}

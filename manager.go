@@ -65,7 +65,7 @@ func (s *manager) NewContext(ctx toolbox.Context) *Context {
 	if UUID, err := uuid.NewV1(); err == nil {
 		sessionID = UUID.String()
 	}
-	var workflowStack Workflows = make([]*Workflow, 0)
+	var workflowStack Workflows = make([]*WorkflowControl, 0)
 	var result = &Context{
 		SessionID: sessionID,
 		Context:   ctx,

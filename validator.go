@@ -3,17 +3,19 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/toolbox"
-	"reflect"
 	"regexp"
 	"strings"
 )
 
 //ValidationIndexByDirective represent indexing directive
 const ValidationIndexByDirective = "@indexBy@"
+const ValidateTimeFormatDirective = "@timeFormat@"
 
 //Validator represents a validator
 type Validator struct {
-	ExcludedFields map[string]bool
+	ExcludedFields    map[string]bool
+	TimeFormat        map[string]string
+	DefaultTimeFormat string
 }
 
 //Check checks expected vs actual value, and returns true if all assertion passes.
@@ -28,8 +30,8 @@ func (s *Validator) Check(expected, actual interface{}) (bool, error) {
 
 //Assert check if actual matches expected value, in any case it update assert info with provided validation path.
 func (s *Validator) Assert(expected, actual interface{}, assertionInfo *ValidationInfo, path string) error {
-	if toolbox.IsValueOfKind(actual, reflect.Slice) {
-		if toolbox.IsValueOfKind(expected, reflect.Map) { //convert actual slice to map using expected indexBy directive
+	if toolbox.IsSlice(actual) {
+		if toolbox.IsMap(expected) { //convert actual slice to map using expected indexBy directive
 			expectedMap := toolbox.AsMap(expected)
 			if indexField, ok := expectedMap[ValidationIndexByDirective]; ok {
 				var actualMap = make(map[string]interface{})
@@ -45,7 +47,7 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Validati
 			}
 		}
 
-		if !toolbox.IsValueOfKind(expected, reflect.Slice) {
+		if !toolbox.IsSlice(expected) {
 			assertionInfo.AddFailure(NewFailedTest(path, fmt.Sprintf("incompatible types, expected %T but had %v", expected, actual), expected, actual))
 			return nil
 		}
@@ -57,8 +59,8 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Validati
 		return nil
 
 	}
-	if toolbox.IsValueOfKind(actual, reflect.Map) {
-		if !toolbox.IsValueOfKind(expected, reflect.Map) {
+	if toolbox.IsMap(actual) {
+		if !toolbox.IsMap(expected) {
 			assertionInfo.AddFailure(NewFailedTest(path, fmt.Sprintf("incompatible types, expected %T but had %v", expected, actual), expected, actual))
 			return nil
 		}
@@ -74,6 +76,19 @@ func (s *Validator) Assert(expected, actual interface{}, assertionInfo *Validati
 	if s.assertJSONIfConvertible(expectedText, actualText, assertionInfo, path) {
 		return nil
 	}
+
+	if toolbox.IsTime(expected) {
+
+		expectedTime, _ := toolbox.ToTime(expected, s.DefaultTimeFormat)
+		actualTime, err := toolbox.ToTime(actual, s.DefaultTimeFormat)
+		if err == nil {
+			if expectedTime.UnixNano() == actualTime.UnixNano() {
+				return nil
+			}
+		}
+
+	}
+
 	s.assertText(expectedText, actualText, assertionInfo, path)
 	return nil
 }
@@ -105,12 +120,26 @@ func (s *Validator) assertIndexableJSON(indexBy string, expectedLines []string, 
 	return err == nil
 }
 
+func (s *Validator) extractTimeFormat(aMap map[string]interface{}) {
+	for k, v := range aMap {
+		if strings.HasPrefix(k, ValidateTimeFormatDirective) {
+			if len(s.TimeFormat) == 0 {
+				s.TimeFormat = make(map[string]string)
+			}
+			var field = strings.Replace(k, ValidateTimeFormatDirective, "", 1)
+			s.TimeFormat[field] = toolbox.AsString(v)
+			s.DefaultTimeFormat = toolbox.AsString(v)
+		}
+	}
+}
+
 func (s *Validator) assertJSONIfConvertible(expectedText string, actualText string, assertionInfo *ValidationInfo, path string) bool {
 	if toolbox.IsCompleteJSON(expectedText) {
 		if toolbox.IsNewLineDelimitedJSON(expectedText) {
 			expectedLines := strings.Split(expectedText, "\n")
 			actualLines := strings.Split(actualText, "\n")
 			if aMap, err := toolbox.JSONToMap(expectedLines[0]); err == nil {
+				s.extractTimeFormat(aMap)
 				if index, ok := aMap[ValidationIndexByDirective]; ok {
 					expectedLines = expectedLines[1:]
 					return s.assertIndexableJSON(toolbox.AsString(index), expectedLines, actualLines, assertionInfo, path)
@@ -255,10 +284,26 @@ func (s *Validator) assertText(expected, actual string, response *ValidationInfo
 }
 
 func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[string]interface{}, response *ValidationInfo, path string) error {
+	if len(s.TimeFormat) == 0 {
+		s.TimeFormat = make(map[string]string)
+	}
+	s.extractTimeFormat(expectedMap)
+
 	for key, expected := range expectedMap {
+		if strings.HasPrefix(key, ValidateTimeFormatDirective) {
+			continue
+		}
 		if s.ExcludedFields[key] {
 			continue
 		}
+		if format, ok := s.TimeFormat[key]; ok {
+			timeValue, err := toolbox.ToTime(expected, toolbox.DateFormatToLayout(format))
+			if err == nil {
+				expected = timeValue
+				expectedMap[key] = expected
+			}
+		}
+
 		keyPath := fmt.Sprintf("%v[%v]", path, key)
 		actual, ok := actualMap[key]
 		if !ok {
@@ -273,6 +318,13 @@ func (s *Validator) assertMap(expectedMap map[string]interface{}, actualMap map[
 		if toolbox.AsString(expected) == "@!exists@" {
 			response.AddFailure(NewFailedTest(path, fmt.Sprintf("'%v' should not exists but was present: %v", keyPath, actual), expected, actual))
 			continue
+		}
+
+		if format, ok := s.TimeFormat[key]; ok {
+			timeValue, err := toolbox.ToTime(actual, toolbox.DateFormatToLayout(format))
+			if err == nil {
+				actual = timeValue
+			}
 		}
 
 		err := s.Assert(expected, actual, response, keyPath)

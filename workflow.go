@@ -6,6 +6,7 @@ import (
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"strings"
+	"sync/atomic"
 )
 
 //ActionRequest represent an action request
@@ -112,12 +113,30 @@ func (w *Workflow) FilterTasks(filter string) ([]*WorkflowTask, error) {
 	return result, nil
 }
 
+//WorkflowControl control workflow execution
+type WorkflowControl struct {
+	*Workflow
+	Terminated int32
+}
+
+//Terminate flags current workflow as terminated
+func (c *WorkflowControl) Terminate() {
+	atomic.StoreInt32(&c.Terminated, 1)
+}
+
+//IsTerminated returns true if current workflow has been terminated
+func (c *WorkflowControl) IsTerminated() bool {
+	return atomic.LoadInt32(&c.Terminated) == 1
+}
+
 //Workflows  represents workflows
-type Workflows []*Workflow
+type Workflows []*WorkflowControl
 
 //Push adds a workflow to the workflow stack.
-func (w *Workflows) Push(workflow *Workflow) {
-	*w = append(*w, workflow)
+func (w *Workflows) Push(workflow *Workflow) *WorkflowControl {
+	var result = &WorkflowControl{Workflow: workflow}
+	*w = append(*w, result)
+	return result
 }
 
 //Pop removes the first workflow from the workflow stack.
@@ -127,11 +146,20 @@ func (w *Workflows) Pop() *Workflow {
 	}
 	var result = (*w)[len(*w)-1]
 	(*w) = (*w)[0 : len(*w)-1]
-	return result
+	return result.Workflow
 }
 
 //Last returns the last workflow from the workflow stack.
 func (w *Workflows) Last() *Workflow {
+	control := w.LastControl()
+	if control == nil {
+		return nil
+	}
+	return control.Workflow
+}
+
+//Last returns the last workflow from the workflow stack.
+func (w *Workflows) LastControl() *WorkflowControl {
 	if w == nil {
 		return nil
 	}

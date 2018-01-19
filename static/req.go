@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	var memStorage = storage.NewMemoryService();
+	var memStorage = storage.NewMemoryService()
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/req/mysql.json", bytes.NewReader([]byte(`{
   "Name": "dockerized_mysql",
@@ -27,6 +27,21 @@ func init() {
 }`)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/req/mysql.json %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/req/ec2.json", bytes.NewReader([]byte(`{
+  "Name": "ec2",
+  "Tasks": "$tasks",
+  "Params": {
+    "awsCredential": "$awsCredential",
+    "ec2InstanceId": "ec2InstanceId"
+  }
+}
+
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/req/ec2.json %v", err)
 		}
 	}
 	{

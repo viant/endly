@@ -1,0 +1,9 @@
+{
+  "Name": "ec2",
+  "Tasks": "$tasks",
+  "Params": {
+    "awsCredential": "$awsCredential",
+    "ec2InstanceId": "ec2InstanceId"
+  }
+}
+

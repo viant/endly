@@ -8,10 +8,7 @@ type EC2CallRequest struct {
 }
 
 //EC2CallResponse represents EC2 run response
-type EC2CallResponse struct {
-	Error    string
-	Response interface{}
-}
+type EC2CallResponse interface{}
 
 //AsEc2Call converts request as Ec2 call
 func (r *EC2CallRequest) AsEc2Call() *EC2Call {
