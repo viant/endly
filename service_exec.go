@@ -278,7 +278,7 @@ func match(stdout string, candidates ...string) string {
 		return ""
 	}
 	for _, candidate := range candidates {
-		if strings.Contains(stdout, candidate) {
+		if escapedContains(stdout, candidate) {
 			return candidate
 		}
 	}

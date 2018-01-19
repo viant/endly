@@ -90,7 +90,7 @@ func GetEc2Client(credential string) (*ec2.EC2, error) {
 	return ec2.New(ec2Session, config), nil
 }
 
-func (s *ec2Service) run(context *Context, request *EC2CallRequest) (*EC2CallResponse, error) {
+func (s *ec2Service) run(context *Context, request *EC2CallRequest) (EC2CallResponse, error) {
 	client, err := GetEc2Client(request.Credential)
 	if err != nil {
 		return nil, err
@@ -99,7 +99,7 @@ func (s *ec2Service) run(context *Context, request *EC2CallRequest) (*EC2CallRes
 	return s.call(context, client, request)
 }
 
-func (s *ec2Service) call(context *Context, caller interface{}, request *EC2CallRequest) (callResponse *EC2CallResponse, err error) {
+func (s *ec2Service) call(context *Context, caller interface{}, request *EC2CallRequest) (callResponse EC2CallResponse, err error) {
 	call := request.AsEc2Call()
 	callResponse, err = s.callMethod(caller, call.Method, call.Parameters)
 	if err != nil {
@@ -108,8 +108,7 @@ func (s *ec2Service) call(context *Context, caller interface{}, request *EC2Call
 	return callResponse, err
 }
 
-func (s *ec2Service) callMethod(owner interface{}, methodName string, parameters []interface{}) (*EC2CallResponse, error) {
-	var response = &EC2CallResponse{}
+func (s *ec2Service) callMethod(owner interface{}, methodName string, parameters []interface{}) (EC2CallResponse, error) {
 	method, err := toolbox.GetFunction(owner, methodName)
 	if err != nil {
 		return nil, err
@@ -118,13 +117,13 @@ func (s *ec2Service) callMethod(owner interface{}, methodName string, parameters
 	if err != nil {
 		return nil, err
 	}
-
+	var response interface{}
 	result := toolbox.CallFunction(method, parameters...)
 	if len(result) == 2 {
-		response.Response = result[0]
+		response = result[0]
 		if result[1] != nil {
 			if e, ok := result[1].(error); ok {
-				response.Error = e.Error()
+				return nil, e
 			}
 		}
 	}

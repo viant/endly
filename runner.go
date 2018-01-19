@@ -424,7 +424,10 @@ func (r *CliRunner) reportTagSummary() {
 			var minRange = 0
 			for i, event := range tag.Events {
 				candidate := event.get(reflect.TypeOf(&ValidationInfo{}))
-				if info, ok := candidate.(*ValidationInfo); ok && info.HasFailure() {
+				if candidate == nil {
+					continue
+				}
+				if info, ok := candidate.(*ValidationInfo); ok && info != nil && info.HasFailure() {
 					var failureSourceEvent = []*Event{}
 					if i-minRange > 0 {
 						failureSourceEvent = tag.Events[minRange : i-1]

@@ -1,7 +1,6 @@
 package reporter
 
 import (
-	"bytes"
 	"github.com/viant/dsc"
 	"github.com/viant/toolbox"
 )
@@ -29,7 +28,7 @@ func (d *reportDao) Persist(manager dsc.Manager, report Report) error {
 
 	records[0].Name = report.GetName()
 	records[0].Type = report.GetType()
-	records[0].Report, err  =toolbox.AsJSONText(report.Unwrap())
+	records[0].Report, err = toolbox.AsJSONText(report.Unwrap())
 	if err != nil {
 		return err
 	}
