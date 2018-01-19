@@ -1,11 +1,9 @@
 Workflow,,Name,Description,Tasks,,Init
-,,dockerized_memcached,This workflow manages memcached service,%Tasks,,#dockerized_memcached_init.json
+,,dockerized_memcached,This workflow manages memcached service,%Tasks,,#dockerized_memcached_init
 []Tasks,,Name,Description,Actions,,
 ,,start,This task will start memcached docker service,%Start,,
 []Start,Service,Action,Description,Request,RunCriteria,Post
-,daemon,status,Check if system docker service is running,#req/docker_system.json,,"[{""name"":""dockerSystemStatus"", ""from"":""State""}]"
-,daemon,start,Start docker service,#req/docker_system.json,$dockerSystemStatus:!running,
-,docker,run,Start docker memcached service,#req/docker_memcached.json,,
+,docker,run,Start docker memcached service,#req/docker_memcached,,
 []Tasks,,Name,Description,Actions,,
 ,,stop,This task will stop docker mysql,%Stop,,
 []Stop,Service,Action,Description,Request,,

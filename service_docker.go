@@ -549,6 +549,15 @@ func (s *dockerService) executeDockerCommand(secure map[string]string, context *
 	return s.executeSecureDockerCommand(false, secure, context, target, errors, template, arguments...)
 }
 
+func (s *dockerService) startDockerIfNeeded(context *Context, target *url.Resource) {
+	daemonService, _ := context.Service(DaemonServiceID)
+	daemonService.Run(context, &DaemonStartRequest{
+		Target:  target,
+		Service: "docker",
+	})
+
+}
+
 func (s *dockerService) executeSecureDockerCommand(asRoot bool, secure map[string]string, context *Context, target *url.Resource, errors []string, template string, arguments ...interface{}) (*CommandResponse, error) {
 	s.applySysPathIfNeeded([]string{})
 	command := fmt.Sprintf(template, arguments...)
@@ -578,7 +587,14 @@ func (s *dockerService) executeSecureDockerCommand(asRoot bool, secure map[strin
 	}
 	response, err := context.Execute(target, commandRequest)
 	if err != nil {
-		return nil, err
+		if !escapedContains(err.Error(), commandNotFound) {
+			return nil, err
+		}
+		s.startDockerIfNeeded(context, target)
+		response, err = context.Execute(target, commandRequest)
+		if err != nil {
+			return nil, err
+		}
 	}
 	var stdout = response.Stdout()
 	if strings.Contains(stdout, containerInUse) {
