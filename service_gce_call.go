@@ -11,10 +11,7 @@ type GCECallRequest struct {
 }
 
 //GCECallResponse represents GCE call response
-type GCECallResponse struct {
-	Error    string
-	Response interface{}
-}
+type GCECallResponse interface{}
 
 //Validate checks if request is valid
 func (r *GCECallRequest) Validate() error {
