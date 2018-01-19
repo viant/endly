@@ -15,8 +15,6 @@ type WorkflowServiceActivity struct {
 	Request         interface{}
 	Response        map[string]interface{}
 	ServiceResponse interface{}
-	ExitWorkflow    bool
-	Exit            bool
 }
 
 //FormatTag return a formatted tag
@@ -37,9 +35,5 @@ func NewWorkflowServiceActivity(context *Context, action *ServiceAction) *Workfl
 		Description: context.Expand(action.Description),
 		Request:     action.Request,
 		Response:    make(map[string]interface{}),
-		StartTime:   time.Now(),
-		Exit: action.Service == WorkflowServiceID &&
-			(action.Action == WorkflowServiceExitAction ||
-				action.Action == WorkflowServiceTaskAction),
-	}
+		StartTime:   time.Now()}
 }
