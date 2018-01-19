@@ -16,8 +16,6 @@ type ActionRequest struct {
 	Request interface{} //service request
 }
 
-
-
 //ServiceAction represents a workflow service action
 type ServiceAction struct {
 	*ActionRequest
@@ -117,14 +115,13 @@ func (w *Workflow) FilterTasks(filter string) ([]*WorkflowTask, error) {
 
 //WorkflowError represent workflow error
 type WorkflowError struct {
-	Error string
+	Error        string
 	WorkflowName string
-	TaskName string
+	TaskName     string
 	*ActionRequest
-	Request interface{}
+	Request  interface{}
 	Response interface{}
 }
-
 
 //WorkflowControl control workflow execution
 type WorkflowControl struct {
@@ -154,7 +151,7 @@ type Workflows []*WorkflowControl
 
 //Push adds a workflow to the workflow stack.
 func (w *Workflows) Push(workflow *Workflow) *WorkflowControl {
-	var result = &WorkflowControl{Workflow: workflow, WorkflowError:&WorkflowError{WorkflowName:workflow.Name}}
+	var result = &WorkflowControl{Workflow: workflow, WorkflowError: &WorkflowError{WorkflowName: workflow.Name}}
 	*w = append(*w, result)
 	return result
 }
