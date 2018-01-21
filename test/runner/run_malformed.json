@@ -1,15 +1,11 @@
 {
-  "WorkflowURL": "ec2.csv",
-  "Name": "ec2",
-  "Tasks": "$tasks",
-  "PublishParameters": true,
-  "Params": {
-    "awsCredential": "${env.HOME}/.secret/aws.json",
-    "ec2InstanceId": "i-0ef8d9260eaf47fdf"
+  "WorkflowURL": "test/workflow/http/workflow.csv",
+  "Name": "http_workflow",
+  "Tasks": "*",
+  "Params":
+    "appServer": "http://127.0.0.1:8120"
   },
-  "EnableLogging": true,
-  "LoggingDirectory": "logs",
-
+  "PublishParameters": true,
   "Filter": {
     "HTTPTrip": true,
     "Stdin": true,

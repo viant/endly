@@ -11,8 +11,8 @@ const sliceKey = "data"
 
 //Repeatable represent repetable execution
 type Repeatable struct {
-	Extraction   DataExtractions //data extraction
-	Variables    Variables       // input JSON body map, output state.httpPrevious
+	Extraction   DataExtractions //textual regexp based data extraction
+	Variables    Variables       //structure data based data extraction
 	Repeat       int             //how many time send this request
 	SleepTimeMs  int             //Sleep time after request send, this only makes sense with repeat option
 	ExitCriteria string          //Repeat exit criteria, it uses extracted variable to determine repeat termination

@@ -4,16 +4,17 @@ import (
 	"fmt"
 	"github.com/satori/go.uuid"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
 	"strings"
 	"sync"
 	"time"
 )
 
 //AppName represents endly application name
-const AppName = "endly - End To End Functional Testing "
+const AppName = "endly"
 
-//AppVersion represents endly application version
-const AppVersion = "0.0.1"
+//EndlyNamespace represents endly namespace
+const EndlyNamespace = "github.com/viant/endly/"
 
 //Manager represnets a workflow manager
 type Manager interface {
@@ -83,7 +84,7 @@ func (s *manager) NewContext(ctx toolbox.Context) *Context {
 func NewManager() Manager {
 	var result = &manager{
 		name:     AppName,
-		version:  AppVersion,
+		version:  GetVersion(),
 		services: make(map[string]Service),
 	}
 
@@ -124,4 +125,11 @@ func Services(mgr interface{}) map[string]Service {
 		return nil
 	}
 	return manager.services
+}
+
+//GetVersion return endly version
+func GetVersion() string {
+	resource := url.NewResource(fmt.Sprintf("mem://%v/Version", EndlyNamespace))
+	version, _ := resource.DownloadText()
+	return version
 }

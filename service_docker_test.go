@@ -14,6 +14,7 @@ import (
 func TestDockerService_Images(t *testing.T) {
 	var credentialFile, err = GetDummyCredential()
 	assert.Nil(t, err)
+
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 	var manager = endly.NewManager()
 	var useCases = []struct {

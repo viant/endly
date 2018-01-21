@@ -1,9 +1,0 @@
-{
-  "Credential": "$awsCredential",
-  "Method": "DescribeInstances",
-  "Input": {
-    "InstanceIds": [
-      "$ec2InstanceId"
-    ]
-  }
-}
