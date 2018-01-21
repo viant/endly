@@ -382,7 +382,7 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	if err != nil {
 		return nil, err
 	}
-	AddEvent(context, "State.Init", Pairs("state", state.AsEncodableMap()), Debug)
+	AddEvent(context, "State.Init", Pairs("state", state.AsEncodableMap(), "tasks", request.Tasks), Debug)
 	filteredTasks, err := workflow.FilterTasks(request.Tasks)
 	if err != nil {
 		return nil, err
