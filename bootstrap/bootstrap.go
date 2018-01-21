@@ -186,9 +186,7 @@ func getRunRequestWithOptons(flagset map[string]string) (*endly.WorkflowRunReque
 		if value, ok := flagset["t"]; ok {
 			request.Tasks = value
 		}
-
 	}
-
 	return request, options, nil
 }
 

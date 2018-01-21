@@ -60,3 +60,8 @@ func Test_LoadRunRequestWithOption(t *testing.T) {
 	}
 
 }
+
+func Test_DefaultRunnerReportingOption(t *testing.T) {
+	options := endly.DefaultRunnerReportingOption()
+	assert.NotNil(t, options)
+}
