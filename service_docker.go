@@ -371,7 +371,7 @@ func (s *dockerService) stopContainer(context *Context, request *DockerContainer
 		return nil, err
 	}
 
-	_, err = s.executeDockerCommand(nil, context, request.Target, dockerErrors, "docker stop %v", request.Target.Name)
+	_, err = s.executeSecureDockerCommand(true, nil, context, request.Target, dockerErrors, "docker stop %v", request.Target.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -386,7 +386,7 @@ func (s *dockerService) removeContainer(context *Context, request *DockerContain
 		return nil, fmt.Errorf("target name was empty for %v", request.Target.URL)
 	}
 
-	commandInfo, err := s.executeDockerCommand(nil, context, request.Target, dockerErrors, "docker rm %v", request.Target.Name)
+	commandInfo, err := s.executeSecureDockerCommand(true, nil, context, request.Target, dockerErrors, "docker rm %v", request.Target.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -470,7 +470,7 @@ func (s *dockerService) pullImage(context *Context, request *DockerPullRequest) 
 	if request.Tag == "" {
 		request.Tag = "latest"
 	}
-	info, err := s.executeDockerCommand(nil, context, request.Target, dockerErrors, "docker pull %v:%v", request.Repository, request.Tag)
+	info, err := s.executeSecureDockerCommand(true, nil, context, request.Target, dockerErrors, "docker pull %v:%v", request.Repository, request.Tag)
 	if err != nil {
 		return nil, err
 	}
@@ -489,7 +489,7 @@ func (s *dockerService) pullImage(context *Context, request *DockerPullRequest) 
 }
 
 func (s *dockerService) checkImages(context *Context, request *DockerImagesRequest) (*DockerImagesResponse, error) {
-	info, err := s.executeDockerCommand(nil, context, request.Target, dockerErrors, "docker images")
+	info, err := s.executeSecureDockerCommand(true, nil, context, request.Target, dockerErrors, "docker images")
 	if err != nil {
 		return nil, err
 	}
