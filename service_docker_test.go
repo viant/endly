@@ -99,7 +99,7 @@ func TestDockerService_Images(t *testing.T) {
 					continue
 				}
 				if len(response.Images) != len(useCase.Expected) {
-					assert.Fail(t, fmt.Sprintf("Expected %v image info but had %v", len(useCase.Expected), len(response.Images)))
+					assert.Fail(t, fmt.Sprintf("Expected %v image info but had %v", len(useCase.Expected), len(response.Images)), useCase.baseDir)
 				}
 
 				for i, expected := range useCase.Expected {
@@ -115,7 +115,6 @@ func TestDockerService_Images(t *testing.T) {
 					assert.EqualValues(t, expected.Size, actual.Size, "Size "+baseCase)
 
 				}
-
 			}
 
 		}
@@ -213,7 +212,7 @@ func TestDockerService_Run(t *testing.T) {
 			},
 			&endly.DockerContainerInfo{},
 			"testMysql01",
-			"failed to run container: testMysql01, Error executing docker run --name testMysql01 -e MYSQL_ROOT_PASSWORD=**mysql** -v /tmp/my.cnf:/etc/my.cnf -p 3306:3306  -d mysql:5.6 , c3d9749a1dc43332bb5a58330187719d14c9c23cee55f583cb83bbb3bbb98a80\ndocker: Error response from daemon: driver failed programming external connectivity on endpoint testMysql01 (5c9925d698dfee79f14483fbc42a3837abfb482e30c70e53d830d3d9cfd6f0da): Error starting userland proxy: Bind for 0.0.0.0:3306 failed: port is already allocated.\n",
+			"failed to run container: testMysql01, error executing docker run --name testMysql01 -e MYSQL_ROOT_PASSWORD=**mysql** -v /tmp/my.cnf:/etc/my.cnf -p 3306:3306  -d mysql:5.6 , c3d9749a1dc43332bb5a58330187719d14c9c23cee55f583cb83bbb3bbb98a80\ndocker: Error response from daemon: driver failed programming external connectivity on endpoint testMysql01 (5c9925d698dfee79f14483fbc42a3837abfb482e30c70e53d830d3d9cfd6f0da): Error starting userland proxy: Bind for 0.0.0.0:3306 failed: port is already allocated.\n",
 		},
 		{
 			"test/docker/run/active/darwin",

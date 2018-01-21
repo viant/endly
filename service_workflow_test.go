@@ -197,8 +197,6 @@ func TestWorkflowService_OnErrorTask(t *testing.T) {
 	}
 }
 
-
-
 func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 
 	baseDir := toolbox.CallerDirectory(3)

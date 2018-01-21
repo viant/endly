@@ -19,7 +19,7 @@ func TestSmtpService_Run(t *testing.T) {
 	service, _ := context.Service(endly.SMTPServiceID)
 	{ //missing subject
 		serviceResponse := service.Run(context, &endly.SMTPSendRequest{
-			Target: url.NewResource("smtp://smtp.gmail.com:465", credential),
+			Target: url.NewResource("smtp://smtp.gmail.com:465", credential+"a"),
 			Mail: &endly.MailMessage{
 				From:        "adrianwit@gmail.com",
 				To:          []string{"viantemailtester@gmail.com"},
