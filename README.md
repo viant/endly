@@ -55,6 +55,8 @@ go get -u github.com/viant/endly
 <a name="GettingStarted"></a>
 ## Getting Started
 
+[Download the latst endl](https://github.com/viant/endly/releases/)
+
 
 To get you familiar with endly workflows, a few examples of fully functioning applications are included.
 You can build, deploy and test them end to end all with endly.
