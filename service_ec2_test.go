@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
+	"testing"
 )
 
 func getInstanceStatus(awsCredential, instance string) (string, error) {
@@ -103,4 +105,32 @@ func stopInstance(awsCredential, instance string) (string, error) {
 		return "", fmt.Errorf("expected %T but had %T", &ec2.StopInstancesOutput{}, response)
 	}
 	return "", nil
+}
+
+func Test_EC2CallRequest_AsEc2Call(t *testing.T) {
+
+	{
+		request := &endly.EC2CallRequest{
+			Credential: "abc",
+			Method:     "Stop",
+			Input: map[string]interface{}{
+				"k1": 1,
+			},
+		}
+		var ec2Call = request.AsEc2Call()
+		assert.NotNil(t, ec2Call)
+		assert.NotNil(t, 1, len(ec2Call.Parameters))
+
+	}
+	{
+		request := &endly.EC2CallRequest{
+			Credential: "abc",
+			Method:     "Stop",
+			Input:      nil,
+		}
+		var ec2Call = request.AsEc2Call()
+		assert.NotNil(t, ec2Call)
+		assert.NotNil(t, 0, len(ec2Call.Parameters))
+
+	}
 }
