@@ -97,3 +97,26 @@ func TestBuildService_Build(t *testing.T) {
 		}
 	}
 }
+
+func Test_BuildMeta_Validate(t *testing.T) {
+	{
+		meta := &endly.BuildMeta{}
+		assert.NotNil(t, meta.Validate())
+	}
+	{
+		meta := &endly.BuildMeta{
+			Name: "abc",
+		}
+		assert.NotNil(t, meta.Validate())
+	}
+	{
+		meta := &endly.BuildMeta{
+			Goals: []*endly.BuildGoal{
+				{
+					Name: "abc",
+				},
+			},
+		}
+		assert.NotNil(t, meta.Validate())
+	}
+}
