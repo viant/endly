@@ -1,6 +1,7 @@
 package endly_test
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
@@ -106,6 +107,11 @@ func Test_ServiceRequest(t *testing.T) {
 
 	}
 
+}
+
+func Test_GetVersion(t *testing.T) {
+	version := endly.GetVersion()
+	assert.True(t, version != "")
 }
 
 type Validator interface {

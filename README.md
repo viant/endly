@@ -12,9 +12,12 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [GettingStarted](#GettingStarted)
 - [Introduction](#Introduction)
 - [System services](#SystemServices)
+- [Cloud and Network services](#CloudAndNetwork)
 - [Build and deployment services](#Buildservices)
 - [Testing services](#Testingservices)
 - [Workfow Service](#Workfowservice)
+- [Wrofklow execution control](#exectuincontrol)
+- [Credentials](#credentail)
 - [Usage](#Usage)
 - [Best Practice](#BestPractice)
 - [License](#License)
@@ -261,13 +264,6 @@ Process service is responsible for starting, stopping and checking status of cus
 | process | stop | kill requested application | [ProcessStopRequest](service_process_stop.go) | [CommandResponse](exec_command_response.go) | 
 
 
-**Sdk Service**
-
-Sdk service sets active terminal session with requested sdk version.
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- | 
-| sdk | set | sets system with requested sdk and version | [SdkSetRequest](service_sdk_set.go) | [SdkSetResponse](service_sdk_set.go) | 
 
 
 **Docker service**
@@ -291,11 +287,6 @@ Sdk service sets active terminal session with requested sdk version.
 | docker | inspect | inspect supplied instance name| [DockerInspectRequest](service_docker_inspect.go) | [DockerInspectResponse](service_docker_inspect.go) |
 
 
-
-
-<a name="Buildservices"></a>
-## Build and deployment services
-
 **Storage service**
 
 Storage service represents a local or remote storage to provide unified storage operations.
@@ -310,35 +301,10 @@ Remote storage could be any cloud storage i.e google cloud, amazon s3, or simple
 | storage | download | copy source content into context state key | [StorageDownloadRequest](service_storage_download.go) | [StorageDownloadResponse](service_storage_download.go) |
 
 
-**Version Control Service**
 
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| version/control | status | Runs version control check on provided URL | [VcStatusRequest](service_vc_status.go) | [VcInfo](service_vc_info.go)  |
-| version/control | checkout | If target directory already  exist with matching origin URL, this action only pulls the latest changes without overriding local ones, otherwise full checkout | [VcCheckoutRequest](service_vc_checkout.go) | [VcInfo](service_vc_info.go)   |
-| version/control | commit | commit commits local changes to the version control | [VcCommitRequest](service_vc_commit.go) | [VcInfo](service_vc_info.go)   |
-| version/control | pull | retrieves the latest changes from the origin | [VcPullRequest](service_vc_pull.go) | [VcInfo](service_vc_info.go)   |
+<a name="CloudAndNetwork"></a>
 
-
-**Build service**
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| build | load | Loads meta build instruction | [BuildLoadMetaRequest](service_build_load.go) | [BuildLoadMetaResponse](service_build_load.go)  |
-| build | build | Run build for provided specification | [BuildRequest](service_build_build.go) | [BuildResponse](service_build_build.go)  |
-
-
-**Deployment service** 
-Deployment service check if target path resource, the app has been installed with requested version, if not it will transfer it and run all defined commands/transfers.
-Maven, tomcat use this service.
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| deployment | load | Loads meta deployment instruction | [DeploymentLoadMetaRequest](service_deployment_load.go) | [DeploymentLoadMetaResponse](service_deployment_load.go) |
-| deployment | deploy | run deployment | [DeploymentDeployRequest](service_deployment_deploy.go) | [DeploymentDeployResponse](service_deployment_deploy.go) |
-
-
-### Cloud services
+### Cloud services and Network services
 
 
 **Amazon Elastic Compute Cloud Service**
@@ -363,7 +329,6 @@ Provides ability to call operations on  [*compute.Service client](https://cloud.
 'call' action's service, method and paramters are proxied to [GCE client](https://cloud.google.com/compute/docs/reference/latest/)
 
 
-### Network services
 
 **Network service**
 
@@ -394,6 +359,49 @@ Mail body is being substitute with the context state variables.
 | --- | --- | --- | --- | --- | 
 | smtp | send | Send an email to supplied recipients | [SMTPSendRequest](service_smtp_send.go#L10) | [SMTPSendResponse](service_smtp_send.go#L17) | 
 
+
+
+
+<a name="Buildservices"></a>
+## Build and deployment services
+
+
+**Sdk Service**
+
+Sdk service sets active terminal session with requested sdk version.
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- | 
+| sdk | set | sets system with requested sdk and version | [SdkSetRequest](service_sdk_set.go) | [SdkSetResponse](service_sdk_set.go) | 
+
+
+
+**Version Control Service**
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| version/control | status | Runs version control check on provided URL | [VcStatusRequest](service_vc_status.go) | [VcInfo](service_vc_info.go)  |
+| version/control | checkout | If target directory already  exist with matching origin URL, this action only pulls the latest changes without overriding local ones, otherwise full checkout | [VcCheckoutRequest](service_vc_checkout.go) | [VcInfo](service_vc_info.go)   |
+| version/control | commit | commit commits local changes to the version control | [VcCommitRequest](service_vc_commit.go) | [VcInfo](service_vc_info.go)   |
+| version/control | pull | retrieves the latest changes from the origin | [VcPullRequest](service_vc_pull.go) | [VcInfo](service_vc_info.go)   |
+
+
+**Build service**
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| build | load | Loads meta build instruction | [BuildLoadMetaRequest](service_build_load.go) | [BuildLoadMetaResponse](service_build_load.go)  |
+| build | build | Run build for provided specification | [BuildRequest](service_build_build.go) | [BuildResponse](service_build_build.go)  |
+
+
+**Deployment service** 
+Deployment service check if target path resource, the app has been installed with requested version, if not it will transfer it and run all defined commands/transfers.
+Maven, tomcat use this service.
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| deployment | load | Loads meta deployment instruction | [DeploymentLoadMetaRequest](service_deployment_load.go) | [DeploymentLoadMetaResponse](service_deployment_load.go) |
+| deployment | deploy | run deployment | [DeploymentDeployRequest](service_deployment_deploy.go) | [DeploymentDeployResponse](service_deployment_deploy.go) |
 
 
 <a name="Testingservices"></a>
@@ -538,8 +546,9 @@ Workflow service provide capability to run task, action from any defined workflo
 | workflow | exit | terminates execution of active workflow (caller) | n/a | n/a |
 
 
-	
+<a name="predefined_workflows">	
 **Predefined workflows**
+</a>
 
 | Name | Task |Description | 
 | --- | --- | --- |
@@ -558,10 +567,16 @@ Workflow service provide capability to run task, action from any defined workflo
 | vc_maven_module_build | build | build module |
 | ec2 | start | start ec2 instance |
 | ec2 | stop | stop  ec2 instance |
+| gce | start | start gce instance |
+| gce | stop | stop  gce instance |
 | notify_error | notify | send error |
  
  
+ 
+ <a name="predefined_requests">
  **Predefined workflow run requests**
+ </a>
+ 
  
  | Name | Workflow | 
  | --- | --- | 
@@ -570,6 +585,7 @@ Workflow service provide capability to run task, action from any defined workflo
  | [mysql.json](req/mysql.json)| dockerized_mysql |
  | [memcached.json](req/memcached.json)| dockerized_memcached|
  | [ec2.json](req/ec2.json)| ec2 |
+ | [gce.json](req/gce.json)| gce |
  | [notify_erro.json](req/notify_error.json)| notify_error |
  
  
@@ -580,49 +596,159 @@ Workflow service provide capability to run task, action from any defined workflo
  |---|test|%Tasks|onError  | |  | |
  |[]Tasks|Name|Description|Actions| | | |
  | | onError|On error task|%OnError| | | |
- |[]OnError|Description|Service|Action|Request|args.error|args.[]receivers|
-  | |send error notification | workflow | run | #req/notify_error.json &#124; $args | $error |	abc@somewehre.com |
+ |[]OnError|Description|Service|Action|Request|error|[]receivers|
+ | |send error notification | workflow | run | #req/notify_error | $error |	abc@somewehre.com |
 
+
+
+<a name="exectuincontrol"></a>
+
+## Workflow execution control:
+
+By default workflow run all specified task, where each task once started executes sequentially all it actions, unless they flag as Asyn execution.
+
+Each action has ability to control its execution with
+
+**Action level criteria control**
+
+Each action has the following fields to control conditional execution:
+
+1. RunCriteria: criteria that check is action is eligible to run
+2. SkipCriteria: in case actions are grouped by TagID, skip criteria will skip remaining action in the current group to continue in the next group.
+3. Repeatable control
+    
+```go
+    type Repeatable struct {
+    	Extraction   DataExtractions //textual regexp based data extraction
+    	Variables    Variables       //structure data based data extraction
+    	Repeat       int             //how many time send this request
+    	SleepTimeMs  int             //Sleep time after request send, this only makes sense with repeat option
+    	ExitCriteria string          //Repeat exit criteria, it uses extracted variable to determine repeat termination 
+    }
+````
+    
+        
+**Workflow goto task action**
+Workflow goto action terminates current task actions execution to start specified current workflow task.`
+
+**Workflow switch action** 
+Workflow switch action enable to branch execution based on specified context.state key value. 
+Note that switch does not terminates next actions within current task.
+
+**Error handling**
+If there is an error during workflow execution, it failes immediately unless OnErrorTask is defined to catch and handle error.
+In addition error key is placed into the config with the following content:
+
+```go
+type WorkflowError struct {
+	Error        string
+	WorkflowName string
+	TaskName     string
+	*ActionRequest
+	Request      interface{}
+	Response     interface{}
+}
+```
+
+
+**Finally** 
+Workflow also offer DeferTask to execute as the last workflow step in case there is an error or not for instance to clean up resource.
+
+ 
+     
+<a name="credentail"></a>
+
+## Credentials
+     
+Endly on its core uses SSH or other system/cloud service requiring credentials. 
+In order to run system workflow the credentials file/s need to be supplied as various request field.
+
+
+Endly uses  [Credentail Config](https://github.com/viant/toolbox/blob/master/cred/config.go) 
+  * it can store user and blowfish encrypted password generated by ['secret' app](https://github.com/viant/toolbox/tree/master/secret)
+  * it can stroe google cloud compatible secret.jsonfields
+  * it can store AWS cloud compatible fields.
+
+
+Endly service were design in a way to  hide user secrets, for example whetever sudo access is needed,
+endly will output **sudo** in the execution event log and screen rather actual password.
+     
+     
+     
      
 <a name="Usage"></a>
 
 ## Usage
 
-The following template can be used to run a workflow from a command line 
+In most case scenario you would use **endly** app supplied with release binary for your platform.
+Alternatively you can build latest version of endly with the following command:
 
-Note that by default this program will look for run.json
+```bash
 
-\#endly.go
-```go
+export GOPATH=~/go
+go get -u github.com/viant/endly
+go get -u github.com/viant/endly/endly
 
-import (
-	"flag"
-	"github.com/viant/endly"
-	"log"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/viant/asc"//	aerospike
-	"time"
-)
+```
 
-//TODO add more database drivers import if needed
-
-var workflow = flag.String("workflow", "run.json", "path to workflow run request json file")
-
-func main() {
-	flag.Parse()
-	runner := endly.NewCliRunner()
-	err := runner.Run(*workflow)
-	if err != nil {
-		log.Fatal(err)
-	}
-	time.Sleep(time.Second)
-}
+endly will be build in the $GOPATH/bin
 
 
-```       
+Make sure its location is on your PATH 
 
 
-Example of run json
+```text
+
+$ endly -h
+
+
+endly 0.1.0
+Usage of endly:
+endly [options] [params...]
+	params should be key value pair to be supplied as actual workflow parameters
+	if -r options is used, original request params may be overriden
+
+where options include:
+  -d	enable logging
+  -h	print help
+  -l string
+    	<log directory> (default "logs")
+  -p	print neatly workflow as JSON
+  -r string
+    	<path/url to workflow run request in JSON format>  (default "run.json")
+  -t string
+    	<task/s to run> (default "*")
+  -v	print version (default true)
+  -w string
+    	<workflow name>  if both -r and -w valid options are specified, -w is ignored (default "manager")
+    	
+
+```
+
+
+When specified workflow or request it can be name of endly [predefined workflow](#predefined_workflows) 
+or [request](#predefined_requests).
+
+For instance the following command will print ec2 workflow in JSON format.
+
+```bash
+
+endly -p -w ec2
+
+```
+
+
+The following command will run predefined ec2 workflow with -w option
+
+```bash
+
+endly -w ec2 -t start awsCredential ~/.secret/aws.json ec2InstanceId i-0ef8d9260eaf47fdd
+
+```
+
+
+
+Example of WorkflowRunRequest JSON
 
 ```json
 {
@@ -668,7 +794,29 @@ Example of run json
 
 ```
 
+
 See for more filter option: [RunnerReportingFilter](runner_filter.go).
+
+
+In case you have defined you one UDF or have other dependencies you have to build endly binary yourself.
+The following template can be used to run a workflow from a command line 
+
+
+\#endly.go
+```go
+
+package main
+
+//import you udf package  or other dependencies here
+
+import "github.com/viant/endly/bootstrap"
+
+func main() {
+	bootstrap.Bootstrap()
+}
+
+
+```       
          
          
          
@@ -713,7 +861,8 @@ Here is an example directory layout.
 ```
   
   
-  Finally contribute by creating a  pull request with a new common workflows so that other can use them.
+
+Finally contribute by creating a  pull request with a new common workflow so that other can use them.
 
 
 ## GoCover
