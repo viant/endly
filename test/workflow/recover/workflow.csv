@@ -1,5 +1,5 @@
 Workflow,Name,Tasks,OnErrorTask,,[]Post.Name,[]Post.From
-,recover,%Tasks,recover,,errorCaught,errorCaught
+,recover,%Tasks,recover,,errorCaught,error.Error
 []Tasks,Name,Actions,,,,
 ,fail,%Fail,,,,
 []Fail,Name,Service,Action,Request.Message,,
@@ -7,4 +7,4 @@ Workflow,Name,Tasks,OnErrorTask,,[]Post.Name,[]Post.From
 []Tasks,Name,Actions,,,,
 ,recover,%Recover,,,,
 []Recover,Name,Service,Action,Request.In,[]Post.Name,[]Post.From
-,recover,nop,parrot,$error,errorCaught,value
+,recover,nop,parrot,$error,errorCaught,error.Error
