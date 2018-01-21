@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/logrusorgru/aurora"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"os/exec"
 	"reflect"
@@ -602,42 +601,36 @@ func (r *CliRunner) processEventTags() {
 	}
 }
 
-//Run run workflow for the specified URL
-func (r *CliRunner) Run(workflowRunRequestURL string, arguments ...interface{}) error {
+//LoadRunRequestWithOption load WorkflowRun request and runner options
+func LoadRunRequestWithOption(workflowRunRequestURL string, params ...interface{}) (*WorkflowRunRequest, *RunnerReportingOptions, error) {
 	request := &WorkflowRunRequest{}
 	resource := url.NewResource(workflowRunRequestURL)
-
-	if len(arguments) > 0 {
-		text, err := resource.DownloadText()
-		if err != nil {
-			return err
-		}
-		parametersMap := data.Map(Pairs(arguments...))
-		text = parametersMap.ExpandAsText(text)
-		err = toolbox.NewJSONDecoderFactory().Create(strings.NewReader(text)).Decode(request)
-		if err != nil {
-			return err
-		}
-	} else {
-		err := resource.JSONDecode(request)
-		if err != nil {
-			return err
-		}
+	parametersMap := Pairs(params...)
+	err := resource.JSONDecode(request)
+	if err != nil {
+		return nil, nil, err
 	}
+	if len(request.Params) == 0 {
+		request.Params = parametersMap
+	}
+	for k, v := range parametersMap {
+		request.Params[k] = v
+	}
+	options := &RunnerReportingOptions{}
+	_ = resource.JSONDecode(options)
+	if options.Filter == nil {
+		options.Filter = DefaultRunnerReportingOption().Filter
+	}
+	return request, options, nil
+}
 
+//Run run workflow for the supplied run request and runner options.
+func (r *CliRunner) Run(request *WorkflowRunRequest, options *RunnerReportingOptions) error {
 	ctx := r.manager.NewContext(toolbox.NewContext())
 	defer ctx.Close()
 	service, err := ctx.Service(WorkflowServiceID)
 	if err != nil {
 		return err
-	}
-	runnerOption := &RunnerReportingOption{}
-	err = resource.JSONDecode(runnerOption)
-	if err != nil {
-		return err
-	}
-	if runnerOption.Filter == nil {
-		runnerOption.Filter = &RunnerReportingFilter{}
 	}
 	request.Async = true
 	response := service.Run(ctx, request)
@@ -646,9 +639,9 @@ func (r *CliRunner) Run(workflowRunRequestURL string, arguments ...interface{}) 
 	}
 	workflowResponse, ok := response.Response.(*WorkflowRunResponse)
 	if !ok {
-		return fmt.Errorf("failed to run workflow: %v invalid response type %T", workflowRunRequestURL, response.Response)
+		return fmt.Errorf("failed to run workflow: %v invalid response type %T", request.Name, response.Response)
 	}
-	return r.reportEvents(ctx, workflowResponse.SessionID, runnerOption.Filter)
+	return r.reportEvents(ctx, workflowResponse.SessionID, options.Filter)
 }
 
 func colorText(text, color string) string {

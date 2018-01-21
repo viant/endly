@@ -332,23 +332,6 @@ func (s *workflowService) publishEvents(context *Context, events []*Event) {
 	}
 }
 
-func (s *workflowService) runWorkflowTasks(context *Context, workflow *WorkflowControl, tasks ...*WorkflowTask) error {
-	for _, task := range tasks {
-		if workflow.IsTerminated() {
-			break
-		}
-		if _, err := s.runTask(context, workflow, task); err != nil {
-			return err
-		}
-	}
-	var scheduledTask = workflow.ScheduledTask
-	if scheduledTask != nil {
-		workflow.ScheduledTask = nil
-		return s.runWorkflowTasks(context, workflow, scheduledTask)
-	}
-	return nil
-}
-
 func (s *workflowService) runWorkflow(upstreamContext *Context, request *WorkflowRunRequest) (*WorkflowRunResponse, error) {
 	if request.EnableLogging {
 		upstreamContext.EventLogger = NewEventLogger(path.Join(request.LoggingDirectory, upstreamContext.SessionID))
@@ -405,30 +388,13 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 		return nil, err
 	}
 
+	defer s.runWorkflowDeferTaskIfNeeded(context, control)
 	err = s.runWorkflowTasks(context, control, filteredTasks...)
-
+	err = s.runOnErrorTaskIfNeeded(context, control, err)
 	if err != nil {
-		if workflow.OnErrorTask == "" {
-			return nil, err
-		}
-		control.Error = err.Error()
-
-		var errorMap = toolbox.AsMap(control.WorkflowError)
-		if control.WorkflowError.Request != nil {
-			errorMap["Request"], _ = toolbox.AsJSONText(control.WorkflowError.Request)
-		}
-		if control.WorkflowError.Response != nil {
-			errorMap["Response"], _ = toolbox.AsJSONText(control.WorkflowError.Response)
-		}
-		state.Put(workflowError, errorMap)
-		onErrorTask, err := workflow.Task(workflow.OnErrorTask)
-		if err == nil {
-			err = s.runWorkflowTasks(context, control, onErrorTask)
-		}
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
+
 	workflow.Post.Apply(state, response.Data) //context -> workflow output
 	s.addVariableEvent("Workflow.Post", workflow.Post, context, state)
 
@@ -436,6 +402,52 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 		s.Sleep(context, workflow.SleepTimeMs)
 	}
 	return response, nil
+}
+
+func (s *workflowService) runWorkflowDeferTaskIfNeeded(context *Context, workflow *WorkflowControl) {
+	if workflow.DeferTask == "" {
+		return
+	}
+	task, _ := workflow.Task(workflow.DeferTask)
+	_ = s.runWorkflowTasks(context, workflow, task)
+}
+
+func (s *workflowService) runOnErrorTaskIfNeeded(context *Context, workflow *WorkflowControl, err error) error {
+	if err != nil {
+		if workflow.OnErrorTask == "" {
+			return err
+		}
+		workflow.Error = err.Error()
+
+		var errorMap = toolbox.AsMap(workflow.WorkflowError)
+		if workflow.WorkflowError.Request != nil {
+			errorMap["Request"], _ = toolbox.AsJSONText(workflow.WorkflowError.Request)
+		}
+		if workflow.WorkflowError.Response != nil {
+			errorMap["Response"], _ = toolbox.AsJSONText(workflow.WorkflowError.Response)
+		}
+		context.state.Put(workflowError, errorMap)
+		task, _ := workflow.Task(workflow.OnErrorTask)
+		err = s.runWorkflowTasks(context, workflow, task)
+	}
+	return err
+}
+
+func (s *workflowService) runWorkflowTasks(context *Context, workflow *WorkflowControl, tasks ...*WorkflowTask) error {
+	for _, task := range tasks {
+		if workflow.IsTerminated() {
+			break
+		}
+		if _, err := s.runTask(context, workflow, task); err != nil {
+			return err
+		}
+	}
+	var scheduledTask = workflow.ScheduledTask
+	if scheduledTask != nil {
+		workflow.ScheduledTask = nil
+		return s.runWorkflowTasks(context, workflow, scheduledTask)
+	}
+	return nil
 }
 
 func buildParamsMap(request *WorkflowRunRequest, context *Context) data.Map {

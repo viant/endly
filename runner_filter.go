@@ -19,7 +19,28 @@ type RunnerReportingFilter struct {
 	FirstUseCaseFailureOnly bool
 }
 
-//RunnerReportingOption represnets runner reporting options
-type RunnerReportingOption struct {
+//RunnerReportingOptions represnets runner reporting options
+type RunnerReportingOptions struct {
 	Filter *RunnerReportingFilter
+}
+
+//DefaultRunnerReportingOption returns new default reporting options
+func DefaultRunnerReportingOption() *RunnerReportingOptions {
+	return &RunnerReportingOptions{
+		Filter: &RunnerReportingFilter{
+			Stdin:             true,
+			Stdout:            true,
+			Transfer:          true,
+			SQLScript:         true,
+			PopulateDatastore: true,
+			Sequence:          true,
+			RegisterDatastore: true,
+			DataMapping:       true,
+			OnFailureFilter: &RunnerReportingFilter{
+				HTTPTrip: true,
+				Stdin:    true,
+				Stdout:   true,
+			},
+		},
+	}
 }

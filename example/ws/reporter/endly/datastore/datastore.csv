@@ -1,8 +1,8 @@
 Workflow,,Name,Description,Tasks,Init
-,,datastore,Data store init,%Tasks,#init.json
+,,datastore,Data store init,%Tasks,#init
 []Tasks,,Name,Description,Actions,
 ,,init,Init datastore,%Init,
 []Init,Service,Action,Description,Request,clearDatastore
-,dsunit,register,Register database connection,#req/db1_register.json,TRUE
-,dsunit,sql,Load schema from ,#req/db1_sql.json,
-,dsunit,prepare,Load schema from ,#req/db1_dictionary.json,
+,dsunit,register,Register database connection,#req/db1_register,TRUE
+,dsunit,sql,Load schema from ,#req/db1_sql,
+,dsunit,prepare,Load schema from ,#req/db1_dictionary,

@@ -52,6 +52,7 @@ type Workflow struct {
 	Post        Variables       //variables to initialise state before this workflow runs
 	Tasks       []*WorkflowTask //workflow task
 	OnErrorTask string          //task that will run if error occur, the final workflow will return this task response
+	DeferTask   string          //task that will alway run if there has been previous  error or not
 	SleepTimeMs int             //optional Sleep time
 }
 
@@ -80,8 +81,21 @@ func (r *ActionRequest) Validate() error {
 	return nil
 }
 
-//Validate validates this workflow TODO add implementation.
+//Validate validates this workflow
 func (w *Workflow) Validate() error {
+	if len(w.Tasks) == 0 {
+		return errors.New("Tasks were empty")
+	}
+	if w.DeferTask != "" {
+		if _, err := w.Task(w.DeferTask); err != nil {
+			return err
+		}
+	}
+	if w.OnErrorTask != "" {
+		if _, err := w.Task(w.OnErrorTask); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -136,7 +150,7 @@ func (c *WorkflowControl) Terminate() {
 	atomic.StoreInt32(&c.Terminated, 1)
 }
 
-//IsTerminated returns true if current workflow has been terminated
+//CanRun returns true if current workflow can run
 func (c *WorkflowControl) CanRun() bool {
 	return !(c.IsTerminated() || c.ScheduledTask != nil)
 }
@@ -175,7 +189,7 @@ func (w *Workflows) Last() *Workflow {
 	return control.Workflow
 }
 
-//Last returns the last workflow from the workflow stack.
+//LastControl returns the last workflow from the workflow stack.
 func (w *Workflows) LastControl() *WorkflowControl {
 	if w == nil {
 		return nil

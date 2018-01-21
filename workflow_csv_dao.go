@@ -25,7 +25,9 @@ func (d *WorkflowDao) Load(context *Context, source *url.Resource) (*Workflow, e
 	err = d.Dao.Load(state, resource, result)
 	if err == nil {
 		d.Dao.AddStandardUdf(context.state)
+		err = result.Validate()
 	}
+
 	return result, err
 }
 

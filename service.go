@@ -11,7 +11,6 @@ import (
 
 //Service represents a set of capabilities per supported actions/request.
 type Service interface {
-
 	//service id
 	ID() string
 
