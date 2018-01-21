@@ -289,15 +289,14 @@ func TestDockerService_Command(t *testing.T) {
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir    string
-		Request    *endly.DockerContainerCommandRequest
+		Request    *endly.DockerContainerRunCommandRequest
 		Expected   string
 		TargetName string
 		Error      string
 	}{
 		{
 			"test/docker/command/export/darwin",
-			&endly.DockerContainerCommandRequest{
-				SysPath:          []string{"/usr/local/bin"},
+			&endly.DockerContainerRunCommandRequest{
 				Target:           target,
 				Interactive:      true,
 				AllocateTerminal: true,
@@ -312,8 +311,7 @@ func TestDockerService_Command(t *testing.T) {
 		},
 		{
 			"test/docker/command/import/darwin",
-			&endly.DockerContainerCommandRequest{
-				SysPath:     []string{"/usr/local/bin"},
+			&endly.DockerContainerRunCommandRequest{
 				Target:      target,
 				Interactive: true,
 				Credentials: map[string]string{
@@ -344,7 +342,7 @@ func TestDockerService_Command(t *testing.T) {
 				var baseCase = useCase.baseDir + " " + useCase.TargetName
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				actual, ok := serviceResponse.Response.(*endly.CommandResponse)
+				actual, ok := serviceResponse.Response.(*endly.DockerContainerRunCommandResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -354,7 +352,7 @@ func TestDockerService_Command(t *testing.T) {
 					continue
 				}
 				var expected = useCase.Expected
-				assert.EqualValues(t, expected, actual.Stdout(), "Status "+baseCase)
+				assert.EqualValues(t, expected, actual.Stdout, "Status "+baseCase)
 			}
 		}
 	}
@@ -515,8 +513,7 @@ func TestDockerService_Start(t *testing.T) {
 		{
 			"test/docker/start/linux",
 			&endly.DockerContainerStartRequest{
-				SysPath: []string{"/usr/local/bin"},
-				Target:  target,
+				Target: target,
 			},
 			&endly.DockerContainerInfo{
 				ContainerID: "b5bcc949f075",
@@ -584,8 +581,7 @@ func TestDockerService_Stop(t *testing.T) {
 		{
 			"test/docker/stop/linux",
 			&endly.DockerContainerStopRequest{
-				SysPath: []string{"/usr/local/bin"},
-				Target:  target,
+				Target: target,
 			},
 			&endly.DockerContainerInfo{
 				ContainerID: "b5bcc949f075",
@@ -649,8 +645,7 @@ func TestDockerService_Remove(t *testing.T) {
 		{
 			"test/docker/remove/linux",
 			&endly.DockerContainerRemoveRequest{
-				SysPath: []string{"/usr/local/bin"},
-				Target:  target,
+				Target: target,
 			},
 			"db1",
 			"",
@@ -672,7 +667,7 @@ func TestDockerService_Remove(t *testing.T) {
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				response, ok := serviceResponse.Response.(*endly.CommandResponse)
+				response, ok := serviceResponse.Response.(*endly.DockerContainerRemoveResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -680,7 +675,7 @@ func TestDockerService_Remove(t *testing.T) {
 
 				var expected = useCase.Expected
 				var actual = response
-				assert.Equal(t, expected, actual.Stdout(), "Command "+baseCase)
+				assert.Equal(t, expected, actual.Stdout, "Command "+baseCase)
 
 			}
 
@@ -883,13 +878,14 @@ func TestDockerService_Inspect(t *testing.T) {
 	assert.EqualValues(t, "", serviceResponse.Error)
 	response, ok := serviceResponse.Response.(*endly.DockerInspectResponse)
 	if assert.True(t, ok) {
-		assert.True(t, response.Output != "")
-		assert.NotNil(t, response.Info)
-		var aMap = data.NewMap()
-		aMap.Put("Output", toolbox.AsSlice(response.Info))
-		ip, has := aMap.GetValue("Output[0].NetworkSettings.IPAddress")
-		if assert.True(t, has) {
-			assert.EqualValues(t, "172.17.0.2", ip)
+		if assert.True(t, response.Stdout != "") {
+			assert.NotNil(t, response.Info)
+			var aMap = data.NewMap()
+			aMap.Put("Output", toolbox.AsSlice(response.Info))
+			ip, has := aMap.GetValue("Output[0].NetworkSettings.IPAddress")
+			if assert.True(t, has) {
+				assert.EqualValues(t, "172.17.0.2", ip)
+			}
 		}
 	}
 }
