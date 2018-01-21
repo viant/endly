@@ -10,6 +10,13 @@ Prerequisites:
 Enable ssh logic you your use on your machine (on osx System Preference / Sharing / Remote Login )
  
 Install [docker](https://docs.docker.com/engine/installation/) service
+
+
+
+[Download endly and secret for your platofrm](https://github.com/viant/endly/releases/)
+
+Or atlernatively build binary from scratch following above instruction:
+
 Install [go lang](https://golang.org/doc/install) version 1.8+
 
 after installing go run the following command
@@ -24,9 +31,11 @@ go get -u github.com/viant/toolbox/secret
 export PATH=$PATH:$GOPATH/bin
 ```
 
+
+
 Generate secret keys with a credential that endly will use to run the workflows.
-(**secret** binary should be compiled and build as result of get -u github.com/viant/toolbox/secret into GOPATH/bin)
-Secret generate a file that store blowfish encrypted credential in $HOME/.secret/ directory.
+(**secret** binary should be downloaded or compiled and build as result of get -u github.com/viant/toolbox/secret into GOPATH/bin)
+Secret generates a file that store blowfish encrypted credential in $HOME/.secret/ directory.
 
 
 Provide a user name and password to login to your box.
