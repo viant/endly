@@ -1,0 +1,11 @@
+{
+  "Name": "gce",
+  "Tasks": "$tasks",
+  "Params": {
+    "gceCredential": "$gceCredential",
+    "gceProject": "$gceProject",
+    "gceZone": "$gceZone",
+    "gceInstance": "$gceInstance"
+  }
+}
+
