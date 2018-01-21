@@ -11,6 +11,6 @@ type DockerInspectRequest struct {
 
 //DockerInspectResponse represents a docker inspect request
 type DockerInspectResponse struct {
-	Output string
+	Stdout string
 	Info   interface{} //you can extract any instance default, for instance to get Ip you can use Info[0].NetworkSettings.IPAddress in the variable action post from key
 }
