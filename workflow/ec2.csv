@@ -1,24 +1,24 @@
-Workflow,,,Name,Description,Tasks,Init,,
-,,,ec2,Start/Stop ec2 instances,%Tasks,#ec2_init,,
-[]Tasks,,,Name,Description,Actions,,,
-,,,start,start ec2 instance,%Start,,,
-[]Start,,Service,Action,Description,Request,Post,var.Name,var.From
-,,aws/ec2,call,Check instance status,#req/ec2_status,[$arg0]|$var,instanceState,Reservations[0].Instances[0].State.Name
-[]Start,,Service,Action,Description,Request.SourceKey,Request.Cases,,
-,,workflow,switch,switch/case for instance status,instanceState,%StartCases,,
-[]StartCases,Value,Service,Action,Description,Request,,,
-,stopped,aws/ec2,call,Start Ec2 instance,#req/ec2_start,,,
-,running,workflow,exit,exit workflow,{},,,
-[]Start,,Service,Action,Description,Request.Task,SleepTimeMs,,
-,,workflow,goto,goto start task,start,5000,,
-[]Tasks,,,Name,Description,Actions,,,
-,,,stop,stop ec2 instance,%Stop,,,
-[]Stop,,Service,Action,Description,Request,Post,var.Name,var.From
-,,aws/ec2,call,Check instance status,#req/ec2_status,[$arg0]|$var,instanceState,Reservations[0].Instances[0].State.Name
-[]Stop,,Service,Action,Description,Request.SourceKey,Request.Cases,,
-,,workflow,switch,switch/case for instance status,instanceState,%StopCases,,
-[]StopCases,Value,Service,Action,Description,Request,,,
-,running,aws/ec2,call,Start Ec2 instance,#req/ec2_stop,,,
-,stopped,workflow,exit,exit workflow,{},,,
-[]Stop,,Service,Action,Description,Request.Task,SleepTimeMs,,
-,,workflow,goto,goto stop task,stop,5000,,
+Workflow,,,Name,Description,Tasks,Init,,,
+,,,ec2,Start/Stop ec2 instances,%Tasks,#ec2_init,,,
+[]Tasks,,,Name,Description,Actions,,,,
+,,,start,Start ec2 instance,%Start,,,,
+[]Start,,Service,Action,Description,Request,Post,method,var.Name,var.From
+,,aws/ec2,call,Check instance status,#req/ec2_instances,[$arg0]|$var,DescribeInstances,instanceState,Reservations[0].Instances[0].State.Name
+[]Start,,Service,Action,Description,Request.SourceKey,Request.Cases,,,
+,,workflow,switch,Switch/case for instance status,instanceState,%StartCases,,,
+[]StartCases,Value,Service,Action,Description,Request,,method,,
+,stopped,aws/ec2,call,Start Ec2 instance,#req/ec2_instances,,StartInstances,,
+,running,workflow,exit,Wxit workflow,{},,,,
+[]Start,,Service,Action,Description,Request.Task,SleepTimeMs,,,
+,,workflow,goto,Ggoto start task,start,5000,,,
+[]Tasks,,,Name,Description,Actions,,,,
+,,,stop,Stop ec2 instance,%Stop,,,,
+[]Stop,,Service,Action,Description,Request,Post,method,var.Name,var.From
+,,aws/ec2,call,Check instance status,#req/ec2_instances,[$arg0]|$var,DescribeInstances,instanceState,Reservations[0].Instances[0].State.Name
+[]Stop,,Service,Action,Description,Request.SourceKey,Request.Cases,,,
+,,workflow,switch,Switch/case for instance status,instanceState,%StopCases,,,
+[]StopCases,Value,Service,Action,Description,Request,,method,,
+,running,aws/ec2,call,Stop Ec2 instance,#req/ec2_instances,,StopInstances,,
+,stopped,workflow,exit,Exit workflow,{},,,,
+[]Stop,,Service,Action,Description,Request.Task,SleepTimeMs,,,
+,,workflow,goto,goto stop task,stop,5000,,,

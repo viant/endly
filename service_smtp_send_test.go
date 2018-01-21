@@ -18,35 +18,36 @@ func TestSMTPSendRequest_Validate(t *testing.T) {
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &endly.SMTPSendRequest{Target: url.NewResource("abc"), Credential: "abc"}
+
+		var request = &endly.SMTPSendRequest{Target: url.NewResource("abc", "abc")}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &endly.SMTPSendRequest{Target: url.NewResource("abc"), Credential: "abc", Mail: &endly.MailMessage{}}
+		var request = &endly.SMTPSendRequest{Target: url.NewResource("abc", "abc"), Mail: &endly.MailMessage{}}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &endly.SMTPSendRequest{Target: url.NewResource("abc"), Credential: "abc", Mail: &endly.MailMessage{
+		var request = &endly.SMTPSendRequest{Target: url.NewResource("abc", "abc"), Mail: &endly.MailMessage{
 			Subject: "abc",
 		}}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &endly.SMTPSendRequest{Target: url.NewResource("abc"), Credential: "abc", Mail: &endly.MailMessage{
+		var request = &endly.SMTPSendRequest{Target: url.NewResource("abc", "abc"), Mail: &endly.MailMessage{
 			Subject: "abc",
 			From:    "abc@a.pl",
 		}}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &endly.SMTPSendRequest{Target: url.NewResource("abc"), Credential: "abc", Mail: &endly.MailMessage{
+		var request = &endly.SMTPSendRequest{Target: url.NewResource("abc", "abc"), Mail: &endly.MailMessage{
 			From: "abc@a.pl",
 			To:   []string{"abc@a.pl"},
 		}}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &endly.SMTPSendRequest{Target: url.NewResource("abc"), Credential: "abc", Mail: &endly.MailMessage{
+		var request = &endly.SMTPSendRequest{Target: url.NewResource("abc", "abc"), Mail: &endly.MailMessage{
 			Subject: "abc",
 			From:    "abc@a.pl",
 			To:      []string{"abc@a.pl"},

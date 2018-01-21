@@ -75,6 +75,7 @@ type AsyncServiceActionEvent struct {
 	Description string
 }
 
+//NewAsyncServiceActionEvent return new AsyncServiceActionEvent
 func NewAsyncServiceActionEvent(workflow string, task string, service string, action string, tagID string, description string) *AsyncServiceActionEvent {
 	return &AsyncServiceActionEvent{
 		Workflow:    workflow,

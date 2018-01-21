@@ -9,6 +9,8 @@ import (
 
 //ValidationIndexByDirective represent indexing directive
 const ValidationIndexByDirective = "@indexBy@"
+
+//ValidateTimeFormatDirective time format directive
 const ValidateTimeFormatDirective = "@timeFormat@"
 
 //Validator represents a validator

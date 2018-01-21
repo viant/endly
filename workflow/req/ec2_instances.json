@@ -1,6 +1,6 @@
 {
   "Credential": "$awsCredential",
-  "Method": "StartInstances",
+  "Method": "$method",
   "Input": {
     "InstanceIds": [
       "$ec2InstanceId"

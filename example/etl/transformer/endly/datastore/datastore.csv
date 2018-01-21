@@ -1,10 +1,10 @@
 Workflow,,Name,Description,Tasks,Init
-,,datastore,Data store init,%Tasks,#init.json
+,,datastore,Data store init,%Tasks,#init
 []Tasks,,Name,Description,Actions,
 ,,init,Init datastore,%Init,
 []Init,Service,Action,Description,Request,clearDatastore
-,dsunit,register,Register database connection,#req/db3_register.json,TRUE
-,dsunit,register,Register database connection,#req/db4_register.json,TRUE
-,dsunit,sql,Load schema from ,#req/db3_sql.json,
-,dsunit,prepare,Load schema from ,#req/db3_dictionary.json,
-,dsunit,prepare,Load schema from ,#req/db4_data.json,
+,dsunit,register,Register database connection,#req/db3_register,TRUE
+,dsunit,register,Register database connection,#req/db4_register,TRUE
+,dsunit,sql,Load schema from ,#req/db3_sql,
+,dsunit,prepare,Load schema from ,#req/db3_dictionary,
+,dsunit,prepare,Load schema from ,#req/db4_data,
