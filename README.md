@@ -238,10 +238,10 @@ The execution service is responsible for opening, managing terminal session, wit
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| exec | open | open SSH session on the target resource. | [OpenSessionRequest](service_exec_session.go) | [OpenSessionResponse](service_exec_session.go) |
-| exec | close | closes SSH session | [CloseSessionRequest](service_exec_session.go) | [CloseSessionResponse](service_exec_session.go) |
-| exec | command | executes basic commands | [CommandRequest](service_exec_command.go) | [CommandResponse](service_exec_command_response.go) |
-| exec | managed-command | executes commands with ability to extract data, define error or success state | [ExtractableCommandRequest](service_exec_command.go) | [SystemCommandResponse](service_system_exec_command_response.go) |
+| exec | open | open SSH session on the target resource. | [OpenSessionRequest](service_exec_session.go#L9) | [OpenSessionResponse](service_exec_session.go#L19) |
+| exec | close | closes SSH session | [CloseSessionRequest](service_exec_session.go#L24) | [CloseSessionResponse](service_exec_session.goL29) |
+| exec | command | executes basic commands | [CommandRequest](service_exec_command.go#L40) | [CommandResponse](service_exec_command_response.go#L15) |
+| exec | managed-command | executes commands with ability to extract data, define error or success state | [ExtractableCommandRequest](service_exec_command.go#L34) | [CommandResponse](service_exec_command_response.go#L15) |
 
 
 **Daemon service.**
