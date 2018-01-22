@@ -168,6 +168,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction, wor
 	if err != nil {
 		return nil, err
 	}
+
 	expandedRequest := state.Expand(action.Request)
 	if expandedRequest == nil || !toolbox.IsMap(expandedRequest) {
 		return nil, fmt.Errorf("failed to evaluate request: %v, expected map but had: %T", expandedRequest, expandedRequest)
