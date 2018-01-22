@@ -19,6 +19,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	"encoding/json"
 )
 
 func init() {
@@ -84,8 +85,12 @@ func printWorkflow(URL string) {
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
 	if workflow, _ := dao.Load(context, url.NewResource(URL)); workflow != nil {
-		var workflowJSON, _ = toolbox.AsJSONText(workflow)
-		fmt.Print(workflowJSON)
+
+		buf, err := json.MarshalIndent(workflow, "", "\t")
+		if err != nil {
+			log.Fatal("failed to load workflow: %v, %v", URL, err)
+		}
+		fmt.Printf("%s", buf)
 	}
 }
 
@@ -105,11 +110,11 @@ func printVersion() {
 }
 
 func getWorkflowURL(candidate string) (string, string, error) {
-	var name = candidate
+	var _,  name = path.Split(candidate)
 	if path.Ext(candidate) == "" {
 		candidate = candidate + ".csv"
 	} else {
-		name = string(candidate[:len(candidate)-4]) //remove extension
+		name = string(name[:len(name)-4]) //remove extension
 	}
 	resource := url.NewResource(candidate)
 	if _, err := resource.Download(); err != nil {
@@ -171,6 +176,7 @@ func getRunRequestWithOptons(flagset map[string]string) (*endly.WorkflowRunReque
 	}
 
 	var params = endly.Pairs(getArguments()...)
+
 	if request != nil {
 		if len(request.Params) == 0 {
 			request.Params = params
@@ -178,7 +184,6 @@ func getRunRequestWithOptons(flagset map[string]string) (*endly.WorkflowRunReque
 		for k, v := range params {
 			request.Params[k] = v
 		}
-
 		if value, ok := flagset["d"]; ok {
 			request.EnableLogging = toolbox.AsBoolean(value)
 			request.LoggingDirectory = flag.Lookup("l").Value.String()
@@ -210,7 +215,9 @@ func getArguments() []interface{} {
 	if len(os.Args) > 1 {
 		for i := 1; i < len(os.Args); i++ {
 			if strings.HasPrefix(os.Args[i], "-") {
-				i++
+				if ! strings.Contains(os.Args[i], "=") {
+					i++
+				}
 				continue
 			}
 			arguments = append(arguments, normalizeArgument(os.Args[i]))
