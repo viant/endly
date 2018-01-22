@@ -44,8 +44,8 @@ type ExecutionEndEvent struct {
 
 type execService struct {
 	*AbstractService
-	mutex               *sync.RWMutex
-	credentialPasswords map[string]string
+	mutex       *sync.RWMutex
+	credentials map[string]*cred.Config
 }
 
 func (s *execService) open(context *Context, request *OpenSessionRequest) (*OpenSessionResponse, error) {
@@ -286,27 +286,35 @@ func match(stdout string, candidates ...string) string {
 }
 
 //TODO caching this
-func (s *execService) credentialPassword(credentialURI string) (string, error) {
+func (s *execService) credential(key string, credentialURI string) (result string, err error) {
 	s.mutex.RLock()
-	result, has := s.credentialPasswords[credentialURI]
+	credConfig, has := s.credentials[credentialURI]
 	s.mutex.RUnlock()
-	if has {
-		return result, nil
+	result = key
+	var getCredentail = func(key string, config *cred.Config) string {
+		if strings.HasPrefix(key, "#") {
+			return config.Username
+		}
+		return config.Password
 	}
-	result = credentialURI
+	if has {
+		return getCredentail(key, credConfig), nil
+	}
+	credConfig = &cred.Config{}
 	if credentialURI != "" && toolbox.FileExists(credentialURI) {
-		credential, err := cred.NewConfig(credentialURI)
+		credConfig, err = cred.NewConfig(credentialURI)
 		if err != nil {
 			return "", err
 		}
 		s.mutex.Lock()
-		result = credential.Password
-		s.credentialPasswords[credentialURI] = result
+		s.credentials[credentialURI] = credConfig
 		s.mutex.Unlock()
-
+		result = getCredentail(key, credConfig)
 	}
 	return result, nil
 }
+
+
 
 func (s *execService) credentialsToSecure(credentials map[string]string) (map[string]string, error) {
 	var secure = make(map[string]string)
@@ -316,11 +324,13 @@ func (s *execService) credentialsToSecure(credentials map[string]string) (map[st
 			if toolbox.IsCompleteJSON(v) {
 				continue
 			}
-			var credential, err = s.credentialPassword(v)
+
+			var credential, err = s.credential(k, v)
 			if err != nil {
 				return nil, err
 			}
 			secure[k] = credential
+
 		}
 	}
 	return secure, nil
@@ -341,12 +351,14 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 		sort.Strings(keys)
 		for _, key := range keys {
 			cmd = strings.Replace(cmd, key, secure[key], len(command))
+			if strings.HasPrefix(key,"#") {
+				command =  strings.Replace(command, key, secure[key], len(command))
+			}
 		}
 	}
 
 	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
 	startEvent := s.Begin(context, executionStartEvent, Pairs("value", executionStartEvent), Info)
-
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
 	var executionEndEvent = &ExecutionEndEvent{
 		SessionID: session.ID,
@@ -616,8 +628,8 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 //NewExecService creates a new execution service
 func NewExecService() Service {
 	var result = &execService{
-		mutex:               &sync.RWMutex{},
-		credentialPasswords: make(map[string]string),
+		mutex:       &sync.RWMutex{},
+		credentials: make(map[string]*cred.Config),
 		AbstractService: NewAbstractService(ExecServiceID,
 			ExecServiceOpenAction,
 			ExecServiceCommandAction,
