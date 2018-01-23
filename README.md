@@ -246,6 +246,8 @@ The execution service is responsible for opening, managing terminal session, wit
 | exec | managed-command | executes commands with ability to extract data, define error or success state | [ExtractableCommandRequest](service_exec_command.go#L34) | [CommandResponse](service_exec_command_response.go#L15) |
 
 
+<a name="daemon"></a>
+
 **Daemon service.**
 
 Daemon System service is responsible for managing system daemon services.
@@ -256,6 +258,8 @@ Daemon System service is responsible for managing system daemon services.
 | daemon | start | start requested system daemon | [DaemonStartRequest](service_daemon_start.go) | [DaemonInfo](service_daemon_status.go) | 
 | daemon | stop | stops requested system daemon | [DaemonStopRequest](service_daemon_stop.go) | [DaemonInfo](service_daemon_status.go) | 
 
+
+<a name="process"></a>
 
 **Process service**
 
@@ -268,6 +272,7 @@ Process service is responsible for starting, stopping and checking status of cus
 | process | stop | kill requested application | [ProcessStopRequest](service_process_stop.go) | [CommandResponse](exec_command_response.go) | 
 
 
+<a name="docker"></a>
 
 
 **Docker service**
@@ -292,6 +297,8 @@ Process service is responsible for starting, stopping and checking status of cus
 | docker | push | copy image to supplied repository| [DockerPushRequest](service_docker_push.go) | [DockerPushResponse](service_docker_push.go) |
 
 
+<a name="storage"></a>
+
 **Storage service**
 
 Storage service represents a local or remote storage to provide unified storage operations.
@@ -312,6 +319,8 @@ Remote storage could be any cloud storage i.e google cloud, amazon s3, or simple
 ### Cloud services and Network services
 
 
+<a name="ec2"></a>
+
 **Amazon Elastic Compute Cloud Service**
 
 Provides ability to call operations on  [EC2 client](https://github.com/aws/aws-sdk-go/tree/master/service/ec2)
@@ -322,6 +331,8 @@ Provides ability to call operations on  [EC2 client](https://github.com/aws/aws-
 
 'call' action's method and input are proxied to [EC2 client](https://github.com/aws/aws-sdk-go/tree/master/service/ec2)
 
+
+<a name="gce"></a>
 
 **Google Compute Engine Service**
 
@@ -344,6 +355,8 @@ Network service is responsible opening tunnel vi SSH between client and target h
 | network | tunnel | Tunnel ports between local and remote host | [NetworkTunnelRequest](service_network_tunnel.go) | [NetworkTunnelResponse](service_network_tunnel.go) | 
 
 
+<a name="endpoint"></a>
+
 **Http Endpoint Service**
 
 Http Endpoint Service is responsible for creating HTTP endpoint serving previously recorded HTTP conversation.
@@ -353,6 +366,7 @@ Http Endpoint Service is responsible for creating HTTP endpoint serving previous
 | --- | --- | --- | --- | --- | 
 | http/endpoint | listen | Starts HTTP endpoint with supplied HTTP trips recording | [HTTPEndpointListenRequest](service_http_ednpoint_listen.go) | [HTTPEndpointListenResponse](service_http_ednpoint_listen.go) | 
 
+<a name="smtp"></a>
 
 
 **SMTP Service**
@@ -371,6 +385,8 @@ Mail body is being substitute with the context state variables.
 ## Build and deployment services
 
 
+<a name="sdk"></a>
+
 **Sdk Service**
 
 Sdk service sets active terminal session with requested sdk version.
@@ -380,6 +396,7 @@ Sdk service sets active terminal session with requested sdk version.
 | sdk | set | sets system with requested sdk and version | [SdkSetRequest](service_sdk_set.go) | [SdkSetResponse](service_sdk_set.go) | 
 
 
+<a name="vc"></a>
 
 **Version Control Service**
 
@@ -391,6 +408,8 @@ Sdk service sets active terminal session with requested sdk version.
 | version/control | pull | retrieves the latest changes from the origin | [VcPullRequest](service_vc_pull.go) | [VcInfo](service_vc_info.go)   |
 
 
+<a name="build"></a>
+
 **Build service**
 
 | Service Id | Action | Description | Request | Response |
@@ -398,6 +417,7 @@ Sdk service sets active terminal session with requested sdk version.
 | build | load | Loads meta build instruction | [BuildLoadMetaRequest](service_build_load.go) | [BuildLoadMetaResponse](service_build_load.go)  |
 | build | build | Run build for provided specification | [BuildRequest](service_build_build.go) | [BuildResponse](service_build_build.go)  |
 
+<a name="deployment"></a>
 
 **Deployment service** 
 Deployment service check if target path resource, the app has been installed with requested version, if not it will transfer it and run all defined commands/transfers.
@@ -412,6 +432,8 @@ Maven, tomcat use this service.
 <a name="Testingservices"></a>
 ### Testing services
 
+<a name="http"></a>
+
 **Http Runner** 
 
 Http runner sends one or more http request to the specified endpoint, it manages cookie with one grouping send request.
@@ -422,6 +444,8 @@ Http runner sends one or more http request to the specified endpoint, it manages
 | http/runner | send | Sends one or more http request to the specified endpoint. | [SendHttpRequest](service_http_runner_send.go) | [SendHttpResponse](service_http_runner_send.go) |
 
 
+<a name="rest"></a>
+
 **Rest Runner**
 
 | Service Id | Action | Description | Request | Response |
@@ -429,6 +453,7 @@ Http runner sends one or more http request to the specified endpoint, it manages
 | rest/runner | send | Sends one rest request to the endpoint. | [RestSendRequest](service_rest_send.go) | [RestSendResponse](service_rest_send.go) |
 
 
+<a name="selenium"></a>
 **Selenium Runner** 
 
 Selenium runner open a web session to run various action on web driver or web elements.
@@ -445,11 +470,18 @@ Selenium runner open a web session to run various action on web driver or web el
 
 call-driver and call-element actions's method and parameters are proxied to stand along selenium server via [selenium client](http://github.com/tebeka/selenium)
 
+
+
+<a name="validator"></a>
+
 **Generic validation service**
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
 | validator | assert | performs validation on provided actual  vs expected data structure. | [ValidatorAssertRequest](service_validator_assert.go) | [AssertionInfo](assertion_info.go) |
+
+
+<a name="logvalidator"></a>
 
 
 **Log validation service** 
@@ -514,6 +546,8 @@ Take as example the following actual and expected data structure.
 
 TODO: unify endly and dsunit validation with macro expression. 
 
+<a name="dsunit"></a>
+
 **Datastore services**
 
 The first action that needs to be run is to register database name with dsc connection config, and optionally init scripts.
@@ -533,6 +567,8 @@ To simplify setup/verification data process [DsUnitTableData](service_dsunit_dat
 
 DsUnit uses its own predicate and macro system to perform advanced validation see [Macros And Predicates](../dsunit/docs/)
 
+
+<a name="workflow"></a>
 
 <a name="Workfowservice"></a>
 ## Workflow service
