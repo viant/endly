@@ -23,7 +23,8 @@
             "package ",
             "Password",
             "in single-value context",
-            "cannot use "
+            "cannot use ",
+            " exit status 1"
           ]
         },
         "Executions": [
@@ -45,10 +46,16 @@
             ]
           },
           {
+            "MatchOutput": "Username for",
+            "Command": "##git##"
+          },
+          {
             "MatchOutput": "Password",
             "Command": "**git**",
             "Error": [
-              "Password"
+              "Username for",
+              "Password",
+              "Authentication failed"
             ]
           },
           {
