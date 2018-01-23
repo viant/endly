@@ -228,7 +228,7 @@ func (s *workflowService) runTask(context *Context, workflow *WorkflowControl, t
 	if err != nil {
 		return nil, err
 	}
-	startEvent := s.Begin(context, task, Pairs("ID", task.Name))
+	startEvent := s.Begin(context, task, Pairs("ID", task.Name, "state", state.AsEncodableMap()))
 	defer s.End(context)(startEvent, Pairs())
 
 	var asyncActions = make([]*ServiceAction, 0)
