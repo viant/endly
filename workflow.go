@@ -113,11 +113,24 @@ func (w *Workflow) Task(name string) (*WorkflowTask, error) {
 //FilterTasks returns filter tasked for provided filter.
 func (w *Workflow) FilterTasks(filter string) ([]*WorkflowTask, error) {
 	if filter == "" || filter == "*" {
-		return w.Tasks, nil
+		if w.DeferTask == "" && w.OnErrorTask == "" {
+			return w.Tasks, nil
+		}
+		var result = make([]*WorkflowTask, 0)
+		for _, candidate := range w.Tasks {
+			if w.DeferTask == candidate.Name || w.OnErrorTask == candidate.Name {
+				continue
+			}
+			result = append(result, candidate)
+		}
+		return result, nil
 	}
 	var taskNames = strings.Split(filter, ",")
 	var result = make([]*WorkflowTask, 0)
 	for _, taskName := range taskNames {
+		if w.DeferTask == taskName || w.OnErrorTask == taskName {
+			continue
+		}
 		task, err := w.Task(taskName)
 		if err != nil {
 			return nil, err
@@ -133,8 +146,8 @@ type WorkflowError struct {
 	WorkflowName string
 	TaskName     string
 	*ActionRequest
-	Request  interface{}
-	Response interface{}
+	Request      interface{}
+	Response     interface{}
 }
 
 //WorkflowControl control workflow execution
@@ -176,7 +189,7 @@ func (w *Workflows) Pop() *Workflow {
 		return nil
 	}
 	var result = (*w)[len(*w)-1]
-	(*w) = (*w)[0 : len(*w)-1]
+	(*w) = (*w)[0: len(*w)-1]
 	return result.Workflow
 }
 
