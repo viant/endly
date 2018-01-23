@@ -441,6 +441,9 @@ func (r *CliRunner) reportTagSummary() {
 }
 
 func (r *CliRunner) reportLookupErrors(response *SeleniumRunResponse) {
+	if response == nil {
+		return
+	}
 	if len(response.LookupErrors) > 0 {
 		for _, errMessage := range response.LookupErrors {
 			r.printShortMessage(messageTypeError, errMessage, messageTypeGeneric, "Selenium")
