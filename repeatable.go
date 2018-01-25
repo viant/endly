@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-const sliceKey = "data"
+const SliceKey = "data"
 
 //Repeatable represent repetable execution
 type Repeatable struct {
@@ -57,7 +57,7 @@ func AsExtractable(input interface{}) (string, map[string]interface{}) {
 			if strings.HasPrefix(strings.Trim(extractableOutput, " \r\n"), "[") {
 				structuredOutput = data.NewMap()
 				if aSlice, err := toolbox.JSONToSlice(extractableOutput); err == nil {
-					structuredOutput.Put(sliceKey, aSlice)
+					structuredOutput.Put(SliceKey, aSlice)
 				}
 			} else if aMap, err := toolbox.JSONToMap(extractableOutput); err == nil {
 				structuredOutput = data.Map(aMap)
