@@ -136,7 +136,7 @@ func printServiceActions() {
 		for k, v := range endly.Services(manager) {
 			fmt.Printf("%v %T\n", k, v)
 		}
-
+		return;
 	}
 
 	service, err := context.Service(serviceID)
@@ -278,8 +278,9 @@ func getRunRequestWithOptons(flagset map[string]string) (*endly.WorkflowRunReque
 func normalizeArgument(value string) interface{} {
 	value = strings.Trim(value, " \"'")
 	if strings.HasPrefix(value, "#") {
-		resource := url.NewResource(value)
-		if text, err := resource.DownloadText(); err == nil {
+		resource := url.NewResource(string(value[1:]))
+		text, err := resource.DownloadText();
+		if err == nil {
 			value = text
 		}
 	}
