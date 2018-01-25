@@ -23,6 +23,9 @@ type Service interface {
 	//NewRequest creates a new supported request for this service for the supplied action.
 	NewRequest(action string) (interface{}, error)
 
+	//NewResponse creates a new supported response for this service for the supplied action.
+	NewResponse(action string) (interface{}, error)
+
 	//Mutex to sync access to the state if needed.
 	Mutex() *sync.RWMutex
 
@@ -131,6 +134,11 @@ func (s *AbstractService) State() data.Map {
 
 //NewRequest returns error for supplied action
 func (s *AbstractService) NewRequest(action string) (interface{}, error) {
+	return nil, fmt.Errorf("unsupported action: %v", action)
+}
+
+//NewResponse returns error for supplied action
+func (s *AbstractService) NewResponse(action string) (interface{}, error) {
 	return nil, fmt.Errorf("unsupported action: %v", action)
 }
 

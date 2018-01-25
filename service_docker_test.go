@@ -896,7 +896,7 @@ func TestDockerService_Inspect(t *testing.T) {
 //	parent := toolbox.CallerDirectory(3)
 //	dockerCredentials := path.Join(parent, "test/docker/gcr_key.json")
 //
-//	var credentialFile = path.Join(os.Getenv("HOME"), ".secret/scp.json")
+//	var credentialFile = path.Join(os.Getenv("HOME"), ".secret/localhost.json")
 //
 //	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 //	manager := endly.NewManager()

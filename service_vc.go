@@ -314,6 +314,20 @@ func (s *versionControlService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+func (s *versionControlService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case VersionControlServiceStatusAction:
+		return &VcInfo{}, nil
+	case VersionControlServiceCheckoutAction:
+		return &VcCheckoutResponse{}, nil
+	case VersionControlServiceCommitAction:
+		return struct{}{}, nil
+	case VersionControlServicePullAction:
+		return &VcInfo{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
 //NewVersionControlService creates a new version control
 func NewVersionControlService() Service {
 	var result = &versionControlService{
