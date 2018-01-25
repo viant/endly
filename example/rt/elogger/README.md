@@ -12,7 +12,7 @@ Install [docker](https://docs.docker.com/engine/installation/) service
 
 [Download endly and secret for your platofrm](https://github.com/viant/endly/releases/)
 
-Or atlernatively build binary from scratch following above instruction:
+Or alternatively build binary from scratch following above instruction:
 
 Install [go lang](https://golang.org/doc/install) version 1.8+
 
@@ -38,13 +38,18 @@ Secret generates a file that store blowfish encrypted credential in $HOME/.secre
 
 Provide a user name and password to login to your box.
 ```text
-secret scp
+mkdir $HOME/.secret
+ssh-keygen -b 1024 -t rsa -f id_rsa -P "" -f $HOME/.secret/id_rsa
+cat $HOME/.secret/id_rsa.pub >  ~/.ssh/authorized_keys 
+chmod u+w authorized_keys
+
+secret -o localhost
 ```
 ```
 
 Verify that secret file were created
 ```text
-cat ~/.secret/scp.json
+cat ~/.secret/localhost.json
 ```
 
 

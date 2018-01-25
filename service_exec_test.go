@@ -63,7 +63,7 @@ func Test_NewSimpleCommandRequest(t *testing.T) {
 // Function template  to capture SSH conversation
 //func TestXXXXService_Run(t *testing.T) {
 //
-//	var credentialFile = path.Join(os.Getenv("HOME"), ".secret/scp.json")
+//	var credentialFile = path.Join(os.Getenv("HOME"), ".secret/localhost.json")
 //
 //	//var target = url.NewResource("scp://35.197.115.53:22/", credentialFile) //
 //	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //

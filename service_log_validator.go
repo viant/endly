@@ -634,6 +634,19 @@ func (s *logValidatorService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+//NewRequest creates a new request for provided action, (listen, asset,reset)
+func (s *logValidatorService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case LogValidatorServiceListenAction:
+		return &LogValidatorListenResponse{}, nil
+	case LogValidatorServiceAssertAction:
+		return &LogValidatorAssertResponse{}, nil
+	case LogValidatorServiceResetAction:
+		return &LogValidatorResetResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
 //NewLogValidatorService creates a new log validator service.
 func NewLogValidatorService() Service {
 	var result = &logValidatorService{

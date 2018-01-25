@@ -1,7 +1,4 @@
 {
-  "SysPath": [
-    "/usr/local/bin"
-  ],
   "Target": "$dockerTarget",
   "Image": "library/memcached:alpine",
   "MappedPort": {

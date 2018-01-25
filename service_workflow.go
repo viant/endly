@@ -180,6 +180,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction, wor
 	if err != nil {
 		return nil, err
 	}
+
 	serviceActivity.Request = serviceRequest
 	err = s.asServiceRequest(action, serviceRequest, requestMap)
 	if err != nil {
@@ -374,10 +375,11 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	params := buildParamsMap(request, context)
 	if request.PublishParameters {
 		for key, value := range params {
-			state.Put(key, state.Expand(value))
+			state.Put(key, value)
 		}
 	}
 	state.Put("params", params)
+
 	err = workflow.Init.Apply(state, state)
 	s.addVariableEvent("Workflow.Init", workflow.Init, context, state)
 	if err != nil {
@@ -453,13 +455,10 @@ func (s *workflowService) runWorkflowTasks(context *Context, workflow *WorkflowC
 
 func buildParamsMap(request *WorkflowRunRequest, context *Context) data.Map {
 	var params = data.NewMap()
+	var state = context.state
 	if len(request.Params) > 0 {
 		for k, v := range request.Params {
-			if toolbox.IsString(v) {
-				params[k] = context.Expand(toolbox.AsString(v))
-			} else {
-				params[k] = v
-			}
+			params[k] = state.Expand(v)
 		}
 	}
 	return params
@@ -612,6 +611,24 @@ func (s *workflowService) NewRequest(action string) (interface{}, error) {
 		return &WorkflowGotoRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
+}
+
+func (s *workflowService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case WorkflowServiceRunAction:
+		return &WorkflowRunResponse{}, nil
+	case WorkflowServiceRegisterAction:
+		return struct{}{}, nil
+	case WorkflowServiceLoadAction:
+		return &WorkflowLoadResponse{}, nil
+	case WorkflowServiceSwitchAction:
+		return struct{}{}, nil
+	case WorkflowServiceExitAction:
+		return &WorkflowExitResponse{}, nil
+	case WorkflowServiceGotoAction:
+		return struct{}{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
 }
 
 func getServiceActivity(state data.Map) *WorkflowServiceActivity {

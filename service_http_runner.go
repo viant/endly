@@ -295,6 +295,14 @@ func (s *httpRunnerService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+func (s *httpRunnerService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case HTTPRunnerServiceSendAction:
+		return &SendHTTPResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
 //NewHTTPpRunnerService creates a new http runner service
 func NewHTTPpRunnerService() Service {
 	var result = &httpRunnerService{

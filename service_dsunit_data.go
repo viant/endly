@@ -16,8 +16,8 @@ type DsUnitTableData struct {
 	Key           string
 }
 
-//AuotGenerateIfNeeded retrieves auto generated values
-func (d *DsUnitTableData) AuotGenerateIfNeeded(state data.Map) error {
+//AutoGenerateIfNeeded retrieves auto generated values
+func (d *DsUnitTableData) AutoGenerateIfNeeded(state data.Map) error {
 	for k, v := range d.AutoGenerate {
 		value, has := state.GetValue(v)
 		if !has {
@@ -112,7 +112,7 @@ func (d *DsUnitTableData) GetValue(state data.Map, source interface{}) map[strin
 func AsTableRecords(source interface{}, state data.Map) (interface{}, error) {
 	var result = make(map[string][]map[string]interface{})
 	if source == nil {
-		return nil, reportError(fmt.Errorf("Source was nil"))
+		return nil, reportError(fmt.Errorf("source was nil"))
 	}
 	if !state.Has(DataStoreUnitServiceID) {
 		state.Put(DataStoreUnitServiceID, data.NewMap())
@@ -129,7 +129,7 @@ func AsTableRecords(source interface{}, state data.Map) (interface{}, error) {
 	}
 	for _, tableData := range prepareTableData {
 		var table = tableData.Table
-		err := tableData.AuotGenerateIfNeeded(state)
+		err := tableData.AutoGenerateIfNeeded(state)
 		if err != nil {
 			return nil, err
 		}

@@ -51,6 +51,15 @@ func (s *hTTPEndpointService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+//NewRequest returns new request for supplied action
+func (s *hTTPEndpointService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case HTTPEndpointServiceListenAction:
+		return &HTTPEndpointListenResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
 func (s *hTTPEndpointService) listen(request *HTTPEndpointListenRequest) (*HTTPEndpointListenResponse, error) {
 	trips := request.AsHTTPServerTrips()
 	err := StartHTTPServer(request.Port, trips)

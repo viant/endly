@@ -8,11 +8,7 @@
     "From": "params.targetHostCredential",
     "Required":true
   },
-  {
-    "Name": "mysqlPort",
-    "From": "params.mysqlPort",
-    "Value":"3306"
-  },
+
   {
     "Name": "buildHost",
     "From": "params.buildHost",
@@ -22,6 +18,11 @@
     "Name": "buildHostCredential",
     "From": "params.buildHostCredential",
     "Required":true
+  },
+  {
+    "Name": "mysqlPort",
+    "From": "params.mysqlPort",
+    "Value":"3306"
   },
   {
     "Name": "mysqlVersion",

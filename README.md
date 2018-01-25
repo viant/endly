@@ -55,7 +55,12 @@ go get -u github.com/viant/endly
 <a name="GettingStarted"></a>
 ## Getting Started
 
-[Download the latst endl](https://github.com/viant/endly/releases/)
+[Download the latst endly](https://github.com/viant/endly/releases/)
+
+
+[Neatly introduction](https://github.com/adranwit/neatly-introduction)
+[Endly introduction](https://github.com/adranwit/endly-introduction)    
+
 
 
 To get you familiar with endly workflows, a few examples of fully functioning applications are included.
@@ -244,6 +249,9 @@ The execution service is responsible for opening, managing terminal session, wit
 | exec | close | closes SSH session | [CloseSessionRequest](service_exec_session.go#L24) | [CloseSessionResponse](service_exec_session.goL29) |
 | exec | command | executes basic commands | [CommandRequest](service_exec_command.go#L40) | [CommandResponse](service_exec_command_response.go#L15) |
 | exec | managed-command | executes commands with ability to extract data, define error or success state | [ExtractableCommandRequest](service_exec_command.go#L34) | [CommandResponse](service_exec_command_response.go#L15) |
+
+
+
 
 
 <a name="daemon"></a>
@@ -471,6 +479,73 @@ Selenium runner open a web session to run various action on web driver or web el
 call-driver and call-element actions's method and parameters are proxied to stand along selenium server via [selenium client](http://github.com/tebeka/selenium)
 
 
+selenium run request defines sequence of action, if selector is present then the call method is on [WebDriver](https://github.com/tebeka/selenium/blob/master/selenium.go#L213), 
+otherwise [WebElement](https://github.com/tebeka/selenium/blob/master/selenium.go#L370) defined by selector.
+
+[Wait](repeatable.go)  provides ability to wait either some time amount or for certain condition to take place, with regexp to extract data
+
+```json
+
+{
+  "SessionID":"$SeleniumSessionID",
+  "Actions": [
+    {
+      "Calls": [
+        {
+          "Method": "Get",
+          "Parameters": [
+            "http://play.golang.org/?simple=1"
+          ]
+        }
+      ]
+    },
+    {
+      "Selector": {
+        "Value": "#code"
+      },
+      "Calls": [
+        {
+          "Method": "Clear"
+        },
+        {
+          "Method": "SendKeys",
+          "Parameters": [
+            "$code"
+          ]
+        }
+      ]
+    },
+    {
+      "Selector": {
+        "Value": "#run"
+      },
+      "Calls": [
+        {
+          "Method": "Click"
+        }
+      ]
+    },
+    {
+      "Selector": {
+        "Value": "#output",
+        "Key": "output"
+      },
+      "Calls": [
+        {
+           "Method": "Text",
+           "Wait": {
+                    "Repeat": 5,
+                    "SleepTimeMs": 100,
+                    "ExitCriteria": ":!$value"
+           }
+        }
+      ]
+    }
+  ]
+}
+```
+
+
 
 <a name="validator"></a>
 
@@ -569,9 +644,8 @@ DsUnit uses its own predicate and macro system to perform advanced validation se
 
 
 <a name="workflow"></a>
-
 <a name="Workfowservice"></a>
-## Workflow service
+## Workflow  and other service
 
 **Workflow Service**
 
@@ -586,6 +660,23 @@ Workflow service provide capability to run task, action from any defined workflo
 | workflow | switch | Runs matched  case action or task  | [WorkflowSwitchRequest](service_workflow_switch.go) | [WorkflowSwitchResponse](service_workflow_switch.go) |
 | workflow | exit | terminates execution of active workflow (caller) | n/a | n/a |
 
+**Log Service **
+
+Log print log message on endly running console.
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| log | print | Print message or error | [LogPrintRequest](service_log.go) | n/a  |
+
+**No Operation Service **
+
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| nop | nop | Does nothing| [Nop](service_nop.go) | n/a  |
+| nop | parrot | Returns request | [NopParrotRequest](service_nop_parrot.go) | n/a  |
+| nop | fail | Failed wokrflow | [NopFailRequest](service_nop_fail.go) | n/a  |
+
 
 <a name="predefined_workflows">	
 **Predefined workflows**
@@ -593,8 +684,8 @@ Workflow service provide capability to run task, action from any defined workflo
 
 | Name | Task |Description | 
 | --- | --- | --- |
-| dokerized_mysql| start | start mysql docker container  |
-| dokerized_mysql| stop | stop mysql docker container 
+| dockerized_mysql| start | start mysql docker container  |
+| dockerized_mysql| stop | stop mysql docker container 
 | dockerized_aerospike| start | aerospike mysql docker container |
 | dockerized_aerospike| stop | stop aerospike docker container |
 | dockerized_memcached| start | aerospike memcached docker container |
@@ -805,9 +896,9 @@ Example of WorkflowRunRequest JSON
     "baseSvnUrl":"https://mysvn.com/trunk/ci",
     "buildRoot":"/build",
     "targetHost": "127.0.0.1",
-    "targetHostCredential": "${env.HOME}/secret/scp.json",
+    "targetHostCredential": "${env.HOME}/secret/localhost.json",
     "svnCredential": "${env.HOME}/secret/adelphic_svn.json",
-    "configURLCredential":"${env.HOME}/secret/scp.json",
+    "configURLCredential":"${env.HOME}/secret/localhost.json",
     "mysqlCredential": "${env.HOME}/secret/mysql.json",
     "catalinaOpts": "-Xms512m -Xmx1g -XX:MaxPermSize=256m",
 

@@ -56,6 +56,14 @@ func (s *restService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+func (s *restService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case RestServiceSendAction:
+		return &RestSendResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
 //NewRestService creates a new reset service
 func NewRestService() Service {
 	var result = &restService{

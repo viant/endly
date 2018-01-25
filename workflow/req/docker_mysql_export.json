@@ -1,7 +1,4 @@
 {
-  "SysPath": [
-    "/usr/local/bin"
-  ],
   "Target": "$dockerTarget",
   "Credentials": {
     "***mysql***": "$mysqlCredential"

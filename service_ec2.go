@@ -63,6 +63,13 @@ func (s *ec2Service) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+func (s *ec2Service) NewResponse(action string) (interface{}, error) {
+	if action == Ec2ServiceCallAction {
+		return struct{}{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
 //GetAWSCredentialConfig returns *aws.Config for provided credential
 func GetAWSCredentialConfig(credential string) (*aws.Config, error) {
 	config := &cred.Config{}

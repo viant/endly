@@ -20,6 +20,9 @@ type DockerRunRequest struct {
 
 //Validate checks if request is valid
 func (r *DockerRunRequest) Validate() error {
+	if r.Target == nil {
+		return fmt.Errorf("target was nil")
+	}
 	if r.Target.Name == "" {
 		return fmt.Errorf("target name was empty for %v", r.Target.URL)
 	}
