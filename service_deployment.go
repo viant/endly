@@ -416,6 +416,16 @@ func (s *deploymentService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+func (s *deploymentService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case DeploymentServiceDeployAction:
+		return &DeploymentDeployResponse{}, nil
+	case DeploymentServiceLoadAction:
+		return &DeploymentMetaResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
 //NewDeploymentService returns new deployment service
 func NewDeploymentService() Service {
 	var result = &deploymentService{

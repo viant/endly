@@ -48,7 +48,6 @@ func (s *NopService) Run(context *Context, request interface{}) *ServiceResponse
 
 //NewRequest returns a new request for supplied action
 func (s *NopService) NewRequest(action string) (interface{}, error) {
-
 	switch action {
 	case NopServiceNopAction:
 		return &Nop{}, nil
@@ -58,6 +57,19 @@ func (s *NopService) NewRequest(action string) (interface{}, error) {
 		return &NopParrotRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
+}
+
+//NewRequest returns a new request for supplied action
+func (s *NopService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case NopServiceNopAction:
+		return struct{}{}, nil
+	case NopServiceFailAction:
+		return struct{}{}, nil
+	case NopServiceParrotAction:
+		return struct{}{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
 }
 
 //NewNopService creates a new NoOperation service.

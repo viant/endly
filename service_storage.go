@@ -45,7 +45,7 @@ type CopyEventType struct {
 	Expand    bool
 }
 
-type transferService struct {
+type storageService struct {
 	*AbstractService
 }
 
@@ -83,7 +83,7 @@ func IsShellCompressable(protScheme string) bool {
 	return protScheme == "scp" || protScheme == "file"
 }
 
-func (s *transferService) getResourceAndService(context *Context, resource *url.Resource) (*url.Resource, storage.Service, error) {
+func (s *storageService) getResourceAndService(context *Context, resource *url.Resource) (*url.Resource, storage.Service, error) {
 	expendedResource, err := context.ExpandResource(resource)
 	if err != nil {
 		return nil, nil, err
@@ -95,7 +95,7 @@ func (s *transferService) getResourceAndService(context *Context, resource *url.
 	return expendedResource, service, nil
 }
 
-func (s *transferService) getModificationHandler(context *Context, transfer *Transfer) func(reader io.ReadCloser) (io.ReadCloser, error) {
+func (s *storageService) getModificationHandler(context *Context, transfer *Transfer) func(reader io.ReadCloser) (io.ReadCloser, error) {
 	var handler func(reader io.ReadCloser) (io.ReadCloser, error)
 	if transfer.Expand || len(transfer.Replace) > 0 {
 		handler = NewExpandedContentHandler(context, transfer.Replace, transfer.Expand)
@@ -103,7 +103,7 @@ func (s *transferService) getModificationHandler(context *Context, transfer *Tra
 	return handler
 }
 
-func (s *transferService) compressSource(context *Context, source, target *url.Resource, sourceObject storage.Object) error {
+func (s *storageService) compressSource(context *Context, source, target *url.Resource, sourceObject storage.Object) error {
 	var baseDirectory, name = path.Split(source.ParsedURL.Path)
 	var archiveSource = name
 
@@ -147,7 +147,7 @@ func (s *transferService) compressSource(context *Context, source, target *url.R
 	return err
 }
 
-func (s *transferService) decompressTarget(context *Context, source, target *url.Resource, sourceObject storage.Object) error {
+func (s *storageService) decompressTarget(context *Context, source, target *url.Resource, sourceObject storage.Object) error {
 
 	var baseDir, name = path.Split(target.ParsedURL.Path)
 
@@ -179,7 +179,7 @@ func (s *transferService) decompressTarget(context *Context, source, target *url
 	return err
 }
 
-func (s *transferService) Run(context *Context, request interface{}) *ServiceResponse {
+func (s *storageService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok"}
 	defer s.End(context)(startEvent, Pairs("response", response))
@@ -211,7 +211,7 @@ func (s *transferService) Run(context *Context, request interface{}) *ServiceRes
 	return response
 }
 
-func (s *transferService) NewRequest(action string) (interface{}, error) {
+func (s *storageService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case StorageServiceCopyAction:
 		return &StorageCopyRequest{Transfers: make([]*Transfer, 0)}, nil
@@ -226,7 +226,21 @@ func (s *transferService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
-func (s *transferService) copy(context *Context, request *StorageCopyRequest) (*StorageCopyResponse, error) {
+func (s *storageService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case StorageServiceCopyAction:
+		return &StorageCopyResponse{}, nil
+	case StorageServiceRemoveAction:
+		return &StorageRemoveResponse{}, nil
+	case StorageServiceUploadAction:
+		return &StorageUploadResponse{}, nil
+	case StorageServiceDownloadAction:
+		return &StorageDownloadResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
+func (s *storageService) copy(context *Context, request *StorageCopyRequest) (*StorageCopyResponse, error) {
 	var result = &StorageCopyResponse{
 		Transferred: make([]*TransferLog, 0),
 	}
@@ -284,7 +298,7 @@ func (s *transferService) copy(context *Context, request *StorageCopyRequest) (*
 	return result, nil
 }
 
-func (s *transferService) remove(context *Context, request *StorageRemoveRequest) (*StorageRemoveResponse, error) {
+func (s *storageService) remove(context *Context, request *StorageRemoveRequest) (*StorageRemoveResponse, error) {
 	var response = &StorageRemoveResponse{
 		Removed: make([]string, 0),
 	}
@@ -305,7 +319,7 @@ func (s *transferService) remove(context *Context, request *StorageRemoveRequest
 	return response, nil
 }
 
-func (s *transferService) download(context *Context, request *StorageDownloadRequest) (*StorageDownloadResponse, error) {
+func (s *storageService) download(context *Context, request *StorageDownloadRequest) (*StorageDownloadResponse, error) {
 	var response = &StorageDownloadResponse{}
 	resource, service, err := s.getResourceAndService(context, request.Source)
 	if err != nil {
@@ -348,7 +362,7 @@ func (s *transferService) download(context *Context, request *StorageDownloadReq
 
 }
 
-func (s *transferService) upload(context *Context, request *StorageUploadRequest) (*StorageUploadResponse, error) {
+func (s *storageService) upload(context *Context, request *StorageUploadRequest) (*StorageUploadResponse, error) {
 	var response = &StorageUploadResponse{}
 
 	resource, service, err := s.getResourceAndService(context, request.Target)
@@ -375,7 +389,7 @@ func (s *transferService) upload(context *Context, request *StorageUploadRequest
 
 //NewStorageService creates a new transfer service
 func NewStorageService() Service {
-	var result = &transferService{
+	var result = &storageService{
 		AbstractService: NewAbstractService(StorageServiceID,
 			StorageServiceCopyAction,
 			StorageServiceRemoveAction,

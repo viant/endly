@@ -102,6 +102,14 @@ func (s *eventReporterService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+func (s *eventReporterService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case EventReporterServiceReportAction:
+		return &EventReporterResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
 //NewEventReporterService creates a new event reporter service.
 func NewEventReporterService() Service {
 	var result = &eventReporterService{

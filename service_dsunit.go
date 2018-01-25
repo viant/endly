@@ -364,6 +364,24 @@ func (s *dataStoreUnitService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+func (s *dataStoreUnitService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case DataStoreUnitServiceRegisterAction:
+		return &DsUnitRegisterResponse{}, nil
+	case DataStoreUnitServiceSQLAction:
+		return &DsUnitSQLScriptResponse{}, nil
+	case DataStoreUnitServiceMappingAction:
+		return &DsUnitMappingResponse{}, nil
+	case DataStoreUnitServicePrepareAction:
+		return &DsUnitPrepareResponse{}, nil
+	case DataStoreUnitServiceSequenceAction:
+		return &DsUnitTableSequenceResponse{}, nil
+	case DataStoreUnitServiceExpectAction:
+		return &dsunit.ExpectResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
 //NewDataStoreUnitService creates a new Datastore unit service
 func NewDataStoreUnitService() Service {
 	var result = &dataStoreUnitService{

@@ -314,8 +314,6 @@ func (s *execService) credential(key string, credentialURI string) (result strin
 	return result, nil
 }
 
-
-
 func (s *execService) credentialsToSecure(credentials map[string]string) (map[string]string, error) {
 	var secure = make(map[string]string)
 	if len(credentials) > 0 {
@@ -351,14 +349,15 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 		sort.Strings(keys)
 		for _, key := range keys {
 			cmd = strings.Replace(cmd, key, secure[key], len(command))
-			if strings.HasPrefix(key,"#") {
-				command =  strings.Replace(command, key, secure[key], len(command))
+			if strings.HasPrefix(key, "#") {
+				command = strings.Replace(command, key, secure[key], len(command))
 			}
 		}
 	}
 
 	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
 	startEvent := s.Begin(context, executionStartEvent, Pairs("value", executionStartEvent), Info)
+
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
 	var executionEndEvent = &ExecutionEndEvent{
 		SessionID: session.ID,
@@ -528,7 +527,7 @@ func (s *execService) Run(context *Context, request interface{}) *ServiceRespons
 		}
 	case *CloseSessionRequest:
 		response.Response, err = s.closeSession(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to close session: %v", actualRequest.SessionID)
+		errorMessage = fmt.Sprintf("failed to c	lose session: %v", actualRequest.SessionID)
 
 	default:
 		err = fmt.Errorf("unsupported request type: %T", request)
@@ -552,9 +551,24 @@ func (s *execService) NewRequest(action string) (interface{}, error) {
 		return &CommandRequest{}, nil
 	case ExecServiceManagedCloseAction:
 		return &CloseSessionRequest{}, nil
-
 	}
-	return nil, fmt.Errorf("unsupported action: %v", action)
+	return s.AbstractService.NewRequest(action)
+}
+
+//NewRequest creates a new request for passed in action, the following is supported: open,close,command,extractableCommand
+func (s *execService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case ExecServiceOpenAction:
+		return &OpenSessionResponse{}, nil
+	case ExecServiceExtractableCommandAction:
+
+		return &CommandResponse{}, nil
+	case ExecServiceCommandAction:
+		return &CommandResponse{}, nil
+	case ExecServiceManagedCloseAction:
+		return &CloseSessionRequest{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
 }
 
 func isAmd64Architecture(candidate string) bool {

@@ -256,7 +256,16 @@ func (s *buildService) NewRequest(action string) (interface{}, error) {
 
 	}
 	return s.AbstractService.NewRequest(action)
+}
 
+func (s *buildService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case BuildServiceLoadAction:
+		return &BuildLoadMetaResponse{}, nil
+	case BuildServiceBuildAction:
+		return &BuildResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
 }
 
 //NewBuildService creates a new build service

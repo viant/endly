@@ -82,6 +82,18 @@ func (s *daemonService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+func (s *daemonService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case DaemonServiceStatusAction:
+		return &DaemonInfo{}, nil
+	case DaemonServiceStartAction:
+		return &DaemonInfo{}, nil
+	case DaemonServiceStopAction:
+		return &DaemonInfo{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
 func (s *daemonService) getDarwinLaunchServiceInfo(context *Context, target *url.Resource, request *DaemonStatusRequest, info *DaemonInfo) error {
 
 	if request.Exclusion != "" {

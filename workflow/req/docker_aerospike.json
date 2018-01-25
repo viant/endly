@@ -1,7 +1,4 @@
 {
-  "SysPath": [
-    "/usr/local/bin"
-  ],
   "Target": "$dockerTarget",
   "Image": "aerospike/aerospike-server:latest",
   "Mount": {

@@ -87,10 +87,16 @@ func (s *systemSdkService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case SdkServiceSetAction:
 		return &SystemSdkSetRequest{}, nil
-
 	}
 	return s.AbstractService.NewRequest(action)
+}
 
+func (s *systemSdkService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case SdkServiceSetAction:
+		return &SystemSdkSetResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
 }
 
 func (s *systemSdkService) checkSdkOnSession(context *Context, target *url.Resource, request *SystemSdkSetRequest, response *SystemSdkSetResponse) bool {

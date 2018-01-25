@@ -83,7 +83,7 @@ func (s *dockerService) NewRequest(action string) (interface{}, error) {
 	case DockerRunAction:
 		return &DockerRunRequest{}, nil
 	case DockerServiceSysPathAction:
-		return &DockerSystemPathRequest{}, nil
+		return struct{}{}, nil
 	case DockerServiceStopImagesAction:
 		return &DockerStopImagesRequest{}, nil
 	case DockerServiceImagesAction:
@@ -117,6 +117,46 @@ func (s *dockerService) NewRequest(action string) (interface{}, error) {
 
 	}
 	return s.AbstractService.NewRequest(action)
+}
+
+func (s *dockerService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case DockerRunAction:
+		return &DockerContainerInfo{}, nil
+	case DockerServiceSysPathAction:
+		return struct{}{}, nil
+	case DockerServiceStopImagesAction:
+		return &DockerStopImagesResponse{}, nil
+	case DockerServiceImagesAction:
+		return &DockerImagesResponse{}, nil
+	case DockerServicePullAction:
+		return &DockerImageInfo{}, nil
+	case DockerServiceContainerCommandAction:
+		return &DockerContainerRunCommandResponse{}, nil
+	case DockerServiceContainerStartAction:
+		return &DockerContainerInfo{}, nil
+	case DockerServiceContainerStopAction:
+		return &DockerContainerInfo{}, nil
+	case DockerServiceContainerStatusAction:
+		return &DockerContainerStatusResponse{}, nil
+	case DockerServiceContainerRemoveAction:
+		return &DockerContainerRemoveResponse{}, nil
+	case DockerServiceBuildAction:
+		return &DockerBuildResponse{}, nil
+	case DockerServiceTagAction:
+		return &DockerTagResponse{}, nil
+	case DockerServiceLoginAction:
+		return &DockerLoginResponse{}, nil
+	case DockerServiceLogoutAction:
+		return &DockerLogoutResponse{}, nil
+	case DockerServicePushAction:
+		return &DockerPushResponse{}, nil
+	case DockerServiceInspectAction:
+		return &DockerInspectResponse{}, nil
+	case DockerServiceContainerLogsAction:
+		return &DockerContainerLogsResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
 }
 
 func (s *dockerService) Run(context *Context, request interface{}) *ServiceResponse {
@@ -691,6 +731,10 @@ func (s *dockerService) getGoogleCloudCredential(context *Context, credential st
 	return result
 }
 
+/**
+on osx when hitting Error saving credentials: error storing credentials - err: exit status 1, out: `User interaction is not allowed.`
+on docker service -> preferences -> and I untick "Securely store docker logins in macOS keychain" this problem goes away.
+*/
 func (s *dockerService) login(context *Context, request *DockerLoginRequest) (*DockerLoginResponse, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {

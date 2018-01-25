@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	messageTypeAction = iota
+	messageTypeAction         = iota
 	messageTypeTagDescription
 	messageTypeError
 	messageTypeSuccess
@@ -133,6 +133,10 @@ func (r *CliRunner) printInput(output string) {
 
 func (r *CliRunner) printOutput(output string) {
 	fmt.Printf("%v\n", colorText(output, r.OutputColor))
+}
+
+func (r *CliRunner) printError(output string) {
+	fmt.Printf("%v\n", colorText(output, r.ErrorColor))
 }
 
 func (r *CliRunner) printShortMessage(messageType int, message string, messageInfoType int, messageInfo string) {
@@ -291,6 +295,13 @@ func (r *CliRunner) reportEventType(serviceResponse interface{}, event *Event, f
 		return
 	}
 	switch actual := serviceResponse.(type) {
+	case *LogPrintRequest:
+		if actual.Message != "" {
+			r.printOutput(actual.Message)
+		} else if actual.Error != "" {
+			r.printError(actual.Error)
+		}
+
 	case *DeploymentDeployRequest:
 		if filter.Deployment {
 			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("app: %v, forced: %v", actual.AppName, actual.Force), messageTypeGeneric, "deploy")
@@ -313,6 +324,7 @@ func (r *CliRunner) reportEventType(serviceResponse interface{}, event *Event, f
 			r.printOutput(fmt.Sprintf("TargetURL: %v", actual.TargetURL))
 
 		}
+
 	}
 }
 
@@ -411,14 +423,14 @@ func (r *CliRunner) reportSummaryEvent() {
 	}
 	var contextMessageLength = len(contextMessage) + len(contextMessageStatus)
 	contextMessage = fmt.Sprintf("%v%v", contextMessage, colorText(contextMessageStatus, contextMessageColor))
-	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed+r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
+	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed + r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
 }
 
 func (r *CliRunner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if tag.FailedCount > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
+			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
 
 			var minRange = 0
 			for i, event := range tag.Events {
@@ -429,7 +441,7 @@ func (r *CliRunner) reportTagSummary() {
 				if info, ok := candidate.(*ValidationInfo); ok && info != nil && info.HasFailure() {
 					var failureSourceEvent = []*Event{}
 					if i-minRange > 0 {
-						failureSourceEvent = tag.Events[minRange : i-1]
+						failureSourceEvent = tag.Events[minRange: i-1]
 					}
 					r.reportFailureWithMatchSource(tag, info, failureSourceEvent)
 					minRange = i + 1
@@ -730,6 +742,7 @@ func NewCliRunner() *CliRunner {
 		TagColor:           "brown",
 		InverseTag:         true,
 		ServiceActionColor: "gray",
+		ErrorColor:         "red",
 		MessageTypeColor: map[int]string{
 			messageTypeTagDescription: "cyan",
 			messageTypeError:          "red",

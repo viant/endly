@@ -2,9 +2,6 @@
   "Env": {
     "MYSQL_ROOT_PASSWORD": "***mysql***"
   },
-  "SysPath": [
-    "/usr/local/bin"
-  ],
   "Target": "$dockerTarget",
   "Credentials": {
     "***mysql***":"$mysqlCredential"

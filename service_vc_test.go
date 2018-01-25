@@ -80,7 +80,7 @@ func TestVc_Status(t *testing.T) {
 }
 
 func TestVc_Checkout(t *testing.T) {
-	credentialFile, err := GetCredential("scp.json", "awitas", "***")
+	credentialFile, err := GetCredential("localhost.json", "awitas", "***")
 	gitCredentialFile, err := GetCredential("git.json", "adrianwit", "***")
 	assert.Nil(t, err)
 	var target = url.NewResource("ssh://127.0.0.1/Projects/project1/trunk", credentialFile) //
@@ -267,8 +267,8 @@ func TestVc_Checkout(t *testing.T) {
 //func TestService_Run2StatusRequest(t *testing.T) {
 //
 //
-//	var credentialFile = path.Join(os.Getenv("HOME"), ".secret/scp.json")
-//	var vcCredentialFile = path.Join(os.Getenv("HOME"), ".secret/scp.json")
+//	var credentialFile = path.Join(os.Getenv("HOME"), ".secret/localhost.json")
+//	var vcCredentialFile = path.Join(os.Getenv("HOME"), ".secret/localhost.json")
 //
 //
 //	//var target = url.NewResource("scp://35.197.115.53:22/", credentialFile) //

@@ -1,6 +1,3 @@
 {
-  "SysPath": [
-    "/usr/local/bin"
-  ],
   "Target": "$dockerTarget"
 }

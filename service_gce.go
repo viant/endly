@@ -55,6 +55,14 @@ func (s *gCEService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+func (s *gCEService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case GCEServiceCallAction:
+		return struct{}{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
 //NewComputeService creates a new compute service.
 func NewComputeService(credentialsFile string) (*compute.Service, netcontext.Context, error) {
 	resource := url.NewResource(credentialsFile)
