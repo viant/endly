@@ -9,17 +9,18 @@ import (
 	_ "github.com/viant/toolbox/storage/aws"
 	_ "github.com/viant/toolbox/storage/gs"
 
+	"encoding/json"
 	"flag"
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
+	"gopkg.in/yaml.v2"
 	"log"
 	"os"
 	"path"
 	"strings"
 	"time"
-	"encoding/json"
 )
 
 func init() {
@@ -31,8 +32,13 @@ func init() {
 	flag.String("l", "logs", "<log directory>")
 	flag.Bool("d", false, "enable logging")
 	flag.Bool("p", false, "print neatly workflow as JSON")
+	flag.String("f", "json", "<workflow or request format>, json or yaml")
+
 	flag.Bool("h", false, "print help")
 	flag.Bool("v", true, "print version")
+
+	flag.String("s", "", "<serviceID> print service details, -s='*' prints all service IDs")
+	flag.String("a", "", "<action> prints action request representation")
 
 }
 
@@ -46,6 +52,7 @@ func Bootstrap() {
 
 	_, shouldQuit := flagset["v"]
 	flagset["v"] = flag.Lookup("v").Value.String()
+
 	if toolbox.AsBoolean(flagset["v"]) {
 		printVersion()
 		if shouldQuit {
@@ -57,11 +64,25 @@ func Bootstrap() {
 		printHelp()
 		return
 	}
+
+	if _, ok := flagset["a"]; ok {
+		printServiceActionRequest()
+		return
+	}
+	if _, ok := flagset["s"]; ok {
+		printServiceActions()
+		return
+	}
+
 	request, option, err := getRunRequestWithOptons(flagset)
 	if request == nil {
 		flagset["r"] = flag.Lookup("r").Value.String()
 		flagset["w"] = flag.Lookup("w").Value.String()
 		request, option, err = getRunRequestWithOptons(flagset)
+		if err != nil && strings.Contains(err.Error(), "failed to locate workflow: manager") {
+			printHelp()
+			return
+		}
 	}
 
 	if err != nil {
@@ -80,18 +101,77 @@ func Bootstrap() {
 	time.Sleep(time.Second)
 }
 
+func printServiceActionRequest() {
+	manager := endly.NewManager()
+	context := manager.NewContext(toolbox.NewContext())
+
+	var serviceID = flag.Lookup("s").Value.String()
+	service, err := context.Service(serviceID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var action = flag.Lookup("a").Value.String()
+	request, err := service.NewRequest(action)
+	if err != nil {
+		log.Fatal(err)
+	}
+	toolbox.InitStruct(request)
+	fmt.Printf("Request: %T\n", request)
+	printInFormat(request, fmt.Sprintf("failed to print %v.%v request (%T)", serviceID, action, request)+", %v")
+	response, _ := service.NewResponse(action)
+	fmt.Printf("\nResponse: %T\n", response)
+	toolbox.InitStruct(response)
+	printInFormat(response, fmt.Sprintf("failed to print %v.%v response (%T)", serviceID, action, request)+", %v")
+
+}
+
+func printServiceActions() {
+	manager := endly.NewManager()
+	context := manager.NewContext(toolbox.NewContext())
+
+	var serviceID = flag.Lookup("s").Value.String()
+
+	if serviceID == "*" {
+		fmt.Printf("endly services:\n")
+		for k, v := range endly.Services(manager) {
+			fmt.Printf("%v %T\n", k, v)
+		}
+
+	}
+
+	service, err := context.Service(serviceID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("'%v' service actions: \n", serviceID)
+	for _, action := range service.Actions() {
+		fmt.Printf("\t%v\n", action)
+	}
+}
+
 func printWorkflow(URL string) {
 	dao := endly.NewWorkflowDao()
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
 	if workflow, _ := dao.Load(context, url.NewResource(URL)); workflow != nil {
-
-		buf, err := json.MarshalIndent(workflow, "", "\t")
-		if err != nil {
-			log.Fatal("failed to load workflow: %v, %v", URL, err)
-		}
-		fmt.Printf("%s", buf)
+		printInFormat(workflow, "failed to print workflow: "+URL+", %v")
 	}
+}
+
+func printInFormat(source interface{}, errorTemplate string) {
+	format := flag.Lookup("f").Value.String()
+	var buf []byte
+	var err error
+	switch format {
+	case "yaml":
+		buf, err = yaml.Marshal(source)
+	default:
+		buf, err = json.MarshalIndent(source, "", "\t")
+	}
+	if err != nil {
+		log.Fatalf(errorTemplate, err)
+	}
+	fmt.Printf("%s\n", buf)
 }
 
 func printHelp() {
@@ -110,7 +190,7 @@ func printVersion() {
 }
 
 func getWorkflowURL(candidate string) (string, string, error) {
-	var _,  name = path.Split(candidate)
+	var _, name = path.Split(candidate)
 	if path.Ext(candidate) == "" {
 		candidate = candidate + ".csv"
 	} else {
@@ -215,7 +295,7 @@ func getArguments() []interface{} {
 	if len(os.Args) > 1 {
 		for i := 1; i < len(os.Args); i++ {
 			if strings.HasPrefix(os.Args[i], "-") {
-				if ! strings.Contains(os.Args[i], "=") {
+				if !strings.Contains(os.Args[i], "=") {
 					i++
 				}
 				continue

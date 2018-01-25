@@ -68,6 +68,14 @@ func (s *validatorService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+func (s *validatorService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case ValidatorServiceAssertAction:
+		return &ValidationInfo{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
 //NewValidatorService creates a new validation service
 func NewValidatorService() Service {
 	var result = &validatorService{

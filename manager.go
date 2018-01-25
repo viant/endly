@@ -115,6 +115,7 @@ func NewManager() Manager {
 	result.Register(NewGceService())
 	result.Register(NewHTTPEndpointService())
 	result.Register(NewSMTPService())
+	result.Register(NewLogService())
 	return result
 }
 

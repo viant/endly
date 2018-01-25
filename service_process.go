@@ -236,9 +236,22 @@ func (s *processService) NewRequest(action string) (interface{}, error) {
 		return &ProcessStopRequest{}, nil
 	case ProcessServiceStopAllAction:
 		return &ProcessStopAllRequest{}, nil
-
 	}
 	return s.AbstractService.NewRequest(action)
+}
+
+func (s *processService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case ProcessServiceStartAction:
+		return &ProcessStartResponse{}, nil
+	case ProcessServiceStatusAction:
+		return &ProcessStatusResponse{}, nil
+	case ProcessServiceStopAction:
+		return &CommandResponse{}, nil
+	case ProcessServiceStopAllAction:
+		return &CommandResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
 }
 
 //NewProcessService returns a new system process service.

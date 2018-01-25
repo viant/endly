@@ -13,11 +13,11 @@
 
     "GOPATH":"$env.GOPATH",
     "targetHost": "127.0.0.1",
-    "targetHostCredential": "${env.HOME}/.secret/scp.json",
+    "targetHostCredential": "${env.HOME}/.secret/localhost.json",
 
 
     "buildHost": "127.0.0.1",
-    "buildHostCredential": "${env.HOME}/.secret/scp.json",
+    "buildHostCredential": "${env.HOME}/.secret/localhost.json",
 
     "buildDirectory" :"!WorkingDirectory(../app)",
     "buildArgs":" -o sso",

@@ -146,8 +146,8 @@ type WorkflowError struct {
 	WorkflowName string
 	TaskName     string
 	*ActionRequest
-	Request      interface{}
-	Response     interface{}
+	Request  interface{}
+	Response interface{}
 }
 
 //WorkflowControl control workflow execution
@@ -189,7 +189,7 @@ func (w *Workflows) Pop() *Workflow {
 		return nil
 	}
 	var result = (*w)[len(*w)-1]
-	(*w) = (*w)[0: len(*w)-1]
+	(*w) = (*w)[0 : len(*w)-1]
 	return result.Workflow
 }
 

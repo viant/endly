@@ -421,6 +421,27 @@ func (s *seleniumService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+//NewRequest creates a new request for the provided action (run).
+func (s *seleniumService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case SeleniumServiceStartAction:
+		return &SeleniumServerStartResponse{}, nil
+	case SeleniumServiceStopAction:
+		return &SeleniumServerStopResponse{}, nil
+	case SeleniumServiceOpenAction:
+		return &SeleniumOpenSessionResponse{}, nil
+	case SeleniumServiceCloseAction:
+		return &SeleniumCloseSessionResponse{}, nil
+	case SeleniumServiceCallDriverAction:
+		return &SeleniumServiceCallResponse{}, nil
+	case SeleniumServiceCallElementAction:
+		return &SeleniumWebElementCallResponse{}, nil
+	case SeleniumServiceRunAction:
+		return &SeleniumRunResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
 //NewSeleniumService creates a new selenium service
 func NewSeleniumService() Service {
 	var result = &seleniumService{

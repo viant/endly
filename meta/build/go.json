@@ -24,7 +24,7 @@
             "Password",
             "in single-value context",
             "cannot use ",
-            " exit status 1"
+            "exit status 1"
           ]
         },
         "Executions": [
@@ -42,7 +42,8 @@
             "Command": "go get -u .",
             "Errors": [
               "Error",
-              "command not found"
+              "command not found",
+              "exit status 1"
             ]
           },
           {

@@ -41,12 +41,19 @@ func (s *smtpService) Run(context *Context, request interface{}) *ServiceRespons
 }
 
 func (s *smtpService) NewRequest(action string) (interface{}, error) {
-
 	switch action {
 	case SMTPServiceSendAction:
 		return &SMTPSendRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
+}
+
+func (s *smtpService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case SMTPServiceSendAction:
+		return &SMTPSendResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
 }
 
 //NewSMTPClient creates a new SMTP client.

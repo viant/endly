@@ -73,6 +73,15 @@ func (s *networkService) NewRequest(action string) (interface{}, error) {
 	return s.AbstractService.NewRequest(action)
 }
 
+//NewRequest creates a new request for an action (run).
+func (s *networkService) NewResponse(action string) (interface{}, error) {
+	switch action {
+	case NetworkServiceTunnelAction:
+		return &NetworkTunnelResponse{}, nil
+	}
+	return s.AbstractService.NewResponse(action)
+}
+
 //NewNetworkService creates a new network service.
 func NewNetworkService() Service {
 	var result = &networkService{

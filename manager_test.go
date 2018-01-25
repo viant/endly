@@ -108,6 +108,25 @@ func Test_ServiceRequest(t *testing.T) {
 
 }
 
+func Test_ServiceResponse(t *testing.T) {
+
+	manager := endly.NewManager()
+
+	var services = endly.Services(manager)
+	for k, service := range services {
+		_, err := service.NewResponse("abc")
+		assert.NotNil(t, err, k)
+		for _, action := range service.Actions() {
+			resp, err := service.NewResponse(action)
+			assert.Nil(t, err, service.ID()+" "+action)
+			assert.NotNil(t, resp)
+			toolbox.InitStruct(resp)
+		}
+
+	}
+
+}
+
 func Test_GetVersion(t *testing.T) {
 	version := endly.GetVersion()
 	assert.True(t, version != "")
