@@ -286,6 +286,9 @@ func normalizeArgument(value string) interface{} {
 	}
 	_, structure := endly.AsExtractable(value)
 	if len(structure) > 0 {
+		if strings.HasPrefix(value, "[") {
+			return structure[endly.SliceKey]
+		}
 		return structure
 	}
 	return value

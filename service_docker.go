@@ -466,7 +466,7 @@ func (s *dockerService) inspect(context *Context, request *DockerInspectRequest)
 		return nil, err
 	}
 	_, structured := AsExtractable(response.Stdout)
-	response.Info = structured[sliceKey]
+	response.Info = structured[SliceKey]
 	return response, nil
 }
 
