@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"github.com/viant/assertly"
 )
 
 const (
@@ -26,13 +27,13 @@ var reportingEventSleep = 250 * time.Millisecond
 
 //EventTag represents an event tag
 type EventTag struct {
-	Description    string
-	Workflow       string
-	TagID          string
-	Events         []*Event
-	ValidationInfo []*ValidationInfo
-	PassedCount    int
-	FailedCount    int
+	Description string
+	Workflow    string
+	TagID       string
+	Events      []*Event
+	Validation  []*assertly.Validation
+	PassedCount int
+	FailedCount int
 }
 
 //AddEvent add provided event
@@ -199,10 +200,14 @@ func (r *CliRunner) reportHTTPEventTypes(serviceResponse interface{}, event *Eve
 
 func (r *CliRunner) reportValidationEventTypes(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) bool {
 	switch actual := serviceResponse.(type) {
-	case *ValidationInfo:
-		r.reportValidationInfo(actual, event)
+	case *assertly.Validation:
+		r.reportValidation(actual, event)
+	case *DsUnitExpectResponse:
+		r.reportValidation(actual.Validation, event)
+	case *ValidatorAssertResponse:
+		r.reportValidation(actual.Validation, event)
 	case *LogValidatorAssertResponse:
-		r.reportLogValidationInfo(actual)
+		r.reportLogValidation(actual)
 	case *SeleniumRunResponse:
 		r.reportLookupErrors(actual)
 	default:
@@ -328,23 +333,24 @@ func (r *CliRunner) reportEventType(serviceResponse interface{}, event *Event, f
 	}
 }
 
-func (r *CliRunner) reportLogValidationInfo(response *LogValidatorAssertResponse) {
+func (r *CliRunner) reportLogValidation(response *LogValidatorAssertResponse) {
 	var passedCount, failedCount = 0, 0
 	if response == nil {
 		return
 	}
-	for _, info := range response.ValidationInfo {
-		if info.HasFailure() {
+	for _, validation := range response.Validations {
+
+		if validation.HasFailure() {
 			failedCount++
-		} else if info.TestPassed > 0 {
+		} else if validation.PassedCount > 0 {
 			passedCount++
 		}
 		if r.activity != nil {
-			var tagID = info.TagID
+			var tagID = validation.TagID
 			if eventTag, ok := r.indexedTag[tagID]; ok {
-				eventTag.AddEvent(&Event{Type: "LogValidation", Value: Pairs("value", info)})
-				eventTag.PassedCount += info.TestPassed
-				eventTag.FailedCount += len(info.FailedTests)
+				eventTag.AddEvent(&Event{Type: "LogValidation", Value: Pairs("value", validation)})
+				eventTag.PassedCount += validation.PassedCount
+				eventTag.FailedCount += validation.FailedCount
 
 			}
 		}
@@ -383,29 +389,30 @@ func (r *CliRunner) extractHTTPTrips(eventCandidates []*Event) ([]*HTTPRequest, 
 	return requests, responses
 }
 
-func (r *CliRunner) reportFailureWithMatchSource(tag *EventTag, info *ValidationInfo, eventCandidates []*Event) {
-	var theFirstFailure = info.FailedTests[0]
+func (r *CliRunner) reportFailureWithMatchSource(tag *EventTag, validation *assertly.Validation, eventCandidates []*Event) {
+	var theFirstFailure = validation.Failures[0]
+	firstFailurePathIndex := theFirstFailure.Index()
 	var requests []*HTTPRequest
 	var responses []*HTTPResponse
 
-	if theFirstFailure.PathIndex != -1 && (strings.Contains(theFirstFailure.Path, "Body") || strings.Contains(theFirstFailure.Path, "Code") || strings.Contains(theFirstFailure.Path, "Cookie") || strings.Contains(theFirstFailure.Path, "Header")) {
+	if theFirstFailure.Index() != -1 && (strings.Contains(theFirstFailure.Path, "Body") || strings.Contains(theFirstFailure.Path, "Code") || strings.Contains(theFirstFailure.Path, "Cookie") || strings.Contains(theFirstFailure.Path, "Header")) {
 		requests, responses = r.extractHTTPTrips(eventCandidates)
-		if theFirstFailure.PathIndex < len(requests) {
-			r.reportHTTPRequest(requests[theFirstFailure.PathIndex])
+		if firstFailurePathIndex < len(requests) {
+			r.reportHTTPRequest(requests[firstFailurePathIndex])
 		}
-		if theFirstFailure.PathIndex < len(responses) {
-			r.reportHTTPResponse(responses[theFirstFailure.PathIndex])
+		if firstFailurePathIndex < len(responses) {
+			r.reportHTTPResponse(responses[firstFailurePathIndex])
 		}
 	}
 
 	var counter = 0
-	for _, failure := range info.FailedTests {
+	for _, failure := range validation.Failures {
 		path := failure.Path
-		if failure.PathIndex != -1 {
-			path = fmt.Sprintf("%v:%v", failure.PathIndex, failure.Path)
+		if failure.Index() != -1 {
+			path = fmt.Sprintf("%v:%v", failure.Index(), failure.Path)
 		}
 		r.printMessage(path, len(path), messageTypeError, failure.Message, messageTypeError, "Failed")
-		if theFirstFailure.PathIndex != failure.PathIndex || counter >= 3 {
+		if firstFailurePathIndex != failure.Index() || counter >= 3 {
 			break
 		}
 		counter++
@@ -434,11 +441,11 @@ func (r *CliRunner) reportTagSummary() {
 
 			var minRange = 0
 			for i, event := range tag.Events {
-				candidate := event.get(reflect.TypeOf(&ValidationInfo{}))
+				candidate := event.get(reflect.TypeOf(&assertly.Validation{}))
 				if candidate == nil {
 					continue
 				}
-				if info, ok := candidate.(*ValidationInfo); ok && info != nil && info.HasFailure() {
+				if info, ok := candidate.(*assertly.Validation); ok && info != nil && info.HasFailure() {
 					var failureSourceEvent = []*Event{}
 					if i-minRange > 0 {
 						failureSourceEvent = tag.Events[minRange: i-1]
@@ -494,30 +501,30 @@ func (r *CliRunner) reportHTTPRequest(request *HTTPRequest) {
 	r.printInput(request.Body)
 }
 
-func (r *CliRunner) reportValidationInfo(info *ValidationInfo, event *Event) {
-	if info == nil {
+func (r *CliRunner) reportValidation(validation *assertly.Validation, event *Event) {
+	if validation == nil {
 		return
 	}
-	var total = info.TestPassed + len(info.FailedTests)
-	var description = info.Description
+	var total = validation.PassedCount + validation.FailedCount
+	var description = validation.Description
 
 	var activity = r.activities.Last()
 	if activity != nil {
-		var tagID = info.TagID
+		var tagID = validation.TagID
 		eventTag, ok := r.indexedTag[tagID]
 		if !ok {
 			eventTag = r.EventTag()
 		}
-		eventTag.FailedCount += len(info.FailedTests)
-		eventTag.PassedCount += info.TestPassed
+		eventTag.FailedCount += validation.FailedCount
+		eventTag.PassedCount += validation.PassedCount
 
 	}
 	messageType := messageTypeSuccess
 	messageInfo := "OK"
-	var message = fmt.Sprintf("Passed %v/%v %v", info.TestPassed, total, description)
-	if len(info.FailedTests) > 0 {
+	var message = fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, total, description)
+	if validation.PassedCount > 0 {
 		messageType = messageTypeError
-		message = fmt.Sprintf("Passed %v/%v %v", info.TestPassed, total, description)
+		message = fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, total, description)
 		messageInfo = "FAILED"
 	}
 	r.printShortMessage(messageType, message, messageType, messageInfo)

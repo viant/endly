@@ -1,0 +1,7 @@
+Validation,Name,Tasks,[]Init.Name,[]Init.From,[]Init.Required
+,validator,%Tasks,actual,params.actual,TRUE
+,,,expected,params.expected,TRUE
+[]Tasks,Name,Actions,,,
+,assert,%Assert,,,
+[]Assert,Service,Action,Request.Actual,Request.Expected,
+,validator,assert,$actual,$expected,

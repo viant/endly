@@ -3,6 +3,7 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/dsunit"
+	"github.com/viant/assertly"
 )
 
 //DsUnitExpectRequest represent verification request.
@@ -48,4 +49,9 @@ func (r *DsUnitExpectRequest) AsDatasetResource() *dsunit.DatasetResource {
 		}
 	}
 	return result
+}
+
+//DsUnitExpectResponse represent dsunit expect response
+type DsUnitExpectResponse struct {
+	*assertly.Validation
 }
