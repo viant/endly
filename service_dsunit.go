@@ -9,6 +9,7 @@ import (
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"strings"
+	"github.com/viant/assertly"
 )
 
 const (
@@ -304,17 +305,21 @@ func (s *dataStoreUnitService) prepare(context *Context, request *DsUnitPrepareR
 	return response, err
 }
 
-func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectRequest) (*ValidationInfo, error) {
+func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectRequest) (response *DsUnitExpectResponse, err error) {
 	datasets, err := s.buildDatasets(context, request.AsDatasetResource(), request.Expand)
 	if err != nil {
 		return nil, err
 	}
+
+	response = &DsUnitExpectResponse{
+		Validation:&assertly.Validation{},
+	}
+
 	var verificationFailures = make(map[string]bool)
 	violations, err := s.Manager.ExpectDatasets(request.CheckPolicy, datasets)
 	if err != nil {
 		return nil, err
 	}
-	validationInfo := &ValidationInfo{}
 
 	if violations.HasViolations() {
 		for _, violation := range violations.Violations() {
@@ -332,18 +337,16 @@ func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectReq
 				message += "\n\tThe following row was different:\n\t\t"
 				message += fmt.Sprintf("[PK: %v]:  %v !=  actual: %v \n\t\t", violation.Key, violation.Expected, violation.Actual)
 			}
-			validationInfo.AddFailure(NewFailedTest(path, message, violation.Expected, violation.Actual))
+			response.AddFailure(assertly.NewFailure(path, message, violation.Expected, violation.Actual))
 		}
-
 	}
-
 	for _, dataset := range datasets.Datasets {
 		if verificationFailures[dataset.Table] {
 			continue
 		}
-		validationInfo.TestPassed = len(dataset.Rows)
+		response.PassedCount= len(dataset.Rows)
 	}
-	return validationInfo, err
+	return response, err
 }
 
 func (s *dataStoreUnitService) NewRequest(action string) (interface{}, error) {
@@ -377,7 +380,7 @@ func (s *dataStoreUnitService) NewResponse(action string) (interface{}, error) {
 	case DataStoreUnitServiceSequenceAction:
 		return &DsUnitTableSequenceResponse{}, nil
 	case DataStoreUnitServiceExpectAction:
-		return &dsunit.ExpectResponse{}, nil
+		return &DsUnitExpectRequest{}, nil
 	}
 	return s.AbstractService.NewResponse(action)
 }
