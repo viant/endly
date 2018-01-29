@@ -284,11 +284,7 @@ func normalizeArgument(value string) interface{} {
 			value = text
 		}
 	}
-	_, structure := endly.AsExtractable(value)
-	if len(structure) > 0 {
-		if strings.HasPrefix(value, "[") {
-			return structure[endly.SliceKey]
-		}
+	if structure, err := toolbox.JSONToInterface(value);err == nil {
 		return structure
 	}
 	return value
