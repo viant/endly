@@ -339,7 +339,6 @@ func (r *CliRunner) reportLogValidation(response *LogValidatorAssertResponse) {
 		return
 	}
 	for _, validation := range response.Validations {
-
 		if validation.HasFailure() {
 			failedCount++
 		} else if validation.PassedCount > 0 {
@@ -395,13 +394,16 @@ func (r *CliRunner) reportFailureWithMatchSource(tag *EventTag, validation *asse
 	var requests []*HTTPRequest
 	var responses []*HTTPResponse
 
-	if theFirstFailure.Index() != -1 && (strings.Contains(theFirstFailure.Path, "Body") || strings.Contains(theFirstFailure.Path, "Code") || strings.Contains(theFirstFailure.Path, "Cookie") || strings.Contains(theFirstFailure.Path, "Header")) {
-		requests, responses = r.extractHTTPTrips(eventCandidates)
-		if firstFailurePathIndex < len(requests) {
-			r.reportHTTPRequest(requests[firstFailurePathIndex])
-		}
-		if firstFailurePathIndex < len(responses) {
-			r.reportHTTPResponse(responses[firstFailurePathIndex])
+	if (strings.Contains(theFirstFailure.Path, "Body") || strings.Contains(theFirstFailure.Path, "Code") || strings.Contains(theFirstFailure.Path, "Cookie") || strings.Contains(theFirstFailure.Path, "Header")) {
+		if theFirstFailure.Index() != -1 {
+
+			requests, responses = r.extractHTTPTrips(eventCandidates)
+			if firstFailurePathIndex < len(requests) {
+				r.reportHTTPRequest(requests[firstFailurePathIndex])
+			}
+			if firstFailurePathIndex < len(responses) {
+				r.reportHTTPResponse(responses[firstFailurePathIndex])
+			}
 		}
 	}
 
@@ -433,24 +435,60 @@ func (r *CliRunner) reportSummaryEvent() {
 	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed + r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
 }
 
+
+
+func (r *CliRunner) getAssertResponse(event *Event) *assertly.Validation{
+	candidate := event.get(reflect.TypeOf(&ValidatorAssertResponse{}))
+	if candidate == nil {
+		return nil
+	}
+	assertResponse, ok := candidate.(*ValidatorAssertResponse);
+	if !  ok {
+		return nil
+	}
+	return assertResponse.Validation
+}
+
+func (r *CliRunner) getDsUnitAssertResponse(event *Event) *assertly.Validation {
+	candidate := event.get(reflect.TypeOf(&DsUnitExpectResponse{}))
+	if candidate == nil {
+		return nil
+	}
+	assertResponse, ok := candidate.(*DsUnitExpectResponse);
+	if !  ok {
+		return nil
+	}
+	return assertResponse.Validation
+}
+
+
 func (r *CliRunner) reportTagSummary() {
 	for _, tag := range r.tags {
+
+
+
 		if tag.FailedCount > 0 {
 			var eventTag = tag.TagID
 			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
 
 			var minRange = 0
 			for i, event := range tag.Events {
-				candidate := event.get(reflect.TypeOf(&assertly.Validation{}))
-				if candidate == nil {
+
+
+				validation := r.getAssertResponse(event)
+				if validation == nil {
+					validation = r.getDsUnitAssertResponse(event)
+				}
+				if validation == nil {
 					continue
 				}
-				if info, ok := candidate.(*assertly.Validation); ok && info != nil && info.HasFailure() {
+
+				if validation.HasFailure() {
 					var failureSourceEvent = []*Event{}
 					if i-minRange > 0 {
 						failureSourceEvent = tag.Events[minRange: i-1]
 					}
-					r.reportFailureWithMatchSource(tag, info, failureSourceEvent)
+					r.reportFailureWithMatchSource(tag, validation, failureSourceEvent)
 					minRange = i + 1
 				}
 			}
@@ -522,7 +560,7 @@ func (r *CliRunner) reportValidation(validation *assertly.Validation, event *Eve
 	messageType := messageTypeSuccess
 	messageInfo := "OK"
 	var message = fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, total, description)
-	if validation.PassedCount > 0 {
+	if validation.FailedCount > 0 {
 		messageType = messageTypeError
 		message = fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, total, description)
 		messageInfo = "FAILED"

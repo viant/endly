@@ -61,7 +61,7 @@ func main() {
 
 	outputFile, ok := flagset["o"]
 	if !ok {
-		fmt.Printf("-o was migging\n")
+		fmt.Printf("-o was missing\n")
 		printHelp()
 		return
 	}
