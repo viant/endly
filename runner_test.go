@@ -10,6 +10,7 @@ import (
 	"testing"
 )
 
+
 func TestCliRunner_RunDsUnitWorkflow(t *testing.T) {
 	exec.Command("rm", "-rf", "/tmp/endly/test/workflow/dsunit").CombinedOutput()
 	toolbox.CreateDirIfNotExist("/tmp/endly/test/workflow/dsunit")
@@ -34,7 +35,6 @@ func TestCliRunner_RunDsHttpWorkflow(t *testing.T) {
 	if !assert.Nil(t, err) {
 		return
 	}
-	exec.Command("rm", "-rf", "/tmp/endly/test/workflow/dsunit").CombinedOutput()
 	toolbox.CreateDirIfNotExist("/tmp/endly/test/workflow/dsunit")
 	runner := endly.NewCliRunner()
 

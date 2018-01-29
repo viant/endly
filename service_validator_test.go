@@ -24,14 +24,14 @@ func assertWithService(expected, actual interface{}) (int, error) {
 		return 0, errors.New(response.Error)
 	}
 
-	validationResponse, ok := response.Response.(*endly.ValidationInfo)
+	assertResponse, ok := response.Response.(*endly.ValidatorAssertResponse)
 	if !ok {
 		return 0, nil
 	}
-	if len(validationResponse.FailedTests) > 0 {
-		return 0, errors.New(validationResponse.Message())
+	if assertResponse.FailedCount > 0 {
+		return 0, errors.New("test violations")
 	}
-	return validationResponse.TestPassed, nil
+	return assertResponse.PassedCount, nil
 }
 
 func TestValidatorService_Assert(t *testing.T) {
@@ -53,7 +53,7 @@ func TestValidatorService_Assert(t *testing.T) {
 	}
 
 	{
-		passed, err := assertWithService("/!abc/", "abcd")
+		passed, err := assertWithService("!/abc/", "abcd")
 		assert.NotNil(t, err)
 		assert.Equal(t, 0, passed)
 	}
@@ -65,7 +65,7 @@ func TestValidatorService_Assert(t *testing.T) {
 	}
 
 	{
-		passed, err := assertWithService("~/!.+(\\d+).+/", "avc1erwer")
+		passed, err := assertWithService("~!/.+(\\d+).+/", "avc1erwer")
 		assert.NotNil(t, err)
 		assert.Equal(t, 0, passed)
 	}
@@ -73,7 +73,7 @@ func TestValidatorService_Assert(t *testing.T) {
 	{
 		passed, err := assertWithService("~/.+(\\d+).+/", "avc1erw\ner")
 		assert.Nil(t, err)
-		assert.Equal(t, 0, passed)
+		assert.Equal(t, 1, passed)
 	}
 
 	{
@@ -154,18 +154,7 @@ func TestValidatorService_Assert(t *testing.T) {
 			},
 		})
 		assert.Nil(t, err)
-		assert.Equal(t, 5, passed)
+		assert.Equal(t, 4, passed)
 	}
-
-}
-
-func Test_AssertText(t *testing.T) {
-	validator := &endly.Validator{
-		ExcludedFields: make(map[string]bool),
-	}
-	assertInfo := &endly.ValidationInfo{}
-	err := validator.Assert("DONE", "Abc", assertInfo, "/")
-	assert.Nil(t, err)
-	assert.Equal(t, 1, assertInfo.TestFailed)
 
 }

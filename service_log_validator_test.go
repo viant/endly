@@ -112,11 +112,11 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	logValidatorAssertResponse, ok := response.Response.(*endly.LogValidatorAssertResponse)
 	if assert.True(t, ok) {
 		assert.NotNil(t, logValidatorAssertResponse)
-		assert.Equal(t, 4, len(logValidatorAssertResponse.ValidationInfo))
+		assert.Equal(t, 4, len(logValidatorAssertResponse.Validations))
 		for i := 0; i < 4; i++ {
-			assert.Equal(t, 0, len(logValidatorAssertResponse.ValidationInfo[i].FailedTests))
-			if !assert.Nil(t, logValidatorAssertResponse.ValidationInfo[i].FailedTests) {
-				assert.FailNow(t, toolbox.AsString(i)+" "+logValidatorAssertResponse.ValidationInfo[i].FailedTests[0].Message)
+			assert.Equal(t, 0, len(logValidatorAssertResponse.Validations[i].Failures))
+			if !assert.Nil(t, logValidatorAssertResponse.Validations[i].Failures) {
+				assert.FailNow(t, toolbox.AsString(i)+" "+logValidatorAssertResponse.Validations[i].Failures[0].Message)
 			}
 
 		}
@@ -137,7 +137,7 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 		logValidatorAssertResponse, ok = response.Response.(*endly.LogValidatorAssertResponse)
 		assert.True(t, ok)
 		assert.NotNil(t, logValidatorAssertResponse)
-		assert.Equal(t, 0, len(logValidatorAssertResponse.ValidationInfo[0].FailedTests))
+		assert.Equal(t, 0, len(logValidatorAssertResponse.Validations[0].Failures))
 
 	}
 	{
@@ -216,13 +216,13 @@ func TestLogValidatorService_TestIndexedRecord(t *testing.T) {
 	logValidatorAssertResponse, ok := response.Response.(*endly.LogValidatorAssertResponse)
 	if assert.True(t, ok) {
 		if assert.NotNil(t, logValidatorAssertResponse) {
-			assert.EqualValues(t, 4, len(logValidatorAssertResponse.ValidationInfo))
+			assert.EqualValues(t, 4, len(logValidatorAssertResponse.Validations))
 			for i := 0; i < 3; i++ {
-				if !assert.EqualValues(t, 0, logValidatorAssertResponse.ValidationInfo[i].TestFailed) {
-					assert.Fail(t, logValidatorAssertResponse.ValidationInfo[i].FailedTests[0].Message)
+				if !assert.EqualValues(t, 0, logValidatorAssertResponse.Validations[i].FailedCount) {
+					assert.Fail(t, logValidatorAssertResponse.Validations[i].Failures[0].Message)
 				}
 			}
-			assert.EqualValues(t, 1, logValidatorAssertResponse.ValidationInfo[3].TestFailed)
+			assert.EqualValues(t, 1, logValidatorAssertResponse.Validations[3].FailedCount)
 
 		}
 	}

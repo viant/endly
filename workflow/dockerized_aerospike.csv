@@ -3,7 +3,7 @@ Workflow,,Name,Description,Tasks,,Init
 []Tasks,,Name,Description,Actions,RunCriteria,
 ,,start,Start aerospike contaner,%Start,,
 []Start,Service,Action,Description,Request,RunCriteria,
-,transfer,copy,This action will copy template config file to the temp folder,#req/docker_config,$configURL:/!configURL/,
+,transfer,copy,This action will copy template config file to the temp folder,#req/docker_config,$configURL:!/configURL/,
 ,docker,run,Start docker aerospike service,#req/docker_aerospike,,
 []Tasks,,Name,Description,Actions,,
 ,,stop,Stop aerospike container,%Stop,,

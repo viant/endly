@@ -82,7 +82,7 @@ func (s *workflowService) Workflow(name string) (*Workflow, error) {
 	return nil, fmt.Errorf("failed to lookup workflow: %v", name)
 }
 
-func (s *workflowService) addVariableEvent(name string, variables Variables, context *Context, state data.Map) {
+func (s *workflowService) addVariableEvent(name string, variables Variables, context *Context, in, out data.Map) {
 	if len(variables) == 0 {
 		return
 	}
@@ -92,12 +92,13 @@ func (s *workflowService) addVariableEvent(name string, variables Variables, con
 		if variable.From != "" {
 			from := strings.Replace(variable.From, "<-", "", 1)
 			from = strings.Replace(from, "++", "", 1)
-			sources[from], _ = state.GetValue(from)
+			sources[from], _ = in.GetValue(from)
 		}
 		var name = variable.Name
 		name = strings.Replace(name, "->", "", 1)
 		name = strings.Replace(name, "++", "", 1)
-		values[name], _ = state.GetValue(name)
+		values[name], _ = in.GetValue(name)
+
 	}
 	AddEvent(context, name, Pairs("variables", variables, "values", values, "sources", sources), Debug)
 }
@@ -160,7 +161,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction, wor
 	}
 
 	err = action.Init.Apply(state, state)
-	s.addVariableEvent("Action.Init", action.Init, context, state)
+	s.addVariableEvent("Action.Init", action.Init, context, state, state)
 	if err != nil {
 		return nil, err
 	}
@@ -201,8 +202,12 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction, wor
 	} else {
 		serviceActivity.Response["value"] = response
 	}
-	err = action.Post.Apply(data.Map(serviceActivity.Response), state) //result to task  state
-	s.addVariableEvent("Action.Post", action.Post, context, state)
+	var responseState = data.Map(serviceActivity.Response)
+	err = action.Post.Apply(responseState, state) //result to task  state
+
+
+
+	s.addVariableEvent("Action.Post", action.Post, context, responseState, state)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +230,7 @@ func (s *workflowService) runTask(context *Context, workflow *WorkflowControl, t
 		return nil, nil
 	}
 	err = task.Init.Apply(state, state)
-	s.addVariableEvent("Task.Init", task.Init, context, state)
+	s.addVariableEvent("Task.Init", task.Init, context, state, state)
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +277,7 @@ func (s *workflowService) runTask(context *Context, workflow *WorkflowControl, t
 	}
 	var taskPostState = data.NewMap()
 	err = task.Post.Apply(state, taskPostState)
-	s.addVariableEvent("Task.Post", task.Post, context, taskPostState)
+	s.addVariableEvent("Task.Post", task.Post, context, taskPostState, state)
 	state.Apply(taskPostState)
 	s.applyRemainingTaskSpentIfNeeded(context, task, startTime)
 	return taskPostState, err
@@ -381,7 +386,7 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	state.Put("params", params)
 
 	err = workflow.Init.Apply(state, state)
-	s.addVariableEvent("Workflow.Init", workflow.Init, context, state)
+	s.addVariableEvent("Workflow.Init", workflow.Init, context, state, state)
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +404,7 @@ func (s *workflowService) runWorkflow(upstreamContext *Context, request *Workflo
 	}
 
 	workflow.Post.Apply(state, response.Data) //context -> workflow output
-	s.addVariableEvent("Workflow.Post", workflow.Post, context, state)
+	s.addVariableEvent("Workflow.Post", workflow.Post, context, state, state)
 
 	if workflow.SleepTimeMs > 0 {
 		s.Sleep(context, workflow.SleepTimeMs)
