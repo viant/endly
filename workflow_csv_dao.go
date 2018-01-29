@@ -40,6 +40,6 @@ func (d *WorkflowDao) NewRepoResource(context data.Map, URI string) (*url.Resour
 //NewWorkflowDao returns a new NewWorkflowDao
 func NewWorkflowDao() *WorkflowDao {
 	return &WorkflowDao{
-		Dao: neatly.NewDao(endlyLocalRepo, endlyRemoteRepo, "", nil),
+		Dao: neatly.NewDao(true, endlyLocalRepo, endlyRemoteRepo, "", nil),
 	}
 }

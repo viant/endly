@@ -1,1 +1,1 @@
-echo '$(gcloud auth application-default print-access-token)' | docker login -u oauth2accesstoken  us.gcr.io/myproj --password-stdin
+echo '**docker-secret**' | docker login -u oauth2accesstoken  us.gcr.io/myproj --password-stdin
