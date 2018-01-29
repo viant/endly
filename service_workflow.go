@@ -205,8 +205,6 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction, wor
 	var responseState = data.Map(serviceActivity.Response)
 	err = action.Post.Apply(responseState, state) //result to task  state
 
-
-
 	s.addVariableEvent("Action.Post", action.Post, context, responseState, state)
 	if err != nil {
 		return nil, err
@@ -247,8 +245,8 @@ func (s *workflowService) runTask(context *Context, workflow *WorkflowControl, t
 			continue
 		}
 
-		var handler =  func(action *ServiceAction) (func() (interface{}, error)) {
-			return func()  (interface{}, error) {
+		var handler = func(action *ServiceAction) func() (interface{}, error) {
+			return func() (interface{}, error) {
 				result, err := s.runAction(context, action, workflow)
 				if err != nil {
 					return nil, fmt.Errorf("failed to run tag:%v %v", action.Tag, err)
@@ -459,7 +457,6 @@ func (s *workflowService) runWorkflowTasks(context *Context, workflow *WorkflowC
 	}
 	return nil
 }
-
 
 func buildParamsMap(request *WorkflowRunRequest, context *Context) data.Map {
 	var params = data.NewMap()

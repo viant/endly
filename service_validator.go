@@ -52,14 +52,12 @@ func (s *validatorService) Assert(context *Context, request *ValidatorAssertRequ
 		name = "/"
 	}
 
-	response.Validation, err =  Assert(context, name, expected, actual)
+	response.Validation, err = Assert(context, name, expected, actual)
 	if err != nil {
 		return nil, err
 	}
 	return response, nil
 }
-
-
 
 func (s *validatorService) NewRequest(action string) (interface{}, error) {
 	switch action {

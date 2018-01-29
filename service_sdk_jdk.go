@@ -21,7 +21,7 @@ func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate strin
 						Key:     "build",
 					},
 				},
-				Error: []string{commandNotFound, noSuchFileOrDirectory, programCanBeFound},
+				Errors: []string{commandNotFound, noSuchFileOrDirectory, programCanBeFound},
 			},
 			{
 				Command: fmt.Sprintf(jdkCandidate + "jrunscript -e 'java.lang.System.out.println(java.lang.System.getProperty(\"java.home\"));'"),
@@ -31,7 +31,7 @@ func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate strin
 						Key:     "JAVA_HOME",
 					},
 				},
-				Error: []string{commandNotFound, noSuchFileOrDirectory, programCanBeFound},
+				Errors: []string{commandNotFound, noSuchFileOrDirectory, programCanBeFound},
 			},
 		},
 	})
@@ -93,7 +93,7 @@ func (s *systemJdkService) setSdk(context *Context, request *SystemSdkSetRequest
 						Key:     "JAVA_HOME",
 					},
 				},
-				Error: []string{commandNotFound, noSuchFileOrDirectory, programCanBeFound},
+				Errors: []string{commandNotFound, noSuchFileOrDirectory, programCanBeFound},
 			},
 		},
 	})

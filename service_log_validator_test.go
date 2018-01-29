@@ -149,10 +149,10 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 
 }
 
-var indexedLogRecords = `{"Timestamp":"2018-01-12T14:07:09.120207-08:00","EventType":"event1","EventID":"eeed0b0c-f7e4-11e7-b54f-784f438e6f38","ClientIP":"127.0.0.1:52141","ServerIP":"127.0.0.1:8777","Request":{"Method":"GET","URL":"http://127.0.0.1:8777/event1/?k1=v1\u0026k2=v2","Header":{"Accept-Encoding":["gzip"],"User-Agent":["Go-http-client/1.1"]}},"Error":""}
-{"Timestamp":"2018-01-12T14:07:09.122259-08:00","EventType":"event1","EventID":"eeed4c70-f7e4-11e7-b54f-784f438e6f38","ClientIP":"127.0.0.1:52141","ServerIP":"127.0.0.1:8777","Request":{"Method":"GET","URL":"http://127.0.0.1:8777/event1/?k10=v1\u0026k2=v2","Header":{"Accept-Encoding":["gzip"],"User-Agent":["Go-http-client/1.1"]}},"Error":""}
-{"Timestamp":"2018-01-12T14:07:09.123185-08:00","EventType":"event2","EventID":"eeed709c-f7e4-11e7-b54f-784f438e6f38","ClientIP":"127.0.0.1:52141","ServerIP":"127.0.0.1:8777","Request":{"Method":"GET","URL":"http://127.0.0.1:8777/event2/?k1=v1\u0026k2=v2","Header":{"Accept-Encoding":["gzip"],"User-Agent":["Go-http-client/1.1"]}},"Error":""}
-{"Timestamp":"2018-01-12T14:07:09.123199-08:00","EventType":"event2","EventID":"eeed709c-f7e4-11e7-b54f-784f438e6f30","ClientIP":"127.0.0.1:52141","ServerIP":"127.0.0.1:8777","Request":{"Method":"GET","URL":"http://127.0.0.1:8777/event2/?k1=v1\u0026k2=v2","Header":{"Accept-Encoding":["gzip"],"User-Agent":["Go-http-client/1.1"]}},"Error":""}
+var indexedLogRecords = `{"Timestamp":"2018-01-12T14:07:09.120207-08:00","EventType":"event1","EventID":"eeed0b0c-f7e4-11e7-b54f-784f438e6f38","ClientIP":"127.0.0.1:52141","ServerIP":"127.0.0.1:8777","Request":{"Method":"GET","URL":"http://127.0.0.1:8777/event1/?k1=v1\u0026k2=v2","Header":{"Accept-Encoding":["gzip"],"User-Agent":["Go-http-client/1.1"]}},"Errors":""}
+{"Timestamp":"2018-01-12T14:07:09.122259-08:00","EventType":"event1","EventID":"eeed4c70-f7e4-11e7-b54f-784f438e6f38","ClientIP":"127.0.0.1:52141","ServerIP":"127.0.0.1:8777","Request":{"Method":"GET","URL":"http://127.0.0.1:8777/event1/?k10=v1\u0026k2=v2","Header":{"Accept-Encoding":["gzip"],"User-Agent":["Go-http-client/1.1"]}},"Errors":""}
+{"Timestamp":"2018-01-12T14:07:09.123185-08:00","EventType":"event2","EventID":"eeed709c-f7e4-11e7-b54f-784f438e6f38","ClientIP":"127.0.0.1:52141","ServerIP":"127.0.0.1:8777","Request":{"Method":"GET","URL":"http://127.0.0.1:8777/event2/?k1=v1\u0026k2=v2","Header":{"Accept-Encoding":["gzip"],"User-Agent":["Go-http-client/1.1"]}},"Errors":""}
+{"Timestamp":"2018-01-12T14:07:09.123199-08:00","EventType":"event2","EventID":"eeed709c-f7e4-11e7-b54f-784f438e6f30","ClientIP":"127.0.0.1:52141","ServerIP":"127.0.0.1:8777","Request":{"Method":"GET","URL":"http://127.0.0.1:8777/event2/?k1=v1\u0026k2=v2","Header":{"Accept-Encoding":["gzip"],"User-Agent":["Go-http-client/1.1"]}},"Errors":""}
 `
 
 func TestLogValidatorService_TestIndexedRecord(t *testing.T) {
