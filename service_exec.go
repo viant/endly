@@ -374,7 +374,7 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 		return err
 	}
 
-	errorMatch := match(stdout, execution.Error...)
+	errorMatch := match(stdout, execution.Errors...)
 	if errorMatch != "" {
 		return fmt.Errorf("encounter error fragment: (%v), command:%v, stdout: %v", errorMatch, command, stdout)
 	}
@@ -406,7 +406,7 @@ func getTerminators(options *ExecutionOptions, session *SystemTerminalSession, e
 		superUserPrompt = string(superUserPrompt[2:])
 	}
 	terminators = append(terminators, superUserPrompt)
-	terminators = append(terminators, execution.Error...)
+	terminators = append(terminators, execution.Errors...)
 	return terminators
 }
 
@@ -703,14 +703,14 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*Extractab
 		}
 		newExecution := &Execution{
 			Command:     sudo + execution.Command,
-			Error:       execution.Error,
+			Errors:      execution.Errors,
 			Extraction:  execution.Extraction,
 			Success:     execution.Success,
 			MatchOutput: execution.MatchOutput,
 			Credentials: execution.Credentials,
 		}
-		if len(execution.Error) > 0 {
-			errors = append(errors, execution.Error...)
+		if len(execution.Errors) > 0 {
+			errors = append(errors, execution.Errors...)
 		}
 		if len(execution.Extraction) > 0 {
 			extractions = append(extractions, execution.Extraction...)
@@ -726,10 +726,10 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*Extractab
 		Credentials: credentials,
 		MatchOutput: "Password",
 		Command:     sudoCredentialKey,
-		Error:       []string{"Password", commandNotFound},
+		Errors:      []string{"Password", commandNotFound},
 		Extraction:  extractions,
 	}
-	execution.Error = append(execution.Error, errors...)
+	execution.Errors = append(execution.Errors, errors...)
 	result.ExtractableCommand.Executions = append(result.ExtractableCommand.Executions, execution)
 	return result, nil
 }

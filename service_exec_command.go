@@ -26,7 +26,7 @@ type Execution struct {
 	MatchOutput string            //only run this execution is output from a previous command is matched
 	Command     string            //command to be executed
 	Extraction  DataExtractions   //Stdout data extraction instruction
-	Error       []string          //fragments that will terminate execution with error if matched with standard output
+	Errors      []string          //fragments that will terminate execution with error if matched with standard output
 	Success     []string          //if specified absence of all of the these fragment will terminate execution with error.
 }
 
@@ -68,7 +68,7 @@ func (r *CommandRequest) AsExtractableCommandRequest() *ExtractableCommandReques
 	for _, command := range r.Commands {
 		extractableCommand.Executions = append(extractableCommand.Executions, &Execution{
 			Command: command,
-			Error:   []string{commandNotFound, noSuchFileOrDirectory, errorIsNotRecoverable},
+			Errors:  []string{commandNotFound, noSuchFileOrDirectory, errorIsNotRecoverable},
 		})
 	}
 	return &ExtractableCommandRequest{
