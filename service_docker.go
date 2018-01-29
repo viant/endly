@@ -66,7 +66,7 @@ const (
 
 	containerInUse    = "is already in use by container"
 	unableToFindImage = "unable to find image"
-	dockerError       = "Error response"
+	dockerError       = "Errors response"
 	dockerSyntaxError = "syntax error near"
 )
 
@@ -176,54 +176,54 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 		s.SysPath = actualRequest.SysPath
 	case *DockerImagesRequest:
 		response.Response, err = s.checkImages(context, actualRequest)
-		errorMessage ="failed to check images"
+		errorMessage = "failed to check images"
 	case *DockerPullRequest:
 		response.Response, err = s.pullImage(context, actualRequest)
-		errorMessage ="failed to pull image"
+		errorMessage = "failed to pull image"
 	case *DockerContainerStatusRequest:
 		response.Response, err = s.checkContainerProcesses(context, actualRequest)
 		errorMessage = "failed to check process"
 	case *DockerContainerRunCommandRequest:
 		response.Response, err = s.runInContainer(context, actualRequest)
-		errorMessage ="failed to run docker command"
+		errorMessage = "failed to run docker command"
 	case *DockerContainerStartRequest:
 		response.Response, err = s.startContainer(context, actualRequest)
-		errorMessage ="failed start container"
+		errorMessage = "failed start container"
 	case *DockerContainerStopRequest:
 		response.Response, err = s.stopContainer(context, actualRequest)
-		errorMessage ="failed to stop container"
+		errorMessage = "failed to stop container"
 	case *DockerContainerRemoveRequest:
 		response.Response, err = s.removeContainer(context, actualRequest)
-		errorMessage ="failed to remove container"
+		errorMessage = "failed to remove container"
 	case *DockerRunRequest:
 		response.Response, err = s.runContainer(context, actualRequest)
-		errorMessage ="failed to run container"
+		errorMessage = "failed to run container"
 	case *DockerStopImagesRequest:
 		response.Response, err = s.stopImages(context, actualRequest)
-		errorMessage ="failed to stop images"
+		errorMessage = "failed to stop images"
 	case *DockerBuildRequest:
 		response.Response, err = s.build(context, actualRequest)
-		errorMessage ="failed to build image"
+		errorMessage = "failed to build image"
 	case *DockerTagRequest:
 		response.Response, err = s.tag(context, actualRequest)
-		errorMessage ="failed to tag "
+		errorMessage = "failed to tag "
 	case *DockerLoginRequest:
 		response.Response, err = s.login(context, actualRequest)
-		errorMessage ="failed to login"
+		errorMessage = "failed to login"
 	case *DockerLogoutRequest:
 		response.Response, err = s.logout(context, actualRequest)
-		errorMessage ="failed to logout"
+		errorMessage = "failed to logout"
 	case *DockerPushRequest:
 		response.Response, err = s.push(context, actualRequest)
-		errorMessage ="failed to push"
+		errorMessage = "failed to push"
 
 	case *DockerInspectRequest:
 		response.Response, err = s.inspect(context, actualRequest)
-		errorMessage ="failed to inspect"
+		errorMessage = "failed to inspect"
 
 	case *DockerContainerLogsRequest:
 		response.Response, err = s.containerLogs(context, actualRequest)
-		errorMessage ="failed to get logs:"
+		errorMessage = "failed to get logs:"
 
 	default:
 		err = fmt.Errorf("unsupported request type: %T", request)
@@ -643,7 +643,7 @@ func (s *dockerService) executeSecureDockerCommand(asRoot bool, secure map[strin
 			{
 				Credentials: secure,
 				Command:     command,
-				Error:       append(errors, []string{commandNotFound}...),
+				Errors:      append(errors, []string{commandNotFound}...),
 			},
 		},
 	}
@@ -733,7 +733,7 @@ func (s *dockerService) getGoogleCloudCredential(context *Context, credential st
 }
 
 /**
-on osx when hitting Error saving credentials: error storing credentials - err: exit status 1, out: `User interaction is not allowed.`
+on osx when hitting Errors saving credentials: error storing credentials - err: exit status 1, out: `User interaction is not allowed.`
 on docker service -> preferences -> and I untick "Securely store docker logins in macOS keychain" this problem goes away.
 */
 func (s *dockerService) login(context *Context, request *DockerLoginRequest) (*DockerLoginResponse, error) {
