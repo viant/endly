@@ -585,9 +585,9 @@ If expected keys have not been specified but exists in actual data structure the
 | --- | --- | --- |
 | Not Equal |  actual | !expected |
 | Contains | actual | /expected/|
-| Not Contains | actual | /!expected/|
+| Not Contains | actual | !/expected/|
 | RegExpr | actual | ~/expected/ |
-| Not RegExpr | actual | ~/!expected/ |
+| Not RegExpr | actual | ~!/expected/ |
 | Between | actual | /[minExpected..maxExpected]/ |
 | exists | n/a | { "key": "@exists@" }
 

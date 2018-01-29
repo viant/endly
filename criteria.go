@@ -23,10 +23,10 @@ func EvaluateCriteria(context *Context, criteria, eventType string, defaultValue
 	actualOperand := state.Expand(strings.TrimSpace(fragments[0]))
 	expectedOperand := state.Expand(strings.TrimSpace(fragments[1]))
 	validation, err := Assert(context, "/", expectedOperand, actualOperand)
+	var result = validation.FailedCount == 0
 	if err != nil {
 		return false, err
 	}
-	var result = validation.FailedCount == 0
 	AddEvent(context, eventType, Pairs("defaultValue", defaultValue, "actual", actualOperand, "expected", expectedOperand, "eligible", result), Info)
 	return result, err
 }

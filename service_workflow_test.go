@@ -221,17 +221,20 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 			},
 			PublishParameters: true,
 			EnableLogging:     true,
-			LoggingDirectory:  "/tmp/http/",
+			LoggingDirectory:  "logs",
 		})
 		assert.EqualValues(t, "", serviceResponse.Error)
 		response, ok := serviceResponse.Response.(*endly.WorkflowRunResponse)
 		if assert.True(t, ok) {
 
-			httpResponses := toolbox.AsSlice(response.Data["httpResponses"])
-			assert.EqualValues(t, 3, len(httpResponses))
-			for _, item := range httpResponses {
-				httpResponse := toolbox.AsMap(item)
-				assert.EqualValues(t, 200, httpResponse["Code"])
+			responses, ok := response.Data["httpResponses"]
+			if assert.True(t, ok) {
+				httpResponses := toolbox.AsSlice(responses)
+				assert.EqualValues(t, 3, len(httpResponses))
+				for _, item := range httpResponses {
+					httpResponse := toolbox.AsMap(item)
+					assert.EqualValues(t, 200, httpResponse["Code"])
+				}
 			}
 		}
 	}
