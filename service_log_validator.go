@@ -3,6 +3,7 @@ package endly
 import (
 	"bytes"
 	"fmt"
+	"github.com/viant/assertly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/storage"
@@ -15,7 +16,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"github.com/viant/assertly"
 )
 
 const (
@@ -321,10 +321,9 @@ func (s *logValidatorService) reset(context *Context, request *LogValidatorReset
 	return response, nil
 }
 
-
 func (s *logValidatorService) assert(context *Context, request *LogValidatorAssertRequest) (*LogValidatorAssertResponse, error) {
 	var response = &LogValidatorAssertResponse{
-		Description:    request.Description,
+		Description: request.Description,
 		Validations: make([]*assertly.Validation, 0),
 	}
 	var state = s.State()
@@ -368,7 +367,6 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 				AddEvent(context, sleepEventType, Pairs("value", sleepEventType))
 				time.Sleep(logWaitDuration)
 			}
-
 
 			if !logRecordIterator.HasNext() {
 				validation.AddFailure(assertly.NewFailure(fmt.Sprintf("[%v]", expectedLogRecords.TagID), "missing log record", expectedLogRecord, nil))

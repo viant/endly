@@ -2,6 +2,7 @@ package endly
 
 import (
 	"fmt"
+	"github.com/viant/assertly"
 	"github.com/viant/dsc"
 	"github.com/viant/dsunit"
 	"github.com/viant/toolbox"
@@ -9,7 +10,6 @@ import (
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"strings"
-	"github.com/viant/assertly"
 )
 
 const (
@@ -312,7 +312,7 @@ func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectReq
 	}
 
 	response = &DsUnitExpectResponse{
-		Validation:&assertly.Validation{},
+		Validation: &assertly.Validation{},
 	}
 
 	var verificationFailures = make(map[string]bool)
@@ -344,7 +344,7 @@ func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectReq
 		if verificationFailures[dataset.Table] {
 			continue
 		}
-		response.PassedCount= len(dataset.Rows)
+		response.PassedCount = len(dataset.Rows)
 	}
 	return response, err
 }
