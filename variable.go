@@ -71,7 +71,7 @@ func (v *Variable) fromVariable() *Variable {
 	}
 }
 
-func (v *Variables) getValueFromInState(variable *Variable, in data.Map) (interface{}, error) {
+func (v *Variables) getValueFromInput(variable *Variable, in data.Map) (interface{}, error) {
 	var value interface{}
 	if variable.From != "" {
 		var has bool
@@ -82,7 +82,6 @@ func (v *Variables) getValueFromInState(variable *Variable, in data.Map) (interf
 		} else {
 			value, has = in.GetValue(key)
 		}
-
 		if !has {
 			fromVariable := variable.fromVariable()
 			err := fromVariable.Load()
@@ -122,7 +121,7 @@ func (v *Variables) Apply(in, out data.Map) error {
 		if variable == nil {
 			continue
 		}
-		value, err := v.getValueFromInState(variable, in)
+		value, err := v.getValueFromInput(variable, in)
 		if err != nil {
 			return err
 		}

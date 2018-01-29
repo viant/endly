@@ -15,6 +15,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"github.com/viant/assertly"
 )
 
 const (
@@ -320,16 +321,13 @@ func (s *logValidatorService) reset(context *Context, request *LogValidatorReset
 	return response, nil
 }
 
-func (s *logValidatorService) assert(context *Context, request *LogValidatorAssertRequest) (*LogValidatorAssertResponse, error) {
 
+func (s *logValidatorService) assert(context *Context, request *LogValidatorAssertRequest) (*LogValidatorAssertResponse, error) {
 	var response = &LogValidatorAssertResponse{
 		Description:    request.Description,
-		ValidationInfo: make([]*ValidationInfo, 0),
+		Validations: make([]*assertly.Validation, 0),
 	}
 	var state = s.State()
-	validator := &Validator{
-		ExcludedFields: make(map[string]bool),
-	}
 	if len(request.ExpectedLogRecords) == 0 {
 		return response, nil
 	}
@@ -357,11 +355,11 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 		logWaitDuration := time.Duration(request.LogWaitTimeMs) * time.Millisecond
 
 		for _, expectedLogRecord := range expectedLogRecords.Records {
-			var validationInfo = &ValidationInfo{
+			var validation = &assertly.Validation{
 				TagID:       expectedLogRecords.TagID,
 				Description: fmt.Sprintf("Log Validation: %v", expectedLogRecords.Type),
 			}
-			response.ValidationInfo = append(response.ValidationInfo, validationInfo)
+			response.Validations = append(response.Validations, validation)
 			for j := 0; j < logWaitRetryCount; j++ {
 				if logRecordIterator.HasNext() {
 					break
@@ -371,8 +369,9 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 				time.Sleep(logWaitDuration)
 			}
 
+
 			if !logRecordIterator.HasNext() {
-				validationInfo.AddFailure(NewFailedTest(fmt.Sprintf("[%v]", expectedLogRecords.TagID), "Missing log record", expectedLogRecord, nil))
+				validation.AddFailure(assertly.NewFailure(fmt.Sprintf("[%v]", expectedLogRecords.TagID), "missing log record", expectedLogRecord, nil))
 				return response, nil
 			}
 
@@ -414,18 +413,17 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 					return nil, err
 				}
 			}
-
 			event.Logs = append(event.Logs, &LogRecordAssert{
 				TagID:    expectedLogRecords.TagID,
 				Expected: expectedLogRecord,
 				Actual:   actualLogRecord,
 			})
-
 			_, filename := toolbox.URLSplit(logRecord.URL)
-			err = validator.Assert(expectedLogRecord, actualLogRecord, validationInfo, fmt.Sprintf("[%v:%v]", filename, logRecord.Number))
+			logValidation, err := Assert(context, fmt.Sprintf("%v:%v", filename, logRecord.Number), expectedLogRecord, actualLogRecord)
 			if err != nil {
 				return nil, err
 			}
+			validation.MergeFrom(logValidation)
 		}
 		AddEvent(context, event, Pairs("value", event))
 	}

@@ -37,28 +37,29 @@ func (s *validatorService) Run(context *Context, request interface{}) *ServiceRe
 	return response
 }
 
-func (s *validatorService) Assert(context *Context, request *ValidatorAssertRequest) (*ValidationInfo, error) {
-	var response = &ValidationInfo{
-		Description: request.Description,
-	}
+func (s *validatorService) Assert(context *Context, request *ValidatorAssertRequest) (response *ValidatorAssertResponse, err error) {
 	var state = context.State()
 	var actual = request.Actual
 	var expected = request.Expected
+	response = &ValidatorAssertResponse{}
 	if toolbox.IsString(request.Actual) {
 		if actualValue, ok := state.GetValue(toolbox.AsString(request.Actual)); ok {
 			actual = actualValue
 		}
 	}
-	validator := &Validator{
-		ExcludedFields: make(map[string]bool),
+	name := request.Name
+	if name == "" {
+		name = "/"
 	}
 
-	err := validator.Assert(expected, actual, response, "/")
+	response.Validation, err =  Assert(context, name, expected, actual)
 	if err != nil {
 		return nil, err
 	}
 	return response, nil
 }
+
+
 
 func (s *validatorService) NewRequest(action string) (interface{}, error) {
 	switch action {
@@ -71,7 +72,7 @@ func (s *validatorService) NewRequest(action string) (interface{}, error) {
 func (s *validatorService) NewResponse(action string) (interface{}, error) {
 	switch action {
 	case ValidatorServiceAssertAction:
-		return &ValidationInfo{}, nil
+		return &ValidatorAssertResponse{}, nil
 	}
 	return s.AbstractService.NewResponse(action)
 }
