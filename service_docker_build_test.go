@@ -10,11 +10,11 @@ import (
 func Test_DockerBuildRequest_Validate(t *testing.T) {
 	{
 		request := endly.DockerBuildRequest{}
-		assert.NotNil(t, request.Vaidate())
+		assert.NotNil(t, request.Validate())
 	}
 	{
 		request := endly.DockerBuildRequest{Target: url.NewResource("abc"), Tag: &endly.DockerTag{}}
-		assert.NotNil(t, request.Vaidate())
+		assert.NotNil(t, request.Validate())
 	}
 	{
 		request := endly.DockerBuildRequest{Target: url.NewResource("abc"),
@@ -22,13 +22,13 @@ func Test_DockerBuildRequest_Validate(t *testing.T) {
 				"-t": "image:1.0",
 			},
 			Tag: &endly.DockerTag{Image: "abc"}}
-		assert.Nil(t, request.Vaidate())
+		assert.Nil(t, request.Validate())
 	}
 
 	{
 		request := endly.DockerBuildRequest{Target: url.NewResource("abc"),
 
 			Tag: &endly.DockerTag{Image: "abc"}}
-		assert.Nil(t, request.Vaidate())
+		assert.Nil(t, request.Validate())
 	}
 }

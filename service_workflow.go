@@ -241,23 +241,24 @@ func (s *workflowService) runTask(context *Context, workflow *WorkflowControl, t
 	for i := 0; i < len(task.Actions); i++ {
 		action := task.Actions[i]
 		if action.Async {
-			asyncActions = append(asyncActions, action)
+			asyncActions = append(asyncActions, task.Actions[i])
 			var asyncEvent = NewAsyncServiceActionEvent(workflow.Name, context.Expand(task.Name), context.Expand(action.Description), action.Service, action.Action, action.TagID)
 			AddEvent(context, asyncEvent, Pairs("value", asyncEvent))
 			continue
 		}
 
-		var handler = func() (interface{}, error) {
-			result, err := s.runAction(context, action, workflow)
-			if err != nil {
-				return nil, fmt.Errorf("failed to run action:%v %v", action.Tag, err)
+		var handler =  func(action *ServiceAction) (func() (interface{}, error)) {
+			return func()  (interface{}, error) {
+				result, err := s.runAction(context, action, workflow)
+				if err != nil {
+					return nil, fmt.Errorf("failed to run tag:%v %v", action.Tag, err)
+				}
+				return result, nil
 			}
-			return result, nil
 		}
-
 		var extractable = make(map[string]string)
 		repeatable := action.Repeatable.Get()
-		err = repeatable.Run(s.AbstractService, workflowCaller, context, handler, extractable)
+		err = repeatable.Run(s.AbstractService, workflowCaller, context, handler(task.Actions[i]), extractable)
 		if err != nil {
 			return nil, err
 		}
@@ -271,6 +272,7 @@ func (s *workflowService) runTask(context *Context, workflow *WorkflowControl, t
 			}
 		}
 	}
+
 	err = s.runAsyncActions(context, workflow, task, asyncActions)
 	if err != nil {
 		return nil, err
@@ -457,6 +459,7 @@ func (s *workflowService) runWorkflowTasks(context *Context, workflow *WorkflowC
 	}
 	return nil
 }
+
 
 func buildParamsMap(request *WorkflowRunRequest, context *Context) data.Map {
 	var params = data.NewMap()
