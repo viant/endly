@@ -35,7 +35,7 @@ func init() {
 	flag.String("f", "json", "<workflow or request format>, json or yaml")
 
 	flag.Bool("h", false, "print help")
-	flag.Bool("v", true, "print version")
+	flag.Bool("v", false, "print version")
 
 	flag.String("s", "", "<serviceID> print service details, -s='*' prints all service IDs")
 	flag.String("a", "", "<action> prints action request representation")
@@ -277,7 +277,7 @@ func getRunRequestWithOptons(flagset map[string]string) (*endly.WorkflowRunReque
 
 func normalizeArgument(value string) interface{} {
 	value = strings.Trim(value, " \"'")
-	if strings.HasPrefix(value, "#") {
+	if strings.HasPrefix(value, "#") || strings.HasPrefix(value, "@") {
 		resource := url.NewResource(string(value[1:]))
 		text, err := resource.DownloadText();
 		if err == nil {

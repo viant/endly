@@ -65,9 +65,9 @@ func TestDsUnitService(t *testing.T) {
 			URL:       url.NewResource("test/dsunit/dataset1").URL,
 		})
 		assert.Equal(t, "", serviceResponse.Error)
-		verifyResponse, ok := serviceResponse.Response.(*endly.ValidationInfo)
+		verifyResponse, ok := serviceResponse.Response.(*endly.DsUnitExpectResponse)
 		assert.True(t, ok)
-		assert.EqualValues(t, 0, len(verifyResponse.FailedTests))
+		assert.EqualValues(t, 0, len(verifyResponse.Failures))
 
 		serviceResponse = service.Run(context, &endly.DsUnitMappingRequest{
 			Mappings: []*url.Resource{
@@ -172,9 +172,9 @@ func TestDsUnitService(t *testing.T) {
 		})
 
 		if assert.Equal(t, "", serviceResponse.Error) {
-			verifyResponse, ok = serviceResponse.Response.(*endly.ValidationInfo)
+			verifyResponse, ok = serviceResponse.Response.(*endly.DsUnitExpectResponse)
 			if assert.True(t, ok) {
-				assert.EqualValues(t, 0, len(verifyResponse.FailedTests))
+				assert.EqualValues(t, 0, len(verifyResponse.Failures))
 			}
 		}
 

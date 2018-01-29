@@ -1,5 +1,7 @@
 package endly
 
+import "github.com/viant/assertly"
+
 //LogValidatorAssertRequest represents a log assert request
 type LogValidatorAssertRequest struct {
 	LogWaitTimeMs      int
@@ -15,8 +17,10 @@ type ExpectedLogRecord struct {
 	Records []interface{}
 }
 
+
+
 //LogValidatorAssertResponse represents a log assert response
 type LogValidatorAssertResponse struct {
-	Description    string
-	ValidationInfo []*ValidationInfo
+	Description string
+	Validations  []*assertly.Validation
 }

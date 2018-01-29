@@ -1,15 +1,16 @@
 package endly_test
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"testing"
+	"fmt"
 )
 
 func TestRepeatable_Run(t *testing.T) {
 	var abstractService = GetAbstractService()
+
 	{ //Test exit criteria with variable extraction from a map
 
 		repeataable := &endly.Repeatable{
@@ -170,7 +171,7 @@ func TestRepeatable_Run(t *testing.T) {
 			},
 			Repeat:       10,
 			SleepTimeMs:  100,
-			ExitCriteria: "$value:/!running/", //this is contains
+			ExitCriteria: "$value:!/running/", //this is contains
 		}
 
 		manager := endly.NewManager()
@@ -206,7 +207,7 @@ func TestRepeatable_Run(t *testing.T) {
 			},
 			Repeat:       10,
 			SleepTimeMs:  100,
-			ExitCriteria: "$value:/!running/", //this is contains
+			ExitCriteria: "$value:!/running/", //this is contains
 		}
 
 		manager := endly.NewManager()
@@ -248,7 +249,7 @@ func TestRepeatable_Run(t *testing.T) {
 			},
 			Repeat:       10,
 			SleepTimeMs:  100,
-			ExitCriteria: "$status:/!running/", //this is contains
+			ExitCriteria: "$status:!/running/", //this is contains
 		}
 
 		manager := endly.NewManager()
@@ -292,7 +293,7 @@ func TestRepeatable_Run(t *testing.T) {
 			},
 			Repeat:       10,
 			SleepTimeMs:  100,
-			ExitCriteria: "$value:/!running/", //this is contains
+			ExitCriteria: "$value:!/running/", //this is contains
 		}
 
 		manager := endly.NewManager()

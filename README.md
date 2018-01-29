@@ -585,9 +585,9 @@ If expected keys have not been specified but exists in actual data structure the
 | --- | --- | --- |
 | Not Equal |  actual | !expected |
 | Contains | actual | /expected/|
-| Not Contains | actual | /!expected/|
+| Not Contains | actual | !/expected/|
 | RegExpr | actual | ~/expected/ |
-| Not RegExpr | actual | ~/!expected/ |
+| Not RegExpr | actual | ~!/expected/ |
 | Between | actual | /[minExpected..maxExpected]/ |
 | exists | n/a | { "key": "@exists@" }
 
@@ -635,7 +635,7 @@ The first action that needs to be run is to register database name with dsc conn
 | dsunit | sequence | takes current sequences for specified tables |  [DsUnitTableSequenceRequest](service_dsunit_sequence.go) | [DsUnitTableSequenceResponse](service_dsunit_sequence.go)  |
 | dsunit | sql | executes SQL from supplied URL, or inline SQL |  [DsUnitSQLRequest](service_dsunit_sql.go) | [DsUnitSQLResponse](service_dsunit_sql.go)  |
 | dsunit | prepare | populates database with setup data |  [DsUnitTablePrepareRequest](service_dsunit_prepare.go) | [DsUnitTablePrepareResponse](service_dsunit_prepare.go)  |
-| dsunit | expect | verifies database content with expected data |  [DsUnitTableExpectRequest](service_dsunit_prepare.go) | [ValidationInfo](validation_info.go)  |
+| dsunit | expect | verifies database content with expected data |  [DsUnitTableExpectRequest](service_dsunit_prepare.go) | [*assertly.Validation](validation_info.go)  |
 
 To simplify setup/verification data process [DsUnitTableData](service_dsunit_data.go) has been introduce, so that data can be push into state, and then transform to the dsunit expected data with AsTableRecords udf function.
 
