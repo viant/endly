@@ -2,7 +2,6 @@ package endly
 
 import "github.com/viant/assertly"
 
-
 //Assert validates expected against actual
 func Assert(context *Context, root string, expected, actual interface{}) (*assertly.Validation, error) {
 	ctx := assertly.NewDefaultContext()

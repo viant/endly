@@ -5,7 +5,7 @@ import "github.com/viant/assertly"
 //ValidatorAssertRequest represent assert request
 type ValidatorAssertRequest struct {
 	TagID       string
-	Name      string
+	Name        string
 	Description string
 	Actual      interface{} //actual data structure
 	Expected    interface{} //expecte data structure
