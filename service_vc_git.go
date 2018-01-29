@@ -170,13 +170,13 @@ func (s *gitService) runSecureCommand(context *Context, origin, target *url.Reso
 		Executions: []*Execution{
 			{
 				Command: command,
-				Error:   []string{"No such file or directory", "Event not found", "Unable to connect"},
+				Errors:  []string{"No such file or directory", "Event not found", "Unable to connect"},
 			},
 			{
 				Credentials: credentials,
 				MatchOutput: "Password",
 				Command:     versionControlCredentialKey,
-				Error:       []string{"No such file or directory", "Event not found", "Authentication failed"},
+				Errors:      []string{"No such file or directory", "Event not found", "Authentication failed"},
 			},
 		},
 	})
@@ -204,7 +204,7 @@ func (s *gitService) commit(context *Context, request *VcCommitRequest) (*VcInfo
 				Executions: []*Execution{
 					{
 						Command: fmt.Sprintf("git add %v ", file),
-						Error:   []string{"No such file or directory", "Error"},
+						Errors:  []string{"No such file or directory", "Errors"},
 					},
 				},
 			})
@@ -219,7 +219,7 @@ func (s *gitService) commit(context *Context, request *VcCommitRequest) (*VcInfo
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("git commit -m \"%v\" -a", message),
-				Error:   []string{"No such file or directory", "Error"},
+				Errors:  []string{"No such file or directory", "Errors"},
 			},
 		},
 	})

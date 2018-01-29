@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/logrusorgru/aurora"
+	"github.com/viant/assertly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"os/exec"
@@ -12,11 +13,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"github.com/viant/assertly"
 )
 
 const (
-	messageTypeAction         = iota
+	messageTypeAction = iota
 	messageTypeTagDescription
 	messageTypeError
 	messageTypeSuccess
@@ -394,7 +394,7 @@ func (r *CliRunner) reportFailureWithMatchSource(tag *EventTag, validation *asse
 	var requests []*HTTPRequest
 	var responses []*HTTPResponse
 
-	if (strings.Contains(theFirstFailure.Path, "Body") || strings.Contains(theFirstFailure.Path, "Code") || strings.Contains(theFirstFailure.Path, "Cookie") || strings.Contains(theFirstFailure.Path, "Header")) {
+	if strings.Contains(theFirstFailure.Path, "Body") || strings.Contains(theFirstFailure.Path, "Code") || strings.Contains(theFirstFailure.Path, "Cookie") || strings.Contains(theFirstFailure.Path, "Header") {
 		if theFirstFailure.Index() != -1 {
 
 			requests, responses = r.extractHTTPTrips(eventCandidates)
@@ -432,18 +432,16 @@ func (r *CliRunner) reportSummaryEvent() {
 	}
 	var contextMessageLength = len(contextMessage) + len(contextMessageStatus)
 	contextMessage = fmt.Sprintf("%v%v", contextMessage, colorText(contextMessageStatus, contextMessageColor))
-	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed + r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
+	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed+r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
 }
 
-
-
-func (r *CliRunner) getAssertResponse(event *Event) *assertly.Validation{
+func (r *CliRunner) getAssertResponse(event *Event) *assertly.Validation {
 	candidate := event.get(reflect.TypeOf(&ValidatorAssertResponse{}))
 	if candidate == nil {
 		return nil
 	}
-	assertResponse, ok := candidate.(*ValidatorAssertResponse);
-	if !  ok {
+	assertResponse, ok := candidate.(*ValidatorAssertResponse)
+	if !ok {
 		return nil
 	}
 	return assertResponse.Validation
@@ -454,26 +452,22 @@ func (r *CliRunner) getDsUnitAssertResponse(event *Event) *assertly.Validation {
 	if candidate == nil {
 		return nil
 	}
-	assertResponse, ok := candidate.(*DsUnitExpectResponse);
-	if !  ok {
+	assertResponse, ok := candidate.(*DsUnitExpectResponse)
+	if !ok {
 		return nil
 	}
 	return assertResponse.Validation
 }
 
-
 func (r *CliRunner) reportTagSummary() {
 	for _, tag := range r.tags {
 
-
-
 		if tag.FailedCount > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
+			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
 
 			var minRange = 0
 			for i, event := range tag.Events {
-
 
 				validation := r.getAssertResponse(event)
 				if validation == nil {
@@ -486,7 +480,7 @@ func (r *CliRunner) reportTagSummary() {
 				if validation.HasFailure() {
 					var failureSourceEvent = []*Event{}
 					if i-minRange > 0 {
-						failureSourceEvent = tag.Events[minRange: i-1]
+						failureSourceEvent = tag.Events[minRange : i-1]
 					}
 					r.reportFailureWithMatchSource(tag, validation, failureSourceEvent)
 					minRange = i + 1

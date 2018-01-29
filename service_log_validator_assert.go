@@ -17,10 +17,8 @@ type ExpectedLogRecord struct {
 	Records []interface{}
 }
 
-
-
 //LogValidatorAssertResponse represents a log assert response
 type LogValidatorAssertResponse struct {
 	Description string
-	Validations  []*assertly.Validation
+	Validations []*assertly.Validation
 }
