@@ -58,8 +58,9 @@ go get -u github.com/viant/endly
 [Download the latst endly](https://github.com/viant/endly/releases/)
 
 
-[Neatly introduction](https://github.com/adranwit/neatly-introduction)
-[Endly introduction](https://github.com/adranwit/endly-introduction)    
+[Neatly introduction](https://github.com/adrianwit/neatly-introduction)
+
+[Endly introduction](https://github.com/adrianwit/endly-introduction)    
 
 
 
