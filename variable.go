@@ -77,7 +77,7 @@ func (v *Variables) getValueFromInput(variable *Variable, in data.Map) (interfac
 		var has bool
 		var key = variable.From
 		if strings.HasPrefix(key, "!") {
-			if !(strings.Contains(key, "[") ||  strings.Contains(key, "]")) {
+			if !(strings.Contains(key, "[") ||  strings.Contains(key, "{")) {
 				key = strings.Replace(key, "(", "($", 1)
 			}
 			value = in.Expand(key)
