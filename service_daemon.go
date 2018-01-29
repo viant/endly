@@ -245,7 +245,7 @@ func (s *daemonService) determineCheckCommand(context *Context, target *url.Reso
 								RegExpr: "state = (running)",
 							},
 						},
-						Error: []string{"Unrecognized"},
+						Errors: []string{"Unrecognized"},
 					},
 				},
 			})

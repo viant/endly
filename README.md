@@ -575,51 +575,9 @@ In order to get log validation,
 
 
 ** Validation expressions **
-Generic validation service and log validator, Task or Action RunCritera share undelying validator, 
-During assertion validator traverses expected data structure to compare it with expected.
-If expected keys have not been specified but exists in actual data structure they are being skipped from assertion.
 
+Validation uses [assertly Arbitraty data structure validation](https://github.com/viant/assertly) library.
 
-
-| Equal |  actual | expected |
-| --- | --- | --- |
-| Not Equal |  actual | !expected |
-| Contains | actual | /expected/|
-| Not Contains | actual | !/expected/|
-| RegExpr | actual | ~/expected/ |
-| Not RegExpr | actual | ~!/expected/ |
-| Between | actual | /[minExpected..maxExpected]/ |
-| exists | n/a | { "key": "@exists@" }
-
-
-**Array of object vs expected map assertion transformation:**
-
-It is possible to convert actual array of object to map, 
-with "@indexBy@ directive.
-
-Take as example the following actual and expected data structure.
-
-\#actual
-```json
-[
-{"id":1, "name":"name1"},
-{"id":2, "name":"name2"}
-]
-
-```
-
-\#expected
-```json
-{
-"@indexBy@":"id",
-"1" :{"id":1, "name":"name1"},
-"2" :{"id":2, "name":"name2"}
-}
-
-```
-	
-
-TODO: unify endly and dsunit validation with macro expression. 
 
 <a name="dsunit"></a>
 
