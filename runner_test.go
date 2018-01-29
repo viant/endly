@@ -10,7 +10,6 @@ import (
 	"testing"
 )
 
-
 func TestCliRunner_RunDsUnitWorkflow(t *testing.T) {
 	exec.Command("rm", "-rf", "/tmp/endly/test/workflow/dsunit").CombinedOutput()
 	toolbox.CreateDirIfNotExist("/tmp/endly/test/workflow/dsunit")

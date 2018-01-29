@@ -119,18 +119,18 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource,
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("svn %v --username=%v %v", command, username, strings.Join(arguments, " ")),
-				Error:   []string{"No such file or directory", "Event not found", "Error validating server certificate", "Unable to connect to a repository"},
+				Errors:  []string{"No such file or directory", "Event not found", "Errors validating server certificate", "Unable to connect to a repository"},
 			},
 			{
 				Credentials: credentials,
 				MatchOutput: "Password",
 				Command:     versionControlCredentialKey,
-				Error:       []string{"No such file or directory", "Event not found", "Username:"},
+				Errors:      []string{"No such file or directory", "Event not found", "Username:"},
 			},
 			{
 				MatchOutput: "Store password unencrypted",
 				Command:     "no",
-				Error:       []string{"No such file or directory", "Event not found", "Error validating server certificate"},
+				Errors:      []string{"No such file or directory", "Event not found", "Errors validating server certificate"},
 			},
 		},
 	})

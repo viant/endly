@@ -28,10 +28,13 @@ func (r *DockerBuildRequest) Init() {
 	}
 }
 
-//Vaidate check if request is valid
-func (r *DockerBuildRequest) Vaidate() error {
+//Validate check if request is valid
+func (r *DockerBuildRequest) Validate() error {
 	if r.Target == nil {
 		return errors.New("target was nil")
+	}
+	if r.Path == "" {
+		return errors.New("path was empty was nil")
 	}
 	if r.Tag != nil {
 		err := r.Tag.Validate()

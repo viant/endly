@@ -2,8 +2,8 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/dsunit"
 	"github.com/viant/assertly"
+	"github.com/viant/dsunit"
 )
 
 //DsUnitExpectRequest represent verification request.

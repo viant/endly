@@ -66,7 +66,7 @@ const (
 
 	containerInUse    = "is already in use by container"
 	unableToFindImage = "unable to find image"
-	dockerError       = "Error response"
+	dockerError       = "Errors response"
 	dockerSyntaxError = "syntax error near"
 )
 
@@ -176,62 +176,62 @@ func (s *dockerService) Run(context *Context, request interface{}) *ServiceRespo
 		s.SysPath = actualRequest.SysPath
 	case *DockerImagesRequest:
 		response.Response, err = s.checkImages(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to check images %v", actualRequest.Tag)
+		errorMessage = "failed to check images"
 	case *DockerPullRequest:
 		response.Response, err = s.pullImage(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to pull image %v", actualRequest.Tag)
+		errorMessage = "failed to pull image"
 	case *DockerContainerStatusRequest:
 		response.Response, err = s.checkContainerProcesses(context, actualRequest)
 		errorMessage = "failed to check process"
 	case *DockerContainerRunCommandRequest:
 		response.Response, err = s.runInContainer(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to run docker command %v in %v", actualRequest.Command, actualRequest.Target.Name)
+		errorMessage = "failed to run docker command"
 	case *DockerContainerStartRequest:
 		response.Response, err = s.startContainer(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed start container %v", actualRequest.Target.Name)
+		errorMessage = "failed start container"
 	case *DockerContainerStopRequest:
 		response.Response, err = s.stopContainer(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to stop container: %v", actualRequest.Target.Name)
+		errorMessage = "failed to stop container"
 	case *DockerContainerRemoveRequest:
 		response.Response, err = s.removeContainer(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to remove container: %v", actualRequest.Target.Name)
+		errorMessage = "failed to remove container"
 	case *DockerRunRequest:
 		response.Response, err = s.runContainer(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to run container: %v", actualRequest.Target.Name)
+		errorMessage = "failed to run container"
 	case *DockerStopImagesRequest:
 		response.Response, err = s.stopImages(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to stop images: %v", actualRequest.Images)
+		errorMessage = "failed to stop images"
 	case *DockerBuildRequest:
 		response.Response, err = s.build(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to stop images: %v", actualRequest.Arguments)
+		errorMessage = "failed to build image"
 	case *DockerTagRequest:
 		response.Response, err = s.tag(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to stop images: %v, %v", actualRequest.SourceTag, actualRequest.TargetTag)
+		errorMessage = "failed to tag "
 	case *DockerLoginRequest:
 		response.Response, err = s.login(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to login: %v", actualRequest.Credential)
+		errorMessage = "failed to login"
 	case *DockerLogoutRequest:
 		response.Response, err = s.logout(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to logout:  %v", actualRequest.Target)
-
+		errorMessage = "failed to logout"
 	case *DockerPushRequest:
 		response.Response, err = s.push(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to push: %v", actualRequest.Tag)
+		errorMessage = "failed to push"
 
 	case *DockerInspectRequest:
 		response.Response, err = s.inspect(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to inspect: %v", actualRequest.Target)
+		errorMessage = "failed to inspect"
 
 	case *DockerContainerLogsRequest:
 		response.Response, err = s.containerLogs(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to get logs: %v", actualRequest.Target)
+		errorMessage = "failed to get logs:"
 
 	default:
 		err = fmt.Errorf("unsupported request type: %T", request)
 	}
 	if err != nil {
+		jsonRequest, _ := toolbox.AsJSONText(request)
 		response.Status = "error"
-		response.Error = errorMessage + ", " + err.Error()
+		response.Error = errorMessage + " " + jsonRequest + ", " + err.Error()
 	}
 	return response
 }
@@ -633,7 +633,7 @@ func (s *dockerService) executeSecureDockerCommand(asRoot bool, secure map[strin
 		secure = make(map[string]string)
 	}
 	secure[sudoCredentialKey] = target.Credential
-
+	command = strings.Replace(command, "\n", " ", len(command))
 	var extractableCommand = &ExtractableCommand{
 		Options: &ExecutionOptions{
 			SystemPaths: s.SysPath,
@@ -643,7 +643,7 @@ func (s *dockerService) executeSecureDockerCommand(asRoot bool, secure map[strin
 			{
 				Credentials: secure,
 				Command:     command,
-				Error:       append(errors, []string{commandNotFound}...),
+				Errors:      append(errors, []string{commandNotFound}...),
 			},
 		},
 	}
@@ -688,6 +688,7 @@ func (s *dockerService) build(context *Context, request *DockerBuildRequest) (*D
 	if request.Path == "" {
 		request.Path = "."
 	}
+
 	commandInfo, err := s.executeDockerCommand(nil, context, target, dockerIgnoreErrors, fmt.Sprintf("docker build %v %v", args, request.Path))
 	if err != nil {
 		return nil, err
@@ -732,7 +733,7 @@ func (s *dockerService) getGoogleCloudCredential(context *Context, credential st
 }
 
 /**
-on osx when hitting Error saving credentials: error storing credentials - err: exit status 1, out: `User interaction is not allowed.`
+on osx when hitting Errors saving credentials: error storing credentials - err: exit status 1, out: `User interaction is not allowed.`
 on docker service -> preferences -> and I untick "Securely store docker logins in macOS keychain" this problem goes away.
 */
 func (s *dockerService) login(context *Context, request *DockerLoginRequest) (*DockerLoginResponse, error) {
