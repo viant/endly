@@ -53,7 +53,7 @@ func TestValidatorService_Assert(t *testing.T) {
 	}
 
 	{
-		passed, err := assertWithService("/!abc/", "abcd")
+		passed, err := assertWithService("!/abc/", "abcd")
 		assert.NotNil(t, err)
 		assert.Equal(t, 0, passed)
 	}
@@ -65,7 +65,7 @@ func TestValidatorService_Assert(t *testing.T) {
 	}
 
 	{
-		passed, err := assertWithService("~/!.+(\\d+).+/", "avc1erwer")
+		passed, err := assertWithService("~!/.+(\\d+).+/", "avc1erwer")
 		assert.NotNil(t, err)
 		assert.Equal(t, 0, passed)
 	}
@@ -73,7 +73,7 @@ func TestValidatorService_Assert(t *testing.T) {
 	{
 		passed, err := assertWithService("~/.+(\\d+).+/", "avc1erw\ner")
 		assert.Nil(t, err)
-		assert.Equal(t, 0, passed)
+		assert.Equal(t, 1, passed)
 	}
 
 	{
@@ -154,7 +154,7 @@ func TestValidatorService_Assert(t *testing.T) {
 			},
 		})
 		assert.Nil(t, err)
-		assert.Equal(t, 5, passed)
+		assert.Equal(t, 4, passed)
 	}
 
 }

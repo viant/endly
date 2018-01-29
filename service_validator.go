@@ -47,7 +47,12 @@ func (s *validatorService) Assert(context *Context, request *ValidatorAssertRequ
 			actual = actualValue
 		}
 	}
-	response.Validation, err =  Assert(context, "/", expected, actual)
+	name := request.Name
+	if name == "" {
+		name = "/"
+	}
+
+	response.Validation, err =  Assert(context, name, expected, actual)
 	if err != nil {
 		return nil, err
 	}
