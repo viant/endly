@@ -9,4 +9,6 @@ import (
 //init initialises UDF functions
 func init() {
 	UdfRegistry["AsTableRecords"] = AsTableRecords
+	// !Dob([3,1,1,"yyyy"])
+	UdfRegistry["Dob"] = DateOfBirth
 }
