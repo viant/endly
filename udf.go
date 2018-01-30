@@ -30,7 +30,6 @@ func transformWithUDF(context *Context, udfName, source string, payload interfac
 func DateOfBirth(source interface{}, state data.Map) (interface{}, error) {
 
 	aSlice, err := toolbox.JSONToSlice(source)
-	fmt.Println("v% aSlice=",aSlice)
 	if err != nil {
 		return nil, err
 	}
