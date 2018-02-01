@@ -698,7 +698,7 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*Extractab
 			}
 		}
 		sudo := ""
-		if len(execution.Command) > 1 {
+		if len(execution.Command) > 1 && !strings.Contains(execution.Command, "sudo") {
 			sudo = "sudo "
 		}
 		newExecution := &Execution{

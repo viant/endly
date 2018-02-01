@@ -212,7 +212,7 @@ func TestDockerService_Run(t *testing.T) {
 			},
 			&endly.DockerContainerInfo{},
 			"testMysql01",
-			"failed to run container: testMysql01, error executing docker run --name testMysql01 -e MYSQL_ROOT_PASSWORD=**mysql** -v /tmp/my.cnf:/etc/my.cnf -p 3306:3306  -d mysql:5.6 , c3d9749a1dc43332bb5a58330187719d14c9c23cee55f583cb83bbb3bbb98a80\ndocker: Errors response from daemon: driver failed programming external connectivity on endpoint testMysql01 (5c9925d698dfee79f14483fbc42a3837abfb482e30c70e53d830d3d9cfd6f0da): Errors starting userland proxy: Bind for 0.0.0.0:3306 failed: port is already allocated.\n",
+			"failed to run container {\"Target\":{\"URL\":\"scp://127.0.0.1:22/\",\"Credential\":\"/var/folders/gl/5550g3kj6tn1rbz8chqx1c61ycmmm1/T/dummy11.json\",\"Cache\":\"\",\"CacheExpiryMs\":0,\"Name\":\"testMysql01\",\"Type\":\"\"},\"Image\":\"mysql:5.6\",\"Port\":\"\",\"Credentials\":{\"**mysql**\":\"/var/folders/gl/5550g3kj6tn1rbz8chqx1c61ycmmm1/T/mysql11.json\"},\"Env\":{\"MYSQL_ROOT_PASSWORD\":\"**mysql**\"},\"Mount\":{\"/tmp/my.cnf\":\"/etc/my.cnf\"},\"MappedPort\":{\"3306\":\"3306\"},\"Params\":null,\"Workdir\":\"\"}\n, error executing docker run --name testMysql01 -e MYSQL_ROOT_PASSWORD=**mysql** -v /tmp/my.cnf:/etc/my.cnf -p 3306:3306  -d mysql:5.6 , c3d9749a1dc43332bb5a58330187719d14c9c23cee55f583cb83bbb3bbb98a80\ndocker: Error response from daemon: driver failed programming external connectivity on endpoint testMysql01 (5c9925d698dfee79f14483fbc42a3837abfb482e30c70e53d830d3d9cfd6f0da): Error starting userland proxy: Bind for 0.0.0.0:3306 failed: port is already allocated.\n",
 		},
 		{
 			"test/docker/run/active/darwin",
@@ -760,7 +760,7 @@ func TestDockerService_Login(t *testing.T) {
 					})
 					continue
 				}
-				if assert.EqualValues(t, "", serviceResponse.Error) {
+				if assert.EqualValues(t, "", serviceResponse.Error, useCase.baseDir) {
 					response, ok := serviceResponse.Response.(*endly.DockerLoginResponse)
 					if assert.True(t, ok) {
 						assert.EqualValues(t, useCase.ExpectedUserName, response.Username)

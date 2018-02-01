@@ -1,1 +1,1 @@
-docker logout us.gcr.io/myproj
+sudo docker logout us.gcr.io/myproj
