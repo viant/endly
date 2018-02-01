@@ -86,6 +86,9 @@ type CliRunner struct {
 	MessageTypeColor   map[int]string
 	SuccessColor       string
 	ErrorColor         string
+	SleepCount         int
+	SleepTime          time.Duration
+	SleepTagID         string
 }
 
 //AddTag adds reporting tag
@@ -142,6 +145,10 @@ func (r *CliRunner) printError(output string) {
 
 func (r *CliRunner) printShortMessage(messageType int, message string, messageInfoType int, messageInfo string) {
 	fmt.Printf("%v\n", r.formatShortMessage(messageType, message, messageInfoType, messageInfo))
+}
+
+func (r *CliRunner) overrideShortMessage(messageType int, message string, messageInfoType int, messageInfo string) {
+	fmt.Printf("\r%v", r.formatShortMessage(messageType, message, messageInfoType, messageInfo))
 }
 
 func (r *CliRunner) reportDsUnitEventTypes(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) bool {
@@ -242,6 +249,10 @@ func (r *CliRunner) reportWorkflowEventTypes(serviceResponse interface{}, event 
 	default:
 		return false
 	}
+	if r.SleepCount > 0 {
+		fmt.Printf("\n")
+		r.SleepCount = 0
+	}
 	return true
 }
 
@@ -270,17 +281,36 @@ func (r *CliRunner) reportSystemEventType(serviceResponse interface{}, event *Ev
 		r.report.Error = true
 		r.printShortMessage(messageTypeError, fmt.Sprintf("%v", actual.Error), messageTypeError, "error")
 		fmt.Println(colorText(fmt.Sprintf("ERROR: %v\n", actual.Error), "red"))
+		return true
 	case *SleepEventType:
-		r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v ms", actual.SleepTimeMs), messageTypeGeneric, "Sleep")
+
+		if r.SleepCount > 0 {
+			r.overrideShortMessage(messageTypeGeneric, fmt.Sprintf("%v ms x %v,  slept so far: %v", actual.SleepTimeMs, r.SleepCount, r.SleepTime), messageTypeGeneric, "Sleep")
+		} else {
+			r.SleepTime = 0
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v ms", actual.SleepTimeMs), messageTypeGeneric, "Sleep")
+		}
+		r.SleepTagID = r.eventTag.TagID
+		r.SleepTime += time.Millisecond * time.Duration(actual.SleepTimeMs)
+		r.SleepCount++
+		return true
 	case *ReportSummaryEvent:
 		r.reportSummaryEvent()
-	default:
-		return false
+		return true
 	}
-	return true
+
+	if r.SleepCount > 0 && r.eventTag.TagID != r.SleepTagID {
+		fmt.Printf("\n")
+		r.SleepCount = 0
+	}
+	return false
 }
 
 func (r *CliRunner) reportEventType(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) {
+	if r.reportSystemEventType(serviceResponse, event, filter) {
+		return
+	}
+
 	if r.reportWorkflowEventTypes(serviceResponse, event, filter) {
 		return
 	}
@@ -296,9 +326,7 @@ func (r *CliRunner) reportEventType(serviceResponse interface{}, event *Event, f
 	if r.reportValidationEventTypes(serviceResponse, event, filter) {
 		return
 	}
-	if r.reportSystemEventType(serviceResponse, event, filter) {
-		return
-	}
+
 	switch actual := serviceResponse.(type) {
 	case *LogPrintRequest:
 		if actual.Message != "" {
