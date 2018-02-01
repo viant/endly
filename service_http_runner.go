@@ -106,6 +106,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 		if useCachedBody {
 			httpRequest.Body = ioutil.NopCloser(bytes.NewReader(bodyCache))
 		}
+
 		httpResponse, err = client.Do(httpRequest)
 		if err != nil {
 			return nil, err
