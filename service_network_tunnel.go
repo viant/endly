@@ -2,7 +2,7 @@ package endly
 
 import "github.com/viant/toolbox/url"
 
-//NetworkTunnel represents network link
+//NetworkTunnel represents network link, both loacl and remove needs to be in [host]:[port] format
 type NetworkTunnel struct {
 	Local  string
 	Remote string

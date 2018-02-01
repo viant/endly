@@ -114,8 +114,8 @@ func (r *Repeatable) runOnce(service *AbstractService, callerInfo string, contex
 	if extractableOutput != "" {
 		extracted["value"] = extractableOutput //string output is published as $value
 	}
-
 	if r.ExitCriteria != "" {
+		AddEvent(context, "Repeatable.Extract", Pairs("Output", extractableOutput, "StructuredOutput", structuredOutput, "Extracted", extracted))
 		if shouldBreak, err := r.EvaluateExitCriteria(callerInfo+"ExitEvaluation", context, extracted); shouldBreak || err != nil {
 			return !shouldBreak, err
 		}
