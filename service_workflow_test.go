@@ -289,7 +289,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
-			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to run action:Broken request was nil for nop.nop"), serviceResponse.Error)
+			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to run workflow: broken1,"), serviceResponse.Error)
 		}
 	}
 	{
