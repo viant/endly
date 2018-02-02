@@ -29,7 +29,7 @@
           "Executions": [
             {
               "Command": "tar xvzf geckodriver-v0.19.1-macos.tar.gz",
-              "Error": [
+              "Errors": [
                 "Error"
               ]
             }
@@ -65,7 +65,7 @@
           "Executions": [
             {
               "Command": "tar xvzf geckodriver-v0.19.1-macos.tar.gz",
-              "Error": [
+              "Errors": [
                 "Error"
               ]
             }
