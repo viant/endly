@@ -110,7 +110,8 @@ func (s *deploymentService) checkIfDeployedOnSession(context *Context, target *u
 	}
 	session.Mutex.RLock()
 	defer session.Mutex.RUnlock()
-	deployedVersion, has := session.Deployed[request.AppName]
+	var key = request.AppName + target.ParsedURL.Path
+	deployedVersion, has := session.Deployed[key]
 	if !has {
 		return false
 	}
@@ -149,7 +150,8 @@ func (s *deploymentService) updateSessionDeployment(context *Context, target *ur
 	}
 	session.Mutex.Lock()
 	defer session.Mutex.Unlock()
-	session.Deployed[app] = version
+	key := app + target.ParsedURL.Path
+	session.Deployed[key] = version
 	return nil
 }
 
@@ -246,6 +248,7 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	if err != nil {
 		return nil, err
 	}
+
 	state := context.state
 	if !state.Has("targetHost") {
 		state.Put("targetHost", target.ParsedURL.Host)
@@ -257,6 +260,18 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 		response.Version = request.Version
 		return response, nil
 	}
+
+	if target.ParsedURL.Path != "" {
+
+
+		if _, err := context.Execute(target, fmt.Sprintf("cd %v", target.ParsedURL.Path)); err != nil {
+			if _, err = context.Execute(target, "cd /"); err != nil {
+				return nil, err
+			}
+		}
+
+	}
+
 	meta, err := s.getMeta(context, request)
 	if err != nil {
 		return nil, err
