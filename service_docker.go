@@ -68,6 +68,7 @@ const (
 	unableToFindImage = "unable to find image"
 	dockerError       = "Error response"
 	dockerSyntaxError = "syntax error near"
+	dockerNotRunning  = "Is the docker daemon running?"
 )
 
 var dockerErrors = []string{"failed", unableToFindImage, dockerSyntaxError}
@@ -659,15 +660,20 @@ func (s *dockerService) executeSecureDockerCommand(asRoot bool, secure map[strin
 		if escapedContains(err.Error(), commandNotFound) {
 			return nil, err
 		}
+		if response != nil && ! escapedContains(response.Stdout(), dockerNotRunning) {
+			return nil, err
+		}
 		s.startDockerIfNeeded(context, target)
 		response, err = context.Execute(target, runRequest)
 		if err != nil {
 			return nil, err
 		}
+
 	}
 	var stdout = response.Stdout()
+
 	if strings.Contains(stdout, containerInUse) {
-		return response, err
+		return response, nil
 	}
 	if strings.Contains(stdout, dockerError) {
 		return response, fmt.Errorf("error executing %v, %v", command, vtclean.Clean(stdout, false))
