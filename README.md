@@ -247,9 +247,9 @@ The execution service is responsible for opening, managing terminal session, wit
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
 | exec | open | open SSH session on the target resource. | [OpenSessionRequest](service_exec_session.go#L9) | [OpenSessionResponse](service_exec_session.go#L19) |
-| exec | close | closes SSH session | [CloseSessionRequest](service_exec_session.go#L24) | [CloseSessionResponse](service_exec_session.goL29) |
-| exec | command | executes basic commands | [CommandRequest](service_exec_command.go#L40) | [CommandResponse](service_exec_command_response.go#L15) |
-| exec | managed-command | executes commands with ability to extract data, define error or success state | [ExtractableCommandRequest](service_exec_command.go#L34) | [CommandResponse](service_exec_command_response.go#L15) |
+| exec | close | close SSH session | [CloseSessionRequest](service_exec_session.go#L24) | [CloseSessionResponse](service_exec_session.goL29) |
+| exec | run | execute basic commands | [CommandRequest](service_exec_command.go#L40) | [CommandResponse](service_exec_command_response.go#L15) |
+| exec | extract| execute commands with ability to extract data, define error or success state | [ExtractableCommandRequest](service_exec_command.go#L34) | [CommandResponse](service_exec_command_response.go#L15) |
 
 
 
@@ -317,8 +317,8 @@ Remote storage could be any cloud storage i.e google cloud, amazon s3, or simple
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
 | storage | copy | copy one or more resources from the source to target destination | [StorgeCopyRequest](service_storage_copy.go) | [StorageCopyResponse](service_storage_copy.go) |
-| storage | remove | removes or more resources if exsit | [StorageRemoveRequest](service_storage_remove.go) | [StorageRemoveResponse](service_storage_remove.go) |
-| storage | upload | uploads content pointed by context state key to target destination. | [StorageUploadRequest](service_storage_copy.go) | [StorageUploadResponse](service_storage_upload.go) |
+| storage | remove | remove or more resources if exsit | [StorageRemoveRequest](service_storage_remove.go) | [StorageRemoveResponse](service_storage_remove.go) |
+| storage | upload | upload content pointed by context state key to target destination. | [StorageUploadRequest](service_storage_copy.go) | [StorageUploadResponse](service_storage_upload.go) |
 | storage | download | copy source content into context state key | [StorageDownloadRequest](service_storage_download.go) | [StorageDownloadResponse](service_storage_download.go) |
 
 
@@ -336,7 +336,7 @@ Provides ability to call operations on  [EC2 client](https://github.com/aws/aws-
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| aws/ec2 | call | Run ec2 operation | [EC2CallRequest](service_ec2_call.go) | [EC2CallResponse](service_ec2_call.go)  |
+| aws/ec2 | call | run ec2 operation | [EC2CallRequest](service_ec2_call.go) | [EC2CallResponse](service_ec2_call.go)  |
 
 'call' action's method and input are proxied to [EC2 client](https://github.com/aws/aws-sdk-go/tree/master/service/ec2)
 
@@ -349,7 +349,7 @@ Provides ability to call operations on  [*compute.Service client](https://cloud.
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| gce | call | Run gce operation | [GCECallRequest](service_gce_call.go) | [GCECallResponse](service_gce_call.go)  |
+| gce | call | run gce operation | [GCECallRequest](service_gce_call.go) | [GCECallResponse](service_gce_call.go)  |
 
 'call' action's service, method and paramters are proxied to [GCE client](https://cloud.google.com/compute/docs/reference/latest/)
 
@@ -361,7 +361,7 @@ Network service is responsible opening tunnel vi SSH between client and target h
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- | 
-| network | tunnel | Tunnel ports between local and remote host | [NetworkTunnelRequest](service_network_tunnel.go) | [NetworkTunnelResponse](service_network_tunnel.go) | 
+| network | tunnel | tunnel ports between local and remote host | [NetworkTunnelRequest](service_network_tunnel.go) | [NetworkTunnelResponse](service_network_tunnel.go) | 
 
 
 <a name="endpoint"></a>
@@ -373,7 +373,7 @@ Http Endpoint Service is responsible for creating HTTP endpoint serving previous
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- | 
-| http/endpoint | listen | Starts HTTP endpoint with supplied HTTP trips recording | [HTTPEndpointListenRequest](service_http_ednpoint_listen.go) | [HTTPEndpointListenResponse](service_http_ednpoint_listen.go) | 
+| http/endpoint | listen | start HTTP endpoint with supplied HTTP trips recording | [HTTPEndpointListenRequest](service_http_ednpoint_listen.go) | [HTTPEndpointListenResponse](service_http_ednpoint_listen.go) | 
 
 <a name="smtp"></a>
 
@@ -385,7 +385,7 @@ Mail body is being substitute with the context state variables.
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- | 
-| smtp | send | Send an email to supplied recipients | [SMTPSendRequest](service_smtp_send.go#L10) | [SMTPSendResponse](service_smtp_send.go#L17) | 
+| smtp | send | send an email to supplied recipients | [SMTPSendRequest](service_smtp_send.go#L10) | [SMTPSendResponse](service_smtp_send.go#L17) | 
 
 
 
