@@ -10,7 +10,7 @@ Workflow,,,Name,Description,Tasks,Init,,,
 ,stopped,aws/ec2,call,Start Ec2 instance,#req/ec2_instances,,StartInstances,,
 ,running,workflow,exit,Wxit workflow,{},,,,
 []Start,,Service,Action,Description,Request.Task,SleepTimeMs,,,
-,,workflow,goto,Ggoto start task,start,5000,,,
+,,workflow,goto,Goto start task,start,5000,,,
 []Tasks,,,Name,Description,Actions,,,,
 ,,,stop,Stop ec2 instance,%Stop,,,,
 []Stop,,Service,Action,Description,Request,Post,method,var.Name,var.From
