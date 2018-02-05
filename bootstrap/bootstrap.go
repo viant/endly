@@ -28,7 +28,7 @@ func init() {
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	flag.String("r", "run.json", "<path/url to workflow run request in JSON format> ")
 	flag.String("w", "manager", "<workflow name>  if both -r and -w valid options are specified, -w is ignored")
-	flag.String("t", "*", "<task/s to run>, t='?' to list all task for current workflow")
+	flag.String("t", "*", "<task/s to run>, t='?' to list all tasks for selected workflow")
 	flag.String("l", "logs", "<log directory>")
 	flag.Bool("d", false, "enable logging")
 	flag.Bool("p", false, "print neatly workflow as JSON")
