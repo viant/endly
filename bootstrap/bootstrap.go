@@ -28,7 +28,7 @@ func init() {
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	flag.String("r", "run.json", "<path/url to workflow run request in JSON format> ")
 	flag.String("w", "manager", "<workflow name>  if both -r and -w valid options are specified, -w is ignored")
-	flag.String("t", "*", "<task/s to run>")
+	flag.String("t", "*", "<task/s to run>, t='?' to list all task for current workflow")
 	flag.String("l", "logs", "<log directory>")
 	flag.Bool("d", false, "enable logging")
 	flag.Bool("p", false, "print neatly workflow as JSON")
@@ -93,12 +93,29 @@ func Bootstrap() {
 		return
 	}
 
+	if flagset["t"] == "?" {
+		printWorkflowTasks(request.WorkflowURL)
+		return
+	}
+
 	runner := endly.NewCliRunner()
 	err = runner.Run(request, option)
 	if err != nil {
 		log.Fatal(err)
 	}
 	time.Sleep(time.Second)
+}
+
+
+func printWorkflowTasks(URL string) {
+	workflow, err := getWorkflow(URL);
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Fprintf(os.Stderr,"Workflow '%v' (%v) tasks:\n", workflow.Name, workflow.Source.URL)
+	for _, task := range workflow.Tasks {
+		fmt.Fprintf(os.Stderr, "\t%v: %v\n", task.Name, task.Description)
+	}
 }
 
 func printServiceActionRequest() {
@@ -149,13 +166,20 @@ func printServiceActions() {
 	}
 }
 
-func printWorkflow(URL string) {
+func getWorkflow(URL string) (*endly.Workflow, error) {
 	dao := endly.NewWorkflowDao()
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
-	if workflow, _ := dao.Load(context, url.NewResource(URL)); workflow != nil {
-		printInFormat(workflow, "failed to print workflow: "+URL+", %v")
+	return dao.Load(context, url.NewResource(URL))
+}
+
+func printWorkflow(URL string) {
+	workflow, err := getWorkflow(URL);
+	if err != nil {
+		log.Fatal(err)
 	}
+	printInFormat(workflow, "failed to print workflow: "+URL+", %v")
+
 }
 
 func printInFormat(source interface{}, errorTemplate string) {
@@ -284,7 +308,7 @@ func normalizeArgument(value string) interface{} {
 			value = text
 		}
 	}
-	if structure, err := toolbox.JSONToInterface(value);err == nil {
+	if structure, err := toolbox.JSONToInterface(value); err == nil {
 		return structure
 	}
 	return value
