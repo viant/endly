@@ -21,10 +21,10 @@ const sudoCredentialKey = "**sudo**"
 const ExecServiceOpenAction = "open"
 
 //ExecServiceCommandAction represent a command action
-const ExecServiceCommandAction = "run"
+const ExecServiceCommandAction = "command"
 
 //ExecServiceExtractableCommandAction represent extractable action
-const ExecServiceExtractableCommandAction = "extract"
+const ExecServiceExtractableCommandAction = "extractable-command"
 
 //ExecServiceManagedCloseAction represent session close action
 const ExecServiceManagedCloseAction = "close"
@@ -565,16 +565,15 @@ func (s *execService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case ExecServiceOpenAction:
 		return &OpenSessionRequest{}, nil
-	case ExecServiceExtractableCommandAction, "extractable-command":
+	case ExecServiceExtractableCommandAction:
 		return &ExtractableCommandRequest{}, nil
-	case ExecServiceCommandAction, "command":
+	case ExecServiceCommandAction:
 		return &CommandRequest{}, nil
 	case ExecServiceManagedCloseAction:
 		return &CloseSessionRequest{}, nil
 	}
 	return s.AbstractService.NewRequest(action)
 }
-
 
 //NewRequest creates a new request for passed in action, the following is supported: open,close,command,extractableCommand
 func (s *execService) NewResponse(action string) (interface{}, error) {
