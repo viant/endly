@@ -172,10 +172,10 @@ The execution service is responsible for opening, managing terminal session, wit
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| exec | open | open SSH session on the target resource. | [OpenSessionRequest](service_exec_session.go) | [OpenSessionResponse](service_exec_session.go) |
-| exec | close | closes SSH session | [CloseSessionRequest](service_exec_session.go) | [CloseSessionResponse](service_exec_session.go) |
-| exec | run | execute basic commands | [CommandRequest](service_exec_command.go) | [CommandResponse](service_exec_command_response.go) |
-| exec | extract | execute commands with ability to extract data, define error or success state | [ManagedCommandRequest](service_exec_command.go) | [SystemCommandResponse](service_system_exec_command_response.go) |
+| exec | open | open SSH session on the target resource. | [OpenSessionRequest](service_exec_session.go#L9) | [OpenSessionResponse](service_exec_session.go#L19) |
+| exec | close | close SSH session | [CloseSessionRequest](service_exec_session.go#L24) | [CloseSessionResponse](service_exec_session.goL29) |
+| exec | run | executes basic commands | [CommandRequest](service_exec_command.go#L40) | [CommandResponse](service_exec_command_response.go#L15) |
+| exec | extract | executes commands with ability to extract data, define error or success state | [ExtractableCommandRequest](service_exec_command.go#L34) | [CommandResponse](service_exec_command_response.go#L15) |
 
 
 
@@ -200,13 +200,110 @@ Process service is responsible for starting, stopping and checking status of cus
 | process | start | start provided application | [ProcessStartRequest](service_process_start.go) | [ProcessStartResponse](service_process_start.go) | 
 | process | stop | kill requested application | [ProcessStopRequest](service_process_stop.go) | [CommandResponse](exec_command_response.go) | 
 
+
 **Netowrk service**
 
-Process service is responsible for starting, stopping and checking status of custom application.
+<a name="docker"></a>
+**Docker service**
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- | 
+| docker | run | run requested docker service | [DockerRunRequest](service_docker_run.go) | [DockerContainerInfo](service_docker_container.go#L54) | 
+| docker | images | check docker image| [DockerImagesRequest](service_docker_image.go) | [DockerImagesResponse](service_docker_image.go) | 
+| docker | stop-images | stop docker containers matching specified images | [DockerStopImagesRequest](service_docker_stop.go) | [DockerStopImagesResponse](service_docker_stop.go) |
+| docker | pull | pull requested docker image| [DockerPullRequest](service_docker_pull.go) | [DockerImageInfo](service_docker_image.go) | 
+| docker | process | check docker container processes | [DockerContainerCheckRequest](service_docker_container.go) | [DockerContainerCheckResponse](service_docker_container.go) | 
+| docker | container-start | start specified docker container | [DockerContainerStartRequest](service_docker_container.go#L19) | [DockerContainerInfo](service_docker_container.go#L54) | 
+| docker | container-command | run command within specified docker container | [DockerContainerRunCommandRequest](service_docker_container.go#L39) | [DockerContainerRunCommandResponse](service_docker_container.go#L49) | 
+| docker | container-stop | stop specified docker container | [DockerContainerStopRequest](service_docker_container.go#L35) | [DockerContainerInfo](service_docker_container.go#L54) | 
+| docker | container-remove | remove specified docker container | [DockerContainerRemoveRequest](service_docker_container.go#L23) | [DockerContainerRemoveResponse](service_docker_container.go#L28) | 
+| docker | container-logs | fetch container logs (app stdout/stderr)| [DockerContainerLogsRequest](service_docker_container.go#L63) | [DockerContainerLogsResponse](service_docker_container.go#L69) | 
+| docker | inspect | inspect supplied instance name| [DockerInspectRequest](service_docker_inspect.go) | [DockerInspectResponse](service_docker_inspect.go#L12) |
+| docker | build | build docker image| [DockerBuildRequest](service_docker_build.go) | [DockerBuildResponse](service_docker_build.go) |
+| docker | tag | create a target image that referes to source docker image| [DockerBuildRequest](service_docker_tag.go) | [DockerBuildResponse](service_docker_tag.go) |
+| docker | login | store supplied credential for provided repository in local docker store| [DockerLoginRequest](service_docker_login.go) | [DockerLoginResponse](service_docker_login.go) |
+| docker | logout | remove credential for supplied repository | [DockerLogoutRequest](service_docker_logout.go) | [DockerLogoutResponse](service_docker_logout.go) |
+| docker | push | copy image to supplied repository| [DockerPushRequest](service_docker_push.go) | [DockerPushResponse](service_docker_push.go) |
+
+
+<a name="storage"></a>
+**Storage service**
+
+Storage service represents a local or remote storage to provide unified storage operations.
+Remote storage could be any cloud storage i.e google cloud, amazon s3, or simple scp or http.
+ 
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| storage | copy | copy one or more resources from the source to target destination | [StorgeCopyRequest](service_storage_copy.go) | [StorageCopyResponse](service_storage_copy.go) |
+| storage | remove | remove or more resources if exsit | [StorageRemoveRequest](service_storage_remove.go) | [StorageRemoveResponse](service_storage_remove.go) |
+| storage | upload | upload content pointed by context state key to target destination. | [StorageUploadRequest](service_storage_copy.go) | [StorageUploadResponse](service_storage_upload.go) |
+| storage | download | copy source content into context state key | [StorageDownloadRequest](service_storage_download.go) | [StorageDownloadResponse](service_storage_download.go) |
+
+
+
+<a name="CloudAndNetwork"></a>
+
+### Cloud services and Network services
+
+
+<a name="ec2"></a>
+
+**Amazon Elastic Compute Cloud Service**
+
+Provides ability to call operations on  [EC2 client](https://github.com/aws/aws-sdk-go/tree/master/service/ec2)
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| aws/ec2 | call | run ec2 operation | [EC2CallRequest](service_ec2_call.go) | [EC2CallResponse](service_ec2_call.go)  |
+
+'call' action's method and input are proxied to [EC2 client](https://github.com/aws/aws-sdk-go/tree/master/service/ec2)
+
+
+<a name="gce"></a>
+
+**Google Compute Engine Service**
+
+Provides ability to call operations on  [*compute.Service client](https://cloud.google.com/compute/docs/reference/latest/)
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| gce | call | run gce operation | [GCECallRequest](service_gce_call.go) | [GCECallResponse](service_gce_call.go)  |
+
+'call' action's service, method and paramters are proxied to [GCE client](https://cloud.google.com/compute/docs/reference/latest/)
+
+
+
+**Network service**
+
+
+Network service is responsible opening tunnel vi SSH between client and target host.
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- | 
 | network | tunnel | Tunnel ports between local and remote host | [NetworkTunnelRequest](service_network_tunnel.go) | [NetworkTunnelResponse](service_network_tunnel.go) | 
+
+
+
+**SMTP Service**
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- | 
+| smtp | send | send an email to supplied recipients | [SMTPSendRequest](service_smtp_send.go#L10) | [SMTPSendResponse](service_smtp_send.go#L17) | 
+
+
+
+**HTTP Endpoint Service**
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- | 
+| http/endpoint | listen | listen on specified port to replay recorded HTTP conversation | [HTTPEndpointListenRequest](service_http_ednpoint.go) | [HTTPEndpointListenResponse](service_http_ednpoint.go) | 
+
+
+
+<a name="Buildservices"></a>
+## Build and deployment services
+
 
 
 **Sdk Service**
@@ -218,43 +315,14 @@ Sdk service sets active terminal session with requested sdk version.
 | sdk | set | set system with requested sdk and version | [SdkSetRequest](service_sdk_set.go) | [SdkSetResponse](service_sdk_set.go) | 
 
 
-**Docker service**
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- | 
-| docker | run | run requested docker service | [DockerRunRequest](service_docker_run.go) | [DockerContainerInfo](service_docker_container.go) | 
-| docker | images | check docker image| [DockerImagesRequest](service_docker_image.go) | [DockerImagesResponse](service_docker_image.go) | 
-| docker | stop-images | stop docker containers matching specified images | [DockerStopImagesRequest](service_docker_stop.go) | [DockerStopImagesResponse](service_docker_stop.go) |
-| docker | pull | pull requested docker image| [DockerPullRequest](service_docker_pull.go) | [DockerImageInfo](service_docker_image.go) | 
-| docker | process | check docker container processes | [DockerContainerCheckRequest](service_docker_container.go) | [DockerContainerCheckResponse](service_docker_container.go) | 
-| docker | container-start | start specified docker container | [DockerContainerStartRequest](service_docker_container.go) | [DockerContainerInfo](service_docker_container.go) | 
-| docker | container-command | run command within specified docker container | [DockerContainerCommandRequest](service_docker_container.go) | [CommandResponse](exec_command_response.go) | 
-| docker | container-stop | stop specified docker container | [DockerContainerStopRequest](service_docker_container.go) | [DockerContainerInfo](service_docker_container.go) | 
-| docker | container-remove | remove specified docker container | [DockerContainerRemoveRequest](service_docker_container.go) | [CommandResponse](exec_command_response.go) | 
-
-
-<a name="Buildservices"></a>
-## Build and deployment services
-
-
-**Transfer service**
-
-Transfer service is responsible for transferring data from the source to the target destination, optionally it supports transferred content data substitution. 
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| transfer | copy | copy one or more resources from the source to target destination | [TransferCopyRequest](service_transfer_copy.go) | [TransferCopyResponse](service_transfer_copy.go) |
-
-
-
 **Version Control Service**
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| version/control | status | Runs version control check on provided URL | [VcStatusRequest](service_vc_status.go) | [VcInfo](service_vc_info.go)  |
-| version/control | checkout | If target directory already  exist with matching origin URL, this action only pulls the latest changes without overriding local ones, otherwise full checkout | [VcCheckoutRequest](service_vc_checkout.go) | [VcInfo](service_vc_info.go)   |
+| version/control | status | run version control check on provided URL | [VcStatusRequest](service_vc_status.go) | [VcInfo](service_vc_info.go)  |
+| version/control | checkout | if target directory already  exist with matching origin URL, this action only pulls the latest changes without overriding local ones, otherwise full checkout | [VcCheckoutRequest](service_vc_checkout.go) | [VcInfo](service_vc_info.go)   |
 | version/control | commit | commit commits local changes to the version control | [VcCommitRequest](service_vc_commit.go) | [VcInfo](service_vc_info.go)   |
-| version/control | pull | retrieves the latest changes from the origin | [VcPullRequest](service_vc_pull.go) | [VcInfo](service_vc_info.go)   |
+| version/control | pull | retrieve the latest changes from the origin | [VcPullRequest](service_vc_pull.go) | [VcInfo](service_vc_info.go)   |
 
 
 **Build service**
@@ -273,6 +341,7 @@ Maven, tomcat use this service.
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
 | deployment | deploy | run deployment | [DeploymentDeployRequest](service_deployment_deploy.go) | [DeploymentDeployResponse](service_deployment_deploy.go) |
+
 
 
 <a name="Testingservices"></a>
@@ -295,6 +364,89 @@ Http runner sends one or more http request to the specified endpoint, it manages
 | rest/runner | send | Sends one rest request to the endpoint. | [RestSendRequest](service_rest_send.go) | [RestSendResponse](service_rest_send.go) |
 
 
+<a name="selenium"></a>
+**Selenium Runner** 
+
+Selenium runner open a web session to run various action on web driver or web elements.
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| selenium | start | start standalone selenium server | [SeleniumServerStartRequest](service_selenium_start.go) | [SeleniumServerStartResponse](service_selenium_start.go) |
+| selenium | stop | stop standalone selenium server | [SeleniumServerStopRequest](service_selenium_start.go) | [SeleniumServerStopResponse](service_selenium_stop.go) |
+| selenium | open | open a new browser with session id for further testing | [SeleniumOpenSessionRequest](service_selenium_session.go) | [SeleniumOpenSessionResponse](service_selenium_session.go) |
+| selenium | close | close browser session | [SeleniumCloseSessionRequest](service_selenium_session.go) | [SeleniumCloseSessionResponse](service_selenium_session.go) |
+| selenium | call-driver | call a method on web driver, i.e wb.GET(url)| [SeleniumWebDriverCallRequest](service_selenium_call_web_driver.go) | [SeleniumServiceCallResponse](service_selenium_call_web_driver.go) |
+| selenium | call-element | call a method on a web element, i.e. we.Click() | [SeleniumWebElementCallRequest](service_selenium_call_web_element.go) | [SeleniumWebElementCallResponse](service_selenium_call_web_element.go) |
+| selenium | run | run set of action on a page | [SeleniumRunRequest](service_selenium_run.go) | [SeleniumRunResponse](service_selenium_run.go) |
+
+call-driver and call-element actions's method and parameters are proxied to stand along selenium server via [selenium client](http://github.com/tebeka/selenium)
+
+
+selenium run request defines sequence of action, if selector is present then the call method is on [WebDriver](https://github.com/tebeka/selenium/blob/master/selenium.go#L213), 
+otherwise [WebElement](https://github.com/tebeka/selenium/blob/master/selenium.go#L370) defined by selector.
+
+[Wait](repeatable.go)  provides ability to wait either some time amount or for certain condition to take place, with regexp to extract data
+
+```json
+
+{
+  "SessionID":"$SeleniumSessionID",
+  "Actions": [
+    {
+      "Calls": [
+        {
+          "Method": "Get",
+          "Parameters": [
+            "http://play.golang.org/?simple=1"
+          ]
+        }
+      ]
+    },
+    {
+      "Selector": {
+        "Value": "#code"
+      },
+      "Calls": [
+        {
+          "Method": "Clear"
+        },
+        {
+          "Method": "SendKeys",
+          "Parameters": [
+            "$code"
+          ]
+        }
+      ]
+    },
+    {
+      "Selector": {
+        "Value": "#run"
+      },
+      "Calls": [
+        {
+          "Method": "Click"
+        }
+      ]
+    },
+    {
+      "Selector": {
+        "Value": "#output",
+        "Key": "output"
+      },
+      "Calls": [
+        {
+           "Method": "Text",
+           "Wait": {
+                    "Repeat": 5,
+                    "SleepTimeMs": 100,
+                    "ExitCriteria": ":!$value"
+           }
+        }
+      ]
+    }
+  ]
+}
+```
 
 
 **Generic validation service**
@@ -320,12 +472,12 @@ In order to get log validation,
 
 
 ** Validation expressions **
-Generic validation service and log validator, Task or Action RunCritera share underlying [validator](https://github.com/viant/assertly), 
+Generic validation service and log validator, Task or Action RunCritera share undelying [Validator](https://github.com/viant/assertly), 
+
 During assertion validator traverses expected data structure to compare it with expected.
-If expected keys have not been specified but exists in actual data structure they are being skipped from assertion.
 
 
-See more validation construct: supported expression, directive and macro go at [Assertly](https://github.com/viant/assertly#validation) 
+[See More](https://github.com/viant/assertly#validation) validation expression, directive and macros.
 
 
 
@@ -344,10 +496,12 @@ The first action that needs to be run is to register database name with dsc conn
 | dsunit | prepare | populates database with setup data |  [DsUnitTablePrepareRequest](service_dsunit_prepare.go) | [DsUnitTablePrepareResponse](service_dsunit_prepare.go)  |
 | dsunit | expect | verifies database content with expected data |  [DsUnitTableExpectRequest](service_dsunit_prepare.go) | [DsUnitTableExpectResponse](service_dsunit_prepare.go)  |
 
+
 To simplify setup/verification data process [DsUnitTableData](service_dsunit_data.go) has been introduce, so that data can be push into state, and then transform to the dsunit expected data with AsTableRecords udf function.
 
 
 DsUnit uses its own predicate and macro system to perform advanced validation see [Macros And Predicates](../dsunit/docs/)
+
 
 
 <a name="Workfowservice"></a>
@@ -360,10 +514,28 @@ Workflow service provide capability to run task, action from any defined workflo
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| workflow | load | Loads workflow from provided path | [WorkflowLoadRequest](service_workflow_load.go) | [WorkflowLoadRequest](service_workflow_load.go)  |
-| workflow | register | Register provide workflow in registry | [WorkflowLoadRequest](service_workflow_register.go) |  |
+| workflow | load | load workflow from provided path | [WorkflowLoadRequest](service_workflow_load.go) | [WorkflowLoadRequest](service_workflow_load.go)  |
+| workflow | register | register provide workflow in registry | [WorkflowLoadRequest](service_workflow_register.go) |  |
 | workflow | run | run workflow with specified tasks and parameters | [WorkflowRunRequest](service_workflow_run.go) | [WorkflowRunResponse]((service_workflow_run.go) |
+| workflow | goto | switche current execution to the specified task on current workflow | [WorkflowGotoRequest](service_workflow_goto.go) | [WorkflowGotoResponse]((service_workflow_goto.go) 
+| workflow | switch | run matched  case action or task  | [WorkflowSwitchRequest](service_workflow_switch.go) | [WorkflowSwitchResponse](service_workflow_switch.go) |
+| workflow | exit | terminate execution of active workflow (caller) | n/a | n/a |
 
+**Log Service **
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| log | print | print message or error | [LogPrintRequest](service_log.go) | n/a  |
+
+**No Operation Service **
+
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| nop | nop | do nothing| [Nop](service_nop.go) | n/a  |
+| nop | parrot | return request | [NopParrotRequest](service_nop_parrot.go) | n/a  |
+| nop | fail | fail  wokrflow | [NopFailRequest](service_nop_fail.go) | n/a  |
+=======
 
 
 
