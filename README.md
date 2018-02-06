@@ -174,8 +174,8 @@ The execution service is responsible for opening, managing terminal session, wit
 | --- | --- | --- | --- | --- |
 | exec | open | open SSH session on the target resource. | [OpenSessionRequest](service_exec_session.go) | [OpenSessionResponse](service_exec_session.go) |
 | exec | close | closes SSH session | [CloseSessionRequest](service_exec_session.go) | [CloseSessionResponse](service_exec_session.go) |
-| exec | command | executes basic commands | [CommandRequest](service_exec_command.go) | [CommandResponse](service_exec_command_response.go) |
-| exec | managedCommand | executes commands with ability to extract data, define error or success state | [ManagedCommandRequest](service_exec_command.go) | [SystemCommandResponse](service_system_exec_command_response.go) |
+| exec | run | execute basic commands | [CommandRequest](service_exec_command.go) | [CommandResponse](service_exec_command_response.go) |
+| exec | extract | execute commands with ability to extract data, define error or success state | [ManagedCommandRequest](service_exec_command.go) | [SystemCommandResponse](service_system_exec_command_response.go) |
 
 
 
@@ -187,7 +187,7 @@ Daemon System service is responsible for managing system daemon services.
 | --- | --- | --- | --- | --- | 
 | daemon | status | check status of system daemon | [DaemonStatusRequest](service_daemon_status.go) | [DaemonInfo](service_daemon_status.go) | 
 | daemon | start | start requested system daemon | [DaemonStartRequest](service_daemon_start.go) | [DaemonInfo](service_daemon_status.go) | 
-| daemon | stop | stops requested system daemon | [DaemonStopRequest](service_daemon_stop.go) | [DaemonInfo](service_daemon_status.go) | 
+| daemon | stop | stop requested system daemon | [DaemonStopRequest](service_daemon_stop.go) | [DaemonInfo](service_daemon_status.go) | 
 
 
 **Process service**
@@ -215,7 +215,7 @@ Sdk service sets active terminal session with requested sdk version.
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- | 
-| sdk | set | sets system with requested sdk and version | [SdkSetRequest](service_sdk_set.go) | [SdkSetResponse](service_sdk_set.go) | 
+| sdk | set | set system with requested sdk and version | [SdkSetRequest](service_sdk_set.go) | [SdkSetResponse](service_sdk_set.go) | 
 
 
 **Docker service**
@@ -261,8 +261,8 @@ Transfer service is responsible for transferring data from the source to the tar
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| build | load | Loads BuildMeta for the supplied resource | [BuildLoadMetaRequest](service_build_load.go) | [BuildLoadMetaResponse](service_build_load.go)  |
-| build | register | Register BuildMeta in service repo | [BuildRegisterMetaRequest](service_build_register.go) | [BuildRegisterMetaResponse](service_build_register.go)  |
+| build | load | load BuildMeta for the supplied resource | [BuildLoadMetaRequest](service_build_load.go) | [BuildLoadMetaResponse](service_build_load.go)  |
+| build | register | register BuildMeta in service repo | [BuildRegisterMetaRequest](service_build_register.go) | [BuildRegisterMetaResponse](service_build_register.go)  |
 | build | build | Run build for provided specification | [BuildRequest](service_build_build.go) | [BuildResponse](service_build_build.go)  |
 
 
@@ -295,8 +295,6 @@ Http runner sends one or more http request to the specified endpoint, it manages
 | rest/runner | send | Sends one rest request to the endpoint. | [RestSendRequest](service_rest_send.go) | [RestSendResponse](service_rest_send.go) |
 
 
-
-TODO add Selenium/WebDriver runner
 
 
 **Generic validation service**
