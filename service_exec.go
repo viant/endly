@@ -82,7 +82,7 @@ func (s *execService) isSupportedScheme(target *url.Resource) bool {
 }
 
 func (s *execService) initSession(context *Context, target *url.Resource, session *SystemTerminalSession, env map[string]string) error {
-	_ = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
+	_, _ = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
 	for k, v := range env {
 		if err := s.setEnvVariable(context, session, k, v); err != nil {
 			return err
@@ -208,27 +208,27 @@ func (s *execService) setEnvVariable(context *Context, session *SystemTerminalSe
 	return err
 }
 
-func (s *execService) changeDirectory(context *Context, session *SystemTerminalSession, commandInfo *CommandResponse, directory string) error {
+func (s *execService) changeDirectory(context *Context, session *SystemTerminalSession, commandInfo *CommandResponse, directory string) (string,error) {
 	if directory == "" {
-		return nil
+		return "", nil
 	}
 	parent, name := path.Split(directory)
 	if path.Ext(name) != "" {
 		directory = parent
 	}
 	if session.currentDirectory == directory {
-		return nil
+		return "", nil
 	}
 
 	result, err := s.rumCommandTemplate(context, session, "cd %v", directory)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if !CheckNoSuchFileOrDirectory(result) {
 		session.currentDirectory = directory
 	}
-	return err
+	return result,  err
 }
 
 func (s *execService) rumCommandTemplate(context *Context, session *SystemTerminalSession, commandTemplate string, arguments ...interface{}) (string, error) {
@@ -244,10 +244,12 @@ func (s *execService) rumCommandTemplate(context *Context, session *SystemTermin
 	s.End(context)(startEvent, Pairs("value", executionEndEvent))
 	if err != nil {
 		executionEndEvent.Error = fmt.Sprintf("%v", err)
-	}
-	if err != nil {
 		return stdout, err
 	}
+	if executionEndEvent.Error != "" || executionEndEvent.Stdout != "" {
+		return executionEndEvent.Stdout, fmt.Errorf("failed to run command %v, %v: %v", command, executionEndEvent.Stdout, executionEndEvent.Error)
+	}
+
 	return stdout, nil
 }
 
@@ -265,10 +267,11 @@ func (s *execService) applyCommandOptions(context *Context, options *ExecutionOp
 	}
 	if options.Directory != "" {
 		directory := context.Expand(options.Directory)
-		err := s.changeDirectory(context, session, info, directory)
+		_, err := s.changeDirectory(context, session, info, directory)
 		if err != nil {
 			return err
 		}
+
 	}
 	return nil
 }
@@ -334,6 +337,23 @@ func (s *execService) credentialsToSecure(credentials map[string]string) (map[st
 	return secure, nil
 }
 
+
+func (s *execService) validateStdout(stdout string, command string, execution *Execution) error {
+	errorMatch := match(stdout, execution.Errors...)
+	if errorMatch != "" {
+		return fmt.Errorf("encounter error fragment: (%v), command:%v, stdout: %v", errorMatch, command, stdout)
+	}
+	if len(execution.Success) > 0 {
+		sucessMatch := match(stdout, execution.Success...)
+		if sucessMatch == "" {
+			return fmt.Errorf("failed to match any fragment: '%v', command: %v; stdout: %v", strings.Join(execution.Success, ","), command, stdout)
+		}
+	}
+	return nil
+}
+
+
+
 func (s *execService) executeCommand(context *Context, session *SystemTerminalSession, execution *Execution, options *ExecutionOptions, response *CommandResponse, request *ExtractableCommandRequest) error {
 	command := context.Expand(execution.Command)
 
@@ -374,16 +394,10 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 		return err
 	}
 
-	errorMatch := match(stdout, execution.Errors...)
-	if errorMatch != "" {
-		return fmt.Errorf("encounter error fragment: (%v), command:%v, stdout: %v", errorMatch, command, stdout)
+	if err = s.validateStdout(stdout, command, execution);err != nil {
+		return err
 	}
-	if len(execution.Success) > 0 {
-		sucessMatch := match(stdout, execution.Success...)
-		if sucessMatch == "" {
-			return fmt.Errorf("failed to match any fragment: '%v', command: %v; stdout: %v", strings.Join(execution.Success, ","), command, stdout)
-		}
-	}
+
 	err = execution.Extraction.Extract(context, response.Extracted, strings.Split(stdout, "\n")...)
 	if err != nil {
 		return err
@@ -450,7 +464,13 @@ func (s *execService) runCommands(context *Context, request *ExtractableCommandR
 		if strings.HasPrefix(command, "cd ") {
 			if !strings.Contains(command, "&&") {
 				var directory = strings.TrimSpace(string(command[3:]))
-				err = s.changeDirectory(context, session, response, directory)
+				stdout, err := s.changeDirectory(context, session, response, directory)
+				if err == nil {
+					err= s.validateStdout(stdout, execution.Command, execution)
+				}
+				if err != nil {
+					return  nil, err
+				}
 				continue
 			}
 			session.currentDirectory = "" //reset path
@@ -698,7 +718,7 @@ func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*Extractab
 			}
 		}
 		sudo := ""
-		if len(execution.Command) > 1 {
+		if len(execution.Command) > 1 && !strings.Contains(execution.Command, "sudo") {
 			sudo = "sudo "
 		}
 		newExecution := &Execution{

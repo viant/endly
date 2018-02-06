@@ -66,8 +66,9 @@ const (
 
 	containerInUse    = "is already in use by container"
 	unableToFindImage = "unable to find image"
-	dockerError       = "Errors response"
+	dockerError       = "Error response"
 	dockerSyntaxError = "syntax error near"
+	dockerNotRunning  = "Is the docker daemon running?"
 )
 
 var dockerErrors = []string{"failed", unableToFindImage, dockerSyntaxError}
@@ -647,26 +648,32 @@ func (s *dockerService) executeSecureDockerCommand(asRoot bool, secure map[strin
 			},
 		},
 	}
-	var commandRequest interface{} = extractableCommand
+	var runRequest interface{} = extractableCommand
 	if asRoot {
-		commandRequest = &superUserCommandRequest{
+		runRequest = &superUserCommandRequest{
 			MangedCommand: extractableCommand,
 		}
 	}
-	response, err := context.Execute(target, commandRequest)
+	response, err := context.Execute(target, runRequest)
+
 	if err != nil {
-		if !escapedContains(err.Error(), commandNotFound) {
+		if escapedContains(err.Error(), commandNotFound) {
+			return nil, err
+		}
+		if response != nil && ! escapedContains(response.Stdout(), dockerNotRunning) {
 			return nil, err
 		}
 		s.startDockerIfNeeded(context, target)
-		response, err = context.Execute(target, commandRequest)
+		response, err = context.Execute(target, runRequest)
 		if err != nil {
 			return nil, err
 		}
+
 	}
 	var stdout = response.Stdout()
+
 	if strings.Contains(stdout, containerInUse) {
-		return response, err
+		return response, nil
 	}
 	if strings.Contains(stdout, dockerError) {
 		return response, fmt.Errorf("error executing %v, %v", command, vtclean.Clean(stdout, false))
@@ -759,7 +766,7 @@ func (s *dockerService) login(context *Context, request *DockerLoginRequest) (*D
 	credentials := map[string]string{
 		"**docker-secret**": credential,
 	}
-	commandResponse, err := s.executeDockerCommand(credentials, context, target, dockerErrors, `echo '**docker-secret**' | docker login -u %v  %v --password-stdin`, credConfig.Username, repository)
+	commandResponse, err := s.executeSecureDockerCommand(true, credentials, context, target, dockerErrors, fmt.Sprintf(`echo '**docker-secret**' | sudo docker login -u %v  %v --password-stdin`, credConfig.Username, repository))
 	if err != nil {
 		return nil, err
 	}
@@ -781,7 +788,7 @@ func (s *dockerService) logout(context *Context, request *DockerLogoutRequest) (
 	}
 
 	repository := context.Expand(request.Repository)
-	_, err = s.executeDockerCommand(nil, context, target, dockerErrors, `docker logout %v`, repository)
+	_, err = s.executeSecureDockerCommand(true, nil, context, target, dockerErrors, fmt.Sprintf(`docker logout %v`, repository))
 	if err != nil {
 		return nil, err
 	}
@@ -795,7 +802,7 @@ func (s *dockerService) push(context *Context, request *DockerPushRequest) (*Doc
 		return nil, err
 	}
 
-	commandResponse, err := s.executeDockerCommand(nil, context, target, dockerErrors, `docker push %v`, request.Tag)
+	commandResponse, err := s.executeSecureDockerCommand(true, nil, context, target, dockerErrors, fmt.Sprintf(`docker push %v`, request.Tag))
 	if err != nil {
 		return nil, err
 	}
