@@ -247,8 +247,8 @@ The execution service is responsible for opening, managing terminal session, wit
 | --- | --- | --- | --- | --- |
 | exec | open | open SSH session on the target resource. | [OpenSessionRequest](service_exec_session.go#L9) | [OpenSessionResponse](service_exec_session.go#L19) |
 | exec | close | closes SSH session | [CloseSessionRequest](service_exec_session.go#L24) | [CloseSessionResponse](service_exec_session.goL29) |
-| exec | command | executes basic commands | [CommandRequest](service_exec_command.go#L40) | [CommandResponse](service_exec_command_response.go#L15) |
-| exec | managed-command | executes commands with ability to extract data, define error or success state | [ExtractableCommandRequest](service_exec_command.go#L34) | [CommandResponse](service_exec_command_response.go#L15) |
+| exec | run | executes basic commands | [CommandRequest](service_exec_command.go#L40) | [CommandResponse](service_exec_command_response.go#L15) |
+| exec | extract | executes commands with ability to extract data, define error or success state | [ExtractableCommandRequest](service_exec_command.go#L34) | [CommandResponse](service_exec_command_response.go#L15) |
 
 
 
@@ -316,8 +316,8 @@ Remote storage could be any cloud storage i.e google cloud, amazon s3, or simple
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
 | storage | copy | copy one or more resources from the source to target destination | [StorgeCopyRequest](service_storage_copy.go) | [StorageCopyResponse](service_storage_copy.go) |
-| storage | remove | removes or more resources if exsit | [StorageRemoveRequest](service_storage_remove.go) | [StorageRemoveResponse](service_storage_remove.go) |
-| storage | upload | uploads content pointed by context state key to target destination. | [StorageUploadRequest](service_storage_copy.go) | [StorageUploadResponse](service_storage_upload.go) |
+| storage | remove | remove or more resources if exsit | [StorageRemoveRequest](service_storage_remove.go) | [StorageRemoveResponse](service_storage_remove.go) |
+| storage | upload | upload content pointed by context state key to target destination. | [StorageUploadRequest](service_storage_copy.go) | [StorageUploadResponse](service_storage_upload.go) |
 | storage | download | copy source content into context state key | [StorageDownloadRequest](service_storage_download.go) | [StorageDownloadResponse](service_storage_download.go) |
 
 
@@ -335,7 +335,7 @@ Provides ability to call operations on  [EC2 client](https://github.com/aws/aws-
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| aws/ec2 | call | Run ec2 operation | [EC2CallRequest](service_ec2_call.go) | [EC2CallResponse](service_ec2_call.go)  |
+| aws/ec2 | call | run ec2 operation | [EC2CallRequest](service_ec2_call.go) | [EC2CallResponse](service_ec2_call.go)  |
 
 'call' action's method and input are proxied to [EC2 client](https://github.com/aws/aws-sdk-go/tree/master/service/ec2)
 
@@ -348,7 +348,7 @@ Provides ability to call operations on  [*compute.Service client](https://cloud.
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| gce | call | Run gce operation | [GCECallRequest](service_gce_call.go) | [GCECallResponse](service_gce_call.go)  |
+| gce | call | run gce operation | [GCECallRequest](service_gce_call.go) | [GCECallResponse](service_gce_call.go)  |
 
 'call' action's service, method and paramters are proxied to [GCE client](https://cloud.google.com/compute/docs/reference/latest/)
 
@@ -384,7 +384,7 @@ Mail body is being substitute with the context state variables.
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- | 
-| smtp | send | Send an email to supplied recipients | [SMTPSendRequest](service_smtp_send.go#L10) | [SMTPSendResponse](service_smtp_send.go#L17) | 
+| smtp | send | send an email to supplied recipients | [SMTPSendRequest](service_smtp_send.go#L10) | [SMTPSendResponse](service_smtp_send.go#L17) | 
 
 
 
@@ -401,7 +401,7 @@ Sdk service sets active terminal session with requested sdk version.
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- | 
-| sdk | set | sets system with requested sdk and version | [SdkSetRequest](service_sdk_set.go) | [SdkSetResponse](service_sdk_set.go) | 
+| sdk | set | set system with requested sdk and version | [SdkSetRequest](service_sdk_set.go) | [SdkSetResponse](service_sdk_set.go) | 
 
 
 <a name="vc"></a>
@@ -410,10 +410,10 @@ Sdk service sets active terminal session with requested sdk version.
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| version/control | status | Runs version control check on provided URL | [VcStatusRequest](service_vc_status.go) | [VcInfo](service_vc_info.go)  |
-| version/control | checkout | If target directory already  exist with matching origin URL, this action only pulls the latest changes without overriding local ones, otherwise full checkout | [VcCheckoutRequest](service_vc_checkout.go) | [VcInfo](service_vc_info.go)   |
+| version/control | status | run version control check on provided URL | [VcStatusRequest](service_vc_status.go) | [VcInfo](service_vc_info.go)  |
+| version/control | checkout | if target directory already  exist with matching origin URL, this action only pulls the latest changes without overriding local ones, otherwise full checkout | [VcCheckoutRequest](service_vc_checkout.go) | [VcInfo](service_vc_info.go)   |
 | version/control | commit | commit commits local changes to the version control | [VcCommitRequest](service_vc_commit.go) | [VcInfo](service_vc_info.go)   |
-| version/control | pull | retrieves the latest changes from the origin | [VcPullRequest](service_vc_pull.go) | [VcInfo](service_vc_info.go)   |
+| version/control | pull | retrieve the latest changes from the origin | [VcPullRequest](service_vc_pull.go) | [VcInfo](service_vc_info.go)   |
 
 
 <a name="build"></a>
@@ -422,8 +422,8 @@ Sdk service sets active terminal session with requested sdk version.
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| build | load | Loads meta build instruction | [BuildLoadMetaRequest](service_build_load.go) | [BuildLoadMetaResponse](service_build_load.go)  |
-| build | build | Run build for provided specification | [BuildRequest](service_build_build.go) | [BuildResponse](service_build_build.go)  |
+| build | load | load meta build instruction | [BuildLoadMetaRequest](service_build_load.go) | [BuildLoadMetaResponse](service_build_load.go)  |
+| build | build | run build for provided specification | [BuildRequest](service_build_build.go) | [BuildResponse](service_build_build.go)  |
 
 <a name="deployment"></a>
 
@@ -468,13 +468,13 @@ Selenium runner open a web session to run various action on web driver or web el
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| selenium | start | Starts standalone selenium server | [SeleniumServerStartRequest](service_selenium_start.go) | [SeleniumServerStartResponse](service_selenium_start.go) |
-| selenium | stop | Stops standalone selenium server | [SeleniumServerStopRequest](service_selenium_start.go) | [SeleniumServerStopResponse](service_selenium_stop.go) |
-| selenium | open | Open a new browser with session id for further testing | [SeleniumOpenSessionRequest](service_selenium_session.go) | [SeleniumOpenSessionResponse](service_selenium_session.go) |
-| selenium | close | Close browser session | [SeleniumCloseSessionRequest](service_selenium_session.go) | [SeleniumCloseSessionResponse](service_selenium_session.go) |
-| selenium | call-driver | Call a method on web driver, i.e wb.GET(url)| [SeleniumWebDriverCallRequest](service_selenium_call_web_driver.go) | [SeleniumServiceCallResponse](service_selenium_call_web_driver.go) |
-| selenium | call-element | Call a method on a web element, i.e. we.Click() | [SeleniumWebElementCallRequest](service_selenium_call_web_element.go) | [SeleniumWebElementCallResponse](service_selenium_call_web_element.go) |
-| selenium | run | Run set of action on a page | [SeleniumRunRequest](service_selenium_run.go) | [SeleniumRunResponse](service_selenium_run.go) |
+| selenium | start | start standalone selenium server | [SeleniumServerStartRequest](service_selenium_start.go) | [SeleniumServerStartResponse](service_selenium_start.go) |
+| selenium | stop | stop standalone selenium server | [SeleniumServerStopRequest](service_selenium_start.go) | [SeleniumServerStopResponse](service_selenium_stop.go) |
+| selenium | open | open a new browser with session id for further testing | [SeleniumOpenSessionRequest](service_selenium_session.go) | [SeleniumOpenSessionResponse](service_selenium_session.go) |
+| selenium | close | close browser session | [SeleniumCloseSessionRequest](service_selenium_session.go) | [SeleniumCloseSessionResponse](service_selenium_session.go) |
+| selenium | call-driver | call a method on web driver, i.e wb.GET(url)| [SeleniumWebDriverCallRequest](service_selenium_call_web_driver.go) | [SeleniumServiceCallResponse](service_selenium_call_web_driver.go) |
+| selenium | call-element | call a method on a web element, i.e. we.Click() | [SeleniumWebElementCallRequest](service_selenium_call_web_element.go) | [SeleniumWebElementCallResponse](service_selenium_call_web_element.go) |
+| selenium | run | run set of action on a page | [SeleniumRunRequest](service_selenium_run.go) | [SeleniumRunResponse](service_selenium_run.go) |
 
 call-driver and call-element actions's method and parameters are proxied to stand along selenium server via [selenium client](http://github.com/tebeka/selenium)
 
@@ -590,10 +590,10 @@ The first action that needs to be run is to register database name with dsc conn
 | --- | --- | --- | --- | --- |
 | dsunit | register | register database connection, and optionally executes init scripts |  [DsUnitRegisterRequest](service_dsunit_register.go) | [DsUnitRegisterResponse](service_dsunit_register.go)  |
 | dsunit | mapping |  register virtual mapping between a virtual table and dozen actual tables to simplify setup. |  [DsUnitMappingRequest](service_dsunit_mapping.go) | [DsUnitMappingResponse](service_dsunit_mapping.go)  |
-| dsunit | sequence | takes current sequences for specified tables |  [DsUnitTableSequenceRequest](service_dsunit_sequence.go) | [DsUnitTableSequenceResponse](service_dsunit_sequence.go)  |
-| dsunit | sql | executes SQL from supplied URL, or inline SQL |  [DsUnitSQLRequest](service_dsunit_sql.go) | [DsUnitSQLResponse](service_dsunit_sql.go)  |
-| dsunit | prepare | populates database with setup data |  [DsUnitTablePrepareRequest](service_dsunit_prepare.go) | [DsUnitTablePrepareResponse](service_dsunit_prepare.go)  |
-| dsunit | expect | verifies database content with expected data |  [DsUnitTableExpectRequest](service_dsunit_prepare.go) | [*assertly.Validation](validation_info.go)  |
+| dsunit | sequence | take current sequences for specified tables |  [DsUnitTableSequenceRequest](service_dsunit_sequence.go) | [DsUnitTableSequenceResponse](service_dsunit_sequence.go)  |
+| dsunit | sql | execute SQL from supplied URL, or inline SQL |  [DsUnitSQLRequest](service_dsunit_sql.go) | [DsUnitSQLResponse](service_dsunit_sql.go)  |
+| dsunit | prepare | populate database with setup data |  [DsUnitTablePrepareRequest](service_dsunit_prepare.go) | [DsUnitTablePrepareResponse](service_dsunit_prepare.go)  |
+| dsunit | expect | verify database content with expected data |  [DsUnitTableExpectRequest](service_dsunit_prepare.go) | [*assertly.Validation](validation_info.go)  |
 
 To simplify setup/verification data process [DsUnitTableData](service_dsunit_data.go) has been introduce, so that data can be push into state, and then transform to the dsunit expected data with AsTableRecords udf function.
 
@@ -611,12 +611,12 @@ Workflow service provide capability to run task, action from any defined workflo
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| workflow | load | Loads workflow from provided path | [WorkflowLoadRequest](service_workflow_load.go) | [WorkflowLoadRequest](service_workflow_load.go)  |
-| workflow | register | Register provide workflow in registry | [WorkflowLoadRequest](service_workflow_register.go) |  |
+| workflow | load | load workflow from provided path | [WorkflowLoadRequest](service_workflow_load.go) | [WorkflowLoadRequest](service_workflow_load.go)  |
+| workflow | register | register provide workflow in registry | [WorkflowLoadRequest](service_workflow_register.go) |  |
 | workflow | run | run workflow with specified tasks and parameters | [WorkflowRunRequest](service_workflow_run.go) | [WorkflowRunResponse]((service_workflow_run.go) |
-| workflow | goto | switches current execution to the specified task on current workflow | [WorkflowGotoRequest](service_workflow_goto.go) | [WorkflowGotoResponse]((service_workflow_goto.go) 
-| workflow | switch | Runs matched  case action or task  | [WorkflowSwitchRequest](service_workflow_switch.go) | [WorkflowSwitchResponse](service_workflow_switch.go) |
-| workflow | exit | terminates execution of active workflow (caller) | n/a | n/a |
+| workflow | goto | switche current execution to the specified task on current workflow | [WorkflowGotoRequest](service_workflow_goto.go) | [WorkflowGotoResponse]((service_workflow_goto.go) 
+| workflow | switch | run matched  case action or task  | [WorkflowSwitchRequest](service_workflow_switch.go) | [WorkflowSwitchResponse](service_workflow_switch.go) |
+| workflow | exit | terminate execution of active workflow (caller) | n/a | n/a |
 
 **Log Service **
 
@@ -624,16 +624,16 @@ Log print log message on endly running console.
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| log | print | Print message or error | [LogPrintRequest](service_log.go) | n/a  |
+| log | print | print message or error | [LogPrintRequest](service_log.go) | n/a  |
 
 **No Operation Service **
 
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| nop | nop | Does nothing| [Nop](service_nop.go) | n/a  |
-| nop | parrot | Returns request | [NopParrotRequest](service_nop_parrot.go) | n/a  |
-| nop | fail | Failed wokrflow | [NopFailRequest](service_nop_fail.go) | n/a  |
+| nop | nop | do nothing| [Nop](service_nop.go) | n/a  |
+| nop | parrot | return request | [NopParrotRequest](service_nop_parrot.go) | n/a  |
+| nop | fail | fail  wokrflow | [NopFailRequest](service_nop_fail.go) | n/a  |
 
 
 <a name="predefined_workflows">	
