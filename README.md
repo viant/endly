@@ -174,8 +174,8 @@ The execution service is responsible for opening, managing terminal session, wit
 | --- | --- | --- | --- | --- |
 | exec | open | open SSH session on the target resource. | [OpenSessionRequest](service_exec_session.go#L9) | [OpenSessionResponse](service_exec_session.go#L19) |
 | exec | close | close SSH session | [CloseSessionRequest](service_exec_session.go#L24) | [CloseSessionResponse](service_exec_session.goL29) |
-| exec | run | executes basic commands | [CommandRequest](service_exec_command.go#L40) | [CommandResponse](service_exec_command_response.go#L15) |
-| exec | extract | executes commands with ability to extract data, define error or success state | [ExtractableCommandRequest](service_exec_command.go#L34) | [CommandResponse](service_exec_command_response.go#L15) |
+| exec | run | execute basic commands | [CommandRequest](service_exec_command.go#L40) | [CommandResponse](service_exec_command_response.go#L15) |
+| exec | extract | execute commands with ability to extract data, define error or success state | [ExtractableCommandRequest](service_exec_command.go#L34) | [CommandResponse](service_exec_command_response.go#L15) |
 
 
 
