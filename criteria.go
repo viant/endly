@@ -27,6 +27,10 @@ func EvaluateCriteria(context *Context, criteria, eventType string, defaultValue
 	if err != nil {
 		return false, err
 	}
-	AddEvent(context, eventType, Pairs("defaultValue", defaultValue, "actual", actualOperand, "expected", expectedOperand, "eligible", result), Info)
+	AddEvent(context, eventType, Pairs("defaultValue", defaultValue, "actual", actualOperand, "expected", expectedOperand, "eligible", result,
+		"criteria", criteria,
+	    "leftOperand",fragments[0],
+		"rightOperand",fragments[1],
+		), Info)
 	return result, err
 }
