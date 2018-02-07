@@ -1,0 +1,7 @@
+{
+  "Resources": [
+    {
+      "URL": "${env.HOME}/.m2/settings.xml.backup"
+    }
+  ]
+}
