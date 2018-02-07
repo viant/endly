@@ -10,6 +10,11 @@
     "Required": true
   },
   {
+    "Name":"mavenSettings",
+    "From":"params.mavenSettings",
+    "Required": false
+  },
+  {
     "Name": "buildGoal",
     "From": "params.buildGoal",
     "Value": "install"
