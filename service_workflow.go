@@ -254,12 +254,7 @@ func (s *workflowService) runTask(context *Context, workflow *WorkflowControl, t
 				return result, nil
 			}
 		}
-		var extractable = make(map[string]string)
-		repeatable := action.Repeatable.Get()
-		err = repeatable.Run(s.AbstractService, workflowCaller, context, handler(task.Actions[i]), extractable)
-		if err != nil {
-			return nil, err
-		}
+
 		moveToNextTag, err := EvaluateCriteria(context, action.SkipCriteria, "TagIdSkipCriteria", false)
 		if err != nil {
 			return nil, err
@@ -268,6 +263,14 @@ func (s *workflowService) runTask(context *Context, workflow *WorkflowControl, t
 			for j := i + 1; j < len(task.Actions) && action.TagID == task.Actions[j].TagID; j++ {
 				i++
 			}
+			continue
+		}
+
+		var extractable = make(map[string]string)
+		repeatable := action.Repeatable.Get()
+		err = repeatable.Run(s.AbstractService, workflowCaller, context, handler(task.Actions[i]), extractable)
+		if err != nil {
+			return nil, err
 		}
 	}
 
