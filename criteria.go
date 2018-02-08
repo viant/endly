@@ -15,7 +15,7 @@ func EvaluateCriteria(context *Context, criteria, eventType string, defaultValue
 	colonPosition := strings.LastIndex(criteria, ":")
 	if colonPosition == -1 {
 		if strings.HasPrefix(criteria, "!$") {
-			criteria 	= string(criteria[1:]) + ":"
+			criteria = string(criteria[1:]) + ":"
 		} else {
 			criteria = criteria + ":!"
 		}
