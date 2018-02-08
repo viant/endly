@@ -719,7 +719,6 @@ Make sure its location is on your PATH
 $ endly -h
 
 
-endly 0.1.0
 Usage of endly:
 endly [options] [params...]
 	params should be key value pair to be supplied as actual workflow parameters
