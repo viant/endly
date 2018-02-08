@@ -841,7 +841,7 @@ func main() {
 ## Best Practice
 
 1) Delegate a new workflow request to dedicated req/ folder
-2) Variables in  Init, Post should only define state not requests
+2) Variables in  Init, Post should only define state, delegate all variables to var/ folder
 3) Flag variable as Required or provide a fallback Value
 4) Use [Tag Iterators](https://github.com/viant/neatly#tagiterator) to group similar class of the tests 
 5) Since JSON inside tabular cell is not too elegant try to use [Virtual object](https://github.com/viant/neatly#vobject) instead.
@@ -855,11 +855,11 @@ Here is an example directory layout.
     manager.csv
         |- system / 
         |      | - system.csv
-        |      | - init.json (workflow init variables)
+        |      | - var/init.json (workflow init variables)
         |      | - req/         
         | - regression /
         |       | - regression.csv
-        |       | - init.json (workflow init variables)
+        |       | - var/init.json (workflow init variables)
         |       | - <use_case_group1> / 1 ... 00X (Tag Iterator)/ <test assets>
         |       | 
         |       | - <use_case_groupN> / 1 ... 00Y (Tag Iterator)/ <test assets>
@@ -867,11 +867,11 @@ Here is an example directory layout.
         |       
         | -  <your app name for related workflow> / //with build, deploy, init, start and stop tasks 
                 | <app>.csv
-                | init.json 
+                | var/init.json 
         
         | - datastore /
                  | - datastore.csv
-                 | - init.json
+                 | - var/init.json
                  | - dictionary /
                  | - schema.ddl
     
