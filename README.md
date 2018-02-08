@@ -141,8 +141,8 @@ An action does actual job, like starting service, building and deploying app etc
 To execute action:
 1) workflow service looks up a service by id, in workflow manager registry.
 2) workflow service creates a new request for corresponding action on the selected service.
-3) Action.Request  is first expanded with context.State ($variable substitution), to converted to service request.
-4) Context with its state it is passed into every action so that it can be modified for state control, future data substitution. 
+3) Action.Request is expanded with context.State ($variable substitution) to be converted as actual structured service request.
+4) Context with its state is passed into every action so that it can be modified for state controlm and future data substitution. 
 5) Service executes Run method for provided action to return ServiceResponse 
 
 
@@ -207,7 +207,7 @@ The following expression are supported:
     
     3) Executes all eligible actions:
         1) Action eligibility determination:
-            1) Evaluate RunCriteria if specified
+            1) Evaluate RunCriteria if specified, or SkipCriteria for all the actions within the same neatly TagID (tag + Group  + Index + Subpath)
         2) Action initialization stage executes,  applying variables defined in Action.Pre (input: workflow  state, output: workflow  state)
         3) Executing action on specified service
         4) Action post stage executes applying variables defined in Action.Post (input: action.response, output: workflow state)
