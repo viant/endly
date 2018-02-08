@@ -1,20 +1,27 @@
 package endly
 
 import (
-	"fmt"
 	"strings"
 )
 
 //EvaluateCriteria evaluates passed in criteria, it uses  <actual>:<expected>
+//
 //Assertion expression can be used for more complex criteria evaluation
 func EvaluateCriteria(context *Context, criteria, eventType string, defaultValue bool) (bool, error) {
 	if criteria == "" {
 		return defaultValue, nil
 	}
+	criteria = strings.TrimSpace(criteria)
 	colonPosition := strings.LastIndex(criteria, ":")
 	if colonPosition == -1 {
-		return false, fmt.Errorf("eval criteria needs to have colon: but had: %v", criteria)
+		if strings.HasPrefix(criteria, "!$") {
+			criteria 	= string(criteria[1:]) + ":"
+		} else {
+			criteria = criteria + ":!"
+		}
+		colonPosition = strings.LastIndex(criteria, ":")
 	}
+
 	fragments := []string{
 		string(criteria[:colonPosition]),
 		string(criteria[colonPosition+1:]),
