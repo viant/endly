@@ -135,10 +135,23 @@ func printServiceActionRequest() {
 	toolbox.InitStruct(request)
 	fmt.Printf("Request: %T\n", request)
 	printInFormat(request, fmt.Sprintf("failed to print %v.%v request (%T)", serviceID, action, request)+", %v")
+
+
+	metaRequest := toolbox.GetStructMeta(request)
+	fmt.Printf("Request Meta: \n")
+	printInFormat(metaRequest, fmt.Sprintf("failed to print %v.%v request (%T)", serviceID, action, metaRequest)+", %v")
+
+
+
 	response, _ := service.NewResponse(action)
 	fmt.Printf("\nResponse: %T\n", response)
 	toolbox.InitStruct(response)
-	printInFormat(response, fmt.Sprintf("failed to print %v.%v response (%T)", serviceID, action, request)+", %v")
+	printInFormat(response, fmt.Sprintf("failed to print %v.%v response (%T)", serviceID, action, response)+", %v")
+
+	metaResponse := toolbox.GetStructMeta(response)
+	fmt.Printf("Response Meta: \n")
+	printInFormat(metaResponse, fmt.Sprintf("failed to print %v.%v request (%T)", serviceID, action, metaResponse)+", %v")
+
 
 }
 

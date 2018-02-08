@@ -7,15 +7,15 @@ import (
 
 //DockerRunRequest represents a docker run request
 type DockerRunRequest struct {
-	Target      *url.Resource
-	Image       string
-	Port        string
-	Credentials map[string]string //container credential, i,e mysql password
-	Env         map[string]string
-	Mount       map[string]string
-	MappedPort  map[string]string
-	Params      map[string]string
-	Workdir     string
+	Target      *url.Resource `required:"true" description:"host where docker service running, name is the docker instance name" example:"{\"URL\":\"ssh://127.0.0.1/\", \"Name\":\"db1\", \"Credential\":\"${env.HOME}/.secret/localhost.json\"}" `
+	Credentials map[string]string `description:"map of secret key to obfuscate terminal output with corresponding filename storing credential compatible with github.com/viant/toolbox/cred/config.go" example:"{\"**mysql**\":\"${env.HOME}/.secret/mysql.json\"}"`
+	Image       string `required:"true" description:"container image to run" example:"mysql:5.6"`
+	Port        string `description:"publish a container’s port(s) to the host, docker -p option"`
+	Env         map[string]string `description:"set docker container an environment variable, docker -e KEY=VAL  option"`
+	Mount       map[string]string `description:"bind mount a volume, docker -v option"`
+	MappedPort  map[string]string `description:"publish a container’s port(s) to the host, docker -p option"`
+	Params      map[string]string `description:"other free form docker parameters"`
+	Workdir     string `description:"working directory inside the container, docker -w option"`
 }
 
 //Validate checks if request is valid

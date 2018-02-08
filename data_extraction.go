@@ -10,9 +10,9 @@ import (
 
 //DataExtraction represents a data extraction
 type DataExtraction struct {
-	RegExpr string //regular expression
-	Key     string //state key to store a match
-	Reset   bool   //reset the key in the context before evaluating this data extraction rule
+	RegExpr string `description:"regular expression with oval bracket to extract match pattern" example:"go(\d\.\d)"`                                                                            //regular expression
+	Key     string `description:"state key to store a match"`                                               //state key to store a match
+	Reset   bool   `description:"reset the key in the context before evaluating this data extraction rule"` //reset the key in the context before evaluating this data extraction rule
 }
 
 //DataExtractions a slice of DataExtractions
