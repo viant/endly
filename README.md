@@ -233,6 +233,34 @@ The following expression are supported:
 	    
 
 
+# Neatly Services
+
+To check all endly services run
+```text
+endly -s='*'
+```
+
+
+To check all actions supported by given service run 
+`endly -s='[service name]'`
+
+i.e 
+```text
+endly -s='docker'
+```
+
+
+To check request/response for service/action combination run 
+`endly -s='[service name]' -a=[action name]`
+
+i.e 
+```text
+endly -s='docker' -a='run'
+```
+
+
+
+
 <a name="SystemServices"></a>
 ## System services
 

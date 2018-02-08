@@ -385,14 +385,19 @@ func (r *CliRunner) reportLogValidation(response *LogValidatorAssertResponse) {
 	var total = passedCount + failedCount
 	messageType := messageTypeSuccess
 	messageInfo := "OK"
-	var message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, response.Description)
-	if failedCount > 0 {
-		messageType = messageTypeError
-		message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, response.Description)
-		messageInfo = "FAILED"
+	var message = ""
+	if total > 0 {
+		 message= fmt.Sprintf("Passed %v/%v %v", passedCount, total, response.Description)
+		if failedCount > 0 {
+			messageType = messageTypeError
+			message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, response.Description)
+			messageInfo = "FAILED"
+		}
 	}
 	r.printShortMessage(messageType, message, messageType, messageInfo)
 }
+
+
 
 func (r *CliRunner) extractHTTPTrips(eventCandidates []*Event) ([]*HTTPRequest, []*HTTPResponse) {
 	var requests = make([]*HTTPRequest, 0)
