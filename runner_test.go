@@ -37,6 +37,13 @@ func TestCliRunner_RunDsHttpWorkflow(t *testing.T) {
 	toolbox.CreateDirIfNotExist("/tmp/endly/test/workflow/dsunit")
 	runner := endly.NewCliRunner()
 
+	origin := endly.OnRunnerError
+	defer func() {
+		endly.OnRunnerError = origin
+	}()
+	endly.OnRunnerError = func(code int) {
+
+	}
 	request, options, err := endly.LoadRunRequestWithOption("test/runner/run_http.json")
 	if assert.Nil(t, err) {
 		err := runner.Run(request, options)
@@ -44,6 +51,7 @@ func TestCliRunner_RunDsHttpWorkflow(t *testing.T) {
 			log.Fatal(err)
 		}
 	}
+
 }
 
 func Test_LoadRunRequestWithOption(t *testing.T) {

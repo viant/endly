@@ -13,10 +13,19 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"log"
+	"os"
 )
 
+
+
+//OnRunnerError exit system with os.Exit with supplied code.
+var OnRunnerError = func(code int) {
+	os.Exit(code)
+}
+
 const (
-	messageTypeAction = iota
+	messageTypeAction         = iota
 	messageTypeTagDescription
 	messageTypeError
 	messageTypeSuccess
@@ -66,14 +75,14 @@ type ReportSummaryEvent struct {
 
 //CliRunner represents command line runner
 type CliRunner struct {
-	manager    Manager
-	tags       []*EventTag
-	indexedTag map[string]*EventTag
-	activities *Activities
-	eventTag   *EventTag
-	report     *ReportSummaryEvent
-	activity   *WorkflowServiceActivity
-
+	manager            Manager
+	tags               []*EventTag
+	indexedTag         map[string]*EventTag
+	activities         *Activities
+	eventTag           *EventTag
+	report             *ReportSummaryEvent
+	activity           *WorkflowServiceActivity
+	errorCode          bool
 	lines              int
 	lineRefreshCount   int
 	ErrorEvent         *Event
@@ -369,6 +378,7 @@ func (r *CliRunner) reportLogValidation(response *LogValidatorAssertResponse) {
 	for _, validation := range response.Validations {
 		if validation.HasFailure() {
 			failedCount++
+			r.errorCode = true
 		} else if validation.PassedCount > 0 {
 			passedCount++
 		}
@@ -387,7 +397,7 @@ func (r *CliRunner) reportLogValidation(response *LogValidatorAssertResponse) {
 	messageInfo := "OK"
 	var message = ""
 	if total > 0 {
-		 message= fmt.Sprintf("Passed %v/%v %v", passedCount, total, response.Description)
+		message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, response.Description)
 		if failedCount > 0 {
 			messageType = messageTypeError
 			message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, response.Description)
@@ -396,8 +406,6 @@ func (r *CliRunner) reportLogValidation(response *LogValidatorAssertResponse) {
 	}
 	r.printShortMessage(messageType, message, messageType, messageInfo)
 }
-
-
 
 func (r *CliRunner) extractHTTPTrips(eventCandidates []*Event) ([]*HTTPRequest, []*HTTPResponse) {
 	var requests = make([]*HTTPRequest, 0)
@@ -463,9 +471,10 @@ func (r *CliRunner) reportSummaryEvent() {
 		contextMessageColor = "red"
 		contextMessageStatus = "FAILED"
 	}
+
 	var contextMessageLength = len(contextMessage) + len(contextMessageStatus)
 	contextMessage = fmt.Sprintf("%v%v", contextMessage, colorText(contextMessageStatus, contextMessageColor))
-	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed+r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
+	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed + r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
 }
 
 func (r *CliRunner) getAssertResponse(event *Event) *assertly.Validation {
@@ -497,7 +506,7 @@ func (r *CliRunner) reportTagSummary() {
 
 		if tag.FailedCount > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
+			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
 
 			var minRange = 0
 			for i, event := range tag.Events {
@@ -513,7 +522,7 @@ func (r *CliRunner) reportTagSummary() {
 				if validation.HasFailure() {
 					var failureSourceEvent = []*Event{}
 					if i-minRange > 0 {
-						failureSourceEvent = tag.Events[minRange : i-1]
+						failureSourceEvent = tag.Events[minRange: i-1]
 					}
 					r.reportFailureWithMatchSource(tag, validation, failureSourceEvent)
 					minRange = i + 1
@@ -588,6 +597,7 @@ func (r *CliRunner) reportValidation(validation *assertly.Validation, event *Eve
 	messageInfo := "OK"
 	var message = fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, total, description)
 	if validation.FailedCount > 0 {
+		r.errorCode = true
 		messageType = messageTypeError
 		message = fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, total, description)
 		messageInfo = "FAILED"
@@ -682,6 +692,7 @@ func (r *CliRunner) processEventTags() {
 	for _, eventTag := range r.tags {
 		if eventTag.FailedCount > 0 {
 			r.report.TotalTagFailed++
+			r.errorCode = true
 		} else if eventTag.PassedCount > 0 {
 			r.report.TotalTagPassed++
 		}
@@ -712,10 +723,21 @@ func LoadRunRequestWithOption(workflowRunRequestURL string, params ...interface{
 }
 
 //Run run workflow for the supplied run request and runner options.
-func (r *CliRunner) Run(request *WorkflowRunRequest, options *RunnerReportingOptions) error {
+func (r *CliRunner) Run(request *WorkflowRunRequest, options *RunnerReportingOptions) (err error) {
 	ctx := r.manager.NewContext(toolbox.NewContext())
-	defer ctx.Close()
-	service, err := ctx.Service(WorkflowServiceID)
+	defer func() {
+		ctx.Close()
+		if r.errorCode {
+			if err != nil {
+				log.Print(err)
+			}
+	//		os.Exit(1)
+		}
+
+	}()
+
+	var service Service
+	service, err = ctx.Service(WorkflowServiceID)
 	if err != nil {
 		return err
 	}
@@ -728,7 +750,9 @@ func (r *CliRunner) Run(request *WorkflowRunRequest, options *RunnerReportingOpt
 	if !ok {
 		return fmt.Errorf("failed to run workflow: %v invalid response type %T", request.Name, response.Response)
 	}
-	return r.reportEvents(ctx, workflowResponse.SessionID, options.Filter)
+	err = r.reportEvents(ctx, workflowResponse.SessionID, options.Filter)
+
+	return err
 }
 
 func colorText(text, color string) string {
