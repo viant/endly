@@ -43,6 +43,11 @@ It addresses all aspect of testing automation namely:
 <a name="Installation"></a>
 ## Installation
 
+
+[Download the latst endly](https://github.com/viant/endly/releases/)
+
+or build from sources
+
 ```text
 #optionally set GOPATH directory
 export GOPATH=/Projects/go
@@ -55,9 +60,6 @@ go get -u github.com/viant/endly
 
 <a name="GettingStarted"></a>
 ## Getting Started
-
-[Download the latst endly](https://github.com/viant/endly/releases/)
-
 
 [Neatly introduction](https://github.com/adrianwit/neatly-introduction)
 
