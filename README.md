@@ -97,8 +97,9 @@ You can build, deploy and test them end to end all with endly.
 Endly as a comprehensive testing framework automate the following step:
 
 1) System preparation 
-    1) System services initialization.  (RDBM, NoSQL, Caching 3rd Party API)
-    2) Application container. (Application server, i,e, tomcat, glassfish)
+    1) Local or remote on cloud
+    2) System services initialization. (RDBM, NoSQL, caching or 3rd party API, dockerized services)
+    3) Application container. (Docker, Application server, i,e, tomcat, glassfish)
 2) Application build and deployment
     1) Application code checkout.
     2) Application build
