@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "targetHost",
+    "Value": "$params.targetHost",
+    "Required":true
+  },
+  {
+    "Name": "mysqlPort",
+    "From": "params.mysqlPort",
+    "Value":"3306"
+  },
+  {
+    "Name": "mysqlCredential",
+    "From": "params.mysqlCredential",
+    "Required": true
+  }
+]

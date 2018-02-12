@@ -13,6 +13,7 @@ import (
 
 //Service represents transformer service
 type Service interface {
+
 	Copy(request *CopyRequest) *CopyResponse
 
 	TaskList(request *TaskListRequest) *TaskListResponse

@@ -1,6 +1,6 @@
 {
 
   "Name":"REST asset",
-  "Actual":"$rest.actual",
+  "Actual":"$restActual",
   "Expected":"$rest.expected"
 }

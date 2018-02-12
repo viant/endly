@@ -9,6 +9,8 @@
     "mysqlPort": "$mysqlPort",
     "mysqlVersion": "$mysqlVersion",
     "mysqlCredential": "$mysqlCredential",
+    "buildTarget":"$buildTarget",
+    "executionTarget":"$executionTarget",
     "buildHost": "$buildHost",
     "buildHostCredential": "$buildHostCredential",
     "targetHost": "$targetHost",
