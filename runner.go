@@ -509,8 +509,7 @@ func (r *CliRunner) getDsUnitAssertResponse(event *Event) *assertly.Validation {
 
 func (r *CliRunner) reportTagSummary() {
 	for _, tag := range r.tags {
-
-		if tag.PassedCount + tag.FailedCount >  0  {
+		if (tag.PassedCount + tag.FailedCount) >  0  {
 			var eventTag = tag.TagID
 			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
 
