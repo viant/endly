@@ -9,13 +9,13 @@ Workflow,,Name,Description,Tasks,Init,DeferTask,,
 ,1,build,This task wil build the checked out code,%Build,,,,
 []Build,Service,Action,Description,Request,Group,SkipCriteria,Init,RunCriteria
 ,nop,nop,,{},mvn_setting,!$mavenSettings,,
-,storage,download,Take current maven settings, @req/maven_get_active_settings,mvn_setting,,,!HasResource(${evn.HOME}/.m2/settings.xml):true
+,storage,download,Take current maven settings, @req/maven_get_active_settings,mvn_setting,,,!HasResource(${env.HOME}/.m2/settings.xml):true
 ,storage,upload,Backup current maven settings, @req/maven_backup_settings,mvn_setting,,,
 ,storage,download,Take maven supplied settings, @req/maven_get_settings,mvn_setting,,,
 ,storage,upload,Apply suppplied maven settings, @req/maven_set_settings,mvn_setting,,,
 ,build,build,Build maven artifact,$buildRequest,,,,
 []Tasks,Step,Name,Description,Actions,,,,
 ,1,cleanup,restores previous maven settings.xml file,%Cleanup,,,,
-[]Cleanup,Service,Action,Description,Request,SkipCriteria,RunCriteria,,
-,storage,upload,Restore original maven settings, @req/maven_restore_settings.json,!HasResource(${env.HOME}/.m2/settings.xml.backup):false,$originalMavenSettings,,
-,storage,remove,Remove backup settings.xml, @req/maven_remove_backup_settings.json,,,,
+[]Cleanup,Service,Action,Description,Request,RunCriteria,,,
+,storage,upload,Restore original maven settings, @req/maven_restore_settings.json,$originalMavenSettings,,,
+,storage,remove,Remove backup settings.xml, @req/maven_remove_backup_settings.json,$originalMavenSettings,,,
