@@ -108,12 +108,18 @@ func (d *DsUnitTableData) GetValue(state data.Map, source interface{}) map[strin
 	return value
 }
 
-//AsTableRecords converts source into slice of *DsUnitTableData to create dsunit data as map[string][]map[string]interface{} (table with records)
-func AsTableRecords(source interface{}, state data.Map) (interface{}, error) {
+//AsTableRecords converts data spcified by dataKey into slice of *DsUnitTableData to create dsunit data as map[string][]map[string]interface{} (table with records)
+func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 	var result = make(map[string][]map[string]interface{})
-	if source == nil {
-		return nil, reportError(fmt.Errorf("source was nil"))
+	if state == nil {
+		return nil, fmt.Errorf("state was nil")
 	}
+
+	source, has := state.GetValue(toolbox.AsString(dataKey))
+	if !has || source == nil {
+		return nil, reportError(fmt.Errorf("value for specified key was empty: %v", dataKey))
+	}
+
 	if !state.Has(DataStoreUnitServiceID) {
 		state.Put(DataStoreUnitServiceID, data.NewMap())
 	}
