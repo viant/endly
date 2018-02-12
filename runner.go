@@ -215,17 +215,22 @@ func (r *CliRunner) reportHTTPEventTypes(serviceResponse interface{}, event *Eve
 }
 
 func (r *CliRunner) reportValidationEventTypes(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) bool {
-	switch actual := serviceResponse.(type) {
+
+	switch response := serviceResponse.(type) {
 	case *assertly.Validation:
-		r.reportValidation(actual, event)
+		r.reportValidation(response, event)
 	case *DsUnitExpectResponse:
-		r.reportValidation(actual.Validation, event)
+		if response != nil {
+			r.reportValidation(response.Validation, event)
+		}
 	case *ValidatorAssertResponse:
-		r.reportValidation(actual.Validation, event)
+		if response != nil {
+			r.reportValidation(response.Validation, event)
+		}
 	case *LogValidatorAssertResponse:
-		r.reportLogValidation(actual)
+		r.reportLogValidation(response)
 	case *SeleniumRunResponse:
-		r.reportLookupErrors(actual)
+		r.reportLookupErrors(response)
 	default:
 		return false
 	}
