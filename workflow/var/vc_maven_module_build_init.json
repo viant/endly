@@ -1,0 +1,123 @@
+[
+  {
+    "Name": "jdkVersion",
+    "From": "params.jdkVersion",
+    "Required": true
+  },
+  {
+    "Name":"mavenVersion",
+    "From":"params.mavenVersion",
+    "Required": true
+  },
+  {
+    "Name":"mavenSettings",
+    "From":"params.mavenSettings",
+    "Required": false
+  },
+  {
+    "Name": "buildGoal",
+    "From": "params.buildGoal",
+    "Value": "install"
+  },
+  {
+    "Name": "buildArgs",
+    "From": "params.buildArgs",
+    "Required": true
+  },
+  {
+    "Name": "originType",
+    "From": "params.originType",
+    "Required": true
+  },
+  {
+    "Name": "originUrl",
+    "From": "params.originUrl",
+    "Required": true
+  },
+  {
+    "Name": "originCredential",
+    "From": "params.originCredential",
+    "Required": true
+  },
+  {
+    "Name": "targetUrl",
+    "From": "params.targetUrl",
+    "Required": true
+  },
+  {
+    "Name": "targetHostCredential",
+    "From": "params.targetHostCredential",
+    "Required": true
+  },
+  {
+    "Name": "modules",
+    "From": "params.modules",
+    "Required": true
+  },
+  {
+    "Name": "parentPomUrl",
+    "From": "params.parentPomUrl",
+    "Required": true
+  },
+  {
+    "Name": "origin",
+    "Value": {
+      "Type": "$originType",
+      "URL": "$originUrl",
+      "Credential": "$originCredential"
+    }
+  },
+  {
+    "Name": "buildTarget",
+    "Value": {
+      "URL": "$targetUrl",
+      "Credential": "$targetHostCredential"
+    }
+  },
+
+  {
+    "Name": "transferPomRequest",
+    "Value": {
+      "Transfers": [
+        {
+          "Source": {
+            "URL": "$parentPomUrl",
+            "Credential": "$originCredential"
+          },
+          "Target": {
+            "URL": "${targetUrl}",
+            "Credential": "$targetHostCredential"
+          }
+        }
+      ]
+    }
+  },
+
+  {
+    "Name": "checkoutRequest",
+    "Value": {
+      "Origin": "$origin",
+      "Modules": "$modules",
+      "Target": "$buildTarget"
+    }
+  },
+  {
+    "Name": "originalMavenSettings",
+    "Value": ""
+  },
+  {
+    "Name": "buildRequest",
+    "Value": {
+      "BuildSpec": {
+        "Name": "maven",
+        "Version": "$mavenVersion",
+        "Goal": "build",
+        "BuildGoal": "$buildGoal",
+        "Args": "$buildArgs",
+        "Sdk": "jdk",
+        "SdkVersion": "$jdkVersion"
+      },
+      "Target": "$buildTarget"
+    }
+  }
+]
