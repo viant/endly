@@ -6,19 +6,21 @@
   "LoggingDirectory": "logs",
   "Tasks": "*",
   "Params": {
+
+
     "app":"transformer",
     "goVersion":"1.8",
-    "buildGoal": "build",
     "originURL": "https://github.com/viant/endly/example/etl/transformer",
-
     "GOPATH":"$env.GOPATH",
+
+
     "targetHost": "127.0.0.1",
     "targetHostCredential": "${env.HOME}/.secret/localhost.json",
-
 
     "buildHost": "127.0.0.1",
     "buildHostCredential": "${env.HOME}/.secret/localhost.json",
 
+    "buildGoal": "build",
     "buildDirectory" :"!WorkingDirectory(../app)",
     "buildArgs":" -o transformer",
     "appRootDirectory":"/opt/",

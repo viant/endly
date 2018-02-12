@@ -1,8 +1,5 @@
 {
-  "Target": {
-    "URL": "ssh://$targetHost",
-    "Credential": "$targetHostCredential"
-  },
+  "Target":"$executionTarget",
   "Directory": "$appDirectory",
   "Command": "./${app}",
   "Arguments": [

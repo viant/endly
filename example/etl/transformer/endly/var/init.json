@@ -1,0 +1,47 @@
+[
+  {
+    "Name": "buildHost",
+    "From": "params.buildHost",
+    "Required": true
+  },
+  {
+    "Name": "buildHostCredential",
+    "From": "params.buildHostCredential",
+    "Required": true
+  },
+  {
+    "Name": "buildHostCredential",
+    "From": "params.buildHostCredential",
+    "Required": true
+  },
+  {
+    "Name": "buildDirectory",
+    "From": "params.buildDirectory",
+    "Required": true
+  },
+
+  {
+    "Name": "buildTarget",
+    "Value": {
+      "URL": "ssh://${buildHost}/${buildDirectory}",
+      "Credential": "$buildHostCredential"
+    }
+  },
+  {
+    "Name": "targetHost",
+    "From": "params.targetHost",
+    "Required": true
+  },
+  {
+    "Name": "targetHostCredential",
+    "From": "params.targetHostCredential",
+    "Required": true
+  },
+  {
+    "Name": "executionTarget",
+    "Value": {
+      "URL": "ssh://${targetHost}/",
+      "Credential": "targetHostCredential"
+    }
+  }
+]
