@@ -1,0 +1,78 @@
+[
+  {
+    "Name": "jdkVersion",
+    "From": "$params.jdkVersion",
+    "Required": true
+  },
+  {
+    "Name":"mavenVersion",
+    "From":"params.mavenVersion",
+    "Required": true
+  },
+  {
+    "Name": "buildGoal",
+    "From": "params.buildGoal",
+    "Value": "install"
+  },
+  {
+    "Name": "buildArgs",
+    "From": "params.buildArgs",
+    "Value": ""
+  },
+  {
+    "Name": "originType",
+    "From": "params.originType",
+    "Required": true
+  },
+  {
+    "Name": "originUrl",
+    "From": "params.originUrl",
+    "Required": true
+  },
+  {
+    "Name": "originCredential",
+    "From": "params.originCredential",
+    "Required": true
+  },
+  {
+    "Name": "buildTarget",
+    "Value": {
+      "URL": "$params.targetUrl",
+      "Credential": "$params.targetHostCredential"
+    }
+  },
+  {
+    "Name": "origin",
+    "Value": {
+      "Type": "$originType",
+      "URL": "$originUrl",
+      "Credential": "$originCredential"
+    }
+  },
+  {
+    "Name": "checkoutRequest",
+    "Value": {
+      "Origin": "$origin",
+      "Target": "$buildTarget"
+    }
+  },
+  {
+    "Name": "originalMavenSettings",
+    "Value": ""
+  },
+  {
+    "Name": "buildRequest",
+    "Value": {
+      "BuildSpec": {
+        "Name": "maven",
+        "Version":"$mavenVersion",
+        "Goal": "build",
+        "BuildGoal": "$buildGoal",
+        "Args": "$buildArgs",
+        "Sdk": "jdk",
+        "SdkVersion": "$jdkVersion"
+      },
+      "Target": "$buildTarget"
+    }
+  }
+]
