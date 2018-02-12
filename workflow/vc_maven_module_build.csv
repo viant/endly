@@ -8,7 +8,7 @@ Workflow,,Name,Description,Tasks,Init,DeferTask,
 []Tasks,Step,Name,Description,Actions,,,
 ,1,build,This task wil build the checked out code,%Build,,,
 []Build,Service,Action,Description,Request,Group,SkipCriteria,Init
-,storage,download,Take current maven settings, @req/maven_get_active_settings,mvn_setting,$mavenSettings:!,
+,storage,download,Take current maven settings, @req/maven_get_active_settings,mvn_setting,!$mavenSettings,
 ,storage,upload,Backup current maven settings, @req/maven_backup_settings,mvn_setting,,
 ,storage,download,Take maven supplied settings, @req/maven_get_settings,mvn_setting,,
 ,storage,upload,Apply suppplied maven settings, @req/maven_set_settings,mvn_setting,,
