@@ -494,6 +494,7 @@ func (r *CliRunner) getAssertResponse(event *Event) *assertly.Validation {
 	return assertResponse.Validation
 }
 
+
 func (r *CliRunner) getDsUnitAssertResponse(event *Event) *assertly.Validation {
 	candidate := event.get(reflect.TypeOf(&DsUnitExpectResponse{}))
 	if candidate == nil {
@@ -509,7 +510,7 @@ func (r *CliRunner) getDsUnitAssertResponse(event *Event) *assertly.Validation {
 func (r *CliRunner) reportTagSummary() {
 	for _, tag := range r.tags {
 
-		if tag.FailedCount > 0 {
+		if tag.PassedCount + tag.FailedCount >  0  {
 			var eventTag = tag.TagID
 			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
 
