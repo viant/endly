@@ -1,0 +1,6 @@
+[
+  {
+    "Name":"users",
+    "Value":"!AsTableRecords(data.ds.users)"
+  }
+]
