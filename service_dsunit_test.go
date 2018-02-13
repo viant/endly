@@ -149,7 +149,8 @@ func TestDsUnitService(t *testing.T) {
 
 		var state = data.NewMap()
 		state.Put("meta", sequences)
-		tableRecords, err := endly.AsTableRecords(tableData, state)
+		state.Put("tableData", tableData)
+		tableRecords, err := endly.AsTableRecords("tableData", state)
 		assert.Nil(t, err)
 		assert.NotNil(t, tableRecords)
 		tableSetupData, ok := tableRecords.(map[string][]map[string]interface{})

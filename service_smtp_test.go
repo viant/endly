@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func TestSmtpService_Run(t *testing.T) {
+func TestSMTPpService_Run(t *testing.T) {
 	var parent = toolbox.CallerDirectory(3)
 	credential := path.Join(parent, "test/smtp/secret.json")
 	manager := endly.NewManager()
@@ -56,7 +56,7 @@ func TestSmtpService_Run(t *testing.T) {
 		response, ok := serviceResponse.Response.(*endly.SMTPSendResponse)
 		if assert.True(t, ok) {
 			if response != nil {
-				assert.EqualValues(t, 185, response.SendPayloadSize)
+				assert.True(t, response.SendPayloadSize > 0)
 			}
 
 		}
