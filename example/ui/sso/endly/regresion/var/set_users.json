@@ -1,6 +1,6 @@
 [
   {
     "Name":"users",
-    "Value":"!AsTableRecords(data.ds.users)"
+    "Value":"$AsTableRecords(data.ds.users)"
   }
 ]

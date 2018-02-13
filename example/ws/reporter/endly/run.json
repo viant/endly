@@ -21,7 +21,7 @@
     "buildHost": "127.0.0.1",
     "buildHostCredential": "${env.HOME}/.secret/localhost.json",
 
-    "buildDirectory" :"!WorkingDirectory(../app)",
+    "buildDirectory" :"$WorkingDirectory(../app)",
     "buildArgs":" -o reporter",
     "appRootDirectory":"/opt/"
   },

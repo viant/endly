@@ -11,7 +11,7 @@
     },
     {
       "Source": {
-        "URL": "!WorkingDirectory(../static)"
+        "URL": "$WorkingDirectory(../static)"
       },
       "Target": {
         "URL": "scp://${targetHost}${appDirectory}/static",
