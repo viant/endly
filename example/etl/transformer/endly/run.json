@@ -21,7 +21,7 @@
     "buildHostCredential": "${env.HOME}/.secret/localhost.json",
 
     "buildGoal": "build",
-    "buildDirectory" :"!WorkingDirectory(../app)",
+    "buildDirectory" :"$WorkingDirectory(../app)",
     "buildArgs":" -o transformer",
     "appRootDirectory":"/opt/",
 

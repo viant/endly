@@ -1,6 +1,6 @@
 [
   {
     "Name":"tablesData",
-    "Value":"!AsTableRecords(data.dsunit.mydb1)"
+    "Value":"$AsTableRecords(data.dsunit.mydb1)"
   }
  ]
