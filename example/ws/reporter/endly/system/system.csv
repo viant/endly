@@ -1,5 +1,5 @@
 Workflow,,Name,Description,Tasks,,Init,,
-,,system,Adelphic system init,%Tasks,,@init,,
+,,system,Adelphic system init,%Tasks,,@var/init,,
 []Tasks,,Name,Description,Actions,,,,
 ,,init,Run app services,%Init,,,,
 []Init,Service,Action,Description,Request,images,,,
