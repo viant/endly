@@ -1,13 +1,12 @@
-Workflow,,Name,Description,Tasks,,[]Init.Name,[]Init.From,[]Init.Required
-,,system,Manages sso services,%Tasks,,targetHost,params.targetHost,TRUE
-,,,,,,targetHostCredential,params.targetHostCredential,TRUE
-[]Tasks,,Name,Description,Actions,,,,
-,,init,Init sso app services,%Init,,,,
-[]Init,Service,Action,Description,Request,image,,,
-,docker,stop-images,Stops requested images,@req/stop_image,aerospike,,,
-[]Init,Service,Action,Description,Request,instance,tasks,SleepTimeMs,
-,workflow,run,start aerospike on $buildHost,@req/aerospike,db1_aerospike,start,30000,
-[]Tasks,,Name,Description,Actions,,,,
-,,destroy,Stop sso services,%Destroy,,,,
-[]Destroy,Service,Action,Description,Request,instance,tasks,,
-,workflow,run,stop aerospike,@req/aerospike,db1_aerospike,stop,,
+Workflow,,Name,Description,Tasks,,Init,
+,,system,manages sso services,%Tasks,,@var/init,
+[]Tasks,,Name,Description,Actions,,,
+,,init,init app services,%Init,,,
+[]Init,Service,Action,Description,Request,image,,
+,docker,stop-images,stops requested images,@req/stop_image,aerospike,,
+[]Init,Service,Action,Description,Request,instance,tasks,SleepTimeMs
+,workflow,run,start aerospike on $buildHost,@req/aerospike,db1_aerospike,start,30000
+[]Tasks,,Name,Description,Actions,,,
+,,destroy,stop sso services,%Destroy,,,
+[]Destroy,Service,Action,Description,Request,instance,tasks,
+,workflow,run,stop aerospike,@req/aerospike,db1_aerospike,stop,

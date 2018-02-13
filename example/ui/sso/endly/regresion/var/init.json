@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "targetHost",
+    "From": "params.targetHost",
+    "Required":true
+  },
+  {
+    "Name": "targetHostCredential",
+    "From": "params.targetHostCredential",
+    "Required":true
+  },
+  {
+    "Name": "seleniumServerPort",
+    "From": "params.seleniumServerPort",
+    "Required":true
+  }
+]
