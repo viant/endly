@@ -20,4 +20,5 @@
     * Simplified evaluation critiera
     * Refactored example workkflow with best practice
     * Maven build workflow optionally parameterized with custom .m2/settings.xml
-    
+    * Added request and response metadata with endly -s -a options
+    * Added workflow task description with endly -t='?'
