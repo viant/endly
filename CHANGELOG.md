@@ -13,3 +13,11 @@
     * Update neatly to support @ for external resources, 
     * Added spaces (pipe has been already supported) for multi external resource separation 
     * Minor fixes
+    
+    
+## Feb 12  2018 0.3.0
+    * Updated udf expression to use $, instead of ! (no backward compatible change)
+    * Simplified evaluation critiera
+    * Refactored example workkflow with best practice
+    * Maven build workflow optionally parameterized with custom .m2/settings.xml
+    
