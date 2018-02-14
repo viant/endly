@@ -386,13 +386,14 @@ func (r *CliRunner) reportLogValidation(response *LogValidatorAssertResponse) {
 			r.errorCode = true
 		} else if validation.PassedCount > 0 {
 			passedCount++
+			continue
 		}
 		if r.activity != nil {
-			var tagID = validation.TagID
-			if eventTag, ok := r.indexedTag[tagID]; ok {
-				eventTag.AddEvent(&Event{Type: "LogValidation", Value: Pairs("value", validation)})
-				eventTag.PassedCount += validation.PassedCount
-				eventTag.FailedCount += validation.FailedCount
+		var tagID = validation.TagID
+		if eventTag, ok := r.indexedTag[tagID]; ok {
+			eventTag.AddEvent(&Event{Type: "LogValidation", Value: Pairs("value", validation)})
+			eventTag.PassedCount += validation.PassedCount
+			eventTag.FailedCount += validation.FailedCount
 
 			}
 		}
@@ -482,18 +483,18 @@ func (r *CliRunner) reportSummaryEvent() {
 	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed + r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
 }
 
-func (r *CliRunner) getAssertResponse(event *Event) *assertly.Validation {
-	candidate := event.get(reflect.TypeOf(&ValidatorAssertResponse{}))
+func (r *CliRunner) getValidation(event *Event) *assertly.Validation {
+
+	candidate := event.get(reflect.TypeOf(&assertly.Validation{}))
 	if candidate == nil {
 		return nil
 	}
-	assertResponse, ok := candidate.(*ValidatorAssertResponse)
+	validation, ok := candidate.(*assertly.Validation)
 	if !ok {
 		return nil
 	}
-	return assertResponse.Validation
+	return validation
 }
-
 
 func (r *CliRunner) getDsUnitAssertResponse(event *Event) *assertly.Validation {
 	candidate := event.get(reflect.TypeOf(&DsUnitExpectResponse{}))
@@ -509,14 +510,14 @@ func (r *CliRunner) getDsUnitAssertResponse(event *Event) *assertly.Validation {
 
 func (r *CliRunner) reportTagSummary() {
 	for _, tag := range r.tags {
-		if (tag.FailedCount) >  0  {
+		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
 			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
 
 			var minRange = 0
 			for i, event := range tag.Events {
 
-				validation := r.getAssertResponse(event)
+				validation := r.getValidation(event)
 				if validation == nil {
 					validation = r.getDsUnitAssertResponse(event)
 				}
@@ -736,7 +737,7 @@ func (r *CliRunner) Run(request *WorkflowRunRequest, options *RunnerReportingOpt
 			if err != nil {
 				log.Print(err)
 			}
-	//		os.Exit(1)
+			//		os.Exit(1)
 		}
 
 	}()
