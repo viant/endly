@@ -28,10 +28,8 @@ func transformWithUDF(context *Context, udfName, source string, payload interfac
 
 //DateOfBirth returns formated date of birth
 func DateOfBirth(source interface{}, state data.Map) (interface{}, error) {
-
-	aSlice, err := toolbox.JSONToSlice(source)
-	if err != nil {
-		return nil, err
+	if ! toolbox.IsSlice(source) {
+		return nil, fmt.Errorf("expected slice but had: %T %v", source, source)
 	}
-	return toolbox.NewDateOfBirthrovider().Get(toolbox.NewContext(), aSlice...)
+	return toolbox.NewDateOfBirthrovider().Get(toolbox.NewContext(), toolbox.AsSlice(source)...)
 }
