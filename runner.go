@@ -1,23 +1,17 @@
 package endly
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"github.com/logrusorgru/aurora"
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
-	"os/exec"
-	"reflect"
-	"strconv"
-	"strings"
-	"time"
 	"log"
 	"os"
+	"reflect"
+	"strings"
+	"time"
 )
-
-
 
 //OnRunnerError exit system with os.Exit with supplied code.
 var OnRunnerError = func(code int) {
@@ -25,7 +19,7 @@ var OnRunnerError = func(code int) {
 }
 
 const (
-	messageTypeAction         = iota
+	messageTypeAction = iota
 	messageTypeTagDescription
 	messageTypeError
 	messageTypeSuccess
@@ -53,18 +47,6 @@ func (e *EventTag) AddEvent(event *Event) {
 	e.Events = append(e.Events, event)
 }
 
-var colors = map[string]func(arg interface{}) aurora.Value{
-	"red":     aurora.Red,
-	"green":   aurora.Green,
-	"blue":    aurora.Blue,
-	"bold":    aurora.Bold,
-	"brown":   aurora.Brown,
-	"gray":    aurora.Gray,
-	"cyan":    aurora.Cyan,
-	"magenta": aurora.Magenta,
-	"inverse": aurora.Inverse,
-}
-
 //ReportSummaryEvent represents event summary
 type ReportSummaryEvent struct {
 	ElapsedMs      int
@@ -75,29 +57,33 @@ type ReportSummaryEvent struct {
 
 //CliRunner represents command line runner
 type CliRunner struct {
-	manager            Manager
-	tags               []*EventTag
-	indexedTag         map[string]*EventTag
-	activities         *Activities
-	eventTag           *EventTag
-	report             *ReportSummaryEvent
-	activity           *WorkflowServiceActivity
-	errorCode          bool
-	lines              int
-	lineRefreshCount   int
-	ErrorEvent         *Event
+	*Renderer
+	manager          Manager
+	tags             []*EventTag
+	indexedTag       map[string]*EventTag
+	activities       *Activities
+	eventTag         *EventTag
+	report           *ReportSummaryEvent
+	activity         *WorkflowServiceActivity
+	errorCode        bool
+	lines            int
+	lineRefreshCount int
+	ErrorEvent       *Event
+
 	InputColor         string
 	OutputColor        string
 	PathColor          string
 	TagColor           string
 	InverseTag         bool
 	ServiceActionColor string
-	MessageTypeColor   map[int]string
-	SuccessColor       string
-	ErrorColor         string
-	SleepCount         int
-	SleepTime          time.Duration
-	SleepTagID         string
+
+	MessageTypeColor map[int]string
+	SuccessColor     string
+	ErrorColor       string
+
+	SleepCount int
+	SleepTime  time.Duration
+	SleepTagID string
 }
 
 //AddTag adds reporting tag
@@ -115,9 +101,7 @@ func (r *CliRunner) EventTag() *EventTag {
 		}
 		return r.eventTag
 	}
-
 	activity := r.activities.Last()
-
 	if _, has := r.indexedTag[activity.TagID]; !has {
 		eventTag := &EventTag{
 			Workflow: activity.Workflow,
@@ -141,23 +125,23 @@ func (r *CliRunner) hasActiveSession(context *Context, sessionID string) bool {
 }
 
 func (r *CliRunner) printInput(output string) {
-	fmt.Printf("%v\n", colorText(output, r.InputColor))
+	r.Printf("%v\n", r.ColorText(output, r.InputColor))
 }
 
 func (r *CliRunner) printOutput(output string) {
-	fmt.Printf("%v\n", colorText(output, r.OutputColor))
+	r.Printf("%v\n", r.ColorText(output, r.OutputColor))
 }
 
 func (r *CliRunner) printError(output string) {
-	fmt.Printf("%v\n", colorText(output, r.ErrorColor))
+	r.Printf("%v\n", r.ColorText(output, r.ErrorColor))
 }
 
 func (r *CliRunner) printShortMessage(messageType int, message string, messageInfoType int, messageInfo string) {
-	fmt.Printf("%v\n", r.formatShortMessage(messageType, message, messageInfoType, messageInfo))
+	r.Printf("%v\n", r.formatShortMessage(messageType, message, messageInfoType, messageInfo))
 }
 
 func (r *CliRunner) overrideShortMessage(messageType int, message string, messageInfoType int, messageInfo string) {
-	fmt.Printf("\r%v", r.formatShortMessage(messageType, message, messageInfoType, messageInfo))
+	r.Printf("\r%v", r.formatShortMessage(messageType, message, messageInfoType, messageInfo))
 }
 
 func (r *CliRunner) reportDsUnitEventTypes(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) bool {
@@ -264,7 +248,7 @@ func (r *CliRunner) reportWorkflowEventTypes(serviceResponse interface{}, event 
 		return false
 	}
 	if r.SleepCount > 0 {
-		fmt.Printf("\n")
+		r.Printf("\n")
 		r.SleepCount = 0
 	}
 	return true
@@ -294,7 +278,7 @@ func (r *CliRunner) reportSystemEventType(serviceResponse interface{}, event *Ev
 	case *ErrorEventType:
 		r.report.Error = true
 		r.printShortMessage(messageTypeError, fmt.Sprintf("%v", actual.Error), messageTypeError, "error")
-		fmt.Println(colorText(fmt.Sprintf("ERROR: %v\n", actual.Error), "red"))
+		r.Println(r.ColorText(fmt.Sprintf("ERROR: %v\n", actual.Error), "red"))
 		return true
 	case *SleepEventType:
 
@@ -314,7 +298,7 @@ func (r *CliRunner) reportSystemEventType(serviceResponse interface{}, event *Ev
 	}
 
 	if r.SleepCount > 0 && r.eventTag.TagID != r.SleepTagID {
-		fmt.Printf("\n")
+		r.Printf("\n")
 		r.SleepCount = 0
 	}
 	return false
@@ -342,12 +326,6 @@ func (r *CliRunner) reportEventType(serviceResponse interface{}, event *Event, f
 	}
 
 	switch actual := serviceResponse.(type) {
-	case *LogPrintRequest:
-		if actual.Message != "" {
-			r.printOutput(actual.Message)
-		} else if actual.Error != "" {
-			r.printError(actual.Error)
-		}
 
 	case *DeploymentDeployRequest:
 		if filter.Deployment {
@@ -389,11 +367,11 @@ func (r *CliRunner) reportLogValidation(response *LogValidatorAssertResponse) {
 			continue
 		}
 		if r.activity != nil {
-		var tagID = validation.TagID
-		if eventTag, ok := r.indexedTag[tagID]; ok {
-			eventTag.AddEvent(&Event{Type: "LogValidation", Value: Pairs("value", validation)})
-			eventTag.PassedCount += validation.PassedCount
-			eventTag.FailedCount += validation.FailedCount
+			var tagID = validation.TagID
+			if eventTag, ok := r.indexedTag[tagID]; ok {
+				eventTag.AddEvent(&Event{Type: "LogValidation", Value: Pairs("value", validation)})
+				eventTag.PassedCount += validation.PassedCount
+				eventTag.FailedCount += validation.FailedCount
 
 			}
 		}
@@ -479,8 +457,8 @@ func (r *CliRunner) reportSummaryEvent() {
 	}
 
 	var contextMessageLength = len(contextMessage) + len(contextMessageStatus)
-	contextMessage = fmt.Sprintf("%v%v", contextMessage, colorText(contextMessageStatus, contextMessageColor))
-	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed + r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
+	contextMessage = fmt.Sprintf("%v%v", contextMessage, r.ColorText(contextMessageStatus, contextMessageColor))
+	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed+r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
 }
 
 func (r *CliRunner) getValidation(event *Event) *assertly.Validation {
@@ -512,7 +490,7 @@ func (r *CliRunner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(colorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
+			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
 
 			var minRange = 0
 			for i, event := range tag.Events {
@@ -528,7 +506,7 @@ func (r *CliRunner) reportTagSummary() {
 				if validation.HasFailure() {
 					var failureSourceEvent = []*Event{}
 					if i-minRange > 0 {
-						failureSourceEvent = tag.Events[minRange: i-1]
+						failureSourceEvent = tag.Events[minRange : i-1]
 					}
 					r.reportFailureWithMatchSource(tag, validation, failureSourceEvent)
 					minRange = i + 1
@@ -661,7 +639,7 @@ func (r *CliRunner) reportEvents(context *Context, sessionID string, filter *Run
 	if context.Workflow() != nil {
 		var workflow = context.Workflow().Name
 		var workflowLength = len(workflow)
-		r.printMessage(colorText(workflow, r.TagColor), workflowLength, messageTypeGeneric, fmt.Sprintf("%v", time.Now()), messageTypeGeneric, "started")
+		r.printMessage(r.ColorText(workflow, r.TagColor), workflowLength, messageTypeGeneric, fmt.Sprintf("%v", time.Now()), messageTypeGeneric, "started")
 	}
 	for {
 		reporterResponse, err := r.getReportedEvents(context, service, sessionID)
@@ -761,38 +739,12 @@ func (r *CliRunner) Run(request *WorkflowRunRequest, options *RunnerReportingOpt
 	return err
 }
 
-func colorText(text, color string) string {
-	if color, has := colors[color]; has {
-		return fmt.Sprintf("%v", color(text))
-	}
-	return text
-}
-
-var minColumns = 120
-
-func (r *CliRunner) columns() int {
-
-	ctx := context.Background()
-	cmd := exec.CommandContext(ctx, "tput", "cols")
-	output, err := cmd.CombinedOutput()
-	if err == nil {
-		r.lines, err = strconv.Atoi(strings.TrimSpace(string(output)))
-		if err != nil {
-			r.lines = minColumns
-		}
-	}
-	if r.lines < minColumns {
-		r.lines = minColumns
-	}
-	return r.lines
-}
-
 func (r *CliRunner) printMessage(contextMessage string, contextMessageLength int, messageType int, message string, messageInfoType int, messageInfo string) {
-	fmt.Printf("%v\n", r.formatMessage(contextMessage, contextMessageLength, messageType, message, messageInfoType, messageInfo))
+	r.Printf("%v\n", r.formatMessage(contextMessage, contextMessageLength, messageType, message, messageInfoType, messageInfo))
 }
 
 func (r *CliRunner) formatMessage(contextMessage string, contextMessageLength int, messageType int, message string, messageInfoType int, messageInfo string) string {
-	var columns = r.columns() - 5
+	var columns = r.Columns() - 5
 	var infoLength = len(messageInfo)
 	var messageLength = columns - contextMessageLength - infoLength
 
@@ -807,12 +759,12 @@ func (r *CliRunner) formatMessage(contextMessage string, contextMessageLength in
 	messageInfo = fmt.Sprintf("%"+toolbox.AsString(infoLength)+"v", messageInfo)
 
 	if messageColor, ok := r.MessageTypeColor[messageType]; ok {
-		message = colorText(message, messageColor)
+		message = r.ColorText(message, messageColor)
 	}
 
-	messageInfo = colorText(messageInfo, "bold")
+	messageInfo = r.ColorText(messageInfo, "bold")
 	if messageInfoColor, ok := r.MessageTypeColor[messageInfoType]; ok {
-		messageInfo = colorText(messageInfo, messageInfoColor)
+		messageInfo = r.ColorText(messageInfo, messageInfoColor)
 	}
 	return fmt.Sprintf("[%v %v %v]", contextMessage, message, messageInfo)
 }
@@ -835,6 +787,7 @@ func NewCliRunner() *CliRunner {
 	var activities Activities = make([]*WorkflowServiceActivity, 0)
 	return &CliRunner{
 		manager:            NewManager(),
+		Renderer:           NewRenderer(os.Stdout, 120),
 		tags:               make([]*EventTag, 0),
 		indexedTag:         make(map[string]*EventTag),
 		activities:         &activities,
@@ -842,9 +795,10 @@ func NewCliRunner() *CliRunner {
 		OutputColor:        "green",
 		PathColor:          "brown",
 		TagColor:           "brown",
+		ErrorColor:         "red",
 		InverseTag:         true,
 		ServiceActionColor: "gray",
-		ErrorColor:         "red",
+
 		MessageTypeColor: map[int]string{
 			messageTypeTagDescription: "cyan",
 			messageTypeError:          "red",

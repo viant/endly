@@ -208,13 +208,16 @@ func (s *execService) setEnvVariable(context *Context, session *SystemTerminalSe
 	return err
 }
 
-func (s *execService) changeDirectory(context *Context, session *SystemTerminalSession, commandInfo *CommandResponse, directory string) (string,error) {
+func (s *execService) changeDirectory(context *Context, session *SystemTerminalSession, commandInfo *CommandResponse, directory string) (string, error) {
 	if directory == "" {
 		return "", nil
 	}
 	parent, name := path.Split(directory)
 	if path.Ext(name) != "" {
 		directory = parent
+	}
+	if len(directory) > 1 && strings.HasSuffix(directory, "/") {
+		directory = string(directory[:len(directory)-1])
 	}
 	if session.currentDirectory == directory {
 		return "", nil
@@ -228,7 +231,7 @@ func (s *execService) changeDirectory(context *Context, session *SystemTerminalS
 	if !CheckNoSuchFileOrDirectory(result) {
 		session.currentDirectory = directory
 	}
-	return result,  err
+	return result, err
 }
 
 func (s *execService) rumCommandTemplate(context *Context, session *SystemTerminalSession, commandTemplate string, arguments ...interface{}) (string, error) {
@@ -241,6 +244,7 @@ func (s *execService) rumCommandTemplate(context *Context, session *SystemTermin
 		SessionID: session.ID,
 		Stdout:    stdout,
 	}
+
 	s.End(context)(startEvent, Pairs("value", executionEndEvent))
 	if err != nil {
 		executionEndEvent.Error = fmt.Sprintf("%v", err)
@@ -337,7 +341,6 @@ func (s *execService) credentialsToSecure(credentials map[string]string) (map[st
 	return secure, nil
 }
 
-
 func (s *execService) validateStdout(stdout string, command string, execution *Execution) error {
 	errorMatch := match(stdout, execution.Errors...)
 	if errorMatch != "" {
@@ -351,8 +354,6 @@ func (s *execService) validateStdout(stdout string, command string, execution *E
 	}
 	return nil
 }
-
-
 
 func (s *execService) executeCommand(context *Context, session *SystemTerminalSession, execution *Execution, options *ExecutionOptions, response *CommandResponse, request *ExtractableCommandRequest) error {
 	command := context.Expand(execution.Command)
@@ -394,7 +395,7 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 		return err
 	}
 
-	if err = s.validateStdout(stdout, command, execution);err != nil {
+	if err = s.validateStdout(stdout, command, execution); err != nil {
 		return err
 	}
 
@@ -466,10 +467,10 @@ func (s *execService) runCommands(context *Context, request *ExtractableCommandR
 				var directory = strings.TrimSpace(string(command[3:]))
 				stdout, err := s.changeDirectory(context, session, response, directory)
 				if err == nil {
-					err= s.validateStdout(stdout, execution.Command, execution)
+					err = s.validateStdout(stdout, execution.Command, execution)
 				}
 				if err != nil {
-					return  nil, err
+					return nil, err
 				}
 				continue
 			}

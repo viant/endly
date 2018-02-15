@@ -103,7 +103,6 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 		return nil, fmt.Errorf("failed to parse URL %v", result.URL)
 	}
 	result.Name = c.Expand(resource.Name)
-	result.Type = c.Expand(resource.Type)
 	result.Cache = c.Expand(resource.Cache)
 	result.CacheExpiryMs = resource.CacheExpiryMs
 	return result, nil

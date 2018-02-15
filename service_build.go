@@ -11,12 +11,6 @@ import (
 const (
 	//BuildServiceID represent build service id
 	BuildServiceID = "build"
-
-	//BuildServiceBuildAction represent build action
-	BuildServiceBuildAction = "build"
-
-	//BuildServiceLoadAction represent load build instruction action
-	BuildServiceLoadAction = "load"
 )
 
 type buildService struct {
@@ -127,6 +121,7 @@ func (s *buildService) setSdkIfNeeded(context *Context, request *BuildRequest) e
 		Target:  request.Target,
 		Sdk:     request.BuildSpec.Sdk,
 		Version: request.BuildSpec.SdkVersion,
+		Env:     request.Env,
 	})
 	if serviceResponse.Error != "" {
 		return errors.New(serviceResponse.Error)
@@ -156,6 +151,7 @@ func (s *buildService) build(context *Context, request *BuildRequest) (*BuildRes
 		return nil, err
 	}
 	state.Put("buildSpec", buildState)
+
 	err = s.setSdkIfNeeded(context, request)
 	if err != nil {
 		return nil, err
@@ -219,64 +215,97 @@ func newBuildState(buildSepc *BuildSpec, target *url.Resource, request *BuildReq
 	return build, nil
 }
 
-func (s *buildService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-	var err = s.Validate(request, response)
-	if err != nil {
-		return response
+func (s *buildService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "build",
+		RequestInfo: &ActionInfo{
+			Description: "build app with supplied specification",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "go app build",
+					Data: `{
+	"BuildSpec": {
+		"Name": "go",
+		"Goal": "build",
+		"BuildGoal": "build",
+		"Args": " -o echo",
+		"Sdk": "go",
+		"SdkVersion": "1.8"
+	},
+	"Env": {
+		"GOOS": "linux"
+	},
+	"Target": {
+		"URL": "scp://127.0.0.1/tmp/app/echo",
+		"Credential": "${env.HOME}/.secret/localhost.json"
 	}
-	switch actualRequest := request.(type) {
-	case *BuildRequest:
-		response.Response, err = s.build(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to build: %v %v", actualRequest.Target.URL, err)
-		}
-	case *BuildLoadMetaRequest:
-		response.Response, err = s.loadMeta(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to load build meta: %v %v", actualRequest.Source, err)
-		}
-	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
-	}
-	if response.Error != "" {
-		response.Status = "error"
-	}
-	return response
 }
-
-func (s *buildService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case BuildServiceLoadAction:
-		return &BuildLoadMetaRequest{}, nil
-	case BuildServiceBuildAction:
-		return &BuildRequest{}, nil
-
-	}
-	return s.AbstractService.NewRequest(action)
+`,
+				},
+				{
+					UseCase: "java app build",
+					Data: `{
+  "BuildSpec": {
+    "Name": "maven",
+    "Version": "3.5",
+    "Goal": "build",
+    "BuildGoal": "install",
+    "Args": " -f pom.xml -am -pl server -DskipTest",
+    "Sdk": "jdk",
+    "SdkVersion": "1.7"
+  },
+ "Target": {
+    "URL": "scp://127.0.0.1/tmp/app/server/",
+    "Credential": "${env.HOME}/.secret/scp.json"
+  }
 }
+`,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &BuildRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &BuildResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*BuildRequest); ok {
+				return s.build(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 
-func (s *buildService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case BuildServiceLoadAction:
-		return &BuildLoadMetaResponse{}, nil
-	case BuildServiceBuildAction:
-		return &BuildResponse{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
+	s.Register(&ServiceActionRoute{
+		Action: "load",
+		RequestInfo: &ActionInfo{
+			Description: "load build meta instruction",
+		},
+		RequestProvider: func() interface{} {
+			return &BuildLoadMetaRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &BuildLoadMetaResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*BuildLoadMetaRequest); ok {
+				return s.loadMeta(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
 }
 
 //NewBuildService creates a new build service
 func NewBuildService() Service {
 	var result = &buildService{
-		registry: make(map[string]*BuildMeta),
-		mutex:    &sync.RWMutex{},
-		AbstractService: NewAbstractService(BuildServiceID,
-			BuildServiceBuildAction,
-			BuildServiceLoadAction),
+		registry:        make(map[string]*BuildMeta),
+		mutex:           &sync.RWMutex{},
+		AbstractService: NewAbstractService(BuildServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }

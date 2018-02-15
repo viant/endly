@@ -107,7 +107,11 @@ func NewManager() Manager {
 	result.Register(NewDockerService())
 	result.Register(NewDataStoreUnitService())
 	result.Register(NewNopService())
-	result.Register(NewLogValidatorService())
+	//backward compatibility name of service
+	var loggerService = NewLogValidatorService()
+	result.services[LogServiceID] = loggerService
+	result.Register(loggerService)
+
 	result.Register(NewEventReporterService())
 	result.Register(NewNetworkService())
 	result.Register(NewSeleniumService())

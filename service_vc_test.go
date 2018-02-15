@@ -13,7 +13,7 @@ func TestVc_Status(t *testing.T) {
 	credentialFile, err := GetDummyCredential()
 	assert.Nil(t, err)
 	var target = url.NewResource("ssh://127.0.0.1/Projects/project1/trunk", credentialFile) //
-	target.Type = "svn"
+
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir  string
@@ -24,6 +24,7 @@ func TestVc_Status(t *testing.T) {
 		{
 			"test/vc/svn/status/darwin",
 			&endly.VcStatusRequest{
+				Type:   "svn",
 				Target: target,
 			},
 			&endly.VcInfo{
@@ -55,7 +56,7 @@ func TestVc_Status(t *testing.T) {
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				actual, ok := serviceResponse.Response.(*endly.VcInfo)
+				actual, ok := serviceResponse.Response.(*endly.VcStatusResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -83,8 +84,7 @@ func TestVc_Checkout(t *testing.T) {
 	credentialFile, err := GetCredential("localhost.json", "awitas", "***")
 	gitCredentialFile, err := GetCredential("git.json", "adrianwit", "***")
 	assert.Nil(t, err)
-	var target = url.NewResource("ssh://127.0.0.1/Projects/project1/trunk", credentialFile) //
-	target.Type = "svn"
+
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir  string
@@ -95,20 +95,23 @@ func TestVc_Checkout(t *testing.T) {
 		{
 			"test/vc/svn/checkout/error/darwin",
 			&endly.VcCheckoutRequest{
+				Type:   "svn",
 				Target: url.NewResource("scp://127.0.0.1:22/tmp/project2/trunk", credentialFile),
 				Origin: url.NewResource("http://svn.viant.com/svn/projects/project1/trunk", credentialFile),
 			},
 			&endly.VcCheckoutResponse{},
-			"failed to checkout version: http://svn.viant.com/svn/projects/project1/trunk -> scp://127.0.0.1:22/tmp/project2/trunk, failed to authenticate username: awitas with",
+			"failed to authenticate username: awitas with",
 		},
 		{
 			"test/vc/svn/checkout/new/darwin",
 			&endly.VcCheckoutRequest{
+				Type:   "svn",
 				Target: url.NewResource("scp://127.0.0.1:22/tmp/project1/trunk", credentialFile),
 				Origin: url.NewResource("http://svn.viant.com/svn/projects/project1/trunk", credentialFile),
 			},
 			&endly.VcCheckoutResponse{
 				Checkouts: map[string]*endly.VcInfo{
+
 					"http://svn.viant.com/svn/projects/project1/trunk": {
 						Origin:                  "http://svn.viant.com/svn/projects/project1/trunk",
 						IsVersionControlManaged: true,
@@ -123,6 +126,7 @@ func TestVc_Checkout(t *testing.T) {
 		{
 			"test/vc/svn/checkout/existing/darwin",
 			&endly.VcCheckoutRequest{
+				Type:   "svn",
 				Target: url.NewResource("scp://127.0.0.1:22/tmp/project1/trunk", credentialFile),
 				Origin: url.NewResource("http://svn.viant.com/svn/projects/project1/trunk", credentialFile),
 			},
@@ -142,6 +146,7 @@ func TestVc_Checkout(t *testing.T) {
 		{
 			"test/vc/svn/checkout/modules/darwin",
 			&endly.VcCheckoutRequest{
+				Type:    "svn",
 				Target:  url.NewResource("scp://127.0.0.1:22/tmp/project3/", credentialFile),
 				Origin:  url.NewResource("http://svn.viant.com/svn/projects/", credentialFile),
 				Modules: []string{"project1/trunk", "project2/trunk"},
@@ -169,15 +174,17 @@ func TestVc_Checkout(t *testing.T) {
 		{
 			"test/vc/git/checkout/private/error/linux",
 			&endly.VcCheckoutRequest{
+
 				Target: url.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
 				Origin: url.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
 			},
 			&endly.VcCheckoutResponse{},
-			"failed to checkout version: https://github.com/adrianwit/projectA -> scp://127.0.0.1:22/tmp/myproj, failed to authenticate username: adrianwit with",
+			"failed to authenticate username: adrianwit",
 		},
 		{
 			"test/vc/git/checkout/private/new/linux",
 			&endly.VcCheckoutRequest{
+
 				Target: url.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
 				Origin: url.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
 			},
@@ -229,7 +236,7 @@ func TestVc_Checkout(t *testing.T) {
 
 				var baseCase = useCase.baseDir + " "
 				if useCase.Error != "" {
-					assert.True(t, strings.HasPrefix(serviceResponse.Error, useCase.Error), baseCase+" "+serviceResponse.Error)
+					assert.True(t, strings.Contains(serviceResponse.Error, useCase.Error), baseCase+" "+serviceResponse.Error)
 				}
 				response, ok := serviceResponse.Response.(*endly.VcCheckoutResponse)
 				if !ok {
@@ -263,7 +270,7 @@ func TestVc_Checkout(t *testing.T) {
 	}
 }
 
-////
+//
 //func TestService_Run2StatusRequest(t *testing.T) {
 //
 //

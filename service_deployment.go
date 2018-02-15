@@ -263,7 +263,6 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 
 	if target.ParsedURL.Path != "" {
 
-
 		if _, err := context.Execute(target, fmt.Sprintf("cd %v", target.ParsedURL.Path)); err != nil {
 			if _, err = context.Execute(target, "cd /"); err != nil {
 				return nil, err
