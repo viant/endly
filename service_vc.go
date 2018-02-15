@@ -215,6 +215,88 @@ func (s *versionControlService) checkoutArtifact(context *Context, versionContro
 	return info, err
 }
 
+const (
+	vcExplicitVersionCheckExample = `{
+					"Target":{
+						"URL":"ssh://127.0.0.1/Projects/myproject/trunk",
+						"Credential":"${env.HOME}/.secret/localhost.json"
+					},
+					"Type":"svn"
+}`
+	vcImplicitVersionCheckExample = `{
+					"Target":{
+						"URL":"ssh://127.0.0.1/Projects/git/myproject/trunk",
+						"Credential":"${env.HOME}/.secret/localhost.json"
+					}
+
+}`
+	vcSingleProjectCheckoutExample = `{
+  "Target":{
+    "URL":"ssh://127.0.0.1/Projects/go/",
+    "Credential":"${env.HOME}/.secret/localhost.json"
+  },
+  "Origin": {
+      "URL":"https://github.com/viant/endly/"
+  }
+}
+`
+	vcMultiProjectCheckoutExample = `{
+  "Target":{
+    "URL":"ssh://127.0.0.1/Projects/go/",
+    "Credential":"${env.HOME}/.secret/localhost.json"
+  },
+  "Origin": {
+    "URL":"https://github.com/viant/"
+  },
+  "Modules":["toolbox", "assertly", "endly"]
+}`
+
+	vcMultiProjectCheckoutResponseExample = `{
+			"Checkouts": {
+			"https://github.com/adrianwit/echo": {
+				"IsVersionControlManaged": true,
+				"Origin": "https://github.com:443/adrianwit/echo",
+				"Revision": "7f98e433333bc1961135d4ec9023aa95134198fd",
+				"Branch": "master",
+				"IsUptoDate": true,
+				"New": [],
+				"Untracked": [],
+				"Modified": [],
+				"Deleted": []
+			},
+			"https://github.com/adrianwit/neatly-introduction": {
+				"IsVersionControlManaged": true,
+				"Origin": "https://github.com:443/adrianwit/neatly-introduction",
+				"Revision": "f194db0d9f7574b424e9820b423d2357da4775f8",
+				"Branch": "master",
+				"IsUptoDate": true,
+				"New": [],
+				"Untracked": [],
+				"Modified": [],
+				"Deleted": []
+			}
+		}
+	}`
+	vcCommitExample = `{
+  "Target":{
+    "URL":"ssh://127.0.0.1/Projects/myproject/trunk",
+    "Credential":"${env.HOME}/.secret/localhost.json"
+  },
+  "Type":"svn",
+  "Message":"my comments"
+}`
+	vcPullExample = `{
+					"Target":{
+						"URL":"ssh://127.0.0.1/Projects/go/",
+						"Credential":"${env.HOME}/.secret/localhost.json"
+					},
+					"Origin": {
+						"URL":"https://github.com/viant/endly/"
+						"Credential":"${env.HOME}/.secret/git.json"
+					}
+				}`
+)
+
 func (s *versionControlService) registerRoutes() {
 	s.Register(&ServiceActionRoute{
 		Action: "status",
@@ -223,23 +305,11 @@ func (s *versionControlService) registerRoutes() {
 			Examples: []*ExampleUseCase{
 				{
 					UseCase: "Explicit version control type",
-					Data: `{
-					"Target":{
-						"URL":"ssh://127.0.0.1/Projects/myproject/trunk",
-						"Credential":"${env.HOME}/.secret/localhost.json"
-					},
-					"Type":"svn"
-}`,
+					Data:    vcExplicitVersionCheckExample,
 				},
 				{
 					UseCase: "Implicit version control type derived from URL",
-					Data: `{
-					"Target":{
-						"URL":"ssh://127.0.0.1/Projects/git/myproject/trunk",
-						"Credential":"${env.HOME}/.secret/localhost.json"
-					}
-
-}`,
+					Data:    vcImplicitVersionCheckExample,
 				},
 			},
 		},
@@ -265,29 +335,11 @@ If target directory exist and contains matching origin URL, only latest changes 
 			Examples: []*ExampleUseCase{
 				{
 					UseCase: "single project checkout",
-					Data: `{
-  "Target":{
-    "URL":"ssh://127.0.0.1/Projects/go/",
-    "Credential":"${env.HOME}/.secret/localhost.json"
-  },
-  "Origin": {
-      "URL":"https://github.com/viant/endly/"
-  }
-}
-`,
+					Data:    vcSingleProjectCheckoutExample,
 				},
 				{
 					UseCase: "multi projects checkout",
-					Data: `{
-  "Target":{
-    "URL":"ssh://127.0.0.1/Projects/go/",
-    "Credential":"${env.HOME}/.secret/localhost.json"
-  },
-  "Origin": {
-    "URL":"https://github.com/viant/"
-  },
-  "Modules":["toolbox", "assertly", "endly"]
-}`,
+					Data:    vcMultiProjectCheckoutExample,
 				},
 			},
 		},
@@ -296,32 +348,7 @@ If target directory exist and contains matching origin URL, only latest changes 
 			Examples: []*ExampleUseCase{
 				{
 					UseCase: "multi project checkout",
-					Data: `{
-			"Checkouts": {
-			"https://github.com/adrianwit/echo": {
-				"IsVersionControlManaged": true,
-				"Origin": "https://github.com:443/adrianwit/echo",
-				"Revision": "7f98e433333bc1961135d4ec9023aa95134198fd",
-				"Branch": "master",
-				"IsUptoDate": true,
-				"New": [],
-				"Untracked": [],
-				"Modified": [],
-				"Deleted": []
-			},
-			"https://github.com/adrianwit/neatly-introduction": {
-				"IsVersionControlManaged": true,
-				"Origin": "https://github.com:443/adrianwit/neatly-introduction",
-				"Revision": "f194db0d9f7574b424e9820b423d2357da4775f8",
-				"Branch": "master",
-				"IsUptoDate": true,
-				"New": [],
-				"Untracked": [],
-				"Modified": [],
-				"Deleted": []
-			}
-		}
-	}`,
+					Data:    vcMultiProjectCheckoutResponseExample,
 				},
 			},
 		},
@@ -346,14 +373,7 @@ If target directory exist and contains matching origin URL, only latest changes 
 			Examples: []*ExampleUseCase{
 				{
 					UseCase: "",
-					Data: `{
-  "Target":{
-    "URL":"ssh://127.0.0.1/Projects/myproject/trunk",
-    "Credential":"${env.HOME}/.secret/localhost.json"
-  },
-  "Type":"svn",
-  "Message":"my comments"
-}`,
+					Data:    vcCommitExample,
 				}},
 		},
 		RequestProvider: func() interface{} {
@@ -376,16 +396,7 @@ If target directory exist and contains matching origin URL, only latest changes 
 			Examples: []*ExampleUseCase{
 				{
 					UseCase: "",
-					Data: `{
-					"Target":{
-						"URL":"ssh://127.0.0.1/Projects/go/",
-						"Credential":"${env.HOME}/.secret/localhost.json"
-					},
-					"Origin": {
-						"URL":"https://github.com/viant/endly/"
-						"Credential":"${env.HOME}/.secret/git.json"
-					}
-				}`,
+					Data:    vcPullExample,
 				}},
 		},
 		RequestProvider: func() interface{} {

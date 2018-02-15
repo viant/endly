@@ -22,11 +22,11 @@ type BuildMeta struct {
 //Validate validates build meta.
 func (m *BuildMeta) Validate() error {
 	if m.Name == "" {
-		return fmt.Errorf("MetaBuild.Names %v", m.Name)
+		return fmt.Errorf("metaBuild.Names %v", m.Name)
 
 	}
 	if len(m.Goals) == 0 {
-		return fmt.Errorf("MetaBuild.Goals were empty %v", m.Name)
+		return fmt.Errorf("metaBuild.Goals were empty %v", m.Name)
 	}
 	return nil
 }

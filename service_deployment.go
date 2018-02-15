@@ -13,12 +13,6 @@ import (
 //DeploymentServiceID represents a deployment service id.
 const DeploymentServiceID = "deployment"
 
-//DeploymentServiceLoadAction represents a load deployment instruction action
-const DeploymentServiceLoadAction = "load"
-
-//DeploymentServiceDeployAction represents a deploy deployment instruction action
-const DeploymentServiceDeployAction = "deploy"
-
 const artifactKey = "artifact"
 const versionKey = "Version"
 
@@ -331,38 +325,10 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	return nil, fmt.Errorf("failed to deploy %v, unable to verify deployments", request.AppName)
 }
 
-func (s *deploymentService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-	var err = s.Validate(request, response)
-	if err != nil {
-		return response
-	}
 
-	switch castedRequest := request.(type) {
-	case *DeploymentDeployRequest:
-		response.Response, err = s.deploy(context, castedRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to run deployment: %v, %v", castedRequest.AppName, err)
-		}
-	case *DeploymentMetaRequest:
-		response.Response, err = s.loadMeta(context, castedRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to load meta deployment: %v, %v", castedRequest.Source.URL, err)
-		}
 
-	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
-	}
 
-	if response.Error != "" {
-		response.Status = "error"
-	}
-	return response
-}
-
-func (s *deploymentService) loadMeta(context *Context, request *DeploymentMetaRequest) (*DeploymentMetaResponse, error) {
+func (s *deploymentService) loadMeta(context *Context, request *DeploymentLoadMetaRequest) (*DeploymentLoadMetaResponse, error) {
 	source, err := context.ExpandResource(request.Source)
 	if err != nil {
 		return nil, err
@@ -378,7 +344,7 @@ func (s *deploymentService) loadMeta(context *Context, request *DeploymentMetaRe
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.registry[meta.Name] = meta
-	return &DeploymentMetaResponse{
+	return &DeploymentLoadMetaResponse{
 		Meta: meta,
 	}, nil
 }
@@ -409,7 +375,7 @@ func (s *deploymentService) getMeta(context *Context, request *DeploymentDeployR
 		if mainWorkflow != nil {
 			credential = mainWorkflow.Source.Credential
 		}
-		response, err := s.loadMeta(context, &DeploymentMetaRequest{
+		response, err := s.loadMeta(context, &DeploymentLoadMetaRequest{
 			Source: url.NewResource(metaURL, credential),
 		})
 		if err != nil {
@@ -420,35 +386,78 @@ func (s *deploymentService) getMeta(context *Context, request *DeploymentDeployR
 	return result, nil
 }
 
-func (s *deploymentService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case DeploymentServiceDeployAction:
-		return &DeploymentDeployRequest{}, nil
-	case DeploymentServiceLoadAction:
-		return &DeploymentMetaRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
+
+
+const (
+	deploymentTomcatDeployExample = `{
+  "Target": {
+    "URL": "scp://127.0.0.1/opt/server/",
+    "Credential": "${env.HOME}/.secret/localhost.json"
+  },
+  "AppName": "tomcat",
+  "Version": "7.0",
+  "Force": true
+}`
+)
+
+
+
+func (s *deploymentService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "deploy",
+		RequestInfo: &ActionInfo{
+			Description: "deploy specific app version on target host, if existing app version matches requested version, deployment is skipped",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "tomcat deploy",
+					Data:deploymentTomcatDeployExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DeploymentDeployRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DeploymentDeployResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DeploymentDeployRequest); ok {
+				return s.deploy(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "load",
+		RequestInfo: &ActionInfo{
+			Description: "load deployment meta instruction into registry",
+		},
+		RequestProvider: func() interface{} {
+			return &DeploymentLoadMetaRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DeploymentLoadMetaResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DeploymentLoadMetaRequest); ok {
+ 				return s.loadMeta(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 }
 
-func (s *deploymentService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case DeploymentServiceDeployAction:
-		return &DeploymentDeployResponse{}, nil
-	case DeploymentServiceLoadAction:
-		return &DeploymentMetaResponse{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
-}
+
 
 //NewDeploymentService returns new deployment service
 func NewDeploymentService() Service {
 	var result = &deploymentService{
-		AbstractService: NewAbstractService(DeploymentServiceID,
-			DeploymentServiceDeployAction,
-			DeploymentServiceLoadAction),
+		AbstractService: NewAbstractService(DeploymentServiceID),
 		mutex:    &sync.RWMutex{},
 		registry: make(map[string]*DeploymentMeta),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }

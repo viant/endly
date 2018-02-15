@@ -304,50 +304,71 @@ func (r *CliRunner) reportSystemEventType(serviceResponse interface{}, event *Ev
 	return false
 }
 
-func (r *CliRunner) reportEventType(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) {
-	if r.reportSystemEventType(serviceResponse, event, filter) {
+func (r *CliRunner) reportEventType(value interface{}, event *Event, filter *RunnerReportingFilter) {
+	if r.reportSystemEventType(value, event, filter) {
 		return
 	}
 
-	if r.reportWorkflowEventTypes(serviceResponse, event, filter) {
+	if r.reportWorkflowEventTypes(value, event, filter) {
 		return
 	}
-	if r.reportExecutionEvenType(serviceResponse, event, filter) {
+	if r.reportExecutionEvenType(value, event, filter) {
 		return
 	}
-	if r.reportDsUnitEventTypes(serviceResponse, event, filter) {
+	if r.reportDsUnitEventTypes(value, event, filter) {
 		return
 	}
-	if r.reportHTTPEventTypes(serviceResponse, event, filter) {
+	if r.reportHTTPEventTypes(value, event, filter) {
 		return
 	}
-	if r.reportValidationEventTypes(serviceResponse, event, filter) {
+	if r.reportValidationEventTypes(value, event, filter) {
 		return
 	}
 
-	switch actual := serviceResponse.(type) {
+	switch casted := value.(type) {
 
 	case *DeploymentDeployRequest:
 		if filter.Deployment {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("app: %v, forced: %v", actual.AppName, actual.Force), messageTypeGeneric, "deploy")
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("app: %v, forced: %v", casted.AppName, casted.Force), messageTypeGeneric, "deploy")
 		}
 
 	case *VcCheckoutRequest:
 		if filter.Checkout {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", actual.Origin.URL, actual.Target.URL), messageTypeGeneric, "checkout")
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", casted.Origin.URL, casted.Target.URL), messageTypeGeneric, "checkout")
 		}
 
 	case *BuildRequest:
 		if filter.Build {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", actual.BuildSpec.Name, actual.Target.URL), messageTypeGeneric, "build")
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", casted.BuildSpec.Name, casted.Target.URL), messageTypeGeneric, "build")
 		}
 
-	case *CopyEventType:
-		if filter.Transfer {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("expand: %v", actual.Expand), messageTypeGeneric, "copy")
-			r.printInput(fmt.Sprintf("SourceURL: %v", actual.SourceURL))
-			r.printOutput(fmt.Sprintf("TargetURL: %v", actual.TargetURL))
 
+	case *StorageRemoveRequest:
+		if filter.Transfer {
+			for _, resource := range casted.Resources {
+				r.printShortMessage(messageTypeGeneric, "", messageTypeGeneric, "remove")
+				r.printInput(fmt.Sprintf("SourceURL: %v", resource.URL))
+			}
+		}
+	case *StorageUploadRequest:
+		if filter.Transfer && casted.Validate() == nil {
+			r.printShortMessage(messageTypeGeneric, "", messageTypeGeneric, "upload")
+			r.printInput(fmt.Sprintf("SourceKe: %v", casted.SourceKey))
+			r.printOutput(fmt.Sprintf("TargetURL: %v", casted.Target.URL))
+		}
+	case *StorageDownloadRequest:
+		if filter.Transfer && casted.Validate() == nil {
+			r.printShortMessage(messageTypeGeneric, "", messageTypeGeneric, "download")
+			r.printInput(fmt.Sprintf("SourceURL: %v", casted.Source.URL))
+			r.printOutput(fmt.Sprintf("TargetKey: %v", casted.TargetKey))
+		}
+	case *StorageCopyRequest:
+		if filter.Transfer && casted.Validate() == nil {
+			for _, transfer := range casted.Transfers {
+				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("expand: %v", transfer.Expand), messageTypeGeneric, "copy")
+				r.printInput(fmt.Sprintf("SourceURL: %v", transfer.Source.URL))
+				r.printOutput(fmt.Sprintf("TargetURL: %v", transfer.Target.URL))
+			}
 		}
 
 	}

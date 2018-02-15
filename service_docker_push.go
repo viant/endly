@@ -6,8 +6,8 @@ import (
 
 //DockerPushRequest represents a docker push request
 type DockerPushRequest struct {
-	Target *url.Resource
-	Tag    *DockerTag
+	Target *url.Resource `required:"true" description:"host with docker service"` //target host
+	Tag    *DockerTag `required:"true"`
 }
 
 //DockerPushResponse represents a docker push request

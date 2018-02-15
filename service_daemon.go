@@ -372,7 +372,6 @@ func (s *daemonService) startService(context *Context, request *DaemonStartReque
 	case serviceTypeInitDaemon:
 		command = fmt.Sprintf("%v start", serviceInfo.Service)
 	}
-
 	commandResult, err := s.executeCommand(context, serviceInfo.Type, target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
@@ -397,6 +396,8 @@ func (s *daemonService) startService(context *Context, request *DaemonStartReque
 	}
 	return &DaemonStartResponse{DaemonInfo: serviceInfo}, err
 }
+
+
 
 func (s *daemonService) registerRoutes() {
 	s.Register(&ServiceActionRoute{

@@ -7,7 +7,7 @@ import (
 
 //StorageRemoveRequest represents a resources Remove request
 type StorageRemoveRequest struct {
-	Resources []*url.Resource
+	Resources []*url.Resource `required:"true" description:"resources to remove"`
 }
 
 //Validate checks if request is valid

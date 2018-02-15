@@ -107,7 +107,7 @@ func Bootstrap() {
 }
 
 func printWorkflowTasks(URL string) {
-	workflow, err := getWorkflow(URL);
+	workflow, err := getWorkflow(URL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -193,7 +193,7 @@ func printServiceActions() {
 		for k, v := range endly.Services(manager) {
 			fmt.Printf("%v %T\n", k, v)
 		}
-		return;
+		return
 	}
 
 	service, err := context.Service(serviceID)
@@ -214,7 +214,7 @@ func getWorkflow(URL string) (*endly.Workflow, error) {
 }
 
 func printWorkflow(URL string) {
-	workflow, err := getWorkflow(URL);
+	workflow, err := getWorkflow(URL)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -343,7 +343,7 @@ func normalizeArgument(value string) interface{} {
 	value = strings.Trim(value, " \"'")
 	if strings.HasPrefix(value, "#") || strings.HasPrefix(value, "@") {
 		resource := url.NewResource(string(value[1:]))
-		text, err := resource.DownloadText();
+		text, err := resource.DownloadText()
 		if err == nil {
 			value = text
 		}

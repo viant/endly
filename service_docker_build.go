@@ -7,10 +7,10 @@ import (
 
 //DockerBuildRequest represents docker build request
 type DockerBuildRequest struct {
-	Target    *url.Resource
-	Tag       *DockerTag
-	Path      string
-	Arguments map[string]string //https://docs.docker.com/engine/reference/commandline/build/#description
+	Target    *url.Resource `required:"true" description:"host with docker service"` //target host
+	Tag       *DockerTag    `required:"true" description:"build docker tag"`
+	Path      string        `required:"true" description:"docker build source path"`
+	Arguments map[string]string `description:"docker build command line arguments, see more: https://docs.docker.com/engine/reference/commandline/build/#description "` //https://docs.docker.com/engine/reference/commandline/build/#description
 }
 
 //DockerBuildResponse represents docker build response

@@ -13,57 +13,6 @@ const (
 	//DockerServiceID represents docker service id
 	DockerServiceID = "docker"
 
-	//DockerRunAction represents docker run action
-	DockerRunAction = "run"
-
-	//DockerServiceSysPathAction represents docker syspath action
-	DockerServiceSysPathAction = "syspath"
-
-	//DockerServiceStopImagesAction represents docker stop-images" action
-	DockerServiceStopImagesAction = "stop-images"
-
-	//DockerServiceImagesAction represents docker images action
-	DockerServiceImagesAction = "images"
-
-	//DockerServicePullAction represents docker pull action
-	DockerServicePullAction = "pull"
-
-	//DockerServiceBuildAction represents docker build action
-	DockerServiceBuildAction = "build"
-
-	//DockerServiceTagAction represents docker tag action
-	DockerServiceTagAction = "tag"
-
-	//DockerServiceLoginAction represents docker login action
-	DockerServiceLoginAction = "login"
-
-	//DockerServiceLogoutAction represents docker logout action
-	DockerServiceLogoutAction = "logout"
-
-	//DockerServicePushAction represents docker push action
-	DockerServicePushAction = "push"
-
-	//DockerServiceInspectAction represents docker inspect action
-	DockerServiceInspectAction = "inspect"
-
-	//DockerServiceContainerCommandAction represents docker container-command action
-	DockerServiceContainerCommandAction = "container-command"
-
-	//DockerServiceContainerStartAction represents docker container-start action
-	DockerServiceContainerStartAction = "container-start"
-
-	//DockerServiceContainerStopAction represents docker container-stop action
-	DockerServiceContainerStopAction = "container-stop"
-
-	//DockerServiceContainerStatusAction represents docker container-status action
-	DockerServiceContainerStatusAction = "container-status"
-
-	//DockerServiceContainerRemoveAction represents docker container-remove action
-	DockerServiceContainerRemoveAction = "container-remove"
-
-	//DockerServiceContainerLogsAction represents docker container-log action
-	DockerServiceContainerLogsAction = "container-logs"
-
 	containerInUse    = "is already in use by container"
 	unableToFindImage = "unable to find image"
 	dockerError       = "Error response"
@@ -77,164 +26,6 @@ var dockerIgnoreErrors = []string{}
 type dockerService struct {
 	*AbstractService
 	SysPath []string
-}
-
-func (s *dockerService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case DockerRunAction:
-		return &DockerRunRequest{}, nil
-	case DockerServiceSysPathAction:
-		return struct{}{}, nil
-	case DockerServiceStopImagesAction:
-		return &DockerStopImagesRequest{}, nil
-	case DockerServiceImagesAction:
-		return &DockerImagesRequest{}, nil
-	case DockerServicePullAction:
-		return &DockerPullRequest{}, nil
-	case DockerServiceContainerCommandAction:
-		return &DockerContainerRunCommandRequest{}, nil
-	case DockerServiceContainerStartAction:
-		return &DockerContainerStartRequest{}, nil
-	case DockerServiceContainerStopAction:
-		return &DockerContainerStopRequest{}, nil
-	case DockerServiceContainerStatusAction:
-		return &DockerContainerStatusRequest{}, nil
-	case DockerServiceContainerRemoveAction:
-		return &DockerContainerRemoveRequest{}, nil
-	case DockerServiceBuildAction:
-		return &DockerBuildRequest{}, nil
-	case DockerServiceTagAction:
-		return &DockerTagRequest{}, nil
-	case DockerServiceLoginAction:
-		return &DockerLoginRequest{}, nil
-	case DockerServiceLogoutAction:
-		return &DockerLogoutRequest{}, nil
-	case DockerServicePushAction:
-		return &DockerPushRequest{}, nil
-	case DockerServiceInspectAction:
-		return &DockerInspectRequest{}, nil
-	case DockerServiceContainerLogsAction:
-		return &DockerContainerLogsRequest{}, nil
-
-	}
-	return s.AbstractService.NewRequest(action)
-}
-
-func (s *dockerService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case DockerRunAction:
-		return &DockerContainerInfo{}, nil
-	case DockerServiceSysPathAction:
-		return struct{}{}, nil
-	case DockerServiceStopImagesAction:
-		return &DockerStopImagesResponse{}, nil
-	case DockerServiceImagesAction:
-		return &DockerImagesResponse{}, nil
-	case DockerServicePullAction:
-		return &DockerImageInfo{}, nil
-	case DockerServiceContainerCommandAction:
-		return &DockerContainerRunCommandResponse{}, nil
-	case DockerServiceContainerStartAction:
-		return &DockerContainerInfo{}, nil
-	case DockerServiceContainerStopAction:
-		return &DockerContainerInfo{}, nil
-	case DockerServiceContainerStatusAction:
-		return &DockerContainerStatusResponse{}, nil
-	case DockerServiceContainerRemoveAction:
-		return &DockerContainerRemoveResponse{}, nil
-	case DockerServiceBuildAction:
-		return &DockerBuildResponse{}, nil
-	case DockerServiceTagAction:
-		return &DockerTagResponse{}, nil
-	case DockerServiceLoginAction:
-		return &DockerLoginResponse{}, nil
-	case DockerServiceLogoutAction:
-		return &DockerLogoutResponse{}, nil
-	case DockerServicePushAction:
-		return &DockerPushResponse{}, nil
-	case DockerServiceInspectAction:
-		return &DockerInspectResponse{}, nil
-	case DockerServiceContainerLogsAction:
-		return &DockerContainerLogsResponse{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
-}
-
-func (s *dockerService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-	var err = s.Validate(request, response)
-	if err != nil {
-		return response
-	}
-	var errorMessage string
-	switch actualRequest := request.(type) {
-
-	case *DockerSystemPathRequest:
-		s.SysPath = actualRequest.SysPath
-	case *DockerImagesRequest:
-		response.Response, err = s.checkImages(context, actualRequest)
-		errorMessage = "failed to check images"
-	case *DockerPullRequest:
-		response.Response, err = s.pullImage(context, actualRequest)
-		errorMessage = "failed to pull image"
-	case *DockerContainerStatusRequest:
-		response.Response, err = s.checkContainerProcesses(context, actualRequest)
-		errorMessage = "failed to check process"
-	case *DockerContainerRunCommandRequest:
-		response.Response, err = s.runInContainer(context, actualRequest)
-		errorMessage = "failed to run docker command"
-	case *DockerContainerStartRequest:
-		response.Response, err = s.startContainer(context, actualRequest)
-		errorMessage = "failed start container"
-	case *DockerContainerStopRequest:
-		response.Response, err = s.stopContainer(context, actualRequest)
-		errorMessage = "failed to stop container"
-	case *DockerContainerRemoveRequest:
-		response.Response, err = s.removeContainer(context, actualRequest)
-		errorMessage = "failed to remove container"
-	case *DockerRunRequest:
-		response.Response, err = s.runContainer(context, actualRequest)
-		errorMessage = "failed to run container"
-	case *DockerStopImagesRequest:
-		response.Response, err = s.stopImages(context, actualRequest)
-		errorMessage = "failed to stop images"
-	case *DockerBuildRequest:
-		response.Response, err = s.build(context, actualRequest)
-		errorMessage = "failed to build image"
-	case *DockerTagRequest:
-		response.Response, err = s.tag(context, actualRequest)
-		errorMessage = "failed to tag "
-	case *DockerLoginRequest:
-		response.Response, err = s.login(context, actualRequest)
-		errorMessage = "failed to login"
-	case *DockerLogoutRequest:
-		response.Response, err = s.logout(context, actualRequest)
-		errorMessage = "failed to logout"
-	case *DockerPushRequest:
-		response.Response, err = s.push(context, actualRequest)
-		errorMessage = "failed to push"
-
-	case *DockerInspectRequest:
-		response.Response, err = s.inspect(context, actualRequest)
-		errorMessage = "failed to inspect"
-
-	case *DockerContainerLogsRequest:
-		response.Response, err = s.containerLogs(context, actualRequest)
-		errorMessage = "failed to get logs:"
-
-	default:
-		err = fmt.Errorf("unsupported request type: %T", request)
-	}
-	if err != nil {
-		jsonRequest, _ := toolbox.AsJSONText(request)
-		response.Status = "error"
-		response.Error = errorMessage + " " + jsonRequest + ", " + err.Error()
-	}
-	return response
 }
 
 func (s *dockerService) stopImages(context *Context, request *DockerStopImagesRequest) (*DockerStopImagesResponse, error) {
@@ -255,7 +46,9 @@ func (s *dockerService) stopImages(context *Context, request *DockerStopImagesRe
 				var containerTarget = request.Target.Clone()
 				containerTarget.Name = strings.Split(container.Names, ",")[0]
 				_, err = s.stopContainer(context, &DockerContainerStopRequest{
-					Target: containerTarget,
+					DockerContainerBaseRequest: &DockerContainerBaseRequest{
+						Target: containerTarget,
+					},
 				})
 				if err != nil {
 					return nil, err
@@ -310,12 +103,17 @@ func (s *dockerService) applyCredentialIfNeeded(credentials map[string]string) m
 func (s *dockerService) resetContainerIfNeeded(context *Context, target *url.Resource, statusResponse *DockerContainerStatusResponse) error {
 	if len(statusResponse.Containers) > 0 {
 		_, err := s.stopContainer(context, &DockerContainerStopRequest{
-			Target: target,
+			DockerContainerBaseRequest: &DockerContainerBaseRequest{
+				Target: target,
+			},
 		})
 		if err != nil {
 			return err
 		}
-		_, err = s.removeContainer(context, &DockerContainerRemoveRequest{Target: target})
+		_, err = s.removeContainer(context, &DockerContainerRemoveRequest{
+			DockerContainerBaseRequest: &DockerContainerBaseRequest{
+				Target: target,
+			},})
 		if err != nil {
 			return err
 		}
@@ -324,7 +122,7 @@ func (s *dockerService) resetContainerIfNeeded(context *Context, target *url.Res
 	return nil
 }
 
-func (s *dockerService) runContainer(context *Context, request *DockerRunRequest) (*DockerContainerInfo, error) {
+func (s *dockerService) runContainer(context *Context, request *DockerRunRequest) (*DockerRunResponse, error) {
 	var err error
 
 	var credentials = s.applyCredentialIfNeeded(request.Credentials)
@@ -362,28 +160,36 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 	}
 
 	if strings.Contains(commandInfo.Stdout(), containerInUse) {
-		_, _ = s.stopContainer(context, &DockerContainerStopRequest{Target: request.Target})
-		_, _ = s.removeContainer(context, &DockerContainerRemoveRequest{Target: request.Target})
+		_, _ = s.stopContainer(context, &DockerContainerStopRequest{DockerContainerBaseRequest: &DockerContainerBaseRequest{
+			Target: request.Target,
+		},})
+		_, _ = s.removeContainer(context, &DockerContainerRemoveRequest{DockerContainerBaseRequest: &DockerContainerBaseRequest{
+			Target: request.Target,
+		},})
 		commandInfo, err = s.executeSecureDockerCommand(true, credentials, context, request.Target, dockerErrors, fmt.Sprintf("docker run --name %v %v -d %v", request.Target.Name, args, request.Image))
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return s.checkContainerProcess(context, &DockerContainerStatusRequest{
+	info, err := s.checkContainerProcess(context, &DockerContainerStatusRequest{
 		Target: request.Target,
 		Names:  request.Target.Name,
 	})
+	if info == nil {
+		return nil, err
+	}
+	return &DockerRunResponse{info}, err
 }
 
-func (s *dockerService) checkContainerProcess(context *Context, request *DockerContainerStatusRequest) (*DockerContainerInfo, error) {
 
+
+func (s *dockerService) checkContainerProcess(context *Context, request *DockerContainerStatusRequest) (*DockerContainerInfo, error) {
 	checkResponse, err := s.checkContainerProcesses(context, request)
 	if err != nil {
 		return nil, err
 	}
-
-	if len(checkResponse.Containers) == 1 {
+	if len(checkResponse.Containers) > 0 {
 		return checkResponse.Containers[0], nil
 	}
 	return nil, nil
@@ -421,19 +227,22 @@ func (s *dockerService) runContainerCommand(context *Context, securet map[string
 	return commandResult.Stdout(), nil
 }
 
-func (s *dockerService) startContainer(context *Context, request *DockerContainerStartRequest) (*DockerContainerInfo, error) {
+func (s *dockerService) startContainer(context *Context, request *DockerContainerStartRequest) (*DockerContainerStartResponse, error) {
 	_, err := s.runContainerCommand(context, nil, request.Target, "start", "")
 	if err != nil {
 		return nil, err
 	}
-	return s.checkContainerProcess(context, &DockerContainerStatusRequest{
+	info, err := s.checkContainerProcess(context, &DockerContainerStatusRequest{
 		Target: request.Target,
 		Names:  request.Target.Name,
 	})
-
+	if info == nil {
+		return nil, err
+	}
+	return &DockerContainerStartResponse{info}, err
 }
 
-func (s *dockerService) stopContainer(context *Context, request *DockerContainerStopRequest) (*DockerContainerInfo, error) {
+func (s *dockerService) stopContainer(context *Context, request *DockerContainerStopRequest) (*DockerContainerStopResponse, error) {
 	info, err := s.checkContainerProcess(context, &DockerContainerStatusRequest{
 		Target: request.Target,
 		Names:  request.Target.Name,
@@ -448,7 +257,8 @@ func (s *dockerService) stopContainer(context *Context, request *DockerContainer
 	if info != nil {
 		info.Status = "down"
 	}
-	return info, nil
+
+	return &DockerContainerStopResponse{info}, nil
 }
 
 func (s *dockerService) removeContainer(context *Context, request *DockerContainerRemoveRequest) (response *DockerContainerRemoveResponse, err error) {
@@ -477,8 +287,8 @@ func (s *dockerService) containerLogs(context *Context, request *DockerContainer
 	return response, err
 }
 
-func (s *dockerService) runInContainer(context *Context, request *DockerContainerRunCommandRequest) (response *DockerContainerRunCommandResponse, err error) {
-	response = &DockerContainerRunCommandResponse{}
+func (s *dockerService) runInContainer(context *Context, request *DockerContainerRunRequest) (response *DockerContainerRunResponse, err error) {
+	response = &DockerContainerRunResponse{}
 	var executionOptions = ""
 	var execArguments = context.Expand(request.Command)
 
@@ -536,7 +346,7 @@ func (s *dockerService) checkContainerProcesses(context *Context, request *Docke
 	return &DockerContainerStatusResponse{Containers: containers}, nil
 }
 
-func (s *dockerService) pullImage(context *Context, request *DockerPullRequest) (*DockerImageInfo, error) {
+func (s *dockerService) pullImage(context *Context, request *DockerPullRequest) (*DockerPullResponse, error) {
 	if request.Tag == "" {
 		request.Tag = "latest"
 	}
@@ -546,17 +356,18 @@ func (s *dockerService) pullImage(context *Context, request *DockerPullRequest) 
 	}
 	stdout := info.Stdout()
 	if strings.Contains(stdout, "not found") {
-		return nil, fmt.Errorf("failed to pull docker image,  %v", stdout)
+		return nil, fmt.Errorf("%v", stdout)
 	}
 	imageResponse, err := s.checkImages(context, &DockerImagesRequest{Target: request.Target, Repository: request.Repository, Tag: request.Tag})
 	if err != nil {
 		return nil, err
 	}
-	if len(imageResponse.Images) == 1 {
-		return imageResponse.Images[0], nil
+	if len(imageResponse.Images) > 0 {
+		return &DockerPullResponse{imageResponse.Images[0]}, nil
 	}
-	return nil, fmt.Errorf("failed to check image status: %v:%v found: %v", request.Repository, request.Tag, len(imageResponse.Images))
+	return nil, fmt.Errorf("not found:  %v %v", request.Repository, request.Tag)
 }
+
 
 func (s *dockerService) checkImages(context *Context, request *DockerImagesRequest) (*DockerImagesResponse, error) {
 	info, err := s.executeSecureDockerCommand(true, nil, context, request.Target, dockerErrors, "docker images")
@@ -650,7 +461,7 @@ func (s *dockerService) executeSecureDockerCommand(asRoot bool, secure map[strin
 	}
 	var runRequest interface{} = extractableCommand
 	if asRoot {
-		runRequest = &superUserCommandRequest{
+		runRequest = &SuperUserCommandRequest{
 			MangedCommand: extractableCommand,
 		}
 	}
@@ -813,30 +624,579 @@ func (s *dockerService) push(context *Context, request *DockerPushRequest) (*Doc
 	return response, nil
 }
 
+const (
+	dockerServiceRunExample = `{
+  "Target": {
+    "URL": "scp://127.0.0.1/",
+    "Credential": "${env.HOME}/.secret/localhost.json"
+  },
+  "Name": "udb_aerospike",
+  "Image": "aerospike/aerospike-server:latest",
+  "Mount": {
+    "/tmp/aerospikeudb_aerospike.conf": "/etc/aerospike/aerospike.conf"
+  },
+  "MappedPort": {
+    "3000": "3000",
+    "3001": "3001",
+    "3002": "3002",
+    "3004": "3004",
+    "8081": "8081"
+  },
+}`
+
+
+	dockerServiceStopImagesExample = `{
+  "Target": {
+    "URL": "ssh://127.0.0.1/",
+    "Credential": "${env.HOME}/.secret/localhost.json"
+  },
+  "Images": [
+    "aerospike",
+    "mysql"
+  ]
+}`
+
+	dockerServiceImagesExample = `{
+    "Target": {
+		"URL": "ssh://127.0.0.1/",
+		"Credential": "${env.HOME}/.secret/localhost.json"
+    },
+	"Repository": "mysql",
+	"Tag"":        "5.6"
+}`
+
+	dockerServicePullExample = `{
+    "Target": {
+		"URL": "ssh://127.0.0.1/",
+		"Credential": "${env.HOME}/.secret/localhost.json"
+    },
+	"Repository": "aerospike",
+	"Tag"":        "latest"
+}`
+
+	dockerServiceBuildExample = `{
+  "Target": {
+    "URL": "ssh://127.0.0.1/Projects/store_backup/app",
+    "Credential": "${env.HOME}/.secret/localhost.json"
+  },
+  "Tag": {
+    "Username": "viant",
+    "Image": "store_backup",
+    "Version": "0.1.2"
+  },
+  "Path": "/Projects/store_backup/app"
+}`
+
+	dockerServiceTagExample = `{
+  "Target": {
+    "URL": "ssh://127.0.0.1/",
+    "Credential": "${env.HOME}/.secret/localhost.json"
+   
+  },
+  "SourceTag": {
+    "Username": "viant",
+    "Registry": "",
+    "Image": "store_backup",
+    "Version": "0.1.2"
+  },
+  "TargetTag": {
+    "Username": "",
+    "Registry": "us.gcr.io/xxxx",
+    "Image": "store_backup",
+    "Version": "0.1.2"
+  }
+}`
+
+	dockerServicePushExample = `{
+  "Target": {
+    "URL": "scp://127.0.0.1//Projects//store_backup/app",
+    "Credential": "${env.HOME}/.secret/localhost.json"
+  },
+  "Tag": {
+    "Username": "",
+    "Registry": "us.gcr.io/tech-ops-poc",
+    "Image": "site_profile_backup",
+    "Version": "0.1.2\n"
+  }
+}`
+
+	dockerServiceLoginExample = `{
+  "Target": {
+    "URL": "ssh://10.10.1.1/",
+    "Credential": "${env.HOME}/.secret/aws-west.json"
+  },
+  "Credential": "${env.HOME}/.secret/docker.json",
+  "Repository": "us.gcr.io/xxxxx"
+}`
+
+	dockerServiceLogoutExample = `{
+  "Target": {
+    "URL": "ssh://10.10.1.1/",
+    "Credential": "${env.HOME}/.secret/aws-west.json"
+  },
+  "Credential": "${env.HOME}/.secret/docker.json",
+  "Repository": "us.gcr.io/xxxxx"
+}`
+
+
+	dockerServiceContainerRunMsqlDumpExample = `{
+  "Target": {
+    "URL": "ssh://10.10.1.1/",
+    "Credential": "${env.HOME}/.secret/aws-west.json"
+  },
+  "Name": "mydb1",
+  "Interactive": true,
+  "AllocateTerminal": true,
+  "Command": "mysqldump  -uroot -p***mysql*** --all-databases --routines | grep -v 'Warning' > /tmp/dump.sql",
+  "Credentials": {
+    "***mysql***": "${env.HOME}/.secret/aws-west-mysql.json"
+  }
+}`
+
+	dockerServiceContainerRunMysqlImportExample = `{
+  "Target": {
+    "URL": "ssh://10.10.1.1/",
+    "Credential": "${env.HOME}/.secret/aws-west.json"
+  },
+  "Name": "mydb1",
+  "Interactive": true,
+  "Command": "mysql  -uroot -p**mysql** < /tmp/dump.sql",
+  "Credentials": {
+    "***mysql***": "${env.HOME}/.secret/aws-west-mysql.json"
+  }
+}`
+
+	dockerServiceContainerExample = `{
+  "Target": {
+    "URL": "ssh://127.0.0.1/",
+    "Credential": "${env.HOME}/.secret/localhost.json"
+  },
+  "Name": "udb_aerospike"
+}`
+)
+
+
+func (s *dockerService) registerRoutes() {
+
+	s.Register(&ServiceActionRoute{
+		Action: "run",
+		RequestInfo: &ActionInfo{
+			Description: "run docker image",
+
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "run docker image on the target host",
+					Data:    dockerServiceRunExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerRunRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerRunResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerRunRequest); ok {
+				return s.runContainer(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "stop-images",
+		RequestInfo: &ActionInfo{
+			Description: "stops docker container matching supplied images",
+
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "stop images",
+					Data:    dockerServiceStopImagesExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerStopImagesRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerStopImagesResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerStopImagesRequest); ok {
+				return s.stopImages(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "images",
+		RequestInfo: &ActionInfo{
+			Description: "return images info for supplied matching images",
+
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "check image",
+					Data:    dockerServiceImagesExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerImagesRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerImagesResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerImagesRequest); ok {
+				return s.checkImages(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "pull",
+		RequestInfo: &ActionInfo{
+			Description: "pull docker image",
+
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "pull example",
+					Data:    dockerServicePullExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerPullRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerPullResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerPullRequest); ok {
+				return s.pullImage(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "build",
+		RequestInfo: &ActionInfo{
+			Description: "build docker image",
+
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "build image",
+					Data:    dockerServiceBuildExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerBuildRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerBuildResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerBuildRequest); ok {
+				return s.build(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "tag",
+		RequestInfo: &ActionInfo{
+			Description: "tag docker image",
+
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "tag image",
+					Data:    dockerServiceTagExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerTagRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerTagResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerTagRequest); ok {
+				return s.tag(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "login",
+		RequestInfo: &ActionInfo{
+			Description: "add credential for supplied docker repository, required docker 17+ for secure credential handling",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "login ",
+					Data:    dockerServiceLoginExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerLoginRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerLoginResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerLoginRequest); ok {
+				return s.login(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "logout",
+		RequestInfo: &ActionInfo{
+			Description: "remove credential for supplied docker repository",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "logout ",
+					Data:    dockerServiceLogoutExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerLogoutRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerLogoutResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerLogoutRequest); ok {
+				return s.logout(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "push",
+		RequestInfo: &ActionInfo{
+			Description: "push docker image into docker repository",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "push ",
+					Data:    dockerServicePushExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerPushRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerPushResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerPushRequest); ok {
+				return s.push(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "container-run",
+		RequestInfo: &ActionInfo{
+			Description: "run command inside container",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "mysqldump from docker container",
+					Data:    dockerServiceContainerRunMsqlDumpExample,
+				},
+				{
+					UseCase: "mysql import into docker container",
+					Data:    dockerServiceContainerRunMysqlImportExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerContainerRunRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerContainerRunResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerContainerRunRequest); ok {
+				return s.runInContainer(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "inspect",
+		RequestInfo: &ActionInfo{
+			Description: "inspect docker container",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "inspect",
+					Data:    dockerServiceContainerExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerInspectRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerInspectResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerInspectRequest); ok {
+				return s.inspect(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "container-start",
+		RequestInfo: &ActionInfo{
+			Description: "start container",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "container start",
+					Data:    dockerServiceContainerExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerContainerStartRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerContainerStartResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerContainerStartRequest); ok {
+				return s.startContainer(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "container-stop",
+		RequestInfo: &ActionInfo{
+			Description: "stop container",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "container stop",
+					Data:    dockerServiceContainerExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerContainerStopRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerContainerStopResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerContainerStopRequest); ok {
+				return s.stopContainer(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "container-status",
+		RequestInfo: &ActionInfo{
+			Description: "check containers status",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "container check status",
+					Data:    dockerServiceContainerExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerContainerStatusRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerContainerStatusResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerContainerStatusRequest); ok {
+				return s.checkContainerProcesses(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "container-remove",
+		RequestInfo: &ActionInfo{
+			Description: "remove docker container",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "remove container",
+					Data:    dockerServiceContainerExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerContainerRemoveRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerContainerRemoveResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerContainerRemoveRequest); ok {
+				return s.removeContainer(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "container-logs",
+		RequestInfo: &ActionInfo{
+			Description: "remove docker container",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "read  container stdout/stderr",
+					Data:    dockerServiceContainerExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DockerContainerLogsRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DockerContainerLogsResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DockerContainerLogsRequest); ok {
+				return s.containerLogs(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+}
+
+
 //NewDockerService returns a new docker service.
 func NewDockerService() Service {
 	var result = &dockerService{
-		AbstractService: NewAbstractService(DockerServiceID,
-			DockerRunAction,
-			DockerServiceSysPathAction,
-			DockerServiceStopImagesAction,
-			DockerServiceImagesAction,
-			DockerServicePullAction,
-			DockerServiceContainerCommandAction,
-			DockerServiceContainerStartAction,
-			DockerServiceContainerStopAction,
-			DockerServiceContainerStatusAction,
-			DockerServiceContainerRemoveAction,
-			DockerServiceContainerLogsAction,
-			DockerServiceBuildAction,
-			DockerServiceTagAction,
-			DockerServiceLoginAction,
-			DockerServiceLogoutAction,
-			DockerServicePushAction,
-			DockerServiceInspectAction,
-		),
+		AbstractService: NewAbstractService(DockerServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }
 

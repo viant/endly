@@ -95,7 +95,12 @@ func Test_ServiceRequest(t *testing.T) {
 			var requestType = toolbox.DereferenceType(reflect.TypeOf(request))
 
 			if requestType.Kind() == reflect.Struct {
-				if _, has := requestType.FieldByName("Target"); has {
+
+				if _, has := requestType.FieldByName("DockerContainerBaseRequest"); has {
+
+					continue
+
+				} else 	if _, has := requestType.FieldByName("Target"); has {
 					reflect.ValueOf(request).Elem().FieldByName("Target").Set(reflect.ValueOf(invalidResourse))
 					response = service.Run(context, request)
 					assert.True(t, response.Error != "", fmt.Sprintf("%T %T", request, service))
@@ -126,6 +131,32 @@ func Test_ServiceResponse(t *testing.T) {
 	}
 
 }
+
+
+
+func Test_ServiceRoutes(t *testing.T) {
+	manager := endly.NewManager()
+	var services = endly.Services(manager)
+	var context = manager.NewContext(toolbox.NewContext())
+	for _, service := range services {
+		response := service.Run(context, struct{}{})
+		assert.True(t, response.Error != "")
+		for  _, action:= range service.Actions() {
+			if route, err  := service.ServiceActionRoute(action);err== nil{
+				if route.Handler != nil{
+				_, err := route.Handler(context, struct{}{})
+				assert.NotNil(t, err)
+			}
+			}
+		}
+	}
+}
+
+
+
+
+
+
 
 func Test_GetVersion(t *testing.T) {
 	version := endly.GetVersion()

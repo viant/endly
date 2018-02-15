@@ -2,13 +2,15 @@ package endly_test
 
 import (
 	"github.com/viant/endly"
-	"os"
 	"testing"
+	"bytes"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_Renderer_PrintTable(t *testing.T) {
 
-	render := endly.NewRenderer(os.Stdout, 80)
+	var buf = new(bytes.Buffer)
+	render := endly.NewRenderer(buf, 80)
 
 	var data = [][]string{
 		{
@@ -19,5 +21,5 @@ func Test_Renderer_PrintTable(t *testing.T) {
 		},
 	}
 	render.PrintTable("table1", []string{"name", "required", "description"}, data, 80)
-
+	assert.True(t, len(buf.String()) > 0)
 }

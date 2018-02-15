@@ -86,7 +86,6 @@ func TestDockerService_Images(t *testing.T) {
 			if assert.Nil(t, err) {
 				var target = useCase.target
 				serviceResponse := service.Run(context, &endly.DockerImagesRequest{
-
 					Target:     target,
 					Tag:        useCase.Tag,
 					Repository: useCase.Repository,
@@ -260,7 +259,7 @@ func TestDockerService_Run(t *testing.T) {
 
 				assert.True(t, strings.Contains(serviceResponse.Error, useCase.Error), baseCase)
 
-				actual, ok := serviceResponse.Response.(*endly.DockerContainerInfo)
+				actual, ok := serviceResponse.Response.(*endly.DockerRunResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -291,15 +290,17 @@ func TestDockerService_Command(t *testing.T) {
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir    string
-		Request    *endly.DockerContainerRunCommandRequest
+		Request    *endly.DockerContainerRunRequest
 		Expected   string
 		TargetName string
 		Error      string
 	}{
 		{
 			"test/docker/command/export/darwin",
-			&endly.DockerContainerRunCommandRequest{
-				Target:           target,
+			&endly.DockerContainerRunRequest{
+				DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
+					Target:           target,
+				},
 				Interactive:      true,
 				AllocateTerminal: true,
 				Command:          "mysqldump  -uroot -p***mysql*** --all-databases --routines | grep -v 'Warning' > /tmp/dump.sql",
@@ -313,8 +314,10 @@ func TestDockerService_Command(t *testing.T) {
 		},
 		{
 			"test/docker/command/import/darwin",
-			&endly.DockerContainerRunCommandRequest{
-				Target:      target,
+			&endly.DockerContainerRunRequest{
+				DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
+					Target:           target,
+				},
 				Interactive: true,
 				Credentials: map[string]string{
 					"**mysql**": mySQLcredentialFile,
@@ -344,7 +347,7 @@ func TestDockerService_Command(t *testing.T) {
 				var baseCase = useCase.baseDir + " " + useCase.TargetName
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				actual, ok := serviceResponse.Response.(*endly.DockerContainerRunCommandResponse)
+				actual, ok := serviceResponse.Response.(*endly.DockerContainerRunResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -404,7 +407,7 @@ func TestDockerService_Pull(t *testing.T) {
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				actual, ok := serviceResponse.Response.(*endly.DockerImageInfo)
+				actual, ok := serviceResponse.Response.(*endly.DockerPullResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -478,7 +481,7 @@ func TestDockerService_Status(t *testing.T) {
 
 				response, ok := serviceResponse.Response.(*endly.DockerContainerStatusResponse)
 				if !ok {
-					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
+					assert.Fail(t, fmt.Sprintf("process resonse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
 				}
 
@@ -515,7 +518,9 @@ func TestDockerService_Start(t *testing.T) {
 		{
 			"test/docker/start/linux",
 			&endly.DockerContainerStartRequest{
-				Target: target,
+				DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
+					Target:           target,
+				},
 			},
 			&endly.DockerContainerInfo{
 				ContainerID: "b5bcc949f075",
@@ -544,8 +549,8 @@ func TestDockerService_Start(t *testing.T) {
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				response, ok := serviceResponse.Response.(*endly.DockerContainerInfo)
-				if !ok {
+				response, ok := serviceResponse.Response.(*endly.DockerContainerStartResponse)
+				if !ok{
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
 				}
@@ -583,7 +588,9 @@ func TestDockerService_Stop(t *testing.T) {
 		{
 			"test/docker/stop/linux",
 			&endly.DockerContainerStopRequest{
-				Target: target,
+				DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
+					Target:           target,
+				},
 			},
 			&endly.DockerContainerInfo{
 				ContainerID: "b5bcc949f075",
@@ -611,7 +618,6 @@ func TestDockerService_Stop(t *testing.T) {
 
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
-
 				response, ok := serviceResponse.Response.(*endly.DockerContainerInfo)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
@@ -647,7 +653,9 @@ func TestDockerService_Remove(t *testing.T) {
 		{
 			"test/docker/remove/linux",
 			&endly.DockerContainerRemoveRequest{
-				Target: target,
+				DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
+					Target:           target,
+				},
 			},
 			"db1",
 			"",
@@ -875,7 +883,9 @@ func TestDockerService_Inspect(t *testing.T) {
 	service, _ := context.Service(endly.DockerServiceID)
 	target.Name = "site_backup"
 	serviceResponse := service.Run(context, &endly.DockerInspectRequest{
-		Target: target,
+		DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
+			Target:           target,
+		},
 	})
 	assert.EqualValues(t, "", serviceResponse.Error)
 	response, ok := serviceResponse.Response.(*endly.DockerInspectResponse)
@@ -921,3 +931,164 @@ func TestDockerService_Inspect(t *testing.T) {
 //
 //}
 //
+
+
+
+
+
+func TestDockerLoginRequest_Validate(t *testing.T) {
+	{
+		request := &endly.DockerLoginRequest{}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := &endly.DockerLoginRequest{
+			Target: url.NewResource("abc"),
+		}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := &endly.DockerLoginRequest{
+			Repository: "abc",
+		}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := &endly.DockerLoginRequest{
+			Repository: "abc",
+			Target:     url.NewResource("abc"),
+		}
+		assert.Nil(t, request.Validate())
+	}
+}
+
+
+func Test_DockerBuildRequest_Validate(t *testing.T) {
+	{
+		request := endly.DockerBuildRequest{}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := endly.DockerBuildRequest{Target: url.NewResource("abc"), Tag: &endly.DockerTag{}}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := endly.DockerBuildRequest{Target: url.NewResource("abc"),
+			Arguments: map[string]string{
+				"-t": "image:1.0",
+			},
+			Path: "/",
+			Tag:  &endly.DockerTag{Image: "abc"}}
+		assert.Nil(t, request.Validate())
+	}
+
+	{
+		request := endly.DockerBuildRequest{Target: url.NewResource("abc"),
+			Path: "/",
+			Tag:  &endly.DockerTag{Image: "abc"}}
+		assert.Nil(t, request.Validate())
+	}
+	{
+		request := endly.DockerBuildRequest{Target: url.NewResource("abc"),
+
+			Tag: &endly.DockerTag{Image: "abc"}}
+		assert.NotNil(t, request.Validate())
+	}
+}
+
+
+
+func TestDockerTag_Validate(t *testing.T) {
+
+	{
+		request := &endly.DockerTagRequest{}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := &endly.DockerTagRequest{
+			Target: url.NewResource("abc"),
+		}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := &endly.DockerTagRequest{
+			Target:    url.NewResource("abc"),
+			SourceTag: &endly.DockerTag{},
+		}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := &endly.DockerTagRequest{
+			Target:    url.NewResource("abc"),
+			SourceTag: &endly.DockerTag{},
+			TargetTag: &endly.DockerTag{},
+		}
+		assert.NotNil(t, request.Validate())
+	}
+
+	{
+		request := &endly.DockerTagRequest{
+			Target:    url.NewResource("abc"),
+			SourceTag: &endly.DockerTag{},
+			TargetTag: &endly.DockerTag{
+				Image: "abc",
+			},
+		}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := &endly.DockerTagRequest{
+			Target: url.NewResource("abc"),
+			SourceTag: &endly.DockerTag{
+				Image: "abc",
+			},
+			TargetTag: &endly.DockerTag{},
+		}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := &endly.DockerTagRequest{
+			Target: url.NewResource("abc"),
+			SourceTag: &endly.DockerTag{
+				Image: "abc",
+			},
+			TargetTag: &endly.DockerTag{
+				Image: "abc",
+			},
+		}
+		assert.Nil(t, request.Validate())
+	}
+
+}
+
+func TestDockerTag_String(t *testing.T) {
+	{
+		tag := &endly.DockerTag{
+			Image: "abc",
+		}
+		assert.EqualValues(t, "abc", tag.String())
+	}
+	{
+		tag := &endly.DockerTag{
+			Image:   "abc",
+			Version: "latest",
+		}
+		assert.EqualValues(t, "abc:latest", tag.String())
+	}
+	{
+		tag := &endly.DockerTag{
+			Registry: "reg.org",
+			Image:    "abc",
+			Version:  "latest",
+		}
+		assert.EqualValues(t, "reg.org/abc:latest", tag.String())
+	}
+	{
+		tag := &endly.DockerTag{
+			Username: "reg.org",
+			Image:    "abc",
+			Version:  "latest",
+		}
+		assert.EqualValues(t, "reg.org/abc:latest", tag.String())
+	}
+}

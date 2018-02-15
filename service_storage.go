@@ -20,30 +20,11 @@ const TransferServiceID = "transfer"
 //StorageServiceID represents transfer service id
 const StorageServiceID = "storage"
 
-//StorageServiceCopyAction represents a copy action
-const StorageServiceCopyAction = "copy"
-
-//StorageServiceRemoveAction represents a remove action
-const StorageServiceRemoveAction = "remove"
-
-//StorageServiceUploadAction represents a upload action
-const StorageServiceUploadAction = "upload"
-
-//StorageServiceDownloadAction represents a download action
-const StorageServiceDownloadAction = "download"
-
 //UseMemoryService flag in the context to ignore
 const UseMemoryService = "useMemoryService"
 
 //CompressionTimeout compression/decompression timeout
 var CompressionTimeout = 120000
-
-//CopyEventType represents CopyEventType
-type CopyEventType struct {
-	SourceURL string
-	TargetURL string
-	Expand    bool
-}
 
 type storageService struct {
 	*AbstractService
@@ -211,42 +192,12 @@ func (s *storageService) Run(context *Context, request interface{}) *ServiceResp
 	return response
 }
 
-func (s *storageService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case StorageServiceCopyAction:
-		return &StorageCopyRequest{Transfers: make([]*Transfer, 0)}, nil
-	case StorageServiceRemoveAction:
-		return &StorageRemoveRequest{
-			Resources: make([]*url.Resource, 0)}, nil
-	case StorageServiceUploadAction:
-		return &StorageUploadRequest{}, nil
-	case StorageServiceDownloadAction:
-		return &StorageDownloadRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
-
-func (s *storageService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case StorageServiceCopyAction:
-		return &StorageCopyResponse{}, nil
-	case StorageServiceRemoveAction:
-		return &StorageRemoveResponse{}, nil
-	case StorageServiceUploadAction:
-		return &StorageUploadResponse{}, nil
-	case StorageServiceDownloadAction:
-		return &StorageDownloadResponse{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
-}
 
 func (s *storageService) copy(context *Context, request *StorageCopyRequest) (*StorageCopyResponse, error) {
 	var result = &StorageCopyResponse{
-		Transferred: make([]*TransferLog, 0),
+		TransferredURL: make([]string, 0),
 	}
-
 	for _, transfer := range request.Transfers {
-
 		sourceResource, sourceService, err := s.getResourceAndService(context, transfer.Source)
 		if err != nil {
 			return nil, err
@@ -263,14 +214,7 @@ func (s *storageService) copy(context *Context, request *StorageCopyRequest) (*S
 			return nil, fmt.Errorf(" %v %v - source does not exists", sourceResource.URL, targetResource.URL)
 		}
 
-		//TODO add in memory compression for other protocols
 		compressed := transfer.Compress && IsShellCompressable(sourceResource.ParsedURL.Scheme) && IsShellCompressable(targetResource.ParsedURL.Scheme)
-		var copyEventType = &CopyEventType{
-			SourceURL: sourceResource.URL,
-			TargetURL: targetResource.URL,
-			Expand:    transfer.Expand || len(transfer.Replace) > 0,
-		}
-		startEvent := s.Begin(context, copyEventType, Pairs("value", copyEventType), Info)
 		object, err := sourceService.StorageObject(sourceResource.URL)
 		if err != nil {
 			return nil, err
@@ -282,7 +226,6 @@ func (s *storageService) copy(context *Context, request *StorageCopyRequest) (*S
 			}
 		}
 		err = storage.Copy(sourceService, sourceResource.URL, targetService, targetResource.URL, handler, nil)
-		s.End(context)(startEvent, Pairs())
 		if err != nil {
 			return result, err
 		}
@@ -292,8 +235,7 @@ func (s *storageService) copy(context *Context, request *StorageCopyRequest) (*S
 				return nil, err
 			}
 		}
-		info := NewTransferLog(context, sourceResource.URL, targetResource.URL, err, transfer.Expand)
-		result.Transferred = append(result.Transferred, info)
+		result.TransferredURL = append(result.TransferredURL, object.URL())
 	}
 	return result, nil
 }
@@ -387,16 +329,155 @@ func (s *storageService) upload(context *Context, request *StorageUploadRequest)
 
 }
 
+
+const (
+	storageCopySimpleExample = `{
+  "Transfers": [
+    {
+      "Source": {
+        "URL": "https://svn.viantinc.com/svn/project/db/schema.ddl",
+        "Credential": "${env.HOME}/.secret/svn.json"
+      },
+      "Target": {
+        "URL": "build/db/"
+      }
+    }
+  ]
+}`
+	storageCopyRemoteTransferExample = `{
+  "Transfers": [
+    {
+      "Source": {
+        "URL": "s3://mybucket1/project1/assets/",
+        "Credential": "${env.HOME}/.secret/s3.json"
+      },
+      "Target": {
+         "URL": "gs://mybucket2/project1/assets/",
+          "Credential": "${env.HOME}/.secret/gs.json"
+      }
+    }
+  ]
+}`
+
+	storageCopyReplacementTransferExample = `{
+  "Transfers": [
+    {
+      "Source": {
+        "URL": "scp://127.0.0.1/build/app/target/classes/server.properties",
+        "Credential": "${env.HOME}/.secret/localhost.json"
+      },
+      "Target": {
+        "URL": "scp://127.0.0.1/build/app/target/target/build/WEB-INF/classes/dserver.properties",
+        "Credential": "${env.HOME}/.secret/localhost.json"
+      },
+      "Replace": {
+        "10.2.1.1": "127.0.0.1",
+        "xxx.enabled=false": "xxx.enabled=true"
+      }
+    }
+  ]
+}`
+)
+
+func (s *storageService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "copy",
+		RequestInfo: &ActionInfo{
+			Description: "transfer content (files or directory structure) from source into destination, both source and destination can use local or remote file system (s3, gs, scp)",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "simple copy",
+					Data:    storageCopySimpleExample,
+				},
+				{
+					UseCase: "remote to remote data transfer",
+					Data:    storageCopyRemoteTransferExample,
+				},
+				{
+					UseCase: "copy with replacement",
+					Data:    storageCopyReplacementTransferExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &StorageCopyRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &StorageCopyResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*StorageCopyRequest); ok {
+				return s.copy(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "remove",
+		RequestInfo: &ActionInfo{
+			Description: "remove assets from local or remote file system",
+		},
+		RequestProvider: func() interface{} {
+			return &StorageRemoveRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &StorageRemoveResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*StorageRemoveRequest); ok {
+				return s.remove(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "upload",
+		RequestInfo: &ActionInfo{
+			Description: "upload content of state map source key into target destination",
+		},
+		RequestProvider: func() interface{} {
+			return &StorageUploadRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &StorageUploadResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*StorageUploadRequest); ok {
+				return s.upload(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "download",
+		RequestInfo: &ActionInfo{
+			Description: "download content from source into state map key",
+		},
+		RequestProvider: func() interface{} {
+			return &StorageDownloadRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &StorageDownloadResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*StorageDownloadRequest); ok {
+				return s.download(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+}
+
 //NewStorageService creates a new transfer service
 func NewStorageService() Service {
 	var result = &storageService{
-		AbstractService: NewAbstractService(StorageServiceID,
-			StorageServiceCopyAction,
-			StorageServiceRemoveAction,
-			StorageServiceUploadAction,
-			StorageServiceDownloadAction),
+		AbstractService: NewAbstractService(StorageServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 
 }

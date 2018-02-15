@@ -319,7 +319,7 @@ Process service is responsible for starting, stopping and checking status of cus
 | docker | pull | pull requested docker image| [DockerPullRequest](service_docker_pull.go) | [DockerImageInfo](service_docker_image.go) | 
 | docker | process | check docker container processes | [DockerContainerCheckRequest](service_docker_container.go) | [DockerContainerCheckResponse](service_docker_container.go) | 
 | docker | container-start | start specified docker container | [DockerContainerStartRequest](service_docker_container.go#L19) | [DockerContainerInfo](service_docker_container.go#L54) | 
-| docker | container-command | run command within specified docker container | [DockerContainerRunCommandRequest](service_docker_container.go#L39) | [DockerContainerRunCommandResponse](service_docker_container.go#L49) | 
+| docker | container-run | run command within specified docker container | [DockerContainerRunCommandRequest](service_docker_container.go#L39) | [DockerContainerRunCommandResponse](service_docker_container.go#L49) | 
 | docker | container-stop | stop specified docker container | [DockerContainerStopRequest](service_docker_container.go#L35) | [DockerContainerInfo](service_docker_container.go#L54) | 
 | docker | container-remove | remove specified docker container | [DockerContainerRemoveRequest](service_docker_container.go#L23) | [DockerContainerRemoveResponse](service_docker_container.go#L28) | 
 | docker | container-logs | fetch container logs (app stdout/stderr)| [DockerContainerLogsRequest](service_docker_container.go#L63) | [DockerContainerLogsResponse](service_docker_container.go#L69) | 
