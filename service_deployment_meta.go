@@ -5,46 +5,46 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//DeploymentMetaRequest represents DeploymentMeta register request.
-type DeploymentMetaRequest struct {
-	Source *url.Resource
+//DeploymentLoadMetaRequest represents DeploymentMeta register request.
+type DeploymentLoadMetaRequest struct {
+	Source *url.Resource `required:"true" description:"deployment meta location"`
 }
 
-//DeploymentMetaResponse represents deployment response
-type DeploymentMetaResponse struct {
+//DeploymentLoadMetaResponse represents deployment response
+type DeploymentLoadMetaResponse struct {
 	Meta *DeploymentMeta
 }
 
 //DeploymentMeta represents description of deployment instructions for various operating system
 type DeploymentMeta struct {
-	Name       string //app name
-	Versioning string //versioning system, i.e. Major.Minor.Release
-	Targets    []*DeploymentTargetMeta
+	Name       string                                                                                                                     //app name
+	Versioning string                  `required:"true" description:"versioning template for dynamic discovery i.e. Major.Minor.Release"` //versioning system, i.e. Major.Minor.Release
+	Targets    []*DeploymentTargetMeta `required:"true" description:"deployment instruction for various version and operating systems"`
 }
 
 //DeploymentTargetMeta represents specific instruction for given os deployment.
 type DeploymentTargetMeta struct {
-	Version           string                  //version of the software
-	MinReleaseVersion map[string]string       //min release version, key is major.minor, value is release or update version
-	OsTarget          *OperatingSystemTarget  //if specified matches current os
-	Deployment        *Deployment             //actual deployment instruction
-	Dependencies      []*DeploymentDependency //app dependencies like sdk
+	Version           string                                                                                                                              //version of the software
+	MinReleaseVersion map[string]string       `required:"true" description:"min release version, key is major.minor, value is release or update version"` //min release version, key is major.minor, value is release or update version
+	OsTarget          *OperatingSystemTarget  `description:"operating system match"`                                                                      //if specified matches current os
+	Deployment        *Deployment             `required:"true" description:"actual deployment instructions"`                                              //actual deployment instruction
+	Dependencies      []*DeploymentDependency `description:"app dependencies like sdk"`                                                                   //app dependencies like sdk
 }
 
 //Deployment represents deployment instruction
 type Deployment struct {
-	Pre          *DeploymentAddition
-	Transfer     *Transfer           //actual copy instruction
-	Command      *ExtractableCommand //post deployment command like tar xvzf
-	VersionCheck *ExtractableCommand //command to check version
-	Post         *DeploymentAddition //post deployment
+	Pre          *DeploymentAddition `description:"initialization deployment instruction"`
+	Transfer     *Transfer           `required:"true" description:"software deployment instruction"` //actual copy instruction
+	Command      *ExtractableCommand `description:"post deployment commands, i.e. tar xvzf"`         //post deployment command like tar xvzf
+	VersionCheck *ExtractableCommand `description:"version extraction command"`                      //command to check version
+	Post         *DeploymentAddition `description:"post deployment instruction"`
 }
 
 //DeploymentAddition represents deployment additions.
 type DeploymentAddition struct {
 	SuperUser bool
-	Commands  []string
-	Transfers []*Transfer
+	Commands  []string    `description:"os command"`
+	Transfers []*Transfer `description:"asset transfer"`
 }
 
 //Validate checks if request if valid

@@ -203,7 +203,7 @@ func (c *Context) OperatingSystem(sessionName string) *OperatingSystem {
 
 //ExecuteAsSuperUser executes provided command as super user.
 func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ExtractableCommand) (*CommandResponse, error) {
-	superUserRequest := superUserCommandRequest{
+	superUserRequest := SuperUserCommandRequest{
 		Target:        target,
 		MangedCommand: command,
 	}
@@ -240,7 +240,7 @@ func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandRe
 	var err error
 	var commandRequest *ExtractableCommandRequest
 	switch actualCommand := command.(type) {
-	case *superUserCommandRequest:
+	case *SuperUserCommandRequest:
 		actualCommand.Target = target
 		commandRequest, err = actualCommand.AsCommandRequest(c)
 		if err != nil {

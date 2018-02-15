@@ -91,6 +91,8 @@ func TestBuildService_Build(t *testing.T) {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
 				}
+
+
 				var actual = response.CommandInfo.Stdout()
 				assert.True(t, strings.Contains(actual, useCase.expected), "name "+baseCase)
 			}
@@ -119,4 +121,66 @@ func Test_BuildMeta_Validate(t *testing.T) {
 		}
 		assert.NotNil(t, meta.Validate())
 	}
+
+
+	{
+		meta := &endly.BuildLoadMetaRequest{}
+		assert.NotNil(t, meta.Validate())
+	}
+
+	{
+		meta := &endly.BuildLoadMetaRequest{
+			Source:url.NewResource("abc"),
+		}
+		assert.Nil(t, meta.Validate())
+	}
+
+}
+
+
+func Test_BuildLoad_Validate(t *testing.T) {
+
+	{
+		request := &endly.BuildRequest{}
+		assert.NotNil(t, request.Validate())
+	}
+
+	{
+		request := &endly.BuildRequest{
+			BuildSpec:&endly.BuildSpec{
+
+			},
+		}
+		assert.NotNil(t, request.Validate())
+	}
+
+	{
+		request := &endly.BuildRequest{
+			BuildSpec:&endly.BuildSpec{
+				Name:"abc",
+			},
+		}
+		assert.NotNil(t, request.Validate())
+	}
+
+	{
+		request := &endly.BuildRequest{
+			BuildSpec:&endly.BuildSpec{
+				Goal:"abc",
+			},
+		}
+		assert.NotNil(t, request.Validate())
+	}
+
+	{
+		request := &endly.BuildRequest{
+			BuildSpec:&endly.BuildSpec{
+				Name:"a",
+				Goal:"abc",
+			},
+		}
+		assert.Nil(t, request.Validate())
+	}
+
+
 }

@@ -6,9 +6,8 @@ import (
 
 //DockerLogoutRequest represents a docker pull request
 type DockerLogoutRequest struct {
-	SysPath    []string
-	Target     *url.Resource
-	Repository string
+	Target *url.Resource `required:"true" description:"host with docker service"` //target host
+	Repository string `required:"true" description:"repository URL"`
 }
 
 //DockerLogoutResponse represents a docker pull request

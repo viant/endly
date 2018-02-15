@@ -244,3 +244,80 @@ func TestDsUnitService_Errors(t *testing.T) {
 	assert.True(t, serviceResponse.Error != "")
 
 }
+
+func TestDockerContainerBaseRequest_Init(t *testing.T) {
+
+	{
+		startRequest := &endly.DockerContainerStartRequest{}
+		assert.Nil(t, startRequest.Init())
+		assert.Nil(t, startRequest.DockerContainerBaseRequest)
+	}
+
+	{
+		startRequest := &endly.DockerContainerStartRequest{
+			DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{},
+		}
+		assert.Nil(t, startRequest.Init())
+		assert.Equal(t, "", startRequest.Name)
+	}
+
+	{
+		startRequest := &endly.DockerContainerStartRequest{
+			DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
+				Target: url.NewResource("test"),
+			},
+		}
+		startRequest.Name = "insance1"
+		assert.Nil(t, startRequest.Init())
+		assert.Equal(t, "insance1", startRequest.Name)
+	}
+
+	{
+		startRequest := &endly.DockerContainerStartRequest{
+			DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
+				Target: url.NewResource("test"),
+				Name:   "instance2",
+			},
+		}
+		startRequest.Name = "insance1"
+		assert.Nil(t, startRequest.Init())
+		assert.Equal(t, "insance1", startRequest.Name)
+	}
+
+}
+
+func TestDockerContainerBaseRequest_Validate(t *testing.T) {
+
+	{
+		startRequest := &endly.DockerContainerStartRequest{}
+		assert.NotNil(t, startRequest.Validate())
+
+	}
+
+	{
+		startRequest := &endly.DockerContainerStartRequest{
+			DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{},
+		}
+		assert.NotNil(t, startRequest.Validate())
+	}
+
+	{
+		startRequest := &endly.DockerContainerStartRequest{
+			DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
+				Target:url.NewResource("ab"),
+			},
+		}
+		assert.NotNil(t, startRequest.Validate())
+	}
+
+	{
+		startRequest := &endly.DockerContainerStartRequest{
+			DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
+				Target:url.NewResource("ab"),
+				Name:"instance2",
+			},
+		}
+		assert.Nil(t, startRequest.Validate())
+	}
+
+}

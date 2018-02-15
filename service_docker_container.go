@@ -2,11 +2,12 @@ package endly
 
 import (
 	"github.com/viant/toolbox/url"
+	"github.com/pkg/errors"
 )
 
 //DockerContainerStatusRequest represents a docker check container status request
 type DockerContainerStatusRequest struct {
-	Target *url.Resource
+	Target *url.Resource `required:"true" description:"host with docker service"` //target host
 	Names  string
 	Image  string
 }
@@ -16,14 +17,60 @@ type DockerContainerStatusResponse struct {
 	Containers []*DockerContainerInfo
 }
 
+
+//DockerContainerBaseRequest represents container base request
+type DockerContainerBaseRequest struct {
+	Target *url.Resource `required:"true" description:"host with docker service"`                //target host
+	Name   string        `description:"container name to inspect, if empty it uses target.Name"` //docker container name
+}
+
+
+
+
+func (r *DockerContainerBaseRequest) Init() error {
+	if r == nil || r.Target == nil {
+		return nil
+	}
+	if r.Name != "" {
+		return nil
+	}
+	r.Name = r.Target.Name
+	return nil
+}
+
+
+func (r *DockerContainerBaseRequest) Validate() error {
+	if r == nil {
+		return errors.New("base container request was nil")
+	}
+	if r.Target == nil {
+		return errors.New("target docker resource was empty")
+	}
+	if r.Name == "" {
+		return errors.New("docker instance name was empty")
+	}
+	return nil
+}
+
+
 //DockerContainerStartRequest represents a docker container start request.
 type DockerContainerStartRequest struct {
-	Target *url.Resource
+	*DockerContainerBaseRequest
 }
+
+
+
+
+
+//DockerContainerStartResponse represents a docker container start response
+type DockerContainerStartResponse struct {
+	*DockerContainerInfo
+}
+
 
 //DockerContainerRemoveRequest represents a docker remove container request
 type DockerContainerRemoveRequest struct {
-	Target *url.Resource
+	*DockerContainerBaseRequest
 }
 
 //DockerContainerRemoveResponse represents a docker remove container response
@@ -33,12 +80,19 @@ type DockerContainerRemoveResponse struct {
 
 //DockerContainerStopRequest represents a docker stop container request.
 type DockerContainerStopRequest struct {
-	Target *url.Resource
+	*DockerContainerBaseRequest
 }
 
-//DockerContainerRunCommandRequest represents a docker run container command.
-type DockerContainerRunCommandRequest struct {
-	Target             *url.Resource
+
+//DockerContainerStopResponse represents a docker stop container response.
+type DockerContainerStopResponse struct {
+	*DockerContainerInfo
+}
+
+
+//DockerContainerRunRequest represents a docker run container command.
+type DockerContainerRunRequest struct {
+	*DockerContainerBaseRequest
 	Credentials        map[string]string
 	Interactive        bool
 	AllocateTerminal   bool
@@ -46,8 +100,21 @@ type DockerContainerRunCommandRequest struct {
 	Command            string
 }
 
-//DockerContainerRunCommandResponse represents a docker run command  response
-type DockerContainerRunCommandResponse struct {
+
+
+//DockerInspectRequest represents a docker inspect request, target name refers to container name
+type DockerInspectRequest struct {
+	*DockerContainerBaseRequest
+}
+
+//DockerInspectResponse represents a docker inspect request
+type DockerInspectResponse struct {
+	Stdout string
+	Info   interface{} //you can extract any instance default, for instance to get Ip you can use Info[0].NetworkSettings.IPAddress in the variable action post from key
+}
+
+//DockerContainerRunResponse represents a docker run command  response
+type DockerContainerRunResponse struct {
 	Stdout string
 }
 
@@ -63,7 +130,7 @@ type DockerContainerInfo struct {
 
 //DockerContainerLogsRequest represents docker runner container logs to take stdout
 type DockerContainerLogsRequest struct {
-	Target *url.Resource
+	*DockerContainerBaseRequest
 }
 
 //DockerContainerLogsResponse represents docker container logs response

@@ -51,7 +51,9 @@ type ServiceResponse struct {
 	Status   string
 	Error    string
 	Response interface{}
+	err    error
 }
+
 
 //ExampleUseCase represents example use case
 type ExampleUseCase struct {
@@ -114,11 +116,11 @@ func (s *AbstractService) Run(context *Context, request interface{}) *ServiceRes
 	defer func() {
 		s.End(context)(startEvent, Pairs("response", response))
 		if err != nil {
+			result.err = err
 			result.Status = "error"
 			result.Error = fmt.Sprintf("%v", err)
 		}
 	}()
-
 	if len(s.routeByRequest) == 0 {
 		err = NewError(s.ID(), fmt.Sprintf("%T", request), fmt.Errorf("failed to lookup service route: %T", request))
 		return result

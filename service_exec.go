@@ -17,18 +17,6 @@ const ExecServiceID = "exec"
 
 const sudoCredentialKey = "**sudo**"
 
-//ExecServiceOpenAction represent open session action
-const ExecServiceOpenAction = "open"
-
-//ExecServiceCommandAction represent a command action
-const ExecServiceCommandAction = "run"
-
-//ExecServiceExtractableCommandAction represent extractable action
-const ExecServiceExtractableCommandAction = "extract"
-
-//ExecServiceManagedCloseAction represent session close action
-const ExecServiceManagedCloseAction = "close"
-
 //ExecutionStartEvent represents an execution event start
 type ExecutionStartEvent struct {
 	SessionID string
@@ -425,7 +413,22 @@ func getTerminators(options *ExecutionOptions, session *SystemTerminalSession, e
 	return terminators
 }
 
-func (s *execService) runCommands(context *Context, request *ExtractableCommandRequest) (*CommandResponse, error) {
+func (s *execService) runCommands(context *Context, request *CommandRequest) (*CommandResponse, error) {
+	var mangedCommandRequest = request.AsExtractableCommandRequest()
+	if request.SuperUser {
+		superCommandRequest := SuperUserCommandRequest{
+			Target:        request.Target,
+			MangedCommand: mangedCommandRequest.ExtractableCommand,
+		}
+		var err error
+		if mangedCommandRequest, err = superCommandRequest.AsCommandRequest(context); err != nil {
+			return nil, err
+		}
+	}
+	return s.runCommandsAndExtractData(context, mangedCommandRequest)
+}
+
+func (s *execService) runCommandsAndExtractData(context *Context, request *ExtractableCommandRequest) (*CommandResponse, error) {
 	err := request.Validate()
 	if err != nil {
 		return nil, err
@@ -512,86 +515,6 @@ func (s *execService) closeSession(context *Context, request *CloseSessionReques
 	}, nil
 }
 
-//Run runs action for passed in request.
-func (s *execService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-	var err error
-	var errorMessage string
-	switch actualRequest := request.(type) {
-	case *CommandRequest:
-		var mangedCommandRequest = actualRequest.AsExtractableCommandRequest()
-		if actualRequest.SuperUser {
-			superCommandRequest := superUserCommandRequest{
-				Target:        actualRequest.Target,
-				MangedCommand: mangedCommandRequest.ExtractableCommand,
-			}
-			mangedCommandRequest, err = superCommandRequest.AsCommandRequest(context)
-		}
-		if err == nil {
-			response.Response, err = s.runCommands(context, mangedCommandRequest)
-		}
-		errorMessage = "failed to run command"
-
-	case *OpenSessionRequest:
-		response.Response, err = s.open(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to open session: %v", actualRequest.Target)
-	case *ExtractableCommandRequest:
-		response.Response, err = s.runCommands(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to run command: %v", actualRequest.ExtractableCommand)
-	case *superUserCommandRequest:
-		var commandRequest *ExtractableCommandRequest
-		commandRequest, err = actualRequest.AsCommandRequest(context)
-		if err == nil {
-			response.Response, err = s.runCommands(context, commandRequest)
-		}
-	case *CloseSessionRequest:
-		response.Response, err = s.closeSession(context, actualRequest)
-		errorMessage = fmt.Sprintf("failed to c	lose session: %v", actualRequest.SessionID)
-
-	default:
-		err = fmt.Errorf("unsupported request type: %T", request)
-	}
-
-	if err != nil {
-		response.Status = "error"
-		response.Error = errorMessage + ", " + err.Error()
-	}
-	return response
-}
-
-//NewRequest creates a new request for passed in action, the following is supported: open,close,command,extractableCommand
-func (s *execService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case ExecServiceOpenAction:
-		return &OpenSessionRequest{}, nil
-	case ExecServiceExtractableCommandAction, "extractable-command":
-		return &ExtractableCommandRequest{}, nil
-	case ExecServiceCommandAction, "command":
-		return &CommandRequest{}, nil
-	case ExecServiceManagedCloseAction:
-		return &CloseSessionRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
-
-//NewRequest creates a new request for passed in action, the following is supported: open,close,command,extractableCommand
-func (s *execService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case ExecServiceOpenAction:
-		return &OpenSessionResponse{}, nil
-	case ExecServiceExtractableCommandAction:
-
-		return &CommandResponse{}, nil
-	case ExecServiceCommandAction:
-		return &CommandResponse{}, nil
-	case ExecServiceManagedCloseAction:
-		return &CloseSessionRequest{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
-}
-
 func isAmd64Architecture(candidate string) bool {
 	return strings.Contains(candidate, "amd64") || strings.Contains(candidate, "x86_64")
 }
@@ -660,30 +583,217 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 	return operatingSystem, nil
 }
 
+const
+(
+	execServiceOpenExample          = `{
+  "Target": {
+    "URL": "scp://127.0.0.1/",
+    "Credential": "${env.HOME}/.secret/localhost.json"
+  },
+  
+  "SystemPaths": ["/usr/local/bin"],
+  "Env": {
+    "GOPATH":"${env.HOME}/go"
+  }
+}`
+	execServiceRunExample           = `{
+  "Target": {
+    "URL": "scp://127.0.0.1/",
+    "Credential": "${env.HOME}/.secret/localhost.json"
+  },
+  "Commands":["mkdir /tmp/app1"]
+}`
+
+
+	execServiceRunAndExtractExample = `{
+  "Target": {
+    "URL": "scp://127.0.0.1/",
+    "Credential": "${env.HOME}/.secret/localhost.json"
+  },
+  "ExtractableCommand": {
+    "Options": {
+      "SystemPaths": [
+        "/opt/sdk/go/bin"
+      ]
+    },
+    "Executions": [
+      {
+        "Command": "go version",
+        "Extraction": [
+          {
+            "RegExpr": "go(\\d\\.\\d)",
+            "Key": "Version"
+          }
+        ]
+      }
+    ]
+  }
+}`
+
+	execServiceManagedCloseExample  = `{
+  "Target": {
+    "URL": "scp://127.0.0.1/",
+    "Credential": "${env.HOME}/.secret/localhost.json"
+  }
+}`
+)
+
+func (s *execService) registerRoutes() {
+
+	s.Register(&ServiceActionRoute{
+		Action: "open",
+		RequestInfo: &ActionInfo{
+			Description: "open SSH session, usually no need for using this action directly since run,extract actions open session if needed",
+
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "open session",
+					Data:    execServiceOpenExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &OpenSessionRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &OpenSessionResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*OpenSessionRequest); ok {
+				return s.open(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "run",
+		RequestInfo: &ActionInfo{
+			Description: "run terminal command",
+
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "run command",
+					Data:    execServiceRunExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &CommandRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &CommandResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*CommandRequest); ok {
+				return s.runCommands(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "extract",
+		RequestInfo: &ActionInfo{
+			Description: "run terminal command and extract data from the stdout",
+
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "run and extract command",
+					Data:    execServiceRunAndExtractExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &ExtractableCommandRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &CommandResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*ExtractableCommandRequest); ok {
+				return s.runCommandsAndExtractData(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+
+	s.Register(&ServiceActionRoute{
+		Action: "sudo",
+		RequestInfo: &ActionInfo{
+			Description: "run terminal command and extract data as rooot",
+		},
+		RequestProvider: func() interface{} {
+			return &SuperUserCommandRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &CommandResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*SuperUserCommandRequest); ok {
+				commandRequest, err := handlerRequest.AsCommandRequest(context)
+				if err != nil {
+					return nil, err
+				}
+				return s.runCommandsAndExtractData(context, commandRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "close",
+		RequestInfo: &ActionInfo{
+			Description: "close SSH terminal session, if created by run or extract it is scheduled to be closed at the end of endly run context.Close()",
+
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "close ",
+					Data:    execServiceManagedCloseExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &CloseSessionRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &CloseSessionResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*CloseSessionRequest); ok {
+				return s.closeSession(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+}
+
+
+
 //NewExecService creates a new execution service
 func NewExecService() Service {
 	var result = &execService{
-		mutex:       &sync.RWMutex{},
-		credentials: make(map[string]*cred.Config),
-		AbstractService: NewAbstractService(ExecServiceID,
-			ExecServiceOpenAction,
-			ExecServiceCommandAction,
-			ExecServiceExtractableCommandAction,
-			ExecServiceManagedCloseAction,
-		),
+		mutex:           &sync.RWMutex{},
+		credentials:     make(map[string]*cred.Config),
+		AbstractService: NewAbstractService(ExecServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }
 
-//superUserCommandRequest represents a super user command,
-type superUserCommandRequest struct {
+//SuperUserCommandRequest represents a super user command,
+type SuperUserCommandRequest struct {
 	Target        *url.Resource       //target destination where to run a command.
 	MangedCommand *ExtractableCommand //managed command
 }
 
+
+
+
 //AsCommandRequest returns ExtractableCommandRequest
-func (r *superUserCommandRequest) AsCommandRequest(context *Context) (*ExtractableCommandRequest, error) {
+func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*ExtractableCommandRequest, error) {
 	target, err := context.ExpandResource(r.Target)
 	if err != nil {
 		return nil, err

@@ -93,8 +93,8 @@ func (s *buildService) deployDependencyIfNeeded(context *Context, meta *BuildMet
 			Version: version,
 			Target:  target,
 		})
-		if response.Error != "" {
-			return fmt.Errorf("failed to build %v, %v", spec.Name, response.Error)
+		if response.err != nil {
+			return err
 		}
 	}
 	return nil
@@ -215,15 +215,10 @@ func newBuildState(buildSepc *BuildSpec, target *url.Resource, request *BuildReq
 	return build, nil
 }
 
-func (s *buildService) registerRoutes() {
-	s.Register(&ServiceActionRoute{
-		Action: "build",
-		RequestInfo: &ActionInfo{
-			Description: "build app with supplied specification",
-			Examples: []*ExampleUseCase{
-				{
-					UseCase: "go app build",
-					Data: `{
+
+
+const (
+	buildGoBuildExample = `{
 	"BuildSpec": {
 		"Name": "go",
 		"Goal": "build",
@@ -240,11 +235,8 @@ func (s *buildService) registerRoutes() {
 		"Credential": "${env.HOME}/.secret/localhost.json"
 	}
 }
-`,
-				},
-				{
-					UseCase: "java app build",
-					Data: `{
+`
+	buildJavaBuildExample = `{
   "BuildSpec": {
     "Name": "maven",
     "Version": "3.5",
@@ -259,7 +251,25 @@ func (s *buildService) registerRoutes() {
     "Credential": "${env.HOME}/.secret/scp.json"
   }
 }
-`,
+`
+)
+
+
+
+
+func (s *buildService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "build",
+		RequestInfo: &ActionInfo{
+			Description: "build app with supplied specification",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "go app build",
+					Data: buildGoBuildExample,
+				},
+				{
+					UseCase: "java app build",
+					Data:buildJavaBuildExample,
 				},
 			},
 		},

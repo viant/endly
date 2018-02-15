@@ -7,17 +7,17 @@ import (
 
 //StorageUploadRequest represents a resources upload request, it takes context state key to upload to target destination.
 type StorageUploadRequest struct {
-	SourceKey string
-	Target    *url.Resource
+	SourceKey string        `required:"true" description:"state key with asset content"`
+	Target    *url.Resource `required:"true" description:"destination asset or directory"` //target URL with credential
 }
 
 //Validate checks if request is valid
 func (r *StorageUploadRequest) Validate() error {
 	if r.Target == nil {
-		return errors.New("Target was empty")
+		return errors.New("target was empty")
 	}
 	if r.SourceKey == "" {
-		return errors.New("SourceKey was empty")
+		return errors.New("sourceKey was empty")
 	}
 	return nil
 }

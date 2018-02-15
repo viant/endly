@@ -163,7 +163,7 @@ func TestTransferService_Copy(t *testing.T) {
 				assert.Fail(t, fmt.Sprintf("process serviceResponse was empty  %T", serviceResponse.Response))
 				continue
 			}
-			assert.True(t, len(response.Transferred) > 0)
+			assert.True(t, len(response.TransferredURL) > 0)
 			for URL, expected := range useCase.Expected {
 				object, err := memStorage.StorageObject(URL)
 				if assert.Nil(t, err, URL) {
@@ -287,4 +287,150 @@ func TestTransferService_Upload_Error(t *testing.T) {
 		Target:    url.NewResource("mem:///test/storage/upload/config1.json"),
 	})
 	assert.Equal(t, "unable to upload, sourcekey key10 value was empty", serviceResponse.Error)
+}
+
+func TestStorageCopyRequest_Validate(t *testing.T) {
+
+	{
+		request := endly.StorageCopyRequest{}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := endly.StorageCopyRequest{
+			Transfers: []*endly.Transfer{
+
+			},
+		}
+		assert.NotNil(t, request.Validate())
+	}
+
+	{
+		request := endly.StorageCopyRequest{
+			Transfers: []*endly.Transfer{
+				{
+					Source: url.NewResource("abc"),
+				},
+			},
+		}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := endly.StorageCopyRequest{
+			Transfers: []*endly.Transfer{
+				{
+					Target: url.NewResource("abc"),
+				},
+			},
+		}
+		assert.NotNil(t, request.Validate())
+	}
+
+	{
+		request := endly.StorageCopyRequest{}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := endly.StorageCopyRequest{
+			Transfers: []*endly.Transfer{
+
+			},
+		}
+		assert.NotNil(t, request.Validate())
+	}
+
+	{
+		request := endly.StorageCopyRequest{
+			Transfers: []*endly.Transfer{
+				{
+					Source: url.NewResource("abc"),
+				},
+			},
+		}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := endly.StorageCopyRequest{
+			Transfers: []*endly.Transfer{
+				{
+					Target: url.NewResource("abc"),
+					Source: url.NewResource("xyz"),
+				},
+			},
+		}
+		assert.Nil(t, request.Validate())
+	}
+
+}
+
+func TestStorageDownloadRequest_Validate(t *testing.T) {
+
+	{
+		request := endly.StorageDownloadRequest{}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := endly.StorageDownloadRequest{
+			TargetKey: "abc",
+		}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := endly.StorageDownloadRequest{
+			Source: url.NewResource("abc"),
+		}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := endly.StorageDownloadRequest{
+			Source:    url.NewResource("abc"),
+			TargetKey: "a",
+		}
+		assert.Nil(t, request.Validate())
+	}
+}
+
+func TestStorageUploadRequest_Validate(t *testing.T) {
+
+	{
+		request := endly.StorageUploadRequest{}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := endly.StorageUploadRequest{
+			SourceKey: "abc",
+		}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := endly.StorageUploadRequest{
+			Target: url.NewResource("abc"),
+		}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := endly.StorageUploadRequest{
+			Target:    url.NewResource("abc"),
+			SourceKey: "a",
+		}
+		assert.Nil(t, request.Validate())
+	}
+}
+
+func TestStorageUploadRemove_Validate(t *testing.T) {
+
+	{
+		request := endly.StorageRemoveRequest{}
+		assert.NotNil(t, request.Validate())
+	}
+
+	{
+		request := endly.StorageRemoveRequest{
+			Resources: []*url.Resource{
+
+				url.NewResource("a"),
+			},
+		}
+		assert.Nil(t, request.Validate())
+	}
+
 }
