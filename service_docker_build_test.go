@@ -21,15 +21,15 @@ func Test_DockerBuildRequest_Validate(t *testing.T) {
 			Arguments: map[string]string{
 				"-t": "image:1.0",
 			},
-			Path:"/",
-			Tag: &endly.DockerTag{Image: "abc"}}
+			Path: "/",
+			Tag:  &endly.DockerTag{Image: "abc"}}
 		assert.Nil(t, request.Validate())
 	}
 
 	{
 		request := endly.DockerBuildRequest{Target: url.NewResource("abc"),
-			Path:"/",
-			Tag: &endly.DockerTag{Image: "abc"}}
+			Path: "/",
+			Tag:  &endly.DockerTag{Image: "abc"}}
 		assert.Nil(t, request.Validate())
 	}
 	{

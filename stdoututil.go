@@ -13,7 +13,6 @@ const errorIsNotRecoverable = "Error is not recoverable"
 const notInstalled = "not installed"
 const canNotOpen = "can't open"
 
-
 //CheckNoSuchFileOrDirectory checks for no such file or directory message in the provided stdout.
 func CheckNoSuchFileOrDirectory(stdout ...string) bool {
 	if len(stdout) == 0 {

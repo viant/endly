@@ -4,18 +4,18 @@ import "fmt"
 
 //BuildGoal builds goal represents a build goal
 type BuildGoal struct {
-	Name                string
-	InitTransfers       *StorageCopyRequest
-	Command             *ExtractableCommand
-	PostTransfers       *StorageCopyRequest
+	Name                string              `required:"true"`
+	InitTransfers       *StorageCopyRequest ` description:"files transfer before build command"`
+	Command             *ExtractableCommand `required:"true"  description:"build command"`
+	PostTransfers       *StorageCopyRequest ` description:"files transfer after build command"`
 	VerificationCommand *ExtractableCommand
 }
 
 //BuildMeta build meta provides instruction how to build an app
 type BuildMeta struct {
-	Name         string
-	Goals        []*BuildGoal
-	Dependencies []*DeploymentDependency
+	Name         string                  `required:"true" description:"name of build system"`
+	Goals        []*BuildGoal            `required:"true" description:"build goals"`
+	Dependencies []*DeploymentDependency `description:"deployment dependencies"`
 	goalsIndex   map[string]*BuildGoal
 }
 

@@ -20,8 +20,9 @@
     "buildHost": "127.0.0.1",
     "buildHostCredential": "${env.HOME}/.secret/localhost.json",
 
-    "buildGoal": "build",
     "buildDirectory" :"$WorkingDirectory(../app)",
+
+    "buildGoal": "build",
     "buildArgs":" -o transformer",
     "appRootDirectory":"/opt/",
 

@@ -12,15 +12,6 @@ import (
 //DaemonServiceID represents system daemon service
 const DaemonServiceID = "daemon"
 
-//DaemonServiceStartAction represents a daemon start action
-const DaemonServiceStartAction = "start"
-
-//DaemonServiceStatusAction represents a daemon start action
-const DaemonServiceStatusAction = "status"
-
-//DaemonServiceStopAction represents a daemon start action
-const DaemonServiceStopAction = "stop"
-
 const (
 	serviceTypeError = iota
 	serviceTypeInitDaemon
@@ -31,67 +22,6 @@ const (
 
 type daemonService struct {
 	*AbstractService
-}
-
-func (s *daemonService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-	var err error
-	switch actualRequest := request.(type) {
-	case *DaemonStartRequest:
-
-		info, err := s.startService(context, actualRequest)
-		response.Response = info
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to start service: %v, %v", actualRequest.Service, err)
-
-		} else if info != nil && !info.IsActive() {
-			response.Error = fmt.Sprintf("failed to start service: %v, service is inactive", actualRequest.Service)
-
-		}
-
-	case *DaemonStopRequest:
-		response.Response, err = s.stopService(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to stop service: %v, %v", actualRequest.Service, err)
-		}
-	case *DaemonStatusRequest:
-		response.Response, err = s.checkService(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to check status service: %v, %v", actualRequest.Service, err)
-		}
-	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
-	}
-	if response.Error != "" {
-		response.Status = "err"
-	}
-	return response
-}
-
-func (s *daemonService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case DaemonServiceStatusAction:
-		return &DaemonStatusRequest{}, nil
-	case DaemonServiceStartAction:
-		return &DaemonStartRequest{}, nil
-	case DaemonServiceStopAction:
-		return &DaemonStopRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
-
-func (s *daemonService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case DaemonServiceStatusAction:
-		return &DaemonInfo{}, nil
-	case DaemonServiceStartAction:
-		return &DaemonInfo{}, nil
-	case DaemonServiceStopAction:
-		return &DaemonInfo{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
 }
 
 func (s *daemonService) getDarwinLaunchServiceInfo(context *Context, target *url.Resource, request *DaemonStatusRequest, info *DaemonInfo) error {
@@ -345,7 +275,7 @@ func (s *daemonService) checkService(context *Context, request *DaemonStatusRequ
 
 }
 
-func (s *daemonService) stopService(context *Context, request *DaemonStopRequest) (*DaemonInfo, error) {
+func (s *daemonService) stopService(context *Context, request *DaemonStopRequest) (*DaemonStopResponse, error) {
 	serviceInfo, err := s.checkService(context, &DaemonStatusRequest{
 		Target:    request.Target,
 		Service:   request.Service,
@@ -355,7 +285,7 @@ func (s *daemonService) stopService(context *Context, request *DaemonStopRequest
 		return nil, err
 	}
 	if !serviceInfo.IsActive() {
-		return serviceInfo, nil
+		return &DaemonStopResponse{serviceInfo}, nil
 	}
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
@@ -387,14 +317,15 @@ func (s *daemonService) stopService(context *Context, request *DaemonStopRequest
 	if CheckCommandNotFound(commandResult.Stdout()) {
 		return nil, fmt.Errorf("%v", commandResult.Stdout())
 	}
-	return s.checkService(context, &DaemonStatusRequest{
+	info, err := s.checkService(context, &DaemonStatusRequest{
 		Target:    request.Target,
 		Service:   request.Service,
 		Exclusion: request.Exclusion,
 	})
+	return &DaemonStopResponse{info}, err
 }
 
-func (s *daemonService) startService(context *Context, request *DaemonStartRequest) (*DaemonInfo, error) {
+func (s *daemonService) startService(context *Context, request *DaemonStartRequest) (*DaemonStartResponse, error) {
 	serviceInfo, err := s.checkService(context, &DaemonStatusRequest{
 		Target:    request.Target,
 		Service:   request.Service,
@@ -403,9 +334,8 @@ func (s *daemonService) startService(context *Context, request *DaemonStartReque
 	if err != nil {
 		return nil, err
 	}
-
 	if serviceInfo.IsActive() {
-		return serviceInfo, nil
+		return &DaemonStartResponse{DaemonInfo: serviceInfo}, nil
 	}
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
@@ -435,7 +365,6 @@ func (s *daemonService) startService(context *Context, request *DaemonStartReque
 			Exclusion: request.Exclusion,
 		})
 		command = fmt.Sprintf("launchctl start %v", serviceInfo.Domain)
-
 	case serviceTypeSystemctl:
 		command = fmt.Sprintf("systemctl start %v ", serviceInfo.Service)
 	case serviceTypeStdService:
@@ -457,21 +386,82 @@ func (s *daemonService) startService(context *Context, request *DaemonStartReque
 	if CheckCommandNotFound(commandResult.Stdout()) {
 		return nil, fmt.Errorf("%v", commandResult.Stdout())
 	}
-	return s.checkService(context, &DaemonStatusRequest{
+
+	serviceInfo, err = s.checkService(context, &DaemonStatusRequest{
 		Target:    request.Target,
 		Service:   request.Service,
 		Exclusion: request.Exclusion,
 	})
+	if serviceInfo != nil && !serviceInfo.IsActive() {
+		return nil, fmt.Errorf("%v service is inactive", request.Service)
+	}
+	return &DaemonStartResponse{DaemonInfo: serviceInfo}, err
+}
+
+func (s *daemonService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "start",
+		RequestInfo: &ActionInfo{
+			Description: "start provided service on target host",
+		},
+		RequestProvider: func() interface{} {
+			return &DaemonStartRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DaemonStartResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DaemonStartRequest); ok {
+				return s.startService(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+	s.Register(&ServiceActionRoute{
+		Action: "status",
+		RequestInfo: &ActionInfo{
+			Description: "check service status on target host",
+		},
+		RequestProvider: func() interface{} {
+			return &DaemonStatusRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DaemonInfo{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DaemonStatusRequest); ok {
+				return s.checkService(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+	s.Register(&ServiceActionRoute{
+		Action: "stop",
+		RequestInfo: &ActionInfo{
+			Description: "stop service on target host",
+		},
+		RequestProvider: func() interface{} {
+			return &DaemonStopRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DaemonInfo{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DaemonStopRequest); ok {
+				return s.stopService(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
 }
 
 //NewDaemonService creates a new system service.
 func NewDaemonService() Service {
 	var result = &daemonService{
-		AbstractService: NewAbstractService(DaemonServiceID,
-			DaemonServiceStartAction,
-			DaemonServiceStatusAction,
-			DaemonServiceStopAction),
+		AbstractService: NewAbstractService(DaemonServiceID),
 	}
+	result.registerRoutes()
 	result.AbstractService.Service = result
 	return result
 }

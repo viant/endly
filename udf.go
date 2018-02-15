@@ -2,8 +2,8 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 )
 
 func transformWithUDF(context *Context, udfName, source string, payload interface{}) (interface{}, error) {
@@ -24,11 +24,9 @@ func transformWithUDF(context *Context, udfName, source string, payload interfac
 	return transformed, nil
 }
 
-
-
 //DateOfBirth returns formated date of birth
 func DateOfBirth(source interface{}, state data.Map) (interface{}, error) {
-	if ! toolbox.IsSlice(source) {
+	if !toolbox.IsSlice(source) {
 		return nil, fmt.Errorf("expected slice but had: %T %v", source, source)
 	}
 	return toolbox.NewDateOfBirthrovider().Get(toolbox.NewContext(), toolbox.AsSlice(source)...)

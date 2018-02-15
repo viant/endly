@@ -106,53 +106,80 @@ func Bootstrap() {
 	time.Sleep(time.Second)
 }
 
-
 func printWorkflowTasks(URL string) {
 	workflow, err := getWorkflow(URL);
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Fprintf(os.Stderr,"Workflow '%v' (%v) tasks:\n", workflow.Name, workflow.Source.URL)
+	fmt.Fprintf(os.Stderr, "Workflow '%v' (%v) tasks:\n", workflow.Name, workflow.Source.URL)
 	for _, task := range workflow.Tasks {
 		fmt.Fprintf(os.Stderr, "\t%v: %v\n", task.Name, task.Description)
 	}
 }
 
+func printServiceActionInfo(renderer *endly.Renderer, info *endly.ActionInfo, color, infoType string, empty interface{}) {
+	if info != nil {
+		if info.Description != "" {
+			renderer.Printf(renderer.ColorText("Description: ", color, "bold")+" %v\n", info.Description)
+		}
+		if len(info.Examples) > 0 {
+			for i, example := range info.Examples {
+
+				renderer.Printf(renderer.ColorText(fmt.Sprintf("Example %v: ", i+1), color, "bold")+" %v %v\n", example.UseCase, infoType)
+				aMap, err := toolbox.JSONToMap(example.Data)
+				if err == nil {
+					buf, _ := json.MarshalIndent(aMap, "", "\t")
+					renderer.Println(string(buf))
+				} else {
+					renderer.Printf("%v\n", example.Data)
+				}
+			}
+		}
+	}
+	renderer.Printf(renderer.ColorText(fmt.Sprintf("Empty %v: \n", infoType), color, "bold"))
+	buf, _ := json.MarshalIndent(empty, "", "\t")
+	renderer.Println(string(buf) + "\n")
+}
+
+func structMetaToArray(meta *toolbox.StructMeta) ([]string, [][]string) {
+	var header = []string{"Name", "Type", "Required", "Description"}
+	var data = make([][]string, 0)
+	for _, field := range meta.Fields {
+		data = append(data, []string{field.Name, field.Type, toolbox.AsString(field.Required), field.Description})
+	}
+	return header, data
+
+}
+
+func printStructMeta(renderer *endly.Renderer, color string, meta *toolbox.StructMeta) {
+	header, data := structMetaToArray(meta)
+	renderer.PrintTable(renderer.ColorText(meta.Type, color), header, data, 110)
+	if len(meta.Dependencies) == 0 {
+		return
+	}
+	for _, dep := range meta.Dependencies {
+		printStructMeta(renderer, color, dep)
+	}
+}
+
 func printServiceActionRequest() {
-	manager := endly.NewManager()
-	context := manager.NewContext(toolbox.NewContext())
+
+	service := endly.NewMetaService()
 
 	var serviceID = flag.Lookup("s").Value.String()
-	service, err := context.Service(serviceID)
-	if err != nil {
-		log.Fatal(err)
-	}
 	var action = flag.Lookup("a").Value.String()
-	request, err := service.NewRequest(action)
+
+	meta, err := service.Lookup(serviceID, action)
 	if err != nil {
 		log.Fatal(err)
 	}
-	toolbox.InitStruct(request)
-	fmt.Printf("Request: %T\n", request)
-	printInFormat(request, fmt.Sprintf("failed to print %v.%v request (%T)", serviceID, action, request)+", %v")
-
-
-	metaRequest := toolbox.GetStructMeta(request)
-	fmt.Printf("Request Meta: \n")
-	printInFormat(metaRequest, fmt.Sprintf("failed to print %v.%v request (%T)", serviceID, action, metaRequest)+", %v")
-
-
-
-	response, _ := service.NewResponse(action)
-	fmt.Printf("\nResponse: %T\n", response)
-	toolbox.InitStruct(response)
-	printInFormat(response, fmt.Sprintf("failed to print %v.%v response (%T)", serviceID, action, response)+", %v")
-
-	metaResponse := toolbox.GetStructMeta(response)
-	fmt.Printf("Response Meta: \n")
-	printInFormat(metaResponse, fmt.Sprintf("failed to print %v.%v request (%T)", serviceID, action, metaResponse)+", %v")
-
-
+	var renderer = endly.NewRenderer(os.Stderr, 120)
+	renderer.Println(renderer.ColorText("Request: ", "blue", "bold") + fmt.Sprintf("%T", meta.Request))
+	printServiceActionInfo(renderer, meta.RequestInfo, "blue", "request", meta.Request)
+	printStructMeta(renderer, "blue", meta.RequestMeta)
+	renderer.Println(renderer.ColorText("Response: ", "green", "bold") + fmt.Sprintf("%T", meta.Response))
+	printServiceActionInfo(renderer, meta.ResponseInfo, "green", "response", meta.Response)
+	printStructMeta(renderer, "green", meta.ResponseMeta)
 }
 
 func printServiceActions() {

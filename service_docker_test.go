@@ -8,11 +8,9 @@ import (
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"path"
-	"testing"
 	"strings"
+	"testing"
 )
-
-
 
 func TestDockerService_Images(t *testing.T) {
 	var credentialFile, err = GetDummyCredential()
@@ -261,7 +259,6 @@ func TestDockerService_Run(t *testing.T) {
 				var baseCase = useCase.baseDir + " " + useCase.TargetName
 
 				assert.True(t, strings.Contains(serviceResponse.Error, useCase.Error), baseCase)
-
 
 				actual, ok := serviceResponse.Response.(*endly.DockerContainerInfo)
 				if !ok {

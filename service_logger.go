@@ -2,11 +2,14 @@ package endly
 
 import (
 	"fmt"
+	"os"
 )
 
 const (
-	//LogServiceID represents log service id.
+	//backward compatible
 	LogServiceID = "log"
+	//LoggerServiceID represents log service id.
+	LoggerServiceID = "logger"
 
 	//LogServicePrintAction represents log action
 	LogServicePrintAction = "print"
@@ -15,20 +18,30 @@ const (
 //Log represent no operation
 type LogPrintRequest struct {
 	Message string
+	Color   string
 	Error   string
 }
 
-//LogService represents no operation service
-type LogService struct {
+//LoggerService represents no operation service
+type LoggerService struct {
 	*AbstractService
+	*Renderer
 }
 
 //Run run supplied request
-func (s *LogService) Run(context *Context, request interface{}) *ServiceResponse {
+func (s *LoggerService) Run(context *Context, request interface{}) *ServiceResponse {
 	startEvent := s.Begin(context, request, Pairs("request", request))
 	var response = &ServiceResponse{Status: "ok", Response: struct{}{}}
-	switch request.(type) {
+	switch actualRequest := request.(type) {
 	case *LogPrintRequest:
+		if actualRequest.Message != "" {
+			var message = s.Renderer.ColorText(actualRequest.Message, actualRequest.Color)
+			s.Renderer.Println(message)
+		} else if actualRequest.Error != "" {
+			var errorMessage = s.Renderer.ColorText(actualRequest.Error, s.Renderer.ErrorColor)
+			s.Renderer.Println(errorMessage)
+		}
+
 	default:
 		response.Error = fmt.Sprintf("unsupported request type: %T", request)
 	}
@@ -42,7 +55,7 @@ func (s *LogService) Run(context *Context, request interface{}) *ServiceResponse
 }
 
 //NewRequest returns a new request for supplied action
-func (s *LogService) NewRequest(action string) (interface{}, error) {
+func (s *LoggerService) NewRequest(action string) (interface{}, error) {
 	switch action {
 	case LogServicePrintAction:
 		return &LogPrintRequest{}, nil
@@ -52,7 +65,7 @@ func (s *LogService) NewRequest(action string) (interface{}, error) {
 }
 
 //NewRequest returns a new request for supplied action
-func (s *LogService) NewResponse(action string) (interface{}, error) {
+func (s *LoggerService) NewResponse(action string) (interface{}, error) {
 	switch action {
 	case LogServicePrintAction:
 		return struct{}{}, nil
@@ -62,8 +75,9 @@ func (s *LogService) NewResponse(action string) (interface{}, error) {
 
 //NewLogService creates a new log service.
 func NewLogService() Service {
-	var result = &LogService{
-		AbstractService: NewAbstractService(LogServiceID,
+	var result = &LoggerService{
+		Renderer: NewRenderer(os.Stdout, 120),
+		AbstractService: NewAbstractService(LoggerServiceID,
 			LogServicePrintAction,
 		),
 	}

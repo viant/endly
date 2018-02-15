@@ -660,7 +660,7 @@ func (s *dockerService) executeSecureDockerCommand(asRoot bool, secure map[strin
 		if escapedContains(err.Error(), commandNotFound) {
 			return nil, err
 		}
-		if response != nil && ! escapedContains(response.Stdout(), dockerNotRunning) {
+		if response != nil && !escapedContains(response.Stdout(), dockerNotRunning) {
 			return nil, err
 		}
 		s.startDockerIfNeeded(context, target)

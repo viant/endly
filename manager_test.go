@@ -1,6 +1,7 @@
 package endly_test
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
@@ -96,9 +97,8 @@ func Test_ServiceRequest(t *testing.T) {
 			if requestType.Kind() == reflect.Struct {
 				if _, has := requestType.FieldByName("Target"); has {
 					reflect.ValueOf(request).Elem().FieldByName("Target").Set(reflect.ValueOf(invalidResourse))
-
 					response = service.Run(context, request)
-					assert.True(t, response.Error != "")
+					assert.True(t, response.Error != "", fmt.Sprintf("%T %T", request, service))
 				}
 			}
 

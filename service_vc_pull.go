@@ -1,23 +1,34 @@
 package endly
 
 import (
-	"errors"
+	"fmt"
 	"github.com/viant/toolbox/url"
 )
 
 //VcPullRequest represents a pull request
 type VcPullRequest struct {
-	Target *url.Resource //local code destination
-	Origin *url.Resource //version control origin
+	Type   string
+	Target *url.Resource `required:"true"`
+	Origin *url.Resource `required:"true"` //version control origin
 }
 
-//Validate checks if request is valud
+//Init initializes request
+func (r *VcPullRequest) Init() error {
+	return versionControlRequestInit(r.Target, &r.Type)
+}
+
+//Validate validates request
 func (r *VcPullRequest) Validate() error {
-	if r.Origin == nil {
-		return errors.New("origin was empty")
-	}
 	if r.Target == nil {
-		return errors.New("target was empty")
+		return fmt.Errorf("target type was empty")
+	}
+	if r.Type == "" {
+		return fmt.Errorf("type was empty for %v", r.Target.URL)
 	}
 	return nil
+}
+
+//VcPullResponse represents a pull response
+type VcPullResponse struct {
+	*VcInfo
 }

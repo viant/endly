@@ -71,18 +71,20 @@ func extractRevision(stdout string, response *VcInfo) {
 
 }
 
-func (s *gitService) checkInfo(context *Context, request *VcStatusRequest) (*VcInfo, error) {
+func (s *gitService) checkInfo(context *Context, request *VcStatusRequest) (*VcStatusResponse, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-	var result = &VcInfo{}
+	var result = &VcStatusResponse{&VcInfo{}}
+	response, err := context.Execute(target, fmt.Sprintf("cd %v", target.DirectoryPath()))
+	if err != nil || CheckCommandNotFound(response.Stdout()) {
+		return result, nil
+	}
 
-	response, err := context.Execute(request.Target, &ExtractableCommand{
+	response, err = context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
-			{
-				Command: fmt.Sprintf("cd %v", target.DirectoryPath()),
-			},
+
 			{
 				Command: fmt.Sprintf("git status"),
 				Extraction: []*DataExtraction{{
@@ -116,12 +118,12 @@ func (s *gitService) checkInfo(context *Context, request *VcStatusRequest) (*VcI
 		return result, nil
 	}
 	result.IsVersionControlManaged = true
-	extractGitStatus(response.Stdout(0), result)
-	extractRevision(response.Stdout(2), result)
+	extractGitStatus(response.Stdout(0), result.VcInfo)
+	extractRevision(response.Stdout(2), result.VcInfo)
 	return result, nil
 }
 
-func (s *gitService) pull(context *Context, request *VcPullRequest) (*VcInfo, error) {
+func (s *gitService) pull(context *Context, request *VcPullRequest) (*VcPullResponse, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -131,11 +133,14 @@ func (s *gitService) pull(context *Context, request *VcPullRequest) (*VcInfo, er
 		return nil, err
 	}
 
+	var response = &VcPullResponse{
+		VcInfo: &VcInfo{},
+	}
 	_, err = context.Execute(target, fmt.Sprintf("cd %v", target.DirectoryPath()))
 	if err != nil {
 		return nil, err
 	}
-	return s.runSecureCommand(context, origin, target, "git pull")
+	return response, s.runSecureCommand(context, request.Type, origin, target, "git pull", response.VcInfo, false)
 }
 
 func (s *gitService) checkout(context *Context, request *VcCheckoutRequest) (*VcInfo, error) {
@@ -151,18 +156,36 @@ func (s *gitService) checkout(context *Context, request *VcCheckoutRequest) (*Vc
 	if origin.Credential != "" && username == "" {
 		return nil, fmt.Errorf("username was empty %v, %v", origin.URL, origin.Credential)
 	}
-	var parent, projectDir = path.Split(target.DirectoryPath())
-	_, err = context.Execute(target, fmt.Sprintf("cd %v", parent))
-	if err != nil {
-		return nil, err
+	var parent, projectName = path.Split(target.DirectoryPath())
+	var useParentDirectory = true
+	var _, originProjectName = path.Split(origin.DirectoryPath())
+	if originProjectName == projectName {
+		projectName = "."
+		_, err = context.Execute(target, []string{fmt.Sprintf("mkdir -p %v", target.DirectoryPath())})
+		if err != nil {
+			return nil, err
+		}
+		useParentDirectory = false
+	} else {
+		_, err = context.Execute(target, fmt.Sprintf("cd %v", parent))
+		if err != nil {
+			return nil, err
+		}
 	}
-	return s.runSecureCommand(context, origin, target, fmt.Sprintf("git clone %v %v", origin.CredentialURL(username, ""), projectDir))
+
+	var info = &VcInfo{}
+	err = s.runSecureCommand(context, request.Type, origin, target, fmt.Sprintf("git clone %v %v", origin.CredentialURL(username, ""), projectName), info, useParentDirectory)
+	return info, err
 }
 
-func (s *gitService) runSecureCommand(context *Context, origin, target *url.Resource, command string) (info *VcInfo, err error) {
+func (s *gitService) runSecureCommand(context *Context, versionControlType string, origin, target *url.Resource, command string, info *VcInfo, useParentDirectory bool) (err error) {
 	var credentials = make(map[string]string)
 	credentials[versionControlCredentialKey] = origin.Credential
-	_, err = context.Execute(target, &ExtractableCommand{
+	commandTarget, _ := context.ExpandResource(target)
+	if useParentDirectory {
+		commandTarget.Rename("")
+	}
+	_, err = context.Execute(commandTarget, &ExtractableCommand{
 		Options: &ExecutionOptions{
 			TimeoutMs:   1000 * 200,
 			Terminators: []string{"Password"},
@@ -183,21 +206,27 @@ func (s *gitService) runSecureCommand(context *Context, origin, target *url.Reso
 
 	err = checkVersionControlAuthErrors(err, origin)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return s.checkInfo(context, &VcStatusRequest{
+	response, err := s.checkInfo(context, &VcStatusRequest{
 		Target: target,
+		Type:   versionControlType,
 	})
+
+	if err != nil {
+		return err
+	}
+	*info = *response.VcInfo
+	return nil
 }
 
-func (s *gitService) commit(context *Context, request *VcCommitRequest) (*VcInfo, error) {
+func (s *gitService) commit(context *Context, request *VcCommitRequest) (*VcCommitResponse, error) {
 	checkInfo, err := s.checkInfo(context, &VcStatusRequest{
 		Target: request.Target,
 	})
 	if err != nil {
 		return nil, err
 	}
-
 	if len(checkInfo.Untracked) > 0 {
 		for _, file := range checkInfo.Untracked {
 			_, err = context.Execute(request.Target, &ExtractableCommand{
@@ -213,7 +242,6 @@ func (s *gitService) commit(context *Context, request *VcCommitRequest) (*VcInfo
 			}
 		}
 	}
-
 	message := strings.Replace(request.Message, "\"", "'", len(request.Message))
 	_, err = context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
@@ -223,8 +251,6 @@ func (s *gitService) commit(context *Context, request *VcCommitRequest) (*VcInfo
 			},
 		},
 	})
-
-	//TODO add branch push
 	_, err = context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
@@ -235,7 +261,11 @@ func (s *gitService) commit(context *Context, request *VcCommitRequest) (*VcInfo
 	if err != nil {
 		return nil, err
 	}
-	return s.checkInfo(context, &VcStatusRequest{
+	respons, err := s.checkInfo(context, &VcStatusRequest{
 		Target: request.Target,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return &VcCommitResponse{respons.VcInfo}, nil
 }

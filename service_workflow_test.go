@@ -304,7 +304,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
-			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "unsupported action: aaa"), serviceResponse.Error)
+			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to provide request for nop.aaa"), serviceResponse.Error)
 		}
 	}
 
@@ -320,7 +320,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
-			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "unsupported action: aaa"), serviceResponse.Error)
+			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to provide request for nop.aaa"), serviceResponse.Error)
 		}
 	}
 

@@ -148,9 +148,6 @@ func TestSeleniumService_Calls(t *testing.T) {
 
 	if assert.Equal(t, "", serviceResponse.Error) {
 		response, ok := serviceResponse.Response.(*endly.SeleniumOpenSessionResponse)
-
-		fmt.Printf("%v %v\n", response.SessionID, serviceResponse.Error)
-
 		if assert.True(t, ok) {
 			assert.EqualValues(t, response.SessionID, targetHost)
 		}

@@ -46,19 +46,19 @@ func (a *Activities) GetPath(runner *CliRunner, fullPath bool) (string, int) {
 
 		serviceAction := ""
 		if i+1 < len(*a) || fullPath {
-			serviceAction = colorText(activity.Service+"."+activity.Action, runner.ServiceActionColor)
+			serviceAction = runner.ColorText(activity.Service+"."+activity.Action, runner.ServiceActionColor)
 			pathLength += len(activity.Service) + 1 + len(activity.Action)
 		}
 
-		tag = colorText(tag, runner.TagColor)
+		tag = runner.ColorText(tag, runner.TagColor)
 		if runner.InverseTag {
-			tag = colorText(tag, "inverse")
+			tag = runner.ColorText(tag, "inverse")
 		}
-		activityPath = append(activityPath, colorText(activity.Workflow, runner.PathColor)+tag+serviceAction)
+		activityPath = append(activityPath, runner.ColorText(activity.Workflow, runner.PathColor)+tag+serviceAction)
 		pathLength += len(activity.Workflow)
 	}
 
-	var path = strings.Join(activityPath, colorText("|", "gray"))
+	var path = strings.Join(activityPath, runner.ColorText("|", "gray"))
 	if len(*a) > 0 {
 		pathLength += (len(*a) - 1)
 	}

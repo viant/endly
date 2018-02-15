@@ -12,7 +12,7 @@ const (
 	//All logging level.
 	All = iota
 	//Error logging level
-	Error
+	Fatal
 	//Info logging level
 	Info
 	//Debug logging level

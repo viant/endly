@@ -146,7 +146,7 @@ func TestDaemonService_Start(t *testing.T) {
 			"myabc",
 			false,
 			0,
-			"failed to start service: myabc, service is inactive",
+			"myabc service is inactive at daemon.start",
 		},
 		{
 			"test/daemon/start/unknown/darwin",
@@ -154,7 +154,7 @@ func TestDaemonService_Start(t *testing.T) {
 			"myabc",
 			false,
 			0,
-			"failed to start service: myabc, service is inactive",
+			"myabc service is inactive at daemon.start",
 		},
 	}
 
@@ -178,7 +178,7 @@ func TestDaemonService_Start(t *testing.T) {
 					continue
 				}
 
-				info, ok := response.Response.(*endly.DaemonInfo)
+				info, ok := response.Response.(*endly.DaemonStartResponse)
 				if assert.True(t, ok) && info != nil {
 					assert.Equal(t, useCase.expected, info.IsActive(), "is running "+baseCase)
 					assert.Equal(t, useCase.pid, info.Pid, "pid :"+baseCase)
@@ -209,41 +209,41 @@ func TestDaemonService_Stop(t *testing.T) {
 			false,
 			0,
 		},
-		//{
-		//	"test/daemon/stop/inactive/darwin",
-		//	target,
-		//	"docker",
-		//	false,
-		//	0,
-		//},
-		//{
-		//	"test/daemon/stop/active/darwin",
-		//	target,
-		//	"docker",
-		//	false,
-		//	0,
-		//},
-		//{
-		//	"test/daemon/stop/active/linux",
-		//	target,
-		//	"docker",
-		//	false,
-		//	23828,
-		//},
-		//{
-		//	"test/daemon/stop/unknown/linux",
-		//	target,
-		//	"myabc",
-		//	false,
-		//	0,
-		//},
-		//{
-		//	"test/daemon/stop/unknown/darwin",
-		//	target,
-		//	"myabc",
-		//	false,
-		//	0,
-		//},
+		{
+			"test/daemon/stop/inactive/darwin",
+			target,
+			"docker",
+			false,
+			0,
+		},
+		{
+			"test/daemon/stop/active/darwin",
+			target,
+			"docker",
+			false,
+			0,
+		},
+		{
+			"test/daemon/stop/active/linux",
+			target,
+			"docker",
+			false,
+			23828,
+		},
+		{
+			"test/daemon/stop/unknown/linux",
+			target,
+			"myabc",
+			false,
+			0,
+		},
+		{
+			"test/daemon/stop/unknown/darwin",
+			target,
+			"myabc",
+			false,
+			0,
+		},
 	}
 
 	for _, useCase := range useCases {
@@ -262,7 +262,7 @@ func TestDaemonService_Stop(t *testing.T) {
 				})
 				var baseCase = useCase.baseDir + " " + useCase.service
 				assert.Equal(t, "", response.Error, baseCase)
-				info, ok := response.Response.(*endly.DaemonInfo)
+				info, ok := response.Response.(*endly.DaemonStopResponse)
 				if assert.True(t, ok) && info != nil {
 					assert.Equal(t, useCase.expected, info.IsActive(), "is running "+baseCase)
 					assert.Equal(t, useCase.pid, info.Pid, "pid :"+baseCase)

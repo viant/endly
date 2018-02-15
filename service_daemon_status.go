@@ -7,8 +7,8 @@ import (
 
 //DaemonStatusRequest represents status request
 type DaemonStatusRequest struct {
-	Target    *url.Resource //target host
-	Service   string        //service name
+	Target    *url.Resource `required:"true" description:"target host"` //target host
+	Service   string        `required:"true" `                          //service name
 	Exclusion string        //exclusion if there is more than one service matching service group
 }
 

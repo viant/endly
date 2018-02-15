@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -26,27 +27,63 @@ type Service interface {
 	//NewResponse creates a new supported response for this service for the supplied action.
 	NewResponse(action string) (interface{}, error)
 
+	//ServiceActionRoute returns service action route
+	ServiceActionRoute(action string) (*ServiceActionRoute, error)
+
 	//Mutex to sync access to the state if needed.
 	Mutex() *sync.RWMutex
 
 	Actions() []string
 }
 
+//Validator represents generic validator
+type Validator interface {
+	Validate() error
+}
+
+//Initializer represents generic initializer
+type Initializer interface {
+	Init() error
+}
+
 //ServiceResponse service response
 type ServiceResponse struct {
-	Status string
-	Error  string
-
+	Status   string
+	Error    string
 	Response interface{}
+}
+
+//ExampleUseCase represents example use case
+type ExampleUseCase struct {
+	UseCase string
+	Data    string
+}
+
+//ActionInfo represent an action info
+type ActionInfo struct {
+	Description string
+	Examples    []*ExampleUseCase
+}
+
+//ServiceActionRoute represents service action route
+type ServiceActionRoute struct {
+	Action           string
+	RequestInfo      *ActionInfo
+	ResponseInfo     *ActionInfo
+	RequestProvider  func() interface{}
+	ResponseProvider func() interface{}
+	Handler          func(context *Context, request interface{}) (interface{}, error)
 }
 
 //AbstractService represenst an abstract service.
 type AbstractService struct {
 	Service
-	actions []string
-	id      string
-	state   data.Map
-	mutex   *sync.RWMutex
+	routeByAction  map[string]*ServiceActionRoute
+	routeByRequest map[reflect.Type]*ServiceActionRoute
+	actions        []string
+	id             string
+	state          data.Map
+	mutex          *sync.RWMutex
 }
 
 //Pairs returns map for pairs.
@@ -57,6 +94,106 @@ func Pairs(params ...interface{}) map[string]interface{} {
 		result[key] = params[i+1]
 	}
 	return result
+}
+
+//Register register action routes
+func (s *AbstractService) Register(routes ...*ServiceActionRoute) {
+	for _, route := range routes {
+		s.routeByAction[route.Action] = route
+		s.routeByRequest[reflect.TypeOf(route.RequestProvider())] = route
+		s.actions = append(s.actions, route.Action)
+	}
+}
+
+//ServiceActionRoute returns a service action for supplied action
+func (s *AbstractService) Run(context *Context, request interface{}) *ServiceResponse {
+	var result = &ServiceResponse{Status: "ok"}
+	startEvent := s.Begin(context, request, Pairs("request", request))
+	var response = &ServiceResponse{Status: "ok"}
+	var err error
+	defer func() {
+		s.End(context)(startEvent, Pairs("response", response))
+		if err != nil {
+			result.Status = "error"
+			result.Error = fmt.Sprintf("%v", err)
+		}
+	}()
+
+	if len(s.routeByRequest) == 0 {
+		err = NewError(s.ID(), fmt.Sprintf("%T", request), fmt.Errorf("failed to lookup service route: %T", request))
+		return result
+	}
+
+	service, ok := s.routeByRequest[reflect.TypeOf(request)]
+	if !ok {
+		err = NewError(s.ID(), fmt.Sprintf("%T", request), fmt.Errorf("failed to lookup service route: %T", request))
+		return result
+	}
+
+	if initializer, ok := request.(Initializer); ok {
+		if err = initializer.Init(); err != nil {
+			err = NewError(s.ID(), service.Action, fmt.Errorf("failed to init request: %T", request))
+			return result
+		}
+	}
+	if validator, ok := request.(Validator); ok {
+		if err = validator.Validate(); err != nil {
+			err = NewError(s.ID(), service.Action, fmt.Errorf("failed to validate request: %T", request))
+			return result
+		}
+	}
+
+	result.Response, err = service.Handler(context, request)
+	if err != nil {
+		err = NewError(s.ID(), service.Action, err)
+	}
+	return result
+}
+
+//ServiceActionRoute returns a service action route for supplied action
+func (s *AbstractService) ServiceActionRoute(action string) (*ServiceActionRoute, error) {
+	if len(s.routeByAction) > 0 {
+		if result, ok := s.routeByAction[action]; ok {
+			return result, nil
+		}
+		return nil, fmt.Errorf("failed to lookup service action for %v", action)
+	}
+	_, err := s.NewRequest(action)
+	if err != nil {
+		return nil, err
+	}
+	//Temporary fallback, until all service get migrated to use *ServiceActionRoute
+	return &ServiceActionRoute{
+		Action: action,
+		RequestProvider: func() interface{} {
+			if result, err := s.Service.NewRequest(action); err == nil {
+				return result
+			}
+			return nil
+		},
+		ResponseProvider: func() interface{} {
+			if result, err := s.Service.NewResponse(action); err == nil {
+				return result
+			}
+			return nil
+		},
+	}, nil
+}
+
+//NewRequest creates a new supported request for this service for the supplied action.
+func (s *AbstractService) NewRequest(action string) (interface{}, error) {
+	if result, ok := s.routeByAction[action]; ok {
+		return result.RequestProvider(), nil
+	}
+	return nil, fmt.Errorf("failed to provide request for %v.%v", s.ID(), action)
+}
+
+//NewResponse creates a new supported response for this service for the supplied action.
+func (s *AbstractService) NewResponse(action string) (interface{}, error) {
+	if result, ok := s.routeByAction[action]; ok {
+		return result.ResponseProvider(), nil
+	}
+	return nil, fmt.Errorf("failed to provide response for %v.%v", s.ID(), action)
 }
 
 //Sleep sleeps for provided time in ms
@@ -132,23 +269,15 @@ func (s *AbstractService) State() data.Map {
 	return s.state
 }
 
-//NewRequest returns error for supplied action
-func (s *AbstractService) NewRequest(action string) (interface{}, error) {
-	return nil, fmt.Errorf("unsupported action: %v", action)
-}
-
-//NewResponse returns error for supplied action
-func (s *AbstractService) NewResponse(action string) (interface{}, error) {
-	return nil, fmt.Errorf("unsupported action: %v", action)
-}
-
 //NewAbstractService creates a new abstract service.
 func NewAbstractService(id string, actions ...string) *AbstractService {
 	return &AbstractService{
-		id:      id,
-		actions: actions,
-		mutex:   &sync.RWMutex{},
-		state:   data.NewMap(),
+		id:             id,
+		actions:        actions,
+		mutex:          &sync.RWMutex{},
+		state:          data.NewMap(),
+		routeByAction:  make(map[string]*ServiceActionRoute),
+		routeByRequest: make(map[reflect.Type]*ServiceActionRoute),
 	}
 }
 

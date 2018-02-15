@@ -9,17 +9,19 @@ import (
 
 type svnService struct{}
 
-func (s *svnService) checkInfo(context *Context, request *VcStatusRequest) (*VcInfo, error) {
+func (s *svnService) checkInfo(context *Context, request *VcStatusRequest) (*VcStatusResponse, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-	var result = &VcInfo{}
-	response, err := context.Execute(request.Target, &ExtractableCommand{
+	var result = &VcStatusResponse{&VcInfo{}}
+	response, err := context.Execute(target, fmt.Sprintf("cd %v", target.DirectoryPath()))
+	if err != nil || CheckCommandNotFound(response.Stdout()) {
+		return result, nil
+	}
+
+	response, err = context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
-			{
-				Command: fmt.Sprintf("cd %v", target.ParsedURL.Path),
-			},
 			{
 				Command: fmt.Sprintf("svn info"),
 				Extraction: []*DataExtraction{
@@ -54,7 +56,7 @@ func (s *svnService) checkInfo(context *Context, request *VcStatusRequest) (*VcI
 	}
 	result.IsVersionControlManaged = true
 
-	readSvnStatus(response, result)
+	readSvnStatus(response, result.VcInfo)
 	return result, nil
 }
 
@@ -88,12 +90,15 @@ func readSvnStatus(commandResult *CommandResponse, response *VcInfo) {
 	}
 }
 
-func (s *svnService) pull(context *Context, request *VcPullRequest) (*VcInfo, error) {
+func (s *svnService) pull(context *Context, request *VcPullRequest) (*VcPullResponse, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-	return s.runSecureSvnCommand(context, target, request.Origin, "up")
+	var response = &VcPullResponse{
+		&VcInfo{},
+	}
+	return response, s.runSecureSvnCommand(context, target, request.Origin, response.VcInfo, "up")
 }
 
 func (s *svnService) checkout(context *Context, request *VcCheckoutRequest) (*VcInfo, error) {
@@ -101,13 +106,15 @@ func (s *svnService) checkout(context *Context, request *VcCheckoutRequest) (*Vc
 	if err != nil {
 		return nil, err
 	}
-	return s.runSecureSvnCommand(context, target, request.Origin, "co", request.Origin.URL, target.DirectoryPath())
+	var vcInfo = &VcInfo{}
+	err = s.runSecureSvnCommand(context, target, request.Origin, vcInfo, "co", request.Origin.URL, target.DirectoryPath())
+	return vcInfo, err
 }
 
-func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource, origin *url.Resource, command string, arguments ...string) (*VcInfo, error) {
+func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource, origin *url.Resource, info *VcInfo, command string, arguments ...string) error {
 	username, _, err := origin.LoadCredential(true)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	var credentials = make(map[string]string)
 	credentials[versionControlCredentialKey] = origin.Credential
@@ -136,16 +143,20 @@ func (s *svnService) runSecureSvnCommand(context *Context, target *url.Resource,
 	})
 	err = checkVersionControlAuthErrors(err, origin)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return s.checkInfo(context, &VcStatusRequest{
+	response, err := s.checkInfo(context, &VcStatusRequest{
 		Target: target,
+		Type:   "svn",
 	})
+	if response != nil {
+		*info = *response.VcInfo
+	}
+	return err
 }
 
-func (s *svnService) commit(context *Context, request *VcCommitRequest) (*VcInfo, error) {
-
-	response, err := context.Execute(request.Target, &ExtractableCommand{
+func (s *svnService) commit(context *Context, request *VcCommitRequest) (*VcCommitResponse, error) {
+	runResponse, err := context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
 				Command: fmt.Sprintf("svn ci -m \"%v\" ", strings.Replace(request.Message, "\"", "'", len(request.Message))),
@@ -155,10 +166,17 @@ func (s *svnService) commit(context *Context, request *VcCommitRequest) (*VcInfo
 	if err != nil {
 		return nil, err
 	}
-	if CheckNoSuchFileOrDirectory(response.Stdout()) {
-		return nil, fmt.Errorf("failed to commit %v", response.Stdout())
+	if CheckNoSuchFileOrDirectory(runResponse.Stdout()) {
+		return nil, fmt.Errorf("failed to commit %v", runResponse.Stdout())
 	}
-	return s.checkInfo(context, &VcStatusRequest{
+
+	var response = &VcCommitResponse{}
+	statusResponse, err := s.checkInfo(context, &VcStatusRequest{
 		Target: request.Target,
 	})
+	if err != nil {
+		return nil, err
+	}
+	response.VcInfo = statusResponse.VcInfo
+	return response, nil
 }
