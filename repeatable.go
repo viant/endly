@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+//SliceKey represents slice key
 const SliceKey = "data"
 
 //Repeatable represent repetable execution

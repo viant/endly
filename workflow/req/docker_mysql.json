@@ -6,6 +6,7 @@
   "Credentials": {
     "***mysql***":"$mysqlCredential"
   },
+  "Name":"$serviceInstanceName",
   "Image": "mysql:$mysqlVersion",
   "Mount": {
     "$configFile": "/etc/my.cnf"

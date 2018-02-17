@@ -7,9 +7,9 @@ import (
 
 //DockerTagRequest represents docker tag request
 type DockerTagRequest struct {
-	Target *url.Resource `required:"true" description:"host with docker service"` //target host
-	SourceTag *DockerTag `required:"true"`
-	TargetTag *DockerTag `required:"true"`
+	Target    *url.Resource `required:"true" description:"host with docker service"` //target host
+	SourceTag *DockerTag    `required:"true"`
+	TargetTag *DockerTag    `required:"true"`
 }
 
 //DockerTag represent a docker tag

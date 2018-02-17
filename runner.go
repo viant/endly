@@ -158,7 +158,8 @@ func (r *CliRunner) reportDsUnitEventTypes(serviceResponse interface{}, event *E
 	case *DsUnitMappingRequest:
 		if filter.DataMapping {
 			for _, mapping := range actual.Mappings {
-				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v: %v", mapping.Name, mapping.URL), messageTypeGeneric, "mapping")
+				var _, name = toolbox.URLSplit(mapping.URL)
+				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v: %v", name, mapping.URL), messageTypeGeneric, "mapping")
 			}
 		}
 
@@ -304,67 +305,74 @@ func (r *CliRunner) reportSystemEventType(serviceResponse interface{}, event *Ev
 	return false
 }
 
-func (r *CliRunner) reportEventType(value interface{}, event *Event, filter *RunnerReportingFilter) {
-	if r.reportSystemEventType(value, event, filter) {
+func (r *CliRunner) reportEventType(input interface{}, event *Event, filter *RunnerReportingFilter) {
+	if r.reportSystemEventType(input, event, filter) {
 		return
 	}
 
-	if r.reportWorkflowEventTypes(value, event, filter) {
+	if r.reportWorkflowEventTypes(input, event, filter) {
 		return
 	}
-	if r.reportExecutionEvenType(value, event, filter) {
+	if r.reportExecutionEvenType(input, event, filter) {
 		return
 	}
-	if r.reportDsUnitEventTypes(value, event, filter) {
+	if r.reportDsUnitEventTypes(input, event, filter) {
 		return
 	}
-	if r.reportHTTPEventTypes(value, event, filter) {
+	if r.reportHTTPEventTypes(input, event, filter) {
 		return
 	}
-	if r.reportValidationEventTypes(value, event, filter) {
+	if r.reportValidationEventTypes(input, event, filter) {
 		return
 	}
 
-	switch casted := value.(type) {
+	switch value := input.(type) {
+	case *LoggerPrintRequest:
+		if value.Message != "" {
+			var message = r.Renderer.ColorText(value.Message, value.Color)
+			r.Renderer.Println(message)
+		} else if value.Error != "" {
+			var errorMessage = r.Renderer.ColorText(value.Error, r.Renderer.ErrorColor)
+			r.Renderer.Println(errorMessage)
+		}
 
 	case *DeploymentDeployRequest:
 		if filter.Deployment {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("app: %v, forced: %v", casted.AppName, casted.Force), messageTypeGeneric, "deploy")
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("app: %v, forced: %v", value.AppName, value.Force), messageTypeGeneric, "deploy")
 		}
 
 	case *VcCheckoutRequest:
 		if filter.Checkout {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", casted.Origin.URL, casted.Target.URL), messageTypeGeneric, "checkout")
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", value.Origin.URL, value.Target.URL), messageTypeGeneric, "checkout")
 		}
 
 	case *BuildRequest:
 		if filter.Build {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", casted.BuildSpec.Name, casted.Target.URL), messageTypeGeneric, "build")
+			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", value.BuildSpec.Name, value.Target.URL), messageTypeGeneric, "build")
 		}
-
 
 	case *StorageRemoveRequest:
 		if filter.Transfer {
-			for _, resource := range casted.Resources {
+			for _, resource := range value.Resources {
 				r.printShortMessage(messageTypeGeneric, "", messageTypeGeneric, "remove")
 				r.printInput(fmt.Sprintf("SourceURL: %v", resource.URL))
 			}
 		}
 	case *StorageUploadRequest:
-		if filter.Transfer && casted.Validate() == nil {
+		if filter.Transfer && value.Validate() == nil {
 			r.printShortMessage(messageTypeGeneric, "", messageTypeGeneric, "upload")
-			r.printInput(fmt.Sprintf("SourceKe: %v", casted.SourceKey))
-			r.printOutput(fmt.Sprintf("TargetURL: %v", casted.Target.URL))
+			r.printInput(fmt.Sprintf("SourceKe: %v", value.SourceKey))
+			r.printOutput(fmt.Sprintf("TargetURL: %v", value.Target.URL))
 		}
 	case *StorageDownloadRequest:
-		if filter.Transfer && casted.Validate() == nil {
+		if filter.Transfer && value.Validate() == nil {
 			r.printShortMessage(messageTypeGeneric, "", messageTypeGeneric, "download")
-			r.printInput(fmt.Sprintf("SourceURL: %v", casted.Source.URL))
-			r.printOutput(fmt.Sprintf("TargetKey: %v", casted.TargetKey))
+			r.printInput(fmt.Sprintf("SourceURL: %v", value.Source.URL))
+			r.printOutput(fmt.Sprintf("TargetKey: %v", value.TargetKey))
 		}
 	case *StorageCopyRequest:
-		if filter.Transfer && casted.Validate() == nil {
-			for _, transfer := range casted.Transfers {
+		if filter.Transfer && value.Validate() == nil {
+			for _, transfer := range value.Transfers {
 				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("expand: %v", transfer.Expand), messageTypeGeneric, "copy")
 				r.printInput(fmt.Sprintf("SourceURL: %v", transfer.Source.URL))
 				r.printOutput(fmt.Sprintf("TargetURL: %v", transfer.Target.URL))
@@ -736,9 +744,8 @@ func (r *CliRunner) Run(request *WorkflowRunRequest, options *RunnerReportingOpt
 			if err != nil {
 				log.Print(err)
 			}
-			//		os.Exit(1)
+			OnRunnerError(1)
 		}
-
 	}()
 
 	var service Service

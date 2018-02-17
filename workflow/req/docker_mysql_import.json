@@ -1,5 +1,7 @@
 {
   "Target": "$dockerTarget",
+  "Name":"$serviceInstanceName",
+
   "Credentials": {
     "***mysql***": "$mysqlCredential"
   },

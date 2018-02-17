@@ -1,8 +1,8 @@
 package endly
 
 import (
-	"github.com/viant/toolbox/url"
 	"github.com/pkg/errors"
+	"github.com/viant/toolbox/url"
 )
 
 //DockerContainerStatusRequest represents a docker check container status request
@@ -17,16 +17,13 @@ type DockerContainerStatusResponse struct {
 	Containers []*DockerContainerInfo
 }
 
-
 //DockerContainerBaseRequest represents container base request
 type DockerContainerBaseRequest struct {
 	Target *url.Resource `required:"true" description:"host with docker service"`                //target host
 	Name   string        `description:"container name to inspect, if empty it uses target.Name"` //docker container name
 }
 
-
-
-
+//Init initializes request
 func (r *DockerContainerBaseRequest) Init() error {
 	if r == nil || r.Target == nil {
 		return nil
@@ -34,11 +31,10 @@ func (r *DockerContainerBaseRequest) Init() error {
 	if r.Name != "" {
 		return nil
 	}
-	r.Name = r.Target.Name
 	return nil
 }
 
-
+//Validate checks if request is valid
 func (r *DockerContainerBaseRequest) Validate() error {
 	if r == nil {
 		return errors.New("base container request was nil")
@@ -52,21 +48,15 @@ func (r *DockerContainerBaseRequest) Validate() error {
 	return nil
 }
 
-
 //DockerContainerStartRequest represents a docker container start request.
 type DockerContainerStartRequest struct {
 	*DockerContainerBaseRequest
 }
 
-
-
-
-
 //DockerContainerStartResponse represents a docker container start response
 type DockerContainerStartResponse struct {
 	*DockerContainerInfo
 }
-
 
 //DockerContainerRemoveRequest represents a docker remove container request
 type DockerContainerRemoveRequest struct {
@@ -83,12 +73,10 @@ type DockerContainerStopRequest struct {
 	*DockerContainerBaseRequest
 }
 
-
 //DockerContainerStopResponse represents a docker stop container response.
 type DockerContainerStopResponse struct {
 	*DockerContainerInfo
 }
-
 
 //DockerContainerRunRequest represents a docker run container command.
 type DockerContainerRunRequest struct {
@@ -99,8 +87,6 @@ type DockerContainerRunRequest struct {
 	RunInTheBackground bool
 	Command            string
 }
-
-
 
 //DockerInspectRequest represents a docker inspect request, target name refers to container name
 type DockerInspectRequest struct {

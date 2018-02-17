@@ -325,9 +325,6 @@ func (s *deploymentService) deploy(context *Context, request *DeploymentDeployRe
 	return nil, fmt.Errorf("failed to deploy %v, unable to verify deployments", request.AppName)
 }
 
-
-
-
 func (s *deploymentService) loadMeta(context *Context, request *DeploymentLoadMetaRequest) (*DeploymentLoadMetaResponse, error) {
 	source, err := context.ExpandResource(request.Source)
 	if err != nil {
@@ -386,8 +383,6 @@ func (s *deploymentService) getMeta(context *Context, request *DeploymentDeployR
 	return result, nil
 }
 
-
-
 const (
 	deploymentTomcatDeployExample = `{
   "Target": {
@@ -400,8 +395,6 @@ const (
 }`
 )
 
-
-
 func (s *deploymentService) registerRoutes() {
 	s.Register(&ServiceActionRoute{
 		Action: "deploy",
@@ -410,7 +403,7 @@ func (s *deploymentService) registerRoutes() {
 			Examples: []*ExampleUseCase{
 				{
 					UseCase: "tomcat deploy",
-					Data:deploymentTomcatDeployExample,
+					Data:    deploymentTomcatDeployExample,
 				},
 			},
 		},
@@ -441,21 +434,19 @@ func (s *deploymentService) registerRoutes() {
 		},
 		Handler: func(context *Context, request interface{}) (interface{}, error) {
 			if handlerRequest, ok := request.(*DeploymentLoadMetaRequest); ok {
- 				return s.loadMeta(context, handlerRequest)
+				return s.loadMeta(context, handlerRequest)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
 }
 
-
-
 //NewDeploymentService returns new deployment service
 func NewDeploymentService() Service {
 	var result = &deploymentService{
 		AbstractService: NewAbstractService(DeploymentServiceID),
-		mutex:    &sync.RWMutex{},
-		registry: make(map[string]*DeploymentMeta),
+		mutex:           &sync.RWMutex{},
+		registry:        make(map[string]*DeploymentMeta),
 	}
 	result.AbstractService.Service = result
 	result.registerRoutes()

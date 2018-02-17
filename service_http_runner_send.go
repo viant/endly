@@ -7,22 +7,22 @@ import (
 
 //SendHTTPRequest represents a send http request.
 type SendHTTPRequest struct {
-	Options  []*toolbox.HttpOptions
+	Options  []*toolbox.HttpOptions `description:"http client options: key value pairs, where key is one of the following: HTTP options:RequestTimeoutMs,TimeoutMs,KeepAliveTimeMs,TLSHandshakeTimeoutMs,ResponseHeaderTimeoutMs,MaxIdleConns"`
 	Requests []*HTTPRequest
 }
 
 //HTTPRequest represents an http request
 type HTTPRequest struct {
 	*Repeatable
-	MatchBody   string //only run this execution is output from a previous command is matched
-	Method      string
+	MatchBody   string `description:"text fragment if matched with previous http response body, is sent"`
+	Method      string `required:"true" description:"HTTP Method"`
 	URL         string
 	Header      http.Header
 	Cookies     Cookies
 	Body        string
-	Replace     map[string]string //replaces key with value if present
-	RequestUdf  string
-	ResponseUdf string
+	Replace     map[string]string `description:"response body key value pair replacement"`
+	RequestUdf  string            `description:"user defined function in context.state key, i,e, json to protobuf"`
+	ResponseUdf string            `description:"user defined function in context.state key, i,e, protobuf to json"`
 }
 
 //SendHTTPResponse represnets a send response
@@ -38,7 +38,7 @@ type HTTPResponse struct {
 	Header      http.Header
 	Cookies     map[string]*http.Cookie
 	Body        string
-	JSONBody    map[string]interface{}
+	JSONBody    map[string]interface{} `description:"structure data if Body was JSON"`
 	TimeTakenMs int
 	Error       string
 }

@@ -7,9 +7,9 @@ import (
 
 //DockerLoginRequest represents a docker pull request
 type DockerLoginRequest struct {
-	Target *url.Resource `required:"true" description:"host with docker service"` //target host
-	Credential string`required:"true" description:"credential path"`
-	Repository string `required:"true" description:"repository url"`
+	Target     *url.Resource `required:"true" description:"host with docker service"` //target host
+	Credential string        `required:"true" description:"credential path"`
+	Repository string        `required:"true" description:"repository url"`
 }
 
 //DockerLoginResponse represents a docker pull request

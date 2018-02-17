@@ -1,5 +1,5 @@
 Workflow,,Name,Description,Tasks,,Init
-,,dockerized_memcached,This workflow manages memcached service,%Tasks,,#dockerized_memcached_init
+,,dockerized_memcached,This workflow manages memcached service,%Tasks,,@var/dockerized_memcached_init
 []Tasks,,Name,Description,Actions,,
 ,,start,This task will start memcached docker service,%Start,,
 []Start,Service,Action,Description,Request,RunCriteria,Post

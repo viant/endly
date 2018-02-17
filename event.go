@@ -11,7 +11,7 @@ import (
 const (
 	//All logging level.
 	All = iota
-	//Error logging level
+	//Fatal logging level
 	Fatal
 	//Info logging level
 	Info

@@ -21,12 +21,6 @@ type Service interface {
 	//Run service action for supported request types.
 	Run(context *Context, request interface{}) *ServiceResponse
 
-	//NewRequest creates a new supported request for this service for the supplied action.
-	NewRequest(action string) (interface{}, error)
-
-	//NewResponse creates a new supported response for this service for the supplied action.
-	NewResponse(action string) (interface{}, error)
-
 	//ServiceActionRoute returns service action route
 	ServiceActionRoute(action string) (*ServiceActionRoute, error)
 
@@ -51,9 +45,8 @@ type ServiceResponse struct {
 	Status   string
 	Error    string
 	Response interface{}
-	err    error
+	err      error
 }
-
 
 //ExampleUseCase represents example use case
 type ExampleUseCase struct {
@@ -107,49 +100,55 @@ func (s *AbstractService) Register(routes ...*ServiceActionRoute) {
 	}
 }
 
-//ServiceActionRoute returns a service action for supplied action
-func (s *AbstractService) Run(context *Context, request interface{}) *ServiceResponse {
-	var result = &ServiceResponse{Status: "ok"}
+//Run returns a service action for supplied action
+func (s *AbstractService) Run(context *Context, request interface{}) (response *ServiceResponse) {
+	response = &ServiceResponse{Status: "ok"}
 	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
 	var err error
 	defer func() {
 		s.End(context)(startEvent, Pairs("response", response))
 		if err != nil {
-			result.err = err
-			result.Status = "error"
-			result.Error = fmt.Sprintf("%v", err)
+			response.err = err
+			response.Status = "error"
+			response.Error = fmt.Sprintf("%v", err)
 		}
 	}()
+
 	if len(s.routeByRequest) == 0 {
 		err = NewError(s.ID(), fmt.Sprintf("%T", request), fmt.Errorf("failed to lookup service route: %T", request))
-		return result
+		return response
 	}
 
 	service, ok := s.routeByRequest[reflect.TypeOf(request)]
 	if !ok {
 		err = NewError(s.ID(), fmt.Sprintf("%T", request), fmt.Errorf("failed to lookup service route: %T", request))
-		return result
+		return response
 	}
 
 	if initializer, ok := request.(Initializer); ok {
 		if err = initializer.Init(); err != nil {
-			err = NewError(s.ID(), service.Action, fmt.Errorf("failed to init request: %T", request))
-			return result
-		}
-	}
-	if validator, ok := request.(Validator); ok {
-		if err = validator.Validate(); err != nil {
-			err = NewError(s.ID(), service.Action, fmt.Errorf("failed to validate request: %T", request))
-			return result
+			err = NewError(s.ID(), service.Action, fmt.Errorf("init %T failed: %v", request, err))
+			return response
 		}
 	}
 
-	result.Response, err = service.Handler(context, request)
-	if err != nil {
-		err = NewError(s.ID(), service.Action, err)
+	if validator, ok := request.(Validator); ok {
+		if err = validator.Validate(); err != nil {
+			err = NewError(s.ID(), service.Action, fmt.Errorf("validation %T failed: %v", request, err))
+			return response
+		}
 	}
-	return result
+
+	response.Response, err = service.Handler(context, request)
+	if err != nil {
+		var previous = err
+		err = NewError(s.ID(), service.Action, err)
+		if previous != err {
+			var eventType = &ErrorEventType{Error: fmt.Sprintf("%v", err)}
+			AddEvent(context, eventType, Pairs("value", eventType), Info)
+		}
+	}
+	return response
 }
 
 //ServiceActionRoute returns a service action route for supplied action
@@ -158,44 +157,9 @@ func (s *AbstractService) ServiceActionRoute(action string) (*ServiceActionRoute
 		if result, ok := s.routeByAction[action]; ok {
 			return result, nil
 		}
-		return nil, fmt.Errorf("failed to lookup service action for %v", action)
+		return nil, fmt.Errorf("unknown %v.%v service action", s.id, action)
 	}
-	_, err := s.NewRequest(action)
-	if err != nil {
-		return nil, err
-	}
-	//Temporary fallback, until all service get migrated to use *ServiceActionRoute
-	return &ServiceActionRoute{
-		Action: action,
-		RequestProvider: func() interface{} {
-			if result, err := s.Service.NewRequest(action); err == nil {
-				return result
-			}
-			return nil
-		},
-		ResponseProvider: func() interface{} {
-			if result, err := s.Service.NewResponse(action); err == nil {
-				return result
-			}
-			return nil
-		},
-	}, nil
-}
-
-//NewRequest creates a new supported request for this service for the supplied action.
-func (s *AbstractService) NewRequest(action string) (interface{}, error) {
-	if result, ok := s.routeByAction[action]; ok {
-		return result.RequestProvider(), nil
-	}
-	return nil, fmt.Errorf("failed to provide request for %v.%v", s.ID(), action)
-}
-
-//NewResponse creates a new supported response for this service for the supplied action.
-func (s *AbstractService) NewResponse(action string) (interface{}, error) {
-	if result, ok := s.routeByAction[action]; ok {
-		return result.ResponseProvider(), nil
-	}
-	return nil, fmt.Errorf("failed to provide response for %v.%v", s.ID(), action)
+	return nil, fmt.Errorf("unknown %v.%v service action", s.id, action)
 }
 
 //Sleep sleeps for provided time in ms
@@ -248,19 +212,6 @@ func (s *AbstractService) ID() string {
 	return s.id
 }
 
-//Validate checks if supplied source can be validated and if so checks it.
-func (s *AbstractService) Validate(source interface{}, response *ServiceResponse) error {
-	if validator, ok := source.(Validateable); ok {
-		err := validator.Validate()
-		if err != nil {
-			response.Status = "error"
-			response.Error = fmt.Sprintf("failed to validate %T, %v", source, err)
-			return err
-		}
-	}
-	return nil
-}
-
 //Mutex returns a mutex
 func (s *AbstractService) Mutex() *sync.RWMutex {
 	return s.mutex
@@ -272,10 +223,10 @@ func (s *AbstractService) State() data.Map {
 }
 
 //NewAbstractService creates a new abstract service.
-func NewAbstractService(id string, actions ...string) *AbstractService {
+func NewAbstractService(id string) *AbstractService {
 	return &AbstractService{
 		id:             id,
-		actions:        actions,
+		actions:        make([]string, 0),
 		mutex:          &sync.RWMutex{},
 		state:          data.NewMap(),
 		routeByAction:  make(map[string]*ServiceActionRoute),

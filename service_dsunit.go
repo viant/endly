@@ -15,29 +15,11 @@ import (
 const (
 	//DataStoreUnitServiceID represents a data store unit service id
 	DataStoreUnitServiceID = "dsunit"
-
-	//DataStoreUnitServiceRegisterAction represents datastore dsn register action
-	DataStoreUnitServiceRegisterAction = "register"
-
-	//DataStoreUnitServiceSQLAction represents sql run action
-	DataStoreUnitServiceSQLAction = "sql"
-
-	//DataStoreUnitServiceMappingAction represents tables mapping action
-	DataStoreUnitServiceMappingAction = "mapping"
-
-	//DataStoreUnitServicePrepareAction represents datastore data preparation action
-	DataStoreUnitServicePrepareAction = "prepare"
-
-	//DataStoreUnitServiceSequenceAction represents datastore reading sequence action
-	DataStoreUnitServiceSequenceAction = "sequence"
-
-	//DataStoreUnitServiceExpectAction represents datastore data verification action
-	DataStoreUnitServiceExpectAction = "expect"
 )
 
 //PopulateDatastoreEvent represents a populate Datastore event
 type PopulateDatastoreEvent struct {
-	Datastore string
+	Datastore string `required:"true" description:"register datastore name"` //target host
 	Table     string
 	Rows      int
 }
@@ -51,44 +33,6 @@ type RunSQLScriptEvent struct {
 type dataStoreUnitService struct {
 	*AbstractService
 	Manager dsunit.DatasetTestManager
-}
-
-func (s *dataStoreUnitService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-	var err = s.Validate(request, response)
-	if err != nil {
-		return response
-	}
-	var errTemplate = "%v"
-	switch actualRequest := request.(type) {
-	case *DsUnitRegisterRequest:
-		response.Response, err = s.register(context, actualRequest)
-
-	case *DsUnitSQLRequest:
-		response.Response, err = s.runScripts(context, actualRequest)
-
-	case *DsUnitPrepareRequest:
-		response.Response, err = s.prepare(context, actualRequest)
-	case *DsUnitExpectRequest:
-		response.Response, err = s.verify(context, actualRequest)
-
-	case *DsUnitTableSequenceRequest:
-		response.Response, err = s.getSequences(context, actualRequest)
-
-	case *DsUnitMappingRequest:
-		response.Response, err = s.addMapping(context, actualRequest)
-
-	default:
-		err = fmt.Errorf("unsupported request type: %T", request)
-	}
-
-	if err != nil {
-		response.Error = fmt.Sprintf(errTemplate, err)
-		response.Status = "err"
-	}
-	return response
 }
 
 func (s *dataStoreUnitService) getSequences(context *Context, request *DsUnitTableSequenceRequest) (*DsUnitTableSequenceResponse, error) {
@@ -158,9 +102,9 @@ func (s *dataStoreUnitService) addMapping(context *Context, request *DsUnitMappi
 	return response, nil
 }
 
-func (s *dataStoreUnitService) runScripts(context *Context, request *DsUnitSQLRequest) (*DsUnitSQLScriptResponse, error) {
+func (s *dataStoreUnitService) runScripts(context *Context, request *DsUnitSQLRequest) (*DsUnitSQLResponse, error) {
 	var err error
-	var response = &DsUnitSQLScriptResponse{}
+	var response = &DsUnitSQLResponse{}
 	response.Modified, err = s.runSQLScripts(context, request.Datastore, request.Scripts)
 	if err != nil {
 		return nil, err
@@ -310,7 +254,6 @@ func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectReq
 	if err != nil {
 		return nil, err
 	}
-
 	response = &DsUnitExpectResponse{
 		Validation: &assertly.Validation{},
 	}
@@ -349,56 +292,303 @@ func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectReq
 	return response, err
 }
 
-func (s *dataStoreUnitService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case DataStoreUnitServiceRegisterAction:
-		return &DsUnitRegisterRequest{}, nil
-	case DataStoreUnitServiceSQLAction:
-		return &DsUnitSQLRequest{}, nil
-	case DataStoreUnitServiceMappingAction:
-		return &DsUnitMappingRequest{}, nil
-	case DataStoreUnitServicePrepareAction:
-		return &DsUnitPrepareRequest{}, nil
-	case DataStoreUnitServiceSequenceAction:
-		return &DsUnitTableSequenceRequest{}, nil
-	case DataStoreUnitServiceExpectAction:
-		return &DsUnitExpectRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
+const (
+	dataStoreUnitAerospikeRegisterExample = `{
+  "Datastore": "db",
+  "Config": {
+    "DriverName": "aerospike",
+    "Descriptor": "tcp([host]:3000)/[namespace]",
+    "Parameters": {
+      "dateFormat": "yyyy-MM-dd hh:mm:ss",
+      "dbname": "db",
+      "host": "127.0.0.1",
+      "keyColumnName": "id",
+      "namespace": "db",
+      "port": "3000"
+    }
+  },
+  "AdminDatastore": "db"
+}`
 
-func (s *dataStoreUnitService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case DataStoreUnitServiceRegisterAction:
-		return &DsUnitRegisterResponse{}, nil
-	case DataStoreUnitServiceSQLAction:
-		return &DsUnitSQLScriptResponse{}, nil
-	case DataStoreUnitServiceMappingAction:
-		return &DsUnitMappingResponse{}, nil
-	case DataStoreUnitServicePrepareAction:
-		return &DsUnitPrepareResponse{}, nil
-	case DataStoreUnitServiceSequenceAction:
-		return &DsUnitTableSequenceResponse{}, nil
-	case DataStoreUnitServiceExpectAction:
-		return &DsUnitExpectRequest{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
+	dataStoreUnitBigQueryRegisterExample = `{
+  "Datastore": "db1",
+  "Config": {
+    "DriverName": "bigquery",
+    "Descriptor": "bq/[datasetId]",
+    "Parameters": {
+      "credentialsFile": "${env.HOME}/.secret/bq.json",
+      "datasetId": "db1",
+      "dateFormat": "yyyy-MM-dd HH:mm:ss.SSSZ",
+      "projectId": "xxxxx"
+    }
+  },
+  "AdminDatastore": "db1",
+  "ClearDatastore": true,
+  "Tables": [
+    {
+      "Table": "my_table",
+      "PkColumns": [
+        "id"
+      ],
+      "SchemaUrl": ""
+    }
+  ]
+}`
+
+	dataStoreUnitMySQLRegisterExample = `{
+  "Datastore": "db1",
+  "Config": {
+    "DriverName": "mysql",
+    "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+  },
+  "Credential": "${env.HOME}/.secret/mysql.json"
+}`
+	dataStoreUnitServiceSQLExample = `{
+		"Datastore": "db1",
+		"Scripts": [
+			{
+				"URL": "datastore/db1/schema.ddl"
+			}
+		]
+	}`
+
+	dataStoreUnitServiceMappingExample = ` {
+		"Mappings": [
+			{
+				"URL": "config/mapping/v_asset.json"
+			}
+		]
+	}`
+
+	dataStoreUnitServiceSequenceExample = `{
+		"Datastore": "db1",
+		"Tables": [
+			"table1",
+			"table2"
+		]
+	}`
+
+	dataStoreUnitServiceStaticDataPrepareExample = `{
+    "Datastore": "db1",
+    "URL": "datastore/db1/dictionary"
+  }`
+
+	dataStoreUnitDataPrepareExaple = ` {
+		"Datastore": "db1",
+		"Data": {
+			"table1": [
+				{
+					"id": 1,
+					"name": "test 1",
+					"type": "pivot"
+				},
+				{
+					"id": 2,
+					"name": "test 2",
+					"type": "pivot"
+				}
+			],
+			"table2": [
+				{
+					"id": 1,
+					"name": "test 1",
+					"type": "pivot"
+				},
+				{
+					"id": 2,
+					"name": "test 2",
+					"type": "pivot"
+				}
+			]
+		}
+	}`
+
+	dataStoreUnitServiceExpectAction = `{
+    "Datastore": "db1",
+    "URL": "datastore/db1/use_case2/",
+	"Prefix":"expect_"
+  }`
+)
+
+func (s *dataStoreUnitService) registerRoutes() {
+
+	s.Register(&ServiceActionRoute{
+		Action: "register",
+		RequestInfo: &ActionInfo{
+			Description: "register database connection",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "aerospike datastore registration",
+					Data:    dataStoreUnitAerospikeRegisterExample,
+				},
+				{
+					UseCase: "BigQuery datastore registration",
+					Data:    dataStoreUnitBigQueryRegisterExample,
+				},
+
+				{
+					UseCase: "MySQL datastore registration",
+					Data:    dataStoreUnitMySQLRegisterExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DsUnitRegisterRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DsUnitRegisterResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DsUnitRegisterRequest); ok {
+				return s.register(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "sql",
+		RequestInfo: &ActionInfo{
+			Description: "run SQL or SQL script",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "sql",
+					Data:    dataStoreUnitServiceSQLExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DsUnitSQLRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DsUnitSQLResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DsUnitSQLRequest); ok {
+				return s.runScripts(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "mapping",
+		RequestInfo: &ActionInfo{
+			Description: "register database table mapping (view)",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "sql",
+					Data:    dataStoreUnitServiceMappingExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DsUnitMappingRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DsUnitMappingResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DsUnitMappingRequest); ok {
+				return s.addMapping(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "sequence",
+		RequestInfo: &ActionInfo{
+			Description: "get sequence for supplied tables",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "sequence",
+					Data:    dataStoreUnitServiceSequenceExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DsUnitTableSequenceRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DsUnitTableSequenceResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DsUnitTableSequenceRequest); ok {
+				return s.getSequences(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "prepare",
+		RequestInfo: &ActionInfo{
+			Description: "populate databstore with provided data",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "static data prepare",
+					Data:    dataStoreUnitServiceStaticDataPrepareExample,
+				},
+				{
+					UseCase: "data prepare",
+					Data:    dataStoreUnitDataPrepareExaple,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DsUnitPrepareRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DsUnitPrepareResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DsUnitPrepareRequest); ok {
+				return s.prepare(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "expect",
+		RequestInfo: &ActionInfo{
+			Description: "verify databstore with provided data",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "static data exppect",
+					Data:    dataStoreUnitServiceExpectAction,
+				},
+				{
+					UseCase: "data expect",
+					Data:    dataStoreUnitDataPrepareExaple,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DsUnitExpectRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DsUnitExpectResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*DsUnitExpectRequest); ok {
+				return s.verify(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
 }
 
 //NewDataStoreUnitService creates a new Datastore unit service
 func NewDataStoreUnitService() Service {
 	var result = &dataStoreUnitService{
-		AbstractService: NewAbstractService(DataStoreUnitServiceID,
-			DataStoreUnitServiceRegisterAction,
-			DataStoreUnitServiceSQLAction,
-			DataStoreUnitServiceMappingAction,
-			DataStoreUnitServicePrepareAction,
-			DataStoreUnitServiceSequenceAction,
-			DataStoreUnitServiceExpectAction,
-		),
-		Manager: dsunit.NewDatasetTestManager(),
+		AbstractService: NewAbstractService(DataStoreUnitServiceID),
+		Manager:         dsunit.NewDatasetTestManager(),
 	}
 	result.Manager.SafeMode(false)
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }

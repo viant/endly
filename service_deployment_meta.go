@@ -17,14 +17,14 @@ type DeploymentLoadMetaResponse struct {
 
 //DeploymentMeta represents description of deployment instructions for various operating system
 type DeploymentMeta struct {
-	Name       string                                                                                                                     //app name
+	Name       string                  //app name
 	Versioning string                  `required:"true" description:"versioning template for dynamic discovery i.e. Major.Minor.Release"` //versioning system, i.e. Major.Minor.Release
 	Targets    []*DeploymentTargetMeta `required:"true" description:"deployment instruction for various version and operating systems"`
 }
 
 //DeploymentTargetMeta represents specific instruction for given os deployment.
 type DeploymentTargetMeta struct {
-	Version           string                                                                                                                              //version of the software
+	Version           string                  //version of the software
 	MinReleaseVersion map[string]string       `required:"true" description:"min release version, key is major.minor, value is release or update version"` //min release version, key is major.minor, value is release or update version
 	OsTarget          *OperatingSystemTarget  `description:"operating system match"`                                                                      //if specified matches current os
 	Deployment        *Deployment             `required:"true" description:"actual deployment instructions"`                                              //actual deployment instruction

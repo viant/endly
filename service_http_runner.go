@@ -15,9 +15,6 @@ import (
 //HTTPRunnerServiceID represents http runner service id.
 const HTTPRunnerServiceID = "http/runner"
 
-//HTTPRunnerServiceSendAction represents a send action.
-const HTTPRunnerServiceSendAction = "send"
-
 //HTTPRunner represent HttpExitEvaluation event name
 const HTTPRunner = "HttpRunner"
 
@@ -266,50 +263,58 @@ func (s *httpRunnerService) resetContext(context *Context, request *SendHTTPRequ
 	}
 }
 
-func (s *httpRunnerService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-	var err error
-	switch actualRequest := request.(type) {
-	case *SendHTTPRequest:
-		defer s.resetContext(context, actualRequest)
-		response.Response, err = s.send(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to send request: %v, %v", actualRequest, err)
-		}
+const httpRunnerSendRequestExample = `{
+  "Requests": [
+    {
+      "Method": "GET",
+      "URL": "http://127.0.0.1:8777/event1/?k1=v1\u0026k2=v2"
+    },
+    {
+      "Method": "GET",
+      "URL": "http://127.0.0.1:8777/event1/?k10=v1\u0026k2=v2"
+    },
+    {
+      "MatchBody": "",
+      "Method": "POST",
+      "URL": "http://127.0.0.1:8777/event4/",
+      "Body": "Lorem Ipsum is simply dummy text of the printing and typesetting industry."
+    }
+  ]
+}`
 
-	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
-	}
-	if response.Error != "" {
-		response.Status = "error"
-	}
-	return response
-}
-
-func (s *httpRunnerService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case HTTPRunnerServiceSendAction:
-		return &SendHTTPRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
-
-func (s *httpRunnerService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case HTTPRunnerServiceSendAction:
-		return &SendHTTPResponse{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
+func (s *httpRunnerService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "send",
+		RequestInfo: &ActionInfo{
+			Description: "send http request(s)",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "send",
+					Data:    httpRunnerSendRequestExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &SendHTTPRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SendHTTPResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*SendHTTPRequest); ok {
+				return s.send(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 }
 
 //NewHTTPpRunnerService creates a new http runner service
 func NewHTTPpRunnerService() Service {
 	var result = &httpRunnerService{
-		AbstractService: NewAbstractService(HTTPRunnerServiceID,
-			HTTPRunnerServiceSendAction),
+		AbstractService: NewAbstractService(HTTPRunnerServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }

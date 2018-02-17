@@ -39,6 +39,7 @@ func init() {
 
 	flag.String("s", "", "<serviceID> print service details, -s='*' prints all service IDs")
 	flag.String("a", "", "<action> prints action request representation")
+	flag.String("i", "", "<coma separated tagID list> to filter")
 
 }
 
@@ -145,6 +146,7 @@ func structMetaToArray(meta *toolbox.StructMeta) ([]string, [][]string) {
 	var header = []string{"Name", "Type", "Required", "Description"}
 	var data = make([][]string, 0)
 	for _, field := range meta.Fields {
+
 		data = append(data, []string{field.Name, field.Type, toolbox.AsString(field.Required), field.Description})
 	}
 	return header, data
@@ -334,6 +336,9 @@ func getRunRequestWithOptons(flagset map[string]string) (*endly.WorkflowRunReque
 		}
 		if value, ok := flagset["t"]; ok {
 			request.Tasks = value
+		}
+		if value, ok := flagset["i"]; ok {
+			request.TagIDs = value
 		}
 	}
 	return request, options, nil

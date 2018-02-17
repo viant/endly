@@ -7,7 +7,7 @@ import (
 
 //DsUnitMappingRequest represents a mapping request
 type DsUnitMappingRequest struct {
-	Mappings []*url.Resource //Resource pointing to JSON representation of *dsunit.DatasetMapping
+	Mappings []*url.Resource `required:"true" description:"URL list with URL to JSON dsunit.DatasetMapping representation"` //Resource pointing to JSON representation of *dsunit.DatasetMapping
 }
 
 //DsUnitMappingResponse represents mapping response

@@ -2,7 +2,6 @@ package endly
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	uuid "github.com/satori/go.uuid"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -102,7 +101,6 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 	if result.ParsedURL == nil {
 		return nil, fmt.Errorf("failed to parse URL %v", result.URL)
 	}
-	result.Name = c.Expand(resource.Name)
 	result.Cache = c.Expand(resource.Cache)
 	result.CacheExpiryMs = resource.CacheExpiryMs
 	return result, nil
@@ -225,8 +223,8 @@ func (c *Context) TerminalSession(target *url.Resource) (*SystemTerminalSession,
 		response := execService.Run(c, &OpenSessionRequest{
 			Target: target,
 		})
-		if response.Error != "" {
-			return nil, errors.New(response.Error)
+		if response.err != nil {
+			return nil, response.err
 		}
 	}
 	return sessions[target.Host()], nil
@@ -272,8 +270,8 @@ func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandRe
 		return nil, err
 	}
 	response := execService.Run(c, commandRequest)
-	if response.Error != "" {
-		return nil, errors.New(response.Error)
+	if response.err != nil {
+		return nil, response.err
 	}
 	if commandResult, ok := response.Response.(*CommandResponse); ok {
 		return commandResult, nil
@@ -299,8 +297,8 @@ func (c *Context) Transfer(transfers ...*Transfer) (interface{}, error) {
 		return nil, err
 	}
 	response := transferService.Run(c, &StorageCopyRequest{Transfers: transfers})
-	if response.Error != "" {
-		return nil, errors.New(response.Error)
+	if response.err != nil {
+		return nil, response.err
 	}
 	return nil, nil
 }
@@ -311,16 +309,29 @@ func (c *Context) Expand(text string) string {
 	return state.ExpandAsText(text)
 }
 
-//AsRequest converts a source map into request for provided service and action.
-func (c *Context) AsRequest(serviceName, action string, source map[string]interface{}) (interface{}, error) {
+//NewRequest creates a new request for service and action
+func (c *Context) NewRequest(serviceName, action string) (interface{}, error) {
 	service, err := c.Service(serviceName)
 	if err != nil {
 		return nil, err
 	}
-	request, err := service.NewRequest(action)
+	route, err := service.ServiceActionRoute(action)
 	if err != nil {
 		return nil, err
 	}
+	return route.RequestProvider(), nil
+}
+
+//AsRequest converts a source map into request for provided service and action.
+func (c *Context) AsRequest(serviceName, action string, source map[string]interface{}) (request interface{}, err error) {
+	if request, err = c.NewRequest(serviceName, action); err != nil {
+		return request, err
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("failed to create request, unable to case %v into %T, %v", source, request, r)
+		}
+	}()
 	err = converter.AssignConverted(request, source)
 	return request, err
 }

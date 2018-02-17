@@ -583,9 +583,8 @@ func (s *execService) detectOperatingSystem(session *SystemTerminalSession) (*Op
 	return operatingSystem, nil
 }
 
-const
-(
-	execServiceOpenExample          = `{
+const (
+	execServiceOpenExample = `{
   "Target": {
     "URL": "scp://127.0.0.1/",
     "Credential": "${env.HOME}/.secret/localhost.json"
@@ -596,14 +595,13 @@ const
     "GOPATH":"${env.HOME}/go"
   }
 }`
-	execServiceRunExample           = `{
+	execServiceRunExample = `{
   "Target": {
     "URL": "scp://127.0.0.1/",
     "Credential": "${env.HOME}/.secret/localhost.json"
   },
   "Commands":["mkdir /tmp/app1"]
 }`
-
 
 	execServiceRunAndExtractExample = `{
   "Target": {
@@ -630,7 +628,7 @@ const
   }
 }`
 
-	execServiceManagedCloseExample  = `{
+	execServiceManagedCloseExample = `{
   "Target": {
     "URL": "scp://127.0.0.1/",
     "Credential": "${env.HOME}/.secret/localhost.json"
@@ -644,7 +642,6 @@ func (s *execService) registerRoutes() {
 		Action: "open",
 		RequestInfo: &ActionInfo{
 			Description: "open SSH session, usually no need for using this action directly since run,extract actions open session if needed",
-
 			Examples: []*ExampleUseCase{
 				{
 					UseCase: "open session",
@@ -718,7 +715,6 @@ func (s *execService) registerRoutes() {
 		},
 	})
 
-
 	s.Register(&ServiceActionRoute{
 		Action: "sudo",
 		RequestInfo: &ActionInfo{
@@ -769,8 +765,6 @@ func (s *execService) registerRoutes() {
 	})
 }
 
-
-
 //NewExecService creates a new execution service
 func NewExecService() Service {
 	var result = &execService{
@@ -788,9 +782,6 @@ type SuperUserCommandRequest struct {
 	Target        *url.Resource       //target destination where to run a command.
 	MangedCommand *ExtractableCommand //managed command
 }
-
-
-
 
 //AsCommandRequest returns ExtractableCommandRequest
 func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*ExtractableCommandRequest, error) {

@@ -32,14 +32,16 @@ func (s *Server) requestService(serviceName, action string, httpRequest *http.Re
 	var service Service
 	var serviceRequest interface{}
 	var err error
-	service, err = s.manager.Service(toolbox.AsString(serviceName))
+	service, err = s.manager.Service(serviceName)
 	if err != nil {
 		return nil, err
 	}
-	serviceRequest, err = service.NewRequest(toolbox.AsString(action))
+	context := s.manager.NewContext(toolbox.NewContext())
+	serviceRequest, err = context.NewRequest(serviceName, action)
 	if err != nil {
 		return nil, err
 	}
+
 	request := &Request{
 		ServiceRequest: serviceRequest,
 	}
@@ -47,7 +49,7 @@ func (s *Server) requestService(serviceName, action string, httpRequest *http.Re
 	if err != nil {
 		return nil, err
 	}
-	context := s.manager.NewContext(toolbox.NewContext())
+
 	defer context.Close()
 	state := context.State()
 	state.Apply(request.Data)
@@ -86,7 +88,6 @@ func (s *Server) routeHandler(serviceRouting *toolbox.ServiceRouting, httpReques
 	if err != nil {
 		return err
 	}
-
 	err = toolbox.WriteServiceRoutingResponse(httpResponse, httpRequest, serviceRouting, response)
 
 	if err != nil {

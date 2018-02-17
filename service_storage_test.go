@@ -286,7 +286,7 @@ func TestTransferService_Upload_Error(t *testing.T) {
 		SourceKey: "key10",
 		Target:    url.NewResource("mem:///test/storage/upload/config1.json"),
 	})
-	assert.Equal(t, "unable to upload, sourcekey key10 value was empty", serviceResponse.Error)
+	assert.Equal(t, "sourcekey key10 value was empty at storage.upload", serviceResponse.Error)
 }
 
 func TestStorageCopyRequest_Validate(t *testing.T) {
@@ -297,9 +297,7 @@ func TestStorageCopyRequest_Validate(t *testing.T) {
 	}
 	{
 		request := endly.StorageCopyRequest{
-			Transfers: []*endly.Transfer{
-
-			},
+			Transfers: []*endly.Transfer{},
 		}
 		assert.NotNil(t, request.Validate())
 	}
@@ -331,9 +329,7 @@ func TestStorageCopyRequest_Validate(t *testing.T) {
 	}
 	{
 		request := endly.StorageCopyRequest{
-			Transfers: []*endly.Transfer{
-
-			},
+			Transfers: []*endly.Transfer{},
 		}
 		assert.NotNil(t, request.Validate())
 	}

@@ -625,6 +625,7 @@ Workflow service provide capability to run task, action from any defined workflo
 | workflow | goto | switche current execution to the specified task on current workflow | [WorkflowGotoRequest](service_workflow_goto.go) | [WorkflowGotoResponse]((service_workflow_goto.go) 
 | workflow | switch | run matched  case action or task  | [WorkflowSwitchRequest](service_workflow_switch.go) | [WorkflowSwitchResponse](service_workflow_switch.go) |
 | workflow | exit | terminate execution of active workflow (caller) | n/a | n/a |
+| workflow | fail | fail  workflow | [WorkflowFailRequest](service_workflow_fail.go) | n/a  |
 
 **Log Service **
 
@@ -639,7 +640,6 @@ Workflow service provide capability to run task, action from any defined workflo
 | --- | --- | --- | --- | --- |
 | nop | nop | do nothing| [Nop](service_nop.go) | n/a  |
 | nop | parrot | return request | [NopParrotRequest](service_nop_parrot.go) | n/a  |
-| nop | fail | fail  wokrflow | [NopFailRequest](service_nop_fail.go) | n/a  |
 =======
 
 

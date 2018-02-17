@@ -15,27 +15,6 @@ type restService struct {
 	*AbstractService
 }
 
-func (s *restService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-	var err error
-	switch actualReuest := request.(type) {
-	case *RestSendRequest:
-		response.Response, err = s.sendRequest(actualReuest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to send %v %v", actualReuest.URL, err)
-		}
-	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
-
-	}
-	if response.Error != "" {
-		response.Status = "err"
-	}
-	return response
-}
-
 func (s *restService) sendRequest(request *RestSendRequest) (*RestSendResponse, error) {
 	var resetResponse = make(map[string]interface{})
 	err := toolbox.RouteToService(request.Method, request.URL, request.Request, &resetResponse)
@@ -48,29 +27,62 @@ func (s *restService) sendRequest(request *RestSendRequest) (*RestSendResponse, 
 
 }
 
-func (s *restService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case RestServiceSendAction:
-		return &RestSendRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
+const restSendExample = `
+{
+		"URL": "http://127.0.0.1:8085/v1/reporter/register/",
+		"Method": "POST",
+		"Request": {
+			"Report": {
+				"Columns": [
+					{
+						"Alias": "",
+						"Name": "category"
+					}
+				],
+				"From": "expenditure",
+				"Groups": [
+					"year"
+				],
+				"Name": "report1",
+				"Values": [
+					{
+						"Column": "expenditure",
+						"Function": "SUM"
+					}
+				]
+			},
+			"ReportType": "pivot"
+		}
+	}`
 
-func (s *restService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case RestServiceSendAction:
-		return &RestSendResponse{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
+func (s *restService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "send",
+		RequestInfo: &ActionInfo{
+			Description: "send REST request",
+		},
+		RequestProvider: func() interface{} {
+			return &RestSendRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &RestSendResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*RestSendRequest); ok {
+				return s.sendRequest(handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 }
 
 //NewRestService creates a new reset service
 func NewRestService() Service {
 	var result = &restService{
-		AbstractService: NewAbstractService(RestServiceID,
-			RestServiceSendAction),
+		AbstractService: NewAbstractService(RestServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 
 }

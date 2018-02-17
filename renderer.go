@@ -48,9 +48,9 @@ func (r *Renderer) Println(text string) {
 	r.Print(text + "\n")
 }
 
-//Print
-func (r *Renderer) Print(text string) {
-	r.writer.Write([]byte(text))
+//Print prints supplied message
+func (r *Renderer) Print(message string) {
+	r.writer.Write([]byte(message))
 }
 
 //ColorText returns text with ANCI color
@@ -192,6 +192,7 @@ func (r *Renderer) PrintTable(caption string, headers []string, data [][]string,
 	r.printTableData(caption, headers, data, maxSize)
 }
 
+//NewRenderer creates a new renderer
 func NewRenderer(writer io.Writer, minColumns int) *Renderer {
 	return &Renderer{
 		ErrorColor: "red",

@@ -11,7 +11,7 @@ type VcStatusRequest struct {
 	Type   string
 }
 
-// /Init initializes request
+//Init initializes request
 func (r *VcStatusRequest) Init() error {
 	return versionControlRequestInit(r.Target, &r.Type)
 }

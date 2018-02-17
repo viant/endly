@@ -11,7 +11,7 @@ type DockerPullRequest struct {
 	Tag        string        `required:"true"`
 }
 
-//DockerPullRequest represents a docker pull response
+//DockerPullResponse represents a docker pull response
 type DockerPullResponse struct {
 	*DockerImageInfo
 }

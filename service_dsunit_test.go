@@ -53,16 +53,20 @@ func TestDsUnitService(t *testing.T) {
 	if assert.Nil(t, err) {
 
 		serviceResponse := service.Run(context, &endly.DsUnitPrepareRequest{
-			Datastore: "mydb1",
-			Prefix:    "prepare_",
-			URL:       url.NewResource("test/dsunit/dataset1").URL,
+			DsUnitDataRequest: &endly.DsUnitDataRequest{
+				Datastore: "mydb1",
+				Prefix:    "prepare_",
+				URL:       url.NewResource("test/dsunit/dataset1").URL,
+			},
 		})
 		assert.Equal(t, "", serviceResponse.Error)
 
 		serviceResponse = service.Run(context, &endly.DsUnitExpectRequest{
-			Datastore: "mydb1",
-			Prefix:    "verify_",
-			URL:       url.NewResource("test/dsunit/dataset1").URL,
+			DsUnitDataRequest: &endly.DsUnitDataRequest{
+				Datastore: "mydb1",
+				Prefix:    "verify_",
+				URL:       url.NewResource("test/dsunit/dataset1").URL,
+			},
 		})
 		assert.Equal(t, "", serviceResponse.Error)
 		verifyResponse, ok := serviceResponse.Response.(*endly.DsUnitExpectResponse)
@@ -108,7 +112,7 @@ func TestDsUnitService(t *testing.T) {
 			},
 		})
 		{
-			response, ok := serviceResponse.Response.(*endly.DsUnitSQLScriptResponse)
+			response, ok := serviceResponse.Response.(*endly.DsUnitSQLResponse)
 			if assert.True(t, ok) {
 				assert.EqualValues(t, 0, response.Modified)
 			}
@@ -161,15 +165,19 @@ func TestDsUnitService(t *testing.T) {
 		assert.EqualValues(t, 2, len(userAccount))
 
 		serviceResponse = service.Run(context, &endly.DsUnitPrepareRequest{
-			Datastore: "mydb1",
-			Prefix:    "prepare_",
-			Data:      tableSetupData,
+			DsUnitDataRequest: &endly.DsUnitDataRequest{
+				Datastore: "mydb1",
+				Prefix:    "prepare_",
+				Data:      tableSetupData,
+			},
 		})
 		assert.Equal(t, "", serviceResponse.Error)
 		serviceResponse = service.Run(context, &endly.DsUnitExpectRequest{
-			Datastore: "mydb1",
-			Data:      tableSetupData,
-			Expand:    true,
+			DsUnitDataRequest: &endly.DsUnitDataRequest{
+				Datastore: "mydb1",
+				Data:      tableSetupData,
+				Expand:    true,
+			},
 		})
 
 		if assert.Equal(t, "", serviceResponse.Error) {
@@ -209,12 +217,17 @@ func TestDsUnitService_Errors(t *testing.T) {
 	serviceResponse = service.Run(context, &endly.DsUnitPrepareRequest{})
 	assert.True(t, serviceResponse.Error != "")
 
-	serviceResponse = service.Run(context, &endly.DsUnitPrepareRequest{Datastore: "dd"})
+	serviceResponse = service.Run(context, &endly.DsUnitPrepareRequest{
+		DsUnitDataRequest: &endly.DsUnitDataRequest{
+			Datastore: "dd",
+		}})
 	assert.True(t, serviceResponse.Error != "")
 
 	serviceResponse = service.Run(context, &endly.DsUnitPrepareRequest{
-		Datastore: "dd",
-		URL:       url.NewResource("test/nonexisting").URL,
+		DsUnitDataRequest: &endly.DsUnitDataRequest{
+			Datastore: "dd",
+			URL:       url.NewResource("test/nonexisting").URL,
+		},
 	})
 	assert.True(t, serviceResponse.Error != "")
 
@@ -240,7 +253,9 @@ func TestDsUnitService_Errors(t *testing.T) {
 	serviceResponse = service.Run(context, &endly.DsUnitExpectRequest{})
 	assert.True(t, serviceResponse.Error != "")
 
-	serviceResponse = service.Run(context, &endly.DsUnitExpectRequest{Datastore: "dd"})
+	serviceResponse = service.Run(context, &endly.DsUnitExpectRequest{DsUnitDataRequest: &endly.DsUnitDataRequest{
+		Datastore: "dd",
+	}})
 	assert.True(t, serviceResponse.Error != "")
 
 }
@@ -304,7 +319,7 @@ func TestDockerContainerBaseRequest_Validate(t *testing.T) {
 	{
 		startRequest := &endly.DockerContainerStartRequest{
 			DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
-				Target:url.NewResource("ab"),
+				Target: url.NewResource("ab"),
 			},
 		}
 		assert.NotNil(t, startRequest.Validate())
@@ -313,8 +328,8 @@ func TestDockerContainerBaseRequest_Validate(t *testing.T) {
 	{
 		startRequest := &endly.DockerContainerStartRequest{
 			DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
-				Target:url.NewResource("ab"),
-				Name:"instance2",
+				Target: url.NewResource("ab"),
+				Name:   "instance2",
 			},
 		}
 		assert.Nil(t, startRequest.Validate())

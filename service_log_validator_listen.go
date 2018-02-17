@@ -7,20 +7,20 @@ import (
 
 //LogType represents  a log type
 type LogType struct {
-	Name         string
-	Format       string
-	Mask         string
-	Exclusion    string
-	Inclusion    string
-	IndexRegExpr string //provide expression for indexing log message, in this case position based logging will not apply
+	Name         string `required:"true" description:"log type name"`
+	Format       string `description:"log format"`
+	Mask         string `description:"expected log file mast"`
+	Exclusion    string `description:"if specified, exclusion fragment can not match log record"`
+	Inclusion    string `description:"if specified, inclusion fragment must match log record"`
+	IndexRegExpr string `description:"provide expression for indexing log messages, in this case position based logging will not apply"` //provide expression for indexing log message, in this case position based logging will not apply
 	indexExpr    *regexp.Regexp
 }
 
 //LogValidatorListenRequest represents listen for a logs request.
 type LogValidatorListenRequest struct {
 	FrequencyMs int
-	Source      *url.Resource
-	Types       []*LogType
+	Source      *url.Resource `required:"true" description:"log location"`
+	Types       []*LogType    `required:"true" description:"log types"`
 }
 
 //LogValidatorListenResponse represents a log validation listen response.

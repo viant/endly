@@ -8,7 +8,7 @@ import (
 
 //DsUnitSQLRequest represents a SQL script request.
 type DsUnitSQLRequest struct {
-	Datastore string
+	Datastore string `required:"true" description:"register datastore name"`
 	Scripts   []*url.Resource
 	SQLs      []string
 }
@@ -24,7 +24,7 @@ func (r *DsUnitSQLRequest) Validate() error {
 	return nil
 }
 
-//DsUnitSQLScriptResponse represents a SQL script response.
-type DsUnitSQLScriptResponse struct {
+//DsUnitSQLResponse represents a SQL script response.
+type DsUnitSQLResponse struct {
 	Modified int
 }

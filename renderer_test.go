@@ -1,10 +1,10 @@
 package endly_test
 
 import (
-	"github.com/viant/endly"
-	"testing"
 	"bytes"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly"
+	"testing"
 )
 
 func Test_Renderer_PrintTable(t *testing.T) {

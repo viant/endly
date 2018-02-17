@@ -14,27 +14,6 @@ const (
 	//SeleniumServiceID represents a SeleniumServiceID
 	SeleniumServiceID = "selenium"
 
-	//SeleniumServiceStartAction represents selenium server start action
-	SeleniumServiceStartAction = "start"
-
-	//SeleniumServiceStopAction represents selenium server stop action
-	SeleniumServiceStopAction = "stop"
-
-	//SeleniumServiceOpenAction represents selenium browser open session action
-	SeleniumServiceOpenAction = "open"
-
-	//SeleniumServiceCloseAction represents selenium close session action
-	SeleniumServiceCloseAction = "close"
-
-	//SeleniumServiceCallDriverAction represents web driver call action
-	SeleniumServiceCallDriverAction = "call-driver"
-
-	//SeleniumServiceCallElementAction represents web element call action
-	SeleniumServiceCallElementAction = "call-element"
-
-	//SeleniumServiceRunAction represents group of calls action.
-	SeleniumServiceRunAction = "run"
-
 	//SeleniumServer represents name of selenium server
 	SeleniumServer = "selenium-server-standalone"
 	//GeckoDriver represents name of gecko driver
@@ -54,51 +33,6 @@ type SeleniumSession struct {
 type SeleniumSessions map[string]*SeleniumSession
 type seleniumService struct {
 	*AbstractService
-}
-
-func (s *seleniumService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-	var err = s.Validate(request, response)
-	if err != nil {
-		return response
-	}
-	var errorTemplate string
-	switch actualRequest := request.(type) {
-
-	case *SeleniumServerStartRequest:
-		response.Response, err = s.start(context, actualRequest)
-		errorTemplate = "failed to start selenium %v"
-	case *SeleniumServerStopRequest:
-		response.Response, err = s.stop(context, actualRequest)
-		errorTemplate = "failed to start selenium %v"
-	case *SeleniumOpenSessionRequest:
-		response.Response, err = s.open(context, actualRequest)
-		errorTemplate = "failed to open selenium session %v"
-	case *SeleniumCloseSessionRequest:
-		response.Response, err = s.close(context, actualRequest)
-		errorTemplate = "failed to open selenium session %v"
-
-	case *SeleniumWebDriverCallRequest:
-		response.Response, err = s.callWebDriver(context, actualRequest)
-		errorTemplate = "failed to call web driver %v"
-	case *SeleniumWebElementCallRequest:
-		response.Response, err = s.callWebElement(context, actualRequest)
-		errorTemplate = "failed to call web element: %v"
-	case *SeleniumRunRequest:
-		response.Response, err = s.run(context, actualRequest)
-		errorTemplate = "failed to call web element: %v"
-	default:
-		errorTemplate = "%v"
-		err = fmt.Errorf("unsupported request type: %T", request)
-	}
-	if err != nil {
-		response.Status = "error"
-		response.Error = fmt.Sprintf(errorTemplate, err)
-	}
-	return response
-
 }
 
 func (s *seleniumService) addResultIfPresent(callResult []interface{}, result data.Map, resultPath ...string) {
@@ -294,7 +228,7 @@ func (s *seleniumService) deployServerIfNeeded(context *Context, request *Seleni
 
 func (s *seleniumService) setJdk(context *Context, request *SeleniumServerStartRequest) error {
 	sdkService, _ := context.Service(SdkServiceID)
-	response := sdkService.Run(context, &SystemSdkSetRequest{
+	response := sdkService.Run(context, &SdkSetRequest{
 		Sdk:     request.Sdk,
 		Version: request.SdkVersion,
 		Target:  request.Target,
@@ -400,62 +334,327 @@ func (s *seleniumService) openSession(context *Context, request *SeleniumOpenSes
 	return seleniumSession, nil
 }
 
-//NewRequest creates a new request for the provided action (run).
-func (s *seleniumService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case SeleniumServiceStartAction:
-		return &SeleniumServerStartRequest{}, nil
-	case SeleniumServiceStopAction:
-		return &SeleniumServerStopRequest{}, nil
-	case SeleniumServiceOpenAction:
-		return &SeleniumOpenSessionRequest{}, nil
-	case SeleniumServiceCloseAction:
-		return &SeleniumCloseSessionRequest{}, nil
-	case SeleniumServiceCallDriverAction:
-		return &SeleniumWebDriverCallRequest{}, nil
-	case SeleniumServiceCallElementAction:
-		return &SeleniumWebElementCallRequest{}, nil
-	case SeleniumServiceRunAction:
-		return &SeleniumRunRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
+const (
+	seleniumServiceStartExample = `{
+		"Target": {
+			"URL": "127.0.0.1",
+			"Credential": "${env.HOME}/.secret/localhost.json"
+		},
+		"Port": 8085,
+		"Sdk": "jdk",
+		"SdkVersion": "1.8",
+		"Version": "3.4"
+	}`
 
-//NewRequest creates a new request for the provided action (run).
-func (s *seleniumService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case SeleniumServiceStartAction:
-		return &SeleniumServerStartResponse{}, nil
-	case SeleniumServiceStopAction:
-		return &SeleniumServerStopResponse{}, nil
-	case SeleniumServiceOpenAction:
-		return &SeleniumOpenSessionResponse{}, nil
-	case SeleniumServiceCloseAction:
-		return &SeleniumCloseSessionResponse{}, nil
-	case SeleniumServiceCallDriverAction:
-		return &SeleniumServiceCallResponse{}, nil
-	case SeleniumServiceCallElementAction:
-		return &SeleniumWebElementCallResponse{}, nil
-	case SeleniumServiceRunAction:
-		return &SeleniumRunResponse{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
+	seleniumServiceStopExample = `{
+		"Target": {
+			"URL": "file://127.0.0.1",
+			"Credential": "${env.HOME}/.secret/localhost.json"
+		},
+		"Port": 8085
+	}`
+
+	seleniumServiceOpenSessionExample = ` {
+		"Browser": "firefox",
+		"RemoteSelenium": {
+			"URL": "http://127.0.0.1:8085/"
+		}
+	}`
+
+	seleniumServiceCloseExample = `{
+"SessionID": "127.0.0.1:8085"
+}`
+
+	seleniumServiceCallDriverExample = `
+ {
+     "SessionID": "127.0.0.1:8085",
+      "Calls": [
+        {
+          "Wait": null,
+          "Method": "Get",
+          "Parameters": [
+            "http://127.0.0.1:8888/signin/"
+          ]
+        }
+      ]
+}
+`
+
+	seleniumServiceCallElementExample = ` {
+ 	"SessionID": "127.0.0.1:8085",
+    "Selector": {
+        "By": "xpath",
+        "Value": "//SMALL[preceding-sibling::INPUT[@id='email']]",
+        "Key": "email"
+      },
+      "Calls": [
+        {
+          "Method": "Text"
+        }
+      ]
+    }`
+
+	seleniumServiceRunAction = `{
+  "SessionID": "127.0.0.1:8085",
+  "Actions": [
+    {
+      "Calls": [
+        {
+          "Wait": null,
+          "Method": "Get",
+          "Parameters": [
+            "http://127.0.0.1:8888/signin/"
+          ]
+        }
+      ]
+    },
+    {
+      "Selector": {
+        "Value": "#email"
+      },
+      "Calls": [
+        {
+          "Method": "Clear"
+        },
+        {
+          "Method": "SendKeys",
+          "Parameters": [
+            "xyz@wp.w"
+          ]
+        }
+      ]
+    },
+    {
+      "Selector": {
+        "Value": "#password"
+      },
+      "Calls": [
+        {
+          "Method": "Clear"
+        },
+        {
+          "Method": "SendKeys",
+          "Parameters": [
+            "pass1"
+          ]
+        }
+      ]
+    },
+    {
+      "Selector": {
+        "Value": "#submit"
+      },
+      "Calls": [
+        {
+          "Wait": {
+            "SleepTimeMs": 100
+          },
+          "Method": "Click"
+        }
+      ]
+    },
+    {
+      "Selector": {
+        "By": "xpath",
+        "Value": "//SMALL[preceding-sibling::INPUT[@id='email']]",
+        "Key": "email"
+      },
+      "Calls": [
+        {
+          "Method": "Text"
+        }
+      ]
+    }
+  ]
+}
+`
+)
+
+func (s *seleniumService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "start",
+		RequestInfo: &ActionInfo{
+			Description: "start selenium server",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "start server",
+					Data:    seleniumServiceStartExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &SeleniumServerStartRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SeleniumServerStartResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*SeleniumServerStartRequest); ok {
+				return s.start(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "stop",
+		RequestInfo: &ActionInfo{
+			Description: "stop selenium server",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "stop server",
+					Data:    seleniumServiceStopExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &SeleniumServerStopRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SeleniumServerStopResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*SeleniumServerStopRequest); ok {
+				return s.stop(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "open",
+		RequestInfo: &ActionInfo{
+			Description: "open selenium session",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "open session",
+					Data:    seleniumServiceOpenSessionExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &SeleniumOpenSessionRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SeleniumOpenSessionResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*SeleniumOpenSessionRequest); ok {
+				return s.open(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "close",
+		RequestInfo: &ActionInfo{
+			Description: "close selenium session",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "close session",
+					Data:    seleniumServiceCloseExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &SeleniumCloseSessionRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SeleniumCloseSessionResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*SeleniumCloseSessionRequest); ok {
+				return s.close(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "run",
+		RequestInfo: &ActionInfo{
+			Description: "run selenium requests",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "run",
+					Data:    seleniumServiceRunAction,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &SeleniumRunRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SeleniumRunResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*SeleniumRunRequest); ok {
+				return s.run(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "call-driver",
+		RequestInfo: &ActionInfo{
+			Description: "call proxies request to  github.com/tebeka/selenium web driver",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "call driver",
+					Data:    seleniumServiceCallDriverExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &SeleniumWebDriverCallRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SeleniumServiceCallResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*SeleniumWebDriverCallRequest); ok {
+				return s.callWebDriver(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "call-element",
+		RequestInfo: &ActionInfo{
+			Description: "find web element and proxy request",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "web element call",
+					Data:    seleniumServiceCallElementExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &SeleniumWebElementCallRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SeleniumServiceCallResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*SeleniumWebElementCallRequest); ok {
+				return s.callWebElement(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
 }
 
 //NewSeleniumService creates a new selenium service
 func NewSeleniumService() Service {
 	var result = &seleniumService{
-		AbstractService: NewAbstractService(SeleniumServiceID,
-			SeleniumServiceStartAction,
-			SeleniumServiceStopAction,
-			SeleniumServiceOpenAction,
-			SeleniumServiceCloseAction,
-			SeleniumServiceCallDriverAction,
-			SeleniumServiceCallElementAction,
-			SeleniumServiceRunAction,
-		),
+		AbstractService: NewAbstractService(SeleniumServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }
 

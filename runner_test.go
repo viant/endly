@@ -44,6 +44,7 @@ func TestCliRunner_RunDsHttpWorkflow(t *testing.T) {
 	endly.OnRunnerError = func(code int) {
 
 	}
+
 	request, options, err := endly.LoadRunRequestWithOption("test/runner/run_http.json")
 	if assert.Nil(t, err) {
 		err := runner.Run(request, options)

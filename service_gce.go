@@ -15,52 +15,11 @@ import (
 const (
 	//GCEServiceID represents cce service id.
 	GCEServiceID = "gce"
-
-	//GCEServiceCallAction represents cce action
-	GCEServiceCallAction = "call"
 )
 
 //google comput engine service
 type gCEService struct {
 	*AbstractService
-}
-
-func (s *gCEService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok", Response: request}
-	var err = s.Validate(request, response)
-	if err != nil {
-		return response
-	}
-	switch actualRequest := request.(type) {
-	case *GCECallRequest:
-		response.Response, err = s.call(actualRequest)
-	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
-	}
-	if err != nil {
-		response.Status = "error"
-		response.Error = err.Error()
-	}
-
-	defer s.End(context)(startEvent, Pairs("response", response))
-	return response
-}
-
-func (s *gCEService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case GCEServiceCallAction:
-		return &GCECallRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
-
-func (s *gCEService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case GCEServiceCallAction:
-		return struct{}{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
 }
 
 //NewComputeService creates a new compute service.
@@ -157,12 +116,48 @@ func (s *gCEService) call(request *GCECallRequest) (GCECallResponse, error) {
 	return nil, fmt.Errorf("unsupported operation: %v.%v", request.Service, request.Method)
 }
 
+const (
+	gceGetInstanceStatusExample = `{
+  "Credential": "${env.HOME}/.secret/gce.json",
+  "Service": "Instances",
+  "Method": "Get",
+  "Parameters":["myProject","us-west1-b","instance-1"]	
+}`
+)
+
+func (s *gCEService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "call",
+		RequestInfo: &ActionInfo{
+			Description: "call proxies request into google.golang.org/api/compute/v1.Service client",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "get instance status",
+					Data:    gceGetInstanceStatusExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &GCECallRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return struct{}{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*GCECallRequest); ok {
+				return s.call(handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+}
+
 //NewGceService creates a new NoOperation service.
 func NewGceService() Service {
 	var result = &gCEService{
-		AbstractService: NewAbstractService(GCEServiceID,
-			GCEServiceCallAction),
+		AbstractService: NewAbstractService(GCEServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }

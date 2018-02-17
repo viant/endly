@@ -13,19 +13,13 @@ import (
 
 //EC2Call represents ec2 call.
 type EC2Call struct {
-	Method     string
-	Parameters []interface{}
+	Method     string        `required:"true" description:"ec2 client method name"`
+	Parameters []interface{} `required:"true" description:"ec2 client method paramters"`
 }
 
 const (
 	//Ec2ServiceID represents nop service id.
 	Ec2ServiceID = "aws/ec2"
-
-	//AwsEc2 represent asw ec2
-	AwsEc2 = "AwsEc2"
-
-	//Ec2ServiceCallAction represents run action
-	Ec2ServiceCallAction = "call"
 )
 
 //Ec2 represent no operation
@@ -34,40 +28,6 @@ type Ec2 struct{}
 //no operation service
 type ec2Service struct {
 	*AbstractService
-}
-
-func (s *ec2Service) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok", Response: request}
-	var err error
-	switch actualRequest := request.(type) {
-	case *EC2CallRequest:
-		response.Response, err = s.run(context, actualRequest)
-	default:
-		err = fmt.Errorf("unsupported request type: %T", request)
-	}
-
-	if err != nil {
-		response.Status = "error"
-		response.Error = fmt.Sprintf("%v", err)
-	}
-
-	defer s.End(context)(startEvent, Pairs("response", response))
-	return response
-}
-
-func (s *ec2Service) NewRequest(action string) (interface{}, error) {
-	if action == Ec2ServiceCallAction {
-		return &EC2CallRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
-
-func (s *ec2Service) NewResponse(action string) (interface{}, error) {
-	if action == Ec2ServiceCallAction {
-		return struct{}{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
 }
 
 //GetAWSCredentialConfig returns *aws.Config for provided credential
@@ -137,12 +97,154 @@ func (s *ec2Service) callMethod(owner interface{}, methodName string, parameters
 	return response, nil
 }
 
+const (
+	ec2GetInstanceStatusExample = `{
+  "Credential": "${env.HOME}/.secret/aws-west.json",
+  "Method": "DescribeInstances",
+  "Input": {
+    "InstanceIds": [
+      "i-0139209d53****"
+    ]
+  }
+}`
+
+	ec2CredentialExample = `{
+        "Region":"us-west-2",
+        "Key":"KKKKKKKKK",
+        "Secret":"SSSSSSSSS"
+}`
+
+	ex2GetInstanceResponseExample = `{
+  "Reservations": [
+    {
+      "Groups": null,
+      "Instances": [
+        {
+          "AmiLaunchIndex": 0,
+          "Architecture": "x86_64",
+          "BlockDeviceMappings": [
+            {
+              "DeviceName": "/dev/sda1",
+              "Ebs": {
+                "DeleteOnTermination": true,
+                "Status": "attached"
+              }
+            }
+          ],
+          "ClientToken": "",
+          "EbsOptimized": false,
+          "ElasticGpuAssociations": null,
+          "EnaSupport": false,
+          "Hypervisor": "xen",
+          "IamInstanceProfile": null,
+          "InstanceLifecycle": null,
+          "InstanceType": "c4.2xlarge",
+          "KernelId": null,
+          "KeyName": "production",
+          "Monitoring": {
+            "State": "disabled"
+          },
+          "NetworkInterfaces": [
+            {
+              "Association": null,
+              "Attachment": {
+                "DeleteOnTermination": true,
+                "DeviceIndex": 0,
+                "Status": "attached"
+              },
+              "Description": "",
+              "SourceDestCheck": true,
+              "Status": "in-use",
+            }
+          ],
+          "Placement": {
+            "Affinity": null,
+            "AvailabilityZone": "us-west-2b",
+            "GroupName": "",
+            "HostId": null,
+            "SpreadDomain": null,
+            "Tenancy": "default"
+          },
+          "Platform": null,
+          "PublicDnsName": "",
+          "PublicIpAddress": null,
+          "RamdiskId": null,
+          "RootDeviceName": "/dev/sda1",
+          "RootDeviceType": "ebs",
+          "SourceDestCheck": true,
+          "SpotInstanceRequestId": null,
+          "SriovNetSupport": null,
+          "State": {
+            "Code": 80,
+            "Name": "stopped"
+          }
+        }
+      ]
+    }
+  ]
+}`
+
+	ec2StartInstanceExample = `{
+		"Credential": "${env.HOME}/.secret/aws-west.json",
+		"Method": "StartInstances",
+		"Input": {
+			"InstanceIds": [
+				"i-*********"
+			]
+		}
+	}`
+)
+
+func (s *ec2Service) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "call",
+		RequestInfo: &ActionInfo{
+			Description: "call proxies request into github.com/aws/aws-sdk-go/service/ec2.EC2 client",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "credential file",
+					Data:    ec2CredentialExample,
+				},
+				{
+					UseCase: "get instance status",
+					Data:    ec2GetInstanceStatusExample,
+				},
+				{
+					UseCase: "start instance",
+					Data:    ec2StartInstanceExample,
+				},
+			},
+		},
+		ResponseInfo: &ActionInfo{
+			Description: "response from github.com/aws/aws-sdk-go/service/ec2.EC2 client",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "get instance status",
+					Data:    ex2GetInstanceResponseExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &EC2CallRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return struct{}{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*EC2CallRequest); ok {
+				return s.run(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+}
+
 //NewEc2Service creates a new AWS Ec2 service.
 func NewEc2Service() Service {
 	var result = &ec2Service{
-		AbstractService: NewAbstractService(Ec2ServiceID,
-			Ec2ServiceCallAction),
+		AbstractService: NewAbstractService(Ec2ServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }

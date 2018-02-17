@@ -7,8 +7,8 @@ import (
 
 //DockerRunRequest represents a docker run request
 type DockerRunRequest struct {
-	Target *url.Resource `required:"true" description:"host with docker service"` //target host
-	Name string `description:"container name to inspect, if empty it uses target.Name"` //docker container name
+	Target      *url.Resource     `required:"true" description:"host with docker service"`                //target host
+	Name        string            `description:"container name to inspect, if empty it uses target.Name"` //docker container name
 	Credentials map[string]string `description:"map of secret key to obfuscate terminal output with corresponding filename storing credential compatible with github.com/viant/toolbox/cred/config.go"`
 	Image       string            `required:"true" description:"container image to run" example:"mysql:5.6"`
 	Port        string            `description:"publish a container’s port(s) to the host, docker -p option"`
@@ -19,8 +19,7 @@ type DockerRunRequest struct {
 	Workdir     string            `description:"working directory inside the container, docker -w option"`
 }
 
-
-//DockerRunRequest represents a docker run response
+//DockerRunResponse represents a docker run response
 type DockerRunResponse struct {
 	*DockerContainerInfo
 }
@@ -30,13 +29,11 @@ func (r *DockerRunRequest) Validate() error {
 	if r.Target == nil {
 		return fmt.Errorf("target was nil")
 	}
-	if r.Target.Name == "" {
-		return fmt.Errorf("target name was empty for %v", r.Target.URL)
+	if r.Name == "" {
+		return fmt.Errorf("container  name was empty for %v", r.Target.URL)
 	}
 	if r.Image == "" {
 		return fmt.Errorf("image was empty for %v", r.Target.URL)
 	}
 	return nil
 }
-
-

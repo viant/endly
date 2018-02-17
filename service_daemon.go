@@ -397,8 +397,6 @@ func (s *daemonService) startService(context *Context, request *DaemonStartReque
 	return &DaemonStartResponse{DaemonInfo: serviceInfo}, err
 }
 
-
-
 func (s *daemonService) registerRoutes() {
 	s.Register(&ServiceActionRoute{
 		Action: "start",

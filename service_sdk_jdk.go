@@ -9,7 +9,7 @@ import (
 
 type systemJdkService struct{}
 
-func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate string, request *SystemSdkSetRequest) (*SystemSdkInfo, error) {
+func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate string, request *SdkSetRequest) (*SystemSdkInfo, error) {
 	var result = &SystemSdkInfo{}
 	commandResponse, err := context.Execute(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
@@ -56,7 +56,7 @@ func (s *systemJdkService) checkJavaVersion(context *Context, jdkCandidate strin
 
 }
 
-func (s *systemJdkService) getJavaHomeCheckCommand(context *Context, request *SystemSdkSetRequest) string {
+func (s *systemJdkService) getJavaHomeCheckCommand(context *Context, request *SdkSetRequest) string {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return ""
@@ -70,7 +70,7 @@ func (s *systemJdkService) getJavaHomeCheckCommand(context *Context, request *Sy
 	return fmt.Sprintf("update-java-alternatives --list | grep %v", version)
 }
 
-func (s *systemJdkService) setSdk(context *Context, request *SystemSdkSetRequest) (*SystemSdkInfo, error) {
+func (s *systemJdkService) setSdk(context *Context, request *SdkSetRequest) (*SystemSdkInfo, error) {
 	var result = &SystemSdkInfo{}
 	result, err := s.checkJavaVersion(context, "", request)
 	if err == nil {

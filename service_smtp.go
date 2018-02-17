@@ -11,49 +11,11 @@ import (
 const (
 	//SMTPServiceID represents smtp service id.
 	SMTPServiceID = "smtp"
-
-	//SMTPServiceSendAction represents smtp action
-	SMTPServiceSendAction = "send"
 )
 
 //no operation service
 type smtpService struct {
 	*AbstractService
-}
-
-func (s *smtpService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok", Response: request}
-	var err error
-	switch actualRequest := request.(type) {
-	case *SMTPSendRequest:
-		response.Response, err = s.send(context, actualRequest)
-
-	default:
-		err = fmt.Errorf("unsupported request type: %T", request)
-	}
-	if err != nil {
-		response.Status = "error"
-		response.Error = err.Error()
-	}
-	defer s.End(context)(startEvent, Pairs("response", response))
-	return response
-}
-
-func (s *smtpService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case SMTPServiceSendAction:
-		return &SMTPSendRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
-
-func (s *smtpService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case SMTPServiceSendAction:
-		return &SMTPSendResponse{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
 }
 
 //NewSMTPClient creates a new SMTP client.
@@ -118,12 +80,56 @@ func (s *smtpService) send(context *Context, request *SMTPSendRequest) (*SMTPSen
 	return response, nil
 }
 
+const sMTPSendExample = `{
+  "Target": {
+    "URL": "smtp://smtp.gmail.com:465",
+    "Credential": "${env.HOME}/.secret/smtp.json"
+  },
+  "Mail": {
+    "From": "sender@gmail.com",
+    "To": [
+      "abc@gmail.com"
+    ],
+    "Subject": "Subject",
+    "Body": "<h1>Header</h1><p>message</p>",
+    "ContentType": "text/html"
+  }
+}`
+
+func (s *smtpService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "send",
+		RequestInfo: &ActionInfo{
+			Description: "send an email",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "email send",
+					Data:    sMTPSendExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &SMTPSendRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SMTPSendRequest{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*SMTPSendRequest); ok {
+				return s.send(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+}
+
 //NewSMTPService creates a new NoOperation service.
 func NewSMTPService() Service {
 	var result = &smtpService{
-		AbstractService: NewAbstractService(SMTPServiceID,
-			SMTPServiceSendAction),
+		AbstractService: NewAbstractService(SMTPServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }

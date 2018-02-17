@@ -9,15 +9,15 @@ import (
 
 //DsUnitRegisterRequest represents a register request.
 type DsUnitRegisterRequest struct {
-	Datastore       string
-	Config          *dsc.Config //make sure Deploy.Parameters have database Id key
-	Credential      string
-	adminConfig     *dsc.Config //make sure Deploy.Parameters have database Id key
-	AdminDatastore  string      //Id of admin db
-	AdminCredential string
-	ClearDatastore  bool
-	Scripts         []*url.Resource
-	Tables          []*dsc.TableDescriptor
+	Datastore       string                 `required:"true" description:"datastore name"`
+	Config          *dsc.Config            `required:"true" description:"datastore config"` //make sure Deploy.Parameters have database Id key
+	Credential      string                 `required:"true" description:"datastore credential file"`
+	adminConfig     *dsc.Config            //make sure Deploy.Parameters have database Id key
+	AdminDatastore  string                 `description:"admin datastore, needed to connect and create test database"`
+	AdminCredential string                 `description:"admin datastore credential file"`
+	ClearDatastore  bool                   `description:"flag to re create database"`
+	Scripts         []*url.Resource        `description:"URL list with SQL script to run"`
+	Tables          []*dsc.TableDescriptor `description:"table descriptor list"`
 }
 
 //DsUnitRegisterResponse represents a register response.
