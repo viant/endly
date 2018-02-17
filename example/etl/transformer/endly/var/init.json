@@ -41,7 +41,7 @@
     "Name": "executionTarget",
     "Value": {
       "URL": "ssh://${targetHost}/",
-      "Credential": "targetHostCredential"
+      "Credential": "$targetHostCredential"
     }
   }
 ]
