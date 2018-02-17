@@ -603,9 +603,11 @@ func (r *CliRunner) reportValidation(validation *assertly.Validation, event *Eve
 		}
 		eventTag.FailedCount += validation.FailedCount
 		eventTag.PassedCount += validation.PassedCount
-		eventTag.AddEvent(&Event{Type: "Validation", Value: Pairs("value", validation)})
+		if validation.FailedCount > 0 {
+			eventTag.AddEvent(&Event{Type: "Validation", Value: Pairs("value", validation)})
+		}
 	}
-	
+
 	messageType := messageTypeSuccess
 	messageInfo := "OK"
 	var message = fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, total, description)
