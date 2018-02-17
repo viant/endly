@@ -14,7 +14,7 @@ import (
 //EC2Call represents ec2 call.
 type EC2Call struct {
 	Method     string        `required:"true" description:"ec2 client method name"`
-	Parameters []interface{} `required:"true" description:"ec2 client method paramters"`
+	Parameters []interface{} `required:"true" description:"ec2 client method parameters"`
 }
 
 const (

@@ -5,13 +5,13 @@ import (
 	"strings"
 )
 
-//Error repreents an exception
+//Error represents an exception
 type Error struct {
 	Path  []string
 	error error
 }
 
-//Unshift appends at the  begining service, action
+//Unshift appends supplied pathFragments at the beginning
 func (e *Error) Unshift(pathFragments ...string) {
 	var pathFragment = strings.Join(pathFragments, ".")
 	e.Path = append([]string{pathFragment}, e.Path...)
