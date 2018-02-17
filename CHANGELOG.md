@@ -23,7 +23,7 @@
     * Added workflow task description with endly -t='?'
     
 ## Feb 18  2018 0.3.1
-    * Updated service action request discover (endly -s -a)
+    * Updated service action request discovery (endly -s -a)
     * Streamline error handling
     * Added tagIDs option for running request
     * Refactor docker container request
