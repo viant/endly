@@ -245,7 +245,7 @@ func printHelp() {
 	fmt.Fprintf(os.Stderr, "Usage of %s:\n", name)
 	fmt.Fprintf(os.Stderr, "endly [options] [params...]\n")
 	fmt.Fprintf(os.Stderr, "\tparams should be key value pair to be supplied as actual workflow parameters\n")
-	fmt.Fprintf(os.Stderr, "\tif -r options is used, original request params may be overriden\n\n")
+	fmt.Fprintf(os.Stderr, "\tif -r options is used, original request params may be overridden \n\n")
 
 	fmt.Fprintf(os.Stderr, "where options include:\n")
 	flag.PrintDefaults()

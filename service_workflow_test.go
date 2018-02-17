@@ -47,7 +47,7 @@ func getServiceWithWorkflowContext(workflowURI string) (*endly.Context, endly.Se
 		if workflowLoadResponse, ok := response.Response.(*endly.WorkflowLoadResponse); ok {
 			context.Workflows.Push(workflowLoadResponse.Workflow)
 		} else {
-			fmt.Printf("unexpected reponse: %T\n", response.Response)
+			fmt.Printf("unexpected response: %T\n", response.Response)
 		}
 	}
 	return context, service, err

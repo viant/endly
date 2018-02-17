@@ -140,6 +140,7 @@ func (w *Workflow) FilterTasks(filter string) ([]*WorkflowTask, error) {
 	return result, nil
 }
 
+//HasTagID checks if task has supplied tagIDs
 func (t *WorkflowTask) HasTagID(tagIDs map[string]bool) bool {
 	if tagIDs == nil {
 		return false
