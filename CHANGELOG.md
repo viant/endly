@@ -24,9 +24,9 @@
     
 ## Feb 18  2018 0.3.1
     * Updated service action request discovery (endly -s -a)
-    * Streamline error handling
-    * Added tagIDs option for running request
-    * Refactor docker container request
-    * Refactor dsunit prepare/expect request
+    * Streamlined error handling
+    * Added tagIDs to WorkflowRunRequest option
+    * Refactored docker container request
+    * Refactored dsunit prepare/expect request
     * Updated documentation
     * Minor fixes
