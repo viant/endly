@@ -13,3 +13,13 @@ type ProcessStopAllRequest struct {
 	Target *url.Resource
 	Input  string
 }
+
+//ProcessStopAllResponse represents a stop all response
+type ProcessStopAllResponse struct {
+	Stdout string
+}
+
+//ProcessStopResponse represents a stop response
+type ProcessStopResponse struct {
+	Stdout string
+}

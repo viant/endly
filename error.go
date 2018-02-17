@@ -12,8 +12,9 @@ type Error struct {
 }
 
 //Unshift appends at the  begining service, action
-func (e *Error) Unshift(service, action string) {
-	e.Path = append([]string{fmt.Sprintf("%v.%v", service, action)}, e.Path...)
+func (e *Error) Unshift(pathFragments ...string) {
+	var pathFragment = strings.Join(pathFragments, ".")
+	e.Path = append([]string{pathFragment}, e.Path...)
 }
 
 //Error returns en error
@@ -21,7 +22,7 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("%v at %v", e.error, strings.Join(e.Path, "/"))
 }
 
-//NewAbstractException returns new abstract exception
+//NewError returns new workflow exception or update path
 func NewError(service, action string, err error) error {
 	if abstractException, ok := err.(*Error); ok {
 		abstractException.Unshift(service, action)

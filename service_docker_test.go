@@ -252,7 +252,7 @@ func TestDockerService_Run(t *testing.T) {
 
 			defer context.Close()
 			if assert.Nil(t, err) {
-				useCase.Request.Target.Name = useCase.TargetName
+				useCase.Request.Name = useCase.TargetName
 				serviceResponse := service.Run(context, useCase.Request)
 
 				var baseCase = useCase.baseDir + " " + useCase.TargetName
@@ -299,7 +299,7 @@ func TestDockerService_Command(t *testing.T) {
 			"test/docker/command/export/darwin",
 			&endly.DockerContainerRunRequest{
 				DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
-					Target:           target,
+					Target: target,
 				},
 				Interactive:      true,
 				AllocateTerminal: true,
@@ -316,7 +316,7 @@ func TestDockerService_Command(t *testing.T) {
 			"test/docker/command/import/darwin",
 			&endly.DockerContainerRunRequest{
 				DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
-					Target:           target,
+					Target: target,
 				},
 				Interactive: true,
 				Credentials: map[string]string{
@@ -340,7 +340,7 @@ func TestDockerService_Command(t *testing.T) {
 
 			defer context.Close()
 			if assert.Nil(t, err) {
-				useCase.Request.Target.Name = useCase.TargetName
+				useCase.Request.Name = useCase.TargetName
 
 				serviceResponse := service.Run(context, useCase.Request)
 
@@ -434,7 +434,7 @@ func TestDockerService_Status(t *testing.T) {
 	credentialFile, err := GetDummyCredential()
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	target.Name = "db1"
+
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir  string
@@ -507,7 +507,6 @@ func TestDockerService_Start(t *testing.T) {
 	credentialFile, err := GetDummyCredential()
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	target.Name = "db1"
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir  string
@@ -519,7 +518,8 @@ func TestDockerService_Start(t *testing.T) {
 			"test/docker/start/linux",
 			&endly.DockerContainerStartRequest{
 				DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
-					Target:           target,
+					Target: target,
+					Name:   "db1",
 				},
 			},
 			&endly.DockerContainerInfo{
@@ -550,7 +550,7 @@ func TestDockerService_Start(t *testing.T) {
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
 				response, ok := serviceResponse.Response.(*endly.DockerContainerStartResponse)
-				if !ok{
+				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
 				}
@@ -577,7 +577,6 @@ func TestDockerService_Stop(t *testing.T) {
 	credentialFile, err := GetDummyCredential()
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	target.Name = "db1"
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir  string
@@ -589,7 +588,8 @@ func TestDockerService_Stop(t *testing.T) {
 			"test/docker/stop/linux",
 			&endly.DockerContainerStopRequest{
 				DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
-					Target:           target,
+					Target: target,
+					Name:   "db1",
 				},
 			},
 			&endly.DockerContainerInfo{
@@ -618,7 +618,7 @@ func TestDockerService_Stop(t *testing.T) {
 
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
-				response, ok := serviceResponse.Response.(*endly.DockerContainerInfo)
+				response, ok := serviceResponse.Response.(*endly.DockerContainerStopResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -642,7 +642,7 @@ func TestDockerService_Remove(t *testing.T) {
 	credentialFile, err := GetDummyCredential()
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	target.Name = "db1"
+
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir  string
@@ -654,7 +654,8 @@ func TestDockerService_Remove(t *testing.T) {
 			"test/docker/remove/linux",
 			&endly.DockerContainerRemoveRequest{
 				DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
-					Target:           target,
+					Target: target,
+					Name:   "db1",
 				},
 			},
 			"db1",
@@ -881,10 +882,10 @@ func TestDockerService_Inspect(t *testing.T) {
 	}
 	defer context.Close()
 	service, _ := context.Service(endly.DockerServiceID)
-	target.Name = "site_backup"
 	serviceResponse := service.Run(context, &endly.DockerInspectRequest{
 		DockerContainerBaseRequest: &endly.DockerContainerBaseRequest{
-			Target:           target,
+			Target: target,
+			Name:   "site_backup",
 		},
 	})
 	assert.EqualValues(t, "", serviceResponse.Error)
@@ -932,10 +933,6 @@ func TestDockerService_Inspect(t *testing.T) {
 //}
 //
 
-
-
-
-
 func TestDockerLoginRequest_Validate(t *testing.T) {
 	{
 		request := &endly.DockerLoginRequest{}
@@ -961,7 +958,6 @@ func TestDockerLoginRequest_Validate(t *testing.T) {
 		assert.Nil(t, request.Validate())
 	}
 }
-
 
 func Test_DockerBuildRequest_Validate(t *testing.T) {
 	{
@@ -995,8 +991,6 @@ func Test_DockerBuildRequest_Validate(t *testing.T) {
 		assert.NotNil(t, request.Validate())
 	}
 }
-
-
 
 func TestDockerTag_Validate(t *testing.T) {
 

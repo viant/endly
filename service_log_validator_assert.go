@@ -7,13 +7,13 @@ type LogValidatorAssertRequest struct {
 	LogWaitTimeMs      int
 	LogWaitRetryCount  int
 	Description        string
-	ExpectedLogRecords []*ExpectedLogRecord
+	ExpectedLogRecords []*ExpectedLogRecord `required:"true" description:"expected log data"`
 }
 
 //ExpectedLogRecord represents an expected log record.
 type ExpectedLogRecord struct {
-	TagID   string
-	Type    string
+	TagID   string `description:"neatly tag id for matching validation summary"`
+	Type    string `required:"true" description:"log type register with listener"`
 	Records []interface{}
 }
 

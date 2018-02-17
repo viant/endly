@@ -140,6 +140,18 @@ func (w *Workflow) FilterTasks(filter string) ([]*WorkflowTask, error) {
 	return result, nil
 }
 
+func (t *WorkflowTask) HasTagID(tagIDs map[string]bool) bool {
+	if tagIDs == nil {
+		return false
+	}
+	for _, action := range t.Actions {
+		if tagIDs[action.TagID] {
+			return true
+		}
+	}
+	return false
+}
+
 //WorkflowError represent workflow error
 type WorkflowError struct {
 	Error        string

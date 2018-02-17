@@ -1,8 +1,8 @@
 package endly
 
 import (
-	"github.com/viant/toolbox/url"
 	"github.com/pkg/errors"
+	"github.com/viant/toolbox/url"
 )
 
 //StorageCopyRequest represents a resources copy request
@@ -17,13 +17,14 @@ type StorageCopyResponse struct {
 
 //Transfer represents copy instruction
 type Transfer struct {
-	Source   *url.Resource     `required:"true" description:"source asset or directory"`                                                    //source URL with credential
-	Target   *url.Resource     `required:"true" description:"destination asset or directory"`                                               //target URL with credential
-	Expand   bool              `description:"flag to substitute asset content with state keys"`                                             //flag to substitute content with state keys
-	Compress bool                                                                                                                           //flag to compress asset before sending over wirte and to decompress (this option is only supported on scp or file proto)
+	Source   *url.Resource     `required:"true" description:"source asset or directory"`        //source URL with credential
+	Target   *url.Resource     `required:"true" description:"destination asset or directory"`   //target URL with credential
+	Expand   bool              `description:"flag to substitute asset content with state keys"` //flag to substitute content with state keys
+	Compress bool              //flag to compress asset before sending over wirte and to decompress (this option is only supported on scp or file proto)
 	Replace  map[string]string `description:"replacements map, if key if found in the conent it wil be replaced with corresponding value."` //replacements map, if key if found in the conent it wil be replaced with corresponding value.
 }
 
+//Validate checks if request is valid
 func (t *Transfer) Validate() error {
 	if t.Source == nil {
 		return errors.New("source was empty")
@@ -34,6 +35,7 @@ func (t *Transfer) Validate() error {
 	return nil
 }
 
+//Validate checks if request is valid
 func (r *StorageCopyRequest) Validate() error {
 	if len(r.Transfers) == 0 {
 		return errors.New("transfers were empty")

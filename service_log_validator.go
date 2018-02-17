@@ -21,15 +21,6 @@ import (
 const (
 	//LogValidatorServiceID represents log validator service id.
 	LogValidatorServiceID = "validator/log"
-
-	//LogValidatorServiceListenAction represents log listening action
-	LogValidatorServiceListenAction = "listen"
-
-	//LogValidatorServiceAssertAction represents log verification action
-	LogValidatorServiceAssertAction = "assert"
-
-	//LogValidatorServiceResetAction represents verification pending logs reset action
-	LogValidatorServiceResetAction = "reset"
 )
 
 type logValidatorService struct {
@@ -266,37 +257,6 @@ func (i *logRecordIterator) HasNext() bool {
 		return i.HasNext()
 	}
 	return true
-}
-
-func (s *logValidatorService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-	var err error
-	switch actualRequest := request.(type) {
-	case *LogValidatorListenRequest:
-		response.Response, err = s.listen(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to run logValidator: %v, %v", actualRequest.Source, err)
-		}
-	case *LogValidatorAssertRequest:
-		response.Response, err = s.assert(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to run logValidator: %v, %v", actualRequest, err)
-		}
-	case *LogValidatorResetRequest:
-		response.Response, err = s.reset(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to run logValidator: %v, %v", actualRequest, err)
-		}
-
-	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
-	}
-	if response.Error != "" {
-		response.Status = "err"
-	}
-	return response
 }
 
 func (s *logValidatorService) reset(context *Context, request *LogValidatorResetRequest) (*LogValidatorResetResponse, error) {
@@ -617,42 +577,145 @@ func (s *logValidatorService) listen(context *Context, request *LogValidatorList
 	return response, err
 }
 
-//NewRequest creates a new request for provided action, (listen, asset,reset)
-func (s *logValidatorService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case LogValidatorServiceListenAction:
-		return &LogValidatorListenRequest{}, nil
-	case LogValidatorServiceAssertAction:
-		return &LogValidatorAssertRequest{}, nil
-	case LogValidatorServiceResetAction:
-		return &LogValidatorResetRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
+const (
+	logValidatorExample = `{
+  "FrequencyMs": 500,
+  "Source": {
+    "URL": "scp://127.0.0.1/opt/elogger/logs/",
+    "Credential": "${env.HOME}/.secret/localhost.json"
+  },
+  "Types": [
+    {
+      "Name": "event1",
+      "Format": "json",
+      "Mask": "elog*.log",
+      "Inclusion": "/event1/",
+      "IndexRegExpr": "\"EventID\":\"([^\"]+)\""
+    }
+  ]
+}`
 
-//NewRequest creates a new request for provided action, (listen, asset,reset)
-func (s *logValidatorService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case LogValidatorServiceListenAction:
-		return &LogValidatorListenResponse{}, nil
-	case LogValidatorServiceAssertAction:
-		return &LogValidatorAssertResponse{}, nil
-	case LogValidatorServiceResetAction:
-		return &LogValidatorResetResponse{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
+	logValidatorAssertExample = ` {
+		"LogWaitTimeMs": 5000,
+		"LogWaitRetryCount": 5,
+		"Description": "E-logger event log validation",
+		"ExpectedLogRecords": [
+			{
+				"Type": "event1",
+				"Records": [
+					{
+						"EventID": "84423348-1384-11e8-b0b4-ba004c285304",
+						"EventType": "event1",
+						"Request": {
+							"Method": "GET",
+							"URL": "http://127.0.0.1:8777/event1/?k10=v1\u0026k2=v2"
+						}
+					},
+					{
+						"EventID": "8441c4bc-1384-11e8-b0b4-ba004c285304",
+						"EventType": "event1",
+						"Request": {
+							"Method": "GET",
+							"URL": "http://127.0.0.1:8777/event1/?k1=v1\u0026k2=v2"
+						}
+					}
+				]
+			},
+			{
+				"Type": "event2",
+				"Records": [
+					{
+						"EventID": "84426d4a-1384-11e8-b0b4-ba004c285304",
+						"EventType": "event2",
+						"Request": {
+							"Method": "GET",
+							"URL": "http://127.0.0.1:8777/event2/?k1=v1\u0026k2=v2"
+						}
+					}
+				]
+			}
+		]
+	}`
+)
+
+func (s *logValidatorService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "listen",
+		RequestInfo: &ActionInfo{
+			Description: "check for log changes",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "log listen",
+					Data:    logValidatorExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &LogValidatorListenRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &LogValidatorListenResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*LogValidatorListenRequest); ok {
+				return s.listen(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "assert",
+		RequestInfo: &ActionInfo{
+			Description: "assert queued logs",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "assert",
+					Data:    logValidatorAssertExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &LogValidatorAssertRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &LogValidatorAssertResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*LogValidatorAssertRequest); ok {
+				return s.assert(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "reset",
+		RequestInfo: &ActionInfo{
+			Description: "reset logs queues",
+		},
+		RequestProvider: func() interface{} {
+			return &LogValidatorResetRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &LogValidatorResetResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*LogValidatorResetRequest); ok {
+				return s.reset(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 }
 
 //NewLogValidatorService creates a new log validator service.
 func NewLogValidatorService() Service {
 	var result = &logValidatorService{
-		AbstractService: NewAbstractService(LogValidatorServiceID,
-			LogValidatorServiceListenAction,
-			LogValidatorServiceAssertAction,
-			LogValidatorServiceResetAction,
-		),
+		AbstractService: NewAbstractService(LogValidatorServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }
 
@@ -682,7 +745,6 @@ func (i *logRecordIterator) Next(itemPointer interface{}) error {
 
 //LogRecordIterator returns log record iterator
 func (m *LogTypeMeta) LogRecordIterator() toolbox.Iterator {
-
 	logFileProvider := func() []*LogFile {
 		var result = make([]*LogFile, 0)
 		for _, logFile := range m.LogFiles {

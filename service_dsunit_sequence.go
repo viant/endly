@@ -7,7 +7,7 @@ import (
 
 //DsUnitTableSequenceRequest represents a sequence request for specified tables.
 type DsUnitTableSequenceRequest struct {
-	Datastore string
+	Datastore string `required:"true" description:"register datastore name"`
 	Tables    []string
 }
 

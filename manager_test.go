@@ -78,13 +78,13 @@ func Test_ServiceRequest(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 	var services = endly.Services(manager)
 	for k, service := range services {
-		_, err := service.NewRequest("abc")
+		_, err := context.NewRequest(service.ID(), "abc")
 		assert.NotNil(t, err, k)
 		response := service.Run(context, struct{}{})
 		assert.True(t, response.Error != "", k)
 
 		for _, action := range service.Actions() {
-			request, err := service.NewRequest(action)
+			request, err := context.NewRequest(service.ID(), action)
 			assert.Nil(t, err)
 			assert.NotNil(t, request)
 			if _, ok := request.(Validator); ok {
@@ -100,7 +100,7 @@ func Test_ServiceRequest(t *testing.T) {
 
 					continue
 
-				} else 	if _, has := requestType.FieldByName("Target"); has {
+				} else if _, has := requestType.FieldByName("Target"); has {
 					reflect.ValueOf(request).Elem().FieldByName("Target").Set(reflect.ValueOf(invalidResourse))
 					response = service.Run(context, request)
 					assert.True(t, response.Error != "", fmt.Sprintf("%T %T", request, service))
@@ -113,27 +113,6 @@ func Test_ServiceRequest(t *testing.T) {
 
 }
 
-func Test_ServiceResponse(t *testing.T) {
-
-	manager := endly.NewManager()
-
-	var services = endly.Services(manager)
-	for k, service := range services {
-		_, err := service.NewResponse("abc")
-		assert.NotNil(t, err, k)
-		for _, action := range service.Actions() {
-			resp, err := service.NewResponse(action)
-			assert.Nil(t, err, service.ID()+" "+action)
-			assert.NotNil(t, resp)
-			toolbox.InitStruct(resp)
-		}
-
-	}
-
-}
-
-
-
 func Test_ServiceRoutes(t *testing.T) {
 	manager := endly.NewManager()
 	var services = endly.Services(manager)
@@ -141,22 +120,16 @@ func Test_ServiceRoutes(t *testing.T) {
 	for _, service := range services {
 		response := service.Run(context, struct{}{})
 		assert.True(t, response.Error != "")
-		for  _, action:= range service.Actions() {
-			if route, err  := service.ServiceActionRoute(action);err== nil{
-				if route.Handler != nil{
-				_, err := route.Handler(context, struct{}{})
-				assert.NotNil(t, err)
-			}
+		for _, action := range service.Actions() {
+			if route, err := service.ServiceActionRoute(action); err == nil {
+				if route.Handler != nil {
+					_, err := route.Handler(context, struct{}{})
+					assert.NotNil(t, err)
+				}
 			}
 		}
 	}
 }
-
-
-
-
-
-
 
 func Test_GetVersion(t *testing.T) {
 	version := endly.GetVersion()

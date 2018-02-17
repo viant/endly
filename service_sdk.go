@@ -11,9 +11,6 @@ var errSdkNotFound = errors.New("SDK NOT FUND")
 const (
 	//SdkServiceID represents system sdk
 	SdkServiceID = "sdk"
-
-	//SdkServiceSetAction represents sdk set action
-	SdkServiceSetAction = "set"
 )
 
 type systemSdkService struct {
@@ -36,7 +33,7 @@ func (s *systemSdkService) updateSessionSdk(context *Context, target *url.Resour
 	return nil
 }
 
-func (s *systemSdkService) deploySdk(context *Context, request *SystemSdkSetRequest) error {
+func (s *systemSdkService) deploySdk(context *Context, request *SdkSetRequest) error {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil
@@ -50,56 +47,13 @@ func (s *systemSdkService) deploySdk(context *Context, request *SystemSdkSetRequ
 		AppName: request.Sdk,
 		Version: request.Version,
 	})
-	if serviceResponse.Error != "" {
-		return fmt.Errorf("failed to deploy sdk: %v %v, %v", request.Sdk, request.Version, serviceResponse.Error)
+	if serviceResponse.err != nil {
+		return serviceResponse.err
 	}
 	return nil
 }
 
-func (s *systemSdkService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-
-	var err error
-	switch actualRequest := request.(type) {
-	case *SystemSdkSetRequest:
-		response.Response, err = s.setSdk(context, actualRequest)
-		if err == errSdkNotFound {
-			err = s.deploySdk(context, actualRequest)
-			if err == nil {
-				response.Response, err = s.setSdk(context, actualRequest)
-			}
-		}
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to run sdk: %v, %v", actualRequest.Sdk, err)
-		}
-	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
-	}
-	if response.Error != "" {
-		response.Status = "error"
-	}
-	return response
-}
-
-func (s *systemSdkService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case SdkServiceSetAction:
-		return &SystemSdkSetRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
-
-func (s *systemSdkService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case SdkServiceSetAction:
-		return &SystemSdkSetResponse{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
-}
-
-func (s *systemSdkService) checkSdkOnSession(context *Context, target *url.Resource, request *SystemSdkSetRequest, response *SystemSdkSetResponse) bool {
+func (s *systemSdkService) checkSdkOnSession(context *Context, target *url.Resource, request *SdkSetRequest, response *SdkSetResponse) bool {
 	session, err := context.TerminalSession(target)
 	if err != nil {
 		return false
@@ -121,8 +75,8 @@ func (s *systemSdkService) checkSdkOnSession(context *Context, target *url.Resou
 	return false
 }
 
-func (s *systemSdkService) setSdk(context *Context, request *SystemSdkSetRequest) (response *SystemSdkSetResponse, err error) {
-	response = &SystemSdkSetResponse{}
+func (s *systemSdkService) setSdk(context *Context, request *SdkSetRequest) (response *SdkSetResponse, err error) {
+	response = &SdkSetResponse{}
 	service, err := context.Service(ExecServiceID)
 	if err != nil {
 		return nil, err
@@ -142,8 +96,8 @@ func (s *systemSdkService) setSdk(context *Context, request *SystemSdkSetRequest
 		Env:    request.Env,
 	})
 
-	if serviceResponse.Error != "" {
-		return nil, fmt.Errorf("failed to set sdk %v", serviceResponse.Error)
+	if serviceResponse.err != nil {
+		return nil, serviceResponse.err
 	}
 
 	switch request.Sdk {
@@ -155,19 +109,70 @@ func (s *systemSdkService) setSdk(context *Context, request *SystemSdkSetRequest
 	default:
 		return nil, fmt.Errorf("unsupported jdk: %v", request.Sdk)
 	}
-
 	s.updateSessionSdk(context, target, response.SdkInfo)
 	return response, err
 }
 
-//NewSystemJdkService creates a new system jdk service.
-func NewSystemJdkService() Service {
+func (s *systemSdkService) setSdkAndDeployIfNeeded(context *Context, request *SdkSetRequest) (response *SdkSetResponse, err error) {
+	response, err = s.setSdk(context, request)
+	if err == errSdkNotFound {
+		err = s.deploySdk(context, request)
+		if err == nil {
+			response, err = s.setSdk(context, request)
+		}
+	}
+	return response, err
+}
+
+const sdkSetExample = `{
+  "Sdk": "go",
+  "Version": "1.8",
+  "Env": {
+    "GOOS": "linux",
+    "GOPATH": "/Projects/go/workspace/"
+  },
+  "Target": {
+    "URL": "ssh://127.0.0.1/",
+    "Credential": "${env.HOME}/.secret/localhost.json"
+  }
+}`
+
+func (s *systemSdkService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "set",
+		RequestInfo: &ActionInfo{
+			Description: "set sdk on SSH session, deploy SDK if needed",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "set go sdk",
+					Data:    sdkSetExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &SdkSetRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SdkSetResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*SdkSetRequest); ok {
+				return s.setSdkAndDeployIfNeeded(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+}
+
+//NewSdkService creates a new system sdk service.
+func NewSdkService() Service {
 	var result = &systemSdkService{
-		jdkService: &systemJdkService{},
-		goService:  &systemGoService{},
-		AbstractService: NewAbstractService(SdkServiceID,
-			SdkServiceSetAction),
+		jdkService:      &systemJdkService{},
+		goService:       &systemGoService{},
+		AbstractService: NewAbstractService(SdkServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }

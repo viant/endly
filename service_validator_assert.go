@@ -7,8 +7,8 @@ type ValidatorAssertRequest struct {
 	TagID       string
 	Name        string
 	Description string
-	Actual      interface{} //actual data structure
-	Expected    interface{} //expecte data structure
+	Actual      interface{} `required:"true" description:"actual value/data structure"`
+	Expected    interface{} `required:"true" description:"expected value/data structure"`
 }
 
 //ValidatorAssertResponse represent validation response

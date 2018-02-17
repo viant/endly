@@ -15,28 +15,6 @@ type validatorService struct {
 	*AbstractService
 }
 
-func (s *validatorService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-
-	switch actualReuest := request.(type) {
-	case *ValidatorAssertRequest:
-		assertResponse, err := s.Assert(context, actualReuest)
-		if err != nil {
-			response.Error = fmt.Sprintf("%v", err)
-		}
-		response.Response = assertResponse
-	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
-
-	}
-	if response.Error != "" {
-		response.Status = "err"
-	}
-	return response
-}
-
 func (s *validatorService) Assert(context *Context, request *ValidatorAssertRequest) (response *ValidatorAssertResponse, err error) {
 	var state = context.State()
 	var actual = request.Actual
@@ -59,29 +37,68 @@ func (s *validatorService) Assert(context *Context, request *ValidatorAssertRequ
 	return response, nil
 }
 
-func (s *validatorService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case ValidatorServiceAssertAction:
-		return &ValidatorAssertRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
+const validationExample = `{
+  "Actual": [
+    {
+      "k": 10,
+      "seq": "22",
+      "y": 2
+    },
+    {
+      "b": 2,
+      "k": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.",
+      "seq": "11"
+    }
+  ],
+  "Expected": {
+    "11": {
+      "b": 2,
+      "k": "/Lorem Ipsum/",
+      "seq": "11"
+    },
+    "22": {
+      "k": 10,
+      "seq": "22",
+      "y": 2
+    },
+    "@indexBy@": "seq"
+  }
+}`
 
-func (s *validatorService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case ValidatorServiceAssertAction:
-		return &ValidatorAssertResponse{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
+func (s *validatorService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "assert",
+		RequestInfo: &ActionInfo{
+			Description: "validate provided data (it uses https://github.com/viant/assertly)",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "validation",
+					Data:    validationExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &ValidatorAssertRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &ValidatorAssertResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*ValidatorAssertRequest); ok {
+				return s.Assert(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 }
 
 //NewValidatorService creates a new validation service
 func NewValidatorService() Service {
 	var result = &validatorService{
-		AbstractService: NewAbstractService(ValidatorServiceID,
-			ValidatorServiceAssertAction),
+		AbstractService: NewAbstractService(ValidatorServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 
 }

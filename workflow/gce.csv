@@ -1,5 +1,5 @@
 Workflow,,,Name,Description,Tasks,Init,,,
-,,,gce,Start/Stop GCE instances,%Tasks,#gce_init,,,
+,,,gce,Start/Stop GCE instances,%Tasks,@var/gce_init,,,
 []Tasks,,,Name,Description,Actions,,,,
 ,,,start,Start GCE instance,%Start,,,,
 []Start,,Service,Action,Description,Request,Post,method,var.Name,var.From

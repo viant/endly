@@ -4,10 +4,10 @@ import "fmt"
 
 //GCECallRequest represents GCE call request, it operates on *cloud.Service client (https://cloud.google.com/compute/docs/reference/latest/)
 type GCECallRequest struct {
-	Credential string        //path to secret json file.
-	Service    string        //field representing service on *compute.Service, for instance Instance field points to  *compute.InstancesService
-	Method     string        //method on cloud service, for instance, Get, Start
-	Parameters []interface{} //actual method parameters
+	Credential string        `required:"true" description:"path to secret json file"`                                                                                         //path to secret json file.
+	Service    string        `required:"true" description:"field representing service on *compute.Service, for instance Instance field points to  *compute.InstancesService"` //field representing service on *compute.Service, for instance Instance field points to  *compute.InstancesService
+	Method     string        `required:"true" description:"method on cloud service, for instance, Get, Start"`                                                                //method on cloud service, for instance, Get, Start
+	Parameters []interface{} `required:"true" description:"actual method parameters"`                                                                                         //actual method parameters
 }
 
 //GCECallResponse represents GCE call response

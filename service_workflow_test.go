@@ -57,7 +57,7 @@ func TestWorkflowService_SwitchAction(t *testing.T) {
 	context, service, err := getServiceWithWorkflowContext("test/workflow/nop/workflow.csv")
 	assert.Nil(t, err)
 
-	request := &endly.WorkflowSwitchActionRequest{
+	request := &endly.WorkflowSwitchRequest{
 		SourceKey: "run",
 		Cases: []*endly.WorkflowSwitchCase{
 			{
@@ -193,7 +193,7 @@ func TestWorkflowService_OnErrorTask(t *testing.T) {
 	response, ok := serviceResponse.Response.(*endly.WorkflowRunResponse)
 	if assert.True(t, ok) {
 		errorCaught := toolbox.AsString(response.Data["errorCaught"])
-		assert.True(t, strings.Contains(errorCaught, "Fail this is test error at"))
+		assert.True(t, strings.Contains(errorCaught, "this is test error "))
 	}
 }
 
@@ -289,7 +289,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
-			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to run workflow: broken1,"), serviceResponse.Error)
+			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "broken1"), serviceResponse.Error)
 		}
 	}
 	{
@@ -304,7 +304,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
-			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to provide request for nop.aaa"), serviceResponse.Error)
+			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "unknown nop.aaa service action at workflow.run"), serviceResponse.Error)
 		}
 	}
 
@@ -320,7 +320,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
-			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to provide request for nop.aaa"), serviceResponse.Error)
+			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "unknown nop.aaa service action at workflow.run"), serviceResponse.Error)
 		}
 	}
 
@@ -354,5 +354,38 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			})
 			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to load workflow"), serviceResponse.Error)
 		}
+	}
+}
+
+func Test_WorkflowSwitchRequest_Validate(t *testing.T) {
+	{
+		request := &endly.WorkflowSwitchRequest{}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := &endly.WorkflowSwitchRequest{
+			SourceKey: "abc",
+		}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := &endly.WorkflowSwitchRequest{
+			SourceKey: "abc",
+			Cases: []*endly.WorkflowSwitchCase{
+				{},
+			},
+		}
+		assert.NotNil(t, request.Validate())
+	}
+	{
+		request := &endly.WorkflowSwitchRequest{
+			SourceKey: "abc",
+			Cases: []*endly.WorkflowSwitchCase{
+				{
+					Value: "123",
+				},
+			},
+		}
+		assert.Nil(t, request.Validate())
 	}
 }

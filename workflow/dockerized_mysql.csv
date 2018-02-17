@@ -1,5 +1,5 @@
 Workflow,,Name,Description,Tasks,,Init
-,,dockerized_mysql,This workflow manages mysql as docker service,%Tasks,,#dockerized_mysql_init
+,,dockerized_mysql,This workflow manages mysql as docker service,%Tasks,,@var/dockerized_mysql_init
 []Tasks,,Name,Description,Actions,,
 ,,start,"This task will stop system mysql if it is running, it only run if  $param.stopSystemMysql is true",%Start,,
 []Start,Service,Action,Description,Request,RunCriteria,Post

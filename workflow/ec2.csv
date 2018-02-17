@@ -1,5 +1,5 @@
 Workflow,,,Name,Description,Tasks,Init,,,
-,,,ec2,Start/Stop ec2 instances,%Tasks,#ec2_init,,,
+,,,ec2,Start/Stop ec2 instances,%Tasks,@var/ec2_init,,,
 []Tasks,,,Name,Description,Actions,,,,
 ,,,start,Start ec2 instance,%Start,,,,
 []Start,,Service,Action,Description,Request,Post,method,var.Name,var.From

@@ -2,7 +2,6 @@ package endly
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"sync"
@@ -117,16 +116,13 @@ func (s *buildService) setSdkIfNeeded(context *Context, request *BuildRequest) e
 	if err != nil {
 		return err
 	}
-	serviceResponse := sdkService.Run(context, &SystemSdkSetRequest{
+	serviceResponse := sdkService.Run(context, &SdkSetRequest{
 		Target:  request.Target,
 		Sdk:     request.BuildSpec.Sdk,
 		Version: request.BuildSpec.SdkVersion,
 		Env:     request.Env,
 	})
-	if serviceResponse.Error != "" {
-		return errors.New(serviceResponse.Error)
-	}
-	return nil
+	return serviceResponse.err
 }
 
 func (s *buildService) build(context *Context, request *BuildRequest) (*BuildResponse, error) {
@@ -215,8 +211,6 @@ func newBuildState(buildSepc *BuildSpec, target *url.Resource, request *BuildReq
 	return build, nil
 }
 
-
-
 const (
 	buildGoBuildExample = `{
 	"BuildSpec": {
@@ -254,9 +248,6 @@ const (
 `
 )
 
-
-
-
 func (s *buildService) registerRoutes() {
 	s.Register(&ServiceActionRoute{
 		Action: "build",
@@ -265,11 +256,11 @@ func (s *buildService) registerRoutes() {
 			Examples: []*ExampleUseCase{
 				{
 					UseCase: "go app build",
-					Data: buildGoBuildExample,
+					Data:    buildGoBuildExample,
 				},
 				{
 					UseCase: "java app build",
-					Data:buildJavaBuildExample,
+					Data:    buildJavaBuildExample,
 				},
 			},
 		},

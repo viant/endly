@@ -2,16 +2,16 @@ package endly
 
 import "github.com/viant/toolbox/url"
 
-//SystemSdkSetRequest represents sdk set request
-type SystemSdkSetRequest struct {
+//SdkSetRequest represents sdk set request
+type SdkSetRequest struct {
 	Sdk     string //request sdk jdk, go
 	Version string //requested version
 	Env     map[string]string
 	Target  *url.Resource //target host
 }
 
-//SystemSdkSetResponse represents sdk response
-type SystemSdkSetResponse struct {
+//SdkSetResponse represents sdk response
+type SdkSetResponse struct {
 	SdkInfo *SystemSdkInfo
 }
 

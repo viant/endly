@@ -8,7 +8,7 @@ import (
 //TODO complete implementation
 type systemGoService struct{}
 
-func (s *systemGoService) setSdk(context *Context, request *SystemSdkSetRequest) (*SystemSdkInfo, error) {
+func (s *systemGoService) setSdk(context *Context, request *SdkSetRequest) (*SystemSdkInfo, error) {
 	var result = &SystemSdkInfo{}
 
 	goPath, ok := request.Env["GOPATH"]

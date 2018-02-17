@@ -1,3 +1,4 @@
 {
-  "Target": "$dockerTarget"
+  "Target": "$dockerTarget",
+  "Name":"$serviceInstanceName"
 }

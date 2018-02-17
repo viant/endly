@@ -102,7 +102,7 @@ func NewManager() Manager {
 	result.Register(NewValidatorService())
 	result.Register(NewWorkflowService())
 	result.Register(NewVersionControlService())
-	result.Register(NewSystemJdkService())
+	result.Register(NewSdkService())
 	result.Register(NewBuildService())
 	result.Register(NewDockerService())
 	result.Register(NewDataStoreUnitService())

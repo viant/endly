@@ -1,5 +1,6 @@
 {
   "Target": "$dockerTarget",
+  "Name":"$serviceInstanceName",
   "Image": "aerospike/aerospike-server:latest",
   "Mount": {
     "$configFile": "/etc/aerospike/aerospike.conf"

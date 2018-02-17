@@ -7,9 +7,6 @@ import (
 const (
 	//EventReporterServiceID represents event reporter service id
 	EventReporterServiceID = "event/reporter"
-
-	//EventReporterServiceReportAction represents a report action
-	EventReporterServiceReportAction = "report"
 )
 
 //EventReporterFilter represents event reporter fitler
@@ -83,7 +80,7 @@ func (s *eventReporterService) Run(context *Context, request interface{}) *Servi
 	case *EventReporterRequest:
 		response.Response, err = s.report(context, actualRequest)
 		if err != nil {
-			response.Error = fmt.Sprintf("failed to run eventReporter: %v, %v", actualRequest.SessionID, err)
+			response.Error = fmt.Sprintf("failed to run report: %v, %v", actualRequest.SessionID, err)
 		}
 	default:
 		response.Error = fmt.Sprintf("unsupported request type: %T", request)
@@ -94,28 +91,33 @@ func (s *eventReporterService) Run(context *Context, request interface{}) *Servi
 	return response
 }
 
-func (s *eventReporterService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case EventReporterServiceReportAction:
-		return &EventReporterRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
-
-func (s *eventReporterService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case EventReporterServiceReportAction:
-		return &EventReporterResponse{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
+func (s *eventReporterService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "report",
+		RequestInfo: &ActionInfo{
+			Description: "report event",
+		},
+		RequestProvider: func() interface{} {
+			return &EventReporterRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &EventReporterResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*EventReporterRequest); ok {
+				return s.report(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 }
 
 //NewEventReporterService creates a new event reporter service.
 func NewEventReporterService() Service {
 	var result = &eventReporterService{
-		AbstractService: NewAbstractService(EventReporterServiceID,
-			EventReporterServiceReportAction),
+		AbstractService: NewAbstractService(EventReporterServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }

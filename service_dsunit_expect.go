@@ -1,32 +1,14 @@
 package endly
 
 import (
-	"fmt"
 	"github.com/viant/assertly"
 	"github.com/viant/dsunit"
 )
 
 //DsUnitExpectRequest represent verification request.
 type DsUnitExpectRequest struct {
-	Datastore   string                              // name of registered datastore
-	URL         string                              //if URL is provided then all files listed from the path are setup data candidates
-	Credential  string                              // optional URL credential
-	Prefix      string                              //apply prefix
-	Postfix     string                              //apply suffix
-	Data        map[string][]map[string]interface{} //setup data, where the first map key is table name with value being records
-	Expand      bool                                //substitute dollar($) expression with the state map
-	CheckPolicy int
-}
-
-//Validate checks if request if valid, otherwise returns an error.
-func (r *DsUnitExpectRequest) Validate() error {
-	if r.Datastore == "" {
-		return fmt.Errorf("Datasets.Datastore was empty")
-	}
-	if r.URL == "" && len(r.Data) == 0 {
-		return fmt.Errorf("Missing data: Datasets.URL/Datasets.TableRows were empty")
-	}
-	return nil
+	*DsUnitDataRequest
+	CheckPolicy int `description:"verification policy"`
 }
 
 //AsDatasetResource converts request as *dsunit.DatasetResource

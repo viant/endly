@@ -14,7 +14,7 @@ func TestSdkService_Run(t *testing.T) {
 	assert.NotNil(t, service)
 
 	//context := manager.NewContext(toolbox.NewContext())
-	//response := service.Run(context, &endly.SystemSdkSetRequest{
+	//response := service.Run(context, &endly.SdkSetRequest{
 	//	Target: &url.Resource{
 	//		URL: "scp://127.0.0.1/",
 	//	},
@@ -22,7 +22,7 @@ func TestSdkService_Run(t *testing.T) {
 	//	Version: "1.7",
 	//})
 	//if response.Error != "" {
-	//	sdkSetResponse, ok := response.Response.(*endly.SystemSdkSetResponse)
+	//	sdkSetResponse, ok := response.Response.(*endly.SdkSetResponse)
 	//	assert.True(t, ok)
 	//	assert.True(t, len(sdkSetResponse.SdkInfo.Build) > 0)
 	//	assert.True(t, len(sdkSetResponse.SdkInfo.Home) > 0)

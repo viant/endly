@@ -40,14 +40,18 @@ func (s *dockerService) stopImages(context *Context, request *DockerStopImagesRe
 	}
 
 	for _, image := range request.Images {
-
 		for _, container := range processResponse.Containers {
+			fmt.Printf("stopping container: %v ? \n", container.Image)
+
 			if strings.Contains(container.Image, image) {
-				var containerTarget = request.Target.Clone()
-				containerTarget.Name = strings.Split(container.Names, ",")[0]
+				var name = strings.Split(container.Names, ",")[0]
+
+				fmt.Printf("stopping container: %v\n", name)
+
 				_, err = s.stopContainer(context, &DockerContainerStopRequest{
 					DockerContainerBaseRequest: &DockerContainerBaseRequest{
-						Target: containerTarget,
+						Target: request.Target,
+						Name:   name,
 					},
 				})
 				if err != nil {
@@ -113,7 +117,7 @@ func (s *dockerService) resetContainerIfNeeded(context *Context, target *url.Res
 		_, err = s.removeContainer(context, &DockerContainerRemoveRequest{
 			DockerContainerBaseRequest: &DockerContainerBaseRequest{
 				Target: target,
-			},})
+			}})
 		if err != nil {
 			return err
 		}
@@ -129,7 +133,7 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 
 	checkResponse, err := s.checkContainerProcesses(context, &DockerContainerStatusRequest{
 		Target: request.Target,
-		Names:  request.Target.Name,
+		Names:  request.Name,
 	})
 	if err == nil {
 		err = s.resetContainerIfNeeded(context, request.Target, checkResponse)
@@ -154,7 +158,7 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 	for k, v := range request.Params {
 		params += fmt.Sprintf("%v %v", k, v)
 	}
-	commandInfo, err := s.executeSecureDockerCommand(true, credentials, context, request.Target, dockerIgnoreErrors, fmt.Sprintf("docker run --name %v %v -d %v %v", request.Target.Name, args, request.Image, params))
+	commandInfo, err := s.executeSecureDockerCommand(true, credentials, context, request.Target, dockerIgnoreErrors, fmt.Sprintf("docker run --name %v %v -d %v %v", request.Name, args, request.Image, params))
 	if err != nil {
 		return nil, err
 	}
@@ -162,11 +166,13 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 	if strings.Contains(commandInfo.Stdout(), containerInUse) {
 		_, _ = s.stopContainer(context, &DockerContainerStopRequest{DockerContainerBaseRequest: &DockerContainerBaseRequest{
 			Target: request.Target,
-		},})
+			Name:   request.Name,
+		}})
 		_, _ = s.removeContainer(context, &DockerContainerRemoveRequest{DockerContainerBaseRequest: &DockerContainerBaseRequest{
 			Target: request.Target,
-		},})
-		commandInfo, err = s.executeSecureDockerCommand(true, credentials, context, request.Target, dockerErrors, fmt.Sprintf("docker run --name %v %v -d %v", request.Target.Name, args, request.Image))
+			Name:   request.Name,
+		}})
+		commandInfo, err = s.executeSecureDockerCommand(true, credentials, context, request.Target, dockerErrors, fmt.Sprintf("docker run --name %v %v -d %v", request.Name, args, request.Image))
 		if err != nil {
 			return nil, err
 		}
@@ -174,15 +180,13 @@ func (s *dockerService) runContainer(context *Context, request *DockerRunRequest
 
 	info, err := s.checkContainerProcess(context, &DockerContainerStatusRequest{
 		Target: request.Target,
-		Names:  request.Target.Name,
+		Names:  request.Name,
 	})
 	if info == nil {
 		return nil, err
 	}
 	return &DockerRunResponse{info}, err
 }
-
-
 
 func (s *dockerService) checkContainerProcess(context *Context, request *DockerContainerStatusRequest) (*DockerContainerInfo, error) {
 	checkResponse, err := s.checkContainerProcesses(context, request)
@@ -195,20 +199,17 @@ func (s *dockerService) checkContainerProcess(context *Context, request *DockerC
 	return nil, nil
 }
 
-func (s *dockerService) runContainerCommand(context *Context, securet map[string]string, target *url.Resource, containerCommand, containerCommandOption string, containerCommandArguments ...string) (string, error) {
+func (s *dockerService) runContainerCommand(context *Context, securet map[string]string, instance string, target *url.Resource, containerCommand, containerCommandOption string, containerCommandArguments ...string) (string, error) {
 	target, err := context.ExpandResource(target)
 	if err != nil {
 		return "", err
-	}
-	if target.Name == "" {
-		return "", fmt.Errorf("target name was empty url: %v", target.URL)
 	}
 	var command = "docker " + containerCommand
 
 	if containerCommandOption != "" {
 		command += " " + containerCommandOption
 	}
-	command += " " + target.Name
+	command += " " + instance
 	if len(containerCommandArguments) > 0 {
 		command += " " + strings.Join(containerCommandArguments, " ")
 	}
@@ -228,13 +229,13 @@ func (s *dockerService) runContainerCommand(context *Context, securet map[string
 }
 
 func (s *dockerService) startContainer(context *Context, request *DockerContainerStartRequest) (*DockerContainerStartResponse, error) {
-	_, err := s.runContainerCommand(context, nil, request.Target, "start", "")
+	_, err := s.runContainerCommand(context, nil, request.Name, request.Target, "start", "")
 	if err != nil {
 		return nil, err
 	}
 	info, err := s.checkContainerProcess(context, &DockerContainerStatusRequest{
 		Target: request.Target,
-		Names:  request.Target.Name,
+		Names:  request.Name,
 	})
 	if info == nil {
 		return nil, err
@@ -245,12 +246,12 @@ func (s *dockerService) startContainer(context *Context, request *DockerContaine
 func (s *dockerService) stopContainer(context *Context, request *DockerContainerStopRequest) (*DockerContainerStopResponse, error) {
 	info, err := s.checkContainerProcess(context, &DockerContainerStatusRequest{
 		Target: request.Target,
-		Names:  request.Target.Name,
+		Names:  request.Name,
 	})
 	if err != nil || info == nil {
 		return nil, err
 	}
-	_, err = s.runContainerCommand(context, nil, request.Target, "stop", "")
+	_, err = s.runContainerCommand(context, nil, request.Name, request.Target, "stop", "")
 	if err != nil {
 		return nil, err
 	}
@@ -263,7 +264,7 @@ func (s *dockerService) stopContainer(context *Context, request *DockerContainer
 
 func (s *dockerService) removeContainer(context *Context, request *DockerContainerRemoveRequest) (response *DockerContainerRemoveResponse, err error) {
 	response = &DockerContainerRemoveResponse{}
-	response.Stdout, err = s.runContainerCommand(context, nil, request.Target, "rm", "")
+	response.Stdout, err = s.runContainerCommand(context, nil, request.Name, request.Target, "rm", "")
 	if err != nil {
 		return nil, err
 	}
@@ -272,7 +273,7 @@ func (s *dockerService) removeContainer(context *Context, request *DockerContain
 
 func (s *dockerService) inspect(context *Context, request *DockerInspectRequest) (response *DockerInspectResponse, err error) {
 	response = &DockerInspectResponse{}
-	response.Stdout, err = s.runContainerCommand(context, nil, request.Target, "inspect", "")
+	response.Stdout, err = s.runContainerCommand(context, nil, request.Name, request.Target, "inspect", "")
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +284,7 @@ func (s *dockerService) inspect(context *Context, request *DockerInspectRequest)
 
 func (s *dockerService) containerLogs(context *Context, request *DockerContainerLogsRequest) (response *DockerContainerLogsResponse, err error) {
 	response = &DockerContainerLogsResponse{}
-	response.Stdout, err = s.runContainerCommand(context, nil, request.Target, "logs", "")
+	response.Stdout, err = s.runContainerCommand(context, nil, request.Name, request.Target, "logs", "")
 	return response, err
 }
 
@@ -304,7 +305,7 @@ func (s *dockerService) runInContainer(context *Context, request *DockerContaine
 	if executionOptions != "" {
 		executionOptions = "-" + executionOptions
 	}
-	response.Stdout, err = s.runContainerCommand(context, request.Credentials, request.Target, "exec", executionOptions, execArguments)
+	response.Stdout, err = s.runContainerCommand(context, request.Credentials, request.Name, request.Target, "exec", executionOptions, execArguments)
 	return response, err
 }
 
@@ -367,7 +368,6 @@ func (s *dockerService) pullImage(context *Context, request *DockerPullRequest) 
 	}
 	return nil, fmt.Errorf("not found:  %v %v", request.Repository, request.Tag)
 }
-
 
 func (s *dockerService) checkImages(context *Context, request *DockerImagesRequest) (*DockerImagesResponse, error) {
 	info, err := s.executeSecureDockerCommand(true, nil, context, request.Target, dockerErrors, "docker images")
@@ -644,7 +644,6 @@ const (
   },
 }`
 
-
 	dockerServiceStopImagesExample = `{
   "Target": {
     "URL": "ssh://127.0.0.1/",
@@ -738,7 +737,6 @@ const (
   "Repository": "us.gcr.io/xxxxx"
 }`
 
-
 	dockerServiceContainerRunMsqlDumpExample = `{
   "Target": {
     "URL": "ssh://10.10.1.1/",
@@ -774,7 +772,6 @@ const (
   "Name": "udb_aerospike"
 }`
 )
-
 
 func (s *dockerService) registerRoutes() {
 
@@ -1188,7 +1185,6 @@ func (s *dockerService) registerRoutes() {
 		},
 	})
 }
-
 
 //NewDockerService returns a new docker service.
 func NewDockerService() Service {

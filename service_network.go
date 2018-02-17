@@ -44,49 +44,45 @@ func (s *networkService) tunnel(context *Context, request *NetworkTunnelRequest)
 	return response, nil
 }
 
-func (s *networkService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-	var err error
-	switch actualRequest := request.(type) {
-	case *NetworkTunnelRequest:
-		response.Response, err = s.tunnel(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to run tunnel: %v, %v", actualRequest.Target.URL, err)
-		}
-	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
-	}
-	if response.Error != "" {
-		response.Status = "err"
-	}
-	return response
+const networkTunnelRequestExample = `{
+	"Local":"127.0.0.1:8080",
+	"Remote":"127.0.0.1:8080"
 }
+`
 
-//NewRequest creates a new request for an action (run).
-func (s *networkService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case NetworkServiceTunnelAction:
-		return &NetworkTunnelRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
-
-//NewRequest creates a new request for an action (run).
-func (s *networkService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case NetworkServiceTunnelAction:
-		return &NetworkTunnelResponse{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
+func (s *networkService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "tunnel",
+		RequestInfo: &ActionInfo{
+			Description: "tunnel tcp ports",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "tunnel",
+					Data:    networkTunnelRequestExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &NetworkTunnelRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &NetworkTunnelResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*NetworkTunnelRequest); ok {
+				return s.tunnel(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 }
 
 //NewNetworkService creates a new network service.
 func NewNetworkService() Service {
 	var result = &networkService{
-		AbstractService: NewAbstractService(NetworkServiceID, NetworkServiceTunnelAction),
+		AbstractService: NewAbstractService(NetworkServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }

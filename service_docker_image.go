@@ -6,9 +6,9 @@ import (
 
 //DockerImagesRequest represents docker check image request
 type DockerImagesRequest struct {
-	Target    *url.Resource `required:"true" description:"host with docker service"` //target host
-	Repository string `required:"true"`
-	Tag        string `required:"true"`
+	Target     *url.Resource `required:"true" description:"host with docker service"` //target host
+	Repository string        `required:"true"`
+	Tag        string        `required:"true"`
 }
 
 //DockerImagesResponse represents a docker check image response

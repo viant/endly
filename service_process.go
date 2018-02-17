@@ -10,61 +10,11 @@ import (
 //ProcessServiceID represents a system process service id
 const ProcessServiceID = "process"
 
-//ProcessServiceStartAction represents a process start action
-const ProcessServiceStartAction = "start"
-
-//ProcessServiceStatusAction represents a process status check
-const ProcessServiceStatusAction = "status"
-
-//ProcessServiceStopAction represents stop action
-const ProcessServiceStopAction = "stop"
-
-//ProcessServiceStopAllAction represents stop-all action
-const ProcessServiceStopAllAction = "stop-all"
-
 type processService struct {
 	*AbstractService
 }
 
-func (s *processService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-	var err error
-	switch actualRequest := request.(type) {
-	case *ProcessStartRequest:
-		response.Response, err = s.startProcess(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to start process: %v, %v", actualRequest.Command, err)
-		}
-	case *ProcessStopRequest:
-		response.Response, err = s.stopProcess(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to stop process: %v, %v", actualRequest.Pid, err)
-		}
-	case *ProcessStopAllRequest:
-		response.Response, err = s.stopAllProcesses(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to stop process: %v, %v", actualRequest.Input, err)
-		}
-
-	case *ProcessStatusRequest:
-		response.Response, err = s.checkProcess(context, actualRequest)
-		if err != nil {
-			response.Error = fmt.Sprintf("failed to stop process: %v, %v", actualRequest, err)
-		}
-
-	default:
-		response.Error = fmt.Sprintf("unsupported request type: %T", request)
-
-	}
-	if response.Error != "" {
-		response.Status = "err"
-	}
-	return response
-}
-
-func (s *processService) stopAllProcesses(context *Context, request *ProcessStopAllRequest) (*CommandResponse, error) {
+func (s *processService) stopAllProcesses(context *Context, request *ProcessStopAllRequest) (*ProcessStopAllResponse, error) {
 	status, err := s.checkProcess(context, &ProcessStatusRequest{
 		Target:  request.Target,
 		Command: request.Input,
@@ -72,18 +22,21 @@ func (s *processService) stopAllProcesses(context *Context, request *ProcessStop
 	if err != nil {
 		return nil, err
 	}
-
-	var respose *CommandResponse
+	var response = &ProcessStopAllResponse{}
 	for _, info := range status.Processes {
-		respose, err = s.stopProcess(context, &ProcessStopRequest{
+		commandResponse, err := s.stopProcess(context, &ProcessStopRequest{
 			Target: request.Target,
 			Pid:    info.Pid,
 		})
 		if err != nil {
 			return nil, err
 		}
+		if len(response.Stdout) > 0 {
+			response.Stdout += "\n"
+		}
+		response.Stdout += commandResponse.Stdout
 	}
-	return respose, nil
+	return response, nil
 }
 
 func (s *processService) checkProcess(context *Context, request *ProcessStatusRequest) (*ProcessStatusResponse, error) {
@@ -142,7 +95,7 @@ func (s *processService) checkProcess(context *Context, request *ProcessStatusRe
 	return response, nil
 }
 
-func (s *processService) stopProcess(context *Context, request *ProcessStopRequest) (*CommandResponse, error) {
+func (s *processService) stopProcess(context *Context, request *ProcessStopRequest) (*ProcessStopResponse, error) {
 	commandResult, err := context.ExecuteAsSuperUser(request.Target, &ExtractableCommand{
 		Executions: []*Execution{
 			{
@@ -153,7 +106,10 @@ func (s *processService) stopProcess(context *Context, request *ProcessStopReque
 	if err != nil {
 		return nil, err
 	}
-	return commandResult, err
+	return &ProcessStopResponse{
+		Stdout: commandResult.Stdout(),
+	}, nil
+
 }
 
 func indexProcesses(processes ...*ProcessInfo) map[int]*ProcessInfo {
@@ -226,43 +182,90 @@ func (s *processService) startProcess(context *Context, request *ProcessStartReq
 	return result, nil
 }
 
-func (s *processService) NewRequest(action string) (interface{}, error) {
-	switch action {
-	case ProcessServiceStartAction:
-		return &ProcessStartRequest{}, nil
-	case ProcessServiceStatusAction:
-		return &ProcessStatusRequest{}, nil
-	case ProcessServiceStopAction:
-		return &ProcessStopRequest{}, nil
-	case ProcessServiceStopAllAction:
-		return &ProcessStopAllRequest{}, nil
-	}
-	return s.AbstractService.NewRequest(action)
-}
+func (s *processService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "start",
+		RequestInfo: &ActionInfo{
+			Description: "start process",
+		},
+		RequestProvider: func() interface{} {
+			return &ProcessStartRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &ProcessStartResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*ProcessStartRequest); ok {
+				return s.startProcess(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 
-func (s *processService) NewResponse(action string) (interface{}, error) {
-	switch action {
-	case ProcessServiceStartAction:
-		return &ProcessStartResponse{}, nil
-	case ProcessServiceStatusAction:
-		return &ProcessStatusResponse{}, nil
-	case ProcessServiceStopAction:
-		return &CommandResponse{}, nil
-	case ProcessServiceStopAllAction:
-		return &CommandResponse{}, nil
-	}
-	return s.AbstractService.NewResponse(action)
+	s.Register(&ServiceActionRoute{
+		Action: "stop",
+		RequestInfo: &ActionInfo{
+			Description: "stop process",
+		},
+		RequestProvider: func() interface{} {
+			return &ProcessStopRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &ProcessStopResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*ProcessStopRequest); ok {
+				return s.stopProcess(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "status",
+		RequestInfo: &ActionInfo{
+			Description: "check process status",
+		},
+		RequestProvider: func() interface{} {
+			return &ProcessStatusRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &ProcessStatusResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*ProcessStatusRequest); ok {
+				return s.checkProcess(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "stop-all",
+		RequestInfo: &ActionInfo{
+			Description: "stop all matching processes",
+		},
+		RequestProvider: func() interface{} {
+			return &ProcessStopAllRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &ProcessStopAllResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*ProcessStopAllRequest); ok {
+				return s.stopAllProcesses(context, handlerRequest)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 }
 
 //NewProcessService returns a new system process service.
 func NewProcessService() Service {
 	var result = &processService{
-		AbstractService: NewAbstractService(ProcessServiceID,
-			ProcessServiceStartAction,
-			ProcessServiceStatusAction,
-			ProcessServiceStopAction,
-			ProcessServiceStopAllAction),
+		AbstractService: NewAbstractService(ProcessServiceID),
 	}
 	result.AbstractService.Service = result
+	result.registerRoutes()
 	return result
 }

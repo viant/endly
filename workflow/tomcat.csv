@@ -1,5 +1,5 @@
 Workflow,,Name,Description,Tasks,,Init,,
-,,tomcat,Tomcat server action manager,%Tasks,,#tomcat_init.json,,
+,,tomcat,Tomcat server action manager,%Tasks,,@var/tomcat_init.json,,
 []Tasks,,Name,Description,Actions,,,,
 ,,install,This task will install tomcat,%Install,,,,
 []Install,Service,Action,Description,Request,,,,

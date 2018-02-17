@@ -160,39 +160,6 @@ func (s *storageService) decompressTarget(context *Context, source, target *url.
 	return err
 }
 
-func (s *storageService) Run(context *Context, request interface{}) *ServiceResponse {
-	startEvent := s.Begin(context, request, Pairs("request", request))
-	var response = &ServiceResponse{Status: "ok"}
-	defer s.End(context)(startEvent, Pairs("response", response))
-	var err error
-	var errorTemplate = "%v"
-
-	switch actualRequest := request.(type) {
-	case *StorageCopyRequest:
-		response.Response, err = s.copy(context, actualRequest)
-		errorTemplate = "unable to copy, %v"
-	case *StorageRemoveRequest:
-		response.Response, err = s.remove(context, actualRequest)
-		errorTemplate = "unable to rmove, %v"
-	case *StorageDownloadRequest:
-		response.Response, err = s.download(context, actualRequest)
-		errorTemplate = "unable to download, %v"
-	case *StorageUploadRequest:
-		response.Response, err = s.upload(context, actualRequest)
-		errorTemplate = "unable to upload, %v"
-
-	default:
-		err = fmt.Errorf("unsupported request type: %T", request)
-	}
-
-	if err != nil {
-		response.Status = "err"
-		response.Error = fmt.Sprintf(errorTemplate, err)
-	}
-	return response
-}
-
-
 func (s *storageService) copy(context *Context, request *StorageCopyRequest) (*StorageCopyResponse, error) {
 	var result = &StorageCopyResponse{
 		TransferredURL: make([]string, 0),
@@ -328,7 +295,6 @@ func (s *storageService) upload(context *Context, request *StorageUploadRequest)
 	return response, nil
 
 }
-
 
 const (
 	storageCopySimpleExample = `{

@@ -8,8 +8,8 @@ import (
 //HTTPEndpointListenRequest represent HTTP endpoint listen request
 type HTTPEndpointListenRequest struct {
 	Port          int
-	BaseDirectory string //directory
-	IndexKeys     []string
+	BaseDirectory string   `required:"true" description:"location with replay files (could be generate by https://github.com/viant/toolbox/blob/master/bridge/http_bridge_recording_util.go#L81"`
+	IndexKeys     []string `description:"recorded requests matching keys, by default: Method,URL,Body,Cookie,Content-Type"`
 }
 
 //HTTPEndpointListenResponse represents HTTP endpoint listen response with indexed trips

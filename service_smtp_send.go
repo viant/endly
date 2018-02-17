@@ -9,8 +9,8 @@ import (
 
 //SMTPSendRequest represents send request.
 type SMTPSendRequest struct {
-	Target *url.Resource
-	Mail   *MailMessage
+	Target *url.Resource `required:"true" description:"SMTP endpoint"`
+	Mail   *MailMessage  `required:"true"`
 }
 
 //SMTPSendResponse represents send response.
@@ -34,7 +34,7 @@ func (r *SMTPSendRequest) Validate() error {
 
 //MailMessage represent an email
 type MailMessage struct {
-	From        string
+	From        string `required:"true" description:"sender, has to match email from target.credential"`
 	To          []string
 	Cc          []string
 	Bcc         []string
