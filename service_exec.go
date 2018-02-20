@@ -238,10 +238,6 @@ func (s *execService) rumCommandTemplate(context *Context, session *SystemTermin
 		executionEndEvent.Error = fmt.Sprintf("%v", err)
 		return stdout, err
 	}
-	if executionEndEvent.Error != "" || executionEndEvent.Stdout != "" {
-		return executionEndEvent.Stdout, fmt.Errorf("failed to run command %v, %v: %v", command, executionEndEvent.Stdout, executionEndEvent.Error)
-	}
-
 	return stdout, nil
 }
 
