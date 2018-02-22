@@ -2,14 +2,8 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/assertly"
-	"github.com/viant/dsc"
 	"github.com/viant/dsunit"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
-	"strings"
 )
 
 const (
@@ -24,273 +18,22 @@ type PopulateDatastoreEvent struct {
 	Rows      int
 }
 
-//RunSQLScriptEvent represents run script event
-type RunSQLScriptEvent struct {
+//RunSQLcriptEvent represents run script event
+type RunSQLcriptEvent struct {
 	Datastore string
 	URL       string
 }
 
 type dataStoreUnitService struct {
 	*AbstractService
-	Manager dsunit.DatasetTestManager
+	Service dsunit.Service
 }
 
-func (s *dataStoreUnitService) getSequences(context *Context, request *DsUnitTableSequenceRequest) (*DsUnitTableSequenceResponse, error) {
-	manager := s.Manager.ManagerRegistry().Get(request.Datastore)
-	if manager == nil {
-		return nil, fmt.Errorf("unknown Datastore: %v", request.Datastore)
-	}
-	var response = &DsUnitTableSequenceResponse{
-		Sequences: make(map[string]int),
-	}
-	dbConfig := manager.Config()
-	var sequence int64
-	var err error
-	dialect := dsc.GetDatastoreDialect(dbConfig.DriverName)
-	for _, table := range request.Tables {
-		sequence, err = dialect.GetSequence(manager, table)
-		response.Sequences[table] = int(sequence)
-	}
-	if len(response.Sequences) == 0 {
-		return response, err
-	}
-	return response, nil
-}
 
-func (s *dataStoreUnitService) registerDsManager(context *Context, datastoreName, credential string, config *dsc.Config) (dsc.Manager, error) {
-	credentialConfig := &cred.Config{}
 
-	if credential != "" {
-		err := credentialConfig.Load(credential)
-		if err != nil {
-			return nil, err
-		}
-	}
-	config.Parameters["username"] = credentialConfig.Username
-	config.Parameters["password"] = credentialConfig.Password
-	err := config.Init()
-	if err != nil {
-		return nil, err
-	}
-	dsManager, err := dsc.NewManagerFactory().Create(config)
-	if err != nil {
-		return nil, err
-	}
-	s.Manager.ManagerRegistry().Register(datastoreName, dsManager)
-	return dsManager, nil
-}
 
-func (s *dataStoreUnitService) addMapping(context *Context, request *DsUnitMappingRequest) (*DsUnitMappingResponse, error) {
-	var response = &DsUnitMappingResponse{
-		Tables: make([]string, 0),
-	}
-	if request.Mappings != nil {
-		for _, mapping := range request.Mappings {
-			mappingResource, err := context.ExpandResource(mapping)
-			if err != nil {
-				return nil, err
-			}
-			var datasetMapping = &DatasetMapping{}
-			err = mappingResource.JSONDecode(datasetMapping)
-			if err != nil {
-				return nil, fmt.Errorf("failed to decode: %v %v", mappingResource.URL, err)
-			}
-			response.Tables = append(response.Tables, datasetMapping.Value.Tables()...)
-			s.Manager.RegisterDatasetMapping(datasetMapping.Name, datasetMapping.Value)
-		}
-	}
-	return response, nil
-}
 
-func (s *dataStoreUnitService) runScripts(context *Context, request *DsUnitSQLRequest) (*DsUnitSQLResponse, error) {
-	var err error
-	var response = &DsUnitSQLResponse{}
-	response.Modified, err = s.runSQLScripts(context, request.Datastore, request.Scripts)
-	if err != nil {
-		return nil, err
-	}
 
-	if len(request.SQLs) > 0 {
-		for _, SQL := range request.SQLs {
-			modified, err := s.runSQL(context, request.Datastore, SQL)
-			if err != nil {
-				return nil, err
-			}
-			response.Modified += modified
-		}
-	}
-	return response, nil
-}
-
-func (s *dataStoreUnitService) runSQL(context *Context, datastore string, SQLs string) (int, error) {
-	scriptRequest := &dsunit.Script{
-		Datastore: datastore,
-		Sqls:      dsunit.ParseSQLScript(strings.NewReader(SQLs)),
-	}
-	return s.Manager.Execute(scriptRequest)
-}
-
-func (s *dataStoreUnitService) runSQLScripts(context *Context, datastore string, scripts []*url.Resource) (int, error) {
-	if len(scripts) == 0 {
-		return 0, nil
-	}
-	var totaModified = 0
-	for _, script := range scripts {
-		var event = &RunSQLScriptEvent{Datastore: datastore, URL: script.URL}
-		AddEvent(context, event, Pairs("value", event), Info)
-		modified, err := s.loadSQLAndRun(context, datastore, script)
-		if err != nil {
-			return 0, err
-		}
-		totaModified += modified
-	}
-	return totaModified, nil
-}
-
-func (s *dataStoreUnitService) loadSQLAndRun(context *Context, datastore string, source *url.Resource) (int, error) {
-	var err error
-
-	source, err = context.ExpandResource(source)
-	if err != nil {
-		return 0, err
-	}
-	script, err := source.DownloadText()
-	if err != nil {
-		return 0, err
-	}
-	return s.runSQL(context, datastore, script)
-}
-
-func (s *dataStoreUnitService) registerTables(state data.Map, dsManger dsc.Manager, tables []*dsc.TableDescriptor) {
-	if len(tables) == 0 {
-		return
-	}
-	for _, table := range tables {
-		table.Table = state.ExpandAsText(table.Table)
-		dsManger.TableDescriptorRegistry().Register(table)
-	}
-
-}
-
-func (s *dataStoreUnitService) register(context *Context, request *DsUnitRegisterRequest) (interface{}, error) {
-	request.Init()
-	var state = context.state
-	var dsManager dsc.Manager
-	var result = &DsUnitRegisterResponse{}
-	dsManager, err := s.registerDsManager(context, request.Datastore, request.Credential, request.Config)
-	if err != nil {
-		return nil, err
-	}
-
-	s.registerTables(state, dsManager, request.Tables)
-
-	var adminDatastore = "admin_" + request.Datastore
-	if request.adminConfig != nil {
-		dsManager, err = s.registerDsManager(context, adminDatastore, request.AdminCredential, request.adminConfig)
-		if err != nil {
-			return nil, err
-		}
-		s.registerTables(state, dsManager, request.Tables)
-	}
-
-	if request.ClearDatastore {
-		err := s.Manager.ClearDatastore(adminDatastore, request.Datastore)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	result.Modified, err = s.runSQLScripts(context, request.Datastore, request.Scripts)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
-func (s *dataStoreUnitService) buildDatasets(context *Context, datasetResource *dsunit.DatasetResource, expand bool) (*dsunit.Datasets, error) {
-	if datasetResource.URL != "" {
-		resource, err := context.ExpandResource(&url.Resource{URL: datasetResource.URL})
-		if err != nil {
-			return nil, err
-		}
-		datasetResource.URL = resource.URL
-	}
-	datasets, err := s.Manager.DatasetFactory().CreateDatasets(datasetResource)
-	if err != nil {
-		return nil, err
-	}
-
-	if expand {
-		var state = context.State()
-		for _, data := range datasets.Datasets {
-			data.Table = state.ExpandAsText(data.Table)
-			for _, row := range data.Rows {
-				expanded := state.Expand(row.Values)
-				row.Values = toolbox.AsMap(expanded)
-			}
-		}
-	}
-	return datasets, err
-}
-
-func (s *dataStoreUnitService) prepare(context *Context, request *DsUnitPrepareRequest) (interface{}, error) {
-	var response = &DsUnitPrepareResponse{}
-	datasets, err := s.buildDatasets(context, request.AsDatasetResource(), request.Expand)
-	if err != nil {
-		return nil, err
-	}
-	for _, dataSet := range datasets.Datasets {
-		var populateDatastoreEvent = &PopulateDatastoreEvent{Datastore: request.Datastore, Table: dataSet.Table, Rows: len(dataSet.Rows)}
-		AddEvent(context, populateDatastoreEvent, Pairs("value", populateDatastoreEvent), Info)
-	}
-
-	response.Added, response.Modified, response.Deleted, err = s.Manager.PrepareDatastore(datasets)
-	return response, err
-}
-
-func (s *dataStoreUnitService) verify(context *Context, request *DsUnitExpectRequest) (response *DsUnitExpectResponse, err error) {
-	datasets, err := s.buildDatasets(context, request.AsDatasetResource(), request.Expand)
-	if err != nil {
-		return nil, err
-	}
-	response = &DsUnitExpectResponse{
-		Validation: &assertly.Validation{},
-	}
-
-	var verificationFailures = make(map[string]bool)
-	violations, err := s.Manager.ExpectDatasets(request.CheckPolicy, datasets)
-	if err != nil {
-		return nil, err
-	}
-
-	if violations.HasViolations() {
-		for _, violation := range violations.Violations() {
-			verificationFailures[violation.Table] = true
-			var path = fmt.Sprintf("%v%v", violation.Table, violation.Key)
-			var message = ""
-
-			switch violation.Type {
-			case dsunit.ViolationTypeInvalidRowCount:
-				message += fmt.Sprintf("expected %v rows but had %v\n\t", violation.Expected, violation.Actual)
-			case dsunit.ViolationTypeMissingActualRow:
-				message += "The following row was missing:\n\t\t"
-				message += fmt.Sprintf("[PK: %v]: %v \n\t\t", violation.Key, violation.Expected)
-			case dsunit.ViolationTypeRowNotEqual:
-				message += "\n\tThe following row was different:\n\t\t"
-				message += fmt.Sprintf("[PK: %v]:  %v !=  actual: %v \n\t\t", violation.Key, violation.Expected, violation.Actual)
-			}
-			response.AddFailure(assertly.NewFailure(path, message, violation.Expected, violation.Actual))
-		}
-	}
-	for _, dataset := range datasets.Datasets {
-		if verificationFailures[dataset.Table] {
-			continue
-		}
-		response.PassedCount = len(dataset.Rows)
-	}
-	return response, err
-}
 
 const (
 	dataStoreUnitAerospikeRegisterExample = `{
@@ -322,8 +65,8 @@ const (
       "projectId": "xxxxx"
     }
   },
-  "AdminDatastore": "db1",
-  "ClearDatastore": true,
+	  "AdminDatastore": "db1",
+  "RecreateDatastore": true,
   "Tables": [
     {
       "Table": "my_table",
@@ -410,6 +153,7 @@ const (
   }`
 )
 
+
 func (s *dataStoreUnitService) registerRoutes() {
 
 	s.Register(&ServiceActionRoute{
@@ -433,14 +177,57 @@ func (s *dataStoreUnitService) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DsUnitRegisterRequest{}
+			return &dsunit.RegisterRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DsUnitRegisterResponse{}
+			return &dsunit.RegisterRequest{}
 		},
 		Handler: func(context *Context, request interface{}) (interface{}, error) {
-			if handlerRequest, ok := request.(*DsUnitRegisterRequest); ok {
-				return s.register(context, handlerRequest)
+			if handlerRequest, ok := request.(*dsunit.RegisterRequest); ok {
+				response := s.Service.Register(handlerRequest)
+				return response, response.Error()
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "recreate",
+		RequestInfo: &ActionInfo{
+			Description: "create datastore",
+			Examples: []*ExampleUseCase{},
+		},
+		RequestProvider: func() interface{} {
+			return &dsunit.RecreateRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &dsunit.RecreateResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*dsunit.RecreateRequest); ok {
+				response := s.Service.Recreate(handlerRequest)
+				return response, response.Error()
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "script",
+		RequestInfo: &ActionInfo{
+			Description: "run SQL script",
+			Examples: []*ExampleUseCase{},
+		},
+		RequestProvider: func() interface{} {
+			return &dsunit.RunScriptRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &dsunit.RunSQLResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*dsunit.RunScriptRequest); ok {
+				response := s.Service.RunScript(handlerRequest)
+				return response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -449,77 +236,70 @@ func (s *dataStoreUnitService) registerRoutes() {
 	s.Register(&ServiceActionRoute{
 		Action: "sql",
 		RequestInfo: &ActionInfo{
-			Description: "run SQL or SQL script",
-			Examples: []*ExampleUseCase{
-				{
-					UseCase: "sql",
-					Data:    dataStoreUnitServiceSQLExample,
-				},
-			},
+			Description: "run SQL",
+			Examples: []*ExampleUseCase{},
 		},
 		RequestProvider: func() interface{} {
-			return &DsUnitSQLRequest{}
+			return &dsunit.RunSQLRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DsUnitSQLResponse{}
+			return &dsunit.RunSQLResponse{}
 		},
 		Handler: func(context *Context, request interface{}) (interface{}, error) {
-			if handlerRequest, ok := request.(*DsUnitSQLRequest); ok {
-				return s.runScripts(context, handlerRequest)
+			if handlerRequest, ok := request.(*dsunit.RunSQLRequest); ok {
+				response := s.Service.RunSQL(handlerRequest)
+				return response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
+
 
 	s.Register(&ServiceActionRoute{
 		Action: "mapping",
 		RequestInfo: &ActionInfo{
 			Description: "register database table mapping (view)",
 			Examples: []*ExampleUseCase{
-				{
-					UseCase: "sql",
-					Data:    dataStoreUnitServiceMappingExample,
-				},
+
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DsUnitMappingRequest{}
+			return &dsunit.MappingRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DsUnitMappingResponse{}
+			return &dsunit.MappingResponse{}
 		},
 		Handler: func(context *Context, request interface{}) (interface{}, error) {
-			if handlerRequest, ok := request.(*DsUnitMappingRequest); ok {
-				return s.addMapping(context, handlerRequest)
+			if handlerRequest, ok := request.(*dsunit.MappingRequest); ok {
+				response :=  s.Service.AddTableMapping(handlerRequest)
+				return response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
 
+
 	s.Register(&ServiceActionRoute{
-		Action: "sequence",
+		Action: "init",
 		RequestInfo: &ActionInfo{
-			Description: "get sequence for supplied tables",
-			Examples: []*ExampleUseCase{
-				{
-					UseCase: "sequence",
-					Data:    dataStoreUnitServiceSequenceExample,
-				},
-			},
+			Description: "initialize datastore (register, recreated, run sql, add mapping)",
+			Examples: []*ExampleUseCase{},
 		},
 		RequestProvider: func() interface{} {
-			return &DsUnitTableSequenceRequest{}
+			return &dsunit.InitRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DsUnitTableSequenceResponse{}
+			return &dsunit.InitResponse{}
 		},
 		Handler: func(context *Context, request interface{}) (interface{}, error) {
-			if handlerRequest, ok := request.(*DsUnitTableSequenceRequest); ok {
-				return s.getSequences(context, handlerRequest)
+			if handlerRequest, ok := request.(*dsunit.InitRequest); ok {
+				response := s.Service.Init(handlerRequest)
+				return response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
+
 
 	s.Register(&ServiceActionRoute{
 		Action: "prepare",
@@ -537,14 +317,15 @@ func (s *dataStoreUnitService) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DsUnitPrepareRequest{}
+			return &dsunit.PrepareRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DsUnitPrepareResponse{}
+			return &dsunit.PrepareResponse{}
 		},
 		Handler: func(context *Context, request interface{}) (interface{}, error) {
-			if handlerRequest, ok := request.(*DsUnitPrepareRequest); ok {
-				return s.prepare(context, handlerRequest)
+			if handlerRequest, ok := request.(*dsunit.PrepareRequest); ok {
+				response := s.Service.Prepare(handlerRequest)
+				return response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -556,7 +337,7 @@ func (s *dataStoreUnitService) registerRoutes() {
 			Description: "verify databstore with provided data",
 			Examples: []*ExampleUseCase{
 				{
-					UseCase: "static data exppect",
+					UseCase: "static data expect",
 					Data:    dataStoreUnitServiceExpectAction,
 				},
 				{
@@ -566,28 +347,84 @@ func (s *dataStoreUnitService) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DsUnitExpectRequest{}
+			return &dsunit.ExpectRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DsUnitExpectResponse{}
+			return &dsunit.ExpectResponse{}
 		},
 		Handler: func(context *Context, request interface{}) (interface{}, error) {
-			if handlerRequest, ok := request.(*DsUnitExpectRequest); ok {
-				return s.verify(context, handlerRequest)
+			if handlerRequest, ok := request.(*dsunit.ExpectRequest); ok {
+				response := s.Service.Expect(handlerRequest)
+				return response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
 
+	s.Register(&ServiceActionRoute{
+		Action: "query",
+		RequestInfo: &ActionInfo{
+			Description: "run SQL or SQL script",
+		},
+		RequestProvider: func() interface{} {
+			return &dsunit.QueryRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &dsunit.QueryResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*dsunit.QueryRequest); ok {
+				response := s.Service.Query(handlerRequest)
+				return response, response.Error()
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+	
+	s.Register(&ServiceActionRoute{
+		Action: "sequence",
+		RequestInfo: &ActionInfo{
+			Description: "get sequence for supplied tables",
+			Examples: []*ExampleUseCase{
+				{
+					UseCase: "sequence",
+					Data:    dataStoreUnitServiceSequenceExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &dsunit.SequenceRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &dsunit.SequenceResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if handlerRequest, ok := request.(*dsunit.SequenceRequest); ok {
+				response := s.Service.Sequence(handlerRequest)
+				return response, response.Error()
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 }
+
+
+func (s dataStoreUnitService) Run(context *Context, request interface{}) *ServiceResponse {
+	var state = context.state
+	context.Context.Replace((*data.Map)(nil), &state)
+	s.Service.SetContext(context.Context)
+	return s.AbstractService.Run(context, request)
+}
+
+//context.Replace((*dsc.Manager)(nil), &manager)
+
 
 //NewDataStoreUnitService creates a new Datastore unit service
 func NewDataStoreUnitService() Service {
 	var result = &dataStoreUnitService{
 		AbstractService: NewAbstractService(DataStoreUnitServiceID),
-		Manager:         dsunit.NewDatasetTestManager(),
+		Service:         dsunit.New(),
 	}
-	result.Manager.SafeMode(false)
 	result.AbstractService.Service = result
 	result.registerRoutes()
 	return result
