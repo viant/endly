@@ -329,7 +329,7 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 			}
 
 			if !logRecordIterator.HasNext() {
-				validation.AddFailure(assertly.NewFailure(fmt.Sprintf("[%v]", expectedLogRecords.TagID), "missing log record", expectedLogRecord, nil))
+				validation.AddFailure(assertly.NewFailure("", fmt.Sprintf("[%v]", expectedLogRecords.TagID), "missing log record", expectedLogRecord, nil))
 				return response, nil
 			}
 

@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"strings"
 	"time"
+	"github.com/viant/dsunit"
 )
 
 //OnRunnerError exit system with os.Exit with supplied code.
@@ -146,7 +147,7 @@ func (r *CliRunner) overrideShortMessage(messageType int, message string, messag
 
 func (r *CliRunner) reportDsUnitEventTypes(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) bool {
 	switch actual := serviceResponse.(type) {
-	case *DsUnitRegisterRequest:
+	case *dsunit.RegisterRequest:
 		if filter.RegisterDatastore {
 			var descriptor = actual.Config.Descriptor
 			var password = actual.Config.Parameters["password"]
@@ -155,17 +156,17 @@ func (r *CliRunner) reportDsUnitEventTypes(serviceResponse interface{}, event *E
 			}
 			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("Datastore: %v, %v:%v", actual.Datastore, actual.Config.DriverName, descriptor), messageTypeGeneric, "register")
 		}
-	case *DsUnitMappingRequest:
+	case *dsunit.MappingRequest:
 		if filter.DataMapping {
 			for _, mapping := range actual.Mappings {
-				var _, name = toolbox.URLSplit(mapping.URL)
-				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v: %v", name, mapping.URL), messageTypeGeneric, "mapping")
+				var _, name = toolbox.URLSplit(mapping.Name)
+				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v: %v", name, mapping.Name), messageTypeGeneric, "mapping")
 			}
 		}
 
-	case *DsUnitTableSequenceResponse:
+	case *dsunit.SequenceRequest:
 		if filter.Sequence {
-			for k, v := range actual.Sequences {
+			for k, v := range actual.Tables {
 				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v: %v", k, v), messageTypeGeneric, "sequence")
 			}
 		}
@@ -173,7 +174,7 @@ func (r *CliRunner) reportDsUnitEventTypes(serviceResponse interface{}, event *E
 		if filter.PopulateDatastore {
 			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v: %v", actual.Datastore, actual.Table, actual.Rows), messageTypeGeneric, "populate")
 		}
-	case *RunSQLScriptEvent:
+	case *RunSQLcriptEvent:
 		if filter.SQLScript {
 			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v", actual.Datastore, actual.URL), messageTypeGeneric, "sql")
 		}
@@ -204,9 +205,13 @@ func (r *CliRunner) reportValidationEventTypes(serviceResponse interface{}, even
 	switch response := serviceResponse.(type) {
 	case *assertly.Validation:
 		r.reportValidation(response, event)
-	case *DsUnitExpectResponse:
+	case *dsunit.ExpectResponse:
 		if response != nil {
-			r.reportValidation(response.Validation, event)
+			for _, validation := range  response.Validation {
+				if validation.Validation != nil {
+					r.reportValidation(validation.Validation, event)
+				}
+			}
 		}
 	case *ValidatorAssertResponse:
 		if response != nil {
@@ -502,12 +507,12 @@ func (r *CliRunner) getValidation(event *Event) *assertly.Validation {
 	return validation
 }
 
-func (r *CliRunner) getDsUnitAssertResponse(event *Event) *assertly.Validation {
-	candidate := event.get(reflect.TypeOf(&DsUnitExpectResponse{}))
+func (r *CliRunner) getDsUnitAssertResponse(event *Event) []*dsunit.DatasetValidation {
+	candidate := event.get(reflect.TypeOf(&dsunit.ExpectResponse{}))
 	if candidate == nil {
 		return nil
 	}
-	assertResponse, ok := candidate.(*DsUnitExpectResponse)
+	assertResponse, ok := candidate.(*dsunit.ExpectResponse)
 	if !ok {
 		return nil
 	}
@@ -524,9 +529,10 @@ func (r *CliRunner) reportTagSummary() {
 			for i, event := range tag.Events {
 
 				validation := r.getValidation(event)
-				if validation == nil {
-					validation = r.getDsUnitAssertResponse(event)
-				}
+				//if validation == nil {
+				//TODO patch dsunit validation
+				//	validation = r.getDsUnitAssertResponse(event)
+				//}
 				if validation == nil {
 					continue
 				}

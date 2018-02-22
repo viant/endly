@@ -794,6 +794,9 @@ func (r *SuperUserCommandRequest) AsCommandRequest(context *Context) (*Extractab
 	var executionOptions = &ExecutionOptions{
 		Terminators: []string{"Password", commandNotFound},
 	}
+	if r.MangedCommand == nil {
+		return nil, fmt.Errorf("command was ampty")
+	}
 	if r.MangedCommand.Options != nil {
 		executionOptions.Terminators = append(executionOptions.Terminators, r.MangedCommand.Options.Terminators...)
 		executionOptions.TimeoutMs = r.MangedCommand.Options.TimeoutMs

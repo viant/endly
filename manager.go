@@ -16,7 +16,7 @@ const AppName = "endly"
 //EndlyNamespace represents endly namespace
 const EndlyNamespace = "github.com/viant/endly/"
 
-//Manager represnets a workflow manager
+//Service represnets a workflow manager
 type Manager interface {
 
 	//Name returns an application ID

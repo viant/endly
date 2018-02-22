@@ -106,11 +106,11 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 	return result, nil
 }
 
-//Manager returns workflow manager or error
+//Service returns workflow manager or error
 func (c *Context) Manager() (Manager, error) {
 	var manager = &manager{}
 	if !c.GetInto(serviceManagerKey, &manager) {
-		return nil, reportError(fmt.Errorf("failed to lookup Manager"))
+		return nil, reportError(fmt.Errorf("failed to lookup Service"))
 	}
 	return manager, nil
 }
