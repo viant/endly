@@ -140,17 +140,29 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 				EnableLogging:    true,
 				LoggingDirectory: "/tmp/logs",
 			})
-			if assert.NotNil(t, serviceResponse) {
+
+			if ! assert.NotNil(t, serviceResponse) {
 				return
 			}
+
 			assert.Equal(t, "", serviceResponse.Error)
 			response, ok := serviceResponse.Response.(*endly.WorkflowRunResponse)
 
 			if assert.True(t, ok) {
 				if assert.NotNil(t, response) {
-					var dsunit= toolbox.AsMap(response.Data["dsunit"])
-					var records= toolbox.AsSlice(dsunit["USER_ACCOUNT"])
+					if assert.True(t, len(response.Data) > 0) {
+						return
+					}
+
+					dsUnit, ok := response.Data["dsunit"]
+					if ! ok {
+						assert.Fail(t, fmt.Sprintf("expected dsunit key dsunit: %v", response.Data))
+						return
+					}
+					var dsunit = toolbox.AsMap(dsUnit)
+					var records = toolbox.AsSlice(dsunit["USER_ACCOUNT"])
 					assert.EqualValues(t, 3, len(records))
+
 				}
 
 			}
