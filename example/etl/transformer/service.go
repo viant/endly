@@ -83,24 +83,24 @@ func (s *service) drainRecordsIfNeeded(count int, channel chan map[string]interf
 	return nil
 }
 
-func (s *service) fetchData(connection dsc.Connection, destinationManager dsc.Manager, dmlProvider dsc.DmlProvider, channel chan map[string]interface{}, transformer Transformer, fetchedCompleted *int32, request *CopyRequest, response *CopyResponse) (completed bool, err error) {
+func (s *service) fetchData(connection dsc.Connection, destinationManager dsc.Manager, dmlProvider dsc.DmlProvider, recordChannel chan map[string]interface{}, transformer Transformer, fetchedCompleted *int32, request *CopyRequest, response *CopyResponse) (completed bool, err error) {
 	var batchSize = request.BatchSize
 	if batchSize == 0 {
 		batchSize++
 	}
 	var records = make([]interface{}, 0)
-	var count = len(channel)
+	var count = len(recordChannel)
 	if count == 0 {
 		select {
-		case record := <-channel:
-			count = len(channel)
+		case record := <-recordChannel:
+			count = len(recordChannel)
 			err = s.appendRecords(transformer, record, &records)
 			if err != nil {
 				return false, err
 			}
-			count = len(channel)
+			count = len(recordChannel)
 		case <-time.After(time.Millisecond):
-			count = len(channel)
+			count = len(recordChannel)
 			completed = atomic.LoadInt32(fetchedCompleted) == 1
 			if completed {
 				if len(records) == 0 && count == 0 {
@@ -111,15 +111,19 @@ func (s *service) fetchData(connection dsc.Connection, destinationManager dsc.Ma
 			}
 		}
 	}
-	err = s.drainRecordsIfNeeded(count, channel, &records, transformer)
+	err = s.drainRecordsIfNeeded(count, recordChannel, &records, transformer)
 	if err != nil {
 		return false, err
 	}
+
+
 	return s.persist(records, connection, destinationManager, dmlProvider, request)
 }
 
 func (s *service) persist(records []interface{}, connection dsc.Connection, destinationManager dsc.Manager, dmlProvider dsc.DmlProvider, request *CopyRequest) (completed bool, err error) {
 	if len(records) > 0 {
+
+
 		if request.InsertMode {
 			parametrizedSQLProvider := func(item interface{}) *dsc.ParametrizedSQL {
 				return dmlProvider.Get(dsc.SQLTypeInsert, item)
@@ -127,23 +131,31 @@ func (s *service) persist(records []interface{}, connection dsc.Connection, dest
 
 			_, err = destinationManager.PersistData(connection, records, request.Destination.Table, dmlProvider, parametrizedSQLProvider)
 			if err != nil {
-				return false, err
+				//return false, err
 			}
 
 		} else {
 			_, _, err = destinationManager.PersistAll(&records, request.Destination.Table, dmlProvider)
 			if err != nil {
-				return false, err
+				//return false, err
 			}
 		}
+
+		t, _ := toolbox.AsJSONText(records)
+		fmt.Printf("P: %v %v\n", err, t)
+
+
 	}
+
+
+
 	if err != nil || completed {
-		return true, nil
+		return true, err
 	}
-	return false, nil
+	return false, err
 }
 
-func (s *service) persistInBackground(sourceManager, destinationManager dsc.Manager, channel chan map[string]interface{}, request *CopyRequest, response *CopyResponse, fetchedCompleted *int32) *sync.WaitGroup {
+func (s *service) persistInBackground(sourceManager, destinationManager dsc.Manager, records chan map[string]interface{}, request *CopyRequest, response *CopyResponse, fetchedCompleted *int32) *sync.WaitGroup {
 	var result = &sync.WaitGroup{}
 	result.Add(1)
 
@@ -182,7 +194,7 @@ func (s *service) persistInBackground(sourceManager, destinationManager dsc.Mana
 		connection, err := destinationManager.ConnectionProvider().Get()
 		for {
 
-			completed, err = s.fetchData(connection, destinationManager, dmlProvider, channel, transformer, fetchedCompleted, request, response)
+			completed, err = s.fetchData(connection, destinationManager, dmlProvider, records, transformer, fetchedCompleted, request, response)
 			if err != nil {
 				response.BaseResponse.Status = "error"
 				response.Error = err.Error()
