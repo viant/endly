@@ -317,7 +317,11 @@ func (s *dataStoreUnitService) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &dsunit.PrepareRequest{}
+			return &dsunit.PrepareRequest{
+				DatasetResource:&dsunit.DatasetResource{
+					DatastoreDatasets:&dsunit.DatastoreDatasets{},
+				},
+			}
 		},
 		ResponseProvider: func() interface{} {
 			return &dsunit.PrepareResponse{}
@@ -347,7 +351,11 @@ func (s *dataStoreUnitService) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &dsunit.ExpectRequest{}
+			return &dsunit.ExpectRequest{
+				DatasetResource:&dsunit.DatasetResource{
+					DatastoreDatasets:&dsunit.DatastoreDatasets{},
+				},
+			}
 		},
 		ResponseProvider: func() interface{} {
 			return &dsunit.ExpectResponse{}

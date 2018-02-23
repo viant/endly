@@ -11,6 +11,5 @@
       "dateFormat": "yyyy-MM-dd hh:mm:ss",
       "keyColumnName": "id"
     }
-  },
-  "AdminDatastore": "db4"
+  }
 }

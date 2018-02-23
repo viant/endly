@@ -147,6 +147,13 @@ func (r *CliRunner) overrideShortMessage(messageType int, message string, messag
 
 func (r *CliRunner) reportDsUnitEventTypes(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) bool {
 	switch actual := serviceResponse.(type) {
+
+	case *dsunit.InitRequest:
+		r.reportDsUnitEventTypes(actual.RegisterRequest, event, filter)
+		if actual.RunScriptRequest != nil {
+			r.reportDsUnitEventTypes(actual.RunScriptRequest, event, filter)
+		}
+
 	case *dsunit.RegisterRequest:
 		if filter.RegisterDatastore {
 			var descriptor = actual.Config.Descriptor
@@ -170,13 +177,20 @@ func (r *CliRunner) reportDsUnitEventTypes(serviceResponse interface{}, event *E
 				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v: %v", k, v), messageTypeGeneric, "sequence")
 			}
 		}
-	case *PopulateDatastoreEvent:
+
+
+	case *dsunit.PrepareRequest:
 		if filter.PopulateDatastore {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v: %v", actual.Datastore, actual.Table, actual.Rows), messageTypeGeneric, "populate")
+			actual.Load()
+			for _, dataset := range actual.Datasets {
+				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v: %v", actual.Datastore, dataset.Table, len(dataset.Records)), messageTypeGeneric, "populate")
+			}
 		}
-	case *RunSQLcriptEvent:
+	case *dsunit.RunScriptRequest:
 		if filter.SQLScript {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v", actual.Datastore, actual.URL), messageTypeGeneric, "sql")
+			for _, script := range actual.Scripts {
+				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v", actual.Datastore, script.URL), messageTypeGeneric, "sql")
+			}
 		}
 	default:
 		return false

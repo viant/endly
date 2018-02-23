@@ -41,13 +41,8 @@ func (s *dockerService) stopImages(context *Context, request *DockerStopImagesRe
 
 	for _, image := range request.Images {
 		for _, container := range processResponse.Containers {
-			fmt.Printf("stopping container: %v ? \n", container.Image)
-
 			if strings.Contains(container.Image, image) {
 				var name = strings.Split(container.Names, ",")[0]
-
-				fmt.Printf("stopping container: %v\n", name)
-
 				_, err = s.stopContainer(context, &DockerContainerStopRequest{
 					DockerContainerBaseRequest: &DockerContainerBaseRequest{
 						Target: request.Target,
