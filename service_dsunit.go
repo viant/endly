@@ -24,7 +24,7 @@ type RunSQLcriptEvent struct {
 	URL       string
 }
 
-type dataStoreUnitService struct {
+type dsunitService struct {
 	*AbstractService
 	Service dsunit.Service
 }
@@ -36,7 +36,34 @@ type dataStoreUnitService struct {
 
 
 const (
-	dataStoreUnitAerospikeRegisterExample = `{
+
+
+	dsunitMySQLInitExample = `{
+  "Datastore": "mydb",
+  "Config": {
+    "DriverName": "mysql",
+    "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+    "Credential": "$mysqlCredential"
+  },
+  "Admin": {
+    "Datastore": "mysql",
+    "Config": {
+      "DriverName": "mysql",
+      "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+      "Credential": "$mysqlCredential"
+    }
+  },
+  "Scripts": [
+    {
+      "URL": "datastore/mydb/schema.ddl"
+    }
+  ],
+  "Recreate": "true"
+}`
+
+
+
+	dsunitAerospikeRegisterExample = `{
   "Datastore": "db",
   "Config": {
     "DriverName": "aerospike",
@@ -49,44 +76,35 @@ const (
       "namespace": "db",
       "port": "3000"
     }
-  },
-  "AdminDatastore": "db"
+  }
 }`
 
-	dataStoreUnitBigQueryRegisterExample = `{
+	dsunitBigQueryRegisterExample = `{
   "Datastore": "db1",
   "Config": {
     "DriverName": "bigquery",
     "Descriptor": "bq/[datasetId]",
+	"Credential": "${env.HOME}/.secret/bq.json",
     "Parameters": {
-      "credentialsFile": "${env.HOME}/.secret/bq.json",
       "datasetId": "db1",
       "dateFormat": "yyyy-MM-dd HH:mm:ss.SSSZ",
       "projectId": "xxxxx"
     }
-  },
-	  "AdminDatastore": "db1",
-  "RecreateDatastore": true,
-  "Tables": [
-    {
-      "Table": "my_table",
-      "PkColumns": [
-        "id"
-      ],
-      "SchemaUrl": ""
-    }
-  ]
+  }
+	
 }`
 
-	dataStoreUnitMySQLRegisterExample = `{
+	dsunitMySQLRegisterExample = `{
   "Datastore": "db1",
   "Config": {
     "DriverName": "mysql",
+  	"Credential": "${env.HOME}/.secret/mysql.json",
     "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
-  },
-  "Credential": "${env.HOME}/.secret/mysql.json"
+  }
 }`
-	dataStoreUnitServiceSQLExample = `{
+
+
+	dsunitServiceSQLExample = `{
 		"Datastore": "db1",
 		"Scripts": [
 			{
@@ -95,7 +113,9 @@ const (
 		]
 	}`
 
-	dataStoreUnitServiceMappingExample = ` {
+
+
+	dsunitServiceMappingExample = ` {
 		"Mappings": [
 			{
 				"URL": "config/mapping/v_asset.json"
@@ -103,7 +123,7 @@ const (
 		]
 	}`
 
-	dataStoreUnitServiceSequenceExample = `{
+	dsunitServiceSequenceExample = `{
 		"Datastore": "db1",
 		"Tables": [
 			"table1",
@@ -111,12 +131,12 @@ const (
 		]
 	}`
 
-	dataStoreUnitServiceStaticDataPrepareExample = `{
+	dsunitServiceStaticDataPrepareExample = `{
     "Datastore": "db1",
     "URL": "datastore/db1/dictionary"
   }`
 
-	dataStoreUnitDataPrepareExaple = ` {
+	dsunitDataPrepareExaple = ` {
 		"Datastore": "db1",
 		"Data": {
 			"table1": [
@@ -146,7 +166,7 @@ const (
 		}
 	}`
 
-	dataStoreUnitServiceExpectAction = `{
+	dsunitServiceExpectAction = `{
     "Datastore": "db1",
     "URL": "datastore/db1/use_case2/",
 	"Prefix":"expect_"
@@ -154,7 +174,7 @@ const (
 )
 
 
-func (s *dataStoreUnitService) registerRoutes() {
+func (s *dsunitService) registerRoutes() {
 
 	s.Register(&ServiceActionRoute{
 		Action: "register",
@@ -163,16 +183,16 @@ func (s *dataStoreUnitService) registerRoutes() {
 			Examples: []*ExampleUseCase{
 				{
 					UseCase: "aerospike datastore registration",
-					Data:    dataStoreUnitAerospikeRegisterExample,
+					Data:    dsunitAerospikeRegisterExample,
 				},
 				{
 					UseCase: "BigQuery datastore registration",
-					Data:    dataStoreUnitBigQueryRegisterExample,
+					Data:    dsunitBigQueryRegisterExample,
 				},
 
 				{
 					UseCase: "MySQL datastore registration",
-					Data:    dataStoreUnitMySQLRegisterExample,
+					Data:    dsunitMySQLRegisterExample,
 				},
 			},
 		},
@@ -216,7 +236,12 @@ func (s *dataStoreUnitService) registerRoutes() {
 		Action: "script",
 		RequestInfo: &ActionInfo{
 			Description: "run SQL script",
-			Examples: []*ExampleUseCase{},
+			Examples: []*ExampleUseCase{
+				{
+					UseCase:"run script",
+					Data:dsunitServiceSQLExample,
+				},
+			},
 		},
 		RequestProvider: func() interface{} {
 			return &dsunit.RunScriptRequest{}
@@ -283,7 +308,13 @@ func (s *dataStoreUnitService) registerRoutes() {
 		Action: "init",
 		RequestInfo: &ActionInfo{
 			Description: "initialize datastore (register, recreated, run sql, add mapping)",
-			Examples: []*ExampleUseCase{},
+
+			Examples: []*ExampleUseCase{
+				{
+					UseCase:"mysql init",
+					Data:dsunitMySQLInitExample,
+				},
+			},
 		},
 		RequestProvider: func() interface{} {
 			return &dsunit.InitRequest{}
@@ -308,11 +339,11 @@ func (s *dataStoreUnitService) registerRoutes() {
 			Examples: []*ExampleUseCase{
 				{
 					UseCase: "static data prepare",
-					Data:    dataStoreUnitServiceStaticDataPrepareExample,
+					Data:    dsunitServiceStaticDataPrepareExample,
 				},
 				{
 					UseCase: "data prepare",
-					Data:    dataStoreUnitDataPrepareExaple,
+					Data:    dsunitDataPrepareExaple,
 				},
 			},
 		},
@@ -342,11 +373,11 @@ func (s *dataStoreUnitService) registerRoutes() {
 			Examples: []*ExampleUseCase{
 				{
 					UseCase: "static data expect",
-					Data:    dataStoreUnitServiceExpectAction,
+					Data:    dsunitServiceExpectAction,
 				},
 				{
 					UseCase: "data expect",
-					Data:    dataStoreUnitDataPrepareExaple,
+					Data:    dsunitDataPrepareExaple,
 				},
 			},
 		},
@@ -388,7 +419,7 @@ func (s *dataStoreUnitService) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
-	
+
 	s.Register(&ServiceActionRoute{
 		Action: "sequence",
 		RequestInfo: &ActionInfo{
@@ -396,7 +427,7 @@ func (s *dataStoreUnitService) registerRoutes() {
 			Examples: []*ExampleUseCase{
 				{
 					UseCase: "sequence",
-					Data:    dataStoreUnitServiceSequenceExample,
+					Data:    dsunitServiceSequenceExample,
 				},
 			},
 		},
@@ -417,7 +448,7 @@ func (s *dataStoreUnitService) registerRoutes() {
 }
 
 
-func (s dataStoreUnitService) Run(context *Context, request interface{}) *ServiceResponse {
+func (s dsunitService) Run(context *Context, request interface{}) *ServiceResponse {
 	var state = context.state
 	context.Context.Replace((*data.Map)(nil), &state)
 	s.Service.SetContext(context.Context)
@@ -429,7 +460,7 @@ func (s dataStoreUnitService) Run(context *Context, request interface{}) *Servic
 
 //NewDataStoreUnitService creates a new Datastore unit service
 func NewDataStoreUnitService() Service {
-	var result = &dataStoreUnitService{
+	var result = &dsunitService{
 		AbstractService: NewAbstractService(DataStoreUnitServiceID),
 		Service:         dsunit.New(),
 	}

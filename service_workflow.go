@@ -154,18 +154,20 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction, wor
 		return nil, err
 	}
 	expandedRequest := state.Expand(action.Request)
+
+
 	if expandedRequest == nil || !toolbox.IsMap(expandedRequest) {
 		err = fmt.Errorf("invalid request: %v, expected map but had: %T", expandedRequest, expandedRequest)
 		return nil, err
 	}
-
 	requestMap := toolbox.AsMap(expandedRequest)
+
+
 	var serviceRequest interface{}
 	serviceRequest, err = context.AsRequest(service.ID(), action.Action, requestMap)
 	if err != nil {
 		return nil, err
 	}
-
 	serviceActivity.Request = serviceRequest
 	workflow.Request = serviceRequest
 	serviceResponse := service.Run(context, serviceRequest)
@@ -228,9 +230,7 @@ func (s *workflowService) runTask(context *Context, workflow *WorkflowControl, t
 
 	var asyncActions = make([]*ServiceAction, 0)
 	for i := 0; i < len(task.Actions); i++ {
-
 		action := task.Actions[i]
-
 		if hasTagIDs {
 			s.injectTagIdsIdNeeded(action.ActionRequest, tagIDs)
 		}
