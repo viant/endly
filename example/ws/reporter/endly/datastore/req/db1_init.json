@@ -1,0 +1,22 @@
+{
+  "Datastore": "db1",
+  "Config": {
+    "Credential": "$mysqlCredential",
+    "DriverName": "mysql",
+    "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+  },
+  "Admin":{
+    "Datastore": "mysql",
+    "Config": {
+      "Credential": "$mysqlCredential",
+      "DriverName": "mysql",
+      "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+    }
+  },
+  "Recreate":true,
+  "Scripts": [
+    {
+      "URL": "datastore/db1/schema.ddl"
+    }
+  ]
+}

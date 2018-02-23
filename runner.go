@@ -156,11 +156,7 @@ func (r *CliRunner) reportDsUnitEventTypes(serviceResponse interface{}, event *E
 
 	case *dsunit.RegisterRequest:
 		if filter.RegisterDatastore {
-			var descriptor = actual.Config.Descriptor
-			var password = actual.Config.Parameters["password"]
-			if len(password) > 0 {
-				descriptor = strings.Replace(descriptor, password, "***", len(descriptor))
-			}
+			var descriptor = actual.Config.SecureDescriptor
 			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("Datastore: %v, %v:%v", actual.Datastore, actual.Config.DriverName, descriptor), messageTypeGeneric, "register")
 		}
 	case *dsunit.MappingRequest:
