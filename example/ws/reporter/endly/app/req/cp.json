@@ -1,6 +1,7 @@
 {
   "Transfers": [
     {
+      "Expand":true,
       "Source": {
         "URL": "config/config.json"
       },
