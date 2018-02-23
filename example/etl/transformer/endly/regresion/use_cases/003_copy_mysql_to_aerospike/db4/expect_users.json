@@ -1,4 +1,5 @@
 [
+  {"@timeFormat@dob":"yyyy-MM-dd"},
   {
     "id": 101,
     "email": "abc@p1.pl",

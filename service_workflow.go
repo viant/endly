@@ -188,6 +188,15 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction, wor
 	return response, err
 }
 
+
+func (s *workflowService) injectTagIdsIdNeeded(action *ActionRequest, tagIDs map[string]bool) {
+	if action.Service != "workflow" || action.Action != "run" {
+		return
+	}
+	requestMap := toolbox.AsMap(action.Request)
+	requestMap["TagIDs"] = strings.Join(toolbox.MapKeysToStringSlice(tagIDs), ",")
+}
+
 func (s *workflowService) runTask(context *Context, workflow *WorkflowControl, tagIDs map[string]bool, task *WorkflowTask) (data.Map, error) {
 	if !workflow.CanRun() {
 		return nil, nil
@@ -211,15 +220,22 @@ func (s *workflowService) runTask(context *Context, workflow *WorkflowControl, t
 	startEvent := s.Begin(context, task, Pairs("ID", task.Name, "state", state.AsEncodableMap()))
 	defer s.End(context)(startEvent, Pairs())
 
-	var hasTagIDs = false
-	if len(tagIDs) > 0 {
-		hasTagIDs = task.HasTagID(tagIDs)
+	var hasTagIDs = len(tagIDs) > 0
+	var filterTagIDs = false
+	if hasTagIDs {
+		filterTagIDs = task.HasTagID(tagIDs)
 	}
 
 	var asyncActions = make([]*ServiceAction, 0)
 	for i := 0; i < len(task.Actions); i++ {
+
 		action := task.Actions[i]
-		if hasTagIDs && !tagIDs[action.TagID] {
+
+		if hasTagIDs {
+			s.injectTagIdsIdNeeded(action.ActionRequest, tagIDs)
+		}
+
+		if filterTagIDs && !tagIDs[action.TagID] {
 			continue
 		}
 
