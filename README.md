@@ -588,24 +588,27 @@ During assertion validator traverses expected data structure to compare it with 
 
 **Datastore services**
 
+
+Datastore service uses [dsunit](https://github.com/viant/dsunit/) service to create, populate, and verify content of datastore. 
+
 The first action that needs to be run is to register database name with dsc connection config, and optionally init scripts.
 
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| dsunit | register | register database connection, and optionally executes init scripts |  [DsUnitRegisterRequest](service_dsunit_register.go) | [DsUnitRegisterResponse](service_dsunit_register.go)  |
-| dsunit | mapping |  register virtual mapping between a virtual table and dozen actual tables to simplify setup. |  [DsUnitMappingRequest](service_dsunit_mapping.go) | [DsUnitMappingResponse](service_dsunit_mapping.go)  |
-| dsunit | register | register database connection, and optionally executes init scripts |  [DsUnitRegisterRequest](service_dsunit_register.go) | [DsUnitRegisterResponse](service_dsunit_register.go)  |
-| dsunit | sequence | takes current sequences for specified tables |  [DsUnitTableSequenceRequest](service_dsunit_sequence.go) | [DsUnitTableSequenceResponse](service_dsunit_sequence.go)  |
-| dsunit | sql | executes SQL from supplied URL |  [DsUnitSQLScriptRequest](service_dsunit_sql.go) | [DsUnitSQLScriptResponse](service_dsunit_sql.go)  |
-| dsunit | prepare | populates database with setup data |  [DsUnitTablePrepareRequest](service_dsunit_prepare.go) | [DsUnitTablePrepareResponse](service_dsunit_prepare.go)  |
-| dsunit | expect | verifies database content with expected data |  [DsUnitTableExpectRequest](service_dsunit_prepare.go) | [DsUnitTableExpectResponse](service_dsunit_prepare.go)  |
+| dsunit | register | register database connection |  [RegisterRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L46) | [RegisterResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#70)  |
+| dsunit | recreate | recreate database/datastore |  [RecreateRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L76) | [RecreateResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#98)  |    
+| dsunit | sql | run SQL commands |  [RunSQLRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L103) | [RunSQLResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#126)  |
+| dsunit | script | run SQL script |  [RunScriptRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L132) | [RunSQLResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#126)  |
+| dsunit | mapping | register database table mapping (view), |  [MappingRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L155) | [MappingResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#217)  |
+| dsunit | init | initialize datastore (register, recreated, run sql, add mapping) |  [InitRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L225) | [MappingResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#286)  |
+| dsunit | prepare | populate databstore with provided data |  [PrepareRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L293) | [MappingResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#323)  |
+| dsunit | expect | verify databstore with provided data |  [ExpectRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L340) | [MappingResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#380)  |
+| dsunit | query | run SQL query |  [QueryRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L407) | [QueryResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#419)  |
+| dsunit | sequence | get sequence values for supplied tables |  [SequenceRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L388) | [SequenceResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#400)  |
 
 
 To simplify setup/verification data process [DsUnitTableData](service_dsunit_data.go) has been introduce, so that data can be push into state, and then transform to the dsunit expected data with AsTableRecords udf function.
-
-
-DsUnit uses its own predicate and macro system to perform advanced validation see [Macros And Predicates](../dsunit/docs/)
 
 
 

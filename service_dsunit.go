@@ -29,15 +29,7 @@ type dsunitService struct {
 	Service dsunit.Service
 }
 
-
-
-
-
-
-
 const (
-
-
 	dsunitMySQLInitExample = `{
   "Datastore": "mydb",
   "Config": {
@@ -60,8 +52,6 @@ const (
   ],
   "Recreate": "true"
 }`
-
-
 
 	dsunitAerospikeRegisterExample = `{
   "Datastore": "db",
@@ -103,7 +93,6 @@ const (
   }
 }`
 
-
 	dsunitServiceSQLExample = `{
 		"Datastore": "db1",
 		"Scripts": [
@@ -112,8 +101,6 @@ const (
 			}
 		]
 	}`
-
-
 
 	dsunitServiceMappingExample = ` {
 		"Mappings": [
@@ -173,7 +160,6 @@ const (
   }`
 )
 
-
 func (s *dsunitService) registerRoutes() {
 
 	s.Register(&ServiceActionRoute{
@@ -215,7 +201,7 @@ func (s *dsunitService) registerRoutes() {
 		Action: "recreate",
 		RequestInfo: &ActionInfo{
 			Description: "create datastore",
-			Examples: []*ExampleUseCase{},
+			Examples:    []*ExampleUseCase{},
 		},
 		RequestProvider: func() interface{} {
 			return &dsunit.RecreateRequest{}
@@ -238,8 +224,8 @@ func (s *dsunitService) registerRoutes() {
 			Description: "run SQL script",
 			Examples: []*ExampleUseCase{
 				{
-					UseCase:"run script",
-					Data:dsunitServiceSQLExample,
+					UseCase: "run script",
+					Data:    dsunitServiceSQLExample,
 				},
 			},
 		},
@@ -262,7 +248,7 @@ func (s *dsunitService) registerRoutes() {
 		Action: "sql",
 		RequestInfo: &ActionInfo{
 			Description: "run SQL",
-			Examples: []*ExampleUseCase{},
+			Examples:    []*ExampleUseCase{},
 		},
 		RequestProvider: func() interface{} {
 			return &dsunit.RunSQLRequest{}
@@ -279,14 +265,11 @@ func (s *dsunitService) registerRoutes() {
 		},
 	})
 
-
 	s.Register(&ServiceActionRoute{
 		Action: "mapping",
 		RequestInfo: &ActionInfo{
 			Description: "register database table mapping (view)",
-			Examples: []*ExampleUseCase{
-
-			},
+			Examples:    []*ExampleUseCase{},
 		},
 		RequestProvider: func() interface{} {
 			return &dsunit.MappingRequest{}
@@ -296,13 +279,12 @@ func (s *dsunitService) registerRoutes() {
 		},
 		Handler: func(context *Context, request interface{}) (interface{}, error) {
 			if handlerRequest, ok := request.(*dsunit.MappingRequest); ok {
-				response :=  s.Service.AddTableMapping(handlerRequest)
+				response := s.Service.AddTableMapping(handlerRequest)
 				return response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
-
 
 	s.Register(&ServiceActionRoute{
 		Action: "init",
@@ -311,8 +293,8 @@ func (s *dsunitService) registerRoutes() {
 
 			Examples: []*ExampleUseCase{
 				{
-					UseCase:"mysql init",
-					Data:dsunitMySQLInitExample,
+					UseCase: "mysql init",
+					Data:    dsunitMySQLInitExample,
 				},
 			},
 		},
@@ -331,7 +313,6 @@ func (s *dsunitService) registerRoutes() {
 		},
 	})
 
-
 	s.Register(&ServiceActionRoute{
 		Action: "prepare",
 		RequestInfo: &ActionInfo{
@@ -349,8 +330,8 @@ func (s *dsunitService) registerRoutes() {
 		},
 		RequestProvider: func() interface{} {
 			return &dsunit.PrepareRequest{
-				DatasetResource:&dsunit.DatasetResource{
-					DatastoreDatasets:&dsunit.DatastoreDatasets{},
+				DatasetResource: &dsunit.DatasetResource{
+					DatastoreDatasets: &dsunit.DatastoreDatasets{},
 				},
 			}
 		},
@@ -383,8 +364,8 @@ func (s *dsunitService) registerRoutes() {
 		},
 		RequestProvider: func() interface{} {
 			return &dsunit.ExpectRequest{
-				DatasetResource:&dsunit.DatasetResource{
-					DatastoreDatasets:&dsunit.DatastoreDatasets{},
+				DatasetResource: &dsunit.DatasetResource{
+					DatastoreDatasets: &dsunit.DatastoreDatasets{},
 				},
 			}
 		},
@@ -403,7 +384,7 @@ func (s *dsunitService) registerRoutes() {
 	s.Register(&ServiceActionRoute{
 		Action: "query",
 		RequestInfo: &ActionInfo{
-			Description: "run SQL or SQL script",
+			Description: "run SQL query",
 		},
 		RequestProvider: func() interface{} {
 			return &dsunit.QueryRequest{}
@@ -447,7 +428,6 @@ func (s *dsunitService) registerRoutes() {
 	})
 }
 
-
 func (s dsunitService) Run(context *Context, request interface{}) *ServiceResponse {
 	var state = context.state
 	context.Context.Replace((*data.Map)(nil), &state)
@@ -456,7 +436,6 @@ func (s dsunitService) Run(context *Context, request interface{}) *ServiceRespon
 }
 
 //context.Replace((*dsc.Manager)(nil), &manager)
-
 
 //NewDataStoreUnitService creates a new Datastore unit service
 func NewDataStoreUnitService() Service {
