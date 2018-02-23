@@ -34,7 +34,6 @@ func (r *DsUnitDataRequest) Validate() error {
 	return nil
 }
 
-
 //DsUnitTableData represents table data
 type DsUnitTableData struct {
 	Table         string
@@ -92,8 +91,6 @@ func (d *DsUnitTableData) GetValues(state data.Map) []map[string]interface{} {
 	return result
 }
 
-
-
 func (d *DsUnitTableData) expandThis(textValue string, value map[string]interface{}) interface{} {
 	if strings.Contains(textValue, "this.") {
 		var thisState = data.NewMap()
@@ -137,8 +134,6 @@ func (d *DsUnitTableData) GetValue(state data.Map, source interface{}) map[strin
 	records.Push(value)
 	return value
 }
-
-
 
 //AsTableRecords converts data spcified by dataKey into slice of *DsUnitTableData to create dsunit data as map[string][]map[string]interface{} (table with records)
 func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {

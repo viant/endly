@@ -116,13 +116,11 @@ func (s *service) fetchData(connection dsc.Connection, destinationManager dsc.Ma
 		return false, err
 	}
 
-
 	return s.persist(records, connection, destinationManager, dmlProvider, request)
 }
 
 func (s *service) persist(records []interface{}, connection dsc.Connection, destinationManager dsc.Manager, dmlProvider dsc.DmlProvider, request *CopyRequest) (completed bool, err error) {
 	if len(records) > 0 {
-
 
 		if request.InsertMode {
 			parametrizedSQLProvider := func(item interface{}) *dsc.ParametrizedSQL {
@@ -144,10 +142,7 @@ func (s *service) persist(records []interface{}, connection dsc.Connection, dest
 		t, _ := toolbox.AsJSONText(records)
 		fmt.Printf("P: %v %v\n", err, t)
 
-
 	}
-
-
 
 	if err != nil || completed {
 		return true, err

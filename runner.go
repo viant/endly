@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/viant/assertly"
+	"github.com/viant/dsunit"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"log"
@@ -11,7 +12,6 @@ import (
 	"reflect"
 	"strings"
 	"time"
-	"github.com/viant/dsunit"
 )
 
 //OnRunnerError exit system with os.Exit with supplied code.
@@ -174,7 +174,6 @@ func (r *CliRunner) reportDsUnitEventTypes(serviceResponse interface{}, event *E
 			}
 		}
 
-
 	case *dsunit.PrepareRequest:
 		if filter.PopulateDatastore {
 			actual.Load()
@@ -217,7 +216,7 @@ func (r *CliRunner) reportValidationEventTypes(serviceResponse interface{}, even
 		r.reportValidation(response, event)
 	case *dsunit.ExpectResponse:
 		if response != nil {
-			for _, validation := range  response.Validation {
+			for _, validation := range response.Validation {
 				if validation.Validation != nil {
 					r.reportValidation(validation.Validation, event)
 				}

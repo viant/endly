@@ -141,7 +141,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 				LoggingDirectory: "/tmp/logs",
 			})
 
-			if ! assert.NotNil(t, serviceResponse) {
+			if !assert.NotNil(t, serviceResponse) {
 				return
 			}
 
@@ -155,7 +155,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 					}
 
 					dsUnit, ok := response.Data["dsunit"]
-					if ! ok {
+					if !ok {
 						assert.Fail(t, fmt.Sprintf("expected dsunit key dsunit: %v", response.Data))
 						return
 					}

@@ -204,7 +204,8 @@ func printServiceActions() {
 	}
 	fmt.Printf("'%v' service actions: \n", serviceID)
 	for _, action := range service.Actions() {
-		fmt.Printf("\t%v\n", action)
+		route, _ := service.ServiceActionRoute(action)
+		fmt.Printf("\t%v - %v\n", action, route.RequestInfo.Description)
 	}
 }
 
