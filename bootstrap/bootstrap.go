@@ -136,6 +136,7 @@ func generateSecret(credentialsFile string) {
 		Password: password,
 	}
 	var privateKeyPath = flag.Lookup("k").Value.String()
+	privateKeyPath = strings.Replace(privateKeyPath, "~", os.Getenv("HOME"), 1)
 	if toolbox.FileExists(privateKeyPath) && !cred.IsKeyEncrypted(privateKeyPath) {
 		config.PrivateKeyPath = privateKeyPath
 	}
