@@ -21,6 +21,11 @@ import (
 	"path"
 	"strings"
 	"time"
+	"github.com/viant/toolbox/cred"
+	"bufio"
+	"golang.org/x/crypto/ssh/terminal"
+	"syscall"
+	"errors"
 )
 
 func init() {
@@ -40,6 +45,8 @@ func init() {
 	flag.String("s", "", "<serviceID> print service details, -s='*' prints all service IDs")
 	flag.String("a", "", "<action> prints action request representation")
 	flag.String("i", "", "<coma separated tagID list> to filter")
+	flag.String("c", "", "<credential>, generate secret credentials file: ~/.secret/<credential>.json")
+	flag.String("k", "", "<private key path>,  works only with -c options, i.e -k=" + path.Join(os.Getenv("HOME"), ".secret/id_rsa.pub"))
 
 }
 
@@ -63,6 +70,11 @@ func Bootstrap() {
 
 	if _, ok := flagset["h"]; ok {
 		printHelp()
+		return
+	}
+
+	if _, ok := flagset["c"]; ok {
+		generateSecret(flag.Lookup("c").Value.String())
 		return
 	}
 
@@ -106,6 +118,58 @@ func Bootstrap() {
 	}
 	time.Sleep(time.Second)
 }
+
+
+func generateSecret(credentialsFile string) {
+	secretPath := path.Join(os.Getenv("HOME"), ".secret")
+	if !toolbox.FileExists(secretPath) {
+		os.Mkdir(secretPath, 0744)
+	}
+	username, password, err := credentials()
+	if err != nil {
+		fmt.Printf("\n")
+		log.Fatal(err)
+	}
+	fmt.Println("")
+	config := &cred.Config{
+		Username: username,
+		Password: password,
+	}
+	var privateKeyPath = flag.Lookup("k").Value.String()
+	if toolbox.FileExists(privateKeyPath) && !cred.IsKeyEncrypted(privateKeyPath) {
+		config.PrivateKeyPath = privateKeyPath
+	}
+	var secretFile = path.Join(secretPath, fmt.Sprintf("%v.json", credentialsFile))
+	err = config.Save(secretFile)
+	if err != nil {
+		fmt.Printf("\n")
+		log.Fatal(err)
+	}
+}
+
+func credentials() (string, string, error) {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter Username: ")
+	username, _ := reader.ReadString('\n')
+	fmt.Print("Enter Password: ")
+	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		log.Fatal("failed to read password %v", err)
+	}
+	fmt.Print("\nRetype Password: ")
+	bytePassword2, err := terminal.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		log.Fatal("failed to read password %v", err)
+	}
+
+	password := string(bytePassword)
+	if string(bytePassword2) != password {
+		return "", "", errors.New("Password did not match")
+	}
+	return strings.TrimSpace(username), strings.TrimSpace(password), nil
+}
+
+
 
 func printWorkflowTasks(URL string) {
 	workflow, err := getWorkflow(URL)

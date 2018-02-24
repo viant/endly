@@ -35,5 +35,5 @@
     * Integrated dsunit with assertly
     * Added unit/integrated test Run function
     * Patched tagIDs 
-    * Added action workflow
+    * Moved secret credetnails file generator to endly -c option
     * Minor fixes
