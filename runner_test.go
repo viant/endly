@@ -73,3 +73,24 @@ func Test_DefaultRunnerReportingOption(t *testing.T) {
 	options := endly.DefaultRunnerReportingOption()
 	assert.NotNil(t, options)
 }
+
+func TestCliRunner_Run(t *testing.T) {
+	{
+		err := endly.Run("action", "run", map[string]interface{}{
+			"service": "logger",
+			"action":  "print",
+			"request": &endly.LoggerPrintRequest{Message: "hello"},
+		}, nil)
+
+		assert.Nil(t, err)
+	}
+	{
+		err := endly.Run("action", "run", map[string]interface{}{
+			"service": "workflow",
+			"action":  "fail",
+			"request": &endly.WorkflowFailRequest{Message: "hello"},
+		}, nil)
+
+		assert.NotNil(t, err)
+	}
+}

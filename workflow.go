@@ -158,9 +158,7 @@ type WorkflowError struct {
 	Error        string
 	WorkflowName string
 	TaskName     string
-	*ActionRequest
-	Request  interface{}
-	Response interface{}
+	Activity     *WorkflowServiceActivity
 }
 
 //WorkflowControl control workflow execution

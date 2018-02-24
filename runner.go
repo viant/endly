@@ -7,8 +7,8 @@ import (
 	"github.com/viant/dsunit"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
-	"log"
 	"os"
+	"path"
 	"reflect"
 	"strings"
 	"time"
@@ -67,6 +67,7 @@ type CliRunner struct {
 	report           *ReportSummaryEvent
 	activity         *WorkflowServiceActivity
 	errorCode        bool
+	err              error
 	lines            int
 	lineRefreshCount int
 	ErrorEvent       *Event
@@ -210,7 +211,6 @@ func (r *CliRunner) reportHTTPEventTypes(serviceResponse interface{}, event *Eve
 }
 
 func (r *CliRunner) reportValidationEventTypes(serviceResponse interface{}, event *Event, filter *RunnerReportingFilter) bool {
-
 	switch response := serviceResponse.(type) {
 	case *assertly.Validation:
 		r.reportValidation(response, event)
@@ -294,6 +294,7 @@ func (r *CliRunner) reportSystemEventType(serviceResponse interface{}, event *Ev
 		r.report.Error = true
 		r.printShortMessage(messageTypeError, fmt.Sprintf("%v", actual.Error), messageTypeError, "error")
 		r.Println(r.ColorText(fmt.Sprintf("ERROR: %v\n", actual.Error), "red"))
+		r.err = errors.New(actual.Error)
 		return true
 	case *SleepEventType:
 
@@ -449,9 +450,7 @@ func (r *CliRunner) extractHTTPTrips(eventCandidates []*Event) ([]*HTTPRequest, 
 				responses = append(responses, httpResponse)
 			}
 		}
-
 	}
-
 	return requests, responses
 }
 
@@ -504,7 +503,6 @@ func (r *CliRunner) reportSummaryEvent() {
 }
 
 func (r *CliRunner) getValidation(event *Event) *assertly.Validation {
-
 	candidate := event.get(reflect.TypeOf(&assertly.Validation{}))
 	if candidate == nil {
 		return nil
@@ -538,10 +536,7 @@ func (r *CliRunner) reportTagSummary() {
 			for i, event := range tag.Events {
 
 				validation := r.getValidation(event)
-				//if validation == nil {
-				//TODO patch dsunit validation
-				//	validation = r.getDsUnitAssertResponse(event)
-				//}
+
 				if validation == nil {
 					continue
 				}
@@ -608,7 +603,6 @@ func (r *CliRunner) reportValidation(validation *assertly.Validation, event *Eve
 	}
 	var total = validation.PassedCount + validation.FailedCount
 	var description = validation.Description
-
 	var activity = r.activities.Last()
 	if activity != nil {
 		var tagID = validation.TagID
@@ -699,7 +693,6 @@ func (r *CliRunner) reportEvents(context *Context, sessionID string, filter *Run
 			time.Sleep(reportingEventSleep)
 			continue
 		}
-
 		for _, event := range reporterResponse.Events {
 			if firstEvent == nil {
 				firstEvent = event
@@ -715,7 +708,7 @@ func (r *CliRunner) reportEvents(context *Context, sessionID string, filter *Run
 
 	}
 	r.processEventTags()
-	return nil
+	return err
 }
 
 func (r *CliRunner) processEventTags() {
@@ -752,35 +745,60 @@ func LoadRunRequestWithOption(workflowRunRequestURL string, params ...interface{
 	return request, options, nil
 }
 
+func getWorkflowURL(candidate string) (string, string, error) {
+	var _, name = path.Split(candidate)
+	if path.Ext(candidate) == "" {
+		candidate = candidate + ".csv"
+	} else {
+		name = string(name[:len(name)-4]) //remove extension
+	}
+	resource := url.NewResource(candidate)
+	if _, err := resource.Download(); err != nil {
+		resource = url.NewResource(fmt.Sprintf("mem://%v/workflow/%v", EndlyNamespace, candidate))
+		if _, memError := resource.Download(); memError != nil {
+			return "", "", err
+		}
+	}
+	return name, resource.URL, nil
+}
+
 //Run run workflow for the supplied run request and runner options.
 func (r *CliRunner) Run(request *WorkflowRunRequest, options *RunnerReportingOptions) (err error) {
+
 	ctx := r.manager.NewContext(toolbox.NewContext())
+
+	if request.Name == "" {
+		name, URL, err := getWorkflowURL(request.WorkflowURL)
+		if err != nil {
+			return fmt.Errorf("failed to locate workflow: %v %v", request.WorkflowURL, err)
+		}
+		request.WorkflowURL = URL
+		request.Name = name
+	}
 	defer func() {
+		if r.err != nil {
+			err = r.err
+		}
 		ctx.Close()
-		if r.errorCode {
-			if err != nil {
-				log.Print(err)
-			}
+		if r.errorCode || err != nil {
 			OnRunnerError(1)
 		}
 	}()
-
 	var service Service
-	service, err = ctx.Service(WorkflowServiceID)
-	if err != nil {
+	if service, err = ctx.Service(WorkflowServiceID); err != nil {
 		return err
 	}
 	request.Async = true
 	response := service.Run(ctx, request)
-	if response.Error != "" {
-		return errors.New(response.Error)
+	if response.err != nil {
+		err = response.err
+		return err
 	}
 	workflowResponse, ok := response.Response.(*WorkflowRunResponse)
 	if !ok {
 		return fmt.Errorf("failed to run workflow: %v invalid response type %T", request.Name, response.Response)
 	}
 	err = r.reportEvents(ctx, workflowResponse.SessionID, options.Filter)
-
 	return err
 }
 
@@ -850,4 +868,30 @@ func NewCliRunner() *CliRunner {
 			messageTypeSuccess:        "green",
 		},
 	}
+}
+
+//Run run workflow tasks with specified parameters
+func Run(workflowURL, tasks string, params map[string]interface{}, options *RunnerReportingOptions) error {
+	var runner = NewCliRunner()
+	var orig = OnRunnerError
+	OnRunnerError = func(code int) {}
+	defer func() {
+		OnRunnerError = orig
+	}()
+
+	if options == nil {
+		options = DefaultRunnerReportingOption()
+	}
+	_, name := toolbox.URLSplit(workflowURL)
+	if path.Ext(name) != "" {
+		name = string(name[:strings.LastIndex(name, ".")])
+	}
+	runRequest := &WorkflowRunRequest{
+		WorkflowURL:       workflowURL,
+		Name:              name,
+		Tasks:             tasks,
+		PublishParameters: true,
+		Params:            params,
+	}
+	return runner.Run(runRequest, options)
 }

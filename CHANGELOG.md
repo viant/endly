@@ -30,3 +30,10 @@
     * Refactored dsunit prepare/expect request
     * Updated documentation
     * Minor fixes
+    
+## Feb 23  2018 0.4.0
+    * Integrated dsunit with assertly
+    * Added unit/integrated test Run function
+    * Patched tagIDs 
+    * Added action workflow
+    * Minor fixes

@@ -1,8 +1,11 @@
 package endly
 
-import "time"
+import (
+	"github.com/viant/toolbox/data"
+	"time"
+)
 
-//WorkflowServiceActivity represents workflow activity
+//WorkflowServiceActivity represents workflow Activity
 type WorkflowServiceActivity struct {
 	*NeatlyTag
 	Workflow        string
@@ -14,7 +17,7 @@ type WorkflowServiceActivity struct {
 	Ineligible      bool
 	Request         interface{}
 	Response        map[string]interface{}
-	ServiceResponse interface{}
+	ServiceResponse *ServiceResponse
 }
 
 //FormatTag return a formatted tag
@@ -25,15 +28,15 @@ func (a *WorkflowServiceActivity) FormatTag() string {
 	return "[" + a.Tag + "]"
 }
 
-//NewWorkflowServiceActivity returns a new workflow activity.
-func NewWorkflowServiceActivity(context *Context, action *ServiceAction) *WorkflowServiceActivity {
+//NewWorkflowServiceActivity returns a new workflow Activity.
+func NewWorkflowServiceActivity(context *Context, action *ServiceAction, state data.Map) *WorkflowServiceActivity {
 	return &WorkflowServiceActivity{
 		Workflow:    context.Workflows.Last().Name,
-		Action:      action.Action,
-		Service:     action.Service,
+		Action:      state.ExpandAsText(action.Action),
+		Service:     state.ExpandAsText(action.Service),
 		NeatlyTag:   action.NeatlyTag,
 		Description: context.Expand(action.Description),
-		Request:     action.Request,
+		Request:     state.Expand(action.Request),
 		Response:    make(map[string]interface{}),
 		StartTime:   time.Now()}
 }
