@@ -3,4 +3,4 @@ Workflow,,,Name,Description,Tasks,Init
 []Tasks,,,Name,Description,Actions,
 ,,,notify,Error notification task,%Notify,
 []Notify,,Service,Action,Description,Request,
-,,smtp,send,send error notification,#req/send_error,
+,,smtp,send,send error notification,@req/send_error,

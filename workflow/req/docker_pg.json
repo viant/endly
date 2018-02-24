@@ -1,0 +1,19 @@
+{
+  "Env": {
+    "POSTGRES_PASSWORD": "***pg***",
+    "POSTGRES_USER": "###pg###"
+  },
+  "Target": "$dockerTarget",
+  "Credentials": {
+    "###pg###": "$mysqlCredential",
+    "***pg***": "$mysqlCredential"
+  },
+  "Name": "$serviceInstanceName",
+  "Image": "postgresql:$pgVersion",
+  "Mount": {
+    "$configFile": "/etc/postgresql/postgresql.conf"
+  },
+  "MappedPort": {
+    "5432": "5432"
+  }
+}

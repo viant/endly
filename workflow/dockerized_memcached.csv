@@ -3,8 +3,8 @@ Workflow,,Name,Description,Tasks,,Init
 []Tasks,,Name,Description,Actions,,
 ,,start,This task will start memcached docker service,%Start,,
 []Start,Service,Action,Description,Request,RunCriteria,Post
-,docker,run,Start docker memcached service,#req/docker_memcached,,
+,docker,run,Start docker memcached service,@req/docker_memcached,,
 []Tasks,,Name,Description,Actions,,
 ,,stop,This task will stop docker mysql,%Stop,,
 []Stop,Service,Action,Description,Request,,
-,docker,container-stop,Stop docker memcached service,#req/docker.json,,
+,docker,container-stop,Stop docker memcached service,@req/docker.json,,

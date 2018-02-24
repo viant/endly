@@ -1,21 +1,21 @@
 Workflow,,Name,Description,Tasks,,Init
 ,,dockerized_mysql,This workflow manages mysql as docker service,%Tasks,,@var/dockerized_mysql_init
 []Tasks,,Name,Description,Actions,,
-,,start,"This task will stop system mysql if it is running, it only run if  $param.stopSystemMysql is true",%Start,,
+,,start,"This task will run mysql docker container, $param.stopSystemMysql is true, it will stop local mysql service",%Start,,
 []Start,Service,Action,Description,Request,RunCriteria,Post
-,daemon,status,Check if system mysql service is running,#req/mysql_system,$params.stopSystemMysql:true,"[{""name"":""mysqlSystemStatus"", ""from"":""State""}]"
-,daemon,stop,Stop system mysql service,#req/mysql_system,$mysqlSystemStatus:running,
-,transfer,copy,This action will copy template config file to the temp folder,#req/docker_config,,
-,docker,run,Start docker mysql service,#req/docker_mysql,,
+,daemon,status,Check if system mysql service is running,@req/mysql_system,$params.stopSystemMysql:true,"[{""name"":""mysqlSystemStatus"", ""from"":""State""}]"
+,daemon,stop,Stop system mysql service,@req/mysql_system,$mysqlSystemStatus:running,
+,transfer,copy,This action will copy template config file to the temp folder,@req/docker_config,,
+,docker,run,Start docker mysql service,@req/docker_mysql,,
 []Tasks,,Name,Description,Actions,,
 ,,stop,This task will stop docker mysql,%Stop,,
 []Stop,Service,Action,Description,Request,,
-,docker,container-stop,Stop docker mysql service,#req/docker,,
+,docker,container-stop,Stop docker mysql service,@req/docker,,
 []Tasks,,Name,Description,Actions,,
 ,,export,Export mysql schema from docker,%Export,,
 []Export,Service,Action,Description,Request,,
-,docker,container-run,Export all databases,#req/docker_mysql_export,,
+,docker,container-run,Export all databases,@req/docker_mysql_export,,
 []Tasks,,Name,Description,Actions,,
 ,,import,Export mysql schema from docker,%Import,,
 []Import,Service,Action,Description,Request,,
-,docker,container-run,Import mysql dump,#req/docker_mysql_import,,
+,docker,container-run,Import mysql dump,@req/docker_mysql_import,,

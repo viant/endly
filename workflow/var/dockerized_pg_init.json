@@ -1,0 +1,58 @@
+[
+  {
+    "Name": "serviceInstanceName",
+    "From": "params.serviceInstanceName",
+    "Required": true
+  },
+  {
+    "Name": "targetHost",
+    "From": "params.targetHost",
+    "Required": true
+  },
+  {
+    "Name": "targetHostCredential",
+    "From": "params.targetHostCredential",
+    "Required": true
+  },
+  {
+    "Name": "configURL",
+    "From": "params.configURL"
+  },
+  {
+    "Name": "configURLCredential",
+    "From": "params.configURLCredential"
+  },
+  {
+    "Name": "pgCredential",
+    "Value": "$params.pgCredential",
+    "Required": true
+  },
+  {
+    "Name": "pgVersion",
+    "Value": "$params.pgVersion"
+  },
+  {
+    "Name": "exportFile",
+    "Value": "$params.exportFile"
+  },
+  {
+    "Name": "importFile",
+    "Value": "$params.importFile"
+  },
+  {
+    "Name": "pgVersion",
+    "Value": "$params.pgVersion",
+    "Required": true
+  },
+  {
+    "Name": "dockerTarget",
+    "Value": {
+      "URL": "scp://${targetHost}/",
+      "Credential": "$targetHostCredential"
+    }
+  },
+  {
+    "Name": "configFile",
+    "Value": "/tmp/pg-${serviceInstanceName}.conf"
+  }
+]
