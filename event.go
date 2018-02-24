@@ -64,7 +64,7 @@ type Event struct {
 	TimeTakenMs int                      //time taken
 	Workflow    string                   //workflow ID
 	Task        *WorkflowTask            //task
-	Activity    *WorkflowServiceActivity //activity details
+	Activity    *WorkflowServiceActivity //Activity details
 	Level       int                      //logging level
 	Type        string                   //event type
 	Value       map[string]interface{}   //event value
@@ -129,8 +129,8 @@ func AddEvent(context *Context, eventType interface{}, value map[string]interfac
 	state := context.state
 	var activity *WorkflowServiceActivity
 	var task *WorkflowTask
-	if state.Has("activity") {
-		activity, _ = state.Get("activity").(*WorkflowServiceActivity)
+	if state.Has("Activity") {
+		activity, _ = state.Get("Activity").(*WorkflowServiceActivity)
 	}
 	if state.Has("task") {
 		task, _ = state.Get(":task").(*WorkflowTask)

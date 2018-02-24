@@ -75,11 +75,11 @@ func Bootstrap() {
 		return
 	}
 
-	request, option, err := getRunRequestWithOptons(flagset)
+	request, option, err := getRunRequestWithOptions(flagset)
 	if request == nil {
 		flagset["r"] = flag.Lookup("r").Value.String()
 		flagset["w"] = flag.Lookup("w").Value.String()
-		request, option, err = getRunRequestWithOptons(flagset)
+		request, option, err = getRunRequestWithOptions(flagset)
 		if err != nil && strings.Contains(err.Error(), "failed to locate workflow: manager") {
 			printHelp()
 			return
@@ -256,23 +256,6 @@ func printVersion() {
 	fmt.Fprintf(os.Stdout, "%v %v\n", endly.AppName, endly.GetVersion())
 }
 
-func getWorkflowURL(candidate string) (string, string, error) {
-	var _, name = path.Split(candidate)
-	if path.Ext(candidate) == "" {
-		candidate = candidate + ".csv"
-	} else {
-		name = string(name[:len(name)-4]) //remove extension
-	}
-	resource := url.NewResource(candidate)
-	if _, err := resource.Download(); err != nil {
-		resource = url.NewResource(fmt.Sprintf("mem://%v/workflow/%v", endly.EndlyNamespace, candidate))
-		if _, memError := resource.Download(); memError != nil {
-			return "", "", err
-		}
-	}
-	return name, resource.URL, nil
-}
-
 func getRunRequestURL(candidate string) (*url.Resource, error) {
 	if path.Ext(candidate) == "" {
 		candidate = candidate + ".json"
@@ -288,17 +271,12 @@ func getRunRequestURL(candidate string) (*url.Resource, error) {
 
 }
 
-func getRunRequestWithOptons(flagset map[string]string) (*endly.WorkflowRunRequest, *endly.RunnerReportingOptions, error) {
+func getRunRequestWithOptions(flagset map[string]string) (*endly.WorkflowRunRequest, *endly.RunnerReportingOptions, error) {
 	var request *endly.WorkflowRunRequest
 	var options = &endly.RunnerReportingOptions{}
 	if value, ok := flagset["w"]; ok {
-		name, URL, err := getWorkflowURL(value)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to locate workflow: %v %v", value, err)
-		}
 		request = &endly.WorkflowRunRequest{
-			WorkflowURL: URL,
-			Name:        name,
+			WorkflowURL: value,
 		}
 		options = endly.DefaultRunnerReportingOption()
 	}

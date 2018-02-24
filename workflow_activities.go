@@ -35,7 +35,7 @@ func (a *Activities) Last() *WorkflowServiceActivity {
 	return (*a)[workflowCount-1]
 }
 
-//GetPath returns hierarchical path to the latest activity
+//GetPath returns hierarchical path to the latest Activity
 func (a *Activities) GetPath(runner *CliRunner, fullPath bool) (string, int) {
 	var pathLength = 0
 	var activityPath = make([]string, 0)

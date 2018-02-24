@@ -22,15 +22,15 @@ const (
 	//WorkflowActionEvalCriteriaEventType event ID
 	WorkflowActionEvalCriteriaEventType = "EvalActionCriteria"
 
-	//WorkflowServiceActivityKey activity key
-	WorkflowServiceActivityKey = "activity"
+	//WorkflowServiceActivityKey Activity key
+	WorkflowServiceActivityKey = "Activity"
 
 	workflowCaller = "Workflow"
 
 	workflowError = "error"
 )
 
-//WorkflowServiceActivityEndEventType represents activity end event type.
+//WorkflowServiceActivityEndEventType represents Activity end event type.
 type WorkflowServiceActivityEndEventType struct {
 }
 
@@ -114,23 +114,53 @@ func (s *workflowService) loadWorkflowIfNeeded(context *Context, name string, UR
 	return nil
 }
 
+func (s *workflowService) getServiceRequest(context *Context, activity *WorkflowServiceActivity) (Service, interface{}, error) {
+	var service, err = context.Service(activity.Service)
+	if err != nil {
+		return nil, nil, err
+	}
+	request := activity.Request
+	if request == nil || !toolbox.IsMap(request) {
+		if toolbox.IsStruct(request) {
+			var requestMap = make(map[string]interface{})
+			converter := toolbox.NewColumnConverter("")
+			if err = converter.AssignConverted(&requestMap, request); err != nil {
+				return nil, nil, err
+			}
+			request = requestMap
+		} else {
+			err = fmt.Errorf("invalid request: %v, expected map but had: %T", request, request)
+			return nil, nil, err
+		}
+	}
+	requestMap := toolbox.AsMap(request)
+	var serviceRequest interface{}
+	serviceRequest, err = context.AsRequest(service.ID(), activity.Action, requestMap)
+	if err != nil {
+		return nil, nil, err
+	}
+	activity.Request = serviceRequest
+	activity.Request = serviceRequest
+	return service, serviceRequest, nil
+}
+
 func (s *workflowService) runAction(context *Context, action *ServiceAction, workflow *WorkflowControl) (response interface{}, err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("%v: %v", action.TagID, err)
 		}
 	}()
-
 	if !workflow.CanRun() {
 		return nil, nil
 	}
-	workflow.ActionRequest = action.ActionRequest
 	if err = action.ActionRequest.Validate(); err != nil {
 		return nil, err
 	}
 	var state = context.state
-	serviceActivity := NewWorkflowServiceActivity(context, action)
+	serviceActivity := NewWorkflowServiceActivity(context, action, state)
+	workflow.Activity = serviceActivity
 	state.Put(WorkflowServiceActivityKey, serviceActivity)
+
 	startEvent := s.Begin(context, action, Pairs(WorkflowServiceActivityKey, serviceActivity), Info)
 	defer s.End(context)(startEvent, Pairs("value", &WorkflowServiceActivityEndEventType{}, "response", serviceActivity.Response))
 	var canRun bool
@@ -148,37 +178,19 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction, wor
 	if err != nil {
 		return nil, err
 	}
-	var service Service
-	service, err = context.Service(action.Service)
+
+	service, serviceRequest, err := s.getServiceRequest(context, serviceActivity)
 	if err != nil {
 		return nil, err
 	}
-	expandedRequest := state.Expand(action.Request)
+	serviceActivity.ServiceResponse = service.Run(context, serviceRequest)
 
-	if expandedRequest == nil || !toolbox.IsMap(expandedRequest) {
-		err = fmt.Errorf("invalid request: %v, expected map but had: %T", expandedRequest, expandedRequest)
-		return nil, err
+	if serviceActivity.ServiceResponse.err != nil {
+		return nil, serviceActivity.ServiceResponse.err
 	}
-	requestMap := toolbox.AsMap(expandedRequest)
-
-	var serviceRequest interface{}
-	serviceRequest, err = context.AsRequest(service.ID(), action.Action, requestMap)
-	if err != nil {
-		return nil, err
-	}
-	serviceActivity.Request = serviceRequest
-	workflow.Request = serviceRequest
-	serviceResponse := service.Run(context, serviceRequest)
-	workflow.Response = serviceResponse
-	serviceActivity.ServiceResponse = serviceResponse
-
-	if serviceResponse.err != nil {
-		return nil, serviceResponse.err
-	}
-
-	response = serviceResponse.Response
+	response = serviceActivity.ServiceResponse.Response
 	if response != nil && (toolbox.IsMap(response) || toolbox.IsStruct(response)) {
-		converter.AssignConverted(&serviceActivity.Response, serviceResponse.Response)
+		converter.AssignConverted(&serviceActivity.Response, serviceActivity.ServiceResponse.Response)
 	} else {
 		serviceActivity.Response["value"] = response
 	}
@@ -447,11 +459,12 @@ func (s *workflowService) runOnErrorTaskIfNeeded(context *Context, workflow *Wor
 		workflow.Error = err.Error()
 
 		var errorMap = toolbox.AsMap(workflow.WorkflowError)
-		if workflow.WorkflowError.Request != nil {
-			errorMap["Request"], _ = toolbox.AsJSONText(workflow.WorkflowError.Request)
+		activity := workflow.WorkflowError.Activity
+		if activity != nil && activity.Request != nil {
+			errorMap["Request"], _ = toolbox.AsJSONText(activity.Request)
 		}
-		if workflow.WorkflowError.Response != nil {
-			errorMap["Response"], _ = toolbox.AsJSONText(workflow.WorkflowError.Response)
+		if activity != nil && activity.Response != nil {
+			errorMap["Response"], _ = toolbox.AsJSONText(activity.Response)
 		}
 		context.state.Put(workflowError, errorMap)
 		task, _ := workflow.Task(workflow.OnErrorTask)
