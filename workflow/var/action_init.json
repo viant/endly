@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "service",
+    "From": "params.service",
+    "Required": true
+  },
+  {
+    "Name": "action",
+    "From": "params.action",
+    "Required": true
+  },
+  {
+    "Name": "request",
+    "From": "params.request",
+    "Required": true
+  }
+]

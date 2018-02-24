@@ -1,0 +1,6 @@
+Workflow,,Name,Description,Tasks,Init,,,
+,,action,Run provided service action,%Tasks,@var/action_init,,,
+[]Tasks,,Name,Description,Actions,,,,
+,,run,Run an action,%Run,,,,
+[]Run,Service,Action,Description,Request,,,,
+,$service,$action,Run $action,$request,,,,
