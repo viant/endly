@@ -29,12 +29,11 @@ export PATH=$PATH:$GOPATH/bin
 ```
 
 
-
-
-Generate secret keys with a credential that endly will use to run the workflows.
-(**secret** binary should be downloaded or compiled and build as result of get -u github.com/viant/toolbox/secret into GOPATH/bin)
-Secret generates a file that store blowfish encrypted credential in $HOME/.secret/ directory.
-
+Generate credentials file used by the workflow.
+```text
+endly -c=CREDENTIAL_FILENAME
+```
+Command endly -c generates a file that store blowfish encrypted password in $HOME/.secret/ directory.
 
 Provide a user name and password to login to your box.
 ```text
@@ -43,7 +42,7 @@ ssh-keygen -b 1024 -t rsa -f id_rsa -P "" -f $HOME/.secret/id_rsa
 cat $HOME/.secret/id_rsa.pub >  ~/.ssh/authorized_keys 
 chmod u+w authorized_keys
 
-secret -o localhost
+endly -c=localhost -k=~/.secret/id_rsa.pub
 ```
 ```
 
