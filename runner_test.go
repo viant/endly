@@ -75,22 +75,38 @@ func Test_DefaultRunnerReportingOption(t *testing.T) {
 }
 
 func TestCliRunner_Run(t *testing.T) {
+	runner := endly.NewCliRunner()
+	endly.OnRunnerError = func(code int) {
+
+	}
 	{
-		err := endly.Run("action", "run", map[string]interface{}{
-			"service": "logger",
-			"action":  "print",
-			"request": &endly.LoggerPrintRequest{Message: "hello"},
+		err := runner.Run(&endly.WorkflowRunRequest{
+			WorkflowURL: "action",
+			Tasks:       "run",
+			Params: map[string]interface{}{
+				"service": "logger",
+				"action":  "print",
+				"request": &endly.LoggerPrintRequest{Message: "hello"},
+			},
 		}, nil)
 
 		assert.Nil(t, err)
 	}
 	{
-		err := endly.Run("action", "run", map[string]interface{}{
-			"service": "workflow",
-			"action":  "fail",
-			"request": &endly.WorkflowFailRequest{Message: "hello"},
-		}, nil)
 
+		err := runner.Run(&endly.WorkflowRunRequest{
+			WorkflowURL: "action",
+			Tasks:       "run",
+			Params: map[string]interface{}{
+				"service": "workflow",
+				"action":  "fail",
+				"request": &endly.WorkflowFailRequest{Message: "hello"},
+			},
+		}, nil)
 		assert.NotNil(t, err)
 	}
+}
+
+func Test_Run(t *testing.T) {
+
 }

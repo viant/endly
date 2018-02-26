@@ -764,9 +764,8 @@ func getWorkflowURL(candidate string) (string, string, error) {
 
 //Run run workflow for the supplied run request and runner options.
 func (r *CliRunner) Run(request *WorkflowRunRequest, options *RunnerReportingOptions) (err error) {
-
 	ctx := r.manager.NewContext(toolbox.NewContext())
-
+	ctx.cliRunnner = true
 	if request.Name == "" {
 		name, URL, err := getWorkflowURL(request.WorkflowURL)
 		if err != nil {
@@ -784,6 +783,11 @@ func (r *CliRunner) Run(request *WorkflowRunRequest, options *RunnerReportingOpt
 			OnRunnerError(1)
 		}
 	}()
+
+	if options == nil {
+		options = DefaultRunnerReportingOption()
+	}
+
 	var service Service
 	if service, err = ctx.Service(WorkflowServiceID); err != nil {
 		return err
@@ -868,30 +872,4 @@ func NewCliRunner() *CliRunner {
 			messageTypeSuccess:        "green",
 		},
 	}
-}
-
-//Run run workflow tasks with specified parameters
-func Run(workflowURL, tasks string, params map[string]interface{}, options *RunnerReportingOptions) error {
-	var runner = NewCliRunner()
-	var orig = OnRunnerError
-	OnRunnerError = func(code int) {}
-	defer func() {
-		OnRunnerError = orig
-	}()
-
-	if options == nil {
-		options = DefaultRunnerReportingOption()
-	}
-	_, name := toolbox.URLSplit(workflowURL)
-	if path.Ext(name) != "" {
-		name = string(name[:strings.LastIndex(name, ".")])
-	}
-	runRequest := &WorkflowRunRequest{
-		WorkflowURL:       workflowURL,
-		Name:              name,
-		Tasks:             tasks,
-		PublishParameters: true,
-		Params:            params,
-	}
-	return runner.Run(runRequest, options)
 }
