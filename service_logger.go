@@ -37,12 +37,20 @@ func (s *LoggerService) registerRoutes() {
 		ResponseProvider: func() interface{} {
 			return struct{}{}
 		},
-		Handler: func(context *Context, request interface{}) (interface{}, error) {
-			if _, ok := request.(*LoggerPrintRequest); ok {
-				//actual printing happened in runner (it is async)
+		Handler: func(context *Context, handlerRequest interface{}) (interface{}, error) {
+			if request, ok := handlerRequest.(*LoggerPrintRequest); ok {
+				if !context.cliRunnner { //actual printing happened in runner
+					if request.Message != "" {
+						var message = s.Renderer.ColorText(request.Message, request.Color)
+						s.Renderer.Println(message)
+					} else if request.Error != "" {
+						var errorMessage = s.Renderer.ColorText(request.Error, s.Renderer.ErrorColor)
+						s.Renderer.Println(errorMessage)
+					}
+				}
 				return nil, nil
 			}
-			return nil, fmt.Errorf("unsupported request type: %T", request)
+			return nil, fmt.Errorf("unsupported request type: %T", handlerRequest)
 		},
 	})
 }

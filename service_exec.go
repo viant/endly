@@ -292,7 +292,7 @@ func (s *execService) credential(key string, credentialURI string) (result strin
 		return getCredentail(key, credConfig), nil
 	}
 	credConfig = &cred.Config{}
-	if credentialURI != "" && toolbox.FileExists(credentialURI) {
+	if credentialURI != "" {
 		credConfig, err = cred.NewConfig(credentialURI)
 		if err != nil {
 			return "", err
@@ -345,6 +345,7 @@ func (s *execService) executeCommand(context *Context, session *SystemTerminalSe
 	terminators := getTerminators(options, session, execution)
 
 	var cmd = command
+
 	if len(execution.Credentials) > 0 {
 		secure, err := s.credentialsToSecure(execution.Credentials)
 		if err != nil {
