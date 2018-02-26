@@ -87,7 +87,7 @@ func Test_ServiceRequest(t *testing.T) {
 			request, err := context.NewRequest(service.ID(), action)
 			assert.Nil(t, err)
 			assert.NotNil(t, request)
-			if _, ok := request.(Validator); ok {
+			if _, ok := request.(endly.Validator); ok {
 				response = service.Run(context, request)
 				assert.True(t, response.Error != "")
 			}
@@ -131,11 +131,29 @@ func Test_ServiceRoutes(t *testing.T) {
 	}
 }
 
+func TestNewManager_Run(t *testing.T) {
+	manager := endly.NewManager()
+
+	{
+		_, err := manager.Run(nil, &endly.LoggerPrintRequest{
+			Message: "Hello world",
+		})
+		if assert.Nil(t, err) {
+
+		}
+	}
+
+	{
+		_, err := manager.Run(nil, &endly.WorkflowFailRequest{
+			Message: "Hello world",
+		})
+		if assert.NotNil(t, err) {
+
+		}
+	}
+}
+
 func Test_GetVersion(t *testing.T) {
 	version := endly.GetVersion()
 	assert.True(t, version != "")
-}
-
-type Validator interface {
-	Vaidate() error
 }
