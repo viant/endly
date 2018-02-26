@@ -1,38 +1,11 @@
 package endly
 
 import (
-	"errors"
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"strings"
 )
-
-//DsUnitDataRequest represents dsunit data request
-type DsUnitDataRequest struct {
-	Datastore  string                              `required:"true" description:"register datastore name"`                                                                                          // name of registered datastore
-	URL        string                              `description:"location with json or csv data filed used verify data content, file name (without prefix/suffix if specified) matches table name"` //if URL is provided then all files listed from the path are setup data candidates
-	Credential string                              `description:"location credential"`                                                                                                              // optional URL credential
-	Prefix     string                              `description:"prefix to match file in specified URL location"`                                                                                   //apply prefix
-	Postfix    string                              `description:"postfix to match file in specified URL location"`                                                                                  //apply suffix
-	Data       map[string][]map[string]interface{} `description:"collection of records keyed by table name"`                                                                                        //setup data, where the first map key is table name with value being records
-	Expand     bool                                `description:"flag to expand data with workflow state keys"`                                                                                     //substitute dollar($) expression with the state map
-
-}
-
-//Validate checks if request is valid
-func (r *DsUnitDataRequest) Validate() error {
-	if r == nil {
-		return errors.New("DsUnitDataRequest was empty")
-	}
-	if r.Datastore == "" {
-		return errors.New("Datastore was empty")
-	}
-	if r.URL == "" && len(r.Data) == 0 {
-		return errors.New("data: URL/Data were empty")
-	}
-	return nil
-}
 
 //DsUnitTableData represents table data
 type DsUnitTableData struct {
