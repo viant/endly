@@ -25,8 +25,9 @@ var workflowKey = (*Workflow)(nil)
 
 //Context represents a workflow session context/state
 type Context struct {
-	SessionID string
-	state     data.Map
+	SessionID  string
+	cliRunnner bool
+	state      data.Map
 	toolbox.Context
 	Events      *Events
 	EventLogger *EventLogger

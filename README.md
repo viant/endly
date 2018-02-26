@@ -19,6 +19,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Wrofklow execution control](#exectuincontrol)
 - [Credentials](#credentail)
 - [Usage](#Usage)
+- [Unit test](#unit)
 - [Best Practice](#BestPractice)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
@@ -232,7 +233,7 @@ The following expression are supported:
     * 
     * all UFD registered functions  
         * [Neatly UDF](https://github.com/viant/neatly/#udf)
-        * AsTableRecords udf converting []*DsUnitTableData into map[string][]map[string]interface{} (used by dsunit service)
+        * AsTableRecords udf converting []*DsUnitTableData into map[string][]map[string]interface{} (used by prepare/expect dsunit service), as table record udf provide sequencing and random id generation functionality for supplied data .
 	    
 
 
@@ -591,7 +592,6 @@ During assertion validator traverses expected data structure to compare it with 
 
 Datastore service uses [dsunit](https://github.com/viant/dsunit/) service to create, populate, and verify content of datastore. 
 
-The first action that needs to be run is to register database name with dsc connection config, and optionally init scripts.
 
 
 | Service Id | Action | Description | Request | Response |
@@ -607,8 +607,6 @@ The first action that needs to be run is to register database name with dsc conn
 | dsunit | query | run SQL query |  [QueryRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L407) | [QueryResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#419)  |
 | dsunit | sequence | get sequence values for supplied tables |  [SequenceRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L388) | [SequenceResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#400)  |
 
-
-To simplify setup/verification data process [DsUnitTableData](service_dsunit_data.go) has been introduce, so that data can be push into state, and then transform to the dsunit expected data with AsTableRecords udf function.
 
 
 
@@ -888,6 +886,75 @@ func main() {
 ```       
          
          
+<a name="unit"></a>
+
+         
+## Unit test 
+
+### Go lang         
+         
+
+To integrate endly directly into you unit test you can use on of the following  
+
+**Service action**
+
+With this method you can run any endly service action directly (including workflow with *endly.WorkflowRunRequest) by providing endly supported request.
+
+This method run in silent mode.
+
+```go
+
+        manager := endly.NewManager()
+    
+		response, err := manager.Run(nil, &endly.DockerRunRequest{
+            Target: target,
+            Image:  "mysql:5.6",
+            MappedPort: map[string]string{
+                "3306": "3306",
+            },
+            Env: map[string]string{
+                "MYSQL_ROOT_PASSWORD": "**mysql**",
+            },
+            Mount: map[string]string{
+                "/tmp/my.cnf": "/etc/my.cnf",
+            },
+            Credentials: map[string]string{
+                "**mysql**": mySQLcredentialFile,
+            },
+        })
+		if err != nil {
+			log.Fatal(err)
+		}
+		dockerResponse := response.(*DockerRunResponse)
+		
+```         
+
+**Workfklow**
+
+In this method a workflow runs with command runner similarly to 'endly' command line.
+RunnerReportingOptions settings control stdout/stdin and other workflow details.
+
+```go
+
+    runner := endly.NewCliRunner()
+	endly.OnRunnerError = func(code int) {}
+	err := runner.Run(&endly.WorkflowRunRequest{
+			WorkflowURL: "action",
+			Tasks:       "run",
+			Params: map[string]interface{}{
+				"service": "logger",
+				"action":  "print",
+				"request": &endly.LoggerPrintRequest{Message: "hello"},
+			},
+	}, nil)
+    if err != nil {
+    	log.Fatal(err)
+    }
+
+```         
+
+
+
          
 <a name="BestPractice"></a>
 ## Best Practice
