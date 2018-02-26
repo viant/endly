@@ -894,7 +894,7 @@ func main() {
 ### Go lang         
          
 
-To integrate endly directly into you unit test you can use on of the following  
+To integrate endly with unit test you can use on of the following  
 
 **Service action**
 
