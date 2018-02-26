@@ -200,7 +200,7 @@ The following expression are supported:
 **Workflow Lifecycle**
 
 1) New context with a new state map is created after inheriting values from a caller. (Caller will not see any state changes from downstream workflow)
-2) **data** key is published to the context state with defined workflow.data. Workflow data field would stores complex nested data structure lika a setup data.
+2) **data** key is published to the context state with defined workflow.data. Workflow data field would stores complex nested data structure like a setup data.
 2) **params** key is published to state map with the caller parameters
 3) Workflow initialization stage executes, applying variables defined in Workflow.Pre (input: workflow state, output: workflow state)
 4) Tasks Execution 
@@ -274,7 +274,7 @@ All services are running on the system referred as target and defined as [Resour
 
 **Execution services**
 
-The execution service is responsible for opening, managing terminal session, with ability to send command and extract data.
+The execution service is responsible for opening, managing terminal session, with the ability to send command and extract data.
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
@@ -298,7 +298,7 @@ Daemon System service is responsible for managing system daemon services.
 
 **Process service**
 
-Process service is responsible for starting, stopping and checking status of custom application.
+Process service is responsible for starting, stopping and checking the status of a custom application.
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- | 
@@ -335,8 +335,8 @@ Process service is responsible for starting, stopping and checking status of cus
 <a name="storage"></a>
 **Storage service**
 
-Storage service represents a local or remote storage to provide unified storage operations.
-Remote storage could be any cloud storage i.e google cloud, amazon s3, or simple scp or http.
+Storage service represents local or remote storage to provide unified storage operations.
+Remote storage could be any cloud storage i.e. google cloud, amazon s3, or simple SCP or HTTP.
  
 
 | Service Id | Action | Description | Request | Response |
@@ -441,7 +441,7 @@ Sdk service sets active terminal session with requested sdk version.
 
 
 **Deployment service** 
-Deployment service check if target path resource, the app has been installed with requested version, if not it will transfer it and run all defined commands/transfers.
+Deployment service checks if target path resource, the app has been installed with requested version, if not it will transfer it and run all defined commands/transfers.
 Maven, tomcat use this service.
 
 | Service Id | Action | Description | Request | Response |
@@ -455,7 +455,7 @@ Maven, tomcat use this service.
 
 **Http Runner** 
 
-Http runner sends one or more http request to the specified endpoint, it manages cookie with one grouping send request.
+Http runner sends one or more HTTP request to the specified endpoint; it manages cookie within [SendHttpRequest](service_http_runner_send.go).
 
 
 | Service Id | Action | Description | Request | Response |
@@ -473,7 +473,7 @@ Http runner sends one or more http request to the specified endpoint, it manages
 <a name="selenium"></a>
 **Selenium Runner** 
 
-Selenium runner open a web session to run various action on web driver or web elements.
+Selenium runner opens a web session to run a various action on web driver or web elements.
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
@@ -488,7 +488,7 @@ Selenium runner open a web session to run various action on web driver or web el
 call-driver and call-element actions's method and parameters are proxied to stand along selenium server via [selenium client](http://github.com/tebeka/selenium)
 
 
-selenium run request defines sequence of action, if selector is present then the call method is on [WebDriver](https://github.com/tebeka/selenium/blob/master/selenium.go#L213), 
+Selenium run request defines sequence of action. In case a selector is not specified, call method is defined on [WebDriver](https://github.com/tebeka/selenium/blob/master/selenium.go#L213), 
 otherwise [WebElement](https://github.com/tebeka/selenium/blob/master/selenium.go#L370) defined by selector.
 
 [Wait](repeatable.go)  provides ability to wait either some time amount or for certain condition to take place, with regexp to extract data
@@ -564,11 +564,10 @@ otherwise [WebElement](https://github.com/tebeka/selenium/blob/master/selenium.g
 
 **Log validation service** 
 
-In order to get log validation, 
-   1) register log listener, to dynamically detect any log changes (log shrinking/rollovers is supported), as long as new logs is detected it is ready to be validated.
+To get log validation, 
+   1) register log listener, to dynamically detect any log changes (log shrinking/rollovers is supported), as long as new logs are detected it is ready to be validated.
    2) run log validation. Log validation removes validated logs from the pending queue.
    3) optionally reset listener to discard pending validation logs.
-
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
@@ -580,7 +579,7 @@ In order to get log validation,
 ** Validation expressions **
 Generic validation service and log validator, Task or Action RunCritera share undelying [Validator](https://github.com/viant/assertly), 
 
-During assertion validator traverses expected data structure to compare it with expected.
+During assertion, validator traverses expected data structure to compare it with expected.
 
 
 [See More](https://github.com/viant/assertly#validation) validation expression, directive and macros.
@@ -709,8 +708,9 @@ Workflow service provide capability to run task, action from any defined workflo
 
 ## Credentials
      
+    
 Endly on its core uses SSH or other system/cloud service requiring credentials. 
-In order to run system workflow the credentials file/s need to be supplied as various request field.
+To run system workflow the credentials file/s need to be supplied as various request field.
 
 
 Endly uses  [Credentail Config](https://github.com/viant/toolbox/blob/master/cred/config.go) 
@@ -720,13 +720,14 @@ Endly uses  [Credentail Config](https://github.com/viant/toolbox/blob/master/cre
   * $HOME/.secret/ directory is used to store endly credentials
 
 
-Endly service were design in a way to  hide user secrets, for example whetever sudo access is needed,
+Endly service was design in a way to  hide user secrets, for example, whether sudo access is needed,
 endly will output **sudo** in the execution event log and screen rather actual password.
      
 
 To generate credentials file to enable endly exec service to run on localhost:
 
-Provide a user name and password to login to your box.
+Provide a username and password to login to your box.
+
 ```text
 mkdir $HOME/.secret
 ssh-keygen -b 1024 -t rsa -f id_rsa -P "" -f $HOME/.secret/id_rsa
@@ -749,7 +750,7 @@ Now you can use ${env.HOME}./secret/localhost.json as you localhost credential.
 ## Usage
 
 In most case scenario you would use **endly** app supplied with [release binary for your platform](https://github.com/viant/endly/releases/).
-Alternatively you can build latest version of endly with the following command:
+Alternatively, you can build the latest version of endly with the following command:
 
 ```bash
 
@@ -894,13 +895,14 @@ func main() {
 ### Go lang         
          
 
-To integrate endly with unit test you can use on of the following  
+To integrate endly with unit test, you can use one of the following  
+  
 
 **Service action**
 
-With this method you can run any endly service action directly (including workflow with *endly.WorkflowRunRequest) by providing endly supported request.
+With this method, you can run any endly service action directly (including workflow with *endly.WorkflowRunRequest) by providing endly supported request.
 
-This method run in silent mode.
+This method runs in silent mode.
 
 ```go
 
@@ -931,7 +933,7 @@ This method run in silent mode.
 
 **Workfklow**
 
-In this method a workflow runs with command runner similarly to 'endly' command line.
+In this method, a workflow runs with command runner similarly to 'endly' command line.
 RunnerReportingOptions settings control stdout/stdin and other workflow details.
 
 ```go
@@ -963,8 +965,8 @@ RunnerReportingOptions settings control stdout/stdin and other workflow details.
 2) Variables in  Init, Post should only define state, delegate all variables to var/ folder
 3) Flag variable as Required or provide a fallback Value
 4) Use [Tag Iterators](https://github.com/viant/neatly#tagiterator) to group similar class of the tests 
-5) Since JSON inside tabular cell is not too elegant try to use [Virtual object](https://github.com/viant/neatly#vobject) instead.
-6) Organize  workflows and data by  grouping system, datastore, test functionality together. 
+5) Since JSON inside a tabular cell is not too elegant, try to use [Virtual object](https://github.com/viant/neatly#vobject) instead.
+6) Organize workflows and data by grouping system, datastore, test functionality together. 
 
 
 Here is an example directory layout.
@@ -1004,18 +1006,18 @@ Finally contribute by creating a  pull request with a new common workflow so tha
 <a name="exectuincontrol"></a>
 
 ## Workflow execution control:
+By default, workflow run all specified task, where each task once started executes sequentially all it actions, unless they flag as 'asyn' execution.
 
-By default workflow run all specified task, where each task once started executes sequentially all it actions, unless they flag as Asyn execution.
-
-Each action has ability to control its execution with
+Each action can control its execution with
 
 **Action level criteria control**
 
 Each action has the following fields to control conditional execution:
 
-1. RunCriteria: criteria that check is action is eligible to run
-2. SkipCriteria: in case actions are grouped by TagID, skip criteria will skip remaining action in the current group to continue in the next group.
+1. RunCriteria: criteria to check if an action is eligible to run
+2. SkipCriteria: criteria to check if the whole group of actions by TagID can be skipped, continuing execution to next  group
 3. Repeatable control
+
     
 ```go
     type Repeatable struct {
@@ -1032,12 +1034,12 @@ Each action has the following fields to control conditional execution:
 Workflow goto action terminates current task actions execution to start specified current workflow task.`
 
 **Workflow switch action** 
-Workflow switch action enable to branch execution based on specified context.state key value. 
-Note that switch does not terminates next actions within current task.
+Workflow switch action enables to branch execution based on specified context.state key value. 
+Note that switch does not terminate next actions within current task.
 
 **Error handling**
-If there is an error during workflow execution, it failes immediately unless OnErrorTask is defined to catch and handle error.
-In addition error key is placed into the config with the following content:
+If there is an error during workflow execution, it fails immediately unless OnErrorTask is defined to catch and handle an error.
+In addition, error key is placed into the config with the following content:
 
 ```go
 type WorkflowError struct {
@@ -1050,7 +1052,7 @@ type WorkflowError struct {
 
 
 **Finally** 
-Workflow also offer DeferTask to execute as the last workflow step in case there is an error or not for instance to clean up resource.
+Workflow also offers DeferTask to execute as the last workflow step in case there is an error or not, for instance, to clean up a resource.
 
  
 
