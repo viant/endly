@@ -200,7 +200,7 @@ The following expression are supported:
 **Workflow Lifecycle**
 
 1) New context with a new state map is created after inheriting values from a caller. (Caller will not see any state changes from downstream workflow)
-2) **data** key is published to the state map with defined workflow.data. Workflow data field would stores complex nested data structure lika a setup data.
+2) **data** key is published to the context state with defined workflow.data. Workflow data field would stores complex nested data structure lika a setup data.
 2) **params** key is published to state map with the caller parameters
 3) Workflow initialization stage executes, applying variables defined in Workflow.Pre (input: workflow state, output: workflow state)
 4) Tasks Execution 
@@ -387,7 +387,7 @@ Network service is responsible opening tunnel vi SSH between client and target h
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- | 
-| network | tunnel | Tunnel ports between local and remote host | [NetworkTunnelRequest](service_network_tunnel.go) | [NetworkTunnelResponse](service_network_tunnel.go) | 
+| network | tunnel | tunnel ports between local and remote host | [NetworkTunnelRequest](service_network_tunnel.go) | [NetworkTunnelResponse](service_network_tunnel.go) | 
 
 
 
@@ -545,7 +545,7 @@ otherwise [WebElement](https://github.com/tebeka/selenium/blob/master/selenium.g
            "Wait": {
                     "Repeat": 5,
                     "SleepTimeMs": 100,
-                    "ExitCriteria": ":!$value"
+                    "ExitCriteria": "$value"
            }
         }
       ]
@@ -559,7 +559,7 @@ otherwise [WebElement](https://github.com/tebeka/selenium/blob/master/selenium.g
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| validator | assert | performs validation on provided actual  vs expected data structure. | [ValidatorAssertRequest](service_validator_assert.go) | [AssertionInfo](assertion_info.go) |
+| validator | assert | perform validation on provided actual  vs expected data structure. | [ValidatorAssertRequest](service_validator_assert.go) | [AssertionInfo](assertion_info.go) |
 
 
 **Log validation service** 
@@ -572,9 +572,9 @@ In order to get log validation,
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| validator/log | listen | starts listening for log file changes on specified location  |  [LogValidatorListenRequest](service_log_validator_listen.go) | [LogValidatorListenResponse](service_log_validator_listen.go)  |
-| validator/log | reset | discards logs detected by listener | [LogValidatorResetRequest](service_log_validator_reset.go) | [LogValidatorResetResponse](service_log_validator_reset.go)  |
-| validator/log | assert | performs validation on provided expected log records against actual log file records. | [LogValidatorAssertRequest](service_log_validator_assert.go) | [LogValidatorAssertResponse](service_log_validator_assert.go)  |
+| validator/log | listen | start listening for log file changes on specified location  |  [LogValidatorListenRequest](service_log_validator_listen.go) | [LogValidatorListenResponse](service_log_validator_listen.go)  |
+| validator/log | reset | discard logs detected by listener | [LogValidatorResetRequest](service_log_validator_reset.go) | [LogValidatorResetResponse](service_log_validator_reset.go)  |
+| validator/log | assert | perform validation on provided expected log records against actual log file records. | [LogValidatorAssertRequest](service_log_validator_assert.go) | [LogValidatorAssertResponse](service_log_validator_assert.go)  |
 
 
 ** Validation expressions **
@@ -623,7 +623,7 @@ Workflow service provide capability to run task, action from any defined workflo
 | workflow | load | load workflow from provided path | [WorkflowLoadRequest](service_workflow_load.go) | [WorkflowLoadRequest](service_workflow_load.go)  |
 | workflow | register | register provide workflow in registry | [WorkflowLoadRequest](service_workflow_register.go) |  |
 | workflow | run | run workflow with specified tasks and parameters | [WorkflowRunRequest](service_workflow_run.go) | [WorkflowRunResponse]((service_workflow_run.go) |
-| workflow | goto | switche current execution to the specified task on current workflow | [WorkflowGotoRequest](service_workflow_goto.go) | [WorkflowGotoResponse]((service_workflow_goto.go) 
+| workflow | goto | switch current execution to the specified task on current workflow | [WorkflowGotoRequest](service_workflow_goto.go) | [WorkflowGotoResponse]((service_workflow_goto.go) 
 | workflow | switch | run matched  case action or task  | [WorkflowSwitchRequest](service_workflow_switch.go) | [WorkflowSwitchResponse](service_workflow_switch.go) |
 | workflow | exit | terminate execution of active workflow (caller) | n/a | n/a |
 | workflow | fail | fail  workflow | [WorkflowFailRequest](service_workflow_fail.go) | n/a  |
