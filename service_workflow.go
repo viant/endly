@@ -119,6 +119,8 @@ func (s *workflowService) getServiceRequest(context *Context, activity *Workflow
 	if err != nil {
 		return nil, nil, err
 	}
+	var state = context.state
+	activity.Request = state.Expand(activity.Request)
 	request := activity.Request
 	if request == nil || !toolbox.IsMap(request) {
 		if toolbox.IsStruct(request) {
@@ -157,6 +159,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction, wor
 		return nil, err
 	}
 	var state = context.state
+
 	serviceActivity := NewWorkflowServiceActivity(context, action, state)
 	workflow.Activity = serviceActivity
 	state.Put(WorkflowServiceActivityKey, serviceActivity)

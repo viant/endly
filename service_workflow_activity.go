@@ -36,7 +36,7 @@ func NewWorkflowServiceActivity(context *Context, action *ServiceAction, state d
 		Service:     state.ExpandAsText(action.Service),
 		NeatlyTag:   action.NeatlyTag,
 		Description: context.Expand(action.Description),
-		Request:     state.Expand(action.Request),
+		Request:     action.Request,
 		Response:    make(map[string]interface{}),
 		StartTime:   time.Now()}
 }
