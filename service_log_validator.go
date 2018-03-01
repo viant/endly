@@ -34,11 +34,6 @@ type LogRecordAssert struct {
 	Actual   interface{}
 }
 
-//LogAssertEvent represents log assert event
-type LogAssertEvent struct {
-	Type string
-	Logs []*LogRecordAssert
-}
 
 //LogProcessingState represents log processing state
 type LogProcessingState struct {
@@ -81,9 +76,9 @@ func (r *LogRecord) AsMap() (map[string]interface{}, error) {
 
 //LogFile represents a log file
 type LogFile struct {
-	URL     string
-	Content string
-	Name    string
+	URL             string
+	Content         string
+	Name            string
 	*LogType
 	ProcessingState *LogProcessingState
 	LastModified    time.Time
@@ -133,6 +128,7 @@ func (f *LogFile) ShiftLogRecordByIndex(value string) *LogRecord {
 func (f *LogFile) PushLogRecord(record *LogRecord) {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
+
 	if len(f.Records) == 0 {
 		f.Records = make([]*LogRecord, 0)
 	}
@@ -298,16 +294,11 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 		request.LogWaitRetryCount = 3
 	}
 
-	var event = &LogAssertEvent{
-		Logs: make([]*LogRecordAssert, 0),
-	}
-
 	for _, expectedLogRecords := range request.ExpectedLogRecords {
 		logTypeMeta, err := s.getLogTypeMeta(expectedLogRecords, state)
 		if err != nil {
 			return nil, err
 		}
-		event.Type = expectedLogRecords.Type
 
 		var logRecordIterator = logTypeMeta.LogRecordIterator()
 		logWaitRetryCount := request.LogWaitRetryCount
@@ -371,19 +362,20 @@ func (s *logValidatorService) assert(context *Context, request *LogValidatorAsse
 					return nil, err
 				}
 			}
-			event.Logs = append(event.Logs, &LogRecordAssert{
+			logRecordsAssert := &LogRecordAssert{
 				TagID:    expectedLogRecords.TagID,
 				Expected: expectedLogRecord,
 				Actual:   actualLogRecord,
-			})
+			}
 			_, filename := toolbox.URLSplit(logRecord.URL)
 			logValidation, err := Assert(context, fmt.Sprintf("%v:%v", filename, logRecord.Number), expectedLogRecord, actualLogRecord)
 			if err != nil {
 				return nil, err
 			}
+			AddEvent(context, logRecordsAssert, Pairs("value", logRecordsAssert, "logValidation", logValidation))
 			validation.MergeFrom(logValidation)
 		}
-		AddEvent(context, event, Pairs("value", event))
+
 	}
 	return response, nil
 }
