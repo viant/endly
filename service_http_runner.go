@@ -180,6 +180,7 @@ func (s *httpRunnerService) send(context *Context, request *SendHTTPRequest) (*S
 	if err != nil {
 		return nil, fmt.Errorf("failed to send req: %v", err)
 	}
+	defer s.resetContext(context, request)
 	var result = &SendHTTPResponse{
 		Responses: make([]*HTTPResponse, 0),
 		Extracted: make(map[string]string),
@@ -302,7 +303,7 @@ func (s *httpRunnerService) registerRoutes() {
 		},
 		Handler: func(context *Context, request interface{}) (interface{}, error) {
 			if handlerRequest, ok := request.(*SendHTTPRequest); ok {
-				defer s.resetContext(context, handlerRequest)
+
 				return s.send(context, handlerRequest)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
