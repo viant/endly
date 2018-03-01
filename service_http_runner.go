@@ -302,6 +302,7 @@ func (s *httpRunnerService) registerRoutes() {
 		},
 		Handler: func(context *Context, request interface{}) (interface{}, error) {
 			if handlerRequest, ok := request.(*SendHTTPRequest); ok {
+				defer s.resetContext(context, handlerRequest)
 				return s.send(context, handlerRequest)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
