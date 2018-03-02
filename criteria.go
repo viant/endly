@@ -1,44 +1,113 @@
 package endly
 
 import (
-	"strings"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 )
 
-//EvaluateCriteria evaluates passed in criteria, it uses  <actual>:<expected>
-//
-//Assertion expression can be used for more complex criteria evaluation
-func EvaluateCriteria(context *Context, criteria, eventType string, defaultValue bool) (bool, error) {
+//Criteria represents logical criteria
+type Criteria struct {
+	LogicalOperator string
+	Criteria        []*Criterion
+}
 
-	if criteria == "" {
-		return defaultValue, nil
-	}
-	criteria = strings.TrimSpace(criteria)
-	colonPosition := strings.LastIndex(criteria, ":")
-	if colonPosition == -1 {
-		if strings.HasPrefix(criteria, "!$") {
-			criteria = string(criteria[1:]) + ":"
-		} else {
-			criteria = criteria + ":!"
+func (c *Criteria) IsTrue(context *Context, state data.Map) (bool, error) {
+	if c.LogicalOperator == "||" {
+		for _, criterion := range c.Criteria {
+			result, err := criterion.IsTrue(context, state)
+			if result || err != nil {
+				return result, err
+			}
 		}
-		colonPosition = strings.LastIndex(criteria, ":")
+		return false, nil
 	}
+	for _, criterion := range c.Criteria {
+		result, err := criterion.IsTrue(context, state)
+		if !result || err != nil {
+			return result, err
+		}
+	}
+	return true, nil
+}
 
-	fragments := []string{
-		string(criteria[:colonPosition]),
-		string(criteria[colonPosition+1:]),
+//NewCriteria creates a new criteria for supplied logical operator and criteria
+func NewCriteria(operator string, criteria ...*Criterion) *Criteria {
+	return &Criteria{
+		LogicalOperator: operator,
+		Criteria:        criteria,
 	}
-	var state = context.state
-	actualOperand := state.Expand(strings.TrimSpace(fragments[0]))
-	expectedOperand := state.Expand(strings.TrimSpace(fragments[1]))
-	validation, err := Assert(context, "/", expectedOperand, actualOperand)
-	var result = validation.FailedCount == 0
-	if err != nil {
-		return false, err
+}
+
+//Criterion represent evaluation criterion
+type Criterion struct {
+	*Criteria
+	LeftOperand  interface{}
+	Operator     string
+	RightOperand interface{}
+}
+
+func (c *Criterion) expandOperand(opperand interface{}, state data.Map) interface{} {
+	if opperand == nil {
+		return nil
 	}
-	AddEvent(context, eventType, Pairs("defaultValue", defaultValue, "actual", actualOperand, "expected", expectedOperand, "eligible", result,
-		"criteria", criteria,
-		"leftOperand", fragments[0],
-		"rightOperand", fragments[1],
-	), Info)
-	return result, err
+	return state.Expand(opperand)
+}
+
+func (c *Criterion) IsTrue(context *Context, state data.Map) (bool, error) {
+	if c.Criteria != nil {
+		return c.Criteria.IsTrue(context, state)
+	}
+	leftOperand := c.expandOperand(c.LeftOperand, state)
+	rightOperand := c.expandOperand(c.RightOperand, state)
+
+	var err error
+	var leftNumber, rightNumber float64
+	switch c.Operator {
+	case "=", ":", "":
+		validation, err := Assert(context, "/", rightOperand, leftOperand)
+		if err != nil {
+			return false, err
+		}
+		return validation.FailedCount == 0, nil
+	case "!=":
+		validation, err := Assert(context, "/", leftOperand, rightOperand)
+		if err != nil {
+			return false, err
+		}
+		return validation.FailedCount > 0, nil
+	case ">=":
+		if leftNumber, err = toolbox.ToFloat(leftOperand); err == nil {
+			if rightNumber, err = toolbox.ToFloat(leftOperand); err == nil {
+				return leftNumber >= rightNumber, nil
+			}
+		}
+	case "<=":
+		if leftNumber, err = toolbox.ToFloat(leftOperand); err == nil {
+			if rightNumber, err = toolbox.ToFloat(leftOperand); err == nil {
+				return leftNumber <= rightNumber, nil
+			}
+		}
+
+	case ">":
+		if leftNumber, err = toolbox.ToFloat(leftOperand); err == nil {
+			if rightNumber, err = toolbox.ToFloat(leftOperand); err == nil {
+				return leftNumber > rightNumber, nil
+			}
+		}
+	case "<":
+		if leftNumber, err = toolbox.ToFloat(leftOperand); err == nil {
+			if rightNumber, err = toolbox.ToFloat(leftOperand); err == nil {
+				return leftNumber < rightNumber, nil
+			}
+		}
+	}
+	return false, err
+}
+
+func NewCriterion(leftOperand interface{}, operator string, rightOperand interface{}) *Criterion {
+	return &Criterion{
+		LeftOperand:  leftOperand,
+		Operator:     operator,
+		RightOperand: rightOperand,
+	}
 }

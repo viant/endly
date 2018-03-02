@@ -6,7 +6,7 @@ import (
 	"github.com/viant/toolbox/data"
 )
 
-func transformWithUDF(context *Context, udfName, source string, payload interface{}) (interface{}, error) {
+func TransformWithUDF(context *Context, udfName, source string, payload interface{}) (interface{}, error) {
 	var state = context.state
 	var udf, has = UdfRegistry[udfName]
 	if !has {

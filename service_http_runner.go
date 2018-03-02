@@ -30,7 +30,7 @@ func (s *httpRunnerService) processResponse(context *Context, sendRequest *SendH
 	copyHeaders(httpResponse.Header, response.Header)
 	readBody(httpResponse, response, isBase64Encoded)
 	if sendHTTPRequest.ResponseUdf != "" {
-		transformed, err := transformWithUDF(context, sendHTTPRequest.ResponseUdf, sendHTTPRequest.URL, response.Body)
+		transformed, err := TransformWithUDF(context, sendHTTPRequest.ResponseUdf, sendHTTPRequest.URL, response.Body)
 		if err != nil {
 			return "", err
 		}
@@ -57,7 +57,7 @@ func (s *httpRunnerService) sendRequest(context *Context, client *http.Client, s
 	if len(sendHTTPRequest.Body) > 0 {
 		body = []byte(sendHTTPRequest.Body)
 		if sendHTTPRequest.RequestUdf != "" {
-			transformed, err := transformWithUDF(context, sendHTTPRequest.RequestUdf, sendHTTPRequest.URL, string(body))
+			transformed, err := TransformWithUDF(context, sendHTTPRequest.RequestUdf, sendHTTPRequest.URL, string(body))
 			if err != nil {
 				return err
 			}
