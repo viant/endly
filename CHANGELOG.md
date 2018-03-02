@@ -38,3 +38,9 @@
     * Moved secret credetnails file generator to endly -c option
     * Minor fixes
     
+
+  
+## March 2  2018 0.5.0
+    * Updated criteria to support comprehensive conditional expression.
+    * Minor fixes
+    
