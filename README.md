@@ -17,6 +17,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Testing services](#Testingservices)
 - [Workfow Service](#Workfowservice)
 - [Wrofklow execution control](#exectuincontrol)
+- [Criteria expression](#criteria)
 - [Credentials](#credentail)
 - [Usage](#Usage)
 - [Unit test](#unit)
@@ -1029,12 +1030,13 @@ Each action has the following fields to control conditional execution:
     }
 ````
     
-    
+
+<a name="criteria"></a>
+## Criteria expression    
 
 Criteria expression support '&&' and '||' logical operators.
-Colon ":" operator support [assertly](https://github.com/viant/assertly#validation) validation expression like ~//, or // etc.  
+Colon ":" operator additionally support [assertly](https://github.com/viant/assertly#validation) validation expression like ~//, or // etc.  
     
-
 Example criteria:
 
 1. $k1 = abc && $k > 20
