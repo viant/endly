@@ -1,20 +1,20 @@
-Workflow,,Name,Description,Tasks,Post,,,,,,,,
-,,workflow,Demonstration of data setup and validation,%Tasks, @var/init,,,,,,,,
-[]Tasks,,Name,Description,Actions,,,,,,,,,
-,,prepare,Prepare database,%Prepare,,,,,,,,,
-[]Prepare,Service,Action,Description,Request,rec.ID,rec.ACCOUNT_ID,rec.NAME,rec.EMAIL,[]auto.0,[]auto.1,/Data.dsunit.[]mydb1.Table,/Data.dsunit.[]mydb1.Value,/Data.dsunit.[]mydb1.PostIncrement
-,dsunit,register,Register database,#req/mydb1_register.json,,,,,,,,,
-,dsunit,sql,,#req/mydb1_script.json,,,,,,,,,
-,nop,nop,create database data setup,{},$meta.USER,$meta.ACCOUNT,abc,,meta.USER,meta.ACCOUNT,USER_ACCOUNT,$rec,$auto
-,nop,nop,create database data setup,{},$meta.USER,$meta.ACCOUNT,abc2,a@ere.com,meta.USER,,USER_ACCOUNT,$rec,$auto
-,nop,nop,create database data setup,{},$meta.USER,$meta.ACCOUNT,abc3,,meta.USER,meta.ACCOUNT,USER_ACCOUNT,$rec,$auto
-[]Prepare,Service,Action,Description,Request,tables,,Init,Post,,,,,
-,dsunit,mapping,Register mapping,#req/mydb1_mapping.json,,,, @var/set_tables,,,,,
-,dsunit,sequence,Get the latest tables id values,#req/mydb1_sequence.json,$metaTables,,, @var/set_seq,,,,,
-,dsunit,prepare,Prepare database,#req/mydb1_prepare.json,,, @var/set_table_data,,,,,,
-[]Tasks,,Name,Description,Actions,,,,,,,,,
-,,validate,Validate substitution of sequence of prepared records,%Validate,,,,,,,,,
-[]Validate,Service,Action,Description,Request,req.Actual,req.Expected.ID,Init,,,,,,
-,validator,assert,Assert,$req,$rowData,1, @var/set_rowdata,,,,,,
-,validator,assert,Assert,$req,$rowData,2, @var/set_rowdata,,,,,,
-,validator,assert,Assert,$req,$rowData,3, @var/set_rowdata,,,,,,
+Workflow,,Name,Description,Tasks,Post,,,
+,,workflow,Demonstration of data setup and validation,%Tasks, @var/init,,,
+[]Tasks,,Name,Description,Actions,,,,
+,,prepare,Prepare database,%Prepare,,,,
+[]Prepare,Service,Action,Description,Request,/Data.dsunit.[]mydb1,,,
+,dsunit,register,Register database,#req/mydb1_register.json,,,,
+,dsunit,script,,#req/mydb1_script.json,,,,
+,nop,nop,create database data setup,{}, @user_1,,,
+,nop,nop,create database data setup,{}, @user_2,,,
+,nop,nop,create database data setup,{}, @user_3,,,
+[]Prepare,Service,Action,Description,Request,tables,,Init,Post
+,dsunit,mapping,Register mapping,#req/mydb1_mapping.json,,,, @var/set_tables
+,dsunit,sequence,Get the latest tables id values,#req/mydb1_sequence.json,$metaTables,,, @var/set_seq
+,dsunit,prepare,Prepare database,#req/mydb1_prepare.json,,, @var/set_table_data,
+[]Tasks,,Name,Description,Actions,,,,
+,,validate,Validate substitution of sequence of prepared records,%Validate,,,,
+[]Validate,Service,Action,Description,Request,req.Actual,req.Expected.ID,Init,
+,validator,assert,Assert,$req,$rowData,1, @var/set_rowdata,
+,validator,assert,Assert,$req,$rowData,2, @var/set_rowdata,
+,validator,assert,Assert,$req,$rowData,3, @var/set_rowdata,
