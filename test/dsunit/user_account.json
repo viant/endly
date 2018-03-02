@@ -1,55 +1,55 @@
 {
   "Name": "USER_ACCOUNT",
-  "Value": {
-    "Table": "ACCOUNT",
-    "Columns": [
-      {
-        "Name": "ID",
-        "FromColumn": "ACCOUNT_ID",
-        "Required": true
-      },
-      {
-        "Name": "CONTACT_ID"
-      },
-      {
-        "Name": "TYPE"
-      },
-      {
-        "Name": "NAME"
-      },
-      {
-        "Name": "DESCRIPTION"
-      },
-      {
-        "Name": "CONTACT_NAME"
-      },
-      {
-        "Name": "CITY"
-      },
-      {
-        "Name": "STATE"
-      },
-      {
-        "Name": "ZIP"
-      }
-    ],
-    "Associations": [
-      {
-        "Table": "USER",
-        "Columns": [
-          {
-            "Name": "ID",
-            "Required": true,
-            "FromColumn": "USER_ID"
-          },
-          {
-            "Name": "EMAIL"
-          },
-          {
-            "Name": "ACCOUNT_ID"
-          }
-        ]
-      }
-    ]
-  }
+  "Table": "ACCOUNT",
+  "Columns": [
+    {
+      "Name": "ID",
+      "FromColumn": "ACCOUNT_ID",
+      "Required": true,
+      "Unique":true
+    },
+    {
+      "Name": "CONTACT_ID"
+    },
+    {
+      "Name": "TYPE"
+    },
+    {
+      "Name": "NAME"
+    },
+    {
+      "Name": "DESCRIPTION"
+    },
+    {
+      "Name": "CONTACT_NAME"
+    },
+    {
+      "Name": "CITY"
+    },
+    {
+      "Name": "STATE"
+    },
+    {
+      "Name": "ZIP"
+    }
+  ],
+  "Associations": [
+    {
+      "Table": "USER",
+      "Columns": [
+        {
+          "Name": "ID",
+          "Required": true,
+          "Unique":true,
+          "FromColumn": "USER_ID"
+        },
+        {
+          "Name": "EMAIL"
+        },
+        {
+          "Name": "ACCOUNT_ID"
+        }
+      ]
+    }
+  ]
 }

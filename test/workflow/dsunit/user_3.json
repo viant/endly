@@ -1,0 +1,13 @@
+{
+  "Table": "USER_ACCOUNT",
+  "Value": {
+    "ID":"$meta.USER",
+    "ACCOUNT_ID":"$meta.ACCOUNT",
+    "NAME":"abc3"
+
+  },
+  "PostIncrement": [
+    "meta.USER",
+    "meta.ACCOUNT"
+  ]
+}

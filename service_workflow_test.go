@@ -4,12 +4,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
-
 	"errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox/url"
-	"os/exec"
 	"path"
 	"strings"
 	"testing"
@@ -124,8 +122,6 @@ func TestWorkflowService_SwitchAction(t *testing.T) {
 
 func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 
-	exec.Command("rm", "-rf", "/tmp/endly/test/workflow/dsunit").CombinedOutput()
-	toolbox.CreateDirIfNotExist("/tmp/endly/test/workflow/dsunit")
 	manager, service, err := getServiceWithWorkflow("test/workflow/dsunit/workflow.csv")
 	if assert.Nil(t, err) {
 
@@ -138,7 +134,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 					"param1": 1,
 				},
 				EnableLogging:    true,
-				LoggingDirectory: "/tmp/logs",
+				LoggingDirectory: "logs",
 			})
 
 			if !assert.NotNil(t, serviceResponse) {
