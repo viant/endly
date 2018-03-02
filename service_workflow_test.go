@@ -1,12 +1,12 @@
 package endly_test
 
 import (
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/viant/endly"
-	"github.com/viant/toolbox"
 	"errors"
 	"fmt"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"

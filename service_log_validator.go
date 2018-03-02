@@ -34,7 +34,6 @@ type LogRecordAssert struct {
 	Actual   interface{}
 }
 
-
 //LogProcessingState represents log processing state
 type LogProcessingState struct {
 	Line     int
@@ -76,9 +75,9 @@ func (r *LogRecord) AsMap() (map[string]interface{}, error) {
 
 //LogFile represents a log file
 type LogFile struct {
-	URL             string
-	Content         string
-	Name            string
+	URL     string
+	Content string
+	Name    string
 	*LogType
 	ProcessingState *LogProcessingState
 	LastModified    time.Time
@@ -431,6 +430,23 @@ func (s *logValidatorService) readLogFile(context *Context, source *url.Resource
 	reader, err := service.Download(candidate)
 	if err != nil {
 		return nil, err
+	}
+
+	if logFile.UDF != "" {
+		content, err := ioutil.ReadAll(reader)
+		reader.Close()
+		if err != nil {
+			return nil, err
+		}
+		transformed, err := TransformWithUDF(context, logFile.UDF, logFile.UDF, content)
+		switch payload := transformed.(type) {
+		case string:
+			reader = ioutil.NopCloser(strings.NewReader(payload))
+		case []byte:
+			reader = ioutil.NopCloser(bytes.NewReader(payload))
+		default:
+			return nil, fmt.Errorf("unsupported response type expeced string or []byte but had: %T", transformed)
+		}
 	}
 	defer reader.Close()
 	logContent, err := ioutil.ReadAll(reader)

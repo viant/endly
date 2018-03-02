@@ -14,6 +14,7 @@ type LogType struct {
 	Inclusion    string `description:"if specified, inclusion fragment must match log record"`
 	IndexRegExpr string `description:"provide expression for indexing log messages, in this case position based logging will not apply"` //provide expression for indexing log message, in this case position based logging will not apply
 	indexExpr    *regexp.Regexp
+	UDF          string `description:"registered user defined function to transform content file before applying validation i,e decompress"`
 }
 
 //LogValidatorListenRequest represents listen for a logs request.

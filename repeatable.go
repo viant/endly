@@ -74,8 +74,7 @@ func (r *Repeatable) EvaluateExitCriteria(callerInfo string, context *Context, e
 	for k, v := range extracted {
 		extractedState[k] = v
 	}
-	criteria := extractedState.ExpandAsText(r.ExitCriteria)
-	canBreak, err := EvaluateCriteria(context, criteria, callerInfo, false)
+	canBreak, err := EvaluateCriteria(context, extractedState, r.ExitCriteria, callerInfo, false)
 	if err != nil {
 		return true, fmt.Errorf("failed to check %v exit criteia: %v", callerInfo, err)
 	}

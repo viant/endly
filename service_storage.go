@@ -251,7 +251,7 @@ func (s *storageService) download(context *Context, request *StorageDownloadRequ
 		return nil, err
 	}
 	if request.Udf != "" {
-		response.Transformed, err = transformWithUDF(context, request.Udf, resource.URL, data)
+		response.Transformed, err = TransformWithUDF(context, request.Udf, resource.URL, data)
 		if err != nil {
 			return nil, err
 		}

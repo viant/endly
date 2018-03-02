@@ -1029,6 +1029,20 @@ Each action has the following fields to control conditional execution:
     }
 ````
     
+    
+
+Criteria expression support '&&' and '||' logical operators.
+Colon ":" operator support [assertly](https://github.com/viant/assertly#validation) validation expression like ~//, or // etc.  
+    
+
+Example criteria:
+
+1. $k1 = abc && $k > 20
+2. $k3 = ~/abc/
+3. $k4 = "~/name (\\d+)/ 
+    (where k4 might be equal 123)
+
+    
         
 **Workflow goto task action**
 Workflow goto action terminates current task actions execution to start specified current workflow task.`

@@ -167,7 +167,7 @@ func (s *workflowService) runAction(context *Context, action *ServiceAction, wor
 	startEvent := s.Begin(context, action, Pairs(WorkflowServiceActivityKey, serviceActivity), Info)
 	defer s.End(context)(startEvent, Pairs("value", &WorkflowServiceActivityEndEventType{}, "response", serviceActivity.Response))
 	var canRun bool
-	canRun, err = EvaluateCriteria(context, action.RunCriteria, WorkflowActionEvalCriteriaEventType, true)
+	canRun, err = EvaluateCriteria(context, context.State(), action.RunCriteria, WorkflowActionEvalCriteriaEventType, true)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +219,7 @@ func (s *workflowService) runTask(context *Context, workflow *WorkflowControl, t
 	var startTime = time.Now()
 	var state = context.state
 	state.Put(":task", task)
-	canRun, err := EvaluateCriteria(context, task.RunCriteria, WorkflowTaskEvalCriteriaEventType, true)
+	canRun, err := EvaluateCriteria(context, context.State(), task.RunCriteria, WorkflowTaskEvalCriteriaEventType, true)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +264,7 @@ func (s *workflowService) runTask(context *Context, workflow *WorkflowControl, t
 			}
 		}
 
-		moveToNextTag, err := EvaluateCriteria(context, action.SkipCriteria, "TagIdSkipCriteria", false)
+		moveToNextTag, err := EvaluateCriteria(context, context.State(), action.SkipCriteria, "TagIdSkipCriteria", false)
 		if err != nil {
 			return nil, err
 		}

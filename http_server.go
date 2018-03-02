@@ -98,7 +98,6 @@ func (h *httpHandler) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 
 func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *HTTPServerTrips) func(writer http.ResponseWriter, request *http.Request) {
 	return func(writer http.ResponseWriter, request *http.Request) {
-
 		trips.Mutex.Lock()
 		defer trips.Mutex.Unlock()
 		if atomic.LoadInt32(&httpHandler.running) == 0 {
@@ -116,6 +115,11 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 			var errorMessage = fmt.Sprintf("key: %v not found, available: [%v]", key, strings.Join(toolbox.MapKeysToStringSlice(trips.Trips), ","))
 			fmt.Println(errorMessage)
 			http.Error(writer, errorMessage, http.StatusNotFound)
+			return
+		}
+
+		if responses.Index >= len(responses.Responses) {
+			http.NotFound(writer, request)
 			return
 		}
 
