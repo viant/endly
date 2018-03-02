@@ -16,8 +16,8 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Build and deployment services](#Buildservices)
 - [Testing services](#Testingservices)
 - [Workfow Service](#Workfowservice)
-- [Wrofklow execution control](#exectuincontrol)
 - [Criteria expression](#criteria)
+- [Wrofklow execution control](#exectuincontrol)
 - [Credentials](#credentail)
 - [Usage](#Usage)
 - [Unit test](#unit)
@@ -1004,6 +1004,22 @@ Here is an example directory layout.
 Finally contribute by creating a  pull request with a new common workflow so that other can use them.
 
 
+
+<a name="criteria"></a>
+## Criteria expression    
+
+Criteria expression support '&&' and '||' logical operators.
+Colon ":" operator additionally support [assertly](https://github.com/viant/assertly#validation) validation expression like ~//, or // etc.  
+    
+Example criteria:
+
+1. $k1 = abc && $k > 20
+2. $k3 = ~/abc/
+3. $k4 = "~/name (\\d+)/ 
+    (where k4 might be equal 123)
+
+    
+
 <a name="exectuincontrol"></a>
 
 ## Workflow execution control:
@@ -1031,20 +1047,6 @@ Each action has the following fields to control conditional execution:
 ````
     
 
-<a name="criteria"></a>
-## Criteria expression    
-
-Criteria expression support '&&' and '||' logical operators.
-Colon ":" operator additionally support [assertly](https://github.com/viant/assertly#validation) validation expression like ~//, or // etc.  
-    
-Example criteria:
-
-1. $k1 = abc && $k > 20
-2. $k3 = ~/abc/
-3. $k4 = "~/name (\\d+)/ 
-    (where k4 might be equal 123)
-
-    
         
 **Workflow goto task action**
 Workflow goto action terminates current task actions execution to start specified current workflow task.`
