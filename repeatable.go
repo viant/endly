@@ -74,7 +74,7 @@ func (r *Repeatable) EvaluateExitCriteria(callerInfo string, context *Context, e
 	for k, v := range extracted {
 		extractedState[k] = v
 	}
-	canBreak, err := EvaluateCriteria(context, extractedState, r.ExitCriteria, callerInfo, false)
+	canBreak, err := Evaluate(context,extractedState, r.ExitCriteria, callerInfo, false)
 	if err != nil {
 		return true, fmt.Errorf("failed to check %v exit criteia: %v", callerInfo, err)
 	}
@@ -95,9 +95,12 @@ func (r *Repeatable) runOnce(service *AbstractService, callerInfo string, contex
 		return true, nil
 	}
 	extractableOutput, structuredOutput := AsExtractable(out)
+
+
+
 	if len(structuredOutput) > 0 {
 		var extractedVariables = data.NewMap()
-		_ = r.Variables.Apply(structuredOutput, extractedVariables)
+		err = r.Variables.Apply(structuredOutput, extractedVariables)
 		for k, v := range extractedVariables {
 			extracted[k] = toolbox.AsString(v)
 		}
@@ -105,17 +108,16 @@ func (r *Repeatable) runOnce(service *AbstractService, callerInfo string, contex
 			extractableOutput, _ = toolbox.AsJSONText(structuredOutput)
 		}
 	}
-
 	err = r.Extraction.Extract(context, extracted, extractableOutput)
 	if err != nil {
 		return false, err
 	}
-
 	if extractableOutput != "" {
 		extracted["value"] = extractableOutput //string output is published as $value
 	}
+
 	if r.ExitCriteria != "" {
-		AddEvent(context, "Repeatable.Extract", Pairs("Output", extractableOutput, "StructuredOutput", structuredOutput, "Extracted", extracted))
+		context.Publish(NewDataExtractionEvent(extractableOutput, structuredOutput, extracted))
 		if shouldBreak, err := r.EvaluateExitCriteria(callerInfo+"ExitEvaluation", context, extracted); shouldBreak || err != nil {
 			return !shouldBreak, err
 		}
@@ -151,4 +153,19 @@ func (r *Repeatable) Get() *Repeatable {
 		result.Repeat = 1
 	}
 	return result
+}
+
+
+type DataExtractionEvent struct {
+	Output string
+	StructuredOutput interface{}
+	Extracted interface{}
+}
+
+func NewDataExtractionEvent(output string, structuredOutput, extracted interface{}) *DataExtractionEvent{
+	return &DataExtractionEvent{
+		Output:output,
+		StructuredOutput:structuredOutput,
+		Extracted:extracted,
+	}
 }

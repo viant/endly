@@ -1,0 +1,19 @@
+{
+	"Method": "POST",
+	"URL": "http://127.0.0.1:8080/send2",
+	"Header": {
+		"Accept": [
+			"*/*"
+		],
+		"Accept-Encoding": [
+			"gzip, deflate"
+		],
+		"Connection": [
+			"keep-alive"
+		],
+		"Content-Length": [
+			"10"
+		]
+	},
+	"Body": "xc"
+}

@@ -1,0 +1,19 @@
+{
+	"Method": "GET",
+	"URL": "http://127.0.0.1:8080/path2",
+	"Header": {
+		"Accept": [
+			"*/*"
+		],
+		"Accept-Encoding": [
+			"gzip, deflate"
+		],
+		"Connection": [
+			"keep-alive"
+		],
+		"Content-Length": [
+			"10"
+		]
+	},
+	"Body": ""
+}

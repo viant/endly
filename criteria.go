@@ -5,6 +5,8 @@ import (
 	"github.com/viant/toolbox/data"
 )
 
+
+
 //Criteria represents logical criteria
 type Criteria struct {
 	LogicalOperator string

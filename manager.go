@@ -14,8 +14,9 @@ import (
 //AppName represents endly application name
 const AppName = "endly"
 
-//EndlyNamespace represents endly namespace
-const EndlyNamespace = "github.com/viant/endly/"
+//Namespace represents endly namespace
+const Namespace = "github.com/viant/endly/"
+
 
 //Service represnets a workflow manager
 type Manager interface {
@@ -81,14 +82,11 @@ func (s *manager) NewContext(ctx toolbox.Context) *Context {
 	if UUID, err := uuid.NewV1(); err == nil {
 		sessionID = UUID.String()
 	}
-	var workflowStack Workflows = make([]*WorkflowControl, 0)
+	var workflowStack Workflows = make([]*Control, 0)
 	var result = &Context{
 		SessionID: sessionID,
 		Context:   ctx,
-		Events: &Events{
-			mutex:  &sync.Mutex{},
-			Events: make([]*Event, 0),
-		},
+		Wait: &sync.WaitGroup{},
 		Workflows: &workflowStack,
 	}
 	_ = result.Put(serviceManagerKey, s)
@@ -104,38 +102,12 @@ func NewManager() Manager {
 		serviceByRequestType: make(map[reflect.Type]Service),
 	}
 
-	result.Register(NewExecService())
-
-	var storageService = NewStorageService()
-	result.Register(storageService)
-	//backward compatibility name of service
-	result.serviceByID[TransferServiceID] = storageService
-	result.Register(NewDeploymentService())
-	result.Register(NewHTTPpRunnerService())
-	result.Register(NewRestService())
-	result.Register(NewProcessService())
-	result.Register(NewDaemonService())
-	result.Register(NewValidatorService())
-	result.Register(NewWorkflowService())
-	result.Register(NewVersionControlService())
-	result.Register(NewSdkService())
-	result.Register(NewBuildService())
-	result.Register(NewDockerService())
-	result.Register(NewDataStoreUnitService())
-	result.Register(NewNopService())
-	//backward compatibility name of service
-	var loggerService = NewLogValidatorService()
-	result.serviceByID[LogServiceID] = loggerService
-	result.Register(loggerService)
-
-	result.Register(NewEventReporterService())
-	result.Register(NewNetworkService())
-	result.Register(NewSeleniumService())
-	result.Register(NewEc2Service())
-	result.Register(NewGceService())
-	result.Register(NewHTTPEndpointService())
-	result.Register(NewSMTPService())
-	result.Register(NewLogService())
+	result.Register(NewService())
+	result.Register(newNopService())
+	result.Register(newLoggerService())
+	for _, provider := range *Registry {
+		result.Register(provider())
+	}
 	return result
 }
 
@@ -155,7 +127,7 @@ func (m *manager) Run(context *Context, request interface{}) (interface{}, error
 		defer context.Close()
 	}
 	response := service.Run(context, request)
-	return response.Response, response.err
+	return response.Response, response.Err
 }
 
 //Services returns manager serviceByID or error
@@ -169,7 +141,7 @@ func Services(mgr interface{}) map[string]Service {
 
 //GetVersion return endly version
 func GetVersion() string {
-	resource := url.NewResource(fmt.Sprintf("mem://%v/Version", EndlyNamespace))
+	resource := url.NewResource(fmt.Sprintf("mem://%v/Version", Namespace))
 	version, _ := resource.DownloadText()
 	return version
 }
