@@ -24,8 +24,8 @@ import (
 	"github.com/viant/endly/util"
 )
 
-//OnRunnerError exit system with os.Exit with supplied code.
-var OnRunnerError = func(code int) {
+//OnError exit system with os.Exit with supplied code.
+var OnError = func(code int) {
 	os.Exit(code)
 }
 
@@ -37,7 +37,6 @@ const (
 	messageTypeGeneric
 )
 
-var reportingEventSleep = 250 * time.Millisecond
 
 //EventTag represents an event tag
 type EventTag struct {
@@ -728,7 +727,7 @@ func (r *Runner) Run(request *endly.RunRequest, options *RunnerReportingOptions)
 		request.WorkflowURL = URL
 		request.Name = name
 	}
-
+	r.context.CLIEnabled = true
 	defer func() {
 		r.onWorkflowEnd()
 		if r.err != nil {
@@ -736,7 +735,7 @@ func (r *Runner) Run(request *endly.RunRequest, options *RunnerReportingOptions)
 		}
 		r.context.Close()
 		if r.errorCode || err != nil {
-			OnRunnerError(1)
+			OnError(1)
 		}
 	}()
 

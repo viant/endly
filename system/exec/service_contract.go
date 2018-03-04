@@ -35,15 +35,15 @@ type ExtractableCommand struct {
 	Executions []*Execution      `description:"execution commands"` //actual execution instruction
 }
 
-//ExtractableCommandRequest represents managed command request
-type ExtractableCommandRequest struct {
+//ExtractRequest represents managed command request
+type ExtractRequest struct {
 	SuperUser          bool                `description:"flag to run as super user, in this case sudo will be added to all individual commands unless present, and Target.Credentials password will be used"` ///flag to run it as super user
 	Target             *url.Resource       `required:"true" description:"host where command runs" `                                                                                                           //execution target - destination where to run a command.
 	ExtractableCommand *ExtractableCommand `description:"command with data extraction instruction "`                                                                                                          //managed command
 }
 
-//CommandRequest represents a simple command
-type CommandRequest struct {
+//RunRequest represents a simple command
+type RunRequest struct {
 	SuperUser bool          `description:"flag to run as super user, in this case sudo will be added to all individual commands unless present, and Target.Credentials password will be used"` ///flag to run it as super user
 	Target    *url.Resource `required:"true" description:"host where command runs" `                                                                                                           //execution target - destination where to run a command.
 	Commands  []string      `required:"true" description:"command list" `                                                                                                                      //list of commands to run
@@ -57,8 +57,8 @@ type CommandLog struct {
 	Error  string
 }
 
-//CommandResponse represents a command response with logged commands.
-type CommandResponse struct {
+//RunResponse represents a command response with logged commands.
+type RunResponse struct {
 	Session   string
 	Commands  []*CommandLog
 	Extracted map[string]string
@@ -98,14 +98,14 @@ type CloseSessionResponse struct {
 	SessionID string
 }
 
-//SuperUserCommandRequest represents a super user command,
-type SuperUserCommandRequest struct {
+//SuperRunRequest represents a super user command,
+type SuperRunRequest struct {
 	Target        *url.Resource       //target destination where to run a command.
 	MangedCommand *ExtractableCommand //managed command
 }
 
 //Validate validates managed command request
-func (r *ExtractableCommandRequest) Validate() error {
+func (r *ExtractRequest) Validate() error {
 	if r.Target == nil {
 		return fmt.Errorf("execution target was empty")
 	}
@@ -115,8 +115,8 @@ func (r *ExtractableCommandRequest) Validate() error {
 	return nil
 }
 
-//AsExtractableCommandRequest returns ExtractableCommandRequest for this requests
-func (r *CommandRequest) AsExtractableCommandRequest() *ExtractableCommandRequest {
+//AsExtractRequest returns ExtractRequest for this requests
+func (r *RunRequest) AsExtractRequest() *ExtractRequest {
 	var extractableCommand = &ExtractableCommand{
 		Options:    NewExecutionOptions(),
 		Executions: make([]*Execution, 0),
@@ -130,24 +130,24 @@ func (r *CommandRequest) AsExtractableCommandRequest() *ExtractableCommandReques
 			Errors:  []string{util.CommandNotFound, util.NoSuchFileOrDirectory, util.ErrorIsNotRecoverable},
 		})
 	}
-	return &ExtractableCommandRequest{
+	return &ExtractRequest{
 		SuperUser:          r.SuperUser,
 		Target:             r.Target,
 		ExtractableCommand: extractableCommand,
 	}
 }
 
-//NewExtractableCommandRequest returns a new command request
-func NewExtractableCommandRequest(target *url.Resource, execution *ExtractableCommand) *ExtractableCommandRequest {
-	return &ExtractableCommandRequest{
+//NewExtractRequest returns a new command request
+func NewExtractRequest(target *url.Resource, execution *ExtractableCommand) *ExtractRequest {
+	return &ExtractRequest{
 		Target:             target,
 		ExtractableCommand: execution,
 	}
 }
 
-//NewSimpleCommandRequest a simple version of ExtractableCommandRequest
-func NewSimpleCommandRequest(target *url.Resource, commands ...string) *ExtractableCommandRequest {
-	var result = &ExtractableCommandRequest{
+//NewSimpleRunRequest a simple version of ExtractRequest
+func NewSimpleRunRequest(target *url.Resource, commands ...string) *ExtractRequest {
+	var result = &ExtractRequest{
 		Target: target,
 		ExtractableCommand: &ExtractableCommand{
 			Executions: make([]*Execution, 0),
@@ -171,7 +171,7 @@ func NewExecutionOptions() *ExecutionOptions {
 }
 
 //Add appends provided log into commands slice.
-func (i *CommandResponse) Add(log *CommandLog) {
+func (i *RunResponse) Add(log *CommandLog) {
 	if len(i.Commands) == 0 {
 		i.Commands = make([]*CommandLog, 0)
 	}
@@ -179,7 +179,7 @@ func (i *CommandResponse) Add(log *CommandLog) {
 }
 
 //Stdout returns stdout for provided index, or all concatenated otherwise
-func (i *CommandResponse) Stdout(indexes ...int) string {
+func (i *RunResponse) Stdout(indexes ...int) string {
 	if len(indexes) == 0 {
 		var result = make([]string, len(i.Commands))
 		for j, stream := range i.Commands {
@@ -196,9 +196,9 @@ func (i *CommandResponse) Stdout(indexes ...int) string {
 	return strings.Join(result, "\r\n")
 }
 
-//NewCommandResponse creates a new CommandResponse
-func NewCommandResponse(session string) *CommandResponse {
-	return &CommandResponse{
+//NewRunResponse creates a new RunResponse
+func NewRunResponse(session string) *RunResponse {
+	return &RunResponse{
 		Session:   session,
 		Commands:  make([]*CommandLog, 0),
 		Extracted: make(map[string]string),
@@ -218,13 +218,13 @@ func NewCommandLog(stdin, stdout string, err error) *CommandLog {
 	return result
 }
 
-//AsCommandRequest returns ExtractableCommandRequest
-func (r *SuperUserCommandRequest) AsCommandRequest(context *endly.Context) (*ExtractableCommandRequest, error) {
+//AsExtractRequest returns ExtractRequest
+func (r *SuperRunRequest) AsExtractRequest(context *endly.Context) (*ExtractRequest, error) {
 	target, err := context.ExpandResource(r.Target)
 	if err != nil {
 		return nil, err
 	}
-	var result = &ExtractableCommandRequest{
+	var result = &ExtractRequest{
 		Target: target,
 		ExtractableCommand: &ExtractableCommand{
 			Executions: make([]*Execution, 0),

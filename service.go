@@ -317,7 +317,15 @@ func (s *loggerService) registerRoutes() {
 			return struct{}{}
 		},
 		Handler: func(context *Context, req interface{}) (interface{}, error) {
-			if _, ok := req.(*PrintRequest); ok {
+			if request, ok := req.(*PrintRequest); ok {
+				if ! context.CLIEnabled {
+					if request.Message != "" {
+						fmt.Printf("%v\n", request.Message)
+					}
+					if request.Error != "" {
+						fmt.Printf("%v\n", request.Error)
+					}
+				}
 				return struct{}{}, nil
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", req)

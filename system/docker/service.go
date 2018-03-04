@@ -425,7 +425,7 @@ func (s *service) checkImages(context *endly.Context, request *DockerImagesReque
 
 }
 
-func (s *service) executeDockerCommand(secure map[string]string, context *endly.Context, target *url.Resource, errors []string, template string, arguments ...interface{}) (*exec.CommandResponse, error) {
+func (s *service) executeDockerCommand(secure map[string]string, context *endly.Context, target *url.Resource, errors []string, template string, arguments ...interface{}) (*exec.RunResponse, error) {
 	return s.executeSecureDockerCommand(false, secure, context, target, errors, fmt.Sprintf(template, arguments...))
 }
 
@@ -438,7 +438,7 @@ func (s *service) startDockerIfNeeded(context *endly.Context, target *url.Resour
 
 }
 
-func (s *service) executeSecureDockerCommand(asRoot bool, secure map[string]string, context *endly.Context, target *url.Resource, errors []string, command string) (*exec.CommandResponse, error) {
+func (s *service) executeSecureDockerCommand(asRoot bool, secure map[string]string, context *endly.Context, target *url.Resource, errors []string, command string) (*exec.RunResponse, error) {
 	s.applySysPathIfNeeded([]string{})
 	if len(secure) == 0 {
 		secure = make(map[string]string)
@@ -460,7 +460,7 @@ func (s *service) executeSecureDockerCommand(asRoot bool, secure map[string]stri
 	}
 	var runRequest interface{} = extractableCommand
 	if asRoot {
-		runRequest = &exec.SuperUserCommandRequest{
+		runRequest = &exec.SuperRunRequest{
 			MangedCommand: extractableCommand,
 		}
 	}

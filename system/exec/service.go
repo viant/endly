@@ -181,7 +181,7 @@ func (s *execService) setEnvVariable(context *endly.Context, session *endly.Syst
 	return err
 }
 
-func (s *execService) changeDirectory(context *endly.Context, session *endly.SystemTerminalSession, commandInfo *CommandResponse, directory string) (string, error) {
+func (s *execService) changeDirectory(context *endly.Context, session *endly.SystemTerminalSession, commandInfo *RunResponse, directory string) (string, error) {
 	if directory == "" {
 		return "", nil
 	}
@@ -225,7 +225,7 @@ func (s *execService) rumCommandTemplate(context *endly.Context, session *endly.
 	return stdout, nil
 }
 
-func (s *execService) applyCommandOptions(context *endly.Context, options *ExecutionOptions, session *endly.SystemTerminalSession, info *CommandResponse) error {
+func (s *execService) applyCommandOptions(context *endly.Context, options *ExecutionOptions, session *endly.SystemTerminalSession, info *RunResponse) error {
 	operatingSystem := session.OperatingSystem
 	if options == nil {
 		return nil
@@ -323,7 +323,7 @@ func (s *execService) validateStdout(stdout string, command string, execution *E
 	return nil
 }
 
-func (s *execService) executeCommand(context *endly.Context, session *endly.SystemTerminalSession, execution *Execution, options *ExecutionOptions, response *CommandResponse, request *ExtractableCommandRequest) error {
+func (s *execService) executeCommand(context *endly.Context, session *endly.SystemTerminalSession, execution *Execution, options *ExecutionOptions, response *RunResponse, request *ExtractRequest) error {
 	command := context.Expand(execution.Command)
 
 	terminators := getTerminators(options, session, execution)
@@ -391,22 +391,22 @@ func getTerminators(options *ExecutionOptions, session *endly.SystemTerminalSess
 	return terminators
 }
 
-func (s *execService) runCommands(context *endly.Context, request *CommandRequest) (*CommandResponse, error) {
-	var mangedCommandRequest = request.AsExtractableCommandRequest()
+func (s *execService) runCommands(context *endly.Context, request *RunRequest) (*RunResponse, error) {
+	var mangedCommandRequest = request.AsExtractRequest()
 	if request.SuperUser {
-		superCommandRequest := SuperUserCommandRequest{
+		superCommandRequest := SuperRunRequest{
 			Target:        request.Target,
 			MangedCommand: mangedCommandRequest.ExtractableCommand,
 		}
 		var err error
-		if mangedCommandRequest, err = superCommandRequest.AsCommandRequest(context); err != nil {
+		if mangedCommandRequest, err = superCommandRequest.AsExtractRequest(context); err != nil {
 			return nil, err
 		}
 	}
 	return s.runCommandsAndExtractData(context, mangedCommandRequest)
 }
 
-func (s *execService) runCommandsAndExtractData(context *endly.Context, request *ExtractableCommandRequest) (*CommandResponse, error) {
+func (s *execService) runCommandsAndExtractData(context *endly.Context, request *ExtractRequest) (*RunResponse, error) {
 	err := request.Validate()
 	if err != nil {
 		return nil, err
@@ -424,7 +424,7 @@ func (s *execService) runCommandsAndExtractData(context *endly.Context, request 
 	if options == nil {
 		options = NewExecutionOptions()
 	}
-	response := NewCommandResponse(session.ID)
+	response := NewRunResponse(session.ID)
 	err = s.applyCommandOptions(context, options, session, response)
 
 	if err != nil {
@@ -437,7 +437,7 @@ func (s *execService) runCommandsAndExtractData(context *endly.Context, request 
 		return nil, err
 	}
 
-	response = NewCommandResponse(session.ID)
+	response = NewRunResponse(session.ID)
 	for _, execution := range request.ExtractableCommand.Executions {
 		var command = context.Expand(execution.Command)
 		if execution.MatchOutput != "" {
@@ -650,13 +650,13 @@ func (s *execService) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &CommandRequest{}
+			return &RunRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &CommandResponse{}
+			return &RunResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*CommandRequest); ok {
+			if req, ok := request.(*RunRequest); ok {
 				return s.runCommands(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -676,13 +676,13 @@ func (s *execService) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &ExtractableCommandRequest{}
+			return &ExtractRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &CommandResponse{}
+			return &RunResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*ExtractableCommandRequest); ok {
+			if req, ok := request.(*ExtractRequest); ok {
 				return s.runCommandsAndExtractData(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -695,14 +695,14 @@ func (s *execService) registerRoutes() {
 			Description: "run terminal command and extract data as rooot",
 		},
 		RequestProvider: func() interface{} {
-			return &SuperUserCommandRequest{}
+			return &SuperRunRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &CommandResponse{}
+			return &RunResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*SuperUserCommandRequest); ok {
-				commandRequest, err := req.AsCommandRequest(context)
+			if req, ok := request.(*SuperRunRequest); ok {
+				commandRequest, err := req.AsExtractRequest(context)
 				if err != nil {
 					return nil, err
 				}

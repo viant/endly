@@ -59,7 +59,7 @@ func (s *service) compressSource(context *endly.Context, source, target *url.Res
 	}
 	var archiveName = fmt.Sprintf("%v.tar.gz", name)
 
-	response, err := exec.Execute(context, source, &exec.CommandRequest{
+	response, err := exec.Execute(context, source, &exec.RunRequest{
 		Commands: []string{
 			fmt.Sprintf("cd %v", baseDirectory),
 			fmt.Sprintf("tar cvzf %v %v", archiveName, archiveSource),
@@ -97,7 +97,7 @@ func (s *service) decompressTarget(context *endly.Context, source, target *url.R
 
 	var baseDir, name = path.Split(target.ParsedURL.Path)
 
-	_, err := exec.Execute(context, target, &exec.CommandRequest{
+	_, err := exec.Execute(context, target, &exec.RunRequest{
 		Commands: []string{
 			fmt.Sprintf("mkdir -p %v", baseDir),
 			fmt.Sprintf("cd %v", baseDir),
@@ -105,7 +105,7 @@ func (s *service) decompressTarget(context *endly.Context, source, target *url.R
 	})
 
 	if err == nil {
-		_, err = exec.Execute(context, target, &exec.CommandRequest{
+		_, err = exec.Execute(context, target, &exec.RunRequest{
 			Commands: []string{
 				fmt.Sprintf("tar xvzf %v", name),
 				fmt.Sprintf("rm %v", name),
@@ -114,7 +114,7 @@ func (s *service) decompressTarget(context *endly.Context, source, target *url.R
 		})
 	}
 	if err == nil {
-		_, err = exec.Execute(context, target, &exec.CommandRequest{
+		_, err = exec.Execute(context, target, &exec.RunRequest{
 			Commands: []string{
 				fmt.Sprintf("cd %v", source.DirectoryPath()),
 				fmt.Sprintf("rm %v", name),

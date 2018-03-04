@@ -7,36 +7,36 @@ import (
 )
 
 //Execute execute shell command
-func Execute(context *endly.Context, target *url.Resource, command interface{}) (*CommandResponse, error) {
+func Execute(context *endly.Context, target *url.Resource, command interface{}) (*RunResponse, error) {
 	if command == nil {
 		return nil, nil
 	}
 	var err error
-	var commandRequest *ExtractableCommandRequest
+	var commandRequest *ExtractRequest
 	switch actualCommand := command.(type) {
-	case *SuperUserCommandRequest:
+	case *SuperRunRequest:
 		actualCommand.Target = target
-		commandRequest, err = actualCommand.AsCommandRequest(context)
+		commandRequest, err = actualCommand.AsExtractRequest(context)
 		if err != nil {
 			return nil, err
 		}
-	case *CommandRequest:
+	case *RunRequest:
 		actualCommand.Target = target
-		commandRequest = actualCommand.AsExtractableCommandRequest()
+		commandRequest = actualCommand.AsExtractRequest()
 	case *ExtractableCommand:
-		commandRequest = NewExtractableCommandRequest(target, actualCommand)
+		commandRequest = NewExtractRequest(target, actualCommand)
 	case string:
-		request := CommandRequest{
+		request := RunRequest{
 			Target:   target,
 			Commands: []string{actualCommand},
 		}
-		commandRequest = request.AsExtractableCommandRequest()
+		commandRequest = request.AsExtractRequest()
 	case []string:
-		request := CommandRequest{
+		request := RunRequest{
 			Target:   target,
 			Commands: actualCommand,
 		}
-		commandRequest = request.AsExtractableCommandRequest()
+		commandRequest = request.AsExtractRequest()
 
 	default:
 		return nil, fmt.Errorf("unsupported command: %T", command)
@@ -49,19 +49,19 @@ func Execute(context *endly.Context, target *url.Resource, command interface{}) 
 	if response.Err != nil {
 		return nil, response.Err
 	}
-	if commandResult, ok := response.Response.(*CommandResponse); ok {
+	if commandResult, ok := response.Response.(*RunResponse); ok {
 		return commandResult, nil
 	}
 	return nil, nil
 }
 
 //ExecuteAsSuperUser executes command as super user
-func ExecuteAsSuperUser(context *endly.Context, target *url.Resource, command *ExtractableCommand) (*CommandResponse, error) {
-	superUserRequest := SuperUserCommandRequest{
+func ExecuteAsSuperUser(context *endly.Context, target *url.Resource, command *ExtractableCommand) (*RunResponse, error) {
+	superUserRequest := SuperRunRequest{
 		Target:        target,
 		MangedCommand: command,
 	}
-	request, err := superUserRequest.AsCommandRequest(context)
+	request, err := superUserRequest.AsExtractRequest(context)
 	if err != nil {
 		return nil, err
 	}

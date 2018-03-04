@@ -31,7 +31,7 @@ type Request struct {
 
 //Response represents a build response.
 type Response struct {
-	CommandInfo *exec.CommandResponse
+	CommandInfo *exec.RunResponse
 }
 
 //Validate validates if request is valid

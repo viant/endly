@@ -11,16 +11,11 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Installation](#Installation)
 - [GettingStarted](#GettingStarted)
 - [Introduction](#Introduction)
-- [System services](#SystemServices)
-- [Cloud and Network services](#CloudAndNetwork)
-- [Build and deployment services](#Buildservices)
-- [Testing services](#Testingservices)
-- [Workfow Service](#Workfowservice)
-- [Criteria expression](#criteria)
-- [Wrofklow execution control](#exectuincontrol)
-- [Credentials](#credentail)
+- [Services](#Services)
+- [Credentials](#Credentail)
+- [Unit test](#Unit)
 - [Usage](#Usage)
-- [Unit test](#unit)
+- [Workflow Service](#Workfowservice)
 - [Best Practice](#BestPractice)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
@@ -121,130 +116,56 @@ Endly as a comprehensive testing framework automate the following step:
     3) Application system services shutdown 
     
 
-
-It uses tabular [Neatly](https://github.com/viant/neatly) format to represent a workflow, that
-can be easily manged with either MS Excel, Apple Number or OpenOffice.
-
-
+Endly automate sequence of actions into reusable tasks and workflows. 
+It uses tabular [Neatly](https://github.com/viant/neatly) format to represent a workflow.
 Neatly is responsible for converting a tabular document (.csv) into workflow object tree as shown below.
 
 ![Workflow diagram](workflow_diagram.png)
+See more about [workflow and its lifecycle](docs)
 
 
+A workflow actions invoke endly services to accomplish specific job.
 
-**[Workflow](workflow.go)** an abstraction to define a set of task with its action.
+<a name="Services"></a>
+## Endly Services
 
-**Task** an abstraction to logically group one or more action, for example, init,test.
-
-**Action** an abstraction defining a call to a service. 
-An action does actual job, like starting service, building and deploying app etc, 
-
-**ActionRequest** an abstraction representing a service request.
+1) **System services**
+    - [SSH Executor Service](/system/exec)
+    - [Storage Service](/system/storage)
+    - [Process Service](/system/process)
+    - [Daemon Service](/system/daemon)
+    - [Network Service](/system/network)
+    - [Docker Service](/system/docker)
+2) **Cloud services**
+    - [Amazon Elastic Compute Cloud Service](cloud/ec2)
+    - [Google Compute Engine Service](cloud/gce)
+3) **Build and Deployment Services**
+    - [Sdk Service](deployment/sdk)
+    - [Version Control Service](deployment/vc)
+    - [Build Service](deployment/build)
+    - [Deplyment Service](deployment/deploy)
+4) **Endpoint Services**
+   - [Http Endpoint Service](endpoint/http) 
+5) **Runner Services**
+   - [Http Runner Service](runner/http) 
+   - [REST Runner Service](runner/rest) 
+   - [Selenium Runner Service](runner/http) 
+   - [SMTP Service](runner/smtp)      
+6) **Testing Services**
+   - [Validator](testing/validator)
+   - [Log Validator Service](testing/log)
+   - [Datastore Preparation and Validation Service](testing/dsunit)
+7) ** Workflow service**
+    - [Workflow Service](#Workfowservice)
+    - [Logger Service](#Workfowservice)
+    - [Nop Service](#Workfowservice)
         
-**ActionResponse** an abstraction representing a service response.
-
-To execute action:
-1) workflow service looks up a service by id, in workflow manager registry.
-2) workflow service creates a new request for corresponding action on the selected service.
-3) Action.Request is expanded with context.State ($variable substitution) to be converted as actual structured service request.
-4) Context with its state is passed into every action so that it can be modified for state controlm and future data substitution. 
-5) Service executes Run method for provided action to return ServiceResponse 
 
 
-**[Service](service.go)** an abstraction providing set of functionalities triggered by specified action/request.
-
-**State** key/value pair map that is used to mange state during the workflow run. 
-The state can be change by providing variable definition.
-The workflow content, data structures, can use dollar '$' sign followed by variable name 
-to get its expanded to its corresponding state value if the key has been present.
- 
-The following diagram shows service with its component.
-![Service diagram](service_diagram.png)
-
-
-
-
-**[Variables](variable.go)** an abstraction having capabilities to change a state map.
-
-A workflow variable defines data transition between input and output state map.
-
-
-Variable has the following attributes
-* **Name**: name can be defined as key to be stored in state map or expression 
-     * array element push **->**, for instance ->collection, where collection is a key in the state map      
-    * reference **$** for example $ref, where ref is the key in the state, in this case the value will be 
-
-* **Value**: any type value that is used when from value is empty
-* From  name of a key state key, or expression with key.    
-The following expression are supported:
-    * number increments  **++**, for example  counter++, where counter is a key in the state
-    * array element shift  **<-**, for example  <-collection, where collection is a key in the state      
-    * reference **$** for example $ref, where ref is the key in the state, in this case the value will be 
-    evaluated as value stored in key pointed by content of ref variable
-    
-**Variable in actions:**
-
-
-| Operation | Variable.Name | Variable.Value | Variable.From | Input State Before | Input State After | Out State Before | Out State  After |
-| --- | --- | --- | ---- | --- | --- | --- | --- |
-| Assignment | key1 | [1,2,3] | n/a | n/a | n/a | { } |{"key1":[1,2,3]}|
-| Assignment by reference | $key1  | 1 | n/a| {"key1":"a"} | n/a | { } | {"a":1} |
-| Assignment | key1 | n/a | params.k1 | {"params":{"k1":100}} | n/a | { } | {"key1":100} |
-| Assignment by reference | key1  | n/a | $k | {"k":"a", "a":100} |n/a |  { } | {"key1":100} |
-| Push | ->key1 | 1 | n/a | n/a | n/a | { } | {"key1":[1]} | 
-| Push | ->key1 | 2 | n/a | n/a | n/a | {"key1":[1]} | {"key1":[1,2]} | 
-| Shift | item | n/a  | <-key1 | n/a | n/a | {"key1":[1, 2]} | {"key1":[2], "item":1} | 
-| Pre increment | key | n/a | ++i |  {"i":100} |  {"i":101}   | {} | {"key":101} } 
-| Post increment | key | n/a | i++ | {"i":100} |  {"i":101}   | {} | {"key":100} } 
-
-
-**Workflow Lifecycle**
-
-1) New context with a new state map is created after inheriting values from a caller. (Caller will not see any state changes from downstream workflow)
-2) **data** key is published to the context state with defined workflow.data. Workflow data field would stores complex nested data structure like a setup data.
-2) **params** key is published to state map with the caller parameters
-3) Workflow initialization stage executes, applying variables defined in Workflow.Pre (input: workflow state, output: workflow state)
-4) Tasks Execution 
-    1) Task eligibility determination: 
-        1) If specified tasks are '*' or empty, all task defined in the workflow will run sequentially, otherwise only specified
-        2) Evaluate RunCriteria if specified
-    2) Task initialization stage executes, applying variables defined in Task.Pre (input: workflow  state, output: workflow state)
-    
-    3) Executes all eligible actions:
-        1) Action eligibility determination:
-            1) Evaluate RunCriteria if specified, or SkipCriteria for all the actions within the same neatly TagID (tag + Group  + Index + Subpath)
-        2) Action initialization stage executes,  applying variables defined in Action.Pre (input: workflow  state, output: workflow  state)
-        3) Executing action on specified service
-        4) Action post stage executes applying variables defined in Action.Post (input: action.response, output: workflow state)
-    4) Task post stage executes, applying variables defined in Task.Post (input: state, output: state)   
-5) Workflow post stage executes, applying variables defined in Workflow.Post (input: workflow  state, output: workflow.response)
-6) Context state comes with the following build-in/reserved keys:
-    * rand - random int64
-    * date -  current date formatted as yyyy-MM-dd
-    * time - current time formatted as yyyy-MM-dd hh:mm:ss
-    * ts - current timestamp formatted  as yyyyMMddhhmmSSS
-    * timestamp.yesterday - timestamp in ms
-    * timestamp.now - timestamp in ms
-    * timestamp.tomorrow - timestamp in ms
-    * tmpDir - temp directory
-    * uuid.next - generate unique id
-    * uuid.get - returns previously generated unique id, or generate new
-    *.env.XXX where XXX is the Id of the env variable to return
-    * previous - http previous request used for multi request send
-    * 
-    * all UFD registered functions  
-        * [Neatly UDF](https://github.com/viant/neatly/#udf)
-        * AsTableRecords udf converting []*DsUnitTableData into map[string][]map[string]interface{} (used by prepare/expect dsunit service), as table record udf provide sequencing and random id generation functionality for supplied data .
-	    
-
-
-# Neatly Services
-
-To check all endly services run
+To get the latest list of endly supported services run
 ```text
 endly -s='*'
 ```
-
 
 To check all actions supported by given service run 
 `endly -s='[service name]'`
@@ -253,7 +174,6 @@ i.e
 ```text
 endly -s='docker'
 ```
-
 
 To check request/response for service/action combination run 
 `endly -s='[service name]' -a=[action name]`
@@ -265,448 +185,8 @@ endly -s='docker' -a='run'
 
 
 
-
-<a name="SystemServices"></a>
-## System services
-
-
-All services are running on the system referred as target and defined as [Resource](https://raw.githubusercontent.com/viant/toolbox/master/url/resource.go)
-
-
-**Execution services**
-
-The execution service is responsible for opening, managing terminal session, with the ability to send command and extract data.
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| exec | open | open SSH session on the target resource. | [OpenSessionRequest](service_exec_session.go#L9) | [OpenSessionResponse](service_exec_session.go#L19) |
-| exec | close | close SSH session | [CloseSessionRequest](service_exec_session.go#L24) | [CloseSessionResponse](service_exec_session.goL29) |
-| exec | run | execute basic commands | [CommandRequest](service_exec_command.go#L40) | [CommandResponse](service_exec_command_response.go#L15) |
-| exec | extract | execute commands with ability to extract data, define error or success state | [ExtractableCommandRequest](service_exec_command.go#L34) | [CommandResponse](service_exec_command_response.go#L15) |
-
-
-
-**Daemon service.**
-
-Daemon System service is responsible for managing system daemon services.
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- | 
-| daemon | status | check status of system daemon | [DaemonStatusRequest](service_daemon_status.go) | [DaemonInfo](service_daemon_status.go) | 
-| daemon | start | start requested system daemon | [DaemonStartRequest](service_daemon_start.go) | [DaemonInfo](service_daemon_status.go) | 
-| daemon | stop | stop requested system daemon | [DaemonStopRequest](service_daemon_stop.go) | [DaemonInfo](service_daemon_status.go) | 
-
-
-**Process service**
-
-Process service is responsible for starting, stopping and checking the status of a custom application.
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- | 
-| process | status | check status of an application | [ProcessStatusRequest](service_process_status.go) | [ProcessStatusResponse](service_process_status.go) | 
-| process | start | start provided application | [ProcessStartRequest](service_process_start.go) | [ProcessStartResponse](service_process_start.go) | 
-| process | stop | kill requested application | [ProcessStopRequest](service_process_stop.go) | [CommandResponse](exec_command_response.go) | 
-
-
-**Netowrk service**
-
-<a name="docker"></a>
-**Docker service**
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- | 
-| docker | run | run requested docker service | [DockerRunRequest](service_docker_run.go) | [DockerContainerInfo](service_docker_container.go#L54) | 
-| docker | images | check docker image| [DockerImagesRequest](service_docker_image.go) | [DockerImagesResponse](service_docker_image.go) | 
-| docker | stop-images | stop docker containers matching specified images | [DockerStopImagesRequest](service_docker_stop.go) | [DockerStopImagesResponse](service_docker_stop.go) |
-| docker | pull | pull requested docker image| [DockerPullRequest](service_docker_pull.go) | [DockerImageInfo](service_docker_image.go) | 
-| docker | process | check docker container processes | [DockerContainerCheckRequest](service_docker_container.go) | [DockerContainerCheckResponse](service_docker_container.go) | 
-| docker | container-start | start specified docker container | [DockerContainerStartRequest](service_docker_container.go#L19) | [DockerContainerInfo](service_docker_container.go#L54) | 
-| docker | container-run | run command within specified docker container | [DockerContainerRunCommandRequest](service_docker_container.go#L39) | [DockerContainerRunCommandResponse](service_docker_container.go#L49) | 
-| docker | container-stop | stop specified docker container | [DockerContainerStopRequest](service_docker_container.go#L35) | [DockerContainerInfo](service_docker_container.go#L54) | 
-| docker | container-remove | remove specified docker container | [DockerContainerRemoveRequest](service_docker_container.go#L23) | [DockerContainerRemoveResponse](service_docker_container.go#L28) | 
-| docker | container-logs | fetch container logs (app stdout/stderr)| [DockerContainerLogsRequest](service_docker_container.go#L63) | [DockerContainerLogsResponse](service_docker_container.go#L69) | 
-| docker | inspect | inspect supplied instance name| [DockerInspectRequest](service_docker_inspect.go) | [DockerInspectResponse](service_docker_inspect.go#L12) |
-| docker | build | build docker image| [DockerBuildRequest](service_docker_build.go) | [DockerBuildResponse](service_docker_build.go) |
-| docker | tag | create a target image that referes to source docker image| [DockerBuildRequest](service_docker_tag.go) | [DockerBuildResponse](service_docker_tag.go) |
-| docker | login | store supplied credential for provided repository in local docker store| [DockerLoginRequest](service_docker_login.go) | [DockerLoginResponse](service_docker_login.go) |
-| docker | logout | remove credential for supplied repository | [DockerLogoutRequest](service_docker_logout.go) | [DockerLogoutResponse](service_docker_logout.go) |
-| docker | push | copy image to supplied repository| [DockerPushRequest](service_docker_push.go) | [DockerPushResponse](service_docker_push.go) |
-
-
-<a name="storage"></a>
-**Storage service**
-
-Storage service represents local or remote storage to provide unified storage operations.
-Remote storage could be any cloud storage i.e. google cloud, amazon s3, or simple SCP or HTTP.
- 
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| storage | copy | copy one or more resources from the source to target destination | [StorgeCopyRequest](service_storage_copy.go) | [StorageCopyResponse](service_storage_copy.go) |
-| storage | remove | remove or more resources if exsit | [StorageRemoveRequest](service_storage_remove.go) | [StorageRemoveResponse](service_storage_remove.go) |
-| storage | upload | upload content pointed by context state key to target destination. | [StorageUploadRequest](service_storage_copy.go) | [StorageUploadResponse](service_storage_upload.go) |
-| storage | download | copy source content into context state key | [StorageDownloadRequest](service_storage_download.go) | [StorageDownloadResponse](service_storage_download.go) |
-
-
-
-<a name="CloudAndNetwork"></a>
-
-### Cloud services and Network services
-
-
-<a name="ec2"></a>
-
-**Amazon Elastic Compute Cloud Service**
-
-Provides ability to call operations on  [EC2 client](https://github.com/aws/aws-sdk-go/tree/master/service/ec2)
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| aws/ec2 | call | run ec2 operation | [EC2CallRequest](service_ec2_call.go) | [EC2CallResponse](service_ec2_call.go)  |
-
-'call' action's method and input are proxied to [EC2 client](https://github.com/aws/aws-sdk-go/tree/master/service/ec2)
-
-
-<a name="gce"></a>
-
-**Google Compute Engine Service**
-
-Provides ability to call operations on  [*compute.Service client](https://cloud.google.com/compute/docs/reference/latest/)
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| gce | call | run gce operation | [GCECallRequest](service_gce_call.go) | [GCECallResponse](service_gce_call.go)  |
-
-'call' action's service, method and paramters are proxied to [GCE client](https://cloud.google.com/compute/docs/reference/latest/)
-
-
-
-**Network service**
-
-
-Network service is responsible opening tunnel vi SSH between client and target host.
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- | 
-| network | tunnel | tunnel ports between local and remote host | [NetworkTunnelRequest](service_network_tunnel.go) | [NetworkTunnelResponse](service_network_tunnel.go) | 
-
-
-
-**SMTP Service**
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- | 
-| smtp | send | send an email to supplied recipients | [SMTPSendRequest](service_smtp_send.go#L10) | [SMTPSendResponse](service_smtp_send.go#L17) | 
-
-
-
-**HTTP Endpoint Service**
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- | 
-| http/endpoint | listen | listen on specified port to replay recorded HTTP conversation | [HTTPEndpointListenRequest](service_http_ednpoint.go) | [HTTPEndpointListenResponse](service_http_ednpoint.go) | 
-
-
-
-<a name="Buildservices"></a>
-## Build and deployment services
-
-
-
-**Sdk Service**
-
-Sdk service sets active terminal session with requested sdk version.
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- | 
-| sdk | set | set system with requested sdk and version | [SdkSetRequest](service_sdk_set.go) | [SdkSetResponse](service_sdk_set.go) | 
-
-
-**Version Control Service**
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| version/control | status | run version control check on provided URL | [VcStatusRequest](service_vc_status.go) | [VcInfo](service_vc_info.go)  |
-| version/control | checkout | if target directory already  exist with matching origin URL, this action only pulls the latest changes without overriding local ones, otherwise full checkout | [VcCheckoutRequest](service_vc_checkout.go) | [VcInfo](service_vc_info.go)   |
-| version/control | commit | commit commits local changes to the version control | [VcCommitRequest](service_vc_commit.go) | [VcInfo](service_vc_info.go)   |
-| version/control | pull | retrieve the latest changes from the origin | [VcPullRequest](service_vc_pull.go) | [VcInfo](service_vc_info.go)   |
-
-
-**Build service**
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| build | load | load BuildMeta for the supplied resource | [BuildLoadMetaRequest](service_build_load.go) | [BuildLoadMetaResponse](service_build_load.go)  |
-| build | register | register BuildMeta in service repo | [BuildRegisterMetaRequest](service_build_register.go) | [BuildRegisterMetaResponse](service_build_register.go)  |
-| build | build | Run build for provided specification | [BuildRequest](service_build_build.go) | [BuildResponse](service_build_build.go)  |
-
-
-**Deployment service** 
-Deployment service checks if target path resource, the app has been installed with requested version, if not it will transfer it and run all defined commands/transfers.
-Maven, tomcat use this service.
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| deployment | deploy | run deployment | [DeploymentDeployRequest](service_deployment_deploy.go) | [DeploymentDeployResponse](service_deployment_deploy.go) |
-
-
-
-<a name="Testingservices"></a>
-### Testing services
-
-**Http Runner** 
-
-Http runner sends one or more HTTP request to the specified endpoint; it manages cookie within [SendHttpRequest](service_http_runner_send.go).
-
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| http/runner | send | Sends one or more http request to the specified endpoint. | [SendHttpRequest](service_http_runner_send.go) | [SendHttpResponse](service_http_runner_send.go) |
-
-
-**Rest Runner**
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| rest/runner | send | Sends one rest request to the endpoint. | [RestSendRequest](service_rest_send.go) | [RestSendResponse](service_rest_send.go) |
-
-
-<a name="selenium"></a>
-**Selenium Runner** 
-
-Selenium runner opens a web session to run a various action on web driver or web elements.
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| selenium | start | start standalone selenium server | [SeleniumServerStartRequest](service_selenium_start.go) | [SeleniumServerStartResponse](service_selenium_start.go) |
-| selenium | stop | stop standalone selenium server | [SeleniumServerStopRequest](service_selenium_start.go) | [SeleniumServerStopResponse](service_selenium_stop.go) |
-| selenium | open | open a new browser with session id for further testing | [SeleniumOpenSessionRequest](service_selenium_session.go) | [SeleniumOpenSessionResponse](service_selenium_session.go) |
-| selenium | close | close browser session | [SeleniumCloseSessionRequest](service_selenium_session.go) | [SeleniumCloseSessionResponse](service_selenium_session.go) |
-| selenium | call-driver | call a method on web driver, i.e wb.GET(url)| [SeleniumWebDriverCallRequest](service_selenium_call_web_driver.go) | [SeleniumServiceCallResponse](service_selenium_call_web_driver.go) |
-| selenium | call-element | call a method on a web element, i.e. we.Click() | [SeleniumWebElementCallRequest](service_selenium_call_web_element.go) | [SeleniumWebElementCallResponse](service_selenium_call_web_element.go) |
-| selenium | run | run set of action on a page | [SeleniumRunRequest](service_selenium_run.go) | [SeleniumRunResponse](service_selenium_run.go) |
-
-call-driver and call-element actions's method and parameters are proxied to stand along selenium server via [selenium client](http://github.com/tebeka/selenium)
-
-
-Selenium run request defines sequence of action. In case a selector is not specified, call method is defined on [WebDriver](https://github.com/tebeka/selenium/blob/master/selenium.go#L213), 
-otherwise [WebElement](https://github.com/tebeka/selenium/blob/master/selenium.go#L370) defined by selector.
-
-[Wait](repeatable.go)  provides ability to wait either some time amount or for certain condition to take place, with regexp to extract data
-
-```json
-
-{
-  "SessionID":"$SeleniumSessionID",
-  "Actions": [
-    {
-      "Calls": [
-        {
-          "Method": "Get",
-          "Parameters": [
-            "http://play.golang.org/?simple=1"
-          ]
-        }
-      ]
-    },
-    {
-      "Selector": {
-        "Value": "#code"
-      },
-      "Calls": [
-        {
-          "Method": "Clear"
-        },
-        {
-          "Method": "SendKeys",
-          "Parameters": [
-            "$code"
-          ]
-        }
-      ]
-    },
-    {
-      "Selector": {
-        "Value": "#run"
-      },
-      "Calls": [
-        {
-          "Method": "Click"
-        }
-      ]
-    },
-    {
-      "Selector": {
-        "Value": "#output",
-        "Key": "output"
-      },
-      "Calls": [
-        {
-           "Method": "Text",
-           "Wait": {
-                    "Repeat": 5,
-                    "SleepTimeMs": 100,
-                    "ExitCriteria": "$value"
-           }
-        }
-      ]
-    }
-  ]
-}
-```
-
-
-**Generic validation service**
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| validator | assert | perform validation on provided actual  vs expected data structure. | [ValidatorAssertRequest](service_validator_assert.go) | [AssertionInfo](assertion_info.go) |
-
-
-**Log validation service** 
-
-To get log validation, 
-   1) register log listener, to dynamically detect any log changes (log shrinking/rollovers is supported), as long as new logs are detected it is ready to be validated.
-   2) run log validation. Log validation removes validated logs from the pending queue.
-   3) optionally reset listener to discard pending validation logs.
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| validator/log | listen | start listening for log file changes on specified location  |  [LogValidatorListenRequest](service_log_validator_listen.go) | [LogValidatorListenResponse](service_log_validator_listen.go)  |
-| validator/log | reset | discard logs detected by listener | [LogValidatorResetRequest](service_log_validator_reset.go) | [LogValidatorResetResponse](service_log_validator_reset.go)  |
-| validator/log | assert | perform validation on provided expected log records against actual log file records. | [LogValidatorAssertRequest](service_log_validator_assert.go) | [LogValidatorAssertResponse](service_log_validator_assert.go)  |
-
-
-** Validation expressions **
-Generic validation service and log validator, Task or Action RunCritera share undelying [Validator](https://github.com/viant/assertly), 
-
-During assertion, validator traverses expected data structure to compare it with expected.
-
-
-[See More](https://github.com/viant/assertly#validation) validation expression, directive and macros.
-
-
-
-**Datastore services**
-
-
-Datastore service uses [dsunit](https://github.com/viant/dsunit/) service to create, populate, and verify content of datastore. 
-
-
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| dsunit | register | register database connection |  [RegisterRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L46) | [RegisterResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#70)  |
-| dsunit | recreate | recreate database/datastore |  [RecreateRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L76) | [RecreateResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#98)  |    
-| dsunit | sql | run SQL commands |  [RunSQLRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L103) | [RunSQLResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#126)  |
-| dsunit | script | run SQL script |  [RunScriptRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L132) | [RunSQLResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#126)  |
-| dsunit | mapping | register database table mapping (view), |  [MappingRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L155) | [MappingResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#217)  |
-| dsunit | init | initialize datastore (register, recreate, run sql, add mapping) |  [InitRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L225) | [MappingResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#286)  |
-| dsunit | prepare | populate databstore with provided data |  [PrepareRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L293) | [MappingResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#323)  |
-| dsunit | expect | verify databstore with provided data |  [ExpectRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L340) | [MappingResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#380)  |
-| dsunit | query | run SQL query |  [QueryRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L407) | [QueryResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#419)  |
-| dsunit | sequence | get sequence values for supplied tables |  [SequenceRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L388) | [SequenceResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#400)  |
-
-
-
-
-<a name="Workfowservice"></a>
-## Workflow service
-
-
-**Workflow Service**
-
-Workflow service provide capability to run task, action from any defined workflow.
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| workflow | load | load workflow from provided path | [WorkflowLoadRequest](service_workflow_load.go) | [WorkflowLoadRequest](service_workflow_load.go)  |
-| workflow | register | register provide workflow in registry | [WorkflowLoadRequest](service_workflow_register.go) |  |
-| workflow | run | run workflow with specified tasks and parameters | [WorkflowRunRequest](service_workflow_run.go) | [WorkflowRunResponse]((service_workflow_run.go) |
-| workflow | goto | switch current execution to the specified task on current workflow | [WorkflowGotoRequest](service_workflow_goto.go) | [WorkflowGotoResponse]((service_workflow_goto.go) 
-| workflow | switch | run matched  case action or task  | [WorkflowSwitchRequest](service_workflow_switch.go) | [WorkflowSwitchResponse](service_workflow_switch.go) |
-| workflow | exit | terminate execution of active workflow (caller) | n/a | n/a |
-| workflow | fail | fail  workflow | [WorkflowFailRequest](service_workflow_fail.go) | n/a  |
-
-**Log Service **
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| log | print | print message or error | [LogPrintRequest](service_log.go) | n/a  |
-
-**No Operation Service **
-
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| nop | nop | do nothing| [Nop](service_nop.go) | n/a  |
-| nop | parrot | return request | [NopParrotRequest](service_nop_parrot.go) | n/a  |
-=======
-
-
-
-**Predefined workflows**
-
-
-<a name="predefined_workflows">	
-**Predefined workflows**
-</a>
-
-| Name | Task |Description | 
-| --- | --- | --- |
-| dockerized_mysql| start | start mysql docker container  |
-| dockerized_mysql| stop | stop mysql docker container 
-| dockerized_aerospike| start | aerospike mysql docker container |
-| dockerized_aerospike| stop | stop aerospike docker container |
-| dockerized_memcached| start | aerospike memcached docker container |
-| dockerized_memcached| stop | stop memcached docker container |
-| tomcat| install | install tomcat |
-| tomcat| start | start tomcat instance|
-| tomcat| stop | stop tomcat instance |
-| vc_maven_build | checkout | checkout the latest code from version control |
-| vc_maven_build | build | build the checked out code |
-| vc_maven_module_build | checkout | check out all required projects to build a module |
-| vc_maven_module_build | build | build module |
-| ec2 | start | start ec2 instance |
-| ec2 | stop | stop  ec2 instance |
-| gce | start | start gce instance |
-| gce | stop | stop  gce instance |
-| notify_error | notify | send error |
- 
- 
- 
- <a name="predefined_requests">
- **Predefined workflow run requests**
- </a>
- 
- 
- | Name | Workflow | 
- | --- | --- | 
- | [tomcat.json](req/tomcat.json) | tomcat | 
- | [aerospike.json](req/aerospike.json)| dockerized_aerospike |
- | [mysql.json](req/mysql.json)| dockerized_mysql |
- | [memcached.json](req/memcached.json)| dockerized_memcached|
- | [ec2.json](req/ec2.json)| ec2 |
- | [gce.json](req/gce.json)| gce |
- | [notify_error.json](req/notify_error.json)| notify_error |
- 
- 
- Notify error can be use in conjunction with Workflow.OnTaskError, see below workflow snippet
- 
- | Workflow | Name | Tasks | OnErrorTask | | | |
- |---|---|---|---|---|---|---|
- |---|test|%Tasks|onError  | |  | |
- |[]Tasks|Name|Description|Actions| | | |
- | | onError|On error task|%OnError| | | |
- |[]OnError|Description|Service|Action|Request|error|[]receivers|
- | |send error notification | workflow | run | #req/notify_error | $error |	abc@somewehre.com |
-
-
-
-
      
-<a name="credentail"></a>
-
+<a name="Credentail"></a>
 ## Credentials
      
     
@@ -806,7 +286,6 @@ endly -p -w ec2
 
 ```
 
-
 The following command will run predefined ec2 workflow with -w option
 
 ```bash
@@ -815,9 +294,7 @@ endly -w ec2 -t start awsCredential ~/.secret/aws.json ec2InstanceId i-0ef8d9260
 
 ```
 
-
-
-Example of WorkflowRunRequest JSON
+Example of RunRequest JSON
 
 ```json
 {
@@ -864,7 +341,7 @@ Example of WorkflowRunRequest JSON
 ```
 
 
-See for more filter option: [RunnerReportingFilter](runner_filter.go).
+See for more filter option: [Filter](cli/runner_filter.go).
 
 
 In case you have defined you one UDF or have other dependencies you have to build endly binary yourself.
@@ -884,13 +361,11 @@ func main() {
 	bootstrap.Bootstrap()
 }
 
-
 ```       
          
-         
-<a name="unit"></a>
-
-         
+    
+<a name="Unit"></a>
+        
 ## Unit test 
 
 ### Go lang         
@@ -909,7 +384,7 @@ This method runs in silent mode.
 
         manager := endly.NewManager()
     
-		response, err := manager.Run(nil, &endly.DockerRunRequest{
+		response, err := manager.Run(nil, &docker.RunRequest{
             Target: target,
             Image:  "mysql:5.6",
             MappedPort: map[string]string{
@@ -928,7 +403,7 @@ This method runs in silent mode.
 		if err != nil {
 			log.Fatal(err)
 		}
-		dockerResponse := response.(*DockerRunResponse)
+		dockerResponse := response.(*docker.RunResponse)
 		
 ```         
 
@@ -939,15 +414,15 @@ RunnerReportingOptions settings control stdout/stdin and other workflow details.
 
 ```go
 
-    runner := endly.NewCliRunner()
-	endly.OnRunnerError = func(code int) {}
-	err := runner.Run(&endly.WorkflowRunRequest{
+    runner := cli.New()
+	cli.OnError = func(code int) {}//to supres os.Exit(1) in case of error
+	err := runner.Run(&endly.RunRequest{
 			WorkflowURL: "action",
 			Tasks:       "run",
 			Params: map[string]interface{}{
 				"service": "logger",
 				"action":  "print",
-				"request": &endly.LoggerPrintRequest{Message: "hello"},
+				"request": &endly.PrintRequest{Message: "hello"},
 			},
 	}, nil)
     if err != nil {
@@ -956,6 +431,73 @@ RunnerReportingOptions settings control stdout/stdin and other workflow details.
 
 ```         
 
+
+
+
+<a name="Workfowservice"></a>
+## Workflow service
+
+
+**Workflow Service**
+
+Workflow service provide capability to run task, action from any defined workflow.
+
+| Service Id | Action | Description | Request | Response |
+| --- | --- | --- | --- | --- |
+| workflow | run | run workflow with specified tasks and parameters | [RunRequest](service_workflow_contract.go) | [RunResponse](service_workflow_contract.go) |
+| workflow | goto | switch current execution to the specified task on current workflow | [GotoRequest](service_workflow_goto.go) | [GotoResponse](service_workflow_contract.go) 
+| workflow | switch | run matched  case action or task  | [SwitchRequest](service_workflow_contract.go) | [SwitchResponse](service_workflow_contract.go) |
+| workflow | exit | terminate execution of active workflow (caller) | n/a | n/a |
+| workflow | fail | fail  workflow | [FailRequest](service_workflow_contract.go) | n/a  |
+
+
+**Predefined workflows**
+
+
+<a name="predefined_workflows">	</a>
+**Predefined workflows**
+
+
+
+[Workflows](shared/workflow)
+| Name | Task |Description | 
+| --- | --- | --- |
+| dockerized_mysql| start | start mysql docker container  |
+| dockerized_mysql| stop | stop mysql docker container 
+| dockerized_aerospike| start | aerospike mysql docker container |
+| dockerized_aerospike| stop | stop aerospike docker container |
+| dockerized_memcached| start | aerospike memcached docker container |
+| dockerized_memcached| stop | stop memcached docker container |
+| tomcat| install | install tomcat |
+| tomcat| start | start tomcat instance|
+| tomcat| stop | stop tomcat instance |
+| vc_maven_build | checkout | checkout the latest code from version control |
+| vc_maven_build | build | build the checked out code |
+| vc_maven_module_build | checkout | check out all required projects to build a module |
+| vc_maven_module_build | build | build module |
+| ec2 | start | start ec2 instance |
+| ec2 | stop | stop  ec2 instance |
+| gce | start | start gce instance |
+| gce | stop | stop  gce instance |
+| notify_error | notify | send error |
+ 
+ 
+ 
+ <a name="predefined_requests"></a>
+ **Predefined workflow run requests**
+ 
+ [Requests](shared/requests)
+  
+ | Name | Workflow | 
+ | --- | --- | 
+ | [tomcat.json](/shared/req/tomcat.json) | tomcat | 
+ | [aerospike.json](/sharedreq/aerospike.json)| dockerized_aerospike |
+ | [mysql.json](/sharedreq/mysql.json)| dockerized_mysql |
+ | [memcached.json](/sharedreq/memcached.json)| dockerized_memcached|
+ | [ec2.json](/sharedreq/ec2.json)| ec2 |
+ | [gce.json](/sharedreq/gce.json)| gce |
+ | [notify_error.json](/sharedreq/notify_error.json)| notify_error |
+ 
 
 
          
@@ -1003,76 +545,6 @@ Here is an example directory layout.
 
 Finally contribute by creating a  pull request with a new common workflow so that other can use them.
 
-
-
-<a name="criteria"></a>
-## Criteria expression    
-
-Criteria expression support '&&' and '||' logical operators.
-Colon ":" operator additionally support [assertly](https://github.com/viant/assertly#validation) validation expression like ~//, or // etc.  
-    
-Example criteria:
-
-1. $k1 = abc && $k > 20
-2. $k3 = ~/abc/
-3. $k4 = "~/name (\\d+)/ 
-    (where k4 might be equal 123)
-
-    
-
-<a name="exectuincontrol"></a>
-
-## Workflow execution control:
-By default, workflow run all specified task, where each task once started executes sequentially all it actions, unless they flag as 'asyn' execution.
-
-Each action can control its execution with
-
-**Action level criteria control**
-
-Each action has the following fields to control conditional execution:
-
-1. RunCriteria: criteria to check if an action is eligible to run
-2. SkipCriteria: criteria to check if the whole group of actions by TagID can be skipped, continuing execution to next  group
-3. Repeatable control
-
-    
-```go
-    type Repeatable struct {
-    	Extraction   DataExtractions //textual regexp based data extraction
-    	Variables    Variables       //structure data based data extraction
-    	Repeat       int             //how many time send this request
-    	SleepTimeMs  int             //Sleep time after request send, this only makes sense with repeat option
-    	ExitCriteria string          //Repeat exit criteria, it uses extracted variable to determine repeat termination 
-    }
-````
-    
-
-        
-**Workflow goto task action**
-Workflow goto action terminates current task actions execution to start specified current workflow task.`
-
-**Workflow switch action** 
-Workflow switch action enables to branch execution based on specified context.state key value. 
-Note that switch does not terminate next actions within current task.
-
-**Error handling**
-If there is an error during workflow execution, it fails immediately unless OnErrorTask is defined to catch and handle an error.
-In addition, error key is placed into the config with the following content:
-
-```go
-type WorkflowError struct {
-	Error        string
-	WorkflowName string
-	TaskName     string
-	Activity     *WorkflowServiceActivity
-}
-```
-
-
-**Finally** 
-Workflow also offers DeferTask to execute as the last workflow step in case there is an error or not, for instance, to clean up a resource.
-
- 
 
          	
 <a name="License"></a>
