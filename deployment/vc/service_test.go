@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
-	_ 	"github.com/viant/toolbox/storage/scp"
-	"strings"
-	"testing"
-	"github.com/viant/endly/util"
 	"github.com/viant/endly/deployment/vc"
 	"github.com/viant/endly/system/exec"
+	"github.com/viant/endly/util"
+	_ "github.com/viant/toolbox/storage/scp"
+	"github.com/viant/toolbox/url"
+	"strings"
+	"testing"
 )
 
 func TestVc_Status(t *testing.T) {

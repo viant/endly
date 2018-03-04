@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/url"
 	"reflect"
 	"sync"
 	"time"
-	"github.com/viant/toolbox/url"
 )
 
 //Service represents a set of capabilities per supported actions/request.
@@ -23,7 +23,6 @@ type Service interface {
 
 	//ServiceActionRoute returns service action route
 	ServiceActionRoute(action string) (*ServiceActionRoute, error)
-
 
 	Mutex() *sync.RWMutex
 
@@ -47,8 +46,6 @@ type ServiceResponse struct {
 	Response interface{}
 	Err      error
 }
-
-
 
 //ExampleUseCase represents example use case
 type ExampleUseCase struct {
@@ -83,7 +80,6 @@ type AbstractService struct {
 	state          data.Map
 }
 
-
 func (s *AbstractService) Mutex() *sync.RWMutex {
 	return s.RWMutex
 }
@@ -103,7 +99,7 @@ func (s *AbstractService) Run(context *Context, request interface{}) (response *
 	startEvent := s.Begin(context, request)
 	var err error
 	defer func() {
-			s.End(context)(startEvent, response.Response)
+		s.End(context)(startEvent, response.Response)
 		if err != nil {
 			response.Err = err
 			response.Status = "error"
@@ -166,7 +162,6 @@ func (s *AbstractService) Sleep(context *Context, sleepTimeMs int) {
 	}
 }
 
-
 //GetHostAndSSHPort return host and ssh port
 func (s *AbstractService) GetHostAndSSHPort(target *url.Resource) (string, int) {
 	if target == nil {
@@ -183,7 +178,6 @@ func (s *AbstractService) GetHostAndSSHPort(target *url.Resource) (string, int) 
 	return hostname, port
 }
 
-
 //Actions returns service actions
 func (s *AbstractService) Actions() []string {
 	return s.actions
@@ -195,8 +189,8 @@ func (s *AbstractService) Begin(context *Context, value interface{}) *Event {
 }
 
 //End adds finishing event.
-func (s *AbstractService) End(context *Context) func(startEvent *Event , value interface{}) *Event {
-	return func(startEvent *Event , value interface{}) *Event {
+func (s *AbstractService) End(context *Context) func(startEvent *Event, value interface{}) *Event {
+	return func(startEvent *Event, value interface{}) *Event {
 		endEvent := context.Publish(value)
 		endEvent.StartEvent = startEvent
 		return endEvent
@@ -208,8 +202,6 @@ func (s *AbstractService) ID() string {
 	return s.id
 }
 
-
-
 //State returns this service state map.
 func (s *AbstractService) State() data.Map {
 	return s.state
@@ -220,27 +212,20 @@ func NewAbstractService(id string) *AbstractService {
 	return &AbstractService{
 		id:             id,
 		actions:        make([]string, 0),
-		RWMutex:          &sync.RWMutex{},
+		RWMutex:        &sync.RWMutex{},
 		state:          data.NewMap(),
 		routeByAction:  make(map[string]*ServiceActionRoute),
 		routeByRequest: make(map[reflect.Type]*ServiceActionRoute),
 	}
 }
 
-
-
-
-
 const (
 	//NopServiceID represents nop nopService id.
 	NopServiceID = "nop"
 )
 
-
-
 //Request represent no operation
 type NopRequest struct{}
-
 
 //NopParrotRequest represent parrot request
 type NopParrotRequest struct {
@@ -302,8 +287,6 @@ func newNopService() Service {
 	return result
 }
 
-
-
 const (
 	//ServiceID represents log service id.
 	LoggerServiceID = "logger"
@@ -351,5 +334,3 @@ func newLoggerService() Service {
 	result.registerRoutes()
 	return result
 }
-
-

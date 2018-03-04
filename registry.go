@@ -5,10 +5,8 @@ import (
 	"github.com/viant/toolbox/data"
 )
 
-
 //UdfRegistry represents a udf registry
 var UdfRegistry = make(map[string]func(source interface{}, state data.Map) (interface{}, error))
-
 
 type ServiceProvider func() Service
 type ServiceRegistry []ServiceProvider
@@ -23,4 +21,3 @@ func (r *ServiceRegistry) Register(serviceProvider ServiceProvider) error {
 
 var registry ServiceRegistry = make([]ServiceProvider, 0)
 var Registry = &registry
-

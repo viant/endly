@@ -4,14 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/tebeka/selenium"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
-	"strings"
 	"github.com/viant/endly"
 	"github.com/viant/endly/deployment/deploy"
 	"github.com/viant/endly/deployment/sdk"
 	"github.com/viant/endly/system/process"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/url"
+	"strings"
 )
 
 const (
@@ -26,12 +26,9 @@ const (
 	runnerCaller = "runnerCaller"
 )
 
-
-
 type service struct {
 	*endly.AbstractService
 }
-
 
 func (s *service) addResultIfPresent(callResult []interface{}, result data.Map, resultPath ...string) {
 	var responseData string
@@ -655,4 +652,3 @@ func New() endly.Service {
 	result.registerRoutes()
 	return result
 }
-

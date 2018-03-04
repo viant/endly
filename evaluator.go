@@ -2,33 +2,31 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/toolbox/data"
 	"github.com/viant/assertly"
+	"github.com/viant/toolbox/data"
 )
 
 //CriteriaEvalEvent represents criteria event
 type CriteriaEvalEvent struct {
-	Default bool
-	Evaluation bool
-	Criteria string
+	Default          bool
+	Evaluation       bool
+	Criteria         string
 	ExpandedCriteria string
-	Error string
+	Error            string
 }
 
-
-func NewCriteriaEvalEvent(defaultValue, evaluation bool, criteria, expendedCriteria string, err error) *CriteriaEvalEvent{
-	var result =  &CriteriaEvalEvent{
-		Default:defaultValue,
-		Evaluation:evaluation,
-		Criteria:criteria,
-		ExpandedCriteria:expendedCriteria,
+func NewCriteriaEvalEvent(defaultValue, evaluation bool, criteria, expendedCriteria string, err error) *CriteriaEvalEvent {
+	var result = &CriteriaEvalEvent{
+		Default:          defaultValue,
+		Evaluation:       evaluation,
+		Criteria:         criteria,
+		ExpandedCriteria: expendedCriteria,
 	}
 	if err != nil {
 		result.Error = fmt.Sprintf("%v", err)
 	}
 	return result
 }
-
 
 //Evaluate evaluates passed in criteria
 func Evaluate(context *Context, state data.Map, criteriaExpression, eventType string, defaultValue bool) (bool, error) {

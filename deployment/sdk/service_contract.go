@@ -23,4 +23,3 @@ type Info struct {
 	Sdk       string //requested sdk
 	Version   string //requested  sdk version
 }
-

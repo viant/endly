@@ -2,8 +2,8 @@ package log
 
 import (
 	"github.com/viant/assertly"
-	"regexp"
 	"github.com/viant/toolbox/url"
+	"regexp"
 )
 
 //AssertRequest represents a log assert request
@@ -26,8 +26,6 @@ type AssertResponse struct {
 	Description string
 	Validations []*assertly.Validation
 }
-
-
 
 //Type represents  a log type
 type Type struct {
@@ -53,7 +51,6 @@ type ListenResponse struct {
 	Meta TypesMeta
 }
 
-
 //UseIndex returns true if index can be used.
 func (t *Type) UseIndex() bool {
 	return t.IndexRegExpr != ""
@@ -69,8 +66,6 @@ func (t *Type) GetIndexExpr() (*regexp.Regexp, error) {
 	return t.indexExpr, err
 }
 
-
-
 //ResetRequest represents a log reset request
 type ResetRequest struct {
 	LogTypes []string `required:"true" description:"log types to reset"`
@@ -80,4 +75,3 @@ type ResetRequest struct {
 type ResetResponse struct {
 	LogFiles []string
 }
-

@@ -13,35 +13,31 @@ import (
 	"flag"
 	"fmt"
 	"github.com/viant/endly"
-	_ "github.com/viant/endly/testing/dsunit"
-	_ "github.com/viant/endly/system/docker"
-	_ "github.com/viant/endly/system/daemon"
-	_ "github.com/viant/endly/system/exec"
-	_ "github.com/viant/endly/system/storage"
-	_ "github.com/viant/endly/system/process"
-	_ "github.com/viant/endly/deployment/vc"
-	_ "github.com/viant/endly/endpoint/http"
-	_ "github.com/viant/endly/cloud/gce"
 	_ "github.com/viant/endly/cloud/ec2"
+	_ "github.com/viant/endly/cloud/gce"
 	_ "github.com/viant/endly/deployment/vc"
 	_ "github.com/viant/endly/endpoint/http"
-	_ "github.com/viant/endly/cloud/gce"
+	_ "github.com/viant/endly/system/daemon"
+	_ "github.com/viant/endly/system/docker"
+	_ "github.com/viant/endly/system/exec"
+	_ "github.com/viant/endly/system/process"
+	_ "github.com/viant/endly/system/storage"
+	_ "github.com/viant/endly/testing/dsunit"
 
-
+	"bufio"
+	"errors"
+	"github.com/viant/endly/cli"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/url"
+	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/yaml.v2"
 	"log"
 	"os"
 	"path"
 	"strings"
-	"time"
-	"github.com/viant/toolbox/cred"
-	"bufio"
-	"golang.org/x/crypto/ssh/terminal"
 	"syscall"
-	"errors"
-	"github.com/viant/endly/cli"
+	"time"
 )
 
 func init() {
@@ -62,7 +58,7 @@ func init() {
 	flag.String("a", "", "<action> prints action request representation")
 	flag.String("i", "", "<coma separated tagID list> to filter")
 	flag.String("c", "", "<credential>, generate secret credentials file: ~/.secret/<credential>.json")
-	flag.String("k", "", "<private key path>,  works only with -c options, i.e -k=" + path.Join(os.Getenv("HOME"), ".secret/id_rsa.pub"))
+	flag.String("k", "", "<private key path>,  works only with -c options, i.e -k="+path.Join(os.Getenv("HOME"), ".secret/id_rsa.pub"))
 
 }
 
@@ -135,7 +131,6 @@ func Bootstrap() {
 	time.Sleep(time.Second)
 }
 
-
 func generateSecret(credentialsFile string) {
 	secretPath := path.Join(os.Getenv("HOME"), ".secret")
 	if !toolbox.FileExists(secretPath) {
@@ -185,8 +180,6 @@ func credentials() (string, string, error) {
 	}
 	return strings.TrimSpace(username), strings.TrimSpace(password), nil
 }
-
-
 
 func printWorkflowTasks(URL string) {
 	workflow, err := getWorkflow(URL)

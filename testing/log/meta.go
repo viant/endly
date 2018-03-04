@@ -1,14 +1,13 @@
 package log
 
 import (
-	"github.com/viant/toolbox/url"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
 	"sort"
 )
 
 //TypesMeta represents log type meta details
 type TypesMeta map[string]*TypeMeta
-
 
 //TypeMeta represents a log type meta
 type TypeMeta struct {
@@ -16,8 +15,6 @@ type TypeMeta struct {
 	LogType  *Type
 	LogFiles map[string]*File
 }
-
-
 
 //Iterator returns log record iterator
 func (m *TypeMeta) Iterator() toolbox.Iterator {

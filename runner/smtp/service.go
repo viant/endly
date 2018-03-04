@@ -1,8 +1,8 @@
 package smtp
 
 import (
-	"github.com/viant/endly"
 	"fmt"
+	"github.com/viant/endly"
 )
 
 const (
@@ -14,7 +14,6 @@ const (
 type service struct {
 	*endly.AbstractService
 }
-
 
 func (s *service) send(context *endly.Context, request *SendRequest) (*SendResponse, error) {
 	var response = &SendResponse{}

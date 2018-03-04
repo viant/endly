@@ -1,13 +1,13 @@
 package ec2
 
 import (
-	"github.com/viant/toolbox/cred"
 	"fmt"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/viant/toolbox/url"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/viant/toolbox/cred"
+	"github.com/viant/toolbox/url"
 )
 
 //GetAWSCredentialConfig returns *aws.Config for provided credential
@@ -36,4 +36,3 @@ func GetEc2Client(credential string) (*ec2.EC2, error) {
 	ec2Session := session.Must(session.NewSession())
 	return ec2.New(ec2Session, config), nil
 }
-

@@ -1,15 +1,12 @@
 package endly
 
 import (
-	"strings"
+	"bytes"
 	"encoding/base64"
 	"io/ioutil"
-	"bytes"
+	"strings"
 	"unicode"
 )
-
-
-
 
 //IsASCIIText return true if supplied string does not have binary data
 func IsASCIIText(candidate string) bool {

@@ -17,7 +17,6 @@ const AppName = "endly"
 //Namespace represents endly namespace
 const Namespace = "github.com/viant/endly/"
 
-
 //Service represnets a workflow manager
 type Manager interface {
 	//Name returns an application ID
@@ -86,7 +85,7 @@ func (s *manager) NewContext(ctx toolbox.Context) *Context {
 	var result = &Context{
 		SessionID: sessionID,
 		Context:   ctx,
-		Wait: &sync.WaitGroup{},
+		Wait:      &sync.WaitGroup{},
 		Workflows: &workflowStack,
 	}
 	_ = result.Put(serviceManagerKey, s)

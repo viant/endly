@@ -1,11 +1,10 @@
 package storage
 
 import (
-	"github.com/viant/toolbox/url"
 	"errors"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
 )
-
 
 //Transfer represents copy instruction
 type Transfer struct {
@@ -16,7 +15,6 @@ type Transfer struct {
 	Replace  map[string]string `description:"replacements map, if key if found in the conent it wil be replaced with corresponding value."` //replacements map, if key if found in the conent it wil be replaced with corresponding value.
 }
 
-
 //CopyRequest represents a resources copy request
 type CopyRequest struct {
 	Transfers []*Transfer `required:"true" description:"asset transfers"` // transfers
@@ -26,7 +24,6 @@ type CopyRequest struct {
 type CopyResponse struct {
 	TransferredURL []string //transferred URLs
 }
-
 
 //DownloadRequest represents a resources download request, it downloads source into context.state target key
 type DownloadRequest struct {
@@ -42,13 +39,11 @@ type DownloadResponse struct {
 	Transformed interface{}
 }
 
-
 //UploadRequest represents a resources upload request, it takes context state key to upload to target destination.
 type UploadRequest struct {
 	SourceKey string        `required:"true" description:"state key with asset content"`
 	Target    *url.Resource `required:"true" description:"destination asset or directory"` //target URL with credential
 }
-
 
 //UploadResponse represents a upload response
 type UploadResponse struct {
@@ -56,19 +51,15 @@ type UploadResponse struct {
 	UploadURL  string
 }
 
-
 //RemoveRequest represents a resources Remove request
 type RemoveRequest struct {
 	Resources []*url.Resource `required:"true" description:"resources to remove"`
 }
 
-
 //RemoveResponse represents a resources Remove response, it returns url of all resource that have been removed.
 type RemoveResponse struct {
 	Removed []string
 }
-
-
 
 //Validate checks if request is valid
 func (r *DownloadRequest) Validate() error {
@@ -81,7 +72,6 @@ func (r *DownloadRequest) Validate() error {
 	return nil
 }
 
-
 //Validate checks if request is valid
 func (r *RemoveRequest) Validate() error {
 	if len(r.Resources) == 0 {
@@ -89,11 +79,6 @@ func (r *RemoveRequest) Validate() error {
 	}
 	return nil
 }
-
-
-
-
-
 
 //Validate checks if request is valid
 func (t *Transfer) Validate() error {
@@ -118,8 +103,6 @@ func (r *CopyRequest) Validate() error {
 	}
 	return nil
 }
-
-
 
 //Validate checks if request is valid
 func (r *UploadRequest) Validate() error {

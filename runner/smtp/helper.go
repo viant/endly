@@ -1,11 +1,11 @@
 package smtp
 
 import (
-	"net/smtp"
-	"github.com/viant/toolbox/cred"
 	"crypto/tls"
 	"fmt"
+	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/url"
+	"net/smtp"
 )
 
 //NewClient creates a new SMTP client.

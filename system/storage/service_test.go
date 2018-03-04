@@ -5,20 +5,18 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/system/exec"
+	"github.com/viant/endly/system/storage"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 	tstorage "github.com/viant/toolbox/storage"
 	_ "github.com/viant/toolbox/storage/scp"
+	"github.com/viant/toolbox/url"
 	"io/ioutil"
 	"path"
 	"strings"
 	"testing"
-	"github.com/viant/endly/system/storage"
-	"github.com/viant/endly/system/exec"
 )
-
-
 
 //update context for data substitution
 func updateContext(context *endly.Context) {
@@ -44,7 +42,6 @@ func SetupMemoryStorage() {
 	memStorage.Upload("mem:///tmp/copy2_source/config1.json.tar.gz", strings.NewReader("abc"))
 	memStorage.Upload("mem:///tmp/copy2_source/config2.json.tar.gz", strings.NewReader("xyz"))
 }
-
 
 func TestTransferService_Copy(t *testing.T) {
 	var target = url.NewResource("ssh://127.0.0.1:22")
@@ -157,7 +154,6 @@ func TestTransferService_Copy(t *testing.T) {
 		updateContext(context)
 		defer context.Close()
 
-
 		service, err := context.Service(storage.ServiceID)
 
 		assert.Nil(t, err)
@@ -169,7 +165,7 @@ func TestTransferService_Copy(t *testing.T) {
 				assert.Fail(t, fmt.Sprintf("process serviceResponse was empty  %T", serviceResponse.Response))
 				continue
 			}
-			if ! assert.NotNil(t, response) {
+			if !assert.NotNil(t, response) {
 				return
 			}
 			if assert.True(t, len(response.TransferredURL) > 0) {

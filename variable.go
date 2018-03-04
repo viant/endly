@@ -56,8 +56,6 @@ func (v *Variable) Load() error {
 	return nil
 }
 
-
-
 //Variables a slice of variables
 type Variables []*Variable
 
@@ -152,18 +150,17 @@ func (v Variables) String() string {
 	return result
 }
 
-
 type ModifiedStateEvent struct {
 	Variables Variables
-	In map[string]interface{}
-	Modified map[string]interface{}
+	In        map[string]interface{}
+	Modified  map[string]interface{}
 }
 
 func NewModifiedStateEvent(variables Variables, in, out data.Map) *ModifiedStateEvent {
 	var result = &ModifiedStateEvent{
-		Variables:variables,
-		In:make(map[string]interface{}),
-		Modified:make(map[string]interface{}),
+		Variables: variables,
+		In:        make(map[string]interface{}),
+		Modified:  make(map[string]interface{}),
 	}
 	for _, variable := range variables {
 		from := data.ExtractPath(variable.From)

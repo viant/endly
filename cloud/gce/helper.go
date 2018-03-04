@@ -1,6 +1,7 @@
 package gce
 
 import (
+	"fmt"
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/url"
 	"golang.org/x/net/context"
@@ -8,7 +9,6 @@ import (
 	"golang.org/x/oauth2"
 	"google.golang.org/api/compute/v1"
 	"reflect"
-	"fmt"
 )
 
 //NewComputeService creates a new compute service.

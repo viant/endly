@@ -1,20 +1,19 @@
 package process
 
 import (
-	"github.com/viant/toolbox/url"
 	"github.com/viant/endly/system/exec"
+	"github.com/viant/toolbox/url"
 )
 
 //StartRequest represents a start request
 type StartRequest struct {
-	Target          *url.Resource  `required:"true" description:"host where process will be started"`
-	Command         string  `required:"true" description:"command to start process"`
+	Target          *url.Resource `required:"true" description:"host where process will be started"`
+	Command         string        `required:"true" description:"command to start process"`
 	Options         *exec.ExecutionOptions
 	Directory       string
 	Arguments       []string
 	ImmuneToHangups bool `description:"start process as nohup"`
 }
-
 
 //StartResponse represents a start response
 type StartResponse struct {
@@ -44,7 +43,6 @@ type Info struct {
 	Stdout    string
 }
 
-
 //StopRequest represents a stop request
 type StopRequest struct {
 	Target *url.Resource
@@ -55,7 +53,6 @@ type StopRequest struct {
 type StopResponse struct {
 	Stdout string
 }
-
 
 //StopAllRequest represents a stop all processes matching provided name request
 type StopAllRequest struct {

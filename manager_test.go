@@ -3,7 +3,7 @@ package endly_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-   _"github.com/viant/endly/static"
+	_ "github.com/viant/endly/static"
 	"github.com/viant/toolbox"
 	"testing"
 )

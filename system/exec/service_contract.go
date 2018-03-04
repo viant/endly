@@ -1,15 +1,14 @@
 package exec
 
 import (
-	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
 	"fmt"
-	"strings"
-	"github.com/viant/toolbox/ssh"
-	"github.com/viant/endly/util"
 	"github.com/pkg/errors"
+	"github.com/viant/endly"
+	"github.com/viant/endly/util"
+	"github.com/viant/toolbox/ssh"
+	"github.com/viant/toolbox/url"
+	"strings"
 )
-
 
 //ExecutionOptions represents an execution options
 type ExecutionOptions struct {
@@ -20,8 +19,6 @@ type ExecutionOptions struct {
 	Env         map[string]string `description:"environment variables to be set before command runs"`                                                                             //environment variables to be set before command runs
 }
 
-
-
 //Execution represents an execution instructions
 type Execution struct {
 	Credentials map[string]string     `description:"actual secured credential details as map { '**mysql**': 'path to credential' }like password, etc..., if secure is not empty it will replace **** in command just before execution, to replace user name from credential file use ## prefixed key"` //actual secured credential details as map { '**mysql**': 'path to credentail' }like password, etc..., if secure is not empty it will replace **** in command just before execution
@@ -31,7 +28,6 @@ type Execution struct {
 	Errors      []string              `description:"fragments that will terminate execution with error if matched with standard output, in most cases leave empty"`                                                                                                                                    //fragments that will terminate execution with error if matched with standard output
 	Success     []string              `description:"if specified absence of all of the these fragment will terminate execution with error, in most cases leave empty"`                                                                                                                                 //if specified absence of all of the these fragment will terminate execution with error.
 }
-
 
 //ExtractableCommand represent managed command, to execute and extract data, detect success or error state
 type ExtractableCommand struct {
@@ -79,7 +75,6 @@ type OpenSessionRequest struct {
 	CommandsBasedir string      //capture all ssh service command in supplied dir (for unit test only)
 	ReplayService   ssh.Service //use Ssh ReplayService instead of actual SSH service (for unit test only)
 }
-
 
 func (r *OpenSessionRequest) Validate() error {
 	if r.Target == nil {

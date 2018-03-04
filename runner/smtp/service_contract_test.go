@@ -2,9 +2,9 @@ package smtp
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly/system/smtp"
 	"github.com/viant/toolbox/url"
 	"testing"
-	"github.com/viant/endly/system/smtp"
 )
 
 func TestSMTPSendRequest_Validate(t *testing.T) {

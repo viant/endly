@@ -1,15 +1,13 @@
 package selenium
 
 import (
-	"fmt"
-	"strings"
-	"github.com/tebeka/selenium"
-	"github.com/viant/toolbox/url"
-	"github.com/viant/endly"
 	"errors"
+	"fmt"
+	"github.com/tebeka/selenium"
+	"github.com/viant/endly"
+	"github.com/viant/toolbox/url"
+	"strings"
 )
-
-
 
 //StartRequest represents a selenium server start request
 type StartRequest struct {
@@ -22,11 +20,10 @@ type StartRequest struct {
 
 //StartResponse repreents a selenium server stop request
 type StartResponse struct {
-	Pid                int
-	ServerPath string
-	GeckodriverPath    string
+	Pid             int
+	ServerPath      string
+	GeckodriverPath string
 }
-
 
 //StopRequest represents server stop request
 type StopRequest struct {
@@ -37,8 +34,6 @@ type StopRequest struct {
 //StopResponse represents a selenium stop request
 type StopResponse struct {
 }
-
-
 
 //OpenSessionResponse represents open session response.
 type OpenSessionResponse struct {
@@ -55,7 +50,6 @@ type CloseSessionResponse struct {
 	SessionID string
 }
 
-
 //WebDriverCallRequest represents selenium call driver request
 type WebDriverCallRequest struct {
 	SessionID string
@@ -67,8 +61,6 @@ type ServiceCallResponse struct {
 	Result    []interface{}
 	Extracted map[string]string
 }
-
-
 
 //WebElementSelector represents a web element selector
 type WebElementSelector struct {
@@ -116,7 +108,6 @@ func NewWebElementSelector(by, value string) *WebElementSelector {
 		Value: value,
 	}
 }
-
 
 //RunRequest represents group of selenium web elements calls
 type RunRequest struct {
@@ -167,8 +158,6 @@ func NewMethodCall(method string, repeatable *endly.Repeatable, parameters ...in
 		Parameters: parameters,
 	}
 }
-
-
 
 //OpenSessionRequest represents open session request
 type OpenSessionRequest struct {

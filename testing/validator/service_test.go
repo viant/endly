@@ -4,9 +4,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
 	"testing"
-	"github.com/viant/endly/testing/validator"
 )
 
 func assertWithService(expected, actual interface{}) (int, error) {

@@ -3,11 +3,11 @@ package daemon_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/system/daemon"
+	"github.com/viant/endly/system/exec"
+	"github.com/viant/endly/util"
 	"github.com/viant/toolbox/url"
 	"testing"
-	"github.com/viant/endly/util"
-	"github.com/viant/endly/system/exec"
-	"github.com/viant/endly/system/daemon"
 )
 
 func TestDaemonService_Status(t *testing.T) {

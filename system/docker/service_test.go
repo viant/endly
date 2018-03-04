@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/system/docker"
+	"github.com/viant/endly/system/exec"
+	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
 	"testing"
-	"github.com/viant/endly/system/docker"
-	"github.com/viant/endly/util"
-	"github.com/viant/endly/system/exec"
 )
 
 func TestDockerService_Images(t *testing.T) {
@@ -977,14 +977,14 @@ func Test_DockerBuildRequest_Validate(t *testing.T) {
 				"-t": "image:1.0",
 			},
 			Path: "/",
-			Tag: &docker.DockerTag{Image: "abc"}}
+			Tag:  &docker.DockerTag{Image: "abc"}}
 		assert.Nil(t, request.Validate())
 	}
 
 	{
 		request := docker.DockerBuildRequest{Target: url.NewResource("abc"),
 			Path: "/",
-			Tag: &docker.DockerTag{Image: "abc"}}
+			Tag:  &docker.DockerTag{Image: "abc"}}
 		assert.Nil(t, request.Validate())
 	}
 	{

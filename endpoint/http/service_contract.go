@@ -1,8 +1,8 @@
 package http
 
 import (
-	"sync"
 	"errors"
+	"sync"
 )
 
 //ListenRequest represent HTTP endpoint listen request

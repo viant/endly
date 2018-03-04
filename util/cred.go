@@ -1,11 +1,11 @@
 package util
 
 import (
+	"fmt"
+	"github.com/viant/toolbox/cred"
 	"os"
 	"path"
-	"fmt"
 	"time"
-	"github.com/viant/toolbox/cred"
 )
 
 func GetDummyCredential() (string, error) {
@@ -21,4 +21,3 @@ func GetCredential(name, username, password string) (string, error) {
 	err := authConfig.Save(credentialFile)
 	return credentialFile, err
 }
-

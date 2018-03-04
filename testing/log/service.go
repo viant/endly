@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/viant/assertly"
+	"github.com/viant/endly"
+	estorage "github.com/viant/endly/system/storage"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
@@ -13,10 +15,7 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"github.com/viant/endly"
-	estorage "github.com/viant/endly/system/storage"
-
-	)
+)
 
 const (
 	//ServiceID represents log validator service id.
@@ -27,14 +26,13 @@ type service struct {
 	*endly.AbstractService
 }
 
-
 func (s *service) reset(context *endly.Context, request *ResetRequest) (*ResetResponse, error) {
 	var response = &ResetResponse{
 		LogFiles: make([]string, 0),
 	}
 	for _, logTypeName := range request.LogTypes {
 
-		var  state = s.State()
+		var state = s.State()
 		if !state.Has(logTypeMetaKey(logTypeName)) {
 			continue
 		}
@@ -88,7 +86,7 @@ func (s *service) assert(context *endly.Context, request *AssertRequest) (*Asser
 				if logRecordIterator.HasNext() {
 					break
 				}
-				s.Sleep(context, int(logWaitDuration) / int(time.Millisecond))
+				s.Sleep(context, int(logWaitDuration)/int(time.Millisecond))
 			}
 			if !logRecordIterator.HasNext() {
 				validation.AddFailure(assertly.NewFailure("", fmt.Sprintf("[%v]", expectedLogRecords.TagID), "missing log record", expectedLogRecord, nil))
@@ -169,7 +167,7 @@ func (s *service) readLogFile(context *endly.Context, source *url.Resource, serv
 	s.Mutex().Lock()
 
 	var state = s.State()
-	if ! state.Has(key) {
+	if !state.Has(key) {
 		state.Put(key, NewTypeMeta(source, logType))
 	}
 
@@ -501,4 +499,3 @@ func New() endly.Service {
 	result.registerRoutes()
 	return result
 }
-

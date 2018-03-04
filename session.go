@@ -1,13 +1,13 @@
 package endly
 
 import (
-	"sync"
 	"github.com/viant/toolbox/ssh"
+	"sync"
 )
 
 //SystemTerminalSession represents a system terminal session
 type SystemTerminalSession struct {
-	ID               string
+	ID string
 	ssh.MultiCommandSession
 	DaemonType       int
 	Service          ssh.Service

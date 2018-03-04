@@ -1,13 +1,10 @@
 package ec2
 
-
 //Call represents ec2 call.
 type Call struct {
 	Method     string        `required:"true" description:"ec2 client method name"`
 	Parameters []interface{} `required:"true" description:"ec2 client method parameters"`
 }
-
-
 
 //CallRequest represents a aws EC2 run request to execute method on ec2 client with provided input.
 type CallRequest struct {
@@ -30,4 +27,3 @@ func (r *CallRequest) AsCall() *Call {
 	}
 	return result
 }
-

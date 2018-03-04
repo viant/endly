@@ -2,14 +2,14 @@ package endly
 
 import (
 	"fmt"
+	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"strings"
-	"time"
-	"sync"
-	"path"
-	"github.com/viant/neatly"
 	"github.com/viant/toolbox/url"
+	"path"
+	"strings"
+	"sync"
+	"time"
 )
 
 const (
@@ -506,7 +506,6 @@ func (s *WorkflowService) startSession(context *Context) bool {
 	defer s.Unlock()
 	return true
 }
-
 
 func (s *WorkflowService) isAsyncRequest(request interface{}) bool {
 	if runRequest, ok := request.(*RunRequest); ok {

@@ -10,7 +10,6 @@ const (
 	ServiceID = "http/endpoint"
 )
 
-
 //service represents http endpoint service, that has ability to replay HTTP trips
 type service struct {
 	*endly.AbstractService

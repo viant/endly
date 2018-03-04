@@ -2,8 +2,8 @@ package gce_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"testing"
 	"github.com/viant/endly/cloud/gce"
+	"testing"
 )
 
 func TestGCECallRequest_Validate(t *testing.T) {

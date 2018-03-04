@@ -1,12 +1,12 @@
 package log
 
 import (
-	"time"
-	"sync"
-	"strings"
+	"github.com/viant/toolbox/storage"
 	"io"
 	"io/ioutil"
-	"github.com/viant/toolbox/storage"
+	"strings"
+	"sync"
+	"time"
 )
 
 //File represents a log file
@@ -77,7 +77,6 @@ func (f *File) PushLogRecord(record *Record) {
 		}
 	}
 }
-
 
 //Reset resets processing state
 func (f *File) Reset(object storage.Object) {

@@ -1,20 +1,20 @@
 package exec
 
 import (
-	"github.com/viant/toolbox"
-	"path"
-	"github.com/viant/toolbox/ssh"
-	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
 	"errors"
 	"fmt"
+	"github.com/viant/endly"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/ssh"
+	"github.com/viant/toolbox/url"
+	"path"
 )
 
 func GetReplayService(basedir string) (ssh.Service, error) {
 	fileName, _, _ := toolbox.CallerInfo(3)
 	parent, _ := path.Split(fileName)
 	replayDirectory := path.Join(parent, basedir)
-	if ! toolbox.FileExists(replayDirectory) {
+	if !toolbox.FileExists(replayDirectory) {
 		return nil, fmt.Errorf("replay directory does not exist: %v", replayDirectory)
 	}
 	commands, err := ssh.NewReplayCommands(path.Join(parent, basedir))
@@ -59,4 +59,3 @@ func OpenTestRecorderContext(manager endly.Manager, target *url.Resource, comman
 func OpenTestContext(manager endly.Manager, target *url.Resource, service ssh.Service) (*endly.Context, error) {
 	return openTestContext(manager, target, "", service)
 }
-

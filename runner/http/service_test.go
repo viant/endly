@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	endpoint "github.com/viant/endly/endpoint/http"
-	 runner "github.com/viant/endly/runner/http"
+	runner "github.com/viant/endly/runner/http"
 	"github.com/viant/endly/test/proto"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"

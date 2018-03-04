@@ -56,8 +56,8 @@ func (s *OperatingSystem) Matches(target *OperatingSystemTarget) bool {
 
 //SystemPath represents a system path
 type SystemPath struct {
-	index      map[string]bool
-	Items       []string
+	index map[string]bool
+	Items []string
 }
 
 //Push appends path to the system paths
@@ -74,7 +74,7 @@ func (p *SystemPath) Push(paths ...string) {
 	}
 }
 
-func NewSystemPath(items ... string) *SystemPath {
+func NewSystemPath(items ...string) *SystemPath {
 	return &SystemPath{
 		index: make(map[string]bool),
 		Items: items,

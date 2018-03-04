@@ -2,15 +2,14 @@ package ec2
 
 import (
 	"fmt"
-	"github.com/viant/toolbox"
 	"github.com/viant/endly"
+	"github.com/viant/toolbox"
 )
 
 const (
 	//ServiceID represents nop service id.
 	ServiceID = "aws/ec2"
 )
-
 
 //no operation service
 type service struct {

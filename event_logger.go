@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/viant/toolbox"
+	"log"
 	"os"
 	"path"
 	"sync"
-	"log"
 )
 
 //EventLogger represent event logger to drop event details in the provied directory.

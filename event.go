@@ -1,13 +1,12 @@
 package endly
 
 import (
+	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
-	"strings"
-	"fmt"
 )
-
 
 //EventListener represents an event listener
 type EventListener func(event *Event)
@@ -52,8 +51,8 @@ func (e *Event) Type() string {
 //NewEvent creates a new event
 func NewEvent(value interface{}) *Event {
 	return &Event{
-		Timestamp:time.Now(),
-		Value:value,
+		Timestamp: time.Now(),
+		Value:     value,
 	}
 }
 
@@ -78,7 +77,6 @@ func NewErrorEvent(message string) *ErrorEvent {
 		Error: message,
 	}
 }
-
 
 //Events represents sychronized slice of Events
 type Events struct {

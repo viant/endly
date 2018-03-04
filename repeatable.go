@@ -74,7 +74,7 @@ func (r *Repeatable) EvaluateExitCriteria(callerInfo string, context *Context, e
 	for k, v := range extracted {
 		extractedState[k] = v
 	}
-	canBreak, err := Evaluate(context,extractedState, r.ExitCriteria, callerInfo, false)
+	canBreak, err := Evaluate(context, extractedState, r.ExitCriteria, callerInfo, false)
 	if err != nil {
 		return true, fmt.Errorf("failed to check %v exit criteia: %v", callerInfo, err)
 	}
@@ -95,8 +95,6 @@ func (r *Repeatable) runOnce(service *AbstractService, callerInfo string, contex
 		return true, nil
 	}
 	extractableOutput, structuredOutput := AsExtractable(out)
-
-
 
 	if len(structuredOutput) > 0 {
 		var extractedVariables = data.NewMap()
@@ -155,17 +153,16 @@ func (r *Repeatable) Get() *Repeatable {
 	return result
 }
 
-
 type DataExtractionEvent struct {
-	Output string
+	Output           string
 	StructuredOutput interface{}
-	Extracted interface{}
+	Extracted        interface{}
 }
 
-func NewDataExtractionEvent(output string, structuredOutput, extracted interface{}) *DataExtractionEvent{
+func NewDataExtractionEvent(output string, structuredOutput, extracted interface{}) *DataExtractionEvent {
 	return &DataExtractionEvent{
-		Output:output,
-		StructuredOutput:structuredOutput,
-		Extracted:extracted,
+		Output:           output,
+		StructuredOutput: structuredOutput,
+		Extracted:        extracted,
 	}
 }

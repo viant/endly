@@ -3,8 +3,8 @@ package sdk_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"testing"
 	"github.com/viant/endly/deployment/sdk"
+	"testing"
 )
 
 func TestSdkService_Run(t *testing.T) {

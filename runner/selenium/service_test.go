@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/storage"
-	tstorage "github.com/viant/endly/system/storage"
 	endpoint "github.com/viant/endly/endpoint/http"
 	runner "github.com/viant/endly/runner/selenium"
+	"github.com/viant/endly/system/exec"
+	tstorage "github.com/viant/endly/system/storage"
+	"github.com/viant/endly/util"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
+	"path"
 	"strings"
 	"testing"
-	"path"
-	"github.com/viant/endly/util"
-	"github.com/viant/endly/system/exec"
 )
 
 const code = `
