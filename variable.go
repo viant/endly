@@ -150,12 +150,14 @@ func (v Variables) String() string {
 	return result
 }
 
+//ModifiedStateEvent represent modified state event
 type ModifiedStateEvent struct {
 	Variables Variables
 	In        map[string]interface{}
 	Modified  map[string]interface{}
 }
 
+//NewModifiedStateEvent creates a new modified state event.
 func NewModifiedStateEvent(variables Variables, in, out data.Map) *ModifiedStateEvent {
 	var result = &ModifiedStateEvent{
 		Variables: variables,

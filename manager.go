@@ -17,7 +17,7 @@ const AppName = "endly"
 //Namespace represents endly namespace
 const Namespace = "github.com/viant/endly/"
 
-//Service represnets a workflow manager
+//Manager represents a workflow manager
 type Manager interface {
 	//Name returns an application ID
 	Name() string
@@ -44,51 +44,52 @@ type manager struct {
 	serviceByRequestType map[reflect.Type]Service
 }
 
-func (s *manager) Name() string {
-	return s.name
+func (m *manager) Name() string {
+	return m.name
 }
 
-func (s *manager) Version() string {
-	return s.version
+func (m *manager) Version() string {
+	return m.version
 }
 
-func (s *manager) Service(input interface{}) (Service, error) {
-	if serviceId, ok := input.(string); ok {
-		if result, found := s.serviceByID[serviceId]; found {
+//Service returns service for supplied request or name.
+func (m *manager) Service(input interface{}) (Service, error) {
+	if serviceID, ok := input.(string); ok {
+		if result, found := m.serviceByID[serviceID]; found {
 			return result, nil
 		}
 	} else if toolbox.IsStruct(input) {
-		if result, found := s.serviceByRequestType[reflect.TypeOf(input)]; found {
+		if result, found := m.serviceByRequestType[reflect.TypeOf(input)]; found {
 			return result, nil
 		}
 	}
-	var available = toolbox.MapKeysToStringSlice(s.serviceByID)
+	var available = toolbox.MapKeysToStringSlice(m.serviceByID)
 	return nil, fmt.Errorf("failed to lookup service: '%v' in [%v]", input, strings.Join(available, ","))
 }
 
-func (s *manager) Register(service Service) {
-	s.serviceByID[service.ID()] = service
+func (m *manager) Register(service Service) {
+	m.serviceByID[service.ID()] = service
 	for _, action := range service.Actions() {
 		if actionRoute, err := service.ServiceActionRoute(action); err == nil {
 			request := actionRoute.RequestProvider()
-			s.serviceByRequestType[reflect.TypeOf(request)] = service
+			m.serviceByRequestType[reflect.TypeOf(request)] = service
 		}
 	}
 }
 
-func (s *manager) NewContext(ctx toolbox.Context) *Context {
+func (m *manager) NewContext(ctx toolbox.Context) *Context {
 	sessionID := toolbox.AsString(time.Now().Unix())
 	if UUID, err := uuid.NewV1(); err == nil {
 		sessionID = UUID.String()
 	}
-	var workflowStack Workflows = make([]*Control, 0)
+	var workflowStack Workflows = make([]*WorkflowRun, 0)
 	var result = &Context{
 		SessionID: sessionID,
 		Context:   ctx,
 		Wait:      &sync.WaitGroup{},
 		Workflows: &workflowStack,
 	}
-	_ = result.Put(serviceManagerKey, s)
+	_ = result.Put(serviceManagerKey, m)
 	return result
 }
 
@@ -110,7 +111,7 @@ func NewManager() Manager {
 	return result
 }
 
-//Run action for supplied request, returns service action response or error
+//Run runs action for supplied request, returns service action response or error
 func (m *manager) Run(context *Context, request interface{}) (interface{}, error) {
 	manager := NewManager()
 
@@ -138,7 +139,7 @@ func Services(mgr interface{}) map[string]Service {
 	return manager.serviceByID
 }
 
-//GetVersion return endly version
+//GetVersion returns endly version
 func GetVersion() string {
 	resource := url.NewResource(fmt.Sprintf("mem://%v/Version", Namespace))
 	version, _ := resource.DownloadText()

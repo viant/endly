@@ -3,6 +3,8 @@ package endly
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
+	"github.com/viant/toolbox"
 	"io/ioutil"
 	"strings"
 	"unicode"
@@ -48,4 +50,9 @@ func AsPayload(data []byte) string {
 	encoder.Write(data)
 	encoder.Close()
 	return "base64:" + buf.String()
+}
+
+func reportError(err error) error {
+	fileName, funcName, line := toolbox.CallerInfo(4)
+	return fmt.Errorf("%v at %v:%v -> %v", err, fileName, line, funcName)
 }
