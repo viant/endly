@@ -9,8 +9,8 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 - [Motivation](#Motivation)
 - [Installation](#Installation)
-- [GettingStarted](#GettingStarted)
 - [Introduction](#Introduction)
+- [GettingStarted](#GettingStarted)
 - [Services](#Services)
 - [Credentials](#Credentail)
 - [Unit test](#Unit)
@@ -55,39 +55,6 @@ go get -u github.com/viant/endly
 ```
 
 
-<a name="GettingStarted"></a>
-## Getting Started
-
-[Neatly introduction](https://github.com/adrianwit/neatly-introduction)
-
-[Endly introduction](https://github.com/adrianwit/endly-introduction)    
-
-
-
-To get you familiar with endly workflows, a few examples of fully functioning applications are included.
-You can build, deploy and test them end to end all with endly.
-
- 
-1) **Web Service** 
-   * [Reporter](example/ws/reporter) - a pivot table report builder.
-        - Test with Rest Runner
-        - Data Preparation and Validation (mysql)
-2) **User Interface**
-   * [SSO](example/ui/sso)  - user registration and login application.
-        - Test with Selenium Runner
-        - Data Preparation and Validation (aersopike)
-        - Web Content validation
-3) **Extract, Transform and Load (ETL)**
-   * [Transformer](example/etl/transformer) - datastore to datastore transformer (i.e. aerospike to mysql)
-       - Test with Rest Runner
-       - Data Preparation and Validation (aersopike, mysql)
-4) **Runtime**  - simple http request event logger
-   * [Logger](example/rt/elogger)
-       - Test with HTTP Runner
-       - Log Validation
-       
- 
-
 <a name="Introduction"></a>
 ## Introduction
 
@@ -124,10 +91,48 @@ Neatly is responsible for converting a tabular document (.csv) into workflow obj
 See more about [workflow and its lifecycle](docs)
 
 
-A workflow actions invoke endly services to accomplish specific job.
+A workflow actions invoke endly [services](#Services) to accomplish specific job.
+
+
+
+
+<a name="GettingStarted"></a>
+## Getting Started
+
+[Neatly introduction](https://github.com/adrianwit/neatly-introduction)
+
+[Endly introduction](https://github.com/adrianwit/endly-introduction)    
+
+
+
+To get you familiar with endly workflows, a few examples of fully functioning applications are included.
+You can build, deploy and test them end to end all with endly.
+
+ 
+1) **Web Service** 
+   * [Reporter](example/ws/reporter) - a pivot table report builder.
+        - Test with Rest Runner
+        - Data Preparation and Validation (mysql)
+2) **User Interface**
+   * [SSO](example/ui/sso)  - user registration and login application.
+        - Test with Selenium Runner
+        - Data Preparation and Validation (aersopike)
+        - Web Content validation
+3) **Extract, Transform and Load (ETL)**
+   * [Transformer](example/etl/transformer) - datastore to datastore transformer (i.e. aerospike to mysql)
+       - Test with Rest Runner
+       - Data Preparation and Validation (aersopike, mysql)
+4) **Runtime**  - simple http request event logger
+   * [Logger](example/rt/elogger)
+       - Test with HTTP Runner
+       - Log Validation
+       
+ 
 
 <a name="Services"></a>
 ## Endly Services
+
+Endly services implement [Service](service.go) interface.
 
 1) **System services**
     - [SSH Executor Service](/system/exec)
@@ -149,13 +154,13 @@ A workflow actions invoke endly services to accomplish specific job.
 5) **Runner Services**
    - [Http Runner Service](runner/http) 
    - [REST Runner Service](runner/rest) 
-   - [Selenium Runner Service](runner/http) 
+   - [Selenium Runner Service](runner/selenium) 
    - [SMTP Service](runner/smtp)      
 6) **Testing Services**
    - [Validator](testing/validator)
    - [Log Validator Service](testing/log)
    - [Datastore Preparation and Validation Service](testing/dsunit)
-7) ** Workflow service**
+7) **Workflow service**
     - [Workflow Service](#Workfowservice)
     - [Logger Service](#Workfowservice)
     - [Nop Service](#Workfowservice)
