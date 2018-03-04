@@ -36,8 +36,6 @@ The state can be change by providing variable definition.
 The workflow content, data structures, can use dollar '$' sign followed by variable name 
 to get its expanded to its corresponding state value if the key has been present.
  
-The following diagram shows service with its component.
-![Service diagram](service_diagram.png)
 
 
 <a name="WorkflowState"></a>
