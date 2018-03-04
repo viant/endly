@@ -15,6 +15,7 @@ type CriteriaEvalEvent struct {
 	Error            string
 }
 
+//NewCriteriaEvalEvent creates a new evaluation event.
 func NewCriteriaEvalEvent(defaultValue, evaluation bool, criteria, expendedCriteria string, err error) *CriteriaEvalEvent {
 	var result = &CriteriaEvalEvent{
 		Default:          defaultValue,

@@ -21,6 +21,8 @@ var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
 
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
+
+//WorkflowKey context.State workflow key
 var WorkflowKey = (*Workflow)(nil)
 
 //Context represents a workflow session context/state
@@ -36,6 +38,7 @@ type Context struct {
 	closed int32
 }
 
+//Publish publishes event to listeners, it updates current run details like activity workflow name etc ...
 func (c *Context) Publish(value interface{}) *Event {
 	var workflow = c.Workflows.Last()
 	var workflowName = ""
@@ -64,6 +67,7 @@ func (c *Context) Publish(value interface{}) *Event {
 	return event
 }
 
+//SetListener sets context event listener
 func (c *Context) SetListener(listener EventListener) {
 	c.listener = listener
 }
@@ -71,11 +75,6 @@ func (c *Context) SetListener(listener EventListener) {
 //IsClosed returns true if it is closed.
 func (c *Context) IsClosed() bool {
 	return atomic.LoadInt32(&c.closed) == 1
-}
-
-func reportError(err error) error {
-	fileName, funcName, line := toolbox.CallerInfo(4)
-	return fmt.Errorf("%v at %v:%v -> %v", err, fileName, line, funcName)
 }
 
 //Clone clones the context.
@@ -139,7 +138,7 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 	return result, nil
 }
 
-//Service returns workflow manager or error
+//Manager returns workflow manager or error
 func (c *Context) Manager() (Manager, error) {
 	var manager = &manager{}
 	if !c.GetInto(serviceManagerKey, &manager) {
