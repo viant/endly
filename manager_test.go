@@ -1,12 +1,10 @@
 package endly_test
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+   _"github.com/viant/endly/static"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
-	"reflect"
 	"testing"
 )
 
@@ -70,49 +68,6 @@ func newTestService() endly.Service {
 
 }
 
-func Test_ServiceRequest(t *testing.T) {
-
-	var invalidResourse = &url.Resource{URL: "a d:/sdwe/23/e"}
-
-	manager := endly.NewManager()
-	context := manager.NewContext(toolbox.NewContext())
-	var services = endly.Services(manager)
-	for k, service := range services {
-		_, err := context.NewRequest(service.ID(), "abc")
-		assert.NotNil(t, err, k)
-		response := service.Run(context, struct{}{})
-		assert.True(t, response.Error != "", k)
-
-		for _, action := range service.Actions() {
-			request, err := context.NewRequest(service.ID(), action)
-			assert.Nil(t, err)
-			assert.NotNil(t, request)
-			if _, ok := request.(endly.Validator); ok {
-				response = service.Run(context, request)
-				assert.True(t, response.Error != "")
-			}
-
-			var requestType = toolbox.DereferenceType(reflect.TypeOf(request))
-
-			if requestType.Kind() == reflect.Struct {
-
-				if _, has := requestType.FieldByName("DockerContainerBaseRequest"); has {
-
-					continue
-
-				} else if _, has := requestType.FieldByName("Target"); has {
-					reflect.ValueOf(request).Elem().FieldByName("Target").Set(reflect.ValueOf(invalidResourse))
-					response = service.Run(context, request)
-					assert.True(t, response.Error != "", fmt.Sprintf("%T %T", request, service))
-				}
-			}
-
-		}
-
-	}
-
-}
-
 func Test_ServiceRoutes(t *testing.T) {
 	manager := endly.NewManager()
 	var services = endly.Services(manager)
@@ -135,8 +90,8 @@ func TestNewManager_Run(t *testing.T) {
 	manager := endly.NewManager()
 
 	{
-		_, err := manager.Run(nil, &endly.LoggerPrintRequest{
-			Message: "Hello world",
+		_, err := manager.Run(nil, &endly.NopParrotRequest{
+			In: "Hello world",
 		})
 		if assert.Nil(t, err) {
 
@@ -144,9 +99,7 @@ func TestNewManager_Run(t *testing.T) {
 	}
 
 	{
-		_, err := manager.Run(nil, &endly.WorkflowFailRequest{
-			Message: "Hello world",
-		})
+		_, err := manager.Run(nil, &struct{}{})
 		if assert.NotNil(t, err) {
 
 		}

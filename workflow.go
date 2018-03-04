@@ -7,6 +7,7 @@ import (
 	"github.com/viant/toolbox/url"
 	"strings"
 	"sync/atomic"
+	"time"
 )
 
 //ActionRequest represent an action request
@@ -155,14 +156,106 @@ func (t *WorkflowTask) HasTagID(tagIDs map[string]bool) bool {
 
 //WorkflowError represent workflow error
 type WorkflowError struct {
-	Error        string
-	WorkflowName string
-	TaskName     string
-	Activity     *WorkflowServiceActivity
+	Error    string
+	Workflow string
+	TaskName string
+	Activity *Activity
 }
 
-//WorkflowControl control workflow execution
-type WorkflowControl struct {
+//Activity represents workflow Activity
+type Activity struct {
+	*NeatlyTag
+	Workflow        string
+	Task            string
+	Service         string
+	Action          string
+	Description     string
+	Error           string
+	StartTime       time.Time
+	Ineligible      bool
+	Request         interface{}
+	Response        map[string]interface{}
+	ServiceResponse *ServiceResponse
+}
+
+//FormatTag return a formatted tag
+func (a *Activity) FormatTag() string {
+	if a.TagIndex != "" {
+		return "[" + a.Tag + a.TagIndex + "]"
+	}
+	return "[" + a.Tag + "]"
+}
+
+//NewActivity returns a new workflow Activity.
+func NewActivity(context *Context, action *ServiceAction, state data.Map) *Activity {
+	return &Activity{
+		Workflow:    context.Workflows.Last().Name,
+		Action:      state.ExpandAsText(action.Action),
+		Service:     state.ExpandAsText(action.Service),
+		NeatlyTag:   action.NeatlyTag,
+		Description: context.Expand(action.Description),
+		Request:     action.Request,
+		Response:    make(map[string]interface{}),
+		StartTime:   time.Now()}
+}
+
+
+type WorkflowLoadedEvent struct {
+	Workflow *Workflow
+}
+
+func NewWorkflowLoadedEvent(workflow *Workflow) *WorkflowLoadedEvent {
+	return &WorkflowLoadedEvent{Workflow:workflow}
+}
+
+
+type WorkflowInitEvent struct {
+	Tasks string
+	State map[string]interface{}
+}
+
+func NewWorkflowInitEvent(tasks string, state data.Map) *WorkflowInitEvent{
+	return &WorkflowInitEvent{
+		Tasks:tasks,
+		State:state.AsEncodableMap(),
+	}
+}
+
+//WorkflowEndEvent represents Activity end event type.
+type WorkflowEndEvent struct{
+	SessionId string
+}
+
+func NewWorkflowEndEvent(sessionID string) *WorkflowEndEvent{
+	return &WorkflowEndEvent{
+		SessionId:sessionID,
+	}
+}
+
+type WorkflowAsyncEvent struct {
+	ServiceAction *ServiceAction
+}
+
+func NewWorkflowAsyncEvent(action *ServiceAction) *WorkflowAsyncEvent{
+	return &WorkflowAsyncEvent{action}
+}
+
+
+
+//ActivityEndEvent represents Activity end event type.
+type ActivityEndEvent struct{
+	Response interface{}
+}
+
+
+func NewActivityEndEvent(response interface{}) *ActivityEndEvent{
+	return &ActivityEndEvent{
+		Response:response,
+	}
+}
+
+//Control control workflow execution
+type Control struct {
 	*Workflow
 	Terminated    int32
 	ScheduledTask *WorkflowTask
@@ -170,26 +263,26 @@ type WorkflowControl struct {
 }
 
 //Terminate flags current workflow as terminated
-func (c *WorkflowControl) Terminate() {
+func (c *Control) Terminate() {
 	atomic.StoreInt32(&c.Terminated, 1)
 }
 
 //CanRun returns true if current workflow can run
-func (c *WorkflowControl) CanRun() bool {
+func (c *Control) CanRun() bool {
 	return !(c.IsTerminated() || c.ScheduledTask != nil)
 }
 
 //IsTerminated returns true if current workflow has been terminated
-func (c *WorkflowControl) IsTerminated() bool {
+func (c *Control) IsTerminated() bool {
 	return atomic.LoadInt32(&c.Terminated) == 1
 }
 
 //Workflows  represents workflows
-type Workflows []*WorkflowControl
+type Workflows []*Control
 
 //Push adds a workflow to the workflow stack.
-func (w *Workflows) Push(workflow *Workflow) *WorkflowControl {
-	var result = &WorkflowControl{Workflow: workflow, WorkflowError: &WorkflowError{WorkflowName: workflow.Name}}
+func (w *Workflows) Push(workflow *Workflow) *Control {
+	var result = &Control{Workflow: workflow, WorkflowError: &WorkflowError{Workflow: workflow.Name}}
 	*w = append(*w, result)
 	return result
 }
@@ -200,7 +293,7 @@ func (w *Workflows) Pop() *Workflow {
 		return nil
 	}
 	var result = (*w)[len(*w)-1]
-	(*w) = (*w)[0 : len(*w)-1]
+	(*w) = (*w)[0: len(*w)-1]
 	return result.Workflow
 }
 
@@ -214,7 +307,7 @@ func (w *Workflows) Last() *Workflow {
 }
 
 //LastControl returns the last workflow from the workflow stack.
-func (w *Workflows) LastControl() *WorkflowControl {
+func (w *Workflows) LastControl() *Control {
 	if w == nil {
 		return nil
 	}
@@ -223,4 +316,37 @@ func (w *Workflows) LastControl() *WorkflowControl {
 		return nil
 	}
 	return (*w)[workflowCount-1]
+}
+
+//Activities represents a workflow activities
+type Activities []*Activity
+
+//Push adds a workflow to the workflow stack.
+func (a *Activities) Push(workflow *Activity) {
+	*a = append(*a, workflow)
+}
+
+//Pop removes the first workflow from the workflow stack.
+func (a *Activities) Pop() *Activity {
+	if len(*a) == 0 {
+		return nil
+	}
+	var result = (*a)[len(*a)-1]
+
+	if len(*a) > 0 {
+		(*a) = (*a)[:len(*a)-1]
+	}
+	return result
+}
+
+//Last returns the last workflow from the workflow stack.
+func (a *Activities) Last() *Activity {
+	if a == nil {
+		return nil
+	}
+	var workflowCount = len(*a)
+	if workflowCount == 0 {
+		return nil
+	}
+	return (*a)[workflowCount-1]
 }

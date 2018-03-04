@@ -5,9 +5,9 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"reflect"
-	"strings"
 	"sync"
 	"time"
+	"github.com/viant/toolbox/url"
 )
 
 //Service represents a set of capabilities per supported actions/request.
@@ -24,7 +24,7 @@ type Service interface {
 	//ServiceActionRoute returns service action route
 	ServiceActionRoute(action string) (*ServiceActionRoute, error)
 
-	//Mutex to sync access to the state if needed.
+
 	Mutex() *sync.RWMutex
 
 	Actions() []string
@@ -45,8 +45,10 @@ type ServiceResponse struct {
 	Status   string
 	Error    string
 	Response interface{}
-	err      error
+	Err      error
 }
+
+
 
 //ExampleUseCase represents example use case
 type ExampleUseCase struct {
@@ -73,22 +75,17 @@ type ServiceActionRoute struct {
 //AbstractService represenst an abstract service.
 type AbstractService struct {
 	Service
+	*sync.RWMutex
 	routeByAction  map[string]*ServiceActionRoute
 	routeByRequest map[reflect.Type]*ServiceActionRoute
 	actions        []string
 	id             string
 	state          data.Map
-	mutex          *sync.RWMutex
 }
 
-//Pairs returns map for pairs.
-func Pairs(params ...interface{}) map[string]interface{} {
-	var result = make(map[string]interface{})
-	for i := 0; i+1 < len(params); i += 2 {
-		var key = toolbox.AsString(params[i])
-		result[key] = params[i+1]
-	}
-	return result
+
+func (s *AbstractService) Mutex() *sync.RWMutex {
+	return s.RWMutex
 }
 
 //Register register action routes
@@ -103,12 +100,12 @@ func (s *AbstractService) Register(routes ...*ServiceActionRoute) {
 //Run returns a service action for supplied action
 func (s *AbstractService) Run(context *Context, request interface{}) (response *ServiceResponse) {
 	response = &ServiceResponse{Status: "ok"}
-	startEvent := s.Begin(context, request, Pairs("request", request))
+	startEvent := s.Begin(context, request)
 	var err error
 	defer func() {
-		s.End(context)(startEvent, Pairs("response", response))
+			s.End(context)(startEvent, response.Response)
 		if err != nil {
-			response.err = err
+			response.Err = err
 			response.Status = "error"
 			response.Error = fmt.Sprintf("%v", err)
 		}
@@ -144,8 +141,7 @@ func (s *AbstractService) Run(context *Context, request interface{}) (response *
 		var previous = err
 		err = NewError(s.ID(), service.Action, err)
 		if previous != err {
-			var eventType = &ErrorEventType{Error: fmt.Sprintf("%v", err)}
-			AddEvent(context, eventType, Pairs("value", eventType), Info)
+			context.Publish(NewErrorEvent(fmt.Sprintf("%v", err)))
 		}
 	}
 	return response
@@ -165,11 +161,28 @@ func (s *AbstractService) ServiceActionRoute(action string) (*ServiceActionRoute
 //Sleep sleeps for provided time in ms
 func (s *AbstractService) Sleep(context *Context, sleepTimeMs int) {
 	if sleepTimeMs > 0 {
-		var sleepEventType = &SleepEventType{SleepTimeMs: sleepTimeMs}
-		AddEvent(context, sleepEventType, Pairs("value", sleepEventType), Info)
+		context.Publish(NewSleepEvent(sleepTimeMs))
 		time.Sleep(time.Millisecond * time.Duration(sleepTimeMs))
 	}
 }
+
+
+//GetHostAndSSHPort return host and ssh port
+func (s *AbstractService) GetHostAndSSHPort(target *url.Resource) (string, int) {
+	if target == nil {
+		return "", 0
+	}
+	port := toolbox.AsInt(target.ParsedURL.Port())
+	if port == 0 {
+		port = 22
+	}
+	hostname := target.ParsedURL.Hostname()
+	if hostname == "" {
+		hostname = "127.0.0.1"
+	}
+	return hostname, port
+}
+
 
 //Actions returns service actions
 func (s *AbstractService) Actions() []string {
@@ -177,33 +190,16 @@ func (s *AbstractService) Actions() []string {
 }
 
 //Begin add starting event
-func (s *AbstractService) Begin(context *Context, source interface{}, value map[string]interface{}, level ...int) *Event {
-	if len(level) == 0 {
-		level = []int{Debug}
-	}
-	simpleTypeName := getSimpleTypeName(source)
-	var eventType = fmt.Sprintf("%v.Start", simpleTypeName)
-	event := AddEvent(context, eventType, value, level...)
-	return event
-}
-
-func getSimpleTypeName(source interface{}) string {
-	var simpleTypeName = toolbox.DereferenceType(source).Name()
-	lastDotPosition := strings.LastIndex(simpleTypeName, ".")
-	if lastDotPosition != -1 {
-		simpleTypeName = string(simpleTypeName[lastDotPosition:])
-	}
-	return simpleTypeName
+func (s *AbstractService) Begin(context *Context, value interface{}) *Event {
+	return context.Publish(value)
 }
 
 //End adds finishing event.
-func (s *AbstractService) End(context *Context) func(*Event, map[string]interface{}) *Event {
-	return func(startEvent *Event, value map[string]interface{}) *Event {
-		var eventType = strings.Replace(startEvent.Type, ".Start", ".End", 1)
-		event := AddEvent(context, eventType, value, startEvent.Level)
-		event.StartEvent = startEvent
-		event.TimeTakenMs = int((event.Timestamp.UnixNano() - startEvent.Timestamp.UnixNano()) / int64(time.Millisecond))
-		return event
+func (s *AbstractService) End(context *Context) func(startEvent *Event , value interface{}) *Event {
+	return func(startEvent *Event , value interface{}) *Event {
+		endEvent := context.Publish(value)
+		endEvent.StartEvent = startEvent
+		return endEvent
 	}
 }
 
@@ -212,10 +208,7 @@ func (s *AbstractService) ID() string {
 	return s.id
 }
 
-//Mutex returns a mutex
-func (s *AbstractService) Mutex() *sync.RWMutex {
-	return s.mutex
-}
+
 
 //State returns this service state map.
 func (s *AbstractService) State() data.Map {
@@ -227,14 +220,136 @@ func NewAbstractService(id string) *AbstractService {
 	return &AbstractService{
 		id:             id,
 		actions:        make([]string, 0),
-		mutex:          &sync.RWMutex{},
+		RWMutex:          &sync.RWMutex{},
 		state:          data.NewMap(),
 		routeByAction:  make(map[string]*ServiceActionRoute),
 		routeByRequest: make(map[reflect.Type]*ServiceActionRoute),
 	}
 }
 
-//Validateable represets validator interface
-type Validateable interface {
-	Validate() error
+
+
+
+
+const (
+	//NopServiceID represents nop nopService id.
+	NopServiceID = "nop"
+)
+
+
+
+//Request represent no operation
+type NopRequest struct{}
+
+
+//NopParrotRequest represent parrot request
+type NopParrotRequest struct {
+	In interface{}
 }
+
+//nopService represents no operation nopService
+type nopService struct {
+	*AbstractService
+}
+
+func (s *nopService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "nop",
+		RequestInfo: &ActionInfo{
+			Description: "no operation action, helper for separating action.Init as self descriptive steps",
+		},
+		RequestProvider: func() interface{} {
+			return &NopRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return struct{}{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*NopRequest); ok {
+				return req, nil
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&ServiceActionRoute{
+		Action: "parrot",
+		RequestInfo: &ActionInfo{
+			Description: "send back supplied In value",
+		},
+		RequestProvider: func() interface{} {
+			return &NopParrotRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return struct{}{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*NopParrotRequest); ok {
+				return req.In, nil
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+}
+
+//newNopService creates a new NoOperation nopService.
+func newNopService() Service {
+	var result = &nopService{
+		AbstractService: NewAbstractService(NopServiceID),
+	}
+	result.AbstractService.Service = result
+	result.registerRoutes()
+	return result
+}
+
+
+
+const (
+	//ServiceID represents log service id.
+	LoggerServiceID = "logger"
+)
+
+//PrintRequest represent print request
+type PrintRequest struct {
+	Message string
+	Color   string
+	Error   string
+}
+
+//loggerService represents no operation service
+type loggerService struct {
+	*AbstractService
+}
+
+func (s *loggerService) registerRoutes() {
+	s.Register(&ServiceActionRoute{
+		Action: "print",
+		RequestInfo: &ActionInfo{
+			Description: "print log message",
+		},
+		RequestProvider: func() interface{} {
+			return &PrintRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return struct{}{}
+		},
+		Handler: func(context *Context, req interface{}) (interface{}, error) {
+			if _, ok := req.(*PrintRequest); ok {
+				return struct{}{}, nil
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", req)
+		},
+	})
+}
+
+//newLoggerService creates a new logger service.
+func newLoggerService() Service {
+	var result = &loggerService{
+		AbstractService: NewAbstractService(LoggerServiceID),
+	}
+	result.AbstractService.Service = result
+	result.registerRoutes()
+	return result
+}
+
+
