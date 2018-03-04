@@ -134,6 +134,9 @@ You can build, deploy and test them end to end all with endly.
 ## Endly Services
 
 Endly services implement [Service](service.go) interface.
+The following diagram shows service with its component.
+![Service diagram](service_diagram.png)
+
 
 1) **System services**
     - [SSH Executor Service](/system/exec)
