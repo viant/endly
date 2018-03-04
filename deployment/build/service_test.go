@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/deployment/build"
+	"github.com/viant/endly/system/exec"
+	"github.com/viant/endly/system/storage"
+	"github.com/viant/endly/util"
 	tstorage "github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 	"strings"
 	"testing"
-	"github.com/viant/endly/util"
-	"github.com/viant/endly/deployment/build"
-	"github.com/viant/endly/system/exec"
-	"github.com/viant/endly/system/storage"
 )
 
 func TestBuildService_Build(t *testing.T) {

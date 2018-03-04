@@ -3,18 +3,18 @@ package http_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	endpoint "github.com/viant/endly/endpoint/http"
 	"github.com/viant/toolbox"
+	"net/http"
 	"path"
 	"strings"
 	"testing"
-	endpoint "github.com/viant/endly/endpoint/http"
-	"net/http"
 )
 
 func TestHTTPEndpointService_Run(t *testing.T) {
 
 	parent := toolbox.CallerDirectory(3)
-	var httpTripBaseDir = path.Join(parent, "test","send")
+	var httpTripBaseDir = path.Join(parent, "test", "send")
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(endpoint.ServiceID)
@@ -50,7 +50,7 @@ func TestHTTPEndpointService_Run(t *testing.T) {
 func TestHTTPEndpointService_Run_WithError(t *testing.T) {
 
 	parent := toolbox.CallerDirectory(3)
-	var httpTripBaseDir = path.Join(parent,  "test", "send")
+	var httpTripBaseDir = path.Join(parent, "test", "send")
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(endpoint.ServiceID)

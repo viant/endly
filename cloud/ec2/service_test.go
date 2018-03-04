@@ -2,14 +2,13 @@ package ec2_test
 
 import (
 	"fmt"
+	cec2 "github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/cloud/ec2"
 	"github.com/viant/toolbox"
 	"testing"
-	"github.com/viant/endly/cloud/ec2"
-	cec2 "github.com/aws/aws-sdk-go/service/ec2"
-
 )
 
 func getInstanceStatus(awsCredential, instance string) (string, error) {

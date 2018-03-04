@@ -2,9 +2,9 @@ package gce
 
 import (
 	"fmt"
-	"google.golang.org/api/compute/v1"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
+	"google.golang.org/api/compute/v1"
 )
 
 const (
@@ -16,7 +16,6 @@ const (
 type service struct {
 	*endly.AbstractService
 }
-
 
 func (s *service) fetchInstanceList(request *CallRequest) (CallResponse, error) {
 	var response interface{}

@@ -3,31 +3,31 @@ package exec_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/system/exec"
 	"github.com/viant/toolbox/url"
 	"testing"
-	"github.com/viant/endly/system/exec"
 )
 
 func TestNewExecService(t *testing.T) {
 
 	var useCases = []struct {
 		description string
-		baseDir  string
-		target   *url.Resource
-		expected *endly.OperatingSystem
+		baseDir     string
+		target      *url.Resource
+		expected    *endly.OperatingSystem
 	}{
 		{
-			description:"open new session on linux",
-			baseDir:"test/open/linux",
-			target:url.NewResource("ssh://127.0.0.1:22/etc"),
-			expected:  &endly.OperatingSystem{Name: "ubuntu", Architecture: "x64", Hardware: "x86_64", Version: "17.04", System: "linux", Path: &endly.SystemPath{
+			description: "open new session on linux",
+			baseDir:     "test/open/linux",
+			target:      url.NewResource("ssh://127.0.0.1:22/etc"),
+			expected: &endly.OperatingSystem{Name: "ubuntu", Architecture: "x64", Hardware: "x86_64", Version: "17.04", System: "linux", Path: &endly.SystemPath{
 				Items: []string{"/usr/local/sbin", "/usr/local/bin", "/usr/sbin", "/usr/bin", "/sbin", "/bin", "/usr/games", "/usr/local/games"},
 			}},
 		},
 		{
-			description:"open new session on osx",
-			baseDir:"test/open/darwin",
-			target:url.NewResource("ssh://127.0.0.1:22/etc"),
+			description: "open new session on osx",
+			baseDir:     "test/open/darwin",
+			target:      url.NewResource("ssh://127.0.0.1:22/etc"),
 			expected: &endly.OperatingSystem{Name: "macosx", Architecture: "x64", Hardware: "x86_64", Version: "10.12.6", System: "darwin", Path: &endly.SystemPath{
 				Items: []string{"/usr/local/apache-maven-3.2.5/bin", "/usr/local/opt/libpcap/bin", "/usr/libexec/", "/Projects/go/workspace/bin", "/usr/local/apache-maven-3.2.5/bin", "/usr/local/opt/libpcap/bin", "/usr/libexec/", "/Projects/go/workspace/bin", "/usr/bin", "/bin", "/usr/sbin", "/sbin"},
 			}},

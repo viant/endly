@@ -3,8 +3,8 @@ package endly_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
-	"testing"
 	"github.com/viant/endly"
+	"testing"
 )
 
 func TestCriteriaParser_Parse(t *testing.T) {

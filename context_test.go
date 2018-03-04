@@ -50,4 +50,3 @@ func TestContext_Expand_Resource(t *testing.T) {
 	assert.NotNil(t, err)
 
 }
-

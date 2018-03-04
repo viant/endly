@@ -30,8 +30,6 @@ func (i *logRecordIterator) HasNext() bool {
 	return true
 }
 
-
-
 //Next sets item pointer with next element.
 func (i *logRecordIterator) Next(itemPointer interface{}) error {
 	var indexRecordPointer, ok = itemPointer.(*IndexedRecord)

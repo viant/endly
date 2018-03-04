@@ -41,8 +41,6 @@ func (r *CheckoutRequest) Validate() error {
 	return nil
 }
 
-
-
 //CommitRequest represents a commit request
 type CommitRequest struct {
 	Target  *url.Resource `required:"true" description:"location to local source code"`
@@ -71,7 +69,6 @@ func (r *CommitRequest) Validate() error {
 	return nil
 }
 
-
 //Info represents version control info
 type Info struct {
 	IsVersionControlManaged bool   //returns true if directory is source controlled managed
@@ -89,7 +86,6 @@ type Info struct {
 func (r *Info) HasPendingChanges() bool {
 	return len(r.New) > 0 || len(r.Untracked) > 0 || len(r.Deleted) > 0 || len(r.Modified) > 0
 }
-
 
 //PullRequest represents a pull request
 type PullRequest struct {
@@ -119,7 +115,6 @@ type PullResponse struct {
 	*Info
 }
 
-
 //StatusRequest represents version control status
 type StatusRequest struct {
 	Target *url.Resource `required:"true"`
@@ -146,4 +141,3 @@ func (r *StatusRequest) Validate() error {
 type StatusResponse struct {
 	*Info
 }
-

@@ -3,9 +3,9 @@ package reset_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox"
 	endpoint "github.com/viant/endly/endpoint/http"
 	runner "github.com/viant/endly/runner/rest"
+	"github.com/viant/toolbox"
 	"path"
 	"testing"
 )

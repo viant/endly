@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"testing"
 	"github.com/viant/endly/cli"
+	"testing"
 )
 
 func Test_Renderer_PrintTable(t *testing.T) {

@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"github.com/viant/endly"
 	"time"
 )
 
@@ -128,7 +128,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, sendH
 		previous = data.NewMap()
 	}
 	response.Code = httpResponse.StatusCode
-	response.TimeTakenMs = int(startEvent.Timestamp.Sub(endEvent.Timestamp)/time.Millisecond)
+	response.TimeTakenMs = int(startEvent.Timestamp.Sub(endEvent.Timestamp) / time.Millisecond)
 
 	if toolbox.IsCompleteJSON(responseBody) {
 		response.JSONBody, err = toolbox.JSONToMap(responseBody)

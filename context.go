@@ -32,8 +32,8 @@ type Context struct {
 	Workflows  *Workflows
 	state      data.Map
 	toolbox.Context
-	cloned     []*Context
-	closed     int32
+	cloned []*Context
+	closed int32
 }
 
 func (c *Context) Publish(value interface{}) *Event {

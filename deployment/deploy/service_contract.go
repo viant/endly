@@ -1,11 +1,11 @@
 package deploy
 
 import (
-	"github.com/viant/toolbox/url"
 	"errors"
 	"github.com/viant/endly"
-	"github.com/viant/endly/system/storage"
 	"github.com/viant/endly/system/exec"
+	"github.com/viant/endly/system/storage"
+	"github.com/viant/toolbox/url"
 )
 
 //Request represent a deploy request
@@ -33,8 +33,6 @@ type Response struct {
 	Version string
 }
 
-
-
 //LoadMetaRequest represents Meta register request.
 type LoadMetaRequest struct {
 	Source *url.Resource `required:"true" description:"deployment meta location"`
@@ -47,11 +45,10 @@ type LoadMetaResponse struct {
 
 //Meta represents description of deployment instructions for various operating system
 type Meta struct {
-	Name       string                  //app name
+	Name       string        //app name
 	Versioning string        `required:"true" description:"versioning template for dynamic discovery i.e. Major.Minor.Release"` //versioning system, i.e. Major.Minor.Release
 	Targets    []*TargetMeta `required:"true" description:"deployment instruction for various version and operating systems"`
 }
-
 
 //Dependency represents deployment dependency
 type Dependency struct {
@@ -61,7 +58,7 @@ type Dependency struct {
 
 //TargetMeta represents specific instruction for given os deployment.
 type TargetMeta struct {
-	Version           string                                                                                                                                   //version of the software
+	Version           string                       //version of the software
 	MinReleaseVersion map[string]string            `required:"true" description:"min release version, key is major.minor, value is release or update version"` //min release version, key is major.minor, value is release or update version
 	OsTarget          *endly.OperatingSystemTarget `description:"operating system match"`                                                                      //if specified matches current os
 	Deployment        *Deployment                  `required:"true" description:"actual deployment instructions"`                                              //actual deployment instruction
@@ -80,7 +77,7 @@ type Deployment struct {
 //Addition represents deployment additions.
 type Addition struct {
 	SuperUser bool
-	Commands  []string    `description:"os command"`
+	Commands  []string            `description:"os command"`
 	Transfers []*storage.Transfer `description:"asset transfer"`
 }
 
@@ -164,4 +161,3 @@ func (m *Meta) Match(operatingSystem *endly.OperatingSystem, requestedVersion st
 	}
 	return nil
 }
-

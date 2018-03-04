@@ -9,7 +9,7 @@ import (
 type RunRequest struct {
 	EnableLogging     bool                   `description:"flag to enable logging"`
 	LoggingDirectory  string                 `description:"log directory"`
-	WorkflowURL               string                 `description:"workflow URL if workflow is not found in the registry, it is loaded"`
+	WorkflowURL       string                 `description:"workflow URL if workflow is not found in the registry, it is loaded"`
 	Name              string                 `required:"true" description:"name defined in workflow document"`
 	Params            map[string]interface{} `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
 	Tasks             string                 `required:"true" description:"coma separated task list or '*'to run all tasks sequencialy"` //tasks to run with coma separated list or '*', or empty string for all tasks
@@ -47,8 +47,8 @@ type LoadResponse struct {
 // SwitchCase represent matching candidate case
 type SwitchCase struct {
 	*ActionRequest `description:"action to run if matched"`
-	Task                 string      `description:"task to run if matched"`
-	Value                interface{} `required:"true" description:"matching sourceKey value"`
+	Task           string      `description:"task to run if matched"`
+	Value          interface{} `required:"true" description:"matching sourceKey value"`
 }
 
 // SwitchRequest represent switch action request

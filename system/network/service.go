@@ -2,9 +2,9 @@ package network
 
 import (
 	"fmt"
+	"github.com/viant/endly"
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/ssh"
-	"github.com/viant/endly"
 )
 
 const (

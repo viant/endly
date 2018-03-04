@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/system/smtp"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"path"
 	"testing"
 	"time"
-	"github.com/viant/endly/system/smtp"
 )
 
 func TestService_Run(t *testing.T) {

@@ -199,36 +199,34 @@ func NewActivity(context *Context, action *ServiceAction, state data.Map) *Activ
 		StartTime:   time.Now()}
 }
 
-
 type WorkflowLoadedEvent struct {
 	Workflow *Workflow
 }
 
 func NewWorkflowLoadedEvent(workflow *Workflow) *WorkflowLoadedEvent {
-	return &WorkflowLoadedEvent{Workflow:workflow}
+	return &WorkflowLoadedEvent{Workflow: workflow}
 }
-
 
 type WorkflowInitEvent struct {
 	Tasks string
 	State map[string]interface{}
 }
 
-func NewWorkflowInitEvent(tasks string, state data.Map) *WorkflowInitEvent{
+func NewWorkflowInitEvent(tasks string, state data.Map) *WorkflowInitEvent {
 	return &WorkflowInitEvent{
-		Tasks:tasks,
-		State:state.AsEncodableMap(),
+		Tasks: tasks,
+		State: state.AsEncodableMap(),
 	}
 }
 
 //WorkflowEndEvent represents Activity end event type.
-type WorkflowEndEvent struct{
+type WorkflowEndEvent struct {
 	SessionId string
 }
 
-func NewWorkflowEndEvent(sessionID string) *WorkflowEndEvent{
+func NewWorkflowEndEvent(sessionID string) *WorkflowEndEvent {
 	return &WorkflowEndEvent{
-		SessionId:sessionID,
+		SessionId: sessionID,
 	}
 }
 
@@ -236,21 +234,18 @@ type WorkflowAsyncEvent struct {
 	ServiceAction *ServiceAction
 }
 
-func NewWorkflowAsyncEvent(action *ServiceAction) *WorkflowAsyncEvent{
+func NewWorkflowAsyncEvent(action *ServiceAction) *WorkflowAsyncEvent {
 	return &WorkflowAsyncEvent{action}
 }
 
-
-
 //ActivityEndEvent represents Activity end event type.
-type ActivityEndEvent struct{
+type ActivityEndEvent struct {
 	Response interface{}
 }
 
-
-func NewActivityEndEvent(response interface{}) *ActivityEndEvent{
+func NewActivityEndEvent(response interface{}) *ActivityEndEvent {
 	return &ActivityEndEvent{
-		Response:response,
+		Response: response,
 	}
 }
 
@@ -293,7 +288,7 @@ func (w *Workflows) Pop() *Workflow {
 		return nil
 	}
 	var result = (*w)[len(*w)-1]
-	(*w) = (*w)[0: len(*w)-1]
+	(*w) = (*w)[0 : len(*w)-1]
 	return result.Workflow
 }
 

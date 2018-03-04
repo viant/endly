@@ -1,10 +1,11 @@
 package log_test
 
-
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/testing/log"
+	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	_ "github.com/viant/toolbox/storage/scp"
 	"github.com/viant/toolbox/url"
@@ -14,8 +15,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-	"github.com/viant/endly/testing/log"
-	"github.com/viant/endly/util"
 )
 
 var templateLog = map[string]interface{}{

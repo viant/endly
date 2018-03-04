@@ -3,12 +3,12 @@ package gce_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/cloud/gce"
 	"github.com/viant/toolbox"
 	"google.golang.org/api/compute/v1"
 	"os"
 	"path"
 	"testing"
-	"github.com/viant/endly/cloud/gce"
 )
 
 //https://cloud.google.com/compute/docs/reference/beta/instances/start

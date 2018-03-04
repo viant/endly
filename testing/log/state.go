@@ -1,8 +1,5 @@
 package log
 
-
-
-
 //ProcessingState represents log processing state
 type ProcessingState struct {
 	Line     int
@@ -21,4 +18,3 @@ func (s *ProcessingState) Reset() {
 	s.Line = 0
 	s.Position = 0
 }
-

@@ -3,14 +3,14 @@ package deploy
 import (
 	"errors"
 	"fmt"
+	"github.com/viant/endly"
+	"github.com/viant/endly/system/exec"
+	"github.com/viant/endly/system/storage"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"strings"
 	"sync"
-	"github.com/viant/endly"
-	"github.com/viant/endly/system/exec"
-	"github.com/viant/endly/system/storage"
 )
 
 //ServiceID represents a deployment service id.
@@ -18,8 +18,6 @@ const ServiceID = "deployment"
 
 const artifactKey = "artifact"
 const versionKey = "Version"
-
-
 
 type service struct {
 	*endly.AbstractService

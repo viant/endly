@@ -1,9 +1,9 @@
 package exec
 
 import (
-	"github.com/viant/toolbox/url"
-	"github.com/viant/endly"
 	"github.com/pkg/errors"
+	"github.com/viant/endly"
+	"github.com/viant/toolbox/url"
 )
 
 //TerminalSession returns SystemTerminalSession for passed in target resource.
@@ -18,7 +18,7 @@ func TerminalSession(context *endly.Context, target *url.Resource) (*endly.Syste
 			return nil, err
 		}
 		response := service.Run(context, &OpenSessionRequest{
-			Target:target,
+			Target: target,
 		})
 		if response.Err != nil {
 			return nil, response.Err
@@ -26,5 +26,3 @@ func TerminalSession(context *endly.Context, target *url.Resource) (*endly.Syste
 	}
 	return sessions[target.Host()], nil
 }
-
-

@@ -3,6 +3,7 @@ package http
 import (
 	"errors"
 	"fmt"
+	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/bridge"
 	"io/ioutil"
@@ -12,7 +13,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"github.com/viant/endly"
 )
 
 const (

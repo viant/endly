@@ -1,12 +1,12 @@
 package build
 
 import (
+	"errors"
 	"fmt"
+	"github.com/viant/endly/deployment/deploy"
+	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
 	"github.com/viant/toolbox/url"
-	"github.com/viant/endly/system/exec"
-	"errors"
-	"github.com/viant/endly/deployment/deploy"
 )
 
 //Spec represents build specification.
@@ -48,8 +48,6 @@ func (r *Request) Validate() error {
 	return nil
 }
 
-
-
 //LoadMetaRequest represents a loading Meta request
 type LoadMetaRequest struct {
 	Source *url.Resource `required:"true" description:"URL with build meta JSON"`
@@ -68,14 +66,12 @@ type LoadMetaResponse struct {
 	Meta *Meta //url to size
 }
 
-
-
 //Goal builds goal represents a build goal
 type Goal struct {
-	Name                string              `required:"true"`
-	InitTransfers       *storage.CopyRequest ` description:"files transfer before build command"`
+	Name                string                   `required:"true"`
+	InitTransfers       *storage.CopyRequest     ` description:"files transfer before build command"`
 	Command             *exec.ExtractableCommand `required:"true"  description:"build command"`
-	PostTransfers       *storage.CopyRequest ` description:"files transfer after build command"`
+	PostTransfers       *storage.CopyRequest     ` description:"files transfer after build command"`
 	VerificationCommand *exec.ExtractableCommand
 }
 
@@ -98,4 +94,3 @@ func (m *Meta) Validate() error {
 	}
 	return nil
 }
-

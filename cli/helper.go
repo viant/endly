@@ -1,12 +1,12 @@
 package cli
 
 import (
-	"strings"
+	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
-	"path"
-	"fmt"
 	"github.com/viant/toolbox/url"
+	"path"
+	"strings"
 )
 
 //GetPath returns hierarchical path to the latest Activity
@@ -38,8 +38,6 @@ func GetPath(activities *endly.Activities, runner *Runner, fullPath bool) (strin
 	}
 	return path, pathLength + 1
 }
-
-
 
 //LoadRunRequestWithOption load WorkflowRun request and runner options
 func LoadRunRequestWithOption(workflowRunRequestURL string, params ...interface{}) (*endly.RunRequest, *RunnerReportingOptions, error) {

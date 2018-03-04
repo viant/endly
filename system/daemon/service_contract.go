@@ -1,8 +1,8 @@
 package daemon
 
 import (
-	"strings"
 	"github.com/viant/toolbox/url"
+	"strings"
 )
 
 //StartRequest represents service request start
@@ -21,14 +21,13 @@ type StartResponse struct {
 type StatusRequest struct {
 	Target    *url.Resource `required:"true" description:"target host"` //target host
 	Service   string        `required:"true" `                          //service name
-	Exclusion string                                                    //exclusion if there is more than one service matching service group
+	Exclusion string        //exclusion if there is more than one service matching service group
 }
 
 //StatusResponse represent status response
 type StatusResponse struct {
 	*Info
 }
-
 
 //Info represents a service info
 type Info struct {
@@ -45,7 +44,7 @@ type Info struct {
 type StopRequest struct {
 	Target    *url.Resource `required:"true" description:"target host"` //target host
 	Service   string        `required:"true"`                           //service name
-	Exclusion string                                                    //exclusion if there is more than one service matching service group
+	Exclusion string        //exclusion if there is more than one service matching service group
 }
 
 //StopResponse represents a stop response

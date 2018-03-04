@@ -12,6 +12,7 @@ const ProgramCanBeFound = "can be found in the following packages"
 const ErrorIsNotRecoverable = "Error is not recoverable"
 const NotInstalled = "not installed"
 const CanNotOpen = "can't open"
+
 var StdErrors = []string{CommandNotFound, NoSuchFileOrDirectory, ProgramCanBeFound}
 
 //CheckNoSuchFileOrDirectory checks for no such file or directory message in the provided stdout.

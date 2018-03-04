@@ -1,8 +1,8 @@
 package log
 
 import (
-	"regexp"
 	"fmt"
+	"regexp"
 )
 
 func matchLogIndex(expr *regexp.Regexp, input string) string {
@@ -18,5 +18,3 @@ func matchLogIndex(expr *regexp.Regexp, input string) string {
 func logTypeMetaKey(name string) string {
 	return fmt.Sprintf("meta_%v", name)
 }
-
-

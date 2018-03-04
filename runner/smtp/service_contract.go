@@ -1,10 +1,10 @@
 package smtp
 
 import (
-	"fmt"
-	"strings"
-	"github.com/viant/toolbox/url"
 	"errors"
+	"fmt"
+	"github.com/viant/toolbox/url"
+	"strings"
 )
 
 //SendRequest represents send request.
@@ -87,4 +87,3 @@ func (m *MailMessage) Payload() []byte {
 	result += "\r\n" + m.Body
 	return []byte(result)
 }
-

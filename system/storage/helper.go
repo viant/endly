@@ -1,13 +1,13 @@
 package storage
 
 import (
+	"github.com/viant/endly"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/storage"
+	"github.com/viant/toolbox/url"
 	"io"
 	"io/ioutil"
 	"strings"
-	"github.com/viant/toolbox"
-	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
-	"github.com/viant/toolbox/storage"
 )
 
 //NewExpandedContentHandler return a new reader that can substitute content with state map, replacement data provided in replacement map.
@@ -32,7 +32,6 @@ func NewExpandedContentHandler(context *endly.Context, replaceMap map[string]str
 	}
 }
 
-
 //GetStorageService return toolbox storage service
 func GetStorageService(context *endly.Context, resource *url.Resource) (storage.Service, error) {
 	var state = context.State()
@@ -42,16 +41,13 @@ func GetStorageService(context *endly.Context, resource *url.Resource) (storage.
 	return storage.NewServiceForURL(resource.URL, resource.Credential)
 }
 
-
 //IsShellCompressable returns true if resource can be compress via shell command.
 func IsShellCompressable(protScheme string) bool {
 	return protScheme == "scp" || protScheme == "file"
 }
 
-
-
 //Transfer transfer data for provided transfer definition.
-func  Copy(context *endly.Context, transfers ...*Transfer) (interface{}, error) {
+func Copy(context *endly.Context, transfers ...*Transfer) (interface{}, error) {
 	if transfers == nil {
 		return nil, nil
 	}

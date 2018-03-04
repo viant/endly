@@ -2,6 +2,8 @@ package exec
 
 import (
 	"fmt"
+	"github.com/viant/endly"
+	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/ssh"
@@ -9,8 +11,6 @@ import (
 	"path"
 	"sort"
 	"strings"
-	"github.com/viant/endly"
-	"github.com/viant/endly/util"
 )
 
 //ServiceID represent system executor service id
@@ -158,8 +158,6 @@ func (s *execService) openSession(context *endly.Context, request *OpenSessionRe
 	return session, nil
 }
 
-
-
 func (s *execService) setEnvVariables(context *endly.Context, session *endly.SystemTerminalSession, env map[string]string) error {
 	for k, v := range env {
 		err := s.setEnvVariable(context, session, k, v)
@@ -219,7 +217,7 @@ func (s *execService) rumCommandTemplate(context *endly.Context, session *endly.
 		SessionID: session.ID,
 		Stdout:    stdout,
 	}
-	defer s.End(context)(startEvent,executionEndEvent)
+	defer s.End(context)(startEvent, executionEndEvent)
 	if err != nil {
 		executionEndEvent.Error = fmt.Sprintf("%v", err)
 		return stdout, err
@@ -751,4 +749,3 @@ func New() endly.Service {
 	result.registerRoutes()
 	return result
 }
-

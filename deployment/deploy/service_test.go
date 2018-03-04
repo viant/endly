@@ -2,10 +2,10 @@ package deploy_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/viant/toolbox/url"
-	"testing"
 	"github.com/viant/endly/deployment/deploy"
 	"github.com/viant/endly/system/storage"
+	"github.com/viant/toolbox/url"
+	"testing"
 )
 
 func Test_MatchVersion(t *testing.T) {

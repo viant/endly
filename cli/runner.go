@@ -5,23 +5,23 @@ import (
 	"fmt"
 	"github.com/viant/assertly"
 	"github.com/viant/dsunit"
+	"github.com/viant/endly"
+	"github.com/viant/endly/runner/http"
+	"github.com/viant/endly/runner/selenium"
+	"github.com/viant/endly/testing/log"
+	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
 	"os"
 	"reflect"
 	"strings"
 	"time"
-	"github.com/viant/endly"
-	"github.com/viant/endly/runner/http"
-	"github.com/viant/endly/testing/validator"
-	"github.com/viant/endly/testing/log"
-	"github.com/viant/endly/runner/selenium"
 
-	"github.com/viant/endly/system/storage"
-	"github.com/viant/endly/system/exec"
-	"github.com/viant/endly/util"
+	"github.com/viant/endly/deployment/build"
 	"github.com/viant/endly/deployment/deploy"
 	"github.com/viant/endly/deployment/vc"
-	"github.com/viant/endly/deployment/build"
+	"github.com/viant/endly/system/exec"
+	"github.com/viant/endly/system/storage"
+	"github.com/viant/endly/util"
 )
 
 //OnRunnerError exit system with os.Exit with supplied code.
@@ -30,7 +30,7 @@ var OnRunnerError = func(code int) {
 }
 
 const (
-	messageTypeAction         = iota
+	messageTypeAction = iota
 	messageTypeTagDescription
 	messageTypeError
 	messageTypeSuccess
@@ -540,7 +540,7 @@ func (r *Runner) reportSummaryEvent() {
 
 	var contextMessageLength = len(contextMessage) + len(contextMessageStatus)
 	contextMessage = fmt.Sprintf("%v%v", contextMessage, r.ColorText(contextMessageStatus, contextMessageColor))
-	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed + r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
+	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed+r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
 }
 
 func (r *Runner) getValidation(event *endly.Event) *assertly.Validation {
@@ -572,7 +572,7 @@ func (r *Runner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
+			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
 
 			var minRange = 0
 			for i, event := range tag.Events {
@@ -586,7 +586,7 @@ func (r *Runner) reportTagSummary() {
 				if validation.HasFailure() {
 					var failureSourceEvent = []*endly.Event{}
 					if i-minRange > 0 {
-						failureSourceEvent = tag.Events[minRange: i-1]
+						failureSourceEvent = tag.Events[minRange : i-1]
 					}
 					r.reportFailureWithMatchSource(tag, validation, failureSourceEvent)
 					minRange = i + 1
@@ -703,7 +703,6 @@ func (r *Runner) processEventTags() {
 		}
 	}
 }
-
 
 func (r *Runner) onWorkflowStart() {
 	if r.context.Workflow() != nil {

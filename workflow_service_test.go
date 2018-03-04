@@ -6,11 +6,11 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	_ "github.com/viant/endly/cli"
 	"github.com/viant/endly/endpoint/http"
+	_ "github.com/viant/endly/testing/dsunit"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
-	_ "github.com/viant/endly/cli"
-	_ "github.com/viant/endly/testing/dsunit"
 
 	"path"
 	"strings"
