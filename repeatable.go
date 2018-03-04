@@ -153,12 +153,14 @@ func (r *Repeatable) Get() *Repeatable {
 	return result
 }
 
+//DataExtractionEvent  represents data extraction event
 type DataExtractionEvent struct {
 	Output           string
 	StructuredOutput interface{}
 	Extracted        interface{}
 }
 
+//NewDataExtractionEvent creates a new event.
 func NewDataExtractionEvent(output string, structuredOutput, extracted interface{}) *DataExtractionEvent {
 	return &DataExtractionEvent{
 		Output:           output,

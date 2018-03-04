@@ -80,6 +80,7 @@ type AbstractService struct {
 	state          data.Map
 }
 
+//Mutex returns a mutex.
 func (s *AbstractService) Mutex() *sync.RWMutex {
 	return s.RWMutex
 }
@@ -224,7 +225,7 @@ const (
 	NopServiceID = "nop"
 )
 
-//Request represent no operation
+//NopRequest represent no operation
 type NopRequest struct{}
 
 //NopParrotRequest represent parrot request
@@ -288,7 +289,7 @@ func newNopService() Service {
 }
 
 const (
-	//ServiceID represents log service id.
+	//LoggerServiceID represents log service id.
 	LoggerServiceID = "logger"
 )
 
@@ -318,7 +319,7 @@ func (s *loggerService) registerRoutes() {
 		},
 		Handler: func(context *Context, req interface{}) (interface{}, error) {
 			if request, ok := req.(*PrintRequest); ok {
-				if ! context.CLIEnabled {
+				if !context.CLIEnabled {
 					if request.Message != "" {
 						fmt.Printf("%v\n", request.Message)
 					}

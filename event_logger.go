@@ -53,6 +53,7 @@ func (l *EventLogger) handlerError(err error) {
 	log.Print(err)
 }
 
+//OnEvent handles supplied event.
 func (l *EventLogger) OnEvent(event *Event) {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
@@ -86,7 +87,7 @@ func (l *EventLogger) OnEvent(event *Event) {
 	_, _ = file.Write(buf)
 }
 
-//Log logs an event
+//AsEventListener returns an event listener
 func (l *EventLogger) AsEventListener() EventListener {
 	return func(event *Event) {
 		if l.listener != nil {

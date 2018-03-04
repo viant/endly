@@ -199,19 +199,23 @@ func NewActivity(context *Context, action *ServiceAction, state data.Map) *Activ
 		StartTime:   time.Now()}
 }
 
+//WorkflowLoadedEvent represents workflow load event
 type WorkflowLoadedEvent struct {
 	Workflow *Workflow
 }
 
+//NewWorkflowLoadedEvent create a new workflow load event.
 func NewWorkflowLoadedEvent(workflow *Workflow) *WorkflowLoadedEvent {
 	return &WorkflowLoadedEvent{Workflow: workflow}
 }
 
+//WorkflowInitEvent represents a new workflow init event
 type WorkflowInitEvent struct {
 	Tasks string
 	State map[string]interface{}
 }
 
+//NewWorkflowInitEvent creates a new workflow init event.
 func NewWorkflowInitEvent(tasks string, state data.Map) *WorkflowInitEvent {
 	return &WorkflowInitEvent{
 		Tasks: tasks,
@@ -221,19 +225,22 @@ func NewWorkflowInitEvent(tasks string, state data.Map) *WorkflowInitEvent {
 
 //WorkflowEndEvent represents Activity end event type.
 type WorkflowEndEvent struct {
-	SessionId string
+	SessionID string
 }
 
+//NewWorkflowEndEvent create a new WorkflowEndEvent
 func NewWorkflowEndEvent(sessionID string) *WorkflowEndEvent {
 	return &WorkflowEndEvent{
-		SessionId: sessionID,
+		SessionID: sessionID,
 	}
 }
 
+//WorkflowAsyncEvent represents a new async action event.
 type WorkflowAsyncEvent struct {
 	ServiceAction *ServiceAction
 }
 
+//NewWorkflowAsyncEvent creates a new WorkflowAsyncEvent.
 func NewWorkflowAsyncEvent(action *ServiceAction) *WorkflowAsyncEvent {
 	return &WorkflowAsyncEvent{action}
 }
@@ -243,14 +250,15 @@ type ActivityEndEvent struct {
 	Response interface{}
 }
 
+//NewActivityEndEvent creates a new ActivityEndEvent
 func NewActivityEndEvent(response interface{}) *ActivityEndEvent {
 	return &ActivityEndEvent{
 		Response: response,
 	}
 }
 
-//Control control workflow execution
-type Control struct {
+//WorkflowRun represents workflow execution.
+type WorkflowRun struct {
 	*Workflow
 	Terminated    int32
 	ScheduledTask *WorkflowTask
@@ -258,26 +266,26 @@ type Control struct {
 }
 
 //Terminate flags current workflow as terminated
-func (c *Control) Terminate() {
+func (c *WorkflowRun) Terminate() {
 	atomic.StoreInt32(&c.Terminated, 1)
 }
 
 //CanRun returns true if current workflow can run
-func (c *Control) CanRun() bool {
+func (c *WorkflowRun) CanRun() bool {
 	return !(c.IsTerminated() || c.ScheduledTask != nil)
 }
 
 //IsTerminated returns true if current workflow has been terminated
-func (c *Control) IsTerminated() bool {
+func (c *WorkflowRun) IsTerminated() bool {
 	return atomic.LoadInt32(&c.Terminated) == 1
 }
 
-//Workflows  represents workflows
-type Workflows []*Control
+//Workflows  represents running workflow stack.
+type Workflows []*WorkflowRun
 
 //Push adds a workflow to the workflow stack.
-func (w *Workflows) Push(workflow *Workflow) *Control {
-	var result = &Control{Workflow: workflow, WorkflowError: &WorkflowError{Workflow: workflow.Name}}
+func (w *Workflows) Push(workflow *Workflow) *WorkflowRun {
+	var result = &WorkflowRun{Workflow: workflow, WorkflowError: &WorkflowError{Workflow: workflow.Name}}
 	*w = append(*w, result)
 	return result
 }
@@ -302,7 +310,7 @@ func (w *Workflows) Last() *Workflow {
 }
 
 //LastControl returns the last workflow from the workflow stack.
-func (w *Workflows) LastControl() *Control {
+func (w *Workflows) LastControl() *WorkflowRun {
 	if w == nil {
 		return nil
 	}
