@@ -261,7 +261,7 @@ const (
 				"Revision": "7f98e433333bc1961135d4ec9023aa95134198fd",
 				"Branch": "master",
 				"IsUptoDate": true,
-				"NewCriteria": [],
+				"New": [],
 				"Untracked": [],
 				"Modified": [],
 				"Deleted": []
@@ -272,7 +272,7 @@ const (
 				"Revision": "f194db0d9f7574b424e9820b423d2357da4775f8",
 				"Branch": "master",
 				"IsUptoDate": true,
-				"NewCriteria": [],
+				"New": [],
 				"Untracked": [],
 				"Modified": [],
 				"Deleted": []
@@ -416,7 +416,7 @@ If target directory exist and contains matching origin URL, only latest changes 
 	})
 }
 
-//NewCriteria creates a new version control service (git,svn)
+//New creates a new version control service (git,svn)
 func New() endly.Service {
 	var service = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

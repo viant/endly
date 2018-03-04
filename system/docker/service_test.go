@@ -26,14 +26,14 @@ func TestDockerService_Images(t *testing.T) {
 		target     *url.Resource
 		Repository string
 		Tag        string
-		Expected   []*docker.DockerImageInfo
+		Expected   []*docker.ImageInfo
 	}{
 		{
 			"test/images/darwin",
 			target,
 			"mysql",
 			"5.6",
-			[]*docker.DockerImageInfo{
+			[]*docker.ImageInfo{
 				{
 					Repository: "mysql",
 					Tag:        "5.6",
@@ -47,7 +47,7 @@ func TestDockerService_Images(t *testing.T) {
 			target,
 			"",
 			"",
-			[]*docker.DockerImageInfo{
+			[]*docker.ImageInfo{
 				{
 					Repository: "mysql",
 					Tag:        "5.6",
@@ -67,7 +67,7 @@ func TestDockerService_Images(t *testing.T) {
 			target,
 			"mysql",
 			"5.6",
-			[]*docker.DockerImageInfo{
+			[]*docker.ImageInfo{
 				{
 					Repository: "mysql",
 					Tag:        "5.6",
@@ -88,7 +88,7 @@ func TestDockerService_Images(t *testing.T) {
 			defer context.Close()
 			if assert.Nil(t, err) {
 				var target = useCase.target
-				serviceResponse := service.Run(context, &docker.DockerImagesRequest{
+				serviceResponse := service.Run(context, &docker.ImagesRequest{
 					Target:     target,
 					Tag:        useCase.Tag,
 					Repository: useCase.Repository,
@@ -96,7 +96,7 @@ func TestDockerService_Images(t *testing.T) {
 
 				var baseCase = useCase.baseDir + " " + useCase.Repository
 				assert.Equal(t, "", serviceResponse.Error, baseCase)
-				response, ok := serviceResponse.Response.(*docker.DockerImagesResponse)
+				response, ok := serviceResponse.Response.(*docker.ImagesResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -137,14 +137,14 @@ func TestDockerService_Run(t *testing.T) {
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir    string
-		Request    *docker.DockerRunRequest
-		Expected   *docker.DockerContainerInfo
+		Request    *docker.RunRequest
+		Expected   *docker.ContainerInfo
 		TargetName string
 		Error      string
 	}{
 		{
 			"test/run/existing/darwin",
-			&docker.DockerRunRequest{
+			&docker.RunRequest{
 				Target: target,
 				Image:  "mysql:5.6",
 				MappedPort: map[string]string{
@@ -160,7 +160,7 @@ func TestDockerService_Run(t *testing.T) {
 					"**mysql**": mySQLcredentialFile,
 				},
 			},
-			&docker.DockerContainerInfo{
+			&docker.ContainerInfo{
 				Status:      "up",
 				Names:       "testMysql",
 				ContainerID: "83ed7b545cbf",
@@ -170,7 +170,7 @@ func TestDockerService_Run(t *testing.T) {
 		},
 		{
 			"test/run/new/darwin",
-			&docker.DockerRunRequest{
+			&docker.RunRequest{
 
 				Target: target,
 				Image:  "mysql:5.6",
@@ -187,7 +187,7 @@ func TestDockerService_Run(t *testing.T) {
 					"**mysql**": mySQLcredentialFile,
 				},
 			},
-			&docker.DockerContainerInfo{
+			&docker.ContainerInfo{
 				Status:      "up",
 				Names:       "testMysql",
 				ContainerID: "98a28566ba7a",
@@ -197,7 +197,7 @@ func TestDockerService_Run(t *testing.T) {
 		},
 		{
 			"test/run/error/darwin",
-			&docker.DockerRunRequest{
+			&docker.RunRequest{
 				Target: target,
 				Image:  "mysql:5.6",
 				MappedPort: map[string]string{
@@ -213,13 +213,13 @@ func TestDockerService_Run(t *testing.T) {
 					"**mysql**": mySQLcredentialFile,
 				},
 			},
-			&docker.DockerContainerInfo{},
+			&docker.ContainerInfo{},
 			"testMysql01",
 			"error executing docker run --name testMysql01 -e MYSQL_ROOT_PASSWORD=**mysql** -v /tmp/my.cnf:/etc/my.cnf -p 3306:3306  -d mysql:5.6 , c3d9749a1dc43332bb5a58330187719d14c9c23cee55f583cb83bbb3bbb98a80\ndocker: Error response from daemon: driver failed programming external connectivity on endpoint testMysql01 (5c9925d698dfee79f14483fbc42a3837abfb482e30c70e53d830d3d9cfd6f0da): Error starting userland proxy: Bind for 0.0.0.0:3306 failed: port is already allocated.\n",
 		},
 		{
 			"test/run/active/darwin",
-			&docker.DockerRunRequest{
+			&docker.RunRequest{
 				Target: target,
 				Image:  "mysql:5.6",
 				MappedPort: map[string]string{
@@ -235,7 +235,7 @@ func TestDockerService_Run(t *testing.T) {
 					"**mysql**": mySQLcredentialFile,
 				},
 			},
-			&docker.DockerContainerInfo{
+			&docker.ContainerInfo{
 				Status:      "up",
 				Names:       "testMysql",
 				ContainerID: "84df38a810f7",
@@ -262,7 +262,7 @@ func TestDockerService_Run(t *testing.T) {
 
 				assert.True(t, strings.Contains(serviceResponse.Error, useCase.Error), baseCase)
 
-				actual, ok := serviceResponse.Response.(*docker.DockerRunResponse)
+				actual, ok := serviceResponse.Response.(*docker.RunResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -293,15 +293,15 @@ func TestDockerService_Command(t *testing.T) {
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir    string
-		Request    *docker.DockerContainerRunRequest
+		Request    *docker.ContainerRunRequest
 		Expected   string
 		TargetName string
 		Error      string
 	}{
 		{
 			"test/command/export/darwin",
-			&docker.DockerContainerRunRequest{
-				DockerContainerBaseRequest: &docker.DockerContainerBaseRequest{
+			&docker.ContainerRunRequest{
+				ContainerBaseRequest: &docker.ContainerBaseRequest{
 					Target: target,
 				},
 				Interactive:      true,
@@ -317,8 +317,8 @@ func TestDockerService_Command(t *testing.T) {
 		},
 		{
 			"test/command/import/darwin",
-			&docker.DockerContainerRunRequest{
-				DockerContainerBaseRequest: &docker.DockerContainerBaseRequest{
+			&docker.ContainerRunRequest{
+				ContainerBaseRequest: &docker.ContainerBaseRequest{
 					Target: target,
 				},
 				Interactive: true,
@@ -350,7 +350,7 @@ func TestDockerService_Command(t *testing.T) {
 				var baseCase = useCase.baseDir + " " + useCase.TargetName
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				actual, ok := serviceResponse.Response.(*docker.DockerContainerRunResponse)
+				actual, ok := serviceResponse.Response.(*docker.ContainerRunResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -373,18 +373,18 @@ func TestDockerService_Pull(t *testing.T) {
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir  string
-		Request  *docker.DockerPullRequest
-		Expected *docker.DockerImageInfo
+		Request  *docker.PullRequest
+		Expected *docker.ImageInfo
 		Error    string
 	}{
 		{
 			"test/pull/linux",
-			&docker.DockerPullRequest{
+			&docker.PullRequest{
 				Target:     target,
 				Repository: "mysql",
 				Tag:        "5.7",
 			},
-			&docker.DockerImageInfo{
+			&docker.ImageInfo{
 				Repository: "mysql",
 				Tag:        "5.7",
 				ImageID:    "5709795eeffa",
@@ -410,7 +410,7 @@ func TestDockerService_Pull(t *testing.T) {
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				actual, ok := serviceResponse.Response.(*docker.DockerPullResponse)
+				actual, ok := serviceResponse.Response.(*docker.PullResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -441,17 +441,17 @@ func TestDockerService_Status(t *testing.T) {
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir  string
-		Request  *docker.DockerContainerStatusRequest
-		Expected *docker.DockerContainerStatusResponse
+		Request  *docker.ContainerStatusRequest
+		Expected *docker.ContainerStatusResponse
 		Error    string
 	}{
 		{
 			"test/status/up/linux",
-			&docker.DockerContainerStatusRequest{
+			&docker.ContainerStatusRequest{
 				Target: target,
 			},
-			&docker.DockerContainerStatusResponse{
-				Containers: []*docker.DockerContainerInfo{
+			&docker.ContainerStatusResponse{
+				Containers: []*docker.ContainerInfo{
 					{
 						ContainerID: "b5bcc949f075",
 						Port:        "0.0.0.0:3306->3306/tcp",
@@ -482,7 +482,7 @@ func TestDockerService_Status(t *testing.T) {
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				response, ok := serviceResponse.Response.(*docker.DockerContainerStatusResponse)
+				response, ok := serviceResponse.Response.(*docker.ContainerStatusResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process resonse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -513,19 +513,19 @@ func TestDockerService_Start(t *testing.T) {
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir  string
-		Request  *docker.DockerContainerStartRequest
-		Expected *docker.DockerContainerInfo
+		Request  *docker.ContainerStartRequest
+		Expected *docker.ContainerInfo
 		Error    string
 	}{
 		{
 			"test/start/linux",
-			&docker.DockerContainerStartRequest{
-				DockerContainerBaseRequest: &docker.DockerContainerBaseRequest{
+			&docker.ContainerStartRequest{
+				ContainerBaseRequest: &docker.ContainerBaseRequest{
 					Target: target,
 					Name:   "db1",
 				},
 			},
-			&docker.DockerContainerInfo{
+			&docker.ContainerInfo{
 				ContainerID: "b5bcc949f075",
 				Port:        "0.0.0.0:3306->3306/tcp",
 				Command:     "docker-entrypoint...",
@@ -552,7 +552,7 @@ func TestDockerService_Start(t *testing.T) {
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				response, ok := serviceResponse.Response.(*docker.DockerContainerStartResponse)
+				response, ok := serviceResponse.Response.(*docker.ContainerStartResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -583,19 +583,19 @@ func TestDockerService_Stop(t *testing.T) {
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir  string
-		Request  *docker.DockerContainerStopRequest
-		Expected *docker.DockerContainerInfo
+		Request  *docker.ContainerStopRequest
+		Expected *docker.ContainerInfo
 		Error    string
 	}{
 		{
 			"test/stop/linux",
-			&docker.DockerContainerStopRequest{
-				DockerContainerBaseRequest: &docker.DockerContainerBaseRequest{
+			&docker.ContainerStopRequest{
+				ContainerBaseRequest: &docker.ContainerBaseRequest{
 					Target: target,
 					Name:   "db1",
 				},
 			},
-			&docker.DockerContainerInfo{
+			&docker.ContainerInfo{
 				ContainerID: "b5bcc949f075",
 				Port:        "0.0.0.0:3306->3306/tcp",
 				Command:     "docker-entrypoint...",
@@ -621,7 +621,7 @@ func TestDockerService_Stop(t *testing.T) {
 
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
-				response, ok := serviceResponse.Response.(*docker.DockerContainerStopResponse)
+				response, ok := serviceResponse.Response.(*docker.ContainerStopResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -649,14 +649,14 @@ func TestDockerService_Remove(t *testing.T) {
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir  string
-		Request  *docker.DockerContainerRemoveRequest
+		Request  *docker.ContainerRemoveRequest
 		Expected string
 		Error    string
 	}{
 		{
 			"test/remove/linux",
-			&docker.DockerContainerRemoveRequest{
-				DockerContainerBaseRequest: &docker.DockerContainerBaseRequest{
+			&docker.ContainerRemoveRequest{
+				ContainerBaseRequest: &docker.ContainerBaseRequest{
 					Target: target,
 					Name:   "db1",
 				},
@@ -681,7 +681,7 @@ func TestDockerService_Remove(t *testing.T) {
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				response, ok := serviceResponse.Response.(*docker.DockerContainerRemoveResponse)
+				response, ok := serviceResponse.Response.(*docker.ContainerRemoveResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -711,14 +711,14 @@ func TestDockerService_Login(t *testing.T) {
 	var manager = endly.NewManager()
 	var useCases = []struct {
 		baseDir          string
-		Request          *docker.DockerLoginRequest
+		Request          *docker.LoginRequest
 		ExpectedUserName string
 		ExpectedStdout   string
 		Error            bool
 	}{
 		{
 			"test/login/gcr_key/darwin",
-			&docker.DockerLoginRequest{
+			&docker.LoginRequest{
 
 				Target:     target,
 				Repository: "us.gcr.io/myproj",
@@ -730,7 +730,7 @@ func TestDockerService_Login(t *testing.T) {
 		},
 		//{
 		//	"test/login/gcr/darwin",
-		//	&docker.DockerLoginRequest{
+		//	&docker.LoginRequest{
 		//
 		//		Target:     target,
 		//		Repository: "us.gcr.io/myproj",
@@ -742,7 +742,7 @@ func TestDockerService_Login(t *testing.T) {
 		//},
 		{
 			"test/login/std/darwin",
-			&docker.DockerLoginRequest{
+			&docker.LoginRequest{
 
 				Target:     target,
 				Repository: "repo.com/myproj",
@@ -768,19 +768,19 @@ func TestDockerService_Login(t *testing.T) {
 
 				if useCase.Error {
 					assert.True(t, serviceResponse.Error != "")
-					serviceResponse = service.Run(context, &docker.DockerLogoutRequest{
+					serviceResponse = service.Run(context, &docker.LogoutRequest{
 						Target:     useCase.Request.Target,
 						Repository: useCase.Request.Repository,
 					})
 					continue
 				}
 				if assert.EqualValues(t, "", serviceResponse.Error, useCase.baseDir) {
-					response, ok := serviceResponse.Response.(*docker.DockerLoginResponse)
+					response, ok := serviceResponse.Response.(*docker.LoginResponse)
 					if assert.True(t, ok) {
 						assert.EqualValues(t, useCase.ExpectedUserName, response.Username)
 						assert.EqualValues(t, useCase.ExpectedStdout, response.Stdout)
 					}
-					serviceResponse = service.Run(context, &docker.DockerLogoutRequest{
+					serviceResponse = service.Run(context, &docker.LogoutRequest{
 						Target:     useCase.Request.Target,
 						Repository: useCase.Request.Repository,
 					})
@@ -808,9 +808,9 @@ func TestDockerService_Build(t *testing.T) {
 	defer context.Close()
 	service, _ := context.Service(docker.ServiceID)
 
-	response := service.Run(context, &docker.DockerBuildRequest{
+	response := service.Run(context, &docker.BuildRequest{
 		Target: target,
-		Tag: &docker.DockerTag{
+		Tag: &docker.Tag{
 			Username: "viant",
 			Image:    "site_profile_backup",
 			Version:  "0.1",
@@ -854,9 +854,9 @@ func TestDockerService_Push(t *testing.T) {
 		defer context.Close()
 		service, _ := context.Service(docker.ServiceID)
 
-		response := service.Run(context, &docker.DockerPushRequest{
+		response := service.Run(context, &docker.PushRequest{
 			Target: target,
-			Tag: &docker.DockerTag{
+			Tag: &docker.Tag{
 				Username: "viant",
 				Image:    "site_profile_backup",
 				Version:  "0.1",
@@ -885,14 +885,14 @@ func TestDockerService_Inspect(t *testing.T) {
 	}
 	defer context.Close()
 	service, _ := context.Service(docker.ServiceID)
-	serviceResponse := service.Run(context, &docker.DockerInspectRequest{
-		DockerContainerBaseRequest: &docker.DockerContainerBaseRequest{
+	serviceResponse := service.Run(context, &docker.ContainerInspectRequest{
+		ContainerBaseRequest: &docker.ContainerBaseRequest{
 			Target: target,
 			Name:   "site_backup",
 		},
 	})
 	assert.EqualValues(t, "", serviceResponse.Error)
-	response, ok := serviceResponse.Response.(*docker.DockerInspectResponse)
+	response, ok := serviceResponse.Response.(*docker.ContainerInspectResponse)
 	if assert.True(t, ok) {
 		if assert.True(t, response.Stdout != "") {
 			assert.NotNil(t, response.Info)
@@ -926,7 +926,7 @@ func TestDockerService_Inspect(t *testing.T) {
 //	fmt.Printf("%v\n", dockerCredentials)
 //
 //	target.Name = "site_backup"
-//	response := service.Run(context, &docker.DockerInspectRequest{
+//	response := service.Run(context, &docker.ContainerInspectRequest{
 //		Target:     target,
 //
 //	})
@@ -938,23 +938,23 @@ func TestDockerService_Inspect(t *testing.T) {
 
 func TestDockerLoginRequest_Validate(t *testing.T) {
 	{
-		request := &docker.DockerLoginRequest{}
+		request := &docker.LoginRequest{}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.DockerLoginRequest{
+		request := &docker.LoginRequest{
 			Target: url.NewResource("abc"),
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.DockerLoginRequest{
+		request := &docker.LoginRequest{
 			Repository: "abc",
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.DockerLoginRequest{
+		request := &docker.LoginRequest{
 			Repository: "abc",
 			Target:     url.NewResource("abc"),
 		}
@@ -964,33 +964,33 @@ func TestDockerLoginRequest_Validate(t *testing.T) {
 
 func Test_DockerBuildRequest_Validate(t *testing.T) {
 	{
-		request := docker.DockerBuildRequest{}
+		request := docker.BuildRequest{}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := docker.DockerBuildRequest{Target: url.NewResource("abc"), Tag: &docker.DockerTag{}}
+		request := docker.BuildRequest{Target: url.NewResource("abc"), Tag: &docker.Tag{}}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := docker.DockerBuildRequest{Target: url.NewResource("abc"),
+		request := docker.BuildRequest{Target: url.NewResource("abc"),
 			Arguments: map[string]string{
 				"-t": "image:1.0",
 			},
 			Path: "/",
-			Tag:  &docker.DockerTag{Image: "abc"}}
+			Tag:  &docker.Tag{Image: "abc"}}
 		assert.Nil(t, request.Validate())
 	}
 
 	{
-		request := docker.DockerBuildRequest{Target: url.NewResource("abc"),
+		request := docker.BuildRequest{Target: url.NewResource("abc"),
 			Path: "/",
-			Tag:  &docker.DockerTag{Image: "abc"}}
+			Tag:  &docker.Tag{Image: "abc"}}
 		assert.Nil(t, request.Validate())
 	}
 	{
-		request := docker.DockerBuildRequest{Target: url.NewResource("abc"),
+		request := docker.BuildRequest{Target: url.NewResource("abc"),
 
-			Tag: &docker.DockerTag{Image: "abc"}}
+			Tag: &docker.Tag{Image: "abc"}}
 		assert.NotNil(t, request.Validate())
 	}
 }
@@ -998,58 +998,58 @@ func Test_DockerBuildRequest_Validate(t *testing.T) {
 func TestDockerTag_Validate(t *testing.T) {
 
 	{
-		request := &docker.DockerTagRequest{}
+		request := &docker.TagRequest{}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.DockerTagRequest{
+		request := &docker.TagRequest{
 			Target: url.NewResource("abc"),
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.DockerTagRequest{
+		request := &docker.TagRequest{
 			Target:    url.NewResource("abc"),
-			SourceTag: &docker.DockerTag{},
+			SourceTag: &docker.Tag{},
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.DockerTagRequest{
+		request := &docker.TagRequest{
 			Target:    url.NewResource("abc"),
-			SourceTag: &docker.DockerTag{},
-			TargetTag: &docker.DockerTag{},
+			SourceTag: &docker.Tag{},
+			TargetTag: &docker.Tag{},
 		}
 		assert.NotNil(t, request.Validate())
 	}
 
 	{
-		request := &docker.DockerTagRequest{
+		request := &docker.TagRequest{
 			Target:    url.NewResource("abc"),
-			SourceTag: &docker.DockerTag{},
-			TargetTag: &docker.DockerTag{
+			SourceTag: &docker.Tag{},
+			TargetTag: &docker.Tag{
 				Image: "abc",
 			},
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.DockerTagRequest{
+		request := &docker.TagRequest{
 			Target: url.NewResource("abc"),
-			SourceTag: &docker.DockerTag{
+			SourceTag: &docker.Tag{
 				Image: "abc",
 			},
-			TargetTag: &docker.DockerTag{},
+			TargetTag: &docker.Tag{},
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.DockerTagRequest{
+		request := &docker.TagRequest{
 			Target: url.NewResource("abc"),
-			SourceTag: &docker.DockerTag{
+			SourceTag: &docker.Tag{
 				Image: "abc",
 			},
-			TargetTag: &docker.DockerTag{
+			TargetTag: &docker.Tag{
 				Image: "abc",
 			},
 		}
@@ -1060,20 +1060,20 @@ func TestDockerTag_Validate(t *testing.T) {
 
 func TestDockerTag_String(t *testing.T) {
 	{
-		tag := &docker.DockerTag{
+		tag := &docker.Tag{
 			Image: "abc",
 		}
 		assert.EqualValues(t, "abc", tag.String())
 	}
 	{
-		tag := &docker.DockerTag{
+		tag := &docker.Tag{
 			Image:   "abc",
 			Version: "latest",
 		}
 		assert.EqualValues(t, "abc:latest", tag.String())
 	}
 	{
-		tag := &docker.DockerTag{
+		tag := &docker.Tag{
 			Registry: "reg.org",
 			Image:    "abc",
 			Version:  "latest",
@@ -1081,7 +1081,7 @@ func TestDockerTag_String(t *testing.T) {
 		assert.EqualValues(t, "reg.org/abc:latest", tag.String())
 	}
 	{
-		tag := &docker.DockerTag{
+		tag := &docker.Tag{
 			Username: "reg.org",
 			Image:    "abc",
 			Version:  "latest",

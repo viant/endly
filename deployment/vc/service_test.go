@@ -71,7 +71,7 @@ func TestVc_Status(t *testing.T) {
 				}
 				var expected = useCase.Expected
 				assert.Equal(t, expected.Untracked, actual.Untracked, "Untracked "+baseCase)
-				assert.Equal(t, expected.New, actual.New, "NewCriteria "+baseCase)
+				assert.Equal(t, expected.New, actual.New, "New "+baseCase)
 				assert.Equal(t, expected.Modified, actual.Modified, "Modified "+baseCase)
 				assert.Equal(t, expected.Deleted, actual.Deleted, "Deleted "+baseCase)
 				assert.Equal(t, expected.IsVersionControlManaged, actual.IsVersionControlManaged, "IsVersionControlManaged "+baseCase)

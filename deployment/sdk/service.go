@@ -172,7 +172,7 @@ func (s *systemSdkService) registerRoutes() {
 
 }
 
-//NewCriteria creates a new  sdk service.
+//New creates a new  sdk service.
 func New() endly.Service {
 	var result = &systemSdkService{
 		jdkService:      &jdkService{},
