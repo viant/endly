@@ -13,19 +13,31 @@ import (
 	"flag"
 	"fmt"
 	"github.com/viant/endly"
+	_ "github.com/viant/endly/cloud/ec2"
+	_ "github.com/viant/endly/cloud/gce"
+	_ "github.com/viant/endly/deployment/vc"
+	_ "github.com/viant/endly/endpoint/http"
+	_ "github.com/viant/endly/system/daemon"
+	_ "github.com/viant/endly/system/docker"
+	_ "github.com/viant/endly/system/exec"
+	_ "github.com/viant/endly/system/process"
+	_ "github.com/viant/endly/system/storage"
+	_ "github.com/viant/endly/testing/dsunit"
+
+	"bufio"
+	"errors"
+	"github.com/viant/endly/cli"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/url"
+	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/yaml.v2"
 	"log"
 	"os"
 	"path"
 	"strings"
-	"time"
-	"github.com/viant/toolbox/cred"
-	"bufio"
-	"golang.org/x/crypto/ssh/terminal"
 	"syscall"
-	"errors"
+	"time"
 )
 
 func init() {
@@ -46,7 +58,7 @@ func init() {
 	flag.String("a", "", "<action> prints action request representation")
 	flag.String("i", "", "<coma separated tagID list> to filter")
 	flag.String("c", "", "<credential>, generate secret credentials file: ~/.secret/<credential>.json")
-	flag.String("k", "", "<private key path>,  works only with -c options, i.e -k=" + path.Join(os.Getenv("HOME"), ".secret/id_rsa.pub"))
+	flag.String("k", "", "<private key path>,  works only with -c options, i.e -k="+path.Join(os.Getenv("HOME"), ".secret/id_rsa.pub"))
 
 }
 
@@ -111,14 +123,13 @@ func Bootstrap() {
 		return
 	}
 
-	runner := endly.NewCliRunner()
+	runner := cli.New()
 	err = runner.Run(request, option)
 	if err != nil {
 		log.Fatal(err)
 	}
 	time.Sleep(time.Second)
 }
-
 
 func generateSecret(credentialsFile string) {
 	secretPath := path.Join(os.Getenv("HOME"), ".secret")
@@ -170,8 +181,6 @@ func credentials() (string, string, error) {
 	return strings.TrimSpace(username), strings.TrimSpace(password), nil
 }
 
-
-
 func printWorkflowTasks(URL string) {
 	workflow, err := getWorkflow(URL)
 	if err != nil {
@@ -183,7 +192,7 @@ func printWorkflowTasks(URL string) {
 	}
 }
 
-func printServiceActionInfo(renderer *endly.Renderer, info *endly.ActionInfo, color, infoType string, empty interface{}) {
+func printServiceActionInfo(renderer *cli.Renderer, info *endly.ActionInfo, color, infoType string, empty interface{}) {
 	if info != nil {
 		if info.Description != "" {
 			renderer.Printf(renderer.ColorText("Description: ", color, "bold")+" %v\n", info.Description)
@@ -218,7 +227,7 @@ func structMetaToArray(meta *toolbox.StructMeta) ([]string, [][]string) {
 
 }
 
-func printStructMeta(renderer *endly.Renderer, color string, meta *toolbox.StructMeta) {
+func printStructMeta(renderer *cli.Renderer, color string, meta *toolbox.StructMeta) {
 	header, data := structMetaToArray(meta)
 	renderer.PrintTable(renderer.ColorText(meta.Type, color), header, data, 110)
 	if len(meta.Dependencies) == 0 {
@@ -240,7 +249,7 @@ func printServiceActionRequest() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var renderer = endly.NewRenderer(os.Stderr, 120)
+	var renderer = cli.NewRenderer(os.Stderr, 120)
 	renderer.Println(renderer.ColorText("Request: ", "blue", "bold") + fmt.Sprintf("%T", meta.Request))
 	printServiceActionInfo(renderer, meta.RequestInfo, "blue", "request", meta.Request)
 	printStructMeta(renderer, "blue", meta.RequestMeta)
@@ -275,7 +284,7 @@ func printServiceActions() {
 }
 
 func getWorkflow(URL string) (*endly.Workflow, error) {
-	dao := endly.NewWorkflowDao()
+	dao := endly.NewDao()
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
 	return dao.Load(context, url.NewResource(URL))
@@ -327,7 +336,7 @@ func getRunRequestURL(candidate string) (*url.Resource, error) {
 	}
 	resource := url.NewResource(candidate)
 	if _, err := resource.Download(); err != nil {
-		resource = url.NewResource(fmt.Sprintf("mem://%v/req/%v", endly.EndlyNamespace, candidate))
+		resource = url.NewResource(fmt.Sprintf("mem://%v/req/%v", endly.Namespace, candidate))
 		if _, memError := resource.Download(); memError != nil {
 			return nil, err
 		}
@@ -336,19 +345,19 @@ func getRunRequestURL(candidate string) (*url.Resource, error) {
 
 }
 
-func getRunRequestWithOptions(flagset map[string]string) (*endly.WorkflowRunRequest, *endly.RunnerReportingOptions, error) {
-	var request *endly.WorkflowRunRequest
-	var options = &endly.RunnerReportingOptions{}
+func getRunRequestWithOptions(flagset map[string]string) (*endly.RunRequest, *cli.RunnerReportingOptions, error) {
+	var request *endly.RunRequest
+	var options = &cli.RunnerReportingOptions{}
 	if value, ok := flagset["w"]; ok {
-		request = &endly.WorkflowRunRequest{
+		request = &endly.RunRequest{
 			WorkflowURL: value,
 		}
-		options = endly.DefaultRunnerReportingOption()
+		options = cli.DefaultRunnerReportingOption()
 	}
 	if value, ok := flagset["r"]; ok {
 		resource, err := getRunRequestURL(value)
 		if err == nil {
-			request = &endly.WorkflowRunRequest{}
+			request = &endly.RunRequest{}
 			err = resource.JSONDecode(request)
 		}
 		if request.WorkflowURL == "" {
@@ -361,11 +370,11 @@ func getRunRequestWithOptions(flagset map[string]string) (*endly.WorkflowRunRequ
 		}
 		resource.JSONDecode(options)
 		if options.Filter == nil {
-			options.Filter = endly.DefaultRunnerReportingOption().Filter
+			options.Filter = cli.DefaultRunnerReportingOption().Filter
 		}
 	}
 
-	var params = endly.Pairs(getArguments()...)
+	var params = toolbox.Pairs(getArguments()...)
 
 	if request != nil {
 		if len(request.Params) == 0 {

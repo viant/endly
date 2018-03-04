@@ -2,31 +2,80 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/toolbox"
 	"reflect"
+	"strings"
 	"sync"
 	"time"
 )
 
-const (
-	//All logging level.
-	All = iota
-	//Fatal logging level
-	Fatal
-	//Info logging level
-	Info
-	//Debug logging level
-	Debug
-)
+//EventListener represents an event listener
+type EventListener func(event *Event)
 
-//SleepEventType represents a Sleep
-type SleepEventType struct {
+//Event represents a workflow event
+type Event struct {
+	Timestamp  time.Time
+	StartEvent *Event    //starting event
+	Activity   *Activity //Activity details
+	Value      interface{}
+}
+
+func (e *Event) Get(expectedType reflect.Type) interface{} {
+	if e.Value == nil {
+		return nil
+	}
+	if reflect.TypeOf(e.Value) == expectedType {
+		return e.Value
+	}
+	if serviceResponse, ok := e.Value.(*ServiceResponse); ok && serviceResponse != nil {
+		if reflect.TypeOf(serviceResponse.Response) == expectedType {
+			return serviceResponse.Response
+		}
+
+	}
+	return nil
+}
+
+func (e *Event) Type() string {
+	if e.Value == nil {
+		return fmt.Sprintf("%T", e.Value)
+	}
+	var eventType = reflect.TypeOf(e.Value)
+	var fullname = eventType.Name()
+	var fragments = strings.Split(fullname, ".")
+	if len(fragments) > 2 {
+		fragments = fragments[len(fragments)-2:]
+	}
+	return strings.Join(fragments, "_")
+}
+
+//NewEvent creates a new event
+func NewEvent(value interface{}) *Event {
+	return &Event{
+		Timestamp: time.Now(),
+		Value:     value,
+	}
+}
+
+//SleepEvent represents a Sleep
+type SleepEvent struct {
 	SleepTimeMs int
 }
 
-//ErrorEventType represents a Sleep
-type ErrorEventType struct {
+//NewSleepEvent create a new sleep event
+func NewSleepEvent(sleepTimeMs int) *SleepEvent {
+	return &SleepEvent{SleepTimeMs: sleepTimeMs}
+}
+
+//ErrorEvent represents a Sleep
+type ErrorEvent struct {
 	Error string
+}
+
+//NewErrorEvent creates a new error event
+func NewErrorEvent(message string) *ErrorEvent {
+	return &ErrorEvent{
+		Error: message,
+	}
 }
 
 //Events represents sychronized slice of Events
@@ -57,100 +106,20 @@ func (e *Events) Shift() *Event {
 	return result
 }
 
-//Event represents a workflow event
-type Event struct {
-	StartEvent  *Event                   //starting event
-	Timestamp   time.Time                //start time
-	TimeTakenMs int                      //time taken
-	Workflow    string                   //workflow ID
-	Task        *WorkflowTask            //task
-	Activity    *WorkflowServiceActivity //Activity details
-	Level       int                      //logging level
-	Type        string                   //event type
-	Value       map[string]interface{}   //event value
+//AsEventListener adds listener
+func (e *Events) AsEventListener() EventListener {
+	return func(event *Event) {
+		e.Push(event)
+	}
 }
 
-//Output returns basic event info
-func (e *Event) Output() string {
-	var name = ""
-	if value, ok := e.Value["ID"]; ok {
-		name = toolbox.AsString(value)
-	}
-	return fmt.Sprintf("%v", name)
-}
-
-//ElapsedInfo returns elapsed info if time taken is present
-func (e *Event) ElapsedInfo() string {
-	if e.TimeTakenMs == 0 {
-		return ""
-	}
-	return fmt.Sprintf("%v ms", e.TimeTakenMs)
-}
-
-func (e *Event) filterByType(candidate interface{}, expectedType reflect.Type) interface{} {
-	if reflect.TypeOf(candidate) == expectedType {
-		return candidate
-	}
-	switch casted := candidate.(type) {
-	case *ServiceResponse:
-		if casted.Response != nil {
-			result := e.filterByType(casted.Response, expectedType)
-			if result != nil {
-				return result
-			}
+//Drains removes all events from struct to publish to context
+func (e *Events) Drain(context *Context) {
+	for i := 0; i < len(e.Events); i++ {
+		event := e.Shift()
+		if event == nil {
+			return
 		}
+		context.Publish(event)
 	}
-	return nil
-}
-
-func (e *Event) get(expectedType reflect.Type) interface{} {
-	for _, value := range e.Value {
-		result := e.filterByType(value, expectedType)
-		if result != nil {
-			return result
-		}
-	}
-	return nil
-}
-
-//AddEvent add an event to the current context
-func AddEvent(context *Context, eventType interface{}, value map[string]interface{}, level ...int) *Event {
-	if len(level) == 0 {
-		level = []int{Info}
-	}
-	if !toolbox.IsString(eventType) {
-		eventType = getSimpleTypeName(eventType)
-	}
-	var workflow = context.Workflows.Last()
-	var workflowName = ""
-	if workflow != nil {
-		workflowName = workflow.Name
-	}
-	state := context.state
-	var activity *WorkflowServiceActivity
-	var task *WorkflowTask
-	if state.Has("Activity") {
-		activity, _ = state.Get("Activity").(*WorkflowServiceActivity)
-	}
-	if state.Has("task") {
-		task, _ = state.Get(":task").(*WorkflowTask)
-	}
-	var event = &Event{
-		Timestamp: time.Now(),
-		Workflow:  workflowName,
-		Task:      task,
-		Activity:  activity,
-		Type:      toolbox.AsString(eventType),
-		Level:     level[0],
-		Value:     value,
-	}
-	context.Events.Push(event)
-
-	if context.EventLogger != nil {
-		err := context.EventLogger.Log(event)
-		if err != nil {
-			fmt.Printf("failed to log event: %v\n", err)
-		}
-	}
-	return event
 }

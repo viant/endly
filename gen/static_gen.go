@@ -15,25 +15,25 @@ func main() {
 	mappings := []*storage.StorageMapping{
 		{
 			SourceURL:      toolbox.FileSchema + path.Join(parent, "meta"),
-			DestinationURI: path.Join(endly.EndlyNamespace, "meta"),
+			DestinationURI: path.Join(endly.Namespace, "meta"),
 			TargetFile:     path.Join(parent, "static", "meta.go"),
 			TargetPackage:  "static",
 		},
 		{
-			SourceURL:      toolbox.FileSchema + path.Join(parent, "workflow"),
-			DestinationURI: path.Join(endly.EndlyNamespace, "workflow"),
+			SourceURL:      toolbox.FileSchema + path.Join(parent, "shared/workflow"),
+			DestinationURI: path.Join(endly.Namespace, "workflow"),
 			TargetFile:     path.Join(parent, "static", "workflow.go"),
 			TargetPackage:  "static",
 		},
 		{
-			SourceURL:      toolbox.FileSchema + path.Join(parent, "req"),
-			DestinationURI: path.Join(endly.EndlyNamespace, "req"),
+			SourceURL:      toolbox.FileSchema + path.Join(parent, "shared/req"),
+			DestinationURI: path.Join(endly.Namespace, "req"),
 			TargetFile:     path.Join(parent, "static", "req.go"),
 			TargetPackage:  "static",
 		},
 		{
 			SourceURL:      toolbox.FileSchema + path.Join(parent, "Version"),
-			DestinationURI: path.Join(endly.EndlyNamespace, "Version"),
+			DestinationURI: path.Join(endly.Namespace, "Version"),
 			TargetFile:     path.Join(parent, "static", "version.go"),
 			TargetPackage:  "static",
 		},

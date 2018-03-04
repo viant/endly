@@ -56,9 +56,8 @@ func (s *OperatingSystem) Matches(target *OperatingSystemTarget) bool {
 
 //SystemPath represents a system path
 type SystemPath struct {
-	index      map[string]bool
-	SystemPath []string
-	Path       []string
+	index map[string]bool
+	Items []string
 }
 
 //Push appends path to the system paths
@@ -70,15 +69,21 @@ func (p *SystemPath) Push(paths ...string) {
 		if _, has := p.index[path]; has {
 			return
 		}
-		p.Path = append(p.Path, path)
+		p.Items = append(p.Items, path)
 		p.index[path] = true
+	}
+}
+
+func NewSystemPath(items ...string) *SystemPath {
+	return &SystemPath{
+		index: make(map[string]bool),
+		Items: items,
 	}
 }
 
 //EnvValue returns evn values
 func (p *SystemPath) EnvValue() string {
-	var directories = append(p.Path, p.SystemPath...)
-	return strings.Join(directories, ":")
+	return strings.Join(p.Items, ":")
 }
 
 //OperatingSystemTarget represents operating system target
