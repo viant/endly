@@ -90,7 +90,7 @@ Neatly is responsible for converting a tabular document (.csv) into workflow obj
 ![Workflow diagram](workflow_diagram.png)
 
 
-See more about [workflow and its lifecycle](docs)
+See more about [workflow and its lifecycle](doc)
 
 A workflow actions invoke endly [services](#Services) to accomplish specific job.
 
