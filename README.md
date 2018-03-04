@@ -88,8 +88,9 @@ It uses tabular [Neatly](https://github.com/viant/neatly) format to represent a 
 Neatly is responsible for converting a tabular document (.csv) into workflow object tree as shown below.
 
 ![Workflow diagram](workflow_diagram.png)
-See more about [workflow and its lifecycle](docs)
 
+
+See more about [workflow and its lifecycle](docs)
 
 A workflow actions invoke endly [services](#Services) to accomplish specific job.
 
