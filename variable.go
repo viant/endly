@@ -149,3 +149,24 @@ func (v Variables) String() string {
 	}
 	return result
 }
+
+type ModifiedStateEvent struct {
+	Variables Variables
+	In        map[string]interface{}
+	Modified  map[string]interface{}
+}
+
+func NewModifiedStateEvent(variables Variables, in, out data.Map) *ModifiedStateEvent {
+	var result = &ModifiedStateEvent{
+		Variables: variables,
+		In:        make(map[string]interface{}),
+		Modified:  make(map[string]interface{}),
+	}
+	for _, variable := range variables {
+		from := data.ExtractPath(variable.From)
+		result.In[from], _ = in.GetValue(from)
+		name := data.ExtractPath(variable.Name)
+		result.Modified[name], _ = out.GetValue(name)
+	}
+	return result
+}

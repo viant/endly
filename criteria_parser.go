@@ -37,10 +37,10 @@ var matchers = map[int]toolbox.Matcher{
 	assertlyExprMatcher: toolbox.NewSequenceMatcher("&&", "||", "("),
 }
 
-//CriteriaParser represents endly criteria parser
-type CriteriaParser struct{}
+//Parser represents endly criteria parser
+type Parser struct{}
 
-func (p *CriteriaParser) expectOptionalWhitespaceFollowedBy(tokenizer *toolbox.Tokenizer, expectedTokensMessage string, expected ...int) (*toolbox.Token, error) {
+func (p *Parser) expectOptionalWhitespaceFollowedBy(tokenizer *toolbox.Tokenizer, expectedTokensMessage string, expected ...int) (*toolbox.Token, error) {
 	var expectedTokens = make([]int, 0)
 	expectedTokens = append(expectedTokens, whitespaces)
 	expectedTokens = append(expectedTokens, expected...)
@@ -66,7 +66,7 @@ func (p *CriteriaParser) expectOptionalWhitespaceFollowedBy(tokenizer *toolbox.T
 	return token, nil
 }
 
-func (p *CriteriaParser) Parse(expression string) (*Criteria, error) {
+func (p *Parser) Parse(expression string) (*Criteria, error) {
 	result := NewCriteria("")
 	tokenizer := toolbox.NewTokenizer(expression, illegal, eof, matchers)
 	var criterion *Criterion
@@ -147,9 +147,9 @@ outer:
 	return result, nil
 }
 
-//NewCriteriaParser creates a new endly criteria parser
-func NewCriteriaParser() *CriteriaParser {
-	return &CriteriaParser{}
+//NewCriteriaParser creates a new criteria parser
+func NewCriteriaParser() *Parser {
+	return &Parser{}
 }
 
 type illegalTokenParsingError struct {

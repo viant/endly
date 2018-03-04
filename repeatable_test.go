@@ -8,6 +8,13 @@ import (
 	"testing"
 )
 
+func GetAbstractService() *endly.AbstractService {
+	manager := endly.NewManager()
+	service, _ := manager.Service(endly.ServiceID)
+	nopService := service.(*endly.WorkflowService)
+	return nopService.AbstractService
+}
+
 func TestRepeatable_Run(t *testing.T) {
 	var abstractService = GetAbstractService()
 

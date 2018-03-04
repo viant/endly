@@ -4,7 +4,7 @@
     "DriverName": "sqlite3",
     "Descriptor": "[url]",
     "Parameters":{
-      "url":"/tmp/endly/test/workflow/dsunit/mydb1"
+      "url":"/tmp/mydb1"
     }
   }
 }

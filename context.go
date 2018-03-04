@@ -21,19 +21,51 @@ var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
 
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
-var workflowKey = (*Workflow)(nil)
+var WorkflowKey = (*Workflow)(nil)
 
 //Context represents a workflow session context/state
 type Context struct {
 	SessionID  string
-	cliRunnner bool
+	CLIEnabled bool
+	Wait       *sync.WaitGroup
+	listener   EventListener
+	Workflows  *Workflows
 	state      data.Map
 	toolbox.Context
-	Events      *Events
-	EventLogger *EventLogger
-	Workflows   *Workflows
-	cloned      []*Context
-	closed      int32
+	cloned []*Context
+	closed int32
+}
+
+func (c *Context) Publish(value interface{}) *Event {
+	var workflow = c.Workflows.Last()
+	var workflowName = ""
+	if workflow != nil {
+		workflowName = workflow.Name
+	}
+	state := c.state
+	var activity = &Activity{
+		Workflow: workflowName,
+	}
+	if state.Has(TaskKey) {
+		task := state.GetString(TaskKey)
+		activity.Task = task
+	}
+	if state.Has(ActivityKey) {
+		activity, _ = state.Get(ActivityKey).(*Activity)
+	}
+	var event = &Event{
+		Timestamp: time.Now(),
+		Activity:  activity,
+		Value:     value,
+	}
+	if c.listener != nil {
+		c.listener(event)
+	}
+	return event
+}
+
+func (c *Context) SetListener(listener EventListener) {
+	c.listener = listener
 }
 
 //IsClosed returns true if it is closed.
@@ -52,13 +84,13 @@ func (c *Context) Clone() *Context {
 		c.cloned = make([]*Context, 0)
 	}
 	result := &Context{}
+	result.Wait = &sync.WaitGroup{}
 	result.Context = c.Context.Clone()
-	result.Events = c.Events
 	result.state = NewDefaultState()
 	result.state.Apply(c.state)
 	result.SessionID = c.SessionID
 	result.Workflows = c.Workflows
-	result.EventLogger = c.EventLogger
+	result.listener = c.listener
 	c.cloned = append(c.cloned, result)
 	return result
 }
@@ -83,7 +115,7 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 		return nil, reportError(fmt.Errorf("resource  was empty"))
 	}
 	if resource.URL == "" {
-		return nil, reportError(fmt.Errorf("URL was empty"))
+		return nil, reportError(fmt.Errorf("url was empty"))
 	}
 
 	if !strings.Contains(resource.URL, "://") {
@@ -129,19 +161,6 @@ func (c *Context) TerminalSessions() SystemTerminalSessions {
 	return *result
 }
 
-//SeleniumSessions returns client sessions
-func (c *Context) SeleniumSessions() SeleniumSessions {
-	var result *SeleniumSessions
-	if !c.Contains(seleniumSessionsKey) {
-		var sessions SeleniumSessions = make(map[string]*SeleniumSession)
-		result = &sessions
-		_ = c.Put(seleniumSessionsKey, result)
-	} else {
-		c.GetInto(seleniumSessionsKey, &result)
-	}
-	return *result
-}
-
 //Service returns a service fo provided id or error.
 func (c *Context) Service(name string) (Service, error) {
 	manager, err := c.Manager()
@@ -183,10 +202,10 @@ func (c *Context) SetState(state data.Map) {
 //Workflow returns the master workflow
 func (c *Context) Workflow() *Workflow {
 	var result *Workflow
-	if !c.Contains(workflowKey) {
+	if !c.Contains(WorkflowKey) {
 		return nil
 	}
-	c.GetInto(workflowKey, &result)
+	c.GetInto(WorkflowKey, &result)
 	return result
 }
 
@@ -198,110 +217,6 @@ func (c *Context) OperatingSystem(sessionName string) *OperatingSystem {
 		return session.OperatingSystem
 	}
 	return nil
-}
-
-//ExecuteAsSuperUser executes provided command as super user.
-func (c *Context) ExecuteAsSuperUser(target *url.Resource, command *ExtractableCommand) (*CommandResponse, error) {
-	superUserRequest := SuperUserCommandRequest{
-		Target:        target,
-		MangedCommand: command,
-	}
-	request, err := superUserRequest.AsCommandRequest(c)
-	if err != nil {
-		return nil, err
-	}
-	return c.Execute(target, request.ExtractableCommand)
-}
-
-//TerminalSession returns SystemTerminalSession for passed in target resource.
-func (c *Context) TerminalSession(target *url.Resource) (*SystemTerminalSession, error) {
-	sessions := c.TerminalSessions()
-	execService, err := c.Service(ExecServiceID)
-	if err != nil {
-		return nil, err
-	}
-	if !sessions.Has(target.Host()) {
-		response := execService.Run(c, &OpenSessionRequest{
-			Target: target,
-		})
-		if response.err != nil {
-			return nil, response.err
-		}
-	}
-	return sessions[target.Host()], nil
-}
-
-//Execute execute shell command
-func (c *Context) Execute(target *url.Resource, command interface{}) (*CommandResponse, error) {
-	if command == nil {
-		return nil, nil
-	}
-	var err error
-	var commandRequest *ExtractableCommandRequest
-	switch actualCommand := command.(type) {
-	case *SuperUserCommandRequest:
-		actualCommand.Target = target
-		commandRequest, err = actualCommand.AsCommandRequest(c)
-		if err != nil {
-			return nil, err
-		}
-	case *CommandRequest:
-		actualCommand.Target = target
-		commandRequest = actualCommand.AsExtractableCommandRequest()
-	case *ExtractableCommand:
-		commandRequest = NewExtractableCommandRequest(target, actualCommand)
-	case string:
-		request := CommandRequest{
-			Target:   target,
-			Commands: []string{actualCommand},
-		}
-		commandRequest = request.AsExtractableCommandRequest()
-	case []string:
-		request := CommandRequest{
-			Target:   target,
-			Commands: actualCommand,
-		}
-		commandRequest = request.AsExtractableCommandRequest()
-
-	default:
-		return nil, fmt.Errorf("unsupported command: %T", command)
-	}
-	execService, err := c.Service(ExecServiceID)
-	if err != nil {
-		return nil, err
-	}
-	response := execService.Run(c, commandRequest)
-	if response.err != nil {
-		return nil, response.err
-	}
-	if commandResult, ok := response.Response.(*CommandResponse); ok {
-		return commandResult, nil
-	}
-	return nil, nil
-}
-
-//Copy transfer source into target url, it takes also exand flag to indicate variable substitution.
-func (c *Context) Copy(expand bool, source, target *url.Resource) (interface{}, error) {
-	return c.Transfer([]*Transfer{{
-		Source: source,
-		Target: target,
-		Expand: expand}}...)
-}
-
-//Transfer transfer data for provided transfer definition.
-func (c *Context) Transfer(transfers ...*Transfer) (interface{}, error) {
-	if transfers == nil {
-		return nil, nil
-	}
-	transferService, err := c.Service(TransferServiceID)
-	if err != nil {
-		return nil, err
-	}
-	response := transferService.Run(c, &StorageCopyRequest{Transfers: transfers})
-	if response.err != nil {
-		return nil, response.err
-	}
-	return nil, nil
 }
 
 //Expand substitute $ expression if present in the text and state map.
@@ -349,14 +264,14 @@ func (c *Context) Close() {
 }
 
 //MakeAsyncSafe makes this contex async safe
-func (c *Context) MakeAsyncSafe() {
-	c.Context.Remove(seleniumSessionsKey)
+func (c *Context) MakeAsyncSafe() *Events {
 	c.Context.Remove(systemTerminalSessionsKey)
-	c.Events = &Events{
+	result := &Events{
 		mutex:  &sync.Mutex{},
 		Events: make([]*Event, 0),
 	}
-	c.EventLogger = nil
+	c.listener = result.AsEventListener()
+	return result
 }
 
 /*
@@ -371,7 +286,7 @@ It comes with the following registered keys:
 	* timestamp.tomorrow - timestamp in ms
 	* tmpDir - temp directory
 	* uuid.next - generate unique id
-	* uuid.get - returns previously generated unique id, or generate new
+	* uuid.Get - returns previously generated unique id, or generate new
 	*.end.XXX where XXX is the ID of the env variable to return
 	* all UFD registry functions
 */
