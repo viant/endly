@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+//TransformWithUDF transform payload with provided UDF name.
 func TransformWithUDF(context *Context, udfName, source string, payload interface{}) (interface{}, error) {
 	var state = context.State()
 	var udf, has = UdfRegistry[udfName]

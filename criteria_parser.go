@@ -66,6 +66,7 @@ func (p *Parser) expectOptionalWhitespaceFollowedBy(tokenizer *toolbox.Tokenizer
 	return token, nil
 }
 
+//Parse parses supplied expression. It returns criteria or parsing error.
 func (p *Parser) Parse(expression string) (*Criteria, error) {
 	result := NewCriteria("")
 	tokenizer := toolbox.NewTokenizer(expression, illegal, eof, matchers)

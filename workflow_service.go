@@ -31,6 +31,7 @@ const (
 	caller = "Workflow"
 )
 
+//WorkflowService represents a workflow service.
 type WorkflowService struct {
 	*AbstractService
 	Dao       *Dao
@@ -48,6 +49,7 @@ func (s *WorkflowService) registerWorkflow(request *RegisterRequest) (*RegisterR
 	return response, nil
 }
 
+//Register register workflow.
 func (s *WorkflowService) Register(workflow *Workflow) error {
 	err := workflow.Validate()
 	if err != nil {
@@ -57,11 +59,13 @@ func (s *WorkflowService) Register(workflow *Workflow) error {
 	return nil
 }
 
+//HasWorkflow returns true if service has registered workflow.
 func (s *WorkflowService) HasWorkflow(name string) bool {
 	_, found := s.registry[name]
 	return found
 }
 
+//Workflow returns a workflow for supplied name.
 func (s *WorkflowService) Workflow(name string) (*Workflow, error) {
 	s.Lock()
 	defer s.Unlock()
@@ -130,7 +134,7 @@ func (s *WorkflowService) getServiceRequest(context *Context, activity *Activity
 	return service, serviceRequest, nil
 }
 
-func (s *WorkflowService) runAction(context *Context, action *ServiceAction, workflow *Control) (response interface{}, err error) {
+func (s *WorkflowService) runAction(context *Context, action *ServiceAction, workflow *WorkflowRun) (response interface{}, err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("%v: %v", action.TagID, err)
@@ -188,7 +192,7 @@ func (s *WorkflowService) runAction(context *Context, action *ServiceAction, wor
 	return response, err
 }
 
-func (s *WorkflowService) injectTagIdsIdNeeded(action *ActionRequest, tagIDs map[string]bool) {
+func (s *WorkflowService) injectTagIDsIfNeeded(action *ActionRequest, tagIDs map[string]bool) {
 	if action.Service != "workflow" || action.Action != "run" {
 		return
 	}
@@ -196,7 +200,7 @@ func (s *WorkflowService) injectTagIdsIdNeeded(action *ActionRequest, tagIDs map
 	requestMap["TagIDs"] = strings.Join(toolbox.MapKeysToStringSlice(tagIDs), ",")
 }
 
-func (s *WorkflowService) runTask(context *Context, workflow *Control, tagIDs map[string]bool, task *WorkflowTask) (data.Map, error) {
+func (s *WorkflowService) runTask(context *Context, workflow *WorkflowRun, tagIDs map[string]bool, task *WorkflowTask) (data.Map, error) {
 	if !workflow.CanRun() {
 		return nil, nil
 	}
@@ -226,7 +230,7 @@ func (s *WorkflowService) runTask(context *Context, workflow *Control, tagIDs ma
 	for i := 0; i < len(task.Actions); i++ {
 		action := task.Actions[i]
 		if hasTagIDs {
-			s.injectTagIdsIdNeeded(action.ActionRequest, tagIDs)
+			s.injectTagIDsIfNeeded(action.ActionRequest, tagIDs)
 		}
 
 		if filterTagIDs && !tagIDs[action.TagID] {
@@ -283,7 +287,7 @@ func (s *WorkflowService) applyRemainingTaskSpentIfNeeded(context *Context, task
 	}
 }
 
-func (s *WorkflowService) runAsyncAction(parent, context *Context, workflow *Control, action *ServiceAction, group *sync.WaitGroup) error {
+func (s *WorkflowService) runAsyncAction(parent, context *Context, workflow *WorkflowRun, action *ServiceAction, group *sync.WaitGroup) error {
 	defer group.Done()
 	events := context.MakeAsyncSafe()
 	defer events.Drain(parent)
@@ -303,7 +307,7 @@ func (s *WorkflowService) runAsyncAction(parent, context *Context, workflow *Con
 	return nil
 }
 
-func (s *WorkflowService) runAsyncActions(context *Context, workflow *Control, task *WorkflowTask, asyncAction []*ServiceAction) error {
+func (s *WorkflowService) runAsyncActions(context *Context, workflow *WorkflowRun, task *WorkflowTask, asyncAction []*ServiceAction) error {
 	if len(asyncAction) > 0 {
 		group := &sync.WaitGroup{}
 		group.Add(len(asyncAction))
@@ -418,7 +422,7 @@ func (s *WorkflowService) run(upstreamContext *Context, request *RunRequest) (re
 	return response, err
 }
 
-func (s *WorkflowService) runWorkflowDeferTaskIfNeeded(context *Context, workflow *Control) {
+func (s *WorkflowService) runWorkflowDeferTaskIfNeeded(context *Context, workflow *WorkflowRun) {
 	if workflow.DeferTask == "" {
 		return
 	}
@@ -426,7 +430,7 @@ func (s *WorkflowService) runWorkflowDeferTaskIfNeeded(context *Context, workflo
 	_ = s.runWorkflowTasks(context, workflow, nil, task)
 }
 
-func (s *WorkflowService) runOnErrorTaskIfNeeded(context *Context, workflow *Control, err error) error {
+func (s *WorkflowService) runOnErrorTaskIfNeeded(context *Context, workflow *WorkflowRun, err error) error {
 	if err != nil {
 		if workflow.OnErrorTask == "" {
 			return err
@@ -449,7 +453,7 @@ func (s *WorkflowService) runOnErrorTaskIfNeeded(context *Context, workflow *Con
 	return err
 }
 
-func (s *WorkflowService) runWorkflowTasks(context *Context, workflow *Control, tagIDs map[string]bool, tasks ...*WorkflowTask) error {
+func (s *WorkflowService) runWorkflowTasks(context *Context, workflow *WorkflowRun, tagIDs map[string]bool, tasks ...*WorkflowTask) error {
 	for _, task := range tasks {
 		if workflow.IsTerminated() {
 			break

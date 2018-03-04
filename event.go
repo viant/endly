@@ -19,6 +19,7 @@ type Event struct {
 	Value      interface{}
 }
 
+//Get returns supplied expected type or nil
 func (e *Event) Get(expectedType reflect.Type) interface{} {
 	if e.Value == nil {
 		return nil
@@ -35,6 +36,7 @@ func (e *Event) Get(expectedType reflect.Type) interface{} {
 	return nil
 }
 
+//Type returns event type (simple package and struct name)
 func (e *Event) Type() string {
 	if e.Value == nil {
 		return fmt.Sprintf("%T", e.Value)
@@ -113,7 +115,7 @@ func (e *Events) AsEventListener() EventListener {
 	}
 }
 
-//Drains removes all events from struct to publish to context
+//Drain removes all events from struct to publish them to context
 func (e *Events) Drain(context *Context) {
 	for i := 0; i < len(e.Events); i++ {
 		event := e.Shift()

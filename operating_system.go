@@ -74,6 +74,7 @@ func (p *SystemPath) Push(paths ...string) {
 	}
 }
 
+//NewSystemPath create a new system path.
 func NewSystemPath(items ...string) *SystemPath {
 	return &SystemPath{
 		index: make(map[string]bool),

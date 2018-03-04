@@ -11,6 +11,7 @@ type Criteria struct {
 	Criteria        []*Criterion
 }
 
+//IsTrue evaluates criteria with supplied context and state map . Dolar prefixed $expression will be expanded before evaluation.
 func (c *Criteria) IsTrue(context *Context, state data.Map) (bool, error) {
 	if c.LogicalOperator == "||" {
 		for _, criterion := range c.Criteria {
@@ -53,6 +54,7 @@ func (c *Criterion) expandOperand(opperand interface{}, state data.Map) interfac
 	return state.Expand(opperand)
 }
 
+//IsTrue evaluates criterion with supplied context and state map . Dolar prefixed $expression will be expanded before evaluation.
 func (c *Criterion) IsTrue(context *Context, state data.Map) (bool, error) {
 	if c.Criteria != nil {
 		return c.Criteria.IsTrue(context, state)
@@ -104,6 +106,7 @@ func (c *Criterion) IsTrue(context *Context, state data.Map) (bool, error) {
 	return false, err
 }
 
+//NewCriterion creates a new criterion
 func NewCriterion(leftOperand interface{}, operator string, rightOperand interface{}) *Criterion {
 	return &Criterion{
 		LeftOperand:  leftOperand,
