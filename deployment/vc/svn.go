@@ -63,7 +63,7 @@ func (s *svnService) checkInfo(context *endly.Context, request *StatusRequest) (
 	return result, nil
 }
 
-func readSvnStatus(commandResult *exec.CommandResponse, response *Info) {
+func readSvnStatus(commandResult *exec.RunResponse, response *Info) {
 	response.New = make([]string, 0)
 	response.Modified = make([]string, 0)
 	response.Deleted = make([]string, 0)

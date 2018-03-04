@@ -91,7 +91,7 @@ func (s *service) determineServiceType(context *endly.Context, service, exclusio
 		{serviceTypeStdService, "service --version"},
 		{serviceTypeSystemctl, "systemctl --version"},
 	}
-	var commandResult *exec.CommandResponse
+	var commandResult *exec.RunResponse
 	for _, candidate := range systemTypeCommands {
 		commandResult, err = exec.Execute(context, target, &exec.ExtractableCommand{
 			Executions: []*exec.Execution{
@@ -145,7 +145,7 @@ func extractServiceInfo(stdout string, state map[string]string, info *Info) {
 	}
 }
 
-func (s *service) executeCommand(context *endly.Context, serviceType int, target *url.Resource, command *exec.ExtractableCommand) (*exec.CommandResponse, error) {
+func (s *service) executeCommand(context *endly.Context, serviceType int, target *url.Resource, command *exec.ExtractableCommand) (*exec.RunResponse, error) {
 	if serviceType == serviceTypeLaunchCtl {
 		return exec.Execute(context, target, command)
 	}
