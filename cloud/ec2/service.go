@@ -198,7 +198,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//NewCriteria creates a new AWS Ec2 service.
+//New creates a new AWS Ec2 service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

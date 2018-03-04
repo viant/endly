@@ -439,7 +439,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//NewCriteria creates a new deployment service
+//New creates a new deployment service
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

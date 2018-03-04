@@ -78,7 +78,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//NewCriteria creates a new network service.
+//New creates a new network service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(NetworkServiceID),

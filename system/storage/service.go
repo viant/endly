@@ -402,7 +402,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//NewCriteria creates a new storage service
+//New creates a new storage service
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

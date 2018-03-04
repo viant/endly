@@ -32,11 +32,11 @@ type service struct {
 	SysPath []string
 }
 
-func (s *service) stopImages(context *endly.Context, request *DockerStopImagesRequest) (*DockerStopImagesResponse, error) {
-	var response = &DockerStopImagesResponse{
+func (s *service) stopImages(context *endly.Context, request *StopImagesRequest) (*StopImagesResponse, error) {
+	var response = &StopImagesResponse{
 		StoppedImages: make([]string, 0),
 	}
-	processResponse, err := s.checkContainerProcesses(context, &DockerContainerStatusRequest{
+	processResponse, err := s.checkContainerProcesses(context, &ContainerStatusRequest{
 		Target: request.Target,
 	})
 	if err != nil {
@@ -47,8 +47,8 @@ func (s *service) stopImages(context *endly.Context, request *DockerStopImagesRe
 		for _, container := range processResponse.Containers {
 			if strings.Contains(container.Image, image) {
 				var name = strings.Split(container.Names, ",")[0]
-				_, err = s.stopContainer(context, &DockerContainerStopRequest{
-					DockerContainerBaseRequest: &DockerContainerBaseRequest{
+				_, err = s.stopContainer(context, &ContainerStopRequest{
+					ContainerBaseRequest: &ContainerBaseRequest{
 						Target: request.Target,
 						Name:   name,
 					},
@@ -103,18 +103,18 @@ func (s *service) applyCredentialIfNeeded(credentials map[string]string) map[str
 	return result
 }
 
-func (s *service) resetContainerIfNeeded(context *endly.Context, target *url.Resource, statusResponse *DockerContainerStatusResponse) error {
+func (s *service) resetContainerIfNeeded(context *endly.Context, target *url.Resource, statusResponse *ContainerStatusResponse) error {
 	if len(statusResponse.Containers) > 0 {
-		_, err := s.stopContainer(context, &DockerContainerStopRequest{
-			DockerContainerBaseRequest: &DockerContainerBaseRequest{
+		_, err := s.stopContainer(context, &ContainerStopRequest{
+			ContainerBaseRequest: &ContainerBaseRequest{
 				Target: target,
 			},
 		})
 		if err != nil {
 			return err
 		}
-		_, err = s.removeContainer(context, &DockerContainerRemoveRequest{
-			DockerContainerBaseRequest: &DockerContainerBaseRequest{
+		_, err = s.removeContainer(context, &ContainerRemoveRequest{
+			ContainerBaseRequest: &ContainerBaseRequest{
 				Target: target,
 			}})
 		if err != nil {
@@ -125,12 +125,12 @@ func (s *service) resetContainerIfNeeded(context *endly.Context, target *url.Res
 	return nil
 }
 
-func (s *service) runContainer(context *endly.Context, request *DockerRunRequest) (*DockerRunResponse, error) {
+func (s *service) runContainer(context *endly.Context, request *RunRequest) (*RunResponse, error) {
 	var err error
 
 	var credentials = s.applyCredentialIfNeeded(request.Credentials)
 
-	checkResponse, err := s.checkContainerProcesses(context, &DockerContainerStatusRequest{
+	checkResponse, err := s.checkContainerProcesses(context, &ContainerStatusRequest{
 		Target: request.Target,
 		Names:  request.Name,
 	})
@@ -163,11 +163,11 @@ func (s *service) runContainer(context *endly.Context, request *DockerRunRequest
 	}
 
 	if strings.Contains(commandInfo.Stdout(), containerInUse) {
-		_, _ = s.stopContainer(context, &DockerContainerStopRequest{DockerContainerBaseRequest: &DockerContainerBaseRequest{
+		_, _ = s.stopContainer(context, &ContainerStopRequest{ContainerBaseRequest: &ContainerBaseRequest{
 			Target: request.Target,
 			Name:   request.Name,
 		}})
-		_, _ = s.removeContainer(context, &DockerContainerRemoveRequest{DockerContainerBaseRequest: &DockerContainerBaseRequest{
+		_, _ = s.removeContainer(context, &ContainerRemoveRequest{ContainerBaseRequest: &ContainerBaseRequest{
 			Target: request.Target,
 			Name:   request.Name,
 		}})
@@ -177,17 +177,17 @@ func (s *service) runContainer(context *endly.Context, request *DockerRunRequest
 		}
 	}
 
-	info, err := s.checkContainerProcess(context, &DockerContainerStatusRequest{
+	info, err := s.checkContainerProcess(context, &ContainerStatusRequest{
 		Target: request.Target,
 		Names:  request.Name,
 	})
 	if info == nil {
 		return nil, err
 	}
-	return &DockerRunResponse{info}, err
+	return &RunResponse{info}, err
 }
 
-func (s *service) checkContainerProcess(context *endly.Context, request *DockerContainerStatusRequest) (*DockerContainerInfo, error) {
+func (s *service) checkContainerProcess(context *endly.Context, request *ContainerStatusRequest) (*ContainerInfo, error) {
 	checkResponse, err := s.checkContainerProcesses(context, request)
 	if err != nil {
 		return nil, err
@@ -227,23 +227,23 @@ func (s *service) runContainerCommand(context *endly.Context, securet map[string
 	return commandResult.Stdout(), nil
 }
 
-func (s *service) startContainer(context *endly.Context, request *DockerContainerStartRequest) (*DockerContainerStartResponse, error) {
+func (s *service) startContainer(context *endly.Context, request *ContainerStartRequest) (*ContainerStartResponse, error) {
 	_, err := s.runContainerCommand(context, nil, request.Name, request.Target, "start", "")
 	if err != nil {
 		return nil, err
 	}
-	info, err := s.checkContainerProcess(context, &DockerContainerStatusRequest{
+	info, err := s.checkContainerProcess(context, &ContainerStatusRequest{
 		Target: request.Target,
 		Names:  request.Name,
 	})
 	if info == nil {
 		return nil, err
 	}
-	return &DockerContainerStartResponse{info}, err
+	return &ContainerStartResponse{info}, err
 }
 
-func (s *service) stopContainer(context *endly.Context, request *DockerContainerStopRequest) (*DockerContainerStopResponse, error) {
-	info, err := s.checkContainerProcess(context, &DockerContainerStatusRequest{
+func (s *service) stopContainer(context *endly.Context, request *ContainerStopRequest) (*ContainerStopResponse, error) {
+	info, err := s.checkContainerProcess(context, &ContainerStatusRequest{
 		Target: request.Target,
 		Names:  request.Name,
 	})
@@ -258,11 +258,11 @@ func (s *service) stopContainer(context *endly.Context, request *DockerContainer
 		info.Status = "down"
 	}
 
-	return &DockerContainerStopResponse{info}, nil
+	return &ContainerStopResponse{info}, nil
 }
 
-func (s *service) removeContainer(context *endly.Context, request *DockerContainerRemoveRequest) (response *DockerContainerRemoveResponse, err error) {
-	response = &DockerContainerRemoveResponse{}
+func (s *service) removeContainer(context *endly.Context, request *ContainerRemoveRequest) (response *ContainerRemoveResponse, err error) {
+	response = &ContainerRemoveResponse{}
 	response.Stdout, err = s.runContainerCommand(context, nil, request.Name, request.Target, "rm", "")
 	if err != nil {
 		return nil, err
@@ -270,8 +270,8 @@ func (s *service) removeContainer(context *endly.Context, request *DockerContain
 	return response, nil
 }
 
-func (s *service) inspect(context *endly.Context, request *DockerInspectRequest) (response *DockerInspectResponse, err error) {
-	response = &DockerInspectResponse{}
+func (s *service) inspect(context *endly.Context, request *ContainerInspectRequest) (response *ContainerInspectResponse, err error) {
+	response = &ContainerInspectResponse{}
 	response.Stdout, err = s.runContainerCommand(context, nil, request.Name, request.Target, "inspect", "")
 	if err != nil {
 		return nil, err
@@ -281,14 +281,14 @@ func (s *service) inspect(context *endly.Context, request *DockerInspectRequest)
 	return response, nil
 }
 
-func (s *service) containerLogs(context *endly.Context, request *DockerContainerLogsRequest) (response *DockerContainerLogsResponse, err error) {
-	response = &DockerContainerLogsResponse{}
+func (s *service) containerLogs(context *endly.Context, request *ContainerLogsRequest) (response *ContainerLogsResponse, err error) {
+	response = &ContainerLogsResponse{}
 	response.Stdout, err = s.runContainerCommand(context, nil, request.Name, request.Target, "logs", "")
 	return response, err
 }
 
-func (s *service) runInContainer(context *endly.Context, request *DockerContainerRunRequest) (response *DockerContainerRunResponse, err error) {
-	response = &DockerContainerRunResponse{}
+func (s *service) runInContainer(context *endly.Context, request *ContainerRunRequest) (response *ContainerRunResponse, err error) {
+	response = &ContainerRunResponse{}
 	var executionOptions = ""
 	var execArguments = context.Expand(request.Command)
 
@@ -308,7 +308,7 @@ func (s *service) runInContainer(context *endly.Context, request *DockerContaine
 	return response, err
 }
 
-func (s *service) checkContainerProcesses(context *endly.Context, request *DockerContainerStatusRequest) (*DockerContainerStatusResponse, error) {
+func (s *service) checkContainerProcesses(context *endly.Context, request *ContainerStatusRequest) (*ContainerStatusResponse, error) {
 
 	info, err := s.executeSecureDockerCommand(true, nil, context, request.Target, dockerErrors, "docker ps")
 	if err != nil {
@@ -316,7 +316,7 @@ func (s *service) checkContainerProcesses(context *endly.Context, request *Docke
 	}
 	stdout := info.Stdout()
 
-	var containers = make([]*DockerContainerInfo, 0)
+	var containers = make([]*ContainerInfo, 0)
 	var lines = strings.Split(stdout, "\r\n")
 	for i := 1; i < len(lines); i++ {
 		columns, ok := util.ExtractColumns(lines[i])
@@ -327,7 +327,7 @@ func (s *service) checkContainerProcesses(context *endly.Context, request *Docke
 		if strings.Contains(lines[i], "Up") {
 			status = "up"
 		}
-		info := &DockerContainerInfo{
+		info := &ContainerInfo{
 			ContainerID: columns[0],
 			Image:       columns[1],
 			Command:     strings.Trim(columns[2], "\""),
@@ -343,10 +343,10 @@ func (s *service) checkContainerProcesses(context *endly.Context, request *Docke
 		}
 		containers = append(containers, info)
 	}
-	return &DockerContainerStatusResponse{Containers: containers}, nil
+	return &ContainerStatusResponse{Containers: containers}, nil
 }
 
-func (s *service) pullImage(context *endly.Context, request *DockerPullRequest) (*DockerPullResponse, error) {
+func (s *service) pullImage(context *endly.Context, request *PullRequest) (*PullResponse, error) {
 	if request.Tag == "" {
 		request.Tag = "latest"
 	}
@@ -358,23 +358,23 @@ func (s *service) pullImage(context *endly.Context, request *DockerPullRequest) 
 	if strings.Contains(stdout, "not found") {
 		return nil, fmt.Errorf("%v", stdout)
 	}
-	imageResponse, err := s.checkImages(context, &DockerImagesRequest{Target: request.Target, Repository: request.Repository, Tag: request.Tag})
+	imageResponse, err := s.checkImages(context, &ImagesRequest{Target: request.Target, Repository: request.Repository, Tag: request.Tag})
 	if err != nil {
 		return nil, err
 	}
 	if len(imageResponse.Images) > 0 {
-		return &DockerPullResponse{imageResponse.Images[0]}, nil
+		return &PullResponse{imageResponse.Images[0]}, nil
 	}
 	return nil, fmt.Errorf("not found:  %v %v", request.Repository, request.Tag)
 }
 
-func (s *service) checkImages(context *endly.Context, request *DockerImagesRequest) (*DockerImagesResponse, error) {
+func (s *service) checkImages(context *endly.Context, request *ImagesRequest) (*ImagesResponse, error) {
 	info, err := s.executeSecureDockerCommand(true, nil, context, request.Target, dockerErrors, "docker images")
 	if err != nil {
 		return nil, err
 	}
 	stdout := info.Stdout()
-	var images = make([]*DockerImageInfo, 0)
+	var images = make([]*ImageInfo, 0)
 
 	for _, line := range strings.Split(stdout, "\n") {
 		line = strings.TrimSpace(line)
@@ -401,7 +401,7 @@ func (s *service) checkImages(context *endly.Context, request *DockerImagesReque
 		}
 
 		size = strings.Replace(size, sizeUnit, "", 1)
-		info := &DockerImageInfo{
+		info := &ImageInfo{
 			Repository: columns[0],
 			Tag:        columns[1],
 			ImageID:    columns[2],
@@ -421,7 +421,7 @@ func (s *service) checkImages(context *endly.Context, request *DockerImagesReque
 		}
 		images = append(images, info)
 	}
-	return &DockerImagesResponse{Images: images}, nil
+	return &ImagesResponse{Images: images}, nil
 
 }
 
@@ -491,9 +491,9 @@ func (s *service) executeSecureDockerCommand(asRoot bool, secure map[string]stri
 	return response, nil
 }
 
-func (s *service) build(context *endly.Context, request *DockerBuildRequest) (*DockerBuildResponse, error) {
+func (s *service) build(context *endly.Context, request *BuildRequest) (*BuildResponse, error) {
 	request.Init()
-	var response = &DockerBuildResponse{}
+	var response = &BuildResponse{}
 	var target, err = context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -516,8 +516,8 @@ func (s *service) build(context *endly.Context, request *DockerBuildRequest) (*D
 	}
 	return response, nil
 }
-func (s *service) tag(context *endly.Context, request *DockerTagRequest) (*DockerTagResponse, error) {
-	var response = &DockerTagResponse{}
+func (s *service) tag(context *endly.Context, request *TagRequest) (*TagResponse, error) {
+	var response = &TagResponse{}
 
 	var target, err = context.ExpandResource(request.Target)
 	if err != nil {
@@ -553,13 +553,13 @@ func (s *service) getGoogleCloudCredential(context *endly.Context, credential st
 on osx when hitting Errors saving credentials: error storing credentials - err: exit status 1, out: `User interaction is not allowed.`
 on docker service -> preferences -> and I untick "Securely store docker logins in macOS keychain" this problem goes away.
 */
-func (s *service) login(context *endly.Context, request *DockerLoginRequest) (*DockerLoginResponse, error) {
+func (s *service) login(context *endly.Context, request *LoginRequest) (*LoginResponse, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
 
-	var response = &DockerLoginResponse{}
+	var response = &LoginResponse{}
 	credential := context.Expand(request.Credential)
 	credConfig, err := cred.NewConfig(credential)
 	repository := context.Expand(request.Repository)
@@ -590,8 +590,8 @@ func (s *service) login(context *endly.Context, request *DockerLoginRequest) (*D
 	return response, nil
 }
 
-func (s *service) logout(context *endly.Context, request *DockerLogoutRequest) (*DockerLogoutResponse, error) {
-	var response = &DockerLogoutResponse{}
+func (s *service) logout(context *endly.Context, request *LogoutRequest) (*LogoutResponse, error) {
+	var response = &LogoutResponse{}
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -605,8 +605,8 @@ func (s *service) logout(context *endly.Context, request *DockerLogoutRequest) (
 	return response, nil
 }
 
-func (s *service) push(context *endly.Context, request *DockerPushRequest) (*DockerPushResponse, error) {
-	var response = &DockerPushResponse{}
+func (s *service) push(context *endly.Context, request *PushRequest) (*PushResponse, error) {
+	var response = &PushResponse{}
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -787,13 +787,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerRunRequest{}
+			return &RunRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerRunResponse{}
+			return &RunResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerRunRequest); ok {
+			if req, ok := request.(*RunRequest); ok {
 				return s.runContainer(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -813,13 +813,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerStopImagesRequest{}
+			return &StopImagesRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerStopImagesResponse{}
+			return &StopImagesResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerStopImagesRequest); ok {
+			if req, ok := request.(*StopImagesRequest); ok {
 				return s.stopImages(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -839,13 +839,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerImagesRequest{}
+			return &ImagesRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerImagesResponse{}
+			return &ImagesResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerImagesRequest); ok {
+			if req, ok := request.(*ImagesRequest); ok {
 				return s.checkImages(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -865,13 +865,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerPullRequest{}
+			return &PullRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerPullResponse{}
+			return &PullResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerPullRequest); ok {
+			if req, ok := request.(*PullRequest); ok {
 				return s.pullImage(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -891,13 +891,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerBuildRequest{}
+			return &BuildRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerBuildResponse{}
+			return &BuildResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerBuildRequest); ok {
+			if req, ok := request.(*BuildRequest); ok {
 				return s.build(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -917,13 +917,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerTagRequest{}
+			return &TagRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerTagResponse{}
+			return &TagResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerTagRequest); ok {
+			if req, ok := request.(*TagRequest); ok {
 				return s.tag(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -942,13 +942,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerLoginRequest{}
+			return &LoginRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerLoginResponse{}
+			return &LoginResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerLoginRequest); ok {
+			if req, ok := request.(*LoginRequest); ok {
 				return s.login(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -967,13 +967,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerLogoutRequest{}
+			return &LogoutRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerLogoutResponse{}
+			return &LogoutResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerLogoutRequest); ok {
+			if req, ok := request.(*LogoutRequest); ok {
 				return s.logout(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -992,13 +992,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerPushRequest{}
+			return &PushRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerPushResponse{}
+			return &PushResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerPushRequest); ok {
+			if req, ok := request.(*PushRequest); ok {
 				return s.push(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -1021,13 +1021,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerContainerRunRequest{}
+			return &ContainerRunRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerContainerRunResponse{}
+			return &ContainerRunResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerContainerRunRequest); ok {
+			if req, ok := request.(*ContainerRunRequest); ok {
 				return s.runInContainer(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -1046,13 +1046,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerInspectRequest{}
+			return &ContainerInspectRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerInspectResponse{}
+			return &ContainerInspectResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerInspectRequest); ok {
+			if req, ok := request.(*ContainerInspectRequest); ok {
 				return s.inspect(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -1071,13 +1071,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerContainerStartRequest{}
+			return &ContainerStartRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerContainerStartResponse{}
+			return &ContainerStartResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerContainerStartRequest); ok {
+			if req, ok := request.(*ContainerStartRequest); ok {
 				return s.startContainer(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -1096,13 +1096,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerContainerStopRequest{}
+			return &ContainerStopRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerContainerStopResponse{}
+			return &ContainerStopResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerContainerStopRequest); ok {
+			if req, ok := request.(*ContainerStopRequest); ok {
 				return s.stopContainer(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -1121,13 +1121,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerContainerStatusRequest{}
+			return &ContainerStatusRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerContainerStatusResponse{}
+			return &ContainerStatusResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerContainerStatusRequest); ok {
+			if req, ok := request.(*ContainerStatusRequest); ok {
 				return s.checkContainerProcesses(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -1146,13 +1146,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerContainerRemoveRequest{}
+			return &ContainerRemoveRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerContainerRemoveResponse{}
+			return &ContainerRemoveResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerContainerRemoveRequest); ok {
+			if req, ok := request.(*ContainerRemoveRequest); ok {
 				return s.removeContainer(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -1171,13 +1171,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &DockerContainerLogsRequest{}
+			return &ContainerLogsRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &DockerContainerLogsResponse{}
+			return &ContainerLogsResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*DockerContainerLogsRequest); ok {
+			if req, ok := request.(*ContainerLogsRequest); ok {
 				return s.containerLogs(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -1185,7 +1185,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//NewCriteria creates a new docker service.
+//New creates a new docker service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

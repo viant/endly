@@ -304,7 +304,7 @@ func (s *service) registerRoutes() {
 
 }
 
-//NewCriteria creates a new build service
+//New creates a new build service
 func New() endly.Service {
 	var result = &service{
 		registry:        make(map[string]*Meta),

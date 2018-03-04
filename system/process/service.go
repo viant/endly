@@ -263,7 +263,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//NewCriteria creates new system process service.
+//New creates new system process service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),
