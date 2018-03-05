@@ -16,6 +16,5 @@ func (r *Request) CanReport(filter map[string]bool) bool {
 func (r *Request) Messages() []*endly.Message {
 	var header = fmt.Sprintf("app: %v:%v, forced: %v", r.AppName, r.Version, r.Force)
 	return []*endly.Message{endly.NewMessage(endly.NewStyledText(header, endly.MessageStyleGeneric),
-		endly.NewStyledText("deploy", endly.MessageStyleGeneric),
-		false)}
+		endly.NewStyledText("deploy", endly.MessageStyleGeneric))}
 }

@@ -38,15 +38,14 @@ type Message struct {
 	Header     *StyledText
 	Tag        *StyledText
 	Messages   []*StyledText
-	IsRepeated bool //flag to reuse the same line if possible, i.e SleepTime
+	Counter    int
 }
 
 //NewMessage creates a new tag message
-func NewMessage(header *StyledText, tag *StyledText, isRepeated bool, messages ...*StyledText) *Message {
+func NewMessage(header *StyledText, tag *StyledText,  messages ...*StyledText) *Message {
 	return &Message{
 		Header:     header,
 		Tag:        tag,
-		IsRepeated: isRepeated,
 		Messages:   messages,
 	}
 }
@@ -62,6 +61,21 @@ type MessageReporter interface {
 	//Returns zero or more  messages
 	Messages() []*Message
 }
+
+
+//RepeatedMessage represents a repeated message
+type RepeatedMessage struct {
+	Total int
+	Count int
+}
+
+//RepeatedReporter represents a reporter that updted current line (with \r)
+type RepeatedReporter interface {
+	//Returns messages
+	Message(repeated *RepeatedMessage) *Message
+}
+
+
 
 //Event represents a workflow event wrapper
 type Event struct {
@@ -112,6 +126,58 @@ type SleepEvent struct {
 	SleepTimeMs int
 }
 
+func (e *SleepEvent) Message(repeated *RepeatedMessage) *Message {
+
+	var result *Message
+	var tagText = NewStyledText("sleep", MessageStyleGeneric)
+	var title *StyledText
+
+	if repeated != nil {
+		counter += repeated.Total
+	}
+
+	var sleepTime = time.Millisecond *  time.Duration(counter)
+	if  repeated.Count == 0 {
+		title = fmt.Sprintf("%v ms", e.SleepTimeMs)
+	} else {
+		var timeSoFar
+		title = fmt.Sprintf("%v ms x %v,  slept so far: %v", e.SleepTimeMs, repeated.Count, time.Millisecond * repeated.Total)
+
+	}
+	result = NewMessage(NewStyledText(fmt.Sprintf("%v", e.SessionID), MessageStyleGeneric), NewStyledText("stdout", endly.MessageStyleGeneric),
+
+
+
+		result = NewMessage(NewStyledText(fmt.Sprintf("%v", e.SessionID), MessageStyleGeneric), NewStyledText("stdout", endly.MessageStyleGeneric),
+
+		r.overrideShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms x %v,  slept so far: %v", actual.SleepTimeMs, r.SleepCount, r.SleepTime), endly.MessageStyleGeneric, "Sleep")
+	} else {
+		endly.NewMessage(endly.NewStyledText(fmt.Sprintf("%v", e.SessionID), endly.MessageStyleGeneric), endly.NewStyledText("stdout", endly.MessageStyleGeneric),
+		r.SleepTime = 0
+		r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms", actual.SleepTimeMs), endly.MessageStyleGeneric, "Sleep")
+	}
+}
+
+
+/*
+
+	case *endly.SleepEvent:
+		if r.SleepCount > 0 {
+			r.overrideShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms x %v,  slept so far: %v", actual.SleepTimeMs, r.SleepCount, r.SleepTime), endly.MessageStyleGeneric, "Sleep")
+		} else {
+			r.SleepTime = 0
+			r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms", actual.SleepTimeMs), endly.MessageStyleGeneric, "Sleep")
+		}
+
+		r.SleepTagID = r.eventTag.TagID
+		r.SleepTime += time.Millisecond * time.Duration(actual.SleepTimeMs)
+		r.SleepCount++
+		return true
+	}
+
+*/
+
+
 //NewSleepEvent create a new sleep event
 func NewSleepEvent(sleepTimeMs int) *SleepEvent {
 	return &SleepEvent{SleepTimeMs: sleepTimeMs}
@@ -120,6 +186,12 @@ func NewSleepEvent(sleepTimeMs int) *SleepEvent {
 //ErrorEvent represents a Sleep
 type ErrorEvent struct {
 	Error string
+}
+
+//Messages returns messages
+func (e *ErrorEvent) Messages() []*Message {
+	return []*Message{
+		NewMessage(NewStyledText(fmt.Sprintf("%v", e.Error), MessageStyleError), NewStyledText("error", MessageStyleError))}
 }
 
 //NewErrorEvent creates a new error event
