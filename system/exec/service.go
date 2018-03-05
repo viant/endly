@@ -211,7 +211,6 @@ func (s *execService) rumCommandTemplate(context *endly.Context, session *endly.
 	command := fmt.Sprintf(commandTemplate, arguments...)
 	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
 	startEvent := s.Begin(context, executionStartEvent)
-
 	stdout, err := session.Run(command, 1000)
 	var executionEndEvent = &ExecutionEndEvent{
 		SessionID: session.ID,
@@ -232,6 +231,7 @@ func (s *execService) applyCommandOptions(context *endly.Context, options *Execu
 	}
 	if len(options.SystemPaths) > 0 {
 		operatingSystem.Path.Push(options.SystemPaths...)
+
 	}
 	err := s.setEnvVariables(context, session, options.Env)
 	if err != nil {
