@@ -22,6 +22,13 @@ func TestCriterion_IsTrue(t *testing.T) {
 			HasError:    true,
 		},
 		{
+			Description: "grater than test ",
+			Criterion:   endly.NewCriterion("21", ">", "10"),
+			IsTrue:      true,
+		},
+
+
+		{
 			Description: "equal test",
 			Criterion:   endly.NewCriterion("12", "", "12"),
 			IsTrue:      true,

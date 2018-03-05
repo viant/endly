@@ -79,26 +79,26 @@ func (c *Criterion) IsTrue(context *Context, state data.Map) (bool, error) {
 		return validation.FailedCount > 0, nil
 	case ">=":
 		if leftNumber, err = toolbox.ToFloat(leftOperand); err == nil {
-			if rightNumber, err = toolbox.ToFloat(leftOperand); err == nil {
+			if rightNumber, err = toolbox.ToFloat(rightOperand); err == nil {
 				return leftNumber >= rightNumber, nil
 			}
 		}
 	case "<=":
 		if leftNumber, err = toolbox.ToFloat(leftOperand); err == nil {
-			if rightNumber, err = toolbox.ToFloat(leftOperand); err == nil {
+			if rightNumber, err = toolbox.ToFloat(rightOperand); err == nil {
 				return leftNumber <= rightNumber, nil
 			}
 		}
 
 	case ">":
 		if leftNumber, err = toolbox.ToFloat(leftOperand); err == nil {
-			if rightNumber, err = toolbox.ToFloat(leftOperand); err == nil {
+			if rightNumber, err = toolbox.ToFloat(rightOperand); err == nil {
 				return leftNumber > rightNumber, nil
 			}
 		}
 	case "<":
 		if leftNumber, err = toolbox.ToFloat(leftOperand); err == nil {
-			if rightNumber, err = toolbox.ToFloat(leftOperand); err == nil {
+			if rightNumber, err = toolbox.ToFloat(rightOperand); err == nil {
 				return leftNumber < rightNumber, nil
 			}
 		}
