@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"errors"
 	"fmt"
 	"github.com/viant/assertly"
 	"github.com/viant/dsunit"
@@ -331,7 +330,6 @@ func (r *Runner) processWorkflowEvent(event *endly.Event, filter *Filter) bool {
 
 func (r *Runner) processEndlyEvents(event *endly.Event, filter *Filter) bool {
 	switch actual := event.Value.(type) {
-
 	case *endly.SleepEvent:
 		if r.SleepCount > 0 {
 			r.overrideShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms x %v,  slept so far: %v", actual.SleepTimeMs, r.SleepCount, r.SleepTime), endly.MessageStyleGeneric, "Sleep")

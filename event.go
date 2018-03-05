@@ -125,38 +125,38 @@ func NewEvent(value interface{}) *Event {
 type SleepEvent struct {
 	SleepTimeMs int
 }
-
-func (e *SleepEvent) Message(repeated *RepeatedMessage) *Message {
-
-	var result *Message
-	var tagText = NewStyledText("sleep", MessageStyleGeneric)
-	var title *StyledText
-
-	if repeated != nil {
-		counter += repeated.Total
-	}
-
-	var sleepTime = time.Millisecond *  time.Duration(counter)
-	if  repeated.Count == 0 {
-		title = fmt.Sprintf("%v ms", e.SleepTimeMs)
-	} else {
-		var timeSoFar
-		title = fmt.Sprintf("%v ms x %v,  slept so far: %v", e.SleepTimeMs, repeated.Count, time.Millisecond * repeated.Total)
-
-	}
-	result = NewMessage(NewStyledText(fmt.Sprintf("%v", e.SessionID), MessageStyleGeneric), NewStyledText("stdout", endly.MessageStyleGeneric),
-
-
-
-		result = NewMessage(NewStyledText(fmt.Sprintf("%v", e.SessionID), MessageStyleGeneric), NewStyledText("stdout", endly.MessageStyleGeneric),
-
-		r.overrideShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms x %v,  slept so far: %v", actual.SleepTimeMs, r.SleepCount, r.SleepTime), endly.MessageStyleGeneric, "Sleep")
-	} else {
-		endly.NewMessage(endly.NewStyledText(fmt.Sprintf("%v", e.SessionID), endly.MessageStyleGeneric), endly.NewStyledText("stdout", endly.MessageStyleGeneric),
-		r.SleepTime = 0
-		r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms", actual.SleepTimeMs), endly.MessageStyleGeneric, "Sleep")
-	}
-}
+//
+//func (e *SleepEvent) Message(repeated *RepeatedMessage) *Message {
+//
+//	var result *Message
+//	var tagText = NewStyledText("sleep", MessageStyleGeneric)
+//	var title *StyledText
+//
+//	if repeated != nil {
+//		counter += repeated.Total
+//	}
+//
+//	var sleepTime = time.Millisecond *  time.Duration(counter)
+//	if  repeated.Count == 0 {
+//		title = fmt.Sprintf("%v ms", e.SleepTimeMs)
+//	} else {
+//		var timeSoFar
+//		title = fmt.Sprintf("%v ms x %v,  slept so far: %v", e.SleepTimeMs, repeated.Count, time.Millisecond * repeated.Total)
+//
+//	}
+//	result = NewMessage(NewStyledText(fmt.Sprintf("%v", e.SessionID), MessageStyleGeneric), NewStyledText("stdout", endly.MessageStyleGeneric),
+//
+//
+//
+//		result = NewMessage(NewStyledText(fmt.Sprintf("%v", e.SessionID), MessageStyleGeneric), NewStyledText("stdout", endly.MessageStyleGeneric),
+//
+//		r.overrideShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms x %v,  slept so far: %v", actual.SleepTimeMs, r.SleepCount, r.SleepTime), endly.MessageStyleGeneric, "Sleep")
+//	} else {
+//		endly.NewMessage(endly.NewStyledText(fmt.Sprintf("%v", e.SessionID), endly.MessageStyleGeneric), endly.NewStyledText("stdout", endly.MessageStyleGeneric),
+//		r.SleepTime = 0
+//		r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms", actual.SleepTimeMs), endly.MessageStyleGeneric, "Sleep")
+//	}
+//}
 
 
 /*
