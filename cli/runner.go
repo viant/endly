@@ -316,11 +316,13 @@ func (r *Runner) processWorkflowEvent(event *endly.Event, filter *Filter) bool {
 }
 
 func (r *Runner) processExecutionEvent(event *endly.Event, filter *Filter) bool {
+	if event.Value == nil {
+		return false
+	}
 	switch actual := event.Value.(type) {
 	case *exec.ExecutionStartEvent:
 		if filter.Stdin {
 			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", actual.SessionID), messageTypeGeneric, "stdin")
-
 			r.printInput(util.EscapeStdout(actual.Stdin))
 		}
 	case *exec.ExecutionEndEvent:
@@ -681,6 +683,9 @@ func (r *Runner) reportEvent(context *endly.Context, event *endly.Event, filter 
 
 func (r *Runner) AsListener() endly.EventListener {
 	var firstEvent, lastEvent *endly.Event
+	if r.filter == nil {
+		r.filter = DefaultRunnerReportingOption().Filter
+	}
 	return func(event *endly.Event) {
 		if firstEvent == nil {
 			firstEvent = event
@@ -719,6 +724,7 @@ func (r *Runner) onWorkflowEnd() {
 //Run run workflow for the supplied run request and runner options.
 func (r *Runner) Run(request *endly.RunRequest, options *RunnerReportingOptions) (err error) {
 	r.context = r.manager.NewContext(toolbox.NewContext())
+	r.report = &ReportSummaryEvent{}
 	if request.Name == "" {
 		name, URL, err := getWorkflowURL(request.WorkflowURL)
 		if err != nil {

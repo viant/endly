@@ -3,7 +3,7 @@ Workflow,,Name,Description,Tasks,,Init
 []Tasks,,Name,Description,Actions,,
 ,,start,"This task will run postgres docker container",%Start,,
 []Start,Service,Action,Description,Request,RunCriteria,Post
-,transfer,copy,This action will copy template config file to the temp folder,@req/docker_config,,
+,storage,copy,This action will copy template config file to the temp folder,@req/docker_config,,
 ,docker,run,Start docker pg service,@req/docker_pg,,
 []Tasks,,Name,Description,Actions,,
 ,,stop,This task will stop docker pg,%Stop,,

@@ -4,7 +4,7 @@ Workflow,,Name,Description,Tasks,Init,DeferTask,,
 ,1,checkout,This task wil get the latest code and build it,%Checkout,,,,
 []Checkout,Service,Action,Description,Request,,,,
 ,version/control,checkout,Check out the latest code,$checkoutRequest,,,,
-,transfer,copy,Copy module pom file,$transferPomRequest,,,,
+,storage,copy,Copy module pom file,$transferPomRequest,,,,
 []Tasks,Step,Name,Description,Actions,,,,
 ,1,build,This task wil build the checked out code,%Build,,,,
 []Build,Service,Action,Description,Request,Group,SkipCriteria,Init,RunCriteria

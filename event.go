@@ -11,7 +11,43 @@ import (
 //EventListener represents an event listener
 type EventListener func(event *Event)
 
-//Event represents a workflow event
+const (
+	messageStyleGeneric = iota
+	messageStyleSuccess
+	messageStyleError
+	messageStyleInput
+	messageStyleOutput
+)
+
+//Message represent event output message
+type Message struct {
+	Text  string
+	Style int
+}
+
+//TagMessage represent a typed message, message is align to left and takes most of the space, tag is align to right takes little space.
+type TagMessage struct {
+	Message    *Message
+	Tag        *Message
+	IsRepeated bool //flag to reuse the same line if possible, i.e SleepTime
+}
+
+
+//EventReporter represents actual event value that can be reported by CLI or Web workflow runner.
+type EventReporter interface {
+	CanReport(filter map[string]bool)
+
+	TagMessages() []*TagMessage
+
+	Messages() []*Message
+}
+
+/*
+	r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", actual.SessionID), messageTypeGeneric, "stdin")
+			r.printInput(util.EscapeStdout(actual.Stdin))
+ */
+
+//Event represents a workflow event wrapper
 type Event struct {
 	Timestamp  time.Time
 	StartEvent *Event    //starting event
