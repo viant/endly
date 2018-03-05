@@ -48,13 +48,13 @@ func (s *service) deployAddition(context *endly.Context, target *url.Resource, a
 	if addition != nil {
 		if len(addition.Commands) > 0 {
 			if addition.SuperUser {
-				_, err = exec.ExecuteAsSuperUser(context, target, addition.AsCommandRequest().AsExtractRequest().ExtractableCommand)
+				_, err = exec.ExecuteAsSuperUser(context, target, addition.AsRunRequest().AsExtractRequest().ExtractableCommand)
 				if err != nil {
 					return fmt.Errorf("failed to init deploy app to %v: %v", target, err)
 				}
 
 			} else {
-				_, err = exec.Execute(context, target, addition.AsCommandRequest())
+				_, err = exec.Execute(context, target, addition.AsRunRequest())
 				if err != nil {
 					return fmt.Errorf("failed to init deploy app to %v: %v", target, err)
 				}
