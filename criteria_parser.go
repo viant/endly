@@ -75,7 +75,7 @@ func (p *Parser) Parse(expression string) (*Criteria, error) {
 	parsingCriteria := result
 outer:
 	for {
-		token, err := p.expectOptionalWhitespaceFollowedBy(tokenizer, "id or grouping expression", jsonObject, jsonArray, grouping, id)
+		token, err := p.expectOptionalWhitespaceFollowedBy(tokenizer, "id or grouping expression", jsonObject, jsonArray, grouping, id, operator)
 		if err != nil {
 			return nil, err
 		}
@@ -100,11 +100,18 @@ outer:
 				LeftOperand: token.Matched,
 			}
 			parsingCriteria.Criteria = append(parsingCriteria.Criteria, criterion)
+		case operator:
+			criterion = &Criterion{}
+			parsingCriteria.Criteria = append(parsingCriteria.Criteria, criterion)
 		}
-		token, err = p.expectOptionalWhitespaceFollowedBy(tokenizer, "operator", operator, logicalOperator, eof)
-		if err != nil {
-			return nil, err
+
+		if token.Token != operator {
+			token, err = p.expectOptionalWhitespaceFollowedBy(tokenizer, "operator", operator, logicalOperator, eof)
+			if err != nil {
+				return nil, err
+			}
 		}
+
 		if token.Token == eof {
 			break outer
 		} else if token.Token == operator {
