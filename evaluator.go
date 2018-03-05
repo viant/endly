@@ -8,6 +8,7 @@ import (
 
 //CriteriaEvalEvent represents criteria event
 type CriteriaEvalEvent struct {
+	Type             string
 	Default          bool
 	Evaluation       bool
 	Criteria         string
@@ -16,8 +17,9 @@ type CriteriaEvalEvent struct {
 }
 
 //NewCriteriaEvalEvent creates a new evaluation event.
-func NewCriteriaEvalEvent(defaultValue, evaluation bool, criteria, expendedCriteria string, err error) *CriteriaEvalEvent {
+func NewCriteriaEvalEvent(criteriaType string, defaultValue, evaluation bool, criteria, expendedCriteria string, err error) *CriteriaEvalEvent {
 	var result = &CriteriaEvalEvent{
+		Type:             criteriaType,
 		Default:          defaultValue,
 		Evaluation:       evaluation,
 		Criteria:         criteria,
@@ -41,7 +43,7 @@ func Evaluate(context *Context, state data.Map, criteriaExpression, eventType st
 	}
 	result, err := criteria.IsTrue(context, state)
 	expandedCriteria := state.Expand(criteriaExpression)
-	context.Publish(NewCriteriaEvalEvent(defaultValue, result, criteriaExpression, fmt.Sprintf("%s", expandedCriteria), err))
+	context.Publish(NewCriteriaEvalEvent(eventType, defaultValue, result, criteriaExpression, fmt.Sprintf("%s", expandedCriteria), err))
 	return result, err
 }
 

@@ -18,6 +18,13 @@ func TestCriteriaParser_Parse(t *testing.T) {
 		HasError    bool
 	}{
 
+
+
+		{
+			Description: "Unicode operator criterion",
+			Expression:  "$counter \u003e 10",
+			Expected:    endly.NewCriteria("", endly.NewCriterion("$counter", ">", "10")),
+		},
 		{
 			Description: "Empty left operand criterion",
 			Expression:  ":!$value",
