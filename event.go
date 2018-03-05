@@ -25,6 +25,14 @@ type Message struct {
 	Style int
 }
 
+//NewMessage creates a new message
+func NewMessage(text string, style int) *Message {
+	return &Message{
+		Text:text,
+		Style:style,
+	}
+}
+
 //TagMessage represent a typed message, message is align to left and takes most of the space, tag is align to right takes little space.
 type TagMessage struct {
 	Message    *Message
@@ -33,19 +41,18 @@ type TagMessage struct {
 }
 
 
-//EventReporter represents actual event value that can be reported by CLI or Web workflow runner.
-type EventReporter interface {
-	CanReport(filter map[string]bool)
 
+//Reporter represents actual event value that can be reported by CLI or Web workflow runner.
+type Reporter interface {
+	//Returns true if can report for supplied filter
+	CanReport(filter map[string]bool) bool
+
+	//Returns zero or more tag messages
 	TagMessages() []*TagMessage
 
+	//Returns zero or more messages
 	Messages() []*Message
 }
-
-/*
-	r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", actual.SessionID), messageTypeGeneric, "stdin")
-			r.printInput(util.EscapeStdout(actual.Stdin))
- */
 
 //Event represents a workflow event wrapper
 type Event struct {
@@ -74,12 +81,9 @@ func (e *Event) Get(expectedType reflect.Type) interface{} {
 
 //Type returns event type (simple package and struct name)
 func (e *Event) Type() string {
-	if e.Value == nil {
-		return fmt.Sprintf("%T", e.Value)
-	}
-	var eventType = reflect.TypeOf(e.Value)
-	var fullname = eventType.Name()
-	var fragments = strings.Split(fullname, ".")
+	var eventType = fmt.Sprintf("%T", e.Value)
+	eventType = strings.Replace(eventType, "*", "", len(eventType))
+	var fragments = strings.Split(eventType, ".")
 	if len(fragments) > 2 {
 		fragments = fragments[len(fragments)-2:]
 	}
@@ -160,4 +164,53 @@ func (e *Events) Drain(context *Context) {
 		}
 		context.Publish(event)
 	}
+}
+
+
+//AbstractReporter represents an abstract event reporter
+type AbstractReporter struct {
+	serviceKey string
+	eventKeys  []string
+	tagMessages []*TagMessage
+	message []*Message
+}
+
+func (r *AbstractReporter) CanReport(filter map[string]bool) bool {
+	if len(filter) == 0 {
+		return false
+	}
+	if len(r.eventKeys) > 0 {
+		for _, candidate := range r.eventKeys {
+			if allowed, has := filter[candidate]; has {
+				return allowed
+			}
+		}
+	}
+	if allowed, has := filter[r.serviceKey]; has {
+		return allowed
+	}
+	return false
+}
+
+func (r *AbstractReporter) TagMessages() []*TagMessage {
+	return r.tagMessages
+}
+
+func (r *AbstractReporter) Messages() []*Message {
+	return r.message
+}
+
+//NewReporter creates a new abstract reporter
+func NewReporter(serviceKey string, eventKeys  []string, tagMessages []*TagMessage, messages ...*Message) Reporter {
+	var result = &AbstractReporter{
+		serviceKey:strings.ToLower(serviceKey),
+		eventKeys:eventKeys,
+		tagMessages:tagMessages,
+		message:messages,
+	}
+
+	for i, eventKey :=range result.eventKeys {
+		result.eventKeys[i] = strings.ToLower(eventKey)
+	}
+	return result
 }

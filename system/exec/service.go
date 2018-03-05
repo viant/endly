@@ -19,18 +19,6 @@ const ServiceID = "exec"
 //SudoCredentialKey represent obsucated password sudo credential key (target.Credential)
 const SudoCredentialKey = "**sudo**"
 
-//ExecutionStartEvent represents an execution event start
-type ExecutionStartEvent struct {
-	SessionID string
-	Stdin     string
-}
-
-//ExecutionEndEvent represents an execution event end
-type ExecutionEndEvent struct {
-	SessionID string
-	Stdout    string
-	Error     string
-}
 
 type execService struct {
 	*endly.AbstractService
