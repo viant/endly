@@ -20,6 +20,12 @@ func TestCriteriaParser_Parse(t *testing.T) {
 
 		{
 			Description: "Simple criterion",
+			Expression:  ":!$value",
+			Expected:    endly.NewCriteria("", endly.NewCriterion(nil, ":", "!$value")),
+		},
+
+		{
+			Description: "Simple criterion",
 			Expression:  "$key1 = 123",
 			Expected:    endly.NewCriteria("", endly.NewCriterion("$key1", "=", "123")),
 		},
