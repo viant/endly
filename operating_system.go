@@ -67,7 +67,7 @@ func (p *SystemPath) Push(paths ...string) {
 			continue
 		}
 		if _, has := p.index[path]; has {
-			return
+			continue
 		}
 		p.Items = append(p.Items, path)
 		p.index[path] = true
