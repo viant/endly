@@ -8,6 +8,7 @@ import (
 	_ "github.com/viant/endly/static" //load external resource like .csv .json files to mem storage
 	_ "github.com/viant/toolbox/storage/aws"
 	_ "github.com/viant/toolbox/storage/gs"
+	_ "github.com/viant/toolbox/storage/scp"
 
 	"encoding/json"
 	"flag"

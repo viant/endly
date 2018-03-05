@@ -8,7 +8,7 @@ Workflow,,Name,Description,Tasks,Init,
 ,,deploy,deploy app,%Deploy,,
 []Deploy,Service,Action,Description,Request,run.app,run.tasks
 ,exec,run,recreated app directories,@req/mkdir,,
-,transfer,copy,install app,@req/cp,,
+,storage,copy,install app,@req/cp,,
 ,exec,run,update permission,@req/chmod,,
 []Tasks,,Name,Description,Actions,,
 ,,stop,stop app ,%Stop,,

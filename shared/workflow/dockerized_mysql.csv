@@ -5,7 +5,7 @@ Workflow,,Name,Description,Tasks,,Init
 []Start,Service,Action,Description,Request,RunCriteria,Post
 ,daemon,status,Check if system mysql service is running,@req/mysql_system,$params.stopSystemMysql:true,"[{""name"":""mysqlSystemStatus"", ""from"":""State""}]"
 ,daemon,stop,Stop system mysql service,@req/mysql_system,$mysqlSystemStatus:running,
-,transfer,copy,This action will copy template config file to the temp folder,@req/docker_config,,
+,storage,copy,This action will copy template config file to the temp folder,@req/docker_config,,
 ,docker,run,Start docker mysql service,@req/docker_mysql,,
 []Tasks,,Name,Description,Actions,,
 ,,stop,This task will stop docker mysql,%Stop,,
