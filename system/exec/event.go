@@ -22,7 +22,6 @@ func (e *ExecutionStartEvent) CanReport(filter map[string]bool) bool {
 func (e *ExecutionStartEvent) Messages() []*endly.Message {
 	return []*endly.Message{
 		endly.NewMessage(endly.NewStyledText(fmt.Sprintf("%v", e.SessionID), endly.MessageStyleGeneric), endly.NewStyledText("stdin", endly.MessageStyleGeneric),
-			false,
 			endly.NewStyledText(e.Stdin, endly.MessageStyleInput)),
 	}
 }
@@ -53,7 +52,6 @@ func (e *ExecutionEndEvent) CanReport(filter map[string]bool) bool {
 func (e *ExecutionEndEvent) Messages() []*endly.Message {
 	return []*endly.Message{
 		endly.NewMessage(endly.NewStyledText(fmt.Sprintf("%v", e.SessionID), endly.MessageStyleGeneric), endly.NewStyledText("stdout", endly.MessageStyleGeneric),
-			false,
 			endly.NewStyledText(e.Stdout, endly.MessageStyleOutput)),
 	}
 }

@@ -23,7 +23,6 @@ func (r *RemoveRequest) Messages() []*endly.Message {
 	}
 	return []*endly.Message{endly.NewMessage(endly.NewStyledText("", endly.MessageStyleGeneric),
 		endly.NewStyledText("remove", endly.MessageStyleGeneric),
-		false,
 		fragments...),
 	}
 }
@@ -42,7 +41,6 @@ func (r *UploadRequest) Messages() []*endly.Message {
 	}
 	return []*endly.Message{endly.NewMessage(endly.NewStyledText("", endly.MessageStyleGeneric),
 		endly.NewStyledText("upload", endly.MessageStyleGeneric),
-		false,
 		endly.NewStyledText(fmt.Sprintf("SourcKey: %v", r.SourceKey), endly.MessageStyleInput),
 		endly.NewStyledText(fmt.Sprintf("TargetURL: %v", r.Target.URL), endly.MessageStyleOutput),
 	)}
@@ -62,7 +60,6 @@ func (r *DownloadRequest) Messages() []*endly.Message {
 	}
 	return []*endly.Message{endly.NewMessage(endly.NewStyledText("", endly.MessageStyleGeneric),
 		endly.NewStyledText("upload", endly.MessageStyleGeneric),
-		false,
 		endly.NewStyledText(fmt.Sprintf("Source: %v", r.Source.URL), endly.MessageStyleInput),
 		endly.NewStyledText(fmt.Sprintf("TargetKey: %v", r.TargetKey), endly.MessageStyleOutput),
 	)}
@@ -87,7 +84,6 @@ func (r *CopyRequest) Messages() []*endly.Message {
 		}
 		result = append(result, endly.NewMessage(endly.NewStyledText("", endly.MessageStyleGeneric),
 			endly.NewStyledText("copy", endly.MessageStyleGeneric),
-			false,
 			endly.NewStyledText(fmt.Sprintf("SourceURL: %v", transfer.Source.URL), endly.MessageStyleInput),
 			endly.NewStyledText(fmt.Sprintf("TargetURL: %v", transfer.Target.URL), endly.MessageStyleOutput),
 		))

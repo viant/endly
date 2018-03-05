@@ -10,6 +10,13 @@ import (
 	"strings"
 )
 
+
+//init initialises UDF functions
+func init() {
+	UdfRegistry["Dob"] = DateOfBirth
+}
+
+
 //TransformWithUDF transform payload with provided UDF name.
 func TransformWithUDF(context *Context, udfName, source string, payload interface{}) (interface{}, error) {
 	var state = context.State()
