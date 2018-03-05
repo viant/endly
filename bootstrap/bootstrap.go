@@ -16,14 +16,19 @@ import (
 	"github.com/viant/endly"
 	_ "github.com/viant/endly/cloud/ec2"
 	_ "github.com/viant/endly/cloud/gce"
-	_ "github.com/viant/endly/deployment/vc"
 	_ "github.com/viant/endly/endpoint/http"
+	_ "github.com/viant/endly/testing/dsunit"
+
+	_ "github.com/viant/endly/deployment/build"
+	_ "github.com/viant/endly/deployment/deploy"
+	_ "github.com/viant/endly/deployment/sdk"
+	_ "github.com/viant/endly/deployment/vc"
+
 	_ "github.com/viant/endly/system/daemon"
 	_ "github.com/viant/endly/system/docker"
 	_ "github.com/viant/endly/system/exec"
 	_ "github.com/viant/endly/system/process"
 	_ "github.com/viant/endly/system/storage"
-	_ "github.com/viant/endly/testing/dsunit"
 
 	"bufio"
 	"errors"

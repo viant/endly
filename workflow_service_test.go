@@ -3,19 +3,27 @@ package endly_test
 import (
 	"errors"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	_ "github.com/viant/endly/cli"
 	"github.com/viant/endly/endpoint/http"
-	_ "github.com/viant/endly/system/exec"
-	_ "github.com/viant/endly/system/storage"
-	_ "github.com/viant/endly/testing/dsunit"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
 	"testing"
+
+	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/viant/endly/cli"
+	_ "github.com/viant/endly/deployment/build"
+	_ "github.com/viant/endly/deployment/deploy"
+	_ "github.com/viant/endly/deployment/sdk"
+	_ "github.com/viant/endly/deployment/vc"
+
+	_ "github.com/viant/endly/system/daemon"
+	_ "github.com/viant/endly/system/docker"
+	_ "github.com/viant/endly/system/exec"
+	_ "github.com/viant/endly/system/process"
+	_ "github.com/viant/endly/system/storage"
 )
 
 func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, error) {

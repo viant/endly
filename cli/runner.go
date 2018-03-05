@@ -6,9 +6,6 @@ import (
 	"github.com/viant/assertly"
 	"github.com/viant/dsunit"
 	"github.com/viant/endly"
-	"github.com/viant/endly/deployment/build"
-	"github.com/viant/endly/deployment/deploy"
-	"github.com/viant/endly/deployment/vc"
 	"github.com/viant/endly/runner/http"
 	"github.com/viant/endly/runner/selenium"
 	"github.com/viant/endly/testing/log"
@@ -232,7 +229,6 @@ func (r *Runner) processDsunitEvent(value interface{}, filter *Filter) bool {
 		if actual.RunScriptRequest != nil {
 			r.processDsunitEvent(actual.RunScriptRequest, filter)
 		}
-
 	case *dsunit.RegisterRequest:
 		if filter.RegisterDatastore {
 			var descriptor = actual.Config.SecureDescriptor
@@ -381,6 +377,7 @@ func (r *Runner) processEvent(event *endly.Event, filter *Filter) {
 	}
 
 	switch value := event.Value.(type) {
+
 	case *endly.PrintRequest:
 		if value.Message != "" {
 			var message = r.Renderer.ColorText(value.Message, value.Color)
@@ -388,21 +385,6 @@ func (r *Runner) processEvent(event *endly.Event, filter *Filter) {
 		} else if value.Error != "" {
 			var errorMessage = r.Renderer.ColorText(value.Error, r.Renderer.ErrorColor)
 			r.Renderer.Println(errorMessage)
-		}
-
-	case *deploy.Request:
-		if filter.Deployment {
-			r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("app: %v, forced: %v", value.AppName, value.Force), endly.MessageStyleGeneric, "deploy")
-		}
-
-	case *vc.CheckoutRequest:
-		if filter.Checkout {
-			r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v %v", value.Origin.URL, value.Target.URL), endly.MessageStyleGeneric, "checkout")
-		}
-
-	case *build.Request:
-		if filter.Build {
-			r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v %v", value.BuildSpec.Name, value.Target.URL), endly.MessageStyleGeneric, "build")
 		}
 	}
 }
@@ -662,7 +644,17 @@ func (r *Runner) updateFilterReporSettings() {
 	if r.filter.Transfer {
 		r.filter.Report["storage"] = true
 	}
+	if r.filter.Build {
+		r.filter.Report["build"] = true
+	}
+	if r.filter.Checkout {
+		r.filter.Report["vc"] = true
+	}
+	if r.filter.Deployment {
+		r.filter.Report["deploy"] = true
+	}
 }
+
 
 func (r *Runner) AsListener() endly.EventListener {
 	var firstEvent, lastEvent *endly.Event

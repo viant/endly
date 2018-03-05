@@ -120,8 +120,8 @@ func (m *Meta) Validate() error {
 	return nil
 }
 
-//AsExtractRequest creates a command request.
-func (a *Addition) AsCommandRequest() *exec.RunRequest {
+//AsRunRequest creates a exec run request.
+func (a *Addition) AsRunRequest() *exec.RunRequest {
 	return &exec.RunRequest{
 		Commands:  a.Commands,
 		SuperUser: a.SuperUser,
