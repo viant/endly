@@ -18,7 +18,7 @@ import (
 	_ "github.com/viant/endly/deployment/deploy"
 	_ "github.com/viant/endly/deployment/sdk"
 	_ "github.com/viant/endly/deployment/vc"
-
+	_ "github.com/viant/endly/testing/dsunit"
 	_ "github.com/viant/endly/system/daemon"
 	_ "github.com/viant/endly/system/docker"
 	_ "github.com/viant/endly/system/exec"
