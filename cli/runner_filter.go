@@ -16,6 +16,7 @@ type Filter struct {
 	DataMapping             bool
 	HTTPTrip                bool
 	OnFailureFilter         *Filter
+	Enabled map[string]bool
 	FirstUseCaseFailureOnly bool
 }
 
