@@ -76,6 +76,7 @@ type OpenSessionRequest struct {
 	ReplayService   ssh.Service //use Ssh ReplayService instead of actual SSH service (for unit test only)
 }
 
+//Validate checks if request is valid
 func (r *OpenSessionRequest) Validate() error {
 	if r.Target == nil {
 		return errors.New("target was empty")

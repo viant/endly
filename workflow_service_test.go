@@ -8,10 +8,11 @@ import (
 	"github.com/viant/endly"
 	_ "github.com/viant/endly/cli"
 	"github.com/viant/endly/endpoint/http"
+	_ "github.com/viant/endly/system/exec"
+	_ "github.com/viant/endly/system/storage"
 	_ "github.com/viant/endly/testing/dsunit"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
-
 	"path"
 	"strings"
 	"testing"

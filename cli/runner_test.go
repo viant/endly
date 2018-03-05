@@ -24,6 +24,7 @@ func TestCliRunner_RunDsUnitWorkflow(t *testing.T) {
 		}
 	}
 }
+
 //
 //func TestCliRunner_RunDsHttpWorkflow(t *testing.T) {
 //	baseDir := toolbox.CallerDirectory(3)
@@ -87,7 +88,7 @@ func TestCliRunner_RunDsUnitWorkflow(t *testing.T) {
 //			Params: map[string]interface{}{
 //				"service": "logger",
 //				"action":  "print",
-//				"request": &endly.LoggerPrintRequest{Message: "hello"},
+//				"request": &endly.LoggerPrintRequest{StyledText: "hello"},
 //			},
 //		}, nil)
 //
@@ -101,7 +102,7 @@ func TestCliRunner_RunDsUnitWorkflow(t *testing.T) {
 //			Params: map[string]interface{}{
 //				"service": "workflow",
 //				"action":  "fail",
-//				"request": &endly.WorkflowFailRequest{Message: "hello"},
+//				"request": &endly.WorkflowFailRequest{StyledText: "hello"},
 //			},
 //		}, nil)
 //		assert.NotNil(t, err)

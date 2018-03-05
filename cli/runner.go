@@ -6,6 +6,9 @@ import (
 	"github.com/viant/assertly"
 	"github.com/viant/dsunit"
 	"github.com/viant/endly"
+	"github.com/viant/endly/deployment/build"
+	"github.com/viant/endly/deployment/deploy"
+	"github.com/viant/endly/deployment/vc"
 	"github.com/viant/endly/runner/http"
 	"github.com/viant/endly/runner/selenium"
 	"github.com/viant/endly/testing/log"
@@ -15,13 +18,6 @@ import (
 	"reflect"
 	"strings"
 	"time"
-
-	"github.com/viant/endly/deployment/build"
-	"github.com/viant/endly/deployment/deploy"
-	"github.com/viant/endly/deployment/vc"
-	"github.com/viant/endly/system/exec"
-	"github.com/viant/endly/system/storage"
-	"github.com/viant/endly/util"
 )
 
 //OnError exit system with os.Exit with supplied code.
@@ -30,13 +26,9 @@ var OnError = func(code int) {
 }
 
 const (
-	messageTypeAction = iota
+	messageTypeAction = iota + 10
 	messageTypeTagDescription
-	messageTypeError
-	messageTypeSuccess
-	messageTypeGeneric
 )
-
 
 //EventTag represents an event tag
 type EventTag struct {
@@ -90,9 +82,9 @@ type Runner struct {
 	InverseTag         bool
 	ServiceActionColor string
 
-	MessageTypeColor map[int]string
-	SuccessColor     string
-	ErrorColor       string
+	MessageStyleColor map[int]string
+	SuccessColor      string
+	ErrorColor        string
 
 	SleepCount int
 	SleepTime  time.Duration
@@ -124,17 +116,6 @@ func (r *Runner) EventTag() *EventTag {
 	}
 
 	return r.indexedTag[activity.TagID]
-}
-
-func (r *Runner) hasActiveSession(context *endly.Context, sessionID string) bool {
-	service, err := context.Service(endly.ServiceID)
-	if err != nil {
-		return false
-	}
-	var state = service.State()
-	service.Mutex().RLock()
-	defer service.Mutex().RUnlock()
-	return state.Has(sessionID)
 }
 
 func (r *Runner) printInput(output string) {
@@ -176,12 +157,12 @@ func (r *Runner) formatMessage(contextMessage string, contextMessageLength int, 
 	message = fmt.Sprintf("%-"+toolbox.AsString(messageLength)+"v", message)
 	messageInfo = fmt.Sprintf("%"+toolbox.AsString(infoLength)+"v", messageInfo)
 
-	if messageColor, ok := r.MessageTypeColor[messageType]; ok {
+	if messageColor, ok := r.MessageStyleColor[messageType]; ok {
 		message = r.ColorText(message, messageColor)
 	}
 
 	messageInfo = r.ColorText(messageInfo, "bold")
-	if messageInfoColor, ok := r.MessageTypeColor[messageInfoType]; ok {
+	if messageInfoColor, ok := r.MessageStyleColor[messageInfoType]; ok {
 		messageInfo = r.ColorText(messageInfo, messageInfoColor)
 	}
 	return fmt.Sprintf("[%v %v %v]", contextMessage, message, messageInfo)
@@ -198,6 +179,43 @@ func (r *Runner) formatShortMessage(messageType int, message string, messageInfo
 		return result
 	}
 	return fmt.Sprintf("%v\n%v", result, message)
+}
+
+func (r *Runner) processReporter(event *endly.Event, filter *Filter) bool {
+	if event.Value == nil {
+		return false
+	}
+	filteredReporter, isFilterReporter := event.Value.(endly.FilteredReporter)
+	messageReporter, isMessageReporter := event.Value.(endly.MessageReporter)
+
+	if !(isFilterReporter || isMessageReporter) {
+		return false
+	}
+
+	if isFilterReporter {
+		if !filteredReporter.CanReport(filter.Report) {
+			return true
+		}
+	}
+	if isMessageReporter {
+		for _, message := range messageReporter.Messages() {
+			tag := message.Tag
+			header := message.Header
+			if header != nil {
+				r.printShortMessage(header.Style, header.Text, tag.Style, tag.Text)
+			}
+			if len(message.Messages) > 0 {
+				for _, subMessage := range message.Messages {
+					if color, ok := r.MessageStyleColor[subMessage.Style]; ok {
+						r.Printf("%v\n", r.ColorText(subMessage.Text, color))
+					} else {
+						r.Printf("%v\n", subMessage.Text)
+					}
+				}
+			}
+		}
+	}
+	return false
 }
 
 func (r *Runner) resetSleepCounterIfNeeded() {
@@ -218,32 +236,32 @@ func (r *Runner) processDsunitEvent(value interface{}, filter *Filter) bool {
 	case *dsunit.RegisterRequest:
 		if filter.RegisterDatastore {
 			var descriptor = actual.Config.SecureDescriptor
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("Datastore: %v, %v:%v", actual.Datastore, actual.Config.DriverName, descriptor), messageTypeGeneric, "register")
+			r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("Datastore: %v, %v:%v", actual.Datastore, actual.Config.DriverName, descriptor), endly.MessageStyleGeneric, "register")
 		}
 	case *dsunit.MappingRequest:
 		if filter.DataMapping {
 			for _, mapping := range actual.Mappings {
 				var _, name = toolbox.URLSplit(mapping.Name)
-				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v: %v", name, mapping.Name), messageTypeGeneric, "mapping")
+				r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v: %v", name, mapping.Name), endly.MessageStyleGeneric, "mapping")
 			}
 		}
 	case *dsunit.SequenceRequest:
 		if filter.Sequence {
 			for k, v := range actual.Tables {
-				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v: %v", k, v), messageTypeGeneric, "sequence")
+				r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v: %v", k, v), endly.MessageStyleGeneric, "sequence")
 			}
 		}
 	case *dsunit.PrepareRequest:
 		if filter.PopulateDatastore {
 			actual.Load()
 			for _, dataset := range actual.Datasets {
-				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v: %v", actual.Datastore, dataset.Table, len(dataset.Records)), messageTypeGeneric, "populate")
+				r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("(%v) %v: %v", actual.Datastore, dataset.Table, len(dataset.Records)), endly.MessageStyleGeneric, "populate")
 			}
 		}
 	case *dsunit.RunScriptRequest:
 		if filter.SQLScript {
 			for _, script := range actual.Scripts {
-				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("(%v) %v", actual.Datastore, script.URL), messageTypeGeneric, "sql")
+				r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("(%v) %v", actual.Datastore, script.URL), endly.MessageStyleGeneric, "sql")
 			}
 		}
 	default:
@@ -315,41 +333,20 @@ func (r *Runner) processWorkflowEvent(event *endly.Event, filter *Filter) bool {
 	return true
 }
 
-func (r *Runner) processExecutionEvent(event *endly.Event, filter *Filter) bool {
-	if event.Value == nil {
-		return false
-	}
-	switch actual := event.Value.(type) {
-	case *exec.ExecutionStartEvent:
-		if filter.Stdin {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", actual.SessionID), messageTypeGeneric, "stdin")
-			r.printInput(util.EscapeStdout(actual.Stdin))
-		}
-	case *exec.ExecutionEndEvent:
-		if filter.Stdout {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v", actual.SessionID), messageTypeGeneric, "stdout")
-			r.printOutput(util.EscapeStdout(actual.Stdout))
-		}
-	default:
-		return false
-	}
-	return true
-}
-
 func (r *Runner) processEndlyEvents(event *endly.Event, filter *Filter) bool {
 	switch actual := event.Value.(type) {
 	case *endly.ErrorEvent:
 		r.report.Error = true
-		r.printShortMessage(messageTypeError, fmt.Sprintf("%v", actual.Error), messageTypeError, "error")
+		r.printShortMessage(endly.MessageStyleError, fmt.Sprintf("%v", actual.Error), endly.MessageStyleError, "error")
 		r.Println(r.ColorText(fmt.Sprintf("ERROR: %v\n", actual.Error), "red"))
 		r.err = errors.New(actual.Error)
 		return true
 	case *endly.SleepEvent:
 		if r.SleepCount > 0 {
-			r.overrideShortMessage(messageTypeGeneric, fmt.Sprintf("%v ms x %v,  slept so far: %v", actual.SleepTimeMs, r.SleepCount, r.SleepTime), messageTypeGeneric, "Sleep")
+			r.overrideShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms x %v,  slept so far: %v", actual.SleepTimeMs, r.SleepCount, r.SleepTime), endly.MessageStyleGeneric, "Sleep")
 		} else {
 			r.SleepTime = 0
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v ms", actual.SleepTimeMs), messageTypeGeneric, "Sleep")
+			r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms", actual.SleepTimeMs), endly.MessageStyleGeneric, "Sleep")
 		}
 		r.SleepTagID = r.eventTag.TagID
 		r.SleepTime += time.Millisecond * time.Duration(actual.SleepTimeMs)
@@ -364,13 +361,13 @@ func (r *Runner) processEvent(event *endly.Event, filter *Filter) {
 	if event.Value == nil {
 		return
 	}
+	if r.processReporter(event, filter) {
+		return
+	}
 	if r.processEndlyEvents(event, filter) {
 		return
 	}
 	if r.processWorkflowEvent(event, filter) {
-		return
-	}
-	if r.processExecutionEvent(event, filter) {
 		return
 	}
 	if r.processDsunitEvent(event.Value, filter) {
@@ -395,47 +392,18 @@ func (r *Runner) processEvent(event *endly.Event, filter *Filter) {
 
 	case *deploy.Request:
 		if filter.Deployment {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("app: %v, forced: %v", value.AppName, value.Force), messageTypeGeneric, "deploy")
+			r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("app: %v, forced: %v", value.AppName, value.Force), endly.MessageStyleGeneric, "deploy")
 		}
 
 	case *vc.CheckoutRequest:
 		if filter.Checkout {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", value.Origin.URL, value.Target.URL), messageTypeGeneric, "checkout")
+			r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v %v", value.Origin.URL, value.Target.URL), endly.MessageStyleGeneric, "checkout")
 		}
 
 	case *build.Request:
 		if filter.Build {
-			r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", value.BuildSpec.Name, value.Target.URL), messageTypeGeneric, "build")
+			r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v %v", value.BuildSpec.Name, value.Target.URL), endly.MessageStyleGeneric, "build")
 		}
-
-	case *storage.RemoveRequest:
-		if filter.Transfer {
-			for _, resource := range value.Resources {
-				r.printShortMessage(messageTypeGeneric, "", messageTypeGeneric, "remove")
-				r.printInput(fmt.Sprintf("SourceURL: %v", resource.URL))
-			}
-		}
-	case *storage.UploadRequest:
-		if filter.Transfer && value.Validate() == nil {
-			r.printShortMessage(messageTypeGeneric, "", messageTypeGeneric, "upload")
-			r.printInput(fmt.Sprintf("SourceKe: %v", value.SourceKey))
-			r.printOutput(fmt.Sprintf("TargetURL: %v", value.Target.URL))
-		}
-	case *storage.DownloadRequest:
-		if filter.Transfer && value.Validate() == nil {
-			r.printShortMessage(messageTypeGeneric, "", messageTypeGeneric, "download")
-			r.printInput(fmt.Sprintf("SourceURL: %v", value.Source.URL))
-			r.printOutput(fmt.Sprintf("TargetKey: %v", value.TargetKey))
-		}
-	case *storage.CopyRequest:
-		if filter.Transfer && value.Validate() == nil {
-			for _, transfer := range value.Transfers {
-				r.printShortMessage(messageTypeGeneric, fmt.Sprintf("expand: %v", transfer.Expand), messageTypeGeneric, "copy")
-				r.printInput(fmt.Sprintf("SourceURL: %v", transfer.Source.URL))
-				r.printOutput(fmt.Sprintf("TargetURL: %v", transfer.Target.URL))
-			}
-		}
-
 	}
 }
 
@@ -462,13 +430,13 @@ func (r *Runner) reportLogValidation(response *log.AssertResponse) {
 		}
 	}
 	var total = passedCount + failedCount
-	messageType := messageTypeSuccess
+	messageType := endly.MessageStyleSuccess
 	messageInfo := "OK"
 	var message = ""
 	if total > 0 {
 		message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, response.Description)
 		if failedCount > 0 {
-			messageType = messageTypeError
+			messageType = endly.MessageStyleError
 			message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, response.Description)
 			messageInfo = "FAILED"
 		}
@@ -504,7 +472,6 @@ func (r *Runner) reportFailureWithMatchSource(tag *EventTag, validation *assertl
 
 	if strings.Contains(theFirstFailure.Path, "Body") || strings.Contains(theFirstFailure.Path, "Code") || strings.Contains(theFirstFailure.Path, "Cookie") || strings.Contains(theFirstFailure.Path, "Header") {
 		if theFirstFailure.Index() != -1 {
-
 			requests, responses = r.extractHTTPTrips(eventCandidates)
 			if firstFailurePathIndex < len(requests) {
 				r.reportHTTPRequest(requests[firstFailurePathIndex])
@@ -521,7 +488,7 @@ func (r *Runner) reportFailureWithMatchSource(tag *EventTag, validation *assertl
 		if failure.Index() != -1 {
 			failurePath = fmt.Sprintf("%v:%v", failure.Index(), failure.Path)
 		}
-		r.printMessage(failurePath, len(failurePath), messageTypeError, failure.Message, messageTypeError, "Failed")
+		r.printMessage(failurePath, len(failurePath), endly.MessageStyleError, failure.Message, endly.MessageStyleError, "Failed")
 		if firstFailurePathIndex != failure.Index() || counter >= 3 {
 			break
 		}
@@ -541,7 +508,7 @@ func (r *Runner) reportSummaryEvent() {
 
 	var contextMessageLength = len(contextMessage) + len(contextMessageStatus)
 	contextMessage = fmt.Sprintf("%v%v", contextMessage, r.ColorText(contextMessageStatus, contextMessageColor))
-	r.printMessage(contextMessage, contextMessageLength, messageTypeGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed+r.report.TotalTagFailed)), messageTypeGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
+	r.printMessage(contextMessage, contextMessageLength, endly.MessageStyleGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed+r.report.TotalTagFailed)), endly.MessageStyleGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
 }
 
 func (r *Runner) getValidation(event *endly.Event) *assertly.Validation {
@@ -573,7 +540,7 @@ func (r *Runner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, messageTypeError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
+			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, endly.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
 
 			var minRange = 0
 			for i, event := range tag.Events {
@@ -604,7 +571,7 @@ func (r *Runner) reportLookupErrors(response *selenium.RunResponse) {
 	}
 	if len(response.LookupErrors) > 0 {
 		for _, errMessage := range response.LookupErrors {
-			r.printShortMessage(messageTypeError, errMessage, messageTypeGeneric, "Selenium")
+			r.printShortMessage(endly.MessageStyleError, errMessage, endly.MessageStyleGeneric, "Selenium")
 		}
 	}
 }
@@ -615,28 +582,28 @@ func asJSONText(source interface{}) string {
 }
 
 func (r *Runner) reportHTTPResponse(response *http.Response) {
-	r.printShortMessage(messageTypeGeneric, fmt.Sprintf("StatusCode: %v", response.Code), messageTypeGeneric, "HttpResponse")
+	r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("StatusCode: %v", response.Code), endly.MessageStyleGeneric, "HttpResponse")
 	if len(response.Header) > 0 {
-		r.printShortMessage(messageTypeGeneric, "Headers", messageTypeGeneric, "HttpResponse")
+		r.printShortMessage(endly.MessageStyleGeneric, "Headers", endly.MessageStyleGeneric, "HttpResponse")
 
 		r.printOutput(asJSONText(response.Header))
 	}
-	r.printShortMessage(messageTypeGeneric, "Body", messageTypeGeneric, "HttpResponse")
+	r.printShortMessage(endly.MessageStyleGeneric, "Body", endly.MessageStyleGeneric, "HttpResponse")
 	r.printOutput(response.Body)
 }
 
 func (r *Runner) reportHTTPRequest(request *http.Request) {
-	r.printShortMessage(messageTypeGeneric, fmt.Sprintf("%v %v", request.Method, request.URL), messageTypeGeneric, "HttpRequest")
+	r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v %v", request.Method, request.URL), endly.MessageStyleGeneric, "HttpRequest")
 	r.printInput(asJSONText(request.URL))
 	if len(request.Header) > 0 {
-		r.printShortMessage(messageTypeGeneric, "Headers", messageTypeGeneric, "HttpRequest")
+		r.printShortMessage(endly.MessageStyleGeneric, "Headers", endly.MessageStyleGeneric, "HttpRequest")
 		r.printInput(asJSONText(request.Header))
 	}
 	if len(request.Cookies) > 0 {
-		r.printShortMessage(messageTypeGeneric, "Cookies", messageTypeGeneric, "HttpRequest")
+		r.printShortMessage(endly.MessageStyleGeneric, "Cookies", endly.MessageStyleGeneric, "HttpRequest")
 		r.printInput(asJSONText(request.Cookies))
 	}
-	r.printShortMessage(messageTypeGeneric, "Body", messageTypeGeneric, "HttpRequest")
+	r.printShortMessage(endly.MessageStyleGeneric, "Body", endly.MessageStyleGeneric, "HttpRequest")
 	r.printInput(request.Body)
 }
 
@@ -660,12 +627,12 @@ func (r *Runner) reportValidation(validation *assertly.Validation, event *endly.
 		}
 	}
 
-	messageType := messageTypeSuccess
+	messageType := endly.MessageStyleSuccess
 	messageInfo := "OK"
 	var message = fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, total, description)
 	if validation.FailedCount > 0 {
 		r.errorCode = true
-		messageType = messageTypeError
+		messageType = endly.MessageStyleError
 		message = fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, total, description)
 		messageInfo = "FAILED"
 	}
@@ -681,11 +648,29 @@ func (r *Runner) reportEvent(context *endly.Context, event *endly.Event, filter 
 	return nil
 }
 
+func (r *Runner) updateFilterReporSettings() {
+	if len(r.filter.Report) == 0 {
+		r.filter.Report = make(map[string]bool)
+	}
+	//temporary transition during refactoring
+	if r.filter.Stdin {
+		r.filter.Report["stdin"] = true
+	}
+	if r.filter.Stdout {
+		r.filter.Report["stdout"] = true
+	}
+	if r.filter.Transfer {
+		r.filter.Report["storage"] = true
+	}
+}
+
 func (r *Runner) AsListener() endly.EventListener {
 	var firstEvent, lastEvent *endly.Event
 	if r.filter == nil {
 		r.filter = DefaultRunnerReportingOption().Filter
 	}
+	r.updateFilterReporSettings()
+
 	return func(event *endly.Event) {
 		if firstEvent == nil {
 			firstEvent = event
@@ -712,7 +697,7 @@ func (r *Runner) onWorkflowStart() {
 	if r.context.Workflow() != nil {
 		var workflow = r.context.Workflow().Name
 		var workflowLength = len(workflow)
-		r.printMessage(r.ColorText(workflow, r.TagColor), workflowLength, messageTypeGeneric, fmt.Sprintf("%v", time.Now()), messageTypeGeneric, "started")
+		r.printMessage(r.ColorText(workflow, r.TagColor), workflowLength, endly.MessageStyleGeneric, fmt.Sprintf("%v", time.Now()), endly.MessageStyleGeneric, "started")
 	}
 }
 
@@ -785,11 +770,13 @@ func New() *Runner {
 		ErrorColor:         "red",
 		InverseTag:         true,
 		ServiceActionColor: "gray",
-
-		MessageTypeColor: map[int]string{
+		MessageStyleColor: map[int]string{
 			messageTypeTagDescription: "cyan",
-			messageTypeError:          "red",
-			messageTypeSuccess:        "green",
+			endly.MessageStyleError:   "red",
+			endly.MessageStyleSuccess: "green",
+			endly.MessageStyleGeneric: "black",
+			endly.MessageStyleInput:   "blue",
+			endly.MessageStyleOutput:  "green",
 		},
 	}
 }
