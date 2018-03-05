@@ -46,7 +46,7 @@ func IsShellCompressable(protScheme string) bool {
 	return protScheme == "scp" || protScheme == "file"
 }
 
-//Transfer transfer data for provided transfer definition.
+//Copy transfers data for provided transfer definition.
 func Copy(context *endly.Context, transfers ...*Transfer) (interface{}, error) {
 	if transfers == nil {
 		return nil, nil

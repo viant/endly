@@ -10,6 +10,7 @@ import (
 	"path"
 )
 
+//GetReplayService return replay service
 func GetReplayService(basedir string) (ssh.Service, error) {
 	fileName, _, _ := toolbox.CallerInfo(3)
 	parent, _ := path.Split(fileName)
@@ -49,6 +50,7 @@ func openTestContext(manager endly.Manager, target *url.Resource, commandDirecto
 	return context, nil
 }
 
+//OpenTestRecorderContext open recorder context (to capture SSH command)
 func OpenTestRecorderContext(manager endly.Manager, target *url.Resource, commandDirectory string) (*endly.Context, error) {
 	fileName, _, _ := toolbox.CallerInfo(2)
 	parent, _ := path.Split(fileName)
@@ -56,6 +58,7 @@ func OpenTestRecorderContext(manager endly.Manager, target *url.Resource, comman
 	return openTestContext(manager, target, commandDirectory, nil)
 }
 
+//OpenTestContext opens test context with SSH commands to replay
 func OpenTestContext(manager endly.Manager, target *url.Resource, service ssh.Service) (*endly.Context, error) {
 	return openTestContext(manager, target, "", service)
 }

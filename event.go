@@ -12,45 +12,54 @@ import (
 type EventListener func(event *Event)
 
 const (
-	messageStyleGeneric = iota
-	messageStyleSuccess
-	messageStyleError
-	messageStyleInput
-	messageStyleOutput
+	MessageStyleGeneric = iota
+	MessageStyleSuccess
+	MessageStyleError
+	MessageStyleInput
+	MessageStyleOutput
 )
 
-//Message represent event output message
-type Message struct {
+//StyledText represent styled text
+type StyledText struct {
 	Text  string
 	Style int
 }
 
-//NewMessage creates a new message
-func NewMessage(text string, style int) *Message {
-	return &Message{
-		Text:text,
-		Style:style,
+//NewStyledText creates a new message
+func NewStyledText(text string, style int) *StyledText {
+	return &StyledText{
+		Text:  text,
+		Style: style,
 	}
 }
 
-//TagMessage represent a typed message, message is align to left and takes most of the space, tag is align to right takes little space.
-type TagMessage struct {
-	Message    *Message
-	Tag        *Message
+//Message represent en event message, that is handled by CLI or Web reporter.
+type Message struct {
+	Header     *StyledText
+	Tag        *StyledText
+	Messages   []*StyledText
 	IsRepeated bool //flag to reuse the same line if possible, i.e SleepTime
 }
 
+//NewMessage creates a new tag message
+func NewMessage(header *StyledText, tag *StyledText, isRepeated bool, messages ...*StyledText) *Message {
+	return &Message{
+		Header:     header,
+		Tag:        tag,
+		IsRepeated: isRepeated,
+		Messages:   messages,
+	}
+}
 
-
-//Reporter represents actual event value that can be reported by CLI or Web workflow runner.
-type Reporter interface {
+//FilteredReporter represents reporter that can filter messages
+type FilteredReporter interface {
 	//Returns true if can report for supplied filter
 	CanReport(filter map[string]bool) bool
+}
 
-	//Returns zero or more tag messages
-	TagMessages() []*TagMessage
-
-	//Returns zero or more messages
+//MessageReporter represents a reporter that can report tag messages
+type MessageReporter interface {
+	//Returns zero or more  messages
 	Messages() []*Message
 }
 
@@ -166,13 +175,10 @@ func (e *Events) Drain(context *Context) {
 	}
 }
 
-
 //AbstractReporter represents an abstract event reporter
 type AbstractReporter struct {
 	serviceKey string
 	eventKeys  []string
-	tagMessages []*TagMessage
-	message []*Message
 }
 
 func (r *AbstractReporter) CanReport(filter map[string]bool) bool {
@@ -192,24 +198,16 @@ func (r *AbstractReporter) CanReport(filter map[string]bool) bool {
 	return false
 }
 
-func (r *AbstractReporter) TagMessages() []*TagMessage {
-	return r.tagMessages
-}
-
-func (r *AbstractReporter) Messages() []*Message {
-	return r.message
-}
-
-//NewReporter creates a new abstract reporter
-func NewReporter(serviceKey string, eventKeys  []string, tagMessages []*TagMessage, messages ...*Message) Reporter {
+//NewFilteredReporter creates a new abstract reporter
+func NewFilteredReporter(serviceKey string, eventKeys ...string) FilteredReporter {
 	var result = &AbstractReporter{
-		serviceKey:strings.ToLower(serviceKey),
-		eventKeys:eventKeys,
-		tagMessages:tagMessages,
-		message:messages,
+		serviceKey: strings.ToLower(serviceKey),
+		eventKeys:  eventKeys,
 	}
-
-	for i, eventKey :=range result.eventKeys {
+	if len(result.eventKeys) == 0 {
+		result.eventKeys = []string{}
+	}
+	for i, eventKey := range result.eventKeys {
 		result.eventKeys[i] = strings.ToLower(eventKey)
 	}
 	return result

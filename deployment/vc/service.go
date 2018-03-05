@@ -285,7 +285,7 @@ const (
     "Credential":"${env.HOME}/.secret/localhost.json"
   },
   "Type":"svn",
-  "Message":"my comments"
+  "StyledText":"my comments"
 }`
 	vcPullExample = `{
 					"Target":{

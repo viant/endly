@@ -19,7 +19,6 @@ const ServiceID = "exec"
 //SudoCredentialKey represent obsucated password sudo credential key (target.Credential)
 const SudoCredentialKey = "**sudo**"
 
-
 type execService struct {
 	*endly.AbstractService
 	credentials map[string]*cred.Config
@@ -197,19 +196,10 @@ func (s *execService) changeDirectory(context *endly.Context, session *endly.Sys
 
 func (s *execService) rumCommandTemplate(context *endly.Context, session *endly.SystemTerminalSession, commandTemplate string, arguments ...interface{}) (string, error) {
 	command := fmt.Sprintf(commandTemplate, arguments...)
-	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
-	startEvent := s.Begin(context, executionStartEvent)
+	startEvent := s.Begin(context, NewExecutionStartEvent(session.ID, command))
 	stdout, err := session.Run(command, 1000)
-	var executionEndEvent = &ExecutionEndEvent{
-		SessionID: session.ID,
-		Stdout:    stdout,
-	}
-	defer s.End(context)(startEvent, executionEndEvent)
-	if err != nil {
-		executionEndEvent.Error = fmt.Sprintf("%v", err)
-		return stdout, err
-	}
-	return stdout, nil
+	s.End(context)(startEvent, NewExecutionEndEvent(session.ID, stdout, err))
+	return stdout, err
 }
 
 func (s *execService) applyCommandOptions(context *endly.Context, options *ExecutionOptions, session *endly.SystemTerminalSession, info *RunResponse) error {
@@ -332,20 +322,9 @@ func (s *execService) executeCommand(context *endly.Context, session *endly.Syst
 			}
 		}
 	}
-
-	var executionStartEvent = &ExecutionStartEvent{SessionID: session.ID, Stdin: command}
-	startEvent := s.Begin(context, executionStartEvent)
-
+	startEvent := s.Begin(context, NewExecutionStartEvent(session.ID, command))
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
-	var executionEndEvent = &ExecutionEndEvent{
-		SessionID: session.ID,
-		Stdout:    stdout,
-	}
-	if err != nil {
-		executionEndEvent.Error = fmt.Sprintf("%v", err)
-	}
-	s.End(context)(startEvent, executionEndEvent)
-
+	s.End(context)(startEvent, NewExecutionEndEvent(session.ID, stdout, err))
 	response.Add(NewCommandLog(command, stdout, err))
 	if err != nil {
 		return err
@@ -727,7 +706,7 @@ func (s *execService) registerRoutes() {
 	})
 }
 
-//NewExecService creates a new execution service
+//New creates a new execution service
 func New() endly.Service {
 	var result = &execService{
 		credentials:     make(map[string]*cred.Config),
