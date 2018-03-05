@@ -19,10 +19,16 @@ func TestCriteriaParser_Parse(t *testing.T) {
 	}{
 
 		{
-			Description: "Simple criterion",
+			Description: "Empty left operand criterion",
 			Expression:  ":!$value",
 			Expected:    endly.NewCriteria("", endly.NewCriterion(nil, ":", "!$value")),
 		},
+		{
+			Description: "UDF criterion",
+			Expression:  "$HasResource(${buildHost}${buildDirectory}/pom.xml):false",
+			Expected:    endly.NewCriteria("", endly.NewCriterion("$HasResource(${buildHost}${buildDirectory}/pom.xml)", ":", "false")),
+		},
+
 
 		{
 			Description: "Simple criterion",

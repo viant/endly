@@ -10,7 +10,7 @@ const (
 	eof
 	illegal
 	whitespaces
-	id
+	operand
 	operator
 	logicalOperator
 	assertlyExprMatcher
@@ -22,7 +22,7 @@ const (
 var matchers = map[int]toolbox.Matcher{
 	eof:         toolbox.EOFMatcher{},
 	whitespaces: toolbox.CharactersMatcher{" \n\t"},
-	id:          toolbox.NewCustomIdMatcher(".", "_", "$", "[", "]", "{", "}", "!", "-", "(", ")"),
+	operand:          toolbox.NewCustomIdMatcher(".", "_", "$", "[", "]", "{", "}", "!", "-", "(", ")", "/", "\\", "+", "-", "*"),
 	operator: toolbox.KeywordsMatcher{
 		Keywords:      []string{"=", ">=", "<=", "<>", ">", "<", "!=", ":"},
 		CaseSensitive: false,
@@ -75,7 +75,7 @@ func (p *Parser) Parse(expression string) (*Criteria, error) {
 	parsingCriteria := result
 outer:
 	for {
-		token, err := p.expectOptionalWhitespaceFollowedBy(tokenizer, "id or grouping expression", jsonObject, jsonArray, grouping, id, operator)
+		token, err := p.expectOptionalWhitespaceFollowedBy(tokenizer, "id or grouping expression", jsonObject, jsonArray, grouping, operand, operator)
 		if err != nil {
 			return nil, err
 		}
@@ -95,7 +95,7 @@ outer:
 					Criteria: criteria,
 				})
 			}
-		case id, jsonObject:
+		case operand, jsonObject:
 			criterion = &Criterion{
 				LeftOperand: token.Matched,
 			}
@@ -120,7 +120,7 @@ outer:
 			if criterion.Operator == ":" {
 				token, err = p.expectOptionalWhitespaceFollowedBy(tokenizer, "right operand", assertlyExprMatcher, eof)
 			} else {
-				token, err = p.expectOptionalWhitespaceFollowedBy(tokenizer, "right operand", jsonObject, jsonArray, id, eof)
+				token, err = p.expectOptionalWhitespaceFollowedBy(tokenizer, "right operand", jsonObject, jsonArray, operand, eof)
 			}
 			if err != nil {
 				return nil, err
