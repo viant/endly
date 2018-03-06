@@ -12,7 +12,7 @@ import (
 
 //EventLogger represent event logger to drop event details in the provied directory.
 type EventLogger struct {
-	listener         EventListener
+	Listener         EventListener
 	activities       *Activities
 	directory        string
 	workflowTag      string
@@ -87,11 +87,11 @@ func (l *EventLogger) OnEvent(event *Event) {
 	_, _ = file.Write(buf)
 }
 
-//AsEventListener returns an event listener
+//AsEventListener returns an event Listener
 func (l *EventLogger) AsEventListener() EventListener {
 	return func(event *Event) {
-		if l.listener != nil {
-			l.listener(event)
+		if l.Listener != nil {
+			l.Listener(event)
 		}
 		l.OnEvent(event)
 	}
@@ -101,7 +101,7 @@ func (l *EventLogger) AsEventListener() EventListener {
 func NewEventLogger(directory string, listener EventListener) *EventLogger {
 	var activities Activities = make([]*Activity, 0)
 	var result = &EventLogger{
-		listener:   listener,
+		Listener:   listener,
 		mutex:      &sync.Mutex{},
 		directory:  directory,
 		activities: &activities,

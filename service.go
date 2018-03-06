@@ -94,6 +94,33 @@ func (s *AbstractService) Register(routes ...*ServiceActionRoute) {
 	}
 }
 
+func (s *AbstractService) addRouteIfConvertible(request interface{}) *ServiceActionRoute {
+	var requestType = reflect.TypeOf(request)
+	if requestType != nil {
+		for k, v := range s.routeByRequest {
+			if requestType.Kind() == reflect.Ptr && requestType.Elem().ConvertibleTo(k.Elem()) {
+
+				s.routeByRequest[requestType] = &ServiceActionRoute{
+					Action:           v.Action,
+					RequestInfo:      v.RequestInfo,
+					ResponseInfo:     v.ResponseInfo,
+					RequestProvider:  v.RequestProvider,
+					ResponseProvider: v.ResponseProvider,
+					Handler: func(context *Context, convertibleRequest interface{}) (interface{}, error) {
+						var request = v.RequestProvider()
+						var requestValue = reflect.ValueOf(request)
+						var convertibleValue = reflect.ValueOf(convertibleRequest)
+						requestValue.Elem().Set(convertibleValue.Elem().Convert(k.Elem()))
+						return v.Handler(context, request)
+					},
+				}
+				return s.routeByRequest[requestType]
+			}
+		}
+	}
+	return nil
+}
+
 //Run returns a service action for supplied action
 func (s *AbstractService) Run(context *Context, request interface{}) (response *ServiceResponse) {
 	response = &ServiceResponse{Status: "ok"}
@@ -115,8 +142,12 @@ func (s *AbstractService) Run(context *Context, request interface{}) (response *
 
 	service, ok := s.routeByRequest[reflect.TypeOf(request)]
 	if !ok {
-		err = NewError(s.ID(), fmt.Sprintf("%T", request), fmt.Errorf("failed to lookup service route: %T", request))
-		return response
+
+		service = s.addRouteIfConvertible(request)
+		if service == nil {
+			err = NewError(s.ID(), fmt.Sprintf("%T", request), fmt.Errorf("failed to lookup service route: %T", request))
+			return response
+		}
 	}
 
 	if initializer, ok := request.(Initializer); ok {
@@ -220,12 +251,7 @@ func NewAbstractService(id string) *AbstractService {
 	}
 }
 
-const (
-	//NopServiceID represents nop nopService id.
-	NopServiceID = "nop"
-)
-
-//NopRequest represent no operation
+//NopRequest represent no operation to be deprecated
 type NopRequest struct{}
 
 //NopParrotRequest represent parrot request
@@ -281,63 +307,7 @@ func (s *nopService) registerRoutes() {
 //newNopService creates a new NoOperation nopService.
 func newNopService() Service {
 	var result = &nopService{
-		AbstractService: NewAbstractService(NopServiceID),
-	}
-	result.AbstractService.Service = result
-	result.registerRoutes()
-	return result
-}
-
-const (
-	//LoggerServiceID represents log service id.
-	LoggerServiceID = "logger"
-)
-
-//PrintRequest represent print request
-type PrintRequest struct {
-	Message string
-	Color   string
-	Error   string
-}
-
-//loggerService represents no operation service
-type loggerService struct {
-	*AbstractService
-}
-
-func (s *loggerService) registerRoutes() {
-	s.Register(&ServiceActionRoute{
-		Action: "print",
-		RequestInfo: &ActionInfo{
-			Description: "print log message",
-		},
-		RequestProvider: func() interface{} {
-			return &PrintRequest{}
-		},
-		ResponseProvider: func() interface{} {
-			return struct{}{}
-		},
-		Handler: func(context *Context, req interface{}) (interface{}, error) {
-			if request, ok := req.(*PrintRequest); ok {
-				if !context.CLIEnabled {
-					if request.Message != "" {
-						fmt.Printf("%v\n", request.Message)
-					}
-					if request.Error != "" {
-						fmt.Printf("%v\n", request.Error)
-					}
-				}
-				return struct{}{}, nil
-			}
-			return nil, fmt.Errorf("unsupported request type: %T", req)
-		},
-	})
-}
-
-//newLoggerService creates a new logger service.
-func newLoggerService() Service {
-	var result = &loggerService{
-		AbstractService: NewAbstractService(LoggerServiceID),
+		AbstractService: NewAbstractService("nop"),
 	}
 	result.AbstractService.Service = result
 	result.registerRoutes()

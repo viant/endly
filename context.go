@@ -22,6 +22,14 @@ var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
 
+const (
+	//ActivityKey Activity key
+	ActivityKey = "Activity"
+
+	//TaskKey task key
+	TaskKey = ":task"
+)
+
 //WorkflowKey context.State workflow key
 var WorkflowKey = (*Workflow)(nil)
 
@@ -30,7 +38,7 @@ type Context struct {
 	SessionID  string
 	CLIEnabled bool
 	Wait       *sync.WaitGroup
-	listener   EventListener
+	Listener   EventListener
 	Workflows  *Workflows
 	state      data.Map
 	toolbox.Context
@@ -61,15 +69,15 @@ func (c *Context) Publish(value interface{}) *Event {
 		Activity:  activity,
 		Value:     value,
 	}
-	if c.listener != nil {
-		c.listener(event)
+	if c.Listener != nil {
+		c.Listener(event)
 	}
 	return event
 }
 
-//SetListener sets context event listener
+//SetListener sets context event Listener
 func (c *Context) SetListener(listener EventListener) {
-	c.listener = listener
+	c.Listener = listener
 }
 
 //IsClosed returns true if it is closed.
@@ -89,7 +97,8 @@ func (c *Context) Clone() *Context {
 	result.state.Apply(c.state)
 	result.SessionID = c.SessionID
 	result.Workflows = c.Workflows
-	result.listener = c.listener
+	result.Listener = c.Listener
+	result.CLIEnabled = c.CLIEnabled
 	c.cloned = append(c.cloned, result)
 	return result
 }
@@ -269,7 +278,7 @@ func (c *Context) MakeAsyncSafe() *Events {
 		mutex:  &sync.Mutex{},
 		Events: make([]*Event, 0),
 	}
-	c.listener = result.AsEventListener()
+	c.Listener = result.AsEventListener()
 	return result
 }
 

@@ -1,0 +1,20 @@
+Workflow,,,Name,Description,Tasks,,Post,var.Name,var.From,
+,,,http_workflow,Sending and validating a smaple request/response,%Tasks,,[$arg0]|$var,httpResponses,httpResponses,
+[]Tasks,,,Name,Description,Actions,,,,,
+,,,send,This task will send a few http requests,%Send,,,,,
+[]Send,,Service ,Action ,Description,Request.[]Requests.URL,Request.[]Requests.Method,Post,var.Name,var.From,Async
+,,http/runner,send,Sending http requests,$appServer/path1,GET,[$arg0]|$var,httpResponses,Responses,
+,,,,,$appServer/path2,GET,,,,
+,,,,,$appServer/path3,GET,,,,
+-,,http/runner,send,Sending http requests,$appServer/path4,GET,[$arg0]|$var,httpResponses4,Responses,TRUE
+-,,http/runner,send,Sending http requests,$appServer/path5,GET,[$arg0]|$var,httpResponses5,Responses,TRUE
+-,,http/runner,send,Sending http requests,$appServer/path6,GET,[$arg0]|$var,httpResponses6,Responses,
+[]Tasks,,,Name,Description,Actions,,,,,
+,,,validate,Validates http resposnes,%Validate,,,,,
+[]Validate,,Service ,Action ,Description,Request.Actual,Request.[]Expected.Body,Request.[]Expected.Code,,Request.Name,
+,,validator,assert,Verify responses,$httpResponses,/path1/,200,,HTTPResponses,
+,,,,,,/path2/,200,,,
+,,,,,,/path3/,200,,,
+-,,validator,assert,Verify responses,$httpResponses4,/path41/,200,,HTTPResponses,
+-,,validator,assert,Verify responses,$httpResponses5,/path5/,200,,HTTPResponses,
+-,,validator,assert,Verify responses,$httpResponses6,/path6/,200,,HTTPResponses,

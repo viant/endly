@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-//EventListener represents an event listener
+//EventListener represents an event Listener
 type EventListener func(event *Event)
 
 const (
@@ -35,25 +35,18 @@ func NewStyledText(text string, style int) *StyledText {
 
 //Message represent en event message, that is handled by CLI or Web reporter.
 type Message struct {
-	Header     *StyledText
-	Tag        *StyledText
-	Messages   []*StyledText
-	Counter    int
+	Header *StyledText
+	Tag    *StyledText
+	Items  []*StyledText
 }
 
 //NewMessage creates a new tag message
-func NewMessage(header *StyledText, tag *StyledText,  messages ...*StyledText) *Message {
+func NewMessage(header *StyledText, tag *StyledText, items ...*StyledText) *Message {
 	return &Message{
-		Header:     header,
-		Tag:        tag,
-		Messages:   messages,
+		Header: header,
+		Tag:    tag,
+		Items:  items,
 	}
-}
-
-//FilteredReporter represents reporter that can filter messages
-type FilteredReporter interface {
-	//Returns true if can report for supplied filter
-	CanReport(filter map[string]bool) bool
 }
 
 //MessageReporter represents a reporter that can report tag messages
@@ -62,11 +55,11 @@ type MessageReporter interface {
 	Messages() []*Message
 }
 
-
 //RepeatedMessage represents a repeated message
 type RepeatedMessage struct {
 	Total int
 	Count int
+	Type  string
 }
 
 //RepeatedReporter represents a reporter that updted current line (with \r)
@@ -74,8 +67,6 @@ type RepeatedReporter interface {
 	//Returns messages
 	Message(repeated *RepeatedMessage) *Message
 }
-
-
 
 //Event represents a workflow event wrapper
 type Event struct {
@@ -125,58 +116,20 @@ func NewEvent(value interface{}) *Event {
 type SleepEvent struct {
 	SleepTimeMs int
 }
-//
-//func (e *SleepEvent) Message(repeated *RepeatedMessage) *Message {
-//
-//	var result *Message
-//	var tagText = NewStyledText("sleep", MessageStyleGeneric)
-//	var title *StyledText
-//
-//	if repeated != nil {
-//		counter += repeated.Total
-//	}
-//
-//	var sleepTime = time.Millisecond *  time.Duration(counter)
-//	if  repeated.Count == 0 {
-//		title = fmt.Sprintf("%v ms", e.SleepTimeMs)
-//	} else {
-//		var timeSoFar
-//		title = fmt.Sprintf("%v ms x %v,  slept so far: %v", e.SleepTimeMs, repeated.Count, time.Millisecond * repeated.Total)
-//
-//	}
-//	result = NewMessage(NewStyledText(fmt.Sprintf("%v", e.SessionID), MessageStyleGeneric), NewStyledText("stdout", endly.MessageStyleGeneric),
-//
-//
-//
-//		result = NewMessage(NewStyledText(fmt.Sprintf("%v", e.SessionID), MessageStyleGeneric), NewStyledText("stdout", endly.MessageStyleGeneric),
-//
-//		r.overrideShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms x %v,  slept so far: %v", actual.SleepTimeMs, r.SleepCount, r.SleepTime), endly.MessageStyleGeneric, "Sleep")
-//	} else {
-//		endly.NewMessage(endly.NewStyledText(fmt.Sprintf("%v", e.SessionID), endly.MessageStyleGeneric), endly.NewStyledText("stdout", endly.MessageStyleGeneric),
-//		r.SleepTime = 0
-//		r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms", actual.SleepTimeMs), endly.MessageStyleGeneric, "Sleep")
-//	}
-//}
 
-
-/*
-
-	case *endly.SleepEvent:
-		if r.SleepCount > 0 {
-			r.overrideShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms x %v,  slept so far: %v", actual.SleepTimeMs, r.SleepCount, r.SleepTime), endly.MessageStyleGeneric, "Sleep")
-		} else {
-			r.SleepTime = 0
-			r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms", actual.SleepTimeMs), endly.MessageStyleGeneric, "Sleep")
-		}
-
-		r.SleepTagID = r.eventTag.TagID
-		r.SleepTime += time.Millisecond * time.Duration(actual.SleepTimeMs)
-		r.SleepCount++
-		return true
+func (e *SleepEvent) Message(repeated *RepeatedMessage) *Message {
+	var tag = NewStyledText("sleep", MessageStyleGeneric)
+	var title *StyledText
+	repeated.Total = +e.SleepTimeMs
+	if repeated.Count == 0 {
+		title = NewStyledText(fmt.Sprintf("%v ms", e.SleepTimeMs), MessageStyleGeneric)
+	} else {
+		var sleptSoFar = time.Millisecond * time.Duration(repeated.Total)
+		title = NewStyledText(fmt.Sprintf("%v ms x %v,  slept so far: %v", e.SleepTimeMs, repeated.Count, sleptSoFar), MessageStyleGeneric)
 	}
-
-*/
-
+	repeated.Count++
+	return NewMessage(title, tag)
+}
 
 //NewSleepEvent create a new sleep event
 func NewSleepEvent(sleepTimeMs int) *SleepEvent {
@@ -229,7 +182,7 @@ func (e *Events) Shift() *Event {
 	return result
 }
 
-//AsEventListener adds listener
+//AsEventListener adds Listener
 func (e *Events) AsEventListener() EventListener {
 	return func(event *Event) {
 		e.Push(event)
@@ -245,42 +198,4 @@ func (e *Events) Drain(context *Context) {
 		}
 		context.Publish(event)
 	}
-}
-
-//AbstractReporter represents an abstract event reporter
-type AbstractReporter struct {
-	serviceKey string
-	eventKeys  []string
-}
-
-func (r *AbstractReporter) CanReport(filter map[string]bool) bool {
-	if len(filter) == 0 {
-		return false
-	}
-	if len(r.eventKeys) > 0 {
-		for _, candidate := range r.eventKeys {
-			if allowed, has := filter[candidate]; has {
-				return allowed
-			}
-		}
-	}
-	if allowed, has := filter[r.serviceKey]; has {
-		return allowed
-	}
-	return false
-}
-
-//NewFilteredReporter creates a new abstract reporter
-func NewFilteredReporter(serviceKey string, eventKeys ...string) FilteredReporter {
-	var result = &AbstractReporter{
-		serviceKey: strings.ToLower(serviceKey),
-		eventKeys:  eventKeys,
-	}
-	if len(result.eventKeys) == 0 {
-		result.eventKeys = []string{}
-	}
-	for i, eventKey := range result.eventKeys {
-		result.eventKeys[i] = strings.ToLower(eventKey)
-	}
-	return result
 }

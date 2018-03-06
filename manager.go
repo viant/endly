@@ -102,9 +102,7 @@ func NewManager() Manager {
 		serviceByRequestType: make(map[reflect.Type]Service),
 	}
 
-	result.Register(NewService())
 	result.Register(newNopService())
-	result.Register(newLoggerService())
 	for _, provider := range *Registry {
 		result.Register(provider())
 	}

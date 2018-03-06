@@ -165,11 +165,9 @@ The following diagram shows service with its component.
    - [Log Validator Service](testing/log)
    - [Datastore Preparation and Validation Service](testing/dsunit)
 7) **Workflow service**
-    - [Workflow Service](#Workfowservice)
-    - [Logger Service](#Workfowservice)
-    - [Nop Service](#Workfowservice)
-        
+    - [Workflow Service](workflow/)
 
+ 
 
 To get the latest list of endly supported services run
 ```text
@@ -280,14 +278,13 @@ where options include:
   -w string
     	<workflow name>  if both -r and -w valid options are specified, -w is ignored (default "manager")
     	
-
 ```
 
 
 When specified workflow or request it can be name of endly [predefined workflow](#predefined_workflows) 
 or [request](#predefined_requests).
 
-For instance the following command will print ec2 workflow in JSON format.
+For instance the following command will print shared ec2 workflow in JSON format.
 
 ```bash
 
@@ -303,7 +300,9 @@ endly -w ec2 -t start awsCredential ~/.secret/aws.json ec2InstanceId i-0ef8d9260
 
 ```
 
-Example of RunRequest JSON
+In case there are more parameters that workflow accepts it is easier to create run.json file representing [*workflow.RunRequest](workflow/service_contract.go)
+
+Example of RunRequest 
 
 ```json
 {
@@ -330,27 +329,10 @@ Example of RunRequest JSON
     "appHost":"127.0.0.1:9880",
     "tomcatForceDeploy":true
   },
-
-  "Filter": {
-    "SQLScript":true,
-    "PopulateDatastore":true,
-    "Sequence": true,
-    "RegisterDatastore":true,
-    "DataMapping":true,
-    "FirstUseCaseFailureOnly":false,
-    "OnFailureFilter": {
-      "UseCase":true,
-      "HttpTrip":true,
-      "Assert":true
-    }
-
-  }
+  "EventFilter":{}
 }
 
 ```
-
-
-See for more filter option: [Filter](cli/runner_filter.go).
 
 
 In case you have defined you one UDF or have other dependencies you have to build endly binary yourself.
@@ -425,7 +407,7 @@ RunnerReportingOptions settings control stdout/stdin and other workflow details.
 
     runner := cli.New()
 	cli.OnError = func(code int) {}//to supres os.Exit(1) in case of error
-	err := runner.Run(&endly.RunRequest{
+	err := runner.Run(&workflow.RunRequest{
 			WorkflowURL: "action",
 			Tasks:       "run",
 			Params: map[string]interface{}{
@@ -439,75 +421,6 @@ RunnerReportingOptions settings control stdout/stdin and other workflow details.
     }
 
 ```         
-
-
-
-
-<a name="Workfowservice"></a>
-## Workflow service
-
-
-**Workflow Service**
-
-Workflow service provide capability to run task, action from any defined workflow.
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| workflow | run | run workflow with specified tasks and parameters | [RunRequest](service_workflow_contract.go) | [RunResponse](service_workflow_contract.go) |
-| workflow | goto | switch current execution to the specified task on current workflow | [GotoRequest](service_workflow_goto.go) | [GotoResponse](service_workflow_contract.go) 
-| workflow | switch | run matched  case action or task  | [SwitchRequest](service_workflow_contract.go) | [SwitchResponse](service_workflow_contract.go) |
-| workflow | exit | terminate execution of active workflow (caller) | n/a | n/a |
-| workflow | fail | fail  workflow | [FailRequest](service_workflow_contract.go) | n/a  |
-
-
-**Predefined workflows**
-
-
-<a name="predefined_workflows">	</a>
-**Predefined workflows**
-
-
-
-[Workflows](shared/workflow)
-
-| Name | Task |Description | 
-| --- | --- | --- |
-| dockerized_mysql| start | start mysql docker container  |
-| dockerized_mysql| stop | stop mysql docker container 
-| dockerized_aerospike| start | aerospike mysql docker container |
-| dockerized_aerospike| stop | stop aerospike docker container |
-| dockerized_memcached| start | aerospike memcached docker container |
-| dockerized_memcached| stop | stop memcached docker container |
-| tomcat| install | install tomcat |
-| tomcat| start | start tomcat instance|
-| tomcat| stop | stop tomcat instance |
-| vc_maven_build | checkout | checkout the latest code from version control |
-| vc_maven_build | build | build the checked out code |
-| vc_maven_module_build | checkout | check out all required projects to build a module |
-| vc_maven_module_build | build | build module |
-| ec2 | start | start ec2 instance |
-| ec2 | stop | stop  ec2 instance |
-| gce | start | start gce instance |
-| gce | stop | stop  gce instance |
-| notify_error | notify | send error |
- 
- 
- 
- <a name="predefined_requests"></a>
- **Predefined workflow run requests**
- 
- [Requests](shared/requests)
-  
- | Name | Workflow | 
- | --- | --- | 
- | [tomcat.json](/shared/req/tomcat.json) | tomcat | 
- | [aerospike.json](/sharedreq/aerospike.json)| dockerized_aerospike |
- | [mysql.json](/sharedreq/mysql.json)| dockerized_mysql |
- | [memcached.json](/sharedreq/memcached.json)| dockerized_memcached|
- | [ec2.json](/sharedreq/ec2.json)| ec2 |
- | [gce.json](/sharedreq/gce.json)| gce |
- | [notify_error.json](/sharedreq/notify_error.json)| notify_error |
- 
 
 
          

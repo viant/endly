@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"testing"
 )
 
 func GetAbstractService() *endly.AbstractService {
 	manager := endly.NewManager()
-	service, _ := manager.Service(endly.ServiceID)
-	nopService := service.(*endly.WorkflowService)
+	service, _ := manager.Service(workflow.ServiceID)
+	nopService := service.(*workflow.Service)
 	return nopService.AbstractService
 }
 

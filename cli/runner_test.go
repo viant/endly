@@ -2,12 +2,10 @@ package cli_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/viant/endly"
 	"github.com/viant/endly/cli"
 	"github.com/viant/toolbox"
 	"log"
 	"os/exec"
-	"path"
 	"testing"
 )
 
@@ -16,9 +14,9 @@ func TestCliRunner_RunDsUnitWorkflow(t *testing.T) {
 	toolbox.CreateDirIfNotExist("/tmp/endly/test/workflow/dsunit")
 	runner := cli.New()
 
-	request, options, err := cli.LoadRunRequestWithOption("test/runner/run_dsunit.json")
+	request, err := cli.LoadRunRequestWithOption("test/runner/run_dsunit.json")
 	if assert.Nil(t, err) {
-		err := runner.Run(request, options)
+		err := runner.Run(request)
 		if err != nil {
 			log.Fatal(err)
 		}

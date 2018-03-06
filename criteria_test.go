@@ -27,7 +27,6 @@ func TestCriterion_IsTrue(t *testing.T) {
 			IsTrue:      true,
 		},
 
-
 		{
 			Description: "equal test",
 			Criterion:   endly.NewCriterion("12", "", "12"),

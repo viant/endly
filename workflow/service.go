@@ -1,7 +1,8 @@
-package endly
+package workflow
 
 import (
 	"fmt"
+	"github.com/viant/endly"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -22,24 +23,18 @@ const (
 	//ActionEvalCriteriaEventType event ID
 	ActionEvalCriteriaEventType = "EvalActionCriteria"
 
-	//ActivityKey Activity key
-	ActivityKey = "Activity"
-
-	//TaskKey task key
-	TaskKey = ":task"
-
 	caller = "Workflow"
 )
 
-//WorkflowService represents a workflow service.
-type WorkflowService struct {
-	*AbstractService
+//Service represents a workflow service.
+type Service struct {
+	*endly.AbstractService
 	Dao       *Dao
-	registry  map[string]*Workflow
+	registry  map[string]*endly.Workflow
 	converter *toolbox.Converter
 }
 
-func (s *WorkflowService) registerWorkflow(request *RegisterRequest) (*RegisterResponse, error) {
+func (s *Service) registerWorkflow(request *RegisterRequest) (*RegisterResponse, error) {
 	if err := s.Register(request.Workflow); err != nil {
 		return nil, err
 	}
@@ -50,7 +45,7 @@ func (s *WorkflowService) registerWorkflow(request *RegisterRequest) (*RegisterR
 }
 
 //Register register workflow.
-func (s *WorkflowService) Register(workflow *Workflow) error {
+func (s *Service) Register(workflow *endly.Workflow) error {
 	err := workflow.Validate()
 	if err != nil {
 		return err
@@ -60,13 +55,13 @@ func (s *WorkflowService) Register(workflow *Workflow) error {
 }
 
 //HasWorkflow returns true if service has registered workflow.
-func (s *WorkflowService) HasWorkflow(name string) bool {
+func (s *Service) HasWorkflow(name string) bool {
 	_, found := s.registry[name]
 	return found
 }
 
 //Workflow returns a workflow for supplied name.
-func (s *WorkflowService) Workflow(name string) (*Workflow, error) {
+func (s *Service) Workflow(name string) (*endly.Workflow, error) {
 	s.Lock()
 	defer s.Unlock()
 	if result, found := s.registry[name]; found {
@@ -75,14 +70,14 @@ func (s *WorkflowService) Workflow(name string) (*Workflow, error) {
 	return nil, fmt.Errorf("failed to lookup workflow: %v", name)
 }
 
-func (s *WorkflowService) addVariableEvent(name string, variables Variables, context *Context, in, out data.Map) {
+func (s *Service) addVariableEvent(name string, variables endly.Variables, context *endly.Context, in, out data.Map) {
 	if len(variables) == 0 {
 		return
 	}
-	context.Publish(NewModifiedStateEvent(variables, in, out))
+	context.Publish(endly.NewModifiedStateEvent(variables, in, out))
 }
 
-func (s *WorkflowService) loadWorkflowIfNeeded(context *Context, name string, URL string) (err error) {
+func (s *Service) loadWorkflowIfNeeded(context *endly.Context, name string, URL string) (err error) {
 	if !s.HasWorkflow(name) {
 		var workflowResource *url.Resource
 		if URL == "" {
@@ -102,7 +97,7 @@ func (s *WorkflowService) loadWorkflowIfNeeded(context *Context, name string, UR
 	return nil
 }
 
-func (s *WorkflowService) getServiceRequest(context *Context, activity *Activity) (Service, interface{}, error) {
+func (s *Service) getServiceRequest(context *endly.Context, activity *endly.Activity) (endly.Service, interface{}, error) {
 	var service, err = context.Service(activity.Service)
 	if err != nil {
 		return nil, nil, err
@@ -134,7 +129,7 @@ func (s *WorkflowService) getServiceRequest(context *Context, activity *Activity
 	return service, serviceRequest, nil
 }
 
-func (s *WorkflowService) runAction(context *Context, action *ServiceAction, workflow *WorkflowRun) (response interface{}, err error) {
+func (s *Service) runAction(context *endly.Context, action *endly.ServiceAction, workflow *endly.WorkflowRun) (response interface{}, err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("%v: %v", action.TagID, err)
@@ -148,15 +143,15 @@ func (s *WorkflowService) runAction(context *Context, action *ServiceAction, wor
 	}
 	var state = context.State()
 
-	activity := NewActivity(context, action, state)
+	activity := endly.NewActivity(context, action, state)
 	workflow.Activity = activity
-	state.Put(ActivityKey, activity)
+	state.Put(endly.ActivityKey, activity)
 
 	startEvent := s.Begin(context, activity)
-	defer s.End(context)(startEvent, NewActivityEndEvent(activity))
+	defer s.End(context)(startEvent, endly.NewActivityEndEvent(activity))
 
 	var canRun bool
-	canRun, err = Evaluate(context, context.State(), action.RunCriteria, ActionEvalCriteriaEventType, true)
+	canRun, err = endly.Evaluate(context, context.State(), action.RunCriteria, ActionEvalCriteriaEventType, true)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +187,7 @@ func (s *WorkflowService) runAction(context *Context, action *ServiceAction, wor
 	return response, err
 }
 
-func (s *WorkflowService) injectTagIDsIfNeeded(action *ActionRequest, tagIDs map[string]bool) {
+func (s *Service) injectTagIDsIfNeeded(action *endly.ActionRequest, tagIDs map[string]bool) {
 	if action.Service != "workflow" || action.Action != "run" {
 		return
 	}
@@ -200,15 +195,15 @@ func (s *WorkflowService) injectTagIDsIfNeeded(action *ActionRequest, tagIDs map
 	requestMap["TagIDs"] = strings.Join(toolbox.MapKeysToStringSlice(tagIDs), ",")
 }
 
-func (s *WorkflowService) runTask(context *Context, workflow *WorkflowRun, tagIDs map[string]bool, task *WorkflowTask) (data.Map, error) {
+func (s *Service) runTask(context *endly.Context, workflow *endly.WorkflowRun, tagIDs map[string]bool, task *endly.WorkflowTask) (data.Map, error) {
 	if !workflow.CanRun() {
 		return nil, nil
 	}
 	workflow.TaskName = task.Name
 	var startTime = time.Now()
 	var state = context.State()
-	state.Put(TaskKey, task.Name)
-	canRun, err := Evaluate(context, context.State(), task.RunCriteria, TaskEvalCriteriaEventType, true)
+	state.Put(endly.TaskKey, task.Name)
+	canRun, err := endly.Evaluate(context, context.State(), task.RunCriteria, TaskEvalCriteriaEventType, true)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +221,7 @@ func (s *WorkflowService) runTask(context *Context, workflow *WorkflowRun, tagID
 		filterTagIDs = task.HasTagID(tagIDs)
 	}
 
-	var asyncActions = make([]*ServiceAction, 0)
+	var asyncActions = make([]*endly.ServiceAction, 0)
 	for i := 0; i < len(task.Actions); i++ {
 		action := task.Actions[i]
 		if hasTagIDs {
@@ -242,13 +237,13 @@ func (s *WorkflowService) runTask(context *Context, workflow *WorkflowRun, tagID
 			continue
 		}
 
-		var handler = func(action *ServiceAction) func() (interface{}, error) {
+		var handler = func(action *endly.ServiceAction) func() (interface{}, error) {
 			return func() (interface{}, error) {
 				return s.runAction(context, action, workflow)
 			}
 		}
 
-		moveToNextTag, err := Evaluate(context, context.State(), action.SkipCriteria, "TagIdSkipCriteria", false)
+		moveToNextTag, err := endly.Evaluate(context, context.State(), action.SkipCriteria, "TagIdSkipCriteria", false)
 		if err != nil {
 			return nil, err
 		}
@@ -279,7 +274,7 @@ func (s *WorkflowService) runTask(context *Context, workflow *WorkflowRun, tagID
 	return taskPostState, err
 }
 
-func (s *WorkflowService) applyRemainingTaskSpentIfNeeded(context *Context, task *WorkflowTask, startTime time.Time) {
+func (s *Service) applyRemainingTaskSpentIfNeeded(context *endly.Context, task *endly.WorkflowTask, startTime time.Time) {
 	if task.TimeSpentMs > 0 {
 		var elapsed = (time.Now().UnixNano() - startTime.UnixNano()) / int64(time.Millisecond)
 		var remainingExecutionTime = time.Duration(task.TimeSpentMs - int(elapsed))
@@ -287,14 +282,14 @@ func (s *WorkflowService) applyRemainingTaskSpentIfNeeded(context *Context, task
 	}
 }
 
-func (s *WorkflowService) runAsyncAction(parent, context *Context, workflow *WorkflowRun, action *ServiceAction, group *sync.WaitGroup) error {
+func (s *Service) runAsyncAction(parent, context *endly.Context, workflow *endly.WorkflowRun, action *endly.ServiceAction, group *sync.WaitGroup) error {
 	defer group.Done()
 	events := context.MakeAsyncSafe()
 	defer events.Drain(parent)
 	if _, err := s.runAction(context, action, workflow); err != nil {
 		return err
 	}
-	var state = parent.state
+	var state = parent.State()
 	if len(action.Post) > 0 {
 		s.Lock()
 		defer s.Unlock()
@@ -307,14 +302,14 @@ func (s *WorkflowService) runAsyncAction(parent, context *Context, workflow *Wor
 	return nil
 }
 
-func (s *WorkflowService) runAsyncActions(context *Context, workflow *WorkflowRun, task *WorkflowTask, asyncAction []*ServiceAction) error {
+func (s *Service) runAsyncActions(context *endly.Context, workflow *endly.WorkflowRun, task *endly.WorkflowTask, asyncAction []*endly.ServiceAction) error {
 	if len(asyncAction) > 0 {
 		group := &sync.WaitGroup{}
 		group.Add(len(asyncAction))
 		var groupErr error
 		for i := range asyncAction {
-			context.Publish(NewWorkflowAsyncEvent(asyncAction[i]))
-			go func(action *ServiceAction, actionContext *Context) {
+			context.Publish(endly.NewWorkflowAsyncEvent(asyncAction[i]))
+			go func(action *endly.ServiceAction, actionContext *endly.Context) {
 				if err := s.runAsyncAction(context, actionContext, workflow, action, group); err != nil {
 					groupErr = err
 				}
@@ -328,33 +323,33 @@ func (s *WorkflowService) runAsyncActions(context *Context, workflow *WorkflowRu
 	return nil
 }
 
-func (s *WorkflowService) runWorkflow(context *Context, request *RunRequest) (response *RunResponse, err error) {
+func (s *Service) runWorkflow(context *endly.Context, request *RunRequest) (response *RunResponse, err error) {
 	s.startSession(context)
 	if request.Async {
 		context.Wait.Add(1)
 		go func() {
-			defer context.Publish(NewWorkflowEndEvent(context.SessionID))
+			defer context.Publish(endly.NewWorkflowEndEvent(context.SessionID))
 			defer context.Wait.Done()
 			_, err = s.run(context, request)
 			if err != nil {
-				context.Publish(NewErrorEvent(fmt.Sprintf("%v", err)))
+				context.Publish(endly.NewErrorEvent(fmt.Sprintf("%v", err)))
 			}
 		}()
 		return
 	}
-	defer context.Publish(NewWorkflowEndEvent(context.SessionID))
+	defer context.Publish(endly.NewWorkflowEndEvent(context.SessionID))
 	return s.run(context, request)
 }
 
-func (s *WorkflowService) run(upstreamContext *Context, request *RunRequest) (response *RunResponse, err error) {
+func (s *Service) run(upstreamContext *endly.Context, request *RunRequest) (response *RunResponse, err error) {
 	response = &RunResponse{
 		Data:      make(map[string]interface{}),
 		SessionID: upstreamContext.SessionID,
 	}
 	if request.EnableLogging {
 		var logDirectory = path.Join(request.LoggingDirectory, upstreamContext.SessionID)
-		eventLogger := NewEventLogger(logDirectory, upstreamContext.listener)
-		upstreamContext.listener = eventLogger.AsEventListener()
+		eventLogger := endly.NewEventLogger(logDirectory, upstreamContext.Listener)
+		upstreamContext.Listener = eventLogger.AsEventListener()
 	}
 
 	err = s.loadWorkflowIfNeeded(upstreamContext, request.Name, request.WorkflowURL)
@@ -365,14 +360,14 @@ func (s *WorkflowService) run(upstreamContext *Context, request *RunRequest) (re
 	if err != nil {
 		return response, err
 	}
-	upstreamContext.Publish(NewWorkflowLoadedEvent(workflow))
+	upstreamContext.Publish(endly.NewWorkflowLoadedEvent(workflow))
 	control := upstreamContext.Workflows.Push(workflow)
 	defer upstreamContext.Workflows.Pop()
 	parentWorkflow := upstreamContext.Workflow()
 	if parentWorkflow != nil {
-		upstreamContext.Put(WorkflowKey, parentWorkflow)
+		upstreamContext.Put(endly.WorkflowKey, parentWorkflow)
 	} else {
-		upstreamContext.Put(WorkflowKey, workflow)
+		upstreamContext.Put(endly.WorkflowKey, workflow)
 	}
 
 	context := upstreamContext.Clone()
@@ -395,7 +390,7 @@ func (s *WorkflowService) run(upstreamContext *Context, request *RunRequest) (re
 	if err != nil {
 		return response, err
 	}
-	context.Publish(NewWorkflowInitEvent(request.Tasks, state))
+	context.Publish(endly.NewWorkflowInitEvent(request.Tasks, state))
 	filteredTasks, err := workflow.FilterTasks(request.Tasks)
 	if err != nil {
 		return response, err
@@ -422,7 +417,7 @@ func (s *WorkflowService) run(upstreamContext *Context, request *RunRequest) (re
 	return response, err
 }
 
-func (s *WorkflowService) runWorkflowDeferTaskIfNeeded(context *Context, workflow *WorkflowRun) {
+func (s *Service) runWorkflowDeferTaskIfNeeded(context *endly.Context, workflow *endly.WorkflowRun) {
 	if workflow.DeferTask == "" {
 		return
 	}
@@ -430,7 +425,7 @@ func (s *WorkflowService) runWorkflowDeferTaskIfNeeded(context *Context, workflo
 	_ = s.runWorkflowTasks(context, workflow, nil, task)
 }
 
-func (s *WorkflowService) runOnErrorTaskIfNeeded(context *Context, workflow *WorkflowRun, err error) error {
+func (s *Service) runOnErrorTaskIfNeeded(context *endly.Context, workflow *endly.WorkflowRun, err error) error {
 	if err != nil {
 		if workflow.OnErrorTask == "" {
 			return err
@@ -453,7 +448,7 @@ func (s *WorkflowService) runOnErrorTaskIfNeeded(context *Context, workflow *Wor
 	return err
 }
 
-func (s *WorkflowService) runWorkflowTasks(context *Context, workflow *WorkflowRun, tagIDs map[string]bool, tasks ...*WorkflowTask) error {
+func (s *Service) runWorkflowTasks(context *endly.Context, workflow *endly.WorkflowRun, tagIDs map[string]bool, tasks ...*endly.WorkflowTask) error {
 	for _, task := range tasks {
 		if workflow.IsTerminated() {
 			break
@@ -470,7 +465,7 @@ func (s *WorkflowService) runWorkflowTasks(context *Context, workflow *WorkflowR
 	return nil
 }
 
-func buildParamsMap(request *RunRequest, context *Context) data.Map {
+func buildParamsMap(request *RunRequest, context *endly.Context) data.Map {
 	var params = data.NewMap()
 	var state = context.State()
 	if len(request.Params) > 0 {
@@ -481,7 +476,7 @@ func buildParamsMap(request *RunRequest, context *Context) data.Map {
 	return params
 }
 
-func (s *WorkflowService) loadWorkflow(context *Context, request *LoadRequest) (*LoadResponse, error) {
+func (s *Service) loadWorkflow(context *endly.Context, request *LoadRequest) (*LoadResponse, error) {
 	workflow, err := s.Dao.Load(context, request.Source)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load workflow: %v, %v", request.Source.URL, err)
@@ -497,7 +492,7 @@ func (s *WorkflowService) loadWorkflow(context *Context, request *LoadRequest) (
 	}, nil
 }
 
-func (s *WorkflowService) startSession(context *Context) bool {
+func (s *Service) startSession(context *endly.Context) bool {
 	s.RLock()
 	var state = context.State()
 	if state.Has(context.SessionID) {
@@ -511,14 +506,14 @@ func (s *WorkflowService) startSession(context *Context) bool {
 	return true
 }
 
-func (s *WorkflowService) isAsyncRequest(request interface{}) bool {
+func (s *Service) isAsyncRequest(request interface{}) bool {
 	if runRequest, ok := request.(*RunRequest); ok {
 		return runRequest.Async
 	}
 	return false
 }
 
-func (s *WorkflowService) exitWorkflow(context *Context, request *ExitRequest) (*ExitResponse, error) {
+func (s *Service) exitWorkflow(context *endly.Context, request *ExitRequest) (*ExitResponse, error) {
 	control := context.Workflows.LastControl()
 	if control != nil {
 		control.Terminate()
@@ -526,14 +521,14 @@ func (s *WorkflowService) exitWorkflow(context *Context, request *ExitRequest) (
 	return &ExitResponse{}, nil
 }
 
-func (s *WorkflowService) runGoto(context *Context, request *GotoRequest) (GotoResponse, error) {
+func (s *Service) runGoto(context *endly.Context, request *GotoRequest) (GotoResponse, error) {
 	var response interface{}
 	if len(*context.Workflows) == 0 {
 		err := fmt.Errorf("no active workflow")
 		return nil, err
 	}
 	workflow := context.Workflows.LastControl()
-	var task *WorkflowTask
+	var task *endly.WorkflowTask
 	task, err := workflow.Task(request.Task)
 	if err == nil {
 		workflow.ScheduledTask = task
@@ -541,22 +536,22 @@ func (s *WorkflowService) runGoto(context *Context, request *GotoRequest) (GotoR
 	return response, err
 }
 
-func getServiceActivity(state data.Map) *Activity {
-	serviceActivity := state.Get(ActivityKey)
+func getServiceActivity(state data.Map) *endly.Activity {
+	serviceActivity := state.Get(endly.ActivityKey)
 	if serviceActivity == nil {
 		return nil
 	}
-	if result, ok := serviceActivity.(*Activity); ok {
+	if result, ok := serviceActivity.(*endly.Activity); ok {
 		return result
 	}
 	return nil
 }
 
-func getServiceAction(state data.Map, actionRequest *ActionRequest) *ServiceAction {
+func getServiceAction(state data.Map, actionRequest *endly.ActionRequest) *endly.ServiceAction {
 	serviceActivity := getServiceActivity(state)
-	var result = &ServiceAction{
+	var result = &endly.ServiceAction{
 		ActionRequest: actionRequest,
-		NeatlyTag:     &NeatlyTag{},
+		NeatlyTag:     &endly.NeatlyTag{},
 	}
 	if serviceActivity != nil {
 		result.NeatlyTag = serviceActivity.NeatlyTag
@@ -566,7 +561,7 @@ func getServiceAction(state data.Map, actionRequest *ActionRequest) *ServiceActi
 	return result
 }
 
-func getSwitchSource(context *Context, sourceKey string) interface{} {
+func getSwitchSource(context *endly.Context, sourceKey string) interface{} {
 	sourceKey = context.Expand(sourceKey)
 	var state = context.State()
 	var result = state.Get(sourceKey)
@@ -576,7 +571,7 @@ func getSwitchSource(context *Context, sourceKey string) interface{} {
 	return toolbox.DereferenceValue(result)
 }
 
-func (s *WorkflowService) runSwitch(context *Context, request *SwitchRequest) (SwitchResponse, error) {
+func (s *Service) runSwitch(context *endly.Context, request *SwitchRequest) (SwitchResponse, error) {
 	workflow := context.Workflows.LastControl()
 	var response interface{}
 	var source = getSwitchSource(context, request.SourceKey)
@@ -638,12 +633,12 @@ const (
 	}`
 )
 
-func (s *WorkflowService) registerRoutes() {
-	s.AbstractService.Register(&ServiceActionRoute{
+func (s *Service) registerRoutes() {
+	s.AbstractService.Register(&endly.ServiceActionRoute{
 		Action: "run",
-		RequestInfo: &ActionInfo{
+		RequestInfo: &endly.ActionInfo{
 			Description: "run workflow",
-			Examples: []*ExampleUseCase{
+			Examples: []*endly.ExampleUseCase{
 				{
 					UseCase: "run workflow",
 					Data:    workflowServiceRunExample,
@@ -656,7 +651,7 @@ func (s *WorkflowService) registerRoutes() {
 		ResponseProvider: func() interface{} {
 			return &RunResponse{}
 		},
-		Handler: func(context *Context, request interface{}) (interface{}, error) {
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*RunRequest); ok {
 				return s.runWorkflow(context, req)
 			}
@@ -664,9 +659,9 @@ func (s *WorkflowService) registerRoutes() {
 		},
 	})
 
-	s.AbstractService.Register(&ServiceActionRoute{
+	s.AbstractService.Register(&endly.ServiceActionRoute{
 		Action: "load",
-		RequestInfo: &ActionInfo{
+		RequestInfo: &endly.ActionInfo{
 			Description: "load workflow from URL",
 		},
 		RequestProvider: func() interface{} {
@@ -675,7 +670,7 @@ func (s *WorkflowService) registerRoutes() {
 		ResponseProvider: func() interface{} {
 			return &LoadResponse{}
 		},
-		Handler: func(context *Context, request interface{}) (interface{}, error) {
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*LoadRequest); ok {
 				return s.loadWorkflow(context, req)
 			}
@@ -683,9 +678,9 @@ func (s *WorkflowService) registerRoutes() {
 		},
 	})
 
-	s.AbstractService.Register(&ServiceActionRoute{
+	s.AbstractService.Register(&endly.ServiceActionRoute{
 		Action: "register",
-		RequestInfo: &ActionInfo{
+		RequestInfo: &endly.ActionInfo{
 			Description: "register workflow",
 		},
 		RequestProvider: func() interface{} {
@@ -694,7 +689,7 @@ func (s *WorkflowService) registerRoutes() {
 		ResponseProvider: func() interface{} {
 			return &LoadResponse{}
 		},
-		Handler: func(context *Context, request interface{}) (interface{}, error) {
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*RegisterRequest); ok {
 				return s.registerWorkflow(req)
 			}
@@ -702,11 +697,11 @@ func (s *WorkflowService) registerRoutes() {
 		},
 	})
 
-	s.AbstractService.Register(&ServiceActionRoute{
+	s.AbstractService.Register(&endly.ServiceActionRoute{
 		Action: "switch",
-		RequestInfo: &ActionInfo{
+		RequestInfo: &endly.ActionInfo{
 			Description: "select action or task for matched case value",
-			Examples: []*ExampleUseCase{
+			Examples: []*endly.ExampleUseCase{
 				{
 					UseCase: "switch case",
 					Data:    workflowServiceSwitchExample,
@@ -719,7 +714,7 @@ func (s *WorkflowService) registerRoutes() {
 		ResponseProvider: func() interface{} {
 			return struct{}{}
 		},
-		Handler: func(context *Context, request interface{}) (interface{}, error) {
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*SwitchRequest); ok {
 				return s.runSwitch(context, req)
 			}
@@ -727,11 +722,11 @@ func (s *WorkflowService) registerRoutes() {
 		},
 	})
 
-	s.AbstractService.Register(&ServiceActionRoute{
+	s.AbstractService.Register(&endly.ServiceActionRoute{
 		Action: "goto",
-		RequestInfo: &ActionInfo{
+		RequestInfo: &endly.ActionInfo{
 			Description: "goto task",
-			Examples: []*ExampleUseCase{
+			Examples: []*endly.ExampleUseCase{
 				{
 					UseCase: "goto",
 					Data:    workflowServiceGotoExample,
@@ -744,7 +739,7 @@ func (s *WorkflowService) registerRoutes() {
 		ResponseProvider: func() interface{} {
 			return struct{}{}
 		},
-		Handler: func(context *Context, request interface{}) (interface{}, error) {
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*GotoRequest); ok {
 				return s.runGoto(context, req)
 			}
@@ -752,11 +747,11 @@ func (s *WorkflowService) registerRoutes() {
 		},
 	})
 
-	s.AbstractService.Register(&ServiceActionRoute{
+	s.AbstractService.Register(&endly.ServiceActionRoute{
 		Action: "exit",
-		RequestInfo: &ActionInfo{
+		RequestInfo: &endly.ActionInfo{
 			Description: "exit current workflow",
-			Examples: []*ExampleUseCase{
+			Examples: []*endly.ExampleUseCase{
 				{
 					UseCase: "exit",
 					Data:    workflowServiceExitExample,
@@ -769,7 +764,7 @@ func (s *WorkflowService) registerRoutes() {
 		ResponseProvider: func() interface{} {
 			return &ExitResponse{}
 		},
-		Handler: func(context *Context, request interface{}) (interface{}, error) {
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*ExitRequest); ok {
 				return s.exitWorkflow(context, req)
 			}
@@ -777,9 +772,9 @@ func (s *WorkflowService) registerRoutes() {
 		},
 	})
 
-	s.AbstractService.Register(&ServiceActionRoute{
+	s.AbstractService.Register(&endly.ServiceActionRoute{
 		Action: "fail",
-		RequestInfo: &ActionInfo{
+		RequestInfo: &endly.ActionInfo{
 			Description: "fail workflow execution",
 		},
 		RequestProvider: func() interface{} {
@@ -788,7 +783,7 @@ func (s *WorkflowService) registerRoutes() {
 		ResponseProvider: func() interface{} {
 			return &FailResponse{}
 		},
-		Handler: func(context *Context, request interface{}) (interface{}, error) {
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*FailRequest); ok {
 				return nil, fmt.Errorf(req.Message)
 			}
@@ -796,14 +791,41 @@ func (s *WorkflowService) registerRoutes() {
 		},
 	})
 
+	s.AbstractService.Register(&endly.ServiceActionRoute{
+		Action: "print",
+		RequestInfo: &endly.ActionInfo{
+			Description: "print log message",
+		},
+		RequestProvider: func() interface{} {
+			return &PrintRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return struct{}{}
+		},
+		Handler: func(context *endly.Context, req interface{}) (interface{}, error) {
+			if request, ok := req.(*PrintRequest); ok {
+				if !context.CLIEnabled {
+					if request.Message != "" {
+						fmt.Printf("%v\n", request.Message)
+					}
+					if request.Error != "" {
+						fmt.Printf("%v\n", request.Error)
+					}
+				}
+				return struct{}{}, nil
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", req)
+		},
+	})
+
 }
 
-//NewService returns a new workflow Service.
-func NewService() Service {
-	var result = &WorkflowService{
-		AbstractService: NewAbstractService(ServiceID),
+//New returns a new workflow Service.
+func New() endly.Service {
+	var result = &Service{
+		AbstractService: endly.NewAbstractService(ServiceID),
 		Dao:             NewDao(),
-		registry:        make(map[string]*Workflow),
+		registry:        make(map[string]*endly.Workflow),
 	}
 	result.AbstractService.Service = result
 	result.registerRoutes()

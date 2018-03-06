@@ -14,10 +14,21 @@ import (
 	"flag"
 	"fmt"
 	"github.com/viant/endly"
+
 	_ "github.com/viant/endly/cloud/ec2"
 	_ "github.com/viant/endly/cloud/gce"
 	_ "github.com/viant/endly/endpoint/http"
+	_ "github.com/viant/endly/workflow"
+
 	_ "github.com/viant/endly/testing/dsunit"
+	_ "github.com/viant/endly/testing/log"
+	_ "github.com/viant/endly/testing/validator"
+
+	_ "github.com/viant/endly/runner/http"
+	_ "github.com/viant/endly/runner/selenium"
+	_ "github.com/viant/endly/runner/rest"
+
+
 
 	_ "github.com/viant/endly/deployment/build"
 	_ "github.com/viant/endly/deployment/deploy"
@@ -33,6 +44,7 @@ import (
 	"bufio"
 	"errors"
 	"github.com/viant/endly/cli"
+	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/url"
@@ -105,11 +117,11 @@ func Bootstrap() {
 		return
 	}
 
-	request, option, err := getRunRequestWithOptions(flagset)
+	request, err := getRunRequestWithOptions(flagset)
 	if request == nil {
 		flagset["r"] = flag.Lookup("r").Value.String()
 		flagset["w"] = flag.Lookup("w").Value.String()
-		request, option, err = getRunRequestWithOptions(flagset)
+		request, err = getRunRequestWithOptions(flagset)
 		if err != nil && strings.Contains(err.Error(), "failed to locate workflow: manager") {
 			printHelp()
 			return
@@ -130,7 +142,7 @@ func Bootstrap() {
 	}
 
 	runner := cli.New()
-	err = runner.Run(request, option)
+	err = runner.Run(request)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -290,7 +302,7 @@ func printServiceActions() {
 }
 
 func getWorkflow(URL string) (*endly.Workflow, error) {
-	dao := endly.NewDao()
+	dao := workflow.NewDao()
 	manager := endly.NewManager()
 	context := manager.NewContext(toolbox.NewContext())
 	return dao.Load(context, url.NewResource(URL))
@@ -336,8 +348,6 @@ func printVersion() {
 	fmt.Fprintf(os.Stdout, "%v %v\n", endly.AppName, endly.GetVersion())
 }
 
-
-
 func getRunRequestURL(candidate string) (*url.Resource, error) {
 	if path.Ext(candidate) == "" {
 		candidate = candidate + ".json"
@@ -353,19 +363,18 @@ func getRunRequestURL(candidate string) (*url.Resource, error) {
 
 }
 
-func getRunRequestWithOptions(flagset map[string]string) (*endly.RunRequest, *cli.RunnerReportingOptions, error) {
-	var request *endly.RunRequest
-	var options = &cli.RunnerReportingOptions{}
+func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, error) {
+	var request *workflow.RunRequest
+
 	if value, ok := flagset["w"]; ok {
-		request = &endly.RunRequest{
+		request = &workflow.RunRequest{
 			WorkflowURL: value,
 		}
-		options = cli.DefaultRunnerReportingOption()
 	}
 	if value, ok := flagset["r"]; ok {
 		resource, err := getRunRequestURL(value)
 		if err == nil {
-			request = &endly.RunRequest{}
+			request = &workflow.RunRequest{}
 			err = resource.JSONDecode(request)
 		}
 		if request.WorkflowURL == "" {
@@ -374,11 +383,7 @@ func getRunRequestWithOptions(flagset map[string]string) (*endly.RunRequest, *cl
 			request.WorkflowURL = toolbox.URLPathJoin(parent, request.Name+".csv")
 		}
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to locate workflow run request: %v %v", value, err)
-		}
-		resource.JSONDecode(options)
-		if options.Filter == nil {
-			options.Filter = cli.DefaultRunnerReportingOption().Filter
+			return nil, fmt.Errorf("failed to locate workflow run request: %v %v", value, err)
 		}
 	}
 
@@ -402,7 +407,7 @@ func getRunRequestWithOptions(flagset map[string]string) (*endly.RunRequest, *cl
 			request.TagIDs = value
 		}
 	}
-	return request, options, nil
+	return request, nil
 }
 
 func normalizeArgument(value string) interface{} {

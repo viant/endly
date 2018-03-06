@@ -5,14 +5,7 @@ import (
 	"github.com/viant/endly"
 )
 
-var removeFilter = endly.NewFilteredReporter("storage", "storage.remove")
-
-//CanReport returns true if filter has matching event key enabled reporting option
-func (r *RemoveRequest) CanReport(filter map[string]bool) bool {
-	return removeFilter.CanReport(filter)
-}
-
-//Messages returns tag messages
+//Items returns tag messages
 func (r *RemoveRequest) Messages() []*endly.Message {
 	if len(r.Resources) == 0 {
 		return []*endly.Message{}
@@ -27,14 +20,7 @@ func (r *RemoveRequest) Messages() []*endly.Message {
 	}
 }
 
-var uploadFilter = endly.NewFilteredReporter("storage", "storage.upload")
-
-//CanReport returns true if filter has matching event key enabled reporting option
-func (r *UploadRequest) CanReport(filter map[string]bool) bool {
-	return uploadFilter.CanReport(filter)
-}
-
-//Messages returns event messages
+//Items returns event messages
 func (r *UploadRequest) Messages() []*endly.Message {
 	if r.Target == nil {
 		return []*endly.Message{}
@@ -46,14 +32,7 @@ func (r *UploadRequest) Messages() []*endly.Message {
 	)}
 }
 
-var downloadFilter = endly.NewFilteredReporter("storage", "storage.download")
-
-//CanReport returns true if filter has matching event key enabled reporting option
-func (r *DownloadRequest) CanReport(filter map[string]bool) bool {
-	return downloadFilter.CanReport(filter)
-}
-
-//Messages returns event messages
+//Items returns event messages
 func (r *DownloadRequest) Messages() []*endly.Message {
 	if r.Source == nil {
 		return []*endly.Message{}
@@ -65,14 +44,7 @@ func (r *DownloadRequest) Messages() []*endly.Message {
 	)}
 }
 
-var copyFilter = endly.NewFilteredReporter("storage", "storage.copy")
-
-//CanReport returns true if filter has matching event key enabled reporting option
-func (r *CopyRequest) CanReport(filter map[string]bool) bool {
-	return copyFilter.CanReport(filter)
-}
-
-//Messages returns event messages
+//Items returns event messages
 func (r *CopyRequest) Messages() []*endly.Message {
 	if len(r.Transfers) == 0 {
 		return []*endly.Message{}

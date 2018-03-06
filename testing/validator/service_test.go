@@ -36,7 +36,6 @@ func assertWithService(expected, actual interface{}) (int, error) {
 }
 
 func TestValidatorService_Assert(t *testing.T) {
-
 	{
 		passed, err := assertWithService("abc", "abc")
 		assert.Nil(t, err)

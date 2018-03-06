@@ -1,0 +1,6 @@
+{
+  "Datastore": "mydb1",
+  "Scripts": [{
+    "URL":"test/dsunit/mydb1.sql"
+  }]
+}

@@ -3,12 +3,9 @@ package cli
 import (
 	"fmt"
 	"github.com/viant/assertly"
-	"github.com/viant/dsunit"
 	"github.com/viant/endly"
 	"github.com/viant/endly/runner/http"
-	"github.com/viant/endly/runner/selenium"
-	"github.com/viant/endly/testing/log"
-	"github.com/viant/endly/testing/validator"
+	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"os"
 	"reflect"
@@ -22,7 +19,7 @@ var OnError = func(code int) {
 }
 
 const (
-	messageTypeAction = iota + 10
+	messageTypeAction         = iota + 10
 	messageTypeTagDescription
 )
 
@@ -56,35 +53,30 @@ type ReportSummaryEvent struct {
 //Runner represents command line runner
 type Runner struct {
 	*Renderer
-	context          *endly.Context
-	filter           *Filter
-	manager          endly.Manager
-	tags             []*EventTag
-	indexedTag       map[string]*EventTag
-	activities       *endly.Activities
-	eventTag         *EventTag
-	report           *ReportSummaryEvent
-	activity         *endly.Activity
-	ErrorEvent       *endly.Event
-	errorCode        bool
-	err              error
-	lines            int
-	lineRefreshCount int
+	context       *endly.Context
+	filter        map[string]bool
+	manager       endly.Manager
+	tags          []*EventTag
+	indexedTag    map[string]*EventTag
+	activities    *endly.Activities
+	eventTag      *EventTag
+	report        *ReportSummaryEvent
+	activity      *endly.Activity
+	repeated      *endly.RepeatedMessage
+	activityEnded bool
 
+	hasValidationFailures bool
+	err                   error
+
+	MessageStyleColor  map[int]string
 	InputColor         string
 	OutputColor        string
-	PathColor          string
 	TagColor           string
 	InverseTag         bool
 	ServiceActionColor string
-
-	MessageStyleColor map[int]string
-	SuccessColor      string
-	ErrorColor        string
-
-	SleepCount int
-	SleepTime  time.Duration
-	SleepTagID string
+	PathColor          string
+	SuccessColor       string
+	ErrorColor         string
 }
 
 //AddTag adds reporting tag
@@ -110,7 +102,6 @@ func (r *Runner) EventTag() *EventTag {
 		}
 		r.AddTag(eventTag)
 	}
-
 	return r.indexedTag[activity.TagID]
 }
 
@@ -177,263 +168,180 @@ func (r *Runner) formatShortMessage(messageType int, message string, messageInfo
 	return fmt.Sprintf("%v\n%v", result, message)
 }
 
-func (r *Runner) processReporter(event *endly.Event, filter *Filter) bool {
-	if event.Value == nil {
-		return false
+func (r *Runner) getRepeated(event *endly.Event) *endly.RepeatedMessage {
+	var repeatedType = fmt.Sprintf("%T", event.Value)
+	if r.repeated != nil && r.repeated.Type == repeatedType {
+		return r.repeated
 	}
-	filteredReporter, isFilterReporter := event.Value.(endly.FilteredReporter)
-	messageReporter, isMessageReporter := event.Value.(endly.MessageReporter)
-
-	if !(isFilterReporter || isMessageReporter) {
-		return false
+	r.repeated = &endly.RepeatedMessage{
+		Type: repeatedType,
 	}
-
-	if isFilterReporter {
-		if !filteredReporter.CanReport(filter.Report) {
-			return true
-		}
-	}
-	if isMessageReporter {
-		for _, message := range messageReporter.Messages() {
-			tag := message.Tag
-			header := message.Header
-			if header != nil {
-				r.printShortMessage(header.Style, header.Text, tag.Style, tag.Text)
-			}
-			if len(message.Messages) > 0 {
-				for _, subMessage := range message.Messages {
-					if color, ok := r.MessageStyleColor[subMessage.Style]; ok {
-						r.Printf("%v\n", r.ColorText(subMessage.Text, color))
-					} else {
-						r.Printf("%v\n", subMessage.Text)
-					}
-				}
-			}
-		}
-	}
-	return false
+	return r.repeated
 }
 
-func (r *Runner) resetSleepCounterIfNeeded() {
-	if r.SleepCount > 0 {
-		r.Printf("\n")
-		r.SleepCount = 0
-	}
+func (r *Runner) resetRepeated() {
+	r.repeated = nil
 }
 
-func (r *Runner) processDsunitEvent(value interface{}, filter *Filter) bool {
-	switch actual := value.(type) {
-	case *dsunit.InitRequest:
-		r.processDsunitEvent(actual.RegisterRequest, filter)
-		if actual.RunScriptRequest != nil {
-			r.processDsunitEvent(actual.RunScriptRequest, filter)
-		}
-	case *dsunit.RegisterRequest:
-		if filter.RegisterDatastore {
-			var descriptor = actual.Config.SecureDescriptor
-			r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("Datastore: %v, %v:%v", actual.Datastore, actual.Config.DriverName, descriptor), endly.MessageStyleGeneric, "register")
-		}
-	case *dsunit.MappingRequest:
-		if filter.DataMapping {
-			for _, mapping := range actual.Mappings {
-				var _, name = toolbox.URLSplit(mapping.Name)
-				r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v: %v", name, mapping.Name), endly.MessageStyleGeneric, "mapping")
-			}
-		}
-	case *dsunit.SequenceRequest:
-		if filter.Sequence {
-			for k, v := range actual.Tables {
-				r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v: %v", k, v), endly.MessageStyleGeneric, "sequence")
-			}
-		}
-	case *dsunit.PrepareRequest:
-		if filter.PopulateDatastore {
-			actual.Load()
-			for _, dataset := range actual.Datasets {
-				r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("(%v) %v: %v", actual.Datastore, dataset.Table, len(dataset.Records)), endly.MessageStyleGeneric, "populate")
-			}
-		}
-	case *dsunit.RunScriptRequest:
-		if filter.SQLScript {
-			for _, script := range actual.Scripts {
-				r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("(%v) %v", actual.Datastore, script.URL), endly.MessageStyleGeneric, "sql")
-			}
-		}
-	default:
-		return false
-	}
-	return true
-}
-
-func (r *Runner) processHTTPEvent(event *endly.Event, filter *Filter) bool {
-	switch actual := event.Value.(type) {
-	case *http.Request:
-		if filter.HTTPTrip {
-			r.reportHTTPRequest(actual)
-		}
-	case *http.Response:
-		if filter.HTTPTrip {
-			r.reportHTTPResponse(actual)
-		}
-	default:
-		return false
-	}
-	return true
-}
-
-func (r *Runner) processValidationEvent(event *endly.Event, filter *Filter) bool {
-	switch response := event.Value.(type) {
-	case *assertly.Validation:
-		r.reportValidation(response, event)
-	case *dsunit.ExpectResponse:
-		if response != nil {
-			for _, validation := range response.Validation {
-				if validation.Validation != nil {
-					r.reportValidation(validation.Validation, event)
-				}
-			}
-		}
-	case *validator.AssertResponse:
-		if response != nil {
-			r.reportValidation(response.Validation, event)
-		}
-	case *log.AssertResponse:
-		r.reportLogValidation(response)
-	case *selenium.RunResponse:
-		r.reportLookupErrors(response)
-	default:
-		return false
-	}
-	return true
-}
-
-func (r *Runner) processWorkflowEvent(event *endly.Event, filter *Filter) bool {
-	switch actual := event.Value.(type) {
-	case *endly.Activity:
-		r.activities.Push(actual)
-		r.activity = actual
-		if actual.TagDescription != "" {
-			r.printShortMessage(messageTypeTagDescription, actual.TagDescription, messageTypeTagDescription, "")
-			eventTag := r.EventTag()
-			eventTag.Description = actual.TagDescription
-		}
-		var serviceAction = fmt.Sprintf("%v.%v", actual.Service, actual.Action)
-		r.printShortMessage(messageTypeAction, actual.Description, messageTypeAction, serviceAction)
-	case *endly.ActivityEndEvent:
-		r.activity = r.activities.Pop()
-	default:
-		return false
-	}
-	r.resetSleepCounterIfNeeded()
-	return true
-}
-
-func (r *Runner) processEndlyEvents(event *endly.Event, filter *Filter) bool {
-	switch actual := event.Value.(type) {
-	case *endly.SleepEvent:
-		if r.SleepCount > 0 {
-			r.overrideShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms x %v,  slept so far: %v", actual.SleepTimeMs, r.SleepCount, r.SleepTime), endly.MessageStyleGeneric, "Sleep")
+func (r *Runner) processRepeatedReporter(reporter endly.RepeatedReporter, event *endly.Event) {
+	repeated := r.getRepeated(event)
+	message := reporter.Message(repeated)
+	tag := message.Tag
+	header := message.Header
+	if header != nil {
+		if repeated.Count == 0 {
+			r.printShortMessage(header.Style, header.Text, tag.Style, tag.Text)
 		} else {
-			r.SleepTime = 0
-			r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v ms", actual.SleepTimeMs), endly.MessageStyleGeneric, "Sleep")
+			r.overrideShortMessage(header.Style, header.Text, tag.Style, tag.Text)
 		}
-		r.SleepTagID = r.eventTag.TagID
-		r.SleepTime += time.Millisecond * time.Duration(actual.SleepTimeMs)
-		r.SleepCount++
+	}
+}
+
+func (r *Runner) processMessageReporter(reporter endly.MessageReporter) {
+	for _, message := range reporter.Messages() {
+		tag := message.Tag
+		header := message.Header
+		if header != nil {
+			r.printShortMessage(header.Style, header.Text, tag.Style, tag.Text)
+		}
+		if len(message.Items) > 0 {
+			for _, item := range message.Items {
+				if color, ok := r.MessageStyleColor[item.Style]; ok {
+					r.Printf("%v\n", r.ColorText(item.Text, color))
+				} else {
+					r.Printf("%v\n", item.Text)
+				}
+			}
+		}
+	}
+}
+
+func (r *Runner) canReport(event *endly.Event, filter map[string]bool) bool {
+	if filter["*"] {
 		return true
 	}
-	r.resetSleepCounterIfNeeded()
+	var eventType = strings.ToLower(event.Type())
+	index := strings.Index(eventType, "_")
+	var packageName, eventName, shortName string
+	if index != -1 {
+		packageName = string(eventType[:index])
+		eventName = strings.ToLower(string(eventType[index+1:]))
+		shortName = eventName
+		if shortName != "request" {
+			shortName = strings.Replace(shortName, "request", "", 1)
+		}
+		shortName = strings.Replace(shortName, "event", "", 1)
+		shortName = packageName + "." + shortName
+		eventName = packageName + "." + eventName
+	}
+
+	for _, candidate := range []string{shortName, eventName, packageName} {
+		if value, has := filter[candidate]; has {
+			return value
+		}
+	}
 	return false
 }
 
-func (r *Runner) processEvent(event *endly.Event, filter *Filter) {
+func (r *Runner) processReporter(event *endly.Event, filter map[string]bool) bool {
 	if event.Value == nil {
+		return false
+	}
+	messageReporter, isMessageReporter := event.Value.(endly.MessageReporter)
+	reptedReporter, isRepeatReporter := event.Value.(endly.RepeatedReporter)
+
+	if !isMessageReporter || isRepeatReporter {
+		return false
+	}
+	if !r.canReport(event, filter) {
+		return true
+	}
+	if isRepeatReporter {
+		r.processRepeatedReporter(reptedReporter, event)
+		if isMessageReporter {
+			r.processMessageReporter(messageReporter)
+		}
+		return true
+	}
+	r.resetRepeated()
+	if isMessageReporter {
+		r.processMessageReporter(messageReporter)
+	}
+	return true
+}
+
+func (r *Runner) processAssertable(event *endly.Event) bool {
+	assertable, ok := event.Value.(Assertable)
+	if !ok {
+		return false
+	}
+	validations := assertable.Assertion()
+	if len(validations) == 0 {
+		return true
+	}
+	r.reportAssertion(event, validations...)
+	return true
+}
+
+func (r *Runner) processActivityStart(event *endly.Event) bool {
+	activity, ok := event.Value.(*endly.Activity)
+	if !ok {
+		return false
+	}
+	r.activities.Push(activity)
+	r.activity = activity
+	if activity.TagDescription != "" {
+		r.printShortMessage(messageTypeTagDescription, activity.TagDescription, messageTypeTagDescription, "")
+		eventTag := r.EventTag()
+		eventTag.Description = activity.TagDescription
+	}
+	var serviceAction = fmt.Sprintf("%v.%v", activity.Service, activity.Action)
+	r.printShortMessage(messageTypeAction, activity.Description, messageTypeAction, serviceAction)
+	return true
+
+}
+
+func (r *Runner) processActivityEnd(event *endly.Event) {
+	if r.activityEnded {
+		r.activities.Pop()
+	}
+	_, r.activityEnded = event.Value.(*endly.ActivityEndEvent)
+}
+
+func (r *Runner) processEvent(event *endly.Event, filter map[string]bool) {
+	if event.Value == nil {
+		return
+	}
+	if r.processActivityStart(event) {
+		return
+	}
+	if r.processErrorEvent(event) {
+		return
+	}
+	if r.processAssertable(event) {
+		r.resetRepeated()
 		return
 	}
 	if r.processReporter(event, filter) {
 		return
 	}
-	if r.processEndlyEvents(event, filter) {
-		return
-	}
-	if r.processWorkflowEvent(event, filter) {
-		return
-	}
-	if r.processDsunitEvent(event.Value, filter) {
-		return
-	}
-	if r.processHTTPEvent(event, filter) {
-		return
-	}
-	if r.processValidationEvent(event, filter) {
-		return
-	}
 
-	switch value := event.Value.(type) {
-
-	case *endly.PrintRequest:
-		if value.Message != "" {
-			var message = r.Renderer.ColorText(value.Message, value.Color)
-			r.Renderer.Println(message)
-		} else if value.Error != "" {
-			var errorMessage = r.Renderer.ColorText(value.Error, r.Renderer.ErrorColor)
-			r.Renderer.Println(errorMessage)
-		}
-	}
-}
-
-func (r *Runner) reportLogValidation(response *log.AssertResponse) {
-	var passedCount, failedCount = 0, 0
-	if response == nil {
-		return
-	}
-	for _, validation := range response.Validations {
-		if validation.HasFailure() {
-			failedCount++
-			r.errorCode = true
-		} else if validation.PassedCount > 0 {
-			passedCount++
-			continue
-		}
-		if r.activity != nil {
-			var tagID = validation.TagID
-			if eventTag, ok := r.indexedTag[tagID]; ok {
-				eventTag.AddEvent(endly.NewEvent(validation))
-				eventTag.PassedCount += validation.PassedCount
-				eventTag.FailedCount += validation.FailedCount
-			}
-		}
-	}
-	var total = passedCount + failedCount
-	messageType := endly.MessageStyleSuccess
-	messageInfo := "OK"
-	var message = ""
-	if total > 0 {
-		message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, response.Description)
-		if failedCount > 0 {
-			messageType = endly.MessageStyleError
-			message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, response.Description)
-			messageInfo = "FAILED"
-		}
-	}
-	r.printShortMessage(messageType, message, messageType, messageInfo)
+	r.resetRepeated()
+	r.processActivityEnd(event)
 }
 
 func (r *Runner) extractHTTPTrips(eventCandidates []*endly.Event) ([]*http.Request, []*http.Response) {
 	var requests = make([]*http.Request, 0)
 	var responses = make([]*http.Response, 0)
 	for _, event := range eventCandidates {
-		request := event.Get(reflect.TypeOf(&http.Request{}))
-		if request != nil {
-			if httpRequest, ok := request.(*http.Request); ok {
-				requests = append(requests, httpRequest)
-			}
+		if event.Value == nil {
+			continue
 		}
-		response := event.Get(reflect.TypeOf(&http.Response{}))
-		if response != nil {
-			if httpResponse, ok := response.(*http.Response); ok {
-				responses = append(responses, httpResponse)
-			}
+		switch value := event.Value.(type) {
+		case *http.Request:
+			requests = append(requests, value)
+		case *http.Response:
+			responses = append(responses, value)
 		}
 	}
 	return requests, responses
@@ -444,19 +352,18 @@ func (r *Runner) reportFailureWithMatchSource(tag *EventTag, validation *assertl
 	firstFailurePathIndex := theFirstFailure.Index()
 	var requests []*http.Request
 	var responses []*http.Response
-
+	var wildcardFilter = WildcardFilter()
 	if strings.Contains(theFirstFailure.Path, "Body") || strings.Contains(theFirstFailure.Path, "Code") || strings.Contains(theFirstFailure.Path, "Cookie") || strings.Contains(theFirstFailure.Path, "Header") {
 		if theFirstFailure.Index() != -1 {
 			requests, responses = r.extractHTTPTrips(eventCandidates)
 			if firstFailurePathIndex < len(requests) {
-				r.reportHTTPRequest(requests[firstFailurePathIndex])
+				r.processReporter(endly.NewEvent(requests[firstFailurePathIndex]), wildcardFilter)
 			}
 			if firstFailurePathIndex < len(responses) {
-				r.reportHTTPResponse(responses[firstFailurePathIndex])
+				r.processReporter(endly.NewEvent(responses[firstFailurePathIndex]), wildcardFilter)
 			}
 		}
 	}
-
 	var counter = 0
 	for _, failure := range validation.Failures {
 		failurePath := failure.Path
@@ -480,14 +387,17 @@ func (r *Runner) reportSummaryEvent() {
 		contextMessageColor = "red"
 		contextMessageStatus = "FAILED"
 	}
-
 	var contextMessageLength = len(contextMessage) + len(contextMessageStatus)
 	contextMessage = fmt.Sprintf("%v%v", contextMessage, r.ColorText(contextMessageStatus, contextMessageColor))
-	r.printMessage(contextMessage, contextMessageLength, endly.MessageStyleGeneric, fmt.Sprintf("Passed %v/%v", r.report.TotalTagPassed, (r.report.TotalTagPassed+r.report.TotalTagFailed)), endly.MessageStyleGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
+	var totalTagValidated = (r.report.TotalTagPassed + r.report.TotalTagFailed)
+	var validationInfo = fmt.Sprintf("Passed %v/%v (TagIDs).", r.report.TotalTagPassed, totalTagValidated)
+	if totalTagValidated == 0 {
+		validationInfo = ""
+	}
+	r.printMessage(contextMessage, contextMessageLength, endly.MessageStyleGeneric, validationInfo, endly.MessageStyleGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
 }
 
 func (r *Runner) getValidation(event *endly.Event) *assertly.Validation {
-
 	candidate := event.Get(reflect.TypeOf(&assertly.Validation{}))
 	if candidate == nil {
 		return nil
@@ -499,122 +409,73 @@ func (r *Runner) getValidation(event *endly.Event) *assertly.Validation {
 	return validation
 }
 
-func (r *Runner) getDsUnitAssertResponse(event *endly.Event) []*dsunit.DatasetValidation {
-	candidate := event.Get(reflect.TypeOf(&dsunit.ExpectResponse{}))
-	if candidate == nil {
-		return nil
+func (r *Runner) reportAssertion(event *endly.Event, validations ...*assertly.Validation) {
+	if len(validations) == 0 {
+		return
 	}
-	assertResponse, ok := candidate.(*dsunit.ExpectResponse)
-	if !ok {
-		return nil
+
+	var passedCount, failedCount = 0, 0
+	var failedValidation *assertly.Validation
+
+	for i, validation := range validations {
+		var tagID = validation.TagID
+		_, ok := r.indexedTag[tagID];
+		if ! ok {
+			r.AddTag(&EventTag{TagID: tagID})
+		}
+		eventTag := r.indexedTag[tagID];
+
+		if validation.HasFailure() {
+			failedCount += validation.FailedCount
+			r.hasValidationFailures = true
+			failedValidation = validations[i]
+			eventTag.FailedCount += validation.FailedCount
+		} else if validation.PassedCount > 0 {
+			passedCount += validation.PassedCount
+			eventTag.PassedCount += validation.PassedCount
+		}
+		eventTag.AddEvent(endly.NewEvent(validation))
 	}
-	return assertResponse.Validation
+	var total = passedCount + failedCount
+	messageType := endly.MessageStyleSuccess
+	messageInfo := "OK"
+	var message = ""
+	if total > 0 {
+		message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, validations[0].Description)
+		if failedCount > 0 {
+			messageType = endly.MessageStyleError
+			message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, failedValidation.Description)
+			messageInfo = "FAILED"
+		}
+	}
+	r.printShortMessage(messageType, message, messageType, messageInfo)
 }
 
 func (r *Runner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, endly.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
-
+			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, endly.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
 			var minRange = 0
 			for i, event := range tag.Events {
-
 				validation := r.getValidation(event)
-
 				if validation == nil {
 					continue
 				}
-
 				if validation.HasFailure() {
-					var failureSourceEvent = []*endly.Event{}
+					var beforeValidationEvents = []*endly.Event{}
 					if i-minRange > 0 {
-						failureSourceEvent = tag.Events[minRange : i-1]
+						beforeValidationEvents = tag.Events[minRange: i-1]
 					}
-					r.reportFailureWithMatchSource(tag, validation, failureSourceEvent)
+					r.reportFailureWithMatchSource(tag, validation, beforeValidationEvents)
 					minRange = i + 1
 				}
 			}
-
 		}
 	}
 }
 
-func (r *Runner) reportLookupErrors(response *selenium.RunResponse) {
-	if response == nil {
-		return
-	}
-	if len(response.LookupErrors) > 0 {
-		for _, errMessage := range response.LookupErrors {
-			r.printShortMessage(endly.MessageStyleError, errMessage, endly.MessageStyleGeneric, "Selenium")
-		}
-	}
-}
-
-func asJSONText(source interface{}) string {
-	text, _ := toolbox.AsJSONText(source)
-	return text
-}
-
-func (r *Runner) reportHTTPResponse(response *http.Response) {
-	r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("StatusCode: %v", response.Code), endly.MessageStyleGeneric, "HttpResponse")
-	if len(response.Header) > 0 {
-		r.printShortMessage(endly.MessageStyleGeneric, "Headers", endly.MessageStyleGeneric, "HttpResponse")
-
-		r.printOutput(asJSONText(response.Header))
-	}
-	r.printShortMessage(endly.MessageStyleGeneric, "Body", endly.MessageStyleGeneric, "HttpResponse")
-	r.printOutput(response.Body)
-}
-
-func (r *Runner) reportHTTPRequest(request *http.Request) {
-	r.printShortMessage(endly.MessageStyleGeneric, fmt.Sprintf("%v %v", request.Method, request.URL), endly.MessageStyleGeneric, "HttpRequest")
-	r.printInput(asJSONText(request.URL))
-	if len(request.Header) > 0 {
-		r.printShortMessage(endly.MessageStyleGeneric, "Headers", endly.MessageStyleGeneric, "HttpRequest")
-		r.printInput(asJSONText(request.Header))
-	}
-	if len(request.Cookies) > 0 {
-		r.printShortMessage(endly.MessageStyleGeneric, "Cookies", endly.MessageStyleGeneric, "HttpRequest")
-		r.printInput(asJSONText(request.Cookies))
-	}
-	r.printShortMessage(endly.MessageStyleGeneric, "Body", endly.MessageStyleGeneric, "HttpRequest")
-	r.printInput(request.Body)
-}
-
-func (r *Runner) reportValidation(validation *assertly.Validation, event *endly.Event) {
-	if validation == nil {
-		return
-	}
-	var total = validation.PassedCount + validation.FailedCount
-	var description = validation.Description
-	var activity = r.activities.Last()
-	if activity != nil {
-		var tagID = validation.TagID
-		eventTag, ok := r.indexedTag[tagID]
-		if !ok {
-			eventTag = r.EventTag()
-		}
-		eventTag.FailedCount += validation.FailedCount
-		eventTag.PassedCount += validation.PassedCount
-		if validation.FailedCount > 0 {
-			eventTag.AddEvent(endly.NewEvent(validation))
-		}
-	}
-
-	messageType := endly.MessageStyleSuccess
-	messageInfo := "OK"
-	var message = fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, total, description)
-	if validation.FailedCount > 0 {
-		r.errorCode = true
-		messageType = endly.MessageStyleError
-		message = fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, total, description)
-		messageInfo = "FAILED"
-	}
-	r.printShortMessage(messageType, message, messageType, messageInfo)
-}
-
-func (r *Runner) reportEvent(context *endly.Context, event *endly.Event, filter *Filter) error {
+func (r *Runner) reportEvent(context *endly.Context, event *endly.Event, filter map[string]bool) error {
 	defer func() {
 		eventTag := r.EventTag()
 		eventTag.AddEvent(event)
@@ -623,39 +484,8 @@ func (r *Runner) reportEvent(context *endly.Context, event *endly.Event, filter 
 	return nil
 }
 
-func (r *Runner) updateFilterReporSettings() {
-	if len(r.filter.Report) == 0 {
-		r.filter.Report = make(map[string]bool)
-	}
-	//temporary transition during refactoring
-	if r.filter.Stdin {
-		r.filter.Report["stdin"] = true
-	}
-	if r.filter.Stdout {
-		r.filter.Report["stdout"] = true
-	}
-	if r.filter.Transfer {
-		r.filter.Report["storage"] = true
-	}
-	if r.filter.Build {
-		r.filter.Report["build"] = true
-	}
-	if r.filter.Checkout {
-		r.filter.Report["vc"] = true
-	}
-	if r.filter.Deployment {
-		r.filter.Report["deploy"] = true
-	}
-}
-
-
 func (r *Runner) AsListener() endly.EventListener {
 	var firstEvent, lastEvent *endly.Event
-	if r.filter == nil {
-		r.filter = DefaultRunnerReportingOption().Filter
-	}
-	r.updateFilterReporSettings()
-
 	return func(event *endly.Event) {
 		if firstEvent == nil {
 			firstEvent = event
@@ -671,7 +501,7 @@ func (r *Runner) processEventTags() {
 	for _, eventTag := range r.tags {
 		if eventTag.FailedCount > 0 {
 			r.report.TotalTagFailed++
-			r.errorCode = true
+			r.hasValidationFailures = true
 		} else if eventTag.PassedCount > 0 {
 			r.report.TotalTagPassed++
 		}
@@ -680,9 +510,9 @@ func (r *Runner) processEventTags() {
 
 func (r *Runner) onWorkflowStart() {
 	if r.context.Workflow() != nil {
-		var workflow = r.context.Workflow().Name
-		var workflowLength = len(workflow)
-		r.printMessage(r.ColorText(workflow, r.TagColor), workflowLength, endly.MessageStyleGeneric, fmt.Sprintf("%v", time.Now()), endly.MessageStyleGeneric, "started")
+		var workflowName = r.context.Workflow().Name
+		var workflowLength = len(workflowName)
+		r.printMessage(r.ColorText(workflowName, r.TagColor), workflowLength, endly.MessageStyleGeneric, fmt.Sprintf("%v", time.Now()), endly.MessageStyleGeneric, "started")
 	}
 }
 
@@ -692,9 +522,14 @@ func (r *Runner) onWorkflowEnd() {
 }
 
 //Run run workflow for the supplied run request and runner options.
-func (r *Runner) Run(request *endly.RunRequest, options *RunnerReportingOptions) (err error) {
+func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 	r.context = r.manager.NewContext(toolbox.NewContext())
 	r.report = &ReportSummaryEvent{}
+	r.context.CLIEnabled = true
+	r.filter = request.EventFilter
+	if len(r.filter) == 0 {
+		r.filter = DefaultFilter()
+	}
 	if request.Name == "" {
 		name, URL, err := getWorkflowURL(request.WorkflowURL)
 		if err != nil {
@@ -703,24 +538,19 @@ func (r *Runner) Run(request *endly.RunRequest, options *RunnerReportingOptions)
 		request.WorkflowURL = URL
 		request.Name = name
 	}
-	r.context.CLIEnabled = true
 	defer func() {
 		r.onWorkflowEnd()
 		if r.err != nil {
 			err = r.err
 		}
 		r.context.Close()
-		if r.errorCode || err != nil {
+		if r.hasValidationFailures || err != nil {
 			OnError(1)
 		}
 	}()
 
-	if options == nil {
-		options = DefaultRunnerReportingOption()
-	}
-
 	var service endly.Service
-	if service, err = r.context.Service(endly.ServiceID); err != nil {
+	if service, err = r.context.Service(workflow.ServiceID); err != nil {
 		return err
 	}
 	r.context.SetListener(r.AsListener())
@@ -731,12 +561,22 @@ func (r *Runner) Run(request *endly.RunRequest, options *RunnerReportingOptions)
 		err = response.Err
 		return err
 	}
-	_, ok := response.Response.(*endly.RunResponse)
+	_, ok := response.Response.(*workflow.RunResponse)
 	if !ok {
 		return fmt.Errorf("failed to run workflow: %v invalid response type %T,  %v", request.Name, response.Response, response.Error)
 	}
 	r.context.Wait.Wait()
 	return err
+}
+
+func (r *Runner) processErrorEvent(event *endly.Event) bool {
+	if errorEvent, ok := event.Value.(*endly.ErrorEvent); ok {
+		r.err = fmt.Errorf("%v", errorEvent.Error)
+		r.report.Error = true
+		r.processReporter(event, WildcardFilter())
+		return true
+	}
+	return false
 }
 
 //New creates a new command line runner
@@ -750,11 +590,11 @@ func New() *Runner {
 		activities:         &activities,
 		InputColor:         "blue",
 		OutputColor:        "green",
-		PathColor:          "brown",
 		TagColor:           "brown",
+		PathColor:          "brown",
+		ServiceActionColor: "gray",
 		ErrorColor:         "red",
 		InverseTag:         true,
-		ServiceActionColor: "gray",
 		MessageStyleColor: map[int]string{
 			messageTypeTagDescription: "cyan",
 			endly.MessageStyleError:   "red",
