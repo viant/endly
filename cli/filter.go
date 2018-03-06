@@ -22,4 +22,3 @@ func WildcardFilter() map[string]bool {
 		"*": true,
 	}
 }
-

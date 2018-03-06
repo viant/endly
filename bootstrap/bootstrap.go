@@ -25,10 +25,8 @@ import (
 	_ "github.com/viant/endly/testing/validator"
 
 	_ "github.com/viant/endly/runner/http"
-	_ "github.com/viant/endly/runner/selenium"
 	_ "github.com/viant/endly/runner/rest"
-
-
+	_ "github.com/viant/endly/runner/selenium"
 
 	_ "github.com/viant/endly/deployment/build"
 	_ "github.com/viant/endly/deployment/deploy"
