@@ -9,7 +9,7 @@ import (
 
 func Test_EvaluateCriteria(t *testing.T) {
 
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	state := context.State()
 

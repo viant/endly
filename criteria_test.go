@@ -64,7 +64,7 @@ func TestCriterion_IsTrue(t *testing.T) {
 		},
 	}
 
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	for _, useCase := range useCases {
 		isTrue, err := useCase.Criterion.IsTrue(context, context.State())
@@ -113,7 +113,7 @@ func TestCriteria_IsTrue(t *testing.T) {
 		},
 	}
 
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	for _, useCase := range useCases {
 		isTrue, err := useCase.Criteria.IsTrue(context, context.State())

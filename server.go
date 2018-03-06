@@ -124,6 +124,6 @@ func (s *Server) Start() error {
 func NewServer(port string) *Server {
 	return &Server{
 		port:    port,
-		manager: NewManager(),
+		manager: New(),
 	}
 }

@@ -44,5 +44,5 @@ func (m *MetaService) Lookup(serviceID, action string) (*ServiceActionMeta, erro
 
 //NewMetaService creates a new meta service
 func NewMetaService() *MetaService {
-	return &MetaService{NewManager()}
+	return &MetaService{New()}
 }

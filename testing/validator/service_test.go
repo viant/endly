@@ -10,7 +10,7 @@ import (
 )
 
 func assertWithService(expected, actual interface{}) (int, error) {
-	manager := endly.NewManager()
+	manager := endly.New()
 	service, err := manager.Service(validator.ServiceID)
 	if err != nil {
 		return 0, err

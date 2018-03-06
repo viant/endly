@@ -41,7 +41,7 @@ import (
 )
 
 func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, error) {
-	manager := endly.NewManager()
+	manager := endly.New()
 	service, err := manager.Service(workflow.ServiceID)
 	if err == nil {
 
@@ -58,7 +58,7 @@ func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, e
 }
 
 func getServiceWithWorkflowContext(workflowURI string) (*endly.Context, endly.Service, error) {
-	manager := endly.NewManager()
+	manager := endly.New()
 	service, err := manager.Service(workflow.ServiceID)
 	context := manager.NewContext(toolbox.NewContext())
 

@@ -93,8 +93,8 @@ func (m *manager) NewContext(ctx toolbox.Context) *Context {
 	return result
 }
 
-//NewManager returns a new manager.
-func NewManager() Manager {
+//New returns a new manager.
+func New() Manager {
 	var result = &manager{
 		name:                 AppName,
 		version:              GetVersion(),
@@ -111,7 +111,7 @@ func NewManager() Manager {
 
 //Run runs action for supplied request, returns service action response or error
 func (m *manager) Run(context *Context, request interface{}) (interface{}, error) {
-	manager := NewManager()
+	manager := New()
 
 	if !toolbox.IsStruct(request) {
 		return nil, fmt.Errorf("expected request but had %T", request)

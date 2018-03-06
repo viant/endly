@@ -15,7 +15,7 @@ func TestHTTPEndpointService_Run(t *testing.T) {
 
 	parent := toolbox.CallerDirectory(3)
 	var httpTripBaseDir = path.Join(parent, "test", "send")
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(endpoint.ServiceID)
 
@@ -51,7 +51,7 @@ func TestHTTPEndpointService_Run_WithError(t *testing.T) {
 
 	parent := toolbox.CallerDirectory(3)
 	var httpTripBaseDir = path.Join(parent, "test", "send")
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(endpoint.ServiceID)
 

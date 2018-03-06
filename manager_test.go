@@ -10,7 +10,7 @@ import (
 
 func TestNewManager(t *testing.T) {
 
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	manager.Register(newTestService())
 
@@ -69,7 +69,7 @@ func newTestService() endly.Service {
 }
 
 func Test_ServiceRoutes(t *testing.T) {
-	manager := endly.NewManager()
+	manager := endly.New()
 	var services = endly.Services(manager)
 	var context = manager.NewContext(toolbox.NewContext())
 	for _, service := range services {
@@ -87,7 +87,7 @@ func Test_ServiceRoutes(t *testing.T) {
 }
 
 func TestNewManager_Run(t *testing.T) {
-	manager := endly.NewManager()
+	manager := endly.New()
 
 	{
 		_, err := manager.Run(nil, &endly.NopParrotRequest{

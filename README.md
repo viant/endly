@@ -372,7 +372,7 @@ This method runs in silent mode.
 
 ```go
 
-        manager := endly.NewManager()
+        manager := endly.New()
     
 		response, err := manager.Run(nil, &docker.RunRequest{
             Target: target,

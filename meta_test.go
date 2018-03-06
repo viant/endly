@@ -7,7 +7,7 @@ import (
 )
 
 func TestMetaService_Lookup(t *testing.T) {
-	manager := endly.NewManager()
+	manager := endly.New()
 	meta := endly.NewMetaService()
 	var services = endly.Services(manager)
 	for _, service := range services {

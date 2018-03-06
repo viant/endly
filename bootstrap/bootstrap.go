@@ -275,7 +275,7 @@ func printServiceActionRequest() {
 }
 
 func printServiceActions() {
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 
 	var serviceID = flag.Lookup("s").Value.String()
@@ -301,7 +301,7 @@ func printServiceActions() {
 
 func getWorkflow(URL string) (*endly.Workflow, error) {
 	dao := workflow.NewDao()
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	return dao.Load(context, url.NewResource(URL))
 }

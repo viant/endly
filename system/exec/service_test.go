@@ -34,7 +34,7 @@ func TestNewExecService(t *testing.T) {
 		},
 	}
 
-	manager := endly.NewManager()
+	manager := endly.New()
 	for _, useCase := range useCases {
 		service, err := exec.GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
@@ -71,7 +71,7 @@ func Test_NewSimpleCommandRequest(t *testing.T) {
 //
 //	//var target = url.NewResource("scp://35.197.115.53:22/", credentialFile) //
 //	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-//	manager := endly.NewManager()
+//	manager := endly.New()
 //
 //	context, err := OpenTestRecorderContext(manager, target, "test/daemon/start/unknown/darwin")
 //	///context := manager.NewContext(toolbox.NewContext())
