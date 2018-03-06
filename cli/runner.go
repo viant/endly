@@ -19,7 +19,7 @@ var OnError = func(code int) {
 }
 
 const (
-	messageTypeAction         = iota + 10
+	messageTypeAction = iota + 10
 	messageTypeTagDescription
 )
 
@@ -419,11 +419,11 @@ func (r *Runner) reportAssertion(event *endly.Event, validations ...*assertly.Va
 
 	for i, validation := range validations {
 		var tagID = validation.TagID
-		_, ok := r.indexedTag[tagID];
-		if ! ok {
+		_, ok := r.indexedTag[tagID]
+		if !ok {
 			r.AddTag(&EventTag{TagID: tagID})
 		}
-		eventTag := r.indexedTag[tagID];
+		eventTag := r.indexedTag[tagID]
 
 		if validation.HasFailure() {
 			failedCount += validation.FailedCount
@@ -455,7 +455,7 @@ func (r *Runner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, endly.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
+			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, endly.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
 			var minRange = 0
 			for i, event := range tag.Events {
 				validation := r.getValidation(event)
@@ -465,7 +465,7 @@ func (r *Runner) reportTagSummary() {
 				if validation.HasFailure() {
 					var beforeValidationEvents = []*endly.Event{}
 					if i-minRange > 0 {
-						beforeValidationEvents = tag.Events[minRange: i-1]
+						beforeValidationEvents = tag.Events[minRange : i-1]
 					}
 					r.reportFailureWithMatchSource(tag, validation, beforeValidationEvents)
 					minRange = i + 1

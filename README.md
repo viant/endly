@@ -15,7 +15,6 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Credentials](#Credentail)
 - [Unit test](#Unit)
 - [Usage](#Usage)
-- [Workflow Service](#Workfowservice)
 - [Best Practice](#BestPractice)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
