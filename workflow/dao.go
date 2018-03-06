@@ -1,6 +1,7 @@
-package endly
+package workflow
 
 import (
+	"github.com/viant/endly"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
@@ -15,12 +16,12 @@ type Dao struct {
 }
 
 //Load loads workflow into memory
-func (d *Dao) Load(context *Context, source *url.Resource) (*Workflow, error) {
+func (d *Dao) Load(context *endly.Context, source *url.Resource) (*endly.Workflow, error) {
 	resource, err := context.ExpandResource(source)
 	if err != nil {
 		return nil, err
 	}
-	result := &Workflow{}
+	result := &endly.Workflow{}
 	var state = data.NewMap()
 	err = d.Dao.Load(state, resource, result)
 	if err == nil {

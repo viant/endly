@@ -15,3 +15,8 @@ type AssertRequest struct {
 type AssertResponse struct {
 	*assertly.Validation
 }
+
+//Assertion returns validation slice
+func (r *AssertResponse) Assertion() []*assertly.Validation {
+	return []*assertly.Validation{r.Validation}
+}

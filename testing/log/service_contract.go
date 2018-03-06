@@ -23,8 +23,12 @@ type ExpectedRecord struct {
 
 //AssertResponse represents a log assert response
 type AssertResponse struct {
-	Description string
 	Validations []*assertly.Validation
+}
+
+//Assertion returns description with validation slice
+func (r *AssertResponse) Assertion() []*assertly.Validation {
+	return r.Validations
 }
 
 //Type represents  a log type

@@ -52,7 +52,6 @@ func (s *service) reset(context *endly.Context, request *ResetRequest) (*ResetRe
 
 func (s *service) assert(context *endly.Context, request *AssertRequest) (*AssertResponse, error) {
 	var response = &AssertResponse{
-		Description: request.Description,
 		Validations: make([]*assertly.Validation, 0),
 	}
 	if len(request.ExpectedLogRecords) == 0 {

@@ -18,8 +18,6 @@ func TestCriteriaParser_Parse(t *testing.T) {
 		HasError    bool
 	}{
 
-
-
 		{
 			Description: "Unicode operator criterion",
 			Expression:  "$counter \u003e 10",
@@ -35,7 +33,6 @@ func TestCriteriaParser_Parse(t *testing.T) {
 			Expression:  "$HasResource(${buildHost}${buildDirectory}/pom.xml):false",
 			Expected:    endly.NewCriteria("", endly.NewCriterion("$HasResource(${buildHost}${buildDirectory}/pom.xml)", ":", "false")),
 		},
-
 
 		{
 			Description: "Simple criterion",

@@ -6,6 +6,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
+	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
@@ -352,11 +353,11 @@ func (s *service) getMeta(context *endly.Context, request *Request) (*Meta, erro
 	if !hasMeta {
 		var metaURL = request.MetaURL
 		if metaURL == "" {
-			service, err := context.Service(endly.ServiceID)
+			service, err := context.Service(workflow.ServiceID)
 			if err != nil {
 				return nil, err
 			}
-			if workflowService, ok := service.(*endly.WorkflowService); ok {
+			if workflowService, ok := service.(*workflow.Service); ok {
 				workflowResource, err := workflowService.Dao.NewRepoResource(state, fmt.Sprintf("meta/deployment/%v.json", request.AppName))
 				if err != nil {
 					return nil, err

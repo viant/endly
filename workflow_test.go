@@ -8,31 +8,47 @@ import (
 	"github.com/viant/endly/endpoint/http"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
+
 	"path"
 	"strings"
 	"testing"
 
 	_ "github.com/mattn/go-sqlite3"
 	_ "github.com/viant/endly/cli"
+
+	_ "github.com/viant/endly/cloud/ec2"
+	_ "github.com/viant/endly/cloud/gce"
+	_ "github.com/viant/endly/endpoint/http"
+	_ "github.com/viant/endly/workflow"
+
+	_ "github.com/viant/endly/testing/dsunit"
+	_ "github.com/viant/endly/testing/log"
+	_ "github.com/viant/endly/testing/validator"
+
+	_ "github.com/viant/endly/runner/http"
+	_ "github.com/viant/endly/runner/selenium"
+
 	_ "github.com/viant/endly/deployment/build"
 	_ "github.com/viant/endly/deployment/deploy"
 	_ "github.com/viant/endly/deployment/sdk"
 	_ "github.com/viant/endly/deployment/vc"
-	_ "github.com/viant/endly/testing/dsunit"
+
 	_ "github.com/viant/endly/system/daemon"
 	_ "github.com/viant/endly/system/docker"
 	_ "github.com/viant/endly/system/exec"
 	_ "github.com/viant/endly/system/process"
 	_ "github.com/viant/endly/system/storage"
+
+	"github.com/viant/endly/workflow"
 )
 
 func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, error) {
 	manager := endly.NewManager()
-	service, err := manager.Service(endly.ServiceID)
+	service, err := manager.Service(workflow.ServiceID)
 	if err == nil {
 
 		context := manager.NewContext(toolbox.NewContext())
-		response := service.Run(context, &endly.LoadRequest{
+		response := service.Run(context, &workflow.LoadRequest{
 			Source: url.NewResource(workflowURI),
 		})
 		if response.Error != "" {
@@ -45,17 +61,17 @@ func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, e
 
 func getServiceWithWorkflowContext(workflowURI string) (*endly.Context, endly.Service, error) {
 	manager := endly.NewManager()
-	service, err := manager.Service(endly.ServiceID)
+	service, err := manager.Service(workflow.ServiceID)
 	context := manager.NewContext(toolbox.NewContext())
 
 	if err == nil {
-		response := service.Run(context, &endly.LoadRequest{
+		response := service.Run(context, &workflow.LoadRequest{
 			Source: url.NewResource(workflowURI),
 		})
 		if response.Error != "" {
 			return nil, nil, errors.New(response.Error)
 		}
-		if workflowLoadResponse, ok := response.Response.(*endly.LoadResponse); ok {
+		if workflowLoadResponse, ok := response.Response.(*workflow.LoadResponse); ok {
 			context.Workflows.Push(workflowLoadResponse.Workflow)
 		} else {
 			fmt.Printf("unexpected response: %T\n", response.Response)
@@ -68,9 +84,9 @@ func TestWorkflowService_SwitchAction(t *testing.T) {
 	context, service, err := getServiceWithWorkflowContext("test/workflow/nop/workflow.csv")
 	assert.Nil(t, err)
 
-	request := &endly.SwitchRequest{
+	request := &workflow.SwitchRequest{
 		SourceKey: "run",
-		Cases: []*endly.SwitchCase{
+		Cases: []*workflow.SwitchCase{
 			{
 				Value: "action1",
 				ActionRequest: &endly.ActionRequest{
@@ -92,7 +108,7 @@ func TestWorkflowService_SwitchAction(t *testing.T) {
 				},
 			},
 		},
-		Default: &endly.SwitchCase{
+		Default: &workflow.SwitchCase{
 			ActionRequest: &endly.ActionRequest{
 				Service: "nop",
 				Action:  "parrot",
@@ -140,7 +156,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 
 		{
 			context := manager.NewContext(toolbox.NewContext())
-			serviceResponse := service.Run(context, &endly.RunRequest{
+			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "workflow",
 				Tasks: "prepare",
 				Params: map[string]interface{}{
@@ -155,7 +171,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 			}
 
 			assert.Equal(t, "", serviceResponse.Error)
-			response, ok := serviceResponse.Response.(*endly.RunResponse)
+			response, ok := serviceResponse.Response.(*workflow.RunResponse)
 
 			if assert.True(t, ok) {
 				if assert.NotNil(t, response) {
@@ -179,7 +195,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 
 		{
 			context := manager.NewContext(toolbox.NewContext())
-			serviceResponse := service.Run(context, &endly.RunRequest{
+			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "workflow",
 				Tasks: "*",
 				Params: map[string]interface{}{
@@ -190,7 +206,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 			})
 			assert.Equal(t, "", serviceResponse.Error)
 
-			response, ok := serviceResponse.Response.(*endly.RunResponse)
+			response, ok := serviceResponse.Response.(*workflow.RunResponse)
 			assert.True(t, ok)
 			assert.NotNil(t, response)
 			var dsunit = toolbox.AsMap(response.Data["dsunit"])
@@ -206,7 +222,7 @@ func TestWorkflowService_OnErrorTask(t *testing.T) {
 	manager, service, _ := getServiceWithWorkflow("test/workflow/recover/workflow.csv")
 
 	context := manager.NewContext(toolbox.NewContext())
-	serviceResponse := service.Run(context, &endly.RunRequest{
+	serviceResponse := service.Run(context, &workflow.RunRequest{
 		Name:             "recover",
 		Tasks:            "fail",
 		Params:           map[string]interface{}{},
@@ -215,7 +231,7 @@ func TestWorkflowService_OnErrorTask(t *testing.T) {
 	})
 
 	assert.EqualValues(t, "", serviceResponse.Error)
-	response, ok := serviceResponse.Response.(*endly.RunResponse)
+	response, ok := serviceResponse.Response.(*workflow.RunResponse)
 	if assert.True(t, ok) {
 		errorCaught := toolbox.AsString(response.Data["errorCaught"])
 		assert.True(t, strings.Contains(errorCaught, "this is test error "))
@@ -238,7 +254,7 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 	if assert.Nil(t, err) {
 
 		context := manager.NewContext(toolbox.NewContext())
-		serviceResponse := service.Run(context, &endly.RunRequest{
+		serviceResponse := service.Run(context, &workflow.RunRequest{
 			Name:  "http_workflow",
 			Tasks: "*",
 			Params: map[string]interface{}{
@@ -249,7 +265,7 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 			LoggingDirectory:  "logs",
 		})
 		assert.EqualValues(t, "", serviceResponse.Error)
-		response, ok := serviceResponse.Response.(*endly.RunResponse)
+		response, ok := serviceResponse.Response.(*workflow.RunResponse)
 		if assert.True(t, ok) {
 
 			responses, ok := response.Data["httpResponses"]
@@ -271,7 +287,7 @@ func TestWorkflowService_RunLifeCycle(t *testing.T) {
 	if assert.Nil(t, err) {
 
 		context := manager.NewContext(toolbox.NewContext())
-		serviceResponse := service.Run(context, &endly.RunRequest{
+		serviceResponse := service.Run(context, &workflow.RunRequest{
 			Name:  "lifecycle",
 			Tasks: "*",
 			Params: map[string]interface{}{
@@ -286,7 +302,7 @@ func TestWorkflowService_RunLifeCycle(t *testing.T) {
 		})
 
 		if assert.EqualValues(t, "", serviceResponse.Error) {
-			response, ok := serviceResponse.Response.(*endly.RunResponse)
+			response, ok := serviceResponse.Response.(*workflow.RunResponse)
 			if assert.True(t, ok) {
 				assert.EqualValues(t, 2, response.Data["testPassed"])
 				var anArray = toolbox.AsSlice(response.Data["array"])
@@ -308,7 +324,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		manager, service, err := getServiceWithWorkflow("test/workflow/broken/broken1.csv")
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
-			serviceResponse := service.Run(context, &endly.RunRequest{
+			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:              "broken1",
 				Tasks:             "*",
 				Params:            map[string]interface{}{},
@@ -323,7 +339,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		manager, service, err := getServiceWithWorkflow("test/workflow/broken/broken2.csv")
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
-			serviceResponse := service.Run(context, &endly.RunRequest{
+			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:              "broken2",
 				Tasks:             "*",
 				Params:            map[string]interface{}{},
@@ -339,7 +355,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		manager, service, err := getServiceWithWorkflow("test/workflow/broken/broken2.csv")
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
-			serviceResponse := service.Run(context, &endly.RunRequest{
+			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:              "broken2",
 				Tasks:             "*",
 				Params:            map[string]interface{}{},
@@ -355,7 +371,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		manager, service, err := getServiceWithWorkflow("test/workflow/broken/broken3.csv")
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
-			serviceResponse := service.Run(context, &endly.RunRequest{
+			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:              "broken3",
 				Tasks:             "*",
 				Params:            map[string]interface{}{},
@@ -371,7 +387,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		manager, service, err := getServiceWithWorkflow("test/workflow/broken/broken4.csv")
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
-			serviceResponse := service.Run(context, &endly.RunRequest{
+			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:              "broken4",
 				Tasks:             "*",
 				Params:            map[string]interface{}{},
@@ -384,28 +400,28 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 
 func Test_WorkflowSwitchRequest_Validate(t *testing.T) {
 	{
-		request := &endly.SwitchRequest{}
+		request := &workflow.SwitchRequest{}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &endly.SwitchRequest{
+		request := &workflow.SwitchRequest{
 			SourceKey: "abc",
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &endly.SwitchRequest{
+		request := &workflow.SwitchRequest{
 			SourceKey: "abc",
-			Cases: []*endly.SwitchCase{
+			Cases: []*workflow.SwitchCase{
 				{},
 			},
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &endly.SwitchRequest{
+		request := &workflow.SwitchRequest{
 			SourceKey: "abc",
-			Cases: []*endly.SwitchCase{
+			Cases: []*workflow.SwitchCase{
 				{
 					Value: "123",
 				},

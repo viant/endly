@@ -1,7 +1,8 @@
-package endly
+package workflow
 
 import (
 	"errors"
+	"github.com/viant/endly"
 	"github.com/viant/toolbox/url"
 )
 
@@ -16,6 +17,7 @@ type RunRequest struct {
 	TagIDs            string                 `description:"coma separated TagID list, if present in a task, only matched runs, other task run as normal"`
 	PublishParameters bool                   `description:"flag to publish parameters directly into context state"`
 	Async             bool                   `description:"flag to run it asynchronously. Do not set it your self runner sets the flag for the first workflow"`
+	EventFilter       map[string]bool        `description:"optional CLI filter option,key is either package name or package name.request/event prefix "`
 }
 
 //RunResponse represents workflow run response
@@ -26,7 +28,7 @@ type RunResponse struct {
 
 //RegisterRequest represents workflow register request
 type RegisterRequest struct {
-	*Workflow
+	*endly.Workflow
 }
 
 //RegisterResponse represents workflow register response
@@ -41,14 +43,14 @@ type LoadRequest struct {
 
 // LoadResponse represents loaded workflow
 type LoadResponse struct {
-	*Workflow
+	*endly.Workflow
 }
 
 // SwitchCase represent matching candidate case
 type SwitchCase struct {
-	*ActionRequest `description:"action to run if matched"`
-	Task           string      `description:"task to run if matched"`
-	Value          interface{} `required:"true" description:"matching sourceKey value"`
+	*endly.ActionRequest `description:"action to run if matched"`
+	Task                 string      `description:"task to run if matched"`
+	Value                interface{} `required:"true" description:"matching sourceKey value"`
 }
 
 // SwitchRequest represent switch action request
@@ -110,3 +112,30 @@ type FailRequest struct {
 
 // FailResponse represents workflow exit response
 type FailResponse struct{}
+
+//NopRequest represent no operation
+type NopRequest struct{}
+
+//NopParrotRequest represent parrot request
+type NopParrotRequest struct {
+	In interface{}
+}
+
+//PrintRequest represent print request
+type PrintRequest struct {
+	Message string
+	Style   int
+	Error   string
+}
+
+//Messages returns messages
+func (r *PrintRequest) Messages() []*endly.Message {
+	var result = endly.NewMessage(nil, nil)
+	if r.Message != "" {
+		result.Items = append(result.Items, endly.NewStyledText(r.Message, r.Style))
+	}
+	if r.Error != "" {
+		result.Items = append(result.Items, endly.NewStyledText(r.Message, endly.MessageStyleError))
+	}
+	return []*endly.Message{result}
+}

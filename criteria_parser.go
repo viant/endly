@@ -22,7 +22,7 @@ const (
 var matchers = map[int]toolbox.Matcher{
 	eof:         toolbox.EOFMatcher{},
 	whitespaces: toolbox.CharactersMatcher{" \n\t"},
-	operand:          toolbox.NewCustomIdMatcher(".", "_", "$", "[", "]", "{", "}", "!", "-", "(", ")", "/", "\\", "+", "-", "*"),
+	operand:     toolbox.NewCustomIdMatcher(".", "_", "$", "[", "]", "{", "}", "!", "-", "(", ")", "/", "\\", "+", "-", "*"),
 	operator: toolbox.KeywordsMatcher{
 		Keywords:      []string{"=", ">=", "<=", "<>", ">", "<", "!=", ":"},
 		CaseSensitive: false,

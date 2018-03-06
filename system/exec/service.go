@@ -196,9 +196,9 @@ func (s *execService) changeDirectory(context *endly.Context, session *endly.Sys
 
 func (s *execService) rumCommandTemplate(context *endly.Context, session *endly.SystemTerminalSession, commandTemplate string, arguments ...interface{}) (string, error) {
 	command := fmt.Sprintf(commandTemplate, arguments...)
-	startEvent := s.Begin(context, NewExecutionStartEvent(session.ID, command))
+	startEvent := s.Begin(context, NewSdtinEvent(session.ID, command))
 	stdout, err := session.Run(command, 1000)
-	s.End(context)(startEvent, NewExecutionEndEvent(session.ID, stdout, err))
+	s.End(context)(startEvent, NewStdoutEvent(session.ID, stdout, err))
 	return stdout, err
 }
 
@@ -322,9 +322,9 @@ func (s *execService) executeCommand(context *endly.Context, session *endly.Syst
 			}
 		}
 	}
-	startEvent := s.Begin(context, NewExecutionStartEvent(session.ID, command))
+	startEvent := s.Begin(context, NewSdtinEvent(session.ID, command))
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
-	s.End(context)(startEvent, NewExecutionEndEvent(session.ID, stdout, err))
+	s.End(context)(startEvent, NewStdoutEvent(session.ID, stdout, err))
 	response.Add(NewCommandLog(command, stdout, err))
 	if err != nil {
 		return err

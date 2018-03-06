@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"path"
@@ -32,21 +33,21 @@ func GetPath(activities *endly.Activities, runner *Runner, fullPath bool) (strin
 		pathLength += len(activity.Workflow)
 	}
 
-	var path = strings.Join(activityPath, runner.ColorText("|", "gray"))
+	var logPath = strings.Join(activityPath, runner.ColorText("|", "gray"))
 	if len(*activities) > 0 {
 		pathLength += (len(*activities) - 1)
 	}
-	return path, pathLength + 1
+	return logPath, pathLength + 1
 }
 
 //LoadRunRequestWithOption load WorkflowRun request and runner options
-func LoadRunRequestWithOption(workflowRunRequestURL string, params ...interface{}) (*endly.RunRequest, *RunnerReportingOptions, error) {
-	request := &endly.RunRequest{}
+func LoadRunRequestWithOption(workflowRunRequestURL string, params ...interface{}) (*workflow.RunRequest, error) {
+	request := &workflow.RunRequest{}
 	resource := url.NewResource(workflowRunRequestURL)
 	parametersMap := toolbox.Pairs(params...)
 	err := resource.JSONDecode(request)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if len(request.Params) == 0 {
 		request.Params = parametersMap
@@ -54,12 +55,7 @@ func LoadRunRequestWithOption(workflowRunRequestURL string, params ...interface{
 	for k, v := range parametersMap {
 		request.Params[k] = v
 	}
-	options := &RunnerReportingOptions{}
-	_ = resource.JSONDecode(options)
-	if options.Filter == nil {
-		options.Filter = DefaultRunnerReportingOption().Filter
-	}
-	return request, options, nil
+	return request, nil
 }
 
 func getWorkflowURL(candidate string) (string, string, error) {

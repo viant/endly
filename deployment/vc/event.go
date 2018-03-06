@@ -5,14 +5,7 @@ import (
 	"github.com/viant/endly"
 )
 
-var checkoutFilter = endly.NewFilteredReporter("vc", "vc.checkout")
-
-//CanReport returns true if filter has matching event key enabled reporting option
-func (r *CheckoutRequest) CanReport(filter map[string]bool) bool {
-	return checkoutFilter.CanReport(filter)
-}
-
-//Messages returns tag messages
+//Items returns tag messages
 func (r *CheckoutRequest) Messages() []*endly.Message {
 	if r.Origin == nil || r.Target == nil {
 		return []*endly.Message{}

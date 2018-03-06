@@ -187,15 +187,21 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &dsunit.RegisterRequest{}
+			return &RegisterRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &dsunit.RegisterRequest{}
+			return &RegisterResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*RegisterRequest); ok {
+				var dsRequest = dsunit.RegisterRequest(*req)
+				request = &dsRequest
+			}
+
 			if req, ok := request.(*dsunit.RegisterRequest); ok {
-				response := s.Service.Register(req)
-				return response, response.Error()
+				resp := s.Service.Register(req)
+				response := RegisterResponse(*resp)
+				return &response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -208,15 +214,21 @@ func (s *service) registerRoutes() {
 			Examples:    []*endly.ExampleUseCase{},
 		},
 		RequestProvider: func() interface{} {
-			return &dsunit.RecreateRequest{}
+			return &RecreateRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &dsunit.RecreateResponse{}
+			return &RecreateResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*RecreateRequest); ok {
+				var dsRequest = dsunit.RecreateRequest(*req)
+				request = &dsRequest
+			}
+
 			if req, ok := request.(*dsunit.RecreateRequest); ok {
-				response := s.Service.Recreate(req)
-				return response, response.Error()
+				resp := s.Service.Recreate(req)
+				response := RecreateResponse(*resp)
+				return &response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -234,15 +246,20 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &dsunit.RunScriptRequest{}
+			return &RunScriptRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &dsunit.RunSQLResponse{}
+			return &RunSQLResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*RunScriptRequest); ok {
+				var dsRequest = dsunit.RunScriptRequest(*req)
+				request = &dsRequest
+			}
 			if req, ok := request.(*dsunit.RunScriptRequest); ok {
-				response := s.Service.RunScript(req)
-				return response, response.Error()
+				resp := s.Service.RunScript(req)
+				response := RunSQLResponse(*resp)
+				return &response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -255,15 +272,22 @@ func (s *service) registerRoutes() {
 			Examples:    []*endly.ExampleUseCase{},
 		},
 		RequestProvider: func() interface{} {
-			return &dsunit.RunSQLRequest{}
+			return &RunSQLRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &dsunit.RunSQLResponse{}
+			return &RunSQLResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+
+			if req, ok := request.(*RunSQLRequest); ok {
+				var dsRequest = dsunit.RunSQLRequest(*req)
+				request = &dsRequest
+			}
+
 			if req, ok := request.(*dsunit.RunSQLRequest); ok {
-				response := s.Service.RunSQL(req)
-				return response, response.Error()
+				resp := s.Service.RunSQL(req)
+				response := RunSQLResponse(*resp)
+				return &response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -276,15 +300,20 @@ func (s *service) registerRoutes() {
 			Examples:    []*endly.ExampleUseCase{},
 		},
 		RequestProvider: func() interface{} {
-			return &dsunit.MappingRequest{}
+			return &MappingRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &dsunit.MappingResponse{}
+			return &MappingResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*MappingRequest); ok {
+				var dsRequest = dsunit.MappingRequest(*req)
+				request = &dsRequest
+			}
 			if req, ok := request.(*dsunit.MappingRequest); ok {
-				response := s.Service.AddTableMapping(req)
-				return response, response.Error()
+				resp := s.Service.AddTableMapping(req)
+				response := MappingResponse(*resp)
+				return &response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -303,15 +332,20 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &dsunit.InitRequest{}
+			return &InitRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &dsunit.InitResponse{}
+			return &InitResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*InitRequest); ok {
+				var dsRequest = dsunit.InitRequest(*req)
+				request = &dsRequest
+			}
 			if req, ok := request.(*dsunit.InitRequest); ok {
-				response := s.Service.Init(req)
-				return response, response.Error()
+				resp := s.Service.Init(req)
+				response := InitResponse(*resp)
+				return &response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -333,19 +367,21 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &dsunit.PrepareRequest{
-				DatasetResource: &dsunit.DatasetResource{
-					DatastoreDatasets: &dsunit.DatastoreDatasets{},
-				},
-			}
+			return &PrepareRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &dsunit.PrepareResponse{}
+			return &PrepareResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*PrepareRequest); ok {
+				var dsRequest = dsunit.PrepareRequest(*req)
+				request = &dsRequest
+			}
+
 			if req, ok := request.(*dsunit.PrepareRequest); ok {
-				response := s.Service.Prepare(req)
-				return response, response.Error()
+				resp := s.Service.Prepare(req)
+				response := PrepareResponse(*resp)
+				return &response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -377,9 +413,15 @@ func (s *service) registerRoutes() {
 			return &dsunit.ExpectResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*ExpectRequest); ok {
+				var dsRequest = dsunit.ExpectRequest(*req)
+				request = &dsRequest
+			}
+
 			if req, ok := request.(*dsunit.ExpectRequest); ok {
-				response := s.Service.Expect(req)
-				return response, response.Error()
+				resp := s.Service.Expect(req)
+				response := ExpectResponse(*resp)
+				return &response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -391,15 +433,20 @@ func (s *service) registerRoutes() {
 			Description: "run SQL query",
 		},
 		RequestProvider: func() interface{} {
-			return &dsunit.QueryRequest{}
+			return &QueryRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &dsunit.QueryResponse{}
+			return &QueryResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*QueryRequest); ok {
+				var dsRequest = dsunit.QueryRequest(*req)
+				request = &dsRequest
+			}
 			if req, ok := request.(*dsunit.QueryRequest); ok {
-				response := s.Service.Query(req)
-				return response, response.Error()
+				resp := s.Service.Query(req)
+				response := QueryResponse(*resp)
+				return &response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -417,15 +464,20 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &dsunit.SequenceRequest{}
+			return &SequenceRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &dsunit.SequenceResponse{}
+			return &SequenceResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*SequenceRequest); ok {
+				var dsRequest = dsunit.SequenceRequest(*req)
+				request = &dsRequest
+			}
 			if req, ok := request.(*dsunit.SequenceRequest); ok {
-				response := s.Service.Sequence(req)
-				return response, response.Error()
+				resp := s.Service.Sequence(req)
+				response := SequenceResponse(*resp)
+				return &response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},

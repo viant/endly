@@ -18,6 +18,7 @@ import (
 )
 
 func getRegisteredDsUnitService(manager endly.Manager, context *endly.Context, dbname string) (endly.Service, error) {
+
 	var baseDir = "/tmp/test/endly/dsunit/"
 	exec.Command("rm", "-rf", baseDir)
 	toolbox.CreateDirIfNotExist(baseDir)
@@ -37,6 +38,7 @@ func getRegisteredDsUnitService(manager endly.Manager, context *endly.Context, d
 	if err != nil {
 		return nil, err
 	}
+
 	response := service.Run(context, dsunit.NewInitRequest(
 		dbname,
 		true,
@@ -64,7 +66,7 @@ func TestDsUnitService(t *testing.T) {
 			dsunit.NewDatasetResource("mydb1", url.NewResource("test/dataset1").URL, "verify_", "")))
 
 		assert.Equal(t, "", serviceResponse.Error)
-		verifyResponse, ok := serviceResponse.Response.(*dsunit.ExpectResponse)
+		verifyResponse, ok := serviceResponse.Response.(*ExpectResponse)
 		assert.True(t, ok)
 		assert.EqualValues(t, 0, len(verifyResponse.Validation[0].Failures))
 
@@ -79,7 +81,7 @@ func TestDsUnitService(t *testing.T) {
 
 		var tables []string
 		{
-			response, ok := serviceResponse.Response.(*dsunit.MappingResponse)
+			response, ok := serviceResponse.Response.(*MappingResponse)
 			if assert.True(t, ok) {
 				assert.EqualValues(t, []string{"ACCOUNT", "USER"}, response.Tables)
 			}
@@ -91,7 +93,7 @@ func TestDsUnitService(t *testing.T) {
 		})
 		var sequences map[string]int
 		{
-			response, ok := serviceResponse.Response.(*dsunit.SequenceResponse)
+			response, ok := serviceResponse.Response.(*SequenceResponse)
 			if assert.True(t, ok) {
 				assert.EqualValues(t, map[string]int{
 					"USER":    3,
@@ -109,7 +111,7 @@ func TestDsUnitService(t *testing.T) {
 			},
 		})
 		{
-			response, ok := serviceResponse.Response.(*dsunit.RunSQLResponse)
+			response, ok := serviceResponse.Response.(*RunSQLResponse)
 			if assert.True(t, ok) {
 				assert.EqualValues(t, 0, response.RowsAffected)
 			}
@@ -173,7 +175,7 @@ func TestDsUnitService(t *testing.T) {
 		serviceResponse = service.Run(context, expectRequest)
 
 		if assert.Equal(t, "", serviceResponse.Error) {
-			verifyResponse, ok = serviceResponse.Response.(*dsunit.ExpectResponse)
+			verifyResponse, ok = serviceResponse.Response.(*ExpectResponse)
 			if assert.True(t, ok) {
 				assert.EqualValues(t, 0, len(verifyResponse.Validation[0].Failures))
 			}
