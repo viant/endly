@@ -32,7 +32,7 @@ func TestSeleniumService_Start(t *testing.T) {
 	var credentialFile, err = util.GetDummyCredential()
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile)
 	assert.Nil(t, err)
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir     string
 		DataURLs    []string
@@ -135,7 +135,7 @@ func TestSeleniumService_Calls(t *testing.T) {
 
 	StartSeleniumMockServer(8116)
 
-	manager := endly.NewManager()
+	manager := endly.New()
 	service, err := manager.Service(runner.ServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
@@ -287,7 +287,7 @@ func TestSeleniumService_Run(t *testing.T) {
 
 	StartSeleniumMockServer(8118)
 
-	manager := endly.NewManager()
+	manager := endly.New()
 	service, err := manager.Service(runner.ServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)

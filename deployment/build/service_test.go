@@ -19,7 +19,7 @@ func TestBuildService_Build(t *testing.T) {
 
 	var credentialFile, err = util.GetDummyCredential()
 	assert.Nil(t, err)
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir     string
 		DataURL     string

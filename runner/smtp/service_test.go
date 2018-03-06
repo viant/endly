@@ -15,7 +15,7 @@ import (
 func TestService_Run(t *testing.T) {
 	var parent = toolbox.CallerDirectory(3)
 	credential := path.Join(parent, "test/secret.json")
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(smtp.ServiceID)
 	{ //missing subject

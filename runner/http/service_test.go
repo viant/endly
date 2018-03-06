@@ -26,7 +26,7 @@ func TestHttpRunnerService_Run(t *testing.T) {
 	if !assert.Nil(t, err) {
 		return
 	}
-	manager := endly.NewManager()
+	manager := endly.New()
 	service, err := manager.Service(runner.ServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
@@ -84,7 +84,7 @@ func TestHttpRunnerService_Repeat(t *testing.T) {
 	if !assert.Nil(t, err) {
 		return
 	}
-	manager := endly.NewManager()
+	manager := endly.New()
 	service, err := manager.Service(runner.ServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
@@ -142,7 +142,7 @@ func TestHttpRunnerService_RepeatWthExitCriteria(t *testing.T) {
 	if !assert.Nil(t, err) {
 		return
 	}
-	manager := endly.NewManager()
+	manager := endly.New()
 	service, err := manager.Service(runner.ServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
@@ -198,7 +198,7 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 		return
 	}
 
-	manager := endly.NewManager()
+	manager := endly.New()
 	service, err := manager.Service(runner.ServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)

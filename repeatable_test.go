@@ -10,7 +10,7 @@ import (
 )
 
 func GetAbstractService() *endly.AbstractService {
-	manager := endly.NewManager()
+	manager := endly.New()
 	service, _ := manager.Service(workflow.ServiceID)
 	nopService := service.(*workflow.Service)
 	return nopService.AbstractService
@@ -34,7 +34,7 @@ func TestRepeatable_Run(t *testing.T) {
 			ExitCriteria: "$status:!running",
 		}
 
-		manager := endly.NewManager()
+		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
 		var extracted = make(map[string]string)
 
@@ -71,7 +71,7 @@ func TestRepeatable_Run(t *testing.T) {
 			ExitCriteria: "$status:!running",
 		}
 
-		manager := endly.NewManager()
+		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
 		var extracted = make(map[string]string)
 
@@ -108,7 +108,7 @@ func TestRepeatable_Run(t *testing.T) {
 			ExitCriteria: "$status:!running",
 		}
 
-		manager := endly.NewManager()
+		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
 		var extracted = make(map[string]string)
 
@@ -145,7 +145,7 @@ func TestRepeatable_Run(t *testing.T) {
 			ExitCriteria: "$status:!running",
 		}
 
-		manager := endly.NewManager()
+		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
 		var extracted = make(map[string]string)
 
@@ -182,7 +182,7 @@ func TestRepeatable_Run(t *testing.T) {
 			ExitCriteria: "$value:!/running/", //this is contains
 		}
 
-		manager := endly.NewManager()
+		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
 		var extracted = make(map[string]string)
 
@@ -218,7 +218,7 @@ func TestRepeatable_Run(t *testing.T) {
 			ExitCriteria: "$value:!/running/", //this is contains
 		}
 
-		manager := endly.NewManager()
+		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
 		var extracted = make(map[string]string)
 
@@ -260,7 +260,7 @@ func TestRepeatable_Run(t *testing.T) {
 			ExitCriteria: "$status:!/running/", //this is contains
 		}
 
-		manager := endly.NewManager()
+		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
 		var extracted = make(map[string]string)
 
@@ -304,7 +304,7 @@ func TestRepeatable_Run(t *testing.T) {
 			ExitCriteria: "$value:!/running/", //this is contains
 		}
 
-		manager := endly.NewManager()
+		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
 		var extracted = make(map[string]string)
 
@@ -342,7 +342,7 @@ func TestRepeatable_Run(t *testing.T) {
 			ExitCriteria: "$status:!running",
 		}
 
-		manager := endly.NewManager()
+		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
 		var extracted = make(map[string]string)
 
@@ -375,7 +375,7 @@ func TestRepeatable_Run(t *testing.T) {
 			ExitCriteria: "$status:!running",
 		}
 
-		manager := endly.NewManager()
+		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
 		var extracted = make(map[string]string)
 
@@ -408,7 +408,7 @@ func TestRepeatable_Run(t *testing.T) {
 			ExitCriteria: "$status!=running",
 		}
 
-		manager := endly.NewManager()
+		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
 		var extracted = make(map[string]string)
 

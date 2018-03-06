@@ -55,7 +55,7 @@ func getRegisteredDsUnitService(manager endly.Manager, context *endly.Context, d
 
 func TestDsUnitService(t *testing.T) {
 
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	service, err := getRegisteredDsUnitService(manager, context, "mydb1")
 	if assert.Nil(t, err) {
@@ -186,7 +186,7 @@ func TestDsUnitService(t *testing.T) {
 }
 
 func TestDsUnitService_Errors(t *testing.T) {
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	service, err := getRegisteredDsUnitService(manager, context, "mydb1")
 	if !assert.Nil(t, err) {

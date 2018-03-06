@@ -20,7 +20,7 @@ func TestDockerService_Images(t *testing.T) {
 	assert.Nil(t, err)
 
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir    string
 		target     *url.Resource
@@ -134,7 +134,7 @@ func TestDockerService_Run(t *testing.T) {
 	assert.Nil(t, err)
 
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir    string
 		Request    *docker.RunRequest
@@ -290,7 +290,7 @@ func TestDockerService_Command(t *testing.T) {
 	assert.Nil(t, err)
 
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir    string
 		Request    *docker.ContainerRunRequest
@@ -370,7 +370,7 @@ func TestDockerService_Pull(t *testing.T) {
 	credentialFile, err := util.GetDummyCredential()
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
 		Request  *docker.PullRequest
@@ -438,7 +438,7 @@ func TestDockerService_Status(t *testing.T) {
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
 		Request  *docker.ContainerStatusRequest
@@ -510,7 +510,7 @@ func TestDockerService_Start(t *testing.T) {
 	credentialFile, err := util.GetDummyCredential()
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
 		Request  *docker.ContainerStartRequest
@@ -580,7 +580,7 @@ func TestDockerService_Stop(t *testing.T) {
 	credentialFile, err := util.GetDummyCredential()
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
 		Request  *docker.ContainerStopRequest
@@ -646,7 +646,7 @@ func TestDockerService_Remove(t *testing.T) {
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
 		Request  *docker.ContainerRemoveRequest
@@ -708,7 +708,7 @@ func TestDockerService_Login(t *testing.T) {
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir          string
 		Request          *docker.LoginRequest
@@ -795,7 +795,7 @@ func TestDockerService_Login(t *testing.T) {
 func TestDockerService_Build(t *testing.T) {
 	credentialFile, err := util.GetDummyCredential()
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	manager := endly.NewManager()
+	manager := endly.New()
 
 	execService, err := exec.GetReplayService("test/build/darwin")
 	if !assert.Nil(t, err) {
@@ -827,7 +827,7 @@ func TestDockerService_Push(t *testing.T) {
 		return
 	}
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	manager := endly.NewManager()
+	manager := endly.New()
 	var useCases = []struct {
 		baseDir string
 		Error   bool
@@ -877,7 +877,7 @@ func TestDockerService_Inspect(t *testing.T) {
 		return
 	}
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	manager := endly.NewManager()
+	manager := endly.New()
 	execService, err := exec.GetReplayService("test/inspect/darwin")
 	context, err := exec.OpenTestContext(manager, target, execService)
 	if !assert.Nil(t, err) {
@@ -915,7 +915,7 @@ func TestDockerService_Inspect(t *testing.T) {
 //	var credentialFile = path.Join(os.Getenv("HOME"), ".secret/localhost.json")
 //
 //	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-//	manager := endly.NewManager()
+//	manager := endly.New()
 //	context, _ := OpenTestRecorderContext(manager, target, "test/inspect/darwin")
 //	///context := manager.NewContext(toolbox.NewContext())
 //

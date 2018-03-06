@@ -37,7 +37,7 @@ func BuildLogContent(from, to, multiplier int, template string) string {
 }
 
 func TestLogValidatorService_NewRequest(t *testing.T) {
-	manager := endly.NewManager()
+	manager := endly.New()
 	service, err := manager.Service(log.ServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
@@ -159,7 +159,7 @@ var indexedLogRecords = `{"Timestamp":"2018-01-12T14:07:09.120207-08:00","EventT
 `
 
 func TestLogValidatorService_TestIndexedRecord(t *testing.T) {
-	manager := endly.NewManager()
+	manager := endly.New()
 	service, err := manager.Service(log.ServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)

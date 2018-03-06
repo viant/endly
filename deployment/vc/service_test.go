@@ -18,7 +18,7 @@ func TestVc_Status(t *testing.T) {
 	assert.Nil(t, err)
 	var target = url.NewResource("ssh://127.0.0.1/Projects/project1/trunk", credentialFile) //
 
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
 		Request  *vc.StatusRequest
@@ -89,7 +89,7 @@ func TestVc_Checkout(t *testing.T) {
 	gitCredentialFile, err := util.GetCredential("git.json", "adrianwit", "***")
 	assert.Nil(t, err)
 
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
 		Request  *vc.CheckoutRequest

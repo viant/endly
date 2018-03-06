@@ -17,7 +17,7 @@ func TestNewGceService(t *testing.T) {
 
 	credential := path.Join(os.Getenv("HOME"), ".secret/gce.json")
 	if toolbox.FileExists(credential) && os.Getenv("GCE_PROJECT") != "" {
-		manager := endly.NewManager()
+		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
 		service, _ := context.Service(gce.ServiceID)
 
@@ -42,7 +42,7 @@ func TestNewGceService(t *testing.T) {
 func TestNewGceService_WithError(t *testing.T) {
 	parent := toolbox.CallerDirectory(3)
 	credential := path.Join(parent, "test/gce/secret.json")
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(gce.ServiceID)
 

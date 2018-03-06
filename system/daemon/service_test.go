@@ -15,7 +15,7 @@ func TestDaemonService_Status(t *testing.T) {
 	var credentialFile, err = util.GetDummyCredential()
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
 		target   *url.Resource
@@ -101,7 +101,7 @@ func TestDaemonService_Start(t *testing.T) {
 	var credentialFile, err = util.GetDummyCredential()
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
 		target   *url.Resource
@@ -196,7 +196,7 @@ func TestDaemonService_Stop(t *testing.T) {
 	var credentialFile, err = util.GetDummyCredential()
 	assert.Nil(t, err)
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
 		target   *url.Resource

@@ -26,7 +26,7 @@ func TestNewDefaultState(t *testing.T) {
 
 func TestContext_AsRequest(t *testing.T) {
 
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 
 	nopRequest, err := context.AsRequest("nop", "nop", map[string]interface{}{})
@@ -41,7 +41,7 @@ func TestContext_AsRequest(t *testing.T) {
 }
 
 func TestContext_Expand_Resource(t *testing.T) {
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 
 	_, err := context.ExpandResource(nil)

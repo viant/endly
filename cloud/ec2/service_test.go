@@ -12,7 +12,7 @@ import (
 )
 
 func getInstanceStatus(awsCredential, instance string) (string, error) {
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(ec2.ServiceID)
 	serviceResponse := service.Run(context, &ec2.CallRequest{
@@ -51,7 +51,7 @@ func getInstanceStatus(awsCredential, instance string) (string, error) {
 }
 
 func startInstance(awsCredential, instance string) (string, error) {
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(ec2.ServiceID)
 	serviceResponse := service.Run(context, &ec2.CallRequest{
@@ -80,7 +80,7 @@ func startInstance(awsCredential, instance string) (string, error) {
 }
 
 func stopInstance(awsCredential, instance string) (string, error) {
-	manager := endly.NewManager()
+	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(ec2.ServiceID)
 	serviceResponse := service.Run(context, &ec2.CallRequest{

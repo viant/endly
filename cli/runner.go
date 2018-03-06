@@ -583,7 +583,7 @@ func (r *Runner) processErrorEvent(event *endly.Event) bool {
 func New() *Runner {
 	var activities endly.Activities = make([]*endly.Activity, 0)
 	return &Runner{
-		manager:            endly.NewManager(),
+		manager:            endly.New(),
 		Renderer:           NewRenderer(os.Stdout, 120),
 		tags:               make([]*EventTag, 0),
 		indexedTag:         make(map[string]*EventTag),

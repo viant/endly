@@ -23,7 +23,7 @@ func TestResetRunnerService_Run(t *testing.T) {
 	if !assert.Nil(t, err) {
 		return
 	}
-	manager := endly.NewManager()
+	manager := endly.New()
 	service, err := manager.Service(runner.ServiceID)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)

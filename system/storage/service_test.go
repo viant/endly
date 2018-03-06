@@ -47,7 +47,7 @@ func TestTransferService_Copy(t *testing.T) {
 	var target = url.NewResource("ssh://127.0.0.1:22")
 	memStorage := tstorage.NewMemoryService()
 	SetupMemoryStorage()
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
 		Request  *storage.CopyRequest
@@ -189,7 +189,7 @@ func TestTransferService_Copy(t *testing.T) {
 }
 
 func TestTransferService_Remove(t *testing.T) {
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	storageService, err := manager.Service(storage.ServiceID)
 	assert.Nil(t, err)
 	context := manager.NewContext(toolbox.NewContext())
@@ -220,7 +220,7 @@ func TestTransferService_Remove(t *testing.T) {
 }
 
 func TestTransferService_Download(t *testing.T) {
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	storageService, err := manager.Service(storage.ServiceID)
 	assert.Nil(t, err)
 	context := manager.NewContext(toolbox.NewContext())
@@ -246,7 +246,7 @@ func TestTransferService_Download(t *testing.T) {
 }
 
 func TestTransferService_Upload(t *testing.T) {
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	storageService, err := manager.Service(storage.ServiceID)
 	assert.Nil(t, err)
 	context := manager.NewContext(toolbox.NewContext())
@@ -283,7 +283,7 @@ func TestTransferService_Upload(t *testing.T) {
 }
 
 func TestTransferService_Upload_Error(t *testing.T) {
-	var manager = endly.NewManager()
+	var manager = endly.New()
 	storageService, err := manager.Service(storage.ServiceID)
 	assert.Nil(t, err)
 	context := manager.NewContext(toolbox.NewContext())
