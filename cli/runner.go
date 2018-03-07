@@ -288,6 +288,9 @@ func (r *Runner) processActivityStart(event *endly.Event) bool {
 	if !ok {
 		return false
 	}
+	if r.activityEnded {
+		r.activities.Pop()
+	}
 	r.activities.Push(activity)
 	r.activity = activity
 	if activity.TagDescription != "" {
@@ -302,17 +305,18 @@ func (r *Runner) processActivityStart(event *endly.Event) bool {
 }
 
 func (r *Runner) processActivityEnd(event *endly.Event) {
-	if r.activityEnded {
-		r.activities.Pop()
+	if _, ended := event.Value.(*endly.ActivityEndEvent);ended{
+		r.activityEnded = ended
 	}
-	_, r.activityEnded = event.Value.(*endly.ActivityEndEvent)
 }
+
 
 func (r *Runner) processEvent(event *endly.Event, filter map[string]bool) {
 	if event.Value == nil {
 		return
 	}
 	if r.processActivityStart(event) {
+
 		return
 	}
 	if r.processErrorEvent(event) {
@@ -325,7 +329,6 @@ func (r *Runner) processEvent(event *endly.Event, filter map[string]bool) {
 	if r.processReporter(event, filter) {
 		return
 	}
-
 	r.resetRepeated()
 	r.processActivityEnd(event)
 }
