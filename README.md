@@ -377,7 +377,7 @@ This method runs in silent mode.
 		response, err := manager.Run(nil, &docker.RunRequest{
             Target: target,
             Image:  "mysql:5.6",
-            MappedPort: map[string]string{
+            Ports: map[string]string{
                 "3306": "3306",
             },
             Env: map[string]string{

@@ -147,7 +147,7 @@ func TestDockerService_Run(t *testing.T) {
 			&docker.RunRequest{
 				Target: target,
 				Image:  "mysql:5.6",
-				MappedPort: map[string]string{
+				Ports: map[string]string{
 					"3306": "3306",
 				},
 				Env: map[string]string{
@@ -174,7 +174,7 @@ func TestDockerService_Run(t *testing.T) {
 
 				Target: target,
 				Image:  "mysql:5.6",
-				MappedPort: map[string]string{
+				Ports: map[string]string{
 					"3306": "3306",
 				},
 				Env: map[string]string{
@@ -200,7 +200,7 @@ func TestDockerService_Run(t *testing.T) {
 			&docker.RunRequest{
 				Target: target,
 				Image:  "mysql:5.6",
-				MappedPort: map[string]string{
+				Ports: map[string]string{
 					"3306": "3306",
 				},
 				Env: map[string]string{
@@ -222,7 +222,7 @@ func TestDockerService_Run(t *testing.T) {
 			&docker.RunRequest{
 				Target: target,
 				Image:  "mysql:5.6",
-				MappedPort: map[string]string{
+				Ports: map[string]string{
 					"3306": "3306",
 				},
 				Env: map[string]string{
