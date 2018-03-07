@@ -20,6 +20,7 @@ type EventLogger struct {
 	subPath          string
 	tagCount         map[string]int
 	mutex            *sync.Mutex
+	activityEnded    bool
 }
 
 func (l *EventLogger) processEvent(event *Event) {
@@ -28,13 +29,16 @@ func (l *EventLogger) processEvent(event *Event) {
 	}
 	switch value := event.Value.(type) {
 	case *Activity:
-		l.activities.Push(value)
-		l.updateSubpath()
-	case *ActivityEndEvent:
-		if len(*l.activities) > 0 {
+		if l.activityEnded && len(*l.activities) > 0 {
+			l.activityEnded = false
 			l.activities.Pop()
 			l.updateSubpath()
 		}
+		l.activities.Push(value)
+		l.updateSubpath()
+	case *ActivityEndEvent:
+		l.activityEnded = true
+
 	}
 }
 

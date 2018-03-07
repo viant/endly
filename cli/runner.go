@@ -350,6 +350,7 @@ func (r *Runner) extractHTTPTrips(eventCandidates []*endly.Event) ([]*http.Reque
 	return requests, responses
 }
 
+
 func (r *Runner) reportFailureWithMatchSource(tag *EventTag, validation *assertly.Validation, eventCandidates []*endly.Event) {
 	var theFirstFailure = validation.Failures[0]
 	firstFailurePathIndex := theFirstFailure.Index()
@@ -453,6 +454,8 @@ func (r *Runner) reportAssertion(event *endly.Event, validations ...*assertly.Va
 	}
 	r.printShortMessage(messageType, message, messageType, messageInfo)
 }
+
+
 
 func (r *Runner) reportTagSummary() {
 	for _, tag := range r.tags {
