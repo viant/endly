@@ -44,19 +44,19 @@ func (s *service) processResponse(context *endly.Context, sendRequest *SendReque
 	return responseBody, nil
 }
 
-func (s *service) sendRequest(context *endly.Context, client *http.Client, sendHTTPRequest *Request, sessionCookies *Cookies, sendGroupRequest *SendRequest, sendGroupResponse *SendResponse) error {
+func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPRequest *Request, sessionCookies *Cookies, sendGroupRequest *SendRequest, sendGroupResponse *SendResponse) error {
 	var err error
 	var state = context.State()
 	cookies := state.GetMap("cookies")
 	var reader io.Reader
 	var isBase64Encoded = false
-	sendHTTPRequest = sendHTTPRequest.Expand(context)
+	HTTPRequest = HTTPRequest.Expand(context)
 	var body []byte
 	var ok bool
-	if len(sendHTTPRequest.Body) > 0 {
-		body = []byte(sendHTTPRequest.Body)
-		if sendHTTPRequest.RequestUdf != "" {
-			transformed, err := endly.TransformWithUDF(context, sendHTTPRequest.RequestUdf, sendHTTPRequest.URL, string(body))
+	if len(HTTPRequest.Body) > 0 {
+		body = []byte(HTTPRequest.Body)
+		if HTTPRequest.RequestUdf != "" {
+			transformed, err := endly.TransformWithUDF(context, HTTPRequest.RequestUdf, HTTPRequest.URL, string(body))
 			if err != nil {
 				return err
 			}
@@ -72,21 +72,21 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, sendH
 		reader = bytes.NewReader(body)
 	}
 
-	httpRequest, err := http.NewRequest(strings.ToUpper(sendHTTPRequest.Method), sendHTTPRequest.URL, reader)
+	httpRequest, err := http.NewRequest(strings.ToUpper(HTTPRequest.Method), HTTPRequest.URL, reader)
 	if err != nil {
 		return err
 	}
 
-	copyHeaders(sendHTTPRequest.Header, httpRequest.Header)
-	sessionCookies.SetHeader(sendHTTPRequest.Header)
-	sendHTTPRequest.Cookies.SetHeader(httpRequest.Header)
+	copyHeaders(HTTPRequest.Header, httpRequest.Header)
+	sessionCookies.SetHeader(HTTPRequest.Header)
+	HTTPRequest.Cookies.SetHeader(httpRequest.Header)
 
 	response := &Response{}
 	sendGroupResponse.Responses = append(sendGroupResponse.Responses, response)
-	startEvent := s.Begin(context, sendHTTPRequest)
-	repeatable := sendHTTPRequest.Repeatable.Get()
+	startEvent := s.Begin(context, HTTPRequest)
+	repeatable := HTTPRequest.Repeatable.Get()
 
-	var httpResponse *http.Response
+	var HTTPResponse *http.Response
 	var responseBody string
 	var bodyCache []byte
 	var useCachedBody = repeatable.Repeat > 1 && httpRequest.ContentLength > 0
@@ -102,11 +102,11 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, sendH
 			httpRequest.Body = ioutil.NopCloser(bytes.NewReader(bodyCache))
 		}
 
-		httpResponse, err = client.Do(httpRequest)
+		HTTPResponse, err = client.Do(httpRequest)
 		if err != nil {
 			return nil, err
 		}
-		responseBody, err = s.processResponse(context, sendGroupRequest, sendHTTPRequest, response, httpResponse, isBase64Encoded, sendGroupResponse.Extracted)
+		responseBody, err = s.processResponse(context, sendGroupRequest, HTTPRequest, response, HTTPResponse, isBase64Encoded, sendGroupResponse.Extracted)
 		return responseBody, err
 	}
 
@@ -114,26 +114,25 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, sendH
 	if err != nil {
 		return err
 	}
-	var responseCookies Cookies = httpResponse.Cookies()
+	var responseCookies Cookies = HTTPResponse.Cookies()
 	response.Cookies = responseCookies.IndexByName()
 	for k, cookie := range response.Cookies {
 		cookies.Put(k, cookie.Value)
 	}
 	sessionCookies.AddCookies(responseCookies...)
-
-	endEvent := s.End(context)(startEvent, toolbox.Pairs("response", response))
+	endEvent := s.End(context)(startEvent, response)
 
 	var previous = state.GetMap(PreviousTripStateKey)
 	if previous == nil {
 		previous = data.NewMap()
 	}
-	response.Code = httpResponse.StatusCode
+	response.Code = HTTPResponse.StatusCode
 	response.TimeTakenMs = int(startEvent.Timestamp.Sub(endEvent.Timestamp) / time.Millisecond)
 
 	if toolbox.IsCompleteJSON(responseBody) {
 		response.JSONBody, err = toolbox.JSONToMap(responseBody)
-		if err == nil && sendHTTPRequest.Repeatable != nil {
-			_ = sendHTTPRequest.Variables.Apply(data.Map(response.JSONBody), previous)
+		if err == nil && HTTPRequest.Repeatable != nil {
+			_ = HTTPRequest.Variables.Apply(data.Map(response.JSONBody), previous)
 		}
 	}
 
@@ -149,7 +148,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, sendH
 	if len(previous) > 0 {
 		state.Put(PreviousTripStateKey, previous)
 	}
-	if sendHTTPRequest.MatchBody != "" {
+	if HTTPRequest.MatchBody != "" {
 		return nil
 	}
 
