@@ -6,8 +6,6 @@
   "LoggingDirectory": "logs",
   "Tasks": "*",
   "Params": {
-
-
     "app":"transformer",
     "goVersion":"1.8",
     "originURL": "https://github.com/viant/endly/example/etl/transformer",
@@ -29,20 +27,5 @@
     "mysqlVersion": "5.7",
     "mysqlCredential": "${env.HOME}/.secret/mysql.json"
 
-  },
-  "Filter": {
-    "Stdin":true,
-    "Stdout":true,
-    "Transfer": true,
-    "SQLScript": true,
-    "PopulateDatastore": true,
-    "Sequence": true,
-    "RegisterDatastore": true,
-    "DataMapping": true,
-    "OnFailureFilter": {
-      "HttpTrip": true,
-      "Stdin": true,
-      "Stdout": true
-    }
   }
 }

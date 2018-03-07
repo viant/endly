@@ -32,7 +32,6 @@ func (l *EventLogger) processEvent(event *Event) {
 		if l.activityEnded && len(*l.activities) > 0 {
 			l.activityEnded = false
 			l.activities.Pop()
-			l.updateSubpath()
 		}
 		l.activities.Push(value)
 		l.updateSubpath()

@@ -24,20 +24,5 @@
     "buildDirectory" :"$WorkingDirectory(../app)",
     "buildArgs":" -o reporter",
     "appRootDirectory":"/opt/"
-  },
-  "Filter": {
-    "Stdin":true,
-    "Stdout":true,
-    "Transfer": true,
-    "SQLScript": true,
-    "PopulateDatastore": true,
-    "Sequence": true,
-    "RegisterDatastore": true,
-    "DataMapping": true,
-    "OnFailureFilter": {
-      "HttpTrip": true,
-      "Stdin": true,
-      "Stdout": true
-    }
   }
 }
