@@ -13,7 +13,7 @@
   "Mount": {
     "$configFile": "/etc/postgresql/postgresql.conf"
   },
-  "MappedPort": {
+  "Ports": {
     "5432": "5432"
   }
 }

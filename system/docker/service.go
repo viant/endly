@@ -147,7 +147,7 @@ func (s *service) runContainer(context *endly.Context, request *RunRequest) (*Ru
 	for k, v := range request.Mount {
 		args += fmt.Sprintf("-v %v:%v ", context.Expand(k), context.Expand(v))
 	}
-	for k, v := range request.MappedPort {
+	for k, v := range request.Ports {
 		args += fmt.Sprintf("-p %v:%v ", context.Expand(toolbox.AsString(k)), context.Expand(toolbox.AsString(v)))
 	}
 	if request.Workdir != "" {
@@ -634,7 +634,7 @@ const (
   "Mount": {
     "/tmp/aerospikeudb_aerospike.conf": "/etc/aerospike/aerospike.conf"
   },
-  "MappedPort": {
+  "Ports": {
     "3000": "3000",
     "3001": "3001",
     "3002": "3002",

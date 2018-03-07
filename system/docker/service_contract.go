@@ -251,7 +251,7 @@ type RunRequest struct {
 	Port        string            `description:"publish a container’s port(s) to the host, docker -p option"`
 	Env         map[string]string `description:"set docker container an environment variable, docker -e KEY=VAL  option"`
 	Mount       map[string]string `description:"bind mount a volume, docker -v option"`
-	MappedPort  map[string]string `description:"publish a container’s port(s) to the host, docker -p option"`
+	Ports       map[string]string `description:"publish a container’s port(s) to the host, docker -p option"`
 	Params      map[string]string `description:"other free form docker parameters"`
 	Workdir     string            `description:"working directory inside the container, docker -w option"`
 }

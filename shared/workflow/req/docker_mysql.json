@@ -11,7 +11,7 @@
   "Mount": {
     "$configFile": "/etc/my.cnf"
   },
-  "MappedPort": {
+  "Ports": {
     "3306": "3306"
   }
 }

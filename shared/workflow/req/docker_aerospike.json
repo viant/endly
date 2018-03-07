@@ -5,7 +5,7 @@
   "Mount": {
     "$configFile": "/etc/aerospike/aerospike.conf"
   },
-  "MappedPort": {
+  "Ports": {
     "3000": "3000",
     "3001": "3001",
     "3002": "3002",

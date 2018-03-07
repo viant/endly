@@ -2,7 +2,7 @@
   "Target": "$dockerTarget",
   "Name":"$serviceInstanceName",
   "Image": "library/memcached:alpine",
-  "MappedPort": {
+  "Ports": {
     "11211": "11211"
   },
   "Params": {
