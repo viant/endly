@@ -3,22 +3,24 @@ package endly
 import (
 	"bytes"
 	"fmt"
-	"github.com/viant/neatly"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/data"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/viant/neatly"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 )
 
 //Variable represents a variable
 type Variable struct {
-	Name     string      //name
-	Value    interface{} //default value
-	From     string      //context state map key to pull data
-	Persist  bool        //stores in tmp directory to be used as backup if data is not in the cotnext
-	Required bool        //flag that validates that from returns non empty value or error is generated
+	Name     string            //name
+	Value    interface{}       //default value
+	From     string            //context state map key to pull data
+	Persist  bool              //stores in tmp directory to be used as backup if data is not in the cotnext
+	Required bool              //flag that validates that from returns non empty value or error is generated
+	Replace  map[string]string `description:"replacements map, if key if specified substitute variable value with corresponding value. This will work only for string replacements"` //replacements map, if key if specified substitute variable value with corresponding value.
 }
 
 func (v *Variable) tempfile() string {
@@ -132,6 +134,13 @@ func (v *Variables) Apply(in, out data.Map) error {
 		}
 		if err := v.validateRequiredValueIfNeeded(variable, value, in); err != nil {
 			return err
+		}
+
+		if text, isText := value.(string); isText && len(variable.Replace) > 0 {
+			for k, v := range variable.Replace {
+				text = strings.Replace(text, k, v, 1)
+			}
+			value = text
 		}
 
 		if variable.Name != "" {
