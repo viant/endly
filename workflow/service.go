@@ -308,7 +308,7 @@ func (s *Service) runAsyncActions(context *endly.Context, workflow *endly.Workfl
 		group.Add(len(asyncAction))
 		var groupErr error
 		for i := range asyncAction {
-			context.Publish(endly.NewWorkflowAsyncEvent(asyncAction[i]))
+			context.Publish(NewWorkflowAsyncEvent(asyncAction[i]))
 			go func(action *endly.ServiceAction, actionContext *endly.Context) {
 				if err := s.runAsyncAction(context, actionContext, workflow, action, group); err != nil {
 					groupErr = err
@@ -328,7 +328,7 @@ func (s *Service) runWorkflow(context *endly.Context, request *RunRequest) (resp
 	if request.Async {
 		context.Wait.Add(1)
 		go func() {
-			defer context.Publish(endly.NewWorkflowEndEvent(context.SessionID))
+			defer context.Publish(NewWorkflowEndEvent(context.SessionID))
 			defer context.Wait.Done()
 			_, err = s.run(context, request)
 			if err != nil {
@@ -337,7 +337,7 @@ func (s *Service) runWorkflow(context *endly.Context, request *RunRequest) (resp
 		}()
 		return
 	}
-	defer context.Publish(endly.NewWorkflowEndEvent(context.SessionID))
+	defer context.Publish(NewWorkflowEndEvent(context.SessionID))
 	return s.run(context, request)
 }
 
@@ -360,7 +360,7 @@ func (s *Service) run(upstreamContext *endly.Context, request *RunRequest) (resp
 	if err != nil {
 		return response, err
 	}
-	upstreamContext.Publish(endly.NewWorkflowLoadedEvent(workflow))
+	upstreamContext.Publish(NewWorkflowLoadedEvent(workflow))
 	control := upstreamContext.Workflows.Push(workflow)
 	defer upstreamContext.Workflows.Pop()
 	parentWorkflow := upstreamContext.Workflow()
@@ -390,7 +390,7 @@ func (s *Service) run(upstreamContext *endly.Context, request *RunRequest) (resp
 	if err != nil {
 		return response, err
 	}
-	context.Publish(endly.NewWorkflowInitEvent(request.Tasks, state))
+	context.Publish(NewWorkflowInitEvent(request.Tasks, state))
 	filteredTasks, err := workflow.FilterTasks(request.Tasks)
 	if err != nil {
 		return response, err
@@ -514,7 +514,7 @@ func (s *Service) isAsyncRequest(request interface{}) bool {
 }
 
 func (s *Service) exitWorkflow(context *endly.Context, request *ExitRequest) (*ExitResponse, error) {
-	control := context.Workflows.LastControl()
+	control := context.Workflows.LastRun()
 	if control != nil {
 		control.Terminate()
 	}
@@ -527,7 +527,7 @@ func (s *Service) runGoto(context *endly.Context, request *GotoRequest) (GotoRes
 		err := fmt.Errorf("no active workflow")
 		return nil, err
 	}
-	workflow := context.Workflows.LastControl()
+	workflow := context.Workflows.LastRun()
 	var task *endly.WorkflowTask
 	task, err := workflow.Task(request.Task)
 	if err == nil {
@@ -572,7 +572,7 @@ func getSwitchSource(context *endly.Context, sourceKey string) interface{} {
 }
 
 func (s *Service) runSwitch(context *endly.Context, request *SwitchRequest) (SwitchResponse, error) {
-	workflow := context.Workflows.LastControl()
+	workflow := context.Workflows.LastRun()
 	var response interface{}
 	var source = getSwitchSource(context, request.SourceKey)
 	matched := request.Match(source)
