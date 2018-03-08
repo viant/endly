@@ -1,13 +1,13 @@
 package reset
 
-//SendRequest represents a send request
-type SendRequest struct {
+//Request represents a send request
+type Request struct {
 	URL     string
 	Method  string
 	Request interface{}
 }
 
-//SendResponse represents a rest response
-type SendResponse struct {
+//Response represents a rest response
+type Response struct {
 	Response interface{}
 }

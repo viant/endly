@@ -62,11 +62,26 @@ type RepeatedMessage struct {
 	Type  string
 }
 
-//RepeatedReporter represents a reporter that updted current line (with \r)
+//RepeatedReporter represents a reporter that overrides current line (with \r)
 type RepeatedReporter interface {
 	//Returns messages
 	Message(repeated *RepeatedMessage) *Message
 }
+
+//RunnerInput represent event storing runner input data, this interface enables matching runner in/out with failed validation (CLI)
+type RunnerInput interface {
+
+	IsInput() bool
+
+}
+//RunnerOutput represent event storing runner output data,this interface enables matching runner in/out with failed validation(CLI)
+type RunnerOutput interface {
+
+	IsOutput() bool
+
+}
+
+
 
 //Event represents a workflow event wrapper
 type Event struct {
@@ -92,6 +107,14 @@ func (e *Event) Get(expectedType reflect.Type) interface{} {
 	}
 	return nil
 }
+
+
+func (e *Event) Package() string {
+	var eventType = fmt.Sprintf("%T", e.Value)
+	var fragments = strings.Split(eventType, ".")
+	return fragments[0]
+}
+
 
 //Type returns event type (simple package and struct name)
 func (e *Event) Type() string {

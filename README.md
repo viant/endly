@@ -158,14 +158,14 @@ The following diagram shows service with its component.
    - [Http Runner Service](runner/http) 
    - [REST Runner Service](runner/rest) 
    - [Selenium Runner Service](runner/selenium) 
-   - [SMTP Service](runner/smtp)      
 6) **Testing Services**
    - [Validator](testing/validator)
    - [Log Validator Service](testing/log)
    - [Datastore Preparation and Validation Service](testing/dsunit)
-7) **Workflow service**
-    - [Workflow Service](workflow/)
-
+7) **Notification Services**
+   - [SMTP Service](notify/smtp)
+8) **Workflow service**
+   - [Workflow Service](workflow/)
  
 
 To get the latest list of endly supported services run
