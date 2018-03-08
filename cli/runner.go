@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
-	"github.com/viant/endly/runner/http"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"os"
@@ -19,7 +18,7 @@ var OnError = func(code int) {
 }
 
 const (
-	messageTypeAction = iota + 10
+	messageTypeAction         = iota + 10
 	messageTypeTagDescription
 )
 
@@ -253,6 +252,9 @@ func (r *Runner) processReporter(event *endly.Event, filter map[string]bool) boo
 	if !isMessageReporter || isRepeatReporter {
 		return false
 	}
+
+
+
 	if !r.canReport(event, filter) {
 		return true
 	}
@@ -305,11 +307,10 @@ func (r *Runner) processActivityStart(event *endly.Event) bool {
 }
 
 func (r *Runner) processActivityEnd(event *endly.Event) {
-	if _, ended := event.Value.(*endly.ActivityEndEvent);ended{
+	if _, ended := event.Value.(*endly.ActivityEndEvent); ended {
 		r.activityEnded = ended
 	}
 }
-
 
 func (r *Runner) processEvent(event *endly.Event, filter map[string]bool) {
 	if event.Value == nil {
@@ -333,38 +334,80 @@ func (r *Runner) processEvent(event *endly.Event, filter map[string]bool) {
 	r.processActivityEnd(event)
 }
 
-func (r *Runner) extractHTTPTrips(eventCandidates []*endly.Event) ([]*http.Request, []*http.Response) {
-	var requests = make([]*http.Request, 0)
-	var responses = make([]*http.Response, 0)
-	for _, event := range eventCandidates {
-		if event.Value == nil {
-			continue
-		}
-		switch value := event.Value.(type) {
-		case *http.Request:
-			requests = append(requests, value)
-		case *http.Response:
-			responses = append(responses, value)
-		}
-	}
-	return requests, responses
+type runnerLog struct {
+	In         *endly.Event
+	Out        *endly.Event
+	JSONOutput string
 }
 
+func (r *Runner) createRunnerLogIfNeeded(logs map[string][]*runnerLog, key string) {
+	if _, has := logs[key]; !has {
+		logs[key] = make([]*runnerLog, 0)
+	}
+}
+
+func (r *Runner) extractRunnerLogs(candidates []*endly.Event) (map[string][]*runnerLog) {
+	var result = make(map[string][]*runnerLog)
+	for _, candidate := range candidates {
+		if candidate.Value == nil {
+			continue
+		}
+
+		if _, ok := candidate.Value.(endly.RunnerInput); ok {
+			key := candidate.Package()
+			r.createRunnerLogIfNeeded(result, key)
+			result[key] = append(result[key], &runnerLog{
+				In: candidate,
+			})
+			continue
+		}
+
+		if _, ok := candidate.Value.(endly.RunnerOutput); ok {
+			key := candidate.Package()
+			lastIndex := len(result[key]) - 1
+
+			if lastIndex == -1 {
+				continue
+			}
+			result[key][lastIndex].Out = candidate
+			result[key][lastIndex].JSONOutput, _ = toolbox.AsJSONText(candidate.Value)
+			continue
+		}
+	}
+	return result
+}
+
+func (r *Runner) hasFailureMatch(failure *assertly.Failure, runnerLogs map[string][]*runnerLog) bool {
+	var leafKey = failure.LeafKey()
+	for _, logs := range runnerLogs {
+		for _, log := range logs {
+			if strings.Contains(log.JSONOutput, leafKey) {
+				return true
+			}
+		}
+	}
+	return false
+}
 
 func (r *Runner) reportFailureWithMatchSource(tag *EventTag, validation *assertly.Validation, eventCandidates []*endly.Event) {
 	var theFirstFailure = validation.Failures[0]
 	firstFailurePathIndex := theFirstFailure.Index()
-	var requests []*http.Request
-	var responses []*http.Response
-	var wildcardFilter = WildcardFilter()
-	if strings.Contains(theFirstFailure.Path, "Body") || strings.Contains(theFirstFailure.Path, "Code") || strings.Contains(theFirstFailure.Path, "Cookie") || strings.Contains(theFirstFailure.Path, "Header") {
+	var runnerLogs = r.extractRunnerLogs(eventCandidates)
+	if r.hasFailureMatch(theFirstFailure, runnerLogs) {
+		var wildcardFilter = WildcardFilter()
 		if theFirstFailure.Index() != -1 {
-			requests, responses = r.extractHTTPTrips(eventCandidates)
-			if firstFailurePathIndex < len(requests) {
-				r.processReporter(endly.NewEvent(requests[firstFailurePathIndex]), wildcardFilter)
+			for _, logs := range runnerLogs {
+				if firstFailurePathIndex < len(logs) {
+					runnerLog := logs[firstFailurePathIndex]
+					r.processReporter(runnerLog.In, wildcardFilter)
+					r.processReporter(runnerLog.Out, wildcardFilter)
+				}
 			}
-			if firstFailurePathIndex < len(responses) {
-				r.processReporter(endly.NewEvent(responses[firstFailurePathIndex]), wildcardFilter)
+		} else {
+			for _, logs := range runnerLogs {
+				runnerLog := logs[0]
+				r.processReporter(runnerLog.In, wildcardFilter)
+				r.processReporter(runnerLog.Out, wildcardFilter)
 			}
 		}
 	}
@@ -423,6 +466,9 @@ func (r *Runner) reportAssertion(event *endly.Event, validations ...*assertly.Va
 
 	for i, validation := range validations {
 		var tagID = validation.TagID
+		if event.Activity != nil {
+			tagID = event.Activity.TagID
+		}
 		_, ok := r.indexedTag[tagID]
 		if !ok {
 			r.AddTag(&EventTag{TagID: tagID})
@@ -455,13 +501,11 @@ func (r *Runner) reportAssertion(event *endly.Event, validations ...*assertly.Va
 	r.printShortMessage(messageType, message, messageType, messageInfo)
 }
 
-
-
 func (r *Runner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, endly.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
+			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, endly.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
 			var minRange = 0
 			for i, event := range tag.Events {
 				validation := r.getValidation(event)
@@ -471,7 +515,7 @@ func (r *Runner) reportTagSummary() {
 				if validation.HasFailure() {
 					var beforeValidationEvents = []*endly.Event{}
 					if i-minRange > 0 {
-						beforeValidationEvents = tag.Events[minRange : i-1]
+						beforeValidationEvents = tag.Events[minRange: i-1]
 					}
 					r.reportFailureWithMatchSource(tag, validation, beforeValidationEvents)
 					minRange = i + 1
@@ -482,11 +526,9 @@ func (r *Runner) reportTagSummary() {
 }
 
 func (r *Runner) reportEvent(context *endly.Context, event *endly.Event, filter map[string]bool) error {
-	defer func() {
-		eventTag := r.EventTag()
-		eventTag.AddEvent(event)
-	}()
+	eventTag := r.EventTag()
 	r.processEvent(event, filter)
+	eventTag.AddEvent(event)
 	return nil
 }
 

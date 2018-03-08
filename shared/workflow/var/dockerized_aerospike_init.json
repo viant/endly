@@ -32,7 +32,6 @@
   {
     "Name": "dockerTarget",
     "Value": {
-      "Name": "$serviceInstanceName",
       "URL": "scp://${targetHost}/",
       "Credential": "$targetHostCredential"
     }

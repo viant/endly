@@ -13,13 +13,13 @@ type restService struct {
 	*endly.AbstractService
 }
 
-func (s *restService) sendRequest(request *SendRequest) (*SendResponse, error) {
+func (s *restService) sendRequest(request *Request) (*Response, error) {
 	var resetResponse = make(map[string]interface{})
 	err := toolbox.RouteToService(request.Method, request.URL, request.Request, &resetResponse)
 	if err != nil {
 		return nil, err
 	}
-	return &SendResponse{
+	return &Response{
 		Response: resetResponse,
 	}, nil
 
@@ -60,13 +60,13 @@ func (s *restService) registerRoutes() {
 			Description: "send REST request",
 		},
 		RequestProvider: func() interface{} {
-			return &SendRequest{}
+			return &Request{}
 		},
 		ResponseProvider: func() interface{} {
-			return &SendResponse{}
+			return &Response{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*SendRequest); ok {
+			if req, ok := request.(*Request); ok {
 				return s.sendRequest(req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
