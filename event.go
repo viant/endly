@@ -82,7 +82,6 @@ type RunnerOutput interface {
 }
 
 
-
 //Event represents a workflow event wrapper
 type Event struct {
 	Timestamp  time.Time

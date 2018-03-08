@@ -259,7 +259,11 @@ type NopParrotRequest struct {
 	In interface{}
 }
 
-//nopService represents no operation nopService
+
+
+
+
+//nopService represents no operation nopService (deprecated, use workflow, nop instead)
 type nopService struct {
 	*AbstractService
 }

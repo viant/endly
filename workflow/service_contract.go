@@ -26,6 +26,28 @@ type RunResponse struct {
 	SessionID string                 //session id
 }
 
+
+//WorkflowSelector represents an expression to invoke workflow with all or specified task:  WorkflowURL[:tasks]
+type WorkflowSelector string
+
+
+//WorkflowParams represents workflow parameters
+type WorkflowParams map[string]interface{}
+
+
+//Request represent request to run one or more workflow.
+type PipelineRequest struct {
+	Namespace string                              `description:"if specified add prefix for all relative workflows URL"`
+	Run       []WorkflowSelector                  `description:"name of piplines to run"`
+	Pipeline  map[WorkflowSelector]WorkflowParams `required:"true" description:"workflows with parameters to run"`
+}
+
+
+//PipelineResponse represent a pipeline response.
+type PipelineResponse struct {
+	Response map[string]*RunResponse
+}
+
 //RegisterRequest represents workflow register request
 type RegisterRequest struct {
 	*endly.Workflow
@@ -49,8 +71,8 @@ type LoadResponse struct {
 // SwitchCase represent matching candidate case
 type SwitchCase struct {
 	*endly.ActionRequest `description:"action to run if matched"`
-	Task                 string      `description:"task to run if matched"`
-	Value                interface{} `required:"true" description:"matching sourceKey value"`
+	Task  string         `description:"task to run if matched"`
+	Value interface{}    `required:"true" description:"matching sourceKey value"`
 }
 
 // SwitchRequest represent switch action request

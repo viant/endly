@@ -199,51 +199,7 @@ func NewActivity(context *Context, action *ServiceAction, state data.Map) *Activ
 		StartTime:   time.Now()}
 }
 
-//WorkflowLoadedEvent represents workflow load event
-type WorkflowLoadedEvent struct {
-	Workflow *Workflow
-}
 
-//NewWorkflowLoadedEvent create a new workflow load event.
-func NewWorkflowLoadedEvent(workflow *Workflow) *WorkflowLoadedEvent {
-	return &WorkflowLoadedEvent{Workflow: workflow}
-}
-
-//WorkflowInitEvent represents a new workflow init event
-type WorkflowInitEvent struct {
-	Tasks string
-	State map[string]interface{}
-}
-
-//NewWorkflowInitEvent creates a new workflow init event.
-func NewWorkflowInitEvent(tasks string, state data.Map) *WorkflowInitEvent {
-	return &WorkflowInitEvent{
-		Tasks: tasks,
-		State: state.AsEncodableMap(),
-	}
-}
-
-//WorkflowEndEvent represents Activity end event type.
-type WorkflowEndEvent struct {
-	SessionID string
-}
-
-//NewWorkflowEndEvent create a new WorkflowEndEvent
-func NewWorkflowEndEvent(sessionID string) *WorkflowEndEvent {
-	return &WorkflowEndEvent{
-		SessionID: sessionID,
-	}
-}
-
-//WorkflowAsyncEvent represents a new async action event.
-type WorkflowAsyncEvent struct {
-	ServiceAction *ServiceAction
-}
-
-//NewWorkflowAsyncEvent creates a new WorkflowAsyncEvent.
-func NewWorkflowAsyncEvent(action *ServiceAction) *WorkflowAsyncEvent {
-	return &WorkflowAsyncEvent{action}
-}
 
 //ActivityEndEvent represents Activity end event type.
 type ActivityEndEvent struct {
@@ -256,6 +212,7 @@ func NewActivityEndEvent(response interface{}) *ActivityEndEvent {
 		Response: response,
 	}
 }
+
 
 //WorkflowRun represents workflow execution.
 type WorkflowRun struct {
@@ -302,15 +259,15 @@ func (w *Workflows) Pop() *Workflow {
 
 //Last returns the last workflow from the workflow stack.
 func (w *Workflows) Last() *Workflow {
-	control := w.LastControl()
+	control := w.LastRun()
 	if control == nil {
 		return nil
 	}
 	return control.Workflow
 }
 
-//LastControl returns the last workflow from the workflow stack.
-func (w *Workflows) LastControl() *WorkflowRun {
+//LastRun returns the last workflow from the workflow stack.
+func (w *Workflows) LastRun() *WorkflowRun {
 	if w == nil {
 		return nil
 	}

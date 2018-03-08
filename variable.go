@@ -49,11 +49,11 @@ func (v *Variable) Load() error {
 		if !toolbox.FileExists(filename) {
 			return nil
 		}
-		data, err := ioutil.ReadFile(filename)
+		filedata, err := ioutil.ReadFile(filename)
 		if err != nil {
 			return err
 		}
-		toolbox.NewJSONDecoderFactory().Create(bytes.NewReader(data)).Decode(&v.Value)
+		toolbox.NewJSONDecoderFactory().Create(bytes.NewReader(filedata)).Decode(&v.Value)
 	}
 	return nil
 }
