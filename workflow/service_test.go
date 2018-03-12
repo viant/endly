@@ -37,8 +37,26 @@ import (
 	_ "github.com/viant/endly/system/process"
 	_ "github.com/viant/endly/system/storage"
 
+	_ "github.com/viant/endly/static"
+
 	"github.com/viant/endly/workflow"
 )
+
+//func TestService_Pipeline(t *testing.T) {
+//	manager := endly.New()
+//	service, err := manager.Service(workflow.ServiceID)
+//	if err != nil {
+//		t.Error(err)
+//		return
+//	}
+//	var context = manager.NewContext(toolbox.NewContext())
+//	response := service.Run(context, workflow.NewPipelineRequest("go", false, toolbox.Pairs(),
+//		workflow.NewPipeline("build", toolbox.Pairs(
+//			"commands", []string{"ls -al"},
+//		))))
+//
+//	assert.EqualValues(t, "", response.Error)
+//}
 
 func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, error) {
 	manager := endly.New()
@@ -239,7 +257,7 @@ func TestWorkflowService_OnErrorTask(t *testing.T) {
 func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 
 	baseDir := toolbox.CallerDirectory(3)
-	err := http.StartServer(8113, &http.HTTPServerTrips{
+	err := http.StartServer(8313, &http.HTTPServerTrips{
 		IndexKeys:     []string{http.MethodKey, http.URLKey, http.BodyKey, http.CookieKey, http.ContentTypeKey},
 		BaseDirectory: path.Join(baseDir, "test/endpoint"),
 	})
@@ -256,7 +274,7 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 			Name:  "http_workflow",
 			Tasks: "*",
 			Params: map[string]interface{}{
-				"appServer": "http://127.0.0.1:8113",
+				"appServer": "http://127.0.0.1:8313",
 			},
 			PublishParameters: true,
 			EnableLogging:     true,

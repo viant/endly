@@ -70,7 +70,7 @@ const (
 	ec2CredentialExample = `{
         "Region":"us-west-2",
         "Key":"KKKKKKKKK",
-        "Secret":"SSSSSSSSS"
+        "Secrets":"SSSSSSSSS"
 }`
 
 	ex2GetInstanceResponseExample = `{

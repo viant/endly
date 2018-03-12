@@ -48,7 +48,7 @@ func (s *service) getModificationHandler(context *endly.Context, transfer *Trans
 	return handler
 }
 
-func (s *service) compressSource(context *endly.Context, source, target *url.Resource, sourceObject storage.Object) error {
+func (s *service) compressSource(context *endly.Context, source, target *url.Resource, sourceObject storage.Object) (err error) {
 	var baseDirectory, name = path.Split(source.ParsedURL.Path)
 	var archiveSource = name
 
@@ -59,19 +59,17 @@ func (s *service) compressSource(context *endly.Context, source, target *url.Res
 	}
 	var archiveName = fmt.Sprintf("%v.tar.gz", name)
 
-	response, err := exec.Execute(context, source, &exec.RunRequest{
-		Commands: []string{
-			fmt.Sprintf("cd %v", baseDirectory),
-			fmt.Sprintf("tar cvzf %v %v", archiveName, archiveSource),
-		},
-		TimeoutMs: CompressionTimeout,
-	})
-
-	if err != nil {
+	var runRequest = exec.NewRunRequest(source, false,
+		fmt.Sprintf("cd %v", baseDirectory),
+		fmt.Sprintf("tar cvzf %v %v", archiveName, archiveSource),
+	)
+	runRequest.TimeoutMs = CompressionTimeout
+	runResponse := &exec.RunResponse{}
+	if err = endly.Run(context, runRequest, runResponse); err != nil {
 		return err
 	}
-	if util.CheckNoSuchFileOrDirectory(response.Stdout()) {
-		return fmt.Errorf("faied to compress: %v, %v", fmt.Sprintf("tar cvzf %v %v", archiveName, archiveSource), response.Stdout())
+	if util.CheckNoSuchFileOrDirectory(runResponse.Stdout()) {
+		return fmt.Errorf("faied to compress: %v, %v", fmt.Sprintf("tar cvzf %v %v", archiveName, archiveSource), runResponse.Stdout())
 	}
 
 	if sourceObject.IsFolder() {
@@ -94,35 +92,16 @@ func (s *service) compressSource(context *endly.Context, source, target *url.Res
 }
 
 func (s *service) decompressTarget(context *endly.Context, source, target *url.Resource, sourceObject storage.Object) error {
-
 	var baseDir, name = path.Split(target.ParsedURL.Path)
-
-	_, err := exec.Execute(context, target, &exec.RunRequest{
-		Commands: []string{
-			fmt.Sprintf("mkdir -p %v", baseDir),
-			fmt.Sprintf("cd %v", baseDir),
-		},
-	})
-
-	if err == nil {
-		_, err = exec.Execute(context, target, &exec.RunRequest{
-			Commands: []string{
-				fmt.Sprintf("tar xvzf %v", name),
-				fmt.Sprintf("rm %v", name),
-			},
-			TimeoutMs: CompressionTimeout,
-		})
-	}
-	if err == nil {
-		_, err = exec.Execute(context, target, &exec.RunRequest{
-			Commands: []string{
-				fmt.Sprintf("cd %v", source.DirectoryPath()),
-				fmt.Sprintf("rm %v", name),
-			},
-		})
-	}
-
-	return err
+	var runRequest = exec.NewRunRequest(target, false,
+		fmt.Sprintf("mkdir -p %v", baseDir),
+		fmt.Sprintf("cd %v", baseDir),
+		fmt.Sprintf("tar xvzf %v", name),
+		fmt.Sprintf("rm %v", name),
+		fmt.Sprintf("cd %v", source.DirectoryPath()),
+		fmt.Sprintf("rm %v", name))
+	runRequest.TimeoutMs = CompressionTimeout
+	return endly.Run(context, runRequest, nil)
 }
 
 func (s *service) copy(context *endly.Context, request *CopyRequest) (*CopyResponse, error) {

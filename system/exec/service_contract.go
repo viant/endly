@@ -5,49 +5,238 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/util"
+	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/ssh"
 	"github.com/viant/toolbox/url"
 	"strings"
 )
 
-//ExecutionOptions represents an execution options
-type ExecutionOptions struct {
-	SystemPaths []string          `description:"path that will be appended to the current SSH execution session the current and future commands"`                                 //path that will be added to the system paths
-	Terminators []string          `description:"fragment that helps identify that command has been completed - the best is to leave it empty, which is the detected bash prompt"` //fragment that helps identify that command has been completed - the best is to leave it empty, which is the detected bash prompt
-	TimeoutMs   int               `description:"time after command was issued for waiting for command output if expect fragment were not matched"`                                //time after command was issued for waiting for command output if expect fragment were not matched.
-	Directory   string            `description:"directory where this command should start - if does not exists there is no exception"`                                            //directory where command should run
-	Env         map[string]string `description:"environment variables to be set before command runs"`                                                                             //environment variables to be set before command runs
+var CommandErrors = []string{util.CommandNotFound, util.NoSuchFileOrDirectory, util.ErrorIsNotRecoverable}
+
+//Options represents an execution options
+type Options struct {
+	SystemPaths []string          `description:"path that will be appended to the current SSH execution session the current and future commands"`                                                //path that will be added to the system paths
+	Terminators []string          `description:"fragment that helps identify that command has been completed - the best is to leave it empty, which is the detected bash prompt"`                //fragment that helps identify that command has been completed - the best is to leave it empty, which is the detected bash prompt
+	TimeoutMs   int               `description:"time after command was issued for waiting for command output if expect fragment were not matched"`                                               //time after command was issued for waiting for command output if expect fragment were not matched.
+	Directory   string            `description:"directory where this command should start - if does not exists there is no exception"`                                                           //directory where command should run
+	Env         map[string]string `description:"environment variables to be set before command runs"`                                                                                            //environment variables to be set before command runs
+	SuperUser   bool              `description:"flag to run as super user, in this case sudo will be added to all individual commands unless present, and Target.Secrets password will be used"` ///flag to run it as super user
+	Secrets     secret.Secrets    `description:"secrets map see https://github.com/viant/toolbox/tree/master/secret"`
 }
 
-//Execution represents an execution instructions
-type Execution struct {
-	Credentials map[string]string     `description:"actual secured credential details as map { '**mysql**': 'path to credential' }like password, etc..., if secure is not empty it will replace **** in command just before execution, to replace user name from credential file use ## prefixed key"` //actual secured credential details as map { '**mysql**': 'path to credentail' }like password, etc..., if secure is not empty it will replace **** in command just before execution
-	MatchOutput string                `description:"only run this execution command is output from a previous command is matched"`                                                                                                                                                                     //only run this execution is output from a previous command is matched
-	Command     string                `required:"true" description:"shell command to be executed"`                                                                                                                                                                                                     //command to be executed
-	Extraction  endly.DataExtractions `description:"stdout data extraction instruction"`                                                                                                                                                                                                               //Stdout data extraction instruction
-	Errors      []string              `description:"fragments that will terminate execution with error if matched with standard output, in most cases leave empty"`                                                                                                                                    //fragments that will terminate execution with error if matched with standard output
-	Success     []string              `description:"if specified absence of all of the these fragment will terminate execution with error, in most cases leave empty"`                                                                                                                                 //if specified absence of all of the these fragment will terminate execution with error.
+//DefaultOptions creates a default execution options
+func DefaultOptions() *Options {
+	return &Options{
+		SystemPaths: make([]string, 0),
+		Terminators: make([]string, 0),
+		Env:         make(map[string]string),
+	}
 }
 
-//ExtractableCommand represent managed command, to execute and extract data, detect success or error state
-type ExtractableCommand struct {
-	Options    *ExecutionOptions `description:"execution option like system paths, env, starting directory"`
-	Executions []*Execution      `description:"execution commands"` //actual execution instruction
+func NewOptions(secrets, env map[string]string, terminators, path []string, superUser bool) *Options {
+	if len(terminators) == 0 {
+		terminators = []string{}
+	}
+	if len(terminators) == 0 {
+		path = []string{}
+	}
+	if len(env) == 0 {
+		env = make(map[string]string)
+	}
+	return &Options{
+		Env:         env,
+		Terminators: terminators,
+		SystemPaths: path,
+		SuperUser:   superUser,
+		Secrets:     secret.NewSecrets(secrets),
+	}
+}
+
+//Extract represents an execution instructions
+type ExtractCommand struct {
+	When       string                `description:"only run this command is criteria is matched i.e $stdout:/password/"`                                              //only run this execution is output from a previous command is matched
+	Command    string                `required:"true" description:"shell command to be executed"`                                                                     //command to be executed
+	Extraction endly.DataExtractions `description:"stdout data extraction instruction"`                                                                               //Stdout data extraction instruction
+	Errors     []string              `description:"fragments that will terminate execution with error if matched with standard output, in most cases leave empty"`    //fragments that will terminate execution with error if matched with standard output
+	Success    []string              `description:"if specified absence of all of the these fragment will terminate execution with error, in most cases leave empty"` //if specified absence of all of the these fragment will terminate execution with error.
+}
+
+func (c *ExtractCommand) Init() error {
+	if strings.TrimSpace(c.When) != "" {
+		if strings.Index(c.When, "$") == -1 {
+			c.When = fmt.Sprintf("$stdout :/%v/", c.When)
+		}
+	}
+	return nil
+}
+
+//Validate validates managed command request
+func (r *ExtractRequest) Validate() error {
+	if r.Target == nil {
+		return fmt.Errorf("target was empty")
+	}
+	if r.Commands == nil {
+		return fmt.Errorf("commands were empty")
+	}
+	return nil
+}
+
+//NewExtractCommand creates a new extract command
+func NewExtractCommand(command, when string, success, errors []string, extractions ...*endly.DataExtraction) *ExtractCommand {
+	if len(success) == 0 {
+		success = []string{}
+	}
+	if len(errors) == 0 {
+		errors = []string{}
+	}
+	return &ExtractCommand{
+		Command:    command,
+		When:       when,
+		Extraction: extractions,
+		Success:    success,
+		Errors:     errors,
+	}
 }
 
 //ExtractRequest represents managed command request
 type ExtractRequest struct {
-	SuperUser          bool                `description:"flag to run as super user, in this case sudo will be added to all individual commands unless present, and Target.Credentials password will be used"` ///flag to run it as super user
-	Target             *url.Resource       `required:"true" description:"host where command runs" `                                                                                                           //execution target - destination where to run a command.
-	ExtractableCommand *ExtractableCommand `description:"command with data extraction instruction "`                                                                                                          //managed command
+	Target *url.Resource `required:"true" description:"host where command runs" ` //execution target - destination where to run a command.
+	*Options
+	Commands []*ExtractCommand `description:"command with data extraction instruction "` //extract command
+}
+
+//Init initialises request
+func (r *ExtractRequest) Init() error {
+	if r.Options == nil {
+		r.Options = DefaultOptions()
+	}
+	if len(r.Commands) > 0 {
+		for _, command := range r.Commands {
+			if err := command.Init(); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+//Clones clones requst with supplide target
+func (r *ExtractRequest) Clone(target *url.Resource) *ExtractRequest {
+	if target == nil {
+		target = r.Target
+	}
+	return &ExtractRequest{
+		Target:   target,
+		Options:  r.Options,
+		Commands: r.Commands,
+	}
+}
+
+//NewExtractRequest returns a new command request
+func NewExtractRequest(target *url.Resource, options *Options, commands ...*ExtractCommand) *ExtractRequest {
+	return &ExtractRequest{
+		Target:   target,
+		Options:  options,
+		Commands: commands,
+	}
+}
+
+//NewExtractRequestFromURL creates a new request from URL
+func NewExtractRequestFromURL(URL string) (*ExtractRequest, error) {
+	var resource = url.NewResource(URL)
+	var result = &ExtractRequest{}
+	return result, resource.JSONDecode(result)
+}
+
+//Command represents a command expression:  [when criteria ?] command
+type Command string
+
+//String returns command string
+func (c Command) String() string {
+	return string(c)
+}
+
+//WhenAndCommand extract when criteria and command
+func (c Command) WhenAndCommand() (string, string) {
+	var expr = c.String()
+	var when, command string
+	var variableIndex = strings.Index(expr, "$")
+	var criteriaEndIndex = strings.LastIndex(expr, "?")
+	if variableIndex == -1 || variableIndex > criteriaEndIndex {
+		return when, expr
+	}
+	when = string(expr[:criteriaEndIndex])
+	command = string(expr[criteriaEndIndex+1:])
+	return when, command
 }
 
 //RunRequest represents a simple command
 type RunRequest struct {
-	SuperUser bool          `description:"flag to run as super user, in this case sudo will be added to all individual commands unless present, and Target.Credentials password will be used"` ///flag to run it as super user
-	Target    *url.Resource `required:"true" description:"host where command runs" `                                                                                                           //execution target - destination where to run a command.
-	Commands  []string      `required:"true" description:"command list" `                                                                                                                      //list of commands to run
-	TimeoutMs int           `description:"time defining how long command can run before timeout, for long running command like large project mvn build, set this value high, otherwise leave empty"`
+	Target *url.Resource `required:"true" description:"host where command runs" ` //execution target - destination where to run a command.
+	*Options
+	Commands []Command `required:"true" description:"command list" ` //list of commands to run
+}
+
+//Init initialises request
+func (r *RunRequest) Init() error {
+	if r.Options == nil {
+		r.Options = DefaultOptions()
+	}
+	return nil
+}
+
+//Validate validates managed command request
+func (r *RunRequest) Validate() error {
+	if r.Target == nil {
+		return fmt.Errorf("target was empty")
+	}
+	if r.Commands == nil {
+		return fmt.Errorf("commands were empty")
+	}
+	return nil
+}
+
+//AsExtractRequest returns ExtractRequest for this requests
+func (r *RunRequest) AsExtractRequest() *ExtractRequest {
+	var request = &ExtractRequest{
+		Options:  r.Options,
+		Target:   r.Target,
+		Commands: make([]*ExtractCommand, 0),
+	}
+	for _, command := range r.Commands {
+		when, runCommand := command.WhenAndCommand()
+		request.Commands = append(request.Commands,
+			&ExtractCommand{
+				When:    when,
+				Command: runCommand,
+				Errors:  CommandErrors,
+			},
+		)
+	}
+	return request
+}
+
+//NewRunRequest creates a new request
+func NewRunRequest(target *url.Resource, superUser bool, commands ...string) *RunRequest {
+	requestCommands := make([]Command, 0)
+	for _, command := range commands {
+		requestCommands = append(requestCommands, Command(command))
+	}
+	result := &RunRequest{
+		Target:   target,
+		Options:  DefaultOptions(),
+		Commands: requestCommands,
+	}
+
+	result.SuperUser = superUser
+	return result
+}
+
+//NewExtractRequestFromURL creates a new request from URL
+func NewRunRequestFromURL(URL string) (*RunRequest, error) {
+	var resource = url.NewResource(URL)
+	var result = &RunRequest{}
+	return result, resource.JSONDecode(result)
 }
 
 //CommandLog represents an executed command with Stdin, Stdout or Error
@@ -61,19 +250,20 @@ type CommandLog struct {
 type RunResponse struct {
 	Session   string
 	Commands  []*CommandLog
+	Output    string
 	Extracted map[string]string
 	Error     string
 }
 
 //OpenSessionRequest represents an open session request.
 type OpenSessionRequest struct {
-	Target          *url.Resource      //Session is created from target host (servername, port)
-	Config          *ssh.SessionConfig //ssh configuration
-	SystemPaths     []string           //system path that are applied to the ssh session
-	Env             map[string]string
-	Transient       bool        //if this flag is true, caller is responsible for closing session, othewise session is closed as context is closed
-	CommandsBasedir string      //capture all ssh service command in supplied dir (for unit test only)
-	ReplayService   ssh.Service //use Ssh ReplayService instead of actual SSH service (for unit test only)
+	Target        *url.Resource      //Session is created from target host (servername, port)
+	Config        *ssh.SessionConfig //ssh configuration
+	SystemPaths   []string           //system path that are applied to the ssh session
+	Env           map[string]string
+	Transient     bool        //if this flag is true, caller is responsible for closing session, othewise session is closed as context is closed
+	Basedir       string      //capture all ssh service command in supplied dir (for unit test only)
+	ReplayService ssh.Service //use Ssh ReplayService instead of actual SSH service (for unit test only)
 }
 
 //Validate checks if request is valid
@@ -82,6 +272,23 @@ func (r *OpenSessionRequest) Validate() error {
 		return errors.New("target was empty")
 	}
 	return nil
+}
+
+//NewOpenSessionRequest creates a new session if transient flag is true, caller is responsible for closing session, otherwise session is closed as context is closed
+func NewOpenSessionRequest(target *url.Resource, systemPaths []string, env map[string]string, transient bool, basedir string) *OpenSessionRequest {
+	if len(systemPaths) == 0 {
+		systemPaths = []string{}
+	}
+	if len(env) == 0 {
+		env = make(map[string]string)
+	}
+	return &OpenSessionRequest{
+		Target:      target,
+		SystemPaths: systemPaths,
+		Env:         env,
+		Transient:   transient,
+		Basedir:     basedir,
+	}
 }
 
 //OpenSessionResponse represents a session id
@@ -97,78 +304,6 @@ type CloseSessionRequest struct {
 //CloseSessionResponse closes session response
 type CloseSessionResponse struct {
 	SessionID string
-}
-
-//SuperRunRequest represents a super user command,
-type SuperRunRequest struct {
-	Target        *url.Resource       //target destination where to run a command.
-	MangedCommand *ExtractableCommand //managed command
-}
-
-//Validate validates managed command request
-func (r *ExtractRequest) Validate() error {
-	if r.Target == nil {
-		return fmt.Errorf("execution target was empty")
-	}
-	if r.ExtractableCommand == nil {
-		return fmt.Errorf("extractableCommand was empty")
-	}
-	return nil
-}
-
-//AsExtractRequest returns ExtractRequest for this requests
-func (r *RunRequest) AsExtractRequest() *ExtractRequest {
-	var extractableCommand = &ExtractableCommand{
-		Options:    NewExecutionOptions(),
-		Executions: make([]*Execution, 0),
-	}
-	if r.TimeoutMs > 0 {
-		extractableCommand.Options.TimeoutMs = r.TimeoutMs
-	}
-	for _, command := range r.Commands {
-		extractableCommand.Executions = append(extractableCommand.Executions, &Execution{
-			Command: command,
-			Errors:  []string{util.CommandNotFound, util.NoSuchFileOrDirectory, util.ErrorIsNotRecoverable},
-		})
-	}
-	return &ExtractRequest{
-		SuperUser:          r.SuperUser,
-		Target:             r.Target,
-		ExtractableCommand: extractableCommand,
-	}
-}
-
-//NewExtractRequest returns a new command request
-func NewExtractRequest(target *url.Resource, execution *ExtractableCommand) *ExtractRequest {
-	return &ExtractRequest{
-		Target:             target,
-		ExtractableCommand: execution,
-	}
-}
-
-//NewSimpleRunRequest a simple version of ExtractRequest
-func NewSimpleRunRequest(target *url.Resource, commands ...string) *ExtractRequest {
-	var result = &ExtractRequest{
-		Target: target,
-		ExtractableCommand: &ExtractableCommand{
-			Executions: make([]*Execution, 0),
-		},
-	}
-	for _, command := range commands {
-		result.ExtractableCommand.Executions = append(result.ExtractableCommand.Executions, &Execution{
-			Command: command,
-		})
-	}
-	return result
-}
-
-//NewExecutionOptions creates a new execution options
-func NewExecutionOptions() *ExecutionOptions {
-	return &ExecutionOptions{
-		SystemPaths: make([]string, 0),
-		Terminators: make([]string, 0),
-		Env:         make(map[string]string),
-	}
 }
 
 //Add appends provided log into commands slice.
@@ -217,80 +352,4 @@ func NewCommandLog(stdin, stdout string, err error) *CommandLog {
 		result.Stdout = stdout
 	}
 	return result
-}
-
-//AsExtractRequest returns ExtractRequest
-func (r *SuperRunRequest) AsExtractRequest(context *endly.Context) (*ExtractRequest, error) {
-	target, err := context.ExpandResource(r.Target)
-	if err != nil {
-		return nil, err
-	}
-	var result = &ExtractRequest{
-		Target: target,
-		ExtractableCommand: &ExtractableCommand{
-			Executions: make([]*Execution, 0),
-		},
-	}
-	var executionOptions = &ExecutionOptions{
-		Terminators: []string{"Password", util.CommandNotFound},
-	}
-	if r.MangedCommand == nil {
-		return nil, fmt.Errorf("command was ampty")
-	}
-	if r.MangedCommand.Options != nil {
-		executionOptions.Terminators = append(executionOptions.Terminators, r.MangedCommand.Options.Terminators...)
-		executionOptions.TimeoutMs = r.MangedCommand.Options.TimeoutMs
-		executionOptions.Directory = r.MangedCommand.Options.Directory
-		executionOptions.SystemPaths = r.MangedCommand.Options.SystemPaths
-	}
-	result.ExtractableCommand.Options = executionOptions
-	var errors = make([]string, 0)
-	var extractions = make([]*endly.DataExtraction, 0)
-
-	var credentials = make(map[string]string)
-
-	for _, execution := range r.MangedCommand.Executions {
-		if execution.Command == "" {
-			continue
-		}
-		if len(execution.Credentials) > 0 {
-			for k, v := range execution.Credentials {
-				credentials[k] = v
-			}
-		}
-		sudo := ""
-		if len(execution.Command) > 1 && !strings.Contains(execution.Command, "sudo") {
-			sudo = "sudo "
-		}
-		newExecution := &Execution{
-			Command:     sudo + execution.Command,
-			Errors:      execution.Errors,
-			Extraction:  execution.Extraction,
-			Success:     execution.Success,
-			MatchOutput: execution.MatchOutput,
-			Credentials: execution.Credentials,
-		}
-		if len(execution.Errors) > 0 {
-			errors = append(errors, execution.Errors...)
-		}
-		if len(execution.Extraction) > 0 {
-			extractions = append(extractions, execution.Extraction...)
-		}
-		result.ExtractableCommand.Executions = append(result.ExtractableCommand.Executions, newExecution)
-	}
-
-	if target.Credential == "" {
-		return nil, fmt.Errorf("Can not run as superuser, credential were empty for target: %v", target.URL)
-	}
-	credentials[SudoCredentialKey] = target.Credential
-	execution := &Execution{
-		Credentials: credentials,
-		MatchOutput: "Password",
-		Command:     SudoCredentialKey,
-		Errors:      []string{"Password", util.CommandNotFound},
-		Extraction:  extractions,
-	}
-	execution.Errors = append(execution.Errors, errors...)
-	result.ExtractableCommand.Executions = append(result.ExtractableCommand.Executions, execution)
-	return result, nil
 }

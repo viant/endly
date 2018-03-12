@@ -199,8 +199,6 @@ func NewActivity(context *Context, action *ServiceAction, state data.Map) *Activ
 		StartTime:   time.Now()}
 }
 
-
-
 //ActivityEndEvent represents Activity end event type.
 type ActivityEndEvent struct {
 	Response interface{}
@@ -212,7 +210,6 @@ func NewActivityEndEvent(response interface{}) *ActivityEndEvent {
 		Response: response,
 	}
 }
-
 
 //WorkflowRun represents workflow execution.
 type WorkflowRun struct {

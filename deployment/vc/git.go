@@ -6,6 +6,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
+	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
@@ -80,49 +81,36 @@ func (s *git) checkInfo(context *endly.Context, request *StatusRequest) (*Status
 		return nil, err
 	}
 	var result = &StatusResponse{&Info{}}
-	response, err := exec.Execute(context, target, fmt.Sprintf("cd %v", target.DirectoryPath()))
-	if err != nil || util.CheckCommandNotFound(response.Stdout()) {
+	var runResponse = &exec.RunResponse{}
+	if err := endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.DirectoryPath())), runResponse); err != nil || util.CheckCommandNotFound(runResponse.Stdout()) {
 		return result, nil
 	}
 
-	response, err = exec.Execute(context, request.Target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
+	runRequest := exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
+		exec.NewExtractCommand(fmt.Sprintf("git status"), "", nil, nil,
+			endly.NewDataExtraction("branch", "On branch[\\s\\t]+([^\\s]+)", true)),
 
-			{
-				Command: fmt.Sprintf("git status"),
-				Extraction: []*endly.DataExtraction{{
-					RegExpr: "On branch[\\s\\t]+([^\\s]+)",
-					Key:     "branch",
-				}},
-			},
-			{
-				Command: fmt.Sprintf("git remote -v"),
-				Extraction: []*endly.DataExtraction{{
-					RegExpr: "origin[\\s\\t]+([^\\s]+)\\s+\\(fetch\\)",
-					Key:     "origin",
-				}},
-			},
-			{
-				Command: fmt.Sprintf("git rev-parse HEAD"),
-			},
-		},
-	})
-	if err != nil {
+		exec.NewExtractCommand(fmt.Sprintf("git remote -v"), "", nil, nil,
+			endly.NewDataExtraction("origin", "origin[\\s\\t]+([^\\s]+)\\s+\\(fetch\\)", true)),
+		exec.NewExtractCommand(fmt.Sprintf("git rev-parse HEAD"), "", nil, nil))
+
+	if err = endly.Run(context, runRequest, runResponse); err != nil {
 		return nil, err
 	}
-	if branch, has := response.Extracted["branch"]; has {
+
+	if branch, has := runResponse.Extracted["branch"]; has {
 		result.Branch = branch
 	}
-	if origin, has := response.Extracted["origin"]; has {
+	if origin, has := runResponse.Extracted["origin"]; has {
 		result.Origin = origin
 	}
 
-	if strings.Contains(response.Stdout(), "Not a git") {
+	if strings.Contains(runResponse.Stdout(), "Not a git") {
 		return result, nil
 	}
 	result.IsVersionControlManaged = true
-	extractGitStatus(response.Stdout(0), result.Info)
-	extractRevision(response.Stdout(2), result.Info)
+	extractGitStatus(runResponse.Stdout(0), result.Info)
+	extractRevision(runResponse.Stdout(2), result.Info)
 	return result, nil
 }
 
@@ -139,8 +127,8 @@ func (s *git) pull(context *endly.Context, request *PullRequest) (*PullResponse,
 	var response = &PullResponse{
 		Info: &Info{},
 	}
-	_, err = exec.Execute(context, target, fmt.Sprintf("cd %v", target.DirectoryPath()))
-	if err != nil {
+
+	if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.DirectoryPath())), nil); err != nil {
 		return nil, err
 	}
 	return response, s.runSecureCommand(context, request.Type, origin, target, "git pull", response.Info, false)
@@ -155,23 +143,23 @@ func (s *git) checkout(context *endly.Context, request *CheckoutRequest) (*Info,
 	if err != nil {
 		return nil, err
 	}
-	var username, _, _ = origin.LoadCredential(false)
-	if origin.Credential != "" && username == "" {
-		return nil, fmt.Errorf("username was empty %v, %v", origin.URL, origin.Credential)
+
+	username, err := util.GetUsername(context.Secrets, origin.Credential)
+	if err != nil {
+		return nil, err
 	}
+
 	var parent, projectName = path.Split(target.DirectoryPath())
 	var useParentDirectory = true
 	var _, originProjectName = path.Split(origin.DirectoryPath())
 	if originProjectName == projectName {
 		projectName = "."
-		_, err = exec.Execute(context, target, []string{fmt.Sprintf("mkdir -p %v", target.DirectoryPath())})
-		if err != nil {
-			return nil, err
+		if err := endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("mkdir -p %v", target.DirectoryPath())), nil); err != nil {
+			return nil, nil
 		}
 		useParentDirectory = false
 	} else {
-		_, err = exec.Execute(context, target, fmt.Sprintf("cd %v", parent))
-		if err != nil {
+		if err := endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", parent)), nil); err != nil {
 			return nil, err
 		}
 	}
@@ -182,40 +170,34 @@ func (s *git) checkout(context *endly.Context, request *CheckoutRequest) (*Info,
 }
 
 func (s *git) runSecureCommand(context *endly.Context, versionControlType string, origin, target *url.Resource, command string, info *Info, useParentDirectory bool) (err error) {
-	var credentials = make(map[string]string)
-	credentials[CredentialKey] = origin.Credential
+	var secrets = make(map[string]string)
+	secrets[CredentialKey] = origin.Credential
 	commandTarget, _ := context.ExpandResource(target)
 	if useParentDirectory {
 		commandTarget.Rename("")
 	}
-	_, err = exec.Execute(context, commandTarget, &exec.ExtractableCommand{
-		Options: &exec.ExecutionOptions{
-			TimeoutMs:   1000 * 200,
-			Terminators: []string{"Password"},
-		},
-		Executions: []*exec.Execution{
-			{
-				Command: command,
-				Errors:  []string{"No such file or directory", "Event not found", "Unable to connect"},
-			},
-			{
-				Credentials: credentials,
-				MatchOutput: "Password",
-				Command:     CredentialKey,
-				Errors:      []string{"No such file or directory", "Event not found", "Authentication failed"},
-			},
-		},
-	})
 
-	err = checkVersionControlAuthErrors(err, origin)
+	var runRequest = exec.NewExtractRequest(commandTarget,
+		exec.DefaultOptions(),
+		exec.NewExtractCommand(command, "", nil, []string{util.NoSuchFileOrDirectory, "Event not found", "Unable to connect"}),
+		exec.NewExtractCommand(CredentialKey, "Password", nil, []string{util.NoSuchFileOrDirectory, "Event not found", "Authentication failed"}),
+	)
+	runRequest.Secrets = secret.NewSecrets(secrets)
+	runRequest.TimeoutMs = 1000 * 200
+	runRequest.Terminators = append(runRequest.Terminators, "Password")
+
+	if err = endly.Run(context, runRequest, nil); err != nil {
+		err = checkVersionControlAuthErrors(err, context.Secrets, origin)
+	}
+
 	if err != nil {
 		return err
 	}
+
 	response, err := s.checkInfo(context, &StatusRequest{
 		Target: target,
 		Type:   versionControlType,
 	})
-
 	if err != nil {
 		return err
 	}
@@ -232,43 +214,32 @@ func (s *git) commit(context *endly.Context, request *CommitRequest) (*CommitRes
 	}
 	if len(checkInfo.Untracked) > 0 {
 		for _, file := range checkInfo.Untracked {
-			_, err = exec.Execute(context, request.Target, &exec.ExtractableCommand{
-				Executions: []*exec.Execution{
-					{
-						Command: fmt.Sprintf("git add %v ", file),
-						Errors:  []string{"No such file or directory", "Errors"},
-					},
-				},
-			})
-			if err != nil {
+			var runRequest = exec.NewExtractRequest(request.Target,
+				exec.DefaultOptions(),
+				exec.NewExtractCommand(fmt.Sprintf("git add %v ", file), "", nil, []string{util.NoSuchFileOrDirectory, "Errors"}),
+			)
+			if err = endly.Run(context, runRequest, nil); err != nil {
 				return nil, err
 			}
 		}
 	}
 	message := strings.Replace(request.Message, "\"", "'", len(request.Message))
-	_, err = exec.Execute(context, request.Target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: fmt.Sprintf("git commit -m \"%v\" -a", message),
-				Errors:  []string{"No such file or directory", "Errors"},
-			},
-		},
-	})
-	_, err = exec.Execute(context, request.Target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: "git push",
-			},
-		},
-	})
+
+	var runRequest = exec.NewExtractRequest(request.Target,
+		exec.DefaultOptions(),
+		exec.NewExtractCommand(fmt.Sprintf("git commit -m \"%v\" -a", message), "", nil, []string{util.NoSuchFileOrDirectory, "Errors"}))
+
+	if err = endly.Run(context, runRequest, nil); err == nil {
+		err = endly.Run(context, exec.NewRunRequest(request.Target, false, "git push"), nil)
+	}
 	if err != nil {
 		return nil, err
 	}
-	respons, err := s.checkInfo(context, &StatusRequest{
+	response, err := s.checkInfo(context, &StatusRequest{
 		Target: request.Target,
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &CommitResponse{respons.Info}, nil
+	return &CommitResponse{response.Info}, nil
 }

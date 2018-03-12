@@ -12,7 +12,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Introduction](#Introduction)
 - [GettingStarted](#GettingStarted)
 - [Services](#Services)
-- [Credentials](#Credentail)
+- [Secrets](#Credentail)
 - [Unit test](#Unit)
 - [Usage](#Usage)
 - [Best Practice](#BestPractice)
@@ -193,7 +193,7 @@ endly -s='docker' -a='run'
 
      
 <a name="Credentail"></a>
-## Credentials
+## Secrets
      
     
 Endly on its core uses SSH or other system/cloud service requiring credentials. 
@@ -386,7 +386,7 @@ This method runs in silent mode.
             Mount: map[string]string{
                 "/tmp/my.cnf": "/etc/my.cnf",
             },
-            Credentials: map[string]string{
+            Secrets: map[string]string{
                 "**mysql**": mySQLcredentialFile,
             },
         })

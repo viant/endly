@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/deployment/vc"
+	_ "github.com/viant/endly/static"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
 	_ "github.com/viant/toolbox/storage/scp"
@@ -188,7 +189,6 @@ func TestVc_Checkout(t *testing.T) {
 		{
 			"test/git/checkout/private/new/linux",
 			&vc.CheckoutRequest{
-
 				Target: url.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
 				Origin: url.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
 			},
@@ -226,18 +226,20 @@ func TestVc_Checkout(t *testing.T) {
 		},
 	}
 
-	for _, useCase := range useCases {
+	for i, useCase := range useCases {
 		var target = useCase.Request.Target
 		execService, err := exec.GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
 			context, err := exec.OpenTestContext(manager, target, execService)
 			service, err := context.Service(vc.ServiceID)
+
+			useCase.baseDir += fmt.Sprintf("[%d]", i)
+
 			assert.Nil(t, err)
 
 			defer context.Close()
 			if assert.Nil(t, err) {
 				serviceResponse := service.Run(context, useCase.Request)
-
 				var baseCase = useCase.baseDir + " "
 				if useCase.Error != "" {
 					assert.True(t, strings.Contains(serviceResponse.Error, useCase.Error), baseCase+" "+serviceResponse.Error)
@@ -252,7 +254,6 @@ func TestVc_Checkout(t *testing.T) {
 					continue
 				}
 				assert.EqualValues(t, useCase.Error, serviceResponse.Error)
-
 				if useCase.Error != "" {
 					continue
 				}

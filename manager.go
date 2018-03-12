@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/satori/go.uuid"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/url"
 	"reflect"
 	"strings"
@@ -34,7 +35,36 @@ type Manager interface {
 	//NewContext returns new workflow context.
 	NewContext(context toolbox.Context) *Context
 
+	//Run run requests
 	Run(context *Context, request interface{}) (interface{}, error)
+}
+
+//Run runs action for supplied context request and response. Response has to be pointer or nil
+func Run(context *Context, request, result interface{}) error {
+	var resultValue reflect.Value
+	if result != nil {
+		resultValue = reflect.ValueOf(result)
+		if resultValue.Kind() != reflect.Ptr {
+			return fmt.Errorf("expected result as pointer, but had %T", result)
+		}
+	}
+	manager, err := context.Manager()
+	if err != nil {
+		return err
+	}
+	response, err := manager.Run(context, request)
+	if err != nil {
+		return err
+	}
+	if result == nil {
+		return nil
+	}
+	if !resultValue.Elem().Type().AssignableTo(resultValue.Elem().Type()) {
+		return fmt.Errorf("expected %T respose type but had: %T", response, result)
+	}
+	var responseValue = reflect.ValueOf(response)
+	resultValue.Elem().Set(responseValue.Elem())
+	return nil
 }
 
 type manager struct {
@@ -88,6 +118,7 @@ func (m *manager) NewContext(ctx toolbox.Context) *Context {
 		Context:   ctx,
 		Wait:      &sync.WaitGroup{},
 		Workflows: &workflowStack,
+		Secrets:   secret.New("", false),
 	}
 	_ = result.Put(serviceManagerKey, m)
 	return result

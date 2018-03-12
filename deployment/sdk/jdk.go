@@ -14,42 +14,25 @@ type jdkService struct{}
 
 func (s *jdkService) checkJavaVersion(context *endly.Context, jdkCandidate string, request *SetRequest) (*Info, error) {
 	var result = &Info{}
-	commandResponse, err := exec.Execute(context, request.Target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: jdkCandidate + "java -version",
-				Extraction: []*endly.DataExtraction{
-					{
-						RegExpr: "build (\\d\\.\\d).+",
-						Key:     "build",
-					},
-				},
-				Errors: util.StdErrors,
-			},
-			{
-				Command: fmt.Sprintf(jdkCandidate + "jrunscript -e 'java.lang.System.out.println(java.lang.System.getProperty(\"java.home\"));'"),
-				Extraction: []*endly.DataExtraction{
-					{
-						RegExpr: "(.+)",
-						Key:     "JAVA_HOME",
-					},
-				},
-				Errors: util.StdErrors,
-			},
-		},
-	})
 
-	if err != nil {
+	extractRequest := exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
+		exec.NewExtractCommand(jdkCandidate+"java -version", "", nil,
+			util.StdErrors,
+			endly.NewDataExtraction("build", "build (\\d\\.\\d).+", false)),
+		exec.NewExtractCommand(fmt.Sprintf(jdkCandidate+"jrunscript -e 'java.lang.System.out.println(java.lang.System.getProperty(\"java.home\"));'"), "", nil,
+			util.StdErrors,
+			endly.NewDataExtraction("JAVA_HOME", "(.+)", false)))
+
+	commandResponse := &exec.RunResponse{}
+	if err := endly.Run(context, extractRequest, commandResponse); err != nil {
 		return nil, err
 	}
-
 	if javaHome, ok := commandResponse.Extracted["JAVA_HOME"]; ok {
 		if build, ok := commandResponse.Extracted["build"]; ok {
 			if build == request.Version {
 				result.Version = build
 				result.Home = strings.Replace(javaHome, "/jre", "", 1)
-				exec.Execute(context, request.Target, fmt.Sprintf("export JAVA_HOME='%v'", result.Home))
-
+				endly.Run(context, exec.NewRunRequest(request.Target, false, fmt.Sprintf("export JAVA_HOME='%v'", result.Home)), nil)
 				return result, nil
 			}
 			return nil, fmt.Errorf("invalid version was found expected: %v, but had: %v", request.Version, build)
@@ -79,28 +62,16 @@ func (s *jdkService) setSdk(context *endly.Context, request *SetRequest) (*Info,
 	if err == nil {
 		return result, nil
 	}
-
 	jdkHomeCheckCommand := s.getJavaHomeCheckCommand(context, request)
-	commandResponse, err := exec.Execute(context, request.Target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: jdkHomeCheckCommand,
-				Extraction: []*endly.DataExtraction{
+	extractRequest := exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
+		exec.NewExtractCommand(jdkHomeCheckCommand, "", nil, util.StdErrors,
+			endly.NewDataExtraction("JAVA_HOME", "(.+jdk.+)", false),
+			endly.NewDataExtraction("JAVA_HOME", "(.+jvm.+)", false)))
 
-					{
-						RegExpr: "(.+jdk.+)",
-						Key:     "JAVA_HOME",
-					},
-					{
-						RegExpr: "(.+jvm.+)",
-						Key:     "JAVA_HOME",
-					},
-				},
-				Errors: util.StdErrors,
-			},
-		},
-	})
-
+	commandResponse := &exec.RunResponse{}
+	if err := endly.Run(context, extractRequest, commandResponse); err != nil {
+		return nil, err
+	}
 	if home, ok := commandResponse.Extracted["JAVA_HOME"]; ok {
 		if strings.Contains(home, "*") {
 			return nil, errSdkNotFound

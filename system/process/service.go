@@ -51,18 +51,14 @@ func (s *service) checkProcess(context *endly.Context, request *StatusRequest) (
 	if strings.Contains(request.Command, " ") && !strings.Contains(request.Command, "|") {
 		command = fmt.Sprintf("ps -ef | grep '%v'", request.Command)
 	}
-	commandResponse, err := exec.Execute(context, request.Target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: command,
-			},
-		},
-	})
-	if err != nil {
+
+	var extractRequest = exec.NewExtractRequest(request.Target, exec.DefaultOptions(), exec.NewExtractCommand(command, "", nil, nil))
+	var runResponse = &exec.RunResponse{}
+	if err := endly.Run(context, extractRequest, runResponse); err != nil {
 		return nil, err
 	}
 
-	for _, line := range strings.Split(commandResponse.Stdout(), "\r\n") {
+	for _, line := range strings.Split(runResponse.Stdout(), "\r\n") {
 		if strings.Contains(line, "grep") {
 			continue
 		}
@@ -99,18 +95,14 @@ func (s *service) checkProcess(context *endly.Context, request *StatusRequest) (
 }
 
 func (s *service) stopProcess(context *endly.Context, request *StopRequest) (*StopResponse, error) {
-	commandResult, err := exec.ExecuteAsSuperUser(context, request.Target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: fmt.Sprintf("kill -9 %v", request.Pid),
-			},
-		},
-	})
-	if err != nil {
+	var extractRequest = exec.NewExtractRequest(request.Target, exec.DefaultOptions(), exec.NewExtractCommand(fmt.Sprintf("kill -9 %v", request.Pid), "", nil, nil))
+	extractRequest.SuperUser = true
+	var runResponse = &exec.RunResponse{}
+	if err := endly.Run(context, extractRequest, runResponse); err != nil {
 		return nil, err
 	}
 	return &StopResponse{
-		Stdout: commandResult.Stdout(),
+		Stdout: runResponse.Stdout(),
 	}, nil
 
 }
@@ -145,23 +137,11 @@ func (s *service) startProcess(context *endly.Context, request *StartRequest) (*
 		}
 	}
 	changeDirCommand := fmt.Sprintf("cd %v ", request.Directory)
-
 	var startCommand = request.Command + " " + strings.Join(request.Arguments, " ") + " &"
 	if request.ImmuneToHangups {
 		startCommand = fmt.Sprintf("nohup  %v", startCommand)
 	}
-	_, err = exec.Execute(context, request.Target, &exec.ExtractableCommand{
-		Options: request.Options,
-		Executions: []*exec.Execution{
-			{
-				Command: changeDirCommand,
-			},
-			{
-				Command: startCommand,
-			},
-		},
-	})
-	if err != nil {
+	if err = endly.Run(context, exec.NewRunRequest(request.Target, request.AsSuperUser, changeDirCommand, startCommand), nil); err != nil {
 		return nil, err
 	}
 	time.Sleep(time.Second)

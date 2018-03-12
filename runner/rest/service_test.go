@@ -1,4 +1,4 @@
-package reset_test
+package rest_test
 
 import (
 	"github.com/stretchr/testify/assert"
@@ -28,14 +28,14 @@ func TestResetRunnerService_Run(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
 	context := manager.NewContext(toolbox.NewContext())
-	serviceResponse := service.Run(context, &runner.SendRequest{
+	serviceResponse := service.Run(context, &runner.Request{
 		URL:     "http://127.0.0.1:8114/reverse",
 		Method:  "POST",
 		Request: "{\"text\":\"abc\"}",
 	})
 
 	assert.Equal(t, "", serviceResponse.Error)
-	response, ok := serviceResponse.Response.(*runner.SendResponse)
+	response, ok := serviceResponse.Response.(*runner.Response)
 	if assert.True(t, ok) {
 		assert.NotNil(t, response)
 		if toolbox.IsMap(response) {

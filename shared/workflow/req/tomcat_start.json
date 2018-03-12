@@ -3,27 +3,23 @@
     "URL": "ssh://${targetHost}${appDirectory}/",
     "Credential": "$targetHostCredential"
   },
-  "ExtractableCommand": {
-    "Options": {
-      "Env": {
-        "CATALINA_OPTS": "$catalinaOpts",
-        "JPDA_ADDRESS": "$jpdaAddress"
-      },
-      "Directory": "$appDirectory"
-    },
-    "Executions": [
-      {
-        "Command": "tomcat/bin/catalina.sh jpda start",
-        "Success": [
-          "Tomcat started."
-        ],
-        "Extraction": [
-          {
-            "Key": "Version",
-            "RegExpr": "Server number: (\\d+\\.\\d+\\.\\d+)"
-          }
-        ]
-      }
-    ]
-  }
+  "Env": {
+    "CATALINA_OPTS": "$catalinaOpts",
+    "JPDA_ADDRESS": "$jpdaAddress"
+  },
+  "Directory": "$appDirectory",
+  "Commands": [
+    {
+      "Command": "tomcat/bin/catalina.sh jpda start",
+      "Success": [
+        "Tomcat started."
+      ],
+      "Extraction": [
+        {
+          "Key": "Version",
+          "RegExpr": "Server number: (\\d+\\.\\d+\\.\\d+)"
+        }
+      ]
+    }
+  ]
 }

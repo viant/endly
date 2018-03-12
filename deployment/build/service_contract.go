@@ -6,6 +6,7 @@ import (
 	"github.com/viant/endly/deployment/deploy"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
+	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/url"
 )
 
@@ -22,11 +23,11 @@ type Spec struct {
 
 //Request represents a build request.
 type Request struct {
-	MetaURL     string            `description:"build meta URL"`
-	BuildSpec   *Spec             `required:"true" description:"build specification" `
-	Credentials map[string]string `description:"key value pair of placeholder and credential files, check build meta file for used placeholders i.e for 'go' build: ##git## - git usernamem, **git** - git password"`
-	Env         map[string]string `description:"environmental variables"`
-	Target      *url.Resource     `required:"true" description:"build location, host and path" `
+	MetaURL   string            `description:"build meta URL"`
+	BuildSpec *Spec             `required:"true" description:"build specification" `
+	Secrets   secret.Secrets    `description:"key value pair of placeholder and credential files, check build meta file for used placeholders i.e for 'go' build: ##git## - git usernamem, **git** - git password"`
+	Env       map[string]string `description:"environmental variables"`
+	Target    *url.Resource     `required:"true" description:"build location, host and path" `
 }
 
 //Response represents a build response.
@@ -68,11 +69,11 @@ type LoadMetaResponse struct {
 
 //Goal builds goal represents a build goal
 type Goal struct {
-	Name                string                   `required:"true"`
-	InitTransfers       *storage.CopyRequest     ` description:"files transfer before build command"`
-	Command             *exec.ExtractableCommand `required:"true"  description:"build command"`
-	PostTransfers       *storage.CopyRequest     ` description:"files transfer after build command"`
-	VerificationCommand *exec.ExtractableCommand
+	Name          string               `required:"true"`
+	InitTransfers *storage.CopyRequest `description:"files transfer before build command"`
+	Run           *exec.ExtractRequest `required:"true"  description:"build command"`
+	PostTransfers *storage.CopyRequest `description:"files transfer after build command"`
+	Verify        *exec.ExtractRequest
 }
 
 //Meta build meta provides instruction how to build an app

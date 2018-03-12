@@ -3,14 +3,10 @@
     "URL": "ssh://${targetHost}${appDirectory}/",
     "Credential": "$targetHostCredential"
   },
-  "ExtractableCommand": {
-    "Options": {
-      "Directory": "$appDirectory"
-    },
-    "Executions": [
-      {
-        "Command": "tomcat/bin/shutdown.sh"
-      }
-    ]
-  }
+  "Directory": "$appDirectory",
+  "Commands": [
+    {
+      "Command": "tomcat/bin/shutdown.sh"
+    }
+  ]
 }

@@ -1,6 +1,7 @@
 package daemon_test
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/daemon"
@@ -68,7 +69,7 @@ func TestDaemonService_Status(t *testing.T) {
 		},
 	}
 
-	for _, useCase := range useCases {
+	for i, useCase := range useCases {
 		execService, err := exec.GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
 			context, err := exec.OpenTestContext(manager, useCase.target, execService)
@@ -82,7 +83,7 @@ func TestDaemonService_Status(t *testing.T) {
 					Target:  target,
 					Service: useCase.service,
 				})
-				var baseCase = useCase.baseDir + " " + useCase.service
+				var baseCase = useCase.baseDir + " " + useCase.service + fmt.Sprintf("[%d]", i)
 				assert.Equal(t, "", response.Error, baseCase)
 				info, ok := response.Response.(*daemon.Info)
 				if assert.True(t, ok) && info != nil {

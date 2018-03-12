@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"github.com/viant/toolbox/cred"
+	"github.com/viant/toolbox/secret"
 	"os"
 	"path"
 	"time"
@@ -20,4 +21,17 @@ func GetCredential(name, username, password string) (string, error) {
 	}
 	err := authConfig.Save(credentialFile)
 	return credentialFile, err
+}
+
+func GetUsername(service *secret.Service, credential string) (string, error) {
+	var username string
+	credConfig, err := service.GetCredentials(credential)
+	if err != nil {
+		return "", err
+	}
+	username = credConfig.Username
+	if username == "" {
+		return "", fmt.Errorf("username was empty %v", credential)
+	}
+	return username, nil
 }

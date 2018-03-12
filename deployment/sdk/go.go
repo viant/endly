@@ -20,40 +20,28 @@ func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, 
 	}
 
 	if goPath != "" {
-		exec.Execute(context, request.Target, fmt.Sprintf("export GOPATH='%v'", goPath))
+		_ = endly.Run(context, exec.NewRunRequest(request.Target, false, fmt.Sprintf("export GOPATH='%v'", goPath)), nil)
 	}
 
-	commandResponse, err := exec.Execute(context, request.Target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: "export GOROOT='/opt/sdk/go'",
-			},
-			{
-				Command: "go version",
-				Extraction: []*endly.DataExtraction{
-					{
-						RegExpr: "go version go([^\\s]+)",
-						Key:     "version",
-					},
-				},
-			},
-		},
-	})
-	if err != nil {
+	var extractRequest = exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
+		exec.NewExtractCommand("export GOROOT='/opt/sdk/go'", "", nil, nil),
+		exec.NewExtractCommand("go version", "", nil, nil,
+			endly.NewDataExtraction("version", "go version go([^\\s]+)", false)),
+	)
+	runResponse := &exec.RunResponse{}
+	if err := endly.Run(context, extractRequest, runResponse); err != nil {
 		return nil, err
 	}
-	var stdout = commandResponse.Stdout()
+	var stdout = runResponse.Stdout()
 	if util.CheckCommandNotFound(stdout) || util.CheckNoSuchFileOrDirectory(stdout) {
-		stdout = commandResponse.Stdout()
+		stdout = runResponse.Stdout()
 		if util.CheckCommandNotFound(stdout) || util.CheckNoSuchFileOrDirectory(stdout) {
 			return nil, errSdkNotFound
 		}
 	}
-	if err != nil {
-		return nil, err
-	}
 	result.Sdk = "go"
-	result.Version = commandResponse.Extracted["version"]
+	result.Home = "/opt/sdk/go"
+	result.Version = runResponse.Extracted["version"]
 	if result.Version == "" {
 		result.Version = request.Version
 	}

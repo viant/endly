@@ -4,20 +4,25 @@ import (
 	"errors"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox/url"
+	"path"
+	"strings"
 )
+
+//WorkflowParams represents workflow parameters
+type WorkflowParams map[string]interface{}
 
 //RunRequest represents workflow run request
 type RunRequest struct {
-	EnableLogging     bool                   `description:"flag to enable logging"`
-	LoggingDirectory  string                 `description:"log directory"`
-	WorkflowURL       string                 `description:"workflow URL if workflow is not found in the registry, it is loaded"`
-	Name              string                 `required:"true" description:"name defined in workflow document"`
-	Params            map[string]interface{} `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
-	Tasks             string                 `required:"true" description:"coma separated task list or '*'to run all tasks sequencialy"` //tasks to run with coma separated list or '*', or empty string for all tasks
-	TagIDs            string                 `description:"coma separated TagID list, if present in a task, only matched runs, other task run as normal"`
-	PublishParameters bool                   `description:"flag to publish parameters directly into context state"`
-	Async             bool                   `description:"flag to run it asynchronously. Do not set it your self runner sets the flag for the first workflow"`
-	EventFilter       map[string]bool        `description:"optional CLI filter option,key is either package name or package name.request/event prefix "`
+	EnableLogging     bool            `description:"flag to enable logging"`
+	LoggingDirectory  string          `description:"log directory"`
+	WorkflowURL       string          `description:"workflow URL if workflow is not found in the registry, it is loaded"`
+	Name              string          `required:"true" description:"name defined in workflow document"`
+	Params            WorkflowParams  `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
+	Tasks             string          `required:"true" description:"coma separated task list or '*'to run all tasks sequencialy"` //tasks to run with coma separated list or '*', or empty string for all tasks
+	TagIDs            string          `description:"coma separated TagID list, if present in a task, only matched runs, other task run as normal"`
+	PublishParameters bool            `description:"flag to publish parameters directly into context state"`
+	Async             bool            `description:"flag to run it asynchronously. Do not set it your self runner sets the flag for the first workflow"`
+	EventFilter       map[string]bool `description:"optional CLI filter option,key is either package name or package name.request/event prefix "`
 }
 
 //RunResponse represents workflow run response
@@ -26,24 +31,43 @@ type RunResponse struct {
 	SessionID string                 //session id
 }
 
-
-//WorkflowSelector represents an expression to invoke workflow with all or specified task:  WorkflowURL[:tasks]
+//WorkflowSelector represents an expression to invoke workflow with all or specified task:  URL[:tasks]
 type WorkflowSelector string
 
-
-//WorkflowParams represents workflow parameters
-type WorkflowParams map[string]interface{}
-
-
-//Request represent request to run one or more workflow.
-type PipelineRequest struct {
-	Namespace string                              `description:"if specified add prefix for all relative workflows URL"`
-	Run       []WorkflowSelector                  `description:"name of piplines to run"`
-	Pipeline  map[WorkflowSelector]WorkflowParams `required:"true" description:"workflows with parameters to run"`
+//Pipeline represents a workflow with parameters to run
+type Pipeline struct {
+	Key      WorkflowSelector `description:"an expression to invoke workflow with all or specified task:  URL[:tasks]"`
+	Value    WorkflowParams   `description:"workflow parameters"`
+	resource *url.Resource    //workflow resource
 }
 
+//NewPipeline creates a new pipeline
+func NewPipeline(selector string, params map[string]interface{}) *Pipeline {
+	return &Pipeline{
+		Key:   WorkflowSelector(selector),
+		Value: WorkflowParams(params),
+	}
+}
 
-//PipelineResponse represent a pipeline response.
+//PipelineRequest represent request to run one or more workflow.
+type PipelineRequest struct {
+	Namespace string         `description:"if specified  it represents prefix for all relative workflow URL"`
+	Async     bool           `default:"true" description:"flag to run pipeline asynchronously"`
+	Params    WorkflowParams `description:"shared parameters to be included if not present in pipline level parameters"`
+	Pipeline  []*Pipeline    `required:"true" description:"workflows with parameters to run"`
+}
+
+//NewPipelineRequest returns new pipeline request
+func NewPipelineRequest(namespace string, async bool, params WorkflowParams, pipeline ...*Pipeline) *PipelineRequest {
+	return &PipelineRequest{
+		Namespace: namespace,
+		Async:     async,
+		Params:    params,
+		Pipeline:  pipeline,
+	}
+}
+
+//Response represent a pipeline response.
 type PipelineResponse struct {
 	Response map[string]*RunResponse
 }
@@ -71,8 +95,8 @@ type LoadResponse struct {
 // SwitchCase represent matching candidate case
 type SwitchCase struct {
 	*endly.ActionRequest `description:"action to run if matched"`
-	Task  string         `description:"task to run if matched"`
-	Value interface{}    `required:"true" description:"matching sourceKey value"`
+	Task                 string      `description:"task to run if matched"`
+	Value                interface{} `required:"true" description:"matching sourceKey value"`
 }
 
 // SwitchRequest represent switch action request
@@ -152,6 +176,7 @@ type PrintRequest struct {
 
 //Messages returns messages
 func (r *PrintRequest) Messages() []*endly.Message {
+
 	var result = endly.NewMessage(nil, nil)
 	if r.Message != "" {
 		result.Items = append(result.Items, endly.NewStyledText(r.Message, r.Style))
@@ -160,4 +185,60 @@ func (r *PrintRequest) Messages() []*endly.Message {
 		result.Items = append(result.Items, endly.NewStyledText(r.Message, endly.MessageStyleError))
 	}
 	return []*endly.Message{result}
+}
+
+//URL returns workflow url
+func (s WorkflowSelector) URL() string {
+	URL, _, _ := s.split()
+	return URL
+}
+
+func (s WorkflowSelector) IsRelative() bool {
+	URL := s.URL()
+	if strings.Contains(URL, "://") || strings.HasPrefix(URL, "/") {
+		return false
+	}
+	return true
+}
+
+//split returns selector URL, name and tasks
+func (s WorkflowSelector) split() (URL, name, tasks string) {
+	var sel = string(s)
+	protoPosition := strings.LastIndex(sel, "://")
+	taskPosition := strings.LastIndex(sel, ":")
+	if protoPosition != -1 {
+		taskPosition = -1
+		selWithoutProto := string(sel[protoPosition+3:])
+		if position := strings.LastIndex(selWithoutProto, ":"); position != -1 {
+			taskPosition = protoPosition + 3 + position
+		}
+	}
+	URL = sel
+	tasks = "*"
+	if taskPosition != -1 {
+		tasks = string(URL[taskPosition+1:])
+		URL = string(URL[:taskPosition])
+
+	}
+	var ext = path.Ext(URL)
+	if ext == "" {
+		_, name = path.Split(URL)
+		URL += ".csv"
+	} else {
+		_, name = path.Split(string(URL[:len(URL)-len(ext)]))
+	}
+	return URL, name, tasks
+}
+
+//Name returns selector workflow name
+func (s WorkflowSelector) Name() string {
+	_, name, _ := s.split()
+	return name
+}
+
+//Tasks returns selector tasks
+func (s WorkflowSelector) Tasks() string {
+	_, _, tasks := s.split()
+	return tasks
+
 }

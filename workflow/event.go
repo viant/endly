@@ -1,8 +1,8 @@
 package workflow
 
 import (
-	"github.com/viant/toolbox/data"
 	"github.com/viant/endly"
+	"github.com/viant/toolbox/data"
 )
 
 //WorkflowLoadedEvent represents workflow load event

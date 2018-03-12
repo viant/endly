@@ -25,12 +25,10 @@
           }
         },
         "VersionCheck": {
-          "Options": {
-            "SystemPaths": [
-              "/opt/build/maven/bin"
-            ]
-          },
-          "Executions": [
+          "SystemPaths": [
+            "/opt/build/maven/bin"
+          ],
+          "Commands": [
             {
               "Command": "mvn -version",
               "Extraction": [
@@ -42,11 +40,9 @@
             }
           ]
         },
-        "Command": {
-          "Options": {
-            "Directory": "/opt/build/"
-          },
-          "Executions": [
+        "Run": {
+          "Directory": "/opt/build/",
+          "Commands": [
             {
               "Command": "tar xvzf apache-maven-${artifact.Version}-bin.tar.gz",
               "Error": [

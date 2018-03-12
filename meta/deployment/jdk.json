@@ -10,7 +10,6 @@
         "Pre": {
           "SuperUser": true,
           "Commands": [
-
             "mkdir -p /opt/sdk/jdk",
             "chmod a+rw /opt/sdk/jdk",
             "mkdir -p /usr/lib/jvm",
@@ -27,12 +26,10 @@
           }
         },
         "VersionCheck": {
-          "Options": {
-            "SystemPaths": [
-              "/usr/lib/jvm/java-7-oracle/bin"
-            ]
-          },
-          "Executions": [
+          "SystemPaths": [
+            "/usr/lib/jvm/java-7-oracle/bin"
+          ],
+          "Commands": [
             {
               "Command": "java -version",
               "Extraction": [
@@ -44,11 +41,9 @@
             }
           ]
         },
-        "Command": {
-          "Options": {
-            "Directory": "/opt/sdk/jdk"
-          },
-          "Executions": [
+        "Run": {
+          "Directory": "/opt/sdk/jdk",
+          "Commands": [
             {
               "Command": "tar xvzf jdk-7u80-linux-x64.tar.gz",
               "Error": [

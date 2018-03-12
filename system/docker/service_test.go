@@ -156,7 +156,7 @@ func TestDockerService_Run(t *testing.T) {
 				Mount: map[string]string{
 					"/tmp/my.cnf": "/etc/my.cnf",
 				},
-				Credentials: map[string]string{
+				Secrets: map[string]string{
 					"**mysql**": mySQLcredentialFile,
 				},
 			},
@@ -183,7 +183,7 @@ func TestDockerService_Run(t *testing.T) {
 				Mount: map[string]string{
 					"/tmp/my.cnf": "/etc/my.cnf",
 				},
-				Credentials: map[string]string{
+				Secrets: map[string]string{
 					"**mysql**": mySQLcredentialFile,
 				},
 			},
@@ -209,7 +209,7 @@ func TestDockerService_Run(t *testing.T) {
 				Mount: map[string]string{
 					"/tmp/my.cnf": "/etc/my.cnf",
 				},
-				Credentials: map[string]string{
+				Secrets: map[string]string{
 					"**mysql**": mySQLcredentialFile,
 				},
 			},
@@ -231,7 +231,7 @@ func TestDockerService_Run(t *testing.T) {
 				Mount: map[string]string{
 					"/tmp/my.cnf": "/etc/my.cnf",
 				},
-				Credentials: map[string]string{
+				Secrets: map[string]string{
 					"**mysql**": mySQLcredentialFile,
 				},
 			},
@@ -307,7 +307,7 @@ func TestDockerService_Command(t *testing.T) {
 				Interactive:      true,
 				AllocateTerminal: true,
 				Command:          "mysqldump  -uroot -p***mysql*** --all-databases --routines | grep -v 'Warning' > /tmp/dump.sql",
-				Credentials: map[string]string{
+				Secrets: map[string]string{
 					"***mysql***": mySQLcredentialFile,
 				},
 			},
@@ -322,7 +322,7 @@ func TestDockerService_Command(t *testing.T) {
 					Target: target,
 				},
 				Interactive: true,
-				Credentials: map[string]string{
+				Secrets: map[string]string{
 					"**mysql**": mySQLcredentialFile,
 				},
 				Command: "mysql  -uroot -p**mysql** < /tmp/dump.sql",
@@ -916,7 +916,7 @@ func TestDockerService_Inspect(t *testing.T) {
 //
 //	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 //	manager := endly.New()
-//	context, _ := OpenTestRecorderContext(manager, target, "test/inspect/darwin")
+//	context, _ := OpenRecorderContext(manager, target, "test/inspect/darwin")
 //	///context := manager.NewContext(toolbox.NewContext())
 //
 //	defer context.Close()

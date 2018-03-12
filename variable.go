@@ -101,7 +101,7 @@ func (v *Variables) getValueFromInput(variable *Variable, in data.Map) (interfac
 func (v *Variables) validateRequiredValueIfNeeded(variable *Variable, value interface{}, in data.Map) error {
 	if variable.Required && (value == nil || toolbox.AsString(value) == "") {
 		source := in.GetString(neatly.OwnerURL)
-		return fmt.Errorf("variable %v is required by %v, but was empty, %v", variable.Name, source, toolbox.MapKeysToStringSlice(in))
+		return fmt.Errorf("variable '%v' is required by %v, but was empty, %v", variable.Name, source, toolbox.MapKeysToStringSlice(in))
 	}
 	return nil
 }

@@ -43,6 +43,7 @@ func Evaluate(context *Context, state data.Map, criteriaExpression, eventType st
 	}
 	result, err := criteria.IsTrue(context, state)
 	expandedCriteria := state.Expand(criteriaExpression)
+	LogF("!%v! -> %v", expandedCriteria, result)
 	context.Publish(NewCriteriaEvalEvent(eventType, defaultValue, result, criteriaExpression, fmt.Sprintf("%s", expandedCriteria), err))
 	return result, err
 }

@@ -122,7 +122,7 @@ type ContainerStopResponse struct {
 //ContainerRunRequest represents a docker run container command.
 type ContainerRunRequest struct {
 	*ContainerBaseRequest
-	Credentials        map[string]string
+	Secrets            map[string]string
 	Interactive        bool
 	AllocateTerminal   bool
 	RunInTheBackground bool
@@ -244,16 +244,16 @@ type PushResponse struct {
 
 //RunRequest represents a docker run request
 type RunRequest struct {
-	Target      *url.Resource     `required:"true" description:"host with docker service"`                //target host
-	Name        string            `description:"container name to inspect, if empty it uses target.Name"` //docker container name
-	Credentials map[string]string `description:"map of secret key to obfuscate terminal output with corresponding filename storing credential compatible with github.com/viant/toolbox/cred/config.go"`
-	Image       string            `required:"true" description:"container image to run" example:"mysql:5.6"`
-	Port        string            `description:"publish a container’s port(s) to the host, docker -p option"`
-	Env         map[string]string `description:"set docker container an environment variable, docker -e KEY=VAL  option"`
-	Mount       map[string]string `description:"bind mount a volume, docker -v option"`
-	Ports       map[string]string `description:"publish a container’s port(s) to the host, docker -p option"`
-	Params      map[string]string `description:"other free form docker parameters"`
-	Workdir     string            `description:"working directory inside the container, docker -w option"`
+	Target  *url.Resource     `required:"true" description:"host with docker service"`                //target host
+	Name    string            `description:"container name to inspect, if empty it uses target.Name"` //docker container name
+	Secrets map[string]string `description:"map of secret key to obfuscate terminal output with corresponding filename storing credential compatible with github.com/viant/toolbox/cred/config.go"`
+	Image   string            `required:"true" description:"container image to run" example:"mysql:5.6"`
+	Port    string            `description:"publish a container’s port(s) to the host, docker -p option"`
+	Env     map[string]string `description:"set docker container an environment variable, docker -e KEY=VAL  option"`
+	Mount   map[string]string `description:"bind mount a volume, docker -v option"`
+	Ports   map[string]string `description:"publish a container’s port(s) to the host, docker -p option"`
+	Params  map[string]string `description:"other free form docker parameters"`
+	Workdir string            `description:"working directory inside the container, docker -w option"`
 }
 
 //RunResponse represents a docker run response

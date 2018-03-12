@@ -6,6 +6,7 @@ import (
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
@@ -75,6 +76,28 @@ func (s *Service) addVariableEvent(name string, variables endly.Variables, conte
 		return
 	}
 	context.Publish(endly.NewModifiedStateEvent(variables, in, out))
+}
+
+//getWorkflowResource returns workflow resource
+func (s *Service) getWorkflowResource(state data.Map, workflowURL string) *url.Resource {
+	resource := url.NewResource(workflowURL)
+	storageService, err := storage.NewServiceForURL(resource.URL, "")
+	if err != nil {
+		return nil
+	}
+	if exists, _ := storageService.Exists(resource.URL); exists {
+		return resource
+	}
+	if !(strings.Contains(workflowURL, "://") || strings.HasPrefix(workflowURL, "/")) {
+		resource, err = s.Dao.NewRepoResource(state, fmt.Sprintf("workflow/%v", workflowURL))
+		if storageService, err = storage.NewServiceForURL(resource.URL, ""); err != nil {
+			return nil
+		}
+		if exists, _ := storageService.Exists(resource.URL); exists {
+			return resource
+		}
+	}
+	return nil
 }
 
 func (s *Service) loadWorkflowIfNeeded(context *endly.Context, name string, URL string) (err error) {
@@ -323,8 +346,77 @@ func (s *Service) runAsyncActions(context *endly.Context, workflow *endly.Workfl
 	return nil
 }
 
+func (s *Service) updatePipelineResource(state data.Map, request *PipelineRequest) error {
+	for _, pipeline := range request.Pipeline {
+		resource := s.getWorkflowResource(state, pipeline.Key.URL())
+		if resource == nil && request.Namespace != "" && pipeline.Key.IsRelative() {
+			resource = s.getWorkflowResource(state, fmt.Sprintf("%v/%v", request.Namespace, pipeline.Key.URL()))
+			if resource == nil {
+				resource = s.getWorkflowResource(state, fmt.Sprintf("%v/%v/%v", request.Namespace, pipeline.Key.Name(), pipeline.Key.URL()))
+			}
+		}
+		if resource == nil {
+			return fmt.Errorf("failed to locate workflow: %v", pipeline.Key.URL())
+		}
+		pipeline.resource = resource
+	}
+	return nil
+}
+
+func (s *Service) pipelineParameters(request *PipelineRequest, pipeline *Pipeline) map[string]interface{} {
+	var result = pipeline.Value
+	if len(result) == 0 {
+		result = make(map[string]interface{})
+	}
+	if len(request.Params) > 0 {
+		for k, v := range request.Params {
+			if _, has := result[k]; !has {
+				result[k] = v
+			}
+		}
+	}
+	return result
+}
+
+func (s *Service) pipeline(context *endly.Context, request *PipelineRequest) (*PipelineResponse, error) {
+	var response = &PipelineResponse{
+		Response: make(map[string]*RunResponse),
+	}
+	var state = context.State()
+	err := s.updatePipelineResource(state, request)
+	if err != nil {
+		return nil, err
+	}
+	for _, pipeline := range request.Pipeline {
+		runContext := context.Clone()
+		runRequest := &RunRequest{
+			WorkflowURL: pipeline.resource.URL,
+			Name:        pipeline.Key.Name(),
+			Tasks:       pipeline.Key.Tasks(),
+			Params:      s.pipelineParameters(request, pipeline),
+		}
+		serviceResponse := s.Run(runContext, runRequest)
+		if serviceResponse.Err != nil {
+			return nil, serviceResponse.Err
+		}
+		response.Response[string(pipeline.Key)], _ = serviceResponse.Response.(*RunResponse)
+	}
+	return response, nil
+}
+
+func (s *Service) pipelineWorkflows(context *endly.Context, request *PipelineRequest) (*PipelineResponse, error) {
+	if request.Async {
+		context.Wait.Add(1)
+		go func() {
+			defer context.Wait.Done()
+			s.pipeline(context, request)
+		}()
+		return &PipelineResponse{}, nil
+	}
+	return s.pipeline(context, request)
+}
+
 func (s *Service) runWorkflow(context *endly.Context, request *RunRequest) (response *RunResponse, err error) {
-	s.startSession(context)
 	if request.Async {
 		context.Wait.Add(1)
 		go func() {
@@ -654,6 +746,26 @@ func (s *Service) registerRoutes() {
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*RunRequest); ok {
 				return s.runWorkflow(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.AbstractService.Register(&endly.ServiceActionRoute{
+		Action: "pipeline",
+		RequestInfo: &endly.ActionInfo{
+			Description: "run pipeline workflow",
+			Examples:    []*endly.ExampleUseCase{},
+		},
+		RequestProvider: func() interface{} {
+			return &PipelineRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &PipelineResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*PipelineRequest); ok {
+				return s.pipelineWorkflows(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},

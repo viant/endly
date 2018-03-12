@@ -32,32 +32,23 @@ func (s *service) getDarwinLaunchServiceInfo(context *endly.Context, target *url
 	if request.Exclusion != "" {
 		request.Exclusion = " | grep -v " + request.Exclusion
 	}
-	commandResult, err := exec.Execute(context, target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: fmt.Sprintf("ls /Library/LaunchDaemons/ | grep %v %v", request.Service, request.Exclusion),
-			},
-		},
-	})
-	if err != nil {
+
+	runResponse := &exec.RunResponse{}
+	runRequest := exec.NewExtractRequest(target, exec.DefaultOptions(), exec.NewExtractCommand(fmt.Sprintf("ls /Library/LaunchDaemons/ | grep %v %v", request.Service, request.Exclusion), "", nil, nil))
+	if err := endly.Run(context, runRequest, runResponse); err != nil {
 		return err
 	}
-	file := strings.TrimSpace(commandResult.Stdout())
+
+	file := strings.TrimSpace(runResponse.Stdout())
 	if len(file) > 0 {
 		info.Path = path.Join("/Library/LaunchDaemons/", file)
 	}
 
-	commandResult, err = exec.Execute(context, target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: fmt.Sprintf("launchctl list | grep %v %v", request.Service, request.Exclusion),
-			},
-		},
-	})
-	if err != nil {
+	runRequest = exec.NewExtractRequest(target, exec.DefaultOptions(), exec.NewExtractCommand(fmt.Sprintf("launchctl list | grep %v %v", request.Service, request.Exclusion), "", nil, nil))
+	if err := endly.Run(context, runRequest, runResponse); err != nil {
 		return err
 	}
-	stdout := commandResult.Stdout()
+	stdout := runResponse.Stdout()
 	for _, line := range strings.Split(stdout, "\n") {
 		columns, ok := util.ExtractColumns(line)
 		if !ok || len(columns) == 0 {
@@ -91,19 +82,15 @@ func (s *service) determineServiceType(context *endly.Context, service, exclusio
 		{serviceTypeStdService, "service --version"},
 		{serviceTypeSystemctl, "systemctl --version"},
 	}
-	var commandResult *exec.RunResponse
+
 	for _, candidate := range systemTypeCommands {
-		commandResult, err = exec.Execute(context, target, &exec.ExtractableCommand{
-			Executions: []*exec.Execution{
-				{
-					Command: candidate.command,
-				},
-			},
-		})
-		if err != nil {
+
+		var runResponse = &exec.RunResponse{}
+		var extractRequest = exec.NewExtractRequest(target, exec.DefaultOptions(), exec.NewExtractCommand(candidate.command, "", nil, nil))
+		if err = endly.Run(context, extractRequest, runResponse); err != nil {
 			break
 		}
-		var stdout = commandResult.Stdout()
+		var stdout = runResponse.Stdout()
 		if !util.CheckNoSuchFileOrDirectory(stdout) && !util.CheckCommandNotFound(stdout) {
 			session.DaemonType = candidate.systemType
 			return session.DaemonType, nil
@@ -145,11 +132,12 @@ func extractServiceInfo(stdout string, state map[string]string, info *Info) {
 	}
 }
 
-func (s *service) executeCommand(context *endly.Context, serviceType int, target *url.Resource, command *exec.ExtractableCommand) (*exec.RunResponse, error) {
-	if serviceType == serviceTypeLaunchCtl {
-		return exec.Execute(context, target, command)
+func (s *service) executeCommand(context *endly.Context, serviceType int, target *url.Resource, request *exec.ExtractRequest) (*exec.RunResponse, error) {
+	var runResponse = &exec.RunResponse{}
+	if serviceType != serviceTypeLaunchCtl {
+		request.SuperUser = true
 	}
-	return exec.ExecuteAsSuperUser(context, target, command)
+	return runResponse, endly.Run(context, request, runResponse)
 }
 
 func (s *service) isLaunchCtlDomainMissing(info *Info) bool {
@@ -164,28 +152,17 @@ func (s *service) determineCheckCommand(context *endly.Context, target *url.Reso
 	case serviceTypeLaunchCtl:
 
 		if info.Pid > 0 {
-			commandResult, err := exec.ExecuteAsSuperUser(context, target, &exec.ExtractableCommand{
-				Executions: []*exec.Execution{
-					{
-						Command: fmt.Sprintf("launchctl procinfo %v", info.Pid),
-						Extraction: endly.DataExtractions{
-							{
-								Key:     "path",
-								RegExpr: "program path[\\s|\\t]+=[\\s|\\t]+([^\\s]+)",
-							},
-							{
-								Key:     "state",
-								RegExpr: "state = (running)",
-							},
-						},
-						Errors: []string{"Unrecognized"},
-					},
-				},
-			})
+			var runResponse = &exec.RunResponse{}
+			var extractRequest = exec.NewExtractRequest(target, exec.DefaultOptions(), exec.NewExtractCommand(fmt.Sprintf("launchctl procinfo %v", info.Pid), "", nil, []string{"Unrecognized"},
+				endly.NewDataExtraction("path", "program path[\\s|\\t]+=[\\s|\\t]+([^\\s]+)", false),
+				endly.NewDataExtraction("state", "state = (running)", false)))
+			extractRequest.SuperUser = true
+
+			err = endly.Run(context, extractRequest, runResponse)
 			if err != nil {
 				return "", err
 			}
-			extractServiceInfo(commandResult.Stdout(), commandResult.Extracted, info)
+			extractServiceInfo(runResponse.Stdout(), runResponse.Extracted, info)
 		}
 		return "", nil
 
@@ -236,39 +213,17 @@ func (s *service) checkService(context *endly.Context, request *StatusRequest) (
 		return info, err
 	}
 
-	commandResult, err := s.executeCommand(context, serviceType, target, &exec.ExtractableCommand{
-		Options: &exec.ExecutionOptions{
-			Terminators: []string{"(END)"},
-		},
-		Executions: []*exec.Execution{
+	var options = exec.DefaultOptions()
+	options.Terminators = append(options.Terminators, "(END)")
 
-			{
-				Command: command,
-				Extraction: endly.DataExtractions{
-					{
-						Key:     "pid",
-						RegExpr: "[^└]+└─(\\d+).+",
-					},
-					{
-						Key:     "pid",
-						RegExpr: " Main PID: (\\d+).+",
-					},
-					{
-						Key:     "state",
-						RegExpr: "[\\s|\\t]+Active:\\s+(\\S+)",
-					},
-					{
-						Key:     "path",
-						RegExpr: "[^└]+└─\\d+[\\s\\t].(.+)",
-					},
-				},
-			},
-			{
-				MatchOutput: "(END)", //quite multiline mode
-				Command:     "Q",
-			},
-		},
-	})
+	commandResult, err := s.executeCommand(context, serviceType, target, exec.NewExtractRequest(
+		target, options, exec.NewExtractCommand(command, "", nil, nil,
+			endly.NewDataExtraction("pid", "[^└]+└─(\\d+).+", true),
+			endly.NewDataExtraction("pid", "Main PID: (\\d+).+", false),
+			endly.NewDataExtraction("state", "[\\s|\\t]+Active:\\s+(\\S+)", false),
+			endly.NewDataExtraction("path", "[^└]+└─\\d+[\\s\\t].(.+)", false)),
+		exec.NewExtractCommand("Q", "(END)", nil, nil)))
+
 	if err != nil {
 		return nil, err
 	}
@@ -307,13 +262,8 @@ func (s *service) stopService(context *endly.Context, request *StopRequest) (*St
 	case serviceTypeInitDaemon:
 		command = fmt.Sprintf("%v stop", serviceInfo.Service)
 	}
-	commandResult, err := s.executeCommand(context, serviceInfo.Type, target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: command,
-			},
-		},
-	})
+	commandResult, err := s.executeCommand(context, serviceInfo.Type, target,
+		exec.NewExtractRequest(target, exec.DefaultOptions(), exec.NewExtractCommand(command, "", nil, nil)))
 	if err != nil {
 		return nil, err
 	}
@@ -351,13 +301,8 @@ func (s *service) startService(context *endly.Context, request *StartRequest) (*
 	case serviceTypeLaunchCtl:
 		if !serviceInfo.Launched {
 			command = fmt.Sprintf("launchctl load -F %v", serviceInfo.Path)
-			_, err = s.executeCommand(context, serviceInfo.Type, target, &exec.ExtractableCommand{
-				Executions: []*exec.Execution{
-					{
-						Command: command,
-					},
-				},
-			})
+			_, err = s.executeCommand(context, serviceInfo.Type, target,
+				exec.NewExtractRequest(target, exec.DefaultOptions(), exec.NewExtractCommand(command, "", nil, nil)))
 			if err != nil {
 				return nil, err
 			}
@@ -375,13 +320,8 @@ func (s *service) startService(context *endly.Context, request *StartRequest) (*
 	case serviceTypeInitDaemon:
 		command = fmt.Sprintf("%v start", serviceInfo.Service)
 	}
-	commandResult, err := s.executeCommand(context, serviceInfo.Type, target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: command,
-			},
-		},
-	})
+	commandResult, err := s.executeCommand(context, serviceInfo.Type, target,
+		exec.NewExtractRequest(target, exec.DefaultOptions(), exec.NewExtractCommand(command, "", nil, nil)))
 	if err != nil {
 		return nil, err
 	}

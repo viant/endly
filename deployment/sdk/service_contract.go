@@ -1,9 +1,9 @@
 package sdk
 
 import (
+	"github.com/pkg/errors"
 	"github.com/viant/toolbox/url"
 	"strings"
-	"github.com/pkg/errors"
 )
 
 //SetRequest represents sdk set request
@@ -14,29 +14,46 @@ type SetRequest struct {
 	Target  *url.Resource //target host
 }
 
-
 //Init initializes request
 func (r *SetRequest) Init() error {
-	if r.Version == "" && strings.Contains(r.Sdk , ":") {
-		var fragments = strings.SplitN(r.Sdk, ":",2)
+	if r.Version == "" && strings.Contains(r.Sdk, ":") {
+		var fragments = strings.SplitN(r.Sdk, ":", 2)
 		r.Sdk = fragments[0]
 		r.Version = fragments[1]
 	}
 	return nil
 }
 
-
 //Validate checks if request if valid
 func (r *SetRequest) Validate() error {
-	if r.Sdk == ""  {
+	if r.Sdk == "" {
 		return errors.New("sdk was empty")
 	}
-	if r.Version == ""  {
+	if r.Version == "" {
 		return errors.New("version was empty")
 	}
 	return nil
 }
 
+//NewSetRequest creates a new sdk request
+func NewSetRequest(target *url.Resource, sdk string, version string, env map[string]string) *SetRequest {
+	if len(env) == 0 {
+		env = make(map[string]string)
+	}
+	return &SetRequest{
+		Target:  target,
+		Sdk:     sdk,
+		Version: version,
+		Env:     env,
+	}
+}
+
+//NewSetRequestFromURL creates a new set request from URL
+func NewSetRequestFromURL(URL string) (*SetRequest, error) {
+	var response = &SetRequest{}
+	resource := url.NewResource(URL)
+	return response, resource.JSONDecode(response)
+}
 
 //SetResponse represents sdk response
 type SetResponse struct {

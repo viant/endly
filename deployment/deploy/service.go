@@ -30,15 +30,13 @@ func (s *service) extractVersion(context *endly.Context, target *url.Resource, d
 	if deployment.VersionCheck == nil {
 		return "", nil
 	}
-	result, err := exec.Execute(context, target, deployment.VersionCheck)
-	if err != nil {
+
+	var runResponse = &exec.RunResponse{}
+	if err := endly.Run(context, deployment.VersionCheck.Clone(target), runResponse); err != nil {
 		return "", err
 	}
-	if result == nil {
-		return "", nil
-	}
-	if len(result.Extracted) > 0 {
-		if version, has := result.Extracted[versionKey]; has {
+	if len(runResponse.Extracted) > 0 {
+		if version, has := runResponse.Extracted[versionKey]; has {
 			return version, nil
 		}
 	}
@@ -48,17 +46,8 @@ func (s *service) extractVersion(context *endly.Context, target *url.Resource, d
 func (s *service) deployAddition(context *endly.Context, target *url.Resource, addition *Addition) (err error) {
 	if addition != nil {
 		if len(addition.Commands) > 0 {
-			if addition.SuperUser {
-				_, err = exec.ExecuteAsSuperUser(context, target, addition.AsRunRequest().AsExtractRequest().ExtractableCommand)
-				if err != nil {
-					return fmt.Errorf("failed to init deploy app to %v: %v", target, err)
-				}
-
-			} else {
-				_, err = exec.Execute(context, target, addition.AsRunRequest())
-				if err != nil {
-					return fmt.Errorf("failed to init deploy app to %v: %v", target, err)
-				}
+			if err = endly.Run(context, addition.AsRunRequest(target), nil); err != nil {
+				return fmt.Errorf("failed to init deploy app to %v: %v", target, err)
 			}
 
 		}
@@ -255,15 +244,12 @@ func (s *service) deploy(context *endly.Context, request *Request) (*Response, e
 	}
 
 	if target.ParsedURL.Path != "" {
-
-		if _, err := exec.Execute(context, target, fmt.Sprintf("cd %v", target.ParsedURL.Path)); err != nil {
-			if _, err = exec.Execute(context, target, "cd /"); err != nil {
+		if err := endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.ParsedURL.Path)), nil); err != nil {
+			if err := endly.Run(context, exec.NewRunRequest(target, false, "cd /"), nil); err != nil {
 				return nil, err
 			}
 		}
-
 	}
-
 	meta, err := s.getMeta(context, request)
 	if err != nil {
 		return nil, err
@@ -302,11 +288,8 @@ func (s *service) deploy(context *endly.Context, request *Request) (*Response, e
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy: %v", err)
 	}
-	if deploymentTarget.Deployment.Command != nil {
-		_, err = exec.Execute(context, target,
-			deploymentTarget.Deployment.Command,
-		)
-		if err != nil {
+	if deploymentTarget.Deployment.Run != nil {
+		if err = endly.Run(context, deploymentTarget.Deployment.Run.Clone(target), nil); err != nil {
 			return nil, fmt.Errorf("failed to init deploy app to %v: %v", target, err)
 		}
 	}

@@ -26,11 +26,9 @@
             "Credential": "$targetHostCredential"
           }
         },
-        "Command": {
-          "Options": {
-            "Directory": "$appDirectory"
-          },
-          "Executions": [
+        "Run": {
+          "Directory": "$appDirectory",
+          "Commands": [
             {
               "Command": "tar xvzf apache-tomcat-${artifact.Version}.tar.gz",
               "Error": [
@@ -46,7 +44,7 @@
           ]
         },
         "VersionCheck": {
-          "Executions": [
+          "Run": [
             {
               "Command": "sh tomcat/bin/version.sh",
               "Extraction": [

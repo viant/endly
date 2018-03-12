@@ -3,7 +3,6 @@ package cli_test
 import (
 	"bytes"
 	"github.com/stretchr/testify/assert"
-	"github.com/viant/endly"
 	"github.com/viant/endly/cli"
 	"testing"
 )

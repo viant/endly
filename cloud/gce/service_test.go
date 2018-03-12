@@ -102,7 +102,7 @@ func TestNewGceService_WithError(t *testing.T) {
 
 func TestGCEService_NewRequest(t *testing.T) {
 	parent := toolbox.CallerDirectory(3)
-	credential := path.Join(parent, "test/gce/secret.json")
+	credential := path.Join(parent, "test/secret.json")
 	service, ctx, err := gce.NewComputeService(credential)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
@@ -112,7 +112,7 @@ func TestGCEService_NewRequest(t *testing.T) {
 
 func Test_NewComputeService(t *testing.T) {
 	parent := toolbox.CallerDirectory(3)
-	credential := path.Join(parent, "test/gce/asecret.json")
+	credential := path.Join(parent, "test/asecret.json")
 	_, _, err := gce.NewComputeService(credential)
 	assert.NotNil(t, err)
 

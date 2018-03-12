@@ -2,7 +2,7 @@
   "Target": "$dockerTarget",
   "Name":"$serviceInstanceName",
 
-  "Credentials": {
+  "Secrets": {
     "***mysql***": "$mysqlCredential"
   },
   "Interactive":true,
