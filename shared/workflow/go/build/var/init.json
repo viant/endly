@@ -1,0 +1,48 @@
+[
+  {
+    "Name":"containerName",
+    "Value":"go_build",
+    "From":"params.containerName",
+    "Required":true
+  },
+  {
+    "Name":"dockerImage",
+    "Value":"rastasheep/ubuntu-sshd:14.04",
+    "From":"params.dockerImage",
+    "Required":true
+  },
+  {
+    "Name":"commands",
+    "From":"params.commands",
+    "Required":true
+  },
+  {
+    "Name": "targetHost",
+    "From": "params.targetHost",
+    "Value":"ssh://127.0.0.1/",
+    "Required": true
+  },
+  {
+    "Name": "targetHostCredential",
+    "From": "params.targetHostCredential",
+    "Value":"${env.HOME}/.secret/localhost.json",
+    "Required": true
+  },
+
+  {
+    "Name": "dockerTarget",
+    "Value": {
+      "URL": "$targetHost",
+      "Credential": "$targetHostCredential"
+    }
+  },
+
+  {
+    "Name": "buildTarget",
+    "Value": {
+      "URL": "scp://127.0.0.1:7722/",
+      "Credential": "mem://github.com/viant/endly/workflow/go/build/secret/build.json"
+    }
+  }
+
+]

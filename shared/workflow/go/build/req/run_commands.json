@@ -1,0 +1,4 @@
+{
+  "Commands": "$commands",
+  "Target": "$buildTarget"
+}

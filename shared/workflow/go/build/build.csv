@@ -1,0 +1,7 @@
+Workflow,,Name,Description,Tasks,Init,,,
+,,build,Build go app in docker container,%Tasks,@var/init,,,
+[]Tasks,,Name,Description,Actions,,,,
+,,build,Run an action,%Run,,,,
+[]Run,Service,Action,Description,Request,,,,
+,docker,run,Run SSHD docker,@req/docker_run,,,,
+,exec,extract,Run commands,@req/run_commands,,,,
