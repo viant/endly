@@ -11,6 +11,7 @@ import (
 type SendRequest struct {
 	Target *url.Resource `required:"true" description:"SMTP endpoint"`
 	Mail   *MailMessage  `required:"true"`
+	UDF string `description:"body UDF"`
 }
 
 //SendResponse represents send response.
