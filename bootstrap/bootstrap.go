@@ -38,6 +38,7 @@ import (
 	_ "github.com/viant/endly/system/exec"
 	_ "github.com/viant/endly/system/process"
 	_ "github.com/viant/endly/system/storage"
+	_ "github.com/viant/endly/system/network"
 
 	"bufio"
 	"errors"
