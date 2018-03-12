@@ -1,0 +1,8 @@
+{
+  "Target": "$dockerTarget",
+  "Name":"$containerName",
+  "Image": "$dockerImage",
+  "Ports": {
+    "7722": "22"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "Target": {
+    "URL": "scp://127.0.0.1"
+  },
+  "Commands": [
+    {
+      "Command": "ls -al"
+    },
+    {
+      "When": "$stdout:/home/",
+      "Command": "ls -al /home/"
+    }
+  ],
+  "TimeoutMs":3200
+}
