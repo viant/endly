@@ -1,4 +1,4 @@
-package reset
+package rest
 
 //Request represents a send request
 type Request struct {

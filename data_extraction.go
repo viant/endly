@@ -15,6 +15,15 @@ type DataExtraction struct {
 	Reset   bool   `description:"reset the key in the context before evaluating this data extraction rule"`           //reset the key in the context before evaluating this data extraction rule
 }
 
+//NewDataExtraction creates a new data extraction
+func NewDataExtraction(key, regExpr string, reset bool) *DataExtraction {
+	return &DataExtraction{
+		RegExpr: regExpr,
+		Key:     key,
+		Reset:   reset,
+	}
+}
+
 //DataExtractions a slice of DataExtractions
 type DataExtractions []*DataExtraction
 
@@ -23,13 +32,11 @@ func (d *DataExtractions) Extract(context *Context, extracted map[string]string,
 	if len(*d) == 0 || len(input) == 0 {
 		return nil
 	}
-
 	for _, extract := range *d {
 		if extract.Reset {
 			delete(extracted, extract.Key)
 		}
 	}
-
 	for _, extract := range *d {
 		compiledExpression, err := regexp.Compile(extract.RegExpr)
 		if err != nil {

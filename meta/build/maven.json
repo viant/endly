@@ -9,12 +9,10 @@
   "Goals": [
     {
       "Name": "build",
-      "Command": {
-        "Options": {
-          "Directory": "$buildSpec.path",
-          "TimeoutMs": 720000
-        },
-        "Executions": [
+      "Run": {
+        "Directory": "$buildSpec.path",
+        "TimeoutMs": 720000,
+        "Commands": [
           {
             "Command": "cd $buildSpec.path"
           },

@@ -13,7 +13,6 @@ type OperatingSystem struct {
 	Hardware     string
 	Architecture string
 	Version      string
-	Path         *SystemPath
 }
 
 func normalizeVersion(version string, count int) int {

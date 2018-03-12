@@ -9,6 +9,7 @@ import (
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
+	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/url"
 	"strings"
 )
@@ -128,7 +129,7 @@ func (s *service) resetContainerIfNeeded(context *endly.Context, target *url.Res
 func (s *service) runContainer(context *endly.Context, request *RunRequest) (*RunResponse, error) {
 	var err error
 
-	var credentials = s.applyCredentialIfNeeded(request.Credentials)
+	var credentials = s.applyCredentialIfNeeded(request.Secrets)
 
 	checkResponse, err := s.checkContainerProcesses(context, &ContainerStatusRequest{
 		Target: request.Target,
@@ -304,7 +305,7 @@ func (s *service) runInContainer(context *endly.Context, request *ContainerRunRe
 	if executionOptions != "" {
 		executionOptions = "-" + executionOptions
 	}
-	response.Stdout, err = s.runContainerCommand(context, request.Credentials, request.Name, request.Target, "exec", executionOptions, execArguments)
+	response.Stdout, err = s.runContainerCommand(context, request.Secrets, request.Name, request.Target, "exec", executionOptions, execArguments)
 	return response, err
 }
 
@@ -438,57 +439,47 @@ func (s *service) startDockerIfNeeded(context *endly.Context, target *url.Resour
 
 }
 
-func (s *service) executeSecureDockerCommand(asRoot bool, secure map[string]string, context *endly.Context, target *url.Resource, errors []string, command string) (*exec.RunResponse, error) {
+func (s *service) executeSecureDockerCommand(asRoot bool, secrets map[string]string, context *endly.Context, target *url.Resource, errors []string, command string) (*exec.RunResponse, error) {
 	s.applySysPathIfNeeded([]string{})
-	if len(secure) == 0 {
-		secure = make(map[string]string)
+	if len(secrets) == 0 {
+		secrets = make(map[string]string)
 	}
-	secure[exec.SudoCredentialKey] = target.Credential
+	secrets[exec.SudoCredentialKey] = target.Credential
 	command = strings.Replace(command, "\n", " ", len(command))
-	var extractableCommand = &exec.ExtractableCommand{
-		Options: &exec.ExecutionOptions{
-			SystemPaths: s.SysPath,
-			TimeoutMs:   120000,
-		},
-		Executions: []*exec.Execution{
-			{
-				Credentials: secure,
-				Command:     command,
-				Errors:      append(errors, []string{util.CommandNotFound}...),
-			},
-		},
-	}
-	var runRequest interface{} = extractableCommand
-	if asRoot {
-		runRequest = &exec.SuperRunRequest{
-			MangedCommand: extractableCommand,
-		}
-	}
-	response, err := exec.Execute(context, target, runRequest)
 
+	var extractRequest = exec.NewExtractRequest(target, exec.DefaultOptions(),
+		exec.NewExtractCommand(command, "", nil, []string{util.CommandNotFound}))
+
+	extractRequest.TimeoutMs = 120000
+	extractRequest.SystemPaths = s.SysPath
+	extractRequest.Secrets = secret.NewSecrets(secrets)
+	extractRequest.SuperUser = asRoot
+
+	var runResponse = &exec.RunResponse{}
+
+	err := endly.Run(context, extractRequest, runResponse)
 	if err != nil {
 		if util.CheckCommandNotFound(err.Error()) {
 			return nil, err
 		}
-		if response != nil && !util.EscapedContains(response.Stdout(), dockerNotRunning) {
+		if runResponse != nil && !util.EscapedContains(runResponse.Stdout(), dockerNotRunning) {
 			return nil, err
 		}
 		s.startDockerIfNeeded(context, target)
-		response, err = exec.Execute(context, target, runRequest)
-		if err != nil {
+
+		if err := endly.Run(context, extractRequest, runResponse); err != nil {
 			return nil, err
 		}
-
 	}
-	var stdout = response.Stdout()
 
+	var stdout = runResponse.Stdout()
 	if strings.Contains(stdout, containerInUse) {
-		return response, nil
+		return runResponse, nil
 	}
 	if strings.Contains(stdout, dockerError) {
-		return response, fmt.Errorf("error executing %v, %v", command, vtclean.Clean(stdout, false))
+		return runResponse, fmt.Errorf("error executing %v, %v", command, vtclean.Clean(stdout, false))
 	}
-	return response, nil
+	return runResponse, nil
 }
 
 func (s *service) build(context *endly.Context, request *BuildRequest) (*BuildResponse, error) {
@@ -745,7 +736,7 @@ const (
   "Interactive": true,
   "AllocateTerminal": true,
   "Command": "mysqldump  -uroot -p***mysql*** --all-databases --routines | grep -v 'Warning' > /tmp/dump.sql",
-  "Credentials": {
+  "Secrets": {
     "***mysql***": "${env.HOME}/.secret/aws-west-mysql.json"
   }
 }`
@@ -758,7 +749,7 @@ const (
   "Name": "mydb1",
   "Interactive": true,
   "Command": "mysql  -uroot -p**mysql** < /tmp/dump.sql",
-  "Credentials": {
+  "Secrets": {
     "***mysql***": "${env.HOME}/.secret/aws-west-mysql.json"
   }
 }`

@@ -44,14 +44,8 @@ func (s *service) commit(context *endly.Context, request *CommitRequest) (*Commi
 	if err != nil {
 		return nil, err
 	}
-	_, err = exec.Execute(context, target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: fmt.Sprintf("cd %v", target.DirectoryPath()),
-			},
-		},
-	})
-	if err != nil {
+
+	if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.DirectoryPath())), nil); err != nil {
 		return nil, err
 	}
 	switch request.Type {
@@ -70,14 +64,7 @@ func (s *service) pull(context *endly.Context, request *PullRequest) (*PullRespo
 	if err != nil {
 		return nil, err
 	}
-	_, err = exec.Execute(context, target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: fmt.Sprintf("cd %v", target.DirectoryPath()),
-			},
-		},
-	})
-	if err != nil {
+	if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.DirectoryPath())), nil); err != nil {
 		return nil, err
 	}
 	switch request.Type {
@@ -99,30 +86,15 @@ func (s *service) checkout(context *endly.Context, request *CheckoutRequest) (*C
 		return nil, err
 	}
 	var modules = request.Modules
+	var directory = target.DirectoryPath()
 	if len(modules) == 0 {
 		modules = append(modules, "")
 		parent, _ := path.Split(target.DirectoryPath())
-		_, err = exec.Execute(context, target, &exec.ExtractableCommand{
-			Executions: []*exec.Execution{
-				{
-					Command: fmt.Sprintf("mkdir -p %v", parent),
-				},
-			},
-		})
-
-	} else {
-		_, err = exec.Execute(context, target, &exec.ExtractableCommand{
-			Executions: []*exec.Execution{
-				{
-					Command: fmt.Sprintf("mkdir -p %v", target.DirectoryPath()),
-				},
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
+		directory = parent
 	}
-
+	if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("mkdir -p %v", directory)), nil); err != nil {
+		return nil, err
+	}
 	origin, err := context.ExpandResource(request.Origin)
 	if err != nil {
 		return nil, err
@@ -182,14 +154,7 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 		}
 
 		if removeLocalChanges {
-			_, err = exec.Execute(context, target, &exec.ExtractableCommand{
-				Executions: []*exec.Execution{
-					{
-						Command: fmt.Sprintf("rm -rf %v", directoryPath),
-					},
-				},
-			})
-			if err != nil {
+			if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("rm -rf %v", directoryPath)), nil); err != nil {
 				return nil, err
 			}
 		} else {

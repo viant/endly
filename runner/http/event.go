@@ -31,8 +31,6 @@ func (r *Request) Messages() []*endly.Message {
 	return response
 }
 
-
-
 //Messages returns messages
 func (r *Response) Messages() []*endly.Message {
 	var response = make([]*endly.Message, 0)
@@ -64,11 +62,7 @@ func (r *Request) IsInput() bool {
 	return true
 }
 
-
 //IsOutput returns this response (CLI reporter interface)
 func (r *Response) IsOutput() bool {
 	return true
 }
-
-
-

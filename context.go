@@ -5,6 +5,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 	"math/rand"
@@ -37,6 +38,7 @@ var WorkflowKey = (*Workflow)(nil)
 type Context struct {
 	SessionID  string
 	CLIEnabled bool
+	Secrets    *secret.Service
 	Wait       *sync.WaitGroup
 	Listener   EventListener
 	Workflows  *Workflows
@@ -99,6 +101,7 @@ func (c *Context) Clone() *Context {
 	result.Workflows = c.Workflows
 	result.Listener = c.Listener
 	result.CLIEnabled = c.CLIEnabled
+	result.Secrets = c.Secrets
 	c.cloned = append(c.cloned, result)
 	return result
 }

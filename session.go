@@ -12,6 +12,9 @@ type SystemTerminalSession struct {
 	DaemonType       int
 	Service          ssh.Service
 	OperatingSystem  *OperatingSystem
+	Username         string
+	SuperUSerAuth    bool
+	Path             *SystemPath
 	EnvVariables     map[string]string
 	CurrentDirectory string
 	Deployed         map[string]string

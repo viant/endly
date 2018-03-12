@@ -70,10 +70,8 @@ func (s *service) loadMeta(context *endly.Context, request *LoadMetaRequest) (*L
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode: %v, %v", source.URL, err)
 	}
-
 	meta.goalsIndex = make(map[string]*Goal)
 	indexBuildGoals(meta.Goals, meta.goalsIndex)
-
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	s.registry[meta.Name] = meta
@@ -142,6 +140,7 @@ func (s *service) build(context *endly.Context, request *Request) (*Response, er
 	if err != nil {
 		return nil, err
 	}
+
 	buildSpec := request.BuildSpec
 	goal, has := meta.goalsIndex[buildSpec.Goal]
 	if !has {
@@ -170,19 +169,23 @@ func (s *service) build(context *endly.Context, request *Request) (*Response, er
 		}
 	}
 
-	if len(request.Credentials) > 0 {
-		for _, execution := range goal.Command.Executions {
-			if execution.MatchOutput != "" {
-				execution.Credentials = request.Credentials
+	if goal.Run == nil {
+		return nil, fmt.Errorf("run was empty %v %v\n", goal.Name, request.BuildSpec.Name)
+	}
+
+	if len(request.Secrets) > 0 {
+		for _, command := range goal.Run.Commands {
+			if command.When != "" {
+				goal.Run.Secrets = request.Secrets
 			}
 		}
 	}
-	commandInfo, err := exec.Execute(context, target, goal.Command)
-	if err != nil {
+
+	runResponse := &exec.RunResponse{}
+	if err := endly.Run(context, goal.Run.Clone(target), runResponse); err != nil {
 		return nil, err
 	}
-	result.CommandInfo = commandInfo
-
+	result.CommandInfo = runResponse
 	if goal.PostTransfers != nil {
 		_, err = storage.Copy(context, goal.PostTransfers.Transfers...)
 		if err != nil {
@@ -190,9 +193,8 @@ func (s *service) build(context *endly.Context, request *Request) (*Response, er
 		}
 	}
 
-	if goal.VerificationCommand != nil {
-		_, err = exec.Execute(context, target, goal.VerificationCommand)
-		if err != nil {
+	if goal.Verify != nil {
+		if err := endly.Run(context, goal.Run.Clone(target), nil); err != nil {
 			return nil, err
 		}
 	}

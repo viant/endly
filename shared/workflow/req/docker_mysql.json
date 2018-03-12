@@ -3,7 +3,7 @@
     "MYSQL_ROOT_PASSWORD": "***mysql***"
   },
   "Target": "$dockerTarget",
-  "Credentials": {
+  "Secrets": {
     "***mysql***":"$mysqlCredential"
   },
   "Name":"$serviceInstanceName",

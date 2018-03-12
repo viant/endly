@@ -81,7 +81,7 @@ func TestCliRunner_RunDsUnitWorkflow(t *testing.T) {
 //	}
 //	{
 //		err := runner.Run(&endly.WorkflowRunRequest{
-//			WorkflowURL: "action",
+//			URL: "action",
 //			Tasks:       "run",
 //			Params: map[string]interface{}{
 //				"service": "logger",
@@ -95,7 +95,7 @@ func TestCliRunner_RunDsUnitWorkflow(t *testing.T) {
 //	{
 //
 //		err := runner.Run(&endly.WorkflowRunRequest{
-//			WorkflowURL: "action",
+//			URL: "action",
 //			Tasks:       "run",
 //			Params: map[string]interface{}{
 //				"service": "workflow",

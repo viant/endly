@@ -4,7 +4,7 @@
     "POSTGRES_USER": "###pg###"
   },
   "Target": "$dockerTarget",
-  "Credentials": {
+  "Secrets": {
     "###pg###": "$mysqlCredential",
     "***pg***": "$mysqlCredential"
   },

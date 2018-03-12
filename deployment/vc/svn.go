@@ -5,6 +5,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
+	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
@@ -18,48 +19,36 @@ func (s *svnService) checkInfo(context *endly.Context, request *StatusRequest) (
 		return nil, err
 	}
 	var result = &StatusResponse{&Info{}}
-	response, err := exec.Execute(context, target, fmt.Sprintf("cd %v", target.DirectoryPath()))
-	if err != nil || util.CheckCommandNotFound(response.Stdout()) {
+	var runResponse = &exec.RunResponse{}
+	if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.DirectoryPath())), runResponse); err != nil ||
+		util.CheckCommandNotFound(runResponse.Stdout()) {
 		return result, nil
 	}
 
-	response, err = exec.Execute(context, request.Target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: fmt.Sprintf("svn info"),
-				Extraction: []*endly.DataExtraction{
-					{
-						RegExpr: "^URL:[\\t\\s]+([^\\s]+)",
-						Key:     "origin",
-					},
-					{
-						RegExpr: "Revision:\\s+([^\\s]+)",
-						Key:     "revision",
-					},
-				},
-			},
-			{
-				Command: fmt.Sprintf("svn stat"),
-			},
-		},
-	})
+	extractRequest := exec.NewExtractRequest(target,
+		exec.DefaultOptions(),
+		exec.NewExtractCommand(fmt.Sprintf("svn info"), "", nil, nil,
+			endly.NewDataExtraction("origin", "^URL:[\\t\\s]+([^\\s]+)", false),
+			endly.NewDataExtraction("revision", "Revision:\\s+([^\\s]+)", false)),
+		exec.NewExtractCommand(fmt.Sprintf("svn stat"), "", nil, nil))
 
-	if err != nil {
+	if err = endly.Run(context, extractRequest, runResponse); err != nil {
 		return nil, err
 	}
-	if revison, has := response.Extracted["revision"]; has {
+
+	if revison, has := runResponse.Extracted["revision"]; has {
 		result.Revision = revison
 	}
-	if origin, has := response.Extracted["origin"]; has {
+	if origin, has := runResponse.Extracted["origin"]; has {
 		result.Origin = origin
 		_, result.Branch = path.Split(origin)
 	}
-	if strings.Contains(response.Stdout(1), "is not a working copy") {
+	if strings.Contains(runResponse.Stdout(1), "is not a working copy") {
 		return result, nil
 	}
 	result.IsVersionControlManaged = true
 
-	readSvnStatus(response, result.Info)
+	readSvnStatus(runResponse, result.Info)
 	return result, nil
 }
 
@@ -115,36 +104,25 @@ func (s *svnService) checkout(context *endly.Context, request *CheckoutRequest) 
 }
 
 func (s *svnService) runSecureSvnCommand(context *endly.Context, target *url.Resource, origin *url.Resource, info *Info, command string, arguments ...string) error {
-	username, _, err := origin.LoadCredential(true)
+	var username, err = util.GetUsername(context.Secrets, origin.Credential)
 	if err != nil {
 		return err
 	}
-	var credentials = make(map[string]string)
-	credentials[CredentialKey] = origin.Credential
-	_, err = exec.Execute(context, target, &exec.ExtractableCommand{
-		Options: &exec.ExecutionOptions{
-			TimeoutMs:   1000 * 200,
-			Terminators: []string{"Password for", "(yes/no)?"},
-		},
-		Executions: []*exec.Execution{
-			{
-				Command: fmt.Sprintf("svn %v --username=%v %v", command, username, strings.Join(arguments, " ")),
-				Errors:  []string{"No such file or directory", "Event not found", "Errors validating server certificate", "Unable to connect to a repository"},
-			},
-			{
-				Credentials: credentials,
-				MatchOutput: "Password",
-				Command:     CredentialKey,
-				Errors:      []string{"No such file or directory", "Event not found", "Username:"},
-			},
-			{
-				MatchOutput: "Store password unencrypted",
-				Command:     "no",
-				Errors:      []string{"No such file or directory", "Event not found", "Errors validating server certificate"},
-			},
-		},
-	})
-	err = checkVersionControlAuthErrors(err, origin)
+	var secrets = make(map[string]string)
+	secrets[CredentialKey] = origin.Credential
+
+	var extractRequest = exec.NewExtractRequest(target,
+		exec.DefaultOptions(),
+		exec.NewExtractCommand(fmt.Sprintf("svn %v --username=%v %v", command, username, strings.Join(arguments, " ")), "", nil, []string{util.NoSuchFileOrDirectory, "Event not found", "Errors validating server certificate", "Unable to connect to a repository"}),
+		exec.NewExtractCommand(CredentialKey, "Password", nil, []string{util.NoSuchFileOrDirectory, "Event not found", "Username:"}),
+		exec.NewExtractCommand("no", "Store password unencrypted", nil, []string{util.NoSuchFileOrDirectory, "Event not found", "Errors validating server certificate"}))
+	extractRequest.TimeoutMs = 1000 * 200
+	extractRequest.Terminators = append(extractRequest.Terminators, "Password for", "(yes/no)?")
+	extractRequest.Secrets = secret.NewSecrets(secrets)
+
+	if err = endly.Run(context, extractRequest, nil); err != nil {
+		err = checkVersionControlAuthErrors(err, context.Secrets, origin)
+	}
 	if err != nil {
 		return err
 	}
@@ -159,14 +137,9 @@ func (s *svnService) runSecureSvnCommand(context *endly.Context, target *url.Res
 }
 
 func (s *svnService) commit(context *endly.Context, request *CommitRequest) (*CommitResponse, error) {
-	runResponse, err := exec.Execute(context, request.Target, &exec.ExtractableCommand{
-		Executions: []*exec.Execution{
-			{
-				Command: fmt.Sprintf("svn ci -m \"%v\" ", strings.Replace(request.Message, "\"", "'", len(request.Message))),
-			},
-		},
-	})
-	if err != nil {
+	runResponse := &exec.RunResponse{}
+	var cmd = fmt.Sprintf("svn ci -m \"%v\" ", strings.Replace(request.Message, "\"", "'", len(request.Message)))
+	if err := endly.Run(context, exec.NewRunRequest(request.Target, false, cmd), runResponse); err != nil {
 		return nil, err
 	}
 	if util.CheckNoSuchFileOrDirectory(runResponse.Stdout()) {

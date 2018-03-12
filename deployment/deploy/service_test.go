@@ -3,6 +3,7 @@ package deploy_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly/deployment/deploy"
+	_ "github.com/viant/endly/static"
 	"github.com/viant/endly/system/storage"
 	"github.com/viant/toolbox/url"
 	"testing"
@@ -11,11 +12,8 @@ import (
 func Test_MatchVersion(t *testing.T) {
 	assert.True(t, deploy.MatchVersion("10.2", "10.2.1"))
 	assert.True(t, deploy.MatchVersion("10.2.1", "10.2"))
-
 	assert.False(t, deploy.MatchVersion("10.1", "10.2.1"))
-
 	assert.True(t, deploy.MatchVersion("10.2.1", "10.2.1"))
-
 }
 
 func Test_DeplymentValiate(t *testing.T) {

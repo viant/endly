@@ -34,9 +34,9 @@ func openTestContext(manager endly.Manager, target *url.Resource, commandDirecto
 	var err error
 	context := manager.NewContext(toolbox.NewContext())
 	request := &OpenSessionRequest{
-		Target:          target,
-		CommandsBasedir: commandDirectory,
-		ReplayService:   service,
+		Target:        target,
+		Basedir:       commandDirectory,
+		ReplayService: service,
 	}
 	srv, err := manager.Service(ServiceID)
 	if err != nil {
@@ -50,12 +50,13 @@ func openTestContext(manager endly.Manager, target *url.Resource, commandDirecto
 	return context, nil
 }
 
-//OpenTestRecorderContext open recorder context (to capture SSH command)
-func OpenTestRecorderContext(manager endly.Manager, target *url.Resource, commandDirectory string) (*endly.Context, error) {
-	fileName, _, _ := toolbox.CallerInfo(2)
+//OpenRecorderContext open recorder context (to capture SSH command)
+func OpenRecorderContext(manager endly.Manager, target *url.Resource, sessionDir string) (*endly.Context, error) {
+	fileName, _, _ := toolbox.CallerInfo(3)
 	parent, _ := path.Split(fileName)
-	commandDirectory = path.Join(parent, commandDirectory)
-	return openTestContext(manager, target, commandDirectory, nil)
+	sessionDir = path.Join(parent, sessionDir)
+	fmt.Printf("sessionDir: %v\n", sessionDir)
+	return openTestContext(manager, target, sessionDir, nil)
 }
 
 //OpenTestContext opens test context with SSH commands to replay

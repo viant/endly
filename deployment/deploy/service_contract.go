@@ -67,11 +67,11 @@ type TargetMeta struct {
 
 //Deployment represents deployment instruction
 type Deployment struct {
-	Pre          *Addition                `description:"initialization deployment instruction"`
-	Transfer     *storage.Transfer        `required:"true" description:"software deployment instruction"` //actual copy instruction
-	Command      *exec.ExtractableCommand `description:"post deployment commands, i.e. tar xvzf"`         //post deployment command like tar xvzf
-	VersionCheck *exec.ExtractableCommand `description:"version extraction command"`                      //command to check version
-	Post         *Addition                `description:"post deployment instruction"`
+	Pre          *Addition            `description:"initialization deployment instruction"`
+	Transfer     *storage.Transfer    `required:"true" description:"software deployment instruction"` //actual copy instruction
+	Run          *exec.ExtractRequest `description:"post deployment commands, i.e. tar xvzf"`         //post deployment command like tar xvzf
+	VersionCheck *exec.ExtractRequest `description:"version extraction command"`                      //command to check version
+	Post         *Addition            `description:"post deployment instruction"`
 }
 
 //Addition represents deployment additions.
@@ -121,11 +121,8 @@ func (m *Meta) Validate() error {
 }
 
 //AsRunRequest creates a exec run request.
-func (a *Addition) AsRunRequest() *exec.RunRequest {
-	return &exec.RunRequest{
-		Commands:  a.Commands,
-		SuperUser: a.SuperUser,
-	}
+func (a *Addition) AsRunRequest(target *url.Resource) *exec.RunRequest {
+	return exec.NewRunRequest(target, a.SuperUser, a.Commands...)
 }
 
 //MatchVersion checks expected and actual version returns true if matches.

@@ -9,25 +9,23 @@
   "Goals": [
     {
       "Name": "build",
-      "Command": {
-        "Options": {
-          "Directory": "$buildSpec.path",
-          "TimeoutMs": 120000,
-          "Env": {
-            "GIT_TERMINAL_PROMPT": "1"
-          },
-          "Terminators": [
-            "Error",
-            "command not found",
-            "imported and not used",
-            "package ",
-            "Password",
-            "in single-value context",
-            "cannot use ",
-            "exit status 1"
-          ]
+      "Run": {
+        "Directory": "$buildSpec.path",
+        "TimeoutMs": 120000,
+        "Env": {
+          "GIT_TERMINAL_PROMPT": "1"
         },
-        "Executions": [
+        "Terminators": [
+          "Error",
+          "command not found",
+          "imported and not used",
+          "package ",
+          "Password",
+          "in single-value context",
+          "cannot use ",
+          "exit status 1"
+        ],
+        "Commands": [
           {
             "Command": "cd $buildSpec.path"
           },
@@ -47,11 +45,11 @@
             ]
           },
           {
-            "MatchOutput": "Username for",
+            "When": "$stdout:/Username for/",
             "Command": "##git##"
           },
           {
-            "MatchOutput": "Password",
+            "When": "$stdout:/Password/",
             "Command": "**git**",
             "Error": [
               "Username for",

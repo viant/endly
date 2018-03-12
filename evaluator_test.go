@@ -44,6 +44,12 @@ func Test_EvaluateCriteria(t *testing.T) {
 			Expected:      true,
 		},
 		{
+			Description:   "Constant equal",
+			Expression:    "a=a",
+			DefaultResult: true,
+			Expected:      true,
+		},
+		{
 			Description:   "Empty expression with default false",
 			Expression:    "",
 			DefaultResult: false,

@@ -4,7 +4,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/exec"
+	"github.com/viant/endly/util"
 	"github.com/viant/toolbox/url"
+	"log"
+	"os"
 	"testing"
 )
 
@@ -20,17 +23,13 @@ func TestNewExecService(t *testing.T) {
 			description: "open new session on linux",
 			baseDir:     "test/open/linux",
 			target:      url.NewResource("ssh://127.0.0.1:22/etc"),
-			expected: &endly.OperatingSystem{Name: "ubuntu", Architecture: "x64", Hardware: "x86_64", Version: "17.04", System: "linux", Path: &endly.SystemPath{
-				Items: []string{"/usr/local/sbin", "/usr/local/bin", "/usr/sbin", "/usr/bin", "/sbin", "/bin", "/usr/games", "/usr/local/games"},
-			}},
+			expected:    &endly.OperatingSystem{Name: "ubuntu", Architecture: "x64", Hardware: "x86_64", Version: "17.04", System: "linux"},
 		},
 		{
 			description: "open new session on osx",
 			baseDir:     "test/open/darwin",
 			target:      url.NewResource("ssh://127.0.0.1:22/etc"),
-			expected: &endly.OperatingSystem{Name: "macosx", Architecture: "x64", Hardware: "x86_64", Version: "10.12.6", System: "darwin", Path: &endly.SystemPath{
-				Items: []string{"/usr/local/apache-maven-3.2.5/bin", "/usr/local/opt/libpcap/bin", "/usr/libexec/", "/Projects/go/workspace/bin", "/usr/local/apache-maven-3.2.5/bin", "/usr/local/opt/libpcap/bin", "/usr/libexec/", "/Projects/go/workspace/bin", "/usr/bin", "/bin", "/usr/sbin", "/sbin"},
-			}},
+			expected:    &endly.OperatingSystem{Name: "macosx", Architecture: "x64", Hardware: "x86_64", Version: "10.12.6", System: "darwin"},
 		},
 	}
 
@@ -49,7 +48,6 @@ func TestNewExecService(t *testing.T) {
 					assert.Equal(t, expected.Version, actual.Version, "os.version")
 					assert.Equal(t, expected.Hardware, actual.Hardware, "os.hardware")
 					assert.Equal(t, expected.System, actual.System, "os.system")
-					assert.EqualValues(t, expected.Path.Items, actual.Path.Items, "os.path")
 				}
 			}
 
@@ -59,37 +57,110 @@ func TestNewExecService(t *testing.T) {
 
 }
 
-func Test_NewSimpleCommandRequest(t *testing.T) {
-	command := exec.NewSimpleRunRequest(url.NewResource("scp://127.0.0.1"), "ls -al")
-	assert.EqualValues(t, "ls -al", command.ExtractableCommand.Executions[0].Command)
+func Test_NoTransientSession(t *testing.T) {
+	manager := endly.New()
+	var credential, err = util.GetDummyCredential()
+	if err != nil {
+		log.Fatal(err)
+	}
+	target := url.NewResource("ssh://127.0.0.1", credential)
+	SSHService, err := exec.GetReplayService("test/session/context")
+	if err != nil {
+		log.Fatal(err)
+	}
+	context, err := exec.OpenTestContext(manager, target, SSHService)
+	if err != nil {
+		log.Fatal(err)
+	}
+	response, err := manager.Run(context, exec.NewOpenSessionRequest(target, []string{"/usr/local/bin"}, map[string]string{"M2_HOME": "/users/test/.m2/"}, false, "/"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	openResponse := response.(*exec.OpenSessionResponse)
+	sessions := context.TerminalSessions()
+	assert.True(t, sessions.Has(openResponse.SessionID))
+	log.Print(openResponse.SessionID)
+	context.Close()
+	assert.False(t, sessions.Has(openResponse.SessionID))
 }
 
-// Function template  to capture SSH conversation
-//func TestXXXXService_Run(t *testing.T) {
-//
-//	var credentialFile = path.Join(os.Getenv("HOME"), ".secret/localhost.json")
-//
-//	//var target = url.NewResource("scp://35.197.115.53:22/", credentialFile) //
-//	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-//	manager := endly.New()
-//
-//	context, err := OpenTestRecorderContext(manager, target, "test/daemon/start/unknown/darwin")
-//	///context := manager.NewContext(toolbox.NewContext())
-//
-//	defer context.Close()
-//
-//	systemService, err := context.Service(endly.XXXServiceID)
-//	assert.Nil(t, err)
-//
-//	response := systemService.Run(context, &endly.XXXStartRequest{
-//		Target:  target,
-//		Service: "myabc",
-//	})
-//
-//	assert.Equal(t, "", response.Error)
-//	info, ok := response.Response.(*endly.DaemonInfo)
-//	if assert.True(t, ok) && info != nil {
-//		assert.False(t, info.IsActive())
-//	}
-//
-//}
+func Test_TransientSession(t *testing.T) {
+	manager := endly.New()
+	var credential, err = util.GetDummyCredential()
+	if err != nil {
+		log.Fatal(err)
+	}
+	target := url.NewResource("ssh://127.0.0.1", credential)
+	SSHService, err := exec.GetReplayService("test/session/transient")
+	if err != nil {
+		log.Fatal(err)
+	}
+	context, err := exec.OpenTestContext(manager, target, SSHService)
+	if err != nil {
+		log.Fatal(err)
+	}
+	response, err := manager.Run(context, exec.NewOpenSessionRequest(target, []string{"/usr/local/bin"}, map[string]string{"M2_HOME": "/users/test/.m2/"}, true, "/"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	openResponse := response.(*exec.OpenSessionResponse)
+	sessions := context.TerminalSessions()
+	assert.True(t, sessions.Has(openResponse.SessionID))
+	log.Print(openResponse.SessionID)
+	context.Close()
+	assert.False(t, sessions.Has(openResponse.SessionID))
+
+}
+
+func TestRunCommand(t *testing.T) {
+
+	{ //simple command
+		manager := endly.New()
+		var credential, err = util.GetDummyCredential()
+		if err != nil {
+			log.Fatal(err)
+		}
+		target := url.NewResource("ssh://127.0.0.1", credential)
+		SSHService, err := exec.GetReplayService("test/run/simple")
+		if err != nil {
+			log.Fatal(err)
+		}
+		context, err := exec.OpenTestContext(manager, target, SSHService)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		resp, err := manager.Run(context, exec.NewRunRequest(target, false, "whoami"))
+		if !assert.Nil(t, err) {
+			log.Fatal(err.Error())
+		}
+		runResponse := resp.(*exec.RunResponse)
+		assert.EqualValues(t, os.Getenv("USER"), runResponse.Output)
+	}
+
+	{
+
+		manager := endly.New()
+		var credential, err = util.GetDummyCredential()
+		if err != nil {
+			log.Fatal(err)
+		}
+		target := url.NewResource("ssh://127.0.0.1", credential)
+		SSHService, err := exec.GetReplayService("test/run/conditional")
+		if err != nil {
+			log.Fatal(err)
+		}
+		context, err := exec.OpenTestContext(manager, target, SSHService)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var runRequest = exec.NewRunRequest(target, true, "whoami", "$stdout:/root/? echo 'hello root'")
+		var runResponse = &exec.RunResponse{}
+		err = endly.Run(context, runRequest, runResponse)
+		if !assert.Nil(t, err) {
+			log.Fatal(err.Error())
+		}
+		assert.NotNil(t, "hello root", runResponse.Stdout(1))
+
+	}
+}

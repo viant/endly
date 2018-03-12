@@ -1,10 +1,11 @@
-package smtp
+package smtp_test
 
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/endly/system/smtp"
+
+	"github.com/viant/endly/notify/smtp"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"path"

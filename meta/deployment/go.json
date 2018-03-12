@@ -25,12 +25,10 @@
           }
         },
         "VersionCheck": {
-          "Options": {
-            "SystemPaths": [
-              "/opt/sdk/go/bin"
-            ]
-          },
-          "Executions": [
+          "SystemPaths": [
+            "/opt/sdk/go/bin"
+          ],
+          "Commands": [
             {
               "Command": "go version",
               "Extraction": [
@@ -42,12 +40,10 @@
             }
           ]
         },
-        "Command": {
-          "Options": {
-            "Directory": "/opt/sdk",
-            "TimeoutMs": 120000
-          },
-          "Executions": [
+        "Run": {
+          "Directory": "/opt/sdk",
+          "TimeoutMs": 120000,
+          "Commands": [
             {
               "Command": "/bin/bash -c '[[ -e /opt/sdk/go ]] && rm -rf /opt/sdk/go'"
             },

@@ -1,4 +1,4 @@
-package reset
+package rest
 
 import "github.com/viant/endly"
 

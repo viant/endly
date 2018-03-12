@@ -1,5 +1,5 @@
 {
-    "Name": "geckodriver",
+  "Name": "geckodriver",
   "Targets": [
     {
       "OsTarget": {
@@ -22,11 +22,9 @@
             "Credential": "${targetHostCredential}"
           }
         },
-        "Command": {
-          "Options": {
-            "Directory": "/opt/selenium"
-          },
-          "Executions": [
+        "Run": {
+          "Directory": "/opt/selenium",
+          "Commands": [
             {
               "Command": "tar xvzf geckodriver-v0.19.1-macos.tar.gz",
               "Errors": [
@@ -58,11 +56,9 @@
             "Credential": "${targetHostCredential}"
           }
         },
-        "Command": {
-          "Options": {
-            "Directory": "/opt/selenium"
-          },
-          "Executions": [
+        "Run": {
+          "Directory": "/opt/selenium",
+          "Commands": [
             {
               "Command": "tar xvzf geckodriver-v0.19.1-macos.tar.gz",
               "Errors": [

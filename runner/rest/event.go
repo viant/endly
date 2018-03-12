@@ -1,8 +1,8 @@
-package reset
+package rest
 
 import (
-	"github.com/viant/endly"
 	"fmt"
+	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 )
 
@@ -32,11 +32,7 @@ func (r *Request) IsInput() bool {
 	return true
 }
 
-
 //IsOutput returns this response (CLI reporter interface)
 func (r *Response) IsOutput() bool {
 	return true
 }
-
-
-
