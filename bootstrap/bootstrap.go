@@ -40,6 +40,8 @@ import (
 	_ "github.com/viant/endly/system/storage"
 	_ "github.com/viant/endly/system/network"
 
+	_ "github.com/viant/endly/notify/smtp"
+
 	"bufio"
 	"errors"
 	"github.com/viant/endly/cli"
