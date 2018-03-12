@@ -3,7 +3,6 @@ package network
 import (
 	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/ssh"
 )
 
@@ -24,19 +23,25 @@ func (s *service) tunnel(context *endly.Context, request *TunnelRequest) (*Tunne
 		Forwards: make([]*NetworkTunnel, 0),
 	}
 	var target, err = context.ExpandResource(request.Target)
-	var authConfig = &cred.Config{}
+	if err != nil {
+		return nil, err
+	}
+	authConfig, err := context.Secrets.GetCredentials(target.Credential)
+	if err != nil {
+		return nil, err
+	}
 	hostname, port := s.GetHostAndSSHPort(target)
-	client, err := ssh.NewService(hostname, port, authConfig)
+	sshClient, err := ssh.NewService(hostname, port, authConfig)
 	if err != nil {
 		return nil, err
 	}
 	context.Deffer(func() {
-		client.Close()
+		sshClient.Close()
 	})
 	for _, tunnel := range request.Tunnels {
 		var local = context.Expand(tunnel.Local)
 		var remote = context.Expand(tunnel.Remote)
-		err = client.OpenTunnel(local, remote)
+		err = sshClient.OpenTunnel(local, remote)
 		if err != nil {
 			return nil, err
 		}
