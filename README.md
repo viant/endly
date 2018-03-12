@@ -193,7 +193,7 @@ endly -s='docker' -a='run'
 
      
 <a name="Credentail"></a>
-## Secrets
+## Secrets/Credentials
      
     
 Endly on its core uses SSH or other system/cloud service requiring credentials. 
@@ -257,26 +257,6 @@ Make sure its location is on your PATH
 
 $ endly -h
 
-
-Usage of endly:
-endly [options] [params...]
-	params should be key value pair to be supplied as actual workflow parameters
-	if -r options is used, original request params may be overriden
-
-where options include:
-  -d	enable logging
-  -h	print help
-  -l string
-    	<log directory> (default "logs")
-  -p	print neatly workflow as JSON
-  -r string
-    	<path/url to workflow run request in JSON format>  (default "run.json")
-  -t string
-    	<task/s to run> (default "*")
-  -v	print version (default true)
-  -w string
-    	<workflow name>  if both -r and -w valid options are specified, -w is ignored (default "manager")
-    	
 ```
 
 
@@ -372,28 +352,48 @@ This method runs in silent mode.
 
 ```go
 
+
+
+
         manager := endly.New()
-    
-		response, err := manager.Run(nil, &docker.RunRequest{
-            Target: target,
-            Image:  "mysql:5.6",
-            Ports: map[string]string{
-                "3306": "3306",
-            },
-            Env: map[string]string{
-                "MYSQL_ROOT_PASSWORD": "**mysql**",
-            },
-            Mount: map[string]string{
-                "/tmp/my.cnf": "/etc/my.cnf",
-            },
-            Secrets: map[string]string{
-                "**mysql**": mySQLcredentialFile,
-            },
-        })
-		if err != nil {
-			log.Fatal(err)
+        var context = manager.NewContext(toolbox.NewContext())
+        var runRequest = &docker.RunRequest{
+                                           Target: target,
+                                           Image:  "mysql:5.6",
+                                           Ports: map[string]string{
+                                               "3306": "3306",
+                                           },
+                                           Env: map[string]string{
+                                               "MYSQL_ROOT_PASSWORD": "**mysql**",
+                                           },
+                                           Mount: map[string]string{
+                                               "/tmp/my.cnf": "/etc/my.cnf",
+                                           },
+                                           Secrets: map[string]string{
+                                               "**mysql**": mySQLcredentialFile,
+                                           },
+                                       }
+                                       
+                                       
+        
+        {//execute vi manager
+            response, err := manager.Run(nil, runRequest)
+            if err != nil {
+                log.Fatal(err)
+            }
+            dockerResponse := response.(*docker.RunResponse)
 		}
-		dockerResponse := response.(*docker.RunResponse)
+		
+		{//execute vi helper method, 
+		    var runResponse = &docker.RunResponse{}
+		    err := endly.Run(context, runRequest, runResponse) //(use 'nil' as last parameters to ignore actual response)
+		    if err != nil {
+               log.Fatal(err)
+            }
+		}
+		
+		
+		
 		
 ```         
 
