@@ -171,6 +171,7 @@ func (s *AbstractService) Run(context *Context, request interface{}) (response *
 		if previous != err {
 			context.Publish(NewErrorEvent(fmt.Sprintf("%v", err)))
 		}
+		response.Err = err
 	}
 	return response
 }
