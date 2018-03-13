@@ -2,7 +2,7 @@ Workflow,,Name,Description,Tasks,,Sleep,,,,
 ,,manager,Run system test,%Tasks,,10000,,,,
 []Tasks,,Name,Description,Actions,,,,,,
 ,,init,Initialise test,%Init,,,,,,
-[]Init,Service,Action,Description,Request,run.workflow,run.tasks,mysqlPort,targetHost,Async,RunCriteria
+[]Init,Service,Action,Description,Request,run.workflow,run.tasks,mysqlPort,targetHost,Async,When
 ,sdk,set,Set sdk,@req/set_go,,,,,,
 ,workflow,run,"Build, deploy app",@req/run|$run,app,*,,,,
 []Tasks,,Name,Description,Actions,,,,,,

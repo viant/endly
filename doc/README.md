@@ -109,8 +109,8 @@ Each action can control its execution with
 
 Each action has the following fields to control conditional execution:
 
-1. RunCriteria: criteria to check if an action is eligible to run
-2. SkipCriteria: criteria to check if the whole group of actions by TagID can be skipped, continuing execution to next  group
+1. When: criteria to check if an action is eligible to run
+2. Skip: criteria to check if the whole group of actions by TagID can be skipped, continuing execution to next  group
 3. Repeatable control
 
     
@@ -120,7 +120,7 @@ Each action has the following fields to control conditional execution:
     	Variables    Variables       //structure data based data extraction
     	Repeat       int             //how many time send this request
     	SleepTimeMs  int             //Sleep time after request send, this only makes sense with repeat option
-    	ExitCriteria string          //Repeat exit criteria, it uses extracted variable to determine repeat termination 
+    	Exit string          //Repeat exit criteria, it uses extracted variable to determine repeat termination 
     }
 ````
     
@@ -174,12 +174,12 @@ Notify error can be use in conjunction with Workflow.OnTaskError, see below work
 4) Tasks Execution 
     1) Task eligibility determination: 
         1) If specified tasks are '*' or empty, all task defined in the workflow will run sequentially, otherwise only specified
-        2) Evaluate RunCriteria if specified
+        2) Evaluate When if specified
     2) Task initialization stage executes, applying variables defined in Task.Pre (input: workflow  state, output: workflow state)
     
     3) Executes all eligible actions:
         1) Action eligibility determination:
-            1) Evaluate RunCriteria if specified, or SkipCriteria for all the actions within the same neatly TagID (tag + Group  + Index + Subpath)
+            1) Evaluate When if specified, or Skip for all the actions within the same neatly TagID (tag + Group  + Index + Subpath)
         2) Action initialization stage executes,  applying variables defined in Action.Pre (input: workflow  state, output: workflow  state)
         3) Executing action on specified service
         4) Action post stage executes applying variables defined in Action.Post (input: action.response, output: workflow state)

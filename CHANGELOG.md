@@ -44,3 +44,11 @@
     * Reorganized services and dependencies
     * Minor fixes
     
+## March 13  2018 0.6.0
+    * Refactor and simpified exec.service
+    * Added endly.Run helper
+    * Renamed RunCriteria to When
+    * Renamed SkipCriteria to Skip
+    * Renamed ExitCriteria to Exit
+    
+             

@@ -9,7 +9,7 @@ Workflow,,,,Name,Description,Tasks,,Init,,
 ,,,validator/log,listen,listen for event2 log changes,@req/event2_listen,,,,
 []Tasks,,,,Name,Description,Actions,,,,
 ,,,,test,run test requests,%Test,,,,
-[]Test{1..002},eventType,Subpath,Service,Action,Description,Request,Init,Post,RunCriteria,TagDescription
+[]Test{1..002},eventType,Subpath,Service,Action,Description,Request,Init,Post,When,TagDescription
 ,,use_cases/${index}*,http/runner,send,send a log request,@generate_log,,@var/extract_http_response,,@use_case.txt
 ,,use_cases/${index}*,validator,assert,assert http response,@var/expect_http,,,,
 ,,use_cases/${index}*,nop,nop,extract event ids,{},@var/extract_event_ids,,,

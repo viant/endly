@@ -7,7 +7,7 @@ Workflow,,,Name,Description,Tasks,,,,,,
 ,,dsunit,register,Register database,@req/db4_register,,,127.0.0.1,,,
 []Tasks,,,Name,Description,Actions,,,,,,
 ,,,test,Defines test requests,%Test,,,,,,
-[]Test{1..003},Subpath,Service,Action,Description,Request,RunCriteria,Post,url,datastore,rest.expected,TagDescription
+[]Test{1..003},Subpath,Service,Action,Description,Request,When,Post,url,datastore,rest.expected,TagDescription
 ,use_cases/${index}*,dsunit,prepare,prepare mysql data,@req/prepare_data,,,${path}/db3,db3,,@use_case.txt
 ,use_cases/${index}*,dsunit,prepare,prepare aerospike data,@req/prepare_data,,,${path}/db4,db4,,
 ,use_cases/${index}*,rest/runner,send,send copy request,@req/rest_send|@copy,, @var/set_rest_job_status,/api/copy/,,,

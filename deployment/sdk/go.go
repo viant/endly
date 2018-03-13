@@ -26,7 +26,7 @@ func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, 
 	var extractRequest = exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand("export GOROOT='/opt/sdk/go'", "", nil, nil),
 		exec.NewExtractCommand("go version", "", nil, nil,
-			endly.NewDataExtraction("version", "go version go([^\\s]+)", false)),
+			endly.NewExtract("version", "go version go([^\\s]+)", false)),
 	)
 	runResponse := &exec.RunResponse{}
 	if err := endly.Run(context, extractRequest, runResponse); err != nil {

@@ -53,7 +53,7 @@
         "Wait": {
           "Repeat": 10,
           "SleepTimeMs": 2000,
-          "ExitCriteria": "$value:/viant/"
+          "Exit": "$value:/viant/"
         }
       }]
   }

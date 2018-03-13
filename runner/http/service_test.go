@@ -37,8 +37,8 @@ func TestHttpRunnerService_Run(t *testing.T) {
 				URL:    "http://127.0.0.1:8766/send1",
 				Method: "POST",
 				Body:   "0123456789",
-				Repeatable: &endly.Repeatable{
-					Extraction: []*endly.DataExtraction{
+				Repeater: &endly.Repeater{
+					Extraction: []*endly.Extract{
 						{
 							Key:     "send_arg1",
 							RegExpr: "send1 (.+)",
@@ -50,8 +50,8 @@ func TestHttpRunnerService_Run(t *testing.T) {
 				URL:    "http://127.0.0.1:8766/send1",
 				Method: "POST",
 				Body:   "0123456789",
-				Repeatable: &endly.Repeatable{
-					Extraction: []*endly.DataExtraction{
+				Repeater: &endly.Repeater{
+					Extraction: []*endly.Extract{
 						{
 							Key:     "send_arg2",
 							RegExpr: "send1 (.+)",
@@ -95,8 +95,8 @@ func TestHttpRunnerService_Repeat(t *testing.T) {
 				URL:    "http://127.0.0.1:8111/send1",
 				Method: "POST",
 				Body:   "0123456789",
-				Repeatable: &endly.Repeatable{
-					Extraction: []*endly.DataExtraction{
+				Repeater: &endly.Repeater{
+					Extraction: []*endly.Extract{
 						{
 							Key:     "send_arg1",
 							RegExpr: "send1 (.+)",
@@ -153,16 +153,16 @@ func TestHttpRunnerService_RepeatWthExitCriteria(t *testing.T) {
 				URL:    "http://127.0.0.1:8112/send1",
 				Method: "POST",
 				Body:   "0123456789",
-				Repeatable: &endly.Repeatable{
-					Extraction: []*endly.DataExtraction{
+				Repeater: &endly.Repeater{
+					Extraction: []*endly.Extract{
 						{
 							Key:     "var1",
 							RegExpr: "send1 (.+)",
 						},
 					},
-					Repeat:       1000,
-					SleepTimeMs:  500,
-					ExitCriteria: "$var1:content1-2",
+					Repeat:      1000,
+					SleepTimeMs: 500,
+					Exit:        "$var1:content1-2",
 				},
 			},
 		},

@@ -14,7 +14,7 @@ type SendRequest struct {
 
 //Request represents an http request
 type Request struct {
-	*endly.Repeatable
+	*endly.Repeater
 	MatchBody   string `description:"text fragment if matched with previous http response body, is sent"`
 	Method      string `required:"true" description:"HTTP Method"`
 	URL         string
@@ -103,7 +103,7 @@ func (r *Request) Expand(context *endly.Context) *Request {
 		URL:         context.Expand(r.URL),
 		Body:        context.Expand(r.Body),
 		Header:      header,
-		Repeatable:  r.Repeatable,
+		Repeater:    r.Repeater,
 		Replace:     r.Replace,
 		RequestUdf:  r.RequestUdf,
 		ResponseUdf: r.ResponseUdf,

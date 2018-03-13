@@ -6,14 +6,14 @@ Workflow,,Name,Description,Tasks,,Init,,
 ,deployment,deploy,Deploy tomcat server into target host,@req/tomcat_deploy,,,,
 []Tasks,,Name,Description,Actions,,,,
 ,,start,This task will start tomcat,%Start,,,,
-[]Start,Service,Action,Description,Request,RunCriteria,Variables,Post,
+[]Start,Service,Action,Description,Request,When,Variables,Post,
 ,sdk,set,Set jdk,@req/set_jdk,,,,
 ,process,status,Check tomcat process,@req/tomcat_check,,,"[{""name"":""tomcatPid"", ""from"":""Pid"", ""value"":""0""}]",
 ,exec,extract,Stop tomcat server,@req/tomcat_stop,$tomcatPid:!0,,,
 ,exec,extract,Start tomcat server,@req/tomcat_start,,,,
 []Tasks,,Name,Description,Actions,,,,
 ,,stop,This task will stop tomcat,%Stop,,,,
-[]Stop,Service,Action,Description,Request,RunCriteria,,Post,SleepTimeMs
+[]Stop,Service,Action,Description,Request,When,,Post,SleepTimeMs
 ,sdk,set,Set jdk,@req/set_jdk,,,,
 ,process,status,Check tomcat process,@req/tomcat_check,,,"[{""name"":""tomcatPid"", ""from"":""Pid"", ""value"":""0""}]",
 ,exec,extract,Stop tomcat server,@req/tomcat_stop,$tomcatPid:!0,,,500
