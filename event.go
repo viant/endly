@@ -136,14 +136,13 @@ type SleepEvent struct {
 func (e *SleepEvent) Message(repeated *RepeatedMessage) *Message {
 	var tag = NewStyledText("sleep", MessageStyleGeneric)
 	var title *StyledText
-	repeated.Total = +e.SleepTimeMs
+	repeated.Total = + int(time.Millisecond * time.Duration(e.SleepTimeMs))
 	if repeated.Count == 0 {
 		title = NewStyledText(fmt.Sprintf("%v ms", e.SleepTimeMs), MessageStyleGeneric)
 	} else {
 		var sleptSoFar = time.Millisecond * time.Duration(repeated.Total)
 		title = NewStyledText(fmt.Sprintf("%v ms x %v,  slept so far: %v", e.SleepTimeMs, repeated.Count, sleptSoFar), MessageStyleGeneric)
 	}
-	repeated.Count++
 	return NewMessage(title, tag)
 }
 

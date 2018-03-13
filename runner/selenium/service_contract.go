@@ -7,6 +7,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/toolbox/url"
 	"strings"
+	"github.com/viant/toolbox/data"
 )
 
 //StartRequest represents a selenium server start request
@@ -59,7 +60,7 @@ type WebDriverCallRequest struct {
 //ServiceCallResponse represents selenium call response
 type ServiceCallResponse struct {
 	Result []interface{}
-	Data   map[string]interface{}
+	Data   data.Map
 }
 
 //WebElementSelector represents a web element selector

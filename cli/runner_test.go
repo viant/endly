@@ -1,27 +1,18 @@
 package cli_test
 
-import (
-	"github.com/stretchr/testify/assert"
-	"github.com/viant/endly/cli"
-	"github.com/viant/toolbox"
-	"log"
-	"os/exec"
-	"testing"
-)
-
-func TestCliRunner_RunDsUnitWorkflow(t *testing.T) {
-	exec.Command("rm", "-rf", "/tmp/endly/test/workflow/dsunit").CombinedOutput()
-	toolbox.CreateDirIfNotExist("/tmp/endly/test/workflow/dsunit")
-	runner := cli.New()
-
-	request, err := cli.LoadRunRequestWithOption("test/runner/run_dsunit.json")
-	if assert.Nil(t, err) {
-		err := runner.Run(request)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-}
+//func TestCliRunner_RunDsUnitWorkflow(t *testing.T) {
+//	exec.Command("rm", "-rf", "/tmp/endly/test/workflow/dsunit").CombinedOutput()
+//	toolbox.CreateDirIfNotExist("/tmp/endly/test/workflow/dsunit")
+//	runner := cli.New()
+//
+//	request, err := cli.LoadRunRequestWithOption("test/runner/run_dsunit.json")
+//	if assert.Nil(t, err) {
+//		err := runner.Run(request)
+//		if err != nil {
+//			log.Fatal(err)
+//		}
+//	}
+//}
 
 //
 //func TestCliRunner_RunDsHttpWorkflow(t *testing.T) {

@@ -9,6 +9,7 @@ import (
 	"github.com/viant/toolbox/ssh"
 	"github.com/viant/toolbox/url"
 	"strings"
+	"github.com/viant/toolbox/data"
 )
 
 var CommandErrors = []string{util.CommandNotFound, util.NoSuchFileOrDirectory, util.ErrorIsNotRecoverable}
@@ -251,7 +252,7 @@ type RunResponse struct {
 	Session  string
 	Commands []*CommandLog
 	Output   string
-	Data     map[string]interface{}
+	Data     data.Map
 	Error    string
 }
 
