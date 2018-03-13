@@ -246,18 +246,19 @@ func (r *Runner) processReporter(event *endly.Event, filter map[string]bool) boo
 	if event.Value == nil {
 		return false
 	}
-	messageReporter, isMessageReporter := event.Value.(endly.MessageReporter)
-	reptedReporter, isRepeatReporter := event.Value.(endly.RepeatedReporter)
 
-	if !isMessageReporter || isRepeatReporter {
+
+	messageReporter, isMessageReporter := event.Value.(endly.MessageReporter)
+	repeatedReporter, isRepeatedReporter := event.Value.(endly.RepeatedReporter)
+
+	if !(isMessageReporter || isRepeatedReporter) {
 		return false
 	}
-
 	if !r.canReport(event, filter) {
 		return true
 	}
-	if isRepeatReporter {
-		r.processRepeatedReporter(reptedReporter, event)
+	if isRepeatedReporter {
+		r.processRepeatedReporter(repeatedReporter, event)
 		if isMessageReporter {
 			r.processMessageReporter(messageReporter)
 		}

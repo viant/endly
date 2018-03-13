@@ -13,6 +13,7 @@ func DefaultFilter() map[string]bool {
 	result["deploy"] = true
 	result["exec.stdin"] = true
 	result["exec.stdout"] = true
+	result["endly"] = true
 	return result
 }
 
