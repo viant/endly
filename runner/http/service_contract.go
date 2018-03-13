@@ -4,6 +4,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"net/http"
+	"github.com/viant/toolbox/data"
 )
 
 //SendRequest represents a send http request.
@@ -29,7 +30,7 @@ type Request struct {
 //SendResponse represnets a send response
 type SendResponse struct {
 	Responses []*Response
-	Data      map[string]interface{}
+	Data      data.Map
 }
 
 //Response represents Http response
