@@ -904,6 +904,25 @@ func (s *Service) registerRoutes() {
 	})
 
 	s.AbstractService.Register(&endly.ServiceActionRoute{
+		Action: "nop",
+		RequestInfo: &endly.ActionInfo{
+			Description: "iddle operation",
+		},
+		RequestProvider: func() interface{} {
+			return &NopRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return struct{}{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*NopRequest); ok {
+				return req, nil
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.AbstractService.Register(&endly.ServiceActionRoute{
 		Action: "print",
 		RequestInfo: &endly.ActionInfo{
 			Description: "print log message",
