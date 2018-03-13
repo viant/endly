@@ -191,7 +191,7 @@ func (r *Runner) processRepeatedReporter(reporter endly.RepeatedReporter, event 
 		if repeated.Count == 0 {
 			r.printShortMessage(header.Style, header.Text, tag.Style, tag.Text)
 		} else {
-			r.overrideShortMessage(header.Style, header.Text, tag.Style, tag.Text)
+			r.overrideShortMessage(header.Style, fmt.Sprintf("%v x%d elapsed: %v", header.Text, repeated.Count, time.Duration(repeated.Total)), tag.Style, tag.Text)
 		}
 	}
 }
