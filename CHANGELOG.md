@@ -50,5 +50,6 @@
     * Renamed RunCriteria to When
     * Renamed SkipCriteria to Skip
     * Renamed ExitCriteria to Exit
-    
+    * Renamed Credentials to Secrets
+    * patched RepeatedReporter CLI event reporting
              
