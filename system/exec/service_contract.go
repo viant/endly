@@ -248,11 +248,11 @@ type CommandLog struct {
 
 //RunResponse represents a command response with logged commands.
 type RunResponse struct {
-	Session   string
-	Commands  []*CommandLog
-	Output    string
-	Extracted map[string]string
-	Error     string
+	Session  string
+	Commands []*CommandLog
+	Output   string
+	Data     map[string]interface{}
+	Error    string
 }
 
 //OpenSessionRequest represents an open session request.
@@ -335,9 +335,9 @@ func (i *RunResponse) Stdout(indexes ...int) string {
 //NewRunResponse creates a new RunResponse
 func NewRunResponse(session string) *RunResponse {
 	return &RunResponse{
-		Session:   session,
-		Commands:  make([]*CommandLog, 0),
-		Extracted: make(map[string]string),
+		Session:  session,
+		Commands: make([]*CommandLog, 0),
+		Data:     make(map[string]interface{}),
 	}
 }
 

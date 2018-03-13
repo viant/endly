@@ -58,8 +58,8 @@ type WebDriverCallRequest struct {
 
 //ServiceCallResponse represents selenium call response
 type ServiceCallResponse struct {
-	Result    []interface{}
-	Extracted map[string]string
+	Result []interface{}
+	Data   map[string]interface{}
 }
 
 //WebElementSelector represents a web element selector

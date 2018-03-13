@@ -136,7 +136,7 @@ func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRe
 
 func (s *service) call(context *endly.Context, caller interface{}, call *MethodCall) (callResponse *ServiceCallResponse, err error) {
 	callResponse = &ServiceCallResponse{
-		Extracted: make(map[string]string),
+		Data: make(map[string]interface{}),
 	}
 	repeatable := call.Wait.Get()
 	var handler = func() (interface{}, error) {
@@ -146,7 +146,7 @@ func (s *service) call(context *endly.Context, caller interface{}, call *MethodC
 		}
 		return callResponse.Result, nil
 	}
-	err = repeatable.Run(s.AbstractService, runnerCaller, context, handler, callResponse.Extracted)
+	err = repeatable.Run(s.AbstractService, runnerCaller, context, handler, callResponse.Data)
 	return callResponse, err
 }
 

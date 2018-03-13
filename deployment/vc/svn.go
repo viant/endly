@@ -36,12 +36,12 @@ func (s *svnService) checkInfo(context *endly.Context, request *StatusRequest) (
 		return nil, err
 	}
 
-	if revison, has := runResponse.Extracted["revision"]; has {
-		result.Revision = revison
+	if revison, has := runResponse.Data["revision"]; has {
+		result.Revision = revison.(string)
 	}
-	if origin, has := runResponse.Extracted["origin"]; has {
-		result.Origin = origin
-		_, result.Branch = path.Split(origin)
+	if origin, has := runResponse.Data["origin"]; has {
+		result.Origin = origin.(string)
+		_, result.Branch = path.Split(result.Origin)
 	}
 	if strings.Contains(runResponse.Stdout(1), "is not a working copy") {
 		return result, nil

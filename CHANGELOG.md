@@ -47,6 +47,8 @@
 ## March 13  2018 0.6.0
     * Refactor and simpified exec.service
     * Added endly.Run helper
+    * Renamed MatchStdout to When
+    * Renamed MatchBody to When
     * Renamed RunCriteria to When
     * Renamed SkipCriteria to Skip
     * Renamed ExitCriteria to Exit

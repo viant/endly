@@ -36,7 +36,7 @@ func TestRepeatable_Run(t *testing.T) {
 
 		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
-		var extracted = make(map[string]string)
+		var extracted = make(map[string]interface{})
 
 		var counter = 0
 		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
@@ -73,7 +73,7 @@ func TestRepeatable_Run(t *testing.T) {
 
 		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
-		var extracted = make(map[string]string)
+		var extracted = make(map[string]interface{})
 
 		var counter = 0
 		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
@@ -110,7 +110,7 @@ func TestRepeatable_Run(t *testing.T) {
 
 		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
-		var extracted = make(map[string]string)
+		var extracted = make(map[string]interface{})
 
 		var counter = 0
 		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
@@ -147,7 +147,7 @@ func TestRepeatable_Run(t *testing.T) {
 
 		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
-		var extracted = make(map[string]string)
+		var extracted = make(map[string]interface{})
 
 		var counter = 0
 		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
@@ -184,7 +184,7 @@ func TestRepeatable_Run(t *testing.T) {
 
 		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
-		var extracted = make(map[string]string)
+		var extracted = make(map[string]interface{})
 
 		var counter = 0
 		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
@@ -220,7 +220,7 @@ func TestRepeatable_Run(t *testing.T) {
 
 		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
-		var extracted = make(map[string]string)
+		var extracted = make(map[string]interface{})
 
 		var counter = 0
 		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
@@ -262,7 +262,7 @@ func TestRepeatable_Run(t *testing.T) {
 
 		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
-		var extracted = make(map[string]string)
+		var extracted = make(map[string]interface{})
 
 		var counter = 0
 		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
@@ -306,7 +306,7 @@ func TestRepeatable_Run(t *testing.T) {
 
 		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
-		var extracted = make(map[string]string)
+		var extracted = make(map[string]interface{})
 
 		var counter = 0
 		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
@@ -344,7 +344,7 @@ func TestRepeatable_Run(t *testing.T) {
 
 		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
-		var extracted = make(map[string]string)
+		var extracted = make(map[string]interface{})
 
 		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
 			return nil, fmt.Errorf("failed to run test")
@@ -377,7 +377,7 @@ func TestRepeatable_Run(t *testing.T) {
 
 		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
-		var extracted = make(map[string]string)
+		var extracted = make(map[string]interface{})
 
 		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
 			return "abc", nil
@@ -410,7 +410,7 @@ func TestRepeatable_Run(t *testing.T) {
 
 		manager := endly.New()
 		context := manager.NewContext(toolbox.NewContext())
-		var extracted = make(map[string]string)
+		var extracted = make(map[string]interface{})
 
 		err := repeataable.Run(abstractService, "test1", context, func() (interface{}, error) {
 			return "abc", nil

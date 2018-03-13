@@ -27,11 +27,11 @@ func (s *jdkService) checkJavaVersion(context *endly.Context, jdkCandidate strin
 	if err := endly.Run(context, extractRequest, commandResponse); err != nil {
 		return nil, err
 	}
-	if javaHome, ok := commandResponse.Extracted["JAVA_HOME"]; ok {
-		if build, ok := commandResponse.Extracted["build"]; ok {
+	if javaHome, ok := commandResponse.Data["JAVA_HOME"]; ok {
+		if build, ok := commandResponse.Data["build"]; ok {
 			if build == request.Version {
-				result.Version = build
-				result.Home = strings.Replace(javaHome, "/jre", "", 1)
+				result.Version = build.(string)
+				result.Home = strings.Replace(javaHome.(string), "/jre", "", 1)
 				endly.Run(context, exec.NewRunRequest(request.Target, false, fmt.Sprintf("export JAVA_HOME='%v'", result.Home)), nil)
 				return result, nil
 			}
@@ -72,11 +72,11 @@ func (s *jdkService) setSdk(context *endly.Context, request *SetRequest) (*Info,
 	if err := endly.Run(context, extractRequest, commandResponse); err != nil {
 		return nil, err
 	}
-	if home, ok := commandResponse.Extracted["JAVA_HOME"]; ok {
-		if strings.Contains(home, "*") {
+	if home, ok := commandResponse.Data["JAVA_HOME"]; ok {
+		if strings.Contains(home.(string), "*") {
 			return nil, errSdkNotFound
 		}
-		var jdkCandidate = vtclean.Clean(home, false)
+		var jdkCandidate = vtclean.Clean(home.(string), false)
 		result, err = s.checkJavaVersion(context, jdkCandidate+"/bin/", request)
 		if err == nil {
 			return result, nil

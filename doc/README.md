@@ -1,16 +1,10 @@
 ## Endly Workflow 
 
-
 - [Introduction](#Introduction)
 - [Modifying workflow state](#WorkflowState)
 - [Criteria expression](#Criteria)
 - [Execution control](ExectuinControl)
 - [Lifecycle](#Lifecycle)
-
-
-
-
-
 
 
 <a name="Introduction"></a>
@@ -111,12 +105,12 @@ Each action has the following fields to control conditional execution:
 
 1. When: criteria to check if an action is eligible to run
 2. Skip: criteria to check if the whole group of actions by TagID can be skipped, continuing execution to next  group
-3. Repeatable control
+3. Repeater control
 
     
 ```go
-    type Repeatable struct {
-    	Extraction   DataExtractions //textual regexp based data extraction
+    type Repeater struct {
+    	Extracts     Extracts //textual regexp based data extraction
     	Variables    Variables       //structure data based data extraction
     	Repeat       int             //how many time send this request
     	SleepTimeMs  int             //Sleep time after request send, this only makes sense with repeat option

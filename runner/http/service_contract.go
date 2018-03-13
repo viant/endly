@@ -15,7 +15,7 @@ type SendRequest struct {
 //Request represents an http request
 type Request struct {
 	*endly.Repeater
-	MatchBody   string `description:"text fragment if matched with previous http response body, is sent"`
+	When        string `description:"criteria to send this request"`
 	Method      string `required:"true" description:"HTTP Method"`
 	URL         string
 	Header      http.Header
@@ -29,7 +29,7 @@ type Request struct {
 //SendResponse represnets a send response
 type SendResponse struct {
 	Responses []*Response
-	Extracted map[string]string
+	Data      map[string]interface{}
 }
 
 //Response represents Http response
@@ -98,7 +98,7 @@ func (r *Request) Expand(context *endly.Context) *Request {
 	header := make(map[string][]string)
 	copyExpandedHeaders(r.Header, header, context)
 	return &Request{
-		MatchBody:   context.Expand(r.MatchBody),
+		When:        context.Expand(r.When),
 		Method:      r.Method,
 		URL:         context.Expand(r.URL),
 		Body:        context.Expand(r.Body),

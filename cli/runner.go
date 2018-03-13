@@ -247,7 +247,6 @@ func (r *Runner) processReporter(event *endly.Event, filter map[string]bool) boo
 		return false
 	}
 
-
 	messageReporter, isMessageReporter := event.Value.(endly.MessageReporter)
 	repeatedReporter, isRepeatedReporter := event.Value.(endly.RepeatedReporter)
 

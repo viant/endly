@@ -41,7 +41,9 @@ func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, 
 	}
 	result.Sdk = "go"
 	result.Home = "/opt/sdk/go"
-	result.Version = runResponse.Extracted["version"]
+	if version, ok := runResponse.Data["version"]; ok {
+		result.Version = version.(string)
+	}
 	if result.Version == "" {
 		result.Version = request.Version
 	}

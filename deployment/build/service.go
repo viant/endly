@@ -181,7 +181,7 @@ func (s *service) build(context *endly.Context, request *Request) (*Response, er
 		}
 	}
 
-	var runRequest =  goal.Run.Clone(target)
+	var runRequest = goal.Run.Clone(target)
 	runRequest.Secrets = request.Secrets
 	runResponse := &exec.RunResponse{}
 	if err := endly.Run(context, runRequest, runResponse); err != nil {
@@ -196,7 +196,7 @@ func (s *service) build(context *endly.Context, request *Request) (*Response, er
 	}
 
 	if goal.Verify != nil {
-		var verifyRequest =  goal.Verify.Clone(target)
+		var verifyRequest = goal.Verify.Clone(target)
 		verifyRequest.Secrets = request.Secrets
 		if err := endly.Run(context, verifyRequest, nil); err != nil {
 			return nil, err

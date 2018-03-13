@@ -60,10 +60,10 @@ func TestHttpRunnerService_Run(t *testing.T) {
 				},
 			},
 			{
-				MatchBody: "content1-2",
-				URL:       "http://127.0.0.1:8766/send2",
-				Method:    "POST",
-				Body:      "xc",
+				When:   "content1-2",
+				URL:    "http://127.0.0.1:8766/send2",
+				Method: "POST",
+				Body:   "xc",
 			},
 		},
 	})
@@ -74,8 +74,8 @@ func TestHttpRunnerService_Run(t *testing.T) {
 	for _, response := range sendResponse.Responses {
 		assert.EqualValues(t, 200, response.Code)
 	}
-	assert.Equal(t, "content1-1", sendResponse.Extracted["send_arg1"])
-	assert.Equal(t, "content1-2", sendResponse.Extracted["send_arg2"])
+	assert.Equal(t, "content1-1", sendResponse.Data["send_arg1"])
+	assert.Equal(t, "content1-2", sendResponse.Data["send_arg2"])
 
 }
 
@@ -111,16 +111,16 @@ func TestHttpRunnerService_Repeat(t *testing.T) {
 			},
 
 			{
-				MatchBody: "never-match",
-				URL:       "http://127.0.0.1:8111/send2",
-				Method:    "POST",
-				Body:      "xc",
+				When:   "never-match",
+				URL:    "http://127.0.0.1:8111/send2",
+				Method: "POST",
+				Body:   "xc",
 			},
 			{
-				MatchBody: "content1-2",
-				URL:       "http://127.0.0.1:8111/send2",
-				Method:    "POST",
-				Body:      "xc",
+				When:   "content1-2",
+				URL:    "http://127.0.0.1:8111/send2",
+				Method: "POST",
+				Body:   "xc",
 			},
 		},
 	})
@@ -132,8 +132,8 @@ func TestHttpRunnerService_Repeat(t *testing.T) {
 	for _, response := range sendResponse.Responses {
 		assert.EqualValues(t, 200, response.Code)
 	}
-	assert.Equal(t, "content1-2", sendResponse.Extracted["send_arg1"])
-	assert.Equal(t, "content1-2", sendResponse.Extracted["send_arg2"])
+	assert.Equal(t, "content1-2", sendResponse.Data["send_arg1"])
+	assert.Equal(t, "content1-2", sendResponse.Data["send_arg2"])
 
 }
 
@@ -175,7 +175,7 @@ func TestHttpRunnerService_RepeatWthExitCriteria(t *testing.T) {
 	for _, response := range sendResponse.Responses {
 		assert.EqualValues(t, 200, response.Code)
 	}
-	assert.Equal(t, "content1-2", sendResponse.Extracted["var1"])
+	assert.Equal(t, "content1-2", sendResponse.Data["var1"])
 
 }
 
