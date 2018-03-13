@@ -21,19 +21,19 @@ type ActionRequest struct {
 type ServiceAction struct {
 	*ActionRequest
 	*NeatlyTag
-	*Repeatable
-	RunCriteria  string    //criteria to run this action
-	SkipCriteria string    //criteria to skip current action to continue to next tag id action
-	Name         string    //Id of the service action
-	Description  string    //description
-	Init         Variables //variables to initialise state before action runs
-	Post         Variables //variable to update state after action completes
-	Async        bool
+	*Repeater
+	When        string    //criteria to run this action
+	Skip        string    //criteria to skip current action to continue to next tag id action
+	Name        string    //Id of the service action
+	Description string    //description
+	Init        Variables //variables to initialise state before action runs
+	Post        Variables //variable to update state after action completes
+	Async       bool
 }
 
 //WorkflowTask represents a group of action
 type WorkflowTask struct {
-	RunCriteria string           //criteria to run this task
+	When        string           //criteria to run this task
 	Seq         int              //sequence of the task
 	Name        string           //Id of the task
 	Description string           //description

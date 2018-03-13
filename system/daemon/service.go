@@ -154,8 +154,8 @@ func (s *service) determineCheckCommand(context *endly.Context, target *url.Reso
 		if info.Pid > 0 {
 			var runResponse = &exec.RunResponse{}
 			var extractRequest = exec.NewExtractRequest(target, exec.DefaultOptions(), exec.NewExtractCommand(fmt.Sprintf("launchctl procinfo %v", info.Pid), "", nil, []string{"Unrecognized"},
-				endly.NewDataExtraction("path", "program path[\\s|\\t]+=[\\s|\\t]+([^\\s]+)", false),
-				endly.NewDataExtraction("state", "state = (running)", false)))
+				endly.NewExtract("path", "program path[\\s|\\t]+=[\\s|\\t]+([^\\s]+)", false),
+				endly.NewExtract("state", "state = (running)", false)))
 			extractRequest.SuperUser = true
 
 			err = endly.Run(context, extractRequest, runResponse)
@@ -218,10 +218,10 @@ func (s *service) checkService(context *endly.Context, request *StatusRequest) (
 
 	commandResult, err := s.executeCommand(context, serviceType, target, exec.NewExtractRequest(
 		target, options, exec.NewExtractCommand(command, "", nil, nil,
-			endly.NewDataExtraction("pid", "[^└]+└─(\\d+).+", true),
-			endly.NewDataExtraction("pid", "Main PID: (\\d+).+", false),
-			endly.NewDataExtraction("state", "[\\s|\\t]+Active:\\s+(\\S+)", false),
-			endly.NewDataExtraction("path", "[^└]+└─\\d+[\\s\\t].(.+)", false)),
+			endly.NewExtract("pid", "[^└]+└─(\\d+).+", true),
+			endly.NewExtract("pid", "Main PID: (\\d+).+", false),
+			endly.NewExtract("state", "[\\s|\\t]+Active:\\s+(\\S+)", false),
+			endly.NewExtract("path", "[^└]+└─\\d+[\\s\\t].(.+)", false)),
 		exec.NewExtractCommand("Q", "(END)", nil, nil)))
 
 	if err != nil {

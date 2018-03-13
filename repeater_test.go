@@ -21,17 +21,17 @@ func TestRepeatable_Run(t *testing.T) {
 
 	{ //Test exit criteria with variable extraction from a map
 
-		repeataable := &endly.Repeatable{
-			//Extraction   DataExtractions //data extraction
+		repeataable := &endly.Repeater{
+			//Extraction   Extracts //data extraction
 			Variables: []*endly.Variable{
 				{
 					Name: "status",
 					From: "testStatus",
 				},
 			},
-			Repeat:       10,
-			SleepTimeMs:  100,
-			ExitCriteria: "$status:!running",
+			Repeat:      10,
+			SleepTimeMs: 100,
+			Exit:        "$status:!running",
 		}
 
 		manager := endly.New()
@@ -58,17 +58,17 @@ func TestRepeatable_Run(t *testing.T) {
 
 	{ //Test exit criteria with variable extraction from a map
 
-		repeataable := &endly.Repeatable{
-			//Extraction   DataExtractions //data extraction
+		repeataable := &endly.Repeater{
+			//Extraction   Extracts //data extraction
 			Variables: []*endly.Variable{
 				{
 					Name: "status",
 					From: "testStatus",
 				},
 			},
-			Repeat:       10,
-			SleepTimeMs:  100,
-			ExitCriteria: "$status:!running",
+			Repeat:      10,
+			SleepTimeMs: 100,
+			Exit:        "$status:!running",
 		}
 
 		manager := endly.New()
@@ -95,17 +95,17 @@ func TestRepeatable_Run(t *testing.T) {
 
 	{ //Test exit criteria with variable extraction from a JSON text
 
-		repeataable := &endly.Repeatable{
-			//Extraction   DataExtractions //data extraction
+		repeataable := &endly.Repeater{
+			//Extraction   Extracts //data extraction
 			Variables: []*endly.Variable{
 				{
 					Name: "status",
 					From: "testStatus",
 				},
 			},
-			Repeat:       10,
-			SleepTimeMs:  100,
-			ExitCriteria: "$status:!running",
+			Repeat:      10,
+			SleepTimeMs: 100,
+			Exit:        "$status:!running",
 		}
 
 		manager := endly.New()
@@ -132,17 +132,17 @@ func TestRepeatable_Run(t *testing.T) {
 
 	{ //Test exit criteria with variable extraction from a []byte  JSON
 
-		repeataable := &endly.Repeatable{
-			//Extraction   DataExtractions //data extraction
+		repeataable := &endly.Repeater{
+			//Extraction   Extracts //data extraction
 			Variables: []*endly.Variable{
 				{
 					Name: "status",
 					From: "testStatus",
 				},
 			},
-			Repeat:       10,
-			SleepTimeMs:  100,
-			ExitCriteria: "$status:!running",
+			Repeat:      10,
+			SleepTimeMs: 100,
+			Exit:        "$status:!running",
 		}
 
 		manager := endly.New()
@@ -169,17 +169,17 @@ func TestRepeatable_Run(t *testing.T) {
 
 	{ //Test exit criteria with variable extraction from a invalid JSON text vi $value key
 
-		repeataable := &endly.Repeatable{
-			//Extraction   DataExtractions //data extraction
+		repeataable := &endly.Repeater{
+			//Extraction   Extracts //data extraction
 			Variables: []*endly.Variable{
 				{
 					Name: "status",
 					From: "testStatus",
 				},
 			},
-			Repeat:       10,
-			SleepTimeMs:  100,
-			ExitCriteria: "$value:!/running/", //this is contains
+			Repeat:      10,
+			SleepTimeMs: 100,
+			Exit:        "$value:!/running/", //this is contains
 		}
 
 		manager := endly.New()
@@ -205,17 +205,17 @@ func TestRepeatable_Run(t *testing.T) {
 
 	{ //Test exit criteria with variable extraction from a invalid JSON text vi $value key
 
-		repeataable := &endly.Repeatable{
-			//Extraction   DataExtractions //data extraction
+		repeataable := &endly.Repeater{
+			//Extraction   Extracts //data extraction
 			Variables: []*endly.Variable{
 				{
 					Name: "status",
 					From: "testStatus",
 				},
 			},
-			Repeat:       10,
-			SleepTimeMs:  100,
-			ExitCriteria: "$value:!/running/", //this is contains
+			Repeat:      10,
+			SleepTimeMs: 100,
+			Exit:        "$value:!/running/", //this is contains
 		}
 
 		manager := endly.New()
@@ -241,23 +241,23 @@ func TestRepeatable_Run(t *testing.T) {
 
 	{ //Test data struct to string regexp extraction
 
-		repeataable := &endly.Repeatable{
+		repeataable := &endly.Repeater{
 			Variables: []*endly.Variable{
 				{
 					Name: "testStatus",
 					From: "testStatus",
 				},
 			},
-			//Extraction   DataExtractions //data extraction
-			Extraction: []*endly.DataExtraction{
+			//Extraction   Extracts //data extraction
+			Extraction: []*endly.Extract{
 				{
 					RegExpr: `"testStatus":"([^"]+)"`,
 					Key:     "status",
 				},
 			},
-			Repeat:       10,
-			SleepTimeMs:  100,
-			ExitCriteria: "$status:!/running/", //this is contains
+			Repeat:      10,
+			SleepTimeMs: 100,
+			Exit:        "$status:!/running/", //this is contains
 		}
 
 		manager := endly.New()
@@ -285,23 +285,23 @@ func TestRepeatable_Run(t *testing.T) {
 
 	{ //Test exit criteria with variable extraction from a invalid JSON text vi $value key
 
-		repeataable := &endly.Repeatable{
-			//Extraction   DataExtractions //data extraction
+		repeataable := &endly.Repeater{
+			//Extraction   Extracts //data extraction
 			Variables: []*endly.Variable{
 				{
 					Name: "status",
 					From: "testStatus",
 				},
 			},
-			Extraction: []*endly.DataExtraction{
+			Extraction: []*endly.Extract{
 				{
 					RegExpr: `"testStatus":"([^"]+)"`,
 					Key:     "status",
 				},
 			},
-			Repeat:       10,
-			SleepTimeMs:  100,
-			ExitCriteria: "$value:!/running/", //this is contains
+			Repeat:      10,
+			SleepTimeMs: 100,
+			Exit:        "$value:!/running/", //this is contains
 		}
 
 		manager := endly.New()
@@ -329,17 +329,17 @@ func TestRepeatable_Run(t *testing.T) {
 
 	{ //Test  error
 
-		repeataable := &endly.Repeatable{
-			//Extraction   DataExtractions //data extraction
+		repeataable := &endly.Repeater{
+			//Extraction   Extracts //data extraction
 			Variables: []*endly.Variable{
 				{
 					Name: "status",
 					From: "testStatus",
 				},
 			},
-			Repeat:       10,
-			SleepTimeMs:  100,
-			ExitCriteria: "$status:!running",
+			Repeat:      10,
+			SleepTimeMs: 100,
+			Exit:        "$status:!running",
 		}
 
 		manager := endly.New()
@@ -355,8 +355,8 @@ func TestRepeatable_Run(t *testing.T) {
 
 	{ //Test  invalid regexpr
 
-		repeataable := &endly.Repeatable{
-			//Extraction   DataExtractions //data extraction
+		repeataable := &endly.Repeater{
+			//Extraction   Extracts //data extraction
 			Variables: []*endly.Variable{
 				{
 					Name: "status",
@@ -364,15 +364,15 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 
-			Extraction: []*endly.DataExtraction{
+			Extraction: []*endly.Extract{
 				{
 					RegExpr: `"testStatus":"(.?+*))"`,
 					Key:     "status",
 				},
 			},
-			Repeat:       10,
-			SleepTimeMs:  100,
-			ExitCriteria: "$status:!running",
+			Repeat:      10,
+			SleepTimeMs: 100,
+			Exit:        "$status:!running",
 		}
 
 		manager := endly.New()
@@ -388,8 +388,8 @@ func TestRepeatable_Run(t *testing.T) {
 
 	{ //Test invalid criteria error
 
-		repeataable := &endly.Repeatable{
-			//Extraction   DataExtractions //data extraction
+		repeataable := &endly.Repeater{
+			//Extraction   Extracts //data extraction
 			Variables: []*endly.Variable{
 				{
 					Name: "status",
@@ -397,15 +397,15 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 
-			Extraction: []*endly.DataExtraction{
+			Extraction: []*endly.Extract{
 				{
 					RegExpr: `"testStatus":"(.?+*))"`,
 					Key:     "status",
 				},
 			},
-			Repeat:       10,
-			SleepTimeMs:  100,
-			ExitCriteria: "$status!=running",
+			Repeat:      10,
+			SleepTimeMs: 100,
+			Exit:        "$status!=running",
 		}
 
 		manager := endly.New()

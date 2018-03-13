@@ -550,6 +550,11 @@ func (s *service) login(context *endly.Context, request *LoginRequest) (*LoginRe
 		return nil, err
 	}
 
+	err = endly.Run(context, exec.NewRunRequest(target, true, "docker ps"), nil)
+	if err != nil {
+		return nil, err
+	}
+
 	var response = &LoginResponse{}
 	credential := context.Expand(request.Credential)
 	credConfig, err := cred.NewConfig(credential)
@@ -567,6 +572,9 @@ func (s *service) login(context *endly.Context, request *LoginRequest) (*LoginRe
 	credentials := map[string]string{
 		"**docker-secret**": credential,
 	}
+
+
+
 	commandResponse, err := s.executeSecureDockerCommand(true, credentials, context, target, dockerErrors, fmt.Sprintf(`echo '**docker-secret**' | sudo docker login -u %v  %v --password-stdin`, credConfig.Username, repository))
 	if err != nil {
 		return nil, err

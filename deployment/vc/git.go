@@ -88,10 +88,10 @@ func (s *git) checkInfo(context *endly.Context, request *StatusRequest) (*Status
 
 	runRequest := exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand(fmt.Sprintf("git status"), "", nil, nil,
-			endly.NewDataExtraction("branch", "On branch[\\s\\t]+([^\\s]+)", true)),
+			endly.NewExtract("branch", "On branch[\\s\\t]+([^\\s]+)", true)),
 
 		exec.NewExtractCommand(fmt.Sprintf("git remote -v"), "", nil, nil,
-			endly.NewDataExtraction("origin", "origin[\\s\\t]+([^\\s]+)\\s+\\(fetch\\)", true)),
+			endly.NewExtract("origin", "origin[\\s\\t]+([^\\s]+)\\s+\\(fetch\\)", true)),
 		exec.NewExtractCommand(fmt.Sprintf("git rev-parse HEAD"), "", nil, nil))
 
 	if err = endly.Run(context, runRequest, runResponse); err != nil {

@@ -1,8 +1,8 @@
 Workflow,,Name,Description,Tasks,,Init
 ,,dockerized_aerospike,This workflow managed aeropsike docker service,%Tasks,,@var/dockerized_aerospike_init
-[]Tasks,,Name,Description,Actions,RunCriteria,
+[]Tasks,,Name,Description,Actions,When,
 ,,start,Start aerospike contaner,%Start,,
-[]Start,Service,Action,Description,Request,RunCriteria,
+[]Start,Service,Action,Description,Request,When,
 ,storage,copy,This action will copy template config file to the temp folder,@req/docker_config,$configURL:!/configURL/,
 ,docker,run,Start docker aerospike service,@req/docker_aerospike,,
 []Tasks,,Name,Description,Actions,,

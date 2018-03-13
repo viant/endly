@@ -174,7 +174,7 @@ func (s *Service) runAction(context *endly.Context, action *endly.ServiceAction,
 	defer s.End(context)(startEvent, endly.NewActivityEndEvent(activity))
 
 	var canRun bool
-	canRun, err = endly.Evaluate(context, context.State(), action.RunCriteria, ActionEvalCriteriaEventType, true)
+	canRun, err = endly.Evaluate(context, context.State(), action.When, ActionEvalCriteriaEventType, true)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +226,7 @@ func (s *Service) runTask(context *endly.Context, workflow *endly.WorkflowRun, t
 	var startTime = time.Now()
 	var state = context.State()
 	state.Put(endly.TaskKey, task.Name)
-	canRun, err := endly.Evaluate(context, context.State(), task.RunCriteria, TaskEvalCriteriaEventType, true)
+	canRun, err := endly.Evaluate(context, context.State(), task.When, TaskEvalCriteriaEventType, true)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +266,7 @@ func (s *Service) runTask(context *endly.Context, workflow *endly.WorkflowRun, t
 			}
 		}
 
-		moveToNextTag, err := endly.Evaluate(context, context.State(), action.SkipCriteria, "TagIdSkipCriteria", false)
+		moveToNextTag, err := endly.Evaluate(context, context.State(), action.Skip, "TagIdSkipCriteria", false)
 		if err != nil {
 			return nil, err
 		}
@@ -278,7 +278,7 @@ func (s *Service) runTask(context *endly.Context, workflow *endly.WorkflowRun, t
 		}
 
 		var extractable = make(map[string]string)
-		repeatable := action.Repeatable.Get()
+		repeatable := action.Repeater.Get()
 		err = repeatable.Run(s.AbstractService, caller, context, handler(task.Actions[i]), extractable)
 		if err != nil {
 			return nil, err

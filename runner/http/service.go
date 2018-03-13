@@ -84,7 +84,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPR
 	response := &Response{}
 	sendGroupResponse.Responses = append(sendGroupResponse.Responses, response)
 	startEvent := s.Begin(context, HTTPRequest)
-	repeatable := HTTPRequest.Repeatable.Get()
+	repeatable := HTTPRequest.Repeater.Get()
 
 	var HTTPResponse *http.Response
 	var responseBody string
@@ -131,7 +131,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPR
 
 	if toolbox.IsCompleteJSON(responseBody) {
 		response.JSONBody, err = toolbox.JSONToMap(responseBody)
-		if err == nil && HTTPRequest.Repeatable != nil {
+		if err == nil && HTTPRequest.Repeater != nil {
 			_ = HTTPRequest.Variables.Apply(data.Map(response.JSONBody), previous)
 		}
 	}
@@ -255,7 +255,7 @@ func (s *service) resetContext(context *endly.Context, request *SendRequest) {
 	state := context.State()
 	state.Delete(PreviousTripStateKey)
 	for _, request := range request.Requests {
-		if request.Repeatable != nil && len(request.Extraction) > 0 {
+		if request.Repeater != nil && len(request.Extraction) > 0 {
 			request.Extraction.Reset(state)
 		}
 	}

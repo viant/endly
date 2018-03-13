@@ -18,10 +18,10 @@ func (s *jdkService) checkJavaVersion(context *endly.Context, jdkCandidate strin
 	extractRequest := exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand(jdkCandidate+"java -version", "", nil,
 			util.StdErrors,
-			endly.NewDataExtraction("build", "build (\\d\\.\\d).+", false)),
+			endly.NewExtract("build", "build (\\d\\.\\d).+", false)),
 		exec.NewExtractCommand(fmt.Sprintf(jdkCandidate+"jrunscript -e 'java.lang.System.out.println(java.lang.System.getProperty(\"java.home\"));'"), "", nil,
 			util.StdErrors,
-			endly.NewDataExtraction("JAVA_HOME", "(.+)", false)))
+			endly.NewExtract("JAVA_HOME", "(.+)", false)))
 
 	commandResponse := &exec.RunResponse{}
 	if err := endly.Run(context, extractRequest, commandResponse); err != nil {
@@ -65,8 +65,8 @@ func (s *jdkService) setSdk(context *endly.Context, request *SetRequest) (*Info,
 	jdkHomeCheckCommand := s.getJavaHomeCheckCommand(context, request)
 	extractRequest := exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand(jdkHomeCheckCommand, "", nil, util.StdErrors,
-			endly.NewDataExtraction("JAVA_HOME", "(.+jdk.+)", false),
-			endly.NewDataExtraction("JAVA_HOME", "(.+jvm.+)", false)))
+			endly.NewExtract("JAVA_HOME", "(.+jdk.+)", false),
+			endly.NewExtract("JAVA_HOME", "(.+jvm.+)", false)))
 
 	commandResponse := &exec.RunResponse{}
 	if err := endly.Run(context, extractRequest, commandResponse); err != nil {

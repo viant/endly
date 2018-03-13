@@ -52,13 +52,13 @@ func NewOptions(secrets, env map[string]string, terminators, path []string, supe
 	}
 }
 
-//Extract represents an execution instructions
+//Extracts represents an execution instructions
 type ExtractCommand struct {
-	When       string                `description:"only run this command is criteria is matched i.e $stdout:/password/"`                                              //only run this execution is output from a previous command is matched
-	Command    string                `required:"true" description:"shell command to be executed"`                                                                     //command to be executed
-	Extraction endly.DataExtractions `description:"stdout data extraction instruction"`                                                                               //Stdout data extraction instruction
-	Errors     []string              `description:"fragments that will terminate execution with error if matched with standard output, in most cases leave empty"`    //fragments that will terminate execution with error if matched with standard output
-	Success    []string              `description:"if specified absence of all of the these fragment will terminate execution with error, in most cases leave empty"` //if specified absence of all of the these fragment will terminate execution with error.
+	When       string         `description:"only run this command is criteria is matched i.e $stdout:/password/"`                                              //only run this execution is output from a previous command is matched
+	Command    string         `required:"true" description:"shell command to be executed"`                                                                     //command to be executed
+	Extraction endly.Extracts `description:"stdout data extraction instruction"`                                                                               //Stdout data extraction instruction
+	Errors     []string       `description:"fragments that will terminate execution with error if matched with standard output, in most cases leave empty"`    //fragments that will terminate execution with error if matched with standard output
+	Success    []string       `description:"if specified absence of all of the these fragment will terminate execution with error, in most cases leave empty"` //if specified absence of all of the these fragment will terminate execution with error.
 }
 
 func (c *ExtractCommand) Init() error {
@@ -82,7 +82,7 @@ func (r *ExtractRequest) Validate() error {
 }
 
 //NewExtractCommand creates a new extract command
-func NewExtractCommand(command, when string, success, errors []string, extractions ...*endly.DataExtraction) *ExtractCommand {
+func NewExtractCommand(command, when string, success, errors []string, extractions ...*endly.Extract) *ExtractCommand {
 	if len(success) == 0 {
 		success = []string{}
 	}

@@ -126,7 +126,7 @@ type RunResponse struct {
 
 //MethodCall represents selenium call.
 type MethodCall struct {
-	Wait       *endly.Repeatable
+	Wait       *endly.Repeater
 	Method     string
 	Parameters []interface{}
 }
@@ -151,7 +151,7 @@ func (r *RunRequest) Validate() error {
 }
 
 //NewMethodCall creates a new method call
-func NewMethodCall(method string, repeatable *endly.Repeatable, parameters ...interface{}) *MethodCall {
+func NewMethodCall(method string, repeatable *endly.Repeater, parameters ...interface{}) *MethodCall {
 	return &MethodCall{
 		Wait:       repeatable,
 		Method:     method,

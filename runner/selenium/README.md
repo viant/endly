@@ -73,7 +73,7 @@ otherwise [WebElement](https://github.com/tebeka/selenium/blob/master/selenium.g
            "Wait": {
                     "Repeat": 5,
                     "SleepTimeMs": 100,
-                    "ExitCriteria": "$value"
+                    "Exit": "$value"
            }
         }
       ]

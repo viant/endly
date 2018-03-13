@@ -276,9 +276,11 @@ func (s *execService) executeCommand(context *endly.Context, session *endly.Syst
 		command = s.commandAsSuperUser(session, command)
 	}
 	var cmd = command
+
 	if cmd, err = context.Secrets.Expand(cmd, request.Secrets); err != nil {
 		return err
 	}
+
 	endly.LogF("stdin:%v", command)
 	startEvent := s.Begin(context, NewSdtinEvent(session.ID, command))
 	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
