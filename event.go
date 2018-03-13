@@ -106,7 +106,7 @@ func (e *Event) Get(expectedType reflect.Type) interface{} {
 func (e *Event) Package() string {
 	var eventType = fmt.Sprintf("%T", e.Value)
 	var fragments = strings.Split(eventType, ".")
-	return fragments[0]
+	return strings.Replace(fragments[0], "*", "", 1)
 }
 
 //Type returns event type (simple package and struct name)
