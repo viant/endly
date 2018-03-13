@@ -21,6 +21,9 @@ type Repeater struct {
 	Exit        string    //Exit criteria, it uses extracted variable to determine repeat termination
 }
 
+//Extracts a slice of Extracts
+type Extracts []*Extract
+
 //Extract represents a data extraction
 type Extract struct {
 	RegExpr string `description:"regular expression with oval bracket to extract match pattern" example:"go(\d\.\d)"` //regular expression
@@ -78,7 +81,7 @@ func AsExtractable(input interface{}) (string, map[string]interface{}) {
 }
 
 //EvaluateExitCriteria check is exit criteria is met.
-func (r *Repeater) EvaluateExitCriteria(callerInfo string, context *Context, extracted map[string]string) (bool, error) {
+func (r *Repeater) EvaluateExitCriteria(callerInfo string, context *Context, extracted map[string]interface{}) (bool, error) {
 	var extractedState = context.state.Clone()
 	for k, v := range extracted {
 		extractedState[k] = v
@@ -94,7 +97,7 @@ func (r *Repeater) EvaluateExitCriteria(callerInfo string, context *Context, ext
 
 }
 
-func (r *Repeater) runOnce(service *AbstractService, callerInfo string, context *Context, handler func() (interface{}, error), extracted map[string]string) (bool, error) {
+func (r *Repeater) runOnce(service *AbstractService, callerInfo string, context *Context, handler func() (interface{}, error), extracted map[string]interface{}) (bool, error) {
 	defer service.Sleep(context, r.SleepTimeMs)
 	out, err := handler()
 	if err != nil {
@@ -133,7 +136,7 @@ func (r *Repeater) runOnce(service *AbstractService, callerInfo string, context 
 }
 
 //Run repeats x times supplied handler
-func (r *Repeater) Run(service *AbstractService, callerInfo string, context *Context, handler func() (interface{}, error), extracted map[string]string) error {
+func (r *Repeater) Run(service *AbstractService, callerInfo string, context *Context, handler func() (interface{}, error), extracted map[string]interface{}) error {
 	for i := 0; i < r.Repeat; i++ {
 		shouldContinue, err := r.runOnce(service, callerInfo, context, handler, extracted)
 		if err != nil || !shouldContinue {
@@ -162,19 +165,19 @@ func (r *Repeater) Get() *Repeater {
 	return result
 }
 
-//DataExtractionEvent  represents data extraction event
-type DataExtractionEvent struct {
+//ExtractEvent  represents data extraction event
+type ExtractEvent struct {
 	Output           string
 	StructuredOutput interface{}
-	Extracted        interface{}
+	Data             interface{}
 }
 
 //NewExtractEvent creates a new event.
-func NewExtractEvent(output string, structuredOutput, extracted interface{}) *DataExtractionEvent {
-	return &DataExtractionEvent{
+func NewExtractEvent(output string, structuredOutput, extracted interface{}) *ExtractEvent {
+	return &ExtractEvent{
 		Output:           output,
 		StructuredOutput: structuredOutput,
-		Extracted:        extracted,
+		Data:             extracted,
 	}
 }
 
@@ -187,11 +190,8 @@ func NewExtract(key, regExpr string, reset bool) *Extract {
 	}
 }
 
-//Extracts a slice of Extracts
-type Extracts []*Extract
-
 //Extracts extract data from provided inputs, the result is placed to extracted map, or error
-func (d *Extracts) Extract(context *Context, extracted map[string]string, input ...string) error {
+func (d *Extracts) Extract(context *Context, extracted map[string]interface{}, input ...string) error {
 	if len(*d) == 0 || len(input) == 0 {
 		return nil
 	}
@@ -227,7 +227,7 @@ func (d *Extracts) Reset(state data.Map) {
 	}
 }
 
-func matchExpression(compiledExpression *regexp.Regexp, line string, extract *Extract, context *Context, extracted map[string]string) bool {
+func matchExpression(compiledExpression *regexp.Regexp, line string, extract *Extract, context *Context, extracted map[string]interface{}) bool {
 	if compiledExpression.MatchString(line) {
 
 		matched := compiledExpression.FindStringSubmatch(line)

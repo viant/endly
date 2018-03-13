@@ -573,8 +573,6 @@ func (s *service) login(context *endly.Context, request *LoginRequest) (*LoginRe
 		"**docker-secret**": credential,
 	}
 
-
-
 	commandResponse, err := s.executeSecureDockerCommand(true, credentials, context, target, dockerErrors, fmt.Sprintf(`echo '**docker-secret**' | sudo docker login -u %v  %v --password-stdin`, credConfig.Username, repository))
 	if err != nil {
 		return nil, err

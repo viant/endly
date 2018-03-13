@@ -277,7 +277,7 @@ func (s *Service) runTask(context *endly.Context, workflow *endly.WorkflowRun, t
 			continue
 		}
 
-		var extractable = make(map[string]string)
+		var extractable = make(map[string]interface{})
 		repeatable := action.Repeater.Get()
 		err = repeatable.Run(s.AbstractService, caller, context, handler(task.Actions[i]), extractable)
 		if err != nil {

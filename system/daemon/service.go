@@ -99,11 +99,12 @@ func (s *service) determineServiceType(context *endly.Context, service, exclusio
 	return serviceTypeError, nil
 }
 
-func extractServiceInfo(stdout string, state map[string]string, info *Info) {
+func extractServiceInfo(stdout string, state map[string]interface{}, info *Info) {
 	if pid, ok := state["pid"]; ok {
 		info.Pid = toolbox.AsInt(pid)
 	}
-	if value, ok := state["state"]; ok {
+	if val, ok := state["state"]; ok {
+		value := val.(string)
 		state := vtclean.Clean(value, false)
 		if strings.Contains(state, "inactive") {
 			state = "not running"
@@ -112,8 +113,8 @@ func extractServiceInfo(stdout string, state map[string]string, info *Info) {
 		}
 		info.State = state
 	}
-	if daemonPath, ok := state["path"]; ok {
-		info.Path = daemonPath
+	if val, ok := state["path"]; ok {
+		info.Path = val.(string)
 	}
 
 	//deal with service deamon		info.Pid = docker start/running, process 48628
@@ -162,7 +163,7 @@ func (s *service) determineCheckCommand(context *endly.Context, target *url.Reso
 			if err != nil {
 				return "", err
 			}
-			extractServiceInfo(runResponse.Stdout(), runResponse.Extracted, info)
+			extractServiceInfo(runResponse.Stdout(), runResponse.Data, info)
 		}
 		return "", nil
 
@@ -228,7 +229,7 @@ func (s *service) checkService(context *endly.Context, request *StatusRequest) (
 		return nil, err
 	}
 
-	extractServiceInfo(commandResult.Stdout(), commandResult.Extracted, info)
+	extractServiceInfo(commandResult.Stdout(), commandResult.Data, info)
 	return info, nil
 
 }

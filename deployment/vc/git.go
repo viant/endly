@@ -98,11 +98,11 @@ func (s *git) checkInfo(context *endly.Context, request *StatusRequest) (*Status
 		return nil, err
 	}
 
-	if branch, has := runResponse.Extracted["branch"]; has {
-		result.Branch = branch
+	if branch, has := runResponse.Data["branch"]; has {
+		result.Branch = branch.(string)
 	}
-	if origin, has := runResponse.Extracted["origin"]; has {
-		result.Origin = origin
+	if origin, has := runResponse.Data["origin"]; has {
+		result.Origin = origin.(string)
 	}
 
 	if strings.Contains(runResponse.Stdout(), "Not a git") {

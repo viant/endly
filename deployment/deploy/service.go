@@ -35,9 +35,9 @@ func (s *service) extractVersion(context *endly.Context, target *url.Resource, d
 	if err := endly.Run(context, deployment.VersionCheck.Clone(target), runResponse); err != nil {
 		return "", err
 	}
-	if len(runResponse.Extracted) > 0 {
-		if version, has := runResponse.Extracted[versionKey]; has {
-			return version, nil
+	if len(runResponse.Data) > 0 {
+		if version, has := runResponse.Data[versionKey]; has {
+			return version.(string), nil
 		}
 	}
 	return "", nil

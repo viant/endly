@@ -44,15 +44,12 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 	defer writer.Close()
 
 	if request.UDF != "" {
-		if transformed, err := endly.TransformWithUDF(context, request.UDF, "mail.Body", mainMessage.Body);err == nil {
+		if transformed, err := endly.TransformWithUDF(context, request.UDF, "mail.Body", mainMessage.Body); err == nil {
 			mainMessage.Body = toolbox.AsString(transformed)
 		}
 	}
 	var payload = mainMessage.Payload()
 	payload = []byte(context.Expand(string(payload)))
-
-
-
 
 	response.SendPayloadSize, err = writer.Write(payload)
 	if err != nil {

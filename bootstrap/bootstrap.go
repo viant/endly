@@ -36,9 +36,9 @@ import (
 	_ "github.com/viant/endly/system/daemon"
 	_ "github.com/viant/endly/system/docker"
 	_ "github.com/viant/endly/system/exec"
+	_ "github.com/viant/endly/system/network"
 	_ "github.com/viant/endly/system/process"
 	_ "github.com/viant/endly/system/storage"
-	_ "github.com/viant/endly/system/network"
 
 	_ "github.com/viant/endly/notify/smtp"
 

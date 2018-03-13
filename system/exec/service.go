@@ -303,7 +303,7 @@ func (s *execService) executeCommand(context *endly.Context, session *endly.Syst
 		return err
 	}
 
-	err = extractCommand.Extraction.Extract(context, response.Extracted, strings.Split(stdout, "\n")...)
+	err = extractCommand.Extraction.Extract(context, response.Data, strings.Split(stdout, "\n")...)
 	if err != nil {
 		return err
 	}

@@ -24,7 +24,7 @@ type service struct {
 	*endly.AbstractService
 }
 
-func (s *service) processResponse(context *endly.Context, sendRequest *SendRequest, sendHTTPRequest *Request, response *Response, httpResponse *http.Response, isBase64Encoded bool, extracted map[string]string) (string, error) {
+func (s *service) processResponse(context *endly.Context, sendRequest *SendRequest, sendHTTPRequest *Request, response *Response, httpResponse *http.Response, isBase64Encoded bool, extracted map[string]interface{}) (string, error) {
 	response.Header = make(map[string][]string)
 	copyHeaders(httpResponse.Header, response.Header)
 	readBody(httpResponse, response, isBase64Encoded)
@@ -106,11 +106,11 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPR
 		if err != nil {
 			return nil, err
 		}
-		responseBody, err = s.processResponse(context, sendGroupRequest, HTTPRequest, response, HTTPResponse, isBase64Encoded, sendGroupResponse.Extracted)
+		responseBody, err = s.processResponse(context, sendGroupRequest, HTTPRequest, response, HTTPResponse, isBase64Encoded, sendGroupResponse.Data)
 		return responseBody, err
 	}
 
-	err = repeatable.Run(s.AbstractService, "HTTPRunner", context, handler, sendGroupResponse.Extracted)
+	err = repeatable.Run(s.AbstractService, "HTTPRunner", context, handler, sendGroupResponse.Data)
 	if err != nil {
 		return err
 	}
@@ -136,7 +136,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPR
 		}
 	}
 
-	for k, v := range sendGroupResponse.Extracted {
+	for k, v := range sendGroupResponse.Data {
 		var expanded = previous.Expand(v)
 		previous[k] = state.Expand(expanded)
 	}
@@ -148,12 +148,12 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPR
 	if len(previous) > 0 {
 		state.Put(PreviousTripStateKey, previous)
 	}
-	if HTTPRequest.MatchBody != "" {
+	if HTTPRequest.When != "" {
 		return nil
 	}
 
 	for _, candidate := range sendGroupRequest.Requests {
-		if candidate.MatchBody != "" && strings.Contains(response.Body, candidate.MatchBody) {
+		if candidate.When != "" && strings.Contains(response.Body, candidate.When) {
 			err = s.sendRequest(context, client, candidate, sessionCookies, sendGroupRequest, sendGroupResponse)
 			if err != nil {
 				return err
@@ -180,7 +180,7 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 	defer s.resetContext(context, request)
 	var result = &SendResponse{
 		Responses: make([]*Response, 0),
-		Extracted: make(map[string]string),
+		Data:      make(map[string]interface{}),
 	}
 	var sessionCookies Cookies = make([]*http.Cookie, 0)
 	var state = context.State()
@@ -188,7 +188,7 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 		state.Put("cookies", data.NewMap())
 	}
 	for _, req := range request.Requests {
-		if req.MatchBody != "" {
+		if req.When != "" {
 			continue
 		}
 		err = s.sendRequest(context, client, req, &sessionCookies, request, result)
@@ -272,7 +272,7 @@ const httpRunnerSendRequestExample = `{
       "URL": "http://127.0.0.1:8777/event1/?k10=v1\u0026k2=v2"
     },
     {
-      "MatchBody": "",
+      "When": "",
       "Method": "POST",
       "URL": "http://127.0.0.1:8777/event4/",
       "Body": "Lorem Ipsum is simply dummy text of the printing and typesetting industry."
