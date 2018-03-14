@@ -55,6 +55,23 @@ func Test_EvaluateCriteria(t *testing.T) {
 			DefaultResult: false,
 			Expected:      false,
 		},
+		{
+			Description: "More complex expression with multiple responses",
+			Expression:  "$responses[0].Body:/bb/ && $responses[1].StatusCode = 404",
+			State: map[string]interface{}{
+				"responses": []interface{}{
+					map[string]interface{}{
+						"Body":       "abbc",
+						"StatusCode": 200,
+					},
+					map[string]interface{}{
+						"Body":       "xyz",
+						"StatusCode": 404,
+					},
+				},
+			},
+			Expected: true,
+		},
 	}
 
 	for _, useCase := range useCases {

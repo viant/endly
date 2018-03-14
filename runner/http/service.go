@@ -45,6 +45,13 @@ func (s *service) processResponse(context *endly.Context, sendRequest *SendReque
 }
 
 func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPRequest *Request, sessionCookies *Cookies, sendGroupRequest *SendRequest, sendGroupResponse *SendResponse) error {
+	// Check if request can be executed
+	if isValid, err := HTTPRequest.EvaluateWhen(context); !isValid {
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 	var err error
 	var state = context.State()
 	cookies := state.GetMap("cookies")
@@ -148,18 +155,6 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPR
 	if len(previous) > 0 {
 		state.Put(PreviousTripStateKey, previous)
 	}
-	if HTTPRequest.When != "" {
-		return nil
-	}
-
-	for _, candidate := range sendGroupRequest.Requests {
-		if candidate.When != "" && strings.Contains(response.Body, candidate.When) {
-			err = s.sendRequest(context, client, candidate, sessionCookies, sendGroupRequest, sendGroupResponse)
-			if err != nil {
-				return err
-			}
-		}
-	}
 	return nil
 }
 
@@ -188,9 +183,6 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 		state.Put("cookies", data.NewMap())
 	}
 	for _, req := range request.Requests {
-		if req.When != "" {
-			continue
-		}
 		err = s.sendRequest(context, client, req, &sessionCookies, request, result)
 		if err != nil {
 			return nil, err
