@@ -16,7 +16,7 @@ type SendRequest struct {
 //Request represents an http request
 type Request struct {
 	*endly.Repeater
-	When        string `description:"criteria to send this request"`
+	When        string `description:"condition expression that will be evaluated successfully before firing this request"`
 	Method      string `required:"true" description:"HTTP Method"`
 	URL         string
 	Header      http.Header
@@ -109,4 +109,14 @@ func (r *Request) Expand(context *endly.Context) *Request {
 		RequestUdf:  r.RequestUdf,
 		ResponseUdf: r.ResponseUdf,
 	}
+}
+
+// Method to evaluate if a request condition is satisfied. This may be used as a pre-requisite before making the actual request call
+// true on success or when no condition is present. false on failed evaluation. Error
+func (r *Request) EvaluateWhen(context *endly.Context) (isEvaluated bool, err error) {
+	isEvaluated = true //By default
+	if r.When != "" {
+		isEvaluated, err = endly.Evaluate(context, context.State(), r.When, "Request When Evaluation", isEvaluated)
+	}
+	return
 }
