@@ -1,5 +1,5 @@
 {
-  "WorkflowURL": "manager.csv",
+  "URL": "manager.csv",
   "Name": "manager",
   "PublishParameters": true,
   "EnableLogging": false,

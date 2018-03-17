@@ -85,7 +85,7 @@ func (s *Service) worflowDedicatedFolderURL(URL string) string {
 	return strings.Replace(URL, workflowFilename, fmt.Sprintf("%v/%v", workflowName, workflowFilename), 1)
 }
 
-func (s *Service) getWorkflowURLs(URL string) []string {
+func (s *Service) getURLs(URL string) []string {
 	return []string{
 		URL,
 		s.worflowDedicatedFolderURL(URL),
@@ -94,13 +94,13 @@ func (s *Service) getWorkflowURLs(URL string) []string {
 
 //getWorkflowResource returns workflow resource
 func (s *Service) getWorkflowResource(state data.Map, URL string) *url.Resource {
-	for _, candidate := range s.getWorkflowURLs(URL) {
+	for _, candidate := range s.getURLs(URL) {
 		resource := url.NewResource(candidate)
 		storageService, err := storage.NewServiceForURL(resource.URL, "")
 		if err != nil {
 			return nil
 		}
-		if exists, _ := storageService.Exists(candidate); exists {
+		if exists, _ := storageService.Exists(resource.URL); exists {
 			return resource
 		}
 	}
@@ -108,7 +108,7 @@ func (s *Service) getWorkflowResource(state data.Map, URL string) *url.Resource 
 		return nil
 	}
 	//Lookup shared workflow
-	for _, candidate := range s.getWorkflowURLs(URL) {
+	for _, candidate := range s.getURLs(URL) {
 		resource, err := s.Dao.NewRepoResource(state, fmt.Sprintf("workflow/%v", candidate))
 		if err != nil {
 			continue
@@ -124,16 +124,16 @@ func (s *Service) getWorkflowResource(state data.Map, URL string) *url.Resource 
 	return nil
 }
 
-func (s *Service) loadWorkflowIfNeeded(context *endly.Context, name string, URL string) (err error) {
+func (s *Service) loadWorkflowIfNeeded(context *endly.Context, name string, resource *url.Resource) (err error) {
 	if !s.HasWorkflow(name) {
-		workflowResource := url.NewResource(URL)
-		_, err := s.loadWorkflow(context, &LoadRequest{Source: workflowResource})
-		if err != nil {
+		if _, err := s.loadWorkflow(context, &LoadRequest{Source: resource});err != nil {
 			return err
 		}
 	}
 	return nil
 }
+
+
 
 func (s *Service) getServiceRequest(context *endly.Context, activity *endly.Activity) (endly.Service, interface{}, error) {
 	var service, err = context.Service(activity.Service)
@@ -455,11 +455,11 @@ func (s *Service) run(upstreamContext *endly.Context, request *RunRequest) (resp
 
 	s.enableLoggingIfNeeded(upstreamContext, request.BaseRun)
 
-	URL := request.WorkflowURL
-	if resource := s.getWorkflowResource(upstreamContext.State(), request.WorkflowURL); resource != nil {
-		URL = resource.URL
+	resource := s.getWorkflowResource(upstreamContext.State(), request.URL);
+	if resource == nil {
+		return nil, fmt.Errorf("unable to locate workflow: %v, %v", request.Name, request.URL)
 	}
-	err = s.loadWorkflowIfNeeded(upstreamContext, request.Name, URL)
+	err = s.loadWorkflowIfNeeded(upstreamContext, request.Name, resource)
 	if err != nil {
 		return response, err
 	}

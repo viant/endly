@@ -133,12 +133,12 @@ func Bootstrap() {
 		log.Fatal(err)
 	}
 	if value, ok := flagset["p"]; ok && toolbox.AsBoolean(value) {
-		printWorkflow(request.WorkflowURL)
+		printWorkflow(request.URL)
 		return
 	}
 
 	if flagset["t"] == "?" {
-		printWorkflowTasks(request.WorkflowURL)
+		printWorkflowTasks(request.URL)
 		return
 	}
 
@@ -369,7 +369,7 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 
 	if value, ok := flagset["w"]; ok {
 		request = &workflow.RunRequest{
-			WorkflowURL: value,
+			URL: value,
 		}
 	}
 	if value, ok := flagset["r"]; ok {
@@ -378,10 +378,10 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 			request = &workflow.RunRequest{}
 			err = resource.Decode(request)
 		}
-		if request.WorkflowURL == "" {
+		if request.URL == "" {
 			parent, _ := toolbox.URLSplit(resource.URL)
 			parent = strings.Replace(parent, "req", "workflow", 1)
-			request.WorkflowURL = toolbox.URLPathJoin(parent, request.Name+".csv")
+			request.URL = toolbox.URLPathJoin(parent, request.Name+".csv")
 		}
 		if err != nil {
 			return nil, fmt.Errorf("failed to locate workflow run request: %v %v", value, err)

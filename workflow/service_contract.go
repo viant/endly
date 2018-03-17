@@ -25,27 +25,39 @@ type BaseRun struct {
 //RunRequest represents workflow run request
 type RunRequest struct {
 	*BaseRun
-	WorkflowURL       string `description:"workflow URL if workflow is not found in the registry, it is loaded"`
+	URL               string `description:"workflow URL if workflow is not found in the registry, it is loaded"`
 	Name              string `required:"true" description:"name defined in workflow document"`
 	Tasks             string `required:"true" description:"coma separated task list or '*'to run all tasks sequencialy"` //tasks to run with coma separated list or '*', or empty string for all tasks
 	TagIDs            string `description:"coma separated TagID list, if present in a task, only matched runs, other task run as normal"`
 	PublishParameters bool   `description:"flag to publish parameters directly into context state"`
 }
 
+//Init initialises request
 func (r *RunRequest) Init() error {
 	if r.BaseRun == nil {
 		r.BaseRun = &BaseRun{}
 	}
-
-	if r.WorkflowURL == "" {
-		r.WorkflowURL = r.Name
+	if r.URL == "" {
+		r.URL = r.Name
 	}
 	if r.Name == "" {
-		r.Name = WorkflowSelector(r.WorkflowURL).Name()
+		r.Name = WorkflowSelector(r.URL).Name()
 	}
-
 	return nil
 }
+
+//Validate checks if request is valid
+func (r *RunRequest) Validate() error {
+	if r.Name == "" {
+		return errors.New("name was empty")
+	}
+	if r.URL == "" {
+		return errors.New("url was empty")
+	}
+	return nil
+}
+
+
 
 //NewRunRequest creates a new run request
 func NewRunRequest(selector WorkflowSelector, params map[string]interface{}, publishParams bool) *RunRequest {
@@ -53,12 +65,20 @@ func NewRunRequest(selector WorkflowSelector, params map[string]interface{}, pub
 		BaseRun: &BaseRun{
 			Params: params,
 		},
-		WorkflowURL:       selector.URL(),
+		URL:               selector.URL(),
 		Name:              selector.Name(),
 		Tasks:             selector.Tasks(),
 		PublishParameters: publishParams,
 	}
 }
+
+//NewRunRequestFromURL creates a new request from URL
+func NewRunRequestFromURL(URL string) (*RunRequest, error) {
+	var request = &RunRequest{}
+	var resource = url.NewResource(URL)
+	return request, resource.Decode(request)
+}
+
 
 //RunResponse represents workflow run response
 type RunResponse struct {
@@ -111,14 +131,14 @@ func (r *PipelineRequest) toPipeline(source interface{}, pipeline *Pipeline) (er
 		pipeline.Workflow = WorkflowSelector(toolbox.AsString(workflow))
 		delete(aMap, pipelineWorkflow)
 		pipeline.Params = Params(aMap)
-		AppendParams(r.Params, pipeline.Params, false)
+		pipeline.Params.AppendParams(r.Params, false)
 		return nil
 	}
 	if workflow, ok := aMap[pipelineAction]; ok {
 		pipeline.Action = ActionSelector(toolbox.AsString(workflow))
 		delete(aMap, pipelineAction)
 		pipeline.Params = Params(aMap)
-		AppendParams(r.Params, pipeline.Params, false)
+		pipeline.Params.AppendParams(r.Params,  false)
 		return nil
 	}
 	if e := toolbox.ProcessMap(source, func(key, value interface{}) bool {
@@ -138,6 +158,9 @@ func (r *PipelineRequest) toPipeline(source interface{}, pipeline *Pipeline) (er
 }
 
 func (r *PipelineRequest) Init() (err error) {
+	if r.BaseRun == nil {
+		r.BaseRun = &BaseRun{}
+	}
 	r.Params, err = util.NormalizeMap(r.Params)
 	if err != nil {
 		return err
@@ -176,6 +199,7 @@ func NewPipelineRequestFromURL(URL string) (*PipelineRequest, error) {
 	var response = &PipelineRequest{}
 	return response, resource.Decode(response)
 }
+
 
 //Response represent a pipeline response.
 type PipelineResponse struct {
@@ -372,11 +396,11 @@ func (s ActionSelector) Service() string {
 }
 
 //AppendMap source to dest map
-func AppendParams(source, dest Params, override bool) {
+func (p *Params) AppendParams(source Params, override bool) {
 	for k, v := range source {
-		if _, ok := dest[k]; ok && !override {
+		if _, ok := (*p)[k]; ok && !override {
 			continue
 		}
-		dest[k] = v
+		(*p)[k] = v
 	}
 }

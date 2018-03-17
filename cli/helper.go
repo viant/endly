@@ -58,7 +58,7 @@ func LoadRunRequestWithOption(workflowRunRequestURL string, params ...interface{
 	return request, nil
 }
 
-func getWorkflowURL(candidate string) (string, string, error) {
+func getURL(candidate string) (string, string, error) {
 	var _, name = path.Split(candidate)
 	if path.Ext(candidate) == "" {
 		candidate = candidate + ".csv"
