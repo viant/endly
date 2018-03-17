@@ -1,0 +1,7 @@
+source:
+  URL: mem://yaml1/dir
+dest:
+  URL: mem://dest/dir2
+assets:
+  file1.txt:
+  file2.txt: renamedFile2  
