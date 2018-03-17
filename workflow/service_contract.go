@@ -36,6 +36,9 @@ func (r *RunRequest) Init() error {
 	if r.BaseRun == nil {
 		r.BaseRun = &BaseRun{}
 	}
+	if r.WorkflowURL == "" {
+		r.WorkflowURL = r.Name
+	}
 	return nil
 }
 

@@ -131,16 +131,7 @@ func (s *Service) getWorkflowResource(state data.Map, URL string) *url.Resource 
 
 func (s *Service) loadWorkflowIfNeeded(context *endly.Context, name string, URL string) (err error) {
 	if !s.HasWorkflow(name) {
-		var workflowResource *url.Resource
-		if URL == "" {
-			workflowResource, err = s.Dao.NewRepoResource(context.State(), fmt.Sprintf("workflow/%v.csv", name))
-			if err != nil {
-				return err
-			}
-		} else {
-			workflowResource = url.NewResource(URL)
-		}
-
+		workflowResource := url.NewResource(URL)
 		_, err := s.loadWorkflow(context, &LoadRequest{Source: workflowResource})
 		if err != nil {
 			return err
@@ -466,7 +457,9 @@ func (s *Service) run(upstreamContext *endly.Context, request *RunRequest) (resp
 		Data:      make(map[string]interface{}),
 		SessionID: upstreamContext.SessionID,
 	}
+
 	s.enableLoggingIfNeeded(upstreamContext, request.BaseRun)
+
 	URL := request.WorkflowURL
 	if resource := s.getWorkflowResource(upstreamContext.State(), request.WorkflowURL); resource != nil {
 		URL = resource.URL
