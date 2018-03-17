@@ -577,11 +577,11 @@ func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 		r.filter = DefaultFilter()
 	}
 	if request.Name == "" {
-		name, URL, err := getWorkflowURL(request.WorkflowURL)
+		name, URL, err := getURL(request.URL)
 		if err != nil {
-			return fmt.Errorf("failed to locate workflow: %v %v", request.WorkflowURL, err)
+			return fmt.Errorf("failed to locate workflow: %v %v", request.URL, err)
 		}
-		request.WorkflowURL = URL
+		request.URL = URL
 		request.Name = name
 	}
 	defer func() {

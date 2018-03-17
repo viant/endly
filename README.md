@@ -285,7 +285,7 @@ Example of RunRequest
 
 ```json
 {
-  "WorkflowURL": "manager.csv",
+  "URL": "manager.csv",
   "Name": "manager",
   "PublishParameters":false,
   "EnableLogging":true,
@@ -407,7 +407,7 @@ RunnerReportingOptions settings control stdout/stdin and other workflow details.
     runner := cli.New()
 	cli.OnError = func(code int) {}//to supres os.Exit(1) in case of error
 	err := runner.Run(&workflow.RunRequest{
-			WorkflowURL: "action",
+			URL: "action",
 			Tasks:       "run",
 			Params: map[string]interface{}{
 				"service": "logger",

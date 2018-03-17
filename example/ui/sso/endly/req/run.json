@@ -1,5 +1,5 @@
 {
-  "WorkflowURL": "${workflow}/${workflow}.csv",
+  "URL": "${workflow}/${workflow}.csv",
   "Name": "${workflow}",
   "Tasks": "$tasks",
   "Params": {
