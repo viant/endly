@@ -1,0 +1,73 @@
+[
+  {
+    "Name":"containerName",
+    "Value":"go_build",
+    "From":"params.containerName",
+    "Required":true
+  },
+  {
+    "Name":"origin",
+    "Value":""
+  },
+  {
+    "Name":"origin",
+    "Value":"$AsMap($params.origin)"
+  },
+  {
+    "Name":"upload",
+    "Value":[],
+    "From":"params.upload",
+    "Required":true
+  },
+  {
+    "Name":"download",
+    "Value":[],
+    "From":"params.download",
+    "Required":true
+  },
+  {
+    "Name":"app",
+    "From":"params.app",
+    "Required":true
+  },
+  {
+    "Name":"dockerImage",
+    "Value":"rastasheep/ubuntu-sshd:14.04",
+    "From":"params.dockerImage",
+    "Required":true
+  },
+  {
+    "Name":"commands",
+    "From":"params.commands",
+    "Required":true
+  },
+  {
+    "Name": "targetHost",
+    "From": "params.targetHost",
+    "Value":"127.0.0.1",
+    "Required": true
+  },
+  {
+    "Name": "targetHostCredential",
+    "From": "params.targetHostCredential",
+    "Value":"${env.HOME}/.secret/localhost.json",
+    "Required": true
+  },
+
+  {
+    "Name": "execTarget",
+    "Value": {
+      "URL": "ssh://$targetHost/",
+      "Credential": "$targetHostCredential"
+    }
+  },
+
+  {
+    "Name": "buildTarget",
+    "Value": {
+      "URL": "scp://127.0.0.1:7722/${app}",
+      "Credential": "mem://github.com/viant/endly/workflow/docker/build/secret/build.json"
+    }
+  }
+
+]
