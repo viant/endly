@@ -17,7 +17,7 @@ func Test_Service(t *testing.T) {
 
 	config := &reporter.Config{}
 	configResource := url.NewResource("endly/config/config.json")
-	err := configResource.JSONDecode(config)
+	err := configResource.Decode(config)
 	if assert.Nil(t, err) {
 		service, err := reporter.NewService(config)
 		if assert.Nil(t, err) {

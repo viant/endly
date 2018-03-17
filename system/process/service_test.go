@@ -76,46 +76,36 @@ func TestProcessService_Status(t *testing.T) {
 	}
 
 	for _, useCase := range useCases {
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, useCase.target, useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, useCase.target, execService)
-			service, err := context.Service(process.ServiceID)
-			assert.Nil(t, err)
+			var request = &process.StatusRequest{
+				Target:  useCase.target,
+				Command: useCase.Command,
+			}
+			var response = &process.StatusResponse{}
+			var description = useCase.baseDir + " " + useCase.Command
+			err := endly.Run(context, request, response)
+			if !assert.Nil(t, err, description) {
+				continue
+			}
 
-			defer context.Close()
-			if assert.Nil(t, err) {
-				var target = useCase.target
-				response := service.Run(context, &process.StatusRequest{
-					Target:  target,
-					Command: useCase.Command,
-				})
+			if len(response.Processes) != len(useCase.Exected) {
+				assert.Fail(t, fmt.Sprintf("Expected %v processes info but had %v", len(useCase.Exected), len(response.Processes)))
+			}
 
-				var baseCase = useCase.baseDir + " " + useCase.Command
-				assert.Equal(t, "", response.Error, baseCase)
-				processResponse, ok := response.Response.(*process.StatusResponse)
-				if !ok {
-					assert.Fail(t, fmt.Sprintf("process response was empty %v %T", baseCase, response.Response))
+			for i, expected := range useCase.Exected {
+
+				if i >= len(response.Processes) {
+					assert.Fail(t, fmt.Sprintf("Process was missing [%v] %v", i, description))
 					continue
 				}
-				if len(processResponse.Processes) != len(useCase.Exected) {
-					assert.Fail(t, fmt.Sprintf("Expected %v processes info but had %v", len(useCase.Exected), len(processResponse.Processes)))
-				}
-
-				for i, expected := range useCase.Exected {
-
-					if i >= len(processResponse.Processes) {
-						assert.Fail(t, fmt.Sprintf("Process was missing [%v] %v", i, baseCase))
-						continue
-					}
-					var actual = processResponse.Processes[i]
-					assert.Equal(t, expected.Name, actual.Name, "name "+baseCase)
-					assert.Equal(t, expected.Command, actual.Command, "command "+baseCase)
-					assert.Equal(t, expected.Pid, actual.Pid, "pid "+baseCase)
-					assert.EqualValues(t, expected.Arguments, actual.Arguments, "command "+baseCase)
-					assert.Equal(t, expected.Stdin, actual.Stdin, "Stdin "+baseCase)
-					assert.Equal(t, expected.Stdout, actual.Stdout, "Stdout "+baseCase)
-
-				}
+				var actual = response.Processes[i]
+				assert.Equal(t, expected.Name, actual.Name, "name "+description)
+				assert.Equal(t, expected.Command, actual.Command, "command "+description)
+				assert.Equal(t, expected.Pid, actual.Pid, "pid "+description)
+				assert.EqualValues(t, expected.Arguments, actual.Arguments, "command "+description)
+				assert.Equal(t, expected.Stdin, actual.Stdin, "Stdin "+description)
+				assert.Equal(t, expected.Stdout, actual.Stdout, "Stdout "+description)
 
 			}
 

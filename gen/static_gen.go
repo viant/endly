@@ -11,7 +11,9 @@ import (
 //main generate file with static content from meta, workflow, req folders so that they can be compiled into final binary
 func main() {
 	genDirectory := toolbox.CallerDirectory(3)
+
 	parent := string(genDirectory[:len(genDirectory)-4])
+
 	mappings := []*storage.StorageMapping{
 		{
 			SourceURL:      toolbox.FileSchema + path.Join(parent, "meta"),

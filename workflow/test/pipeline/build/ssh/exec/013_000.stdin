@@ -1,0 +1,1 @@
+sudo docker run --name go_build -p 7722:22  -d rastasheep/ubuntu-sshd:14.04 

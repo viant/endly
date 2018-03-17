@@ -35,24 +35,19 @@ func TestNewExecService(t *testing.T) {
 
 	manager := endly.New()
 	for _, useCase := range useCases {
-		service, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, useCase.target, useCase.baseDir)
+		defer context.Close()
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, useCase.target, service)
-			defer context.Close()
-			if assert.Nil(t, err) {
-				var target = useCase.target
-				actual := context.OperatingSystem(target.Host())
-				if assert.NotNil(t, actual) {
-					expected := useCase.expected
-					assert.Equal(t, expected.Name, actual.Name, "os.name")
-					assert.Equal(t, expected.Version, actual.Version, "os.version")
-					assert.Equal(t, expected.Hardware, actual.Hardware, "os.hardware")
-					assert.Equal(t, expected.System, actual.System, "os.system")
-				}
+			var target = useCase.target
+			actual := context.OperatingSystem(target.Host())
+			if assert.NotNil(t, actual) {
+				expected := useCase.expected
+				assert.Equal(t, expected.Name, actual.Name, "os.name")
+				assert.Equal(t, expected.Version, actual.Version, "os.version")
+				assert.Equal(t, expected.Hardware, actual.Hardware, "os.hardware")
+				assert.Equal(t, expected.System, actual.System, "os.system")
 			}
-
 		}
-
 	}
 
 }
@@ -64,11 +59,7 @@ func Test_NoTransientSession(t *testing.T) {
 		log.Fatal(err)
 	}
 	target := url.NewResource("ssh://127.0.0.1", credential)
-	SSHService, err := exec.GetReplayService("test/session/context")
-	if err != nil {
-		log.Fatal(err)
-	}
-	context, err := exec.OpenTestContext(manager, target, SSHService)
+	context, err := exec.NewSSHReplayContext(manager, target, "test/session/context")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -91,11 +82,7 @@ func Test_TransientSession(t *testing.T) {
 		log.Fatal(err)
 	}
 	target := url.NewResource("ssh://127.0.0.1", credential)
-	SSHService, err := exec.GetReplayService("test/session/transient")
-	if err != nil {
-		log.Fatal(err)
-	}
-	context, err := exec.OpenTestContext(manager, target, SSHService)
+	context, err := exec.NewSSHReplayContext(manager, target, "test/session/transient")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -121,11 +108,7 @@ func TestRunCommand(t *testing.T) {
 			log.Fatal(err)
 		}
 		target := url.NewResource("ssh://127.0.0.1", credential)
-		SSHService, err := exec.GetReplayService("test/run/simple")
-		if err != nil {
-			log.Fatal(err)
-		}
-		context, err := exec.OpenTestContext(manager, target, SSHService)
+		context, err := exec.NewSSHReplayContext(manager, target, "test/run/simple")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -146,11 +129,7 @@ func TestRunCommand(t *testing.T) {
 			log.Fatal(err)
 		}
 		target := url.NewResource("ssh://127.0.0.1", credential)
-		SSHService, err := exec.GetReplayService("test/run/conditional")
-		if err != nil {
-			log.Fatal(err)
-		}
-		context, err := exec.OpenTestContext(manager, target, SSHService)
+		context, err := exec.NewSSHReplayContext(manager, target, "test/run/conditional")
 		if err != nil {
 			log.Fatal(err)
 		}

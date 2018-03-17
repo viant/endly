@@ -5,11 +5,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/util"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/ssh"
 	"github.com/viant/toolbox/url"
 	"strings"
-	"github.com/viant/toolbox/data"
 )
 
 var CommandErrors = []string{util.CommandNotFound, util.NoSuchFileOrDirectory, util.ErrorIsNotRecoverable}
@@ -18,6 +18,7 @@ var CommandErrors = []string{util.CommandNotFound, util.NoSuchFileOrDirectory, u
 type Options struct {
 	SystemPaths []string          `description:"path that will be appended to the current SSH execution session the current and future commands"`                                                //path that will be added to the system paths
 	Terminators []string          `description:"fragment that helps identify that command has been completed - the best is to leave it empty, which is the detected bash prompt"`                //fragment that helps identify that command has been completed - the best is to leave it empty, which is the detected bash prompt
+	Errors      []string          `description:"fragments that will terminate execution with error if matched with standard output, in most cases leave empty"`                                  //fragments that will terminate execution with error if matched with standard output
 	TimeoutMs   int               `description:"time after command was issued for waiting for command output if expect fragment were not matched"`                                               //time after command was issued for waiting for command output if expect fragment were not matched.
 	Directory   string            `description:"directory where this command should start - if does not exists there is no exception"`                                                           //directory where command should run
 	Env         map[string]string `description:"environment variables to be set before command runs"`                                                                                            //environment variables to be set before command runs
@@ -146,7 +147,7 @@ func NewExtractRequest(target *url.Resource, options *Options, commands ...*Extr
 func NewExtractRequestFromURL(URL string) (*ExtractRequest, error) {
 	var resource = url.NewResource(URL)
 	var result = &ExtractRequest{}
-	return result, resource.JSONDecode(result)
+	return result, resource.Decode(result)
 }
 
 //Command represents a command expression:  [when criteria ?] command
@@ -204,13 +205,17 @@ func (r *RunRequest) AsExtractRequest() *ExtractRequest {
 		Target:   r.Target,
 		Commands: make([]*ExtractCommand, 0),
 	}
+	if len(r.Errors) == 0 {
+		r.Errors = []string{}
+	}
+	var commandErrors = append(CommandErrors, r.Errors...)
 	for _, command := range r.Commands {
 		when, runCommand := command.WhenAndCommand()
 		request.Commands = append(request.Commands,
 			&ExtractCommand{
 				When:    when,
 				Command: runCommand,
-				Errors:  CommandErrors,
+				Errors:  commandErrors,
 			},
 		)
 	}
@@ -237,11 +242,11 @@ func NewRunRequest(target *url.Resource, superUser bool, commands ...string) *Ru
 func NewRunRequestFromURL(URL string) (*RunRequest, error) {
 	var resource = url.NewResource(URL)
 	var result = &RunRequest{}
-	return result, resource.JSONDecode(result)
+	return result, resource.Decode(result)
 }
 
-//CommandLog represents an executed command with Stdin, Stdout or Error
-type CommandLog struct {
+//Log represents an executed command with Stdin, Stdout or Error
+type Log struct {
 	Stdin  string
 	Stdout string
 	Error  string
@@ -249,11 +254,11 @@ type CommandLog struct {
 
 //RunResponse represents a command response with logged commands.
 type RunResponse struct {
-	Session  string
-	Commands []*CommandLog
-	Output   string
-	Data     data.Map
-	Error    string
+	Session string
+	Cmd     []*Log
+	Output  string
+	Data    data.Map
+	Error   string
 }
 
 //OpenSessionRequest represents an open session request.
@@ -308,26 +313,26 @@ type CloseSessionResponse struct {
 }
 
 //Add appends provided log into commands slice.
-func (i *RunResponse) Add(log *CommandLog) {
-	if len(i.Commands) == 0 {
-		i.Commands = make([]*CommandLog, 0)
+func (i *RunResponse) Add(log *Log) {
+	if len(i.Cmd) == 0 {
+		i.Cmd = make([]*Log, 0)
 	}
-	i.Commands = append(i.Commands, log)
+	i.Cmd = append(i.Cmd, log)
 }
 
 //Stdout returns stdout for provided index, or all concatenated otherwise
 func (i *RunResponse) Stdout(indexes ...int) string {
 	if len(indexes) == 0 {
-		var result = make([]string, len(i.Commands))
-		for j, stream := range i.Commands {
+		var result = make([]string, len(i.Cmd))
+		for j, stream := range i.Cmd {
 			result[j] = stream.Stdout
 		}
 		return strings.Join(result, "\r\n")
 	}
 	var result = make([]string, len(indexes))
 	for _, index := range indexes {
-		if index < len(i.Commands) {
-			result = append(result, i.Commands[index].Stdout)
+		if index < len(i.Cmd) {
+			result = append(result, i.Cmd[index].Stdout)
 		}
 	}
 	return strings.Join(result, "\r\n")
@@ -336,15 +341,15 @@ func (i *RunResponse) Stdout(indexes ...int) string {
 //NewRunResponse creates a new RunResponse
 func NewRunResponse(session string) *RunResponse {
 	return &RunResponse{
-		Session:  session,
-		Commands: make([]*CommandLog, 0),
-		Data:     make(map[string]interface{}),
+		Session: session,
+		Cmd:     make([]*Log, 0),
+		Data:    make(map[string]interface{}),
 	}
 }
 
 //NewCommandLog creates a new command log
-func NewCommandLog(stdin, stdout string, err error) *CommandLog {
-	result := &CommandLog{
+func NewCommandLog(stdin, stdout string, err error) *Log {
+	result := &Log{
 		Stdin: stdin,
 	}
 	if err != nil {

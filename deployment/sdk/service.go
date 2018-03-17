@@ -45,7 +45,12 @@ func (s *systemSdkService) deploySdk(context *endly.Context, request *SetRequest
 	if err != nil {
 		return err
 	}
-	serviceResponse := deploymentService.Run(context, &deploy.Request{
+
+	ctx := context.Clone()
+	state := ctx.State()
+	state.Put("buildHost", target.ParsedURL.Host)
+	state.Put("buildHostCredential", target.Credential)
+	serviceResponse := deploymentService.Run(ctx, &deploy.Request{
 		Target:  target,
 		AppName: request.Sdk,
 		Version: request.Version,

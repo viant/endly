@@ -19,7 +19,7 @@
           "Source": {
             "URL": "http://mirror.metrocast.net/apache/tomcat/tomcat-${artifact.MajorVersion}/v${artifact.Version}/bin/apache-tomcat-${artifact.Version}.tar.gz"
           },
-          "Target": {
+          "Dest": {
             "Name": "tomcat",
             "Version": "$tomcatVersion",
             "URL": "scp://${targetHost}/${appDirectory}/apache-tomcat-${artifact.Version}.tar.gz",
@@ -68,7 +68,7 @@
                 "URL": "$configUrl",
                 "Credential": "$configURLCredential"
               },
-              "Target": {
+              "Dest": {
                 "URL": "scp://${targetHost}${appDirectory}/tomcat/conf/server.xml",
                 "Credential": "$targetHostCredential"
               },

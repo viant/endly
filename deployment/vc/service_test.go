@@ -48,22 +48,17 @@ func TestVc_Status(t *testing.T) {
 
 	for _, useCase := range useCases {
 		var target = useCase.Request.Target
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, target, execService)
 			service, err := context.Service(vc.ServiceID)
-			assert.Nil(t, err)
-
-			defer context.Close()
 			if assert.Nil(t, err) {
 				serviceResponse := service.Run(context, useCase.Request)
-
-				var baseCase = useCase.baseDir + " "
-				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
+				var description = useCase.baseDir + " "
+				assert.Equal(t, useCase.Error, serviceResponse.Error, description)
 
 				actual, ok := serviceResponse.Response.(*vc.StatusResponse)
 				if !ok {
-					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
+					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", description, serviceResponse.Response))
 					continue
 				}
 
@@ -71,14 +66,14 @@ func TestVc_Status(t *testing.T) {
 					continue
 				}
 				var expected = useCase.Expected
-				assert.Equal(t, expected.Untracked, actual.Untracked, "Untracked "+baseCase)
-				assert.Equal(t, expected.New, actual.New, "New "+baseCase)
-				assert.Equal(t, expected.Modified, actual.Modified, "Modified "+baseCase)
-				assert.Equal(t, expected.Deleted, actual.Deleted, "Deleted "+baseCase)
-				assert.Equal(t, expected.IsVersionControlManaged, actual.IsVersionControlManaged, "IsVersionControlManaged "+baseCase)
-				assert.Equal(t, expected.IsUptoDate, actual.IsUptoDate, "IsUptoDate "+baseCase)
-				assert.Equal(t, expected.Origin, actual.Origin, "Origin "+baseCase)
-				assert.Equal(t, expected.Branch, actual.Branch, "Branch "+baseCase)
+				assert.Equal(t, expected.Untracked, actual.Untracked, "Untracked "+description)
+				assert.Equal(t, expected.New, actual.New, "New "+description)
+				assert.Equal(t, expected.Modified, actual.Modified, "Modified "+description)
+				assert.Equal(t, expected.Deleted, actual.Deleted, "Deleted "+description)
+				assert.Equal(t, expected.IsVersionControlManaged, actual.IsVersionControlManaged, "IsVersionControlManaged "+description)
+				assert.Equal(t, expected.IsUptoDate, actual.IsUptoDate, "IsUptoDate "+description)
+				assert.Equal(t, expected.Origin, actual.Origin, "Origin "+description)
+				assert.Equal(t, expected.Branch, actual.Branch, "Branch "+description)
 
 			}
 		}
@@ -228,25 +223,19 @@ func TestVc_Checkout(t *testing.T) {
 
 	for i, useCase := range useCases {
 		var target = useCase.Request.Target
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, target, execService)
 			service, err := context.Service(vc.ServiceID)
-
-			useCase.baseDir += fmt.Sprintf("[%d]", i)
-
-			assert.Nil(t, err)
-
-			defer context.Close()
 			if assert.Nil(t, err) {
+
 				serviceResponse := service.Run(context, useCase.Request)
-				var baseCase = useCase.baseDir + " "
+				var description = useCase.baseDir + " " + fmt.Sprintf("[%d]", i)
 				if useCase.Error != "" {
-					assert.True(t, strings.Contains(serviceResponse.Error, useCase.Error), baseCase+" "+serviceResponse.Error)
+					assert.True(t, strings.Contains(serviceResponse.Error, useCase.Error), description+" "+serviceResponse.Error)
 				}
 				response, ok := serviceResponse.Response.(*vc.CheckoutResponse)
 				if !ok {
-					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
+					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", description, serviceResponse.Response))
 					continue
 				}
 
@@ -263,11 +252,11 @@ func TestVc_Checkout(t *testing.T) {
 					if !assert.True(t, ok, "missing origin: "+key) {
 						continue
 					}
-					assert.Equal(t, expected.IsVersionControlManaged, actual.IsVersionControlManaged, "IsVersionControlManaged "+baseCase)
-					assert.Equal(t, expected.IsUptoDate, actual.IsUptoDate, "IsUptoDate "+baseCase)
-					assert.Equal(t, expected.Origin, actual.Origin, "Origin "+baseCase)
-					assert.Equal(t, expected.Branch, actual.Branch, "Branch "+baseCase)
-					assert.Equal(t, expected.Modified, actual.Modified, "Modified "+baseCase)
+					assert.Equal(t, expected.IsVersionControlManaged, actual.IsVersionControlManaged, "IsVersionControlManaged "+description)
+					assert.Equal(t, expected.IsUptoDate, actual.IsUptoDate, "IsUptoDate "+description)
+					assert.Equal(t, expected.Origin, actual.Origin, "Origin "+description)
+					assert.Equal(t, expected.Branch, actual.Branch, "Branch "+description)
+					assert.Equal(t, expected.Modified, actual.Modified, "Modified "+description)
 				}
 
 			}

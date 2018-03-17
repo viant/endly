@@ -3,6 +3,7 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/toolbox"
+	"path"
 	"strings"
 )
 
@@ -13,8 +14,11 @@ var logger = &Logger{
 //LogF global log function
 var LogF = logger.Logf
 
-//LogEnable enable log for supplied pacakge
-var LogEnable = logger.Enable
+//EnableLogging enable log for supplied package
+var EnableLogging = logger.Enable
+
+//Returns true if logging is enabled for supplied package
+var IsLoggingEnabled = logger.IsEnabled
 
 //logger represents logger
 type Logger struct {
@@ -27,12 +31,12 @@ func (l *Logger) Enable(pkgs ...string) {
 	}
 }
 
-func (l *Logger) hasPackage(caller string) bool {
+func (l *Logger) IsEnabled(pkg string) bool {
 	if len(l.Packages) == 0 {
 		return false
 	}
 	for candidate := range l.Packages {
-		if strings.Contains(caller, candidate) {
+		if strings.Contains(pkg, candidate) {
 			return true
 		}
 	}
@@ -45,7 +49,9 @@ func (l *Logger) Logf(template string, args ...interface{}) {
 		return
 	}
 	caller, _, _ := toolbox.DiscoverCaller(2, 10, "logger.go")
-	if !l.hasPackage(caller) {
+	parent, _ := path.Split(caller)
+	pkg, _ := path.Split(parent)
+	if !l.IsEnabled(pkg) {
 		return
 	}
 	if !strings.Contains(template, "\n") {

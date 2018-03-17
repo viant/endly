@@ -7,11 +7,11 @@ import (
 	"github.com/viant/endly"
 	endpoint "github.com/viant/endly/endpoint/http"
 	runner "github.com/viant/endly/runner/selenium"
+	_ "github.com/viant/endly/static"
 	"github.com/viant/endly/system/exec"
-	tstorage "github.com/viant/endly/system/storage"
+	"github.com/viant/endly/system/storage"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
@@ -82,44 +82,29 @@ func TestSeleniumService_Start(t *testing.T) {
 	}
 
 	for _, useCase := range useCases {
-		execService, err := exec.GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, useCase.target, execService)
-			var state = context.State()
-
-			if len(useCase.DataURLs) > 0 {
-				storageService := storage.NewMemoryService()
-				state.Put(tstorage.UseMemoryService, true)
-				for _, setupURL := range useCase.DataURLs {
-					err = storageService.Upload(setupURL, bytes.NewReader(useCase.DataPayload))
-				}
-
-				assert.Nil(t, err)
-			}
-			service, err := context.Service(runner.ServiceID)
+			context, err := exec.NewSSHReplayContext(manager, useCase.target, useCase.baseDir)
 			if !assert.Nil(t, err) {
-				break
+				continue
 			}
-
-			defer context.Close()
-			if assert.Nil(t, err) {
-				serviceResponse := service.Run(context, useCase.request)
-
-				var baseCase = useCase.baseDir
-				assert.Equal(t, "", serviceResponse.Error, baseCase)
-				response, ok := serviceResponse.Response.(*runner.StartResponse)
-				if !ok {
-					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
-					continue
-				}
-				if response != nil {
-					var actual = response.Pid
-					assert.Equal(t, actual, useCase.Pid, "PID "+baseCase)
+			if len(useCase.DataURLs) > 0 {
+				storageService := storage.UseMemoryService(context)
+				for _, setupURL := range useCase.DataURLs {
+					storageService.Upload(setupURL, bytes.NewReader(useCase.DataPayload))
 				}
 			}
+			var description = useCase.baseDir
+			var response = &runner.StartResponse{}
+			err = endly.Run(context, useCase.request, response)
+			if !assert.Nil(t, err, description) {
+				t.Error(err.Error())
+				continue
+			}
+
+			var actual = response.Pid
+			assert.Equal(t, actual, useCase.Pid, "PID "+description)
 		}
 	}
-
 }
 
 func StartSeleniumMockServer(port int) error {
@@ -144,38 +129,28 @@ func TestSeleniumService_Calls(t *testing.T) {
 	var targetHost = "127.0.0.1:8116"
 	var target = url.NewResource(fmt.Sprintf("http://%v/", targetHost))
 
-	serviceResponse := service.Run(context, &runner.OpenSessionRequest{
+	var openResponse = &exec.OpenSessionResponse{}
+	if err := endly.Run(context, &runner.OpenSessionRequest{
 		RemoteSelenium: target,
 		Browser:        "firefox",
-	})
-
-	if assert.Equal(t, "", serviceResponse.Error) {
-		response, ok := serviceResponse.Response.(*runner.OpenSessionResponse)
-		if assert.True(t, ok) {
-			assert.EqualValues(t, response.SessionID, targetHost)
-		}
-	} else {
-		return
+	}, openResponse); err != nil {
+		t.Fatal(err)
 	}
+	assert.EqualValues(t, openResponse.SessionID, targetHost)
 
-	serviceResponse = service.Run(context, &runner.WebDriverCallRequest{
+	if err = endly.Run(context, &runner.WebDriverCallRequest{
 		SessionID: targetHost,
 		Call: &runner.MethodCall{
 			Method:     "Get",
 			Parameters: []interface{}{"http://play.golang.org/?simple=1"},
 		},
-	})
-
-	if assert.Equal(t, "", serviceResponse.Error) {
-		_, ok := serviceResponse.Response.(*runner.ServiceCallResponse)
-		if assert.True(t, ok) {
-
-		}
+	}, nil); err != nil {
+		t.Fatal(err)
 	}
 
-	serviceResponse = service.Run(context, &runner.WebElementCallRequest{
+	var response = &runner.WebElementCallResponse{}
+	if err = endly.Run(context, &runner.WebElementCallRequest{
 		SessionID: targetHost,
-
 		Selector: &runner.WebElementSelector{
 			By:    "css selector",
 			Value: "#dummay",
@@ -184,14 +159,14 @@ func TestSeleniumService_Calls(t *testing.T) {
 			Method:     "Clear",
 			Parameters: []interface{}{},
 		},
-	})
-	response, ok := serviceResponse.Response.(*runner.WebElementCallResponse)
-	if assert.True(t, ok) {
-		assert.Equal(t, "failed to lookup element: css selector #dummay", response.LookupError)
+	}, response); err != nil {
+		t.Fatal(err)
 	}
-	serviceResponse = service.Run(context, &runner.WebElementCallRequest{
-		SessionID: targetHost,
 
+	assert.Equal(t, "failed to lookup element: css selector #dummay", response.LookupError)
+
+	if err = endly.Run(context, &runner.WebElementCallRequest{
+		SessionID: targetHost,
 		Selector: &runner.WebElementSelector{
 			By:    "css selector",
 			Value: "#code",
@@ -200,18 +175,12 @@ func TestSeleniumService_Calls(t *testing.T) {
 			Method:     "Clear",
 			Parameters: []interface{}{},
 		},
-	})
-
-	if assert.Equal(t, "", serviceResponse.Error) {
-		_, ok := serviceResponse.Response.(*runner.WebElementCallResponse)
-		if assert.True(t, ok) {
-
-		}
+	}, nil); err != nil {
+		t.Fatal(err)
 	}
 
-	serviceResponse = service.Run(context, &runner.WebElementCallRequest{
+	if err = endly.Run(context, &runner.WebElementCallRequest{
 		SessionID: targetHost,
-
 		Selector: &runner.WebElementSelector{
 			By:    "css selector",
 			Value: "#code",
@@ -222,15 +191,10 @@ func TestSeleniumService_Calls(t *testing.T) {
 				code,
 			},
 		},
-	})
-	if assert.Equal(t, "", serviceResponse.Error) {
-		_, ok := serviceResponse.Response.(*runner.WebElementCallResponse)
-		if assert.True(t, ok) {
-
-		}
+	}, nil); err != nil {
+		t.Fatal(err)
 	}
-
-	serviceResponse = service.Run(context, &runner.WebElementCallRequest{
+	if err = endly.Run(context, &runner.WebElementCallRequest{
 		SessionID: targetHost,
 		Call: &runner.MethodCall{
 			Method:     "Click",
@@ -241,17 +205,12 @@ func TestSeleniumService_Calls(t *testing.T) {
 			By:    "css selector",
 			Value: "#run",
 		},
-	})
-	if assert.Equal(t, "", serviceResponse.Error) {
-		_, ok := serviceResponse.Response.(*runner.WebElementCallResponse)
-		if assert.True(t, ok) {
-
-		}
+	}, nil); err != nil {
+		t.Fatal(err)
 	}
 
-	serviceResponse = service.Run(context, &runner.WebElementCallRequest{
+	if err = endly.Run(context, &runner.WebElementCallRequest{
 		SessionID: targetHost,
-
 		Selector: &runner.WebElementSelector{
 			By:    "css selector",
 			Value: "#output",
@@ -265,21 +224,21 @@ func TestSeleniumService_Calls(t *testing.T) {
 				Exit:        "$value:/WebDriver/",
 			},
 		},
-	})
-	if assert.Equal(t, "", serviceResponse.Error) {
-		callResponse, ok := serviceResponse.Response.(*runner.WebElementCallResponse)
-		if assert.True(t, ok) {
-			assert.True(t, strings.Contains(toolbox.AsString(callResponse.Result[0]), "Hello WebDriver!"))
-		}
+	}, response); err != nil {
+		t.Fatal(err)
 	}
 
-	serviceResponse = service.Run(context, &runner.WebDriverCallRequest{
+	assert.True(t, strings.Contains(toolbox.AsString(response.Result[0]), "Hello WebDriver!"))
+
+	if err = endly.Run(context, &runner.WebDriverCallRequest{
 		SessionID: targetHost,
 		Call: &runner.MethodCall{
 			Method:     "Close",
 			Parameters: []interface{}{},
 		},
-	})
+	}, nil); err != nil {
+		t.Fatal(err)
+	}
 
 }
 

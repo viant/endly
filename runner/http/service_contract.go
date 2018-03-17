@@ -3,8 +3,8 @@ package http
 import (
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
-	"net/http"
 	"github.com/viant/toolbox/data"
+	"net/http"
 )
 
 //SendRequest represents a send http request.

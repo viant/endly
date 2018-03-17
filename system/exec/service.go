@@ -5,6 +5,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox/cred"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/ssh"
 	"github.com/viant/toolbox/url"
@@ -84,8 +85,8 @@ func (s *execService) openSession(context *endly.Context, request *OpenSessionRe
 	}
 	var sessionID = target.Host()
 	if sessions.Has(sessionID) {
-		session := sessions[sessionID]
-		err = s.initSession(context, target, session, request.Env)
+		SShSession := sessions[sessionID]
+		err = s.initSession(context, target, SShSession, request.Env)
 		if err != nil {
 			return nil, err
 		}
@@ -98,7 +99,7 @@ func (s *execService) openSession(context *endly.Context, request *OpenSessionRe
 	if err != nil {
 		return nil, err
 	}
-	session, err := endly.NewSystemTerminalSession(sessionID, sshService)
+	SSHSession, err := endly.NewSystemTerminalSession(sessionID, sshService)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +108,7 @@ func (s *execService) openSession(context *endly.Context, request *OpenSessionRe
 			_ = sshService.Close()
 		})
 	}
-	session.MultiCommandSession, err = session.Service.OpenMultiCommandSession(request.Config)
+	SSHSession.MultiCommandSession, err = SSHSession.Service.OpenMultiCommandSession(request.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -118,16 +119,16 @@ func (s *execService) openSession(context *endly.Context, request *OpenSessionRe
 			})
 		})
 	}
-	err = s.initSession(context, target, session, request.Env)
+	err = s.initSession(context, target, SSHSession, request.Env)
 	if err != nil {
 		return nil, err
 	}
-	sessions[sessionID] = session
-	session.OperatingSystem, err = s.detectOperatingSystem(session)
+	sessions[sessionID] = SSHSession
+	SSHSession.OperatingSystem, err = s.detectOperatingSystem(SSHSession)
 	if err != nil {
 		return nil, err
 	}
-	return session, nil
+	return SSHSession, nil
 }
 
 func (s *execService) setEnvVariables(context *endly.Context, session *endly.SystemTerminalSession, env map[string]string) error {
@@ -179,10 +180,33 @@ func (s *execService) changeDirectory(context *endly.Context, session *endly.Sys
 	return result, err
 }
 
+func (s *execService) run(context *endly.Context, session *endly.SystemTerminalSession, command string, listener ssh.Listener, timeoutMs int, terminators ...string) (stdout string, err error) {
+	if stdout, err = session.Run(command, listener, timeoutMs, terminators...); err == nil {
+		return stdout, err
+	}
+	if err == ssh.ErrTerminated {
+		err := session.Reconnect()
+		if err != nil {
+			return "", err
+		}
+		currentDirectory := session.CurrentDirectory
+		env := session.EnvVariables
+		session.EnvVariables = make(map[string]string)
+		session.CurrentDirectory = ""
+		for k, v := range env {
+			s.setEnvVariable(context, session, k, v)
+		}
+		runResponse := &RunResponse{}
+		s.changeDirectory(context, session, runResponse, currentDirectory)
+		return session.Run(command, listener, timeoutMs, terminators...)
+	}
+	return stdout, err
+}
+
 func (s *execService) rumCommandTemplate(context *endly.Context, session *endly.SystemTerminalSession, commandTemplate string, arguments ...interface{}) (string, error) {
 	command := fmt.Sprintf(commandTemplate, arguments...)
 	startEvent := s.Begin(context, NewSdtinEvent(session.ID, command))
-	stdout, err := session.Run(command, 1000)
+	stdout, err := session.Run(command, nil, 1000)
 	s.End(context)(startEvent, NewStdoutEvent(session.ID, stdout, err))
 	return stdout, err
 }
@@ -244,9 +268,9 @@ func (s *execService) validateStdout(stdout string, command string, execution *E
 	return nil
 }
 
-func (s *execService) authSuperUserIfNeeded(stdout string, context *endly.Context, session *endly.SystemTerminalSession, extractCommand *ExtractCommand, response *RunResponse, request *ExtractRequest, commandIndex int) (string, error) {
+func (s *execService) authSuperUserIfNeeded(stdout string, context *endly.Context, session *endly.SystemTerminalSession, extractCommand *ExtractCommand, response *RunResponse, request *ExtractRequest) (err error) {
 	if !request.SuperUser || session.SuperUSerAuth {
-		return stdout, nil
+		return nil
 	}
 	if util.EscapedContains(stdout, "Password") {
 		session.SuperUSerAuth = true
@@ -255,20 +279,43 @@ func (s *execService) authSuperUserIfNeeded(stdout string, context *endly.Contex
 			request.Secrets[SudoCredentialKey] = secret.Secret(request.Target.Credential)
 		}
 		extractCommand := NewExtractCommand(SudoCredentialKey, "", nil, []string{"Password", util.CommandNotFound})
-		err := s.executeCommand(context, session, extractCommand, response, request, commandIndex)
-		if err != nil {
-			return stdout, err
-		}
-		return response.Commands[len(response.Commands)-1].Stdout, nil
+		err = s.executeCommand(context, session, extractCommand, response, request)
 	}
-	return stdout, nil
+	return err
 }
 
-func (s *execService) executeCommand(context *endly.Context, session *endly.SystemTerminalSession, extractCommand *ExtractCommand, response *RunResponse, request *ExtractRequest, commandIndex int) (err error) {
+func (s *execService) buildMatchingState(response *RunResponse, context *endly.Context) data.Map {
+	var state = context.State()
+	var result = state.Clone()
+	var logs = data.NewCollection()
+	for _, log := range response.Cmd {
+		var cmd = data.NewMap()
+		cmd.Put("stdin", log.Stdin)
+		cmd.Put("stdout", log.Stdout)
+		logs.Push(cmd)
+	}
+	result.Put("cmd", logs)
+	result.Put("output", response.Output)
+
+	var stdout = ""
+	if len(response.Cmd) > 0 {
+		stdout = response.Cmd[len(response.Cmd)-1].Stdout
+	}
+	result.Put("stdout", stdout)
+	return result
+}
+
+func (s *execService) executeCommand(context *endly.Context, session *endly.SystemTerminalSession, extractCommand *ExtractCommand, response *RunResponse, request *ExtractRequest) (err error) {
 	command := context.Expand(extractCommand.Command)
 	options := request.Options
 	terminators := getTerminators(options, session, extractCommand)
 
+	if extractCommand.When != "" {
+		var state = s.buildMatchingState(response, context)
+		if ok, err := endly.Evaluate(context, state, extractCommand.When, "Cmd.When", true); !ok {
+			return err
+		}
+	}
 	if request.SuperUser {
 		if !session.SuperUSerAuth {
 			terminators = append(terminators, "Password")
@@ -280,13 +327,12 @@ func (s *execService) executeCommand(context *endly.Context, session *endly.Syst
 	if cmd, err = context.Secrets.Expand(cmd, request.Secrets); err != nil {
 		return err
 	}
-
-	endly.LogF("stdin:%v", command)
-	startEvent := s.Begin(context, NewSdtinEvent(session.ID, command))
-	stdout, err := session.Run(cmd, options.TimeoutMs, terminators...)
-	s.End(context)(startEvent, NewStdoutEvent(session.ID, stdout, err))
-	endly.LogF("stdout:%v", stdout)
-
+	var listener ssh.Listener
+	s.Begin(context, NewSdtinEvent(session.ID, command))
+	listener = func(stdout string, hasMore bool) {
+		context.Publish(NewStdoutEvent(session.ID, stdout, err))
+	}
+	stdout, err := s.run(context, session, cmd, listener, options.TimeoutMs, terminators...)
 	if len(response.Output) > 0 {
 		response.Output += "\n"
 	}
@@ -298,36 +344,12 @@ func (s *execService) executeCommand(context *endly.Context, session *endly.Syst
 	if err = s.validateStdout(stdout, command, extractCommand); err != nil {
 		return err
 	}
-	stdout, err = s.authSuperUserIfNeeded(stdout, context, session, extractCommand, response, request, commandIndex)
+	err = s.authSuperUserIfNeeded(stdout, context, session, extractCommand, response, request)
 	if err != nil {
 		return err
 	}
-
-	err = extractCommand.Extraction.Extract(context, response.Data, strings.Split(stdout, "\n")...)
-	if err != nil {
-		return err
-	}
-	if len(stdout) > 0 {
-		if !(commandIndex+1 < len(request.Commands)) {
-			return nil
-		}
-		var state = context.State()
-		state.Put("stdout", util.EscapeStdout(stdout))
-		state.Put("output", stdout)
-
-		for j, candidate := range request.Commands[commandIndex+1:] {
-			if candidate.When == "" {
-				break
-			}
-
-			when := candidate.When
-			if ok, _ := endly.Evaluate(context, state, when, "Cmd.When", true); !ok {
-				continue
-			}
-			return s.executeCommand(context, session, candidate, response, request, j)
-		}
-	}
-	return nil
+	stdout = response.Cmd[len(response.Cmd)-1].Stdout
+	return extractCommand.Extraction.Extract(context, response.Data, strings.Split(stdout, "\n")...)
 }
 
 func getTerminators(options *Options, session *endly.SystemTerminalSession, execution *ExtractCommand) []string {
@@ -355,17 +377,16 @@ func (s *execService) runExtractCommands(context *endly.Context, request *Extrac
 	if err != nil {
 		return nil, err
 	}
+
 	response := NewRunResponse(session.ID)
 	if err = s.applyCommandOptions(context, request.Options, session, response); err != nil {
 		return nil, err
 	}
 
 	response = NewRunResponse(session.ID)
-	for i, extractCommand := range request.Commands {
+	for _, extractCommand := range request.Commands {
 		var command = context.Expand(extractCommand.Command)
-		if extractCommand.When != "" {
-			continue
-		}
+
 		if strings.HasPrefix(command, "cd ") {
 			if !strings.Contains(command, "&&") {
 				var directory = strings.TrimSpace(string(command[3:]))
@@ -394,7 +415,7 @@ func (s *execService) runExtractCommands(context *endly.Context, request *Extrac
 			}
 			session.EnvVariables = make(map[string]string) //reset env variables
 		}
-		err = s.executeCommand(context, session, extractCommand, response, request, i)
+		err = s.executeCommand(context, session, extractCommand, response, request)
 		if err != nil {
 			return nil, err
 		}
@@ -420,7 +441,7 @@ func isAmd64Architecture(candidate string) bool {
 }
 
 func (s *execService) extractOsPath(session *endly.SystemTerminalSession, os *endly.OperatingSystem) error {
-	output, err := session.Run("echo $PATH", 0)
+	output, err := session.Run("echo $PATH", nil, 0)
 	if err != nil {
 		return err
 	}
@@ -438,7 +459,7 @@ func (s *execService) extractOsPath(session *endly.SystemTerminalSession, os *en
 }
 
 func (s *execService) extractOsUser(session *endly.SystemTerminalSession, os *endly.OperatingSystem) error {
-	output, err := session.Run("echo $USER", 0)
+	output, err := session.Run("echo $USER", nil, 0)
 	if err != nil {
 		return err
 	}
@@ -456,7 +477,7 @@ func (s *execService) detectOperatingSystem(session *endly.SystemTerminalSession
 	if session.MultiCommandSession.System() == "darwin" {
 		varsionCheckCommand = "sw_vers"
 	}
-	output, err := session.Run(varsionCheckCommand, 0)
+	output, err := session.Run(varsionCheckCommand, nil, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -482,7 +503,7 @@ func (s *execService) detectOperatingSystem(session *endly.SystemTerminalSession
 		}
 
 	}
-	operatingSystem.Hardware, err = session.Run("uname -m", 0)
+	operatingSystem.Hardware, err = session.Run("uname -m", nil, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -526,7 +547,7 @@ const (
     "URL": "scp://127.0.0.1/",
     "Credential": "${env.HOME}/.secret/localhost.json"
   },
-  "Commands":["mkdir /tmp/app1"]
+  "Cmd":["mkdir /tmp/app1"]
 }`
 
 	execServiceRunAndExtractExample = `{
@@ -537,7 +558,7 @@ const (
 	"SystemPaths": [
 	"/opt/sdk/go/bin"
 	],
-	"Commands": [
+	"Cmd": [
 	  {
 		"Command": "go version",
 		"Extraction": [

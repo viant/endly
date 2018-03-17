@@ -58,14 +58,22 @@ type ContainerStatusResponse struct {
 	Containers []*ContainerInfo
 }
 
-//ContainerBaseRequest represents container base request
-type ContainerBaseRequest struct {
+//BaseRequest represents container base request
+type BaseRequest struct {
 	Target *url.Resource `required:"true" description:"host with docker service"`                //target host
 	Name   string        `description:"container name to inspect, if empty it uses target.Name"` //docker container name
 }
 
+//NewBaseRequest creates a new base request
+func NewBaseRequest(target *url.Resource, name string) *BaseRequest {
+	return &BaseRequest{
+		Target: target,
+		Name:   name,
+	}
+}
+
 //Init initializes request
-func (r *ContainerBaseRequest) Init() error {
+func (r *BaseRequest) Init() error {
 	if r == nil || r.Target == nil {
 		return nil
 	}
@@ -76,7 +84,7 @@ func (r *ContainerBaseRequest) Init() error {
 }
 
 //Validate checks if request is valid
-func (r *ContainerBaseRequest) Validate() error {
+func (r *BaseRequest) Validate() error {
 	if r == nil {
 		return errors.New("base container request was nil")
 	}
@@ -89,60 +97,79 @@ func (r *ContainerBaseRequest) Validate() error {
 	return nil
 }
 
-//ContainerStartRequest represents a docker container start request.
-type ContainerStartRequest struct {
-	*ContainerBaseRequest
+//StartRequest represents a docker container start request.
+type StartRequest struct {
+	*BaseRequest
 }
 
-//ContainerStartResponse represents a docker container start response
-type ContainerStartResponse struct {
+//StartResponse represents a docker container start response
+type StartResponse struct {
 	*ContainerInfo
 }
 
-//ContainerRemoveRequest represents a docker remove container request
-type ContainerRemoveRequest struct {
-	*ContainerBaseRequest
+//RemoveRequest represents a docker remove container request
+type RemoveRequest struct {
+	*BaseRequest
 }
 
-//ContainerRemoveResponse represents a docker remove container response
-type ContainerRemoveResponse struct {
+//RemoveResponse represents a docker remove container response
+type RemoveResponse struct {
 	Stdout string
 }
 
-//ContainerStopRequest represents a docker stop container request.
-type ContainerStopRequest struct {
-	*ContainerBaseRequest
+//StopRequest represents a docker stop container request.
+type StopRequest struct {
+	*BaseRequest
 }
 
-//ContainerStopResponse represents a docker stop container response.
-type ContainerStopResponse struct {
+//StopResponse represents a docker stop container response.
+type StopResponse struct {
 	*ContainerInfo
 }
 
-//ContainerRunRequest represents a docker run container command.
-type ContainerRunRequest struct {
-	*ContainerBaseRequest
+//ExecRequest represents a docker run container command.
+type ExecRequest struct {
+	*BaseRequest
+	Command            string
 	Secrets            map[string]string
 	Interactive        bool
 	AllocateTerminal   bool
 	RunInTheBackground bool
-	Command            string
 }
 
-//ContainerInspectRequest represents a docker inspect request, target name refers to container name
-type ContainerInspectRequest struct {
-	*ContainerBaseRequest
+//NewExecRequest creates a new request to run command inside container
+func NewExecRequest(super *BaseRequest, command string, secrets map[string]string, interactive bool, allocateTerminal bool, runInTheBackground bool) *ExecRequest {
+	return &ExecRequest{
+		BaseRequest:        super,
+		Command:            command,
+		Secrets:            secrets,
+		Interactive:        interactive,
+		AllocateTerminal:   allocateTerminal,
+		RunInTheBackground: runInTheBackground,
+	}
 }
 
-//ContainerInspectResponse represents a docker inspect request
-type ContainerInspectResponse struct {
+//NewExecRequestFromURL creates a new container run request
+func NewExecRequestFromURL(URL string) (*ExecRequest, error) {
+	request := &ExecRequest{}
+	resource := url.NewResource(URL)
+	return request, resource.Decode(request)
+}
+
+//ExecResponse represents a docker run command  response
+type ExecResponse struct {
+	Stdout string
+}
+
+//InspectRequest represents a docker inspect request, target name refers to container name
+type InspectRequest struct {
+	*BaseRequest
+}
+
+//InspectResponse represents a docker inspect request
+type InspectResponse struct {
 	Stdout string
 	Info   interface{} //you can extract any instance default, for instance to get Ip you can use Info[0].NetworkSettings.IPAddress in the variable action post from key
-}
-
-//ContainerRunResponse represents a docker run command  response
-type ContainerRunResponse struct {
-	Stdout string
 }
 
 //ContainerInfo represents a docker container info
@@ -155,13 +182,13 @@ type ContainerInfo struct {
 	Names       string
 }
 
-//ContainerLogsRequest represents docker runner container logs to take stdout
-type ContainerLogsRequest struct {
-	*ContainerBaseRequest
+//LogsRequest represents docker runner container logs to take stdout
+type LogsRequest struct {
+	*BaseRequest
 }
 
-//ContainerLogsResponse represents docker container logs response
-type ContainerLogsResponse struct {
+//LogsResponse represents docker container logs response
+type LogsResponse struct {
 	Stdout string
 }
 
@@ -170,6 +197,22 @@ type ImagesRequest struct {
 	Target     *url.Resource `required:"true" description:"host with docker service"` //target host
 	Repository string        `required:"true"`
 	Tag        string        `required:"true"`
+}
+
+//NewImagesRequest creates a new image request
+func NewImagesRequest(target *url.Resource, repository, tag string) *ImagesRequest {
+	return &ImagesRequest{
+		Target:     target,
+		Repository: repository,
+		Tag:        tag,
+	}
+}
+
+//NewImagesRequestFromURL creates a new request from URL
+func NewImagesRequestFromURL(URL string) (*ImagesRequest, error) {
+	var request = &ImagesRequest{}
+	var resource = url.NewResource(URL)
+	return request, resource.Decode(request)
 }
 
 //ImagesResponse represents a docker check image response
@@ -256,9 +299,26 @@ type RunRequest struct {
 	Workdir string            `description:"working directory inside the container, docker -w option"`
 }
 
-//RunResponse represents a docker run response
-type RunResponse struct {
-	*ContainerInfo
+func NewRunRequest(target *url.Resource, name string, secrets map[string]string, image string, port string, env map[string]string, mount map[string]string, ports map[string]string, params map[string]string, workdir string) *RunRequest {
+	return &RunRequest{
+		Target:  target,
+		Name:    name,
+		Secrets: secrets,
+		Image:   image,
+		Port:    port,
+		Env:     env,
+		Mount:   mount,
+		Ports:   ports,
+		Params:  params,
+		Workdir: workdir,
+	}
+}
+
+//NewRunRequestFromURL creates a new request from URL
+func NewRunRequestFromURL(URL string) (*RunRequest, error) {
+	var request = &RunRequest{}
+	var resource = url.NewResource(URL)
+	return request, resource.Decode(request)
 }
 
 //Validate checks if request is valid
@@ -275,10 +335,22 @@ func (r *RunRequest) Validate() error {
 	return nil
 }
 
+//RunResponse represents a docker run response
+type RunResponse struct {
+	*ContainerInfo
+}
+
 //StopImagesRequest represents docker stop running images request
 type StopImagesRequest struct {
 	Target *url.Resource `required:"true" description:"host with docker service"` //target host
 	Images []string      `required:"true"`
+}
+
+func (r StopImagesRequest) Validate() error {
+	if len(r.Images) == 0 {
+		return errors.New("images were empty")
+	}
+	return nil
 }
 
 //StopImagesResponse represents docker stop images response

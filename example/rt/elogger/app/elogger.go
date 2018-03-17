@@ -14,7 +14,7 @@ func main() {
 	config := &elogger.Config{}
 
 	configResource := url.NewResource(*configURI)
-	err := configResource.JSONDecode(config)
+	err := configResource.Decode(config)
 	if err != nil {
 		log.Fatal(err)
 	}

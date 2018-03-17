@@ -113,7 +113,7 @@ func (s *service) checkIfDeployedOnSystem(context *endly.Context, target *url.Re
 		}
 		return MatchVersion(request.Version, actualVersion), nil
 	}
-	transferTarget, err := context.ExpandResource(deploymentTarget.Deployment.Transfer.Target)
+	transferTarget, err := context.ExpandResource(deploymentTarget.Deployment.Transfer.Dest)
 	if err != nil {
 		return false, err
 	}
@@ -142,7 +142,7 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 		return deploymentTarget.Deployment.Transfer, nil
 	}
 	var transfer = &storage.Transfer{
-		Target:   deploymentTarget.Deployment.Transfer.Target,
+		Dest:     deploymentTarget.Deployment.Transfer.Dest,
 		Expand:   deploymentTarget.Deployment.Transfer.Expand,
 		Replace:  deploymentTarget.Deployment.Transfer.Replace,
 		Compress: deploymentTarget.Deployment.Transfer.Compress,
@@ -313,7 +313,7 @@ func (s *service) loadMeta(context *endly.Context, request *LoadMetaRequest) (*L
 		return nil, err
 	}
 	meta := &Meta{}
-	err = source.JSONDecode(meta)
+	err = source.Decode(meta)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode: %v, %v", source.URL, err)
 	}

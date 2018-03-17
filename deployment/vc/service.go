@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/exec"
+	"github.com/viant/endly/system/storage"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/storage"
+
 	"github.com/viant/toolbox/url"
 	"path"
 )
@@ -92,8 +93,10 @@ func (s *service) checkout(context *endly.Context, request *CheckoutRequest) (*C
 		parent, _ := path.Split(target.DirectoryPath())
 		directory = parent
 	}
-	if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("mkdir -p %v", directory)), nil); err != nil {
-		return nil, err
+	if directory != "/" {
+		if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("mkdir -p %v", directory)), nil); err != nil {
+			return nil, err
+		}
 	}
 	origin, err := context.ExpandResource(request.Origin)
 	if err != nil {
@@ -123,7 +126,7 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 		}
 	}()
 	var directoryPath = target.DirectoryPath()
-	storageService, err := storage.NewServiceForURL(target.URL, target.Credential)
+	storageService, err := storage.GetStorageService(context, target)
 	if err != nil {
 		return nil, err
 	}
@@ -137,28 +140,30 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 		if err != nil {
 			return nil, err
 		}
-		var originURLResource = url.NewResource(origin.URL)
-		var actualURLResource = url.NewResource(response.Origin)
-		originPath := originURLResource.ParsedURL.Hostname() + originURLResource.DirectoryPath()
-		actualPath := actualURLResource.ParsedURL.Hostname() + actualURLResource.DirectoryPath()
-		if originPath == actualPath {
-			_, err = s.pull(context, &PullRequest{
-				Type:   versionControlType,
-				Origin: origin,
-				Target: target,
-			})
-			if err != nil {
-				return nil, err
+		if response.IsVersionControlManaged {
+			var originURLResource = url.NewResource(origin.URL)
+			var actualURLResource = url.NewResource(response.Origin)
+			originPath := originURLResource.ParsedURL.Hostname() + originURLResource.DirectoryPath()
+			actualPath := actualURLResource.ParsedURL.Hostname() + actualURLResource.DirectoryPath()
+			if originPath == actualPath {
+				_, err = s.pull(context, &PullRequest{
+					Type:   versionControlType,
+					Origin: origin,
+					Target: target,
+				})
+				if err != nil {
+					return nil, err
+				}
+				return response.Info, nil
 			}
-			return response.Info, nil
-		}
 
-		if removeLocalChanges {
-			if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("rm -rf %v", directoryPath)), nil); err != nil {
-				return nil, err
+			if removeLocalChanges {
+				if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("rm -rf %v", directoryPath)), nil); err != nil {
+					return nil, err
+				}
+			} else {
+				return nil, fmt.Errorf("directory contains incompatible repo: %v %v", response.Origin, origin.URL)
 			}
-		} else {
-			return nil, fmt.Errorf("directory contains incompatible repo: %v %v", response.Origin, origin.URL)
 		}
 	}
 	if err != nil {

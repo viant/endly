@@ -45,7 +45,7 @@ func LoadRunRequestWithOption(workflowRunRequestURL string, params ...interface{
 	request := &workflow.RunRequest{}
 	resource := url.NewResource(workflowRunRequestURL)
 	parametersMap := toolbox.Pairs(params...)
-	err := resource.JSONDecode(request)
+	err := resource.Decode(request)
 	if err != nil {
 		return nil, err
 	}

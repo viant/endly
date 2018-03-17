@@ -14,7 +14,7 @@ import (
 func GetAWSCredentialConfig(credential string) (*aws.Config, error) {
 	config := &cred.Config{}
 	resource := url.NewResource(credential)
-	err := resource.JSONDecode(config)
+	err := resource.Decode(config)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load aws credential: %v", credential)
 	}

@@ -15,7 +15,7 @@ import (
 func NewComputeService(credentialsFile string) (*compute.Service, netcontext.Context, error) {
 	resource := url.NewResource(credentialsFile)
 	config := &cred.Config{}
-	err := resource.JSONDecode(config)
+	err := resource.Decode(config)
 	if err != nil {
 		return nil, nil, err
 	}

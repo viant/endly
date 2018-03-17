@@ -283,20 +283,12 @@ func (s *service) readLogFiles(context *endly.Context, service storage.Service, 
 	return response, nil
 }
 
-func (s *service) getStorageService(context *endly.Context, resource *url.Resource) (storage.Service, error) {
-	var state = context.State()
-	if state.Has(estorage.UseMemoryService) {
-		return storage.NewMemoryService(), nil
-	}
-	return storage.NewServiceForURL(resource.URL, resource.Credential)
-}
-
 func (s *service) listenForChanges(context *endly.Context, request *ListenRequest) error {
 	var target, err = context.ExpandResource(request.Source)
 	if err != nil {
 		return err
 	}
-	service, err := s.getStorageService(context, target)
+	service, err := estorage.GetStorageService(context, target)
 	if err != nil {
 		return err
 	}

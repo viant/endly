@@ -36,27 +36,43 @@ import (
 	_ "github.com/viant/endly/system/exec"
 	_ "github.com/viant/endly/system/process"
 	_ "github.com/viant/endly/system/storage"
+	_ "github.com/viant/toolbox/storage"
+	_ "github.com/viant/toolbox/storage/scp"
 
 	_ "github.com/viant/endly/static"
 
+	"github.com/viant/endly/system/exec"
+	"github.com/viant/endly/system/storage"
+	"github.com/viant/endly/util"
 	"github.com/viant/endly/workflow"
+	"log"
 )
 
-//func TestService_Pipeline(t *testing.T) {
-//	manager := endly.New()
-//	service, err := manager.Service(workflow.ServiceID)
-//	if err != nil {
-//		t.Error(err)
-//		return
-//	}
-//	var context = manager.NewContext(toolbox.NewContext())
-//	response := service.Run(context, workflow.NewPipelineRequest("go", false, toolbox.Pairs(),
-//		workflow.NewPipeline("build", toolbox.Pairs(
-//			"commands", []string{"ls -al"},
-//		))))
-//
-//	assert.EqualValues(t, "", response.Error)
-//}
+func TestService_Pipeline(t *testing.T) {
+	manager := endly.New()
+	credentials, _ := util.GetDummyCredential()
+	context, err := exec.NewSSHMultiReplayContext(manager, map[string]*url.Resource{
+		"test/pipeline/build/ssh/exec":  url.NewResource("ssh://127.0.0.1/", credentials),
+		"test/pipeline/build/ssh/build": url.NewResource("ssh://127.0.0.1:7722/", "mem://github.com/viant/endly/workflow/docker/build/secret/build.json"),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	memStorage := storage.UseMemoryService(context)
+	assert.Nil(t, err)
+	memStorage.Upload("https://redirector.gvt1.com/edgedl/go/go1.8.9.linux-amd64.tar.gz", strings.NewReader("xyz"))
+	memStorage.Upload("mem://127.0.0.1:7722/opt/sdk/go_1.8.9.tar.gz", strings.NewReader("abc"))
+	memStorage.Upload("mem://127.0.0.1:7722/echo", strings.NewReader("eee"))
+	memStorage.Upload("ssh://127.0.0.1/Projects/go/workspace/src/github.com/viant/endly/workflow/test/pipeline/build.yaml", strings.NewReader("111"))
+	request, err := workflow.NewPipelineRequestFromURL("test/pipeline/build.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	var resp = &workflow.PipelineResponse{}
+	err = endly.Run(context, request, resp)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+}
 
 func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, error) {
 	manager := endly.New()
@@ -175,11 +191,13 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "workflow",
 				Tasks: "prepare",
-				Params: map[string]interface{}{
-					"param1": 1,
+				BaseRun: &workflow.BaseRun{
+					Params: map[string]interface{}{
+						"param1": 1,
+					},
+					EnableLogging: true,
+					LogDirectory:  "logs",
 				},
-				EnableLogging:    true,
-				LoggingDirectory: "logs",
 			})
 
 			if !assert.NotNil(t, serviceResponse) {
@@ -214,11 +232,13 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "workflow",
 				Tasks: "*",
-				Params: map[string]interface{}{
-					"param1": 1,
+				BaseRun: &workflow.BaseRun{
+					Params: map[string]interface{}{
+						"param1": 1,
+					},
+					EnableLogging: true,
+					LogDirectory:  "/tmp/logs",
 				},
-				EnableLogging:    true,
-				LoggingDirectory: "/tmp/logs",
 			})
 			assert.Equal(t, "", serviceResponse.Error)
 
@@ -239,11 +259,13 @@ func TestWorkflowService_OnErrorTask(t *testing.T) {
 
 	context := manager.NewContext(toolbox.NewContext())
 	serviceResponse := service.Run(context, &workflow.RunRequest{
-		Name:             "recover",
-		Tasks:            "fail",
-		Params:           map[string]interface{}{},
-		EnableLogging:    false,
-		LoggingDirectory: "logs",
+		Name:  "recover",
+		Tasks: "fail",
+		BaseRun: &workflow.BaseRun{
+			Params:        map[string]interface{}{},
+			EnableLogging: false,
+			LogDirectory:  "logs",
+		},
 	})
 
 	assert.EqualValues(t, "", serviceResponse.Error)
@@ -273,12 +295,14 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 		serviceResponse := service.Run(context, &workflow.RunRequest{
 			Name:  "http_workflow",
 			Tasks: "*",
-			Params: map[string]interface{}{
-				"appServer": "http://127.0.0.1:8313",
+			BaseRun: &workflow.BaseRun{
+				Params: map[string]interface{}{
+					"appServer": "http://127.0.0.1:8313",
+				},
+				EnableLogging: true,
+				LogDirectory:  "logs",
 			},
 			PublishParameters: true,
-			EnableLogging:     true,
-			LoggingDirectory:  "logs",
 		})
 		assert.EqualValues(t, "", serviceResponse.Error)
 		response, ok := serviceResponse.Response.(*workflow.RunResponse)
@@ -304,17 +328,19 @@ func TestWorkflowService_RunLifeCycle(t *testing.T) {
 
 		context := manager.NewContext(toolbox.NewContext())
 		serviceResponse := service.Run(context, &workflow.RunRequest{
-			Name:  "lifecycle",
-			Tasks: "*",
-			Params: map[string]interface{}{
-				"object": map[string]interface{}{
-					"key1": 1,
-					"key2": "abc",
-				},
-			},
+			Name:              "lifecycle",
+			Tasks:             "*",
 			PublishParameters: true,
-			EnableLogging:     true,
-			LoggingDirectory:  "logs",
+			BaseRun: &workflow.BaseRun{
+				Params: map[string]interface{}{
+					"object": map[string]interface{}{
+						"key1": 1,
+						"key2": "abc",
+					},
+				},
+				EnableLogging: true,
+				LogDirectory:  "logs",
+			},
 		})
 
 		if assert.EqualValues(t, "", serviceResponse.Error) {
@@ -341,9 +367,11 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
-				Name:              "broken1",
-				Tasks:             "*",
-				Params:            map[string]interface{}{},
+				Name:  "broken1",
+				Tasks: "*",
+				BaseRun: &workflow.BaseRun{
+					Params: map[string]interface{}{},
+				},
 				PublishParameters: true,
 			})
 			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "broken1"), serviceResponse.Error)
@@ -356,9 +384,11 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
-				Name:              "broken2",
-				Tasks:             "*",
-				Params:            map[string]interface{}{},
+				Name:  "broken2",
+				Tasks: "*",
+				BaseRun: &workflow.BaseRun{
+					Params: map[string]interface{}{},
+				},
 				PublishParameters: true,
 			})
 			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "unknown nop.aaa service action at workflow.run"), serviceResponse.Error)
@@ -372,9 +402,11 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
-				Name:              "broken2",
-				Tasks:             "*",
-				Params:            map[string]interface{}{},
+				Name:  "broken2",
+				Tasks: "*",
+				BaseRun: &workflow.BaseRun{
+					Params: map[string]interface{}{},
+				},
 				PublishParameters: true,
 			})
 			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "unknown nop.aaa service action at workflow.run"), serviceResponse.Error)
@@ -388,9 +420,11 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
-				Name:              "broken3",
-				Tasks:             "*",
-				Params:            map[string]interface{}{},
+				Name:  "broken3",
+				Tasks: "*",
+				BaseRun: &workflow.BaseRun{
+					Params: map[string]interface{}{},
+				},
 				PublishParameters: true,
 			})
 			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to lookup service: 'aaa'"), serviceResponse.Error)
@@ -404,9 +438,11 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
-				Name:              "broken4",
-				Tasks:             "*",
-				Params:            map[string]interface{}{},
+				Name:  "broken4",
+				Tasks: "*",
+				BaseRun: &workflow.BaseRun{
+					Params: map[string]interface{}{},
+				},
 				PublishParameters: true,
 			})
 			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to load workflow"), serviceResponse.Error)

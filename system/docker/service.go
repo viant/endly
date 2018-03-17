@@ -48,8 +48,8 @@ func (s *service) stopImages(context *endly.Context, request *StopImagesRequest)
 		for _, container := range processResponse.Containers {
 			if strings.Contains(container.Image, image) {
 				var name = strings.Split(container.Names, ",")[0]
-				_, err = s.stopContainer(context, &ContainerStopRequest{
-					ContainerBaseRequest: &ContainerBaseRequest{
+				_, err = s.stopContainer(context, &StopRequest{
+					BaseRequest: &BaseRequest{
 						Target: request.Target,
 						Name:   name,
 					},
@@ -104,19 +104,21 @@ func (s *service) applyCredentialIfNeeded(credentials map[string]string) map[str
 	return result
 }
 
-func (s *service) resetContainerIfNeeded(context *endly.Context, target *url.Resource, statusResponse *ContainerStatusResponse) error {
+func (s *service) resetContainerIfNeeded(context *endly.Context, request *RunRequest, statusResponse *ContainerStatusResponse) error {
 	if len(statusResponse.Containers) > 0 {
-		_, err := s.stopContainer(context, &ContainerStopRequest{
-			ContainerBaseRequest: &ContainerBaseRequest{
-				Target: target,
+		_, err := s.stopContainer(context, &StopRequest{
+			BaseRequest: &BaseRequest{
+				Target: request.Target,
+				Name:   request.Name,
 			},
 		})
 		if err != nil {
 			return err
 		}
-		_, err = s.removeContainer(context, &ContainerRemoveRequest{
-			ContainerBaseRequest: &ContainerBaseRequest{
-				Target: target,
+		_, err = s.removeContainer(context, &RemoveRequest{
+			BaseRequest: &BaseRequest{
+				Target: request.Target,
+				Name:   request.Name,
 			}})
 		if err != nil {
 			return err
@@ -128,15 +130,13 @@ func (s *service) resetContainerIfNeeded(context *endly.Context, target *url.Res
 
 func (s *service) runContainer(context *endly.Context, request *RunRequest) (*RunResponse, error) {
 	var err error
-
 	var credentials = s.applyCredentialIfNeeded(request.Secrets)
-
 	checkResponse, err := s.checkContainerProcesses(context, &ContainerStatusRequest{
 		Target: request.Target,
 		Names:  request.Name,
 	})
 	if err == nil {
-		err = s.resetContainerIfNeeded(context, request.Target, checkResponse)
+		err = s.resetContainerIfNeeded(context, request, checkResponse)
 	}
 	if err != nil {
 		return nil, err
@@ -164,11 +164,11 @@ func (s *service) runContainer(context *endly.Context, request *RunRequest) (*Ru
 	}
 
 	if strings.Contains(commandInfo.Stdout(), containerInUse) {
-		_, _ = s.stopContainer(context, &ContainerStopRequest{ContainerBaseRequest: &ContainerBaseRequest{
+		_, _ = s.stopContainer(context, &StopRequest{BaseRequest: &BaseRequest{
 			Target: request.Target,
 			Name:   request.Name,
 		}})
-		_, _ = s.removeContainer(context, &ContainerRemoveRequest{ContainerBaseRequest: &ContainerBaseRequest{
+		_, _ = s.removeContainer(context, &RemoveRequest{BaseRequest: &BaseRequest{
 			Target: request.Target,
 			Name:   request.Name,
 		}})
@@ -217,18 +217,18 @@ func (s *service) runContainerCommand(context *endly.Context, securet map[string
 	if err != nil {
 		return "", err
 	}
-	if len(commandResult.Commands) > 1 {
+	if len(commandResult.Cmd) > 1 {
 		//Truncate password auth, to process vanila container output
-		var stdout = commandResult.Commands[0].Stdout
+		var stdout = commandResult.Cmd[0].Stdout
 		if strings.Contains(stdout, "Password:") {
-			commandResult.Commands = commandResult.Commands[1:]
+			commandResult.Cmd = commandResult.Cmd[1:]
 		}
 	}
 
 	return commandResult.Stdout(), nil
 }
 
-func (s *service) startContainer(context *endly.Context, request *ContainerStartRequest) (*ContainerStartResponse, error) {
+func (s *service) startContainer(context *endly.Context, request *StartRequest) (*StartResponse, error) {
 	_, err := s.runContainerCommand(context, nil, request.Name, request.Target, "start", "")
 	if err != nil {
 		return nil, err
@@ -240,10 +240,10 @@ func (s *service) startContainer(context *endly.Context, request *ContainerStart
 	if info == nil {
 		return nil, err
 	}
-	return &ContainerStartResponse{info}, err
+	return &StartResponse{info}, err
 }
 
-func (s *service) stopContainer(context *endly.Context, request *ContainerStopRequest) (*ContainerStopResponse, error) {
+func (s *service) stopContainer(context *endly.Context, request *StopRequest) (*StopResponse, error) {
 	info, err := s.checkContainerProcess(context, &ContainerStatusRequest{
 		Target: request.Target,
 		Names:  request.Name,
@@ -259,11 +259,11 @@ func (s *service) stopContainer(context *endly.Context, request *ContainerStopRe
 		info.Status = "down"
 	}
 
-	return &ContainerStopResponse{info}, nil
+	return &StopResponse{info}, nil
 }
 
-func (s *service) removeContainer(context *endly.Context, request *ContainerRemoveRequest) (response *ContainerRemoveResponse, err error) {
-	response = &ContainerRemoveResponse{}
+func (s *service) removeContainer(context *endly.Context, request *RemoveRequest) (response *RemoveResponse, err error) {
+	response = &RemoveResponse{}
 	response.Stdout, err = s.runContainerCommand(context, nil, request.Name, request.Target, "rm", "")
 	if err != nil {
 		return nil, err
@@ -271,8 +271,8 @@ func (s *service) removeContainer(context *endly.Context, request *ContainerRemo
 	return response, nil
 }
 
-func (s *service) inspect(context *endly.Context, request *ContainerInspectRequest) (response *ContainerInspectResponse, err error) {
-	response = &ContainerInspectResponse{}
+func (s *service) inspect(context *endly.Context, request *InspectRequest) (response *InspectResponse, err error) {
+	response = &InspectResponse{}
 	response.Stdout, err = s.runContainerCommand(context, nil, request.Name, request.Target, "inspect", "")
 	if err != nil {
 		return nil, err
@@ -282,14 +282,14 @@ func (s *service) inspect(context *endly.Context, request *ContainerInspectReque
 	return response, nil
 }
 
-func (s *service) containerLogs(context *endly.Context, request *ContainerLogsRequest) (response *ContainerLogsResponse, err error) {
-	response = &ContainerLogsResponse{}
+func (s *service) containerLogs(context *endly.Context, request *LogsRequest) (response *LogsResponse, err error) {
+	response = &LogsResponse{}
 	response.Stdout, err = s.runContainerCommand(context, nil, request.Name, request.Target, "logs", "")
 	return response, err
 }
 
-func (s *service) runInContainer(context *endly.Context, request *ContainerRunRequest) (response *ContainerRunResponse, err error) {
-	response = &ContainerRunResponse{}
+func (s *service) runInContainer(context *endly.Context, request *ExecRequest) (response *ExecResponse, err error) {
+	response = &ExecResponse{}
 	var executionOptions = ""
 	var execArguments = context.Expand(request.Command)
 
@@ -1018,13 +1018,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &ContainerRunRequest{}
+			return &ExecRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &ContainerRunResponse{}
+			return &ExecResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*ContainerRunRequest); ok {
+			if req, ok := request.(*ExecRequest); ok {
 				return s.runInContainer(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -1043,13 +1043,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &ContainerInspectRequest{}
+			return &InspectRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &ContainerInspectResponse{}
+			return &InspectResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*ContainerInspectRequest); ok {
+			if req, ok := request.(*InspectRequest); ok {
 				return s.inspect(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -1068,13 +1068,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &ContainerStartRequest{}
+			return &StartRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &ContainerStartResponse{}
+			return &StartResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*ContainerStartRequest); ok {
+			if req, ok := request.(*StartRequest); ok {
 				return s.startContainer(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -1093,13 +1093,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &ContainerStopRequest{}
+			return &StopRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &ContainerStopResponse{}
+			return &StopResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*ContainerStopRequest); ok {
+			if req, ok := request.(*StopRequest); ok {
 				return s.stopContainer(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -1143,13 +1143,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &ContainerRemoveRequest{}
+			return &RemoveRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &ContainerRemoveResponse{}
+			return &RemoveResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*ContainerRemoveRequest); ok {
+			if req, ok := request.(*RemoveRequest); ok {
 				return s.removeContainer(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -1168,13 +1168,13 @@ func (s *service) registerRoutes() {
 			},
 		},
 		RequestProvider: func() interface{} {
-			return &ContainerLogsRequest{}
+			return &LogsRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &ContainerLogsResponse{}
+			return &LogsResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*ContainerLogsRequest); ok {
+			if req, ok := request.(*LogsRequest); ok {
 				return s.containerLogs(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)

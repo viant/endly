@@ -78,19 +78,48 @@ func (s *Service) addVariableEvent(name string, variables endly.Variables, conte
 	context.Publish(endly.NewModifiedStateEvent(variables, in, out))
 }
 
+func (s *Service) worflowDedicatedFolderURL(URL string) string {
+	selector := WorkflowSelector(URL)
+	workflowName := selector.Name()
+	workflowFilename := fmt.Sprintf("%v.csv", workflowName)
+	return strings.Replace(URL, workflowFilename, fmt.Sprintf("%v/%v", workflowName, workflowFilename), 1)
+}
+
+func (s *Service) getWorkflowURLs(URL string) []string {
+	return []string{
+		URL,
+		s.worflowDedicatedFolderURL(URL),
+	}
+}
+
 //getWorkflowResource returns workflow resource
-func (s *Service) getWorkflowResource(state data.Map, workflowURL string) *url.Resource {
-	resource := url.NewResource(workflowURL)
-	storageService, err := storage.NewServiceForURL(resource.URL, "")
-	if err != nil {
+func (s *Service) getWorkflowResource(state data.Map, URL string) *url.Resource {
+
+	for _, candidate := range s.getWorkflowURLs(URL) {
+		resource := url.NewResource(candidate)
+		storageService, err := storage.NewServiceForURL(resource.URL, "")
+		if err != nil {
+			return nil
+		}
+
+		if exists, _ := storageService.Exists(candidate); exists {
+			return resource
+		}
+	}
+
+	if strings.Contains(URL, ":/") || strings.HasPrefix(URL, "/") {
+
 		return nil
 	}
-	if exists, _ := storageService.Exists(resource.URL); exists {
-		return resource
-	}
-	if !(strings.Contains(workflowURL, "://") || strings.HasPrefix(workflowURL, "/")) {
-		resource, err = s.Dao.NewRepoResource(state, fmt.Sprintf("workflow/%v", workflowURL))
-		if storageService, err = storage.NewServiceForURL(resource.URL, ""); err != nil {
+
+	//Lookup shared worflow
+	for _, candidate := range s.getWorkflowURLs(URL) {
+		resource, err := s.Dao.NewRepoResource(state, fmt.Sprintf("workflow/%v", candidate))
+		if err != nil {
+			continue
+		}
+		storageService, err := storage.NewServiceForURL(resource.URL, "")
+		if err != nil {
 			return nil
 		}
 		if exists, _ := storageService.Exists(resource.URL); exists {
@@ -131,8 +160,8 @@ func (s *Service) getServiceRequest(context *endly.Context, activity *endly.Acti
 	if request == nil || !toolbox.IsMap(request) {
 		if toolbox.IsStruct(request) {
 			var requestMap = make(map[string]interface{})
-			converter := toolbox.NewColumnConverter("")
-			if err = converter.AssignConverted(&requestMap, request); err != nil {
+
+			if err = toolbox.DefaultConverter.AssignConverted(&requestMap, request); err != nil {
 				return nil, nil, err
 			}
 			request = requestMap
@@ -336,7 +365,7 @@ func (s *Service) runAsyncActions(context *endly.Context, workflow *endly.Workfl
 				if err := s.runAsyncAction(context, actionContext, workflow, action, group); err != nil {
 					groupErr = err
 				}
-			}(asyncAction[i], context.Clone())
+			}(asyncAction[i], context)
 		}
 		group.Wait()
 		if groupErr != nil {
@@ -346,65 +375,56 @@ func (s *Service) runAsyncActions(context *endly.Context, workflow *endly.Workfl
 	return nil
 }
 
-func (s *Service) updatePipelineResource(state data.Map, request *PipelineRequest) error {
-	for _, pipeline := range request.Pipeline {
-		resource := s.getWorkflowResource(state, pipeline.Key.URL())
-		if resource == nil && request.Namespace != "" && pipeline.Key.IsRelative() {
-			resource = s.getWorkflowResource(state, fmt.Sprintf("%v/%v", request.Namespace, pipeline.Key.URL()))
-			if resource == nil {
-				resource = s.getWorkflowResource(state, fmt.Sprintf("%v/%v/%v", request.Namespace, pipeline.Key.Name(), pipeline.Key.URL()))
+func (s *Service) traversePipelines(pipelines []*Pipeline, context *endly.Context, response *PipelineResponse) error {
+	var state = context.State()
+	for _, pipeline := range pipelines {
+		if pipeline.Skip {
+			continue
+		}
+		if pipeline.Workflow != "" {
+			runRequest := NewRunRequest(pipeline.Workflow, pipeline.Params, true)
+			runResponse := &RunResponse{}
+			if err := endly.Run(context, runRequest, runResponse); err != nil {
+				return err
+			}
+			if len(runResponse.Data) > 0 {
+				for k, v := range runResponse.Data {
+					state.Put(k, v)
+				}
+			}
+		} else if pipeline.Action != "" {
+			serviceAction := pipeline.Action
+			var response = make(map[string]interface{})
+			var request, err = context.AsRequest(serviceAction.Service(), serviceAction.Action(), pipeline.Params)
+			if err != nil {
+				return err
+			}
+			if err = endly.Run(context, request, response); err != nil {
+				return err
+			}
+			if len(response) > 0 {
+				for k, v := range response {
+					state.Put(k, v)
+				}
+			}
+		} else if len(pipeline.Pipelines) > 0 {
+			if err := s.traversePipelines(pipeline.Pipelines, context, response); err != nil {
+				return err
 			}
 		}
-		if resource == nil {
-			return fmt.Errorf("failed to locate workflow: %v", pipeline.Key.URL())
-		}
-		pipeline.resource = resource
 	}
 	return nil
 }
 
-func (s *Service) pipelineParameters(request *PipelineRequest, pipeline *Pipeline) map[string]interface{} {
-	var result = pipeline.Value
-	if len(result) == 0 {
-		result = make(map[string]interface{})
-	}
-	if len(request.Params) > 0 {
-		for k, v := range request.Params {
-			if _, has := result[k]; !has {
-				result[k] = v
-			}
-		}
-	}
-	return result
-}
-
 func (s *Service) pipeline(context *endly.Context, request *PipelineRequest) (*PipelineResponse, error) {
 	var response = &PipelineResponse{
-		Response: make(map[string]*RunResponse),
+		Response: make(map[string]interface{}),
 	}
-	var state = context.State()
-	err := s.updatePipelineResource(state, request)
-	if err != nil {
-		return nil, err
-	}
-	for _, pipeline := range request.Pipeline {
-		runContext := context.Clone()
-		runRequest := &RunRequest{
-			WorkflowURL: pipeline.resource.URL,
-			Name:        pipeline.Key.Name(),
-			Tasks:       pipeline.Key.Tasks(),
-			Params:      s.pipelineParameters(request, pipeline),
-		}
-		serviceResponse := s.Run(runContext, runRequest)
-		if serviceResponse.Err != nil {
-			return nil, serviceResponse.Err
-		}
-		response.Response[string(pipeline.Key)], _ = serviceResponse.Response.(*RunResponse)
-	}
-	return response, nil
+	return response, s.traversePipelines(request.Pipelines, context, response)
 }
 
 func (s *Service) pipelineWorkflows(context *endly.Context, request *PipelineRequest) (*PipelineResponse, error) {
+	s.enableLoggingIfNeeded(context, request.BaseRun)
 	if request.Async {
 		context.Wait.Add(1)
 		go func() {
@@ -433,18 +453,25 @@ func (s *Service) runWorkflow(context *endly.Context, request *RunRequest) (resp
 	return s.run(context, request)
 }
 
+func (s *Service) enableLoggingIfNeeded(context *endly.Context, request *BaseRun) {
+	if request.EnableLogging && context.Listener == nil {
+		var logDirectory = path.Join(request.LogDirectory, context.SessionID)
+		eventLogger := endly.NewEventLogger(logDirectory, context.Listener)
+		context.Listener = eventLogger.AsEventListener()
+	}
+}
+
 func (s *Service) run(upstreamContext *endly.Context, request *RunRequest) (response *RunResponse, err error) {
 	response = &RunResponse{
 		Data:      make(map[string]interface{}),
 		SessionID: upstreamContext.SessionID,
 	}
-	if request.EnableLogging {
-		var logDirectory = path.Join(request.LoggingDirectory, upstreamContext.SessionID)
-		eventLogger := endly.NewEventLogger(logDirectory, upstreamContext.Listener)
-		upstreamContext.Listener = eventLogger.AsEventListener()
+	s.enableLoggingIfNeeded(upstreamContext, request.BaseRun)
+	URL := request.WorkflowURL
+	if resource := s.getWorkflowResource(upstreamContext.State(), request.WorkflowURL); resource != nil {
+		URL = resource.URL
 	}
-
-	err = s.loadWorkflowIfNeeded(upstreamContext, request.Name, request.WorkflowURL)
+	err = s.loadWorkflowIfNeeded(upstreamContext, request.Name, URL)
 	if err != nil {
 		return response, err
 	}

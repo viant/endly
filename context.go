@@ -50,6 +50,7 @@ type Context struct {
 
 //Publish publishes event to listeners, it updates current run details like activity workflow name etc ...
 func (c *Context) Publish(value interface{}) *Event {
+
 	var workflow = c.Workflows.Last()
 	var workflowName = ""
 	if workflow != nil {
@@ -71,6 +72,12 @@ func (c *Context) Publish(value interface{}) *Event {
 		Activity:  activity,
 		Value:     value,
 	}
+	if IsLoggingEnabled(event.Package()) {
+		EnableLogging("endly")
+		text, _ := toolbox.AsYamlText(value)
+		LogF("%v %v", event.Type(), text)
+	}
+
 	if c.Listener != nil {
 		c.Listener(event)
 	}

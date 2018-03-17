@@ -3,26 +3,53 @@ package workflow
 import (
 	"errors"
 	"github.com/viant/endly"
+	"github.com/viant/endly/util"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
 )
 
-//WorkflowParams represents workflow parameters
-type WorkflowParams map[string]interface{}
+//Params represents parameters
+type Params map[string]interface{}
+
+//BaseRun represents a base run request
+type BaseRun struct {
+	EnableLogging bool            `description:"flag to enable logging"`
+	LogDirectory  string          `description:"log directory"`
+	EventFilter   map[string]bool `description:"optional CLI filter option,key is either package name or package name.request/event prefix "`
+	Async         bool            `description:"flag to run it asynchronously. Do not set it your self runner sets the flag for the first workflow"`
+	Params        Params          `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
+}
 
 //RunRequest represents workflow run request
 type RunRequest struct {
-	EnableLogging     bool            `description:"flag to enable logging"`
-	LoggingDirectory  string          `description:"log directory"`
-	WorkflowURL       string          `description:"workflow URL if workflow is not found in the registry, it is loaded"`
-	Name              string          `required:"true" description:"name defined in workflow document"`
-	Params            WorkflowParams  `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
-	Tasks             string          `required:"true" description:"coma separated task list or '*'to run all tasks sequencialy"` //tasks to run with coma separated list or '*', or empty string for all tasks
-	TagIDs            string          `description:"coma separated TagID list, if present in a task, only matched runs, other task run as normal"`
-	PublishParameters bool            `description:"flag to publish parameters directly into context state"`
-	Async             bool            `description:"flag to run it asynchronously. Do not set it your self runner sets the flag for the first workflow"`
-	EventFilter       map[string]bool `description:"optional CLI filter option,key is either package name or package name.request/event prefix "`
+	*BaseRun
+	WorkflowURL       string `description:"workflow URL if workflow is not found in the registry, it is loaded"`
+	Name              string `required:"true" description:"name defined in workflow document"`
+	Tasks             string `required:"true" description:"coma separated task list or '*'to run all tasks sequencialy"` //tasks to run with coma separated list or '*', or empty string for all tasks
+	TagIDs            string `description:"coma separated TagID list, if present in a task, only matched runs, other task run as normal"`
+	PublishParameters bool   `description:"flag to publish parameters directly into context state"`
+}
+
+func (r *RunRequest) Init() error {
+	if r.BaseRun == nil {
+		r.BaseRun = &BaseRun{}
+	}
+	return nil
+}
+
+//NewRunRequest creates a new run request
+func NewRunRequest(selector WorkflowSelector, params map[string]interface{}, publishParams bool) *RunRequest {
+	return &RunRequest{
+		BaseRun: &BaseRun{
+			Params: params,
+		},
+		WorkflowURL:       selector.URL(),
+		Name:              selector.Name(),
+		Tasks:             selector.Tasks(),
+		PublishParameters: publishParams,
+	}
 }
 
 //RunResponse represents workflow run response
@@ -34,42 +61,117 @@ type RunResponse struct {
 //WorkflowSelector represents an expression to invoke workflow with all or specified task:  URL[:tasks]
 type WorkflowSelector string
 
-//Pipeline represents a workflow with parameters to run
+//ActionSelector represents an expression to invoke endly action:  service:Action
+type ActionSelector string
+
+//MapEntry represents a workflow with parameters to run
+type MapEntry struct {
+	Key   string
+	Value interface{}
+}
+
 type Pipeline struct {
-	Key      WorkflowSelector `description:"an expression to invoke workflow with all or specified task:  URL[:tasks]"`
-	Value    WorkflowParams   `description:"workflow parameters"`
-	resource *url.Resource    //workflow resource
+	Name      string
+	Skip      bool
+	Workflow  WorkflowSelector
+	Action    ActionSelector
+	Params    Params
+	Pipelines []*Pipeline
 }
 
 //NewPipeline creates a new pipeline
-func NewPipeline(selector string, params map[string]interface{}) *Pipeline {
-	return &Pipeline{
-		Key:   WorkflowSelector(selector),
-		Value: WorkflowParams(params),
+func NewPipeline(key string, value interface{}) *MapEntry {
+	return &MapEntry{
+		Key:   key,
+		Value: value,
 	}
 }
 
 //PipelineRequest represent request to run one or more workflow.
 type PipelineRequest struct {
-	Namespace string         `description:"if specified  it represents prefix for all relative workflow URL"`
-	Async     bool           `default:"true" description:"flag to run pipeline asynchronously"`
-	Params    WorkflowParams `description:"shared parameters to be included if not present in pipline level parameters"`
-	Pipeline  []*Pipeline    `required:"true" description:"workflows with parameters to run"`
+	*BaseRun
+	Pipeline  []*MapEntry `required:"true" description:"key value representing pipelines in simplified form"`
+	Pipelines []*Pipeline `description:"actual pipelines (derived from Pipeline)"`
+}
+
+func (r *PipelineRequest) toPipeline(source interface{}, pipeline *Pipeline) (err error) {
+	var aMap map[string]interface{}
+	if aMap, err = util.NormalizeMap(source); err != nil {
+		return err
+	}
+	if workflow, ok := aMap[pipelineWorkflow]; ok {
+		pipeline.Workflow = WorkflowSelector(toolbox.AsString(workflow))
+		delete(aMap, pipelineWorkflow)
+		pipeline.Params = Params(aMap)
+		AppendParams(r.Params, pipeline.Params, false)
+		return nil
+	}
+	if workflow, ok := aMap[pipelineAction]; ok {
+		pipeline.Action = ActionSelector(toolbox.AsString(workflow))
+		delete(aMap, pipelineAction)
+		pipeline.Params = Params(aMap)
+		AppendParams(r.Params, pipeline.Params, false)
+		return nil
+	}
+	if e := toolbox.ProcessMap(source, func(key, value interface{}) bool {
+		subPipeline := &Pipeline{
+			Name:      toolbox.AsString(key),
+			Pipelines: make([]*Pipeline, 0),
+		}
+		if err = r.toPipeline(value, subPipeline); err != nil {
+			return false
+		}
+		pipeline.Pipelines = append(pipeline.Pipelines, subPipeline)
+		return true
+	}); e != nil {
+		return e
+	}
+	return err
+}
+
+func (r *PipelineRequest) Init() (err error) {
+	r.Params, err = util.NormalizeMap(r.Params)
+	if err != nil {
+		return err
+	}
+	if len(r.Pipelines) > 0 {
+		return nil
+	}
+	r.Pipelines = make([]*Pipeline, 0)
+	for _, entry := range r.Pipeline {
+		pipeline := &Pipeline{
+			Name:      entry.Key,
+			Pipelines: make([]*Pipeline, 0),
+		}
+		if err := r.toPipeline(entry.Value, pipeline); err != nil {
+			return err
+		}
+		r.Pipelines = append(r.Pipelines, pipeline)
+	}
+	return nil
 }
 
 //NewPipelineRequest returns new pipeline request
-func NewPipelineRequest(namespace string, async bool, params WorkflowParams, pipeline ...*Pipeline) *PipelineRequest {
+func NewPipelineRequest(async bool, params Params, pipeline ...*MapEntry) *PipelineRequest {
 	return &PipelineRequest{
-		Namespace: namespace,
-		Async:     async,
-		Params:    params,
-		Pipeline:  pipeline,
+		BaseRun: &BaseRun{
+			Async:  async,
+			Params: params,
+		},
+		Pipeline: pipeline,
 	}
+}
+
+//NewPipelineRequestFromURL creates a new pipeline request from URL
+func NewPipelineRequestFromURL(URL string) (*PipelineRequest, error) {
+	resource := url.NewResource(URL)
+	var response = &PipelineRequest{}
+	return response, resource.Decode(response)
 }
 
 //Response represent a pipeline response.
 type PipelineResponse struct {
-	Response map[string]*RunResponse
+	Response map[string]interface{}
 }
 
 //RegisterRequest represents workflow register request
@@ -241,4 +343,32 @@ func (s WorkflowSelector) Tasks() string {
 	_, _, tasks := s.split()
 	return tasks
 
+}
+
+//Action returns action
+func (s ActionSelector) Action() string {
+	pair := strings.Split(string(s), ":")
+	if len(pair) == 2 {
+		return pair[1]
+	}
+	return ""
+}
+
+//Service returns service
+func (s ActionSelector) Service() string {
+	pair := strings.Split(string(s), ":")
+	if len(pair) == 2 {
+		return pair[0]
+	}
+	return string(s)
+}
+
+//AppendMap source to dest map
+func AppendParams(source, dest Params, override bool) {
+	for k, v := range source {
+		if _, ok := dest[k]; ok && !override {
+			continue
+		}
+		dest[k] = v
+	}
 }

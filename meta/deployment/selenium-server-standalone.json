@@ -3,7 +3,6 @@
   "Versioning":"MajorVersion.MinorVersion.ReleaseVersion",
   "Targets": [
     {
-
       "MinReleaseVersion": {
         "3.4": "0"
       },
@@ -15,14 +14,13 @@
             "chmod a+rw /opt/selenium/"
           ]
         },
-
         "Transfer": {
-          "Source": {
-            "URL": "http://selenium-release.storage.googleapis.com/${artifact.MajorVersion}.${artifact.MinorVersion}/selenium-server-standalone-${artifact.Version}.jar"
-          },
-          "Target": {
+          "Dest": {
             "URL": "scp://${targetHost}/opt/selenium/selenium-server-standalone.jar",
             "Credential": "${targetHostCredential}"
+          },
+          "Source": {
+            "URL": "http://selenium-release.storage.googleapis.com/${artifact.MajorVersion}.${artifact.MinorVersion}/selenium-server-standalone-${artifact.Version}.jar"
           }
         }
       }

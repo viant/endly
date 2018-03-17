@@ -34,10 +34,8 @@ func SetupMemoryStorage() {
 	memStorage.Upload("mem:///test/copy/storage/config1.json", bytes.NewReader(fileContent))
 	memStorage.Upload("mem:///test/copy/storage/config2.json", bytes.NewReader(fileContent))
 	memStorage.Upload("mem:///test/copy/storage/data/data.json", strings.NewReader("{\"key\":1}"))
-
 	memStorage.Upload("mem:///tmp/copy2_source/config1.json", bytes.NewReader(fileContent))
 	memStorage.Upload("mem:///tmp/copy2_source/config2.json", bytes.NewReader(fileContent))
-
 	memStorage.Upload("mem:///tmp/copy2_source/copy2_source.tar.gz", strings.NewReader("123"))
 	memStorage.Upload("mem:///tmp/copy2_source/config1.json.tar.gz", strings.NewReader("abc"))
 	memStorage.Upload("mem:///tmp/copy2_source/config2.json.tar.gz", strings.NewReader("xyz"))
@@ -54,46 +52,14 @@ func TestTransferService_Copy(t *testing.T) {
 		Expected map[string]string
 		Error    string
 	}{
-		//{
-		//	"",
-		//	&storage.CopyRequest{
-		//		[]*storage.Transfer{
-		//			{
-		//				Source: url.NewResource("mem:///test/copy/storage/"),
-		//				Target: url.NewResource("mem:///tmp/copy1"),
-		//				Expand: true,
-		//			},
-		//		},
-		//	},
-		//	map[string]string{
-		//		"mem:///tmp/copy1/config1.json": "{\n  \"Endpoint\": {\n    \"Hostname\":\"127.0.0.1\",\n    \"Port\":\"8080\"\n  }\n}",
-		//	},
-		//	"",
-		//},
-		//{
-		//	"",
-		//	&storage.CopyRequest{
-		//		[]*storage.Transfer{
-		//			{
-		//				Source: url.NewResource("mem:///test/copy/storage/"),
-		//				Target: url.NewResource("mem:///tmp/copy1"),
-		//				Expand: false,
-		//			},
-		//		},
-		//	},
-		//	map[string]string{
-		//		"mem:///tmp/copy1/config1.json": "{\n  \"Endpoint\": {\n    \"Hostname\":\"$endpoint.host\",\n    \"Port\":\"$endpoint.port\"\n  }\n}",
-		//	},
-		//	"",
-		//},
 		{
 			"test/copy/compress/dir/darwin",
 			&storage.CopyRequest{
-				[]*storage.Transfer{
+				Transfers: []*storage.Transfer{
+
 					{
-						Source:   url.NewResource("scp://127.0.0.1:22/tmp/copy2_source"),
-						Target:   url.NewResource("/tmp/copy2_target"),
-						Compress: true,
+						Source: url.NewResource("scp://127.0.0.1:22/tmp/copy2_source"),
+						Dest:   url.NewResource("/tmp/copy2_target"),
 					},
 				},
 			},
@@ -105,11 +71,12 @@ func TestTransferService_Copy(t *testing.T) {
 		{
 			"test/copy/compress/file1/darwin",
 			&storage.CopyRequest{
-				[]*storage.Transfer{
+
+				Transfers: []*storage.Transfer{
 					{
-						Source:   url.NewResource("scp://127.0.0.1:22/tmp/copy2_source/config1.json"),
-						Target:   url.NewResource("/tmp/copy3_target"),
 						Compress: true,
+						Source:   url.NewResource("scp://127.0.0.1:22/tmp/copy2_source/config1.json"),
+						Dest:     url.NewResource("/tmp/copy3_target"),
 					},
 				},
 			},
@@ -121,10 +88,10 @@ func TestTransferService_Copy(t *testing.T) {
 		{
 			"test/copy/compress/file2/darwin",
 			&storage.CopyRequest{
-				[]*storage.Transfer{
+				Transfers: []*storage.Transfer{
 					{
 						Source:   url.NewResource("scp://127.0.0.1:22/tmp/copy2_source/config2.json"),
-						Target:   url.NewResource("/tmp/copy4_target/config2.json"),
+						Dest:     url.NewResource("/tmp/copy4_target/config2.json"),
 						Compress: true,
 					},
 				},
@@ -137,20 +104,9 @@ func TestTransferService_Copy(t *testing.T) {
 	}
 
 	for _, useCase := range useCases {
-		context := manager.NewContext(toolbox.NewContext())
 
-		if useCase.baseDir != "" {
-			execService, err := exec.GetReplayService(useCase.baseDir)
-			if assert.Nil(t, err) {
-				context, err = exec.OpenTestContext(manager, target, execService)
-				if !assert.Nil(t, err) {
-					continue
-				}
-				var state = context.State()
-				state.Put(storage.UseMemoryService, true)
-			}
-		}
-
+		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
+		storage.UseMemoryService(context)
 		updateContext(context)
 		defer context.Close()
 
@@ -193,16 +149,14 @@ func TestTransferService_Remove(t *testing.T) {
 	storageService, err := manager.Service(storage.ServiceID)
 	assert.Nil(t, err)
 	context := manager.NewContext(toolbox.NewContext())
-	var state = context.State()
-	state.Put(storage.UseMemoryService, true)
-	memStorage := tstorage.NewMemoryService()
+	memStorage := storage.UseMemoryService(context)
 	memStorage.Upload("mem:///test/remove/storage/config1.json", strings.NewReader("abc"))
 
 	object, _ := memStorage.StorageObject("mem:///test/remove/storage/config1.json")
 	assert.NotNil(t, object)
 
 	serviceResponse := storageService.Run(context, &storage.RemoveRequest{
-		Resources: []*url.Resource{
+		Assets: []*url.Resource{
 			url.NewResource("mem:///test/remove/storage/config1.json"),
 			url.NewResource("mem:///dummy"),
 		},
@@ -224,14 +178,12 @@ func TestTransferService_Download(t *testing.T) {
 	storageService, err := manager.Service(storage.ServiceID)
 	assert.Nil(t, err)
 	context := manager.NewContext(toolbox.NewContext())
-	var state = context.State()
-	state.Put(storage.UseMemoryService, true)
-	memStorage := tstorage.NewMemoryService()
+	memStorage := storage.UseMemoryService(context)
 	memStorage.Upload("mem:///test/download/storage/config1.json", strings.NewReader("abc"))
 
 	serviceResponse := storageService.Run(context, &storage.DownloadRequest{
-		TargetKey: "key1",
-		Source:    url.NewResource("mem:///test/download/storage/config1.json"),
+		DestKey: "key1",
+		Source:  url.NewResource("mem:///test/download/storage/config1.json"),
 	})
 
 	if assert.Equal(t, serviceResponse.Error, "") {
@@ -250,16 +202,13 @@ func TestTransferService_Upload(t *testing.T) {
 	storageService, err := manager.Service(storage.ServiceID)
 	assert.Nil(t, err)
 	context := manager.NewContext(toolbox.NewContext())
-	var state = context.State()
-	state.Put(storage.UseMemoryService, true)
-
-	memStorage := tstorage.NewMemoryService()
-
+	memStorage := storage.UseMemoryService(context)
+	state := context.State()
 	state.Put("key10", "XYZ")
 
 	serviceResponse := storageService.Run(context, &storage.UploadRequest{
 		SourceKey: "key10",
-		Target:    url.NewResource("mem:///test/storage/upload/config1.json"),
+		Dest:      url.NewResource("mem:///test/storage/upload/config1.json"),
 	})
 
 	if assert.Equal(t, serviceResponse.Error, "") {
@@ -290,7 +239,7 @@ func TestTransferService_Upload_Error(t *testing.T) {
 
 	serviceResponse := storageService.Run(context, &storage.UploadRequest{
 		SourceKey: "key10",
-		Target:    url.NewResource("mem:///test/storage/upload/config1.json"),
+		Dest:      url.NewResource("mem:///test/storage/upload/config1.json"),
 	})
 	assert.Equal(t, "sourcekey key10 value was empty at storage.upload", serviceResponse.Error)
 }
@@ -322,7 +271,7 @@ func TestStorageCopyRequest_Validate(t *testing.T) {
 		request := storage.CopyRequest{
 			Transfers: []*storage.Transfer{
 				{
-					Target: url.NewResource("abc"),
+					Dest: url.NewResource("abc"),
 				},
 			},
 		}
@@ -354,7 +303,7 @@ func TestStorageCopyRequest_Validate(t *testing.T) {
 		request := storage.CopyRequest{
 			Transfers: []*storage.Transfer{
 				{
-					Target: url.NewResource("abc"),
+					Dest:   url.NewResource("abc"),
 					Source: url.NewResource("xyz"),
 				},
 			},
@@ -372,7 +321,7 @@ func TestStorageDownloadRequest_Validate(t *testing.T) {
 	}
 	{
 		request := storage.DownloadRequest{
-			TargetKey: "abc",
+			DestKey: "abc",
 		}
 		assert.NotNil(t, request.Validate())
 	}
@@ -384,8 +333,8 @@ func TestStorageDownloadRequest_Validate(t *testing.T) {
 	}
 	{
 		request := storage.DownloadRequest{
-			Source:    url.NewResource("abc"),
-			TargetKey: "a",
+			Source:  url.NewResource("abc"),
+			DestKey: "a",
 		}
 		assert.Nil(t, request.Validate())
 	}
@@ -405,13 +354,13 @@ func TestStorageUploadRequest_Validate(t *testing.T) {
 	}
 	{
 		request := storage.UploadRequest{
-			Target: url.NewResource("abc"),
+			Dest: url.NewResource("abc"),
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
 		request := storage.UploadRequest{
-			Target:    url.NewResource("abc"),
+			Dest:      url.NewResource("abc"),
 			SourceKey: "a",
 		}
 		assert.Nil(t, request.Validate())
@@ -427,7 +376,7 @@ func TestStorageUploadRemove_Validate(t *testing.T) {
 
 	{
 		request := storage.RemoveRequest{
-			Resources: []*url.Resource{
+			Assets: []*url.Resource{
 
 				url.NewResource("a"),
 			},

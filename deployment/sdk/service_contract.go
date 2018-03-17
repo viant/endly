@@ -52,7 +52,7 @@ func NewSetRequest(target *url.Resource, sdk string, version string, env map[str
 func NewSetRequestFromURL(URL string) (*SetRequest, error) {
 	var response = &SetRequest{}
 	resource := url.NewResource(URL)
-	return response, resource.JSONDecode(response)
+	return response, resource.Decode(response)
 }
 
 //SetResponse represents sdk response

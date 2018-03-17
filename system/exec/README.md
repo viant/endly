@@ -12,9 +12,9 @@ Service keeps tracking the session current directory commands, env variable sett
 
 
 <a name="endly"></a>
-## Endly service and action integration
+## Endly service action integration
 
-Run the following for exec service
+Run the following command for exec service operation details:
 
 ```bash
 
@@ -24,7 +24,6 @@ endly -s=exec -a=run
 endly -s=exec -a=extract
 endly -s=exec -a=open
 endly -s=exec -a=close
-
 
 ```
 
@@ -37,8 +36,11 @@ endly -s=exec -a=close
 | exec | extract | execute commands with ability to extract data, define error or success state | [ExtractRequest](service_contract.go) | [RunResponse](service_contract.go) |
 
 
-
 **RunRequest example**
+
+
+@run.json
+
 ```json
 {
   "Target": {
@@ -50,6 +52,19 @@ endly -s=exec -a=close
 }
 ```
 
+@run.yaml
+
+```yaml
+target:
+  url:  ssh://127.0.0.1/
+  credential: ${env.HOME}/.secret/localhost.json
+commands:
+  whoami
+  ${cmd[0].stdout}:/root/?  mkdir -p /tmp/app
+  ${cmd[0].stdout}:!/root/? mkdir ~/app
+  echo cmd[0].stdout
+  
+```
 
 **ExtractRequest example**
 
@@ -117,8 +132,9 @@ ExtractRequest has ability to fine tune SSH command execution with extraction da
 Command in RunRequest can represents one of the following:
 
 1) Simple command: i.e echo $HOME   
-2) Conditional command. i.e. $stdout:/root/? echo 'hello root'"
-        
+2) Conditional command: [criteria ?] command
+    i.e. $stdout:/root/? echo 'hello root'",  
+       
 
 ```go
 
@@ -167,7 +183,7 @@ If you use **sudo**. any **secret or credentials** make sure that you rename it 
 ```go
 	manager := endly.New()
 	target := url.NewResource("ssh://127.0.0.1", "~/.secret/localhost.json")
-	context, err :=  exec.OpenRecorderContext(manager, target, "test/session/context")
+	context, err :=  exec.NewSSHRecodingContext(manager, target, "test/session/context")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -189,11 +205,7 @@ a test SSHService, use location of stored SSH conversation  as parameter, then c
 		log.Fatal(err)
 	}
 	target := url.NewResource("ssh://127.0.0.1", credential)
-	SSHService, err := exec.GetReplayService("test/session/transient")
-	if err != nil {
-		log.Fatal(err)
-	}
-	context, err := exec.OpenTestContext(manager, target, SSHService)
+	context, err := exec.NewSSHReplayContext(manager, target, "test/session/transient")
 	if err != nil {
 		log.Fatal(err)
 	}

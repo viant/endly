@@ -66,7 +66,7 @@ func (s *service) loadMeta(context *endly.Context, request *LoadMetaRequest) (*L
 		return nil, err
 	}
 	meta := &Meta{}
-	err = source.JSONDecode(meta)
+	err = source.Decode(meta)
 	if err != nil {
 		return nil, fmt.Errorf("unable to decode: %v, %v", source.URL, err)
 	}
@@ -171,14 +171,6 @@ func (s *service) build(context *endly.Context, request *Request) (*Response, er
 
 	if goal.Run == nil {
 		return nil, fmt.Errorf("run was empty %v %v\n", goal.Name, request.BuildSpec.Name)
-	}
-
-	if len(request.Secrets) > 0 {
-		for _, command := range goal.Run.Commands {
-			if command.When != "" {
-				goal.Run.Secrets = request.Secrets
-			}
-		}
 	}
 
 	var runRequest = goal.Run.Clone(target)

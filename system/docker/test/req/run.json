@@ -1,0 +1,21 @@
+{
+  "Target": {
+    "URL": "scp://127.0.0.1:22/",
+    "Credential": "/var/folders/gl/5550g3kj6tn1rbz8chqx1c61ycmmm1/T/dummy20.json"
+  },
+  "Name": "testMysql",
+  "Secrets": {
+    "**mysql**": "/var/folders/gl/5550g3kj6tn1rbz8chqx1c61ycmmm1/T/mysql20.json"
+  },
+  "Image": "mysql:5.6",
+  "Port": "",
+  "Env": {
+    "MYSQL_ROOT_PASSWORD": "**mysql**"
+  },
+  "Mount": {
+    "/tmp/my.cnf": "/etc/my.cnf"
+  },
+  "Ports": {
+    "3306": "3306"
+  }
+}

@@ -3,6 +3,7 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/assertly"
+	"github.com/viant/endly/criteria"
 	"github.com/viant/toolbox/data"
 )
 
@@ -36,14 +37,14 @@ func Evaluate(context *Context, state data.Map, criteriaExpression, eventType st
 	if criteriaExpression == "" {
 		return defaultValue, nil
 	}
-	parser := NewCriteriaParser()
+	parser := criteria.NewParser()
 	criteria, err := parser.Parse(criteriaExpression)
 	if err != nil {
 		return !defaultValue, fmt.Errorf("%v, %v", err, criteriaExpression)
 	}
-	result, err := criteria.IsTrue(context, state)
+	result, err := criteria.IsTrue(state)
 	expandedCriteria := state.Expand(criteriaExpression)
-	LogF("!%v! -> %v", expandedCriteria, result)
+	LogF("[%v] -> %v", expandedCriteria, result)
 	context.Publish(NewCriteriaEvalEvent(eventType, defaultValue, result, criteriaExpression, fmt.Sprintf("%s", expandedCriteria), err))
 	return result, err
 }
