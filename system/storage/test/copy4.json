@@ -1,0 +1,18 @@
+{
+  "Source": {
+    "URL": "mem://yaml1/dir"
+  },
+  "Dest": {
+    "URL": "mem://dest/dir2"
+  },
+  "Transfers":[
+    {
+      "Source": {
+        "URL":"file1.txt"
+      },
+      "Dest": {
+        "URL":"mem://dest/file1.txt"
+      }
+    }
+  ]
+}

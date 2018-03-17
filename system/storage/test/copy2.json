@@ -1,0 +1,14 @@
+{
+  "Source": {
+    "URL": "mem://yaml1/dir"
+  },
+  "Dest": {
+    "URL": "mem://dest/dir2"
+  },
+  "Compress":true,
+  "Expand": true,
+  "Replace": {
+    "k1": "1",
+    "k2": "2"
+  }
+}
