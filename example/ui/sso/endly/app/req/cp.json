@@ -10,10 +10,10 @@
       }
     },
     {
-      "Dest": {
+      "Source": {
         "URL": "$WorkingDirectory(../static)"
       },
-      "Target": {
+      "Dest": {
         "URL": "scp://${targetHost}${appDirectory}/static",
         "Credential": "$targetHostCredential"
       }
@@ -23,7 +23,7 @@
         "URL": "scp://$buildHost/$buildDirectory/${app}",
         "Credential": "$buildHostCredential"
       },
-      "Target": {
+      "Dest": {
         "URL": "scp://${targetHost}${appDirectory}/${app}",
         "Credential": "$targetHostCredential"
       }
