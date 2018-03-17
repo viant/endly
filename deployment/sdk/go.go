@@ -22,9 +22,9 @@ func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, 
 	if goPath != "" {
 		_ = endly.Run(context, exec.NewRunRequest(request.Target, false, fmt.Sprintf("export GOPATH='%v'", goPath)), nil)
 	}
+	_ = endly.Run(context, exec.NewRunRequest(request.Target, false, "export GOROOT='/opt/sdk/go'"), nil)
 
 	var extractRequest = exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
-		exec.NewExtractCommand("export GOROOT='/opt/sdk/go'", "", nil, nil),
 		exec.NewExtractCommand("go version", "", nil, nil,
 			endly.NewExtract("version", "go version go([^\\s]+)", false)),
 	)
@@ -34,10 +34,7 @@ func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, 
 	}
 	var stdout = runResponse.Stdout()
 	if util.CheckCommandNotFound(stdout) || util.CheckNoSuchFileOrDirectory(stdout) {
-		stdout = runResponse.Stdout()
-		if util.CheckCommandNotFound(stdout) || util.CheckNoSuchFileOrDirectory(stdout) {
-			return nil, errSdkNotFound
-		}
+		return nil, errSdkNotFound
 	}
 	result.Sdk = "go"
 	result.Home = "/opt/sdk/go"

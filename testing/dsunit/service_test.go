@@ -121,8 +121,8 @@ func TestDsUnitService(t *testing.T) {
 			sequences[k] = v + 1
 		}
 
-		var tableData = make([]*DsUnitTableData, 0)
-		tableData = append(tableData, &DsUnitTableData{
+		var tableData = make([]*TableData, 0)
+		tableData = append(tableData, &TableData{
 			Table: "USER_ACCOUNT",
 			Value: map[string]interface{}{
 				"ACCOUNT_ID":   "$meta.ACCOUNT_ID",
@@ -135,7 +135,7 @@ func TestDsUnitService(t *testing.T) {
 			},
 			PostIncrement: []string{"meta.ACCOUNT_ID", "meta.USER_ID"},
 		},
-			&DsUnitTableData{
+			&TableData{
 				Table: "USER_ACCOUNT",
 				Value: []interface{}{map[string]interface{}{
 					"ACCOUNT_ID":   "$meta.ACCOUNT_ID",

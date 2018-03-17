@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"errors"
+	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
@@ -83,21 +84,11 @@ type Addition struct {
 
 //Validate checks if request if valid
 func (d *Deployment) Validate() error {
-
 	if d.Transfer == nil {
-		return errors.New("Transfer was nil")
+		return errors.New("transfer was nil")
 	}
-	if d.Transfer.Target == nil {
-		return errors.New("Transfer.Target was not specified")
-	}
-	if d.Transfer.Target.URL == "" {
-		return errors.New("Transfer.Target.URL was empty")
-	}
-	if d.Transfer.Source == nil {
-		return errors.New("Transfer.Source was empty")
-	}
-	if d.Transfer.Source.URL == "" {
-		return errors.New("Transfer.Source.URL was empty")
+	if err := d.Transfer.Validate(); err != nil {
+		return fmt.Errorf("invaid deployment.tranfer: %v", err)
 	}
 	return nil
 
@@ -106,11 +97,11 @@ func (d *Deployment) Validate() error {
 //Validate checks is meta is valid.
 func (m *Meta) Validate() error {
 	if len(m.Targets) == 0 {
-		return errors.New("Targets were empty")
+		return errors.New("targets were empty")
 	}
 	for _, target := range m.Targets {
 		if target.Deployment == nil {
-			return errors.New("Target.Deployment was empty")
+			return errors.New("target.Deployment was empty")
 		}
 		err := target.Deployment.Validate()
 		if err != nil {

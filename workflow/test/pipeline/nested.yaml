@@ -1,0 +1,31 @@
+params:
+  secrets:
+    localhost: localhsot
+  target:
+    URL:ssh://127.0.0.1
+    Credential:localhost
+pipeline:
+  system1:
+    checkout:
+      action: vc:checkout
+      origin:
+        URL: http://github.com/adrianwit/echo1
+    build:
+      workflow: docker/build:build
+      commands:
+        - apt-get update; apt-get -y install libpcap0.8 libpcap0.8-dev
+        - go get
+        - go version
+        - go build -a
+  system2:
+    checkout:
+      action: vc:checkout
+      origin:
+        URL: http://github.com/adrianwit/echo2
+    build:
+      workflow: docker/build:build
+      commands:
+        - apt-get update; apt-get -y install libpcap0.8 libpcap0.8-dev
+        - go get
+        - go version
+        - go build -a

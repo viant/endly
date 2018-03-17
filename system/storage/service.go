@@ -18,8 +18,8 @@ import (
 //ServiceID represents transfer service id
 const ServiceID = "storage"
 
-//UseMemoryService flag in the context to ignore
-const UseMemoryService = "useMemoryService"
+//useMemoryService flag in the context to ignore
+const useMemoryService = "useMemoryService"
 
 //CompressionTimeout compression/decompression timeout
 var CompressionTimeout = 120000
@@ -114,13 +114,14 @@ func (s *service) copy(context *endly.Context, request *CopyRequest) (*CopyRespo
 			return nil, err
 		}
 		defer sourceService.Close()
-		targetResource, targetService, err := s.getResourceAndService(context, transfer.Target)
+		targetResource, targetService, err := s.getResourceAndService(context, transfer.Dest)
 		if err != nil {
 			return nil, err
 		}
 		defer targetService.Close()
 
 		var handler = s.getModificationHandler(context, transfer)
+
 		if has, _ := sourceService.Exists(sourceResource.URL); !has {
 			return nil, fmt.Errorf(" %v %v - source does not exists (%T)", sourceResource.URL, targetResource.URL, sourceService)
 		}
@@ -155,7 +156,7 @@ func (s *service) remove(context *endly.Context, request *RemoveRequest) (*Remov
 	var response = &RemoveResponse{
 		Removed: make([]string, 0),
 	}
-	for _, resource := range request.Resources {
+	for _, resource := range request.Assets {
 		resource, service, err := s.getResourceAndService(context, resource)
 		if err != nil {
 			return nil, err
@@ -202,12 +203,12 @@ func (s *service) download(context *endly.Context, request *DownloadRequest) (*D
 	}
 
 	response.Payload = endly.AsPayload(data)
-	if request.TargetKey != "" {
+	if request.DestKey != "" {
 		var state = context.State()
 		if response.Transformed != nil {
-			state.Put(request.TargetKey, response.Transformed)
+			state.Put(request.DestKey, response.Transformed)
 		} else {
-			state.Put(request.TargetKey, response.Payload)
+			state.Put(request.DestKey, response.Payload)
 		}
 	}
 
@@ -218,7 +219,7 @@ func (s *service) download(context *endly.Context, request *DownloadRequest) (*D
 func (s *service) upload(context *endly.Context, request *UploadRequest) (*UploadResponse, error) {
 	var response = &UploadResponse{}
 
-	resource, service, err := s.getResourceAndService(context, request.Target)
+	resource, service, err := s.getResourceAndService(context, request.Dest)
 	if err != nil {
 		return nil, err
 	}
@@ -242,41 +243,56 @@ func (s *service) upload(context *endly.Context, request *UploadRequest) (*Uploa
 
 const (
 	storageCopySimpleExample = `{
-  "Transfers": [
+  "Assets": [
     {
       "Source": {
         "URL": "https://svn.viantinc.com/svn/project/db/schema.ddl",
         "Credential": "${env.HOME}/.secret/svn.json"
       },
-      "Target": {
+      "Desc": {
         "URL": "build/db/"
       }
     }
   ]
 }`
 	storageCopyRemoteTransferExample = `{
-  "Transfers": [
+  "Assets": [
     {
       "Source": {
-        "URL": "s3://mybucket1/project1/assets/",
+        "URL": "s3://mybucket1/project1/Transfers/",
         "Credential": "${env.HOME}/.secret/s3.json"
       },
-      "Target": {
-         "URL": "gs://mybucket2/project1/assets/",
+      "Desc": {
+         "URL": "gs://mybucket2/project1/Transfers/",
           "Credential": "${env.HOME}/.secret/gs.json"
       }
     }
   ]
 }`
 
+	storageBatchCopyTransferExample = `{
+	"Source": {
+		"URL": "s3://mybucket1/",
+		"Credential": "${env.HOME}/.secret/s3.json"
+	  },
+	"Desc": {
+		 "URL": "gs://mybucket2/",
+		  "Credential": "${env.HOME}/.secret/gs.json"
+	  },
+	"Assets": [
+		{"project1/Transfers/":"project1/Transfers/"}
+		{"project1/config/":"project1/config/"},
+	]
+}`
+
 	storageCopyReplacementTransferExample = `{
-  "Transfers": [
+  "Assets": [
     {
       "Source": {
         "URL": "scp://127.0.0.1/build/app/target/classes/server.properties",
         "Credential": "${env.HOME}/.secret/localhost.json"
       },
-      "Target": {
+      "Desc": {
         "URL": "scp://127.0.0.1/build/app/target/target/build/WEB-INF/classes/dserver.properties",
         "Credential": "${env.HOME}/.secret/localhost.json"
       },
@@ -307,6 +323,10 @@ func (s *service) registerRoutes() {
 					UseCase: "copy with replacement",
 					Data:    storageCopyReplacementTransferExample,
 				},
+				{
+					UseCase: "batch coopy",
+					Data:    storageBatchCopyTransferExample,
+				},
 			},
 		},
 		RequestProvider: func() interface{} {
@@ -326,7 +346,7 @@ func (s *service) registerRoutes() {
 	s.Register(&endly.ServiceActionRoute{
 		Action: "remove",
 		RequestInfo: &endly.ActionInfo{
-			Description: "remove assets from local or remote file system",
+			Description: "remove Transfers from local or remote file system",
 		},
 		RequestProvider: func() interface{} {
 			return &RemoveRequest{}

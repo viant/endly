@@ -11,7 +11,6 @@ import (
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"path"
-	"strings"
 	"testing"
 )
 
@@ -79,34 +78,22 @@ func TestDockerService_Images(t *testing.T) {
 	}
 
 	for _, useCase := range useCases {
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, useCase.target, useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, useCase.target, execService)
-			service, err := context.Service(docker.ServiceID)
-			assert.Nil(t, err)
 
-			defer context.Close()
 			if assert.Nil(t, err) {
-				var target = useCase.target
-				serviceResponse := service.Run(context, &docker.ImagesRequest{
-					Target:     target,
-					Tag:        useCase.Tag,
-					Repository: useCase.Repository,
-				})
 
+				var request = docker.NewImagesRequest(useCase.target, useCase.Repository, useCase.Tag)
+				var response = &docker.ImagesResponse{}
+				err := endly.Run(context, request, response)
 				var baseCase = useCase.baseDir + " " + useCase.Repository
-				assert.Equal(t, "", serviceResponse.Error, baseCase)
-				response, ok := serviceResponse.Response.(*docker.ImagesResponse)
-				if !ok {
-					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
-					continue
+				if !assert.Nil(t, err, baseCase) {
+					return
 				}
 				if len(response.Images) != len(useCase.Expected) {
 					assert.Fail(t, fmt.Sprintf("Expected %v image info but had %v", len(useCase.Expected), len(response.Images)), useCase.baseDir)
 				}
-
 				for i, expected := range useCase.Expected {
-
 					if i >= len(response.Images) {
 						assert.Fail(t, fmt.Sprintf("Image info was missing [%v] %v", i, baseCase))
 						continue
@@ -215,26 +202,20 @@ func TestDockerService_Run(t *testing.T) {
 			},
 			&docker.ContainerInfo{},
 			"testMysql01",
-			"error executing docker run --name testMysql01 -e MYSQL_ROOT_PASSWORD=**mysql** -v /tmp/my.cnf:/etc/my.cnf -p 3306:3306  -d mysql:5.6 , c3d9749a1dc43332bb5a58330187719d14c9c23cee55f583cb83bbb3bbb98a80\ndocker: Error response from daemon: driver failed programming external connectivity on endpoint testMysql01 (5c9925d698dfee79f14483fbc42a3837abfb482e30c70e53d830d3d9cfd6f0da): Error starting userland proxy: Bind for 0.0.0.0:3306 failed: port is already allocated.\n",
+			"error executing docker run --name testMysql01 -e MYSQL_ROOT_PASSWORD=**mysql** -v /tmp/my.cnf:/etc/my.cnf -p 3306:3306  -d mysql:5.6 , c3d9749a1dc43332bb5a58330187719d14c9c23cee55f583cb83bbb3bbb98a80\ndocker: Error response from daemon: driver failed programming external connectivity on endpoint testMysql01 (5c9925d698dfee79f14483fbc42a3837abfb482e30c70e53d830d3d9cfd6f0da): Error starting userland proxy: Bind for 0.0.0.0:3306 failed: port is already allocated.\n at docker.run",
 		},
 		{
 			"test/run/active/darwin",
-			&docker.RunRequest{
-				Target: target,
-				Image:  "mysql:5.6",
-				Ports: map[string]string{
-					"3306": "3306",
-				},
-				Env: map[string]string{
-					"MYSQL_ROOT_PASSWORD": "**mysql**",
-				},
-				Mount: map[string]string{
-					"/tmp/my.cnf": "/etc/my.cnf",
-				},
-				Secrets: map[string]string{
+			docker.NewRunRequest(target, "testMysql",
+				map[string]string{
 					"**mysql**": mySQLcredentialFile,
-				},
-			},
+				}, "mysql:5.6", "", map[string]string{
+					"MYSQL_ROOT_PASSWORD": "**mysql**",
+				}, map[string]string{
+					"/tmp/my.cnf": "/etc/my.cnf",
+				}, map[string]string{
+					"3306": "3306",
+				}, nil, ""),
 			&docker.ContainerInfo{
 				Status:      "up",
 				Names:       "testMysql",
@@ -247,34 +228,26 @@ func TestDockerService_Run(t *testing.T) {
 
 	for _, useCase := range useCases {
 		var target = useCase.Request.Target
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, target, execService)
-			service, err := context.Service(docker.ServiceID)
-			assert.Nil(t, err)
 
 			defer context.Close()
 			if assert.Nil(t, err) {
 				useCase.Request.Name = useCase.TargetName
-				serviceResponse := service.Run(context, useCase.Request)
-
-				var baseCase = useCase.baseDir + " " + useCase.TargetName
-
-				assert.True(t, strings.Contains(serviceResponse.Error, useCase.Error), baseCase)
-
-				actual, ok := serviceResponse.Response.(*docker.RunResponse)
-				if !ok {
-					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
+				var response = &docker.RunResponse{}
+				err := endly.Run(context, useCase.Request, response)
+				var description = useCase.baseDir + " " + useCase.TargetName
+				if useCase.Error != "" {
+					assert.EqualValues(t, useCase.Error, fmt.Sprintf("%v", err), description)
 					continue
 				}
-
-				if actual == nil {
+				if !assert.Nil(t, err) {
 					continue
 				}
 				var expected = useCase.Expected
-				assert.EqualValues(t, expected.Status, actual.Status, "Status "+baseCase)
-				assert.EqualValues(t, expected.Names, actual.Names, "Names "+baseCase)
-				assert.EqualValues(t, expected.ContainerID, actual.ContainerID, "ContainerID "+baseCase)
+				assert.EqualValues(t, expected.Status, response.Status, "Status "+description)
+				assert.EqualValues(t, expected.Names, response.Names, "Names "+description)
+				assert.EqualValues(t, expected.ContainerID, response.ContainerID, "ContainerID "+description)
 			}
 
 		}
@@ -282,7 +255,7 @@ func TestDockerService_Run(t *testing.T) {
 	}
 }
 
-func TestDockerService_Command(t *testing.T) {
+func TestDockerService_ExecRequest(t *testing.T) {
 	credentialFile, err := util.GetDummyCredential()
 	assert.Nil(t, err)
 
@@ -293,32 +266,26 @@ func TestDockerService_Command(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir    string
-		Request    *docker.ContainerRunRequest
+		Request    *docker.ExecRequest
 		Expected   string
 		TargetName string
 		Error      string
 	}{
 		{
 			"test/command/export/darwin",
-			&docker.ContainerRunRequest{
-				ContainerBaseRequest: &docker.ContainerBaseRequest{
-					Target: target,
-				},
-				Interactive:      true,
-				AllocateTerminal: true,
-				Command:          "mysqldump  -uroot -p***mysql*** --all-databases --routines | grep -v 'Warning' > /tmp/dump.sql",
-				Secrets: map[string]string{
+			docker.NewExecRequest(docker.NewBaseRequest(target, "testMysql"),
+				"mysqldump  -uroot -p***mysql*** --all-databases --routines | grep -v 'Warning' > /tmp/dump.sql",
+				map[string]string{
 					"***mysql***": mySQLcredentialFile,
-				},
-			},
+				}, true, true, false),
 			"",
 			"testMysql",
 			"",
 		},
 		{
 			"test/command/import/darwin",
-			&docker.ContainerRunRequest{
-				ContainerBaseRequest: &docker.ContainerBaseRequest{
+			&docker.ExecRequest{
+				BaseRequest: &docker.BaseRequest{
 					Target: target,
 				},
 				Interactive: true,
@@ -335,32 +302,23 @@ func TestDockerService_Command(t *testing.T) {
 
 	for _, useCase := range useCases {
 		var target = useCase.Request.Target
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, target, execService)
-			service, err := context.Service(docker.ServiceID)
-			assert.Nil(t, err)
 
-			defer context.Close()
 			if assert.Nil(t, err) {
 				useCase.Request.Name = useCase.TargetName
-
-				serviceResponse := service.Run(context, useCase.Request)
-
-				var baseCase = useCase.baseDir + " " + useCase.TargetName
-				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
-
-				actual, ok := serviceResponse.Response.(*docker.ContainerRunResponse)
-				if !ok {
-					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
+				var description = useCase.baseDir + " " + useCase.TargetName
+				response := &docker.ExecResponse{}
+				err := endly.Run(context, useCase.Request, response)
+				if useCase.Error != "" {
+					assert.EqualValues(t, useCase.Error, fmt.Sprint("%v", err), description)
 					continue
 				}
-
-				if actual == nil {
+				if !assert.Nil(t, err) {
 					continue
 				}
 				var expected = useCase.Expected
-				assert.EqualValues(t, expected, actual.Stdout, "Status "+baseCase)
+				assert.EqualValues(t, expected, response.Stdout, "Status "+description)
 			}
 		}
 	}
@@ -397,13 +355,10 @@ func TestDockerService_Pull(t *testing.T) {
 
 	for _, useCase := range useCases {
 		var target = useCase.Request.Target
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, target, execService)
 			service, err := context.Service(docker.ServiceID)
 			assert.Nil(t, err)
-
-			defer context.Close()
 			if assert.Nil(t, err) {
 				serviceResponse := service.Run(context, useCase.Request)
 
@@ -469,12 +424,11 @@ func TestDockerService_Status(t *testing.T) {
 
 	for _, useCase := range useCases {
 		var target = useCase.Request.Target
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
+		exec.GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, target, execService)
 			service, err := context.Service(docker.ServiceID)
 			assert.Nil(t, err)
-
 			defer context.Close()
 			if assert.Nil(t, err) {
 				serviceResponse := service.Run(context, useCase.Request)
@@ -513,14 +467,14 @@ func TestDockerService_Start(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
-		Request  *docker.ContainerStartRequest
+		Request  *docker.StartRequest
 		Expected *docker.ContainerInfo
 		Error    string
 	}{
 		{
 			"test/start/linux",
-			&docker.ContainerStartRequest{
-				ContainerBaseRequest: &docker.ContainerBaseRequest{
+			&docker.StartRequest{
+				BaseRequest: &docker.BaseRequest{
 					Target: target,
 					Name:   "db1",
 				},
@@ -539,20 +493,19 @@ func TestDockerService_Start(t *testing.T) {
 
 	for _, useCase := range useCases {
 		var target = useCase.Request.Target
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
+		exec.GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, target, execService)
 			service, err := context.Service(docker.ServiceID)
 			assert.Nil(t, err)
 
-			defer context.Close()
 			if assert.Nil(t, err) {
 				serviceResponse := service.Run(context, useCase.Request)
 
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				response, ok := serviceResponse.Response.(*docker.ContainerStartResponse)
+				response, ok := serviceResponse.Response.(*docker.StartResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -583,14 +536,14 @@ func TestDockerService_Stop(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
-		Request  *docker.ContainerStopRequest
+		Request  *docker.StopRequest
 		Expected *docker.ContainerInfo
 		Error    string
 	}{
 		{
 			"test/stop/linux",
-			&docker.ContainerStopRequest{
-				ContainerBaseRequest: &docker.ContainerBaseRequest{
+			&docker.StopRequest{
+				BaseRequest: &docker.BaseRequest{
 					Target: target,
 					Name:   "db1",
 				},
@@ -609,9 +562,9 @@ func TestDockerService_Stop(t *testing.T) {
 
 	for _, useCase := range useCases {
 		var target = useCase.Request.Target
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
+		exec.GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, target, execService)
 			service, err := context.Service(docker.ServiceID)
 			assert.Nil(t, err)
 
@@ -621,7 +574,7 @@ func TestDockerService_Stop(t *testing.T) {
 
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
-				response, ok := serviceResponse.Response.(*docker.ContainerStopResponse)
+				response, ok := serviceResponse.Response.(*docker.StopResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -649,14 +602,14 @@ func TestDockerService_Remove(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
-		Request  *docker.ContainerRemoveRequest
+		Request  *docker.RemoveRequest
 		Expected string
 		Error    string
 	}{
 		{
 			"test/remove/linux",
-			&docker.ContainerRemoveRequest{
-				ContainerBaseRequest: &docker.ContainerBaseRequest{
+			&docker.RemoveRequest{
+				BaseRequest: &docker.BaseRequest{
 					Target: target,
 					Name:   "db1",
 				},
@@ -668,9 +621,9 @@ func TestDockerService_Remove(t *testing.T) {
 
 	for _, useCase := range useCases {
 		var target = useCase.Request.Target
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
+		exec.GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, target, execService)
 			service, err := context.Service(docker.ServiceID)
 			assert.Nil(t, err)
 
@@ -681,7 +634,7 @@ func TestDockerService_Remove(t *testing.T) {
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				response, ok := serviceResponse.Response.(*docker.ContainerRemoveResponse)
+				response, ok := serviceResponse.Response.(*docker.RemoveResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -756,9 +709,9 @@ func TestDockerService_Login(t *testing.T) {
 
 	for _, useCase := range useCases {
 		var target = useCase.Request.Target
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
+		exec.GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, target, execService)
 			service, err := context.Service(docker.ServiceID)
 			defer context.Close()
 
@@ -796,12 +749,7 @@ func TestDockerService_Build(t *testing.T) {
 	credentialFile, err := util.GetDummyCredential()
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 	manager := endly.New()
-
-	execService, err := exec.GetReplayService("test/build/darwin")
-	if !assert.Nil(t, err) {
-		return
-	}
-	context, err := exec.OpenTestContext(manager, target, execService)
+	context, err := exec.NewSSHReplayContext(manager, target, "test/build/darwin")
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -843,17 +791,11 @@ func TestDockerService_Push(t *testing.T) {
 	}
 
 	for _, useCase := range useCases {
-		execService, err := exec.GetReplayService(useCase.baseDir)
-		if !assert.Nil(t, err, useCase.baseDir) {
-			return
-		}
-		context, err := exec.OpenTestContext(manager, target, execService)
+		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
 		if !assert.Nil(t, err) {
 			return
 		}
-		defer context.Close()
 		service, _ := context.Service(docker.ServiceID)
-
 		response := service.Run(context, &docker.PushRequest{
 			Target: target,
 			Tag: &docker.Tag{
@@ -878,21 +820,20 @@ func TestDockerService_Inspect(t *testing.T) {
 	}
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 	manager := endly.New()
-	execService, err := exec.GetReplayService("test/inspect/darwin")
-	context, err := exec.OpenTestContext(manager, target, execService)
+	context, err := exec.NewSSHReplayContext(manager, target, "test/inspect/darwin")
 	if !assert.Nil(t, err) {
 		return
 	}
 	defer context.Close()
 	service, _ := context.Service(docker.ServiceID)
-	serviceResponse := service.Run(context, &docker.ContainerInspectRequest{
-		ContainerBaseRequest: &docker.ContainerBaseRequest{
+	serviceResponse := service.Run(context, &docker.InspectRequest{
+		BaseRequest: &docker.BaseRequest{
 			Target: target,
 			Name:   "site_backup",
 		},
 	})
 	assert.EqualValues(t, "", serviceResponse.Error)
-	response, ok := serviceResponse.Response.(*docker.ContainerInspectResponse)
+	response, ok := serviceResponse.Response.(*docker.InspectResponse)
 	if assert.True(t, ok) {
 		if assert.True(t, response.Stdout != "") {
 			assert.NotNil(t, response.Info)
@@ -905,36 +846,6 @@ func TestDockerService_Inspect(t *testing.T) {
 		}
 	}
 }
-
-//
-//func TestDockerService_RecorderTemplate(t *testing.T) {
-//
-//	parent := toolbox.CallerDirectory(3)
-//	dockerCredentials := path.Join(parent, "test/gcr_key.json")
-//
-//	var credentialFile = path.Join(os.Getenv("HOME"), ".secret/localhost.json")
-//
-//	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
-//	manager := endly.New()
-//	context, _ := OpenRecorderContext(manager, target, "test/inspect/darwin")
-//	///context := manager.NewContext(toolbox.NewContext())
-//
-//	defer context.Close()
-//
-//	service, _ := manager.Service(endly.ID)
-//
-//	fmt.Printf("%v\n", dockerCredentials)
-//
-//	target.Name = "site_backup"
-//	response := service.Run(context, &docker.ContainerInspectRequest{
-//		Target:     target,
-//
-//	})
-//	assert.EqualValues(t, "", response.Error)
-//
-//
-//}
-//
 
 func TestDockerLoginRequest_Validate(t *testing.T) {
 	{

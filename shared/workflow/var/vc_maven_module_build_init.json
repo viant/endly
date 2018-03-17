@@ -84,7 +84,7 @@
             "URL": "$parentPomUrl",
             "Credential": "$originCredential"
           },
-          "Target": {
+          "Dest": {
             "URL": "${targetUrl}",
             "Credential": "$targetHostCredential"
           }

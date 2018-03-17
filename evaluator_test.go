@@ -30,6 +30,14 @@ func Test_EvaluateCriteria(t *testing.T) {
 			Expected: true,
 		},
 		{
+			Description: "Left operand expression",
+			Expression:  "$key1",
+			State: map[string]interface{}{
+				"key1": "123",
+			},
+			Expected: true,
+		},
+		{
 			Description: "Simple true expression with ok = false",
 			Expression:  "$ok:true",
 			State: map[string]interface{}{

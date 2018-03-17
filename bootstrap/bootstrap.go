@@ -376,7 +376,7 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 		resource, err := getRunRequestURL(value)
 		if err == nil {
 			request = &workflow.RunRequest{}
-			err = resource.JSONDecode(request)
+			err = resource.Decode(request)
 		}
 		if request.WorkflowURL == "" {
 			parent, _ := toolbox.URLSplit(resource.URL)
@@ -399,7 +399,7 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 		}
 		if value, ok := flagset["d"]; ok {
 			request.EnableLogging = toolbox.AsBoolean(value)
-			request.LoggingDirectory = flag.Lookup("l").Value.String()
+			request.LogDirectory = flag.Lookup("l").Value.String()
 		}
 		if value, ok := flagset["t"]; ok {
 			request.Tasks = value

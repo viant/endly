@@ -5,7 +5,7 @@
         "URL": "$configURL",
         "Credential": "$configURLCredential"
       },
-      "Target": {
+      "Dest": {
         "URL": "scp://${targetHost}${configFile}",
         "Credential":"$targetHostCredential"
       },

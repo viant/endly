@@ -55,8 +55,8 @@ func AsProtobufMessage(source interface{}, state data.Map, target proto.Message)
 	} else {
 		requestMap = toolbox.AsMap(source)
 	}
-	converter := toolbox.NewColumnConverter("")
-	err := converter.AssignConverted(target, requestMap)
+
+	err := toolbox.DefaultConverter.AssignConverted(target, requestMap)
 	if err != nil {
 		fmt.Printf("failed to run udf: unable convert: %v %v\n", source, err)
 		return nil, err
@@ -83,7 +83,6 @@ func FromProtobufMessage(source interface{}, state data.Map, sourceMessage proto
 		if err != nil {
 			return nil, err
 		}
-		converter := toolbox.NewColumnConverter("")
 		err = proto.Unmarshal(payload, sourceMessage)
 		if err != nil {
 			return nil, err

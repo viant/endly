@@ -75,26 +75,31 @@ func (v *Variable) fromVariable() *Variable {
 
 func (v *Variables) getValueFromInput(variable *Variable, in data.Map) (interface{}, error) {
 	var value interface{}
-	if variable.From != "" {
+	from := variable.From
+	if from == "" && variable.Value == nil {
+		from = variable.Name
+	}
+	if from != "" {
 		var has bool
-		var key = variable.From
-		if strings.Contains(key, "$") {
-			value = in.Expand(key)
+
+		if strings.Contains(from, "$") {
+			value = in.Expand(from)
 		} else {
-			value, has = in.GetValue(key)
+			value, has = in.GetValue(from)
 		}
 		if !has {
 			fromVariable := variable.fromVariable()
 			err := fromVariable.Load()
 			if fromVariable.Value != nil {
 				in.SetValue(fromVariable.Name, fromVariable.Value)
-				value, _ = in.GetValue(key)
+				value, _ = in.GetValue(from)
 			}
 			if err != nil {
 				return err, nil
 			}
 		}
 	}
+
 	return value, nil
 }
 
@@ -126,6 +131,7 @@ func (v *Variables) Apply(in, out data.Map) error {
 		if err != nil {
 			return err
 		}
+
 		if value == nil || (variable.Required && toolbox.AsString(value) == "") {
 			value = variable.Value
 			if value != nil {

@@ -70,30 +70,22 @@ func TestDaemonService_Status(t *testing.T) {
 	}
 
 	for i, useCase := range useCases {
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, useCase.target, useCase.baseDir)
+		defer context.Close()
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, useCase.target, execService)
-			service, err := context.Service(daemon.ServiceID)
-			assert.Nil(t, err)
-
-			defer context.Close()
-			if assert.Nil(t, err) {
-				var target = useCase.target
-				response := service.Run(context, &daemon.StatusRequest{
-					Target:  target,
-					Service: useCase.service,
-				})
-				var baseCase = useCase.baseDir + " " + useCase.service + fmt.Sprintf("[%d]", i)
-				assert.Equal(t, "", response.Error, baseCase)
-				info, ok := response.Response.(*daemon.Info)
-				if assert.True(t, ok) && info != nil {
-					assert.Equal(t, useCase.expected, info.IsActive(), "is running "+baseCase)
-					assert.Equal(t, useCase.pid, info.Pid, "pid :"+baseCase)
-				}
+			var response = &daemon.Info{}
+			err := endly.Run(context, &daemon.StatusRequest{
+				Target:  useCase.target,
+				Service: useCase.service,
+			}, response)
+			var baseCase = useCase.baseDir + " " + useCase.service + fmt.Sprintf("[%d]", i)
+			if !assert.Nil(t, err, baseCase) {
+				continue
 			}
 
+			assert.Equal(t, useCase.expected, response.IsActive(), "is running "+baseCase)
+			assert.Equal(t, useCase.pid, response.Pid, "pid :"+baseCase)
 		}
-
 	}
 }
 
@@ -163,12 +155,10 @@ func TestDaemonService_Start(t *testing.T) {
 	}
 
 	for _, useCase := range useCases {
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, useCase.target, useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, useCase.target, execService)
 			service, err := context.Service(daemon.ServiceID)
 			assert.Nil(t, err)
-
 			defer context.Close()
 			if assert.Nil(t, err) {
 				var target = useCase.target
@@ -251,26 +241,23 @@ func TestDaemonService_Stop(t *testing.T) {
 	}
 
 	for _, useCase := range useCases {
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, useCase.target, useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, useCase.target, execService)
-			service, err := context.Service(daemon.ServiceID)
-			assert.Nil(t, err)
-
 			defer context.Close()
 			if assert.Nil(t, err) {
 				var target = useCase.target
-				response := service.Run(context, &daemon.StopRequest{
+				var response = &daemon.StopResponse{}
+				err := endly.Run(context, &daemon.StopRequest{
 					Target:  target,
 					Service: useCase.service,
-				})
+				}, response)
 				var baseCase = useCase.baseDir + " " + useCase.service
-				assert.Equal(t, "", response.Error, baseCase)
-				info, ok := response.Response.(*daemon.StopResponse)
-				if assert.True(t, ok) && info != nil {
-					assert.Equal(t, useCase.expected, info.IsActive(), "is running "+baseCase)
-					assert.Equal(t, useCase.pid, info.Pid, "pid :"+baseCase)
+
+				if !assert.Nil(t, err) {
+					continue
 				}
+				assert.Equal(t, useCase.expected, response.IsActive(), "is running "+baseCase)
+				assert.Equal(t, useCase.pid, response.Pid, "pid :"+baseCase)
 			}
 
 		}

@@ -37,8 +37,7 @@ func asStructureData(source interface{}) data.Map {
 	}
 	var aMap = make(map[string]interface{})
 	if toolbox.IsStruct(source) {
-		converter = toolbox.NewColumnConverter(toolbox.DefaultDateLayout)
-		converter.AssignConverted(&aMap, source)
+		toolbox.DefaultConverter.AssignConverted(&aMap, source)
 	} else if toolbox.IsMap(source) {
 		aMap = toolbox.AsMap(source)
 	}

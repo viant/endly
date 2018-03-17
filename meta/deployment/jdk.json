@@ -20,9 +20,9 @@
           "Source": {
             "URL": "sdk/jdk-7u80-linux-x64.tar.gz"
           },
-          "Target": {
-            "URL": "scp://${targetHost}/opt/sdk/jdk/jdk-7u80-linux-x64.tar.gz",
-            "Credential": "${targetHostCredential}"
+          "Dest": {
+            "URL": "scp://${buildHost}/opt/sdk/jdk/jdk-7u80-linux-x64.tar.gz",
+            "Credential": "${buildHostCredential}"
           }
         },
         "VersionCheck": {

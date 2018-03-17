@@ -59,12 +59,7 @@ func Run(context *Context, request, result interface{}) error {
 	if result == nil {
 		return nil
 	}
-	if !resultValue.Elem().Type().AssignableTo(resultValue.Elem().Type()) {
-		return fmt.Errorf("expected %T respose type but had: %T", response, result)
-	}
-	var responseValue = reflect.ValueOf(response)
-	resultValue.Elem().Set(responseValue.Elem())
-	return nil
+	return toolbox.DefaultConverter.AssignConverted(result, response)
 }
 
 type manager struct {
@@ -108,6 +103,9 @@ func (m *manager) Register(service Service) {
 }
 
 func (m *manager) NewContext(ctx toolbox.Context) *Context {
+	if ctx == nil {
+		ctx = toolbox.NewContext()
+	}
 	sessionID := toolbox.AsString(time.Now().Unix())
 	if UUID, err := uuid.NewV1(); err == nil {
 		sessionID = UUID.String()

@@ -18,7 +18,7 @@
           "Source": {
             "URL": "http://mirrors.gigenet.com/apache/maven/maven-${artifact.MajorVersion}/${artifact.Version}/binaries/apache-maven-${artifact.Version}-bin.tar.gz"
           },
-          "Target": {
+          "Dest": {
             "Name": "apache-maven",
             "URL": "scp://${buildSpec.host}/opt/build/",
             "Credential": "$buildSpec.credential"

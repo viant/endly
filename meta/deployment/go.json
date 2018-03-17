@@ -19,9 +19,9 @@
           "Source": {
             "URL": "https://redirector.gvt1.com/edgedl/go/go${artifact.Version}.${os.System}-${os.Architecture}.tar.gz"
           },
-          "Target": {
-            "URL": "scp://${targetHost}/opt/sdk/go_${artifact.Version}.tar.gz",
-            "Credential": "${targetHostCredential}"
+          "Dest": {
+            "URL": "scp://${buildHost}/opt/sdk/go_${artifact.Version}.tar.gz",
+            "Credential": "${buildHostCredential}"
           }
         },
         "VersionCheck": {

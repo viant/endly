@@ -4,13 +4,13 @@
       "Source": {
         "URL": "config/config.json"
       },
-      "Target": {
+      "Dest": {
         "URL": "scp://${targetHost}${appDirectory}/conf/config.json",
         "Credential": "$targetHostCredential"
       }
     },
     {
-      "Source": {
+      "Dest": {
         "URL": "$WorkingDirectory(../static)"
       },
       "Target": {

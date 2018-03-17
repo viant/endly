@@ -2,7 +2,6 @@ package build_test
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/deployment/build"
@@ -10,7 +9,6 @@ import (
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
 	"github.com/viant/endly/util"
-	tstorage "github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 	"strings"
 	"testing"
@@ -67,39 +65,28 @@ func TestBuildService_Build(t *testing.T) {
 	}
 
 	for _, useCase := range useCases {
-		execService, err := exec.GetReplayService(useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, useCase.target, useCase.baseDir)
 		if assert.Nil(t, err) {
-			context, err := exec.OpenTestContext(manager, useCase.target, execService)
-			var state = context.State()
-
 			if useCase.DataURL != "" {
-				storageService := tstorage.NewMemoryService()
-				state.Put(storage.UseMemoryService, true)
+				storageService := storage.UseMemoryService(context)
 				err = storageService.Upload(useCase.DataURL, bytes.NewReader(useCase.DataPayload))
 				assert.Nil(t, err)
 			}
 
-			service, err := context.Service(build.ServiceID)
-			assert.Nil(t, err)
-
-			defer context.Close()
-			if assert.Nil(t, err) {
-				serviceResponse := service.Run(context, &build.Request{
-					Target:    useCase.target,
-					BuildSpec: useCase.request.BuildSpec,
-				})
-
-				var baseCase = useCase.baseDir + " " + useCase.request.BuildSpec.Name
-				assert.Equal(t, "", serviceResponse.Error, baseCase)
-				response, ok := serviceResponse.Response.(*build.Response)
-				if !ok {
-					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
-					continue
-				}
-
-				var actual = response.CommandInfo.Stdout()
-				assert.True(t, strings.Contains(actual, useCase.expected), "name "+baseCase)
+			var request = &build.Request{
+				Target:    useCase.target,
+				BuildSpec: useCase.request.BuildSpec,
 			}
+			var response = &build.Response{}
+
+			err := endly.Run(context, request, response)
+			if !assert.Nil(t, err) {
+				continue
+			}
+			var baseCase = useCase.baseDir + " " + useCase.request.BuildSpec.Name
+			var actual = response.CommandInfo.Stdout()
+			assert.True(t, strings.Contains(actual, useCase.expected), "name "+baseCase)
+
 		}
 	}
 }

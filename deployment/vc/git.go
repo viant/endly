@@ -104,10 +104,11 @@ func (s *git) checkInfo(context *endly.Context, request *StatusRequest) (*Status
 	if origin, has := runResponse.Data["origin"]; has {
 		result.Origin = origin.(string)
 	}
-
-	if strings.Contains(runResponse.Stdout(), "Not a git") {
+	if util.EscapedContains(strings.ToLower(runResponse.Stdout()), "not a git") {
+		result.IsVersionControlManaged = false
 		return result, nil
 	}
+
 	result.IsVersionControlManaged = true
 	extractGitStatus(runResponse.Stdout(0), result.Info)
 	extractRevision(runResponse.Stdout(2), result.Info)
@@ -144,9 +145,12 @@ func (s *git) checkout(context *endly.Context, request *CheckoutRequest) (*Info,
 		return nil, err
 	}
 
-	username, err := util.GetUsername(context.Secrets, origin.Credential)
-	if err != nil {
-		return nil, err
+	username := ""
+	if origin.Credential != "" {
+		username, err = util.GetUsername(context.Secrets, origin.Credential)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var parent, projectName = path.Split(target.DirectoryPath())
@@ -154,8 +158,10 @@ func (s *git) checkout(context *endly.Context, request *CheckoutRequest) (*Info,
 	var _, originProjectName = path.Split(origin.DirectoryPath())
 	if originProjectName == projectName {
 		projectName = "."
-		if err := endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("mkdir -p %v", target.DirectoryPath())), nil); err != nil {
-			return nil, nil
+		if target.DirectoryPath() != "/" {
+			if err := endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("mkdir -p %v", target.DirectoryPath())), nil); err != nil {
+				return nil, nil
+			}
 		}
 		useParentDirectory = false
 	} else {

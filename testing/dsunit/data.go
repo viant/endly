@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-//DsUnitTableData represents table data
-type DsUnitTableData struct {
+//TableData represents table data
+type TableData struct {
 	Table         string
 	Value         interface{}
 	AutoGenerate  map[string]string `json:",omitempty"`
@@ -18,7 +18,7 @@ type DsUnitTableData struct {
 }
 
 //AutoGenerateIfNeeded retrieves auto generated values
-func (d *DsUnitTableData) AutoGenerateIfNeeded(state data.Map) error {
+func (d *TableData) AutoGenerateIfNeeded(state data.Map) error {
 	for k, v := range d.AutoGenerate {
 		value, has := state.GetValue(v)
 		if !has {
@@ -30,7 +30,7 @@ func (d *DsUnitTableData) AutoGenerateIfNeeded(state data.Map) error {
 }
 
 //PostIncrementIfNeeded increments all specified counters by one.
-func (d *DsUnitTableData) PostIncrementIfNeeded(state data.Map) {
+func (d *TableData) PostIncrementIfNeeded(state data.Map) {
 	for _, key := range d.PostIncrement {
 		keyText := toolbox.AsString(key)
 		value, has := state.GetValue(keyText)
@@ -42,7 +42,7 @@ func (d *DsUnitTableData) PostIncrementIfNeeded(state data.Map) {
 }
 
 //GetValues a table records.
-func (d *DsUnitTableData) GetValues(state data.Map) []map[string]interface{} {
+func (d *TableData) GetValues(state data.Map) []map[string]interface{} {
 	if toolbox.IsMap(d.Value) {
 		var value = d.GetValue(state, d.Value)
 		if len(value) == 0 {
@@ -65,7 +65,7 @@ func (d *DsUnitTableData) GetValues(state data.Map) []map[string]interface{} {
 	return result
 }
 
-func (d *DsUnitTableData) expandThis(textValue string, value map[string]interface{}) interface{} {
+func (d *TableData) expandThis(textValue string, value map[string]interface{}) interface{} {
 	if strings.Contains(textValue, "this.") {
 		var thisState = data.NewMap()
 		for subKey, subValue := range value {
@@ -82,7 +82,7 @@ func (d *DsUnitTableData) expandThis(textValue string, value map[string]interfac
 }
 
 //GetValue returns record.
-func (d *DsUnitTableData) GetValue(state data.Map, source interface{}) map[string]interface{} {
+func (d *TableData) GetValue(state data.Map, source interface{}) map[string]interface{} {
 	value := toolbox.AsMap(state.Expand(source))
 	for k, v := range value {
 		var textValue = toolbox.AsString(v)
@@ -109,7 +109,7 @@ func (d *DsUnitTableData) GetValue(state data.Map, source interface{}) map[strin
 	return value
 }
 
-//AsTableRecords converts data spcified by dataKey into slice of *DsUnitTableData to create dsunit data as map[string][]map[string]interface{} (table with records)
+//AsTableRecords converts data spcified by dataKey into slice of *TableData to create dsunit data as map[string][]map[string]interface{} (table with records)
 func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 	var result = make(map[string][]map[string]interface{})
 	if state == nil {
@@ -125,10 +125,10 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 		state.Put(ServiceID, data.NewMap())
 	}
 
-	var prepareTableData, ok = source.([]*DsUnitTableData)
+	var prepareTableData, ok = source.([]*TableData)
 
 	if !ok {
-		prepareTableData = make([]*DsUnitTableData, 0)
+		prepareTableData = make([]*TableData, 0)
 		err := converter.AssignConverted(&prepareTableData, source)
 		if err != nil {
 			return nil, err

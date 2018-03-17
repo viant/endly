@@ -36,7 +36,7 @@ func Test_DeplymentValiate(t *testing.T) {
 	{
 		deployment := &deploy.Deployment{
 			Transfer: &storage.Transfer{
-				Target: &url.Resource{},
+				Dest: &url.Resource{},
 			},
 		}
 		err := deployment.Validate()
@@ -45,7 +45,7 @@ func Test_DeplymentValiate(t *testing.T) {
 	{
 		deployment := &deploy.Deployment{
 			Transfer: &storage.Transfer{
-				Target: &url.Resource{URL: "mem:///123"},
+				Dest: &url.Resource{URL: "mem:///123"},
 			},
 		}
 		err := deployment.Validate()
@@ -54,7 +54,7 @@ func Test_DeplymentValiate(t *testing.T) {
 	{
 		deployment := &deploy.Deployment{
 			Transfer: &storage.Transfer{
-				Target: &url.Resource{URL: "mem:///123"},
+				Dest:   &url.Resource{URL: "mem:///123"},
 				Source: &url.Resource{},
 			},
 		}

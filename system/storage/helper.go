@@ -32,10 +32,17 @@ func NewExpandedContentHandler(context *endly.Context, replaceMap map[string]str
 	}
 }
 
+//UseMemoryService sets flag on context to always use memory service (testing only)
+func UseMemoryService(context *endly.Context) storage.Service {
+	state := context.State()
+	state.Put(useMemoryService, true)
+	return storage.NewMemoryService()
+}
+
 //GetStorageService return toolbox storage service
 func GetStorageService(context *endly.Context, resource *url.Resource) (storage.Service, error) {
 	var state = context.State()
-	if state.Has(UseMemoryService) {
+	if state.Has(useMemoryService) {
 		return storage.NewMemoryService(), nil
 	}
 	return storage.NewServiceForURL(resource.URL, resource.Credential)
@@ -60,4 +67,20 @@ func Copy(context *endly.Context, transfers ...*Transfer) (interface{}, error) {
 		return nil, response.Err
 	}
 	return nil, nil
+}
+
+func joinIfNeeded(parent *url.Resource, URI string) (result *url.Resource) {
+	defer func() {
+		if parent != nil {
+			result.Credential = parent.Credential
+		}
+	}()
+	if strings.Contains(URI, ":/") {
+		result = url.NewResource(URI)
+	} else if parent != nil {
+		result = url.NewResource(toolbox.URLPathJoin(parent.URL, URI))
+	} else {
+		result = url.NewResource(URI)
+	}
+	return result
 }
