@@ -94,25 +94,20 @@ func (s *Service) getWorkflowURLs(URL string) []string {
 
 //getWorkflowResource returns workflow resource
 func (s *Service) getWorkflowResource(state data.Map, URL string) *url.Resource {
-
 	for _, candidate := range s.getWorkflowURLs(URL) {
 		resource := url.NewResource(candidate)
 		storageService, err := storage.NewServiceForURL(resource.URL, "")
 		if err != nil {
 			return nil
 		}
-
 		if exists, _ := storageService.Exists(candidate); exists {
 			return resource
 		}
 	}
-
 	if strings.Contains(URL, ":/") || strings.HasPrefix(URL, "/") {
-
 		return nil
 	}
-
-	//Lookup shared worflow
+	//Lookup shared workflow
 	for _, candidate := range s.getWorkflowURLs(URL) {
 		resource, err := s.Dao.NewRepoResource(state, fmt.Sprintf("workflow/%v", candidate))
 		if err != nil {
