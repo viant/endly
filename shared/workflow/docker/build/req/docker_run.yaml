@@ -1,0 +1,5 @@
+target: $execTarget
+name: $containerName
+image: $dockerImage
+ports:
+  7722: 22

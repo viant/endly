@@ -1,0 +1,3 @@
+source: $buildTarget
+dest: $execTarget
+assets: $download
