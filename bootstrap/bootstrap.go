@@ -152,7 +152,7 @@ func Bootstrap() {
 		flagset["r"] = flag.Lookup("r").Value.String()
 		flagset["w"] = flag.Lookup("w").Value.String()
 		request, err = getRunRequestWithOptions(flagset)
-		if !strings.Contains(err.Error(), "no such file or directory") {
+		if err != nil && !strings.Contains(err.Error(), "no such file or directory") {
 			log.Fatal(err)
 		}
 	}
