@@ -46,6 +46,10 @@ func (r *RunRequest) Init() error {
 	}
 	if r.Name == "" {
 		r.Name = WorkflowSelector(r.URL).Name()
+	} else {
+		if index := strings.LastIndex(r.Name, "/");index != -1 {
+			r.Name = string(r.Name[index+1:])
+		}
 	}
 	return nil
 }
