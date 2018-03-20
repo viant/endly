@@ -24,8 +24,8 @@ func (r *SendRequest) Validate() error {
 	if r.Target == nil {
 		return errors.New("target was nil")
 	}
-	if r.Target.Credential == "" {
-		return errors.New("credential was empty")
+	if r.Target.Credentials == "" {
+		return errors.New("credentials was empty")
 	}
 	if r.Mail == nil {
 		return errors.New("mail was nil")
@@ -35,7 +35,7 @@ func (r *SendRequest) Validate() error {
 
 //MailMessage represent an email
 type MailMessage struct {
-	From        string `required:"true" description:"sender, has to match email from target.credential"`
+	From        string `required:"true" description:"sender, has to match email from target.credentials"`
 	To          []string
 	Cc          []string
 	Bcc         []string

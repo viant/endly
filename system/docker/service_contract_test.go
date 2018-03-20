@@ -25,7 +25,7 @@ func TestNewRequestFromURL(t *testing.T) {
 			Expected: `{
   "Target": {
     "URL": "ssh://127.0.0.1/",
-    "Credential": "localhost"
+    "Credentials": "localhost"
   },
   "Repository": "mysql",
   "Tag": "5.6"
@@ -42,7 +42,7 @@ func TestNewRequestFromURL(t *testing.T) {
 			Expected: `{
   "Target": {
     "URL": "scp://127.0.0.1:22/",
-    "Credential": "/var/folders/gl/5550g3kj6tn1rbz8chqx1c61ycmmm1/T/dummy20.json"
+    "Credentials": "/var/folders/gl/5550g3kj6tn1rbz8chqx1c61ycmmm1/T/dummy20.json"
   },
   "Name": "testMysql",
   "Secrets": {
@@ -73,7 +73,7 @@ func TestNewRequestFromURL(t *testing.T) {
 			Expected: `{
   "Target": {
     "URL": "scp://127.0.0.1:22/",
-    "Credential": "/var/folders/gl/5550g3kj6tn1rbz8chqx1c61ycmmm1/T/dummy20.json"
+    "Credentials": "/var/folders/gl/5550g3kj6tn1rbz8chqx1c61ycmmm1/T/dummy20.json"
   },
   "Name": "testMysql",
   "Secrets": {
@@ -104,7 +104,7 @@ func TestNewRequestFromURL(t *testing.T) {
 			Expected: `{
   "Target": {
     "URL": "scp://127.0.0.1:22/",
-    "Credential": "/var/folders/gl/5550g3kj6tn1rbz8chqx1c61ycmmm1/T/dummy20.json"
+    "Credentials": "/var/folders/gl/5550g3kj6tn1rbz8chqx1c61ycmmm1/T/dummy20.json"
   },
   "Name": "testMysql",
   "Command": "mysqldump  -uroot -p***mysql*** --all-databases --routines | grep -v 'Warning' \u003e /tmp/dump.sql",

@@ -45,7 +45,7 @@ func GetStorageService(context *endly.Context, resource *url.Resource) (storage.
 	if state.Has(useMemoryService) {
 		return storage.NewMemoryService(), nil
 	}
-	return storage.NewServiceForURL(resource.URL, resource.Credential)
+	return storage.NewServiceForURL(resource.URL, resource.Credentials)
 }
 
 //IsShellCompressable returns true if resource can be compress via shell command.
@@ -72,7 +72,7 @@ func Copy(context *endly.Context, transfers ...*Transfer) (interface{}, error) {
 func joinIfNeeded(parent *url.Resource, URI string) (result *url.Resource) {
 	defer func() {
 		if parent != nil {
-			result.Credential = parent.Credential
+			result.Credentials = parent.Credentials
 		}
 	}()
 	if strings.Contains(URI, ":/") {

@@ -1,0 +1,7 @@
+target: $serviceTarget
+name: $name
+command: mysqldump  -uroot -p**mysql** --all-databases --routines | grep -v 'Warning' > $dump
+interactive: true
+allocateTerminal: true
+secrets:
+  mysql: $credentials

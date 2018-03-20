@@ -1,0 +1,8 @@
+name: docker/aerospike
+tasks: $tasks
+params:
+  target: $target
+  serviceTarget: $serviceTarget
+  config: $conifg
+  name: $instance
+  version: $version

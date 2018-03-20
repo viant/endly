@@ -34,7 +34,7 @@ func Test_NewPipelineRequestFromURL(t *testing.T) {
           "Value": "localhsot"
         }
       ],
-      "target": "URL:ssh://127.0.0.1 Credential:localhost"
+      "target": "URL:ssh://127.0.0.1 Credentials:localhost"
     }
   },
   {
@@ -76,7 +76,7 @@ func Test_NewPipelineRequestFromURL(t *testing.T) {
               "Value": "localhsot"
             }
           ],
-          "target": "URL:ssh://127.0.0.1 Credential:localhost"
+          "target": "URL:ssh://127.0.0.1 Credentials:localhost"
         }
       },
       {
@@ -114,7 +114,7 @@ func Test_NewPipelineRequestFromURL(t *testing.T) {
               "Value": "localhsot"
             }
           ],
-          "target": "URL:ssh://127.0.0.1 Credential:localhost"
+          "target": "URL:ssh://127.0.0.1 Credentials:localhost"
         }
       },
       {

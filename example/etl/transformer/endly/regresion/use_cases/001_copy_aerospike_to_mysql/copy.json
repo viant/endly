@@ -20,7 +20,7 @@
   "Destination": {
     "DsConfig": {
       "DriverName": "mysql",
-      "Credential": "$mysqlCredential",
+      "Credentials": "$mysqlCredential",
       "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
       "Parameters": {
         "dateFormat": "yyyy-MM-dd hh:mm:ss",

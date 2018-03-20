@@ -39,14 +39,14 @@ const (
   "Config": {
     "DriverName": "mysql",
     "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
-    "Credential": "$mysqlCredential"
+    "Credentials": "$mysqlCredential"
   },
   "Admin": {
     "Datastore": "mysql",
     "Config": {
       "DriverName": "mysql",
       "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
-      "Credential": "$mysqlCredential"
+      "Credentials": "$mysqlCredential"
     }
   },
   "Scripts": [
@@ -78,7 +78,7 @@ const (
   "Config": {
     "DriverName": "bigquery",
     "Descriptor": "bq/[datasetId]",
-	"Credential": "${env.HOME}/.secret/bq.json",
+	"Credentials": "${env.HOME}/.secret/bq.json",
     "Parameters": {
       "datasetId": "db1",
       "dateFormat": "yyyy-MM-dd HH:mm:ss.SSSZ",
@@ -92,7 +92,7 @@ const (
   "Datastore": "db1",
   "Config": {
     "DriverName": "mysql",
-  	"Credential": "${env.HOME}/.secret/mysql.json",
+  	"Credentials": "${env.HOME}/.secret/mysql.json",
     "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
   }
 }`
@@ -446,7 +446,11 @@ func (s *service) registerRoutes() {
 			if req, ok := request.(*dsunit.QueryRequest); ok {
 				resp := s.Service.Query(req)
 				response := QueryResponse(*resp)
-				return &response, response.Error()
+				var err = response.Error()
+				if req.IgnoreError {
+					err = nil
+				}
+				return &response, err
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},

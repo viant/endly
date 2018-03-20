@@ -1,12 +1,7 @@
 package cli
 
 import (
-	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/endly/workflow"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
-	"path"
 	"strings"
 )
 
@@ -18,7 +13,6 @@ func GetPath(activities *endly.Activities, runner *Runner, fullPath bool) (strin
 	for i, activity := range *activities {
 		var tag = activity.FormatTag()
 		pathLength += len(tag)
-
 		serviceAction := ""
 		if i+1 < len(*activities) || fullPath {
 			serviceAction = runner.ColorText(activity.Service+"."+activity.Action, runner.ServiceActionColor)
@@ -38,39 +32,4 @@ func GetPath(activities *endly.Activities, runner *Runner, fullPath bool) (strin
 		pathLength += (len(*activities) - 1)
 	}
 	return logPath, pathLength + 1
-}
-
-//LoadRunRequestWithOption load WorkflowRun request and runner options
-func LoadRunRequestWithOption(workflowRunRequestURL string, params ...interface{}) (*workflow.RunRequest, error) {
-	request := &workflow.RunRequest{}
-	resource := url.NewResource(workflowRunRequestURL)
-	parametersMap := toolbox.Pairs(params...)
-	err := resource.Decode(request)
-	if err != nil {
-		return nil, err
-	}
-	if len(request.Params) == 0 {
-		request.Params = parametersMap
-	}
-	for k, v := range parametersMap {
-		request.Params[k] = v
-	}
-	return request, nil
-}
-
-func getURL(candidate string) (string, string, error) {
-	var _, name = path.Split(candidate)
-	if path.Ext(candidate) == "" {
-		candidate = candidate + ".csv"
-	} else {
-		name = string(name[:len(name)-4]) //remove extension
-	}
-	resource := url.NewResource(candidate)
-	if _, err := resource.Download(); err != nil {
-		resource = url.NewResource(fmt.Sprintf("mem://%v/workflow/%v", endly.Namespace, candidate))
-		if _, memError := resource.Download(); memError != nil {
-			return "", "", err
-		}
-	}
-	return name, resource.URL, nil
 }

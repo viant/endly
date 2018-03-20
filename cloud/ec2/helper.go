@@ -11,17 +11,17 @@ import (
 )
 
 //GetAWSCredentialConfig returns *aws.Config for provided credential
-func GetAWSCredentialConfig(credential string) (*aws.Config, error) {
+func GetAWSCredentialConfig(credentialsLocation string) (*aws.Config, error) {
 	config := &cred.Config{}
-	resource := url.NewResource(credential)
+	resource := url.NewResource(credentialsLocation)
 	err := resource.Decode(config)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load aws credential: %v", credential)
+		return nil, fmt.Errorf("failed to load aws credentialsLocation: %v", credentialsLocation)
 	}
 	awsCredentials := credentials.NewStaticCredentials(config.Key, config.Secret, "")
 	_, err = awsCredentials.Get()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get aws credential: %v, %v", credential, err)
+		return nil, fmt.Errorf("failed to get aws credentialsLocation: %v, %v", credentialsLocation, err)
 	}
 	awsConfig := aws.NewConfig().WithRegion(config.Region).WithCredentials(awsCredentials)
 	return awsConfig, nil

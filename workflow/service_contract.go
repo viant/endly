@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"errors"
+	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
@@ -13,8 +14,8 @@ import (
 //Params represents parameters
 type Params map[string]interface{}
 
-//BaseRun represents a base run request
-type BaseRun struct {
+//AbstractRun represents a base run request
+type AbstractRun struct {
 	EnableLogging bool            `description:"flag to enable logging"`
 	LogDirectory  string          `description:"log directory"`
 	EventFilter   map[string]bool `description:"optional CLI filter option,key is either package name or package name.request/event prefix "`
@@ -24,7 +25,7 @@ type BaseRun struct {
 
 //RunRequest represents workflow run request
 type RunRequest struct {
-	*BaseRun
+	*AbstractRun
 	URL               string `description:"workflow URL if workflow is not found in the registry, it is loaded"`
 	Name              string `required:"true" description:"name defined in workflow document"`
 	Tasks             string `required:"true" description:"coma separated task list or '*'to run all tasks sequencialy"` //tasks to run with coma separated list or '*', or empty string for all tasks
@@ -34,11 +35,14 @@ type RunRequest struct {
 
 //Init initialises request
 func (r *RunRequest) Init() error {
-	if r.BaseRun == nil {
-		r.BaseRun = &BaseRun{}
+	if r.AbstractRun == nil {
+		r.AbstractRun = &AbstractRun{}
 	}
 	if r.URL == "" {
 		r.URL = r.Name
+	}
+	if r.URL != "" {
+		r.URL = WorkflowSelector(r.URL).URL()
 	}
 	if r.Name == "" {
 		r.Name = WorkflowSelector(r.URL).Name()
@@ -57,12 +61,10 @@ func (r *RunRequest) Validate() error {
 	return nil
 }
 
-
-
 //NewRunRequest creates a new run request
 func NewRunRequest(selector WorkflowSelector, params map[string]interface{}, publishParams bool) *RunRequest {
 	return &RunRequest{
-		BaseRun: &BaseRun{
+		AbstractRun: &AbstractRun{
 			Params: params,
 		},
 		URL:               selector.URL(),
@@ -78,7 +80,6 @@ func NewRunRequestFromURL(URL string) (*RunRequest, error) {
 	var resource = url.NewResource(URL)
 	return request, resource.Decode(request)
 }
-
 
 //RunResponse represents workflow run response
 type RunResponse struct {
@@ -115,14 +116,14 @@ func NewPipeline(key string, value interface{}) *MapEntry {
 	}
 }
 
-//PipelineRequest represent request to run one or more workflow.
-type PipelineRequest struct {
-	*BaseRun
+//PipeRequest represent request to run workflows/actions sequentialy if previous was completed without error
+type PipeRequest struct {
+	*AbstractRun
 	Pipeline  []*MapEntry `required:"true" description:"key value representing pipelines in simplified form"`
 	Pipelines []*Pipeline `description:"actual pipelines (derived from Pipeline)"`
 }
 
-func (r *PipelineRequest) toPipeline(source interface{}, pipeline *Pipeline) (err error) {
+func (r *PipeRequest) toPipeline(source interface{}, pipeline *Pipeline) (err error) {
 	var aMap map[string]interface{}
 	if aMap, err = util.NormalizeMap(source); err != nil {
 		return err
@@ -138,7 +139,7 @@ func (r *PipelineRequest) toPipeline(source interface{}, pipeline *Pipeline) (er
 		pipeline.Action = ActionSelector(toolbox.AsString(workflow))
 		delete(aMap, pipelineAction)
 		pipeline.Params = Params(aMap)
-		pipeline.Params.AppendParams(r.Params,  false)
+		pipeline.Params.AppendParams(r.Params, false)
 		return nil
 	}
 	if e := toolbox.ProcessMap(source, func(key, value interface{}) bool {
@@ -157,9 +158,9 @@ func (r *PipelineRequest) toPipeline(source interface{}, pipeline *Pipeline) (er
 	return err
 }
 
-func (r *PipelineRequest) Init() (err error) {
-	if r.BaseRun == nil {
-		r.BaseRun = &BaseRun{}
+func (r *PipeRequest) Init() (err error) {
+	if r.AbstractRun == nil {
+		r.AbstractRun = &AbstractRun{}
 	}
 	r.Params, err = util.NormalizeMap(r.Params)
 	if err != nil {
@@ -183,9 +184,9 @@ func (r *PipelineRequest) Init() (err error) {
 }
 
 //NewPipelineRequest returns new pipeline request
-func NewPipelineRequest(async bool, params Params, pipeline ...*MapEntry) *PipelineRequest {
-	return &PipelineRequest{
-		BaseRun: &BaseRun{
+func NewPipelineRequest(async bool, params Params, pipeline ...*MapEntry) *PipeRequest {
+	return &PipeRequest{
+		AbstractRun: &AbstractRun{
 			Async:  async,
 			Params: params,
 		},
@@ -194,15 +195,14 @@ func NewPipelineRequest(async bool, params Params, pipeline ...*MapEntry) *Pipel
 }
 
 //NewPipelineRequestFromURL creates a new pipeline request from URL
-func NewPipelineRequestFromURL(URL string) (*PipelineRequest, error) {
+func NewPipelineRequestFromURL(URL string) (*PipeRequest, error) {
 	resource := url.NewResource(URL)
-	var response = &PipelineRequest{}
+	var response = &PipeRequest{}
 	return response, resource.Decode(response)
 }
 
-
 //Response represent a pipeline response.
-type PipelineResponse struct {
+type PipeResponse struct {
 	Response map[string]interface{}
 }
 
@@ -229,8 +229,9 @@ type LoadResponse struct {
 // SwitchCase represent matching candidate case
 type SwitchCase struct {
 	*endly.ActionRequest `description:"action to run if matched"`
-	Task                 string      `description:"task to run if matched"`
-	Value                interface{} `required:"true" description:"matching sourceKey value"`
+
+	Task  string      `description:"task to run if matched"`
+	Value interface{} `required:"true" description:"matching sourceKey value"`
 }
 
 // SwitchRequest represent switch action request
@@ -403,4 +404,21 @@ func (p *Params) AppendParams(source Params, override bool) {
 		}
 		(*p)[k] = v
 	}
+}
+
+//GetAbstractRun returns base request for supplied request or error
+func GetAbstractRun(request interface{}) (*AbstractRun, error) {
+	switch req := request.(type) {
+	case *RunRequest:
+		if req == nil {
+			return nil, fmt.Errorf("request %T was nil", request)
+		}
+		return req.AbstractRun, nil
+	case *PipeRequest:
+		if req == nil {
+			return nil, fmt.Errorf("request %T  was nil", request)
+		}
+		return req.AbstractRun, nil
+	}
+	return nil, fmt.Errorf("unsupported tyep %T, exacted %T or %T", request, &RunRequest{}, &PipeRequest{})
 }

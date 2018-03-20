@@ -1,7 +1,7 @@
 {
   "Target": {
     "URL": "ssh://${targetHost}${appDirectory}/",
-    "Credential": "$targetHostCredential"
+    "Credentials": "$targetHostCredential"
   },
   "Env": {
     "CATALINA_OPTS": "$catalinaOpts",

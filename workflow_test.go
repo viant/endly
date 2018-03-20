@@ -159,7 +159,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "workflow",
 				Tasks: "prepare",
-				BaseRun: &workflow.BaseRun{
+				AbstractRun: &workflow.AbstractRun{
 					Params: map[string]interface{}{
 						"param1": 1,
 					},
@@ -200,7 +200,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "workflow",
 				Tasks: "*",
-				BaseRun: &workflow.BaseRun{
+				AbstractRun: &workflow.AbstractRun{
 					Params: map[string]interface{}{
 						"param1": 1,
 					},
@@ -229,7 +229,7 @@ func TestWorkflowService_OnErrorTask(t *testing.T) {
 	serviceResponse := service.Run(context, &workflow.RunRequest{
 		Name:  "recover",
 		Tasks: "fail",
-		BaseRun: &workflow.BaseRun{
+		AbstractRun: &workflow.AbstractRun{
 			Params:        map[string]interface{}{},
 			EnableLogging: false,
 			LogDirectory:  "logs",
@@ -264,7 +264,7 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 			Name:              "http_workflow",
 			Tasks:             "*",
 			PublishParameters: true,
-			BaseRun: &workflow.BaseRun{
+			AbstractRun: &workflow.AbstractRun{
 				Params: map[string]interface{}{
 					"appServer": "http://127.0.0.1:8113",
 				},
@@ -299,7 +299,7 @@ func TestWorkflowService_RunLifeCycle(t *testing.T) {
 			Name:              "lifecycle",
 			Tasks:             "*",
 			PublishParameters: true,
-			BaseRun: &workflow.BaseRun{
+			AbstractRun: &workflow.AbstractRun{
 				Params: map[string]interface{}{
 					"object": map[string]interface{}{
 						"key1": 1,
@@ -337,7 +337,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "broken1",
 				Tasks: "*",
-				BaseRun: &workflow.BaseRun{
+				AbstractRun: &workflow.AbstractRun{
 					Params: map[string]interface{}{},
 				},
 				PublishParameters: true,
@@ -354,7 +354,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "broken2",
 				Tasks: "*",
-				BaseRun: &workflow.BaseRun{
+				AbstractRun: &workflow.AbstractRun{
 					Params: map[string]interface{}{},
 				},
 				PublishParameters: true,
@@ -372,7 +372,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "broken2",
 				Tasks: "*",
-				BaseRun: &workflow.BaseRun{
+				AbstractRun: &workflow.AbstractRun{
 					Params: map[string]interface{}{},
 				},
 				PublishParameters: true,
@@ -390,7 +390,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "broken3",
 				Tasks: "*",
-				BaseRun: &workflow.BaseRun{
+				AbstractRun: &workflow.AbstractRun{
 
 					Params: map[string]interface{}{},
 				},
@@ -409,7 +409,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "broken4",
 				Tasks: "*",
-				BaseRun: &workflow.BaseRun{
+				AbstractRun: &workflow.AbstractRun{
 					Params: map[string]interface{}{},
 				},
 				PublishParameters: true,

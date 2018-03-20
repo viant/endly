@@ -17,7 +17,7 @@
         "Transfer": {
           "Dest": {
             "URL": "scp://${targetHost}/opt/selenium/selenium-server-standalone.jar",
-            "Credential": "${targetHostCredential}"
+            "Credentials": "${targetHostCredential}"
           },
           "Source": {
             "URL": "http://selenium-release.storage.googleapis.com/${artifact.MajorVersion}.${artifact.MinorVersion}/selenium-server-standalone-${artifact.Version}.jar"

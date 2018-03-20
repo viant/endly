@@ -21,7 +21,7 @@
           },
           "Dest": {
             "URL": "scp://${buildHost}/opt/sdk/go_${artifact.Version}.tar.gz",
-            "Credential": "${buildHostCredential}"
+            "Credentials": "${buildHostCredential}"
           }
         },
         "VersionCheck": {

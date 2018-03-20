@@ -14,7 +14,7 @@ import (
 const (
 	//ServiceID version control service id
 	ServiceID = "version/control"
-	//CredentialKey represents credential key
+	//CredentialKey represents credentials key
 	CredentialKey = "***vc***"
 )
 
@@ -191,21 +191,21 @@ const (
 	vcExplicitVersionCheckExample = `{
 					"Target":{
 						"URL":"ssh://127.0.0.1/Projects/myproject/trunk",
-						"Credential":"${env.HOME}/.secret/localhost.json"
+						"Credentials":"${env.HOME}/.secret/localhost.json"
 					},
 					"Type":"svn"
 }`
 	vcImplicitVersionCheckExample = `{
 					"Target":{
 						"URL":"ssh://127.0.0.1/Projects/git/myproject/trunk",
-						"Credential":"${env.HOME}/.secret/localhost.json"
+						"Credentials":"${env.HOME}/.secret/localhost.json"
 					}
 
 }`
 	vcSingleProjectCheckoutExample = `{
   "Target":{
     "URL":"ssh://127.0.0.1/Projects/go/",
-    "Credential":"${env.HOME}/.secret/localhost.json"
+    "Credentials":"${env.HOME}/.secret/localhost.json"
   },
   "Origin": {
       "URL":"https://github.com/viant/endly/"
@@ -215,7 +215,7 @@ const (
 	vcMultiProjectCheckoutExample = `{
   "Target":{
     "URL":"ssh://127.0.0.1/Projects/go/",
-    "Credential":"${env.HOME}/.secret/localhost.json"
+    "Credentials":"${env.HOME}/.secret/localhost.json"
   },
   "Origin": {
     "URL":"https://github.com/viant/"
@@ -252,7 +252,7 @@ const (
 	vcCommitExample = `{
   "Target":{
     "URL":"ssh://127.0.0.1/Projects/myproject/trunk",
-    "Credential":"${env.HOME}/.secret/localhost.json"
+    "Credentials":"${env.HOME}/.secret/localhost.json"
   },
   "Type":"svn",
   "StyledText":"my comments"
@@ -260,11 +260,11 @@ const (
 	vcPullExample = `{
 					"Target":{
 						"URL":"ssh://127.0.0.1/Projects/go/",
-						"Credential":"${env.HOME}/.secret/localhost.json"
+						"Credentials":"${env.HOME}/.secret/localhost.json"
 					},
 					"Origin": {
 						"URL":"https://github.com/viant/endly/"
-						"Credential":"${env.HOME}/.secret/git.json"
+						"Credentials":"${env.HOME}/.secret/git.json"
 					}
 				}`
 )

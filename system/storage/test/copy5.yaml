@@ -1,8 +1,8 @@
 source:
   url: scp://127.0.0.1:7722/echo
-  credential: mem://github.com/viant/endly/workflow/docker/build/secret/build.json
+  credentials: mem://github.com/viant/endly/workflow/docker/build/secret/build.json
 dest:
   url: ssh://127.0.0.1/
-  credential: /Users/awitas/.secret/localhost.json
+  credentials: /Users/awitas/.secret/localhost.json
 assets:
   /echo: /tmp/echo/

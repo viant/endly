@@ -6,17 +6,17 @@
       },
       "Dest": {
         "URL": "scp://${targetHost}${appDirectory}/conf/config.json",
-        "Credential": "$targetHostCredential"
+        "Credentials": "$targetHostCredential"
       }
     },
     {
       "Source": {
         "URL": "scp://$buildHost/$buildDirectory/${app}",
-        "Credential": "$buildHostCredential"
+        "Credentials": "$buildHostCredential"
       },
       "Dest": {
         "URL": "scp://${targetHost}${appDirectory}/${app}",
-        "Credential": "$targetHostCredential"
+        "Credentials": "$targetHostCredential"
       }
     }
   ]

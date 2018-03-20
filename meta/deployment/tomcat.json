@@ -23,7 +23,7 @@
             "Name": "tomcat",
             "Version": "$tomcatVersion",
             "URL": "scp://${targetHost}/${appDirectory}/apache-tomcat-${artifact.Version}.tar.gz",
-            "Credential": "$targetHostCredential"
+            "Credentials": "$targetHostCredential"
           }
         },
         "Run": {
@@ -66,11 +66,11 @@
             {
               "Source": {
                 "URL": "$configUrl",
-                "Credential": "$configURLCredential"
+                "Credentials": "$configURLCredential"
               },
               "Dest": {
                 "URL": "scp://${targetHost}${appDirectory}/tomcat/conf/server.xml",
-                "Credential": "$targetHostCredential"
+                "Credentials": "$targetHostCredential"
               },
               "Expand": true
             }

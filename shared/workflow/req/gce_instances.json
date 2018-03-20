@@ -1,8 +1,0 @@
-{
-  "Credential": "$gceCredential",
-  "Service": "Instances",
-  "Method": "$method",
-  "Parameters": ["$gceProject", "$gceZone", "$gceInstance"]
-}
-
-

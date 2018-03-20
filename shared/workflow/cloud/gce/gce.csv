@@ -1,0 +1,24 @@
+Workflow,,,Name,Description,Tasks,Init,,,
+,,,gce,Start/Stop GCE instances,%Tasks,@var/init,,,
+[]Tasks,,,Name,Description,Actions,,,,
+,,,start,Start GCE instance,%Start,,,,
+[]Start,,Service,Action,Description,Request,Post,method,var.Name,var.From
+,,gce,call,Check instance status,@req/call,[$arg0]|$var,Get,instanceState,Status
+[]Start,,Service,Action,Description,Request.SourceKey,Request.Cases,,,
+,,workflow,switch,switch/case for instance status,instanceState,%StartCases,,,
+[]StartCases,Value,Service,Action,Description,Request,,method,,
+,TERMINATED,gce,call,Start GCE instance,@req/call,,Start,,
+,RUNNING,workflow,exit,exit workflow,{},,,,
+[]Start,,Service,Action,Description,Request.Task,SleepTimeMs,,,
+,,workflow,goto,goto start task,start,5000,,,
+[]Tasks,,,Name,Description,Actions,,,,
+,,,stop,Stop GCE instance,%Stop,,,,
+[]Stop,,Service,Action,Description,Request,Post,method,var.Name,var.From
+,,gce,call,Check instance status,@req/call,[$arg0]|$var,Get,instanceState,Status
+[]Stop,,Service,Action,Description,Request.SourceKey,Request.Cases,,,
+,,workflow,switch,switch/case for instance status,instanceState,%StopCases,,,
+[]StopCases,Value,Service,Action,Description,Request,,method,,
+,RUNNING,gce,call,Stop GCE instance,@req/call,,Stop,,
+,TERMINATED,workflow,exit,exit workflow,{},,,,
+[]Stop,,Service,Action,Description,Request.Task,SleepTimeMs,,,
+,,workflow,goto,goto stop task,stop,5000,,,

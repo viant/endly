@@ -44,13 +44,13 @@ func (s *service) getMeta(context *endly.Context, request *Request) (*Meta, erro
 				metaURL = workflowResource.URL
 			}
 		}
-		var credential = ""
+		var credentials = ""
 		mainWorkflow := context.Workflow()
 		if mainWorkflow != nil {
-			credential = mainWorkflow.Source.Credential
+			credentials = mainWorkflow.Source.Credentials
 		}
 		response, err := s.loadMeta(context, &LoadMetaRequest{
-			Source: url.NewResource(metaURL, credential),
+			Source: url.NewResource(metaURL, credentials),
 		})
 		if err != nil {
 			return nil, err
@@ -208,7 +208,7 @@ func newBuildState(buildSepc *Spec, target *url.Resource, request *Request, cont
 	build.Put("goal", buildSepc.BuildGoal)
 	build.Put("path", target.ParsedURL.Path)
 	build.Put("host", target.ParsedURL.Host)
-	build.Put("credential", target.Credential)
+	build.Put("credentials", target.Credentials)
 	build.Put("target", target)
 	build.Put("sdk", buildSepc.Sdk)
 	build.Put("sdkVersion", buildSepc.SdkVersion)
@@ -230,7 +230,7 @@ const (
 	},
 	"Target": {
 		"URL": "scp://127.0.0.1/tmp/app/echo",
-		"Credential": "${env.HOME}/.secret/localhost.json"
+		"Credentials": "${env.HOME}/.secret/localhost.json"
 	}
 }
 `
@@ -246,7 +246,7 @@ const (
   },
  "Target": {
     "URL": "scp://127.0.0.1/tmp/app/server/",
-    "Credential": "${env.HOME}/.secret/scp.json"
+    "Credentials": "${env.HOME}/.secret/scp.json"
   }
 }
 `

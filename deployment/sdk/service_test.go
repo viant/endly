@@ -14,11 +14,11 @@ import (
 
 func TestSdkService_Run_Jdk(t *testing.T) {
 	manager := endly.New()
-	var credential, err = util.GetDummyCredential()
+	var credentials, err = util.GetDummyCredential()
 	if err != nil {
 		log.Fatal(err)
 	}
-	target := url.NewResource("ssh://127.0.0.1", credential)
+	target := url.NewResource("ssh://127.0.0.1", credentials)
 	context, err := exec.NewSSHReplayContext(manager, target, "test/jdk")
 	if err != nil {
 		log.Fatal(err)
@@ -33,11 +33,11 @@ func TestSdkService_Run_Jdk(t *testing.T) {
 
 func TestSdkService_Run_Go(t *testing.T) {
 	manager := endly.New()
-	var credential, err = util.GetDummyCredential()
+	var credentials, err = util.GetDummyCredential()
 	if err != nil {
 		log.Fatal(err)
 	}
-	target := url.NewResource("ssh://127.0.0.1", credential)
+	target := url.NewResource("ssh://127.0.0.1", credentials)
 	context, err := exec.NewSSHReplayContext(manager, target, "test/go")
 	if err != nil {
 		log.Fatal(err)

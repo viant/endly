@@ -23,7 +23,7 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 		return nil, err
 	}
 
-	client, err := NewClient(target, target.Credential)
+	client, err := NewClient(target, target.Credentials)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 const sMTPSendExample = `{
   "Target": {
     "URL": "smtp://smtp.gmail.com:465",
-    "Credential": "${env.HOME}/.secret/smtp.json"
+    "Credentials": "${env.HOME}/.secret/smtp.json"
   },
   "Mail": {
     "From": "sender@gmail.com",

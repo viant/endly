@@ -12,9 +12,10 @@ import (
 
 //ActionRequest represent an action request
 type ActionRequest struct {
-	Service string      //service Id
-	Action  string      //Id of the action used to create service request
-	Request interface{} //service request
+	Service     string      //service Id
+	Action      string      //Id of the action used to create service request
+	Request     interface{} //service request
+	Description string
 }
 
 //ServiceAction represents a workflow service action
@@ -22,13 +23,12 @@ type ServiceAction struct {
 	*ActionRequest
 	*NeatlyTag
 	*Repeater
-	When        string    //criteria to run this action
-	Skip        string    //criteria to skip current action to continue to next tag id action
-	Name        string    //Id of the service action
-	Description string    //description
-	Init        Variables //variables to initialise state before action runs
-	Post        Variables //variable to update state after action completes
-	Async       bool
+	When  string    //criteria to run this action
+	Skip  string    //criteria to skip current action to continue to next tag id action
+	Name  string    //Id of the service action
+	Init  Variables //variables to initialise state before action runs
+	Post  Variables //variable to update state after action completes
+	Async bool
 }
 
 //WorkflowTask represents a group of action
@@ -279,8 +279,8 @@ func (w *Workflows) LastRun() *WorkflowRun {
 type Activities []*Activity
 
 //Push adds a workflow to the workflow stack.
-func (a *Activities) Push(workflow *Activity) {
-	*a = append(*a, workflow)
+func (a *Activities) Push(activity *Activity) {
+	*a = append(*a, activity)
 }
 
 //Pop removes the first workflow from the workflow stack.
@@ -289,10 +289,7 @@ func (a *Activities) Pop() *Activity {
 		return nil
 	}
 	var result = (*a)[len(*a)-1]
-
-	if len(*a) > 0 {
-		(*a) = (*a)[:len(*a)-1]
-	}
+	(*a) = (*a)[:len(*a)-1]
 	return result
 }
 

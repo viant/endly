@@ -1,0 +1,15 @@
+pipeline:
+  build:
+    action: workflow:print
+    message: building app ...
+  test:
+    workflow: assert
+    actual:
+      key1: value1
+      key2: value20
+      key3: value30
+    expected:
+      key1: value1
+      key2: value2
+      key3: value3
+      key4: value4

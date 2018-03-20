@@ -24,7 +24,7 @@
     "Name": "buildTarget",
     "Value": {
       "URL": "ssh://${buildHost}/${buildDirectory}",
-      "Credential": "$buildHostCredential"
+      "Credentials": "$buildHostCredential"
     }
   },
   {
@@ -41,7 +41,7 @@
     "Name": "executionTarget",
     "Value": {
       "URL": "ssh://${targetHost}/",
-      "Credential": "$targetHostCredential"
+      "Credentials": "$targetHostCredential"
     }
   }
 ]

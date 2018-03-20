@@ -16,7 +16,7 @@ import (
 //ServiceID represent system executor service id
 const ServiceID = "exec"
 
-//SudoCredentialKey represent obsucated password sudo credential key (target.Credential)
+//SudoCredentialKey represent obsucated password sudo credentials key (target.Credentials)
 const SudoCredentialKey = "**sudo**"
 
 type execService struct {
@@ -42,7 +42,7 @@ func (s *execService) openSSHService(context *endly.Context, request *OpenSessio
 	if err != nil {
 		return nil, err
 	}
-	authConfig, err := context.Secrets.GetOrCreate(target.Credential)
+	authConfig, err := context.Secrets.GetOrCreate(target.Credentials)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +276,7 @@ func (s *execService) authSuperUserIfNeeded(stdout string, context *endly.Contex
 		session.SuperUSerAuth = true
 		if len(request.Secrets) == 0 {
 			request.Secrets = secret.NewSecrets(nil)
-			request.Secrets[SudoCredentialKey] = secret.Secret(request.Target.Credential)
+			request.Secrets[SudoCredentialKey] = secret.Secret(request.Target.Credentials)
 		}
 		extractCommand := NewExtractCommand(SudoCredentialKey, "", nil, []string{"Password", util.CommandNotFound})
 		err = s.executeCommand(context, session, extractCommand, response, request)
@@ -534,7 +534,7 @@ const (
 	execServiceOpenExample = `{
   "Target": {
     "URL": "scp://127.0.0.1/",
-    "Credential": "${env.HOME}/.secret/localhost.json"
+    "Credentials": "${env.HOME}/.secret/localhost.json"
   },
   
   "SystemPaths": ["/usr/local/bin"],
@@ -545,7 +545,7 @@ const (
 	execServiceRunExample = `{
   "Target": {
     "URL": "scp://127.0.0.1/",
-    "Credential": "${env.HOME}/.secret/localhost.json"
+    "Credentials": "${env.HOME}/.secret/localhost.json"
   },
   "Cmd":["mkdir /tmp/app1"]
 }`
@@ -553,7 +553,7 @@ const (
 	execServiceRunAndExtractExample = `{
 	"Target": {
 	"URL": "scp://127.0.0.1/",
-	"Credential": "${env.HOME}/.secret/localhost.json"
+	"Credentials": "${env.HOME}/.secret/localhost.json"
 	},
 	"SystemPaths": [
 	"/opt/sdk/go/bin"
@@ -574,7 +574,7 @@ const (
 	execServiceManagedCloseExample = `{
   "Target": {
     "URL": "scp://127.0.0.1/",
-    "Credential": "${env.HOME}/.secret/localhost.json"
+    "Credentials": "${env.HOME}/.secret/localhost.json"
   }
 }`
 )

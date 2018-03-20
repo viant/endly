@@ -104,12 +104,12 @@ func (s *svnService) checkout(context *endly.Context, request *CheckoutRequest) 
 }
 
 func (s *svnService) runSecureSvnCommand(context *endly.Context, target *url.Resource, origin *url.Resource, info *Info, command string, arguments ...string) error {
-	var username, err = util.GetUsername(context.Secrets, origin.Credential)
+	var username, err = util.GetUsername(context.Secrets, origin.Credentials)
 	if err != nil {
 		return err
 	}
 	var secrets = make(map[string]string)
-	secrets[CredentialKey] = origin.Credential
+	secrets[CredentialKey] = origin.Credentials
 
 	var extractRequest = exec.NewExtractRequest(target,
 		exec.DefaultOptions(),

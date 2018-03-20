@@ -229,7 +229,7 @@ Verify that secret file were created
 ```text
 cat ~/.secret/localhost.json
 ```     
-Now you can use ${env.HOME}./secret/localhost.json as you localhost credential.
+Now you can use ${env.HOME}./secret/localhost.json as you localhost credentials.
      
      
 <a name="Usage"></a>

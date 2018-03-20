@@ -25,7 +25,7 @@ type Spec struct {
 type Request struct {
 	MetaURL   string            `description:"build meta URL"`
 	BuildSpec *Spec             `required:"true" description:"build specification" `
-	Secrets   secret.Secrets    `description:"key value pair of placeholder and credential files, check build meta file for used placeholders i.e for 'go' build: ##git## - git usernamem, **git** - git password"`
+	Secrets   secret.Secrets    `description:"key value pair of placeholder and credentials files, check build meta file for used placeholders i.e for 'go' build: ##git## - git usernamem, **git** - git password"`
 	Env       map[string]string `description:"environmental variables"`
 	Target    *url.Resource     `required:"true" description:"build location, host and path" `
 }

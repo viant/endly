@@ -22,7 +22,7 @@
           },
           "Dest": {
             "URL": "scp://${buildHost}/opt/sdk/jdk/jdk-7u80-linux-x64.tar.gz",
-            "Credential": "${buildHostCredential}"
+            "Credentials": "${buildHostCredential}"
           }
         },
         "VersionCheck": {

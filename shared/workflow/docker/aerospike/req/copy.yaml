@@ -1,0 +1,4 @@
+source: $target
+dest: $serviceTarget
+assets:
+  $config: $serviceConfig

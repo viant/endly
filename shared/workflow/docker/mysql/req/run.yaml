@@ -1,0 +1,9 @@
+target: $serviceTarget
+name: $name
+image: $image
+ports:
+   "3306": "3306"
+env:
+   MYSQL_ROOT_PASSWORD: "**mysql**"
+secrets:
+  mysql: "$credentials"

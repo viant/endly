@@ -2,7 +2,7 @@
   "SourceKey": "originalMavenSettings",
   "Target": {
     "URL": "${env.HOME}/.m2/settings.xml.backup",
-    "Credential": "${targetHostCredential}",
+    "Credentials": "${targetHostCredential}",
     "Name": "backupMavenSettings"
   }
 }

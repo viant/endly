@@ -444,7 +444,7 @@ func (s *service) executeSecureDockerCommand(asRoot bool, secrets map[string]str
 	if len(secrets) == 0 {
 		secrets = make(map[string]string)
 	}
-	secrets[exec.SudoCredentialKey] = target.Credential
+	secrets[exec.SudoCredentialKey] = target.Credentials
 	command = strings.Replace(command, "\n", " ", len(command))
 
 	var extractRequest = exec.NewExtractRequest(target, exec.DefaultOptions(),
@@ -527,13 +527,13 @@ func IsGoogleCloudRegistry(URL string) bool {
 	return strings.Contains(URL, "gcr.io")
 }
 
-func (s *service) getGoogleCloudCredential(context *endly.Context, credential string, config *cred.Config) *cred.Config {
+func (s *service) getGoogleCloudCredential(context *endly.Context, credentials string, config *cred.Config) *cred.Config {
 	var result = &cred.Config{
 		Username: "oauth2accesstoken",
 		Password: "$(gcloud auth application-default print-access-token)",
 	}
 	if config.PrivateKeyID != "" && config.PrivateKey != "" {
-		content, _ := url.NewResource(credential).DownloadText()
+		content, _ := url.NewResource(credentials).DownloadText()
 		result.Username = "_json_key"
 		result.Password = strings.Replace(content, "\n", " ", len(content))
 	}
@@ -556,24 +556,25 @@ func (s *service) login(context *endly.Context, request *LoginRequest) (*LoginRe
 	}
 
 	var response = &LoginResponse{}
-	credential := context.Expand(request.Credential)
-	credConfig, err := cred.NewConfig(credential)
+	credentials := context.Expand(request.Credentials)
+	credConfig, err := cred.NewConfig(credentials)
 	repository := context.Expand(request.Repository)
 	if IsGoogleCloudRegistry(repository) {
-		credConfig = s.getGoogleCloudCredential(context, credential, credConfig)
-		credential = credConfig.Password
+		credConfig = s.getGoogleCloudCredential(context, credentials, credConfig)
+		credentials = credConfig.Password
 	}
 	if credConfig.Username == "" {
-		return nil, fmt.Errorf("username was empty: %v", credential)
+		return nil, fmt.Errorf("username was empty: %v", credentials)
 	}
 	if credConfig.Password == "" {
-		return nil, fmt.Errorf("password was empty: %v", credential)
-	}
-	credentials := map[string]string{
-		"**docker-secret**": credential,
+		return nil, fmt.Errorf("password was empty: %v", credentials)
 	}
 
-	commandResponse, err := s.executeSecureDockerCommand(true, credentials, context, target, dockerErrors, fmt.Sprintf(`echo '**docker-secret**' | sudo docker login -u %v  %v --password-stdin`, credConfig.Username, repository))
+	secrets := map[string]string{
+		"**docker-secret**": credentials,
+	}
+
+	commandResponse, err := s.executeSecureDockerCommand(true, secrets, context, target, dockerErrors, fmt.Sprintf(`echo '**docker-secret**' | sudo docker login -u %v  %v --password-stdin`, credConfig.Username, repository))
 	if err != nil {
 		return nil, err
 	}
@@ -624,7 +625,7 @@ const (
 	dockerServiceRunExample = `{
   "Target": {
     "URL": "scp://127.0.0.1/",
-    "Credential": "${env.HOME}/.secret/localhost.json"
+    "Credentials": "${env.HOME}/.secret/localhost.json"
   },
   "Name": "udb_aerospike",
   "Image": "aerospike/aerospike-server:latest",
@@ -637,13 +638,13 @@ const (
     "3002": "3002",
     "3004": "3004",
     "8081": "8081"
-  },
+  }
 }`
 
 	dockerServiceStopImagesExample = `{
   "Target": {
     "URL": "ssh://127.0.0.1/",
-    "Credential": "${env.HOME}/.secret/localhost.json"
+    "Credentials": "${env.HOME}/.secret/localhost.json"
   },
   "Images": [
     "aerospike",
@@ -654,7 +655,7 @@ const (
 	dockerServiceImagesExample = `{
     "Target": {
 		"URL": "ssh://127.0.0.1/",
-		"Credential": "${env.HOME}/.secret/localhost.json"
+		"Credentials": "${env.HOME}/.secret/localhost.json"
     },
 	"Repository": "mysql",
 	"Tag"":        "5.6"
@@ -663,7 +664,7 @@ const (
 	dockerServicePullExample = `{
     "Target": {
 		"URL": "ssh://127.0.0.1/",
-		"Credential": "${env.HOME}/.secret/localhost.json"
+		"Credentials": "${env.HOME}/.secret/localhost.json"
     },
 	"Repository": "aerospike",
 	"Tag"":        "latest"
@@ -672,7 +673,7 @@ const (
 	dockerServiceBuildExample = `{
   "Target": {
     "URL": "ssh://127.0.0.1/Projects/store_backup/app",
-    "Credential": "${env.HOME}/.secret/localhost.json"
+    "Credentials": "${env.HOME}/.secret/localhost.json"
   },
   "Tag": {
     "Username": "viant",
@@ -685,7 +686,7 @@ const (
 	dockerServiceTagExample = `{
   "Target": {
     "URL": "ssh://127.0.0.1/",
-    "Credential": "${env.HOME}/.secret/localhost.json"
+    "Credentials": "${env.HOME}/.secret/localhost.json"
    
   },
   "SourceTag": {
@@ -705,7 +706,7 @@ const (
 	dockerServicePushExample = `{
   "Target": {
     "URL": "scp://127.0.0.1//Projects//store_backup/app",
-    "Credential": "${env.HOME}/.secret/localhost.json"
+    "Credentials": "${env.HOME}/.secret/localhost.json"
   },
   "Tag": {
     "Username": "",
@@ -718,25 +719,25 @@ const (
 	dockerServiceLoginExample = `{
   "Target": {
     "URL": "ssh://10.10.1.1/",
-    "Credential": "${env.HOME}/.secret/aws-west.json"
+    "Credentials": "${env.HOME}/.secret/aws-west.json"
   },
-  "Credential": "${env.HOME}/.secret/docker.json",
+  "Credentials": "${env.HOME}/.secret/docker.json",
   "Repository": "us.gcr.io/xxxxx"
 }`
 
 	dockerServiceLogoutExample = `{
   "Target": {
     "URL": "ssh://10.10.1.1/",
-    "Credential": "${env.HOME}/.secret/aws-west.json"
+    "Credentials": "${env.HOME}/.secret/aws-west.json"
   },
-  "Credential": "${env.HOME}/.secret/docker.json",
+  "Credentials": "${env.HOME}/.secret/docker.json",
   "Repository": "us.gcr.io/xxxxx"
 }`
 
 	dockerServiceContainerRunMsqlDumpExample = `{
   "Target": {
     "URL": "ssh://10.10.1.1/",
-    "Credential": "${env.HOME}/.secret/aws-west.json"
+    "Credentials": "${env.HOME}/.secret/aws-west.json"
   },
   "Name": "mydb1",
   "Interactive": true,
@@ -750,7 +751,7 @@ const (
 	dockerServiceContainerRunMysqlImportExample = `{
   "Target": {
     "URL": "ssh://10.10.1.1/",
-    "Credential": "${env.HOME}/.secret/aws-west.json"
+    "Credentials": "${env.HOME}/.secret/aws-west.json"
   },
   "Name": "mydb1",
   "Interactive": true,
@@ -763,7 +764,7 @@ const (
 	dockerServiceContainerExample = `{
   "Target": {
     "URL": "ssh://127.0.0.1/",
-    "Credential": "${env.HOME}/.secret/localhost.json"
+    "Credentials": "${env.HOME}/.secret/localhost.json"
   },
   "Name": "udb_aerospike"
 }`
@@ -930,7 +931,7 @@ func (s *service) registerRoutes() {
 	s.Register(&endly.ServiceActionRoute{
 		Action: "login",
 		RequestInfo: &endly.ActionInfo{
-			Description: "add credential for supplied docker repository, required docker 17+ for secure credential handling",
+			Description: "add credentials for supplied docker repository, required docker 17+ for secure credentials handling",
 			Examples: []*endly.ExampleUseCase{
 				{
 					UseCase: "login ",
@@ -955,7 +956,7 @@ func (s *service) registerRoutes() {
 	s.Register(&endly.ServiceActionRoute{
 		Action: "logout",
 		RequestInfo: &endly.ActionInfo{
-			Description: "remove credential for supplied docker repository",
+			Description: "remove credentials for supplied docker repository",
 			Examples: []*endly.ExampleUseCase{
 				{
 					UseCase: "logout ",
@@ -1003,7 +1004,7 @@ func (s *service) registerRoutes() {
 	})
 
 	s.Register(&endly.ServiceActionRoute{
-		Action: "container-run",
+		Action: "exec",
 		RequestInfo: &endly.ActionInfo{
 			Description: "run command inside container",
 			Examples: []*endly.ExampleUseCase{
@@ -1057,7 +1058,7 @@ func (s *service) registerRoutes() {
 	})
 
 	s.Register(&endly.ServiceActionRoute{
-		Action: "container-start",
+		Action: "start",
 		RequestInfo: &endly.ActionInfo{
 			Description: "start container",
 			Examples: []*endly.ExampleUseCase{
@@ -1082,7 +1083,7 @@ func (s *service) registerRoutes() {
 	})
 
 	s.Register(&endly.ServiceActionRoute{
-		Action: "container-stop",
+		Action: "stop",
 		RequestInfo: &endly.ActionInfo{
 			Description: "stop container",
 			Examples: []*endly.ExampleUseCase{
@@ -1107,7 +1108,7 @@ func (s *service) registerRoutes() {
 	})
 
 	s.Register(&endly.ServiceActionRoute{
-		Action: "container-status",
+		Action: "status",
 		RequestInfo: &endly.ActionInfo{
 			Description: "check containers status",
 			Examples: []*endly.ExampleUseCase{
@@ -1132,7 +1133,7 @@ func (s *service) registerRoutes() {
 	})
 
 	s.Register(&endly.ServiceActionRoute{
-		Action: "container-remove",
+		Action: "remove",
 		RequestInfo: &endly.ActionInfo{
 			Description: "remove docker container",
 			Examples: []*endly.ExampleUseCase{
@@ -1157,7 +1158,7 @@ func (s *service) registerRoutes() {
 	})
 
 	s.Register(&endly.ServiceActionRoute{
-		Action: "container-logs",
+		Action: "logs",
 		RequestInfo: &endly.ActionInfo{
 			Description: "remove docker container",
 			Examples: []*endly.ExampleUseCase{

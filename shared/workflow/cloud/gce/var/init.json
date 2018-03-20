@@ -1,0 +1,22 @@
+[
+  {
+    "Name":"gceCredential",
+    "From":"params.gceCredential",
+    "Required":true
+  },
+  {
+    "Name":"gceProject",
+    "From":"params.gceProject",
+    "Required":true
+  },
+  {
+    "Name":"gceZone",
+    "From":"params.gceZone",
+    "Required":true
+  },
+  {
+    "Name":"gceInstance",
+    "From":"params.gceInstance",
+    "Required":true
+  }
+]

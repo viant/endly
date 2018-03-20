@@ -36,13 +36,14 @@ var WorkflowKey = (*Workflow)(nil)
 
 //Context represents a workflow session context/state
 type Context struct {
-	SessionID  string
-	CLIEnabled bool
-	Secrets    *secret.Service
-	Wait       *sync.WaitGroup
-	Listener   EventListener
-	Workflows  *Workflows
-	state      data.Map
+	SessionID   string
+	CLIEnabled  bool
+	EventLogger *EventLogger
+	Secrets     *secret.Service
+	Wait        *sync.WaitGroup
+	Listener    EventListener
+	Workflows   *Workflows
+	state       data.Map
 	toolbox.Context
 	cloned []*Context
 	closed int32
@@ -148,7 +149,7 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 			}
 		}
 	}
-	var result = url.NewResource(c.Expand(resource.URL), c.Expand(resource.Credential))
+	var result = url.NewResource(c.Expand(resource.URL), c.Expand(resource.Credentials))
 	if result.ParsedURL == nil {
 		return nil, fmt.Errorf("failed to parse URL %v", result.URL)
 	}

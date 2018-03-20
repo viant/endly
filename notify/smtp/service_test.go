@@ -15,13 +15,13 @@ import (
 
 func TestService_Run(t *testing.T) {
 	var parent = toolbox.CallerDirectory(3)
-	credential := path.Join(parent, "test/secret.json")
+	credentials := path.Join(parent, "test/secret.json")
 	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(smtp.ServiceID)
 	{ //missing subject
 		serviceResponse := service.Run(context, &smtp.SendRequest{
-			Target: url.NewResource("smtp://smtp.gmail.com:465", credential+"a"),
+			Target: url.NewResource("smtp://smtp.gmail.com:465", credentials+"a"),
 			Mail: &smtp.MailMessage{
 				From:        "adrianwit@gmail.com",
 				To:          []string{"viantemailtester@gmail.com"},
@@ -33,7 +33,7 @@ func TestService_Run(t *testing.T) {
 	}
 	{ //invalid credentials subject
 		serviceResponse := service.Run(context, &smtp.SendRequest{
-			Target: url.NewResource("smtp://smtp.gmail.com:465", credential+"aa"),
+			Target: url.NewResource("smtp://smtp.gmail.com:465", credentials+"aa"),
 			Mail: &smtp.MailMessage{
 				From:        "adrianwit@gmail.com",
 				To:          []string{"viantemailtester@gmail.com"},
@@ -45,7 +45,7 @@ func TestService_Run(t *testing.T) {
 	}
 	{ //sending message
 		serviceResponse := service.Run(context, &smtp.SendRequest{
-			Target: url.NewResource("smtp://smtp.gmail.com:465", credential),
+			Target: url.NewResource("smtp://smtp.gmail.com:465", credentials),
 			Mail: &smtp.MailMessage{
 				From:        "adrianwit@gmail.com",
 				To:          []string{"viantemailtester@gmail.com"},
@@ -71,8 +71,8 @@ func TestNewSMTPClient(t *testing.T) {
 
 		var target = url.NewResource("smtp://smtp.gmail.com:465")
 		var parent = toolbox.CallerDirectory(3)
-		credential := path.Join(parent, "test/secret.json")
-		client, err := smtp.NewClient(target, credential)
+		credentials := path.Join(parent, "test/secret.json")
+		client, err := smtp.NewClient(target, credentials)
 		if assert.Nil(t, err) {
 			assert.NotNil(t, client)
 			client.Close()
@@ -83,8 +83,8 @@ func TestNewSMTPClient(t *testing.T) {
 
 		var target = url.NewResource("smtp://smtp.gmail.com:465")
 		var parent = toolbox.CallerDirectory(3)
-		credential := path.Join(parent, "test/invalid_secret.json")
-		_, err := smtp.NewClient(target, credential)
+		credentials := path.Join(parent, "test/invalid_secret.json")
+		_, err := smtp.NewClient(target, credentials)
 		assert.NotNil(t, err)
 	}
 

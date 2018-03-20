@@ -49,7 +49,7 @@ func (s *systemSdkService) deploySdk(context *endly.Context, request *SetRequest
 	ctx := context.Clone()
 	state := ctx.State()
 	state.Put("buildHost", target.ParsedURL.Host)
-	state.Put("buildHostCredential", target.Credential)
+	state.Put("buildHostCredential", target.Credentials)
 	serviceResponse := deploymentService.Run(ctx, &deploy.Request{
 		Target:  target,
 		AppName: request.Sdk,
@@ -145,7 +145,7 @@ const sdkSetExample = `{
   },
   "Target": {
     "URL": "ssh://127.0.0.1/",
-    "Credential": "${env.HOME}/.secret/localhost.json"
+    "Credentials": "${env.HOME}/.secret/localhost.json"
   }
 }`
 
