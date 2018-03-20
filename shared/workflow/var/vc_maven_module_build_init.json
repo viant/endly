@@ -64,14 +64,14 @@
     "Value": {
       "Type": "$originType",
       "URL": "$originUrl",
-      "Credential": "$originCredential"
+      "Credentials": "$originCredential"
     }
   },
   {
     "Name": "buildTarget",
     "Value": {
       "URL": "$targetUrl",
-      "Credential": "$targetHostCredential"
+      "Credentials": "$targetHostCredential"
     }
   },
 
@@ -82,11 +82,11 @@
         {
           "Source": {
             "URL": "$parentPomUrl",
-            "Credential": "$originCredential"
+            "Credentials": "$originCredential"
           },
           "Dest": {
             "URL": "${targetUrl}",
-            "Credential": "$targetHostCredential"
+            "Credentials": "$targetHostCredential"
           }
         }
       ]

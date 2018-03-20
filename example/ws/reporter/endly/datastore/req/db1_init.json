@@ -1,14 +1,14 @@
 {
   "Datastore": "db1",
   "Config": {
-    "Credential": "$mysqlCredential",
+    "Credentials": "$mysqlCredential",
     "DriverName": "mysql",
     "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
   },
   "Admin":{
     "Datastore": "mysql",
     "Config": {
-      "Credential": "$mysqlCredential",
+      "Credentials": "$mysqlCredential",
       "DriverName": "mysql",
       "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
     }

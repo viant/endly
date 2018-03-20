@@ -1,10 +1,12 @@
 package bootstrap
 
 import (
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/adrianwit/mgc"
+	"github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/viant/asc"
 	_ "github.com/viant/bgc"
+
 	_ "github.com/viant/endly/static" //load external resource like .csv .json files to mem storage
 	_ "github.com/viant/toolbox/storage/aws"
 	_ "github.com/viant/toolbox/storage/gs"
@@ -33,14 +35,13 @@ import (
 	_ "github.com/viant/endly/deployment/sdk"
 	_ "github.com/viant/endly/deployment/vc"
 
+	_ "github.com/viant/endly/notify/smtp"
 	_ "github.com/viant/endly/system/daemon"
 	_ "github.com/viant/endly/system/docker"
 	_ "github.com/viant/endly/system/exec"
 	_ "github.com/viant/endly/system/network"
 	_ "github.com/viant/endly/system/process"
 	_ "github.com/viant/endly/system/storage"
-
-	_ "github.com/viant/endly/notify/smtp"
 
 	"bufio"
 	"errors"
@@ -62,22 +63,29 @@ import (
 func init() {
 
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-	flag.String("r", "run.json", "<path/url to workflow run request in JSON format> ")
-	flag.String("w", "manager", "<workflow name>  if both -r and -w valid options are specified, -w is ignored")
+
+	flag.String("r", "run.json", "<path/url to workflow run request in YAML or JSON format>")
+	flag.String("w", "manager", "<workflow name>  if both -r or -p and -w are specified, -w is ignored")
+	flag.String("i", "", "<coma separated tagID list> to filter")
+	flag.String("p", "run.yaml", "<path/url to workflow pipeline request in YAML or JSON format>")
+
 	flag.String("t", "*", "<task/s to run>, t='?' to list all tasks for selected workflow")
+
 	flag.String("l", "logs", "<log directory>")
 	flag.Bool("d", false, "enable logging")
-	flag.Bool("p", false, "print neatly workflow as JSON")
+
+	flag.Bool("o", false, "print workflow/run/piple as JSON or YAML")
 	flag.String("f", "json", "<workflow or request format>, json or yaml")
 
 	flag.Bool("h", false, "print help")
 	flag.Bool("v", false, "print version")
 
 	flag.String("s", "", "<serviceID> print service details, -s='*' prints all service IDs")
-	flag.String("a", "", "<action> prints action request representation")
-	flag.String("i", "", "<coma separated tagID list> to filter")
-	flag.String("c", "", "<credential>, generate secret credentials file: ~/.secret/<credential>.json")
+	flag.String("a", "", "<action> prints service action request/response detail")
+
+	flag.String("c", "", "<credentials>, generate secret credentials file: ~/.secret/<credentials>.json")
 	flag.String("k", "", "<private key path>,  works only with -c options, i.e -k="+path.Join(os.Getenv("HOME"), ".secret/id_rsa.pub"))
+	mysql.SetLogger(&emptyLogger{})
 
 }
 
@@ -117,29 +125,51 @@ func Bootstrap() {
 		printServiceActions()
 		return
 	}
+	var err error
+	var request interface{}
 
-	request, err := getRunRequestWithOptions(flagset)
-	if request == nil {
-		flagset["r"] = flag.Lookup("r").Value.String()
-		flagset["w"] = flag.Lookup("w").Value.String()
-		request, err = getRunRequestWithOptions(flagset)
-		if err != nil && strings.Contains(err.Error(), "failed to locate workflow: manager") {
-			printHelp()
-			return
+	if request, err = getPipelineRequestWithOptions(flagset); err != nil {
+		log.Fatal(err)
+	}
+
+	if req, _ := workflow.GetAbstractRun(request); req == nil {
+		if request, err = getRunRequestWithOptions(flagset); err != nil {
+			log.Fatal(err)
 		}
 	}
 
-	if err != nil {
-		log.Fatal(err)
-	}
-	if value, ok := flagset["p"]; ok && toolbox.AsBoolean(value) {
-		printWorkflow(request.URL)
-		return
+	if req, _ := workflow.GetAbstractRun(request); req == nil {
+		flagset["p"] = flag.Lookup("p").Value.String()
+		request, err = getPipelineRequestWithOptions(flagset)
+		if err != nil {
+			if !strings.Contains(err.Error(), "no such file or directory") {
+				log.Fatal(err)
+			}
+		}
 	}
 
-	if flagset["t"] == "?" {
-		printWorkflowTasks(request.URL)
+	if req, _ := workflow.GetAbstractRun(request); req == nil {
+		flagset["r"] = flag.Lookup("r").Value.String()
+		flagset["w"] = flag.Lookup("w").Value.String()
+		request, err = getRunRequestWithOptions(flagset)
+		if !strings.Contains(err.Error(), "no such file or directory") {
+			log.Fatal(err)
+		}
+	}
+
+	if req, _ := workflow.GetAbstractRun(request); req == nil {
+		printHelp()
 		return
+	}
+	if runRequest, isRunRequest := request.(*workflow.RunRequest); isRunRequest {
+		if value, ok := flagset["o"]; ok && toolbox.AsBoolean(value) {
+			printWorkflow(runRequest.URL)
+			return
+		}
+		if flagset["t"] == "?" {
+			printWorkflowTasks(runRequest.URL)
+			return
+		}
 	}
 
 	runner := cli.New()
@@ -211,27 +241,43 @@ func printWorkflowTasks(URL string) {
 	}
 }
 
-func printServiceActionInfo(renderer *cli.Renderer, info *endly.ActionInfo, color, infoType string, empty interface{}) {
+func requestName(name string, ext string) string {
+	name = path.Ext(name)
+	name = strings.ToLower(string(name[1:]))
+	name = strings.Replace(name, "request", "", 1)
+	return fmt.Sprintf("@%v.%v\n", name, ext)
+}
+
+func printServiceActionInfo(renderer *cli.Renderer, info *endly.ActionInfo, color, infoType string, req interface{}) {
 	if info != nil {
 		if info.Description != "" {
 			renderer.Printf(renderer.ColorText("Description: ", color, "bold")+" %v\n", info.Description)
 		}
 		if len(info.Examples) > 0 {
 			for i, example := range info.Examples {
-
 				renderer.Printf(renderer.ColorText(fmt.Sprintf("Example %v: ", i+1), color, "bold")+" %v %v\n", example.UseCase, infoType)
 				aMap, err := toolbox.JSONToMap(example.Data)
+
 				if err == nil {
 					buf, _ := json.MarshalIndent(aMap, "", "\t")
+
+					renderer.Printf(requestName(fmt.Sprintf("%T", req), "json"))
 					renderer.Println(string(buf))
+					text, err := toolbox.AsYamlText(aMap)
+					if err == nil {
+						renderer.Printf(requestName(fmt.Sprintf("%T", req), "yaml"))
+						renderer.Println(text)
+					}
+
 				} else {
 					renderer.Printf("%v\n", example.Data)
 				}
+
 			}
 		}
 	}
 	renderer.Printf(renderer.ColorText(fmt.Sprintf("Empty %v: \n", infoType), color, "bold"))
-	buf, _ := json.MarshalIndent(empty, "", "\t")
+	buf, _ := json.MarshalIndent(req, "", "\t")
 	renderer.Println(string(buf) + "\n")
 }
 
@@ -349,47 +395,103 @@ func printVersion() {
 	fmt.Fprintf(os.Stdout, "%v %v\n", endly.AppName, endly.GetVersion())
 }
 
-func getRunRequestURL(candidate string) (*url.Resource, error) {
+func getPipeRequestURL(candidate string) (*url.Resource, error) {
 	if path.Ext(candidate) == "" {
-		candidate = candidate + ".json"
+		candidate = candidate + ".yaml"
 	}
 	resource := url.NewResource(candidate)
 	if _, err := resource.Download(); err != nil {
-		resource = url.NewResource(fmt.Sprintf("mem://%v/req/%v", endly.Namespace, candidate))
+		resource = url.NewResource(fmt.Sprintf("mem://%v/pipe/%v", endly.Namespace, candidate))
 		if _, memError := resource.Download(); memError != nil {
 			return nil, err
 		}
-	}
-	return resource, nil
 
+	}
+
+	return resource, nil
+}
+
+func getRunRequestURL(URL string) (*url.Resource, error) {
+	resource := url.NewResource(URL)
+	var candidates = make([]string, 0)
+	if path.Ext(resource.ParsedURL.Path) == "" {
+		candidates = append(candidates, URL+".json", URL+".yaml")
+	} else {
+		candidates = append(candidates, URL)
+	}
+
+	var err error
+	for _, candidate := range candidates {
+		resource = url.NewResource(candidate)
+		if _, err = resource.Download(); err != nil {
+			resource = url.NewResource(fmt.Sprintf("mem://%v/req/%v", endly.Namespace, candidate))
+			if _, memError := resource.Download(); memError != nil {
+				continue
+			}
+			return resource, nil
+		}
+	}
+	return resource, err
+}
+
+func getPipelineRequestWithOptions(flagset map[string]string) (request *workflow.PipeRequest, err error) {
+	if value, ok := flagset["p"]; ok {
+		resource, err := getPipeRequestURL(value)
+		if err != nil {
+			return nil, err
+		}
+		request = &workflow.PipeRequest{
+			AbstractRun: &workflow.AbstractRun{},
+		}
+		err = resource.Decode(request)
+		if err != nil {
+			return nil, err
+		}
+
+		request.Init()
+		updateBaseRunWithOptions(request.AbstractRun, flagset)
+		return request, err
+	}
+	return nil, err
 }
 
 func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, error) {
 	var request *workflow.RunRequest
-
 	if value, ok := flagset["w"]; ok {
 		request = &workflow.RunRequest{
-			URL: value,
+			AbstractRun: &workflow.AbstractRun{},
+			URL:         value,
 		}
 	}
+
 	if value, ok := flagset["r"]; ok {
 		resource, err := getRunRequestURL(value)
-		if err == nil {
-			request = &workflow.RunRequest{}
-			err = resource.Decode(request)
+		if err != nil {
+			return nil, err
 		}
-		if request.URL == "" {
-			parent, _ := toolbox.URLSplit(resource.URL)
-			parent = strings.Replace(parent, "req", "workflow", 1)
-			request.URL = toolbox.URLPathJoin(parent, request.Name+".csv")
-		}
+		request = &workflow.RunRequest{}
+		err = resource.Decode(request)
 		if err != nil {
 			return nil, fmt.Errorf("failed to locate workflow run request: %v %v", value, err)
 		}
 	}
 
-	var params = toolbox.Pairs(getArguments()...)
+	if request == nil {
+		return nil, nil
+	}
+	request.Init()
+	if value, ok := flagset["t"]; ok {
+		request.Tasks = value
+	}
+	if value, ok := flagset["i"]; ok {
+		request.TagIDs = value
+	}
+	updateBaseRunWithOptions(request.AbstractRun, flagset)
+	return request, nil
+}
 
+func updateBaseRunWithOptions(request *workflow.AbstractRun, flagset map[string]string) {
+	var params = toolbox.Pairs(getArguments()...)
 	if request != nil {
 		if len(request.Params) == 0 {
 			request.Params = params
@@ -401,18 +503,12 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 			request.EnableLogging = toolbox.AsBoolean(value)
 			request.LogDirectory = flag.Lookup("l").Value.String()
 		}
-		if value, ok := flagset["t"]; ok {
-			request.Tasks = value
-		}
-		if value, ok := flagset["i"]; ok {
-			request.TagIDs = value
-		}
 	}
-	return request, nil
 }
 
 func normalizeArgument(value string) interface{} {
 	value = strings.Trim(value, " \"'")
+
 	if strings.HasPrefix(value, "#") || strings.HasPrefix(value, "@") {
 		resource := url.NewResource(string(value[1:]))
 		text, err := resource.DownloadText()
@@ -430,14 +526,27 @@ func getArguments() []interface{} {
 	var arguments = make([]interface{}, 0)
 	if len(os.Args) > 1 {
 		for i := 1; i < len(os.Args); i++ {
-			if strings.HasPrefix(os.Args[i], "-") {
-				if !strings.Contains(os.Args[i], "=") {
+			var candidate = os.Args[i]
+			if strings.HasPrefix(candidate, "-") {
+				if !strings.Contains(candidate, "=") {
 					i++
 				}
 				continue
 			}
-			arguments = append(arguments, normalizeArgument(os.Args[i]))
+			keyValuePair := strings.SplitN(candidate, "=", 2)
+			if len(keyValuePair) == 2 {
+				arguments = append(arguments, keyValuePair[0], normalizeArgument(keyValuePair[1]))
+			} else {
+				arguments = append(arguments, normalizeArgument(candidate))
+			}
+			arguments = append(arguments)
 		}
 	}
 	return arguments
+}
+
+type emptyLogger struct{}
+
+func (l *emptyLogger) Print(v ...interface{}) {
+
 }

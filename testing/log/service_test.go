@@ -49,10 +49,10 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	var template, _ = toolbox.AsJSONText(templateLog)
 
 	var fileURL = strings.Replace(url.NewResource(tempPath).URL, "file://", "scp://127.0.0.1", 1)
-	credential, err := util.GetDummyCredential()
+	credentials, err := util.GetDummyCredential()
 	assert.Nil(t, err)
 	var response = service.Run(context, &log.ListenRequest{
-		Source: url.NewResource(fileURL, credential),
+		Source: url.NewResource(fileURL, credentials),
 		Types: []*log.Type{
 			{
 				Name:   "t",

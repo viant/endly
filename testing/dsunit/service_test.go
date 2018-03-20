@@ -22,7 +22,7 @@ func getRegisteredDsUnitService(manager endly.Manager, context *endly.Context, d
 	var baseDir = "/tmp/test/endly/dsunit/"
 	exec.Command("rm", "-rf", baseDir)
 	toolbox.CreateDirIfNotExist(baseDir)
-	credential, err := util.GetDummyCredential()
+	credentials, err := util.GetDummyCredential()
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func getRegisteredDsUnitService(manager endly.Manager, context *endly.Context, d
 		return nil, err
 	}
 
-	config, err := dsc.NewConfigWithParameters("sqlite3", "[url]", credential, map[string]interface{}{
+	config, err := dsc.NewConfigWithParameters("sqlite3", "[url]", credentials, map[string]interface{}{
 		"url": path.Join(baseDir, dbname),
 	})
 

@@ -78,7 +78,7 @@ func TestService_SignIn(t *testing.T) {
 		assert.NotNil(t, response.User)
 	}
 
-	{ //test singin with  invalid credential users
+	{ //test singin with  invalid credentials users
 		response := service.SignIn(&sso.SignInRequest{
 			Email:    "abc@wp.pl",
 			Password: "abc1",

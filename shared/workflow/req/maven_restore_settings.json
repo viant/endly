@@ -2,6 +2,6 @@
   "SourceKey": "originalMavenSettings",
   "Target": {
     "URL": "${env.HOME}/.m2/settings.xml",
-    "Credential": "${targetHostCredential}"
+    "Credentials": "${targetHostCredential}"
   }
 }

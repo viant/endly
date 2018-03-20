@@ -134,11 +134,11 @@ func TestNewCopyRequestFromURL(t *testing.T) {
 			ExpectedRequest: `{
   "Source": {
     "URL": "scp://127.0.0.1:7722/echo",
-    "Credential": "mem://github.com/viant/endly/workflow/docker/build/secret/build.json"
+    "Credentials": "mem://github.com/viant/endly/workflow/docker/build/secret/build.json"
   },
   "Dest": {
     "URL": "ssh://127.0.0.1/",
-    "Credential": "/Users/awitas/.secret/localhost.json"
+    "Credentials": "/Users/awitas/.secret/localhost.json"
   },
   "Assets": {
     "/echo": "/tmp/echo/"
@@ -147,11 +147,11 @@ func TestNewCopyRequestFromURL(t *testing.T) {
     {
       "Source": {
         "URL": "scp://127.0.0.1:7722/echo",
-        "Credential": "mem://github.com/viant/endly/workflow/docker/build/secret/build.json"
+        "Credentials": "mem://github.com/viant/endly/workflow/docker/build/secret/build.json"
       },
       "Dest": {
         "URL": "ssh://127.0.0.1/tmp/echo/",
-        "Credential": "/Users/awitas/.secret/localhost.json"
+        "Credentials": "/Users/awitas/.secret/localhost.json"
       }
     }
   ]

@@ -23,15 +23,15 @@ func GetCredential(name, username, password string) (string, error) {
 	return credentialFile, err
 }
 
-func GetUsername(service *secret.Service, credential string) (string, error) {
+func GetUsername(service *secret.Service, credentials string) (string, error) {
 	var username string
-	credConfig, err := service.GetCredentials(credential)
+	credConfig, err := service.GetCredentials(credentials)
 	if err != nil {
 		return "", err
 	}
 	username = credConfig.Username
 	if username == "" {
-		return "", fmt.Errorf("username was empty %v", credential)
+		return "", fmt.Errorf("username was empty %v", credentials)
 	}
 	return username, nil
 }

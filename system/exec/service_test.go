@@ -54,11 +54,11 @@ func TestNewExecService(t *testing.T) {
 
 func Test_NoTransientSession(t *testing.T) {
 	manager := endly.New()
-	var credential, err = util.GetDummyCredential()
+	var credentials, err = util.GetDummyCredential()
 	if err != nil {
 		log.Fatal(err)
 	}
-	target := url.NewResource("ssh://127.0.0.1", credential)
+	target := url.NewResource("ssh://127.0.0.1", credentials)
 	context, err := exec.NewSSHReplayContext(manager, target, "test/session/context")
 	if err != nil {
 		log.Fatal(err)
@@ -77,11 +77,11 @@ func Test_NoTransientSession(t *testing.T) {
 
 func Test_TransientSession(t *testing.T) {
 	manager := endly.New()
-	var credential, err = util.GetDummyCredential()
+	var credentials, err = util.GetDummyCredential()
 	if err != nil {
 		log.Fatal(err)
 	}
-	target := url.NewResource("ssh://127.0.0.1", credential)
+	target := url.NewResource("ssh://127.0.0.1", credentials)
 	context, err := exec.NewSSHReplayContext(manager, target, "test/session/transient")
 	if err != nil {
 		log.Fatal(err)
@@ -103,11 +103,11 @@ func TestRunCommand(t *testing.T) {
 
 	{ //simple command
 		manager := endly.New()
-		var credential, err = util.GetDummyCredential()
+		var credentials, err = util.GetDummyCredential()
 		if err != nil {
 			log.Fatal(err)
 		}
-		target := url.NewResource("ssh://127.0.0.1", credential)
+		target := url.NewResource("ssh://127.0.0.1", credentials)
 		context, err := exec.NewSSHReplayContext(manager, target, "test/run/simple")
 		if err != nil {
 			log.Fatal(err)
@@ -124,11 +124,11 @@ func TestRunCommand(t *testing.T) {
 	{
 
 		manager := endly.New()
-		var credential, err = util.GetDummyCredential()
+		var credentials, err = util.GetDummyCredential()
 		if err != nil {
 			log.Fatal(err)
 		}
-		target := url.NewResource("ssh://127.0.0.1", credential)
+		target := url.NewResource("ssh://127.0.0.1", credentials)
 		context, err := exec.NewSSHReplayContext(manager, target, "test/run/conditional")
 		if err != nil {
 			log.Fatal(err)

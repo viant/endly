@@ -1,4 +1,4 @@
-target: $execTarget
+target: $target
 name: $containerName
 image: $dockerImage
 ports:

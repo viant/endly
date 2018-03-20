@@ -82,7 +82,7 @@ type DownloadResponse struct {
 //UploadRequest represents a resources upload request, it takes context state key to upload to target destination.
 type UploadRequest struct {
 	SourceKey string        `required:"true" description:"state key with asset content"`
-	Dest      *url.Resource `required:"true" description:"destination asset or directory"` //target URL with credential
+	Dest      *url.Resource `required:"true" description:"destination asset or directory"` //target URL with credentials
 }
 
 //UploadResponse represents a upload response

@@ -17,7 +17,7 @@ type service struct {
 }
 
 func (s *service) run(context *endly.Context, request *CallRequest) (CallResponse, error) {
-	client, err := GetEc2Client(request.Credential)
+	client, err := GetEc2Client(request.Credentials)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func (s *service) callMethod(owner interface{}, methodName string, parameters []
 
 const (
 	ec2GetInstanceStatusExample = `{
-  "Credential": "${env.HOME}/.secret/aws-west.json",
+  "Credentials": "${env.HOME}/.secret/aws-west.json",
   "Method": "DescribeInstances",
   "Input": {
     "InstanceIds": [
@@ -144,7 +144,7 @@ const (
 }`
 
 	ec2StartInstanceExample = `{
-		"Credential": "${env.HOME}/.secret/aws-west.json",
+		"Credentials": "${env.HOME}/.secret/aws-west.json",
 		"Method": "StartInstances",
 		"Input": {
 			"InstanceIds": [
@@ -161,7 +161,7 @@ func (s *service) registerRoutes() {
 			Description: "call proxies request into github.com/aws/aws-sdk-go/service/ec2.EC2 client",
 			Examples: []*endly.ExampleUseCase{
 				{
-					UseCase: "credential file",
+					UseCase: "credentials file",
 					Data:    ec2CredentialExample,
 				},
 				{

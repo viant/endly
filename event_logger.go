@@ -67,6 +67,7 @@ func (l *EventLogger) OnEvent(event *Event) {
 	l.tagCount[l.subPath]++
 	var counter = l.tagCount[l.subPath]
 	filename := path.Join(l.directory, l.subPath, fmt.Sprintf("%04d_%v.json", counter, event.Type()))
+
 	parent, _ := path.Split(filename)
 	if !toolbox.FileExists(parent) {
 		err := os.MkdirAll(parent, 0744)

@@ -1,7 +1,7 @@
 {
   "Target": {
     "URL": "ssh://127.0.0.1/",
-    "Credential": "${env.HOME}/.secret/localhost.json"
+    "Credentials": "${env.HOME}/.secret/localhost.json"
   },
   "Sdk": "go:1.8",
   "Env": {

@@ -1,1 +1,1 @@
-This use case try to signin user with invalid credential.
+This use case try to signin user with invalid credentials.

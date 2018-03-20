@@ -1,0 +1,5 @@
+target: $serviceTarget
+name: $name
+image: $image
+params:
+  "-m": $maxMemory

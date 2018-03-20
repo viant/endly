@@ -1,0 +1,11 @@
+name: docker/mysql
+tasks: $tasks
+paramas:
+  stopSystemMysql: true
+  serviceTarget: serviceTarget
+  target: $target
+  config: $Pwd(config/my.cnf)
+  credentials: $mysqlCredential
+  name: $instance
+  version: $mysqlVersion
+  dump: $dump

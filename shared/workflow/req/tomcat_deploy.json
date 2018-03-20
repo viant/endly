@@ -6,6 +6,6 @@
   "Version": "$tomcatVersion",
   "Target": {
     "URL": "scp://${targetHost}/${appDirectory}/",
-    "Credential": "$targetHostCredential"
+    "Credentials": "$targetHostCredential"
   }
 }

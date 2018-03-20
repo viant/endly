@@ -17,6 +17,7 @@ const (
 	MessageStyleError
 	MessageStyleInput
 	MessageStyleOutput
+	MessageStyleGroup
 )
 
 //StyledText represent styled text
@@ -57,7 +58,7 @@ type MessageReporter interface {
 
 //RepeatedMessage represents a repeated message
 type RepeatedMessage struct {
-	Total int
+	Spent time.Duration
 	Count int
 	Type  string
 }
@@ -136,12 +137,12 @@ type SleepEvent struct {
 func (e *SleepEvent) Message(repeated *RepeatedMessage) *Message {
 	var tag = NewStyledText("sleep", MessageStyleGeneric)
 	var title *StyledText
-	repeated.Total = +int(time.Millisecond * time.Duration(e.SleepTimeMs))
+	repeated.Spent += (time.Millisecond * time.Duration(e.SleepTimeMs))
 	if repeated.Count == 0 {
 		title = NewStyledText(fmt.Sprintf("%v ms", e.SleepTimeMs), MessageStyleGeneric)
 	} else {
-		var sleptSoFar = time.Millisecond * time.Duration(repeated.Total)
-		title = NewStyledText(fmt.Sprintf("%v ms x %v,  slept so far: %v", e.SleepTimeMs, repeated.Count, sleptSoFar), MessageStyleGeneric)
+		var sleptSoFar = repeated.Spent
+		title = NewStyledText(fmt.Sprintf("%v ms x %v,  slept so far: %v", e.SleepTimeMs, repeated.Count+1, sleptSoFar), MessageStyleGeneric)
 	}
 	return NewMessage(title, tag)
 }

@@ -26,7 +26,7 @@ func (s *service) tunnel(context *endly.Context, request *TunnelRequest) (*Tunne
 	if err != nil {
 		return nil, err
 	}
-	authConfig, err := context.Secrets.GetCredentials(target.Credential)
+	authConfig, err := context.Secrets.GetCredentials(target.Credentials)
 	if err != nil {
 		return nil, err
 	}

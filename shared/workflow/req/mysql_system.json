@@ -1,8 +1,0 @@
-{
-  "Service": "mysql",
-  "Target": {
-    "URL":"$targetHost",
-    "Credential":"$targetHostCredential"
-  }
-
-}

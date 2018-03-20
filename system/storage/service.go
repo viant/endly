@@ -243,28 +243,24 @@ func (s *service) upload(context *endly.Context, request *UploadRequest) (*Uploa
 
 const (
 	storageCopySimpleExample = `{
-  "Assets": [
-    {
       "Source": {
         "URL": "https://svn.viantinc.com/svn/project/db/schema.ddl",
-        "Credential": "${env.HOME}/.secret/svn.json"
+        "Credentials": "${env.HOME}/.secret/svn.json"
       },
       "Desc": {
         "URL": "build/db/"
       }
-    }
-  ]
 }`
 	storageCopyRemoteTransferExample = `{
-  "Assets": [
+  "Transfers": [
     {
       "Source": {
         "URL": "s3://mybucket1/project1/Transfers/",
-        "Credential": "${env.HOME}/.secret/s3.json"
+        "Credentials": "${env.HOME}/.secret/s3.json"
       },
       "Desc": {
          "URL": "gs://mybucket2/project1/Transfers/",
-          "Credential": "${env.HOME}/.secret/gs.json"
+          "Credentials": "${env.HOME}/.secret/gs.json"
       }
     }
   ]
@@ -273,28 +269,28 @@ const (
 	storageBatchCopyTransferExample = `{
 	"Source": {
 		"URL": "s3://mybucket1/",
-		"Credential": "${env.HOME}/.secret/s3.json"
-	  },
-	"Desc": {
+		"Credentials": "${env.HOME}/.secret/s3.json"
+    },
+	"Dest": {
 		 "URL": "gs://mybucket2/",
-		  "Credential": "${env.HOME}/.secret/gs.json"
-	  },
-	"Assets": [
-		{"project1/Transfers/":"project1/Transfers/"}
-		{"project1/config/":"project1/config/"},
-	]
+		  "Credentials": "${env.HOME}/.secret/gs.json"
+    },
+	"Assets":{
+		"project1/data/":"archive/data/",
+		"project1/config/":"setting/config/"
+	}
 }`
 
 	storageCopyReplacementTransferExample = `{
-  "Assets": [
+  "Transfers": [
     {
       "Source": {
         "URL": "scp://127.0.0.1/build/app/target/classes/server.properties",
-        "Credential": "${env.HOME}/.secret/localhost.json"
+        "Credentials": "${env.HOME}/.secret/localhost.json"
       },
       "Desc": {
         "URL": "scp://127.0.0.1/build/app/target/target/build/WEB-INF/classes/dserver.properties",
-        "Credential": "${env.HOME}/.secret/localhost.json"
+        "Credentials": "${env.HOME}/.secret/localhost.json"
       },
       "Replace": {
         "10.2.1.1": "127.0.0.1",

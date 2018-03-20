@@ -54,4 +54,15 @@
     * Renamed ExitCriteria to Exit
     * Renamed Credentials to Secrets
     * patched RepeatedReporter CLI event reporting
-             
+    
+## March 20  2018 0.7.0
+     * Refactor and simpified storage.service
+     * Added When/Else to variable
+     * Refactorored docker shared service added docs
+     * Refactored SSH service with stdout listener (for instant stdout CLI reporting)
+     * Minor patches
+     * Renamed Credential to Credentials
+     * Added more yaml examples
+     * Add SSH testing utilities NewSSHRecodingContext, NewSSHReplayContext
+     * Integrated pipe request into endly -p option        
+     

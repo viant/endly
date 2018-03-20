@@ -146,8 +146,8 @@ func (s *git) checkout(context *endly.Context, request *CheckoutRequest) (*Info,
 	}
 
 	username := ""
-	if origin.Credential != "" {
-		username, err = util.GetUsername(context.Secrets, origin.Credential)
+	if origin.Credentials != "" {
+		username, err = util.GetUsername(context.Secrets, origin.Credentials)
 		if err != nil {
 			return nil, err
 		}
@@ -177,7 +177,7 @@ func (s *git) checkout(context *endly.Context, request *CheckoutRequest) (*Info,
 
 func (s *git) runSecureCommand(context *endly.Context, versionControlType string, origin, target *url.Resource, command string, info *Info, useParentDirectory bool) (err error) {
 	var secrets = make(map[string]string)
-	secrets[CredentialKey] = origin.Credential
+	secrets[CredentialKey] = origin.Credentials
 	commandTarget, _ := context.ExpandResource(target)
 	if useParentDirectory {
 		commandTarget.Rename("")

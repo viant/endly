@@ -124,16 +124,18 @@ func (s *Service) getWorkflowResource(state data.Map, URL string) *url.Resource 
 	return nil
 }
 
-func (s *Service) loadWorkflowIfNeeded(context *endly.Context, name string, resource *url.Resource) (err error) {
-	if !s.HasWorkflow(name) {
-		if _, err := s.loadWorkflow(context, &LoadRequest{Source: resource});err != nil {
+func (s *Service) loadWorkflowIfNeeded(context *endly.Context, request *RunRequest) (err error) {
+	if !s.HasWorkflow(request.Name) {
+		resource := s.getWorkflowResource(context.State(), request.URL)
+		if resource == nil {
+			return fmt.Errorf("unable to locate workflow: %v, %v", request.Name, request.URL)
+		}
+		if _, err := s.loadWorkflow(context, &LoadRequest{Source: resource}); err != nil {
 			return err
 		}
 	}
 	return nil
 }
-
-
 
 func (s *Service) getServiceRequest(context *endly.Context, activity *endly.Activity) (endly.Service, interface{}, error) {
 	var service, err = context.Service(activity.Service)
@@ -361,12 +363,13 @@ func (s *Service) runAsyncActions(context *endly.Context, workflow *endly.Workfl
 	return nil
 }
 
-func (s *Service) traversePipelines(pipelines []*Pipeline, context *endly.Context, response *PipelineResponse) error {
+func (s *Service) traversePipelines(pipelines []*Pipeline, context *endly.Context, response *PipeResponse) error {
 	var state = context.State()
 	for _, pipeline := range pipelines {
 		if pipeline.Skip {
 			continue
 		}
+		context.Publish(NewPipelineEvent(pipeline))
 		if pipeline.Workflow != "" {
 			runRequest := NewRunRequest(pipeline.Workflow, pipeline.Params, true)
 			runResponse := &RunResponse{}
@@ -385,7 +388,7 @@ func (s *Service) traversePipelines(pipelines []*Pipeline, context *endly.Contex
 			if err != nil {
 				return err
 			}
-			if err = endly.Run(context, request, response); err != nil {
+			if err = endly.Run(context, request, &response); err != nil {
 				return err
 			}
 			if len(response) > 0 {
@@ -402,22 +405,26 @@ func (s *Service) traversePipelines(pipelines []*Pipeline, context *endly.Contex
 	return nil
 }
 
-func (s *Service) pipeline(context *endly.Context, request *PipelineRequest) (*PipelineResponse, error) {
-	var response = &PipelineResponse{
+func (s *Service) pipeline(context *endly.Context, request *PipeRequest) (*PipeResponse, error) {
+	var response = &PipeResponse{
 		Response: make(map[string]interface{}),
 	}
 	return response, s.traversePipelines(request.Pipelines, context, response)
 }
 
-func (s *Service) pipelineWorkflows(context *endly.Context, request *PipelineRequest) (*PipelineResponse, error) {
-	s.enableLoggingIfNeeded(context, request.BaseRun)
+func (s *Service) pipelineWorkflows(context *endly.Context, request *PipeRequest) (*PipeResponse, error) {
+	s.enableLoggingIfNeeded(context, request.AbstractRun)
 	if request.Async {
 		context.Wait.Add(1)
 		go func() {
 			defer context.Wait.Done()
-			s.pipeline(context, request)
+			_, err := s.pipeline(context, request)
+			if err != nil {
+				context.Publish(endly.NewErrorEvent(fmt.Sprintf("%v", err)))
+			}
+
 		}()
-		return &PipelineResponse{}, nil
+		return &PipeResponse{}, nil
 	}
 	return s.pipeline(context, request)
 }
@@ -439,11 +446,11 @@ func (s *Service) runWorkflow(context *endly.Context, request *RunRequest) (resp
 	return s.run(context, request)
 }
 
-func (s *Service) enableLoggingIfNeeded(context *endly.Context, request *BaseRun) {
-	if request.EnableLogging && context.Listener == nil {
+func (s *Service) enableLoggingIfNeeded(context *endly.Context, request *AbstractRun) {
+	if request.EnableLogging && context.EventLogger == nil {
 		var logDirectory = path.Join(request.LogDirectory, context.SessionID)
-		eventLogger := endly.NewEventLogger(logDirectory, context.Listener)
-		context.Listener = eventLogger.AsEventListener()
+		context.EventLogger = endly.NewEventLogger(logDirectory, context.Listener)
+		context.Listener = context.EventLogger.AsEventListener()
 	}
 }
 
@@ -453,13 +460,9 @@ func (s *Service) run(upstreamContext *endly.Context, request *RunRequest) (resp
 		SessionID: upstreamContext.SessionID,
 	}
 
-	s.enableLoggingIfNeeded(upstreamContext, request.BaseRun)
+	s.enableLoggingIfNeeded(upstreamContext, request.AbstractRun)
 
-	resource := s.getWorkflowResource(upstreamContext.State(), request.URL);
-	if resource == nil {
-		return nil, fmt.Errorf("unable to locate workflow: %v, %v", request.Name, request.URL)
-	}
-	err = s.loadWorkflowIfNeeded(upstreamContext, request.Name, resource)
+	err = s.loadWorkflowIfNeeded(upstreamContext, request)
 	if err != nil {
 		return response, err
 	}
@@ -483,7 +486,7 @@ func (s *Service) run(upstreamContext *endly.Context, request *RunRequest) (resp
 	var workflowData = data.Map(workflow.Data)
 	state.Put(neatly.OwnerURL, workflow.Source.URL)
 	state.Put("data", workflowData)
-
+	state.Put("tasks", request.Tasks)
 	params := buildParamsMap(request, context)
 	if request.PublishParameters {
 		for key, value := range params {
@@ -491,7 +494,6 @@ func (s *Service) run(upstreamContext *endly.Context, request *RunRequest) (resp
 		}
 	}
 	state.Put("params", params)
-
 	err = workflow.Init.Apply(state, state)
 	s.addVariableEvent("Workflow.Init", workflow.Init, context, state, state)
 	if err != nil {
@@ -663,7 +665,9 @@ func getServiceAction(state data.Map, actionRequest *endly.ActionRequest) *endly
 	if serviceActivity != nil {
 		result.NeatlyTag = serviceActivity.NeatlyTag
 		result.Name = serviceActivity.Action
-		result.Description = serviceActivity.Description
+		if result.Description == "" {
+			result.Description = serviceActivity.Description
+		}
 	}
 	return result
 }
@@ -715,7 +719,7 @@ const (
       "Service": "aws/ec2",
       "Action": "call",
       "Request": {
-        "Credential": "${env.HOME}/.secret/aws-west.json",
+        "Credentials": "${env.HOME}/.secret/aws-west.json",
         "Input": {
           "InstanceIds": [
             "i-*********"
@@ -767,19 +771,19 @@ func (s *Service) registerRoutes() {
 	})
 
 	s.AbstractService.Register(&endly.ServiceActionRoute{
-		Action: "pipeline",
+		Action: "pipe",
 		RequestInfo: &endly.ActionInfo{
-			Description: "run pipeline workflow",
+			Description: "run workflows/actions sequentially",
 			Examples:    []*endly.ExampleUseCase{},
 		},
 		RequestProvider: func() interface{} {
-			return &PipelineRequest{}
+			return &PipeRequest{}
 		},
 		ResponseProvider: func() interface{} {
-			return &PipelineResponse{}
+			return &PipeResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*PipelineRequest); ok {
+			if req, ok := request.(*PipeRequest); ok {
 				return s.pipelineWorkflows(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)

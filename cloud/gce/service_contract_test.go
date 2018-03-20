@@ -17,16 +17,16 @@ func TestGCECallRequest_Validate(t *testing.T) {
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := gce.CallRequest{Service: "Instances", Credential: "abc"}
+		request := gce.CallRequest{Service: "Instances", Credentials: "abc"}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := gce.CallRequest{Method: "Get", Credential: "abc"}
+		request := gce.CallRequest{Method: "Get", Credentials: "abc"}
 		assert.NotNil(t, request.Validate())
 	}
 
 	{
-		request := gce.CallRequest{Service: "Instances", Credential: "abc", Method: "Get"}
+		request := gce.CallRequest{Service: "Instances", Credentials: "abc", Method: "Get"}
 		assert.Nil(t, request.Validate())
 	}
 }

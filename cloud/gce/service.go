@@ -19,7 +19,7 @@ type service struct {
 
 func (s *service) fetchInstanceList(request *CallRequest) (CallResponse, error) {
 	var response interface{}
-	computeClient, ctx, err := NewComputeService(request.Credential)
+	computeClient, ctx, err := NewComputeService(request.Credentials)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func (s *service) call(request *CallRequest) (CallResponse, error) {
 		return s.fetchInstanceList(request)
 	}
 	var response interface{}
-	computeClient, ctx, err := NewComputeService(request.Credential)
+	computeClient, ctx, err := NewComputeService(request.Credentials)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (s *service) call(request *CallRequest) (CallResponse, error) {
 
 const (
 	gceGetInstanceStatusExample = `{
-  "Credential": "${env.HOME}/.secret/gce.json",
+  "Credentials": "${env.HOME}/.secret/gce.json",
   "Service": "Instances",
   "Method": "Get",
   "Parameters":["myProject","us-west1-b","instance-1"]	

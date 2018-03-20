@@ -333,7 +333,7 @@ const (
 	seleniumServiceStartExample = `{
 		"Target": {
 			"URL": "127.0.0.1",
-			"Credential": "${env.HOME}/.secret/localhost.json"
+			"Credentials": "${env.HOME}/.secret/localhost.json"
 		},
 		"Port": 8085,
 		"Sdk": "jdk",
@@ -344,7 +344,7 @@ const (
 	seleniumServiceStopExample = `{
 		"Target": {
 			"URL": "file://127.0.0.1",
-			"Credential": "${env.HOME}/.secret/localhost.json"
+			"Credentials": "${env.HOME}/.secret/localhost.json"
 		},
 		"Port": 8085
 	}`

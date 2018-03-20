@@ -673,9 +673,9 @@ func TestDockerService_Login(t *testing.T) {
 			"test/login/gcr_key/darwin",
 			&docker.LoginRequest{
 
-				Target:     target,
-				Repository: "us.gcr.io/myproj",
-				Credential: gcrKeyDockerCredentials,
+				Target:      target,
+				Repository:  "us.gcr.io/myproj",
+				Credentials: gcrKeyDockerCredentials,
 			},
 			"_json_key",
 			"Login Succeeded",
@@ -687,7 +687,7 @@ func TestDockerService_Login(t *testing.T) {
 		//
 		//		Target:     target,
 		//		Repository: "us.gcr.io/myproj",
-		//		Credential: keyDockerCredentials,
+		//		Credentials: keyDockerCredentials,
 		//	},
 		//	"oauth2accesstoken",
 		//	"Login Succeeded",
@@ -697,9 +697,9 @@ func TestDockerService_Login(t *testing.T) {
 			"test/login/std/darwin",
 			&docker.LoginRequest{
 
-				Target:     target,
-				Repository: "repo.com/myproj",
-				Credential: keyDockerCredentials,
+				Target:      target,
+				Repository:  "repo.com/myproj",
+				Credentials: keyDockerCredentials,
 			},
 			"",
 			"",

@@ -1,0 +1,17 @@
+Workflow,,,Name,Description,Tasks,,Init,
+,,,mongo,aeropsike docker service,%Tasks,,@var/init,
+[]Tasks,,,Name,Description,Actions,,,
+,,,start,start mongo service,%Start,,,
+[]Start,,Service,Action,Description,Request,,,
+,,docker,run,start mongo, @req/run,,,
+,,dsunit,register,register test db connection, @req/register,,,
+,,workflow,goto,check if db ready,@req/goto_check,,,
+[]Tasks,,,Name,Description,Actions,,,
+,,,check,check if started,%Check,,,
+[]Check,,Service,Action,Description,Request,Post,When,SleepTimeMs
+,,dsunit,query,run test query, @req/query, @var/status,,
+,,workflow,goto,check if db ready,@req/goto_check,,$status:/no reachable/,1000
+[]Tasks,,,Name,Description,Actions,,,
+,,,stop,stop mongo $name,%Stop,,,
+[]Stop,,Service,Action,Description,Request,,,
+,,docker,stop,start mongo $name, @req/stop,,,

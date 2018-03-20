@@ -3,14 +3,14 @@
   "Config": {
     "DriverName": "mysql",
     "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
-    "Credential": "$mysqlCredential"
+    "Credentials": "$mysqlCredential"
   },
   "Admin": {
     "Datastore": "mysql",
     "Config": {
       "DriverName": "mysql",
       "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
-      "Credential": "$mysqlCredential"
+      "Credentials": "$mysqlCredential"
     }
   },
   "Scripts": [

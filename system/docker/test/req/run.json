@@ -1,7 +1,7 @@
 {
   "Target": {
     "URL": "scp://127.0.0.1:22/",
-    "Credential": "/var/folders/gl/5550g3kj6tn1rbz8chqx1c61ycmmm1/T/dummy20.json"
+    "Credentials": "/var/folders/gl/5550g3kj6tn1rbz8chqx1c61ycmmm1/T/dummy20.json"
   },
   "Name": "testMysql",
   "Secrets": {

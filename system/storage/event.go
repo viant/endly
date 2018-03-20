@@ -46,7 +46,8 @@ func (r *DownloadRequest) Messages() []*endly.Message {
 
 //Items returns event messages
 func (r *CopyRequest) Messages() []*endly.Message {
-	if len(r.Assets) == 0 {
+	r.Init()
+	if len(r.Transfers) == 0 {
 		return []*endly.Message{}
 	}
 	var result = make([]*endly.Message, 0)

@@ -1,0 +1,7 @@
+name: docker/mysql
+tasks: $tasks
+paramas:
+  maxMemory: $maxMemory
+  serviceTarget: serviceTarget
+  name: $instance
+  version: $mysqlVersion

@@ -323,7 +323,7 @@ func (s *service) listen(context *endly.Context, request *ListenRequest) (*Liste
 			return nil, fmt.Errorf("listener has been already register for %v", logType.Name)
 		}
 	}
-	service, err := storage.NewServiceForURL(request.Source.URL, request.Source.Credential)
+	service, err := storage.NewServiceForURL(request.Source.URL, request.Source.Credentials)
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +354,7 @@ const (
   "FrequencyMs": 500,
   "Source": {
     "URL": "scp://127.0.0.1/opt/elogger/logs/",
-    "Credential": "${env.HOME}/.secret/localhost.json"
+    "Credentials": "${env.HOME}/.secret/localhost.json"
   },
   "Types": [
     {

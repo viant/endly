@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox/data"
 )
@@ -41,7 +42,7 @@ func NewWorkflowEndEvent(sessionID string) *WorkflowEndEvent {
 	}
 }
 
-//WorkflowAsyncEvent represents a new async action event.
+//WorkflowAsyncEvent represents an async action event.
 type WorkflowAsyncEvent struct {
 	ServiceAction *endly.ServiceAction
 }
@@ -49,4 +50,22 @@ type WorkflowAsyncEvent struct {
 //NewWorkflowAsyncEvent creates a new WorkflowAsyncEvent.
 func NewWorkflowAsyncEvent(action *endly.ServiceAction) *WorkflowAsyncEvent {
 	return &WorkflowAsyncEvent{action}
+}
+
+//PipelineEvent represents a pipeline event
+type PipelineEvent struct {
+	Name string
+}
+
+//Messages returns messages
+func (e *PipelineEvent) Messages() []*endly.Message {
+	return []*endly.Message{
+		endly.NewMessage(endly.NewStyledText(fmt.Sprintf("PIPELINE: %s", e.Name), endly.MessageStyleGroup), endly.NewStyledText("pipe", endly.MessageStyleGeneric)),
+	}
+}
+
+func NewPipelineEvent(pipeline *Pipeline) *PipelineEvent {
+	return &PipelineEvent{
+		Name: pipeline.Name,
+	}
 }

@@ -55,10 +55,10 @@
   },
 
   {
-    "Name": "execTarget",
+    "Name": "target",
     "Value": {
       "URL": "ssh://$targetHost/",
-      "Credential": "$targetHostCredential"
+      "Credentials": "$targetHostCredential"
     }
   },
 
@@ -66,7 +66,7 @@
     "Name": "buildTarget",
     "Value": {
       "URL": "scp://127.0.0.1:7722/${app}",
-      "Credential": "mem://github.com/viant/endly/workflow/docker/build/secret/build.json"
+      "Credentials": "mem://github.com/viant/endly/workflow/docker/build/secret/build.json"
     }
   }
 

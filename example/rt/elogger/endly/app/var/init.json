@@ -25,7 +25,7 @@
     "Name":"buildTarget",
     "Value":{
       "URL":"scp://$buildHost/$buildDirectory",
-      "Credential":"$buildHostCredential"
+      "Credentials":"$buildHostCredential"
     }
   },
   {

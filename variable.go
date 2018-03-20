@@ -18,6 +18,8 @@ type Variable struct {
 	Name     string            //name
 	Value    interface{}       //default value
 	From     string            //context state map key to pull data
+	When     string            //criteria if specified this variable will be set only if evaluated criteria is true (it can use $in, and $out state variables)
+	Else     interface{}       //if when criteria is not met then else can provide variable value alternative
 	Persist  bool              //stores in tmp directory to be used as backup if data is not in the cotnext
 	Required bool              //flag that validates that from returns non empty value or error is generated
 	Replace  map[string]string `description:"replacements map, if key if specified substitute variable value with corresponding value. This will work only for string replacements"` //replacements map, if key if specified substitute variable value with corresponding value.
@@ -58,9 +60,6 @@ func (v *Variable) Load() error {
 	return nil
 }
 
-//Variables a slice of variables
-type Variables []*Variable
-
 func (v *Variable) fromVariable() *Variable {
 	var fromExpr = v.From
 	fromExpr = strings.Replace(fromExpr, "<-", "", 1)
@@ -73,11 +72,11 @@ func (v *Variable) fromVariable() *Variable {
 	}
 }
 
-func (v *Variables) getValueFromInput(variable *Variable, in data.Map) (interface{}, error) {
+func (v *Variable) getValueFromInput(in data.Map) (interface{}, error) {
 	var value interface{}
-	from := variable.From
-	if from == "" && variable.Value == nil {
-		from = variable.Name
+	from := v.From
+	if from == "" && v.Value == nil {
+		from = v.Name
 	}
 	if from != "" {
 		var has bool
@@ -88,7 +87,7 @@ func (v *Variables) getValueFromInput(variable *Variable, in data.Map) (interfac
 			value, has = in.GetValue(from)
 		}
 		if !has {
-			fromVariable := variable.fromVariable()
+			fromVariable := v.fromVariable()
 			err := fromVariable.Load()
 			if fromVariable.Value != nil {
 				in.SetValue(fromVariable.Name, fromVariable.Value)
@@ -99,17 +98,94 @@ func (v *Variables) getValueFromInput(variable *Variable, in data.Map) (interfac
 			}
 		}
 	}
-
 	return value, nil
 }
 
-func (v *Variables) validateRequiredValueIfNeeded(variable *Variable, value interface{}, in data.Map) error {
-	if variable.Required && (value == nil || toolbox.AsString(value) == "") {
+func (v *Variable) validate(value interface{}, in data.Map) error {
+	if v.Required && (value == nil || toolbox.AsString(value) == "") {
 		source := in.GetString(neatly.OwnerURL)
-		return fmt.Errorf("variable '%v' is required by %v, but was empty, %v", variable.Name, source, toolbox.MapKeysToStringSlice(in))
+		return fmt.Errorf("variable '%v' is required by %v, but was empty, %v", v.Name, source, toolbox.MapKeysToStringSlice(in))
 	}
 	return nil
 }
+
+func (v *Variable) canApply(in, out data.Map) bool {
+	var state data.Map = map[string]interface{}{
+		"in":  in,
+		"out": out,
+	}
+	result, _ := Evaluate(nil, state, v.When, "", false)
+	return result
+}
+
+func (v *Variable) getValue(in data.Map) interface{} {
+	value := v.Value
+	if value != nil {
+		value = in.Expand(value)
+	}
+	return value
+}
+
+func (v *Variable) getElse(in data.Map) interface{} {
+	value := v.Else
+	if value != nil {
+		value = in.Expand(value)
+	}
+	return value
+}
+
+func (v *Variable) replaceValue(value interface{}) interface{} {
+	if len(v.Replace) == 0 {
+		return value
+	}
+	text, ok := value.(string)
+	if !ok {
+		return value
+	}
+
+	for k, v := range v.Replace {
+		text = strings.Replace(text, k, v, 1)
+	}
+	return text
+}
+
+func (v *Variable) applyElse(in, out data.Map) {
+	value := v.getElse(in)
+	if v.Name != "" {
+		out.SetValue(v.Name, value)
+	}
+}
+
+func (v *Variable) applyDefault(in, out data.Map) {
+	value := v.getValue(in)
+	if v.Name != "" {
+		out.SetValue(v.Name, value)
+	}
+}
+
+func (v *Variable) Apply(in, out data.Map) error {
+	value, err := v.getValueFromInput(in)
+	if err != nil {
+		return err
+	}
+
+	if value == nil || (v.Required && toolbox.AsString(value) == "") {
+		value = v.getValue(in)
+	}
+
+	if err := v.validate(value, in); err != nil {
+		return err
+	}
+
+	value = v.replaceValue(value)
+	if v.Name != "" {
+		out.SetValue(v.Name, value)
+	}
+	return nil
+}
+
+//Variables a slice of variables
+type Variables []*Variable
 
 func (v *Variables) isContextEmpty(in, out data.Map) bool {
 	if v == nil || out == nil || in == nil || len(*v) == 0 {
@@ -127,30 +203,15 @@ func (v *Variables) Apply(in, out data.Map) error {
 		if variable == nil {
 			continue
 		}
-		value, err := v.getValueFromInput(variable, in)
-		if err != nil {
-			return err
-		}
 
-		if value == nil || (variable.Required && toolbox.AsString(value) == "") {
-			value = variable.Value
-			if value != nil {
-				value = in.Expand(value)
+		if variable.When != "" {
+			if !variable.canApply(in, out) {
+				variable.applyElse(in, out)
+				continue
 			}
 		}
-		if err := v.validateRequiredValueIfNeeded(variable, value, in); err != nil {
+		if err := variable.Apply(in, out); err != nil {
 			return err
-		}
-
-		if text, isText := value.(string); isText && len(variable.Replace) > 0 {
-			for k, v := range variable.Replace {
-				text = strings.Replace(text, k, v, 1)
-			}
-			value = text
-		}
-
-		if variable.Name != "" {
-			out.SetValue(variable.Name, value)
 		}
 	}
 	return nil

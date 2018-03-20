@@ -2,7 +2,7 @@
   "SuperUser":true,
   "Target":{
     "URL": "ssh://$targetHost",
-    "Credential": "$targetHostCredential"
+    "Credentials": "$targetHostCredential"
   },
   "Commands":[
     "/bin/bash -c '[[ -e ${appDirectory}/conf ]] && rm -rf ${appDirectory}/conf/*'",

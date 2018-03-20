@@ -2,12 +2,8 @@
   "Name": "dockerized_memcached",
   "Tasks":"$tasks",
   "Params": {
-    "url": "scp://${targetHost}/",
-    "targetHost":"$targetHost",
-    "targetHostCredential": "$targetHostCredential",
-    "configURL": "config/aerospike.conf",
-    "configURLCredential": "$configURLCredential",
-    "serviceInstanceName": "$instance",
+    "serviceTarget": "$serviceTarget",
+    "name": "$instance",
     "maxMemory":"$maxMemory"
   }
 }

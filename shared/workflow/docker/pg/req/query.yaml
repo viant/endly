@@ -1,0 +1,3 @@
+datastore: testdb
+sql: SELECT current_database() AS name
+ignoreError: true

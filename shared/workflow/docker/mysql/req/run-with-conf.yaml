@@ -1,0 +1,11 @@
+target: $serviceTarget
+name: $name
+image: $image
+mount:
+  "${serviceConfig}": /etc/my.cnf
+ports:
+   "3306": "3306"
+env:
+   MYSQL_ROOT_PASSWORD: "**mysql**"
+secrets:
+  mysql: "$credentials"

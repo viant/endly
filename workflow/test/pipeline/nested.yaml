@@ -3,7 +3,7 @@ params:
     localhost: localhsot
   target:
     URL:ssh://127.0.0.1
-    Credential:localhost
+    Credentials:localhost
 pipeline:
   system1:
     checkout:

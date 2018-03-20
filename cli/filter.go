@@ -11,9 +11,11 @@ func DefaultFilter() map[string]bool {
 	result["workflow.print"] = true
 	result["build"] = true
 	result["deploy"] = true
+	result["storage"] = true
 	result["exec.stdin"] = true
 	result["exec.stdout"] = true
 	result["endly"] = true
+	result["workflow"] = true
 	return result
 }
 

@@ -45,7 +45,7 @@ endly -s=exec -a=close
 {
   "Target": {
     "URL": "ssh://127.0.0.1/",
-    "Credential": "${env.HOME}/.secret/localhost.json"
+    "Credentials": "${env.HOME}/.secret/localhost.json"
   },
   "SuperUser":true,
   "Commands":["mkdir /tmp/app1"]
@@ -57,7 +57,7 @@ endly -s=exec -a=close
 ```yaml
 target:
   url:  ssh://127.0.0.1/
-  credential: ${env.HOME}/.secret/localhost.json
+  credentials: ${env.HOME}/.secret/localhost.json
 commands:
   whoami
   ${cmd[0].stdout}:/root/?  mkdir -p /tmp/app
@@ -73,7 +73,7 @@ commands:
 {
 	"Target": {
 	  "URL": "ssh://127.0.0.1/",
-	  "Credential": "${env.HOME}/.secret/localhost.json"
+	  "Credentials": "${env.HOME}/.secret/localhost.json"
 	},
 	"SystemPaths": ["/opt/sdk/go/bin"],
 	"Commands": [
@@ -95,7 +95,7 @@ commands:
 <a name="session"></a>
 ## SSH Session
 
-In order to run any SSH command, service needs to open a session, it uses target.Credential and [secret service](https://github.com/viant/toolbox/tree/master/secret) to connect the target host.
+In order to run any SSH command, service needs to open a session, it uses target.Credentials and [secret service](https://github.com/viant/toolbox/tree/master/secret) to connect the target host.
 
 Opening session is an optional step, run or extract request will open session automatically.
 
@@ -177,7 +177,7 @@ This module provide  SSH session recording ability to later replay it during uni
 **Recroding SSH session**
 
 To record actual SSH session use  exec.OpenRecorderContext helper method, the last parameters specify location where conversation is recorded, actual dump takes place when context is closed (defer context.Clode()).
-If you use **sudo**. any **secret or credentials** make sure that you rename it to *** before checking in any code so you can use  `var credential, err = util.GetDummyCredential()`
+If you use **sudo**. any **secret or credentials** make sure that you rename it to *** before checking in any code so you can use  `var credentials, err = util.GetDummyCredential()`
 
 
 ```go
@@ -200,11 +200,11 @@ a test SSHService, use location of stored SSH conversation  as parameter, then c
 
 ```go
 	manager := endly.New()
-	var credential, err = util.GetDummyCredential()
+	var credentials, err = util.GetDummyCredential()
 	if err != nil {
 		log.Fatal(err)
 	}
-	target := url.NewResource("ssh://127.0.0.1", credential)
+	target := url.NewResource("ssh://127.0.0.1", credentials)
 	context, err := exec.NewSSHReplayContext(manager, target, "test/session/transient")
 	if err != nil {
 		log.Fatal(err)

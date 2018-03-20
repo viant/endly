@@ -8,9 +8,9 @@ type Call struct {
 
 //CallRequest represents a aws EC2 run request to execute method on ec2 client with provided input.
 type CallRequest struct {
-	Credential string      `required:"true" description:"ec2 credential file see more at: github.com/viant/toolbox/cred/config.go"`
-	Method     string      `required:"true" description:"ec2 client method name"`
-	Input      interface{} `required:"true" description:"ec2 client method input/request"`
+	Credentials string      `required:"true" description:"ec2 credentials file see more at: github.com/viant/toolbox/cred/config.go"`
+	Method      string      `required:"true" description:"ec2 client method name"`
+	Input       interface{} `required:"true" description:"ec2 client method input/request"`
 }
 
 //CallResponse represents EC2 run response

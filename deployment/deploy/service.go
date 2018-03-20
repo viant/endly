@@ -181,7 +181,7 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 			var sourceURL = context.Expand(source.URL)
 			exists, _ := service.Exists(sourceURL)
 			if exists {
-				source = url.NewResource(sourceURL, source.Credential)
+				source = url.NewResource(sourceURL, source.Credentials)
 				break
 			}
 		}
@@ -234,7 +234,7 @@ func (s *service) deploy(context *endly.Context, request *Request) (*Response, e
 	state := context.State()
 	if !state.Has("targetHost") {
 		state.Put("targetHost", target.ParsedURL.Host)
-		state.Put("targetHostCredential", target.Credential)
+		state.Put("targetHostCredential", target.Credentials)
 	}
 
 	var response = &Response{}
@@ -349,13 +349,13 @@ func (s *service) getMeta(context *endly.Context, request *Request) (*Meta, erro
 
 			}
 		}
-		var credential = ""
+		var credentials = ""
 		mainWorkflow := context.Workflow()
 		if mainWorkflow != nil {
-			credential = mainWorkflow.Source.Credential
+			credentials = mainWorkflow.Source.Credentials
 		}
 		response, err := s.loadMeta(context, &LoadMetaRequest{
-			Source: url.NewResource(metaURL, credential),
+			Source: url.NewResource(metaURL, credentials),
 		})
 		if err != nil {
 			return nil, err
@@ -369,7 +369,7 @@ const (
 	deploymentTomcatDeployExample = `{
   "Target": {
     "URL": "scp://127.0.0.1/opt/server/",
-    "Credential": "${env.HOME}/.secret/localhost.json"
+    "Credentials": "${env.HOME}/.secret/localhost.json"
   },
   "AppName": "tomcat",
   "Version": "7.0",

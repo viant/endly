@@ -16,8 +16,8 @@ func getInstanceStatus(awsCredential, instance string) (string, error) {
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(ec2.ServiceID)
 	serviceResponse := service.Run(context, &ec2.CallRequest{
-		Credential: awsCredential,
-		Method:     "DescribeInstances",
+		Credentials: awsCredential,
+		Method:      "DescribeInstances",
 		Input: map[string]interface{}{
 			"InstanceIds": []interface{}{
 				instance,
@@ -55,8 +55,8 @@ func startInstance(awsCredential, instance string) (string, error) {
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(ec2.ServiceID)
 	serviceResponse := service.Run(context, &ec2.CallRequest{
-		Credential: awsCredential,
-		Method:     "StartInstances",
+		Credentials: awsCredential,
+		Method:      "StartInstances",
 		Input: map[string]interface{}{
 			"InstanceIds": []interface{}{
 				instance,
@@ -84,8 +84,8 @@ func stopInstance(awsCredential, instance string) (string, error) {
 	context := manager.NewContext(toolbox.NewContext())
 	service, _ := context.Service(ec2.ServiceID)
 	serviceResponse := service.Run(context, &ec2.CallRequest{
-		Credential: awsCredential,
-		Method:     "StopInstances",
+		Credentials: awsCredential,
+		Method:      "StopInstances",
 		Input: map[string]interface{}{
 			"InstanceIds": []interface{}{
 				instance,
@@ -112,8 +112,8 @@ func Test_EC2CallRequest_AsEc2Call(t *testing.T) {
 
 	{
 		request := &ec2.CallRequest{
-			Credential: "abc",
-			Method:     "Stop",
+			Credentials: "abc",
+			Method:      "Stop",
 			Input: map[string]interface{}{
 				"k1": 1,
 			},
@@ -125,9 +125,9 @@ func Test_EC2CallRequest_AsEc2Call(t *testing.T) {
 	}
 	{
 		request := &ec2.CallRequest{
-			Credential: "abc",
-			Method:     "Stop",
-			Input:      nil,
+			Credentials: "abc",
+			Method:      "Stop",
+			Input:       nil,
 		}
 		var ec2Call = request.AsCall()
 		assert.NotNil(t, ec2Call)

@@ -68,7 +68,7 @@ func TestService_Pipeline(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	var resp = &workflow.PipelineResponse{}
+	var resp = &workflow.PipeResponse{}
 	err = endly.Run(context, request, resp)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
@@ -78,7 +78,6 @@ func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, e
 	manager := endly.New()
 	service, err := manager.Service(workflow.ServiceID)
 	if err == nil {
-
 		context := manager.NewContext(toolbox.NewContext())
 		response := service.Run(context, &workflow.LoadRequest{
 			Source: url.NewResource(workflowURI),
@@ -191,7 +190,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "workflow",
 				Tasks: "prepare",
-				BaseRun: &workflow.BaseRun{
+				AbstractRun: &workflow.AbstractRun{
 					Params: map[string]interface{}{
 						"param1": 1,
 					},
@@ -232,7 +231,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "workflow",
 				Tasks: "*",
-				BaseRun: &workflow.BaseRun{
+				AbstractRun: &workflow.AbstractRun{
 					Params: map[string]interface{}{
 						"param1": 1,
 					},
@@ -261,7 +260,7 @@ func TestWorkflowService_OnErrorTask(t *testing.T) {
 	serviceResponse := service.Run(context, &workflow.RunRequest{
 		Name:  "recover",
 		Tasks: "fail",
-		BaseRun: &workflow.BaseRun{
+		AbstractRun: &workflow.AbstractRun{
 			Params:        map[string]interface{}{},
 			EnableLogging: false,
 			LogDirectory:  "logs",
@@ -295,7 +294,7 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 		serviceResponse := service.Run(context, &workflow.RunRequest{
 			Name:  "http_workflow",
 			Tasks: "*",
-			BaseRun: &workflow.BaseRun{
+			AbstractRun: &workflow.AbstractRun{
 				Params: map[string]interface{}{
 					"appServer": "http://127.0.0.1:8313",
 				},
@@ -331,7 +330,7 @@ func TestWorkflowService_RunLifeCycle(t *testing.T) {
 			Name:              "lifecycle",
 			Tasks:             "*",
 			PublishParameters: true,
-			BaseRun: &workflow.BaseRun{
+			AbstractRun: &workflow.AbstractRun{
 				Params: map[string]interface{}{
 					"object": map[string]interface{}{
 						"key1": 1,
@@ -369,7 +368,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "broken1",
 				Tasks: "*",
-				BaseRun: &workflow.BaseRun{
+				AbstractRun: &workflow.AbstractRun{
 					Params: map[string]interface{}{},
 				},
 				PublishParameters: true,
@@ -386,7 +385,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "broken2",
 				Tasks: "*",
-				BaseRun: &workflow.BaseRun{
+				AbstractRun: &workflow.AbstractRun{
 					Params: map[string]interface{}{},
 				},
 				PublishParameters: true,
@@ -404,7 +403,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "broken2",
 				Tasks: "*",
-				BaseRun: &workflow.BaseRun{
+				AbstractRun: &workflow.AbstractRun{
 					Params: map[string]interface{}{},
 				},
 				PublishParameters: true,
@@ -422,7 +421,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "broken3",
 				Tasks: "*",
-				BaseRun: &workflow.BaseRun{
+				AbstractRun: &workflow.AbstractRun{
 					Params: map[string]interface{}{},
 				},
 				PublishParameters: true,
@@ -440,12 +439,12 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Name:  "broken4",
 				Tasks: "*",
-				BaseRun: &workflow.BaseRun{
+				AbstractRun: &workflow.AbstractRun{
 					Params: map[string]interface{}{},
 				},
 				PublishParameters: true,
 			})
-			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "failed to load workflow"), serviceResponse.Error)
+			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "unable to locate workflow"), serviceResponse.Error)
 		}
 	}
 }

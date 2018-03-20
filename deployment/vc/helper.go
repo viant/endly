@@ -27,15 +27,15 @@ var secretService = secret.New("", false)
 
 var errorRewrites = map[string]func(*secret.Service, *url.Resource) string{
 	"authentication failed": func(service *secret.Service, resource *url.Resource) string {
-		username, _ := util.GetUsername(service, resource.Credential)
-		return fmt.Sprintf("failed to authenticate username: %v with %v secret", username, resource.Credential)
+		username, _ := util.GetUsername(service, resource.Credentials)
+		return fmt.Sprintf("failed to authenticate username: %v with %v secret", username, resource.Credentials)
 	},
 	"error validating server certificate": func(service *secret.Service, resource *url.Resource) string {
 		return fmt.Sprintf("failed to validate svn certificate: %v", resource.URL)
 	},
 	"username": func(service *secret.Service, resource *url.Resource) string {
-		username, _ := util.GetUsername(service, resource.Credential)
-		return fmt.Sprintf("failed to authenticate username: %v with %v secret", username, resource.Credential)
+		username, _ := util.GetUsername(service, resource.Credentials)
+		return fmt.Sprintf("failed to authenticate username: %v with %v secret", username, resource.Credentials)
 	},
 }
 

@@ -93,6 +93,7 @@ func (r *Runner) EventTag() *EventTag {
 		}
 		return r.eventTag
 	}
+
 	activity := r.activities.Last()
 	if _, has := r.indexedTag[activity.TagID]; !has {
 		eventTag := &EventTag{
@@ -156,7 +157,7 @@ func (r *Runner) formatMessage(contextMessage string, contextMessageLength int, 
 
 func (r *Runner) formatShortMessage(messageType int, message string, messageInfoType int, messageInfo string) string {
 	var fullPath = !(messageType == messageTypeTagDescription || messageInfoType == messageTypeAction)
-	var path, pathLength = "", 0
+	var path, pathLength = "[/]", 4
 	if len(*r.activities) > 0 {
 		path, pathLength = GetPath(r.activities, r, fullPath)
 	}
@@ -179,6 +180,9 @@ func (r *Runner) getRepeated(event *endly.Event) *endly.RepeatedMessage {
 }
 
 func (r *Runner) resetRepeated() {
+	if r.repeated != nil {
+		fmt.Printf("\n")
+	}
 	r.repeated = nil
 }
 
@@ -191,7 +195,7 @@ func (r *Runner) processRepeatedReporter(reporter endly.RepeatedReporter, event 
 		if repeated.Count == 0 {
 			r.printShortMessage(header.Style, header.Text, tag.Style, tag.Text)
 		} else {
-			r.overrideShortMessage(header.Style, fmt.Sprintf("%v x%d  %v", header.Text, repeated.Count, time.Duration(repeated.Total)), tag.Style, tag.Text)
+			r.overrideShortMessage(header.Style, fmt.Sprintf("%v", header.Text), tag.Style, tag.Text)
 		}
 		repeated.Count++
 	}
@@ -285,13 +289,24 @@ func (r *Runner) processAssertable(event *endly.Event) bool {
 }
 
 func (r *Runner) processActivityStart(event *endly.Event) bool {
+	if r.activityEnded {
+		_, ok := event.Value.(*workflow.PipelineEvent)
+		if !ok {
+			return false
+		}
+		r.activityEnded = false
+		r.activities.Pop()
+	}
+
 	activity, ok := event.Value.(*endly.Activity)
 	if !ok {
 		return false
 	}
 	if r.activityEnded {
+		r.activityEnded = false
 		r.activities.Pop()
 	}
+
 	r.activities.Push(activity)
 	r.activity = activity
 	if activity.TagDescription != "" {
@@ -568,21 +583,18 @@ func (r *Runner) onWorkflowEnd() {
 }
 
 //Run run workflow for the supplied run request and runner options.
-func (r *Runner) Run(request *workflow.RunRequest) (err error) {
+func (r *Runner) Run(request interface{}) (err error) {
 	r.context = r.manager.NewContext(toolbox.NewContext())
 	r.report = &ReportSummaryEvent{}
 	r.context.CLIEnabled = true
-	r.filter = request.EventFilter
+
+	superRun, err := workflow.GetAbstractRun(request)
+	if err != nil {
+		return err
+	}
+	r.filter = superRun.EventFilter
 	if len(r.filter) == 0 {
 		r.filter = DefaultFilter()
-	}
-	if request.Name == "" {
-		name, URL, err := getURL(request.URL)
-		if err != nil {
-			return fmt.Errorf("failed to locate workflow: %v %v", request.URL, err)
-		}
-		request.URL = URL
-		request.Name = name
 	}
 	defer func() {
 		r.onWorkflowEnd()
@@ -600,16 +612,12 @@ func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 		return err
 	}
 	r.context.SetListener(r.AsListener())
-	request.Async = true
+	superRun.Async = true
 	response := service.Run(r.context, request)
 	r.onWorkflowStart()
 	if response.Err != nil {
 		err = response.Err
 		return err
-	}
-	_, ok := response.Response.(*workflow.RunResponse)
-	if !ok {
-		return fmt.Errorf("failed to run workflow: %v invalid response type %T,  %v", request.Name, response.Response, response.Error)
 	}
 	r.context.Wait.Wait()
 	return err
@@ -648,6 +656,7 @@ func New() *Runner {
 			endly.MessageStyleGeneric: "black",
 			endly.MessageStyleInput:   "blue",
 			endly.MessageStyleOutput:  "green",
+			endly.MessageStyleGroup:   "bold",
 		},
 	}
 }

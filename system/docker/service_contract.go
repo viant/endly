@@ -230,9 +230,9 @@ type ImageInfo struct {
 
 //LoginRequest represents a docker pull request
 type LoginRequest struct {
-	Target     *url.Resource `required:"true" description:"host with docker service"` //target host
-	Credential string        `required:"true" description:"credential path"`
-	Repository string        `required:"true" description:"repository url"`
+	Target      *url.Resource `required:"true" description:"host with docker service"` //target host
+	Credentials string        `required:"true" description:"credentials path"`
+	Repository  string        `required:"true" description:"repository url"`
 }
 
 //LoginResponse represents a docker pull request
@@ -289,7 +289,7 @@ type PushResponse struct {
 type RunRequest struct {
 	Target  *url.Resource     `required:"true" description:"host with docker service"`                //target host
 	Name    string            `description:"container name to inspect, if empty it uses target.Name"` //docker container name
-	Secrets map[string]string `description:"map of secret key to obfuscate terminal output with corresponding filename storing credential compatible with github.com/viant/toolbox/cred/config.go"`
+	Secrets map[string]string `description:"map of secret key to obfuscate terminal output with corresponding filename storing credentials compatible with github.com/viant/toolbox/cred/config.go"`
 	Image   string            `required:"true" description:"container image to run" example:"mysql:5.6"`
 	Port    string            `description:"publish a container’s port(s) to the host, docker -p option"`
 	Env     map[string]string `description:"set docker container an environment variable, docker -e KEY=VAL  option"`
