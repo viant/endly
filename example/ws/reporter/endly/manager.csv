@@ -1,5 +1,5 @@
 Workflow,,Name,Description,Tasks,Init,Sleep,,,,
-,,manager,run system test,%Tasks,@var/init,10000,,,,
+,,manager,run system test,%Tasks,@var/init,,,,,
 []Tasks,,Name,Description,Actions,,,,,,
 ,,init,Initialise test,%Init,,,,,,
 []Init,Service,Action,Description,Request,run.workflow,run.tasks,mysqlPort,targetHost,Async,When

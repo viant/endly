@@ -8,12 +8,17 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"strings"
+	"github.com/viant/toolbox/url"
 )
 
 //init initialises UDF functions
 func init() {
 	UdfRegistry["Dob"] = DateOfBirth
+	UdfRegistry["URLJoin"] = URLJoin
+	UdfRegistry["URLPath"] = URLPath
 }
+
+
 
 //TransformWithUDF transform payload with provided UDF name.
 func TransformWithUDF(context *Context, udfName, source string, payload interface{}) (interface{}, error) {
@@ -34,13 +39,36 @@ func TransformWithUDF(context *Context, udfName, source string, payload interfac
 	return transformed, nil
 }
 
-//DateOfBirth returns formated date of birth
+//DateOfBirth returns formatted date of birth
 func DateOfBirth(source interface{}, state data.Map) (interface{}, error) {
 	if !toolbox.IsSlice(source) {
 		return nil, fmt.Errorf("expected slice but had: %T %v", source, source)
 	}
 	return toolbox.NewDateOfBirthrovider().Get(toolbox.NewContext(), toolbox.AsSlice(source)...)
 }
+
+//URLJoin joins base URL and URI path
+func URLJoin(source interface{}, state data.Map) (interface{}, error) {
+	if !toolbox.IsSlice(source) {
+		return nil, fmt.Errorf("expected slice but had: %T %v", source, source)
+	}
+	var args = toolbox.AsSlice(source)
+	if len(args) != 2 {
+		return nil, fmt.Errorf("expected 2 arguments  but had: %v", len(args))
+	}
+	var baseURL = strings.Trim(toolbox.AsString(args[0]), " '\"")
+	var URI = strings.Trim(toolbox.AsString(args[1]), " '\"")
+	return toolbox.URLPathJoin(baseURL, URI), nil
+}
+
+
+//URLPath return path from URL
+func URLPath(source interface{}, state data.Map) (interface{}, error) {
+	resource := url.NewResource(toolbox.AsString(source))
+	return resource.ParsedURL.Path, nil
+}
+
+
 
 //AsProtobufMessage generic method for converting a map, or json string into a proto message
 func AsProtobufMessage(source interface{}, state data.Map, target proto.Message) (interface{}, error) {
@@ -74,6 +102,9 @@ func AsProtobufMessage(source interface{}, state data.Map, target proto.Message)
 	return fmt.Sprintf("base64:%v", string(buf.Bytes())), err
 }
 
+
+
+
 //FromProtobufMessage generic method for converting a proto message into a map
 func FromProtobufMessage(source interface{}, state data.Map, sourceMessage proto.Message) (interface{}, error) {
 	if toolbox.IsString(source) {
@@ -94,7 +125,6 @@ func FromProtobufMessage(source interface{}, state data.Map, sourceMessage proto
 			return nil, err
 		}
 		return toolbox.DereferenceValues(resultMap), nil
-
 	}
 	return nil, fmt.Errorf("expected string but had:%T", source)
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
+
 //AssetTransfer represents asset transfer
 type AssetTransfer map[string]interface{}
 
@@ -31,7 +32,7 @@ func NewTransfer(source, dest *url.Resource, compress, expand bool, replace map[
 
 //CopyRequest represents a resources copy request
 type CopyRequest struct {
-	*Transfer ` description:"if asset uses relative path it will be joined with this URL"`
+	*Transfer               ` description:"if asset uses relative path it will be joined with this URL"`
 	Assets    AssetTransfer `description:"map entry can either represent a transfer struct or simple key is the source and the value destination relative path"` // transfers
 	Transfers []*Transfer   `description:"actual transfer assets, if empty it derives from assets or source/desc "`
 }
@@ -207,20 +208,28 @@ func (r *UploadRequest) Validate() error {
 }
 
 //AsTransfer converts map to transfer or transfers
-func (t *AssetTransfer) AsTransfer(source, dest *url.Resource) []*Transfer {
+func (t *AssetTransfer) AsTransfer(sourceBase, destBase *url.Resource) []*Transfer {
 	aMap := toolbox.AsMap(t)
 	var transfers = make([]*Transfer, 0)
-
-	for k, v := range aMap {
+	var isSourceRootPath = sourceBase != nil && sourceBase.ParsedURL != nil && sourceBase.ParsedURL.Path == "/"
+	var isDestRootPath = destBase != nil && destBase.ParsedURL != nil && destBase.ParsedURL.Path == "/"
+	for source, v := range aMap {
 		if v == nil {
-			v = k
+			v = source
 		}
-		if _, ok := v.(string); !ok {
+		var dest, ok = v.(string)
+		if !ok {
 			continue
 		}
+		if isSourceRootPath {
+			source = url.NewResource(source).URL
+		}
+		if isDestRootPath {
+			dest = url.NewResource(dest).URL
+		}
 		transfers = append(transfers, &Transfer{
-			Source: joinIfNeeded(source, k),
-			Dest:   joinIfNeeded(dest, toolbox.AsString(v)),
+			Source: joinIfNeeded(sourceBase, source),
+			Dest:   joinIfNeeded(destBase, dest),
 		})
 	}
 	return transfers

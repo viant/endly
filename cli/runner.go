@@ -181,9 +181,11 @@ func (r *Runner) getRepeated(event *endly.Event) *endly.RepeatedMessage {
 
 func (r *Runner) resetRepeated() {
 	if r.repeated != nil {
-		fmt.Printf("\n")
+		if r.repeated.Count > 1 {
+			fmt.Printf("\n")
+		}
 	}
-	r.repeated = nil
+	//r.repeated = nil
 }
 
 func (r *Runner) processRepeatedReporter(reporter endly.RepeatedReporter, event *endly.Event) {
@@ -292,12 +294,13 @@ func (r *Runner) processActivityStart(event *endly.Event) bool {
 	if r.activityEnded {
 		_, ok := event.Value.(*workflow.PipelineEvent)
 		if !ok {
-			return false
+			if _, ok := event.Value.(*endly.Activity); !ok {
+				return false
+			}
 		}
 		r.activityEnded = false
 		r.activities.Pop()
 	}
-
 	activity, ok := event.Value.(*endly.Activity)
 	if !ok {
 		return false
@@ -306,6 +309,7 @@ func (r *Runner) processActivityStart(event *endly.Event) bool {
 		r.activityEnded = false
 		r.activities.Pop()
 	}
+	r.resetRepeated()
 
 	r.activities.Push(activity)
 	r.activity = activity
@@ -331,7 +335,6 @@ func (r *Runner) processEvent(event *endly.Event, filter map[string]bool) {
 		return
 	}
 	if r.processActivityStart(event) {
-
 		return
 	}
 	if r.processErrorEvent(event) {

@@ -60,10 +60,21 @@ func TestService_Pipeline(t *testing.T) {
 	}
 	memStorage := storage.UseMemoryService(context)
 	assert.Nil(t, err)
+
+
+
+	// TEST ASETS
+	//initial upload
+	memStorage.Upload("ssh://127.0.0.1/Projects/go/workspace/src/github.com/viant/endly/workflow/test/pipeline/build.yaml", strings.NewReader("111"))
+
+	//go deployment assets
 	memStorage.Upload("https://redirector.gvt1.com/edgedl/go/go1.8.9.linux-amd64.tar.gz", strings.NewReader("xyz"))
 	memStorage.Upload("mem://127.0.0.1:7722/opt/sdk/go_1.8.9.tar.gz", strings.NewReader("abc"))
-	memStorage.Upload("mem://127.0.0.1:7722/echo", strings.NewReader("eee"))
-	memStorage.Upload("ssh://127.0.0.1/Projects/go/workspace/src/github.com/viant/endly/workflow/test/pipeline/build.yaml", strings.NewReader("111"))
+
+
+	//final download source
+	memStorage.Upload("mem://127.0.0.1:7722/echo", strings.NewReader("final app build"))
+
 	request, err := workflow.NewPipelineRequestFromURL("test/pipeline/build.yaml")
 	if err != nil {
 		log.Fatal(err)
