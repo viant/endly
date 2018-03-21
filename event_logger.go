@@ -28,11 +28,16 @@ func (l *EventLogger) processEvent(event *Event) {
 		return
 	}
 	switch value := event.Value.(type) {
+
 	case *Activity:
+		fmt.Printf("has activity")
+
 		if l.activityEnded && len(*l.activities) > 0 {
+			fmt.Printf("activity ended !!\n")
 			l.activityEnded = false
 			l.activities.Pop()
 		}
+
 		l.activities.Push(value)
 		l.updateSubpath()
 	case *ActivityEndEvent:
@@ -60,7 +65,10 @@ func (l *EventLogger) handlerError(err error) {
 func (l *EventLogger) OnEvent(event *Event) {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
+
+
 	l.processEvent(event)
+
 	if _, has := l.tagCount[l.subPath]; !has {
 		l.tagCount[l.subPath] = 0
 	}

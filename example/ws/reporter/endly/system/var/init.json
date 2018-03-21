@@ -1,8 +1,7 @@
 [
   {
-    "Name": "targetHost",
-    "From": "params.targetHost",
-    "Required":true
+    "Name": "config",
+    "Value": "$Pwd(config/my.cnf)"
   },
   {
     "Name": "targetHostCredential",
@@ -10,12 +9,12 @@
     "Required":true
   },
   {
-    "Name": "mysqlVersion",
+    "Name": "version",
     "From": "params.mysqlVersion",
     "Required":true
   },
   {
-    "Name":"mysqlCredential",
+    "Name":"credentials",
     "From":"params.mysqlCredential",
     "Required":true
   }

@@ -10,7 +10,7 @@ Workflow,,,Name,Description,Tasks,,Init,
 ,,,check,check if started,%Check,,,
 []Check,,Service,Action,Description,Request,Post,When,SleepTimeMs
 ,,dsunit,query,run test query, @req/query, @var/status,,
-,,workflow,goto,check if db ready,@req/goto_check,,$status:/no reachable/,1000
+,,workflow,goto,check if db ready,@req/goto_check,,$status:/is not yet fully initialized/,1000
 []Tasks,,,Name,Description,Actions,,,
 ,,,stop,stop mongo $name,%Stop,,,
 []Stop,,Service,Action,Description,Request,,,
