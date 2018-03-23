@@ -16,69 +16,43 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"github.com/viant/endly/msg"
 )
-
-var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
 
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
 
-const (
-	//ActivityKey Activity key
-	ActivityKey = "Activity"
-
-	//TaskKey task key
-	TaskKey = ":task"
-)
-
-//WorkflowKey context.State workflow key
-var WorkflowKey = (*Workflow)(nil)
-
 //Context represents a workflow session context/state
 type Context struct {
-	SessionID   string
-	CLIEnabled  bool
-	EventLogger *EventLogger
-	Secrets     *secret.Service
-	Wait        *sync.WaitGroup
-	Listener    EventListener
-	Workflows   *Workflows
-	state       data.Map
+	SessionID       string
+	CLIEnabled      bool
+	HasLogger          bool
+	AsyncUnsafeKeys map[interface{}]bool
+	Secrets         *secret.Service
+	Wait            *sync.WaitGroup
+	Listener        msg.Listener
+	Source          *url.Resource
+	state           data.Map
 	toolbox.Context
-	cloned []*Context
-	closed int32
+	cloned          []*Context
+	closed          int32
 }
 
 //Publish publishes event to listeners, it updates current run details like activity workflow name etc ...
-func (c *Context) Publish(value interface{}) *Event {
+func (c *Context) Publish(value interface{}) msg.Event {
+	event, ok := value.(msg.Event);
+	if ! ok {
+		event = msg.NewEvent(value)
+	}
+	if c.Listener != nil {
+		c.Listener(event)
+	}
+	return event
+}
 
-	var workflow = c.Workflows.Last()
-	var workflowName = ""
-	if workflow != nil {
-		workflowName = workflow.Name
-	}
-	state := c.state
-	var activity = &Activity{
-		Workflow: workflowName,
-	}
-	if state.Has(TaskKey) {
-		task := state.GetString(TaskKey)
-		activity.Task = task
-	}
-	if state.Has(ActivityKey) {
-		activity, _ = state.Get(ActivityKey).(*Activity)
-	}
-	var event = &Event{
-		Timestamp: time.Now(),
-		Activity:  activity,
-		Value:     value,
-	}
-	if IsLoggingEnabled(event.Package()) {
-		EnableLogging("endly")
-		text, _ := toolbox.AsYamlText(value)
-		LogF("%v %v", event.Type(), text)
-	}
-
+//PublishWithTimestamp publishes event to listeners, it updates current run details like activity workflow name etc ...
+func (c *Context) PublishWithTimestamp(value interface{}, timestamp time.Time) msg.Event {
+	event := msg.NewEventWithTimestamp(value, timestamp)
 	if c.Listener != nil {
 		c.Listener(event)
 	}
@@ -86,7 +60,7 @@ func (c *Context) Publish(value interface{}) *Event {
 }
 
 //SetListener sets context event Listener
-func (c *Context) SetListener(listener EventListener) {
+func (c *Context) SetListener(listener msg.Listener) {
 	c.Listener = listener
 }
 
@@ -106,18 +80,18 @@ func (c *Context) Clone() *Context {
 	result.state = NewDefaultState()
 	result.state.Apply(c.state)
 	result.SessionID = c.SessionID
-	result.Workflows = c.Workflows
 	result.Listener = c.Listener
 	result.CLIEnabled = c.CLIEnabled
 	result.Secrets = c.Secrets
+	result.AsyncUnsafeKeys = make(map[interface{}]bool)
 	c.cloned = append(c.cloned, result)
 	return result
 }
 
 func (c *Context) parentURLCandidates() []string {
 	var result = make([]string, 0)
-	if workflow := c.Workflow(); workflow != nil && workflow.Source != nil {
-		baseURL, _ := toolbox.URLSplit(workflow.Source.URL)
+	if c.Source != nil {
+		baseURL, _ := toolbox.URLSplit(c.Source.URL)
 		result = append(result, baseURL)
 	}
 	currentDirectory, err := os.Getwd()
@@ -131,10 +105,10 @@ func (c *Context) parentURLCandidates() []string {
 //ExpandResource substitutes any $ expression with the key value from the state map if it is present.
 func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) {
 	if resource == nil {
-		return nil, reportError(fmt.Errorf("resource  was empty"))
+		return nil, msg.ReportError(fmt.Errorf("resource  was empty"))
 	}
 	if resource.URL == "" {
-		return nil, reportError(fmt.Errorf("url was empty"))
+		return nil, msg.ReportError(fmt.Errorf("url was empty"))
 	}
 
 	if !strings.Contains(resource.URL, "://") {
@@ -162,22 +136,9 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 func (c *Context) Manager() (Manager, error) {
 	var manager = &manager{}
 	if !c.GetInto(serviceManagerKey, &manager) {
-		return nil, reportError(fmt.Errorf("failed to lookup Service"))
+		return nil, msg.ReportError(fmt.Errorf("failed to lookup Service"))
 	}
 	return manager, nil
-}
-
-//TerminalSessions returns client sessions
-func (c *Context) TerminalSessions() SystemTerminalSessions {
-	var result *SystemTerminalSessions
-	if !c.Contains(systemTerminalSessionsKey) {
-		var sessions SystemTerminalSessions = make(map[string]*SystemTerminalSession)
-		result = &sessions
-		_ = c.Put(systemTerminalSessionsKey, result)
-	} else {
-		c.GetInto(systemTerminalSessionsKey, &result)
-	}
-	return *result
 }
 
 //Service returns a service fo provided id or error.
@@ -218,26 +179,6 @@ func (c *Context) SetState(state data.Map) {
 	c.state = state
 }
 
-//Workflow returns the master workflow
-func (c *Context) Workflow() *Workflow {
-	var result *Workflow
-	if !c.Contains(WorkflowKey) {
-		return nil
-	}
-	c.GetInto(WorkflowKey, &result)
-	return result
-}
-
-//OperatingSystem returns operating system for provide session
-func (c *Context) OperatingSystem(sessionName string) *OperatingSystem {
-	var sessions = c.TerminalSessions()
-
-	if session, has := sessions[sessionName]; has {
-		return session.OperatingSystem
-	}
-	return nil
-}
-
 //Expand substitute $ expression if present in the text and state map.
 func (c *Context) Expand(text string) string {
 	state := c.State()
@@ -250,7 +191,7 @@ func (c *Context) NewRequest(serviceName, action string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	route, err := service.ServiceActionRoute(action)
+	route, err := service.Route(action)
 	if err != nil {
 		return nil, err
 	}
@@ -264,10 +205,10 @@ func (c *Context) AsRequest(serviceName, action string, source map[string]interf
 	}
 	defer func() {
 		if r := recover(); r != nil {
-			err = fmt.Errorf("failed to create request, unable to case %v into %T, %v", source, request, r)
+			err = fmt.Errorf("failed to create request, unable to cast %v into %T, %v", source, request, r)
 		}
 	}()
-	err = converter.AssignConverted(request, source)
+	err = toolbox.DefaultConverter.AssignConverted(request, source)
 	return request, err
 }
 
@@ -283,13 +224,13 @@ func (c *Context) Close() {
 }
 
 //MakeAsyncSafe makes this contex async safe
-func (c *Context) MakeAsyncSafe() *Events {
-	c.Context.Remove(systemTerminalSessionsKey)
-	result := &Events{
-		mutex:  &sync.Mutex{},
-		Events: make([]*Event, 0),
+
+func (c *Context) MakeAsyncSafe() *msg.Events {
+	for k, _ := range c.AsyncUnsafeKeys {
+		c.Context.Remove(k)
 	}
-	c.Listener = result.AsEventListener()
+	result := msg.NewEvents()
+	c.Listener = result.AsListener()
 	return result
 }
 
@@ -362,6 +303,5 @@ func NewDefaultState() data.Map {
 	for k, v := range UdfRegistry {
 		result.Put(k, v)
 	}
-
 	return result
 }
