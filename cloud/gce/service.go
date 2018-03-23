@@ -94,11 +94,11 @@ const (
 )
 
 func (s *service) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "call",
 		RequestInfo: &endly.ActionInfo{
 			Description: "call proxies request into google.golang.org/api/compute/v1.Service client",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "get instance status",
 					Data:    gceGetInstanceStatusExample,

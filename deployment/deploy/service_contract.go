@@ -3,13 +3,13 @@ package deploy
 import (
 	"errors"
 	"fmt"
-	"github.com/viant/endly"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
 	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model"
 )
 
-//Request represent a deploy request
+//ServiceRequest represent a deploy request
 type Request struct {
 	Target  *url.Resource `required:"true" description:"target host"`                                                                                   //target host
 	MetaURL string        `description:"optional URL for meta deployment file, if left empty the meta URL is construct as meta/deployment/**AppName**"` //deployment URL for meta deployment instruction
@@ -61,7 +61,7 @@ type Dependency struct {
 type TargetMeta struct {
 	Version           string                       //version of the software
 	MinReleaseVersion map[string]string            `required:"true" description:"min release version, key is major.minor, value is release or update version"` //min release version, key is major.minor, value is release or update version
-	OsTarget          *endly.OperatingSystemTarget `description:"operating system match"`                                                                      //if specified matches current os
+	OsTarget          *model.OsTarget `description:"operating system match"`                                                                      //if specified matches current os
 	Deployment        *Deployment                  `required:"true" description:"actual deployment instructions"`                                              //actual deployment instruction
 	Dependencies      []*Dependency                `description:"app dependencies like sdk"`                                                                   //app dependencies like sdk
 }
@@ -136,7 +136,7 @@ func MatchVersion(expected, actual string) bool {
 }
 
 //Match provides build instruction for matching os and version
-func (m *Meta) Match(operatingSystem *endly.OperatingSystem, requestedVersion string) *TargetMeta {
+func (m *Meta) Match(operatingSystem *model.OperatingSystem, requestedVersion string) *TargetMeta {
 	for _, candidate := range m.Targets {
 		if candidate.Version != "" {
 			if !MatchVersion(requestedVersion, candidate.Version) {

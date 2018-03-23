@@ -28,7 +28,7 @@ func (s *service) listen(request *ListenRequest) (*ListenResponse, error) {
 }
 
 func (s *service) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "listen",
 		RequestInfo: &endly.ActionInfo{
 			Description: "start HTTP endpoint",

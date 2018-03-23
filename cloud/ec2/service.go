@@ -155,11 +155,11 @@ const (
 )
 
 func (s *service) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "call",
 		RequestInfo: &endly.ActionInfo{
 			Description: "call proxies request into github.com/aws/aws-sdk-go/service/ec2.EC2 client",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "credentials file",
 					Data:    ec2CredentialExample,
@@ -176,7 +176,7 @@ func (s *service) registerRoutes() {
 		},
 		ResponseInfo: &endly.ActionInfo{
 			Description: "response from github.com/aws/aws-sdk-go/service/ec2.EC2 client",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "get instance status",
 					Data:    ex2GetInstanceResponseExample,

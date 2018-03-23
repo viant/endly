@@ -26,7 +26,7 @@ type service struct {
 
 //checkInfo returns version control info
 func (s *service) checkInfo(context *endly.Context, request *StatusRequest) (*StatusResponse, error) {
-	target, err := context.ExpandResource(request.Target)
+	source, err := context.ExpandResource(request.Source)
 	if err != nil {
 		return nil, err
 	}
@@ -35,13 +35,19 @@ func (s *service) checkInfo(context *endly.Context, request *StatusRequest) (*St
 		return s.git.checkInfo(context, request)
 	case "svn":
 		return s.svnService.checkInfo(context, request)
+	case "local":
+		return &StatusResponse{
+			Info:&Info{
+				Origin:request.Source.URL,
+			},
+		},nil
 	}
-	return nil, fmt.Errorf("unsupported type: %v for URL %v", request.Type, target.URL)
+	return nil, fmt.Errorf("unsupported vc type: %v for URL %v", request.Type, source.URL)
 }
 
 //commit commits local changes to the version control
 func (s *service) commit(context *endly.Context, request *CommitRequest) (*CommitResponse, error) {
-	target, err := context.ExpandResource(request.Target)
+	target, err := context.ExpandResource(request.Source)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +67,7 @@ func (s *service) commit(context *endly.Context, request *CommitRequest) (*Commi
 
 //pull retrieves the latest changes from the origin
 func (s *service) pull(context *endly.Context, request *PullRequest) (*PullResponse, error) {
-	target, err := context.ExpandResource(request.Target)
+	target, err := context.ExpandResource(request.Dest)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +88,7 @@ func (s *service) checkout(context *endly.Context, request *CheckoutRequest) (*C
 	var response = &CheckoutResponse{
 		Checkouts: make(map[string]*Info),
 	}
-	target, err := context.ExpandResource(request.Target)
+	target, err := context.ExpandResource(request.Dest)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +142,7 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 	}
 	if exists {
 		var response *StatusResponse
-		response, err = s.checkInfo(context, &StatusRequest{Target: target, Type: versionControlType})
+		response, err = s.checkInfo(context, &StatusRequest{Source: target, Type: versionControlType})
 		if err != nil {
 			return nil, err
 		}
@@ -149,7 +155,7 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 				_, err = s.pull(context, &PullRequest{
 					Type:   versionControlType,
 					Origin: origin,
-					Target: target,
+					Dest: target,
 				})
 				if err != nil {
 					return nil, err
@@ -173,14 +179,16 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 	case "git":
 		info, err = s.git.checkout(context, &CheckoutRequest{
 			Origin: origin,
-			Target: target,
+			Dest: target,
 		})
 	case "svn":
 		info, err = s.svnService.checkout(context, &CheckoutRequest{
 			Origin: origin,
-			Target: target,
+			Dest: target,
 		})
-
+	case "local":
+		err = endly.Run(context, storage.NewCopyRequest(nil, storage.NewTransfer(origin, target, false, false, nil)), nil)
+		info = &Info{Origin:origin.URL}
 	default:
 		err = fmt.Errorf("unsupported version control type: '%v'", versionControlType)
 	}
@@ -270,11 +278,11 @@ const (
 )
 
 func (s *service) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "status",
 		RequestInfo: &endly.ActionInfo{
 			Description: "check status of version control on supplied target URL host and path",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "Explicit version control type",
 					Data:    vcExplicitVersionCheckExample,
@@ -299,12 +307,12 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "checkout",
 		RequestInfo: &endly.ActionInfo{
 			Description: `pull orign code to destination defined by target resource. 
 If target directory exist and contains matching origin URL, only latest changes without overriding local are sync, otherwise full checkout`,
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "single project checkout",
 					Data:    vcSingleProjectCheckoutExample,
@@ -317,7 +325,7 @@ If target directory exist and contains matching origin URL, only latest changes 
 		},
 		ResponseInfo: &endly.ActionInfo{
 			Description: "returns key value pairs of origin url with corresponding info ",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "multi project checkout",
 					Data:    vcMultiProjectCheckoutResponseExample,
@@ -338,11 +346,11 @@ If target directory exist and contains matching origin URL, only latest changes 
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "commit",
 		RequestInfo: &endly.ActionInfo{
 			Description: "submit code changes to version control origin",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "",
 					Data:    vcCommitExample,
@@ -361,11 +369,11 @@ If target directory exist and contains matching origin URL, only latest changes 
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "pull",
 		RequestInfo: &endly.ActionInfo{
 			Description: "",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "",
 					Data:    vcPullExample,

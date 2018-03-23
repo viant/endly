@@ -3,13 +3,13 @@ package exec
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/viant/endly"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/ssh"
 	"github.com/viant/toolbox/url"
 	"strings"
+	"github.com/viant/endly/model"
 )
 
 var CommandErrors = []string{util.CommandNotFound, util.NoSuchFileOrDirectory, util.ErrorIsNotRecoverable}
@@ -58,7 +58,7 @@ func NewOptions(secrets, env map[string]string, terminators, path []string, supe
 type ExtractCommand struct {
 	When       string         `description:"only run this command is criteria is matched i.e $stdout:/password/"`                                              //only run this execution is output from a previous command is matched
 	Command    string         `required:"true" description:"shell command to be executed"`                                                                     //command to be executed
-	Extraction endly.Extracts `description:"stdout data extraction instruction"`                                                                               //Stdout data extraction instruction
+	Extraction model.Extracts `description:"stdout data extraction instruction"`                                                                               //Stdout data extraction instruction
 	Errors     []string       `description:"fragments that will terminate execution with error if matched with standard output, in most cases leave empty"`    //fragments that will terminate execution with error if matched with standard output
 	Success    []string       `description:"if specified absence of all of the these fragment will terminate execution with error, in most cases leave empty"` //if specified absence of all of the these fragment will terminate execution with error.
 }
@@ -84,7 +84,7 @@ func (r *ExtractRequest) Validate() error {
 }
 
 //NewExtractCommand creates a new extract command
-func NewExtractCommand(command, when string, success, errors []string, extractions ...*endly.Extract) *ExtractCommand {
+func NewExtractCommand(command, when string, success, errors []string, extractions ...*model.Extract) *ExtractCommand {
 	if len(success) == 0 {
 		success = []string{}
 	}

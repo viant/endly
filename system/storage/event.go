@@ -2,63 +2,63 @@ package storage
 
 import (
 	"fmt"
-	"github.com/viant/endly"
+	"github.com/viant/endly/msg"
 )
 
 //Items returns tag messages
-func (r *RemoveRequest) Messages() []*endly.Message {
+func (r *RemoveRequest) Messages() []*msg.Message {
 	if len(r.Assets) == 0 {
-		return []*endly.Message{}
+		return []*msg.Message{}
 	}
-	var fragments = make([]*endly.StyledText, 0)
+	var fragments = make([]*msg.StyledText, 0)
 	for _, resource := range r.Assets {
-		fragments = append(fragments, endly.NewStyledText(fmt.Sprintf("SourceURL: %v", resource.URL), endly.MessageStyleInput))
+		fragments = append(fragments, msg.NewStyledText(fmt.Sprintf("SourceURL: %v", resource.URL), msg.MessageStyleInput))
 	}
-	return []*endly.Message{endly.NewMessage(endly.NewStyledText("", endly.MessageStyleGeneric),
-		endly.NewStyledText("remove", endly.MessageStyleGeneric),
+	return []*msg.Message{msg.NewMessage(msg.NewStyledText("", msg.MessageStyleGeneric),
+		msg.NewStyledText("remove", msg.MessageStyleGeneric),
 		fragments...),
 	}
 }
 
 //Items returns event messages
-func (r *UploadRequest) Messages() []*endly.Message {
+func (r *UploadRequest) Messages() []*msg.Message {
 	if r.Dest == nil {
-		return []*endly.Message{}
+		return []*msg.Message{}
 	}
-	return []*endly.Message{endly.NewMessage(endly.NewStyledText("", endly.MessageStyleGeneric),
-		endly.NewStyledText("upload", endly.MessageStyleGeneric),
-		endly.NewStyledText(fmt.Sprintf("SourcKey: %v", r.SourceKey), endly.MessageStyleInput),
-		endly.NewStyledText(fmt.Sprintf("DestURL: %v", r.Dest.URL), endly.MessageStyleOutput),
+	return []*msg.Message{msg.NewMessage(msg.NewStyledText("", msg.MessageStyleGeneric),
+		msg.NewStyledText("upload", msg.MessageStyleGeneric),
+		msg.NewStyledText(fmt.Sprintf("SourcKey: %v", r.SourceKey), msg.MessageStyleInput),
+		msg.NewStyledText(fmt.Sprintf("DestURL: %v", r.Dest.URL), msg.MessageStyleOutput),
 	)}
 }
 
 //Items returns event messages
-func (r *DownloadRequest) Messages() []*endly.Message {
+func (r *DownloadRequest) Messages() []*msg.Message {
 	if r.Source == nil {
-		return []*endly.Message{}
+		return []*msg.Message{}
 	}
-	return []*endly.Message{endly.NewMessage(endly.NewStyledText("", endly.MessageStyleGeneric),
-		endly.NewStyledText("upload", endly.MessageStyleGeneric),
-		endly.NewStyledText(fmt.Sprintf("Source: %v", r.Source.URL), endly.MessageStyleInput),
-		endly.NewStyledText(fmt.Sprintf("DestKey: %v", r.DestKey), endly.MessageStyleOutput),
+	return []*msg.Message{msg.NewMessage(msg.NewStyledText("", msg.MessageStyleGeneric),
+		msg.NewStyledText("upload", msg.MessageStyleGeneric),
+		msg.NewStyledText(fmt.Sprintf("Source: %v", r.Source.URL), msg.MessageStyleInput),
+		msg.NewStyledText(fmt.Sprintf("DestKey: %v", r.DestKey), msg.MessageStyleOutput),
 	)}
 }
 
 //Items returns event messages
-func (r *CopyRequest) Messages() []*endly.Message {
+func (r *CopyRequest) Messages() []*msg.Message {
 	r.Init()
 	if len(r.Transfers) == 0 {
-		return []*endly.Message{}
+		return []*msg.Message{}
 	}
-	var result = make([]*endly.Message, 0)
+	var result = make([]*msg.Message, 0)
 	for _, transfer := range r.Transfers {
 		if transfer.Source == nil || transfer.Dest == nil {
 			continue
 		}
-		result = append(result, endly.NewMessage(endly.NewStyledText("", endly.MessageStyleGeneric),
-			endly.NewStyledText("copy", endly.MessageStyleGeneric),
-			endly.NewStyledText(fmt.Sprintf("SourceURL: %v", transfer.Source.URL), endly.MessageStyleInput),
-			endly.NewStyledText(fmt.Sprintf("DestURL: %v", transfer.Dest.URL), endly.MessageStyleOutput),
+		result = append(result, msg.NewMessage(msg.NewStyledText("", msg.MessageStyleGeneric),
+			msg.NewStyledText("copy", msg.MessageStyleGeneric),
+			msg.NewStyledText(fmt.Sprintf("SourceURL: %v", transfer.Source.URL), msg.MessageStyleInput),
+			msg.NewStyledText(fmt.Sprintf("DestURL: %v", transfer.Dest.URL), msg.MessageStyleOutput),
 		))
 	}
 	return result

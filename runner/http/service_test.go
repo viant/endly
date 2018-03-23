@@ -11,6 +11,8 @@ import (
 	"path"
 	"strings"
 	"testing"
+	"github.com/viant/endly/model"
+	"github.com/viant/endly/udf"
 )
 
 func StartTestServer(port int, basedir string) error {
@@ -37,8 +39,8 @@ func TestHttpRunnerService_Run(t *testing.T) {
 				URL:    "http://127.0.0.1:8766/send1",
 				Method: "POST",
 				Body:   "0123456789",
-				Repeater: &endly.Repeater{
-					Extraction: []*endly.Extract{
+				Repeater: &model.Repeater{
+					Extraction: []*model.Extract{
 						{
 							Key:     "send_arg1",
 							RegExpr: "send1 (.+)",
@@ -50,8 +52,8 @@ func TestHttpRunnerService_Run(t *testing.T) {
 				URL:    "http://127.0.0.1:8766/send1",
 				Method: "POST",
 				Body:   "0123456789",
-				Repeater: &endly.Repeater{
-					Extraction: []*endly.Extract{
+				Repeater: &model.Repeater{
+					Extraction: []*model.Extract{
 						{
 							Key:     "send_arg2",
 							RegExpr: "send1 (.+)",
@@ -95,8 +97,8 @@ func TestHttpRunnerService_Repeat(t *testing.T) {
 				URL:    "http://127.0.0.1:8111/send1",
 				Method: "POST",
 				Body:   "0123456789",
-				Repeater: &endly.Repeater{
-					Extraction: []*endly.Extract{
+				Repeater: &model.Repeater{
+					Extraction: []*model.Extract{
 						{
 							Key:     "send_arg1",
 							RegExpr: "send1 (.+)",
@@ -153,8 +155,8 @@ func TestHttpRunnerService_RepeatWthExitCriteria(t *testing.T) {
 				URL:    "http://127.0.0.1:8112/send1",
 				Method: "POST",
 				Body:   "0123456789",
-				Repeater: &endly.Repeater{
-					Extraction: []*endly.Extract{
+				Repeater: &model.Repeater{
+					Extraction: []*model.Extract{
 						{
 							Key:     "var1",
 							RegExpr: "send1 (.+)",
@@ -180,11 +182,11 @@ func TestHttpRunnerService_RepeatWthExitCriteria(t *testing.T) {
 }
 
 func AsTestMessage(source interface{}, state data.Map) (interface{}, error) {
-	return endly.AsProtobufMessage(source, state, &proto.Message{})
+	return udf.AsProtobufMessage(source, state, &proto.Message{})
 }
 
 func FromTestMessage(source interface{}, state data.Map) (interface{}, error) {
-	return endly.FromProtobufMessage(source, state, &proto.Message{})
+	return udf.FromProtobufMessage(source, state, &proto.Message{})
 }
 
 func init() {

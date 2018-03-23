@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
+	"github.com/viant/endly/criteria"
 )
 
 //ServiceID represents validator service id
@@ -31,7 +32,7 @@ func (s *validatorService) Assert(context *endly.Context, request *AssertRequest
 		name = "/"
 	}
 
-	response.Validation, err = endly.Assert(context, name, expected, actual)
+	response.Validation, err = criteria.Assert(context, name, expected, actual)
 	if err != nil {
 		return nil, err
 	}
@@ -67,11 +68,11 @@ const validationExample = `{
 }`
 
 func (s *validatorService) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "assert",
 		RequestInfo: &endly.ActionInfo{
 			Description: "validate provided data (it uses https://github.com/viant/assertly)",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "validation",
 					Data:    validationExample,

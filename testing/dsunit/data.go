@@ -2,10 +2,10 @@ package dsunit
 
 import (
 	"fmt"
-	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"strings"
+	"github.com/viant/endly/model"
 )
 
 //TableData represents table data
@@ -148,7 +148,7 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 	}
 
 	dataStoreState := state.GetMap(ServiceID)
-	var variable = &endly.Variable{
+	var variable = &model.Variable{
 		Name:    ServiceID,
 		Persist: true,
 		Value:   dataStoreState,

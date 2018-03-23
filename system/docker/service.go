@@ -277,8 +277,8 @@ func (s *service) inspect(context *endly.Context, request *InspectRequest) (resp
 	if err != nil {
 		return nil, err
 	}
-	_, structured := endly.AsExtractable(response.Stdout)
-	response.Info = structured[endly.SliceKey]
+	_, structured := util.AsExtractable(response.Stdout)
+	response.Info = structured["value"]
 	return response, nil
 }
 
@@ -772,12 +772,12 @@ const (
 
 func (s *service) registerRoutes() {
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "run",
 		RequestInfo: &endly.ActionInfo{
 			Description: "run docker image",
 
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "run docker image on the target host",
 					Data:    dockerServiceRunExample,
@@ -798,12 +798,12 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "stop-images",
 		RequestInfo: &endly.ActionInfo{
 			Description: "stops docker container matching supplied images",
 
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "stop images",
 					Data:    dockerServiceStopImagesExample,
@@ -824,12 +824,12 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "images",
 		RequestInfo: &endly.ActionInfo{
 			Description: "return images info for supplied matching images",
 
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "check image",
 					Data:    dockerServiceImagesExample,
@@ -850,12 +850,12 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "pull",
 		RequestInfo: &endly.ActionInfo{
 			Description: "pull docker image",
 
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "pull example",
 					Data:    dockerServicePullExample,
@@ -876,12 +876,12 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "build",
 		RequestInfo: &endly.ActionInfo{
 			Description: "build docker image",
 
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "build image",
 					Data:    dockerServiceBuildExample,
@@ -902,12 +902,12 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "tag",
 		RequestInfo: &endly.ActionInfo{
 			Description: "tag docker image",
 
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "tag image",
 					Data:    dockerServiceTagExample,
@@ -928,11 +928,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "login",
 		RequestInfo: &endly.ActionInfo{
 			Description: "add credentials for supplied docker repository, required docker 17+ for secure credentials handling",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "login ",
 					Data:    dockerServiceLoginExample,
@@ -953,11 +953,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "logout",
 		RequestInfo: &endly.ActionInfo{
 			Description: "remove credentials for supplied docker repository",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "logout ",
 					Data:    dockerServiceLogoutExample,
@@ -978,11 +978,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "push",
 		RequestInfo: &endly.ActionInfo{
 			Description: "push docker image into docker repository",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "push ",
 					Data:    dockerServicePushExample,
@@ -1003,11 +1003,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "exec",
 		RequestInfo: &endly.ActionInfo{
 			Description: "run command inside container",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "mysqldump from docker container",
 					Data:    dockerServiceContainerRunMsqlDumpExample,
@@ -1032,11 +1032,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "inspect",
 		RequestInfo: &endly.ActionInfo{
 			Description: "inspect docker container",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "inspect",
 					Data:    dockerServiceContainerExample,
@@ -1057,11 +1057,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "start",
 		RequestInfo: &endly.ActionInfo{
 			Description: "start container",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "container start",
 					Data:    dockerServiceContainerExample,
@@ -1082,11 +1082,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "stop",
 		RequestInfo: &endly.ActionInfo{
 			Description: "stop container",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "container stop",
 					Data:    dockerServiceContainerExample,
@@ -1107,11 +1107,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "status",
 		RequestInfo: &endly.ActionInfo{
 			Description: "check containers status",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "container check status",
 					Data:    dockerServiceContainerExample,
@@ -1132,11 +1132,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "remove",
 		RequestInfo: &endly.ActionInfo{
 			Description: "remove docker container",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "remove container",
 					Data:    dockerServiceContainerExample,
@@ -1157,11 +1157,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "logs",
 		RequestInfo: &endly.ActionInfo{
 			Description: "remove docker container",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "read  container stdout/stderr",
 					Data:    dockerServiceContainerExample,

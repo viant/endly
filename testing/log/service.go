@@ -15,6 +15,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"github.com/viant/endly/criteria"
+	"github.com/viant/endly/udf"
 )
 
 const (
@@ -135,7 +137,7 @@ func (s *service) assert(context *endly.Context, request *AssertRequest) (*Asser
 				Actual:   actualLogRecord,
 			}
 			_, filename := toolbox.URLSplit(logRecord.URL)
-			logValidation, err := endly.Assert(context, fmt.Sprintf("%v:%v", filename, logRecord.Number), expectedLogRecord, actualLogRecord)
+			logValidation, err := criteria.Assert(context, fmt.Sprintf("%v:%v", filename, logRecord.Number), expectedLogRecord, actualLogRecord)
 			if err != nil {
 				return nil, err
 			}
@@ -209,7 +211,7 @@ func (s *service) readLogFile(context *endly.Context, source *url.Resource, serv
 		if err != nil {
 			return nil, err
 		}
-		transformed, err := endly.TransformWithUDF(context, logFile.UDF, logFile.UDF, content)
+		transformed, err := udf.TransformWithUDF(context, logFile.UDF, logFile.UDF, content)
 		switch payload := transformed.(type) {
 		case string:
 			reader = ioutil.NopCloser(strings.NewReader(payload))
@@ -411,11 +413,11 @@ const (
 )
 
 func (s *service) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "listen",
 		RequestInfo: &endly.ActionInfo{
 			Description: "check for log changes",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "log listen",
 					Data:    logValidatorExample,
@@ -436,11 +438,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "assert",
 		RequestInfo: &endly.ActionInfo{
 			Description: "assert queued logs",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "assert",
 					Data:    logValidatorAssertExample,
@@ -461,7 +463,7 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "reset",
 		RequestInfo: &endly.ActionInfo{
 			Description: "reset logs queues",

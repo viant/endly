@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/tebeka/selenium"
-	"github.com/viant/endly"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"strings"
+	"github.com/viant/endly/model"
 )
 
 //StartRequest represents a selenium server start request
@@ -127,7 +127,7 @@ type RunResponse struct {
 
 //MethodCall represents selenium call.
 type MethodCall struct {
-	Wait       *endly.Repeater
+	Wait       *model.Repeater
 	Method     string
 	Parameters []interface{}
 }
@@ -152,7 +152,7 @@ func (r *RunRequest) Validate() error {
 }
 
 //NewMethodCall creates a new method call
-func NewMethodCall(method string, repeatable *endly.Repeater, parameters ...interface{}) *MethodCall {
+func NewMethodCall(method string, repeatable *model.Repeater, parameters ...interface{}) *MethodCall {
 	return &MethodCall{
 		Wait:       repeatable,
 		Method:     method,

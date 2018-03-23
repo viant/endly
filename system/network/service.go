@@ -57,11 +57,11 @@ const networkTunnelRequestExample = `{
 `
 
 func (s *service) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "tunnel",
 		RequestInfo: &endly.ActionInfo{
 			Description: "tunnel tcp ports",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "tunnel",
 					Data:    networkTunnelRequestExample,

@@ -166,11 +166,11 @@ const (
 
 func (s *service) registerRoutes() {
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "register",
 		RequestInfo: &endly.ActionInfo{
 			Description: "register database connection",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "aerospike datastore registration",
 					Data:    dsunitAerospikeRegisterExample,
@@ -207,11 +207,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "recreate",
 		RequestInfo: &endly.ActionInfo{
 			Description: "create datastore",
-			Examples:    []*endly.ExampleUseCase{},
+			Examples:    []*endly.UseCase{},
 		},
 		RequestProvider: func() interface{} {
 			return &RecreateRequest{}
@@ -234,11 +234,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "script",
 		RequestInfo: &endly.ActionInfo{
 			Description: "run SQL script",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "run script",
 					Data:    dsunitServiceSQLExample,
@@ -265,11 +265,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "sql",
 		RequestInfo: &endly.ActionInfo{
 			Description: "run SQL",
-			Examples:    []*endly.ExampleUseCase{},
+			Examples:    []*endly.UseCase{},
 		},
 		RequestProvider: func() interface{} {
 			return &RunSQLRequest{}
@@ -293,11 +293,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "mapping",
 		RequestInfo: &endly.ActionInfo{
 			Description: "register database table mapping (view)",
-			Examples:    []*endly.ExampleUseCase{},
+			Examples:    []*endly.UseCase{},
 		},
 		RequestProvider: func() interface{} {
 			return &MappingRequest{}
@@ -319,12 +319,12 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "init",
 		RequestInfo: &endly.ActionInfo{
 			Description: "initialize datastore (register, recreated, run sql, add mapping)",
 
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "mysql init",
 					Data:    dsunitMySQLInitExample,
@@ -351,11 +351,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "prepare",
 		RequestInfo: &endly.ActionInfo{
 			Description: "populate databstore with provided data",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "static data prepare",
 					Data:    dsunitServiceStaticDataPrepareExample,
@@ -387,11 +387,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "expect",
 		RequestInfo: &endly.ActionInfo{
 			Description: "verify databstore with provided data",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "static data expect",
 					Data:    dsunitServiceExpectAction,
@@ -427,7 +427,7 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "query",
 		RequestInfo: &endly.ActionInfo{
 			Description: "run SQL query",
@@ -456,11 +456,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "sequence",
 		RequestInfo: &endly.ActionInfo{
 			Description: "get sequence for supplied tables",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "sequence",
 					Data:    dsunitServiceSequenceExample,

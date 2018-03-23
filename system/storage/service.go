@@ -13,6 +13,7 @@ import (
 	url2 "net/url"
 	"path"
 	"strings"
+	"github.com/viant/endly/udf"
 )
 
 //ServiceID represents transfer service id
@@ -196,13 +197,13 @@ func (s *service) download(context *endly.Context, request *DownloadRequest) (*D
 		return nil, err
 	}
 	if request.Udf != "" {
-		response.Transformed, err = endly.TransformWithUDF(context, request.Udf, resource.URL, data)
+		response.Transformed, err = udf.TransformWithUDF(context, request.Udf, resource.URL, data)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	response.Payload = endly.AsPayload(data)
+	response.Payload = util.AsPayload(data)
 	if request.DestKey != "" {
 		var state = context.State()
 		if response.Transformed != nil {
@@ -302,11 +303,11 @@ const (
 )
 
 func (s *service) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "copy",
 		RequestInfo: &endly.ActionInfo{
 			Description: "transfer content (files or directory structure) from source into destination, both source and destination can use local or remote file system (s3, gs, scp)",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "simple copy",
 					Data:    storageCopySimpleExample,
@@ -339,7 +340,7 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "remove",
 		RequestInfo: &endly.ActionInfo{
 			Description: "remove Transfers from local or remote file system",
@@ -358,7 +359,7 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "upload",
 		RequestInfo: &endly.ActionInfo{
 			Description: "upload content of state map source key into target destination",
@@ -377,7 +378,7 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "download",
 		RequestInfo: &endly.ActionInfo{
 			Description: "download content from source into state map key",

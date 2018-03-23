@@ -3,7 +3,6 @@ package http
 import (
 	"errors"
 	"fmt"
-	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/bridge"
 	"io/ioutil"
@@ -13,6 +12,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"github.com/viant/endly/util"
 )
 
 const (
@@ -133,7 +133,7 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 		}
 		writer.WriteHeader(response.Code)
 		if response.Body != "" {
-			var body, _ = endly.FromPayload(response.Body)
+			var body, _ = util.FromPayload(response.Body)
 			_, err = writer.Write(body)
 			if err != nil {
 				log.Print(err)
@@ -236,7 +236,7 @@ func init() {
 	HTTPRequestKeyProviders[BodyKey] = func(source interface{}) (string, error) {
 		switch request := source.(type) {
 		case *bridge.HttpRequest:
-			body, err := endly.FromPayload(request.Body)
+			body, err := util.FromPayload(request.Body)
 			return string(body), err
 		case *http.Request:
 			if request.ContentLength == 0 {

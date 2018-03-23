@@ -54,7 +54,7 @@ const restSendExample = `
 	}`
 
 func (s *restService) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "send",
 		RequestInfo: &endly.ActionInfo{
 			Description: "send REST request",

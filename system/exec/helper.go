@@ -7,7 +7,59 @@ import (
 	"github.com/viant/toolbox/ssh"
 	"github.com/viant/toolbox/url"
 	"path"
+	"github.com/viant/endly/model"
+	"errors"
 )
+
+var sessionsKey = (*model.Sessions)(nil)
+
+//TerminalSessions returns system sessions
+func TerminalSessions(context *endly.Context) model.Sessions {
+	var result *model.Sessions
+
+	if !context.Contains(sessionsKey) {
+		var sessions model.Sessions = make(map[string]*model.Session)
+		result = &sessions
+		context.AsyncUnsafeKeys[sessionsKey] = true
+		_ = context.Put(sessionsKey, result)
+	} else {
+		context.GetInto(sessionsKey, &result)
+	}
+	return *result
+}
+
+
+//TerminalSession returns Session for passed in target resource.
+func TerminalSession(context *endly.Context, target *url.Resource) (*model.Session, error) {
+	sessions := TerminalSessions(context)
+	if target == nil {
+		return nil, errors.New("target was empty")
+	}
+	if !sessions.Has(target.Host()) {
+		service, err := context.Service(ServiceID)
+		if err != nil {
+			return nil, err
+		}
+		response := service.Run(context, &OpenSessionRequest{
+			Target: target,
+		})
+		if response.Err != nil {
+			return nil, response.Err
+		}
+	}
+	return sessions[target.Host()], nil
+}
+
+
+
+//Os returns operating system for provide session
+func OperatingSystem(context *endly.Context, sessionName string) *model.OperatingSystem {
+	var sessions = TerminalSessions(context)
+	if session, has := sessions[sessionName]; has {
+		return session.Os
+	}
+	return nil
+}
 
 func openSSHSession(context *endly.Context, target *url.Resource, commandDirectory string, service ssh.Service) error {
 	request := &OpenSessionRequest{
@@ -19,8 +71,8 @@ func openSSHSession(context *endly.Context, target *url.Resource, commandDirecto
 	if err := endly.Run(context, request, response); err != nil {
 		return err
 	}
-	if _, ok := context.TerminalSessions()[":"]; !ok {
-		context.TerminalSessions()[":"] = context.TerminalSessions()[response.SessionID]
+	if _, ok := TerminalSessions(context)[":"]; !ok {
+		TerminalSessions(context)[":"] = TerminalSessions(context)[response.SessionID]
 	}
 	return nil
 }
@@ -38,7 +90,6 @@ func NewSSHMultiRecordingContext(manager endly.Manager, sessions map[string]*url
 	fileName, _, _ := toolbox.CallerInfo(3)
 	parent, _ := path.Split(fileName)
 	for baseDir, target := range sessions {
-		endly.LogF("Recoding %v: in %v\n", target.Host(), baseDir)
 		baseDir = path.Join(parent, baseDir)
 		if err := openSSHSession(context, target, baseDir, nil); err != nil {
 			return nil, err
@@ -79,7 +130,6 @@ func NewSSHReplayContext(manager endly.Manager, target *url.Resource, basedir st
 func NewSSHMultiReplayContext(manager endly.Manager, sessions map[string]*url.Resource) (*endly.Context, error) {
 	context := manager.NewContext(nil)
 	for baseDir, target := range sessions {
-		endly.LogF("Replaying %v: from %v\n", target.Host(), baseDir)
 		service, err := GetReplayService(baseDir)
 		if err != nil {
 			return nil, err

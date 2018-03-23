@@ -45,7 +45,7 @@ func (s *service) getMeta(context *endly.Context, request *Request) (*Meta, erro
 			}
 		}
 		var credentials = ""
-		mainWorkflow := context.Workflow()
+		mainWorkflow := workflow.Last(context)
 		if mainWorkflow != nil {
 			credentials = mainWorkflow.Source.Credentials
 		}
@@ -253,11 +253,11 @@ const (
 )
 
 func (s *service) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "build",
 		RequestInfo: &endly.ActionInfo{
 			Description: "build app with supplied specification",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "go app build",
 					Data:    buildGoBuildExample,
@@ -282,7 +282,7 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "load",
 		RequestInfo: &endly.ActionInfo{
 			Description: "load build meta instruction",

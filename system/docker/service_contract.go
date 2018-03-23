@@ -347,6 +347,9 @@ type StopImagesRequest struct {
 }
 
 func (r StopImagesRequest) Validate() error {
+	if r.Target == nil {
+		return errors.New("target was emty")
+	}
 	if len(r.Images) == 0 {
 		return errors.New("images were empty")
 	}

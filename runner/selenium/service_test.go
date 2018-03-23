@@ -16,6 +16,7 @@ import (
 	"path"
 	"strings"
 	"testing"
+	"github.com/viant/endly/model"
 )
 
 const code = `
@@ -199,7 +200,7 @@ func TestSeleniumService_Calls(t *testing.T) {
 		Call: &runner.MethodCall{
 			Method:     "Click",
 			Parameters: []interface{}{},
-			Wait:       &endly.Repeater{SleepTimeMs: 1},
+			Wait:       &model.Repeater{SleepTimeMs: 1},
 		},
 		Selector: &runner.WebElementSelector{
 			By:    "css selector",
@@ -218,7 +219,7 @@ func TestSeleniumService_Calls(t *testing.T) {
 		Call: &runner.MethodCall{
 			Method:     "Text",
 			Parameters: []interface{}{},
-			Wait: &endly.Repeater{
+			Wait: &model.Repeater{
 				Repeat:      20,
 				SleepTimeMs: 100,
 				Exit:        "$value:/WebDriver/",
@@ -285,7 +286,7 @@ func TestSeleniumService_Run(t *testing.T) {
 			{
 				Selector: runner.NewWebElementSelector("", "#output"),
 				Calls: []*runner.MethodCall{
-					runner.NewMethodCall("Text", &endly.Repeater{
+					runner.NewMethodCall("Text", &model.Repeater{
 						Repeat:      20,
 						SleepTimeMs: 100,
 						Exit:        "$value:/WebDriver/",
