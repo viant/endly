@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
-
 )
 
 //NewExpandedContentHandler return a new reader that can substitute content with state map, replacement data provided in replacement map.

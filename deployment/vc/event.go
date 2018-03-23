@@ -5,7 +5,6 @@ import (
 	"github.com/viant/endly/msg"
 )
 
-
 //Items returns tag messages
 func (r *CheckoutRequest) Messages() []*msg.Message {
 	if r.Origin == nil || r.Dest == nil {

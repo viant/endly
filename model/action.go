@@ -1,6 +1,5 @@
 package model
 
-
 //Action represents a workflow service action
 type Action struct {
 	*ServiceRequest
@@ -14,7 +13,6 @@ type Action struct {
 	Skip  string    `description:"criteria to skip current TagID"`
 }
 
-
 //NeatlyTag represent a neatly tag
 type NeatlyTag struct {
 	Tag            string //neatly tag
@@ -22,4 +20,3 @@ type NeatlyTag struct {
 	TagID          string //neatly tag id
 	TagDescription string //tag description
 }
-

@@ -4,7 +4,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly/model"
 	"testing"
-
 )
 
 func TestOperatingSystem_Matches(t *testing.T) {

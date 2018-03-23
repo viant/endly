@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-
 //FromPayload return bytes from
 func FromPayload(payload string) ([]byte, error) {
 	if strings.HasPrefix(payload, "text:") {

@@ -5,10 +5,10 @@ import (
 	"github.com/lunixbochs/vtclean"
 	"github.com/pkg/errors"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
 	"strings"
-	"github.com/viant/endly/model"
 )
 
 type jdkService struct{}

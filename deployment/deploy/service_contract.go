@@ -3,10 +3,10 @@ package deploy
 import (
 	"errors"
 	"fmt"
+	"github.com/viant/endly/model"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
 	"github.com/viant/toolbox/url"
-	"github.com/viant/endly/model"
 )
 
 //ServiceRequest represent a deploy request
@@ -59,11 +59,11 @@ type Dependency struct {
 
 //TargetMeta represents specific instruction for given os deployment.
 type TargetMeta struct {
-	Version           string                       //version of the software
-	MinReleaseVersion map[string]string            `required:"true" description:"min release version, key is major.minor, value is release or update version"` //min release version, key is major.minor, value is release or update version
-	OsTarget          *model.OsTarget `description:"operating system match"`                                                                      //if specified matches current os
-	Deployment        *Deployment                  `required:"true" description:"actual deployment instructions"`                                              //actual deployment instruction
-	Dependencies      []*Dependency                `description:"app dependencies like sdk"`                                                                   //app dependencies like sdk
+	Version           string            //version of the software
+	MinReleaseVersion map[string]string `required:"true" description:"min release version, key is major.minor, value is release or update version"` //min release version, key is major.minor, value is release or update version
+	OsTarget          *model.OsTarget   `description:"operating system match"`                                                                      //if specified matches current os
+	Deployment        *Deployment       `required:"true" description:"actual deployment instructions"`                                              //actual deployment instruction
+	Dependencies      []*Dependency     `description:"app dependencies like sdk"`                                                                   //app dependencies like sdk
 }
 
 //Deployment represents deployment instruction

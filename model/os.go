@@ -43,7 +43,6 @@ func (s *OperatingSystem) Matches(target *OsTarget) bool {
 	return actualVersion >= maxAllowedVersion
 }
 
-
 func normalizeVersion(version string, count int) int {
 	var result = 0
 	var fragments = strings.Split(version, ".")
@@ -53,5 +52,3 @@ func normalizeVersion(version string, count int) int {
 	}
 	return result
 }
-
-

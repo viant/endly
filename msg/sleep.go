@@ -1,10 +1,9 @@
 package msg
 
 import (
-	"time"
 	"fmt"
+	"time"
 )
-
 
 //SleepEvent represents a Sleep
 type SleepEvent struct {

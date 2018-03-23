@@ -2,8 +2,8 @@ package endly
 
 import (
 	"github.com/viant/toolbox"
-	"sync"
 	"github.com/viant/toolbox/data"
+	"sync"
 )
 
 //AppName represents endly application name
@@ -62,9 +62,6 @@ type Initializer interface {
 	Init() error
 }
 
-
-
-
 //ServiceResponse service response
 type ServiceResponse struct {
 	Status   string
@@ -94,4 +91,3 @@ type ActionInfo struct {
 	Description string
 	Examples    []*UseCase
 }
-

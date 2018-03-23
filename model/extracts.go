@@ -1,12 +1,12 @@
 package model
 
 import (
-	"github.com/viant/toolbox/data"
-	"strings"
-	"github.com/viant/endly"
-	"regexp"
 	"fmt"
 	"github.com/lunixbochs/vtclean"
+	"github.com/viant/endly"
+	"github.com/viant/toolbox/data"
+	"regexp"
+	"strings"
 )
 
 //Extracts represents an extracted data collection
@@ -49,12 +49,10 @@ func (d *Extracts) Reset(state data.Map) {
 	}
 }
 
-
 //NewExtracts creates a new NewExtracts
 func NewExtracts() Extracts {
 	return make([]*Extract, 0)
 }
-
 
 //Extract represents a data extraction
 type Extract struct {
@@ -62,7 +60,6 @@ type Extract struct {
 	Key     string `description:"state key to store a match"`                                                         //state key to store a match
 	Reset   bool   `description:"reset the key in the context before evaluating this data extraction rule"`           //reset the key in the context before evaluating this data extraction rule
 }
-
 
 //NewExtract creates a new data extraction
 func NewExtract(key, regExpr string, reset bool) *Extract {
@@ -72,8 +69,6 @@ func NewExtract(key, regExpr string, reset bool) *Extract {
 		Reset:   reset,
 	}
 }
-
-
 
 //ExtractionEvent  represents data extraction event
 type ExtractionEvent struct {
@@ -90,7 +85,6 @@ func NewExtractEvent(output string, structuredOutput, extracted interface{}) *Ex
 		Data:             extracted,
 	}
 }
-
 
 func matchExpression(compiledExpression *regexp.Regexp, line string, extract *Extract, context *endly.Context, extracted map[string]interface{}) bool {
 	if compiledExpression.MatchString(line) {
@@ -115,4 +109,3 @@ func matchExpression(compiledExpression *regexp.Regexp, line string, extract *Ex
 	}
 	return false
 }
-

@@ -1,8 +1,8 @@
 package model
 
 import (
-	"sync/atomic"
 	"sync"
+	"sync/atomic"
 )
 
 //Process represents a workflow execution process.
@@ -44,10 +44,10 @@ func (p *Process) Push(activity *Activity) {
 //NewProcess creates a new workflow, pipeline process
 func NewProcess(workflow *Workflow, pipeline *Pipeline) *Process {
 	return &Process{
-		ExecutionError:      &ExecutionError{},
-		Workflow:   workflow,
-		Pipeline:   pipeline,
-		Activities: NewActivities(),
+		ExecutionError: &ExecutionError{},
+		Workflow:       workflow,
+		Pipeline:       pipeline,
+		Activities:     NewActivities(),
 	}
 }
 
@@ -72,7 +72,7 @@ func (p *Processes) Pop() *Process {
 		return nil
 	}
 	var result = (p.processes)[len(p.processes)-1]
-	p.processes = p.processes[0: len(p.processes)-1]
+	p.processes = p.processes[0 : len(p.processes)-1]
 	return result
 }
 

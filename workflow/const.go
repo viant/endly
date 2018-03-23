@@ -3,7 +3,7 @@ package workflow
 const (
 	pipelineWorkflow = "workflow"
 	pipelineAction   = "action"
-	dataStateKey   = "data"
+	dataStateKey     = "data"
 	paramsStateKey   = "params"
-	tasksStateKey   = "tasks"
+	tasksStateKey    = "tasks"
 )

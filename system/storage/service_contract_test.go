@@ -1,11 +1,11 @@
 package storage
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox/url"
 	"testing"
-	"fmt"
 )
 
 func TestNewCopyRequestFromURL(t *testing.T) {
@@ -173,7 +173,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
 
 		assert.Nil(t, request.Init(), useCase.Description)
 		assert.Nil(t, request.Validate(), useCase.Description)
-		assertly.AssertValues(t, useCase.ExpectedRequest, request, useCase.Description +fmt.Sprintf("[%d]", i))
+		assertly.AssertValues(t, useCase.ExpectedRequest, request, useCase.Description+fmt.Sprintf("[%d]", i))
 	}
 
 }

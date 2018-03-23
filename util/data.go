@@ -1,8 +1,8 @@
 package util
 
 import (
-	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"strings"
 )
 
@@ -18,7 +18,6 @@ func AsDataMap(source interface{}) data.Map {
 	}
 	return data.Map(aMap)
 }
-
 
 //AsExtractable returns  text and data structure
 func AsExtractable(input interface{}) (string, map[string]interface{}) {

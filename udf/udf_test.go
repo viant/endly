@@ -4,8 +4,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly/test/proto"
 	"github.com/viant/toolbox"
-	"testing"
 	"github.com/viant/toolbox/data"
+	"testing"
 )
 
 func Test_AsProtobufMessage(t *testing.T) {
@@ -60,7 +60,6 @@ func Test_AsProtobufMessage_Errors(t *testing.T) {
 	}
 }
 
-
 func TestURLJoin(t *testing.T) {
 	aMap := data.NewMap()
 	aMap.Put("URLJoin", URLJoin)
@@ -71,7 +70,6 @@ func TestURLJoin(t *testing.T) {
 	assert.EqualValues(t, "mem://127.0.0.1/abc/file1.txt", expanded)
 
 }
-
 
 func TestURLPath(t *testing.T) {
 	aMap := data.NewMap()

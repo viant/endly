@@ -2,8 +2,8 @@ package selenium
 
 import (
 	"fmt"
-	"github.com/viant/toolbox"
 	"github.com/viant/endly/msg"
+	"github.com/viant/toolbox"
 )
 
 //Messages returns messages

@@ -41,12 +41,12 @@ import (
 
 	_ "github.com/viant/endly/static"
 
+	"github.com/viant/endly/model"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
 	"github.com/viant/endly/util"
 	"github.com/viant/endly/workflow"
 	"log"
-	"github.com/viant/endly/model"
 )
 
 func TestService_Pipeline(t *testing.T) {
@@ -78,10 +78,10 @@ func TestService_Pipeline(t *testing.T) {
 		log.Fatal(err)
 	}
 	request.EnableLogging = true
-	request.LogDirectory ="logs"
+	request.LogDirectory = "logs"
 	var resp = &workflow.RunResponse{}
 	err = endly.Run(context, request, resp)
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		log.Fatal(err.Error())
 	}
 	assert.NotNil(t, resp)
@@ -244,7 +244,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Tasks: "*",
 				Selector: &workflow.Selector{
-					Name:  "workflow",
+					Name: "workflow",
 				},
 				Params: map[string]interface{}{
 					"param1": 1,
@@ -273,7 +273,7 @@ func TestWorkflowService_OnErrorTask(t *testing.T) {
 	serviceResponse := service.Run(context, &workflow.RunRequest{
 		Tasks: "fail",
 		Selector: &workflow.Selector{
-			Name:  "recover",
+			Name: "recover",
 		},
 		Params:        map[string]interface{}{},
 		EnableLogging: false,
@@ -307,7 +307,7 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 		serviceResponse := service.Run(context, &workflow.RunRequest{
 			Tasks: "*",
 			Selector: &workflow.Selector{
-				Name:  "http_workflow",
+				Name: "http_workflow",
 			},
 
 			Params: map[string]interface{}{
@@ -343,9 +343,8 @@ func TestWorkflowService_RunLifeCycle(t *testing.T) {
 		serviceResponse := service.Run(context, &workflow.RunRequest{
 			Tasks: "*",
 			Selector: &workflow.Selector{
-				Name:  "lifecycle",
+				Name: "lifecycle",
 			},
-
 
 			Params: map[string]interface{}{
 				"object": map[string]interface{}{
@@ -384,7 +383,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Tasks: "*",
 				Selector: &workflow.Selector{
-					Name:  "broken1",
+					Name: "broken1",
 				},
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
@@ -401,7 +400,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Tasks: "*",
 				Selector: &workflow.Selector{
-					Name:  "broken2",
+					Name: "broken2",
 				},
 
 				Params:            map[string]interface{}{},
@@ -420,7 +419,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Tasks: "*",
 				Selector: &workflow.Selector{
-					Name:  "broken2",
+					Name: "broken2",
 				},
 
 				Params:            map[string]interface{}{},
@@ -439,8 +438,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Tasks: "*",
 				Selector: &workflow.Selector{
-					Name:  "broken3",
-
+					Name: "broken3",
 				},
 
 				Params:            map[string]interface{}{},
@@ -459,7 +457,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Tasks: "*",
 				Selector: &workflow.Selector{
-					Name:  "broken4",
+					Name: "broken4",
 				},
 
 				Params:            map[string]interface{}{},

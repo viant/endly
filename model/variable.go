@@ -8,10 +8,10 @@ import (
 	"path"
 	"strings"
 
+	"github.com/viant/endly/criteria"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/endly/criteria"
 )
 
 //Variable represents a variable
@@ -227,15 +227,12 @@ func (v Variables) String() string {
 	return result
 }
 
-
-
 //ModifiedStateEvent represent modified state event
 type ModifiedStateEvent struct {
 	Variables Variables
 	In        map[string]interface{}
 	Modified  map[string]interface{}
 }
-
 
 //NewModifiedStateEvent creates a new modified state event.
 func NewModifiedStateEvent(variables Variables, in, out data.Map) *ModifiedStateEvent {

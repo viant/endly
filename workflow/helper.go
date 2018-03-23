@@ -6,6 +6,7 @@ import (
 )
 
 var processesKey = (*model.Processes)(nil)
+
 func processes(context *endly.Context) *model.Processes {
 	var result *model.Processes
 	if !context.Contains(processesKey) {
@@ -16,8 +17,6 @@ func processes(context *endly.Context) *model.Processes {
 	}
 	return result
 }
-
-
 
 //Push push process to context
 func Push(context *endly.Context, process *model.Process) {
@@ -31,17 +30,15 @@ func Push(context *endly.Context, process *model.Process) {
 //Remove push process to context
 func Pop(context *endly.Context) *model.Process {
 	var processes = processes(context)
-	var process  =processes.Pop()
+	var process = processes.Pop()
 	if process.Workflow != nil {
 		context.Source = process.Workflow.Source
 	}
 	return process
 }
 
-
 //Returns last process
 func Last(context *endly.Context) *model.Process {
 	var processes = processes(context)
 	return processes.Last()
 }
-

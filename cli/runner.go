@@ -5,13 +5,13 @@ import (
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
 
+	"github.com/viant/endly/model"
+	"github.com/viant/endly/msg"
+	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"os"
 	"strings"
 	"time"
-	"github.com/viant/endly/msg"
-	"github.com/viant/endly/model"
-	"github.com/viant/endly/workflow"
 )
 
 //OnError exit system with os.Exit with supplied code.
@@ -20,7 +20,7 @@ var OnError = func(code int) {
 }
 
 const (
-	messageTypeAction         = iota + 10
+	messageTypeAction = iota + 10
 	messageTypeTagDescription
 )
 
@@ -529,7 +529,7 @@ func (r *Runner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
+			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
 			var minRange = 0
 			for i, event := range tag.Events {
 				validation := r.getValidation(event)
@@ -539,7 +539,7 @@ func (r *Runner) reportTagSummary() {
 				if validation.HasFailure() {
 					var beforeValidationEvents = []msg.Event{}
 					if i-minRange > 0 {
-						beforeValidationEvents = tag.Events[minRange: i-1]
+						beforeValidationEvents = tag.Events[minRange : i-1]
 					}
 					r.reportFailureWithMatchSource(tag, validation, beforeValidationEvents)
 					minRange = i + 1

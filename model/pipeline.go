@@ -1,19 +1,16 @@
 package model
 
-
-
-
 //represents pipelines
 type Pipelines []*Pipeline
 
 //Pipeline represents sequential workflow/action execution.
 type Pipeline struct {
-	Name      string    `description:"pipeline task name"`
-	Workflow  string    `description:"workflow (URL[:tasks]) selector "`
-	Action    string    `description:"action (service.action) selector "`
-	Params    map[string]interface{}    `description:"workflow or action parameters"`
-	When      string    `description:"run criteria"`
-	Pipelines Pipelines `description:"workflow or action pipelines"`
+	Name      string                 `description:"pipeline task name"`
+	Workflow  string                 `description:"workflow (URL[:tasks]) selector "`
+	Action    string                 `description:"action (service.action) selector "`
+	Params    map[string]interface{} `description:"workflow or action parameters"`
+	When      string                 `description:"run criteria"`
+	Pipelines Pipelines              `description:"workflow or action pipelines"`
 }
 
 //Select selects pipelines matching supplied selector

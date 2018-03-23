@@ -2,13 +2,12 @@ package workflow
 
 import (
 	"errors"
+	"github.com/viant/endly/model"
+	"github.com/viant/endly/msg"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"strings"
-	"github.com/viant/endly/model"
-	"github.com/viant/endly/msg"
-
 )
 
 //Run represents workflow tasks selector
@@ -17,7 +16,6 @@ type Selector struct {
 	Name   string `required:"true" description:"name defined in workflow document"`
 	TagIDs string `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
 }
-
 
 //Init initialises selector
 func (s *Selector) Init() {
@@ -49,13 +47,13 @@ func (r *Selector) Validate() error {
 
 //RunRequest represents workflow runWorkflow request
 type RunRequest struct {
-	EnableLogging     bool            `description:"flag to enable logging"`
-	LogDirectory      string          `description:"log directory"`
-	EventFilter       map[string]bool `description:"optional CLI filter option,key is either package name or package name.request/event prefix "`
-	Async             bool            `description:"flag to runWorkflow it asynchronously. Do not set it your self runner sets the flag for the first workflow"`
-	Params            map[string]interface{}    `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
-	PublishParameters bool            `default:"true" description:"flag to publish parameters directly into context state"`
-	Tasks             string          `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequencialy"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
+	EnableLogging     bool                   `description:"flag to enable logging"`
+	LogDirectory      string                 `description:"log directory"`
+	EventFilter       map[string]bool        `description:"optional CLI filter option,key is either package name or package name.request/event prefix "`
+	Async             bool                   `description:"flag to runWorkflow it asynchronously. Do not set it your self runner sets the flag for the first workflow"`
+	Params            map[string]interface{} `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
+	PublishParameters bool                   `default:"true" description:"flag to publish parameters directly into context state"`
+	Tasks             string                 `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequencialy"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
 	*Selector
 	*MultiSelector
 }
@@ -225,8 +223,8 @@ type LoadResponse struct {
 // SwitchCase represent matching candidate case
 type SwitchCase struct {
 	*model.ServiceRequest `description:"action to runWorkflow if matched"`
-	Task  string          `description:"task to runWorkflow if matched"`
-	Value interface{}     `required:"true" description:"matching sourceKey value"`
+	Task                  string      `description:"task to runWorkflow if matched"`
+	Value                 interface{} `required:"true" description:"matching sourceKey value"`
 }
 
 // SwitchRequest represent switch action request

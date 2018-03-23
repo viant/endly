@@ -27,7 +27,6 @@ type RunnerOutput interface {
 	IsOutput() bool
 }
 
-
 //StyledText represent styled text
 type StyledText struct {
 	Text  string
@@ -70,4 +69,3 @@ type RepeatedMessage struct {
 	Count int
 	Type  string
 }
-

@@ -169,14 +169,14 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 			artifact.Put(versioningFragments[i], versionFragment)
 		}
 		minReleaseVersion, has := deploymentTarget.MinReleaseVersion[request.Version]
-		if ! has {
+		if !has {
 			minReleaseVersion = ""
 		}
 		var repeatCount = len(minReleaseVersion)
 		if repeatCount == 0 {
 			repeatCount = 1
 		}
-		var maxReleaseVersion = strings.Repeat("9",repeatCount)
+		var maxReleaseVersion = strings.Repeat("9", repeatCount)
 		var min = toolbox.AsInt(minReleaseVersion)
 		var max = toolbox.AsInt(maxReleaseVersion)
 

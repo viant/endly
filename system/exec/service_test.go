@@ -3,13 +3,13 @@ package exec_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox/url"
 	"log"
 	"os"
 	"testing"
-	"github.com/viant/endly/model"
 )
 
 func TestNewExecService(t *testing.T) {
@@ -40,7 +40,7 @@ func TestNewExecService(t *testing.T) {
 		defer context.Close()
 		if assert.Nil(t, err) {
 			var target = useCase.target
-			actual :=  exec.OperatingSystem(context, target.Host())
+			actual := exec.OperatingSystem(context, target.Host())
 			if assert.NotNil(t, actual) {
 				expected := useCase.expected
 				assert.Equal(t, expected.Name, actual.Name, "os.name")

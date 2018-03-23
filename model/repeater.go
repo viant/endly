@@ -2,17 +2,15 @@ package model
 
 import (
 	"fmt"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/data"
 	"github.com/viant/endly"
 	"github.com/viant/endly/criteria"
 	"github.com/viant/endly/util"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 )
 
 //SliceKey represents slice key
 const SliceKey = "data"
-
-
 
 //Repeater represent repeated execution
 type Repeater struct {
@@ -22,8 +20,6 @@ type Repeater struct {
 	SleepTimeMs int       //Sleep time after request send, this only makes sense with repeat option
 	Exit        string    //Exit criteria, it uses extracted variable to determine repeat termination
 }
-
-
 
 //Get returns non empty instance of default instance
 func (r *Repeater) Init() *Repeater {
@@ -36,8 +32,6 @@ func (r *Repeater) Init() *Repeater {
 	}
 	return r
 }
-
-
 
 //EvaluateExitCriteria check is exit criteria is met.
 func (r *Repeater) EvaluateExitCriteria(callerInfo string, context *endly.Context, extracted map[string]interface{}) (bool, error) {
@@ -112,8 +106,3 @@ func NewRepeater() *Repeater {
 		Repeat: 1,
 	}
 }
-
-
-
-
-

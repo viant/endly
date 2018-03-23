@@ -3,8 +3,8 @@ package criteria
 import (
 	"fmt"
 	"github.com/viant/assertly"
-	"github.com/viant/toolbox/data"
 	"github.com/viant/endly"
+	"github.com/viant/toolbox/data"
 )
 
 //EvalEvent represents criteria event
@@ -31,7 +31,6 @@ func NewEvalEvent(criteriaType string, defaultValue, evaluation bool, criteria, 
 	}
 	return result
 }
-
 
 //Evaluate evaluates passed in criteria
 func Evaluate(context *endly.Context, state data.Map, expression, eventType string, defaultValue bool) (bool, error) {

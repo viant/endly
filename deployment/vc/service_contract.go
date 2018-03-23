@@ -8,11 +8,11 @@ import (
 //CheckoutRequest represents checkout request. If target directory exist and contains matching origin URL,
 // only taking the latest changes without overriding local if performed, otherwise full checkout
 type CheckoutRequest struct {
-	Type   string        `required:"true" description:"version control type: git, svn"`
-	Origin *url.Resource `required:"true" description:"checkout source for git or svn or simply file::/path"`
-	Dest   *url.Resource `required:"true" description:"checkout dest defined by host and path URL"`
-	Modules            []string `description:"list of modules to checkout"`
-	RemoveLocalChanges bool     `description:"flat to remove local directory before checkout"`
+	Type               string        `required:"true" description:"version control type: git, svn"`
+	Origin             *url.Resource `required:"true" description:"checkout source for git or svn or simply file::/path"`
+	Dest               *url.Resource `required:"true" description:"checkout dest defined by host and path URL"`
+	Modules            []string      `description:"list of modules to checkout"`
+	RemoveLocalChanges bool          `description:"flat to remove local directory before checkout"`
 }
 
 //CheckoutResponse represents checkout response
@@ -96,7 +96,7 @@ func (r *Info) HasPendingChanges() bool {
 //PullRequest represents a pull request
 type PullRequest struct {
 	Type   string
-	Dest *url.Resource `required:"true"`
+	Dest   *url.Resource `required:"true"`
 	Origin *url.Resource `required:"true"` //version control origin
 }
 

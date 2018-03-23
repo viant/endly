@@ -1,21 +1,20 @@
 package model
 
 import (
-	"sync"
 	"fmt"
+	"sync"
 )
 
 //Activities represents activities
 type Activities struct {
 	mux        *sync.RWMutex
 	activities []*Activity
-	Activity *Activity
-
+	Activity   *Activity
 }
 
 func (a *Activities) Len() int {
 	return len(a.activities)
-} 
+}
 
 //Push add activity
 func (a *Activities) Push(activity *Activity) {
@@ -24,7 +23,6 @@ func (a *Activities) Push(activity *Activity) {
 	a.activities = append(a.activities, activity)
 	a.Activity = activity
 }
-
 
 //Pop removes last activity
 func (a *Activities) Pop() *Activity {
@@ -44,12 +42,11 @@ func (a *Activities) Pop() *Activity {
 func (a *Activities) Last() *Activity {
 	if a.Activity == nil {
 		a.Activity = &Activity{
-			NeatlyTag:&NeatlyTag{Tag:"main"},
+			NeatlyTag: &NeatlyTag{Tag: "main"},
 		}
 	}
 	return a.Activity
 }
-
 
 func (a *Activities) First() *Activity {
 	if a.Len() > 0 {
@@ -58,9 +55,8 @@ func (a *Activities) First() *Activity {
 	return a.Activity
 }
 
-
 //NewActivities creates a new activites
-func NewActivities() *Activities{
+func NewActivities() *Activities {
 	return &Activities{
 		mux:        &sync.RWMutex{},
 		activities: make([]*Activity, 0),

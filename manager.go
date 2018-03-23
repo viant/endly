@@ -35,7 +35,6 @@ func Run(context *Context, request, result interface{}) error {
 	return toolbox.DefaultConverter.AssignConverted(result, response)
 }
 
-
 type manager struct {
 	name                 string
 	version              string

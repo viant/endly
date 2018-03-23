@@ -1,11 +1,11 @@
 package criteria_test
 
 import (
-	"github.com/viant/endly"
-	"github.com/viant/toolbox"
 	"github.com/stretchr/testify/assert"
-	"testing"
+	"github.com/viant/endly"
 	"github.com/viant/endly/criteria"
+	"github.com/viant/toolbox"
+	"testing"
 )
 
 func TestPredicate_Apply(t *testing.T) {

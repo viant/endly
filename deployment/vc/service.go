@@ -37,10 +37,10 @@ func (s *service) checkInfo(context *endly.Context, request *StatusRequest) (*St
 		return s.svnService.checkInfo(context, request)
 	case "local":
 		return &StatusResponse{
-			Info:&Info{
-				Origin:request.Source.URL,
+			Info: &Info{
+				Origin: request.Source.URL,
 			},
-		},nil
+		}, nil
 	}
 	return nil, fmt.Errorf("unsupported vc type: %v for URL %v", request.Type, source.URL)
 }
@@ -155,7 +155,7 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 				_, err = s.pull(context, &PullRequest{
 					Type:   versionControlType,
 					Origin: origin,
-					Dest: target,
+					Dest:   target,
 				})
 				if err != nil {
 					return nil, err
@@ -179,16 +179,16 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 	case "git":
 		info, err = s.git.checkout(context, &CheckoutRequest{
 			Origin: origin,
-			Dest: target,
+			Dest:   target,
 		})
 	case "svn":
 		info, err = s.svnService.checkout(context, &CheckoutRequest{
 			Origin: origin,
-			Dest: target,
+			Dest:   target,
 		})
 	case "local":
 		err = endly.Run(context, storage.NewCopyRequest(nil, storage.NewTransfer(origin, target, false, false, nil)), nil)
-		info = &Info{Origin:origin.URL}
+		info = &Info{Origin: origin.URL}
 	default:
 		err = fmt.Errorf("unsupported version control type: '%v'", versionControlType)
 	}

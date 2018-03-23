@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/tebeka/selenium"
+	"github.com/viant/endly/model"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"strings"
-	"github.com/viant/endly/model"
 )
 
 //StartRequest represents a selenium server start request

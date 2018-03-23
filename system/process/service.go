@@ -142,7 +142,7 @@ func (s *service) startProcess(context *endly.Context, request *StartRequest) (*
 		startCommand = fmt.Sprintf("nohup  %v", startCommand)
 	}
 
-	var runRequest =  exec.NewRunRequest(request.Target, request.AsSuperUser, changeDirCommand, startCommand)
+	var runRequest = exec.NewRunRequest(request.Target, request.AsSuperUser, changeDirCommand, startCommand)
 	runRequest.Errors = append(runRequest.Errors, "Exit 1")
 	if err = endly.Run(context, runRequest, nil); err != nil {
 		return nil, err

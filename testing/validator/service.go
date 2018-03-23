@@ -3,8 +3,8 @@ package validator
 import (
 	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox"
 	"github.com/viant/endly/criteria"
+	"github.com/viant/toolbox"
 )
 
 //ServiceID represents validator service id

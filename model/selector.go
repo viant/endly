@@ -1,8 +1,8 @@
 package model
 
 import (
-	"strings"
 	"path"
+	"strings"
 )
 
 //WorkflowSelector represents an expression to invoke workflow with all or specified task:  URL[:tasks]
@@ -22,8 +22,6 @@ func (s WorkflowSelector) IsRelative() bool {
 	}
 	return true
 }
-
-
 
 //split returns selector URL, name and tasks
 func (s WorkflowSelector) split() (URL, name, tasks string) {
@@ -66,7 +64,6 @@ func (s WorkflowSelector) Tasks() string {
 	return tasks
 
 }
-
 
 //ActionSelector represents an expression to invoke endly action:  service.Action (for workflow service workflow keyword can be skipped)
 type ActionSelector string

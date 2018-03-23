@@ -5,12 +5,12 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/data"
-	"strings"
-	"github.com/viant/toolbox/url"
 	"github.com/viant/endly"
 	"github.com/viant/endly/util"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/url"
+	"strings"
 )
 
 //init initialises UDF functions
@@ -19,8 +19,6 @@ func init() {
 	endly.UdfRegistry["URLJoin"] = URLJoin
 	endly.UdfRegistry["URLPath"] = URLPath
 }
-
-
 
 //TransformWithUDF transform payload with provided UDF name.
 func TransformWithUDF(context *endly.Context, udfName, source string, payload interface{}) (interface{}, error) {
@@ -63,14 +61,11 @@ func URLJoin(source interface{}, state data.Map) (interface{}, error) {
 	return toolbox.URLPathJoin(baseURL, URI), nil
 }
 
-
 //URLPath return path from URL
 func URLPath(source interface{}, state data.Map) (interface{}, error) {
 	resource := url.NewResource(toolbox.AsString(source))
 	return resource.ParsedURL.Path, nil
 }
-
-
 
 //AsProtobufMessage generic method for converting a map, or json string into a proto message
 func AsProtobufMessage(source interface{}, state data.Map, target proto.Message) (interface{}, error) {
@@ -103,9 +98,6 @@ func AsProtobufMessage(source interface{}, state data.Map, target proto.Message)
 	err = encoder.Close()
 	return fmt.Sprintf("base64:%v", string(buf.Bytes())), err
 }
-
-
-
 
 //FromProtobufMessage generic method for converting a proto message into a map
 func FromProtobufMessage(source interface{}, state data.Map, sourceMessage proto.Message) (interface{}, error) {

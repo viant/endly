@@ -3,6 +3,7 @@ package endly
 import (
 	"fmt"
 	uuid "github.com/satori/go.uuid"
+	"github.com/viant/endly/msg"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/secret"
@@ -16,7 +17,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"github.com/viant/endly/msg"
 )
 
 var serviceManagerKey = (*manager)(nil)
@@ -26,7 +26,7 @@ var deferFunctionsKey = (*[]func())(nil)
 type Context struct {
 	SessionID       string
 	CLIEnabled      bool
-	HasLogger          bool
+	HasLogger       bool
 	AsyncUnsafeKeys map[interface{}]bool
 	Secrets         *secret.Service
 	Wait            *sync.WaitGroup
@@ -34,14 +34,14 @@ type Context struct {
 	Source          *url.Resource
 	state           data.Map
 	toolbox.Context
-	cloned          []*Context
-	closed          int32
+	cloned []*Context
+	closed int32
 }
 
 //Publish publishes event to listeners, it updates current run details like activity workflow name etc ...
 func (c *Context) Publish(value interface{}) msg.Event {
-	event, ok := value.(msg.Event);
-	if ! ok {
+	event, ok := value.(msg.Event)
+	if !ok {
 		event = msg.NewEvent(value)
 	}
 	if c.Listener != nil {
@@ -226,7 +226,7 @@ func (c *Context) Close() {
 //MakeAsyncSafe makes this contex async safe
 
 func (c *Context) MakeAsyncSafe() *msg.Events {
-	for k, _ := range c.AsyncUnsafeKeys {
+	for k := range c.AsyncUnsafeKeys {
 		c.Context.Remove(k)
 	}
 	result := msg.NewEvents()
