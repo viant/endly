@@ -12,33 +12,6 @@ import (
 	"time"
 )
 
-//AppName represents endly application name
-const AppName = "endly"
-
-//Namespace represents endly namespace
-const Namespace = "github.com/viant/endly/"
-
-//Manager represents a workflow manager
-type Manager interface {
-	//Name returns an application ID
-	Name() string
-
-	//Version returns an application version
-	Version() string
-
-	//Service return a workflow service for provided ID, request,  or error
-	Service(input interface{}) (Service, error)
-
-	//Register register service in this manager
-	Register(service Service)
-
-	//NewContext returns new workflow context.
-	NewContext(context toolbox.Context) *Context
-
-	//Run run requests
-	Run(context *Context, request interface{}) (interface{}, error)
-}
-
 //Run runs action for supplied context request and response. Response has to be pointer or nil
 func Run(context *Context, request, result interface{}) error {
 	var resultValue reflect.Value
@@ -56,11 +29,12 @@ func Run(context *Context, request, result interface{}) error {
 	if err != nil {
 		return err
 	}
-	if result == nil {
+	if result == nil || response == nil {
 		return nil
 	}
 	return toolbox.DefaultConverter.AssignConverted(result, response)
 }
+
 
 type manager struct {
 	name                 string
@@ -95,7 +69,7 @@ func (m *manager) Service(input interface{}) (Service, error) {
 func (m *manager) Register(service Service) {
 	m.serviceByID[service.ID()] = service
 	for _, action := range service.Actions() {
-		if actionRoute, err := service.ServiceActionRoute(action); err == nil {
+		if actionRoute, err := service.Route(action); err == nil {
 			request := actionRoute.RequestProvider()
 			m.serviceByRequestType[reflect.TypeOf(request)] = service
 		}
@@ -110,13 +84,12 @@ func (m *manager) NewContext(ctx toolbox.Context) *Context {
 	if UUID, err := uuid.NewV1(); err == nil {
 		sessionID = UUID.String()
 	}
-	var workflowStack Workflows = make([]*WorkflowRun, 0)
 	var result = &Context{
-		SessionID: sessionID,
-		Context:   ctx,
-		Wait:      &sync.WaitGroup{},
-		Workflows: &workflowStack,
-		Secrets:   secret.New("", false),
+		SessionID:       sessionID,
+		Context:         ctx,
+		Wait:            &sync.WaitGroup{},
+		AsyncUnsafeKeys: make(map[interface{}]bool),
+		Secrets:         secret.New("", false),
 	}
 	_ = result.Put(serviceManagerKey, m)
 	return result
@@ -140,17 +113,15 @@ func New() Manager {
 
 //Run runs action for supplied request, returns service action response or error
 func (m *manager) Run(context *Context, request interface{}) (interface{}, error) {
-	manager := New()
-
 	if !toolbox.IsStruct(request) {
 		return nil, fmt.Errorf("expected request but had %T", request)
 	}
-	service, err := manager.Service(request)
+	service, err := m.Service(request)
 	if err != nil {
 		return nil, err
 	}
 	if context == nil {
-		context = manager.NewContext(toolbox.NewContext())
+		context = m.NewContext(toolbox.NewContext())
 		defer context.Close()
 	}
 	response := service.Run(context, request)

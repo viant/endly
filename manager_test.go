@@ -76,7 +76,7 @@ func Test_ServiceRoutes(t *testing.T) {
 		response := service.Run(context, struct{}{})
 		assert.True(t, response.Error != "")
 		for _, action := range service.Actions() {
-			if route, err := service.ServiceActionRoute(action); err == nil {
+			if route, err := service.Route(action); err == nil {
 				if route.Handler != nil {
 					_, err := route.Handler(context, struct{}{})
 					assert.NotNil(t, err)
@@ -88,16 +88,12 @@ func Test_ServiceRoutes(t *testing.T) {
 
 func TestNewManager_Run(t *testing.T) {
 	manager := endly.New()
-
 	{
-		_, err := manager.Run(nil, &endly.NopParrotRequest{
-			In: "Hello world",
-		})
+		_, err := manager.Run(nil, &endly.NopRequest{})
 		if assert.Nil(t, err) {
 
 		}
 	}
-
 	{
 		_, err := manager.Run(nil, &struct{}{})
 		if assert.NotNil(t, err) {

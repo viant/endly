@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-//Error represents an exception
+//Error represents an workflow execution error
 type Error struct {
 	Path  []string
 	error error
