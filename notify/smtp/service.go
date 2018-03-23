@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
+	"github.com/viant/endly/udf"
 )
 
 const (
@@ -44,7 +45,7 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 	defer writer.Close()
 
 	if request.UDF != "" {
-		if transformed, err := endly.TransformWithUDF(context, request.UDF, "mail.Body", mainMessage.Body); err == nil {
+		if transformed, err := udf.TransformWithUDF(context, request.UDF, "mail.Body", mainMessage.Body); err == nil {
 			mainMessage.Body = toolbox.AsString(transformed)
 		}
 	}
@@ -75,11 +76,11 @@ const sMTPSendExample = `{
 }`
 
 func (s *service) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "send",
 		RequestInfo: &endly.ActionInfo{
 			Description: "send an email",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "email send",
 					Data:    sMTPSendExample,

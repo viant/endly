@@ -150,11 +150,11 @@ const sdkSetExample = `{
 }`
 
 func (s *systemSdkService) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "set",
 		RequestInfo: &endly.ActionInfo{
 			Description: "set sdk on SSH session, deploy SDK if needed",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "set go sdk",
 					Data:    sdkSetExample,

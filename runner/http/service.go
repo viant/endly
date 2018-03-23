@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"github.com/viant/endly/udf"
+	"github.com/viant/endly/util"
 )
 
 //ServiceID represents http runner service id.
@@ -29,7 +31,7 @@ func (s *service) processResponse(context *endly.Context, sendRequest *SendReque
 	copyHeaders(httpResponse.Header, response.Header)
 	readBody(httpResponse, response, isBase64Encoded)
 	if sendHTTPRequest.ResponseUdf != "" {
-		transformed, err := endly.TransformWithUDF(context, sendHTTPRequest.ResponseUdf, sendHTTPRequest.URL, response.Body)
+		transformed, err := udf.TransformWithUDF(context, sendHTTPRequest.ResponseUdf, sendHTTPRequest.URL, response.Body)
 		if err != nil {
 			return "", err
 		}
@@ -56,7 +58,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPR
 	if len(HTTPRequest.Body) > 0 {
 		body = []byte(HTTPRequest.Body)
 		if HTTPRequest.RequestUdf != "" {
-			transformed, err := endly.TransformWithUDF(context, HTTPRequest.RequestUdf, HTTPRequest.URL, string(body))
+			transformed, err := udf.TransformWithUDF(context, HTTPRequest.RequestUdf, HTTPRequest.URL, string(body))
 			if err != nil {
 				return err
 			}
@@ -65,7 +67,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPR
 			}
 		}
 		isBase64Encoded = strings.HasPrefix(string(body), "base64:")
-		body, err = endly.FromPayload(string(body))
+		body, err = util.FromPayload(string(body))
 		if err != nil {
 			return err
 		}
@@ -84,12 +86,12 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPR
 	response := &Response{}
 	sendGroupResponse.Responses = append(sendGroupResponse.Responses, response)
 	startEvent := s.Begin(context, HTTPRequest)
-	repeatable := HTTPRequest.Repeater.Get()
+	repeater := HTTPRequest.Repeater.Init()
 
 	var HTTPResponse *http.Response
 	var responseBody string
 	var bodyCache []byte
-	var useCachedBody = repeatable.Repeat > 1 && httpRequest.ContentLength > 0
+	var useCachedBody = repeater.Repeat > 1 && httpRequest.ContentLength > 0
 	if useCachedBody {
 		bodyCache, err = ioutil.ReadAll(httpRequest.Body)
 		if err != nil {
@@ -110,7 +112,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPR
 		return responseBody, err
 	}
 
-	err = repeatable.Run(s.AbstractService, "HTTPRunner", context, handler, sendGroupResponse.Data)
+	err = repeater.Run(s.AbstractService, "HTTPRunner", context, handler, sendGroupResponse.Data)
 	if err != nil {
 		return err
 	}
@@ -127,7 +129,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPR
 		previous = data.NewMap()
 	}
 	response.Code = HTTPResponse.StatusCode
-	response.TimeTakenMs = int(startEvent.Timestamp.Sub(endEvent.Timestamp) / time.Millisecond)
+	response.TimeTakenMs = int(startEvent.Timestamp().Sub(endEvent.Timestamp()) / time.Millisecond)
 
 	if toolbox.IsCompleteJSON(responseBody) {
 		response.JSONBody, err = toolbox.JSONToMap(responseBody)
@@ -141,7 +143,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPR
 		previous[k] = state.Expand(expanded)
 	}
 
-	err = repeatable.Variables.Apply(previous, previous)
+	err = repeater.Variables.Apply(previous, previous)
 	if err != nil {
 		return err
 	}
@@ -281,11 +283,11 @@ const httpRunnerSendRequestExample = `{
 }`
 
 func (s *service) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "send",
 		RequestInfo: &endly.ActionInfo{
 			Description: "send http request(s)",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "send",
 					Data:    httpRunnerSendRequestExample,

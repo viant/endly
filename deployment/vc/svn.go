@@ -9,12 +9,13 @@ import (
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
+	"github.com/viant/endly/model"
 )
 
 type svnService struct{}
 
 func (s *svnService) checkInfo(context *endly.Context, request *StatusRequest) (*StatusResponse, error) {
-	target, err := context.ExpandResource(request.Target)
+	target, err := context.ExpandResource(request.Source)
 	if err != nil {
 		return nil, err
 	}
@@ -28,8 +29,8 @@ func (s *svnService) checkInfo(context *endly.Context, request *StatusRequest) (
 	extractRequest := exec.NewExtractRequest(target,
 		exec.DefaultOptions(),
 		exec.NewExtractCommand(fmt.Sprintf("svn info"), "", nil, nil,
-			endly.NewExtract("origin", "^URL:[\\t\\s]+([^\\s]+)", false),
-			endly.NewExtract("revision", "Revision:\\s+([^\\s]+)", false)),
+			model.NewExtract("origin", "^URL:[\\t\\s]+([^\\s]+)", false),
+			model.NewExtract("revision", "Revision:\\s+([^\\s]+)", false)),
 		exec.NewExtractCommand(fmt.Sprintf("svn stat"), "", nil, nil))
 
 	if err = endly.Run(context, extractRequest, runResponse); err != nil {
@@ -83,7 +84,7 @@ func readSvnStatus(commandResult *exec.RunResponse, response *Info) {
 }
 
 func (s *svnService) pull(context *endly.Context, request *PullRequest) (*PullResponse, error) {
-	target, err := context.ExpandResource(request.Target)
+	target, err := context.ExpandResource(request.Dest)
 	if err != nil {
 		return nil, err
 	}
@@ -94,16 +95,16 @@ func (s *svnService) pull(context *endly.Context, request *PullRequest) (*PullRe
 }
 
 func (s *svnService) checkout(context *endly.Context, request *CheckoutRequest) (*Info, error) {
-	target, err := context.ExpandResource(request.Target)
+	dest, err := context.ExpandResource(request.Dest)
 	if err != nil {
 		return nil, err
 	}
 	var vcInfo = &Info{}
-	err = s.runSecureSvnCommand(context, target, request.Origin, vcInfo, "co", request.Origin.URL, target.DirectoryPath())
+	err = s.runSecureSvnCommand(context, dest, request.Origin, vcInfo, "co", request.Origin.URL, dest.DirectoryPath())
 	return vcInfo, err
 }
 
-func (s *svnService) runSecureSvnCommand(context *endly.Context, target *url.Resource, origin *url.Resource, info *Info, command string, arguments ...string) error {
+func (s *svnService) runSecureSvnCommand(context *endly.Context, source *url.Resource, origin *url.Resource, info *Info, command string, arguments ...string) error {
 	var username, err = util.GetUsername(context.Secrets, origin.Credentials)
 	if err != nil {
 		return err
@@ -111,7 +112,7 @@ func (s *svnService) runSecureSvnCommand(context *endly.Context, target *url.Res
 	var secrets = make(map[string]string)
 	secrets[CredentialKey] = origin.Credentials
 
-	var extractRequest = exec.NewExtractRequest(target,
+	var extractRequest = exec.NewExtractRequest(source,
 		exec.DefaultOptions(),
 		exec.NewExtractCommand(fmt.Sprintf("svn %v --username=%v %v", command, username, strings.Join(arguments, " ")), "", nil, []string{util.NoSuchFileOrDirectory, "Event not found", "Errors validating server certificate", "Unable to connect to a repository"}),
 		exec.NewExtractCommand(CredentialKey, "Password", nil, []string{util.NoSuchFileOrDirectory, "Event not found", "Username:"}),
@@ -127,7 +128,7 @@ func (s *svnService) runSecureSvnCommand(context *endly.Context, target *url.Res
 		return err
 	}
 	response, err := s.checkInfo(context, &StatusRequest{
-		Target: target,
+		Source: source,
 		Type:   "svn",
 	})
 	if response != nil {
@@ -139,7 +140,7 @@ func (s *svnService) runSecureSvnCommand(context *endly.Context, target *url.Res
 func (s *svnService) commit(context *endly.Context, request *CommitRequest) (*CommitResponse, error) {
 	runResponse := &exec.RunResponse{}
 	var cmd = fmt.Sprintf("svn ci -m \"%v\" ", strings.Replace(request.Message, "\"", "'", len(request.Message)))
-	if err := endly.Run(context, exec.NewRunRequest(request.Target, false, cmd), runResponse); err != nil {
+	if err := endly.Run(context, exec.NewRunRequest(request.Source, false, cmd), runResponse); err != nil {
 		return nil, err
 	}
 	if util.CheckNoSuchFileOrDirectory(runResponse.Stdout()) {
@@ -148,7 +149,7 @@ func (s *svnService) commit(context *endly.Context, request *CommitRequest) (*Co
 
 	var response = &CommitResponse{}
 	statusResponse, err := s.checkInfo(context, &StatusRequest{
-		Target: request.Target,
+		Source: request.Source,
 	})
 	if err != nil {
 		return nil, err

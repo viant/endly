@@ -10,6 +10,7 @@ import (
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
+	"github.com/viant/endly/model"
 )
 
 //ServiceID represents system daemon service
@@ -155,8 +156,8 @@ func (s *service) determineCheckCommand(context *endly.Context, target *url.Reso
 		if info.Pid > 0 {
 			var runResponse = &exec.RunResponse{}
 			var extractRequest = exec.NewExtractRequest(target, exec.DefaultOptions(), exec.NewExtractCommand(fmt.Sprintf("launchctl procinfo %v", info.Pid), "", nil, []string{"Unrecognized"},
-				endly.NewExtract("path", "program path[\\s|\\t]+=[\\s|\\t]+([^\\s]+)", false),
-				endly.NewExtract("state", "state = (running)", false)))
+				model.NewExtract("path", "program path[\\s|\\t]+=[\\s|\\t]+([^\\s]+)", false),
+				model.NewExtract("state", "state = (running)", false)))
 			extractRequest.SuperUser = true
 
 			err = endly.Run(context, extractRequest, runResponse)
@@ -219,10 +220,10 @@ func (s *service) checkService(context *endly.Context, request *StatusRequest) (
 
 	commandResult, err := s.executeCommand(context, serviceType, target, exec.NewExtractRequest(
 		target, options, exec.NewExtractCommand(command, "", nil, nil,
-			endly.NewExtract("pid", "[^└]+└─(\\d+).+", true),
-			endly.NewExtract("pid", "Main PID: (\\d+).+", false),
-			endly.NewExtract("state", "[\\s|\\t]+Active:\\s+(\\S+)", false),
-			endly.NewExtract("path", "[^└]+└─\\d+[\\s\\t].(.+)", false)),
+			model.NewExtract("pid", "[^└]+└─(\\d+).+", true),
+			model.NewExtract("pid", "Main PID: (\\d+).+", false),
+			model.NewExtract("state", "[\\s|\\t]+Active:\\s+(\\S+)", false),
+			model.NewExtract("path", "[^└]+└─\\d+[\\s\\t].(.+)", false)),
 		exec.NewExtractCommand("Q", "(END)", nil, nil)))
 
 	if err != nil {
@@ -342,7 +343,7 @@ func (s *service) startService(context *endly.Context, request *StartRequest) (*
 }
 
 func (s *service) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "start",
 		RequestInfo: &endly.ActionInfo{
 			Description: "start provided service on target host",
@@ -360,7 +361,7 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "status",
 		RequestInfo: &endly.ActionInfo{
 			Description: "check service status on target host",
@@ -378,7 +379,7 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "stop",
 		RequestInfo: &endly.ActionInfo{
 			Description: "stop service on target host",

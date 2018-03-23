@@ -10,6 +10,7 @@ import (
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
+	"github.com/viant/endly/model"
 )
 
 type git struct{}
@@ -76,7 +77,7 @@ func extractRevision(stdout string, response *Info) {
 }
 
 func (s *git) checkInfo(context *endly.Context, request *StatusRequest) (*StatusResponse, error) {
-	target, err := context.ExpandResource(request.Target)
+	target, err := context.ExpandResource(request.Source)
 	if err != nil {
 		return nil, err
 	}
@@ -86,12 +87,12 @@ func (s *git) checkInfo(context *endly.Context, request *StatusRequest) (*Status
 		return result, nil
 	}
 
-	runRequest := exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
+	runRequest := exec.NewExtractRequest(request.Source, exec.DefaultOptions(),
 		exec.NewExtractCommand(fmt.Sprintf("git status"), "", nil, nil,
-			endly.NewExtract("branch", "On branch[\\s\\t]+([^\\s]+)", true)),
+			model.NewExtract("branch", "On branch[\\s\\t]+([^\\s]+)", true)),
 
 		exec.NewExtractCommand(fmt.Sprintf("git remote -v"), "", nil, nil,
-			endly.NewExtract("origin", "origin[\\s\\t]+([^\\s]+)\\s+\\(fetch\\)", true)),
+			model.NewExtract("origin", "origin[\\s\\t]+([^\\s]+)\\s+\\(fetch\\)", true)),
 		exec.NewExtractCommand(fmt.Sprintf("git rev-parse HEAD"), "", nil, nil))
 
 	if err = endly.Run(context, runRequest, runResponse); err != nil {
@@ -116,7 +117,7 @@ func (s *git) checkInfo(context *endly.Context, request *StatusRequest) (*Status
 }
 
 func (s *git) pull(context *endly.Context, request *PullRequest) (*PullResponse, error) {
-	target, err := context.ExpandResource(request.Target)
+	target, err := context.ExpandResource(request.Dest)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +141,7 @@ func (s *git) checkout(context *endly.Context, request *CheckoutRequest) (*Info,
 	if err != nil {
 		return nil, err
 	}
-	target, err := context.ExpandResource(request.Target)
+	dest, err := context.ExpandResource(request.Dest)
 	if err != nil {
 		return nil, err
 	}
@@ -153,32 +154,32 @@ func (s *git) checkout(context *endly.Context, request *CheckoutRequest) (*Info,
 		}
 	}
 
-	var parent, projectName = path.Split(target.DirectoryPath())
+	var parent, projectName = path.Split(dest.DirectoryPath())
 	var useParentDirectory = true
 	var _, originProjectName = path.Split(origin.DirectoryPath())
 	if originProjectName == projectName {
 		projectName = "."
-		if target.DirectoryPath() != "/" {
-			if err := endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("mkdir -p %v", target.DirectoryPath())), nil); err != nil {
+		if dest.DirectoryPath() != "/" {
+			if err := endly.Run(context, exec.NewRunRequest(dest, false, fmt.Sprintf("mkdir -p %v", dest.DirectoryPath())), nil); err != nil {
 				return nil, nil
 			}
 		}
 		useParentDirectory = false
 	} else {
-		if err := endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", parent)), nil); err != nil {
+		if err := endly.Run(context, exec.NewRunRequest(dest, false, fmt.Sprintf("cd %v", parent)), nil); err != nil {
 			return nil, err
 		}
 	}
 
 	var info = &Info{}
-	err = s.runSecureCommand(context, request.Type, origin, target, fmt.Sprintf("git clone %v %v", origin.CredentialURL(username, ""), projectName), info, useParentDirectory)
+	err = s.runSecureCommand(context, request.Type, origin, dest, fmt.Sprintf("git clone %v %v", origin.CredentialURL(username, ""), projectName), info, useParentDirectory)
 	return info, err
 }
 
-func (s *git) runSecureCommand(context *endly.Context, versionControlType string, origin, target *url.Resource, command string, info *Info, useParentDirectory bool) (err error) {
+func (s *git) runSecureCommand(context *endly.Context, versionControlType string, origin, source *url.Resource, command string, info *Info, useParentDirectory bool) (err error) {
 	var secrets = make(map[string]string)
 	secrets[CredentialKey] = origin.Credentials
-	commandTarget, _ := context.ExpandResource(target)
+	commandTarget, _ := context.ExpandResource(source)
 	if useParentDirectory {
 		commandTarget.Rename("")
 	}
@@ -201,7 +202,7 @@ func (s *git) runSecureCommand(context *endly.Context, versionControlType string
 	}
 
 	response, err := s.checkInfo(context, &StatusRequest{
-		Target: target,
+		Source: source,
 		Type:   versionControlType,
 	})
 	if err != nil {
@@ -213,14 +214,14 @@ func (s *git) runSecureCommand(context *endly.Context, versionControlType string
 
 func (s *git) commit(context *endly.Context, request *CommitRequest) (*CommitResponse, error) {
 	checkInfo, err := s.checkInfo(context, &StatusRequest{
-		Target: request.Target,
+		Source: request.Source,
 	})
 	if err != nil {
 		return nil, err
 	}
 	if len(checkInfo.Untracked) > 0 {
 		for _, file := range checkInfo.Untracked {
-			var runRequest = exec.NewExtractRequest(request.Target,
+			var runRequest = exec.NewExtractRequest(request.Source,
 				exec.DefaultOptions(),
 				exec.NewExtractCommand(fmt.Sprintf("git add %v ", file), "", nil, []string{util.NoSuchFileOrDirectory, "Errors"}),
 			)
@@ -231,18 +232,18 @@ func (s *git) commit(context *endly.Context, request *CommitRequest) (*CommitRes
 	}
 	message := strings.Replace(request.Message, "\"", "'", len(request.Message))
 
-	var runRequest = exec.NewExtractRequest(request.Target,
+	var runRequest = exec.NewExtractRequest(request.Source,
 		exec.DefaultOptions(),
 		exec.NewExtractCommand(fmt.Sprintf("git commit -m \"%v\" -a", message), "", nil, []string{util.NoSuchFileOrDirectory, "Errors"}))
 
 	if err = endly.Run(context, runRequest, nil); err == nil {
-		err = endly.Run(context, exec.NewRunRequest(request.Target, false, "git push"), nil)
+		err = endly.Run(context, exec.NewRunRequest(request.Source, false, "git push"), nil)
 	}
 	if err != nil {
 		return nil, err
 	}
 	response, err := s.checkInfo(context, &StatusRequest{
-		Target: request.Target,
+		Source: request.Source,
 	})
 	if err != nil {
 		return nil, err

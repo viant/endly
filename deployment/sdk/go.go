@@ -6,6 +6,7 @@ import (
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
 	"os"
+	"github.com/viant/endly/model"
 )
 
 //TODO complete implementation
@@ -26,7 +27,7 @@ func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, 
 
 	var extractRequest = exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand("go version", "", nil, nil,
-			endly.NewExtract("version", "go version go([^\\s]+)", false)),
+			model.NewExtract("version", "go version go([^\\s]+)", false)),
 	)
 	runResponse := &exec.RunResponse{}
 	if err := endly.Run(context, extractRequest, runResponse); err != nil {

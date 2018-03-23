@@ -128,6 +128,19 @@ func (r *RemoveRequest) Validate() error {
 	return nil
 }
 
+
+//Init initialises transfr
+func (t *Transfer) Init() error {
+	if t.Source != nil {
+		t.Source.Init()
+	}
+	if t.Dest != nil {
+		t.Dest.Init()
+	}
+	return nil
+}
+
+
 //Validate checks if request is valid
 func (t *Transfer) Validate() error {
 	if t.Source == nil {
@@ -149,6 +162,10 @@ func (t *Transfer) Validate() error {
 func (r *CopyRequest) Init() error {
 	if r.Transfer == nil {
 		r.Transfer = &Transfer{}
+	} else {
+		if err := r.Transfer.Init();err != nil {
+			return err
+		}
 	}
 
 	hasAssets := len(r.Assets) > 0
@@ -158,6 +175,7 @@ func (r *CopyRequest) Init() error {
 			return nil
 		}
 		for _, transfer := range r.Transfers {
+
 			if transfer.Source != nil {
 				transfer.Source = joinIfNeeded(r.Source, transfer.Source.URL)
 			}
@@ -179,7 +197,7 @@ func (r *CopyRequest) Init() error {
 		}
 		return nil
 	}
-	r.Transfers = r.Assets.AsTransfer(r.Source, r.Dest)
+	r.Transfers = r.Assets.AsTransfer(r.Transfer)
 	return nil
 }
 
@@ -208,7 +226,8 @@ func (r *UploadRequest) Validate() error {
 }
 
 //AsTransfer converts map to transfer or transfers
-func (t *AssetTransfer) AsTransfer(sourceBase, destBase *url.Resource) []*Transfer {
+func (t *AssetTransfer) AsTransfer(base *Transfer) []*Transfer {
+	var sourceBase, destBase = base.Source, base.Dest
 	aMap := toolbox.AsMap(t)
 	var transfers = make([]*Transfer, 0)
 	var isSourceRootPath = sourceBase != nil && sourceBase.ParsedURL != nil && sourceBase.ParsedURL.Path == "/"
@@ -222,14 +241,16 @@ func (t *AssetTransfer) AsTransfer(sourceBase, destBase *url.Resource) []*Transf
 			continue
 		}
 		if isSourceRootPath {
-			source = url.NewResource(source).URL
+			source = url.NewResource(source).ParsedURL.Path
 		}
 		if isDestRootPath {
-			dest = url.NewResource(dest).URL
+			dest = url.NewResource(dest).ParsedURL.Path
 		}
 		transfers = append(transfers, &Transfer{
 			Source: joinIfNeeded(sourceBase, source),
 			Dest:   joinIfNeeded(destBase, dest),
+			Expand:base.Expand,
+			Replace:base.Replace,
 		})
 	}
 	return transfers

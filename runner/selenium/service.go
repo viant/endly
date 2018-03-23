@@ -138,7 +138,7 @@ func (s *service) call(context *endly.Context, caller interface{}, call *MethodC
 	callResponse = &ServiceCallResponse{
 		Data: make(map[string]interface{}),
 	}
-	repeatable := call.Wait.Get()
+	repeater := call.Wait.Init()
 	var handler = func() (interface{}, error) {
 		callResponse, err = s.callMethod(caller, call.Method, call.Parameters)
 		if err != nil {
@@ -146,7 +146,7 @@ func (s *service) call(context *endly.Context, caller interface{}, call *MethodC
 		}
 		return callResponse.Result, nil
 	}
-	err = repeatable.Run(s.AbstractService, runnerCaller, context, handler, callResponse.Data)
+	err = repeater.Run(s.AbstractService, runnerCaller, context, handler, callResponse.Data)
 	return callResponse, err
 }
 
@@ -466,11 +466,11 @@ const (
 )
 
 func (s *service) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "start",
 		RequestInfo: &endly.ActionInfo{
 			Description: "start selenium server",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "start server",
 					Data:    seleniumServiceStartExample,
@@ -491,11 +491,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "stop",
 		RequestInfo: &endly.ActionInfo{
 			Description: "stop selenium server",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "stop server",
 					Data:    seleniumServiceStopExample,
@@ -516,11 +516,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "open",
 		RequestInfo: &endly.ActionInfo{
 			Description: "open selenium session",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "open session",
 					Data:    seleniumServiceOpenSessionExample,
@@ -541,11 +541,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "close",
 		RequestInfo: &endly.ActionInfo{
 			Description: "close selenium session",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "close session",
 					Data:    seleniumServiceCloseExample,
@@ -566,11 +566,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "run",
 		RequestInfo: &endly.ActionInfo{
 			Description: "run selenium requests",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "run",
 					Data:    seleniumServiceRunAction,
@@ -591,11 +591,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "call-driver",
 		RequestInfo: &endly.ActionInfo{
 			Description: "call proxies request to  github.com/tebeka/selenium web driver",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "call driver",
 					Data:    seleniumServiceCallDriverExample,
@@ -616,11 +616,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "call-element",
 		RequestInfo: &endly.ActionInfo{
 			Description: "find web element and proxy request",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "web element call",
 					Data:    seleniumServiceCallElementExample,

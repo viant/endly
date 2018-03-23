@@ -8,6 +8,7 @@ import (
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
 	"strings"
+	"github.com/viant/endly/model"
 )
 
 type jdkService struct{}
@@ -18,10 +19,10 @@ func (s *jdkService) checkJavaVersion(context *endly.Context, jdkCandidate strin
 	extractRequest := exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand(jdkCandidate+"java -version", "", nil,
 			util.StdErrors,
-			endly.NewExtract("build", "build (\\d\\.\\d).+", false)),
+			model.NewExtract("build", "build (\\d\\.\\d).+", false)),
 		exec.NewExtractCommand(fmt.Sprintf(jdkCandidate+"jrunscript -e 'java.lang.System.out.println(java.lang.System.getProperty(\"java.home\"));'"), "", nil,
 			util.StdErrors,
-			endly.NewExtract("JAVA_HOME", "(.+)", false)))
+			model.NewExtract("JAVA_HOME", "(.+)", false)))
 
 	commandResponse := &exec.RunResponse{}
 	if err := endly.Run(context, extractRequest, commandResponse); err != nil {
@@ -47,7 +48,7 @@ func (s *jdkService) getJavaHomeCheckCommand(context *endly.Context, request *Se
 	if err != nil {
 		return ""
 	}
-	operatingSystem := context.OperatingSystem(target.Host())
+	operatingSystem := exec.OperatingSystem(context, target.Host())
 	if operatingSystem.System == "darwin" {
 		return fmt.Sprintf("/usr/libexec/java_home -v%v", request.Version)
 	}
@@ -65,8 +66,8 @@ func (s *jdkService) setSdk(context *endly.Context, request *SetRequest) (*Info,
 	jdkHomeCheckCommand := s.getJavaHomeCheckCommand(context, request)
 	extractRequest := exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand(jdkHomeCheckCommand, "", nil, util.StdErrors,
-			endly.NewExtract("JAVA_HOME", "(.+jdk.+)", false),
-			endly.NewExtract("JAVA_HOME", "(.+jvm.+)", false)))
+			model.NewExtract("JAVA_HOME", "(.+jdk.+)", false),
+			model.NewExtract("JAVA_HOME", "(.+jvm.+)", false)))
 
 	commandResponse := &exec.RunResponse{}
 	if err := endly.Run(context, extractRequest, commandResponse); err != nil {

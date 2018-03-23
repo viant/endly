@@ -5,6 +5,7 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"net/http"
+	"github.com/viant/endly/model"
 )
 
 //SendRequest represents a send http request.
@@ -13,9 +14,9 @@ type SendRequest struct {
 	Requests []*Request
 }
 
-//Request represents an http request
+//ServiceRequest represents an http request
 type Request struct {
-	*endly.Repeater
+	*model.Repeater
 	When        string `description:"criteria to send this request"`
 	Method      string `required:"true" description:"HTTP Method"`
 	URL         string
@@ -35,7 +36,7 @@ type SendResponse struct {
 
 //Response represents Http response
 type Response struct {
-	//Request     *Request
+	//ServiceRequest     *ServiceRequest
 	Code        int
 	Header      http.Header
 	Cookies     map[string]*http.Cookie

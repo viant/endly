@@ -8,11 +8,11 @@ import (
 //CheckoutRequest represents checkout request. If target directory exist and contains matching origin URL,
 // only taking the latest changes without overriding local if performed, otherwise full checkout
 type CheckoutRequest struct {
-	Type               string        `required:"true" description:"version control type: git, svn"`
-	Target             *url.Resource `required:"true" description:"checkout source  defined by host and path URL"`
-	Origin             *url.Resource `required:"true"`
-	Modules            []string      `description:"list of modules to checkout"`
-	RemoveLocalChanges bool          `description:"flat to remove local directory before checkout"`
+	Type   string        `required:"true" description:"version control type: git, svn"`
+	Origin *url.Resource `required:"true" description:"checkout source for git or svn or simply file::/path"`
+	Dest   *url.Resource `required:"true" description:"checkout dest defined by host and path URL"`
+	Modules            []string `description:"list of modules to checkout"`
+	RemoveLocalChanges bool     `description:"flat to remove local directory before checkout"`
 }
 
 //CheckoutResponse represents checkout response
@@ -23,27 +23,33 @@ type CheckoutResponse struct {
 //Init initializes request
 func (r *CheckoutRequest) Init() error {
 	versionControlRequestInit(r.Origin, &r.Type)
+	if r.Type == "" {
+		_ = r.Origin.Init()
+		if r.Origin.ParsedURL.Scheme == "file" {
+			r.Type = "local"
+		}
+	}
+
 	return nil
 }
 
 //Validate validates request
 func (r *CheckoutRequest) Validate() error {
-
 	if r.Origin == nil {
-		return fmt.Errorf("origin type was empty")
+		return fmt.Errorf("origin was empty")
 	}
-	if r.Target == nil {
-		return fmt.Errorf("target type was empty")
+	if r.Dest == nil {
+		return fmt.Errorf("dest was empty")
 	}
 	if r.Type == "" {
-		return fmt.Errorf("version control type was empty for %v", r.Origin.URL)
+		return fmt.Errorf("version control was empty for %v", r.Origin.URL)
 	}
 	return nil
 }
 
 //CommitRequest represents a commit request
 type CommitRequest struct {
-	Target  *url.Resource `required:"true" description:"location to local source code"`
+	Source  *url.Resource `required:"true" description:"location to local source code"`
 	Type    string        `description:"version control type: git,svn"`
 	Message string        `required:"true"`
 }
@@ -55,16 +61,16 @@ type CommitResponse struct {
 
 //Init initializes request
 func (r *CommitRequest) Init() error {
-	return versionControlRequestInit(r.Target, &r.Type)
+	return versionControlRequestInit(r.Source, &r.Type)
 }
 
 //Validate validates request
 func (r *CommitRequest) Validate() error {
-	if r.Target == nil {
-		return fmt.Errorf("target type was empty")
+	if r.Source == nil {
+		return fmt.Errorf("source type was empty")
 	}
 	if r.Type == "" {
-		return fmt.Errorf("type was empty for %v", r.Target.URL)
+		return fmt.Errorf("type was empty for %v", r.Source.URL)
 	}
 	return nil
 }
@@ -90,22 +96,22 @@ func (r *Info) HasPendingChanges() bool {
 //PullRequest represents a pull request
 type PullRequest struct {
 	Type   string
-	Target *url.Resource `required:"true"`
+	Dest *url.Resource `required:"true"`
 	Origin *url.Resource `required:"true"` //version control origin
 }
 
 //Init initializes request
 func (r *PullRequest) Init() error {
-	return versionControlRequestInit(r.Target, &r.Type)
+	return versionControlRequestInit(r.Dest, &r.Type)
 }
 
 //Validate validates request
 func (r *PullRequest) Validate() error {
-	if r.Target == nil {
-		return fmt.Errorf("target type was empty")
+	if r.Dest == nil {
+		return fmt.Errorf("dest type was empty")
 	}
 	if r.Type == "" {
-		return fmt.Errorf("type was empty for %v", r.Target.URL)
+		return fmt.Errorf("type was empty for %v", r.Dest.URL)
 	}
 	return nil
 }
@@ -117,22 +123,22 @@ type PullResponse struct {
 
 //StatusRequest represents version control status
 type StatusRequest struct {
-	Target *url.Resource `required:"true"`
+	Source *url.Resource `required:"true"`
 	Type   string
 }
 
 //Init initializes request
 func (r *StatusRequest) Init() error {
-	return versionControlRequestInit(r.Target, &r.Type)
+	return versionControlRequestInit(r.Source, &r.Type)
 }
 
 //Validate validates request
 func (r *StatusRequest) Validate() error {
-	if r.Target == nil {
-		return fmt.Errorf("target type was empty")
+	if r.Source == nil {
+		return fmt.Errorf("source type was empty")
 	}
 	if r.Type == "" {
-		return fmt.Errorf("type was empty for %v", r.Target.URL)
+		return fmt.Errorf("type was empty for %v", r.Source.URL)
 	}
 	return nil
 }

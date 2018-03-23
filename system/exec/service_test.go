@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"github.com/viant/endly/model"
 )
 
 func TestNewExecService(t *testing.T) {
@@ -17,19 +18,19 @@ func TestNewExecService(t *testing.T) {
 		description string
 		baseDir     string
 		target      *url.Resource
-		expected    *endly.OperatingSystem
+		expected    *model.OperatingSystem
 	}{
 		{
 			description: "open new session on linux",
 			baseDir:     "test/open/linux",
 			target:      url.NewResource("ssh://127.0.0.1:22/etc"),
-			expected:    &endly.OperatingSystem{Name: "ubuntu", Architecture: "x64", Hardware: "x86_64", Version: "17.04", System: "linux"},
+			expected:    &model.OperatingSystem{Name: "ubuntu", Architecture: "x64", Hardware: "x86_64", Version: "17.04", System: "linux"},
 		},
 		{
 			description: "open new session on osx",
 			baseDir:     "test/open/darwin",
 			target:      url.NewResource("ssh://127.0.0.1:22/etc"),
-			expected:    &endly.OperatingSystem{Name: "macosx", Architecture: "x64", Hardware: "x86_64", Version: "10.12.6", System: "darwin"},
+			expected:    &model.OperatingSystem{Name: "macosx", Architecture: "x64", Hardware: "x86_64", Version: "10.12.6", System: "darwin"},
 		},
 	}
 
@@ -39,7 +40,7 @@ func TestNewExecService(t *testing.T) {
 		defer context.Close()
 		if assert.Nil(t, err) {
 			var target = useCase.target
-			actual := context.OperatingSystem(target.Host())
+			actual :=  exec.OperatingSystem(context, target.Host())
 			if assert.NotNil(t, actual) {
 				expected := useCase.expected
 				assert.Equal(t, expected.Name, actual.Name, "os.name")
@@ -68,7 +69,8 @@ func Test_NoTransientSession(t *testing.T) {
 		log.Fatal(err)
 	}
 	openResponse := response.(*exec.OpenSessionResponse)
-	sessions := context.TerminalSessions()
+
+	sessions := exec.TerminalSessions(context)
 	assert.True(t, sessions.Has(openResponse.SessionID))
 	log.Print(openResponse.SessionID)
 	context.Close()
@@ -91,7 +93,7 @@ func Test_TransientSession(t *testing.T) {
 		log.Fatal(err)
 	}
 	openResponse := response.(*exec.OpenSessionResponse)
-	sessions := context.TerminalSessions()
+	sessions := exec.TerminalSessions(context)
 	assert.True(t, sessions.Has(openResponse.SessionID))
 	log.Print(openResponse.SessionID)
 	context.Close()

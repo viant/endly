@@ -141,7 +141,10 @@ func (s *service) startProcess(context *endly.Context, request *StartRequest) (*
 	if request.ImmuneToHangups {
 		startCommand = fmt.Sprintf("nohup  %v", startCommand)
 	}
-	if err = endly.Run(context, exec.NewRunRequest(request.Target, request.AsSuperUser, changeDirCommand, startCommand), nil); err != nil {
+
+	var runRequest =  exec.NewRunRequest(request.Target, request.AsSuperUser, changeDirCommand, startCommand)
+	runRequest.Errors = append(runRequest.Errors, "Exit 1")
+	if err = endly.Run(context, runRequest, nil); err != nil {
 		return nil, err
 	}
 	time.Sleep(time.Second)
@@ -166,7 +169,7 @@ func (s *service) startProcess(context *endly.Context, request *StartRequest) (*
 }
 
 func (s *service) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "start",
 		RequestInfo: &endly.ActionInfo{
 			Description: "start process",
@@ -185,7 +188,7 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "stop",
 		RequestInfo: &endly.ActionInfo{
 			Description: "stop process",
@@ -204,7 +207,7 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "status",
 		RequestInfo: &endly.ActionInfo{
 			Description: "check process status",
@@ -223,7 +226,7 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "stop-all",
 		RequestInfo: &endly.ActionInfo{
 			Description: "stop all matching processes",

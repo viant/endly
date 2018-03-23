@@ -21,7 +21,7 @@ type Spec struct {
 	SdkVersion string
 }
 
-//Request represents a build request.
+//ServiceRequest represents a build request.
 type Request struct {
 	MetaURL   string            `description:"build meta URL"`
 	BuildSpec *Spec             `required:"true" description:"build specification" `

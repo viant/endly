@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
+
 )
 
 //NewExpandedContentHandler return a new reader that can substitute content with state map, replacement data provided in replacement map.
@@ -75,10 +76,12 @@ func joinIfNeeded(parent *url.Resource, URI string) (result *url.Resource) {
 			result.Credentials = parent.Credentials
 		}
 	}()
+
 	if strings.Contains(URI, ":/") {
 		result = url.NewResource(URI)
 	} else if parent != nil {
 		result = url.NewResource(toolbox.URLPathJoin(parent.URL, URI))
+
 	} else {
 		result = url.NewResource(URI)
 	}

@@ -5,6 +5,7 @@ import (
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox/url"
 	"testing"
+	"fmt"
 )
 
 func TestNewCopyRequestFromURL(t *testing.T) {
@@ -160,7 +161,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
 		},
 	}
 
-	for _, useCase := range useCases {
+	for i, useCase := range useCases {
 		request, err := NewCopyRequestFromuRL(useCase.URL)
 		if useCase.HasError {
 			assert.NotNil(t, err, useCase.Description)
@@ -172,7 +173,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
 
 		assert.Nil(t, request.Init(), useCase.Description)
 		assert.Nil(t, request.Validate(), useCase.Description)
-		assertly.AssertValues(t, useCase.ExpectedRequest, request, useCase.Description)
+		assertly.AssertValues(t, useCase.ExpectedRequest, request, useCase.Description +fmt.Sprintf("[%d]", i))
 	}
 
 }

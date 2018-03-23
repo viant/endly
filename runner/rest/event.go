@@ -2,27 +2,27 @@ package rest
 
 import (
 	"fmt"
-	"github.com/viant/endly"
 	"github.com/viant/toolbox"
+	"github.com/viant/endly/msg"
 )
 
 //Messages returns messages
-func (r *Request) Messages() []*endly.Message {
-	var response = make([]*endly.Message, 0)
-	response = append(response, endly.NewMessage(endly.NewStyledText(fmt.Sprintf("%v %v", r.Method, r.URL), endly.MessageStyleGeneric), endly.NewStyledText("rest.Request", endly.MessageStyleGeneric)))
+func (r *Request) Messages() []*msg.Message {
+	var response = make([]*msg.Message, 0)
+	response = append(response, msg.NewMessage(msg.NewStyledText(fmt.Sprintf("%v %v", r.Method, r.URL), msg.MessageStyleGeneric), msg.NewStyledText("rest.Request", msg.MessageStyleGeneric)))
 	requestJSON, _ := toolbox.AsJSONText(r)
-	response = append(response, endly.NewMessage(endly.NewStyledText("Request", endly.MessageStyleGeneric), endly.NewStyledText("rest.Request", endly.MessageStyleGeneric),
-		endly.NewStyledText(requestJSON, endly.MessageStyleInput),
+	response = append(response, msg.NewMessage(msg.NewStyledText("Request", msg.MessageStyleGeneric), msg.NewStyledText("rest.Request", msg.MessageStyleGeneric),
+		msg.NewStyledText(requestJSON, msg.MessageStyleInput),
 	))
 	return response
 }
 
 //Messages returns messages
-func (r *Response) Messages() []*endly.Message {
-	var response = make([]*endly.Message, 0)
+func (r *Response) Messages() []*msg.Message {
+	var response = make([]*msg.Message, 0)
 	responseJSON, _ := toolbox.AsJSONText(r)
-	response = append(response, endly.NewMessage(endly.NewStyledText("Response", endly.MessageStyleGeneric), endly.NewStyledText("rest.Response", endly.MessageStyleGeneric),
-		endly.NewStyledText(responseJSON, endly.MessageStyleOutput),
+	response = append(response, msg.NewMessage(msg.NewStyledText("Response", msg.MessageStyleGeneric), msg.NewStyledText("rest.Response", msg.MessageStyleGeneric),
+		msg.NewStyledText(responseJSON, msg.MessageStyleOutput),
 	))
 	return response
 }

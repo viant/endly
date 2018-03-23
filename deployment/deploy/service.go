@@ -72,7 +72,7 @@ func (s *service) matchDeployment(context *endly.Context, version string, target
 	if openSessionResponse.Error != "" {
 		return nil, errors.New(openSessionResponse.Error)
 	}
-	operatingSystem := context.OperatingSystem(target.Host())
+	operatingSystem := exec.OperatingSystem(context, target.Host())
 	if operatingSystem == nil {
 		return nil, fmt.Errorf("failed to detect operating system on %v", target.Host())
 	}
@@ -169,15 +169,24 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 			artifact.Put(versioningFragments[i], versionFragment)
 		}
 		minReleaseVersion, has := deploymentTarget.MinReleaseVersion[request.Version]
-		if !has {
-			return nil, fmt.Errorf("failed to discover source - unable to determine minReleaseVersion for %v", request.Version)
+		if ! has {
+			minReleaseVersion = ""
 		}
-		var maxReleaseVersion = strings.Repeat("9", len(minReleaseVersion))
+		var repeatCount = len(minReleaseVersion)
+		if repeatCount == 0 {
+			repeatCount = 1
+		}
+		var maxReleaseVersion = strings.Repeat("9",repeatCount)
 		var min = toolbox.AsInt(minReleaseVersion)
 		var max = toolbox.AsInt(maxReleaseVersion)
+
 		for i := min; i <= max; i++ {
 			artifact.Put(releaseFragmentKey, toolbox.AsString(i))
-			artifact.Put(versionKey, fmt.Sprintf("%v.%v", request.Version, i))
+			if minReleaseVersion == "" && i == 0 {
+				artifact.Put(versionKey, "%v")
+			} else {
+				artifact.Put(versionKey, fmt.Sprintf("%v.%v", request.Version, i))
+			}
 			var sourceURL = context.Expand(source.URL)
 			exists, _ := service.Exists(sourceURL)
 			if exists {
@@ -208,7 +217,7 @@ func (s *service) deployDependenciesIfNeeded(context *endly.Context, target *url
 }
 
 func (s *service) updateOperatingSystem(context *endly.Context, target *url.Resource) {
-	operatingSystem := context.OperatingSystem(target.Host())
+	operatingSystem := exec.OperatingSystem(context, target.Host())
 	if operatingSystem != nil {
 		osMap := data.NewMap()
 		osMap.Put("System", operatingSystem.System)
@@ -350,7 +359,7 @@ func (s *service) getMeta(context *endly.Context, request *Request) (*Meta, erro
 			}
 		}
 		var credentials = ""
-		mainWorkflow := context.Workflow()
+		mainWorkflow := workflow.Last(context)
 		if mainWorkflow != nil {
 			credentials = mainWorkflow.Source.Credentials
 		}
@@ -378,11 +387,11 @@ const (
 )
 
 func (s *service) registerRoutes() {
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "deploy",
 		RequestInfo: &endly.ActionInfo{
 			Description: "deploy specific app version on target host, if existing app version matches requested version, deployment is skipped",
-			Examples: []*endly.ExampleUseCase{
+			Examples: []*endly.UseCase{
 				{
 					UseCase: "tomcat deploy",
 					Data:    deploymentTomcatDeployExample,
@@ -403,7 +412,7 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.ServiceActionRoute{
+	s.Register(&endly.Route{
 		Action: "load",
 		RequestInfo: &endly.ActionInfo{
 			Description: "load deployment meta instruction into registry",

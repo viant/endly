@@ -2,11 +2,11 @@ package build
 
 import (
 	"fmt"
-	"github.com/viant/endly"
+	"github.com/viant/endly/msg"
 )
 
 //Items returns tag messages
-func (r *Request) Messages() []*endly.Message {
-	return []*endly.Message{endly.NewMessage(endly.NewStyledText(fmt.Sprintf("%v %v", r.BuildSpec.Name, r.Target.URL), endly.MessageStyleGeneric),
-		endly.NewStyledText("build", endly.MessageStyleGeneric))}
+func (r *Request) Messages() []*msg.Message {
+	return []*msg.Message{msg.NewMessage(msg.NewStyledText(fmt.Sprintf("%v %v", r.BuildSpec.Name, r.Target.URL), msg.MessageStyleGeneric),
+		msg.NewStyledText("build", msg.MessageStyleGeneric))}
 }

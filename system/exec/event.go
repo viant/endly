@@ -2,7 +2,7 @@ package exec
 
 import (
 	"fmt"
-	"github.com/viant/endly"
+	"github.com/viant/endly/msg"
 )
 
 //StdinEvent represents an execution event start
@@ -12,10 +12,10 @@ type StdinEvent struct {
 }
 
 //Messages returns messages
-func (e *StdinEvent) Messages() []*endly.Message {
-	return []*endly.Message{
-		endly.NewMessage(endly.NewStyledText(fmt.Sprintf("%v", e.SessionID), endly.MessageStyleGeneric), endly.NewStyledText("stdin", endly.MessageStyleGeneric),
-			endly.NewStyledText(e.Stdin, endly.MessageStyleInput)),
+func (e *StdinEvent) Messages() []*msg.Message {
+	return []*msg.Message{
+		msg.NewMessage(msg.NewStyledText(fmt.Sprintf("%v", e.SessionID), msg.MessageStyleGeneric), msg.NewStyledText("stdin", msg.MessageStyleGeneric),
+			msg.NewStyledText(e.Stdin, msg.MessageStyleInput)),
 	}
 }
 
@@ -35,10 +35,10 @@ type StdoutEvent struct {
 }
 
 //Messages returns messages
-func (e *StdoutEvent) Messages() []*endly.Message {
-	return []*endly.Message{
-		endly.NewMessage(endly.NewStyledText(fmt.Sprintf("%v", e.SessionID), endly.MessageStyleGeneric), endly.NewStyledText("stdout", endly.MessageStyleGeneric),
-			endly.NewStyledText(e.Stdout, endly.MessageStyleOutput)),
+func (e *StdoutEvent) Messages() []*msg.Message {
+	return []*msg.Message{
+		msg.NewMessage(msg.NewStyledText(fmt.Sprintf("%v", e.SessionID), msg.MessageStyleGeneric), msg.NewStyledText("stdout", msg.MessageStyleGeneric),
+			msg.NewStyledText(e.Stdout, msg.MessageStyleOutput)),
 	}
 }
 
