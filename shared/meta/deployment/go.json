@@ -1,0 +1,63 @@
+{
+  "Name": "go",
+  "Versioning": "MajorVersion.MinorVersion.ReleaseVersion",
+  "Targets": [
+    {
+      "MinReleaseVersion": {
+        "1.10": "",
+        "1.9": "4",
+        "1.8": "5",
+        "1.2": "2"
+      },
+      "Deployment": {
+        "Pre": {
+          "SuperUser": true,
+          "Commands": [
+            "mkdir -p /opt/sdk/",
+            "chmod a+rw /opt/sdk/"
+          ]
+        },
+        "Transfer": {
+          "Source": {
+            "URL": "https://redirector.gvt1.com/edgedl/go/go${artifact.Version}.${os.System}-${os.Architecture}.tar.gz"
+          },
+          "Dest": {
+            "URL": "scp://${buildHost}/opt/sdk/go_${artifact.Version}.tar.gz",
+            "Credentials": "${buildHostCredential}"
+          }
+        },
+        "VersionCheck": {
+          "SystemPaths": [
+            "/opt/sdk/go/bin"
+          ],
+          "Commands": [
+            {
+              "Command": "go version",
+              "Extraction": [
+                {
+                  "Key": "Version",
+                  "RegExpr": "go(\\d\\.\\d)"
+                }
+              ]
+            }
+          ]
+        },
+        "Run": {
+          "Directory": "/opt/sdk",
+          "TimeoutMs": 120000,
+          "Commands": [
+            {
+              "Command": "/bin/bash -c '[[ -e /opt/sdk/go ]] && rm -rf /opt/sdk/go'"
+            },
+            {
+              "Command": "tar xvzf go_${artifact.Version}.tar.gz",
+              "Error": [
+                "Error"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

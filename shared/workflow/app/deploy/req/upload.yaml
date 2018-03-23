@@ -1,0 +1,5 @@
+source: $target
+dest:   $appTarget
+replace: $replace
+expand: $expand
+assets: $upload

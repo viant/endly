@@ -2,8 +2,8 @@ params:
   secrets:
     localhost: localhsot
   target:
-    URL:ssh://127.0.0.1
-    Credentials:localhost
+    URL: "ssh://127.0.0.1"
+    Credentials: localhost
 pipeline:
   checkout:
     action: vc:checkout

@@ -14,7 +14,7 @@ Workflow,,,Name,Description,Tasks,,,,Init,,,
 ,use_cases/${index}*,nop,nop,push user data,{},,,,@user,,,
 ,use_cases/${index}*,selenium,run,run selenium actions,@req/selenium_run|@$action,,,@action.txt,, @var/set_selenium_data,,100
 ,use_cases/${index}*,validator,assert,validate selenium data,@req/assert_selenium|@selenium_expect,,,,,,,
-,use_cases/${index}*,dsunit,expect,verify register user in datastore, @req/db1_expect,,$HasResource(${subPath}/req/db1_expect):true,,,,,
+,use_cases/${index}*,dsunit,expect,verify register user in datastore,@req/db1_expect,,$HasResource(${subPath}/req/db1_expect):true,,,,,
 []Tasks,,,Name,Description,Actions,,,,,,,
 ,,,clean,stop test services,%Clean,,,,,,,
 []Clean,,Service,Action,Description,Request,SleepTimeMs,,,,,,

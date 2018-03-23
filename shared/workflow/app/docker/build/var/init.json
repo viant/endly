@@ -1,0 +1,86 @@
+[
+  {
+    "Name": "containerName",
+    "Value": "go_build",
+    "From": "params.containerName",
+    "Required": true
+  },
+  {
+    "Name": "dockerImage",
+    "Value": "rastasheep/ubuntu-sshd:14.04",
+    "From": "params.dockerImage",
+    "Required": true
+  },
+
+  {
+    "Name": "app",
+    "From": "params.app",
+    "Required": true
+  },
+
+
+  {
+    "Name": "replace",
+    "Required": true,
+    "From": "params.replace",
+    "Value": {}
+  },
+  {
+    "Name": "expand",
+    "Required": true,
+    "From": "params.expand",
+    "Value": true
+  },
+  {
+    "Name": "upload",
+    "Required": true,
+    "From": "params.upload",
+    "Value": []
+  },
+  {
+    "Name": "download",
+    "Value": [],
+    "From": "params.download",
+    "Required": true
+  },
+  {
+    "Name": "superUser",
+    "Required": true,
+    "Params": "params.superUser",
+    "Value": false
+  },
+  {
+    "Name": "commands",
+    "Required": true,
+    "From": "params.commands"
+  },
+
+  {
+    "Name": "buildPath",
+    "Required": true,
+    "From": "params.buildPath",
+    "Value": "/tmp/${app}/build/"
+  },
+  {
+    "Name": "releasePath",
+    "Required": true,
+    "From": "params.buildRoot",
+    "Value": "/tmp/${app}/release/"
+  },
+
+  {
+    "Name": "target",
+    "From": "params.target",
+    "Value": {
+      "URL": "ssh://127.0.0.1/",
+      "Credentials": "localhost"
+    }
+  },
+  {
+    "Name": "buildTarget",
+    "Value": {
+      "URL": "scp://127.0.0.1:7722/${buildPath}",
+      "Credential": "mem://github.com/viant/endly/workflow/app/docker/build/secret.json"
+    }
+  }
+]

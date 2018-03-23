@@ -346,7 +346,7 @@ To integrate endly with unit test, you can use one of the following
 
 **Service action**
 
-With this method, you can run any endly service action directly (including workflow with *endly.WorkflowRunRequest) by providing endly supported request.
+With this method, you can run any endly service action directly (including workflow with *model.ProcessRequest) by providing endly supported request.
 
 This method runs in silent mode.
 

@@ -2,60 +2,42 @@ package workflow
 
 import (
 	"errors"
-	"fmt"
-	"github.com/viant/endly"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
-	"path"
 	"strings"
+	"github.com/viant/endly/model"
+	"github.com/viant/endly/msg"
+
 )
 
-//Params represents parameters
-type Params map[string]interface{}
-
-//AbstractRun represents a base run request
-type AbstractRun struct {
-	EnableLogging bool            `description:"flag to enable logging"`
-	LogDirectory  string          `description:"log directory"`
-	EventFilter   map[string]bool `description:"optional CLI filter option,key is either package name or package name.request/event prefix "`
-	Async         bool            `description:"flag to run it asynchronously. Do not set it your self runner sets the flag for the first workflow"`
-	Params        Params          `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
+//Run represents workflow tasks selector
+type Selector struct {
+	URL    string `description:"workflow URL if workflow is not found in the registry, it is loaded"`
+	Name   string `required:"true" description:"name defined in workflow document"`
+	TagIDs string `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
 }
 
-//RunRequest represents workflow run request
-type RunRequest struct {
-	*AbstractRun
-	URL               string `description:"workflow URL if workflow is not found in the registry, it is loaded"`
-	Name              string `required:"true" description:"name defined in workflow document"`
-	Tasks             string `required:"true" description:"coma separated task list or '*'to run all tasks sequencialy"` //tasks to run with coma separated list or '*', or empty string for all tasks
-	TagIDs            string `description:"coma separated TagID list, if present in a task, only matched runs, other task run as normal"`
-	PublishParameters bool   `description:"flag to publish parameters directly into context state"`
-}
 
-//Init initialises request
-func (r *RunRequest) Init() error {
-	if r.AbstractRun == nil {
-		r.AbstractRun = &AbstractRun{}
+//Init initialises selector
+func (s *Selector) Init() {
+	if s.URL == "" {
+		s.URL = s.Name
 	}
-	if r.URL == "" {
-		r.URL = r.Name
+	if s.URL != "" {
+		s.URL = model.WorkflowSelector(s.URL).URL()
 	}
-	if r.URL != "" {
-		r.URL = WorkflowSelector(r.URL).URL()
-	}
-	if r.Name == "" {
-		r.Name = WorkflowSelector(r.URL).Name()
+	if s.Name == "" {
+		s.Name = model.WorkflowSelector(s.URL).Name()
 	} else {
-		if index := strings.LastIndex(r.Name, "/");index != -1 {
-			r.Name = string(r.Name[index+1:])
+		if index := strings.LastIndex(s.Name, "/"); index != -1 {
+			s.Name = string(s.Name[index+1:])
 		}
 	}
-	return nil
 }
 
 //Validate checks if request is valid
-func (r *RunRequest) Validate() error {
+func (r *Selector) Validate() error {
 	if r.Name == "" {
 		return errors.New("name was empty")
 	}
@@ -65,16 +47,58 @@ func (r *RunRequest) Validate() error {
 	return nil
 }
 
-//NewRunRequest creates a new run request
-func NewRunRequest(selector WorkflowSelector, params map[string]interface{}, publishParams bool) *RunRequest {
+//RunRequest represents workflow runWorkflow request
+type RunRequest struct {
+	EnableLogging     bool            `description:"flag to enable logging"`
+	LogDirectory      string          `description:"log directory"`
+	EventFilter       map[string]bool `description:"optional CLI filter option,key is either package name or package name.request/event prefix "`
+	Async             bool            `description:"flag to runWorkflow it asynchronously. Do not set it your self runner sets the flag for the first workflow"`
+	Params            map[string]interface{}    `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
+	PublishParameters bool            `default:"true" description:"flag to publish parameters directly into context state"`
+	Tasks             string          `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequencialy"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
+	*Selector
+	*MultiSelector
+}
+
+//Init initialises request
+func (r *RunRequest) Init() (err error) {
+
+	r.Params, err = util.NormalizeMap(r.Params, true)
+	if err != nil {
+		return err
+	}
+	if r.Selector != nil {
+		r.Selector.Init()
+	} else {
+		r.Selector = &Selector{}
+	}
+	if r.MultiSelector != nil {
+		if err = r.MultiSelector.Init(r); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+//Validate checks if request is valid
+func (r *RunRequest) Validate() error {
+	if r.MultiSelector == nil || len(r.MultiSelector.Pipelines) == 0 {
+		return r.Selector.Validate()
+	}
+	return nil
+}
+
+//NewRunRequest creates a new runWorkflow request
+func NewRunRequest(workflow string, params map[string]interface{}, publishParams bool) *RunRequest {
+	selector := model.WorkflowSelector(workflow)
 	return &RunRequest{
-		AbstractRun: &AbstractRun{
-			Params: params,
-		},
-		URL:               selector.URL(),
-		Name:              selector.Name(),
-		Tasks:             selector.Tasks(),
+		Params:            params,
 		PublishParameters: publishParams,
+		Selector: &Selector{
+			URL:  selector.URL(),
+			Name: selector.Name(),
+		},
+		Tasks: selector.Tasks(),
 	}
 }
 
@@ -85,31 +109,16 @@ func NewRunRequestFromURL(URL string) (*RunRequest, error) {
 	return request, resource.Decode(request)
 }
 
-//RunResponse represents workflow run response
+//RunResponse represents workflow runWorkflow response
 type RunResponse struct {
 	Data      map[string]interface{} //  data populated by  .Post variable section.
 	SessionID string                 //session id
 }
 
-//WorkflowSelector represents an expression to invoke workflow with all or specified task:  URL[:tasks]
-type WorkflowSelector string
-
-//ActionSelector represents an expression to invoke endly action:  service:Action
-type ActionSelector string
-
-//MapEntry represents a workflow with parameters to run
+//MapEntry represents a workflow with parameters to runWorkflow
 type MapEntry struct {
-	Key   string
-	Value interface{}
-}
-
-type Pipeline struct {
-	Name      string
-	Skip      bool
-	Workflow  WorkflowSelector
-	Action    ActionSelector
-	Params    Params
-	Pipelines []*Pipeline
+	Key   string      `description:"preserved order map entry key"`
+	Value interface{} `description:"preserved order map entry value"`
 }
 
 //NewPipeline creates a new pipeline
@@ -120,38 +129,42 @@ func NewPipeline(key string, value interface{}) *MapEntry {
 	}
 }
 
-//PipeRequest represent request to run workflows/actions sequentialy if previous was completed without error
-type PipeRequest struct {
-	*AbstractRun
-	Pipeline  []*MapEntry `required:"true" description:"key value representing pipelines in simplified form"`
-	Pipelines []*Pipeline `description:"actual pipelines (derived from Pipeline)"`
+//MultiSelector represent sequence of workflow/action to runWorkflow
+type MultiSelector struct {
+	Pipeline  []*MapEntry       `required:"true" description:"key value representing Pipelines in simplified form"`
+	Pipelines []*model.Pipeline `description:"actual Pipelines (derived from Pipeline)"`
 }
 
-func (r *PipeRequest) toPipeline(source interface{}, pipeline *Pipeline) (err error) {
+func (r *MultiSelector) toPipeline(source interface{}, pipeline *model.Pipeline, runRequest *RunRequest) (err error) {
 	var aMap map[string]interface{}
-	if aMap, err = util.NormalizeMap(source); err != nil {
+
+	if aMap, err = util.NormalizeMap(source, false); err != nil {
 		return err
 	}
 	if workflow, ok := aMap[pipelineWorkflow]; ok {
-		pipeline.Workflow = WorkflowSelector(toolbox.AsString(workflow))
+		pipeline.Workflow = toolbox.AsString(workflow)
 		delete(aMap, pipelineWorkflow)
-		pipeline.Params = Params(aMap)
-		pipeline.Params.AppendParams(r.Params, false)
+
+		pipeline.Params = aMap
+		pipeline.Params, _ = util.NormalizeMap(pipeline.Params, true)
+		util.Append(runRequest.Params, pipeline.Params, false)
 		return nil
 	}
-	if workflow, ok := aMap[pipelineAction]; ok {
-		pipeline.Action = ActionSelector(toolbox.AsString(workflow))
+	if action, ok := aMap[pipelineAction]; ok {
+		pipeline.Action = toolbox.AsString(action)
 		delete(aMap, pipelineAction)
-		pipeline.Params = Params(aMap)
-		pipeline.Params.AppendParams(r.Params, false)
+		pipeline.Params = aMap
+		pipeline.Params, _ = util.NormalizeMap(pipeline.Params, true)
+		util.Append(runRequest.Params, pipeline.Params, false)
 		return nil
 	}
+
 	if e := toolbox.ProcessMap(source, func(key, value interface{}) bool {
-		subPipeline := &Pipeline{
+		subPipeline := &model.Pipeline{
 			Name:      toolbox.AsString(key),
-			Pipelines: make([]*Pipeline, 0),
+			Pipelines: make([]*model.Pipeline, 0),
 		}
-		if err = r.toPipeline(value, subPipeline); err != nil {
+		if err = r.toPipeline(value, subPipeline, runRequest); err != nil {
 			return false
 		}
 		pipeline.Pipelines = append(pipeline.Pipelines, subPipeline)
@@ -162,24 +175,19 @@ func (r *PipeRequest) toPipeline(source interface{}, pipeline *Pipeline) (err er
 	return err
 }
 
-func (r *PipeRequest) Init() (err error) {
-	if r.AbstractRun == nil {
-		r.AbstractRun = &AbstractRun{}
-	}
-	r.Params, err = util.NormalizeMap(r.Params)
-	if err != nil {
-		return err
-	}
+//Init initialises
+func (r *MultiSelector) Init(runRequest *RunRequest) (err error) {
 	if len(r.Pipelines) > 0 {
 		return nil
 	}
-	r.Pipelines = make([]*Pipeline, 0)
+	runRequest.Params, _ = util.NormalizeMap(runRequest.Params, true)
+	r.Pipelines = make([]*model.Pipeline, 0)
 	for _, entry := range r.Pipeline {
-		pipeline := &Pipeline{
+		pipeline := &model.Pipeline{
 			Name:      entry.Key,
-			Pipelines: make([]*Pipeline, 0),
+			Pipelines: make([]*model.Pipeline, 0),
 		}
-		if err := r.toPipeline(entry.Value, pipeline); err != nil {
+		if err := r.toPipeline(entry.Value, pipeline, runRequest); err != nil {
 			return err
 		}
 		r.Pipelines = append(r.Pipelines, pipeline)
@@ -187,32 +195,16 @@ func (r *PipeRequest) Init() (err error) {
 	return nil
 }
 
-//NewPipelineRequest returns new pipeline request
-func NewPipelineRequest(async bool, params Params, pipeline ...*MapEntry) *PipeRequest {
-	return &PipeRequest{
-		AbstractRun: &AbstractRun{
-			Async:  async,
-			Params: params,
-		},
+//NewPipelines returns new pipeline request
+func NewPipelines(pipeline ...*MapEntry) *MultiSelector {
+	return &MultiSelector{
 		Pipeline: pipeline,
 	}
 }
 
-//NewPipelineRequestFromURL creates a new pipeline request from URL
-func NewPipelineRequestFromURL(URL string) (*PipeRequest, error) {
-	resource := url.NewResource(URL)
-	var response = &PipeRequest{}
-	return response, resource.Decode(response)
-}
-
-//Response represent a pipeline response.
-type PipeResponse struct {
-	Response map[string]interface{}
-}
-
 //RegisterRequest represents workflow register request
 type RegisterRequest struct {
-	*endly.Workflow
+	*model.Workflow
 }
 
 //RegisterResponse represents workflow register response
@@ -227,15 +219,14 @@ type LoadRequest struct {
 
 // LoadResponse represents loaded workflow
 type LoadResponse struct {
-	*endly.Workflow
+	*model.Workflow
 }
 
 // SwitchCase represent matching candidate case
 type SwitchCase struct {
-	*endly.ActionRequest `description:"action to run if matched"`
-
-	Task  string      `description:"task to run if matched"`
-	Value interface{} `required:"true" description:"matching sourceKey value"`
+	*model.ServiceRequest `description:"action to runWorkflow if matched"`
+	Task  string          `description:"task to runWorkflow if matched"`
+	Value interface{}     `required:"true" description:"matching sourceKey value"`
 }
 
 // SwitchRequest represent switch action request
@@ -314,115 +305,14 @@ type PrintRequest struct {
 }
 
 //Messages returns messages
-func (r *PrintRequest) Messages() []*endly.Message {
+func (r *PrintRequest) Messages() []*msg.Message {
 
-	var result = endly.NewMessage(nil, nil)
+	var result = msg.NewMessage(nil, nil)
 	if r.Message != "" {
-		result.Items = append(result.Items, endly.NewStyledText(r.Message, r.Style))
+		result.Items = append(result.Items, msg.NewStyledText(r.Message, r.Style))
 	}
 	if r.Error != "" {
-		result.Items = append(result.Items, endly.NewStyledText(r.Message, endly.MessageStyleError))
+		result.Items = append(result.Items, msg.NewStyledText(r.Message, msg.MessageStyleError))
 	}
-	return []*endly.Message{result}
-}
-
-//URL returns workflow url
-func (s WorkflowSelector) URL() string {
-	URL, _, _ := s.split()
-	return URL
-}
-
-func (s WorkflowSelector) IsRelative() bool {
-	URL := s.URL()
-	if strings.Contains(URL, "://") || strings.HasPrefix(URL, "/") {
-		return false
-	}
-	return true
-}
-
-//split returns selector URL, name and tasks
-func (s WorkflowSelector) split() (URL, name, tasks string) {
-	var sel = string(s)
-	protoPosition := strings.LastIndex(sel, "://")
-	taskPosition := strings.LastIndex(sel, ":")
-	if protoPosition != -1 {
-		taskPosition = -1
-		selWithoutProto := string(sel[protoPosition+3:])
-		if position := strings.LastIndex(selWithoutProto, ":"); position != -1 {
-			taskPosition = protoPosition + 3 + position
-		}
-	}
-	URL = sel
-	tasks = "*"
-	if taskPosition != -1 {
-		tasks = string(URL[taskPosition+1:])
-		URL = string(URL[:taskPosition])
-
-	}
-	var ext = path.Ext(URL)
-	if ext == "" {
-		_, name = path.Split(URL)
-		URL += ".csv"
-	} else {
-		_, name = path.Split(string(URL[:len(URL)-len(ext)]))
-	}
-	return URL, name, tasks
-}
-
-//Name returns selector workflow name
-func (s WorkflowSelector) Name() string {
-	_, name, _ := s.split()
-	return name
-}
-
-//Tasks returns selector tasks
-func (s WorkflowSelector) Tasks() string {
-	_, _, tasks := s.split()
-	return tasks
-
-}
-
-//Action returns action
-func (s ActionSelector) Action() string {
-	pair := strings.Split(string(s), ":")
-	if len(pair) == 2 {
-		return pair[1]
-	}
-	return ""
-}
-
-//Service returns service
-func (s ActionSelector) Service() string {
-	pair := strings.Split(string(s), ":")
-	if len(pair) == 2 {
-		return pair[0]
-	}
-	return string(s)
-}
-
-//AppendMap source to dest map
-func (p *Params) AppendParams(source Params, override bool) {
-	for k, v := range source {
-		if _, ok := (*p)[k]; ok && !override {
-			continue
-		}
-		(*p)[k] = v
-	}
-}
-
-//GetAbstractRun returns base request for supplied request or error
-func GetAbstractRun(request interface{}) (*AbstractRun, error) {
-	switch req := request.(type) {
-	case *RunRequest:
-		if req == nil {
-			return nil, fmt.Errorf("request %T was nil", request)
-		}
-		return req.AbstractRun, nil
-	case *PipeRequest:
-		if req == nil {
-			return nil, fmt.Errorf("request %T  was nil", request)
-		}
-		return req.AbstractRun, nil
-	}
-	return nil, fmt.Errorf("unsupported tyep %T, exacted %T or %T", request, &RunRequest{}, &PipeRequest{})
+	return []*msg.Message{result}
 }

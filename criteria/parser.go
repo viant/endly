@@ -3,10 +3,11 @@ package criteria
 import (
 	"fmt"
 	"github.com/viant/toolbox"
+	"strings"
 )
 
 const (
-	undefined int = iota
+	undefined           int = iota
 	eof
 	illegal
 	whitespaces
@@ -14,6 +15,7 @@ const (
 	operator
 	logicalOperator
 	assertlyExprMatcher
+	quoted
 	jsonObject
 	jsonArray
 	grouping
@@ -31,6 +33,7 @@ var matchers = map[int]toolbox.Matcher{
 		Keywords:      []string{"&&", "||"},
 		CaseSensitive: false,
 	},
+	quoted:              toolbox.BodyMatcher{"'", "'"},
 	grouping:            toolbox.BodyMatcher{"(", ")"},
 	jsonObject:          toolbox.BodyMatcher{"{", "}"},
 	jsonArray:           toolbox.BodyMatcher{"[", "]"},
@@ -67,13 +70,13 @@ func (p *Parser) expectOptionalWhitespaceFollowedBy(tokenizer *toolbox.Tokenizer
 }
 
 //Parse parses supplied expression. It returns criteria or parsing error.
-func (p *Parser) Parse(expression string) (*Criteria, error) {
-	result := NewCriteria("")
+func (p *Parser) Parse(expression string) (*Predicate, error) {
+	result := NewPredicate("")
 	tokenizer := toolbox.NewTokenizer(expression, illegal, eof, matchers)
 	var criterion *Criterion
 
-	var leftOperandTokens = []int{jsonObject, jsonArray, grouping, operand, operator}
-	var rightOperandTokens = []int{jsonObject, jsonArray, operand, operator}
+	var leftOperandTokens = []int{quoted, jsonObject, jsonArray, grouping, operand, operator}
+	var rightOperandTokens = []int{quoted, jsonObject, jsonArray, operand, operator}
 
 	parsingCriteria := result
 outer:
@@ -90,7 +93,7 @@ outer:
 		switch token.Token {
 
 		case grouping:
-			groupingExpression := string(token.Matched[1 : len(token.Matched)-1])
+			groupingExpression := string(token.Matched[1: len(token.Matched)-1])
 			criteria, err := p.Parse(groupingExpression)
 			if err != nil {
 				return nil, err
@@ -101,12 +104,17 @@ outer:
 				parsingCriteria.LogicalOperator = criteria.LogicalOperator
 			} else {
 				parsingCriteria.Criteria = append(parsingCriteria.Criteria, &Criterion{
-					Criteria: criteria,
+					Predicate: criteria,
 				})
 			}
-		case operand, jsonObject:
+
+		case operand, jsonObject, jsonArray, quoted:
+			var matched = token.Matched
+			if token.Token == quoted {
+				matched = strings.Trim(token.Matched, "' ")
+			}
 			criterion = &Criterion{
-				LeftOperand: token.Matched,
+				LeftOperand: matched,
 			}
 			parsingCriteria.Criteria = append(parsingCriteria.Criteria, criterion)
 		case operator:
@@ -129,7 +137,7 @@ outer:
 			if criterion.Operator == ":" {
 				token, err = p.expectOptionalWhitespaceFollowedBy(tokenizer, "right operand", assertlyExprMatcher, eof)
 			} else {
-				token, err = p.expectOptionalWhitespaceFollowedBy(tokenizer, "right operand", jsonObject, jsonArray, operand, eof)
+				token, err = p.expectOptionalWhitespaceFollowedBy(tokenizer, "right operand", quoted, jsonObject, jsonArray, operand, eof)
 			}
 			if err != nil {
 				return nil, err
@@ -137,8 +145,11 @@ outer:
 			if token.Token == eof {
 				break outer
 			}
-
-			criterion.RightOperand = token.Matched
+			var matched = token.Matched
+			if token.Token == quoted {
+				matched = strings.Trim(token.Matched, "' ")
+			}
+			criterion.RightOperand = matched
 			token, err = p.expectOptionalWhitespaceFollowedBy(tokenizer, "logical conjunction", logicalOperator, eof)
 			if err != nil {
 				return nil, err
@@ -157,8 +168,8 @@ outer:
 		}
 		conjunctionCriterion := &Criterion{}
 		parsingCriteria.Criteria = append(parsingCriteria.Criteria, conjunctionCriterion)
-		parsingCriteria = NewCriteria(token.Matched)
-		conjunctionCriterion.Criteria = parsingCriteria
+		parsingCriteria = NewPredicate(token.Matched)
+		conjunctionCriterion.Predicate = parsingCriteria
 		criterion = nil
 	}
 	return result, nil

@@ -1,0 +1,66 @@
+[
+  {
+    "Name": "appRoot",
+    "From": "params.appRoot",
+    "Value": "/opt/",
+    "Required": true
+  },
+  {
+    "Name": "app",
+    "From": "params.app",
+    "Required": true
+  },
+  {
+    "Name": "upload",
+    "Value": [],
+    "From": "params.upload",
+    "Required": true
+  },
+  {
+    "Name": "init",
+    "Required": true,
+    "From": "params.init",
+    "Value": [
+      "mkdir -p $deployPath",
+      "chmod +x $deployPath",
+      "chown $os.user  $deployPath"
+    ]
+  },
+  {
+    "Name": "commands",
+    "Required": true,
+    "From": "params.commands",
+    "Value": []
+  },
+  {
+    "Name": "target",
+    "When": "$in.params.target:!/$/ && $in.params.target",
+    "From": "params.target",
+    "Else": {
+      "URL": "ssh://127.0.0.1/",
+      "Credentials": "localhost"
+    }
+  },
+  {
+    "Name": "superUser",
+    "Required": true,
+    "Params": "params.superUser",
+    "Value": false
+  },
+  {
+    "Name": "replace",
+    "Required": true,
+    "From": "params.replace",
+    "Value": {}
+  },
+  {
+    "Name": "expand",
+    "Required": true,
+    "From": "params.expand",
+    "Value": true
+  },
+  {
+    "Name": "startCmd",
+    "Required":true
+  }
+]

@@ -1,0 +1,2 @@
+origin: $origin
+dest: $buildTarget

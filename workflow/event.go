@@ -2,17 +2,18 @@ package workflow
 
 import (
 	"fmt"
-	"github.com/viant/endly"
 	"github.com/viant/toolbox/data"
+	"github.com/viant/endly/model"
+	"github.com/viant/endly/msg"
 )
 
 //WorkflowLoadedEvent represents workflow load event
 type WorkflowLoadedEvent struct {
-	Workflow *endly.Workflow
+	Workflow *model.Workflow
 }
 
 //NewWorkflowLoadedEvent create a new workflow load event.
-func NewWorkflowLoadedEvent(workflow *endly.Workflow) *WorkflowLoadedEvent {
+func NewWorkflowLoadedEvent(workflow *model.Workflow) *WorkflowLoadedEvent {
 	return &WorkflowLoadedEvent{Workflow: workflow}
 }
 
@@ -44,11 +45,11 @@ func NewWorkflowEndEvent(sessionID string) *WorkflowEndEvent {
 
 //WorkflowAsyncEvent represents an async action event.
 type WorkflowAsyncEvent struct {
-	ServiceAction *endly.ServiceAction
+	ServiceAction *model.Action
 }
 
 //NewWorkflowAsyncEvent creates a new WorkflowAsyncEvent.
-func NewWorkflowAsyncEvent(action *endly.ServiceAction) *WorkflowAsyncEvent {
+func NewWorkflowAsyncEvent(action *model.Action) *WorkflowAsyncEvent {
 	return &WorkflowAsyncEvent{action}
 }
 
@@ -58,13 +59,13 @@ type PipelineEvent struct {
 }
 
 //Messages returns messages
-func (e *PipelineEvent) Messages() []*endly.Message {
-	return []*endly.Message{
-		endly.NewMessage(endly.NewStyledText(fmt.Sprintf("PIPELINE: %s", e.Name), endly.MessageStyleGroup), endly.NewStyledText("pipe", endly.MessageStyleGeneric)),
+func (e *PipelineEvent) Messages() []*msg.Message {
+	return []*msg.Message{
+		msg.NewMessage(msg.NewStyledText(fmt.Sprintf("PIPELINE: %s", e.Name), msg.MessageStyleGroup), msg.NewStyledText("pipe", msg.MessageStyleGeneric)),
 	}
 }
 
-func NewPipelineEvent(pipeline *Pipeline) *PipelineEvent {
+func NewPipelineEvent(pipeline *model.Pipeline) *PipelineEvent {
 	return &PipelineEvent{
 		Name: pipeline.Name,
 	}

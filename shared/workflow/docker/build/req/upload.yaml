@@ -1,3 +1,0 @@
-source: $target
-dest: $buildTarget
-assets: $upload

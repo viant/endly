@@ -1,0 +1,59 @@
+[
+  {
+    "Name": "name",
+    "From": "params.name"
+  },
+  {
+    "Name": "name",
+    "When": "$in.params.name:/$/",
+    "Value": "monog_endly"
+  },
+  {
+    "Name": "target",
+    "From": "params.target"
+  },
+  {
+    "Name": "target",
+    "When": "$in.params.target:/$/",
+    "Value": {
+      "URL": "ssh://127.0.0.1/",
+      "Credentials": "localhost"
+    }
+  },
+  {
+    "Name": "env",
+    "From": "params.env"
+  },
+  {
+    "Name": "env",
+    "When": "$in.params.env:!/$/ && $in.params.env",
+    "Value": {}
+  },
+  {
+    "Name": "serviceTarget",
+    "From": "params.serviceTarget"
+  },
+  {
+    "Name": "serviceTarget",
+    "When": "$in.params.serviceTarget:/$/",
+    "Value": "$target"
+  },
+  {
+    "Name": "version",
+    "From": "params.version"
+  },
+  {
+    "Name": "version",
+    "When": "$in.params.version:/$/",
+    "Value": "latest"
+  },
+  {
+    "Name": "image",
+    "From": "params.image"
+  },
+  {
+    "Name": "image",
+    "When": "$in.params.image:/$/",
+    "Value": "mongo:$version"
+  }
+]

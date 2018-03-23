@@ -1,0 +1,90 @@
+[
+  {
+    "Name": "credentials",
+    "From": "params.credentials"
+  },
+  {
+    "Name": "credentials",
+    "When": "$in.params.credentials:/$/",
+    "Value": "mem://github.com/viant/endly/workflow/service/mysql/secret.json"
+  },
+  {
+    "Name": "name",
+    "From": "params.name"
+  },
+  {
+    "Name": "name",
+    "When": "$in.params.name:/$/",
+    "Value": "mysql_endly"
+  },
+  {
+    "Name": "target",
+    "From": "params.target"
+  },
+  {
+    "Name": "target",
+    "When": "$in.params.target:/$/",
+    "Value": {
+      "URL": "ssh://127.0.0.1/",
+      "Credentials": "localhost"
+    }
+  },
+  {
+    "Name": "env",
+    "From": "params.env"
+  },
+  {
+    "Name": "env",
+    "When": "$in.params.env:!/$/ && $in.params.env",
+    "Value": {}
+  },
+  {
+    "Name": "serviceTarget",
+    "From": "params.serviceTarget"
+  },
+  {
+    "Name": "serviceTarget",
+    "When": "$in.params.serviceTarget:/$/",
+    "Value": "$target"
+  },
+  {
+    "Name": "version",
+    "From": "params.version"
+  },
+  {
+    "Name": "version",
+    "When": "$in.params.version:/$/",
+    "Value": "latest"
+  },
+  {
+    "Name": "image",
+    "From": "params.image"
+  },
+  {
+    "Name": "image",
+    "When": "$in.params.image:/$/",
+    "Value": "mysql:$version"
+  },
+
+
+  {
+    "Name": "config",
+    "From": "params.config"
+  },
+  {
+    "Name": "hasConfig",
+    "When": "$out.config:!/$/ && $out.config",
+    "Value": "1",
+    "Else": "0"
+  },
+  {
+    "Name": "serviceConfig",
+    "Value": "/tmp/${name}.cnf"
+  },
+  {
+    "Name": "dump",
+    "From": "params.dump",
+    "When": "$in.tasks:/export/ || $in.tasks:/import/",
+    "Required": true
+  }
+]

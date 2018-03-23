@@ -58,6 +58,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"github.com/viant/endly/meta"
+	"github.com/viant/endly/model"
 )
 
 func init() {
@@ -67,14 +69,13 @@ func init() {
 	flag.String("r", "run.json", "<path/url to workflow run request in YAML or JSON format>")
 	flag.String("w", "manager", "<workflow name>  if both -r or -p and -w are specified, -w is ignored")
 	flag.String("i", "", "<coma separated tagID list> to filter")
-	flag.String("p", "run.yaml", "<path/url to workflow pipeline request in YAML or JSON format>")
 
 	flag.String("t", "*", "<task/s to run>, t='?' to list all tasks for selected workflow")
 
 	flag.String("l", "logs", "<log directory>")
 	flag.Bool("d", false, "enable logging")
 
-	flag.Bool("o", false, "print workflow/run/piple as JSON or YAML")
+	flag.Bool("p", false, "print workflow/run/piple as JSON or YAML")
 	flag.String("f", "json", "<workflow or request format>, json or yaml")
 
 	flag.Bool("h", false, "print help")
@@ -125,30 +126,12 @@ func Bootstrap() {
 		printServiceActions()
 		return
 	}
-	var err error
-	var request interface{}
 
-	if request, err = getPipelineRequestWithOptions(flagset); err != nil {
+	request, err := getRunRequestWithOptions(flagset);
+	if err != nil {
 		log.Fatal(err)
 	}
-
-	if req, _ := workflow.GetAbstractRun(request); req == nil {
-		if request, err = getRunRequestWithOptions(flagset); err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	if req, _ := workflow.GetAbstractRun(request); req == nil {
-		flagset["p"] = flag.Lookup("p").Value.String()
-		request, err = getPipelineRequestWithOptions(flagset)
-		if err != nil {
-			if !strings.Contains(err.Error(), "no such file or directory") {
-				log.Fatal(err)
-			}
-		}
-	}
-
-	if req, _ := workflow.GetAbstractRun(request); req == nil {
+	if request == nil {
 		flagset["r"] = flag.Lookup("r").Value.String()
 		flagset["w"] = flag.Lookup("w").Value.String()
 		request, err = getRunRequestWithOptions(flagset)
@@ -156,20 +139,17 @@ func Bootstrap() {
 			log.Fatal(err)
 		}
 	}
-
-	if req, _ := workflow.GetAbstractRun(request); req == nil {
+	if request == nil {
 		printHelp()
 		return
 	}
-	if runRequest, isRunRequest := request.(*workflow.RunRequest); isRunRequest {
-		if value, ok := flagset["o"]; ok && toolbox.AsBoolean(value) {
-			printWorkflow(runRequest.URL)
-			return
-		}
-		if flagset["t"] == "?" {
-			printWorkflowTasks(runRequest.URL)
-			return
-		}
+	if value, ok := flagset["o"]; ok && toolbox.AsBoolean(value) {
+		printWorkflow(request.URL)
+		return
+	}
+	if flagset["t"] == "?" {
+		printWorkflowTasks(request.URL)
+		return
 	}
 
 	runner := cli.New()
@@ -231,12 +211,12 @@ func credentials() (string, string, error) {
 }
 
 func printWorkflowTasks(URL string) {
-	workflow, err := getWorkflow(URL)
+	workFlow, err := getWorkflow(URL)
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Fprintf(os.Stderr, "Workflow '%v' (%v) tasks:\n", workflow.Name, workflow.Source.URL)
-	for _, task := range workflow.Tasks {
+	fmt.Fprintf(os.Stderr, "Workflow '%v' (%v) tasks:\n", workFlow.Name, workFlow.Source.URL)
+	for _, task := range workFlow.Tasks {
 		fmt.Fprintf(os.Stderr, "\t%v: %v\n", task.Name, task.Description)
 	}
 }
@@ -305,7 +285,7 @@ func printStructMeta(renderer *cli.Renderer, color string, meta *toolbox.StructM
 
 func printServiceActionRequest() {
 
-	service := endly.NewMetaService()
+	service := meta.New()
 
 	var serviceID = flag.Lookup("s").Value.String()
 	var action = flag.Lookup("a").Value.String()
@@ -315,7 +295,7 @@ func printServiceActionRequest() {
 		log.Fatal(err)
 	}
 	var renderer = cli.NewRenderer(os.Stderr, 120)
-	renderer.Println(renderer.ColorText("Request: ", "blue", "bold") + fmt.Sprintf("%T", meta.Request))
+	renderer.Println(renderer.ColorText("ServiceRequest: ", "blue", "bold") + fmt.Sprintf("%T", meta.Request))
 	printServiceActionInfo(renderer, meta.RequestInfo, "blue", "request", meta.Request)
 	printStructMeta(renderer, "blue", meta.RequestMeta)
 	renderer.Println(renderer.ColorText("Response: ", "green", "bold") + fmt.Sprintf("%T", meta.Response))
@@ -343,12 +323,12 @@ func printServiceActions() {
 	}
 	fmt.Printf("'%v' service actions: \n", serviceID)
 	for _, action := range service.Actions() {
-		route, _ := service.ServiceActionRoute(action)
+		route, _ := service.Route(action)
 		fmt.Printf("\t%v - %v\n", action, route.RequestInfo.Description)
 	}
 }
 
-func getWorkflow(URL string) (*endly.Workflow, error) {
+func getWorkflow(URL string) (*model.Workflow, error) {
 	dao := workflow.NewDao()
 	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
@@ -356,11 +336,11 @@ func getWorkflow(URL string) (*endly.Workflow, error) {
 }
 
 func printWorkflow(URL string) {
-	workflow, err := getWorkflow(URL)
+	workFlow, err := getWorkflow(URL)
 	if err != nil {
 		log.Fatal(err)
 	}
-	printInFormat(workflow, "failed to print workflow: "+URL+", %v")
+	printInFormat(workFlow, "failed to print workFlow: "+URL+", %v")
 
 }
 
@@ -395,21 +375,6 @@ func printVersion() {
 	fmt.Fprintf(os.Stdout, "%v %v\n", endly.AppName, endly.GetVersion())
 }
 
-func getPipeRequestURL(candidate string) (*url.Resource, error) {
-	if path.Ext(candidate) == "" {
-		candidate = candidate + ".yaml"
-	}
-	resource := url.NewResource(candidate)
-	if _, err := resource.Download(); err != nil {
-		resource = url.NewResource(fmt.Sprintf("mem://%v/pipe/%v", endly.Namespace, candidate))
-		if _, memError := resource.Download(); memError != nil {
-			return nil, err
-		}
-
-	}
-
-	return resource, nil
-}
 
 func getRunRequestURL(URL string) (*url.Resource, error) {
 	resource := url.NewResource(URL)
@@ -434,36 +399,15 @@ func getRunRequestURL(URL string) (*url.Resource, error) {
 	return resource, err
 }
 
-func getPipelineRequestWithOptions(flagset map[string]string) (request *workflow.PipeRequest, err error) {
-	if value, ok := flagset["p"]; ok {
-		resource, err := getPipeRequestURL(value)
-		if err != nil {
-			return nil, err
-		}
-		request = &workflow.PipeRequest{
-			AbstractRun: &workflow.AbstractRun{},
-		}
-		err = resource.Decode(request)
-		if err != nil {
-			return nil, err
-		}
-
-		request.Init()
-		updateBaseRunWithOptions(request.AbstractRun, flagset)
-		return request, err
-	}
-	return nil, err
-}
-
 func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, error) {
 	var request *workflow.RunRequest
 	if value, ok := flagset["w"]; ok {
 		request = &workflow.RunRequest{
-			AbstractRun: &workflow.AbstractRun{},
-			URL:         value,
+			Selector: &workflow.Selector{
+				URL: value,
+			},
 		}
 	}
-
 	if value, ok := flagset["r"]; ok {
 		resource, err := getRunRequestURL(value)
 		if err != nil {
@@ -486,11 +430,11 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 	if value, ok := flagset["i"]; ok {
 		request.TagIDs = value
 	}
-	updateBaseRunWithOptions(request.AbstractRun, flagset)
+	updateBaseRunWithOptions(request, flagset)
 	return request, nil
 }
 
-func updateBaseRunWithOptions(request *workflow.AbstractRun, flagset map[string]string) {
+func updateBaseRunWithOptions(request *workflow.RunRequest, flagset map[string]string) {
 	var params = toolbox.Pairs(getArguments()...)
 	if request != nil {
 		if len(request.Params) == 0 {
