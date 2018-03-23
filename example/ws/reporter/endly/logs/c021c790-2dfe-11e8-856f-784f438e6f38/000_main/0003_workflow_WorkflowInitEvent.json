@@ -1,0 +1,64 @@
+{
+	"Tasks": "",
+	"State": {
+		"AsBool": "func()",
+		"AsFloat": "func()",
+		"AsInt": "func()",
+		"AsMap": "func()",
+		"AsTableRecords": "func()",
+		"Cat": "func()",
+		"Dob": "func()",
+		"FormatTime": "func()",
+		"GOPATH": "/Projects/go/workspace/",
+		"HasResource": "func()",
+		"Length": "func()",
+		"LoadNeatly": "func()",
+		"Markdown": "func()",
+		"Md5": "func()",
+		"Pwd": "func()",
+		"URLJoin": "func()",
+		"URLPath": "func()",
+		"Unzip": "func()",
+		"UnzipText": "func()",
+		"WorkingDirectory": "func()",
+		"Zip": "func()",
+		"app": "reporter",
+		"appPath": "/opt/reporter",
+		"appTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"buildPath": "/tmp/reporter/build/",
+		"buildTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"data": {},
+		"date": "2018-03-22",
+		"env": "func()",
+		"mysqlCredential": "mysql",
+		"mysqlVersion": "5.7",
+		"origin": {
+			"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/ws/reporter"
+		},
+		"ownerURL": "file:///Projects/go/workspace/src/github.com/viant/endly/example/ws/reporter/endly/manager.csv",
+		"params": {},
+		"rand": 6717537746780029161,
+		"releasePath": "/tmp/reporter/release",
+		"sdk": "go:1.8",
+		"serviceTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"target": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"tasks": "",
+		"time": "2018-03-22 11:28:00",
+		"timestamp": "func()",
+		"tmpDir": "func()",
+		"ts": "201803221128000",
+		"uuid": "func()"
+	}
+}

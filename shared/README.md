@@ -3,10 +3,10 @@
 
 Shared workflow provide predefined workflows:
 
-- [Workflow using docker](workflow/docker) (build and services)
+- [Services](workflow/services) (datastore/caching services)
+- [App](workflow/app) (buid/deployment,publishing including docker)
 - [Cloud](workflow/cloud) (ec2, gce)
 - [Testing](assert) (assert)
-- [Tomcat](workflow)
 
 
 Endly operates on local or remote resources referred as target in various service contracts. 
@@ -18,6 +18,7 @@ To unify target naming the following function based methodology is used:
 origin - version control origin
 target - host resource where endly runs (usually 127.0.0.1 with localhost credentials)
 buildTarget  - host resource where app is being built
+appTarget - host whre app is deployed and runs
 serviceTarget - host resource where app service (i.e. datastore service) runs
 
 

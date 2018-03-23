@@ -1,22 +1,22 @@
 package cli
 
 import (
-	"github.com/viant/endly"
 	"strings"
+	"github.com/viant/endly/model"
 )
 
 //GetPath returns hierarchical path to the latest Activity
-func GetPath(candidates *endly.Activities, runner *Runner, fullPath bool) (string, int) {
+func GetPath(candidates *model.Activities, runner *Runner, fullPath bool) (string, int) {
 	var pathLength = 0
 	var activityPath = make([]string, 0)
 
 
-	var activities = make([]*endly.Activity, 0)
-	if len(*candidates) > 0 {
-		activities = append(activities, (*candidates)[0])
+	var activities = make([]*model.Activity, 0)
+	if candidates.Len() > 0 {
+		activities = append(activities, candidates.First())
 	}
-	if len(*candidates) > 1 {
-		activities = append(activities, (*candidates)[len(*candidates)-1])
+	if candidates.Len() > 1 {
+		activities = append(activities, candidates.Last())
 	}
 
 	for i, activity := range activities {
@@ -38,8 +38,8 @@ func GetPath(candidates *endly.Activities, runner *Runner, fullPath bool) (strin
 			tag = runner.ColorText(tag, "inverse")
 		}
 
-		activityPath = append(activityPath, runner.ColorText(activity.Workflow, runner.PathColor)+tag+serviceAction)
-		pathLength += len(activity.Workflow)
+		activityPath = append(activityPath, runner.ColorText(activity.Caller, runner.PathColor)+tag+serviceAction)
+		pathLength += len(activity.Caller)
 	}
 
 	var logPath = strings.Join(activityPath, runner.ColorText("|", "gray"))

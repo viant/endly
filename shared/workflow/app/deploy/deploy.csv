@@ -1,0 +1,16 @@
+Workflow,,Name,Description,Tasks,Init
+,,deploy,deploy app,%Tasks,@var/init
+[]Tasks,,Name,Description,Actions,
+,,build,Run an action,%Build,
+[]Build,Service,Action,Description,Request,When
+,exec,run,init process,@req/init,$Length($init) > 0
+,storage,copy,upload custom assets,@req/upload,$Length($upload) > 0
+,exec,run,run commands,@req/cmd,$Length($commands) > 0
+[]Tasks,,Name,Description,Actions,
+,,stop,stop app,%Stop,
+[]Stop,Service,Action,Description,Request,
+,process,stop,stop app,@req/stop,
+[]Tasks,,Name,Description,Actions,
+,,start,start app,%Start,
+[]Start,Service,Action,Description,Request,
+,process,start,start app,@req/start,

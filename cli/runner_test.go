@@ -71,7 +71,7 @@ package cli_test
 //
 //	}
 //	{
-//		err := runner.Run(&endly.WorkflowRunRequest{
+//		err := runner.Run(&model.ProcessRequest{
 //			URL: "action",
 //			Tasks:       "run",
 //			Params: map[string]interface{}{
@@ -85,13 +85,13 @@ package cli_test
 //	}
 //	{
 //
-//		err := runner.Run(&endly.WorkflowRunRequest{
+//		err := runner.Run(&model.ProcessRequest{
 //			URL: "action",
 //			Tasks:       "run",
 //			Params: map[string]interface{}{
 //				"service": "workflow",
 //				"action":  "fail",
-//				"request": &endly.WorkflowFailRequest{StyledText: "hello"},
+//				"request": &model.WorkflowFailRequest{StyledText: "hello"},
 //			},
 //		}, nil)
 //		assert.NotNil(t, err)

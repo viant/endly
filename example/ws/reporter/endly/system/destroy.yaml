@@ -1,0 +1,5 @@
+pipeline:
+  stop-images:
+    action: docker:stop-images
+    images:
+      - mysql

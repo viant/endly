@@ -1,0 +1,99 @@
+{
+	"EnableLogging": false,
+	"LogDirectory": "",
+	"EventFilter": null,
+	"Async": false,
+	"Params": null,
+	"PublishParameters": true,
+	"Pipeline": [
+		{
+			"Key": "create-db",
+			"Value": [
+				{
+					"Key": "action",
+					"Value": "dsunit:register"
+				},
+				{
+					"Key": "datastore",
+					"Value": "db1"
+				},
+				{
+					"Key": "recreate",
+					"Value": true
+				},
+				{
+					"Key": "scripts",
+					"Value": [
+						[
+							{
+								"Key": "URL",
+								"Value": "datastore/db1/schema.ddl"
+							}
+						]
+					]
+				},
+				{
+					"Key": "config",
+					"Value": [
+						{
+							"Key": "driverName",
+							"Value": "mysql"
+						},
+						{
+							"Key": "descriptor",
+							"Value": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+						},
+						{
+							"Key": "credentials",
+							"Value": "mysql"
+						}
+					]
+				},
+				{
+					"Key": "admin",
+					"Value": [
+						{
+							"Key": "datastore",
+							"Value": "mysql"
+						},
+						{
+							"Key": "config",
+							"Value": [
+								{
+									"Key": "driverName",
+									"Value": "mysql"
+								},
+								{
+									"Key": "descriptor",
+									"Value": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+								},
+								{
+									"Key": "credentials",
+									"Value": "mysql"
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"Key": "populate",
+			"Value": [
+				{
+					"Key": "action",
+					"Value": "dbunit:prepare"
+				},
+				{
+					"Key": "datastore",
+					"Value": "db1"
+				},
+				{
+					"Key": "URL",
+					"Value": "datastore/db1/dictionary"
+				}
+			]
+		}
+	],
+	"Pipelines": null
+}

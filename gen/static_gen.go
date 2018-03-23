@@ -16,7 +16,7 @@ func main() {
 
 	mappings := []*storage.StorageMapping{
 		{
-			SourceURL:      toolbox.FileSchema + path.Join(parent, "meta"),
+			SourceURL:      toolbox.FileSchema + path.Join(parent, "shared/meta"),
 			DestinationURI: path.Join(endly.Namespace, "meta"),
 			TargetFile:     path.Join(parent, "static", "meta.go"),
 			TargetPackage:  "static",

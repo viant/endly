@@ -1,0 +1,14 @@
+Workflow,,Name,Description,Tasks,Init
+,,build,Build go app in linux docker container with custom dependencies,%Tasks,@var/init
+[]Tasks,,Name,Description,Actions,
+,,start SSHD docker,Run an docker,%Init,
+[]Init,Service,Action,Description,Request,
+,exec,run,create base app dir,@req/init,
+[]Tasks,,Name,Description,Actions,
+,,build,Run an action,%Build,
+[]Build,Service,Action,Description,Request,When
+,sdk,set,set sdk,@req/sdk,$Length($init) > 0
+,version/control,checkout,checkout code,@req/checkout,$origin
+,storage,copy,upload custom assets,@req/upload,$Length($upload) > 0
+,exec,run,run commands,@req/cmd,
+,storage,copy,download custom assets,@req/download,$Length($download) > 0

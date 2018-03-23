@@ -1,0 +1,178 @@
+{
+	"Response": {
+		"Tag": "Init",
+		"TagIndex": "",
+		"TagID": "manager_Init",
+		"TagDescription": "",
+		"Workflow": "manager",
+		"Task": "",
+		"Service": "workflow",
+		"Action": "run",
+		"Description": "initialise datastores",
+		"Error": "",
+		"StartTime": "2018-03-22T11:46:23.688222-07:00",
+		"Ineligible": false,
+		"Request": {
+			"EnableLogging": false,
+			"LogDirectory": "",
+			"EventFilter": null,
+			"Async": false,
+			"Params": {},
+			"PublishParameters": true,
+			"URL": "",
+			"Name": "",
+			"Tasks": "",
+			"TagIDs": "",
+			"Pipeline": [
+				{
+					"Key": "create-db",
+					"Value": [
+						{
+							"Key": "action",
+							"Value": "dsunit:register"
+						},
+						{
+							"Key": "datastore",
+							"Value": "db1"
+						},
+						{
+							"Key": "recreate",
+							"Value": true
+						},
+						{
+							"Key": "scripts",
+							"Value": [
+								[
+									{
+										"Key": "URL",
+										"Value": "datastore/db1/schema.ddl"
+									}
+								]
+							]
+						},
+						{
+							"Key": "config",
+							"Value": [
+								{
+									"Key": "driverName",
+									"Value": "mysql"
+								},
+								{
+									"Key": "descriptor",
+									"Value": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+								},
+								{
+									"Key": "credentials",
+									"Value": "mysql"
+								}
+							]
+						},
+						{
+							"Key": "admin",
+							"Value": [
+								{
+									"Key": "datastore",
+									"Value": "mysql"
+								},
+								{
+									"Key": "config",
+									"Value": [
+										{
+											"Key": "driverName",
+											"Value": "mysql"
+										},
+										{
+											"Key": "descriptor",
+											"Value": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+										},
+										{
+											"Key": "credentials",
+											"Value": "mysql"
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"Key": "populate",
+					"Value": [
+						{
+							"Key": "action",
+							"Value": "dsunit:prepare"
+						},
+						{
+							"Key": "datastore",
+							"Value": "db1"
+						},
+						{
+							"Key": "URL",
+							"Value": "datastore/db1/dictionary"
+						}
+					]
+				}
+			],
+			"Pipelines": [
+				{
+					"Name": "create-db",
+					"Skip": false,
+					"Workflow": "",
+					"Action": "dsunit:register",
+					"Params": {
+						"admin": {
+							"config": {
+								"credentials": "mysql",
+								"descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+								"driverName": "mysql"
+							},
+							"datastore": "mysql"
+						},
+						"config": {
+							"credentials": "mysql",
+							"descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+							"driverName": "mysql"
+						},
+						"datastore": "db1",
+						"recreate": true,
+						"scripts": [
+							[
+								{
+									"Key": "URL",
+									"Value": "datastore/db1/schema.ddl"
+								}
+							]
+						]
+					},
+					"Pipelines": []
+				},
+				{
+					"Name": "populate",
+					"Skip": false,
+					"Workflow": "",
+					"Action": "dsunit:prepare",
+					"Params": {
+						"URL": "datastore/db1/dictionary",
+						"datastore": "db1"
+					},
+					"Pipelines": []
+				}
+			]
+		},
+		"Response": {},
+		"ServiceResponse": {
+			"Status": "error",
+			"Error": "unknown datastore: !db1! at workflow.run/dsunit.prepare",
+			"Response": {
+				"Data": {},
+				"SessionID": ""
+			},
+			"Err": {
+				"Path": [
+					"workflow.run",
+					"dsunit.prepare"
+				]
+			}
+		}
+	}
+}
