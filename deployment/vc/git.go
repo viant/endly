@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"github.com/lunixbochs/vtclean"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
-	"github.com/viant/endly/model"
 )
 
 type git struct{}

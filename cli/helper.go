@@ -1,15 +1,14 @@
 package cli
 
 import (
-	"strings"
 	"github.com/viant/endly/model"
+	"strings"
 )
 
 //GetPath returns hierarchical path to the latest Activity
 func GetPath(candidates *model.Activities, runner *Runner, fullPath bool) (string, int) {
 	var pathLength = 0
 	var activityPath = make([]string, 0)
-
 
 	var activities = make([]*model.Activity, 0)
 	if candidates.Len() > 0 {
@@ -25,7 +24,7 @@ func GetPath(candidates *model.Activities, runner *Runner, fullPath bool) (strin
 		pathLength += len(tag)
 		serviceAction := ""
 		if i+1 < len(activities) || fullPath {
-			service := activity.Service+"."
+			service := activity.Service + "."
 			if activity.Service == "workflow" {
 				service = ""
 			}

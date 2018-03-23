@@ -46,6 +46,8 @@ import (
 	"bufio"
 	"errors"
 	"github.com/viant/endly/cli"
+	"github.com/viant/endly/meta"
+	"github.com/viant/endly/model"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
@@ -58,8 +60,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"github.com/viant/endly/meta"
-	"github.com/viant/endly/model"
 )
 
 func init() {
@@ -127,7 +127,7 @@ func Bootstrap() {
 		return
 	}
 
-	request, err := getRunRequestWithOptions(flagset);
+	request, err := getRunRequestWithOptions(flagset)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -374,7 +374,6 @@ func printHelp() {
 func printVersion() {
 	fmt.Fprintf(os.Stdout, "%v %v\n", endly.AppName, endly.GetVersion())
 }
-
 
 func getRunRequestURL(URL string) (*url.Resource, error) {
 	resource := url.NewResource(URL)

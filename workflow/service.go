@@ -2,7 +2,11 @@ package workflow
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/endly"
+	"github.com/viant/endly/criteria"
+	"github.com/viant/endly/model"
+	"github.com/viant/endly/msg"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -12,10 +16,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"github.com/viant/endly/model"
-	"github.com/viant/endly/criteria"
-	"github.com/pkg/errors"
-	"github.com/viant/endly/msg"
 )
 
 const (
@@ -142,7 +142,6 @@ func (s *Service) getServiceRequest(context *endly.Context, activity *model.Acti
 	activity.Request = state.Expand(activity.Request)
 	request := activity.Request
 
-
 	if request == nil || !toolbox.IsMap(request) {
 		if toolbox.IsStruct(request) {
 			var requestMap = make(map[string]interface{})
@@ -157,7 +156,6 @@ func (s *Service) getServiceRequest(context *endly.Context, activity *model.Acti
 		}
 	}
 
-
 	requestMap := toolbox.AsMap(request)
 	var serviceRequest interface{}
 	serviceRequest, err = context.AsRequest(service.ID(), activity.Action, requestMap)
@@ -169,8 +167,6 @@ func (s *Service) getServiceRequest(context *endly.Context, activity *model.Acti
 	activity.Request = serviceRequest
 	return service, serviceRequest, nil
 }
-
-
 
 func (s *Service) runAction(context *endly.Context, action *model.Action, process *model.Process) (response interface{}, err error) {
 	defer func() {
@@ -232,8 +228,6 @@ func (s *Service) injectTagIDsIfNeeded(action *model.ServiceRequest, tagIDs map[
 	requestMap := toolbox.AsMap(action.Request)
 	requestMap["TagIDs"] = strings.Join(toolbox.MapKeysToStringSlice(tagIDs), ",")
 }
-
-
 
 func (s *Service) runTask(context *endly.Context, process *model.Process, tagIDs map[string]bool, task *model.Task) (data.Map, error) {
 	if !process.CanRun() {
@@ -424,14 +418,12 @@ func (s *Service) pipelineWorkflowAsyncInNeeded(context *endly.Context, request 
 	return s.pipeline(context, request)
 }
 
-
 func (s *Service) run(context *endly.Context, request *RunRequest) (response *RunResponse, err error) {
 	if request.MultiSelector != nil {
 		return s.pipelineWorkflowAsyncInNeeded(context, request)
 	}
 	return s.runWorkflowAsyncIfNeeded(context, request)
 }
-
 
 func (s *Service) runWorkflowAsyncIfNeeded(context *endly.Context, request *RunRequest) (response *RunResponse, err error) {
 	if request.Async {
@@ -450,15 +442,13 @@ func (s *Service) runWorkflowAsyncIfNeeded(context *endly.Context, request *RunR
 	return s.runWorkflow(context, request)
 }
 
-
 func (s *Service) enableLoggingIfNeeded(context *endly.Context, request *RunRequest) {
-	if request.EnableLogging && ! context.HasLogger {
+	if request.EnableLogging && !context.HasLogger {
 		var logDirectory = path.Join(request.LogDirectory, context.SessionID)
 		logger := NewLogger(logDirectory, context.Listener)
 		context.Listener = logger.AsEventListener()
 	}
 }
-
 
 func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunRequest) (response *RunResponse, err error) {
 	response = &RunResponse{
@@ -477,7 +467,6 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	}
 	upstreamContext.Publish(NewWorkflowLoadedEvent(workflow))
 
-
 	defer Pop(upstreamContext)
 	process := model.NewProcess(workflow, nil)
 	Push(upstreamContext, process)
@@ -488,7 +477,6 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	//} else {
 	//	upstreamContext.Put(model.WorkflowKey, workflow)
 	//}
-	
 
 	context := upstreamContext.Clone()
 	var state = context.State()
@@ -505,8 +493,6 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 		}
 	}
 	state.Put(paramsStateKey, params)
-
-
 
 	err = workflow.Init.Apply(state, state)
 	s.addVariableEvent("Workflow.Init", workflow.Init, context, state, state)
@@ -783,7 +769,6 @@ func (s *Service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
-
 
 	s.AbstractService.Register(&endly.Route{
 		Action: "load",

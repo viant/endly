@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	endpoint "github.com/viant/endly/endpoint/http"
+	"github.com/viant/endly/model"
 	runner "github.com/viant/endly/runner/selenium"
 	_ "github.com/viant/endly/static"
 	"github.com/viant/endly/system/exec"
@@ -16,7 +17,6 @@ import (
 	"path"
 	"strings"
 	"testing"
-	"github.com/viant/endly/model"
 )
 
 const code = `

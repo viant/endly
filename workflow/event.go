@@ -2,9 +2,9 @@ package workflow
 
 import (
 	"fmt"
-	"github.com/viant/toolbox/data"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/msg"
+	"github.com/viant/toolbox/data"
 )
 
 //WorkflowLoadedEvent represents workflow load event

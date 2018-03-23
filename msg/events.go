@@ -4,7 +4,7 @@ import "sync"
 
 //Events represents events
 type Events struct {
-	mux *sync.Mutex
+	mux    *sync.Mutex
 	Events []Event
 }
 
@@ -18,9 +18,9 @@ func (e *Events) AsListener() Listener {
 }
 
 //NewEvents creates a new events
-func NewEvents() *Events{
+func NewEvents() *Events {
 	return &Events{
-		mux:&sync.Mutex{},
+		mux:    &sync.Mutex{},
 		Events: make([]Event, 0),
 	}
 }

@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	undefined           int = iota
+	undefined int = iota
 	eof
 	illegal
 	whitespaces
@@ -93,7 +93,7 @@ outer:
 		switch token.Token {
 
 		case grouping:
-			groupingExpression := string(token.Matched[1: len(token.Matched)-1])
+			groupingExpression := string(token.Matched[1 : len(token.Matched)-1])
 			criteria, err := p.Parse(groupingExpression)
 			if err != nil {
 				return nil, err

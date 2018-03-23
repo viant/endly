@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"testing"
-	"github.com/viant/endly/model"
 )
 
 func GetAbstractService() *endly.AbstractService {
@@ -422,12 +422,10 @@ func TestRepeatable_Run(t *testing.T) {
 
 }
 
-
 func TestRepeater_Init(t *testing.T) {
 
 	var repeater *model.Repeater
 	repeater = repeater.Init()
 	assert.EqualValues(t, 1, repeater.Repeat)
-
 
 }

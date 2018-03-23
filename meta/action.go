@@ -13,4 +13,3 @@ type Action struct {
 	Response     interface{}
 	ResponseMeta *toolbox.StructMeta
 }
-

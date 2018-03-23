@@ -2,16 +2,14 @@ package endly
 
 import (
 	"fmt"
+	"github.com/viant/endly/msg"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"reflect"
 	"sync"
 	"time"
-	"github.com/viant/endly/msg"
 )
-
-
 
 //AbstractService represenst an abstract service.
 type AbstractService struct {
@@ -131,7 +129,6 @@ func (s *AbstractService) Route(action string) (*Route, error) {
 	return nil, fmt.Errorf("unknown %v.%v service action", s.id, action)
 }
 
-
 //Sleep sleeps for provided time in ms
 func (s *AbstractService) Sleep(context *Context, sleepTimeMs int) {
 	if sleepTimeMs > 0 {
@@ -173,7 +170,6 @@ func (s *AbstractService) End(context *Context) func(startEvent msg.Event, value
 	}
 }
 
-
 //ID returns this service id.
 func (s *AbstractService) ID() string {
 	return s.id
@@ -196,14 +192,10 @@ func NewAbstractService(id string) *AbstractService {
 	}
 }
 
-
-
-
 //NopRequest represent no operation to be deprecated
-type NopRequest struct{
+type NopRequest struct {
 	In interface{}
 }
-
 
 //nopService represents no operation nopService (deprecated, use workflow, nop instead)
 type nopService struct {
@@ -230,8 +222,6 @@ func (s *nopService) registerRoutes() {
 		},
 	})
 }
-
-
 
 //newNopService creates a new NoOperation nopService.
 func newNopService() Service {

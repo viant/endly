@@ -3,6 +3,8 @@ package exec
 import (
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/criteria"
+	"github.com/viant/endly/model"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/data"
@@ -11,8 +13,6 @@ import (
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
-	"github.com/viant/endly/model"
-	"github.com/viant/endly/criteria"
 )
 
 //ServiceID represent system executor service id
@@ -308,7 +308,7 @@ func (s *execService) buildMatchingState(response *RunResponse, context *endly.C
 }
 
 func (s *execService) executeCommand(context *endly.Context, session *model.Session, extractCommand *ExtractCommand, response *RunResponse, request *ExtractRequest) (err error) {
-	var state  = context.State()
+	var state = context.State()
 	state.SetValue("os.user", session.Username)
 	command := context.Expand(extractCommand.Command)
 	options := request.Options

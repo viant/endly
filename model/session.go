@@ -7,7 +7,7 @@ import (
 
 //Session represents a system terminal session
 type Session struct {
-	ID               string
+	ID string
 	ssh.MultiCommandSession
 	DaemonType       int
 	Service          ssh.Service
@@ -42,5 +42,3 @@ func (s *Sessions) Has(id string) bool {
 	_, has := (*s)[id]
 	return has
 }
-
-

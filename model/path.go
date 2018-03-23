@@ -27,7 +27,6 @@ func (p *Path) EnvValue() string {
 	return strings.Join(p.Items, ":")
 }
 
-
 //NewSystemPath create a new system path.
 func NewPath(items ...string) *Path {
 	return &Path{

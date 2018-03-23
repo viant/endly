@@ -44,7 +44,7 @@ func (w *Workflow) Validate() error {
 		for _, action := range task.Actions {
 			action.ServiceRequest = action.ServiceRequest.Init()
 			action.Repeater = action.Repeater.Init()
-			if err := action.Validate();err != nil {
+			if err := action.Validate(); err != nil {
 				return err
 			}
 		}

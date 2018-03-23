@@ -1,11 +1,10 @@
 package msg
 
 import (
-	"time"
 	"fmt"
 	"strings"
+	"time"
 )
-
 
 //Represents a generic event
 type Event interface {
@@ -14,8 +13,6 @@ type Event interface {
 	Value() interface{}
 	Timestamp() time.Time
 }
-
-
 
 //event represents an event
 type event struct {

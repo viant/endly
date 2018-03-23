@@ -1,17 +1,16 @@
 package workflow
 
 import (
-	"sync"
-	"fmt"
-	"path"
-	"github.com/viant/toolbox"
-	"os"
 	"encoding/json"
+	"fmt"
 	"github.com/viant/endly/model"
-	"log"
 	"github.com/viant/endly/msg"
+	"github.com/viant/toolbox"
+	"log"
+	"os"
+	"path"
+	"sync"
 )
-
 
 //Logger represent event logger to drop event details in the provied directory.
 type Logger struct {
@@ -62,8 +61,6 @@ func (l *Logger) handlerError(err error) {
 	log.Print(err)
 }
 
-
-
 //OnEvent handles supplied event.
 func (l *Logger) OnEvent(event msg.Event) {
 	l.mutex.Lock()
@@ -109,7 +106,6 @@ func (l *Logger) AsEventListener() msg.Listener {
 	}
 }
 
-
 //New creates a new event logger
 func NewLogger(directory string, listener msg.Listener) *Logger {
 	var result = &Logger{
@@ -123,4 +119,3 @@ func NewLogger(directory string, listener msg.Listener) *Logger {
 
 	return result
 }
-

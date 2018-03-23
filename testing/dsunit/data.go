@@ -2,10 +2,10 @@ package dsunit
 
 import (
 	"fmt"
+	"github.com/viant/endly/model"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"strings"
-	"github.com/viant/endly/model"
 )
 
 //TableData represents table data

@@ -12,7 +12,6 @@ type Task struct {
 	TimeSpentMs int       //optional min required time spent in this task, remaining will force Sleep
 }
 
-
 //HasTagID checks if task has supplied tagIDs
 func (t *Task) HasTagID(tagIDs map[string]bool) bool {
 	if tagIDs == nil {
@@ -25,6 +24,3 @@ func (t *Task) HasTagID(tagIDs map[string]bool) bool {
 	}
 	return false
 }
-
-
-

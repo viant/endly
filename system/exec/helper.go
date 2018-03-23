@@ -1,14 +1,14 @@
 package exec
 
 import (
+	"errors"
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/ssh"
 	"github.com/viant/toolbox/url"
 	"path"
-	"github.com/viant/endly/model"
-	"errors"
 )
 
 var sessionsKey = (*model.Sessions)(nil)
@@ -27,7 +27,6 @@ func TerminalSessions(context *endly.Context) model.Sessions {
 	}
 	return *result
 }
-
 
 //TerminalSession returns Session for passed in target resource.
 func TerminalSession(context *endly.Context, target *url.Resource) (*model.Session, error) {
@@ -49,8 +48,6 @@ func TerminalSession(context *endly.Context, target *url.Resource) (*model.Sessi
 	}
 	return sessions[target.Host()], nil
 }
-
-
 
 //Os returns operating system for provide session
 func OperatingSystem(context *endly.Context, sessionName string) *model.OperatingSystem {

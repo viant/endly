@@ -1,11 +1,12 @@
 package model
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 )
 
 const defaultServiceID = "workflow"
+
 var emptyRequest = map[string]interface{}{}
 
 //ServiceRequest represent an action request
@@ -16,9 +17,8 @@ type ServiceRequest struct {
 	Description string
 }
 
-
 //Init initialises action
-func (r *ServiceRequest) Init()  *ServiceRequest {
+func (r *ServiceRequest) Init() *ServiceRequest {
 	if r == nil {
 		r = &ServiceRequest{}
 	}

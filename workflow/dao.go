@@ -2,10 +2,10 @@ package workflow
 
 import (
 	"github.com/viant/endly"
+	"github.com/viant/endly/model"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
-	"github.com/viant/endly/model"
 )
 
 var endlyRemoteRepo = "https://raw.githubusercontent.com/viant/endly/master/%v"

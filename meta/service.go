@@ -1,10 +1,9 @@
 package meta
 
 import (
-	"github.com/viant/toolbox"
 	"github.com/viant/endly"
+	"github.com/viant/toolbox"
 )
-
 
 //Service represents service action meta service
 type Service struct {
