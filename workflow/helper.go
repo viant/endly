@@ -37,8 +37,22 @@ func Pop(context *endly.Context) *model.Process {
 	return process
 }
 
-//Returns last process
+//Last returns last process
 func Last(context *endly.Context) *model.Process {
 	var processes = processes(context)
 	return processes.Last()
+}
+
+//LastWorkflow returns last workflow
+func LastWorkflow(context *endly.Context) *model.Workflow {
+	var processes = processes(context)
+	return processes.LastWorkflow()
+}
+
+
+
+//FirstWorkflow returns last workflow
+func FirstWorkflow(context *endly.Context) *model.Workflow {
+	var processes = processes(context)
+	return processes.FirstWorkflow()
 }

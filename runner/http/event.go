@@ -9,24 +9,24 @@ import (
 //Messages returns messages
 func (r *Request) Messages() []*msg.Message {
 	var response = make([]*msg.Message, 0)
-	response = append(response, msg.NewMessage(msg.NewStyledText(fmt.Sprintf("%v %v", r.Method, r.URL), msg.MessageStyleGeneric), msg.NewStyledText("http.ServiceRequest", msg.MessageStyleGeneric)))
+	response = append(response, msg.NewMessage(msg.NewStyled(fmt.Sprintf("%v %v", r.Method, r.URL), msg.MessageStyleGeneric), msg.NewStyled("http.ServiceRequest", msg.MessageStyleGeneric)))
 
 	if len(r.Header) > 0 {
 		value, _ := toolbox.AsJSONText(r.Header)
-		response = append(response, msg.NewMessage(msg.NewStyledText("Headers", msg.MessageStyleGeneric),
-			msg.NewStyledText("http.ServiceRequest", msg.MessageStyleGeneric),
-			msg.NewStyledText(value, msg.MessageStyleInput),
+		response = append(response, msg.NewMessage(msg.NewStyled("Headers", msg.MessageStyleGeneric),
+			msg.NewStyled("http.ServiceRequest", msg.MessageStyleGeneric),
+			msg.NewStyled(value, msg.MessageStyleInput),
 		))
 	}
 	if len(r.Cookies) > 0 {
 		value, _ := toolbox.AsJSONText(r.Cookies)
-		response = append(response, msg.NewMessage(msg.NewStyledText("Cookies", msg.MessageStyleGeneric),
-			msg.NewStyledText("http.ServiceRequest", msg.MessageStyleGeneric),
-			msg.NewStyledText(value, msg.MessageStyleInput),
+		response = append(response, msg.NewMessage(msg.NewStyled("Cookies", msg.MessageStyleGeneric),
+			msg.NewStyled("http.ServiceRequest", msg.MessageStyleGeneric),
+			msg.NewStyled(value, msg.MessageStyleInput),
 		))
 	}
-	response = append(response, msg.NewMessage(msg.NewStyledText("Body", msg.MessageStyleGeneric), msg.NewStyledText("http.ServiceRequest", msg.MessageStyleGeneric),
-		msg.NewStyledText(r.Body, msg.MessageStyleInput),
+	response = append(response, msg.NewMessage(msg.NewStyled("Body", msg.MessageStyleGeneric), msg.NewStyled("http.ServiceRequest", msg.MessageStyleGeneric),
+		msg.NewStyled(r.Body, msg.MessageStyleInput),
 	))
 	return response
 }
@@ -34,24 +34,24 @@ func (r *Request) Messages() []*msg.Message {
 //Messages returns messages
 func (r *Response) Messages() []*msg.Message {
 	var response = make([]*msg.Message, 0)
-	response = append(response, msg.NewMessage(msg.NewStyledText(fmt.Sprintf("StatusCode: %v", r.Code), msg.MessageStyleGeneric), msg.NewStyledText("http.Response", msg.MessageStyleGeneric)))
+	response = append(response, msg.NewMessage(msg.NewStyled(fmt.Sprintf("StatusCode: %v", r.Code), msg.MessageStyleGeneric), msg.NewStyled("http.Response", msg.MessageStyleGeneric)))
 	if len(r.Header) > 0 {
 		value, _ := toolbox.AsJSONText(r.Header)
-		response = append(response, msg.NewMessage(msg.NewStyledText("Headers", msg.MessageStyleGeneric),
-			msg.NewStyledText("http.Response", msg.MessageStyleGeneric),
-			msg.NewStyledText(value, msg.MessageStyleOutput),
+		response = append(response, msg.NewMessage(msg.NewStyled("Headers", msg.MessageStyleGeneric),
+			msg.NewStyled("http.Response", msg.MessageStyleGeneric),
+			msg.NewStyled(value, msg.MessageStyleOutput),
 		))
 	}
 	if len(r.Cookies) > 0 {
 		value, _ := toolbox.AsJSONText(r.Cookies)
-		response = append(response, msg.NewMessage(msg.NewStyledText("Cookies", msg.MessageStyleGeneric),
-			msg.NewStyledText("http.Response", msg.MessageStyleGeneric),
-			msg.NewStyledText(value, msg.MessageStyleOutput),
+		response = append(response, msg.NewMessage(msg.NewStyled("Cookies", msg.MessageStyleGeneric),
+			msg.NewStyled("http.Response", msg.MessageStyleGeneric),
+			msg.NewStyled(value, msg.MessageStyleOutput),
 		))
 	}
 	if r.Body != "" {
-		response = append(response, msg.NewMessage(msg.NewStyledText("Body", msg.MessageStyleGeneric), msg.NewStyledText("http.Response", msg.MessageStyleGeneric),
-			msg.NewStyledText(r.Body, msg.MessageStyleOutput),
+		response = append(response, msg.NewMessage(msg.NewStyled("Body", msg.MessageStyleGeneric), msg.NewStyled("http.Response", msg.MessageStyleGeneric),
+			msg.NewStyled(r.Body, msg.MessageStyleOutput),
 		))
 	}
 	return response

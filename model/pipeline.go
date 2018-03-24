@@ -1,5 +1,9 @@
 package model
 
+import (
+	"github.com/viant/endly"
+)
+
 //represents pipelines
 type Pipelines []*Pipeline
 
@@ -10,8 +14,10 @@ type Pipeline struct {
 	Action    string                 `description:"action (service.action) selector "`
 	Params    map[string]interface{} `description:"workflow or action parameters"`
 	When      string                 `description:"run criteria"`
-	Pipelines Pipelines              `description:"workflow or action pipelines"`
+	Pipelines Pipelines              `description:"workflow or action subsequent pipelines"`
 }
+
+
 
 //Select selects pipelines matching supplied selector
 func (p *Pipelines) Select(selector TasksSelector) Pipelines {
@@ -32,4 +38,24 @@ func (p *Pipelines) Select(selector TasksSelector) Pipelines {
 		}
 	}
 	return result
+}
+
+//NewActivity returns pipline activity
+func (p *Pipeline) NewActivity(context *endly.Context) *Activity {
+	var action = &Action{
+		NeatlyTag:&NeatlyTag{Tag:p.Name},
+		ServiceRequest:&ServiceRequest{},
+		Repeater: &Repeater{},
+	}
+	if p.Action != "" {
+		selector := ActionSelector(p.Action)
+		action.Service = selector.Service()
+		action.Action = selector.Action()
+	} else if p.Workflow != "" {
+		action.Service = "workflow"
+		action.Action = "run"
+	}
+	action.Request = p.Params
+	var state = context.State()
+	return  NewActivity(context, action, state)
 }

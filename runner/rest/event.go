@@ -9,10 +9,10 @@ import (
 //Messages returns messages
 func (r *Request) Messages() []*msg.Message {
 	var response = make([]*msg.Message, 0)
-	response = append(response, msg.NewMessage(msg.NewStyledText(fmt.Sprintf("%v %v", r.Method, r.URL), msg.MessageStyleGeneric), msg.NewStyledText("rest.Request", msg.MessageStyleGeneric)))
+	response = append(response, msg.NewMessage(msg.NewStyled(fmt.Sprintf("%v %v", r.Method, r.URL), msg.MessageStyleGeneric), msg.NewStyled("rest.Request", msg.MessageStyleGeneric)))
 	requestJSON, _ := toolbox.AsJSONText(r)
-	response = append(response, msg.NewMessage(msg.NewStyledText("Request", msg.MessageStyleGeneric), msg.NewStyledText("rest.Request", msg.MessageStyleGeneric),
-		msg.NewStyledText(requestJSON, msg.MessageStyleInput),
+	response = append(response, msg.NewMessage(msg.NewStyled("Request", msg.MessageStyleGeneric), msg.NewStyled("rest.Request", msg.MessageStyleGeneric),
+		msg.NewStyled(requestJSON, msg.MessageStyleInput),
 	))
 	return response
 }
@@ -21,8 +21,8 @@ func (r *Request) Messages() []*msg.Message {
 func (r *Response) Messages() []*msg.Message {
 	var response = make([]*msg.Message, 0)
 	responseJSON, _ := toolbox.AsJSONText(r)
-	response = append(response, msg.NewMessage(msg.NewStyledText("Response", msg.MessageStyleGeneric), msg.NewStyledText("rest.Response", msg.MessageStyleGeneric),
-		msg.NewStyledText(responseJSON, msg.MessageStyleOutput),
+	response = append(response, msg.NewMessage(msg.NewStyled("Response", msg.MessageStyleGeneric), msg.NewStyled("rest.Response", msg.MessageStyleGeneric),
+		msg.NewStyled(responseJSON, msg.MessageStyleOutput),
 	))
 	return response
 }

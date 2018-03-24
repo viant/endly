@@ -2,7 +2,7 @@ package cli
 
 import "github.com/viant/assertly"
 
-//Assertable represent validation response
-type Assertable interface {
+//Asserted represent validation response
+type Asserted interface {
 	Assertion() []*assertly.Validation
 }

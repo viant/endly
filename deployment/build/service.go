@@ -45,7 +45,7 @@ func (s *service) getMeta(context *endly.Context, request *Request) (*Meta, erro
 			}
 		}
 		var credentials = ""
-		mainWorkflow := workflow.Last(context)
+		mainWorkflow := workflow.LastWorkflow(context)
 		if mainWorkflow != nil {
 			credentials = mainWorkflow.Source.Credentials
 		}

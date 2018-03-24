@@ -75,7 +75,7 @@ func init() {
 	flag.String("l", "logs", "<log directory>")
 	flag.Bool("d", false, "enable logging")
 
-	flag.Bool("p", false, "print workflow/run/piple as JSON or YAML")
+	flag.Bool("p", false, "print workflow  as JSON or YAML")
 	flag.String("f", "json", "<workflow or request format>, json or yaml")
 
 	flag.Bool("h", false, "print help")
@@ -407,14 +407,15 @@ func getRunRequestURL(URL string) (*url.Resource, error) {
 
 func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, error) {
 	var request *workflow.RunRequest
+	var URL string
 	if value, ok := flagset["w"]; ok {
+		URL = value
 		request = &workflow.RunRequest{
-			Selector: &workflow.Selector{
-				URL: value,
-			},
+			URL: value,
 		}
 	}
 	if value, ok := flagset["r"]; ok {
+		URL = value
 		resource, err := getRunRequestURL(value)
 		if err != nil {
 			return nil, err
@@ -423,6 +424,9 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 		err = resource.Decode(request)
 		if err != nil {
 			return nil, fmt.Errorf("failed to locate workflow run request: %v %v", value, err)
+		}
+		if request.Name == "" {
+			request.Name = model.WorkflowSelector(URL).Name()
 		}
 	}
 

@@ -77,7 +77,7 @@ package cli_test
 //			Params: map[string]interface{}{
 //				"service": "logger",
 //				"action":  "print",
-//				"request": &endly.LoggerPrintRequest{StyledText: "hello"},
+//				"request": &endly.LoggerPrintRequest{Styled: "hello"},
 //			},
 //		}, nil)
 //
@@ -91,7 +91,7 @@ package cli_test
 //			Params: map[string]interface{}{
 //				"service": "workflow",
 //				"action":  "fail",
-//				"request": &model.WorkflowFailRequest{StyledText: "hello"},
+//				"request": &model.WorkflowFailRequest{Styled: "hello"},
 //			},
 //		}, nil)
 //		assert.NotNil(t, err)
