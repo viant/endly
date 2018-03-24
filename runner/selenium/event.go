@@ -15,13 +15,13 @@ func (r *RunResponse) Messages() []*msg.Message {
 
 	seleniumData, _ := toolbox.AsJSONText(r.Data)
 	result = append(result,
-		msg.NewMessage(msg.NewStyledText("Response", msg.MessageStyleGeneric), msg.NewStyledText("selenium", msg.MessageStyleGeneric),
-			msg.NewStyledText(seleniumData, msg.MessageStyleInput),
+		msg.NewMessage(msg.NewStyled("Response", msg.MessageStyleGeneric), msg.NewStyled("selenium", msg.MessageStyleGeneric),
+			msg.NewStyled(seleniumData, msg.MessageStyleInput),
 		))
 
 	for _, errMessage := range r.LookupErrors {
 		result = append(result,
-			msg.NewMessage(msg.NewStyledText(errMessage, msg.MessageStyleError), msg.NewStyledText("selenium", msg.MessageStyleGeneric)))
+			msg.NewMessage(msg.NewStyled(errMessage, msg.MessageStyleError), msg.NewStyled("selenium", msg.MessageStyleGeneric)))
 	}
 	return result
 }
@@ -30,18 +30,18 @@ func (r *RunResponse) Messages() []*msg.Message {
 func (r *RunRequest) Messages() []*msg.Message {
 	var result = make([]*msg.Message, 0)
 
-	var actionCalls = make([]*msg.StyledText, 0)
+	var actionCalls = make([]*msg.Styled, 0)
 	for _, action := range r.Actions {
 		var selector = "webDriver"
 		if action.Selector != nil {
 			selector = fmt.Sprintf("webElement[%v %v]", action.Selector.By, action.Selector.Key+action.Selector.Value)
 		}
 		for _, call := range action.Calls {
-			actionCalls = append(actionCalls, msg.NewStyledText(fmt.Sprintf("%v.%v(%v)", selector, call.Method, call.Parameters), msg.MessageStyleGeneric))
+			actionCalls = append(actionCalls, msg.NewStyled(fmt.Sprintf("%v.%v(%v)", selector, call.Method, call.Parameters), msg.MessageStyleGeneric))
 		}
 	}
 	result = append(result,
-		msg.NewMessage(msg.NewStyledText("Run", msg.MessageStyleOutput), msg.NewStyledText("selenium.run", msg.MessageStyleGeneric),
+		msg.NewMessage(msg.NewStyled("Run", msg.MessageStyleOutput), msg.NewStyled("selenium.run", msg.MessageStyleGeneric),
 			actionCalls...))
 
 	return result

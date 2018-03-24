@@ -16,6 +16,7 @@ func DefaultFilter() map[string]bool {
 	result["exec.stdout"] = true
 	result["endly"] = true
 	result["workflow"] = true
+	result["msg"] = true
 	return result
 }
 

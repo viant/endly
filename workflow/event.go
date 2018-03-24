@@ -7,50 +7,50 @@ import (
 	"github.com/viant/toolbox/data"
 )
 
-//WorkflowLoadedEvent represents workflow load event
-type WorkflowLoadedEvent struct {
+//LoadedEvent represents workflow load event
+type LoadedEvent struct {
 	Workflow *model.Workflow
 }
 
-//NewWorkflowLoadedEvent create a new workflow load event.
-func NewWorkflowLoadedEvent(workflow *model.Workflow) *WorkflowLoadedEvent {
-	return &WorkflowLoadedEvent{Workflow: workflow}
+//NewLoadedEvent create a new workflow load event.
+func NewLoadedEvent(workflow *model.Workflow) *LoadedEvent {
+	return &LoadedEvent{Workflow: workflow}
 }
 
-//WorkflowInitEvent represents a new workflow init event
-type WorkflowInitEvent struct {
+//InitEvent represents a new workflow init event
+type InitEvent struct {
 	Tasks string
 	State map[string]interface{}
 }
 
-//NewWorkflowInitEvent creates a new workflow init event.
-func NewWorkflowInitEvent(tasks string, state data.Map) *WorkflowInitEvent {
-	return &WorkflowInitEvent{
+//NewInitEvent creates a new workflow init event.
+func NewInitEvent(tasks string, state data.Map) *InitEvent {
+	return &InitEvent{
 		Tasks: tasks,
 		State: state.AsEncodableMap(),
 	}
 }
 
-//WorkflowEndEvent represents Activity end event type.
-type WorkflowEndEvent struct {
+//EndEvent represents Activity end event type.
+type EndEvent struct {
 	SessionID string
 }
 
-//NewWorkflowEndEvent create a new WorkflowEndEvent
-func NewWorkflowEndEvent(sessionID string) *WorkflowEndEvent {
-	return &WorkflowEndEvent{
+//NewEndEvent create a new EndEvent
+func NewEndEvent(sessionID string) *EndEvent {
+	return &EndEvent{
 		SessionID: sessionID,
 	}
 }
 
-//WorkflowAsyncEvent represents an async action event.
-type WorkflowAsyncEvent struct {
+//AsyncEvent represents an async action event.
+type AsyncEvent struct {
 	ServiceAction *model.Action
 }
 
-//NewWorkflowAsyncEvent creates a new WorkflowAsyncEvent.
-func NewWorkflowAsyncEvent(action *model.Action) *WorkflowAsyncEvent {
-	return &WorkflowAsyncEvent{action}
+//NewAsyncEvent creates a new AsyncEvent.
+func NewAsyncEvent(action *model.Action) *AsyncEvent {
+	return &AsyncEvent{action}
 }
 
 //PipelineEvent represents a pipeline event
@@ -61,10 +61,12 @@ type PipelineEvent struct {
 //Messages returns messages
 func (e *PipelineEvent) Messages() []*msg.Message {
 	return []*msg.Message{
-		msg.NewMessage(msg.NewStyledText(fmt.Sprintf("PIPELINE: %s", e.Name), msg.MessageStyleGroup), msg.NewStyledText("pipe", msg.MessageStyleGeneric)),
+		msg.NewMessage(msg.NewStyled(fmt.Sprintf("%s", e.Name), msg.MessageStyleGroup), msg.NewStyled("pipeline", msg.MessageStyleGeneric)),
 	}
 }
 
+
+//NewPipelineEvent creates a new pipeline event
 func NewPipelineEvent(pipeline *model.Pipeline) *PipelineEvent {
 	return &PipelineEvent{
 		Name: pipeline.Name,

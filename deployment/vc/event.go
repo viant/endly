@@ -11,6 +11,6 @@ func (r *CheckoutRequest) Messages() []*msg.Message {
 		return []*msg.Message{}
 	}
 	var header = fmt.Sprintf("%v %v", r.Origin.URL, r.Dest.URL)
-	return []*msg.Message{msg.NewMessage(msg.NewStyledText(header, msg.MessageStyleGeneric),
-		msg.NewStyledText("checkout", msg.MessageStyleGeneric))}
+	return []*msg.Message{msg.NewMessage(msg.NewStyled(header, msg.MessageStyleGeneric),
+		msg.NewStyled("checkout", msg.MessageStyleGeneric))}
 }

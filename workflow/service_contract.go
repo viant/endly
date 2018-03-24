@@ -10,41 +10,6 @@ import (
 	"strings"
 )
 
-//Run represents workflow tasks selector
-type Selector struct {
-	URL    string `description:"workflow URL if workflow is not found in the registry, it is loaded"`
-	Name   string `required:"true" description:"name defined in workflow document"`
-	TagIDs string `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
-}
-
-//Init initialises selector
-func (s *Selector) Init() {
-	if s.URL == "" {
-		s.URL = s.Name
-	}
-	if s.URL != "" {
-		s.URL = model.WorkflowSelector(s.URL).URL()
-	}
-	if s.Name == "" {
-		s.Name = model.WorkflowSelector(s.URL).Name()
-	} else {
-		if index := strings.LastIndex(s.Name, "/"); index != -1 {
-			s.Name = string(s.Name[index+1:])
-		}
-	}
-}
-
-//Validate checks if request is valid
-func (r *Selector) Validate() error {
-	if r.Name == "" {
-		return errors.New("name was empty")
-	}
-	if r.URL == "" {
-		return errors.New("url was empty")
-	}
-	return nil
-}
-
 //RunRequest represents workflow runWorkflow request
 type RunRequest struct {
 	EnableLogging     bool                   `description:"flag to enable logging"`
@@ -53,35 +18,58 @@ type RunRequest struct {
 	Async             bool                   `description:"flag to runWorkflow it asynchronously. Do not set it your self runner sets the flag for the first workflow"`
 	Params            map[string]interface{} `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
 	PublishParameters bool                   `default:"true" description:"flag to publish parameters directly into context state"`
+	URL               string                 `description:"workflow URL if workflow is not found in the registry, it is loaded"`
+	Name              string                 `required:"true" description:"name defined in workflow document"`
+	TagIDs            string                 `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
 	Tasks             string                 `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequencialy"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
-	*Selector
-	*MultiSelector
+	*InlinePipeline
+}
+
+//HasPipeline returns true if request has inline piplines
+func (r *RunRequest) HasPipeline() bool {
+	if r.InlinePipeline == nil {
+		return false
+	}
+	return len(r.Pipelines) > 0 || len(r.Pipeline) > 0
 }
 
 //Init initialises request
 func (r *RunRequest) Init() (err error) {
-
 	r.Params, err = util.NormalizeMap(r.Params, true)
 	if err != nil {
 		return err
 	}
-	if r.Selector != nil {
-		r.Selector.Init()
-	} else {
-		r.Selector = &Selector{}
+	if r.HasPipeline() {
+		return r.InlinePipeline.Init(r)
 	}
-	if r.MultiSelector != nil {
-		if err = r.MultiSelector.Init(r); err != nil {
-			return err
+
+	if r.URL == "" {
+		r.URL = r.Name
+	}
+	if r.URL != "" {
+		r.URL = model.WorkflowSelector(r.URL).URL()
+	}
+	if r.Name == "" {
+		r.Name = model.WorkflowSelector(r.URL).Name()
+	} else {
+		if index := strings.LastIndex(r.Name, "/"); index != -1 {
+			r.Name = string(r.Name[index+1:])
 		}
 	}
+
 	return nil
 }
 
 //Validate checks if request is valid
 func (r *RunRequest) Validate() error {
-	if r.MultiSelector == nil || len(r.MultiSelector.Pipelines) == 0 {
-		return r.Selector.Validate()
+	if r.HasPipeline() {
+		return nil
+	}
+	if r.Name == "" {
+		return errors.New("name was empty")
+	}
+	if r.URL == "" {
+		return errors.New("url was empty")
 	}
 	return nil
 }
@@ -92,11 +80,9 @@ func NewRunRequest(workflow string, params map[string]interface{}, publishParams
 	return &RunRequest{
 		Params:            params,
 		PublishParameters: publishParams,
-		Selector: &Selector{
-			URL:  selector.URL(),
-			Name: selector.Name(),
-		},
-		Tasks: selector.Tasks(),
+		URL:               selector.URL(),
+		Name:              selector.Name(),
+		Tasks:             selector.Tasks(),
 	}
 }
 
@@ -119,21 +105,13 @@ type MapEntry struct {
 	Value interface{} `description:"preserved order map entry value"`
 }
 
-//NewPipeline creates a new pipeline
-func NewPipeline(key string, value interface{}) *MapEntry {
-	return &MapEntry{
-		Key:   key,
-		Value: value,
-	}
-}
-
-//MultiSelector represent sequence of workflow/action to runWorkflow
-type MultiSelector struct {
-	Pipeline  []*MapEntry       `required:"true" description:"key value representing Pipelines in simplified form"`
+//InlinePipeline represent sequence of workflow/action to runWorkflow
+type InlinePipeline struct {
+	Pipeline  []*MapEntry     `required:"true" description:"key value representing Pipelines in simplified form"`
 	Pipelines model.Pipelines `description:"actual Pipelines (derived from Pipeline)"`
 }
 
-func (r *MultiSelector) toPipeline(source interface{}, pipeline *model.Pipeline, runRequest *RunRequest) (err error) {
+func (r *InlinePipeline) toPipeline(source interface{}, pipeline *model.Pipeline, runRequest *RunRequest) (err error) {
 	var aMap map[string]interface{}
 
 	if aMap, err = util.NormalizeMap(source, false); err != nil {
@@ -174,7 +152,7 @@ func (r *MultiSelector) toPipeline(source interface{}, pipeline *model.Pipeline,
 }
 
 //Init initialises
-func (r *MultiSelector) Init(runRequest *RunRequest) (err error) {
+func (r *InlinePipeline) Init(runRequest *RunRequest) (err error) {
 	if len(r.Pipelines) > 0 {
 		return nil
 	}
@@ -198,12 +176,6 @@ func (r *MultiSelector) Init(runRequest *RunRequest) (err error) {
 	return nil
 }
 
-//NewPipelines returns new pipeline request
-func NewPipelines(pipeline ...*MapEntry) *MultiSelector {
-	return &MultiSelector{
-		Pipeline: pipeline,
-	}
-}
 
 //RegisterRequest represents workflow register request
 type RegisterRequest struct {
@@ -228,8 +200,8 @@ type LoadResponse struct {
 // SwitchCase represent matching candidate case
 type SwitchCase struct {
 	*model.ServiceRequest `description:"action to runWorkflow if matched"`
-	Task                  string      `description:"task to runWorkflow if matched"`
-	Value                 interface{} `required:"true" description:"matching sourceKey value"`
+	Task  string          `description:"task to runWorkflow if matched"`
+	Value interface{}     `required:"true" description:"matching sourceKey value"`
 }
 
 // SwitchRequest represent switch action request
@@ -312,10 +284,10 @@ func (r *PrintRequest) Messages() []*msg.Message {
 
 	var result = msg.NewMessage(nil, nil)
 	if r.Message != "" {
-		result.Items = append(result.Items, msg.NewStyledText(r.Message, r.Style))
+		result.Items = append(result.Items, msg.NewStyled(r.Message, r.Style))
 	}
 	if r.Error != "" {
-		result.Items = append(result.Items, msg.NewStyledText(r.Message, msg.MessageStyleError))
+		result.Items = append(result.Items, msg.NewStyled(r.Message, msg.MessageStyleError))
 	}
 	return []*msg.Message{result}
 }

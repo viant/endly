@@ -339,7 +339,7 @@ func (s *Service) runAsyncActions(context *endly.Context, process *model.Process
 		group.Add(len(asyncAction))
 		var groupErr error
 		for i := range asyncAction {
-			context.Publish(NewWorkflowAsyncEvent(asyncAction[i]))
+			context.Publish(NewAsyncEvent(asyncAction[i]))
 			go func(action *model.Action, actionContext *endly.Context) {
 				if err := s.runAsyncAction(context, actionContext, process, action, group); err != nil {
 					groupErr = err
@@ -354,41 +354,52 @@ func (s *Service) runAsyncActions(context *endly.Context, process *model.Process
 	return nil
 }
 
-func (s *Service) traversePipelines(pipelines model.Pipelines, context *endly.Context, response *RunResponse) error {
+func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, response *RunResponse, process *model.Process) error {
+	context.Publish(NewPipelineEvent(pipeline))
 	var state = context.State()
-	for _, pipeline := range pipelines {
+	if len(pipeline.Pipelines) > 0 {
+		defer Pop(context)
+		process := model.NewProcess(pipeline.Name, nil, pipeline)
+		Push(context, process)
+		return s.traversePipelines(pipeline.Pipelines, context, response, process);
+	}
+	process.Push(pipeline.NewActivity(context))
+	defer process.Pop()
+	if pipeline.Workflow != "" {
+		runRequest := NewRunRequest(pipeline.Workflow, pipeline.Params, true)
+		runResponse := &RunResponse{}
+		if err := endly.Run(context, runRequest, runResponse); err != nil {
+			return err
+		}
+		if len(runResponse.Data) > 0 {
+			for k, v := range runResponse.Data {
+				state.Put(k, v)
+			}
+		}
+	} else if pipeline.Action != "" {
+		actionSelector := model.ActionSelector(pipeline.Action)
+		var response = make(map[string]interface{})
+		var request, err = context.AsRequest(actionSelector.Service(), actionSelector.Action(), pipeline.Params)
+		if err != nil {
+			return err
+		}
+		if err = endly.Run(context, request, &response); err != nil {
+			return err
+		}
+		if len(response) > 0 {
+			for k, v := range response {
+				state.Put(k, v)
+			}
+		}
+	}
+	return nil
+}
 
-		context.Publish(NewPipelineEvent(pipeline))
-		if pipeline.Workflow != "" {
-			runRequest := NewRunRequest(pipeline.Workflow, pipeline.Params, true)
-			runResponse := &RunResponse{}
-			if err := endly.Run(context, runRequest, runResponse); err != nil {
-				return err
-			}
-			if len(runResponse.Data) > 0 {
-				for k, v := range runResponse.Data {
-					state.Put(k, v)
-				}
-			}
-		} else if pipeline.Action != "" {
-			actionSelector := model.ActionSelector(pipeline.Action)
-			var response = make(map[string]interface{})
-			var request, err = context.AsRequest(actionSelector.Service(), actionSelector.Action(), pipeline.Params)
-			if err != nil {
-				return err
-			}
-			if err = endly.Run(context, request, &response); err != nil {
-				return err
-			}
-			if len(response) > 0 {
-				for k, v := range response {
-					state.Put(k, v)
-				}
-			}
-		} else if len(pipeline.Pipelines) > 0 {
-			if err := s.traversePipelines(pipeline.Pipelines, context, response); err != nil {
-				return err
-			}
+
+func (s *Service) traversePipelines(pipelines model.Pipelines, context *endly.Context, response *RunResponse, process *model.Process) error {
+	for i := range pipelines {
+		if err := s.runPipeline(context, pipelines[i], response, process); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -398,7 +409,11 @@ func (s *Service) pipeline(context *endly.Context, request *RunRequest) (*RunRes
 	var response = &RunResponse{
 		Data: make(map[string]interface{}),
 	}
-	return response, s.traversePipelines(request.MultiSelector.Pipelines, context, response)
+
+	defer Pop(context)
+	process := model.NewProcess(request.Name, nil, request.Pipelines[0])
+	Push(context, process)
+	return response, s.traversePipelines(request.InlinePipeline.Pipelines, context, response, process)
 }
 
 func (s *Service) pipelineWorkflowAsyncInNeeded(context *endly.Context, request *RunRequest) (*RunResponse, error) {
@@ -419,7 +434,7 @@ func (s *Service) pipelineWorkflowAsyncInNeeded(context *endly.Context, request 
 }
 
 func (s *Service) run(context *endly.Context, request *RunRequest) (response *RunResponse, err error) {
-	if request.MultiSelector != nil {
+	if request.InlinePipeline != nil {
 		return s.pipelineWorkflowAsyncInNeeded(context, request)
 	}
 	return s.runWorkflowAsyncIfNeeded(context, request)
@@ -429,7 +444,7 @@ func (s *Service) runWorkflowAsyncIfNeeded(context *endly.Context, request *RunR
 	if request.Async {
 		context.Wait.Add(1)
 		go func() {
-			defer context.Publish(NewWorkflowEndEvent(context.SessionID))
+			defer context.Publish(NewEndEvent(context.SessionID))
 			defer context.Wait.Done()
 			_, err = s.runWorkflow(context, request)
 			if err != nil {
@@ -438,7 +453,7 @@ func (s *Service) runWorkflowAsyncIfNeeded(context *endly.Context, request *RunR
 		}()
 		return &RunResponse{}, nil
 	}
-	defer context.Publish(NewWorkflowEndEvent(context.SessionID))
+	defer context.Publish(NewEndEvent(context.SessionID))
 	return s.runWorkflow(context, request)
 }
 
@@ -465,10 +480,10 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	if err != nil {
 		return response, err
 	}
-	upstreamContext.Publish(NewWorkflowLoadedEvent(workflow))
+	upstreamContext.Publish(NewLoadedEvent(workflow))
 
 	defer Pop(upstreamContext)
-	process := model.NewProcess(workflow, nil)
+	process := model.NewProcess(workflow.Name, workflow, nil)
 	Push(upstreamContext, process)
 
 	//TODO asses need of this
@@ -499,7 +514,7 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	if err != nil {
 		return response, err
 	}
-	context.Publish(NewWorkflowInitEvent(request.Tasks, state))
+	context.Publish(NewInitEvent(request.Tasks, state))
 	filteredTasks, err := workflow.Select(model.TasksSelector(request.Tasks))
 	if err != nil {
 		return response, err
@@ -527,16 +542,16 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 }
 
 func (s *Service) runWorkflowDeferTaskIfNeeded(context *endly.Context, process *model.Process) {
-	if process.DeferTask == "" {
+	if process.Workflow.DeferTask == "" {
 		return
 	}
-	task, _ := process.Task(process.DeferTask)
+	task, _ := process.Workflow.Task(process.Workflow.DeferTask)
 	_ = s.runWorkflowTasks(context, process, nil, task)
 }
 
 func (s *Service) runOnErrorTaskIfNeeded(context *endly.Context, process *model.Process, err error) error {
 	if err != nil {
-		if process.OnErrorTask == "" {
+		if process.Workflow.OnErrorTask == "" {
 			return err
 		}
 		process.Error = err.Error()
@@ -551,7 +566,7 @@ func (s *Service) runOnErrorTaskIfNeeded(context *endly.Context, process *model.
 		}
 		var state = context.State()
 		state.Put("error", errorMap)
-		task, _ := process.Task(process.OnErrorTask)
+		task, _ := process.Workflow.Task(process.Workflow.OnErrorTask)
 		err = s.runWorkflowTasks(context, process, nil, task)
 	}
 	return err
@@ -638,7 +653,7 @@ func (s *Service) runGoto(context *endly.Context, request *GotoRequest) (GotoRes
 		return nil, err
 	}
 	var task *model.Task
-	task, err := process.Task(request.Task)
+	task, err := process.Workflow.Task(request.Task)
 	if err == nil {
 		process.Scheduled = task
 	}
@@ -689,7 +704,7 @@ func (s *Service) runSwitch(context *endly.Context, request *SwitchRequest) (Swi
 	matched := request.Match(source)
 	if matched != nil {
 		if matched.Task != "" {
-			task, err := process.Task(matched.Task)
+			task, err := process.Workflow.Task(matched.Task)
 			if err != nil {
 				return nil, err
 			}

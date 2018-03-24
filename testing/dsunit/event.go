@@ -30,7 +30,7 @@ func (r *RegisterRequest) Messages() []*msg.Message {
 	}
 	var descriptor = r.Config.SecureDescriptor
 	return []*msg.Message{
-		msg.NewMessage(msg.NewStyledText(fmt.Sprintf("Datastore: %v, %v:%v", r.Datastore, r.Config.DriverName, descriptor), msg.MessageStyleGeneric), msg.NewStyledText("register", msg.MessageStyleGeneric)),
+		msg.NewMessage(msg.NewStyled(fmt.Sprintf("Datastore: %v, %v:%v", r.Datastore, r.Config.DriverName, descriptor), msg.MessageStyleGeneric), msg.NewStyled("register", msg.MessageStyleGeneric)),
 	}
 }
 
@@ -42,7 +42,7 @@ func (r *MappingRequest) Messages() []*msg.Message {
 	var result = make([]*msg.Message, 0)
 	for _, mapping := range r.Mappings {
 		result = append(result,
-			msg.NewMessage(msg.NewStyledText(fmt.Sprintf("(%v) %v", mapping.Name, mapping.URL), msg.MessageStyleGeneric), msg.NewStyledText("mapping", msg.MessageStyleGeneric)))
+			msg.NewMessage(msg.NewStyled(fmt.Sprintf("(%v) %v", mapping.Name, mapping.URL), msg.MessageStyleGeneric), msg.NewStyled("mapping", msg.MessageStyleGeneric)))
 	}
 	return result
 
@@ -56,7 +56,7 @@ func (r *RunScriptRequest) Messages() []*msg.Message {
 	var result = make([]*msg.Message, 0)
 	for _, script := range r.Scripts {
 		result = append(result,
-			msg.NewMessage(msg.NewStyledText(fmt.Sprintf("(%v) %v", r.Datastore, script.URL), msg.MessageStyleGeneric), msg.NewStyledText("sql", msg.MessageStyleGeneric)))
+			msg.NewMessage(msg.NewStyled(fmt.Sprintf("(%v) %v", r.Datastore, script.URL), msg.MessageStyleGeneric), msg.NewStyled("sql", msg.MessageStyleGeneric)))
 
 	}
 	return result
@@ -70,7 +70,7 @@ func (r *SequenceResponse) Messages() []*msg.Message {
 	var result = make([]*msg.Message, 0)
 	for table, seq := range r.Sequences {
 		result = append(result,
-			msg.NewMessage(msg.NewStyledText(fmt.Sprintf("%30s: %v", table, seq), msg.MessageStyleGeneric), msg.NewStyledText("seq", msg.MessageStyleGeneric)))
+			msg.NewMessage(msg.NewStyled(fmt.Sprintf("%30s: %v", table, seq), msg.MessageStyleGeneric), msg.NewStyled("seq", msg.MessageStyleGeneric)))
 	}
 	return result
 }
@@ -84,7 +84,7 @@ func (r *PrepareRequest) Messages() []*msg.Message {
 	var result = make([]*msg.Message, 0)
 	for _, dataset := range r.Datasets {
 		result = append(result,
-			msg.NewMessage(msg.NewStyledText(fmt.Sprintf("(%v) %v: %v", r.Datastore, dataset.Table, len(dataset.Records)), msg.MessageStyleGeneric), msg.NewStyledText("populate", msg.MessageStyleGeneric)))
+			msg.NewMessage(msg.NewStyled(fmt.Sprintf("(%v) %v: %v", r.Datastore, dataset.Table, len(dataset.Records)), msg.MessageStyleGeneric), msg.NewStyled("populate", msg.MessageStyleGeneric)))
 	}
 	return result
 }

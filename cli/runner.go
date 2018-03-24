@@ -20,7 +20,7 @@ var OnError = func(code int) {
 }
 
 const (
-	messageTypeAction = iota + 10
+	messageTypeAction         = iota + 10
 	messageTypeTagDescription
 )
 
@@ -63,7 +63,8 @@ type Runner struct {
 	eventTag      *EventTag
 	report        *ReportSummaryEvent
 	activity      *model.Activity
-	repeated      *msg.RepeatedMessage
+	repeated      *msg.Repeated
+	repeatedCount int
 	activityEnded bool
 
 	hasValidationFailures bool
@@ -170,12 +171,12 @@ func (r *Runner) formatShortMessage(messageType int, message string, messageInfo
 	return fmt.Sprintf("%v\n%v", result, message)
 }
 
-func (r *Runner) getRepeated(event msg.Event) *msg.RepeatedMessage {
+func (r *Runner) getRepeated(event msg.Event) *msg.Repeated {
 	var repeatedType = fmt.Sprintf("%T", event.Value)
 	if r.repeated != nil && r.repeated.Type == repeatedType {
 		return r.repeated
 	}
-	r.repeated = &msg.RepeatedMessage{
+	r.repeated = &msg.Repeated{
 		Type: repeatedType,
 	}
 	return r.repeated
@@ -183,13 +184,15 @@ func (r *Runner) getRepeated(event msg.Event) *msg.RepeatedMessage {
 
 func (r *Runner) resetRepeated() {
 	if r.repeated != nil {
-		if r.repeated.Count > 1 {
+		if r.repeated.Count > r.repeatedCount {
 			fmt.Printf("\n")
 		}
+		r.repeatedCount = r.repeated.Count
+
 	}
 }
 
-func (r *Runner) processRepeatedReporter(reporter msg.RepeatedReporter, event msg.Event) {
+func (r *Runner) processRepeated(reporter msg.RepeatedReporter, event msg.Event) {
 	repeated := r.getRepeated(event)
 	message := reporter.Message(repeated)
 	tag := message.Tag
@@ -204,7 +207,7 @@ func (r *Runner) processRepeatedReporter(reporter msg.RepeatedReporter, event ms
 	}
 }
 
-func (r *Runner) processMessageReporter(reporter msg.MessageReporter) {
+func (r *Runner) processMessages(reporter msg.Reporter) {
 	for _, message := range reporter.Messages() {
 		tag := message.Tag
 		header := message.Header
@@ -255,35 +258,38 @@ func (r *Runner) processReporter(event msg.Event, filter map[string]bool) bool {
 	if eventValue == nil {
 		return false
 	}
-	messageReporter, isMessageReporter := eventValue.(msg.MessageReporter)
+	messageReporter, isMessageReporter := eventValue.(msg.Reporter)
 	repeatedReporter, isRepeatedReporter := eventValue.(msg.RepeatedReporter)
 
 	if !(isMessageReporter || isRepeatedReporter) {
 		return false
 	}
+
 	if !r.canReport(event, filter) {
 		return true
 	}
+
 	if isRepeatedReporter {
-		r.processRepeatedReporter(repeatedReporter, event)
+		r.processRepeated(repeatedReporter, event)
+
 		if isMessageReporter {
-			r.processMessageReporter(messageReporter)
+			r.processMessages(messageReporter)
 		}
 		return true
 	}
 	r.resetRepeated()
 	if isMessageReporter {
-		r.processMessageReporter(messageReporter)
+		r.processMessages(messageReporter)
 	}
 	return true
 }
 
 func (r *Runner) processAssertable(event msg.Event) bool {
-	assertable, ok := event.Value().(Assertable)
+	asserted, ok := event.Value().(Asserted)
 	if !ok {
 		return false
 	}
-	validations := assertable.Assertion()
+	validations := asserted.Assertion()
 	if len(validations) == 0 {
 		return true
 	}
@@ -529,7 +535,7 @@ func (r *Runner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
+			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
 			var minRange = 0
 			for i, event := range tag.Events {
 				validation := r.getValidation(event)
@@ -539,7 +545,7 @@ func (r *Runner) reportTagSummary() {
 				if validation.HasFailure() {
 					var beforeValidationEvents = []msg.Event{}
 					if i-minRange > 0 {
-						beforeValidationEvents = tag.Events[minRange : i-1]
+						beforeValidationEvents = tag.Events[minRange: i-1]
 					}
 					r.reportFailureWithMatchSource(tag, validation, beforeValidationEvents)
 					minRange = i + 1
@@ -581,9 +587,12 @@ func (r *Runner) processEventTags() {
 }
 
 func (r *Runner) onCallerStart() {
-	wrkflow := workflow.Last(r.context)
-	if wrkflow != nil {
-		var CallerName = wrkflow.Name
+	process := workflow.Last(r.context)
+	if process != nil {
+		var CallerName = process.Owner
+		if CallerName == "" {
+			CallerName = "noname"
+		}
 		var CallerLength = len(CallerName)
 		r.printMessage(r.ColorText(CallerName, r.TagColor), CallerLength, msg.MessageStyleGeneric, fmt.Sprintf("%v", time.Now()), msg.MessageStyleGeneric, "started")
 	}

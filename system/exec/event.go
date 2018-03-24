@@ -14,8 +14,8 @@ type StdinEvent struct {
 //Messages returns messages
 func (e *StdinEvent) Messages() []*msg.Message {
 	return []*msg.Message{
-		msg.NewMessage(msg.NewStyledText(fmt.Sprintf("%v", e.SessionID), msg.MessageStyleGeneric), msg.NewStyledText("stdin", msg.MessageStyleGeneric),
-			msg.NewStyledText(e.Stdin, msg.MessageStyleInput)),
+		msg.NewMessage(msg.NewStyled(fmt.Sprintf("%v", e.SessionID), msg.MessageStyleGeneric), msg.NewStyled("stdin", msg.MessageStyleGeneric),
+			msg.NewStyled(e.Stdin, msg.MessageStyleInput)),
 	}
 }
 
@@ -37,8 +37,8 @@ type StdoutEvent struct {
 //Messages returns messages
 func (e *StdoutEvent) Messages() []*msg.Message {
 	return []*msg.Message{
-		msg.NewMessage(msg.NewStyledText(fmt.Sprintf("%v", e.SessionID), msg.MessageStyleGeneric), msg.NewStyledText("stdout", msg.MessageStyleGeneric),
-			msg.NewStyledText(e.Stdout, msg.MessageStyleOutput)),
+		msg.NewMessage(msg.NewStyled(fmt.Sprintf("%v", e.SessionID), msg.MessageStyleGeneric), msg.NewStyled("stdout", msg.MessageStyleGeneric),
+			msg.NewStyled(e.Stdout, msg.MessageStyleOutput)),
 	}
 }
 

@@ -10,15 +10,15 @@ type SleepEvent struct {
 	SleepTimeMs int
 }
 
-func (e *SleepEvent) Message(repeated *RepeatedMessage) *Message {
-	var tag = NewStyledText("sleep", MessageStyleGeneric)
-	var title *StyledText
+func (e *SleepEvent) Message(repeated *Repeated) *Message {
+	var tag = NewStyled("sleep", MessageStyleGeneric)
+	var title *Styled
 	repeated.Spent += (time.Millisecond * time.Duration(e.SleepTimeMs))
 	if repeated.Count == 0 {
-		title = NewStyledText(fmt.Sprintf("%v ms", e.SleepTimeMs), MessageStyleGeneric)
+		title = NewStyled(fmt.Sprintf("%v ms", e.SleepTimeMs), MessageStyleGeneric)
 	} else {
 		var sleptSoFar = repeated.Spent
-		title = NewStyledText(fmt.Sprintf("%v ms x %v,  slept so far: %v", e.SleepTimeMs, repeated.Count+1, sleptSoFar), MessageStyleGeneric)
+		title = NewStyled(fmt.Sprintf("%v ms x %v,  slept so far: %v", e.SleepTimeMs, repeated.Count+1, sleptSoFar), MessageStyleGeneric)
 	}
 	return NewMessage(title, tag)
 }

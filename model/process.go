@@ -7,8 +7,9 @@ import (
 
 //Process represents a workflow execution process.
 type Process struct {
-	*Workflow
-	Pipeline *Pipeline
+	Owner      string
+	Workflow   *Workflow
+	Pipeline   *Pipeline
 	*Activities
 	Terminated int32
 	Scheduled  *Task
@@ -41,8 +42,10 @@ func (p *Process) Push(activity *Activity) {
 	p.Activities.Push(activity)
 }
 
+
+
 //NewProcess creates a new workflow, pipeline process
-func NewProcess(workflow *Workflow, pipeline *Pipeline) *Process {
+func NewProcess(owner string, workflow *Workflow, pipeline *Pipeline) *Process {
 	return &Process{
 		ExecutionError: &ExecutionError{},
 		Workflow:       workflow,
@@ -72,30 +75,50 @@ func (p *Processes) Pop() *Process {
 		return nil
 	}
 	var result = (p.processes)[len(p.processes)-1]
-	p.processes = p.processes[0 : len(p.processes)-1]
+	p.processes = p.processes[0: len(p.processes)-1]
 	return result
 }
 
-//LastRun returns the last workflow process.
+//Last returns the last process.
 func (p *Processes) Last() *Process {
 	p.mux.RLock()
 	defer p.mux.RUnlock()
 	for i := len(p.processes) - 1; i >= 0; i-- {
+		return p.processes[i]
+	}
+	return nil
+}
+
+//LastWorkflow returns the last workflow.
+func (p *Processes) LastWorkflow() *Workflow {
+	p.mux.RLock()
+	defer p.mux.RUnlock()
+	for i := len(p.processes) - 1; i >= 0; i-- {
 		if p.processes[i].Workflow != nil {
-			return p.processes[i]
+			return p.processes[i].Workflow
 		}
 	}
 	return nil
 }
 
-//LastRun returns the first workflow process.
-func (p *Processes) First() *Process {
+//FirstWorkflow returns the first workflow.
+func (p *Processes) FirstWorkflow() *Workflow {
 	p.mux.RLock()
 	defer p.mux.RUnlock()
 	for i := 0; i < len(p.processes); i++ {
 		if p.processes[i].Workflow != nil {
-			return p.processes[i]
+			return p.processes[i].Workflow
 		}
+	}
+	return nil
+}
+
+//First returns the first process.
+func (p *Processes) First() *Process {
+	p.mux.RLock()
+	defer p.mux.RUnlock()
+	for i := 0; i < len(p.processes); i++ {
+		return p.processes[i]
 	}
 	return nil
 }
