@@ -68,29 +68,41 @@ func (s WorkflowSelector) Tasks() string {
 //ActionSelector represents an expression to invoke endly action:  service.Action (for workflow service workflow keyword can be skipped)
 type ActionSelector string
 
-//Action returns action
-func (s ActionSelector) Action() string {
-	pair := strings.Split(string(s), ".")
-	if len(pair) == 2 {
-		return pair[1]
+
+
+func (s *ActionSelector) pair() (string, string) {
+	sel  := string(*s)
+	index := strings.Index(sel, ".")
+	if index == -1 {
+		index = strings.Index(sel, ":")
 	}
-	return string(s)
+	if index == -1{
+		return "workflow", sel
+	}
+	return string(sel[:index]), string(sel[index+1:])
+}
+
+//Action returns action
+func (s *ActionSelector) Action() string {
+	var _, action =  s.pair()
+	return action
 }
 
 //Service returns service
 func (s ActionSelector) Service() string {
-	pair := strings.Split(string(s), ".")
-	if len(pair) == 2 {
-		return pair[0]
-	}
-	return string("workflow")
+	var service, _ =  s.pair()
+	return service
 }
+
 
 //TasksSelector represents a task selector
 type TasksSelector string
 
 //Tasks return tasks
 func (t *TasksSelector) Tasks() []string {
+	if t.RunAll() {
+		return []string{}
+	}
 	var result = strings.Split(string(*t), ",")
 	for i, item := range result {
 		result[i] = strings.TrimSpace(item)

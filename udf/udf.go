@@ -18,6 +18,7 @@ func init() {
 	endly.UdfRegistry["Dob"] = DateOfBirth
 	endly.UdfRegistry["URLJoin"] = URLJoin
 	endly.UdfRegistry["URLPath"] = URLPath
+	endly.UdfRegistry["Hostname"] = Hostname
 }
 
 //TransformWithUDF transform payload with provided UDF name.
@@ -65,6 +66,13 @@ func URLJoin(source interface{}, state data.Map) (interface{}, error) {
 func URLPath(source interface{}, state data.Map) (interface{}, error) {
 	resource := url.NewResource(toolbox.AsString(source))
 	return resource.ParsedURL.Path, nil
+}
+
+
+//Hostname return host from URL
+func Hostname(source interface{}, state data.Map) (interface{}, error) {
+	resource := url.NewResource(toolbox.AsString(source))
+	return resource.ParsedURL.Hostname(), nil
 }
 
 //AsProtobufMessage generic method for converting a map, or json string into a proto message

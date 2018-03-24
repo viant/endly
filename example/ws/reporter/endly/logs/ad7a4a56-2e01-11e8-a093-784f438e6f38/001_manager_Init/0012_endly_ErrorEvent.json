@@ -1,3 +1,0 @@
-{
-	"Error": "manager_Init: failed to execute INSERT INTO expenditure(category,country,expenditure,year) VALUES(?,?,?,?) [Food US 6759 2014] on map[dbname:db1 username:root password:dev] due to:\nError 1049: Unknown database 'db1' at workflow.run/dsunit.prepare"
-}

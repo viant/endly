@@ -1,7 +1,6 @@
 package endly_test
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
@@ -24,21 +23,9 @@ func TestNewDefaultState(t *testing.T) {
 
 }
 
-func TestContext_AsRequest(t *testing.T) {
 
-	manager := endly.New()
-	context := manager.NewContext(toolbox.NewContext())
 
-	nopRequest, err := context.AsRequest("nop", "nop", map[string]interface{}{})
-	assert.Nil(t, err)
-	assert.EqualValues(t, fmt.Sprintf("%T", nopRequest), fmt.Sprintf("%T", &endly.NopRequest{}))
 
-	_, err = context.AsRequest("abc", "nop", map[string]interface{}{})
-	assert.NotNil(t, err)
-	_, err = context.AsRequest("nop", "abc", map[string]interface{}{})
-	assert.NotNil(t, err)
-
-}
 
 func TestContext_Expand_Resource(t *testing.T) {
 	manager := endly.New()

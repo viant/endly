@@ -130,7 +130,7 @@ func NewPipeline(key string, value interface{}) *MapEntry {
 //MultiSelector represent sequence of workflow/action to runWorkflow
 type MultiSelector struct {
 	Pipeline  []*MapEntry       `required:"true" description:"key value representing Pipelines in simplified form"`
-	Pipelines []*model.Pipeline `description:"actual Pipelines (derived from Pipeline)"`
+	Pipelines model.Pipelines `description:"actual Pipelines (derived from Pipeline)"`
 }
 
 func (r *MultiSelector) toPipeline(source interface{}, pipeline *model.Pipeline, runRequest *RunRequest) (err error) {
@@ -189,6 +189,11 @@ func (r *MultiSelector) Init(runRequest *RunRequest) (err error) {
 			return err
 		}
 		r.Pipelines = append(r.Pipelines, pipeline)
+	}
+
+	selector := model.TasksSelector(runRequest.Tasks)
+	if ! selector.RunAll() {
+		r.Pipelines = r.Pipelines.Select(selector)
 	}
 	return nil
 }

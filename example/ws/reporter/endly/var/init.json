@@ -58,6 +58,11 @@
     "From": "params.app",
     "Value": "reporter"
   },
+
+  {
+    "Name": "targetHost",
+    "Value": "$Hostname($target.URL)"
+  },
   {
     "Name": "buildPath",
     "Required": true,

@@ -3,7 +3,7 @@ pipeline:
   create-db:
     action: dsunit:register
     scripts:
-      - URL: datastore/db1/schema.ddl
+      - URL: data/db1/schema.ddl
     datastore: db1
     recreate: true
     config:
