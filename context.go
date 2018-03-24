@@ -136,7 +136,7 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 func (c *Context) Manager() (Manager, error) {
 	var manager = &manager{}
 	if !c.GetInto(serviceManagerKey, &manager) {
-		return nil, msg.ReportError(fmt.Errorf("failed to lookup Service"))
+		return nil, msg.ReportError(fmt.Errorf("failed to lookup Manager"))
 	}
 	return manager, nil
 }

@@ -1,3 +1,4 @@
+tasks: $tasks
 params:
   app: $app
   sdk: $sdk
@@ -37,11 +38,11 @@ pipeline:
 
   start:
     action: process:start
-    directory:  ${releasePath}/${app}
+    directory: $appPath
     immuneToHangups: true
     command: ./${app}
     arguments:
       - "config"
-      - "conf/config.json"
+      - "config.json"
       - "-port"
       - "8085"

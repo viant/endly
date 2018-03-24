@@ -193,6 +193,7 @@ func (s *service) registerRoutes() {
 			return &RegisterResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+
 			if req, ok := request.(*RegisterRequest); ok {
 				var dsRequest = dsunit.RegisterRequest(*req)
 				request = &dsRequest

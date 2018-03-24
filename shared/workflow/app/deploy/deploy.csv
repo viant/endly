@@ -12,5 +12,6 @@ Workflow,,Name,Description,Tasks,Init
 ,process,stop,stop app,@req/stop,
 []Tasks,,Name,Description,Actions,
 ,,start,start app,%Start,
-[]Start,Service,Action,Description,Request,
-,process,start,start app,@req/start,
+[]Start,Service,Action,Description,Request,When
+,process,start,start app,@req/start,$startCmd
+,,,,,

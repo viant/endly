@@ -4,6 +4,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"testing"
+	"github.com/viant/toolbox"
+	"fmt"
 )
 
 func Test_NewPipelineRequestFromURL(t *testing.T) {
@@ -13,6 +15,13 @@ func Test_NewPipelineRequestFromURL(t *testing.T) {
 		URL         string
 		Expected    interface{}
 	}{
+
+		{
+			Description: "nested data pipeline",
+			URL:         "test/pipeline/data.yaml",
+			Expected: `[`,
+		},
+
 		{
 			Description: "flat pipeline with action and workflow",
 			URL:         "test/pipeline/flat.yaml",
@@ -117,13 +126,20 @@ func Test_NewPipelineRequestFromURL(t *testing.T) {
 		},
 	}
 
-	for _, useCase := range useCases {
+	for i, useCase := range useCases {
+		if i != 0 {
+			continue
+		}
 		request, err := NewRunRequestFromURL(useCase.URL)
 		if assert.Nil(t, err, useCase.Description) {
 			err = request.Init()
 			if !assert.Nil(t, err, useCase.Description) {
 				continue
 			}
+
+			rr, _ := toolbox.AsJSONText(request)
+			fmt.Printf("%v\n", rr)
+
 			assertly.AssertValues(t, useCase.Expected, request.Pipelines, useCase.Description)
 		}
 	}

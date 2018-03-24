@@ -1,3 +1,0 @@
-{
-	"Error": "DriverName was empty \u0026{ 0 0 root:dev@tcp(127.0.0.1:3306)/db1?parseTime=true root:***@tcp(127.0.0.1:3306)/db1?parseTime=true map[dbname:db1 username:root password:dev] mysql root} at dsunit.register"
-}
