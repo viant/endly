@@ -11,15 +11,17 @@ func GetPath(candidates *model.Activities, runner *Runner, fullPath bool) (strin
 	var activityPath = make([]string, 0)
 
 	var activities = make([]*model.Activity, 0)
-	if candidates.Len() > 0 {
-		activities = append(activities, candidates.First())
+	for i := 0; i < candidates.Len(); i++ {
+		if i > 0 && candidates.Get(i).Service == candidates.Get(i - 1).Service {
+			continue
+		}
+		activities = append(activities, candidates.Get(i))
 	}
-	if candidates.Len() > 1 {
-		activities = append(activities, candidates.Last())
+	if len(activities) > 2 {
+		activities = activities[len(activities)-2:]
 	}
 
 	for i, activity := range activities {
-
 		var tag = activity.FormatTag()
 		pathLength += len(tag)
 		serviceAction := ""
@@ -31,7 +33,6 @@ func GetPath(candidates *model.Activities, runner *Runner, fullPath bool) (strin
 			serviceAction = runner.ColorText(service+activity.Action, runner.ServiceActionColor)
 			pathLength += len(activity.Service) + 1 + len(activity.Action)
 		}
-
 		tag = runner.ColorText(tag, runner.TagColor)
 		if runner.InverseTag {
 			tag = runner.ColorText(tag, "inverse")

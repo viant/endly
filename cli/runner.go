@@ -319,7 +319,6 @@ func (r *Runner) processActivityStart(event msg.Event) bool {
 		r.Pop()
 	}
 	r.resetRepeated()
-
 	r.Push(activity)
 	r.activity = activity
 	if activity.TagDescription != "" {

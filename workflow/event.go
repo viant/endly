@@ -1,9 +1,7 @@
 package workflow
 
 import (
-	"fmt"
 	"github.com/viant/endly/model"
-	"github.com/viant/endly/msg"
 	"github.com/viant/toolbox/data"
 )
 
@@ -58,12 +56,13 @@ type PipelineEvent struct {
 	Name string
 }
 
-//Messages returns messages
-func (e *PipelineEvent) Messages() []*msg.Message {
-	return []*msg.Message{
-		msg.NewMessage(msg.NewStyled(fmt.Sprintf("%s", e.Name), msg.MessageStyleGroup), msg.NewStyled("pipeline", msg.MessageStyleGeneric)),
-	}
-}
+//
+////Messages returns messages
+//func (e *PipelineEvent) Messages() []*msg.Message {
+//	return []*msg.Message{
+//		msg.NewMessage(msg.NewStyled(fmt.Sprintf("%s", e.Name), msg.MessageStyleGroup), msg.NewStyled("pipeline", msg.MessageStyleGeneric)),
+//	}
+//}
 
 
 //NewPipelineEvent creates a new pipeline event
