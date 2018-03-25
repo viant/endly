@@ -179,10 +179,9 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 	}
 	var state = context.State()
 	activity := model.NewActivity(context, action, state)
-
 	process.Push(activity)
-	startEvent := s.Begin(context, activity)
 
+	startEvent := s.Begin(context, activity)
 	defer s.End(context)(startEvent, model.NewActivityEndEvent(activity))
 	defer process.Pop()
 
@@ -363,11 +362,18 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 		Push(context, process)
 		return s.traversePipelines(pipeline.Pipelines, context, response, process);
 	}
-	process.Push(pipeline.NewActivity(context))
+	activity := pipeline.NewActivity(context)
+	startEvent := s.Begin(context, activity)
+	process.Push(activity)
+	runResponse := &RunResponse{
+		Data:make(map[string]interface{}),
+	}
+
 	defer process.Pop()
+	defer s.End(context)(startEvent, model.NewActivityEndEvent(runResponse))
+
 	if pipeline.Workflow != "" {
 		runRequest := NewRunRequest(pipeline.Workflow, pipeline.Params, true)
-		runResponse := &RunResponse{}
 		if err := endly.Run(context, runRequest, runResponse); err != nil {
 			return err
 		}
@@ -378,7 +384,7 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 		}
 	} else if pipeline.Action != "" {
 		actionSelector := model.ActionSelector(pipeline.Action)
-		var response = make(map[string]interface{})
+		var response = runResponse.Data
 		var request, err = context.AsRequest(actionSelector.Service(), actionSelector.Action(), pipeline.Params)
 		if err != nil {
 			return err

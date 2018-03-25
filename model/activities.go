@@ -38,6 +38,11 @@ func (a *Activities) Pop() *Activity {
 	return result
 }
 
+//Get returns activity for index
+func (a *Activities) Get(index int) *Activity {
+	return a.activities[index]
+}
+
 func (a *Activities) Last() *Activity {
 	if a.Activity == nil {
 		a.Activity = &Activity{

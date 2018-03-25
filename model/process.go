@@ -42,11 +42,10 @@ func (p *Process) Push(activity *Activity) {
 	p.Activities.Push(activity)
 }
 
-
-
 //NewProcess creates a new workflow, pipeline process
 func NewProcess(owner string, workflow *Workflow, pipeline *Pipeline) *Process {
 	return &Process{
+		Owner:          owner,
 		ExecutionError: &ExecutionError{},
 		Workflow:       workflow,
 		Pipeline:       pipeline,
@@ -88,6 +87,22 @@ func (p *Processes) Last() *Process {
 	}
 	return nil
 }
+
+
+//Recent returns the most reset process.
+func (p *Processes) Recent(count int) []*Process {
+	p.mux.RLock()
+	defer p.mux.RUnlock()
+	var result = make([]*Process, 0)
+	for i := len(p.processes) - 1; i >= 0; i-- {
+		result = append(result, p.processes[i])
+		if len(result) >= count {
+			return result
+		}
+	}
+	return result
+}
+
 
 //LastWorkflow returns the last workflow.
 func (p *Processes) LastWorkflow() *Workflow {
