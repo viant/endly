@@ -2,6 +2,10 @@ package model
 
 import (
 	"github.com/viant/endly"
+	"github.com/viant/toolbox"
+	"github.com/viant/endly/util"
+	"strings"
+	"github.com/viant/toolbox/data"
 )
 
 //represents pipelines
@@ -9,14 +13,14 @@ type Pipelines []*Pipeline
 
 //Pipeline represents sequential workflow/action execution.
 type Pipeline struct {
-	Name      string                 `description:"pipeline task name"`
-	Workflow  string                 `description:"workflow (URL[:tasks]) selector "`
-	Action    string                 `description:"action (service.action) selector "`
-	Params    map[string]interface{} `description:"workflow or action parameters"`
-	When      string                 `description:"run criteria"`
-	Pipelines Pipelines              `description:"workflow or action subsequent pipelines"`
+	Name        string                 `description:"pipeline task name"`
+	Workflow    string                 `description:"workflow (URL[:tasks]) selector "`
+	Action      string                 `description:"action (service.action) selector "`
+	Params      map[string]interface{} `description:"workflow or action parameters"`
+	Description string                 `description:"description"`
+	Request     interface{}            `description:"external action request location, params are used to request data substitution"`
+	Pipelines   Pipelines              `description:"workflow or action subsequent pipelines"`
 }
-
 
 
 //Select selects pipelines matching supplied selector
@@ -40,22 +44,145 @@ func (p *Pipelines) Select(selector TasksSelector) Pipelines {
 	return result
 }
 
+
+func (p *Pipeline) initRequestIfNeeded(baseURL string) (err error) {
+	if p.Request == nil {
+		return nil
+	}
+	if toolbox.IsString(p.Request) {
+		var requestMap = make(map[string]interface{})
+		err := util.DecodeMap(baseURL, toolbox.AsString(p.Request), requestMap)
+		if err != nil {
+			return err
+		}
+		var state = data.Map(p.Params)
+		p.Request = state.Expand(requestMap)
+		return err
+	}
+	return nil
+}
+
 //NewActivity returns pipline activity
 func (p *Pipeline) NewActivity(context *endly.Context) *Activity {
 	var action = &Action{
-		NeatlyTag:&NeatlyTag{Tag:p.Name},
-		ServiceRequest:&ServiceRequest{},
-		Repeater: &Repeater{},
+		NeatlyTag:      &NeatlyTag{Tag: p.Name},
+		ServiceRequest: &ServiceRequest{
+			Description:p.Description,
+		},
+		Repeater:       &Repeater{},
 	}
 	if p.Action != "" {
 		selector := ActionSelector(p.Action)
 		action.Service = selector.Service()
 		action.Action = selector.Action()
+
 	} else if p.Workflow != "" {
 		action.Service = "workflow"
 		action.Action = "run"
 	}
-	action.Request = p.Params
+	if p.Request != nil {
+		action.Request = p.Request
+	} else {
+		action.Request = p.Params
+	}
 	var state = context.State()
-	return  NewActivity(context, action, state)
+	return NewActivity(context, action, state)
+}
+
+//MapEntry represents pipeline parameters or attributes if key has '@' prefix.
+type MapEntry struct {
+	Key   string      `description:"preserved order map entry key"`
+	Value interface{} `description:"preserved order map entry value"`
+}
+
+
+
+//Inline represent sequence of workflow/action to run, map entry represent bridge between YAML, JSON and actual domain model Pipelines abstraction.
+type Inline struct {
+	Pipeline  []*MapEntry `required:"true" description:"key value representing Pipelines in simplified form"`
+	Pipelines Pipelines   `description:"actual Pipelines (derived from Pipeline)"`
+	Init      interface{} `description:"init state expression"`
+	Post      interface{} `description:"post processing update state expression"`
+}
+
+
+
+func (p Inline) split(source interface{}) (attributes, params map[string]interface{}, err error) {
+	aMap, err := util.NormalizeMap(source, false);
+	attributes = make(map[string]interface{})
+	params = make(map[string]interface{})
+	for k, v := range aMap {
+		if strings.HasPrefix(k, "@") {
+			attributes[string(k[1:])] = v
+			continue
+		}
+		attributes[k] = v
+		params[k] = v
+	}
+	return attributes, params, err
+}
+
+func (p *Inline) toPipeline(baseURL string, source interface{}, name string, sharedParams map[string]interface{}) (pipeline *Pipeline, err error) {
+	attributes, params, err := p.split(source)
+	if err != nil {
+		return nil, err
+	}
+	pipeline = &Pipeline{}
+	if err = toolbox.DefaultConverter.AssignConverted(pipeline, attributes); err != nil {
+		return nil, err
+	}
+
+	pipeline.Params, _ = util.NormalizeMap(params, true)
+	util.Append(pipeline.Params, sharedParams, false)
+
+
+	if err = pipeline.initRequestIfNeeded(baseURL); err != nil {
+		return nil, err
+	}
+
+	pipeline.Name = name
+	if pipeline.Workflow != "" || pipeline.Action != "" {
+		return pipeline, nil
+	}
+
+	pipeline.Pipelines = make([]*Pipeline, 0)
+	var nextPipeline *Pipeline
+
+	if e := toolbox.ProcessMap(source, func(key, value interface{}) bool {
+		if !toolbox.IsSlice(value) {
+			return true
+		}
+		nextPipeline, err = p.toPipeline(baseURL, value, toolbox.AsString(key), sharedParams)
+		if err != nil {
+			return false
+		}
+		pipeline.Pipelines = append(pipeline.Pipelines, nextPipeline)
+		return true
+	}); e != nil {
+		return nil, e
+	}
+	return pipeline, err
+}
+
+//Init initialises inline pipeline
+func (p *Inline) InitTasks(baseURL string, selector TasksSelector, sharedParams map[string]interface{}) (err error) {
+	if len(p.Pipelines) > 0 {
+		return nil
+	}
+	p.Init, err = GetVariables(baseURL, p.Init)
+	p.Post, err = GetVariables(baseURL, p.Post)
+	sharedParams, _ = util.NormalizeMap(sharedParams, true)
+
+	p.Pipelines = make([]*Pipeline, 0)
+	for _, entry := range p.Pipeline {
+		pipeline, err := p.toPipeline(baseURL, entry.Value, entry.Key, sharedParams)
+		if err != nil {
+			return err
+		}
+		p.Pipelines = append(p.Pipelines, pipeline)
+	}
+	if ! selector.RunAll() {
+		p.Pipelines = p.Pipelines.Select(selector)
+	}
+	return nil
 }

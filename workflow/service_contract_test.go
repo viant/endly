@@ -4,9 +4,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"testing"
-	"github.com/viant/toolbox"
-	"fmt"
 )
+
 
 func Test_NewPipelineRequestFromURL(t *testing.T) {
 
@@ -19,7 +18,44 @@ func Test_NewPipelineRequestFromURL(t *testing.T) {
 		{
 			Description: "nested data pipeline",
 			URL:         "test/pipeline/data.yaml",
-			Expected: `[`,
+			Expected: `[
+  {
+    "Name": "create-db",
+    "Workflow": "",
+    "Action": "dsunit:register",
+    "Params": {
+      "admin": {
+        "config": {
+          "credentials": "$mysqlCredential",
+          "descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+          "driverName": "mysql"
+        },
+        "datastore": "mysql"
+      },
+      "config": {
+        "credentials": "$mysqlCredential",
+        "descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+        "driverName": "mysql"
+      },
+      "datastore": "db1",
+      "recreate": true,
+      "scripts": [
+        {
+          "URL": "data/db1/schema.ddl"
+        }
+      ]
+    }
+  },
+  {
+    "Name": "populate",
+    "Workflow": "",
+    "Action": "dsunit:prepare",
+    "Params": {
+      "URL": "datastore/db1/dictionary",
+      "datastore": "db1"
+    }
+  }
+]`,
 		},
 
 		{
@@ -46,7 +82,12 @@ func Test_NewPipelineRequestFromURL(t *testing.T) {
       "Name": "build",
       "Workflow": "docker/build:build",
       "Params": {
-        "commands": {},
+         "commands": [
+        "apt-get update; apt-get -y install libpcap0.8 libpcap0.8-dev",
+        "go get",
+        "go version",
+        "go build -a"
+      ],
         "secrets": {
           "localhost": "localhsot"
         },
@@ -82,7 +123,12 @@ func Test_NewPipelineRequestFromURL(t *testing.T) {
           "Name": "build",
           "Workflow": "docker/build:build",
           "Params": {
-            "commands": {},
+            "commands": [
+		   "apt-get update; apt-get -y install libpcap0.8 libpcap0.8-dev",
+           "go get",
+           "go version",
+           "go build -a"
+			],
             "secrets": {
               "localhost": "localhsot"
             },
@@ -113,7 +159,12 @@ func Test_NewPipelineRequestFromURL(t *testing.T) {
           "Name": "build",
           "Workflow": "docker/build:build",
           "Params": {
-            "commands": {},
+            "commands": [
+   			"apt-get update; apt-get -y install libpcap0.8 libpcap0.8-dev",
+            "go get",
+            "go version",
+            "go build -a"
+			],
             "secrets": {
               "localhost": "localhsot"
             },
@@ -126,20 +177,15 @@ func Test_NewPipelineRequestFromURL(t *testing.T) {
 		},
 	}
 
-	for i, useCase := range useCases {
-		if i != 0 {
-			continue
-		}
+	for _, useCase := range useCases {
+
 		request, err := NewRunRequestFromURL(useCase.URL)
 		if assert.Nil(t, err, useCase.Description) {
 			err = request.Init()
 			if !assert.Nil(t, err, useCase.Description) {
+				t.Log(err)
 				continue
 			}
-
-			rr, _ := toolbox.AsJSONText(request)
-			fmt.Printf("%v\n", rr)
-
 			assertly.AssertValues(t, useCase.Expected, request.Pipelines, useCase.Description)
 		}
 	}

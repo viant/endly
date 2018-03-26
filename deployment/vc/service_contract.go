@@ -23,7 +23,7 @@ type CheckoutResponse struct {
 //Init initializes request
 func (r *CheckoutRequest) Init() error {
 	versionControlRequestInit(r.Origin, &r.Type)
-	if r.Type == "" {
+	if r.Type == "" || r.Type == "local" {
 		_ = r.Origin.Init()
 		if r.Origin.ParsedURL.Scheme == "file" {
 			r.Type = "local"

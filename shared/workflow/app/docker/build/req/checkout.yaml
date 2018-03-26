@@ -1,2 +1,2 @@
 origin: $origin
-target: $buildTarget
+dest: $buildTarget

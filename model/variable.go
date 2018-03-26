@@ -7,22 +7,22 @@ import (
 	"os"
 	"path"
 	"strings"
-
 	"github.com/viant/endly/criteria"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"github.com/viant/endly/util"
 )
 
 //Variable represents a variable
 type Variable struct {
-	Name     string            //name
-	Value    interface{}       //default value
-	From     string            //context state map key to pull data
-	When     string            //criteria if specified this variable will be set only if evaluated criteria is true (it can use $in, and $out state variables)
-	Else     interface{}       //if when criteria is not met then else can provide variable value alternative
-	Persist  bool              //stores in tmp directory to be used as backup if data is not in the cotnext
-	Required bool              //flag that validates that from returns non empty value or error is generated
+	Name     string                                                                                                                                                                  //name
+	Value    interface{}                                                                                                                                                             //default value
+	From     string                                                                                                                                                                  //context state map key to pull data
+	When     string                                                                                                                                                                  //criteria if specified this variable will be set only if evaluated criteria is true (it can use $in, and $out state variables)
+	Else     interface{}                                                                                                                                                             //if when criteria is not met then else can provide variable value alternative
+	Persist  bool                                                                                                                                                                    //stores in tmp directory to be used as backup if data is not in the cotnext
+	Required bool                                                                                                                                                                    //flag that validates that from returns non empty value or error is generated
 	Replace  map[string]string `description:"replacements map, if key if specified substitute variable value with corresponding value. This will work only for string replacements"` //replacements map, if key if specified substitute variable value with corresponding value.
 }
 
@@ -47,18 +47,17 @@ func (v *Variable) PersistValue() error {
 
 //Load loads persisted variable value.
 func (v *Variable) Load() error {
+	var err error
+	var encoded []byte
 	if v.Value == nil {
 		var filename = v.tempfile()
 		if !toolbox.FileExists(filename) {
 			return nil
 		}
-		filedata, err := ioutil.ReadFile(filename)
-		if err != nil {
-			return err
-		}
-		toolbox.NewJSONDecoderFactory().Create(bytes.NewReader(filedata)).Decode(&v.Value)
+		encoded, _ = ioutil.ReadFile(filename);
+		err = toolbox.NewJSONDecoderFactory().Create(bytes.NewReader(encoded)).Decode(&v.Value)
 	}
-	return nil
+	return err
 }
 
 func (v *Variable) fromVariable() *Variable {
@@ -83,7 +82,7 @@ func (v *Variable) getValueFromInput(in data.Map) (interface{}, error) {
 		var has bool
 
 		if strings.Contains(from, "$") {
-			value = in.Expand(from)
+			value, has = in.GetValue(in.ExpandAsText(from))
 		} else {
 			value, has = in.GetValue(from)
 		}
@@ -150,21 +149,21 @@ func (v *Variable) replaceValue(value interface{}) interface{} {
 	return text
 }
 
-func (v *Variable) applyElse(in, out data.Map) {
+func (v *Variable) applyElse(in, out data.Map) interface{} {
 	value := v.getElse(in)
 	if v.Name != "" {
 		out.SetValue(v.Name, value)
 	}
-}
-
-func (v *Variable) applyDefault(in, out data.Map) {
-	value := v.getValue(in)
-	if v.Name != "" {
-		out.SetValue(v.Name, value)
-	}
+	return value
 }
 
 func (v *Variable) Apply(in, out data.Map) error {
+	if v.When != "" {
+		if !v.canApply(in, out) {
+			value := v.applyElse(in, out)
+			return v.validate(value, in)
+		}
+	}
 	value, err := v.getValueFromInput(in)
 	if err != nil {
 		return err
@@ -185,31 +184,33 @@ func (v *Variable) Apply(in, out data.Map) error {
 	return nil
 }
 
+//NewVariable creates a new variable
+func NewVariable(name, form, when string, required bool, value, elseValue interface{}, replace map[string]string) *Variable {
+	return &Variable{
+		Name:     name,
+		From:     form,
+		When:     when,
+		Required: required,
+		Value:    value,
+		Else:     elseValue,
+		Replace:  replace,
+	}
+}
+
 //Variables a slice of variables
 type Variables []*Variable
 
-func (v *Variables) isContextEmpty(in, out data.Map) bool {
-	if v == nil || out == nil || in == nil || len(*v) == 0 {
-		return true
-	}
-	return false
-}
-
 //Apply evaluates all variable from in map to out map
 func (v *Variables) Apply(in, out data.Map) error {
-	if v.isContextEmpty(in, out) {
-		return nil
+	if out == nil {
+		return fmt.Errorf("out state was empty")
+	}
+	if in == nil {
+		in = data.NewMap()
 	}
 	for _, variable := range *v {
 		if variable == nil {
 			continue
-		}
-
-		if variable.When != "" {
-			if !variable.canApply(in, out) {
-				variable.applyElse(in, out)
-				continue
-			}
 		}
 		if err := variable.Apply(in, out); err != nil {
 			return err
@@ -222,30 +223,105 @@ func (v *Variables) Apply(in, out data.Map) error {
 func (v Variables) String() string {
 	var result = ""
 	for _, item := range v {
+		if item == nil {
+			continue
+		}
 		result += fmt.Sprintf("{Name:%v From:%v Value:%v},", item.Name, item.From, item.Value)
 	}
 	return result
 }
 
-//ModifiedStateEvent represent modified state event
-type ModifiedStateEvent struct {
-	Variables Variables
-	In        map[string]interface{}
-	Modified  map[string]interface{}
+//VariableExpression represent a variable expression [!] [when  ?] VariableName = value : else, exclemation mark flags variable as required
+type VariableExpression string
+
+func normalizeValue(value string) interface{} {
+	if strings.HasPrefix(value, "'") {
+		return strings.Trim(value, "'")
+	}
+	if toolbox.IsCompleteJSON(value) {
+		if JSON, err := toolbox.JSONToInterface(value); err == nil {
+			return JSON
+		}
+	}
+	return value
 }
 
-//NewModifiedStateEvent creates a new modified state event.
-func NewModifiedStateEvent(variables Variables, in, out data.Map) *ModifiedStateEvent {
-	var result = &ModifiedStateEvent{
-		Variables: variables,
-		In:        make(map[string]interface{}),
-		Modified:  make(map[string]interface{}),
+//AsVariable converts expression to variable
+func (e *VariableExpression) AsVariable() (*Variable, error) {
+	var value = strings.TrimSpace(string(*e))
+	isRequired := strings.HasPrefix(value, "!")
+
+	if isRequired {
+		value = string(value[1:])
 	}
-	for _, variable := range variables {
-		from := data.ExtractPath(variable.From)
-		result.In[from], _ = in.GetValue(from)
-		name := data.ExtractPath(variable.Name)
-		result.Modified[name], _ = out.GetValue(name)
+	pair := strings.Split(value, "=")
+	if len(pair) != 2 {
+		return nil, fmt.Errorf("invalid variable expression, expected '=' operator")
 	}
-	return result
+	var result = &Variable{
+		Required: isRequired,
+	}
+	var whenIndex = strings.Index(pair[0], "?")
+	if whenIndex != -1 {
+		result.When = string(pair[0][:whenIndex])
+		result.Name = strings.TrimSpace(string(pair[0][whenIndex+1:]))
+		elseIndex := strings.Index(pair[1], ":")
+		if elseIndex != -1 {
+			result.Value = string(pair[1][:elseIndex])
+			result.Else = normalizeValue(string(pair[1][elseIndex+1:]))
+		} else {
+			result.Value = pair[1]
+		}
+	} else {
+		result.Name = strings.TrimSpace(pair[0])
+		result.Value = strings.TrimSpace(pair[1])
+	}
+	result.Value = normalizeValue(toolbox.AsString(result.Value))
+	return result, nil
+}
+
+//GetVariables returns variables from Variables ([]*Variable), []string (as expression) or from []interface{} (where interface is a map matching Variable struct)
+func GetVariables(baseURL string, source interface{}) (Variables, error) {
+	if source == nil {
+		return nil, nil
+	}
+	switch value := source.(type) {
+	case *Variables:
+		return *value, nil
+	case Variables:
+		return value, nil
+	case string:
+		value = strings.TrimSpace(value)
+		if value == "" {
+			return nil, nil
+		}
+		var result Variables = make([]*Variable, 0)
+		err := util.Decode(baseURL, value, &result)
+		return result, err
+	}
+	var result Variables = make([]*Variable, 0)
+	if ! toolbox.IsSlice(source) {
+		return nil, fmt.Errorf("invalid varaibles type: %T, expected %T or %T", source, result, []string{})
+	}
+	variables := toolbox.AsSlice(source)
+	if len(variables) == 0 {
+		return nil, nil
+	}
+	if toolbox.IsString(variables[0]) {
+		for _, expr := range variables {
+			text := toolbox.AsString(expr)
+			if len(text) == 0 {
+				continue
+			}
+			variableExpr := VariableExpression(toolbox.AsString(expr))
+			variable, err := variableExpr.AsVariable()
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, variable)
+		}
+		return result, nil
+	}
+	err := toolbox.DefaultConverter.AssignConverted(&result, source)
+	return result, err
 }

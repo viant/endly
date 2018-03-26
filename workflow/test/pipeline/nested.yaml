@@ -7,11 +7,11 @@ params:
 pipeline:
   system1:
     checkout:
-      action: vc:checkout
+      "@action": vc:checkout
       origin:
         URL: http://github.com/adrianwit/echo1
     build:
-      workflow: docker/build:build
+      "@workflow": docker/build:build
       commands:
         - apt-get update; apt-get -y install libpcap0.8 libpcap0.8-dev
         - go get
@@ -19,11 +19,11 @@ pipeline:
         - go build -a
   system2:
     checkout:
-      action: vc:checkout
+      "@action": vc:checkout
       origin:
         URL: http://github.com/adrianwit/echo2
     build:
-      workflow: docker/build:build
+      "@workflow": docker/build:build
       commands:
         - apt-get update; apt-get -y install libpcap0.8 libpcap0.8-dev
         - go get

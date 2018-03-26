@@ -65,8 +65,6 @@
     "When": "$in.params.image:/$/",
     "Value": "mysql:$version"
   },
-
-
   {
     "Name": "config",
     "From": "params.config"
@@ -83,8 +81,8 @@
   },
   {
     "Name": "dump",
+    "Required": true,
     "From": "params.dump",
-    "When": "$in.tasks:/export/ || $in.tasks:/import/",
-    "Required": true
+    "Value": "dump.sql"
   }
 ]
