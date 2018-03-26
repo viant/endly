@@ -96,10 +96,6 @@ func (m *manager) NewContext(ctx toolbox.Context) *Context {
 
 //New returns a new manager.
 func New() Manager {
-
-	a, b, c := toolbox.CallerInfo(3)
-	fmt.Printf("NEW MANAGER: %v %v %v\n", a, b, c)
-
 	var result = &manager{
 		name:                 AppName,
 		version:              GetVersion(),

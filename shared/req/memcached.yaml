@@ -1,4 +1,4 @@
-name: docker/mysql
+name: service/mysql
 tasks: $tasks
 paramas:
   maxMemory: $maxMemory

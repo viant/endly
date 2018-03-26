@@ -1,4 +1,4 @@
-name: docker/aerospike
+name: service/aerospike
 tasks: $tasks
 params:
   target: $target

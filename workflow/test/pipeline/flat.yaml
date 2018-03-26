@@ -6,11 +6,11 @@ params:
     Credentials: localhost
 pipeline:
   checkout:
-    action: vc:checkout
+    "@action": vc:checkout
     origin:
       URL: http://github.com/adrianwit/echo
   build:
-    workflow: docker/build:build
+    "@workflow": docker/build:build
     commands:
       - apt-get update; apt-get -y install libpcap0.8 libpcap0.8-dev
       - go get

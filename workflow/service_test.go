@@ -42,50 +42,49 @@ import (
 	_ "github.com/viant/endly/static"
 
 	"github.com/viant/endly/model"
-	"github.com/viant/endly/system/exec"
-	"github.com/viant/endly/system/storage"
-	"github.com/viant/endly/util"
 	"github.com/viant/endly/workflow"
-	"log"
 )
 
-func TestService_Pipeline(t *testing.T) {
-	manager := endly.New()
-	credentials, _ := util.GetDummyCredential()
-	context, err := exec.NewSSHMultiReplayContext(manager, map[string]*url.Resource{
-		"test/pipeline/build/ssh/exec":  url.NewResource("ssh://127.0.0.1/", credentials),
-		"test/pipeline/build/ssh/build": url.NewResource("ssh://127.0.0.1:7722/", "mem://github.com/viant/endly/workflow/docker/build/secret/build.json"),
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	memStorage := storage.UseMemoryService(context)
-	assert.Nil(t, err)
 
-	// TEST ASSETS
-	//initial upload
-	memStorage.Upload("ssh://127.0.0.1/Projects/go/workspace/src/github.com/viant/endly/workflow/test/pipeline/build.yaml", strings.NewReader("111"))
 
-	//go deployment assets
-	memStorage.Upload("https://redirector.gvt1.com/edgedl/go/go1.8.9.linux-amd64.tar.gz", strings.NewReader("xyz"))
-	memStorage.Upload("mem://127.0.0.1:7722/opt/sdk/go_1.8.9.tar.gz", strings.NewReader("abc"))
-
-	//final download source
-	memStorage.Upload("mem://127.0.0.1:7722/echo", strings.NewReader("final app build"))
-
-	request, err := workflow.NewRunRequestFromURL("test/pipeline/build.yaml")
-	if err != nil {
-		log.Fatal(err)
-	}
-	request.EnableLogging = true
-	request.LogDirectory = "logs"
-	var resp = &workflow.RunResponse{}
-	err = endly.Run(context, request, resp)
-	if !assert.Nil(t, err) {
-		log.Fatal(err.Error())
-	}
-	assert.NotNil(t, resp)
-}
+//
+//func TestService_Pipeline(t *testing.T) {
+//	manager := endly.New()
+//	credentials, _ := util.GetDummyCredential()
+//	context, err := exec.NewSSHMultiReplayContext(manager, map[string]*url.Resource{
+//		"test/pipeline/build/ssh/exec":  url.NewResource("ssh://127.0.0.1/", credentials),
+//		"test/pipeline/build/ssh/build": url.NewResource("ssh://127.0.0.1:7722/", "mem://github.com/viant/endly/workflow/docker/build/secret/build.json"),
+//	})
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	memStorage := storage.UseMemoryService(context)
+//	assert.Nil(t, err)
+//
+//	// TEST ASSETS
+//	//initial upload
+//	memStorage.Upload("ssh://127.0.0.1/Projects/go/workspace/src/github.com/viant/endly/workflow/test/pipeline/build.yaml", strings.NewReader("111"))
+//
+//	//go deployment assets
+//	memStorage.Upload("https://redirector.gvt1.com/edgedl/go/go1.8.9.linux-amd64.tar.gz", strings.NewReader("xyz"))
+//	memStorage.Upload("mem://127.0.0.1:7722/opt/sdk/go_1.8.9.tar.gz", strings.NewReader("abc"))
+//
+//	//final download source
+//	memStorage.Upload("mem://127.0.0.1:7722/echo", strings.NewReader("final app build"))
+//
+//	request, err := workflow.NewRunRequestFromURL("test/pipeline/build.yaml")
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	request.EnableLogging = true
+//	request.LogDirectory = "logs"
+//	var resp = &workflow.RunResponse{}
+//	err = endly.Run(context, request, resp)
+//	if !assert.Nil(t, err) {
+//		log.Fatal(err.Error())
+//	}
+//	assert.NotNil(t, resp)
+//}
 
 func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, error) {
 	manager := endly.New()
@@ -116,7 +115,7 @@ func getServiceWithWorkflowContext(workflowURI string) (*endly.Context, endly.Se
 			return nil, nil, errors.New(response.Error)
 		}
 		if workflowLoadResponse, ok := response.Response.(*workflow.LoadResponse); ok {
-			workflow.Push(context, model.NewProcess(workflowLoadResponse.Workflow, nil))
+			workflow.Push(context, model.NewProcess(workflowLoadResponse.Workflow.Source, workflowLoadResponse.Workflow, nil))
 		} else {
 			fmt.Printf("unexpected response: %T\n", response.Response)
 		}
@@ -202,9 +201,7 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Tasks: "prepare",
-				Selector: &workflow.Selector{
-					Name: "workflow",
-				},
+				Name:  "workflow",
 				Params: map[string]interface{}{
 					"param1": 1,
 				},
@@ -243,9 +240,9 @@ func TestWorkflowService_RunDsUnitWorkflow(t *testing.T) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Tasks: "*",
-				Selector: &workflow.Selector{
-					Name: "workflow",
-				},
+
+				Name: "workflow",
+
 				Params: map[string]interface{}{
 					"param1": 1,
 				},
@@ -272,9 +269,9 @@ func TestWorkflowService_OnErrorTask(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 	serviceResponse := service.Run(context, &workflow.RunRequest{
 		Tasks: "fail",
-		Selector: &workflow.Selector{
-			Name: "recover",
-		},
+
+		Name: "recover",
+
 		Params:        map[string]interface{}{},
 		EnableLogging: false,
 		LogDirectory:  "logs",
@@ -306,9 +303,9 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 		context := manager.NewContext(toolbox.NewContext())
 		serviceResponse := service.Run(context, &workflow.RunRequest{
 			Tasks: "*",
-			Selector: &workflow.Selector{
-				Name: "http_workflow",
-			},
+
+			Name: "http_workflow",
+
 
 			Params: map[string]interface{}{
 				"appServer": "http://127.0.0.1:8313",
@@ -342,9 +339,9 @@ func TestWorkflowService_RunLifeCycle(t *testing.T) {
 		context := manager.NewContext(toolbox.NewContext())
 		serviceResponse := service.Run(context, &workflow.RunRequest{
 			Tasks: "*",
-			Selector: &workflow.Selector{
-				Name: "lifecycle",
-			},
+
+			Name: "lifecycle",
+
 
 			Params: map[string]interface{}{
 				"object": map[string]interface{}{
@@ -382,9 +379,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Tasks: "*",
-				Selector: &workflow.Selector{
-					Name: "broken1",
-				},
+				Name: "broken1",
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
@@ -399,10 +394,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Tasks: "*",
-				Selector: &workflow.Selector{
-					Name: "broken2",
-				},
-
+				Name: "broken2",
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
@@ -418,10 +410,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Tasks: "*",
-				Selector: &workflow.Selector{
-					Name: "broken2",
-				},
-
+				Name: "broken2",
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
@@ -437,10 +426,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Tasks: "*",
-				Selector: &workflow.Selector{
-					Name: "broken3",
-				},
-
+				Name: "broken3",
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
@@ -456,10 +442,7 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
 				Tasks: "*",
-				Selector: &workflow.Selector{
-					Name: "broken4",
-				},
-
+				Name: "broken4",
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})

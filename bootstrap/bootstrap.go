@@ -425,11 +425,11 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 		if err != nil {
 			return nil, fmt.Errorf("failed to locate workflow run request: %v %v", value, err)
 		}
+		request.Source = resource
 		if request.Name == "" {
 			request.Name = model.WorkflowSelector(URL).Name()
 		}
 	}
-
 	if request == nil {
 		return nil, nil
 	}

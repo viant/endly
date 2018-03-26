@@ -8,7 +8,7 @@ params:
   sdk: go:1.8
 pipeline:
   build:
-    workflow: app/docker/build
+    "@workflow": app/docker/build
     origin:
       URL: http://github.com/adrianwit/echo
     upload:

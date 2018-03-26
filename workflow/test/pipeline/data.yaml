@@ -1,7 +1,7 @@
 
 pipeline:
   create-db:
-    action: dsunit:register
+    "@action": dsunit:register
     scripts:
       - URL: data/db1/schema.ddl
     datastore: db1
@@ -17,6 +17,6 @@ pipeline:
         descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
         credentials: $mysqlCredential
   populate:
-    action: dsunit:prepare
+    "@action": dsunit:prepare
     datastore: db1
     URL: datastore/db1/dictionary

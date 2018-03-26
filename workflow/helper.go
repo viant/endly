@@ -21,8 +21,8 @@ func processes(context *endly.Context) *model.Processes {
 //Push push process to context
 func Push(context *endly.Context, process *model.Process) {
 	var processes = processes(context)
-	if process.Workflow != nil {
-		context.Source = process.Workflow.Source
+	if process.Source != nil {
+		context.Source = process.Source
 	}
 	processes.Push(process)
 }
@@ -31,8 +31,8 @@ func Push(context *endly.Context, process *model.Process) {
 func Pop(context *endly.Context) *model.Process {
 	var processes = processes(context)
 	var process = processes.Pop()
-	if process.Workflow != nil {
-		context.Source = process.Workflow.Source
+	if process.Source != nil {
+		context.Source = process.Source
 	}
 	return process
 }

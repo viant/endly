@@ -71,7 +71,7 @@ func (s *Service) addVariableEvent(name string, variables model.Variables, conte
 	if len(variables) == 0 {
 		return
 	}
-	context.Publish(model.NewModifiedStateEvent(variables, in, out))
+	context.Publish(NewModifiedStateEvent(variables, in, out))
 }
 
 func (s *Service) worflowDedicatedFolderURL(URL string) string {
@@ -96,7 +96,8 @@ func (s *Service) getWorkflowResource(state data.Map, URL string) *url.Resource 
 		if err != nil {
 			return nil
 		}
-		if exists, _ := storageService.Exists(resource.URL); exists {
+		exists, _ := storageService.Exists(resource.URL);
+		if exists {
 			return resource
 		}
 	}
@@ -358,20 +359,22 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 	var state = context.State()
 	if len(pipeline.Pipelines) > 0 {
 		defer Pop(context)
-		process := model.NewProcess(pipeline.Name, nil, pipeline)
+		process := model.NewProcess(process.Source, nil, pipeline)
 		Push(context, process)
 		return s.traversePipelines(pipeline.Pipelines, context, response, process);
 	}
+
 	activity := pipeline.NewActivity(context)
 	startEvent := s.Begin(context, activity)
 	process.Push(activity)
 	runResponse := &RunResponse{
-		Data:make(map[string]interface{}),
+		Data: make(map[string]interface{}),
 	}
 
 	defer process.Pop()
 	defer s.End(context)(startEvent, model.NewActivityEndEvent(runResponse))
 
+	var request  = toolbox.AsMap(state.Expand(activity.Request))
 	if pipeline.Workflow != "" {
 		runRequest := NewRunRequest(pipeline.Workflow, pipeline.Params, true)
 		if err := endly.Run(context, runRequest, runResponse); err != nil {
@@ -385,7 +388,7 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 	} else if pipeline.Action != "" {
 		actionSelector := model.ActionSelector(pipeline.Action)
 		var response = runResponse.Data
-		var request, err = context.AsRequest(actionSelector.Service(), actionSelector.Action(), pipeline.Params)
+		var request, err = context.AsRequest(actionSelector.Service(), actionSelector.Action(), request)
 		if err != nil {
 			return err
 		}
@@ -401,7 +404,6 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 	return nil
 }
 
-
 func (s *Service) traversePipelines(pipelines model.Pipelines, context *endly.Context, response *RunResponse, process *model.Process) error {
 	for i := range pipelines {
 		if err := s.runPipeline(context, pipelines[i], response, process); err != nil {
@@ -411,16 +413,44 @@ func (s *Service) traversePipelines(pipelines model.Pipelines, context *endly.Co
 	return nil
 }
 
+func (s *Service) applyVariables(candidates interface{}, process *model.Process, in data.Map, context *endly.Context) error {
+	variables, ok := candidates.(model.Variables)
+	if ! ok {
+		return nil
+	}
+	var out = context.State()
+	err :=  variables.Apply(in, out)
+	s.addVariableEvent("Pipeline.Init", variables, context, in, out)
+	return err
+}
+
+
+
 func (s *Service) pipeline(context *endly.Context, request *RunRequest) (*RunResponse, error) {
 	var response = &RunResponse{
 		Data: make(map[string]interface{}),
 	}
-
 	defer Pop(context)
-	process := model.NewProcess(request.Name, nil, request.Pipelines[0])
+	process := model.NewProcess(request.Source, nil, request.Pipelines[0])
 	Push(context, process)
-	return response, s.traversePipelines(request.InlinePipeline.Pipelines, context, response, process)
+
+	var state = context.State()
+	if request.Inline.Init != nil {
+		if err := s.applyVariables(request.Inline.Init, process, state, context); err != nil {
+			return nil, err
+		}
+	}
+	response, err := response, s.traversePipelines(request.Inline.Pipelines, context, response, process)
+
+	if request.Inline.Post != nil && response != nil {
+		if err := s.applyVariables(request.Inline.Post, process, response.Data, context); err != nil {
+			return nil, err
+		}
+	}
+	return response, err
 }
+
+
 
 func (s *Service) pipelineWorkflowAsyncInNeeded(context *endly.Context, request *RunRequest) (*RunResponse, error) {
 	s.enableLoggingIfNeeded(context, request)
@@ -440,7 +470,7 @@ func (s *Service) pipelineWorkflowAsyncInNeeded(context *endly.Context, request 
 }
 
 func (s *Service) run(context *endly.Context, request *RunRequest) (response *RunResponse, err error) {
-	if request.InlinePipeline != nil {
+	if request.Inline != nil {
 		return s.pipelineWorkflowAsyncInNeeded(context, request)
 	}
 	return s.runWorkflowAsyncIfNeeded(context, request)
@@ -471,6 +501,19 @@ func (s *Service) enableLoggingIfNeeded(context *endly.Context, request *RunRequ
 	}
 }
 
+
+func (s *Service) publishParameters(request *RunRequest, context *endly.Context) {
+	var state = context.State()
+	params := buildParamsMap(request, context)
+	if request.PublishParameters {
+		for key, value := range params {
+			state.Put(key, value)
+		}
+	}
+	state.Put(paramsStateKey, params)
+}
+
+
 func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunRequest) (response *RunResponse, err error) {
 	response = &RunResponse{
 		Data:      make(map[string]interface{}),
@@ -487,17 +530,9 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 		return response, err
 	}
 	upstreamContext.Publish(NewLoadedEvent(workflow))
-
 	defer Pop(upstreamContext)
-	process := model.NewProcess(workflow.Name, workflow, nil)
+	process := model.NewProcess(workflow.Source, workflow, nil)
 	Push(upstreamContext, process)
-
-	//TODO asses need of this
-	//if parentWorkflow != nil {
-	//	upstreamContext.Put(model.WorkflowKey, parentWorkflow)
-	//} else {
-	//	upstreamContext.Put(model.WorkflowKey, workflow)
-	//}
 
 	context := upstreamContext.Clone()
 	var state = context.State()
@@ -506,14 +541,8 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	state.Put(neatly.OwnerURL, workflow.Source.URL)
 	state.Put(dataStateKey, workflowData)
 	state.Put(tasksStateKey, request.Tasks)
+	s.publishParameters(request, context)
 
-	params := buildParamsMap(request, context)
-	if request.PublishParameters {
-		for key, value := range params {
-			state.Put(key, value)
-		}
-	}
-	state.Put(paramsStateKey, params)
 
 	err = workflow.Init.Apply(state, state)
 	s.addVariableEvent("Workflow.Init", workflow.Init, context, state, state)

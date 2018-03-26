@@ -92,6 +92,9 @@ func (s *service) checkout(context *endly.Context, request *CheckoutRequest) (*C
 	if err != nil {
 		return nil, err
 	}
+
+
+
 	var modules = request.Modules
 	var directory = target.DirectoryPath()
 	if len(modules) == 0 {
@@ -125,24 +128,27 @@ func (s *service) checkout(context *endly.Context, request *CheckoutRequest) (*C
 	return response, nil
 }
 
-func (s *service) checkoutArtifact(context *endly.Context, versionControlType string, origin, target *url.Resource, removeLocalChanges bool) (info *Info, err error) {
+func (s *service) checkoutArtifact(context *endly.Context, versionControlType string, origin, dest *url.Resource, removeLocalChanges bool) (info *Info, err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("failed to checkout %v, %v", origin.URL, err)
 		}
 	}()
-	var directoryPath = target.DirectoryPath()
-	storageService, err := storage.GetStorageService(context, target)
+
+	var directoryPath = dest.DirectoryPath()
+	storageService, err := storage.GetStorageService(context, dest)
 	if err != nil {
 		return nil, err
 	}
-	exists, err := storageService.Exists(target.URL)
+	exists, err := storageService.Exists(dest.URL)
 	if err != nil {
 		return nil, err
 	}
+
+
 	if exists {
 		var response *StatusResponse
-		response, err = s.checkInfo(context, &StatusRequest{Source: target, Type: versionControlType})
+		response, err = s.checkInfo(context, &StatusRequest{Source: dest, Type: versionControlType})
 		if err != nil {
 			return nil, err
 		}
@@ -155,7 +161,7 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 				_, err = s.pull(context, &PullRequest{
 					Type:   versionControlType,
 					Origin: origin,
-					Dest:   target,
+					Dest:   dest,
 				})
 				if err != nil {
 					return nil, err
@@ -164,7 +170,7 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 			}
 
 			if removeLocalChanges {
-				if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("rm -rf %v", directoryPath)), nil); err != nil {
+				if err = endly.Run(context, exec.NewRunRequest(dest, false, fmt.Sprintf("rm -rf %v", directoryPath)), nil); err != nil {
 					return nil, err
 				}
 			} else {
@@ -179,15 +185,15 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 	case "git":
 		info, err = s.git.checkout(context, &CheckoutRequest{
 			Origin: origin,
-			Dest:   target,
+			Dest:   dest,
 		})
 	case "svn":
 		info, err = s.svnService.checkout(context, &CheckoutRequest{
 			Origin: origin,
-			Dest:   target,
+			Dest:   dest,
 		})
 	case "local":
-		err = endly.Run(context, storage.NewCopyRequest(nil, storage.NewTransfer(origin, target, false, false, nil)), nil)
+		err = endly.Run(context, storage.NewCopyRequest(nil, storage.NewTransfer(origin, dest, false, false, nil)), nil)
 		info = &Info{Origin: origin.URL}
 	default:
 		err = fmt.Errorf("unsupported version control type: '%v'", versionControlType)

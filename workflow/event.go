@@ -71,3 +71,31 @@ func NewPipelineEvent(pipeline *model.Pipeline) *PipelineEvent {
 		Name: pipeline.Name,
 	}
 }
+
+
+
+//ModifiedStateEvent represent modified state event
+type ModifiedStateEvent struct {
+	Variables model.Variables
+	In        map[string]interface{}
+	Modified  map[string]interface{}
+}
+
+//NewModifiedStateEvent creates a new modified state event.
+func NewModifiedStateEvent(variables model.Variables, in, out data.Map) *ModifiedStateEvent {
+	var result = &ModifiedStateEvent{
+		Variables: variables,
+		In:        make(map[string]interface{}),
+		Modified:  make(map[string]interface{}),
+	}
+
+	for _, variable := range variables {
+		from := data.ExtractPath(variable.From)
+		result.In[from], _ = in.GetValue(from)
+
+		name := data.ExtractPath(variable.Name)
+
+		result.Modified[name], _ = out.GetValue(name)
+	}
+	return result
+}

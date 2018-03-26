@@ -5,9 +5,9 @@ import (
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/msg"
 	"github.com/viant/endly/util"
-	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"strings"
+	"github.com/viant/toolbox"
 )
 
 //RunRequest represents workflow runWorkflow request
@@ -19,15 +19,16 @@ type RunRequest struct {
 	Params            map[string]interface{} `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
 	PublishParameters bool                   `default:"true" description:"flag to publish parameters directly into context state"`
 	URL               string                 `description:"workflow URL if workflow is not found in the registry, it is loaded"`
+	Source            *url.Resource           `description:"run request location "`
 	Name              string                 `required:"true" description:"name defined in workflow document"`
 	TagIDs            string                 `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
-	Tasks             string                 `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequencialy"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
-	*InlinePipeline
+	Tasks             string                 `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequentially"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
+	*model.Inline
 }
 
 //HasPipeline returns true if request has inline piplines
 func (r *RunRequest) HasPipeline() bool {
-	if r.InlinePipeline == nil {
+	if r.Inline == nil {
 		return false
 	}
 	return len(r.Pipelines) > 0 || len(r.Pipeline) > 0
@@ -39,10 +40,14 @@ func (r *RunRequest) Init() (err error) {
 	if err != nil {
 		return err
 	}
-	if r.HasPipeline() {
-		return r.InlinePipeline.Init(r)
-	}
 
+	if r.HasPipeline() {
+		var baseURL = ""
+		if r.Source != nil {
+			baseURL, _ = toolbox.URLSplit(r.Source.URL)
+		}
+		return r.Inline.InitTasks(baseURL, model.TasksSelector(r.Tasks), r.Params)
+	}
 	if r.URL == "" {
 		r.URL = r.Name
 	}
@@ -56,7 +61,6 @@ func (r *RunRequest) Init() (err error) {
 			r.Name = string(r.Name[index+1:])
 		}
 	}
-
 	return nil
 }
 
@@ -98,84 +102,6 @@ type RunResponse struct {
 	Data      map[string]interface{} //  data populated by  .Post variable section.
 	SessionID string                 //session id
 }
-
-//MapEntry represents a workflow with parameters to runWorkflow
-type MapEntry struct {
-	Key   string      `description:"preserved order map entry key"`
-	Value interface{} `description:"preserved order map entry value"`
-}
-
-//InlinePipeline represent sequence of workflow/action to runWorkflow
-type InlinePipeline struct {
-	Pipeline  []*MapEntry     `required:"true" description:"key value representing Pipelines in simplified form"`
-	Pipelines model.Pipelines `description:"actual Pipelines (derived from Pipeline)"`
-}
-
-func (r *InlinePipeline) toPipeline(source interface{}, pipeline *model.Pipeline, runRequest *RunRequest) (err error) {
-	var aMap map[string]interface{}
-
-	if aMap, err = util.NormalizeMap(source, false); err != nil {
-		return err
-	}
-	if workflow, ok := aMap[pipelineWorkflow]; ok {
-		pipeline.Workflow = toolbox.AsString(workflow)
-		delete(aMap, pipelineWorkflow)
-
-		pipeline.Params = aMap
-		pipeline.Params, _ = util.NormalizeMap(pipeline.Params, true)
-		util.Append(runRequest.Params, pipeline.Params, false)
-		return nil
-	}
-	if action, ok := aMap[pipelineAction]; ok {
-		pipeline.Action = toolbox.AsString(action)
-		delete(aMap, pipelineAction)
-		pipeline.Params = aMap
-		pipeline.Params, _ = util.NormalizeMap(pipeline.Params, true)
-		util.Append(runRequest.Params, pipeline.Params, false)
-		return nil
-	}
-
-	if e := toolbox.ProcessMap(source, func(key, value interface{}) bool {
-		subPipeline := &model.Pipeline{
-			Name:      toolbox.AsString(key),
-			Pipelines: make([]*model.Pipeline, 0),
-		}
-		if err = r.toPipeline(value, subPipeline, runRequest); err != nil {
-			return false
-		}
-		pipeline.Pipelines = append(pipeline.Pipelines, subPipeline)
-		return true
-	}); e != nil {
-		return e
-	}
-	return err
-}
-
-//Init initialises
-func (r *InlinePipeline) Init(runRequest *RunRequest) (err error) {
-	if len(r.Pipelines) > 0 {
-		return nil
-	}
-	runRequest.Params, _ = util.NormalizeMap(runRequest.Params, true)
-	r.Pipelines = make([]*model.Pipeline, 0)
-	for _, entry := range r.Pipeline {
-		pipeline := &model.Pipeline{
-			Name:      entry.Key,
-			Pipelines: make([]*model.Pipeline, 0),
-		}
-		if err := r.toPipeline(entry.Value, pipeline, runRequest); err != nil {
-			return err
-		}
-		r.Pipelines = append(r.Pipelines, pipeline)
-	}
-
-	selector := model.TasksSelector(runRequest.Tasks)
-	if ! selector.RunAll() {
-		r.Pipelines = r.Pipelines.Select(selector)
-	}
-	return nil
-}
-
 
 //RegisterRequest represents workflow register request
 type RegisterRequest struct {

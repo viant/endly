@@ -134,6 +134,9 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 
 //Manager returns workflow manager or error
 func (c *Context) Manager() (Manager, error) {
+	if c == nil {
+		return nil, fmt.Errorf("context was nil")
+	}
 	var manager = &manager{}
 	if !c.GetInto(serviceManagerKey, &manager) {
 		return nil, msg.ReportError(fmt.Errorf("failed to lookup Manager"))

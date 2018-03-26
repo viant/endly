@@ -3,10 +3,13 @@ package model
 import (
 	"sync"
 	"sync/atomic"
+	"github.com/viant/toolbox/url"
+	"github.com/viant/toolbox"
 )
 
 //Process represents a workflow execution process.
 type Process struct {
+	Source     *url.Resource
 	Owner      string
 	Workflow   *Workflow
 	Pipeline   *Pipeline
@@ -43,14 +46,18 @@ func (p *Process) Push(activity *Activity) {
 }
 
 //NewProcess creates a new workflow, pipeline process
-func NewProcess(owner string, workflow *Workflow, pipeline *Pipeline) *Process {
-	return &Process{
-		Owner:          owner,
+func NewProcess(source *url.Resource, workflow *Workflow, pipeline *Pipeline) *Process {
+	var process =  &Process{
+		Source:source,
 		ExecutionError: &ExecutionError{},
 		Workflow:       workflow,
 		Pipeline:       pipeline,
 		Activities:     NewActivities(),
 	}
+	if source != nil {
+		_, process.Owner = toolbox.URLSplit(source.URL)
+	}
+	return process
 }
 
 //processes  represents running workflow/pipe process stack.
@@ -88,7 +95,6 @@ func (p *Processes) Last() *Process {
 	return nil
 }
 
-
 //Recent returns the most reset process.
 func (p *Processes) Recent(count int) []*Process {
 	p.mux.RLock()
@@ -102,7 +108,6 @@ func (p *Processes) Recent(count int) []*Process {
 	}
 	return result
 }
-
 
 //LastWorkflow returns the last workflow.
 func (p *Processes) LastWorkflow() *Workflow {

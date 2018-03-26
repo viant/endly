@@ -4,7 +4,7 @@ Workflow,,Name,Description,Tasks,Init,Sleep
 ,,init,Initialise test,%Init,,
 []Init,Service,Action,Description,Request,tasks,
 ,workflow,run,initialise system services,@system,*,
-,workflow,run,initialise data,@data,,
+,workflow,run,initialise data,@datastore,,
 ,workflow,run,deploy app,@app,*,
 []Tasks,,Name,Description,Actions,,
 ,,test,Run test,%Test,,

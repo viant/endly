@@ -61,6 +61,8 @@ func TestWorkflowSelector(t *testing.T) {
 		assert.EqualValues(t, useCase.ExpectedURL, useCase.Selector.URL(), "URL() "+useCase.Description)
 		assert.EqualValues(t, useCase.ExpectedName, useCase.Selector.Name(), "Name() "+useCase.Description)
 		assert.EqualValues(t, useCase.ExpectedTaks, useCase.Selector.Tasks(), "Task() "+useCase.Description)
+		assert.EqualValues(t, useCase.ExpectedRelative, useCase.Selector.IsRelative(), "IsRelative() "+useCase.Description)
+
 	}
 
 }
