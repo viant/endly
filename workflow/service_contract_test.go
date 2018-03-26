@@ -134,7 +134,6 @@ func Test_NewPipelineRequestFromURL(t *testing.T) {
             },
             "target": "URL:ssh://127.0.0.1 Credentials:localhost"
           },
-          "When": "",
           "Pipelines": []
         }
       ]
