@@ -1,5 +1,5 @@
 init: "@var/init"
-params:
+defaults:
   app: $app
   sdk: $sdk
   target: $target

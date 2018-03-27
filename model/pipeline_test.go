@@ -1,25 +1,25 @@
 package model
 
 import (
-	"testing"
-	"gopkg.in/yaml.v2"
-	"strings"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox"
+	"gopkg.in/yaml.v2"
+	"strings"
+	"testing"
 )
 
 func TestInlinePipeline_Init(t *testing.T) {
 
-	useCases := []struct{
-		Description string
-		YAMLData string
-		Expected interface{}
-		SharedParams map[string]interface{}
+	useCases := []struct {
+		Description   string
+		YAMLData      string
+		Expected      interface{}
+		DefaultParams map[string]interface{}
 	}{
 		{
 			Description: "flat pipeline",
-			YAMLData:`
+			YAMLData: `
 pipeline:
   checkout:
     "@action": vc:checkout
@@ -34,7 +34,7 @@ pipeline:
       - go build -a
 
 `,
-			Expected:`{"Pipelines":[
+			Expected: `{"Pipelines":[
     {
       "Name": "checkout",
       "Action": "vc:checkout",
@@ -60,7 +60,7 @@ pipeline:
 		},
 		{
 			Description: "nested pipeline",
-			YAMLData:`
+			YAMLData: `
 pipeline:
   create-db:
     "@action": dsunit:register
@@ -83,11 +83,11 @@ pipeline:
     datastore: db1
     URL: datastore/db1/dictionary
 `,
-			SharedParams:map[string]interface{}{
-				"key":1,
+			DefaultParams: map[string]interface{}{
+				"key":       1,
 				"datastore": "db1",
 			},
-			Expected:`{"Pipelines":[
+			Expected: `{"Pipelines":[
   {
     "Name": "create-db",
     "Workflow": "",
@@ -129,7 +129,7 @@ pipeline:
 
 		{
 			Description: "init/post pipeline",
-			YAMLData:`
+			YAMLData: `
 init: 
   - "var1 = $var2"
 post: 
@@ -138,7 +138,7 @@ pipeline:
   checkout: 
     action: "vc:checkout"
 `,
-			Expected:`{
+			Expected: `{
   "Pipelines": [
     {
       "Name": "checkout",
@@ -164,25 +164,23 @@ pipeline:
 		},
 	}
 
-	for _, useCase :=  range useCases {
+	for _, useCase := range useCases {
 		inline := &Inline{}
 		var mapSlice = yaml.MapSlice{}
 		err := yaml.NewDecoder(strings.NewReader(useCase.YAMLData)).Decode(&mapSlice)
-		if ! assert.Nil(t, err, useCase.Description) {
+		if !assert.Nil(t, err, useCase.Description) {
 			return
 		}
 		err = toolbox.DefaultConverter.AssignConverted(inline, mapSlice)
-		if ! assert.Nil(t, err, useCase.Description) {
+		if !assert.Nil(t, err, useCase.Description) {
 			return
 		}
-		err = inline.InitTasks("", TasksSelector("") ,useCase.SharedParams)
-		if ! assert.Nil(t, err, useCase.Description) {
+		err = inline.InitTasks("", TasksSelector(""), useCase.DefaultParams)
+		if !assert.Nil(t, err, useCase.Description) {
 			return
 		}
-	assertly.AssertValues(t, useCase.Expected, inline, useCase.Description)
-
+		assertly.AssertValues(t, useCase.Expected, inline, useCase.Description)
 
 	}
-
 
 }

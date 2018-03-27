@@ -64,15 +64,12 @@ type PipelineEvent struct {
 //	}
 //}
 
-
 //NewPipelineEvent creates a new pipeline event
 func NewPipelineEvent(pipeline *model.Pipeline) *PipelineEvent {
 	return &PipelineEvent{
 		Name: pipeline.Name,
 	}
 }
-
-
 
 //ModifiedStateEvent represent modified state event
 type ModifiedStateEvent struct {

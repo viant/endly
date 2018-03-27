@@ -1,0 +1,14 @@
+tasks: $tasks
+defaults:
+  target: $serviceTarget
+pipeline:
+  destory:
+    stop-images:
+      action: docker:stop-images
+      images:
+        - aerospike
+  init:
+    services:
+      workflow: "service/aerospike:start"
+      name: db1
+      config: config/aerospike.conf

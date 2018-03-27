@@ -68,15 +68,13 @@ func (s WorkflowSelector) Tasks() string {
 //ActionSelector represents an expression to invoke endly action:  service.Action (for workflow service workflow keyword can be skipped)
 type ActionSelector string
 
-
-
 func (s *ActionSelector) pair() (string, string) {
-	sel  := string(*s)
+	sel := string(*s)
 	index := strings.Index(sel, ".")
 	if index == -1 {
 		index = strings.Index(sel, ":")
 	}
-	if index == -1{
+	if index == -1 {
 		return "workflow", sel
 	}
 	return string(sel[:index]), string(sel[index+1:])
@@ -84,16 +82,15 @@ func (s *ActionSelector) pair() (string, string) {
 
 //Action returns action
 func (s *ActionSelector) Action() string {
-	var _, action =  s.pair()
+	var _, action = s.pair()
 	return action
 }
 
 //Service returns service
 func (s ActionSelector) Service() string {
-	var service, _ =  s.pair()
+	var service, _ = s.pair()
 	return service
 }
-
 
 //TasksSelector represents a task selector
 type TasksSelector string

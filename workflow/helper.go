@@ -31,7 +31,7 @@ func Push(context *endly.Context, process *model.Process) {
 func Pop(context *endly.Context) *model.Process {
 	var processes = processes(context)
 	var process = processes.Pop()
-	if process.Source != nil {
+	if process != nil && process.Source != nil {
 		context.Source = process.Source
 	}
 	return process
@@ -48,8 +48,6 @@ func LastWorkflow(context *endly.Context) *model.Process {
 	var processes = processes(context)
 	return processes.LastWorkflow()
 }
-
-
 
 //FirstWorkflow returns last workflow
 func FirstWorkflow(context *endly.Context) *model.Process {

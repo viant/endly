@@ -1,16 +1,13 @@
 package model
 
 import (
-	"testing"
-	"github.com/viant/toolbox/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"io/ioutil"
+	"testing"
 )
-
-
-
 
 func TestVariable_Apply(t *testing.T) {
 
@@ -171,7 +168,7 @@ func TestVariable_Apply(t *testing.T) {
 			assert.NotNil(t, err, useCase.Description)
 			continue
 		}
-		if ! assert.Nil(t, err, useCase.Description) {
+		if !assert.Nil(t, err, useCase.Description) {
 			continue
 		}
 		assertly.AssertValues(t, useCase.Expected, output, useCase.Description)
@@ -223,21 +220,21 @@ func TestVariables_Apply(t *testing.T) {
 	})
 
 	{
-		var output= data.NewMap()
+		var output = data.NewMap()
 		err := variables.Apply(input, output)
 		assert.Nil(t, err)
 		assert.EqualValues(t, 123, output.GetInt("var1"))
 		assert.EqualValues(t, 234, output.GetInt("var4"))
 	}
 	{
-		var output= data.NewMap()
+		var output = data.NewMap()
 		err := variables.Apply(nil, output)
 		assert.Nil(t, err)
 		assert.EqualValues(t, nil, output.Get("var1"))
 		assert.EqualValues(t, nil, output.Get("var4"))
 	}
 
-	assert.NotNil(t, 	variables.Apply(nil, nil))
+	assert.NotNil(t, variables.Apply(nil, nil))
 }
 
 func TestVariables_String(t *testing.T) {
@@ -290,7 +287,7 @@ func TestVariableExpression_AsVariable(t *testing.T) {
 		{
 			Description: "error assignment ",
 			Expression:  "avc",
-			HasError:true,
+			HasError:    true,
 		},
 	}
 
@@ -301,7 +298,7 @@ func TestVariableExpression_AsVariable(t *testing.T) {
 			assert.NotNil(t, err, useCase.Description)
 			continue
 		}
-		if !  assert.Nil(t, err, useCase.Description) {
+		if !assert.Nil(t, err, useCase.Description) {
 			continue
 		}
 		assert.EqualValues(t, useCase.Expected, variable, useCase.Description)
@@ -310,24 +307,23 @@ func TestVariableExpression_AsVariable(t *testing.T) {
 
 func TestGetVariables(t *testing.T) {
 
-
 	var variables Variables = []*Variable{
 		NewVariable("var1", "", "", false, "123", nil, nil),
 	}
 
-	{//variables use case
+	{ //variables use case
 		actual, err := GetVariables("", variables)
 		assert.Nil(t, err)
 		assert.EqualValues(t, variables, actual)
 	}
 
-	{//*variables use case
+	{ //*variables use case
 		actual, err := GetVariables("", &variables)
 		assert.Nil(t, err)
 		assert.EqualValues(t, variables, actual)
 	}
 
-	{//expression use case
+	{ //expression use case
 		actual, err := GetVariables("", []string{
 			"var1 = 123",
 		})
@@ -335,17 +331,17 @@ func TestGetVariables(t *testing.T) {
 		assert.EqualValues(t, variables, actual)
 	}
 
-	{//slice of map items use case
+	{ //slice of map items use case
 		actual, err := GetVariables("", []interface{}{
 			map[string]interface{}{
-				"Name":"var1",
-				"Value":"123",
+				"Name":  "var1",
+				"Value": "123",
 			},
 		})
 		assert.Nil(t, err)
 		assert.EqualValues(t, variables, actual)
 	}
-	{//load from file use case
+	{ //load from file use case
 		var JSON = `[{"Name":"var1", "Value":"123"}]`
 		ioutil.WriteFile("/tmp/endly_model_get_variables.json", []byte(JSON), 0644)
 		actual, err := GetVariables("", "@/tmp/endly_model_get_variables.json")
@@ -353,18 +349,18 @@ func TestGetVariables(t *testing.T) {
 		assert.EqualValues(t, variables, actual)
 
 	}
-	{//no varibles
+	{ //no varibles
 		actual, err := GetVariables("", "")
 		assert.Nil(t, err)
 		assert.Nil(t, actual)
 	}
 
-	{//no such file error case
+	{ //no such file error case
 		_, err := GetVariables("", "@nonexisting")
 		assert.NotNil(t, err)
 	}
 
-	{//invalid expression error case
+	{ //invalid expression error case
 		_, err := GetVariables("", []string{"ac"})
 		assert.NotNil(t, err)
 	}

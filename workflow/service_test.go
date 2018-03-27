@@ -45,8 +45,6 @@ import (
 	"github.com/viant/endly/workflow"
 )
 
-
-
 //
 //func TestService_Pipeline(t *testing.T) {
 //	manager := endly.New()
@@ -306,7 +304,6 @@ func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 
 			Name: "http_workflow",
 
-
 			Params: map[string]interface{}{
 				"appServer": "http://127.0.0.1:8313",
 			},
@@ -341,7 +338,6 @@ func TestWorkflowService_RunLifeCycle(t *testing.T) {
 			Tasks: "*",
 
 			Name: "lifecycle",
-
 
 			Params: map[string]interface{}{
 				"object": map[string]interface{}{
@@ -378,8 +374,8 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
-				Tasks: "*",
-				Name: "broken1",
+				Tasks:             "*",
+				Name:              "broken1",
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
@@ -393,8 +389,8 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
-				Tasks: "*",
-				Name: "broken2",
+				Tasks:             "*",
+				Name:              "broken2",
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
@@ -409,8 +405,8 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
-				Tasks: "*",
-				Name: "broken2",
+				Tasks:             "*",
+				Name:              "broken2",
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
@@ -425,8 +421,8 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
-				Tasks: "*",
-				Name: "broken3",
+				Tasks:             "*",
+				Name:              "broken3",
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})
@@ -441,8 +437,8 @@ func TestWorkflowService_RunBroken(t *testing.T) {
 		if assert.Nil(t, err) {
 			context := manager.NewContext(toolbox.NewContext())
 			serviceResponse := service.Run(context, &workflow.RunRequest{
-				Tasks: "*",
-				Name: "broken4",
+				Tasks:             "*",
+				Name:              "broken4",
 				Params:            map[string]interface{}{},
 				PublishParameters: true,
 			})

@@ -1,0 +1,7 @@
+name: $workflow
+tasks: $tasks
+params:
+  app: $app
+  targetHost: $targetHost
+  eLoggerHost: $eLoggerHost
+  seleniumServerPort: $seleniumServerPort

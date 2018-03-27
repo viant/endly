@@ -115,8 +115,8 @@ func (m *manager) Run(context *Context, request interface{}) (interface{}, error
 	if !toolbox.IsStruct(request) {
 		return nil, fmt.Errorf("expected request but had %T", request)
 	}
-	manager, err  := context.Manager()
-	if  err != nil {
+	manager, err := context.Manager()
+	if err != nil {
 		manager = m
 	}
 	service, err := manager.Service(request)

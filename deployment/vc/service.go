@@ -93,8 +93,6 @@ func (s *service) checkout(context *endly.Context, request *CheckoutRequest) (*C
 		return nil, err
 	}
 
-
-
 	var modules = request.Modules
 	var directory = target.DirectoryPath()
 	if len(modules) == 0 {
@@ -144,7 +142,6 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 	if err != nil {
 		return nil, err
 	}
-
 
 	if exists {
 		var response *StatusResponse

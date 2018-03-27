@@ -1,0 +1,4 @@
+name: $workflow
+tasks: $tasks
+params:
+  app: $app

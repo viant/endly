@@ -12,7 +12,7 @@ func GetPath(candidates *model.Activities, runner *Runner, fullPath bool) (strin
 
 	var activities = make([]*model.Activity, 0)
 	for i := 0; i < candidates.Len(); i++ {
-		if i > 0 && candidates.Get(i).Service == candidates.Get(i - 1).Service {
+		if i > 0 && candidates.Get(i).Service == candidates.Get(i-1).Service {
 			continue
 		}
 		activities = append(activities, candidates.Get(i))

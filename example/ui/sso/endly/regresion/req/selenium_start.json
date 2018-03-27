@@ -1,8 +1,5 @@
 {
-  "Target": {
-    "URL": "$targetHost",
-    "Credentials": "$targetHostCredential"
-  },
+  "Target": "$target",
   "Sdk": "jdk",
   "SdkVersion": "1.8",
   "Version": "3.4",

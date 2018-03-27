@@ -87,8 +87,6 @@ func (s *git) checkInfo(context *endly.Context, request *StatusRequest) (*Status
 		return result, nil
 	}
 
-
-
 	runRequest := exec.NewExtractRequest(request.Source, exec.DefaultOptions(),
 		exec.NewExtractCommand(fmt.Sprintf("git status"), "", nil, nil,
 			model.NewExtract("branch", "On branch[\\s\\t]+([^\\s]+)", true)),
@@ -144,7 +142,6 @@ func (s *git) checkout(context *endly.Context, request *CheckoutRequest) (*Info,
 		return nil, err
 	}
 
-
 	dest, err := context.ExpandResource(request.Dest)
 	if err != nil {
 		return nil, err
@@ -161,8 +158,6 @@ func (s *git) checkout(context *endly.Context, request *CheckoutRequest) (*Info,
 	var parent, projectName = path.Split(dest.DirectoryPath())
 	var useParentDirectory = true
 	var _, originProjectName = path.Split(origin.DirectoryPath())
-
-
 
 	if originProjectName == projectName {
 		projectName = "."

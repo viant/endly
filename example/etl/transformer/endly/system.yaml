@@ -1,5 +1,5 @@
 tasks: $tasks
-params:
+defaults:
   target: $serviceTarget
 pipeline:
   destory:
