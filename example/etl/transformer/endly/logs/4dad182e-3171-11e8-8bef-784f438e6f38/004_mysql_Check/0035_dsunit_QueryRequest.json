@@ -1,5 +1,0 @@
-{
-	"Datastore": "testdb",
-	"SQL": "SELECT NOW()",
-	"IgnoreError": true
-}

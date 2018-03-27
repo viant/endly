@@ -1,8 +1,0 @@
-{
-	"Type": "action.When",
-	"Default": true,
-	"Evaluation": true,
-	"Criteria": "$hasConfig:1",
-	"ExpandedCriteria": "1:1",
-	"Error": ""
-}

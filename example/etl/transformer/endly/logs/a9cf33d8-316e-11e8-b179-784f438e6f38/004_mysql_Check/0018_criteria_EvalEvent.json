@@ -1,8 +1,0 @@
-{
-	"Type": "action.When",
-	"Default": true,
-	"Evaluation": true,
-	"Criteria": "$status:/bad connection/",
-	"ExpandedCriteria": "failed to prepare sql: SELECT NOW() with [] due to:driver: bad connection\n\t:/bad connection/",
-	"Error": ""
-}

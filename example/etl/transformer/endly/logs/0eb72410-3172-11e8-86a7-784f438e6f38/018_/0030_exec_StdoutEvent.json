@@ -1,5 +1,0 @@
-{
-	"SessionID": "127.0.0.1:22",
-	"Stdout": "[1]+  Exit 1                  nohup ./reporter -config config.json  (wd: /opt/reporter)\r\n(wd now: /)",
-	"Error": ""
-}

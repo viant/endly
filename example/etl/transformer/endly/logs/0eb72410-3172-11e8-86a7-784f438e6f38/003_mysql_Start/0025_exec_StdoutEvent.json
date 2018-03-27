@@ -1,5 +1,0 @@
-{
-	"SessionID": "127.0.0.1:22",
-	"Stdout": "docker: Error response from daemon: Conflict. The container name \"/mydb3\" is already in use by container \"200e7de6c97cf18c7567ed9979dc28c07a1f41f435c2441c497e31c40b93896b\". You have to remove (or rename) that container to be able to reuse that name.\r\nSee 'docker run --help'.\r\n",
-	"Error": ""
-}

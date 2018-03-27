@@ -1,3 +1,0 @@
-{
-	"Error": "manager_Init: dial tcp 127.0.0.1:3000: getsockopt: connection refused at workflow.run/dsunit.init"
-}

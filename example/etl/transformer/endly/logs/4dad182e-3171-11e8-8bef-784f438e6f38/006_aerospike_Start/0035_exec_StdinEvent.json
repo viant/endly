@@ -1,4 +1,0 @@
-{
-	"SessionID": "127.0.0.1:22",
-	"Stdin": "sudo docker run --name mydb4 -v /tmp/mydb4.conf:/etc/aerospike/aerospike.conf -p 3004:3004 -p 8081:8081 -p 3000:3000 -p 3001:3001 -p 3002:3002  -d aerospike/aerospike-server:latest --config-file /tmp/mydb4.conf"
-}

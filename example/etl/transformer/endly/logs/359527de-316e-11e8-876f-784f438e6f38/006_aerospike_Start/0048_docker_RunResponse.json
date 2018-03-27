@@ -1,8 +1,0 @@
-{
-	"ContainerID": "9b4b80f7f2f0",
-	"Image": "aerospike/aerospike-server:latest",
-	"Command": "/entrypoint.sh",
-	"Status": "up",
-	"Port": "3003/tcp",
-	"Names": "mydb4"
-}

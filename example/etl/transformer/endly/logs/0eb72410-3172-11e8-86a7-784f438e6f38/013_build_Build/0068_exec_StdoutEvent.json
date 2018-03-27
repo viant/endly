@@ -1,5 +1,0 @@
-{
-	"SessionID": "127.0.0.1:22",
-	"Stdout": "package _/tmp/reporter/build/app: unrecognized import path \"_/tmp/reporter/build/app\" (import path does not begin with hostname)\r\n",
-	"Error": ""
-}

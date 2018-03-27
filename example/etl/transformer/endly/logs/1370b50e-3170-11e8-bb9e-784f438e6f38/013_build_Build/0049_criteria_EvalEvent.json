@@ -1,8 +1,0 @@
-{
-	"Type": "action.When",
-	"Default": true,
-	"Evaluation": true,
-	"Criteria": "$origin",
-	"ExpandedCriteria": "map[URL:./../]",
-	"Error": ""
-}

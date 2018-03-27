@@ -1,8 +1,0 @@
-{
-	"Type": "action.When",
-	"Default": true,
-	"Evaluation": false,
-	"Criteria": "$startCmd",
-	"ExpandedCriteria": "",
-	"Error": ""
-}

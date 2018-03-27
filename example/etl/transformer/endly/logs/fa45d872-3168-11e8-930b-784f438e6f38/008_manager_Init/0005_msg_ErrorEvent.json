@@ -1,3 +1,0 @@
-{
-	"Error": "manager_Init: init *workflow.RunRequest failed: unable process map, not key value pairs at workflow.run"
-}

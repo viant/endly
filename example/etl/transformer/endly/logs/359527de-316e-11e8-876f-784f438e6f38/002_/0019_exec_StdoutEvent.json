@@ -1,5 +1,0 @@
-{
-	"SessionID": "127.0.0.1:22",
-	"Stdout": "CONTAINER ID        IMAGE                               COMMAND                  CREATED             STATUS              PORTS                                                                                        NAMES\r\ne080bae0ddd2        aerospike/aerospike-server:latest   \"/entrypoint.sh asd\"     34 minutes ago      Up 34 minutes       0.0.0.0:3000-3002-\u003e3000-3002/tcp, 0.0.0.0:3004-\u003e3004/tcp, 0.0.0.0:8081-\u003e8081/tcp, 3003/tcp   mydb4\r\n871ede43f8f4        mysql:5.7        ",
-	"Error": ""
-}

@@ -1,5 +1,0 @@
-{
-	"SessionID": "127.0.0.1:22",
-	"Stdout": "3a148ca516c6        mysql:5.7           \"docker-entrypoint.s…\"   Less than a second ago   Up Less than a second   0.0.0.0:3306-\u003e3306/tcp   mydb3\r\n",
-	"Error": ""
-}

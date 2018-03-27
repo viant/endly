@@ -1,8 +1,0 @@
-{
-	"Type": "action.When",
-	"Default": true,
-	"Evaluation": false,
-	"Criteria": "$status:/is not yet fully initialized/",
-	"ExpandedCriteria": "Failed to connect to hosts:dial tcp 127.0.0.1:3000: getsockopt: connection refused:/is not yet fully initialized/",
-	"Error": ""
-}

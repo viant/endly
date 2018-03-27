@@ -1,8 +1,0 @@
-{
-	"Type": "action.When",
-	"Default": true,
-	"Evaluation": true,
-	"Criteria": "$Length($commands) \u003e 0",
-	"ExpandedCriteria": "1 \u003e 0",
-	"Error": ""
-}

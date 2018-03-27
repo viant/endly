@@ -1,8 +1,0 @@
-{
-	"Type": "action.When",
-	"Default": true,
-	"Evaluation": false,
-	"Criteria": "$status:/is not yet fully initialized/",
-	"ExpandedCriteria": ":/is not yet fully initialized/",
-	"Error": ""
-}

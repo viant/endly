@@ -1,5 +1,0 @@
-{
-	"SessionID": "127.0.0.1:22",
-	"Stdout": "CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                    NAMES\r\na87d0fd684f4        mysql:5.7           \"docker-entrypoint.s…\"   15 seconds ago      Up 15 seconds       0.0.0.0:3306-\u003e3306/tcp   mydb3\r\n",
-	"Error": ""
-}

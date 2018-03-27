@@ -1,8 +1,0 @@
-{
-	"Type": "action.When",
-	"Default": true,
-	"Evaluation": false,
-	"Criteria": "$status:/bad connection/",
-	"ExpandedCriteria": "failed to prepare sql: SELECT NOW() with [] due to:Error 1049: Unknown database 'testdb'\n\t:/bad connection/",
-	"Error": ""
-}
