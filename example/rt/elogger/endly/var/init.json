@@ -1,0 +1,77 @@
+[
+  {
+    "Name": "sdk",
+    "Required": true,
+    "From": "params.sdk",
+    "Value": "go:1.8"
+  },
+  {
+    "Name": "GOPATH",
+    "Required": true,
+    "From": "params.GOPATH",
+    "Value": "${env.GOPATH}"
+  },
+  {
+    "Name": "app",
+    "Required": true,
+    "From": "params.app",
+    "Value": "elogger"
+  },
+  {
+    "Name": "target",
+    "Required": true,
+    "From": "params.target",
+    "Value": {
+      "URL": "ssh://127.0.0.1/",
+      "Credentials": "localhost"
+    }
+  },
+  {
+    "Name": "buildTarget",
+    "Required": true,
+    "From": "params.buildTarget",
+    "Value": "$target"
+  },
+  {
+    "Name": "appTarget",
+    "Required": true,
+    "From": "params.appTarget",
+    "Value": "$target"
+  },
+  {
+    "Name": "origin",
+    "Required": true,
+    "From": "params.origin",
+    "Value": {
+      "URL": "$Pwd(./../)"
+    }
+  },
+  {
+    "Name": "eLoggerHost",
+    "Value": "$Hostname($appTarget.URL):8777"
+  },
+  {
+    "Name": "buildPath",
+    "Required": true,
+    "From": "params.buildPath",
+    "Value": "/tmp/${app}/build/"
+  },
+  {
+    "Name": "releasePath",
+    "Required": true,
+    "From": "params.buildRoot",
+    "Value": "/tmp/${app}/release"
+  },
+  {
+    "Name": "appPath",
+    "Required": true,
+    "From": "params.appPath",
+    "Value": "/opt/${app}"
+  },
+  {
+    "Name": "appLogPath",
+    "Required": true,
+    "From": "params.appPath",
+    "Value": "/opt/${app}/logs"
+  }
+]
