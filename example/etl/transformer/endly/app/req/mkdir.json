@@ -1,9 +1,0 @@
-{
-  "SuperUser":true,
-  "Target":"$executionTarget",
-  "Commands":[
-    "/bin/bash -c '[[ -e ${appDirectory}/conf ]] && rm -rf ${appDirectory}/conf/*'",
-    "mkdir -p $appDirectory/conf",
-    "chmod -R a+w $appDirectory"
-  ]
-}

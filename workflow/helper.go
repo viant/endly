@@ -44,7 +44,7 @@ func Last(context *endly.Context) *model.Process {
 }
 
 //LastWorkflow returns last workflow
-func LastWorkflow(context *endly.Context) *model.Workflow {
+func LastWorkflow(context *endly.Context) *model.Process {
 	var processes = processes(context)
 	return processes.LastWorkflow()
 }
@@ -52,7 +52,7 @@ func LastWorkflow(context *endly.Context) *model.Workflow {
 
 
 //FirstWorkflow returns last workflow
-func FirstWorkflow(context *endly.Context) *model.Workflow {
+func FirstWorkflow(context *endly.Context) *model.Process {
 	var processes = processes(context)
 	return processes.FirstWorkflow()
 }

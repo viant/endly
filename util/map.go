@@ -10,29 +10,28 @@ func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{},
 	if keyValuePairs == nil {
 		return result, nil
 	}
-	err:= toolbox.ProcessMap(keyValuePairs, func(key, value interface{}) bool {
+	err := toolbox.ProcessMap(keyValuePairs, func(key, value interface{}) bool {
 		result[toolbox.AsString(key)] = value
 
 		if deep {
 			if value != nil && toolbox.IsSlice(value) { //yaml style map conversion if applicable
-				aMap, err := NormalizeMap(value, deep)
-				if err != nil {
-
-					aSlice := toolbox.AsSlice(value)
-					if len(aSlice) > 0 {
-						if toolbox.IsSlice(aSlice[0]) {
-							for i, item := range aSlice {
-								itmemMap, err := NormalizeMap(item, deep)
-								if err != nil {
-									return true
-								}
-								aSlice[i]=itmemMap
+				aSlice := toolbox.AsSlice(value)
+				if len(aSlice) > 0 {
+					if toolbox.IsMap(aSlice[0]) {
+						if normalized, err := NormalizeMap(value, deep);err == nil{
+							result[toolbox.AsString(key)] = normalized
+						}
+					} else if toolbox.IsSlice(aSlice[0]) {
+						for i, item := range aSlice {
+							itemMap, err := NormalizeMap(item, deep)
+							if err != nil {
+								return true
 							}
+							aSlice[i] = itemMap
 						}
 					}
 					return true
 				}
-				result[toolbox.AsString(key)] = aMap
 			}
 		}
 		return true

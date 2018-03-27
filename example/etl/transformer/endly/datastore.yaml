@@ -1,0 +1,42 @@
+pipeline:
+  create-db:
+    db3:
+      action: dsunit:init
+      scripts:
+        - URL: datastore/db3/schema.ddl
+      datastore: db3
+      recreate: true
+      config:
+        driverName: mysql
+        descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+        credentials: $mysqlCredential
+      admin:
+        datastore: mysql
+        config:
+          driverName: mysql
+          descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+          credentials: $mysqlCredential
+    db4:
+      action: dsunit:init
+      datastore: db4
+      recreate: true
+      config:
+        driverName: aerospike
+        descriptor: "tcp([host]:3000)/[namespace]"
+        parameters:
+          dbname: db4
+          namespace: db4
+          host: $serviceHost
+          port: 3000
+          dateFormat: yyyy-MM-dd hh:mm:ss
+          excludedColumns:
+            - PK
+  populate:
+    db3:
+      action: dsunit:prepare
+      datastore: db3
+      URL: datastore/db3/dictionary
+    db4:
+      action: dsunit:prepare
+      datastore: db4
+      URL: datastore/db4/data

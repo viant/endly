@@ -16,6 +16,7 @@ pipeline:
       - cd $buildPath/app
       - go get -u .
       - go build -o $app
+      - chmod +x $app
     download:
       /$buildPath/app/${app}: $releasePath
       /$buildPath/endly/config/config.json: $releasePath
@@ -28,7 +29,7 @@ pipeline:
       - chown -R ${os.user} $appPath
     upload:
       ${releasePath}/${app}: $appPath
-      ${releasePath}/config.json: $appPath/config/
+      ${releasePath}/config.json: $appPath
     commands:
       - echo 'deployed'
 
@@ -42,7 +43,7 @@ pipeline:
     immuneToHangups: true
     command: ./${app}
     arguments:
-      - "config"
+      - "-config"
       - "config.json"
       - "-port"
       - "8085"

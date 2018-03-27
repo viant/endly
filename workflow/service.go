@@ -730,7 +730,7 @@ func getSwitchSource(context *endly.Context, sourceKey string) interface{} {
 }
 
 func (s *Service) runSwitch(context *endly.Context, request *SwitchRequest) (SwitchResponse, error) {
-	process := Last(context)
+	process := LastWorkflow(context)
 	if process == nil {
 		return nil, errors.New("no active workflow")
 	}

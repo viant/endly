@@ -1,0 +1,22 @@
+tasks: $tasks
+params:
+  target: $serviceTarget
+pipeline:
+  destory:
+    stop-images:
+      action: docker:stop-images
+      images:
+        - mysql
+        - aerospike
+  init:
+    services:
+      mysql:
+        workflow: "service/mysql:start"
+        name: mydb3
+        version: $mysqlVersion
+        credentials: $mysqlCredentials
+        config: config/my.cnf
+      aerospike:
+        workflow: "service/aerospike:start"
+        name: mydb4
+        config: config/aerospike.conf

@@ -154,6 +154,8 @@ func (s *service) runContainer(context *endly.Context, request *RunRequest) (*Ru
 	if request.Workdir != "" {
 		args += fmt.Sprintf("-w %v ", context.Expand(request.Workdir))
 	}
+
+
 	var params = ""
 	for k, v := range request.Params {
 		params += fmt.Sprintf("%v %v", k, v)
@@ -172,7 +174,7 @@ func (s *service) runContainer(context *endly.Context, request *RunRequest) (*Ru
 			Target: request.Target,
 			Name:   request.Name,
 		}})
-		commandInfo, err = s.executeSecureDockerCommand(true, credentials, context, request.Target, dockerErrors, fmt.Sprintf("docker run --name %v %v -d %v", request.Name, args, request.Image))
+		commandInfo, err = s.executeSecureDockerCommand(true, credentials, context, request.Target, dockerErrors, fmt.Sprintf("docker run --name %v %v -d %v %v", request.Name, args, request.Image, params))
 		if err != nil {
 			return nil, err
 		}

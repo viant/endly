@@ -110,24 +110,24 @@ func (p *Processes) Recent(count int) []*Process {
 }
 
 //LastWorkflow returns the last workflow.
-func (p *Processes) LastWorkflow() *Workflow {
+func (p *Processes) LastWorkflow() *Process {
 	p.mux.RLock()
 	defer p.mux.RUnlock()
 	for i := len(p.processes) - 1; i >= 0; i-- {
 		if p.processes[i].Workflow != nil {
-			return p.processes[i].Workflow
+			return p.processes[i]
 		}
 	}
 	return nil
 }
 
 //FirstWorkflow returns the first workflow.
-func (p *Processes) FirstWorkflow() *Workflow {
+func (p *Processes) FirstWorkflow() *Process {
 	p.mux.RLock()
 	defer p.mux.RUnlock()
 	for i := 0; i < len(p.processes); i++ {
 		if p.processes[i].Workflow != nil {
-			return p.processes[i].Workflow
+			return p.processes[i]
 		}
 	}
 	return nil

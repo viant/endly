@@ -1,7 +1,0 @@
-{
-  "SuperUser":false,
-  "Target":"$executionTarget",
-  "Commands":[
-    "chmod  a+x ${appDirectory}/${app}"
-  ]
-}
