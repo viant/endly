@@ -1,0 +1,8 @@
+{
+	"Type": "action.When",
+	"Default": true,
+	"Evaluation": false,
+	"Criteria": "$params.stopSystemMysql:true",
+	"ExpandedCriteria": "$params.stopSystemMysql:true",
+	"Error": ""
+}

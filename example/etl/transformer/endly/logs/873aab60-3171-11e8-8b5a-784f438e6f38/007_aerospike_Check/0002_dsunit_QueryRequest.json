@@ -1,0 +1,5 @@
+{
+	"Datastore": "testdb",
+	"SQL": "SELECT id FROM dummy",
+	"IgnoreError": true
+}

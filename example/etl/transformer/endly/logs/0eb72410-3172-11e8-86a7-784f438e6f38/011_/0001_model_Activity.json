@@ -1,0 +1,45 @@
+{
+	"Tag": "build",
+	"TagIndex": "",
+	"TagID": "",
+	"TagDescription": "",
+	"Caller": "",
+	"Task": "",
+	"Service": "workflow",
+	"Action": "run",
+	"Description": "",
+	"Error": "",
+	"StartTime": "2018-03-26T20:51:24.835829-07:00",
+	"Ineligible": false,
+	"Request": {
+		"app": "reporter",
+		"appTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"buildTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"commands": [
+			"cd /tmp/reporter/build//app",
+			"go get -u .",
+			"go build -o reporter"
+		],
+		"download": {
+			"//tmp/reporter/build//app/reporter": "/tmp/reporter/release",
+			"//tmp/reporter/build//endly/config/config.json": "/tmp/reporter/release"
+		},
+		"origin": {
+			"URL": "./../"
+		},
+		"sdk": "go:1.8",
+		"target": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"workflow": "app/build"
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

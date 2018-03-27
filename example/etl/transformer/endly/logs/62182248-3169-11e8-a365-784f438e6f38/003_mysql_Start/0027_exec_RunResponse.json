@@ -1,0 +1,13 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "sudo docker run --name mydb3 -e MYSQL_ROOT_PASSWORD=**mysql** -v /tmp/mydb3.cnf:/etc/my.cnf -p 3306:3306  -d mysql:5.7 ",
+			"Stdout": "docker: Error response from daemon: Conflict. The container name \"/mydb3\" is already in use by container \"4b5b52e530be43970d4cae4c7e9e76808d8fef25951f20361f556d3f74876b18\". You have to remove (or rename) that container to be able to reuse that name.\r\nSee 'docker run --help'.",
+			"Error": ""
+		}
+	],
+	"Output": "docker: Error response from daemon: Conflict. The container name \"/mydb3\" is already in use by container \"4b5b52e530be43970d4cae4c7e9e76808d8fef25951f20361f556d3f74876b18\". You have to remove (or rename) that container to be able to reuse that name.\r\nSee 'docker run --help'.",
+	"Data": {},
+	"Error": ""
+}

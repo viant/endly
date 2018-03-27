@@ -1,0 +1,13 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "sudo docker rm mydb3",
+			"Stdout": "mydb3",
+			"Error": ""
+		}
+	],
+	"Output": "mydb3",
+	"Data": {},
+	"Error": ""
+}

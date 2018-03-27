@@ -1,0 +1,21 @@
+{
+	"Tag": "Check",
+	"TagIndex": "",
+	"TagID": "aerospike_Check",
+	"TagDescription": "",
+	"Caller": "aerospike",
+	"Task": "",
+	"Service": "dsunit",
+	"Action": "query",
+	"Description": "run test query",
+	"Error": "",
+	"StartTime": "2018-03-26T19:46:19.24544-07:00",
+	"Ineligible": false,
+	"Request": {
+		"datastore": "testdb",
+		"ignoreError": true,
+		"sql": "SELECT id FROM dummy"
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

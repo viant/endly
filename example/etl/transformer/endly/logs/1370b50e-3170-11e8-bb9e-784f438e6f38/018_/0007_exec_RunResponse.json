@@ -1,0 +1,13 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "sudo kill -9 0",
+			"Stdout": "Killed: 9",
+			"Error": ""
+		}
+	],
+	"Output": "Killed: 9",
+	"Data": {},
+	"Error": ""
+}

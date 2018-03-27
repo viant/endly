@@ -1,0 +1,4 @@
+{
+	"SessionID": "127.0.0.1:22",
+	"Stdin": "sudo docker run --name mydb3 -e MYSQL_ROOT_PASSWORD=**mysql** -v /tmp/mydb3.cnf:/etc/my.cnf -p 3306:3306  -d mysql:5.7"
+}

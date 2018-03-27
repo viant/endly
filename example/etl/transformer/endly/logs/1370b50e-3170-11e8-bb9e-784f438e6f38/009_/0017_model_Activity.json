@@ -1,0 +1,21 @@
+{
+	"Tag": "db4",
+	"TagIndex": "",
+	"TagID": "",
+	"TagDescription": "",
+	"Caller": "",
+	"Task": "",
+	"Service": "dsunit",
+	"Action": "prepare",
+	"Description": "",
+	"Error": "",
+	"StartTime": "2018-03-26T20:37:11.311349-07:00",
+	"Ineligible": false,
+	"Request": {
+		"URL": "datastore/db4/data",
+		"action": "dsunit:prepare",
+		"datastore": "db4"
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

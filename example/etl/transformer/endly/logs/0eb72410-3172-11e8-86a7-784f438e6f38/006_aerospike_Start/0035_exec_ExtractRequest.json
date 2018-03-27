@@ -1,0 +1,31 @@
+{
+	"Target": {
+		"URL": "ssh://127.0.0.1/",
+		"Credentials": "localhost",
+		"Cache": "",
+		"CacheExpiryMs": 0
+	},
+	"SystemPaths": [
+		"/usr/local/bin"
+	],
+	"Terminators": [],
+	"Errors": null,
+	"TimeoutMs": 120000,
+	"Directory": "",
+	"Env": {},
+	"SuperUser": true,
+	"Secrets": {
+		"**sudo**": "localhost"
+	},
+	"Commands": [
+		{
+			"When": "",
+			"Command": "docker run --name mydb4 -v /tmp/mydb4.conf:/opt/aerospike/etc/aerospike.conf -p 3000:3000 -p 3001:3001 -p 3002:3002 -p 3004:3004 -p 8081:8081  -d aerospike/aerospike-server:latest --config-file /opt/aerospike/etc/aerospike.conf",
+			"Extraction": null,
+			"Errors": [
+				"command not found"
+			],
+			"Success": []
+		}
+	]
+}

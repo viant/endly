@@ -1,0 +1,30 @@
+{
+	"Target": {
+		"URL": "ssh://127.0.0.1/tmp/reporter/build/",
+		"Credentials": "localhost",
+		"Cache": "",
+		"CacheExpiryMs": 0
+	},
+	"SystemPaths": null,
+	"Terminators": null,
+	"Errors": [
+		"Error",
+		"command not found",
+		"imported and not used",
+		"in single-value context",
+		"cannot use",
+		"can't load package",
+		"exit status 1",
+		"executable file not found"
+	],
+	"TimeoutMs": 60000,
+	"Directory": "",
+	"Env": null,
+	"SuperUser": false,
+	"Secrets": null,
+	"Commands": [
+		"cd /tmp/reporter/build//app",
+		"go get -u .",
+		"go build -o reporter"
+	]
+}

@@ -1,0 +1,10 @@
+{
+	"Response": {
+		"Data": {
+			"StoppedImages": [
+				"mysql:5.7"
+			]
+		},
+		"SessionID": ""
+	}
+}

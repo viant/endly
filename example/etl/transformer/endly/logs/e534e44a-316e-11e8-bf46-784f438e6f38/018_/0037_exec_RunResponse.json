@@ -1,0 +1,13 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "ps -ef | grep ./reporter",
+			"Stdout": "2093634177 49995     1   0  3:06PM ??         0:00.03 ./reporter config config.json -port 8085\r\n2093634177 57264 56900   0  8:28PM ttys006    0:00.00 grep ./reporter",
+			"Error": ""
+		}
+	],
+	"Output": "2093634177 49995     1   0  3:06PM ??         0:00.03 ./reporter config config.json -port 8085\r\n2093634177 57264 56900   0  8:28PM ttys006    0:00.00 grep ./reporter",
+	"Data": {},
+	"Error": ""
+}

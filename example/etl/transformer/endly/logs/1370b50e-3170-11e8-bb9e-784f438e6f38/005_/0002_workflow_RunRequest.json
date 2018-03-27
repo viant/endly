@@ -1,0 +1,21 @@
+{
+	"EnableLogging": false,
+	"LogDirectory": "",
+	"EventFilter": null,
+	"Async": false,
+	"Params": {
+		"config": "config/aerospike.conf",
+		"name": "mydb4",
+		"target": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"workflow": "service/aerospike:start"
+	},
+	"PublishParameters": true,
+	"URL": "service/aerospike.csv",
+	"Source": null,
+	"Name": "aerospike",
+	"TagIDs": "",
+	"Tasks": "start"
+}

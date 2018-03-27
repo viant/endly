@@ -1,0 +1,14 @@
+{
+	"Datastore": "db3",
+	"Config": {
+		"DriverName": "mysql",
+		"PoolSize": 0,
+		"MaxPoolSize": 0,
+		"Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+		"SecureDescriptor": "",
+		"Parameters": null,
+		"Credentials": "mysql"
+	},
+	"ConfigURL": "",
+	"Tables": null
+}

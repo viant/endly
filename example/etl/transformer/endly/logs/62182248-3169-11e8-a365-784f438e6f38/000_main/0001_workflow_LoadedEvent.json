@@ -1,0 +1,972 @@
+{
+	"Workflow": {
+		"Source": {
+			"URL": "file:///Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/manager.csv",
+			"Credentials": "",
+			"Cache": "",
+			"CacheExpiryMs": 0
+		},
+		"Data": null,
+		"Name": "manager",
+		"Description": "run system test",
+		"Init": [
+			{
+				"Name": "sdk",
+				"Value": "go:1.8",
+				"From": "params.sdk",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": true,
+				"Replace": null
+			},
+			{
+				"Name": "GOPATH",
+				"Value": "${env.GOPATH}",
+				"From": "params.GOPATH",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": true,
+				"Replace": null
+			},
+			{
+				"Name": "app",
+				"Value": "reporter",
+				"From": "params.app",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": true,
+				"Replace": null
+			},
+			{
+				"Name": "target",
+				"Value": {
+					"Credentials": "localhost",
+					"URL": "ssh://127.0.0.1/"
+				},
+				"From": "params.target",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": true,
+				"Replace": null
+			},
+			{
+				"Name": "serviceTarget",
+				"Value": "$target",
+				"From": "params.serviceTarget",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": true,
+				"Replace": null
+			},
+			{
+				"Name": "buildTarget",
+				"Value": "$target",
+				"From": "params.buildTarget",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": true,
+				"Replace": null
+			},
+			{
+				"Name": "appTarget",
+				"Value": "$target",
+				"From": "params.appTarget",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": true,
+				"Replace": null
+			},
+			{
+				"Name": "origin",
+				"Value": {
+					"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer"
+				},
+				"From": "params.origin",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": true,
+				"Replace": null
+			},
+			{
+				"Name": "targetHost",
+				"Value": "$Hostname($target.URL)",
+				"From": "",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "buildPath",
+				"Value": "/tmp/${app}/build/",
+				"From": "params.buildPath",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": true,
+				"Replace": null
+			},
+			{
+				"Name": "releasePath",
+				"Value": "/tmp/${app}/release",
+				"From": "params.buildRoot",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": true,
+				"Replace": null
+			},
+			{
+				"Name": "appPath",
+				"Value": "/opt/${app}",
+				"From": "params.appPath",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": true,
+				"Replace": null
+			},
+			{
+				"Name": "mysqlVersion",
+				"Value": "5.7",
+				"From": "params.mysqlVersion",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": true,
+				"Replace": null
+			},
+			{
+				"Name": "mysqlCredential",
+				"Value": "mysql",
+				"From": "params.mysqlCredential",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": true,
+				"Replace": null
+			}
+		],
+		"Post": null,
+		"Tasks": [
+			{
+				"When": "",
+				"Seq": 0,
+				"Name": "init",
+				"Description": "Initialise test",
+				"Actions": [
+					{
+						"Service": "workflow",
+						"Action": "run",
+						"Request": {
+							"params": [
+								{
+									"Key": "target",
+									"Value": "$serviceTarget"
+								}
+							],
+							"pipeline": [
+								{
+									"Key": "destory",
+									"Value": [
+										{
+											"Key": "stop-images",
+											"Value": [
+												{
+													"Key": "action",
+													"Value": "docker:stop-images"
+												},
+												{
+													"Key": "images",
+													"Value": [
+														"mysql",
+														"aerospike"
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"Key": "init",
+									"Value": [
+										{
+											"Key": "services",
+											"Value": [
+												{
+													"Key": "mysql",
+													"Value": [
+														{
+															"Key": "workflow",
+															"Value": "service/mysql:start"
+														},
+														{
+															"Key": "name",
+															"Value": "mydb3"
+														},
+														{
+															"Key": "version",
+															"Value": "$mysqlVersion"
+														},
+														{
+															"Key": "credentials",
+															"Value": "$mysqlCredentials"
+														},
+														{
+															"Key": "config",
+															"Value": "config/my.cnf"
+														}
+													]
+												},
+												{
+													"Key": "aerospike",
+													"Value": [
+														{
+															"Key": "workflow",
+															"Value": "service/aerospike:start"
+														},
+														{
+															"Key": "name",
+															"Value": "mydb4"
+														},
+														{
+															"Key": "config",
+															"Value": "config/aerospike.conf"
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							],
+							"tasks": "*"
+						},
+						"Description": "initialise system services",
+						"Tag": "Init",
+						"TagIndex": "",
+						"TagID": "manager_Init",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "workflow",
+						"Action": "run",
+						"Request": {
+							"pipeline": [
+								{
+									"Key": "create-db",
+									"Value": [
+										{
+											"Key": "db3",
+											"Value": [
+												{
+													"Key": "action",
+													"Value": "dsunit:init"
+												},
+												{
+													"Key": "scripts",
+													"Value": [
+														[
+															{
+																"Key": "URL",
+																"Value": "datastore/db3/schema.ddl"
+															}
+														]
+													]
+												},
+												{
+													"Key": "datastore",
+													"Value": "db3"
+												},
+												{
+													"Key": "recreate",
+													"Value": true
+												},
+												{
+													"Key": "config",
+													"Value": [
+														{
+															"Key": "driverName",
+															"Value": "mysql"
+														},
+														{
+															"Key": "descriptor",
+															"Value": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+														},
+														{
+															"Key": "credentials",
+															"Value": "$mysqlCredential"
+														}
+													]
+												},
+												{
+													"Key": "admin",
+													"Value": [
+														{
+															"Key": "datastore",
+															"Value": "mysql"
+														},
+														{
+															"Key": "config",
+															"Value": [
+																{
+																	"Key": "driverName",
+																	"Value": "mysql"
+																},
+																{
+																	"Key": "descriptor",
+																	"Value": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+																},
+																{
+																	"Key": "credentials",
+																	"Value": "$mysqlCredential"
+																}
+															]
+														}
+													]
+												}
+											]
+										},
+										{
+											"Key": "db4",
+											"Value": [
+												{
+													"Key": "datastore",
+													"Value": "db4"
+												},
+												{
+													"Key": "recreate",
+													"Value": true
+												},
+												{
+													"Key": "config",
+													"Value": [
+														{
+															"Key": "driverName",
+															"Value": "aerospike"
+														},
+														{
+															"Key": "descriptor",
+															"Value": "tcp([host]:3000)/[namespace]"
+														},
+														{
+															"Key": "parameters",
+															"Value": [
+																{
+																	"Key": "dbname",
+																	"Value": "db4,"
+																},
+																{
+																	"Key": "namespace",
+																	"Value": "db4"
+																},
+																{
+																	"Key": "host",
+																	"Value": "$serviceHost"
+																},
+																{
+																	"Key": "port",
+																	"Value": "3000,"
+																},
+																{
+																	"Key": "dateFormat",
+																	"Value": "yyyy-MM-dd hh:mm:ss"
+																},
+																{
+																	"Key": "excludedColumns",
+																	"Value": [
+																		"PK"
+																	]
+																}
+															]
+														}
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"Key": "populate",
+									"Value": [
+										{
+											"Key": "db3",
+											"Value": [
+												{
+													"Key": "action",
+													"Value": "dsunit:prepare"
+												},
+												{
+													"Key": "datastore",
+													"Value": "db3"
+												},
+												{
+													"Key": "URL",
+													"Value": "datastore/db3/dictionary"
+												}
+											]
+										},
+										{
+											"Key": "db4",
+											"Value": [
+												{
+													"Key": "action",
+													"Value": "dsunit:prepare"
+												},
+												{
+													"Key": "datastore",
+													"Value": "db4"
+												},
+												{
+													"Key": "URL",
+													"Value": "datastore/db4/data"
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						"Description": "initialise data",
+						"Tag": "Init",
+						"TagIndex": "",
+						"TagID": "manager_Init",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "workflow",
+						"Action": "run",
+						"Request": {
+							"params": [
+								{
+									"Key": "app",
+									"Value": "$app"
+								},
+								{
+									"Key": "sdk",
+									"Value": "$sdk"
+								},
+								{
+									"Key": "target",
+									"Value": "$target"
+								},
+								{
+									"Key": "buildTarget",
+									"Value": "$buildTarget"
+								},
+								{
+									"Key": "appTarget",
+									"Value": "$appTarget"
+								}
+							],
+							"pipeline": [
+								{
+									"Key": "build",
+									"Value": [
+										{
+											"Key": "workflow",
+											"Value": "app/build"
+										},
+										{
+											"Key": "origin",
+											"Value": [
+												{
+													"Key": "URL",
+													"Value": "./../"
+												}
+											]
+										},
+										{
+											"Key": "commands",
+											"Value": [
+												"cd $buildPath/app",
+												"go get -u .",
+												"go build -o $app"
+											]
+										},
+										{
+											"Key": "download",
+											"Value": [
+												{
+													"Key": "/$buildPath/app/${app}",
+													"Value": "$releasePath"
+												},
+												{
+													"Key": "/$buildPath/endly/config/config.json",
+													"Value": "$releasePath"
+												}
+											]
+										}
+									]
+								},
+								{
+									"Key": "deploy",
+									"Value": [
+										{
+											"Key": "workflow",
+											"Value": "app/deploy"
+										},
+										{
+											"Key": "init",
+											"Value": [
+												"mkdir -p $appPath",
+												"mkdir -p $appPath/config",
+												"chown -R ${os.user} $appPath"
+											]
+										},
+										{
+											"Key": "upload",
+											"Value": [
+												{
+													"Key": "${releasePath}/${app}",
+													"Value": "$appPath"
+												},
+												{
+													"Key": "${releasePath}/config.json",
+													"Value": "$appPath/config/"
+												}
+											]
+										},
+										{
+											"Key": "commands",
+											"Value": [
+												"echo 'deployed'"
+											]
+										}
+									]
+								},
+								{
+									"Key": "stop",
+									"Value": [
+										{
+											"Key": "action",
+											"Value": "process:stop"
+										},
+										{
+											"Key": "input",
+											"Value": "${app}"
+										}
+									]
+								},
+								{
+									"Key": "start",
+									"Value": [
+										{
+											"Key": "action",
+											"Value": "process:start"
+										},
+										{
+											"Key": "directory",
+											"Value": "$appPath"
+										},
+										{
+											"Key": "immuneToHangups",
+											"Value": true
+										},
+										{
+											"Key": "command",
+											"Value": "./${app}"
+										},
+										{
+											"Key": "arguments",
+											"Value": [
+												"-config",
+												"config.json"
+											]
+										}
+									]
+								}
+							],
+							"tasks": "*"
+						},
+						"Description": "deploy app",
+						"Tag": "Init",
+						"TagIndex": "",
+						"TagID": "manager_Init",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					}
+				],
+				"Init": null,
+				"Post": null,
+				"TimeSpentMs": 0
+			},
+			{
+				"When": "",
+				"Seq": 0,
+				"Name": "test",
+				"Description": "Run test",
+				"Actions": [
+					{
+						"Service": "workflow",
+						"Action": "run",
+						"Request": {
+							"Name": "regresion",
+							"Params": {
+								"GOPATH": "$GOPATH",
+								"app": "$app",
+								"appRootDirectory": "$appRootDirectory",
+								"buildArgs": "$buildArgs",
+								"buildDirectory": "$buildDirectory",
+								"buildGoal": "$buildGoal",
+								"buildHost": "$buildHost",
+								"buildHostCredential": "$buildHostCredential",
+								"buildTarget": "$buildTarget",
+								"executionTarget": "$executionTarget",
+								"goVersion": "$goVersion",
+								"mysqlCredential": "$mysqlCredential",
+								"mysqlPort": "$mysqlPort",
+								"mysqlVersion": "$mysqlVersion",
+								"targetHost": "$targetHost",
+								"targetHostCredential": "$targetHostCredential"
+							},
+							"Tasks": "*",
+							"URL": "regresion/regresion.csv"
+						},
+						"Description": "run test plan",
+						"Tag": "Test",
+						"TagIndex": "",
+						"TagID": "manager_Test",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					}
+				],
+				"Init": null,
+				"Post": null,
+				"TimeSpentMs": 0
+			},
+			{
+				"When": "",
+				"Seq": 0,
+				"Name": "destroy",
+				"Description": "destroy system",
+				"Actions": [
+					{
+						"Service": "workflow",
+						"Action": "run",
+						"Request": {
+							"params": [
+								{
+									"Key": "app",
+									"Value": "$app"
+								},
+								{
+									"Key": "sdk",
+									"Value": "$sdk"
+								},
+								{
+									"Key": "target",
+									"Value": "$target"
+								},
+								{
+									"Key": "buildTarget",
+									"Value": "$buildTarget"
+								},
+								{
+									"Key": "appTarget",
+									"Value": "$appTarget"
+								}
+							],
+							"pipeline": [
+								{
+									"Key": "build",
+									"Value": [
+										{
+											"Key": "workflow",
+											"Value": "app/build"
+										},
+										{
+											"Key": "origin",
+											"Value": [
+												{
+													"Key": "URL",
+													"Value": "./../"
+												}
+											]
+										},
+										{
+											"Key": "commands",
+											"Value": [
+												"cd $buildPath/app",
+												"go get -u .",
+												"go build -o $app"
+											]
+										},
+										{
+											"Key": "download",
+											"Value": [
+												{
+													"Key": "/$buildPath/app/${app}",
+													"Value": "$releasePath"
+												},
+												{
+													"Key": "/$buildPath/endly/config/config.json",
+													"Value": "$releasePath"
+												}
+											]
+										}
+									]
+								},
+								{
+									"Key": "deploy",
+									"Value": [
+										{
+											"Key": "workflow",
+											"Value": "app/deploy"
+										},
+										{
+											"Key": "init",
+											"Value": [
+												"mkdir -p $appPath",
+												"mkdir -p $appPath/config",
+												"chown -R ${os.user} $appPath"
+											]
+										},
+										{
+											"Key": "upload",
+											"Value": [
+												{
+													"Key": "${releasePath}/${app}",
+													"Value": "$appPath"
+												},
+												{
+													"Key": "${releasePath}/config.json",
+													"Value": "$appPath/config/"
+												}
+											]
+										},
+										{
+											"Key": "commands",
+											"Value": [
+												"echo 'deployed'"
+											]
+										}
+									]
+								},
+								{
+									"Key": "stop",
+									"Value": [
+										{
+											"Key": "action",
+											"Value": "process:stop"
+										},
+										{
+											"Key": "input",
+											"Value": "${app}"
+										}
+									]
+								},
+								{
+									"Key": "start",
+									"Value": [
+										{
+											"Key": "action",
+											"Value": "process:start"
+										},
+										{
+											"Key": "directory",
+											"Value": "$appPath"
+										},
+										{
+											"Key": "immuneToHangups",
+											"Value": true
+										},
+										{
+											"Key": "command",
+											"Value": "./${app}"
+										},
+										{
+											"Key": "arguments",
+											"Value": [
+												"-config",
+												"config.json"
+											]
+										}
+									]
+								}
+							],
+							"tasks": "stop"
+						},
+						"Description": "stop app",
+						"Tag": "Destroy",
+						"TagIndex": "",
+						"TagID": "manager_Destroy",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "workflow",
+						"Action": "run",
+						"Request": {
+							"params": [
+								{
+									"Key": "target",
+									"Value": "$serviceTarget"
+								}
+							],
+							"pipeline": [
+								{
+									"Key": "destory",
+									"Value": [
+										{
+											"Key": "stop-images",
+											"Value": [
+												{
+													"Key": "action",
+													"Value": "docker:stop-images"
+												},
+												{
+													"Key": "images",
+													"Value": [
+														"mysql",
+														"aerospike"
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"Key": "init",
+									"Value": [
+										{
+											"Key": "services",
+											"Value": [
+												{
+													"Key": "mysql",
+													"Value": [
+														{
+															"Key": "workflow",
+															"Value": "service/mysql:start"
+														},
+														{
+															"Key": "name",
+															"Value": "mydb3"
+														},
+														{
+															"Key": "version",
+															"Value": "$mysqlVersion"
+														},
+														{
+															"Key": "credentials",
+															"Value": "$mysqlCredentials"
+														},
+														{
+															"Key": "config",
+															"Value": "config/my.cnf"
+														}
+													]
+												},
+												{
+													"Key": "aerospike",
+													"Value": [
+														{
+															"Key": "workflow",
+															"Value": "service/aerospike:start"
+														},
+														{
+															"Key": "name",
+															"Value": "mydb4"
+														},
+														{
+															"Key": "config",
+															"Value": "config/aerospike.conf"
+														}
+													]
+												}
+											]
+										}
+									]
+								}
+							],
+							"tasks": "destory"
+						},
+						"Description": "stop system services",
+						"Tag": "Destroy",
+						"TagIndex": "",
+						"TagID": "manager_Destroy",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					}
+				],
+				"Init": null,
+				"Post": null,
+				"TimeSpentMs": 0
+			}
+		],
+		"OnErrorTask": "",
+		"DeferTask": "",
+		"SleepTimeMs": 0
+	}
+}

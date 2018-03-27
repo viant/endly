@@ -1,0 +1,18 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "go get -u .",
+			"Stdout": "package _/tmp/reporter/build/app: unrecognized import path \"_/tmp/reporter/build/app\" (import path does not begin with hostname)",
+			"Error": ""
+		},
+		{
+			"Stdin": "go build -o reporter",
+			"Stdout": "# _/tmp/reporter/build/app\r\n./transformer.go:13: configURI redeclared in this block\r\n\tprevious declaration at ./reporter.go:11\r\n./transformer.go:15: main redeclared in this block\r\n\tprevious declaration at ./reporter.go:14",
+			"Error": ""
+		}
+	],
+	"Output": "package _/tmp/reporter/build/app: unrecognized import path \"_/tmp/reporter/build/app\" (import path does not begin with hostname)\n# _/tmp/reporter/build/app\r\n./transformer.go:13: configURI redeclared in this block\r\n\tprevious declaration at ./reporter.go:11\r\n./transformer.go:15: main redeclared in this block\r\n\tprevious declaration at ./reporter.go:14",
+	"Data": {},
+	"Error": ""
+}

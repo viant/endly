@@ -1,0 +1,28 @@
+{
+	"Response": {
+		"Tag": "Start",
+		"TagIndex": "",
+		"TagID": "aerospike_Start",
+		"TagDescription": "",
+		"Caller": "aerospike",
+		"Task": "",
+		"Service": "workflow",
+		"Action": "goto",
+		"Description": "check if db ready",
+		"Error": "",
+		"StartTime": "2018-03-26T20:23:49.785315-07:00",
+		"Ineligible": false,
+		"Request": {
+			"Task": "check"
+		},
+		"Response": {
+			"value": null
+		},
+		"ServiceResponse": {
+			"Status": "ok",
+			"Error": "",
+			"Response": null,
+			"Err": null
+		}
+	}
+}

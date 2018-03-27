@@ -1,0 +1,21 @@
+{
+	"Response": {
+		"Tag": "Check",
+		"TagIndex": "",
+		"TagID": "aerospike_Check",
+		"TagDescription": "",
+		"Caller": "aerospike",
+		"Task": "",
+		"Service": "workflow",
+		"Action": "goto",
+		"Description": "check if db ready",
+		"Error": "",
+		"StartTime": "2018-03-26T19:46:21.333203-07:00",
+		"Ineligible": true,
+		"Request": {
+			"task": "check"
+		},
+		"Response": {},
+		"ServiceResponse": null
+	}
+}

@@ -1,0 +1,41 @@
+{
+	"EnableLogging": false,
+	"LogDirectory": "",
+	"EventFilter": null,
+	"Async": false,
+	"Params": {
+		"app": "reporter",
+		"appTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"buildTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"commands": [
+			"cd /tmp/reporter/build//app",
+			"go get -u .",
+			"go build -o reporter"
+		],
+		"download": {
+			"//tmp/reporter/build//app/reporter": "/tmp/reporter/release",
+			"//tmp/reporter/build//endly/config/config.json": "/tmp/reporter/release"
+		},
+		"origin": {
+			"URL": "./../"
+		},
+		"sdk": "go:1.8",
+		"target": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"workflow": "app/build"
+	},
+	"PublishParameters": true,
+	"URL": "app/build.csv",
+	"Source": null,
+	"Name": "build",
+	"TagIDs": "",
+	"Tasks": "*"
+}

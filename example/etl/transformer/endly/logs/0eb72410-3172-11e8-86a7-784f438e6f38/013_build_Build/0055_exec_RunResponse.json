@@ -1,0 +1,13 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "mkdir -p /tmp/reporter/",
+			"Stdout": "",
+			"Error": ""
+		}
+	],
+	"Output": "",
+	"Data": {},
+	"Error": ""
+}

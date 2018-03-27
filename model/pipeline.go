@@ -135,7 +135,6 @@ func (p *Inline) toPipeline(baseURL string, source interface{}, name string, sha
 	pipeline.Params, _ = util.NormalizeMap(params, true)
 	util.Append(pipeline.Params, sharedParams, false)
 
-
 	if err = pipeline.initRequestIfNeeded(baseURL); err != nil {
 		return nil, err
 	}
@@ -165,17 +164,17 @@ func (p *Inline) toPipeline(baseURL string, source interface{}, name string, sha
 }
 
 //Init initialises inline pipeline
-func (p *Inline) InitTasks(baseURL string, selector TasksSelector, sharedParams map[string]interface{}) (err error) {
+func (p *Inline) InitTasks(baseURL string, selector TasksSelector, defaultParams map[string]interface{}) (err error) {
 	if len(p.Pipelines) > 0 {
 		return nil
 	}
 	p.Init, err = GetVariables(baseURL, p.Init)
 	p.Post, err = GetVariables(baseURL, p.Post)
-	sharedParams, _ = util.NormalizeMap(sharedParams, true)
+	defaultParams, _ = util.NormalizeMap(defaultParams, true)
 
 	p.Pipelines = make([]*Pipeline, 0)
 	for _, entry := range p.Pipeline {
-		pipeline, err := p.toPipeline(baseURL, entry.Value, entry.Key, sharedParams)
+		pipeline, err := p.toPipeline(baseURL, entry.Value, entry.Key, defaultParams)
 		if err != nil {
 			return err
 		}

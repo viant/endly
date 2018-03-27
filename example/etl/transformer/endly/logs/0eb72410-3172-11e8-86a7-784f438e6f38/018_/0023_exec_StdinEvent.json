@@ -1,0 +1,4 @@
+{
+	"SessionID": "127.0.0.1:22",
+	"Stdin": "nohup  ./reporter -config config.json \u0026"
+}

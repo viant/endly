@@ -1,0 +1,23 @@
+{
+	"EnableLogging": false,
+	"LogDirectory": "",
+	"EventFilter": null,
+	"Async": false,
+	"Params": {
+		"config": "config/my.cnf",
+		"credentials": "$mysqlCredentials",
+		"name": "mydb3",
+		"target": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"version": "5.7",
+		"workflow": "service/mysql:start"
+	},
+	"PublishParameters": true,
+	"URL": "service/mysql.csv",
+	"Source": null,
+	"Name": "mysql",
+	"TagIDs": "",
+	"Tasks": "start"
+}

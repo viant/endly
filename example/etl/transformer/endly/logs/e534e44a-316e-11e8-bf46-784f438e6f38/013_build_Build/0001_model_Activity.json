@@ -1,0 +1,20 @@
+{
+	"Tag": "Build",
+	"TagIndex": "",
+	"TagID": "build_Build",
+	"TagDescription": "",
+	"Caller": "build",
+	"Task": "",
+	"Service": "sdk",
+	"Action": "set",
+	"Description": "set sdk",
+	"Error": "",
+	"StartTime": "2018-03-26T20:28:47.589364-07:00",
+	"Ineligible": false,
+	"Request": {
+		"sdk": "$sdk",
+		"target": "$buildTarget"
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

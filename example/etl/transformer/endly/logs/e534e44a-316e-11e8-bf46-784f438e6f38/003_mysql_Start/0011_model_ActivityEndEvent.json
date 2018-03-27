@@ -1,0 +1,70 @@
+{
+	"Response": {
+		"Tag": "Start",
+		"TagIndex": "",
+		"TagID": "mysql_Start",
+		"TagDescription": "",
+		"Caller": "mysql",
+		"Task": "",
+		"Service": "storage",
+		"Action": "copy",
+		"Description": "copy config file to temp location",
+		"Error": "",
+		"StartTime": "2018-03-26T20:28:25.647223-07:00",
+		"Ineligible": false,
+		"Request": {
+			"Expand": false,
+			"Compress": false,
+			"Replace": null,
+			"Source": {
+				"URL": "ssh://127.0.0.1/",
+				"Credentials": "localhost",
+				"Cache": "",
+				"CacheExpiryMs": 0
+			},
+			"Dest": {
+				"URL": "ssh://127.0.0.1/",
+				"Credentials": "localhost",
+				"Cache": "",
+				"CacheExpiryMs": 0
+			},
+			"Assets": {
+				"config/my.cnf": "/tmp/mydb3.cnf"
+			},
+			"Transfers": [
+				{
+					"Expand": false,
+					"Compress": false,
+					"Replace": null,
+					"Source": {
+						"URL": "ssh://127.0.0.1/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/config/my.cnf",
+						"Credentials": "localhost",
+						"Cache": "",
+						"CacheExpiryMs": 0
+					},
+					"Dest": {
+						"URL": "ssh://127.0.0.1/tmp/mydb3.cnf",
+						"Credentials": "localhost",
+						"Cache": "",
+						"CacheExpiryMs": 0
+					}
+				}
+			]
+		},
+		"Response": {
+			"TransferredURL": [
+				"file:///Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/config/my.cnf"
+			]
+		},
+		"ServiceResponse": {
+			"Status": "ok",
+			"Error": "",
+			"Response": {
+				"TransferredURL": [
+					"file:///Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/config/my.cnf"
+				]
+			},
+			"Err": null
+		}
+	}
+}

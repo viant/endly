@@ -1,0 +1,27 @@
+{
+	"Tag": "Build",
+	"TagIndex": "",
+	"TagID": "deploy_Build",
+	"TagDescription": "",
+	"Caller": "deploy",
+	"Task": "",
+	"Service": "exec",
+	"Action": "run",
+	"Description": "run commands",
+	"Error": "",
+	"StartTime": "2018-03-26T20:37:20.530187-07:00",
+	"Ineligible": false,
+	"Request": {
+		"commands": "$commands",
+		"errors": [
+			"Error",
+			"command not found",
+			"No such file or directory"
+		],
+		"superUser": "$superUser",
+		"target": "$appTarget",
+		"timeoutMs": 60000
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

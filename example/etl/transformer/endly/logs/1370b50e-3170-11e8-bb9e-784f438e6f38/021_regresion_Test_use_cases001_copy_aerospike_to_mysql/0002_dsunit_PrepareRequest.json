@@ -1,0 +1,19 @@
+{
+	"Expand": false,
+	"URL": "file:///Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/use_cases/001_copy_aerospike_to_mysql/db3",
+	"Credentials": "",
+	"Cache": "",
+	"CacheExpiryMs": 0,
+	"Datastore": "db3",
+	"Datasets": [
+		{
+			"Table": "users",
+			"Records": [
+				{}
+			]
+		}
+	],
+	"Data": null,
+	"Prefix": "prepare_",
+	"Postfix": ""
+}

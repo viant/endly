@@ -23,6 +23,11 @@ Verify that secret file were created
 cat ~/.secret/localhost.json
 ```
 
+Create 'mysql' secret credentials, provide  **root** as username and non empty password for docker mysqladmin
+```text
+endly -c=mysql
+```
+
 
 
 #### Run reporter webservice workflow
@@ -43,8 +48,22 @@ endly -r=run
 
 ## To check manager workflow tasks list
 endly -w=manager -t='?'
-
-   
+ 
 ```
+
+
+
+
+#Troubleshooting
+
+to check you aerospike just run
+
+
+
+docker exec -it mydb1 mysql
+show tables;
+
+
+  
 
 

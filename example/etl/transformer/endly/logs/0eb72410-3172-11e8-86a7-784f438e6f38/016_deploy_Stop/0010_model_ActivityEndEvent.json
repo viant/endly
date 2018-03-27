@@ -1,0 +1,36 @@
+{
+	"Response": {
+		"Tag": "Stop",
+		"TagIndex": "",
+		"TagID": "deploy_Stop",
+		"TagDescription": "",
+		"Caller": "deploy",
+		"Task": "",
+		"Service": "process",
+		"Action": "stop",
+		"Description": "stop app",
+		"Error": "",
+		"StartTime": "2018-03-26T20:51:34.315674-07:00",
+		"Ineligible": false,
+		"Request": {
+			"Target": {
+				"URL": "ssh://127.0.0.1/",
+				"Credentials": "localhost",
+				"Cache": "",
+				"CacheExpiryMs": 0
+			},
+			"Pid": 0
+		},
+		"Response": {
+			"Stdout": "Killed: 9"
+		},
+		"ServiceResponse": {
+			"Status": "ok",
+			"Error": "",
+			"Response": {
+				"Stdout": "Killed: 9"
+			},
+			"Err": null
+		}
+	}
+}

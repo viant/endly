@@ -1,0 +1,38 @@
+{
+	"Datastore": "db3",
+	"Recreate": true,
+	"Config": {
+		"DriverName": "mysql",
+		"PoolSize": 0,
+		"MaxPoolSize": 0,
+		"Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+		"SecureDescriptor": "",
+		"Parameters": null,
+		"Credentials": "mysql"
+	},
+	"ConfigURL": "",
+	"Tables": null,
+	"Admin": {
+		"Datastore": "mysql",
+		"Config": {
+			"DriverName": "mysql",
+			"PoolSize": 0,
+			"MaxPoolSize": 0,
+			"Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+			"SecureDescriptor": "",
+			"Parameters": null,
+			"Credentials": "mysql"
+		},
+		"ConfigURL": "",
+		"Tables": null
+	},
+	"Expand": false,
+	"Scripts": [
+		{
+			"URL": "datastore/db3/schema.ddl",
+			"Credentials": "",
+			"Cache": "",
+			"CacheExpiryMs": 0
+		}
+	]
+}

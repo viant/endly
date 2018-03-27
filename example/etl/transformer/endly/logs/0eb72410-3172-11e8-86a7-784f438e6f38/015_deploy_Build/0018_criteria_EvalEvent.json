@@ -1,0 +1,8 @@
+{
+	"Type": "action.When",
+	"Default": true,
+	"Evaluation": true,
+	"Criteria": "$Length($upload) \u003e 0",
+	"ExpandedCriteria": "2 \u003e 0",
+	"Error": ""
+}

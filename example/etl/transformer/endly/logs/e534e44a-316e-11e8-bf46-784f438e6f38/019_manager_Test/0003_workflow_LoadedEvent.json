@@ -1,0 +1,712 @@
+{
+	"Workflow": {
+		"Source": {
+			"URL": "file:///Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/regresion.csv",
+			"Credentials": "",
+			"Cache": "",
+			"CacheExpiryMs": 0
+		},
+		"Data": null,
+		"Name": "regresion",
+		"Description": "Adelphic system test",
+		"Init": null,
+		"Post": null,
+		"Tasks": [
+			{
+				"When": "",
+				"Seq": 0,
+				"Name": "prepare",
+				"Description": "Prepare data for test use cases",
+				"Actions": [
+					{
+						"Service": "dsunit",
+						"Action": "register",
+						"Request": {
+							"Config": {
+								"Credentials": "$mysqlCredential",
+								"Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+								"DriverName": "mysql"
+							},
+							"Datastore": "db3"
+						},
+						"Description": "Register database",
+						"Tag": "Prepare",
+						"TagIndex": "",
+						"TagID": "regresion_Prepare",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "dsunit",
+						"Action": "register",
+						"Request": {
+							"Config": {
+								"Descriptor": "tcp([host]:3000)/[namespace]",
+								"DriverName": "aerospike",
+								"Parameters": {
+									"dateFormat": "yyyy-MM-dd hh:mm:ss",
+									"dbname": "db4",
+									"host": "127.0.0.1",
+									"keyColumnName": "id",
+									"namespace": "db4",
+									"port": "3000"
+								}
+							},
+							"Datastore": "db4"
+						},
+						"Description": "Register database",
+						"Tag": "Prepare",
+						"TagIndex": "",
+						"TagID": "regresion_Prepare",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					}
+				],
+				"Init": null,
+				"Post": null,
+				"TimeSpentMs": 0
+			},
+			{
+				"When": "",
+				"Seq": 0,
+				"Name": "test",
+				"Description": "Defines test requests",
+				"Actions": [
+					{
+						"Service": "dsunit",
+						"Action": "prepare",
+						"Request": {
+							"Datastore": "db3",
+							"Prefix": "prepare_",
+							"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/use_cases/001_copy_aerospike_to_mysql/db3"
+						},
+						"Description": "prepare mysql data",
+						"Tag": "Test",
+						"TagIndex": "001",
+						"TagID": "regresion_Test_use_cases001_copy_aerospike_to_mysql",
+						"TagDescription": "Copy user table from aerospike to mysql",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "dsunit",
+						"Action": "prepare",
+						"Request": {
+							"Datastore": "db4",
+							"Prefix": "prepare_",
+							"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/use_cases/001_copy_aerospike_to_mysql/db4"
+						},
+						"Description": "prepare aerospike data",
+						"Tag": "Test",
+						"TagIndex": "001",
+						"TagID": "regresion_Test_use_cases001_copy_aerospike_to_mysql",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "rest/runner",
+						"Action": "send",
+						"Request": {
+							"Method": "POST",
+							"Request": {
+								"BatchSize": 8,
+								"Destination": {
+									"Columns": [
+										"id",
+										"email",
+										"dob"
+									],
+									"DsConfig": {
+										"Credentials": "$mysqlCredential",
+										"Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+										"DriverName": "mysql",
+										"Parameters": {
+											"dateFormat": "yyyy-MM-dd hh:mm:ss",
+											"dbname": "db3"
+										}
+									},
+									"PkColumns": [
+										"id"
+									],
+									"Table": "users"
+								},
+								"InsertMode": true,
+								"Source": {
+									"DsConfig": {
+										"Descriptor": "tcp([host]:3000)/[namespace]",
+										"DriverName": "aerospike",
+										"Parameters": {
+											"dateFormat": "yyyy-MM-dd hh:mm:ss",
+											"dbname": "db4",
+											"host": "$targetHost",
+											"keyColumnName": "id",
+											"namespace": "db4",
+											"optimizeLargeScan": "true",
+											"port": "3000"
+										}
+									},
+									"SQL": "SELECT id, email, dob FROM users"
+								},
+								"Transformer": ""
+							},
+							"URL": "http://${targetHost}:8889/api/copy/"
+						},
+						"Description": "send copy request",
+						"Tag": "Test",
+						"TagIndex": "001",
+						"TagID": "regresion_Test_use_cases001_copy_aerospike_to_mysql",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": [
+							{
+								"Name": "restActual",
+								"Value": null,
+								"From": "Response.Status",
+								"When": "",
+								"Else": null,
+								"Persist": false,
+								"Required": false,
+								"Replace": null
+							}
+						],
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "validator",
+						"Action": "assert",
+						"Request": {
+							"Actual": "$restActual",
+							"Expected": "ok",
+							"Name": "REST asset"
+						},
+						"Description": "validate register respose",
+						"Tag": "Test",
+						"TagIndex": "001",
+						"TagID": "regresion_Test_use_cases001_copy_aerospike_to_mysql",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "dsunit",
+						"Action": "expect",
+						"Request": {
+							"Datastore": "db3",
+							"Prefix": "expect_",
+							"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/use_cases/001_copy_aerospike_to_mysql/db3"
+						},
+						"Description": "validate mysql datastore",
+						"Tag": "Test",
+						"TagIndex": "001",
+						"TagID": "regresion_Test_use_cases001_copy_aerospike_to_mysql",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "true:true",
+						"Skip": ""
+					},
+					{
+						"Service": "dsunit",
+						"Action": "expect",
+						"Request": {
+							"Datastore": "db4",
+							"Prefix": "expect_",
+							"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/use_cases/001_copy_aerospike_to_mysql/db4"
+						},
+						"Description": "validate aerospike   datastore",
+						"Tag": "Test",
+						"TagIndex": "001",
+						"TagID": "regresion_Test_use_cases001_copy_aerospike_to_mysql",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "false:true",
+						"Skip": ""
+					},
+					{
+						"Service": "dsunit",
+						"Action": "prepare",
+						"Request": {
+							"Datastore": "db3",
+							"Prefix": "prepare_",
+							"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/use_cases/002_transform_aerospike_to_mysql/db3"
+						},
+						"Description": "prepare mysql data",
+						"Tag": "Test",
+						"TagIndex": "002",
+						"TagID": "regresion_Test_use_cases002_transform_aerospike_to_mysql",
+						"TagDescription": "Transform user table from aerospike to mysql app_usage table with Flatten transformer",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "dsunit",
+						"Action": "prepare",
+						"Request": {
+							"Datastore": "db4",
+							"Prefix": "prepare_",
+							"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/use_cases/002_transform_aerospike_to_mysql/db4"
+						},
+						"Description": "prepare aerospike data",
+						"Tag": "Test",
+						"TagIndex": "002",
+						"TagID": "regresion_Test_use_cases002_transform_aerospike_to_mysql",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "rest/runner",
+						"Action": "send",
+						"Request": {
+							"Method": "POST",
+							"Request": {
+								"BatchSize": 8,
+								"Destination": {
+									"Columns": [
+										"user_id",
+										"visit_date",
+										"visit_count",
+										"visit_app_id"
+									],
+									"DsConfig": {
+										"Credentials": "$mysqlCredential",
+										"Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+										"DriverName": "mysql",
+										"Parameters": {
+											"dateFormat": "yyyy-MM-dd hh:mm:ss",
+											"dbname": "db3"
+										}
+									},
+									"PkColumns": [
+										"user_id",
+										"visit_date",
+										"visit_count",
+										"visit_app_id"
+									],
+									"Table": "user_visits"
+								},
+								"InsertMode": true,
+								"Source": {
+									"DsConfig": {
+										"Descriptor": "tcp([host]:3000)/[namespace]",
+										"DriverName": "aerospike",
+										"Parameters": {
+											"dateFormat": "yyyy-MM-dd hh:mm:ss",
+											"dbname": "db4",
+											"host": "$targetHost",
+											"inheritIdFromPK": "false",
+											"keyColumnName": "id",
+											"namespace": "db4",
+											"optimizeLargeScan": "true",
+											"port": "3000"
+										}
+									},
+									"SQL": "SELECT id AS user_id, visits AS visit FROM users"
+								},
+								"Transformer": "Flatten"
+							},
+							"URL": "http://${targetHost}:8889/api/copy/"
+						},
+						"Description": "send copy request",
+						"Tag": "Test",
+						"TagIndex": "002",
+						"TagID": "regresion_Test_use_cases002_transform_aerospike_to_mysql",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": [
+							{
+								"Name": "restActual",
+								"Value": null,
+								"From": "Response.Status",
+								"When": "",
+								"Else": null,
+								"Persist": false,
+								"Required": false,
+								"Replace": null
+							}
+						],
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "validator",
+						"Action": "assert",
+						"Request": {
+							"Actual": "$restActual",
+							"Expected": "ok",
+							"Name": "REST asset"
+						},
+						"Description": "validate register respose",
+						"Tag": "Test",
+						"TagIndex": "002",
+						"TagID": "regresion_Test_use_cases002_transform_aerospike_to_mysql",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "dsunit",
+						"Action": "expect",
+						"Request": {
+							"Datastore": "db3",
+							"Prefix": "expect_",
+							"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/use_cases/002_transform_aerospike_to_mysql/db3"
+						},
+						"Description": "validate mysql datastore",
+						"Tag": "Test",
+						"TagIndex": "002",
+						"TagID": "regresion_Test_use_cases002_transform_aerospike_to_mysql",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "true:true",
+						"Skip": ""
+					},
+					{
+						"Service": "dsunit",
+						"Action": "expect",
+						"Request": {
+							"Datastore": "db4",
+							"Prefix": "expect_",
+							"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/use_cases/002_transform_aerospike_to_mysql/db4"
+						},
+						"Description": "validate aerospike   datastore",
+						"Tag": "Test",
+						"TagIndex": "002",
+						"TagID": "regresion_Test_use_cases002_transform_aerospike_to_mysql",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "false:true",
+						"Skip": ""
+					},
+					{
+						"Service": "dsunit",
+						"Action": "prepare",
+						"Request": {
+							"Datastore": "db3",
+							"Prefix": "prepare_",
+							"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/use_cases/003_copy_mysql_to_aerospike/db3"
+						},
+						"Description": "prepare mysql data",
+						"Tag": "Test",
+						"TagIndex": "003",
+						"TagID": "regresion_Test_use_cases003_copy_mysql_to_aerospike",
+						"TagDescription": "Copy user table from mysql to aerospike",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "dsunit",
+						"Action": "prepare",
+						"Request": {
+							"Datastore": "db4",
+							"Prefix": "prepare_",
+							"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/use_cases/003_copy_mysql_to_aerospike/db4"
+						},
+						"Description": "prepare aerospike data",
+						"Tag": "Test",
+						"TagIndex": "003",
+						"TagID": "regresion_Test_use_cases003_copy_mysql_to_aerospike",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "rest/runner",
+						"Action": "send",
+						"Request": {
+							"Method": "POST",
+							"Request": {
+								"BatchSize": 8,
+								"Destination": {
+									"Columns": [
+										"id",
+										"email",
+										"dob"
+									],
+									"DsConfig": {
+										"Descriptor": "tcp([host]:3000)/[namespace]",
+										"DriverName": "aerospike",
+										"Parameters": {
+											"dateFormat": "yyyy-MM-dd hh:mm:ss",
+											"dbname": "db4",
+											"host": "$targetHost",
+											"keyColumnName": "id",
+											"namespace": "db4",
+											"port": "3000"
+										}
+									},
+									"PkColumns": [
+										"id"
+									],
+									"Table": "users"
+								},
+								"InsertMode": true,
+								"Source": {
+									"DsConfig": {
+										"Credentials": "$mysqlCredential",
+										"Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+										"DriverName": "mysql",
+										"Parameters": {
+											"dateFormat": "yyyy-MM-dd hh:mm:ss",
+											"dbname": "db3"
+										}
+									},
+									"SQL": "SELECT id,email, dob FROM users",
+									"Table": "users"
+								}
+							},
+							"URL": "http://${targetHost}:8889/api/copy/"
+						},
+						"Description": "send copy request",
+						"Tag": "Test",
+						"TagIndex": "003",
+						"TagID": "regresion_Test_use_cases003_copy_mysql_to_aerospike",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": [
+							{
+								"Name": "restActual",
+								"Value": null,
+								"From": "Response.Status",
+								"When": "",
+								"Else": null,
+								"Persist": false,
+								"Required": false,
+								"Replace": null
+							}
+						],
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "validator",
+						"Action": "assert",
+						"Request": {
+							"Actual": "$restActual",
+							"Expected": "ok",
+							"Name": "REST asset"
+						},
+						"Description": "validate register respose",
+						"Tag": "Test",
+						"TagIndex": "003",
+						"TagID": "regresion_Test_use_cases003_copy_mysql_to_aerospike",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "dsunit",
+						"Action": "expect",
+						"Request": {
+							"Datastore": "db3",
+							"Prefix": "expect_",
+							"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/use_cases/003_copy_mysql_to_aerospike/db3"
+						},
+						"Description": "validate mysql datastore",
+						"Tag": "Test",
+						"TagIndex": "003",
+						"TagID": "regresion_Test_use_cases003_copy_mysql_to_aerospike",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "false:true",
+						"Skip": ""
+					},
+					{
+						"Service": "dsunit",
+						"Action": "expect",
+						"Request": {
+							"Datastore": "db4",
+							"Prefix": "expect_",
+							"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/use_cases/003_copy_mysql_to_aerospike/db4"
+						},
+						"Description": "validate aerospike   datastore",
+						"Tag": "Test",
+						"TagIndex": "003",
+						"TagID": "regresion_Test_use_cases003_copy_mysql_to_aerospike",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "true:true",
+						"Skip": ""
+					}
+				],
+				"Init": null,
+				"Post": null,
+				"TimeSpentMs": 0
+			}
+		],
+		"OnErrorTask": "",
+		"DeferTask": "",
+		"SleepTimeMs": 0
+	}
+}

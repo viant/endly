@@ -1,0 +1,22 @@
+{
+	"Response": {
+		"Tag": "Start",
+		"TagIndex": "",
+		"TagID": "mysql_Start",
+		"TagDescription": "",
+		"Caller": "mysql",
+		"Task": "",
+		"Service": "daemon",
+		"Action": "status",
+		"Description": "check if system mysql service is running",
+		"Error": "",
+		"StartTime": "2018-03-26T20:28:25.631578-07:00",
+		"Ineligible": true,
+		"Request": {
+			"service": "mysql",
+			"target": "$serviceTarget"
+		},
+		"Response": {},
+		"ServiceResponse": null
+	}
+}

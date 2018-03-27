@@ -1,0 +1,311 @@
+{
+	"Response": {
+		"Tag": "Init",
+		"TagIndex": "",
+		"TagID": "manager_Init",
+		"TagDescription": "",
+		"Caller": "manager",
+		"Task": "",
+		"Service": "workflow",
+		"Action": "run",
+		"Description": "deploy app",
+		"Error": "",
+		"StartTime": "2018-03-26T20:28:47.183061-07:00",
+		"Ineligible": false,
+		"Request": {
+			"EnableLogging": false,
+			"LogDirectory": "",
+			"EventFilter": null,
+			"Async": false,
+			"Params": {
+				"app": "reporter",
+				"appTarget": {
+					"Credentials": "localhost",
+					"URL": "ssh://127.0.0.1/"
+				},
+				"buildTarget": {
+					"Credentials": "localhost",
+					"URL": "ssh://127.0.0.1/"
+				},
+				"sdk": "go:1.8",
+				"target": {
+					"Credentials": "localhost",
+					"URL": "ssh://127.0.0.1/"
+				}
+			},
+			"PublishParameters": true,
+			"URL": "",
+			"Source": null,
+			"Name": "",
+			"TagIDs": "",
+			"Tasks": "*",
+			"Pipeline": [
+				{
+					"Key": "build",
+					"Value": [
+						{
+							"Key": "workflow",
+							"Value": "app/build"
+						},
+						{
+							"Key": "origin",
+							"Value": [
+								{
+									"Key": "URL",
+									"Value": "./../"
+								}
+							]
+						},
+						{
+							"Key": "commands",
+							"Value": [
+								"cd /tmp/reporter/build//app",
+								"go get -u .",
+								"go build -o reporter"
+							]
+						},
+						{
+							"Key": "download",
+							"Value": [
+								{
+									"Key": "//tmp/reporter/build//app/reporter",
+									"Value": "/tmp/reporter/release"
+								},
+								{
+									"Key": "//tmp/reporter/build//endly/config/config.json",
+									"Value": "/tmp/reporter/release"
+								}
+							]
+						}
+					]
+				},
+				{
+					"Key": "deploy",
+					"Value": [
+						{
+							"Key": "workflow",
+							"Value": "app/deploy"
+						},
+						{
+							"Key": "init",
+							"Value": [
+								"mkdir -p /opt/reporter",
+								"mkdir -p /opt/reporter/config",
+								"chown -R awitas /opt/reporter"
+							]
+						},
+						{
+							"Key": "upload",
+							"Value": [
+								{
+									"Key": "/tmp/reporter/release/reporter",
+									"Value": "/opt/reporter"
+								},
+								{
+									"Key": "/tmp/reporter/release/config.json",
+									"Value": "/opt/reporter/config/"
+								}
+							]
+						},
+						{
+							"Key": "commands",
+							"Value": [
+								"echo 'deployed'"
+							]
+						}
+					]
+				},
+				{
+					"Key": "stop",
+					"Value": [
+						{
+							"Key": "action",
+							"Value": "process:stop"
+						},
+						{
+							"Key": "input",
+							"Value": "reporter"
+						}
+					]
+				},
+				{
+					"Key": "start",
+					"Value": [
+						{
+							"Key": "action",
+							"Value": "process:start"
+						},
+						{
+							"Key": "directory",
+							"Value": "/opt/reporter"
+						},
+						{
+							"Key": "immuneToHangups",
+							"Value": true
+						},
+						{
+							"Key": "command",
+							"Value": "./reporter"
+						},
+						{
+							"Key": "arguments",
+							"Value": [
+								"-config",
+								"config.json"
+							]
+						}
+					]
+				}
+			],
+			"Pipelines": [
+				{
+					"Name": "build",
+					"Workflow": "app/build",
+					"Action": "",
+					"Params": {
+						"app": "reporter",
+						"appTarget": {
+							"Credentials": "localhost",
+							"URL": "ssh://127.0.0.1/"
+						},
+						"buildTarget": {
+							"Credentials": "localhost",
+							"URL": "ssh://127.0.0.1/"
+						},
+						"commands": [
+							"cd /tmp/reporter/build//app",
+							"go get -u .",
+							"go build -o reporter"
+						],
+						"download": {
+							"//tmp/reporter/build//app/reporter": "/tmp/reporter/release",
+							"//tmp/reporter/build//endly/config/config.json": "/tmp/reporter/release"
+						},
+						"origin": {
+							"URL": "./../"
+						},
+						"sdk": "go:1.8",
+						"target": {
+							"Credentials": "localhost",
+							"URL": "ssh://127.0.0.1/"
+						},
+						"workflow": "app/build"
+					},
+					"Description": "",
+					"Request": null,
+					"Pipelines": null
+				},
+				{
+					"Name": "deploy",
+					"Workflow": "app/deploy",
+					"Action": "",
+					"Params": {
+						"app": "reporter",
+						"appTarget": {
+							"Credentials": "localhost",
+							"URL": "ssh://127.0.0.1/"
+						},
+						"buildTarget": {
+							"Credentials": "localhost",
+							"URL": "ssh://127.0.0.1/"
+						},
+						"commands": [
+							"echo 'deployed'"
+						],
+						"init": [
+							"mkdir -p /opt/reporter",
+							"mkdir -p /opt/reporter/config",
+							"chown -R awitas /opt/reporter"
+						],
+						"sdk": "go:1.8",
+						"target": {
+							"Credentials": "localhost",
+							"URL": "ssh://127.0.0.1/"
+						},
+						"upload": {
+							"/tmp/reporter/release/config.json": "/opt/reporter/config/",
+							"/tmp/reporter/release/reporter": "/opt/reporter"
+						},
+						"workflow": "app/deploy"
+					},
+					"Description": "",
+					"Request": null,
+					"Pipelines": null
+				},
+				{
+					"Name": "stop",
+					"Workflow": "",
+					"Action": "process:stop",
+					"Params": {
+						"action": "process:stop",
+						"app": "reporter",
+						"appTarget": {
+							"Credentials": "localhost",
+							"URL": "ssh://127.0.0.1/"
+						},
+						"buildTarget": {
+							"Credentials": "localhost",
+							"URL": "ssh://127.0.0.1/"
+						},
+						"input": "reporter",
+						"sdk": "go:1.8",
+						"target": {
+							"Credentials": "localhost",
+							"URL": "ssh://127.0.0.1/"
+						}
+					},
+					"Description": "",
+					"Request": null,
+					"Pipelines": null
+				},
+				{
+					"Name": "start",
+					"Workflow": "",
+					"Action": "process:start",
+					"Params": {
+						"action": "process:start",
+						"app": "reporter",
+						"appTarget": {
+							"Credentials": "localhost",
+							"URL": "ssh://127.0.0.1/"
+						},
+						"arguments": [
+							"-config",
+							"config.json"
+						],
+						"buildTarget": {
+							"Credentials": "localhost",
+							"URL": "ssh://127.0.0.1/"
+						},
+						"command": "./reporter",
+						"directory": "/opt/reporter",
+						"immuneToHangups": true,
+						"sdk": "go:1.8",
+						"target": {
+							"Credentials": "localhost",
+							"URL": "ssh://127.0.0.1/"
+						}
+					},
+					"Description": "",
+					"Request": null,
+					"Pipelines": null
+				}
+			],
+			"Init": null,
+			"Post": null
+		},
+		"Response": {
+			"Data": {},
+			"SessionID": ""
+		},
+		"ServiceResponse": {
+			"Status": "ok",
+			"Error": "",
+			"Response": {
+				"Data": {},
+				"SessionID": ""
+			},
+			"Err": null
+		}
+	}
+}

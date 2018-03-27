@@ -1,0 +1,19 @@
+{
+	"Tag": "Check",
+	"TagIndex": "",
+	"TagID": "mysql_Check",
+	"TagDescription": "",
+	"Caller": "mysql",
+	"Task": "",
+	"Service": "workflow",
+	"Action": "goto",
+	"Description": "check if db ready",
+	"Error": "",
+	"StartTime": "2018-03-26T20:28:33.012955-07:00",
+	"Ineligible": false,
+	"Request": {
+		"task": "check"
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

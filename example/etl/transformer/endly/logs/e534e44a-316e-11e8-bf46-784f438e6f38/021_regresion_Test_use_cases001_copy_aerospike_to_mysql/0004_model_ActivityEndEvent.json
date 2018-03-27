@@ -1,0 +1,73 @@
+{
+	"Response": {
+		"Tag": "Test",
+		"TagIndex": "001",
+		"TagID": "regresion_Test_use_cases001_copy_aerospike_to_mysql",
+		"TagDescription": "Copy user table from aerospike to mysql",
+		"Caller": "regresion",
+		"Task": "",
+		"Service": "dsunit",
+		"Action": "prepare",
+		"Description": "prepare mysql data",
+		"Error": "",
+		"StartTime": "2018-03-26T20:28:56.366654-07:00",
+		"Ineligible": false,
+		"Request": {
+			"Expand": false,
+			"URL": "file:///Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/use_cases/001_copy_aerospike_to_mysql/db3",
+			"Credentials": "",
+			"Cache": "",
+			"CacheExpiryMs": 0,
+			"Datastore": "db3",
+			"Datasets": [
+				{
+					"Table": "users",
+					"Records": [
+						{
+							"@indexBy@": [
+								"id"
+							]
+						},
+						{}
+					]
+				}
+			],
+			"Data": null,
+			"Prefix": "prepare_",
+			"Postfix": ""
+		},
+		"Response": {
+			"Expand": false,
+			"Message": "",
+			"Modification": {
+				"users": {
+					"Subject": "users",
+					"Method": "persist",
+					"Deleted": 0,
+					"Modified": 0,
+					"Added": 0
+				}
+			},
+			"Status": "ok"
+		},
+		"ServiceResponse": {
+			"Status": "ok",
+			"Error": "",
+			"Response": {
+				"Status": "ok",
+				"Message": "",
+				"Expand": false,
+				"Modification": {
+					"users": {
+						"Subject": "users",
+						"Method": "persist",
+						"Deleted": 0,
+						"Modified": 0,
+						"Added": 0
+					}
+				}
+			},
+			"Err": null
+		}
+	}
+}

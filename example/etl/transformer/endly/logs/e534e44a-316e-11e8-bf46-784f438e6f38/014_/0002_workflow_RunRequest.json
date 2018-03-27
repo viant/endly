@@ -1,0 +1,41 @@
+{
+	"EnableLogging": false,
+	"LogDirectory": "",
+	"EventFilter": null,
+	"Async": false,
+	"Params": {
+		"app": "reporter",
+		"appTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"buildTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"commands": [
+			"echo 'deployed'"
+		],
+		"init": [
+			"mkdir -p /opt/reporter",
+			"mkdir -p /opt/reporter/config",
+			"chown -R awitas /opt/reporter"
+		],
+		"sdk": "go:1.8",
+		"target": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"upload": {
+			"/tmp/reporter/release/config.json": "/opt/reporter/config/",
+			"/tmp/reporter/release/reporter": "/opt/reporter"
+		},
+		"workflow": "app/deploy"
+	},
+	"PublishParameters": true,
+	"URL": "app/deploy.csv",
+	"Source": null,
+	"Name": "deploy",
+	"TagIDs": "",
+	"Tasks": "*"
+}

@@ -1,0 +1,149 @@
+{
+	"EnableLogging": false,
+	"LogDirectory": "",
+	"EventFilter": null,
+	"Async": false,
+	"Params": {
+		"app": "reporter",
+		"appTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"buildTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"sdk": "go:1.8",
+		"target": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		}
+	},
+	"PublishParameters": true,
+	"URL": "",
+	"Source": null,
+	"Name": "",
+	"TagIDs": "",
+	"Tasks": "*",
+	"Pipeline": [
+		{
+			"Key": "build",
+			"Value": [
+				{
+					"Key": "workflow",
+					"Value": "app/build"
+				},
+				{
+					"Key": "origin",
+					"Value": [
+						{
+							"Key": "URL",
+							"Value": "./../"
+						}
+					]
+				},
+				{
+					"Key": "commands",
+					"Value": [
+						"cd /tmp/reporter/build//app",
+						"go get -u .",
+						"go build -o reporter"
+					]
+				},
+				{
+					"Key": "download",
+					"Value": [
+						{
+							"Key": "//tmp/reporter/build//app/reporter",
+							"Value": "/tmp/reporter/release"
+						},
+						{
+							"Key": "//tmp/reporter/build//endly/config/config.json",
+							"Value": "/tmp/reporter/release"
+						}
+					]
+				}
+			]
+		},
+		{
+			"Key": "deploy",
+			"Value": [
+				{
+					"Key": "workflow",
+					"Value": "app/deploy"
+				},
+				{
+					"Key": "init",
+					"Value": [
+						"mkdir -p /opt/reporter",
+						"mkdir -p /opt/reporter/config",
+						"chown -R awitas /opt/reporter"
+					]
+				},
+				{
+					"Key": "upload",
+					"Value": [
+						{
+							"Key": "/tmp/reporter/release/reporter",
+							"Value": "/opt/reporter"
+						},
+						{
+							"Key": "/tmp/reporter/release/config.json",
+							"Value": "/opt/reporter/config/"
+						}
+					]
+				},
+				{
+					"Key": "commands",
+					"Value": [
+						"echo 'deployed'"
+					]
+				}
+			]
+		},
+		{
+			"Key": "stop",
+			"Value": [
+				{
+					"Key": "action",
+					"Value": "process:stop"
+				},
+				{
+					"Key": "input",
+					"Value": "reporter"
+				}
+			]
+		},
+		{
+			"Key": "start",
+			"Value": [
+				{
+					"Key": "action",
+					"Value": "process:start"
+				},
+				{
+					"Key": "directory",
+					"Value": "/opt/reporter"
+				},
+				{
+					"Key": "immuneToHangups",
+					"Value": true
+				},
+				{
+					"Key": "command",
+					"Value": "./reporter"
+				},
+				{
+					"Key": "arguments",
+					"Value": [
+						"-config",
+						"config.json"
+					]
+				}
+			]
+		}
+	],
+	"Pipelines": null,
+	"Init": null,
+	"Post": null
+}

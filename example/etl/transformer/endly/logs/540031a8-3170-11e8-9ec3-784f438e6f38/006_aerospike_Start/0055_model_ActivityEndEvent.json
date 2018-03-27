@@ -1,0 +1,48 @@
+{
+	"Response": {
+		"Tag": "Start",
+		"TagIndex": "",
+		"TagID": "aerospike_Start",
+		"TagDescription": "",
+		"Caller": "aerospike",
+		"Task": "",
+		"Service": "dsunit",
+		"Action": "register",
+		"Description": "register test db connection",
+		"Error": "",
+		"StartTime": "2018-03-26T20:38:56.714976-07:00",
+		"Ineligible": false,
+		"Request": {
+			"Datastore": "testdb",
+			"Config": {
+				"DriverName": "aerospike",
+				"PoolSize": 0,
+				"MaxPoolSize": 1,
+				"Descriptor": "tcp(127.0.0.1:3000)/test",
+				"SecureDescriptor": "",
+				"Parameters": {
+					"dbname": "testdb",
+					"host": "127.0.0.1",
+					"namespace": "test",
+					"port": 3000
+				},
+				"Credentials": ""
+			},
+			"ConfigURL": "",
+			"Tables": null
+		},
+		"Response": {
+			"Message": "",
+			"Status": "ok"
+		},
+		"ServiceResponse": {
+			"Status": "ok",
+			"Error": "",
+			"Response": {
+				"Status": "ok",
+				"Message": ""
+			},
+			"Err": null
+		}
+	}
+}

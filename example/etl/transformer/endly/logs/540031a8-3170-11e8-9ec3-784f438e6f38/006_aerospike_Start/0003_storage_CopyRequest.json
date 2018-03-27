@@ -1,0 +1,39 @@
+{
+	"Expand": false,
+	"Compress": false,
+	"Replace": null,
+	"Source": {
+		"URL": "ssh://127.0.0.1/",
+		"Credentials": "localhost",
+		"Cache": "",
+		"CacheExpiryMs": 0
+	},
+	"Dest": {
+		"URL": "ssh://127.0.0.1/",
+		"Credentials": "localhost",
+		"Cache": "",
+		"CacheExpiryMs": 0
+	},
+	"Assets": {
+		"config/aerospike.conf": "/tmp/mydb4.conf"
+	},
+	"Transfers": [
+		{
+			"Expand": false,
+			"Compress": false,
+			"Replace": null,
+			"Source": {
+				"URL": "ssh://127.0.0.1/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/config/aerospike.conf",
+				"Credentials": "localhost",
+				"Cache": "",
+				"CacheExpiryMs": 0
+			},
+			"Dest": {
+				"URL": "ssh://127.0.0.1/tmp/mydb4.conf",
+				"Credentials": "localhost",
+				"Cache": "",
+				"CacheExpiryMs": 0
+			}
+		}
+	]
+}

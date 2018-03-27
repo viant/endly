@@ -1,0 +1,5 @@
+{
+	"SessionID": "127.0.0.1:22",
+	"Stdout": "# _/tmp/reporter/build/app\r\n./transformer.go:13: configURI redeclared in this block\r\n\tprevious declaration at ./reporter.go:11\r\n./transformer.go:15: main redeclared in this block\r\n\tprevious declaration at ./reporter.go:14\r\n",
+	"Error": ""
+}

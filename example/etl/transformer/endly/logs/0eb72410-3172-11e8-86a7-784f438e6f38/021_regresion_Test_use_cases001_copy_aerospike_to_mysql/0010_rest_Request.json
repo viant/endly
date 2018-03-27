@@ -1,0 +1,45 @@
+{
+	"URL": "http://127.0.0.1:8889/api/copy/",
+	"Method": "POST",
+	"Request": {
+		"BatchSize": 8,
+		"Destination": {
+			"Columns": [
+				"id",
+				"email",
+				"dob"
+			],
+			"DsConfig": {
+				"Credentials": "mysql",
+				"Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+				"DriverName": "mysql",
+				"Parameters": {
+					"dateFormat": "yyyy-MM-dd hh:mm:ss",
+					"dbname": "db3"
+				}
+			},
+			"PkColumns": [
+				"id"
+			],
+			"Table": "users"
+		},
+		"InsertMode": true,
+		"Source": {
+			"DsConfig": {
+				"Descriptor": "tcp([host]:3000)/[namespace]",
+				"DriverName": "aerospike",
+				"Parameters": {
+					"dateFormat": "yyyy-MM-dd hh:mm:ss",
+					"dbname": "db4",
+					"host": "127.0.0.1",
+					"keyColumnName": "id",
+					"namespace": "db4",
+					"optimizeLargeScan": "true",
+					"port": "3000"
+				}
+			},
+			"SQL": "SELECT id, email, dob FROM users"
+		},
+		"Transformer": ""
+	}
+}

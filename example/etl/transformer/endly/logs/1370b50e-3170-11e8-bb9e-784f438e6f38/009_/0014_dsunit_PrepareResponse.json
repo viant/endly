@@ -1,0 +1,14 @@
+{
+	"Status": "ok",
+	"Message": "",
+	"Expand": false,
+	"Modification": {
+		"apps": {
+			"Subject": "apps",
+			"Method": "persist",
+			"Deleted": 0,
+			"Modified": 0,
+			"Added": 3
+		}
+	}
+}

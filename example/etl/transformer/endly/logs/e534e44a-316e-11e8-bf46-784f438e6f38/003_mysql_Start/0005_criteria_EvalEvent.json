@@ -1,0 +1,8 @@
+{
+	"Type": "action.When",
+	"Default": true,
+	"Evaluation": false,
+	"Criteria": "$serviceStatus:running",
+	"ExpandedCriteria": "$serviceStatus:running",
+	"Error": ""
+}

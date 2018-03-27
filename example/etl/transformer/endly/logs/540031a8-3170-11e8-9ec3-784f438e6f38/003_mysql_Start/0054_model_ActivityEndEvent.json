@@ -1,0 +1,62 @@
+{
+	"Response": {
+		"Tag": "Start",
+		"TagIndex": "",
+		"TagID": "mysql_Start",
+		"TagDescription": "",
+		"Caller": "mysql",
+		"Task": "",
+		"Service": "docker",
+		"Action": "run",
+		"Description": "run mysql mydb3 with custom config",
+		"Error": "",
+		"StartTime": "2018-03-26T20:38:41.271622-07:00",
+		"Ineligible": false,
+		"Request": {
+			"Target": {
+				"URL": "ssh://127.0.0.1/",
+				"Credentials": "localhost",
+				"Cache": "",
+				"CacheExpiryMs": 0
+			},
+			"Name": "mydb3",
+			"Secrets": {
+				"mysql": "mem://github.com/viant/endly/workflow/service/mysql/secret.json"
+			},
+			"Image": "mysql:5.7",
+			"Port": "",
+			"Env": {
+				"MYSQL_ROOT_PASSWORD": "**mysql**"
+			},
+			"Mount": {
+				"/tmp/mydb3.cnf": "/etc/my.cnf"
+			},
+			"Ports": {
+				"3306": "3306"
+			},
+			"Params": null,
+			"Workdir": ""
+		},
+		"Response": {
+			"Command": "docker-entrypoint.s…",
+			"ContainerID": "3a148ca516c6",
+			"Image": "mysql:5.7",
+			"Names": "mydb3",
+			"Port": "0.0.0.0:3306-\u003e3306/tcp",
+			"Status": "up"
+		},
+		"ServiceResponse": {
+			"Status": "ok",
+			"Error": "",
+			"Response": {
+				"ContainerID": "3a148ca516c6",
+				"Image": "mysql:5.7",
+				"Command": "docker-entrypoint.s…",
+				"Status": "up",
+				"Port": "0.0.0.0:3306-\u003e3306/tcp",
+				"Names": "mydb3"
+			},
+			"Err": null
+		}
+	}
+}

@@ -1,0 +1,64 @@
+{
+	"Response": {
+		"Tag": "Start",
+		"TagIndex": "",
+		"TagID": "aerospike_Start",
+		"TagDescription": "",
+		"Caller": "aerospike",
+		"Task": "",
+		"Service": "docker",
+		"Action": "run",
+		"Description": "run aerospike mydb4 with custom config",
+		"Error": "",
+		"StartTime": "2018-03-26T19:46:17.728941-07:00",
+		"Ineligible": false,
+		"Request": {
+			"Target": {
+				"URL": "ssh://127.0.0.1/",
+				"Credentials": "localhost",
+				"Cache": "",
+				"CacheExpiryMs": 0
+			},
+			"Name": "mydb4",
+			"Secrets": null,
+			"Image": "aerospike/aerospike-server:latest",
+			"Port": "",
+			"Env": {},
+			"Mount": {
+				"/tmp/mydb4.conf": "/etc/aerospike/aerospike.conf"
+			},
+			"Ports": {
+				"3000": "3000",
+				"3001": "3001",
+				"3002": "3002",
+				"3004": "3004",
+				"8081": "8081"
+			},
+			"Params": {
+				"--config-file": "/tmp/mydb4.conf"
+			},
+			"Workdir": ""
+		},
+		"Response": {
+			"Command": "/entrypoint.sh",
+			"ContainerID": "332f4f5c3d2d",
+			"Image": "aerospike/aerospike-server:latest",
+			"Names": "mydb4",
+			"Port": "3003/tcp",
+			"Status": "up"
+		},
+		"ServiceResponse": {
+			"Status": "ok",
+			"Error": "",
+			"Response": {
+				"ContainerID": "332f4f5c3d2d",
+				"Image": "aerospike/aerospike-server:latest",
+				"Command": "/entrypoint.sh",
+				"Status": "up",
+				"Port": "3003/tcp",
+				"Names": "mydb4"
+			},
+			"Err": null
+		}
+	}
+}

@@ -1,0 +1,649 @@
+{
+	"Workflow": {
+		"Source": {
+			"URL": "mem://github.com/viant/endly/workflow/service/mysql/mysql.csv",
+			"Credentials": "",
+			"Cache": "",
+			"CacheExpiryMs": 0
+		},
+		"Data": null,
+		"Name": "mysql",
+		"Description": "manages mysql docker service",
+		"Init": [
+			{
+				"Name": "credentials",
+				"Value": null,
+				"From": "params.credentials",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "credentials",
+				"Value": "mem://github.com/viant/endly/workflow/service/mysql/secret.json",
+				"From": "",
+				"When": "$in.params.credentials:/$/",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "name",
+				"Value": null,
+				"From": "params.name",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "name",
+				"Value": "mysql_endly",
+				"From": "",
+				"When": "$in.params.name:/$/",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "target",
+				"Value": null,
+				"From": "params.target",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "target",
+				"Value": {
+					"Credentials": "localhost",
+					"URL": "ssh://127.0.0.1/"
+				},
+				"From": "",
+				"When": "$in.params.target:/$/",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "env",
+				"Value": null,
+				"From": "params.env",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "env",
+				"Value": {},
+				"From": "",
+				"When": "$in.params.env:!/$/ \u0026\u0026 $in.params.env",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "serviceTarget",
+				"Value": null,
+				"From": "params.serviceTarget",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "serviceTarget",
+				"Value": "$target",
+				"From": "",
+				"When": "$in.params.serviceTarget:/$/",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "version",
+				"Value": null,
+				"From": "params.version",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "version",
+				"Value": "latest",
+				"From": "",
+				"When": "$in.params.version:/$/",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "image",
+				"Value": null,
+				"From": "params.image",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "image",
+				"Value": "mysql:$version",
+				"From": "",
+				"When": "$in.params.image:/$/",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "config",
+				"Value": null,
+				"From": "params.config",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "hasConfig",
+				"Value": "1",
+				"From": "",
+				"When": "$out.config:!/$/ \u0026\u0026 $out.config",
+				"Else": "0",
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "serviceConfig",
+				"Value": "/tmp/${name}.cnf",
+				"From": "",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": false,
+				"Replace": null
+			},
+			{
+				"Name": "dump",
+				"Value": "dump.sql",
+				"From": "params.dump",
+				"When": "",
+				"Else": null,
+				"Persist": false,
+				"Required": true,
+				"Replace": null
+			}
+		],
+		"Post": null,
+		"Tasks": [
+			{
+				"When": "",
+				"Seq": 0,
+				"Name": "start",
+				"Description": "start docker mysql service",
+				"Actions": [
+					{
+						"Service": "daemon",
+						"Action": "status",
+						"Request": {
+							"service": "mysql",
+							"target": "$serviceTarget"
+						},
+						"Description": "check if system mysql service is running",
+						"Tag": "Start",
+						"TagIndex": "",
+						"TagID": "mysql_Start",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": [
+							{
+								"Name": "serviceStatus",
+								"Value": null,
+								"From": "State",
+								"When": "",
+								"Else": null,
+								"Persist": false,
+								"Required": false,
+								"Replace": null
+							}
+						],
+						"Async": false,
+						"When": "$params.stopSystemMysql:true",
+						"Skip": ""
+					},
+					{
+						"Service": "daemon",
+						"Action": "stop",
+						"Request": {
+							"service": "mysql",
+							"target": "$serviceTarget"
+						},
+						"Description": "stop mysql system service",
+						"Tag": "Start",
+						"TagIndex": "",
+						"TagID": "mysql_Start",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "$serviceStatus:running",
+						"Skip": ""
+					},
+					{
+						"Service": "storage",
+						"Action": "copy",
+						"Request": {
+							"assets": [
+								{
+									"Key": "$config",
+									"Value": "$serviceConfig"
+								}
+							],
+							"dest": "$serviceTarget",
+							"source": "$target"
+						},
+						"Description": "copy config file to temp location",
+						"Tag": "Start",
+						"TagIndex": "",
+						"TagID": "mysql_Start",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "$hasConfig:1",
+						"Skip": ""
+					},
+					{
+						"Service": "workflow",
+						"Action": "switch",
+						"Request": {
+							"Cases": [
+								{
+									"Action": "run",
+									"Description": "run mysql $name with custom config",
+									"Request": {
+										"env": [
+											{
+												"Key": "MYSQL_ROOT_PASSWORD",
+												"Value": "**mysql**"
+											}
+										],
+										"image": "$image",
+										"mount": [
+											{
+												"Key": "${serviceConfig}",
+												"Value": "/etc/my.cnf"
+											}
+										],
+										"name": "$name",
+										"ports": [
+											{
+												"Key": "3306",
+												"Value": "3306"
+											}
+										],
+										"secrets": [
+											{
+												"Key": "mysql",
+												"Value": "$credentials"
+											}
+										],
+										"target": "$serviceTarget"
+									},
+									"Service": "docker",
+									"Tag": "RunCase",
+									"TagID": "mysql_RunCase",
+									"Value": "1"
+								},
+								{
+									"Action": "run",
+									"Description": "run mysql $name with default config",
+									"Request": {
+										"env": [
+											{
+												"Key": "MYSQL_ROOT_PASSWORD",
+												"Value": "**mysql**"
+											}
+										],
+										"image": "$image",
+										"name": "$name",
+										"ports": [
+											{
+												"Key": "3306",
+												"Value": "3306"
+											}
+										],
+										"secrets": [
+											{
+												"Key": "mysql",
+												"Value": "$credentials"
+											}
+										],
+										"target": "$serviceTarget"
+									},
+									"Service": "docker",
+									"Tag": "RunCase",
+									"TagID": "mysql_RunCase",
+									"Value": "0"
+								}
+							],
+							"SourceKey": "hasConfig"
+						},
+						"Description": "check if custom config has been supplied",
+						"Tag": "Start",
+						"TagIndex": "",
+						"TagID": "mysql_Start",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "dsunit",
+						"Action": "register",
+						"Request": {
+							"config": [
+								{
+									"Key": "descriptor",
+									"Value": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+								},
+								{
+									"Key": "driverName",
+									"Value": "mysql"
+								},
+								{
+									"Key": "credentials",
+									"Value": "$credentials"
+								}
+							],
+							"datastore": "testdb"
+						},
+						"Description": "register test db connection",
+						"Tag": "Start",
+						"TagIndex": "",
+						"TagID": "mysql_Start",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "workflow",
+						"Action": "goto",
+						"Request": {
+							"task": "check"
+						},
+						"Description": "check if db ready",
+						"Tag": "Start",
+						"TagIndex": "",
+						"TagID": "mysql_Start",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					}
+				],
+				"Init": null,
+				"Post": null,
+				"TimeSpentMs": 0
+			},
+			{
+				"When": "",
+				"Seq": 0,
+				"Name": "check",
+				"Description": "check if started",
+				"Actions": [
+					{
+						"Service": "dsunit",
+						"Action": "query",
+						"Request": {
+							"datastore": "testdb",
+							"ignoreError": true,
+							"sql": "SELECT NOW()"
+						},
+						"Description": "run test query",
+						"Tag": "Check",
+						"TagIndex": "",
+						"TagID": "mysql_Check",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": [
+							{
+								"Name": "status",
+								"Value": null,
+								"From": "Message",
+								"When": "",
+								"Else": null,
+								"Persist": false,
+								"Required": false,
+								"Replace": null
+							}
+						],
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					},
+					{
+						"Service": "workflow",
+						"Action": "goto",
+						"Request": {
+							"task": "check"
+						},
+						"Description": "check if db ready",
+						"Tag": "Check",
+						"TagIndex": "",
+						"TagID": "mysql_Check",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 3000,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "$status:/bad connection/",
+						"Skip": ""
+					}
+				],
+				"Init": null,
+				"Post": null,
+				"TimeSpentMs": 0
+			},
+			{
+				"When": "",
+				"Seq": 0,
+				"Name": "stop",
+				"Description": "stop docker mysql",
+				"Actions": [
+					{
+						"Service": "docker",
+						"Action": "stop",
+						"Request": {
+							"name": "$name",
+							"target": "$serviceTarget"
+						},
+						"Description": "Stop docker mysql service",
+						"Tag": "Stop",
+						"TagIndex": "",
+						"TagID": "mysql_Stop",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					}
+				],
+				"Init": null,
+				"Post": null,
+				"TimeSpentMs": 0
+			},
+			{
+				"When": "",
+				"Seq": 0,
+				"Name": "export",
+				"Description": "export mysql schema from docker",
+				"Actions": [
+					{
+						"Service": "docker",
+						"Action": "exec",
+						"Request": {
+							"allocateTerminal": true,
+							"command": "mysqldump  -uroot -p**mysql** --all-databases --routines | grep -v 'Warning' \u003e $dump",
+							"interactive": true,
+							"name": "$name",
+							"secrets": [
+								{
+									"Key": "mysql",
+									"Value": "$credentials"
+								}
+							],
+							"target": "$serviceTarget"
+						},
+						"Description": "Export all databases",
+						"Tag": "Export",
+						"TagIndex": "",
+						"TagID": "mysql_Export",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					}
+				],
+				"Init": null,
+				"Post": null,
+				"TimeSpentMs": 0
+			},
+			{
+				"When": "",
+				"Seq": 0,
+				"Name": "import",
+				"Description": "load mysql dump",
+				"Actions": [
+					{
+						"Service": "docker",
+						"Action": "exec",
+						"Request": {
+							"command": "mysql  -uroot -p**mysql** \u003c $dump",
+							"interactive": true,
+							"name": "$name",
+							"secrets": [
+								{
+									"Key": "mysql",
+									"Value": "$credentials"
+								}
+							],
+							"target": "$serviceTarget"
+						},
+						"Description": "Import mysql dump",
+						"Tag": "Import",
+						"TagIndex": "",
+						"TagID": "mysql_Import",
+						"TagDescription": "",
+						"Extraction": null,
+						"Variables": null,
+						"Repeat": 1,
+						"SleepTimeMs": 0,
+						"Exit": "",
+						"Name": "",
+						"Init": null,
+						"Post": null,
+						"Async": false,
+						"When": "",
+						"Skip": ""
+					}
+				],
+				"Init": null,
+				"Post": null,
+				"TimeSpentMs": 0
+			}
+		],
+		"OnErrorTask": "",
+		"DeferTask": "",
+		"SleepTimeMs": 0
+	}
+}

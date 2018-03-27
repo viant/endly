@@ -1,0 +1,13 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "nohup  ./reporter -config config.json \u0026",
+			"Stdout": "[1] 59370",
+			"Error": ""
+		}
+	],
+	"Output": "[1] 59370",
+	"Data": {},
+	"Error": ""
+}

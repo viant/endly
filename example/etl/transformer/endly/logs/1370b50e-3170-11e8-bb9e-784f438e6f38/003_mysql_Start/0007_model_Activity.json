@@ -1,0 +1,26 @@
+{
+	"Tag": "Start",
+	"TagIndex": "",
+	"TagID": "mysql_Start",
+	"TagDescription": "",
+	"Caller": "mysql",
+	"Task": "",
+	"Service": "storage",
+	"Action": "copy",
+	"Description": "copy config file to temp location",
+	"Error": "",
+	"StartTime": "2018-03-26T20:36:53.125488-07:00",
+	"Ineligible": false,
+	"Request": {
+		"assets": [
+			{
+				"Key": "$config",
+				"Value": "$serviceConfig"
+			}
+		],
+		"dest": "$serviceTarget",
+		"source": "$target"
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

@@ -1,0 +1,90 @@
+{
+	"Tasks": "start",
+	"State": {
+		"AsBool": "func()",
+		"AsFloat": "func()",
+		"AsInt": "func()",
+		"AsMap": "func()",
+		"AsTableRecords": "func()",
+		"Cat": "func()",
+		"Dob": "func()",
+		"FormatTime": "func()",
+		"GOPATH": "/Projects/go/workspace/",
+		"HasResource": "func()",
+		"Hostname": "func()",
+		"Length": "func()",
+		"LoadNeatly": "func()",
+		"Markdown": "func()",
+		"Md5": "func()",
+		"Pwd": "func()",
+		"StoppedImages": [],
+		"URLJoin": "func()",
+		"URLPath": "func()",
+		"Unzip": "func()",
+		"UnzipText": "func()",
+		"WorkingDirectory": "func()",
+		"Zip": "func()",
+		"app": "reporter",
+		"appPath": "/opt/reporter",
+		"appTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"buildPath": "/tmp/reporter/build/",
+		"buildTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"config": "config/my.cnf",
+		"credentials": "mem://github.com/viant/endly/workflow/service/mysql/secret.json",
+		"data": {},
+		"date": "2018-03-26",
+		"dump": "dump.sql",
+		"env": "func()",
+		"hasConfig": "1",
+		"image": "mysql:5.7",
+		"mysqlCredential": "mysql",
+		"mysqlVersion": "5.7",
+		"name": "mydb3",
+		"origin": {
+			"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer"
+		},
+		"os": {
+			"user": "awitas"
+		},
+		"ownerURL": "mem://github.com/viant/endly/workflow/service/mysql/mysql.csv",
+		"params": {
+			"config": "config/my.cnf",
+			"credentials": "$mysqlCredentials",
+			"name": "mydb3",
+			"target": {
+				"Credentials": "localhost",
+				"URL": "ssh://127.0.0.1/"
+			},
+			"version": "5.7",
+			"workflow": "service/mysql:start"
+		},
+		"rand": 4313670206620678026,
+		"releasePath": "/tmp/reporter/release",
+		"sdk": "go:1.8",
+		"serviceConfig": "/tmp/mydb3.cnf",
+		"serviceHost": "127.0.0.1",
+		"serviceTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"target": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"targetHost": "127.0.0.1",
+		"tasks": "start",
+		"time": "2018-03-26 08:36:46",
+		"timestamp": "func()",
+		"tmpDir": "func()",
+		"ts": "201803260836000",
+		"uuid": "func()",
+		"version": "5.7",
+		"workflow": "service/mysql:start"
+	}
+}

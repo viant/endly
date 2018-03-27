@@ -1,0 +1,13 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "go version",
+			"Stdout": "bash: go: command not found",
+			"Error": ""
+		}
+	],
+	"Output": "bash: go: command not found",
+	"Data": {},
+	"Error": ""
+}

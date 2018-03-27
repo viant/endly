@@ -1,0 +1,13 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "sudo docker ps",
+			"Stdout": "CONTAINER ID        IMAGE                               COMMAND                CREATED             STATUS              PORTS                                                                                        NAMES\r\n1ec982d71630        aerospike/aerospike-server:latest   \"/entrypoint.sh asd\"   6 minutes ago       Up 6 minutes        0.0.0.0:3000-3002-\u003e3000-3002/tcp, 0.0.0.0:3004-\u003e3004/tcp, 0.0.0.0:8081-\u003e8081/tcp, 3003/tcp   mydb4",
+			"Error": ""
+		}
+	],
+	"Output": "CONTAINER ID        IMAGE                               COMMAND                CREATED             STATUS              PORTS                                                                                        NAMES\r\n1ec982d71630        aerospike/aerospike-server:latest   \"/entrypoint.sh asd\"   6 minutes ago       Up 6 minutes        0.0.0.0:3000-3002-\u003e3000-3002/tcp, 0.0.0.0:3004-\u003e3004/tcp, 0.0.0.0:8081-\u003e8081/tcp, 3003/tcp   mydb4",
+	"Data": {},
+	"Error": ""
+}

@@ -1,0 +1,22 @@
+{
+	"Tag": "Build",
+	"TagIndex": "",
+	"TagID": "deploy_Build",
+	"TagDescription": "",
+	"Caller": "deploy",
+	"Task": "",
+	"Service": "exec",
+	"Action": "run",
+	"Description": "init process",
+	"Error": "",
+	"StartTime": "2018-03-26T20:28:54.34942-07:00",
+	"Ineligible": false,
+	"Request": {
+		"commands": "$init",
+		"superUser": true,
+		"target": "$appTarget",
+		"timeoutMs": 40000
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

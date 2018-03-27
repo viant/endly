@@ -1,4 +1,0 @@
-{
-  "Target": "$executionTarget",
-  "Images": $arg0
-}

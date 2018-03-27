@@ -1,0 +1,23 @@
+{
+	"Tag": "Build",
+	"TagIndex": "",
+	"TagID": "deploy_Build",
+	"TagDescription": "",
+	"Caller": "deploy",
+	"Task": "",
+	"Service": "storage",
+	"Action": "copy",
+	"Description": "upload custom assets",
+	"Error": "",
+	"StartTime": "2018-03-26T20:37:20.415098-07:00",
+	"Ineligible": false,
+	"Request": {
+		"assets": "$upload",
+		"dest": "$appTarget",
+		"expand": "$expand",
+		"replace": "$replace",
+		"source": "$target"
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

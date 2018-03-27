@@ -1,0 +1,8 @@
+{
+	"ContainerID": "d56b219baed0",
+	"Image": "mysql:5.7",
+	"Command": "docker-entrypoint.s…",
+	"Status": "up",
+	"Port": "0.0.0.0:3306-\u003e3306/tcp",
+	"Names": "mydb3"
+}

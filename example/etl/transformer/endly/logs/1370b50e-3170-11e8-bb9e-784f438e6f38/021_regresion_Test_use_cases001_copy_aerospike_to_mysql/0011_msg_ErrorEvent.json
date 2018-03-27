@@ -1,0 +1,3 @@
+{
+	"Error": "regresion_Test_use_cases001_copy_aerospike_to_mysql: failed to fetch existing data: due to:\n\tInvalid namespace db4 at dsunit.prepare at workflow.run"
+}

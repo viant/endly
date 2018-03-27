@@ -1,0 +1,36 @@
+{
+	"Response": {
+		"Tag": "Check",
+		"TagIndex": "",
+		"TagID": "aerospike_Check",
+		"TagDescription": "",
+		"Caller": "aerospike",
+		"Task": "",
+		"Service": "dsunit",
+		"Action": "query",
+		"Description": "run test query",
+		"Error": "",
+		"StartTime": "2018-03-26T20:51:23.531745-07:00",
+		"Ineligible": false,
+		"Request": {
+			"Datastore": "testdb",
+			"SQL": "SELECT id FROM dummy",
+			"IgnoreError": true
+		},
+		"Response": {
+			"Message": "Namespace not found",
+			"Records": null,
+			"Status": "error"
+		},
+		"ServiceResponse": {
+			"Status": "ok",
+			"Error": "",
+			"Response": {
+				"Status": "error",
+				"Message": "Namespace not found",
+				"Records": []
+			},
+			"Err": null
+		}
+	}
+}

@@ -1,0 +1,5 @@
+{
+	"Status": "error",
+	"Message": "failed to prepare sql: SELECT NOW() with [] due to:driver: bad connection\n\t",
+	"Records": []
+}

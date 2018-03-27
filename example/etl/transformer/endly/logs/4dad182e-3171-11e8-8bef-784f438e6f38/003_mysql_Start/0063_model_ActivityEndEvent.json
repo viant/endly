@@ -1,0 +1,28 @@
+{
+	"Response": {
+		"Tag": "Start",
+		"TagIndex": "",
+		"TagID": "mysql_Start",
+		"TagDescription": "",
+		"Caller": "mysql",
+		"Task": "",
+		"Service": "workflow",
+		"Action": "goto",
+		"Description": "check if db ready",
+		"Error": "",
+		"StartTime": "2018-03-26T20:45:40.330216-07:00",
+		"Ineligible": false,
+		"Request": {
+			"Task": "check"
+		},
+		"Response": {
+			"value": null
+		},
+		"ServiceResponse": {
+			"Status": "ok",
+			"Error": "",
+			"Response": null,
+			"Err": null
+		}
+	}
+}

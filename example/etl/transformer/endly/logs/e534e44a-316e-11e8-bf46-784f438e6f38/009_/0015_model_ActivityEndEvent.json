@@ -1,0 +1,19 @@
+{
+	"Response": {
+		"Data": {
+			"Expand": false,
+			"Message": "",
+			"Modification": {
+				"apps": {
+					"Subject": "apps",
+					"Method": "persist",
+					"Deleted": 0,
+					"Modified": 0,
+					"Added": 3
+				}
+			},
+			"Status": "ok"
+		},
+		"SessionID": ""
+	}
+}

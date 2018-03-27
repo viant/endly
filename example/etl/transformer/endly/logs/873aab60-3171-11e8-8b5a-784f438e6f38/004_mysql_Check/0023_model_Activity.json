@@ -1,0 +1,21 @@
+{
+	"Tag": "Check",
+	"TagIndex": "",
+	"TagID": "mysql_Check",
+	"TagDescription": "",
+	"Caller": "mysql",
+	"Task": "",
+	"Service": "dsunit",
+	"Action": "query",
+	"Description": "run test query",
+	"Error": "",
+	"StartTime": "2018-03-26T20:47:22.044865-07:00",
+	"Ineligible": false,
+	"Request": {
+		"datastore": "testdb",
+		"ignoreError": true,
+		"sql": "SELECT NOW()"
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

@@ -1,0 +1,50 @@
+{
+	"Response": {
+		"Tag": "Build",
+		"TagIndex": "",
+		"TagID": "build_Build",
+		"TagDescription": "",
+		"Caller": "build",
+		"Task": "",
+		"Service": "sdk",
+		"Action": "set",
+		"Description": "set sdk",
+		"Error": "",
+		"StartTime": "2018-03-26T20:28:47.589364-07:00",
+		"Ineligible": false,
+		"Request": {
+			"Sdk": "go",
+			"Version": "1.8",
+			"Env": null,
+			"Target": {
+				"URL": "ssh://127.0.0.1/tmp/reporter/build/",
+				"Credentials": "localhost",
+				"Cache": "",
+				"CacheExpiryMs": 0
+			}
+		},
+		"Response": {
+			"SdkInfo": {
+				"Build": "",
+				"Home": "/opt/sdk/go",
+				"Sdk": "go",
+				"SessionID": "",
+				"Version": "1.8.5"
+			}
+		},
+		"ServiceResponse": {
+			"Status": "ok",
+			"Error": "",
+			"Response": {
+				"SdkInfo": {
+					"Home": "/opt/sdk/go",
+					"Build": "",
+					"SessionID": "",
+					"Sdk": "go",
+					"Version": "1.8.5"
+				}
+			},
+			"Err": null
+		}
+	}
+}

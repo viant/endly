@@ -1,0 +1,27 @@
+{
+	"Target": {
+		"URL": "ssh://127.0.0.1/",
+		"Credentials": "localhost",
+		"Cache": "",
+		"CacheExpiryMs": 0
+	},
+	"Name": "mydb4",
+	"Secrets": null,
+	"Image": "aerospike/aerospike-server:latest",
+	"Port": "",
+	"Env": {},
+	"Mount": {
+		"/tmp/mydb4.conf": "/etc/aerospike/aerospike.conf"
+	},
+	"Ports": {
+		"3000": "3000",
+		"3001": "3001",
+		"3002": "3002",
+		"3004": "3004",
+		"8081": "8081"
+	},
+	"Params": {
+		"--zconfig-file": "/tmp/mydb4.conf"
+	},
+	"Workdir": ""
+}

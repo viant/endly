@@ -1,0 +1,25 @@
+{
+	"Target": {
+		"URL": "ssh://127.0.0.1/",
+		"Credentials": "localhost",
+		"Cache": "",
+		"CacheExpiryMs": 0
+	},
+	"Name": "mydb3",
+	"Secrets": {
+		"mysql": "mem://github.com/viant/endly/workflow/service/mysql/secret.json"
+	},
+	"Image": "mysql:5.7",
+	"Port": "",
+	"Env": {
+		"MYSQL_ROOT_PASSWORD": "**mysql**"
+	},
+	"Mount": {
+		"/tmp/mydb3.cnf": "/etc/my.cnf"
+	},
+	"Ports": {
+		"3306": "3306"
+	},
+	"Params": null,
+	"Workdir": ""
+}

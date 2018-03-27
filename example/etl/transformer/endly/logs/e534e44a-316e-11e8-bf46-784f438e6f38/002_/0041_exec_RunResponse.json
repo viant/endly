@@ -1,0 +1,13 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "sudo docker stop mydb4",
+			"Stdout": "mydb4",
+			"Error": ""
+		}
+	],
+	"Output": "mydb4",
+	"Data": {},
+	"Error": ""
+}

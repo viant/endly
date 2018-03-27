@@ -1,0 +1,6 @@
+{
+	"StoppedImages": [
+		"mysql:5.7",
+		"aerospike/aerospike-server:latest"
+	]
+}

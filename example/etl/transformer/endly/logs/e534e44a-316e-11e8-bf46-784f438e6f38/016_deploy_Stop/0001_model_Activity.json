@@ -1,0 +1,20 @@
+{
+	"Tag": "Stop",
+	"TagIndex": "",
+	"TagID": "deploy_Stop",
+	"TagDescription": "",
+	"Caller": "deploy",
+	"Task": "",
+	"Service": "process",
+	"Action": "stop",
+	"Description": "stop app",
+	"Error": "",
+	"StartTime": "2018-03-26T20:28:54.724705-07:00",
+	"Ineligible": false,
+	"Request": {
+		"input": "${app}",
+		"target": "$appTarget"
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

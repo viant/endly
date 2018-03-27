@@ -1,0 +1,94 @@
+{
+	"SourceKey": "hasConfig",
+	"Cases": [
+		{
+			"Service": "docker",
+			"Action": "run",
+			"Request": {
+				"env": {},
+				"image": "aerospike/aerospike-server:latest",
+				"mount": [
+					{
+						"Key": "/tmp/mydb4.conf",
+						"Value": "/opt/aerospike/etc/aerospike.conf"
+					}
+				],
+				"name": "mydb4",
+				"params": [
+					{
+						"Key": "--config-file",
+						"Value": "/opt/aerospike/etc/aerospike.conf"
+					}
+				],
+				"ports": [
+					{
+						"Key": "3000",
+						"Value": "3000"
+					},
+					{
+						"Key": "3001",
+						"Value": "3001"
+					},
+					{
+						"Key": "3002",
+						"Value": "3002"
+					},
+					{
+						"Key": "3004",
+						"Value": "3004"
+					},
+					{
+						"Key": "8081",
+						"Value": "8081"
+					}
+				],
+				"target": {
+					"Credentials": "localhost",
+					"URL": "ssh://127.0.0.1/"
+				}
+			},
+			"Description": "run aerospike mydb4 with custom config",
+			"Task": "",
+			"Value": "1"
+		},
+		{
+			"Service": "docker",
+			"Action": "run",
+			"Request": {
+				"env": {},
+				"image": "aerospike/aerospike-server:latest",
+				"name": "mydb4",
+				"ports": [
+					{
+						"Key": "3000",
+						"Value": "3000"
+					},
+					{
+						"Key": "3001",
+						"Value": "3001"
+					},
+					{
+						"Key": "3002",
+						"Value": "3002"
+					},
+					{
+						"Key": "3004",
+						"Value": "3004"
+					},
+					{
+						"Key": "8081",
+						"Value": "8081"
+					}
+				],
+				"target": {
+					"Credentials": "localhost",
+					"URL": "ssh://127.0.0.1/"
+				}
+			},
+			"Description": "run aerospike mydb4 with default config",
+			"Task": "",
+			"Value": "0"
+		}
+	],
+	"Default": null
+}

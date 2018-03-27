@@ -1,0 +1,13 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "echo 'deployed'",
+			"Stdout": "deployed",
+			"Error": ""
+		}
+	],
+	"Output": "deployed",
+	"Data": {},
+	"Error": ""
+}

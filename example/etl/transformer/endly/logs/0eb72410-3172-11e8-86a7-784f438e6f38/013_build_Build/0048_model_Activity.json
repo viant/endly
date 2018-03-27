@@ -1,0 +1,20 @@
+{
+	"Tag": "Build",
+	"TagIndex": "",
+	"TagID": "build_Build",
+	"TagDescription": "",
+	"Caller": "build",
+	"Task": "",
+	"Service": "version/control",
+	"Action": "checkout",
+	"Description": "checkout code",
+	"Error": "",
+	"StartTime": "2018-03-26T20:51:25.730752-07:00",
+	"Ineligible": false,
+	"Request": {
+		"dest": "$buildTarget",
+		"origin": "$origin"
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

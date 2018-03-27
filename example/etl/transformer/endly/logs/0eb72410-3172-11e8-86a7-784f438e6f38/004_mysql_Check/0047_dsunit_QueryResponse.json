@@ -1,0 +1,5 @@
+{
+	"Status": "error",
+	"Message": "failed to prepare sql: SELECT NOW() with [] due to:Error 1049: Unknown database 'testdb'\n\t",
+	"Records": []
+}

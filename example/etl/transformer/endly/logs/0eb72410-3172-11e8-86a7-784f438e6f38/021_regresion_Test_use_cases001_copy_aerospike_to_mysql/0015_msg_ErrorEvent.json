@@ -1,0 +1,3 @@
+{
+	"Error": "regresion_Test_use_cases001_copy_aerospike_to_mysql: failed to receive response Post http://127.0.0.1:8889/api/copy/: dial tcp 127.0.0.1:8889: getsockopt: connection refused at rest/runner.send at workflow.run"
+}

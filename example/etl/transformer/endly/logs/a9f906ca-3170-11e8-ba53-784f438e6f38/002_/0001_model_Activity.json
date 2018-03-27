@@ -1,0 +1,27 @@
+{
+	"Tag": "stop-images",
+	"TagIndex": "",
+	"TagID": "",
+	"TagDescription": "",
+	"Caller": "",
+	"Task": "",
+	"Service": "docker",
+	"Action": "stop-images",
+	"Description": "",
+	"Error": "",
+	"StartTime": "2018-03-26T20:40:59.285512-07:00",
+	"Ineligible": false,
+	"Request": {
+		"action": "docker:stop-images",
+		"images": [
+			"mysql",
+			"aerospike"
+		],
+		"target": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		}
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

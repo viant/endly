@@ -1,47 +1,102 @@
 [
+
   {
-    "Name": "buildHost",
-    "From": "params.buildHost",
-    "Required": true
+    "Name": "sdk",
+    "Required": true,
+    "From": "params.sdk",
+    "Value": "go:1.8"
   },
   {
-    "Name": "buildHostCredential",
-    "From": "params.buildHostCredential",
-    "Required": true
+    "Name": "GOPATH",
+    "Required": true,
+    "From": "params.GOPATH",
+    "Value": "${env.GOPATH}"
   },
+
   {
-    "Name": "buildHostCredential",
-    "From": "params.buildHostCredential",
-    "Required": true
+    "Name": "app",
+    "Required": true,
+    "From": "params.app",
+    "Value": "transformer"
   },
+
   {
-    "Name": "buildDirectory",
-    "From": "params.buildDirectory",
-    "Required": true
+    "Name": "target",
+    "Required": true,
+    "From": "params.target",
+    "Value": {
+      "URL": "ssh://127.0.0.1/",
+      "Credentials": "localhost"
+    }
+  },
+
+  {
+    "Name": "serviceTarget",
+    "Required": true,
+    "From": "params.serviceTarget",
+    "Value": "$target"
   },
 
   {
     "Name": "buildTarget",
+    "Required": true,
+    "From": "params.buildTarget",
+    "Value": "$target"
+  },
+
+  {
+    "Name": "appTarget",
+    "Required": true,
+    "From": "params.appTarget",
+    "Value": "$target"
+  },
+
+  {
+    "Name": "origin",
+    "Required": true,
+    "From": "params.origin",
     "Value": {
-      "URL": "ssh://${buildHost}/${buildDirectory}",
-      "Credentials": "$buildHostCredential"
+      "URL": "$Pwd(./../)"
     }
   },
+
+  {
+    "Name": "serviceHost",
+    "Value": "$Hostname($serviceTarget.URL)"
+  },
+
   {
     "Name": "targetHost",
-    "From": "params.targetHost",
-    "Required": true
+    "Value": "$Hostname($target.URL)"
   },
   {
-    "Name": "targetHostCredential",
-    "From": "params.targetHostCredential",
-    "Required": true
+    "Name": "buildPath",
+    "Required": true,
+    "From": "params.buildPath",
+    "Value": "/tmp/${app}/build/"
   },
   {
-    "Name": "executionTarget",
-    "Value": {
-      "URL": "ssh://${targetHost}/",
-      "Credentials": "$targetHostCredential"
-    }
+    "Name": "releasePath",
+    "Required": true,
+    "From": "params.buildRoot",
+    "Value": "/tmp/${app}/release"
+  },
+  {
+    "Name": "appPath",
+    "Required": true,
+    "From": "params.appPath",
+    "Value": "/opt/${app}"
+  },
+  {
+    "Name": "mysqlVersion",
+    "Required": true,
+    "From": "params.mysqlVersion",
+    "Value": "5.7"
+  },
+  {
+    "Name": "mysqlCredential",
+    "Required": true,
+    "From": "params.mysqlCredential",
+    "Value": "mysql"
   }
 ]

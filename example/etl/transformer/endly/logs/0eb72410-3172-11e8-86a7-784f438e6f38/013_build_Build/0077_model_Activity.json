@@ -1,0 +1,23 @@
+{
+	"Tag": "Build",
+	"TagIndex": "",
+	"TagID": "build_Build",
+	"TagDescription": "",
+	"Caller": "build",
+	"Task": "",
+	"Service": "storage",
+	"Action": "copy",
+	"Description": "download custom assets",
+	"Error": "",
+	"StartTime": "2018-03-26T20:51:33.546908-07:00",
+	"Ineligible": false,
+	"Request": {
+		"assets": "$download",
+		"dest": "$target",
+		"expand": "$expand",
+		"replace": "$replace",
+		"source": "$buildTarget"
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

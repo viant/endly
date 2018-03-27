@@ -1,4 +1,0 @@
-{
-  "Target":"$executionTarget",
-  "Input":"${app}"
-}

@@ -1,0 +1,195 @@
+{
+	"Variables": [
+		{
+			"Name": "sdk",
+			"Value": "go:1.8",
+			"From": "params.sdk",
+			"When": "",
+			"Else": null,
+			"Persist": false,
+			"Required": true,
+			"Replace": null
+		},
+		{
+			"Name": "GOPATH",
+			"Value": "${env.GOPATH}",
+			"From": "params.GOPATH",
+			"When": "",
+			"Else": null,
+			"Persist": false,
+			"Required": true,
+			"Replace": null
+		},
+		{
+			"Name": "app",
+			"Value": "reporter",
+			"From": "params.app",
+			"When": "",
+			"Else": null,
+			"Persist": false,
+			"Required": true,
+			"Replace": null
+		},
+		{
+			"Name": "target",
+			"Value": {
+				"Credentials": "localhost",
+				"URL": "ssh://127.0.0.1/"
+			},
+			"From": "params.target",
+			"When": "",
+			"Else": null,
+			"Persist": false,
+			"Required": true,
+			"Replace": null
+		},
+		{
+			"Name": "serviceTarget",
+			"Value": "$target",
+			"From": "params.serviceTarget",
+			"When": "",
+			"Else": null,
+			"Persist": false,
+			"Required": true,
+			"Replace": null
+		},
+		{
+			"Name": "buildTarget",
+			"Value": "$target",
+			"From": "params.buildTarget",
+			"When": "",
+			"Else": null,
+			"Persist": false,
+			"Required": true,
+			"Replace": null
+		},
+		{
+			"Name": "appTarget",
+			"Value": "$target",
+			"From": "params.appTarget",
+			"When": "",
+			"Else": null,
+			"Persist": false,
+			"Required": true,
+			"Replace": null
+		},
+		{
+			"Name": "origin",
+			"Value": {
+				"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer"
+			},
+			"From": "params.origin",
+			"When": "",
+			"Else": null,
+			"Persist": false,
+			"Required": true,
+			"Replace": null
+		},
+		{
+			"Name": "targetHost",
+			"Value": "$Hostname($target.URL)",
+			"From": "",
+			"When": "",
+			"Else": null,
+			"Persist": false,
+			"Required": false,
+			"Replace": null
+		},
+		{
+			"Name": "buildPath",
+			"Value": "/tmp/${app}/build/",
+			"From": "params.buildPath",
+			"When": "",
+			"Else": null,
+			"Persist": false,
+			"Required": true,
+			"Replace": null
+		},
+		{
+			"Name": "releasePath",
+			"Value": "/tmp/${app}/release",
+			"From": "params.buildRoot",
+			"When": "",
+			"Else": null,
+			"Persist": false,
+			"Required": true,
+			"Replace": null
+		},
+		{
+			"Name": "appPath",
+			"Value": "/opt/${app}",
+			"From": "params.appPath",
+			"When": "",
+			"Else": null,
+			"Persist": false,
+			"Required": true,
+			"Replace": null
+		},
+		{
+			"Name": "mysqlVersion",
+			"Value": "5.7",
+			"From": "params.mysqlVersion",
+			"When": "",
+			"Else": null,
+			"Persist": false,
+			"Required": true,
+			"Replace": null
+		},
+		{
+			"Name": "mysqlCredential",
+			"Value": "mysql",
+			"From": "params.mysqlCredential",
+			"When": "",
+			"Else": null,
+			"Persist": false,
+			"Required": true,
+			"Replace": null
+		}
+	],
+	"In": {
+		"": null,
+		"params.GOPATH": null,
+		"params.app": null,
+		"params.appPath": null,
+		"params.appTarget": null,
+		"params.buildPath": null,
+		"params.buildRoot": null,
+		"params.buildTarget": null,
+		"params.mysqlCredential": null,
+		"params.mysqlVersion": null,
+		"params.origin": null,
+		"params.sdk": null,
+		"params.serviceTarget": null,
+		"params.target": null
+	},
+	"Modified": {
+		"GOPATH": "/Projects/go/workspace/",
+		"app": "reporter",
+		"appPath": "/opt/reporter",
+		"appTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"buildPath": "/tmp/reporter/build/",
+		"buildTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"mysqlCredential": "mysql",
+		"mysqlVersion": "5.7",
+		"origin": {
+			"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer"
+		},
+		"releasePath": "/tmp/reporter/release",
+		"sdk": "go:1.8",
+		"serviceTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"target": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"targetHost": "127.0.0.1"
+	}
+}

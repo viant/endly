@@ -1,0 +1,31 @@
+{
+	"Target": {
+		"URL": "ssh://127.0.0.1/tmp/reporter/build/",
+		"Credentials": "localhost",
+		"Cache": "",
+		"CacheExpiryMs": 0
+	},
+	"SystemPaths": [],
+	"Terminators": [],
+	"Errors": null,
+	"TimeoutMs": 0,
+	"Directory": "",
+	"Env": {},
+	"SuperUser": false,
+	"Secrets": null,
+	"Commands": [
+		{
+			"When": "",
+			"Command": "go version",
+			"Extraction": [
+				{
+					"RegExpr": "go version go([^\\s]+)",
+					"Key": "version",
+					"Reset": false
+				}
+			],
+			"Errors": [],
+			"Success": []
+		}
+	]
+}

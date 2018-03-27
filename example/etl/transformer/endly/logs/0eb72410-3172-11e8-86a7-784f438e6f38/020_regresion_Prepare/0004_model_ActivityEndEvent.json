@@ -1,0 +1,47 @@
+{
+	"Response": {
+		"Tag": "Prepare",
+		"TagIndex": "",
+		"TagID": "regresion_Prepare",
+		"TagDescription": "",
+		"Caller": "regresion",
+		"Task": "",
+		"Service": "dsunit",
+		"Action": "register",
+		"Description": "Register database",
+		"Error": "",
+		"StartTime": "2018-03-26T20:51:35.956648-07:00",
+		"Ineligible": false,
+		"Request": {
+			"Datastore": "db3",
+			"Config": {
+				"DriverName": "mysql",
+				"PoolSize": 0,
+				"MaxPoolSize": 1,
+				"Descriptor": "root:dev@tcp(127.0.0.1:3306)/db3?parseTime=true",
+				"SecureDescriptor": "root:dev@tcp(127.0.0.1:3306)/db3?parseTime=true",
+				"Parameters": {
+					"dbname": "db3",
+					"password": "dev",
+					"username": "root"
+				},
+				"Credentials": "mysql"
+			},
+			"ConfigURL": "",
+			"Tables": null
+		},
+		"Response": {
+			"Message": "",
+			"Status": "ok"
+		},
+		"ServiceResponse": {
+			"Status": "ok",
+			"Error": "",
+			"Response": {
+				"Status": "ok",
+				"Message": ""
+			},
+			"Err": null
+		}
+	}
+}

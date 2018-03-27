@@ -1,0 +1,72 @@
+{
+	"Response": {
+		"Tag": "Test",
+		"TagIndex": "001",
+		"TagID": "regresion_Test_use_cases001_copy_aerospike_to_mysql",
+		"TagDescription": "",
+		"Caller": "regresion",
+		"Task": "",
+		"Service": "rest/runner",
+		"Action": "send",
+		"Description": "send copy request",
+		"Error": "",
+		"StartTime": "2018-03-26T20:51:36.074013-07:00",
+		"Ineligible": false,
+		"Request": {
+			"URL": "http://127.0.0.1:8889/api/copy/",
+			"Method": "POST",
+			"Request": {
+				"BatchSize": 8,
+				"Destination": {
+					"Columns": [
+						"id",
+						"email",
+						"dob"
+					],
+					"DsConfig": {
+						"Credentials": "mysql",
+						"Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+						"DriverName": "mysql",
+						"Parameters": {
+							"dateFormat": "yyyy-MM-dd hh:mm:ss",
+							"dbname": "db3"
+						}
+					},
+					"PkColumns": [
+						"id"
+					],
+					"Table": "users"
+				},
+				"InsertMode": true,
+				"Source": {
+					"DsConfig": {
+						"Descriptor": "tcp([host]:3000)/[namespace]",
+						"DriverName": "aerospike",
+						"Parameters": {
+							"dateFormat": "yyyy-MM-dd hh:mm:ss",
+							"dbname": "db4",
+							"host": "127.0.0.1",
+							"keyColumnName": "id",
+							"namespace": "db4",
+							"optimizeLargeScan": "true",
+							"port": "3000"
+						}
+					},
+					"SQL": "SELECT id, email, dob FROM users"
+				},
+				"Transformer": ""
+			}
+		},
+		"Response": {},
+		"ServiceResponse": {
+			"Status": "error",
+			"Error": "failed to receive response Post http://127.0.0.1:8889/api/copy/: dial tcp 127.0.0.1:8889: getsockopt: connection refused at rest/runner.send",
+			"Response": null,
+			"Err": {
+				"Path": [
+					"rest/runner.send"
+				]
+			}
+		}
+	}
+}

@@ -1,0 +1,111 @@
+{
+	"Tasks": "*",
+	"State": {
+		"AsBool": "func()",
+		"AsFloat": "func()",
+		"AsInt": "func()",
+		"AsMap": "func()",
+		"AsTableRecords": "func()",
+		"Cat": "func()",
+		"Command": "",
+		"Dob": "func()",
+		"Expand": "false",
+		"FormatTime": "func()",
+		"GOPATH": "/Projects/go/workspace/",
+		"HasResource": "func()",
+		"Hostname": "func()",
+		"Info": [],
+		"Length": "func()",
+		"LoadNeatly": "func()",
+		"Markdown": "func()",
+		"Md5": "func()",
+		"Message": "",
+		"Modification": {
+			"users": "\u0026{users persist 0 0 0}"
+		},
+		"Pwd": "func()",
+		"Status": "ok",
+		"Stdout": "Killed: 9",
+		"StoppedImages": [],
+		"Tables": [],
+		"URLJoin": "func()",
+		"URLPath": "func()",
+		"Unzip": "func()",
+		"UnzipText": "func()",
+		"WorkingDirectory": "func()",
+		"Zip": "func()",
+		"app": "reporter",
+		"appPath": "/opt/reporter",
+		"appRootDirectory": "$appRootDirectory",
+		"appTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"buildArgs": "$buildArgs",
+		"buildDirectory": "$buildDirectory",
+		"buildGoal": "$buildGoal",
+		"buildHost": "$buildHost",
+		"buildHostCredential": "$buildHostCredential",
+		"buildPath": "/tmp/reporter/build/",
+		"buildTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"data": {},
+		"date": "2018-03-26",
+		"env": "func()",
+		"executionTarget": "$executionTarget",
+		"goVersion": "$goVersion",
+		"mysqlCredential": "mysql",
+		"mysqlPort": "$mysqlPort",
+		"mysqlVersion": "5.7",
+		"origin": {
+			"URL": "/Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer"
+		},
+		"os": {
+			"user": "awitas"
+		},
+		"ownerURL": "file:///Projects/go/workspace/src/github.com/viant/endly/example/etl/transformer/endly/regresion/regresion.csv",
+		"params": {
+			"GOPATH": "/Projects/go/workspace/",
+			"app": "reporter",
+			"appRootDirectory": "$appRootDirectory",
+			"buildArgs": "$buildArgs",
+			"buildDirectory": "$buildDirectory",
+			"buildGoal": "$buildGoal",
+			"buildHost": "$buildHost",
+			"buildHostCredential": "$buildHostCredential",
+			"buildTarget": {
+				"Credentials": "localhost",
+				"URL": "ssh://127.0.0.1/"
+			},
+			"executionTarget": "$executionTarget",
+			"goVersion": "$goVersion",
+			"mysqlCredential": "mysql",
+			"mysqlPort": "$mysqlPort",
+			"mysqlVersion": "5.7",
+			"targetHost": "127.0.0.1",
+			"targetHostCredential": "$targetHostCredential"
+		},
+		"rand": 4313670206620678026,
+		"releasePath": "/tmp/reporter/release",
+		"sdk": "go:1.8",
+		"serviceHost": "127.0.0.1",
+		"serviceTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"target": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"targetHost": "127.0.0.1",
+		"targetHostCredential": "$targetHostCredential",
+		"tasks": "*",
+		"time": "2018-03-26 08:36:46",
+		"timestamp": "func()",
+		"tmpDir": "func()",
+		"ts": "201803260836000",
+		"uuid": "func()"
+	}
+}

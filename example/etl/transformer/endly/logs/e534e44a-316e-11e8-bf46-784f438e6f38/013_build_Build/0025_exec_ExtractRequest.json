@@ -1,0 +1,33 @@
+{
+	"Target": {
+		"URL": "ssh://127.0.0.1/tmp/reporter/build/",
+		"Credentials": "localhost",
+		"Cache": "",
+		"CacheExpiryMs": 0
+	},
+	"SystemPaths": [
+		"/opt/sdk/go/bin"
+	],
+	"Terminators": null,
+	"Errors": null,
+	"TimeoutMs": 0,
+	"Directory": "",
+	"Env": null,
+	"SuperUser": false,
+	"Secrets": null,
+	"Commands": [
+		{
+			"When": "",
+			"Command": "go version",
+			"Extraction": [
+				{
+					"RegExpr": "go(\\d\\.\\d)",
+					"Key": "Version",
+					"Reset": false
+				}
+			],
+			"Errors": null,
+			"Success": null
+		}
+	]
+}

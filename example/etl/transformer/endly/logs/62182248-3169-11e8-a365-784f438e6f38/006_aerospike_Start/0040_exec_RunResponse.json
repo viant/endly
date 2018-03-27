@@ -1,0 +1,13 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "sudo docker run --name mydb4 -v /tmp/mydb4.conf:/etc/aerospike/aerospike.conf -p 3000:3000 -p 3001:3001 -p 3002:3002 -p 3004:3004 -p 8081:8081  -d aerospike/aerospike-server:latest",
+			"Stdout": "e080bae0ddd23736c5aa5b5d67d531cbdb26bff84823e11e3be8a67d77df9e01",
+			"Error": ""
+		}
+	],
+	"Output": "e080bae0ddd23736c5aa5b5d67d531cbdb26bff84823e11e3be8a67d77df9e01",
+	"Data": {},
+	"Error": ""
+}

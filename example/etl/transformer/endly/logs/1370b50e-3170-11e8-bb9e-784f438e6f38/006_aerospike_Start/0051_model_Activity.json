@@ -1,0 +1,54 @@
+{
+	"Tag": "Start",
+	"TagIndex": "",
+	"TagID": "aerospike_Start",
+	"TagDescription": "",
+	"Caller": "aerospike",
+	"Task": "",
+	"Service": "dsunit",
+	"Action": "register",
+	"Description": "register test db connection",
+	"Error": "",
+	"StartTime": "2018-03-26T20:37:08.069701-07:00",
+	"Ineligible": false,
+	"Request": {
+		"config": [
+			{
+				"Key": "descriptor",
+				"Value": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+			},
+			{
+				"Key": "driverName",
+				"Value": "aerospike"
+			},
+			{
+				"Key": "descriptor",
+				"Value": "tcp(127.0.0.1:3000)/[namespace]"
+			},
+			{
+				"Key": "Parameters",
+				"Value": [
+					{
+						"Key": "dbname",
+						"Value": "mydb"
+					},
+					{
+						"Key": "namespace",
+						"Value": "test"
+					},
+					{
+						"Key": "host",
+						"Value": "127.0.0.1"
+					},
+					{
+						"Key": "port",
+						"Value": 3000
+					}
+				]
+			}
+		],
+		"datastore": "testdb"
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

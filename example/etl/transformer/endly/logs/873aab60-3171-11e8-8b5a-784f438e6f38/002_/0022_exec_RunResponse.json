@@ -1,0 +1,13 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "sudo docker ps",
+			"Stdout": "CONTAINER ID        IMAGE               COMMAND                  CREATED              STATUS              PORTS                    NAMES\r\n1bc0e010af16        mysql:5.7           \"docker-entrypoint.s…\"   About a minute ago   Up About a minute   0.0.0.0:3306-\u003e3306/tcp   mydb3",
+			"Error": ""
+		}
+	],
+	"Output": "CONTAINER ID        IMAGE               COMMAND                  CREATED              STATUS              PORTS                    NAMES\r\n1bc0e010af16        mysql:5.7           \"docker-entrypoint.s…\"   About a minute ago   Up About a minute   0.0.0.0:3306-\u003e3306/tcp   mydb3",
+	"Data": {},
+	"Error": ""
+}

@@ -1,0 +1,88 @@
+{
+	"Response": {
+		"Tag": "Build",
+		"TagIndex": "",
+		"TagID": "deploy_Build",
+		"TagDescription": "",
+		"Caller": "deploy",
+		"Task": "",
+		"Service": "exec",
+		"Action": "run",
+		"Description": "init process",
+		"Error": "",
+		"StartTime": "2018-03-26T20:37:20.172968-07:00",
+		"Ineligible": false,
+		"Request": {
+			"Target": {
+				"URL": "ssh://127.0.0.1/",
+				"Credentials": "localhost",
+				"Cache": "",
+				"CacheExpiryMs": 0
+			},
+			"SystemPaths": null,
+			"Terminators": null,
+			"Errors": [],
+			"TimeoutMs": 40000,
+			"Directory": "",
+			"Env": null,
+			"SuperUser": true,
+			"Secrets": null,
+			"Commands": [
+				"mkdir -p /opt/reporter",
+				"mkdir -p /opt/reporter/config",
+				"chown -R awitas /opt/reporter"
+			]
+		},
+		"Response": {
+			"Cmd": [
+				{
+					"Error": "",
+					"Stdin": "sudo mkdir -p /opt/reporter",
+					"Stdout": ""
+				},
+				{
+					"Error": "",
+					"Stdin": "sudo mkdir -p /opt/reporter/config",
+					"Stdout": ""
+				},
+				{
+					"Error": "",
+					"Stdin": "sudo chown -R awitas /opt/reporter",
+					"Stdout": ""
+				}
+			],
+			"Data": {},
+			"Error": "",
+			"Output": "",
+			"Session": "127.0.0.1:22"
+		},
+		"ServiceResponse": {
+			"Status": "ok",
+			"Error": "",
+			"Response": {
+				"Session": "127.0.0.1:22",
+				"Cmd": [
+					{
+						"Stdin": "sudo mkdir -p /opt/reporter",
+						"Stdout": "",
+						"Error": ""
+					},
+					{
+						"Stdin": "sudo mkdir -p /opt/reporter/config",
+						"Stdout": "",
+						"Error": ""
+					},
+					{
+						"Stdin": "sudo chown -R awitas /opt/reporter",
+						"Stdout": "",
+						"Error": ""
+					}
+				],
+				"Output": "",
+				"Data": {},
+				"Error": ""
+			},
+			"Err": null
+		}
+	}
+}

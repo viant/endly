@@ -1,0 +1,57 @@
+{
+	"Expand": true,
+	"Compress": false,
+	"Replace": {},
+	"Source": {
+		"URL": "ssh://127.0.0.1/tmp/reporter/build/",
+		"Credentials": "localhost",
+		"Cache": "",
+		"CacheExpiryMs": 0
+	},
+	"Dest": {
+		"URL": "ssh://127.0.0.1/",
+		"Credentials": "localhost",
+		"Cache": "",
+		"CacheExpiryMs": 0
+	},
+	"Assets": {
+		"//tmp/reporter/build//app/reporter": "/tmp/reporter/release",
+		"//tmp/reporter/build//endly/config/config.json": "/tmp/reporter/release"
+	},
+	"Transfers": [
+		{
+			"Expand": true,
+			"Compress": false,
+			"Replace": {},
+			"Source": {
+				"URL": "ssh://127.0.0.1/tmp/reporter/build/app/reporter",
+				"Credentials": "localhost",
+				"Cache": "",
+				"CacheExpiryMs": 0
+			},
+			"Dest": {
+				"URL": "ssh://127.0.0.1/tmp/reporter/release",
+				"Credentials": "localhost",
+				"Cache": "",
+				"CacheExpiryMs": 0
+			}
+		},
+		{
+			"Expand": true,
+			"Compress": false,
+			"Replace": {},
+			"Source": {
+				"URL": "ssh://127.0.0.1/tmp/reporter/build/endly/config/config.json",
+				"Credentials": "localhost",
+				"Cache": "",
+				"CacheExpiryMs": 0
+			},
+			"Dest": {
+				"URL": "ssh://127.0.0.1/tmp/reporter/release",
+				"Credentials": "localhost",
+				"Cache": "",
+				"CacheExpiryMs": 0
+			}
+		}
+	]
+}

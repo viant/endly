@@ -1,0 +1,33 @@
+{
+	"EnableLogging": false,
+	"LogDirectory": "",
+	"EventFilter": null,
+	"Async": false,
+	"Params": {
+		"GOPATH": "/Projects/go/workspace/",
+		"app": "reporter",
+		"appRootDirectory": "$appRootDirectory",
+		"buildArgs": "$buildArgs",
+		"buildDirectory": "$buildDirectory",
+		"buildGoal": "$buildGoal",
+		"buildHost": "$buildHost",
+		"buildHostCredential": "$buildHostCredential",
+		"buildTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"executionTarget": "$executionTarget",
+		"goVersion": "$goVersion",
+		"mysqlCredential": "mysql",
+		"mysqlPort": "$mysqlPort",
+		"mysqlVersion": "5.7",
+		"targetHost": "127.0.0.1",
+		"targetHostCredential": "$targetHostCredential"
+	},
+	"PublishParameters": true,
+	"URL": "regresion/regresion.csv",
+	"Source": null,
+	"Name": "regresion",
+	"TagIDs": "",
+	"Tasks": "*"
+}

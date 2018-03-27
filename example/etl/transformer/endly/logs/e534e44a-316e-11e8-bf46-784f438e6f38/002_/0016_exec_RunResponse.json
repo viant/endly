@@ -1,0 +1,18 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "sudo docker ps",
+			"Stdout": "Password:",
+			"Error": ""
+		},
+		{
+			"Stdin": "**sudo**",
+			"Stdout": "CONTAINER ID        IMAGE                               COMMAND                  CREATED              STATUS              PORTS                                                                                        NAMES\r\nd0bf7baf9f48        aerospike/aerospike-server:latest   \"/entrypoint.sh asd\"     About a minute ago   Up About a minute   0.0.0.0:3000-3002-\u003e3000-3002/tcp, 0.0.0.0:3004-\u003e3004/tcp, 0.0.0.0:8081-\u003e8081/tcp, 3003/tcp   mydb4\r\nd56b219baed0        mysql:5.7                           \"docker-entrypoint.s…\"   About a minute ago   Up About a minute   0.0.0.0:3306-\u003e3306/tcp                                                                       mydb3",
+			"Error": ""
+		}
+	],
+	"Output": "Password:\nCONTAINER ID        IMAGE                               COMMAND                  CREATED              STATUS              PORTS                                                                                        NAMES\r\nd0bf7baf9f48        aerospike/aerospike-server:latest   \"/entrypoint.sh asd\"     About a minute ago   Up About a minute   0.0.0.0:3000-3002-\u003e3000-3002/tcp, 0.0.0.0:3004-\u003e3004/tcp, 0.0.0.0:8081-\u003e8081/tcp, 3003/tcp   mydb4\r\nd56b219baed0        mysql:5.7                           \"docker-entrypoint.s…\"   About a minute ago   Up About a minute   0.0.0.0:3306-\u003e3306/tcp                                                                       mydb3",
+	"Data": {},
+	"Error": ""
+}

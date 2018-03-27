@@ -1,0 +1,35 @@
+{
+	"Tag": "db4",
+	"TagIndex": "",
+	"TagID": "",
+	"TagDescription": "",
+	"Caller": "",
+	"Task": "",
+	"Service": "dsunit",
+	"Action": "init",
+	"Description": "",
+	"Error": "",
+	"StartTime": "2018-03-26T20:27:04.575874-07:00",
+	"Ineligible": false,
+	"Request": {
+		"action": "dsunit:init",
+		"config": {
+			"descriptor": "tcp([host]:3000)/[namespace]",
+			"driverName": "aerospike",
+			"parameters": {
+				"dateFormat": "yyyy-MM-dd hh:mm:ss",
+				"dbname": "db4,",
+				"excludedColumns": [
+					"PK"
+				],
+				"host": "127.0.0.1",
+				"namespace": "db4",
+				"port": "3000,"
+			}
+		},
+		"datastore": "db4",
+		"recreate": true
+	},
+	"Response": {},
+	"ServiceResponse": null
+}

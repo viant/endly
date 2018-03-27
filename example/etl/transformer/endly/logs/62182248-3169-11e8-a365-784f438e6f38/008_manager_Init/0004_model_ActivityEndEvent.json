@@ -1,0 +1,214 @@
+{
+	"Response": {
+		"Tag": "Init",
+		"TagIndex": "",
+		"TagID": "manager_Init",
+		"TagDescription": "",
+		"Caller": "manager",
+		"Task": "",
+		"Service": "workflow",
+		"Action": "run",
+		"Description": "initialise data",
+		"Error": "",
+		"StartTime": "2018-03-26T19:49:19.452475-07:00",
+		"Ineligible": false,
+		"Request": {
+			"EnableLogging": false,
+			"LogDirectory": "",
+			"EventFilter": null,
+			"Async": false,
+			"Params": {},
+			"PublishParameters": true,
+			"URL": "",
+			"Source": null,
+			"Name": "",
+			"TagIDs": "",
+			"Tasks": "",
+			"Pipeline": [
+				{
+					"Key": "create-db",
+					"Value": [
+						{
+							"Key": "db3",
+							"Value": [
+								{
+									"Key": "action",
+									"Value": "dsunit:init"
+								},
+								{
+									"Key": "scripts",
+									"Value": [
+										{
+											"URL": "datastore/db3/schema.ddl"
+										}
+									]
+								},
+								{
+									"Key": "datastore",
+									"Value": "db3"
+								},
+								{
+									"Key": "recreate",
+									"Value": true
+								},
+								{
+									"Key": "config",
+									"Value": [
+										{
+											"Key": "driverName",
+											"Value": "mysql"
+										},
+										{
+											"Key": "descriptor",
+											"Value": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+										},
+										{
+											"Key": "credentials",
+											"Value": "mysql"
+										}
+									]
+								},
+								{
+									"Key": "admin",
+									"Value": [
+										{
+											"Key": "datastore",
+											"Value": "mysql"
+										},
+										{
+											"Key": "config",
+											"Value": [
+												{
+													"Key": "driverName",
+													"Value": "mysql"
+												},
+												{
+													"Key": "descriptor",
+													"Value": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+												},
+												{
+													"Key": "credentials",
+													"Value": "mysql"
+												}
+											]
+										}
+									]
+								}
+							]
+						},
+						{
+							"Key": "db4",
+							"Value": [
+								{
+									"Key": "datastore",
+									"Value": "db4"
+								},
+								{
+									"Key": "recreate",
+									"Value": true
+								},
+								{
+									"Key": "config",
+									"Value": [
+										{
+											"Key": "driverName",
+											"Value": "aerospike"
+										},
+										{
+											"Key": "descriptor",
+											"Value": "tcp([host]:3000)/[namespace]"
+										},
+										{
+											"Key": "parameters",
+											"Value": [
+												{
+													"Key": "dbname",
+													"Value": "db4,"
+												},
+												{
+													"Key": "namespace",
+													"Value": "db4"
+												},
+												{
+													"Key": "host",
+													"Value": "$serviceHost"
+												},
+												{
+													"Key": "port",
+													"Value": "3000,"
+												},
+												{
+													"Key": "dateFormat",
+													"Value": "yyyy-MM-dd hh:mm:ss"
+												},
+												{
+													"Key": "excludedColumns",
+													"Value": [
+														"PK"
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				},
+				{
+					"Key": "populate",
+					"Value": [
+						{
+							"Key": "db3",
+							"Value": [
+								{
+									"Key": "action",
+									"Value": "dsunit:prepare"
+								},
+								{
+									"Key": "datastore",
+									"Value": "db3"
+								},
+								{
+									"Key": "URL",
+									"Value": "datastore/db3/dictionary"
+								}
+							]
+						},
+						{
+							"Key": "db4",
+							"Value": [
+								{
+									"Key": "action",
+									"Value": "dsunit:prepare"
+								},
+								{
+									"Key": "datastore",
+									"Value": "db4"
+								},
+								{
+									"Key": "URL",
+									"Value": "datastore/db4/data"
+								}
+							]
+						}
+					]
+				}
+			],
+			"Pipelines": [],
+			"Init": null,
+			"Post": null
+		},
+		"Response": {},
+		"ServiceResponse": {
+			"Status": "error",
+			"Error": "init *workflow.RunRequest failed: unable process map, not key value pairs at workflow.run",
+			"Response": null,
+			"Err": {
+				"Path": [
+					"workflow.run"
+				]
+			}
+		}
+	}
+}

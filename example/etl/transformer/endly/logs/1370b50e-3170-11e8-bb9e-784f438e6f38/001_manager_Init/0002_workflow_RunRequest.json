@@ -1,0 +1,96 @@
+{
+	"EnableLogging": false,
+	"LogDirectory": "",
+	"EventFilter": null,
+	"Async": false,
+	"Params": {
+		"target": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		}
+	},
+	"PublishParameters": true,
+	"URL": "",
+	"Source": null,
+	"Name": "",
+	"TagIDs": "",
+	"Tasks": "*",
+	"Pipeline": [
+		{
+			"Key": "destory",
+			"Value": [
+				{
+					"Key": "stop-images",
+					"Value": [
+						{
+							"Key": "action",
+							"Value": "docker:stop-images"
+						},
+						{
+							"Key": "images",
+							"Value": [
+								"mysql",
+								"aerospike"
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"Key": "init",
+			"Value": [
+				{
+					"Key": "services",
+					"Value": [
+						{
+							"Key": "mysql",
+							"Value": [
+								{
+									"Key": "workflow",
+									"Value": "service/mysql:start"
+								},
+								{
+									"Key": "name",
+									"Value": "mydb3"
+								},
+								{
+									"Key": "version",
+									"Value": "5.7"
+								},
+								{
+									"Key": "credentials",
+									"Value": "$mysqlCredentials"
+								},
+								{
+									"Key": "config",
+									"Value": "config/my.cnf"
+								}
+							]
+						},
+						{
+							"Key": "aerospike",
+							"Value": [
+								{
+									"Key": "workflow",
+									"Value": "service/aerospike:start"
+								},
+								{
+									"Key": "name",
+									"Value": "mydb4"
+								},
+								{
+									"Key": "config",
+									"Value": "config/aerospike.conf"
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"Pipelines": null,
+	"Init": null,
+	"Post": null
+}

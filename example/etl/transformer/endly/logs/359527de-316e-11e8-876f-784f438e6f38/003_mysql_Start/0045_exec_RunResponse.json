@@ -1,0 +1,13 @@
+{
+	"Session": "127.0.0.1:22",
+	"Cmd": [
+		{
+			"Stdin": "sudo docker run --name mydb3 -e MYSQL_ROOT_PASSWORD=**mysql** -v /tmp/mydb3.cnf:/etc/my.cnf -p 3306:3306  -d mysql:5.7",
+			"Stdout": "cffed0f14b52c6d0ccab757967a8245781899824c80fae19a91b4287a95d6f29",
+			"Error": ""
+		}
+	],
+	"Output": "cffed0f14b52c6d0ccab757967a8245781899824c80fae19a91b4287a95d6f29",
+	"Data": {},
+	"Error": ""
+}

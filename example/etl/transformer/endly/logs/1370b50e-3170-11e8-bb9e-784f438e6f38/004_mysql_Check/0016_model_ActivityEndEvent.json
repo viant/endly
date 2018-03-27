@@ -1,0 +1,36 @@
+{
+	"Response": {
+		"Tag": "Check",
+		"TagIndex": "",
+		"TagID": "mysql_Check",
+		"TagDescription": "",
+		"Caller": "mysql",
+		"Task": "",
+		"Service": "dsunit",
+		"Action": "query",
+		"Description": "run test query",
+		"Error": "",
+		"StartTime": "2018-03-26T20:36:57.426591-07:00",
+		"Ineligible": false,
+		"Request": {
+			"Datastore": "testdb",
+			"SQL": "SELECT NOW()",
+			"IgnoreError": true
+		},
+		"Response": {
+			"Message": "failed to prepare sql: SELECT NOW() with [] due to:driver: bad connection\n\t",
+			"Records": null,
+			"Status": "error"
+		},
+		"ServiceResponse": {
+			"Status": "ok",
+			"Error": "",
+			"Response": {
+				"Status": "error",
+				"Message": "failed to prepare sql: SELECT NOW() with [] due to:driver: bad connection\n\t",
+				"Records": []
+			},
+			"Err": null
+		}
+	}
+}
