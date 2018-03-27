@@ -1,29 +1,5 @@
 [
   {
-    "Name": "app",
-    "From": "params.app",
-    "Required": true
-  },
-  {
-    "Name": "targetHost",
-    "From": "params.targetHost",
-    "Required": true
-  },
-  {
-    "Name": "targetHostCredential",
-    "From": "params.targetHostCredential",
-    "Required": true
-  },
-  {
-    "Name": "appRootDirectory",
-    "From": "params.appRootDirectory",
-    "Required": true
-  },
-  {
-    "Name": "appDirectory",
-    "Value": "${appRootDirectory}${app}"
-  },
-  {
     "Name": "eventLogs",
     "Value": []
   }

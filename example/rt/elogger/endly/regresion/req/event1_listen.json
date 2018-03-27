@@ -1,7 +1,6 @@
 {
   "Source": {
-    "URL":"scp://${targetHost}${appDirectory}/logs/",
-    "Credentials":"$targetHostCredential"
+    "URL":"$appLogPath"
   },
   "Types": [
     {

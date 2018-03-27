@@ -1,0 +1,23 @@
+init: "@var/init"
+params:
+  app: $app
+  sdk: $sdk
+  target: $target
+  buildTarget: $buildTarget
+  appTarget: $appTarget
+
+pipeline:
+  init:
+    app:
+      action: run
+      request: "@app"
+      tasks: "*"
+  test:
+    action: run
+    name: regresion
+    tasks: "*"
+  destory:
+    app:
+      action: run
+      request: "@app"
+      tasks: stop
