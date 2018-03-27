@@ -21,12 +21,14 @@
     }
   },
   {
-    "Name": "env",
-    "From": "params.env"
+    "Name": "environment",
+    "From": "params.environment",
+    "Value":{},
+    "Required":true
   },
   {
-    "Name": "env",
-    "When": "$in.params.env:!/$/ && $in.params.env",
+    "Name": "environment",
+    "When": "$in.params.environment:/$/",
     "Value": {}
   },
   {
@@ -38,7 +40,6 @@
     "When": "$in.params.serviceTarget:/$/",
     "Value": "$target"
   },
-
   {
     "Name": "version",
     "From": "params.version"

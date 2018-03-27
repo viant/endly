@@ -2,7 +2,7 @@ target: $serviceTarget
 name: $name
 image: $image
 mount:
-  ${serviceConfig}: /etc/aerospike/aerospike.conf
+  ${serviceConfig}: /opt/aerospike/etc/aerospike.conf
 ports:
   "3000": "3000"
   "3001": "3001"
@@ -10,5 +10,5 @@ ports:
   "3004": "3004"
   "8081": "8081"
 params:
-  "--config-file": $serviceConfig
-env: $env
+  "--config-file": /opt/aerospike/etc/aerospike.conf
+env: $environment
