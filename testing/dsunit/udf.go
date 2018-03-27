@@ -2,9 +2,9 @@ package dsunit
 
 import (
 	"fmt"
+	"github.com/viant/endly/model"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/endly/model"
 )
 
 //AsTableRecords converts data spcified by dataKey into slice of *TableData to create dsunit data as map[string][]map[string]interface{} (table with records)
@@ -57,4 +57,3 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 	}
 	return result, nil
 }
-

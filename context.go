@@ -34,8 +34,8 @@ type Context struct {
 	Source          *url.Resource
 	state           data.Map
 	toolbox.Context
-	cloned          []*Context
-	closed          int32
+	cloned []*Context
+	closed int32
 }
 
 //Publish publishes event to listeners, it updates current run details like activity workflow name etc ...

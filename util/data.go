@@ -1,12 +1,12 @@
 package util
 
 import (
+	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"strings"
 	"github.com/viant/toolbox/url"
-	"fmt"
 	"path"
+	"strings"
 )
 
 func AsDataMap(source interface{}) data.Map {
@@ -57,54 +57,46 @@ func AsExtractable(input interface{}) (string, map[string]interface{}) {
 	return extractableOutput, structuredOutput
 }
 
-
 //DecodeMap load and decode URI into result pointer
 func DecodeMap(ownerURL, URI string, result map[string]interface{}) error {
-	if ! strings.HasPrefix(URI, "@") {
+	if !strings.HasPrefix(URI, "@") {
 		return fmt.Errorf("expected @ prefix but had: %v\n", URI)
 	}
 
 	URI = string(URI[1:])
-	if ownerURL != "" && (! strings.Contains(URI, ":/") && !strings.HasPrefix(URI, "/")) {
+	if ownerURL != "" && (!strings.Contains(URI, ":/") && !strings.HasPrefix(URI, "/")) {
 		URI = toolbox.URLPathJoin(ownerURL, URI)
 	}
 	resource := url.NewResource(URI)
 	if path.Ext(resource.ParsedURL.Path) == "" {
 		for _, ext := range []string{".json", ".yaml"} {
 			resource := url.NewResource(URI + ext)
-			if err := resource.Decode(&result);err == nil {
+			if err := resource.Decode(&result); err == nil {
 				return nil
 			}
 		}
 	}
 	return resource.Decode(&result)
 }
-
 
 //Decode load and decode URI into result pointer
 func Decode(ownerURL, URI string, result interface{}) error {
-	if ! strings.HasPrefix(URI, "@") {
+	if !strings.HasPrefix(URI, "@") {
 		return fmt.Errorf("expected @ prefix but had: %v\n", URI)
 	}
 
 	URI = string(URI[1:])
-	if ownerURL != "" && (! strings.Contains(URI, ":/") && !strings.HasPrefix(URI, "/")) {
+	if ownerURL != "" && (!strings.Contains(URI, ":/") && !strings.HasPrefix(URI, "/")) {
 		URI = toolbox.URLPathJoin(ownerURL, URI)
 	}
 	resource := url.NewResource(URI)
 	if path.Ext(resource.ParsedURL.Path) == "" {
 		for _, ext := range []string{".json", ".yaml"} {
 			resource := url.NewResource(URI + ext)
-			if err := resource.Decode(&result);err == nil {
+			if err := resource.Decode(&result); err == nil {
 				return nil
 			}
 		}
 	}
 	return resource.Decode(&result)
 }
-
-
-
-
-
-

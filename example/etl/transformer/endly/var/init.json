@@ -59,12 +59,10 @@
       "URL": "$Pwd(./../)"
     }
   },
-
   {
     "Name": "serviceHost",
     "Value": "$Hostname($serviceTarget.URL)"
   },
-
   {
     "Name": "targetHost",
     "Value": "$Hostname($target.URL)"

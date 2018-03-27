@@ -1,18 +1,18 @@
 package model
 
 import (
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
 	"sync"
 	"sync/atomic"
-	"github.com/viant/toolbox/url"
-	"github.com/viant/toolbox"
 )
 
 //Process represents a workflow execution process.
 type Process struct {
-	Source     *url.Resource
-	Owner      string
-	Workflow   *Workflow
-	Pipeline   *Pipeline
+	Source   *url.Resource
+	Owner    string
+	Workflow *Workflow
+	Pipeline *Pipeline
 	*Activities
 	Terminated int32
 	Scheduled  *Task
@@ -47,8 +47,8 @@ func (p *Process) Push(activity *Activity) {
 
 //NewProcess creates a new workflow, pipeline process
 func NewProcess(source *url.Resource, workflow *Workflow, pipeline *Pipeline) *Process {
-	var process =  &Process{
-		Source:source,
+	var process = &Process{
+		Source:         source,
 		ExecutionError: &ExecutionError{},
 		Workflow:       workflow,
 		Pipeline:       pipeline,
@@ -81,7 +81,7 @@ func (p *Processes) Pop() *Process {
 		return nil
 	}
 	var result = (p.processes)[len(p.processes)-1]
-	p.processes = p.processes[0: len(p.processes)-1]
+	p.processes = p.processes[0 : len(p.processes)-1]
 	return result
 }
 

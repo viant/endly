@@ -6,8 +6,8 @@ Workflow,,Name,Description,Tasks,Init,
 ,workflow,run,"Build, deploy app", @app,,
 []Tasks,,Name,Description,Actions,,
 ,,test,Run test,%Test,,
-[]Test,Service,Action,Description,Request,run.workflow,run.tasks
-,workflow,run,Run test plan,@req/run|$run,regresion,*
+[]Test,Service,Action,Description,Request,workflow,tasks
+,workflow,run,Run test plan, @req/run,regresion,*
 []Tasks,,Name,Description,Actions,,
 ,,destroy,Destroy system,%Destroy,,
 []Destroy,Service,Action,Description,Request,tasks,

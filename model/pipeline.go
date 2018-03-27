@@ -2,10 +2,10 @@ package model
 
 import (
 	"github.com/viant/endly"
-	"github.com/viant/toolbox"
 	"github.com/viant/endly/util"
-	"strings"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"strings"
 )
 
 //represents pipelines
@@ -21,7 +21,6 @@ type Pipeline struct {
 	Request     interface{}            `description:"external action request location, params are used to request data substitution"`
 	Pipelines   Pipelines              `description:"workflow or action subsequent pipelines"`
 }
-
 
 //Select selects pipelines matching supplied selector
 func (p *Pipelines) Select(selector TasksSelector) Pipelines {
@@ -44,7 +43,6 @@ func (p *Pipelines) Select(selector TasksSelector) Pipelines {
 	return result
 }
 
-
 func (p *Pipeline) initRequestIfNeeded(baseURL string) (err error) {
 	if p.Request == nil {
 		return nil
@@ -65,11 +63,11 @@ func (p *Pipeline) initRequestIfNeeded(baseURL string) (err error) {
 //NewActivity returns pipline activity
 func (p *Pipeline) NewActivity(context *endly.Context) *Activity {
 	var action = &Action{
-		NeatlyTag:      &NeatlyTag{Tag: p.Name},
+		NeatlyTag: &NeatlyTag{Tag: p.Name},
 		ServiceRequest: &ServiceRequest{
-			Description:p.Description,
+			Description: p.Description,
 		},
-		Repeater:       &Repeater{},
+		Repeater: &Repeater{},
 	}
 	if p.Action != "" {
 		selector := ActionSelector(p.Action)
@@ -95,20 +93,17 @@ type MapEntry struct {
 	Value interface{} `description:"preserved order map entry value"`
 }
 
-
-
 //Inline represent sequence of workflow/action to run, map entry represent bridge between YAML, JSON and actual domain model Pipelines abstraction.
 type Inline struct {
-	Pipeline  []*MapEntry `required:"true" description:"key value representing Pipelines in simplified form"`
-	Pipelines Pipelines   `description:"actual Pipelines (derived from Pipeline)"`
-	Init      interface{} `description:"init state expression"`
-	Post      interface{} `description:"post processing update state expression"`
+	Pipeline  []*MapEntry            `required:"true" description:"key value representing Pipelines in simplified form"`
+	Pipelines Pipelines              `description:"actual Pipelines (derived from Pipeline)"`
+	Defaults  map[string]interface{} `description:"default value for pipline parameters"`
+	Init      interface{}            `description:"init state expression"`
+	Post      interface{}            `description:"post processing update state expression"`
 }
 
-
-
 func (p Inline) split(source interface{}) (attributes, params map[string]interface{}, err error) {
-	aMap, err := util.NormalizeMap(source, false);
+	aMap, err := util.NormalizeMap(source, false)
 	attributes = make(map[string]interface{})
 	params = make(map[string]interface{})
 	for k, v := range aMap {
@@ -122,7 +117,7 @@ func (p Inline) split(source interface{}) (attributes, params map[string]interfa
 	return attributes, params, err
 }
 
-func (p *Inline) toPipeline(baseURL string, source interface{}, name string, sharedParams map[string]interface{}) (pipeline *Pipeline, err error) {
+func (p *Inline) toPipeline(baseURL string, source interface{}, name string, defaultParams map[string]interface{}) (pipeline *Pipeline, err error) {
 	attributes, params, err := p.split(source)
 	if err != nil {
 		return nil, err
@@ -133,7 +128,7 @@ func (p *Inline) toPipeline(baseURL string, source interface{}, name string, sha
 	}
 
 	pipeline.Params, _ = util.NormalizeMap(params, true)
-	util.Append(pipeline.Params, sharedParams, false)
+	util.Append(pipeline.Params, defaultParams, false)
 
 	if err = pipeline.initRequestIfNeeded(baseURL); err != nil {
 		return nil, err
@@ -151,7 +146,7 @@ func (p *Inline) toPipeline(baseURL string, source interface{}, name string, sha
 		if !toolbox.IsSlice(value) {
 			return true
 		}
-		nextPipeline, err = p.toPipeline(baseURL, value, toolbox.AsString(key), sharedParams)
+		nextPipeline, err = p.toPipeline(baseURL, value, toolbox.AsString(key), defaultParams)
 		if err != nil {
 			return false
 		}
@@ -170,8 +165,6 @@ func (p *Inline) InitTasks(baseURL string, selector TasksSelector, defaultParams
 	}
 	p.Init, err = GetVariables(baseURL, p.Init)
 	p.Post, err = GetVariables(baseURL, p.Post)
-	defaultParams, _ = util.NormalizeMap(defaultParams, true)
-
 	p.Pipelines = make([]*Pipeline, 0)
 	for _, entry := range p.Pipeline {
 		pipeline, err := p.toPipeline(baseURL, entry.Value, entry.Key, defaultParams)
@@ -180,7 +173,7 @@ func (p *Inline) InitTasks(baseURL string, selector TasksSelector, defaultParams
 		}
 		p.Pipelines = append(p.Pipelines, pipeline)
 	}
-	if ! selector.RunAll() {
+	if !selector.RunAll() {
 		p.Pipelines = p.Pipelines.Select(selector)
 	}
 	return nil

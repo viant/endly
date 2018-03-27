@@ -3,26 +3,26 @@ package model
 import (
 	"bytes"
 	"fmt"
+	"github.com/viant/endly/criteria"
+	"github.com/viant/endly/util"
+	"github.com/viant/neatly"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
-	"github.com/viant/endly/criteria"
-	"github.com/viant/neatly"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/data"
-	"github.com/viant/endly/util"
 )
 
 //Variable represents a variable
 type Variable struct {
-	Name     string                                                                                                                                                                  //name
-	Value    interface{}                                                                                                                                                             //default value
-	From     string                                                                                                                                                                  //context state map key to pull data
-	When     string                                                                                                                                                                  //criteria if specified this variable will be set only if evaluated criteria is true (it can use $in, and $out state variables)
-	Else     interface{}                                                                                                                                                             //if when criteria is not met then else can provide variable value alternative
-	Persist  bool                                                                                                                                                                    //stores in tmp directory to be used as backup if data is not in the cotnext
-	Required bool                                                                                                                                                                    //flag that validates that from returns non empty value or error is generated
+	Name     string            //name
+	Value    interface{}       //default value
+	From     string            //context state map key to pull data
+	When     string            //criteria if specified this variable will be set only if evaluated criteria is true (it can use $in, and $out state variables)
+	Else     interface{}       //if when criteria is not met then else can provide variable value alternative
+	Persist  bool              //stores in tmp directory to be used as backup if data is not in the cotnext
+	Required bool              //flag that validates that from returns non empty value or error is generated
 	Replace  map[string]string `description:"replacements map, if key if specified substitute variable value with corresponding value. This will work only for string replacements"` //replacements map, if key if specified substitute variable value with corresponding value.
 }
 
@@ -54,7 +54,7 @@ func (v *Variable) Load() error {
 		if !toolbox.FileExists(filename) {
 			return nil
 		}
-		encoded, _ = ioutil.ReadFile(filename);
+		encoded, _ = ioutil.ReadFile(filename)
 		err = toolbox.NewJSONDecoderFactory().Create(bytes.NewReader(encoded)).Decode(&v.Value)
 	}
 	return err
@@ -300,7 +300,7 @@ func GetVariables(baseURL string, source interface{}) (Variables, error) {
 		return result, err
 	}
 	var result Variables = make([]*Variable, 0)
-	if ! toolbox.IsSlice(source) {
+	if !toolbox.IsSlice(source) {
 		return nil, fmt.Errorf("invalid varaibles type: %T, expected %T or %T", source, result, []string{})
 	}
 	variables := toolbox.AsSlice(source)

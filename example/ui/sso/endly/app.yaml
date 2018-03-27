@@ -1,0 +1,48 @@
+tasks: $tasks
+defaults:
+  app: $app
+  sdk: $sdk
+  target: $target
+  buildTarget: $buildTarget
+  appTarget: $appTarget
+
+pipeline:
+
+  build:
+    workflow: app/build
+    origin:
+      URL: ./../
+    commands:
+      - cd $buildPath/app
+      - go get -u .
+      - go build -o $app
+      - chmod +x $app
+    download:
+      /$buildPath/app/${app}: $releasePath
+      /$buildPath/endly/config/config.json: $releasePath
+      /$buildPath/static/: $releasePath/static/
+
+  deploy:
+    workflow: app/deploy
+    init:
+      - mkdir -p $appPath
+      - mkdir -p $appPath/config
+      - chown -R ${os.user} $appPath
+    upload:
+      ${releasePath}/${app}: $appPath
+      ${releasePath}/config.json: $appPath
+    commands:
+      - echo 'deployed'
+
+  stop:
+    action: process:stop-all
+    input: ${app}
+
+  start:
+    action: process:start
+    directory: $appPath
+    immuneToHangups: true
+    command: ./${app}
+    arguments:
+      - "-config"
+      - "config.json"

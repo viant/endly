@@ -1,5 +1,5 @@
 tasks: $tasks
-params:
+defaults:
   app: $app
   sdk: $sdk
   target: $target
@@ -34,7 +34,7 @@ pipeline:
       - echo 'deployed'
 
   stop:
-    action: process:stop
+    action: process:stop-all
     input: ${app}
 
   start:

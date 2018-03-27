@@ -6,7 +6,7 @@
     "Parameters": {
       "dbname": "db4",
       "namespace": "db4",
-      "host": "$targetHost",
+      "host": "$serviceHost",
       "port": "3000",
       "dateFormat": "yyyy-MM-dd hh:mm:ss",
       "keyColumnName": "id"

@@ -6,7 +6,6 @@ import (
 	"testing"
 )
 
-
 func Test_NewPipelineRequestFromURL(t *testing.T) {
 
 	var useCases = []struct {

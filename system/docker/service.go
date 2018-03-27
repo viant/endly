@@ -155,7 +155,6 @@ func (s *service) runContainer(context *endly.Context, request *RunRequest) (*Ru
 		args += fmt.Sprintf("-w %v ", context.Expand(request.Workdir))
 	}
 
-
 	var params = ""
 	for k, v := range request.Params {
 		params += fmt.Sprintf("%v %v", k, v)

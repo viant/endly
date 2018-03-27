@@ -5,9 +5,9 @@ import (
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/msg"
 	"github.com/viant/endly/util"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"strings"
-	"github.com/viant/toolbox"
 )
 
 //RunRequest represents workflow runWorkflow request
@@ -19,7 +19,7 @@ type RunRequest struct {
 	Params            map[string]interface{} `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
 	PublishParameters bool                   `default:"true" description:"flag to publish parameters directly into context state"`
 	URL               string                 `description:"workflow URL if workflow is not found in the registry, it is loaded"`
-	Source            *url.Resource           `description:"run request location "`
+	Source            *url.Resource          `description:"run request location "`
 	Name              string                 `required:"true" description:"name defined in workflow document"`
 	TagIDs            string                 `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
 	Tasks             string                 `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequentially"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
@@ -36,17 +36,25 @@ func (r *RunRequest) HasPipeline() bool {
 
 //Init initialises request
 func (r *RunRequest) Init() (err error) {
+
 	r.Params, err = util.NormalizeMap(r.Params, true)
 	if err != nil {
 		return err
 	}
 
 	if r.HasPipeline() {
+		if len(r.Defaults) == 0 {
+			r.Defaults = make(map[string]interface{})
+		}
+
+		if r.Defaults, err = util.NormalizeMap(r.Defaults, true); err != nil {
+			return err
+		}
 		var baseURL = ""
 		if r.Source != nil {
 			baseURL, _ = toolbox.URLSplit(r.Source.URL)
 		}
-		return r.Inline.InitTasks(baseURL, model.TasksSelector(r.Tasks), r.Params)
+		return r.Inline.InitTasks(baseURL, model.TasksSelector(r.Tasks), r.Defaults)
 	}
 	if r.URL == "" {
 		r.URL = r.Name
@@ -126,8 +134,8 @@ type LoadResponse struct {
 // SwitchCase represent matching candidate case
 type SwitchCase struct {
 	*model.ServiceRequest `description:"action to runWorkflow if matched"`
-	Task  string          `description:"task to runWorkflow if matched"`
-	Value interface{}     `required:"true" description:"matching sourceKey value"`
+	Task                  string      `description:"task to runWorkflow if matched"`
+	Value                 interface{} `required:"true" description:"matching sourceKey value"`
 }
 
 // SwitchRequest represent switch action request

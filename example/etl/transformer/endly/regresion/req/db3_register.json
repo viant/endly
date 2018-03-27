@@ -2,7 +2,7 @@
   "Datastore": "db3",
   "Config": {
     "DriverName": "mysql",
-    "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
+    "Descriptor": "[username]:[password]@tcp(${serviceHost}:3306)/[dbname]?parseTime=true",
     "Credentials": "$mysqlCredential"
   }
 }

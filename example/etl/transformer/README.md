@@ -36,7 +36,7 @@ Run the following command:
 
 ```text
 git clone https://github.com/viant/endly
-cd endly/example/ws/reporter/endly/
+cd endly/example/etl/transformer/endly/
 
 
 ## run test with [manager](endly/manager.csv) workflow:

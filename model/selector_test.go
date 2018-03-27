@@ -67,38 +67,37 @@ func TestWorkflowSelector(t *testing.T) {
 
 }
 
-
 func TestActionSelector(t *testing.T) {
 	useCases := []struct {
-		Description      string
-		Selector         ActionSelector
-		ExpectedService      string
-		ExpectedAction     string
+		Description     string
+		Selector        ActionSelector
+		ExpectedService string
+		ExpectedAction  string
 	}{
 
 		{
-			Description:"standard action selector with dot",
-			Selector:ActionSelector("exec.run"),
-			ExpectedService:"exec",
-			ExpectedAction:"run",
+			Description:     "standard action selector with dot",
+			Selector:        ActionSelector("exec.run"),
+			ExpectedService: "exec",
+			ExpectedAction:  "run",
 		},
 		{
-			Description:"standard action selector with colon",
-			Selector:ActionSelector("exec:run"),
-			ExpectedService:"exec",
-			ExpectedAction:"run",
+			Description:     "standard action selector with colon",
+			Selector:        ActionSelector("exec:run"),
+			ExpectedService: "exec",
+			ExpectedAction:  "run",
 		},
 		{
-			Description:"action without service",
-			Selector:ActionSelector("run"),
-			ExpectedService:"workflow",
-			ExpectedAction:"run",
+			Description:     "action without service",
+			Selector:        ActionSelector("run"),
+			ExpectedService: "workflow",
+			ExpectedAction:  "run",
 		},
 		{
-			Description:"empty selector",
-			Selector:ActionSelector(""),
-			ExpectedService:"workflow",
-			ExpectedAction:"",
+			Description:     "empty selector",
+			Selector:        ActionSelector(""),
+			ExpectedService: "workflow",
+			ExpectedAction:  "",
 		},
 	}
 	for _, useCase := range useCases {
@@ -109,36 +108,36 @@ func TestActionSelector(t *testing.T) {
 
 func TestTasksSelector(t *testing.T) {
 	useCases := []struct {
-		Description      string
-		Selector         TasksSelector
-		Expected []string
-		RunAll bool
+		Description string
+		Selector    TasksSelector
+		Expected    []string
+		RunAll      bool
 	}{
 
 		{
-			Description:"empty task selector",
-			Selector:TasksSelector(""),
-			Expected:[]string{},
-			RunAll:true,
+			Description: "empty task selector",
+			Selector:    TasksSelector(""),
+			Expected:    []string{},
+			RunAll:      true,
 		},
 		{
-			Description:"wildcard task selector",
-			Selector:TasksSelector("*"),
-			Expected:[]string{},
-			RunAll:true,
+			Description: "wildcard task selector",
+			Selector:    TasksSelector("*"),
+			Expected:    []string{},
+			RunAll:      true,
 		},
 		{
-			Description:"single  task selector",
-			Selector:TasksSelector("task1" ),
-			Expected:[]string{"task1"},
-			RunAll:false,
+			Description: "single  task selector",
+			Selector:    TasksSelector("task1"),
+			Expected:    []string{"task1"},
+			RunAll:      false,
 		},
 
 		{
-			Description:"single  task selector",
-			Selector:TasksSelector("task1 , task3"),
-			Expected:[]string{"task1", "task3"},
-			RunAll:false,
+			Description: "single  task selector",
+			Selector:    TasksSelector("task1 , task3"),
+			Expected:    []string{"task1", "task3"},
+			RunAll:      false,
 		},
 	}
 	for _, useCase := range useCases {

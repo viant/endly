@@ -1,6 +1,6 @@
 name: service/aerospike
 tasks: $tasks
-params:
+defaults:
   target: $target
   serviceTarget: $serviceTarget
   config: $conifg

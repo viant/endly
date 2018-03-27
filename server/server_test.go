@@ -15,7 +15,7 @@ func TestServer_Start(t *testing.T) {
 	time.Sleep(500 * time.Millisecond)
 	request := &Request{
 		ServiceRequest: &endly.NopRequest{
-			In:&endly.NopRequest{},
+			In: &endly.NopRequest{},
 		},
 	}
 	response := &Response{

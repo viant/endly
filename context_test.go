@@ -23,10 +23,6 @@ func TestNewDefaultState(t *testing.T) {
 
 }
 
-
-
-
-
 func TestContext_Expand_Resource(t *testing.T) {
 	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())

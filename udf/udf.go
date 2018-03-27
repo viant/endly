@@ -68,7 +68,6 @@ func URLPath(source interface{}, state data.Map) (interface{}, error) {
 	return resource.ParsedURL.Path, nil
 }
 
-
 //Hostname return host from URL
 func Hostname(source interface{}, state data.Map) (interface{}, error) {
 	resource := url.NewResource(toolbox.AsString(source))
@@ -130,5 +129,3 @@ func FromProtobufMessage(source interface{}, state data.Map, sourceMessage proto
 	}
 	return nil, fmt.Errorf("expected string but had:%T", source)
 }
-
-
