@@ -1,7 +1,8 @@
-
 **Selenium Runner** 
 
 Selenium runner opens a web session to run a various action on web driver or web elements.
+
+
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
@@ -16,68 +17,29 @@ Selenium runner opens a web session to run a various action on web driver or web
 call-driver and call-element actions's method and parameters are proxied to stand along selenium server via [selenium client](http://github.com/tebeka/selenium)
 
 
-Selenium run request defines sequence of action. In case a selector is not specified, call method is defined on [WebDriver](https://github.com/tebeka/selenium/blob/master/selenium.go#L213), 
-otherwise [WebElement](https://github.com/tebeka/selenium/blob/master/selenium.go#L370) defined by selector.
 
+Selenium run request defines sequence of action/commands. In case a selector is not specified, call method's caller is a [WebDriver](https://github.com/tebeka/selenium/blob/master/selenium.go#L213), 
+otherwise [WebElement](https://github.com/tebeka/selenium/blob/master/selenium.go#L370) defined by selector.
 [Wait](./../../repeatable.go)  provides ability to wait either some time amount or for certain condition to take place, with regexp to extract data
 
-```json
+Run request provide commands expression for easy selenium interaction:
 
-{
-  "SessionID":"$SeleniumSessionID",
-  "Actions": [
-    {
-      "Calls": [
-        {
-          "Method": "Get",
-          "Parameters": [
-            "http://play.golang.org/?simple=1"
-          ]
-        }
-      ]
-    },
-    {
-      "Selector": {
-        "Value": "#code"
-      },
-      "Calls": [
-        {
-          "Method": "Clear"
-        },
-        {
-          "Method": "SendKeys",
-          "Parameters": [
-            "$code"
-          ]
-        }
-      ]
-    },
-    {
-      "Selector": {
-        "Value": "#run"
-      },
-      "Calls": [
-        {
-          "Method": "Click"
-        }
-      ]
-    },
-    {
-      "Selector": {
-        "Value": "#output",
-        "Key": "output"
-      },
-      "Calls": [
-        {
-           "Method": "Text",
-           "Wait": {
-                    "Repeat": 5,
-                    "SleepTimeMs": 100,
-                    "Exit": "$value"
-           }
-        }
-      ]
-    }
-  ]
-}
+Command syntax:
+```text
+  [ RESULT_KEY =  ] [{WEB_ELEMENT_SELECTOR}.]METHOD_NAME(PARAMETERS)
+```  
+ 
+ 
+### Inline pipeline tasks
+
+```bash
+endly -r=test
 ```
+
+[@test.yaml](test/test.yaml)
+ 
+### Workflow 
+
+    
+
+

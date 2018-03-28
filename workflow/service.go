@@ -388,6 +388,7 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 	} else if pipeline.Action != "" {
 		actionSelector := model.ActionSelector(pipeline.Action)
 		var response = runResponse.Data
+
 		var request, err = context.AsRequest(actionSelector.Service(), actionSelector.Action(), request)
 		if err != nil {
 			return err
