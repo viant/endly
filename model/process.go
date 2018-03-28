@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 )
 
-//Process represents a workflow execution process.
+//Process represents a running instance of workflow/pipeline process.
 type Process struct {
 	Source   *url.Resource
 	Owner    string

@@ -82,8 +82,8 @@ func (s *service) registerRoutes() {
 			Description: "send an email",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "email send",
-					Data:    sMTPSendExample,
+					Description: "email send",
+					Data:        sMTPSendExample,
 				},
 			},
 		},

@@ -1,40 +1,97 @@
-### Build workflow
+### Application workflows
 
+Predefined to easy build and deploy application.
 
-Upload assets, install dependencies, build app, download built app 
+- [Application build deployment](#build)
+- [Application build deployment on docker](#deployment)
 
-#### _Pipeing workflows/actions_
+<a name="build"></a>
+## Application build deployment
+
+To enable flexible build and deployment resource delegation the the workflow uses the following resource:
+
+origin - version control origin or some non source control managed location (i.e file system)
+target - host resource where endly runs (usually 127.0.0.1 with localhost credentials)
+buildTarget  - host resource where app is being built
+appTarget - host where app is deployed and runs
+
+If not specified  buildTarget and appTarget use target.
+Target is localhost by default.
+
+Here are the basic step with [build](build/build.csv) and [deploy](deploy/deploy.csv) workflows.
+
+1) Build
+- create $buildPath (default: $buildTarget:/tmp/${app}/build/)
+- checkout code (from source control or local resource ) to build host
+- set SDK
+- upload additional assets to $buildPath (default: $buildTarget:/tmp/${app}/build/)
+- download build commands
+- downloading build app and other assets to $target release path  (default: $target:/tmp/${app}/release/)
+2) Deploy
+- create appPath (default: $appTarget:/opt/${app}/)
+- upload application from $releasePath to $appTarget
+- stop app (if previous instance is still running)
+- start app
+
+Here is example execution of [build](build/build.csv) and [deploy](deploy/deploy.csv) workflows vi inline pipeline tasks:
 
 ```bash
-endly.go -p=run
+endly -r=app.yaml
 ```
 
-@run.yaml
+
+@app.yaml
 ```yaml
-params:
-  app: echo
-  secrets:
-    localhost: localhsot
-  target:
-    URL:ssh://127.0.0.1/
-    Credentials:localhost
-  sdk: go:1.8
+tasks: $tasks
+defaults:
+  app: $app
+  sdk: $sdk
+  target: $target
+  buildTarget: $buildTarget
+  appTarget: $appTarget
+
 pipeline:
 
   build:
-    workflow: docker/build
-    init: 
-      - mkdir -p /$app
+    workflow: app/build
     origin:
-      URL: http://github.com/adrianwit/echo
-    upload:
-      test/pipeline/build.yaml: /$app/
+      URL: ./../
     commands:
-      - cd /$app
-      - go build -o echo
+      - cd $buildPath/app
+      - go get -u .
+      - go build -o $app
+      - chmod +x $app
     download:
-      /$app: /tmp/$app/
-  test:
-    action: workflow:print
-    message: testing app ...
+      /$buildPath/app/${app}: $releasePath
+      /$buildPath/endly/config/config.json: $releasePath
+
+  deploy:
+    workflow: app/deploy
+    init:
+      - mkdir -p $appPath
+      - mkdir -p $appPath/config
+      - chown -R ${os.user} $appPath
+    upload:
+      ${releasePath}/${app}: $appPath
+      ${releasePath}/config.json: $appPath
+    commands:
+      - echo 'deployed'
+
+  stop:
+    action: process:stop-all
+    input: ${app}
+
+  start:
+    action: process:start
+    directory: $appPath
+    immuneToHangups: true
+    command: ./${app}
+    arguments:
+      - "-config"
+      - "config.json"
+
 ```
+
+<a name="deployment"></a>
+## Application build deployment on docker
+

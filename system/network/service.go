@@ -63,8 +63,8 @@ func (s *service) registerRoutes() {
 			Description: "tunnel tcp ports",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "tunnel",
-					Data:    networkTunnelRequestExample,
+					Description: "tunnel",
+					Data:        networkTunnelRequestExample,
 				},
 			},
 		},

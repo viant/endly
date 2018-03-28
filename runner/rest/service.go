@@ -22,8 +22,8 @@ func (s *restService) sendRequest(request *Request) (*Response, error) {
 	return &Response{
 		Response: resetResponse,
 	}, nil
-
 }
+
 
 const restSendExample = `
 {
@@ -58,6 +58,12 @@ func (s *restService) registerRoutes() {
 		Action: "send",
 		RequestInfo: &endly.ActionInfo{
 			Description: "send REST request",
+			Examples: []*endly.UseCase{
+				{
+					Description: "send request",
+					Data:        restSendExample,
+				},
+			},
 		},
 		RequestProvider: func() interface{} {
 			return &Request{}

@@ -135,7 +135,7 @@ func (s *service) runContainer(context *endly.Context, request *RunRequest) (*Ru
 		Target: request.Target,
 		Names:  request.Name,
 	})
-	if err == nil {
+	if err == nil && ! request.Reuse {
 		err = s.resetContainerIfNeeded(context, request, checkResponse)
 	}
 	if err != nil {
@@ -165,6 +165,16 @@ func (s *service) runContainer(context *endly.Context, request *RunRequest) (*Ru
 	}
 
 	if strings.Contains(commandInfo.Stdout(), containerInUse) {
+		if request.Reuse {
+			startResponse, err := s.startContainer(context, &StartRequest{BaseRequest: &BaseRequest{
+				Target: request.Target,
+				Name:   request.Name,
+			}})
+			if err != nil {
+				return nil, err
+			}
+			return  &RunResponse{startResponse.ContainerInfo}, err
+		}
 		_, _ = s.stopContainer(context, &StopRequest{BaseRequest: &BaseRequest{
 			Target: request.Target,
 			Name:   request.Name,
@@ -497,7 +507,6 @@ func (s *service) build(context *endly.Context, request *BuildRequest) (*BuildRe
 	if request.Path == "" {
 		request.Path = "."
 	}
-
 	commandInfo, err := s.executeDockerCommand(nil, context, target, dockerIgnoreErrors, fmt.Sprintf("docker build %v %v", args, request.Path))
 	if err != nil {
 		return nil, err
@@ -515,7 +524,7 @@ func (s *service) tag(context *endly.Context, request *TagRequest) (*TagResponse
 	if err != nil {
 		return nil, err
 	}
-	commandInfo, err := s.executeDockerCommand(nil, context, target, dockerIgnoreErrors, fmt.Sprintf("docker tag %v %v", request.SourceTag, request.TargetTag))
+	commandInfo, err := s.executeDockerCommand(nil, context, target, dockerIgnoreErrors, fmt.Sprintf("docker tag %v %v", request.SourceTag, request.DestTag))
 	if err != nil {
 		return nil, err
 	}
@@ -696,7 +705,7 @@ const (
     "Image": "store_backup",
     "Version": "0.1.2"
   },
-  "TargetTag": {
+  "DestTag": {
     "Username": "",
     "Registry": "us.gcr.io/xxxx",
     "Image": "store_backup",
@@ -780,8 +789,8 @@ func (s *service) registerRoutes() {
 
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "run docker image on the target host",
-					Data:    dockerServiceRunExample,
+					Description: "run docker image on the target host",
+					Data:        dockerServiceRunExample,
 				},
 			},
 		},
@@ -806,8 +815,8 @@ func (s *service) registerRoutes() {
 
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "stop images",
-					Data:    dockerServiceStopImagesExample,
+					Description: "stop images",
+					Data:        dockerServiceStopImagesExample,
 				},
 			},
 		},
@@ -832,8 +841,8 @@ func (s *service) registerRoutes() {
 
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "check image",
-					Data:    dockerServiceImagesExample,
+					Description: "check image",
+					Data:        dockerServiceImagesExample,
 				},
 			},
 		},
@@ -858,8 +867,8 @@ func (s *service) registerRoutes() {
 
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "pull example",
-					Data:    dockerServicePullExample,
+					Description: "pull example",
+					Data:        dockerServicePullExample,
 				},
 			},
 		},
@@ -884,8 +893,8 @@ func (s *service) registerRoutes() {
 
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "build image",
-					Data:    dockerServiceBuildExample,
+					Description: "build image",
+					Data:        dockerServiceBuildExample,
 				},
 			},
 		},
@@ -910,8 +919,8 @@ func (s *service) registerRoutes() {
 
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "tag image",
-					Data:    dockerServiceTagExample,
+					Description: "tag image",
+					Data:        dockerServiceTagExample,
 				},
 			},
 		},
@@ -935,8 +944,8 @@ func (s *service) registerRoutes() {
 			Description: "add credentials for supplied docker repository, required docker 17+ for secure credentials handling",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "login ",
-					Data:    dockerServiceLoginExample,
+					Description: "login ",
+					Data:        dockerServiceLoginExample,
 				},
 			},
 		},
@@ -960,8 +969,8 @@ func (s *service) registerRoutes() {
 			Description: "remove credentials for supplied docker repository",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "logout ",
-					Data:    dockerServiceLogoutExample,
+					Description: "logout ",
+					Data:        dockerServiceLogoutExample,
 				},
 			},
 		},
@@ -985,8 +994,8 @@ func (s *service) registerRoutes() {
 			Description: "push docker image into docker repository",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "push ",
-					Data:    dockerServicePushExample,
+					Description: "push ",
+					Data:        dockerServicePushExample,
 				},
 			},
 		},
@@ -1010,12 +1019,12 @@ func (s *service) registerRoutes() {
 			Description: "run command inside container",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "mysqldump from docker container",
-					Data:    dockerServiceContainerRunMsqlDumpExample,
+					Description: "mysqldump from docker container",
+					Data:        dockerServiceContainerRunMsqlDumpExample,
 				},
 				{
-					UseCase: "mysql import into docker container",
-					Data:    dockerServiceContainerRunMysqlImportExample,
+					Description: "mysql import into docker container",
+					Data:        dockerServiceContainerRunMysqlImportExample,
 				},
 			},
 		},
@@ -1039,8 +1048,8 @@ func (s *service) registerRoutes() {
 			Description: "inspect docker container",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "inspect",
-					Data:    dockerServiceContainerExample,
+					Description: "inspect",
+					Data:        dockerServiceContainerExample,
 				},
 			},
 		},
@@ -1064,8 +1073,8 @@ func (s *service) registerRoutes() {
 			Description: "start container",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "container start",
-					Data:    dockerServiceContainerExample,
+					Description: "container start",
+					Data:        dockerServiceContainerExample,
 				},
 			},
 		},
@@ -1089,8 +1098,8 @@ func (s *service) registerRoutes() {
 			Description: "stop container",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "container stop",
-					Data:    dockerServiceContainerExample,
+					Description: "container stop",
+					Data:        dockerServiceContainerExample,
 				},
 			},
 		},
@@ -1114,8 +1123,8 @@ func (s *service) registerRoutes() {
 			Description: "check containers status",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "container check status",
-					Data:    dockerServiceContainerExample,
+					Description: "container check status",
+					Data:        dockerServiceContainerExample,
 				},
 			},
 		},
@@ -1139,8 +1148,8 @@ func (s *service) registerRoutes() {
 			Description: "remove docker container",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "remove container",
-					Data:    dockerServiceContainerExample,
+					Description: "remove container",
+					Data:        dockerServiceContainerExample,
 				},
 			},
 		},
@@ -1164,8 +1173,8 @@ func (s *service) registerRoutes() {
 			Description: "remove docker container",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "read  container stdout/stderr",
-					Data:    dockerServiceContainerExample,
+					Description: "read  container stdout/stderr",
+					Data:        dockerServiceContainerExample,
 				},
 			},
 		},

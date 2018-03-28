@@ -415,8 +415,8 @@ func (s *service) registerRoutes() {
 			Description: "start selenium server",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "start server",
-					Data:    seleniumServiceStartExample,
+					Description: "start server",
+					Data:        seleniumServiceStartExample,
 				},
 			},
 		},
@@ -440,8 +440,8 @@ func (s *service) registerRoutes() {
 			Description: "stop selenium server",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "stop server",
-					Data:    seleniumServiceStopExample,
+					Description: "stop server",
+					Data:        seleniumServiceStopExample,
 				},
 			},
 		},
@@ -465,8 +465,8 @@ func (s *service) registerRoutes() {
 			Description: "open selenium session",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "open session",
-					Data:    seleniumServiceOpenSessionExample,
+					Description: "open session",
+					Data:        seleniumServiceOpenSessionExample,
 				},
 			},
 		},
@@ -490,8 +490,8 @@ func (s *service) registerRoutes() {
 			Description: "close selenium session",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "close session",
-					Data:    seleniumServiceCloseExample,
+					Description: "close session",
+					Data:        seleniumServiceCloseExample,
 				},
 			},
 		},
@@ -515,8 +515,8 @@ func (s *service) registerRoutes() {
 			Description: "run selenium requests",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "run",
-					Data:    seleniumServiceRunAction,
+					Description: "run",
+					Data:        seleniumServiceRunAction,
 				},
 			},
 		},
@@ -540,8 +540,8 @@ func (s *service) registerRoutes() {
 			Description: "call proxies request to  github.com/tebeka/selenium web driver",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "call driver",
-					Data:    seleniumServiceCallDriverExample,
+					Description: "call driver",
+					Data:        seleniumServiceCallDriverExample,
 				},
 			},
 		},
@@ -565,8 +565,8 @@ func (s *service) registerRoutes() {
 			Description: "find web element and proxy request",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "web element call",
-					Data:    seleniumServiceCallElementExample,
+					Description: "web element call",
+					Data:        seleniumServiceCallElementExample,
 				},
 			},
 		},

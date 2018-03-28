@@ -80,10 +80,10 @@ type Route struct {
 	Handler          func(context *Context, request interface{}) (interface{}, error)
 }
 
-//UseCase represents example use case
+//Description represents example use case
 type UseCase struct {
-	UseCase string
-	Data    string
+	Description string
+	Data        string
 }
 
 //ActionInfo represent an action info

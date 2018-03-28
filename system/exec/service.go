@@ -590,8 +590,8 @@ func (s *execService) registerRoutes() {
 			Description: "open SSH session, usually no need for using this action directly since run,extract actions open session if needed",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "open session",
-					Data:    execServiceOpenExample,
+					Description: "open session",
+					Data:        execServiceOpenExample,
 				},
 			},
 		},
@@ -616,8 +616,8 @@ func (s *execService) registerRoutes() {
 
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "run command",
-					Data:    execServiceRunExample,
+					Description: "run command",
+					Data:        execServiceRunExample,
 				},
 			},
 		},
@@ -642,8 +642,8 @@ func (s *execService) registerRoutes() {
 
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "run and extract command",
-					Data:    execServiceRunAndExtractExample,
+					Description: "run and extract command",
+					Data:        execServiceRunAndExtractExample,
 				},
 			},
 		},
@@ -668,8 +668,8 @@ func (s *execService) registerRoutes() {
 
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "close ",
-					Data:    execServiceManagedCloseExample,
+					Description: "close ",
+					Data:        execServiceManagedCloseExample,
 				},
 			},
 		},

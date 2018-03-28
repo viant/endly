@@ -354,7 +354,7 @@ func (s *Service) runAsyncActions(context *endly.Context, process *model.Process
 	return nil
 }
 
-func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, response *RunResponse, process *model.Process) error {
+func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, response *RunResponse, process *model.Process) (err error) {
 	context.Publish(NewPipelineEvent(pipeline))
 	var state = context.State()
 	if len(pipeline.Pipelines) > 0 {
@@ -365,45 +365,39 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 	}
 
 	activity := pipeline.NewActivity(context)
-	startEvent := s.Begin(context, activity)
+	context.Publish(activity)
 	process.Push(activity)
+	defer process.Pop()
 	runResponse := &RunResponse{
 		Data: make(map[string]interface{}),
 	}
 
-	defer process.Pop()
-	defer s.End(context)(startEvent, model.NewActivityEndEvent(runResponse))
-
-	var request = toolbox.AsMap(state.Expand(activity.Request))
-	if pipeline.Workflow != "" {
-		runRequest := NewRunRequest(pipeline.Workflow, pipeline.Params, true)
-		if err := endly.Run(context, runRequest, runResponse); err != nil {
-			return err
-		}
+	defer func() {
+		context.Publish(model.NewActivityEndEvent(runResponse))
 		if len(runResponse.Data) > 0 {
 			for k, v := range runResponse.Data {
 				state.Put(k, v)
 			}
+			response.Data[pipeline.Name] = runResponse.Data
+		}
+	}()
+
+	var request = toolbox.AsMap(state.Expand(activity.Request))
+	if pipeline.Workflow != "" {
+		runRequest := NewRunRequest(pipeline.Workflow, pipeline.Params, true)
+		if err = endly.Run(context, runRequest, runResponse); err != nil {
+			return err
 		}
 	} else if pipeline.Action != "" {
 		actionSelector := model.ActionSelector(pipeline.Action)
-		var response = runResponse.Data
-
 		var request, err = context.AsRequest(actionSelector.Service(), actionSelector.Action(), request)
-		if err != nil {
+		if err = endly.Run(context, request, &runResponse.Data); err != nil {
 			return err
-		}
-		if err = endly.Run(context, request, &response); err != nil {
-			return err
-		}
-		if len(response) > 0 {
-			for k, v := range response {
-				state.Put(k, v)
-			}
 		}
 	}
-	return nil
+	return err
 }
+
 
 func (s *Service) traversePipelines(pipelines model.Pipelines, context *endly.Context, response *RunResponse, process *model.Process) error {
 	for i := range pipelines {
@@ -426,6 +420,9 @@ func (s *Service) applyVariables(candidates interface{}, process *model.Process,
 }
 
 func (s *Service) pipeline(context *endly.Context, request *RunRequest) (*RunResponse, error) {
+
+
+
 	var response = &RunResponse{
 		Data: make(map[string]interface{}),
 	}
@@ -437,6 +434,7 @@ func (s *Service) pipeline(context *endly.Context, request *RunRequest) (*RunRes
 	process := model.NewProcess(request.Source, nil, request.Pipelines[0])
 	Push(context, process)
 
+
 	s.publishParameters(request, context)
 	var state = context.State()
 	if request.Inline.Init != nil {
@@ -444,6 +442,9 @@ func (s *Service) pipeline(context *endly.Context, request *RunRequest) (*RunRes
 			return nil, err
 		}
 	}
+
+
+
 	response, err := response, s.traversePipelines(request.Inline.Pipelines, context, response, process)
 
 	if request.Inline.Post != nil && response != nil {
@@ -455,6 +456,10 @@ func (s *Service) pipeline(context *endly.Context, request *RunRequest) (*RunRes
 }
 
 func (s *Service) pipelineWorkflowAsyncInNeeded(context *endly.Context, request *RunRequest) (*RunResponse, error) {
+
+
+
+
 	s.enableLoggingIfNeeded(context, request)
 	if request.Async {
 		context.Wait.Add(1)
@@ -800,8 +805,8 @@ func (s *Service) registerRoutes() {
 			Description: "runWorkflow workflow",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "runWorkflow workflow",
-					Data:    workflowServiceRunExample,
+					Description: "runWorkflow workflow",
+					Data:        workflowServiceRunExample,
 				},
 			},
 		},
@@ -863,8 +868,8 @@ func (s *Service) registerRoutes() {
 			Description: "select action or task for matched case value",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "switch case",
-					Data:    workflowServiceSwitchExample,
+					Description: "switch case",
+					Data:        workflowServiceSwitchExample,
 				},
 			},
 		},
@@ -888,8 +893,8 @@ func (s *Service) registerRoutes() {
 			Description: "goto task",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "goto",
-					Data:    workflowServiceGotoExample,
+					Description: "goto",
+					Data:        workflowServiceGotoExample,
 				},
 			},
 		},
@@ -913,8 +918,8 @@ func (s *Service) registerRoutes() {
 			Description: "exit current workflow",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "exit",
-					Data:    workflowServiceExitExample,
+					Description: "exit",
+					Data:        workflowServiceExitExample,
 				},
 			},
 		},

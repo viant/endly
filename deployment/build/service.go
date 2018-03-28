@@ -259,12 +259,12 @@ func (s *service) registerRoutes() {
 			Description: "build app with supplied specification",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "go app build",
-					Data:    buildGoBuildExample,
+					Description: "go app build",
+					Data:        buildGoBuildExample,
 				},
 				{
-					UseCase: "java app build",
-					Data:    buildJavaBuildExample,
+					Description: "java app build",
+					Data:        buildJavaBuildExample,
 				},
 			},
 		},

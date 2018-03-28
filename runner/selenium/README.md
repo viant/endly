@@ -1,7 +1,7 @@
 **Selenium Runner** 
 
-Selenium runner opens a web session to run a various action on web driver or web elements.
 
+Selenium runner opens a web session to run a various action on web driver or web elements.
 
 
 | Service Id | Action | Description | Request | Response |
@@ -38,7 +38,8 @@ endly -r=test
 
 [@test.yaml](test/test.yaml)
  
-### Workflow 
+
+ 
 
     
 

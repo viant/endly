@@ -74,8 +74,8 @@ func (s *validatorService) registerRoutes() {
 			Description: "validate provided data (it uses https://github.com/viant/assertly)",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "validation",
-					Data:    validationExample,
+					Description: "validation",
+					Data:        validationExample,
 				},
 			},
 		},

@@ -156,8 +156,8 @@ func (s *systemSdkService) registerRoutes() {
 			Description: "set sdk on SSH session, deploy SDK if needed",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "set go sdk",
-					Data:    sdkSetExample,
+					Description: "set go sdk",
+					Data:        sdkSetExample,
 				},
 			},
 		},

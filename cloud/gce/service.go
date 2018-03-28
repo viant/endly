@@ -100,8 +100,8 @@ func (s *service) registerRoutes() {
 			Description: "call proxies request into google.golang.org/api/compute/v1.Service client",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "get instance status",
-					Data:    gceGetInstanceStatusExample,
+					Description: "get instance status",
+					Data:        gceGetInstanceStatusExample,
 				},
 			},
 		},

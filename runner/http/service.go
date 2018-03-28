@@ -289,8 +289,8 @@ func (s *service) registerRoutes() {
 			Description: "send http request(s)",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "send",
-					Data:    httpRunnerSendRequestExample,
+					Description: "send",
+					Data:        httpRunnerSendRequestExample,
 				},
 			},
 		},
