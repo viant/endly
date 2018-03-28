@@ -393,8 +393,8 @@ func (s *service) registerRoutes() {
 			Description: "deploy specific app version on target host, if existing app version matches requested version, deployment is skipped",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "tomcat deploy",
-					Data:    deploymentTomcatDeployExample,
+					Description: "tomcat deploy",
+					Data:        deploymentTomcatDeployExample,
 				},
 			},
 		},

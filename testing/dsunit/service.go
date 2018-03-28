@@ -172,17 +172,17 @@ func (s *service) registerRoutes() {
 			Description: "register database connection",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "aerospike datastore registration",
-					Data:    dsunitAerospikeRegisterExample,
+					Description: "aerospike datastore registration",
+					Data:        dsunitAerospikeRegisterExample,
 				},
 				{
-					UseCase: "BigQuery datastore registration",
-					Data:    dsunitBigQueryRegisterExample,
+					Description: "BigQuery datastore registration",
+					Data:        dsunitBigQueryRegisterExample,
 				},
 
 				{
-					UseCase: "MySQL datastore registration",
-					Data:    dsunitMySQLRegisterExample,
+					Description: "MySQL datastore registration",
+					Data:        dsunitMySQLRegisterExample,
 				},
 			},
 		},
@@ -241,8 +241,8 @@ func (s *service) registerRoutes() {
 			Description: "run SQL script",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "run script",
-					Data:    dsunitServiceSQLExample,
+					Description: "run script",
+					Data:        dsunitServiceSQLExample,
 				},
 			},
 		},
@@ -327,8 +327,8 @@ func (s *service) registerRoutes() {
 
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "mysql init",
-					Data:    dsunitMySQLInitExample,
+					Description: "mysql init",
+					Data:        dsunitMySQLInitExample,
 				},
 			},
 		},
@@ -358,12 +358,12 @@ func (s *service) registerRoutes() {
 			Description: "populate databstore with provided data",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "static data prepare",
-					Data:    dsunitServiceStaticDataPrepareExample,
+					Description: "static data prepare",
+					Data:        dsunitServiceStaticDataPrepareExample,
 				},
 				{
-					UseCase: "data prepare",
-					Data:    dsunitDataPrepareExaple,
+					Description: "data prepare",
+					Data:        dsunitDataPrepareExaple,
 				},
 			},
 		},
@@ -394,12 +394,12 @@ func (s *service) registerRoutes() {
 			Description: "verify databstore with provided data",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "static data expect",
-					Data:    dsunitServiceExpectAction,
+					Description: "static data expect",
+					Data:        dsunitServiceExpectAction,
 				},
 				{
-					UseCase: "data expect",
-					Data:    dsunitDataPrepareExaple,
+					Description: "data expect",
+					Data:        dsunitDataPrepareExaple,
 				},
 			},
 		},
@@ -463,8 +463,8 @@ func (s *service) registerRoutes() {
 			Description: "get sequence for supplied tables",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "sequence",
-					Data:    dsunitServiceSequenceExample,
+					Description: "sequence",
+					Data:        dsunitServiceSequenceExample,
 				},
 			},
 		},

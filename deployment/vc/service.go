@@ -287,12 +287,12 @@ func (s *service) registerRoutes() {
 			Description: "check status of version control on supplied target URL host and path",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "Explicit version control type",
-					Data:    vcExplicitVersionCheckExample,
+					Description: "Explicit version control type",
+					Data:        vcExplicitVersionCheckExample,
 				},
 				{
-					UseCase: "Implicit version control type derived from URL",
-					Data:    vcImplicitVersionCheckExample,
+					Description: "Implicit version control type derived from URL",
+					Data:        vcImplicitVersionCheckExample,
 				},
 			},
 		},
@@ -317,12 +317,12 @@ func (s *service) registerRoutes() {
 If target directory exist and contains matching origin URL, only latest changes without overriding local are sync, otherwise full checkout`,
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "single project checkout",
-					Data:    vcSingleProjectCheckoutExample,
+					Description: "single project checkout",
+					Data:        vcSingleProjectCheckoutExample,
 				},
 				{
-					UseCase: "multi projects checkout",
-					Data:    vcMultiProjectCheckoutExample,
+					Description: "multi projects checkout",
+					Data:        vcMultiProjectCheckoutExample,
 				},
 			},
 		},
@@ -330,8 +330,8 @@ If target directory exist and contains matching origin URL, only latest changes 
 			Description: "returns key value pairs of origin url with corresponding info ",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "multi project checkout",
-					Data:    vcMultiProjectCheckoutResponseExample,
+					Description: "multi project checkout",
+					Data:        vcMultiProjectCheckoutResponseExample,
 				},
 			},
 		},
@@ -355,8 +355,8 @@ If target directory exist and contains matching origin URL, only latest changes 
 			Description: "submit code changes to version control origin",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "",
-					Data:    vcCommitExample,
+					Description: "",
+					Data:        vcCommitExample,
 				}},
 		},
 		RequestProvider: func() interface{} {
@@ -378,8 +378,8 @@ If target directory exist and contains matching origin URL, only latest changes 
 			Description: "",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "",
-					Data:    vcPullExample,
+					Description: "",
+					Data:        vcPullExample,
 				}},
 		},
 		RequestProvider: func() interface{} {

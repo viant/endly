@@ -11,14 +11,22 @@
     "From": "params.dockerImage",
     "Required": true
   },
-
   {
     "Name": "app",
     "From": "params.app",
     "Required": true
   },
-
-
+  {
+    "Name": "version",
+    "From": "params.version",
+    "Required": true
+  },
+  {
+    "Name": "reuseContainer",
+    "Required": true,
+    "From": "params.reuseContainer",
+    "Value": "true"
+  },
   {
     "Name": "replace",
     "Required": true,
@@ -54,7 +62,6 @@
     "Required": true,
     "From": "params.commands"
   },
-
   {
     "Name": "buildPath",
     "Required": true,
@@ -67,7 +74,44 @@
     "From": "params.buildRoot",
     "Value": "/tmp/${app}/release/"
   },
-
+  {
+    "Name": "dockerfile",
+    "Required": true,
+    "From": "params.dockerfile",
+    "Value": {
+      "URL": "config/Dockerfile"
+    }
+  },
+  {
+    "Name": "registry",
+    "From": "params.registry"
+  },
+  {
+    "Name": "registryUsername",
+    "Required": true,
+    "From": "params.registryUsername",
+    "Value": "endly"
+  },
+  {
+    "Name": "sourceTag",
+    "From": "params.sourceTag",
+    "Required": true,
+    "Value": {
+      "Username": "$registryUsername",
+      "Image": "$app",
+      "Version": "$version"
+    }
+  },
+  {
+    "Name": "destTag",
+    "From": "params.imgTag",
+    "Required": true,
+    "Value": {
+      "Registry": "$registry",
+      "Image": "$app",
+      "Version": "$version"
+    }
+  },
   {
     "Name": "target",
     "From": "params.target",
@@ -80,7 +124,7 @@
     "Name": "buildTarget",
     "Value": {
       "URL": "scp://127.0.0.1:7722/${buildPath}",
-      "Credential": "mem://github.com/viant/endly/workflow/app/docker/build/secret.json"
+      "Credentials": "mem://github.com/viant/endly/workflow/app/docker/build/secret.json"
     }
   }
 ]

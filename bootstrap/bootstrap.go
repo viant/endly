@@ -242,7 +242,7 @@ func printServiceActionInfo(renderer *cli.Renderer, info *endly.ActionInfo, colo
 		}
 		if len(info.Examples) > 0 {
 			for i, example := range info.Examples {
-				renderer.Printf(renderer.ColorText(fmt.Sprintf("Example %v: ", i+1), color, "bold")+" %v %v\n", example.UseCase, infoType)
+				renderer.Printf(renderer.ColorText(fmt.Sprintf("Example %v: ", i+1), color, "bold")+" %v %v\n", example.Description, infoType)
 				aMap, err := toolbox.JSONToMap(example.Data)
 
 				if err == nil {

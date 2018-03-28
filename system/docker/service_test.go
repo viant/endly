@@ -929,7 +929,7 @@ func TestDockerTag_Validate(t *testing.T) {
 		request := &docker.TagRequest{
 			Target:    url.NewResource("abc"),
 			SourceTag: &docker.Tag{},
-			TargetTag: &docker.Tag{},
+			DestTag:   &docker.Tag{},
 		}
 		assert.NotNil(t, request.Validate())
 	}
@@ -938,7 +938,7 @@ func TestDockerTag_Validate(t *testing.T) {
 		request := &docker.TagRequest{
 			Target:    url.NewResource("abc"),
 			SourceTag: &docker.Tag{},
-			TargetTag: &docker.Tag{
+			DestTag: &docker.Tag{
 				Image: "abc",
 			},
 		}
@@ -950,7 +950,7 @@ func TestDockerTag_Validate(t *testing.T) {
 			SourceTag: &docker.Tag{
 				Image: "abc",
 			},
-			TargetTag: &docker.Tag{},
+			DestTag: &docker.Tag{},
 		}
 		assert.NotNil(t, request.Validate())
 	}
@@ -960,7 +960,7 @@ func TestDockerTag_Validate(t *testing.T) {
 			SourceTag: &docker.Tag{
 				Image: "abc",
 			},
-			TargetTag: &docker.Tag{
+			DestTag: &docker.Tag{
 				Image: "abc",
 			},
 		}

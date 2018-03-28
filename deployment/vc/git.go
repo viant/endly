@@ -172,8 +172,6 @@ func (s *git) checkout(context *endly.Context, request *CheckoutRequest) (*Info,
 			return nil, err
 		}
 	}
-	fmt.Printf("CLONE !!!\n")
-
 	var info = &Info{}
 	err = s.runSecureCommand(context, request.Type, origin, dest, fmt.Sprintf("git clone %v %v", origin.CredentialURL(username, ""), projectName), info, useParentDirectory)
 	return info, err

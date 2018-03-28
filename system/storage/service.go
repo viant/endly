@@ -309,20 +309,20 @@ func (s *service) registerRoutes() {
 			Description: "transfer content (files or directory structure) from source into destination, both source and destination can use local or remote file system (s3, gs, scp)",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "simple copy",
-					Data:    storageCopySimpleExample,
+					Description: "simple copy",
+					Data:        storageCopySimpleExample,
 				},
 				{
-					UseCase: "remote to remote data transfer",
-					Data:    storageCopyRemoteTransferExample,
+					Description: "remote to remote data transfer",
+					Data:        storageCopyRemoteTransferExample,
 				},
 				{
-					UseCase: "copy with replacement",
-					Data:    storageCopyReplacementTransferExample,
+					Description: "copy with replacement",
+					Data:        storageCopyReplacementTransferExample,
 				},
 				{
-					UseCase: "batch coopy",
-					Data:    storageBatchCopyTransferExample,
+					Description: "batch coopy",
+					Data:        storageBatchCopyTransferExample,
 				},
 			},
 		},

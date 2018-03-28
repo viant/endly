@@ -161,16 +161,16 @@ func (s *service) registerRoutes() {
 			Description: "call proxies request into github.com/aws/aws-sdk-go/service/ec2.EC2 client",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "credentials file",
-					Data:    ec2CredentialExample,
+					Description: "credentials file",
+					Data:        ec2CredentialExample,
 				},
 				{
-					UseCase: "get instance status",
-					Data:    ec2GetInstanceStatusExample,
+					Description: "get instance status",
+					Data:        ec2GetInstanceStatusExample,
 				},
 				{
-					UseCase: "start instance",
-					Data:    ec2StartInstanceExample,
+					Description: "start instance",
+					Data:        ec2StartInstanceExample,
 				},
 			},
 		},
@@ -178,8 +178,8 @@ func (s *service) registerRoutes() {
 			Description: "response from github.com/aws/aws-sdk-go/service/ec2.EC2 client",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "get instance status",
-					Data:    ex2GetInstanceResponseExample,
+					Description: "get instance status",
+					Data:        ex2GetInstanceResponseExample,
 				},
 			},
 		},

@@ -4,19 +4,36 @@ Storage  service represents local or remote storage to provide unified storage o
 Remote storage could be any cloud storage i.e. google cloud, amazon s3, or simple SCP or HTTP.
 
 
-
-
-
 <a name="endly"></a>
 
-## Endly service inline pipeline tasks
+## Endly inline pipeline tasks
+
+```bash
+endly -r=copy
+```
 
 
 
+@copy.yaml
+```yaml
+
+pipeline:
+  transfer:
+    action: storage:copy  
+    source:
+      URL: s3://mybucket/dir
+      credentials: aws-west
+    dest:
+      URL: scp://dest/dir2
+      credential: dest
+    assets:
+      file1.txt:
+      file2.txt: renamedFile2      
+
+```
 
 
-
-## Endly service action integration
+## Endly workflow service action
 
 Run the following command for storage service operation details:
 
@@ -42,6 +59,8 @@ endly -s=storage -a=download
 
 
 Storage service uses undelying [Storage Service](https://github.com/viant/toolbox/tree/master/storage)
+
+
 
 
 ## Asset copy

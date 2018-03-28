@@ -1,5 +1,6 @@
 target: $target
 name: $containerName
 image: $dockerImage
+reuse: $reuseContainer
 ports:
   7722: 22

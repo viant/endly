@@ -43,6 +43,7 @@ func (r *RunRequest) Init() (err error) {
 	}
 
 	if r.HasPipeline() {
+
 		if len(r.Defaults) == 0 {
 			r.Defaults = make(map[string]interface{})
 		}

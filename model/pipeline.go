@@ -6,10 +6,26 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"strings"
+	"fmt"
 )
 
-//represents pipelines
+//Pipelines represents pipelines
 type Pipelines []*Pipeline
+
+//RunnableCount returns number of pipeline that run either action or workflow
+func (p *Pipelines) RunnableCount() int {
+	var result = 0
+	for _, pipeline := range *p {
+		if pipeline.Workflow != "" || pipeline.Action != "" {
+			result++
+			continue
+		}
+		if len(pipeline.Pipelines) > 0 {
+			result += pipeline.Pipelines.RunnableCount()
+		}
+	}
+	return result
+}
 
 //Pipeline represents sequential workflow/action execution.
 type Pipeline struct {
@@ -18,7 +34,7 @@ type Pipeline struct {
 	Action      string                 `description:"action (service.action) selector "`
 	Params      map[string]interface{} `description:"workflow or action parameters"`
 	Description string                 `description:"description"`
-	Request     interface{}            `description:"external action request location, params are used to request data substitution"`
+	Request     interface{}            `description:"external action request location, otherwise params are used to form request"`
 	Pipelines   Pipelines              `description:"workflow or action subsequent pipelines"`
 }
 
@@ -60,7 +76,7 @@ func (p *Pipeline) initRequestIfNeeded(baseURL string) (err error) {
 	return nil
 }
 
-//NewActivity returns pipline activity
+//NewActivity returns pipeline activity
 func (p *Pipeline) NewActivity(context *endly.Context) *Activity {
 	var action = &Action{
 		NeatlyTag: &NeatlyTag{Tag: p.Name},
@@ -101,6 +117,8 @@ type Inline struct {
 	Init      interface{}            `description:"init state expression"`
 	Post      interface{}            `description:"post processing update state expression"`
 }
+
+
 
 func (p Inline) split(source interface{}) (attributes, params map[string]interface{}, err error) {
 	aMap, err := util.NormalizeMap(source, false)
@@ -173,8 +191,13 @@ func (p *Inline) InitTasks(baseURL string, selector TasksSelector, defaultParams
 		}
 		p.Pipelines = append(p.Pipelines, pipeline)
 	}
+
 	if !selector.RunAll() {
 		p.Pipelines = p.Pipelines.Select(selector)
 	}
+	if len(p.Pipelines) == 0 || p.Pipelines.RunnableCount() == 0 {
+		return fmt.Errorf("no pipelines matched with tasks selector: '%v'", string(selector))
+	}
+
 	return nil
 }

@@ -419,8 +419,8 @@ func (s *service) registerRoutes() {
 			Description: "check for log changes",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "log listen",
-					Data:    logValidatorExample,
+					Description: "log listen",
+					Data:        logValidatorExample,
 				},
 			},
 		},
@@ -444,8 +444,8 @@ func (s *service) registerRoutes() {
 			Description: "assert queued logs",
 			Examples: []*endly.UseCase{
 				{
-					UseCase: "assert",
-					Data:    logValidatorAssertExample,
+					Description: "assert",
+					Data:        logValidatorAssertExample,
 				},
 			},
 		},
