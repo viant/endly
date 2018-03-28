@@ -12,7 +12,6 @@ func (r *RunResponse) Messages() []*msg.Message {
 	if len(r.LookupErrors) == 0 {
 		return result
 	}
-
 	seleniumData, _ := toolbox.AsJSONText(r.Data)
 	result = append(result,
 		msg.NewMessage(msg.NewStyled("Response", msg.MessageStyleGeneric), msg.NewStyled("selenium", msg.MessageStyleGeneric),

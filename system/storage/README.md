@@ -5,7 +5,17 @@ Remote storage could be any cloud storage i.e. google cloud, amazon s3, or simpl
 
 
 
+
+
 <a name="endly"></a>
+
+## Endly service inline pipeline tasks
+
+
+
+
+
+
 ## Endly service action integration
 
 Run the following command for storage service operation details:

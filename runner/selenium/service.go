@@ -12,6 +12,7 @@ import (
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"strings"
+	"github.com/viant/endly/util"
 )
 
 const (
@@ -48,19 +49,29 @@ func (s *service) addResultIfPresent(callResult []interface{}, result data.Map, 
 	result.SetValue(key, responseData)
 }
 
+func (s *service) getResultPath(key string, call *MethodCall) []string {
+	var method = call.Method
+	if len(call.Parameters) == 1 && toolbox.IsString(call.Parameters[0]) {
+		method = strings.Replace(method, "Get", "", 1)
+		method = strings.Replace(method, "Property", "", 1)
+	}
+	return []string{key, method}
+}
+
 func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse, error) {
 	var response = &RunResponse{
 		Data:         make(map[string]interface{}),
 		LookupErrors: make([]string, 0),
 	}
-	var result = data.Map(response.Data)
+	sessions := Sessions(context)
+	_, hasSession := sessions[request.SessionID]
 
-	if request.SessionID == "" {
+	if ! hasSession {
 		openResponse, err := s.openSession(context, &OpenSessionRequest{
 			RemoteSelenium: request.RemoteSelenium,
 			Browser:        request.Browser,
+			SessionID:      request.SessionID,
 		})
-
 		if err != nil {
 			return nil, err
 		}
@@ -70,8 +81,14 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 	if len(request.Actions) == 0 {
 		return response, nil
 	}
+	var state = context.State()
 	for _, action := range request.Actions {
 		for _, call := range action.Calls {
+			if len(call.Parameters) > 0 {
+				for i, item := range call.Parameters {
+					call.Parameters[i] = state.Expand(item)
+				}
+			}
 			if action.Selector == nil {
 				callResponse, err := s.callWebDriver(context, &WebDriverCallRequest{
 					SessionID: request.SessionID,
@@ -80,11 +97,10 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 				if err != nil {
 					return nil, err
 				}
-				s.addResultIfPresent(callResponse.Result, result, call.Method)
+				util.Append(response.Data, callResponse.Data, true)
 				continue
 
 			}
-
 			callResponse, err := s.callWebElement(context, &WebElementCallRequest{
 				SessionID: request.SessionID,
 				Selector:  action.Selector,
@@ -96,34 +112,23 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 			if callResponse.LookupError != "" {
 				response.LookupErrors = append(response.LookupErrors, callResponse.LookupError)
 			}
-			var elementKey = action.Selector.Key
-			if elementKey == "" {
-				elementKey = action.Selector.Value
-			}
-			var elementPath = []string{elementKey, call.Method}
-			if len(call.Parameters) == 1 && toolbox.IsString(call.Parameters[0]) {
-				elementPath[1] = strings.Replace(elementPath[1], "Get", "", 1)
-				elementPath[1] = strings.Replace(elementPath[1], "Property", "", 1)
-				elementPath = append(elementPath)
-			}
-			s.addResultIfPresent(callResponse.Result, result, elementPath...)
+			util.Append(response.Data, callResponse.Data, true)
 		}
 	}
 	return response, nil
 }
 
-func (s *service) callMethod(owner interface{}, methodName string, parameters []interface{}) (*ServiceCallResponse, error) {
+func (s *service) callMethod(owner interface{}, methodName string, response *ServiceCallResponse, parameters []interface{}) (err error) {
 	method, err := toolbox.GetFunction(owner, methodName)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	parameters, err = toolbox.AsCompatibleFunctionParameters(method, parameters)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	var response = &ServiceCallResponse{}
 	response.Result = toolbox.CallFunction(method, parameters...)
-	return response, nil
+	return nil
 }
 
 func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRequest) (*ServiceCallResponse, error) {
@@ -131,23 +136,23 @@ func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRe
 	if err != nil {
 		return nil, err
 	}
-	return s.call(context, seleniumSession.driver, request.Call)
-}
-
-func (s *service) call(context *endly.Context, caller interface{}, call *MethodCall) (callResponse *ServiceCallResponse, err error) {
-	callResponse = &ServiceCallResponse{
+	response := &ServiceCallResponse{
 		Data: make(map[string]interface{}),
 	}
+	return response, s.call(context, seleniumSession.driver, request.Call, response, request.Call.Method)
+}
+
+func (s *service) call(context *endly.Context, caller interface{}, call *MethodCall, response *ServiceCallResponse, elementPath ... string) (err error) {
 	repeater := call.Wait.Init()
 	var handler = func() (interface{}, error) {
-		callResponse, err = s.callMethod(caller, call.Method, call.Parameters)
+		err = s.callMethod(caller, call.Method, response, call.Parameters)
 		if err != nil {
 			return nil, err
 		}
-		return callResponse.Result, nil
+		s.addResultIfPresent(response.Result, response.Data, elementPath...)
+		return response.Result, nil
 	}
-	err = repeater.Run(s.AbstractService, runnerCaller, context, handler, callResponse.Data)
-	return callResponse, err
+	return repeater.Run(s.AbstractService, runnerCaller, context, handler, response.Data)
 }
 
 func (s *service) callWebElement(context *endly.Context, request *WebElementCallRequest) (*WebElementCallResponse, error) {
@@ -155,7 +160,9 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 	if err != nil {
 		return nil, err
 	}
-	var response = &WebElementCallResponse{}
+	var response = &WebElementCallResponse{
+		Data:make(map[string]interface{}),
+	}
 	err = request.Selector.Validate()
 	if err != nil {
 		return nil, fmt.Errorf("invalid selector: %v", err)
@@ -167,10 +174,15 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 		response.LookupError = fmt.Sprintf("failed to lookup element: %v %v", selector.By, selector.Value)
 		return response, nil
 	}
-	callResponse, err := s.call(context, element, request.Call)
+	elementPath := s.getResultPath(request.Selector.Key, request.Call)
+	callResponse := &ServiceCallResponse{
+		Data: make(map[string]interface{}),
+	}
+	err = s.call(context, element, request.Call, callResponse, elementPath...)
 	if err != nil {
 		return nil, err
 	}
+	util.Append(response.Data, callResponse.Data, true)
 	response.Result = callResponse.Result
 	return response, nil
 }
@@ -301,7 +313,11 @@ func (s *service) openSession(context *endly.Context, request *OpenSessionReques
 	if err != nil {
 		return nil, err
 	}
-	sessionID := resource.Host()
+
+	sessionID := request.SessionID
+	if sessionID == "" {
+		sessionID = resource.Host()
+	}
 	sessions := Sessions(context)
 	seleniumSession, ok := sessions[sessionID]
 	if ok {
@@ -389,80 +405,7 @@ const (
       ]
     }`
 
-	seleniumServiceRunAction = `{
-  "SessionID": "127.0.0.1:8085",
-  "Actions": [
-    {
-      "Calls": [
-        {
-          "Wait": null,
-          "Method": "Get",
-          "Parameters": [
-            "http://127.0.0.1:8888/signin/"
-          ]
-        }
-      ]
-    },
-    {
-      "Selector": {
-        "Value": "#email"
-      },
-      "Calls": [
-        {
-          "Method": "Clear"
-        },
-        {
-          "Method": "SendKeys",
-          "Parameters": [
-            "xyz@wp.w"
-          ]
-        }
-      ]
-    },
-    {
-      "Selector": {
-        "Value": "#password"
-      },
-      "Calls": [
-        {
-          "Method": "Clear"
-        },
-        {
-          "Method": "SendKeys",
-          "Parameters": [
-            "pass1"
-          ]
-        }
-      ]
-    },
-    {
-      "Selector": {
-        "Value": "#submit"
-      },
-      "Calls": [
-        {
-          "Wait": {
-            "SleepTimeMs": 100
-          },
-          "Method": "Click"
-        }
-      ]
-    },
-    {
-      "Selector": {
-        "By": "xpath",
-        "Value": "//SMALL[preceding-sibling::INPUT[@id='email']]",
-        "Key": "email"
-      },
-      "Calls": [
-        {
-          "Method": "Text"
-        }
-      ]
-    }
-  ]
-}
-`
+	seleniumServiceRunAction = ``
 )
 
 func (s *service) registerRoutes() {
