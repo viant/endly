@@ -114,7 +114,7 @@ func (r *DownloadRequest) Validate() error {
 		return errors.New("source was empty")
 	}
 	if r.DestKey == "" {
-		return errors.New("targetKey was empty")
+		return errors.New("destKey was empty")
 	}
 	return nil
 }
