@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
+	"github.com/viant/endly/testing/validator"
 )
 
 //ServiceID represents rest service id.
@@ -13,15 +14,21 @@ type restService struct {
 	*endly.AbstractService
 }
 
-func (s *restService) sendRequest(request *Request) (*Response, error) {
+func (s *restService) sendRequest(context *endly.Context, request *Request) (*Response, error) {
 	var resetResponse = make(map[string]interface{})
 	err := toolbox.RouteToService(request.Method, request.URL, request.Request, &resetResponse)
 	if err != nil {
 		return nil, err
 	}
-	return &Response{
+	var response = &Response{
 		Response: resetResponse,
-	}, nil
+	}
+
+	if request.Expected != nil {
+		response.AssertResponse, err = validator.Assert(context, request, request.Expected, resetResponse, "REST validation", "assert REST response")
+	}
+	return response, err
+
 }
 
 const restSendExample = `
@@ -72,7 +79,7 @@ func (s *restService) registerRoutes() {
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*Request); ok {
-				return s.sendRequest(req)
+				return s.sendRequest(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},

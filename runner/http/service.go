@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"github.com/viant/endly/testing/validator"
 )
 
 //ServiceID represents http runner service id.
@@ -198,6 +199,13 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 			return nil, err
 		}
 	}
+
+	if request.Expected != nil {
+		result.AssertResponse, err = validator.Assert(context, request, request.Expected, map[string]interface{}{
+			"Responses": result.Responses,
+		}, "http validation", "assert http responses")
+	}
+
 	return result, nil
 
 }

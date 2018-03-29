@@ -9,6 +9,7 @@ type AssertRequest struct {
 	Description string
 	Actual      interface{} `required:"true" description:"actual value/data structure"`
 	Expected    interface{} `required:"true" description:"expected value/data structure"`
+	Source interface{} 		//optional validation source
 }
 
 //AssertResponse represent validation response
@@ -19,4 +20,16 @@ type AssertResponse struct {
 //Assertion returns validation slice
 func (r *AssertResponse) Assertion() []*assertly.Validation {
 	return []*assertly.Validation{r.Validation}
+}
+
+//NewAssertRequest creates a new assertRequest
+func NewAssertRequest(tagID string, name string, description string, source, expected, actual interface{}) *AssertRequest{
+	return &AssertRequest{
+		Source:source,
+		TagID:tagID,
+		Name:name,
+		Description:description,
+		Expected:expected,
+		Actual:actual,
+	}
 }
