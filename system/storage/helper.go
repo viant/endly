@@ -8,27 +8,37 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
+	"bytes"
 )
 
 //NewExpandedContentHandler return a new reader that can substitute content with state map, replacement data provided in replacement map.
 func NewExpandedContentHandler(context *endly.Context, replaceMap map[string]string, expand bool) func(reader io.ReadCloser) (io.ReadCloser, error) {
 	return func(reader io.ReadCloser) (io.ReadCloser, error) {
+		var replacted = false
 		defer reader.Close()
 		content, err := ioutil.ReadAll(reader)
 		if err != nil {
 			return nil, err
 		}
+
 		var result = string(content)
 		if expand {
 			result = context.Expand(result)
 			if err != nil {
 				return nil, err
 			}
+			replacted = len(result) != len(content)
 		}
 		for k, v := range replaceMap {
+			if ! replacted && strings.Contains(result, k) {
+				replacted = true
+			}
 			result = strings.Replace(result, k, v, len(result))
 		}
-		return ioutil.NopCloser(strings.NewReader(toolbox.AsString(result))), nil
+		if replacted {
+			return ioutil.NopCloser(strings.NewReader(toolbox.AsString(result))), nil
+		}
+		return ioutil.NopCloser(bytes.NewReader(content)), nil
 	}
 }
 
