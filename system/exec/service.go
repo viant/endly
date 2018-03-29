@@ -390,6 +390,9 @@ func (s *execService) runExtractCommands(context *endly.Context, request *Extrac
 	for _, extractCommand := range request.Commands {
 		var command = context.Expand(extractCommand.Command)
 
+		if strings.Contains(command, "rm ") && strings.Contains(command, session.CurrentDirectory) {
+			session.CurrentDirectory = "" //reset path
+		}
 		if strings.HasPrefix(command, "cd ") {
 			if !strings.Contains(command, "&&") {
 				var directory = strings.TrimSpace(string(command[3:]))
