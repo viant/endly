@@ -16,7 +16,7 @@ pipeline:
     action: run
     name: regresion
     tasks: "*"
-  destory:
+  destroy:
     app:
       action: run
       request: "@app"

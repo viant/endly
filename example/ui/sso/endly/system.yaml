@@ -2,7 +2,7 @@ tasks: $tasks
 defaults:
   target: $serviceTarget
 pipeline:
-  destory:
+  destroy:
     stop-images:
       action: docker:stop-images
       images:
