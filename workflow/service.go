@@ -311,6 +311,7 @@ func (s *Service) applyRemainingTaskSpentIfNeeded(context *endly.Context, task *
 
 func (s *Service) runAsyncAction(parent, context *endly.Context, process *model.Process, action *model.Action, group *sync.WaitGroup) error {
 	defer group.Done()
+
 	events := context.MakeAsyncSafe()
 	defer func() {
 		for _, event := range events.Events {
@@ -344,7 +345,7 @@ func (s *Service) runAsyncActions(context *endly.Context, process *model.Process
 				if err := s.runAsyncAction(context, actionContext, process, action, group); err != nil {
 					groupErr = err
 				}
-			}(asyncAction[i], context)
+			}(asyncAction[i], context.Clone())
 		}
 		group.Wait()
 		if groupErr != nil {
