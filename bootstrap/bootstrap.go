@@ -150,7 +150,7 @@ func Bootstrap() {
 		printHelp()
 		return
 	}
-	if value, ok := flagset["o"]; ok && toolbox.AsBoolean(value) {
+	if value, ok := flagset["p"]; ok && toolbox.AsBoolean(value) {
 		printWorkflow(request.URL)
 		return
 	}

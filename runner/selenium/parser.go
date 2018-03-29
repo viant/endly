@@ -1,13 +1,13 @@
 package selenium
 
 import (
-	"strings"
-	"github.com/viant/toolbox"
 	"fmt"
+	"github.com/viant/toolbox"
+	"strings"
 )
 
 const (
-	undefined   int = iota
+	undefined int = iota
 	eof
 	illegal
 	whitespaces
@@ -46,7 +46,6 @@ func (p *parser) expectOptionalWhitespaceFollowedBy(tokenizer *toolbox.Tokenizer
 
 	token := tokenizer.Nexts(expectedTokens...)
 
-
 	if token.Token == eof && !toolbox.HasSliceAnyElements(expectedTokens, eof) {
 		return nil, newIllegalTokenParsingError(tokenizer.Index, token.Token, expectedTokensMessage)
 	}
@@ -79,7 +78,6 @@ func (p *parser) Parse(command string) (*Action, error) {
 
 	expectTokens := []int{selector, id}
 
-
 outer:
 	for {
 
@@ -90,7 +88,7 @@ outer:
 		switch token.Token {
 
 		case selector:
-			webSelector = WebSelector(token.Matched[1:len(token.Matched)-1])
+			webSelector = WebSelector(token.Matched[1 : len(token.Matched)-1])
 			token, err = p.expectOptionalWhitespaceFollowedBy(tokenizer, "'.' method selector", dot)
 			if token.Token != dot {
 				return nil, err
@@ -111,7 +109,7 @@ outer:
 			case params:
 				call.Method = identity
 				if len(token.Matched) > 2 {
-					callParams = string(token.Matched[1:len(token.Matched)-1])
+					callParams = string(token.Matched[1 : len(token.Matched)-1])
 				}
 				break outer
 			case operator:
@@ -122,7 +120,7 @@ outer:
 				continue
 			case eof:
 				call.Method = identity
-				break outer;
+				break outer
 			default:
 
 				return nil, fmt.Errorf("invalid token: '%v', %v", token.Token, err)
@@ -133,7 +131,6 @@ outer:
 	if len(params) > 0 {
 		call.Parameters = []interface{}{strings.Trim(callParams, " '\"")}
 	}
-
 
 	if len(webSelector) > 0 {
 		result.Selector = &WebElementSelector{}
@@ -163,5 +160,5 @@ func (e illegalTokenParsingError) Error() string {
 }
 
 func newIllegalTokenParsingError(index, token int, expected string) error {
-	return &illegalTokenParsingError{Index: index, Expected: expected, error: fmt.Sprintf("illegal token:%v at %v, expected %v", token,  index,  expected)}
+	return &illegalTokenParsingError{Index: index, Expected: expected, error: fmt.Sprintf("illegal token:%v at %v, expected %v", token, index, expected)}
 }

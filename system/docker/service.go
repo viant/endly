@@ -135,7 +135,7 @@ func (s *service) runContainer(context *endly.Context, request *RunRequest) (*Ru
 		Target: request.Target,
 		Names:  request.Name,
 	})
-	if err == nil && ! request.Reuse {
+	if err == nil && !request.Reuse {
 		err = s.resetContainerIfNeeded(context, request, checkResponse)
 	}
 	if err != nil {
@@ -173,7 +173,7 @@ func (s *service) runContainer(context *endly.Context, request *RunRequest) (*Ru
 			if err != nil {
 				return nil, err
 			}
-			return  &RunResponse{startResponse.ContainerInfo}, err
+			return &RunResponse{startResponse.ContainerInfo}, err
 		}
 		_, _ = s.stopContainer(context, &StopRequest{BaseRequest: &BaseRequest{
 			Target: request.Target,
@@ -524,7 +524,7 @@ func (s *service) tag(context *endly.Context, request *TagRequest) (*TagResponse
 	if err != nil {
 		return nil, err
 	}
-	commandInfo, err := s.executeDockerCommand(nil, context, target, dockerIgnoreErrors, fmt.Sprintf("docker tag %v %v", request.SourceTag, request.DestTag))
+	commandInfo, err := s.executeDockerCommand(nil, context, target, dockerIgnoreErrors, fmt.Sprintf("docker tag %v %v", request.SourceTag, request.TargetTag))
 	if err != nil {
 		return nil, err
 	}
@@ -550,6 +550,19 @@ func (s *service) getGoogleCloudCredential(context *endly.Context, credentials s
 	return result
 }
 
+func (s *service) runDockerProcessChecklist(context *endly.Context, target *url.Resource) (string, error) {
+	var extractRequest = exec.NewExtractRequest(target, exec.DefaultOptions(),
+		exec.NewExtractCommand("docker ps", "", nil, nil))
+	extractRequest.SuperUser = true
+	extractRequest.SystemPaths = []string{"/usr/local/bin"}
+	var runResponse = &exec.RunResponse{}
+	err := endly.Run(context, extractRequest, &runResponse)
+	if err != nil {
+		return "", err
+	}
+	return runResponse.Output, nil
+}
+
 /**
 on osx when hitting Errors saving credentials: error storing credentials - err: exit status 1, out: `User interaction is not allowed.`
 on docker service -> preferences -> and I untick "Securely store docker logins in macOS keychain" this problem goes away.
@@ -559,15 +572,16 @@ func (s *service) login(context *endly.Context, request *LoginRequest) (*LoginRe
 	if err != nil {
 		return nil, err
 	}
-
-	err = endly.Run(context, exec.NewRunRequest(target, true, "docker ps"), nil)
-	if err != nil {
+	if _, err = s.runDockerProcessChecklist(context, target); err != nil {
 		return nil, err
 	}
 
 	var response = &LoginResponse{}
 	credentials := context.Expand(request.Credentials)
-	credConfig, err := cred.NewConfig(credentials)
+	credConfig, err := context.Secrets.GetCredentials(credentials)
+	if err != nil {
+		return nil, err
+	}
 	repository := context.Expand(request.Repository)
 	if IsGoogleCloudRegistry(repository) {
 		credConfig = s.getGoogleCloudCredential(context, credentials, credConfig)
@@ -583,7 +597,9 @@ func (s *service) login(context *endly.Context, request *LoginRequest) (*LoginRe
 	secrets := map[string]string{
 		"**docker-secret**": credentials,
 	}
-
+	if strings.Contains(repository, "hub.docker.com") {
+		repository = ""
+	}
 	commandResponse, err := s.executeSecureDockerCommand(true, secrets, context, target, dockerErrors, fmt.Sprintf(`echo '**docker-secret**' | sudo docker login -u %v  %v --password-stdin`, credConfig.Username, repository))
 	if err != nil {
 		return nil, err
@@ -705,7 +721,7 @@ const (
     "Image": "store_backup",
     "Version": "0.1.2"
   },
-  "DestTag": {
+  "TargetTag": {
     "Username": "",
     "Registry": "us.gcr.io/xxxx",
     "Image": "store_backup",

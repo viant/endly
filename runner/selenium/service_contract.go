@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/viant/endly/model"
-	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/url"
 )
 
 //StartRequest represents a selenium server start request
@@ -105,7 +105,7 @@ type WebElementCallRequest struct {
 type WebElementCallResponse struct {
 	Result      []interface{}
 	LookupError string
-	Data map[string]interface{}
+	Data        map[string]interface{}
 }
 
 //RunRequest represents group of selenium web elements calls
@@ -119,8 +119,8 @@ type RunRequest struct {
 
 func (r *RunRequest) asWaitAction(parser *parser, candidate interface{}) (*Action, error) {
 	if aMap, err := util.NormalizeMap(candidate, true); err == nil {
-		command, ok := aMap["command"];
-		if ! ok {
+		command, ok := aMap["command"]
+		if !ok {
 			return nil, fmt.Errorf("command was missing: %v", candidate)
 		}
 		action, err := parser.Parse(toolbox.AsString(command))
@@ -128,7 +128,7 @@ func (r *RunRequest) asWaitAction(parser *parser, candidate interface{}) (*Actio
 			return nil, err
 		}
 		action.Calls[0].Wait = &model.Repeater{}
-		err = toolbox.DefaultConverter.AssignConverted(action.Calls[0].Wait, aMap);
+		err = toolbox.DefaultConverter.AssignConverted(action.Calls[0].Wait, aMap)
 		return action, err
 	}
 	return nil, fmt.Errorf("sunupported command: %T", candidate)
@@ -159,7 +159,7 @@ func (r *RunRequest) Init() error {
 	for _, candidate := range r.Commands {
 
 		command, ok := candidate.(string)
-		if ! ok {
+		if !ok {
 			action, err := r.asWaitAction(parser, candidate)
 			if err != nil {
 				return err
@@ -222,7 +222,7 @@ type Action struct {
 }
 
 //NewAction creates a new action
-func NewAction(key, selector string, method string, params ... interface{}) *Action {
+func NewAction(key, selector string, method string, params ...interface{}) *Action {
 	var result = &Action{
 		Key: key,
 		Calls: []*MethodCall{

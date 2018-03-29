@@ -8,9 +8,9 @@ import (
 
 //BuildRequest represents docker build request
 type BuildRequest struct {
-	Target     *url.Resource     `required:"true" description:"host with docker service"` //target host
-	Tag        *Tag              `required:"true" description:"build docker tag"`
-	Path        string            `description:"location of dockerfile"`
+	Target    *url.Resource     `required:"true" description:"host with docker service"` //target host
+	Tag       *Tag              `required:"true" description:"build docker tag"`
+	Path      string            `description:"location of dockerfile"`
 	Arguments map[string]string `description:"docker build command line arguments, see more: https://docs.docker.com/engine/reference/commandline/build/#description "` //https://docs.docker.com/engine/reference/commandline/build/#description
 }
 
@@ -39,7 +39,6 @@ func (r *BuildRequest) Validate() error {
 	}
 	return nil
 }
-
 
 //ContainerStatusRequest represents a docker check container status request
 type ContainerStatusRequest struct {
@@ -292,7 +291,7 @@ type RunRequest struct {
 	Ports   map[string]string `description:"publish a container’s port(s) to the host, docker -p option"`
 	Params  map[string]string `description:"other free form docker parameters"`
 	Workdir string            `description:"working directory inside the container, docker -w option"`
-	Reuse bool				  `description:"reuse existing container if exists, otherwise always removes"`
+	Reuse   bool              `description:"reuse existing container if exists, otherwise always removes"`
 }
 
 func NewRunRequest(target *url.Resource, name string, secrets map[string]string, image string, port string, env map[string]string, mount map[string]string, ports map[string]string, params map[string]string, workdir string) *RunRequest {
@@ -361,7 +360,7 @@ type StopImagesResponse struct {
 type TagRequest struct {
 	Target    *url.Resource `required:"true" description:"host with docker service"` //target host
 	SourceTag *Tag          `required:"true"`
-	DestTag   *Tag          `required:"true"`
+	TargetTag *Tag          `required:"true"`
 }
 
 //Tag represent a docker tag
@@ -385,13 +384,13 @@ func (r *TagRequest) Validate() error {
 	if r.SourceTag == nil {
 		return errors.New("sourceTag was empty")
 	}
-	if r.DestTag == nil {
+	if r.TargetTag == nil {
 		return errors.New("targetTag was empty")
 	}
 	if err := r.SourceTag.Validate(); err != nil {
 		return err
 	}
-	return r.DestTag.Validate()
+	return r.TargetTag.Validate()
 }
 
 //Validate checks if tag is valid

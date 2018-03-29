@@ -12,6 +12,8 @@ func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{},
 	}
 	err := toolbox.ProcessMap(keyValuePairs, func(k, value interface{}) bool {
 		var key = toolbox.AsString(k)
+
+		//inline map key
 		result[key] = value
 		if deep {
 			if value == nil {

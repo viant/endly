@@ -15,11 +15,11 @@ defined as URL and credentials.
 
 To unify target naming the following function based methodology is used:
 
-origin - version control origin
-target - host resource where endly runs (usually 127.0.0.1 with localhost credentials)
-buildTarget  - host resource where app is being built
-appTarget - host whre app is deployed and runs
-serviceTarget - host resource where app service (i.e. datastore service) runs
+- origin - version control origin
+- target - host resource where endly runs (usually 127.0.0.1 with localhost credentials)
+- buildTarget  - host resource where app is being built
+- appTarget - host whre app is deployed and runs
+- serviceTarget - host resource where app service (i.e. datastore service) runs
 
 
 

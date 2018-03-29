@@ -1,13 +1,11 @@
 package selenium
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox/url"
+	"testing"
 )
-
-
 
 func TestNewRunRequestFromURL(t *testing.T) {
 
@@ -152,7 +150,7 @@ func TestNewRunRequestFromURL(t *testing.T) {
       ]
     }
   ]
-}`,},
+}`},
 		{
 			Description: "Commands test with wait missing command error",
 			URL:         "test/run3.yaml",
@@ -193,7 +191,6 @@ func TestNewRunRequestFromURL(t *testing.T) {
 
 }
 
-
 func TestNewAction(t *testing.T) {
 	var action = NewAction("k1", "#name", "clear")
 	assert.EqualValues(t, "clear", action.Calls[0].Method)
@@ -202,36 +199,34 @@ func TestNewAction(t *testing.T) {
 
 }
 
-
 func TestRunRequest_Validate(t *testing.T) {
 
 	{
-		var req =  NewRunRequest("", "", nil, nil)
+		var req = NewRunRequest("", "", nil, nil)
 		assert.NotNil(t, req.Validate(), "empty remote")
 	}
 	{
-		var req =  NewRunRequest("", "", url.NewResource("abc"), nil)
+		var req = NewRunRequest("", "", url.NewResource("abc"), nil)
 		assert.NotNil(t, req.Validate(), "empty browser")
 	}
 
 	{
-		var req =  NewRunRequest("", "firefox", url.NewResource("abc"))
+		var req = NewRunRequest("", "firefox", url.NewResource("abc"))
 		assert.NotNil(t, req.Validate(), "action empty")
 	}
 	{
-		var req =  NewRunRequest("", "firefox", url.NewResource("abc"), NewAction("", "", "get", "localhost"))
+		var req = NewRunRequest("", "firefox", url.NewResource("abc"), NewAction("", "", "get", "localhost"))
 		assert.Nil(t, req.Validate(), "valid request")
 	}
 	{
-		var req =  NewRunRequest("123", "", nil,  NewAction("", "", "get", "localhost"))
+		var req = NewRunRequest("123", "", nil, NewAction("", "", "get", "localhost"))
 		assert.Nil(t, req.Validate(), "valid request")
 	}
 }
 
-
 func TestRunRequest_Init(t *testing.T) {
 
-	{//init action selector
+	{ //init action selector
 		var req = NewRunRequest("123", "", nil,
 			NewAction("", "", "get", "localhost"),
 			NewAction("", "#name", "clear", "localhost"))
@@ -247,32 +242,31 @@ func TestRunRequest_Init(t *testing.T) {
 
 func TestOpenSessionRequest_Validate(t *testing.T) {
 	{
-		var req= NewOpenSessionRequest("forefox", nil)
+		var req = NewOpenSessionRequest("forefox", nil)
 		assert.NotNil(t, req.Validate())
 	}
 	{
-		var req= NewOpenSessionRequest("forefox", &url.Resource{})
+		var req = NewOpenSessionRequest("forefox", &url.Resource{})
 		assert.NotNil(t, req.Validate())
 	}
 	{
-		var req= NewOpenSessionRequest("", url.NewResource("abc"))
+		var req = NewOpenSessionRequest("", url.NewResource("abc"))
 		assert.NotNil(t, req.Validate())
 	}
 
 	{
-		var req= NewOpenSessionRequest("forefox", url.NewResource("abc"))
+		var req = NewOpenSessionRequest("forefox", url.NewResource("abc"))
 		assert.Nil(t, req.Validate())
 	}
 }
 
 func TestNewMethodCall(t *testing.T) {
 	var m = NewMethodCall("get", nil, nil)
-	assert.EqualValues(t, "get" ,m.Method)
+	assert.EqualValues(t, "get", m.Method)
 }
 
-
 func TestNewStartRequestFromURL(t *testing.T) {
-	req , err := NewStartRequestFromURL("test/start.yaml")
+	req, err := NewStartRequestFromURL("test/start.yaml")
 	assert.Nil(t, err)
 	assert.EqualValues(t, "jdk", req.Sdk)
 	assert.EqualValues(t, "1.8", req.SdkVersion)
@@ -283,17 +277,15 @@ func TestNewStartRequestFromURL(t *testing.T) {
 }
 
 func TestNewStopRequestFromURL(t *testing.T) {
-	req , err := NewStopRequestFromURL("test/start.yaml")
+	req, err := NewStopRequestFromURL("test/start.yaml")
 	assert.Nil(t, err)
 	assert.EqualValues(t, 8085, req.Port)
 	assert.EqualValues(t, "ssh://127.0.0.1/", req.Target.URL)
 
 }
 
-
-
 func TestNewCloseRequestFromURL(t *testing.T) {
-	req , err := NewCloseSessionRequestFromURL("test/close.yaml")
+	req, err := NewCloseSessionRequestFromURL("test/close.yaml")
 	assert.Nil(t, err)
 	assert.EqualValues(t, "abc", req.SessionID)
 }

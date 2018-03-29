@@ -1,9 +1,9 @@
 package selenium
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
+	"testing"
 )
 
 func TestParser_Parse(t *testing.T) {
@@ -22,14 +22,13 @@ func TestParser_Parse(t *testing.T) {
 		{
 			Description: "WebDriver call empty",
 			Command:     "get",
-			Expected:    NewAction("", "", "Get", ),
+			Expected:    NewAction("", "", "Get"),
 		},
 		{
 			Description: "WebDriver call assigments",
 			Command:     "key1 = get(http://127.0.0.1:8888/signup/)",
 			Expected:    NewAction("key1", "", "Get", "http://127.0.0.1:8888/signup/"),
 		},
-
 
 		{
 			Description: "WebElement call",
@@ -48,7 +47,6 @@ func TestParser_Parse(t *testing.T) {
 			Command:     "key1 = (xpath://SMALL[preceding-sibling::INPUT[@id='dateOfBirth']]).text",
 			Expected:    NewAction("key1", "//SMALL[preceding-sibling::INPUT[@id='dateOfBirth']]", "Text"),
 		},
-
 	}
 
 	parser := &parser{}
@@ -59,7 +57,7 @@ func TestParser_Parse(t *testing.T) {
 			assert.NotNil(t, err, useCase.Description)
 			continue
 		}
-		if ! assert.Nil(t, err, useCase.Description) {
+		if !assert.Nil(t, err, useCase.Description) {
 			continue
 		}
 		assertly.AssertValues(t, useCase.Expected, action, useCase.Description)

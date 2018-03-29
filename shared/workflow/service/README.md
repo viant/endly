@@ -13,7 +13,7 @@
  
 ```bash
 # call workflow with task start/stop
-endly -w=docker/mysql -t=start
+endly -w=service/mysql -t=start
 ```
  
  

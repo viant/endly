@@ -1,12 +1,12 @@
 package model
 
 import (
+	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"strings"
-	"fmt"
 )
 
 //Pipelines represents pipelines
@@ -117,8 +117,6 @@ type Inline struct {
 	Init      interface{}            `description:"init state expression"`
 	Post      interface{}            `description:"post processing update state expression"`
 }
-
-
 
 func (p Inline) split(source interface{}) (attributes, params map[string]interface{}, err error) {
 	aMap, err := util.NormalizeMap(source, false)

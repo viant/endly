@@ -24,7 +24,6 @@ func (s *restService) sendRequest(request *Request) (*Response, error) {
 	}, nil
 }
 
-
 const restSendExample = `
 {
 		"URL": "http://127.0.0.1:8085/v1/reporter/register/",
