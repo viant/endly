@@ -27,12 +27,13 @@ type service struct {
 }
 
 func (s *service) extractVersion(context *endly.Context, target *url.Resource, deployment *Deployment) (string, error) {
+
 	if deployment.VersionCheck == nil {
 		return "", nil
 	}
-
+	var extractRequest = deployment.VersionCheck.Clone(target)
 	var runResponse = &exec.RunResponse{}
-	if err := endly.Run(context, deployment.VersionCheck.Clone(target), runResponse); err != nil {
+	if err := endly.Run(context, extractRequest, runResponse); err != nil {
 		return "", err
 	}
 	if len(runResponse.Data) > 0 {
@@ -103,6 +104,8 @@ func (s *service) checkIfDeployedOnSession(context *endly.Context, target *url.R
 }
 
 func (s *service) checkIfDeployedOnSystem(context *endly.Context, target *url.Resource, deploymentTarget *TargetMeta, request *Request) (bool, error) {
+
+
 	if deploymentTarget.Deployment.VersionCheck != nil {
 		actualVersion, err := s.extractVersion(context, target, deploymentTarget.Deployment)
 		if err != nil || actualVersion == "" {
@@ -113,6 +116,7 @@ func (s *service) checkIfDeployedOnSystem(context *endly.Context, target *url.Re
 		}
 		return MatchVersion(request.Version, actualVersion), nil
 	}
+
 	transferTarget, err := context.ExpandResource(deploymentTarget.Deployment.Transfer.Dest)
 	if err != nil {
 		return false, err
@@ -304,6 +308,12 @@ func (s *service) deploy(context *endly.Context, request *Request) (*Response, e
 	}
 
 	err = s.deployAddition(context, target, deploymentTarget.Deployment.Post)
+	if err != nil {
+		return nil, err
+	}
+
+
+
 	if deployed, _ := s.checkIfDeployedOnSystem(context, target, deploymentTarget, request); deployed {
 		var version = request.Version
 		if version == "" {

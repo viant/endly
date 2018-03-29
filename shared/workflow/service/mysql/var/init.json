@@ -30,15 +30,6 @@
     }
   },
   {
-    "Name": "env",
-    "From": "params.env"
-  },
-  {
-    "Name": "env",
-    "When": "$in.params.env:!/$/ && $in.params.env",
-    "Value": {}
-  },
-  {
     "Name": "serviceTarget",
     "From": "params.serviceTarget"
   },
@@ -47,6 +38,7 @@
     "When": "$in.params.serviceTarget:/$/",
     "Value": "$target"
   },
+
   {
     "Name": "version",
     "From": "params.version"
@@ -56,6 +48,22 @@
     "When": "$in.params.version:/$/",
     "Value": "latest"
   },
+
+
+  {
+    "Name": "environment",
+    "From": "params.environment",
+    "Value":{},
+    "Required":true
+  },
+  {
+    "Name": "environment",
+    "When": "$in.params.environment:/$/",
+    "Value": {}
+  },
+
+
+
   {
     "Name": "image",
     "From": "params.image"

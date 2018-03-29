@@ -1,7 +1,7 @@
-name: service/mysql
+name: service/memcached
 tasks: $tasks
-paramas:
+params:
   maxMemory: $maxMemory
-  serviceTarget: serviceTarget
+  serviceTarget: $serviceTarget
   name: $instance
-  version: $mysqlVersion
+  version: latest

@@ -98,7 +98,7 @@
     "Value": {
       "Origin": "$origin",
       "Modules": "$modules",
-      "Target": "$buildTarget"
+      "Dest": "$buildTarget"
     }
   },
   {

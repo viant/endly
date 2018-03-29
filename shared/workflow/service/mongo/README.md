@@ -6,25 +6,27 @@
 #### _Workflow run_
 ```bash
 # call workflow with task start/stop
-endly -w=docker/mongo -t=start
-endly -w=docker/mongo -t=stop
+endly -w=service/mongo -t=start
+endly -w=service/mongo -t=stop
 
 
 #or with parameters
-endly -w=docker/mongo -t=start name=myDB
+endly -w=service/mongo -t=start name=myDB
 ```
 
-#### _Pipeline run_
+#### _Workflow with parameters_
 
 ```bash
-endly -p=run
+endly -r=run
 ```
+
+**Pipeline multi tasks run**
 
 @run.yaml
 ```yaml
 pipeline:
   service:
-    workflow: docker/mongo:start
+    workflow: service/mongo:start
     name: mydb1
     version: latest
   build:
@@ -33,17 +35,11 @@ pipeline:
 ```
 
 
-#### _Workflow run with custom parameters_
- 
- 
-```bash      
-endly -r=run.yaml
-```
-
+**Single tasks run**
 
 @run.yaml 
 ```yaml
-name: docker/mongo
+name: service/mongo
 tasks: start
 params:
   name: mydb1

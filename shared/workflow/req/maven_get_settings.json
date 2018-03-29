@@ -1,4 +1,4 @@
 {
   "Source": "$mavenSettings",
-  "TargetKey": "workflowMavenSettings"
+  "DestKey": "workflowMavenSettings"
 }

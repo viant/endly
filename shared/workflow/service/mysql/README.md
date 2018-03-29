@@ -46,16 +46,9 @@ pipeline:
 ```
 
 
-#### _Workflow run with custom parameters_
- 
- 
-```bash      
-endly -r=run.yaml
-endly -r=run.json
-```
+**Single tasks run**
 
 
-@run.yaml 
 ```yaml
 name: docker/mysql
 tasks: start
