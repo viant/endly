@@ -553,7 +553,7 @@ const (
     "URL": "scp://127.0.0.1/",
     "Credentials": "${env.HOME}/.secret/localhost.json"
   },
-  "Cmd":["mkdir /tmp/app1"]
+  "Commands":["mkdir /tmp/app1"]
 }`
 
 	execServiceRunAndExtractExample = `{
@@ -564,7 +564,7 @@ const (
 	"SystemPaths": [
 	"/opt/sdk/go/bin"
 	],
-	"Cmd": [
+	"Commands": [
 	  {
 		"Command": "go version",
 		"Extraction": [
