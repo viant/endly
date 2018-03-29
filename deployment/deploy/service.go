@@ -105,7 +105,6 @@ func (s *service) checkIfDeployedOnSession(context *endly.Context, target *url.R
 
 func (s *service) checkIfDeployedOnSystem(context *endly.Context, target *url.Resource, deploymentTarget *TargetMeta, request *Request) (bool, error) {
 
-
 	if deploymentTarget.Deployment.VersionCheck != nil {
 		actualVersion, err := s.extractVersion(context, target, deploymentTarget.Deployment)
 		if err != nil || actualVersion == "" {
@@ -311,8 +310,6 @@ func (s *service) deploy(context *endly.Context, request *Request) (*Response, e
 	if err != nil {
 		return nil, err
 	}
-
-
 
 	if deployed, _ := s.checkIfDeployedOnSystem(context, target, deploymentTarget, request); deployed {
 		var version = request.Version

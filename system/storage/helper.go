@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
@@ -8,7 +9,6 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
-	"bytes"
 )
 
 //NewExpandedContentHandler return a new reader that can substitute content with state map, replacement data provided in replacement map.
@@ -30,7 +30,7 @@ func NewExpandedContentHandler(context *endly.Context, replaceMap map[string]str
 			replacted = len(result) != len(content)
 		}
 		for k, v := range replaceMap {
-			if ! replacted && strings.Contains(result, k) {
+			if !replacted && strings.Contains(result, k) {
 				replacted = true
 			}
 			result = strings.Replace(result, k, v, len(result))
