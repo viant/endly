@@ -1,0 +1,7 @@
+Workflow,,Name,Description,Tasks,Init
+,,deploy,deploy app image to docker container,%Tasks,@var/init
+[]Tasks,,Name,Description,Actions,
+,,deploy,deploy app image,%Deploy,
+[]Deploy,Service,Action,Description,Request,When
+,docker,login,login to docker registry,@req/login,$useRegistry:true
+,docker,run,run app image, @req/run,

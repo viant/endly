@@ -1,0 +1,3 @@
+target: $appTarget
+repository: $registry
+credentials: $registryCredentials

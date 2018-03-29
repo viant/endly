@@ -8,11 +8,11 @@ import (
 	"github.com/viant/endly/deployment/deploy"
 	"github.com/viant/endly/deployment/sdk"
 	"github.com/viant/endly/system/process"
+	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"strings"
-	"github.com/viant/endly/util"
 )
 
 const (
@@ -66,7 +66,7 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 	sessions := Sessions(context)
 	_, hasSession := sessions[request.SessionID]
 
-	if ! hasSession {
+	if !hasSession {
 		openResponse, err := s.openSession(context, &OpenSessionRequest{
 			RemoteSelenium: request.RemoteSelenium,
 			Browser:        request.Browser,
@@ -142,7 +142,7 @@ func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRe
 	return response, s.call(context, seleniumSession.driver, request.Call, response, request.Call.Method)
 }
 
-func (s *service) call(context *endly.Context, caller interface{}, call *MethodCall, response *ServiceCallResponse, elementPath ... string) (err error) {
+func (s *service) call(context *endly.Context, caller interface{}, call *MethodCall, response *ServiceCallResponse, elementPath ...string) (err error) {
 	repeater := call.Wait.Init()
 	var handler = func() (interface{}, error) {
 		err = s.callMethod(caller, call.Method, response, call.Parameters)
@@ -161,7 +161,7 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 		return nil, err
 	}
 	var response = &WebElementCallResponse{
-		Data:make(map[string]interface{}),
+		Data: make(map[string]interface{}),
 	}
 	err = request.Selector.Validate()
 	if err != nil {

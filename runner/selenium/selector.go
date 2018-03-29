@@ -1,9 +1,9 @@
 package selenium
 
 import (
+	"fmt"
 	"github.com/tebeka/selenium"
 	"strings"
-	"fmt"
 )
 
 type WebSelector string
@@ -17,7 +17,6 @@ var selectors = map[string]bool{
 	selenium.ByLinkText:        true,
 	selenium.ByPartialLinkText: true,
 }
-
 
 //Validate checks is selector is valid.
 func (s *WebElementSelector) Init() error {
@@ -49,7 +48,7 @@ func (s WebSelector) ByAndValue() (by, value string) {
 	var byIndex = strings.Index(selector, ":")
 	if byIndex != -1 {
 		var byCandidate = strings.TrimSpace(string(selector[:byIndex]))
-		if selectors[byCandidate ] {
+		if selectors[byCandidate] {
 			return byCandidate, strings.TrimSpace(string(selector[byIndex+1:]))
 		}
 	}
@@ -62,4 +61,3 @@ func (s WebSelector) ByAndValue() (by, value string) {
 	}
 	return selenium.ByXPATH, selector
 }
-

@@ -25,8 +25,8 @@ func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, 
 	}
 
 	var runResponse = &exec.RunResponse{}
-	if err := endly.Run(context, exec.NewExtractRequest(request.Target, nil, exec.NewExtractCommand("ls -al /opt/sdk/go", "", nil, nil)), runResponse);err == nil {
-		if ! util.CheckNoSuchFileOrDirectory(runResponse.Output) {
+	if err := endly.Run(context, exec.NewExtractRequest(request.Target, nil, exec.NewExtractCommand("ls -al /opt/sdk/go", "", nil, nil)), runResponse); err == nil {
+		if !util.CheckNoSuchFileOrDirectory(runResponse.Output) {
 			_ = endly.Run(context, exec.NewRunRequest(request.Target, false, "export GOROOT='/opt/sdk/go'"), nil)
 		}
 	}

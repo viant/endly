@@ -5,8 +5,6 @@ import (
 	"testing"
 )
 
-
-
 func TestWebSelector_ByAndValue(t *testing.T) {
 
 	var useCases = []struct {
@@ -51,16 +49,12 @@ func TestWebSelector_ByAndValue(t *testing.T) {
 
 }
 
-
 func TestWebElementSelector_Init(t *testing.T) {
 
-
-
-	var elem =  NewWebElementSelector("", "#name")
+	var elem = NewWebElementSelector("", "#name")
 	assert.Nil(t, elem.Init())
 	assert.Nil(t, elem.Validate())
 	assert.EqualValues(t, "css selector", elem.By)
 	assert.EqualValues(t, "#name", elem.Value)
 
 }
-

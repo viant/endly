@@ -398,7 +398,6 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 	return err
 }
 
-
 func (s *Service) traversePipelines(pipelines model.Pipelines, context *endly.Context, response *RunResponse, process *model.Process) error {
 	for i := range pipelines {
 		if err := s.runPipeline(context, pipelines[i], response, process); err != nil {
@@ -421,8 +420,6 @@ func (s *Service) applyVariables(candidates interface{}, process *model.Process,
 
 func (s *Service) pipeline(context *endly.Context, request *RunRequest) (*RunResponse, error) {
 
-
-
 	var response = &RunResponse{
 		Data: make(map[string]interface{}),
 	}
@@ -434,7 +431,6 @@ func (s *Service) pipeline(context *endly.Context, request *RunRequest) (*RunRes
 	process := model.NewProcess(request.Source, nil, request.Pipelines[0])
 	Push(context, process)
 
-
 	s.publishParameters(request, context)
 	var state = context.State()
 	if request.Inline.Init != nil {
@@ -442,8 +438,6 @@ func (s *Service) pipeline(context *endly.Context, request *RunRequest) (*RunRes
 			return nil, err
 		}
 	}
-
-
 
 	response, err := response, s.traversePipelines(request.Inline.Pipelines, context, response, process)
 
@@ -456,9 +450,6 @@ func (s *Service) pipeline(context *endly.Context, request *RunRequest) (*RunRes
 }
 
 func (s *Service) pipelineWorkflowAsyncInNeeded(context *endly.Context, request *RunRequest) (*RunResponse, error) {
-
-
-
 
 	s.enableLoggingIfNeeded(context, request)
 	if request.Async {
