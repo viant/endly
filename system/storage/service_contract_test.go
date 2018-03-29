@@ -31,6 +31,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
     "file2.txt": "renamedFile2"
   },
   "Transfers": [
+	
     {
       "Source": {
         "URL": "mem://yaml1/dir/file1.txt"
