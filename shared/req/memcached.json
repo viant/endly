@@ -1,9 +1,0 @@
-{
-  "Name": "dockerized_memcached",
-  "Tasks":"$tasks",
-  "Params": {
-    "serviceTarget": "$serviceTarget",
-    "name": "$instance",
-    "maxMemory":"$maxMemory"
-  }
-}

@@ -53,7 +53,7 @@
     "Name": "checkoutRequest",
     "Value": {
       "Origin": "$origin",
-      "Target": "$buildTarget"
+      "Dest": "$buildTarget"
     }
   },
   {

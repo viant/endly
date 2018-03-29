@@ -7,26 +7,28 @@
 #### _Workflow run_
 ```bash
 # call workflow with task start/stop
-endly -w=docker/aerospike -t=start
-endly -w=docker/aerospike -t=stop
+endly -w=service/aerospike -t=start
+endly -w=service/aerospike -t=stop
 
 
 #or with parameters
-endly -w=docker/aerospike -t=start name=myDB
+endly -w=service/aerospike -t=start name=myDB
 ```
 
 
-#### _Pipeline run_
+#### _Workflow with parameters_
 
 ```bash
-endly -p=run
+endly -r=run
 ```
+
+**Pipeline multi tasks run**
 
 @run.yaml
 ```yaml
 pipeline:
   service:
-    workflow: docker/aerospike:start
+    workflow: service/aerospike:start
     name: mydb1
     version: latest
   build:
@@ -34,18 +36,12 @@ pipeline:
     message: building app ...
 ```
 
-#### _Workflow run with custom parameters_
- 
- 
-```bash      
-endly -r=run.yaml
-endly -r=run.json
-```
 
+**Single task run**
 
 @run.yaml 
 ```yaml
-name: docker/aerospike
+name: service/aerospike
 tasks: start
 params:
   name: mydb1
@@ -58,7 +54,7 @@ params:
 @run.json
 ```json
 {
-  "Name": "docker/aerospike",
+  "Name": "service/aerospike",
   "Tasks": "$tasks",
   "Params": {
     "target": "$target",
@@ -69,5 +65,3 @@ params:
   }
 }
 ```
-
-

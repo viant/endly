@@ -8,6 +8,8 @@
     "When": "$in.params.name:/$/",
     "Value": "aerospike_endly"
   },
+
+
   {
     "Name": "target",
     "From": "params.target"
@@ -21,6 +23,30 @@
     }
   },
   {
+    "Name": "serviceTarget",
+    "From": "params.serviceTarget"
+  },
+  {
+    "Name": "serviceTarget",
+    "When": "$in.params.serviceTarget:/$/",
+    "Value": "$target"
+  },
+
+  {
+    "Name": "version",
+    "From": "params.version"
+  },
+  {
+    "Name": "version",
+    "When": "$in.params.version:/$/",
+    "Value": "latest"
+  },
+
+
+
+
+
+  {
     "Name": "environment",
     "From": "params.environment",
     "Value":{},
@@ -31,24 +57,10 @@
     "When": "$in.params.environment:/$/",
     "Value": {}
   },
-  {
-    "Name": "serviceTarget",
-    "From": "params.serviceTarget"
-  },
-  {
-    "Name": "serviceTarget",
-    "When": "$in.params.serviceTarget:/$/",
-    "Value": "$target"
-  },
-  {
-    "Name": "version",
-    "From": "params.version"
-  },
-  {
-    "Name": "version",
-    "When": "$in.params.version:/$/",
-    "Value": "latest"
-  },
+
+
+
+
 
   {
     "Name": "image",

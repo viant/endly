@@ -12,7 +12,8 @@
           "Commands": [
             "rm -rf $appDirectory",
             "mkdir -p $appDirectory",
-            "chmod  -R a+rw $appDirectory"
+            "chmod  -R a+rw $appDirectory",
+            "cd $appDirectory"
           ]
         },
         "Transfer": {
@@ -44,7 +45,7 @@
           ]
         },
         "VersionCheck": {
-          "Run": [
+          "Commands": [
             {
               "Command": "sh tomcat/bin/version.sh",
               "Extraction": [

@@ -1,8 +1,8 @@
 name: service/mysql
 tasks: $tasks
-paramas:
+params:
   stopSystemMysql: true
-  serviceTarget: serviceTarget
+  serviceTarget: $serviceTarget
   target: $target
   config: $Pwd(config/my.cnf)
   credentials: $mysqlCredential

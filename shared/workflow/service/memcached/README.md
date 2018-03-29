@@ -7,44 +7,38 @@
 #### _Workflow run_
 ```bash
 # call workflow with task start/stop
-endly -w=docker/memcached -t=start
-endly -w=docker/memcached -t=stop
+endly -w=service/memcached -t=start
+endly -w=service/memcached -t=stop
 
 
 #or with parameters
-endly -w=docker/memcached -t=start maxMemory=1g
+endly -w=service/memcached -t=start maxMemory=1g
 ```
 
-
-#### _Pipeline run_
+#### _Workflow with parameters_
 
 ```bash
-endly -p=run
+endly -r=run
 ```
+
+**Pipeline multi tasks run**
 
 @run.yaml
 ```yaml
 pipeline:
   service:
-    workflow: docker/memcached
+    workflow: service/memcached
     name: myCache1
   build:
     action: workflow:print
     message: building app ...
 ```
 
-#### _Workflow run with custom parameters_
- 
- 
-```bash      
-endly -r=run.yaml
-endly -r=run.json
-```
-
+**Single tasks run**
 
 @run.yaml 
 ```yaml
-name: docker/memcached
+name: service/memcached
 tasks: start
 params:
   name: myCache1
@@ -54,7 +48,7 @@ params:
 @run.json
 ```json
 {
-  "Name": "docker/memcached",
+  "Name": "service/memcached",
   "Tasks": "start",
   "Params": {
     "serviceTarget": "$serviceTarget",

@@ -1,8 +1,8 @@
 name: service/aerospike
 tasks: $tasks
-defaults:
+params:
   target: $target
   serviceTarget: $serviceTarget
-  config: $conifg
+  config: config/aerospike.conf
   name: $instance
-  version: $version
+  version: 3.16.0.6
