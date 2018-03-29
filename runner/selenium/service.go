@@ -13,6 +13,7 @@ import (
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"strings"
+	"github.com/viant/endly/testing/validator"
 )
 
 const (
@@ -115,7 +116,11 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 			util.Append(response.Data, callResponse.Data, true)
 		}
 	}
-	return response, nil
+	var err error
+	if request.Expected != nil {
+		response.AssertResponse, err = validator.Assert(context, request, request.Expected, response.Data, "selenium validation","assert selenium response" )
+	}
+	return response, err
 }
 
 func (s *service) callMethod(owner interface{}, methodName string, response *ServiceCallResponse, parameters []interface{}) (err error) {
