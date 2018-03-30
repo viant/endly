@@ -294,7 +294,6 @@ func (r *Runner) processAssertable(event msg.Event) bool {
 	if !ok {
 		return false
 	}
-
 	validations := asserted.Assertion()
 	if len(validations) == 0 {
 		return true
