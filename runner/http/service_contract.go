@@ -34,7 +34,7 @@ type Request struct {
 type SendResponse struct {
 	Responses []*Response
 	Data      data.Map
-	*validator.AssertResponse
+	Assert *validator.AssertResponse
 }
 
 //Response represents Http response

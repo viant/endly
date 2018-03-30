@@ -13,5 +13,5 @@ type Request struct {
 //Response represents a rest response
 type Response struct {
 	Response interface{}
-	*validator.AssertResponse
+	Assert *validator.AssertResponse
 }
