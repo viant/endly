@@ -13,7 +13,7 @@ import (
 type SendRequest struct {
 	Options  []*toolbox.HttpOptions `description:"http client options: key value pairs, where key is one of the following: HTTP options:RequestTimeoutMs,TimeoutMs,KeepAliveTimeMs,TLSHandshakeTimeoutMs,ResponseHeaderTimeoutMs,MaxIdleConns"`
 	Requests []*Request
-	Expected interface{}            `description:"If specified it will validated response as actual"`
+	Expect interface{}            `description:"If specified it will validated response as actual"`
 }
 
 //ServiceRequest represents an http request

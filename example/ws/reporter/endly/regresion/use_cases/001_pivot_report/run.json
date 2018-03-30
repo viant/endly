@@ -1,5 +1,35 @@
 {
-  "Name":"report1",
-  "Datastore":"db1",
-  "Parameters":{}
+  "Request": {
+    "Name": "report1",
+    "Datastore": "db1",
+    "Parameters": {}
+  },
+  "Expect": {
+    "Data": [
+      {
+        "Food": "6759.00",
+        "Healthcare": "4290.00",
+        "Housing": "17798.00",
+        "Other": "3547.00",
+        "Transportation": "9073.00",
+        "year": 2014
+      },
+      {
+        "Food": "7023.00",
+        "Healthcare": "4342.00",
+        "Housing": "18409.00",
+        "Other": "3845.00",
+        "Transportation": "9503.00",
+        "year": 2015
+      },
+      {
+        "Food": "7023.00",
+        "Healthcare": "4612.00",
+        "Housing": "18886.00",
+        "Other": "3933.00",
+        "Transportation": "9049.00",
+        "year": 2016
+      }
+    ]
+  }
 }

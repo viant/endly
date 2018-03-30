@@ -200,10 +200,10 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 		}
 	}
 
-	if request.Expected != nil {
-		result.Assert, err = validator.Assert(context, request, request.Expected, map[string]interface{}{
+	if request.Expect != nil {
+		result.Assert, err = validator.Assert(context, request, request.Expect, map[string]interface{}{
 			"Responses": result.Responses,
-		}, "http validation", "assert http responses")
+		}, "HTTP.responses", "assert http responses")
 	}
 
 	return result, nil

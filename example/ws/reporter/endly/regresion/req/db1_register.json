@@ -1,8 +1,0 @@
-{
-  "Datastore": "db1",
-  "Config": {
-    "Credentials": "$mysqlCredential",
-    "DriverName": "mysql",
-    "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
-  }
-}
