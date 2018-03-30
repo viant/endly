@@ -166,7 +166,7 @@ func (s *AbstractService) Begin(context *Context, value interface{}) msg.Event {
 //End adds finishing event.
 func (s *AbstractService) End(context *Context) func(startEvent msg.Event, value interface{}) msg.Event {
 	return func(startEvent msg.Event, value interface{}) msg.Event {
-		return context.Publish(value)
+		return context.PublishWithStartEvent(value, startEvent)
 	}
 }
 

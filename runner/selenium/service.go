@@ -117,8 +117,8 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 		}
 	}
 	var err error
-	if request.Expected != nil {
-		response.AssertResponse, err = validator.Assert(context, request, request.Expected, response.Data, "selenium validation","assert selenium response" )
+	if request.Expect != nil {
+		response.Assert, err = validator.Assert(context, request, request.Expect, response.Data, "selenium validation","assert selenium response" )
 	}
 	return response, err
 }

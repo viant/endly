@@ -193,9 +193,9 @@ func (p *Inline) InitTasks(baseURL string, selector TasksSelector, defaultParams
 	if !selector.RunAll() {
 		p.Pipelines = p.Pipelines.Select(selector)
 	}
+
 	if len(p.Pipelines) == 0 || p.Pipelines.RunnableCount() == 0 {
 		return fmt.Errorf("no pipelines matched with tasks selector: '%v'", string(selector))
 	}
-
 	return nil
 }

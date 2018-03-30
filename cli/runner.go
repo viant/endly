@@ -254,6 +254,9 @@ func (r *Runner) canReport(event msg.Event, filter map[string]bool) bool {
 }
 
 func (r *Runner) processReporter(event msg.Event, filter map[string]bool) bool {
+	if event == nil {
+		return true
+	}
 	var eventValue = event.Value()
 	if eventValue == nil {
 		return false
@@ -415,7 +418,8 @@ func (r *Runner) hasFailureMatch(failure *assertly.Failure, runnerLogs map[strin
 	return false
 }
 
-func (r *Runner) reportFailureWithMatchSource(tag *EventTag, validation *assertly.Validation, eventCandidates []msg.Event) {
+func (r *Runner) reportFailureWithMatchSource(tag *EventTag, event msg.Event, validation *assertly.Validation, eventCandidates []msg.Event) {
+
 	var theFirstFailure = validation.Failures[0]
 	firstFailurePathIndex := theFirstFailure.Index()
 	var runnerLogs = r.extractRunnerLogs(eventCandidates)
@@ -513,7 +517,7 @@ func (r *Runner) reportAssertion(event msg.Event, validations ...*assertly.Valid
 			passedCount += validation.PassedCount
 			eventTag.PassedCount += validation.PassedCount
 		}
-		eventTag.AddEvent(msg.NewEvent(validation))
+		eventTag.AddEvent(msg.NewEventWithInit(validation, event.Init()))
 	}
 	var total = passedCount + failedCount
 	messageType := msg.MessageStyleSuccess
@@ -544,9 +548,13 @@ func (r *Runner) reportTagSummary() {
 				if validation.HasFailure() {
 					var beforeValidationEvents = []msg.Event{}
 					if i-minRange > 0 {
-						beforeValidationEvents = tag.Events[minRange : i-1]
+						var maxRagne = i+3
+						if maxRagne >= len(tag.Events) {
+							maxRagne = len(tag.Events)-1
+						}
+						beforeValidationEvents = tag.Events[minRange : maxRagne]
 					}
-					r.reportFailureWithMatchSource(tag, validation, beforeValidationEvents)
+					r.reportFailureWithMatchSource(tag, event, validation, beforeValidationEvents)
 					minRange = i + 1
 				}
 			}

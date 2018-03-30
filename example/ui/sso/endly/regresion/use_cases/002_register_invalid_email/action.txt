@@ -1,1 +1,1 @@
-register.json
+register.yaml

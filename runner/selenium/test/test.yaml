@@ -31,7 +31,6 @@ pipeline:
         sleepTimeMs: 1000
         repeat: 10
       - close
-  assert:
-    action: validator:assert
-    actual: $Data.output.Text
-    expected: /Hello Endly!/
+    expect:
+      output:
+        Text: /Hello Endly!/

@@ -50,9 +50,9 @@ func (c *Context) Publish(value interface{}) msg.Event {
 	return event
 }
 
-//PublishWithTimestamp publishes event to listeners, it updates current run details like activity workflow name etc ...
-func (c *Context) PublishWithTimestamp(value interface{}, timestamp time.Time) msg.Event {
-	event := msg.NewEventWithTimestamp(value, timestamp)
+//PublishWithStartEvent publishes event to listeners, it updates current run details like activity workflow name etc ...
+func (c *Context) PublishWithStartEvent(value interface{}, init msg.Event) msg.Event {
+	event := msg.NewEventWithInit(value, init)
 	if c.Listener != nil {
 		c.Listener(event)
 	}

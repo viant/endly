@@ -1,6 +1,0 @@
-{
-  "RemoteSelenium": {
-    "URL":"http://${targetHost}:$seleniumServerPort/"
-  },
-  "Browser": "firefox"
-}
