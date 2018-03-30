@@ -1,0 +1,17 @@
+sessionID: $SeleniumSessionID
+commands:
+  - (#email).clear
+  - (#email).sendKeys('$email')
+  - (#name).clear
+  - (#name).sendKeys('$name')
+  - (#password).clear
+  - (#password).sendKeys('$password')
+  - (#retypedPassword).clear
+  - (#retypedPassword).sendKeys('$password')
+  - (#dateOfBirth).clear
+  - (#dateOfBirth).sendKeys('$dateOfBirth')
+  - (#submit).click
+  - email = (xpath://SMALL[preceding-sibling::INPUT[@id='email']]).text
+expect:
+  email:
+    Text: email abc@wp.pl has been already registered

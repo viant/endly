@@ -20,7 +20,7 @@ var OnError = func(code int) {
 }
 
 const (
-	messageTypeAction = iota + 10
+	messageTypeAction         = iota + 10
 	messageTypeTagDescription
 )
 
@@ -98,6 +98,7 @@ func (r *Runner) EventTag() *EventTag {
 	}
 
 	activity := r.Last()
+
 	if _, has := r.indexedTag[activity.TagID]; !has {
 		eventTag := &EventTag{
 			Caller: activity.Caller,
@@ -173,12 +174,14 @@ func (r *Runner) formatShortMessage(messageType int, message string, messageInfo
 
 func (r *Runner) getRepeated(event msg.Event) *msg.Repeated {
 	var repeatedType = fmt.Sprintf("%T", event.Value)
+	r.repeatedCount = -1
 	if r.repeated != nil && r.repeated.Type == repeatedType {
 		return r.repeated
 	}
 	r.repeated = &msg.Repeated{
 		Type: repeatedType,
 	}
+
 	return r.repeated
 }
 
@@ -188,7 +191,6 @@ func (r *Runner) resetRepeated() {
 			fmt.Printf("\n")
 		}
 		r.repeatedCount = r.repeated.Count
-
 	}
 }
 
@@ -292,10 +294,12 @@ func (r *Runner) processAssertable(event msg.Event) bool {
 	if !ok {
 		return false
 	}
+
 	validations := asserted.Assertion()
 	if len(validations) == 0 {
 		return true
 	}
+	r.resetRepeated()
 	r.reportAssertion(event, validations...)
 	return true
 }
@@ -352,7 +356,6 @@ func (r *Runner) processEvent(event msg.Event, filter map[string]bool) {
 		return
 	}
 	if r.processAssertable(event) {
-		r.resetRepeated()
 		return
 	}
 	if r.processReporter(event, filter) {
@@ -373,28 +376,30 @@ func (r *Runner) createRunnerLogIfNeeded(logs map[string][]*runnerLog, key strin
 	}
 }
 
-func (r *Runner) extractRunnerLogs(candidates []msg.Event) map[string][]*runnerLog {
-
+func (r *Runner) extractRunnerLogs(candidates []msg.Event, offset, maxIndex int) map[string][]*runnerLog {
 	var result = make(map[string][]*runnerLog)
-	for _, candidate := range candidates {
+	for i := offset; i < len(candidates);i++ {
+		var candidate = candidates[i]
 		var eventValue = candidate.Value()
 		if eventValue == nil {
 			continue
 		}
 
-		if _, ok := eventValue.(msg.RunnerInput); ok {
-			key := candidate.Package()
-			r.createRunnerLogIfNeeded(result, key)
-			result[key] = append(result[key], &runnerLog{
-				In: candidate,
-			})
-			continue
+		if i <= maxIndex  {
+			_, ok := eventValue.(msg.RunnerInput);
+			if ok {
+				key := candidate.Package()
+				r.createRunnerLogIfNeeded(result, key)
+				result[key] = append(result[key], &runnerLog{
+					In: candidate,
+				})
+				continue
+			}
 		}
 
-		if _, ok := eventValue.(msg.RunnerOutput); ok {
+		if _, ok := eventValue.(msg.RunnerOutput); ok  {
 			key := candidate.Package()
 			lastIndex := len(result[key]) - 1
-
 			if lastIndex == -1 {
 				continue
 			}
@@ -410,7 +415,11 @@ func (r *Runner) hasFailureMatch(failure *assertly.Failure, runnerLogs map[strin
 	var leafKey = failure.LeafKey()
 	for _, logs := range runnerLogs {
 		for _, log := range logs {
-			if strings.Contains(log.JSONOutput, leafKey) {
+			var matchable =log.JSONOutput
+			if matchable == "" {
+				matchable = toolbox.AsString(log.Out.Value())
+			}
+			if strings.Contains(matchable, leafKey) {
 				return true
 			}
 		}
@@ -418,22 +427,29 @@ func (r *Runner) hasFailureMatch(failure *assertly.Failure, runnerLogs map[strin
 	return false
 }
 
-func (r *Runner) reportFailureWithMatchSource(tag *EventTag, event msg.Event, validation *assertly.Validation, eventCandidates []msg.Event) {
+func (r *Runner) reportFailureWithMatchSource(tag *EventTag, event msg.Event, validation *assertly.Validation, eventCandidates []msg.Event, offset, maxIndex int) {
 
 	var theFirstFailure = validation.Failures[0]
 	firstFailurePathIndex := theFirstFailure.Index()
-	var runnerLogs = r.extractRunnerLogs(eventCandidates)
+	var runnerLogs = r.extractRunnerLogs(eventCandidates, offset, maxIndex)
+
 	if r.hasFailureMatch(theFirstFailure, runnerLogs) {
 		var wildcardFilter = WildcardFilter()
+		var matched = false
 		if theFirstFailure.Index() != -1 {
 			for _, logs := range runnerLogs {
 				if firstFailurePathIndex < len(logs) {
 					runnerLog := logs[firstFailurePathIndex]
-					r.processReporter(runnerLog.In, wildcardFilter)
-					r.processReporter(runnerLog.Out, wildcardFilter)
+					if runnerLog.In != nil && runnerLog.Out != nil {
+						 matched = true
+						r.processReporter(runnerLog.In, wildcardFilter)
+						r.processReporter(runnerLog.Out, wildcardFilter)
+					}
 				}
 			}
-		} else {
+		}
+
+		if ! matched {
 			for _, logs := range runnerLogs {
 				runnerLog := logs[0]
 				r.processReporter(runnerLog.In, wildcardFilter)
@@ -538,24 +554,17 @@ func (r *Runner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
-			var minRange = 0
+			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
+			var offset = 0
 			for i, event := range tag.Events {
 				validation := r.getValidation(event)
 				if validation == nil {
 					continue
 				}
 				if validation.HasFailure() {
-					var beforeValidationEvents = []msg.Event{}
-					if i-minRange > 0 {
-						var maxRagne = i+3
-						if maxRagne >= len(tag.Events) {
-							maxRagne = len(tag.Events)-1
-						}
-						beforeValidationEvents = tag.Events[minRange : maxRagne]
-					}
-					r.reportFailureWithMatchSource(tag, event, validation, beforeValidationEvents)
-					minRange = i + 1
+					var maxIndex = i - 1
+					r.reportFailureWithMatchSource(tag, event, validation, tag.Events, offset, maxIndex)
+					offset = i + 1
 				}
 			}
 		}
