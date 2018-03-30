@@ -20,9 +20,8 @@ func NewExpandedContentHandler(context *endly.Context, replaceMap map[string]str
 		if err != nil {
 			return nil, err
 		}
-
 		var result = string(content)
-		if expand {
+		if expand  && toolbox.IsPrintText(result) {
 			result = context.Expand(result)
 			if err != nil {
 				return nil, err
