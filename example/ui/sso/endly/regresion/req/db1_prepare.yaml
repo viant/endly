@@ -1,0 +1,2 @@
+datastore: db1
+data: $users

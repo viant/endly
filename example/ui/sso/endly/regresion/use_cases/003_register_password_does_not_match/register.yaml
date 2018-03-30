@@ -1,0 +1,12 @@
+sessionID: $SeleniumSessionID
+commands:
+  - get(http://127.0.0.1:8888/signup/)
+  - (#password).clear
+  - (#password).sendKeys('test!abc@')
+  - (#retypedPassword).clear
+  - (#retypedPassword).sendKeys('test!abc@123')
+  - (#submit).click
+  - retypedPassword = (xpath://SMALL[preceding-sibling::INPUT[@id='retypedPassword']]).text
+expect:
+  retypedPassword:
+    Text: Password does not match

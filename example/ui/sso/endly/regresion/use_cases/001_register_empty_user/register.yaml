@@ -1,0 +1,21 @@
+sessionID: $SeleniumSessionID
+commands:
+  - get(http://127.0.0.1:8888/signup/)
+  - (#email).clear
+  - (#name).clear
+  - (#password).clear
+  - (#dateOfBirth).clear
+  - (#submit).click
+  - name = (xpath://SMALL[preceding-sibling::INPUT[@id='name']]).text
+  - email = (xpath://SMALL[preceding-sibling::INPUT[@id='email']]).text
+  - password = (xpath://SMALL[preceding-sibling::INPUT[@id='password']]).text
+  - dateOfBirth = (xpath://SMALL[preceding-sibling::INPUT[@id='dateOfBirth']]).text
+expect:
+  dateOfBirth:
+    Text: Data of birth can not be empty
+  email:
+    Text: Email can not be empty
+  name:
+    Text: Name can not be empty
+  password:
+    Text: Password can not be empty

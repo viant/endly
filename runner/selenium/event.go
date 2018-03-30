@@ -9,28 +9,23 @@ import (
 //Messages returns messages
 func (r *RunResponse) Messages() []*msg.Message {
 	var result = make([]*msg.Message, 0)
-	if len(r.LookupErrors) == 0 {
-		return result
-	}
-	seleniumData, _ := toolbox.AsJSONText(r.Data)
-	result = append(result,
-		msg.NewMessage(msg.NewStyled("Response", msg.MessageStyleGeneric), msg.NewStyled("selenium", msg.MessageStyleGeneric),
-			msg.NewStyled(seleniumData, msg.MessageStyleInput),
-		))
 
-	for _, errMessage := range r.LookupErrors {
-		result = append(result,
-			msg.NewMessage(msg.NewStyled(errMessage, msg.MessageStyleError), msg.NewStyled("selenium", msg.MessageStyleGeneric)))
-	}
-
+	var dataMessages = []*msg.Styled{}
 	for k, v := range r.Data {
 		value := v
 		if toolbox.IsCompleteJSON(toolbox.AsString(v)) {
 			value, _ = toolbox.AsJSONText(v)
 		}
-		var message=fmt.Sprint("$Data.%v = %v", k, value)
+		dataMessages = append(dataMessages, msg.NewStyled(fmt.Sprintf("%v = %v", k, value), msg.MessageStyleOutput))
+	}
+	result = append(result,
+		msg.NewMessage(msg.NewStyled("Response", msg.MessageStyleGeneric), msg.NewStyled("selenium", msg.MessageStyleGeneric), dataMessages...))
+	if len(r.LookupErrors) == 0 {
+		return result
+	}
+	for _, errMessage := range r.LookupErrors {
 		result = append(result,
-			msg.NewMessage(msg.NewStyled(message, msg.MessageStyleOutput), msg.NewStyled("selenium.", msg.MessageStyleGeneric)))
+			msg.NewMessage(msg.NewStyled(errMessage, msg.MessageStyleOutput), msg.NewStyled("lookup", msg.MessageStyleError)))
 	}
 	return result
 }
@@ -45,12 +40,15 @@ func (r *RunRequest) Messages() []*msg.Message {
 		if action.Selector != nil {
 			selector = fmt.Sprintf("(%v:%v)", action.Selector.By, action.Selector.Value)
 		}
+		if selector != "" {
+			selector += "."
+		}
 		for _, call := range action.Calls {
-			actionCalls = append(actionCalls, msg.NewStyled(fmt.Sprintf("%v.%v(%v)", selector, call.Method, call.Parameters), msg.MessageStyleGeneric))
+			actionCalls = append(actionCalls, msg.NewStyled(fmt.Sprintf("%v%v(%v)", selector, call.Method, call.Parameters), msg.MessageStyleInput))
 		}
 	}
 	result = append(result,
-		msg.NewMessage(msg.NewStyled("Run", msg.MessageStyleInput), msg.NewStyled("selenium.run", msg.MessageStyleGeneric),
+		msg.NewMessage(msg.NewStyled("Request", msg.MessageStyleGeneric), msg.NewStyled("selenium.run", msg.MessageStyleGeneric),
 			actionCalls...))
 
 	return result
