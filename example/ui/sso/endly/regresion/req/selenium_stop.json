@@ -1,4 +1,0 @@
-{
-  "Target": "$target",
-  "Port": "$seleniumServerPort"
-}

@@ -116,7 +116,7 @@ type RunRequest struct {
 	RemoteSelenium *url.Resource //remote selenium resource
 	Actions        []*Action
 	Commands       []interface{} `description:"list of selenium command: {web element selector}.WebElementMethod(params),  or WebDriverMethod(params), or wait map "`
-	Expected       interface{}   `description:"If specified it will validated response as actual"`
+	Expect       interface{}   `description:"If specified it will validated response as actual"`
 }
 
 func (r *RunRequest) asWaitAction(parser *parser, candidate interface{}) (*Action, error) {
@@ -207,7 +207,7 @@ type RunResponse struct {
 	SessionID    string
 	Data         map[string]interface{}
 	LookupErrors []string
-	*validator.AssertResponse `transient= true`
+	Assert *validator.AssertResponse
 }
 
 //MethodCall represents selenium call.
@@ -280,13 +280,13 @@ type OpenSessionRequest struct {
 //Validate validate open session request
 func (r *OpenSessionRequest) Validate() error {
 	if r.RemoteSelenium == nil {
-		return errors.New("Remote (remote selenium endpoint) was empty")
+		return errors.New("remote (remote selenium endpoint) was empty")
 	}
 	if r.RemoteSelenium.URL == "" {
-		return errors.New("Remote.URL (selenium resource URL) was empty")
+		return errors.New("remote.URL (selenium resource URL) was empty")
 	}
 	if r.Browser == "" {
-		return errors.New("Browser was empty")
+		return errors.New("browser was empty")
 	}
 	return nil
 }

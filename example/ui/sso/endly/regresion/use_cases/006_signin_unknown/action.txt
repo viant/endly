@@ -1,1 +1,1 @@
-signin.json|#signin_data.json
+signin.yaml|@signin_data.json

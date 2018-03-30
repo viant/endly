@@ -36,14 +36,11 @@ func (r *RunRequest) HasPipeline() bool {
 
 //Init initialises request
 func (r *RunRequest) Init() (err error) {
-
 	r.Params, err = util.NormalizeMap(r.Params, true)
 	if err != nil {
 		return err
 	}
-
 	if r.HasPipeline() {
-
 		if len(r.Defaults) == 0 {
 			r.Defaults = make(map[string]interface{})
 		}

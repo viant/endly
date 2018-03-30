@@ -1,1 +1,1 @@
-register.json|#registeration_data.json
+register.yaml|@registeration_data.json

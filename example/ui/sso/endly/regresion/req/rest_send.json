@@ -1,5 +1,0 @@
-{
-  "URL" :"http://${targetHost}:8085$uri",
-  "Method":"POST",
-  "Request":$arg0
-}
