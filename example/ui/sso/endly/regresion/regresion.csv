@@ -8,7 +8,7 @@ Workflow,,,Name,Description,Tasks,,,,Init,,
 ,,dsunit,prepare,prepare data in datastore,@req/db1_prepare,$Length($users):!0,,,,,
 []Tasks,,,Name,Description,Actions,,,,,,
 ,,,test,Defines test requests,%Test,,,,,,
-[]Test{3..003},Subpath,Service,Action,Description,Request,Skip,When,action,/Data.ds.[]users,TagDescription,SleepTimeMs
+[]Test{5..008},Subpath,Service,Action,Description,Request,Skip,When,action,/Data.ds.[]users,TagDescription,SleepTimeMs
 ,use_cases/${index}*,nop,nop,skip this group if skip.txt is present,{},$HasResource(${subPath}/skip.txt):true,,,,@use_case.txt,
 ,use_cases/${index}*,nop,nop,push user data,{},,,,@user,,
 ,use_cases/${index}*,selenium,run,run selenium test,@$action,,,@action.txt,,,100
@@ -16,5 +16,5 @@ Workflow,,,Name,Description,Tasks,,,,Init,,
 []Tasks,,,Name,Description,Actions,,,,,,
 ,,,clean,stop test services,%Clean,,,,,,
 []Clean,,Service,Action,Description,Request,SleepTimeMs,,,,,
-,,nop,nop,sleep for easy debuging,{},1000000,,,,,
+,,nop,nop,sleep for easy debuging,{},1000,,,,,
 ,,,run,close and stop seleniun,@req/selenium_destroy,,,,,,
