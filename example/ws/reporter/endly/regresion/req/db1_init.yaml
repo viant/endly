@@ -1,0 +1,19 @@
+defaults:
+  datastore: db1
+pipeline:
+  register:
+    action: dsunit.register
+    config:
+      driverName: mysql
+      descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+      credentials: $mysqlCredential
+  populate:
+    action: dsunit.prepare
+    URL: datastore/db1/data
+  read:
+    action: dsunit.sequence
+    tables:
+      - report
+      - report_performance
+post:
+  - db1.sequence = $read.Sequences

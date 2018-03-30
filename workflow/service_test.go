@@ -45,44 +45,6 @@ import (
 	"github.com/viant/endly/workflow"
 )
 
-//
-//func TestService_Pipeline(t *testing.T) {
-//	manager := endly.New()
-//	credentials, _ := util.GetDummyCredential()
-//	context, err := exec.NewSSHMultiReplayContext(manager, map[string]*url.Resource{
-//		"test/pipeline/build/ssh/exec":  url.NewResource("ssh://127.0.0.1/", credentials),
-//		"test/pipeline/build/ssh/build": url.NewResource("ssh://127.0.0.1:7722/", "mem://github.com/viant/endly/workflow/docker/build/secret/build.json"),
-//	})
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	memStorage := storage.UseMemoryService(context)
-//	assert.Nil(t, err)
-//
-//	// TEST ASSETS
-//	//initial upload
-//	memStorage.Upload("ssh://127.0.0.1/Projects/go/workspace/src/github.com/viant/endly/workflow/test/pipeline/build.yaml", strings.NewReader("111"))
-//
-//	//go deployment assets
-//	memStorage.Upload("https://redirector.gvt1.com/edgedl/go/go1.8.9.linux-amd64.tar.gz", strings.NewReader("xyz"))
-//	memStorage.Upload("mem://127.0.0.1:7722/opt/sdk/go_1.8.9.tar.gz", strings.NewReader("abc"))
-//
-//	//final download source
-//	memStorage.Upload("mem://127.0.0.1:7722/echo", strings.NewReader("final app build"))
-//
-//	request, err := workflow.NewRunRequestFromURL("test/pipeline/build.yaml")
-//	if err != nil {
-//		log.Fatal(err)
-//	}
-//	request.EnableLogging = true
-//	request.LogDirectory = "logs"
-//	var resp = &workflow.RunResponse{}
-//	err = endly.Run(context, request, resp)
-//	if !assert.Nil(t, err) {
-//		log.Fatal(err.Error())
-//	}
-//	assert.NotNil(t, resp)
-//}
 
 func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, error) {
 	manager := endly.New()

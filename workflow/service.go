@@ -358,14 +358,25 @@ func (s *Service) runAsyncActions(context *endly.Context, process *model.Process
 func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, response *RunResponse, process *model.Process) (err error) {
 	context.Publish(NewPipelineEvent(pipeline))
 	var state = context.State()
+	last := LastWorkflow(context)
 	if len(pipeline.Pipelines) > 0 {
 		defer Pop(context)
 		process := model.NewProcess(process.Source, nil, pipeline)
+
 		Push(context, process)
 		return s.traversePipelines(pipeline.Pipelines, context, response, process)
 	}
 
 	activity := pipeline.NewActivity(context)
+	if activity.Caller == "" && last != nil  {
+		lastActivity := last.Last()
+		if lastActivity != nil {
+			activity.Caller = last.Activity.Caller
+			activity.TagID = last.Activity.TagID
+			activity.Tag = last.Activity.Tag
+		}
+	}
+
 	context.Publish(activity)
 	process.Push(activity)
 	defer process.Pop()

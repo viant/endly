@@ -7,7 +7,7 @@ type Request struct {
 	URL     string
 	Method  string
 	Request interface{}
-	Expected interface{} `description:"If specified it will validated response as actual"`
+	Expect interface{} `description:"If specified it will validated response as actual"`
 }
 
 //Response represents a rest response

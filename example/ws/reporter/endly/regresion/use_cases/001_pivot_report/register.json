@@ -1,22 +1,27 @@
 {
-  "ReportType": "pivot",
-  "Report": {
-    "Name": "report1",
-    "From": "expenditure",
-    "Values": [
-      {
-        "Function": "SUM",
-        "Column": "expenditure"
-      }
-    ],
-    "Columns": [
-      {
-        "Name": "category",
-        "Alias": ""
-      }
-    ],
-    "Groups": [
-      "year"
-    ]
+  "Request": {
+    "ReportType": "pivot",
+    "Report": {
+      "Name": "report1",
+      "From": "expenditure",
+      "Values": [
+        {
+          "Function": "SUM",
+          "Column": "expenditure"
+        }
+      ],
+      "Columns": [
+        {
+          "Name": "category",
+          "Alias": ""
+        }
+      ],
+      "Groups": [
+        "year"
+      ]
+    }
+  },
+  "Expect": {
+    "Status": "ok"
   }
 }

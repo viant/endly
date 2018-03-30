@@ -1,5 +1,7 @@
 {
   "Datastore": "db1",
-  "Data": $arg0,
+  "Data": {
+    "...":"$data"
+  },
   "CheckPolicy": 1
 }
