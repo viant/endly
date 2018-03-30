@@ -25,7 +25,7 @@ func (s *restService) sendRequest(context *endly.Context, request *Request) (*Re
 	}
 
 	if request.Expected != nil {
-		response.AssertResponse, err = validator.Assert(context, request, request.Expected, resetResponse, "REST validation", "assert REST response")
+		response.Assert, err = validator.Assert(context, request, request.Expected, resetResponse, "REST validation", "assert REST response")
 	}
 	return response, err
 
