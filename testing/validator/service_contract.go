@@ -19,6 +19,9 @@ type AssertResponse struct {
 
 //Assertion returns validation slice
 func (r *AssertResponse) Assertion() []*assertly.Validation {
+	if r == nil {
+		return []*assertly.Validation{}
+	}
 	return []*assertly.Validation{r.Validation}
 }
 

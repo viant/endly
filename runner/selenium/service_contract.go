@@ -258,6 +258,12 @@ func (r *RunRequest) Validate() error {
 	if len(r.Actions) == 0 {
 		return fmt.Errorf("both actions/commands were empty")
 	}
+
+	for i, action := range r.Actions {
+		if len(action.Calls) == 0 {
+			return fmt.Errorf("actions[%d].Calls were empty", i)
+		}
+	}
 	return nil
 }
 
