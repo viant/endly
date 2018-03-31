@@ -322,7 +322,7 @@ You can build, deploy and test them end to end all with endly.
 
 <a name="Documentation"></a>
 
-###**Documentation**
+**Documentation**
 - [Secret/Credential](doc/secrets)
 - [Service](doc/service)
 - [Usage](doc/usage)
@@ -331,7 +331,7 @@ You can build, deploy and test them end to end all with endly.
 
 
 
-###**External resources**
+**External resources**
 
 [Endly introduction](https://github.com/adrianwit/endly-introduction)    
 
