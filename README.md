@@ -11,11 +11,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Installation](#Installation)
 - [Introduction](#Introduction)
 - [GettingStarted](#GettingStarted)
-- [Services](#Services)
-- [Secrets](#Credentail)
-- [Unit test](#Unit)
-- [Usage](#Usage)
-- [Best Practice](#BestPractice)
+- [Documentation](#Documentation)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
 
@@ -24,7 +20,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 ## Motivation
 
-This library was developed to enable simple automated declarative end to end functional testing 
+This library was developed in go lang to enable simple automated declarative end to end functional testing 
 for web application developed in any language.
 
 It addresses all aspect of testing automation namely:
@@ -39,19 +35,44 @@ It addresses all aspect of testing automation namely:
 <a name="Installation"></a>
 ## Installation
 
+1) [Download latest binary](https://github.com/viant/endly/releases/)
 
-[Download the latst endly](https://github.com/viant/endly/releases/)
-
-or build from sources
-
-```text
-#optionally set GOPATH directory
-export GOPATH=/Projects/go
-
-go get -u github.com/viant/endly
+    tax -xvzf endly_xxx.tar.gz
+    cp endly /usr/local/bin
+    endly -h
+    endly -v
 
 
-```
+2) Build from source
+   a) install go 1.9+
+   b) run the following commands:
+   ```bash
+   mkdir -p ~/go
+   export GOPATH=~/go
+   go get -u  github.com/viant/endly
+   go get -u  github.com/viant/endly/endly
+   cd $GOPATH/src/github.com/viant/endly/endly
+   go build endly.go
+   cp endly /usr/local/bin
+   ```
+3) Custom build, in case you need additional drivers, dependencies or UDF, added necessary imports:
+
+@endly.go
+```go
+
+package main
+
+//import your udf package  or other dependencies here
+
+import "github.com/viant/endly/bootstrap"
+
+func main() {
+	bootstrap.Bootstrap()
+}
+
+```       
+
+     
 
 
 <a name="Introduction"></a>
@@ -82,30 +103,192 @@ Endly as a comprehensive testing framework automate the following step:
     3) Application system services shutdown 
     
 
-Endly automate sequence of actions into reusable tasks and workflows. 
-It uses tabular [Neatly](https://github.com/viant/neatly) format to represent a workflow.
-Neatly is responsible for converting a tabular document (.csv) into workflow object tree as shown below.
-
-![Workflow diagram](workflow_diagram.png)
-
-
-See more about [workflow and its lifecycle](doc)
-
-A workflow actions invoke endly [services](#Services) to accomplish specific job.
-
-
-
-
 <a name="GettingStarted"></a>
 ## Getting Started
 
-[Neatly introduction](https://github.com/adrianwit/neatly-introduction)
+Endly automate sequence of actions into reusable tasks and workflows or inline tasks pipeline tasks. 
 
-[Endly introduction](https://github.com/adrianwit/endly-introduction)    
+**a) System preparation**
+
+For instance: the following define inline pipeline tasks to prepare app system services:
+
+@system.yaml
+```yaml
+tasks: $tasks
+defaults:
+  target: $serviceTarget
+pipeline:
+  destroy:
+    stop-images:
+      action: docker:stop-images
+      images:
+        - mysql
+        - aerospike
+  init:
+    services:
+      mysql:
+        workflow: "service/mysql:start"
+        name: mydb3
+        version: $mysqlVersion
+        credentials: $mysqlCredentials
+        config: config/my.cnf
+      aerospike:
+        workflow: "service/aerospike:start"
+        name: mydb4
+        config: config/aerospike.conf
+```
+
+
+**b) Application build and deployment** 
+
+For instance: the following  define inline pipeline tasks to build and deploy a test app:
+(you can easily build an app for standalone mode or in and for docker container)
+
+@app.yaml
+```yaml
+tasks: $tasks
+defaults:
+  app: myApp
+  sdk: go:1.8
+
+pipeline:
+
+  build:
+    workflow: app/build
+    origin:
+      URL: ./../
+    commands:
+      - cd $buildPath/app
+      - go get -u .
+      - go build -o $app
+      - chmod +x $app
+    download:
+      /$buildPath/app/${app}: $releasePath
+      /$buildPath/endly/config/config.json: $releasePath
+
+  deploy:
+    workflow: app/deploy
+    init:
+      - mkdir -p $appPath
+      - mkdir -p $appPath/config
+      - chown -R ${os.user} $appPath
+    upload:
+      ${releasePath}/${app}: $appPath
+      ${releasePath}/config.json: $appPath
+    commands:
+      - echo 'deployed'
+
+  stop:
+    action: process:stop-all
+    input: ${app}
+
+  start:
+    action: process:start
+    directory: $appPath
+    immuneToHangups: true
+    command: ./${app}
+    arguments:
+      - "-config"
+      - "config.json"
+
+```
+
+
+**c) Datastore creation**
+
+For instance: the following  define inline pipeline tasks to create/populare mysql and aerospike database/dataset:
+
+```yaml
+pipeline:
+  create-db:
+    db3:
+      action: dsunit:init
+      scripts:
+        - URL: datastore/db3/schema.ddl
+      datastore: db3
+      recreate: true
+      config:
+        driverName: mysql
+        descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+        credentials: $mysqlCredential
+      admin:
+        datastore: mysql
+        config:
+          driverName: mysql
+          descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+          credentials: $mysqlCredential
+    db4:
+      action: dsunit:init
+      datastore: db4
+      recreate: true
+      config:
+        driverName: aerospike
+        descriptor: "tcp([host]:3000)/[namespace]"
+        parameters:
+          dbname: db4
+          namespace: db4
+          host: $serviceHost
+          port: 3000
+  populate:
+    db3:
+      action: dsunit:prepare
+      datastore: db3
+      URL: datastore/db3/dictionary
+    db4:
+      action: dsunit:prepare
+      datastore: db4
+      URL: datastore/db4/data
+```
+
+**d) Testing**
+
+For instance: the following  define inline pipeline tasks to run test with selenium runner:
+
+
+@test.yaml
+
+```yaml
+defaults:
+  target:
+     URL: ssh://127.0.0.1/
+     credentials: localhost
+pipeline:
+  init:
+    action: selenium:start
+    version: 3.4.0
+    port: 8085
+    sdk: jdk
+    sdkVersion: 1.8
+  test:
+    action: selenium:run
+    browser: firefox
+    remoteSelenium:
+      URL: http://127.0.0.1:8085
+    commands:
+      - get(http://play.golang.org/?simple=1)
+      - (#code).clear
+      - (#code).sendKeys(package main
+
+          import "fmt"
+
+          func main() {
+              fmt.Println("Hello Endly!")
+          }
+        )
+      - (#run).click
+      - command: output = (#output).text
+        exit: $output.Text:/Endly/
+        sleepTimeMs: 1000
+        repeat: 10
+      - close
+    expect:
+      output:
+        Text: /Hello Endly!/
+```
 
 
 
-To get you familiar with endly workflows, a few examples of fully functioning applications are included.
+To show _Endly_ in action, a few examples of fully functioning applications are included.
 You can build, deploy and test them end to end all with endly.
 
  
@@ -126,347 +309,30 @@ You can build, deploy and test them end to end all with endly.
    * [Logger](example/rt/elogger)
        - Test with HTTP Runner
        - Log Validation
-       
- 
+5) **Automation** - simple 3rd party echo app
+    * [Echo](example/au/echo)
+        - Build 3rd party application binary in docker container
+        - Build application docker image
+        - Optionally publish app image to the docker registry
+        - Deploy app to docker container
+        - Test an app with REST and HTTP runner
 
-<a name="Services"></a>
-## Endly Services
 
-Endly services implement [Service](service.go) interface.
-The following diagram shows service with its component.
-![Service diagram](service_diagram.png)
 
+<a name="Documentation">
 
-1) **System services**
-    - [SSH Executor Service](/system/exec)
-    - [Storage Service](/system/storage)
-    - [Process Service](/system/process)
-    - [Daemon Service](/system/daemon)
-    - [Network Service](/system/network)
-    - [Docker Service](/system/docker)
-2) **Cloud services**
-    - [Amazon Elastic Compute Cloud Service](cloud/ec2)
-    - [Google Compute Engine Service](cloud/gce)
-3) **Build and Deployment Services**
-    - [Sdk Service](deployment/sdk)
-    - [Version Control Service](deployment/vc)
-    - [Build Service](deployment/build)
-    - [Deplyment Service](deployment/deploy)
-4) **Endpoint Services**
-   - [Http Endpoint Service](endpoint/http) 
-5) **Runner Services**
-   - [Http Runner Service](runner/http) 
-   - [REST Runner Service](runner/rest) 
-   - [Selenium Runner Service](runner/selenium) 
-6) **Testing Services**
-   - [Validator](testing/validator)
-   - [Log Validator Service](testing/log)
-   - [Datastore Preparation and Validation Service](testing/dsunit)
-7) **Notification Services**
-   - [SMTP Service](notify/smtp)
-8) **Workflow service**
-   - [Workflow Service](workflow/)
- 
+##Documentation
+- [Secret/Credential](doc/secrets)
+- [Service](doc/service)
+- [Usage](doc/usage)
+- [Pipeline](doc/pipeline)
+- [Workflow](doc/workflow)
 
-To get the latest list of endly supported services run
-```text
-endly -s='*'
-```
 
-To check all actions supported by given service run 
-`endly -s='[service name]'`
 
-i.e 
-```text
-endly -s='docker'
-```
+##External resources:
 
-To check request/response for service/action combination run 
-`endly -s='[service name]' -a=[action name]`
-
-i.e 
-```text
-endly -s='docker' -a='run'
-```
-
-
-
-     
-<a name="Credentail"></a>
-## Secrets/Credentials
-     
-    
-Endly on its core uses SSH or other system/cloud service requiring credentials. 
-To run system workflow the credentials file/s need to be supplied as various request field.
-
-
-Endly uses  [Credentail Config](https://github.com/viant/toolbox/blob/master/cred/config.go) 
-  * it can store user and blowfish encrypted password generated by "endly -c option".
-    * it can store google cloud compatible secret.json fields
-  * it can store AWS cloud compatible fields.
-  * $HOME/.secret/ directory is used to store endly credentials
-
-
-Endly service was design in a way to  hide user secrets, for example, whether sudo access is needed,
-endly will output **sudo** in the execution event log and screen rather actual password.
-     
-
-To generate credentials file to enable endly exec service to run on localhost:
-
-Provide a username and password to login to your box.
-
-```text
-mkdir $HOME/.secret
-ssh-keygen -b 1024 -t rsa -f id_rsa -P "" -f $HOME/.secret/id_rsa
-cat $HOME/.secret/id_rsa.pub >  ~/.ssh/authorized_keys 
-chmod u+w authorized_keys
-
-endly -c=localhost -k=~/.secret/id_rsa.pub
-```
-
-```
-Verify that secret file were created
-```text
-cat ~/.secret/localhost.json
-```     
-Now you can use ${env.HOME}./secret/localhost.json as you localhost credentials.
-     
-     
-<a name="Usage"></a>
-
-## Usage
-
-In most case scenario you would use **endly** app supplied with [release binary for your platform](https://github.com/viant/endly/releases/).
-Alternatively, you can build the latest version of endly with the following command:
-
-```bash
-
-export GOPATH=~/go
-go get -u github.com/viant/endly
-go get -u github.com/viant/endly/endly
-
-```
-
-endly will be build in the $GOPATH/bin
-
-
-Make sure its location is on your PATH 
-
-
-```text
-
-$ endly -h
-
-```
-
-
-When specified workflow or request it can be name of endly [predefined workflow](#predefined_workflows) 
-or [request](#predefined_requests).
-
-For instance the following command will print shared ec2 workflow in JSON format.
-
-```bash
-
-endly -p -w ec2
-
-```
-
-The following command will run predefined ec2 workflow with -w option
-
-```bash
-
-endly -w ec2 -t start awsCredential ~/.secret/aws.json ec2InstanceId i-0ef8d9260eaf47fdd
-
-```
-
-In case there are more parameters that workflow accepts it is easier to create run.json file representing [*workflow.RunRequest](workflow/service_contract.go)
-
-Example of RunRequest 
-
-```json
-{
-  "URL": "manager.csv",
-  "Name": "manager",
-  "PublishParameters":false,
-  "EnableLogging":true,
-  "LoggingDirectory":"/tmp/myapp/",
-  "Tasks":"init,test",
-  "Params": {
-    "jdkVersion":"1.7",
-    "buildGoal": "install",
-    "baseSvnUrl":"https://mysvn.com/trunk/ci",
-    "buildRoot":"/build",
-    "targetHost": "127.0.0.1",
-    "targetHostCredential": "${env.HOME}/secret/localhost.json",
-    "svnCredential": "${env.HOME}/secret/adelphic_svn.json",
-    "configURLCredential":"${env.HOME}/secret/localhost.json",
-    "mysqlCredential": "${env.HOME}/secret/mysql.json",
-    "catalinaOpts": "-Xms512m -Xmx1g -XX:MaxPermSize=256m",
-
-    "appRootDirectory":"/use/local",
-    "tomcatVersion":"7.0.82",
-    "appHost":"127.0.0.1:9880",
-    "tomcatForceDeploy":true
-  },
-  "EventFilter":{}
-}
-
-```
-
-
-In case you have defined you one UDF or have other dependencies you have to build endly binary yourself.
-The following template can be used to run a workflow from a command line 
-
-
-\#endly.go
-```go
-
-package main
-
-//import you udf package  or other dependencies here
-
-import "github.com/viant/endly/bootstrap"
-
-func main() {
-	bootstrap.Bootstrap()
-}
-
-```       
-         
-    
-<a name="Unit"></a>
-        
-## Unit test 
-
-### Go lang         
-         
-
-To integrate endly with unit test, you can use one of the following  
-  
-
-**Service action**
-
-With this method, you can run any endly service action directly (including workflow with *model.ProcessRequest) by providing endly supported request.
-
-This method runs in silent mode.
-
-```go
-
-
-
-
-        manager := endly.New()
-        var context = manager.NewContext(toolbox.NewContext())
-        var runRequest = &docker.RunRequest{
-                                           Target: target,
-                                           Image:  "mysql:5.6",
-                                           Ports: map[string]string{
-                                               "3306": "3306",
-                                           },
-                                           Env: map[string]string{
-                                               "MYSQL_ROOT_PASSWORD": "**mysql**",
-                                           },
-                                           Mount: map[string]string{
-                                               "/tmp/my.cnf": "/etc/my.cnf",
-                                           },
-                                           Secrets: map[string]string{
-                                               "**mysql**": mySQLcredentialFile,
-                                           },
-                                       }
-                                       
-                                       
-        
-        {//execute vi manager
-            response, err := manager.Run(nil, runRequest)
-            if err != nil {
-                log.Fatal(err)
-            }
-            dockerResponse := response.(*docker.RunResponse)
-		}
-		
-		{//execute vi helper method, 
-		    var runResponse = &docker.RunResponse{}
-		    err := endly.Run(context, runRequest, runResponse) //(use 'nil' as last parameters to ignore actual response)
-		    if err != nil {
-               log.Fatal(err)
-            }
-		}
-		
-		
-		
-		
-```         
-
-**Workfklow**
-
-In this method, a workflow runs with command runner similarly to 'endly' command line.
-RunnerReportingOptions settings control stdout/stdin and other workflow details.
-
-```go
-
-    runner := cli.New()
-	cli.OnError = func(code int) {}//to supres os.Exit(1) in case of error
-	err := runner.Run(&workflow.RunRequest{
-			URL: "action",
-			Tasks:       "run",
-			Params: map[string]interface{}{
-				"service": "logger",
-				"action":  "print",
-				"request": &endly.PrintRequest{Message: "hello"},
-			},
-	}, nil)
-    if err != nil {
-    	log.Fatal(err)
-    }
-
-```         
-
-
-         
-<a name="BestPractice"></a>
-## Best Practice
-
-1) Delegate a new workflow request to dedicated req/ folder
-2) Variables in  Init, Post should only define state, delegate all variables to var/ folder
-3) Flag variable as Required or provide a fallback Value
-4) Use [Tag Iterators](https://github.com/viant/neatly#tagiterator) to group similar class of the tests 
-5) Since JSON inside a tabular cell is not too elegant, try to use [Virtual object](https://github.com/viant/neatly#vobject) instead.
-6) Organize workflows and data by grouping system, datastore, test functionality together. 
-
-
-Here is an example directory layout.
-
-```text
-
-    manager.csv
-        |- system / 
-        |      | - system.csv
-        |      | - var/init.json (workflow init variables)
-        |      | - req/         
-        | - regression /
-        |       | - regression.csv
-        |       | - var/init.json (workflow init variables)
-        |       | - <use_case_group1> / 1 ... 00X (Tag Iterator)/ <test assets>
-        |       | 
-        |       | - <use_case_groupN> / 1 ... 00Y (Tag Iterator)/ <test assets>
-        | - config /
-        |       
-        | -  <your app name for related workflow> / //with build, deploy, init, start and stop tasks 
-                | <app>.csv
-                | var/init.json 
-        
-        | - datastore /
-                 | - datastore.csv
-                 | - var/init.json
-                 | - dictionary /
-                 | - schema.ddl
-    
-```
-  
-  
-
-Finally contribute by creating a  pull request with a new common workflow so that other can use them.
-
+[Endly introduction](https://github.com/adrianwit/endly-introduction)    
 
          	
 <a name="License"></a>
@@ -476,6 +342,7 @@ The source code is made available under the terms of the Apache License, Version
 
 Individual files may be made available under their own specific license,
 all compatible with Apache License, Version 2. Please see individual files for details.
+
 
 
 <a name="Credits-and-Acknowledgements"></a>

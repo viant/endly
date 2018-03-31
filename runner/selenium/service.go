@@ -8,12 +8,12 @@ import (
 	"github.com/viant/endly/deployment/deploy"
 	"github.com/viant/endly/deployment/sdk"
 	"github.com/viant/endly/system/process"
+	"github.com/viant/endly/testing/validator"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"strings"
-	"github.com/viant/endly/testing/validator"
 )
 
 const (
@@ -118,7 +118,7 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 	}
 	var err error
 	if request.Expect != nil {
-		response.Assert, err = validator.Assert(context, request, request.Expect, response.Data, "selenium","assert selenium response" )
+		response.Assert, err = validator.Assert(context, request, request.Expect, response.Data, "selenium", "assert selenium response")
 	}
 	return response, err
 }

@@ -1,17 +1,16 @@
 package validator
 
 import (
-	"github.com/viant/endly"
-	"github.com/viant/endly/workflow"
 	"github.com/pkg/errors"
-	"github.com/viant/toolbox"
+	"github.com/viant/endly"
 	"github.com/viant/endly/util"
+	"github.com/viant/endly/workflow"
+	"github.com/viant/toolbox"
 )
-
 
 //NewAssertRequestFromContext creates a new assert rquest from context for current activity
 func NewAssertRequestFromContext(context *endly.Context, source, expected, actual interface{}, name, description string) (*AssertRequest, error) {
-	process :=workflow.Last(context)
+	process := workflow.Last(context)
 	if process == nil {
 		return nil, errors.New("process was empty")
 	}
@@ -25,7 +24,7 @@ func NewAssertRequestFromContext(context *endly.Context, source, expected, actua
 	}
 
 	if expected != nil && toolbox.IsSlice(expected) {
-		if normalized, err := util.NormalizeMap(expected, true);err == nil {
+		if normalized, err := util.NormalizeMap(expected, true); err == nil {
 			expected = normalized
 		}
 	}
@@ -33,10 +32,9 @@ func NewAssertRequestFromContext(context *endly.Context, source, expected, actua
 
 }
 
-
 //Assert compares provided expected amd actual
 func Assert(context *endly.Context, source, expected, actual interface{}, name, description string) (*AssertResponse, error) {
-	var request, err = NewAssertRequestFromContext(context, source,expected, actual, name, description)
+	var request, err = NewAssertRequestFromContext(context, source, expected, actual, name, description)
 	if err != nil {
 		return nil, err
 	}

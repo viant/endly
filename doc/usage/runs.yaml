@@ -1,0 +1,6 @@
+name: cloud/ec2
+tasks: start
+  params:
+    awsCredential: ~/.secret/aws.json
+    ec2InstanceId: i-0ef8d9260eaf47fdd
+

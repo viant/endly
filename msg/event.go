@@ -17,7 +17,7 @@ type Event interface {
 
 //event represents an event
 type event struct {
-	init Event
+	init      Event
 	timestamp time.Time
 	value     interface{}
 }
@@ -29,7 +29,6 @@ func (e *event) Value() interface{} {
 func (e *event) Init() Event {
 	return e.init
 }
-
 
 func (e *event) Timestamp() time.Time {
 	return e.timestamp
@@ -63,7 +62,7 @@ func NewEvent(value interface{}) *event {
 //NewEvent creates a new event
 func NewEventWithInit(value interface{}, init Event) Event {
 	return &event{
-		init:init,
+		init:      init,
 		timestamp: time.Now(),
 		value:     value,
 	}

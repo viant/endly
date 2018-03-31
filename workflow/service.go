@@ -368,7 +368,7 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 	}
 
 	activity := pipeline.NewActivity(context)
-	if activity.Caller == "" && last != nil  {
+	if activity.Caller == "" && last != nil {
 		lastActivity := last.Last()
 		if lastActivity != nil {
 			activity.Caller = last.Activity.Caller

@@ -20,7 +20,7 @@ var OnError = func(code int) {
 }
 
 const (
-	messageTypeAction         = iota + 10
+	messageTypeAction = iota + 10
 	messageTypeTagDescription
 )
 
@@ -377,15 +377,15 @@ func (r *Runner) createRunnerLogIfNeeded(logs map[string][]*runnerLog, key strin
 
 func (r *Runner) extractRunnerLogs(candidates []msg.Event, offset, maxIndex int) map[string][]*runnerLog {
 	var result = make(map[string][]*runnerLog)
-	for i := offset; i < len(candidates);i++ {
+	for i := offset; i < len(candidates); i++ {
 		var candidate = candidates[i]
 		var eventValue = candidate.Value()
 		if eventValue == nil {
 			continue
 		}
 
-		if i <= maxIndex  {
-			_, ok := eventValue.(msg.RunnerInput);
+		if i <= maxIndex {
+			_, ok := eventValue.(msg.RunnerInput)
 			if ok {
 				key := candidate.Package()
 				r.createRunnerLogIfNeeded(result, key)
@@ -396,7 +396,7 @@ func (r *Runner) extractRunnerLogs(candidates []msg.Event, offset, maxIndex int)
 			}
 		}
 
-		if _, ok := eventValue.(msg.RunnerOutput); ok  {
+		if _, ok := eventValue.(msg.RunnerOutput); ok {
 			key := candidate.Package()
 			lastIndex := len(result[key]) - 1
 			if lastIndex == -1 {
@@ -414,7 +414,7 @@ func (r *Runner) hasFailureMatch(failure *assertly.Failure, runnerLogs map[strin
 	var leafKey = failure.LeafKey()
 	for _, logs := range runnerLogs {
 		for _, log := range logs {
-			var matchable =log.JSONOutput
+			var matchable = log.JSONOutput
 			if matchable == "" {
 				matchable = toolbox.AsString(log.Out.Value())
 			}
@@ -440,7 +440,7 @@ func (r *Runner) reportFailureWithMatchSource(tag *EventTag, event msg.Event, va
 				if firstFailurePathIndex < len(logs) {
 					runnerLog := logs[firstFailurePathIndex]
 					if runnerLog.In != nil && runnerLog.Out != nil {
-						 matched = true
+						matched = true
 						r.processReporter(runnerLog.In, wildcardFilter)
 						r.processReporter(runnerLog.Out, wildcardFilter)
 					}
@@ -448,7 +448,7 @@ func (r *Runner) reportFailureWithMatchSource(tag *EventTag, event msg.Event, va
 			}
 		}
 
-		if ! matched {
+		if !matched {
 			for _, logs := range runnerLogs {
 				runnerLog := logs[0]
 				r.processReporter(runnerLog.In, wildcardFilter)
@@ -553,7 +553,7 @@ func (r *Runner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
+			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
 			var offset = 0
 			for i, event := range tag.Events {
 				validation := r.getValidation(event)

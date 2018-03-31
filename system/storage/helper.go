@@ -11,6 +11,14 @@ import (
 	"strings"
 )
 
+func canExpand(content []byte) bool {
+	limit := 100
+	if limit >= len(content) {
+		limit = len(content) - 1
+	}
+	return toolbox.IsPrintText(string(content[:limit]))
+}
+
 //NewExpandedContentHandler return a new reader that can substitute content with state map, replacement data provided in replacement map.
 func NewExpandedContentHandler(context *endly.Context, replaceMap map[string]string, expand bool) func(reader io.ReadCloser) (io.ReadCloser, error) {
 	return func(reader io.ReadCloser) (io.ReadCloser, error) {
@@ -21,7 +29,7 @@ func NewExpandedContentHandler(context *endly.Context, replaceMap map[string]str
 			return nil, err
 		}
 		var result = string(content)
-		if expand  && toolbox.IsPrintText(result) {
+		if expand && canExpand(content) {
 			result = context.Expand(result)
 			if err != nil {
 				return nil, err

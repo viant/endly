@@ -45,7 +45,6 @@ import (
 	"github.com/viant/endly/workflow"
 )
 
-
 func getServiceWithWorkflow(workflowURI string) (endly.Manager, endly.Service, error) {
 	manager := endly.New()
 	service, err := manager.Service(workflow.ServiceID)
@@ -329,21 +328,6 @@ func TestWorkflowService_RunLifeCycle(t *testing.T) {
 
 func TestWorkflowService_RunBroken(t *testing.T) {
 
-	{
-		//request empty error
-
-		manager, service, err := getServiceWithWorkflow("test/broken/broken1.csv")
-		if assert.Nil(t, err) {
-			context := manager.NewContext(toolbox.NewContext())
-			serviceResponse := service.Run(context, &workflow.RunRequest{
-				Tasks:             "*",
-				Name:              "broken1",
-				Params:            map[string]interface{}{},
-				PublishParameters: true,
-			})
-			assert.EqualValues(t, true, strings.Contains(serviceResponse.Error, "broken1"), serviceResponse.Error)
-		}
-	}
 	{
 		//unsupported action error
 

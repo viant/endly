@@ -1,0 +1,71 @@
+[
+  {
+    "Name": "sdk",
+    "Required": true,
+    "From": "params.sdk",
+    "Value": "go:1.8"
+  },
+  {
+    "Name": "app",
+    "Required": true,
+    "From": "params.app",
+    "Value": "echo"
+  },
+  {
+    "Name": "version",
+    "Required": true,
+    "From": "params.version",
+    "Value": "0.1"
+  },
+  {
+    "Name": "target",
+    "Required": true,
+    "From": "params.target",
+    "Value": {
+      "URL": "ssh://127.0.0.1/",
+      "Credentials": "localhost"
+    }
+  },
+  {
+    "Name": "serviceTarget",
+    "Required": true,
+    "From": "params.serviceTarget",
+    "Value": "$target"
+  },
+  {
+    "Name": "appTarget",
+    "Required": true,
+    "From": "params.appTarget",
+    "Value": "$target"
+  },
+  {
+    "Name": "origin",
+    "Required": true,
+    "From": "params.origin",
+    "Value": {
+      "URL": "$Pwd(./../)"
+    }
+  },
+  {
+    "Name": "targetHost",
+    "Value": "$Hostname($target.URL)"
+  },
+  {
+    "Name": "releasePath",
+    "Required": true,
+    "From": "params.buildRoot",
+    "Value": "/tmp/${app}/release"
+  },
+  {
+    "Name": "registryUsername",
+    "From": "params.registryUsername"
+  },
+  {
+    "Name": "registryCredentials",
+    "From": "params.registryCredentials"
+  },
+  {
+    "Name": "registry",
+    "From": "params.registry"
+  }
+]

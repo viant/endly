@@ -27,20 +27,10 @@ func TestNewCopyRequestFromURL(t *testing.T) {
     "URL": "mem://dest/dir2"
   },
   "Assets": {
-    "file1.txt": null,
     "file2.txt": "renamedFile2"
   },
   "Transfers": [
-	
-    {
-      "Source": {
-        "URL": "mem://yaml1/dir/file1.txt"
-      },
-      "Dest": {
-        "URL": "mem://dest/dir2/file1.txt"
-      }
-    },
-    {
+   {
       "Source": {
         "URL": "mem://yaml1/dir/file2.txt"
       },

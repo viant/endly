@@ -1,0 +1,14 @@
+{
+  "URL" :"http://${targetHost}:8080$uri",
+  "Method":"POST",
+  "Request": {
+    "Name": "report1",
+    "Datastore": "db1",
+    "Parameters": {}
+  },
+  "Expect": {
+    "Name": "report1",
+    "Datastore": "db1",
+    "Parameters": {}
+  }
+}

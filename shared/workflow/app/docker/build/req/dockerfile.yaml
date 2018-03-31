@@ -1,3 +1,4 @@
+expand: true
 source: $dockerfile
 dest:
   URL: $releasePath

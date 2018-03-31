@@ -66,4 +66,9 @@
      * Add SSH testing utilities NewSSHRecodingContext, NewSSHReplayContext
      * Refactored and updated shared workflows        
      * Minor patched
+## March 31 2018 0.7.1
+     * Added Expec to all runner Run request and Assert field to response
+     * Added automation with docker example
+     * Reorganized documentation
+     * Minor patches
      

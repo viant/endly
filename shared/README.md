@@ -1,4 +1,4 @@
-#Shared/global workflows
+#Shared/global workflow
 
 
 Shared workflow provide predefined workflows:
@@ -7,6 +7,7 @@ Shared workflow provide predefined workflows:
 - [App](workflow/app) (buid/deployment,publishing including docker)
 - [Cloud](workflow/cloud) (ec2, gce)
 - [Testing](assert) (assert)
+
 
 
 Endly operates on local or remote resources referred as target in various service contracts. 

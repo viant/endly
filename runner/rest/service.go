@@ -3,8 +3,8 @@ package rest
 import (
 	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox"
 	"github.com/viant/endly/testing/validator"
+	"github.com/viant/toolbox"
 )
 
 //ServiceID represents rest service id.
