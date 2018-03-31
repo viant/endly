@@ -9,9 +9,9 @@
 <a name="introduction"></a>
 ### Introduction
 
-**[Pipeline](../../model/pipeline.go)** an abstraction to define a simple sequence of tasks.
+**[Pipeline](../../model/pipeline.go)** an abstraction defining a simple sequence of tasks.
 
-A task can either execute a workflow or service action.
+A task can either execute a [workflow](../workflow) or [service](../service) action.
 
 For instance the following pipeline will execute SSH command (service: exec, action: run).
 
