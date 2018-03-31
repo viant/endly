@@ -1,4 +1,4 @@
-## Endly Workflow 
+## Pipeline 
 
 - [Introduction](#introduction)
 - [Pipeline format](#format)

@@ -1,4 +1,4 @@
-# Endly Services
+# Service
 
 
 Service is actual execution unit, in order to run any workflow's action or piple task you have use specify :
