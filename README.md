@@ -198,6 +198,8 @@ pipeline:
 
 For instance: the following  define inline pipeline tasks to create/populare mysql and aerospike database/dataset:
 
+@datastore.yaml
+
 ```yaml
 pipeline:
   create-db:
