@@ -14,7 +14,6 @@ Provide a username and password to login to your box.
 ```text
 endly -c=localhost
 ```
-```
 Verify that secret file were created
 ```text
 cat ~/.secret/localhost.json
@@ -29,16 +28,19 @@ Run the following command:
 ```text
 git clone https://github.com/viant/endly
 cd endly/example/rt/elogger/endly/
-
+```
 
 ## run test with [manager](endly/manager.csv) workflow:
+```text
 endly -w=manager
-
+```
 ## run test with inline pipeline tasks [run](endly/run.yaml) request
+```text
 endly -r=run
-
+```
 
 ## To check manager workflow tasks list
+```text
 endly -w=manager -t='?'
  
 ```
