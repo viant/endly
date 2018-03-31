@@ -108,12 +108,14 @@ On the top level initialization and post state modification blocks are supported
 Init, Post can be on of the following:
 - external reference for **[Variables](./../../model/variable.go)** in JSON or YAML format.
 - list of variables assignments i.e.
+
 ```yaml
 init:
   - target = $params.target
   - app = $params.app
       
 ```
+
 
 <a name="lifecycle></a>
 
@@ -129,5 +131,5 @@ init:
 <a name="shared"></a>
 ### Shared workflow:
 
-Beside endly action pipeline can also use any local or globally [shared workflow](./../../shared/):
-Share workflow already provide functionality to prepare system with various service, build, deploy and test an app without reinventing the wheel.
+Beside endly action pipeline can also use any local or endly [shared workflow](./../../shared/):
+Shared workflows provide functionality to prepare system with various service, build, deploy and test an app without reinventing the wheel.
