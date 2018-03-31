@@ -37,7 +37,7 @@ pipeline:
 Pipeline run request can use either JSON or YAML however the latter can be easier choice.
 
 
-The general pipeline syntax if the following
+The general pipeline syntax: 
 
 @xxx.yaml
 ```yaml
