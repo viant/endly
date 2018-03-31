@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/viant/endly/model"
+	"github.com/viant/endly/testing/validator"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
-	"github.com/viant/endly/testing/validator"
 )
 
 //StartRequest represents a selenium server start request
@@ -116,7 +116,7 @@ type RunRequest struct {
 	RemoteSelenium *url.Resource //remote selenium resource
 	Actions        []*Action
 	Commands       []interface{} `description:"list of selenium command: {web element selector}.WebElementMethod(params),  or WebDriverMethod(params), or wait map "`
-	Expect       interface{}   `description:"If specified it will validated response as actual"`
+	Expect         interface{}   `description:"If specified it will validated response as actual"`
 }
 
 func (r *RunRequest) asWaitAction(parser *parser, candidate interface{}) (*Action, error) {
@@ -207,7 +207,7 @@ type RunResponse struct {
 	SessionID    string
 	Data         map[string]interface{}
 	LookupErrors []string
-	Assert *validator.AssertResponse
+	Assert       *validator.AssertResponse
 }
 
 //MethodCall represents selenium call.

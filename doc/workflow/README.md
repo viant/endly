@@ -1,16 +1,20 @@
 ## Endly Workflow 
 
-- [Introduction](#Introduction)
-- [Modifying workflow state](#WorkflowState)
-- [Criteria expression](#Criteria)
-- [Execution control](ExectuinControl)
-- [Lifecycle](#Lifecycle)
+- [Introduction](#introduction)
+- [Workflow format](#format)
+- [Workflow process state](#state)
+- [Execution control](#control)
+- [Lifecycle](#lifecycle)
+- [Best Practise](#best)
 
-
-<a name="Introduction"></a>
+<a name="introduction"></a>
 ### Introduction
 
-**[Workflow](../workflow.go)** an abstraction to define a set actions and tasks.
+**[Workflow](../../model/workflow.go)** an abstraction to define a set actions and tasks.
+
+![diagram](diagram.png)
+
+
 
 **Task** an abstraction to logically group one or more action, for example, init,test.
 
@@ -29,7 +33,7 @@ To execute action:
 5) Service executes Run method for provided action to return ServiceResponse 
 
 
-**[Service](service.go)** an abstraction providing set of functionalities triggered by specified action/request.
+**[Service](../../service.go)** an abstraction providing set of functionalities triggered by specified action/request.
 
 **State** key/value pair map that is used to mange state during the workflow run. 
 The state can be change by providing variable definition.
@@ -37,11 +41,21 @@ The workflow content, data structures, can use dollar '$' sign followed by varia
 to get its expanded to its corresponding state value if the key has been present.
  
 
+<a name="format"></a>
+### Format
 
-<a name="WorkflowState"></a>
-### Modifying workflow state
+Endly uses [Neatly](https://github.com/viant/neatly) format to represent a workflow.
+Neatly is responsible for converting a tabular document (.csv) into workflow object tree as shown in the [diagram](diagram.png).
 
-Workflow during its executes maintains it state in Context.State() map.
+Find out more about neatly:
+[Neatly introduction](https://github.com/adrianwit/neatly-introduction)
+
+
+
+<a name="state"></a>
+### Workflow process state
+
+Workflow process uses context.State() to maintain execution state.
 
 **[Variables](variable.go)** an abstraction having capabilities to change a workflow state.
 
@@ -78,22 +92,10 @@ The following expression are supported:
 
 
 
-<a name="Criteria"></a>
-### Criteria expression    
 
-Criteria expression is used to conditionally execute some workflow steps.
-It support '&&' and '||' logical operators.
-Colon ":" operator additionally support [assertly](https://github.com/viant/assertly#validation) style validation expression like ~//, or // etc.  
-    
-Example criteria:
-
-1. $k1 = abc && $k > 20
-2. $k3 = ~/abc/
-3. $k4 = "~/name (\\d+)/ 
-    (where k4 might be equal 123)
 
     
-<a name="ExectuinControl"></a>
+<a name="control"></a>
 ### Workflow execution control:
 By default, workflow run all specified task, where each task once started executes sequentially all it actions, unless they flag as 'asyn' execution.
 
@@ -101,7 +103,7 @@ Each action can control its execution with
 
 **Action level criteria control**
 
-Each action has the following fields to control conditional execution:
+Each action has the following fields supports [conditional expression](../../criteria) to control workflow execution
 
 1. When: criteria to check if an action is eligible to run
 2. Skip: criteria to check if the whole group of actions by TagID can be skipped, continuing execution to next  group
@@ -155,10 +157,8 @@ Notify error can be use in conjunction with Workflow.OnTaskError, see below work
  |[]OnError|Description|Service|Action|Request|error|[]receivers|
  | |send error notification | workflow | run | #req/notify_error | $error |	abc@somewehre.com |
 
-
-
  
- <a name="Lifecycle"></a>
+ <a name="lifecycle"></a>
 #### Workflow Lifecycle
 
 1) New context with a new state map is created after inheriting values from a caller. (Caller will not see any state changes from downstream workflow)
@@ -197,3 +197,43 @@ Notify error can be use in conjunction with Workflow.OnTaskError, see below work
         * [Neatly UDF](https://github.com/viant/neatly/#udf)
         * AsTableRecords udf converting []*DsUnitTableData into map[string][]map[string]interface{} (used by prepare/expect dsunit service), as table record udf provide sequencing and random id generation functionality for supplied data .
 	    
+
+
+
+         
+<a name="best"></a>
+## Best Practice
+
+1) Delegate a new workflow request to dedicated req/ folder
+2) Variables in  Init, Post should only define state, delegate all variables to var/ folder
+3) Flag variable as Required or provide a fallback Value
+4) Use [Tag Iterators](https://github.com/viant/neatly#tagiterator) to group similar class of the tests 
+5) Since JSON inside a tabular cell is not too elegant, try to use [Virtual object](https://github.com/viant/neatly#vobject) instead.
+6) Organize sequential simple tasks into pipeline.
+7) Organize functionally cohesive complex tasks into workflows. 
+
+
+Here is an example directory layout.
+
+```text
+
+      endly
+        |- manager.csv
+        |- system.yaml              
+        |- app.yaml
+        |- datastore.yaml
+        |
+        |- system / 
+        | - regression /
+        |       | - regression.csv
+        |       | - var/init.json (workflow init variables)
+        |       | - <use_case_group1> / 1 ... 00X (Tag Iterator)/ <test assets>
+        |       | 
+        |       | - <use_case_groupN> / 1 ... 00Y (Tag Iterator)/ <test assets>
+        | - config /
+        |       
+        | - datastore /
+                 | - dictionary /
+                 | - schema.ddl
+    
+```

@@ -186,10 +186,7 @@ func (r *CopyRequest) Init() error {
 	if !hasAssets {
 		if r.Source != nil && r.Dest != nil {
 			r.Transfers = []*Transfer{
-				{
-					Source: r.Source,
-					Dest:   r.Dest,
-				},
+				r.Transfer,
 			}
 		}
 		return nil

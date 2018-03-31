@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/testing/validator"
 	"github.com/viant/endly/udf"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
@@ -14,7 +15,6 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	"github.com/viant/endly/testing/validator"
 )
 
 //ServiceID represents http runner service id.

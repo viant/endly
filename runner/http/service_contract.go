@@ -3,24 +3,24 @@ package http
 import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/model"
+	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"net/http"
-	"github.com/viant/endly/testing/validator"
 )
 
 //SendRequest represents a send http request.
 type SendRequest struct {
 	Options  []*toolbox.HttpOptions `description:"http client options: key value pairs, where key is one of the following: HTTP options:RequestTimeoutMs,TimeoutMs,KeepAliveTimeMs,TLSHandshakeTimeoutMs,ResponseHeaderTimeoutMs,MaxIdleConns"`
 	Requests []*Request
-	Expect interface{}            `description:"If specified it will validated response as actual"`
+	Expect   interface{} `description:"If specified it will validated response as actual"`
 }
 
 //ServiceRequest represents an http request
 type Request struct {
 	*model.Repeater
-	When        string            `description:"criteria to send this request"`
-	Method      string            `required:"true" description:"HTTP Method"`
+	When        string `description:"criteria to send this request"`
+	Method      string `required:"true" description:"HTTP Method"`
 	URL         string
 	Header      http.Header
 	Cookies     Cookies
@@ -34,7 +34,7 @@ type Request struct {
 type SendResponse struct {
 	Responses []*Response
 	Data      data.Map
-	Assert *validator.AssertResponse
+	Assert    *validator.AssertResponse
 }
 
 //Response represents Http response

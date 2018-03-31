@@ -136,7 +136,7 @@ func TestNewRunRequestFromURL(t *testing.T) {
           "Wait": {
             "Repeat": 10,
             "SleepTimeMs": 1000,
-            "Exit": "$output:/Endly/"
+            "Exit": "$output.Text:/Endly/"
           },
           "Method": "Text"
         }

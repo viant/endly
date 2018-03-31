@@ -15,9 +15,9 @@ Workflow,,Name,Description,Tasks,Init,
 ,storage,copy,download custom assets,@req/download,$Length($download) > 0,
 []Tasks,,Name,Description,Actions,When,
 ,,buildImg,build app image,%BuildImg,$HasResource(${dockerfile.URL}):true,
-[]BuildImg,Service,Action,Description,Request,Skip,Group
+[]BuildImg,Service,Action,Description,Request,When,Group
 ,storage,copy,download build dockerfile , @req/dockerfile,,
 ,docker,build,build app docker image, @req/build_img,,
-,docker,login,login to docker registry, @req/login,$useRegistry:!true,publish
-,docker,tag,tag app image, @req/tag,,publish
-,docker,push,push docker image to registry, @req/push,,publish
+,docker,login,login to docker registry, @req/login,$useRegistry:true,
+,docker,tag,tag app image, @req/tag,$useRegistry:true,
+,docker,push,push docker image to registry, @req/push,$useRegistry:true,
