@@ -34,7 +34,7 @@ pipeline:
 
 <name a="format"></a>
 ### Pipeline format
-Pipeline run request can use either JSON or YAML however the latter can be easier choice.
+Pipeline run request can use either JSON or YAML.
 
 
 The general pipeline syntax: 
