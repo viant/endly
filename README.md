@@ -106,7 +106,7 @@ Endly as a comprehensive testing framework automate the following step:
 <a name="GettingStarted"></a>
 ## Getting Started
 
-Endly automate sequence of actions into reusable tasks and workflows or inline tasks pipeline tasks. 
+Endly automate sequence of actions into reusable tasks and workflows or inline pipeline tasks. 
 
 **a) System preparation**
 
