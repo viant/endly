@@ -70,7 +70,7 @@ post:
   - age = $response.user.age
 
 ```
-Pipeline execution node is determined by presence of either action or workflow attribute, otherwise
+Pipeline execution node is determined by presence of either **_action_** or **_workflow_** attribute, otherwise
 any sub node organization is allowed i.e
 
 ```yaml
