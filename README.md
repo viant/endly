@@ -36,12 +36,14 @@ It addresses all aspect of testing automation namely:
 ## Installation
 
 1) [Download latest binary](https://github.com/viant/endly/releases/)
+    ```bash
+     tar -xvzf endly_xxx.tar.gz
+     cp endly /usr/local/bin
+     endly -h
+     endly -v
 
-    tax -xvzf endly_xxx.tar.gz
-    cp endly /usr/local/bin
-    endly -h
-    endly -v
-
+    ```
+ 
 
 2) Build from source
    a) install go 1.9+
@@ -71,8 +73,6 @@ func main() {
 }
 
 ```       
-
-     
 
 
 <a name="Introduction"></a>
