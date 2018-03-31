@@ -38,11 +38,6 @@ cd endly/example/ui/sso/endly/
 endly -w=manager
 ```
 
-## run test with inline pipeline tasks [run](endly/run.yaml) request
-```text
-endly -r=run
-```
-
 ## To check manager workflow tasks list
 ```text
 endly -w=manager -t='?'
