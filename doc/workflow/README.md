@@ -1,4 +1,4 @@
-## Endly Workflow 
+## Workflow 
 
 - [Introduction](#introduction)
 - [Workflow format](#format)
