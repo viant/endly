@@ -332,7 +332,7 @@ You can build, deploy and test them end to end all with endly.
 
 
 
-##External resources:
+##External resources
 
 [Endly introduction](https://github.com/adrianwit/endly-introduction)    
 
