@@ -7,10 +7,9 @@ This application provides example of 3rd application build deployment and test a
 2) Build  binary is used by Dockerfile to build size optimized application docker image
 3) Application image is deploy for testing
 4) Test execution
-5) Stoping application
+5) Stopping application
 
 If useRegistry: true, then endly login to docker registry, application is pushed to docker registry
-
 
 
 Prerequisites:
@@ -25,7 +24,7 @@ Provide a username and password to login to your box.
 ```text
 endly -c=localhost
 ```
-```
+
 Verify that secret file were created
 ```text
 cat ~/.secret/localhost.json
@@ -39,8 +38,9 @@ Run the following command:
 ```text
 git clone https://github.com/viant/endly
 cd endly/example/echo
-
+```
 
 ## run test with inline pipeline tasks [run](endly/run.yaml) request
+```text
 endly -r=run
 ```
