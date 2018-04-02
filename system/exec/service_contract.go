@@ -168,7 +168,7 @@ func (c Command) WhenAndCommand() (string, string) {
 		return when, expr
 	}
 	when = string(expr[:criteriaEndIndex])
-	command = string(expr[criteriaEndIndex+1:])
+	command = strings.Trim(string(expr[criteriaEndIndex+1:]), " '")
 	return when, command
 }
 
