@@ -5,7 +5,7 @@ params:
   serviceTarget: $serviceTarget
   target: $target
   config: $Pwd(config/my.cnf)
-  credentials: $mysqlCredential
+  credentials: $mysqlCredentials
   name: $instance
   version: $mysqlVersion
   dump: $dump

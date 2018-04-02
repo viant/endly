@@ -39,14 +39,14 @@ const (
   "Config": {
     "DriverName": "mysql",
     "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
-    "Credentials": "$mysqlCredential"
+    "Credentials": "$mysqlCredentials"
   },
   "Admin": {
     "Datastore": "mysql",
     "Config": {
       "DriverName": "mysql",
       "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
-      "Credentials": "$mysqlCredential"
+      "Credentials": "$mysqlCredentials"
     }
   },
   "Scripts": [

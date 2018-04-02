@@ -76,12 +76,6 @@ func (s *AbstractService) Run(context *Context, request interface{}) (response *
 			response.Error = fmt.Sprintf("%v", err)
 		}
 	}()
-
-	if len(s.routeByRequest) == 0 {
-		err = NewError(s.ID(), fmt.Sprintf("%T", request), fmt.Errorf("failed to lookup service route: %T", request))
-		return response
-	}
-
 	service, ok := s.routeByRequest[reflect.TypeOf(request)]
 	if !ok {
 
@@ -120,11 +114,9 @@ func (s *AbstractService) Run(context *Context, request interface{}) (response *
 
 //Route returns a service action route for supplied action
 func (s *AbstractService) Route(action string) (*Route, error) {
-	if len(s.routeByAction) > 0 {
-		if result, ok := s.routeByAction[action]; ok {
-			return result, nil
-		}
-		return nil, fmt.Errorf("unknown %v.%v service action", s.id, action)
+
+	if result, ok := s.routeByAction[action]; ok {
+		return result, nil
 	}
 	return nil, fmt.Errorf("unknown %v.%v service action", s.id, action)
 }
