@@ -3,6 +3,6 @@
   "Config": {
     "DriverName": "mysql",
     "Descriptor": "[username]:[password]@tcp(${serviceHost}:3306)/[dbname]?parseTime=true",
-    "Credentials": "$mysqlCredential"
+    "Credentials": "$mysqlCredentials"
   }
 }

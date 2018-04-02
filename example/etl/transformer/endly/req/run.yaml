@@ -2,6 +2,6 @@ name: $workflow
 tasks: $tasks
 params:
   app: $app
-  mysqlCredential: $mysqlCredential
+  mysqlCredentials: $mysqlCredentials
   targetHost: $targetHost
   serviceHost: $serviceHost

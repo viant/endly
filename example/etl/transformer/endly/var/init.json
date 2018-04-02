@@ -92,9 +92,9 @@
     "Value": "5.7"
   },
   {
-    "Name": "mysqlCredential",
+    "Name": "mysqlCredentials",
     "Required": true,
-    "From": "params.mysqlCredential",
+    "From": "params.mysqlCredentials",
     "Value": "mysql"
   }
 ]
