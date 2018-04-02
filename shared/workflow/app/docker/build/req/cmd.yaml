@@ -1,6 +1,10 @@
 target: $buildTarget
 timeoutMs: 60000
 superUser: $superUser
+secrets: $secrets
+terminators:
+  - Username for
+  - Password for
 errors:
   - Error
   - command not found

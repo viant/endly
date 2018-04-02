@@ -12,6 +12,12 @@
     "Required": true
   },
   {
+    "Name": "secrets",
+    "From": "params.secrets",
+    "Required": true,
+    "Value": {}
+  },
+  {
     "Name": "app",
     "From": "params.app",
     "Required": true
@@ -63,10 +69,10 @@
     "From": "params.commands"
   },
   {
-    "Name":"useRegistry",
+    "Name": "useRegistry",
     "Required": true,
-    "From":"params.useRegistry",
-    "Value":true
+    "From": "params.useRegistry",
+    "Value": true
   },
   {
     "Name": "buildPath",

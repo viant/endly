@@ -4,13 +4,11 @@
     "From": "params.app",
     "Required": true
   },
-
   {
     "Name": "origin",
     "Required": true,
     "From": "params.origin"
   },
-
   {
     "Name": "replace",
     "Required": true,
@@ -45,8 +43,6 @@
     "From": "params.init",
     "Required": true
   },
-
-
   {
     "Name": "superUser",
     "Required": true,
@@ -58,7 +54,6 @@
     "Required": true,
     "From": "params.commands"
   },
-
   {
     "Name": "buildPath",
     "Required": true,
@@ -71,7 +66,6 @@
     "From": "params.buildRoot",
     "Value": "/tmp/${app}/release/"
   },
-
   {
     "Name": "target",
     "From": "params.target",
@@ -83,7 +77,7 @@
   {
     "Name": "buildTarget",
     "Required": true,
-    "Value":"$target"
+    "Value": "$target"
   },
   {
     "Name": "buildTarget",
@@ -91,5 +85,11 @@
       "URL": "$URLJoin([\"$buildTarget.URL\",\"$buildPath\"])",
       "Credentials": "$buildTarget.Credentials"
     }
+  },
+  {
+    "Name": "secrets",
+    "From": "params.secrets",
+    "Required": true,
+    "Value": {}
   }
 ]
