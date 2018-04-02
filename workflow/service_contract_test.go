@@ -25,14 +25,14 @@ func Test_NewPipelineRequestFromURL(t *testing.T) {
     "Params": {
       "admin": {
         "config": {
-          "credentials": "$mysqlCredential",
+          "credentials": "$mysqlCredentials",
           "descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
           "driverName": "mysql"
         },
         "datastore": "mysql"
       },
       "config": {
-        "credentials": "$mysqlCredential",
+        "credentials": "$mysqlCredentials",
         "descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
         "driverName": "mysql"
       },

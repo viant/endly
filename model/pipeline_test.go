@@ -71,13 +71,13 @@ pipeline:
     config:
       driverName: mysql
       descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
-      credentials: $mysqlCredential
+      credentials: $mysqlCredentials
     admin:
       datastore: mysql
       config:
         driverName: mysql
         descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
-        credentials: $mysqlCredential
+        credentials: $mysqlCredentials
   populate:
     "@action": dsunit:prepare
     datastore: db1
@@ -95,14 +95,14 @@ pipeline:
     "Params": {
       "admin": {
         "config": {
-          "credentials": "$mysqlCredential",
+          "credentials": "$mysqlCredentials",
           "descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
           "driverName": "mysql"
         },
         "datastore": "mysql"
       },
       "config": {
-        "credentials": "$mysqlCredential",
+        "credentials": "$mysqlCredentials",
         "descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
         "driverName": "mysql"
       },
