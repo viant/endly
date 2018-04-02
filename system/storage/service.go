@@ -56,7 +56,7 @@ func (s *service) compressSource(context *endly.Context, source, target *url.Res
 	if sourceObject.IsFolder() {
 		baseDirectory = source.DirectoryPath()
 		_, name = path.Split(baseDirectory)
-		archiveSource = "*"
+		archiveSource = "."
 	}
 	var archiveName = fmt.Sprintf("%v.tar.gz", name)
 
@@ -99,8 +99,7 @@ func (s *service) decompressTarget(context *endly.Context, source, target *url.R
 		fmt.Sprintf("cd %v", baseDir),
 		fmt.Sprintf("tar xvzf %v", name),
 		fmt.Sprintf("rm %v", name),
-		fmt.Sprintf("cd %v", source.DirectoryPath()),
-		fmt.Sprintf("rm %v", name))
+		fmt.Sprintf("cd %v", source.DirectoryPath()))
 	runRequest.TimeoutMs = CompressionTimeout
 	return endly.Run(context, runRequest, nil)
 }

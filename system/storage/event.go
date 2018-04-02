@@ -57,6 +57,7 @@ func (r *CopyRequest) Messages() []*msg.Message {
 		}
 		result = append(result, msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
 			msg.NewStyled("copy", msg.MessageStyleGeneric),
+			msg.NewStyled(fmt.Sprintf("compress: %v, expand: %v", transfer.Compress, transfer.Expand), msg.MessageStyleGeneric),
 			msg.NewStyled(fmt.Sprintf("SourceURL: %v", transfer.Source.URL), msg.MessageStyleInput),
 			msg.NewStyled(fmt.Sprintf("DestURL: %v", transfer.Dest.URL), msg.MessageStyleOutput),
 		))
