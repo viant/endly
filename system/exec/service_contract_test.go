@@ -70,19 +70,19 @@ func TestCommand_WhenAndCommand(t *testing.T) {
 			Description:     "simple when and command ",
 			Expression:      "$stdout:/end/? q",
 			ExpectedWhen:    "$stdout:/end/",
-			ExpectedCommand: " q",
+			ExpectedCommand: "q",
 		},
 		{
 			Description:     "when and command ",
 			Expression:      "$stdout:/end/ AND $cound >  1 ? q",
 			ExpectedWhen:    "$stdout:/end/ AND $cound >  1 ",
-			ExpectedCommand: " q",
+			ExpectedCommand: "q",
 		},
 		{
 			Description:     "command with partial when (thread as command)",
-			Expression:      "  echo ':/end/  ? q'",
+			Expression:      "echo ':/end/  ? q'",
 			ExpectedWhen:    "",
-			ExpectedCommand: "  echo ':/end/  ? q'",
+			ExpectedCommand: "echo ':/end/  ? q'",
 		},
 		{
 			Description:     "command",
