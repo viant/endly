@@ -38,7 +38,7 @@ func TestRunRequest_AsExtractRequest(t *testing.T) {
 	if assert.NotNil(t, extract) {
 		assert.NotNil(t, request)
 		assert.EqualValues(t, "whoami", extract.Commands[0].Command)
-		assert.EqualValues(t, " echo 'hello'", extract.Commands[1].Command)
+		assert.EqualValues(t, "echo 'hello'", extract.Commands[1].Command)
 		assert.EqualValues(t, "$stdout:/awitas/ ", extract.Commands[1].When)
 		assert.EqualValues(t, "scp://127.0.0.1", extract.Target.URL)
 	}
