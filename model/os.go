@@ -12,6 +12,7 @@ type OperatingSystem struct {
 	Name         string
 	Hardware     string
 	Architecture string
+	Arch         string //architecture abbreviation
 	Version      string
 }
 
