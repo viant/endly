@@ -1,0 +1,71 @@
+{
+  "Name": "node",
+  "Versioning": "MajorVersion.MinorVersion.ReleaseVersion",
+  "Targets": [
+    {
+      "MinReleaseVersion": {
+        "7.0": "0",
+        "7.9": "0",
+        "8.0": "0",
+        "8.11": "1",
+        "9.0": "0",
+        "9.9": "0"
+      },
+      "Deployment": {
+        "Pre": {
+          "SuperUser": true,
+          "Commands": [
+            "mkdir -p /opt/sdk/",
+            "chmod a+rw /opt/sdk/"
+          ]
+        },
+        "Transfer": {
+          "Source": {
+            "URL": "https://nodejs.org/dist/v${artifact.Version}/node-v${artifact.Version}-${os.System}-${os.Arch}.tar.gz"
+          },
+          "Dest": {
+            "URL": "scp://${buildHost}/opt/sdk/node_${artifact.Version}.tar.gz",
+            "Credentials": "${buildHostCredential}"
+          }
+        },
+        "VersionCheck": {
+          "SystemPaths": [
+            "/opt/sdk/node/bin"
+          ],
+          "Commands": [
+            {
+              "Command": "node -v",
+              "Extraction": [
+                {
+                  "Key": "Version",
+                  "RegExpr": "v(\\d\\.\\d)"
+                }
+              ]
+            }
+          ]
+        },
+        "Run": {
+          "Directory": "/opt/sdk",
+          "TimeoutMs": 120000,
+          "Commands": [
+            {
+              "Command": "/bin/bash -c '[[ -e /opt/sdk/node ]] && rm -rf /opt/sdk/node'"
+            },
+            {
+              "Command": "tar xvzf node_${artifact.Version}.tar.gz",
+              "Error": [
+                "Error", "No such file or directory"
+              ]
+            },
+            {
+              "Command": "mv node-v${artifact.Version}-${os.System}-${os.Arch} node",
+              "Error": [
+                "Error", "No such file or directory"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
