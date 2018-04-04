@@ -1,0 +1,6 @@
+target:
+  URL: ssh://127.0.0.1
+  credentials: "${env.HOME}/.secret/localhost.json"
+sdk: node:8.1
+env:
+  NODE_ENV: dev

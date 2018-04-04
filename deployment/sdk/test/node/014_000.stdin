@@ -1,0 +1,1 @@
+/bin/bash -c '[[ -e /opt/sdk/node ]] && rm -rf /opt/sdk/node'

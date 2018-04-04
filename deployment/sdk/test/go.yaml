@@ -1,0 +1,7 @@
+target:
+  URL: ssh://127.0.0.1/
+  credentials: ${env.HOME}/.secret/localhost.json
+sdk: go:1.9
+env:
+  GOOS: linux
+  GOPATH: /Projects/go

@@ -225,6 +225,7 @@ func (s *service) updateOperatingSystem(context *endly.Context, target *url.Reso
 		osMap := data.NewMap()
 		osMap.Put("System", operatingSystem.System)
 		osMap.Put("Architecture", operatingSystem.Architecture)
+		osMap.Put("Arch", operatingSystem.Arch)
 		osMap.Put("Version", operatingSystem.Version)
 		osMap.Put("Hardware", operatingSystem.Hardware)
 		var state = context.State()
@@ -450,3 +451,4 @@ func New() endly.Service {
 	result.registerRoutes()
 	return result
 }
+
