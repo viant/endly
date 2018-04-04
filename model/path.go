@@ -8,8 +8,8 @@ type Path struct {
 	Items []string
 }
 
-//Push appends path to the system paths
-func (p *Path) Push(paths ...string) {
+//Unshift add path at the begining to the system paths
+func (p *Path) Unshift(paths ...string) {
 	for _, path := range paths {
 		if strings.Contains(path, "\n") {
 			continue
@@ -17,7 +17,7 @@ func (p *Path) Push(paths ...string) {
 		if _, has := p.index[path]; has {
 			continue
 		}
-		p.Items = append(p.Items, path)
+		p.Items = append([]string{path}, p.Items...)
 		p.index[path] = true
 	}
 }
