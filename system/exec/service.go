@@ -215,7 +215,7 @@ func (s *execService) rumCommandTemplate(context *endly.Context, session *model.
 
 func (s *execService) applyCommandOptions(context *endly.Context, options *Options, session *model.Session, info *RunResponse) error {
 	if len(options.SystemPaths) > 0 {
-		session.Path.Push(options.SystemPaths...)
+		session.Path.Unshift(options.SystemPaths...)
 		if err := s.setEnvVariable(context, session, "PATH", session.Path.EnvValue()); err != nil {
 			return err
 		}
@@ -513,9 +513,13 @@ func (s *execService) detectOperatingSystem(session *model.Session) (*model.Oper
 	if err != nil {
 		return nil, err
 	}
+	operatingSystem.Arch = operatingSystem.Architecture
 	if isAmd64Architecture(operatingSystem.Hardware) {
 		operatingSystem.Architecture = "amd64"
+		operatingSystem.Arch = "x64"
 	}
+
+
 	operatingSystem.System = session.System()
 	if err = s.extractOsPath(session, operatingSystem); err == nil {
 		err = s.extractOsUser(session, operatingSystem)
