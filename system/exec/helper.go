@@ -84,7 +84,7 @@ func NewSSHRecodingContext(manager endly.Manager, target *url.Resource, sessionD
 //NewSSHMultiRecordingContext open multi recorded session
 func NewSSHMultiRecordingContext(manager endly.Manager, sessions map[string]*url.Resource) (*endly.Context, error) {
 	context := manager.NewContext(toolbox.NewContext())
-	fileName, _, _ := toolbox.CallerInfo(3)
+	fileName, _, _ := toolbox.CallerInfo(4)
 	parent, _ := path.Split(fileName)
 	for baseDir, target := range sessions {
 		baseDir = path.Join(parent, baseDir)
