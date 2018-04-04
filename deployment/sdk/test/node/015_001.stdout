@@ -1,0 +1,5 @@
+x node-v8.1.1-darwin-x64/
+x node-v8.1.1-darwin-x64/bin/
+x node-v8.1.1-darwin-x64/include/node/libplatform/v8-tracing.h
+x node-v8.1.1-darwin-x64/bin/node
+x node-v8.1.1-darwin-x64/bin/npm

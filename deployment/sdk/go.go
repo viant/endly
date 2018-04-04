@@ -14,26 +14,27 @@ type goService struct{}
 
 func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, error) {
 	var result = &Info{}
-
+	var sdkHome = "/opt/sdk/go"
 	goPath, ok := request.Env["GOPATH"]
 	if !ok || goPath == "" {
 		goPath = os.Getenv("GOPATH")
 	}
-
 	if goPath != "" {
 		_ = endly.Run(context, exec.NewRunRequest(request.Target, false, fmt.Sprintf("export GOPATH='%v'", goPath)), nil)
 	}
-
 	var runResponse = &exec.RunResponse{}
 	if err := endly.Run(context, exec.NewExtractRequest(request.Target, nil, exec.NewExtractCommand("ls -al /opt/sdk/go", "", nil, nil)), runResponse); err == nil {
 		if !util.CheckNoSuchFileOrDirectory(runResponse.Output) {
-			_ = endly.Run(context, exec.NewRunRequest(request.Target, false, "export GOROOT='/opt/sdk/go'"), nil)
+			var request = exec.NewRunRequest(request.Target, false, "export GOROOT='/opt/sdk/go'")
+
+			_ = endly.Run(context, request, nil)
 		}
 	}
 	var extractRequest = exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand("go version", "", nil, nil,
 			model.NewExtract("version", "go version go([^\\s]+)", false)),
 	)
+	extractRequest.SystemPaths = append(extractRequest.SystemPaths,fmt.Sprintf("%v/bin", sdkHome))
 	if err := endly.Run(context, extractRequest, runResponse); err != nil {
 		return nil, err
 	}
@@ -42,7 +43,7 @@ func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, 
 		return nil, errSdkNotFound
 	}
 	result.Sdk = "go"
-	result.Home = "/opt/sdk/go"
+	result.Home = sdkHome
 	if version, ok := runResponse.Data["version"]; ok {
 		result.Version = version.(string)
 	}

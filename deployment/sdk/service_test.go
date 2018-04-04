@@ -8,8 +8,11 @@ import (
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox/url"
+	_ "github.com/viant/toolbox/storage/scp"
 	"log"
 	"testing"
+	"github.com/viant/endly/system/storage"
+	"strings"
 )
 
 func TestSdkService_Run_Jdk(t *testing.T) {
@@ -31,6 +34,8 @@ func TestSdkService_Run_Jdk(t *testing.T) {
 
 }
 
+
+
 func TestSdkService_Run_Go(t *testing.T) {
 	manager := endly.New()
 	var credentials, err = util.GetDummyCredential()
@@ -43,7 +48,7 @@ func TestSdkService_Run_Go(t *testing.T) {
 		log.Fatal(err)
 	}
 	sdkResponse := &sdk.SetResponse{}
-	sdkRequest, err := sdk.NewSetRequestFromURL("test/go.json")
+	sdkRequest, err := sdk.NewSetRequestFromURL("test/go.yaml")
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -55,5 +60,36 @@ func TestSdkService_Run_Go(t *testing.T) {
 	if assert.Nil(t, err) {
 		assert.EqualValues(t, "/opt/sdk/go", sdkResponse.SdkInfo.Home)
 	}
+
+}
+
+
+
+func TestSdkService_Run_Node(t *testing.T) {
+	manager := endly.New()
+	var credentials, err = util.GetDummyCredential()
+	if err != nil {
+		log.Fatal(err)
+	}
+	target := url.NewResource("ssh://127.0.0.1", credentials)
+	context, err := exec.NewSSHReplayContext(manager, target, "test/node")
+	if err != nil {
+		log.Fatal(err)
+	}
+	mem := storage.UseMemoryService(context)
+	mem.Upload("https://nodejs.org/dist/v8.1.1/node-v8.1.1-darwin-x64.tar.gz", strings.NewReader("abc"))
+
+
+	sdkResponse := &sdk.SetResponse{}
+	sdkRequest, err := sdk.NewSetRequestFromURL("test/node.yaml")
+	if !assert.Nil(t, err) {
+		return
+	}
+
+	err = endly.Run(context, sdkRequest, sdkResponse)
+	if ! assert.Nil(t, err) {
+		return
+	}
+	assert.EqualValues(t, "/opt/sdk/node", sdkResponse.SdkInfo.Home)
 
 }

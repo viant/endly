@@ -20,6 +20,7 @@ type systemSdkService struct {
 	*endly.AbstractService
 	jdkService *jdkService
 	goService  *goService
+	nodeService *nodeService
 }
 
 func (s *systemSdkService) updateSessionSdk(context *endly.Context, target *url.Resource, sdkInfo *Info) error {
@@ -117,6 +118,8 @@ func (s *systemSdkService) setSdk(context *endly.Context, request *SetRequest) (
 		response.SdkInfo, err = s.jdkService.setSdk(context, request)
 	case "go":
 		response.SdkInfo, err = s.goService.setSdk(context, request)
+	case "node":
+		response.SdkInfo, err = s.nodeService.setSdk(context, request)
 
 	default:
 		return nil, fmt.Errorf("unsupported jdk: %v", request.Sdk)
@@ -124,6 +127,8 @@ func (s *systemSdkService) setSdk(context *endly.Context, request *SetRequest) (
 	s.updateSessionSdk(context, target, response.SdkInfo)
 	return response, err
 }
+
+
 
 func (s *systemSdkService) setSdkAndDeployIfNeeded(context *endly.Context, request *SetRequest) (response *SetResponse, err error) {
 	response, err = s.setSdk(context, request)
@@ -148,6 +153,19 @@ const sdkSetExample = `{
     "Credentials": "${env.HOME}/.secret/localhost.json"
   }
 }`
+
+
+const sdkNodeSetExample = `{
+  "Sdk": "node:9.9",
+  "Env": {
+    "NODE_ENV": "dev"
+  },
+  "Target": {
+    "URL": "ssh://127.0.0.1/",
+    "Credentials": "${env.HOME}/.secret/localhost.json"
+  }
+}`
+
 
 func (s *systemSdkService) registerRoutes() {
 	s.Register(&endly.Route{
@@ -182,6 +200,7 @@ func New() endly.Service {
 	var result = &systemSdkService{
 		jdkService:      &jdkService{},
 		goService:       &goService{},
+		nodeService: &nodeService{},
 		AbstractService: endly.NewAbstractService(ServiceID),
 	}
 	result.AbstractService.Service = result
