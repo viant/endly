@@ -79,6 +79,7 @@ type CloseSessionResponse struct {
 //WebDriverCallRequest represents selenium call driver request
 type WebDriverCallRequest struct {
 	SessionID string
+	Key       string
 	Call      *MethodCall
 }
 

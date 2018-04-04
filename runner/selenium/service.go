@@ -92,6 +92,7 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 			}
 			if action.Selector == nil {
 				callResponse, err := s.callWebDriver(context, &WebDriverCallRequest{
+					Key:       action.Key,
 					SessionID: request.SessionID,
 					Call:      call,
 				})
@@ -144,7 +145,11 @@ func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRe
 	response := &ServiceCallResponse{
 		Data: make(map[string]interface{}),
 	}
-	return response, s.call(context, seleniumSession.driver, request.Call, response, request.Call.Method)
+	var key = request.Key
+	if key == "" {
+		key = request.Call.Method
+	}
+	return response, s.call(context, seleniumSession.driver, request.Call, response, key)
 }
 
 func (s *service) call(context *endly.Context, caller interface{}, call *MethodCall, response *ServiceCallResponse, elementPath ...string) (err error) {
