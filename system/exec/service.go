@@ -286,7 +286,7 @@ func (s *execService) authSuperUserIfNeeded(stdout string, context *endly.Contex
 	return err
 }
 
-func (s *execService) buildMatchingState(response *RunResponse, context *endly.Context) data.Map {
+func (s *execService) buildExecutionState(response *RunResponse, context *endly.Context) data.Map {
 	var state = context.State()
 	var result = state.Clone()
 	var logs = data.NewCollection()
@@ -314,11 +314,16 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	options := request.Options
 	terminators := getTerminators(options, session, extractCommand)
 	if extractCommand.When != "" {
-		var state = s.buildMatchingState(response, context)
+		var state = s.buildExecutionState(response, context)
 		if ok, err := criteria.Evaluate(context, state, extractCommand.When, "Cmd.When", true); !ok {
 			return err
 		}
+	} else if strings.Contains(command, "$") {
+		var state = s.buildExecutionState(response, context)
+		command = state.ExpandAsText(command)
 	}
+
+
 	if request.SuperUser {
 		if !session.SuperUSerAuth {
 			terminators = append(terminators, "Password")
