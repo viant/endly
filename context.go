@@ -2,12 +2,6 @@ package endly
 
 import (
 	"fmt"
-	uuid "github.com/satori/go.uuid"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/secret"
-	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox/url"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -16,6 +10,13 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	uuid "github.com/satori/go.uuid"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/secret"
+	"github.com/viant/toolbox/storage"
+	"github.com/viant/toolbox/url"
 )
 
 var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
@@ -141,7 +142,7 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 			}
 		}
 	}
-	var result = url.NewResource(c.Expand(resource.URL), c.Expand(resource.Credential))
+	var result = url.NewResource(c.Expand(resource.URL), c.Expand(resource.Credentials))
 	if result.ParsedURL == nil {
 		return nil, fmt.Errorf("failed to parse URL %v", result.URL)
 	}

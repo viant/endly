@@ -1,9 +1,10 @@
 package http
 
 import (
+	"net/http"
+
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
-	"net/http"
 	"github.com/viant/toolbox/data"
 )
 
@@ -116,7 +117,7 @@ func (r *Request) Expand(context *endly.Context) *Request {
 func (r *Request) EvaluateWhen(context *endly.Context) (isEvaluated bool, err error) {
 	isEvaluated = true //By default
 	if r.When != "" {
-		isEvaluated, err = endly.Evaluate(context, context.State(), r.When, "Request When Evaluation", isEvaluated)
+		isEvaluated, err = endly.Evaluate(context, context.State(), r.When, "Evaluate When condition with expersion"+r.When, isEvaluated)
 	}
 	return
 }
