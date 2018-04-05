@@ -67,12 +67,33 @@ func TestHttpRunnerService_Run(t *testing.T) {
 				Method: "POST",
 				Body:   "xc",
 			},
+			{
+				URL:    "http://127.0.0.1:8766/create",
+				Method: "POST",
+				Body:   "{\"name\":\"Employee Name\"}",
+				Repeater: &endly.Repeater{
+					Variables: endly.Variables{
+						{
+							Name:     "getByEmployeeIdURL",
+							Value:    "http://127.0.0.1:8766/get/$id",
+							Persist:  true,
+							Required: true,
+						},
+					},
+				},
+			},
+			//Request to be fired only when response #4 had "id" in its response
+			{
+				When:   "$responses[2].Body:/id/",
+				URL:    "${previous.getByEmployeeIdURL}",
+				Method: "GET",
+			},
 		},
 	})
 	assert.Equal(t, "", response.Error)
 	sendResponse, ok := response.Response.(*runner.SendResponse)
 	assert.True(t, ok)
-	assert.EqualValues(t, 3, len(sendResponse.Responses))
+	assert.EqualValues(t, 4, len(sendResponse.Responses))
 	for _, response := range sendResponse.Responses {
 		assert.EqualValues(t, 200, response.Code)
 	}
@@ -80,7 +101,6 @@ func TestHttpRunnerService_Run(t *testing.T) {
 	assert.Equal(t, "content1-2", sendResponse.Data["send_arg2"])
 
 }
-
 
 // Test for checking "When" criteria with request/response dependency
 func TestHttpRunnerService_Run_Expansion(t *testing.T) {
@@ -140,7 +160,7 @@ func TestHttpRunnerService_Run_Expansion(t *testing.T) {
 							Persist:  false,
 							Required: false,
 						},
-							{
+						{
 							Name:     "winNoticeURL",
 							Value:    "http://127.0.0.1:8990/logger/rtb${winNoticePath}",
 							From:     "",
@@ -151,9 +171,9 @@ func TestHttpRunnerService_Run_Expansion(t *testing.T) {
 				},
 			},
 			{
-				When: "${responses[0].Body:/rubicon/won}",
-				URL:       "${previous.winNoticeURL}",
-				Method:    "GET",
+				When:   "$responses[0].Body:/rubicon/won",
+				URL:    "${previous.winNoticeURL}",
+				Method: "GET",
 				Repeater: &endly.Repeater{
 					Extraction: []*endly.Extract{
 						{
@@ -184,9 +204,9 @@ func TestHttpRunnerService_Run_Expansion(t *testing.T) {
 				},
 			},
 			{
-				When: "csimp/pixel",
-				URL:       "${previous.csImpURL}",
-				Method:    "GET",
+				When:   "csimp/pixel",
+				URL:    "${previous.csImpURL}",
+				Method: "GET",
 			},
 		},
 	})
