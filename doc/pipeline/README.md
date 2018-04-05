@@ -11,7 +11,8 @@
 
 **[Pipeline](../../model/pipeline.go)** an abstraction defining a simple sequence of tasks.
 
-A task can either execute a [workflow](../workflow) or [service](../service) action.
+A task can either be a groping sub tasks node or actual execution node. In the latter
+case it can execute a [workflow](../workflow) or [service](../service) action.
 
 For instance the following pipeline will execute SSH command (service: exec, action: run).
 
@@ -48,19 +49,19 @@ defaults:
   d1:v1
 
 pipeline:
-  node1:
+  task1:
      action: serviceID:action
      requestField1: val1
      requestFieldN: valN
            
-  nodeX:
-    subNodeX:
+  taskN:
+    subTaskA:
       workflow: workflowSelector
       tasks: task selector
       paramsKey1: val1
       paramKeyN: valN
       
-    subNodeZ:
+    subTaskZ:
        action: serviceID:action
        requestField1: val1
        requestFieldN: valN
