@@ -76,4 +76,6 @@
      * Reverter order of adding os.path (to begining)
      * Added node sdk 
      * Minor patches
-     
+         
+## Apr 6 2018 0.7.4
+     * Minor patches
