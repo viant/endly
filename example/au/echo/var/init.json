@@ -56,6 +56,11 @@
     "From": "params.buildRoot",
     "Value": "/tmp/${app}/release"
   },
+
+  {
+    "Name": "registry",
+    "From": "params.registry"
+  },
   {
     "Name": "registryUsername",
     "From": "params.registryUsername"
@@ -63,9 +68,6 @@
   {
     "Name": "registryCredentials",
     "From": "params.registryCredentials"
-  },
-  {
-    "Name": "registry",
-    "From": "params.registry"
   }
+
 ]

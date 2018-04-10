@@ -42,6 +42,12 @@
     }
   },
   {
+    "Name": "releasePath",
+    "Required": true,
+    "From": "params.releasePath",
+    "Value": "/tmp/${app}/release/"
+  },
+  {
     "Name": "superUser",
     "Required": true,
     "Params": "params.superUser",

@@ -83,7 +83,7 @@
   {
     "Name": "releasePath",
     "Required": true,
-    "From": "params.buildRoot",
+    "From": "params.releasePath",
     "Value": "/tmp/${app}/release/"
   },
   {
