@@ -387,6 +387,11 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 	defer func() {
 		context.Publish(model.NewActivityEndEvent(runResponse))
 		if len(runResponse.Data) > 0 {
+			if pipeline.Post != nil {
+				if varibales, err := model.GetVariables("", pipeline.Post); err == nil {
+					varibales.Apply(response.Data, state)
+				}
+			}
 			for k, v := range runResponse.Data {
 				state.Put(k, v)
 			}
