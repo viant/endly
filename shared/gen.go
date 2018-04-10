@@ -15,7 +15,6 @@ func main() {
 	callerDir := toolbox.CallerDirectory(3)
 	parent := strings.Replace(callerDir, "/shared/", "", 1)
 
-
 	mappings := []*storage.StorageMapping{
 		{
 			SourceURL:      toolbox.FileSchema + path.Join(parent, "shared/meta"),
