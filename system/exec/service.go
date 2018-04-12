@@ -13,6 +13,7 @@ import (
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
+	"os"
 )
 
 //ServiceID represent system executor service id
@@ -336,6 +337,11 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 		return err
 	}
 	var listener ssh.Listener
+
+	//troubleshooting secrets - DO NOT USE unless really needed
+	if os.Getenv("ENDLY_SECRET_REVEAL") == "true" {
+		command = cmd
+	}
 	s.Begin(context, NewSdtinEvent(session.ID, command))
 	listener = func(stdout string, hasMore bool) {
 		context.Publish(NewStdoutEvent(session.ID, stdout, err))
