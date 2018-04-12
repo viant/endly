@@ -211,6 +211,8 @@ func (c *Context) AsRequest(serviceName, action string, source map[string]interf
 			err = fmt.Errorf("failed to create request, unable to cast %v into %T, %v", source, request, r)
 		}
 	}()
+	expanded := c.state.Expand(source)
+	source = toolbox.AsMap(expanded)
 	err = toolbox.DefaultConverter.AssignConverted(request, source)
 	return request, err
 }
