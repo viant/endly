@@ -160,7 +160,6 @@ func (s *Service) getServiceRequest(context *endly.Context, activity *model.Acti
 	requestMap := toolbox.AsMap(request)
 	var serviceRequest interface{}
 	serviceRequest, err = context.AsRequest(service.ID(), activity.Action, requestMap)
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -362,7 +361,6 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 	if len(pipeline.Pipelines) > 0 {
 		defer Pop(context)
 		process := model.NewProcess(process.Source, nil, pipeline)
-
 		Push(context, process)
 		return s.traversePipelines(pipeline.Pipelines, context, response, process)
 	}
@@ -388,9 +386,7 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 		context.Publish(model.NewActivityEndEvent(runResponse))
 		if len(runResponse.Data) > 0 {
 			if pipeline.Post != nil {
-				if varibales, err := model.GetVariables("", pipeline.Post); err == nil {
-					varibales.Apply(response.Data, state)
-				}
+				s.applyVariables(pipeline.Post, process, runResponse.Data, context)
 			}
 			for k, v := range runResponse.Data {
 				state.Put(k, v)
@@ -398,6 +394,10 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 			response.Data[pipeline.Name] = runResponse.Data
 		}
 	}()
+
+	if pipeline.Init != nil {
+		s.applyVariables(pipeline.Init, process, state, context)
+	}
 
 	var request = toolbox.AsMap(state.Expand(activity.Request))
 	if pipeline.Workflow != "" {
@@ -408,6 +408,9 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 	} else if pipeline.Action != "" {
 		actionSelector := model.ActionSelector(pipeline.Action)
 		var request, err = context.AsRequest(actionSelector.Service(), actionSelector.Action(), request)
+		if err != nil {
+			return err
+		}
 		if err = endly.Run(context, request, &runResponse.Data); err != nil {
 			return err
 		}
@@ -457,7 +460,6 @@ func (s *Service) pipeline(context *endly.Context, request *RunRequest) (*RunRes
 	}
 
 	response, err := response, s.traversePipelines(request.Inline.Pipelines, context, response, process)
-
 	if request.Inline.Post != nil && response != nil {
 		if err := s.applyVariables(request.Inline.Post, process, response.Data, context); err != nil {
 			return nil, err

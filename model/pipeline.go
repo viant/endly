@@ -36,7 +36,8 @@ type Pipeline struct {
 	Description string                 `description:"description"`
 	Request     interface{}            `description:"external action request location, otherwise params are used to form request"`
 	Pipelines   Pipelines              `description:"workflow or action subsequent pipelines"`
-	Post        interface{}            `description:"post execution variables "`
+	Init        interface{}            `description:"state initalization "`
+	Post        interface{}            `description:"post execution state update "`
 }
 
 //Select selects pipelines matching supplied selector
@@ -151,6 +152,9 @@ func (p *Inline) toPipeline(baseURL string, source interface{}, name string, def
 		return nil, err
 	}
 
+	if pipeline.Init != nil {
+		pipeline.Init, err = GetVariables(baseURL, pipeline.Init)
+	}
 	if pipeline.Post != nil {
 		pipeline.Post, err = GetVariables(baseURL, pipeline.Post)
 	}
