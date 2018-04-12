@@ -12,6 +12,9 @@ import (
 )
 
 func canExpand(content []byte) bool {
+	if len(content) == 0 {
+		return false
+	}
 	limit := 100
 	if limit >= len(content) {
 		limit = len(content) - 1
