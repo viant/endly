@@ -20,6 +20,21 @@ type StartRequest struct {
 	Version    string
 }
 
+func (r *StartRequest) Validate() error {
+	if r.Target == nil {
+		return errors.New("target was empty")
+	}
+	if r.Port == 0 {
+		return errors.New("port was empty")
+	}
+	if r.Version == "" {
+		return errors.New("version was empty")
+	}
+	return nil
+}
+
+
+
 //NewStartRequestFromURL creates a new start request from URL
 func NewStartRequestFromURL(URL string) (*StartRequest, error) {
 	var result = &StartRequest{}
