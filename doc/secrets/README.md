@@ -23,13 +23,14 @@ Provide a username and password to login to your box.
 ```text
 mkdir $HOME/.secret
 ssh-keygen -b 1024 -t rsa -f id_rsa -P "" -f $HOME/.secret/id_rsa
-cat $HOME/.secret/id_rsa.pub >  ~/.ssh/authorized_keys 
+touch ~/.ssh/authorized_keys
+cat $HOME/.secret/id_rsa.pub >>  ~/.ssh/authorized_keys 
 chmod u+w authorized_keys
 
 endly -c=localhost -k=~/.secret/id_rsa.pub
 ```
 
-```
+
 Verify that secret file were created
 ```text
 cat ~/.secret/localhost.json
