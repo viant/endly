@@ -114,7 +114,6 @@ func (s *AbstractService) Run(context *Context, request interface{}) (response *
 
 //Route returns a service action route for supplied action
 func (s *AbstractService) Route(action string) (*Route, error) {
-
 	if result, ok := s.routeByAction[action]; ok {
 		return result, nil
 	}

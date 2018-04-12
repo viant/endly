@@ -1,0 +1,6 @@
+source:
+  URL: $update.URL
+dest:
+  URL: $update.URL
+replace: $update.replace
+expand: true

@@ -83,4 +83,6 @@
 ## Apr 11 2018 0.7.5
     * Add pipeline post
     * Patched neatly Cat udf
+    * Added Pipeline state init block
+    * Streamlined share workflow
     

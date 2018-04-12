@@ -14,4 +14,3 @@ Workflow,,Name,Description,Tasks,Init
 ,,start,start app,%Start,
 []Start,Service,Action,Description,Request,When
 ,process,start,start app,@req/start,$startCmd
-,,,,,
