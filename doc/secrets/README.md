@@ -27,7 +27,7 @@ touch ~/.ssh/authorized_keys
 cat $HOME/.secret/id_rsa.pub >>  ~/.ssh/authorized_keys 
 chmod u+w authorized_keys
 
-endly -c=localhost -k=~/.secret/id_rsa.pub
+endly -c=localhost -k=~/.secret/id_rsa
 ```
 
 
