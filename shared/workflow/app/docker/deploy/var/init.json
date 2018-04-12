@@ -10,6 +10,12 @@
     "Required": true
   },
   {
+    "Name": "releasePath",
+    "Required": true,
+    "From": "params.releasePath",
+    "Value": "/tmp/${app}/release/"
+  },
+  {
     "Name": "useRegistry",
     "Required": true,
     "From": "params.useRegistry",
@@ -48,5 +54,10 @@
       "URL": "ssh://127.0.0.1/",
       "Credentials": "localhost"
     }
+  },
+  {
+    "Name": "update",
+    "From": "params.update",
+    "Value": []
   }
 ]
