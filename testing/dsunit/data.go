@@ -42,6 +42,9 @@ func (d *TableData) PostIncrementIfNeeded(state data.Map) {
 
 //GetValues a table records.
 func (d *TableData) GetValues(state data.Map) []map[string]interface{} {
+	if d.Value == nil {
+		return []map[string]interface{}{}
+	}
 	if toolbox.IsMap(d.Value) {
 		var value = d.GetValue(state, d.Value)
 		if len(value) == 0 {

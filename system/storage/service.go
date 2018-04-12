@@ -247,7 +247,7 @@ const (
         "URL": "https://svn.viantinc.com/svn/project/db/schema.ddl",
         "Credentials": "${env.HOME}/.secret/svn.json"
       },
-      "Desc": {
+      "Dest": {
         "URL": "build/db/"
       }
 }`
@@ -258,7 +258,7 @@ const (
         "URL": "s3://mybucket1/project1/Transfers/",
         "Credentials": "${env.HOME}/.secret/s3.json"
       },
-      "Desc": {
+      "Dest": {
          "URL": "gs://mybucket2/project1/Transfers/",
           "Credentials": "${env.HOME}/.secret/gs.json"
       }
@@ -288,7 +288,7 @@ const (
         "URL": "scp://127.0.0.1/build/app/target/classes/server.properties",
         "Credentials": "${env.HOME}/.secret/localhost.json"
       },
-      "Desc": {
+      "Dest": {
         "URL": "scp://127.0.0.1/build/app/target/target/build/WEB-INF/classes/dserver.properties",
         "Credentials": "${env.HOME}/.secret/localhost.json"
       },
