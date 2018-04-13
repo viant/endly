@@ -1,0 +1,3 @@
+sdk: jdk
+version: 1.8
+build: build/default
