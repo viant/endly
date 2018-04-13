@@ -336,10 +336,14 @@ func printServiceActions() {
 }
 
 func getWorkflow(URL string) (*model.Workflow, error) {
-	dao := workflow.NewDao()
 	manager := endly.New()
-	context := manager.NewContext(toolbox.NewContext())
-	return dao.Load(context, url.NewResource(URL))
+	context := manager.NewContext(nil)
+	var response = &workflow.LoadResponse{}
+	var source = workflow.GetResource(workflow.NewDao(), context.State(), URL)
+	if err := endly.Run(context, &workflow.LoadRequest{Source:source}, response);err != nil {
+		return nil, err
+	}
+	return response.Workflow, nil
 }
 
 func printWorkflow(URL string) {
