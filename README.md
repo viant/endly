@@ -336,7 +336,7 @@ You can build, deploy and test them end to end all with endly.
 ## External resources
 
 - [Go lang e2e testing](https://github.com/adrianwit/golang-e2e-testing)
-    
+- [Endly introduction](https://github.com/adrianwit/endly-introduction)    
 
          	
 <a name="License"></a>
