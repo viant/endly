@@ -80,9 +80,10 @@
 ## Apr 6 2018 0.7.4
      * Minor patches
      
-## Apr 11 2018 0.7.5
+## Apr 13 2018 0.7.5
     * Add pipeline post
     * Patched neatly Cat udf
     * Added Pipeline state init block
-    * Updated share workflow
+    * Updated shared workflow
+    * Added workflow generator
     
