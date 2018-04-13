@@ -74,23 +74,24 @@ func (s *Service) addVariableEvent(name string, variables model.Variables, conte
 	context.Publish(NewModifiedStateEvent(variables, in, out))
 }
 
-func (s *Service) worflowDedicatedFolderURL(URL string) string {
+
+
+func  getURLs(URL string) []string {
 	selector := model.WorkflowSelector(URL)
 	workflowName := selector.Name()
 	workflowFilename := fmt.Sprintf("%v.csv", workflowName)
-	return strings.Replace(URL, workflowFilename, fmt.Sprintf("%v/%v", workflowName, workflowFilename), 1)
-}
-
-func (s *Service) getURLs(URL string) []string {
+	dedicatedFolderURL := strings.Replace(URL, workflowFilename, fmt.Sprintf("%v/%v", workflowName, workflowFilename), 1)
 	return []string{
 		URL,
-		s.worflowDedicatedFolderURL(URL),
+		dedicatedFolderURL,
 	}
 }
 
-//getWorkflowResource returns workflow resource
-func (s *Service) getWorkflowResource(state data.Map, URL string) *url.Resource {
-	for _, candidate := range s.getURLs(URL) {
+
+
+//GetResource returns workflow resource
+func GetResource(dao *Dao, state data.Map, URL string) *url.Resource {
+	for _, candidate := range getURLs(URL) {
 		resource := url.NewResource(candidate)
 		storageService, err := storage.NewServiceForURL(resource.URL, "")
 		if err != nil {
@@ -105,8 +106,8 @@ func (s *Service) getWorkflowResource(state data.Map, URL string) *url.Resource 
 		return nil
 	}
 	//Lookup shared workflow
-	for _, candidate := range s.getURLs(URL) {
-		resource, err := s.Dao.NewRepoResource(state, fmt.Sprintf("workflow/%v", candidate))
+	for _, candidate := range getURLs(URL) {
+		resource, err := dao.NewRepoResource(state, fmt.Sprintf("workflow/%v", candidate))
 		if err != nil {
 			continue
 		}
@@ -123,7 +124,7 @@ func (s *Service) getWorkflowResource(state data.Map, URL string) *url.Resource 
 
 func (s *Service) loadWorkflowIfNeeded(context *endly.Context, request *RunRequest) (err error) {
 	if !s.HasWorkflow(request.Name) {
-		resource := s.getWorkflowResource(context.State(), request.URL)
+		resource := GetResource(s.Dao, context.State(), request.URL)
 		if resource == nil {
 			return fmt.Errorf("unable to locate workflow: %v, %v", request.Name, request.URL)
 		}
