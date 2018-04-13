@@ -1,0 +1,10 @@
+sessionID: $SeleniumSessionID
+commands:
+  - get($url)
+  - (#$in).clear
+  - (#$in).sendKeys('$data')
+  - (#$submit).click
+  - $out = (xpath://DIV[preceding-sibling::INPUT[@id='$out']]).text
+expect:
+  $out:
+    Text: /$expected/

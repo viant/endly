@@ -1,0 +1,16 @@
+action: dsunit:init
+type: RDBMS
+datastore: $db
+config:
+  driverName: bigquery
+  credentials: $bgCredentials
+  params:
+    projectId: myproject
+    datasetId: mydataset
+    dateFormat: yyyy-MM-dd hh:mm:ss z
+recreate: true
+tables:
+  - table: "users"
+    - pkColumns:
+      - id
+    schemaURL: ddl/$db/dummy.json

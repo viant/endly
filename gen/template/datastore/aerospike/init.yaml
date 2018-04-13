@@ -1,0 +1,12 @@
+action: dsunit:init
+datastore: $db
+recreate: true
+config:
+  driverName: aerospike
+  descriptor: "tcp([host]:3000)/[namespace]"
+  parameters:
+    dbname: $db
+    namespace: $db
+    host: $serviceHost
+    port: 3000
+    dateFormat: yyyy-MM-dd hh:mm:ss

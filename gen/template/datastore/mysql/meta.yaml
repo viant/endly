@@ -1,0 +1,14 @@
+id: mysql
+service: service/mysql
+name: MySQL
+kind: RDBMS
+tag: mysql
+credentials: $mysqlCredentials
+config: config/my.cnf
+schema: ddl/schema.sql
+dictionary: dictionary/
+data: data/
+sequence: true
+tables:
+  - dummy
+  - dummy_type

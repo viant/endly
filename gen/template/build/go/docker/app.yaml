@@ -1,0 +1,39 @@
+tasks: $tasks
+defaults:
+  app: $app
+  version: $appVersion
+  useRegistry: false
+pipeline:
+  build:
+    workflow: app/docker/build
+    origin:
+      URL: $originURL
+      credentials: localhost
+    sdk: $sdk
+    commands:
+      - apt-get -y install git
+      - export GOPATH=/tmp/go
+      - cd ${buildPath}app
+      - go get -u github.com/viant/endly/bootstrap
+      - export CGO_ENABLED=0
+      - go build -o $app
+      - chmod +x $app
+    download:
+      /$buildPath/${app}: $releasePath
+  stop:
+    target: $target
+    action: docker:stop-images
+    images:
+    - $app
+  deploy:
+    workflow: app/docker/deploy
+    name: endly_$app
+    update:
+      URL: "${releasePath}/config/config.yaml"
+      replace:
+        127.0.0.1: $dbIP
+    ports:
+      "8080": "8080"
+    mount:
+      ${env.HOME}/.secret: /root/.secret
+      ${releasePath}/config/: /config/

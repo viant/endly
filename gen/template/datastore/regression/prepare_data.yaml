@@ -1,0 +1,13 @@
+sequence:
+  action: dsunit.sequence
+  tables: $tables
+  post:
+    - seq = $Sequences
+data:
+  action: nop
+  init:
+    -  dbSetup = $AsTableRecords(data.db.setup)
+setup:
+  action: dsunit:prepare
+  URL: regression/$db/data/
+  data: $dbSetup

@@ -1,0 +1,14 @@
+{
+  "Requests": [
+    {
+      "...": "$request"
+    }
+  ],
+  "Expect": {
+    "Responses": [
+      {
+        "...": "$expect"
+      }
+    ]
+  }
+}
