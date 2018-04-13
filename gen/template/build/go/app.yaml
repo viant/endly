@@ -1,0 +1,47 @@
+tasks: $tasks
+defaults:
+  app: $app
+  sdk: $sdk
+  target: $target
+  buildTarget: $buildTarget
+  appTarget: $appTarget
+
+pipeline:
+
+  build:
+    workflow: app/build
+    origin:
+      URL: $originURL
+    commands:
+      - export GOPATH=/tmp/go
+      - cd $buildPath/app
+      - go get -u github.com/viant/endly/bootstrap
+      - go build -o $app
+      - chmod +x $app
+    download:
+      ${buildPath}/app/${app}: $releasePath
+
+  deploy:
+    workflow: app/deploy
+    init:
+      - mkdir -p $appPath
+      - mkdir -p $appPath/config
+      - mkdir -p $appPath/static
+      - chown -R ${os.user} $appPath
+    upload:
+      ${releasePath}/${app}: $appPath
+      ${releasePath}/config.yaml: $appPath
+      ${releasePath}/static: ${appPath}/static/
+    commands:
+      - echo 'deployed'
+
+  stop:
+    action: process:stop-all
+    input: ${app}
+
+  start:
+    action: process:start
+    directory: $appPath
+    immuneToHangups: true
+    command: ./${app}
+    arguments: $args

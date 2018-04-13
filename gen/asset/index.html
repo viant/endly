@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Endly E2E testing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/main.css"/>
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/main.js"></script>
+
+</head>
+<body>
+<div class="mx-auto" style="width: 80vw;">
+    <h3 class="text-center">Endly E2E testing workflow generator</h3>
+
+    <form action="/download/endly.zip" method="post">
+        <fieldset class="form-group">
+            <div class="form-row text-center">
+                <legend class="text-center pt-0">Application</legend>
+            </div>
+
+            <div class="form-group row">
+
+                <label for="appTemplate" class="col-1 col-form-label">Template</label>
+                <div class="col">
+                    <select class="form-control" id="appTemplate" name="appTemplate" required>
+                        <option value=""></option>
+                    </select>
+                    <div class="invalid-feedback">
+                        Please choose a application template
+                    </div>
+                </div>
+            </div>
+            <div class="form-group row">
+
+
+                <label for="origin" class="col-1 col-form-label">Origin</label>
+                <div class="col">
+                    <input class="form-control" type="text" id="origin" name="origin" placeholder="Source code URL" required>
+                    <div class="invalid-feedback">
+                        Please choose an application origin
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-row row">
+                <label for="appName" class="col-1 col-form-label">Name</label>
+                <div class="col-6">
+                    <input class="form-control" type="text" name="appName" id="appName" placeholder="Application Name" required>
+                    <div class="invalid-feedback">
+                        Please choose an application name.
+                    </div>
+                </div>
+
+
+                <label for="sdk" class="col-1 col-form-label">Sdk</label>
+                <div class="col-1">
+                    <select class="form-control" id="sdk" name="sdk" required>
+                        <option value=""></option>
+                    </select>
+                    <div class="invalid-feedback">
+                        Please choose a application sdk
+                    </div>
+                </div>
+
+                <div class="form-check">
+                    <input class="form-check-input form-control-sm" name="docker" type="checkbox" id="docker">
+                    <label class="form-check-label" for="docker">
+                        Use docker
+                    </label>
+                </div>
+
+            </div>
+        </fieldset>
+
+
+
+        <fieldset class="form-group">
+            <div class="form-row text-center">
+                <legend class="text-center pt-0">Datastore</legend>
+            </div>
+            <div class="form-group row">
+
+                <label for="dbEngine" class="col-1 col-form-label">Engine</label>
+                <div class="col-3">
+                    <select class="form-control" id="dbEngine" name="dbEngine" required>
+                        <option value=""></option>
+                    </select>
+                    <div class="invalid-feedback">
+                        Please choose a datastore driver
+                    </div>
+                </div>
+                <label for="dbName" class="col-1 col-form-label">Name</label>
+                <div class="col-6">
+                    <input class="form-control" type="text" id="dbName" name="dbName"   placeholder="Datastore Name" required>
+                    <div class="invalid-feedback">
+                        Please choose an datastore name.
+                    </div>
+                </div>
+
+                <div class="form-check">
+                    <input class="form-check-input form-control-sm" type="checkbox" name="dbConfig" id="dbConfig">
+                    <label class="form-check-label" for="dbConfig">
+                        Use config
+                    </label>
+                </div>
+
+            </div>
+        </fieldset>
+
+
+
+        <fieldset class="form-group">
+            <div class="form-row text-center">
+                <legend class="text-center pt-0">Testing</legend>
+            </div>
+
+            <div class="form-group row ">
+                <div class="form-check  mx-auto">
+                    <input type="checkbox" class="form-check-input form-control-lg" id="selenium" name="selenium">
+                    <label class="form-check-label" for="selenium">Use selenium runner</label>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="form-check mx-auto">
+                    <input type="checkbox" class="form-check-input form-control-lg" id="http" name="http">
+                    <label class="form-check-label" for="http">Use HTTP runner</label>
+                </div>
+            </div>
+
+
+            <div class="form-group row">
+                <div class="form-check mx-auto">
+                    <input type="checkbox" class="form-check-input form-control-lg" id="rest" name="rest">
+                    <label class="form-check-label" for="rest">Use REST runner</label>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="form-check mx-auto">
+                    <input type="checkbox" class="form-check-input form-control-lg" id="caseData" name="caseData">
+                    <label class="form-check-label" for="caseData">Setup data per use case</label>
+                </div>
+            </div>
+        </fieldset>
+        <div class="form-group row text-center ">
+            <button type="submit" class="mx-auto  btn btn-primary">Download</button>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

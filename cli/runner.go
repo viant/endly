@@ -51,7 +51,7 @@ type ReportSummaryEvent struct {
 	Error          bool
 }
 
-//Runner represents command line runner
+//Testing represents command line runner
 type Runner struct {
 	*Renderer
 	*model.Activities

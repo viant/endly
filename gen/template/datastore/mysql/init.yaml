@@ -1,0 +1,14 @@
+action: dsunit:init
+datastore: $db
+recreate: true
+config:
+  driverName: mysql
+  descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+  credentials: $mysqlCredentials
+admin:
+  datastore: mysql
+  config:
+    driverName: mysql
+    descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+    credentials: $mysqlCredentials
+

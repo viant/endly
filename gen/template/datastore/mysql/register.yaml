@@ -1,0 +1,8 @@
+action: dsunit:register
+config:
+  driverName: mysql
+  descriptor: "[username]:[password]@tcp([mysqlIP]:3306)/[dbname]?parseTime=true"
+  credentials: $mysqlCredentials
+  parameters:
+    dbname: $db
+    mysqlIP: 127.0.0.1

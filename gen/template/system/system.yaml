@@ -1,0 +1,10 @@
+tasks: $tasks
+defaults:
+  target: $serviceTarget
+pipeline:
+  destroy:
+    stop-images:
+      action: docker:stop-images
+      images: $tags
+  init:
+    services: $services

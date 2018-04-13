@@ -1,0 +1,8 @@
+id: bigquery
+name: BigQuery
+kind: RDBMS
+dictionary: dictionary/
+sequence: false
+tables:
+  - dummy
+  - dummy_type

@@ -1,0 +1,12 @@
+id: pg
+service: service/pg
+name: PostgreSQL
+kind: RDBMS
+tag: pg
+credentials: $pgCredentials
+schema: ddl/schema.sql
+dictionary: dictionary/
+sequence: true
+tables:
+  - dummy
+  - dummy_type

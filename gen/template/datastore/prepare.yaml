@@ -1,0 +1,3 @@
+action: dsunit:prepare
+datastore: $db
+URL: $dictionary

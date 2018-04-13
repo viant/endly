@@ -1,0 +1,7 @@
+action: dsunit:init
+datastore: $db
+recreate: true
+config:
+  driverName: mgc
+  descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+

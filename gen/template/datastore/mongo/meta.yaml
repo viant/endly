@@ -1,0 +1,10 @@
+id: mongo
+service: service/mongo
+name: MongoDB
+king: NoSQL
+tag: mongo
+dictionary: dictionary/
+sequence: false
+tables:
+  - dummy
+  - dummy_type

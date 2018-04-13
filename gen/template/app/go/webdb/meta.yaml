@@ -1,0 +1,39 @@
+name: go/webdb
+description: "golang: simple web/rest app"
+config: config/config.yaml
+build: build/go
+docker: true
+sdk: go:1.9
+dbconfigpath:  datastore
+assets:
+  - config/config.yaml
+  - static/
+args:
+  - "-configURL"
+  - config/config.yaml
+originurl: "./../"
+selenium:
+  url: http://127.0.0.1:8080/form.html
+  in: id
+  data: 111111
+  out: name
+  submit: submit
+  expected: Please choose a dummy name
+http:
+  request:
+    method: get
+    url: http://127.0.0.1:8080/v1/api/dummy/111111111
+  expect:
+    Code: 404
+rest:
+  method: post
+  url: http://127.0.0.1:8080/v1/api/dummy
+  request:
+    data:
+      Id: 9999
+      TypeId: 2
+      Name: name 9999
+  expect:
+    Data:
+      TypeId: 2
+      Name: name 9999

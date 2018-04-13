@@ -1,0 +1,17 @@
+Workflow,,Name,Description,Tasks,Init,
+,,manager,run system test,%Tasks,@var/init,
+[]Tasks,,Name,Description,Actions,,
+,,init,Initialise test,%Init,,
+[]Init,Service,Action,Description,Request,,
+,workflow,run,initialise system services,@system,,
+,workflow,run,initialise data,@datastore,,
+,workflow,run,deploy app,@app,,
+[]Tasks,,Name,Description,Actions,,
+,,test,Run test,%Test,,
+[]Test,Service,Action,Description,Request,workflow,tasks
+,workflow,run,run test plan,@req/run,regression,*
+[]Tasks,,Name,Description,Actions,,
+,,destroy,destroy system,%Destroy,,
+[]Destroy,Service,Action,Description,Request,tasks,
+,workflow,run,stop app,@app,stop,
+,workflow,run,stop system` services, @system,destroy,

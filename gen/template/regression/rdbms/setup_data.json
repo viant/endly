@@ -1,0 +1,14 @@
+[
+  {
+    "Table": "dummy",
+    "Value": {
+      "id": "$seq.dummy",
+      "name": "Name $index",
+      "type_id": 1
+    },
+    "PostIncrement": [
+      "seq.dummy"
+    ],
+    "Key": "${tagId}_dummy"
+  }
+]

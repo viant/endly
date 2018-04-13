@@ -1,0 +1,11 @@
+id: aerospike
+service: service/aerospike
+name: Aerospike
+kind: NoSQL
+tag: aerospike
+config: config/aerospike.conf
+dictionary: dictionary/
+sequence: false
+tables:
+  - dummy
+  - dummy_type
