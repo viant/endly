@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	var memStorage = storage.NewMemoryService()
+	var memStorage = storage.NewMemoryService();
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/config.go", bytes.NewReader([]byte(`package webdb
 
@@ -1018,6 +1018,12 @@ tables:
 		}
 	}
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/bigquery/data/dummy.json", bytes.NewReader([]byte(`[]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/bigquery/data/dummy.json %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/bigquery/init.yaml", bytes.NewReader([]byte(`action: dsunit:init
 type: RDBMS
 datastore: $db
@@ -1054,7 +1060,7 @@ DROP TABLE IF EXISTS dummy;
 
 CREATE TABLE dummy (
   id       SERIAL CONSTRAINT dummy_id PRIMARY KEY,
-  type_id  INT,
+  type_id  INT NOT NULL,
   name     VARCHAR(255) DEFAULT NULL,
   modified TIMESTAMP    DEFAULT current_timestamp
 );`)))
@@ -1084,7 +1090,10 @@ datastore: $db
 config:
   driverName: postgres
   descriptor: "host=127.0.0.1 port=5432 user=[username] password=[password] dbname=[dbname] sslmode=disable"
-  credentials: $pgCredentials`)))
+  credentials: $pgCredentials
+  parameters:
+    dbname: $db
+`)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/pg/register.yaml %v", err)
 		}
@@ -1223,8 +1232,8 @@ config:
   descriptor: tcp([host]:3000)/[namespace]
   parameters:
     dbname: $db
-    namespace: $db
-    host: $targetHost
+    namespace: test
+    host: 127.0.0.1
     port: 3000
     dateFormat: yyyy-MM-dd hh:mm:ss
 `)))
@@ -1250,6 +1259,12 @@ tables:
 		}
 	}
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/aerospike/data/dummy.json", bytes.NewReader([]byte(`[]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/aerospike/data/dummy.json %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/aerospike/init.yaml", bytes.NewReader([]byte(`action: dsunit:init
 datastore: $db
 recreate: true
@@ -1258,8 +1273,8 @@ config:
   descriptor: "tcp([host]:3000)/[namespace]"
   parameters:
     dbname: $db
-    namespace: $db
-    host: $serviceHost
+    namespace: test
+    host: 127.0.0.1
     port: 3000
     dateFormat: yyyy-MM-dd hh:mm:ss
 `)))
@@ -1326,11 +1341,11 @@ CREATE TABLE dummy (
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/mysql/register.yaml", bytes.NewReader([]byte(`action: dsunit:register
 config:
   driverName: mysql
-  descriptor: "[username]:[password]@tcp([mysqlIP]:3306)/[dbname]?parseTime=true"
+  descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
   credentials: $mysqlCredentials
   parameters:
     dbname: $db
-    mysqlIP: 127.0.0.1`)))
+`)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/mysql/register.yaml %v", err)
 		}
@@ -1385,9 +1400,11 @@ admin:
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/mongo/register.yaml", bytes.NewReader([]byte(`action: dsunit:register
 datastore: $db
 config:
-  driverName: mysql
-  descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
-  credentials: $mysqlCredentials
+  driverName: mgc
+  parameters:
+    dbname: $db
+    host: "127.0.0.1"
+    keyColumnName: "id"
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/mongo/register.yaml %v", err)
@@ -1410,13 +1427,21 @@ tables:
 		}
 	}
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/mongo/data/dummy.json", bytes.NewReader([]byte(`[]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/mongo/data/dummy.json %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/mongo/init.yaml", bytes.NewReader([]byte(`action: dsunit:init
 datastore: $db
 recreate: true
 config:
   driverName: mgc
-  descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
-
+  parameters:
+    dbname: $db
+    host: "127.0.0.1"
+    keyColumnName: "id"
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/mongo/init.yaml %v", err)

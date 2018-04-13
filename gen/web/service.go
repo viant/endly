@@ -129,8 +129,8 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	archive.Flush()
 	archive.Close()
 
-	err = storage.Copy(builder.storage, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/ss", nil, nil)
-
+	//Local debuging
+	//err = storage.Copy(builder.storage, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/ss", nil, nil)
 	response.Data = writer.Bytes()
 	return response, err
 }
