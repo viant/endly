@@ -319,6 +319,8 @@ You can build, deploy and test them end to end all with endly.
         - Deploy app to docker container
         - Test an app with REST and HTTP runner
 
+6) [Generate](https://endly-external.appspot.com/) e2e testing workflow 
+
 
 <a name="Documentation"></a>
 
