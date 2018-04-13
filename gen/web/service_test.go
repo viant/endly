@@ -1,12 +1,12 @@
 package web
 
 import (
-	"testing"
-	"github.com/viant/toolbox/url"
-	"github.com/stretchr/testify/assert"
-	"os/exec"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
+	"os/exec"
+	"testing"
 )
 
 func TestService_Run(t *testing.T) {
@@ -14,21 +14,19 @@ func TestService_Run(t *testing.T) {
 	output, _ := exec.Command("rm", "-rf", "/tmp/ee").CombinedOutput()
 	fmt.Printf("%s\n", output)
 
-
-
-	srv := NewService(url.NewResource("../").URL)
-
+	var templateURL = toolbox.URLPathJoin(url.NewResource("../").URL, "template")
+	var assetURL = toolbox.URLPathJoin(url.NewResource("../").URL, "asset")
+	srv := NewService(templateURL, assetURL)
 
 	resp, err := srv.Run(&RunRequest{
 		Datastore: &Datastore{
-			Driver:      "mysql",
-			Name:        "db1",
-			Config:      true,
-
+			Driver: "mysql",
+			Name:   "db1",
+			Config: true,
 		},
 		Build: &Build{
 			Sdk:         "go:1.9",
-			Docker:      false,
+			Docker:      true,
 			App:         "myapp",
 			TemplateApp: "go/webdb",
 		},
@@ -37,7 +35,6 @@ func TestService_Run(t *testing.T) {
 			HTTP:        true,
 			REST:        true,
 			UseCaseData: true,
-
 		},
 	})
 	assert.Nil(t, err)
@@ -45,11 +42,11 @@ func TestService_Run(t *testing.T) {
 
 }
 
-
 func TestService_Get(t *testing.T) {
-	srv := NewService(url.NewResource("../").URL)
+	var templateURL = toolbox.URLPathJoin(url.NewResource("../").URL, "template")
+	var assetURL = toolbox.URLPathJoin(url.NewResource("../").URL, "asset")
+	srv := NewService(templateURL, assetURL)
 	resp, err := srv.Get(&GetRequest{})
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
-	toolbox.Dump(resp)
 }

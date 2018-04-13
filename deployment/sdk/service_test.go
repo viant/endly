@@ -6,13 +6,13 @@ import (
 	"github.com/viant/endly/deployment/sdk"
 	_ "github.com/viant/endly/static"
 	"github.com/viant/endly/system/exec"
-	"github.com/viant/endly/util"
-	"github.com/viant/toolbox/url"
-	_ "github.com/viant/toolbox/storage/scp"
-	"log"
-	"testing"
 	"github.com/viant/endly/system/storage"
+	"github.com/viant/endly/util"
+	_ "github.com/viant/toolbox/storage/scp"
+	"github.com/viant/toolbox/url"
+	"log"
 	"strings"
+	"testing"
 )
 
 func TestSdkService_Run_Jdk(t *testing.T) {
@@ -33,8 +33,6 @@ func TestSdkService_Run_Jdk(t *testing.T) {
 	assert.EqualValues(t, "/Library/Java/JavaVirtualMachines/jdk1.7.0_80.jdk/Contents/Home", sdkResponse.SdkInfo.Home)
 
 }
-
-
 
 func TestSdkService_Run_Go(t *testing.T) {
 	manager := endly.New()
@@ -63,8 +61,6 @@ func TestSdkService_Run_Go(t *testing.T) {
 
 }
 
-
-
 func TestSdkService_Run_Node(t *testing.T) {
 	manager := endly.New()
 	var credentials, err = util.GetDummyCredential()
@@ -79,7 +75,6 @@ func TestSdkService_Run_Node(t *testing.T) {
 	mem := storage.UseMemoryService(context)
 	mem.Upload("https://nodejs.org/dist/v8.1.1/node-v8.1.1-darwin-x64.tar.gz", strings.NewReader("abc"))
 
-
 	sdkResponse := &sdk.SetResponse{}
 	sdkRequest, err := sdk.NewSetRequestFromURL("test/node.yaml")
 	if !assert.Nil(t, err) {
@@ -87,7 +82,7 @@ func TestSdkService_Run_Node(t *testing.T) {
 	}
 
 	err = endly.Run(context, sdkRequest, sdkResponse)
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		return
 	}
 	assert.EqualValues(t, "/opt/sdk/node", sdkResponse.SdkInfo.Home)

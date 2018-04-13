@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	var memStorage = storage.NewMemoryService();
+	var memStorage = storage.NewMemoryService()
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/config.go", bytes.NewReader([]byte(`package webdb
 
@@ -821,6 +821,7 @@ func NewRouter(dummyService *Service) http.Handler {
 description: external application URL
 build: build/default
 docker: true
+usesdkbuild: true
 dbconfigpath:  datastore
 assets:
 args:
@@ -1042,7 +1043,7 @@ tables:
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/pg/ddl/schema.sql", bytes.NewReader([]byte(`DROP TABLE IF EXISTS dummy_type;
 
 CREATE TABLE dummy_type (
-  id       SERIAL CONSTRAINT dummy_id PRIMARY KEY,
+  id       SERIAL CONSTRAINT dummy_type_id PRIMARY KEY,
   name     VARCHAR(255) DEFAULT NULL,
   modified TIMESTAMP    DEFAULT current_timestamp,
   UNIQUE(name)
@@ -1507,11 +1508,30 @@ pipeline:
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/sdk/sdk.yaml", bytes.NewReader([]byte(`go: 1.9
-java: 1.8
-node: 9.9`)))
+		err := memStorage.Upload("mem://github.com/viant/endly/template/sdk/go/meta.yaml", bytes.NewReader([]byte(`sdk: go
+version: 1.9
+build: build/go
+`)))
 		if err != nil {
-			log.Printf("failed to upload: mem://github.com/viant/endly/template/sdk/sdk.yaml %v", err)
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/sdk/go/meta.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/sdk/jdk/meta.yaml", bytes.NewReader([]byte(`sdk: jdk
+version: 1.8
+build: build/default
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/sdk/jdk/meta.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/sdk/node/meta.yaml", bytes.NewReader([]byte(`sdk: node
+version: 9.9
+build: build/default
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/sdk/node/meta.yaml %v", err)
 		}
 	}
 	{

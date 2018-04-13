@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	var memStorage = storage.NewMemoryService();
+	var memStorage = storage.NewMemoryService()
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/asset/index.html", bytes.NewReader([]byte(`<!DOCTYPE html>
 <html lang="en">
@@ -290,17 +290,20 @@ function submit(e) {
         $('#dbName')
     ];
 
+
     var valid = true;
     candidates.forEach(function (element) {
         if (element.required && !isValid(element)) {
             valid = false
         }
     });
-
     if(! valid) {
         e.preventDefault();
         return false;
     }
+    var appName = $('#appName').val();
+    appName = appName.replace(/\s/g, '');
+    $('form').attr("action", "/download/" + appName + ".zip")
     return true
 }
 

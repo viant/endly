@@ -3,4 +3,4 @@ name: $name
 image: $image
 ports:
   "27017": "27017"
-env: $env
+env: $environment

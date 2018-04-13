@@ -74,9 +74,7 @@ func (s *Service) addVariableEvent(name string, variables model.Variables, conte
 	context.Publish(NewModifiedStateEvent(variables, in, out))
 }
 
-
-
-func  getURLs(URL string) []string {
+func getURLs(URL string) []string {
 	selector := model.WorkflowSelector(URL)
 	workflowName := selector.Name()
 	workflowFilename := fmt.Sprintf("%v.csv", workflowName)
@@ -86,8 +84,6 @@ func  getURLs(URL string) []string {
 		dedicatedFolderURL,
 	}
 }
-
-
 
 //GetResource returns workflow resource
 func GetResource(dao *Dao, state data.Map, URL string) *url.Resource {

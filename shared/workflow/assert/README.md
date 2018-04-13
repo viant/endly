@@ -14,7 +14,7 @@ endly -w=assert actual '@actual.json' expected '@expected.json'
 #### _Pipeline run_
 
 ```bash
-endly -p=run
+endly -r=run
 ```
 
 @run.yaml

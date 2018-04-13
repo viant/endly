@@ -17,14 +17,14 @@ func main() {
 			DestinationURI: path.Join(endly.Namespace, "asset"),
 			TargetFile:     path.Join(parent, "static", "asset.go"),
 			TargetPackage:  "static",
-			UseTextFormat:true,
+			UseTextFormat:  true,
 		},
 		{
 			SourceURL:      toolbox.FileSchema + path.Join(parent, "template"),
 			DestinationURI: path.Join(endly.Namespace, "template"),
 			TargetFile:     path.Join(parent, "static", "template.go"),
 			TargetPackage:  "static",
-			UseTextFormat:true,
+			UseTextFormat:  true,
 		},
 	}
 	err := storage.GenerateStorageCode(mappings...)

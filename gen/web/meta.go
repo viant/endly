@@ -2,6 +2,12 @@ package web
 
 import "fmt"
 
+type SdkMeta struct {
+	Sdk     string
+	Version string
+	Build   string
+}
+
 type DbMeta struct {
 	Id          string
 	Name        string
@@ -27,6 +33,7 @@ type AppMeta struct {
 	Args         []string
 	Config       string
 	Build        string //build path
+	UseSdkBuild  bool
 	DbConfigPath string
 	Assets       []string
 	Selenium     map[string]interface{}

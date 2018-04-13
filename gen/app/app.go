@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/viant/endly/gen/web"
-	_ "github.com/viant/endly/gen/static"
-	"net/http"
-	"github.com/viant/toolbox"
-	"github.com/viant/endly"
 	"fmt"
+	"github.com/viant/endly"
+	_ "github.com/viant/endly/gen/static"
+	"github.com/viant/endly/gen/web"
+	"github.com/viant/toolbox"
+	"net/http"
 )
 
 func main() {
@@ -17,8 +17,8 @@ func main() {
 
 	baseURL := fmt.Sprintf("mem://%v", endly.Namespace)
 	service := web.NewService(
-		toolbox.URLPathJoin(baseURL , "template"),
-		toolbox.URLPathJoin(baseURL , "asset"),
+		toolbox.URLPathJoin(baseURL, "template"),
+		toolbox.URLPathJoin(baseURL, "asset"),
 	)
 
 	web.NewRouter(service)

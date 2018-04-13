@@ -21,12 +21,9 @@
     }
   },
   {
-    "Name": "env",
-    "From": "params.env"
-  },
-  {
-    "Name": "env",
-    "When": "$in.params.env:!/$/ && $in.params.env",
+    "Name": "environment",
+    "Required":true,
+    "From": "params.environment",
     "Value": {}
   },
   {

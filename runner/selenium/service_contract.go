@@ -33,8 +33,6 @@ func (r *StartRequest) Validate() error {
 	return nil
 }
 
-
-
 //NewStartRequestFromURL creates a new start request from URL
 func NewStartRequestFromURL(URL string) (*StartRequest, error) {
 	var result = &StartRequest{}

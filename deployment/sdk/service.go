@@ -18,8 +18,8 @@ const (
 
 type systemSdkService struct {
 	*endly.AbstractService
-	jdkService *jdkService
-	goService  *goService
+	jdkService  *jdkService
+	goService   *goService
 	nodeService *nodeService
 }
 
@@ -128,8 +128,6 @@ func (s *systemSdkService) setSdk(context *endly.Context, request *SetRequest) (
 	return response, err
 }
 
-
-
 func (s *systemSdkService) setSdkAndDeployIfNeeded(context *endly.Context, request *SetRequest) (response *SetResponse, err error) {
 	response, err = s.setSdk(context, request)
 	if err == errSdkNotFound {
@@ -154,7 +152,6 @@ const sdkSetExample = `{
   }
 }`
 
-
 const sdkNodeSetExample = `{
   "Sdk": "node:9.9",
   "Env": {
@@ -165,7 +162,6 @@ const sdkNodeSetExample = `{
     "Credentials": "${env.HOME}/.secret/localhost.json"
   }
 }`
-
 
 func (s *systemSdkService) registerRoutes() {
 	s.Register(&endly.Route{
@@ -200,7 +196,7 @@ func New() endly.Service {
 	var result = &systemSdkService{
 		jdkService:      &jdkService{},
 		goService:       &goService{},
-		nodeService: &nodeService{},
+		nodeService:     &nodeService{},
 		AbstractService: endly.NewAbstractService(ServiceID),
 	}
 	result.AbstractService.Service = result

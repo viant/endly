@@ -1,15 +1,14 @@
 package web
 
 import (
-	"net/http"
-	"github.com/viant/toolbox"
 	"fmt"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
-	_ "github.com/viant/endly/gen/static"
-	"path"
 	"io"
-	"strings"
+	"net/http"
 	"net/url"
+	"path"
+	"strings"
 )
 
 const baseURI = "/v1/api"
@@ -75,8 +74,8 @@ func (r *Router) download() http.Handler {
 		var form = request.Form
 		var runRequest = &RunRequest{
 			Datastore: &Datastore{},
-			Build: &Build{},
-			Testing: &Testing{},
+			Build:     &Build{},
+			Testing:   &Testing{},
 		}
 		r.setTextValue(form, "appTemplate", &runRequest.Build.TemplateApp, "default")
 		r.setTextValue(form, "appName", &runRequest.Build.App, "myapp")
@@ -87,18 +86,17 @@ func (r *Router) download() http.Handler {
 		r.setTextValue(form, "dbName", &runRequest.Datastore.Name, "mydb")
 		r.setBoolValue(form, "dbConfig", &runRequest.Datastore.Config)
 
-
 		r.setBoolValue(form, "http", &runRequest.Testing.HTTP)
 		r.setBoolValue(form, "rest", &runRequest.Testing.REST)
 		r.setBoolValue(form, "selenium", &runRequest.Testing.Selenium)
 		r.setBoolValue(form, "caseData", &runRequest.Testing.UseCaseData)
 
-		resp, err :=r.service.Run(runRequest)
-		if  err != nil {
+		resp, err := r.service.Run(runRequest)
+		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		writer.Header().Set("Content-Type","application/zip")
+		writer.Header().Set("Content-Type", "application/zip")
 		writer.Write(resp.Data)
 	})
 }
@@ -111,7 +109,7 @@ func (r *Router) static() http.Handler {
 			assetPath = "index.html"
 		}
 		var URL = toolbox.URLPathJoin(r.service.baseAssetURL, assetPath)
-		if has, _ := r.mem.Exists(URL); ! has {
+		if has, _ := r.mem.Exists(URL); !has {
 			http.NotFound(writer, request)
 			return
 		}
@@ -121,7 +119,7 @@ func (r *Router) static() http.Handler {
 			ext = string(ext[1:])
 		}
 		contentType, has := toolbox.FileExtensionMimeType[ext]
-		if ! has {
+		if !has {
 			contentType = fmt.Sprintf("text/%v", ext)
 		}
 		if strings.Contains(contentType, "text") {
