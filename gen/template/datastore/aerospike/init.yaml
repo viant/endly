@@ -6,7 +6,7 @@ config:
   descriptor: "tcp([host]:3000)/[namespace]"
   parameters:
     dbname: $db
-    namespace: $db
-    host: $serviceHost
+    namespace: test
+    host: 127.0.0.1
     port: 3000
     dateFormat: yyyy-MM-dd hh:mm:ss

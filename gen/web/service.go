@@ -1,14 +1,14 @@
 package web
 
 import (
+	"archive/zip"
+	"bytes"
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/storage"
 	"gopkg.in/yaml.v2"
 	"strings"
-	"github.com/viant/toolbox/storage"
-	"bytes"
-	"archive/zip"
 )
 
 type Service struct {
@@ -34,6 +34,25 @@ func (s *Service) getDbTemplates() ([]*DbTemplate, error) {
 				Name:      meta.Name,
 				HasConfig: meta.Config != "",
 			})
+		}
+	}
+	return result, nil
+}
+
+func (s *Service) getSdk() ([]string, error) {
+	var templateURL = toolbox.URLPathJoin(s.baseTemplateURL, fmt.Sprintf("sdk"))
+	templ, err := DownloadAll(templateURL)
+	if err != nil {
+		return nil, err
+	}
+	var result = make([]string, 0)
+	for k := range templ {
+		if strings.HasSuffix(k, "meta.yaml") {
+			meta, err := s.loadSdkMeta(k, templ)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, fmt.Sprintf("%v:%v", meta.Sdk, meta.Version))
 		}
 	}
 	return result, nil
@@ -69,15 +88,10 @@ func (s *Service) Get(request *GetRequest) (*GetResponse, error) {
 		Status: "ok",
 		Sdk:    []string{},
 	}
-	builder := newBuilder(s.baseTemplateURL)
-	sdk, err := builder.NewMapFromURI("sdk/sdk.yaml", nil)
-	if err != nil {
+	var err error
+	if response.Sdk, err = s.getSdk(); err != nil {
 		return nil, err
 	}
-	sdk.Range(func(key string, value interface{}) {
-		response.Sdk = append(response.Sdk, fmt.Sprintf("%s:%s", key, toolbox.AsString(value)))
-	})
-
 	if response.App, err = s.getAppTemplates(); err != nil {
 		return nil, err
 	}
@@ -90,7 +104,7 @@ func (s *Service) Get(request *GetRequest) (*GetResponse, error) {
 func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	var response = &RunResponse{}
 	builder := newBuilder(s.baseTemplateURL)
-	err := s.handleDatastore(builder, request.Datastore);
+	err := s.handleDatastore(builder, request.Datastore)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +115,7 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	if err = builder.buildDatastore(); err != nil {
 		return nil, err
 	}
-	err = s.handleBuild(builder, request);
+	err = s.handleBuild(builder, request)
 	if err != nil {
 		return nil, err
 	}
@@ -114,6 +128,9 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	}
 	archive.Flush()
 	archive.Close()
+
+	err = storage.Copy(builder.storage, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/ss", nil, nil)
+
 	response.Data = writer.Bytes()
 	return response, err
 }
@@ -127,7 +144,7 @@ func (s *Service) asData(state data.Map, template interface{}) (map[string]inter
 
 func (s *Service) loadDbMeta(URI string, assets map[string]string) (*DbMeta, error) {
 	value, ok := assets[URI]
-	if ! ok {
+	if !ok {
 		return nil, fmt.Errorf("unable to locate meta %v", assets)
 	}
 	meta := &DbMeta{}
@@ -135,9 +152,19 @@ func (s *Service) loadDbMeta(URI string, assets map[string]string) (*DbMeta, err
 	return meta, err
 }
 
+func (s *Service) loadSdkMeta(URI string, assets map[string]string) (*SdkMeta, error) {
+	value, ok := assets[URI]
+	if !ok {
+		return nil, fmt.Errorf("unable to locate meta %v", assets)
+	}
+	meta := &SdkMeta{}
+	err := yaml.NewDecoder(strings.NewReader(toolbox.AsString(value))).Decode(meta)
+	return meta, err
+}
+
 func (s *Service) loadAppMeta(URI string, assets map[string]string) (*AppMeta, error) {
 	value, ok := assets[URI]
-	if ! ok {
+	if !ok {
 		return nil, fmt.Errorf("unable to locate meta %v", assets)
 	}
 	meta := &AppMeta{}
@@ -173,9 +200,33 @@ func (s *Service) handleBuild(builder *builder, request *RunRequest) error {
 	}
 
 	appMeta, err := s.loadAppMeta("meta.yaml", assets)
-	if err == nil {
-		err = builder.buildApp(appMeta, request.Build, assets)
+	if err != nil {
+		return err
 	}
+
+	if request.Build.Sdk == "" {
+		request.Build.Sdk = appMeta.Sdk
+	}
+
+	var sdkURL = toolbox.URLPathJoin(s.baseTemplateURL, "sdk")
+	sdkAssets, err := DownloadAll(sdkURL)
+	if err != nil {
+		return err
+	}
+
+	var sdk = strings.Split(request.Build.Sdk, ":")[0]
+	sdkMeta, err := s.loadSdkMeta(sdk+"/meta.yaml", sdkAssets)
+	if err != nil {
+		return err
+	}
+
+	if err == nil {
+		if request.Build.Sdk == "" {
+			request.Build.Sdk = appMeta.Sdk
+		}
+		err = builder.buildApp(appMeta, sdkMeta, request, assets)
+	}
+
 	if err == nil {
 		err = builder.addSourceCode(appMeta, request.Build, assets)
 	}

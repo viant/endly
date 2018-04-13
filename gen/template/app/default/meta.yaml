@@ -2,6 +2,7 @@ name: default
 description: external application URL
 build: build/default
 docker: true
+usesdkbuild: true
 dbconfigpath:  datastore
 assets:
 args:

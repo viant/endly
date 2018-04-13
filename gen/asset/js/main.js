@@ -86,17 +86,20 @@ function submit(e) {
         $('#dbName')
     ];
 
+
     var valid = true;
     candidates.forEach(function (element) {
         if (element.required && !isValid(element)) {
             valid = false
         }
     });
-
     if(! valid) {
         e.preventDefault();
         return false;
     }
+    var appName = $('#appName').val();
+    appName = appName.replace(/\s/g, '');
+    $('form').attr("action", "/download/" + appName + ".zip")
     return true
 }
 

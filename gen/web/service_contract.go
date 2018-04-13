@@ -38,6 +38,7 @@ type Build struct {
 	Origin      string
 	TemplateApp string
 	Docker      bool
+	path        string
 }
 
 type SystemService struct {

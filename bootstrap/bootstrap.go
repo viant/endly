@@ -340,7 +340,7 @@ func getWorkflow(URL string) (*model.Workflow, error) {
 	context := manager.NewContext(nil)
 	var response = &workflow.LoadResponse{}
 	var source = workflow.GetResource(workflow.NewDao(), context.State(), URL)
-	if err := endly.Run(context, &workflow.LoadRequest{Source:source}, response);err != nil {
+	if err := endly.Run(context, &workflow.LoadRequest{Source: source}, response); err != nil {
 		return nil, err
 	}
 	return response.Workflow, nil

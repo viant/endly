@@ -1,19 +1,19 @@
 package web
 
 import (
-	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox"
-	"io"
-	"fmt"
-	"github.com/viant/toolbox/url"
-	"gopkg.in/yaml.v2"
-	"strings"
-	"io/ioutil"
 	"bytes"
-	"github.com/viant/toolbox/data"
-	"path"
+	"fmt"
 	"github.com/viant/endly/util"
 	"github.com/viant/neatly"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/storage"
+	"github.com/viant/toolbox/url"
+	"gopkg.in/yaml.v2"
+	"io"
+	"io/ioutil"
+	"path"
+	"strings"
 )
 
 type builder struct {
@@ -47,8 +47,8 @@ func (b *builder) addDatastore(assets map[string]string, meta *DbMeta, request *
 	//ddl/schema.ddl
 	if meta.Schema != "" {
 		var scriptURL = fmt.Sprintf("datastore/%v/schema.sql", request.Name)
-		schema, ok := assets[meta.Schema];
-		if ! ok {
+		schema, ok := assets[meta.Schema]
+		if !ok {
 			return fmt.Errorf("unable locate %v schema : %v", request.Driver, meta.Schema)
 		}
 		b.UploadToEndly(scriptURL, strings.NewReader(toolbox.AsString(schema)))
@@ -113,9 +113,9 @@ func (b *builder) addDatastoreService(assets map[string]string, meta *DbMeta, re
 	if meta.Credentials != "" {
 		service.Put("credentials", meta.Credentials)
 	}
-	if request.Config {
-		config, ok := assets[meta.Config];
-		if ! ok {
+	if request.Config && meta.Config != "" {
+		config, ok := assets[meta.Config]
+		if !ok {
 			return fmt.Errorf("unable locate %v service config: %v", request.Driver, meta.Config)
 		}
 		var configURL = fmt.Sprintf("datastore/%v", meta.Config)
@@ -182,22 +182,32 @@ func (b *builder) getBuildDownloadMap(meta *AppMeta) Map {
 	return result
 }
 
-func (b *builder) buildApp(meta *AppMeta, request *Build, assets map[string]string) error {
+func (b *builder) buildApp(meta *AppMeta, sdkMeta *SdkMeta, request *RunRequest, assets map[string]string) error {
+	buildRequest := request.Build
 	var state = data.NewMap()
 	var err error
 
-	var buildTemplateURL = toolbox.URLPathJoin(b.baseURL, meta.Build)
+	request.Build.path = meta.Build
+	if meta.UseSdkBuild {
+		request.Build.path = sdkMeta.Build
+	}
+
+	var buildTemplateURL = toolbox.URLPathJoin(b.baseURL, request.Build.path)
 	buildAssets, err := DownloadAll(buildTemplateURL)
 	if err != nil {
 		return err
 	}
-	var args = meta.GetArguments(request.Docker)
-	var appFile = fmt.Sprintf("app.yaml", )
+	var args = meta.GetArguments(buildRequest.Docker)
+	var appFile = fmt.Sprintf("app.yaml")
 	var app string
 	var appMap Map
-	state.Put("originURL", fmt.Sprintf(`"%v"`, meta.OriginURL))
 
-	if request.Docker {
+	var originURL = meta.OriginURL
+	if originURL == "" {
+		originURL = request.Origin
+	}
+	state.Put("originURL", fmt.Sprintf(`"%v"`, originURL))
+	if buildRequest.Docker {
 		state.Put("args", args)
 		appFile = "docker/app.yaml"
 		if appMap, err = b.NewAssetMap(buildAssets, appFile, state); err != nil {
@@ -221,7 +231,7 @@ func (b *builder) buildApp(meta *AppMeta, request *Build, assets map[string]stri
 	}
 	_ = b.UploadToEndly("app.yaml", strings.NewReader(app))
 
-	if request.Docker {
+	if buildRequest.Docker {
 		var dockerAssets = ""
 		if len(meta.Assets) > 0 {
 			for _, asset := range meta.Assets {
@@ -241,7 +251,7 @@ func (b *builder) buildApp(meta *AppMeta, request *Build, assets map[string]stri
 		}
 		state.Put("assets", dockerAssets)
 		dockerfile, ok := buildAssets["docker/Dockerfile"]
-		if ! ok {
+		if !ok {
 			return fmt.Errorf("failed to locate docker file %v", meta.Name)
 		}
 		dockerfile = state.ExpandAsText(dockerfile)
@@ -273,7 +283,7 @@ func (b *builder) addSourceCode(meta *AppMeta, request *Build, assets map[string
 	return nil
 }
 
-func (b *builder) Copy(state data.Map, URIs ... string) error {
+func (b *builder) Copy(state data.Map, URIs ...string) error {
 	for _, URI := range URIs {
 
 		var asset string
@@ -324,10 +334,6 @@ func (b *builder) addManager(appMeta *AppMeta, request *RunRequest) error {
 }
 
 func (b *builder) NewMapFromURI(URI string, state data.Map) (Map, error) {
-
-	fmt.Printf("%v\n", toolbox.URLPathJoin(b.baseURL, URI))
-	fmt.Printf("%v %v\n", b.baseURL, URI)
-
 	var resource = url.NewResource(toolbox.URLPathJoin(b.baseURL, URI))
 	text, err := resource.DownloadText()
 	if err != nil {
@@ -336,9 +342,9 @@ func (b *builder) NewMapFromURI(URI string, state data.Map) (Map, error) {
 	return b.asMap(text, state)
 }
 
-func (b *builder) NewAssetMap(assets map[string]string, URI string, state data.Map, ) (Map, error) {
+func (b *builder) NewAssetMap(assets map[string]string, URI string, state data.Map) (Map, error) {
 	value, ok := assets[URI]
-	if ! ok {
+	if !ok {
 		return nil, fmt.Errorf("unable locate %v, available: %v", URI, toolbox.MapKeysToStringSlice(assets))
 	}
 	var text = state.ExpandAsText(toolbox.AsString(value))
@@ -437,17 +443,15 @@ func (b *builder) buildHTTPTestAssets(appMeta *AppMeta, request *RunRequest) err
 	var http map[string]interface{}
 	if len(appMeta.HTTP) > 0 {
 		http, _ = util.NormalizeMap(appMeta.HTTP, true)
-		if value, ok := http["request"];ok {
+		if value, ok := http["request"]; ok {
 			valueMap := toolbox.AsMap(value)
 			util.Append(requestMap, valueMap, true)
 		}
-		if value, ok := http["expect"];ok {
+		if value, ok := http["expect"]; ok {
 			valueMap := toolbox.AsMap(value)
 			util.Append(expectMap, valueMap, true)
 		}
 	}
-
-
 
 	var httpTest = map[string]interface{}{}
 	var httpTestResource = url.NewResource(toolbox.URLPathJoin(b.baseURL, "regression/http_test.json"))
@@ -467,7 +471,6 @@ func (b *builder) buildHTTPTestAssets(appMeta *AppMeta, request *RunRequest) err
 	return nil
 }
 
-
 func (b *builder) buildRESTTestAssets(appMeta *AppMeta, request *RunRequest) error {
 
 	var requestMap = map[string]interface{}{}
@@ -477,18 +480,18 @@ func (b *builder) buildRESTTestAssets(appMeta *AppMeta, request *RunRequest) err
 	var http map[string]interface{}
 	if len(appMeta.REST) > 0 {
 		http, _ = util.NormalizeMap(appMeta.REST, true)
-		if value, ok := http["request"];ok {
+		if value, ok := http["request"]; ok {
 			valueMap := toolbox.AsMap(value)
 			util.Append(requestMap, valueMap, true)
 		}
-		if value, ok := http["expect"];ok {
+		if value, ok := http["expect"]; ok {
 			valueMap := toolbox.AsMap(value)
 			util.Append(expectMap, valueMap, true)
 		}
-		if value, ok := http["url"];ok {
+		if value, ok := http["url"]; ok {
 			requesURL = toolbox.AsString(value)
 		}
-		if value, ok := http["method"];ok {
+		if value, ok := http["method"]; ok {
 			method = toolbox.AsString(value)
 		}
 	}
@@ -532,7 +535,7 @@ func (b *builder) addRegressionData(appMeta *AppMeta, request *RunRequest) error
 
 	if request.Testing.UseCaseData {
 		prepare, err = b.NewMapFromURI("datastore/regression/prepare_data.yaml", state)
-		if ! b.dbMeta.Sequence || len(b.dbMeta.Tables) == 0 {
+		if !b.dbMeta.Sequence || len(b.dbMeta.Tables) == 0 {
 			prepare = prepare.Remove("sequence")
 		} else {
 			prepare.GetMap("sequence").Put("tables", b.dbMeta.Tables)
@@ -565,7 +568,7 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 		regression = removeMatchedLines(regression, "selenium")
 	}
 	if request.Testing.HTTP {
-		 b.buildHTTPTestAssets(appMeta, request)
+		b.buildHTTPTestAssets(appMeta, request)
 	} else {
 		regression = removeMatchedLines(regression, "HTTP test")
 	}
@@ -580,7 +583,11 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 		regression = removeMatchedLines(regression, "test data")
 	} else {
 		b.addRegressionData(appMeta, request)
-		regression = strings.Replace(regression, "setup_data", fmt.Sprintf("%v_data", request.Datastore.Name), len(regression))
+		if !request.Testing.UseCaseData {
+			regression = removeMatchedLines(regression, "setup_data")
+		} else {
+			regression = strings.Replace(regression, "setup_data", fmt.Sprintf("%v_data", request.Datastore.Name), len(regression))
+		}
 	}
 	b.UploadToEndly("regression/regression.csv", strings.NewReader(regression))
 	init, err := b.Download("regression/var/init.json", nil)
@@ -620,8 +627,8 @@ func newBuilder(baseURL string) *builder {
 		services:   NewMap(),
 		createDb:   NewMap(),
 		populateDb: NewMap(),
-		destURL: "mem:///endly/",
-		storage: storage.NewMemoryService(),
+		destURL:    "mem:///endly/",
+		storage:    storage.NewMemoryService(),
 	}
 
 }

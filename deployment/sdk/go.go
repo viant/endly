@@ -34,7 +34,7 @@ func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, 
 		exec.NewExtractCommand("go version", "", nil, nil,
 			model.NewExtract("version", "go version go([^\\s]+)", false)),
 	)
-	extractRequest.SystemPaths = append(extractRequest.SystemPaths,fmt.Sprintf("%v/bin", sdkHome))
+	extractRequest.SystemPaths = append(extractRequest.SystemPaths, fmt.Sprintf("%v/bin", sdkHome))
 	if err := endly.Run(context, extractRequest, runResponse); err != nil {
 		return nil, err
 	}

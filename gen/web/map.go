@@ -1,9 +1,9 @@
 package web
 
 import (
+	"github.com/viant/toolbox"
 	"gopkg.in/yaml.v2"
 	"strings"
-	"github.com/viant/toolbox"
 )
 
 type Map interface {
@@ -20,7 +20,7 @@ type Map interface {
 type mapSlice yaml.MapSlice
 
 func (m *mapSlice) Put(key string, value interface{}) {
-	for i, item := range (*m) {
+	for i, item := range *m {
 		if item.Key == key {
 			(*m)[i] = yaml.MapItem{key, value}
 			return
@@ -31,13 +31,13 @@ func (m *mapSlice) Put(key string, value interface{}) {
 
 //Get returns a value for provided key
 func (s *mapSlice) Range(handler func(key string, value interface{})) {
-	for _, item := range (*s) {
+	for _, item := range *s {
 		handler(toolbox.AsString(item.Key), item.Value)
 	}
 }
 
 func (m *mapSlice) Get(key string) interface{} {
-	for _, item := range (*m) {
+	for _, item := range *m {
 		if item.Key == key {
 			return item.Value
 		}
@@ -46,7 +46,7 @@ func (m *mapSlice) Get(key string) interface{} {
 }
 
 func (m *mapSlice) Has(key string) bool {
-	for _, item := range (*m) {
+	for _, item := range *m {
 		if item.Key == key {
 			return true
 		}

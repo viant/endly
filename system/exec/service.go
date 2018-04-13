@@ -11,9 +11,9 @@ import (
 	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/ssh"
 	"github.com/viant/toolbox/url"
+	"os"
 	"path"
 	"strings"
-	"os"
 )
 
 //ServiceID represent system executor service id
@@ -324,7 +324,6 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 		command = state.ExpandAsText(command)
 	}
 
-
 	if request.SuperUser {
 		if !session.SuperUSerAuth {
 			terminators = append(terminators, "Password")
@@ -529,7 +528,6 @@ func (s *execService) detectOperatingSystem(session *model.Session) (*model.Oper
 		operatingSystem.Architecture = "amd64"
 		operatingSystem.Arch = "x64"
 	}
-
 
 	operatingSystem.System = session.System()
 	if err = s.extractOsPath(session, operatingSystem); err == nil {

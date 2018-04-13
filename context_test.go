@@ -6,8 +6,8 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"strings"
-	"testing"
 	"sync/atomic"
+	"testing"
 )
 
 func TestNewDefaultState(t *testing.T) {

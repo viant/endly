@@ -451,4 +451,3 @@ func New() endly.Service {
 	result.registerRoutes()
 	return result
 }
-

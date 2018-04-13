@@ -23,12 +23,12 @@
     }
   },
   {
-    "Name": "env",
-    "From": "params.env"
+    "Name": "environment",
+    "From": "params.environment"
   },
   {
-    "Name": "env",
-    "When": "$in.params.env:!/$/ && $in.params.env",
+    "Name": "environment",
+    "When": "$in.params.environment:!/$/ && $in.params.environment",
     "Value": {}
   },
   {
@@ -83,11 +83,5 @@
   {
     "Name": "serviceConfig",
     "Value": "/tmp/${name}.cnf"
-  },
-  {
-    "Name": "dump",
-    "From": "params.dump",
-    "When": "$in.tasks:/export/ || $in.tasks:/import/",
-    "Required": true
   }
 ]
