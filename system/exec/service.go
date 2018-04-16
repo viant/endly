@@ -290,14 +290,14 @@ func (s *execService) authSuperUserIfNeeded(stdout string, context *endly.Contex
 func (s *execService) buildExecutionState(response *RunResponse, context *endly.Context) data.Map {
 	var state = context.State()
 	var result = state.Clone()
-	var logs = data.NewCollection()
+	var commands = data.NewCollection()
 	for _, log := range response.Cmd {
 		var cmd = data.NewMap()
 		cmd.Put("stdin", log.Stdin)
 		cmd.Put("stdout", log.Stdout)
-		logs.Push(cmd)
+		commands.Push(cmd)
 	}
-	result.Put("cmd", logs)
+	result.Put("cmd", commands)
 	result.Put("output", response.Output)
 
 	var stdout = ""

@@ -332,6 +332,18 @@ You can build, deploy and test them end to end all with endly.
 - [Workflow](doc/workflow)
 
 
+@run.yaml
+```yaml
+target:
+  URL: "ssh://127.0.0.1/"
+  credentials: localhost
+systemPaths:
+  - /usr/local/go/bin
+commands:
+  - go version
+  - echo $GOPATH
+```
+
 
 ## External resources
 

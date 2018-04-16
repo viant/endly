@@ -175,8 +175,26 @@ func replaceResponseBodyIfNeeded(sendHTTPRequest *Request, responseBody string) 
 	return responseBody
 }
 
+
+func (s *service) applyDefaultTimeoutIfNeeded(options []*toolbox.HttpOptions)  []*toolbox.HttpOptions {
+	if len(options) > 0 {
+		return options
+	}
+	return []*toolbox.HttpOptions{
+		{
+			Key:"RequestTimeoutMs",
+			Value:120000,
+		},
+		{
+			Key:"TimeoutMs",
+			Value:120000,
+		},
+	}
+}
+
+
 func (s *service) send(context *endly.Context, request *SendRequest) (*SendResponse, error) {
-	client, err := toolbox.NewHttpClient(request.Options...)
+	client, err := toolbox.NewHttpClient(s.applyDefaultTimeoutIfNeeded(request.Options)...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send req: %v", err)
 	}
