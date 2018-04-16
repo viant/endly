@@ -466,16 +466,15 @@ func updateBaseRunWithOptions(request *workflow.RunRequest, flagset map[string]s
 
 func normalizeArgument(value string) interface{} {
 	value = strings.Trim(value, " \"'")
-
 	if strings.HasPrefix(value, "#") || strings.HasPrefix(value, "@") {
 		resource := url.NewResource(string(value[1:]))
-		text, err := resource.DownloadText()
-		if err == nil {
-			value = text
+		var dataStructure= map[string]interface{}{}
+		if err := resource.Decode(&dataStructure); err == nil {
+			return dataStructure
 		}
-	}
-	if structure, err := toolbox.JSONToInterface(value); err == nil {
-		return structure
+		if text, err := resource.DownloadText(); err == nil {
+			return text
+		}
 	}
 	return value
 }

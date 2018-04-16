@@ -33,7 +33,9 @@ type Manager interface {
 	Run(context *Context, request interface{}) (interface{}, error)
 }
 
-//Service represents a service
+
+
+//Service represents an endly service
 type Service interface {
 	//service id
 	ID() string
@@ -51,6 +53,9 @@ type Service interface {
 
 	Actions() []string
 }
+
+
+
 
 //Validator represents generic validator
 type Validator interface {
