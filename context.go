@@ -301,6 +301,34 @@ func NewDefaultState() data.Map {
 		return nil
 	})
 
+	result.Put("unix", func(key string) interface{} {
+		var timeDiffProvider= toolbox.NewTimeDiffProvider()
+		switch key {
+		case "now":
+			result, _ := timeDiffProvider.Get(nil, "now", 0, "day", "unix")
+			return result
+		case "tomorrow":
+			result, _ := timeDiffProvider.Get(nil, "now", 1, "day", "unix")
+			return result
+		case "yesterday":
+			result, _ := timeDiffProvider.Get(nil, "now", -1, "day", "unix")
+			return result
+		case "hourbefore":
+			result, _ := timeDiffProvider.Get(nil, "now", -1, "hour", "unix")
+			return result
+		case "2hourbefore":
+			result, _ := timeDiffProvider.Get(nil, "now", -2, "hour", "unix")
+			return result
+		case "hourlater":
+			result, _ := timeDiffProvider.Get(nil, "now", 1, "hour", "unix")
+			return result
+		case "2hourlater":
+			result, _ := timeDiffProvider.Get(nil, "now", 2, "hour", "unix")
+			return result
+		}
+		return nil
+	})
+
 	result.Put("env", func(key string) interface{} {
 		return os.Getenv(key)
 	})
