@@ -87,7 +87,7 @@
     * Updated shared workflow
     * Added workflow generator
     
-## Apr 13 2018 0.7.6
+## Apr 16 2018 0.7.6
     * Patched workflow generator shared mem 
     * Merge docker compose pull request
     * Minor patches
