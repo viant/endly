@@ -2,7 +2,7 @@ name: go/webdb
 description: "golang: simple web/rest app (dsc/toolbox)"
 config: config/config.yaml
 build: build/go
-dependency: go get -u github.com/viant/endly/bootstrap
+dependency: go get -u -v github.com/viant/endly/bootstrap
 docker: true
 sdk: go:1.9
 dbconfigpath:  datastore

@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	var memStorage = storage.NewMemoryService()
+	var memStorage = storage.NewMemoryService();
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/web/meta.yaml", bytes.NewReader([]byte(`name: go/web
 description: "golang: web hello world"
@@ -193,7 +193,6 @@ func NewServer(service *Service, port int) *Server {
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/service.go", bytes.NewReader([]byte(`package webdb
 
 import (
-	. "./model"
 	"github.com/viant/dsc"
 	"net/http"
 	"fmt"
@@ -314,10 +313,12 @@ import (
 	_ "github.com/viant/asc"
 	_ "github.com/viant/bgc"
 
+	/*remove
 	.  ".."
 	"log"
 	"os"
 	"fmt"
+	remove*/
 	"flag"
 )
 
@@ -326,6 +327,8 @@ var configURL = flag.String("configURL", "", "path to config file (JSON or YAML"
 
 func main() {
 	flag.Parse()
+
+	/*remove
 	config, err := NewConfigFromURL(*configURL)
 	if err != nil {
 		log.Fatal(err)
@@ -338,7 +341,7 @@ func main() {
 	go server.StopOnSiginals(os.Interrupt)
 	fmt.Printf("start listening on :%d\n", config.Port)
 	server.ListenAndServe()
-
+	remove*/
 }
 `)))
 		if err != nil {
@@ -664,7 +667,7 @@ function setSystemError(error) {
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/model/dummy_type.go", bytes.NewReader([]byte(`package model
+		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/dummy_type.go", bytes.NewReader([]byte(`package webdb
 
 
 //DummyType represents a dummy type object
@@ -674,22 +677,7 @@ type DummyType struct {
 }
 `)))
 		if err != nil {
-			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/go/webdb/model/dummy_type.go %v", err)
-		}
-	}
-	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/model/dummy.go", bytes.NewReader([]byte(`package model
-
-//Dummy represents a dummy object
-type Dummy struct {
-	Id     int        `+"`"+`column:"id" primaryKey:"true" autoincrement:"true" `+"`"+`
-	Name   string     `+"`"+`column:"name"`+"`"+`
-	TypeId *int       `+"`"+`column:"type_id" json:",omitempty"`+"`"+`
-	Type   *DummyType `+"`"+`transient:"true"`+"`"+`
-}
-`)))
-		if err != nil {
-			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/go/webdb/model/dummy.go %v", err)
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/go/webdb/dummy_type.go %v", err)
 		}
 	}
 	{
@@ -697,7 +685,7 @@ type Dummy struct {
 description: "golang: simple web/rest app (dsc/toolbox)"
 config: config/config.yaml
 build: build/go
-dependency: go get -u github.com/viant/endly/bootstrap
+dependency: go get -u -v github.com/viant/endly/bootstrap
 docker: true
 sdk: go:1.9
 dbconfigpath:  datastore
@@ -743,7 +731,6 @@ rest:
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/service_contract.go", bytes.NewReader([]byte(`package webdb
 
 import (
-	. "./model"
 	"net/http"
 )
 
@@ -809,6 +796,21 @@ type PersistResponse struct {
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/go/webdb/service_contract.go %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/dummy.go", bytes.NewReader([]byte(`package webdb
+
+//Dummy represents a dummy object
+type Dummy struct {
+	Id     int        `+"`"+`column:"id" primaryKey:"true" autoincrement:"true" `+"`"+`
+	Name   string     `+"`"+`column:"name"`+"`"+`
+	TypeId *int       `+"`"+`column:"type_id" json:",omitempty"`+"`"+`
+	Type   *DummyType `+"`"+`transient:"true"`+"`"+`
+}
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/go/webdb/dummy.go %v", err)
 		}
 	}
 	{
