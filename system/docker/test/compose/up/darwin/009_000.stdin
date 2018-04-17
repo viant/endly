@@ -1,1 +1,1 @@
-sudo docker-compose -f /Projects/golang/src/github.com/viant/endly/system/docker/test/compose/up/docker-compose.yaml up -d
+sudo docker-compose -f /Projects/go/workspace/src/github.com/viant/endly/system/docker/test/compose/up/docker-compose.yaml up -d

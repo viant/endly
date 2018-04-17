@@ -1,1 +1,1 @@
-sudo docker-compose -f file:///Projects/golang/src/github.com/viant/endly/system/docker/test/compose/up/docker-compose.yaml down
+sudo docker-compose -f /Projects/go/workspace/src/github.com/viant/endly/system/docker/test/compose/up/docker-compose.yaml down

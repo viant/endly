@@ -468,7 +468,7 @@ func normalizeArgument(value string) interface{} {
 	value = strings.Trim(value, " \"'")
 	if strings.HasPrefix(value, "#") || strings.HasPrefix(value, "@") {
 		resource := url.NewResource(string(value[1:]))
-		var dataStructure= map[string]interface{}{}
+		var dataStructure = map[string]interface{}{}
 		if err := resource.Decode(&dataStructure); err == nil {
 			return dataStructure
 		}
