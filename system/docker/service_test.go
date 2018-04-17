@@ -2,7 +2,12 @@ package docker_test
 
 import (
 	"fmt"
+	"log"
+	"path"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/assertly"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/docker"
 	"github.com/viant/endly/system/exec"
@@ -10,9 +15,121 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
-	"path"
-	"testing"
 )
+
+func TestDockerService_ComposeUp(t *testing.T) {
+
+	//var credentialFile, err = util.GetDummyCredential()
+	//assert.Nil(t, err)
+	credentialFile := "localhost"
+
+	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
+	manager := endly.New()
+
+	useCases := []struct {
+		description string
+		baseDir     string
+		target      *url.Resource
+		request     *docker.ComposeRequestUp
+		expected    interface{}
+		HasError    bool
+	}{
+
+		{
+			description: "Docker Compose up request",
+			target:      target,
+			baseDir:     "test/compose/up/darwin",
+			request:     &docker.ComposeRequestUp{&docker.ComposeRequest{Target: target, Source: url.NewResource("test/compose/up/docker-compose.yaml")}, true},
+			expected: &docker.ComposeResponse{Containers: []*docker.ContainerInfo{
+				{
+					Status: "up",
+					Names:  "redis",
+				},
+			},
+			},
+		},
+	}
+
+	for _, useCase := range useCases {
+		context, err := exec.NewSSHRecodingContext(manager, target, useCase.baseDir)
+		defer context.Close()
+		if !assert.Nil(t, err) {
+			log.Fatal(err)
+		}
+
+		var response = &docker.ComposeResponse{}
+		err = endly.Run(context, useCase.request, response)
+		if useCase.HasError {
+			assert.NotNil(t, err, useCase.description)
+			continue
+		}
+		if !assert.Nil(t, err, useCase.description) {
+			t.Log(err.Error())
+			continue
+		}
+
+		toolbox.Dump(response)
+		assertly.AssertValues(t, useCase.expected, response, useCase.description)
+	}
+
+}
+
+func TestDockerService_ComposeDown(t *testing.T) {
+
+	//var credentialFile, err = util.GetDummyCredential()
+	//assert.Nil(t, err)
+	credentialFile := "localhost"
+
+	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
+	manager := endly.New()
+
+	useCases := []struct {
+		description string
+		baseDir     string
+		target      *url.Resource
+		request     *docker.ComposeRequestDown
+		expected    interface{}
+		HasError    bool
+	}{
+
+		{
+			description: "Docker Compose down request",
+			target:      target,
+			baseDir:     "test/compose/down/darwin",
+			request:     &docker.ComposeRequestDown{&docker.ComposeRequest{Target: target, Source: url.NewResource("test/compose/up/docker-compose.yaml")}},
+			expected: &docker.ComposeResponse{Containers: []*docker.ContainerInfo{
+				{
+					Status: "down",
+					Names:  "redis",
+				},
+			},
+			},
+		},
+	}
+
+	for _, useCase := range useCases {
+		context, err := exec.NewSSHRecodingContext(manager, target, useCase.baseDir)
+		defer context.Close()
+		if !assert.Nil(t, err) {
+			log.Fatal(err)
+		}
+
+		var response = &docker.ComposeResponse{}
+		err = endly.Run(context, useCase.request, response)
+		if useCase.HasError {
+			assert.NotNil(t, err, useCase.description)
+			continue
+		}
+		if !assert.Nil(t, err, useCase.description) {
+			t.Log(err.Error())
+			continue
+		}
+
+		toolbox.Dump(response)
+		assertly.AssertValues(t, useCase.expected, response, useCase.description)
+	}
+
+}
 
 func TestDockerService_Images(t *testing.T) {
 	var credentialFile, err = util.GetDummyCredential()

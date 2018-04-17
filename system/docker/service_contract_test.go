@@ -1,10 +1,11 @@
 package docker
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox/url"
-	"testing"
 )
 
 func TestNewRequestFromURL(t *testing.T) {
@@ -145,4 +146,46 @@ func TestRunRequest_Validate(t *testing.T) {
 		var stopRequest = &RunRequest{Target: url.NewResource("abc")}
 		assert.NotNil(t, stopRequest.Validate())
 	}
+}
+
+func TestDockerComposeRequest_Validate(t *testing.T) {
+
+	//Test to validate when Target is not provided
+	t.Run("Testing target validation", func(t *testing.T) {
+		r := ComposeRequest{
+			Target: nil,
+			Source: url.NewResource("/tmp"),
+		}
+
+		//Validate request
+		err := r.Validate()
+
+		assert.Error(t, err)
+	})
+
+	//Test to validate when ComposeFilePath is not provided
+	t.Run("Testing ComposeFilePath validation", func(t *testing.T) {
+		r := ComposeRequest{
+			Target: url.NewResource("scp://127.0.0.1:22/", ""),
+			Source: nil,
+		}
+
+		//Validate request
+		err := r.Validate()
+
+		assert.Error(t, err)
+	})
+
+	//Test to validate when ComposeFilePath is not provided
+	t.Run("Testing ComposeFilePath validation", func(t *testing.T) {
+		r := ComposeRequest{
+			Target: url.NewResource("scp://127.0.0.1:22/", ""),
+			Source: nil,
+		}
+
+		//Validate request
+		err := r.Validate()
+
+		assert.Error(t, err)
+	})
 }

@@ -1,0 +1,5 @@
+CONTAINER ID        IMAGE                                        COMMAND                  CREATED             STATUS              PORTS                                            NAMES
+e3d9cdd4f47a        redis                                        "docker-entrypoint.s…"   12 minutes ago      Up 2 minutes        6379/tcp                                         redis
+9950affd8733        us.gcr.io/tech-ops-poc/etly-service:1.6.15   "./etly-service -t f…"   3 days ago          Up 8 hours          0.0.0.0:8084->8084/tcp, 0.0.0.0:9001->9000/tcp   bids_gbq_transfer
+5c1c2c7b7a04        us.gcr.io/tech-ops-poc/etly-service:1.6.15   "./etly-service -c f…"   3 days ago          Up 8 hours          0.0.0.0:8085->8085/tcp, 0.0.0.0:9002->9000/tcp   bids_etly_worker
+cce27307f6ee        us.gcr.io/tech-ops-poc/etly-service:1.6.15   "./etly-service -t f…"   3 days ago          Up 8 hours          0.0.0.0:8083->8083/tcp, 0.0.0.0:9000->9000/tcp   bids_file_transfer
