@@ -18,4 +18,6 @@
 | docker | login | store supplied credentials for provided repository in local docker store| [LoginRequest](service_contract.go) | [LoginResponse](service_contract.go) |
 | docker | logout | remove credentials for supplied repository | [LogoutRequest](service_contract.go) | [LogoutResponse](service_contract.go) |
 | docker | push | copy image to supplied repository| [PushRequest](service_contract.go) | [PushResponse](service_contract.go) |
+| docker | composeUp | docker compose up| [ComposeUpRequest](service_contract.go) | [ComposeResponse](service_contract.go) |
+| docker | comoseDown | docker compose down | [ComposeDownRequest](service_contract.go) | [ComposeResponse](service_contract.go) |
 
