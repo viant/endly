@@ -1,7 +1,6 @@
 package webdb
 
 import (
-	. "./model"
 	"github.com/viant/dsc"
 	"net/http"
 	"fmt"

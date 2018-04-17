@@ -1,4 +1,4 @@
-package model
+package webdb
 
 //Dummy represents a dummy object
 type Dummy struct {

@@ -1,7 +1,6 @@
 package webdb
 
 import (
-	. "./model"
 	"net/http"
 )
 
