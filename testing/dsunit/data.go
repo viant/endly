@@ -1,19 +1,19 @@
 package dsunit
 
 import (
-	"fmt"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/data"
-	"strings"
+"fmt"
+"github.com/viant/toolbox"
+"github.com/viant/toolbox/data"
+"strings"
 )
 
 //TableData represents table data
 type TableData struct {
-	Table         string
-	Value         interface{}
-	AutoGenerate  map[string]string `json:",omitempty"`
-	PostIncrement []string          `json:",omitempty"`
-	Key           string
+	Table string
+	Value interface{}
+	AutoGenerate map[string]string `json:",omitempty"`
+	PostIncrement []string`json:",omitempty"`
+	Key string
 }
 
 //AutoGenerateIfNeeded retrieves auto generated values
@@ -22,9 +22,9 @@ func (d *TableData) AutoGenerateIfNeeded(state data.Map) error {
 		value, has := state.GetValue(v)
 		if !has {
 			return fmt.Errorf("failed to autogenerate value for %v - unable to eval: %v", k, v)
-		}
+			}
 		state.SetValue(k, value)
-	}
+		}
 	return nil
 }
 
@@ -35,25 +35,25 @@ func (d *TableData) PostIncrementIfNeeded(state data.Map) {
 		value, has := state.GetValue(keyText)
 		if !has {
 			value = 0
-		}
+			}
 		state.SetValue(keyText, toolbox.AsInt(value)+1)
-	}
+		}
 }
 
 //GetValues a table records.
 func (d *TableData) GetValues(state data.Map) []map[string]interface{} {
 	if d.Value == nil {
 		return []map[string]interface{}{}
-	}
+		}
 	if toolbox.IsMap(d.Value) {
 		var value = d.GetValue(state, d.Value)
 		if len(value) == 0 {
 			return []map[string]interface{}{}
-		}
+			}
 		return []map[string]interface{}{
 			value,
+			}
 		}
-	}
 	var result = make([]map[string]interface{}, 0)
 	if toolbox.IsSlice(d.Value) {
 		var aSlice = toolbox.AsSlice(d.Value)
@@ -61,15 +61,15 @@ func (d *TableData) GetValues(state data.Map) []map[string]interface{} {
 			value := d.GetValue(state, item)
 			if len(value) > 0 {
 				result = append(result, value)
+				}
 			}
 		}
-	}
 	return result
 }
 
 func (d *TableData) expandThis(textValue string, value map[string]interface{}) interface{} {
 	if strings.Contains(textValue, "this.") {
-		var thisState = data.NewMap()
+		var thisState= data.NewMap()
 		for subKey, subValue := range value {
 			if toolbox.IsString(subValue) {
 				subKeyTextValue := toolbox.AsString(subValue)
@@ -83,29 +83,72 @@ func (d *TableData) expandThis(textValue string, value map[string]interface{}) i
 	return textValue
 }
 
+func hasNumericKeys(aMap map[string]interface{}) bool {
+	for k := range aMap {
+		if strings.HasPrefix(k, "$As") {
+			return true
+			}
+		}
+	return false
+}
+
+func normalize(source interface{}) interface{} {
+	if source == nil {
+		return nil
+		}
+	switch value := source.(type) {
+		case map[string]interface{}:
+
+		if hasNumericKeys(value) {
+			result := map[interface{}]interface{}{}
+			for k, v := range value {
+				result[k] = v
+				}
+			return result
+			}
+		for key, item := range value {
+			value[key] = normalize(item)
+			}
+
+		case []interface{}:
+		for i, item := range value {
+			value[i] = normalize(item)
+			}
+		case map[interface{}]interface{}:
+		for key, item := range value {
+			value[key] = normalize(item)
+			}
+		}
+	return source
+
+}
+
 //GetValue returns record.
 func (d *TableData) GetValue(state data.Map, source interface{}) map[string]interface{} {
+
+	source = normalize(source)
+
 	value := toolbox.AsMap(state.Expand(source))
 
 	for k, v := range value {
 		var textValue = toolbox.AsString(v)
 		if strings.Contains(textValue, "this") {
 			value[k] = d.expandThis(textValue, value)
-		} else if strings.HasPrefix(textValue, "$") {
+			} else if strings.HasPrefix(textValue, "$") {
 			delete(value, k)
-		} else if strings.HasPrefix(textValue, "\\$") {
+			} else if strings.HasPrefix(textValue, "\\$") {
 			value[k] = string(textValue[1:])
+			}
 		}
-	}
 
 	dataStoreState := state.GetMap(ServiceID)
 	var key = d.Key
 	if key == "" {
 		key = d.Table
-	}
+		}
 	if !dataStoreState.Has(key) {
 		dataStoreState.Put(key, data.NewCollection())
-	}
+		}
 
 	records := dataStoreState.GetCollection(key)
 	records.Push(value)
