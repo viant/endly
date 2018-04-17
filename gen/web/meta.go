@@ -25,20 +25,22 @@ type DbMeta struct {
 }
 
 type AppMeta struct {
-	Name         string
-	Description  string
-	OriginURL    string
-	Sdk          string
-	Docker       bool
-	Args         []string
-	Config       string
-	Build        string //build path
-	UseSdkBuild  bool
-	DbConfigPath string
-	Assets       []string
-	Selenium     map[string]interface{}
-	HTTP         map[string]interface{}
-	REST         map[string]interface{}
+	Name            string
+	Description     string
+	hasAppDirectory bool
+	OriginURL       string
+	Sdk             string
+	Docker          bool
+	Args            []string
+	Config          string
+	Build           string //build path
+	UseSdkBuild     bool
+	Dependency      string
+	DbConfigPath    string
+	Assets          []string
+	Selenium        map[string]interface{}
+	HTTP            map[string]interface{}
+	REST            map[string]interface{}
 }
 
 func (m *AppMeta) GetArguments(dockerfile bool) string {

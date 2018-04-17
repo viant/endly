@@ -4,13 +4,15 @@ build: build/default
 docker: true
 usesdkbuild: true
 dbconfigpath:  datastore
+dependency: ""
 assets:
 args:
 selenium:
   url: http://127.0.0.1:8080/form.html
   in: id
   data: 111111
-  out: name
+  output: out = (#output).text
+  assert: out
   submit: submit
   expected: Please choose a dummy name
 http:

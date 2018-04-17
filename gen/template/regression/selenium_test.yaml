@@ -4,7 +4,7 @@ commands:
   - (#$in).clear
   - (#$in).sendKeys('$data')
   - (#$submit).click
-  - $out = (xpath://DIV[preceding-sibling::INPUT[@id='$out']]).text
+  - $output
 expect:
-  $out:
+  $assert:
     Text: /$expected/

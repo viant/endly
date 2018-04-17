@@ -17,15 +17,15 @@ import (
 )
 
 type builder struct {
-	baseURL    string
-	destURL    string
-	storage    storage.Service
-	registerDb Map
-	services   Map
-	tags       []string
-	createDb   Map
-	dbMeta     *DbMeta
-	populateDb Map
+	baseURL              string
+	destURL              string
+	destService, storage storage.Service
+	registerDb           Map
+	services             Map
+	tags                 []string
+	createDb             Map
+	dbMeta               *DbMeta
+	populateDb           Map
 }
 
 func (b *builder) addDatastore(assets map[string]string, meta *DbMeta, request *Datastore) error {
@@ -140,9 +140,12 @@ func (b *builder) asMap(text string, state data.Map) (Map, error) {
 	if state != nil {
 		text = state.ExpandAsText(text)
 	}
-	yaml.NewDecoder(strings.NewReader(text)).Decode(&aMap)
+	err := yaml.NewDecoder(strings.NewReader(text)).Decode(&aMap)
+	if err != nil {
+		err = fmt.Errorf("failed to decode %v, %v", text, err)
+	}
 	var result = mapSlice(aMap)
-	return &result, nil
+	return &result, err
 }
 
 func (b *builder) Download(URI string, state data.Map) (string, error) {
@@ -172,7 +175,11 @@ func (b *builder) getDeployUploadMap(meta *AppMeta) Map {
 
 func (b *builder) getBuildDownloadMap(meta *AppMeta) Map {
 	var result = NewMap()
-	result.Put("${buildPath}/app/${app}", "$releasePath")
+	if meta.hasAppDirectory {
+		result.Put("${buildPath}/app/${app}", "$releasePath")
+	} else  {
+		result.Put("${buildPath}/${app}", "$releasePath")
+	}
 	if len(meta.Assets) == 0 {
 		return result
 	}
@@ -180,6 +187,15 @@ func (b *builder) getBuildDownloadMap(meta *AppMeta) Map {
 		result.Put(fmt.Sprintf("${buildPath}/%v", asset), fmt.Sprintf("${releasePath}%v", asset))
 	}
 	return result
+}
+
+func hasKeyPrefix(keyPrefix string, assets map[string]string) bool {
+	for candidate:= range assets {
+		if strings.HasPrefix(candidate, keyPrefix) {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *builder) buildApp(meta *AppMeta, sdkMeta *SdkMeta, request *RunRequest, assets map[string]string) error {
@@ -206,7 +222,22 @@ func (b *builder) buildApp(meta *AppMeta, sdkMeta *SdkMeta, request *RunRequest,
 	if originURL == "" {
 		originURL = request.Origin
 	}
+
+	appDirectory := ""
+	dependency := ""
+	if meta.Dependency != "" {
+		dependency = fmt.Sprintf("\n      - %v", strings.Replace(meta.Dependency, "\n", "", strings.Count(meta.Dependency, "\n")))
+	}
+	if meta.hasAppDirectory {
+		appDirectory = "\n      - cd ${buildPath}app"
+	}
+
+
+	state.Put("dependency", dependency)
 	state.Put("originURL", fmt.Sprintf(`"%v"`, originURL))
+	state.Put("appDirectory", appDirectory)
+
+
 	if buildRequest.Docker {
 		state.Put("args", args)
 		appFile = "docker/app.yaml"
@@ -218,13 +249,17 @@ func (b *builder) buildApp(meta *AppMeta, sdkMeta *SdkMeta, request *RunRequest,
 		if appMap, err = b.NewAssetMap(buildAssets, "app.yaml", state); err != nil {
 			return err
 		}
+		fmt.Printf("%v\n", appMap)
+
 		start := appMap.SubMap("pipeline.start")
 		start.Put("arguments", meta.Args)
-
 		appMap.SubMap("pipeline.deploy").Put("upload", b.getDeployUploadMap(meta))
 	}
 
+
 	appMap.SubMap("pipeline.build").Put("download", b.getBuildDownloadMap(meta))
+
+
 
 	if app, err = toolbox.AsYamlText(appMap); err != nil {
 		return err
@@ -562,18 +597,18 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 		return err
 	}
 
-	if request.Testing.Selenium {
+	if request.Testing.Selenium && len(appMeta.Selenium) > 0 {
 		b.buildSeleniumTestAssets(appMeta, request)
 	} else {
 		regression = removeMatchedLines(regression, "selenium")
 	}
-	if request.Testing.HTTP {
+	if request.Testing.HTTP && len(appMeta.HTTP) > 0 {
 		b.buildHTTPTestAssets(appMeta, request)
 	} else {
 		regression = removeMatchedLines(regression, "HTTP test")
 	}
 
-	if request.Testing.REST {
+	if request.Testing.REST  && len(appMeta.REST) > 0{
 		b.buildRESTTestAssets(appMeta, request)
 	} else {
 		regression = removeMatchedLines(regression, "REST test")
@@ -610,25 +645,26 @@ func (b *builder) UploadToEndly(URI string, reader io.Reader) error {
 	URL := toolbox.URLPathJoin(fmt.Sprintf("%vendly", b.destURL), URI)
 	content, _ := ioutil.ReadAll(reader)
 	//fmt.Printf("%v\n%s\n", URL, content)
-	return b.storage.Upload(URL, bytes.NewReader(content))
+	return b.destService.Upload(URL, bytes.NewReader(content))
 }
 
 func (b *builder) Upload(URI string, reader io.Reader) error {
 	URL := toolbox.URLPathJoin(b.destURL, URI)
 	content, _ := ioutil.ReadAll(reader)
 	//fmt.Printf("%v\n%s\n", URL, content)
-	return b.storage.Upload(URL, bytes.NewReader(content))
+	return b.destService.Upload(URL, bytes.NewReader(content))
 }
 
 func newBuilder(baseURL string) *builder {
 	return &builder{
-		baseURL:    baseURL,
-		tags:       make([]string, 0),
-		services:   NewMap(),
-		createDb:   NewMap(),
-		populateDb: NewMap(),
-		destURL:    "mem:///endly/",
-		storage:    storage.NewMemoryService(),
+		baseURL:     baseURL,
+		tags:        make([]string, 0),
+		services:    NewMap(),
+		createDb:    NewMap(),
+		populateDb:  NewMap(),
+		destURL:     "mem:///endly/",
+		destService: storage.NewPrivateMemoryService(),
+		storage:     storage.NewMemoryService(),
 	}
 
 }

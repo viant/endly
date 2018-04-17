@@ -9,6 +9,101 @@ import (
 func init() {
 	var memStorage = storage.NewMemoryService();
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/web/meta.yaml", bytes.NewReader([]byte(`name: go/web
+description: "golang: web hello world"
+build: build/go
+docker: true
+sdk: go:1.9
+dbconfigpath:  datastore
+assets:
+args:
+originurl: "./../"
+selenium:
+  url: http://127.0.0.1:8080/
+  in: name
+  data: world
+  output: output = (#output).text
+  assert: output
+  submit: run
+  expected: Hello world
+http:
+  request:
+    method: get
+    url: http://127.0.0.1:8080/
+  expect:
+    Code: 200`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/go/web/meta.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/web/main.go", bytes.NewReader([]byte(`package main
+
+import (
+	"io"
+	"net/http"
+)
+
+
+func hello(w http.ResponseWriter, r *http.Request) {
+	io.WriteString(w, index)
+}
+
+func main() {
+	http.HandleFunc("/", hello)
+	http.ListenAndServe(":8080", nil)
+}
+
+
+
+var index = `+"`"+`
+	<!DOCTYPE html>
+<html>
+<head>
+  <title>Hello world</title>
+</head>
+<script type="text/javascript">
+  
+(function(){
+
+  var run = function() {
+    var name = document.querySelector('#name')
+    var output = document.querySelector('#output');
+    output.innerHTML = 'Hello ' + name.value;
+  }
+
+  var onLoad = function() {
+	var runButton = document.querySelector('#run');
+  	console.log(runButton);
+    runButton.addEventListener('click', run); 
+  }
+
+  window.addEventListener('load', onLoad);  
+
+})()
+
+</script>
+<body>
+
+<p>
+  <label for="name">Name</label>
+  <input type="text" name="name" id="name" />
+</p>
+<p>
+  <input type="button" value="run" id="run" />
+</p>
+
+<div id="output">Hello ***</div>
+
+</body>
+</html>
+`+"`"+`
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/go/web/main.go %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/config.go", bytes.NewReader([]byte(`package webdb
 
 import (
@@ -599,9 +694,10 @@ type Dummy struct {
 	}
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/meta.yaml", bytes.NewReader([]byte(`name: go/webdb
-description: "golang: simple web/rest app"
+description: "golang: simple web/rest app (dsc/toolbox)"
 config: config/config.yaml
 build: build/go
+dependency: go get -u github.com/viant/endly/bootstrap
 docker: true
 sdk: go:1.9
 dbconfigpath:  datastore
@@ -616,7 +712,8 @@ selenium:
   url: http://127.0.0.1:8080/form.html
   in: id
   data: 111111
-  out: name
+  output: name = (xpath://DIV[preceding-sibling::INPUT[@id='name']]).text
+  assert: name
   submit: submit
   expected: Please choose a dummy name
 http:
@@ -823,13 +920,15 @@ build: build/default
 docker: true
 usesdkbuild: true
 dbconfigpath:  datastore
+dependency: ""
 assets:
 args:
 selenium:
   url: http://127.0.0.1:8080/form.html
   in: id
   data: 111111
-  out: name
+  output: out = (#output).text
+  assert: out
   submit: submit
   expected: Please choose a dummy name
 http:
@@ -1342,7 +1441,7 @@ CREATE TABLE dummy (
 config:
   driverName: mysql
   descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
-  credentials: $mysqlCredentials
+  credentials: "$mysqlCredentials"
   parameters:
     dbname: $db
 `)))
@@ -1575,11 +1674,10 @@ pipeline:
     origin:
       URL: $originURL
     commands:
-      - export GOPATH=/tmp/go
-      - cd $buildPath/app
-      - go get -u github.com/viant/endly/bootstrap
+      - export GOPATH=/tmp/go$dependency$appDirectory
       - go build -o $app
       - chmod +x $app
+
     download:
       ${buildPath}/app/${app}: $releasePath
 
@@ -1627,9 +1725,7 @@ pipeline:
     sdk: $sdk
     commands:
       - apt-get -y install git
-      - export GOPATH=/tmp/go
-      - cd ${buildPath}app
-      - go get -u github.com/viant/endly/bootstrap
+      - export GOPATH=/tmp/go $dependency $appDirectory
       - export CGO_ENABLED=0
       - go build -o $app
       - chmod +x $app
@@ -1812,9 +1908,9 @@ commands:
   - (#$in).clear
   - (#$in).sendKeys('$data')
   - (#$submit).click
-  - $out = (xpath://DIV[preceding-sibling::INPUT[@id='$out']]).text
+  - $output
 expect:
-  $out:
+  $assert:
     Text: /$expected/
 `)))
 		if err != nil {
