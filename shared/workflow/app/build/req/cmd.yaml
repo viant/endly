@@ -1,5 +1,5 @@
 target: $buildTarget
-timeoutMs: 60000
+timeoutMs: 240000
 superUser: $superUser
 secrets: $secrets
 terminators:
