@@ -2,6 +2,6 @@ action: dsunit:register
 config:
   driverName: mysql
   descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
-  credentials: $mysqlCredentials
+  credentials: "$mysqlCredentials"
   parameters:
     dbname: $db

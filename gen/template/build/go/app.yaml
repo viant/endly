@@ -13,11 +13,10 @@ pipeline:
     origin:
       URL: $originURL
     commands:
-      - export GOPATH=/tmp/go
-      - cd $buildPath/app
-      - go get -u github.com/viant/endly/bootstrap
+      - export GOPATH=/tmp/go$dependency$appDirectory
       - go build -o $app
       - chmod +x $app
+
     download:
       ${buildPath}/app/${app}: $releasePath
 

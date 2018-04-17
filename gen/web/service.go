@@ -123,14 +123,14 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	destURL = string(destURL[strings.LastIndex(destURL, "/endly"):])
 	var writer = new(bytes.Buffer)
 	archive := zip.NewWriter(writer)
-	if err = storage.Archive(builder.storage, destURL, archive); err != nil {
+	if err = storage.Archive(builder.destService, destURL, archive); err != nil {
 		return nil, err
 	}
 	archive.Flush()
 	archive.Close()
 
 	//Local debuging
-	//err = storage.Copy(builder.storage, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/ss", nil, nil)
+	err = storage.Copy(builder.destService, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/ss", nil, nil)
 	response.Data = writer.Bytes()
 	return response, err
 }
@@ -169,6 +169,7 @@ func (s *Service) loadAppMeta(URI string, assets map[string]string) (*AppMeta, e
 	}
 	meta := &AppMeta{}
 	err := yaml.NewDecoder(strings.NewReader(toolbox.AsString(value))).Decode(meta)
+	meta.hasAppDirectory = hasKeyPrefix("app/", assets)
 	return meta, err
 }
 

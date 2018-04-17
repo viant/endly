@@ -1,7 +1,8 @@
 name: go/webdb
-description: "golang: simple web/rest app"
+description: "golang: simple web/rest app (dsc/toolbox)"
 config: config/config.yaml
 build: build/go
+dependency: go get -u github.com/viant/endly/bootstrap
 docker: true
 sdk: go:1.9
 dbconfigpath:  datastore
@@ -16,7 +17,8 @@ selenium:
   url: http://127.0.0.1:8080/form.html
   in: id
   data: 111111
-  out: name
+  output: name = (xpath://DIV[preceding-sibling::INPUT[@id='name']]).text
+  assert: name
   submit: submit
   expected: Please choose a dummy name
 http:
