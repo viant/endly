@@ -4,7 +4,7 @@
 Shared workflow provide predefined workflows:
 
 - [Services](workflow/services) (datastore/caching services)
-- [App](workflow/app) (buid/deployment,publishing including docker)
+- [App](workflow/app) (build/deployment,publishing including docker)
 - [Cloud](workflow/cloud) (ec2, gce)
 - [Testing](assert) (assert)
 
