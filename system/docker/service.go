@@ -2,6 +2,8 @@ package docker
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/lunixbochs/vtclean"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/daemon"
@@ -11,7 +13,6 @@ import (
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/url"
-	"strings"
 )
 
 const (
@@ -647,6 +648,80 @@ func (s *service) push(context *endly.Context, request *PushRequest) (*PushRespo
 	return response, nil
 }
 
+/*
+	Build, re-create and start docker services and their linked/dependent services.
+	This will force stop any previous containers and recreates all containers.
+	ComposeError is returned on any failure
+*/
+func (s *service) composeUp(context *endly.Context, request *ComposeRequestUp) (*ComposeResponse, error) {
+	//Expand variables
+	target, err := context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, NewComposeError(err.Error(), request.Source)
+	}
+	composePath, err := context.ExpandResource(request.Source)
+	if err != nil {
+		return nil, NewComposeError(err.Error(), request.Source)
+	}
+
+	//Build & execute command
+	command := "docker-compose -f " + composePath.ParsedURL.Path + " up"
+	if request.RunInBackground {
+		command = command + " -d"
+	}
+	_, e := s.executeSecureDockerCommand(true, request.Credentials, context, target, dockerErrors, command)
+	if e != nil {
+		return nil, NewComposeError(err.Error(), request.Source)
+	}
+
+	//Check if the services are running
+	response := &ComposeResponse{Containers: make([]*ContainerInfo, 0)}
+	compose, err := mapToComposeStructureFromURL(request.Source.URL)
+	if compose.Services != nil {
+		for k, _ := range compose.Services {
+			if statusResponse, err := s.checkContainerProcess(context, &ContainerStatusRequest{Target: request.Target, Names: k}); err == nil && statusResponse != nil {
+				response.Containers = append(response.Containers, statusResponse)
+			}
+		}
+	}
+
+	return response, nil
+}
+
+/*
+	Stop all the services that were brought up by compose up
+*/
+func (s *service) composeDown(context *endly.Context, request *ComposeRequestDown) (*ComposeResponse, error) {
+	//Expand variables
+	target, err := context.ExpandResource(request.Target)
+	if err != nil {
+		return nil, NewComposeError(err.Error(), request.Source)
+	}
+	composePath, err := context.ExpandResource(request.Source)
+	if err != nil {
+		return nil, NewComposeError(err.Error(), request.Source)
+	}
+
+	//Build & execute command
+	command := "docker-compose -f " + composePath.URL + " down"
+	_, e := s.executeSecureDockerCommand(true, request.Credentials, context, target, dockerErrors, command)
+	if e != nil {
+		return nil, NewComposeError(err.Error(), request.Source)
+	}
+
+	response := &ComposeResponse{Containers: make([]*ContainerInfo, 0)}
+	compose, err := mapToComposeStructureFromURL(request.Source.URL)
+	if compose.Services != nil {
+		for k, _ := range compose.Services {
+			if statusResponse, err := s.checkContainerProcess(context, &ContainerStatusRequest{Target: request.Target, Names: k}); err == nil && statusResponse != nil {
+				response.Containers = append(response.Containers, statusResponse)
+			}
+		}
+	}
+
+	return response, nil
+}
+
 const (
 	dockerServiceRunExample = `{
   "Target": {
@@ -793,6 +868,22 @@ const (
     "Credentials": "${env.HOME}/.secret/localhost.json"
   },
   "Name": "udb_aerospike"
+}`
+
+	dockerServiceComposeUpExample = `{
+  "Target": {
+    "URL": "ssh://127.0.0.1/",
+    "Credentials": "${env.HOME}/.secret/localhost.json"
+  },
+  "Source": "test/compose/up/docker-compose.yaml"
+}`
+
+	dockerServiceComposeDownExample = `{
+  "Target": {
+    "URL": "ssh://127.0.0.1/",
+    "Credentials": "${env.HOME}/.secret/localhost.json"
+  },
+  "Source": "test/compose/down/docker-compose.yaml"
 }`
 )
 
@@ -1203,6 +1294,56 @@ func (s *service) registerRoutes() {
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*LogsRequest); ok {
 				return s.containerLogs(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "composeUp",
+		RequestInfo: &endly.ActionInfo{
+			Description: "docker compose up",
+			Examples: []*endly.UseCase{
+				{
+					Description: "Build, re-create and start docker services and their linked/dependent services",
+					Data:        dockerServiceComposeUpExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &ComposeRequestUp{}
+		},
+		ResponseProvider: func() interface{} {
+			return &ComposeResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*ComposeRequestUp); ok {
+				return s.composeUp(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "composeDown",
+		RequestInfo: &endly.ActionInfo{
+			Description: "docker compose down",
+			Examples: []*endly.UseCase{
+				{
+					Description: "Stop all the services that were brought up by compose up",
+					Data:        dockerServiceComposeDownExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &ComposeRequestDown{}
+		},
+		ResponseProvider: func() interface{} {
+			return &ComposeResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*ComposeRequestDown); ok {
+				return s.composeDown(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},

@@ -3,6 +3,8 @@ package docker
 import (
 	"errors"
 	"fmt"
+
+	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 )
 
@@ -415,4 +417,123 @@ func (t *Tag) String() string {
 		result += ":" + t.Version
 	}
 	return result
+}
+
+// Request to compose, build and run multi-container docker services
+type ComposeRequest struct {
+	Target      *url.Resource     `required:"true" description:"host with docker and docker-compose service,omitempty"` //target host
+	Source      *url.Resource     `required:"true" description:"Url to the docker compose file,omitempty"`
+	Credentials map[string]string `description:"map of secret key to obfuscate terminal output with corresponding filename storing credential compatible with github.com/viant/toolbox/cred/config.go,omitempty"`
+
+	// True - docker-compose cli is used, false - (Default) endly parses the compose file and builds as separate docker images.
+	// TBD: This is work in progress and not yet supported.
+	DoNative bool `required:"true" description:"Indicates if the composition is performed native using docker-compose cli or via endly,omitempty"`
+}
+type ComposeRequestUp struct {
+	*ComposeRequest
+	RunInBackground bool //Detached mode
+}
+
+type ComposeRequestDown struct {
+	*ComposeRequest
+}
+
+func (r *ComposeRequest) Validate() error {
+	if r.Target == nil {
+		return fmt.Errorf("target host was not specified %v", r.Source)
+	}
+	if r.Source == nil {
+		return NewComposeError("file path was not specified", nil)
+	}
+	storagService, err := storage.NewServiceForURL(r.Source.URL, r.Source.Credentials)
+	if err != nil {
+		return NewComposeError(err.Error(), r.Source)
+	}
+	if has, _ := storagService.Exists(r.Source.URL); !has {
+		return NewComposeError("file does not exists", r.Source)
+	}
+	//Load file into Docker Compose structure. Validating structure
+	_, err = mapToComposeStructureFromURL(r.Source.URL)
+	if err != nil {
+		return NewComposeError(err.Error(), r.Source)
+	}
+	return nil
+}
+func mapToComposeStructureFromURL(URL string) (*Compose, error) {
+	compose := &Compose{}
+	resource := url.NewResource(URL)
+	return compose, resource.Decode(compose)
+}
+
+// DockerBuildResponse represents docker build response
+type ComposeResponse struct {
+	Containers []*ContainerInfo
+}
+
+// Error type related to any docker compose operations
+type ComposeError struct {
+	Msg        string
+	ComposeURL string
+}
+
+func (e ComposeError) Error() string {
+	return fmt.Sprintf("docker-compose error:%v, URL:%v", e.Msg, e.ComposeURL)
+}
+
+// Create new docker compose error
+func NewComposeError(msg string, composeURL *url.Resource) ComposeError {
+	err := ComposeError{Msg: msg}
+	if composeURL != nil {
+		err.ComposeURL = composeURL.URL
+	}
+	return err
+}
+
+// Represents a native docker-compose file
+type Compose struct {
+	Version  string                    `yaml:"version,omitempty"`  //Docker-compose version
+	Services map[string]*DockerService `yaml:"services,omitempty"` //Definition of all services by custom name
+	Volumes  map[string]*Volume        `yaml:"volumes,omitempty"`  //Definition of all volumes to be mounted
+	Networks map[string]*Network       `yaml:"networks,omitempty"` //Definition of all networks
+}
+
+type DockerService struct {
+	Image         string      `yaml:"image,omitempty"`  //Image registry path
+	Ports         Ports       `yaml:"ports,omitempty"`  //Ports mapping from host machine to docker container
+	InternalPorts ExposePorts `yaml:"expose,omitempty"` //Ports will NOT be exposed from the container to the host machine. But they will be accessible to the linked containers
+}
+
+/*
+	Maps to "ports:" section of the compose file
+	Ports will be exposed from the container to the host machine
+	Format is host port:container port e.g. "8080":"8080"
+*/
+type Ports struct {
+	port map[string]string //Per specification to be string instead of number
+}
+
+/*
+	Maps to "expose:" section of the compose file
+	Ports will NOT be exposed from the container to the host machine. But they will be accessible to the linked containers
+*/
+type ExposePorts struct {
+	ports []string
+}
+
+/*
+	Maps to "volumes:" section of the compose file
+	Used to specify the path in host machine to be mounted and available within container and in which path.
+	Format is host path:container path e.g /data/endly:/etc/endly
+*/
+type Volume struct {
+	Driver        string            `yaml:"driver,omitempty"`      //Specifies the volume driver. Default is local
+	DriverOptions map[string]string `yaml:"driver_opts,omitempty"` //Specifies the options to the volume driver
+	External      bool              `yaml:"external,omitempty"`    //Specifies this volume is created externally outside of compose and attempting to recreate raises an error
+	Source        string            `yaml:"source,omitempty"`      //Specifies the source of mount on the host machine. This is an alternate way of specifying source
+	Target        string            `yaml:"target,omitempty"`      //Specifies the target of mount on the container. This is an alternate way of specifying target
+	Readonly      bool              `yaml:"read_only,omitempty"`   //Specifies mount is read only
+}
+
+// TBD
+type Network struct {
 }
