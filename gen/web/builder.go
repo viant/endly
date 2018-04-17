@@ -177,7 +177,7 @@ func (b *builder) getBuildDownloadMap(meta *AppMeta) Map {
 	var result = NewMap()
 	if meta.hasAppDirectory {
 		result.Put("${buildPath}/app/${app}", "$releasePath")
-	} else  {
+	} else {
 		result.Put("${buildPath}/${app}", "$releasePath")
 	}
 	if len(meta.Assets) == 0 {
@@ -190,7 +190,7 @@ func (b *builder) getBuildDownloadMap(meta *AppMeta) Map {
 }
 
 func hasKeyPrefix(keyPrefix string, assets map[string]string) bool {
-	for candidate:= range assets {
+	for candidate := range assets {
 		if strings.HasPrefix(candidate, keyPrefix) {
 			return true
 		}
@@ -232,11 +232,9 @@ func (b *builder) buildApp(meta *AppMeta, sdkMeta *SdkMeta, request *RunRequest,
 		appDirectory = "\n      - cd ${buildPath}app"
 	}
 
-
 	state.Put("dependency", dependency)
 	state.Put("originURL", fmt.Sprintf(`"%v"`, originURL))
 	state.Put("appDirectory", appDirectory)
-
 
 	if buildRequest.Docker {
 		state.Put("args", args)
@@ -256,10 +254,7 @@ func (b *builder) buildApp(meta *AppMeta, sdkMeta *SdkMeta, request *RunRequest,
 		appMap.SubMap("pipeline.deploy").Put("upload", b.getDeployUploadMap(meta))
 	}
 
-
 	appMap.SubMap("pipeline.build").Put("download", b.getBuildDownloadMap(meta))
-
-
 
 	if app, err = toolbox.AsYamlText(appMap); err != nil {
 		return err
@@ -608,7 +603,7 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 		regression = removeMatchedLines(regression, "HTTP test")
 	}
 
-	if request.Testing.REST  && len(appMeta.REST) > 0{
+	if request.Testing.REST && len(appMeta.REST) > 0 {
 		b.buildRESTTestAssets(appMeta, request)
 	} else {
 		regression = removeMatchedLines(regression, "REST test")

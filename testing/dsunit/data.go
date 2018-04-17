@@ -87,8 +87,6 @@ func (d *TableData) expandThis(textValue string, value map[string]interface{}) i
 func (d *TableData) GetValue(state data.Map, source interface{}) map[string]interface{} {
 	value := toolbox.AsMap(state.Expand(source))
 
-
-
 	for k, v := range value {
 		var textValue = toolbox.AsString(v)
 		if strings.Contains(textValue, "this") {

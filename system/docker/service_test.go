@@ -19,9 +19,8 @@ import (
 
 func TestDockerService_ComposeUp(t *testing.T) {
 
-	//var credentialFile, err = util.GetDummyCredential()
-	//assert.Nil(t, err)
-	credentialFile := "localhost"
+	var credentialFile, err = util.GetDummyCredential()
+	assert.Nil(t, err)
 
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 	manager := endly.New()
@@ -40,19 +39,24 @@ func TestDockerService_ComposeUp(t *testing.T) {
 			target:      target,
 			baseDir:     "test/compose/up/darwin",
 			request:     &docker.ComposeRequestUp{&docker.ComposeRequest{Target: target, Source: url.NewResource("test/compose/up/docker-compose.yaml")}, true},
-			expected: &docker.ComposeResponse{Containers: []*docker.ContainerInfo{
-				{
-					Status: "up",
-					Names:  "redis",
-				},
-			},
-			},
+			expected: `{
+  "Containers": [
+    {	
+      "ContainerID":"5280cb455e33",
+      "Image": "redis",
+      "Command": "docker-entrypoint.s…",
+      "Status": "up",
+      "Port": "6379/tcp",
+      "Names": "redis"
+    }
+  ]
+}
+`,
 		},
 	}
 
 	for _, useCase := range useCases {
-		context, err := exec.NewSSHRecodingContext(manager, target, useCase.baseDir)
-		defer context.Close()
+		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
 		if !assert.Nil(t, err) {
 			log.Fatal(err)
 		}
@@ -67,18 +71,14 @@ func TestDockerService_ComposeUp(t *testing.T) {
 			t.Log(err.Error())
 			continue
 		}
-
-		toolbox.Dump(response)
 		assertly.AssertValues(t, useCase.expected, response, useCase.description)
 	}
-
 }
 
 func TestDockerService_ComposeDown(t *testing.T) {
 
-	//var credentialFile, err = util.GetDummyCredential()
-	//assert.Nil(t, err)
-	credentialFile := "localhost"
+	var credentialFile, err = util.GetDummyCredential()
+	assert.Nil(t, err)
 
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 	manager := endly.New()
@@ -97,18 +97,12 @@ func TestDockerService_ComposeDown(t *testing.T) {
 			target:      target,
 			baseDir:     "test/compose/down/darwin",
 			request:     &docker.ComposeRequestDown{&docker.ComposeRequest{Target: target, Source: url.NewResource("test/compose/up/docker-compose.yaml")}},
-			expected: &docker.ComposeResponse{Containers: []*docker.ContainerInfo{
-				{
-					Status: "down",
-					Names:  "redis",
-				},
-			},
-			},
+			expected:    `{"Containers":[]}`,
 		},
 	}
 
 	for _, useCase := range useCases {
-		context, err := exec.NewSSHRecodingContext(manager, target, useCase.baseDir)
+		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
 		defer context.Close()
 		if !assert.Nil(t, err) {
 			log.Fatal(err)
@@ -124,8 +118,6 @@ func TestDockerService_ComposeDown(t *testing.T) {
 			t.Log(err.Error())
 			continue
 		}
-
-		toolbox.Dump(response)
 		assertly.AssertValues(t, useCase.expected, response, useCase.description)
 	}
 

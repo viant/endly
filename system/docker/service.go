@@ -678,7 +678,7 @@ func (s *service) composeUp(context *endly.Context, request *ComposeRequestUp) (
 	response := &ComposeResponse{Containers: make([]*ContainerInfo, 0)}
 	compose, err := mapToComposeStructureFromURL(request.Source.URL)
 	if compose.Services != nil {
-		for k, _ := range compose.Services {
+		for k := range compose.Services {
 			if statusResponse, err := s.checkContainerProcess(context, &ContainerStatusRequest{Target: request.Target, Names: k}); err == nil && statusResponse != nil {
 				response.Containers = append(response.Containers, statusResponse)
 			}
@@ -703,7 +703,7 @@ func (s *service) composeDown(context *endly.Context, request *ComposeRequestDow
 	}
 
 	//Build & execute command
-	command := "docker-compose -f " + composePath.URL + " down"
+	command := "docker-compose -f " + composePath.ParsedURL.Path + " down"
 	_, e := s.executeSecureDockerCommand(true, request.Credentials, context, target, dockerErrors, command)
 	if e != nil {
 		return nil, NewComposeError(err.Error(), request.Source)
@@ -712,7 +712,7 @@ func (s *service) composeDown(context *endly.Context, request *ComposeRequestDow
 	response := &ComposeResponse{Containers: make([]*ContainerInfo, 0)}
 	compose, err := mapToComposeStructureFromURL(request.Source.URL)
 	if compose.Services != nil {
-		for k, _ := range compose.Services {
+		for k := range compose.Services {
 			if statusResponse, err := s.checkContainerProcess(context, &ContainerStatusRequest{Target: request.Target, Names: k}); err == nil && statusResponse != nil {
 				response.Containers = append(response.Containers, statusResponse)
 			}

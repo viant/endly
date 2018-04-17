@@ -459,6 +459,7 @@ func (r *ComposeRequest) Validate() error {
 	}
 	return nil
 }
+
 func mapToComposeStructureFromURL(URL string) (*Compose, error) {
 	compose := &Compose{}
 	resource := url.NewResource(URL)
