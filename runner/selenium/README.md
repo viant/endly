@@ -26,8 +26,27 @@ Run request provide commands expression for easy selenium interaction:
 
 Command syntax:
 ```text
-  [ RESULT_KEY =  ] [{WEB_ELEMENT_SELECTOR}.]METHOD_NAME(PARAMETERS)
+  [RESULT_KEY=] [(WEB_ELEMENT_SELECTOR).]METHOD_NAME(PARAMETERS)
+  
+  i.e:
+  (#name).sendKeys('dummy 123')
+  (xpath://SELECT[@id='typeId']/option[text()='type1']).click()
+  get(http://127.0.0.1:8080/form.html)
+  
 ```  
+
+
+Time wait
+```text
+
+        - command: CurrentURL = CurrentURL()
+        exit: $CurrentURL:/dummy/
+        sleepTimeMs: 1000
+        repeat: 10
+
+```
+
+ 
  
  
 ### Inline pipeline tasks
