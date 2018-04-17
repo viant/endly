@@ -1,4 +1,4 @@
-package model
+package webdb
 
 
 //DummyType represents a dummy type object

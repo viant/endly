@@ -198,11 +198,20 @@ func hasKeyPrefix(keyPrefix string, assets map[string]string) bool {
 	return false
 }
 
+func removeComments(assets map[string]string) {
+	for k, code := range assets {
+		if strings.HasSuffix(k, ".go") && strings.Contains(code, "/*remove") {
+			code = strings.Replace(code, "/*remove", "", len(code))
+			assets[k] = strings.Replace(code, "remove*/", "", len(code))
+		}
+	}
+}
+
 func (b *builder) buildApp(meta *AppMeta, sdkMeta *SdkMeta, request *RunRequest, assets map[string]string) error {
 	buildRequest := request.Build
 	var state = data.NewMap()
 	var err error
-
+	removeComments(assets)
 	request.Build.path = meta.Build
 	if meta.UseSdkBuild {
 		request.Build.path = sdkMeta.Build

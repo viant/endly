@@ -7,10 +7,12 @@ import (
 	_ "github.com/viant/asc"
 	_ "github.com/viant/bgc"
 
+	/*remove
 	.  ".."
 	"log"
 	"os"
 	"fmt"
+	remove*/
 	"flag"
 )
 
@@ -19,6 +21,8 @@ var configURL = flag.String("configURL", "", "path to config file (JSON or YAML"
 
 func main() {
 	flag.Parse()
+
+	/*remove
 	config, err := NewConfigFromURL(*configURL)
 	if err != nil {
 		log.Fatal(err)
@@ -31,5 +35,5 @@ func main() {
 	go server.StopOnSiginals(os.Interrupt)
 	fmt.Printf("start listening on :%d\n", config.Port)
 	server.ListenAndServe()
-
+	remove*/
 }
