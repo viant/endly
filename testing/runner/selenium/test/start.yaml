@@ -1,0 +1,7 @@
+target:
+  URL: ssh://127.0.0.1/
+  credentials: localhost
+version: 3.4.0
+port: 8085
+sdk: jdk
+sdkVersion: 1.8

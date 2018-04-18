@@ -1,0 +1,22 @@
+{
+	"Method": "POST",
+	"URL": "http://127.0.0.1:8117/wd/hub/session",
+	"Header": {
+		"Accept": [
+			"application/json"
+		],
+		"Accept-Encoding": [
+			"gzip"
+		],
+		"Content-Length": [
+			"106"
+		],
+		"User-Agent": [
+			"Go-http-client/1.1"
+		],
+		"X-Forwarded-For": [
+			"127.0.0.1"
+		]
+	},
+	"Body": "text:{\"capabilities\":{\"alwaysMatch\":{\"browserName\":\"firefox\"}},\"desiredCapabilities\":{\"browserName\":\"firefox\"}}"
+}
