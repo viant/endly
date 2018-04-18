@@ -92,6 +92,12 @@
     * Merge docker compose pull request
     * Minor patches
     
-## Apr 16 2018 0.7.6
+## Apr 16 2018 0.7.7
     * Added map[interface{}]interface{} for non string key support
+    * Minor patches
+
+## Apr 16 2018 0.7.8
+    * Patched CLI formatting
+    * Updated workflow generator
+    * Added when criteria to pipeline    
     * Minor patches

@@ -97,32 +97,34 @@ The following diagram shows service with its component.
 
 
 1) **System services**
-    - [SSH Executor Service](/system/exec)
-    - [Storage Service](/system/storage)
-    - [Process Service](/system/process)
-    - [Daemon Service](/system/daemon)
-    - [Network Service](/system/network)
-    - [Docker Service](/system/docker)
+    - [SSH Executor Service](../../system/exec)
+    - [Storage Service](../../system/storage)
+    - [Process Service](../../system/process)
+    - [Daemon Service](../..//system/daemon)
+    - [Network Service](../../system/network)
+    - [Docker Service](../../system/docker)
 2) **Cloud services**
-    - [Amazon Elastic Compute Cloud Service](cloud/ec2)
-    - [Google Compute Engine Service](cloud/gce)
+    - [Amazon Elastic Compute Cloud Service](../../cloud/ec2)
+    - [Google Compute Engine Service](../../cloud/gce)
 3) **Build and Deployment Services**
-    - [Sdk Service](deployment/sdk)
-    - [Version Control Service](deployment/vc)
-    - [Build Service](deployment/build)
-    - [Deplyment Service](deployment/deploy)
-4) **Endpoint Services**
-   - [Http Endpoint Service](endpoint/http) 
-5) **Runner Services**
-   - [Http Runner Service](runner/http) 
-   - [REST Runner Service](runner/rest) 
-   - [Selenium Runner Service](runner/selenium) 
+    - [Sdk Service](../../deployment/sdk)
+    - [Version Control Service](../../deployment/vc)
+    - [Build Service](../../deployment/build)
+    - [Deplyment Service](../../deployment/deploy)
 6) **Testing Services**
-   - [Validator](testing/validator)
-   - [Log Validator Service](testing/log)
-   - [Datastore Preparation and Validation Service](testing/dsunit)
+   - [Validator](../../testing/validator)
+   - [Log Validator Service](../../testing/log)
+   - [Datastore Preparation and Validation Service](../../testing/dsunit)
+   - **Endpoint Services**
+      - [Http Endpoint Service](../../testing/endpoint/http) 
+   - **Runner Services**
+      - [Http Runner Service](../../testing/runner/http) 
+      - [REST Runner Service](../../testing/runner/rest) 
+      - [Selenium Runner Service](../../testing/runner/selenium) 
+
+   
 7) **Notification Services**
-   - [SMTP Service](notify/smtp)
+   - [SMTP Service](../../notify/smtp)
 8) **Workflow service**
-   - [Workflow Service](workflow/)
+   - [Workflow Service](../../workflow/)
  
