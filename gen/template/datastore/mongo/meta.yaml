@@ -4,6 +4,7 @@ name: MongoDB
 king: NoSQL
 tag: mongo
 dictionary: dictionary/
+data: data/
 sequence: false
 tables:
   - dummy

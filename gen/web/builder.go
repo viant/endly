@@ -435,12 +435,17 @@ func removeMatchedLines(text string, matchExpr string) string {
 	return strings.Join(result, "\n")
 }
 
+func (b *builder) addUseCaseAssets(appMeta *AppMeta, request *RunRequest) error {
+	b.Copy(nil,
+		"regression/use_cases/001_xx_case/use_case.txt",
+		"regression/use_cases/002_yy_case/use_case.txt")
+	return nil
+}
+
 func (b *builder) buildSeleniumTestAssets(appMeta *AppMeta, request *RunRequest) error {
 	b.Copy(nil,
 		"regression/req/selenium_init.yaml",
-		"regression/req/selenium_destroy.yaml",
-		"regression/use_cases/001_xx_case/use_case.txt",
-		"regression/use_cases/002_yy_case/use_case.txt")
+		"regression/req/selenium_destroy.yaml")
 
 	var aMap = map[string]interface{}{
 		"in":       "name",
@@ -550,7 +555,6 @@ func (b *builder) buildRESTTestAssets(appMeta *AppMeta, request *RunRequest) err
 	state.Put("AsBool", neatly.AsBool)
 
 	expandedHttpTest := state.Expand(httpTest)
-
 	if test, err := toolbox.AsIndentJSONText(expandedHttpTest); err == nil {
 		b.UploadToEndly("regression/use_cases/001_xx_case/rest_test.json", strings.NewReader(strings.Replace(test, "$index", "1", 2)))
 		b.UploadToEndly("regression/use_cases/002_yy_case/rest_test.json", strings.NewReader(strings.Replace(test, "$index", "1", 2)))
@@ -600,6 +604,8 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 	if err = b.Copy(nil, "regression/var/test_init.json"); err != nil {
 		return err
 	}
+
+	b.addUseCaseAssets(appMeta, request)
 
 	if request.Testing.Selenium && len(appMeta.Selenium) > 0 {
 		b.buildSeleniumTestAssets(appMeta, request)

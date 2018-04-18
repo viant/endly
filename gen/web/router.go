@@ -79,6 +79,7 @@ func (r *Router) download() http.Handler {
 		}
 		r.setTextValue(form, "appTemplate", &runRequest.Build.TemplateApp, "default")
 		r.setTextValue(form, "appName", &runRequest.Build.App, "myapp")
+		r.setTextValue(form, "origin", &runRequest.Origin, "")
 		r.setTextValue(form, "sdk", &runRequest.Build.Sdk, "")
 		r.setBoolValue(form, "docker", &runRequest.Build.Docker)
 

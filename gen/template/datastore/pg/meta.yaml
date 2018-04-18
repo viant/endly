@@ -6,6 +6,7 @@ tag: pg
 credentials: $pgCredentials
 schema: ddl/schema.sql
 dictionary: dictionary/
+data: data/
 sequence: true
 tables:
   - dummy
