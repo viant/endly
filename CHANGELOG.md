@@ -91,3 +91,7 @@
     * Patched workflow generator shared mem 
     * Merge docker compose pull request
     * Minor patches
+    
+## Apr 16 2018 0.7.6
+    * Added map[interface{}]interface{} for non string key support
+    * Minor patches
