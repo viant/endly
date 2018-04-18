@@ -6,10 +6,8 @@ import (
 )
 
 //GetPath returns hierarchical path to the latest Activity
-func GetPath(candidates *model.Activities, runner *Runner, fullPath bool) (string, int) {
-	var pathLength = 0
+func GetPath(candidates *model.Activities, runner *Runner, fullPath bool) string {
 	var activityPath = make([]string, 0)
-
 	var activities = make([]*model.Activity, 0)
 	for i := 0; i < candidates.Len(); i++ {
 		if i > 0 && candidates.Get(i).Service == candidates.Get(i-1).Service {
@@ -23,7 +21,6 @@ func GetPath(candidates *model.Activities, runner *Runner, fullPath bool) (strin
 
 	for i, activity := range activities {
 		var tag = activity.FormatTag()
-		pathLength += len(tag)
 		serviceAction := ""
 		if i+1 < len(activities) || fullPath {
 			service := activity.Service + "."
@@ -31,7 +28,6 @@ func GetPath(candidates *model.Activities, runner *Runner, fullPath bool) (strin
 				service = ""
 			}
 			serviceAction = runner.ColorText(service+activity.Action, runner.ServiceActionColor)
-			pathLength += len(activity.Service) + 1 + len(activity.Action)
 		}
 		tag = runner.ColorText(tag, runner.TagColor)
 		if runner.InverseTag {
@@ -39,12 +35,7 @@ func GetPath(candidates *model.Activities, runner *Runner, fullPath bool) (strin
 		}
 
 		activityPath = append(activityPath, runner.ColorText(activity.Caller, runner.PathColor)+tag+serviceAction)
-		pathLength += len(activity.Caller)
 	}
-
-	var logPath = strings.Join(activityPath, runner.ColorText("|", "gray"))
-	if len(activities) > 0 {
-		pathLength += (len(activities) - 1)
-	}
-	return logPath, pathLength + 1
+	var resut = strings.Join(activityPath, runner.ColorText("|", "gray"))
+	return resut
 }

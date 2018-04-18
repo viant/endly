@@ -5,6 +5,7 @@ import (
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
 
+	"github.com/lunixbochs/vtclean"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/msg"
 	"github.com/viant/endly/workflow"
@@ -129,14 +130,16 @@ func (r *Runner) overrideShortMessage(messageType int, message string, messageIn
 	r.Printf("\r%v", r.formatShortMessage(messageType, message, messageInfoType, messageInfo))
 }
 
-func (r *Runner) printMessage(contextMessage string, contextMessageLength int, messageType int, message string, messageInfoType int, messageInfo string) {
-	r.Printf("%v\n", r.formatMessage(contextMessage, contextMessageLength, messageType, message, messageInfoType, messageInfo))
+func (r *Runner) printMessage(contextMessage string, messageType int, message string, messageInfoType int, messageInfo string) {
+	r.Printf("%v\n", r.formatMessage(contextMessage, messageType, message, messageInfoType, messageInfo))
 }
 
-func (r *Runner) formatMessage(contextMessage string, contextMessageLength int, messageType int, message string, messageInfoType int, messageInfo string) string {
+func (r *Runner) formatMessage(contextMessage string, messageType int, message string, messageInfoType int, messageInfo string) string {
 	var columns = r.Columns() - 5
+
 	var infoLength = len(messageInfo)
-	var messageLength = columns - contextMessageLength - infoLength
+
+	var messageLength = columns - len(vtclean.Clean(contextMessage, false)) - infoLength
 
 	if messageLength < len(message) {
 		if messageLength > 1 {
@@ -156,16 +159,18 @@ func (r *Runner) formatMessage(contextMessage string, contextMessageLength int, 
 	if messageInfoColor, ok := r.MessageStyleColor[messageInfoType]; ok {
 		messageInfo = r.ColorText(messageInfo, messageInfoColor)
 	}
+
 	return fmt.Sprintf("[%v %v %v]", contextMessage, message, messageInfo)
 }
 
 func (r *Runner) formatShortMessage(messageType int, message string, messageInfoType int, messageInfo string) string {
 	var fullPath = !(messageType == messageTypeTagDescription || messageInfoType == messageTypeAction)
-	var path, pathLength = "[/]", 4
+	var path = "[/]"
 	if r.Len() > 0 {
-		path, pathLength = GetPath(r.Activities, r, fullPath)
+		path = GetPath(r.Activities, r, fullPath)
 	}
-	var result = r.formatMessage(path, pathLength, messageType, message, messageInfoType, messageInfo)
+
+	var result = r.formatMessage(path, messageType, message, messageInfoType, messageInfo)
 	if strings.Contains(result, message) {
 		return result
 	}
@@ -462,7 +467,7 @@ func (r *Runner) reportFailureWithMatchSource(tag *EventTag, event msg.Event, va
 		if failure.Index() != -1 {
 			failurePath = fmt.Sprintf("%v:%v", failure.Index(), failure.Path)
 		}
-		r.printMessage(failurePath, len(failurePath), msg.MessageStyleError, failure.Message, msg.MessageStyleError, "Failed")
+		r.printMessage(failurePath, msg.MessageStyleError, failure.Message, msg.MessageStyleError, "Failed")
 		if firstFailurePathIndex != failure.Index() || counter >= 3 {
 			break
 		}
@@ -479,14 +484,13 @@ func (r *Runner) reportSummaryEvent() {
 		contextMessageColor = "red"
 		contextMessageStatus = "FAILED"
 	}
-	var contextMessageLength = len(contextMessage) + len(contextMessageStatus)
 	contextMessage = fmt.Sprintf("%v%v", contextMessage, r.ColorText(contextMessageStatus, contextMessageColor))
 	var totalTagValidated = (r.report.TotalTagPassed + r.report.TotalTagFailed)
 	var validationInfo = fmt.Sprintf("Passed %v/%v (TagIDs).", r.report.TotalTagPassed, totalTagValidated)
 	if totalTagValidated == 0 {
 		validationInfo = ""
 	}
-	r.printMessage(contextMessage, contextMessageLength, msg.MessageStyleGeneric, validationInfo, msg.MessageStyleGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
+	r.printMessage(contextMessage, msg.MessageStyleGeneric, validationInfo, msg.MessageStyleGeneric, fmt.Sprintf("elapsed: %v ms", r.report.ElapsedMs))
 }
 
 func (r *Runner) getValidation(event msg.Event) *assertly.Validation {
@@ -553,7 +557,7 @@ func (r *Runner) reportTagSummary() {
 	for _, tag := range r.tags {
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(r.ColorText(eventTag, "red"), len(eventTag), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
+			r.printMessage(r.ColorText(eventTag, "red"), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
 			var offset = 0
 			for i, event := range tag.Events {
 				validation := r.getValidation(event)
@@ -608,8 +612,7 @@ func (r *Runner) onCallerStart() {
 		if CallerName == "" {
 			CallerName = "noname"
 		}
-		var CallerLength = len(CallerName)
-		r.printMessage(r.ColorText(CallerName, r.TagColor), CallerLength, msg.MessageStyleGeneric, fmt.Sprintf("%v", time.Now()), msg.MessageStyleGeneric, "started")
+		r.printMessage(r.ColorText(CallerName, r.TagColor), msg.MessageStyleGeneric, fmt.Sprintf("%v", time.Now()), msg.MessageStyleGeneric, "started")
 	}
 }
 
