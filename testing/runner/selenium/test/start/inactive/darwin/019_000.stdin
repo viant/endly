@@ -1,0 +1,1 @@
+nohup  java -jar -Dwebdriver.gecko.driver=/opt/selenium/geckodriver -jar /opt/selenium/selenium-server-standalone.jar -port 8117 &
