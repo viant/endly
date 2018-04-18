@@ -5,6 +5,7 @@ kind: NoSQL
 tag: aerospike
 config: config/aerospike.conf
 dictionary: dictionary/
+data: data/
 sequence: false
 tables:
   - dummy

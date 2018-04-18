@@ -149,6 +149,19 @@
             <button type="submit" class="mx-auto  btn btn-primary">Download</button>
         </div>
     </form>
+    <ul> <b>Running workflow:</b>
+        <li><a href="https://github.com/viant/endly/releases">download latest endly</a></li>
+        <li>unpack downloaded archive (unzip $myapp)</li>
+        <li>change directory to $myapp/endly (cd $myapp/endly)</li>
+        <li>setup credentials:
+            <ul>
+                <li>localhost (locahost user): endly -c=localhost</li>
+                <li>mysql(root user): endly -c=mysql</li>
+                <li>pg(root user): endly -c=pg</li>
+            </ul>
+        </li>
+        <li>run e2e tests: endly</li>
+    </ul>
 </div>
 
 </body>

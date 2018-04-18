@@ -1,0 +1,16 @@
+{
+  "Fields": [
+    {
+      "name": "id",
+      "type": "integer"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "modified",
+      "type": "timestamp"
+    }
+  ]
+}

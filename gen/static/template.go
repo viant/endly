@@ -1090,6 +1090,43 @@ rest:
 		}
 	}
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/bigquery/ddl/dummy_type.json", bytes.NewReader([]byte(`{
+  "Fields": [
+    {
+      "name": "id",
+      "type": "integer"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "modified",
+      "type": "timestamp"
+    }
+  ]
+}`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/bigquery/ddl/dummy_type.json %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/bigquery/dictionary/dummy_type.json", bytes.NewReader([]byte(`[
+  {},
+  {
+    "id": 1,
+    "name": "type1"
+  },
+  {
+    "id": 2,
+    "name": "type2"
+  }
+]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/bigquery/dictionary/dummy_type.json %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/bigquery/register.yaml", bytes.NewReader([]byte(`action: dsunit:register
 datastore: $db
 config:
@@ -1109,6 +1146,7 @@ config:
 name: BigQuery
 kind: RDBMS
 dictionary: dictionary/
+data: data/
 sequence: false
 tables:
   - dummy
@@ -1208,6 +1246,7 @@ tag: pg
 credentials: $pgCredentials
 schema: ddl/schema.sql
 dictionary: dictionary/
+data: data/
 sequence: true
 tables:
   - dummy
@@ -1326,6 +1365,22 @@ namespace test {
 		}
 	}
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/aerospike/dictionary/dummy_type.json", bytes.NewReader([]byte(`[
+  {},
+  {
+    "id": 1,
+    "name": "type1"
+  },
+  {
+    "id": 2,
+    "name": "type2"
+  }
+]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/aerospike/dictionary/dummy_type.json %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/aerospike/register.yaml", bytes.NewReader([]byte(`action: dsunit:register
 datastore: $db
 config:
@@ -1350,6 +1405,7 @@ kind: NoSQL
 tag: aerospike
 config: config/aerospike.conf
 dictionary: dictionary/
+data: data/
 sequence: false
 tables:
   - dummy
@@ -1498,6 +1554,22 @@ admin:
 		}
 	}
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/mongo/dictionary/dummy_type.json", bytes.NewReader([]byte(`[
+  {},
+  {
+    "id": 1,
+    "name": "type1"
+  },
+  {
+    "id": 2,
+    "name": "type2"
+  }
+]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/mongo/dictionary/dummy_type.json %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/mongo/register.yaml", bytes.NewReader([]byte(`action: dsunit:register
 datastore: $db
 config:
@@ -1518,6 +1590,7 @@ name: MongoDB
 king: NoSQL
 tag: mongo
 dictionary: dictionary/
+data: data/
 sequence: false
 tables:
   - dummy

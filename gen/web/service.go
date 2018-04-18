@@ -104,11 +104,11 @@ func (s *Service) Get(request *GetRequest) (*GetResponse, error) {
 func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	var response = &RunResponse{}
 	builder := newBuilder(s.baseTemplateURL)
+
 	err := s.handleDatastore(builder, request.Datastore)
 	if err != nil {
 		return nil, err
 	}
-
 	if err := builder.buildSystem(); err != nil {
 		return nil, err
 	}
