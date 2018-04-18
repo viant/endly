@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/endly/endpoint/http"
+	"github.com/viant/endly/testing/endpoint/http"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"path"
@@ -17,14 +17,14 @@ import (
 
 	_ "github.com/viant/endly/cloud/ec2"
 	_ "github.com/viant/endly/cloud/gce"
-	_ "github.com/viant/endly/endpoint/http"
+	_ "github.com/viant/endly/testing/endpoint/http"
 
 	_ "github.com/viant/endly/testing/dsunit"
 	_ "github.com/viant/endly/testing/log"
 	_ "github.com/viant/endly/testing/validator"
 
-	_ "github.com/viant/endly/runner/http"
-	_ "github.com/viant/endly/runner/selenium"
+	_ "github.com/viant/endly/testing/runner/http"
+	_ "github.com/viant/endly/testing/runner/selenium"
 
 	_ "github.com/viant/endly/deployment/build"
 	_ "github.com/viant/endly/deployment/deploy"

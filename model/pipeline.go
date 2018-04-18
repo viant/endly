@@ -36,6 +36,7 @@ type Pipeline struct {
 	Description string                 `description:"description"`
 	Request     interface{}            `description:"external action request location, otherwise params are used to form request"`
 	Pipelines   Pipelines              `description:"workflow or action subsequent pipelines"`
+	When        string                 `description:"run criteria"`
 	Init        interface{}            `description:"state initalization "`
 	Post        interface{}            `description:"post execution state update "`
 }
