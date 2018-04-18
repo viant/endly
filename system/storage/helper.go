@@ -11,6 +11,9 @@ import (
 	"strings"
 )
 
+//MaxContentSize represent max allowed expandable content size
+var MaxContentSize = 1024 * 64
+
 func canExpand(content []byte) bool {
 	if len(content) == 0 {
 		return false
@@ -25,27 +28,32 @@ func canExpand(content []byte) bool {
 //NewExpandedContentHandler return a new reader that can substitute content with state map, replacement data provided in replacement map.
 func NewExpandedContentHandler(context *endly.Context, replaceMap map[string]string, expand bool) func(reader io.ReadCloser) (io.ReadCloser, error) {
 	return func(reader io.ReadCloser) (io.ReadCloser, error) {
-		var replacted = false
+		var replaced = false
 		defer reader.Close()
 		content, err := ioutil.ReadAll(reader)
 		if err != nil {
 			return nil, err
 		}
+		if len(content) > MaxContentSize {
+			return ioutil.NopCloser(bytes.NewReader(content)), nil
+		}
+
 		var result = string(content)
 		if expand && canExpand(content) {
 			result = context.Expand(result)
 			if err != nil {
 				return nil, err
 			}
-			replacted = len(result) != len(content)
+			replaced = len(result) != len(content)
 		}
+
 		for k, v := range replaceMap {
-			if !replacted && strings.Contains(result, k) {
-				replacted = true
+			if !replaced && strings.Contains(result, k) {
+				replaced = true
 			}
 			result = strings.Replace(result, k, v, len(result))
 		}
-		if replacted {
+		if replaced {
 			return ioutil.NopCloser(strings.NewReader(toolbox.AsString(result))), nil
 		}
 		return ioutil.NopCloser(bytes.NewReader(content)), nil
