@@ -184,12 +184,9 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 
 	var canRun bool
 	canRun, err = criteria.Evaluate(context, context.State(), action.When, "action.When", true)
-	if err != nil {
-		return nil, err
-	}
-	if !canRun {
+	if err != nil || !canRun  {
 		activity.Ineligible = true
-		return nil, nil
+		return nil, err
 	}
 	err = action.Init.Apply(state, state)
 	s.addVariableEvent("Action.Init", action.Init, context, state, state)
@@ -377,6 +374,13 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 	defer process.Pop()
 	runResponse := &RunResponse{
 		Data: make(map[string]interface{}),
+	}
+
+	var canRun bool
+	canRun, err = criteria.Evaluate(context, context.State(), pipeline.When, "pipeline.When", true)
+	if err != nil || !canRun {
+		activity.Ineligible = true
+		return err
 	}
 
 	defer func() {
