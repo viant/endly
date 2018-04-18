@@ -136,10 +136,10 @@ func (s *Service) getServiceRequest(context *endly.Context, activity *model.Acti
 	if err != nil {
 		return nil, nil, err
 	}
+
 	var state = context.State()
 	activity.Request = state.Expand(activity.Request)
 	request := activity.Request
-
 	if request == nil || !toolbox.IsMap(request) {
 		if toolbox.IsStruct(request) {
 			var requestMap = make(map[string]interface{})

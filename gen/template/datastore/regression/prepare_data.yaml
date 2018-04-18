@@ -6,7 +6,8 @@ sequence:
 data:
   action: nop
   init:
-    -  dbSetup = $AsTableRecords(data.db.setup)
+    -  dbSetup = $AsTableRecords($key)
+    -  key = data.db.setup
 setup:
   action: dsunit:prepare
   URL: regression/$db/data/

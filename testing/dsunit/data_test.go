@@ -1,15 +1,15 @@
 package dsunit_test
 
-import ("github.com/viant/toolbox"
-"testing"
-"github.com/viant/endly/testing/dsunit"
-"github.com/viant/toolbox/data"
-"strings"
-"log"
-"github.com/viant/neatly"
-"github.com/stretchr/testify/assert"
+import (
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly/testing/dsunit"
+	"github.com/viant/neatly"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
+	"log"
+	"strings"
+	"testing"
 )
-
 
 var JSON = `
 [
@@ -30,10 +30,8 @@ var JSON = `
 ]
 `
 
-
 func Test_DsUnitUdfGetTableRecords(t *testing.T) {
 	var state = data.NewMap()
-
 
 	collection := data.NewCollection()
 	var referenceMap = data.NewMap()
@@ -49,7 +47,7 @@ func Test_DsUnitUdfGetTableRecords(t *testing.T) {
 		log.Fatal(err)
 	}
 	state.Put("test", records)
-	result, err:= dsunit.AsTableRecords("test", state)
+	result, err := dsunit.AsTableRecords("test", state)
 	tables := toolbox.AsMap(result)
 	rows := tables["abc"]
 	row := toolbox.AsMap(toolbox.AsSlice(rows)[0])
