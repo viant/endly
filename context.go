@@ -302,7 +302,7 @@ func NewDefaultState() data.Map {
 	})
 
 	result.Put("unix", func(key string) interface{} {
-		var timeDiffProvider= toolbox.NewTimeDiffProvider()
+		var timeDiffProvider = toolbox.NewTimeDiffProvider()
 		switch key {
 		case "now":
 			result, _ := timeDiffProvider.Get(nil, "now", 0, "day", "unix")

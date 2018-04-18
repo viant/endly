@@ -9,14 +9,21 @@ import (
 
 //AsTableRecords converts data spcified by dataKey into slice of *TableData to create dsunit data as map[string][]map[string]interface{} (table with records)
 func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
+	var recordsKey = fmt.Sprintf("%v.tableRecord", dataKey)
 	var result = make(map[string][]map[string]interface{})
 	if state == nil {
 		return nil, fmt.Errorf("state was nil")
 	}
-
 	source, has := state.GetValue(toolbox.AsString(dataKey))
 	if !has || source == nil {
 		return nil, fmt.Errorf("value for specified key was empty: %v", dataKey)
+	}
+
+	if state.Has(recordsKey) {
+		var records = state.Get(recordsKey)
+		if result, ok := records.(map[string][]map[string]interface{}); ok {
+			return result, nil
+		}
 	}
 
 	if !state.Has(ServiceID) {
@@ -55,5 +62,6 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	state.Put(recordsKey, result)
 	return result, nil
 }
