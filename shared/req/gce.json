@@ -1,5 +1,5 @@
 {
-  "Name": "gce",
+  "Name": "cloud/gce",
   "Tasks": "$tasks",
   "Params": {
     "gceCredential": "$gceCredential",
