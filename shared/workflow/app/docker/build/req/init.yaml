@@ -7,3 +7,5 @@ commands:
   - ${cmd[1].stdout}:/git/ ?  apt-get -y install git
   - ${cmd[1].stdout}:/svn/ ?  apt-get -y install subversion
   - apt-get -y install gcc
+  - if [ -e $buildPath ]; then rm -rf $buildPath; fi
+  - mkdir -p $buildPath
