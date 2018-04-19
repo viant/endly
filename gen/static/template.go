@@ -959,12 +959,6 @@ rest:
     "Value": "$sdk"
   },
   {
-    "Name": "GOPATH",
-    "Required": true,
-    "From": "params.GOPATH",
-    "Value": "${env.GOPATH}"
-  },
-  {
     "Name": "app",
     "Required": true,
     "From": "params.app",

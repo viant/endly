@@ -36,6 +36,7 @@
   {
     "Name": "init",
     "Value": [
+      "if [ -e $buildPath ]; then rm -rf $buildPath; fi",
       "mkdir -p $buildPath",
       "chmod +x $buildPath",
       "chown $os.user  $buildPath"
