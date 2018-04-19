@@ -10,7 +10,6 @@ type CallRequest struct {
 	Parameters  []interface{} `required:"true" description:"actual method parameters"`                                                                                         //actual method parameters
 }
 
-
 //Validate checks if request is valid
 func (r *CallRequest) Validate() error {
 	if r.Credentials == "" {
@@ -24,8 +23,6 @@ func (r *CallRequest) Validate() error {
 	}
 	return nil
 }
-
-
 
 //CallResponse represents GCE call response
 type CallResponse interface{}

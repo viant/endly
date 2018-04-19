@@ -179,12 +179,13 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 	process.Push(activity)
 
 	startEvent := s.Begin(context, activity)
+
 	defer s.End(context)(startEvent, model.NewActivityEndEvent(activity))
 	defer process.Pop()
 
 	var canRun bool
 	canRun, err = criteria.Evaluate(context, context.State(), action.When, "action.When", true)
-	if err != nil || !canRun  {
+	if err != nil || !canRun {
 		activity.Ineligible = true
 		return nil, err
 	}
@@ -435,7 +436,7 @@ func (s *Service) applyVariables(candidates interface{}, process *model.Process,
 	}
 	var out = context.State()
 	err := variables.Apply(in, out)
-	s.addVariableEvent("Pipeline.Init", variables, context, in, out)
+	s.addVariableEvent("Pipeline", variables, context, in, out)
 	return err
 }
 

@@ -3,10 +3,10 @@ package http_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	endpoint "github.com/viant/endly/testing/endpoint/http"
 	"github.com/viant/endly/model"
-	runner "github.com/viant/endly/testing/runner/http"
 	"github.com/viant/endly/test/proto"
+	endpoint "github.com/viant/endly/testing/endpoint/http"
+	runner "github.com/viant/endly/testing/runner/http"
 	"github.com/viant/endly/udf"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
