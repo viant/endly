@@ -17,7 +17,11 @@ type service struct {
 }
 
 func (s *service) run(context *endly.Context, request *CallRequest) (CallResponse, error) {
-	client, err := GetEc2Client(request.Credentials)
+	config, err := context.Secrets.GetCredentials(request.Credentials)
+	if err != nil {
+		return nil, err
+	}
+	client, err := GetEc2Client(config)
 	if err != nil {
 		return nil, err
 	}

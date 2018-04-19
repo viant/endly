@@ -1,5 +1,10 @@
 package ec2
 
+import (
+	"github.com/viant/endly/util"
+	"fmt"
+)
+
 //Call represents ec2 call.
 type Call struct {
 	Method     string        `required:"true" description:"ec2 client method name"`
@@ -12,6 +17,35 @@ type CallRequest struct {
 	Method      string      `required:"true" description:"ec2 client method name"`
 	Input       interface{} `required:"true" description:"ec2 client method input/request"`
 }
+
+
+//Init initialise request
+func (r *CallRequest) Init() error {
+	if r.Input == nil {
+		return nil
+	}
+
+	if input, err := util.NormalizeMap(r.Input, true);err == nil {
+		r.Input = input
+	}
+	return nil
+}
+
+//Init initialise request
+func (r *CallRequest) Validate() error {
+	if r.Method == "" {
+		return fmt.Errorf("EC2 method was empty")
+	}
+	if r.Input == nil {
+		return fmt.Errorf("EC2 %v Input was empty", r.Method)
+	}
+	if r.Credentials == "" {
+		return fmt.Errorf("EC2 Credentials were empty")
+	}
+	return nil
+}
+
+
 
 //CallResponse represents EC2 run response
 type CallResponse interface{}

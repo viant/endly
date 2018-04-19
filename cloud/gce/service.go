@@ -17,9 +17,13 @@ type service struct {
 	*endly.AbstractService
 }
 
-func (s *service) fetchInstanceList(request *CallRequest) (CallResponse, error) {
+func (s *service) fetchInstanceList(context *endly.Context, request *CallRequest) (CallResponse, error) {
 	var response interface{}
-	computeClient, ctx, err := NewComputeService(request.Credentials)
+	config, err := context.Secrets.GetCredentials(request.Credentials)
+	if err != nil {
+		return nil, err
+	}
+	computeClient, ctx, err := NewComputeService(config)
 	if err != nil {
 		return nil, err
 	}
@@ -38,12 +42,16 @@ func (s *service) fetchInstanceList(request *CallRequest) (CallResponse, error) 
 	return response, nil
 }
 
-func (s *service) call(request *CallRequest) (CallResponse, error) {
+func (s *service) call(context *endly.Context, request *CallRequest) (CallResponse, error) {
 	if request.Service == "Instances" && request.Method == "List" {
-		return s.fetchInstanceList(request)
+		return s.fetchInstanceList(context, request)
+	}
+	config, err := context.Secrets.GetCredentials(request.Credentials)
+	if err != nil {
+		return nil, err
 	}
 	var response interface{}
-	computeClient, ctx, err := NewComputeService(request.Credentials)
+	computeClient, ctx, err := NewComputeService(config)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +98,59 @@ const (
   "Service": "Instances",
   "Method": "Get",
   "Parameters":["myProject","us-west1-b","instance-1"]	
+}
+`
+	gceGetInstanceStatusResponseExample = `{
+  "cpuPlatform": "Intel Skylake",
+  "id": "2222222254251138088",
+  "kind": "compute#instance",
+  "machineType": "https://www.googleapis.com/compute/v1/projects/myproject/zones/us-west1-b/machineTypes/n1-standard-8",
+  "metadata": {
+    "kind": "compute#metadata"
+  },
+  "name": "instance-1",
+  "networkInterfaces": [
+    {
+      "accessConfigs": [
+        {
+          "kind": "compute#accessConfig",
+          "name": "External NAT",
+          "natIP": "235.147.19.148",
+          "type": "ONE_TO_ONE_NAT"
+        }
+      ],
+      "kind": "compute#networkInterface",
+      "name": "nic0",
+      "network": "https://www.googleapis.com/compute/v1/projects/myproject/global/networks/default",
+      "networkIP": "11.128.0.2",
+      "subnetwork": "https://www.googleapis.com/compute/v1/projects/myproject/regions/us-west1/subnetworks/default"
+    }
+  ],
+  "scheduling": {
+    "automaticRestart": false,
+    "onHostMaintenance": "TERMINATE",
+    "preemptible": true
+  },
+  "selfLink": "https://www.googleapis.com/compute/v1/projects/myproject/zones/us-west1-b/instances/instance-1",
+  "serviceAccounts": [
+    {
+      "email": "zzzzzzz-compute@developer.gserviceaccount.com",
+      "scopes": [
+        "https://www.googleapis.com/auth/cloud-platform"
+      ]
+    }
+  ],
+  "status": "RUNNING",
+  "tags": {
+    "items": [
+      "http-server",
+      "https-server"
+    ]
+  },
+  "zone": "https://www.googleapis.com/compute/v1/projects/myproject/zones/us-west1-b"
 }`
+
+
 )
 
 func (s *service) registerRoutes() {
@@ -103,7 +163,12 @@ func (s *service) registerRoutes() {
 					Description: "get instance status",
 					Data:        gceGetInstanceStatusExample,
 				},
+				{
+					Description: "get instance status response",
+					Data:        gceGetInstanceStatusResponseExample,
+				},
 			},
+
 		},
 		RequestProvider: func() interface{} {
 			return &CallRequest{}
@@ -113,7 +178,7 @@ func (s *service) registerRoutes() {
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*CallRequest); ok {
-				return s.call(req)
+				return s.call(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},

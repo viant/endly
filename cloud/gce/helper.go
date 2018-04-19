@@ -3,7 +3,6 @@ package gce
 import (
 	"fmt"
 	"github.com/viant/toolbox/cred"
-	"github.com/viant/toolbox/url"
 	"golang.org/x/net/context"
 	netcontext "golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -12,14 +11,8 @@ import (
 )
 
 //NewComputeService creates a new compute service.
-func NewComputeService(credentialsFile string) (*compute.Service, netcontext.Context, error) {
-	resource := url.NewResource(credentialsFile)
-	config := &cred.Config{}
-	err := resource.Decode(config)
-	if err != nil {
-		return nil, nil, err
-	}
-	jwtConfig, err := config.NewJWTConfig(compute.CloudPlatformScope)
+func NewComputeService(credConfig *cred.Config) (*compute.Service, netcontext.Context, error) {
+	jwtConfig, err := credConfig.NewJWTConfig(compute.CloudPlatformScope)
 	if err != nil {
 		return nil, nil, err
 	}
