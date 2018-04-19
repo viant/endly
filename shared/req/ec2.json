@@ -1,5 +1,5 @@
 {
-  "Name": "ec2",
+  "Name": "cloud/ec2",
   "Tasks": "$tasks",
   "Params": {
     "awsCredential": "$awsCredential",
