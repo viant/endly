@@ -12,5 +12,5 @@ Workflow,,Name,Description,Tasks,Init,Sleep
 []Tasks,,Name,Description,Actions,,
 ,,destroy,Destroy system,%Destroy,,
 []Destroy,Service,Action,Description,Request,tasks,
-,workflow,run,Stop app, @app,stop,
+,workflow,run,stop app, @app,stop,
 ,workflow,run,Destroy system, @system,destroy,
