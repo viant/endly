@@ -7,29 +7,22 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/viant/toolbox/cred"
-	"github.com/viant/toolbox/url"
 )
 
 //GetAWSCredentialConfig returns *aws.Config for provided credential
-func GetAWSCredentialConfig(credentialsLocation string) (*aws.Config, error) {
-	config := &cred.Config{}
-	resource := url.NewResource(credentialsLocation)
-	err := resource.Decode(config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load aws credentialsLocation: %v", credentialsLocation)
-	}
+func GetAWSCredentialConfig(config *cred.Config) (*aws.Config, error) {
 	awsCredentials := credentials.NewStaticCredentials(config.Key, config.Secret, "")
-	_, err = awsCredentials.Get()
+	_, err := awsCredentials.Get()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get aws credentialsLocation: %v, %v", credentialsLocation, err)
+		return nil, fmt.Errorf("failed to get aws credential: %v, %v", config.Key, err)
 	}
 	awsConfig := aws.NewConfig().WithRegion(config.Region).WithCredentials(awsCredentials)
 	return awsConfig, nil
 }
 
 //GetEc2Client creates ec2 client for passed in credential file
-func GetEc2Client(credential string) (*ec2.EC2, error) {
-	config, err := GetAWSCredentialConfig(credential)
+func GetEc2Client(credConfig *cred.Config) (*ec2.EC2, error) {
+	config, err := GetAWSCredentialConfig(credConfig )
 	if err != nil {
 		return nil, err
 	}
