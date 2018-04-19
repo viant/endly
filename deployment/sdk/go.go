@@ -12,7 +12,6 @@ import (
 //TODO complete implementation
 type goService struct{}
 
-
 func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, error) {
 	var result = &Info{}
 	var sdkHome = "/opt/sdk/go"
@@ -26,7 +25,7 @@ func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, 
 	var runResponse = &exec.RunResponse{}
 	hasGoRoot := endly.Run(context, exec.NewRunRequest(request.Target, false, "ls -al /usr/local/go"), nil) == nil
 	if err := endly.Run(context, exec.NewExtractRequest(request.Target, nil, exec.NewExtractCommand("ls -al /opt/sdk/go", "", nil, nil)), runResponse); err == nil {
-		if !util.CheckNoSuchFileOrDirectory(runResponse.Output) || ! hasGoRoot {
+		if !util.CheckNoSuchFileOrDirectory(runResponse.Output) || !hasGoRoot {
 			var request = exec.NewRunRequest(request.Target, false, "export GOROOT='/opt/sdk/go'")
 
 			_ = endly.Run(context, request, nil)
