@@ -1,0 +1,14 @@
+[
+  {
+    "Name": "Reservations",
+    "From": "Reservations"
+  },
+  {
+    "Name":"PrivateIP",
+    "From":"Reservations[0].Instances[0].NetworkInterfaces[0].PrivateIpAddress"
+  },
+  {
+    "Name":"PublicIP",
+    "From":"Reservations[0].Instances[0].NetworkInterfaces[0].PublicIpAddress"
+  }
+]
