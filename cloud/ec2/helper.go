@@ -22,7 +22,7 @@ func GetAWSCredentialConfig(config *cred.Config) (*aws.Config, error) {
 
 //GetEc2Client creates ec2 client for passed in credential file
 func GetEc2Client(credConfig *cred.Config) (*ec2.EC2, error) {
-	config, err := GetAWSCredentialConfig(credConfig )
+	config, err := GetAWSCredentialConfig(credConfig)
 	if err != nil {
 		return nil, err
 	}

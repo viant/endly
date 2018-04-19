@@ -1,8 +1,8 @@
 package ec2
 
 import (
-	"github.com/viant/endly/util"
 	"fmt"
+	"github.com/viant/endly/util"
 )
 
 //Call represents ec2 call.
@@ -18,14 +18,13 @@ type CallRequest struct {
 	Input       interface{} `required:"true" description:"ec2 client method input/request"`
 }
 
-
 //Init initialise request
 func (r *CallRequest) Init() error {
 	if r.Input == nil {
 		return nil
 	}
 
-	if input, err := util.NormalizeMap(r.Input, true);err == nil {
+	if input, err := util.NormalizeMap(r.Input, true); err == nil {
 		r.Input = input
 	}
 	return nil
@@ -44,8 +43,6 @@ func (r *CallRequest) Validate() error {
 	}
 	return nil
 }
-
-
 
 //CallResponse represents EC2 run response
 type CallResponse interface{}

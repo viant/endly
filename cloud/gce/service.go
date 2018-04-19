@@ -149,8 +149,6 @@ const (
   },
   "zone": "https://www.googleapis.com/compute/v1/projects/myproject/zones/us-west1-b"
 }`
-
-
 )
 
 func (s *service) registerRoutes() {
@@ -168,7 +166,6 @@ func (s *service) registerRoutes() {
 					Data:        gceGetInstanceStatusResponseExample,
 				},
 			},
-
 		},
 		RequestProvider: func() interface{} {
 			return &CallRequest{}
