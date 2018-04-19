@@ -438,6 +438,13 @@ type ComposeRequestDown struct {
 	*ComposeRequest
 }
 
+func (r *ComposeRequest) Init() error {
+	if r.Source != nil {
+		r.Source.Init()
+	}
+	return nil
+}
+
 func (r *ComposeRequest) Validate() error {
 	if r.Target == nil {
 		return fmt.Errorf("target host was not specified %v", r.Source)
