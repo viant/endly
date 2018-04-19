@@ -16,13 +16,13 @@ import (
 
 //Variable represents a variable
 type Variable struct {
-	Name     string            //name
-	Value    interface{}       //default value
-	From     string            //context state map key to pull data
-	When     string            //criteria if specified this variable will be set only if evaluated criteria is true (it can use $in, and $out state variables)
-	Else     interface{}       //if when criteria is not met then else can provide variable value alternative
-	Persist  bool              //stores in tmp directory to be used as backup if data is not in the cotnext
-	Required bool              //flag that validates that from returns non empty value or error is generated
+	Name     string                                                                                                                                                                  //name
+	Value    interface{}                                                                                                                                                             //default value
+	From     string                                                                                                                                                                  //context state map key to pull data
+	When     string                                                                                                                                                                  //criteria if specified this variable will be set only if evaluated criteria is true (it can use $in, and $out state variables)
+	Else     interface{}                                                                                                                                                             //if when criteria is not met then else can provide variable value alternative
+	Persist  bool                                                                                                                                                                    //stores in tmp directory to be used as backup if data is not in the cotnext
+	Required bool                                                                                                                                                                    //flag that validates that from returns non empty value or error is generated
 	Replace  map[string]string `description:"replacements map, if key if specified substitute variable value with corresponding value. This will work only for string replacements"` //replacements map, if key if specified substitute variable value with corresponding value.
 }
 
@@ -303,22 +303,70 @@ func GetVariables(baseURL string, source interface{}) (Variables, error) {
 	if !toolbox.IsSlice(source) {
 		return nil, fmt.Errorf("invalid varaibles type: %T, expected %T or %T", source, result, []string{})
 	}
+
+	//if _, err := util.NormalizeMap(source, false); err == nil {
+	//	toolbox.ProcessMap(source, func(key, value interface{}) bool {
+	//		var name = toolbox.AsString(key)
+	//		isRequired := strings.HasPrefix(name, "!")
+	//
+	//		if isRequired {
+	//			name = string(name[1:])
+	//		}
+	//		if toolbox.IsSlice(value) {
+	//			if normalized, err := util.NormalizeMap(value, false); err == nil {
+	//				value = normalized
+	//			}
+	//			result = append(result, &Variable{
+	//				Name:  name,
+	//				Value: value,
+	//			})
+	//		} else {
+	//			result = append(result, &Variable{
+	//				Name:  name,
+	//				Value: value,
+	//			})
+	//		}
+	//
+	//		return true
+	//	})
+	//	return result, nil
+	//}
+
 	variables := toolbox.AsSlice(source)
 	if len(variables) == 0 {
 		return nil, nil
 	}
 	if toolbox.IsString(variables[0]) {
-		for _, expr := range variables {
-			text := toolbox.AsString(expr)
-			if len(text) == 0 {
-				continue
+		for _, item := range variables {
+
+			switch  value := item.(type) {
+			case string:
+				text := value
+				if len(text) == 0 {
+					continue
+				}
+				variableExpr := VariableExpression(toolbox.AsString(item))
+				variable, err := variableExpr.AsVariable()
+				if err != nil {
+					return nil, err
+				}
+				result = append(result, variable)
+			default:
+				if toolbox.IsSlice(item) || toolbox.IsMap(item) {
+					aMap, err := util.NormalizeMap(value, true);
+					if err != nil {
+						return nil, err
+					}
+					var variable = &Variable{}
+					err = toolbox.DefaultConverter.AssignConverted(&variable, aMap)
+					if err != nil {
+						return nil, err
+					}
+					result = append(result, variable)
+				} else {
+					return nil, fmt.Errorf("unsupported type: %T", value)
+				}
 			}
-			variableExpr := VariableExpression(toolbox.AsString(expr))
-			variable, err := variableExpr.AsVariable()
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, variable)
 		}
 		return result, nil
 	}
