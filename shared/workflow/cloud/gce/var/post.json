@@ -1,0 +1,10 @@
+[
+  {
+    "Name":"PrivateIP",
+    "From":"PrivateIP"
+  },
+  {
+    "Name":"PublicIP",
+    "From":"PublicIP"
+  }
+]

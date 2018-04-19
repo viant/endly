@@ -1,0 +1,11 @@
+[
+  {
+    "Name": "instanceState",
+    "From": "Reservations[0].Instances[0].State.Name"
+  },
+  {
+    "Name": "Reservations",
+    "From": "Reservations"
+  }
+
+]
