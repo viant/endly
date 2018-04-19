@@ -96,8 +96,11 @@
     * Added map[interface{}]interface{} for non string key support
     * Minor patches
 
-## Apr 16 2018 0.7.8
+## Apr 17 2018 0.7.8
     * Patched CLI formatting
     * Updated workflow generator
     * Added when criteria to pipeline    
     * Minor patches
+
+## Apr 18 2018 0.7.8
+    * Expanded variable init expression/format
