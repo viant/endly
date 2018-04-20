@@ -1,7 +1,7 @@
 [
   {
-    "Name":"gceCredential",
-    "From":"params.gceCredential",
+    "Name":"gceCredentials",
+    "From":"params.gceCredentials",
     "Required":true
   },
   {

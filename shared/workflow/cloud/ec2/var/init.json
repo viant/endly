@@ -1,7 +1,7 @@
 [
   {
-    "Name":"awsCredential",
-    "From":"params.awsCredential",
+    "Name":"awsCredentials",
+    "From":"params.awsCredentials",
     "Required":true
   },
   {

@@ -1,4 +1,4 @@
-credentials: $awsCredential
+credentials: $awsCredentials
 method: $method
 input:
   instanceIds:
