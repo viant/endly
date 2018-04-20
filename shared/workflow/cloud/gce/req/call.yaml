@@ -1,4 +1,4 @@
-credentials: $gceCredential
+credentials: $gceCredentials
 service: Instances
 method: $method
 parameters:

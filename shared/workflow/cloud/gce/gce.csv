@@ -7,7 +7,7 @@ Workflow,,,Name,Description,Tasks,Init,Post
 []Start,,Service,Action,Description,Request.SourceKey,Request.Cases,
 ,,workflow,switch,switch/case for instance status,instanceState,%StartCases,
 []StartCases,Value,Service,Action,Description,Request,,method
-,TERMINATED,gce,call,start GCE instance,@req/call,,start
+,TERMINATED,gce,call,start GCE instance,@req/call,,Start
 ,RUNNING,workflow,exit,exit workflow,{},,
 []Start,,Service,Action,Description,Request.Task,SleepTimeMs,
 ,,workflow,goto,goto start task,start,5000,
@@ -18,7 +18,7 @@ Workflow,,,Name,Description,Tasks,Init,Post
 []Stop,,Service,Action,Description,Request.SourceKey,Request.Cases,
 ,,workflow,switch,switch/case for instance status,instanceState,%StopCases,
 []StopCases,Value,Service,Action,Description,Request,,method
-,RUNNING,gce,call,stop GCE instance,@req/call,,stop
+,RUNNING,gce,call,stop GCE instance,@req/call,,Stop
 ,TERMINATED,workflow,exit,exit workflow,{},,
 []Stop,,Service,Action,Description,Request.Task,SleepTimeMs,
 ,,workflow,goto,goto stop task,stop,5000,

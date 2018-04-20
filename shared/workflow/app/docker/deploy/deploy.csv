@@ -5,4 +5,5 @@ Workflow,,Name,Description,Tasks,Init
 []Deploy,Service,Action,Description,Request,When
 ,docker,login,login to docker registry,@req/login,$useRegistry:true
 ,storage,copy,update asset,@req/copy,$Length($update) > 1
-,docker,run,run app image,@req/run,
+,docker,run,run app image,@req/run,$useRegistry:!true
+,docker,run,run app image,@req/run_from_registry,$useRegistry:true
