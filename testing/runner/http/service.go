@@ -217,7 +217,6 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 	}
 
 	if request.Expect != nil {
-
 		var actual =  map[string]interface{}{
 			"Responses": result.Responses,
 			"Data":	result.Data,
