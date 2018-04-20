@@ -213,6 +213,8 @@ func (p *Inline) InitTasks(baseURL string, selector TasksSelector, defaultParams
 	p.Init, err = GetVariables(baseURL, p.Init)
 	p.Post, err = GetVariables(baseURL, p.Post)
 	p.Pipelines = make([]*Pipeline, 0)
+
+
 	for _, entry := range p.Pipeline {
 		pipeline, err := p.toPipeline(baseURL, entry.Value, entry.Key, defaultParams)
 		if err != nil {
@@ -221,9 +223,12 @@ func (p *Inline) InitTasks(baseURL string, selector TasksSelector, defaultParams
 		p.Pipelines = append(p.Pipelines, pipeline)
 	}
 
+
 	if !selector.RunAll() {
 		p.Pipelines = p.Pipelines.Select(selector)
 	}
+
+	fmt.Printf("selector: %v %v\n", selector, len(p.Pipelines))
 
 	if len(p.Pipelines) == 0 || p.Pipelines.RunnableCount() == 0 {
 		return fmt.Errorf("no pipelines matched with tasks selector: '%v'", string(selector))

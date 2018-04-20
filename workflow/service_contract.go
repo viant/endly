@@ -52,6 +52,8 @@ func (r *RunRequest) Init() (err error) {
 		if r.Source != nil {
 			baseURL, _ = toolbox.URLSplit(r.Source.URL)
 		}
+
+
 		return r.Inline.InitTasks(baseURL, model.TasksSelector(r.Tasks), r.Defaults)
 	}
 	if r.URL == "" {
