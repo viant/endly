@@ -14,6 +14,7 @@ import (
 	url2 "net/url"
 	"path"
 	"strings"
+	"github.com/viant/endly/testing/validator"
 )
 
 //ServiceID represents transfer service id
@@ -203,15 +204,21 @@ func (s *service) download(context *endly.Context, request *DownloadRequest) (*D
 	}
 
 	response.Payload = util.AsPayload(data)
-	if request.DestKey != "" {
-		var state = context.State()
-		if response.Transformed != nil {
-			state.Put(request.DestKey, response.Transformed)
-		} else {
-			state.Put(request.DestKey, response.Payload)
-		}
+	var payload interface{}
+
+	if response.Transformed != nil {
+		payload = response.Transformed
+	} else {
+		payload = response.Payload
 	}
 
+	if request.DestKey != "" {
+		var state = context.State()
+		state.Put(request.DestKey, payload)
+	}
+	if request.Expect != nil {
+		response.Assert, err = validator.Assert(context, request, request.Expect, payload, "Download.Payload", "assert download responses")
+	}
 	return response, nil
 
 }

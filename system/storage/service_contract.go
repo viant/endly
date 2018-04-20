@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/testing/validator"
 )
 
 //AssetTransfer represents asset transfer
@@ -70,6 +71,7 @@ type DownloadRequest struct {
 	Source  *url.Resource `required:"true" description:"source asset or directory"`
 	DestKey string        `required:"true" description:"state map key destination"`
 	Udf     string        `description:"name of udf to transform payload before placing into state map"` //name of udf function that will be used to transform payload
+	Expect interface{} 	  `description:"if specified expected file content used for validation"`
 }
 
 //DownloadResponse represents a download response
@@ -77,6 +79,7 @@ type DownloadResponse struct {
 	Info        toolbox.FileInfo
 	Payload     string //source content, if binary then is will be prefixed base64: followed by based 64 encoded content.
 	Transformed interface{}
+	Assert *validator.AssertResponse
 }
 
 //UploadRequest represents a resources upload request, it takes context state key to upload to target destination.
@@ -112,9 +115,6 @@ type RemoveResponse struct {
 func (r *DownloadRequest) Validate() error {
 	if r.Source == nil {
 		return errors.New("source was empty")
-	}
-	if r.DestKey == "" {
-		return errors.New("destKey was empty")
 	}
 	return nil
 }
