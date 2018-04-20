@@ -304,72 +304,69 @@ func GetVariables(baseURL string, source interface{}) (Variables, error) {
 		return nil, fmt.Errorf("invalid varaibles type: %T, expected %T or %T", source, result, []string{})
 	}
 
-	//if _, err := util.NormalizeMap(source, false); err == nil {
-	//	toolbox.ProcessMap(source, func(key, value interface{}) bool {
-	//		var name = toolbox.AsString(key)
-	//		isRequired := strings.HasPrefix(name, "!")
-	//
-	//		if isRequired {
-	//			name = string(name[1:])
-	//		}
-	//		if toolbox.IsSlice(value) {
-	//			if normalized, err := util.NormalizeMap(value, false); err == nil {
-	//				value = normalized
-	//			}
-	//			result = append(result, &Variable{
-	//				Name:  name,
-	//				Value: value,
-	//			})
-	//		} else {
-	//			result = append(result, &Variable{
-	//				Name:  name,
-	//				Value: value,
-	//			})
-	//		}
-	//
-	//		return true
-	//	})
-	//	return result, nil
-	//}
+	if _, err := util.NormalizeMap(source, false); err == nil {
+		toolbox.ProcessMap(source, func(key, value interface{}) bool {
+			var name = toolbox.AsString(key)
+			isRequired := strings.HasPrefix(name, "!")
+
+			if isRequired {
+				name = string(name[1:])
+			}
+			if toolbox.IsSlice(value) {
+				if normalized, err := util.NormalizeMap(value, false); err == nil {
+					value = normalized
+				}
+				result = append(result, &Variable{
+					Name:  name,
+					Value: value,
+				})
+			} else {
+				result = append(result, &Variable{
+					Name:  name,
+					Value: value,
+				})
+			}
+
+			return true
+		})
+		return result, nil
+	}
 
 	variables := toolbox.AsSlice(source)
 	if len(variables) == 0 {
 		return nil, nil
 	}
-	if toolbox.IsString(variables[0]) {
-		for _, item := range variables {
 
-			switch  value := item.(type) {
-			case string:
-				text := value
-				if len(text) == 0 {
-					continue
+	for _, item := range variables {
+		switch  value := item.(type) {
+		case string:
+			text := value
+			if len(text) == 0 {
+				continue
+			}
+			variableExpr := VariableExpression(toolbox.AsString(item))
+			variable, err := variableExpr.AsVariable()
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, variable)
+		default:
+			if toolbox.IsSlice(item) || toolbox.IsMap(item) {
+				aMap, err := util.NormalizeMap(value, true);
+				if err != nil {
+					return nil, err
 				}
-				variableExpr := VariableExpression(toolbox.AsString(item))
-				variable, err := variableExpr.AsVariable()
+				var variable = &Variable{}
+				err = toolbox.DefaultConverter.AssignConverted(&variable, aMap)
 				if err != nil {
 					return nil, err
 				}
 				result = append(result, variable)
-			default:
-				if toolbox.IsSlice(item) || toolbox.IsMap(item) {
-					aMap, err := util.NormalizeMap(value, true);
-					if err != nil {
-						return nil, err
-					}
-					var variable = &Variable{}
-					err = toolbox.DefaultConverter.AssignConverted(&variable, aMap)
-					if err != nil {
-						return nil, err
-					}
-					result = append(result, variable)
-				} else {
-					return nil, fmt.Errorf("unsupported type: %T", value)
-				}
+			} else {
+				return nil, fmt.Errorf("unsupported type: %T", value)
 			}
 		}
-		return result, nil
 	}
-	err := toolbox.DefaultConverter.AssignConverted(&result, source)
-	return result, err
+	return result, nil
+
 }
