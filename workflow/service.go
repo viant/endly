@@ -482,7 +482,6 @@ func (s *Service) applyVariables(candidates interface{}, process *model.Process,
 }
 
 func (s *Service) pipeline(context *endly.Context, request *RunRequest) (*RunResponse, error) {
-
 	var response = &RunResponse{
 		Data: make(map[string]interface{}),
 	}

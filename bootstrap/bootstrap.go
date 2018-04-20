@@ -437,10 +437,11 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 	if request == nil {
 		return nil, nil
 	}
-	request.Init()
+
 	if value, ok := flagset["t"]; ok {
 		request.Tasks = value
 	}
+	request.Init()
 	if value, ok := flagset["i"]; ok {
 		request.TagIDs = value
 	}
