@@ -73,6 +73,12 @@ func GetStorageService(context *endly.Context, resource *url.Resource) (storage.
 	if state.Has(useMemoryService) {
 		return storage.NewMemoryService(), nil
 	}
+	if resource.Credentials != "" {
+		var err error
+		if resource.Credentials, err = context.Secrets.CredentialsLocation(resource.Credentials);err != nil {
+			return nil, err
+		}
+	}
 	return storage.NewServiceForURL(resource.URL, resource.Credentials)
 }
 
