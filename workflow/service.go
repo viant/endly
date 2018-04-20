@@ -21,7 +21,11 @@ import (
 const (
 	//ServiceID represents workflow Service id
 	ServiceID = "workflow"
+	catchPipelineTask = "catch"
+	finallyPipelineTask = "finally"
 )
+
+
 
 //Service represents a workflow service.
 type Service struct {
@@ -349,6 +353,10 @@ func (s *Service) runAsyncActions(context *endly.Context, process *model.Process
 	return nil
 }
 
+
+
+
+
 func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, response *RunResponse, process *model.Process) (err error) {
 	context.Publish(NewPipelineEvent(pipeline))
 	var state = context.State()
@@ -387,10 +395,11 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 	defer func() {
 		context.Publish(model.NewActivityEndEvent(runResponse))
 		if len(runResponse.Data) > 0 {
+			var responseData = runResponse.Data
 			if pipeline.Post != nil {
-				s.applyVariables(pipeline.Post, process, runResponse.Data, context)
+				s.applyVariables(pipeline.Post, process, responseData, context)
 			}
-			for k, v := range runResponse.Data {
+			for k, v := range responseData {
 				state.Put(k, v)
 			}
 			response.Data[pipeline.Name] = runResponse.Data
@@ -420,20 +429,52 @@ func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, 
 	return err
 }
 
-func (s *Service) traversePipelines(pipelines model.Pipelines, context *endly.Context, response *RunResponse, process *model.Process) error {
-	for i := range pipelines {
-		if err := s.runPipeline(context, pipelines[i], response, process); err != nil {
+
+
+func (s *Service) traversePipelines(pipelines model.Pipelines, context *endly.Context, response *RunResponse, process *model.Process) (err error) {
+	var onErrorPipeline, finallyPipeline *model.Pipeline
+	var runnable = []*model.Pipeline{}
+	for _, pipeline := range pipelines {
+		if pipeline.Name == catchPipelineTask {
+			onErrorPipeline = pipeline
+			continue
+		}
+		if pipeline.Name == finallyPipelineTask {
+			finallyPipeline = pipeline
+			continue
+		}
+		runnable = append(runnable, pipeline)
+	}
+	if finallyPipeline != nil {
+		defer func() {
+			pipelineErr:= s.runPipeline(context, finallyPipeline, response, process)
+			if err == nil {
+				err = pipelineErr
+			}
+		}()
+	}
+	for i := range runnable {
+		if err = s.runPipeline(context, pipelines[i], response, process); err != nil {
+			if onErrorPipeline != nil {
+				if err = s.runPipeline(context, pipelines[i], response, process); err != nil {
+					return err
+				}
+				continue
+			}
 			return err
 		}
 	}
-	return nil
+	return err
 }
+
+
 
 func (s *Service) applyVariables(candidates interface{}, process *model.Process, in data.Map, context *endly.Context) error {
 	variables, ok := candidates.(model.Variables)
-	if !ok {
+	if !ok || len(variables) == 0 {
 		return nil
 	}
+
 	var out = context.State()
 	err := variables.Apply(in, out)
 	s.addVariableEvent("Pipeline", variables, context, in, out)
