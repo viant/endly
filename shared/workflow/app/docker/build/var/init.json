@@ -75,6 +75,12 @@
     "Value": true
   },
   {
+    "Name": "tagLatest",
+    "Required": true,
+    "From": "params.tagLatest",
+    "Value": false
+  },
+  {
     "Name": "buildPath",
     "Required": true,
     "From": "params.buildPath",
@@ -128,6 +134,16 @@
       "Registry": "$registry",
       "Image": "$app",
       "Version": "$version"
+    }
+  },
+  {
+    "Name": "latestTargetTag",
+    "From": "params.latestTargetTag",
+    "Required": true,
+    "Value": {
+      "Registry": "$registry",
+      "Image": "$app",
+      "Version": "latest"
     }
   },
   {

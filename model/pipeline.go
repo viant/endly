@@ -46,21 +46,30 @@ func (p *Pipelines) Select(selector TasksSelector) Pipelines {
 	if selector.RunAll() {
 		return *p
 	}
-	var result = make([]*Pipeline, 0)
+	var allowed = make(map[string]bool)
 	for _, task := range selector.Tasks() {
-		for _, pipeline := range *p {
-			if task == pipeline.Name {
-				result = append(result, pipeline)
-				continue
+		allowed[task] = true
+	}
+	var result Pipelines = []*Pipeline{}
+	for _, pipeline := range *p {
+		if len(pipeline.Pipelines) > 0  {
+			if allowed[pipeline.Name] {
+				result = append(result, pipeline.Pipelines...)
+			} else {
+				var selected = pipeline.Pipelines.Select(selector)
+				if len(selected) > 0 {
+					result = append(result, selected...)
+				}
 			}
-			if len(pipeline.Pipelines) > 0 {
-				selected := pipeline.Pipelines.Select(selector)
-				result = append(result, selected...)
-			}
+		}
+		if allowed[pipeline.Name] {
+			result = append(result, pipeline)
 		}
 	}
 	return result
 }
+
+
 
 func (p *Pipeline) initRequestIfNeeded(baseURL string) (err error) {
 	if p.Request == nil {
