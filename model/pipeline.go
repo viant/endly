@@ -54,10 +54,10 @@ func (p *Pipelines) Select(selector TasksSelector) Pipelines {
 		return *p
 	}
 	var allowed = make(map[string]bool)
+	allowed[CatchPipelineTask] = true
+	allowed[DeferPipelineTask]= true
 	for _, task := range selector.Tasks() {
 		allowed[task] = true
-		allowed[CatchPipelineTask] = true
-		allowed[DeferPipelineTask]= true
 	}
 	var result Pipelines = []*Pipeline{}
 	for _, pipeline := range *p {
