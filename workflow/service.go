@@ -443,6 +443,7 @@ func (s *Service) traversePipelines(pipelines model.Pipelines, context *endly.Co
 		}
 		runnable = append(runnable, pipeline)
 	}
+
 	if finallyPipeline != nil {
 		defer func() {
 			pipelineErr:= s.runPipeline(context, finallyPipeline, response, process)
@@ -451,10 +452,11 @@ func (s *Service) traversePipelines(pipelines model.Pipelines, context *endly.Co
 			}
 		}()
 	}
+
 	for i := range runnable {
-		if err = s.runPipeline(context, pipelines[i], response, process); err != nil {
+		if err = s.runPipeline(context, runnable[i], response, process); err != nil {
 			if onErrorPipeline != nil {
-				if err = s.runPipeline(context, pipelines[i], response, process); err != nil {
+				if err = s.runPipeline(context, onErrorPipeline, response, process); err != nil {
 					return err
 				}
 				continue
