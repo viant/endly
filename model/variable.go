@@ -26,9 +26,11 @@ type Variable struct {
 	Replace  map[string]string `description:"replacements map, if key if specified substitute variable value with corresponding value. This will work only for string replacements"` //replacements map, if key if specified substitute variable value with corresponding value.
 }
 
+
 func (v *Variable) tempfile() string {
 	return path.Join(os.Getenv("TMPDIR"), v.Name+".var")
 }
+
 
 //PersistValue persist variable
 func (v *Variable) PersistValue() error {
