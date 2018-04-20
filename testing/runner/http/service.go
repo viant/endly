@@ -217,9 +217,12 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 	}
 
 	if request.Expect != nil {
-		result.Assert, err = validator.Assert(context, request, request.Expect, map[string]interface{}{
+
+		var actual =  map[string]interface{}{
 			"Responses": result.Responses,
-		}, "HTTP.responses", "assert http responses")
+			"Data":	result.Data,
+		}
+		result.Assert, err = validator.Assert(context, request, request.Expect, actual, "HTTP.responses", "assert http responses")
 	}
 
 	return result, nil
