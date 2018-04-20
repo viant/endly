@@ -1,0 +1,3 @@
+target: $appTarget
+image: ${registry}/${app}:$version
+"...": $params
