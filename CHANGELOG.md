@@ -108,5 +108,5 @@
 ## Apr 18 2018 0.7.9
     * Added expect validation to storage Download
     * Enhanced expression parser for map key nested expression
-    * Added catch, final pipeline special tasks
+    * Added catch, defer pipeline special tasks
     * Minor patches        

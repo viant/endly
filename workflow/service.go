@@ -21,8 +21,6 @@ import (
 const (
 	//ServiceID represents workflow Service id
 	ServiceID = "workflow"
-	catchPipelineTask = "catch"
-	finallyPipelineTask = "finally"
 )
 
 
@@ -435,11 +433,11 @@ func (s *Service) traversePipelines(pipelines model.Pipelines, context *endly.Co
 	var onErrorPipeline, finallyPipeline *model.Pipeline
 	var runnable = []*model.Pipeline{}
 	for _, pipeline := range pipelines {
-		if pipeline.Name == catchPipelineTask {
+		if pipeline.Name == model.CatchPipelineTask {
 			onErrorPipeline = pipeline
 			continue
 		}
-		if pipeline.Name == finallyPipelineTask {
+		if pipeline.Name == model.DeferPipelineTask {
 			finallyPipeline = pipeline
 			continue
 		}

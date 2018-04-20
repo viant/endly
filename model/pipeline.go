@@ -9,6 +9,13 @@ import (
 	"strings"
 )
 
+const(
+	//CatchPipelineTask  represent a task name that execute if error occured and defined
+	CatchPipelineTask = "catch"
+	//DeferPipelineTask represent a task name that always execute if defined
+	DeferPipelineTask = "defer"
+)
+
 //Pipelines represents pipelines
 type Pipelines []*Pipeline
 
@@ -49,6 +56,8 @@ func (p *Pipelines) Select(selector TasksSelector) Pipelines {
 	var allowed = make(map[string]bool)
 	for _, task := range selector.Tasks() {
 		allowed[task] = true
+		allowed[CatchPipelineTask] = true
+		allowed[DeferPipelineTask]= true
 	}
 	var result Pipelines = []*Pipeline{}
 	for _, pipeline := range *p {
