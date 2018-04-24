@@ -70,9 +70,6 @@ endly -s=smtp -a=send
 
 
 
-
-
-
 ```run.yaml
 
 init:
@@ -96,4 +93,43 @@ pipeline:
               * list item 1\n
               * list item 2"
 
+```
+
+
+**Catching and seding errors**
+
+
+[@run.yaml](test/send_err.yaml)
+```yaml
+init:
+  - "body = Error: <strong>$error.Error at:</strong>
+    $error.TaskName:
+    <br />
+    <code>
+    $errorJSON
+    </code>"
+defaults:
+  target:
+    URL: smtp://smtp.gmail.com:465
+    credentials: smtp
+  sender: viantemailtester@gmail.com
+
+pipeline:
+
+  task1:
+    action: fail
+    message: test failure
+
+  catch:
+    action: smtp:send
+    mail:
+      to:
+      - awitas@viantinc.com
+      from: $sender
+      subject: Endly test $error.Error
+      contentType: text/html
+      body: $body
+  defer:
+    action: print
+    message: all done
 ```

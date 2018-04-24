@@ -305,6 +305,7 @@ func (s *Service) publishParameters(request *RunRequest, context *endly.Context)
 }
 
 func (s *Service) getWorkflow(context *endly.Context, request *RunRequest) (*model.Workflow, error) {
+	s.Dao.Dao.AddStandardUdf(context.State())
 	if request.workflow != nil {
 		context.Publish(NewLoadedEvent(request.workflow))
 		return request.workflow, nil
@@ -412,16 +413,17 @@ func (s *Service) runNode(context *endly.Context, nodeType string, process *mode
 	return nil
 }
 
-func (s *Service) runDeferredTask(context *endly.Context, process *model.Process,  parent *model.TasksNode,) {
+func (s *Service) runDeferredTask(context *endly.Context, process *model.Process, parent *model.TasksNode) error {
 	if parent.DeferredTask == "" {
-		return
+		return nil
 	}
 	task, _ := parent.Task(parent.DeferredTask)
-	_ = s.runTasks(context, process, &model.TasksNode{Tasks: []*model.Task{task}})
+	_, err := s.runTask(context, process, task)
+	return err
 }
 
 func (s *Service) runOnErrorTask(context *endly.Context, process *model.Process, parent *model.TasksNode, err error) error {
-	if  parent.OnErrorTask == ""  {
+	if parent.OnErrorTask == "" {
 		return err
 	}
 	if err != nil {
@@ -432,19 +434,27 @@ func (s *Service) runOnErrorTask(context *endly.Context, process *model.Process,
 			process.TaskName = process.Task.Name
 		}
 		var state = context.State()
-		state.Put("error", process.AsMap())
+		var processErr = process.AsMap()
+		state.Put("error", processErr)
+		processErr = toolbox.DeleteEmptyKeys(processErr)
+		errorJSON, err := toolbox.AsIndentJSONText(processErr)
+		state.Put("errorJSON", errorJSON)
 		task, e := parent.Task(parent.OnErrorTask)
 		if e != nil {
 			return fmt.Errorf("failed to catch: %v, %v", err, e)
 		}
-		return s.runTasks(context, process, &model.TasksNode{Tasks: []*model.Task{task}})
+		_, err = s.runTask(context, process, task)
 	}
 	return err
 }
 
-func (s *Service) runTasks(context *endly.Context, process *model.Process, tasks *model.TasksNode) error {
-	defer s.runDeferredTask(context, process, tasks)
-
+func (s *Service) runTasks(context *endly.Context, process *model.Process, tasks *model.TasksNode) (err error) {
+	defer func() {
+		e := s.runDeferredTask(context, process, tasks)
+		if err == nil {
+			err = e
+		}
+	}()
 	for _, task := range tasks.Tasks {
 		if task.Name == tasks.OnErrorTask {
 			continue
@@ -452,19 +462,19 @@ func (s *Service) runTasks(context *endly.Context, process *model.Process, tasks
 		if process.IsTerminated() {
 			break
 		}
-		if _, err := s.runTask(context, process, task); err != nil {
-			if err = s.runOnErrorTask(context, process, tasks, err);err != nil {
-				return err
-			}
+		if _, err = s.runTask(context, process, task); err != nil {
+			err = s.runOnErrorTask(context, process, tasks, err);
+		}
+		if err != nil {
+			return err
 		}
 	}
-
 	var scheduledTask = process.Scheduled
 	if scheduledTask != nil {
 		process.Scheduled = nil
-		return s.runTasks(context, process, &model.TasksNode{Tasks: []*model.Task{scheduledTask}})
+		err = s.runTasks(context, process, &model.TasksNode{Tasks: []*model.Task{scheduledTask}})
 	}
-	return nil
+	return err
 }
 
 func buildParamsMap(request *RunRequest, context *endly.Context) data.Map {
@@ -643,7 +653,6 @@ const (
 	"Tasks": "*",
 	"URL": "app/build.csv"
 }`
-
 
 	workflowServiceSwitchExample = `{
   "SourceKey": "instanceState",
