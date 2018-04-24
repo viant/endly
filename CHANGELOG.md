@@ -110,3 +110,11 @@
     * Enhanced expression parser for map key nested expression
     * Added catch, defer pipeline special tasks
     * Minor patches        
+
+## Apr 24 2018 0.8.0
+    * Merged pipeline into workflow
+    * Added shrared state workflow mode
+    * Update smtp with secret service
+    * Enhanced workflow and inline workflow inspection with -p options
+    * Minor patches
+            

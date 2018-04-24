@@ -50,6 +50,68 @@ Neatly is responsible for converting a tabular document (.csv) into workflow obj
 Find out more about neatly:
 [Neatly introduction](https://github.com/adrianwit/neatly-introduction)
 
+To see neatly converted workflow  [*model.Workflow](../../model/workflow.go) run the following
+
+```bash
+
+endly -w=WORKFLOW_NAME -p   -f=yaml|json
+
+
+```
+
+
+
+<a name="data-flow"></a>
+### Workflow data flow
+
+#### Workflow arguments 
+For sake of illustrating data flow, let assume **p1** and **p2** parameters are supplied to workflow.
+These can be accessed within workflow or its tasks or actions vi the following:
+   - $params.**p1**
+   - $params.**p2**
+
+A test workflow can be invoked by one of the following methods:
+
+1) Command line:
+
+```bash
+endly -w=test p1=val1 p2=val2
+```
+2) Single workflow run request
+
+```bash
+endly -r=run
+```
+
+@run.yaml
+```bash
+Name: test
+Params:
+  p1: val1
+  p2: val2
+```
+
+2) Inline workflow run request:
+
+```bash
+ endly -r=run p2=val2
+```
+
+@run.yaml
+```bash
+params:
+  p1: val1
+pipeline:
+  task1:
+    action: print
+    message: $params.p1 $params.p2
+  task2:
+    workflow: test
+    p1: $params.p1
+    p2: $params.p2  
+```
+
+
 
 
 <a name="state"></a>
@@ -218,7 +280,7 @@ Here is an example directory layout.
 ```text
 
       endly
-        |- manager.csv
+        |- manager.csv or run.yaml
         |- system.yaml              
         |- app.yaml
         |- datastore.yaml

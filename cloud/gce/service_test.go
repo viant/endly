@@ -5,6 +5,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/cloud/gce"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/secret"
 	"google.golang.org/api/compute/v1"
 	"os"
 	"path"
@@ -12,6 +13,7 @@ import (
 )
 
 //https://cloud.google.com/compute/docs/reference/beta/instances/start
+var secrets = secret.New("", false)
 
 func TestNewGceService(t *testing.T) {
 
@@ -103,7 +105,9 @@ func TestNewGceService_WithError(t *testing.T) {
 func TestGCEService_NewRequest(t *testing.T) {
 	parent := toolbox.CallerDirectory(3)
 	credentials := path.Join(parent, "test/secret.json")
-	service, ctx, err := gce.NewComputeService(credentials)
+	credConfig, err := secrets.GetCredentials(credentials)
+	assert.Nil(t, err)
+	service, ctx, err := gce.NewComputeService(credConfig)
 	assert.Nil(t, err)
 	assert.NotNil(t, service)
 	assert.NotNil(t, ctx)
@@ -111,9 +115,7 @@ func TestGCEService_NewRequest(t *testing.T) {
 }
 
 func Test_NewComputeService(t *testing.T) {
-	parent := toolbox.CallerDirectory(3)
-	credentials := path.Join(parent, "test/asecret.json")
-	_, _, err := gce.NewComputeService(credentials)
+	_, _, err := gce.NewComputeService(nil)
 	assert.NotNil(t, err)
 
 }

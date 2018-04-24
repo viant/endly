@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox"
@@ -9,24 +10,72 @@ import (
 	"testing"
 )
 
-func TestInlinePipeline_Init(t *testing.T) {
+func TestPipelines_AsWorkflow(t *testing.T) {
 
 	useCases := []struct {
-		Description   string
-		YAMLData      string
-		Expected      interface{}
-		DefaultParams map[string]interface{}
+		Description string
+		YAMLData    string
+		Expected    interface{}
+		HasError    bool
 	}{
+		{
+			Description: "workflow/action pipeline",
+			YAMLData: `pipeline:
+  mysql:
+    workflow: service/mysql:start
+  catch:
+    action: print
+    message: error
+ `,
+			Expected: `{
+	"OnErrorTask": "catch",
+	"Tasks": [
+		{
+			"Actions": [
+				{
+					"Action": "run",
+					"Name": "mysql",
+					"Repeat": 1,
+					"Request": {
+						"URL": "service/mysql.csv",
+						"tasks": "start"
+					},
+					"Service": "workflow",
+					"Tag": "mysql",
+					"TagID": "mysql"
+				}
+			],
+			"Name": "mysql"
+		},
+		{
+			"Actions": [
+				{
+					"Action": "print",
+					"Name": "catch",
+					"Repeat": 1,
+					"Request": {
+						"message": "error"
+					},
+					"Service": "workflow",
+					"Tag": "catch",
+					"TagID": "catch"
+				}
+			],
+			"Name": "catch"
+		}
+	]
+}`,
+		},
 		{
 			Description: "flat pipeline",
 			YAMLData: `
 pipeline:
   checkout:
-    "@action": vc:checkout
+    :action: vc:checkout
     origin:
       URL: http://github.com/adrianwit/echo
   build:
-    "@workflow": docker/build:build
+    :workflow: docker/build:build
     commands:
       - apt-get update; apt-get -y install libpcap0.8 libpcap0.8-dev
       - go get
@@ -34,153 +83,349 @@ pipeline:
       - go build -a
 
 `,
-			Expected: `{"Pipelines":[
-    {
-      "Name": "checkout",
-      "Action": "vc:checkout",
-      "Params": {
-        "origin": {
-          "URL": "http://github.com/adrianwit/echo"
-        }
-      }
-    },
-    {
-      "Name": "build",
-      "Workflow": "docker/build:build",
-      "Params": {
-         "commands": [
-        "apt-get update; apt-get -y install libpcap0.8 libpcap0.8-dev",
-        "go get",
-        "go version",
-        "go build -a"
-      ]
-      }
-    }
-  ]}`,
+			Expected: `{
+	"Tasks": [
+		{
+			"Actions": [
+				{
+					"Action": "checkout",
+					"Name": "checkout",
+					"Repeat": 1,
+					"Request": {
+						"origin": [
+							{
+								"Key": "URL",
+								"Value": "http://github.com/adrianwit/echo"
+							}
+						]
+					},
+					"Service": "vc",
+					"Tag": "checkout",
+					"TagID": "checkout"
+				}
+			],
+			"Name": "checkout"
 		},
 		{
-			Description: "nested pipeline",
-			YAMLData: `
-pipeline:
-  create-db:
-    "@action": dsunit:register
-    scripts:
-      - URL: data/db1/schema.ddl
-    datastore: db1
-    recreate: true
-    config:
-      driverName: mysql
-      descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
-      credentials: $mysqlCredentials
-    admin:
-      datastore: mysql
-      config:
-        driverName: mysql
-        descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
-        credentials: $mysqlCredentials
-  populate:
-    "@action": dsunit:prepare
-    datastore: db1
-    URL: datastore/db1/dictionary
-`,
-			DefaultParams: map[string]interface{}{
-				"key":       1,
-				"datastore": "db1",
-			},
-			Expected: `{"Pipelines":[
-  {
-    "Name": "create-db",
-    "Workflow": "",
-    "Action": "dsunit:register",
-    "Params": {
-      "admin": {
-        "config": {
-          "credentials": "$mysqlCredentials",
-          "descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
-          "driverName": "mysql"
-        },
-        "datastore": "mysql"
-      },
-      "config": {
-        "credentials": "$mysqlCredentials",
-        "descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true",
-        "driverName": "mysql"
-      },
-      "datastore": "db1",
-      "recreate": true,
-      "scripts": [
-        {
-          "URL": "data/db1/schema.ddl"
-        }
-      ]
-    }
-  },
-  {
-    "Name": "populate",
-    "Workflow": "",
-    "Action": "dsunit:prepare",
-    "Params": {
-      "URL": "datastore/db1/dictionary",
-      "datastore": "db1"
-    }
-  }
-]}`,
+			"Actions": [
+				{
+					"Action": "run",
+					"Name": "build",
+					"Repeat": 1,
+					"Request": {
+						"URL": "docker/build.csv",
+						"params": {
+							"commands": [
+								"apt-get update; apt-get -y install libpcap0.8 libpcap0.8-dev",
+								"go get",
+								"go version",
+								"go build -a"
+							]
+						},
+						"tasks": "build"
+					},
+					"Service": "workflow",
+					"Tag": "build",
+					"TagID": "build"
+				}
+			],
+			"Name": "build"
+		}
+	]
+}`,
 		},
 
 		{
 			Description: "init/post pipeline",
 			YAMLData: `
-init: 
+init:
   - "var1 = $var2"
-post: 
+defaults:
+  d: v
+post:
   - "var3 = $var10"
-pipeline: 
-  checkout: 
+pipeline:
+  checkout:
     action: "vc:checkout"
 `,
 			Expected: `{
-  "Pipelines": [
-    {
-      "Name": "checkout",
-      "Action": "vc:checkout",
-      "Params": {
-        "action": "vc:checkout"
-      }
-    }
-  ],
-  "Init": [
-    {
-      "Name": "var1",
-      "Value": "$var2"
-    }
-  ],
-  "Post": [
-    {
-      "Name": "var3",
-      "Value": "$var10"
-    }
-  ]
+	"Init": [
+		{
+			"Name": "var1",
+			"Value": "$var2"
+		}
+	],
+	"Post": [
+		{
+			"Name": "var3",
+			"Value": "$var10"
+		}
+	],
+	"Tasks": [
+		{
+			"Actions": [
+				{
+					"Action": "checkout",
+					"Name": "checkout",
+					"Repeat": 1,
+					"Request": {
+						"d": "v"
+					},
+					"Service": "vc",
+					"Tag": "checkout"
+				}
+			],
+			"Name": "checkout"
+		}
+	]
+}`,
+		},
+
+		{
+			Description: "task with subtask",
+			YAMLData: `pipeline:
+  service:
+    mysql:
+      action: docker:run
+    aerospike:
+      action: docker:run
+  catch:
+    action: print
+    message: error
+  defer:
+    action: print
+    message: done`,
+			Expected: `{
+	"DeferredTask": "defer",
+	"OnErrorTask": "catch",
+	"Tasks": [
+		{
+			"Name": "service",
+			"Tasks": [
+				{
+					"Actions": [
+						{
+							"Action": "run",
+							"Name": "mysql",
+							"Repeat": 1,
+							"Service": "docker",
+							"Tag": "mysql",
+							"TagID": "_service"
+						}
+					],
+					"Name": "mysql"
+				},
+				{
+					"Actions": [
+						{
+							"Action": "run",
+							"Name": "aerospike",
+							"Repeat": 1,
+							"Service": "docker",
+							"Tag": "aerospike",
+							"TagID": "_service"
+						}
+					],
+					"Name": "aerospike"
+				}
+			]
+		},
+		{
+			"Actions": [
+				{
+					"Action": "print",
+					"Name": "catch",
+					"Repeat": 1,
+					"Request": {
+						"message": "error"
+					},
+					"Service": "workflow",
+					"Tag": "catch",
+					"TagID": "catch"
+				}
+			],
+			"Name": "catch"
+		},
+		{
+			"Actions": [
+				{
+					"Action": "print",
+					"Name": "defer",
+					"Repeat": 1,
+					"Request": {
+						"message": "done"
+					},
+					"Service": "workflow",
+					"Tag": "defer",
+					"TagID": "defer"
+				}
+			],
+			"Name": "defer"
+		}
+	]
+}`,
+		},
+
+		{
+			Description: "task with subtask, onError deferredTask",
+			YAMLData: `pipeline:
+  mysql:
+    action: docker:run
+  aerospike:
+    action: docker:run
+  catch:
+    action: print
+    message: error
+  defer:
+    action: print
+    message: done`,
+			Expected: `{
+	"DeferredTask": "defer",
+	"OnErrorTask": "catch",
+	"Tasks": [
+		{
+			"Actions": [
+				{
+					"Action": "run",
+					"Name": "mysql",
+					"Repeat": 1,
+					"Service": "docker",
+					"Tag": "mysql"
+				}
+			],
+			"Name": "mysql"
+		},
+		{
+			"Actions": [
+				{
+					"Action": "run",
+					"Name": "aerospike",
+					"Repeat": 1,
+					"Service": "docker",
+					"Tag": "aerospike"
+				}
+			],
+			"Name": "aerospike"
+		},
+		{
+			"Actions": [
+				{
+					"Action": "print",
+					"Name": "catch",
+					"Repeat": 1,
+					"Request": {
+						"message": "error"
+					},
+					"Service": "workflow",
+					"Tag": "catch"
+				}
+			],
+			"Name": "catch"
+		},
+		{
+			"Actions": [
+				{
+					"Action": "print",
+					"Name": "defer",
+					"Repeat": 1,
+					"Request": {
+						"message": "done"
+					},
+					"Service": "workflow",
+					"Tag": "defer"
+				}
+			],
+			"Name": "defer"
+		}
+	]
+}`,
+		},
+
+		{
+			Description: "task with subtask init post",
+			YAMLData: `pipeline:
+  mysql:
+    action: docker:run
+    init:
+      - key1 = $a
+  aero:
+    action: docker:run
+    post:
+      - key2 = $b
+
+`,
+			Expected: `{
+	"Tasks": [
+		{
+			"Actions": [
+				{
+					"Action": "run",
+					"Init": [
+						{
+							"Name": "key1",
+							"Value": "$a"
+						}
+					],
+					"Name": "mysql",
+					"Repeat": 1,
+					"Service": "docker",
+					"Tag": "mysql",
+					"TagID": "mysql"
+				}
+			],
+			"Name": "mysql"
+		},
+		{
+			"Actions": [
+				{
+					"Action": "run",
+					"Name": "aero",
+					"Post": [
+						{
+							"Name": "key2",
+							"Value": "$b"
+						}
+					],
+					"Repeat": 1,
+					"Service": "docker",
+					"Tag": "aero",
+					"TagID": "aero"
+				}
+			],
+			"Name": "aero"
+		}
+	]
 }`,
 		},
 	}
 
-	for _, useCase := range useCases {
-		inline := &Inline{}
-		var mapSlice = yaml.MapSlice{}
-		err := yaml.NewDecoder(strings.NewReader(useCase.YAMLData)).Decode(&mapSlice)
+	for i, useCase := range useCases {
+		inline := &Pipelines{}
+		var YAML = &yaml.MapSlice{}
+		pipeline := map[string]interface{}{}
+		err := yaml.NewDecoder(strings.NewReader(useCase.YAMLData)).Decode(YAML)
 		if !assert.Nil(t, err, useCase.Description) {
 			return
 		}
-		err = toolbox.DefaultConverter.AssignConverted(inline, mapSlice)
+		for _, entry := range *YAML {
+			pipeline[toolbox.AsString(entry.Key)] = entry.Value
+		}
+		err = toolbox.DefaultConverter.AssignConverted(inline, pipeline)
 		if !assert.Nil(t, err, useCase.Description) {
 			return
 		}
-		err = inline.InitTasks("", TasksSelector(""), useCase.DefaultParams)
-		if !assert.Nil(t, err, useCase.Description) {
-			return
+		if useCase.HasError {
+			assert.NotNil(t, err, useCase.Description)
+			continue
 		}
-		assertly.AssertValues(t, useCase.Expected, inline, useCase.Description)
+		workflow, err := inline.AsWorkflow("", "")
+		if !assert.Nil(t, err, useCase.Description) {
+			continue
+		}
 
+		if !assertly.AssertValues(t, useCase.Expected, workflow, useCase.Description+fmt.Sprintf("%d", i)) {
+			toolbox.DumpIndent(workflow, true)
+		}
 	}
 
 }

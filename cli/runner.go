@@ -312,11 +312,8 @@ func (r *Runner) processActivityStart(event msg.Event) bool {
 
 	var eventValue = event.Value()
 	if r.activityEnded {
-		_, ok := eventValue.(workflow.PipelineEvent)
-		if !ok {
-			if _, ok := eventValue.(*model.Activity); !ok {
-				return false
-			}
+		if _, ok := eventValue.(*model.Activity); !ok {
+			return false
 		}
 		r.activityEnded = false
 		r.Pop()

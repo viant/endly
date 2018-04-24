@@ -109,5 +109,5 @@ func (t *TasksSelector) Tasks() []string {
 
 //RunAll returns true if no individual tasks are selected
 func (t *TasksSelector) RunAll() bool {
-	return *t == "" || *t == "*"  || *t == "$tasks"
+	return *t == "" || *t == "*" || *t == "$tasks"
 }

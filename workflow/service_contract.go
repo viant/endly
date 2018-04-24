@@ -7,7 +7,9 @@ import (
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
+	"path"
 	"strings"
+	"fmt"
 )
 
 //RunRequest represents workflow runWorkflow request
@@ -18,43 +20,45 @@ type RunRequest struct {
 	Async             bool                   `description:"flag to runWorkflow it asynchronously. Do not set it your self runner sets the flag for the first workflow"`
 	Params            map[string]interface{} `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
 	PublishParameters bool                   `default:"true" description:"flag to publish parameters directly into context state"`
+	SharedStateMode   bool                   `description:"by default workflow uses a separate cloned context copy, if this is flag context will be shared with a caller state"`
 	URL               string                 `description:"workflow URL if workflow is not found in the registry, it is loaded"`
-	Source            *url.Resource          `description:"run request location "`
 	Name              string                 `required:"true" description:"name defined in workflow document"`
-	TagIDs            string                 `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
-	Tasks             string                 `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequentially"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
-	*model.Inline
-}
-
-//HasPipeline returns true if request has inline piplines
-func (r *RunRequest) HasPipeline() bool {
-	if r.Inline == nil {
-		return false
-	}
-	return len(r.Pipelines) > 0 || len(r.Pipeline) > 0
+	Source            *url.Resource          `description:"run request location "`
+	AssetURL          string
+	TagIDs            string `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
+	Tasks             string `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequentially"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
+	*model.Pipelines
+	workflow *model.Workflow //inline workflow from pipeline
 }
 
 //Init initialises request
 func (r *RunRequest) Init() (err error) {
-	r.Params, err = util.NormalizeMap(r.Params, true)
-	if err != nil {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("%v (%v)", err, r.AssetURL)
+		}
+	}()
+
+	if r.Params, err = util.NormalizeMap(r.Params, true);err  != nil {
 		return err
 	}
-	if r.HasPipeline() {
-		if len(r.Defaults) == 0 {
-			r.Defaults = make(map[string]interface{})
-		}
 
-		if r.Defaults, err = util.NormalizeMap(r.Defaults, true); err != nil {
+	if r.Tasks == "" || r.Tasks == "$tasks" {
+		r.Tasks = "*"
+	}
+	if r.Pipelines != nil && len(r.Pipelines.Pipeline) > 0 {
+		name := r.Name
+		baseURL, URI := toolbox.URLSplit(r.AssetURL)
+		if name == "" && r.Name != "" {
+			name = strings.Replace(URI, path.Ext(URI), "", 1)
+		}
+		r.SharedStateMode = true
+		r.workflow, err = r.Pipelines.AsWorkflow(name, baseURL)
+		if err != nil {
 			return err
 		}
-		var baseURL = ""
-		if r.Source != nil {
-			baseURL, _ = toolbox.URLSplit(r.Source.URL)
-		}
-
-
-		return r.Inline.InitTasks(baseURL, model.TasksSelector(r.Tasks), r.Defaults)
+		r.workflow.Source = url.NewResource(r.AssetURL)
+		return r.workflow.Init()
 	}
 	if r.URL == "" {
 		r.URL = r.Name
@@ -74,9 +78,10 @@ func (r *RunRequest) Init() (err error) {
 
 //Validate checks if request is valid
 func (r *RunRequest) Validate() error {
-	if r.HasPipeline() {
-		return nil
+	if r.workflow != nil {
+		return r.workflow.Validate()
 	}
+
 	if r.Name == "" {
 		return errors.New("name was empty")
 	}

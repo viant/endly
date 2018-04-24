@@ -470,17 +470,24 @@ func (s *service) executeSecureDockerCommand(asRoot bool, secrets map[string]str
 	var runResponse = &exec.RunResponse{}
 
 	err := endly.Run(context, extractRequest, runResponse)
+
+	if err == nil && util.EscapedContains(runResponse.Output, dockerNotRunning) {
+		err = fmt.Errorf("%v", runResponse.Output)
+	}
+
 	if err != nil {
 		if util.CheckCommandNotFound(err.Error()) {
 			return nil, err
 		}
-		if runResponse != nil && !util.EscapedContains(runResponse.Stdout(), dockerNotRunning) {
+		if runResponse != nil && !util.EscapedContains(runResponse.Output, dockerNotRunning) {
 			return nil, err
 		}
 		s.startDockerIfNeeded(context, target)
-
 		if err := endly.Run(context, extractRequest, runResponse); err != nil {
 			return nil, err
+		}
+		if err == nil && util.EscapedContains(runResponse.Output, dockerNotRunning) {
+			err = fmt.Errorf("%v", runResponse.Output)
 		}
 	}
 
@@ -543,14 +550,12 @@ func (s *service) getGoogleCloudCredential(context *endly.Context, credentials s
 		Username: "oauth2accesstoken",
 		Password: "$(gcloud auth application-default print-access-token)",
 	}
-	if config.PrivateKeyID != ""  {
+	if config.PrivateKeyID != "" {
 		result.Username = "_json_key"
 		result.Password = strings.Replace(config.Data, "\n", " ", len(config.Data))
 	}
 	return result
 }
-
-
 
 func (s *service) runDockerProcessChecklist(context *endly.Context, target *url.Resource) (string, error) {
 	var extractRequest = exec.NewExtractRequest(target, exec.DefaultOptions(),

@@ -2,6 +2,7 @@ package gce
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/toolbox/cred"
 	"golang.org/x/net/context"
 	netcontext "golang.org/x/net/context"
@@ -12,6 +13,9 @@ import (
 
 //NewComputeService creates a new compute service.
 func NewComputeService(credConfig *cred.Config) (*compute.Service, netcontext.Context, error) {
+	if credConfig == nil {
+		return nil, nil, errors.New("credentail config was empty")
+	}
 	jwtConfig, err := credConfig.NewJWTConfig(compute.CloudPlatformScope)
 	if err != nil {
 		return nil, nil, err

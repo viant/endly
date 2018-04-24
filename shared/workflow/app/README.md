@@ -38,7 +38,7 @@ Here are the basic step with [build](build/build.csv) and [deploy](deploy/deploy
 - stop app (if previous instance is still running)
 - start app
 
-Here is example execution of [build](build/build.csv) and [deploy](deploy/deploy.csv) workflows vi inline pipeline tasks:
+Here is example execution of [build](build/build.csv) and [deploy](deploy/deploy.csv) workflows vi inline workflow:
 
 ```bash
 endly -r=app.yaml -t='*'

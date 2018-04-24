@@ -44,3 +44,15 @@ func (r *ServiceRequest) Validate() error {
 	}
 	return nil
 }
+
+func (r *ServiceRequest) NewAction() *Action {
+	var repeater = &Repeater{}
+	return &Action{
+		AbstractNode: &AbstractNode{
+			Description: r.Description,
+		},
+		ServiceRequest: r,
+		NeatlyTag:      &NeatlyTag{},
+		Repeater:       repeater.Init(),
+	}
+}

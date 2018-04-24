@@ -327,12 +327,6 @@ func TestStorageDownloadRequest_Validate(t *testing.T) {
 	}
 	{
 		request := storage.DownloadRequest{
-			Source: url.NewResource("abc"),
-		}
-		assert.NotNil(t, request.Validate())
-	}
-	{
-		request := storage.DownloadRequest{
 			Source:  url.NewResource("abc"),
 			DestKey: "a",
 		}

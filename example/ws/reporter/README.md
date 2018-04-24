@@ -44,7 +44,7 @@ cd endly/example/ws/reporter/endly/
 endly -w=manager
 ```
 
-## run test with inline pipeline tasks [run](endly/run.yaml) request
+## run test with inline workflow[run](endly/run.yaml) request
 ```text
 endly -r=run
 ```

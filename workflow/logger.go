@@ -87,8 +87,14 @@ func (l *Logger) OnEvent(event msg.Event) {
 		return
 	}
 	defer func() { _ = file.Close() }()
+	value := event.Value()
 
-	buf, err := json.MarshalIndent(event.Value(), "", "\t")
+	var aMap = map[string]interface{}{}
+	if err := toolbox.DefaultConverter.AssignConverted(&aMap, value); err == nil {
+		value = toolbox.DeleteEmptyKeys(aMap)
+	}
+
+	buf, err := json.MarshalIndent(value, "", "\t")
 	if err != nil {
 		l.handlerError(err)
 		return

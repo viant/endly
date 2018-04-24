@@ -51,26 +51,6 @@ func NewAsyncEvent(action *model.Action) *AsyncEvent {
 	return &AsyncEvent{action}
 }
 
-//PipelineEvent represents a pipeline event
-type PipelineEvent struct {
-	Name string
-}
-
-//
-////Messages returns messages
-//func (e *PipelineEvent) Messages() []*msg.Message {
-//	return []*msg.Message{
-//		msg.NewMessage(msg.NewStyled(fmt.Sprintf("%s", e.Name), msg.MessageStyleGroup), msg.NewStyled("pipeline", msg.MessageStyleGeneric)),
-//	}
-//}
-
-//NewPipelineEvent creates a new pipeline event
-func NewPipelineEvent(pipeline *model.Pipeline) *PipelineEvent {
-	return &PipelineEvent{
-		Name: pipeline.Name,
-	}
-}
-
 //ModifiedStateEvent represent modified state event
 type ModifiedStateEvent struct {
 	Variables model.Variables
