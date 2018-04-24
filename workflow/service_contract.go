@@ -131,6 +131,14 @@ type LoadRequest struct {
 	Source *url.Resource
 }
 
+//Validate checks if request is valid
+func (r *LoadRequest) Validate() error {
+	if r.Source == nil {
+		return errors.New("source was empty")
+	}
+	return nil
+}
+
 // LoadResponse represents loaded workflow
 type LoadResponse struct {
 	*model.Workflow

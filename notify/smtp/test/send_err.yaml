@@ -1,4 +1,10 @@
 init:
+  - "body = Error: <strong>$error.Error at:</strong>
+    $error.TaskName:
+    <br />
+    <code>
+    $errorJSON
+    </code>"
 defaults:
   target:
     URL: smtp://smtp.gmail.com:465
@@ -13,13 +19,13 @@ pipeline:
 
   catch:
     action: smtp:send
-    udf: Markdown
     mail:
       to:
       - awitas@viantinc.com
       from: $sender
-      subject: Endly test
+      subject: Endly test $error.Error
       contentType: text/html
-      body:  "# test message\n
-              * list item 1\n
-              * list item 2"
+      body: $body
+  defer:
+    action: print
+    message: all done
