@@ -1,0 +1,20 @@
+init:
+defaults:
+  target:
+    URL: smtp://smtp.gmail.com:465
+    credentials: smtp
+  sender: viantemailtester@gmail.com
+
+pipeline:
+  send:
+    action: smtp:send
+    udf: Markdown
+    mail:
+      to:
+      - awitas@viantinc.com
+      from: $sender
+      subject: Endly test
+      contentType: text/html
+      body:  "# test message\n
+              * list item 1\n
+              * list item 2"
