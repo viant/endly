@@ -7,6 +7,7 @@ import (
 
 	"github.com/viant/endly/notify/smtp"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/url"
 	"path"
 	"testing"
@@ -72,7 +73,8 @@ func TestNewSMTPClient(t *testing.T) {
 		var target = url.NewResource("smtp://smtp.gmail.com:465")
 		var parent = toolbox.CallerDirectory(3)
 		credentials := path.Join(parent, "test/secret.json")
-		client, err := smtp.NewClient(target, credentials)
+		credConfig, _ := secret.New("", false).GetCredentials(credentials)
+		client, err := smtp.NewClient(target, credConfig)
 		if assert.Nil(t, err) {
 			assert.NotNil(t, client)
 			client.Close()
@@ -84,7 +86,8 @@ func TestNewSMTPClient(t *testing.T) {
 		var target = url.NewResource("smtp://smtp.gmail.com:465")
 		var parent = toolbox.CallerDirectory(3)
 		credentials := path.Join(parent, "test/invalid_secret.json")
-		_, err := smtp.NewClient(target, credentials)
+		credConfig, _ := secret.New("", false).GetCredentials(credentials)
+		_, err := smtp.NewClient(target, credConfig)
 		assert.NotNil(t, err)
 	}
 

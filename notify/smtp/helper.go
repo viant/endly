@@ -9,17 +9,13 @@ import (
 )
 
 //NewClient creates a new SMTP client.
-func NewClient(target *url.Resource, credentialsFile string) (*smtp.Client, error) {
-	credentials, err := cred.NewConfig(credentialsFile)
-	if err != nil {
-		return nil, err
-	}
+func NewClient(target *url.Resource, credConfig *cred.Config) (*smtp.Client, error) {
 	var targetURL = target.ParsedURL
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 		ServerName:         targetURL.Host,
 	}
-	auth := smtp.PlainAuth("", credentials.Username, credentials.Password, targetURL.Host)
+	auth := smtp.PlainAuth("", credConfig.Username, credConfig.Password, targetURL.Host)
 	conn, err := tls.Dial("tcp", targetURL.Host, tlsConfig)
 	if err != nil {
 		return nil, err
@@ -30,7 +26,7 @@ func NewClient(target *url.Resource, credentialsFile string) (*smtp.Client, erro
 	}
 
 	if err = client.Auth(auth); err != nil {
-		return nil, fmt.Errorf("failed to auth with %v, %v", credentials.Username, err)
+		return nil, fmt.Errorf("failed to auth with %v, %v", credConfig.Username, err)
 	}
 	return client, nil
 }

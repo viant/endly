@@ -24,7 +24,11 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 		return nil, err
 	}
 
-	client, err := NewClient(target, target.Credentials)
+	credConfig, err := context.Secrets.GetCredentials(target.Credentials)
+	if err != nil {
+		return nil, err
+	}
+	client, err := NewClient(target, credConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +49,8 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 	defer writer.Close()
 
 	if request.UDF != "" {
-		if transformed, err := udf.TransformWithUDF(context, request.UDF, "mail.Body", mainMessage.Body); err == nil {
+		transformed, err := udf.TransformWithUDF(context, request.UDF, "mail.Body", mainMessage.Body)
+		if err == nil {
 			mainMessage.Body = toolbox.AsString(transformed)
 		}
 	}
@@ -59,10 +64,10 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 	return response, nil
 }
 
-const sMTPSendExample = `{
+const sendExample = `{
   "Target": {
     "URL": "smtp://smtp.gmail.com:465",
-    "Credentials": "${env.HOME}/.secret/smtp.json"
+    "Credentials": "smtp"
   },
   "Mail": {
     "From": "sender@gmail.com",
@@ -75,6 +80,24 @@ const sMTPSendExample = `{
   }
 }`
 
+const sendUDFExample = `
+{
+	"Target": {
+		"URL": "smtp://smtp.gmail.com:465",
+		"Credentials": "smtp"
+	},
+	"Mail": {
+		"From": "$sender",
+		"To": [
+			"awitas@viantinc.com"
+		],
+		"Subject": "Endly test",
+		"Body": "# test message\n * list item 1\n * list item 2",
+		"ContentType": "text/html"
+	},
+	"UDF": "Markdown"
+}`
+
 func (s *service) registerRoutes() {
 	s.Register(&endly.Route{
 		Action: "send",
@@ -83,7 +106,11 @@ func (s *service) registerRoutes() {
 			Examples: []*endly.UseCase{
 				{
 					Description: "email send",
-					Data:        sMTPSendExample,
+					Data:        sendExample,
+				},
+				{
+					Description: "email send with UDF",
+					Data:        sendUDFExample,
 				},
 			},
 		},
