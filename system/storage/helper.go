@@ -75,7 +75,7 @@ func GetStorageService(context *endly.Context, resource *url.Resource) (storage.
 	}
 	if resource.Credentials != "" {
 		var err error
-		if resource.Credentials, err = context.Secrets.CredentialsLocation(resource.Credentials);err != nil {
+		if resource.Credentials, err = context.Secrets.CredentialsLocation(resource.Credentials); err != nil {
 			return nil, err
 		}
 	}
@@ -110,13 +110,11 @@ func joinIfNeeded(parent *url.Resource, URI string) (result *url.Resource) {
 		}
 	}()
 
-
-
 	if strings.Contains(URI, ":/") {
 		result = url.NewResource(URI)
-	} else if ! strings.HasPrefix(URI, "/")  {
+	} else if !strings.HasPrefix(URI, "/") {
 		var hostname = parent.ParsedURL.Hostname()
-		if hostname == "" || hostname == "127.0.0.1" ||   hostname == "localhos" {
+		if hostname == "" || hostname == "127.0.0.1" || hostname == "localhos" {
 			var candidate = url.NewResource(URI)
 			if toolbox.FileExists(candidate.ParsedURL.Path) {
 				result = candidate

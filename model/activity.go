@@ -33,16 +33,20 @@ func (a *Activity) FormatTag() string {
 //NewActivity returns a new workflow Activity.
 func NewActivity(context *endly.Context, action *Action, state data.Map) *Activity {
 	var result = &Activity{
-		Action:      state.ExpandAsText(action.Action),
-		Service:     state.ExpandAsText(action.Service),
-		NeatlyTag:   action.NeatlyTag,
-		Description: context.Expand(action.Description),
-		Request:     action.Request,
-		Response:    make(map[string]interface{}),
-		StartTime:   time.Now(),
+		Action:          state.ExpandAsText(action.Action),
+		Service:         state.ExpandAsText(action.Service),
+		NeatlyTag:       action.NeatlyTag,
+		Description:     context.Expand(action.AbstractNode.Description),
+		Request:         action.Request,
+		Response:        make(map[string]interface{}),
+		StartTime:       time.Now(),
+		ServiceResponse: &endly.ServiceResponse{},
 	}
 	if result.NeatlyTag == nil {
 		result.NeatlyTag = &NeatlyTag{}
+	}
+	if result.Request == nil {
+		result.Request = map[string]interface{}{}
 	}
 	return result
 }

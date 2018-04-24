@@ -151,11 +151,11 @@ func Bootstrap() {
 		return
 	}
 	if value, ok := flagset["p"]; ok && toolbox.AsBoolean(value) {
-		printWorkflow(request.URL)
+		printWorkflow(request)
 		return
 	}
 	if flagset["t"] == "?" {
-		printWorkflowTasks(request.URL)
+		printWorkflowTasks(request)
 		return
 	}
 
@@ -217,8 +217,8 @@ func credentials() (string, string, error) {
 	return strings.TrimSpace(username), strings.TrimSpace(password), nil
 }
 
-func printWorkflowTasks(URL string) {
-	workFlow, err := getWorkflow(URL)
+func printWorkflowTasks(request *workflow.RunRequest) {
+	workFlow, err := getWorkflow(request)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -335,27 +335,41 @@ func printServiceActions() {
 	}
 }
 
-func getWorkflow(URL string) (*model.Workflow, error) {
+func getWorkflow(request *workflow.RunRequest) (*model.Workflow, error) {
+	if request.Pipelines != nil && len(request.Pipeline) > 0 {
+		baseURL, name := toolbox.URLSplit(request.AssetURL)
+		name = strings.Replace(name, path.Ext(name), "", 1)
+		return request.AsWorkflow(name, baseURL)
+	}
 	manager := endly.New()
 	context := manager.NewContext(nil)
 	var response = &workflow.LoadResponse{}
-	var source = workflow.GetResource(workflow.NewDao(), context.State(), URL)
+	var source = workflow.GetResource(workflow.NewDao(), context.State(), request.URL)
 	if err := endly.Run(context, &workflow.LoadRequest{Source: source}, response); err != nil {
 		return nil, err
 	}
 	return response.Workflow, nil
 }
 
-func printWorkflow(URL string) {
-	workFlow, err := getWorkflow(URL)
+func printWorkflow(request *workflow.RunRequest) {
+
+	workFlow, err := getWorkflow(request)
 	if err != nil {
 		log.Fatal(err)
 	}
-	printInFormat(workFlow, "failed to print workFlow: "+URL+", %v")
+	printInFormat(workFlow, "failed to print workFlow: "+request.URL+", %v", true)
 
 }
 
-func printInFormat(source interface{}, errorTemplate string) {
+func printInFormat(source interface{}, errorTemplate string, hideEmpty bool) {
+
+	if hideEmpty {
+		var aMap = map[string]interface{}{}
+		if err := toolbox.DefaultConverter.AssignConverted(&aMap, source); err == nil {
+			source = toolbox.DeleteEmptyKeys(aMap)
+		}
+	}
+
 	format := flag.Lookup("f").Value.String()
 	var buf []byte
 	var err error
@@ -418,6 +432,7 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 			URL: value,
 		}
 	}
+	assetURL := ""
 	if value, ok := flagset["r"]; ok {
 		URL = value
 		resource, err := getRunRequestURL(value)
@@ -429,6 +444,7 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 		if err != nil {
 			return nil, fmt.Errorf("failed to locate workflow run request: %v %v", value, err)
 		}
+		assetURL = resource.URL
 		request.Source = resource
 		if request.Name == "" {
 			request.Name = model.WorkflowSelector(URL).Name()
@@ -446,6 +462,7 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 		request.TagIDs = value
 	}
 	updateBaseRunWithOptions(request, flagset)
+	request.AssetURL = assetURL
 	return request, nil
 }
 

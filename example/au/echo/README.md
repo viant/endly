@@ -40,7 +40,7 @@ git clone https://github.com/viant/endly
 cd endly/example/echo
 ```
 
-## run test with inline pipeline tasks [run](endly/run.yaml) request
+## run test with inline workflow[run](endly/run.yaml) request
 ```text
 endly -r=run
 ```

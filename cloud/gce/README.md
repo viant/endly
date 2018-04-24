@@ -36,7 +36,7 @@ endly -s='gce' -a=call
 
 <a name="endly"></a>
 
-## Endly inline pipeline tasks
+## Endly inline workflow
 
 
 ```bash

@@ -9,7 +9,7 @@ There are a few ways to execute workflow/action
     - endly -w=workflowname param1=value params2=value2
 2) Run single workflow with run request
     -  endly -r=[run](runs.yaml)   
-2) Run sequence of workflow / actions with run pipeline request.
+2) Run inline workflow run request.
     -  endly -r=[run](runm.yaml)   
 
 
@@ -18,7 +18,6 @@ To check endly other options run the following:
 
 ```text
 $ endly -h
-
 ```
          
 

@@ -188,6 +188,22 @@ func (c *Context) Expand(text string) string {
 	return state.ExpandAsText(text)
 }
 
+//PublishAndRestore sets supplied value and returns func restoring original values
+func (s *Context) PublishAndRestore(values map[string]interface{}) func() {
+	var backup = map[string]interface{}{}
+	for k, v := range values {
+		if value, has := s.state.GetValue(k); has {
+			backup[k] = value
+		}
+		s.state.SetValue(k, v)
+	}
+	return func() {
+		for k, v := range backup {
+			s.state.SetValue(k, v)
+		}
+	}
+}
+
 //NewRequest creates a new request for service and action
 func (c *Context) NewRequest(serviceName, action string) (interface{}, error) {
 	service, err := c.Service(serviceName)

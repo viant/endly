@@ -7,7 +7,13 @@ import (
 )
 
 func init() {
-	var memStorage = storage.NewMemoryService();
+	var memStorage = storage.NewMemoryService()
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/app.yaml", bytes.NewReader([]byte(``)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/app.yaml %v", err)
+		}
+	}
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/web/meta.yaml", bytes.NewReader([]byte(`name: go/web
 description: "golang: web hello world"
@@ -1644,8 +1650,8 @@ pipeline:
 data:
   action: nop
   init:
-    -  dbSetup = $AsTableRecords($key)
     -  key = data.db.setup
+    -  dbSetup = $AsTableRecords($key)
 setup:
   action: dsunit:prepare
   URL: regression/$db/data/

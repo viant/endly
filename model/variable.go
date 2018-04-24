@@ -16,21 +16,19 @@ import (
 
 //Variable represents a variable
 type Variable struct {
-	Name     string                                                                                                                                                                  //name
-	Value    interface{}                                                                                                                                                             //default value
-	From     string                                                                                                                                                                  //context state map key to pull data
-	When     string                                                                                                                                                                  //criteria if specified this variable will be set only if evaluated criteria is true (it can use $in, and $out state variables)
-	Else     interface{}                                                                                                                                                             //if when criteria is not met then else can provide variable value alternative
-	Persist  bool                                                                                                                                                                    //stores in tmp directory to be used as backup if data is not in the cotnext
-	Required bool                                                                                                                                                                    //flag that validates that from returns non empty value or error is generated
+	Name     string            //name
+	Value    interface{}       //default value
+	From     string            //context state map key to pull data
+	When     string            //criteria if specified this variable will be set only if evaluated criteria is true (it can use $in, and $out state variables)
+	Else     interface{}       //if when criteria is not met then else can provide variable value alternative
+	Persist  bool              //stores in tmp directory to be used as backup if data is not in the cotnext
+	Required bool              //flag that validates that from returns non empty value or error is generated
 	Replace  map[string]string `description:"replacements map, if key if specified substitute variable value with corresponding value. This will work only for string replacements"` //replacements map, if key if specified substitute variable value with corresponding value.
 }
-
 
 func (v *Variable) tempfile() string {
 	return path.Join(os.Getenv("TMPDIR"), v.Name+".var")
 }
-
 
 //PersistValue persist variable
 func (v *Variable) PersistValue() error {
@@ -340,7 +338,7 @@ func GetVariables(baseURL string, source interface{}) (Variables, error) {
 	}
 
 	for _, item := range variables {
-		switch  value := item.(type) {
+		switch value := item.(type) {
 		case string:
 			text := value
 			if len(text) == 0 {
@@ -354,7 +352,7 @@ func GetVariables(baseURL string, source interface{}) (Variables, error) {
 			result = append(result, variable)
 		default:
 			if toolbox.IsSlice(item) || toolbox.IsMap(item) {
-				aMap, err := util.NormalizeMap(value, true);
+				aMap, err := util.NormalizeMap(value, true)
 				if err != nil {
 					return nil, err
 				}

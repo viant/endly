@@ -55,6 +55,14 @@ func TestWorkflowSelector(t *testing.T) {
 			ExpectedTaks:     "task1",
 			ExpectedRelative: false,
 		},
+		{
+			Description:      "absolute URL selector with tasks",
+			Selector:         "http://abc.com/path/build:task1",
+			ExpectedURL:      "http://abc.com/path/build.csv",
+			ExpectedName:     "build",
+			ExpectedTaks:     "task1",
+			ExpectedRelative: false,
+		},
 	}
 
 	for _, useCase := range useCases {

@@ -6,12 +6,11 @@ Remote storage could be any cloud storage i.e. google cloud, amazon s3, or simpl
 
 <a name="endly"></a>
 
-## Endly inline pipeline tasks
+## Endly inline workflow
 
 ```bash
 endly -r=copy
 ```
-
 
 
 @copy.yaml

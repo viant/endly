@@ -10,20 +10,15 @@ import (
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
 	"sync"
-	"time"
 )
 
 const (
 	//ServiceID represents workflow Service id
 	ServiceID = "workflow"
 )
-
-
 
 //Service represents a workflow service.
 type Service struct {
@@ -76,50 +71,6 @@ func (s *Service) addVariableEvent(name string, variables model.Variables, conte
 	context.Publish(NewModifiedStateEvent(variables, in, out))
 }
 
-func getURLs(URL string) []string {
-	selector := model.WorkflowSelector(URL)
-	workflowName := selector.Name()
-	workflowFilename := fmt.Sprintf("%v.csv", workflowName)
-	dedicatedFolderURL := strings.Replace(URL, workflowFilename, fmt.Sprintf("%v/%v", workflowName, workflowFilename), 1)
-	return []string{
-		URL,
-		dedicatedFolderURL,
-	}
-}
-
-//GetResource returns workflow resource
-func GetResource(dao *Dao, state data.Map, URL string) *url.Resource {
-	for _, candidate := range getURLs(URL) {
-		resource := url.NewResource(candidate)
-		storageService, err := storage.NewServiceForURL(resource.URL, "")
-		if err != nil {
-			return nil
-		}
-		exists, _ := storageService.Exists(resource.URL)
-		if exists {
-			return resource
-		}
-	}
-	if strings.Contains(URL, ":/") || strings.HasPrefix(URL, "/") {
-		return nil
-	}
-	//Lookup shared workflow
-	for _, candidate := range getURLs(URL) {
-		resource, err := dao.NewRepoResource(state, fmt.Sprintf("workflow/%v", candidate))
-		if err != nil {
-			continue
-		}
-		storageService, err := storage.NewServiceForURL(resource.URL, "")
-		if err != nil {
-			return nil
-		}
-		if exists, _ := storageService.Exists(resource.URL); exists {
-			return resource
-		}
-	}
-	return nil
-}
-
 func (s *Service) loadWorkflowIfNeeded(context *endly.Context, request *RunRequest) (err error) {
 	if !s.HasWorkflow(request.Name) {
 		resource := GetResource(s.Dao, context.State(), request.URL)
@@ -138,14 +89,12 @@ func (s *Service) getServiceRequest(context *endly.Context, activity *model.Acti
 	if err != nil {
 		return nil, nil, err
 	}
-
 	var state = context.State()
 	activity.Request = state.Expand(activity.Request)
 	request := activity.Request
 	if request == nil || !toolbox.IsMap(request) {
 		if toolbox.IsStruct(request) {
 			var requestMap = make(map[string]interface{})
-
 			if err = toolbox.DefaultConverter.AssignConverted(&requestMap, request); err != nil {
 				return nil, nil, err
 			}
@@ -155,7 +104,6 @@ func (s *Service) getServiceRequest(context *endly.Context, activity *model.Acti
 			return nil, nil, err
 		}
 	}
-
 	requestMap := toolbox.AsMap(request)
 	var serviceRequest interface{}
 	serviceRequest, err = context.AsRequest(service.ID(), activity.Action, requestMap)
@@ -163,151 +111,108 @@ func (s *Service) getServiceRequest(context *endly.Context, activity *model.Acti
 		return nil, nil, err
 	}
 	activity.Request = serviceRequest
-	activity.Request = serviceRequest
 	return service, serviceRequest, nil
 }
 
-func (s *Service) runAction(context *endly.Context, action *model.Action, process *model.Process) (response interface{}, err error) {
+func (s *Service) runAction(context *endly.Context, action *model.Action, process *model.Process) (response map[string]interface{}, err error) {
+	var state = context.State()
+	activity := model.NewActivity(context, action, state)
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("%v: %v", action.TagID, err)
+		} else if action.Name != "" && len(response) > 0 {
+			state.Put(action.Name, response)
 		}
 	}()
-	if !process.CanRun() {
-		return nil, nil
-	}
-	var state = context.State()
-	activity := model.NewActivity(context, action, state)
-	process.Push(activity)
+	var request interface{}
+	err = s.runNode(context, "action", process, action.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
+		process.Push(activity)
+		startEvent := s.Begin(context, activity)
+		defer s.End(context)(startEvent, model.NewActivityEndEvent(activity))
+		defer process.Pop()
 
-	startEvent := s.Begin(context, activity)
+		requestMap := toolbox.AsMap(activity.Request)
+		if request, err = context.AsRequest(action.Service, action.Action, requestMap); err != nil {
+			return nil, nil, err
+		}
+		err = endly.Run(context, request, activity.ServiceResponse)
+		if err != nil {
+			return nil, nil, err
+		}
 
-	defer s.End(context)(startEvent, model.NewActivityEndEvent(activity))
-	defer process.Pop()
-
-	var canRun bool
-	canRun, err = criteria.Evaluate(context, context.State(), action.When, "action.When", true)
-	if err != nil || !canRun {
-		activity.Ineligible = true
-		return nil, err
-	}
-	err = action.Init.Apply(state, state)
-	s.addVariableEvent("Action.Init", action.Init, context, state, state)
-	if err != nil {
-		return nil, err
-	}
-	service, serviceRequest, err := s.getServiceRequest(context, activity)
-	if err != nil {
-		return nil, err
-	}
-	activity.ServiceResponse = service.Run(context, serviceRequest)
-
-	if activity.ServiceResponse.Err != nil {
-		return nil, activity.ServiceResponse.Err
-	}
-	response = activity.ServiceResponse.Response
-	if response != nil && (toolbox.IsMap(response) || toolbox.IsStruct(response)) {
-		s.converter.AssignConverted(&activity.Response, activity.ServiceResponse.Response)
-	} else {
-		activity.Response["value"] = response
-	}
-	var responseState = data.Map(activity.Response)
-	err = action.Post.Apply(responseState, state) //result to task  state
-	s.addVariableEvent("Action.Post", action.Post, context, responseState, state)
+		_ = toolbox.DefaultConverter.AssignConverted(&activity.Response, activity.ServiceResponse.Response)
+		response = activity.Response
+		if runResponse, ok := activity.ServiceResponse.Response.(*RunResponse); ok {
+			response = runResponse.Data
+		}
+		return response, state, err
+	})
 	return response, err
 }
 
-func (s *Service) injectTagIDsIfNeeded(action *model.ServiceRequest, tagIDs map[string]bool) {
-	if action.Service != "workflow" || action.Action != "runWorkflow" {
-		return
-	}
-	requestMap := toolbox.AsMap(action.Request)
-	requestMap["TagIDs"] = strings.Join(toolbox.MapKeysToStringSlice(tagIDs), ",")
-}
-
-func (s *Service) runTask(context *endly.Context, process *model.Process, tagIDs map[string]bool, task *model.Task) (data.Map, error) {
-	if !process.CanRun() {
-		return nil, nil
-	}
-	process.TaskName = task.Name
-	var startTime = time.Now()
+func (s *Service) runTask(context *endly.Context, process *model.Process, task *model.Task) (data.Map, error) {
+	process.SetTask(task)
+	var result = data.NewMap()
 	var state = context.State()
-	canRun, err := criteria.Evaluate(context, context.State(), task.When, "task.When", true)
-	if err != nil {
-		return nil, err
-	}
-	if !canRun {
-		return nil, nil
-	}
-	err = task.Init.Apply(state, state)
-	s.addVariableEvent("Task.Init", task.Init, context, state, state)
-	if err != nil {
-		return nil, err
-	}
-	var hasTagIDs = len(tagIDs) > 0
-	var filterTagIDs = false
-	if hasTagIDs {
-		filterTagIDs = task.HasTagID(tagIDs)
-	}
 
-	var asyncActions = make([]*model.Action, 0)
-	for i := 0; i < len(task.Actions); i++ {
-		action := task.Actions[i]
-		if hasTagIDs {
-			s.injectTagIDsIfNeeded(action.ServiceRequest, tagIDs)
-		}
-		if filterTagIDs && !tagIDs[action.TagID] {
-			continue
-		}
-		if action.Async {
-			asyncActions = append(asyncActions, task.Actions[i])
-			continue
-		}
-
-		var handler = func(action *model.Action) func() (interface{}, error) {
-			return func() (interface{}, error) {
-				return s.runAction(context, action, process)
+	err := s.runNode(context, "task", process, task.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
+		if task.TasksNode != nil && len(task.Tasks) > 0 {
+			if err := s.runTasks(context, process, task.TasksNode); err != nil || len(task.Actions) == 0 {
+				return state, result, err
 			}
 		}
-		moveToNextTag, err := criteria.Evaluate(context, context.State(), action.Skip, "TagIdSkipCriteria", false)
-		if err != nil {
-			return nil, err
-		}
-		if moveToNextTag {
-			for j := i + 1; j < len(task.Actions) && action.TagID == task.Actions[j].TagID; j++ {
-				i++
+		var asyncActions = make([]*model.Action, 0)
+		for i := 0; i < len(task.Actions); i++ {
+			action := task.Actions[i]
+			if action.Async {
+				asyncActions = append(asyncActions, task.Actions[i])
+				continue
 			}
-			continue
-		}
-		var extractable = make(map[string]interface{})
-		err = action.Repeater.Run(s.AbstractService, "action", context, handler(task.Actions[i]), extractable)
-		if err != nil {
-			return nil, err
-		}
-	}
-	err = s.runAsyncActions(context, process, task, asyncActions)
-	if err != nil {
-		return nil, err
-	}
-	var taskPostState = data.NewMap()
-	err = task.Post.Apply(state, taskPostState)
-	s.addVariableEvent("Task.Post", task.Post, context, taskPostState, state)
-	state.Apply(taskPostState)
-	s.applyRemainingTaskSpentIfNeeded(context, task, startTime)
-	return taskPostState, err
-}
+			if process.HasTagID && !process.TagIDs[action.TagID] {
+				continue
+			}
 
-func (s *Service) applyRemainingTaskSpentIfNeeded(context *endly.Context, task *model.Task, startTime time.Time) {
-	if task.TimeSpentMs > 0 {
-		var elapsed = (time.Now().UnixNano() - startTime.UnixNano()) / int64(time.Millisecond)
-		var remainingExecutionTime = time.Duration(task.TimeSpentMs - int(elapsed))
-		s.Sleep(context, int(remainingExecutionTime))
-	}
+			var handler = func(action *model.Action) func() (interface{}, error) {
+				return func() (interface{}, error) {
+					var response, err = s.runAction(context, action, process)
+					if err != nil {
+						return nil, err
+					}
+					if len(response) > 0 {
+						result[action.ID()] = response
+					}
+					return response, nil
+				}
+			}
+			moveToNextTag, err := criteria.Evaluate(context, context.State(), action.Skip, "Skip", false)
+			if err != nil {
+				return nil, nil, err
+			}
+			if moveToNextTag {
+				for j := i + 1; j < len(task.Actions) && action.TagID == task.Actions[j].TagID; j++ {
+					i++
+				}
+				continue
+			}
+
+			var extractable = make(map[string]interface{})
+			err = action.Repeater.Run(s.AbstractService, "action", context, handler(task.Actions[i]), extractable)
+			if err != nil {
+				return nil, nil, err
+			}
+		}
+		err = s.runAsyncActions(context, process, task, asyncActions)
+		if err != nil {
+			return nil, nil, err
+		}
+		return state, result, nil
+	})
+	state.Apply(result)
+	return result, err
 }
 
 func (s *Service) runAsyncAction(parent, context *endly.Context, process *model.Process, action *model.Action, group *sync.WaitGroup) error {
 	defer group.Done()
-
 	events := context.MakeAsyncSafe()
 	defer func() {
 		for _, event := range events.Events {
@@ -351,124 +256,6 @@ func (s *Service) runAsyncActions(context *endly.Context, process *model.Process
 	return nil
 }
 
-
-
-
-
-func (s *Service) runPipeline(context *endly.Context, pipeline *model.Pipeline, response *RunResponse, process *model.Process) (err error) {
-	context.Publish(NewPipelineEvent(pipeline))
-	var state = context.State()
-	last := LastWorkflow(context)
-	if len(pipeline.Pipelines) > 0 {
-		defer Pop(context)
-		process := model.NewProcess(process.Source, nil, pipeline)
-		Push(context, process)
-		return s.traversePipelines(pipeline.Pipelines, context, response, process)
-	}
-
-	activity := pipeline.NewActivity(context)
-	if activity.Caller == "" && last != nil {
-		lastActivity := last.Last()
-		if lastActivity != nil {
-			activity.Caller = last.Activity.Caller
-			activity.TagID = last.Activity.TagID
-			activity.Tag = last.Activity.Tag
-		}
-	}
-
-	context.Publish(activity)
-	process.Push(activity)
-	defer process.Pop()
-	runResponse := &RunResponse{
-		Data: make(map[string]interface{}),
-	}
-
-	var canRun bool
-	canRun, err = criteria.Evaluate(context, context.State(), pipeline.When, "pipeline.When", true)
-	if err != nil || !canRun {
-		activity.Ineligible = true
-		return err
-	}
-
-	defer func() {
-		context.Publish(model.NewActivityEndEvent(runResponse))
-		if len(runResponse.Data) > 0 {
-			var responseData = runResponse.Data
-			if pipeline.Post != nil {
-				s.applyVariables(pipeline.Post, process, responseData, context)
-			}
-			for k, v := range responseData {
-				state.Put(k, v)
-			}
-			response.Data[pipeline.Name] = runResponse.Data
-		}
-	}()
-
-	if pipeline.Init != nil {
-		s.applyVariables(pipeline.Init, process, state, context)
-	}
-
-	var request = toolbox.AsMap(state.Expand(activity.Request))
-	if pipeline.Workflow != "" {
-		runRequest := NewRunRequest(pipeline.Workflow, pipeline.Params, true)
-		if err = endly.Run(context, runRequest, runResponse); err != nil {
-			return err
-		}
-	} else if pipeline.Action != "" {
-		actionSelector := model.ActionSelector(pipeline.Action)
-		var request, err = context.AsRequest(actionSelector.Service(), actionSelector.Action(), request)
-		if err != nil {
-			return err
-		}
-		if err = endly.Run(context, request, &runResponse.Data); err != nil {
-			return err
-		}
-	}
-	return err
-}
-
-
-
-func (s *Service) traversePipelines(pipelines model.Pipelines, context *endly.Context, response *RunResponse, process *model.Process) (err error) {
-	var onErrorPipeline, finallyPipeline *model.Pipeline
-	var runnable = []*model.Pipeline{}
-	for _, pipeline := range pipelines {
-		if pipeline.Name == model.CatchPipelineTask {
-			onErrorPipeline = pipeline
-			continue
-		}
-		if pipeline.Name == model.DeferPipelineTask {
-			finallyPipeline = pipeline
-			continue
-		}
-		runnable = append(runnable, pipeline)
-	}
-
-	if finallyPipeline != nil {
-		defer func() {
-			pipelineErr:= s.runPipeline(context, finallyPipeline, response, process)
-			if err == nil {
-				err = pipelineErr
-			}
-		}()
-	}
-
-	for i := range runnable {
-		if err = s.runPipeline(context, runnable[i], response, process); err != nil {
-			if onErrorPipeline != nil {
-				if err = s.runPipeline(context, onErrorPipeline, response, process); err != nil {
-					return err
-				}
-				continue
-			}
-			return err
-		}
-	}
-	return err
-}
-
-
-
 func (s *Service) applyVariables(candidates interface{}, process *model.Process, in data.Map, context *endly.Context) error {
 	variables, ok := candidates.(model.Variables)
 	if !ok || len(variables) == 0 {
@@ -481,61 +268,7 @@ func (s *Service) applyVariables(candidates interface{}, process *model.Process,
 	return err
 }
 
-func (s *Service) pipeline(context *endly.Context, request *RunRequest) (*RunResponse, error) {
-	var response = &RunResponse{
-		Data: make(map[string]interface{}),
-	}
-	if len(request.Pipelines) == 0 {
-		return response, nil
-	}
-
-	defer Pop(context)
-	process := model.NewProcess(request.Source, nil, request.Pipelines[0])
-	Push(context, process)
-
-	s.publishParameters(request, context)
-	var state = context.State()
-	if request.Inline.Init != nil {
-		if err := s.applyVariables(request.Inline.Init, process, state, context); err != nil {
-			return nil, err
-		}
-	}
-
-	response, err := response, s.traversePipelines(request.Inline.Pipelines, context, response, process)
-	if request.Inline.Post != nil && response != nil {
-		if err := s.applyVariables(request.Inline.Post, process, response.Data, context); err != nil {
-			return nil, err
-		}
-	}
-	return response, err
-}
-
-func (s *Service) pipelineWorkflowAsyncInNeeded(context *endly.Context, request *RunRequest) (*RunResponse, error) {
-
-	s.enableLoggingIfNeeded(context, request)
-	if request.Async {
-		context.Wait.Add(1)
-		go func() {
-			defer context.Wait.Done()
-			_, err := s.pipeline(context, request)
-			if err != nil {
-				context.Publish(msg.NewErrorEvent(fmt.Sprintf("%v", err)))
-			}
-
-		}()
-		return &RunResponse{}, nil
-	}
-	return s.pipeline(context, request)
-}
-
 func (s *Service) run(context *endly.Context, request *RunRequest) (response *RunResponse, err error) {
-	if request.Inline != nil {
-		return s.pipelineWorkflowAsyncInNeeded(context, request)
-	}
-	return s.runWorkflowAsyncIfNeeded(context, request)
-}
-
-func (s *Service) runWorkflowAsyncIfNeeded(context *endly.Context, request *RunRequest) (response *RunResponse, err error) {
 	if request.Async {
 		context.Wait.Add(1)
 		go func() {
@@ -571,6 +304,23 @@ func (s *Service) publishParameters(request *RunRequest, context *endly.Context)
 	state.Put(paramsStateKey, params)
 }
 
+func (s *Service) getWorkflow(context *endly.Context, request *RunRequest) (*model.Workflow, error) {
+	if request.workflow != nil {
+		context.Publish(NewLoadedEvent(request.workflow))
+		return request.workflow, nil
+	}
+	err := s.loadWorkflowIfNeeded(context, request)
+	if err != nil {
+		return nil, err
+	}
+	workflow, err := s.Workflow(request.Name)
+	if err != nil {
+		return nil, err
+	}
+	context.Publish(NewLoadedEvent(workflow))
+	return workflow, err
+}
+
 func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunRequest) (response *RunResponse, err error) {
 	response = &RunResponse{
 		Data:      make(map[string]interface{}),
@@ -578,104 +328,141 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	}
 
 	s.enableLoggingIfNeeded(upstreamContext, request)
-	err = s.loadWorkflowIfNeeded(upstreamContext, request)
+	workflow, err := s.getWorkflow(upstreamContext, request)
 	if err != nil {
-		return response, err
+		return nil, err
 	}
-	workflow, err := s.Workflow(request.Name)
-	if err != nil {
-		return response, err
-	}
-	upstreamContext.Publish(NewLoadedEvent(workflow))
+
 	defer Pop(upstreamContext)
-	process := model.NewProcess(workflow.Source, workflow, nil)
+
+	upstreamProcess := Last(upstreamContext)
+	process := model.NewProcess(workflow.Source, workflow, upstreamProcess)
+	process.AddTagIDs(strings.Split(request.TagIDs, ",")...)
 	Push(upstreamContext, process)
-
-	context := upstreamContext.Clone()
-	var state = context.State()
-
-	var workflowData = data.Map(workflow.Data)
-	state.Put(neatly.OwnerURL, workflow.Source.URL)
-	state.Put(dataStateKey, workflowData)
-	state.Put(tasksStateKey, request.Tasks)
+	context := upstreamContext
+	if !request.SharedStateMode {
+		context = upstreamContext.Clone()
+	}
 	s.publishParameters(request, context)
-
-	err = workflow.Init.Apply(state, state)
-	s.addVariableEvent("Workflow.Init", workflow.Init, context, state, state)
-	if err != nil {
-		return response, err
+	if len(workflow.Data) > 0 {
+		state := context.State()
+		state.Put(dataStateKey, workflow.Data)
 	}
+	restore := context.PublishAndRestore(toolbox.Pairs(
+		neatly.OwnerURL, workflow.Source.URL,
+		tasksStateKey, request.Tasks,
+	))
+	defer restore()
+	var state = context.State()
 	context.Publish(NewInitEvent(request.Tasks, state))
-	filteredTasks, err := workflow.Select(model.TasksSelector(request.Tasks))
+	taskSelector := model.TasksSelector(request.Tasks)
+
+	if !taskSelector.RunAll() {
+		for _, task := range taskSelector.Tasks() {
+			if !workflow.TasksNode.Has(task) {
+				return nil, fmt.Errorf("failed to lookup task: %v . %v", workflow.Name, task)
+			}
+		}
+	}
+
+	filteredTasks := workflow.TasksNode.Select(taskSelector)
 	if err != nil {
 		return response, err
 	}
 
-	var tagIDs = make(map[string]bool)
-	for _, tagID := range strings.Split(request.TagIDs, ",") {
-		tagIDs[tagID] = true
-	}
-
-	defer s.runWorkflowDeferTaskIfNeeded(context, process)
-	err = s.runWorkflowTasks(context, process, tagIDs, filteredTasks...)
-	err = s.runOnErrorTaskIfNeeded(context, process, err)
-	if err != nil {
-		return response, err
-	}
-
-	workflow.Post.Apply(state, response.Data) //context -> workflow output
-	s.addVariableEvent("Workflow.Post", workflow.Post, context, state, state)
-
-	if workflow.SleepTimeMs > 0 {
-		s.Sleep(context, workflow.SleepTimeMs)
+	err = s.runNode(context, "workflow", process, workflow.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
+		err = s.runTasks(context, process, filteredTasks)
+		return state, response.Data, err
+	})
+	if len(response.Data) > 0 {
+		for k, v := range response.Data {
+			state.Put(k, v)
+		}
 	}
 	return response, err
 }
 
-func (s *Service) runWorkflowDeferTaskIfNeeded(context *endly.Context, process *model.Process) {
-	if process.Workflow.DeferTask == "" {
-		return
+func (s *Service) runNode(context *endly.Context, nodeType string, process *model.Process, node *model.AbstractNode, runHandler func(context *endly.Context, process *model.Process) (in, out data.Map, err error)) error {
+	if !process.CanRun() {
+		return nil
 	}
-	task, _ := process.Workflow.Task(process.Workflow.DeferTask)
-	_ = s.runWorkflowTasks(context, process, nil, task)
+	var state = context.State()
+	canRun, err := criteria.Evaluate(context, context.State(), node.When, fmt.Sprintf("%v.When", nodeType), true)
+	if err != nil || !canRun {
+		return err
+	}
+	err = node.Init.Apply(state, state)
+	s.addVariableEvent(fmt.Sprintf("%v.Init", nodeType), node.Init, context, state, state)
+	if err != nil {
+		return err
+	}
+	in, out, err := runHandler(context, process)
+	if err != nil {
+		return err
+	}
+	if len(in) == 0 {
+		in = data.NewMap()
+	}
+	err = node.Post.Apply(in, out)
+	s.addVariableEvent(fmt.Sprintf("%v.Post", nodeType), node.Post, context, in, out)
+	if err != nil {
+		return err
+	}
+	s.Sleep(context, node.SleepTimeMs)
+	return nil
 }
 
-func (s *Service) runOnErrorTaskIfNeeded(context *endly.Context, process *model.Process, err error) error {
-	if err != nil {
-		if process.Workflow.OnErrorTask == "" {
-			return err
-		}
-		process.Error = err.Error()
+func (s *Service) runDeferredTask(context *endly.Context, process *model.Process,  parent *model.TasksNode,) {
+	if parent.DeferredTask == "" {
+		return
+	}
+	task, _ := parent.Task(parent.DeferredTask)
+	_ = s.runTasks(context, process, &model.TasksNode{Tasks: []*model.Task{task}})
+}
 
-		var errorMap = toolbox.AsMap(process.ExecutionError)
-		activity := process.Activity
-		if activity != nil && activity.Request != nil {
-			errorMap["ServiceRequest"], _ = toolbox.AsJSONText(activity.Request)
-		}
-		if activity != nil && activity.Response != nil {
-			errorMap["Response"], _ = toolbox.AsJSONText(activity.Response)
+func (s *Service) runOnErrorTask(context *endly.Context, process *model.Process, parent *model.TasksNode, err error) error {
+	if  parent.OnErrorTask == ""  {
+		return err
+	}
+	if err != nil {
+		process.Error = err.Error()
+		if process.Activity != nil {
+			process.Request = process.Activity.Request
+			process.Response = process.Activity.Response
+			process.TaskName = process.Task.Name
 		}
 		var state = context.State()
-		state.Put("error", errorMap)
-		task, _ := process.Workflow.Task(process.Workflow.OnErrorTask)
-		err = s.runWorkflowTasks(context, process, nil, task)
+		state.Put("error", process.AsMap())
+		task, e := parent.Task(parent.OnErrorTask)
+		if e != nil {
+			return fmt.Errorf("failed to catch: %v, %v", err, e)
+		}
+		return s.runTasks(context, process, &model.TasksNode{Tasks: []*model.Task{task}})
 	}
 	return err
 }
 
-func (s *Service) runWorkflowTasks(context *endly.Context, process *model.Process, tagIDs map[string]bool, tasks ...*model.Task) error {
-	for _, task := range tasks {
+func (s *Service) runTasks(context *endly.Context, process *model.Process, tasks *model.TasksNode) error {
+	defer s.runDeferredTask(context, process, tasks)
+
+	for _, task := range tasks.Tasks {
+		if task.Name == tasks.OnErrorTask {
+			continue
+		}
 		if process.IsTerminated() {
 			break
 		}
-		if _, err := s.runTask(context, process, tagIDs, task); err != nil {
-			return err
+		if _, err := s.runTask(context, process, task); err != nil {
+			if err = s.runOnErrorTask(context, process, tasks, err);err != nil {
+				return err
+			}
 		}
 	}
+
 	var scheduledTask = process.Scheduled
 	if scheduledTask != nil {
 		process.Scheduled = nil
-		return s.runWorkflowTasks(context, process, tagIDs, scheduledTask)
+		return s.runTasks(context, process, &model.TasksNode{Tasks: []*model.Task{scheduledTask}})
 	}
 	return nil
 }
@@ -761,15 +548,13 @@ func getServiceActivity(context *endly.Context) *model.Activity {
 
 func getServiceAction(context *endly.Context, actionRequest *model.ServiceRequest) *model.Action {
 	activity := getServiceActivity(context)
-	var result = &model.Action{
-		ServiceRequest: actionRequest,
-		NeatlyTag:      &model.NeatlyTag{},
-	}
+	var result = actionRequest.NewAction()
+
 	if activity != nil {
 		result.NeatlyTag = activity.NeatlyTag
 		result.Name = activity.Action
-		if result.Description == "" {
-			result.Description = activity.Description
+		if result.AbstractNode.Description == "" {
+			result.AbstractNode.Description = activity.Description
 		}
 	}
 	return result
@@ -799,7 +584,7 @@ func (s *Service) runSwitch(context *endly.Context, request *SwitchRequest) (Swi
 			if err != nil {
 				return nil, err
 			}
-			return s.runTask(context, process, nil, task)
+			return s.runTask(context, process, task)
 		}
 		serviceAction := getServiceAction(context, matched.ServiceRequest)
 		return s.runAction(context, serviceAction, process)
@@ -815,8 +600,50 @@ const (
     "awsCredential": "${env.HOME}/.secret/aws-west.json",
     "ec2InstanceId": "i-0139209d5358e60a4"
   },
-  "TasksSelector": "start"
+  "Tasks": "start"
 }`
+
+	inlineWorkflowServiceRunExample = `{
+	"Params": {
+		"app": "myapp",
+		"appTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"buildTarget": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		},
+		"commands": [
+			"export GOPATH=/tmp/go",
+			"go get -u -v github.com/viant/endly/bootstrap",
+			"cd ${buildPath}app",
+			"go build -o myapp",
+			"chmod +x myapp"
+		],
+		"download": [
+			{
+				"Key": "${buildPath}/app/myapp",
+				"Value": "$releasePath"
+			}
+		],
+		"origin": [
+			{
+				"Key": "URL",
+				"Value": "./../"
+			}
+		],
+		"sdk": "go:1.9",
+		"target": {
+			"Credentials": "localhost",
+			"URL": "ssh://127.0.0.1/"
+		}
+	},
+	"PublishParameters": true,
+	"Tasks": "*",
+	"URL": "app/build.csv"
+}`
+
 
 	workflowServiceSwitchExample = `{
   "SourceKey": "instanceState",
@@ -857,8 +684,12 @@ func (s *Service) registerRoutes() {
 			Description: "runWorkflow workflow",
 			Examples: []*endly.UseCase{
 				{
-					Description: "runWorkflow workflow",
+					Description: "run external workflow",
 					Data:        workflowServiceRunExample,
+				},
+				{
+					Description: "run inline workflow",
+					Data:        inlineWorkflowServiceRunExample,
 				},
 			},
 		},

@@ -68,6 +68,7 @@ func DecodeMap(ownerURL, URI string, result map[string]interface{}) error {
 		URI = toolbox.URLPathJoin(ownerURL, URI)
 	}
 	resource := url.NewResource(URI)
+
 	if path.Ext(resource.ParsedURL.Path) == "" {
 		for _, ext := range []string{".json", ".yaml"} {
 			resource := url.NewResource(URI + ext)

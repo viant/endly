@@ -228,9 +228,7 @@ func TestWorkflowService_OnErrorTask(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 	serviceResponse := service.Run(context, &workflow.RunRequest{
 		Tasks: "fail",
-
 		Name: "recover",
-
 		Params:        map[string]interface{}{},
 		EnableLogging: false,
 		LogDirectory:  "logs",
@@ -243,6 +241,8 @@ func TestWorkflowService_OnErrorTask(t *testing.T) {
 		assert.True(t, strings.Contains(errorCaught, "this is test error "))
 	}
 }
+
+
 
 func TestWorkflowService_RunHttpWorkflow(t *testing.T) {
 

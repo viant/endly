@@ -27,7 +27,9 @@ func (d *Dao) Load(context *endly.Context, source *url.Resource) (*model.Workflo
 	err = d.Dao.Load(state, resource, result)
 	if err == nil {
 		d.Dao.AddStandardUdf(context.State())
-		err = result.Validate()
+		if err = result.Init(); err == nil {
+			err = result.Validate()
+		}
 	}
 
 	return result, err

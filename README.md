@@ -75,6 +75,11 @@ func main() {
 ```       
 
 
+
+
+
+
+
 <a name="Introduction"></a>
 ## Introduction
 
@@ -106,11 +111,11 @@ Endly as a comprehensive testing framework automate the following step:
 <a name="GettingStarted"></a>
 ## Getting Started
 
-Endly automate sequence of actions into reusable tasks and workflows or inline pipeline tasks. 
+Endly automate sequence of actions into reusable tasks and workflows. 
 
 **a) System preparation**
 
-For instance: the following define inline pipeline tasks to prepare app system services:
+For instance: the following define inline workflowto prepare app system services:
 
 @system.yaml
 ```yaml
@@ -141,7 +146,7 @@ pipeline:
 
 **b) Application build and deployment** 
 
-For instance: the following  define inline pipeline tasks to build and deploy a test app:
+For instance: the following  define inline workflowto build and deploy a test app:
 (you can easily build an app for standalone mode or in and for docker container)
 
 @app.yaml
@@ -196,7 +201,7 @@ pipeline:
 
 **c) Datastore creation**
 
-For instance: the following  define inline pipeline tasks to create/populare mysql and aerospike database/dataset:
+For instance: the following  define inline workflowto create/populare mysql and aerospike database/dataset:
 
 @datastore.yaml
 
@@ -244,7 +249,7 @@ pipeline:
 
 **d) Testing**
 
-For instance: the following  define inline pipeline tasks to run test with selenium runner:
+For instance: the following  define inline workflowto run test with selenium runner:
 
 
 @test.yaml

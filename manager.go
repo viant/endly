@@ -29,6 +29,16 @@ func Run(context *Context, request, result interface{}) error {
 	if err != nil {
 		return err
 	}
+	if serviceResponse, ok := result.(*ServiceResponse); ok {
+		serviceResponse.Response = response
+		serviceResponse.Status = "ok"
+		if err != nil {
+			serviceResponse.Status = "error"
+			serviceResponse.Err = err
+			serviceResponse.Error = err.Error()
+		}
+		return err
+	}
 	if result == nil || response == nil {
 		return nil
 	}

@@ -11,8 +11,11 @@ import (
 type Process struct {
 	Source   *url.Resource
 	Owner    string
+	TagIDs   map[string]bool
+	HasTagID bool
 	Workflow *Workflow
-	Pipeline *Pipeline
+	Task     *Task
+	TaskNode *TasksNode
 	*Activities
 	Terminated int32
 	Scheduled  *Task
@@ -22,6 +25,15 @@ type Process struct {
 //Terminate flags current workflow as terminated
 func (p *Process) Terminate() {
 	atomic.StoreInt32(&p.Terminated, 1)
+}
+
+//SetTask sets process task
+func (p *Process) SetTask(task *Task) {
+	p.Task = task
+	p.HasTagID = false
+	if len(p.TagIDs) > 0 {
+		p.HasTagID = task.HasTagID(p.TagIDs)
+	}
 }
 
 //CanRun returns true if current workflow can run
@@ -39,23 +51,32 @@ func (p *Process) Push(activity *Activity) {
 	if p.Workflow != nil {
 		activity.Caller = p.Workflow.Name
 	}
-	if p.Pipeline != nil {
-		activity.Caller = p.Pipeline.Name
-	}
 	p.Activities.Push(activity)
 }
 
+//Push adds a workflow to the workflow stack.
+func (p *Process) AddTagIDs(tagIDs ...string) {
+	for _, tagID := range tagIDs {
+		p.TagIDs[tagID] = true
+	}
+}
+
 //NewProcess creates a new workflow, pipeline process
-func NewProcess(source *url.Resource, workflow *Workflow, pipeline *Pipeline) *Process {
+func NewProcess(source *url.Resource, workflow *Workflow, upstream *Process) *Process {
 	var process = &Process{
 		Source:         source,
 		ExecutionError: &ExecutionError{},
 		Workflow:       workflow,
-		Pipeline:       pipeline,
 		Activities:     NewActivities(),
 	}
 	if source != nil {
 		_, process.Owner = toolbox.URLSplit(source.URL)
+	}
+	process.TagIDs = map[string]bool{}
+	if upstream != nil && len(upstream.TagIDs) > 0 {
+		for k := range upstream.TagIDs {
+			process.TagIDs[k] = true
+		}
 	}
 	return process
 }
@@ -156,4 +177,13 @@ type ExecutionError struct {
 	Error    string
 	Caller   string
 	TaskName string
+	Request  interface{}
+	Response interface{}
+}
+
+//AsMap returns error map
+func (e *ExecutionError) AsMap() map[string]interface{} {
+	var result = map[string]interface{}{}
+	toolbox.DefaultConverter.AssignConverted(&result, e)
+	return result
 }
