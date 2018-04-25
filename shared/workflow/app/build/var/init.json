@@ -77,14 +77,9 @@
   },
   {
     "Name": "buildTarget",
-    "Required": true,
-    "Value": "$target"
-  },
-  {
-    "Name": "buildTarget",
     "Value": {
-      "URL": "$URLJoin([\"$buildTarget.URL\",\"$buildPath\"])",
-      "Credentials": "$buildTarget.Credentials"
+      "URL": "$URLJoin([\"${target.URL}\",\"$buildPath\"])",
+      "Credentials": "${target.Credentials}"
     }
   },
   {
