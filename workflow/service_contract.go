@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"errors"
+	"fmt"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/msg"
 	"github.com/viant/endly/util"
@@ -9,7 +10,6 @@ import (
 	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
-	"fmt"
 )
 
 //RunRequest represents workflow runWorkflow request
@@ -39,7 +39,7 @@ func (r *RunRequest) Init() (err error) {
 		}
 	}()
 
-	if r.Params, err = util.NormalizeMap(r.Params, true);err  != nil {
+	if r.Params, err = util.NormalizeMap(r.Params, true); err != nil {
 		return err
 	}
 
