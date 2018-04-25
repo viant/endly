@@ -84,7 +84,6 @@ func (s *Service) loadWorkflowIfNeeded(context *endly.Context, request *RunReque
 	return nil
 }
 
-
 func (s *Service) runAction(context *endly.Context, action *model.Action, process *model.Process) (response map[string]interface{}, err error) {
 	var state = context.State()
 	activity := model.NewActivity(context, action, state)
@@ -434,7 +433,7 @@ func (s *Service) runTasks(context *endly.Context, process *model.Process, tasks
 			break
 		}
 		if _, err = s.runTask(context, process, task); err != nil {
-			err = s.runOnErrorTask(context, process, tasks, err);
+			err = s.runOnErrorTask(context, process, tasks, err)
 		}
 		if err != nil {
 			return err
