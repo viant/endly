@@ -84,35 +84,6 @@ func (s *Service) loadWorkflowIfNeeded(context *endly.Context, request *RunReque
 	return nil
 }
 
-func (s *Service) getServiceRequest(context *endly.Context, activity *model.Activity) (endly.Service, interface{}, error) {
-	var service, err = context.Service(activity.Service)
-	if err != nil {
-		return nil, nil, err
-	}
-	var state = context.State()
-	activity.Request = state.Expand(activity.Request)
-	request := activity.Request
-	if request == nil || !toolbox.IsMap(request) {
-		if toolbox.IsStruct(request) {
-			var requestMap = make(map[string]interface{})
-			if err = toolbox.DefaultConverter.AssignConverted(&requestMap, request); err != nil {
-				return nil, nil, err
-			}
-			request = requestMap
-		} else {
-			err = fmt.Errorf("invalid request: %v, expected map but had: %T", request, request)
-			return nil, nil, err
-		}
-	}
-	requestMap := toolbox.AsMap(request)
-	var serviceRequest interface{}
-	serviceRequest, err = context.AsRequest(service.ID(), activity.Action, requestMap)
-	if err != nil {
-		return nil, nil, err
-	}
-	activity.Request = serviceRequest
-	return service, serviceRequest, nil
-}
 
 func (s *Service) runAction(context *endly.Context, action *model.Action, process *model.Process) (response map[string]interface{}, err error) {
 	var state = context.State()
