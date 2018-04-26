@@ -2,8 +2,8 @@ action: dsunit:register
 datastore: $db
 config:
   driverName: bigquery
-  credentials: $bgCredentials
-  params:
-    projectId: myproject
+  credentials: $bqCredentials
+  parameters:
+    projectId: abstractmeta-p1
     datasetId: mydataset
     dateFormat: yyyy-MM-dd hh:mm:ss z

@@ -349,6 +349,20 @@ func (b *builder) addRun(appMeta *AppMeta, request *RunRequest) error {
 		run.Put("defaults", defaults)
 		init.Put(credentialName, secret)
 	}
+
+	if b.dbMeta.Service == "" {
+
+		pieline := run.GetMap("pipeline")
+		pielineInit := pieline.GetMap("init")
+		pieline.Put("init", pielineInit.Remove("system"))
+
+
+		pielineDestroy := pieline.GetMap("destroy")
+		pieline.Put("destroy", pielineDestroy.Remove("system"))
+
+		run.Put("pipeline", pieline)
+	}
+
 	run.Put("init", init)
 	if content, err := toolbox.AsYamlText(run); err == nil {
 		b.UploadToEndly("run.yaml", strings.NewReader(content))

@@ -109,8 +109,11 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := builder.buildSystem(); err != nil {
-		return nil, err
+
+	if builder.dbMeta.Service != "" {
+		if err := builder.buildSystem(); err != nil {
+			return nil, err
+		}
 	}
 	if err = builder.buildDatastore(); err != nil {
 		return nil, err
@@ -130,7 +133,7 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	archive.Close()
 
 	//Local debugging
-	//err = storage.Copy(builder.destService, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/ss", nil, nil)
+	err = storage.Copy(builder.destService, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/ss", nil, nil)
 
 	response.Data = writer.Bytes()
 	return response, err
