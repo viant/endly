@@ -4,6 +4,6 @@ config:
   driverName: bigquery
   credentials: $bqCredentials
   parameters:
-    projectId: abstractmeta-p1
+    projectId: myproject
     datasetId: mydataset
     dateFormat: yyyy-MM-dd hh:mm:ss z
