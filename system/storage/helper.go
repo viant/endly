@@ -129,7 +129,7 @@ func joinIfNeeded(parent *url.Resource, URI string) (result *url.Resource) {
 	} else {
 		result = url.NewResource(URI)
 	}
-	if strings.HasPrefix(URI, "$") {//has to expand to be re-evaluated
+	if strings.HasPrefix(URI, "$") { //has to expand to be re-evaluated
 		result.URL = URI
 	}
 	return result
