@@ -129,8 +129,8 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	archive.Flush()
 	archive.Close()
 
-	//Local debuging
-	//	err = storage.Copy(builder.destService, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/ss", nil, nil)
+	//Local debugging
+	//err = storage.Copy(builder.destService, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/ss", nil, nil)
 
 	response.Data = writer.Bytes()
 	return response, err
@@ -176,6 +176,7 @@ func (s *Service) loadAppMeta(URI string, assets map[string]string) (*AppMeta, e
 
 func (s *Service) handleDatastore(builder *builder, datastore *Datastore) error {
 	var templateURL = toolbox.URLPathJoin(s.baseTemplateURL, fmt.Sprintf("datastore/%v", datastore.Driver))
+	datastore.Name = strings.TrimSpace(datastore.Name)
 	assets, err := DownloadAll(templateURL)
 	if err != nil {
 		return err
@@ -236,7 +237,7 @@ func (s *Service) handleBuild(builder *builder, request *RunRequest) error {
 		err = builder.addRegression(appMeta, request)
 	}
 	if err == nil {
-		err = builder.addManager(appMeta, request)
+		err = builder.addRun(appMeta, request)
 	}
 	return err
 }

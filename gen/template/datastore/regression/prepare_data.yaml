@@ -1,3 +1,9 @@
+mapping:
+  action: dsunit.mapping
+  mappings:
+    - URL: regression/$db/mapping.json
+  post:
+    tables: $Tables
 sequence:
   action: dsunit.sequence
   tables: $tables

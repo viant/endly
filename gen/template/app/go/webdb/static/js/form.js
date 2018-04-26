@@ -33,6 +33,9 @@ function submit() {
             valid = false
         }
     });
+    if(!valid) {
+        return false
+    }
 
     var request = {
         Data: {
@@ -64,7 +67,7 @@ function submit() {
             }
         }
     });
-
+    return true
 }
 
 function isValid(element) {

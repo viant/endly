@@ -20,20 +20,21 @@ func TestService_Run(t *testing.T) {
 
 	resp, err := srv.Run(&RunRequest{
 		Datastore: &Datastore{
-			Driver: "mysql",
-			Name:   "db1",
-			Config: true,
+			Driver:            "mysql",
+			Name:              "db1",
+			Config:            true,
+			MultiTableMapping: false,
 		},
 		Build: &Build{
 			Sdk:         "go:1.9",
-			Docker:      true,
+			Docker:      false,
 			App:         "myapp",
 			TemplateApp: "go/webdb",
 		},
 		Testing: &Testing{
-			Selenium:    true,
+			Selenium:    false,
 			HTTP:        true,
-			REST:        true,
+			REST:        false,
 			UseCaseData: true,
 		},
 	})

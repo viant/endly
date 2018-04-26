@@ -91,6 +91,7 @@ func (r *Router) download() http.Handler {
 		r.setBoolValue(form, "rest", &runRequest.Testing.REST)
 		r.setBoolValue(form, "selenium", &runRequest.Testing.Selenium)
 		r.setBoolValue(form, "caseData", &runRequest.Testing.UseCaseData)
+		r.setBoolValue(form, "mapping", &runRequest.Datastore.MultiTableMapping)
 
 		resp, err := r.service.Run(runRequest)
 		if err != nil {

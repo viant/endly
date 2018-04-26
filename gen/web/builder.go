@@ -79,19 +79,6 @@ func (b *builder) addDatastore(assets map[string]string, meta *DbMeta, request *
 		}
 		b.populateDb.Put(request.Name, prepare)
 	}
-
-	if meta.Data != "" {
-		dictionaryURL := fmt.Sprintf("regression/%v/data", request.Name)
-
-		for k, v := range assets {
-			if strings.HasPrefix(k, meta.Data) {
-				k = string(k[len(meta.Data):])
-				assetURL := path.Join(dictionaryURL, k)
-				b.UploadToEndly(assetURL, strings.NewReader(v))
-			}
-		}
-	}
-
 	return nil
 }
 
@@ -256,8 +243,6 @@ func (b *builder) buildApp(meta *AppMeta, sdkMeta *SdkMeta, request *RunRequest,
 		if appMap, err = b.NewAssetMap(buildAssets, "app.yaml", state); err != nil {
 			return err
 		}
-		fmt.Printf("%v\n", appMap)
-
 		start := appMap.SubMap("pipeline.start")
 		start.Put("arguments", meta.Args)
 		appMap.SubMap("pipeline.deploy").Put("upload", b.getDeployUploadMap(meta))
@@ -347,29 +332,28 @@ func (b *builder) Copy(state data.Map, URIs ...string) error {
 	return nil
 }
 
-func (b *builder) addManager(appMeta *AppMeta, request *RunRequest) error {
-
-	manager, err := b.Download("manager.csv", nil)
+func (b *builder) addRun(appMeta *AppMeta, request *RunRequest) error {
+	run, err := b.NewMapFromURI("run.yaml", nil)
 	if err != nil {
 		return err
 	}
-	_ = b.UploadToEndly("manager.csv", strings.NewReader(manager))
-	var state = data.NewMap()
-	state.Put("sdk", request.Build.Sdk)
-	state.Put("app", request.Build.App)
-
-	var credentials = make(map[string]interface{})
+	var init = run.GetMap("init")
+	init.Put("sdk", request.Build.Sdk)
+	init.Put("app", request.Build.App)
 	if b.dbMeta != nil && b.dbMeta.Credentials != "" {
 		var credentialName = b.dbMeta.Credentials
 		credentialName = strings.Replace(credentialName, "$", "", 1)
 		secret := strings.ToLower(strings.Replace(credentialName, "Credentials", "", 1))
-		credentials["Name"] = credentialName
-		credentials["Required"] = true
-		credentials["From"] = fmt.Sprintf("params.%v", credentialName)
-		credentials["Value"] = secret
-		state.Put("credentials", credentials)
+		defaults := run.GetMap("defaults")
+		defaults.Put(credentialName, "$"+credentialName)
+		run.Put("defaults", defaults)
+		init.Put(credentialName, secret)
 	}
-	return b.Copy(state, "req/run.yaml", "var/init.json")
+	run.Put("init", init)
+	if content, err := toolbox.AsYamlText(run); err == nil {
+		b.UploadToEndly("run.yaml", strings.NewReader(content))
+	}
+	return err
 }
 
 func (b *builder) NewMapFromURI(URI string, state data.Map) (Map, error) {
@@ -468,10 +452,32 @@ func (b *builder) buildSeleniumTestAssets(appMeta *AppMeta, request *RunRequest)
 }
 
 func (b *builder) buildDataTestAssets(appMeta *AppMeta, request *RunRequest) error {
-	if setupData, err := b.Download(fmt.Sprintf("regression/%v/setup_data.json", strings.ToLower(b.dbMeta.Kind)), nil); err == nil {
+
+	var setupSource = fmt.Sprintf("regression/%v/setup_data.json", strings.ToLower(b.dbMeta.Kind))
+	if request.Datastore.MultiTableMapping {
+		setupSource = fmt.Sprintf("regression/%v/v_setup_data.json", strings.ToLower(b.dbMeta.Kind))
+	}
+
+	if setupData, err := b.Download(setupSource, nil); err == nil {
 		b.UploadToEndly(fmt.Sprintf("regression/use_cases/001_xx_case/%s_data.json", request.Datastore.Name), strings.NewReader(strings.Replace(setupData, "$index", "1", 2)))
 		b.UploadToEndly(fmt.Sprintf("regression/use_cases/002_yy_case/%s_data.json", request.Datastore.Name), strings.NewReader(strings.Replace(setupData, "$index", "1", 2)))
+
 		b.UploadToEndly(fmt.Sprintf("regression/%s_data.json", request.Datastore.Name), strings.NewReader("[]"))
+		b.UploadToEndly(fmt.Sprintf("regression/%s/data/dummy.json", request.Datastore.Name), strings.NewReader("[]"))
+
+	}
+	return nil
+}
+
+func (b *builder) buildStaticDataTestAssets(appMeta *AppMeta, request *RunRequest) error {
+	var dataSource = "dummy.json"
+	if request.Datastore.MultiTableMapping {
+		dataSource = "v_dummy.json"
+	}
+	setupSource := fmt.Sprintf("regression/data/%v", dataSource)
+	setupData, err := b.Download(setupSource, nil)
+	if err == nil {
+		b.UploadToEndly(fmt.Sprintf("regression/%v/data/%v", request.Datastore.Name, dataSource), strings.NewReader(setupData))
 	}
 	return nil
 }
@@ -575,17 +581,36 @@ func (b *builder) addRegressionData(appMeta *AppMeta, request *RunRequest) error
 	}
 	pipeline := dataInit.GetMap("pipeline")
 	var prepare Map
-
 	if request.Testing.UseCaseData {
 		prepare, err = b.NewMapFromURI("datastore/regression/prepare_data.yaml", state)
+	} else {
+		prepare, err = b.NewMapFromURI("datastore/regression/prepare.yaml", state)
+	}
+	if err != nil {
+		return err
+	}
+	var tables interface{} = b.dbMeta.Tables
+	if !request.Datastore.MultiTableMapping {
+		prepare = prepare.Remove("mapping")
+	} else {
+		tables = "$tables"
+		mappping, err := b.Download("regression/mapping.json", nil)
+
+		if err == nil {
+			b.UploadToEndly(fmt.Sprintf("regression/%v/mapping.json", request.Datastore.Name), strings.NewReader(mappping))
+		}
+	}
+
+	if request.Testing.UseCaseData {
 		if !b.dbMeta.Sequence || len(b.dbMeta.Tables) == 0 {
 			prepare = prepare.Remove("sequence")
 		} else {
-			prepare.GetMap("sequence").Put("tables", b.dbMeta.Tables)
+			prepare.GetMap("sequence").Put("tables", tables)
 		}
 		b.buildDataTestAssets(appMeta, request)
 	} else {
-		prepare, err = b.NewMapFromURI("datastore/regression/prepare.yaml", state)
+		b.buildStaticDataTestAssets(appMeta, request)
+
 	}
 
 	pipeline.Put("prepare", prepare)

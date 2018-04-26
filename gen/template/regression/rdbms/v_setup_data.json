@@ -1,0 +1,15 @@
+[
+  {
+    "Table": "v_dummy",
+    "Value": [{
+      "dummy_id": "$seq.dummy",
+      "name": "Name $index",
+      "dummy_type_id": 1,
+      "dummy_type_name":"type1"
+    }],
+    "PostIncrement": [
+      "seq.dummy"
+    ],
+    "Key": "${tagId}_dummy"
+  }
+]

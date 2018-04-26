@@ -77,7 +77,11 @@ func DecodeMap(ownerURL, URI string, result map[string]interface{}) error {
 			}
 		}
 	}
-	return resource.Decode(&result)
+	err := resource.Decode(&result)
+	if _, has := result["AssetURL"]; !has {
+		result["AssetURL"] = resource.URL
+	}
+	return err
 }
 
 //Decode load and decode URI into result pointer
