@@ -2,6 +2,7 @@ id: bigquery
 name: BigQuery
 kind: RDBMS
 dictionary: dictionary/
+credentials: $bqCredentials
 data: data/
 sequence: false
 tables:

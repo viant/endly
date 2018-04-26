@@ -1033,8 +1033,8 @@ rest:
 datastore: $db
 config:
   driverName: bigquery
-  credentials: $bgCredentials
-  params:
+  credentials: $bqCredentials
+  parameters:
     projectId: myproject
     datasetId: mydataset
     dateFormat: yyyy-MM-dd hh:mm:ss z
@@ -1048,6 +1048,7 @@ config:
 name: BigQuery
 kind: RDBMS
 dictionary: dictionary/
+credentials: $bqCredentials
 data: data/
 sequence: false
 tables:
@@ -1070,15 +1071,15 @@ type: RDBMS
 datastore: $db
 config:
   driverName: bigquery
-  credentials: $bgCredentials
-  params:
+  credentials: $bqCredentials
+  parameters:
     projectId: myproject
     datasetId: mydataset
     dateFormat: yyyy-MM-dd hh:mm:ss z
 recreate: true
 tables:
   - table: "users"
-    - pkColumns:
+    pkColumns:
       - id
     schemaURL: ddl/$db/dummy.json
 `)))
