@@ -9,12 +9,6 @@ import (
 func init() {
 	var memStorage = storage.NewMemoryService()
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/app.yaml", bytes.NewReader([]byte(``)))
-		if err != nil {
-			log.Printf("failed to upload: mem://github.com/viant/endly/template/app.yaml %v", err)
-		}
-	}
-	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/web/meta.yaml", bytes.NewReader([]byte(`name: go/web
 description: "golang: web hello world"
 build: build/go
@@ -572,6 +566,9 @@ function submit() {
             valid = false
         }
     });
+    if(!valid) {
+        return false
+    }
 
     var request = {
         Data: {
@@ -603,7 +600,7 @@ function submit() {
             }
         }
     });
-
+    return true
 }
 
 function isValid(element) {
@@ -954,101 +951,6 @@ rest:
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/default/meta.yaml %v", err)
-		}
-	}
-	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/var/init.json", bytes.NewReader([]byte(`[
-  {
-    "Name": "sdk",
-    "Required": true,
-    "From": "params.sdk",
-    "Value": "$sdk"
-  },
-  {
-    "Name": "app",
-    "Required": true,
-    "From": "params.app",
-    "Value": "$app"
-  },
-  {
-    "Name": "target",
-    "Required": true,
-    "From": "params.target",
-    "Value": {
-      "URL": "ssh://127.0.0.1/",
-      "Credentials": "localhost"
-    }
-  },
-  {
-    "Name": "serviceTarget",
-    "Required": true,
-    "From": "params.serviceTarget",
-    "Value": "$target"
-  },
-  {
-    "Name": "buildTarget",
-    "Required": true,
-    "From": "params.buildTarget",
-    "Value": "$target"
-  },
-  {
-    "Name": "appTarget",
-    "Required": true,
-    "From": "params.appTarget",
-    "Value": "$target"
-  },
-  {
-    "Name": "targetHost",
-    "Value": "$Hostname($target.URL)"
-  },
-  {
-    "Name": "appHost",
-    "Value": "$Hostname($appTarget.URL)"
-  },
-  {
-    "Name": "appVersion",
-    "Value": "0.1"
-  },
-  {
-    "Name": "appPath",
-    "Required": true,
-    "From": "params.appPath",
-    "Value": "/opt/${app}"
-  },
-  {
-    "Name": "seleniumServerPort",
-    "Required": true,
-    "From": "params.seleniumServerPort",
-    "Value": "8077"
-  },
-  {
-    "...":"$credentials"
-  }
-]`)))
-		if err != nil {
-			log.Printf("failed to upload: mem://github.com/viant/endly/template/var/init.json %v", err)
-		}
-	}
-	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/manager.csv", bytes.NewReader([]byte(`Workflow,,Name,Description,Tasks,Init,
-,,manager,run system test,%Tasks,@var/init,
-[]Tasks,,Name,Description,Actions,,
-,,init,Initialise test,%Init,,
-[]Init,Service,Action,Description,Request,,
-,workflow,run,initialise system services,@system,,
-,workflow,run,initialise data,@datastore,,
-,workflow,run,deploy app,@app,,
-[]Tasks,,Name,Description,Actions,,
-,,test,Run test,%Test,,
-[]Test,Service,Action,Description,Request,workflow,tasks
-,workflow,run,run test plan,@req/run,regression,*
-[]Tasks,,Name,Description,Actions,,
-,,destroy,destroy system,%Destroy,,
-[]Destroy,Service,Action,Description,Request,tasks,
-,workflow,run,stop app,@app,stop,
-,workflow,run,stop system`+"`"+` services, @system,destroy,`)))
-		if err != nil {
-			log.Printf("failed to upload: mem://github.com/viant/endly/template/manager.csv %v", err)
 		}
 	}
 	{
@@ -1642,7 +1544,13 @@ pipeline:
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/prepare_data.yaml", bytes.NewReader([]byte(`sequence:
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/prepare_data.yaml", bytes.NewReader([]byte(`mapping:
+  action: dsunit.mapping
+  mappings:
+    - URL: regression/$db/mapping.json
+  post:
+    tables: $Tables
+sequence:
   action: dsunit.sequence
   tables: $tables
   post:
@@ -1671,24 +1579,18 @@ URL: $db/expect/
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/prepare.yaml", bytes.NewReader([]byte(`action: dsunit:prepare
-URL: regression/$db/data/
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/prepare.yaml", bytes.NewReader([]byte(`mapping:
+  action: dsunit.mapping
+  mappings:
+    - URL: regression/$db/mapping.json
+  post:
+    tables: $Tables
+setup:
+  action: dsunit:prepare
+  URL: regression/$db/data/
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/regression/prepare.yaml %v", err)
-		}
-	}
-	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/req/run.yaml", bytes.NewReader([]byte(`name: $workflow
-tasks: $tasks
-params:
-  app: $app
-  appHost: $appHost
-  target: $target
-  targetHost: $targetHost
-  seleniumServerPort: $seleniumServerPort`)))
-		if err != nil {
-			log.Printf("failed to upload: mem://github.com/viant/endly/template/req/run.yaml %v", err)
 		}
 	}
 	{
@@ -1732,6 +1634,62 @@ build: build/default
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/sdk/node/meta.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/run.yaml", bytes.NewReader([]byte(`init:
+  app: $app
+  sdk: $sdk
+  appPath: /opt/${app}
+  target:
+    URL: ssh://127.0.0.1/
+    credentials: localhost
+  serviceTarget: $target
+  buildTarget: $target
+  appTarget: $target
+  targetHost: $Hostname($target.URL)
+  appHost: $Hostname($appTarget.URL)
+  seleniumServerPort: 8077
+  appVersion: 0.1
+defaults:
+  app: $app
+  target: $target
+  buildTarget: $buildTarget
+  appTarget: $appTarget
+pipeline:
+  init:
+    system:
+      action: run
+      request: "@system"
+      tasks: "*"
+    datastore:
+      action: run
+      request: "@datastore"
+      tasks: "*"
+    app:
+      sdk: $sdk
+      action: run
+      request: "@app"
+      tasks: "*"
+  test:
+    action: run
+    name: regression
+    tasks: "*"
+  destroy:
+    app:
+      buildTarget: $target
+      app: $app
+      appVersion: $appVersion
+      action: run
+      request: "@app"
+      tasks: stop
+    system:
+        action: run
+        request: "@system"
+        tasks: destroy
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/run.yaml %v", err)
 		}
 	}
 	{
@@ -2022,6 +1980,50 @@ expect:
 		}
 	}
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/regression/mapping.json", bytes.NewReader([]byte(`{
+  "Name": "v_dummy",
+
+  "Table": "dummy",
+  "Columns": [
+    {
+      "Name": "id",
+      "FromColumn": "dummy_id",
+      "Required": true,
+      "Unique": true
+    },
+    {
+      "Name": "name",
+      "FromColumn": "dummy_name"
+    },
+    {
+      "Name": "type_id",
+      "FromColumn": "dummy_type_id"
+    }
+  ],
+  "Associations": [
+    {
+      "Table": "dummy_type",
+      "Columns": [
+        {
+          "Name": "id",
+          "Required": true,
+          "Unique": true,
+          "FromColumn": "dummy_type_id"
+        },
+        {
+          "Name": "name",
+          "FromColumn": "dummy_type_name"
+        }
+      ]
+    }
+  ]
+}
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/regression/mapping.json %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/regression/req/selenium_init.yaml", bytes.NewReader([]byte(`pipeline:
   start:
     action: "selenium:start"
@@ -2097,6 +2099,44 @@ post:
 		}
 	}
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/regression/data/v_dummy.json", bytes.NewReader([]byte(`[
+  {
+    "dummy_id": 1,
+    "dummy_name": "Name 1",
+    "dummy_type_id": 1,
+    "dummy_type_name": "type1"
+  },
+  {
+    "dummy_id": 2,
+    "dummy_name": "Name 2",
+    "dummy_type_id": 2,
+    "dummy_type_name": "type2"
+  }
+]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/regression/data/v_dummy.json %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/regression/nosql/v_setup_data.json", bytes.NewReader([]byte(`[
+  {
+    "Table": "v_dummy",
+    "Value": {
+      "dummy_id": "$dummyId",
+      "dummy_name": "Name $index",
+      "dummy_type_id": 1
+    },
+    "AutoGenerate": {
+      "dummyId": "uuid.next"
+    },
+    "Key": "${tagId}_dummy"
+  }
+]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/regression/nosql/v_setup_data.json %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/regression/nosql/setup_data.json", bytes.NewReader([]byte(`[
   {
     "Table": "dummy",
@@ -2113,6 +2153,26 @@ post:
 ]`)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/regression/nosql/setup_data.json %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/regression/rdbms/v_setup_data.json", bytes.NewReader([]byte(`[
+  {
+    "Table": "v_dummy",
+    "Value": [{
+      "dummy_id": "$seq.dummy",
+      "name": "Name $index",
+      "dummy_type_id": 1,
+      "dummy_type_name":"type1"
+    }],
+    "PostIncrement": [
+      "seq.dummy"
+    ],
+    "Key": "${tagId}_dummy"
+  }
+]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/regression/rdbms/v_setup_data.json %v", err)
 		}
 	}
 	{

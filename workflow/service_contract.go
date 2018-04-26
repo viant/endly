@@ -46,6 +46,7 @@ func (r *RunRequest) Init() (err error) {
 	if r.Tasks == "" || r.Tasks == "$tasks" {
 		r.Tasks = "*"
 	}
+
 	if r.Pipelines != nil && len(r.Pipelines.Pipeline) > 0 {
 		name := r.Name
 		baseURL, URI := toolbox.URLSplit(r.AssetURL)

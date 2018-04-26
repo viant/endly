@@ -47,10 +47,11 @@ type SystemService struct {
 }
 
 type Datastore struct {
-	Driver  string
-	Name    string
-	Version string
-	Config  bool
+	Driver            string
+	Name              string
+	Version           string
+	Config            bool
+	MultiTableMapping bool
 }
 
 type RunRequest struct {

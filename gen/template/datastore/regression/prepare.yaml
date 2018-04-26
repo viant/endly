@@ -1,2 +1,9 @@
-action: dsunit:prepare
-URL: regression/$db/data/
+mapping:
+  action: dsunit.mapping
+  mappings:
+    - URL: regression/$db/mapping.json
+  post:
+    tables: $Tables
+setup:
+  action: dsunit:prepare
+  URL: regression/$db/data/

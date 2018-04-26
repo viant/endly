@@ -155,6 +155,13 @@ func init() {
                     <label class="form-check-label" for="caseData">Setup data per use case</label>
                 </div>
             </div>
+
+            <div class="form-group row">
+                <div class="form-check mx-auto">
+                    <input type="checkbox" class="form-check-input form-control-lg" id="mapping" name="mapping">
+                    <label class="form-check-label" for="caseData">Multi table mapping</label>
+                </div>
+            </div>
         </fieldset>
         <div class="form-group row text-center ">
             <button type="submit" class="mx-auto  btn btn-primary">Download</button>

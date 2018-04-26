@@ -66,7 +66,7 @@ func init() {
 
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
-	flag.String("r", "run.json", "<path/url to workflow run request in YAML or JSON format>")
+	flag.String("r", "run", "<path/url to workflow run request in YAML or JSON format>")
 	flag.String("w", "manager", "<workflow name>  if both -r or -p and -w are specified, -w is ignored")
 	flag.String("i", "", "<coma separated tagID list> to filter")
 
@@ -362,7 +362,6 @@ func printWorkflow(request *workflow.RunRequest) {
 }
 
 func printInFormat(source interface{}, errorTemplate string, hideEmpty bool) {
-
 	if hideEmpty {
 		var aMap = map[string]interface{}{}
 		if err := toolbox.DefaultConverter.AssignConverted(&aMap, source); err == nil {

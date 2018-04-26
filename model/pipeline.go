@@ -3,10 +3,9 @@ package model
 import (
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
 	"strings"
 )
-
-
 
 const (
 	//CatchTask  represent a task name that execute if error occurred and defined
@@ -49,6 +48,11 @@ func (p Pipelines) loadRequest(attributes, actionData map[string]interface{}) er
 		if err := util.DecodeMap(p.baseURL, request, requestMap); err != nil {
 			return err
 		}
+		if val, ok := requestMap["defaults"]; ok {
+			if defaults, err := util.NormalizeMap(val, false); err == nil {
+				requestMap["defaults"] = defaults
+			}
+		}
 		util.Append(actionData, requestMap, false)
 	}
 	return nil
@@ -86,7 +90,7 @@ func (p Pipelines) split(source interface{}) (attributes, actionData map[string]
 	}
 
 	if value, ok := attributes["init"]; ok {
-		variables, err := p.asVariables(value);
+		variables, err := p.asVariables(value)
 		if err != nil {
 			if _, has := actionData["init"]; !has {
 				return nil, nil, err
@@ -99,7 +103,7 @@ func (p Pipelines) split(source interface{}) (attributes, actionData map[string]
 	}
 
 	if value, ok := attributes["post"]; ok {
-		variables, err := p.asVariables(value);
+		variables, err := p.asVariables(value)
 		if err != nil {
 			if _, has := actionData["post"]; !has {
 				return nil, nil, err
@@ -122,6 +126,7 @@ func (p *Pipelines) AsWorkflow(name string, baseURL string) (*Workflow, error) {
 		TasksNode: &TasksNode{
 			Tasks: []*Task{},
 		},
+		Source: url.NewResource(toolbox.URLPathJoin(baseURL, name+".yaml")),
 	}
 	var err error
 	if p.Init != nil {
@@ -142,7 +147,6 @@ func (p *Pipelines) AsWorkflow(name string, baseURL string) (*Workflow, error) {
 		}
 	}
 	p.normalize(root.TasksNode)
-
 	if len(root.Tasks) > 0 {
 		result.TasksNode = root.TasksNode
 	} else {
@@ -193,6 +197,7 @@ func (p *Pipelines) buildAction(name string, attributes, actionData map[string]i
 		ServiceRequest: &ServiceRequest{},
 		Repeater:       &Repeater{},
 	}
+
 	util.Append(actionData, p.Defaults, false)
 	if action, ok := attributes["action"]; ok {
 		attributes["request"], _ = util.NormalizeMap(actionData, false)
