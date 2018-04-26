@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	var memStorage = storage.NewMemoryService()
+	var memStorage = storage.NewMemoryService();
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/web/meta.yaml", bytes.NewReader([]byte(`name: go/web
 description: "golang: web hello world"
@@ -2161,7 +2161,7 @@ post:
     "Table": "v_dummy",
     "Value": [{
       "dummy_id": "$seq.dummy",
-      "name": "Name $index",
+      "dummy_name": "Name $index",
       "dummy_type_id": 1,
       "dummy_type_name":"type1"
     }],
