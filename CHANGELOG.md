@@ -116,5 +116,7 @@
     * Added shrared state workflow mode
     * Update smtp with secret service
     * Enhanced workflow and inline workflow inspection with -p options
+    * Patched gs remove folder
+    * Added multi table mapping option to workflow generator
     * Minor patches
             
