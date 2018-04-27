@@ -22,6 +22,12 @@ type CheckoutResponse struct {
 
 //Init initializes request
 func (r *CheckoutRequest) Init() error {
+	if r.Origin == nil {
+		return nil
+	}
+	if r.Dest == nil {
+		return nil
+	}
 	versionControlRequestInit(r.Origin, &r.Type)
 	if r.Type == "" || r.Type == "local" {
 		_ = r.Origin.Init()

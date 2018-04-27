@@ -120,3 +120,8 @@
     * Added multi table mapping option to workflow generator
     * Minor patches
             
+
+## Apr 27 2018 0.8.1
+    * Patched multi keys validation with @indexBy@ directive
+    * Minor patches
+            
