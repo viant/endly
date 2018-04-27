@@ -411,12 +411,13 @@ func getRunRequestURL(URL string) (*url.Resource, error) {
 	var err error
 	for _, candidate := range candidates {
 		resource = url.NewResource(candidate)
-		if _, err = resource.Download(); err != nil {
-			resource = url.NewResource(fmt.Sprintf("mem://%v/req/%v", endly.Namespace, candidate))
-			if _, memError := resource.Download(); memError != nil {
-				continue
-			}
-			return resource, nil
+		_, err = resource.Download();
+		if err == nil {
+			break
+		}
+		resource = url.NewResource(fmt.Sprintf("mem://%v/req/%v", endly.Namespace, candidate))
+		if _, memError := resource.Download(); memError != nil {
+			continue
 		}
 	}
 	return resource, err
@@ -433,38 +434,22 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 	}
 	assetURL := ""
 	if value, ok := flagset["r"]; ok {
-
-		candidates :=[]string{value}
-
-		if path.Ext(value) == "" {
-			candidates = []string{fmt.Sprintf("%s.json",value), fmt.Sprintf("%s.yaml",value)}
-		}
-		var err error
-		for _, candidate := range candidates {
-			err = nil
-			URL = value
-			resource, e := getRunRequestURL(candidate)
-			if err != nil {
-				err = e
-				continue
-			}
-			request = &workflow.RunRequest{}
-			err = resource.Decode(request)
-			if err != nil {
-				return nil, fmt.Errorf("failed to locate workflow run request: %v %v", candidate, err)
-			}
-			assetURL = resource.URL
-			request.Source = resource
-			if request.Name == "" {
-				request.Name = model.WorkflowSelector(URL).Name()
-			}
-			break
-		}
+		URL = value
+		resource, err := getRunRequestURL(value)
 		if err != nil {
 			return nil, err
 		}
+		request = &workflow.RunRequest{}
+		err = resource.Decode(request)
+		if err != nil {
+			return nil, fmt.Errorf("failed to locate workflow run request: %v %v", value, err)
+		}
+		assetURL = resource.URL
+		request.Source = resource
+		if request.Name == "" {
+			request.Name = model.WorkflowSelector(URL).Name()
+		}
 	}
-
 	if request == nil {
 		return nil, nil
 	}
