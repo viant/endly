@@ -3,6 +3,7 @@ package sdk
 import (
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/deployment/deploy"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
@@ -35,6 +36,7 @@ func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, 
 		exec.NewExtractCommand("go version", "", nil, nil,
 			model.NewExtract("version", "go version go([^\\s]+)", false)),
 	)
+
 	extractRequest.SystemPaths = append(extractRequest.SystemPaths, fmt.Sprintf("%v/bin", sdkHome))
 	if err := endly.Run(context, extractRequest, runResponse); err != nil {
 		return nil, err
@@ -47,6 +49,9 @@ func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, 
 	result.Home = sdkHome
 	if version, ok := runResponse.Data["version"]; ok {
 		result.Version = version.(string)
+	}
+	if !deploy.MatchVersion(request.Version, result.Version) {
+		return nil, errSdkNotFound
 	}
 	if result.Version == "" {
 		result.Version = request.Version
