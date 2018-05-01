@@ -14,15 +14,6 @@ type Server struct {
 	serviceRouter *toolbox.ServiceRouter
 }
 
-func handlerWrapper(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		request.Header.Del("If-Modified-Since")
-		writer.Header().Set("Cache-Control", "no-cache, private, max-age=0")
-		writer.Header().Set("Pragma", "no-cache")
-		handler.ServeHTTP(writer, request)
-	})
-}
-
 //Start start server
 func (s *Server) Start() {
 	http.HandleFunc("/api/", func(writer http.ResponseWriter, reader *http.Request) {
@@ -34,7 +25,7 @@ func (s *Server) Start() {
 	})
 	for _, route := range s.config.StaticRoutes {
 		fileServer := http.FileServer(http.Dir(route.Directory))
-		http.Handle(route.URI, handlerWrapper(fileServer))
+		http.Handle(route.URI, fileServer)
 	}
 	fmt.Printf("Started test server on port %v\n", s.config.Port)
 	log.Fatal(http.ListenAndServe(":"+s.config.Port, nil))

@@ -13,6 +13,7 @@ import (
 	_ "github.com/viant/toolbox/storage/scp"
 	"github.com/viant/toolbox/url"
 	"io/ioutil"
+	"log"
 	"path"
 	"strings"
 	"testing"
@@ -25,6 +26,24 @@ func updateContext(context *endly.Context) {
 	endpointMap.Put("host", "127.0.0.1")
 	endpointMap.Put("port", "8080")
 	state.Put("endpoint", endpointMap)
+}
+
+func TestTransfer(t *testing.T) {
+
+	var manager = endly.New()
+	var context = manager.NewContext(nil)
+	var request = &storage.CopyRequest{
+		Transfer: &storage.Transfer{
+			Source: url.NewResource("s3://bucket1/data", "aws-west"),
+			Dest:   url.NewResource("gs://bucket2/data", "gs"),
+		},
+	}
+	var response = &storage.CopyResponse{}
+	err := endly.Run(context, request, response)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
 
 func SetupMemoryStorage() {

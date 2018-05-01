@@ -123,5 +123,7 @@
 
 ## Apr 27 2018 0.8.1
     * Patched multi keys validation with @indexBy@ directive
+    * Added @sortText@ assertly directive
+    * Refactored java maven build workflow
     * Minor patches
             
