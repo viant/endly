@@ -411,7 +411,7 @@ func getRunRequestURL(URL string) (*url.Resource, error) {
 	var err error
 	for _, candidate := range candidates {
 		resource = url.NewResource(candidate)
-		_, err = resource.Download();
+		_, err = resource.Download()
 		if err == nil {
 			break
 		}

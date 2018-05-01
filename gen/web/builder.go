@@ -356,7 +356,6 @@ func (b *builder) addRun(appMeta *AppMeta, request *RunRequest) error {
 		pielineInit := pieline.GetMap("init")
 		pieline.Put("init", pielineInit.Remove("system"))
 
-
 		pielineDestroy := pieline.GetMap("destroy")
 		pieline.Put("destroy", pielineDestroy.Remove("system"))
 
