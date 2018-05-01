@@ -414,6 +414,7 @@ func (s *Service) runOnErrorTask(context *endly.Context, process *model.Process,
 			return fmt.Errorf("failed to catch: %v, %v", err, e)
 		}
 		_, err = s.runTask(context, process, task)
+		return err
 	}
 	return err
 }
@@ -433,6 +434,7 @@ func (s *Service) runTasks(context *endly.Context, process *model.Process, tasks
 			break
 		}
 		if _, err = s.runTask(context, process, task); err != nil {
+
 			err = s.runOnErrorTask(context, process, tasks, err)
 		}
 		if err != nil {

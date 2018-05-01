@@ -7,4 +7,4 @@ Workflow,Name,Tasks,OnErrorTask,,[]Post.Name,[]Post.From
 []Tasks,Name,Actions,,,,
 ,recover,%Recover,,,,
 []Recover,Name,Service,Action,Request.In,[]Post.Name,[]Post.From
-,recover,nop,nop,$error,errorCaught,error.Error
+,recover,nop,nop,$error,errorCaught,Error
