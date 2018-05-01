@@ -230,7 +230,7 @@ func TestWorkflowService_OnErrorTask(t *testing.T) {
 		Tasks:         "fail",
 		Name:          "recover",
 		Params:        map[string]interface{}{},
-		EnableLogging: false,
+		EnableLogging: true,
 		LogDirectory:  "logs",
 	})
 
