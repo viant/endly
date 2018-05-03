@@ -257,7 +257,14 @@ func (s *service) registerRoutes() {
 				var dsRequest = dsunit.RunScriptRequest(*req)
 				request = &dsRequest
 			}
+			var err error
 			if req, ok := request.(*dsunit.RunScriptRequest); ok {
+				for i, script := range req.Scripts {
+					req.Scripts[i], err  = context.ExpandResource(script)
+					if err != nil {
+						return nil, err
+					}
+				}
 				resp := s.Service.RunScript(req)
 				response := RunSQLResponse(*resp)
 				return &response, response.Error()
