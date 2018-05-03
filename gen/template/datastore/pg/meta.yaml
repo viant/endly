@@ -3,6 +3,7 @@ service: service/pg
 name: PostgreSQL
 kind: RDBMS
 tag: pg
+version: 9.6-alpine
 credentials: $pgCredentials
 schema: ddl/schema.sql
 dictionary: dictionary/

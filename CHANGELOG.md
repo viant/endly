@@ -127,3 +127,11 @@
     * Refactored java maven build workflow
     * Minor patches
             
+
+## May 02 2018 0.8.2
+    * Added shared switchCase assertly validation key for shared data points
+    * Patched workflow generator app with postgress issue
+    * Enhnced @indexBy@ directive to use path exrp for nested sturcture on assertly
+    * Minor patches
+            
+            
