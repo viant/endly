@@ -4,6 +4,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/toolbox/data"
 	"time"
+	"github.com/viant/toolbox"
 )
 
 //Activity represents pipeline or workflow activity
@@ -44,6 +45,9 @@ func NewActivity(context *endly.Context, action *Action, state data.Map) *Activi
 	}
 	if result.NeatlyTag == nil {
 		result.NeatlyTag = &NeatlyTag{}
+	}
+	if toolbox.IsString(result.Request) {
+		result.Request = state.Expand(result.Request)
 	}
 	if result.Request == nil {
 		result.Request = map[string]interface{}{}
