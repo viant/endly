@@ -2,9 +2,9 @@ package model
 
 import (
 	"github.com/viant/endly"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"time"
-	"github.com/viant/toolbox"
 )
 
 //Activity represents pipeline or workflow activity
