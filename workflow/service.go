@@ -102,7 +102,7 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 		defer process.Pop()
 
 		requestMap := toolbox.AsMap(activity.Request)
-		if request, err = context.AsRequest(action.Service, action.Action, requestMap); err != nil {
+		if request, err = context.AsRequest(activity.Service, activity.Action, requestMap); err != nil {
 			return nil, nil, err
 		}
 		err = endly.Run(context, request, activity.ServiceResponse)
