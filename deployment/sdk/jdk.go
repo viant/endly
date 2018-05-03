@@ -16,6 +16,8 @@ type jdkService struct{}
 func (s *jdkService) checkJavaVersion(context *endly.Context, jdkCandidate string, request *SetRequest) (*Info, error) {
 	var result = &Info{}
 
+	jdkCandidate = strings.Replace(jdkCandidate, "/jre", "", 1)
+
 	extractRequest := exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand(jdkCandidate+"java -version", "", nil,
 			util.StdErrors,
