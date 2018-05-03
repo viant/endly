@@ -1,0 +1,4 @@
+{
+  "Source": "$mavenSettings",
+  "DestKey": "workflowMavenSettings"
+}

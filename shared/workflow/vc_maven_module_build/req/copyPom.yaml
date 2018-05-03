@@ -1,0 +1,7 @@
+transfers:
+  - source:
+      URL: $parentPomUrl
+      credentials: $originCredential
+    dest:
+      URL: ${targetUrl}
+      credentials: $targetHostCredential

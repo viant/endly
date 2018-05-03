@@ -1,0 +1,9 @@
+target: $buildTarget
+buildSpec:
+  name: maven
+  version: $mavenVersion
+  goal: build
+  buildGoal: $buildGoal
+  args: $buildArgs
+  sdk: jdk
+  sdkVersion: $jdkVersion
