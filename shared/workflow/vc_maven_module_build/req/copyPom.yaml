@@ -5,3 +5,4 @@ transfers:
     dest:
       URL: ${targetUrl}
       credentials: $targetHostCredential
+    expand: true
