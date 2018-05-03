@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	var memStorage = storage.NewMemoryService()
+	var memStorage = storage.NewMemoryService();
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/web/meta.yaml", bytes.NewReader([]byte(`name: go/web
 description: "golang: web hello world"
@@ -1146,6 +1146,7 @@ service: service/pg
 name: PostgreSQL
 kind: RDBMS
 tag: pg
+version: 9.6-alpine
 credentials: $pgCredentials
 schema: ddl/schema.sql
 dictionary: dictionary/
@@ -1416,6 +1417,7 @@ service: service/mysql
 name: MySQL
 kind: RDBMS
 tag: mysql
+version: 5,7
 credentials: $mysqlCredentials
 config: config/my.cnf
 schema: ddl/schema.sql
