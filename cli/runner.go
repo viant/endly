@@ -82,6 +82,7 @@ type Runner struct {
 	ErrorColor         string
 }
 
+
 //AddTag adds reporting tag
 func (r *Runner) AddTag(eventTag *EventTag) {
 	r.tags = append(r.tags, eventTag)
@@ -99,7 +100,6 @@ func (r *Runner) EventTag() *EventTag {
 	}
 
 	activity := r.Last()
-
 	if _, has := r.indexedTag[activity.TagID]; !has {
 		eventTag := &EventTag{
 			Caller: activity.Caller,
@@ -136,9 +136,7 @@ func (r *Runner) printMessage(contextMessage string, messageType int, message st
 
 func (r *Runner) formatMessage(contextMessage string, messageType int, message string, messageInfoType int, messageInfo string) string {
 	var columns = r.Columns() - 5
-
 	var infoLength = len(messageInfo)
-
 	var messageLength = columns - len(vtclean.Clean(contextMessage, false)) - infoLength
 
 	if messageLength < len(message) {
