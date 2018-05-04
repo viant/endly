@@ -44,18 +44,32 @@ to get its expanded to its corresponding state value if the key has been present
 <a name="format"></a>
 ### Format
 
-Endly uses [Neatly](https://github.com/viant/neatly) format to represent a workflow.
-Neatly is responsible for converting a tabular document (.csv) into workflow object tree as shown in the [diagram](diagram.png).
+
+*Inline Workflow*
+
+For simple tasks workflow can be defined inline with [pipeline](../pipeline) run request.
+
+
+
+*Neatly*
+
+For more complex workflow endly uses [Neatly](https://github.com/viant/neatly) format 
+to represent a workflow. In that case neatly is responsible for converting a tabular document (.csv) 
+with json/yaml sub path dependencies into workflow object tree as shown in the [diagram](diagram.png).
+
 
 Find out more about neatly:
 [Neatly introduction](https://github.com/adrianwit/neatly-introduction)
 
+
 To see neatly converted workflow  [*model.Workflow](../../model/workflow.go) run the following
+
+
+*Printing workflow model representation*
 
 ```bash
 
 endly -w=WORKFLOW_NAME -p   -f=yaml|json
-
 
 ```
 
@@ -130,12 +144,13 @@ Variable has the following attributes
     * reference **$** for example $ref, where ref is the key in the state, in this case the value will be 
 
 * **Value**: any type value that is used when from value is empty
-* From  name of a key state key, or expression with key.    
+* **From**  name of a key state key, or expression with key.    
 The following expression are supported:
     * number increments  **++**, for example  counter++, where counter is a key in the state
     * array element shift  **<-**, for example  <-collection, where collection is a key in the state      
     * reference **$** for example $ref, where ref is the key in the state, in this case the value will be 
     evaluated as value stored in key pointed by content of ref variable
+
     
 **Variable in actions:**
 
