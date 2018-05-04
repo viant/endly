@@ -241,7 +241,8 @@ The following expression are supported:
     
 <a name="control"></a>
 ### Workflow execution control:
-By default, workflow run all specified task, where each task once started executes sequentially all it actions, unless they flag as 'asyn' execution.
+By default, workflow run all specified task, and subtask with sync actions sequentially.
+All async action are executed independently, task completes when all actions execution is completed.
 
 Each action can control its execution with
 
