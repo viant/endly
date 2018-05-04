@@ -46,7 +46,7 @@ to get its expanded to its corresponding state value if the key has been present
 
 *Inline Workflow*
 
-For simple tasks workflow can be defined inline with [pipeline](../pipeline) run request.
+For simple sequential tasks, workflow can be defined inline with [pipeline](../pipeline) run request.
 
 i. e.
 
@@ -96,7 +96,7 @@ pipeline:
 
 For more complex workflow endly uses [Neatly](https://github.com/viant/neatly) format 
 to represent a workflow. In that case neatly is responsible for converting a tabular document (.csv) 
-with json/yaml sub path dependencies into workflow object tree as shown in the [diagram](diagram.png).
+with json/yaml and other sub path dependencies into workflow object tree as shown in the [diagram](diagram.png).
 
 
 Find out more about neatly:
