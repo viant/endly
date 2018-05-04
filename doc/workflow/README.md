@@ -49,6 +49,48 @@ to get its expanded to its corresponding state value if the key has been present
 
 For simple tasks workflow can be defined inline with [pipeline](../pipeline) run request.
 
+i. e.
+
+@data.yaml
+
+
+```yaml
+defaults:
+  datastore: db1
+pipeline:
+  register:
+    action: dsunit:register
+    datastore: db1
+    config:
+      driverName: postgres
+      descriptor: host=127.0.0.1 port=5432 user=[username] password=[password] dbname=[dbname]
+        sslmode=disable
+      credentials: $pgCredentials
+      parameters:
+        dbname: db1
+  prepare:
+    mapping:
+      action: dsunit.mapping
+      mappings:
+      - URL: regression/db1/mapping.json
+      post:
+        tables: $Tables
+    sequence:
+      action: dsunit.sequence
+      tables: $tables
+      post:
+      - seq = $Sequences
+    data:
+      action: nop
+      init:
+      - key = data.db.setup
+      - dbSetup = $AsTableRecords($key)
+    setup:
+      action: dsunit:prepare
+      URL: regression/db1/data/
+      data: $dbSetup
+
+```
 
 
 *Neatly*
@@ -63,6 +105,32 @@ Find out more about neatly:
 
 
 To see neatly converted workflow  [*model.Workflow](../../model/workflow.go) run the following
+
+
+i.e.
+@regression.csv
+
+|**Workflow**| | |**Name**|**Description**|**Tasks**| | |**Init**| |
+|---|---|---|---|---|---|---|---|---|---|
+| | |regression|$app app regresion test|%Tasks| | | @var/init| |
+|[]**Tasks**| | |**Name**|**Description**|**Actions**| | | | |
+| | |prepare|prepare data for test use cases|%Prepare| | | | |
+|[]**Prepare**| |**Service**|**Action**|**Description**|**Request**| | | | |
+| |workflow|run|init selenium|@req/selenium_init| | | | |
+| |workflow|run|init test data|@req/data| | | | |
+|[]**Tasks**| | |**Name**|**Description**|**Actions**| | | | |
+| | |test|Defines test requests|%Test| | | | |
+|[]**Test{1..002}**|**Subpath**|**Service**|**Action**|**Description**|**Request**|**Skip**|**When**|**Init**|**/Data.db.[]setup**|**TagDescription**
+|use_cases/${index}*| |nop|skip this group if skip.txt is present|{}|$HasResource(${subPath}/skip.txt):true| | @var/test_init| |@use_case.txt
+|use_cases/${index}*| |nop|push test data|{}| |$HasResource(${subPath}/db1_data.json):true| | @db1_data|
+|use_cases/${index}*|selenium|run|run selenium test| @selenium_test| | | | |
+|use_cases/${index}*|http/runner|send|run HTTP test| @http_test| | | | |
+|use_cases/${index}*|rest/runner|send|run REST test| @rest_test| | | | |
+|[]**Tasks**| | |**Name**|**Description**|**Actions**| | | | |
+| | |clean|stop test services|%Clean| | | | |
+|[]**Clean**| |**Service**|**Action**|**Description**|**Request**|**SleepTimeMs**| | | |
+| | |nop|sleep for easy debuging|{}|1000| | | |
+| | |run|close and stop seleniun|@req/selenium_destroy| | | | |
 
 
 *Printing workflow model representation*
