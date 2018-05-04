@@ -14,6 +14,11 @@ import (
 
 //Run runs action for supplied context request and response. Response has to be pointer or nil
 func Run(context *Context, request, result interface{}) error {
+	if context == nil {
+		manager := New()
+		context = manager.NewContext(nil)
+		defer context.Close()
+	}
 	var resultValue reflect.Value
 	if result != nil {
 		resultValue = reflect.ValueOf(result)
