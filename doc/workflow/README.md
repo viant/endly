@@ -28,9 +28,8 @@ An action does actual job, like starting service, building and deploying app etc
 To execute action:
 1) workflow service looks up a service by id, in workflow manager registry.
 2) workflow service creates a new request for corresponding action on the selected service.
-3) Action.Request is expanded with context.State ($variable substitution) to be converted as actual structured service request.
-4) Context with its state is passed into every action so that it can be modified for state controlm and future data substitution. 
-5) Service executes Run method for provided action to return ServiceResponse 
+3) Action.Request is expanded with context.State ($variable substitution) and converted as service request struct.
+4) Service executes operation for provided request.
 
 
 **[Service](../../service.go)** an abstraction providing set of functionalities triggered by specified action/request.
