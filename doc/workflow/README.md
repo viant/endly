@@ -291,16 +291,6 @@ type WorkflowError struct {
 Workflow also offers DeferTask to execute as the last workflow step in case there is an error or not, for instance, to clean up a resource.
 
 
-Notify error can be use in conjunction with Workflow.OnTaskError, see below workflow snippet
- 
- | Workflow | Name | Tasks | OnErrorTask | | | |
- |---|---|---|---|---|---|---|
- |---|test|%Tasks|onError  | |  | |
- |[]Tasks|Name|Description|Actions| | | |
- | | onError|On error task|%OnError| | | |
- |[]OnError|Description|Service|Action|Request|error|[]receivers|
- | |send error notification | workflow | run | #req/notify_error | $error |	abc@somewehre.com |
-
  
  <a name="lifecycle"></a>
 #### Workflow Lifecycle
