@@ -5,12 +5,20 @@ import (
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
 
+	"bytes"
+	"encoding/json"
+	"encoding/xml"
 	"github.com/lunixbochs/vtclean"
+	"github.com/viant/endly/cli/xunit"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/msg"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"log"
 	"os"
+	"path"
 	"strings"
 	"time"
 )
@@ -44,7 +52,7 @@ func (e *EventTag) AddEvent(event msg.Event) {
 	e.Events = append(e.Events, event)
 }
 
-//ReportSummaryEvent represents event summary
+//ReportSummaryEvent represents event xUnitSummary
 type ReportSummaryEvent struct {
 	ElapsedMs      int
 	TotalTagPassed int
@@ -54,8 +62,10 @@ type ReportSummaryEvent struct {
 
 //Testing represents command line runner
 type Runner struct {
+	request *workflow.RunRequest
 	*Renderer
 	*model.Activities
+	xUnitSummary  *xunit.Testsuite
 	context       *endly.Context
 	filter        map[string]bool
 	manager       endly.Manager
@@ -81,7 +91,6 @@ type Runner struct {
 	SuccessColor       string
 	ErrorColor         string
 }
-
 
 //AddTag adds reporting tag
 func (r *Runner) AddTag(eventTag *EventTag) {
@@ -426,8 +435,8 @@ func (r *Runner) hasFailureMatch(failure *assertly.Failure, runnerLogs map[strin
 	return false
 }
 
-func (r *Runner) reportFailureWithMatchSource(tag *EventTag, event msg.Event, validation *assertly.Validation, eventCandidates []msg.Event, offset, maxIndex int) {
-
+func (r *Runner) reportFailureWithMatchSource(tag *EventTag, event msg.Event, validation *assertly.Validation, eventCandidates []msg.Event, offset, maxIndex int) *runnerLog {
+	var runnerLog *runnerLog
 	var theFirstFailure = validation.Failures[0]
 	firstFailurePathIndex := theFirstFailure.Index()
 	var runnerLogs = r.extractRunnerLogs(eventCandidates, offset, maxIndex)
@@ -438,7 +447,7 @@ func (r *Runner) reportFailureWithMatchSource(tag *EventTag, event msg.Event, va
 		if theFirstFailure.Index() != -1 {
 			for _, logs := range runnerLogs {
 				if firstFailurePathIndex < len(logs) {
-					runnerLog := logs[firstFailurePathIndex]
+					runnerLog = logs[firstFailurePathIndex]
 					if runnerLog.In != nil && runnerLog.Out != nil {
 						matched = true
 						r.processReporter(runnerLog.In, wildcardFilter)
@@ -450,7 +459,7 @@ func (r *Runner) reportFailureWithMatchSource(tag *EventTag, event msg.Event, va
 
 		if !matched {
 			for _, logs := range runnerLogs {
-				runnerLog := logs[0]
+				runnerLog = logs[0]
 				r.processReporter(runnerLog.In, wildcardFilter)
 				r.processReporter(runnerLog.Out, wildcardFilter)
 			}
@@ -468,6 +477,7 @@ func (r *Runner) reportFailureWithMatchSource(tag *EventTag, event msg.Event, va
 		}
 		counter++
 	}
+	return runnerLog
 }
 
 func (r *Runner) reportSummaryEvent() {
@@ -479,6 +489,7 @@ func (r *Runner) reportSummaryEvent() {
 		contextMessageColor = "red"
 		contextMessageStatus = "FAILED"
 	}
+
 	contextMessage = fmt.Sprintf("%v%v", contextMessage, r.ColorText(contextMessageStatus, contextMessageColor))
 	var totalTagValidated = (r.report.TotalTagPassed + r.report.TotalTagFailed)
 	var validationInfo = fmt.Sprintf("Passed %v/%v (TagIDs).", r.report.TotalTagPassed, totalTagValidated)
@@ -549,22 +560,84 @@ func (r *Runner) reportAssertion(event msg.Event, validations ...*assertly.Valid
 }
 
 func (r *Runner) reportTagSummary() {
+
+	var useCaseCount = 0
 	for _, tag := range r.tags {
+
+		if (tag.FailedCount) > 0 || tag.PassedCount > 0 {
+			useCaseCount++
+		} else {
+			continue
+		}
+		useCase := xunit.NewTestCase()
+		r.xUnitSummary.TestCase = append(r.xUnitSummary.TestCase, useCase)
+		useCase.Label = tag.TagID
+		description := strings.Split(tag.Description, "\n")[0]
+		if description == "" {
+			description = tag.TagID
+		}
+		useCase.Name = description
+		useCase.Tests = fmt.Sprintf("%d", tag.PassedCount+tag.FailedCount)
+		useCase.Failures = fmt.Sprintf("%d", tag.FailedCount)
+
+		var failureLog *runnerLog
+		var validation *assertly.Validation
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
 			r.printMessage(r.ColorText(eventTag, "red"), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
 			var offset = 0
 			for i, event := range tag.Events {
-				validation := r.getValidation(event)
+				validation = r.getValidation(event)
 				if validation == nil {
 					continue
 				}
 				if validation.HasFailure() {
 					var maxIndex = i - 1
-					r.reportFailureWithMatchSource(tag, event, validation, tag.Events, offset, maxIndex)
+					runnerLog := r.reportFailureWithMatchSource(tag, event, validation, tag.Events, offset, maxIndex)
+					if runnerLog != nil {
+						failureLog = runnerLog
+					}
 					offset = i + 1
+					nodes := xunit.NewNodes()
+					useCase.Nodes = nodes
+					nodes.Expected = "/"
+					nodes.Result = "/"
+					for _, failure := range validation.Failures {
+						node := xunit.NewNodes()
+						node.Expected = fmt.Sprintf("%s: %s", failure.Path, failure.Expected)
+						node.Result = fmt.Sprintf("%s: %s", failure.Path, failure.Actual)
+						node.Error = &xunit.Error{
+							Type:  failure.Reason,
+							Value: failure.Message,
+						}
+						nodes.Nodes = append(nodes.Nodes, node)
+					}
 				}
 			}
+		}
+		if validation != nil {
+			useCase.FailuresDetail = validation.Report()
+		}
+		if len(tag.Events) > 0 {
+			useCase.Time = tag.Events[0].Timestamp().String()
+		}
+		if failureLog != nil {
+			useCase.Sysout = failureLog.JSONOutput
+		}
+	}
+	r.xUnitSummary.TestCases = fmt.Sprintf("%d", useCaseCount)
+	r.xUnitSummary.Reports = fmt.Sprintf("%d", useCaseCount)
+	r.xUnitSummary.Tests = fmt.Sprintf("%d", r.report.TotalTagPassed+r.report.TotalTagFailed)
+	r.xUnitSummary.Failures = fmt.Sprintf("%d", +r.report.TotalTagFailed)
+	if r.request != nil && len(r.request.Params) > 0 {
+		if val, ok := r.request.Params["app"]; ok {
+			r.xUnitSummary.Name = toolbox.AsString(val)
+		} else if r.request.Source != nil {
+			workflowPath := r.request.Source.DirectoryPath()
+			if strings.HasSuffix(workflowPath, "/") {
+				workflowPath = string(workflowPath[:len(workflowPath)-1])
+			}
+			_, r.xUnitSummary.Name = path.Split(workflowPath)
 		}
 	}
 }
@@ -614,10 +687,40 @@ func (r *Runner) onCallerStart() {
 func (r *Runner) onCallerEnd() {
 	r.processEventTags()
 	r.reportSummaryEvent()
+	r.printSummary()
+}
+
+func (r *Runner) printSummary() {
+
+	if r.request == nil || r.request.SummaryFormat == "" {
+		return
+	}
+	var err error
+	buf := new(bytes.Buffer)
+	switch r.request.SummaryFormat {
+	case "xml":
+		encoder := xml.NewEncoder(buf)
+		encoder.Indent("  ", "    ")
+		err = encoder.EncodeElement(r.xUnitSummary, xml.StartElement{Name: xml.Name{Local: "test-suite"}})
+	case "yaml":
+		err = yaml.NewEncoder(buf).Encode(r.xUnitSummary)
+	case "json":
+		encoder := json.NewEncoder(buf)
+		encoder.SetIndent("  ", "    ")
+		err = encoder.Encode(r.xUnitSummary)
+	}
+	if err == nil {
+		err = ioutil.WriteFile(fmt.Sprintf("summary.%v", r.request.SummaryFormat), buf.Bytes(), 0644)
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
 
 //Run run Caller for the supplied run request and runner options.
 func (r *Runner) Run(request *workflow.RunRequest) (err error) {
+	r.request = request
 	r.context = r.manager.NewContext(toolbox.NewContext())
 	r.report = &ReportSummaryEvent{}
 	r.context.CLIEnabled = true
@@ -651,6 +754,8 @@ func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 func (r *Runner) processErrorEvent(event msg.Event) bool {
 	if errorEvent, ok := event.Value().(*msg.ErrorEvent); ok {
 		r.err = fmt.Errorf("%v", errorEvent.Error)
+		r.xUnitSummary.Errors = "1"
+		r.xUnitSummary.ErrorsDetail = errorEvent.Error
 		r.report.Error = true
 		r.processReporter(event, WildcardFilter())
 		return true
@@ -673,6 +778,7 @@ func New() *Runner {
 		ServiceActionColor: "gray",
 		ErrorColor:         "red",
 		InverseTag:         true,
+		xUnitSummary:       xunit.NewTestsuite(),
 		MessageStyleColor: map[int]string{
 			messageTypeTagDescription: "cyan",
 			msg.MessageStyleError:     "red",

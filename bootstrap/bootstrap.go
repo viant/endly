@@ -86,6 +86,8 @@ func init() {
 
 	flag.String("c", "", "<credentials>, generate secret credentials file: ~/.secret/<credentials>.json")
 	flag.String("k", "", "<private key path>,  works only with -c options, i.e -k="+path.Join(os.Getenv("HOME"), ".secret/id_rsa.pub"))
+
+	flag.String("x", "", "xunit summary report format: xml|yaml|json")
 	mysql.SetLogger(&emptyLogger{})
 
 }
@@ -453,9 +455,11 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 	if request == nil {
 		return nil, nil
 	}
-
 	if value, ok := flagset["t"]; ok {
 		request.Tasks = value
+	}
+	if value, ok := flagset["x"]; ok {
+		request.SummaryFormat = value
 	}
 	request.Init()
 	if value, ok := flagset["i"]; ok {

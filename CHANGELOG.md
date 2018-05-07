@@ -134,4 +134,8 @@
     * Enhnced @indexBy@ directive to use path exrp for nested sturcture on assertly
     * Minor patches
             
+## May 07 2018 0.8.3
+    * Added xunit summary report
+    * Minor patches
             
+                        

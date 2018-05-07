@@ -260,7 +260,7 @@ func (s *service) registerRoutes() {
 			var err error
 			if req, ok := request.(*dsunit.RunScriptRequest); ok {
 				for i, script := range req.Scripts {
-					req.Scripts[i], err  = context.ExpandResource(script)
+					req.Scripts[i], err = context.ExpandResource(script)
 					if err != nil {
 						return nil, err
 					}
