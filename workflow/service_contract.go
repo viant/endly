@@ -16,6 +16,7 @@ import (
 type RunRequest struct {
 	EnableLogging     bool                   `description:"flag to enable logging"`
 	LogDirectory      string                 `description:"log directory"`
+	SummaryFormat     string                 `description:"summary format: xml|json|yaml, summary file is not produced if this is empty"`
 	EventFilter       map[string]bool        `description:"optional CLI filter option,key is either package name or package name.request/event prefix "`
 	Async             bool                   `description:"flag to runWorkflow it asynchronously. Do not set it your self runner sets the flag for the first workflow"`
 	Params            map[string]interface{} `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
