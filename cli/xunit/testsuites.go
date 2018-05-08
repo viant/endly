@@ -15,7 +15,7 @@ type Testsuite struct {
 	Reports   string `xml:"reports,attr" yaml:"reports,omitempty"  json:"reports,omitempty" `
 
 	Time     string      `xml:"time,attr,omitempty" yaml:"time,omitempty"  json:"time,omitempty" `
-	TestCase []*TestCase `xml:"test-case" yaml:"test-case,omitempty"  json:"test-case,omitempty" `
+	TestCase []*TestCase `xml:"testcase" yaml:"test-case,omitempty"  json:"test-case,omitempty" `
 }
 
 func NewTestsuite() *Testsuite {
