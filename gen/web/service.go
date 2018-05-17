@@ -140,7 +140,7 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	archive.Close()
 
 	//Local debugging
-	err = storage.Copy(builder.destService, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/zz", nil, nil)
+	//err = storage.Copy(builder.destService, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/zz", nil, nil)
 
 	response.Data = writer.Bytes()
 	return response, err

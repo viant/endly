@@ -2,7 +2,6 @@ package web
 
 import (
 	"fmt"
-	"github.com/viant/endly/system/docker"
 )
 
 type AppTemplate struct {
@@ -18,6 +17,15 @@ type DbTemplate struct {
 	Id        string `json:"id"`
 	Name      string `json:"name"`
 	HasConfig bool   `json:"hasConfig"`
+}
+
+
+//Tag represent a docker tag
+type Tag struct {
+	Username string
+	Registry string
+	Image    string
+	Version  string
 }
 
 type GetRequest struct{}
@@ -44,7 +52,7 @@ type Build struct {
 	Docker        bool
 	Dockerfile    bool
 	DockerCompose bool
-	Tag           *docker.Tag
+	Tag           *Tag
 	path          string
 }
 

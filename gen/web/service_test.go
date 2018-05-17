@@ -19,11 +19,12 @@ func TestService_Run(t *testing.T) {
 	srv := NewService(templateURL, assetURL)
 
 	resp, err := srv.Run(&RunRequest{
-		Datastore: &Datastore{
+		Datastore: []*Datastore{{
 			Driver:            "mysql",
 			Name:              "db1",
 			Config:            true,
 			MultiTableMapping: false,
+		},
 		},
 		Build: &Build{
 			Sdk:         "go:1.9",

@@ -14,11 +14,13 @@ import (
 const baseURI = "/v1/api"
 
 type Router struct {
-	mem     storage.Service
-	service *Service
+	mem      storage.Service
+	service  *Service
+	callback func(request *http.Request)
 }
 
 func (r *Router) route() {
+
 	http.Handle(baseURI+"/", r.api())
 	http.Handle("/", r.static())
 	http.Handle("/download/", r.download())
@@ -70,6 +72,9 @@ func (r *Router) setBoolValue(form url.Values, field string, target *bool) {
 
 func (r *Router) download() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if r.callback != nil {
+			r.callback(request)
+		}
 		request.ParseForm()
 		var form = request.Form
 		var runRequest = &RunRequest{
@@ -166,11 +171,13 @@ func (r *Router) static() http.Handler {
 	})
 }
 
-func NewRouter(service *Service) *Router {
+
+func NewRouter(service *Service, callback func(request *http.Request)) *Router {
 	srv := storage.NewMemoryService()
 	var result = &Router{
-		service: service,
-		mem:     srv,
+		service:  service,
+		mem:      srv,
+		callback: callback,
 	}
 	result.route()
 	return result
