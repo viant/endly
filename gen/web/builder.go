@@ -3,7 +3,6 @@ package web
 import (
 	"bytes"
 	"fmt"
-	"github.com/viant/endly/system/docker"
 	"github.com/viant/endly/util"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
@@ -306,7 +305,7 @@ func (b *builder) buildApp(meta *AppMeta, sdkMeta *SdkMeta, request *RunRequest,
 	return err
 }
 
-func extractTag(composeContent string) *docker.Tag {
+func extractTag(composeContent string) *Tag {
 	index := strings.Index(composeContent, "image:")
 	if index == -1 {
 		return nil
@@ -315,7 +314,7 @@ func extractTag(composeContent string) *docker.Tag {
 	if breakIndex := strings.Index(imageInfo, "\n"); breakIndex != -1 {
 		imageInfo = strings.TrimSpace(string(imageInfo[:breakIndex]))
 	}
-	var result = &docker.Tag{}
+	var result = &Tag{}
 	result.Version = "latest"
 	result.Username = "endly"
 	imageVersionPair := strings.SplitN(imageInfo, ":", 2)
