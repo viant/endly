@@ -1,6 +1,9 @@
 package web
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/viant/endly/system/docker"
+)
 
 type AppTemplate struct {
 	Template    string `json:"template"`
@@ -8,6 +11,7 @@ type AppTemplate struct {
 	Sdk         string `json:"sdk"`
 	Docker      bool   `json:"docker"`
 	HasOrigin   bool   `json:"hasOrigin"`
+	MultiDb     bool   `json:"multiDb"`
 }
 
 type DbTemplate struct {
@@ -33,12 +37,15 @@ type Testing struct {
 }
 
 type Build struct {
-	Sdk         string
-	App         string
-	Origin      string
-	TemplateApp string
-	Docker      bool
-	path        string
+	Sdk           string
+	App           string
+	Origin        string
+	TemplateApp   string
+	Docker        bool
+	Dockerfile    bool
+	DockerCompose bool
+	Tag           *docker.Tag
+	path          string
 }
 
 type SystemService struct {
@@ -57,7 +64,7 @@ type Datastore struct {
 type RunRequest struct {
 	Origin    string
 	Build     *Build
-	Datastore *Datastore
+	Datastore []*Datastore
 	Testing   *Testing
 }
 

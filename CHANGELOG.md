@@ -138,4 +138,9 @@
     * Added xunit summary report
     * Minor patches
             
-                        
+## May 17 2018 0.9.0
+    * Added explicit data attribute with  "@" prefix in inline workflows (pipeline)
+    * Added multi datastore selection to workflow generator
+    * Added autodiscovery to workflow generator
+    * Update big query to support DDL schema file
+    * Minor patches

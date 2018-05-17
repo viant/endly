@@ -92,10 +92,9 @@ func init() {
                 <legend class="text-center pt-0">Datastore</legend>
             </div>
             <div class="form-group row">
-
                 <label for="dbEngine" class="col-1 col-form-label">Engine</label>
                 <div class="col-3">
-                    <select class="form-control" id="dbEngine" name="dbEngine" required>
+                    <select size="6"  multiple class="form-control" id="dbEngine" name="dbEngine" required>
                         <option value=""></option>
                     </select>
                     <div class="invalid-feedback">
@@ -104,9 +103,9 @@ func init() {
                 </div>
                 <label for="dbName" class="col-1 col-form-label">Name</label>
                 <div class="col-6">
-                    <input class="form-control" type="text" id="dbName" name="dbName"   placeholder="Datastore Name" required>
+                    <input class="form-control" type="text" id="dbName" name="dbName"   placeholder="datastore names" required>
                     <div class="invalid-feedback">
-                        Please choose an datastore name.
+                        Please choose an datastore names.
                     </div>
                 </div>
 
@@ -170,7 +169,7 @@ func init() {
     <ul> <b>Running workflow:</b>
         <li><a href="https://github.com/viant/endly/releases">download latest endly</a></li>
         <li>unpack downloaded archive (unzip $myapp)</li>
-        <li>change directory to $myapp/endly (cd $myapp/endly)</li>
+        <li>change directory to $myapp/e2e (cd $myapp/e2e)</li>
         <li>setup credentials:
             <ul>
                 <li>localhost (locahost user): endly -c=localhost</li>
@@ -201,7 +200,9 @@ func init() {
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/asset/css/main.css", bytes.NewReader([]byte(``)))
+		err := memStorage.Upload("mem://github.com/viant/endly/asset/css/main.css", bytes.NewReader([]byte(`select[multiple]{
+    height: 100%;
+}`)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/asset/css/main.css %v", err)
 		}
@@ -279,6 +280,17 @@ $(document).ready(function () {
                         origin.prop("disabled", false);
 
                     }
+
+                    var dbEngine = $('#dbEngine');
+
+                    if (meta.multiDb) {
+                        dbEngine.prop("multiple", true);
+
+                    } else {
+                        dbEngine.prop("multiple", false);
+                    }
+
+
                     if (meta.sdk !== "") {
                         sdk.val(meta.sdk);
                         sdk.prop("disabled", true);

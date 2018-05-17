@@ -7,9 +7,9 @@ Workflow,,,Name,Description,Tasks,,,Init,,
 ,,workflow,run,init test data,@req/data,,,,,
 []Tasks,,,Name,Description,Actions,,,,,
 ,,,test,Defines test requests,%Test,,,,,
-[]Test{1..002},Subpath,Service,Action,Description,Request,Skip,When,Init,/Data.db.[]setup,TagDescription
-,use_cases/${index}*,,nop,skip this group if skip.txt is present,{},$HasResource(${subPath}/skip.txt):true,, @var/test_init,,@use_case.txt
-,use_cases/${index}*,,nop,push test data,{},,$HasResource(${subPath}/setup_data.json):true,, @setup_data,
+[]Test{1..002},Subpath,Service,Action,Description,Request,Skip,When,Init,TagDescription,/Data.db
+,use_cases/${index}*,,nop,skip this group if skip.txt is present,{},$HasResource(${subPath}/skip.txt):true,, @var/test_init,@use_case.txt,
+,use_cases/${index}*,,nop,push test data,{},,$HasResource(${subPath}/setup_data.json):true,,,@setup_data
 ,use_cases/${index}*,selenium,run,run selenium test, @selenium_test,,,,,
 ,use_cases/${index}*,http/runner,send,run HTTP test, @http_test,,,,,
 ,use_cases/${index}*,rest/runner,send,run REST test, @rest_test,,,,,

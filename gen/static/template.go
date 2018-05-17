@@ -926,6 +926,8 @@ docker: true
 usesdkbuild: true
 dbconfigpath:  datastore
 dependency: ""
+multidb: true
+autodiscovery: true
 assets:
 args:
 selenium:
@@ -971,45 +973,24 @@ rest:
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/bigquery/ddl/dummy.json", bytes.NewReader([]byte(`{
-  "Fields": [
-    {
-      "name": "id",
-      "type": "integer"
-    },
-    {
-      "name": "name",
-      "type": "string"
-    },
-    {
-      "name": "modified",
-      "type": "timestamp"
-    }
-  ]
-}`)))
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/bigquery/ddl/schema.sql", bytes.NewReader([]byte(`CREATE OR REPLACE TABLE dummy_type (
+  id       INT64 NOT NULL,
+  name     STRING,
+  modified TIMESTAMP
+);
+
+
+CREATE OR REPLACE TABLE dummy (
+  id         INT64 NOT NULL,
+  type_id    INT64 NOT NULL,
+  name       STRING,
+  modified   TIMESTAMP
+);
+
+
+`)))
 		if err != nil {
-			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/bigquery/ddl/dummy.json %v", err)
-		}
-	}
-	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/bigquery/ddl/dummy_type.json", bytes.NewReader([]byte(`{
-  "Fields": [
-    {
-      "name": "id",
-      "type": "integer"
-    },
-    {
-      "name": "name",
-      "type": "string"
-    },
-    {
-      "name": "modified",
-      "type": "timestamp"
-    }
-  ]
-}`)))
-		if err != nil {
-			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/bigquery/ddl/dummy_type.json %v", err)
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/bigquery/ddl/schema.sql %v", err)
 		}
 	}
 	{
@@ -1035,9 +1016,7 @@ config:
   driverName: bigquery
   credentials: $bqCredentials
   parameters:
-    projectId: myproject
-    datasetId: mydataset
-    dateFormat: yyyy-MM-dd hh:mm:ss z
+    datasetId: mydataset  #projectId is read from secret.json file
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/bigquery/register.yaml %v", err)
@@ -1051,6 +1030,7 @@ dictionary: dictionary/
 credentials: $bqCredentials
 data: data/
 sequence: false
+schema: ddl/schema.sql
 tables:
   - dummy
   - dummy_type
@@ -1067,21 +1047,13 @@ tables:
 	}
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/bigquery/init.yaml", bytes.NewReader([]byte(`action: dsunit:init
-type: RDBMS
 datastore: $db
 config:
   driverName: bigquery
   credentials: $bqCredentials
   parameters:
-    projectId: myproject
-    datasetId: mydataset
-    dateFormat: yyyy-MM-dd hh:mm:ss z
+    datasetId: mydataset  #projectId is read from secret.json file
 recreate: true
-tables:
-  - table: "users"
-    pkColumns:
-      - id
-    schemaURL: ddl/$db/dummy.json
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/bigquery/init.yaml %v", err)
@@ -1400,6 +1372,7 @@ CREATE TABLE dummy (
 	}
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/mysql/register.yaml", bytes.NewReader([]byte(`action: dsunit:register
+datastore: $db
 config:
   driverName: mysql
   descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
@@ -1417,7 +1390,7 @@ service: service/mysql
 name: MySQL
 kind: RDBMS
 tag: mysql
-version: 5,7
+version: 5.7
 credentials: $mysqlCredentials
 config: config/my.cnf
 schema: ddl/schema.sql
@@ -1536,11 +1509,7 @@ post:
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/data_init.yaml", bytes.NewReader([]byte(`defaults:
-  datastore: $db
-pipeline:
-  register: $register
-  prepare: $prepare
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/data_init.yaml", bytes.NewReader([]byte(`pipeline:
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/regression/data_init.yaml %v", err)
@@ -1548,12 +1517,14 @@ pipeline:
 	}
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/prepare_data.yaml", bytes.NewReader([]byte(`mapping:
+  datastore: $db
   action: dsunit.mapping
   mappings:
     - URL: regression/$db/mapping.json
   post:
     tables: $Tables
 sequence:
+  datastore: $db
   action: dsunit.sequence
   tables: $tables
   post:
@@ -1561,12 +1532,13 @@ sequence:
 data:
   action: nop
   init:
-    -  key = data.db.setup
-    -  dbSetup = $AsTableRecords($key)
+    -  ${db}key = data.${db}.setup
+    -  ${db}Setup = $AsTableRecords($${db}key)
 setup:
+  datastore: $db
   action: dsunit:prepare
   URL: regression/$db/data/
-  data: $dbSetup
+  data: $${db}Setup
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/regression/prepare_data.yaml %v", err)
@@ -1583,17 +1555,27 @@ URL: $db/expect/
 	}
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/prepare.yaml", bytes.NewReader([]byte(`mapping:
+  datastore: $db
   action: dsunit.mapping
   mappings:
     - URL: regression/$db/mapping.json
   post:
     tables: $Tables
 setup:
+  datastore: $db
   action: dsunit:prepare
   URL: regression/$db/data/
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/regression/prepare.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/dbnode.yaml", bytes.NewReader([]byte(`register: $register
+prepare: $prepare
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/regression/dbnode.yaml %v", err)
 		}
 	}
 	{
@@ -1802,6 +1784,66 @@ CMD ["/$app"$args]`)))
 		}
 	}
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/build/go/docker/compose/app.yaml", bytes.NewReader([]byte(`tasks: $tasks
+init:
+  - buildPath = /tmp/build/$app
+  - version = $appVersion
+defaults:
+  app: $app
+  version: $appVersion
+  useRegistry: false
+pipeline:
+  build:
+    init:
+      action: exec:run
+      target: $target
+      commands:
+        - if [ -e $buildPath ]; then rm -rf $buildPath; fi
+        - mkdir -p $buildPath
+
+    checkout:
+      action: version/control:checkout
+      origin:
+        URL: $originURL
+
+      dest:
+        URL: $buildPath
+        credentials: localhost
+
+    download:
+      action: storage:copy
+      source:
+        URL: config/Dockerfile
+      dest:
+        URL: $buildPath
+        credentials: localhost
+
+    build-img:
+      action: docker:build
+      target: $target
+      path: $buildPath
+      "@tag":
+        image: $image
+        username: $imageUsername
+        version: $appVersion
+
+  stop:
+    target: $appTarget
+    action: docker:composeDown
+    source:
+      URL: config/docker-compose.yaml
+  deploy:
+    target: $appTarget
+    action: docker:composeUp
+    runInBackground: true
+    source:
+      URL: config/docker-compose.yaml
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/build/go/docker/compose/app.yaml %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/build/default/app.yaml", bytes.NewReader([]byte(`tasks: $tasks
 defaults:
   app: $app
@@ -1895,6 +1937,67 @@ CMD ["/$app"$args]`)))
 		}
 	}
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/build/default/docker/compose/app.yaml", bytes.NewReader([]byte(`tasks: $tasks
+init:
+  - buildPath = /tmp/build/$app
+  - version = $appVersion
+defaults:
+  app: $app
+  version: $appVersion
+  useRegistry: false
+pipeline:
+  build:
+    init:
+      action: exec:run
+      target: $target
+      commands:
+        - if [ -e $buildPath ]; then rm -rf $buildPath; fi
+        - mkdir -p $buildPath
+
+    checkout:
+      action: version/control:checkout
+      origin:
+        URL: $originURL
+
+      dest:
+        URL: $buildPath
+        credentials: localhost
+
+    download:
+      action: storage:copy
+      source:
+        URL: config/Dockerfile
+      dest:
+        URL: $buildPath
+        credentials: localhost
+
+    build-img:
+      action: docker:build
+      target: $target
+      path: $buildPath
+      "@tag":
+        image: $image
+        username: $imageUsername
+        version: $appVersion
+
+  stop:
+    target: $appTarget
+    action: docker:composeDown
+    source:
+      URL: config/docker-compose.yaml
+  deploy:
+    target: $appTarget
+    action: docker:composeUp
+    runInBackground: true
+    source:
+      URL: config/docker-compose.yaml
+
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/build/default/docker/compose/app.yaml %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/regression/http_test.json", bytes.NewReader([]byte(`{
   "Requests": [
     {
@@ -1923,9 +2026,9 @@ CMD ["/$app"$args]`)))
 ,,workflow,run,init test data,@req/data,,,,,
 []Tasks,,,Name,Description,Actions,,,,,
 ,,,test,Defines test requests,%Test,,,,,
-[]Test{1..002},Subpath,Service,Action,Description,Request,Skip,When,Init,/Data.db.[]setup,TagDescription
-,use_cases/${index}*,,nop,skip this group if skip.txt is present,{},$HasResource(${subPath}/skip.txt):true,, @var/test_init,,@use_case.txt
-,use_cases/${index}*,,nop,push test data,{},,$HasResource(${subPath}/setup_data.json):true,, @setup_data,
+[]Test{1..002},Subpath,Service,Action,Description,Request,Skip,When,Init,TagDescription,/Data.db
+,use_cases/${index}*,,nop,skip this group if skip.txt is present,{},$HasResource(${subPath}/skip.txt):true,, @var/test_init,@use_case.txt,
+,use_cases/${index}*,,nop,push test data,{},,$HasResource(${subPath}/setup_data.json):true,,,@setup_data
 ,use_cases/${index}*,selenium,run,run selenium test, @selenium_test,,,,,
 ,use_cases/${index}*,http/runner,send,run HTTP test, @http_test,,,,,
 ,use_cases/${index}*,rest/runner,send,run REST test, @rest_test,,,,,

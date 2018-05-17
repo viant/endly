@@ -1,5 +1,1 @@
-defaults:
-  datastore: $db
 pipeline:
-  register: $register
-  prepare: $prepare

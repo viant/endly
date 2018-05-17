@@ -3,6 +3,7 @@ package web
 import (
 	"bytes"
 	"fmt"
+	"github.com/viant/endly/system/docker"
 	"github.com/viant/endly/util"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
@@ -20,11 +21,11 @@ type builder struct {
 	baseURL              string
 	destURL              string
 	destService, storage storage.Service
-	registerDb           Map
+	registerDb           []Map
 	services             Map
 	tags                 []string
 	createDb             Map
-	dbMeta               *DbMeta
+	dbMeta               []*DbMeta
 	populateDb           Map
 }
 
@@ -32,7 +33,10 @@ func (b *builder) addDatastore(assets map[string]string, meta *DbMeta, request *
 	if b.createDb.Has(request.Name) {
 		return nil
 	}
-	b.dbMeta = meta
+	if len(b.dbMeta) == 0 {
+		b.dbMeta = []*DbMeta{}
+	}
+	b.dbMeta = append(b.dbMeta, meta)
 	var state = data.NewMap()
 	state.Put("db", request.Name)
 	init, err := b.NewAssetMap(assets, "init.yaml", state)
@@ -40,9 +44,14 @@ func (b *builder) addDatastore(assets map[string]string, meta *DbMeta, request *
 		return err
 	}
 
-	if b.registerDb, err = b.NewAssetMap(assets, "register.yaml", state); err != nil {
+	registerDb, err := b.NewAssetMap(assets, "register.yaml", state)
+	if err != nil {
 		return err
 	}
+	if len(b.registerDb) == 0 {
+		b.registerDb = make([]Map, 0)
+	}
+	b.registerDb = append(b.registerDb, registerDb)
 
 	//ddl/schema.ddl
 	if meta.Schema != "" {
@@ -64,7 +73,6 @@ func (b *builder) addDatastore(assets map[string]string, meta *DbMeta, request *
 	//dictionary
 	if meta.Dictionary != "" {
 		dictionaryURL := fmt.Sprintf("datastore/%v/dictionary", request.Name)
-
 		for k, v := range assets {
 			if strings.HasPrefix(k, meta.Dictionary) {
 				k = string(k[len(meta.Dictionary):])
@@ -232,30 +240,44 @@ func (b *builder) buildApp(meta *AppMeta, sdkMeta *SdkMeta, request *RunRequest,
 	state.Put("originURL", fmt.Sprintf(`"%v"`, originURL))
 	state.Put("appDirectory", appDirectory)
 
-	if buildRequest.Docker {
-		state.Put("args", args)
-		appFile = "docker/app.yaml"
+	var uploadDockerfile = buildRequest.Dockerfile
+	if buildRequest.DockerCompose && buildRequest.Dockerfile {
+		if buildRequest.Tag != nil {
+			state.Put("app", buildRequest.Tag.Image)
+			state.Put("image", buildRequest.Tag.Image)
+			state.Put("appVersion", buildRequest.Tag.Version)
+			state.Put("imageUsername", buildRequest.Tag.Username)
+		}
+
+		appFile = "docker/compose/app.yaml"
 		if appMap, err = b.NewAssetMap(buildAssets, appFile, state); err != nil {
 			return err
 		}
-
+		uploadDockerfile = false
 	} else {
-		if appMap, err = b.NewAssetMap(buildAssets, "app.yaml", state); err != nil {
-			return err
+		if buildRequest.Docker {
+			state.Put("args", args)
+			appFile = "docker/app.yaml"
+			if appMap, err = b.NewAssetMap(buildAssets, appFile, state); err != nil {
+				return err
+			}
+
+		} else {
+			if appMap, err = b.NewAssetMap(buildAssets, "app.yaml", state); err != nil {
+				return err
+			}
+			start := appMap.SubMap("pipeline.start")
+			start.Put("arguments", meta.Args)
+			appMap.SubMap("pipeline.deploy").Put("upload", b.getDeployUploadMap(meta))
 		}
-		start := appMap.SubMap("pipeline.start")
-		start.Put("arguments", meta.Args)
-		appMap.SubMap("pipeline.deploy").Put("upload", b.getDeployUploadMap(meta))
+		appMap.SubMap("pipeline.build").Put("download", b.getBuildDownloadMap(meta))
 	}
-
-	appMap.SubMap("pipeline.build").Put("download", b.getBuildDownloadMap(meta))
-
 	if app, err = toolbox.AsYamlText(appMap); err != nil {
 		return err
 	}
 	_ = b.UploadToEndly("app.yaml", strings.NewReader(app))
 
-	if buildRequest.Docker {
+	if uploadDockerfile {
 		var dockerAssets = ""
 		if len(meta.Assets) > 0 {
 			for _, asset := range meta.Assets {
@@ -284,11 +306,80 @@ func (b *builder) buildApp(meta *AppMeta, sdkMeta *SdkMeta, request *RunRequest,
 	return err
 }
 
-func (b *builder) addSourceCode(meta *AppMeta, request *Build, assets map[string]string) error {
+func extractTag(composeContent string) *docker.Tag {
+	index := strings.Index(composeContent, "image:")
+	if index == -1 {
+		return nil
+	}
+	imageInfo := composeContent[index+6:]
+	if breakIndex := strings.Index(imageInfo, "\n"); breakIndex != -1 {
+		imageInfo = strings.TrimSpace(string(imageInfo[:breakIndex]))
+	}
+	var result = &docker.Tag{}
+	result.Version = "latest"
+	result.Username = "endly"
+	imageVersionPair := strings.SplitN(imageInfo, ":", 2)
+	if len(imageVersionPair) > 1 {
+		result.Version = imageVersionPair[1]
+		userImagePair := strings.SplitN(imageVersionPair[0], "/", 2)
+		if len(userImagePair) > 1 {
+			result.Username = userImagePair[0]
+			result.Image = userImagePair[1]
+		}
+	} else {
+		result.Image = imageInfo
+	}
+	return result
+}
 
+//TODO java, node, react autodiscovery and initial test setup
+func (b *builder) autoDiscover(request *Build, URL string) {
+	service, err := storage.NewServiceForURL(request.Origin, "")
+	if err != nil {
+		return
+	}
+	objects, err := service.List(URL)
+	if err != nil || len(objects) == 0 {
+		return
+	}
+	for _, candidate := range objects {
+		if request.DockerCompose && request.Dockerfile {
+			return
+		}
+		if candidate.URL() == URL {
+			continue
+		}
+		if candidate.FileInfo().Name() == "config" && candidate.IsFolder() {
+			b.autoDiscover(request, candidate.URL())
+		}
+		if candidate.FileInfo().Name() == "Dockerfile" {
+			if reader, err := service.Download(candidate); err == nil {
+				defer reader.Close()
+				if err := b.UploadToEndly("config/Dockerfile", reader); err == nil {
+					request.Dockerfile = true
+				}
+			}
+		}
+		if candidate.FileInfo().Name() == "docker-compose.yml" || candidate.FileInfo().Name() == "docker-compose.yaml" {
+			if reader, err := service.Download(candidate); err == nil {
+				defer reader.Close()
+				content, err := ioutil.ReadAll(reader)
+				if err != nil {
+					continue
+				}
+				request.Tag = extractTag(string(content))
+				if err := b.UploadToEndly("config/docker-compose.yaml", bytes.NewReader(content)); err == nil {
+					request.DockerCompose = true
+				}
+			}
+		}
+	}
+}
+
+func (b *builder) addSourceCode(meta *AppMeta, request *Build, assets map[string]string) error {
 	var dbConfig Map
-	if b.registerDb != nil {
-		dbConfig = b.registerDb.GetMap("config")
+	if len(b.registerDb) > 0 {
+		dbConfig = b.registerDb[0].GetMap("config")
 	}
 	if meta.DbConfigPath != "" && dbConfig != nil {
 		if config, err := b.NewAssetMap(assets, meta.Config, nil); err == nil {
@@ -304,6 +395,7 @@ func (b *builder) addSourceCode(meta *AppMeta, request *Build, assets map[string
 		}
 		b.Upload(k, strings.NewReader(v))
 	}
+
 	return nil
 }
 
@@ -340,28 +432,31 @@ func (b *builder) addRun(appMeta *AppMeta, request *RunRequest) error {
 	var init = run.GetMap("init")
 	init.Put("sdk", request.Build.Sdk)
 	init.Put("app", request.Build.App)
-	if b.dbMeta != nil && b.dbMeta.Credentials != "" {
-		var credentialName = b.dbMeta.Credentials
-		credentialName = strings.Replace(credentialName, "$", "", 1)
-		secret := strings.ToLower(strings.Replace(credentialName, "Credentials", "", 1))
-		defaults := run.GetMap("defaults")
-		defaults.Put(credentialName, "$"+credentialName)
-		run.Put("defaults", defaults)
-		init.Put(credentialName, secret)
+
+	var hasService bool
+	for _, dbMeta := range b.dbMeta {
+		if b.dbMeta != nil && dbMeta.Credentials != "" {
+			var credentialName = dbMeta.Credentials
+			credentialName = strings.Replace(credentialName, "$", "", 1)
+			secret := strings.ToLower(strings.Replace(credentialName, "Credentials", "", 1))
+			defaults := run.GetMap("defaults")
+			defaults.Put(credentialName, "$"+credentialName)
+			run.Put("defaults", defaults)
+			init.Put(credentialName, secret)
+		}
+		if dbMeta.Service != "" {
+			hasService = true
+		}
 	}
 
-	if b.dbMeta.Service == "" {
-
+	if !hasService {
 		pieline := run.GetMap("pipeline")
 		pielineInit := pieline.GetMap("init")
 		pieline.Put("init", pielineInit.Remove("system"))
-
 		pielineDestroy := pieline.GetMap("destroy")
 		pieline.Put("destroy", pielineDestroy.Remove("system"))
-
 		run.Put("pipeline", pieline)
 	}
-
 	run.Put("init", init)
 	if content, err := toolbox.AsYamlText(run); err == nil {
 		b.UploadToEndly("run.yaml", strings.NewReader(content))
@@ -465,32 +560,35 @@ func (b *builder) buildSeleniumTestAssets(appMeta *AppMeta, request *RunRequest)
 }
 
 func (b *builder) buildDataTestAssets(appMeta *AppMeta, request *RunRequest) error {
+	for i, dbMeta := range b.dbMeta {
+		var setupSource = fmt.Sprintf("regression/%v/setup_data.json", strings.ToLower(dbMeta.Kind))
+		datastore := request.Datastore[i]
+		if datastore.MultiTableMapping {
+			setupSource = fmt.Sprintf("regression/%v/v_setup_data.json", strings.ToLower(dbMeta.Kind))
+		}
+		if setupData, err := b.Download(setupSource, nil); err == nil {
+			b.UploadToEndly(fmt.Sprintf("regression/use_cases/001_xx_case/%s_data.json", datastore.Name), strings.NewReader(strings.Replace(setupData, "$index", "1", 2)))
+			b.UploadToEndly(fmt.Sprintf("regression/use_cases/002_yy_case/%s_data.json", datastore.Name), strings.NewReader(strings.Replace(setupData, "$index", "1", 2)))
 
-	var setupSource = fmt.Sprintf("regression/%v/setup_data.json", strings.ToLower(b.dbMeta.Kind))
-	if request.Datastore.MultiTableMapping {
-		setupSource = fmt.Sprintf("regression/%v/v_setup_data.json", strings.ToLower(b.dbMeta.Kind))
-	}
-
-	if setupData, err := b.Download(setupSource, nil); err == nil {
-		b.UploadToEndly(fmt.Sprintf("regression/use_cases/001_xx_case/%s_data.json", request.Datastore.Name), strings.NewReader(strings.Replace(setupData, "$index", "1", 2)))
-		b.UploadToEndly(fmt.Sprintf("regression/use_cases/002_yy_case/%s_data.json", request.Datastore.Name), strings.NewReader(strings.Replace(setupData, "$index", "1", 2)))
-
-		b.UploadToEndly(fmt.Sprintf("regression/%s_data.json", request.Datastore.Name), strings.NewReader("[]"))
-		b.UploadToEndly(fmt.Sprintf("regression/%s/data/dummy.json", request.Datastore.Name), strings.NewReader("[]"))
-
+			b.UploadToEndly(fmt.Sprintf("regression/%s_data.json", datastore.Name), strings.NewReader("[]"))
+			b.UploadToEndly(fmt.Sprintf("regression/%s/data/dummy.json", datastore.Name), strings.NewReader("[]"))
+		}
 	}
 	return nil
 }
 
 func (b *builder) buildStaticDataTestAssets(appMeta *AppMeta, request *RunRequest) error {
-	var dataSource = "dummy.json"
-	if request.Datastore.MultiTableMapping {
-		dataSource = "v_dummy.json"
-	}
-	setupSource := fmt.Sprintf("regression/data/%v", dataSource)
-	setupData, err := b.Download(setupSource, nil)
-	if err == nil {
-		b.UploadToEndly(fmt.Sprintf("regression/%v/data/%v", request.Datastore.Name, dataSource), strings.NewReader(setupData))
+
+	for _, datastore := range request.Datastore {
+		var dataSource = "dummy.json"
+		if datastore.MultiTableMapping {
+			dataSource = "v_dummy.json"
+		}
+		setupSource := fmt.Sprintf("regression/data/%v", dataSource)
+		setupData, err := b.Download(setupSource, nil)
+		if err == nil {
+			b.UploadToEndly(fmt.Sprintf("regression/%v/data/%v", datastore.Name, dataSource), strings.NewReader(setupData))
+		}
 	}
 	return nil
 }
@@ -587,51 +685,116 @@ func (b *builder) addRegressionData(appMeta *AppMeta, request *RunRequest) error
 		return nil
 	}
 	var state = data.NewMap()
-	state.Put("db", request.Datastore.Name)
+
 	dataInit, err := b.NewMapFromURI("datastore/regression/data_init.yaml", state)
 	if err != nil {
 		return err
 	}
 	pipeline := dataInit.GetMap("pipeline")
-	var prepare Map
-	if request.Testing.UseCaseData {
-		prepare, err = b.NewMapFromURI("datastore/regression/prepare_data.yaml", state)
-	} else {
-		prepare, err = b.NewMapFromURI("datastore/regression/prepare.yaml", state)
-	}
-	if err != nil {
-		return err
-	}
-	var tables interface{} = b.dbMeta.Tables
-	if !request.Datastore.MultiTableMapping {
-		prepare = prepare.Remove("mapping")
-	} else {
-		tables = "$tables"
-		mappping, err := b.Download("regression/mapping.json", nil)
-
-		if err == nil {
-			b.UploadToEndly(fmt.Sprintf("regression/%v/mapping.json", request.Datastore.Name), strings.NewReader(mappping))
-		}
-	}
-
-	if request.Testing.UseCaseData {
-		if !b.dbMeta.Sequence || len(b.dbMeta.Tables) == 0 {
-			prepare = prepare.Remove("sequence")
+	for i, datastore := range request.Datastore {
+		state.Put("db", datastore.Name)
+		var prepare Map
+		if request.Testing.UseCaseData {
+			prepare, err = b.NewMapFromURI("datastore/regression/prepare_data.yaml", state)
 		} else {
-			prepare.GetMap("sequence").Put("tables", tables)
+			prepare, err = b.NewMapFromURI("datastore/regression/prepare.yaml", state)
 		}
-		b.buildDataTestAssets(appMeta, request)
-	} else {
-		b.buildStaticDataTestAssets(appMeta, request)
+		if err != nil {
+			return err
+		}
 
+		dbMeta := b.dbMeta[i]
+
+		var tables interface{} = dbMeta.Tables
+		if !datastore.MultiTableMapping {
+			prepare = prepare.Remove("mapping")
+		} else {
+			tables = "$tables"
+			mappping, err := b.Download("regression/mapping.json", nil)
+
+			if err == nil {
+				b.UploadToEndly(fmt.Sprintf("regression/%v/mapping.json", datastore.Name), strings.NewReader(mappping))
+			}
+		}
+
+		if request.Testing.UseCaseData {
+			if !dbMeta.Sequence || len(dbMeta.Tables) == 0 {
+				prepare = prepare.Remove("sequence")
+			} else {
+				prepare.GetMap("sequence").Put("tables", tables)
+			}
+			b.buildDataTestAssets(appMeta, request)
+		} else {
+			b.buildStaticDataTestAssets(appMeta, request)
+
+		}
+		dbNode, err := b.NewMapFromURI("datastore/regression/dbnode.yaml", state)
+		if err != nil {
+			return err
+		}
+		prepareText, _ := toolbox.AsYamlText(prepare)
+		prepareText = strings.Replace(prepareText, "${db}", datastore.Name, len(prepareText))
+		prepareYAML, _ := b.asMap(prepareText, state)
+		dbNode.Put("register", b.registerDb[i])
+		dbNode.Put("prepare", prepareYAML)
+		pipeline.Put(datastore.Name, dbNode)
 	}
 
-	pipeline.Put("prepare", prepare)
-	pipeline.Put("register", b.registerDb)
 	dataYAML, _ := toolbox.AsYamlText(dataInit)
 	b.UploadToEndly("regression/req/data.yaml", strings.NewReader(dataYAML))
-
 	return nil
+}
+
+func (b *builder) addRegressionUseCaseData(regression string, request *RunRequest) string {
+	lines := strings.Split(regression, "\n")
+	var before = []string{}
+	var setupLine = ""
+	//extract lines before setup_data and after
+	var after = []string{}
+	for i, line := range lines {
+		if strings.Contains(lines[i], "@setup_data") {
+			before = lines[:i]
+			setupLine = line
+			after = lines[i+1:]
+			break
+		}
+	}
+	lines = []string{}
+	headers := []string{}
+	///Data.${db}.[]setup
+	var dataLines = []string{}
+	var columnsOffset = ""
+	//expand setup data per datastore
+	for i, datastore := range request.Datastore {
+		if i > 0 {
+			columnsOffset += ","
+		}
+		headers = append(headers, fmt.Sprintf("/Data.%v.[]setup", datastore.Name))
+		columnsSuffix := strings.Repeat(",", len(request.Datastore)-(i+1))
+		var line = strings.Replace(setupLine, "@setup_data", fmt.Sprintf("%v@%v_data%v", columnsOffset, datastore.Name, columnsSuffix), len(setupLine))
+		line = strings.Replace(line, "setup_data", fmt.Sprintf("%v_data", datastore.Name), len(line))
+		line = strings.Replace(line, "test data", fmt.Sprintf("test %v data", datastore.Name), 1)
+		dataLines = append(dataLines, line)
+
+	}
+
+	//expand root data header per datastore
+	for _, line := range before {
+		if strings.Contains(line, "/Data") {
+			lines = append(lines, strings.Replace(line, "/Data.db", strings.Join(headers, ","), 1))
+
+		} else {
+			lines = append(lines, line+columnsOffset)
+		}
+	}
+	for _, line := range dataLines {
+		lines = append(lines, line)
+	}
+
+	for _, line := range after {
+		lines = append(lines, line+columnsOffset)
+	}
+	return strings.Join(lines, "\n")
 }
 
 func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
@@ -669,9 +832,10 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 		if !request.Testing.UseCaseData {
 			regression = removeMatchedLines(regression, "setup_data")
 		} else {
-			regression = strings.Replace(regression, "setup_data", fmt.Sprintf("%v_data", request.Datastore.Name), len(regression))
+			regression = b.addRegressionUseCaseData(regression, request)
 		}
 	}
+
 	b.UploadToEndly("regression/regression.csv", strings.NewReader(regression))
 	init, err := b.Download("regression/var/init.json", nil)
 	if err != nil {
@@ -690,7 +854,7 @@ func (b *builder) URL(URI string) string {
 }
 
 func (b *builder) UploadToEndly(URI string, reader io.Reader) error {
-	URL := toolbox.URLPathJoin(fmt.Sprintf("%vendly", b.destURL), URI)
+	URL := toolbox.URLPathJoin(fmt.Sprintf("%ve2e/", b.destURL), URI)
 	content, _ := ioutil.ReadAll(reader)
 	//fmt.Printf("%v\n%s\n", URL, content)
 	return b.destService.Upload(URL, bytes.NewReader(content))
@@ -710,9 +874,8 @@ func newBuilder(baseURL string) *builder {
 		services:    NewMap(),
 		createDb:    NewMap(),
 		populateDb:  NewMap(),
-		destURL:     "mem:///endly/",
+		destURL:     "mem:///e2e/",
 		destService: storage.NewPrivateMemoryService(),
 		storage:     storage.NewMemoryService(),
 	}
-
 }

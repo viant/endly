@@ -3,7 +3,7 @@ service: service/mysql
 name: MySQL
 kind: RDBMS
 tag: mysql
-version: 5,7
+version: 5.7
 credentials: $mysqlCredentials
 config: config/my.cnf
 schema: ddl/schema.sql

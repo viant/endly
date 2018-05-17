@@ -1,10 +1,12 @@
 mapping:
+  datastore: $db
   action: dsunit.mapping
   mappings:
     - URL: regression/$db/mapping.json
   post:
     tables: $Tables
 sequence:
+  datastore: $db
   action: dsunit.sequence
   tables: $tables
   post:
@@ -12,9 +14,10 @@ sequence:
 data:
   action: nop
   init:
-    -  key = data.db.setup
-    -  dbSetup = $AsTableRecords($key)
+    -  ${db}key = data.${db}.setup
+    -  ${db}Setup = $AsTableRecords($${db}key)
 setup:
+  datastore: $db
   action: dsunit:prepare
   URL: regression/$db/data/
-  data: $dbSetup
+  data: $${db}Setup

@@ -55,6 +55,17 @@ $(document).ready(function () {
                         origin.prop("disabled", false);
 
                     }
+
+                    var dbEngine = $('#dbEngine');
+
+                    if (meta.multiDb) {
+                        dbEngine.prop("multiple", true);
+
+                    } else {
+                        dbEngine.prop("multiple", false);
+                    }
+
+
                     if (meta.sdk !== "") {
                         sdk.val(meta.sdk);
                         sdk.prop("disabled", true);
