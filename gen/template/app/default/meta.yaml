@@ -5,6 +5,8 @@ docker: true
 usesdkbuild: true
 dbconfigpath:  datastore
 dependency: ""
+multidb: true
+autodiscovery: true
 assets:
 args:
 selenium:

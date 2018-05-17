@@ -881,7 +881,9 @@ const (
     "URL": "ssh://127.0.0.1/",
     "Credentials": "${env.HOME}/.secret/localhost.json"
   },
-  "Source": "test/compose/up/docker-compose.yaml"
+  "Source": {
+	"URL": test/compose/down/docker-compose.yaml"
+  }
 }`
 
 	dockerServiceComposeDownExample = `{
@@ -889,7 +891,9 @@ const (
     "URL": "ssh://127.0.0.1/",
     "Credentials": "${env.HOME}/.secret/localhost.json"
   },
-  "Source": "test/compose/down/docker-compose.yaml"
+  "Source": {
+	"URL": test/compose/down/docker-compose.yaml"
+  }
 }`
 )
 

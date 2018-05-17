@@ -73,7 +73,7 @@ func (r *Router) download() http.Handler {
 		request.ParseForm()
 		var form = request.Form
 		var runRequest = &RunRequest{
-			Datastore: &Datastore{},
+			Datastore: []*Datastore{},
 			Build:     &Build{},
 			Testing:   &Testing{},
 		}
@@ -83,16 +83,41 @@ func (r *Router) download() http.Handler {
 		r.setTextValue(form, "sdk", &runRequest.Build.Sdk, "")
 		r.setBoolValue(form, "docker", &runRequest.Build.Docker)
 
-		r.setTextValue(form, "dbEngine", &runRequest.Datastore.Driver, "mysql")
-		r.setTextValue(form, "dbName", &runRequest.Datastore.Name, "mydb")
-		r.setBoolValue(form, "dbConfig", &runRequest.Datastore.Config)
+		dbConfig := false
+		r.setBoolValue(form, "dbConfig", &dbConfig)
+		dbName := ""
+		r.setTextValue(form, "dbName", &dbName, "db")
+		dbEngines := form["dbEngine"]
+		dbNames := strings.Split(dbName, ",")
 
+		if len(dbNames) == 0 {
+			dbNames = append(dbNames, "mysql")
+		}
+		for i := len(dbNames); i < len(dbEngines); i++ {
+			dbNames = append(dbNames, fmt.Sprintf("db%v", i+1))
+		}
+		for i, dbName := range dbNames {
+			dbNames[i] = strings.Replace(dbName, " ", "", len(dbName))
+		}
+		runRequest.Datastore = []*Datastore{}
+		for i, driver := range dbEngines {
+			if driver == "" {
+				continue
+			}
+			runRequest.Datastore = append(runRequest.Datastore,
+				&Datastore{
+					Driver: driver,
+					Name:   dbNames[i],
+					Config: dbConfig,
+				})
+		}
 		r.setBoolValue(form, "http", &runRequest.Testing.HTTP)
 		r.setBoolValue(form, "rest", &runRequest.Testing.REST)
 		r.setBoolValue(form, "selenium", &runRequest.Testing.Selenium)
 		r.setBoolValue(form, "caseData", &runRequest.Testing.UseCaseData)
-		r.setBoolValue(form, "mapping", &runRequest.Datastore.MultiTableMapping)
-
+		if len(runRequest.Datastore) > 0 {
+			r.setBoolValue(form, "mapping", &runRequest.Datastore[0].MultiTableMapping)
+		}
 		resp, err := r.service.Run(runRequest)
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -105,7 +130,6 @@ func (r *Router) download() http.Handler {
 
 func (r *Router) static() http.Handler {
 	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-
 		var assetPath = string(request.URL.Path[1:])
 		if assetPath == "" {
 			assetPath = "index.html"

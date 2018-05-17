@@ -5,6 +5,7 @@ dictionary: dictionary/
 credentials: $bqCredentials
 data: data/
 sequence: false
+schema: ddl/schema.sql
 tables:
   - dummy
   - dummy_type

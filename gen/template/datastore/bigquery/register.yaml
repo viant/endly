@@ -4,6 +4,4 @@ config:
   driverName: bigquery
   credentials: $bqCredentials
   parameters:
-    projectId: myproject
-    datasetId: mydataset
-    dateFormat: yyyy-MM-dd hh:mm:ss z
+    datasetId: mydataset  #projectId is read from secret.json file

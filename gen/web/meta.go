@@ -31,6 +31,8 @@ type AppMeta struct {
 	OriginURL       string
 	Sdk             string
 	Docker          bool
+	MultiDb         bool
+	AutoDiscovery   bool
 	Args            []string
 	Config          string
 	Build           string //build path

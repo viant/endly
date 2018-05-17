@@ -164,8 +164,15 @@ func (s *service) persistInBackground(sourceManager, destinationManager dsc.Mana
 		dialect := dsc.GetDatastoreDialect(sourceManager.Config().DriverName)
 		datastore, err := dialect.GetCurrentDatastore(sourceManager)
 		if err == nil {
-			columns := dialect.GetColumns(sourceManager, datastore, table)
-			tableDescriptor.Columns = columns
+			columns, err := dialect.GetColumns(sourceManager, datastore, table)
+			if err == nil {
+				tableDescriptor.Columns = []string{}
+				for _, column:= range columns {
+					tableDescriptor.Columns = append(tableDescriptor.Columns, column.Name())
+				}
+			}
+
+
 		}
 	}
 	destinationManager.TableDescriptorRegistry().Register(tableDescriptor)

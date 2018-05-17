@@ -14,6 +14,7 @@ const (
 	DeferredTask = "defer"
 	//ExplicitModelAttributePrefix represent model attribute prefix
 	ExplicitModelAttributePrefix = ":"
+	ExplicitDataAttributePrefix  = "@"
 )
 
 type MapEntry struct {
@@ -80,6 +81,10 @@ func (p Pipelines) split(source interface{}) (attributes, actionData map[string]
 	for k, v := range aMap {
 		if strings.HasPrefix(k, ExplicitModelAttributePrefix) {
 			attributes[strings.ToLower(string(k[1:]))] = v
+			continue
+		}
+		if strings.HasPrefix(k, ExplicitDataAttributePrefix) {
+			actionData[strings.ToLower(string(k[1:]))] = v
 			continue
 		}
 		attributes[k] = v

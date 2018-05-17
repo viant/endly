@@ -77,6 +77,7 @@ func (s *Service) getAppTemplates() ([]*AppTemplate, error) {
 				Sdk:         meta.Sdk,
 				Docker:      meta.Docker,
 				HasOrigin:   meta.OriginURL != "",
+				MultiDb:     meta.MultiDb,
 			})
 		}
 	}
@@ -104,13 +105,19 @@ func (s *Service) Get(request *GetRequest) (*GetResponse, error) {
 func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	var response = &RunResponse{}
 	builder := newBuilder(s.baseTemplateURL)
+	var err error
+	var hasSystem = false
+	for i, datastore := range request.Datastore {
+		err = s.handleDatastore(builder, datastore)
+		if err != nil {
+			return nil, err
+		}
+		if builder.dbMeta[i].Service != "" {
+			hasSystem = true
+		}
 
-	err := s.handleDatastore(builder, request.Datastore)
-	if err != nil {
-		return nil, err
 	}
-
-	if builder.dbMeta.Service != "" {
+	if hasSystem {
 		if err := builder.buildSystem(); err != nil {
 			return nil, err
 		}
@@ -123,7 +130,7 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 		return nil, err
 	}
 	var destURL = builder.destURL
-	destURL = string(destURL[strings.LastIndex(destURL, "/endly"):])
+	destURL = string(destURL[strings.LastIndex(destURL, "/e2e"):])
 	var writer = new(bytes.Buffer)
 	archive := zip.NewWriter(writer)
 	if err = storage.Archive(builder.destService, destURL, archive); err != nil {
@@ -133,7 +140,7 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	archive.Close()
 
 	//Local debugging
-	//err = storage.Copy(builder.destService, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/ss", nil, nil)
+	err = storage.Copy(builder.destService, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/zz", nil, nil)
 
 	response.Data = writer.Bytes()
 	return response, err
@@ -226,9 +233,16 @@ func (s *Service) handleBuild(builder *builder, request *RunRequest) error {
 		return err
 	}
 
+	if request.Origin != "" {
+		request.Build.Origin = request.Origin
+	}
+
 	if err == nil {
 		if request.Build.Sdk == "" {
 			request.Build.Sdk = appMeta.Sdk
+		}
+		if appMeta.AutoDiscovery && request.Origin != "" {
+			builder.autoDiscover(request.Build, request.Origin)
 		}
 		err = builder.buildApp(appMeta, sdkMeta, request, assets)
 	}
