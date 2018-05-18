@@ -144,3 +144,7 @@
     * Added autodiscovery to workflow generator
     * Update big query to support DDL schema file
     * Minor patches
+
+## May 18 2018 0.9.1
+    * Patched workflow generator
+    * Minor patches

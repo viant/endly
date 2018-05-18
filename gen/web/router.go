@@ -171,7 +171,6 @@ func (r *Router) static() http.Handler {
 	})
 }
 
-
 func NewRouter(service *Service, callback func(request *http.Request)) *Router {
 	srv := storage.NewMemoryService()
 	var result = &Router{

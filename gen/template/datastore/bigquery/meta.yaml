@@ -4,7 +4,7 @@ kind: RDBMS
 dictionary: dictionary/
 credentials: $bqCredentials
 data: data/
-sequence: false
+sequence: true
 schema: ddl/schema.sql
 tables:
   - dummy

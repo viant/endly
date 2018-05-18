@@ -13,12 +13,37 @@ type AppTemplate struct {
 	MultiDb     bool   `json:"multiDb"`
 }
 
+type AppTemplates []*AppTemplate
+
+func (a AppTemplates) Len() int {
+	return len(a)
+}
+func (a AppTemplates) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+func (a AppTemplates) Less(i, j int) bool {
+	return a[i].Template < a[j].Template
+}
+
 type DbTemplate struct {
 	Id        string `json:"id"`
 	Name      string `json:"name"`
 	HasConfig bool   `json:"hasConfig"`
 }
 
+type DbTemplates []*DbTemplate
+
+func (a DbTemplates) Len() int {
+	return len(a)
+}
+
+func (a DbTemplates) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+func (a DbTemplates) Less(i, j int) bool {
+	return a[i].Id < a[j].Id
+}
 
 //Tag represent a docker tag
 type Tag struct {

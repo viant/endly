@@ -167,11 +167,10 @@ func (s *service) persistInBackground(sourceManager, destinationManager dsc.Mana
 			columns, err := dialect.GetColumns(sourceManager, datastore, table)
 			if err == nil {
 				tableDescriptor.Columns = []string{}
-				for _, column:= range columns {
+				for _, column := range columns {
 					tableDescriptor.Columns = append(tableDescriptor.Columns, column.Name())
 				}
 			}
-
 
 		}
 	}

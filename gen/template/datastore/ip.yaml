@@ -2,3 +2,4 @@ action: docker:inspect
 name: endly_$db
 post:
   - dbIP = $Info[0].NetworkSettings.IPAddress
+  - ${driver}IP = $Info[0].NetworkSettings.IPAddress

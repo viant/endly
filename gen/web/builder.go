@@ -90,7 +90,7 @@ func (b *builder) addDatastore(assets map[string]string, meta *DbMeta, request *
 }
 
 func (b *builder) addDatastoreService(assets map[string]string, meta *DbMeta, request *Datastore) error {
-	if b.services.Has(request.Driver) {
+	if b.services.Has(request.Driver) || meta.Service == "" {
 		return nil
 	}
 	var service = NewMap()

@@ -1016,7 +1016,7 @@ config:
   driverName: bigquery
   credentials: $bqCredentials
   parameters:
-    datasetId: mydataset  #projectId is read from secret.json file
+    datasetId: $db  #projectId is read from secret.json file
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/bigquery/register.yaml %v", err)
@@ -1029,7 +1029,7 @@ kind: RDBMS
 dictionary: dictionary/
 credentials: $bqCredentials
 data: data/
-sequence: false
+sequence: true
 schema: ddl/schema.sql
 tables:
   - dummy
@@ -1052,7 +1052,7 @@ config:
   driverName: bigquery
   credentials: $bqCredentials
   parameters:
-    datasetId: mydataset  #projectId is read from secret.json file
+    datasetId: $db  #projectId is read from secret.json file
 recreate: true
 `)))
 		if err != nil {
@@ -1503,7 +1503,8 @@ config:
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/ip.yaml", bytes.NewReader([]byte(`action: docker:inspect
 name: endly_$db
 post:
-  - dbIP = $Info[0].NetworkSettings.IPAddress`)))
+  - dbIP = $Info[0].NetworkSettings.IPAddress
+  - ${driver}IP = $Info[0].NetworkSettings.IPAddress`)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/ip.yaml %v", err)
 		}

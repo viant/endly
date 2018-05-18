@@ -200,9 +200,10 @@ func init() {
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/asset/css/main.css", bytes.NewReader([]byte(`select[multiple]{
-    height: 100%;
-}`)))
+		err := memStorage.Upload("mem://github.com/viant/endly/asset/css/main.css", bytes.NewReader([]byte(`body {
+    background: #EEEEEE;
+}
+`)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/asset/css/main.css %v", err)
 		}
@@ -229,6 +230,20 @@ var db = {};
 
 $(document).ready(function () {
 
+
+
+
+    $("#origin").change(function () {
+        var origin = $(this);
+        var URL = origin.val()
+        var index = URL.lastIndexOf("/")
+        if(index !==-1) {
+            var name = URL.substr(index + 1)
+            var appName = $('#appName');
+            appName.val(name)
+        }
+
+    });
     $.ajax({
         dataType: "json",
         url: '/v1/api/meta',
