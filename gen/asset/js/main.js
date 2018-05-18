@@ -4,6 +4,20 @@ var db = {};
 
 $(document).ready(function () {
 
+
+
+
+    $("#origin").change(function () {
+        var origin = $(this);
+        var URL = origin.val()
+        var index = URL.lastIndexOf("/")
+        if(index !==-1) {
+            var name = URL.substr(index + 1)
+            var appName = $('#appName');
+            appName.val(name)
+        }
+
+    });
     $.ajax({
         dataType: "json",
         url: '/v1/api/meta',

@@ -8,6 +8,7 @@ import (
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/storage"
 	"gopkg.in/yaml.v2"
+	"sort"
 	"strings"
 )
 
@@ -22,7 +23,7 @@ func (s *Service) getDbTemplates() ([]*DbTemplate, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result = make([]*DbTemplate, 0)
+	var result DbTemplates = make([]*DbTemplate, 0)
 	for k := range templ {
 		if strings.HasSuffix(k, "meta.yaml") {
 			meta, err := s.loadDbMeta(k, templ)
@@ -36,6 +37,7 @@ func (s *Service) getDbTemplates() ([]*DbTemplate, error) {
 			})
 		}
 	}
+	sort.Sort(result)
 	return result, nil
 }
 
@@ -55,6 +57,7 @@ func (s *Service) getSdk() ([]string, error) {
 			result = append(result, fmt.Sprintf("%v:%v", meta.Sdk, meta.Version))
 		}
 	}
+
 	return result, nil
 }
 
@@ -64,7 +67,7 @@ func (s *Service) getAppTemplates() ([]*AppTemplate, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result = make([]*AppTemplate, 0)
+	var result AppTemplates = make([]*AppTemplate, 0)
 	for k := range templ {
 		if strings.HasSuffix(k, "meta.yaml") {
 			meta, err := s.loadAppMeta(k, templ)
@@ -81,6 +84,7 @@ func (s *Service) getAppTemplates() ([]*AppTemplate, error) {
 			})
 		}
 	}
+	sort.Sort(result)
 	return result, nil
 }
 

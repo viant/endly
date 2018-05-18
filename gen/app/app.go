@@ -21,7 +21,9 @@ func main() {
 		toolbox.URLPathJoin(baseURL, "asset"),
 	)
 
-	web.NewRouter(service)
+	web.NewRouter(service, func(request *http.Request) {
+
+	})
 
 	http.ListenAndServe(":8071", nil)
 }

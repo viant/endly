@@ -4,5 +4,5 @@ config:
   driverName: bigquery
   credentials: $bqCredentials
   parameters:
-    datasetId: mydataset  #projectId is read from secret.json file
+    datasetId: $db  #projectId is read from secret.json file
 recreate: true
