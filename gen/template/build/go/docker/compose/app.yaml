@@ -1,6 +1,6 @@
 tasks: $tasks
 init:
-  - buildPath = /tmp/build/$app
+  - buildPath = /tmp/build/$app/
   - version = $appVersion
 defaults:
   app: $app
