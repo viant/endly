@@ -1787,7 +1787,7 @@ CMD ["/$app"$args]`)))
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/build/go/docker/compose/app.yaml", bytes.NewReader([]byte(`tasks: $tasks
 init:
-  - buildPath = /tmp/build/$app
+  - buildPath = /tmp/build/$app/
   - version = $appVersion
 defaults:
   app: $app
@@ -1940,7 +1940,7 @@ CMD ["/$app"$args]`)))
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/build/default/docker/compose/app.yaml", bytes.NewReader([]byte(`tasks: $tasks
 init:
-  - buildPath = /tmp/build/$app
+  - buildPath = /tmp/build/$app/
   - version = $appVersion
 defaults:
   app: $app
