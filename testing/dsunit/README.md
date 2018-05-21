@@ -497,5 +497,5 @@ Tested, but not included drivers with custom build:
 
  - vertica
  - oracle
- - redis
+
  
