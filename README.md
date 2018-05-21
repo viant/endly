@@ -78,8 +78,6 @@ func main() {
 
 
 
-
-
 <a name="Introduction"></a>
 ## Introduction
 
@@ -336,6 +334,7 @@ You can build, deploy and test them end to end all with endly.
 - [Usage](doc/usage)
 - [Pipeline](doc/pipeline)
 - [Workflow](doc/workflow)
+- [Data store testing](testing/dsunit)
 
 
 @run.yaml
