@@ -1,5 +1,8 @@
-**Datastore services**
+# Datastore services
 
+- [Usage](#usage)
+- [Datstore Credentials](#credentials)
+- [Supported databases](#databases)
 
 
 Datastore service uses [dsunit](https://github.com/viant/dsunit/) service to create, populate, and verify content of datastore. 
@@ -19,7 +22,8 @@ Datastore service uses [dsunit](https://github.com/viant/dsunit/) service to cre
 | dsunit | sequence | get sequence values for supplied tables |  [SequenceRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L388) | [SequenceResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#400)  |
 
 
-###Usage:
+<a name="usage"></a>
+## Usage
 
 In order to operate on any data store the first step is to register named data store with specific driver:
 
@@ -452,6 +456,7 @@ expected/user.json
 ```
 
 
+<a name="credentials"></a>
 ## Datastore credentials
 
 
@@ -473,6 +478,7 @@ endly -c=mysql
 For BigQuery: use service account generated JSON credentials  
 
 
+<a name="databases"></a>
 ## Supported databases
 
 - any database that provide database/sql golang driver.
