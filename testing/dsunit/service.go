@@ -162,6 +162,7 @@ const (
     "URL": "datastore/db1/use_case2/",
 	"Prefix":"expect_"
   }`
+	dsunitServiceMapping = `{"mappings":{"URL":"regression/db1/mapping.json"}}`
 )
 
 func (s *service) registerRoutes() {
@@ -305,7 +306,12 @@ func (s *service) registerRoutes() {
 		Action: "mapping",
 		RequestInfo: &endly.ActionInfo{
 			Description: "register database table mapping (view)",
-			Examples:    []*endly.UseCase{},
+			Examples:    []*endly.UseCase{
+				{
+					Description: "external mapping",
+					Data:        dsunitServiceMapping,
+				},
+			},
 		},
 		RequestProvider: func() interface{} {
 			return &MappingRequest{}
