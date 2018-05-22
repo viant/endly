@@ -23,8 +23,13 @@ func (s *restService) sendRequest(context *endly.Context, request *Request) (*Re
 	repeater := request.Repeater.Init()
 
 	var extracted = make(map[string]interface{})
+	var state = context.State()
+	var req = request.Request
+	if req != nil {
+		req = state.Expand(req)
+	}
 	handler := func() (interface{}, error) {
-		err := toolbox.RouteToService(request.Method, request.URL, request.Request, &resetResponse)
+		err := toolbox.RouteToService(request.Method, context.Expand(request.URL), req, &resetResponse)
 		if err != nil {
 			return nil, err
 		}
