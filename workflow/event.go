@@ -50,4 +50,3 @@ type AsyncEvent struct {
 func NewAsyncEvent(action *model.Action) *AsyncEvent {
 	return &AsyncEvent{action}
 }
-
