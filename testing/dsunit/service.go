@@ -306,7 +306,7 @@ func (s *service) registerRoutes() {
 		Action: "mapping",
 		RequestInfo: &endly.ActionInfo{
 			Description: "register database table mapping (view)",
-			Examples:    []*endly.UseCase{
+			Examples: []*endly.UseCase{
 				{
 					Description: "external mapping",
 					Data:        dsunitServiceMapping,
