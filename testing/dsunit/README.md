@@ -50,8 +50,6 @@ pipeline:
 ```
 
 
-
-
 - **Create database schema and populating static data**
 
 ```bash
@@ -455,10 +453,8 @@ expected/user.json
 ]
 ```
 
-
 <a name="credentials"></a>
 ## Datastore credentials
-
 
 Credential are stored in ~/.secret/CREDENTIAL_NAME.json using [toolobx/cred/config.go](https://github.com/viant/toolbox/blob/master/cred/config.go) format.
 
