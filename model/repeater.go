@@ -61,10 +61,16 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 		return true, nil
 	}
 	extractableOutput, structuredOutput := util.AsExtractable(out)
-
+	state := context.State()
 	if len(structuredOutput) > 0 {
 		var extractedVariables = data.NewMap()
 		err = r.Variables.Apply(structuredOutput, extractedVariables)
+		if len(extractedVariables) > 0 {
+			context.Publish(NewModifiedStateEvent(r.Variables, structuredOutput, extractedVariables))
+
+			state.Apply(extractedVariables)
+		}
+
 		for k, v := range extractedVariables {
 			extracted[k] = toolbox.AsString(v)
 		}
@@ -72,6 +78,7 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 			extractableOutput, _ = toolbox.AsJSONText(structuredOutput)
 		}
 	}
+
 	err = r.Extraction.Extract(context, extracted, extractableOutput)
 	if err != nil {
 		return false, err
