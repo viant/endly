@@ -63,10 +63,11 @@ type GetResponse struct {
 }
 
 type Testing struct {
-	REST        bool
-	HTTP        bool
-	Selenium    bool `json:"selenium"`
-	UseCaseData bool `json:"useCaseData"`
+	REST           bool
+	HTTP           bool
+	Selenium       bool   `json:"selenium"`
+	UseCaseData    string `json:"useCaseData"`
+	DataValidation bool   `json:"dataValidation"`
 }
 
 type Build struct {

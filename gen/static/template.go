@@ -1501,6 +1501,7 @@ config:
 	}
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/ip.yaml", bytes.NewReader([]byte(`action: docker:inspect
+target: $target
 name: endly_$db
 post:
   - dbIP = $Info[0].NetworkSettings.IPAddress
@@ -1546,6 +1547,22 @@ setup:
 		}
 	}
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/req/expect.yaml", bytes.NewReader([]byte(`action: dsunit:expect
+datastore: $db
+URL: ${path}/prepare/$db`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/regression/req/expect.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/req/prepare.yaml", bytes.NewReader([]byte(`action: dsunit:prepare
+datastore: $db
+URL: ${path}/prepare/$db`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/regression/req/prepare.yaml %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/expect.yaml", bytes.NewReader([]byte(`datastore: $db
 action: dsunit:prepare
 URL: $db/expect/
@@ -1572,7 +1589,8 @@ setup:
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/dbnode.yaml", bytes.NewReader([]byte(`register: $register
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/dbnode.yaml", bytes.NewReader([]byte(`"${driver}-ip": $ip
+register: $register
 prepare: $prepare
 `)))
 		if err != nil {
@@ -2018,26 +2036,28 @@ pipeline:
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/regression/regression.csv", bytes.NewReader([]byte(`Workflow,,,Name,Description,Tasks,,,Init,,
-,,,regression,$app app regresion test,%Tasks,,, @var/init,,
-[]Tasks,,,Name,Description,Actions,,,,,
-,,,prepare,prepare data for test use cases,%Prepare,,,,,
-[]Prepare,,Service,Action,Description,Request,,,,,
-,,workflow,run,init selenium,@req/selenium_init,,,,,
-,,workflow,run,init test data,@req/data,,,,,
-[]Tasks,,,Name,Description,Actions,,,,,
-,,,test,Defines test requests,%Test,,,,,
-[]Test{1..002},Subpath,Service,Action,Description,Request,Skip,When,Init,TagDescription,/Data.db
-,use_cases/${index}*,,nop,skip this group if skip.txt is present,{},$HasResource(${subPath}/skip.txt):true,, @var/test_init,@use_case.txt,
-,use_cases/${index}*,,nop,push test data,{},,$HasResource(${subPath}/setup_data.json):true,,,@setup_data
-,use_cases/${index}*,selenium,run,run selenium test, @selenium_test,,,,,
-,use_cases/${index}*,http/runner,send,run HTTP test, @http_test,,,,,
-,use_cases/${index}*,rest/runner,send,run REST test, @rest_test,,,,,
-[]Tasks,,,Name,Description,Actions,,,,,
-,,,clean,stop test services,%Clean,,,,,
-[]Clean,,Service,Action,Description,Request,SleepTimeMs,,,,
-,,,nop,sleep for easy debuging,{},1000,,,,
-,,,run,close and stop seleniun,@req/selenium_destroy,,,,,`)))
+		err := memStorage.Upload("mem://github.com/viant/endly/template/regression/regression.csv", bytes.NewReader([]byte(`Workflow,,,Name,Description,Tasks,,,Init,,,
+,,,regression,$app app regresion test,%Tasks,,, @var/init,,,
+[]Tasks,,,Name,Description,Actions,,,,,,
+,,,prepare,prepare data for test use cases,%Prepare,,,,,,
+[]Prepare,,Service,Action,Description,Request,,,,,,
+,,workflow,run,init selenium,@req/selenium_init,,,,,,
+,,workflow,run,set initial data state,@data,,,,,,
+[]Tasks,,,Name,Description,Actions,,,,,,
+,,,test,Defines test requests,%Test,,,,,,
+[]Test{1..002},Subpath,Service,Action,Description,Request,Skip,When,Init,TagDescription,db,/Data.db
+,use_cases/${index}*,,nop,skip this group if skip.txt is present,{},$HasResource(${subPath}/skip.txt):true,, @var/test_init,@use_case.txt,,
+,use_cases/${index}*,,nop,push test data,{},,$HasResource(${subPath}/setup_data.json):true,,,,@setup_data
+,use_cases/${index}*,dsunit,prepare,set initial test $db state, @req/prepare,,$HasResource(${path}/prepare/${db}):true,,,$datastore,
+,use_cases/${index}*,selenium,run,run selenium test, @selenium_test,,,,,,
+,use_cases/${index}*,http/runner,send,run HTTP test, @http_test,,,,,,
+,use_cases/${index}*,rest/runner,send,run REST test, @rest_test,,,,,,
+,use_cases/${index}*,dsunit,expect,verify test $db state, @req/expect,,$HasResource(${path}/expect/${db}):true,,,$datastore,
+[]Tasks,,,Name,Description,Actions,,,,,,
+,,,clean,stop test services,%Clean,,,,,,
+[]Clean,,Service,Action,Description,Request,SleepTimeMs,,,,,
+,,,nop,sleep for easy debuging,{},1000,,,,,
+,,,run,close and stop seleniun,@req/selenium_destroy,,,,,,`)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/regression/regression.csv %v", err)
 		}

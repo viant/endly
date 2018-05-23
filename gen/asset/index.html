@@ -37,7 +37,8 @@
 
                 <label for="origin" class="col-1 col-form-label">Origin</label>
                 <div class="col">
-                    <input class="form-control" type="text" id="origin" name="origin" placeholder="Source code URL" required>
+                    <input class="form-control" type="text" id="origin" name="origin" placeholder="Source code URL"
+                           required>
                     <div class="invalid-feedback">
                         Please choose an application origin
                     </div>
@@ -47,7 +48,8 @@
             <div class="form-row row">
                 <label for="appName" class="col-1 col-form-label">Name</label>
                 <div class="col-6">
-                    <input class="form-control" type="text" name="appName" id="appName" placeholder="Application Name" required>
+                    <input class="form-control" type="text" name="appName" id="appName" placeholder="Application Name"
+                           required>
                     <div class="invalid-feedback">
                         Please choose an application name.
                     </div>
@@ -75,7 +77,6 @@
         </fieldset>
 
 
-
         <fieldset class="form-group">
             <div class="form-row text-center">
                 <legend class="text-center pt-0">Datastore</legend>
@@ -83,7 +84,7 @@
             <div class="form-group row">
                 <label for="dbEngine" class="col-1 col-form-label">Engine</label>
                 <div class="col-3">
-                    <select size="6"  multiple class="form-control" id="dbEngine" name="dbEngine" required>
+                    <select size="6" multiple class="form-control" id="dbEngine" name="dbEngine" required>
                         <option value=""></option>
                     </select>
                     <div class="invalid-feedback">
@@ -92,7 +93,8 @@
                 </div>
                 <label for="dbName" class="col-1 col-form-label">Name</label>
                 <div class="col-6">
-                    <input class="form-control" type="text" id="dbName" name="dbName"   placeholder="datastore names" required>
+                    <input class="form-control" type="text" id="dbName" name="dbName" placeholder="datastore names"
+                           required>
                     <div class="invalid-feedback">
                         Please choose an datastore names.
                     </div>
@@ -105,9 +107,48 @@
                     </label>
                 </div>
 
+
             </div>
         </fieldset>
 
+        <fieldset class="form-group">
+            <div class="form-group row">
+                <div class="mx-auto">Use case data:
+                    <div class="form-check form-check-inline">
+                        <input type="radio" class="form-check-input form-control-lg" id="caseDataEmpty" name="useCaseData" value="">
+                        <label class="form-check-label" for="caseDataEmpty">Not include</label>
+                    </div>
+
+                    <div class="form-check form-check-inline">
+                        <input type="radio" class="form-check-input form-control-lg" id="caseDataInclude" name="useCaseData"
+                               value="test">
+                        <label class="form-check-label" for="caseDataInclude">Per test</label>
+                    </div>
+
+                    <div class="form-check form-check-inline">
+                        <input type="radio" class="form-check-input form-control-lg" id="caseDataPreload"
+                               name="useCaseData" value="preload">
+                        <label class="form-check-label" for="caseDataPreload">Preload</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="form-check mx-auto">
+                    <input type="checkbox" class="form-check-input form-control-lg" id="dataValidation" name="dataValidation">
+                    <label class="form-check-label" for="dataValidation">Data validation</label>
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <div class="form-check mx-auto">
+                    <input type="checkbox" class="form-check-input form-control-lg" id="mapping" name="mapping">
+                    <label class="form-check-label" for="caseData">Multi table mapping</label>
+                </div>
+            </div>
+
+
+        </fieldset>
 
 
         <fieldset class="form-group">
@@ -137,25 +178,13 @@
                 </div>
             </div>
 
-            <div class="form-group row">
-                <div class="form-check mx-auto">
-                    <input type="checkbox" class="form-check-input form-control-lg" id="caseData" name="caseData">
-                    <label class="form-check-label" for="caseData">Setup data per use case</label>
-                </div>
-            </div>
 
-            <div class="form-group row">
-                <div class="form-check mx-auto">
-                    <input type="checkbox" class="form-check-input form-control-lg" id="mapping" name="mapping">
-                    <label class="form-check-label" for="caseData">Multi table mapping</label>
-                </div>
-            </div>
         </fieldset>
         <div class="form-group row text-center ">
             <button type="submit" class="mx-auto  btn btn-primary">Download</button>
         </div>
     </form>
-    <ul> <b>Running workflow:</b>
+    <ul><b>Running workflow:</b>
         <li><a href="https://github.com/viant/endly/releases">download latest endly</a></li>
         <li>unpack downloaded archive (unzip $myapp)</li>
         <li>change directory to $myapp/e2e (cd $myapp/e2e)</li>
