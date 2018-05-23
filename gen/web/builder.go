@@ -3,6 +3,7 @@ package web
 import (
 	"bytes"
 	"fmt"
+	_ "github.com/viant/endly/static" //load external resource like .csv .json files to mem storage
 	"github.com/viant/endly/util"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
@@ -576,8 +577,23 @@ func (b *builder) buildDataTestAssets(appMeta *AppMeta, request *RunRequest) err
 	return nil
 }
 
-func (b *builder) buildStaticDataTestAssets(appMeta *AppMeta, request *RunRequest) error {
+func (b *builder) buildTestUseCaseDataTestAssets(appMeta *AppMeta, request *RunRequest) error {
+	for _, datastore := range request.Datastore {
+		var dataSource = "dummy.json"
+		if datastore.MultiTableMapping {
+			dataSource = "v_dummy.json"
+		}
+		setupSource := fmt.Sprintf("regression/data/%v", dataSource)
+		setupData, err := b.Download(setupSource, nil)
+		if err == nil {
+			err = b.UploadToEndly(fmt.Sprintf("regression/use_cases/001_xx_case/prepare/%v/%v", datastore.Name, dataSource), strings.NewReader(setupData))
+		}
 
+	}
+	return nil
+}
+
+func (b *builder) buildStaticDataTestAssets(appMeta *AppMeta, request *RunRequest) error {
 	for _, datastore := range request.Datastore {
 		var dataSource = "dummy.json"
 		if datastore.MultiTableMapping {
@@ -690,20 +706,21 @@ func (b *builder) addRegressionData(appMeta *AppMeta, request *RunRequest) error
 		return err
 	}
 	pipeline := dataInit.GetMap("pipeline")
+
 	for i, datastore := range request.Datastore {
 		state.Put("db", datastore.Name)
 		var prepare Map
-		if request.Testing.UseCaseData {
+
+		switch request.Testing.UseCaseData {
+		case "load":
 			prepare, err = b.NewMapFromURI("datastore/regression/prepare_data.yaml", state)
-		} else {
+		default:
 			prepare, err = b.NewMapFromURI("datastore/regression/prepare.yaml", state)
 		}
 		if err != nil {
 			return err
 		}
-
 		dbMeta := b.dbMeta[i]
-
 		var tables interface{} = dbMeta.Tables
 		if !datastore.MultiTableMapping {
 			prepare = prepare.Remove("mapping")
@@ -716,35 +733,98 @@ func (b *builder) addRegressionData(appMeta *AppMeta, request *RunRequest) error
 			}
 		}
 
-		if request.Testing.UseCaseData {
+		switch request.Testing.UseCaseData {
+		case "test":
+			b.buildTestUseCaseDataTestAssets(appMeta, request)
+		case "preload":
+
 			if !dbMeta.Sequence || len(dbMeta.Tables) == 0 {
 				prepare = prepare.Remove("sequence")
 			} else {
 				prepare.GetMap("sequence").Put("tables", tables)
 			}
 			b.buildDataTestAssets(appMeta, request)
-		} else {
-			b.buildStaticDataTestAssets(appMeta, request)
 
+		default:
+			b.buildStaticDataTestAssets(appMeta, request)
 		}
+
+		state.Put("driver", datastore.Driver)
+		state.Put("db", datastore.Name)
 		dbNode, err := b.NewMapFromURI("datastore/regression/dbnode.yaml", state)
 		if err != nil {
 			return err
 		}
+
+		readIp, _ := b.NewMapFromURI("datastore/ip.yaml", state)
 		prepareText, _ := toolbox.AsYamlText(prepare)
 		prepareText = strings.Replace(prepareText, "${db}", datastore.Name, len(prepareText))
 		prepareYAML, _ := b.asMap(prepareText, state)
+
+		if b.dbMeta[i].Service == "" {
+			dbNode = dbNode.Remove(fmt.Sprintf("%v-ip", datastore.Driver))
+		} else {
+			dbNode.Put(fmt.Sprintf("%v-ip", datastore.Driver), readIp)
+		}
 		dbNode.Put("register", b.registerDb[i])
-		dbNode.Put("prepare", prepareYAML)
+
+		if request.Testing.UseCaseData == "test" {
+			dbNode = dbNode.Remove("prepare")
+		} else {
+			dbNode.Put("prepare", prepareYAML)
+		}
 		pipeline.Put(datastore.Name, dbNode)
 	}
 
 	dataYAML, _ := toolbox.AsYamlText(dataInit)
-	b.UploadToEndly("regression/req/data.yaml", strings.NewReader(dataYAML))
+	b.UploadToEndly("regression/data.yaml", strings.NewReader(dataYAML))
 	return nil
 }
 
-func (b *builder) addRegressionUseCaseData(regression string, request *RunRequest) string {
+func removePreloadUseCaseReference(regression string) string {
+	regression = strings.Replace(regression, "/Data.db", "", 1)
+	var lines = []string{}
+	for _, line := range strings.Split(regression, "\n") {
+		lines = append(lines, string(line[:len(line)-1]))
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (b *builder) expandPrepareTestUseCaseData(regression string, request *RunRequest) string {
+	var lines = []string{}
+	for _, line := range strings.Split(regression, "\n") {
+		if strings.Contains(line, "set initial test") {
+
+			for _, datastore := range request.Datastore {
+				var state = data.NewMap()
+				state.Put("datastore", datastore.Name)
+				lines = append(lines, state.ExpandAsText(line))
+			}
+		} else {
+			lines = append(lines, line)
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (b *builder) expandExpectTestUseCaseData(regression string, request *RunRequest) string {
+	var lines = []string{}
+	for _, line := range strings.Split(regression, "\n") {
+		if strings.Contains(line, "verify test") {
+
+			for _, datastore := range request.Datastore {
+				var state = data.NewMap()
+				state.Put("datastore", datastore.Name)
+				lines = append(lines, state.ExpandAsText(line))
+			}
+		} else {
+			lines = append(lines, line)
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
+func (b *builder) expandPushPreloadedUseCaseData(regression string, request *RunRequest) string {
 	lines := strings.Split(regression, "\n")
 	var before = []string{}
 	var setupLine = ""
@@ -828,10 +908,37 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 		regression = removeMatchedLines(regression, "test data")
 	} else {
 		b.addRegressionData(appMeta, request)
-		if !request.Testing.UseCaseData {
-			regression = removeMatchedLines(regression, "setup_data")
+		if request.Testing.DataValidation {
+			regression = b.expandExpectTestUseCaseData(regression, request)
+			prepare, err := b.Download("datastore/regression/req/expect.yaml", nil)
+			if err != nil {
+				return err
+			}
+			b.UploadToEndly("regression/req/expect.yaml", strings.NewReader(prepare))
+			b.UploadToEndly("regression/use_cases/001_xx_case/expect/README", strings.NewReader("Create a folder for each datastore with JSON or CSV files with expected data, filename refers to data store table."))
 		} else {
-			regression = b.addRegressionUseCaseData(regression, request)
+			regression = removeMatchedLines(regression, "verify test")
+		}
+
+		switch request.Testing.UseCaseData {
+		case "test":
+			regression = removePreloadUseCaseReference(regression)
+			regression = b.expandPrepareTestUseCaseData(regression, request)
+			regression = removeMatchedLines(regression, "setup_data")
+			prepare, err := b.Download("datastore/regression/req/prepare.yaml", nil)
+			if err != nil {
+				return err
+			}
+			b.UploadToEndly("regression/req/prepare.yaml", strings.NewReader(prepare))
+			b.UploadToEndly("regression/use_cases/001_xx_case/prepare/README", strings.NewReader("Create a folder for each datastore with JSON or CSV data files, filename refers to data store table.\nTo remove data from table place first empty record in the file, followed by actual data "))
+
+		case "preload":
+			regression = removeMatchedLines(regression, "set initial test")
+			regression = b.expandPushPreloadedUseCaseData(regression, request)
+		default:
+			regression = removePreloadUseCaseReference(regression)
+			regression = removeMatchedLines(regression, "setup_data")
+			regression = removeMatchedLines(regression, "set initial test")
 		}
 	}
 
@@ -855,7 +962,6 @@ func (b *builder) URL(URI string) string {
 func (b *builder) UploadToEndly(URI string, reader io.Reader) error {
 	URL := toolbox.URLPathJoin(fmt.Sprintf("%ve2e/", b.destURL), URI)
 	content, _ := ioutil.ReadAll(reader)
-	//fmt.Printf("%v\n%s\n", URL, content)
 	return b.destService.Upload(URL, bytes.NewReader(content))
 }
 

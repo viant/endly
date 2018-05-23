@@ -16,19 +16,33 @@ type restService struct {
 
 func (s *restService) sendRequest(context *endly.Context, request *Request) (*Response, error) {
 	var resetResponse = make(map[string]interface{})
-	err := toolbox.RouteToService(request.Method, request.URL, request.Request, &resetResponse)
-	if err != nil {
-		return nil, err
-	}
 	var response = &Response{
 		Response: resetResponse,
 	}
 
+	repeater := request.Repeater.Init()
+
+	var extracted = make(map[string]interface{})
+	var state = context.State()
+	var req = request.Request
+	if req != nil {
+		req = state.Expand(req)
+	}
+	handler := func() (interface{}, error) {
+		err := toolbox.RouteToService(request.Method, context.Expand(request.URL), req, &resetResponse)
+		if err != nil {
+			return nil, err
+		}
+		return resetResponse, nil
+	}
+	err := repeater.Run(s.AbstractService, "RESTRunner", context, handler, extracted)
+	if err != nil {
+		return response, err
+	}
 	if request.Expect != nil {
 		response.Assert, err = validator.Assert(context, request, request.Expect, resetResponse, "REST.response", "assert REST response")
 	}
 	return response, err
-
 }
 
 const restSendExample = `

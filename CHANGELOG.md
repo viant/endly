@@ -145,6 +145,10 @@
     * Update big query to support DDL schema file
     * Minor patches
 
-## May 18 2018 0.9.1
-    * Patched workflow generator
+## May 23 2018 0.10.0
+    * Customized data setup in workflow generator
+    * Added data validation option to workflow generator
+    * Added repeater to rest send request
+    * Assertly validation enhancement
+    * Added actual datastore and expected dsunit validation data
     * Minor patches
