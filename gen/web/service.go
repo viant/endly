@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"fmt"
+	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/storage"
@@ -133,6 +134,7 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var destURL = builder.destURL
 	destURL = string(destURL[strings.LastIndex(destURL, "/e2e"):])
 	var writer = new(bytes.Buffer)
@@ -144,7 +146,7 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	archive.Close()
 
 	//Local debugging
-	//err = storage.Copy(builder.destService, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/zz", nil, nil)
+	err = storage.Copy(builder.destService, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/zz", nil, nil)
 
 	response.Data = writer.Bytes()
 	return response, err
@@ -260,6 +262,7 @@ func (s *Service) handleBuild(builder *builder, request *RunRequest) error {
 	if err == nil {
 		err = builder.addRun(appMeta, request)
 	}
+	builder.Upload(".endly.info", strings.NewReader(fmt.Sprintf("%v %v\n", endly.AppName, endly.GetVersion())))
 	return err
 }
 

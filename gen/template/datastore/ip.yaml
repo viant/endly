@@ -1,4 +1,5 @@
 action: docker:inspect
+target: $target
 name: endly_$db
 post:
   - dbIP = $Info[0].NetworkSettings.IPAddress
