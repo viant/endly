@@ -68,7 +68,7 @@ func (s *Service) addVariableEvent(name string, variables model.Variables, conte
 	if len(variables) == 0 {
 		return
 	}
-	context.Publish(NewModifiedStateEvent(variables, in, out))
+	context.Publish(model.NewModifiedStateEvent(variables, in, out))
 }
 
 func (s *Service) loadWorkflowIfNeeded(context *endly.Context, request *RunRequest) (err error) {

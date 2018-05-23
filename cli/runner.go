@@ -538,6 +538,7 @@ func (r *Runner) reportAssertion(event msg.Event, validations ...*assertly.Valid
 			r.hasValidationFailures = true
 			failedValidation = validations[i]
 			eventTag.FailedCount += validation.FailedCount
+			passedCount += validation.PassedCount
 		} else if validation.PassedCount > 0 {
 			passedCount += validation.PassedCount
 			eventTag.PassedCount += validation.PassedCount

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/dsunit"
 	"github.com/viant/endly"
+	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 )
@@ -162,6 +163,7 @@ const (
     "URL": "datastore/db1/use_case2/",
 	"Prefix":"expect_"
   }`
+	dsunitServiceMapping = `{"mappings":{"URL":"regression/db1/mapping.json"}}`
 )
 
 func (s *service) registerRoutes() {
@@ -305,7 +307,12 @@ func (s *service) registerRoutes() {
 		Action: "mapping",
 		RequestInfo: &endly.ActionInfo{
 			Description: "register database table mapping (view)",
-			Examples:    []*endly.UseCase{},
+			Examples: []*endly.UseCase{
+				{
+					Description: "external mapping",
+					Data:        dsunitServiceMapping,
+				},
+			},
 		},
 		RequestProvider: func() interface{} {
 			return &MappingRequest{}
@@ -429,6 +436,16 @@ func (s *service) registerRoutes() {
 			if req, ok := request.(*dsunit.ExpectRequest); ok {
 				resp := s.Service.Expect(req)
 				response := ExpectResponse(*resp)
+
+				if len(response.Validation) > 0 {
+					for _, validation := range response.Validation {
+						context.Publish(&validator.AssertRequest{
+							Expected: validation.Expected,
+							Actual:   validation.Actual,
+						})
+					}
+				}
+
 				return &response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
