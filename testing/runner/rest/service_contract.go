@@ -1,8 +1,8 @@
 package rest
 
 import (
-	"github.com/viant/endly/testing/validator"
 	"github.com/viant/endly/model"
+	"github.com/viant/endly/testing/validator"
 )
 
 //Request represents a send request

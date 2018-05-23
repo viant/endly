@@ -45,7 +45,6 @@ func (s *restService) sendRequest(context *endly.Context, request *Request) (*Re
 	return response, err
 }
 
-
 const restSendExample = `
 {
 		"URL": "http://127.0.0.1:8085/v1/reporter/register/",
