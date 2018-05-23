@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/dsunit"
 	"github.com/viant/endly"
+	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 )
@@ -435,6 +436,16 @@ func (s *service) registerRoutes() {
 			if req, ok := request.(*dsunit.ExpectRequest); ok {
 				resp := s.Service.Expect(req)
 				response := ExpectResponse(*resp)
+
+				if len(response.Validation) > 0 {
+					for _, validation := range response.Validation {
+						context.Publish(&validator.AssertRequest{
+							Expected: validation.Expected,
+							Actual:   validation.Actual,
+						})
+					}
+				}
+
 				return &response, response.Error()
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
