@@ -352,6 +352,7 @@ commands:
 
 ## External resources
 
+- [ETL end to end testing with docker, NoSQL, RDBMS and Big Query](https://medium.com/@adrianwit/etl-end-to-end-testing-with-docker-nosql-rdbms-and-big-query-35b13b7fada8)
 - [Go lang e2e testing](https://github.com/adrianwit/golang-e2e-testing)
 - [Endly introduction](https://github.com/adrianwit/endly-introduction)    
 
