@@ -3,13 +3,14 @@ package workflow
 import (
 	"errors"
 	"fmt"
+	"path"
+	"strings"
+
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/msg"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
-	"path"
-	"strings"
 )
 
 //RunRequest represents workflow runWorkflow request
@@ -236,7 +237,7 @@ func (r *PrintRequest) Messages() []*msg.Message {
 		result.Items = append(result.Items, msg.NewStyled(r.Message, r.Style))
 	}
 	if r.Error != "" {
-		result.Items = append(result.Items, msg.NewStyled(r.Message, msg.MessageStyleError))
+		result.Items = append(result.Items, msg.NewStyled(r.Error, msg.MessageStyleError))
 	}
 	return []*msg.Message{result}
 }
