@@ -3,14 +3,15 @@ package workflow_test
 import (
 	"errors"
 	"fmt"
+	"path"
+	"strings"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/testing/endpoint/http"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
-	"path"
-	"strings"
-	"testing"
 
 	_ "github.com/mattn/go-sqlite3"
 	_ "github.com/viant/endly/cli"
@@ -422,4 +423,31 @@ func Test_WorkflowSwitchRequest_Validate(t *testing.T) {
 		}
 		assert.Nil(t, request.Validate())
 	}
+}
+
+func Test_PrintRequest(t *testing.T) {
+
+	t.Run("Case to check if error message is created", func(t *testing.T) {
+		msg := "Test Error message"
+
+		r := workflow.PrintRequest{
+			Error: msg,
+		}
+
+		m := r.Messages()
+		assert.Equal(t, 1, len(m))
+		assert.Equal(t, msg, m[0].Items[0].Text)
+	})
+
+	t.Run("Case to check if regular message is created", func(t *testing.T) {
+		msg := "Test regular message"
+
+		r := workflow.PrintRequest{
+			Message: msg,
+		}
+
+		m := r.Messages()
+		assert.Equal(t, 1, len(m))
+		assert.Equal(t, msg, m[0].Items[0].Text)
+	})
 }
