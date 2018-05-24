@@ -337,7 +337,12 @@ func (r *Runner) processActivityStart(event msg.Event) bool {
 	r.Push(activity)
 	r.activity = activity
 	if activity.TagDescription != "" {
-		r.printShortMessage(messageTypeTagDescription, activity.TagDescription, messageTypeTagDescription, "")
+		if r.repeated != nil {
+			r.repeated.Count = 0
+			r.repeated.Spent = 0
+		}
+		r.printShortMessage(messageTypeAction,  activity.TagID, messageTypeAction, "tag.id")
+		r.printShortMessage(messageTypeTagDescription, activity.TagDescription, messageTypeTagDescription, "use case")
 		eventTag := r.EventTag()
 		eventTag.Description = activity.TagDescription
 	}
