@@ -6,7 +6,6 @@ import (
 	"github.com/viant/endly/criteria"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/data"
 )
 
 //SliceKey represents slice key
@@ -61,18 +60,11 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 		return true, nil
 	}
 	extractableOutput, structuredOutput := util.AsExtractable(out)
-	state := context.State()
+
 	if len(structuredOutput) > 0 {
-		var extractedVariables = data.NewMap()
-		err = r.Variables.Apply(structuredOutput, extractedVariables)
-		if len(extractedVariables) > 0 {
-			context.Publish(NewModifiedStateEvent(r.Variables, structuredOutput, extractedVariables))
 
-			state.Apply(extractedVariables)
-		}
-
-		for k, v := range extractedVariables {
-			extracted[k] = toolbox.AsString(v)
+		if len(r.Variables) > 0 {
+			err = r.Variables.Apply(structuredOutput, extracted)
 		}
 		if extractableOutput == "" {
 			extractableOutput, _ = toolbox.AsJSONText(structuredOutput)
@@ -86,7 +78,6 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 	if extractableOutput != "" {
 		extracted["value"] = extractableOutput //string output is published as $value
 	}
-
 	if r.Exit != "" {
 		context.Publish(NewExtractEvent(extractableOutput, structuredOutput, extracted))
 		if shouldBreak, err := r.EvaluateExitCriteria(callerInfo+"ExitEvaluation", context, extracted); shouldBreak || err != nil {
@@ -95,6 +86,7 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 	}
 	return true, nil
 }
+
 
 //Run repeats x times supplied handler
 func (r *Repeater) Run(service *endly.AbstractService, callerInfo string, context *endly.Context, handler func() (interface{}, error), extracted map[string]interface{}) error {
