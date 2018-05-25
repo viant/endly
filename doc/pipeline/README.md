@@ -13,19 +13,19 @@
 <a name="introduction"></a>
 ### Introduction
 
-**[Pipeline](../../model/pipeline.go)** represents inline [workflow](../workflow) to define some tasks and actions.
+**[Pipeline](../../model/pipeline.go)** represents an inline [workflow](../workflow) defining some tasks and actions.
 
 A task can either be a groping tasks node or actual action task node. In the latter
-case it can execute existing [workflow](../workflow) or [service](../service) action.
+case it can run existing [workflow](../workflow) or perform [service](../service) action.
 
 
-To see pipeline converted workflow  [*model.Workflow](../../model/workflow.go) run the following
+To see the workflow model tree converted from a pipeline [*model.Workflow](../../model/workflow.go) run the following
 
 ```bash
 endly -r=PIPELINE_FILE -p  -f=yaml|json
 ```
 
-For instance the following inline workflow will execute SSH command (service: exec, action: run).
+For instance the following workflow runs SSH command (service: exec, action: run).
 
 ```bash
 endly -r=run
@@ -50,7 +50,7 @@ pipeline:
 ### Pipeline format
 Pipeline run request can use either JSON or YAML.
 
-The general pipeline syntax: 
+The general inline workflow syntax: 
 
 @xxx.yaml
 ```yaml
