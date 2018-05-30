@@ -3,19 +3,21 @@ package storage_test
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
+	"path"
+	"strings"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
+	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	tstorage "github.com/viant/toolbox/storage"
 	_ "github.com/viant/toolbox/storage/scp"
 	"github.com/viant/toolbox/url"
-	"io/ioutil"
-	"path"
-	"strings"
-	"testing"
 )
 
 //update context for data substitution
@@ -25,6 +27,10 @@ func updateContext(context *endly.Context) {
 	endpointMap.Put("host", "127.0.0.1")
 	endpointMap.Put("port", "8080")
 	state.Put("endpoint", endpointMap)
+
+	//Add standard UDFs
+	dao := neatly.Dao{}
+	dao.AddStandardUdf(state)
 }
 
 func SetupMemoryStorage() {
@@ -36,6 +42,7 @@ func SetupMemoryStorage() {
 	memStorage.Upload("mem:///test/copy/storage/data/data.json", strings.NewReader("{\"key\":1}"))
 	memStorage.Upload("mem:///tmp/copy2_source/config1.json", bytes.NewReader(fileContent))
 	memStorage.Upload("mem:///tmp/copy2_source/config2.json", bytes.NewReader(fileContent))
+	memStorage.Upload("mem:///tmp/copy5_source/config5.json", strings.NewReader("compressed"))
 	memStorage.Upload("mem:///tmp/copy2_source/copy2_source.tar.gz", strings.NewReader("123"))
 	memStorage.Upload("mem:///tmp/copy2_source/config1.json.tar.gz", strings.NewReader("abc"))
 	memStorage.Upload("mem:///tmp/copy2_source/config2.json.tar.gz", strings.NewReader("xyz"))
@@ -98,6 +105,23 @@ func TestTransferService_Copy(t *testing.T) {
 			},
 			map[string]string{
 				"mem:///tmp/copy4_target/config2.json.tar.gz": "xyz",
+			},
+			"",
+		},
+		{
+			"test/copy/compress/file2/darwin",
+			&storage.CopyRequest{
+				Transfers: []*storage.Transfer{
+					{
+						Source:   url.NewResource("scp://127.0.0.1:22/tmp/copy5_source/config5.json"),
+						Dest:     url.NewResource("/tmp/copy5_target/config5.gz"),
+						Compress: false,
+					},
+				},
+				CopyHandlerUdf: "CopyWithCompression",
+			},
+			map[string]string{
+				"mem:///tmp/copy5_target/config5.gz": "\x1f\x8b\b\x00\x00\tn\x88\x04\xff\x00\n\x00\xf5\xffcompressed\x00\x00\x00\xff\xff\x00\x00\x00\xff\xff\x01\x00\x00\xff\xff\x1eKV\x97\n\x00\x00\x00",
 			},
 			"",
 		},
