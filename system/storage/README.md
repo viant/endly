@@ -219,21 +219,21 @@ transfers:
 
 
 ```json
-  {
-    "Transfers": [
-      {
-        "Source": {
-          "URL": "s3://mybucket1/project1/Transfers/",
-          "Credentials": "${env.HOME}/.secret/s3.json"
-        },
-        "Dest": {
-           "URL": "gs://mybucket2/project1/Transfers/",
-            "Credentials": "${env.HOME}/.secret/gs.gz"
-        }
+{
+  "Transfers": [
+    {
+      "Source": {
+        "URL": "s3://mybucket1/project1/Transfers/",
+        "Credentials": "${env.HOME}/.secret/s3.json"
       },
-      "CopyHandlerUdf": "CopyWithCompression"
-    ]
-  }
+      "Dest": {
+        "URL": "gs://mybucket2/project1/Transfers/",
+        "Credentials": "${env.HOME}/.secret/gs.gz"
+      }
+    }
+  ],
+  "CopyHandlerUdf": "CopyWithCompression"
+}
 
 
 ```
