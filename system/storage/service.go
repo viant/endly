@@ -281,9 +281,9 @@ const (
          "URL": "gs://mybucket2/project1/Transfers/",
           "Credentials": "${env.HOME}/.secret/gs.gz"
       }
-    },
-    "CopyHandlerUdf": "CopyWithCompression"
-  ]
+    }
+  ],
+  "CopyHandlerUdf": "CopyWithCompression"
 }`
 
 	storageBatchCopyTransferExample = `{
