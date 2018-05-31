@@ -279,9 +279,10 @@ const (
       },
       "Dest": {
          "URL": "gs://mybucket2/project1/Transfers/",
-          "Credentials": "${env.HOME}/.secret/gs.json"
+          "Credentials": "${env.HOME}/.secret/gs.gz"
       }
-    }
+    },
+    "CopyHandlerUdf": "CopyWithCompression"
   ]
 }`
 
