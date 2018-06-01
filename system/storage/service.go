@@ -2,6 +2,12 @@ package storage
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
+	url2 "net/url"
+	"path"
+	"strings"
+
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/testing/validator"
@@ -10,11 +16,6 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
-	"io"
-	"io/ioutil"
-	url2 "net/url"
-	"path"
-	"strings"
 )
 
 //ServiceID represents transfer service id
@@ -31,15 +32,15 @@ type service struct {
 }
 
 func (s *service) getResourceAndService(context *endly.Context, resource *url.Resource) (*url.Resource, storage.Service, error) {
-	expendedResource, err := context.ExpandResource(resource)
+	expandedResource, err := context.ExpandResource(resource)
 	if err != nil {
 		return nil, nil, err
 	}
-	service, err := GetStorageService(context, expendedResource)
+	service, err := GetStorageService(context, expandedResource)
 	if err != nil {
 		return nil, nil, err
 	}
-	return expendedResource, service, nil
+	return expandedResource, service, nil
 }
 
 func (s *service) getModificationHandler(context *endly.Context, transfer *Transfer) func(reader io.ReadCloser) (io.ReadCloser, error) {
@@ -138,7 +139,18 @@ func (s *service) copy(context *endly.Context, request *CopyRequest) (*CopyRespo
 				return nil, err
 			}
 		}
-		err = storage.Copy(sourceService, sourceResource.URL, targetService, targetResource.URL, handler, nil)
+
+		// Custom CopyHandler wrapped as UDF
+		var copyHandler storage.CopyHandler
+		if request.CopyHandlerUdf != "" && object.IsContent() {
+			udf, err := udf.TransformWithUDF(context, request.CopyHandlerUdf, transfer.Source.URL, nil)
+			if err != nil {
+				return nil, err
+			}
+			copyHandler = udf.(storage.CopyHandler)
+		}
+
+		err = storage.Copy(sourceService, sourceResource.URL, targetService, targetResource.URL, handler, copyHandler)
 		if err != nil {
 			return result, err
 		}
@@ -267,10 +279,11 @@ const (
       },
       "Dest": {
          "URL": "gs://mybucket2/project1/Transfers/",
-          "Credentials": "${env.HOME}/.secret/gs.json"
+          "Credentials": "${env.HOME}/.secret/gs.gz"
       }
     }
-  ]
+  ],
+  "CopyHandlerUdf": "CopyWithCompression"
 }`
 
 	storageBatchCopyTransferExample = `{
