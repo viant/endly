@@ -33,10 +33,10 @@ var matchers = map[int]toolbox.Matcher{
 		Keywords:      []string{"&&", "||"},
 		CaseSensitive: false,
 	},
-	quoted:              toolbox.BodyMatcher{"'", "'"},
-	grouping:            toolbox.BodyMatcher{"(", ")"},
-	jsonObject:          toolbox.BodyMatcher{"{", "}"},
-	jsonArray:           toolbox.BodyMatcher{"[", "]"},
+	quoted:              &toolbox.BodyMatcher{"'", "'"},
+	grouping:            &toolbox.BodyMatcher{"(", ")"},
+	jsonObject:          &toolbox.BodyMatcher{"{", "}"},
+	jsonArray:           &toolbox.BodyMatcher{"[", "]"},
 	assertlyExprMatcher: toolbox.NewSequenceMatcher("&&", "||"),
 }
 
