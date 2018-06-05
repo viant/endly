@@ -85,7 +85,12 @@ func (s *service) compressSource(context *endly.Context, source, target *url.Res
 
 	if err = source.Rename(archiveName); err == nil {
 		if path.Ext(target.ParsedURL.Path) != "" {
-			err = target.Rename(archiveName)
+			_, targetName := path.Split(target.ParsedURL.Path)
+			if name != targetName {
+				err = target.Rename(fmt.Sprintf("%v.tar.gz", targetName))
+			} else {
+				err = target.Rename(archiveName)
+			}
 		} else {
 			target.URL = toolbox.URLPathJoin(target.URL, archiveName)
 			target.ParsedURL, _ = url2.Parse(target.URL)
