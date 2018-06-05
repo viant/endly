@@ -4,13 +4,18 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"strings"
+
 	"github.com/golang/protobuf/proto"
+	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
-	"strings"
 )
 
 //init initialises UDF functions
@@ -19,6 +24,7 @@ func init() {
 	endly.UdfRegistry["URLJoin"] = URLJoin
 	endly.UdfRegistry["URLPath"] = URLPath
 	endly.UdfRegistry["Hostname"] = Hostname
+	endly.UdfRegistry["CopyWithCompression"] = CopyWithCompression
 }
 
 //TransformWithUDF transform payload with provided UDF name.
@@ -26,9 +32,7 @@ func TransformWithUDF(context *endly.Context, udfName, source string, payload in
 	var state = context.State()
 	var udf, has = endly.UdfRegistry[udfName]
 	if !has {
-		if candidate, ok := state[udfName]; ok {
-			udf, has = candidate.(func(source interface{}, state data.Map) (interface{}, error))
-		}
+		udf, has = getUdfFromContext(udfName, state)
 	}
 	if !has {
 		return nil, fmt.Errorf("failed to lookup udf: %v for: %v", udfName, source)
@@ -38,6 +42,15 @@ func TransformWithUDF(context *endly.Context, udfName, source string, payload in
 		return nil, fmt.Errorf("failed to run udf: %v, %v", udfName, err)
 	}
 	return transformed, nil
+}
+
+// Helper to get UDF from context state
+func getUdfFromContext(udfName string, state data.Map) (func(interface{}, data.Map) (interface{}, error), bool) {
+	if candidate, has := state[udfName]; has {
+		udf, ok := candidate.(func(source interface{}, state data.Map) (interface{}, error))
+		return udf, ok
+	}
+	return nil, false
 }
 
 //DateOfBirth returns formatted date of birth
@@ -128,4 +141,33 @@ func FromProtobufMessage(source interface{}, state data.Map, sourceMessage proto
 		return toolbox.DereferenceValues(resultMap), nil
 	}
 	return nil, fmt.Errorf("expected string but had:%T", source)
+}
+
+// UDF to provide a CopyHandler that performs compression before copy source to destination
+// Compatible only with Object that is a content and not a directory
+func CopyWithCompression(source interface{}, state data.Map) (interface{}, error) {
+	// Get UDF to Zip from context
+	if zipUdf, has := getUdfFromContext("Zip", state); has {
+		// Build copy handler
+		var copyHandlerWithCompression storage.CopyHandler
+		copyHandlerWithCompression = func(sourceObject storage.Object, reader io.Reader, destinationService storage.Service, destinationURL string) error {
+			// Zip source contents
+			contents, err := ioutil.ReadAll(reader)
+			if err != nil {
+				return fmt.Errorf("error when reading object content before zipping source %v: %v", sourceObject.URL(), err)
+			}
+			zippedContents, err := zipUdf(contents, nil)
+			if err != nil {
+				return fmt.Errorf("error during zipping source %v: %v", sourceObject.URL(), err)
+			}
+
+			//Upload zipped contents
+			if err := destinationService.Upload(destinationURL, bytes.NewReader(zippedContents.([]byte))); err != nil {
+				return fmt.Errorf("error during upload, %v %v %v", sourceObject.URL(), destinationURL, err)
+			}
+			return nil
+		}
+		return copyHandlerWithCompression, nil
+	}
+	return nil, errors.New("unable to find udf with name Zip")
 }

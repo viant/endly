@@ -214,3 +214,26 @@ transfers:
 
 ```
 
+
+**Single asset transfer with custom copy handler using an UDF (User defined function). Below is an example to use custom UDF CopyWithCompression that gzips target file**
+
+
+```json
+{
+  "Transfers": [
+    {
+      "Source": {
+        "URL": "s3://mybucket1/project1/Transfers/",
+        "Credentials": "${env.HOME}/.secret/s3.json"
+      },
+      "Dest": {
+        "URL": "gs://mybucket2/project1/Transfers/",
+        "Credentials": "${env.HOME}/.secret/gs.gz"
+      }
+    }
+  ],
+  "CopyHandlerUdf": "CopyWithCompression"
+}
+
+
+```
