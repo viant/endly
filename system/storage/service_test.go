@@ -98,13 +98,13 @@ func TestTransferService_Copy(t *testing.T) {
 				Transfers: []*storage.Transfer{
 					{
 						Source:   url.NewResource("scp://127.0.0.1:22/tmp/copy2_source/config2.json"),
-						Dest:     url.NewResource("/tmp/copy4_target/config2.json"),
+						Dest:     url.NewResource("/tmp/copy4_target/config4.json"),
 						Compress: true,
 					},
 				},
 			},
 			map[string]string{
-				"mem:///tmp/copy4_target/config2.json.tar.gz": "xyz",
+				"mem:///tmp/copy4_target/config4.json.tar.gz": "xyz",
 			},
 			"",
 		},
