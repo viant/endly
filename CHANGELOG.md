@@ -152,3 +152,11 @@
     * Assertly validation enhancement
     * Added actual datastore and expected dsunit validation data
     * Minor patches
+
+## June 06 2018 0.10.1
+    * Patched and enhanced storage service compression
+    * Patched validation errors
+    * Patched nil pointers on aws service
+    * Minor patches
+    
+     
