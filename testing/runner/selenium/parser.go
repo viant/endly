@@ -29,9 +29,9 @@ var matchers = map[int]toolbox.Matcher{
 		Keywords:      []string{"="},
 		CaseSensitive: false,
 	},
-	selector:   toolbox.BodyMatcher{"(", ")"},
+	selector:   &toolbox.BodyMatcher{"(", ")"},
 	selectorBy: toolbox.NewSequenceMatcher(":"),
-	params:     toolbox.BodyMatcher{"(", ")"},
+	params:     &toolbox.BodyMatcher{"(", ")"},
 	dot:        toolbox.CharactersMatcher{Chars: "."},
 	method:     toolbox.LiteralMatcher{},
 }
