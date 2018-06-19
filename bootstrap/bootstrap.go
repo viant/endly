@@ -17,6 +17,8 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 
+	_ "github.com/viant/endly/gen/static"
+
 	_ "github.com/viant/endly/cloud/ec2"
 	_ "github.com/viant/endly/cloud/gce"
 	_ "github.com/viant/endly/testing/endpoint/http"
@@ -46,6 +48,7 @@ import (
 	"bufio"
 	"errors"
 	"github.com/viant/endly/cli"
+	"github.com/viant/endly/gen/web"
 	"github.com/viant/endly/meta"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/workflow"
@@ -55,7 +58,10 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 	"gopkg.in/yaml.v2"
 	"log"
+	"net/http"
 	"os"
+	"os/exec"
+	"os/signal"
 	"path"
 	"strings"
 	"syscall"
@@ -88,6 +94,8 @@ func init() {
 	flag.String("k", "", "<private key path>,  works only with -c options, i.e -k="+path.Join(os.Getenv("HOME"), ".secret/id_rsa.pub"))
 
 	flag.String("x", "", "xunit summary report format: xml|yaml|json")
+	flag.Bool("g", false, "open test project generator")
+
 	mysql.SetLogger(&emptyLogger{})
 
 }
@@ -109,6 +117,13 @@ func Bootstrap() {
 			return
 		}
 	}
+
+	if toolbox.AsBoolean(flagset["g"]) {
+		openTestGenerator()
+		return
+	}
+
+	//
 
 	if _, ok := flagset["h"]; ok {
 		printHelp()
@@ -167,6 +182,45 @@ func Bootstrap() {
 		log.Fatal(err)
 	}
 	time.Sleep(time.Second)
+}
+
+func openbrowser(url string) {
+	log.Printf("opening http://127.0.0.1:8071/ ...")
+	exec.Command("open", url).Start()
+}
+
+func openTestGenerator() {
+
+	baseURL := fmt.Sprintf("mem://%v", endly.Namespace)
+	service := web.NewService(
+		toolbox.URLPathJoin(baseURL, "template"),
+		toolbox.URLPathJoin(baseURL, "asset"),
+	)
+	web.NewRouter(service, func(request *http.Request) {})
+	go http.ListenAndServe(":8071", nil)
+	time.Sleep(time.Second)
+	openbrowser("http://127.0.0.1:8071/")
+
+	signal_chan := make(chan os.Signal, 1)
+	signal.Notify(signal_chan,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+	exit_chan := make(chan int)
+	go func() {
+		for {
+			s := <-signal_chan
+			switch s {
+			// kill -SIGHUP XXXX
+			case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT:
+				exit_chan <- 0
+			}
+		}
+	}()
+	code := <-exit_chan
+	os.Exit(code)
+
 }
 
 func generateSecret(credentialsFile string) {
