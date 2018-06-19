@@ -1,0 +1,4 @@
+logWaitTimeMs: 5000
+logWaitRetryCount: 5
+description: My logType1 validation
+expectedLogRecords: $logRecords

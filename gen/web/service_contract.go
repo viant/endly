@@ -68,6 +68,7 @@ type Testing struct {
 	Selenium       bool   `json:"selenium"`
 	UseCaseData    string `json:"useCaseData"`
 	DataValidation bool   `json:"dataValidation"`
+	LogValidation  bool   `json:"logValidation"`
 }
 
 type Build struct {

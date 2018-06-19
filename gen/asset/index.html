@@ -12,7 +12,7 @@
 </head>
 <body>
 <div class="mx-auto" style="width: 80vw;">
-    <h3 class="text-center">Endly E2E testing workflow generator</h3>
+    <h3 class="text-center">E2E test project generator</h3>
 
     <form action="/download/endly.zip" method="post">
         <fieldset class="form-group">
@@ -111,91 +111,127 @@
             </div>
         </fieldset>
 
-        <fieldset class="form-group">
-            <div class="form-group row">
-                <div class="mx-auto">Use case data:
-                    <div class="form-check form-check-inline">
-                        <input type="radio" class="form-check-input form-control-lg" id="caseDataEmpty" name="useCaseData" value="">
-                        <label class="form-check-label" for="caseDataEmpty">Not include</label>
-                    </div>
-
-                    <div class="form-check form-check-inline">
-                        <input type="radio" class="form-check-input form-control-lg" id="caseDataInclude" name="useCaseData"
-                               value="test">
-                        <label class="form-check-label" for="caseDataInclude">Per test</label>
-                    </div>
-
-                    <div class="form-check form-check-inline">
-                        <input type="radio" class="form-check-input form-control-lg" id="caseDataPreload"
-                               name="useCaseData" value="preload">
-                        <label class="form-check-label" for="caseDataPreload">Preload</label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-group row">
-                <div class="form-check mx-auto">
-                    <input type="checkbox" class="form-check-input form-control-lg" id="dataValidation" name="dataValidation">
-                    <label class="form-check-label" for="dataValidation">Data validation</label>
-                </div>
-            </div>
-
-            <div class="form-group row">
-                <div class="form-check mx-auto">
-                    <input type="checkbox" class="form-check-input form-control-lg" id="mapping" name="mapping">
-                    <label class="form-check-label" for="caseData">Multi table mapping</label>
-                </div>
-            </div>
-
-
-        </fieldset>
-
 
         <fieldset class="form-group">
             <div class="form-row text-center">
                 <legend class="text-center pt-0">Testing</legend>
             </div>
 
-            <div class="form-group row ">
-                <div class="form-check  mx-auto">
-                    <input type="checkbox" class="form-check-input form-control-lg" id="selenium" name="selenium">
-                    <label class="form-check-label" for="selenium">Use selenium runner</label>
-                </div>
-            </div>
 
-            <div class="form-group row">
-                <div class="form-check mx-auto">
-                    <input type="checkbox" class="form-check-input form-control-lg" id="http" name="http">
-                    <label class="form-check-label" for="http">Use HTTP runner</label>
-                </div>
-            </div>
+            <div class="form-row">
+
+                <div class="col-6">
+                    <div class="form-row text-center">
+                        <h5 class="text-center pt-0">Data</h5>
+                    </div>
 
 
-            <div class="form-group row">
-                <div class="form-check mx-auto">
-                    <input type="checkbox" class="form-check-input form-control-lg" id="rest" name="rest">
-                    <label class="form-check-label" for="rest">Use REST runner</label>
+                    <fieldset class="form-group">
+                        <div class="form-group row">
+                            <div class="">Load use case data: <a href="https://github.com/viant/endly/tree/master/testing/dsunit#loaddata"><sup>[*]</sup></a></div>
+                        </div>
+
+                        <div class="form-group row">
+                            <div class="form-check form-check-inline">
+                                <input type="radio" class="form-check-input form-control-lg" id="caseDataEmpty"
+                                       name="useCaseData" value="">
+                                <label class="form-check-label" for="caseDataEmpty">n/a</label>
+                            </div>
+
+                            <div class="form-check form-check-inline">
+                                <input type="radio" class="form-check-input form-control-lg" id="caseDataInclude"
+                                       name="useCaseData"
+                                       value="test">
+                                <label class="form-check-label" for="caseDataInclude">Per test</label>
+                            </div>
+
+                            <div class="form-check form-check-inline">
+                                <input type="radio" class="form-check-input form-control-lg" id="caseDataPreload"
+                                       name="useCaseData" value="preload">
+                                <label class="form-check-label" for="caseDataPreload">Before tests</label>
+                            </div>
+                        </div>
+
+                    </fieldset>
+
+
+                    <div class="form-group row">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input form-control-lg" id="dataValidation"name="dataValidation">
+                            <label class="form-check-label" for="dataValidation">Data validation<a href="https://github.com/viant/endly/tree/master/testing/log#validation"><sup>[*]</sup></a></label>
+                        </div>
+                    </div>
+
+
+
+                    <div class="form-group row">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input form-control-lg" id="mapping"
+                                   name="mapping">
+                            <label class="form-check-label" for="caseData">Multi table mapping<a href="https://github.com/viant/endly/tree/master/testing/dsunit#mapping"><sup>[*]</sup></a></label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input form-control-lg" id="logValidation" name="logValidation">
+                            <label class="form-check-label" for="logValidation">Log validation<a href="https://github.com/viant/endly/tree/master/testing/log"><sup>[*]</sup></a></label>
+                        </div>
+                    </div>
+
                 </div>
+
+
+                <div class="col-6">
+
+                    <div class="form-row text-center">
+                        <h5 class="text-center pt-0">Test Runners</h5>
+                    </div>
+
+                    <div class="form-row text-center">&nbsp;</div>
+
+                    <div class="form-group row ">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input form-control-lg" id="selenium"
+                                   name="selenium">
+                            <label class="form-check-label" for="selenium">Selenium  <a href="https://github.com/viant/endly/tree/master/testing/runner/selenium"><sup>[*]</sup></a></label>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input form-control-lg" id="http" name="http">
+                            <label class="form-check-label" for="http">HTTP runner <a href="https://github.com/viant/endly/tree/master/testing/runner/http"><sup>[*]</sup></a></label>
+                        </div>
+                    </div>
+
+
+                    <div class="form-group row">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input form-control-lg" id="rest" name="rest">
+                            <label class="form-check-label" for="rest">REST runner<a href="https://github.com/viant/endly/tree/master/testing/runner/rest"><sup>[*]</sup></a></label>
+                        </div>
+                    </div>
+
+                </div>
+
+
             </div>
 
 
         </fieldset>
+
+
         <div class="form-group row text-center ">
             <button type="submit" class="mx-auto  btn btn-primary">Download</button>
         </div>
     </form>
     <ul><b>Running workflow:</b>
-        <li><a href="https://github.com/viant/endly/releases">download latest endly</a></li>
+        <li><a href="https://github.com/viant/endly/releases">install latest endly</a></li>
         <li>unpack downloaded archive (unzip $myapp)</li>
         <li>change directory to $myapp/e2e (cd $myapp/e2e)</li>
-        <li>setup credentials:
-            <ul>
-                <li>localhost (locahost user): endly -c=localhost</li>
-                <li>mysql(root user): endly -c=mysql</li>
-                <li>pg(root user): endly -c=pg</li>
-            </ul>
-        </li>
-        <li>run e2e tests: endly</li>
+        <li><a href="https://github.com/viant/endly/tree/master/doc/secrets">setup credentials</a></li>
+        <li>run e2e tests: endly -i='init,test'</li>
     </ul>
 </div>
 

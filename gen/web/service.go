@@ -58,7 +58,6 @@ func (s *Service) getSdk() ([]string, error) {
 			result = append(result, fmt.Sprintf("%v:%v", meta.Sdk, meta.Version))
 		}
 	}
-
 	return result, nil
 }
 
@@ -144,10 +143,8 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	}
 	archive.Flush()
 	archive.Close()
-
 	//Local debugging
 	//err = storage.Copy(builder.destService, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/zz", nil, nil)
-
 	response.Data = writer.Bytes()
 	return response, err
 }
@@ -242,7 +239,6 @@ func (s *Service) handleBuild(builder *builder, request *RunRequest) error {
 	if request.Origin != "" {
 		request.Build.Origin = request.Origin
 	}
-
 	if err == nil {
 		if request.Build.Sdk == "" {
 			request.Build.Sdk = appMeta.Sdk
@@ -252,7 +248,6 @@ func (s *Service) handleBuild(builder *builder, request *RunRequest) error {
 		}
 		err = builder.buildApp(appMeta, sdkMeta, request, assets)
 	}
-
 	if err == nil {
 		err = builder.addSourceCode(appMeta, request.Build, assets)
 	}
@@ -262,7 +257,9 @@ func (s *Service) handleBuild(builder *builder, request *RunRequest) error {
 	if err == nil {
 		err = builder.addRun(appMeta, request)
 	}
-	builder.Upload(".endly.info", strings.NewReader(fmt.Sprintf("%v %v\n", endly.AppName, endly.GetVersion())))
+	requestJSON, _ := toolbox.AsIndentJSONText(request)
+	builder.Upload(".gen", strings.NewReader(requestJSON))
+	builder.UploadToEndly(".ver", strings.NewReader(fmt.Sprintf("%v %v\n", endly.AppName, endly.GetVersion())))
 	return err
 }
 
