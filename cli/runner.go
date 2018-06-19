@@ -341,7 +341,7 @@ func (r *Runner) processActivityStart(event msg.Event) bool {
 			r.repeated.Count = 0
 			r.repeated.Spent = 0
 		}
-		r.printShortMessage(messageTypeAction,  activity.TagID, messageTypeAction, "tag.id")
+		r.printShortMessage(messageTypeAction, activity.TagID, messageTypeAction, "tag.id")
 		r.printShortMessage(messageTypeTagDescription, activity.TagDescription, messageTypeTagDescription, "use case")
 		eventTag := r.EventTag()
 		eventTag.Description = activity.TagDescription
@@ -430,7 +430,12 @@ func (r *Runner) hasFailureMatch(failure *assertly.Failure, runnerLogs map[strin
 		for _, log := range logs {
 			var matchable = log.JSONOutput
 			if matchable == "" {
-				matchable = toolbox.AsString(log.Out.Value())
+				var value = log.Out.Value()
+				if toolbox.IsMap(value) || toolbox.IsStruct(value) {
+					matchable, _ = toolbox.AsJSONText(log.Out.Value())
+				} else {
+					matchable = toolbox.AsString(log.Out.Value())
+				}
 			}
 			if strings.Contains(matchable, leafKey) {
 				return true
