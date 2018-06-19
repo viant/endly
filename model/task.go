@@ -45,7 +45,7 @@ func (t *TasksNode) Select(selector TasksSelector) *TasksNode {
 					result.Tasks = append(result.Tasks, selected.Tasks...)
 				}
 			}
-		} else 	if allowed[task.Name] {
+		} else if allowed[task.Name] {
 			result.Tasks = append(result.Tasks, task)
 		}
 	}
