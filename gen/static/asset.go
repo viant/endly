@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	var memStorage = storage.NewMemoryService()
+	var memStorage = storage.NewMemoryService();
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/asset/index.html", bytes.NewReader([]byte(`<!DOCTYPE html>
 <html lang="en">
@@ -139,7 +139,7 @@ func init() {
 
                     <fieldset class="form-group">
                         <div class="form-group row">
-                            <div class="">Load use case data: <a href="https://github.com/viant/endly/tree/master/testing/dsunit#loaddata"><sup>[*]</sup></a></div>
+                            <div class="">Load use case data: <a href="https://github.com/viant/endly/blob/master/testing/dsunit/README.md#loaddata"><sup>[*]</sup></a></div>
                         </div>
 
                         <div class="form-group row">
@@ -169,7 +169,7 @@ func init() {
                     <div class="form-group row">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input form-control-lg" id="dataValidation"name="dataValidation">
-                            <label class="form-check-label" for="dataValidation">Data validation<a href="https://github.com/viant/endly/tree/master/testing/log#validation"><sup>[*]</sup></a></label>
+                            <label class="form-check-label" for="dataValidation">Data validation<a href="https://github.com/viant/endly/blob/master/testing/dsunit/README.md#validation"><sup>[*]</sup></a></label>
                         </div>
                     </div>
 
@@ -179,7 +179,7 @@ func init() {
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input form-control-lg" id="mapping"
                                    name="mapping">
-                            <label class="form-check-label" for="caseData">Multi table mapping<a href="https://github.com/viant/endly/tree/master/testing/dsunit#mapping"><sup>[*]</sup></a></label>
+                            <label class="form-check-label" for="caseData">Multi table mapping<a href="https://github.com/viant/endly/blob/master/testing/dsunit/README.md#mapping"><sup>[*]</sup></a></label>
                         </div>
                     </div>
 
