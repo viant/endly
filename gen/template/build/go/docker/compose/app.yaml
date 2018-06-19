@@ -8,11 +8,11 @@ defaults:
   useRegistry: false
 pipeline:
   build:
-    init:
+    prepare:
       action: exec:run
       target: $target
       commands:
-        - if [ -e $buildPath ]; then rm -rf $buildPath; fi
+        - if [ -e $buildPath ]; then cd / && rm -rf $buildPath; fi
         - mkdir -p $buildPath
 
     checkout:

@@ -20,10 +20,7 @@ func main() {
 		toolbox.URLPathJoin(baseURL, "template"),
 		toolbox.URLPathJoin(baseURL, "asset"),
 	)
-
-	web.NewRouter(service, func(request *http.Request) {
-
-	})
-
+	web.NewRouter(service, func(request *http.Request) {})
 	http.ListenAndServe(":8071", nil)
+
 }

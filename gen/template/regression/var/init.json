@@ -1,6 +1,10 @@
 [
   {
     "Name": "db.setup",
-    "Value": []
+    "Value": "[]"
+  },
+  {
+    "Name":"logRecords",
+    "Value": "[]"
   }
 ]

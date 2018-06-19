@@ -1,0 +1,9 @@
+source:
+  URL: /tmp
+types:
+  - name: logType1
+    inclusion: LogTypeMatchingTextHere
+    format: json
+    mask: myLogType*.json
+    indexRegExpr: "\"ID\":\"([^\"]+)\""
+

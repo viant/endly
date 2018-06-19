@@ -19,5 +19,5 @@ data:
 setup:
   datastore: $db
   action: dsunit:prepare
-  URL: regression/$db/data/
+  URL: regression/data/$db/
   data: $${db}Setup

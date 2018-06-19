@@ -571,7 +571,7 @@ func (b *builder) buildDataTestAssets(appMeta *AppMeta, request *RunRequest) err
 			b.UploadToEndly(fmt.Sprintf("regression/use_cases/002_yy_case/%s_data.json", datastore.Name), strings.NewReader(strings.Replace(setupData, "$index", "1", 2)))
 
 			b.UploadToEndly(fmt.Sprintf("regression/%s_data.json", datastore.Name), strings.NewReader("[]"))
-			b.UploadToEndly(fmt.Sprintf("regression/%s/data/dummy.json", datastore.Name), strings.NewReader("[]"))
+			b.UploadToEndly(fmt.Sprintf("regression/data/%s/dummy.json", datastore.Name), strings.NewReader("[]"))
 		}
 	}
 	return nil
@@ -602,7 +602,7 @@ func (b *builder) buildStaticDataTestAssets(appMeta *AppMeta, request *RunReques
 		setupSource := fmt.Sprintf("regression/data/%v", dataSource)
 		setupData, err := b.Download(setupSource, nil)
 		if err == nil {
-			b.UploadToEndly(fmt.Sprintf("regression/%v/data/%v", datastore.Name, dataSource), strings.NewReader(setupData))
+			b.UploadToEndly(fmt.Sprintf("regression/data/%v/%v", datastore.Name, dataSource), strings.NewReader(setupData))
 		}
 	}
 	return nil
@@ -727,7 +727,6 @@ func (b *builder) addRegressionData(appMeta *AppMeta, request *RunRequest) error
 		} else {
 			tables = "$tables"
 			mappping, err := b.Download("regression/mapping.json", nil)
-
 			if err == nil {
 				b.UploadToEndly(fmt.Sprintf("regression/%v/mapping.json", datastore.Name), strings.NewReader(mappping))
 			}
@@ -737,7 +736,6 @@ func (b *builder) addRegressionData(appMeta *AppMeta, request *RunRequest) error
 		case "test":
 			b.buildTestUseCaseDataTestAssets(appMeta, request)
 		case "preload":
-
 			if !dbMeta.Sequence || len(dbMeta.Tables) == 0 {
 				prepare = prepare.Remove("sequence")
 			} else {
@@ -769,7 +767,15 @@ func (b *builder) addRegressionData(appMeta *AppMeta, request *RunRequest) error
 		dbNode.Put("register", b.registerDb[i])
 
 		if request.Testing.UseCaseData == "test" {
+			mapping, err := b.NewMapFromURI("datastore/regression/mapping.yaml", state)
+			if err != nil {
+				return err
+			}
+			if datastore.MultiTableMapping {
+				dbNode.Put("mapping", mapping)
+			}
 			dbNode = dbNode.Remove("prepare")
+
 		} else {
 			dbNode.Put("prepare", prepareYAML)
 		}
@@ -940,6 +946,21 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 			regression = removeMatchedLines(regression, "setup_data")
 			regression = removeMatchedLines(regression, "set initial test")
 		}
+	}
+
+	if !request.Testing.LogValidation {
+		regression = removeMatchedLines(regression, "validator/log")
+		regression = removeMatchedLines(regression, "log records for validation")
+	} else {
+		if err = b.Copy(nil, "regression/req/log_listen.yaml", "regression/req/log_validate.yaml", "regression/var/push_log.json"); err != nil {
+			return err
+		}
+		logRecrods, err := b.Download("regression/logType1.json", nil)
+		if err != nil {
+			return err
+		}
+		b.UploadToEndly("regression/use_cases/001_xx_case/logType1.json", strings.NewReader(logRecrods))
+		b.UploadToEndly("regression/logType1.json", strings.NewReader("[]"))
 	}
 
 	b.UploadToEndly("regression/regression.csv", strings.NewReader(regression))

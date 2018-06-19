@@ -120,6 +120,7 @@ func (r *Router) download() http.Handler {
 		r.setBoolValue(form, "rest", &runRequest.Testing.REST)
 		r.setBoolValue(form, "selenium", &runRequest.Testing.Selenium)
 		r.setBoolValue(form, "dataValidation", &runRequest.Testing.DataValidation)
+		r.setBoolValue(form, "logValidation", &runRequest.Testing.LogValidation)
 		r.setTextValue(form, "useCaseData", &runRequest.Testing.UseCaseData, "")
 
 		if len(runRequest.Datastore) > 0 {
