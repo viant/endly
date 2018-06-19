@@ -35,6 +35,7 @@ func (t *TasksNode) Select(selector TasksSelector) *TasksNode {
 	}
 
 	for _, task := range t.Tasks {
+
 		if task.TasksNode != nil && len(task.Tasks) > 0 {
 			if allowed[task.Name] {
 				result.Tasks = append(result.Tasks, task.Tasks...)
@@ -44,6 +45,8 @@ func (t *TasksNode) Select(selector TasksSelector) *TasksNode {
 					result.Tasks = append(result.Tasks, selected.Tasks...)
 				}
 			}
+		} else 	if allowed[task.Name] {
+			result.Tasks = append(result.Tasks, task)
 		}
 	}
 	return result
