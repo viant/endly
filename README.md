@@ -293,7 +293,10 @@ pipeline:
 
 
 
-To see _Endly_ in action, try to [generate an e2e workflow from scratch](https://endly-external.appspot.com/).
+To see _Endly_ in action,
+ 
+[Generate a test project for your app](https://endly-external.appspot.com/).
+
 
 In addition a few examples of fully functioning applications are included.
 You can build, deploy and test them end to end all with endly.
