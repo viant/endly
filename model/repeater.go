@@ -87,7 +87,6 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 	return true, nil
 }
 
-
 //Run repeats x times supplied handler
 func (r *Repeater) Run(service *endly.AbstractService, callerInfo string, context *endly.Context, handler func() (interface{}, error), extracted map[string]interface{}) error {
 	for i := 0; i < r.Repeat; i++ {

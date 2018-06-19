@@ -27,6 +27,7 @@ func (c *Criterion) Apply(state data.Map) (bool, error) {
 		return c.Predicate.Apply(state)
 	}
 	leftOperand := c.expandOperand(c.LeftOperand, state)
+
 	rightOperand := c.expandOperand(c.RightOperand, state)
 
 	var err error

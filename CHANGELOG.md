@@ -159,4 +159,12 @@
     * Patched nil pointers on aws service
     * Minor patches
     
-     
+## June 06 2018 0.11
+    * Added endly -g option to generate a test project
+    * Added log validator to project generator
+    * Added documentation link to project generator options
+    * Patched validation failure source matching
+    * Patched task duplication when run with -t option
+    * Renamed test project folder 'endly' to e2e in examples
+    * Minor patches
+          
