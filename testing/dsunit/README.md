@@ -50,7 +50,7 @@ pipeline:
 ```
 
 
-- **Create database schema and populating static data**
+- **Create database schema and loading static data**
 
 ```bash
 endly -r=init
@@ -92,9 +92,12 @@ In this scenario above workflow
 
 In this case dsunit.init also register datastore with driver thus no need to register it with separate workflow task.
 
+
+
+<a name="loaddata">&nbsp;</a>
 - **Loading data into data store**
 
-Assuming that register or init task has already taken place within the same e2e workflow run
+Assuming that register or init task has already taken place within the same e2e workflow session
 
 
 @prepare_db1.yaml
@@ -249,7 +252,7 @@ Using AsTableRecords is more advance testing option, allowing value autogenerati
 ```
 
 
-
+<a name="mapping">&nbsp;</a>
 - **Using data table mapping**
 
 Imagine your application uses dozen of tables, and each use case has to define data for most of them.
@@ -399,6 +402,8 @@ pipeline:
       - URL: regression/db1/mapping.json
 ```
 
+
+<a name="validation">&nbsp;</a>
 - **Validating data in data store**
 
 
@@ -489,7 +494,7 @@ Already included drivers with [endly](./../../bootstrap/bootstrap.go) default bu
  - mongo
 
 
-Tested, but not included drivers with custom build:
+Tested, but not included drivers with custom endly build:
 
  - vertica
  - oracle

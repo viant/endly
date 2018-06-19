@@ -88,18 +88,18 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 	var state = context.State()
 	activity := model.NewActivity(context, action, state)
 	defer func() {
-		var resultKey =  action.Name
+		var resultKey = action.Name
 		if resultKey == "" {
-			resultKey  = action.Action
+			resultKey = action.Action
 		}
 		if err != nil {
 			err = fmt.Errorf("%v: %v", action.TagID, err)
 		} else if len(response) > 0 {
 			state.Put(resultKey, response)
-			var variables =  model.Variables{
+			var variables = model.Variables{
 				{
-					Name:resultKey,
-					Value:response,
+					Name:  resultKey,
+					Value: response,
 				},
 			}
 			variables.Apply(state, state)

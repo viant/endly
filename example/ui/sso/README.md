@@ -30,7 +30,7 @@ Run the following command:
 
 ```text
 git clone https://github.com/viant/endly
-cd endly/example/ui/sso/endly/
+cd endly/example/ui/sso/e2e/
 ```
 
 ## run test with [manager](endly/manager.csv) workflow:

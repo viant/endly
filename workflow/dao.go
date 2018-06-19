@@ -31,7 +31,6 @@ func (d *Dao) Load(context *endly.Context, source *url.Resource) (*model.Workflo
 			err = result.Validate()
 		}
 	}
-
 	return result, err
 }
 

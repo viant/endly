@@ -22,9 +22,7 @@ func NewModifiedStateEvent(variables Variables, in, out data.Map) *ModifiedState
 	for _, variable := range variables {
 		from := data.ExtractPath(variable.From)
 		result.In[from], _ = in.GetValue(from)
-
 		name := data.ExtractPath(variable.Name)
-
 		result.Modified[name], _ = out.GetValue(name)
 	}
 	return result
