@@ -9,7 +9,7 @@ import (
 //Messages returns messages
 func (r *Request) Messages() []*msg.Message {
 	var response = make([]*msg.Message, 0)
-	response = append(response, msg.NewMessage(msg.NewStyled(fmt.Sprintf("%v %v", r.Method, r.URL), msg.MessageStyleGeneric), msg.NewStyled("http.ServiceRequest", msg.MessageStyleGeneric)))
+	response = append(response, msg.NewMessage(msg.NewStyled(fmt.Sprintf("%v %v", r.Method, r.URL), msg.MessageStyleInput), msg.NewStyled("http.ServiceRequest", msg.MessageStyleGeneric)))
 
 	if len(r.Header) > 0 {
 		value, _ := toolbox.AsJSONText(r.Header)
