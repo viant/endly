@@ -36,7 +36,7 @@ func TestService_Run(t *testing.T) {
 			Selenium:    false,
 			HTTP:        true,
 			REST:        false,
-			UseCaseData: true,
+			UseCaseData: "test",
 		},
 	})
 	assert.Nil(t, err)
