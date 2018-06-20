@@ -19,7 +19,7 @@ pipeline:
       - chmod +x $app
     download:
       /$buildPath/app/${app}: $releasePath
-      /$buildPath/endly/config/config.json: $releasePath
+      /$buildPath/e2e/config/config.json: $releasePath
       /$buildPath/static/: $releasePath/static/
 
   deploy:
