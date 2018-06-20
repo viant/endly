@@ -4,7 +4,7 @@
     "Name": "sdk",
     "Required": true,
     "From": "params.sdk",
-    "Value": "go:1.8"
+    "Value": "go:1.9"
   },
   {
     "Name": "GOPATH",
