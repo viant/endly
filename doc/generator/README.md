@@ -2,8 +2,7 @@
 
 Test project generator has ability to create initial test project with various setup, data and testing options.
 
-
-##Usage
+## Usage
 
 #### Generate test project
 
