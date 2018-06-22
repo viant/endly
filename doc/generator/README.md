@@ -34,6 +34,23 @@ A initial test project workflows:
   -  data.yaml registers data stores and sets initial data state  
 
 
+**Regression workflow:**
+
+  regression.csv define a regression test workflow using [neatly format](https://github.com/viant/neatly).
+
+The typical workflow performs the following task:
+
+1.  Register data store driver, set database IP by inspecting corresponding docker container, and optionally sets initial data state: data.yaml
+
+2. Check if skip.txt file exist to skip specific use case
+
+3. Optionally set initial test data for all data stores if regression/use_cases/xxx/prepare/$db is defined with corresponding tables data.
+
+4. Run a REST/HTTP/Selenium test
+
+5. Verify data in data stores only if expected data is defined in regression/use_cases/xxx/expect/$db
+
+
 
 #### Running all tasks
 
