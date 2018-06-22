@@ -186,6 +186,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
+
 //newNopService creates a new NoOperation nopService.
 func newService() *service {
 	var result = &service{
