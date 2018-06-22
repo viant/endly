@@ -55,8 +55,8 @@ endly -t=test
 
 #### Running individual test
 
-endly -t=test -i=<tagID>
+endly -t=test -i=&lt;tagID>
 
 #### Running individual test with debug logs
 
-endly -t=test -d=true -i=<tagID>  
+endly -t=test -d=true -i=&lt;tagID>  
