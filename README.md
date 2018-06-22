@@ -94,8 +94,8 @@ Endly as a comprehensive testing framework automate the following step:
 3) Testing
     1) Preparing test data
     2) Actual application testing
-        1) Http runner
-        2) Reset runner
+        1) HTTP runner
+        2) REST runner
         3) Selenium runner
     3) Application output verification
     4) Application persisted data verification
