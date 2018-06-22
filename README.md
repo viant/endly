@@ -107,9 +107,17 @@ Endly as a comprehensive testing framework automate the following step:
     
 
 <a name="GettingStarted"></a>
+
 ## Getting Started
 
 Endly automate sequence of actions into reusable tasks and workflows. 
+
+
+[Create test project for your app](doc/generator).
+
+![](project_generator.png)
+
+
 
 **a) System preparation**
 
@@ -295,9 +303,6 @@ pipeline:
 
 To see _Endly_ in action,
  
-[Generate a test project for your app](https://endly-external.appspot.com/).
-
-
 In addition a few examples of fully functioning applications are included.
 You can build, deploy and test them end to end all with endly.
 
