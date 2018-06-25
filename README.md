@@ -115,7 +115,7 @@ Endly automate sequence of actions into reusable tasks and workflows.
 
 [Create test project for your app](doc/generator).
 
-![](project_generator.png)
+[![test project generator](project_generator.png)](http://endly-external.appspot.com/)
 
 
 
