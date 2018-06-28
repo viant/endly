@@ -18,19 +18,45 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 
 
+
 ## Motivation
 
-This library was developed in go lang to enable simple automated declarative end to end functional testing 
-for web application developed in any language.
+_An end to end testing_ is a methodology which comprehensively tests an application in the environment closely imitating production system with all network communication, datastore and other dependencies interaction.
 
-It addresses all aspect of testing automation namely:
-- Local or remote system preparation including all services required by the application.
+It takes great length to manually prepare an application and its data for testing. And it can be serious bottleneck if this process is manual or relies on the 3rd party.
+Complex regression test plan execution and data organization can be yet additional challenge with hundreds business use cases to test. 
+
+While there are many great frameworks selection helping with an integration testing: 
+
+web UI integration testing: 
+ - [Selenium](https://www.seleniumhq.org/)
+ - [Cypress.io](https://www.cypress.io/) 
+ - [Procrator](https://www.protractortest.org/)
+
+or database integration testing:
+ - [dbunit](http://dbunit.sourceforge.net/)
+ - [dsunit](http://github.com/viant/dsunit)
+
+or application build and deployment:
+ - [Docker](https://www.docker.com/)
+
+None of these tools on its own have a comprehensive end to end testing and automation capabilities. 
+What is worst some of these tools are coupled with a particular frameworks or specific language.
+
+Endly takes declarative approach to test an application written in any language. The testing weight moves towards input and expected application output definition.
+Not only it provides an ability to maintain and operate on hundreds of use cases effectively and cohesively but also can automate application and data preparation tasks.
+Endly can easily orchestrate e2e testing process of n-tier distributed application where backend, middleware and front-end each uses different stack.
+
+
+Some typical e2e testing tasks supported by **endly**:
+- Local or remote system preparation including all services required by the application (with or without docker).
 - Checking out the application code
-- Building and deploying the application as a separate process, or in the container.
-- Data preparation including RDBMS, or key/value store
-- Test use cases with HTTP, REST or selenium runner.
-- Verification of responses, data in datastores or log produced.
-    
+- Building and deploying the application (with or without docker).
+- Database and data preparation
+- Setting application state 
+- Regression test execution (HTTP, REST, Selenium)
+- Data and application output verification (UI changes, transaction logs, database changes)
+
 
 <a name="Installation"></a>
 ## Installation
@@ -75,37 +101,6 @@ func main() {
 ```       
 
 
-
-
-
-<a name="Introduction"></a>
-## Introduction
-
-Endly as a comprehensive testing framework automate the following step:
-
-1) System preparation 
-    1) Local or remote on cloud
-    2) System services initialization. (RDBM, NoSQL, caching or 3rd party API, dockerized services)
-    3) Application container. (Docker, Application server, i,e, tomcat, glassfish)
-2) Application build and deployment
-    1) Application code checkout.
-    2) Application build
-    3) Application deployment
-3) Testing
-    1) Preparing test data
-    2) Actual application testing
-        1) HTTP runner
-        2) REST runner
-        3) Selenium runner
-    3) Application output verification
-    4) Application persisted data verification
-    5) Application produced log verification    
-4) Cleanup
-    1) Data cleanup 
-    2) Application shutdown
-    3) Application system services shutdown 
-    
-
 <a name="GettingStarted"></a>
 
 ## Getting Started
@@ -116,6 +111,14 @@ Endly automate sequence of actions into reusable tasks and workflows.
 [Create test project for your app](doc/generator).
 
 [![test project generator](project_generator.png)](http://endly-external.appspot.com/)
+
+
+
+Endly uses various text data format, so here are some IDEs with YAML, JSON, CSV support. 
+
+a) [Atom](https://ide.atom.io/) with tablr plugin  (apm install tablr)
+
+b) [IntelJ](https://www.jetbrains.com/idea/)  with [CSV plugin](https://www.jetbrains.com/help/idea/editing-csv-and-tsv-files.html)
 
 
 
