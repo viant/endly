@@ -114,7 +114,7 @@ func main() {
 
 
 
-Endly uses various text data format(YAML, JSON, CSV ), so here are some IDEs selection to consider:
+Endly uses various text data format (YAML, JSON, CSV), so here are some IDEs selection to consider:
 
 a) [Atom](https://ide.atom.io/) with tablr plugin  (apm install tablr)
 
