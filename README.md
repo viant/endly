@@ -114,7 +114,7 @@ func main() {
 
 
 
-Endly uses various text data format (YAML, JSON, CSV), so here is some IDEs selection to consider:
+Endly uses various text data format (YAML, JSON, CSV), so here is some IDEs     selection to consider:
 
 a) [Atom](https://ide.atom.io/) with tablr plugin  (apm install tablr)
 
@@ -368,6 +368,7 @@ commands:
 ## External resources
 
 - [ETL end to end testing with docker, NoSQL, RDBMS and Big Query](https://medium.com/@adrianwit/etl-end-to-end-testing-with-docker-nosql-rdbms-and-big-query-35b13b7fada8)
+- [Abc of data testing](https://medium.com/@adrianwit/killing-data-testing-swamp-6c3e11fb92c6)
 - [Go lang e2e testing](https://github.com/adrianwit/golang-e2e-testing)
 - [Endly introduction](https://github.com/adrianwit/endly-introduction)    
 
