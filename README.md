@@ -105,7 +105,7 @@ func main() {
 
 ## Getting Started
 
-Endly automate sequence of actions into reusable tasks and workflows. 
+ 
 
 
 [Create test project for your app](doc/generator).
@@ -120,6 +120,10 @@ a) [Atom](https://ide.atom.io/) with tablr plugin  (apm install tablr)
 
 b) [IntelJ](https://www.jetbrains.com/idea/)  with [CSV plugin](https://www.jetbrains.com/help/idea/editing-csv-and-tsv-files.html)
 
+
+
+
+Endly automate sequence of actions into reusable tasks and workflows, here are some examples:
 
 
 **a) System preparation**
