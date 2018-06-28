@@ -21,7 +21,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 ## Motivation
 
-_An end to end testing_ is a methodology which comprehensively tests an application in the environment closely imitating production system with all network communication, datastore and other dependencies interaction.
+_An end to end testing_ is a methodology which comprehensively tests an application in the environment closely imitating production system with all network communication, user, datastore and other dependencies interaction.
 
 It takes great length to manually prepare an application and its data for testing. And it can be serious bottleneck if this process is manual or relies on the 3rd party.
 Complex regression test plan execution and data organization can be yet additional challenge with hundreds business use cases to test. 
