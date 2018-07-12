@@ -1,3 +1,39 @@
+## July 12 2018 0.12.0          
+    * Documents have been updated
+    * Endly dependencies have been updated
+
+## June 20 2018 0.11.1          
+    * Patched record mapper nil pointer
+    * Updated test generator links
+    * Minor patches
+
+## June 19 2018 0.11.0
+    * Added endly -g option to generate a test project
+    * Added log validator to project generator
+    * Added documentation link to project generator options
+    * Patched validation failure source matching
+    * Patched task duplication when run with -t option
+    * Renamed test project folder 'endly' to e2e in examples
+    * Minor patches
+    
+## June 06 2018 0.10.1
+  * Patched and enhanced storage service compression
+  * Patched validation errors
+  * Patched nil pointers on aws service
+  * Minor patches  
+  
+## May 23 2018 0.10.0
+    * Customized data setup in workflow generator
+    * Added data validation option to workflow generator
+    * Added repeater to rest send request
+    * Assertly validation enhancement
+    * Added actual datastore and expected dsunit validation data
+    * Minor patches
+    
+    
+    
+#OLDER RELEASES    
+    
 
 ## Sep 1 2017 (Alpha)
 
@@ -145,30 +181,11 @@
     * Update big query to support DDL schema file
     * Minor patches
 
-## May 23 2018 0.10.0
-    * Customized data setup in workflow generator
-    * Added data validation option to workflow generator
-    * Added repeater to rest send request
-    * Assertly validation enhancement
-    * Added actual datastore and expected dsunit validation data
-    * Minor patches
 
-## June 06 2018 0.10.1
-    * Patched and enhanced storage service compression
-    * Patched validation errors
-    * Patched nil pointers on aws service
-    * Minor patches
+
+
     
-## June 19 2018 0.11.0
-    * Added endly -g option to generate a test project
-    * Added log validator to project generator
-    * Added documentation link to project generator options
-    * Patched validation failure source matching
-    * Patched task duplication when run with -t option
-    * Renamed test project folder 'endly' to e2e in examples
-    * Minor patches
 
-## June 20 2018 0.11.1          
-    * Patched record mapper nil pointer
-    * Updated test generator links
-    * Minor patches
+
+
+    
