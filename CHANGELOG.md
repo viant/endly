@@ -172,3 +172,7 @@
     * Patched record mapper nil pointer
     * Updated test generator links
     * Minor patches
+    
+## July 12 2018 0.12.0          
+    * Documents have been updated
+    * Endly dependencies have been updated
