@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/viant/endly"
+	"github.com/viant/endly/udf"
+	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 )
 
@@ -73,7 +75,7 @@ func (b *requestBuilder) buildRequestBody() (io.Reader, bool, error) {
 	if len(b.request.Body) > 0 {
 		body = []byte(b.request.Body)
 		if b.request.RequestUdf != "" {
-			transformed, err := endly.TransformWithUDF(b.context, b.request.RequestUdf, b.request.URL, string(body))
+			transformed, err := udf.TransformWithUDF(b.context, b.request.RequestUdf, b.request.URL, string(body))
 			if err != nil {
 				return nil, isBase64Encoded, err
 			}
@@ -82,7 +84,7 @@ func (b *requestBuilder) buildRequestBody() (io.Reader, bool, error) {
 			}
 		}
 		isBase64Encoded = strings.HasPrefix(string(body), "base64:")
-		body, err = endly.FromPayload(string(body))
+		body, err = util.FromPayload(string(body))
 		if err != nil {
 			return nil, isBase64Encoded, err
 		}
