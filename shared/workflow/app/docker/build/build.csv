@@ -18,6 +18,7 @@ Workflow,,Name,Description,Tasks,Init,
 []BuildImg,Service,Action,Description,Request,When,Group
 ,storage,copy,download build dockerfile , @req/dockerfile,,
 ,docker,build,build app docker image, @req/build_img,,
+,docker,tag,tag application image, @req/tag_latest,$tagLatest:true,
 ,docker,login,login to docker registry, @req/login,$useRegistry:true,
 ,docker,tag,tag app image, @req/tag,$useRegistry:true,
 ,docker,tag,tag latest app image, @req/tag_latest,$useRegistry=true && $tagLatest=true,
