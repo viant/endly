@@ -290,6 +290,21 @@ const (
   ],
   "CopyHandlerUdf": "CopyWithCompression"
 }`
+	storageCopyRemoteTransferWithCorruptionExample = `{
+  "Transfers": [
+    {
+      "Source": {
+        "URL": "s3://mybucket1/project1/Transfers/",
+        "Credentials": "${env.HOME}/.secret/s3.json"
+      },
+      "Dest": {
+         "URL": "gs://mybucket2/project1/Transfers/",
+          "Credentials": "${env.HOME}/.secret/gs.gz"
+      }
+    }
+  ],
+  "CopyHandlerUdf": "CopyWithCompressionAndCorruption"
+}`
 
 	storageBatchCopyTransferExample = `{
 	"Source": {
@@ -339,6 +354,10 @@ func (s *service) registerRoutes() {
 				{
 					Description: "remote to remote data transfer",
 					Data:        storageCopyRemoteTransferExample,
+				},
+				{
+					Description: "remote to remote data transfer with corruption",
+					Data:        storageCopyRemoteTransferWithCorruptionExample,
 				},
 				{
 					Description: "copy with replacement",

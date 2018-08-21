@@ -125,6 +125,23 @@ func TestTransferService_Copy(t *testing.T) {
 			},
 			"",
 		},
+		{
+			"test/copy/compress/file2/darwin",
+			&storage.CopyRequest{
+				Transfers: []*storage.Transfer{
+					{
+						Source:   url.NewResource("scp://127.0.0.1:22/tmp/copy5_source/config5.json"),
+						Dest:     url.NewResource("/tmp/copy5_target/config5_corruption.gz"),
+						Compress: false,
+					},
+				},
+				CopyHandlerUdf: "CopyWithCompressionAndCorruption",
+			},
+			map[string]string{
+				"mem:///tmp/copy5_target/config5_corruption.gz": "\x1f\x8b\b\x00\x00\tn\x88\x04\xff\x00\v\x00\xf4\xffcompressed*\x00\x00\x00\xff\xff\x00\x00\x00\xff\xff\x01\x00\x00\xff\xffsM!\xf3\v\x00\x00\x00",
+			},
+			"",
+		},
 	}
 
 	for _, useCase := range useCases {
