@@ -162,7 +162,67 @@ pipeline:
 For instance: the following  define inline workflowto build and deploy a test app:
 (you can easily build an app for standalone mode or in and for docker container)
 
+
+**With Dockerfile build file and docker compose**
+
 @app.yaml
+```yaml
+tasks: $tasks
+init:
+- buildPath = /tmp/build/myapp/
+- version = 0.1.0
+defaults:
+  app: myapp
+  version: 0.1.0
+  useRegistry: false
+pipeline:
+  build:
+    init:
+      action: exec:run
+      target: $target
+      commands:
+      - if [ -e $buildPath ]; then rm -rf $buildPath; fi
+      - mkdir -p $buildPath
+    checkout:
+      action: version/control:checkout
+      origin:
+        URL: https://github.com/adrianwit/dstransfer
+      dest:
+        URL: scp://${targetHost}:22/$buildPath
+        credentials: localhost
+    download:
+      action: storage:copy
+      source:
+        URL: config/Dockerfile
+      dest:
+        URL: $buildPath
+        credentials: localhost
+    build-img:
+      action: docker:build
+      target: $target
+      path: $buildPath
+      '@tag':
+        image: dstransfer
+        username: adrianwit
+        version: 0.1.0
+  stop:
+    target: $appTarget
+    action: docker:composeDown
+    source:
+      URL: config/docker-compose.yaml
+  deploy:
+    target: $appTarget
+    action: docker:composeUp
+    runInBackground: true
+    source:
+      URL: config/docker-compose.yaml
+
+```
+
+**As Standalone app** (with predefined shared workflow)
+
+@app.yaml
+
 ```yaml
 tasks: $tasks
 defaults:
@@ -210,6 +270,9 @@ pipeline:
       - "config.json"
 
 ```
+
+
+
 
 
 **c) Datastore creation**
