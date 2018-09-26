@@ -80,6 +80,7 @@ func (m *manager) Service(input interface{}) (Service, error) {
 	return nil, fmt.Errorf("failed to lookup service: '%v' in [%v]", input, strings.Join(available, ","))
 }
 
+
 func (m *manager) Register(service Service) {
 	m.serviceByID[service.ID()] = service
 	for _, action := range service.Actions() {
