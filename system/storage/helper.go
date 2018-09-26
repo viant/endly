@@ -84,7 +84,7 @@ func GetStorageService(context *endly.Context, resource *url.Resource) (storage.
 
 //IsShellCompressable returns true if resource can be compress via shell command.
 func IsShellCompressable(protScheme string) bool {
-	return protScheme == "scp" || protScheme == "file"
+	return protScheme == "scp" || protScheme == "file" || protScheme == "ssh"
 }
 
 //Copy transfers data for provided transfer definition.
@@ -109,6 +109,7 @@ func joinIfNeeded(parent *url.Resource, URI string) (result *url.Resource) {
 			result.Credentials = parent.Credentials
 		}
 	}()
+
 
 	if strings.Contains(URI, ":/") {
 		result = url.NewResource(URI)
