@@ -21,3 +21,66 @@
 | docker | composeUp | docker compose up| [ComposeUpRequest](service_contract.go) | [ComposeResponse](service_contract.go) |
 | docker | comoseDown | docker compose down | [ComposeDownRequest](service_contract.go) | [ComposeResponse](service_contract.go) |
 
+
+
+Example of using docker service for building and deploying an app.
+
+
+```bash
+    endly -r=app -t=build,depoy
+```
+
+
+@app.yaml
+```yaml
+tasks: $tasks
+init:
+- buildPath = /tmp/build/myapp/
+- version = 0.1.0
+defaults:
+  app: myapp
+  version: 0.1.0
+  useRegistry: false
+pipeline:
+  build:
+    init:
+      action: exec:run
+      target: $target
+      commands:
+      - if [ -e $buildPath ]; then rm -rf $buildPath; fi
+      - mkdir -p $buildPath
+    checkout:
+      action: version/control:checkout
+      origin:
+        URL: https://github.com/adrianwit/dstransfer
+      dest:
+        URL: scp://${targetHost}:22/$buildPath
+        credentials: localhost
+    download:
+      action: storage:copy
+      source:
+        URL: config/Dockerfile
+      dest:
+        URL: $buildPath
+        credentials: localhost
+    build-img:
+      action: docker:build
+      target: $target
+      path: $buildPath
+      '@tag':
+        image: dstransfer
+        username: adrianwit
+        version: 0.1.0
+  stop:
+    target: $appTarget
+    action: docker:composeDown
+    source:
+      URL: config/docker-compose.yaml
+  deploy:
+    target: $appTarget
+    action: docker:composeUp
+    runInBackground: true
+    source:
+      URL: config/docker-compose.yaml
+
+```
