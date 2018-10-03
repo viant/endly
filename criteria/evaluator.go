@@ -32,6 +32,7 @@ func NewEvalEvent(criteriaType string, defaultValue, evaluation bool, criteria, 
 	return result
 }
 
+
 //Evaluate evaluates passed in criteria
 func Evaluate(context *endly.Context, state data.Map, expression, eventType string, defaultValue bool) (bool, error) {
 	if expression == "" {

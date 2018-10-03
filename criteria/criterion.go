@@ -4,6 +4,7 @@ import (
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"fmt"
 )
 
 //Criterion represent evaluation criterion
@@ -23,26 +24,25 @@ func (c *Criterion) expandOperand(opperand interface{}, state data.Map) interfac
 
 //Apply evaluates criterion with supplied context and state map . Dolar prefixed $expression will be expanded before evaluation.
 func (c *Criterion) Apply(state data.Map) (bool, error) {
-	if c.Predicate != nil {
+
+	if c.Predicate != nil && len(c.Predicate.Criteria) > 0 {
 		return c.Predicate.Apply(state)
 	}
+
 	leftOperand := c.expandOperand(c.LeftOperand, state)
-
 	rightOperand := c.expandOperand(c.RightOperand, state)
-
 	var err error
 	var leftNumber, rightNumber float64
-
 	var rootPath = assertly.NewDataPath("/")
 	var context = assertly.NewDefaultContext()
 
 	switch c.Operator {
 	case "=", ":":
-
 		validation, err := assertly.AssertWithContext(rightOperand, leftOperand, rootPath, context)
 		if err != nil {
 			return false, err
 		}
+		fmt.Printf("validation: %v\n", validation.Report())
 		return validation.FailedCount == 0, nil
 	case "!=", "":
 		if _, ok := leftOperand.(string); ok && rightOperand == nil {
@@ -81,6 +81,7 @@ func (c *Criterion) Apply(state data.Map) (bool, error) {
 	}
 	return false, err
 }
+
 
 //NewCriterion creates a new criterion
 func NewCriterion(leftOperand interface{}, operator string, rightOperand interface{}) *Criterion {
