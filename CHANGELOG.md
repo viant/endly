@@ -1,3 +1,7 @@
+## October 2 2018 0.12.3          
+    * Update logging with activity context (-d=true)
+    * Minor patches
+    
 ## July 12 2018 0.12.0          
     * Documents have been updated
     * Endly dependencies have been updated

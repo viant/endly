@@ -62,7 +62,7 @@ func (s *service) compressSource(context *endly.Context, source, target *url.Res
 	}
 	var archiveName = fmt.Sprintf("%v.tar.gz", name)
 
-	if source.ParsedURL.Scheme == "file"  && source.Credentials == ""{
+	if source.ParsedURL.Scheme == "file" && source.Credentials == "" {
 		source.Credentials = "localhost"
 	}
 	var runRequest = exec.NewRunRequest(source, false,
