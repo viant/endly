@@ -110,7 +110,6 @@ func joinIfNeeded(parent *url.Resource, URI string) (result *url.Resource) {
 		}
 	}()
 
-
 	if strings.Contains(URI, ":/") {
 		result = url.NewResource(URI)
 	} else if !(strings.HasPrefix(URI, "/") || strings.HasPrefix(URI, "$")) {
