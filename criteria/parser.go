@@ -133,7 +133,15 @@ outer:
 			break outer
 		} else if token.Token == operator {
 
-			criterion.Operator = token.Matched
+			leftOperand := toolbox.AsString(criterion.LeftOperand)
+			if strings.HasSuffix(leftOperand, "!") {
+				criterion.LeftOperand = string(leftOperand[:len(leftOperand)-1])
+				criterion.Operator = "!"  + token.Matched
+			} else {
+				criterion.Operator = token.Matched
+			}
+
+
 			if criterion.Operator == ":" {
 				token, err = p.expectOptionalWhitespaceFollowedBy(tokenizer, "right operand", assertlyExprMatcher, eof)
 			} else {
