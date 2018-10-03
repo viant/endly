@@ -434,7 +434,7 @@ commands:
 - [Abc of data testing](https://medium.com/@adrianwit/killing-data-testing-swamp-6c3e11fb92c6)
 - [Go lang e2e testing](https://github.com/adrianwit/golang-e2e-testing)
 - [Endly introduction](https://github.com/adrianwit/endly-introduction)    
-
+- [Endly UI e2e testing demo](https://www.youtube.com/watch?v=jRJ8_0Pmgr0)
          	
 <a name="License"></a>
 ## License
