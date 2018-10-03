@@ -4,7 +4,6 @@ import (
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"fmt"
 )
 
 //Criterion represent evaluation criterion
