@@ -272,11 +272,11 @@ func (s *execService) validateStdout(stdout string, command string, execution *E
 }
 
 func (s *execService) authSuperUserIfNeeded(stdout string, context *endly.Context, session *model.Session, extractCommand *ExtractCommand, response *RunResponse, request *ExtractRequest) (err error) {
-	if !request.SuperUser  {
+	if !request.SuperUser {
 		return nil
 	}
 
-	if session.SuperUSerAuth && !(util.EscapedContains(stdout, "Sorry, try again.")  &&  util.EscapedContains(stdout, "Password"))  {
+	if session.SuperUSerAuth && !(util.EscapedContains(stdout, "Sorry, try again.") && util.EscapedContains(stdout, "Password")) {
 		return nil
 	}
 
