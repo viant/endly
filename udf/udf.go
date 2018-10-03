@@ -188,7 +188,7 @@ func CopyWithCompressionAndCorruption(source interface{}, state data.Map) (inter
 			}
 
 			//adding few bytes to corrupt the file
-			contents = append(contents,'*')
+			contents = append(contents, '*')
 
 			zippedContents, err := zipUdf(contents, nil)
 			if err != nil {
