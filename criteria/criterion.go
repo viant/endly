@@ -42,7 +42,6 @@ func (c *Criterion) Apply(state data.Map) (bool, error) {
 		if err != nil {
 			return false, err
 		}
-		fmt.Printf("validation: %v\n", validation.Report())
 		return validation.FailedCount == 0, nil
 	case "!=", "":
 		if _, ok := leftOperand.(string); ok && rightOperand == nil {
