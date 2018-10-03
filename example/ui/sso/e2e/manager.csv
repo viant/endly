@@ -5,6 +5,7 @@ Workflow,,Name,Description,Tasks,Init,Sleep
 []Init,Service,Action,Description,Request,,
 ,workflow,run,Initialise system, @system,,
 ,workflow,run,"Build, deploy app", @app,,
+,workflow,run,"Init datastore", @datastore,,
 []Tasks,,Name,Description,Actions,,
 ,,test,Run test,%Test,,
 []Test,Service,Action,Description,Request,workflow,tasks

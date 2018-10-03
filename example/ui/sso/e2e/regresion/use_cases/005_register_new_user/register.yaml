@@ -14,7 +14,7 @@ commands:
   - (#submit).click
   - command: CurrentURL = CurrentURL()
     exit: $CurrentURL:/signin/
-    sleepTimeMs: 1000
+    sleepTimeMs: 2000
     repeat: 10
 expect:
   CurrentURL: http://127.0.0.1:8888/signin/
