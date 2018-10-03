@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 	"sync"
 )
 
@@ -21,6 +22,7 @@ type Logger struct {
 	workflowTagCount int
 	subPath          string
 	tagCount         map[string]int
+	activityPath     string
 	mutex            *sync.Mutex
 	activityEnded    bool
 }
@@ -31,7 +33,6 @@ func (l *Logger) processEvent(event msg.Event) {
 	}
 	switch value := event.Value().(type) {
 	case *model.Activity:
-
 		if l.activityEnded && l.Len() > 0 {
 			l.activityEnded = false
 			l.Pop()
@@ -61,18 +62,56 @@ func (l *Logger) handlerError(err error) {
 	log.Print(err)
 }
 
+func (l *Logger) normalizeActivityPath(activity *model.Activity) string {
+	if activity == nil || activity.Action == "" {
+		return ""
+	}
+	if activity.Action == "run" && activity.Service == ServiceID {
+		req := toolbox.AsMap(activity.Request)
+		if URL, ok := req["assetURL"]; ok {
+			_, name := toolbox.URLSplit(toolbox.AsString(URL))
+			return name
+		}
+	}
+	var service = strings.Replace(activity.Service, "/", "_", 1)
+	var action = strings.Replace(activity.Action, "-", "_", 1)
+	return service + "_" + action + "/"
+}
+
+func (l *Logger) getAndIncrementTag(tag string) int {
+	if _, has := l.tagCount[tag]; !has {
+		l.tagCount[tag] = 0
+	}
+	l.tagCount[tag]++
+	return l.tagCount[tag]
+}
+
 //OnEvent handles supplied event.
 func (l *Logger) OnEvent(event msg.Event) {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 	l.processEvent(event)
-	if _, has := l.tagCount[l.subPath]; !has {
-		l.tagCount[l.subPath] = 0
-	}
-	l.tagCount[l.subPath]++
-	var counter = l.tagCount[l.subPath]
-	filename := path.Join(l.directory, l.subPath, fmt.Sprintf("%04d_%v.json", counter, event.Type()))
 
+	activity := l.Last()
+	activityID := l.normalizeActivityPath(activity)
+
+	if activityID != "" {
+		if !strings.HasSuffix(l.activityPath, activityID) {
+			activityCount := l.getAndIncrementTag(l.subPath + activityID)
+			l.activityPath = fmt.Sprintf("%03d_%v", activityCount, activityID)
+		}
+		activityID = l.activityPath
+	}
+
+	subPath := l.subPath
+	tagCount := l.getAndIncrementTag(l.subPath)
+
+	if activityID != "" {
+		tagCount = l.getAndIncrementTag(l.subPath + activityID)
+		subPath = subPath + "/" + activityID
+	}
+
+	filename := path.Join(l.directory, subPath, fmt.Sprintf("%04d_%v.json", tagCount, event.Type()))
 	parent, _ := path.Split(filename)
 	if !toolbox.FileExists(parent) {
 		err := os.MkdirAll(parent, 0744)
@@ -115,12 +154,13 @@ func (l *Logger) AsEventListener() msg.Listener {
 //New creates a new event logger
 func NewLogger(directory string, listener msg.Listener) *Logger {
 	var result = &Logger{
-		Activities: model.NewActivities(),
-		Listener:   listener,
-		mutex:      &sync.Mutex{},
-		directory:  directory,
-		tagCount:   make(map[string]int),
-		subPath:    "000_main",
+		Activities:   model.NewActivities(),
+		Listener:     listener,
+		mutex:        &sync.Mutex{},
+		directory:    directory,
+		tagCount:     make(map[string]int),
+		subPath:      "000_main",
+		activityPath: "",
 	}
 
 	return result
