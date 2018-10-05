@@ -25,6 +25,7 @@ func init() {
 	endly.UdfRegistry["URLPath"] = URLPath
 	endly.UdfRegistry["Hostname"] = Hostname
 	endly.UdfRegistry["CopyWithCompression"] = CopyWithCompression
+	endly.UdfRegistry["CopyWithCompressionAndCorruption"] = CopyWithCompressionAndCorruption
 }
 
 //TransformWithUDF transform payload with provided UDF name.
@@ -168,6 +169,39 @@ func CopyWithCompression(source interface{}, state data.Map) (interface{}, error
 			return nil
 		}
 		return copyHandlerWithCompression, nil
+	}
+	return nil, errors.New("unable to find udf with name Zip")
+}
+
+// UDF to provide a CopyHandler that performs compression and corruption before copy source to destination
+// Compatible only with Object that is a content and not a directory
+func CopyWithCompressionAndCorruption(source interface{}, state data.Map) (interface{}, error) {
+	// Get UDF to Zip from context
+	if zipUdf, has := getUdfFromContext("Zip", state); has {
+		// Build copy handler
+		var copyHandlerWithCompressionAndCorruption storage.CopyHandler
+		copyHandlerWithCompressionAndCorruption = func(sourceObject storage.Object, reader io.Reader, destinationService storage.Service, destinationURL string) error {
+			// Zip source contents
+			contents, err := ioutil.ReadAll(reader)
+			if err != nil {
+				return fmt.Errorf("error when reading object content before zipping source %v: %v", sourceObject.URL(), err)
+			}
+
+			//adding few bytes to corrupt the file
+			contents = append(contents, '*')
+
+			zippedContents, err := zipUdf(contents, nil)
+			if err != nil {
+				return fmt.Errorf("error during zipping source %v: %v", sourceObject.URL(), err)
+			}
+
+			//Upload zipped contents
+			if err := destinationService.Upload(destinationURL, bytes.NewReader(zippedContents.([]byte))); err != nil {
+				return fmt.Errorf("error during upload, %v %v %v", sourceObject.URL(), destinationURL, err)
+			}
+			return nil
+		}
+		return copyHandlerWithCompressionAndCorruption, nil
 	}
 	return nil, errors.New("unable to find udf with name Zip")
 }

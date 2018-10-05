@@ -79,11 +79,22 @@ func Test_EvaluateCriteria(t *testing.T) {
 				},
 			},
 			Expected: true,
+    },
+    {
+			Description:   "Not equal",
+			Expression:    "1:!0",
+			DefaultResult: true,
+			Expected:      true,
+		},
+		{
+			Description:   "Not equal 2",
+			Expression:    "1!=0",
+			DefaultResult: true,
+			Expected:      true,
 		},
 	}
 
 	for _, useCase := range useCases {
-
 		if len(useCase.State) > 0 {
 			for k, v := range useCase.State {
 				state.Put(k, v)
@@ -94,9 +105,7 @@ func Test_EvaluateCriteria(t *testing.T) {
 			assert.NotNil(t, err, useCase.Description)
 			continue
 		}
-
 		assert.EqualValues(t, useCase.Expected, isTrue, useCase.Description)
-
 	}
 
 }
