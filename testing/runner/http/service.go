@@ -4,15 +4,17 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"github.com/viant/endly"
+	"github.com/viant/endly/testing/validator"
+	"github.com/viant/endly/udf"
+	"github.com/viant/endly/util"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/viant/endly"
-	"github.com/viant/endly/udf"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/data"
 )
 
 //ServiceID represents http runner service id.
@@ -25,69 +27,89 @@ type service struct {
 	*endly.AbstractService
 }
 
-func (s *service) send(context *endly.Context, request *SendRequest) (*SendResponse, error) {
-	client, err := toolbox.NewHttpClient(request.Options...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create http client for http runner service: %v", err)
-	}
-	defer s.resetContext(context, request)
-	initializeContext(context)
-
-	var sendGroupResponse = &SendResponse{
-		Responses: make([]*Response, 0),
-		Data:      make(map[string]interface{}),
-	}
-
-	for _, req := range request.Requests {
-		err = s.sendRequest(context, client, req, request, sendGroupResponse)
+func (s *service) processResponse(context *endly.Context, sendRequest *SendRequest, sendHTTPRequest *Request, response *Response, httpResponse *http.Response, isBase64Encoded bool, extracted map[string]interface{}) (string, error) {
+	response.Header = make(map[string][]string)
+	copyHeaders(httpResponse.Header, response.Header)
+	readBody(httpResponse, response, isBase64Encoded)
+	if sendHTTPRequest.ResponseUdf != "" {
+		transformed, err := udf.TransformWithUDF(context, sendHTTPRequest.ResponseUdf, sendHTTPRequest.URL, response.Body)
 		if err != nil {
-			return nil, err
+			return "", err
+		}
+		if toolbox.IsMap(transformed) {
+			response.Body, _ = toolbox.AsJSONText(transformed)
+		} else {
+			response.Body = toolbox.AsString(transformed)
 		}
 	}
-	return sendGroupResponse, nil
 
+	var responseBody = replaceResponseBodyIfNeeded(sendHTTPRequest, response.Body)
+	return responseBody, nil
 }
 
-func (s *service) sendRequest(context *endly.Context, client *http.Client, sendRequest *Request, sendGroupRequest *SendRequest, sendGroupResponse *SendResponse) error {
-	// Check if request can be executed
-	if isValid, err := sendRequest.EvaluateWhen(context); !isValid {
+func (s *service) sendRequest(context *endly.Context, client *http.Client, HTTPRequest *Request, sessionCookies *Cookies, sendGroupRequest *SendRequest, sendGroupResponse *SendResponse) error {
+	var err error
+	var state = context.State()
+	cookies := state.GetMap("cookies")
+	var reader io.Reader
+	var isBase64Encoded = false
+	HTTPRequest = HTTPRequest.Expand(context)
+	var body []byte
+	var ok bool
+	if len(HTTPRequest.Body) > 0 {
+		body = []byte(HTTPRequest.Body)
+		if HTTPRequest.RequestUdf != "" {
+			transformed, err := udf.TransformWithUDF(context, HTTPRequest.RequestUdf, HTTPRequest.URL, string(body))
+			if err != nil {
+				return err
+			}
+			if body, ok = transformed.([]byte); !ok {
+				body = []byte(toolbox.AsString(transformed))
+			}
+		}
+		isBase64Encoded = strings.HasPrefix(string(body), "base64:")
+		body, err = util.FromPayload(string(body))
 		if err != nil {
 			return err
 		}
-		return nil
+		reader = bytes.NewReader(body)
 	}
 
-	//Build http request from SendRequest
-	httpRequest, err := newRequestBuilder().setContext(context).setRequest(sendRequest).build()
+	httpRequest, err := http.NewRequest(strings.ToUpper(HTTPRequest.Method), HTTPRequest.URL, reader)
 	if err != nil {
 		return err
 	}
 
-	//Add request to context trips
-	t := trips(context.State().GetMap(Trips))
-	t.addRequest(sendRequest)
-
-	//Event tracking
-	startEvent := s.Begin(context, sendRequest)
+	copyHeaders(HTTPRequest.Header, httpRequest.Header)
+	sessionCookies.SetHeader(HTTPRequest.Header)
+	HTTPRequest.Cookies.SetHeader(httpRequest.Header)
 
 	response := &Response{}
 	sendGroupResponse.Responses = append(sendGroupResponse.Responses, response)
-
-	repeater := sendRequest.Repeater
+	startEvent := s.Begin(context, HTTPRequest)
+	repeater := HTTPRequest.Repeater.Init()
 
 	var HTTPResponse *http.Response
 	var responseBody string
+	var bodyCache []byte
+	var useCachedBody = repeater.Repeat > 1 && httpRequest.ContentLength > 0
+	if useCachedBody {
+		bodyCache, err = ioutil.ReadAll(httpRequest.Body)
+		if err != nil {
+			return err
+		}
+	}
 
 	handler := func() (interface{}, error) {
+		if useCachedBody {
+			httpRequest.Body = ioutil.NopCloser(bytes.NewReader(bodyCache))
+		}
+
 		HTTPResponse, err = client.Do(httpRequest)
 		if err != nil {
 			return nil, err
 		}
-		var isBase64Encoded bool
-		if httpRequest.TransferEncoding != nil && len(httpRequest.TransferEncoding) > 0 && httpRequest.TransferEncoding[0] == "base64" {
-			isBase64Encoded = true
-		}
-		responseBody, err = s.processResponse(context, sendGroupRequest, sendRequest, response, HTTPResponse, isBase64Encoded, sendGroupResponse.Data)
+		responseBody, err = s.processResponse(context, sendGroupRequest, HTTPRequest, response, HTTPResponse, isBase64Encoded, sendGroupResponse.Data)
 		return responseBody, err
 	}
 
@@ -107,14 +129,13 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, sendR
 	if previous == nil {
 		previous = data.NewMap()
 	}
-
 	response.Code = HTTPResponse.StatusCode
 	response.TimeTakenMs = int(startEvent.Timestamp().Sub(endEvent.Timestamp()) / time.Millisecond)
 
 	if toolbox.IsCompleteJSON(responseBody) {
 		response.JSONBody, err = toolbox.JSONToMap(responseBody)
-		if err == nil && sendRequest.Repeater != nil {
-			_ = sendRequest.Variables.Apply(data.Map(response.JSONBody), previous)
+		if err == nil && HTTPRequest.Repeater != nil {
+			_ = HTTPRequest.Variables.Apply(data.Map(response.JSONBody), previous)
 		}
 	}
 
@@ -130,37 +151,19 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, sendR
 	if len(previous) > 0 {
 		state.Put(PreviousTripStateKey, previous)
 	}
+	if HTTPRequest.When != "" {
+		return nil
+	}
 
-	if sendGroupResponse.Responses != nil {
-		var resp = make([]map[string]interface{}, 0)
-		err = toolbox.DefaultConverter.AssignConverted(&resp, sendGroupResponse.Responses)
-		if err != nil {
-			return err
+	for _, candidate := range sendGroupRequest.Requests {
+		if candidate.When != "" && strings.Contains(response.Body, candidate.When) {
+			err = s.sendRequest(context, client, candidate, sessionCookies, sendGroupRequest, sendGroupResponse)
+			if err != nil {
+				return err
+			}
 		}
-		state.Put(PreviousTripStateKey, resp)
 	}
 	return nil
-}
-
-func (s *service) processResponse(context *endly.Context, sendRequest *SendRequest, sendHTTPRequest *Request, response *Response, httpResponse *http.Response, isBase64Encoded bool, extracted map[string]interface{}) (string, error) {
-	response.Header = make(map[string][]string)
-	copyHeaders(httpResponse.Header, response.Header)
-
-	readBody(httpResponse, response, isBase64Encoded)
-	if sendHTTPRequest.ResponseUdf != "" {
-		transformed, err := udf.TransformWithUDF(context, sendHTTPRequest.ResponseUdf, sendHTTPRequest.URL, response.Body)
-		if err != nil {
-			return "", err
-		}
-		if toolbox.IsMap(transformed) {
-			response.Body, _ = toolbox.AsJSONText(transformed)
-		} else {
-			response.Body = toolbox.AsString(transformed)
-		}
-	}
-
-	var responseBody = replaceResponseBodyIfNeeded(sendHTTPRequest, response.Body)
-	return responseBody, nil
 }
 
 func replaceResponseBodyIfNeeded(sendHTTPRequest *Request, responseBody string) string {
@@ -172,6 +175,58 @@ func replaceResponseBodyIfNeeded(sendHTTPRequest *Request, responseBody string) 
 	return responseBody
 }
 
+func (s *service) applyDefaultTimeoutIfNeeded(options []*toolbox.HttpOptions) []*toolbox.HttpOptions {
+	if len(options) > 0 {
+		return options
+	}
+	return []*toolbox.HttpOptions{
+		{
+			Key:   "RequestTimeoutMs",
+			Value: 120000,
+		},
+		{
+			Key:   "TimeoutMs",
+			Value: 120000,
+		},
+	}
+}
+
+func (s *service) send(context *endly.Context, request *SendRequest) (*SendResponse, error) {
+	client, err := toolbox.NewHttpClient(s.applyDefaultTimeoutIfNeeded(request.Options)...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to send req: %v", err)
+	}
+	defer s.resetContext(context, request)
+	var result = &SendResponse{
+		Responses: make([]*Response, 0),
+		Data:      make(map[string]interface{}),
+	}
+	var sessionCookies Cookies = make([]*http.Cookie, 0)
+	var state = context.State()
+	if !state.Has("cookies") {
+		state.Put("cookies", data.NewMap())
+	}
+	for _, req := range request.Requests {
+		if req.When != "" {
+			continue
+		}
+		err = s.sendRequest(context, client, req, &sessionCookies, request, result)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if request.Expect != nil {
+		var actual = map[string]interface{}{
+			"Responses": result.Responses,
+			"Data":      result.Data,
+		}
+		result.Assert, err = validator.Assert(context, request, request.Expect, actual, "HTTP.responses", "assert http responses")
+	}
+
+	return result, nil
+
+}
 func readBody(httpResponse *http.Response, response *Response, expectBased64Encoded bool) {
 
 	body, err := ioutil.ReadAll(httpResponse.Body)
@@ -192,6 +247,22 @@ func readBody(httpResponse *http.Response, response *Response, expectBased64Enco
 	}
 }
 
+func copyHeaders(source http.Header, target http.Header) {
+	for key, values := range source {
+		if _, has := target[key]; !has {
+			target[key] = make([]string, 0)
+		}
+		if len(values) == 1 {
+			target.Set(key, values[0])
+		} else {
+
+			for _, value := range values {
+				target.Add(key, value)
+			}
+		}
+	}
+}
+
 func copyExpandedHeaders(source http.Header, target http.Header, context *endly.Context) {
 	for key, values := range source {
 		if _, has := target[key]; !has {
@@ -204,16 +275,6 @@ func copyExpandedHeaders(source http.Header, target http.Header, context *endly.
 				target.Add(key, context.Expand(value))
 			}
 		}
-	}
-}
-
-func initializeContext(c *endly.Context) {
-	var state = c.State()
-	if !state.Has("cookies") {
-		state.Put("cookies", data.NewMap())
-	}
-	if !state.Has(Trips) {
-		state.Put(Trips, newTrips())
 	}
 }
 
