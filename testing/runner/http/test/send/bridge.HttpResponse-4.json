@@ -1,0 +1,17 @@
+{
+	"Code": 200,
+	"Header": {
+		"Cache-Control": [
+			"private"
+		],
+		"Content-Type": [
+			"text/html;charset=ISO-8859-1"
+		],
+		"Server": [
+			"Apache-Coyote/1.1"
+		],
+		"Set-Cookie": [
+			"u=xcz; Domain=.viantinc.com; Expires=Sat, 22-Sep-2118 19:53:24 GMT; Path=/ HttpOnly"
+		]
+	}
+}

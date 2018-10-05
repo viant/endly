@@ -2,13 +2,6 @@ package endly
 
 import (
 	"fmt"
-	uuid "github.com/satori/go.uuid"
-	"github.com/viant/endly/msg"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/secret"
-	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox/url"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -17,6 +10,14 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	uuid "github.com/satori/go.uuid"
+	"github.com/viant/endly/msg"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/secret"
+	"github.com/viant/toolbox/storage"
+	"github.com/viant/toolbox/url"
 )
 
 var serviceManagerKey = (*manager)(nil)
