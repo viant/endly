@@ -331,19 +331,28 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 		state := context.State()
 		state.Put(dataStateKey, workflow.Data)
 	}
+
+	var state = context.State()
+	upstreamTasks, hasUpstreamTasks := state.GetValue(tasksStateKey)
+
 	restore := context.PublishAndRestore(toolbox.Pairs(
 		neatly.OwnerURL, workflow.Source.URL,
 		tasksStateKey, request.Tasks,
 	))
 	defer restore()
-	var state = context.State()
+
 	context.Publish(NewInitEvent(request.Tasks, state))
+
 	taskSelector := model.TasksSelector(request.Tasks)
 
 	if !taskSelector.RunAll() {
 		for _, task := range taskSelector.Tasks() {
 			if !workflow.TasksNode.Has(task) {
-				return nil, fmt.Errorf("failed to lookup task: %v . %v", workflow.Name, task)
+				if hasUpstreamTasks && request.Tasks == toolbox.AsString(upstreamTasks) {
+					taskSelector = model.TasksSelector("*")
+				} else {
+					return nil, fmt.Errorf("failed to lookup task: %v . %v", workflow.Name, task)
+				}
 			}
 		}
 	}

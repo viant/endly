@@ -47,7 +47,6 @@
   },
   {
     "Name": "upload",
-    "Required": true,
     "From": "params.upload",
     "Value": []
   },
