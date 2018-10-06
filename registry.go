@@ -8,6 +8,16 @@ import (
 //UdfRegistry represents a udf registry
 var UdfRegistry = make(map[string]func(source interface{}, state data.Map) (interface{}, error))
 
+
+//UdfRegistryProvider represents udf registry provider (i.e. to register parameterized udf dynamically)
+var UdfRegistryProvider = make(map[string]func(args ... interface{}) (func(source interface{}, state data.Map) (interface{}, error), error))
+
+type UdfProvider struct {
+	Id string
+	Provider string
+	Params []interface{}
+}
+
 //ServiceProvider represents a service provider
 type ServiceProvider func() Service
 
@@ -27,3 +37,5 @@ var registry ServiceRegistry = make([]ServiceProvider, 0)
 
 //Registry global service provider registry
 var Registry = &registry
+
+
