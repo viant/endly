@@ -13,6 +13,7 @@ import (
 	"path"
 	"strings"
 	"testing"
+	"net/http"
 )
 
 func StartTestServer(port int, basedir string) error {
@@ -22,6 +23,8 @@ func StartTestServer(port int, basedir string) error {
 		BaseDirectory: path.Join(baseDir, basedir),
 	})
 }
+
+
 
 func TestHttpRunnerService_Run(t *testing.T) {
 	err := StartTestServer(8766, "test/send")
@@ -34,11 +37,21 @@ func TestHttpRunnerService_Run(t *testing.T) {
 	assert.NotNil(t, service)
 	context := manager.NewContext(toolbox.NewContext())
 	response := service.Run(context, &runner.SendRequest{
+		Options:[]*toolbox.HttpOptions{
+		 {
+		 	Key:"RequestTimeoutMs",
+		 	Value:12000,
+		 },
+		},
 		Requests: []*runner.Request{
 			{
 				URL:    "http://127.0.0.1:8766/send1",
 				Method: "POST",
 				Body:   "0123456789",
+				Header:http.Header{
+						"User-Agent":[]string{"myUa"},
+				},
+
 				Repeater: &model.Repeater{
 					Extraction: []*model.Extract{
 						{
@@ -113,13 +126,13 @@ func TestHttpRunnerService_Repeat(t *testing.T) {
 			},
 
 			{
-				When:   "never-match",
+				When:   "${httpTrips.Response[0].Body}:/never-match/",
 				URL:    "http://127.0.0.1:8111/send2",
 				Method: "POST",
 				Body:   "xc",
 			},
 			{
-				When:   "content1-2",
+				When:   "${httpTrips.Response[0].Body}:/content1-2/",
 				URL:    "http://127.0.0.1:8111/send2",
 				Method: "POST",
 				Body:   "xc",
