@@ -6,6 +6,8 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"testing"
+	"github.com/viant/assertly"
+	"github.com/viant/endly"
 )
 
 func Test_AsProtobufMessage(t *testing.T) {
@@ -34,7 +36,7 @@ func Test_AsProtobufMessage(t *testing.T) {
 	if assert.Nil(t, err) {
 		aMap := toolbox.AsMap(message)
 		assert.EqualValues(t, 1, aMap["Id"])
-		assert.EqualValues(t, "abc", aMap["Name"])
+		assert.EqualValues(t, "abc", aMap["Desc"])
 	}
 
 }
@@ -78,4 +80,66 @@ func TestURLPath(t *testing.T) {
 	var expr = `$URLPath($URL)`
 	var expanded = aMap.Expand(expr)
 	assert.EqualValues(t, "/abc", expanded)
+}
+
+var avroSchema = `{
+  "type": "record",
+  "name": "user",
+  "fields": [
+    {
+      "name": "ID",
+      "type":"int"
+    },
+    {
+      "name": "Desc",
+      "type":"string"
+    }
+  ]
+}`
+
+func TestNewAvroWriterProvider(t *testing.T) {
+
+	writer, err := NewAvroWriterProvider(avroSchema, "snappy")
+	assert.Nil(t, err)
+	type user struct {
+		ID   int
+		Desc string
+
+	}
+	transformed, err := writer(&user{1, "test"}, nil)
+	assert.Nil(t, err)
+	assert.NotNil(t, transformed)
+	output, err := NewAvroReader(transformed, nil)
+	assert.Nil(t, err)
+	assertly.AssertValues(t, "{\"Desc\":\"test\",\"ID\":1}", output)
+}
+
+
+func TestRegisterProviders(t *testing.T) {
+	{
+		err := RegisterProviders([]*endly.UdfProvider{
+			{
+				Id:       "userAvro",
+				Provider: "AvroWriter",
+				Params: []interface{}{
+					avroSchema,
+				},
+			},
+		})
+		assert.Nil(t, err)
+		_, ok := endly.UdfRegistry["userAvro"]
+		assert.True(t, ok)
+	}
+	{
+		err := RegisterProviders([]*endly.UdfProvider{
+			{
+				Id:       "userAvro",
+				Provider: "AvroWritaaaaer",
+				Params: []interface{}{
+					avroSchema,
+				},
+			},
+		})
+		assert.NotNil(t, err)
+	}
 }
