@@ -37,6 +37,7 @@ var HTTPRequestKeyProviders = make(map[string]HTTPRequestKeyProvider)
 //HTTPServerTrips represents http trips
 type HTTPServerTrips struct {
 	BaseDirectory string
+	Rotate bool
 	Trips         map[string]*HTTPResponses
 	IndexKeys     []string
 	Mutex         *sync.Mutex
@@ -85,7 +86,7 @@ func (t *HTTPServerTrips) Init() error {
 type HTTPResponses struct {
 	Request   *bridge.HttpRequest
 	Responses []*bridge.HttpResponse
-	Index     int
+	Index     uint32
 }
 
 type httpHandler struct {
@@ -119,13 +120,19 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 			return
 		}
 
-		if responses.Index >= len(responses.Responses) {
-			http.NotFound(writer, request)
-			return
+		index := int(atomic.LoadUint32(&responses.Index))
+
+		if index >= len(responses.Responses) {
+			if ! trips.Rotate {
+				http.NotFound(writer, request)
+				return
+			}
+			index = 0
+			atomic.StoreUint32(&responses.Index, 0)
 		}
 
 		response := responses.Responses[responses.Index]
-		defer func() { responses.Index++ }()
+		defer atomic.AddUint32(&responses.Index, 1)
 		for k, headerValues := range response.Header {
 			for _, headerValue := range headerValues {
 				writer.Header().Set(k, headerValue)
@@ -139,9 +146,8 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 				log.Print(err)
 			}
 		}
-		if responses.Index >= len(responses.Responses) {
-			delete(trips.Trips, key)
-		}
+
+
 		if len(trips.Trips) == 0 {
 			func() { _ = httpServer.Close() }()
 			go func() {
