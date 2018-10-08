@@ -2,29 +2,33 @@ package http_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/assertly"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/test/proto"
 	endpoint "github.com/viant/endly/testing/endpoint/http"
 	runner "github.com/viant/endly/testing/runner/http"
 	"github.com/viant/endly/udf"
+	_ "github.com/viant/endly/udf"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"log"
+	"net/http"
 	"path"
 	"strings"
 	"testing"
-	"net/http"
 )
 
-func StartTestServer(port int, basedir string) error {
+func StartTestServer(port int, basedir string, indexBy ...string) error {
+	if len(indexBy) == 0 {
+		indexBy = []string{endpoint.MethodKey, endpoint.URLKey, endpoint.BodyKey, endpoint.CookieKey, endpoint.ContentTypeKey}
+	}
 	baseDir := toolbox.CallerDirectory(3)
 	return endpoint.StartServer(port, &endpoint.HTTPServerTrips{
-		IndexKeys:     []string{endpoint.MethodKey, endpoint.URLKey, endpoint.BodyKey, endpoint.CookieKey, endpoint.ContentTypeKey},
+		IndexKeys:     indexBy,
 		BaseDirectory: path.Join(baseDir, basedir),
 	})
 }
-
-
 
 func TestHttpRunnerService_Run(t *testing.T) {
 	err := StartTestServer(8766, "test/send")
@@ -37,19 +41,19 @@ func TestHttpRunnerService_Run(t *testing.T) {
 	assert.NotNil(t, service)
 	context := manager.NewContext(toolbox.NewContext())
 	response := service.Run(context, &runner.SendRequest{
-		Options:[]*toolbox.HttpOptions{
-		 {
-		 	Key:"RequestTimeoutMs",
-		 	Value:12000,
-		 },
+		Options: []*toolbox.HttpOptions{
+			{
+				Key:   "RequestTimeoutMs",
+				Value: 12000,
+			},
 		},
 		Requests: []*runner.Request{
 			{
 				URL:    "http://127.0.0.1:8766/send1",
 				Method: "POST",
 				Body:   "0123456789",
-				Header:http.Header{
-						"User-Agent":[]string{"myUa"},
+				Header: http.Header{
+					"User-Agent": []string{"myUa"},
 				},
 
 				Repeater: &model.Repeater{
@@ -212,7 +216,6 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 	if !assert.Nil(t, err) {
 		return
 	}
-
 	manager := endly.New()
 	service, err := manager.Service(runner.ServiceID)
 	assert.Nil(t, err)
@@ -318,4 +321,58 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 			}
 		}
 	}
+}
+
+func Test_UdfProvider(t *testing.T) {
+
+	err := StartTestServer(8987, "test/udf_provider", endpoint.MethodKey, endpoint.URLKey)
+	if !assert.Nil(t, err) {
+		return
+	}
+	manager := endly.New()
+	service, err := manager.Service(runner.ServiceID)
+	if !assert.Nil(t, err) {
+		return
+	}
+	assert.NotNil(t, service)
+
+	context := manager.NewContext(toolbox.NewContext())
+
+	var parentDir = toolbox.CallerDirectory(3)
+	request, err := runner.NewSendRequestFromURL(path.Join(parentDir, "test/udf_provider.json"))
+	if !assert.Nil(t, err) {
+		return
+	}
+	var response = &runner.SendResponse{}
+	err = endly.Run(context, request, response)
+	if !assert.Nil(t, err) {
+		log.Fatal(err)
+		return
+	}
+	var expected = `{
+	"Data": {
+		"value": "{\"Desc\":\"abc\",\"ID\":1}\n"
+	},
+	"Responses": [
+		{
+			"Body": "{\"Desc\":\"abc\",\"ID\":1}\n",
+			"Code": 200,
+			"Header": {
+				"Content-Length": [
+					"183"
+				],
+				"Content-Type": [
+					"application/avro-binary; Charset=UTF-8"
+				]
+			},
+			"JSONBody": {
+				"Desc": "abc",
+				"ID": 1
+			}
+		}
+	]
+}
+`
+	assertly.AssertValues(t, expected, response)
+
 }

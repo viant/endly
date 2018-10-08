@@ -1,15 +1,15 @@
 package http
 
 import (
-	"github.com/viant/endly"
-	"github.com/viant/toolbox/data"
-	"net/http"
 	"bytes"
 	"encoding/base64"
-	ioutil "io/ioutil"
 	"fmt"
-	"strings"
+	"github.com/viant/endly"
+	"github.com/viant/toolbox/data"
 	"io"
+	ioutil "io/ioutil"
+	"net/http"
+	"strings"
 )
 
 func initializeContext(c *endly.Context) {
@@ -75,7 +75,6 @@ func readBody(httpResponse *http.Response, response *Response, expectBinary bool
 	}
 }
 
-
 //getRequestBodyReader returns request body reader
 func getRequestBodyReader(request *http.Request, repeat int) (func() io.ReadCloser, error) {
 	if repeat == 0 || request.ContentLength == 0 {
@@ -90,9 +89,8 @@ func getRequestBodyReader(request *http.Request, repeat int) (func() io.ReadClos
 	}
 	return func() io.ReadCloser {
 		return ioutil.NopCloser(bytes.NewReader(bodyCache))
-	} , nil
+	}, nil
 }
-
 
 func replaceResponseBodyIfNeeded(sendHTTPRequest *Request, responseBody string) string {
 	if len(sendHTTPRequest.Replace) > 0 {

@@ -12,6 +12,7 @@ import (
 const TripsKey = "httpTrips"
 const TripRequests = "Request"
 const TripResponses = "Response"
+const TripData = "Data"
 
 // Internal structure for managing all requests and responses
 type Trips data.Map
@@ -24,12 +25,17 @@ func newTrips() Trips {
 	return t
 }
 
-// Add HTTP Request to Trips
+//addRequest add HTTP Request to Trips
 func (t Trips) addRequest(request *Request) error {
 	return t.add(TripRequests, request)
 }
 
-// Add HTTP Response to Trips
+// Set sets trip data
+func (t Trips) setData(data data.Map) {
+	t[TripData] = data
+}
+
+//addResponse addd HTTP Response to Trips
 func (t Trips) addResponse(response *Response) error {
 	return t.add(TripResponses, response)
 }
