@@ -1,11 +1,11 @@
 package http
 
 import (
-	"net/http"
-	"github.com/viant/toolbox"
 	"github.com/viant/endly"
 	"github.com/viant/endly/udf"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"net/http"
 )
 
 //Response represents Http response
@@ -38,7 +38,7 @@ func (r *Response) TransformBodyIfNeeded(context *endly.Context, request *Reques
 }
 
 func (r *Response) UpdateCookies(target data.Map) {
-	for k, cookie := range r.Cookies  {
+	for k, cookie := range r.Cookies {
 		target.Put(k, cookie.Value)
 	}
 }
@@ -52,8 +52,6 @@ func (r *Response) Merge(httpResponse *http.Response, expectBinary bool) {
 	var responseCookies Cookies = httpResponse.Cookies()
 	r.Cookies = responseCookies.IndexByName()
 }
-
-
 
 //NewResponse creates a new response
 func NewResponse() *Response {

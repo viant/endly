@@ -3,11 +3,12 @@ package http
 import (
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/criteria"
 	"github.com/viant/endly/testing/validator"
+	"github.com/viant/endly/udf"
 	"github.com/viant/toolbox"
 	"net/http"
 	"time"
-	"github.com/viant/endly/criteria"
 )
 
 //ServiceID represents http runner service id.
@@ -25,6 +26,10 @@ func (s *service) send(context *endly.Context, sendGroupRequest *SendRequest) (*
 	}
 	initializeContext(context)
 	defer s.resetContext(context, sendGroupRequest)
+
+	if err = udf.RegisterProviders(sendGroupRequest.UdfProviders); err != nil {
+		return nil, err
+	}
 
 	var sendGroupResponse = &SendResponse{
 		Responses: make([]*Response, 0),
@@ -73,7 +78,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, reque
 		if err != nil {
 			return nil, err
 		}
-		if response == nil {//if request is repeated only the allocated one, and keep overriding it to see the last snapshot
+		if response == nil { //if request is repeated only the allocated one, and keep overriding it to see the last snapshot
 			response = sendGroupResponse.NewResponse()
 		}
 		response.Merge(httpResponse, expectBinary)
@@ -90,13 +95,12 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, reque
 	if toolbox.IsCompleteJSON(response.Body) {
 		response.JSONBody, err = toolbox.JSONToMap(response.Body)
 	}
-
+	trips.setData(sendGroupResponse.Data)
 	trips.addResponse(response)
 	endEvent := s.End(context)(startEvent, response)
-	response.TimeTakenMs = int(startEvent.Timestamp().Sub(endEvent.Timestamp()) / time.Millisecond)
+	response.TimeTakenMs = int(endEvent.Timestamp().Sub(startEvent.Timestamp()) / time.Millisecond)
 	return nil
 }
-
 
 func (s *service) applyDefaultTimeoutIfNeeded(options []*toolbox.HttpOptions) []*toolbox.HttpOptions {
 	if len(options) > 0 {

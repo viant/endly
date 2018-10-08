@@ -50,4 +50,3 @@ func (c *Cookies) AddCookies(cookies ...*http.Cookie) {
 		}
 	}
 }
-
