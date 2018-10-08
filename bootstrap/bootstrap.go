@@ -56,6 +56,8 @@ import (
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/url"
 	"golang.org/x/crypto/ssh/terminal"
+
+	rec "github.com/viant/endly/testing/endpoint/http"
 	"gopkg.in/yaml.v2"
 	"log"
 	"net/http"
@@ -96,6 +98,10 @@ func init() {
 	flag.String("x", "", "xunit summary report format: xml|yaml|json")
 	flag.Bool("g", false, "open test project generator")
 
+	flag.String("u", "", "start HTTP recorder for the supplied URLs (testing/endpoint/http)")
+
+	flag.Bool("m", false, "interactive mode (does not terminates process after workflow completes)")
+
 	mysql.SetLogger(&emptyLogger{})
 
 }
@@ -110,6 +116,11 @@ func Bootstrap() {
 
 	_, shouldQuit := flagset["v"]
 	flagset["v"] = flag.Lookup("v").Value.String()
+
+	if URLs, ok := flagset["u"]; ok {
+		startRecorder(strings.Split(URLs, " "))
+		return
+	}
 
 	if toolbox.AsBoolean(flagset["v"]) {
 		printVersion()
@@ -181,6 +192,13 @@ func Bootstrap() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	interactive, ok := flagset["m"]
+	if ok && toolbox.AsBoolean(interactive) {
+		log.Printf("terminate by ctr-c\n")
+		makeInteractive()
+	}
+
 	time.Sleep(time.Second)
 }
 
@@ -189,17 +207,7 @@ func openbrowser(url string) {
 	exec.Command("open", url).Start()
 }
 
-func openTestGenerator() {
-
-	baseURL := fmt.Sprintf("mem://%v", endly.Namespace)
-	service := web.NewService(
-		toolbox.URLPathJoin(baseURL, "template"),
-		toolbox.URLPathJoin(baseURL, "asset"),
-	)
-	web.NewRouter(service, func(request *http.Request) {})
-	go http.ListenAndServe(":8071", nil)
-	time.Sleep(time.Second)
-	openbrowser("http://127.0.0.1:8071/")
+func makeInteractive() {
 
 	signal_chan := make(chan os.Signal, 1)
 	signal.Notify(signal_chan,
@@ -220,6 +228,21 @@ func openTestGenerator() {
 	}()
 	code := <-exit_chan
 	os.Exit(code)
+
+}
+
+func openTestGenerator() {
+
+	baseURL := fmt.Sprintf("mem://%v", endly.Namespace)
+	service := web.NewService(
+		toolbox.URLPathJoin(baseURL, "template"),
+		toolbox.URLPathJoin(baseURL, "asset"),
+	)
+	web.NewRouter(service, func(request *http.Request) {})
+	go http.ListenAndServe(":8071", nil)
+	time.Sleep(time.Second)
+	openbrowser("http://127.0.0.1:8071/")
+	makeInteractive()
 
 }
 
@@ -576,6 +599,10 @@ func getArguments() []interface{} {
 		}
 	}
 	return arguments
+}
+
+func startRecorder(URLs []string) {
+	rec.StartRecorder(URLs...)
 }
 
 type emptyLogger struct{}
