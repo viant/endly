@@ -7,6 +7,7 @@ import (
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
+	"github.com/viant/endly"
 )
 
 //AssetTransfer represents asset transfer
@@ -74,6 +75,7 @@ type DownloadRequest struct {
 	Source  *url.Resource `required:"true" description:"source asset or directory"`
 	DestKey string        `required:"true" description:"state map key destination"`
 	Udf     string        `description:"name of udf to transform payload before placing into state map"` //name of udf function that will be used to transform payload
+	UdfProvider *endly.UdfProvider `description:"udf registration info"`
 	Expect  interface{}   `description:"if specified expected file content used for validation"`
 }
 
