@@ -2,12 +2,12 @@ package udf
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/assertly"
+	"github.com/viant/endly"
 	"github.com/viant/endly/test/proto"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"testing"
-	"github.com/viant/assertly"
-	"github.com/viant/endly"
 )
 
 func Test_AsProtobufMessage(t *testing.T) {
@@ -82,20 +82,7 @@ func TestURLPath(t *testing.T) {
 	assert.EqualValues(t, "/abc", expanded)
 }
 
-var avroSchema = `{
-  "type": "record",
-  "name": "user",
-  "fields": [
-    {
-      "name": "ID",
-      "type":"int"
-    },
-    {
-      "name": "Desc",
-      "type":"string"
-    }
-  ]
-}`
+var avroSchema = `{"type": "record", "name": "user", "fields": [{"name": "ID","type":"int"},{"name": "Desc","type":"string"}]}`
 
 func TestNewAvroWriterProvider(t *testing.T) {
 
@@ -104,7 +91,6 @@ func TestNewAvroWriterProvider(t *testing.T) {
 	type user struct {
 		ID   int
 		Desc string
-
 	}
 	transformed, err := writer(&user{1, "test"}, nil)
 	assert.Nil(t, err)
@@ -113,7 +99,6 @@ func TestNewAvroWriterProvider(t *testing.T) {
 	assert.Nil(t, err)
 	assertly.AssertValues(t, "{\"Desc\":\"test\",\"ID\":1}", output)
 }
-
 
 func TestRegisterProviders(t *testing.T) {
 	{

@@ -38,11 +38,10 @@ Command syntax:
 
 Time wait
 ```text
-
-        - command: CurrentURL = CurrentURL()
-        exit: $CurrentURL:/dummy/
-        sleepTimeMs: 1000
-        repeat: 10
+    - command: CurrentURL = CurrentURL()
+    exit: $CurrentURL:/dummy/
+    sleepTimeMs: 1000
+    repeat: 10
 
 ```
 
@@ -57,7 +56,45 @@ endly -r=test
 
 [@test.yaml](test/test.yaml)
  
+```yaml
+defaults:
+  target:
+     URL: ssh://127.0.0.1/
+     credentials: localhost
+pipeline:
+  init:
+    action: selenium:start
+    version: 3.4.0
+    port: 8085
+    sdk: jdk
+    sdkVersion: 1.8
+  test:
+    action: selenium:run
+    browser: firefox
+    remoteSelenium:
+      URL: http://127.0.0.1:8085
+    commands:
+      - get(http://play.golang.org/?simple=1)
+      - (#code).clear
+      - (#code).sendKeys(package main
 
+          import "fmt"
+
+          func main() {
+              fmt.Println("Hello Endly!")
+          }
+        )
+      - (#run).click
+      - command: output = (#output).text
+        exit: $output.Text:/Endly/
+        sleepTimeMs: 1000
+        repeat: 10
+      - close
+    expect:
+      output:
+        Text: /Hello Endly!/
+
+```
  
 
     

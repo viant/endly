@@ -11,34 +11,10 @@ import (
 
 //Service represents sso service
 type Service interface {
-
 	SignUp(*SignUpRequest) *SignUpResponse
 
 	SignIn(*SignInRequest) *SignInResponse
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 type service struct {
 	config    *Config
