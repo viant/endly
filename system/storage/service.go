@@ -216,7 +216,13 @@ func (s *service) download(context *endly.Context, request *DownloadRequest) (*D
 	if err != nil {
 		return nil, err
 	}
+
 	if request.Udf != "" {
+		if request.UdfProvider != nil {
+			if err = udf.RegisterProviders([]*endly.UdfProvider{request.UdfProvider});err != nil {
+				return nil, err
+			}
+		}
 		response.Transformed, err = udf.TransformWithUDF(context, request.Udf, resource.URL, data)
 		if err != nil {
 			return nil, err
