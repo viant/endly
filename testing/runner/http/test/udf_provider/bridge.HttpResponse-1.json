@@ -1,0 +1,15 @@
+{
+  "Code": 200,
+  "Header": {
+    "Access-Control-Allow-Methods": [
+      "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS"
+    ],
+    "Content-Type": [
+      "application/avro+binary; Charset=UTF-8"
+    ],
+    "X-Request-Time": [
+      "0.042"
+    ]
+  },
+  "Body": "{\"ip\":\"38.75.3.1\", \"country_code\":\"US\"}"
+}
