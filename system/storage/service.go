@@ -219,7 +219,7 @@ func (s *service) download(context *endly.Context, request *DownloadRequest) (*D
 
 	if request.Udf != "" {
 		if request.UdfProvider != nil {
-			if err = udf.RegisterProviders([]*endly.UdfProvider{request.UdfProvider});err != nil {
+			if err = udf.RegisterProviders([]*endly.UdfProvider{request.UdfProvider}); err != nil {
 				return nil, err
 			}
 		}
