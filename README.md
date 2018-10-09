@@ -384,8 +384,11 @@ You can build, deploy and test them end to end all with endly.
 2) **User Interface**
    * [SSO](example/ui/sso)  - user registration and login application.
         - Test with Selenium Runner
+        - Test with HTTP Runner
         - Data Preparation and Validation (aersopike)
         - Web Content validation
+        - Mocking 3rd party REST API with [http/endpoint service](testing/endpoint/http) 
+        
 3) **Extract, Transform and Load (ETL)**
    * [Transformer](example/etl/transformer) - datastore to datastore transformer (i.e. aerospike to mysql)
        - Test with Rest Runner
@@ -431,7 +434,7 @@ commands:
 ## External resources
 
 - [ETL end to end testing with docker, NoSQL, RDBMS and Big Query](https://medium.com/@adrianwit/etl-end-to-end-testing-with-docker-nosql-rdbms-and-big-query-35b13b7fada8)
-- [Abc of data testing](https://medium.com/@adrianwit/killing-data-testing-swamp-6c3e11fb92c6)
+- [Data testing strategy reinvented](https://medium.com/@adrianwit/killing-data-testing-swamp-6c3e11fb92c6)
 - [Go lang e2e testing](https://github.com/adrianwit/golang-e2e-testing)
 - [Endly introduction](https://github.com/adrianwit/endly-introduction)    
 - [Endly UI e2e testing demo](https://www.youtube.com/watch?v=jRJ8_0Pmgr0)
