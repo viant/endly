@@ -4,7 +4,7 @@
 | --- | --- | --- | --- | --- | 
 | http/endpoint | listen | listen on specified port to replay recorded HTTP conversation | [ListenRequest](service_contract.go) | [ListenResponse](service_contract.go) | 
 
-
+This service enable capturing and replaying HTTP traffic to simulate 3rd party dependency.
 
 
 ### Capturing HTTP traffic
