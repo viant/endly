@@ -38,7 +38,7 @@ func NewServer(config *Config, service Service) (*Server, error) {
 			HTTPMethod: "POST",
 			URI:        "/api/singup/",
 			Handler:    service.SignUp,
-			Parameters: []string{"request"},
+			Parameters: []string{"request", "@httpRequest"},
 		},
 		toolbox.ServiceRouting{
 			HTTPMethod: "POST",

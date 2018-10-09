@@ -7,8 +7,19 @@ pipeline:
       action: docker:stop-images
       images:
         - aerospike
+        - memcached
   init:
     services:
-      workflow: "service/aerospike:start"
-      name: db1
-      config: config/aerospike.conf
+      aerospike:
+        workflow: "service/aerospike:start"
+        name: db1
+        config: config/aerospike.conf
+      memcached:
+        workflow: "service/memcached:start"
+        name: myCache
+        maxMemory: 512
+      iplookup:
+        action: http/endpoint:listen
+        port: 8383
+        rotate: true
+        baseDirectory: ipinfo/

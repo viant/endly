@@ -11,6 +11,7 @@ type StaticRoute struct {
 //Config represents sso config
 type Config struct {
 	Port         string
+	IPLookupURL  string
 	StaticRoutes []*StaticRoute
 	DsConfig     *dsc.Config
 }
