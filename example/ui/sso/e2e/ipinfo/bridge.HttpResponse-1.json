@@ -1,0 +1,24 @@
+{
+  "Code": 200,
+  "Header": {
+    "Access-Control-Allow-Methods": [
+      "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS"
+    ],
+    "Access-Control-Allow-Origin": [
+      "*"
+    ],
+    "Content-Type": [
+      "application/json; Charset=UTF-8"
+    ],
+    "Date": [
+      "Mon, 08 Oct 2018 15:37:57 GMT"
+    ],
+    "Server": [
+      "nginx"
+    ],
+    "X-Request-Time": [
+      "0.042"
+    ]
+  },
+  "Body": "text:{\"ip\":\"127.0.0.1\",\"type\":\"ipv4\",\"continent_code\":\"NA\",\"continent_name\":\"North America\",\"country_code\":\"US\",\"country_name\":\"United States\",\"region_code\":\"CA\",\"region_name\":\"California\",\"city\":\"Los Angeles\",\"zip\":\"90034\",\"latitude\":34.0291,\"longitude\":-118.3993,\"location\":{\"geoname_id\":5368361,\"capital\":\"Washington D.C.\",\"languages\":[{\"code\":\"en\",\"name\":\"English\",\"native\":\"English\"}], \"is_eu\":false}}"
+}

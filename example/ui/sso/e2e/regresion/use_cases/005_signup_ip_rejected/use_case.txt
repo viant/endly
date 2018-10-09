@@ -1,0 +1,1 @@
+This use case checks that user with IP from outside US is rejected

@@ -6,12 +6,14 @@ import (
 	"github.com/viant/dsc"
 	"github.com/viant/toolbox"
 	"golang.org/x/crypto/bcrypt"
+	"net/http"
+	"strings"
 	"sync"
 )
 
 //Service represents sso service
 type Service interface {
-	SignUp(*SignUpRequest) *SignUpResponse
+	SignUp(*SignUpRequest, *http.Request) *SignUpResponse
 
 	SignIn(*SignInRequest) *SignInResponse
 }
@@ -46,13 +48,32 @@ func (s *service) persistUser(user *User) error {
 	return err
 }
 
-func (s *service) SignUp(request *SignUpRequest) *SignUpResponse {
+func (s *service) isIPEligible(httpRequest *http.Request) (bool, error) {
+	IP := extractIp(httpRequest)
+	var URL = fmt.Sprintf(s.config.IPLookupURL, IP)
+	var response = &IpInfo{}
+	err := toolbox.RouteToService("get", URL, nil, response)
+	if err != nil {
+		return false, err
+	}
+	return response.CountryCode == "" || strings.ToUpper(response.CountryCode) == "US", nil
+}
+
+func (s *service) SignUp(request *SignUpRequest, httpRequest *http.Request) *SignUpResponse {
 	response := &SignUpResponse{
 		BaseResponse: &BaseResponse{
 			Status: "ok",
 		},
 	}
-
+	ipEligible, err := s.isIPEligible(httpRequest)
+	if err != nil {
+		setResponseError(response.BaseResponse, "system", fmt.Sprintf("%v", err))
+		return response
+	}
+	if !ipEligible {
+		setResponseError(response.BaseResponse, "system", "registration from outside of US is no supported")
+		return response
+	}
 	errorSource, err := request.Validate()
 	if err != nil {
 		setResponseError(response.BaseResponse, errorSource, fmt.Sprintf("%v", err))
