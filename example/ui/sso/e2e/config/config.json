@@ -1,5 +1,6 @@
 {
   "Port":"8888",
+  "IPLookupURL":"http://127.0.0.1:8383/%v?access_key=abc",
   "StaticRoutes":[
     {
       "URI":"/css/",

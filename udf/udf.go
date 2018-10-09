@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/linkedin/goavro"
 	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/util"
@@ -26,6 +27,8 @@ func init() {
 	endly.UdfRegistry["Hostname"] = Hostname
 	endly.UdfRegistry["CopyWithCompression"] = CopyWithCompression
 	endly.UdfRegistry["CopyWithCompressionAndCorruption"] = CopyWithCompressionAndCorruption
+	endly.UdfRegistry["AvroReader"] = NewAvroReader
+	endly.UdfRegistryProvider["AvroWriter"] = NewAvroWriterProvider
 }
 
 //TransformWithUDF transform payload with provided UDF name.
@@ -204,4 +207,99 @@ func CopyWithCompressionAndCorruption(source interface{}, state data.Map) (inter
 		return copyHandlerWithCompressionAndCorruption, nil
 	}
 	return nil, errors.New("unable to find udf with name Zip")
+}
+
+func getAvroSchema(args interface{}) (string, error) {
+	textArg := strings.TrimSpace(toolbox.AsString(args))
+	if strings.HasPrefix(textArg, "{") {
+		return textArg, nil
+	} else {
+		resource := url.NewResource(textArg)
+		return resource.DownloadText()
+	}
+}
+
+//NewAvroWriterProvider creates a new avro writer provider
+func NewAvroWriterProvider(args ...interface{}) (func(source interface{}, state data.Map) (interface{}, error), error) {
+	if len(args) == 0 {
+		return nil, fmt.Errorf("no sufficent args |usage: NewAvroWriterProvider(avroSchema|URL, compression)")
+	}
+	schema, err := getAvroSchema(args[0])
+	if err != nil {
+		return nil, err
+	}
+	var compression = ""
+	if len(args) > 1 {
+		compression = toolbox.AsString(args[1])
+	}
+	return func(source interface{}, state data.Map) (interface{}, error) {
+		writer := new(bytes.Buffer)
+		avroWriter, err := goavro.NewOCFWriter(goavro.OCFConfig{
+			W:               writer,
+			Schema:          schema,
+			CompressionName: compression,
+		})
+		if err != nil {
+			return nil, err
+		}
+		var input interface{}
+		switch source.(type) {
+		case []byte, string:
+			input, err = toolbox.JSONToInterface(source)
+			if err != nil {
+				return nil, fmt.Errorf("failed to convert %v to JSON: %v ", source, err)
+			}
+		default:
+			input = toolbox.AsMap(source)
+		}
+
+		err = avroWriter.Append([]interface{}{input})
+		return writer.Bytes(), err
+	}, nil
+}
+
+//NewAvroReader creates a new avro reader UDF
+func NewAvroReader(source interface{}, state data.Map) (interface{}, error) {
+	var reader io.Reader
+	switch data := source.(type) {
+	case []byte:
+		reader = bytes.NewReader(data)
+	case string:
+		reader = strings.NewReader(data)
+	default:
+		return nil, fmt.Errorf("unsupported input: %T, expected []byte or string", source)
+	}
+	avroReader, err := goavro.NewOCFReader(reader)
+	if err != nil {
+		return nil, err
+	}
+	var datums []interface{}
+	for avroReader.Scan() {
+		if datum, err := avroReader.Read(); err == nil {
+			datums = append(datums, datum)
+		}
+	}
+	if len(datums) == 1 {
+		return toolbox.AsJSONText(datums[0])
+	}
+	return toolbox.AsJSONText(datums)
+}
+
+//RegisterProviders register the supplied providers
+func RegisterProviders(providers []*endly.UdfProvider) error {
+	if len(providers) == 0 {
+		return nil
+	}
+	for _, meta := range providers {
+		provider, ok := endly.UdfRegistryProvider[meta.Provider]
+		if !ok {
+			return fmt.Errorf("failed to lookup udf provider: %v", meta.Provider)
+		}
+		udf, err := provider(meta.Params...)
+		if err != nil {
+			return fmt.Errorf("failed to get udf %v", meta.Provider)
+		}
+		endly.UdfRegistry[meta.Id] = udf
+	}
+	return nil
 }

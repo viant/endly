@@ -76,6 +76,7 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 		return false, err
 	}
 	if extractableOutput != "" {
+		//TODO rename to output
 		extracted["value"] = extractableOutput //string output is published as $value
 	}
 	if r.Exit != "" {

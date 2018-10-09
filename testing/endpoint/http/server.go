@@ -37,6 +37,7 @@ var HTTPRequestKeyProviders = make(map[string]HTTPRequestKeyProvider)
 //HTTPServerTrips represents http trips
 type HTTPServerTrips struct {
 	BaseDirectory string
+	Rotate        bool
 	Trips         map[string]*HTTPResponses
 	IndexKeys     []string
 	Mutex         *sync.Mutex
@@ -53,7 +54,11 @@ func (t *HTTPServerTrips) loadTripsIfNeeded() error {
 			return fmt.Errorf("http capautre directory was empty %v", t.BaseDirectory)
 		}
 		for _, trip := range httpTrips {
-			key, _ := buildKeyValue(t.IndexKeys, trip.Request)
+			key, err := buildKeyValue(t.IndexKeys, trip.Request)
+			if err != nil {
+				return fmt.Errorf("failed to build request key: %v, %v", trip.Request.URL, err)
+			}
+
 			if _, has := t.Trips[key]; !has {
 				t.Trips[key] = &HTTPResponses{
 					Request:   trip.Request,
@@ -85,7 +90,7 @@ func (t *HTTPServerTrips) Init() error {
 type HTTPResponses struct {
 	Request   *bridge.HttpRequest
 	Responses []*bridge.HttpResponse
-	Index     int
+	Index     uint32
 }
 
 type httpHandler struct {
@@ -119,13 +124,19 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 			return
 		}
 
-		if responses.Index >= len(responses.Responses) {
-			http.NotFound(writer, request)
-			return
+		index := int(atomic.LoadUint32(&responses.Index))
+
+		if index >= len(responses.Responses) {
+			if !trips.Rotate {
+				http.NotFound(writer, request)
+				return
+			}
+			index = 0
+			atomic.StoreUint32(&responses.Index, 0)
 		}
 
 		response := responses.Responses[responses.Index]
-		defer func() { responses.Index++ }()
+		defer atomic.AddUint32(&responses.Index, 1)
 		for k, headerValues := range response.Header {
 			for _, headerValue := range headerValues {
 				writer.Header().Set(k, headerValue)
@@ -139,9 +150,7 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 				log.Print(err)
 			}
 		}
-		if responses.Index >= len(responses.Responses) {
-			delete(trips.Trips, key)
-		}
+
 		if len(trips.Trips) == 0 {
 			func() { _ = httpServer.Close() }()
 			go func() {
@@ -234,10 +243,10 @@ func init() {
 	HTTPRequestKeyProviders[CookieKey] = HeaderProvider(CookieKey)
 	HTTPRequestKeyProviders[ContentTypeKey] = HeaderProvider(ContentTypeKey)
 	HTTPRequestKeyProviders[BodyKey] = func(source interface{}) (string, error) {
+
 		switch request := source.(type) {
 		case *bridge.HttpRequest:
-			body, err := util.FromPayload(request.Body)
-			return string(body), err
+			return request.Body, nil
 		case *http.Request:
 			if request.ContentLength == 0 {
 				return "", nil
@@ -246,8 +255,7 @@ func init() {
 			if err != nil {
 				return "", fmt.Errorf("failed to read body %v, %v", request.URL, err)
 			}
-
-			return string(content), nil
+			return util.AsPayload(content), nil
 
 		}
 		return "", fmt.Errorf("unsupported request type %T", source)
@@ -257,14 +265,13 @@ func init() {
 func buildKeyValue(keys []string, request interface{}) (string, error) {
 	var values = make([]string, 0)
 	for _, key := range keys {
-
 		provider, has := HTTPRequestKeyProviders[key]
 		if !has {
 			return "", fmt.Errorf("unsupported key: %v, available, [%v]", key, strings.Join(toolbox.MapKeysToStringSlice(HTTPRequestKeyProviders), ","))
 		}
 		value, err := provider(request)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("unable to get value for %v, %v", key, err)
 		}
 		values = append(values, value)
 	}

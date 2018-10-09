@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/viant/endly"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
@@ -71,10 +72,11 @@ type CopyResponse struct {
 
 //DownloadRequest represents a resources download request, it downloads source into context.state target key
 type DownloadRequest struct {
-	Source  *url.Resource `required:"true" description:"source asset or directory"`
-	DestKey string        `required:"true" description:"state map key destination"`
-	Udf     string        `description:"name of udf to transform payload before placing into state map"` //name of udf function that will be used to transform payload
-	Expect  interface{}   `description:"if specified expected file content used for validation"`
+	Source      *url.Resource      `required:"true" description:"source asset or directory"`
+	DestKey     string             `required:"true" description:"state map key destination"`
+	Udf         string             `description:"name of udf to transform payload before placing into state map"` //name of udf function that will be used to transform payload
+	UdfProvider *endly.UdfProvider `description:"udf registration info"`
+	Expect      interface{}        `description:"if specified expected file content used for validation"`
 }
 
 //DownloadResponse represents a download response

@@ -1,3 +1,9 @@
+## October 9 2018 0.14.0          
+    * Added http recordng option -u
+    * Added Avro UDFs
+    * Added UDF providers for UDF registration on the fly
+    * Minor patches
+
 ## October 2 2018 0.12.3          
     * Update logging with activity context (-d=true)
     * Minor patches
