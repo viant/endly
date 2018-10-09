@@ -1,0 +1,12 @@
+{
+  "Code": 200,
+  "Header": {
+    "Content-Type": [
+      "application/avro-binary; Charset=UTF-8"
+    ],
+    "X-Request-Time": [
+      "0.042"
+    ]
+  },
+  "Body": "base64:T2JqAQQWYXZyby5zY2hlbWHYAXsidHlwZSI6ICJyZWNvcmQiLCAibmFtZSI6ICJ1c2VyIiwgImZpZWxkcyI6IFt7Im5hbWUiOiAiSUQiLCJ0eXBlIjoiaW50In0seyJuYW1lIjogIkRlc2MiLCJ0eXBlIjoic3RyaW5nIn1dfRRhdnJvLmNvZGVjCG51bGwA/9/yyvmFtYihaBy2YbkvEAIKAgZhYmP/3/LK+YW1iKFoHLZhuS8Q"
+}

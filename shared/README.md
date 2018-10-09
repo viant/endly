@@ -23,5 +23,6 @@ To unify target naming the following function based methodology is used:
 - serviceTarget - host resource where app service (i.e. datastore service) runs
 
 
-
+_Note_
+All shared workflow/resources are compiled into target endly binary, make sure that you run ./gen.go each time any resource under shared folder has been modified.
 

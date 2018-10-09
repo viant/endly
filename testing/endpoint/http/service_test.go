@@ -48,7 +48,6 @@ func TestHTTPEndpointService_Run(t *testing.T) {
 }
 
 func TestHTTPEndpointService_Run_WithError(t *testing.T) {
-
 	parent := toolbox.CallerDirectory(3)
 	var httpTripBaseDir = path.Join(parent, "test", "send")
 	manager := endly.New()

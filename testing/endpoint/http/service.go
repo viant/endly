@@ -16,15 +16,27 @@ type service struct {
 }
 
 func (s *service) listen(request *ListenRequest) (*ListenResponse, error) {
+	key := ServiceID + ":" + request.BaseDirectory
+	s.Mutex().Lock()
+	var response *ListenResponse
+	defer s.Mutex().Unlock()
+	var state = s.State()
+	value := state.Get(key)
+	if value != nil {
+		if response = value.(*ListenResponse); response != nil {
+			return response, nil
+		}
+	}
 	trips := request.AsHTTPServerTrips()
 	err := StartServer(request.Port, trips)
 	if err != nil {
 		return nil, err
 	}
-	return &ListenResponse{
+	response = &ListenResponse{
 		Trips: trips.Trips,
-	}, nil
-
+	}
+	state.Put(key, response)
+	return response, nil
 }
 
 func (s *service) registerRoutes() {

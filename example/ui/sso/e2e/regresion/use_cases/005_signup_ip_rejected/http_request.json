@@ -1,0 +1,27 @@
+{
+  "Requests": [
+    {
+      "Method": "post",
+      "Header": {
+        "X-Forwarded-For": [
+          "212.77.98.9"
+        ]
+      },
+      "URL": "http://127.0.0.1:8888/api/singup/",
+      "Body": "$user"
+    }
+  ],
+  "Expect": {
+    "Responses": [
+      {
+        "Code": 200,
+        "Body":"/outside of US/",
+        "JSONBody": {
+          "error": "registration from outside of US is no supported",
+          "errorSource": "system",
+          "status": "error"
+        }
+      }
+    ]
+  }
+}

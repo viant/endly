@@ -1,0 +1,10 @@
+{
+  "Method": "GET",
+  "URL": "/38.75.3.1?access_key=abc",
+  "Header": {
+    "Accept": [
+      "text/html,application/avro+binary,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"
+    ]
+  },
+  "Body": "text:"
+}

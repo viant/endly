@@ -15,6 +15,9 @@ func FromPayload(payload string) ([]byte, error) {
 		return []byte(payload[5:]), nil
 	} else if strings.HasPrefix(payload, "base64:") {
 		payload = string(payload[7:])
+		if payload == "" {
+			return []byte{}, nil
+		}
 		decoder := base64.NewDecoder(base64.StdEncoding, strings.NewReader(payload))
 		decoded, err := ioutil.ReadAll(decoder)
 		if err != nil {

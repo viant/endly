@@ -1,0 +1,24 @@
+{
+	"Code": 200,
+	"Header": {
+		"Access-Control-Allow-Methods": [
+			"GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS"
+		],
+		"Access-Control-Allow-Origin": [
+			"*"
+		],
+		"Content-Type": [
+			"application/json; Charset=UTF-8"
+		],
+		"Date": [
+			"Mon, 08 Oct 2018 15:39:12 GMT"
+		],
+		"Server": [
+			"nginx"
+		],
+		"X-Request-Time": [
+			"0.047"
+		]
+	},
+	"Body": "text:{\"ip\":\"212.77.98.9\",\"type\":\"ipv4\",\"continent_code\":\"EU\",\"continent_name\":\"Europe\",\"country_code\":\"PL\",\"country_name\":\"Poland\",\"region_code\":null,\"region_name\":null,\"city\":null,\"zip\":null,\"latitude\":52.2394,\"longitude\":21.0362,\"location\":{\"geoname_id\":null,\"capital\":\"Warsaw\",\"languages\":[{\"code\":\"pl\",\"name\":\"Polish\",\"native\":\"Polski\"}],\"is_eu\":true}}"
+}

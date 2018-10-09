@@ -80,7 +80,6 @@ func (c *Criterion) Apply(state data.Map) (bool, error) {
 	return false, err
 }
 
-
 //NewCriterion creates a new criterion
 func NewCriterion(leftOperand interface{}, operator string, rightOperand interface{}) *Criterion {
 	return &Criterion{
