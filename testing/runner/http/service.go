@@ -121,6 +121,7 @@ func (s *service) applyDefaultTimeoutIfNeeded(options []*toolbox.HttpOptions) []
 //resetContext resets context for variables with Reset flag set, and removes PreviousTripStateKey
 func (s *service) resetContext(context *endly.Context, request *SendRequest) {
 	state := context.State()
+	state.Delete(TripsKey)
 	for _, request := range request.Requests {
 		if request.Repeater != nil && len(request.Extraction) > 0 {
 			request.Extraction.Reset(state)
