@@ -40,6 +40,18 @@ func (r *SendResponse) NewResponse() *Response {
 	return response
 }
 
+//Expands expands data ($httpTrips.Data) attribute shared across requests within a group
+func (r *SendResponse) Expand(state data.Map) {
+	if len(r.Data) == 0 {
+		return
+	}
+	for i:=0;i<3;i++ {//we expanding numerous time in case there are some multi level references
+		//TODO add function to check if any unexpanded placeholder left
+		expanded := r.Data.Expand(state)
+		r.Data = data.Map(toolbox.AsMap(expanded))
+	}
+}
+
 //NewSendRequestFromURL create new request from URL
 func NewSendResponseFromURL(URL string) (*SendResponse, error) {
 	resource := url.NewResource(URL)
