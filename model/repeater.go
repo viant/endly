@@ -62,13 +62,14 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 	extractableOutput, structuredOutput := util.AsExtractable(out)
 
 	if len(structuredOutput) > 0 {
-
 		if len(r.Variables) > 0 {
 			err = r.Variables.Apply(structuredOutput, extracted)
 		}
 		if extractableOutput == "" {
 			extractableOutput, _ = toolbox.AsJSONText(structuredOutput)
 		}
+	} else {
+		err = r.Variables.Apply(extracted, extracted)
 	}
 
 	err = r.Extraction.Extract(context, extracted, extractableOutput)
