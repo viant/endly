@@ -182,7 +182,7 @@ func (c *Context) SetState(state data.Map) {
 	c.state = state
 }
 
-//Clone substitute $ expression if present in the text and state map.
+//Expand substitute $ expression if present in the text and state map.
 func (c *Context) Expand(text string) string {
 	state := c.State()
 	return state.ExpandAsText(text)
