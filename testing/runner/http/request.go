@@ -10,13 +10,14 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"github.com/viant/toolbox/data"
 )
 
 //ServiceRequest represents an http request
 type Request struct {
 	*model.Repeater
-	When        string `description:"criteria to send this request"`
-	Method      string `required:"true" description:"HTTP Method"`
+	When        string            `description:"criteria to send this request"`
+	Method      string            `required:"true" description:"HTTP Method"`
 	URL         string
 	Header      http.Header
 	Cookies     Cookies
@@ -27,8 +28,8 @@ type Request struct {
 	ResponseUdf string            `description:"user defined function in context.state key, i,e, protobuf to json"`
 }
 
-//Expand substitute request data with matching context map state.
-func (r *Request) Expand(context *endly.Context) *Request {
+//Clone substitute request data with matching context map state.
+func (r *Request) Clone(context *endly.Context) *Request {
 	header := make(map[string][]string)
 	copyExpandedHeaders(r.Header, header, context)
 	return &Request{
@@ -45,6 +46,13 @@ func (r *Request) Expand(context *endly.Context) *Request {
 	}
 }
 
+//Clone substitute request data with matching context map state.
+func (r *Request) Expand(state data.Map) {
+	r.URL = state.ExpandAsText(r.URL)
+	r.Body = state.ExpandAsText(r.Body)
+}
+
+
 //Build builds an http.Request
 func (r *Request) Build(context *endly.Context, sessionCookies Cookies) (*http.Request, bool, error) {
 
@@ -55,7 +63,8 @@ func (r *Request) Build(context *endly.Context, sessionCookies Cookies) (*http.R
 			return nil, false, err
 		}
 	}
-	request := r.Expand(context)
+	request := r.Clone(context)
+
 	var reader io.Reader
 	var expectBinary = false
 	var err error
@@ -78,6 +87,8 @@ func (r *Request) Build(context *endly.Context, sessionCookies Cookies) (*http.R
 		}
 		reader = bytes.NewReader(body)
 	}
+
+
 	httpRequest, err := http.NewRequest(strings.ToUpper(request.Method), request.URL, reader)
 	if err != nil {
 		return nil, expectBinary, err
