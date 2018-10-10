@@ -58,6 +58,8 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, reque
 	var state = context.State()
 	cookies := state.GetMap("cookies")
 	trips := Trips(state.GetMap(TripsKey))
+	request.Expand(state)
+
 	canRun, err := criteria.Evaluate(context, context.State(), request.When, fmt.Sprintf("%v.When", "HttpRequest"), true)
 	if err != nil || !canRun {
 		return err
@@ -95,7 +97,11 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, reque
 	if toolbox.IsCompleteJSON(response.Body) {
 		response.JSONBody, err = toolbox.JSONToMap(response.Body)
 	}
+
+	sendGroupResponse.Expand(sendGroupResponse.Data)
+
 	trips.setData(sendGroupResponse.Data)
+
 	trips.addResponse(response)
 	endEvent := s.End(context)(startEvent, response)
 	response.TimeTakenMs = int(endEvent.Timestamp().Sub(startEvent.Timestamp()) / time.Millisecond)
