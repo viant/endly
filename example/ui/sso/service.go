@@ -11,43 +11,12 @@ import (
 	"sync"
 )
 
-
 //Service represents sso service
 type Service interface {
 	SignUp(*SignUpRequest, *http.Request) *SignUpResponse
 
 	SignIn(*SignInRequest) *SignInResponse
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 type service struct {
 	config    *Config
