@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	var memStorage = storage.NewMemoryService()
+	var memStorage = storage.NewMemoryService();
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/web/meta.yaml", bytes.NewReader([]byte(`name: go/web
 description: "golang: web hello world"
@@ -31,7 +31,8 @@ http:
     method: get
     url: http://127.0.0.1:8080/
   expect:
-    Code: 200`)))
+    Code: 200
+`)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/go/web/meta.yaml %v", err)
 		}

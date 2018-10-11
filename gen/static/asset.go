@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	var memStorage = storage.NewMemoryService()
+	var memStorage = storage.NewMemoryService();
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/asset/index.html", bytes.NewReader([]byte(`<!DOCTYPE html>
 <html lang="en">
@@ -125,9 +125,8 @@ func init() {
 
         <fieldset class="form-group">
             <div class="form-row text-center">
-                <legend class="text-center pt-0">Testing</legend>
+                <legend class="text-center pt-0">Regression options</legend>
             </div>
-
 
             <div class="form-row">
 
@@ -234,7 +233,7 @@ func init() {
 
 
         <div class="form-group row text-center ">
-            <button type="submit" class="mx-auto  btn btn-primary">Download</button>
+            <button type="submit" class="mx-auto  btn btn-primary">Create</button>
         </div>
     </form>
     <ul><b>Running workflow:</b>

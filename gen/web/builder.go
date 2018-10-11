@@ -898,6 +898,7 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 	} else {
 		regression = removeMatchedLines(regression, "selenium")
 	}
+
 	if request.Testing.HTTP && len(appMeta.HTTP) > 0 {
 		b.buildHTTPTestAssets(appMeta, request)
 	} else {
@@ -909,6 +910,9 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 	} else {
 		regression = removeMatchedLines(regression, "REST test")
 	}
+
+
+
 	var dbMeta = b.dbMeta
 	if dbMeta == nil {
 		regression = removeMatchedLines(regression, "test data")
@@ -916,11 +920,11 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 		b.addRegressionData(appMeta, request)
 		if request.Testing.DataValidation {
 			regression = b.expandExpectTestUseCaseData(regression, request)
-			prepare, err := b.Download("datastore/regression/req/expect.yaml", nil)
+			expect, err := b.Download("datastore/regression/req/expect.yaml", nil)
 			if err != nil {
 				return err
 			}
-			b.UploadToEndly("regression/req/expect.yaml", strings.NewReader(prepare))
+			b.UploadToEndly("regression/req/expect.yaml", strings.NewReader(expect))
 			b.UploadToEndly("regression/use_cases/001_xx_case/expect/README", strings.NewReader("Create a folder for each datastore with JSON or CSV files with expected data, filename refers to data store table."))
 		} else {
 			regression = removeMatchedLines(regression, "verify test")
