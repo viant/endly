@@ -1,3 +1,7 @@
+## October 11 2018 0.14.1
+    * Patched http trips cross reference expression substitution
+    * Minor patches
+
 ## October 9 2018 0.14.0          
     * Added http recordng option -u
     * Added Avro UDFs
