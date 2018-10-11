@@ -7,17 +7,17 @@ import (
 	"github.com/viant/endly/udf"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"io"
 	"net/http"
 	"strings"
-	"github.com/viant/toolbox/data"
 )
 
 //ServiceRequest represents an http request
 type Request struct {
 	*model.Repeater
-	When        string            `description:"criteria to send this request"`
-	Method      string            `required:"true" description:"HTTP Method"`
+	When        string `description:"criteria to send this request"`
+	Method      string `required:"true" description:"HTTP Method"`
 	URL         string
 	Header      http.Header
 	Cookies     Cookies
@@ -51,7 +51,6 @@ func (r *Request) Expand(state data.Map) {
 	r.URL = state.ExpandAsText(r.URL)
 	r.Body = state.ExpandAsText(r.Body)
 }
-
 
 //Build builds an http.Request
 func (r *Request) Build(context *endly.Context, sessionCookies Cookies) (*http.Request, bool, error) {
@@ -87,7 +86,6 @@ func (r *Request) Build(context *endly.Context, sessionCookies Cookies) (*http.R
 		}
 		reader = bytes.NewReader(body)
 	}
-
 
 	httpRequest, err := http.NewRequest(strings.ToUpper(request.Method), request.URL, reader)
 	if err != nil {
