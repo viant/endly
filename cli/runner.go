@@ -21,6 +21,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	"github.com/viant/endly/system/exec"
 )
 
 //OnError exit system with os.Exit with supplied code.
@@ -733,6 +734,7 @@ func (r *Runner) printSummary() {
 func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 	r.request = request
 	r.context = r.manager.NewContext(toolbox.NewContext())
+	exec.TerminalSessions(r.context)
 	r.report = &ReportSummaryEvent{}
 	r.context.CLIEnabled = true
 	r.filter = request.EventFilter
