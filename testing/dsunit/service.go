@@ -166,6 +166,18 @@ const (
 	dsunitServiceMapping = `{"mappings":{"URL":"regression/db1/mapping.json"}}`
 )
 
+
+func expandTablesIfNeeded(context *endly.Context, req *InitRequest) {
+	if len(req.Tables) == 0 {
+		return
+	}
+	var state = context.State()
+	for _, table := range req.Tables {
+		table.Table =  state.ExpandAsText(table.Table)
+	}
+
+}
+
 func (s *service) registerRoutes() {
 
 	s.Register(&endly.Route{
@@ -354,9 +366,11 @@ func (s *service) registerRoutes() {
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*InitRequest); ok {
+				expandTablesIfNeeded(context, req)
 				var dsRequest = dsunit.InitRequest(*req)
 				request = &dsRequest
 			}
+
 			if req, ok := request.(*dsunit.InitRequest); ok {
 				resp := s.Service.Init(req)
 				response := InitResponse(*resp)
