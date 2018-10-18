@@ -911,7 +911,16 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 		regression = removeMatchedLines(regression, "REST test")
 	}
 
-
+	if request.Testing.SSH {
+		b.buildSSHCmdAssets(appMeta, request)
+	} else {
+		regression = removeMatchedLines(regression, "run SSH cmd")
+	}
+	if request.Testing.Inline {
+		b.buildInlineWorkflowAssets(appMeta, request)
+	} else {
+		regression = removeMatchedLines(regression, "run workflow")
+	}
 
 	var dbMeta = b.dbMeta
 	if dbMeta == nil {
@@ -995,6 +1004,26 @@ func (b *builder) Upload(URI string, reader io.Reader) error {
 	content, _ := ioutil.ReadAll(reader)
 	//fmt.Printf("%v\n%s\n", URL, content)
 	return b.destService.Upload(URL, bytes.NewReader(content))
+}
+
+func (b *builder) buildSSHCmdAssets(meta *AppMeta, request *RunRequest) error {
+	cmd, err := b.Download("regression/cmd.yaml", nil)
+	if err != nil {
+		return err
+	}
+	b.UploadToEndly("regression/use_cases/001_xx_case/cmd.yaml", strings.NewReader(cmd))
+	b.UploadToEndly("regression/use_cases/002_yy_case/cmd.yaml", strings.NewReader(cmd))
+	return nil
+}
+
+func (b *builder) buildInlineWorkflowAssets(meta *AppMeta, request *RunRequest) error {
+	cmd, err := b.Download("regression/run.yaml", nil)
+	if err != nil {
+		return err
+	}
+	b.UploadToEndly("regression/use_cases/001_xx_case/run.yaml", strings.NewReader(cmd))
+	b.UploadToEndly("regression/use_cases/002_yy_case/run.yaml", strings.NewReader(cmd))
+	return nil
 }
 
 func newBuilder(baseURL string) *builder {

@@ -66,6 +66,8 @@ type Testing struct {
 	REST           bool   `json:"rest"`
 	HTTP           bool   `json:"http"`
 	Selenium       bool   `json:"selenium"`
+	SSH            bool   `json:"ssh"`
+	Inline         bool   `json:"inline"`
 	UseCaseData    string `json:"useCaseData"`
 	DataValidation bool   `json:"dataValidation"`
 	LogValidation  bool   `json:"logValidation"`
