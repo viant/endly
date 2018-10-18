@@ -61,11 +61,10 @@ target:
   url:  ssh://127.0.0.1/
   credentials: ${env.HOME}/.secret/localhost.json
 commands:
-  whoami
-  ${cmd[0].stdout}:/root/?  mkdir -p /tmp/app
-  ${cmd[0].stdout}:!/root/? mkdir ~/app
-  echo cmd[0].stdout
-  
+  - whoami
+  - ${cmd[0].stdout}:/root/?  mkdir -p /tmp/app
+  - ${cmd[0].stdout}:!/root/? mkdir ~/app
+  - echo cmd[0].stdout  
 ```
 
 **ExtractRequest example**
