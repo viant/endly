@@ -166,14 +166,13 @@ const (
 	dsunitServiceMapping = `{"mappings":{"URL":"regression/db1/mapping.json"}}`
 )
 
-
 func expandTablesIfNeeded(context *endly.Context, req *InitRequest) {
 	if len(req.Tables) == 0 {
 		return
 	}
 	var state = context.State()
 	for _, table := range req.Tables {
-		table.Table =  state.ExpandAsText(table.Table)
+		table.Table = state.ExpandAsText(table.Table)
 	}
 
 }
