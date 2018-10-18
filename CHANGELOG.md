@@ -1,3 +1,7 @@
+## October 18 2018 0.15.0
+    * Added SSH, Inline workflow runner option in e2e project generator 
+    * Minor patches
+
 ## October 11 2018 0.14.1
     * Patched http trips cross reference expression substitution
     * Minor patches
@@ -60,7 +64,7 @@
 ## Feb 1  2018 0.2.0
     
     * Integrated with assertly data structure validation
-    * Update neatly to support @ for external resources, 
+    * Updated neatly to support @ for external resources, 
     * Added spaces (pipe has been already supported) for multi external resource separation 
     * Minor fixes
     
@@ -87,7 +91,6 @@
     * Patched tagIDs 
     * Moved secret credetnails file generator to endly -c option
     * Minor fixes
-    
   
 ## March 4  2018 0.5.0
     * Updated criteria to support comprehensive conditional expression.
@@ -116,6 +119,7 @@
      * Add SSH testing utilities NewSSHRecodingContext, NewSSHReplayContext
      * Refactored and updated shared workflows        
      * Minor patched
+     
 ## March 31 2018 0.7.1
      * Added Expec to all runner Run request and Assert field to response
      * Added automation with docker example
@@ -176,8 +180,7 @@
     * Added @sortText@ assertly directive
     * Refactored java maven build workflow
     * Minor patches
-            
-
+    
 ## May 02 2018 0.8.2
     * Added shared switchCase assertly validation key for shared data points
     * Patched workflow generator app with postgress issue
