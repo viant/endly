@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	var memStorage = storage.NewMemoryService();
+	var memStorage = storage.NewMemoryService()
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/web/meta.yaml", bytes.NewReader([]byte(`name: go/web
 description: "golang: web hello world"
@@ -1550,7 +1550,7 @@ setup:
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/req/expect.yaml", bytes.NewReader([]byte(`action: dsunit:expect
 datastore: $db
-URL: ${path}/prepare/$db`)))
+URL: ${path}/expect/$db`)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/regression/req/expect.yaml %v", err)
 		}
@@ -2067,6 +2067,8 @@ pipeline:
 ,use_cases/${index}*,selenium,run,run selenium test,@selenium_test,,,,,,
 ,use_cases/${index}*,http/runner,send,run HTTP test,@http_test,,,,,,
 ,use_cases/${index}*,rest/runner,send,run REST test,@rest_test,,,,,,
+,use_cases/${index}*,exec,run,run SSH cmd,@cmd,,,,,,
+,use_cases/${index}*,workflow,run,run workflow,@run,,,,,,
 ,use_cases/${index}*,dsunit,expect,verify test $db state,@req/expect,,$HasResource(${path}/expect/${db}):true,,,$datastore,
 ,use_cases/${index}*,,nop,push expected log records for validation,{},,$HasResource(${path}/expect/logType1.json):true,@var/push_log|@logType1,,,
 []Test,,Service,Action,Description,Request,SleepTimeMs,When,,,,
@@ -2079,6 +2081,16 @@ pipeline:
 ,,,run,close and stop seleniun,@req/selenium_destroy,,,,,,`)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/regression/regression.csv %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/regression/cmd.yaml", bytes.NewReader([]byte(`target:
+  credentials: localhost
+  URL: ssh://127.0.0.1/
+commands:
+  - echo 'hi from $WorkingDirectory()'`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/regression/cmd.yaml %v", err)
 		}
 	}
 	{
@@ -2291,6 +2303,22 @@ types:
 		err := memStorage.Upload("mem://github.com/viant/endly/template/regression/use_cases/001_xx_case/use_case.txt", bytes.NewReader([]byte(`use case 1 description here`)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/regression/use_cases/001_xx_case/use_case.txt %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/regression/run.yaml", bytes.NewReader([]byte(`init:
+  key1: val1
+pipeline:
+  task1:
+    action: exec:run
+    target:
+      credentials: localhost
+      URL: ssh://127.0.0.1/
+    commands:
+      - echo 'hi  from $WorkingDirectory()'
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/regression/run.yaml %v", err)
 		}
 	}
 	{
