@@ -12,6 +12,7 @@ import (
 	"github.com/viant/endly/cli/xunit"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/msg"
+	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"gopkg.in/yaml.v2"
@@ -21,7 +22,6 @@ import (
 	"path"
 	"strings"
 	"time"
-	"github.com/viant/endly/system/exec"
 )
 
 //OnError exit system with os.Exit with supplied code.
