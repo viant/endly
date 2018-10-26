@@ -118,7 +118,7 @@ func TestTransferService_Copy(t *testing.T) {
 						Compress: false,
 					},
 				},
-				CopyHandlerUdf: "CopyWithCompression",
+				Udf: "CopyWithCompression",
 			},
 			map[string]string{
 				"mem:///tmp/copy5_target/config5.gz": "\x1f\x8b\b\x00\x00\tn\x88\x04\xff\x00\n\x00\xf5\xffcompressed\x00\x00\x00\xff\xff\x00\x00\x00\xff\xff\x01\x00\x00\xff\xff\x1eKV\x97\n\x00\x00\x00",
@@ -135,7 +135,7 @@ func TestTransferService_Copy(t *testing.T) {
 						Compress: false,
 					},
 				},
-				CopyHandlerUdf: "CopyWithCompressionAndCorruption",
+				Udf: "CopyWithCompressionAndCorruption",
 			},
 			map[string]string{
 				"mem:///tmp/copy5_target/config5_corruption.gz": "\x1f\x8b\b\x00\x00\tn\x88\x04\xff\x00\v\x00\xf4\xffcompressed*\x00\x00\x00\xff\xff\x00\x00\x00\xff\xff\x01\x00\x00\xff\xffsM!\xf3\v\x00\x00\x00",
