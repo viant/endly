@@ -13,7 +13,6 @@ func Test_EvaluateCriteria(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 	state := context.State()
 
-	state.Put("key1", 0)
 	var useCases = []struct {
 		Description   string
 		DefaultResult bool
@@ -77,10 +76,13 @@ func Test_EvaluateCriteria(t *testing.T) {
 			Expected:      true,
 		},
 		{
-			Description:   "Not equal 0",
+			Description:   "Data substitution",
 			Expression:    "$key1:!0", //
 			DefaultResult: true,
 			Expected:      false,
+			State: map[string]interface{}{
+				"key1": 0,
+			},
 		},
 	}
 
