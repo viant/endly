@@ -13,6 +13,7 @@ func Test_EvaluateCriteria(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 	state := context.State()
 
+	state.Put("key1", 0)
 	var useCases = []struct {
 		Description   string
 		DefaultResult bool
@@ -75,6 +76,12 @@ func Test_EvaluateCriteria(t *testing.T) {
 			DefaultResult: true,
 			Expected:      true,
 		},
+		{
+			Description:   "Not equal 0",
+			Expression:    "$key1:!0", //
+			DefaultResult: true,
+			Expected:      false,
+		},
 	}
 
 	for _, useCase := range useCases {
@@ -83,7 +90,7 @@ func Test_EvaluateCriteria(t *testing.T) {
 				state.Put(k, v)
 			}
 		}
-		isTrue, err := Evaluate(context, context.State(), useCase.Expression, "test", useCase.DefaultResult)
+		isTrue, err := Evaluate(context, state, useCase.Expression, "test", useCase.DefaultResult)
 		if useCase.HasError {
 			assert.NotNil(t, err, useCase.Description)
 			continue
