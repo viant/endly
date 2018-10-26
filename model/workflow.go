@@ -11,7 +11,7 @@ type Workflow struct {
 	Source *url.Resource //source definition of the workflow
 	Data   data.Map      //workflow data
 	*AbstractNode
-	*TasksNode //workflow task
+	*TasksNode //workflow tasks
 }
 
 //Validate validates this workflow

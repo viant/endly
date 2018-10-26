@@ -32,7 +32,27 @@ To execute action:
 4) Service executes operation for provided request.
 
 
-**[Service](../../service.go)** an abstraction providing set of functionalities triggered by specified action/request.
+**[Service](../../service.go)** an abstraction providing set of capabilities triggered by specified action/request.
+
+To list endly supported services run the following:
+```bash
+endly -s='*'
+```
+
+To list supported services actions run the following ```endly -s=[service name]```:
+
+i.e
+```bash
+endly -s='storage' 
+```
+
+To list request/response contract for a service action run the following ```endly -s=[service name] -a=[action]```:
+
+i.e
+```bash
+endly -s='storage' -a='copy' 
+```
+
 
 **State** key/value pair map that is used to mange state during the workflow run. 
 The state can be change by providing variable definition.
