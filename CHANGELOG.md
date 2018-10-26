@@ -1,3 +1,7 @@
+## October 26 2018 0.15.1
+    * Patched assertly numeric type casting criterion 
+    * Renamed CopyHandlerUdf to Udf on storage copy request
+    
 ## October 18 2018 0.15.0
     * Added SSH, Inline workflow runner option in e2e project generator 
     * Minor patches
