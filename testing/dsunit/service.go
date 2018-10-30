@@ -89,6 +89,12 @@ const (
 	
 }`
 
+	freezeExample = `{
+  	"Datastore": "db1",
+  	"SQL": "SELECT id, name FROM users",
+	"DestURL":"/tmp/expect/db1/users.json"
+}`
+
 	dsunitMySQLRegisterExample = `{
   "Datastore": "db1",
   "Config": {
@@ -488,6 +494,38 @@ func (s *service) registerRoutes() {
 				if req.IgnoreError {
 					err = nil
 				}
+				return &response, err
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "freeze",
+		RequestInfo: &endly.ActionInfo{
+			Description: "create setup or verification dataset from existing datastore",
+			Examples: []*endly.UseCase{
+				{
+					Description: "Creating dataset from existng datastore for verification",
+					Data:        freezeExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &FreezeRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &FreezeResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*FreezeRequest); ok {
+				var dsRequest = dsunit.FreezeRequest(*req)
+				request = &dsRequest
+			}
+			if req, ok := request.(*dsunit.FreezeRequest); ok {
+				resp := s.Service.Freeze(req)
+				response := FreezeResponse(*resp)
+				var err = response.Error()
 				return &response, err
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
