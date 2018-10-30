@@ -329,7 +329,7 @@ endly -r=datastore
 **d) Creating setup / verification dataset from existing datastore**
 
 
-For instance: the following  define inline workflow to create setup dataset based SQL from on existing database
+For instance: the following  define inline workflow to create setup dataset SQL based from on existing database
 
 @freeze.yaml
 ```yaml
