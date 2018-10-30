@@ -1,6 +1,12 @@
 # Datastore services
 
 - [Usage](#usage)
+    - [Registering datastore with driver info](#register)
+    - [Creating database with schema and loading static data](#schema_and_loading)
+    - [Loading data into data store](#loaddata)
+    - [Creating setup or verification dataset from existing datastore](#freeze)
+    - [Using data table mapping](#mapping)
+    - [Validating data in data store](#validation)
 - [Datstore Credentials](#credentials)
 - [Supported databases](#databases)
 
@@ -24,6 +30,9 @@ Datastore service uses [dsunit](https://github.com/viant/dsunit/) service to cre
 
 <a name="usage"></a>
 ## Usage
+
+<a name="register"></a>
+**Registering datastore with driver info**
 
 In order to operate on any data store the first step is to register named data store with specific driver:
 
@@ -50,7 +59,8 @@ pipeline:
 ```
 
 
-- **Create database schema and loading static data**
+<a name="schema_and_loading"></a>
+- **Creating database with schema and loading static data**
 
 ```bash
 endly -r=init
@@ -250,6 +260,37 @@ Using AsTableRecords is more advance testing option, allowing value autogenerati
   ]
 
 ```
+
+
+<a name="freeze">&nbsp;</a>
+**Creating setup or verification dataset from existing datastore**
+
+
+```bash
+endly -r=freeze.yaml 
+```
+
+
+@freeze.yaml
+```yaml
+pipeline:
+  db1:
+    register:
+      action: dsunit:register
+      datastore: db1
+      config:
+        driverName: mysql
+        descriptor: '[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true'
+        credentials: $mysqlCredentials
+        parameters:
+          dbname: db1
+    reverse-engineer:
+      action: dsunit:freeze
+      datastore: db1
+      sql:  SELECT id, name FROM users
+      destURL: regression/use_cases/001_xx_case/prepare/db1/users.json       
+```
+
 
 
 <a name="mapping">&nbsp;</a>

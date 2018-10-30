@@ -62,6 +62,12 @@ type QueryRequest dsunit.QueryRequest
 //QueryResponse represents dsunit response
 type QueryResponse dsunit.QueryResponse
 
+//FreezeRequest represents a request to create a dataset from existing datastore either for setup or verification
+type FreezeRequest dsunit.FreezeRequest
+
+//FreezeResponse represents a freeze response
+type FreezeResponse dsunit.FreezeResponse
+
 //Assertion returns description with validation slice
 func (r *ExpectResponse) Assertion() []*assertly.Validation {
 	var result = make([]*assertly.Validation, 0)
