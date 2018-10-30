@@ -1,3 +1,6 @@
+## October 30 2018 0.16.0
+    * Added option to create setup or verification dataset with dsunit.freeze
+    
 ## October 26 2018 0.15.1
     * Patched assertly numeric type casting criterion 
     * Renamed CopyHandlerUdf to Udf on storage copy request
