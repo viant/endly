@@ -3,7 +3,7 @@
 [![Declarative funtional testing for Go.](https://goreportcard.com/badge/github.com/viant/endly)](https://goreportcard.com/report/github.com/viant/endly)
 [![GoDoc](https://godoc.org/github.com/viant/endly?status.svg)](https://godoc.org/github.com/viant/endly)
 
-This library is compatible with Go 1.8+
+This library is compatible with Go 1.9+
 
 Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes.
 
@@ -14,8 +14,6 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Documentation](#Documentation)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
-
-
 
 
 
@@ -128,7 +126,7 @@ Endly automate sequence of actions into reusable tasks and workflows, here are s
 
 **a) System preparation**
 
-For instance: the following define inline workflowto prepare app system services:
+For instance: the following define inline workflow to prepare app system services:
 
 @system.yaml
 ```yaml
@@ -159,7 +157,7 @@ pipeline:
 
 **b) Application build and deployment** 
 
-For instance: the following  define inline workflowto build and deploy a test app:
+For instance: the following  define inline workflow to build and deploy a test app:
 (you can easily build an app for standalone mode or in and for docker container)
 
 
@@ -219,6 +217,10 @@ pipeline:
 
 ```
 
+
+
+
+
 **As Standalone app** (with predefined shared workflow)
 
 @app.yaml
@@ -271,13 +273,9 @@ pipeline:
 
 ```
 
+**c) Datastore/database creation**
 
-
-
-
-**c) Datastore creation**
-
-For instance: the following  define inline workflowto create/populare mysql and aerospike database/dataset:
+For instance: the following  define inline workflow to create/populare mysql and aerospike database/dataset:
 
 @datastore.yaml
 
@@ -323,9 +321,50 @@ pipeline:
       URL: datastore/db4/data
 ```
 
-**d) Testing**
+```bash
+endly -r=datastore
+```
 
-For instance: the following  define inline workflowto run test with selenium runner:
+
+**d) Creating setup / verification dataset from existing datastore**
+
+
+For instance: the following  define inline workflow to create setup dataset based SQL from on existing database
+
+@freeze.yaml
+```yaml
+pipeline:
+  db1:
+    register:
+      action: dsunit:register
+      datastore: db1
+      config:
+        driverName: bigquery
+        credentials: bq
+        parameters:
+          datasetId: adlogs
+    reverse:
+      action: dsunit:freeze
+      datastore: db1
+      destURL: db1/prepare/raw_logs.json
+      omitEmpty: true
+      ignore:
+        - request.postBody
+      replace:
+        request.timestamp: $$ts
+      sql:  SELECT request, meta, fee
+            FROM raw_logs 
+            WHERE requests.sessionID IN(x, y, z)
+```
+
+```bash
+endly -r=freeze
+```
+
+
+**e) Testing**
+
+For instance: the following  define inline workflow to run test with selenium runner:
 
 
 @test.yaml
@@ -367,6 +406,10 @@ pipeline:
     expect:
       output:
         Text: /Hello Endly!/
+```
+
+```bash
+endly -r=test
 ```
 
 
