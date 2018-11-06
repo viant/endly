@@ -6,8 +6,12 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
+	"github.com/viant/dsc"
 	"github.com/viant/toolbox/data"
 )
+
+
+const DsUnitConfigKey = "dsconfig";
 
 var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
 
@@ -219,6 +223,9 @@ func (s *service) registerRoutes() {
 			}
 
 			if req, ok := request.(*dsunit.RegisterRequest); ok {
+				if req.Config != nil {
+					s.publishConfigParameters(context, req.Config)
+				}
 				resp := s.Service.Register(req)
 				response := RegisterResponse(*resp)
 				return &response, response.Error()
@@ -246,6 +253,7 @@ func (s *service) registerRoutes() {
 			}
 
 			if req, ok := request.(*dsunit.RecreateRequest); ok {
+
 				resp := s.Service.Recreate(req)
 				response := RecreateResponse(*resp)
 				return &response, response.Error()
@@ -377,6 +385,9 @@ func (s *service) registerRoutes() {
 			}
 
 			if req, ok := request.(*dsunit.InitRequest); ok {
+				if req.Config != nil {
+					s.publishConfigParameters(context, req.Config)
+				}
 				resp := s.Service.Init(req)
 				response := InitResponse(*resp)
 				return &response, response.Error()
@@ -388,7 +399,7 @@ func (s *service) registerRoutes() {
 	s.Register(&endly.Route{
 		Action: "prepare",
 		RequestInfo: &endly.ActionInfo{
-			Description: "populate databstore with provided data",
+			Description: "populate datastore with provided data",
 			Examples: []*endly.UseCase{
 				{
 					Description: "static data prepare",
@@ -564,9 +575,21 @@ func (s *service) registerRoutes() {
 	})
 }
 
-func (s service) Run(context *endly.Context, request interface{}) *endly.ServiceResponse {
+
+func (s service) publishConfigParameters(context *endly.Context,  config *dsc.Config) {
+	state := context.State()
+	var params = config.Parameters
+	if len(params) == 0 {
+		params = make(map[string]interface{})
+	}
+	state.Put(DsUnitConfigKey, data.Map(params))
+}
+
+
+
+func (s *service) Run(context *endly.Context, request interface{}) *endly.ServiceResponse {
 	var state = context.State()
-	context.Context.Replace((*data.Map)(nil), &state)
+	context.Context.Replace(dsunit.SubstitutionMapKey, &state)
 	s.Service.SetContext(context.Context)
 	return s.AbstractService.Run(context, request)
 }
