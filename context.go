@@ -313,6 +313,18 @@ func NewDefaultState() data.Map {
 		case "yesterday":
 			result, _ := timeDiffProvider.Get(nil, "now", -1, "day", "timestamp")
 			return result
+		case "hourbefore":
+			result, _ := timeDiffProvider.Get(nil, "now", -1, "hour", "timestamp")
+			return result
+		case "2hourbefore":
+			result, _ := timeDiffProvider.Get(nil, "now", -2, "hour", "timestamp")
+			return result
+		case "hourlater":
+			result, _ := timeDiffProvider.Get(nil, "now", 1, "hour", "timestamp")
+			return result
+		case "2hourlater":
+			result, _ := timeDiffProvider.Get(nil, "now", 2, "hour", "timestamp")
+			return result
 		}
 		return nil
 	})
