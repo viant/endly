@@ -34,8 +34,11 @@ func (r *CheckoutRequest) Init() error {
 		if r.Origin.ParsedURL.Scheme == "file" {
 			r.Type = "local"
 		}
-	}
 
+	}
+	if r.Dest.Credentials == "" {
+		r.Dest.Credentials = "localhost"
+	}
 	return nil
 }
 
