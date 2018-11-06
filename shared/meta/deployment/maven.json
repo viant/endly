@@ -20,8 +20,8 @@
           },
           "Dest": {
             "Name": "apache-maven",
-            "URL": "scp://${buildSpec.host}/opt/build/",
-            "Credentials": "$buildSpec.credentials"
+            "URL": "scp://${buildHost}/opt/build/",
+            "Credentials": "$buildHostCredentials"
           }
         },
         "VersionCheck": {

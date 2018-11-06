@@ -19,7 +19,7 @@
           },
           "Dest": {
             "URL": "scp://${targetHost}/opt/selenium/geckodriver-v0.19.1-macos.tar.gz",
-            "Credentials": "${targetHostCredential}"
+            "Credentials": "${targetHostCredentials}"
           }
         },
         "Run": {
@@ -53,7 +53,7 @@
           },
           "Dest": {
             "URL": "scp://${targetHost}/opt/selenium/",
-            "Credentials": "${targetHostCredential}"
+            "Credentials": "${targetHostCredentials}"
           }
         },
         "Run": {

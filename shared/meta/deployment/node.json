@@ -25,7 +25,7 @@
           },
           "Dest": {
             "URL": "scp://${buildHost}/opt/sdk/node_${artifact.Version}.tar.gz",
-            "Credentials": "${buildHostCredential}"
+            "Credentials": "${buildHostCredentials}"
           }
         },
         "VersionCheck": {
