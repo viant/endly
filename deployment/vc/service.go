@@ -8,7 +8,6 @@ import (
 	"github.com/viant/toolbox"
 
 	"github.com/viant/toolbox/url"
-	"path"
 )
 
 const (
@@ -94,17 +93,10 @@ func (s *service) checkout(context *endly.Context, request *CheckoutRequest) (*C
 	}
 
 	var modules = request.Modules
-	var directory = target.DirectoryPath()
 	if len(modules) == 0 {
 		modules = append(modules, "")
-		parent, _ := path.Split(target.DirectoryPath())
-		directory = parent
 	}
-	if directory != "/" {
-		if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("mkdir -p %v", directory)), nil); err != nil {
-			return nil, err
-		}
-	}
+
 	origin, err := context.ExpandResource(request.Origin)
 	if err != nil {
 		return nil, err
@@ -133,6 +125,7 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 		}
 	}()
 
+
 	var directoryPath = dest.DirectoryPath()
 	storageService, err := storage.GetStorageService(context, dest)
 	if err != nil {
@@ -150,10 +143,8 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 			return nil, err
 		}
 		if response.IsVersionControlManaged {
-			var originURLResource = url.NewResource(origin.URL)
-			var actualURLResource = url.NewResource(response.Origin)
-			originPath := originURLResource.ParsedURL.Hostname() + originURLResource.DirectoryPath()
-			actualPath := actualURLResource.ParsedURL.Hostname() + actualURLResource.DirectoryPath()
+			originPath := normalizeVCPath(origin.URL)
+			actualPath := normalizeVCPath(response.Origin)
 			if originPath == actualPath {
 				_, err = s.pull(context, &PullRequest{
 					Type:   versionControlType,
