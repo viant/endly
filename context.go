@@ -22,8 +22,6 @@ import (
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
 
-
-
 //Context represents a workflow session context/state
 type Context struct {
 	SessionID       string
@@ -257,8 +255,6 @@ func (c *Context) MakeAsyncSafe() *msg.Events {
 	return result
 }
 
-
-
 var yyyyMMDDLayout = toolbox.DateFormatToLayout("yyyy-MM-dd")
 var yyyMMDDHHMMSSLayout = toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss")
 var numberDateLayout = toolbox.DateFormatToLayout("yyyyMMddhhmmSSS")
@@ -286,7 +282,7 @@ func NewDefaultState() data.Map {
 	result.Put("rand", source.Int63())
 	result.Put("date", now.Format(yyyyMMDDLayout))
 	result.Put("time", now.Format(yyyMMDDHHMMSSLayout))
-	result.Put("ts", now.Format(numberDateLayout));
+	result.Put("ts", now.Format(numberDateLayout))
 
 	result.Put("tmpDir", func(key string) interface{} {
 		tempPath := path.Join(os.TempDir(), key)
@@ -314,7 +310,7 @@ func NewDefaultState() data.Map {
 		if err != nil {
 			return nil
 		}
-		return int(timeAt.Unix()+timeAt.UnixNano()) / 1000000;
+		return int(timeAt.Unix()+timeAt.UnixNano()) / 1000000
 	})
 
 	result.Put("unix", func(key string) interface{} {
@@ -322,7 +318,7 @@ func NewDefaultState() data.Map {
 		if err != nil {
 			return nil
 		}
-		return int(timeAt.Unix()+timeAt.UnixNano()) / 1000000000;
+		return int(timeAt.Unix()+timeAt.UnixNano()) / 1000000000
 	})
 
 	result.Put("tzTime", func(key string) interface{} {
