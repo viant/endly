@@ -307,6 +307,7 @@ pipeline:
 
 
 State initialization can be applied on top(workflow) or task/action node level. 
+Parameters can be passed from command line.
 
 
 @run.yaml
