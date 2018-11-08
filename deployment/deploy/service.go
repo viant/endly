@@ -233,8 +233,6 @@ func (s *service) updateOperatingSystem(context *endly.Context, target *url.Reso
 	}
 }
 
-
-
 func (s *service) deploy(context *endly.Context, request *Request) (*Response, error) {
 	request = &Request{
 		AppName: context.Expand(request.AppName),
@@ -242,20 +240,17 @@ func (s *service) deploy(context *endly.Context, request *Request) (*Response, e
 		Target:  request.Target,
 	}
 
-
-
-
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
 
 	state := context.State()
-	if !state.Has("targetHost") || ! state.Has("targetHostCredentials") {
+	if !state.Has("targetHost") || !state.Has("targetHostCredentials") {
 		state.Put("targetHost", target.ParsedURL.Host)
 		state.Put("targetHostCredentials", target.Credentials)
 	}
-	if !state.Has("buildHost") || ! state.Has("buildHostCredentials") {
+	if !state.Has("buildHost") || !state.Has("buildHostCredentials") {
 		state.Put("buildHost", target.ParsedURL.Host)
 		state.Put("buildHostCredentials", target.Credentials)
 	}

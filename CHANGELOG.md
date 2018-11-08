@@ -1,3 +1,10 @@
+## November 8 2018 0.17.0
+    * Added $dsconfig state keys with dsc.Config.params (i.e. $dsconfig.datasetId. $dsconfig.projectId)
+    * Added dsunit.dump method to create schema DDL fro existing database
+    * Refactor $timestamp. , $unix. to take advandate toolbox TimeAt method, i.e. ${unix.nowInUTC}, ${timestamp.5DaysAhead}
+    * Added global $tzTime state function that uses time.RFC3339 time format with toolbox.TimeAt semantic
+    * Minor patches 
+
 ## October 30 2018 0.16.0
     * Added option to create setup or verification dataset with dsunit.freeze
     

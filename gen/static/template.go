@@ -957,6 +957,44 @@ rest:
 		}
 	}
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/util/dump.yaml", bytes.NewReader([]byte(`pipeline:
+  register:
+    action: dsunit:register
+    datastore: $db
+    config: $confog
+  dump:
+    action: dsunit:dump
+    datastore: $db
+    destURL: schema.sql
+    tables:
+      - dummy
+      - dummy_type`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/util/dump.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/util/freeze.yaml", bytes.NewReader([]byte(`pipeline:
+  register:
+    action: dsunit:register
+    datastore: $db
+    config: $confog
+  freeze:
+    action: dsunit:freeze
+    datastore: $db
+    destURL: dummy.json
+    omitEmpty: true
+    ignore:
+      - request.postBody
+    replace:
+      request.timestamp: $$ts
+    sql: SELECT  * FROM dummy
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/util/freeze.yaml %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/script.yaml", bytes.NewReader([]byte(`scripts:
   - URL: $script
 `)))

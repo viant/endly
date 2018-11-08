@@ -125,7 +125,6 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 		}
 	}()
 
-
 	var directoryPath = dest.DirectoryPath()
 	storageService, err := storage.GetStorageService(context, dest)
 	if err != nil {

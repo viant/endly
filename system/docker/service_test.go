@@ -420,7 +420,7 @@ func TestDockerService_ExecRequest(t *testing.T) {
 				response := &docker.ExecResponse{}
 				err := endly.Run(context, useCase.Request, response)
 				if useCase.Error != "" {
-					assert.EqualValues(t, useCase.Error, fmt.Sprint("%v", err), description)
+					assert.EqualValues(t, useCase.Error, fmt.Sprintf("%v", err), description)
 					continue
 				}
 				if !assert.Nil(t, err) {

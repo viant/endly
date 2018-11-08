@@ -118,7 +118,7 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 
 		responses, ok := trips.Trips[key]
 		if !ok {
-			var errorMessage = fmt.Sprintf("key: %v not found, available: [%v]", key, strings.Join(toolbox.MapKeysToStringSlice(trips.Trips), ","))
+			var errorMessage = fmt.Sprintf("key: %v not found, available: \n%v", key, strings.Join(toolbox.MapKeysToStringSlice(trips.Trips), ",\n"))
 			fmt.Println(errorMessage)
 			http.Error(writer, errorMessage, http.StatusNotFound)
 			return
@@ -246,7 +246,9 @@ func init() {
 
 		switch request := source.(type) {
 		case *bridge.HttpRequest:
-			return request.Body, nil
+			body, _ := util.FromPayload(request.Body)
+
+			return string(body), nil
 		case *http.Request:
 			if request.ContentLength == 0 {
 				return "", nil
