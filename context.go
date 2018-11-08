@@ -22,6 +22,8 @@ import (
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
 
+
+
 //Context represents a workflow session context/state
 type Context struct {
 	SessionID       string
@@ -255,20 +257,26 @@ func (c *Context) MakeAsyncSafe() *msg.Events {
 	return result
 }
 
+
+
+var yyyyMMDDLayout = toolbox.DateFormatToLayout("yyyy-MM-dd")
+var yyyMMDDHHMMSSLayout = toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss")
+var numberDateLayout = toolbox.DateFormatToLayout("yyyyMMddhhmmSSS")
+
 /*
 NewDefaultState returns a new default state.
 It comes with the following registered keys:
 	* rand - random int64
-	*  date -  current date formatted as yyyy-MM-dd
+	* date -  current date formatted as yyyy-MM-dd
 	* time - current time formatted as yyyy-MM-dd hh:mm:ss
 	* ts - current timestamp formatted  as yyyyMMddhhmmSSS
-	* timestamp.yesterday - timestamp in ms
-	* timestamp.now - timestamp in ms
-	* timestamp.tomorrow - timestamp in ms
+	* timestamp.XXX - timestamp in ms where XXX is time diff expression i.e 3DaysAgo, tomorrow, hourAhead
+	* unix.XXX - timestamp in sec where XXX is time diff expression i.e 3DaysAgo, tomorrow, hourAhead
+	* tzTime.XXX - RFC3339 formatted time where XXX is time diff expression i.e 3DaysAgo, tomorrow, hourAhead
 	* tmpDir - temp directory
 	* uuid.next - generate unique id
 	* uuid.Get - returns previously generated unique id, or generate new
-	*.end.XXX where XXX is the ID of the env variable to return
+	*.env.XXX where XXX is the ID of the env variable to return
 	* all UFD registry functions
 */
 func NewDefaultState() data.Map {
@@ -276,9 +284,9 @@ func NewDefaultState() data.Map {
 	var now = time.Now()
 	source := rand.NewSource(now.UnixNano())
 	result.Put("rand", source.Int63())
-	result.Put("date", now.Format(toolbox.DateFormatToLayout("yyyy-MM-dd")))
-	result.Put("time", now.Format(toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss")))
-	result.Put("ts", now.Format(toolbox.DateFormatToLayout("yyyyMMddhhmmSSS")))
+	result.Put("date", now.Format(yyyyMMDDLayout))
+	result.Put("time", now.Format(yyyMMDDHHMMSSLayout))
+	result.Put("ts", now.Format(numberDateLayout));
 
 	result.Put("tmpDir", func(key string) interface{} {
 		tempPath := path.Join(os.TempDir(), key)
@@ -302,59 +310,27 @@ func NewDefaultState() data.Map {
 	})
 
 	result.Put("timestamp", func(key string) interface{} {
-		var timeDiffProvider = toolbox.NewTimeDiffProvider()
-		switch key {
-		case "now":
-			result, _ := timeDiffProvider.Get(nil, "now", 0, "day", "timestamp")
-			return result
-		case "tomorrow":
-			result, _ := timeDiffProvider.Get(nil, "now", 1, "day", "timestamp")
-			return result
-		case "yesterday":
-			result, _ := timeDiffProvider.Get(nil, "now", -1, "day", "timestamp")
-			return result
-		case "hourbefore":
-			result, _ := timeDiffProvider.Get(nil, "now", -1, "hour", "timestamp")
-			return result
-		case "2hourbefore":
-			result, _ := timeDiffProvider.Get(nil, "now", -2, "hour", "timestamp")
-			return result
-		case "hourlater":
-			result, _ := timeDiffProvider.Get(nil, "now", 1, "hour", "timestamp")
-			return result
-		case "2hourlater":
-			result, _ := timeDiffProvider.Get(nil, "now", 2, "hour", "timestamp")
-			return result
+		timeAt, err := toolbox.TimeAt(key)
+		if err != nil {
+			return nil
 		}
-		return nil
+		return int(timeAt.Unix()+timeAt.UnixNano()) / 1000000;
 	})
 
 	result.Put("unix", func(key string) interface{} {
-		var timeDiffProvider = toolbox.NewTimeDiffProvider()
-		switch key {
-		case "now":
-			result, _ := timeDiffProvider.Get(nil, "now", 0, "day", "unix")
-			return result
-		case "tomorrow":
-			result, _ := timeDiffProvider.Get(nil, "now", 1, "day", "unix")
-			return result
-		case "yesterday":
-			result, _ := timeDiffProvider.Get(nil, "now", -1, "day", "unix")
-			return result
-		case "hourbefore":
-			result, _ := timeDiffProvider.Get(nil, "now", -1, "hour", "unix")
-			return result
-		case "2hourbefore":
-			result, _ := timeDiffProvider.Get(nil, "now", -2, "hour", "unix")
-			return result
-		case "hourlater":
-			result, _ := timeDiffProvider.Get(nil, "now", 1, "hour", "unix")
-			return result
-		case "2hourlater":
-			result, _ := timeDiffProvider.Get(nil, "now", 2, "hour", "unix")
-			return result
+		timeAt, err := toolbox.TimeAt(key)
+		if err != nil {
+			return nil
 		}
-		return nil
+		return int(timeAt.Unix()+timeAt.UnixNano()) / 1000000000;
+	})
+
+	result.Put("tzTime", func(key string) interface{} {
+		timeAt, err := toolbox.TimeAt(key)
+		if err != nil {
+			return nil
+		}
+		return timeAt.Format(time.RFC3339)
 	})
 
 	result.Put("env", func(key string) interface{} {
