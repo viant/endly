@@ -26,6 +26,8 @@ Datastore service uses [dsunit](https://github.com/viant/dsunit/) service to cre
 | dsunit | expect | verify databstore with provided data |  [ExpectRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L340) | [MappingResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#380)  |
 | dsunit | query | run SQL query |  [QueryRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L407) | [QueryResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#419)  |
 | dsunit | sequence | get sequence values for supplied tables |  [SequenceRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L388) | [SequenceResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#400)  |
+| dsunit | freeze | create a dataset from existing datastore |  [FreezeRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L453) | [FreezeResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#463)  |
+| dsunit | dump | create DDL schema from existing databasse|  [Dumpequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L470) | [DumpResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#477)  |
 
 
 <a name="usage"></a>
@@ -260,6 +262,35 @@ Using AsTableRecords is more advance testing option, allowing value autogenerati
   ]
 
 ```
+
+<a name="freeze">&nbsp;</a>
+**Creating DDL schema from existing datastore**
+
+```bash
+endly -r=dump.yaml 
+```
+
+
+@dump.yaml
+```yaml
+pipeline:
+  db1:
+    register:
+      action: dsunit:register
+      datastore: db1
+      config:
+        driverName: mysql
+        descriptor: '[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true'
+        credentials: $mysqlCredentials
+        parameters:
+          dbname: db1
+    reverse-engineer:
+      action: dsunit:dump
+      datastore: db1
+      tables:
+        - users       
+```
+
 
 
 <a name="freeze">&nbsp;</a>
