@@ -68,13 +68,11 @@ type FreezeRequest dsunit.FreezeRequest
 //FreezeResponse represents a freeze response
 type FreezeResponse dsunit.FreezeResponse
 
-
 //DumpRequest represents a request to create a schema DDL from existing database
 type DumpRequest dsunit.DumpRequest
 
 //DumpResponse represents a dump response
 type DumpResponse dsunit.DumpResponse
-
 
 //Assertion returns description with validation slice
 func (r *ExpectResponse) Assertion() []*assertly.Validation {

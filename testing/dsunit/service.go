@@ -2,16 +2,15 @@ package dsunit
 
 import (
 	"fmt"
+	"github.com/viant/dsc"
 	"github.com/viant/dsunit"
 	"github.com/viant/endly"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
-	"github.com/viant/dsc"
 	"github.com/viant/toolbox/data"
 )
 
-
-const DsUnitConfigKey = "dsconfig";
+const DsUnitConfigKey = "dsconfig"
 
 var converter = toolbox.NewColumnConverter("yyyy-MM-dd HH:ss")
 
@@ -98,7 +97,6 @@ const (
   	"SQL": "SELECT id, name FROM users",
 	"DestURL":"/tmp/expect/db1/users.json"
 }`
-
 
 	dumpExample = `{
   	"Datastore": "db1",
@@ -550,7 +548,6 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-
 	s.Register(&endly.Route{
 		Action: "dump",
 		RequestInfo: &endly.ActionInfo{
@@ -582,7 +579,6 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
-
 
 	s.Register(&endly.Route{
 		Action: "sequence",
@@ -616,8 +612,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-
-func (s service) publishConfigParameters(context *endly.Context,  config *dsc.Config) {
+func (s service) publishConfigParameters(context *endly.Context, config *dsc.Config) {
 	state := context.State()
 	var params = config.Parameters
 	if len(params) == 0 {
@@ -625,8 +620,6 @@ func (s service) publishConfigParameters(context *endly.Context,  config *dsc.Co
 	}
 	state.Put(DsUnitConfigKey, data.Map(params))
 }
-
-
 
 func (s *service) Run(context *endly.Context, request interface{}) *endly.ServiceResponse {
 	var state = context.State()
