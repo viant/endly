@@ -360,7 +360,7 @@ func (r *Runner) processActivityEnd(event msg.Event) {
 }
 
 func (r *Runner) processEvent(event msg.Event, filter map[string]bool) {
-	if event.Value == nil {
+	if event.Value() == nil {
 		return
 	}
 	if r.processActivityStart(event) {

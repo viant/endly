@@ -281,12 +281,12 @@ func credentials() (string, string, error) {
 	fmt.Print("Enter Password: ")
 	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
-		log.Fatal("failed to read password %v", err)
+		log.Fatalf("failed to read password %v", err)
 	}
 	fmt.Print("\nRetype Password: ")
 	bytePassword2, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
-		log.Fatal("failed to read password %v", err)
+		log.Fatalf("failed to read password %v", err)
 	}
 
 	password := string(bytePassword)
