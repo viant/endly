@@ -336,7 +336,6 @@ Workflow also offers DeferTask to execute as the last workflow step in case ther
 5) Workflow post stage executes, applying variables defined in Workflow.Post (input: workflow  state, output: workflow.response)
 
 
-<a name="udf">&nbsp;</a>
 6) Context state comes with the following build-in/reserved keys:
    	* rand - random int64
    	* date -  current date formatted as yyyy-MM-dd
@@ -349,11 +348,13 @@ Workflow also offers DeferTask to execute as the last workflow step in case ther
    	* uuid.next - generate unique id
    	* uuid.Get - returns previously generated unique id, or generate new
    	* env.XXX where XXX is the ID of the env variable to return
-    *  UDF registered functions  
-        * [Neatly UDF](https://github.com/viant/neatly/#udf)
-        * [Endly UDF](../../udf)
-        * [AsTableRecords](../../testing/dsunit/udf.go)  udf converting []*DsUnitTableData into map[string][]map[string]interface{} (used by prepare/expect dsunit service), as table record udf provide sequencing and random id generation functionality for supplied data .
+   	* registered user defined function UDFs
 
+<a name="udf">&nbsp;</a>
+## User defined function UDF
+- [Neatly UDF](https://github.com/viant/neatly/#udf)
+- [Endly UDF](../../udf)
+- [AsTableRecords](../../testing/dsunit/udf.go)  udf converting []*DsUnitTableData into map[string][]map[string]interface{} (used by prepare/expect dsunit service), as table record udf provide sequencing and random id generation functionality for supplied data .
 
          
 <a name="best"></a>
