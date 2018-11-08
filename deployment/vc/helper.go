@@ -6,8 +6,8 @@ import (
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/url"
-	"strings"
 	"path"
+	"strings"
 )
 
 func versionControlRequestInit(resource *url.Resource, vcType *string) error {
@@ -51,7 +51,6 @@ func checkVersionControlAuthErrors(err error, service *secret.Service, resource 
 	}
 	return err
 }
-
 
 func normalizeVCPath(URL string) string {
 	var resource = url.NewResource(URL)
