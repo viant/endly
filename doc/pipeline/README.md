@@ -308,26 +308,29 @@ pipeline:
 
 State initialization can be applied on top(workflow) or task/action node level. 
 
-@test.yaml
- ```yaml
-init:
-  - var1 = $params.p1 
-pipeline:
-  task1:
-    action: print
-    message: $var1
-```
 
-
-@test.yaml
+@run.yaml
  ```yaml
+init: 
+  var1: $params.msg
+  var2: 
+    k1: 1
+    k2: 2
 pipeline:
   task1:
     init:
-      - var1 =  $params.p1 
+      var3:
+        - 1
+        - 2
+        
     action: print
-    message: $var1
+    message: $var1 $var2 $var3
 ```
+
+```bash
+endly -r=run msg=hello
+```
+
 
 **Using udf**:
 
