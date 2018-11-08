@@ -99,6 +99,13 @@ const (
 	"DestURL":"/tmp/expect/db1/users.json"
 }`
 
+
+	dumpExample = `{
+  	"Datastore": "db1",
+  	"Tables": ["users", "accounts"],
+	"DestURL":"/tmp/expect/db1/users.json"
+}`
+
 	dsunitMySQLRegisterExample = `{
   "Datastore": "db1",
   "Config": {
@@ -542,6 +549,40 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
+
+
+	s.Register(&endly.Route{
+		Action: "dump",
+		RequestInfo: &endly.ActionInfo{
+			Description: "create schema DDL from existing datastore",
+			Examples: []*endly.UseCase{
+				{
+					Description: "Creating schema DDL from existng datastore",
+					Data:        dumpExample,
+				},
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &DumpRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &DumpResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*DumpRequest); ok {
+				var dsRequest = dsunit.DumpRequest(*req)
+				request = &dsRequest
+			}
+			if req, ok := request.(*dsunit.DumpRequest); ok {
+				resp := s.Service.Dump(req)
+				response := DumpResponse(*resp)
+				var err = response.Error()
+				return &response, err
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
 
 	s.Register(&endly.Route{
 		Action: "sequence",
