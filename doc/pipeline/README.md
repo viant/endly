@@ -329,6 +329,31 @@ pipeline:
     message: $var1
 ```
 
+**Using udf**:
+
+The following pipeline provide example of using WorkingDirectory and FormatTime [UDFs](./../workflow/README.md#udf).
+
+
+
+@run.yaml
+ ```yaml
+init:
+  appPath: $WorkingDirectory(../)
+  bqTimeFormatArgs:
+    - now
+    - yyyy-MM-dd HH:mm:ss.SSSZ
+  bqTimestamp: $FormatTime($bqTimeFormatArgs)
+pipeline:
+  run:
+    action: print
+    message: upper: $appPath <-> ts: $bqTimestamp
+```
+
+
+```bash
+endly -r=run
+```
+
 
 
 Post processing state modification.
