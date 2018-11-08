@@ -334,25 +334,25 @@ Workflow also offers DeferTask to execute as the last workflow step in case ther
         4) Action post stage executes applying variables defined in Action.Post (input: action.response, output: workflow state)
     4) Task post stage executes, applying variables defined in Task.Post (input: state, output: state)   
 5) Workflow post stage executes, applying variables defined in Workflow.Post (input: workflow  state, output: workflow.response)
-6) Context state comes with the following build-in/reserved keys:
-    * rand - random int64
-    * date -  current date formatted as yyyy-MM-dd
-    * time - current time formatted as yyyy-MM-dd hh:mm:ss
-    * ts - current timestamp formatted  as yyyyMMddhhmmSSS
-    * timestamp.yesterday - timestamp in ms
-    * timestamp.now - timestamp in ms
-    * timestamp.tomorrow - timestamp in ms
-    * tmpDir - temp directory
-    * uuid.next - generate unique id
-    * uuid.get - returns previously generated unique id, or generate new
-    *.env.XXX where XXX is the Id of the env variable to return
-    * previous - http previous request used for multi request send
-    * 
-    * all UFD registered functions  
-        * [Neatly UDF](https://github.com/viant/neatly/#udf)
-        * AsTableRecords udf converting []*DsUnitTableData into map[string][]map[string]interface{} (used by prepare/expect dsunit service), as table record udf provide sequencing and random id generation functionality for supplied data .
-	    
 
+
+<a name="udf">&nbsp;</a>
+6) Context state comes with the following build-in/reserved keys:
+   	* rand - random int64
+   	* date -  current date formatted as yyyy-MM-dd
+   	* time - current time formatted as yyyy-MM-dd hh:mm:ss
+   	* ts - current timestamp formatted  as yyyyMMddhhmmSSS
+   	* timestamp.XXX - timestamp in ms where XXX is time diff expression i.e 3DaysAgo, tomorrow, hourAhead 
+   	* unix.XXX - timestamp in sec where XXX is time diff expression i.e 3DaysAgo, tomorrow, hourAhead
+   	* tzTime.XXX - RFC3339 formatted time where XXX is time diff expression i.e 3DaysAgo, tomorrow, hourAhead
+   	* tmpDir - temp directory
+   	* uuid.next - generate unique id
+   	* uuid.Get - returns previously generated unique id, or generate new
+   	* env.XXX where XXX is the ID of the env variable to return
+    *  UDF registered functions  
+        * [Neatly UDF](https://github.com/viant/neatly/#udf)
+        * [Endly UDF](../../udf)
+        * [AsTableRecords](../../testing/dsunit/udf.go)  udf converting []*DsUnitTableData into map[string][]map[string]interface{} (used by prepare/expect dsunit service), as table record udf provide sequencing and random id generation functionality for supplied data .
 
 
          
