@@ -84,6 +84,15 @@ func Test_EvaluateCriteria(t *testing.T) {
 				"key1": 0,
 			},
 		},
+		{
+			Description:   "UDF substitution",
+			Expression:    "$Len($logRecords) > 0", //
+			DefaultResult: true,
+			Expected:      true,
+			State: map[string]interface{}{
+				"logRecords": []interface{}{"1"},
+			},
+		},
 	}
 
 	for _, useCase := range useCases {
