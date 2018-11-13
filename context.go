@@ -17,6 +17,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"github.com/viant/neatly"
 )
 
 var serviceManagerKey = (*manager)(nil)
@@ -336,6 +337,7 @@ func NewDefaultState() data.Map {
 		return os.Getenv(key)
 	})
 
+	neatly.AddStandardUdf(result)
 	for k, v := range UdfRegistry {
 		result.Put(k, v)
 	}
