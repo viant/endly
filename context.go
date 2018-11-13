@@ -305,6 +305,7 @@ func NewDefaultState() data.Map {
 		return ""
 	})
 
+	//returns time in ms
 	result.Put("timestamp", func(key string) interface{} {
 		timeAt, err := toolbox.TimeAt(key)
 		if err != nil {
@@ -312,7 +313,7 @@ func NewDefaultState() data.Map {
 		}
 		return int(timeAt.Unix()+timeAt.UnixNano()) / 1000000
 	})
-
+	//return time in sec
 	result.Put("unix", func(key string) interface{} {
 		timeAt, err := toolbox.TimeAt(key)
 		if err != nil {
@@ -320,6 +321,8 @@ func NewDefaultState() data.Map {
 		}
 		return int(timeAt.Unix()+timeAt.UnixNano()) / 1000000000
 	})
+
+	//return formatted time with time.RFC3339 yyyy-MM-ddThh:mm:ss.SSS Z  i.e ${tzTime.4daysAgoInUTC}
 
 	result.Put("tzTime", func(key string) interface{} {
 		timeAt, err := toolbox.TimeAt(key)
