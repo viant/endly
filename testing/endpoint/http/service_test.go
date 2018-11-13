@@ -21,7 +21,7 @@ func TestHTTPEndpointService_Run(t *testing.T) {
 
 	response := service.Run(context, &endpoint.ListenRequest{
 		BaseDirectory: httpTripBaseDir,
-		Port:          8718,
+		Port:          7718,
 	})
 	assert.Equal(t, "", response.Error)
 	listenResponse, ok := response.Response.(*endpoint.ListenResponse)
@@ -29,17 +29,17 @@ func TestHTTPEndpointService_Run(t *testing.T) {
 		assert.Equal(t, 2, len(listenResponse.Trips))
 		client := http.DefaultClient
 		{
-			response, err := client.Post("http://127.0.0.1:8718/send1", "", strings.NewReader("0123456789"))
+			response, err := client.Post("http://127.0.0.1:7718/send1", "", strings.NewReader("0123456789"))
 			assert.Nil(t, err)
 			assert.Equal(t, 200, response.StatusCode)
 		}
 		{
-			response, err := client.Post("http://127.0.0.1:8718/send1", "", strings.NewReader("0123456789"))
+			response, err := client.Post("http://127.0.0.1:7718/send1", "", strings.NewReader("0123456789"))
 			assert.Nil(t, err)
 			assert.Equal(t, 200, response.StatusCode)
 		}
 		{
-			response, err := client.Post("http://127.0.0.1:8718/send2", "", strings.NewReader("xc"))
+			response, err := client.Post("http://127.0.0.1:7718/send2", "", strings.NewReader("xc"))
 			assert.Nil(t, err)
 			assert.Equal(t, 200, response.StatusCode)
 		}
