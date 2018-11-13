@@ -287,7 +287,6 @@ func (s *Service) publishParameters(request *RunRequest, context *endly.Context)
 }
 
 func (s *Service) getWorkflow(context *endly.Context, request *RunRequest) (*model.Workflow, error) {
-	s.Dao.Dao.AddStandardUdf(context.State())
 	if request.workflow != nil {
 		context.Publish(NewLoadedEvent(request.workflow))
 		return request.workflow, nil
