@@ -11,4 +11,4 @@ commands:
     sleepTimeMs: 1000
     repeat: 10
 expect:
-  CurrentURL: http://viantinc.com/
+  CurrentURL: /viantinc.com/
