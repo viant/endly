@@ -301,7 +301,7 @@ func (s *service) listenForChanges(context *endly.Context, request *ListenReques
 			frequency = 400 * time.Millisecond
 		}
 		for !context.IsClosed() {
-			_, err := s.readLogFiles(context, service, request.Source, request.Types...)
+			_, err := s.readLogFiles(context, service, target, request.Types...)
 			if err != nil {
 				log.Printf("failed to load log types %v", err)
 				break
@@ -318,19 +318,18 @@ func (s *service) listen(context *endly.Context, request *ListenRequest) (*Liste
 	if err != nil {
 		return nil, err
 	}
-
 	var state = s.State()
 	for _, logType := range request.Types {
 		if state.Has(logTypeMetaKey(logType.Name)) {
 			return nil, fmt.Errorf("listener has been already register for %v", logType.Name)
 		}
 	}
-	service, err := storage.NewServiceForURL(request.Source.URL, request.Source.Credentials)
+	service, err := storage.NewServiceForURL(source.URL, source.Credentials)
 	if err != nil {
 		return nil, err
 	}
 	defer service.Close()
-	logTypeMetas, err := s.readLogFiles(context, service, request.Source, request.Types...)
+	logTypeMetas, err := s.readLogFiles(context, service, source, request.Types...)
 	if err != nil {
 		return nil, err
 	}
@@ -346,10 +345,10 @@ func (s *service) listen(context *endly.Context, request *ListenRequest) (*Liste
 	response := &ListenResponse{
 		Meta: logTypeMetas,
 	}
-
 	err = s.listenForChanges(context, request)
 	return response, err
 }
+
 
 const (
 	logValidatorExample = `{

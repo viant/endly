@@ -11,3 +11,4 @@ To get log validation,
 | validator/log | reset | discard logs detected by listener | [ResetRequest](service_contract.go) | [ResetResponse](service_contract.go)  |
 | validator/log | assert | perform validation on provided expected log records against actual log file records. | [AssertRequest](service_contract.go) | [AssertResponse](service_contract.go)  |
 
+
