@@ -12,3 +12,64 @@ To get log validation,
 | validator/log | assert | perform validation on provided expected log records against actual log file records. | [AssertRequest](service_contract.go) | [AssertResponse](service_contract.go)  |
 
 
+
+**Usage:**
+
+Standalone testing workflow example:
+
+ 
+```bash
+endly -r=run
+```
+
+
+[@run.yaml](test/run.yaml)
+
+```yaml
+init:
+  logLocation: /tmp/logs
+  target:
+    url:  ssh://127.0.0.1/
+    credentials: ${env.HOME}/.secret/localhost.json
+defaults:
+  target: $target
+pipeline:
+  init:
+    action: exec:run
+    commands:
+      - mkdir -p $logLocation
+      - "> ${logLocation}/myevents.log"
+      - echo '{"EventID":111, "EventType":"event1", "X":11111111}' >> ${logLocation}/myevents.log
+      - echo '{"EventID":222, "EventType":"event2", "X":11141111}' >> ${logLocation}/myevents.log
+      - echo '{"EventID":333, "EventType":"event1","X":22222222}' >>  ${logLocation}/myevents.log
+  listen:
+    action: validator/log:listen
+    frequencyMs: 500
+    source:
+      URL: $logLocation
+    types:
+      - format: json
+        inclusion: event1
+        mask: '*.log'
+        name: event1
+  validate:
+    action: validator/log:assert
+    logTypes:
+      - event1
+    description: E-logger event log validation
+    expect:
+      - type: event1
+        records:
+         - EventID: 111
+           X: 11111111
+         - EventID: 333
+           X: 22222222
+    logWaitRetryCount: 2
+    logWaitTimeMs: 5000
+```
+
+
+**As part of workflow**
+
+
+

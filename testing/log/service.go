@@ -56,7 +56,7 @@ func (s *service) assert(context *endly.Context, request *AssertRequest) (*Asser
 	var response = &AssertResponse{
 		Validations: make([]*assertly.Validation, 0),
 	}
-	if len(request.ExpectedLogRecords) == 0 {
+	if len(request.Expect) == 0 {
 		return response, nil
 	}
 
@@ -67,7 +67,7 @@ func (s *service) assert(context *endly.Context, request *AssertRequest) (*Asser
 		request.LogWaitRetryCount = 3
 	}
 
-	for _, expectedLogRecords := range request.ExpectedLogRecords {
+	for _, expectedLogRecords := range request.Expect {
 		logTypeMeta, err := s.getLogTypeMeta(expectedLogRecords)
 		if err != nil {
 			return nil, err
@@ -372,7 +372,7 @@ const (
 		"LogWaitTimeMs": 5000,
 		"LogWaitRetryCount": 5,
 		"Description": "E-logger event log validation",
-		"ExpectedLogRecords": [
+		"Expect": [
 			{
 				"Type": "event1",
 				"Records": [
