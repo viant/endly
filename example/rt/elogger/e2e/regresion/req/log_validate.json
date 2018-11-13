@@ -2,5 +2,5 @@
   "LogWaitTimeMs": 5000,
   "LogWaitRetryCount": 5,
   "Description":"E-logger event log validation",
-  "ExpectedLogRecords": "$eventLogs"
+  "Expect": "$eventLogs"
 }
