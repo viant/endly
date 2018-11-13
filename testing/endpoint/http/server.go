@@ -247,8 +247,7 @@ func init() {
 		switch request := source.(type) {
 		case *bridge.HttpRequest:
 			body, _ := util.FromPayload(request.Body)
-
-			return string(body), nil
+			return util.AsPayload(body), nil
 		case *http.Request:
 			if request.ContentLength == 0 {
 				return "", nil
@@ -257,8 +256,11 @@ func init() {
 			if err != nil {
 				return "", fmt.Errorf("failed to read body %v, %v", request.URL, err)
 			}
+			encoded := string(content)
+			if strings.HasPrefix(encoded , "base64:") {
+				content, _ = util.FromPayload(encoded)
+			}
 			return util.AsPayload(content), nil
-
 		}
 		return "", fmt.Errorf("unsupported request type %T", source)
 	}

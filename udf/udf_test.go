@@ -36,7 +36,7 @@ func Test_AsProtobufMessage(t *testing.T) {
 	if assert.Nil(t, err) {
 		aMap := toolbox.AsMap(message)
 		assert.EqualValues(t, 1, aMap["Id"])
-		assert.EqualValues(t, "abc", aMap["Desc"])
+		assert.EqualValues(t, "abc", aMap["Name"])
 	}
 
 }

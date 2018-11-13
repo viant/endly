@@ -57,7 +57,7 @@ func TestSeleniumService_Start(t *testing.T) {
 				Sdk:        "jdk",
 				SdkVersion: "1.8",
 				Version:    "3.4",
-				Port:       8117,
+				Port:       5617,
 			},
 			28811,
 		},
@@ -76,7 +76,7 @@ func TestSeleniumService_Start(t *testing.T) {
 				Sdk:        "jdk",
 				SdkVersion: "1.8",
 				Version:    "3.4",
-				Port:       8117,
+				Port:       5617,
 			},
 			28866,
 		},
@@ -119,7 +119,7 @@ func StartSeleniumMockServer(port int) error {
 
 func TestSeleniumService_Calls(t *testing.T) {
 
-	StartSeleniumMockServer(8116)
+	StartSeleniumMockServer(5619)
 
 	manager := endly.New()
 	service, err := manager.Service(runner.ServiceID)
@@ -127,7 +127,7 @@ func TestSeleniumService_Calls(t *testing.T) {
 	assert.NotNil(t, service)
 
 	context := manager.NewContext(toolbox.NewContext())
-	var targetHost = "127.0.0.1:8116"
+	var targetHost = "127.0.0.1:5619"
 	var target = url.NewResource(fmt.Sprintf("http://%v/", targetHost))
 
 	var openResponse = &exec.OpenSessionResponse{}
