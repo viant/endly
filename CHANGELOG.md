@@ -1,3 +1,10 @@
+## November 13 2018 0.18.0
+    * Patched logger source.URL init to allow log validation with non schema based resources i.e. /tmp/logs/data as opposed to file:///tmp/logs/data
+    * Updated logger validation documentation
+    * Added $Len udf
+    * Renamed ExpectedLogRecords in testing/log/service_contract.go to Expect for consistency (not backward compatible)
+    * Added optional conversion from yaml kv paris to map in testing/log/service_contract.go  AssertRequest.Expect.Records
+
 ## November 8 2018 0.17.0
     * Added $dsconfig state keys with dsc.Config.params (i.e. $dsconfig.datasetId. $dsconfig.projectId)
     * Added dsunit.dump method to create schema DDL fro existing database
