@@ -349,7 +349,6 @@ func (s *service) listen(context *endly.Context, request *ListenRequest) (*Liste
 	return response, err
 }
 
-
 const (
 	logValidatorExample = `{
   "FrequencyMs": 500,

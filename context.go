@@ -4,6 +4,7 @@ import (
 	"fmt"
 	uuid "github.com/satori/go.uuid"
 	"github.com/viant/endly/msg"
+	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/secret"
@@ -17,7 +18,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-	"github.com/viant/neatly"
 )
 
 var serviceManagerKey = (*manager)(nil)
