@@ -1,11 +1,11 @@
 package log
 
 import (
+	"fmt"
 	"github.com/viant/assertly"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"regexp"
-	"fmt"
-	"github.com/viant/toolbox"
 )
 
 //AssertRequest represents a log assert request
@@ -16,12 +16,10 @@ type AssertRequest struct {
 	Expect            []*ExpectedRecord `required:"true" description:"expected log data"`
 }
 
-
-
 //Init converts yaml kv pairs to a map if applicable
 func (r *AssertRequest) Init() error {
 	if len(r.Expect) == 0 {
-		return nil;
+		return nil
 	}
 	for _, expecRecords := range r.Expect {
 		if len(expecRecords.Records) == 0 {
@@ -29,7 +27,7 @@ func (r *AssertRequest) Init() error {
 		}
 		for i, record := range expecRecords.Records {
 			if toolbox.IsSlice(record) {
-				if aMap, err := toolbox.ToMap(record);err == nil {
+				if aMap, err := toolbox.ToMap(record); err == nil {
 					expecRecords.Records[i] = aMap
 				}
 			}
@@ -38,11 +36,10 @@ func (r *AssertRequest) Init() error {
 	return nil
 }
 
-
 //Validate check if request is valid
 func (r *AssertRequest) Validate() error {
 	if len(r.Expect) == 0 {
-		return nil;
+		return nil
 	}
 	for i, expecRecords := range r.Expect {
 		if expecRecords.Type == "" {
@@ -51,7 +48,6 @@ func (r *AssertRequest) Validate() error {
 	}
 	return nil
 }
-
 
 //ExpectedRecord represents an expected log record.
 type ExpectedRecord struct {
