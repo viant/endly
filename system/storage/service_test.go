@@ -27,10 +27,7 @@ func updateContext(context *endly.Context) {
 	endpointMap.Put("host", "127.0.0.1")
 	endpointMap.Put("port", "8080")
 	state.Put("endpoint", endpointMap)
-
-	//Add standard UDFs
-	dao := neatly.Dao{}
-	dao.AddStandardUdf(state)
+	neatly.AddStandardUdf(state)
 }
 
 func SetupMemoryStorage() {
