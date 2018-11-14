@@ -22,7 +22,7 @@
 
 ### Validation strategies:
 
-A log validation verifies produced by a logger and desired log records by match
+A log validation verifies produced by a logger with desired log records.
 
 Once listener matches data produce by a logger it places it to the pending validation queue, 
 then later when assert request takes place,  validator takes (and removes) records from pending validation 
