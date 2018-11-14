@@ -25,9 +25,9 @@
 A log validation verifies produced by a logger with desired log records.
 
 Once a log/validator listener detects data produce by a logger it places it to the pending validation queue, 
-then later when assert request takes place,  validator takes (and removes) records from pending validation 
-corresponding to expected records. This process may use either _position_ or _index based_ matching.
+then later when assert request takes place,  validator takes (and removes) records from pending validation queue.
 
+This process may use either _position_ or _index based_ matching method.
 The first strategy,  a matcher takes the older record from the pending validation qeueue (FIFO) for each expected record.
 The later strategy  requires an indexing expression (provided in listen request IndexRegExpr i.e. \"UUID\":\"([^\"]+)\" ) which is used for both
 indexing pending logs and desired logs. If expected record can not be matched with indexing expression it falls back to the first strategy.
