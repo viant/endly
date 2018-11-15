@@ -13,7 +13,7 @@
 <a name="introduction"></a>
 ### Introduction
 
-**[Pipeline](../../model/pipeline.go)** represents an inline [workflow](../workflow) defining some tasks and actions.
+**[Pipeline](../../model/pipeline.go)** represents an inline [workflow](../workflow) defining some tasks with its actions.
 
 A task can either be a groping tasks node or actual action task node. In the latter
 case it can run existing [workflow](../workflow) or perform [service](../service) action.
@@ -22,7 +22,8 @@ case it can run existing [workflow](../workflow) or perform [service](../service
 To see the workflow model tree converted from a pipeline [*model.Workflow](../../model/workflow.go) run the following
 
 ```bash
-endly -r=PIPELINE_FILE -p  -f=yaml|json
+endly -r=PIPELINE_FILE.yaml -p  -f=yaml|json
+endly -w=WORKFLOW_FILE.csv -p  -f=yaml|json
 ```
 
 For instance the following workflow runs SSH command (service: exec, action: run).
@@ -335,7 +336,7 @@ endly -r=run msg=hello
 
 **Using udf**:
 
-The following pipeline provide example of using WorkingDirectory and FormatTime [UDFs](./../workflow/README.md#udf).
+The following pipeline provide example of using WorkingDirectory and FormatTime [UDFs](../udf).
 
 
 
