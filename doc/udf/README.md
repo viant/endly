@@ -95,7 +95,7 @@ In data substitution case if UDF returns error data will NOT be expanded with co
 | AvroReader | Avro reader | n/a | 
 | AvroWriter | Registered Avro Writer | n/a |
 
-**Defined in [dsunit project](./../../testing/dsunit/data.go)**
+**Defined in [dsunit project](./../../testing/dsunit/udf.go)**
 
 | UDF | Description |
 |---|----|
