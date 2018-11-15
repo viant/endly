@@ -454,11 +454,13 @@ You can build, deploy and test them end to end all with endly.
 
 ## Documentation
 - [Secret/Credential](doc/secrets)
-- [Service](doc/service)
-- [Usage](doc/usage)
 - [Pipeline](doc/pipeline)
 - [Workflow](doc/workflow)
+- [Service](doc/service)
+- [Usage](doc/usage)
+- [User Defined Function](doc/udf)
 - [Data store testing](testing/dsunit)
+
 
 
 @run.yaml

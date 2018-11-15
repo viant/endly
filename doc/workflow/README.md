@@ -346,16 +346,10 @@ Workflow also offers DeferTask to execute as the last workflow step in case ther
    	* uuid.next - generate unique id
    	* uuid.Get - returns previously generated unique id, or generate new
    	* env.XXX where XXX is the ID of the env variable to return
-   	* registered user defined function UDFs
+   	* registered user defined function [UDFs](../udf)
 
 
 
-
-<a name="udf"></a>
-## User defined function UDF
-- [Neatly UDF](https://github.com/viant/neatly/#udf)
-- [Endly UDF](../../udf)
-- [AsTableRecords](../../testing/dsunit/udf.go)  udf converting []*DsUnitTableData into map[string][]map[string]interface{} (used by prepare/expect dsunit service), as table record udf provide sequencing and random id generation functionality for supplied data .
 
          
 <a name="best"></a>
