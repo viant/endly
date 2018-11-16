@@ -19,7 +19,6 @@
 | validator/log | assert | perform validation on provided expected log records against actual log file records. | [AssertRequest](service_contract.go) | [AssertResponse](service_contract.go)  |
 
 
-
 ### Validation strategies:
 
 A log validation verifies produced by a logger with desired log records.
@@ -88,6 +87,81 @@ pipeline:
     logWaitRetryCount: 2
     logWaitTimeMs: 5000
 ```
+
+
+_with request delegation:_
+
+
+```bash
+endly -r=test
+```
+
+
+[@test.yaml](test/test.yaml)
+```yaml
+init:
+  logLocation: /tmp/logs
+  target:
+    url:  ssh://127.0.0.1/
+    credentials: ${env.HOME}/.secret/localhost.json
+defaults:
+  target: $target
+pipeline:
+  init:
+    action: exec:run
+    request: '@exec.yaml'
+  listen:
+    action: validator/log:listen
+    request: '@listen.yaml'
+  validate:
+    action: validator/log:assert
+    request: '@validate.json'
+```
+
+[@exec.yaml](test/exec.yaml)
+```yaml
+commands:
+  - mkdir -p $logLocation
+  - "> ${logLocation}/myevents.log"
+  - echo '{"EventID":111, "EventType":"event1", "X":11111111}' >> ${logLocation}/myevents.log
+  - echo '{"EventID":222, "EventType":"event2", "X":11141111}' >> ${logLocation}/myevents.log
+  - echo '{"EventID":333, "EventType":"event1","X":22222222}' >>  ${logLocation}/myevents.log
+```
+
+[@listen.yaml](test/listen.yaml)
+```yaml
+frequencyMs: 500
+source:
+  URL: $logLocation
+types:
+  - format: json
+    inclusion: event1
+    mask: '*.log'
+    name: event1
+```
+
+
+[@validate.json](test/validate.json)
+```json
+{
+  "Expect": [
+    {
+      "type": "event1",
+      "records": [
+        {
+          "EventID": 111,
+          "X": 11111111
+        },
+        {
+          "EventID": 333,
+          "X": 22222222
+        }
+      ]
+    }
+  ]
+}
+```
+
 
 
 **As part of workflow**
