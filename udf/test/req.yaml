@@ -1,0 +1,6 @@
+udfs:
+  - id: AddressBookToProto
+    provider: ProtoWriter
+    params:
+      - ${pd}/test/proto/book/address_book.proto
+      - AddressBook
