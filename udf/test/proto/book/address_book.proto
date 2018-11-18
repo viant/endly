@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+import "person.proto";
+
+
+message AddressBook {
+    string name = 1;
+    repeated foo.Person people = 2;
+}
+

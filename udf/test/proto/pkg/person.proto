@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package foo;
+
+message Person {
+    string name = 1;
+    int32 id = 2;  // Unique ID number for this person.
+    string email = 3;
+}
