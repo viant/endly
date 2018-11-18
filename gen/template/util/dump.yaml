@@ -1,0 +1,12 @@
+pipeline:
+  register:
+    action: dsunit:register
+    datastore: $db
+    config: $confog
+  dump:
+    action: dsunit:dump
+    datastore: $db
+    destURL: schema.sql
+    tables:
+      - dummy
+      - dummy_type
