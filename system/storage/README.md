@@ -235,5 +235,6 @@ transfers:
   "CopyHandlerUdf": "CopyWithCompression"
 }
 
-
 ```
+
+[See more](./../../../udf/) how to register common codec UDF (avro, protobuf) with custom schema 
