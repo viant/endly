@@ -1,7 +1,7 @@
-## Pipeline 
+## Inline Workflow
 
 - [Introduction](#introduction)
-- [Pipeline format](#format)
+- [Inline Workflow format](#format)
 - [Workflow invocation](#workflow)
 - [Action invocation](#action)
 - [Data model vs request namespace](#model_vs_request)
@@ -9,31 +9,16 @@
 
 
 
-
 <a name="introduction"></a>
 ### Introduction
 
-**[Pipeline](../../model/pipeline.go)** represents an inline [workflow](../workflow) defining some tasks with its actions.
-
-A task can either be a groping tasks node or actual action task node. In the latter
-case it can run existing [workflow](../workflow) or perform [service](../service) action.
-
-
-To see the workflow model tree converted from a pipeline [*model.Workflow](../../model/workflow.go) run the following
-
-```bash
-endly -r=PIPELINE_FILE.yaml -p  -f=yaml|json
-endly -w=WORKFLOW_FILE.csv -p  -f=yaml|json
-```
-
+Endly uses [Inline Workflow](../../model/inline_workflow.go) to define simple sequential tasks with yaml files.
 For instance the following workflow runs SSH command (service: exec, action: run).
+
 
 ```bash
 endly -r=run
 ```
-
-
-
 
 @run.yaml
 ```yaml
@@ -47,9 +32,10 @@ pipeline:
     - chown ${os.user} /tmp/app/build 
 ```
 
+
+
 <a name="format"></a>
-### Pipeline format
-Pipeline run request can use either JSON or YAML.
+### Inline Workflow format
 
 The general inline workflow syntax: 
 
@@ -82,10 +68,10 @@ pipeline:
 
 post: 
   - age = $response.user.age
-
 ```
-Pipeline execution node is determined by presence of either **_action_** or **_workflow_** attribute, otherwise
-any sub task node is allowed i.e
+
+Pipeline node defines set of tasks with its actions, which are be executed sequentially unless endly -t: task switch is used
+
 
 ```yaml
 pipeline:
@@ -111,58 +97,19 @@ pipeline:
   test:    
 ```
 
-<a name="workflow"></a>
-### Workflow invocation
+A _task_ can either be a groping or actual actions node. The latter invokes selected endly service operation, with defined request attributes.
 
 
-The generic external workflow invocation syntax:
-
-```yaml
-pipeline:
-  task1:
-     workflow: WORKFLOW_NAME[:TASKS_TO_RUN]
-     param1: val1
-     paramX: valX
-```
-
-for example the following workflow task1: invokes [assert workflow](../../shared/workflow/assert/assert.csv) with task:'assert' and the following  [@run](#assert_run) request:
+To see the [*model.Workflow model](../../model/workflow.go) tree converted from a inline workflow run the following
 
 ```bash
-endly -r=test
+endly -r=PIPELINE_FILE.yaml -p  -f=yaml|json
+endly -w=WORKFLOW_FILE.csv -p  -f=yaml|json
 ```
-
-@test.yaml    
- ```yaml
- pipeline:
-   task1:
-      workflow: assert:assert
-      expected: 10
-      actual: 1
- ```
- 
-<a name="assert_run"></a>
-@run.yaml
-```run.yaml
-URL: assert.csv
-tasks: assert
-params:
-  actual: 1
-  expected: 10
-```
-
-
-To see pipeline converted workflow  [*model.Workflow](../../model/workflow.go) run the following
-
-```bash
-endly -r=test -p -f=yaml
-endly -r=test -p
-```
-
 
 
 <a name="action"></a>
 ### Action invocation
-
 
 The generic service action invocation syntax:
 
@@ -211,10 +158,18 @@ pipeline:
     message: hello world
 ```
 
+or 
 
+@test.yaml    
+ ```yaml
+pipeline:
+  task1:
+    action: workflow.print
+    request: '@print_req.yaml'
+```
 
-@run.yaml
-```run.yaml
+@print_req.yaml
+```yaml
 message: hello world
 ```
 
@@ -224,6 +179,48 @@ To see pipeline converted workflow  [*model.Workflow](../../model/workflow.go) r
 ```bash
 endly -r=test -p -f=yaml
 endly -r=test -p
+```
+
+
+
+<a name="workflow"></a>
+### Sub workflow invocation
+
+The generic external workflow invocation syntax:
+
+```yaml
+pipeline:
+  task1:
+     workflow: WORKFLOW_NAME[:TASKS_TO_RUN]
+     param1: val1
+     paramX: valX
+```
+
+for example the following workflow task1: invokes [assert workflow](../../shared/workflow/assert/assert.csv) with task:'assert' and the following  [@run](#assert_run) request:
+
+```bash
+endly -r=test
+```
+
+@test.yaml    
+ ```yaml
+ pipeline:
+   task1:
+      workflow: assert:assert
+      expected: 10
+      actual: 1
+ ```
+ 
+<a name="assert_run"></a>
+
+
+@run.yaml
+```yaml
+URL: assert.csv
+tasks: assert
+params:
+  actual: 1
+  expected: 10
 ```
 
 
@@ -265,10 +262,8 @@ endly -p -r=implicit
 ```
 
 
-
 <a name="state"></a>
 ### State modification
-
 
 #### Default values
 
@@ -338,8 +333,6 @@ endly -r=run msg=hello
 
 The following pipeline provide example of using WorkingDirectory and FormatTime [UDFs](../udf).
 
-
-
 @run.yaml
  ```yaml
 init:
@@ -348,6 +341,7 @@ init:
     - now
     - yyyy-MM-dd HH:mm:ss.SSSZ
   bqTimestamp: $FormatTime($bqTimeFormatArgs)
+
 pipeline:
   run:
     action: print
@@ -358,7 +352,6 @@ pipeline:
 ```bash
 endly -r=run
 ```
-
 
 
 Post processing state modification.

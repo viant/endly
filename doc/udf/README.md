@@ -66,8 +66,8 @@ The following HTTP request definition uses Avro UDFs.
 }
 ```
 
-**Data Embedding**
-Another way of consuming UDF is via reference in data itself, in that case just use $ in front of UDF name followed by parameters.
+**Data Substitution**
+Another way of consuming UDF is via reference in data itself, in that case just use $ in front of UDF name followed by (parameters).
 In data substitution case if UDF returns error data will NOT be expanded with corresponding UDF.
 
 @user.json
@@ -154,7 +154,6 @@ func main() {
 		bootstrap.Bootstrap()
 }
 
-
 ```
 
 And to build it.
@@ -166,12 +165,33 @@ go build endly.go
 ### UDF Providers
 <a name="providers"></a>
 
-UDF provider has ability to create an instance of UDF with custom parameters. 
+UDF provider has ability to create an instance of UDF with custom settings. 
 Imagine UDF transforming data with avro codec, without UDF provider you would have to 
 create your custom UDF for each data schema with custom endly build.
 This can be avoided  with UDF provider, in this case you would register an avro writer witch specific data schema.
 
-At this moment it is only supported by http runner, but wider support level is comming.
+To register custom UDF use [udf](./../../udf) service with register action.
 
-TODO more info here.
+i.e: 
 
+```go
+endly -r=reqister
+```
+
+@register.yaml
+```yaml
+pipeline:
+    register-udf:
+      action: udf:register
+      udfs:
+        - id: ProfileToProto
+          provider: ProtoWriter
+          params:
+            - /Project/proto/up.proto
+            - Profile
+        - id: ProtoToProfile
+          provider: ProtoReader
+          params:
+            - /Project/proto/ip.proto
+            - Profile
+```

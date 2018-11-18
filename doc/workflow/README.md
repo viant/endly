@@ -225,18 +225,113 @@ Workflow process uses context.State() to maintain execution state.
 A workflow variable defines data transition between input and output state map.
 
 
+
+In most cases input and output state is the same underlying map stored in context.State().
+
+In the following cases  input and output state refer to different maps:
+    - _post action execution_ 
+        - input state map is build from actual action response i.e http send response
+        - output is context.State()
+    - _post workflow execution_
+        - input state map is context.State()
+        - output is workflow.RunResponse.Data map 
+    
+Workflow context.State() is shared between all sub workflows if SharedStateMode is set in workflow.RunRequest.
+This flag is set by default to all inline workflow invocation. 
+
+
+In the inline workflow you can use define variables in the 'init' section
+
+
+
+@var.yaml
+
+ ```yaml
+pipeline:
+  task1:
+    init:
+      - '!var1 = $params.greeting'
+      - var2 = world
+      - name: var3
+        value:
+          - 1
+          - 2
+      - var4 = $Len($var3) > 0 ? var3.length is $Len($var3) : nil
+    action: print
+    message: $var1 $var2 $var3 $var4
+  task2:
+    init:
+      var0: abc
+      varSlice:
+        - 1
+        - 2
+        - 3   
+      varMap:
+         k1: v1
+         k2: $var0
+         k3: $varSlice
+    action: print
+    message: $varMap 
+```
+
+
+```bash
+endly -r=test_var p1=hello 
+```
+
+For more advanced usage you can also delegate variable declaration to a separate JSON file  
+
+i.e:
+
+@var.json
+```json
+
+[
+
+  {
+    "Name": "catalinaOpts",
+    "From": "params.catalinaOpts",
+    "Value": "-Xms512m -Xmx1g -XX:MaxPermSize=256m"
+  },
+  {
+     "Name": "buildRequest",
+     "Value": {
+       "BuildSpec": {
+         "Name": "maven",
+         "Version":"$mavenVersion",
+         "Goal": "build",
+         "BuildGoal": "$buildGoal",
+         "Args": "$buildArgs",
+         "Sdk": "jdk",
+         "SdkVersion": "$jdkVersion"
+       },
+       "Target": "$buildTarget"
+     }
+   }
+]
+```
+    
+
+
 Variable has the following attributes
 * **Name**: name can be defined as key to be stored in state map or expression 
-     * array element push **->**, for instance ->collection, where collection is a key in the state map      
+    * array element push **->**, for instance ->collection, where collection is a key in the state map      
     * reference **$** for example $ref, where ref is the key in the state, in this case the value will be 
 
 * **Value**: any type value that is used when from value is empty
-* **From**  name of a key state key, or expression with key.    
+* **From**  name of a key state key, or expression with key.
+* **When**  criteria if specified this variable will be set only if evaluated criteria is true (it can use $in, and $out state variables)
+* **Required** flag that validates that from returns non empty value or error is generated
+* **Replace**  replacements map, if specified substitute variable value with corresponding value.
+
+    
 The following expression are supported:
-    * number increments  **++**, for example  counter++, where counter is a key in the state
-    * array element shift  **<-**, for example  <-collection, where collection is a key in the state      
-    * reference **$** for example $ref, where ref is the key in the state, in this case the value will be 
-    evaluated as value stored in key pointed by content of ref variable
+
+- number increments  **++**, for example  counter++, where counter is a key in the state
+- array element shift  **<-**, for example  <-collection, where collection is a key in the state      
+- reference **$** for example $ref, where ref is the key in the state, in this case the value will be 
+- evaluated as value stored in key pointed by content of ref variable
+- embedding UDF
 
     
 **Variable in actions:**
@@ -332,6 +427,8 @@ Workflow also offers DeferTask to execute as the last workflow step in case ther
         2) Action initialization stage executes,  applying variables defined in Action.Pre (input: workflow  state, output: workflow  state)
         3) Executing action on specified service
         4) Action post stage executes applying variables defined in Action.Post (input: action.response, output: workflow state)
+            response converted to map is also published to workflow state under key defined by COALESCE(action.Name, action.Action)
+            
     4) Task post stage executes, applying variables defined in Task.Post (input: state, output: state)   
 5) Workflow post stage executes, applying variables defined in Workflow.Post (input: workflow  state, output: workflow.response)
 6) Context state comes with the following build-in/reserved keys:
@@ -360,7 +457,7 @@ Workflow also offers DeferTask to execute as the last workflow step in case ther
 3) Flag variable as Required or provide a fallback Value
 4) Use [Tag Iterators](https://github.com/viant/neatly#tagiterator) to group similar class of the tests 
 5) Since JSON inside a tabular cell is not too elegant, try to use [Virtual object](https://github.com/viant/neatly#vobject) instead.
-6) Organize sequential simple tasks into pipeline.
+6) Organize sequential simple tasks [into inline workflow](../pipeline).
 7) Organize functionally cohesive complex tasks into workflows. 
 
 
