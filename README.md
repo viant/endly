@@ -62,7 +62,7 @@ Some typical e2e testing tasks supported by **endly**:
 Endly uses a generic workflow system to automate development and testing processes. 
 Each process defines a sequence of task and actions.
 While a task act like a grouping element, an action does the actual job.
-Imagine a regression test task; it may involve many small activities like
+For instance a regression test task; it may involve many small activities like
 sending HTTP request and checking response, validating database state,
 validating log records produced by the application, etc. 
 
