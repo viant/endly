@@ -8,7 +8,6 @@ This library is compatible with Go 1.9+
 Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes.
 
 - [Motivation](#Motivation)
-- [Installation](#Installation)
 - [Introduction](#Introduction)
 - [GettingStarted](#GettingStarted)
 - [Documentation](#Documentation)
@@ -56,55 +55,164 @@ Some typical e2e testing tasks supported by **endly**:
 - Data and application output verification (UI changes, transaction logs, database changes)
 
 
-<a name="Installation"></a>
-## Installation
+<a name="introduction"></a>
 
-1) [Download latest binary](https://github.com/viant/endly/releases/)
-    ```bash
-     tar -xvzf endly_xxx.tar.gz
-     cp endly /usr/local/bin
-     endly -h
-     endly -v
+## Introduction
 
-    ```
- 
+Endly uses a generic workflow system to automates development and testing processes. 
+Each process defines a sequence of task and actions.
+While a task act like a grouping element, an action does the actual job.
+Imagine a regression test task; it may involve many small activities like
+sending HTTP request and checking response, validating database state,
+validating log records produced by the application, etc. 
 
-2) Build from source
-   a) install go 1.9+
-   b) run the following commands:
-   ```bash
-   mkdir -p ~/go
-   export GOPATH=~/go
-   go get -u  github.com/viant/endly
-   go get -u  github.com/viant/endly/endly
-   cd $GOPATH/src/github.com/viant/endly/endly
-   go build endly.go
-   cp endly /usr/local/bin
-   ```
-3) Custom build, in case you need additional drivers, dependencies or UDF with additional imports:
+Various endly services expose a set of actions that can be directly invoked by a user-defined workflow. 
 
-@endly.go
-```go
+Imagine _an application build task_, which may involve the following
+- code checkout
+- setting up SDK 
+- setting build tools
+- setting environment
+- build an app 
 
-package main
+An endly workflow accomplishing this task  may look like the following:
 
-//import your udf package  or other dependencies here
+```yaml
+init:
+  xxCredentials: ${env.HOME}/.secret/secret.json
+  appPath: $WorkingDirectory(../)
+  target:
+    URL: ssh://127.0.0.1/
+    credentials: localhost
+pipeline:
+  build-app:
+    checkout:
+      action: version/control:checkout
+      origin:
+        URL: https://github.com/some_repo/app
+      dest:
+        URL: $appPath
+    set_sdk:
+      set_jdk:
+        action: sdk:set
+        sdk: jdk:1.8
+      set_build_runner:
+        action: deployment:deploy
+        appName: maven
+        version: 3.5
+      set_env:
+        action: exec:run
+        target: $target
+        commands:
+          - export XXX_CREDENTIALS=$xxCredentials
+      get-schema:
+        action: storage:copy
+        source:
+          URL: https://raw.githubusercontent.com/some_repo/db/schema.sql
+        dest:
+          URL: $appPath/schema.sql
+      build:
+        action: exec:run
+        request: '@build.yaml'
+       
+```
 
-import "github.com/viant/endly/bootstrap"
+@build.yaml
+```yaml
+target: $target
+commands:
+  - echo 'building app'
+  - cd $appPath
+  - mvn clean test
+```
 
-func main() {
-	bootstrap.Bootstrap()
+In the following inline workflow, I have used
+ - version/control service with checkout operation
+ - sdk service with set operation
+ - deployment service with deploy operation
+ - storage service with copy operation
+ - exec service with run operation
+
+Endly exposes services in the RESTful manner, where each service providing list of supported operation alongside corresponding contracts.
+Any service request can be defined either directly within workflow or delegated to external request file using YAML or JSON format. 
+
+For instance to find out what request/response contract is supported by exec:run (which uses SSH command) you can simply run 
+
+```bash
+endly -s=exec -a=run
+```
+
+```bash
+ServiceRequest: *exec.RunRequest
+Description:  run terminal command
+Example 1:  run command request
+@run.json
+{
+	"Commands": [
+		"mkdir /tmp/app1"
+	],
+	"Target": {
+		"Credentials": "${env.HOME}/.secret/localhost.json",
+		"URL": "scp://127.0.0.1/"
+	}
 }
+@run.yaml
+Commands:
+- mkdir /tmp/app1
+Target:
+  Credentials: ${env.HOME}/.secret/localhost.json
+  URL: scp://127.0.0.1/
 
-```       
+....
+```
+
+The following command provide list of currently supported endly services
+```bash
+endly -s='*'
+```
+ 
+```bash
+endly services:
+rest/runner *rest.restService
+build *build.service
+version/control *vc.service
+pubsub *pubsub.service
+network *network.service
+validator *validator.validatorService
+gce *gce.service
+exec *exec.execService
+deployment *deploy.service
+sdk *sdk.systemSdkService
+selenium *selenium.service
+docker *docker.service
+aws/ec2 *ec2.service
+http/endpoint *http.service
+udf *udf.service
+daemon *daemon.service
+nop *endly.nopService
+dsunit *dsunit.service
+storage *storage.service
+validator/log *log.service
+http/runner *http.service
+process *process.service
+smtp *smtp.service
+workflow *workflow.Service
+``` 
+
+While the above build task was a trivial workflow usage, the power of endly comes with 
+- flexible workflow definition
+- workflow reusability
+- full stateful workflow execution control (i.e., defer task, on error task, loops, switch/case, concurrent action execution etc)
+- ability to organize regression workflow with thousands of use cases in a cohesive manner
+- ability to comprehensively control testing application state
+- flexible service architecture
 
 
 <a name="GettingStarted"></a>
 
 ## Getting Started
 
- 
-
+Good workflow and data organization is the key for success, e2e project generator is the great place to start.
 
 [Create test project for your app](doc/generator).
 
@@ -112,13 +220,11 @@ func main() {
 
 
 
-Endly uses various text data format (YAML, JSON, CSV), so here is some IDEs     selection to consider:
+Endly uses various text data format (YAML, JSON, CSV), so here is some IDEs  selection to consider:
 
 a) [Atom](https://ide.atom.io/) with tablr plugin  (apm install tablr)
 
 b) [IntelJ](https://www.jetbrains.com/idea/)  with [CSV plugin](https://www.jetbrains.com/help/idea/editing-csv-and-tsv-files.html)
-
-
 
 
 Endly automate sequence of actions into reusable tasks and workflows, here are some examples:
@@ -216,10 +322,6 @@ pipeline:
       URL: config/docker-compose.yaml
 
 ```
-
-
-
-
 
 **As Standalone app** (with predefined shared workflow)
 
@@ -453,8 +555,9 @@ You can build, deploy and test them end to end all with endly.
 <a name="Documentation"></a>
 
 ## Documentation
+- [Installation](doc/installation)
 - [Secret/Credential](doc/secrets)
-- [Pipeline](doc/pipeline)
+- [Inline Workflow](doc/inline)
 - [Workflow](doc/workflow)
 - [Service](doc/service)
 - [Usage](doc/usage)
@@ -474,7 +577,6 @@ commands:
   - go version
   - echo $GOPATH
 ```
-
 
 ## External resources
 
