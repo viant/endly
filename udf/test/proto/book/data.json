@@ -1,0 +1,16 @@
+{
+  "name": "emergency",
+  "people": [
+    {
+      "name": "name 1",
+      "id": 1,
+      "email": "email@gmail.com",
+      "phones": [
+        {
+          "number": "222 222 3334",
+          "type":"HOME"
+        }
+      ]
+    }
+  ]
+}
