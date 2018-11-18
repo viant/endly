@@ -70,8 +70,11 @@ post:
   - age = $response.user.age
 ```
 
-Pipeline node defines set of tasks with its actions, which are be executed sequentially unless endly -t: task switch is used
-
+- _params_ node defines command line arguments
+- _init_ node defines initial workflow variables/state
+- _default_ node defines attributes that will be merge with every actionable node.
+- _pipeline_ node defines set of tasks with its actions, which are be executed sequentially unless endly -t: task switch is used
+- _post_ node defines post execution current workflow state data extraction to wrokflow run response
 
 ```yaml
 pipeline:
