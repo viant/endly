@@ -1,3 +1,12 @@
+## November 18 2018 0.19.0
+    * Added pubsub cloud messaging service
+    * Added UDF service for registering udf with custom settings
+    * Added generic protobuf UDF provider
+    * Removed UDF Providers from service specific contracts in http/runner and storage services
+    * Enhanced variable validation
+    * Renamed Pipelines struct to InlineWorkflow
+    * Updated documentation
+    
 ## November 13 2018 0.18.0
     * Patched logger source.URL init to allow log validation with non schema based resources i.e. /tmp/logs/data as opposed to file:///tmp/logs/data
     * Updated logger validation documentation
