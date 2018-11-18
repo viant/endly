@@ -32,6 +32,7 @@ import (
 	_ "github.com/viant/endly/testing/runner/rest"
 	_ "github.com/viant/endly/testing/runner/selenium"
 
+	_ "github.com/viant/endly/cloud/pubsub"
 	_ "github.com/viant/endly/deployment/build"
 	_ "github.com/viant/endly/deployment/deploy"
 	_ "github.com/viant/endly/deployment/sdk"
@@ -415,7 +416,7 @@ func printServiceActions() {
 }
 
 func getWorkflow(request *workflow.RunRequest) (*model.Workflow, error) {
-	if request.Pipelines != nil && len(request.Pipeline) > 0 {
+	if request.InlineWorkflow != nil && len(request.Pipeline) > 0 {
 		baseURL, name := toolbox.URLSplit(request.AssetURL)
 		name = strings.Replace(name, path.Ext(name), "", 1)
 		return request.AsWorkflow(name, baseURL)
