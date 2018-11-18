@@ -283,7 +283,7 @@ func NewDefaultState() data.Map {
 	result.Put("rand", source.Int63())
 	result.Put("date", now.Format(yyyyMMDDLayout))
 	result.Put("time", now.Format(yyyMMDDHHMMSSLayout))
-	result.Put("ts", now.Format(numberDateLayout))
+	result.Put("ts", now.Unix())
 
 	result.Put("tmpDir", func(key string) interface{} {
 		tempPath := path.Join(os.TempDir(), key)
