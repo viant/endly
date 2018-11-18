@@ -105,15 +105,15 @@ pipeline:
         target: $target
         commands:
           - export XXX_CREDENTIALS=$xxCredentials
-      get-schema:
-        action: storage:copy
-        source:
-          URL: https://raw.githubusercontent.com/some_repo/db/schema.sql
-        dest:
-          URL: $appPath/schema.sql
-      build:
-        action: exec:run
-        request: '@build.yaml'
+    get-schema:
+      action: storage:copy
+      source:
+        URL: https://raw.githubusercontent.com/some_repo/db/schema.sql
+      dest:
+        URL: $appPath/schema.sql
+    build:
+      action: exec:run
+      request: '@build.yaml'
        
 ```
 
