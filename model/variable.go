@@ -16,14 +16,15 @@ import (
 
 //Variable represents a variable
 type Variable struct {
-	Name     string            //name
-	Value    interface{}       //default value
-	From     string            //context state map key to pull data
-	When     string            //criteria if specified this variable will be set only if evaluated criteria is true (it can use $in, and $out state variables)
-	Else     interface{}       //if when criteria is not met then else can provide variable value alternative
-	Persist  bool              //stores in tmp directory to be used as backup if data is not in the cotnext
-	Required bool              //flag that validates that from returns non empty value or error is generated
-	Replace  map[string]string `description:"replacements map, if key if specified substitute variable value with corresponding value. This will work only for string replacements"` //replacements map, if key if specified substitute variable value with corresponding value.
+	Name              string            `description:"name"`
+	Value             interface{}       `description:"default value"`
+	From              string            `description:"context state map key to pull data"`
+	When              string            `description:"criteria if specified this variable will be set only if evaluated criteria is true (it can use $in, and $out state variables)"`
+	Else              interface{}       `description:"if when criteria is not met then else can provide variable value alternative"`
+	Persist           bool              `description:"stores in tmp directory to be used as backup if data is not in the cotnext"`
+	Required          bool              `description:"flag that validates that from returns non empty value or error is generated"`
+	EmptyIfUnexpanded bool              `description:"threat variable value empty if it was not expanded"`
+	Replace           map[string]string `description:"replacements map, if key if specified substitute variable value with corresponding value. This will work only for string replacements"`
 }
 
 func (v *Variable) tempfile() string {
@@ -101,10 +102,40 @@ func (v *Variable) getValueFromInput(in data.Map) (interface{}, error) {
 	return value, nil
 }
 
+func (v *Variable) formatStateInfo(state data.Map) string {
+	var aMap = state.AsEncodableMap()
+	var result = map[string]interface{}{}
+	for k, v := range aMap {
+		if "func()" == v {
+			continue
+		}
+		if toolbox.IsStruct(result) || toolbox.IsSlice(result) {
+			JSONVal, _ := toolbox.AsJSONText(v)
+			if len(JSONVal) < 250 {
+				result[k] = v
+			} else if toolbox.IsSlice(result) {
+				result[k] = "[..large array..]"
+			} else {
+				result[k] = "{..large object..}"
+			}
+			continue
+		}
+		result[k] = v
+	}
+	JSONResult, _ := toolbox.AsIndentJSONText(result)
+	return JSONResult
+}
+
 func (v *Variable) validate(value interface{}, in data.Map) error {
-	if v.Required && (value == nil || toolbox.AsString(value) == "") {
+	val := toolbox.AsString(value)
+	if v.Required {
 		source := in.GetString(neatly.OwnerURL)
-		return fmt.Errorf("variable '%v' is required by %v, but was empty, %v", v.Name, source, toolbox.MapKeysToStringSlice(in))
+		if value == nil || toolbox.AsString(value) == "" {
+			return fmt.Errorf("variable '%v' is required by %v, but was empty,  \n\tstate dump: %v", v.Name, source, v.formatStateInfo(in))
+		}
+		if v.EmptyIfUnexpanded && val == v.Value && strings.HasPrefix(val, "$") {
+			return fmt.Errorf("variable '%v' is required by %v, but %v was not expanded,\n\tstate dump:%v", v.Name, source, v.Value, v.formatStateInfo(in))
+		}
 	}
 	return nil
 }
@@ -113,6 +144,9 @@ func (v *Variable) canApply(in, out data.Map) bool {
 	var state data.Map = map[string]interface{}{
 		"in":  in,
 		"out": out,
+	}
+	for k, v := range in {
+		state[k] = v
 	}
 	result, _ := criteria.Evaluate(nil, state, v.When, "", false)
 	return result
@@ -231,10 +265,15 @@ func (v Variables) String() string {
 	return result
 }
 
-//VariableExpression represent a variable expression [!] [when  ?] VariableName = value : else, exclemation mark flags variable as required
+//VariableExpression represent a variable expression [!] VariableName = [when  ?] value : otherwiseValue,
+// exclamation mark flags variable as required
 type VariableExpression string
 
 func normalizeValue(value string) interface{} {
+	value = strings.TrimSpace(value)
+	if "nil" == value {
+		return nil
+	}
 	if strings.HasPrefix(value, "'") {
 		return strings.Trim(value, "'")
 	}
@@ -250,7 +289,6 @@ func normalizeValue(value string) interface{} {
 func (e *VariableExpression) AsVariable() (*Variable, error) {
 	var value = strings.TrimSpace(string(*e))
 	isRequired := strings.HasPrefix(value, "!")
-
 	if isRequired {
 		value = string(value[1:])
 	}
@@ -259,18 +297,20 @@ func (e *VariableExpression) AsVariable() (*Variable, error) {
 		return nil, fmt.Errorf("invalid variable expression, expected '=' operator")
 	}
 	var result = &Variable{
-		Required: isRequired,
+		Required:          isRequired,
+		EmptyIfUnexpanded: isRequired,
 	}
-	var whenIndex = strings.Index(pair[0], "?")
+
+	result.Name = strings.TrimSpace(pair[0])
+	var whenIndex = strings.Index(pair[1], "?")
 	if whenIndex != -1 {
-		result.When = string(pair[0][:whenIndex])
-		result.Name = strings.TrimSpace(string(pair[0][whenIndex+1:]))
-		elseIndex := strings.Index(pair[1], ":")
+		result.When = strings.TrimSpace(string(pair[1][:whenIndex]))
+		value := strings.TrimSpace(string(pair[1][whenIndex+1:]))
+		result.Value = value
+		elseIndex := strings.LastIndex(value, ":")
 		if elseIndex != -1 {
-			result.Value = string(pair[1][:elseIndex])
-			result.Else = normalizeValue(string(pair[1][elseIndex+1:]))
-		} else {
-			result.Value = pair[1]
+			result.Value = string(value[:elseIndex])
+			result.Else = normalizeValue(string(value[elseIndex+1:]))
 		}
 	} else {
 		result.Name = strings.TrimSpace(pair[0])
@@ -306,30 +346,15 @@ func GetVariables(baseURL string, source interface{}) (Variables, error) {
 
 	if _, err := util.NormalizeMap(source, false); err == nil {
 		toolbox.ProcessMap(source, func(key, value interface{}) bool {
-			var name = toolbox.AsString(key)
-			isRequired := strings.HasPrefix(name, "!")
-
-			if isRequired {
-				name = string(name[1:])
+			variable, e := newVariableFromKetValuePair(toolbox.AsString(key), value)
+			if err != nil {
+				err = e
+				return false
 			}
-			if toolbox.IsSlice(value) {
-				if normalized, err := util.NormalizeMap(value, false); err == nil {
-					value = normalized
-				}
-				result = append(result, &Variable{
-					Name:  name,
-					Value: value,
-				})
-			} else {
-				result = append(result, &Variable{
-					Name:  name,
-					Value: value,
-				})
-			}
-
+			result = append(result, variable)
 			return true
 		})
-		return result, nil
+		return result, err
 	}
 
 	variables := toolbox.AsSlice(source)
@@ -361,6 +386,14 @@ func GetVariables(baseURL string, source interface{}) (Variables, error) {
 				if err != nil {
 					return nil, err
 				}
+				if variable.Name == "" && len(aMap) == 1 {
+					for key, value := range aMap {
+						variable, err = newVariableFromKetValuePair(toolbox.AsString(key), value)
+						if err != nil {
+							return nil, fmt.Errorf("unsupported variable definition: %v", value)
+						}
+					}
+				}
 				result = append(result, variable)
 			} else {
 				return nil, fmt.Errorf("unsupported type: %T", value)
@@ -369,4 +402,31 @@ func GetVariables(baseURL string, source interface{}) (Variables, error) {
 	}
 	return result, nil
 
+}
+
+func newVariableFromKetValuePair(key string, value interface{}) (*Variable, error) {
+	var name = toolbox.AsString(key)
+	isRequired := strings.HasPrefix(name, "!")
+	if isRequired {
+		name = string(name[1:])
+	}
+	if toolbox.IsSlice(value) {
+		if normalized, err := util.NormalizeMap(value, false); err == nil {
+			value = normalized
+		}
+		return &Variable{
+			Name:              name,
+			Value:             value,
+			Required:          isRequired,
+			EmptyIfUnexpanded: isRequired,
+		}, nil
+	} else {
+		var variableExpr VariableExpression
+		if strings.Contains(name, "=") {
+			variableExpr = VariableExpression(fmt.Sprintf("%v: %v", name, value))
+		} else {
+			variableExpr = VariableExpression(fmt.Sprintf("%v = %v", name, value))
+		}
+		return variableExpr.AsVariable()
+	}
 }
