@@ -1,0 +1,14 @@
+pipeline:
+    register-udf:
+      action: udf:register
+      udfs:
+        - id: AddressBookToProto
+          provider: ProtoWriter
+          params:
+            - /Project/proto/address_book.proto
+            - AddressBook
+        - id: ProtoToAddressBook
+          provider: ProtoReader
+          params:
+            - /Project/proto/address_book.proto
+            - AddressBook
