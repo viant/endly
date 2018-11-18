@@ -20,7 +20,7 @@ func TestVariable_Apply(t *testing.T) {
 	}{
 		{
 			Description: "From assigment",
-			Variable:    NewVariable("var1", "var2", "", false, nil, nil, nil),
+			Variable:    NewVariable("var1", "var2", "", false, nil, nil, nil, false),
 			Input: map[string]interface{}{
 				"var2": 123,
 			},
@@ -30,7 +30,7 @@ func TestVariable_Apply(t *testing.T) {
 		},
 		{
 			Description: "Value ref assigment",
-			Variable:    NewVariable("var1", "", "", false, "$var2", nil, nil),
+			Variable:    NewVariable("var1", "", "", false, "$var2", nil, nil, false),
 			Input: map[string]interface{}{
 				"var2": 123,
 			},
@@ -40,7 +40,7 @@ func TestVariable_Apply(t *testing.T) {
 		},
 		{
 			Description: "From ref assigment",
-			Variable:    NewVariable("var1", "$ref", "", false, "", nil, nil),
+			Variable:    NewVariable("var1", "$ref", "", false, "", nil, nil, false),
 			Input: map[string]interface{}{
 				"var2": 123,
 				"ref":  "var2",
@@ -51,7 +51,7 @@ func TestVariable_Apply(t *testing.T) {
 		},
 		{
 			Description: "Required value",
-			Variable:    NewVariable("var1", "var2", "", true, "", nil, nil),
+			Variable:    NewVariable("var1", "var2", "", true, "", nil, nil, false),
 			Input: map[string]interface{}{
 				"ref": "var2",
 			},
@@ -59,7 +59,7 @@ func TestVariable_Apply(t *testing.T) {
 		},
 		{
 			Description: "Conditional value assignment",
-			Variable:    NewVariable("var1", "", "${in.var2} =< 10", false, "$var3", "$var4", nil),
+			Variable:    NewVariable("var1", "", "${in.var2} =< 10", false, "$var3", "$var4", nil, false),
 			Input: map[string]interface{}{
 				"var2": 10,
 				"var3": 20,
@@ -71,7 +71,7 @@ func TestVariable_Apply(t *testing.T) {
 		},
 		{
 			Description: "Conditional else assignment",
-			Variable:    NewVariable("var1", "", "${in.var2} > 10", false, "$var3", "$var4", nil),
+			Variable:    NewVariable("var1", "", "${in.var2} > 10", false, "$var3", "$var4", nil, false),
 			Input: map[string]interface{}{
 				"var2": 10,
 				"var3": 20,
@@ -83,7 +83,7 @@ func TestVariable_Apply(t *testing.T) {
 		},
 		{
 			Description: "Required fallback",
-			Variable:    NewVariable("var1", "var2", "", false, "$var3", "", nil),
+			Variable:    NewVariable("var1", "var2", "", false, "$var3", "", nil, false),
 			Input: map[string]interface{}{
 				"var3": 30,
 			},
@@ -94,7 +94,7 @@ func TestVariable_Apply(t *testing.T) {
 
 		{
 			Description: "Post increment",
-			Variable:    NewVariable("var1", "", "", false, "$var2++", "", nil),
+			Variable:    NewVariable("var1", "", "", false, "$var2++", "", nil, false),
 			Input: map[string]interface{}{
 				"var2": 10,
 			},
@@ -104,7 +104,7 @@ func TestVariable_Apply(t *testing.T) {
 		},
 		{
 			Description: "Pre increment",
-			Variable:    NewVariable("var1", "", "", false, "$++var2", "", nil),
+			Variable:    NewVariable("var1", "", "", false, "$++var2", "", nil, false),
 			Input: map[string]interface{}{
 				"var2": 10,
 			},
@@ -114,7 +114,7 @@ func TestVariable_Apply(t *testing.T) {
 		},
 		{
 			Description: "Push",
-			Variable:    NewVariable("->var1", "", "", false, "$var2", "", nil),
+			Variable:    NewVariable("->var1", "", "", false, "$var2", "", nil, false),
 			Input: map[string]interface{}{
 				"var2": 12,
 			},
@@ -125,7 +125,7 @@ func TestVariable_Apply(t *testing.T) {
 
 		{
 			Description: "Unshift",
-			Variable:    NewVariable("var1", "", "", false, "$<-var2", "", nil),
+			Variable:    NewVariable("var1", "", "", false, "$<-var2", "", nil, false),
 			Input: map[string]interface{}{
 				"var2": []int{11, 12},
 			},
@@ -138,7 +138,7 @@ func TestVariable_Apply(t *testing.T) {
 			Description: "Replace text value",
 			Variable: NewVariable("var1", "", "", false, "$var2", "", map[string]string{
 				"my": "endly",
-			}),
+			}, false),
 			Input: map[string]interface{}{
 				"var2": "this is my test",
 			},
@@ -151,7 +151,7 @@ func TestVariable_Apply(t *testing.T) {
 			Description: "Replace skip non string value",
 			Variable: NewVariable("var1", "", "", false, "$var2", "", map[string]string{
 				"my": "endly",
-			}),
+			}, false),
 			Input: map[string]interface{}{
 				"var2": 123,
 			},
@@ -178,12 +178,12 @@ func TestVariable_Apply(t *testing.T) {
 
 func TestVariable_PersistValue(t *testing.T) {
 
-	var var1 = NewVariable("key1", "", "", false, "123", nil, nil)
+	var var1 = NewVariable("key1", "", "", false, "123", nil, nil, false)
 	toolbox.RemoveFileIfExist(var1.tempfile())
 	var1.PersistValue()
 
 	{ //load persisted value
-		var2 := NewVariable("key1", "", "", false, "123", nil, nil)
+		var2 := NewVariable("key1", "", "", false, "123", nil, nil, false)
 		err := var2.Load()
 		assert.Nil(t, err)
 		assert.EqualValues(t, "123", var2.Value)
@@ -191,7 +191,7 @@ func TestVariable_PersistValue(t *testing.T) {
 	}
 	{
 		toolbox.RemoveFileIfExist(var1.tempfile())
-		var2 := NewVariable("key1", "", "", false, nil, nil, nil)
+		var2 := NewVariable("key1", "", "", false, nil, nil, nil, false)
 		toolbox.RemoveFileIfExist(var1.tempfile())
 		ioutil.WriteFile(var1.tempfile(), []byte("aa"), 0644)
 		err := var2.Load()
@@ -199,7 +199,7 @@ func TestVariable_PersistValue(t *testing.T) {
 	}
 	{
 		toolbox.RemoveFileIfExist(var1.tempfile())
-		var2 := NewVariable("key1", "", "", false, nil, nil, nil)
+		var2 := NewVariable("key1", "", "", false, nil, nil, nil, false)
 		toolbox.RemoveFileIfExist(var1.tempfile())
 		err := var2.Load()
 		assert.Nil(t, err)
@@ -209,9 +209,9 @@ func TestVariable_PersistValue(t *testing.T) {
 
 func TestVariables_Apply(t *testing.T) {
 	var variables Variables = []*Variable{
-		NewVariable("var1", "var2", "", false, nil, nil, nil),
+		NewVariable("var1", "var2", "", false, nil, nil, nil, false),
 		nil,
-		NewVariable("var4", "var3", "", false, nil, nil, nil),
+		NewVariable("var4", "var3", "", false, nil, nil, nil, false),
 	}
 
 	var input = data.Map(map[string]interface{}{
@@ -239,9 +239,9 @@ func TestVariables_Apply(t *testing.T) {
 
 func TestVariables_String(t *testing.T) {
 	var variables Variables = []*Variable{
-		NewVariable("var1", "var2", "", false, nil, nil, nil),
+		NewVariable("var1", "var2", "", false, nil, nil, nil, false),
 		nil,
-		NewVariable("var4", "var3", "", false, nil, nil, nil),
+		NewVariable("var4", "var3", "", false, nil, nil, nil, false),
 	}
 	assert.EqualValues(t, `{Name:var1 From:var2 Value:<nil>},{Name:var4 From:var3 Value:<nil>},`, variables.String())
 }
@@ -256,33 +256,33 @@ func TestVariableExpression_AsVariable(t *testing.T) {
 		{
 			Description: "simple assignment",
 			Expression:  "var1 = 123",
-			Expected:    NewVariable("var1", "", "", false, "123", nil, nil),
+			Expected:    NewVariable("var1", "", "", false, "123", nil, nil, false),
 		},
 		{
 			Description: "required simple assignment",
 			Expression:  "! var1 = 123",
-			Expected:    NewVariable("var1", "", "", true, "123", nil, nil),
+			Expected:    NewVariable("var1", "", "", true, "123", nil, nil, true),
 		},
 		{
 			Description: "quoted assignment",
 			Expression:  "var1 = '123 56'",
-			Expected:    NewVariable("var1", "", "", false, "123 56", nil, nil),
+			Expected:    NewVariable("var1", "", "", false, "123 56", nil, nil, false),
 		},
 		{
 			Description: "data structure assignment",
 			Expression:  "var1 = [1, 2, 3]",
-			Expected:    NewVariable("var1", "", "", false, []interface{}{1.0, 2.0, 3.0}, nil, nil),
+			Expected:    NewVariable("var1", "", "", false, []interface{}{1.0, 2.0, 3.0}, nil, nil, false),
 		},
 
 		{
 			Description: "conditional assignment",
-			Expression:  "$in.var2 > 10 ? var1 = [1, 2, 3]",
-			Expected:    NewVariable("var1", "", "$in.var2 > 10 ", false, []interface{}{1.0, 2.0, 3.0}, nil, nil),
+			Expression:  "var1 =  $in.var2 > 10 ? [1, 2, 3]",
+			Expected:    NewVariable("var1", "", "$in.var2 > 10", false, []interface{}{1.0, 2.0, 3.0}, nil, nil, false),
 		},
 		{
 			Description: "conditional assignment with else",
-			Expression:  "$in.var2 > 10 ? var1 = [1, 2, 3]:3",
-			Expected:    NewVariable("var1", "", "$in.var2 > 10 ", false, []interface{}{1.0, 2.0, 3.0}, "3", nil),
+			Expression:  "var1 = $in.var2 > 10 ? [1, 2, 3]:3",
+			Expected:    NewVariable("var1", "", "$in.var2 > 10", false, []interface{}{1.0, 2.0, 3.0}, "3", nil, false),
 		},
 		{
 			Description: "error assignment ",
@@ -308,7 +308,7 @@ func TestVariableExpression_AsVariable(t *testing.T) {
 func TestGetVariables(t *testing.T) {
 
 	var variables Variables = []*Variable{
-		NewVariable("var1", "", "", false, "123", nil, nil),
+		NewVariable("var1", "", "", false, "123", nil, nil, false),
 	}
 
 	{ //variables use case

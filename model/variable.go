@@ -219,7 +219,7 @@ func (v *Variable) Apply(in, out data.Map) error {
 }
 
 //NewVariable creates a new variable
-func NewVariable(name, form, when string, required bool, value, elseValue interface{}, replace map[string]string) *Variable {
+func NewVariable(name, form, when string, required bool, value, elseValue interface{}, replace map[string]string, emptyIfUnexpanded bool) *Variable {
 	return &Variable{
 		Name:     name,
 		From:     form,
@@ -228,6 +228,7 @@ func NewVariable(name, form, when string, required bool, value, elseValue interf
 		Value:    value,
 		Else:     elseValue,
 		Replace:  replace,
+		EmptyIfUnexpanded:emptyIfUnexpanded,
 	}
 }
 
