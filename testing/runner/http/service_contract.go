@@ -1,7 +1,6 @@
 package http
 
 import (
-	"github.com/viant/endly"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -13,7 +12,6 @@ type SendRequest struct {
 	Options      []*toolbox.HttpOptions `description:"http client options: key value pairs, where key is one of the following: HTTP options:RequestTimeoutMs,TimeoutMs,KeepAliveTimeMs,TLSHandshakeTimeoutMs,ResponseHeaderTimeoutMs,MaxIdleConns"`
 	Requests     []*Request
 	Expect       interface{}          `description:"If specified it will validated response as actual"`
-	UdfProviders []*endly.UdfProvider `description:"collection of predefined udf provider name with custom parameters and new registration id"`
 }
 
 //NewSendRequestFromURL create new request from URL

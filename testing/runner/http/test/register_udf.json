@@ -1,0 +1,11 @@
+{
+  "Udfs": [
+    {
+      "Id": "UserAvroWriter",
+      "Provider": "AvroWriter",
+      "Params": [
+        "{\"type\": \"record\", \"name\": \"user\", \"fields\": [{\"name\": \"ID\",\"type\":\"int\"},{\"name\": \"Desc\",\"type\":\"string\"}]}"
+      ]
+    }
+  ]
+}

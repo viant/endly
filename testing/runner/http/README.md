@@ -127,7 +127,18 @@ Repeat till test host status is 'READY', keep testing for status no more than 15
 
 
 ```go
+    registerUDF, err := udf.NewRegisterRequestFromURL("udf.json")
+    if err != nil {
+      	log.Fatal(err)
+    }
+    err = endly.Run(context, registerUDF, nil)
+    if err != nil {
+    	log.Fatal(err)
+    }
     request, err := runner.NewSendRequestFromURL("http.json")
+    if err != nil {
+    	log.Fatal(err)
+    }
 	var response = &runner.SendResponse{}
 	err = endly.Run(context, request, response)
 	if err != nil {
@@ -151,8 +162,14 @@ Repeat till test host status is 'READY', keep testing for status no more than 15
         "Desc":"abc"
       }
     }
-  ],
-  "UdfProviders": [
+  ] 
+}
+```
+
+@udf.json
+```json
+{
+ "Udfs": [
     {
       "Id": "UserAvroWriter",
       "Provider": "AvroWriter",
@@ -163,6 +180,8 @@ Repeat till test host status is 'READY', keep testing for status no more than 15
   ]
 }
 ```
+
+[See more](./../../../udf/) how to register common codec UDF (avro, protobuf) with custom schema 
 
 
 <a name="sequential"></a>
