@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	//ServiceID represents cce service id.
+	//ServiceID represents gce service id.
 	ServiceID = "gce"
 )
 
@@ -182,7 +182,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//New creates a new NoOperation service.
+//New creates a new GCE service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),
