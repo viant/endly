@@ -400,7 +400,7 @@ pipeline:
 	}
 
 	for i, useCase := range useCases {
-		inline := &Pipelines{}
+		inline := &InlineWorkflow{}
 		var YAML = &yaml.MapSlice{}
 		pipeline := map[string]interface{}{}
 		err := yaml.NewDecoder(strings.NewReader(useCase.YAMLData)).Decode(YAML)
