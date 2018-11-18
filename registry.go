@@ -12,9 +12,9 @@ var UdfRegistry = make(map[string]func(source interface{}, state data.Map) (inte
 var UdfRegistryProvider = make(map[string]func(args ...interface{}) (func(source interface{}, state data.Map) (interface{}, error), error))
 
 type UdfProvider struct {
-	Id       string
-	Provider string
-	Params   []interface{}
+	ID       string        `description:"id for new udf registration"`
+	Provider string        `description:"provider name"`
+	Params   []interface{} `description:"provider parameters"`
 }
 
 //ServiceProvider represents a service provider
