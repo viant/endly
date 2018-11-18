@@ -5,7 +5,6 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/criteria"
 	"github.com/viant/endly/testing/validator"
-	"github.com/viant/endly/udf"
 	"github.com/viant/toolbox"
 	"net/http"
 	"time"
@@ -26,10 +25,6 @@ func (s *service) send(context *endly.Context, sendGroupRequest *SendRequest) (*
 	}
 	initializeContext(context)
 	defer s.resetContext(context, sendGroupRequest)
-
-	if err = udf.RegisterProviders(sendGroupRequest.UdfProviders); err != nil {
-		return nil, err
-	}
 
 	var sendGroupResponse = &SendResponse{
 		Responses: make([]*Response, 0),

@@ -257,7 +257,7 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 
 	}
 
-	{ // invalid request UDF use case
+	{ // invalid request UDFs use case
 		response := service.Run(context, &runner.SendRequest{
 			Requests: []*runner.Request{
 				{
@@ -272,7 +272,7 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 		assert.True(t, strings.Contains(response.Error, "failed to lookup udf: AsTestBlah"))
 	}
 
-	{ // invalid json for request UDF use case
+	{ // invalid json for request UDFs use case
 		response := service.Run(context, &runner.SendRequest{
 			Requests: []*runner.Request{
 				{
@@ -287,7 +287,7 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 		assert.True(t, strings.Contains(response.Error, "failed to run udf"), response.Error)
 	}
 
-	{ // invalid response UDF use case
+	{ // invalid response UDFs use case
 		response := service.Run(context, &runner.SendRequest{
 			Requests: []*runner.Request{
 				{
@@ -324,7 +324,7 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 }
 
 func Test_UdfProvider(t *testing.T) {
-
+	var parentDir = toolbox.CallerDirectory(3)
 	err := StartTestServer(8987, "test/udf_provider", endpoint.MethodKey, endpoint.URLKey)
 	if !assert.Nil(t, err) {
 		return
@@ -335,10 +335,15 @@ func Test_UdfProvider(t *testing.T) {
 		return
 	}
 	assert.NotNil(t, service)
-
 	context := manager.NewContext(toolbox.NewContext())
-
-	var parentDir = toolbox.CallerDirectory(3)
+	registerUDF, err := udf.NewRegisterRequestFromURL(path.Join(parentDir, "test/register_udf.json"))
+	if ! assert.Nil(t, err) {
+		return
+	}
+	err = endly.Run(context, registerUDF, nil)
+	if ! assert.Nil(t, err) {
+		return
+	}
 	request, err := runner.NewSendRequestFromURL(path.Join(parentDir, "test/udf_provider.json"))
 	if !assert.Nil(t, err) {
 		return
