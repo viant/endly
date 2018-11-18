@@ -29,7 +29,7 @@ type RunRequest struct {
 	AssetURL          string
 	TagIDs            string `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
 	Tasks             string `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequentially"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
-	*model.Pipelines
+	*model.InlineWorkflow
 	workflow *model.Workflow //inline workflow from pipeline
 }
 
@@ -49,14 +49,14 @@ func (r *RunRequest) Init() (err error) {
 		r.Tasks = "*"
 	}
 
-	if r.Pipelines != nil && len(r.Pipelines.Pipeline) > 0 {
+	if r.InlineWorkflow != nil && len(r.InlineWorkflow.Pipeline) > 0 {
 		name := r.Name
 		baseURL, URI := toolbox.URLSplit(r.AssetURL)
 		if name == "" && r.Name != "" {
 			name = strings.Replace(URI, path.Ext(URI), "", 1)
 		}
 		r.SharedStateMode = true
-		r.workflow, err = r.Pipelines.AsWorkflow(name, baseURL)
+		r.workflow, err = r.InlineWorkflow.AsWorkflow(name, baseURL)
 		if err != nil {
 			return err
 		}
