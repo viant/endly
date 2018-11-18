@@ -142,64 +142,12 @@ For instance to find out what request/response contract is supported by exec:run
 endly -s=exec -a=run
 ```
 
-```bash
-ServiceRequest: *exec.RunRequest
-Description:  run terminal command
-Example 1:  run command request
-@run.json
-{
-	"Commands": [
-		"mkdir /tmp/app1"
-	],
-	"Target": {
-		"Credentials": "${env.HOME}/.secret/localhost.json",
-		"URL": "scp://127.0.0.1/"
-	}
-}
-@run.yaml
-Commands:
-- mkdir /tmp/app1
-Target:
-  Credentials: ${env.HOME}/.secret/localhost.json
-  URL: scp://127.0.0.1/
-
-....
-```
-
 The following command provide list of currently supported endly services
 ```bash
 endly -s='*'
 ```
- 
-```bash
-endly services:
-rest/runner *rest.restService
-build *build.service
-version/control *vc.service
-pubsub *pubsub.service
-network *network.service
-validator *validator.validatorService
-gce *gce.service
-exec *exec.execService
-deployment *deploy.service
-sdk *sdk.systemSdkService
-selenium *selenium.service
-docker *docker.service
-aws/ec2 *ec2.service
-http/endpoint *http.service
-udf *udf.service
-daemon *daemon.service
-nop *endly.nopService
-dsunit *dsunit.service
-storage *storage.service
-validator/log *log.service
-http/runner *http.service
-process *process.service
-smtp *smtp.service
-workflow *workflow.Service
-``` 
 
-While the above build task was a trivial workflow usage, the power of endly comes with 
+While the above build task example was a trivial workflow usage, the power of endly comes with 
 - flexible workflow definition
 - workflow reusability
 - full stateful workflow execution control (i.e., defer task, on error task, loops, switch/case, concurrent action execution etc)
