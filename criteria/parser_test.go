@@ -29,7 +29,7 @@ func TestCriteriaParser_Parse(t *testing.T) {
 			Expected:    criteria.NewPredicate("", criteria.NewCriterion(nil, ":", "!$value")),
 		},
 		{
-			Description: "UDF criterion",
+			Description: "UDFs criterion",
 			Expression:  "$HasResource(${buildHost}${buildDirectory}/pom.xml):false",
 			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$HasResource(${buildHost}${buildDirectory}/pom.xml)", ":", "false")),
 		},
