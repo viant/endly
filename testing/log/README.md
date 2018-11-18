@@ -21,17 +21,23 @@
 
 ### Validation strategies:
 
-A log validation verifies produced by a logger with desired log records.
+A log validation verifies produced by a logger with a user provides a desired log records in the asset request.Expect[logTypeIndex].Records
+Any arbitrary data structure can represent records.
 
-Once a log/validator listener detects data produce by a logger it places it to the pending validation queue, 
-then later when assert request takes place,  validator takes (and removes) records from pending validation queue.
+
+Once a log/validator listener detects data produce by a logger, it places it to the pending validation queue, 
+then later when assert request takes place,  validator takes (and removes) records from pending validation queue 
+to match and validate with expected records.
+
 
 This process may use either _position_ or _index based_ matching method.
-The first strategy,  a matcher takes the older record from the pending validation qeueue (FIFO) for each expected record.
-The later strategy  requires an indexing expression (provided in listen request IndexRegExpr i.e. \"UUID\":\"([^\"]+)\" ) which is used for both
-indexing pending logs and desired logs. If expected record can not be matched with indexing expression it falls back to the first strategy.
+In the first strategy,  a matcher takes the first record from the pending validation queue (FIFO) for each expected record.
+The latter strategy  requires an indexing expression (provided in listen request IndexRegExpr i.e. \"UUID\":\"([^\"]+)\" ) which is used for both
+indexing pending logs and desired logs. If the validator is unable to match record with indexing expression, it falls back to the position based one.
 
+Validator also supports data transformation on the fly just before validation with [UDF](../../doc/udf)
 
+Actual validation is delegated to [assertly](http://github.com/viant/assertly/)
 
 ### Example
 
@@ -163,9 +169,10 @@ types:
 ```
 
 
-
 **As part of workflow**
 
    [See more](https://github.com/viant/endly/tree/master/example/rt/elogger)
+
+
 
 
