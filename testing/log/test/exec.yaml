@@ -1,0 +1,6 @@
+commands:
+  - mkdir -p $logLocation
+  - "> ${logLocation}/myevents.log"
+  - echo '{"EventID":111, "EventType":"event1", "X":11111111}' >> ${logLocation}/myevents.log
+  - echo '{"EventID":222, "EventType":"event2", "X":11141111}' >> ${logLocation}/myevents.log
+  - echo '{"EventID":333, "EventType":"event1","X":22222222}' >>  ${logLocation}/myevents.log

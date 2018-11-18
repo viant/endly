@@ -1,0 +1,8 @@
+frequencyMs: 500
+source:
+  URL: $logLocation
+types:
+  - format: json
+    inclusion: event1
+    mask: '*.log'
+    name: event1

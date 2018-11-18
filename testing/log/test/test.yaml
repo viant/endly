@@ -1,0 +1,17 @@
+init:
+  logLocation: /tmp/logs
+  target:
+    url:  ssh://127.0.0.1/
+    credentials: ${env.HOME}/.secret/localhost.json
+defaults:
+  target: $target
+pipeline:
+  init:
+    action: exec:run
+    request: "@exec.yaml"
+  listen:
+    action: validator/log:listen
+    request: "@listen.yaml"
+  validate:
+    action: validator/log:assert
+    request: '@validate.json'
