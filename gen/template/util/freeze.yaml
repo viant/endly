@@ -1,0 +1,15 @@
+pipeline:
+  register:
+    action: dsunit:register
+    datastore: $db
+    config: $confog
+  freeze:
+    action: dsunit:freeze
+    datastore: $db
+    destURL: dummy.json
+    omitEmpty: true
+    ignore:
+      - request.postBody
+    replace:
+      request.timestamp: $$ts
+    sql: SELECT  * FROM dummy
