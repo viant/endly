@@ -148,7 +148,7 @@ func (s *service) copy(context *endly.Context, request *CopyRequest) (*CopyRespo
 			}
 		}
 
-		// Custom CopyHandler wrapped as UDF
+		// Custom CopyHandler wrapped as UDFs
 		var copyHandler storage.CopyHandler
 		if request.Udf != "" && object.IsContent() {
 			udf, err := udf.TransformWithUDF(context, request.Udf, transfer.Source.URL, nil)
@@ -218,11 +218,6 @@ func (s *service) download(context *endly.Context, request *DownloadRequest) (*D
 	}
 
 	if request.Udf != "" {
-		if request.UdfProvider != nil {
-			if err = udf.RegisterProviders([]*endly.UdfProvider{request.UdfProvider}); err != nil {
-				return nil, err
-			}
-		}
 		response.Transformed, err = udf.TransformWithUDF(context, request.Udf, resource.URL, data)
 		if err != nil {
 			return nil, err
@@ -297,7 +292,7 @@ const (
       }
     }
   ],
-  "Udf": "CopyWithCompression"
+  "UDFs": "CopyWithCompression"
 }`
 	storageCopyRemoteTransferWithCorruptionExample = `{
   "Transfers": [
@@ -312,7 +307,7 @@ const (
       }
     }
   ],
-  "Udf": "CopyWithCompressionAndCorruption"
+  "UDFs": "CopyWithCompressionAndCorruption"
 }`
 
 	storageBatchCopyTransferExample = `{
