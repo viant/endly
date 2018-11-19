@@ -133,7 +133,7 @@ In the following inline workflow, I have used
  - storage service with copy operation
  - exec service with run operation
 
-Endly exposes services in the RESTful manner, where each service providing list of supported operation alongside corresponding contracts.
+Endly exposes services in the RESTful manner, where each service provides a list of supported operation alongside with corresponding contracts.
 Any service request can be defined either directly within workflow or delegated to external request file using YAML or JSON format. 
 
 For instance to find out what request/response contract is supported by exec:run (which uses SSH command) you can simply run 
