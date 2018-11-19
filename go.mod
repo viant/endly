@@ -1,7 +1,7 @@
 module github.com/viant/endly
 
 require (
-	cloud.google.com/go v0.32.0 // indirect
+	cloud.google.com/go v0.32.0
 	github.com/adrianwit/mgc v0.1.0
 	github.com/aerospike/aerospike-client-go v1.36.0 // indirect
 	github.com/aws/aws-sdk-go v1.15.74
@@ -13,6 +13,7 @@ require (
 	github.com/gomarkdown/markdown v0.0.0-20181104084050-d1d0edeb5d85 // indirect
 	github.com/google/martian v2.1.0+incompatible // indirect
 	github.com/googleapis/gax-go v2.0.0+incompatible // indirect
+	github.com/jhump/protoreflect v1.1.0
 	github.com/klauspost/compress v1.4.1 // indirect
 	github.com/klauspost/cpuid v1.2.0 // indirect
 	github.com/klauspost/crc32 v0.0.0-20170628072449-bab58d77464a // indirect
@@ -31,7 +32,7 @@ require (
 	github.com/tebeka/selenium v0.9.3
 	github.com/viant/asc v0.2.0
 	github.com/viant/assertly v0.1.0
-	github.com/viant/bgc v0.2.0
+	github.com/viant/bgc v0.2.1
 	github.com/viant/dsc v0.2.0
 	github.com/viant/dsunit v0.2.0
 	github.com/viant/neatly v0.2.3
