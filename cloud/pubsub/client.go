@@ -3,22 +3,20 @@ package pubsub
 import (
 	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
-
 	"time"
 )
 
 const (
-	//GoogleCloudPubSubSchema represents endly resource for google cloud pubsub resource i.e gcpubsub:/projects/[PROJECT ID]/subscriptions/[SUBSCRIPTION]
-	GoogleCloudPubSubSchema = "gcpubsub"
+	ResourceVendorGoogleCloud      = "gc"
+	ResourceVendorAmazonWebService = "aws"
 )
 
 type Client interface {
-	Push(dest string, message *Message) (Result, error)
+	Push(dest *Resource, message *Message) (Result, error)
 
-	PullN(source string, count int) ([]*Message, error)
+	PullN(source *Resource, count int) ([]*Message, error)
 
-	Create(resource *Resource) (*Resource, error)
+	Create(resource *ResourceSetup) (*Resource, error)
 
 	Delete(resource *Resource) error
 
@@ -26,21 +24,25 @@ type Client interface {
 }
 
 //NewPubSubClient creates a new Client
-func NewPubSubClient(context *endly.Context, dest *url.Resource, timeout time.Duration) (Client, error) {
-	config, err := context.Secrets.GetCredentials(dest.Credentials)
+func NewPubSubClient(context *endly.Context, dest *Resource, timeout time.Duration) (Client, error) {
+	credConfig, err := context.Secrets.GetCredentials(dest.Credentials)
 	if err != nil {
 		return nil, err
 	}
+	if dest.Vendor == "" {
+		dest.Vendor = inferResourceTypeFromCredentialConfig(credConfig)
+	}
 	state := context.State()
-	if config.ProjectID != "" {
-		state.SetValue("pubsub.projectID", config.ProjectID)
+	if credConfig.ProjectID != "" {
+		state.SetValue("pubsub.projectID", credConfig.ProjectID)
 	}
-
-	var destURL = state.ExpandAsText(dest.URL)
-	if dest.ParsedURL.Scheme == GoogleCloudPubSubSchema {
-		return newCloudPubSub(config, destURL, timeout)
+	dest = expandResource(context, dest)
+	switch dest.Vendor {
+	case ResourceVendorGoogleCloud:
+		return newCloudPubSub(credConfig, dest.URL, timeout)
+	case ResourceVendorAmazonWebService:
+		return newAwsSqsClient(credConfig, timeout)
 	}
-
-	return nil, fmt.Errorf("unsupported scheme: '%v'", dest.ParsedURL.Scheme)
+	return nil, fmt.Errorf("unsupported vendor: '%v'", dest.Vendor)
 
 }

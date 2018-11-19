@@ -27,5 +27,6 @@ func GetEc2Client(credConfig *cred.Config) (*ec2.EC2, error) {
 		return nil, err
 	}
 	ec2Session := session.Must(session.NewSession())
+
 	return ec2.New(ec2Session, config), nil
 }

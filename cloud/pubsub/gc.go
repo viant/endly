@@ -21,8 +21,8 @@ type gcPubSubClient struct {
 	timeout   time.Duration
 }
 
-func (s *gcPubSubClient) createSubscription(resource *Resource) (*pubsub.Subscription, error) {
-	subscription, err := s.getSubscription(resource.URL)
+func (s *gcPubSubClient) createSubscription(resource *ResourceSetup) (*pubsub.Subscription, error) {
+	subscription, err := s.getSubscription(&resource.Resource)
 	if err != nil {
 		return nil, err
 	}
@@ -41,13 +41,12 @@ func (s *gcPubSubClient) createSubscription(resource *Resource) (*pubsub.Subscri
 		if config.Topic == nil {
 			return nil, fmt.Errorf("topic was empty")
 		}
-		topicURL := getTopicURL(resource)
-		topic, err := s.getTopic(topicURL)
+		topic, err := s.getTopic(config.Topic)
 		if err != nil {
 			return nil, err
 		}
 
-		sbuscriptionConfig := pubsub.SubscriptionConfig{
+		subscriptionConfig := pubsub.SubscriptionConfig{
 			Labels:              config.Labels,
 			Topic:               topic,
 			AckDeadline:         config.AckDeadline,
@@ -55,13 +54,13 @@ func (s *gcPubSubClient) createSubscription(resource *Resource) (*pubsub.Subscri
 			RetentionDuration:   config.RetentionDuration,
 		}
 
-		subscription, err = s.client.CreateSubscription(s.ctx, subscription.ID(), sbuscriptionConfig)
+		subscription, err = s.client.CreateSubscription(s.ctx, subscription.ID(), subscriptionConfig)
 	}
 	return subscription, err
 }
 
-func (s *gcPubSubClient) createTopic(resource *Resource) (*pubsub.Topic, error) {
-	topic, err := s.getTopic(resource.URL)
+func (s *gcPubSubClient) createTopic(resource *ResourceSetup) (*pubsub.Topic, error) {
+	topic, err := s.getTopic(&resource.Resource)
 	if err != nil {
 		return nil, err
 	}
@@ -84,29 +83,38 @@ func (s *gcPubSubClient) createTopic(resource *Resource) (*pubsub.Topic, error) 
 	return topic, nil
 }
 
-func (s *gcPubSubClient) Create(resource *Resource) (*Resource, error) {
+func (s *gcPubSubClient) Create(resource *ResourceSetup) (*Resource, error) {
 	var err error
+	var result = resource.Resource
 	switch resource.Type {
 	case ResourceTypeTopic:
-		_, err = s.createTopic(resource)
+		topic, err := s.createTopic(resource)
+		if err != nil {
+			return nil, err
+		}
+		result.ID = topic.ID()
 	case ResourceTypeSubscription:
-		_, err = s.createSubscription(resource)
+		subscription, err := s.createSubscription(resource)
+		if err != nil {
+			return nil, err
+		}
+		result.ID = subscription.ID()
 	default:
 		err = fmt.Errorf("unsupported resource type: %v, %v", resource.Type, resource.URL)
 	}
-	return resource, err
+	return &result, err
 }
 
 func (s *gcPubSubClient) Delete(resource *Resource) error {
 	switch resource.Type {
 	case ResourceTypeTopic:
-		topic, err := s.getTopic(resource.URL)
+		topic, err := s.getTopic(resource)
 		if err != nil {
 			return err
 		}
 		return topic.Delete(s.ctx)
 	case ResourceTypeSubscription:
-		subscription, err := s.getSubscription(resource.URL)
+		subscription, err := s.getSubscription(resource)
 		if err != nil {
 			return err
 		}
@@ -115,7 +123,7 @@ func (s *gcPubSubClient) Delete(resource *Resource) error {
 	return fmt.Errorf("unsupported resource type: %v, %v", resource.Type, resource.URL)
 }
 
-func (s *gcPubSubClient) Push(dest string, message *Message) (Result, error) {
+func (s *gcPubSubClient) Push(dest *Resource, message *Message) (Result, error) {
 	topic, err := s.getTopic(dest)
 	if err != nil {
 		return nil, err
@@ -157,7 +165,7 @@ func (s *gcPubSubClient) Push(dest string, message *Message) (Result, error) {
 	return serverId, err
 }
 
-func (s *gcPubSubClient) PullN(source string, max int) ([]*Message, error) {
+func (s *gcPubSubClient) PullN(source *Resource, max int) ([]*Message, error) {
 	subscription, err := s.getSubscription(source)
 	if err != nil {
 		return nil, err
@@ -196,26 +204,24 @@ func (s *gcPubSubClient) Close() error {
 	return s.client.Close()
 }
 
-func (s *gcPubSubClient) getSubscription(dest string) (*pubsub.Subscription, error) {
-	projectId, subscription, err := extractGCSubcription(dest)
-	if err != nil {
-		return nil, err
+func (s *gcPubSubClient) getSubscription(dest *Resource) (*pubsub.Subscription, error) {
+	if dest.Name == "" && dest.URL == "" {
+		return nil, fmt.Errorf("subscription name and URL was empty, expected /projects/[PROJECT ID]/subscriptions/[SUBSCRIPTION] URL or subscription name")
 	}
-	if projectId == "" {
-		projectId = s.projectId
+	if dest.projectID == "" {
+		return s.client.Subscription(dest.Name), nil
 	}
-	return s.client.SubscriptionInProject(subscription, projectId), nil
+	return s.client.SubscriptionInProject(dest.Name, dest.projectID), nil
 }
 
-func (s *gcPubSubClient) getTopic(dest string) (*pubsub.Topic, error) {
-	projectId, topic, err := extractGCTopics(dest)
-	if err != nil {
-		return nil, err
+func (s *gcPubSubClient) getTopic(dest *Resource) (*pubsub.Topic, error) {
+	if dest.Name == "" && dest.URL == "" {
+		return nil, fmt.Errorf("subscription name and URL was empty, expected /projects/[PROJECT ID]/topics/[SUBSCRIPTION] URL or topic name")
 	}
-	if projectId == "" {
-		projectId = s.projectId
+	if dest.projectID == "" {
+		return s.client.Topic(dest.Name), nil
 	}
-	return s.client.TopicInProject(topic, projectId), nil
+	return s.client.TopicInProject(dest.Name, dest.projectID), nil
 }
 
 func newCloudPubSub(credConfig *cred.Config, URL string, timeout time.Duration) (Client, error) {
@@ -231,7 +237,7 @@ func newCloudPubSub(credConfig *cred.Config, URL string, timeout time.Duration) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pubsub client: %v", err)
 	}
-	var projectID = extractGCProjectID(URL)
+	var projectID = extractSubPath(URL, "project")
 	if projectID == "" {
 		projectID = credConfig.ProjectID
 	}
