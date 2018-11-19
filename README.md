@@ -40,7 +40,7 @@ or application build and deployment:
 None of these tools on its own have a comprehensive end to end testing and automation capabilities. 
 What is worst some of these tools are coupled with a particular frameworks or specific language.
 
-Endly takes declarative approach to test an application written in any language. The testing weight moves towards input and expected application output definition.
+Endly takes declarative approach to test an application written in any language. The testing weight moves towards input and desired application output definition.
 This framework provides an ability to maintain and operate on hundreds of use cases effectively and cohesively, on top of that it can also automate system, data and application preparation related tasks.
 Endly can easily orchestrate e2e testing process of n-tier distributed application where backend, middleware and front-end each uses different stack.
 
@@ -461,7 +461,6 @@ pipeline:
 ```bash
 endly -r=test
 ```
-
 
 
 To see _Endly_ in action,
