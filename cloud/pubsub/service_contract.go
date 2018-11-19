@@ -6,14 +6,13 @@ import (
 	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 	"io/ioutil"
-	"time"
 )
 
-const defaultTimeoutMs = 5000
+const defaultTimeoutMs = 10000
 
 //CreateRequest represents a create resource request
 type CreateRequest struct {
-	Resources []*Resource
+	Resources []*ResourceSetup
 }
 
 func (r *CreateRequest) Init() error {
@@ -40,56 +39,19 @@ type CreateResponse struct {
 	Resources []*Resource
 }
 
-//Config represent a subscription config
-type Config struct {
-	Topic               *url.Resource
-	Labels              map[string]string
-	Attributes          map[string]string
-	AckDeadline         time.Duration
-	RetentionDuration   time.Duration
-	RetainAckedMessages bool
-}
-
-//NewConfig create new config
-func NewConfig(topic string) *Config {
-	return &Config{
-		Topic: &url.Resource{URL: topic},
-	}
-}
-
-//Resource represnts pubsub resource
-type Resource struct {
-	*url.Resource
-	Type     string `description:"resource type: topic, subscription"`
-	Recreate bool
-	Config   *Config
-}
-
-//Init initilizes resource
-func (r *Resource) Init() error {
-	if r.Type == "" {
-		if isTopic := r.Config == nil || r.Config.Topic == nil; isTopic {
-			r.Type = ResourceTypeTopic
-		} else {
-			r.Type = ResourceTypeSubscription
-		}
-	}
-	return nil
-}
-
-//NewResource creates a new URL
-func NewResource(resourceType, URL, credentials string, recreate bool, config *Config) *Resource {
-	return &Resource{
-		Type:     resourceType,
-		Resource: url.NewResource(URL, credentials),
-		Recreate: recreate,
-		Config:   config,
-	}
-}
-
 //DeleteRequest represents a delete resource request
 type DeleteRequest struct {
 	Resources []*Resource
+}
+
+func (r *DeleteRequest) Init() error {
+	if len(r.Resources) == 0 {
+		return nil
+	}
+	for _, resource := range r.Resources {
+		_ = resource.Init()
+	}
+	return nil
 }
 
 //DeleteResponse represents a delete resource response
@@ -97,7 +59,7 @@ type DeleteResponse struct{}
 
 //PushRequest represents push request
 type PushRequest struct {
-	Dest          *url.Resource
+	Dest          *Resource
 	Messages      []*Message
 	Source        *url.Resource
 	TimeoutMs     int
@@ -135,6 +97,12 @@ func (r *PushRequest) Init() error {
 		}
 		r.Messages = loadMessages(content)
 	}
+
+	if r.Dest != nil {
+		if err := r.Dest.Init(); err != nil {
+			return err
+		}
+	}
 	if r.TimeoutMs == 0 {
 		r.TimeoutMs = defaultTimeoutMs
 	}
@@ -171,7 +139,7 @@ type PushResponse struct {
 
 //PullRequest represents a pull request
 type PullRequest struct {
-	Source    *url.Resource
+	Source    *Resource
 	TimeoutMs int
 	Count     int
 	UDF       string
@@ -181,7 +149,7 @@ func (r *PullRequest) Init() error {
 	if r.TimeoutMs == 0 {
 		r.TimeoutMs = defaultTimeoutMs
 	}
-	return nil
+	return r.Source.Init()
 }
 
 func (r *PullRequest) Validate() error {
@@ -198,6 +166,7 @@ type PullResponse struct {
 
 type Message struct {
 	ID         string
+	Subject    string
 	Attributes map[string]string
 	Data       interface{}
 }

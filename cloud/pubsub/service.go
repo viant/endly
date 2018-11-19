@@ -7,11 +7,8 @@ import (
 )
 
 const (
-	//ServiceID represents smtp service id.
-	ServiceID                = "pubsub"
-	ResourceTypeTopic        = "topic"
-	ResourceTypeSubscription = "subscription"
-	ResourceTypeQueue        = "queue"
+	//ServiceID represents gloud messaging  pubsub service id.
+	ServiceID = "pubsub"
 )
 
 //service represent SMTP service
@@ -100,19 +97,16 @@ func (s *service) push(context *endly.Context, request *PushRequest) (interface{
 	response := PushResponse{
 		Results: make([]Result, 0),
 	}
-	dest, err := context.ExpandResource(request.Dest)
-	if err != nil {
-		return response, err
-	}
 	var duration, _ = toolbox.NewDuration(request.TimeoutMs, toolbox.DurationMillisecond)
-	client, err := NewPubSubClient(context, dest, duration)
+	client, err := NewPubSubClient(context, request.Dest, duration)
 	if err != nil {
 		return response, err
 	}
 	defer client.Close()
+	dest := expandResource(context, request.Dest)
 	var state = context.State()
 	for _, message := range request.Messages {
-		result, err := client.Push(state.ExpandAsText(dest.URL), message.Expand(state))
+		result, err := client.Push(dest, message.Expand(state))
 		if err != nil {
 			return response, err
 		}
@@ -123,24 +117,20 @@ func (s *service) push(context *endly.Context, request *PushRequest) (interface{
 
 func (s *service) pull(context *endly.Context, request *PullRequest) (interface{}, error) {
 	response := PullResponse{}
-	source, err := context.ExpandResource(request.Source)
-	if err != nil {
-		return response, err
-	}
 	var duration, _ = toolbox.NewDuration(request.TimeoutMs, toolbox.DurationMillisecond)
-	client, err := NewPubSubClient(context, source, duration)
+	client, err := NewPubSubClient(context, request.Source, duration)
 	if err != nil {
 		return response, err
 	}
+	source := expandResource(context, request.Source)
 	defer client.Close()
-	var state = context.State()
-	response.Messages, err = client.PullN(state.ExpandAsText(source.URL), request.Count)
+	response.Messages, err = client.PullN(source, request.Count)
 	return response, err
 }
 
-func (s *service) createResource(context *endly.Context, resource *Resource) (*Resource, error) {
+func (s *service) createResource(context *endly.Context, resource *ResourceSetup) (*Resource, error) {
 	var duration, _ = toolbox.NewDuration(defaultTimeoutMs, toolbox.DurationMillisecond)
-	client, err := NewPubSubClient(context, resource.Resource, duration)
+	client, err := NewPubSubClient(context, &resource.Resource, duration)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +165,7 @@ func (s *service) delete(context *endly.Context, request *DeleteRequest) (interf
 }
 func (s *service) deleteResource(context *endly.Context, resource *Resource) error {
 	var duration, _ = toolbox.NewDuration(defaultTimeoutMs, toolbox.DurationMillisecond)
-	client, err := NewPubSubClient(context, resource.Resource, duration)
+	client, err := NewPubSubClient(context, resource, duration)
 	if err != nil {
 		return err
 	}

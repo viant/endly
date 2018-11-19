@@ -5,7 +5,6 @@ import (
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"log"
 	"os"
 	"path"
@@ -13,7 +12,7 @@ import (
 	"time"
 )
 
-func createResources(t *testing.T, resources ...*Resource) bool {
+func createResources(t *testing.T, resources ...*ResourceSetup) bool {
 	var response = &CreateResponse{}
 	err := endly.Run(nil, &CreateRequest{
 		Resources: resources,
@@ -25,8 +24,13 @@ func createResources(t *testing.T, resources ...*Resource) bool {
 	return true
 }
 
-func deleteResource(t *testing.T, resources ...*Resource) bool {
+func deleteResource(t *testing.T, resourceSetup ...*ResourceSetup) bool {
 	var response = &DeleteResponse{}
+
+	var resources = []*Resource{}
+	for _, setup := range resourceSetup {
+		resources = append(resources, &setup.Resource)
+	}
 	err := endly.Run(nil, &DeleteRequest{
 		Resources: resources,
 	}, response)
@@ -38,9 +42,9 @@ func deleteResource(t *testing.T, resources ...*Resource) bool {
 }
 
 func TestService_PushPull(t *testing.T) {
-	var resources = []*Resource{
-		NewResource("topic", "gcpubsub:e2eTopic", "am", true, nil),
-		NewResource("subscription", "gcpubsub:e2eSubscription", "am", true, NewConfig("e2eTopic")),
+	var resources = []*ResourceSetup{
+		NewResourceSetup("topic", "e2eTopic", "am", true, nil),
+		NewResourceSetup("subscription", "e2eSubscription", "am", true, NewConfig("e2eTopic")),
 	}
 
 	if !createResources(t, resources...) {
@@ -50,16 +54,16 @@ func TestService_PushPull(t *testing.T) {
 
 	useCases := []struct {
 		description string
-		dest        *url.Resource
-		source      *url.Resource
+		dest        *Resource
+		source      *Resource
 		messages    []*Message
 		expected    interface{}
 		hasError    bool
 	}{
 		{
 			description: "google cloud push messages use case",
-			dest:        url.NewResource("gcpubsub:/projects/${pubsub.projectID}/topics/e2eTopic", "am"),
-			source:      url.NewResource("gcpubsub:/projects/${pubsub.projectID}/subscriptions/e2eSubscription", "am"),
+			dest:        NewResource("", "/projects/${pubsub.projectID}/topics/e2eTopic", "am"),
+			source:      NewResource("", "/projects/${pubsub.projectID}/subscriptions/e2eSubscription", "am"),
 			messages: []*Message{
 				{
 					Attributes: map[string]string{

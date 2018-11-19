@@ -25,7 +25,6 @@ func (s *service) run(context *endly.Context, request *CallRequest) (CallRespons
 	if err != nil {
 		return nil, err
 	}
-
 	return s.call(context, client, request)
 }
 
