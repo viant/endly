@@ -13,7 +13,6 @@ import (
 	"time"
 )
 
-//https://github.com/awsdocs/aws-doc-sdk-examples/blob/master/go/example_code/sqs/sqs_createqueues.go
 
 type awsPubSub struct {
 	session *session.Session
