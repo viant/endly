@@ -8,7 +8,7 @@ it manages cookie within [SendRequest](service_contract.go).
 | http/runner | send | Sends one or more http request to the specified endpoint. | [SendRequest](service_contract.go) | [SendResponse](service_contract.go) |
 
 
-##Usage
+## Usage
 
 - [Basic and conditional requests](#basic)
 - [Repeating request](#repeating)
