@@ -420,7 +420,8 @@ Imagine a case where Payload body can be shared across various HTTP requests wit
 }
 ```
 
-You can use the following [neatly](github.com/viant/neatly) construct
+
+You can use the following [neatly](https://github.com/viant/neatly#external_resource_substitution) construct
 
 @test.csv
 
