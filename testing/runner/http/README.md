@@ -421,7 +421,7 @@ Imagine a case where Payload body can be shared across various HTTP requests wit
 ```
 
 
-You can use the following [neatly](https://github.com/viant/neatly#external_resource_substitution) construct
+You can use the following [neatly](https://github.com/viant/neatly#external-resources-loading-with-content-substitution-and-user-defined-function-udf-use-case) construct
 
 @test.csv
 
