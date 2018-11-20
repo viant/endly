@@ -238,10 +238,76 @@ Repeat till test host status is 'READY', keep testing for status no more than 15
 }
 ```
 
+Where $bidX is defined in separated file [stichted with Neatly](#workflow)
+
+@bids.json
+```json
+{
+	"bid0": {
+		"app": {
+			"cat": [
+				"IAB14"
+			],
+			"domain": "http://www.wildisthewind.com/",
+			"id": "yyyyy",
+			"name": "RTB TEST",
+			"publisher": {
+				"id": "xxxxxx",
+				"name": "Match Media Group"
+			}
+		},
+		"at": 2,
+		"badv": [
+			"go-text.me/"
+		],
+		"bcat": [
+			"IAB7-39"
+		],
+		"device": {
+			"carrier": "310-410",
+			"devicetype": 1,
+			"dpidsha1": "${userProfile.uuid}",
+			"ext": {
+				"idfa": "${userProfile.uuid}"
+			},
+			"geo": {
+				"city": "Whitewright",
+				"country": "USA"
+			},
+			"language": "en",
+			"make": "Apple",
+			"model": "iPhone",
+			"os": "iOS",
+			"osv": "6.1",
+			"ua": "Mozilla/5.0 (iPhone; U; CPU iPhone 6_1 like Mac OS X; en-us) AppleWebKit/528.18 (KHTML, like Gecko) Mobile/7E18 Grindr/1.8.5 (iPhone3,1/6.1)"
+		},
+		"imp": [
+			{
+				"banner": {
+					"api": [
+						3
+					],
+					"btype": [
+						4
+					],
+					"h": 300,
+					"pos": 1,
+					"w": 250
+				}
+			}
+		]
+	},
+	"bid1": {
+		
+	}
+}
+```
 
 
 The following example extracts from _POST Body_ tracking URL with regular expression matches 
 and from structured POST Body _AUCTION_PRICE_ and variables that define subsequent URL. 
+
+
   
 <a name="assert"></a>
 **Request with validation**
