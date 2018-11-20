@@ -136,7 +136,7 @@ In the following inline workflow, I have used
 Endly exposes services in the RESTful manner, where each service provides a list of supported operation alongside with corresponding contracts.
 Any service request can be defined either directly within workflow or delegated to external request file using YAML or JSON format. 
 
-For instance to find out what request/response contract is supported by exec:run (which uses SSH command) you can simply run 
+For instance to find out what request/response contract is supported by exec:run (which uses SSH session) you can simply run 
 
 ```bash
 endly -s=exec -a=run
@@ -496,7 +496,6 @@ You can build, deploy and test them end to end all with endly.
         - Optionally publish app image to the docker registry
         - Deploy app to docker container
         - Test an app with REST and HTTP runner
-
 
 
 <a name="Documentation"></a>
