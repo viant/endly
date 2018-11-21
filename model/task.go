@@ -85,6 +85,7 @@ type Task struct {
 	*AbstractNode
 	Actions []*Action //actions
 	*TasksNode
+	async bool
 }
 
 //HasTagID checks if task has supplied tagIDs
