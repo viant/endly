@@ -376,12 +376,42 @@ pipeline:
       - ls -al /tmp/
       
     post:
-      stdout: $output
+      stdout: $Output
   task2:
     action: print
-    message: $output        
+    message: $stdout        
   task3:
     action: print
-    message: $task1.output        
+    message: $task1.Output        
 ```
 
+
+##Workflow control:
+
+
+**Parallel execution:**
+
+
+```bash
+endly -r=parallel
+```
+
+@parallel.yaml
+```yaml
+pipeline:
+  task1:
+    action1:
+      action: print
+      message: hello from action 1
+      sleepTimeMs: 3000
+      async: true
+    action2:
+      action: print
+      message: hello from action 2
+      sleepTimeMs: 3000
+    action3:
+      action: print
+      message: hello from action 3
+      sleepTimeMs: 3000
+      async: true
+```
