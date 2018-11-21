@@ -515,34 +515,3 @@ pipeline:
     message: allway run
 
 ```
-
-
-
-
-**Defer Node**
-
-Defer node if defined always runs at the last step
-
-```bash
-endly -r=defer
-```
-
-@defer.yaml
-```yaml
-pipeline:
-  task1:
-    action1:
-      action: print
-      message: hello action 1
-    action2:
-      action: fail
-      message: execption in action 2
-
-    action2:
-      action: print
-      message: hello action 3
-  defer:
-    action: print
-    message: allway run
-
-```
