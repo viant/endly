@@ -177,7 +177,9 @@ func (p *InlineWorkflow) normalize(node *TasksNode) {
 
 func (p *InlineWorkflow) buildTask(name string, source interface{}) *Task {
 	var task = &Task{}
-	toolbox.DefaultConverter.AssignConverted(task, source)
+	if toolbox.IsSlice(source) && toolbox.IsMap(source) {
+		toolbox.DefaultConverter.AssignConverted(task, source)
+	}
 	task.Actions = []*Action{}
 	task.AbstractNode = &AbstractNode{}
 	task.TasksNode = &TasksNode{
@@ -268,13 +270,14 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 	if err != nil {
 		return err
 	}
+
 	if isActionNode(attributes) {
 		action, err := p.buildAction(name, attributes, actionData, tagID)
 		if err != nil {
 			return err
 		}
 		task := parentTask
-		if parentTask.Description == "" {
+		if ! parentTask.async {
 			task = p.buildTask(name, map[string]interface{}{})
 			parentTask.Tasks = append(parentTask.Tasks, task)
 		}
@@ -292,9 +295,13 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 
 	var buildErr error
 	if err := toolbox.ProcessMap(source, func(key, value interface{}) bool {
+		if strings.ToLower(toolbox.AsString(key)) == "async" {
+			task.async = toolbox.AsBoolean(value)
+		}
 		if !toolbox.IsSlice(value) {
 			return true
 		}
+
 		buildErr = p.buildWorkflowNodes(toolbox.AsString(key), value, task, tagID+"_"+task.Name)
 		if buildErr != nil {
 			return false
