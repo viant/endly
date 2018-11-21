@@ -164,7 +164,7 @@ type SwitchRequest struct {
 //Match matches source with supplied action request.
 func (r *SwitchRequest) Match(source interface{}) *SwitchCase {
 	for _, switchCase := range r.Cases {
-		if switchCase.Value == source {
+		if toolbox.AsString(switchCase.Value) == toolbox.AsString(source) {
 			return switchCase
 		}
 	}
