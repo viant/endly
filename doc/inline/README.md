@@ -515,3 +515,78 @@ pipeline:
     message: allway run
 
 ```
+
+
+**Switch Case**
+
+```go
+endly -r=switch_case var1=1
+```
+
+@switch_case.yaml
+```yaml
+pipeline:
+  controller:
+     action: switch
+     sourceKey: var1
+     default:
+       task: task3
+     cases:
+        - value: 1
+          task: task1
+        - value: 2
+          task: task2
+
+  task1:
+    multiAction: true
+    action1:
+      action: print
+      message: selected task1
+    exit:
+      action: exit
+
+  task2:
+    multiAction: true
+    action1:
+      action: print
+      message: selected task2
+    exit:
+      action: exit
+
+  task3:
+    multiAction: true
+    action1:
+      action: print
+      message: selected default
+    exit:
+      action: exit
+```
+
+
+**Loop Execution**
+
+```go
+endly -r=loop
+```
+
+@switch_case.yaml
+```yaml
+init:
+  - i = 0
+pipeline:
+  loop:
+    multiAction: true
+    show-counter:
+      action: print
+      message: counter $i
+    increment:
+      action: nop
+      init:
+        - i = $i++
+    goto:
+      when: $i < 10
+      action: goto
+      task: loop
+```
+
+

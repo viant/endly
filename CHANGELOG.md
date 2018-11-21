@@ -1,3 +1,8 @@
+## November 22 2018 0.19.1
+    * Added async flag to inline workflow at task level to allow parallel execution
+    * Patched maching switch case with incompatible types
+    * Updated documentation 
+
 ## November 18 2018 0.19.0
     * Added pubsub cloud messaging service
     * Added UDF service for registering udf with custom settings
