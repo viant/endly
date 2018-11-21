@@ -112,7 +112,8 @@ endly -w=WORKFLOW_FILE.csv -p  -f=yaml|json
 
 
 By default each executable node is converted to a task with one action, so that endly -t=taskname allows you to select one or more nodes to run at a time.
-In some case for instance in parallel actions execution which is implemented within a task,  you want to group action under one task node:
+In some case for instance in parallel actions execution which is implemented within a task,  you want to group action under one task node. 
+In order to group actions under parent task set multiAction: true
 
 ```yaml
 pipeline:
