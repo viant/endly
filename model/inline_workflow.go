@@ -277,7 +277,7 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 			return err
 		}
 		task := parentTask
-		if ! parentTask.async {
+		if ! parentTask.multiAction {
 			task = p.buildTask(name, map[string]interface{}{})
 			parentTask.Tasks = append(parentTask.Tasks, task)
 		}
@@ -295,8 +295,8 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 
 	var buildErr error
 	if err := toolbox.ProcessMap(source, func(key, value interface{}) bool {
-		if strings.ToLower(toolbox.AsString(key)) == "async" {
-			task.async = toolbox.AsBoolean(value)
+		if strings.ToLower(toolbox.AsString(key)) == "multiAction" || strings.ToLower(toolbox.AsString(key)) == "async" {
+			task.multiAction = toolbox.AsBoolean(value)
 		}
 		if !toolbox.IsSlice(value) {
 			return true
