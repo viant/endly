@@ -111,6 +111,32 @@ endly -w=WORKFLOW_FILE.csv -p  -f=yaml|json
 ```
 
 
+By default each executable node is converted to a task with one action, so that endly -t=taskname allows you to select one or more nodes to run at a time.
+In some case for instance in parallel actions execution which is implemented within a task,  you want to group action under one task node:
+
+```yaml
+pipeline:
+  task1:
+    multiAction: true
+    action1:
+      action: print
+      message: hello from action 1
+      sleepTimeMs: 3000
+      async: true
+    action2:
+      action: print
+      message: hello from action 2
+      sleepTimeMs: 3000
+      async: true
+    action3:
+      action: print
+      message: hello from action 3
+      sleepTimeMs: 3000
+```
+
+
+
+
 <a name="action"></a>
 ### Action invocation
 
@@ -400,7 +426,7 @@ endly -r=parallel
 ```yaml
 pipeline:
   task1:
-    async: true
+    multiAction: true
     action1:
       action: print
       message: hello from action 1
@@ -458,6 +484,37 @@ pipeline:
     message: caught $error.Error
 
 ```
+
+
+
+**Defer Node**
+
+Defer node if defined always runs at the last step
+
+```bash
+endly -r=defer
+```
+
+@defer.yaml
+```yaml
+pipeline:
+  task1:
+    action1:
+      action: print
+      message: hello action 1
+    action2:
+      action: fail
+      message: execption in action 2
+
+    action2:
+      action: print
+      message: hello action 3
+  defer:
+    action: print
+    message: allway run
+
+```
+
 
 
 
