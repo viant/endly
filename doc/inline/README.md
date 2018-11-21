@@ -400,6 +400,7 @@ endly -r=parallel
 ```yaml
 pipeline:
   task1:
+    async: true
     action1:
       action: print
       message: hello from action 1
@@ -414,4 +415,76 @@ pipeline:
       message: hello from action 3
       sleepTimeMs: 3000
       async: true
+```
+
+
+**Conditional execution and error handling**
+
+_'When'_ attriute instruct to run an action ony if criteria is met.
+
+By default an error terminates workflow execution, i
+if 'catch' node is defined it can handle error so that workflow execution can continue 
+
+
+```bash
+endly -r=catch var1=failNow
+
+endly -r=catch var1=ignore
+```
+
+@catch.yaml
+```yaml
+pipeline:
+  task1:
+    action1:
+      action: print
+      message: hello action 1
+    action2:
+      when: $var1 = failNow
+      action: fail
+      message: execption in action 2
+
+    action2:
+      action: print
+      message: hello action 3
+
+  task2:
+    action1:
+      action: print
+      message: hello task 2 action 1
+
+  catch:
+    action: print
+    message: caught $error.Error
+
+```
+
+
+
+**Defer Node**
+
+Defer node if defined always runs at the last step
+
+```bash
+endly -r=defer
+```
+
+@defer.yaml
+```yaml
+pipeline:
+  task1:
+    action1:
+      action: print
+      message: hello action 1
+    action2:
+      action: fail
+      message: execption in action 2
+
+    action2:
+      action: print
+      message: hello action 3
+  defer:
+    action: print
+    message: allway run
+
 ```
