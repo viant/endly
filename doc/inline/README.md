@@ -569,7 +569,8 @@ pipeline:
 endly -r=loop
 ```
 
-@switch_case.yaml
+
+@loop.yaml
 ```yaml
 init:
   - i = 0
