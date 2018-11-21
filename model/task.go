@@ -83,9 +83,9 @@ func (t *TasksNode) Has(name string) bool {
 //Task represents a group of action
 type Task struct {
 	*AbstractNode
-	Actions []*Action //actions
+	Actions     []*Action //actions
 	*TasksNode
-	async bool
+	multiAction bool
 }
 
 //HasTagID checks if task has supplied tagIDs
