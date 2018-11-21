@@ -312,19 +312,19 @@ func TestGetVariables(t *testing.T) {
 	}
 
 	{ //variables use case
-		actual, err := GetVariables("", variables)
+		actual, err := GetVariables([]string{""}, variables)
 		assert.Nil(t, err)
 		assert.EqualValues(t, variables, actual)
 	}
 
 	{ //*variables use case
-		actual, err := GetVariables("", &variables)
+		actual, err := GetVariables([]string{""}, &variables)
 		assert.Nil(t, err)
 		assert.EqualValues(t, variables, actual)
 	}
 
 	{ //expression use case
-		actual, err := GetVariables("", []string{
+		actual, err := GetVariables([]string{""}, []string{
 			"var1 = 123",
 		})
 		assert.Nil(t, err)
@@ -332,7 +332,7 @@ func TestGetVariables(t *testing.T) {
 	}
 
 	{ //slice of map items use case
-		actual, err := GetVariables("", []interface{}{
+		actual, err := GetVariables([]string{""}, []interface{}{
 			map[string]interface{}{
 				"Name":  "var1",
 				"Value": "123",
@@ -344,24 +344,24 @@ func TestGetVariables(t *testing.T) {
 	{ //load from file use case
 		var JSON = `[{"Name":"var1", "Value":"123"}]`
 		ioutil.WriteFile("/tmp/endly_model_get_variables.json", []byte(JSON), 0644)
-		actual, err := GetVariables("", "@/tmp/endly_model_get_variables.json")
+		actual, err := GetVariables([]string{""}, "@/tmp/endly_model_get_variables.json")
 		assert.Nil(t, err)
 		assert.EqualValues(t, variables, actual)
 
 	}
 	{ //no varibles
-		actual, err := GetVariables("", "")
+		actual, err := GetVariables([]string{""}, "")
 		assert.Nil(t, err)
 		assert.Nil(t, actual)
 	}
 
 	{ //no such file error case
-		_, err := GetVariables("", "@nonexisting")
+		_, err := GetVariables([]string{""}, "@nonexisting")
 		assert.NotNil(t, err)
 	}
 
 	{ //invalid expression error case
-		_, err := GetVariables("", []string{"ac"})
+		_, err := GetVariables([]string{""}, []string{"ac"})
 		assert.NotNil(t, err)
 	}
 

@@ -93,6 +93,17 @@ func Test_EvaluateCriteria(t *testing.T) {
 				"logRecords": []interface{}{"1"},
 			},
 		},
+		{
+			Description:   "Uni operand expression",
+			Expression:    "$getTrue()", //
+			DefaultResult: true,
+			Expected:      true,
+			State: map[string]interface{}{
+				"getTrue": func() interface{} {
+					return true
+				},
+			},
+		},
 	}
 
 	for _, useCase := range useCases {

@@ -1,7 +1,5 @@
 package model
 
-import "github.com/viant/endly/util"
-
 //Action represents a workflow service action
 type Action struct {
 	*AbstractNode
@@ -39,8 +37,23 @@ func (a *Action) Init() error {
 	if err := a.Validate(); err != nil {
 		return err
 	}
-	util.SetNonZero(&a.Repeater.SleepTimeMs, &a.AbstractNode.SleepTimeMs)
-	util.SetNonEmpty(&a.ServiceRequest.Description, &a.ServiceRequest.Description)
+
+	var setNonEmpty = func(ptr1, ptr2 *string) {
+		if *ptr1 != "" {
+			*ptr2 = *ptr2
+		} else {
+			*ptr2 = *ptr1
+		}
+	}
+	var setNonZero = func(ptr1, ptr2 *int) {
+		if *ptr1 != 0 {
+			*ptr2 = *ptr2
+		} else {
+			*ptr2 = *ptr1
+		}
+	}
+	setNonZero(&a.Repeater.SleepTimeMs, &a.AbstractNode.SleepTimeMs)
+	setNonEmpty(&a.ServiceRequest.Description, &a.ServiceRequest.Description)
 	return nil
 }
 

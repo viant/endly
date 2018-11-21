@@ -13,7 +13,6 @@ import (
 	"time"
 )
 
-
 type awsPubSub struct {
 	session *session.Session
 	sqs     *sqs.SQS

@@ -63,6 +63,7 @@ type GetResponse struct {
 }
 
 type Testing struct {
+	Regression     string `json:"regression"`
 	REST           bool   `json:"rest"`
 	HTTP           bool   `json:"http"`
 	Selenium       bool   `json:"selenium"`

@@ -1,0 +1,42 @@
+pipeline:
+  db1:
+    register:
+      comments: register db1 database name with mysql driver
+      action: dsunit:register
+      datastore: db1
+      config:
+        driverName: mysql
+        descriptor: '[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true'
+        credentials: $mysqlCredentials
+        parameters:
+          dbname: db1
+    prepare:
+      setup:
+        comments: loads static data,
+                     in this scenario in db1/ tehre is only users.json  file
+                     it contains JSON array with the first empty map element - which will instruct db unit to remove all users data
+        datastore: db1
+        action: dsunit:prepare
+        URL: db1/
+
+      sequence:
+        comments: read sequence for supplied tables and publish it to 'seq' variable (workflow state key)
+        action: dsunit.sequence
+        datastore: db1
+        tables:
+        - users
+        post:
+          - seq = $Sequences
+      data:
+        comments: convert use case level @data with AsTableRecords UDF,
+                  converted table records set 'db1Setup' variable
+                  AsTableRecords also pushes data dsunit.${tagId}_users slice
+        action: nop
+        init:
+          - db1key = data.db1
+          - db1Setup = $AsTableRecords($db1key)
+      load:
+        comments: insert data from db1Setup to db1 database
+        action: dsunit:prepare
+        datastore: db1
+        data: $db1Setup

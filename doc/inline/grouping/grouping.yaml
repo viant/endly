@@ -1,0 +1,20 @@
+pipeline:
+  test:
+    range: 1..002
+    subPath: cases/${index}_*
+    template:
+      group1:
+        validate:
+          action: validator:assert
+          request: '@req/assert @data'
+        info:
+          action: print
+          message: "$index: group 1; failed: $validate.FailedCount, passed: $validate.PassedCount"
+        optional:
+          skip: $validate.FailedCount > 0
+          action: print
+          message: "$index: group 1; optional action"
+      group2:
+        other:
+          action: print
+          message: "$index: group 2; action 4"

@@ -189,7 +189,6 @@ func expandTablesIfNeeded(context *endly.Context, req *InitRequest) {
 	for _, table := range req.Tables {
 		table.Table = state.ExpandAsText(table.Table)
 	}
-
 }
 
 func (s *service) registerRoutes() {

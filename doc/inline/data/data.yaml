@@ -1,0 +1,14 @@
+pipeline:
+  test:
+    tag: Test
+    data:
+      'someKey.[]users': '@users'
+    range: 1..002
+    subPath: use_cases/${index}_*
+    template:
+      action1:
+        action: print
+        init:
+          - name: user
+            from: <-data.someKey.users
+        message: action 1 $index $user.email

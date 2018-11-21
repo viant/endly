@@ -257,7 +257,7 @@ func init() {
 				return "", fmt.Errorf("failed to read body %v, %v", request.URL, err)
 			}
 			encoded := string(content)
-			if strings.HasPrefix(encoded , "base64:") {
+			if strings.HasPrefix(encoded, "base64:") {
 				content, _ = util.FromPayload(encoded)
 			}
 			return util.AsPayload(content), nil
