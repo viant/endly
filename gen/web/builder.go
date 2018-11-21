@@ -17,6 +17,11 @@ import (
 	"strings"
 )
 
+const (
+	inlineWorkflowFormat = "inline"
+	neatlyWorkflowFormat = "neatly"
+)
+
 type builder struct {
 	baseURL              string
 	destURL              string
@@ -459,6 +464,9 @@ func (b *builder) addRun(appMeta *AppMeta, request *RunRequest) error {
 	}
 	run.Put("init", init)
 	if content, err := toolbox.AsYamlText(run); err == nil {
+		if inlineWorkflowFormat == request.Testing.Regression {
+			content = strings.Replace(content, "name: regression", "request: '@regression/regression'", 1)
+		}
 		b.UploadToEndly("run.yaml", strings.NewReader(content))
 	}
 	return err
@@ -514,12 +522,51 @@ func (b *builder) buildDatastore() error {
 	return err
 }
 
-func removeMatchedLines(text string, matchExpr string) string {
+func removeMatchedLines(text string, format string, matchExpressions ...string) string {
+	if len(matchExpressions) > 1 {
+		for i := 1; i < len(matchExpressions); i++ {
+			text = removeMatchedLines(text, format, matchExpressions[i])
+		}
+	}
+
 	text = strings.Replace(text, "\r", "", len(text))
 	var lines = strings.Split(text, "\n")
 	var result = make([]string, 0)
+	matchExpr := matchExpressions[0]
+	if format == neatlyWorkflowFormat {
+		for _, line := range lines {
+			if strings.Contains(line, matchExpr) {
+				continue
+			}
+			result = append(result, line)
+		}
+		return strings.Join(result, "\n")
+	}
+	return processBlockedText(text, matchExpr, "comments:", func(matched string) string {
+		return ""
+	})
+}
+
+func processBlockedText(text string, blockBeginExpr, blockEndExpr string, matchingBlockHandler func(matched string) string) string {
+	text = strings.Replace(text, "\r", "", len(text))
+	var lines = strings.Split(text, "\n")
+	var result = make([]string, 0)
+	var matched = make([]string, 0)
 	for _, line := range lines {
-		if strings.Contains(line, matchExpr) {
+
+		if strings.Contains(line, blockBeginExpr) {
+			matched = append(matched, line)
+			continue
+		}
+		if len(matched) > 0 {
+			matched = append(matched, line)
+			if strings.Contains(line, blockEndExpr) {
+				block := matchingBlockHandler(strings.Join(matched, "\n"))
+				if block != "" {
+					result = append(result, block)
+				}
+				matched = make([]string, 0)
+			}
 			continue
 		}
 		result = append(result, line)
@@ -712,8 +759,8 @@ func (b *builder) addRegressionData(appMeta *AppMeta, request *RunRequest) error
 		var prepare Map
 
 		switch request.Testing.UseCaseData {
-		case "load":
-			prepare, err = b.NewMapFromURI("datastore/regression/prepare_data.yaml", state)
+		case "preload":
+			prepare, err = b.NewMapFromURI("datastore/regression/data.yaml", state)
 		default:
 			prepare, err = b.NewMapFromURI("datastore/regression/prepare.yaml", state)
 		}
@@ -781,13 +828,15 @@ func (b *builder) addRegressionData(appMeta *AppMeta, request *RunRequest) error
 		}
 		pipeline.Put(datastore.Name, dbNode)
 	}
-
 	dataYAML, _ := toolbox.AsYamlText(dataInit)
-	b.UploadToEndly("regression/data.yaml", strings.NewReader(dataYAML))
+	b.UploadToEndly("regression/data_init.yaml", strings.NewReader(dataYAML))
 	return nil
 }
 
-func removePreloadUseCaseReference(regression string) string {
+func removePreloadUseCaseReference(regression string, format string) string {
+	if format == inlineWorkflowFormat {
+		return removeMatchedLines(regression, format, "data:")
+	}
 	regression = strings.Replace(regression, "/Data.db", "", 1)
 	var lines = []string{}
 	for _, line := range strings.Split(regression, "\n") {
@@ -796,11 +845,22 @@ func removePreloadUseCaseReference(regression string) string {
 	return strings.Join(lines, "\n")
 }
 
-func (b *builder) expandPrepareTestUseCaseData(regression string, request *RunRequest) string {
-	var lines = []string{}
+func (b *builder) expandPrepareTestUseCaseData(regression, format string, request *RunRequest) string {
+
+	if inlineWorkflowFormat == format {
+		return processBlockedText(regression, "-prepare", "comments:", func(matched string) string {
+			var result = make([]string, 0)
+			for _, datastore := range request.Datastore {
+				var state = data.NewMap()
+				state.Put("datastore", datastore.Name)
+				result = append(result, state.ExpandAsText(matched))
+			}
+			return strings.Join(result, "\n")
+		})
+	}
+	var lines = make([]string, 0)
 	for _, line := range strings.Split(regression, "\n") {
 		if strings.Contains(line, "set initial test") {
-
 			for _, datastore := range request.Datastore {
 				var state = data.NewMap()
 				state.Put("datastore", datastore.Name)
@@ -813,7 +873,19 @@ func (b *builder) expandPrepareTestUseCaseData(regression string, request *RunRe
 	return strings.Join(lines, "\n")
 }
 
-func (b *builder) expandExpectTestUseCaseData(regression string, request *RunRequest) string {
+func (b *builder) expandExpectTestUseCaseData(regression, format string, request *RunRequest) string {
+	if inlineWorkflowFormat == format {
+		return processBlockedText(regression, "-expect", "comments:", func(matched string) string {
+			var result = make([]string, 0)
+			for _, datastore := range request.Datastore {
+				var state = data.NewMap()
+				state.Put("datastore", datastore.Name)
+				result = append(result, state.ExpandAsText(matched))
+			}
+			return strings.Join(result, "\n")
+		})
+	}
+
 	var lines = []string{}
 	for _, line := range strings.Split(regression, "\n") {
 		if strings.Contains(line, "verify test") {
@@ -830,7 +902,20 @@ func (b *builder) expandExpectTestUseCaseData(regression string, request *RunReq
 	return strings.Join(lines, "\n")
 }
 
-func (b *builder) expandPushPreloadedUseCaseData(regression string, request *RunRequest) string {
+func (b *builder) expandPushPreloadedUseCaseData(regression string, format string, request *RunRequest) string {
+	if inlineWorkflowFormat == format {
+		return processBlockedText(regression, "data", "comments:", func(matched string) string {
+			var result = make([]string, 0)
+			for _, datastore := range request.Datastore {
+				var state = data.NewMap()
+				state.Put("dataTarget", fmt.Sprintf("%v.[]setup", datastore.Name))
+				state.Put("dataFile", fmt.Sprintf("@%v_data", datastore.Name))
+				result = append(result, state.ExpandAsText(matched))
+			}
+			return strings.Join(result, "\n")
+		})
+	}
+
 	lines := strings.Split(regression, "\n")
 	var before = []string{}
 	var setupLine = ""
@@ -883,7 +968,13 @@ func (b *builder) expandPushPreloadedUseCaseData(regression string, request *Run
 }
 
 func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
-	regression, err := b.Download("regression/regression.csv", nil)
+	format := request.Testing.Regression
+	var err error
+	regressionFile := "regression.csv"
+	if format == inlineWorkflowFormat {
+		regressionFile = "regression.yaml"
+	}
+	regression, err := b.Download("regression/"+regressionFile, nil)
 	if err != nil {
 		return err
 	}
@@ -896,39 +987,40 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 	if request.Testing.Selenium && len(appMeta.Selenium) > 0 {
 		b.buildSeleniumTestAssets(appMeta, request)
 	} else {
-		regression = removeMatchedLines(regression, "selenium")
+		regression = removeMatchedLines(regression, format, "selenium")
 	}
 
 	if request.Testing.HTTP && len(appMeta.HTTP) > 0 {
 		b.buildHTTPTestAssets(appMeta, request)
 	} else {
-		regression = removeMatchedLines(regression, "HTTP test")
+		regression = removeMatchedLines(regression, format, "HTTP test", "http:")
 	}
 
 	if request.Testing.REST && len(appMeta.REST) > 0 {
 		b.buildRESTTestAssets(appMeta, request)
 	} else {
-		regression = removeMatchedLines(regression, "REST test")
+		regression = removeMatchedLines(regression, format, "REST test", "rest:")
 	}
 
 	if request.Testing.SSH {
 		b.buildSSHCmdAssets(appMeta, request)
 	} else {
-		regression = removeMatchedLines(regression, "run SSH cmd")
+		regression = removeMatchedLines(regression, format, "run SSH cmd", "ssh:")
 	}
 	if request.Testing.Inline {
 		b.buildInlineWorkflowAssets(appMeta, request)
 	} else {
-		regression = removeMatchedLines(regression, "run workflow")
+		regression = removeMatchedLines(regression, format, "subworkflow")
 	}
 
 	var dbMeta = b.dbMeta
 	if dbMeta == nil {
-		regression = removeMatchedLines(regression, "test data")
+		regression = removeMatchedLines(regression, format, "test data", "data:")
 	} else {
 		b.addRegressionData(appMeta, request)
 		if request.Testing.DataValidation {
-			regression = b.expandExpectTestUseCaseData(regression, request)
+			regression = b.expandExpectTestUseCaseData(regression, format, request)
+
 			expect, err := b.Download("datastore/regression/req/expect.yaml", nil)
 			if err != nil {
 				return err
@@ -936,14 +1028,14 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 			b.UploadToEndly("regression/req/expect.yaml", strings.NewReader(expect))
 			b.UploadToEndly("regression/use_cases/001_xx_case/expect/README", strings.NewReader("Create a folder for each datastore with JSON or CSV files with expected data, filename refers to data store table."))
 		} else {
-			regression = removeMatchedLines(regression, "verify test")
+			regression = removeMatchedLines(regression, format, "verify test", "-expect:")
 		}
 
 		switch request.Testing.UseCaseData {
 		case "test":
-			regression = removePreloadUseCaseReference(regression)
-			regression = b.expandPrepareTestUseCaseData(regression, request)
-			regression = removeMatchedLines(regression, "setup_data")
+			regression = removePreloadUseCaseReference(regression, format)
+			regression = b.expandPrepareTestUseCaseData(regression, format, request)
+			regression = removeMatchedLines(regression, format, "setup_data", "data:")
 			prepare, err := b.Download("datastore/regression/req/prepare.yaml", nil)
 			if err != nil {
 				return err
@@ -952,18 +1044,18 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 			b.UploadToEndly("regression/use_cases/001_xx_case/prepare/README", strings.NewReader("Create a folder for each datastore with JSON or CSV data files, filename refers to data store table.\nTo remove data from table place first empty record in the file, followed by actual data "))
 
 		case "preload":
-			regression = removeMatchedLines(regression, "set initial test")
-			regression = b.expandPushPreloadedUseCaseData(regression, request)
+			regression = removeMatchedLines(regression, format, "set initial test", "-prepare:")
+			regression = b.expandPushPreloadedUseCaseData(regression, format, request)
 		default:
-			regression = removePreloadUseCaseReference(regression)
-			regression = removeMatchedLines(regression, "setup_data")
-			regression = removeMatchedLines(regression, "set initial test")
+			regression = removePreloadUseCaseReference(regression, format)
+			regression = removeMatchedLines(regression, format, "setup_data", "data:")
+			regression = removeMatchedLines(regression, format, "set initial test", "-prepare:")
 		}
 	}
 
 	if !request.Testing.LogValidation {
-		regression = removeMatchedLines(regression, "validator/log")
-		regression = removeMatchedLines(regression, "log records for validation")
+		regression = removeMatchedLines(regression, format, "validator/log", "log:", "validate-logs:")
+		regression = removeMatchedLines(regression, format, "log records for validation", "transaction-logs:")
 	} else {
 		if err = b.Copy(nil, "regression/req/log_listen.yaml", "regression/req/log_validate.yaml", "regression/var/push_log.json"); err != nil {
 			return err
@@ -976,7 +1068,8 @@ func (b *builder) addRegression(appMeta *AppMeta, request *RunRequest) error {
 		b.UploadToEndly("regression/logType1.json", strings.NewReader("[]"))
 	}
 
-	b.UploadToEndly("regression/regression.csv", strings.NewReader(regression))
+	b.UploadToEndly("regression/"+regressionFile, strings.NewReader(regression))
+
 	init, err := b.Download("regression/var/init.json", nil)
 	if err != nil {
 		return err

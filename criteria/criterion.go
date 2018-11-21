@@ -23,17 +23,27 @@ func (c *Criterion) expandOperand(opperand interface{}, state data.Map) interfac
 
 //Apply evaluates criterion with supplied context and state map . Dolar prefixed $expression will be expanded before evaluation.
 func (c *Criterion) Apply(state data.Map) (bool, error) {
-
 	if c.Predicate != nil && len(c.Predicate.Criteria) > 0 {
 		return c.Predicate.Apply(state)
 	}
-
 	leftOperand := c.expandOperand(c.LeftOperand, state)
 	rightOperand := c.expandOperand(c.RightOperand, state)
 	var err error
 	var leftNumber, rightNumber float64
 	var rootPath = assertly.NewDataPath("/")
 	var context = assertly.NewDefaultContext()
+
+	if boolValue, err := toolbox.ToBoolean(leftOperand); err == nil {
+		leftOperand = boolValue
+	}
+	if rightOperand == nil {
+		switch leftOperand.(type) {
+		case bool:
+			rightOperand = false
+		case string:
+			rightOperand = ""
+		}
+	}
 
 	switch c.Operator {
 	case "=", ":":
@@ -43,9 +53,6 @@ func (c *Criterion) Apply(state data.Map) (bool, error) {
 		}
 		return validation.FailedCount == 0, nil
 	case "!=", "":
-		if _, ok := leftOperand.(string); ok && rightOperand == nil {
-			rightOperand = ""
-		}
 		validation, err := assertly.AssertWithContext(leftOperand, rightOperand, rootPath, context)
 		if err != nil {
 			return false, err

@@ -1,0 +1,13 @@
+[
+  {
+    "Table": "users",
+    "Data": [
+      {"id":"${meta.upId1}", "name":"user7"},
+      {"id":"${meta.upId1}", "name":"user8"}
+    ],
+    "AutoGenerate": {
+      "meta.upId1": "uuid.next"
+    },
+    "Key": "${tagId}_up"
+  }
+]

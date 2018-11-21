@@ -90,6 +90,17 @@ func TestCriteriaParser_Parse(t *testing.T) {
 			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$key1", "=", "abc")),
 		},
 
+		{
+			Description: "uni operan boolean expression",
+			Expression:  "$key1",
+			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$key1", "!=", nil)),
+		},
+		{
+			Description: "uni operan boolean expression",
+			Expression:  "$HasResource(file:///tmp/req/print.json)",
+			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$HasResource(file:///tmp/req/print.json)", "!=", nil)),
+		},
+
 		//$stdout :/(END)/
 	}
 

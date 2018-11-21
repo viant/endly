@@ -82,7 +82,7 @@
                 <legend class="text-center pt-0">Datastore</legend>
             </div>
             <div class="form-group row">
-                <label for="dbEngine" class="col-1 col-form-label">Engine</label>
+                <label for="dbEngine" class="col-1 col-form-label">Vendor</label>
                 <div class="col-3">
                     <select size="6" multiple class="form-control" id="dbEngine" name="dbEngine" required>
                         <option value=""></option>
@@ -114,7 +114,12 @@
 
         <fieldset class="form-group">
             <div class="form-row text-center">
-                <legend class="text-center pt-0">Regression options</legend>
+                <legend class="text-center pt-0"><b>Regression</b>
+                    <small><i>Format:</i>
+                        <input type="radio" id="regression" name="regression" checked="checked" value="inline"/>Inline
+                        <input type="radio" id="regression" name="regression" value="neatly"/>Neatly
+                    </small>
+                </legend>
             </div>
 
             <div class="form-row">
@@ -127,7 +132,9 @@
 
                     <fieldset class="form-group">
                         <div class="form-group row">
-                            <div class="">Load use case data: <a href="https://github.com/viant/endly/blob/master/testing/dsunit/README.md#loaddata"><sup>[?]</sup></a></div>
+                            <div class="">Load use case data: <a
+                                    href="https://github.com/viant/endly/blob/master/testing/dsunit/README.md#loaddata"><sup>[?]</sup></a>
+                            </div>
                         </div>
 
                         <div class="form-group row">
@@ -156,25 +163,29 @@
 
                     <div class="form-group row">
                         <div class="form-check">
-                            <input type="checkbox" class="form-check-input form-control-lg" id="dataValidation"name="dataValidation">
-                            <label class="form-check-label" for="dataValidation">Data validation<a href="https://github.com/viant/endly/blob/master/testing/dsunit/README.md#validation"><sup>[?]</sup></a></label>
+                            <input type="checkbox" class="form-check-input form-control-lg" id="dataValidation"
+                                   name="dataValidation">
+                            <label class="form-check-label" for="dataValidation">Data validation<a
+                                    href="https://github.com/viant/endly/blob/master/testing/dsunit/README.md#validation"><sup>[?]</sup></a></label>
                         </div>
                     </div>
-
 
 
                     <div class="form-group row">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input form-control-lg" id="mapping"
                                    name="mapping">
-                            <label class="form-check-label" for="caseData">Multi table mapping<a href="https://github.com/viant/endly/blob/master/testing/dsunit/README.md#mapping"><sup>[?]</sup></a></label>
+                            <label class="form-check-label" for="caseData">Multi table mapping<a
+                                    href="https://github.com/viant/endly/blob/master/testing/dsunit/README.md#mapping"><sup>[?]</sup></a></label>
                         </div>
                     </div>
 
                     <div class="form-group row">
                         <div class="form-check">
-                            <input type="checkbox" class="form-check-input form-control-lg" id="logValidation" name="logValidation">
-                            <label class="form-check-label" for="logValidation">Log validation<a href="https://github.com/viant/endly/tree/master/testing/log"><sup>[?]</sup></a></label>
+                            <input type="checkbox" class="form-check-input form-control-lg" id="logValidation"
+                                   name="logValidation">
+                            <label class="form-check-label" for="logValidation">Log validation<a
+                                    href="https://github.com/viant/endly/tree/master/testing/log"><sup>[?]</sup></a></label>
                         </div>
                     </div>
 
@@ -193,14 +204,16 @@
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input form-control-lg" id="selenium"
                                    name="selenium">
-                            <label class="form-check-label" for="selenium">Selenium  <a href="https://github.com/viant/endly/tree/master/testing/runner/selenium"><sup>[?]</sup></a></label>
+                            <label class="form-check-label" for="selenium">Selenium <a
+                                    href="https://github.com/viant/endly/tree/master/testing/runner/selenium"><sup>[?]</sup></a></label>
                         </div>
                     </div>
 
                     <div class="form-group row">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input form-control-lg" id="http" name="http">
-                            <label class="form-check-label" for="http">HTTP runner <a href="https://github.com/viant/endly/tree/master/testing/runner/http"><sup>[?]</sup></a></label>
+                            <label class="form-check-label" for="http">HTTP runner <a
+                                    href="https://github.com/viant/endly/tree/master/testing/runner/http"><sup>[?]</sup></a></label>
                         </div>
                     </div>
 
@@ -208,14 +221,16 @@
                     <div class="form-group row">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input form-control-lg" id="rest" name="rest">
-                            <label class="form-check-label" for="rest">REST runner<a href="https://github.com/viant/endly/tree/master/testing/runner/rest"><sup>[?]</sup></a></label>
+                            <label class="form-check-label" for="rest">REST runner<a
+                                    href="https://github.com/viant/endly/tree/master/testing/runner/rest"><sup>[?]</sup></a></label>
                         </div>
                     </div>
 
                     <div class="form-group row">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input form-control-lg" id="ssh" name="ssh">
-                            <label class="form-check-label" for="rest">SSH runner<a href="https://github.com/viant/endly/tree/master/system/exec"><sup>[?]</sup></a></label>
+                            <label class="form-check-label" for="rest">SSH runner<a
+                                    href="https://github.com/viant/endly/tree/master/system/exec"><sup>[?]</sup></a></label>
                         </div>
                     </div>
 
@@ -223,7 +238,8 @@
                     <div class="form-group row">
                         <div class="form-check">
                             <input type="checkbox" class="form-check-input form-control-lg" id="inline" name="inline">
-                            <label class="form-check-label" for="rest">Workflow runner<a href="https://github.com/viant/endly/tree/master/doc/pipeline"><sup>[?]</sup></a></label>
+                            <label class="form-check-label" for="rest">Workflow runner<a
+                                    href="https://github.com/viant/endly/tree/master/doc/pipeline"><sup>[?]</sup></a></label>
                         </div>
                     </div>
 

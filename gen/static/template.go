@@ -13,7 +13,7 @@ func init() {
 description: "golang: web hello world"
 build: build/go
 docker: true
-sdk: go:1.9
+sdk: go:1.11
 dbconfigpath:  datastore
 assets:
 args:
@@ -691,7 +691,7 @@ config: config/config.yaml
 build: build/go
 dependency: go get -u -v github.com/viant/endly/bootstrap
 docker: true
-sdk: go:1.9
+sdk: go:1.11
 dbconfigpath:  datastore
 assets:
   - config/config.yaml
@@ -1557,35 +1557,6 @@ post:
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/prepare_data.yaml", bytes.NewReader([]byte(`mapping:
-  datastore: $db
-  action: dsunit.mapping
-  mappings:
-    - URL: regression/$db/mapping.json
-  post:
-    tables: $Tables
-sequence:
-  datastore: $db
-  action: dsunit.sequence
-  tables: $tables
-  post:
-    - seq = $Sequences
-data:
-  action: nop
-  init:
-    -  ${db}key = data.${db}.setup
-    -  ${db}Setup = $AsTableRecords($${db}key)
-setup:
-  datastore: $db
-  action: dsunit:prepare
-  URL: regression/data/$db/
-  data: $${db}Setup
-`)))
-		if err != nil {
-			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/regression/prepare_data.yaml %v", err)
-		}
-	}
-	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/req/expect.yaml", bytes.NewReader([]byte(`action: dsunit:expect
 datastore: $db
 URL: ${path}/expect/$db`)))
@@ -1641,6 +1612,35 @@ setup:
 		}
 	}
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/data.yaml", bytes.NewReader([]byte(`mapping:
+  datastore: $db
+  action: dsunit.mapping
+  mappings:
+    - URL: regression/$db/mapping.json
+  post:
+    tables: $Tables
+sequence:
+  datastore: $db
+  action: dsunit.sequence
+  tables: $tables
+  post:
+    - seq = $Sequences
+data:
+  action: nop
+  init:
+    -  ${db}key = data.${db}.setup
+    -  ${db}Setup = $AsTableRecords($${db}key)
+setup:
+  datastore: $db
+  action: dsunit:prepare
+  URL: regression/data/$db/
+  data: $${db}Setup
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/regression/data.yaml %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/regression/dbnode.yaml", bytes.NewReader([]byte(`"${driver}-ip": $ip
 register: $register
 prepare: $prepare
@@ -1667,11 +1667,44 @@ pipeline:
 	}
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/sdk/go/meta.yaml", bytes.NewReader([]byte(`sdk: go
-version: 1.9
+version: 1.11
 build: build/go
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/sdk/go/meta.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/sdk/jdk/app.yaml", bytes.NewReader([]byte(`pipeline:
+  set_sdk:
+    multiAction: true
+    set_jdk:
+      action: sdk:set
+      sdk: $sdk
+    set_build_runner:
+      action: deployment:deploy
+      appName: maven
+      version: 3.5
+    set_env:
+      action: exec:run
+      commands:
+        - echo 'setting env'
+  checkout:
+    action: version/control:checkout
+    origin:
+      URL: $originURL
+    dest:
+      URL: $appPath
+
+  build:
+    action: exec:run
+    commands:
+      - echo 'building app'
+      - cd $appPath
+      - echo 'mvn clean test'
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/sdk/jdk/app.yaml %v", err)
 		}
 	}
 	{
@@ -2095,7 +2128,7 @@ pipeline:
 []Init,,Service,Action,Description,Request,,,,,,
 ,,workflow,run,init selenium,@req/selenium_init,,,,,,
 ,,validator/log,listen,set log listener,@req/log_listen,,,,,,
-,,workflow,run,set initial data state,@data,,,,,,
+,,workflow,run,set initial data state,@data_init,,,,,,
 []Tasks,,,Name,Description,Actions,,,,,,
 ,,,test,Defines test requests,%Test,,,,,,
 []Test{1..002},Subpath,Service,Action,Description,Request,Skip,When,Init,TagDescription,db,/Data.db
@@ -2106,7 +2139,7 @@ pipeline:
 ,use_cases/${index}*,http/runner,send,run HTTP test,@http_test,,,,,,
 ,use_cases/${index}*,rest/runner,send,run REST test,@rest_test,,,,,,
 ,use_cases/${index}*,exec,run,run SSH cmd,@cmd,,,,,,
-,use_cases/${index}*,workflow,run,run workflow,@run,,,,,,
+,use_cases/${index}*,workflow,run,run subworkflow,@run,,,,,,
 ,use_cases/${index}*,dsunit,expect,verify test $db state,@req/expect,,$HasResource(${path}/expect/${db}):true,,,$datastore,
 ,use_cases/${index}*,,nop,push expected log records for validation,{},,$HasResource(${path}/expect/logType1.json):true,@var/push_log|@logType1,,,
 []Test,,Service,Action,Description,Request,SleepTimeMs,When,,,,
@@ -2129,6 +2162,114 @@ commands:
   - echo 'hi from $WorkingDirectory()'`)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/regression/cmd.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/regression/regression.yaml", bytes.NewReader([]byte(`init: '@var/init'
+pipeline:
+  init:
+    selenium:
+      action: run
+      request: '@req/selenium_init'
+      comments: initialize seleniun
+
+    log:
+      action: 'validator/log:listen'
+      request: '@req/log_listen'
+      comments: initialize log listener
+
+    data:
+      action: run
+      request: '@data_init'
+      comments: set initial app state
+
+  test:
+    tag: Test
+    description: '@use_case'
+
+    data:
+      '$dataTarget': '$dataFile'
+    comments: add setup data
+
+    subPath: 'use_cases/${index}*'
+    range: 1..002
+    template:
+      skip-tag:
+        action: nop
+        init: '@var/test_init'
+        skip: $HasResource(${subPath}/skip.txt)
+        comments: skip tag Id if subdirectory has skip.txt file present
+
+      $datastore-prepare:
+        when: '$HasResource(${path}/prepare/${db})'
+        action: dsunit:prepare
+        request: '@req/prepare'
+        db: $datastore
+        comments: populate data for use case if data is defined in folder ${path}/prepare/${db}
+
+      seleniun:
+        action: selenium:run
+        request: '@selenium_test'
+        comments: test with selenium runner
+
+      http:
+        action: 'http/runner:send'
+        request: '@http_test'
+        comments: test with http runner
+
+      rest:
+        action: 'rest/runner:send'
+        request: '@rest_test'
+        comments: test with rest runner
+
+      ssh:
+        action: exec:run
+        request: '@cmd'
+        comments: test with SSH commands
+
+      subworkflow:
+        action: run
+        request: '@run'
+        comments: test with sub workflow
+
+      $datastore-expect:
+        when: '$HasResource(${path}/expect/${db})'
+        action: dsunit:expect
+        request: '@req/expect'
+        db: $datastore
+        comments: verify test $db state after use case
+
+      transaction-logs:
+        when: '$HasResource(${path}/expect/logType1.json)'
+        action: nop
+        init: '@var/push_log @logType1'
+        comments: push data from ${path}/expect/logType1.json for post validation if defined
+
+
+    post-test-sleep:
+      action: nop
+      sleepTimeMs: 1000
+      comments: sleep for extra debuging
+
+    validate-logs:
+      when: $Len($logRecords) > 0
+      action: 'validator/log:assert'
+      request: '@req/log_validate'
+      comments: validate log records
+
+  destroy:
+    multiAction: true
+    sleep:
+      action: nop
+      sleepTimeMs: 1000
+
+    selenium:
+      action: run
+      request: '@req/selenium_destroy'
+      comments: stops selenium server
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/regression/regression.yaml %v", err)
 		}
 	}
 	{

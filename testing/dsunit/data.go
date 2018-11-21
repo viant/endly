@@ -10,7 +10,8 @@ import (
 //TableData represents table data
 type TableData struct {
 	Table         string
-	Value         interface{}
+	Value         interface{} //deprecated, use Data attribute instead
+	Data          interface{}
 	AutoGenerate  map[string]string `json:",omitempty"`
 	PostIncrement []string          `json:",omitempty"`
 	Key           string
@@ -42,11 +43,15 @@ func (d *TableData) PostIncrementIfNeeded(state data.Map) {
 
 //GetValues a table records.
 func (d *TableData) GetValues(state data.Map) []map[string]interface{} {
-	if d.Value == nil {
+	if d.Data == nil { //backward compatible check
+		d.Data = d.Value
+	}
+
+	if d.Data == nil {
 		return []map[string]interface{}{}
 	}
-	if toolbox.IsMap(d.Value) {
-		var value = d.GetValue(state, d.Value)
+	if toolbox.IsMap(d.Data) {
+		var value = d.GetValue(state, d.Data)
 		if len(value) == 0 {
 			return []map[string]interface{}{}
 		}
@@ -55,8 +60,8 @@ func (d *TableData) GetValues(state data.Map) []map[string]interface{} {
 		}
 	}
 	var result = make([]map[string]interface{}, 0)
-	if toolbox.IsSlice(d.Value) {
-		var aSlice = toolbox.AsSlice(d.Value)
+	if toolbox.IsSlice(d.Data) {
+		var aSlice = toolbox.AsSlice(d.Data)
 		for _, item := range aSlice {
 			value := d.GetValue(state, item)
 			if len(value) > 0 {

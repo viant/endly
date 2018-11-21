@@ -1,0 +1,64 @@
+{
+  "Name": "simple_subpath",
+  "Tasks": [
+    {
+      "Actions": [
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action1",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 1 - message from 001 xxx/001_xx"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagDescription": "xx description",
+          "TagID": "simple_subpath_task1_xxx001_xx",
+          "TagIndex": "001"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action2",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 2 - message from 001  xxx/001_xx"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "simple_subpath_task1_xxx001_xx",
+          "TagIndex": "001"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action1",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 1 - message from 002 xxx/002_yy"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagDescription": "yy description",
+          "TagID": "simple_subpath_task1_xxx002_yy",
+          "TagIndex": "002"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action2",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 2 - message from 002  xxx/002_yy"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "simple_subpath_task1_xxx002_yy",
+          "TagIndex": "002"
+        }
+      ],
+      "Name": "task1"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+pipeline:
+  init:
+    action: print
+    message: init ...
+
+  test:
+    tag: Test
+    range: 1..003
+    description: '@desc'
+    subPath: dir/${index}_*
+    template:
+
+      action1:
+        action: print
+        message: action 1 - message from $index $tagId $subPath
+
+      action2:
+        when: $HasResource(${path}/req/print.json)
+        action: print
+        request: '@req/print'
+
+    post-test:
+      action: print
+      message: post test
+
+
+  destroy:
+    action: print
+    message: destroy...

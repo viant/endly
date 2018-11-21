@@ -1,0 +1,126 @@
+{
+  "Name": "group_template",
+  "Tasks": [
+    {
+      "Actions": [
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action1",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 1 - message from 001"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "group_template_task1_group1001",
+          "TagIndex": "001"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action2",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 2 - message from 001"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "group_template_task1_group1001",
+          "TagIndex": "001"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action3",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 3 - message from 001"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "group_template_task1_group2001",
+          "TagIndex": "001"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action4",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 4 - message from 001"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "group_template_task1_group2001",
+          "TagIndex": "001"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action1",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 1 - message from 002"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "group_template_task1_group1002",
+          "TagIndex": "002"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action2",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 2 - message from 002"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "group_template_task1_group1002",
+          "TagIndex": "002"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action3",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 3 - message from 002"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "group_template_task1_group2002",
+          "TagIndex": "002"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action4",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 4 - message from 002"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "group_template_task1_group2002",
+          "TagIndex": "002"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "subTask2",
+          "Repeat": 1,
+          "Request": {
+            "message": "hello"
+          },
+          "Service": "workflow",
+          "Tag": "subTask2",
+          "TagID": "group_template_task1"
+        }
+      ],
+      "Name": "task1"
+    }
+  ]
+}

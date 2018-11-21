@@ -85,8 +85,14 @@ func (r *Router) download() http.Handler {
 		r.setTextValue(form, "appTemplate", &runRequest.Build.TemplateApp, "default")
 		r.setTextValue(form, "appName", &runRequest.Build.App, "myapp")
 		r.setTextValue(form, "origin", &runRequest.Origin, "")
+
 		r.setTextValue(form, "sdk", &runRequest.Build.Sdk, "")
 		r.setBoolValue(form, "docker", &runRequest.Build.Docker)
+
+		if len(runRequest.Build.App) < 3 {
+			http.Error(writer, "app name too short", 500)
+			return
+		}
 
 		dbConfig := false
 		r.setBoolValue(form, "dbConfig", &dbConfig)
@@ -116,6 +122,7 @@ func (r *Router) download() http.Handler {
 					Config: dbConfig,
 				})
 		}
+		r.setTextValue(form, "regression", &runRequest.Testing.Regression, "inline")
 		r.setBoolValue(form, "http", &runRequest.Testing.HTTP)
 		r.setBoolValue(form, "rest", &runRequest.Testing.REST)
 		r.setBoolValue(form, "selenium", &runRequest.Testing.Selenium)

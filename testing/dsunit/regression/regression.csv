@@ -1,0 +1,12 @@
+Workflow,,,Name,Description,Tasks,Init,
+,,,regression,app regresion test,%Tasks,@var/init,
+[]Tasks,,,Name,Description,Actions,,
+,,,init,Initialise tests,%Init,,
+[]Init,,Service,Action,Description,Request,db,
+,,workflow,run,set initial app state,@state-init,db1,
+[]Tasks,,,Name,Description,Actions,,
+,,,test,Defines test requests,%Test,,
+[]Test{1..002},Subpath,Service,Action,Description,Request,Init,/Data.[]db1
+,use_cases/${index}*,,nop,load data,{},@var/test_init,@data
+,use_cases/${index}*,workflow,print,print user info,@req/print,,
+,use_cases/${index}*,validator,assert,check user,@req/assert @user,,

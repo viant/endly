@@ -1,0 +1,23 @@
+pipeline:
+  task1:
+    range: 1..002
+    template:
+      group1:
+        action1:
+          action: print
+          message: action 1 - message from ${index}
+        action2:
+          action: print
+          message: action 2 - message from ${index}
+      group2:
+        action3:
+          action: print
+          message: action 3 - message from ${index}
+        action4:
+          action: print
+          message: action 4 - message from ${index}
+
+    subTask2:
+      action: print
+      message: hello
+      message: hello
