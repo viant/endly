@@ -15,7 +15,11 @@ const (
 	//ExplicitModelAttributePrefix represent model attribute prefix
 	ExplicitModelAttributePrefix = ":"
 	ExplicitDataAttributePrefix  = "@"
+
 )
+
+
+var multiActionKeys = []string{"multiaction", "async"}
 
 type MapEntry struct {
 	Key   string      `description:"preserved order map entry key"`
@@ -293,11 +297,11 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 	task := p.buildTask(name, source)
 	parentTask.Tasks = append(parentTask.Tasks, task)
 
+
 	var buildErr error
 	if err := toolbox.ProcessMap(source, func(key, value interface{}) bool {
-		if strings.ToLower(toolbox.AsString(key)) == "multiAction" || strings.ToLower(toolbox.AsString(key)) == "async" {
-			task.multiAction = toolbox.AsBoolean(value)
-		}
+		textKey := strings.ToLower(toolbox.AsString(key))
+		flagAsMultiActionIfNeeded(textKey, task, value)
 		if !toolbox.IsSlice(value) {
 			return true
 		}
@@ -312,4 +316,15 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 	}
 	return buildErr
 
+}
+
+
+
+func flagAsMultiActionIfNeeded(textKey string, task *Task, value interface{}) {
+	for _, key := range multiActionKeys {
+		if textKey == key {
+			task.multiAction = toolbox.AsBoolean(value)
+			break
+		}
+	}
 }
