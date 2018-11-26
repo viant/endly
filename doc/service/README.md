@@ -128,3 +128,86 @@ The following diagram shows service with its component.
 8) **Workflow service**
    - [Workflow Service](../../workflow/)
  
+
+
+
+<a name="new_service>&nbsp;</a>
+# Adding new service
+
+The following step provide quick instruction how to add new endly service:
+
+- Create a service contract for each service operation for instance 'xx' request/response may look like the following:
+```go
+type XXRequest struct {
+	SomeField string
+}
+
+type XXResponse struct {
+	SomeOtherField string
+}
+```
+- Create a new service type that embeds *AbstractService
+```go
+type xxService struct {
+	*AbstractService
+}
+```
+- Provide implementation for each action i.e.
+```go
+func (s *xxService) xx(request *XXRequest) (*XXResponse,error) {
+	var response = &XXResponse{}
+	var err error
+	//some logic here
+	
+	return response, err
+}
+````
+- Register service routes for each action
+```go
+func (s *xxService) registerRoutes() {
+	
+	//xx action route
+	s.Register(&Route{
+		Action: "xx",
+		RequestInfo: &ActionInfo{
+			Description: "xx action ....",
+		},
+		RequestProvider: func() interface{} {
+			return &XXRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &XXResponse{}
+		},
+		Handler: func(context *Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*XXRequest); ok {
+				return s.xx(context, request)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+	
+	
+}
+```
+- Create service constructor
+```go
+func newXXService() Service {
+	var result = &xxService{
+		AbstractService: NewAbstractService("xx"),
+	}
+	result.AbstractService.Service = result
+	result.registerRoutes()
+	return result
+}
+```
+- Register a new service with endly repository.
+```go
+import "github.com/viant/endly"
+
+func init() {
+	endly.Registry.Register(func() endly.Service {
+		return New()
+	})
+}
+```
+- Add a new service package to [bootstrap](./../../bootstrap/bootstrap.go) import.
