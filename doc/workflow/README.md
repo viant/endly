@@ -453,12 +453,14 @@ Workflow also offers DeferTask to execute as the last workflow step in case ther
 ## Best Practice
 
 1) Delegate a new workflow request to dedicated req/ folder
-2) Variables in  Init, Post should only define state, delegate all variables to var/ folder
-3) Flag variable as Required or provide a fallback Value
-4) Use [Tag Iterators](https://github.com/viant/neatly#tagiterator) to group similar class of the tests 
-5) Since JSON inside a tabular cell is not too elegant, try to use [Virtual object](https://github.com/viant/neatly#vobject) instead.
-6) Organize sequential simple tasks [into inline workflow](../pipeline).
-7) Organize functionally cohesive complex tasks into workflows. 
+2) Variables controlling workflow state:  Init, Post should only define state, if you decide to delegate then to external file use var/ folder
+3) Flag variable as Required or provide a fallback Value when applicable.
+4) Group similar functionally tasks into a reusable workflow.
+5) For complex workflow like regression consider using the following  
+    - [actions template](https://github.com/viant/endly/tree/master/doc/inline#actions-template) if inline workflow format is used 
+    - [tags templates](https://github.com/viant/neatly/#loading-repeated-data-with-tags-template) if neatly workflow format is used 
+
+
 
 
 Here is an example directory layout.
@@ -466,22 +468,21 @@ Here is an example directory layout.
 ```text
 
       endly
-        |- manager.csv or run.yaml
+        |- run.yaml
         |- system.yaml              
         |- app.yaml
         |- datastore.yaml
         |
-        |- system / 
-        | - regression /
-        |       | - regression.csv
+        |- regression /
+        |       | - regression[.csv|.yaml]
         |       | - var/init.json (workflow init variables)
         |       | - <use_case_group1> / 1 ... 00X (Tag Iterator)/ <test assets>
         |       | 
         |       | - <use_case_groupN> / 1 ... 00Y (Tag Iterator)/ <test assets>
         | - config /
         |       
-        | - datastore /
-                 | - dictionary /
-                 | - schema.ddl
+        | - datastore / db name 
+                         | - dictionary /
+                         | - schema.ddl
     
 ```
