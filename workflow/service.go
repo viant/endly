@@ -107,9 +107,9 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 		}
 	}()
 	var request interface{}
+	process.Push(activity)
+	startEvent := s.Begin(context, activity)
 	err = s.runNode(context, "action", process, action.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
-		process.Push(activity)
-		startEvent := s.Begin(context, activity)
 		defer s.End(context)(startEvent, model.NewActivityEndEvent(activity))
 		defer process.Pop()
 
@@ -447,14 +447,13 @@ func (s *Service) runTasks(context *endly.Context, process *model.Process, tasks
 		}
 	}()
 	for _, task := range tasks.Tasks {
-		if task.Name == tasks.OnErrorTask {
+		if task.Name == tasks.OnErrorTask || task.Name == tasks.DeferredTask {
 			continue
 		}
 		if process.IsTerminated() {
 			break
 		}
 		if _, err = s.runTask(context, process, task); err != nil {
-
 			err = s.runOnErrorTask(context, process, tasks, err)
 		}
 		if err != nil {

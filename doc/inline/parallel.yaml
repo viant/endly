@@ -1,0 +1,37 @@
+init:
+  target:
+    URL: ssh://127.0.0.1:22
+    credentials: localhost
+defaults:
+  target: $target
+pipeline:
+  task1:
+    multiAction: true
+    action1:
+      action: exec:run
+      commands:
+        - date
+        - echo 'action 1 start'
+        - sleep 2
+        - date
+        - echo 'action 1 end'
+
+      async: true
+    action2:
+      action: exec:run
+      commands:
+        - date
+        - echo 'action 2 start'
+        - sleep 4
+        - date
+        - echo 'action 2 end'
+      async: true
+    action1:
+      action: exec:run
+      commands:
+        - date
+        - echo 'action 3 start'
+        - sleep 6
+        - date
+        - echo 'action 3 end'
+      async: true

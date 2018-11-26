@@ -1,0 +1,28 @@
+pipeline:
+  task1:
+    range: 1..002
+    template:
+      action1:
+        action: print
+        message: action 1 - message from ${index}
+      action2:
+        action: print
+        message: action 2 - message from ${index}
+
+    subTask2:
+      action: print
+      message: hello
+  task2:
+    range: 1..002
+    tag: Test
+    template:
+      action1:
+        action: print
+        message: action 1 - message from ${index}
+      action2:
+        action: print
+        message: action 2 - message from ${index}
+
+    subTask2:
+      action: print
+      message: hello

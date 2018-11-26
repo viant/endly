@@ -1,7 +1,13 @@
-## November 22 2018 0.19.1
+## November 25 2018 0.20.0
+    * Added  actions template support for inline workflow action template (neatly tag iterators)
+    * Added multi asset supprot for inline workflow request (neatly like multi resource loading)
     * Added async flag to inline workflow at task level to allow parallel execution
     * Patched maching switch case with incompatible types
+    * Patch assertly validator for nil expected time validation
+    * Added regression format option to e2e project generator
+    * Patched double execution of defer tasks
     * Updated documentation 
+    
 
 ## November 18 2018 0.19.0
     * Added pubsub cloud messaging service

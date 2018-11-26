@@ -83,9 +83,20 @@ func (t *TasksNode) Has(name string) bool {
 //Task represents a group of action
 type Task struct {
 	*AbstractNode
-	Actions     []*Action //actions
+	Actions []*Action //actions
 	*TasksNode
-	multiAction bool
+
+	//internal only for inline workflow meta data
+
+	multiAction bool //flag directing grouping actions (otherwise each action has its own task)
+
+	//publish data in parent workflow
+	data map[string]string
+
+	//these attribute if present dynamically load action from subpath
+
+	tagRange string
+	subpath  string
 }
 
 //HasTagID checks if task has supplied tagIDs
@@ -99,4 +110,18 @@ func (t *Task) HasTagID(tagIDs map[string]bool) bool {
 		}
 	}
 	return false
+}
+
+//NewTask creates a new task
+func NewTask(name string, multiAction bool) *Task {
+	return &Task{
+		AbstractNode: &AbstractNode{
+			Name: name,
+		},
+		Actions:     make([]*Action, 0),
+		multiAction: multiAction,
+		TasksNode: &TasksNode{
+			Tasks: make([]*Task, 0),
+		},
+	}
 }

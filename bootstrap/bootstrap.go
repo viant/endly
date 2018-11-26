@@ -1,5 +1,7 @@
 package bootstrap
 
+//_ "github.com/alexbrainman/odbc"
+
 import (
 	_ "github.com/adrianwit/mgc"
 	"github.com/go-sql-driver/mysql"
@@ -7,20 +9,18 @@ import (
 	_ "github.com/viant/asc"
 	_ "github.com/viant/bgc"
 
+	"encoding/json"
+	"flag"
+	"fmt"
 	_ "github.com/viant/endly/static" //load external resource like .csv .json files to mem storage
 	_ "github.com/viant/toolbox/storage/aws"
 	_ "github.com/viant/toolbox/storage/gs"
 	_ "github.com/viant/toolbox/storage/scp"
 
-	"encoding/json"
-	"flag"
-	"fmt"
 	"github.com/viant/endly"
-
-	_ "github.com/viant/endly/gen/static"
-
 	_ "github.com/viant/endly/cloud/ec2"
 	_ "github.com/viant/endly/cloud/gce"
+	_ "github.com/viant/endly/gen/static"
 	_ "github.com/viant/endly/testing/endpoint/http"
 	_ "github.com/viant/endly/workflow"
 
@@ -432,7 +432,6 @@ func getWorkflow(request *workflow.RunRequest) (*model.Workflow, error) {
 }
 
 func printWorkflow(request *workflow.RunRequest) {
-
 	workFlow, err := getWorkflow(request)
 	if err != nil {
 		log.Fatal(err)
@@ -539,13 +538,13 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 	if value, ok := flagset["x"]; ok {
 		request.SummaryFormat = value
 	}
-	request.Init()
+	request.AssetURL = assetURL
+	err := request.Init()
 	if value, ok := flagset["i"]; ok {
 		request.TagIDs = value
 	}
 	updateBaseRunWithOptions(request, flagset)
-	request.AssetURL = assetURL
-	return request, nil
+	return request, err
 }
 
 func updateBaseRunWithOptions(request *workflow.RunRequest, flagset map[string]string) {

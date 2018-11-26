@@ -97,7 +97,7 @@ func (l *Logger) OnEvent(event msg.Event) {
 
 	if activityID != "" {
 		if !strings.HasSuffix(l.activityPath, activityID) {
-			activityCount := l.getAndIncrementTag(l.subPath + activityID)
+			activityCount := l.getAndIncrementTag(l.subPath)
 			l.activityPath = fmt.Sprintf("%03d_%v", activityCount, activityID)
 		}
 		activityID = l.activityPath

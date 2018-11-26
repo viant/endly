@@ -24,7 +24,7 @@ const (
 var matchers = map[int]toolbox.Matcher{
 	eof:         toolbox.EOFMatcher{},
 	whitespaces: toolbox.CharactersMatcher{" \n\t"},
-	operand:     toolbox.NewCustomIdMatcher(".", "_", "$", "[", "]", "{", "}", "!", "-", "(", ")", "/", "\\", "+", "-", "*"),
+	operand:     toolbox.NewCustomIdMatcher(".", "_", "$", "[", "]", "{", "}", "!", "-", "/", "\\", "+", "-", "*"),
 	operator: toolbox.KeywordsMatcher{
 		Keywords:      []string{"=", ">=", "<=", "<>", ">", "<", "!=", ":"},
 		CaseSensitive: false,
@@ -79,6 +79,14 @@ func (p *Parser) Parse(expression string) (*Predicate, error) {
 	var rightOperandTokens = []int{quoted, jsonObject, jsonArray, operand, operator}
 
 	parsingCriteria := result
+
+	setUniOperandCriteriaIfNeeed := func(criterion *Criterion) {
+		if criterion.Operator != "" || criterion.RightOperand != nil {
+			return
+		}
+		criterion.Operator = "!="
+	}
+
 outer:
 	for {
 
@@ -112,6 +120,10 @@ outer:
 			var matched = token.Matched
 			if token.Token == quoted {
 				matched = strings.Trim(token.Matched, "' ")
+			}
+			token = tokenizer.Next(grouping)
+			if token != nil {
+				matched += token.Matched
 			}
 			criterion = &Criterion{
 				LeftOperand: matched,
@@ -177,8 +189,10 @@ outer:
 		parsingCriteria.Criteria = append(parsingCriteria.Criteria, conjunctionCriterion)
 		parsingCriteria = NewPredicate(token.Matched)
 		conjunctionCriterion.Predicate = parsingCriteria
+		setUniOperandCriteriaIfNeeed(criterion)
 		criterion = nil
 	}
+	setUniOperandCriteriaIfNeeed(criterion)
 	return result, nil
 }
 

@@ -1,0 +1,17 @@
+pipeline:
+  task1:
+    range: 1..003
+    data:
+      'dsunit.[]user': '@users'
+    subPath: ddd/${index}*
+    template:
+      action1:
+        init:
+          - name: user
+            from: <-dsunit.${tagId}_users
+
+        action: print
+        message: action 1 - message from ${index} ${subPath}
+      action2:
+        action: print
+        message: action 2 - message from ${index}  ${subPath}

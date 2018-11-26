@@ -107,7 +107,7 @@ In this case dsunit.init also register datastore with driver thus no need to reg
 
 
 <a name="loaddata">&nbsp;</a>
-- **Loading data into data store**
+- **Static data loading into a data store**
 
 Assuming that register or init task has already taken place within the same e2e workflow session
 
@@ -120,72 +120,138 @@ pipeline:
       action: dsunit:prepare
       datastore: db1
       URL: datastore/db1/dictionary
-      data: ${data.db1.setup}
-```
+ ```
 
 - When **URL** attribute is used:  each file has to match a table name in db1 datastore and have json and csv extension.
 
-- When **data** attribute is used, $data usually is defined by [workflow.Data](./../../model/workflow.go) attribute.
-
-
-  _$data_ has to be in the following format:
-
-  @setup_data.json
-      
-  ```json
-        {
-          "table1":[
-              {"id":1, "name":"name 1"},
-              {"id":2, "name":"name 2"}
-          ],
-          "table2":[
-              {"id":1, "name":"name 1"},
-              {"id":2, "name":"name 2"}
-          ]
-        }
-  ``` 
     
-     
+- **Dynamic use case data loading into a datastore**
     
-  
-  Print workflow model to examine "Data" attribute
-    
-  ```bash
-  endly -r=regression -p  
-  ```
-  
-  Run workflow
-  ```bash
-  endly -r=regression
-  ```  
-  
-  Run workflow with debug option
-    ```bash
-    endly -r=regression -d=true
-    ```
-
-  @regression.csv
-
-  | Workflow | Name |Tasks | | 
-  | --- | ---| --- |--- | 
-  |  | regression |%Tasks | |
-  |**[]Tasks**| **Name** | **Actions** | |
-  | | prepare | %Prepare | | 
-  |**[]Prepare**| **Action** | **Request**  | **/Data.db1.[]setup** |   
-  | | nop|  {} | @setup_data.json |
-  | | run | @register.yaml |
-  | | run | @prepare_db1.yaml |
+ 
+In many system where data is managed and refreshed by central cache service loading data per use case is very inefficient, to address this problem 
+data defined on individual use case level can be loaded to database before individual use cases run. In this scenario 
+workflow.Data attribute is used operate any arbitrary data structure.
 
 
+Assume the [regression](regression) is a folder with the the following structure:
 
-_In many system where data is managed and refreshed by central cache service loading data per use case is very inefficient, to address this problem 
-data defined on individual use case level can be loaded to database before individual use cases run if workflow.Data attribute is used._   
+[![regression](regression.png)](regression)
+
+where:
+
+[@state-init.yaml](regression/state-init.yaml) defines an [inline workflow](./../../doc/inline) taking care of registering and loading data defined on use cases level.
+
+```yaml
+pipeline:
+  db1:
+    register:
+      comments: register db1 database name with mysql driver
+      action: dsunit:register
+      datastore: db1
+      config:
+        driverName: mysql
+        descriptor: '[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true'
+        credentials: $mysqlCredentials
+        parameters:
+          dbname: db1
+    prepare:
+      setup:
+        comments: loads static data,
+                     in this scenario in db1/ tehre is only users.json  file
+                     it contains JSON array with the first empty map element - which will instruct db unit to remove all users data
+        datastore: db1
+        action: dsunit:prepare
+        URL: db1/
+
+      sequence:
+        comments: read sequence for supplied tables and publish it to 'seq' variable (workflow state key)
+        action: dsunit.sequence
+        datastore: db1
+        tables:
+        - users
+        post:
+          - seq = $Sequences
+      data:
+        comments: convert use case level @data with AsTableRecords UDF,
+                  converted table records set 'db1Setup' variable
+                  AsTableRecords also pushes data dsunit.${tagId}_users slice
+        action: nop
+        init:
+          - db1key = data.db1
+          - db1Setup = $AsTableRecords($db1key)
+      load:
+        comments: insert data from db1Setup to db1 database
+        action: dsunit:prepare
+        datastore: db1
+        data: $db1Setup
+```    
+
+
+[@regression.yaml](regression/regression.yaml) defines regression inline workflow.
+
+```yaml
+init:
+  mysqlCredentials: mysql
+
+pipeline:
+  prepare:
+    action: run
+    request: '@state-init'
+  test:
+    range: 1..002
+    subPath: use_cases/${index}_*
+    data:
+      '[]db1': '@data'
+    template:
+      load-user:
+        comments: init section shift data loaded to datbase with sequences
+                  published by AsTableRecords UDF, and assign it to user variable
+        action: print
+        init:
+          - name: user
+            from: <-dsunit.${tagId}_users
+        message: "loaded user: id: $user.id, email: $user.email"
+      check:
+        action: validator:assert
+        actual: $user
+        request: '@req/assert @user'
+```    
+
+```bash
+endly -r=regression.yaml
+```  
+
+[@regression.csv](regression/regression.csv)  defines regression workflow using [neatly format](http://github.com/viant/neatly/).
+
+| Workflow| | | Name| Description| Tasks| Init| 
+|---|---|---|---|---|---|----| 
+| | | | regression| app regresion test| %Tasks| @var/init| 
+| **[]Tasks**| | | Name| Description| Actions| | 
+| | | | init| Initialise tests| %Init| | 
+| **[]Init**| | Service| Action| Description| Request| db| 
+| | | workflow| run| set initial app state| @state-init| db1| 
+| **[]Tasks**| | | Name| Description| Actions| | 
+| | | | test| Defines test requests| %Test| | 
+| **[]Test{1..002}**| Subpath| Service| Action| Description| Request| Init| /Data.[]db1
+| | use_cases/${index}*| | nop| load data| {}| @var/test_init| @data
+| | use_cases/${index}*| workflow| print| print user info| @req/print| | 
+| | use_cases/${index}*| validator| assert| check user| @req/assert @user| |  
+ 
+
+```bash
+endly -w=regression.csv
+```  
+
+In both cases delegates data loading to state-init workflow, 
+the it reference it back for validation.
+
+
 
     
 - **Dealing with data and autogenerated ID**    
 
 
-In this scenario, workflow has to read initial datastore sequence to used it by  [_AsTableRecords_](udf.go) UDF.
+In this scenario, workflow has to read initial datastore sequence which is used by [_AsTableRecords_](udf.go) UDF.
 
     
 @prepare_db1.yaml
@@ -219,7 +285,7 @@ In this scenario, workflow has to read initial datastore sequence to used it by 
     [
       {
         "Table": "table1",
-        "Value": {
+        "Data": {
           "id": "$id",
           "name": "Name 1",
           "type_id": 1
@@ -231,7 +297,7 @@ In this scenario, workflow has to read initial datastore sequence to used it by 
       },
       {
         "Table": "table2",
-        "Value": {
+        "Data": {
           "id": "$seq.table2",
           "name": "Name 1",
           "type_id": 1
@@ -269,7 +335,6 @@ Using AsTableRecords is more advance testing option, allowing value autogenerati
 ```bash
 endly -r=dump.yaml 
 ```
-
 
 @dump.yaml
 ```yaml
@@ -355,10 +420,10 @@ Data validation can take place on various level
  
 
 
-@epxec_db1.yaml
+@expect_db1.yaml
 ```bash
 pipeline:
-  prepare:
+  assert:
     db1:
       action: dsunit:epxect
       datastore: db1
@@ -373,7 +438,7 @@ pipeline:
     - Directive and macro
     - Casting
     - Date/time formatting
-    - testing nested unordered collection strucure
+    - testing any arbitrary data structure including nested and unordered collection 
 
 
 **Testing tables without primary key contrains**
