@@ -19,6 +19,7 @@ const (
 	ExplicitRequestAttributePrefix = "@"
 )
 
+
 var multiActionKeys = []string{"multiaction", "async"}
 
 type MapEntry struct {
@@ -383,9 +384,9 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 		parentTask.Tasks = append(parentTask.Tasks, task)
 	}
 
+
 	var buildErr error
 	if err := toolbox.ProcessMap(source, func(key, value interface{}) bool {
-
 		textKey := strings.ToLower(toolbox.AsString(key))
 		if isTemplateNode && "template" == textKey {
 			return true
