@@ -1,0 +1,195 @@
+{
+  "Data": {
+    "dsunit": {
+      "user": [
+        {
+          "AutoGenerate": {
+            "meta.upId1": "uuid.next"
+          },
+          "Data": [
+            {
+              "id": "${meta.upId1}",
+              "name": "user1"
+            },
+            {
+              "id": "${meta.upId1}",
+              "name": "user2"
+            }
+          ],
+          "Key": "data_task1_ddd001_xx_up",
+          "Table": "users"
+        },
+        {
+          "Key": "data_task1_ddd002_yy_up",
+          "Table": "users"
+        },
+        {
+          "AutoGenerate": {
+            "meta.upId1": "uuid.next"
+          },
+          "Data": [
+            {
+              "id": "${meta.upId1}",
+              "name": "user7"
+            },
+            {
+              "id": "${meta.upId1}",
+              "name": "user8"
+            }
+          ],
+          "Key": "data_task1_ddd003_zz_up",
+          "Table": "users"
+        }
+      ]
+    }
+  },
+  "Name": "data",
+  "Tasks": [
+    {
+      "Actions": [
+        {
+          "Action": "print",
+          "Async": false,
+          "Init": [
+            {
+              "EmptyIfUnexpanded": false,
+              "From": "\u003c-dsunit.data_task1_ddd001_xx_users",
+              "Name": "user",
+              "Persist": false,
+              "Required": false
+            }
+          ],
+          "Name": "action1",
+          "Repeat": 1,
+          "Request": {
+            "init": [
+              [
+                {
+                  "Key": "name",
+                  "Value": "user"
+                },
+                {
+                  "Key": "from",
+                  "Value": "\u003c-dsunit.${tagId}_users"
+                }
+              ]
+            ],
+            "message": "action 1 - message from 001 ddd/001_xx"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "data_task1_ddd001_xx",
+          "TagIndex": "001"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action2",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 2 - message from 001  ddd/001_xx"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "data_task1_ddd001_xx",
+          "TagIndex": "001"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Init": [
+            {
+              "EmptyIfUnexpanded": false,
+              "From": "\u003c-dsunit.data_task1_ddd002_yy_users",
+              "Name": "user",
+              "Persist": false,
+              "Required": false
+            }
+          ],
+          "Name": "action1",
+          "Repeat": 1,
+          "Request": {
+            "init": [
+              [
+                {
+                  "Key": "name",
+                  "Value": "user"
+                },
+                {
+                  "Key": "from",
+                  "Value": "\u003c-dsunit.${tagId}_users"
+                }
+              ]
+            ],
+            "message": "action 1 - message from 002 ddd/002_yy"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "data_task1_ddd002_yy",
+          "TagIndex": "002"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action2",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 2 - message from 002  ddd/002_yy"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "data_task1_ddd002_yy",
+          "TagIndex": "002"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Init": [
+            {
+              "EmptyIfUnexpanded": false,
+              "From": "\u003c-dsunit.data_task1_ddd003_zz_users",
+              "Name": "user",
+              "Persist": false,
+              "Required": false
+            }
+          ],
+          "Name": "action1",
+          "Repeat": 1,
+          "Request": {
+            "init": [
+              [
+                {
+                  "Key": "name",
+                  "Value": "user"
+                },
+                {
+                  "Key": "from",
+                  "Value": "\u003c-dsunit.${tagId}_users"
+                }
+              ]
+            ],
+            "message": "action 1 - message from 003 ddd/003_zz"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "data_task1_ddd003_zz",
+          "TagIndex": "003"
+        },
+        {
+          "Action": "print",
+          "Async": false,
+          "Name": "action2",
+          "Repeat": 1,
+          "Request": {
+            "message": "action 2 - message from 003  ddd/003_zz"
+          },
+          "Service": "workflow",
+          "Tag": "task1",
+          "TagID": "data_task1_ddd003_zz",
+          "TagIndex": "003"
+        }
+      ],
+      "Name": "task1"
+    }
+  ]
+}

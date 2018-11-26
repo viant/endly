@@ -68,8 +68,6 @@ func (s *execService) initSession(context *endly.Context, target *url.Resource, 
 }
 
 func (s *execService) openSession(context *endly.Context, request *OpenSessionRequest) (*model.Session, error) {
-	s.Lock()
-	defer s.Unlock()
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -77,7 +75,10 @@ func (s *execService) openSession(context *endly.Context, request *OpenSessionRe
 	if !s.isSupportedScheme(target) {
 		return nil, fmt.Errorf("failed to open sessionID: invalid schema: %v in url: %v", target.ParsedURL.Scheme, target.URL)
 	}
+
+	s.Lock()
 	sessions := TerminalSessions(context)
+	s.Unlock()
 
 	var replayCommands *ssh.ReplayCommands
 	if request.Basedir != "" {
@@ -86,14 +87,17 @@ func (s *execService) openSession(context *endly.Context, request *OpenSessionRe
 			return nil, err
 		}
 	}
+
 	var sessionID = target.Host()
 	if sessions.Has(sessionID) {
+		s.Lock()
 		SShSession := sessions[sessionID]
+		s.Unlock()
 		err = s.initSession(context, target, SShSession, request.Env)
 		if err != nil {
 			return nil, err
 		}
-		return sessions[sessionID], err
+		return SShSession, err
 	}
 	sshService, err := s.openSSHService(context, request)
 	if err == nil {
@@ -126,7 +130,9 @@ func (s *execService) openSession(context *endly.Context, request *OpenSessionRe
 	if err != nil {
 		return nil, err
 	}
+	s.Lock()
 	sessions[sessionID] = SSHSession
+	s.Unlock()
 	SSHSession.Os, err = s.detectOperatingSystem(SSHSession)
 	if err != nil {
 		return nil, err

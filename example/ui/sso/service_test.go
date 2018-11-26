@@ -6,9 +6,9 @@ import (
 	"github.com/viant/endly/example/ui/sso"
 	"github.com/viant/toolbox"
 	"log"
+	"net/http"
 	"path"
 	"testing"
-	"net/http"
 )
 
 func TestService_SignIn(t *testing.T) {
@@ -50,7 +50,7 @@ func TestService_SignIn(t *testing.T) {
 			},
 			Password:    "abc",
 			DataOfBirth: "2002-02-11",
-		}, &http.Request{RemoteAddr:"127.0.0.1"})
+		}, &http.Request{RemoteAddr: "127.0.0.1"})
 
 		assert.EqualValues(t, "", response.Error)
 		assert.NotNil(t, response.User.DateOfBirth)
@@ -64,7 +64,7 @@ func TestService_SignIn(t *testing.T) {
 			},
 			Password:    "abc",
 			DataOfBirth: "2002-02-11",
-		}, &http.Request{RemoteAddr:"127.0.0.1"})
+		}, &http.Request{RemoteAddr: "127.0.0.1"})
 
 		assert.EqualValues(t, "email abc@wp.pl has been already registered", response.Error)
 

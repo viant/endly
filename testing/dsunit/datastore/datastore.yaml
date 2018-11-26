@@ -1,0 +1,21 @@
+pipeline:
+  init:
+    mysqlCredentials: mysql
+
+  create-db:
+    db1:
+      action: dsunit:init
+      datastore: db1
+      recreate: true
+      config:
+        driverName: mysql
+        descriptor: '[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true'
+        credentials: $mysqlCredentials
+      admin:
+        datastore: mysql
+        config:
+          driverName: mysql
+          descriptor: '[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true'
+          credentials: $mysqlCredentials
+      scripts:
+      - URL: db1/schema.sql

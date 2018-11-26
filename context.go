@@ -85,6 +85,9 @@ func (c *Context) Clone() *Context {
 	result.CLIEnabled = c.CLIEnabled
 	result.Secrets = c.Secrets
 	result.AsyncUnsafeKeys = make(map[interface{}]bool)
+	for k, v := range c.AsyncUnsafeKeys {
+		result.AsyncUnsafeKeys[k] = v
+	}
 	c.cloned = append(c.cloned, result)
 	return result
 }

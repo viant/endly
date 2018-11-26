@@ -45,7 +45,7 @@ func Evaluate(context *endly.Context, state data.Map, expression, eventType stri
 	result, err := predicate.Apply(state)
 	expandedCriteria := state.Expand(expression)
 	if context != nil {
-		context.Publish(NewEvalEvent(eventType, defaultValue, result, expression, fmt.Sprintf("%s", expandedCriteria), err))
+		context.Publish(NewEvalEvent(eventType, defaultValue, result, expression, fmt.Sprintf("%v", expandedCriteria), err))
 	}
 	return result, err
 }

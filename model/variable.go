@@ -221,14 +221,14 @@ func (v *Variable) Apply(in, out data.Map) error {
 //NewVariable creates a new variable
 func NewVariable(name, form, when string, required bool, value, elseValue interface{}, replace map[string]string, emptyIfUnexpanded bool) *Variable {
 	return &Variable{
-		Name:     name,
-		From:     form,
-		When:     when,
-		Required: required,
-		Value:    value,
-		Else:     elseValue,
-		Replace:  replace,
-		EmptyIfUnexpanded:emptyIfUnexpanded,
+		Name:              name,
+		From:              form,
+		When:              when,
+		Required:          required,
+		Value:             value,
+		Else:              elseValue,
+		Replace:           replace,
+		EmptyIfUnexpanded: emptyIfUnexpanded,
 	}
 }
 
@@ -322,7 +322,7 @@ func (e *VariableExpression) AsVariable() (*Variable, error) {
 }
 
 //GetVariables returns variables from Variables ([]*Variable), []string (as expression) or from []interface{} (where interface is a map matching Variable struct)
-func GetVariables(baseURL string, source interface{}) (Variables, error) {
+func GetVariables(baseURLs []string, source interface{}) (Variables, error) {
 	if source == nil {
 		return nil, nil
 	}
@@ -337,9 +337,14 @@ func GetVariables(baseURL string, source interface{}) (Variables, error) {
 			return nil, nil
 		}
 		var result Variables = make([]*Variable, 0)
-		err := util.Decode(baseURL, value, &result)
+		loaded, err := util.LoadData(baseURLs, value)
+		if err == nil {
+			toolbox.DefaultConverter.AssignConverted(&result, loaded)
+		}
+
 		return result, err
 	}
+
 	var result Variables = make([]*Variable, 0)
 	if !toolbox.IsSlice(source) {
 		return nil, fmt.Errorf("invalid varaibles type: %T, expected %T or %T", source, result, []string{})

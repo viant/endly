@@ -62,11 +62,26 @@ func (s *service) checkProcess(context *endly.Context, request *StatusRequest) (
 		if strings.Contains(line, "grep") {
 			continue
 		}
+
+		index := strings.Index(line, request.Command)
+		if index == -1 {
+			continue
+		}
+
+		index += len(request.Command)
+		if index+1 < len(line) { //narrow grep result to command
+			argsSeparator := string(line[index : index+1])
+			if !(argsSeparator == " " || argsSeparator == "\t") {
+				continue
+			}
+		}
+
 		line = strings.TrimSpace(line)
 		columns, ok := util.ExtractColumns(line)
 		if len(columns) < 3 || !ok {
 			continue
 		}
+
 		info := &Info{
 			Pid:       toolbox.AsInt(columns[1]),
 			Command:   request.Command,
@@ -74,6 +89,11 @@ func (s *service) checkProcess(context *endly.Context, request *StatusRequest) (
 			Stdin:     command,
 			Stdout:    line,
 		}
+
+		if info.Pid == 0 {
+			continue
+		}
+
 		var expectArgument = false
 		for _, column := range columns {
 			if expectArgument {

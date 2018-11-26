@@ -3,6 +3,7 @@ package model
 import (
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"strings"
 )
@@ -10,12 +11,12 @@ import (
 const (
 	//CatchTask  represent a task name that execute if error occurred and defined
 	CatchTask = "catch"
+
 	//DeferredTask represent a task name that always execute if defined
 	DeferredTask = "defer"
-	//ExplicitModelAttributePrefix represent model attribute prefix
-	ExplicitModelAttributePrefix = ":"
-	ExplicitDataAttributePrefix  = "@"
-
+	//ExplicitActionAttributePrefix represent model attribute prefix
+	ExplicitActionAttributePrefix  = ":"
+	ExplicitRequestAttributePrefix = "@"
 )
 
 
@@ -27,48 +28,94 @@ type MapEntry struct {
 }
 
 type InlineWorkflow struct {
-	baseURL  string
-	Init     interface{}
-	Post     interface{}
-	Defaults map[string]interface{}
-	Pipeline []*MapEntry
+	baseURL    string
+	tagPathURL string
+	name       string
+	Init       interface{}
+	Post       interface{}
+	Defaults   map[string]interface{}
+	Data       map[string]interface{}
+	Pipeline   []*MapEntry
+	workflow   *Workflow //inline workflow from pipeline
 }
 
 func (p InlineWorkflow) updateReservedAttributes(aMap map[string]interface{}) {
 	for _, key := range []string{"action", "workflow"} {
 		if val, ok := aMap[key]; ok {
-			if _, has := aMap[ExplicitModelAttributePrefix+key]; has {
+			if _, has := aMap[ExplicitActionAttributePrefix+key]; has {
 				continue
 			}
 			delete(aMap, key)
-			aMap[ExplicitModelAttributePrefix+key] = val
+			aMap[ExplicitActionAttributePrefix+key] = val
 		}
 	}
 }
 
-func (p InlineWorkflow) loadRequest(attributes, actionData map[string]interface{}) error {
-	if request, ok := attributes["request"]; ok && toolbox.IsString(request) {
-		request := toolbox.AsString(attributes["request"])
-		var requestMap = map[string]interface{}{}
-		if err := util.DecodeMap(p.baseURL, request, requestMap); err != nil {
+var normalizationBlacklist = map[string]bool{
+	"workflow:run": true,
+	"seleniun:run": true,
+}
+
+func isNormalizableRequest(actionAttributes map[string]interface{}) bool {
+	if len(actionAttributes) == 0 {
+		return true
+	}
+	if _, ok := actionAttributes["workflow"]; ok {
+		return false
+	}
+
+	service := "workflow"
+	action := ""
+	if val, ok := actionAttributes["service"]; ok {
+		service = toolbox.AsString(val)
+	}
+	if val, ok := actionAttributes["action"]; ok {
+		action = toolbox.AsString(val)
+		action = strings.Replace(action, ".", ":", 1)
+	}
+
+	if !strings.Contains(action, service) {
+		action = service + ":" + action
+	}
+	_, has := normalizationBlacklist[action]
+	return !has
+}
+
+func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]interface{}, state data.Map) error {
+	if request, ok := actionAttributes["request"]; ok && toolbox.IsString(request) {
+		request := toolbox.AsString(actionAttributes["request"])
+		requestMap, err := util.LoadMap([]string{p.tagPathURL, p.baseURL}, request)
+		if err != nil {
 			return err
 		}
+
+		if isNormalizableRequest(actionAttributes) {
+			requestMap, err = util.NormalizeMap(requestMap, true)
+			if err != nil {
+				return err
+			}
+		}
+		expanded := state.Expand(requestMap)
+		dataRequest := data.Map(actionRequest)
+		expanded = dataRequest.Expand(expanded)
+		requestMap = toolbox.AsMap(expanded)
+
 		if val, ok := requestMap["defaults"]; ok {
 			if defaults, err := util.NormalizeMap(val, false); err == nil {
 				requestMap["defaults"] = defaults
 			}
 		}
-		util.Append(actionData, requestMap, false)
+		util.Append(actionRequest, requestMap, false)
 	}
 	return nil
 }
 
-func (p InlineWorkflow) asVariables(source interface{}) ([]interface{}, error) {
+func (p InlineWorkflow) asVariables(source interface{}) ([]map[string]interface{}, error) {
 	if source == nil {
 		return nil, nil
 	}
-	var result = make([]interface{}, 0)
-	variables, err := GetVariables(p.baseURL, source)
+	var result = make([]map[string]interface{}, 0)
+	variables, err := GetVariables([]string{p.tagPathURL, p.baseURL}, source)
 	if err != nil {
 		return nil, err
 	}
@@ -76,58 +123,66 @@ func (p InlineWorkflow) asVariables(source interface{}) ([]interface{}, error) {
 	return result, err
 }
 
-func (p InlineWorkflow) split(source interface{}) (attributes, actionData map[string]interface{}, err error) {
+//split splits key value pair into workflow action attribute and action request data,
+// while ':' key prefix assign pair to workflow action, '@' assign to request data, if none is matched pair is assign to both
+func (p InlineWorkflow) split(source interface{}, state data.Map) (map[string]interface{}, map[string]interface{}, error) {
 	aMap, err := util.NormalizeMap(source, false)
-	attributes = make(map[string]interface{})
-	actionData = make(map[string]interface{})
+	var actionAttributes = make(map[string]interface{})
+	var actionRequest = make(map[string]interface{})
 	p.updateReservedAttributes(aMap)
 
 	for k, v := range aMap {
-		if strings.HasPrefix(k, ExplicitModelAttributePrefix) {
-			attributes[strings.ToLower(string(k[1:]))] = v
+		if strings.HasPrefix(k, ExplicitActionAttributePrefix) {
+			actionAttributes[strings.ToLower(string(k[1:]))] = v
 			continue
 		}
-		if strings.HasPrefix(k, ExplicitDataAttributePrefix) {
-			actionData[strings.ToLower(string(k[1:]))] = v
+		if strings.HasPrefix(k, ExplicitRequestAttributePrefix) {
+			actionRequest[strings.ToLower(string(k[1:]))] = v
 			continue
 		}
-		attributes[k] = v
-		actionData[k] = v
+		actionAttributes[k] = v
+		actionRequest[k] = v
 	}
-	if err = p.loadRequest(attributes, actionData); err != nil {
+	if err = p.loadRequest(actionAttributes, actionRequest, state); err != nil {
 		return nil, nil, err
 	}
-
-	if value, ok := attributes["init"]; ok {
+	if value, ok := actionAttributes["init"]; ok {
 		variables, err := p.asVariables(value)
 		if err != nil {
-			if _, has := actionData["init"]; !has {
+			if _, has := actionRequest["init"]; !has {
 				return nil, nil, err
 			} else {
-				delete(attributes, "init")
+				delete(actionAttributes, "init")
 			}
 		} else {
-			attributes["init"] = variables
+			actionAttributes["init"] = state.Expand(variables)
 		}
 	}
 
-	if value, ok := attributes["post"]; ok {
+	if value, ok := actionAttributes["post"]; ok {
 		variables, err := p.asVariables(value)
 		if err != nil {
-			if _, has := actionData["post"]; !has {
+			if _, has := actionRequest["post"]; !has {
 				return nil, nil, err
 			} else {
-				delete(attributes, "post")
+				delete(actionAttributes, "post")
 			}
 		} else {
-			attributes["post"] = variables
+			actionAttributes["post"] = state.Expand(variables)
 		}
 	}
-	return attributes, actionData, err
+	return actionAttributes, actionRequest, err
 }
 
 func (p *InlineWorkflow) AsWorkflow(name string, baseURL string) (*Workflow, error) {
+	if p.workflow != nil {
+		return p.workflow, nil
+	}
 	p.baseURL = baseURL
+	p.name = name
+	if len(p.Data) == 0 {
+		p.Data = make(map[string]interface{})
+	}
 	var result = &Workflow{
 		AbstractNode: &AbstractNode{
 			Name: name,
@@ -135,23 +190,24 @@ func (p *InlineWorkflow) AsWorkflow(name string, baseURL string) (*Workflow, err
 		TasksNode: &TasksNode{
 			Tasks: []*Task{},
 		},
+		Data:   p.Data,
 		Source: url.NewResource(toolbox.URLPathJoin(baseURL, name+".yaml")),
 	}
 	var err error
 	if p.Init != nil {
-		if result.AbstractNode.Init, err = GetVariables(p.baseURL, p.Init); err != nil {
+		if result.AbstractNode.Init, err = GetVariables([]string{p.baseURL}, p.Init); err != nil {
 			return nil, err
 		}
 	}
 	if p.Post != nil {
-		if result.AbstractNode.Post, err = GetVariables(p.baseURL, p.Post); err != nil {
+		if result.AbstractNode.Post, err = GetVariables([]string{p.baseURL}, p.Post); err != nil {
 			return nil, err
 		}
 	}
 	root := p.buildTask("", map[string]interface{}{})
 	tagID := name
 	for _, entry := range p.Pipeline {
-		if err = p.buildWorkflowNodes(entry.Key, entry.Value, root, tagID); err != nil {
+		if err = p.buildWorkflowNodes(entry.Key, entry.Value, root, tagID, nil); err != nil {
 			return nil, err
 		}
 	}
@@ -163,6 +219,7 @@ func (p *InlineWorkflow) AsWorkflow(name string, baseURL string) (*Workflow, err
 			Tasks: []*Task{root},
 		}
 	}
+	p.workflow = result
 	return result, nil
 
 }
@@ -202,31 +259,43 @@ func isActionNode(attributes map[string]interface{}) bool {
 	return action || workflow
 }
 
-func (p *InlineWorkflow) buildAction(name string, attributes, actionData map[string]interface{}, tagId string) (*Action, error) {
+func getTemplateNode(source interface{}) *Template {
+	if source == nil || !(toolbox.IsSlice(source) || toolbox.IsMap(source)) {
+		return nil
+	}
+	var template = &Template{}
+	toolbox.DefaultConverter.AssignConverted(template, source)
+	if len(template.Template) == 0 || template.Range == "" {
+		return nil
+	}
+	return template
+}
+
+func (p *InlineWorkflow) buildAction(name string, actionAttributes, actionRequest map[string]interface{}, tagId string) (*Action, error) {
 	var result = &Action{
 		AbstractNode:   &AbstractNode{},
 		ServiceRequest: &ServiceRequest{},
 		Repeater:       &Repeater{},
 	}
 
-	util.Append(actionData, p.Defaults, false)
-	if action, ok := attributes["action"]; ok {
-		attributes["request"], _ = util.NormalizeMap(actionData, false)
+	util.Append(actionRequest, p.Defaults, false)
+
+	if action, ok := actionAttributes["action"]; ok {
+		actionAttributes["request"], _ = util.NormalizeMap(actionRequest, false)
 		selector := ActionSelector(toolbox.AsString(action))
-		attributes["service"] = selector.Service()
-		attributes["action"] = selector.Action()
+		actionAttributes["service"] = selector.Service()
+		actionAttributes["action"] = selector.Action()
 	} else {
-		workflow := toolbox.AsString(attributes["workflow"])
-		attributes["action"] = "run"
+		workflow := toolbox.AsString(actionAttributes["workflow"])
+		actionAttributes["action"] = "run"
 		selector := WorkflowSelector(workflow)
-		attributes["request"] = map[string]interface{}{
-			"params": actionData,
+		actionAttributes["request"] = map[string]interface{}{
+			"params": actionRequest,
 			"tasks":  selector.Tasks(),
 			"URL":    selector.URL(),
 		}
-
 	}
-	if err := toolbox.DefaultConverter.AssignConverted(result, attributes); err != nil {
+	if err := toolbox.DefaultConverter.AssignConverted(result, actionAttributes); err != nil {
 		return nil, err
 	}
 	result.Init()
@@ -269,44 +338,64 @@ func (p *InlineWorkflow) hasActionNode(source interface{}) bool {
 	return result
 }
 
-func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, parentTask *Task, tagID string) error {
-	attributes, actionData, err := p.split(source)
+func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, parentTask *Task, tagID string, state data.Map) error {
+	if state != nil {
+		source = state.Expand(source)
+	}
+	actionAttributes, actionRequest, err := p.split(source, state)
 	if err != nil {
 		return err
 	}
+	var task *Task
+	isTemplateNode := false
+	if parentTask != nil {
+		template := getTemplateNode(source)
+		if template != nil {
+			task = p.buildTask(name, source)
+			parentTask.Tasks = append(parentTask.Tasks, task)
+			isTemplateNode = true
+			if err = template.Expand(task, name, p); err != nil {
+				return err
+			}
+		}
+	}
 
-	if isActionNode(attributes) {
-		action, err := p.buildAction(name, attributes, actionData, tagID)
+	if isActionNode(actionAttributes) {
+		action, err := p.buildAction(name, actionAttributes, actionRequest, tagID)
 		if err != nil {
 			return err
 		}
 		task := parentTask
-		if ! parentTask.multiAction {
+		if !parentTask.multiAction {
 			task = p.buildTask(name, map[string]interface{}{})
 			parentTask.Tasks = append(parentTask.Tasks, task)
 		}
+
 		task.Actions = append(task.Actions, action)
-
 		return nil
 	}
 
-	if !p.hasActionNode(attributes) {
+	if !p.hasActionNode(actionAttributes) {
 		return nil
 	}
 
-	task := p.buildTask(name, source)
-	parentTask.Tasks = append(parentTask.Tasks, task)
+	if !isTemplateNode {
+		task = p.buildTask(name, source)
+		parentTask.Tasks = append(parentTask.Tasks, task)
+	}
 
 
 	var buildErr error
 	if err := toolbox.ProcessMap(source, func(key, value interface{}) bool {
 		textKey := strings.ToLower(toolbox.AsString(key))
-		flagAsMultiActionIfNeeded(textKey, task, value)
+		if isTemplateNode && "template" == textKey {
+			return true
+		}
+		flagAsMultiActionIfMatched(textKey, task, value)
 		if !toolbox.IsSlice(value) {
 			return true
 		}
-
-		buildErr = p.buildWorkflowNodes(toolbox.AsString(key), value, task, tagID+"_"+task.Name)
+		buildErr = p.buildWorkflowNodes(toolbox.AsString(key), value, task, tagID+"_"+task.Name, state)
 		if buildErr != nil {
 			return false
 		}
@@ -318,11 +407,9 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 
 }
 
-
-
-func flagAsMultiActionIfNeeded(textKey string, task *Task, value interface{}) {
+func flagAsMultiActionIfMatched(textKey string, task *Task, value interface{}) {
 	for _, key := range multiActionKeys {
-		if textKey == key {
+		if textKey == key && toolbox.IsBool(value) {
 			task.multiAction = toolbox.AsBoolean(value)
 			break
 		}

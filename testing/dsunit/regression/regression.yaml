@@ -1,0 +1,24 @@
+init:
+  mysqlCredentials: mysql
+
+pipeline:
+  prepare:
+    action: run
+    request: '@state-init'
+  test:
+    range: 1..002
+    subPath: use_cases/${index}_*
+    data:
+      '[]db1': '@data'
+    template:
+      load-user:
+        comments: init section shift data loaded to datbase with sequences
+                  published by AsTableRecords UDF, and assign it to user variable
+        action: print
+        init:
+          - name: user
+            from: <-dsunit.${tagId}_users
+        message: "loaded user: id: $user.id, email: $user.email"
+      check:
+        action: validator:assert
+        request: '@req/assert @user'

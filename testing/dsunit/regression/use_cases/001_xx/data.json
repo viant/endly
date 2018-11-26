@@ -1,0 +1,13 @@
+[
+  {
+    "Table": "users",
+    "Value": {
+      "id": "$seq.users",
+      "email": "bob@wp.pl"
+    },
+    "PostIncrement": [
+      "seq.users"
+    ],
+    "Key": "${tagId}_users"
+  }
+]
