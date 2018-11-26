@@ -134,7 +134,7 @@ The following diagram shows service with its component.
 <a name="new_service>&nbsp;</a>
 # Adding new service
 
-The following step provide quick instruction how to add new endly service:
+The following steps provide quick instruction how to add a new endly service:
 
 - Create a service contract for each service operation for instance 'xx' request/response may look like the following:
 ```go
