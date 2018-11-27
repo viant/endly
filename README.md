@@ -465,7 +465,9 @@ endly -r=test
 
 **f) Stress testing:**
 
+The following  define inline workflow that loads request and desired responses from data folder for stress testing.
 
+@load.yaml
 ```yaml
 init:
   testEndpoint: z.myendoint.com
@@ -509,6 +511,11 @@ Where data folder contains http request and desired responses i.e
   "Code":200,
   "Body":"/some expected fragement/"
 }
+```
+
+
+```bash
+endly -r=load
 ```
 
 
