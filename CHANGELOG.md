@@ -1,5 +1,4 @@
 ## November 25 2018 0.21.0
-
     * Added http/runner:load action for HTTP endpoint stress testing
     * Added  NumericFloatPrecission
     * Added wildcard resource support for loading data section in actions template
