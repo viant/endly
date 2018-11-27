@@ -416,7 +416,9 @@ where
 ```
 
 
-The following workflow provide example how to **_bulk load**_ request and expected responses for stress testing
+## Bulk requests loading for stress testing
+
+The following workflow provide example how to bulk load request and desired response for stress testing
 
 
 [@regression.yaml](regression/regression.yaml)
