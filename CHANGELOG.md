@@ -1,3 +1,9 @@
+## November 25 2018 0.21.0
+
+    * Added http/runner:load action for HTTP endpoint stress testing
+    * Added  NumericFloatPrecission
+    * Added wildcard resource support for loading data section in actions template
+
 ## November 25 2018 0.20.0
     * Added  actions template support for inline workflow action template (neatly tag iterators)
     * Added multi asset supprot for inline workflow request (neatly like multi resource loading)
