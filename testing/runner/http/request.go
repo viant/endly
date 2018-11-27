@@ -54,7 +54,6 @@ func (r *Request) Expand(state data.Map) {
 
 //Build builds an http.Request
 func (r *Request) Build(context *endly.Context, sessionCookies Cookies) (*http.Request, bool, error) {
-
 	if r.Body == "" && r.JSONBody != nil {
 		var err error
 		r.Body, err = toolbox.AsJSONText(r.JSONBody)

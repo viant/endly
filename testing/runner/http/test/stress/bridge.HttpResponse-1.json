@@ -1,0 +1,15 @@
+{
+	"Code": 200,
+	"Header": {
+		"Cache-Control": [
+			"private"
+		],
+		"Content-Type": [
+			"text/html;charset=ISO-8859-1"
+		],
+		"Server": [
+			"Apache-Coyote/1.1"
+		]
+	},
+	"Body": "1111"
+}

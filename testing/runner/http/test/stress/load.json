@@ -1,0 +1,64 @@
+{
+  "ThreadCount": 6,
+  "Repeat": 30,
+  "Requests": [
+    {
+      "Body": "000",
+      "Method": "POST",
+      "URL": "http://127.0.0.1:8988/send0"
+    },
+    {
+      "Body": "111",
+      "Method": "POST",
+      "URL": "http://127.0.0.1:8988/send1"
+    },
+    {
+      "Body": "222",
+      "Method": "POST",
+      "URL": "http://127.0.0.1:8988/send2"
+    },
+    {
+      "Body": "333",
+      "Method": "POST",
+      "URL": "http://127.0.0.1:8988/send3"
+    },
+    {
+      "Body": "444",
+      "Method": "POST",
+      "URL": "http://127.0.0.1:8988/send4"
+    },
+    {
+      "Body": "555",
+      "Method": "POST",
+      "URL": "http://127.0.0.1:8988/send5"
+    }
+  ],
+  "Expect": {
+    "Responses": [
+      {
+        "Body": "1000",
+        "Code": 200
+      },
+      {
+        "Body": "1111",
+        "Code": 200
+      },
+      {
+        "Body": "1222",
+        "Code": 200
+      },
+      {
+        "Body": "1333",
+        "Code": 200
+      },
+      {
+        "Body": "1444",
+        "Code": 200
+      },
+      {
+        "Body": "1555",
+        "Code": 200
+      }
+    ]
+  }
+}
