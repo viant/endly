@@ -721,7 +721,7 @@ Assume that a [data](data) folder has the following structure:
 
 **Bulk data loading**
 
-To load resource data in bulk you can use * wildcard matching a files with data structure to load.
+To load resource in bulk you can use * wildcard matching a files with data structure to load.
 
 ```bash
 endly -r=bulk
