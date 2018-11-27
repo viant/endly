@@ -463,6 +463,56 @@ endly -r=test
 ```
 
 
+**f) Stress testing:**
+
+
+```yaml
+init:
+  testEndpoint: z.myendoint.com
+pipeline:
+  test:
+    tag: StressTest
+    data:
+      []Requests: '@data/*request.json'
+      []Responses: '@data/*response.json'
+    range: '1..1'
+    template:
+      info:
+        action: print
+        message: starting load testing 
+      load:
+        action: 'http/runner:load'
+        threadCount: 3
+        '@repeat': 100
+        requests: $data.Requests
+        expect:
+          Responses: $data.Responses
+      load-info:
+        action: print
+        message: '$load.QPS: Response: min: $load.MinResponseTimeInMs ms, avg: $load.AvgResponseTimeInMs ms max: $load.MaxResponseTimeInMs ms'
+
+```
+
+Where data folder contains http request and desired responses i.e 
+
+@data/XXX_request.json
+```json
+{
+  "Method":"get",
+  "URL":"http://${testEndpoint}/bg/?pixid=123"
+}
+```
+
+@data/XXX_response.json
+```json
+{
+  "Code":200,
+  "Body":"/some expected fragement/"
+}
+```
+
+
+
 To see _Endly_ in action,
  
 In addition a few examples of fully functioning applications are included.
