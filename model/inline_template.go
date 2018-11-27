@@ -69,43 +69,73 @@ func (t *Template) Expand(task *Task, parentTag string, inline *InlineWorkflow) 
 }
 
 func (t *Template) loadWorkflowData(tagPath string, workflowData data.Map, state data.Map) error {
+	var baseURLs =[]string{tagPath, t.inline.baseURL}
+	var err error
 	for k, v := range t.Data {
 		k = state.ExpandAsText(k)
-		loaded, err := util.LoadData([]string{tagPath, t.inline.baseURL}, v)
+		hasWildCard := strings.Contains(v, "*")
+		var resourceURLs  = make([]string,0)
+		if hasWildCard {
+			resourceURLs, err = util.ListResource(baseURLs, v)
+			if util.IsNotSuchResourceError(err) {
+				continue
+			}
+			if err != nil {
+				return err
+			}
+		}
+		if len(resourceURLs) > 0 {
+			for _, resourceURL := range resourceURLs {
+				base, URI := toolbox.URLSplit(resourceURL)
+				loaded, err := util.LoadData([]string{base}, "@"+URI)
+				if err != nil {
+					return err
+				}
+				addLoadedData(loaded, state, k, workflowData)
+			}
+			continue
+		}
+		loaded, err := util.LoadData(baseURLs, v)
 		if util.IsNotSuchResourceError(err) {
 			continue
 		}
 		if err != nil {
 			return err
 		}
-		loaded = state.Expand(loaded)
-		collectionSignatureCount := strings.Count(k, "[]")
-		if collectionSignatureCount > 0 {
-			k = strings.Replace(k, "[]", "", collectionSignatureCount)
-			var collection *data.Collection
-			collectionValue, ok := workflowData.GetValue(k)
-			if !ok {
-				collection = data.NewCollection()
-				workflowData.SetValue(k, collection)
-			} else {
-				collection, _ = collectionValue.(*data.Collection)
-			}
-			if collection == nil {
-				collection = data.NewCollection()
-				workflowData.SetValue(k, collection)
-			}
-			if toolbox.IsSlice(loaded) {
-				for _, item := range toolbox.AsSlice(loaded) {
-					collection.Push(item)
-				}
-			} else {
-				collection.Push(loaded)
-			}
-		} else {
-			workflowData.SetValue(k, loaded)
-		}
+		addLoadedData(loaded, state, k, workflowData)
 	}
 	return nil
+}
+
+
+
+func addLoadedData(loaded interface{}, state data.Map, k string, workflowData data.Map) {
+	loaded = state.Expand(loaded)
+	collectionSignatureCount := strings.Count(k, "[]")
+	if collectionSignatureCount > 0 {
+		k = strings.Replace(k, "[]", "", collectionSignatureCount)
+		var collection *data.Collection
+		collectionValue, ok := workflowData.GetValue(k)
+		if !ok {
+			collection = data.NewCollection()
+			workflowData.SetValue(k, collection)
+		} else {
+			collection, _ = collectionValue.(*data.Collection)
+		}
+		if collection == nil {
+			collection = data.NewCollection()
+			workflowData.SetValue(k, collection)
+		}
+		if toolbox.IsSlice(loaded) {
+			for _, item := range toolbox.AsSlice(loaded) {
+				collection.Push(item)
+			}
+		} else {
+			collection.Push(loaded)
+		}
+	} else {
+		workflowData.SetValue(k, loaded)
+	}
 }
 
 func (t *Template) buildTagState(index string, tag *neatly.Tag) data.Map {
