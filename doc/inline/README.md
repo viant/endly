@@ -140,7 +140,8 @@ where
 }
 ```
 
-The executable node ancestor represent one or more grouped tasks, that run sequentially or can be filtered with endly -t=task1,taskN option. -t='*' means run all tasks.
+The executable node ancestor represent one or more grouped tasks, that run sequentially or can be filtered with endly -t=task1,taskN switch.
+Option  -t='*' run all tasks.
 
 By default each executable node is also converted to a task with only one action, so that endly -t=taskname allows you to select one or more nodes to run at a time.
 In some case for instance in parallel actions execution which is implemented within a task,  you want to group action under one task node. 
