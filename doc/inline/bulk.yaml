@@ -1,0 +1,25 @@
+pipeline:
+  test1:
+    tag: Test1
+    data:
+      '[]xx': '@bulk/*_xx'
+    range: 1..1
+    template:
+      action1:
+        action: print
+        init:
+          xx: $data.xx
+        message: 'xx: $xx'
+
+  test2:
+      tag: Test2
+      subPath: bulk/${index}_*
+      data:
+        '${tagId}.[]x': '@*_xx'
+      range: 1..0002
+      template:
+        action1:
+          action: print
+          init:
+            x: ${data.${tagId}.x}
+          message: '$tagId: $x'
