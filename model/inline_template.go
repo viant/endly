@@ -69,12 +69,12 @@ func (t *Template) Expand(task *Task, parentTag string, inline *InlineWorkflow) 
 }
 
 func (t *Template) loadWorkflowData(tagPath string, workflowData data.Map, state data.Map) error {
-	var baseURLs =[]string{tagPath, t.inline.baseURL}
+	var baseURLs = []string{tagPath, t.inline.baseURL}
 	var err error
 	for k, v := range t.Data {
 		k = state.ExpandAsText(k)
 		hasWildCard := strings.Contains(v, "*")
-		var resourceURLs  = make([]string,0)
+		var resourceURLs = make([]string, 0)
 		if hasWildCard {
 			resourceURLs, err = util.ListResource(baseURLs, v)
 			if util.IsNotSuchResourceError(err) {
@@ -106,8 +106,6 @@ func (t *Template) loadWorkflowData(tagPath string, workflowData data.Map, state
 	}
 	return nil
 }
-
-
 
 func addLoadedData(loaded interface{}, state data.Map, k string, workflowData data.Map) {
 	loaded = state.Expand(loaded)

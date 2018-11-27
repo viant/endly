@@ -72,7 +72,6 @@ func TestLoadMap(t *testing.T) {
 
 }
 
-
 func TestListResource(t *testing.T) {
 	parentDirectory := path.Join(toolbox.CallerDirectory(3), "test")
 	URLs, err := ListResource([]string{parentDirectory}, "dir/*_xx")
