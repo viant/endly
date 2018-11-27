@@ -756,6 +756,7 @@ pipeline:
 ```
 
 where [bulk](bulk) is a folder with the following structure
+
 [![bulk](bulk.png)](bulk)
 
 [See more ...](https://github.com/viant/endly/tree/master/testing/runner/http#bulk-requests-loading-for-stress-testing) how to bulk load resources for HTTP stress testing
