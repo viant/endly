@@ -236,13 +236,15 @@ func collectTripResponses(context *endly.Context, trips []*stressTestTrip, respo
 		cumulativeResponse += trip.elapsed
 		tripResponse := response.NewResponse()
 		var index = trip.index
-		tripResponse.Merge(trip.response, trip.expectBinary)
-		err := tripResponse.TransformBodyIfNeeded(context, request.Requests[index])
-		if err != nil {
-			return err
-		}
-		if toolbox.IsCompleteJSON(tripResponse.Body) {
-			tripResponse.JSONBody, _ = toolbox.JSONToMap(tripResponse.Body)
+		if trip.response != nil {
+			tripResponse.Merge(trip.response, trip.expectBinary)
+			err := tripResponse.TransformBodyIfNeeded(context, request.Requests[index])
+			if err != nil {
+				return err
+			}
+			if toolbox.IsCompleteJSON(tripResponse.Body) {
+				tripResponse.JSONBody, _ = toolbox.JSONToMap(tripResponse.Body)
+			}
 		}
 		response.Responses[trip.index] = tripResponse
 	}
