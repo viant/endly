@@ -17,21 +17,23 @@ import (
 	"path"
 	"strings"
 	"testing"
+	"fmt"
 )
 
-func StartTestServer(port int, basedir string, indexBy ...string) error {
+func StartTestServer(port int, basedir string, rotate bool, indexBy ...string) error {
 	if len(indexBy) == 0 {
 		indexBy = []string{endpoint.MethodKey, endpoint.URLKey, endpoint.BodyKey, endpoint.CookieKey, endpoint.ContentTypeKey}
 	}
 	baseDir := toolbox.CallerDirectory(3)
 	return endpoint.StartServer(port, &endpoint.HTTPServerTrips{
 		IndexKeys:     indexBy,
+		Rotate:        rotate,
 		BaseDirectory: path.Join(baseDir, basedir),
 	})
 }
 
 func TestHttpRunnerService_Run(t *testing.T) {
-	err := StartTestServer(8766, "test/send")
+	err := StartTestServer(8766, "test/send", false)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -99,7 +101,7 @@ func TestHttpRunnerService_Run(t *testing.T) {
 }
 
 func TestHttpRunnerService_Repeat(t *testing.T) {
-	err := StartTestServer(8111, "test/send")
+	err := StartTestServer(8111, "test/send", false)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -157,7 +159,7 @@ func TestHttpRunnerService_Repeat(t *testing.T) {
 }
 
 func TestHttpRunnerService_RepeatWthExitCriteria(t *testing.T) {
-	err := StartTestServer(8112, "test/send")
+	err := StartTestServer(8112, "test/send", false)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -212,7 +214,7 @@ func init() {
 }
 
 func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
-	err := StartTestServer(8119, "test/udf")
+	err := StartTestServer(8119, "test/udf", false)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -325,7 +327,7 @@ func TestHttpRunnerService_PayloadTransformation(t *testing.T) {
 
 func Test_UdfProvider(t *testing.T) {
 	var parentDir = toolbox.CallerDirectory(3)
-	err := StartTestServer(8987, "test/udf_provider", endpoint.MethodKey, endpoint.URLKey)
+	err := StartTestServer(8987, "test/udf_provider", false, endpoint.MethodKey, endpoint.URLKey)
 	if !assert.Nil(t, err) {
 		return
 	}
@@ -379,5 +381,160 @@ func Test_UdfProvider(t *testing.T) {
 }
 `
 	assertly.AssertValues(t, expected, response)
+
+}
+
+func TestHttpRunnerService_Run_StressTest(t *testing.T) {
+	err := StartTestServer(8988, "test/stress", true, endpoint.MethodKey, endpoint.URLKey, endpoint.BodyKey)
+	if ! assert.Nil(t, err) {
+		log.Fatal(err)
+	}
+	request := &runner.LoadRequest{
+		SendRequest: &runner.SendRequest{},
+		ThreadCount: 6,
+		Repeat:      30,
+	}
+
+	request.Requests = []*runner.Request{
+	}
+	var expected = []interface{}{}
+	for i := 0; i < 6; i++ {
+		request.Requests = append(request.Requests,
+			&runner.Request{
+				Method: "POST",
+				URL:    fmt.Sprintf("http://127.0.0.1:8988/send%d", i),
+				Body:   strings.Repeat(toolbox.AsString(i), 3),
+			},
+		)
+		expected = append(expected,
+			map[string]interface{}{
+				"Code": 200,
+				"Body": "1" + strings.Repeat(toolbox.AsString(i), 3),
+			})
+	}
+	request.Expect = map[string]interface{}{
+		"Responses": expected,
+	}
+
+	response := &runner.LoadResponse{}
+	err = endly.Run(nil, request, response)
+	if ! assert.Nil(t, err) {
+		log.Fatal(err)
+	}
+	expect := `{
+	"RequestCount": 180,
+	"Responses": [
+		{
+			"Body": "1000",
+			"Code": 200,
+			"Header": {
+				"Cache-Control": [
+					"private"
+				],
+				"Content-Length": [
+					"4"
+				],
+				"Content-Type": [
+					"text/html;charset=ISO-8859-1"
+				],
+				"Server": [
+					"Apache-Coyote/1.1"
+				]
+			}
+		},
+		{
+			"Body": "1111",
+			"Code": 200,
+			"Header": {
+				"Cache-Control": [
+					"private"
+				],
+				"Content-Length": [
+					"4"
+				],
+				"Content-Type": [
+					"text/html;charset=ISO-8859-1"
+				],
+				"Server": [
+					"Apache-Coyote/1.1"
+				]
+			}
+		},
+		{
+			"Body": "1222",
+			"Code": 200,
+			"Header": {
+				"Cache-Control": [
+					"private"
+				],
+				"Content-Length": [
+					"4"
+				],
+				"Content-Type": [
+					"text/html;charset=ISO-8859-1"
+				],
+				"Server": [
+					"Apache-Coyote/1.1"
+				]
+			}
+		},
+		{
+			"Body": "3333",
+			"Code": 200,
+			"Header": {
+				"Cache-Control": [
+					"private"
+				],
+				"Content-Length": [
+					"4"
+				],
+				"Content-Type": [
+					"text/html;charset=ISO-8859-1"
+				],
+				"Server": [
+					"Apache-Coyote/1.1"
+				]
+			}
+		},
+		{
+			"Body": "1444",
+			"Code": 200,
+			"Header": {
+				"Cache-Control": [
+					"private"
+				],
+				"Content-Length": [
+					"4"
+				],
+				"Content-Type": [
+					"text/html;charset=ISO-8859-1"
+				],
+				"Server": [
+					"Apache-Coyote/1.1"
+				]
+			}
+		},
+		{
+			"Body": "1555",
+			"Code": 200,
+			"Header": {
+				"Cache-Control": [
+					"private"
+				],
+				"Content-Length": [
+					"4"
+				],
+				"Content-Type": [
+					"text/html;charset=ISO-8859-1"
+				],
+				"Server": [
+					"Apache-Coyote/1.1"
+				]
+			}
+		}
+	],
+	"Status": "ok"
+}`
+	assertly.AssertValues(t, expect, response)
 
 }

@@ -1,0 +1,23 @@
+init:
+  testEndpoint: x.vindicosuite.com
+pipeline:
+  test:
+    tag: Test
+    subPath: use_cases/${index}*
+    data:
+      ${tagId}.[]Requests: '@data/*request.json'
+      ${tagId}.[]Responses: '@data/*response.json'
+    range: '1..002'
+    template:
+      info:
+        action: print
+        message: load testing $subPath
+      load:
+        action: 'http/runner:load'
+        request: '@req/load'
+        init:
+          requests: ${data.${tagId}.Requests}
+          expect:   ${data.${tagId}.Responses}
+      load-info:
+        action: print
+        message: '$load.QPS: Response: min: $load.MinResponseTimeInMs ms, avg: $load.AvgResponseTimeInMs ms max: $load.MaxResponseTimeInMs ms'

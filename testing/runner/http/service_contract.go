@@ -5,13 +5,14 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
+	"fmt"
 )
 
 //SendRequest represents a send http request.
 type SendRequest struct {
 	Options  []*toolbox.HttpOptions `description:"http client options: key value pairs, where key is one of the following: HTTP options:RequestTimeoutMs,TimeoutMs,KeepAliveTimeMs,TLSHandshakeTimeoutMs,ResponseHeaderTimeoutMs,MaxIdleConns"`
 	Requests []*Request
-	Expect   interface{} `description:"If specified it will validated response as actual"`
+	Expect   map[string]interface{} `description:"If specified it will validated response as actual"`
 }
 
 //NewSendRequestFromURL create new request from URL
@@ -55,4 +56,68 @@ func NewSendResponseFromURL(URL string) (*SendResponse, error) {
 	resource := url.NewResource(URL)
 	var request = &SendResponse{}
 	return request, resource.Decode(request)
+}
+
+//LoadRequest represents a send http request.
+type LoadRequest struct {
+	*SendRequest
+	ThreadCount int `description:"defines number of http client sending request concurrently, default 3"`
+	Repeat      int `description:"defines how many times repeat individual request, default 1"`
+}
+
+func (r *LoadRequest) Init() error {
+	if r.ThreadCount == 0 {
+		r.ThreadCount = 3;
+	}
+	if r.Repeat == 0 {
+		r.Repeat = 1;
+	}
+	if len(r.Requests) == 0 {
+		return nil
+	}
+
+	for _, req := range r.Requests {
+		if req.Repeater == nil {
+			req.Repeater = req.Repeater.Init()
+			req.Repeat = r.Repeat
+		}
+		if req.Repeat == 0 {
+			req.Repeat = r.Repeat
+		}
+	}
+
+	return nil
+}
+
+func (r *LoadRequest) Validate() error {
+	if len(r.Requests) == 0 {
+		return fmt.Errorf("requests were empty")
+	}
+	for _, request := range r.Requests {
+		if request.When != "" {
+			return fmt.Errorf("conditional execution is not supported in stress test mode")
+		}
+		if len(request.Variables) > 0 {
+			return fmt.Errorf("scraping variables is not supported in stress test mode")
+		}
+		if len(request.Extraction) > 0 {
+			return fmt.Errorf("scraping data is not supported in stress test mode")
+		}
+	}
+
+	return nil
+}
+
+
+//LoadRequest represents a stress test response
+type LoadResponse struct {
+	SendResponse
+	Status              string
+	Error               string
+	QPS                 float64
+	TestDurationSec     float64
+	RequestCount int
+	MinResponseTimeInMs float64
+	AvgResponseTimeInMs float64
+	MaxResponseTimeInMs float64
 }

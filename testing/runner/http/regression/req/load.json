@@ -1,0 +1,8 @@
+{
+  "ThreadCount":3,
+  "Repeat":5,
+  "Requests": "$requests",
+  "Expect": {
+    "Responses": "$expect"
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "Method":"get",
+  "URL":"http://${testEndpoint}/bg/?pixid=345"
+}

@@ -6,6 +6,7 @@ it manages cookie within [SendRequest](service_contract.go).
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
 | http/runner | send | Sends one or more http request to the specified endpoint. | [SendRequest](service_contract.go) | [SendResponse](service_contract.go) |
+| http/runner | load | Stress test http endpoint. | [LoadRequest](service_contract.go) | [LoadResponse](service_contract.go) |
 
 
 ## Usage
@@ -17,7 +18,8 @@ it manages cookie within [SendRequest](service_contract.go).
 - [Request with validation](#assert)
 - [Testing http request from cli](#cli)
 - [Sending http request from inline workflow](#inline)
-- [Neatly http body payload data organization](#workflow)
+- [Stress testing](#load)
+- [Data organization](#workflow)
 
 
 <a name="basic"></a>
@@ -366,11 +368,10 @@ endly -w=action service='http/runner' action=send request='@send.json'
 
 
 ```bash
-endly -r=inline
+endly -r=http
 ```
 
-
-@inline.yaml
+@http.yaml
 ```yaml
 pipeline:
   task1:
@@ -379,8 +380,87 @@ pipeline:
 ```
 
 
-<a name="workflow"></a>
-**Neatly http body payload data organization**
+
+<a name="load"></a>
+## Stress testing
+
+
+HTTP runner provide stress testing capabilities to test race condition or endpoint concurrency. 
+Note that stress testing should not be consider as replacement with real load testing and tools like [wrk](https://github.com/wg/wrk) or [jmeter](https://jmeter.apache.org/)
+
+
+@load.yaml
+```yaml
+pipeline:
+  task1:
+    action: http/runner:load
+    request: "@load.json" 
+```
+
+where 
+[@load.json](test/stress/load.json)
+
+```json
+{
+  "ThreadCount": 6,
+  "Repeat": 30,
+  "Requests": [
+    //...
+  ],
+  "Expect": {
+    "Responses": [
+       //... 
+    ]
+  }
+}
+```
+
+
+The following workflow provide example how to bulk load request and expected responses for stress testing
+
+
+[@regression.yaml](regression/regression.yaml)
+```yaml
+init:
+  testEndpoint: x.vindicosuite.com
+pipeline:
+  test:
+    tag: Test
+    subPath: use_cases/${index}*
+    data:
+      ${tagId}.[]Requests: '@data/*request.json'
+      ${tagId}.[]Responses: '@data/*response.json'
+    range: '1..002'
+    template:
+      info:
+        action: print
+        message: load testing $subPath
+      load:
+        action: 'http/runner:load'
+        request: '@req/load'
+        init:
+          requests: ${data.${tagId}.Requests}
+          expect:   ${data.${tagId}.Responses}
+      load-info:
+        action: print
+        message: '$load.QPS: Response: min: $load.MinResponseTimeInMs ms, avg: $load.AvgResponseTimeInMs ms max: $load.MaxResponseTimeInMs ms'
+```
+
+Where 
+
+- [@load.json](regression/req/load.json)
+
+- [regression](regression) is a folder with the following structure
+
+[![regression](regression.png)](regression)
+
+```bash
+endly -r=regression
+```
+
+
+<a name="data_organization"></a>
+**Data organization**
 
 Imagine a case where Payload body can be shared across various HTTP requests within the same group.
 
@@ -421,7 +501,22 @@ Imagine a case where Payload body can be shared across various HTTP requests wit
 ```
 
 
-You can use the following [neatly](https://github.com/viant/neatly#external-resources-loading-with-content-substitution-and-user-defined-function-udf-use-case) construct
+You can use the multi resource loading: 
+
+
+- [inline](./../../do) workflow format
+
+@test.yaml
+```yaml
+pipeline:
+  task1:
+    action: http/runner:send
+    request: "@send.json @payloads" 
+```
+
+
+
+-  [neatly](https://github.com/viant/neatly#external-resources-loading-with-content-substitution-and-user-defined-function-udf-use-case) workflow format
 
 @test.csv
 
