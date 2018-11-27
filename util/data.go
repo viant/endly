@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
-	"strings"
-	"path"
 	"github.com/viant/toolbox/storage"
+	"github.com/viant/toolbox/url"
+	"path"
 	"regexp"
 	"sort"
+	"strings"
 )
 
 func AsDataMap(source interface{}) data.Map {
@@ -77,8 +77,8 @@ func ListResource(baseURLs []string, URI string) ([]string, error) {
 			exprSuffix = ".+"
 		}
 		regExprText := strings.Replace(matchingExpr, "*", ".+", strings.Count(matchingExpr, "*"))
-		regExprText  = regExprText + exprSuffix
-		if ! strings.HasPrefix(regExprText , ".+")  {
+		regExprText = regExprText + exprSuffix
+		if !strings.HasPrefix(regExprText, ".+") {
 			regExprText = ".+" + regExprText
 		}
 		regExpression := regexp.MustCompile(regExprText)
@@ -94,7 +94,7 @@ func ListResource(baseURLs []string, URI string) ([]string, error) {
 
 		var result = make([]string, 0)
 		for _, candidate := range objects {
-			if ! candidate.IsContent() {
+			if !candidate.IsContent() {
 				continue
 			}
 			if regExpression.MatchString(candidate.URL()) {
@@ -192,7 +192,7 @@ func expandMapWithArgumentsIfMatched(baseURLs []string, URIs []string, mainConte
 				return nil, err
 			}
 			state.Put(fmt.Sprintf("arg%d", i-1), text)
-			trimText := string(text[strings.Index(text, "{")+1: strings.LastIndex(text, "}")-1])
+			trimText := string(text[strings.Index(text, "{")+1 : strings.LastIndex(text, "}")-1])
 			state.Put(fmt.Sprintf("args%d", i-1), trimText)
 
 		}
