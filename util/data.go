@@ -6,6 +6,10 @@ import (
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"strings"
+	"path"
+	"github.com/viant/toolbox/storage"
+	"regexp"
+	"sort"
 )
 
 func AsDataMap(source interface{}) data.Map {
@@ -54,6 +58,54 @@ func AsExtractable(input interface{}) (string, map[string]interface{}) {
 		}
 	}
 	return extractableOutput, structuredOutput
+}
+
+//ListResource returns list of matcher resource URL
+func ListResource(baseURLs []string, URI string) ([]string, error) {
+	if strings.HasPrefix(URI, "@") {
+		URI = string(URI[1:])
+	}
+	for _, baseURL := range baseURLs {
+		parent, matchingExpr := path.Split(URI)
+		if parent != "" {
+			baseURL = toolbox.URLPathJoin(baseURL, parent)
+		} else {
+			matchingExpr = URI
+		}
+		var exprSuffix = ""
+		if path.Ext(matchingExpr) == "" {
+			exprSuffix = ".+"
+		}
+		regExprText := strings.Replace(matchingExpr, "*", ".+", strings.Count(matchingExpr, "*"))
+
+		regExprText  = ".+" + regExprText + exprSuffix
+		regExpression := regexp.MustCompile(regExprText)
+
+		resource := url.NewResource(baseURL)
+		storageService, err := storage.NewServiceForURL(resource.URL, "")
+		if err != nil {
+			return nil, err
+		}
+		objects, err := storageService.List(resource.URL)
+		if err != nil {
+			continue
+		}
+
+		var result = make([]string, 0)
+		for _, candidate := range objects {
+			if ! candidate.IsContent() {
+				continue
+			}
+			if regExpression.MatchString(candidate.URL()) {
+				result = append(result, candidate.URL())
+			}
+		}
+		if len(result) > 0 {
+			sort.Strings(result)
+			return result, nil
+		}
+	}
+	return nil, nil
 }
 
 //LoadData load and decode URI into a pointer
@@ -139,7 +191,7 @@ func expandMapWithArgumentsIfMatched(baseURLs []string, URIs []string, mainConte
 				return nil, err
 			}
 			state.Put(fmt.Sprintf("arg%d", i-1), text)
-			trimText := string(text[strings.Index(text, "{")+1 : strings.LastIndex(text, "}")-1])
+			trimText := string(text[strings.Index(text, "{")+1: strings.LastIndex(text, "}")-1])
 			state.Put(fmt.Sprintf("args%d", i-1), trimText)
 
 		}
