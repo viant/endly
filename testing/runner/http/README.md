@@ -385,8 +385,8 @@ pipeline:
 ## Stress testing
 
 
-HTTP runner provide stress testing capabilities to test race condition or endpoint concurrency. 
-Note that stress testing should not be consider as replacement with real load testing and tools like [wrk](https://github.com/wg/wrk) or [jmeter](https://jmeter.apache.org/)
+HTTP runner provide stress testing capabilities to test race condition and concurrency support. 
+Note that this service stress testing should not be consider as replacement for a load testing with tools like [wrk](https://github.com/wg/wrk) or [jmeter](https://jmeter.apache.org/)
 
 
 @load.yaml
@@ -416,7 +416,7 @@ where
 ```
 
 
-The following workflow provide example how to bulk load request and expected responses for stress testing
+The following workflow provide example how to **_bulk load**_ request and expected responses for stress testing
 
 
 [@regression.yaml](regression/regression.yaml)

@@ -103,6 +103,8 @@ you can use key prefix to instruct how data is dispatched. For instance '@init' 
 
 Additionally action request can be delegated to external file with 'request' key, file has to start with '@' to reference external resource. 
 
+##### Multi resource loading
+
 Delegating request to external resource supports multi asset loading, which means that any structured data from subsequent asset 
 can be used to expand the main request asset. For instance: '@request.json @payload.json' expression expands request: $payload1 and $payload2 keys from @payload asset.
 
@@ -716,3 +718,44 @@ Assume that a [data](data) folder has the following structure:
 
 
 [See moee ...](./../../testing/dsunit/README.md#loaddata) to how to load data to database/datastore with dsunit service
+
+**Bulk data loading**
+
+```bash
+endly -r=bulk
+```
+
+[@bulk.yaml](bulk.yaml)
+```yaml
+pipeline:
+  test1:
+    tag: Test1
+    data:
+      '[]xx': '@bulk/*_xx'
+    range: 1..1
+    template:
+      action1:
+        action: print
+        init:
+          xx: $data.xx
+        message: 'xx: $xx'
+
+  test2:
+      tag: Test2
+      subPath: bulk/sub_${index}
+      data:
+        '$tagId.[]x': '@*_xx'
+      range: 1..0002
+      template:
+        action1:
+          action: print
+          init:
+            x: ${data.${tagId}.x}
+          message: '$tagId: $x'
+
+```
+
+where [bulk](bulk) is a folder with the following structure
+[![bulk](bulk.png)](bulk)
+
+[See moore](https://github.com/viant/endly/tree/master/testing/runner/http#stress-testing) how to bulk load resource for http stress testing
