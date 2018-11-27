@@ -385,8 +385,8 @@ pipeline:
 ## Stress testing
 
 
-HTTP runner provide stress testing capabilities to test race condition and concurrency support. 
-Note that this service stress testing should not be consider as replacement for a load testing with tools like [wrk](https://github.com/wg/wrk) or [jmeter](https://jmeter.apache.org/)
+HTTP runner provides stress testing capabilities to generate a HTTP endpoint load and to validate desired responses.
+Note that this service  should not be consider as replacement for a load testing tools like [wrk](https://github.com/wg/wrk) or [jmeter](https://jmeter.apache.org/)
 
 
 @load.yaml
