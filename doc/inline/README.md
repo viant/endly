@@ -177,8 +177,8 @@ The generic service action invocation syntax:
 pipeline:
   task1:
     action: [SERVICE.]ACTION
-    param1: val1
-    paramX: valX
+    actionContractField1: val1
+    actionContractField2: valX
 ```
 
 If SERVICE is omitted, 'workflow' service is used.
