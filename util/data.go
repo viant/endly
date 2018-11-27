@@ -77,10 +77,11 @@ func ListResource(baseURLs []string, URI string) ([]string, error) {
 			exprSuffix = ".+"
 		}
 		regExprText := strings.Replace(matchingExpr, "*", ".+", strings.Count(matchingExpr, "*"))
-
-		regExprText  = ".+" + regExprText + exprSuffix
+		regExprText  = regExprText + exprSuffix
+		if ! strings.HasPrefix(regExprText , ".+")  {
+			regExprText = ".+" + regExprText
+		}
 		regExpression := regexp.MustCompile(regExprText)
-
 		resource := url.NewResource(baseURL)
 		storageService, err := storage.NewServiceForURL(resource.URL, "")
 		if err != nil {
