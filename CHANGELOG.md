@@ -1,3 +1,9 @@
+## November 28 2018 0.21.1
+    * Patch nil pointer check in stress Test
+    * Added coalesceWithZero directive, patched nil and numeric value validation (assertly)
+    * Patched ToInt, ToFloat conversion to throw error if nil is supplied (toolbox)
+    * Added Added LocationTimezone, TimeLayout attribute to FreezeRequest (dsunit)
+
 ## November 25 2018 0.21.0
     * Added http/runner:load action for HTTP endpoint stress testing
     * Added  NumericFloatPrecission
