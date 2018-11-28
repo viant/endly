@@ -3,26 +3,24 @@ package bootstrap
 //_ "github.com/alexbrainman/odbc"
 
 import (
+	"encoding/json"
+	"flag"
+	"fmt"
 	_ "github.com/adrianwit/mgc"
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/viant/asc"
 	_ "github.com/viant/bgc"
-
-	"encoding/json"
-	"flag"
-	"fmt"
-	_ "github.com/viant/endly/static" //load external resource like .csv .json files to mem storage
-	_ "github.com/viant/toolbox/storage/aws"
-	_ "github.com/viant/toolbox/storage/gs"
-	_ "github.com/viant/toolbox/storage/scp"
-
 	"github.com/viant/endly"
 	_ "github.com/viant/endly/cloud/ec2"
 	_ "github.com/viant/endly/cloud/gce"
 	_ "github.com/viant/endly/gen/static"
+	_ "github.com/viant/endly/static" //load external resource like .csv .json files to mem storage
 	_ "github.com/viant/endly/testing/endpoint/http"
 	_ "github.com/viant/endly/workflow"
+	_ "github.com/viant/toolbox/storage/aws"
+	_ "github.com/viant/toolbox/storage/gs"
+	_ "github.com/viant/toolbox/storage/scp"
 
 	_ "github.com/viant/endly/testing/dsunit"
 	_ "github.com/viant/endly/testing/log"
