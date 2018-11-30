@@ -1,17 +1,17 @@
 package log
 
 import (
+	"fmt"
+	"github.com/viant/endly"
+	"github.com/viant/endly/msg"
+	"github.com/viant/endly/workflow"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"io"
 	"io/ioutil"
 	"strings"
 	"sync"
 	"time"
-	"github.com/viant/endly/workflow"
-	"github.com/viant/endly"
-	"github.com/viant/toolbox"
-	"fmt"
-	"github.com/viant/endly/msg"
 )
 
 //File represents a log file
@@ -26,7 +26,7 @@ type File struct {
 	Records         []*Record
 	IndexedRecords  map[string]*Record
 	Mutex           *sync.RWMutex
-	context *endly.Context
+	context         *endly.Context
 }
 
 //ShiftLogRecord returns and remove the first log record if present
@@ -65,9 +65,9 @@ func (f *File) ShiftLogRecordByIndex(value string) *Record {
 	if f.Type.Debug {
 		info, _ := toolbox.AsJSONText(result)
 		endly.Run(f.context, &workflow.PrintRequest{
-			Style:msg.MessageStyleOutput,
-			Message:fmt.Sprintf("shifted [%v] -> %v",  f.Type.Name, info),
-		}, nil);
+			Style:   msg.MessageStyleOutput,
+			Message: fmt.Sprintf("shifted [%v] -> %v", f.Type.Name, info),
+		}, nil)
 	}
 
 	return result
@@ -84,9 +84,9 @@ func (f *File) PushLogRecord(record *Record) {
 	if f.Type.Debug {
 		info, _ := toolbox.AsJSONText(record)
 		endly.Run(f.context, &workflow.PrintRequest{
-			Style:msg.MessageStyleInput,
-			Message:fmt.Sprintf("queued [%v] <- %v",  f.Type.Name, info),
-		}, nil);
+			Style:   msg.MessageStyleInput,
+			Message: fmt.Sprintf("queued [%v] <- %v", f.Type.Name, info),
+		}, nil)
 	}
 
 	f.Records = append(f.Records, record)
