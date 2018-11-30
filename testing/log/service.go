@@ -182,8 +182,8 @@ func (s *service) readLogFile(context *endly.Context, source *url.Resource, serv
 	fileInfo := candidate.FileInfo()
 	if !has {
 		isNewLogFile = true
-
 		logFile = &File{
+			context:         context,
 			Type:            logType,
 			Name:            name,
 			URL:             candidate.URL(),

@@ -7,6 +7,11 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"github.com/viant/endly/workflow"
+	"github.com/viant/endly"
+	"github.com/viant/toolbox"
+	"fmt"
+	"github.com/viant/endly/msg"
 )
 
 //File represents a log file
@@ -21,6 +26,7 @@ type File struct {
 	Records         []*Record
 	IndexedRecords  map[string]*Record
 	Mutex           *sync.RWMutex
+	context *endly.Context
 }
 
 //ShiftLogRecord returns and remove the first log record if present
@@ -56,6 +62,14 @@ func (f *File) ShiftLogRecordByIndex(value string) *Record {
 		}
 		f.Records = records
 	}
+	if f.Type.Debug {
+		info, _ := toolbox.AsJSONText(result)
+		endly.Run(f.context, &workflow.PrintRequest{
+			Style:msg.MessageStyleOutput,
+			Message:fmt.Sprintf("shifted [%v] -> %v",  f.Type.Name, info),
+		}, nil);
+	}
+
 	return result
 }
 
@@ -63,10 +77,18 @@ func (f *File) ShiftLogRecordByIndex(value string) *Record {
 func (f *File) PushLogRecord(record *Record) {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
-
 	if len(f.Records) == 0 {
 		f.Records = make([]*Record, 0)
 	}
+
+	if f.Type.Debug {
+		info, _ := toolbox.AsJSONText(record)
+		endly.Run(f.context, &workflow.PrintRequest{
+			Style:msg.MessageStyleInput,
+			Message:fmt.Sprintf("queued [%v] <- %v",  f.Type.Name, info),
+		}, nil);
+	}
+
 	f.Records = append(f.Records, record)
 	if f.UseIndex() {
 		if expr, err := f.GetIndexExpr(); err == nil {
