@@ -279,6 +279,32 @@ pipeline:
 endly -r=test_var p1=hello 
 ```
 
+
+**_Inline variables:_**
+ 
+You can inline variable by simply using '$' followed by variable name, 
+if variable is surrounded with textual data or uses sub variable use {} to enclose it like the following examples: 
+
+- some text${variable}abc
+- ${array[${i}]} 
+- ${array[${i}].id}
+- xx${array[${i}].id}yy
+
+
+if value of variable is a function you can use the $name.xx, where xx is argument passed to a function
+
+- ${uuid.next}, ${uuid.value}
+
+The following predefined in [context.go](./../../context.go#282) variables are function:
+
+- _env_: return environment variable i.e ${env.HOME}
+- _uuid_: return UUID previously generated or next instance
+- _timestamp_: return timestamp in ms for any expression likes ${timestamp.now} or ${timestamp.5hoursAgo}, etc ...
+- _unix_: return timestamp in sec for any expression likes ${unix.tomorrow} or ${unix.5daysAhead}, etc ...
+- _tzTime_: return formatted time with time.RFC3339 yyyy-MM-ddThh:mm:ss.SSS Z  i.e ${tzTime.4daysAgoInUTC}
+
+
+
 For more advanced usage you can also delegate variable declaration to a separate JSON file  
 
 i.e:
@@ -351,8 +377,6 @@ The following expression are supported:
 
 
 
-
-
     
 <a name="control"></a>
 ### Workflow execution control:
@@ -405,7 +429,6 @@ type WorkflowError struct {
 
 **Finally** 
 Workflow also offers DeferTask to execute as the last workflow step in case there is an error or not, for instance, to clean up a resource.
-
 
  
  <a name="lifecycle"></a>
