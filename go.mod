@@ -32,7 +32,7 @@ require (
 	github.com/stretchr/testify v1.2.2
 	github.com/tebeka/selenium v0.9.3
 	github.com/viant/asc v0.2.0
-	github.com/viant/assertly v0.2.1
+	github.com/viant/assertly v0.2.2
 	github.com/viant/bgc v0.2.1
 	github.com/viant/dsc v0.2.0
 	github.com/viant/dsunit v0.2.1
