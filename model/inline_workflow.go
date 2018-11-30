@@ -53,6 +53,7 @@ func (p InlineWorkflow) updateReservedAttributes(aMap map[string]interface{}) {
 var normalizationBlacklist = map[string]bool{
 	"workflow:run": true,
 	"seleniun:run": true,
+	"validator:assert": true,
 }
 
 func isNormalizableRequest(actionAttributes map[string]interface{}) bool {
@@ -63,17 +64,16 @@ func isNormalizableRequest(actionAttributes map[string]interface{}) bool {
 		return false
 	}
 
-	service := "workflow"
 	action := ""
-	if val, ok := actionAttributes["service"]; ok {
-		service = toolbox.AsString(val)
-	}
 	if val, ok := actionAttributes["action"]; ok {
 		action = toolbox.AsString(val)
 		action = strings.Replace(action, ".", ":", 1)
 	}
-
-	if !strings.Contains(action, service) {
+	if strings.Count(action, ":") ==0 {
+		service := "workflow"
+		if val, ok := actionAttributes["service"]; ok {
+			service = toolbox.AsString(val)
+		}
 		action = service + ":" + action
 	}
 	_, has := normalizationBlacklist[action]
