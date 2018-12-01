@@ -112,6 +112,17 @@ func (t *Task) HasTagID(tagIDs map[string]bool) bool {
 	return false
 }
 
+//AsyncActions returns async actions
+func (t *Task) AsyncActions() []*Action {
+	var result = make([]*Action, 0)
+	for _, candidate := range t.Actions {
+		if candidate.Async {
+			result = append(result, candidate)
+		}
+	}
+	return result
+}
+
 //NewTask creates a new task
 func NewTask(name string, multiAction bool) *Task {
 	return &Task{
