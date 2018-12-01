@@ -41,6 +41,7 @@ pipeline:
 | ProtoReader |  schemaFile, messageType, importPath |
 | ProtoReader | schemaFile, messageType, importPath |
 | AvroWriter | avroSchema/URL, compression |
+| CsvReader | headerFields, delimiter |
 
 
 ### Service actions
