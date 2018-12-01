@@ -110,6 +110,7 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 	process.Push(activity)
 	startEvent := s.Begin(context, activity)
 	state.Put("tagId", action.TagID)
+
 	err = s.runNode(context, "action", process, action.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
 		defer s.End(context)(startEvent, model.NewActivityEndEvent(activity))
 		defer process.Pop()
@@ -138,17 +139,22 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 	var result = data.NewMap()
 	var state = context.State()
 
+	asyncGroup := &sync.WaitGroup{}
+	var asyncError error
+	asyncActions := task.AsyncActions()
+
 	err := s.runNode(context, "task", process, task.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
 		if task.TasksNode != nil && len(task.Tasks) > 0 {
 			if err := s.runTasks(context, process, task.TasksNode); err != nil || len(task.Actions) == 0 {
 				return state, result, err
 			}
 		}
-		var asyncActions = make([]*model.Action, 0)
+		if len(asyncActions) > 0 {
+			s.runAsyncActions(context, process, task, asyncActions, asyncGroup, &asyncError)
+		}
 		for i := 0; i < len(task.Actions); i++ {
 			action := task.Actions[i]
 			if action.Async {
-				asyncActions = append(asyncActions, task.Actions[i])
 				continue
 			}
 			if process.HasTagID && !process.TagIDs[action.TagID] {
@@ -177,19 +183,22 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 				}
 				continue
 			}
-
 			var extractable = make(map[string]interface{})
 			err = action.Repeater.Run(s.AbstractService, "action", context, handler(task.Actions[i]), extractable)
 			if err != nil {
 				return nil, nil, err
 			}
 		}
-		err = s.runAsyncActions(context, process, task, asyncActions)
-		if err != nil {
-			return nil, nil, err
-		}
+
 		return state, result, nil
 	})
+
+	if len(asyncActions) > 0 {
+		asyncGroup.Wait()
+		if err == nil && asyncError != nil {
+			err = asyncError
+		}
+	}
 	state.Apply(result)
 	return result, err
 }
@@ -202,25 +211,29 @@ func (s *Service) runAsyncAction(parent, context *endly.Context, process *model.
 			parent.Publish(event)
 		}
 	}()
-	if _, err := s.runAction(context, action, process); err != nil {
-		return err
-	}
-	var state = parent.State()
-	if len(action.Post) > 0 {
-		s.Lock()
-		defer s.Unlock()
-		var actionState = context.State()
-		for _, variable := range action.Post {
-			var variableName = context.Expand(variable.Name)
-			state.Put(variableName, actionState.Get(variableName))
+	var result = make(map[string]interface{})
+	var handler = func(action *model.Action) func() (interface{}, error) {
+		return func() (interface{}, error) {
+			var response, err = s.runAction(context, action, process)
+			if err != nil {
+				return nil, err
+			}
+			if len(response) > 0 {
+				result[action.ID()] = response
+			}
+			return response, nil
 		}
+	}
+	var extractable = make(map[string]interface{})
+	err := action.Repeater.Run(s.AbstractService, "action", context, handler(action), extractable)
+	if err != nil {
+		return err
 	}
 	return nil
 }
 
-func (s *Service) runAsyncActions(context *endly.Context, process *model.Process, task *model.Task, asyncAction []*model.Action) error {
+func (s *Service) runAsyncActions(context *endly.Context, process *model.Process, task *model.Task, asyncAction []*model.Action, group *sync.WaitGroup, asyncError *error) {
 	if len(asyncAction) > 0 {
-		group := &sync.WaitGroup{}
 		group.Add(len(asyncAction))
 		var groupErr error
 		for i := range asyncAction {
@@ -231,12 +244,10 @@ func (s *Service) runAsyncActions(context *endly.Context, process *model.Process
 				}
 			}(asyncAction[i], context.Clone())
 		}
-		group.Wait()
 		if groupErr != nil {
-			return groupErr
+			*asyncError = groupErr
 		}
 	}
-	return nil
 }
 
 func (s *Service) applyVariables(candidates interface{}, process *model.Process, in data.Map, context *endly.Context) error {
