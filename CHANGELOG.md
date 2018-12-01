@@ -1,3 +1,10 @@
+## December 1 2018 0.21.2
+    * Refactor asyn action to run with repeater like a regular action
+    * Added keySensitive direction (assertly) 
+    * Added CSVReder commond udf provider
+    * Updated doc
+    * Enabled diagnosctive with gops with -d switch
+
 ## November 28 2018 0.21.1
     * Patch nil pointer check in stress Test
     * Added coalesceWithZero directive, patched nil and numeric value validation (assertly)
