@@ -4,7 +4,6 @@ require (
 	cloud.google.com/go v0.32.0
 	github.com/adrianwit/mgc v0.1.0
 	github.com/aerospike/aerospike-client-go v1.36.0 // indirect
-	github.com/alexbrainman/odbc v0.0.0-20181122072825-9f8c46d67b52
 	github.com/aws/aws-sdk-go v1.15.74
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect

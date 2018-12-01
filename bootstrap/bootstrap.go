@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	_ "github.com/adrianwit/mgc"
-	_ "github.com/alexbrainman/odbc"
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/viant/asc"
