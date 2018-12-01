@@ -39,9 +39,9 @@ Validator also supports data transformation on the fly just before validation wi
 
 Actual validation is delegated to [assertly](http://github.com/viant/assertly/)
 
-### Example
+### Examples
 
-**Standalone testing workflow example:**
+#### Standalone testing workflow example:**
 
  
 ```bash
@@ -169,7 +169,7 @@ types:
 ```
 
 
-**Workflow with csv UDF example**
+#### Workflow with csv UDF example
 
 ```bash
 endly -r=csv
