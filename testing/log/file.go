@@ -38,6 +38,13 @@ func (f *File) ShiftLogRecord() *Record {
 	}
 	result := f.Records[0]
 	f.Records = f.Records[1:]
+	if f.Type.Debug {
+		info, _ := toolbox.AsJSONText(result)
+		endly.Run(f.context, &workflow.PrintRequest{
+			Style:   msg.MessageStyleOutput,
+			Message: fmt.Sprintf("shifted [%v] -> %v", f.Type.Name, info),
+		}, nil)
+	}
 	return result
 }
 
@@ -66,7 +73,7 @@ func (f *File) ShiftLogRecordByIndex(value string) *Record {
 		info, _ := toolbox.AsJSONText(result)
 		endly.Run(f.context, &workflow.PrintRequest{
 			Style:   msg.MessageStyleOutput,
-			Message: fmt.Sprintf("shifted [%v] -> %v", f.Type.Name, info),
+			Message: fmt.Sprintf("shifted [%v:idx:%s]-> %v", f.Type.Name, value, info),
 		}, nil)
 	}
 

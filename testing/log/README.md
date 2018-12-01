@@ -41,7 +41,7 @@ Actual validation is delegated to [assertly](http://github.com/viant/assertly/)
 
 ### Example
 
-Standalone testing workflow example:
+**Standalone testing workflow example:**
 
  
 ```bash
@@ -169,10 +169,87 @@ types:
 ```
 
 
+**Workflow with csv UDF example**
+
+```bash
+endly -r=csv
+```
+
+[csv.yaml](csv.yaml)
+```yaml
+init:
+  i: 0
+  j: 0
+  logLocation: /tmp/logs
+  target:
+    url:  ssh://127.0.0.1/
+    credentials: ${env.HOME}/.secret/localhost.json
+defaults:
+  target: $target
+pipeline:
+  init:
+    make-dir:
+      action: exec:run
+      commands:
+      - mkdir -p $logLocation
+      - "> ${logLocation}/events.csv"
+    register-udf:
+      action: udf:register
+      udfs:
+        - id: UserCsvReader
+          provider: CsvReader
+          params:
+            - id,type,timestamp,user
+    listen:
+      action: validator/log:listen
+      frequencyMs: 500
+      source:
+        URL: $logLocation
+      types:
+        - format: json
+          inclusion: event1
+          mask: '*.csv'
+          name: event1
+          UDF: UserCsvReader
+          debug: true
+  test:
+    multiAction: true
+    produce:
+      async: true
+      repeat: 6
+      sleepTimeMs: 400
+      action: exec:run
+      commands:
+        - echo '$i++,event1,${timestamp.now},user $j++' >> ${logLocation}/events.csv
+
+    validate:
+      action: validator/log:assert
+      logTypes:
+        - event1
+      description: E-logger event log validation
+      expect:
+      - type: event1
+        records:
+          - id: 0
+            user: user 0
+          - id: 1
+            user: user 1
+          - id: 2
+            user: user 2
+          - id: 3
+            user: user 3
+          - id: 4
+            user: user 4
+          - id: 5
+            user: user 5
+
+      logWaitRetryCount: 10
+      logWaitTimeMs: 2000
+```
+
 **As part of workflow**
 
    [See more](https://github.com/viant/endly/tree/master/example/rt/elogger)
-
 
 
 

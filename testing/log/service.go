@@ -11,6 +11,7 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
+	"io"
 	"io/ioutil"
 	"log"
 	"regexp"
@@ -162,6 +163,30 @@ func (s *service) getLogTypeMeta(expectedLogRecords *ExpectedRecord) (*TypeMeta,
 	return logTypeMeta, nil
 }
 
+//tryReadSnapshot tries to read file snapshot, since file may change any time, this method attempts to get a stable snapshot read withhout actual change in file content while it is read.
+func (s *service) tryReadSnapshot(service storage.Service, object storage.Object, attemptsCount int) (io.Reader, error) {
+	fileSize := object.FileInfo().Size()
+	for i := 0; i < attemptsCount; i++ {
+		reader, err := service.Download(object)
+		if err != nil {
+			return nil, err
+		}
+		defer reader.Close()
+		content, err := ioutil.ReadAll(reader)
+		if err != nil {
+			return nil, err
+		}
+		if recentSnapshot, err := service.StorageObject(object.URL()); err == nil {
+			if recentSnapshot.FileInfo().Size() == fileSize { //no content modification since last content download, it safe to return snapshot
+				return bytes.NewReader(content), nil
+			}
+			fileSize = recentSnapshot.FileInfo().Size()
+		}
+		time.Sleep(300 * time.Millisecond)
+	}
+	return nil, nil
+}
+
 func (s *service) readLogFile(context *endly.Context, source *url.Resource, service storage.Service, candidate storage.Object, logType *Type) (*TypeMeta, error) {
 	var result *TypeMeta
 	var key = logTypeMetaKey(logType.Name)
@@ -197,17 +222,17 @@ func (s *service) readLogFile(context *endly.Context, source *url.Resource, serv
 		result.LogFiles[name] = logFile
 	}
 	s.Mutex().Unlock()
+
 	if !isNewLogFile && (logFile.Size == int(fileInfo.Size()) && logFile.LastModified.Unix() == fileInfo.ModTime().Unix()) {
 		return result, nil
 	}
-	reader, err := service.Download(candidate)
-	if err != nil {
+
+	reader, err := s.tryReadSnapshot(service, candidate, 3)
+	if err != nil || reader == nil {
 		return nil, err
 	}
-
 	if logFile.UDF != "" {
 		content, err := ioutil.ReadAll(reader)
-		reader.Close()
 		if err != nil {
 			return nil, err
 		}
@@ -221,7 +246,7 @@ func (s *service) readLogFile(context *endly.Context, source *url.Resource, serv
 			return nil, fmt.Errorf("unsupported response type expeced string or []byte but had: %T", transformed)
 		}
 	}
-	defer reader.Close()
+
 	logContent, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return nil, err
@@ -265,7 +290,6 @@ func (s *service) readLogFiles(context *endly.Context, service storage.Service, 
 		if candidate.IsFolder() {
 			continue
 		}
-
 		for _, logType := range logTypes {
 			mask := strings.Replace(logType.Mask, "*", ".+", len(logType.Mask))
 			maskExpression, err := regexp.Compile("^" + mask + "$")
