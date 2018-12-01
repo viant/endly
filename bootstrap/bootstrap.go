@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	_ "github.com/adrianwit/mgc"
+	_ "github.com/alexbrainman/odbc"
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/viant/asc"
@@ -56,6 +57,7 @@ import (
 	"github.com/viant/toolbox/url"
 	"golang.org/x/crypto/ssh/terminal"
 
+	"github.com/google/gops/agent"
 	rec "github.com/viant/endly/testing/endpoint/http"
 	"gopkg.in/yaml.v2"
 	"log"
@@ -132,8 +134,6 @@ func Bootstrap() {
 		openTestGenerator()
 		return
 	}
-
-	//
 
 	if _, ok := flagset["h"]; ok {
 		printHelp()
@@ -269,6 +269,12 @@ func generateSecret(credentialsFile string) {
 	err = config.Save(secretFile)
 	if err != nil {
 		fmt.Printf("\n")
+		log.Fatal(err)
+	}
+}
+
+func enableDiagnostics() {
+	if err := agent.Listen(agent.Options{}); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -555,6 +561,7 @@ func updateBaseRunWithOptions(request *workflow.RunRequest, flagset map[string]s
 			request.Params[k] = v
 		}
 		if value, ok := flagset["d"]; ok {
+			go enableDiagnostics()
 			request.EnableLogging = toolbox.AsBoolean(value)
 			request.LogDirectory = flag.Lookup("l").Value.String()
 		}
