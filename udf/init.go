@@ -19,5 +19,6 @@ func init() {
 	endly.UdfRegistryProvider["AvroWriter"] = NewAvroWriter
 	endly.UdfRegistryProvider["ProtoReader"] = NewProtoReader
 	endly.UdfRegistryProvider["ProtoWriter"] = NewProtoWriter
+	endly.UdfRegistryProvider["CsvReader"] = NewCsvReader
 
 }
