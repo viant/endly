@@ -168,6 +168,11 @@ outer:
 			if token.Token == quoted {
 				matched = strings.Trim(token.Matched, "' ")
 			}
+
+			match := tokenizer.Nexts(grouping, eof)
+			if match != nil && match.Token  == grouping {
+				matched += match.Matched
+			}
 			criterion.RightOperand = matched
 			token, err = p.expectOptionalWhitespaceFollowedBy(tokenizer, "logical conjunction", logicalOperator, eof)
 			if err != nil {

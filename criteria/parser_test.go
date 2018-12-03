@@ -96,9 +96,16 @@ func TestCriteriaParser_Parse(t *testing.T) {
 			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$key1", "!=", nil)),
 		},
 		{
-			Description: "uni operan boolean expression",
+			Description: "uni operand boolean expression",
 			Expression:  "$HasResource(file:///tmp/req/print.json)",
 			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$HasResource(file:///tmp/req/print.json)", "!=", nil)),
+		},
+
+		{
+			Description: "udf usage",
+			Expression:  "$i < $Len($params.requests)",
+			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$i", "<", "$Len($params.requests)")),
+
 		},
 
 		//$stdout :/(END)/
