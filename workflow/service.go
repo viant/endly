@@ -339,6 +339,7 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 
 
 	var workflowState = data.NewMap()
+
 	upstreamState := upstreamContext.State()
 	if request.StateKey != "" {
 		upstreamState.Put(request.StateKey, workflowState)
@@ -350,6 +351,7 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	}
 	params := s.publishParameters(request, context)
 	workflowState.Put(paramsStateKey, params)
+	fmt.Printf("%v %v\n", workflowState, params)
 	if len(workflow.Data) > 0 {
 		state := context.State()
 		state.Put(dataStateKey, workflow.Data)
