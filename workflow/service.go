@@ -287,7 +287,7 @@ func (s *Service) enableLoggingIfNeeded(context *endly.Context, request *RunRequ
 	}
 }
 
-func (s *Service) publishParameters(request *RunRequest, context *endly.Context) {
+func (s *Service) publishParameters(request *RunRequest, context *endly.Context) map[string]interface{} {
 	var state = context.State()
 	params := buildParamsMap(request, context)
 	if request.PublishParameters {
@@ -334,19 +334,29 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	process := model.NewProcess(workflow.Source, workflow, upstreamProcess)
 	process.AddTagIDs(strings.Split(request.TagIDs, ",")...)
 	Push(upstreamContext, process)
+
+
+
+	var workflowState = data.NewMap()
+	upstreamState := upstreamContext.State()
+	if request.StateKey != "" {
+		upstreamState.Put(request.StateKey, workflowState)
+	}
+
 	context := upstreamContext
 	if !request.SharedStateMode {
 		context = upstreamContext.Clone()
 	}
-	s.publishParameters(request, context)
+	params := s.publishParameters(request, context)
+	workflowState.Put(paramsStateKey, params)
 	if len(workflow.Data) > 0 {
 		state := context.State()
 		state.Put(dataStateKey, workflow.Data)
+		workflowState.Put(dataStateKey, workflow.Data)
 	}
 
 	var state = context.State()
 	upstreamTasks, hasUpstreamTasks := state.GetValue(tasksStateKey)
-
 	restore := context.PublishAndRestore(toolbox.Pairs(
 		neatly.OwnerURL, workflow.Source.URL,
 		tasksStateKey, request.Tasks,
