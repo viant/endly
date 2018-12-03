@@ -25,6 +25,7 @@ type RunRequest struct {
 	SharedStateMode   bool                   `description:"by default workflow uses a separate cloned context copy, if this is flag context will be shared with a caller state"`
 	URL               string                 `description:"workflow URL if workflow is not found in the registry, it is loaded"`
 	Name              string                 `required:"true" description:"name defined in workflow document"`
+	StateKey          string                 `description:"if specified workflow params and data will be visible globally with this key, default is inherited from workflow name"`
 	Source            *url.Resource          `description:"run request location "`
 	AssetURL          string
 	TagIDs            string `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
@@ -75,6 +76,10 @@ func (r *RunRequest) Init() (err error) {
 		if index := strings.LastIndex(r.Name, "/"); index != -1 {
 			r.Name = string(r.Name[index+1:])
 		}
+	}
+
+	if r.StateKey == "" {
+		r.StateKey  = r.Name
 	}
 	return nil
 }
