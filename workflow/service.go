@@ -298,6 +298,7 @@ func (s *Service) publishParameters(request *RunRequest, context *endly.Context)
 	state.Put(paramsStateKey, params)
 }
 
+
 func (s *Service) getWorkflow(context *endly.Context, request *RunRequest) (*model.Workflow, error) {
 	if request.workflow != nil {
 		context.Publish(NewLoadedEvent(request.workflow))

@@ -1,6 +1,5 @@
 datastore: testdb
 config:
-  descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
   driverName: aerospike
   descriptor: "tcp(127.0.0.1:3000)/[namespace]"
   Parameters:

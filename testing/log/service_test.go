@@ -15,6 +15,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"regexp"
 )
 
 var templateLog = map[string]interface{}{
@@ -230,4 +231,9 @@ func TestLogValidatorService_TestIndexedRecord(t *testing.T) {
 		}
 	}
 
+}
+
+
+func Test_TT(t *testing.T) {
+	fmt.Printf(regexp.QuoteMeta("events[v3].csv]"))
 }

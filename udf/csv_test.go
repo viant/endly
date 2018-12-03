@@ -5,9 +5,24 @@ import (
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox"
 	"testing"
+	"encoding/json"
+	"fmt"
 )
 
 func TestNewCsvReader(t *testing.T) {
+
+	resultMap := map[string]interface{}{
+		"name":          "Bob",
+		"facoriteColor": "red",
+	}
+
+	rBytes, _ := json.Marshal(resultMap)
+
+	fmt.Printf("!%v!", string(rBytes))
+
+
+
+
 
 	useCases := []struct {
 		description string
