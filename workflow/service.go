@@ -296,6 +296,7 @@ func (s *Service) publishParameters(request *RunRequest, context *endly.Context)
 		}
 	}
 	state.Put(paramsStateKey, params)
+	return params
 }
 
 
