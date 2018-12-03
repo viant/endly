@@ -69,6 +69,7 @@ func (f *File) ShiftLogRecordByIndex(value string) *Record {
 		}
 		f.Records = records
 	}
+
 	if f.Type.Debug {
 		info, _ := toolbox.AsJSONText(result)
 		endly.Run(f.context, &workflow.PrintRequest{

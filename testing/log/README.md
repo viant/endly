@@ -247,6 +247,7 @@ pipeline:
       logWaitTimeMs: 2000
 ```
 
+
 **As part of workflow**
 
    [See more](https://github.com/viant/endly/tree/master/example/rt/elogger)
