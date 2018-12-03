@@ -8,7 +8,7 @@
         ]
       },
       "URL": "http://127.0.0.1:8888/api/singup/",
-      "Body": "$user"
+      "Body": "$AsString($user)"
     }
   ],
   "Expect": {
