@@ -1,0 +1,36 @@
+init: "@var/init"
+defaults:
+  app: $app
+  sdk: $sdk
+  target: $target
+  buildTarget: $buildTarget
+  serviceTarget: $serviceTarget
+  appTarget: $appTarget
+
+pipeline:
+  init:
+    system:
+      action: run
+      request: "@system"
+      tasks: "*"
+    datastore:
+      action: run
+      request: "@datastore"
+      tasks: "*"
+    app:
+      action: run
+      request: "@app"
+      tasks: "*"
+  test:
+    action: run
+    name: regresion
+    tasks: "*"
+  destroy:
+    app:
+      action: run
+      request: "@app"
+      tasks: stop
+    system:
+        action: run
+        request: "@system"
+        tasks: destroy
