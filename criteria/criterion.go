@@ -33,9 +33,15 @@ func (c *Criterion) Apply(state data.Map) (bool, error) {
 	var rootPath = assertly.NewDataPath("/")
 	var context = assertly.NewDefaultContext()
 
-	if boolValue, err := toolbox.ToBoolean(leftOperand); err == nil {
-		leftOperand = boolValue
+	if text, ok := leftOperand.(string);ok {
+		switch text {
+		case "t", "T", "true", "TRUE", "True":
+			leftOperand = true
+		case "f", "F", "false", "FALSE", "False":
+			leftOperand = false
+		}
 	}
+
 	if rightOperand == nil {
 		switch leftOperand.(type) {
 		case bool:

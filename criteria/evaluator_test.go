@@ -22,6 +22,34 @@ func Test_EvaluateCriteria(t *testing.T) {
 		HasError      bool
 	}{
 		{
+			Description:   "Data substitution 2",
+			Expression:    "$key1:1", //
+			DefaultResult: true,
+			Expected:      true,
+			State: map[string]interface{}{
+				"key1": 1,
+			},
+		},
+		{
+			Description:   "Data substitution 2",
+			Expression:    "$key1:1", //
+			DefaultResult: true,
+			Expected:      true,
+			State: map[string]interface{}{
+				"key1": "1",
+			},
+		},
+
+		{
+			Description:   "Data substitution 1",
+			Expression:    "$key1:!0", //
+			DefaultResult: true,
+			Expected:      false,
+			State: map[string]interface{}{
+				"key1": 0,
+			},
+		},
+		{
 			Description: "Simple true expression with ok = true",
 			Expression:  "$ok:true",
 			State: map[string]interface{}{
@@ -75,15 +103,8 @@ func Test_EvaluateCriteria(t *testing.T) {
 			DefaultResult: true,
 			Expected:      true,
 		},
-		{
-			Description:   "Data substitution",
-			Expression:    "$key1:!0", //
-			DefaultResult: true,
-			Expected:      false,
-			State: map[string]interface{}{
-				"key1": 0,
-			},
-		},
+
+
 		{
 			Description:   "UDFs substitution",
 			Expression:    "$Len($logRecords) > 0", //
