@@ -62,6 +62,9 @@ func (r *RunRequest) Init() (err error) {
 			return err
 		}
 		r.workflow.Source = url.NewResource(r.AssetURL)
+		if r.StateKey == "" {
+			r.StateKey  = r.Name
+		}
 		return r.workflow.Init()
 	}
 	if r.URL == "" {
