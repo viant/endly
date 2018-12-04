@@ -38,7 +38,7 @@ require (
 	github.com/viant/dsc v0.2.0
 	github.com/viant/dsunit v0.2.1
 	github.com/viant/neatly v0.4.0
-	github.com/viant/toolbox v0.3.1
+	github.com/viant/toolbox v0.3.2
 	github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227 // indirect
 	go.opencensus.io v0.18.0 // indirect
 	golang.org/x/crypto v0.0.0-20181112202954-3d3f9f413869
