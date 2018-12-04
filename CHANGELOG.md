@@ -1,3 +1,10 @@
+## December 5 2018 0.22.0
+    * Refactor expression parser
+    * Added basic arithmetic support
+    * Added workflow params and data to worklow state dedicated bucket
+    * Enhanced criteria parser to work with UDF expression
+    
+    
 ## December 1 2018 0.21.2
     * Refactor asyn action to run with repeater like a regular action
     * Added keySensitive direction (assertly) 
