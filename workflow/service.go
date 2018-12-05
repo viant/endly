@@ -10,6 +10,7 @@ import (
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"log"
 	"path"
 	"strings"
 	"sync"
@@ -336,17 +337,20 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	process.AddTagIDs(strings.Split(request.TagIDs, ",")...)
 	Push(upstreamContext, process)
 
-
-
 	var workflowState = data.NewMap()
-
 	upstreamState := upstreamContext.State()
 	if request.StateKey != "" {
+		if upstreamState.Has(request.StateKey) {
+			log.Print("detected workflow state key: %v is taken by: %v, skiping consider stateKey customiztion", request.StateKey, upstreamState.Get(request.StateKey))
+		}
 		upstreamState.Put(request.StateKey, workflowState)
+		defer func() {
+			upstreamState.Delete(request.StateKey)
+		}()
 	}
 
 	context := upstreamContext
-	if !request.SharedStateMode {
+	if !request.SharedState {
 		context = upstreamContext.Clone()
 	}
 	params := s.publishParameters(request, context)
