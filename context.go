@@ -223,12 +223,18 @@ func (c *Context) NewRequest(serviceName, action string) (interface{}, error) {
 
 //AsRequest converts a source map into request for provided service and action.
 func (c *Context) AsRequest(serviceName, action string, source map[string]interface{}) (request interface{}, err error) {
+
 	if request, err = c.NewRequest(serviceName, action); err != nil {
-		return request, err
+		return request, fmt.Errorf("unable to create %v request %v", serviceName+":"+action, err)
 	}
 	defer func() {
+
 		if r := recover(); r != nil {
-			err = fmt.Errorf("failed to create request, unable to cast %v into %T, %v", source, request, r)
+			var info  = toolbox.AsString(source)
+			if JSONSource, err :=  toolbox.AsJSONText(source);err == nil {
+				info = JSONSource
+			}
+			err = fmt.Errorf("unable to create %v request %v, request: %v", serviceName+":"+action, err, info)
 		}
 	}()
 	expanded := c.state.Expand(source)
