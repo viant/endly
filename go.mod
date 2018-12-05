@@ -38,7 +38,7 @@ require (
 	github.com/viant/bgc v0.2.1
 	github.com/viant/dsc v0.2.0
 	github.com/viant/dsunit v0.2.1
-	github.com/viant/neatly v0.4.1
+	github.com/viant/neatly v0.4.2
 	github.com/viant/toolbox v0.3.3
 	github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227 // indirect
 	go.opencensus.io v0.18.0 // indirect
