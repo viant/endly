@@ -1,7 +1,6 @@
+init:
+  mysqlCredentials: mysql
 pipeline:
-  init:
-    mysqlCredentials: mysql
-
   create-db:
     db1:
       action: dsunit:init
