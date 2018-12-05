@@ -3,7 +3,8 @@
     * Added basic arithmetic support
     * Added workflow params and data to worklow state dedicated bucket
     * Enhanced criteria parser to work with UDF expression
-    
+    * Renamted ShareStateMode to ShareState on workflow:run request
+    * ShareState is not set by default for inline workflow any more
     
 ## December 1 2018 0.21.2
     * Refactor asyn action to run with repeater like a regular action
