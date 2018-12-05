@@ -2,6 +2,7 @@ package process
 
 import (
 	"fmt"
+	"github.com/lunixbochs/vtclean"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
@@ -58,21 +59,27 @@ func (s *service) checkProcess(context *endly.Context, request *StatusRequest) (
 		return nil, err
 	}
 
+	actualCommand := request.Command
+	if index := strings.Index(actualCommand, "grep "); index !=-1 {
+		actualCommand = string(actualCommand[index+5:])
+	}
+
 	for _, line := range strings.Split(runResponse.Stdout(), "\r\n") {
+		line = vtclean.Clean(line, false)
 		if strings.Contains(line, "grep") {
 			continue
 		}
-
-		index := strings.Index(line, request.Command)
-		if index == -1 {
-			continue
-		}
-
-		index += len(request.Command)
-		if index+1 < len(line) { //narrow grep result to command
-			argsSeparator := string(line[index : index+1])
-			if !(argsSeparator == " " || argsSeparator == "\t") {
+		if ! request.ExactCommand {
+			index := strings.Index(line, actualCommand)
+			if index == -1 {
 				continue
+			}
+			index += len(actualCommand)
+			if index+1 < len(line) { //narrow grep result to command
+				argsSeparator := string(line[index : index+1])
+				if !(argsSeparator == " " || argsSeparator == "\t" || argsSeparator == ".") {
+					continue
+				}
 			}
 		}
 
