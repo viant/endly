@@ -1,3 +1,4 @@
+sharedState: true
 pipeline:
   start:
     action: "selenium:start"
@@ -11,6 +12,5 @@ pipeline:
     remoteSelenium:
       URL: http://${targetHost}:$seleniumServerPort/
     browser: firefox
-
 post:
   - SeleniumSessionID = ${open.SessionID}

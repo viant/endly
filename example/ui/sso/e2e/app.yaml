@@ -14,7 +14,8 @@ pipeline:
       URL: ./../
     commands:
       - cd $buildPath/app
-      - go get -u .
+      - go get -u github.com/viant/endly
+      - go get -u github.com/viant/endly/endly
       - go build -o $app
       - chmod +x $app
     download:
