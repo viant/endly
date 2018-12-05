@@ -19,15 +19,16 @@ func TestProcessService_Status(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir string
-		target  *url.Resource
-		Command string
-		Exected []*process.Info
+		target       *url.Resource
+		command      string
+		exactCommand bool
+		expected     []*process.Info
 	}{
 		{
-			"test/status/active/darwin",
-			target,
-			"docker",
-			[]*process.Info{
+			baseDir: "test/status/active/darwin",
+			target:  target,
+			command: "docker",
+			expected:[]*process.Info{
 				{
 					Name:      "/Library/PrivilegedHelperTools/com.docker.vmnetd",
 					Pid:       34227,
@@ -39,10 +40,11 @@ func TestProcessService_Status(t *testing.T) {
 			},
 		},
 		{
-			"test/status/active/linux",
-			target,
-			"docker",
-			[]*process.Info{
+			baseDir:      "test/status/active/linux",
+			target:       target,
+			command:      "docker",
+			exactCommand: true,
+			expected:[]*process.Info{
 				{
 					Name:      "/usr/bin/dockerd",
 					Pid:       1700,
@@ -62,16 +64,16 @@ func TestProcessService_Status(t *testing.T) {
 			},
 		},
 		{
-			"test/status/inactive/darwin",
-			target,
-			"myabc",
-			[]*process.Info{},
+			baseDir:  "test/status/inactive/darwin",
+			target:   target,
+			command:  "myabc",
+			expected: []*process.Info{},
 		},
 		{
-			"test/status/inactive/linux",
-			target,
-			"myabc",
-			[]*process.Info{},
+			baseDir:  "test/status/inactive/linux",
+			target:   target,
+			command:  "myabc",
+			expected: []*process.Info{},
 		},
 	}
 
@@ -80,20 +82,21 @@ func TestProcessService_Status(t *testing.T) {
 		if assert.Nil(t, err) {
 			var request = &process.StatusRequest{
 				Target:  useCase.target,
-				Command: useCase.Command,
+				Command: useCase.command,
+				ExactCommand:useCase.exactCommand,
 			}
 			var response = &process.StatusResponse{}
-			var description = useCase.baseDir + " " + useCase.Command
+			var description = useCase.baseDir + " " + useCase.command
 			err := endly.Run(context, request, response)
 			if !assert.Nil(t, err, description) {
 				continue
 			}
 
-			if len(response.Processes) != len(useCase.Exected) {
-				assert.Fail(t, fmt.Sprintf("Expected %v processes info but had %v", len(useCase.Exected), len(response.Processes)))
+			if len(response.Processes) != len(useCase.expected) {
+				assert.Fail(t, fmt.Sprintf("Expected %v processes info but had %v", len(useCase.expected), len(response.Processes)))
 			}
 
-			for i, expected := range useCase.Exected {
+			for i, expected := range useCase.expected {
 
 				if i >= len(response.Processes) {
 					assert.Fail(t, fmt.Sprintf("Process was missing [%v] %v", i, description))

@@ -24,8 +24,9 @@ type StartResponse struct {
 
 //StatusRequest represents a status check request
 type StatusRequest struct {
-	Target  *url.Resource
-	Command string
+	Target       *url.Resource
+	Command      string `description:"command identifying a process, by default it is check that command is ps -ef suffix or is terminated by space / or dot "`
+	ExactCommand bool   `description:"if this flag set do not try detect actual command but return all processes matched by command"`
 }
 
 //StatusResponse represents a status check response
