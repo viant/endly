@@ -22,7 +22,7 @@ type RunRequest struct {
 	Async             bool                   `description:"flag to runWorkflow it asynchronously. Do not set it your self runner sets the flag for the first workflow"`
 	Params            map[string]interface{} `description:"workflow parameters, accessibly by paras.[Key], if PublishParameters is set, all parameters are place in context.state"`
 	PublishParameters bool                   `default:"true" description:"flag to publish parameters directly into context state"`
-	SharedStateMode   bool                   `description:"by default workflow uses a separate cloned context copy, if this is flag context will be shared with a caller state"`
+	SharedState       bool                   `description:"by default workflow uses a separate cloned context copy, if this is flag context will be shared with a caller workflow state"`
 	URL               string                 `description:"workflow URL if workflow is not found in the registry, it is loaded"`
 	Name              string                 `required:"true" description:"name defined in workflow document"`
 	StateKey          string                 `description:"if specified workflow params and data will be visible globally with this key, default is inherited from workflow name"`
@@ -56,7 +56,6 @@ func (r *RunRequest) Init() (err error) {
 		if name == "" && r.Name != "" {
 			name = strings.Replace(URI, path.Ext(URI), "", 1)
 		}
-		r.SharedStateMode = true
 		r.workflow, err = r.InlineWorkflow.AsWorkflow(name, baseURL)
 		if err != nil {
 			return err
