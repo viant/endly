@@ -70,14 +70,14 @@ func (s *service) checkProcess(context *endly.Context, request *StatusRequest) (
 			continue
 		}
 		if ! request.ExactCommand {
-			index := strings.Index(line, actualCommand)
+			index := strings.LastIndex(line, actualCommand)
 			if index == -1 {
 				continue
 			}
 			index += len(actualCommand)
 			if index+1 < len(line) { //narrow grep result to command
 				argsSeparator := string(line[index : index+1])
-				if !(argsSeparator == " " || argsSeparator == "\t" || argsSeparator == ".") {
+				if !(argsSeparator == " " || argsSeparator == "\t" || argsSeparator == "." || argsSeparator == "/") {
 					continue
 				}
 			}
