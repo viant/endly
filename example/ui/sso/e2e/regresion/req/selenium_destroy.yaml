@@ -4,5 +4,6 @@ pipeline:
     action: selenium:close
     sessionID: $SeleniumSessionID
   stop:
+    action: selenium:stop
     target: $target
     port: $seleniumServerPort
