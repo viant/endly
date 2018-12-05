@@ -396,7 +396,7 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	})
 	if len(response.Data) > 0 {
 		for k, v := range response.Data {
-			state.Put(k, v)
+			upstreamState.Put(k, v)
 		}
 	}
 	return response, err
