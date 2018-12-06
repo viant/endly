@@ -1,11 +1,11 @@
 package http
 
 import (
+	"fmt"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
-	"fmt"
 )
 
 //SendRequest represents a send http request.
@@ -67,10 +67,10 @@ type LoadRequest struct {
 
 func (r *LoadRequest) Init() error {
 	if r.ThreadCount == 0 {
-		r.ThreadCount = 3;
+		r.ThreadCount = 3
 	}
 	if r.Repeat == 0 {
-		r.Repeat = 1;
+		r.Repeat = 1
 	}
 	if len(r.Requests) == 0 {
 		return nil
@@ -108,7 +108,6 @@ func (r *LoadRequest) Validate() error {
 	return nil
 }
 
-
 //LoadRequest represents a stress test response
 type LoadResponse struct {
 	SendResponse
@@ -116,7 +115,7 @@ type LoadResponse struct {
 	Error               string
 	QPS                 float64
 	TestDurationSec     float64
-	RequestCount int
+	RequestCount        int
 	MinResponseTimeInMs float64
 	AvgResponseTimeInMs float64
 	MaxResponseTimeInMs float64

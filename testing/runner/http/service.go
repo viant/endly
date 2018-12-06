@@ -1,17 +1,17 @@
 package http
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/criteria"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
+	"io/ioutil"
 	"net/http"
-	"time"
 	"sync"
 	"sync/atomic"
-	"io/ioutil"
-	"bytes"
+	"time"
 )
 
 //ServiceID represents http runner service id.
@@ -164,10 +164,10 @@ func (s *service) handleRequests(client *http.Client, sendChannel chan *stressTe
 		case trip := <-sendChannel:
 			s.handleRequest(client, trip)
 		case <-time.After(15 * time.Second):
-			return;
+			return
 		}
 		if atomic.LoadUint32(done) == 1 {
-			return;
+			return
 		}
 	}
 }
@@ -218,7 +218,7 @@ func collectTripResponses(context *endly.Context, trips []*stressTestTrip, respo
 			response.Status = "error"
 			response.Error = trip.err.Error()
 		}
-		if ! trip.expected {
+		if !trip.expected {
 			continue
 		}
 		if trip.requestTime.Before(startTime) {
@@ -254,7 +254,7 @@ func collectTripResponses(context *endly.Context, trips []*stressTestTrip, respo
 	response.AvgResponseTimeInMs = avg / float64(time.Millisecond)
 	testDuration := endTime.Sub(startTime)
 	response.TestDurationSec = float64(testDuration) / float64(time.Second)
-	response.RequestCount =  len(trips)
+	response.RequestCount = len(trips)
 	response.QPS = float64(len(trips)) / response.TestDurationSec
 	return nil
 }
@@ -279,9 +279,9 @@ func buildStressTestTrip(request *LoadRequest, context *endly.Context, waitGroup
 
 	var expectedResponses []interface{}
 	if len(request.Expect) > 0 {
-		responses, ok := request.Expect["Responses"];
-		if ! ok {
-			responses, ok = request.Expect["responses"];
+		responses, ok := request.Expect["Responses"]
+		if !ok {
+			responses, ok = request.Expect["responses"]
 		}
 		if ok {
 			expectedResponses = toolbox.AsSlice(responses)

@@ -1,6 +1,7 @@
 package http_test
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
@@ -17,7 +18,6 @@ import (
 	"path"
 	"strings"
 	"testing"
-	"fmt"
 )
 
 func StartTestServer(port int, basedir string, rotate bool, indexBy ...string) error {
@@ -386,7 +386,7 @@ func Test_UdfProvider(t *testing.T) {
 
 func TestHttpRunnerService_Run_StressTest(t *testing.T) {
 	err := StartTestServer(8988, "test/stress", true, endpoint.MethodKey, endpoint.URLKey, endpoint.BodyKey)
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		log.Fatal(err)
 	}
 	request := &runner.LoadRequest{
@@ -395,8 +395,7 @@ func TestHttpRunnerService_Run_StressTest(t *testing.T) {
 		Repeat:      30,
 	}
 
-	request.Requests = []*runner.Request{
-	}
+	request.Requests = []*runner.Request{}
 	var expected = []interface{}{}
 	for i := 0; i < 6; i++ {
 		request.Requests = append(request.Requests,
@@ -418,7 +417,7 @@ func TestHttpRunnerService_Run_StressTest(t *testing.T) {
 
 	response := &runner.LoadResponse{}
 	err = endly.Run(nil, request, response)
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		log.Fatal(err)
 	}
 	expect := `{

@@ -368,12 +368,11 @@ func (r *Runner) getIndex(tagID string) string {
 	r.mutex.RLock()
 
 	defer r.mutex.RUnlock()
-	if result, ok:= r.tagIdIndex[tagID];ok {
+	if result, ok := r.tagIdIndex[tagID]; ok {
 		return result
 	}
 	return ""
 }
-
 
 func (r *Runner) processActivityEnd(event msg.Event) {
 	if _, ended := event.Value().(*model.ActivityEndEvent); ended {
@@ -608,7 +607,7 @@ func (r *Runner) reportTagSummary() {
 		var validation *assertly.Validation
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(r.ColorText(eventTag, "red"), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
+			r.printMessage(r.ColorText(eventTag, "red"), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
 			var offset = 0
 			for i, event := range tag.Events {
 				validation = r.getValidation(event)
