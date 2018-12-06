@@ -230,8 +230,8 @@ func (c *Context) AsRequest(serviceName, action string, source map[string]interf
 	defer func() {
 
 		if r := recover(); r != nil {
-			var info  = toolbox.AsString(source)
-			if JSONSource, err :=  toolbox.AsJSONText(source);err == nil {
+			var info = toolbox.AsString(source)
+			if JSONSource, err := toolbox.AsJSONText(source); err == nil {
 				info = JSONSource
 			}
 			err = fmt.Errorf("unable to create %v request %v, request: %v", serviceName+":"+action, err, info)

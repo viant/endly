@@ -100,9 +100,6 @@ func (r *Runner) AddTag(eventTag *EventTag) {
 	r.indexedTag[eventTag.TagID] = eventTag
 }
 
-
-
-
 //EventTag returns an event tag
 func (r *Runner) EventTag() *EventTag {
 	if r.Len() == 0 {
@@ -123,8 +120,6 @@ func (r *Runner) EventTag() *EventTag {
 	}
 	return r.indexedTag[activity.TagID]
 }
-
-
 
 func (r *Runner) printInput(output string) {
 	r.Printf("%v\n", r.ColorText(output, r.InputColor))

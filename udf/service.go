@@ -49,7 +49,6 @@ func (s *service) register(context *endly.Context, request *RegisterRequest) (in
 	return &RegisterResponse{}, nil
 }
 
-
 //New creates a new udf service.
 func New() endly.Service {
 	var result = &service{
