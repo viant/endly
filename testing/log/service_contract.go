@@ -13,6 +13,7 @@ type AssertRequest struct {
 	LogWaitTimeMs     int
 	LogWaitRetryCount int
 	Description       string
+	DescriptionTemplate string
 	Expect            []*ExpectedRecord `required:"true" description:"expected log data"`
 }
 
