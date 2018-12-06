@@ -10,11 +10,11 @@ import (
 
 //AssertRequest represents a log assert request
 type AssertRequest struct {
-	LogWaitTimeMs     int
-	LogWaitRetryCount int
-	Description       string
+	LogWaitTimeMs       int
+	LogWaitRetryCount   int
+	Description         string
 	DescriptionTemplate string
-	Expect            []*ExpectedRecord `required:"true" description:"expected log data"`
+	Expect              []*ExpectedRecord `required:"true" description:"expected log data"`
 }
 
 //Init converts yaml kv pairs to a map if applicable
