@@ -5,6 +5,8 @@ import (
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
 	"github.com/viant/endly/testing/runner/selenium"
+	"github.com/viant/toolbox/data"
+	"sync"
 
 	"bytes"
 	"encoding/json"
@@ -77,6 +79,8 @@ type Runner struct {
 	report        *ReportSummaryEvent
 	activity      *model.Activity
 	repeated      *msg.Repeated
+	mutex         *sync.RWMutex
+	tagIdIndex    map[string]string
 	repeatedCount int
 	activityEnded bool
 
@@ -338,6 +342,12 @@ func (r *Runner) processActivityStart(event msg.Event) bool {
 	r.resetRepeated()
 	r.Push(activity)
 	r.activity = activity
+	if activity.TagIndex != "" {
+		r.mutex.Lock()
+		r.tagIdIndex[activity.TagID] = activity.TagIndex
+		r.mutex.Unlock()
+	}
+
 	if activity.TagDescription != "" {
 		if r.repeated != nil {
 			r.repeated.Count = 0
@@ -353,6 +363,17 @@ func (r *Runner) processActivityStart(event msg.Event) bool {
 	return true
 
 }
+
+func (r *Runner) getIndex(tagID string) string {
+	r.mutex.RLock()
+
+	defer r.mutex.RUnlock()
+	if result, ok:= r.tagIdIndex[tagID];ok {
+		return result
+	}
+	return ""
+}
+
 
 func (r *Runner) processActivityEnd(event msg.Event) {
 	if _, ended := event.Value().(*model.ActivityEndEvent); ended {
@@ -547,16 +568,18 @@ func (r *Runner) reportAssertion(event msg.Event, validations ...*assertly.Valid
 			eventTag.PassedCount += validation.PassedCount
 		}
 		eventTag.AddEvent(msg.NewEventWithInit(validation, event.Init()))
-			messageInfo := "OK"
-			messageType := msg.MessageStyleSuccess
-			if validation.FailedCount > 0 {
-				messageInfo = "FAILED"
-				messageType = msg.MessageStyleError
-			}
-			message := fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, validation.PassedCount+validation.FailedCount, validation.Description)
-			r.printShortMessage(messageType, message, messageType, messageInfo)
+		messageInfo := "OK"
+		messageType := msg.MessageStyleSuccess
+		if validation.FailedCount > 0 {
+			messageInfo = "FAILED"
+			messageType = msg.MessageStyleError
+		}
+		var aMap = data.NewMap()
+		aMap.Put("tagIndex", r.getIndex(tagID))
+		aMap.Put("tagID", tagID)
+		message := fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, validation.PassedCount+validation.FailedCount, aMap.ExpandAsText(validation.Description))
+		r.printShortMessage(messageType, message, messageType, messageInfo)
 	}
-
 
 }
 
@@ -783,6 +806,8 @@ func New() *Runner {
 		ServiceActionColor: "gray",
 		ErrorColor:         "red",
 		InverseTag:         true,
+		tagIdIndex:         map[string]string{},
+		mutex:              &sync.RWMutex{},
 		xUnitSummary:       xunit.NewTestsuite(),
 		MessageStyleColor: map[int]string{
 			messageTypeTagDescription: "cyan",
