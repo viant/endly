@@ -78,10 +78,9 @@ func (s *service) assert(context *endly.Context, request *AssertRequest) (*Asser
 		var logRecordIterator = logTypeMeta.Iterator()
 		logWaitRetryCount := request.LogWaitRetryCount
 		logWaitDuration := time.Duration(request.LogWaitTimeMs) * time.Millisecond
-		var aMap  = data.NewMap()
+		var aMap = data.NewMap()
 		aMap.Put("logType", expectedLogRecords.Type)
 		aMap.Put("TagID", expectedLogRecords.TagID)
-
 
 		for _, expectedLogRecord := range expectedLogRecords.Records {
 			description := "Log Validation: $logType"
