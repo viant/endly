@@ -524,11 +524,7 @@ func (r *Runner) reportAssertion(event msg.Event, validations ...*assertly.Valid
 	if len(validations) == 0 {
 		return
 	}
-
-	var passedCount, failedCount = 0, 0
-	var failedValidation *assertly.Validation
-
-	for i, validation := range validations {
+	for _, validation := range validations {
 		var tagID = validation.TagID
 		if tagID == "" {
 			wrkFflow := workflow.Last(r.context)
@@ -544,32 +540,24 @@ func (r *Runner) reportAssertion(event msg.Event, validations ...*assertly.Valid
 			r.AddTag(&EventTag{TagID: tagID})
 		}
 		eventTag := r.indexedTag[tagID]
-
 		if validation.HasFailure() {
-			failedCount += validation.FailedCount
 			r.hasValidationFailures = true
-			failedValidation = validations[i]
 			eventTag.FailedCount += validation.FailedCount
-			passedCount += validation.PassedCount
 		} else if validation.PassedCount > 0 {
-			passedCount += validation.PassedCount
 			eventTag.PassedCount += validation.PassedCount
 		}
 		eventTag.AddEvent(msg.NewEventWithInit(validation, event.Init()))
+			messageInfo := "OK"
+			messageType := msg.MessageStyleSuccess
+			if validation.FailedCount > 0 {
+				messageInfo = "FAILED"
+				messageType = msg.MessageStyleError
+			}
+			message := fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, validation.PassedCount+validation.FailedCount, validation.Description)
+			r.printShortMessage(messageType, message, messageType, messageInfo)
 	}
-	var total = passedCount + failedCount
-	messageType := msg.MessageStyleSuccess
-	messageInfo := "OK"
-	var message = ""
-	if total > 0 {
-		message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, validations[0].Description)
-		if failedCount > 0 {
-			messageType = msg.MessageStyleError
-			message = fmt.Sprintf("Passed %v/%v %v", passedCount, total, failedValidation.Description)
-			messageInfo = "FAILED"
-		}
-	}
-	r.printShortMessage(messageType, message, messageType, messageInfo)
+
+
 }
 
 func (r *Runner) reportTagSummary() {
@@ -597,7 +585,7 @@ func (r *Runner) reportTagSummary() {
 		var validation *assertly.Validation
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(r.ColorText(eventTag, "red"), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
+			r.printMessage(r.ColorText(eventTag, "red"), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
 			var offset = 0
 			for i, event := range tag.Events {
 				validation = r.getValidation(event)
