@@ -1,4 +1,3 @@
-sharedState: true
 pipeline:
   start:
     action: "selenium:start"
