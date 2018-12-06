@@ -474,8 +474,10 @@ func (s *service) registerRoutes() {
 				if len(response.Validation) > 0 {
 					for _, validation := range response.Validation {
 						context.Publish(&validator.AssertRequest{
+							Description:validation.Description,
 							Expected: validation.Expected,
 							Actual:   validation.Actual,
+							Source:validation.Dataset,
 						})
 					}
 				}
@@ -622,7 +624,7 @@ func (s service) publishConfigParameters(context *endly.Context, config *dsc.Con
 
 func (s *service) Run(context *endly.Context, request interface{}) *endly.ServiceResponse {
 	var state = context.State()
-	context.Context.Replace(dsunit.SubstitutionMapKey, &state)
+	_ = context.Context.Replace(dsunit.SubstitutionMapKey, &state)
 	s.Service.SetContext(context.Context)
 	return s.AbstractService.Run(context, request)
 }
