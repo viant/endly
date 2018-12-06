@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
+	"github.com/viant/endly/testing/runner/selenium"
 
 	"bytes"
 	"encoding/json"
@@ -99,6 +100,9 @@ func (r *Runner) AddTag(eventTag *EventTag) {
 	r.indexedTag[eventTag.TagID] = eventTag
 }
 
+
+
+
 //EventTag returns an event tag
 func (r *Runner) EventTag() *EventTag {
 	if r.Len() == 0 {
@@ -119,6 +123,8 @@ func (r *Runner) EventTag() *EventTag {
 	}
 	return r.indexedTag[activity.TagID]
 }
+
+
 
 func (r *Runner) printInput(output string) {
 	r.Printf("%v\n", r.ColorText(output, r.InputColor))
@@ -734,7 +740,10 @@ func (r *Runner) printSummary() {
 func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 	r.request = request
 	r.context = r.manager.NewContext(toolbox.NewContext())
+	//init shared session
 	exec.TerminalSessions(r.context)
+	selenium.Sessions(r.context)
+
 	r.report = &ReportSummaryEvent{}
 	r.context.CLIEnabled = true
 	r.filter = request.EventFilter
