@@ -78,10 +78,18 @@ func (s *service) assert(context *endly.Context, request *AssertRequest) (*Asser
 		logWaitRetryCount := request.LogWaitRetryCount
 		logWaitDuration := time.Duration(request.LogWaitTimeMs) * time.Millisecond
 
+
 		for _, expectedLogRecord := range expectedLogRecords.Records {
+			description := fmt.Sprintf("Log Validation: %v", expectedLogRecords.Type)
+			if request.Description != "" {
+				description = request.Description
+			}
+			if ! strings.Contains(description, expectedLogRecords.Type) {
+				description += ": " + expectedLogRecords.Type
+			}
 			var validation = &assertly.Validation{
 				TagID:       expectedLogRecords.TagID,
-				Description: fmt.Sprintf("Log Validation: %v", expectedLogRecords.Type),
+				Description: description,
 			}
 			response.Validations = append(response.Validations, validation)
 			for j := 0; j < logWaitRetryCount; j++ {
