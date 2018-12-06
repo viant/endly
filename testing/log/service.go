@@ -9,6 +9,7 @@ import (
 	estorage "github.com/viant/endly/system/storage"
 	"github.com/viant/endly/udf"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 	"io"
@@ -77,19 +78,19 @@ func (s *service) assert(context *endly.Context, request *AssertRequest) (*Asser
 		var logRecordIterator = logTypeMeta.Iterator()
 		logWaitRetryCount := request.LogWaitRetryCount
 		logWaitDuration := time.Duration(request.LogWaitTimeMs) * time.Millisecond
+		var aMap  = data.NewMap()
+		aMap.Put("logType", expectedLogRecords.Type)
+		aMap.Put("TagID", expectedLogRecords.TagID)
 
 
 		for _, expectedLogRecord := range expectedLogRecords.Records {
-			description := fmt.Sprintf("Log Validation: %v", expectedLogRecords.Type)
+			description := "Log Validation: $logType"
 			if request.Description != "" {
-				description = request.Description
-			}
-			if ! strings.Contains(description, expectedLogRecords.Type) {
-				description += ": " + expectedLogRecords.Type
+				description = request.DescriptionTemplate
 			}
 			var validation = &assertly.Validation{
 				TagID:       expectedLogRecords.TagID,
-				Description: description,
+				Description: aMap.ExpandAsText(description),
 			}
 			response.Validations = append(response.Validations, validation)
 			for j := 0; j < logWaitRetryCount; j++ {
