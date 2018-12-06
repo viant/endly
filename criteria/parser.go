@@ -170,7 +170,7 @@ outer:
 			}
 
 			match := tokenizer.Nexts(grouping, eof)
-			if match != nil && match.Token  == grouping {
+			if match != nil && match.Token == grouping {
 				matched += match.Matched
 			}
 			criterion.RightOperand = matched

@@ -105,7 +105,6 @@ func TestCriteriaParser_Parse(t *testing.T) {
 			Description: "udf usage",
 			Expression:  "$i < $Len($params.requests)",
 			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$i", "<", "$Len($params.requests)")),
-
 		},
 
 		//$stdout :/(END)/

@@ -60,7 +60,7 @@ func (s *service) checkProcess(context *endly.Context, request *StatusRequest) (
 	}
 
 	actualCommand := request.Command
-	if index := strings.Index(actualCommand, "grep "); index !=-1 {
+	if index := strings.Index(actualCommand, "grep "); index != -1 {
 		actualCommand = string(actualCommand[index+5:])
 	}
 
@@ -69,7 +69,7 @@ func (s *service) checkProcess(context *endly.Context, request *StatusRequest) (
 		if strings.Contains(line, "grep") {
 			continue
 		}
-		if ! request.ExactCommand {
+		if !request.ExactCommand {
 			index := strings.LastIndex(line, actualCommand)
 			if index == -1 {
 				continue

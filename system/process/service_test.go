@@ -18,7 +18,7 @@ func TestProcessService_Status(t *testing.T) {
 	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
 	var manager = endly.New()
 	var useCases = []struct {
-		baseDir string
+		baseDir      string
 		target       *url.Resource
 		command      string
 		exactCommand bool
@@ -28,7 +28,7 @@ func TestProcessService_Status(t *testing.T) {
 			baseDir: "test/status/active/darwin",
 			target:  target,
 			command: "docker",
-			expected:[]*process.Info{
+			expected: []*process.Info{
 				{
 					Name:      "/Library/PrivilegedHelperTools/com.docker.vmnetd",
 					Pid:       34227,
@@ -44,7 +44,7 @@ func TestProcessService_Status(t *testing.T) {
 			target:       target,
 			command:      "docker",
 			exactCommand: true,
-			expected:[]*process.Info{
+			expected: []*process.Info{
 				{
 					Name:      "/usr/bin/dockerd",
 					Pid:       1700,
@@ -81,9 +81,9 @@ func TestProcessService_Status(t *testing.T) {
 		context, err := exec.NewSSHReplayContext(manager, useCase.target, useCase.baseDir)
 		if assert.Nil(t, err) {
 			var request = &process.StatusRequest{
-				Target:  useCase.target,
-				Command: useCase.command,
-				ExactCommand:useCase.exactCommand,
+				Target:       useCase.target,
+				Command:      useCase.command,
+				ExactCommand: useCase.exactCommand,
 			}
 			var response = &process.StatusResponse{}
 			var description = useCase.baseDir + " " + useCase.command

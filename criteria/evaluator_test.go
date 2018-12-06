@@ -104,7 +104,6 @@ func Test_EvaluateCriteria(t *testing.T) {
 			Expected:      true,
 		},
 
-
 		{
 			Description:   "UDFs substitution",
 			Expression:    "$Len($logRecords) > 0", //

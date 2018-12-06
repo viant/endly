@@ -62,7 +62,7 @@ func (r *RunRequest) Init() (err error) {
 		}
 		r.workflow.Source = url.NewResource(r.AssetURL)
 		if r.StateKey == "" {
-			r.StateKey  = r.Name
+			r.StateKey = r.Name
 		}
 		return r.workflow.Init()
 	}
@@ -81,7 +81,7 @@ func (r *RunRequest) Init() (err error) {
 	}
 
 	if r.StateKey == "" {
-		r.StateKey  = r.Name
+		r.StateKey = r.Name
 	}
 	return nil
 }

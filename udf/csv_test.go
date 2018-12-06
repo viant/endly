@@ -1,12 +1,12 @@
 package udf
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox"
 	"testing"
-	"encoding/json"
-	"fmt"
 )
 
 func TestNewCsvReader(t *testing.T) {
@@ -19,10 +19,6 @@ func TestNewCsvReader(t *testing.T) {
 	rBytes, _ := json.Marshal(resultMap)
 
 	fmt.Printf("!%v!", string(rBytes))
-
-
-
-
 
 	useCases := []struct {
 		description string

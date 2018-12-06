@@ -144,8 +144,6 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 	var asyncError error
 	asyncActions := task.AsyncActions()
 
-
-
 	err := s.runNode(context, "task", process, task.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
 		if task.TasksNode != nil && len(task.Tasks) > 0 {
 			if err := s.runTasks(context, process, task.TasksNode); err != nil || len(task.Actions) == 0 {
@@ -302,7 +300,6 @@ func (s *Service) publishParameters(request *RunRequest, context *endly.Context)
 	return params
 }
 
-
 func (s *Service) getWorkflow(context *endly.Context, request *RunRequest) (*model.Workflow, error) {
 	if request.workflow != nil {
 		context.Publish(NewLoadedEvent(request.workflow))
@@ -396,7 +393,6 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 		err = s.runTasks(context, process, filteredTasks)
 		return state, response.Data, err
 	})
-
 
 	if len(response.Data) > 0 {
 		for k, v := range response.Data {
