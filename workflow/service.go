@@ -103,16 +103,16 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 					Value: response,
 				},
 			}
-			variables.Apply(state, state)
+			_ = variables.Apply(state, state)
 			context.Publish(model.NewModifiedStateEvent(variables, state, state))
 		}
 	}()
 	var request interface{}
-	process.Push(activity)
-	startEvent := s.Begin(context, activity)
 	state.Put("tagId", action.TagID)
 
 	err = s.runNode(context, "action", process, action.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
+		process.Push(activity)
+		startEvent := s.Begin(context, activity)
 		defer s.End(context)(startEvent, model.NewActivityEndEvent(activity))
 		defer process.Pop()
 
@@ -143,6 +143,8 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 	asyncGroup := &sync.WaitGroup{}
 	var asyncError error
 	asyncActions := task.AsyncActions()
+
+
 
 	err := s.runNode(context, "task", process, task.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
 		if task.TasksNode != nil && len(task.Tasks) > 0 {
@@ -394,6 +396,8 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 		err = s.runTasks(context, process, filteredTasks)
 		return state, response.Data, err
 	})
+
+
 	if len(response.Data) > 0 {
 		for k, v := range response.Data {
 			upstreamState.Put(k, v)
