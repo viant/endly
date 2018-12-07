@@ -462,6 +462,8 @@ Workflow also offers DeferTask to execute as the last workflow step in case ther
    	* timestamp.XXX - timestamp in ms where XXX is time diff expression i.e 3DaysAgo, tomorrow, hourAhead 
    	* unix.XXX - timestamp in sec where XXX is time diff expression i.e 3DaysAgo, tomorrow, hourAhead
    	* tzTime.XXX - RFC3339 formatted time where XXX is time diff expression i.e 3DaysAgo, tomorrow, hourAhead
+   	* elapsedToday.locale i.e. : ${elapsedToday.UTC}  
+    * remainingToday.locale i.e. : ${remainingToday.Poland}
    	* tmpDir - temp directory
    	* uuid.next - generate unique id
    	* uuid.Get - returns previously generated unique id, or generate new
