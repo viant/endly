@@ -5,6 +5,8 @@
     * Enhanced criteria parser to work with UDF expression
     * Renamted ShareStateMode to ShareState on workflow:run request
     * ShareState is not set by default for inline workflow any more
+    * Added elapsed time helper $elapsedToday.local i.e. : ${elapsedToday.UTC}  
+    * Added remianing time helper $remainingToday.local i.e. : ${remainingToday.UTC}
     
 ## December 1 2018 0.21.2
     * Refactor asyn action to run with repeater like a regular action
