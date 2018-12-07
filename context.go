@@ -332,6 +332,23 @@ func NewDefaultState() data.Map {
 		return int(timeAt.Unix()+timeAt.UnixNano()) / 1000000000
 	})
 
+	//return fraction of elapsed today in supplied key locale, i.e  ${elapsedToday.UTC}
+	result.Put("elapsedToday", func(key string) interface{} {
+		elapsed, err := toolbox.ElapsedToday(key)
+		if err != nil {
+			return nil
+		}
+		return elapsed
+	})
+	//return fraction of elapsed today in supplied key timezone, i.e  ${remainingToday.Poland}
+	result.Put("remainingToday", func(key string) interface{} {
+		remainingToday, err := toolbox.RemainingToday(key)
+		if err != nil {
+			return nil
+		}
+		return remainingToday
+	})
+
 	//return formatted time with time.RFC3339 yyyy-MM-ddThh:mm:ss.SSS Z  i.e ${tzTime.4daysAgoInUTC}
 
 	result.Put("tzTime", func(key string) interface{} {
