@@ -1,13 +1,14 @@
 ## December 5 2018 0.22.0
-    * Refactor expression parser
+    * Refactored/streamlined expression parser
     * Added basic arithmetic support
     * Added workflow params and data to worklow state dedicated bucket
     * Enhanced criteria parser to work with UDF expression
-    * Renamted ShareStateMode to ShareState on workflow:run request
-    * ShareState is not set by default for inline workflow any more
-    * Added elapsed time helper $elapsedToday.local i.e. : ${elapsedToday.UTC}  
-    * Added remianing time helper $remainingToday.local i.e. : ${remainingToday.UTC}
-    
+    * Renamed ShareStateMode to ShareState on workflow:run request
+    * Removed setting ShareState by inline workflow by default
+    * Added elapsed time helper $elapsedToday.locale i.e. : ${elapsedToday.UTC}  
+    * Added remianing time helper $remainingToday.locale i.e. : ${remainingToday.UTC}
+    * Patched/refactored variable loading
+        
 ## December 1 2018 0.21.2
     * Refactor asyn action to run with repeater like a regular action
     * Added keySensitive direction (assertly) 
