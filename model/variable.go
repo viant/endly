@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/viant/endly/criteria"
-	"github.com/viant/endly/util"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -35,13 +34,15 @@ func (v *Variable) tempfile() string {
 func (v *Variable) PersistValue() error {
 	if v.Value != nil {
 		var filename = v.tempfile()
-		toolbox.RemoveFileIfExist(filename)
+		_ = toolbox.RemoveFileIfExist(filename)
 		file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
 		if err != nil {
 			return err
 		}
 		defer file.Close()
-		toolbox.NewJSONEncoderFactory().Create(file).Encode(v.Value)
+		if err = toolbox.NewJSONEncoderFactory().Create(file).Encode(v.Value); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -270,7 +271,20 @@ func (v Variables) String() string {
 // exclamation mark flags variable as required
 type VariableExpression string
 
-func normalizeValue(value string) interface{} {
+//AsVariable converts expression to variable
+func (e *VariableExpression) AsVariable() (*Variable, error) {
+	var value = strings.TrimSpace(string(*e))
+	var result = &Variable{}
+	pair := strings.SplitN(value, "=", 2)
+	if len(pair) < 2 {
+		return nil, fmt.Errorf("expected variable declaration but had: %v", value)
+	}
+	extractFromKey(pair[0], result)
+	extractFromValue(pair[1], result)
+	return result, nil
+}
+
+func normalizeVariableValue(value string) interface{} {
 	value = strings.TrimSpace(value)
 	if "nil" == value {
 		return nil
@@ -286,153 +300,43 @@ func normalizeValue(value string) interface{} {
 	return value
 }
 
-//AsVariable converts expression to variable
-func (e *VariableExpression) AsVariable() (*Variable, error) {
-	var value = strings.TrimSpace(string(*e))
-	isRequired := strings.HasPrefix(value, "!")
+func extractFromKey(key string, variable *Variable) {
+	isRequired := strings.HasPrefix(key, "!")
 	if isRequired {
-		value = string(value[1:])
+		key = string(key[1:])
 	}
-	pair := strings.Split(value, "=")
-	if len(pair) != 2 {
-		return nil, fmt.Errorf("invalid variable expression, expected '=' operator")
-	}
-	var result = &Variable{
-		Required:          isRequired,
-		EmptyIfUnexpanded: isRequired,
-	}
+	variable.Name = strings.TrimSpace(key)
+	variable.Required = isRequired
+	variable.EmptyIfUnexpanded = isRequired
+}
 
-	result.Name = strings.TrimSpace(pair[0])
-	var whenIndex = strings.Index(pair[1], "?")
+func extractFromValue(value string, variable *Variable) {
+	if !hasConditionalAssignment(value) {
+		variable.Value = normalizeVariableValue(value)
+		return
+	}
+	var whenIndex = strings.Index(value, "?")
 	if whenIndex != -1 {
-		result.When = strings.TrimSpace(string(pair[1][:whenIndex]))
-		value := strings.TrimSpace(string(pair[1][whenIndex+1:]))
-		result.Value = value
+		variable.When = strings.TrimSpace(string(value[:whenIndex]))
+		value := strings.TrimSpace(string(value[whenIndex+1:]))
+		variable.Value = value
 		elseIndex := strings.LastIndex(value, ":")
 		if elseIndex != -1 {
-			result.Value = string(value[:elseIndex])
-			result.Else = normalizeValue(string(value[elseIndex+1:]))
+			variable.Value = string(value[:elseIndex])
+			variable.Else = normalizeVariableValue(string(value[elseIndex+1:]))
 		}
-	} else {
-		result.Name = strings.TrimSpace(pair[0])
-		result.Value = strings.TrimSpace(pair[1])
 	}
-	result.Value = normalizeValue(toolbox.AsString(result.Value))
-	return result, nil
+	variable.Value = normalizeVariableValue(toolbox.AsString(variable.Value))
 }
 
-//GetVariables returns variables from Variables ([]*Variable), []string (as expression) or from []interface{} (where interface is a map matching Variable struct)
-func GetVariables(baseURLs []string, source interface{}) (Variables, error) {
-	if source == nil {
-		return nil, nil
+func hasConditionalAssignment(candidate string) bool {
+	questionMarkCount := strings.Count(candidate, "?")
+	if questionMarkCount != 1 {
+		return false
 	}
-	switch value := source.(type) {
-	case *Variables:
-		return *value, nil
-	case Variables:
-		return value, nil
-	case string:
-		value = strings.TrimSpace(value)
-		if value == "" {
-			return nil, nil
-		}
-		var result Variables = make([]*Variable, 0)
-		loaded, err := util.LoadData(baseURLs, value)
-		if err == nil {
-			toolbox.DefaultConverter.AssignConverted(&result, loaded)
-		}
-
-		return result, err
+	elseCount := strings.Count(candidate, ":")
+	if elseCount == 0 {
+		return true
 	}
-
-	var result Variables = make([]*Variable, 0)
-	if !toolbox.IsSlice(source) {
-		return nil, fmt.Errorf("invalid varaibles type: %T, expected %T or %T", source, result, []string{})
-	}
-
-	if _, err := util.NormalizeMap(source, false); err == nil {
-		toolbox.ProcessMap(source, func(key, value interface{}) bool {
-			variable, e := newVariableFromKetValuePair(toolbox.AsString(key), value)
-			if err != nil {
-				err = e
-				return false
-			}
-			result = append(result, variable)
-			return true
-		})
-		return result, err
-	}
-
-	variables := toolbox.AsSlice(source)
-	if len(variables) == 0 {
-		return nil, nil
-	}
-
-	for _, item := range variables {
-		switch value := item.(type) {
-		case string:
-			text := value
-			if len(text) == 0 {
-				continue
-			}
-			variableExpr := VariableExpression(toolbox.AsString(item))
-			variable, err := variableExpr.AsVariable()
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, variable)
-		default:
-			if toolbox.IsSlice(item) || toolbox.IsMap(item) {
-				aMap, err := util.NormalizeMap(value, true)
-				if err != nil {
-					return nil, err
-				}
-				var variable = &Variable{}
-				err = toolbox.DefaultConverter.AssignConverted(&variable, aMap)
-				if err != nil {
-					return nil, err
-				}
-				if variable.Name == "" && len(aMap) == 1 {
-					for key, value := range aMap {
-						variable, err = newVariableFromKetValuePair(toolbox.AsString(key), value)
-						if err != nil {
-							return nil, fmt.Errorf("unsupported variable definition: %v", value)
-						}
-					}
-				}
-				result = append(result, variable)
-			} else {
-				return nil, fmt.Errorf("unsupported type: %T", value)
-			}
-		}
-	}
-	return result, nil
-
-}
-
-func newVariableFromKetValuePair(key string, value interface{}) (*Variable, error) {
-	var name = toolbox.AsString(key)
-	isRequired := strings.HasPrefix(name, "!")
-	if isRequired {
-		name = string(name[1:])
-	}
-	if toolbox.IsSlice(value) {
-		if normalized, err := util.NormalizeMap(value, false); err == nil {
-			value = normalized
-		}
-		return &Variable{
-			Name:              name,
-			Value:             value,
-			Required:          isRequired,
-			EmptyIfUnexpanded: isRequired,
-		}, nil
-	} else {
-		var variableExpr VariableExpression
-		if strings.Contains(name, "=") {
-			variableExpr = VariableExpression(fmt.Sprintf("%v: %v", name, value))
-		} else {
-			variableExpr = VariableExpression(fmt.Sprintf("%v = %v", name, value))
-		}
-		return variableExpr.AsVariable()
-	}
+	return strings.Index(candidate, "?") < strings.LastIndex(candidate, ":")
 }

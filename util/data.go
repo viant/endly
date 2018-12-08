@@ -209,9 +209,6 @@ func LoadResourceFromBaseURLs(baseURLs []string, URI string, result interface{})
 	var err error
 	var resource *url.Resource
 	for _, baseURL := range baseURLs {
-		if baseURL == "" {
-			continue
-		}
 		resource, err = LoadResource(baseURL, URI, result)
 		if err == nil {
 			return resource, nil

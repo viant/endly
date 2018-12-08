@@ -311,6 +311,15 @@ func TestGetVariables(t *testing.T) {
 		NewVariable("var1", "", "", false, "123", nil, nil, false),
 	}
 
+	{ //load from file use case
+		var JSON = `[{"Name":"var1", "Value":"123"}]`
+		ioutil.WriteFile("/tmp/endly_model_get_variables.json", []byte(JSON), 0644)
+		actual, err := GetVariables([]string{""}, "@/tmp/endly_model_get_variables.json")
+		assert.Nil(t, err)
+		assert.EqualValues(t, variables, actual)
+
+	}
+
 	{ //variables use case
 		actual, err := GetVariables([]string{""}, variables)
 		assert.Nil(t, err)
@@ -341,21 +350,14 @@ func TestGetVariables(t *testing.T) {
 		assert.Nil(t, err)
 		assert.EqualValues(t, variables, actual)
 	}
-	{ //load from file use case
-		var JSON = `[{"Name":"var1", "Value":"123"}]`
-		ioutil.WriteFile("/tmp/endly_model_get_variables.json", []byte(JSON), 0644)
-		actual, err := GetVariables([]string{""}, "@/tmp/endly_model_get_variables.json")
-		assert.Nil(t, err)
-		assert.EqualValues(t, variables, actual)
 
-	}
-	{ //no varibles
+	{ //no variables
 		actual, err := GetVariables([]string{""}, "")
 		assert.Nil(t, err)
 		assert.Nil(t, actual)
 	}
 
-	{ //no such file error case
+	{ //no nonexisting
 		_, err := GetVariables([]string{""}, "@nonexisting")
 		assert.NotNil(t, err)
 	}
