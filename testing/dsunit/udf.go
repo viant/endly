@@ -56,7 +56,7 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 	var variable = &model.Variable{
 		Name:    ServiceID,
 		Persist: true,
-		Value:   dataStoreState,
+		Value:   dataStoreState.AsEncodableMap(),
 	}
 	err := variable.PersistValue()
 	if err != nil {

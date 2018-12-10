@@ -18,6 +18,7 @@ import (
 	_ "github.com/viant/endly/static" //load external resource like .csv .json files to mem storage
 	_ "github.com/viant/endly/testing/endpoint/http"
 	_ "github.com/viant/endly/workflow"
+	"github.com/viant/toolbox/data"
 	_ "github.com/viant/toolbox/storage/aws"
 	_ "github.com/viant/toolbox/storage/gs"
 	_ "github.com/viant/toolbox/storage/scp"
@@ -447,7 +448,8 @@ func printInFormat(source interface{}, errorTemplate string, hideEmpty bool) {
 	if hideEmpty {
 		var aMap = map[string]interface{}{}
 		if err := toolbox.DefaultConverter.AssignConverted(&aMap, source); err == nil {
-			source = toolbox.DeleteEmptyKeys(aMap)
+			mapSource := data.Map(toolbox.DeleteEmptyKeys(aMap))
+			source = mapSource.AsEncodableMap()
 		}
 	}
 
