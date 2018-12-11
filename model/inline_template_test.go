@@ -66,7 +66,7 @@ func TestTemplate_Expand(t *testing.T) {
 		var expectedURL = useCase.workflowPrefixURL + ".json"
 		expectedResource := url.NewResource(expectedURL)
 		if expected, err := expectedResource.DownloadText(); err == nil {
-			if !assertly.AssertValues(t, expected, workflow) {
+			if !assertly.AssertValues(t, expected, workflow, useCase.description) {
 				toolbox.DumpIndent(workflow, true)
 			}
 		}

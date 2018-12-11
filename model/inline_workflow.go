@@ -238,7 +238,7 @@ func (p *InlineWorkflow) normalize(node *TasksNode) {
 func (p *InlineWorkflow) buildTask(name string, source interface{}) *Task {
 	var task = &Task{}
 	if toolbox.IsSlice(source) && toolbox.IsMap(source) {
-		toolbox.DefaultConverter.AssignConverted(task, source)
+		_ = toolbox.DefaultConverter.AssignConverted(task, source)
 	}
 	task.Actions = []*Action{}
 	task.AbstractNode = &AbstractNode{}
@@ -383,7 +383,9 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 		parentTask.Tasks = append(parentTask.Tasks, task)
 	}
 
+	var nodeAttributes = make(map[string]interface{})
 	var buildErr error
+
 	if err := toolbox.ProcessMap(source, func(key, value interface{}) bool {
 		textKey := strings.ToLower(toolbox.AsString(key))
 		if isTemplateNode && "template" == textKey {
@@ -397,10 +399,31 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 		if buildErr != nil {
 			return false
 		}
+		nodeAttributes[textKey] = value
 		return true
 	}); err != nil {
 		return err
 	}
+
+	if task == nil {
+		task = parentTask
+	}
+
+	if _, actionNode := nodeAttributes["action"]; !actionNode && !isTemplateNode {
+		if taskAttributes, _, err := p.split(nodeAttributes, state); err == nil {
+			if len(taskAttributes) > 0 {
+				tempTask := &Task{}
+				if err = toolbox.DefaultConverter.AssignConverted(&tempTask, taskAttributes); err == nil {
+					if tempTask.AbstractNode != nil {
+						task.Init = tempTask.Init
+						task.Post = tempTask.Post
+						task.When = tempTask.When
+					}
+				}
+			}
+		}
+	}
+
 	return buildErr
 
 }
