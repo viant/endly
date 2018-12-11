@@ -1,6 +1,7 @@
 package criteria
 
 import (
+	"fmt"
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -19,6 +20,19 @@ func (c *Criterion) expandOperand(opperand interface{}, state data.Map) interfac
 		return nil
 	}
 	return state.Expand(opperand)
+}
+
+func checkUndefined(err error, left, right interface{}, operator string) error {
+	if err != nil {
+		if text, ok := left.(string); ok {
+			return fmt.Errorf("undefined %v  in expression: %v %s %v", text, left, operator, right)
+		}
+		if text, ok := right.(string); ok {
+			return fmt.Errorf("undefined %v  in expression: %v %s %v", text, left, operator, right)
+		}
+
+	}
+	return err
 }
 
 //Apply evaluates criterion with supplied context and state map . Dolar prefixed $expression will be expanded before evaluation.
@@ -50,7 +64,6 @@ func (c *Criterion) Apply(state data.Map) (bool, error) {
 			rightOperand = ""
 		}
 	}
-
 	switch c.Operator {
 	case "=", ":":
 		validation, err := assertly.AssertWithContext(rightOperand, leftOperand, rootPath, context)
@@ -90,6 +103,7 @@ func (c *Criterion) Apply(state data.Map) (bool, error) {
 			}
 		}
 	}
+	err = checkUndefined(err, leftOperand, rightNumber, c.Operator)
 	return false, err
 }
 
