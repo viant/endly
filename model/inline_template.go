@@ -45,7 +45,7 @@ func (t *Template) Expand(task *Task, parentTag string, inline *InlineWorkflow) 
 			}
 		}
 		var err error
-		toolbox.ProcessMap(t.Template, func(key, value interface{}) bool {
+		_ = toolbox.ProcessMap(t.Template, func(key, value interface{}) bool {
 			if err = inline.buildWorkflowNodes(toolbox.AsString(key), value, tempTask, t.Tag, state); err != nil {
 				return false
 			}
@@ -56,7 +56,7 @@ func (t *Template) Expand(task *Task, parentTag string, inline *InlineWorkflow) 
 		}
 		description := ""
 		if t.Description != "" {
-			util.LoadResource(tagPath, t.Description, &description)
+			_, _ = util.LoadResource(tagPath, t.Description, &description)
 		}
 		actions := flattenAction(tempTask, tempTask, tag, description)
 		task.Actions = append(task.Actions, actions...)
