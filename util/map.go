@@ -6,7 +6,7 @@ import (
 
 //NormalizeMap normalizes yaml keyvalue pairs into a map
 func NormalizeValue(value interface{}, deep bool) (interface{}, error) {
-	if (value == nil) {
+	if value == nil {
 		return value, nil
 	}
 	if toolbox.IsMap(value) || toolbox.IsSlice(value) {
@@ -37,7 +37,6 @@ func NormalizeValue(value interface{}, deep bool) (interface{}, error) {
 	return value, nil
 }
 
-
 //NormalizeMap normalizes keyValuePairs from map or slice (map with preserved key order)
 func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{}, error) {
 	var result = make(map[string]interface{})
@@ -62,7 +61,7 @@ func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{},
 				if len(aSlice) == 0 {
 					return true
 				}
-				if  toolbox.IsMap(aSlice[0]) || toolbox.IsStruct(aSlice[0]) {
+				if toolbox.IsMap(aSlice[0]) || toolbox.IsStruct(aSlice[0]) {
 					normalized, err := NormalizeMap(value, deep)
 					if err == nil {
 						result[key] = normalized
