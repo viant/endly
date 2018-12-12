@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"sync"
 	"sync/atomic"
@@ -17,6 +18,7 @@ type Process struct {
 	Task     *Task
 	TaskNode *TasksNode
 	*Activities
+	State      data.Map
 	Terminated int32
 	Scheduled  *Task
 	*ExecutionError
