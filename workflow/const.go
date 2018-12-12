@@ -4,4 +4,5 @@ const (
 	dataStateKey   = "data"
 	paramsStateKey = "params"
 	tasksStateKey  = "tasks"
+	selfStateKey   = "self"
 )
