@@ -103,3 +103,16 @@ func getURLs(URL string) []string {
 		dedicatedFolderURL,
 	}
 }
+
+func isWorkflowRunAction(action *model.Action) bool {
+	return action.Action == "run" && action.Service == ServiceID
+}
+
+func runWithoutSelfIfNeeded(process *model.Process, action *model.Action, state data.Map, handler func() error) error {
+	if !isWorkflowRunAction(action) {
+		return handler()
+	}
+	state.Delete(selfStateKey)
+	defer state.Put(selfStateKey, process.State)
+	return handler()
+}

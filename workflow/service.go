@@ -87,7 +87,12 @@ func (s *Service) loadWorkflowIfNeeded(context *endly.Context, request *RunReque
 
 func (s *Service) runAction(context *endly.Context, action *model.Action, process *model.Process) (response map[string]interface{}, err error) {
 	var state = context.State()
-	activity := model.NewActivity(context, action, state)
+
+	var activity *model.Activity
+	_ = runWithoutSelfIfNeeded(process, action, state, func() error {
+		activity = model.NewActivity(context, action, state)
+		return nil
+	})
 	defer func() {
 		var resultKey = action.Name
 		if resultKey == "" {
@@ -117,7 +122,10 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 		defer process.Pop()
 
 		requestMap := toolbox.AsMap(activity.Request)
-		if request, err = context.AsRequest(activity.Service, activity.Action, requestMap); err != nil {
+		if err = runWithoutSelfIfNeeded(process, action, state, func() error {
+			request, err = context.AsRequest(activity.Service, activity.Action, requestMap)
+			return nil
+		}); err != nil {
 			return nil, nil, err
 		}
 		err = endly.Run(context, request, activity.ServiceResponse)
@@ -336,31 +344,41 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	process.AddTagIDs(strings.Split(request.TagIDs, ",")...)
 	Push(upstreamContext, process)
 
-	var workflowState = data.NewMap()
+	process.State = data.NewMap()
 	upstreamState := upstreamContext.State()
 	if request.StateKey != "" {
 		if upstreamState.Has(request.StateKey) {
 			log.Print("detected workflow state key: %v is taken by: %v, skiping consider stateKey customiztion", request.StateKey, upstreamState.Get(request.StateKey))
 		}
-		upstreamState.Put(request.StateKey, workflowState)
+		upstreamState.Put(request.StateKey, process.State)
 		defer func() {
 			upstreamState.Delete(request.StateKey)
+
 		}()
 	}
 
 	context := upstreamContext
+	state := context.State()
 	if !request.SharedState {
 		context = upstreamContext.Clone()
+		state = context.State()
+		state.Delete(selfStateKey)
 	}
+
+	origSelfState := upstreamState.Get(selfStateKey)
+	state.Put(selfStateKey, process.State)
+	if origSelfState != nil {
+		defer state.Put(selfStateKey, origSelfState)
+	}
+
 	params := s.publishParameters(request, context)
-	workflowState.Put(paramsStateKey, params)
+	process.State.Put(paramsStateKey, params)
 	if len(workflow.Data) > 0 {
 		state := context.State()
 		state.Put(dataStateKey, workflow.Data)
-		workflowState.Put(dataStateKey, workflow.Data)
+		process.State.Put(dataStateKey, workflow.Data)
 	}
 
-	var state = context.State()
 	upstreamTasks, hasUpstreamTasks := state.GetValue(tasksStateKey)
 	restore := context.PublishAndRestore(toolbox.Pairs(
 		neatly.OwnerURL, workflow.Source.URL,
