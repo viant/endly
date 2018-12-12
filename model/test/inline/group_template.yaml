@@ -20,4 +20,3 @@ pipeline:
     subTask2:
       action: print
       message: hello
-      message: hello
