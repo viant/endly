@@ -11,6 +11,7 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/viant/asc"
 	_ "github.com/viant/bgc"
+
 	"github.com/viant/endly"
 	_ "github.com/viant/endly/cloud/ec2"
 	_ "github.com/viant/endly/cloud/gce"
@@ -31,11 +32,11 @@ import (
 	_ "github.com/viant/endly/testing/runner/rest"
 	_ "github.com/viant/endly/testing/runner/selenium"
 
-	_ "github.com/viant/endly/cloud/pubsub"
 	_ "github.com/viant/endly/deployment/build"
 	_ "github.com/viant/endly/deployment/deploy"
 	_ "github.com/viant/endly/deployment/sdk"
 	_ "github.com/viant/endly/deployment/vc"
+	_ "github.com/viant/endly/messaging"
 
 	_ "github.com/viant/endly/notify/smtp"
 	_ "github.com/viant/endly/system/daemon"
