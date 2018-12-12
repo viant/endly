@@ -1,4 +1,4 @@
-package pubsub
+package messaging
 
 import (
 	"strings"
@@ -18,6 +18,7 @@ type Resource struct {
 	Name        string
 	Type        string `description:"resource type: topic, subscription"`
 	Vendor      string
+	Config      interface{} `description:"vendor client config"`
 	projectID   string
 }
 

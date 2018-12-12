@@ -1,4 +1,4 @@
-package pubsub
+package messaging
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 
 const (
 	//ServiceID represents gloud messaging  pubsub service id.
-	ServiceID = "pubsub"
+	ServiceID = "messaging"
 )
 
 //service represent SMTP service

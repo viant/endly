@@ -1,4 +1,4 @@
-package pubsub
+package messaging
 
 import "github.com/viant/endly"
 
