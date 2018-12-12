@@ -65,9 +65,9 @@ pipeline:
        action: serviceID:someAction
        requestField1: val1
        requestFieldN: valN
-       '@init':
+       ':init':
          - i = 0 
-       ':init': true
+       '@init': true
      subTaskY:
         action: serviceID:someAction
         request: @action_request1 
@@ -98,8 +98,8 @@ endly -r=PIPELINE_FILE.yaml -p  -f=yaml|json
 
 Presence of 'action' or 'workflow' attributes in a node makes the node executable, which means endly will invoke specified service with corresponding action and defined action request.
 Since the executable node share the namespace for both [action.go](./../../model/action.go) attributes and action request attributes,
-you can use key prefix to instruct how data is dispatched. For instance '@init' defines an action init variable section, while
- ':init' defines action request init attribute, if prefix is not used key is dispatched for both action and action request attributes.
+you can use key prefix to instruct how data is dispatched. For instance ':init' defines an action init variable section, while
+ '@init' defines action request init attribute, if prefix is not used key is dispatched for both action and action request attributes.
 
 Additionally action request can be delegated to external file with 'request' key, file has to start with '@' to reference external resource. 
 
