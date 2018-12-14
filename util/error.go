@@ -5,10 +5,16 @@ import (
 )
 
 //NotSuchResourceError represents generic no such resource error
-type NotSuchResourceError struct{ Resource string }
+type NotSuchResourceError struct {
+	Message  string
+	Resource string
+}
 
 func (e *NotSuchResourceError) Error() string {
-	return "no such resource " + e.Resource
+	if e.Message != "" {
+		return e.Message
+	}
+	return "no such resource" + e.Resource
 }
 
 //NewNotSuchResourceError create new NewNotSuchResourceError
