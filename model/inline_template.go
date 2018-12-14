@@ -146,8 +146,7 @@ func (t *Template) buildTagState(index string, tag *neatly.Tag) data.Map {
 	state.Put("subpath", tag.Subpath)
 	state.Put("tagId", tag.TagID())
 	state.Put("subPath", tag.Subpath)
-	state.Put("dirMatch", tag.PathMatch)
-
+	state.Put("pathMatch", tag.PathMatch)
 	state.Put("path", tagPath)
 	return state
 }
@@ -164,6 +163,7 @@ func flattenAction(parent *Task, task *Task, tag *neatly.Tag, description string
 			action := result[i]
 			action.TagID = tag.TagID()
 			action.TagIndex = tag.Iterator.Index()
+
 			action.Tag = tag.Expand(tag.Name)
 			if i == 0 {
 				action.TagDescription = description
