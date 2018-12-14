@@ -134,7 +134,10 @@ func LoadMap(baseURLs []string, URI string) (map[string]interface{}, error) {
 	URIs := getURIa(URI)
 	mainAssetURI := URIs[0]
 	rawContent := ""
-	resource, _ := LoadResourceFromBaseURLs(baseURLs, mainAssetURI, &rawContent)
+	resource, err := LoadResourceFromBaseURLs(baseURLs, mainAssetURI, &rawContent)
+	if err != nil {
+		return nil, err
+	}
 	result, err := expandMapWithArgumentsIfMatched(baseURLs, URIs, rawContent)
 	if err != nil {
 		return nil, err
@@ -208,6 +211,7 @@ func expandMapWithArgumentsIfMatched(baseURLs []string, URIs []string, mainConte
 func LoadResourceFromBaseURLs(baseURLs []string, URI string, result interface{}) (*url.Resource, error) {
 	var err error
 	var resource *url.Resource
+
 	for _, baseURL := range baseURLs {
 		resource, err = LoadResource(baseURL, URI, result)
 		if err == nil {
@@ -217,6 +221,21 @@ func LoadResourceFromBaseURLs(baseURLs []string, URI string, result interface{})
 			continue
 		}
 		return nil, err
+	}
+	if IsNotSuchResourceError(err) {
+		var resourceURLs = []string{}
+		var reported = make(map[string]bool)
+		for _, baseURL := range baseURLs {
+			for _, ext := range []string{".json", ".yaml", ".yml", ".txt", ""} {
+				candidate := toolbox.URLPathJoin(baseURL, (string(URI[1:]) + ext))
+				if _, ok := reported[candidate]; ok {
+					continue
+				}
+				reported[candidate] = true
+				resourceURLs = append(resourceURLs, candidate)
+			}
+		}
+		return nil, &NotSuchResourceError{Message: "failed to locate one of the following: " + strings.Join(resourceURLs, ",\n\t")}
 	}
 	return nil, err
 }
