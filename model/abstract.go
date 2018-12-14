@@ -8,4 +8,5 @@ type AbstractNode struct {
 	Post        Variables `description:"post execution state update instruction"`
 	When        string    `description:"run criteria"`
 	SleepTimeMs int       //optional Sleep time
+	Logging     *bool     `description:"optional flag to disable logging, enabled by default"`
 }

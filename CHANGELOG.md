@@ -1,9 +1,14 @@
+## December 13 2018 0.23.1
+    * Added logging option on abstract node level
+    * Patched action tracking for cli execution path reporter  
+
 ## December 12 2018 0.23.0
     * Added workflow scoped variable ($self.x)
     * Enhanced inline workflow task conversion process (init,post,when)
     * Added Values,Keys,IndexOf udf (neatly)
     * Enhanced multi parameters UDF call expression syntax (toolbox)
     * Renamed and moved pubsub service to messaging
+    * Added AssertPath directive (assertly)
 
 ## December 5 2018 0.22.0
     * Refactored/streamlined expression parser

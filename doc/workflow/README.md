@@ -114,9 +114,11 @@ pipeline:
 
 *Neatly*
 
-For more complex workflow endly uses [Neatly](https://github.com/viant/neatly) format 
+For originally developed workflow endly uses [Neatly](https://github.com/viant/neatly) format 
 to represent a workflow. In that case neatly is responsible for converting a tabular document (.csv) 
 with json/yaml and other sub path dependencies into workflow object tree as shown in the [diagram](diagram.png).
+
+
 
 
 Find out more about neatly:
@@ -211,6 +213,10 @@ pipeline:
     p1: $params.p1
     p2: $params.p2  
 ```
+
+
+
+
 
 
 

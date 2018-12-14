@@ -21,6 +21,7 @@ type Activity struct {
 	Request         interface{}
 	Response        map[string]interface{}
 	ServiceResponse *endly.ServiceResponse
+	Logging         *bool
 }
 
 //FormatTag return a formatted tag
@@ -51,6 +52,10 @@ func NewActivity(context *endly.Context, action *Action, state data.Map) *Activi
 	}
 	if result.Request == nil {
 		result.Request = map[string]interface{}{}
+	}
+
+	if action.Logging != nil {
+		result.Logging = action.Logging
 	}
 	return result
 }
