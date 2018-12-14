@@ -84,11 +84,16 @@ func isNormalizableRequest(actionAttributes map[string]interface{}) bool {
 func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]interface{}, state data.Map) error {
 	if request, ok := actionAttributes["request"]; ok && toolbox.IsString(request) {
 		request := toolbox.AsString(actionAttributes["request"])
-		requestMap, err := util.LoadMap([]string{p.tagPathURL, p.baseURL}, request)
+		var requestMap map[string]interface{}
+		var err error
+		if strings.HasPrefix(request, "@") {
+			requestMap, err = util.LoadMap([]string{p.tagPathURL, p.baseURL}, request)
+		} else {
+			requestMap, err = toolbox.ToMap(actionAttributes["request"])
+		}
 		if err != nil {
 			return err
 		}
-
 		if isNormalizableRequest(actionAttributes) {
 			requestMap, err = util.NormalizeMap(requestMap, true)
 			if err != nil {
@@ -305,7 +310,7 @@ func (p *InlineWorkflow) buildAction(name string, actionAttributes, actionReques
 	if err := toolbox.DefaultConverter.AssignConverted(result, actionAttributes); err != nil {
 		return nil, err
 	}
-	result.Init()
+	_ = result.Init()
 	if result.Name == "" {
 		result.Name = name
 	}
