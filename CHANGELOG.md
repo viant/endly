@@ -1,4 +1,4 @@
-## December 13 2018 0.23.1
+## December 14 2018 0.23.1
     * Added logging option on abstract node level
     * Patched action tracking for cli execution path reporter  
 
