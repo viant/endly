@@ -84,7 +84,6 @@ type Runner struct {
 	repeatedCount int
 	activityEnded bool
 
-
 	hasValidationFailures bool
 	err                   error
 
@@ -326,7 +325,6 @@ func (r *Runner) processActivityStart(event msg.Event) bool {
 
 	var eventValue = event.Value()
 
-
 	if r.activityEnded {
 		if _, ok := eventValue.(*model.Activity); !ok {
 			return false
@@ -353,6 +351,10 @@ func (r *Runner) processActivityStart(event msg.Event) bool {
 		r.mutex.Unlock()
 	}
 
+	if activity.Logging != nil && !*activity.Logging {
+		return true
+	}
+
 	if activity.TagDescription != "" {
 		if r.repeated != nil {
 			r.repeated.Count = 0
@@ -366,7 +368,6 @@ func (r *Runner) processActivityStart(event msg.Event) bool {
 	var serviceAction = fmt.Sprintf("%v.%v", activity.Service, activity.Action)
 	r.printShortMessage(messageTypeAction, activity.Description, messageTypeAction, serviceAction)
 	return true
-
 }
 
 func (r *Runner) getIndex(tagID string) string {
@@ -612,7 +613,7 @@ func (r *Runner) reportTagSummary() {
 		var validation *assertly.Validation
 		if (tag.FailedCount) > 0 {
 			var eventTag = tag.TagID
-			r.printMessage(r.ColorText(eventTag, "red"), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount + tag.PassedCount)))
+			r.printMessage(r.ColorText(eventTag, "red"), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
 			var offset = 0
 			for i, event := range tag.Events {
 				validation = r.getValidation(event)
