@@ -15,6 +15,35 @@ type SendRequest struct {
 	Expect   map[string]interface{} `description:"If specified it will validated response as actual"`
 }
 
+//Init initializes send request
+func (s *SendRequest) Init() error {
+
+	if s.Expect == nil {
+		s.Expect = make(map[string]interface{})
+	}
+	if len(s.Requests) == 0 {
+		return nil
+	}
+	if _, has := s.Expect["Responses"]; has {
+		return nil
+	}
+	var hasExpectedResponse = false
+	var emptyMap = make(map[string]interface{})
+	var expectedResponses = make([]interface{}, 0)
+	for _, request := range s.Requests {
+		if request.Expect != nil {
+			hasExpectedResponse = true
+			expectedResponses = append(expectedResponses, request.Expect)
+		} else {
+			expectedResponses = append(expectedResponses, emptyMap)
+		}
+	}
+	if hasExpectedResponse {
+		s.Expect["Responses"] = expectedResponses
+	}
+	return nil
+}
+
 //NewSendRequestFromURL create new request from URL
 func NewSendRequestFromURL(URL string) (*SendRequest, error) {
 	resource := url.NewResource(URL)
@@ -86,7 +115,7 @@ func (r *LoadRequest) Init() error {
 		}
 	}
 
-	return nil
+	return r.SendRequest.Init()
 }
 
 func (r *LoadRequest) Validate() error {

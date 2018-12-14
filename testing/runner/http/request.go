@@ -22,10 +22,11 @@ type Request struct {
 	Header      http.Header
 	Cookies     Cookies
 	Body        string
-	JSONBody    interface{}       `description:"body JSON representation"`
-	Replace     map[string]string `description:"response body key value pair replacement"`
-	RequestUdf  string            `description:"user defined function in context.state key, i,e, json to protobuf"`
-	ResponseUdf string            `description:"user defined function in context.state key, i,e, protobuf to json"`
+	JSONBody    interface{}            `description:"body JSON representation"`
+	Replace     map[string]string      `description:"response body key value pair replacement"`
+	RequestUdf  string                 `description:"user defined function in context.state key, i,e, json to protobuf"`
+	ResponseUdf string                 `description:"user defined function in context.state key, i,e, protobuf to json"`
+	Expect      map[string]interface{} `description:"desired http response"`
 }
 
 //Clone substitute request data with matching context map state.
