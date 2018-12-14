@@ -17,14 +17,11 @@ type Workflow struct {
 //Validate validates this workflow
 func (w *Workflow) Init() error {
 	for _, task := range w.Tasks {
-		if len(task.Actions) == 0 {
-			task.Actions = []*Action{}
-			continue
+		if w.Logging != nil && task.Logging == nil {
+			task.Logging = w.Logging
 		}
-		for _, action := range task.Actions {
-			if err := action.Init(); err != nil {
-				return err
-			}
+		if err := task.init(); err != nil {
+			return err
 		}
 	}
 	return nil

@@ -32,6 +32,7 @@ type InlineWorkflow struct {
 	name       string
 	Init       interface{}
 	Post       interface{}
+	Logging    *bool
 	Defaults   map[string]interface{}
 	Data       map[string]interface{}
 	Pipeline   []*MapEntry
@@ -145,6 +146,11 @@ func (p InlineWorkflow) split(source interface{}, state data.Map) (map[string]in
 	if err = p.loadRequest(actionAttributes, actionRequest, state); err != nil {
 		return nil, nil, err
 	}
+
+	if value, ok := actionAttributes["logging"]; ok {
+		actionAttributes["logging"] = toolbox.AsBoolean(value)
+	}
+
 	if value, ok := actionAttributes["init"]; ok {
 		variables, err := p.asVariables(value)
 		if err != nil {
@@ -182,24 +188,26 @@ func (p *InlineWorkflow) AsWorkflow(name string, baseURL string) (*Workflow, err
 	if len(p.Data) == 0 {
 		p.Data = make(map[string]interface{})
 	}
-	var result = &Workflow{
+	var workflow = &Workflow{
 		AbstractNode: &AbstractNode{
-			Name: name,
+			Name:    name,
+			Logging: p.Logging,
 		},
 		TasksNode: &TasksNode{
 			Tasks: []*Task{},
 		},
+
 		Data:   p.Data,
 		Source: url.NewResource(toolbox.URLPathJoin(baseURL, name+".yaml")),
 	}
 	var err error
 	if p.Init != nil {
-		if result.AbstractNode.Init, err = GetVariables([]string{p.baseURL}, p.Init); err != nil {
+		if workflow.AbstractNode.Init, err = GetVariables([]string{p.baseURL}, p.Init); err != nil {
 			return nil, err
 		}
 	}
 	if p.Post != nil {
-		if result.AbstractNode.Post, err = GetVariables([]string{p.baseURL}, p.Post); err != nil {
+		if workflow.AbstractNode.Post, err = GetVariables([]string{p.baseURL}, p.Post); err != nil {
 			return nil, err
 		}
 	}
@@ -212,14 +220,14 @@ func (p *InlineWorkflow) AsWorkflow(name string, baseURL string) (*Workflow, err
 	}
 	p.normalize(root.TasksNode)
 	if len(root.Tasks) > 0 {
-		result.TasksNode = root.TasksNode
+		workflow.TasksNode = root.TasksNode
 	} else {
-		result.TasksNode = &TasksNode{
+		workflow.TasksNode = &TasksNode{
 			Tasks: []*Task{root},
 		}
 	}
-	p.workflow = result
-	return result, nil
+	p.workflow = workflow
+	return workflow, nil
 
 }
 
@@ -324,7 +332,7 @@ func (p *InlineWorkflow) hasActionNode(source interface{}) bool {
 		return true
 	}
 
-	toolbox.ProcessMap(attributes, func(key, value interface{}) bool {
+	_ = toolbox.ProcessMap(attributes, func(key, value interface{}) bool {
 		if !(toolbox.IsMap(value) || toolbox.IsStruct(value) || toolbox.IsSlice(value)) {
 			return true
 		}
@@ -391,6 +399,9 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 		if isTemplateNode && "template" == textKey {
 			return true
 		}
+		if textKey == "logging" || textKey == "when" { //abstract node attributes
+			nodeAttributes[textKey] = value
+		}
 		flagAsMultiActionIfMatched(textKey, task, value)
 		if !toolbox.IsSlice(value) {
 			return true
@@ -408,8 +419,8 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 	if task == nil {
 		task = parentTask
 	}
-
 	if _, actionNode := nodeAttributes["action"]; !actionNode && !isTemplateNode {
+
 		if taskAttributes, _, err := p.split(nodeAttributes, state); err == nil {
 			if len(taskAttributes) > 0 {
 				tempTask := &Task{}
@@ -418,6 +429,7 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 						task.Init = tempTask.Init
 						task.Post = tempTask.Post
 						task.When = tempTask.When
+						task.Logging = tempTask.Logging
 					}
 				}
 			}
