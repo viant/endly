@@ -17,8 +17,8 @@ type Template struct {
 	Range       string            `description:"range expression i.e 2..003  where upper bound number drives padding $index variable"`
 	Description string            `description:"reference to file containing tagDescription i.e. @use_case,  file reference has to start with @"`
 	Data        map[string]string `description:"map of data references, where key is workflow.data target, and value is a file within expanded dynamically subpath or workflow path fallback. Value has to start with @"`
-	inline      *InlineWorkflow
 	Template    []interface{}
+	inline      *InlineWorkflow
 }
 
 func (t *Template) Expand(task *Task, parentTag string, inline *InlineWorkflow) error {
@@ -146,6 +146,8 @@ func (t *Template) buildTagState(index string, tag *neatly.Tag) data.Map {
 	state.Put("subpath", tag.Subpath)
 	state.Put("tagId", tag.TagID())
 	state.Put("subPath", tag.Subpath)
+	state.Put("dirMatch", tag.PathMatch)
+
 	state.Put("path", tagPath)
 	return state
 }
@@ -162,7 +164,7 @@ func flattenAction(parent *Task, task *Task, tag *neatly.Tag, description string
 			action := result[i]
 			action.TagID = tag.TagID()
 			action.TagIndex = tag.Iterator.Index()
-			action.Tag = tag.Name
+			action.Tag = tag.Expand(tag.Name)
 			if i == 0 {
 				action.TagDescription = description
 			}
