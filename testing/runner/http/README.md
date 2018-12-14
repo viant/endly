@@ -381,6 +381,29 @@ pipeline:
 
 
 
+
+<a name="inline_validtion"></a>
+**Sending http request and validation**
+
+
+```bash
+endly -r=http
+```
+
+@http.yaml
+```yaml
+pipeline:
+  task1:
+    action: http/runner:send
+    requests:
+      - url: http://www.wp.pl
+        expect:
+          Code: 200
+```
+
+
+
+
 <a name="load"></a>
 ## Stress testing
 
