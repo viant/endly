@@ -582,7 +582,7 @@ pipeline:
 
       action1:
         action: print
-        message: action 1 - message from $index $tagId $subPath
+        message: action 1 - message from $index $tagId $subPath $pathMatch
 
       action2:
         when: $HasResource(${path}/req/print.json)

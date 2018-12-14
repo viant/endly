@@ -4,7 +4,7 @@ pipeline:
     message: init ...
 
   test:
-    tag: Test
+    tag: $pathMatch
     range: 1..003
     description: '@desc'
     subPath: dir/${index}_*
