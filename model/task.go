@@ -31,6 +31,9 @@ func (t *Task) init() error {
 			return err
 		}
 	}
+	if t.TasksNode == nil {
+		return nil
+	}
 	if len(t.Tasks) > 0 {
 		for _, task := range t.Tasks {
 			if t.Logging != nil && task.Logging == nil {
