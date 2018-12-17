@@ -123,8 +123,8 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 
 		requestMap := toolbox.AsMap(activity.Request)
 		if err = runWithoutSelfIfNeeded(process, action, state, func() error {
-			request, err = context.AsRequest(activity.Service, activity.Action, requestMap)
-			return nil
+			request, err = context.AsRequest(activity.Service, activity.Action, requestMap);
+			return err
 		}); err != nil {
 			return nil, nil, err
 		}
