@@ -57,12 +57,6 @@ func (r *Request) Expand(state data.Map) {
 func (r *Request) Build(context *endly.Context, sessionCookies Cookies) (*http.Request, bool, error) {
 	if r.Body == "" && r.JSONBody != nil {
 		var err error
-		isDataStruct := toolbox.IsMap(r.JSONBody) || toolbox.IsSlice(r.JSONBody)
-		if isDataStruct {
-			if normalized, err  := util.NormalizeValue(r.JSONBody, true);err == nil {
-				r.JSONBody = normalized
-			}
-		}
 		r.Body, err = toolbox.AsJSONText(r.JSONBody)
 		if err != nil {
 			return nil, false, err
