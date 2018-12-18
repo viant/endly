@@ -4,7 +4,7 @@ import (
 	"github.com/viant/toolbox"
 )
 
-//NormalizeMap normalizes yaml keyvalue pairs into a map
+//NormalizeValue normalizes yaml keyvalue pairs into a map
 func NormalizeValue(value interface{}, deep bool) (interface{}, error) {
 	if value == nil {
 		return value, nil
@@ -36,6 +36,8 @@ func NormalizeValue(value interface{}, deep bool) (interface{}, error) {
 	}
 	return value, nil
 }
+
+
 
 //NormalizeMap normalizes keyValuePairs from map or slice (map with preserved key order)
 func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{}, error) {
