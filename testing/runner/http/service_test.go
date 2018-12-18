@@ -537,3 +537,78 @@ func TestHttpRunnerService_Run_StressTest(t *testing.T) {
 	assertly.AssertValues(t, expect, response)
 
 }
+
+
+
+func TestRequest_FROMYaml(t *testing.T) {
+	var JSON = `{
+	"requests": [
+		[
+			{
+				"Key": "URL",
+				"Value": "http://localhost:5000"
+			},
+			{
+				"Key": "Method",
+				"Value": "GET"
+			},
+			{
+				"Key": "Header",
+				"Value": [
+					{
+						"Key": "aHeader",
+						"Value": [
+							"myField=a-value; path=/; domain=localhost; Expires=Tue, 19 Jan 2038 03:14:07 GMT;"
+						]
+					}
+				]
+			},
+			{
+				"Key": "Body",
+				"Value": "hey there"
+			},
+			{
+				"Key": "Cookies",
+				"Value": [
+					[
+						{
+							"Key": "Name",
+							"Value": "aHeader"
+						},
+						{
+							"Key": "Value",
+							"Value": "a-value"
+						},
+						{
+							"Key": "Domain",
+							"Value": "localhost"
+						},
+						{
+							"Key": "Expires",
+							"Value": "2023-12-16T20:17:38Z"
+						},
+						{
+							"Key": "RawExpires",
+							"Value": "Sat, 16 Dec 2023 20:17:38 GMT"
+						}
+					]
+				]
+			}
+		]
+	]
+}`;
+
+	var aMap = make(map[string]interface{});
+	err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(JSON)).Decode(&aMap)
+	if ! assert.Nil(t, err) {
+		log.Fatal(err)
+	}
+	var request  = &runner.SendRequest{}
+	err = toolbox.DefaultConverter.AssignConverted(request, aMap)
+	if ! assert.Nil(t, err) {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("%v\n", request)
+
+}
