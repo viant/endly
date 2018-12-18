@@ -82,10 +82,12 @@ func isNormalizableRequest(actionAttributes map[string]interface{}) bool {
 }
 
 func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]interface{}, state data.Map) error {
+	requestMap := actionRequest
+	var dataRequest data.Map
+	var err error
 	if request, ok := actionAttributes["request"]; ok && toolbox.IsString(request) {
+		dataRequest = data.Map(actionRequest)
 		request := toolbox.AsString(actionAttributes["request"])
-		var requestMap map[string]interface{}
-		var err error
 		if strings.HasPrefix(request, "@") {
 			requestMap, err = util.LoadMap([]string{p.tagPathURL, p.baseURL}, request)
 		} else {
@@ -94,24 +96,22 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 		if err != nil {
 			return err
 		}
-		if isNormalizableRequest(actionAttributes) {
-			requestMap, err = util.NormalizeMap(requestMap, true)
-			if err != nil {
-				return err
-			}
-		}
-		expanded := state.Expand(requestMap)
-		dataRequest := data.Map(actionRequest)
-		expanded = dataRequest.Expand(expanded)
-		requestMap = toolbox.AsMap(expanded)
-
-		if val, ok := requestMap["defaults"]; ok {
-			if defaults, err := util.NormalizeMap(val, false); err == nil {
-				requestMap["defaults"] = defaults
-			}
-		}
-		util.Append(actionRequest, requestMap, false)
 	}
+	if len(dataRequest) > 0 {
+		requestMap = toolbox.AsMap(dataRequest.Expand(requestMap))
+	}
+	if isNormalizableRequest(actionAttributes) {
+		requestMap, err = util.NormalizeMap(requestMap, true)
+		if err != nil {
+			return err
+		}
+	}
+	if val, ok := requestMap["defaults"]; ok {
+		if defaults, err := util.NormalizeMap(val, false); err == nil {
+			requestMap["defaults"] = defaults
+		}
+	}
+	util.Append(actionRequest, requestMap, true)
 	return nil
 }
 
