@@ -67,7 +67,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, reque
 	if err != nil {
 		return err
 	}
-	trips.addRequest(request)
+	_= trips.addRequest(request)
 	startEvent := s.Begin(context, request)
 	repeater := request.Repeater.Init()
 	var response *Response
