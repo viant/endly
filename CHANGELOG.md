@@ -1,6 +1,11 @@
-## December 14 2018 0.23.1
+## December 19 2018 0.23.1
     * Added logging option on abstract node level
     * Patched action tracking for cli execution path reporter  
+    * Refactored yaml source kv paris into map for inline workflow action request attributes
+    * Data substitution expression patches (toolbox)
+    * Moved standard udf from neatly to toolbox/data/udf (neatly)
+    * Added Expect attribute to http/runner Request type (data cohesion)
+    * Minor patches
 
 ## December 12 2018 0.23.0
     * Added workflow scoped variable ($self.x)
