@@ -5,9 +5,9 @@ import (
 	"fmt"
 	_ "github.com/viant/endly/static" //load external resource like .csv .json files to mem storage
 	"github.com/viant/endly/util"
-	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/data/udf"
 	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 	"gopkg.in/yaml.v2"
@@ -729,10 +729,7 @@ func (b *builder) buildRESTTestAssets(appMeta *AppMeta, request *RunRequest) err
 	state.Put("expect", expectMap)
 	state.Put("url", requesURL)
 	state.Put("method", method)
-	state.Put("AsInt", neatly.AsInt)
-	state.Put("AsFloat", neatly.AsFloat)
-	state.Put("AsBool", neatly.AsBool)
-
+	udf.Register(state)
 	expandedHttpTest := state.Expand(httpTest)
 	if test, err := toolbox.AsIndentJSONText(expandedHttpTest); err == nil {
 		b.UploadToEndly("regression/use_cases/001_xx_case/rest_test.json", strings.NewReader(strings.Replace(test, "$index", "1", 2)))
