@@ -55,10 +55,14 @@ endly -s='storage' -a='copy'
 
 
 **State** key/value pair map that is used to mange state during the workflow run. 
-The state can be change by providing variable definition.
+The state can in init, or post action,task or workflow node.
+
+State is a [data substitution](https://github.com/viant/toolbox/tree/master/data#expandable-map--collection) source with rich expression language
+    
 The workflow content, data structures, can use dollar '$' sign followed by variable name 
 to get its expanded to its corresponding state value if the key has been present.
  
+
 
 <a name="format"></a>
 ### Format
