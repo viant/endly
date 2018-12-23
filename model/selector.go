@@ -23,7 +23,7 @@ func (s WorkflowSelector) IsRelative() bool {
 	return true
 }
 
-//split returns selector URL, name and tasks
+//groupAttributes returns selector URL, name and tasks
 func (s WorkflowSelector) split() (URL, name, tasks string) {
 	var sel = string(s)
 	protoPosition := strings.LastIndex(sel, "://")
