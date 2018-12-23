@@ -40,7 +40,7 @@ type InlineWorkflow struct {
 }
 
 func (p InlineWorkflow) updateReservedAttributes(aMap map[string]interface{}) {
-	for _, key := range []string{"action", "workflow"} {
+	for _, key := range []string{"action", "workflow", "skip", "when", "post"} {
 		if val, ok := aMap[key]; ok {
 			if _, has := aMap[ExplicitActionAttributePrefix+key]; has {
 				continue
@@ -83,20 +83,25 @@ func isNormalizableRequest(actionAttributes map[string]interface{}) bool {
 
 func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]interface{}, state data.Map) error {
 	requestMap := actionRequest
-	var dataRequest data.Map
+	dataRequest := data.NewMap()
 	var err error
 	if request, ok := actionAttributes["request"]; ok && toolbox.IsString(request) {
-		dataRequest = data.Map(actionRequest)
 		request := toolbox.AsString(actionAttributes["request"])
 		if strings.HasPrefix(request, "@") {
 			requestMap, err = util.LoadMap([]string{p.tagPathURL, p.baseURL}, request)
+			if state != nil {
+				requestMap = toolbox.AsMap(state.Expand(requestMap))
+			}
 		} else {
 			requestMap, err = toolbox.ToMap(actionAttributes["request"])
 		}
+		delete(actionAttributes, "request")
 		if err != nil {
 			return err
 		}
+		util.Append(dataRequest, actionAttributes, true)
 	}
+
 	if len(dataRequest) > 0 {
 		requestMap = toolbox.AsMap(dataRequest.Expand(requestMap))
 	}
@@ -109,6 +114,12 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 	if val, ok := requestMap["defaults"]; ok {
 		if defaults, err := util.NormalizeMap(val, false); err == nil {
 			requestMap["defaults"] = defaults
+		}
+	}
+	for _, key := range []string{"when", "init", "post", "skip", "exit"} {
+		if node, ok := actionAttributes[key]; ok {
+			node = dataRequest.Expand(node)
+			actionAttributes[key] = state.Expand(node)
 		}
 	}
 	util.Append(actionRequest, requestMap, true)
@@ -128,9 +139,9 @@ func (p InlineWorkflow) asVariables(source interface{}) ([]map[string]interface{
 	return result, err
 }
 
-//split splits key value pair into workflow action attribute and action request data,
+//groupAttributes splits key value pair into workflow action attribute and action request data,
 // while ':' key prefix assign pair to workflow action, '@' assign to request data, if none is matched pair is assign to both
-func (p InlineWorkflow) split(source interface{}, state data.Map) (map[string]interface{}, map[string]interface{}, error) {
+func (p InlineWorkflow) groupAttributes(source interface{}, state data.Map) (map[string]interface{}, map[string]interface{}, error) {
 	aMap, err := util.NormalizeMap(source, false)
 	var actionAttributes = make(map[string]interface{})
 	var actionRequest = make(map[string]interface{})
@@ -148,40 +159,32 @@ func (p InlineWorkflow) split(source interface{}, state data.Map) (map[string]in
 		actionAttributes[k] = v
 		actionRequest[k] = v
 	}
+
 	if err = p.loadRequest(actionAttributes, actionRequest, state); err != nil {
 		return nil, nil, err
 	}
-
 	if value, ok := actionAttributes["logging"]; ok {
 		actionAttributes["logging"] = toolbox.AsBoolean(value)
 	}
-
-	if value, ok := actionAttributes["init"]; ok {
-		variables, err := p.asVariables(value)
-		if err != nil {
-			if _, has := actionRequest["init"]; !has {
-				return nil, nil, err
-			} else {
-				delete(actionAttributes, "init")
-			}
-		} else {
-			actionAttributes["init"] = state.Expand(variables)
-		}
-	}
-
-	if value, ok := actionAttributes["post"]; ok {
-		variables, err := p.asVariables(value)
-		if err != nil {
-			if _, has := actionRequest["post"]; !has {
-				return nil, nil, err
-			} else {
-				delete(actionAttributes, "post")
-			}
-		} else {
-			actionAttributes["post"] = state.Expand(variables)
-		}
-	}
+	err = p.loadVariables(actionAttributes, state)
 	return actionAttributes, actionRequest, err
+}
+
+func (p *InlineWorkflow) loadVariables(actionAttributes map[string]interface{}, state data.Map) error {
+	for _, key := range []string{"init", "post"} {
+		value, ok := actionAttributes[key]
+		if !ok {
+			continue
+		}
+		variables, err := p.asVariables(value)
+		if err != nil {
+			delete(actionAttributes, key)
+			return err
+		} else {
+			actionAttributes[key] = state.Expand(variables)
+		}
+	}
+	return nil
 }
 
 func (p *InlineWorkflow) AsWorkflow(name string, baseURL string) (*Workflow, error) {
@@ -276,8 +279,8 @@ func getTemplateNode(source interface{}) *Template {
 		return nil
 	}
 	var template = &Template{}
-	toolbox.DefaultConverter.AssignConverted(template, source)
-	if len(template.Template) == 0 || template.Range == "" {
+	err := toolbox.DefaultConverter.AssignConverted(template, source)
+	if err != nil || len(template.Template) == 0 || template.Range == "" {
 		return nil
 	}
 	return template
@@ -354,7 +357,7 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 	if state != nil {
 		source = state.Expand(source)
 	}
-	actionAttributes, actionRequest, err := p.split(source, state)
+	actionAttributes, actionRequest, err := p.groupAttributes(source, state)
 	if err != nil {
 		return err
 	}
@@ -426,7 +429,7 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 	}
 	if _, actionNode := nodeAttributes["action"]; !actionNode && !isTemplateNode {
 
-		if taskAttributes, _, err := p.split(nodeAttributes, state); err == nil {
+		if taskAttributes, _, err := p.groupAttributes(nodeAttributes, state); err == nil {
 			if len(taskAttributes) > 0 {
 				tempTask := &Task{}
 				if err = toolbox.DefaultConverter.AssignConverted(&tempTask, taskAttributes); err == nil {
