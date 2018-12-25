@@ -46,6 +46,8 @@ import (
 	_ "github.com/viant/endly/system/process"
 	_ "github.com/viant/endly/system/storage"
 
+	_ "github.com/viant/endly/testing/endpoint/smtp"
+
 	"bufio"
 	"errors"
 	"github.com/viant/endly/cli"

@@ -23,7 +23,7 @@ func TestService_Run(t *testing.T) {
 	{ //missing subject
 		serviceResponse := service.Run(context, &smtp.SendRequest{
 			Target: url.NewResource("smtp://smtp.gmail.com:465", credentials+"a"),
-			Mail: &smtp.MailMessage{
+			Mail: &smtp.Message{
 				From:        "adrianwit@gmail.com",
 				To:          []string{"viantemailtester@gmail.com"},
 				ContentType: "text/html",
@@ -35,7 +35,7 @@ func TestService_Run(t *testing.T) {
 	{ //invalid credentials subject
 		serviceResponse := service.Run(context, &smtp.SendRequest{
 			Target: url.NewResource("smtp://smtp.gmail.com:465", credentials+"aa"),
-			Mail: &smtp.MailMessage{
+			Mail: &smtp.Message{
 				From:        "adrianwit@gmail.com",
 				To:          []string{"viantemailtester@gmail.com"},
 				ContentType: "text/html",
@@ -47,7 +47,7 @@ func TestService_Run(t *testing.T) {
 	{ //sending message
 		serviceResponse := service.Run(context, &smtp.SendRequest{
 			Target: url.NewResource("smtp://smtp.gmail.com:465", credentials),
-			Mail: &smtp.MailMessage{
+			Mail: &smtp.Message{
 				From:        "adrianwit@gmail.com",
 				To:          []string{"viantemailtester@gmail.com"},
 				ContentType: "text/html",

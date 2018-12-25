@@ -28,6 +28,7 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 	if err != nil {
 		return nil, err
 	}
+
 	client, err := NewClient(target, credConfig)
 	if err != nil {
 		return nil, err

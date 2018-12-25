@@ -90,7 +90,7 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	response = service.Run(context, &log.AssertRequest{
 		LogWaitTimeMs:     3000,
 		LogWaitRetryCount: 3,
-		Expect: []*log.ExpectedRecord{
+		Expect: []*log.TypedRecord{
 
 			{
 				Type: "t",
@@ -125,7 +125,7 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 
 		}
 		response = service.Run(context, &log.AssertRequest{
-			Expect: []*log.ExpectedRecord{
+			Expect: []*log.TypedRecord{
 				{
 					Type: "t",
 					Records: []interface{}{
@@ -187,7 +187,7 @@ func TestLogValidatorService_TestIndexedRecord(t *testing.T) {
 	response = service.Run(context, &log.AssertRequest{
 		LogWaitTimeMs:     3000,
 		LogWaitRetryCount: 3,
-		Expect: []*log.ExpectedRecord{
+		Expect: []*log.TypedRecord{
 
 			{
 				Type: "t",

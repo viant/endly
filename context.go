@@ -3,7 +3,7 @@ package endly
 import (
 	"fmt"
 	uuid "github.com/satori/go.uuid"
-	"github.com/viant/endly/msg"
+	"github.com/viant/endly/model/msg"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"

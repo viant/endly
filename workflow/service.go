@@ -6,7 +6,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/criteria"
 	"github.com/viant/endly/model"
-	"github.com/viant/endly/msg"
+	"github.com/viant/endly/model/msg"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -123,7 +123,7 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 
 		requestMap := toolbox.AsMap(activity.Request)
 		if err = runWithoutSelfIfNeeded(process, action, state, func() error {
-			request, err = context.AsRequest(activity.Service, activity.Action, requestMap);
+			request, err = context.AsRequest(activity.Service, activity.Action, requestMap)
 			return err
 		}); err != nil {
 			return nil, nil, err

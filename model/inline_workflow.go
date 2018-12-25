@@ -85,6 +85,7 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 	requestMap := actionRequest
 	dataRequest := data.NewMap()
 	var err error
+
 	if request, ok := actionAttributes["request"]; ok && toolbox.IsString(request) {
 		request := toolbox.AsString(actionAttributes["request"])
 		if strings.HasPrefix(request, "@") {
@@ -123,6 +124,7 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 		}
 	}
 	util.Append(actionRequest, requestMap, true)
+
 	return nil
 }
 
@@ -411,6 +413,7 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 			nodeAttributes[textKey] = value
 		}
 		flagAsMultiActionIfMatched(textKey, task, value)
+
 		if !toolbox.IsSlice(value) {
 			return true
 		}

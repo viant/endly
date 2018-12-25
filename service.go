@@ -2,7 +2,7 @@ package endly
 
 import (
 	"fmt"
-	"github.com/viant/endly/msg"
+	"github.com/viant/endly/model/msg"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"

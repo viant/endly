@@ -16,6 +16,7 @@ func NewClient(target *url.Resource, credConfig *cred.Config) (*smtp.Client, err
 		ServerName:         targetURL.Host,
 	}
 	auth := smtp.PlainAuth("", credConfig.Username, credConfig.Password, targetURL.Host)
+
 	conn, err := tls.Dial("tcp", targetURL.Host, tlsConfig)
 	if err != nil {
 		return nil, err
@@ -24,7 +25,6 @@ func NewClient(target *url.Resource, credConfig *cred.Config) (*smtp.Client, err
 	if err != nil {
 		return nil, err
 	}
-
 	if err = client.Auth(auth); err != nil {
 		return nil, fmt.Errorf("failed to auth with %v, %v", credConfig.Username, err)
 	}

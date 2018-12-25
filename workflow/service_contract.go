@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/viant/endly/model"
-	"github.com/viant/endly/msg"
+	"github.com/viant/endly/model/msg"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
