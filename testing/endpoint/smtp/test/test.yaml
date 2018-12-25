@@ -1,0 +1,29 @@
+pipeline:
+  listen:
+    action: smtp/endpoint:listen
+    port: 1465
+    enableTLS: true
+    certLocation:
+    users:
+      - username: bob
+        credentials: e2eendly
+
+  send:
+    action: smtp:send
+    target:
+      URL: smtp://localhost:1465
+      credentials: e2eendly
+    mail:
+      from: tester@localhost
+      to:
+        - bob@localhost
+      subject: test subject
+      body: this is test body
+
+  assert:
+    action: smtp/endpoint:assert
+    expect:
+      - user: bob
+        message:
+          Subject: test subject
+          Body: /test body/
