@@ -3,7 +3,7 @@ package log
 import (
 	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/endly/msg"
+	"github.com/viant/endly/model/msg"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
@@ -40,9 +40,9 @@ func (f *File) ShiftLogRecord() *Record {
 	f.Records = f.Records[1:]
 	if f.Type.Debug {
 		info, _ := toolbox.AsJSONText(result)
-		endly.Run(f.context, &workflow.PrintRequest{
+		_ = endly.Run(f.context, &workflow.PrintRequest{
 			Style:   msg.MessageStyleOutput,
-			Message: fmt.Sprintf("shifted [%v] -> %v", f.Type.Name, info),
+			Message: fmt.Sprintf("shift [%v] -> %v", f.Type.Name, info),
 		}, nil)
 	}
 	return result
@@ -72,7 +72,7 @@ func (f *File) ShiftLogRecordByIndex(value string) *Record {
 
 	if f.Type.Debug {
 		info, _ := toolbox.AsJSONText(result)
-		endly.Run(f.context, &workflow.PrintRequest{
+		_ = endly.Run(f.context, &workflow.PrintRequest{
 			Style:   msg.MessageStyleOutput,
 			Message: fmt.Sprintf("shifted [%v:idx:%s]-> %v", f.Type.Name, value, info),
 		}, nil)
@@ -91,9 +91,9 @@ func (f *File) PushLogRecord(record *Record) {
 
 	if f.Type.Debug {
 		info, _ := toolbox.AsJSONText(record)
-		endly.Run(f.context, &workflow.PrintRequest{
+		_ = endly.Run(f.context, &workflow.PrintRequest{
 			Style:   msg.MessageStyleInput,
-			Message: fmt.Sprintf("queued [%v] <- %v", f.Type.Name, info),
+			Message: fmt.Sprintf("push [%v] <- %v", f.Type.Name, info),
 		}, nil)
 	}
 

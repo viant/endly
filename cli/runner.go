@@ -14,7 +14,7 @@ import (
 	"github.com/lunixbochs/vtclean"
 	"github.com/viant/endly/cli/xunit"
 	"github.com/viant/endly/model"
-	"github.com/viant/endly/msg"
+	"github.com/viant/endly/model/msg"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"

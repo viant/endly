@@ -7,6 +7,7 @@ require (
 	github.com/aerospike/aerospike-client-go v1.37.0 // indirect
 	github.com/aws/aws-sdk-go v1.15.90
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/emersion/go-smtp v0.0.0-20180917150411-7162b2ca3bcb // indirect
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/golang/lint v0.0.0-20181026193005-c67002cb31c3 // indirect
@@ -48,7 +49,7 @@ require (
 	github.com/viant/dsc v0.2.0
 	github.com/viant/dsunit v0.2.1
 	github.com/viant/neatly v0.6.0
-	github.com/viant/toolbox v0.5.0
+	github.com/viant/toolbox v0.5.1
 	github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227 // indirect
 	go.opencensus.io v0.18.0 // indirect
 	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9

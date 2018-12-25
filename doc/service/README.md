@@ -149,12 +149,12 @@ type XXResponse struct {
 - Create a new service type that embeds *AbstractService
 ```go
 type xxService struct {
-	*AbstractService
+	*endly.AbstractService
 }
 ```
 - Provide implementation for each action i.e.
 ```go
-func (s *xxService) xx(request *XXRequest) (*XXResponse,error) {
+func (s *xxService) xx(context *endly.Context, request *XXRequest) (*XXResponse,error) {
 	var response = &XXResponse{}
 	var err error
 	//some logic here
@@ -167,9 +167,9 @@ func (s *xxService) xx(request *XXRequest) (*XXResponse,error) {
 func (s *xxService) registerRoutes() {
 	
 	//xx action route
-	s.Register(&Route{
+	s.Register(&endly.Route{
 		Action: "xx",
-		RequestInfo: &ActionInfo{
+		RequestInfo: &endly.ActionInfo{
 			Description: "xx action ....",
 		},
 		RequestProvider: func() interface{} {
@@ -178,9 +178,9 @@ func (s *xxService) registerRoutes() {
 		ResponseProvider: func() interface{} {
 			return &XXResponse{}
 		},
-		Handler: func(context *Context, request interface{}) (interface{}, error) {
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*XXRequest); ok {
-				return s.xx(context, request)
+				return s.xx(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -188,12 +188,14 @@ func (s *xxService) registerRoutes() {
 	
 	
 }
+
+
 ```
 - Create service constructor
 ```go
-func newXXService() Service {
+func New() endly.Service {
 	var result = &xxService{
-		AbstractService: NewAbstractService("xx"),
+		AbstractService: endly.NewAbstractService("xx"),
 	}
 	result.AbstractService.Service = result
 	result.registerRoutes()

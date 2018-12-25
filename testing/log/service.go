@@ -7,6 +7,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/criteria"
 	estorage "github.com/viant/endly/system/storage"
+	"github.com/viant/endly/testing/validator"
 	"github.com/viant/endly/udf"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -62,91 +63,47 @@ func (s *service) assert(context *endly.Context, request *AssertRequest) (*Asser
 		return response, nil
 	}
 
-	if request.LogWaitTimeMs == 0 {
-		request.LogWaitTimeMs = 500
-	}
-	if request.LogWaitRetryCount == 0 {
-		request.LogWaitRetryCount = 3
-	}
-
 	for _, expectedLogRecords := range request.Expect {
-		logTypeMeta, err := s.getLogTypeMeta(expectedLogRecords)
+		typeMeta, err := s.getLogTypeMeta(expectedLogRecords)
 		if err != nil {
 			return nil, err
 		}
+		var recordIterator = typeMeta.Iterator()
 
-		var logRecordIterator = logTypeMeta.Iterator()
-		logWaitRetryCount := request.LogWaitRetryCount
-		logWaitDuration := time.Duration(request.LogWaitTimeMs) * time.Millisecond
 		var aMap = data.NewMap()
 		aMap.Put("logType", expectedLogRecords.Type)
 		aMap.Put("TagID", expectedLogRecords.TagID)
 
-		for _, expectedLogRecord := range expectedLogRecords.Records {
-			description := "Log Validation: $logType"
-			if request.Description != "" {
-				description = request.DescriptionTemplate
-			}
+		for _, expectedRecord := range expectedLogRecords.Records {
 			var validation = &assertly.Validation{
 				TagID:       expectedLogRecords.TagID,
-				Description: aMap.ExpandAsText(description),
+				Description: aMap.ExpandAsText(request.DescriptionTemplate),
 			}
 			response.Validations = append(response.Validations, validation)
-			for j := 0; j < logWaitRetryCount; j++ {
-				if logRecordIterator.HasNext() {
-					break
-				}
-				s.Sleep(context, int(logWaitDuration)/int(time.Millisecond))
-			}
-			if !logRecordIterator.HasNext() {
-				validation.AddFailure(assertly.NewFailure("", fmt.Sprintf("[%v]", expectedLogRecords.TagID), "missing log record", expectedLogRecord, nil))
+			if !s.waitForRecord(context, recordIterator, request) {
+				validation.AddFailure(assertly.NewFailure("", fmt.Sprintf("[%v]", expectedLogRecords.TagID), "missing log record", expectedRecord, nil))
 				return response, nil
 			}
+
 			var logRecord = &Record{}
-			var isLogStructured = toolbox.IsMap(expectedLogRecord)
-			var calledNext = false
-			if logTypeMeta.LogType.UseIndex() {
-				if expr, err := logTypeMeta.LogType.GetIndexExpr(); err == nil {
-					var expectedTextRecord = toolbox.AsString(expectedLogRecord)
-					if toolbox.IsMap(expectedLogRecord) || toolbox.IsSlice(expectedLogRecord) || toolbox.IsStruct(expectedLogRecord) {
-						expectedTextRecord, _ = toolbox.AsJSONText(expectedLogRecord)
-					}
-					var indexValue = matchLogIndex(expr, expectedTextRecord)
-					if indexValue != "" {
-						indexedLogRecord := &IndexedRecord{
-							IndexValue: indexValue,
-						}
-						err = logRecordIterator.Next(indexedLogRecord)
-						if err != nil {
-							return nil, err
-						}
-						calledNext = true
-						logRecord = indexedLogRecord.Record
-					}
-				}
+			logRecord, err := s.matchLogRecord(typeMeta, expectedRecord, recordIterator)
+			if err != nil {
+				return nil, err
 			}
-
-			if !calledNext {
-				err = logRecordIterator.Next(&logRecord)
-				if err != nil {
-					return nil, err
-				}
-			}
-
 			var actualLogRecord interface{} = logRecord.Line
-			if isLogStructured {
+			if isLogStructured := toolbox.IsMap(expectedRecord); isLogStructured {
 				actualLogRecord, err = logRecord.AsMap()
 				if err != nil {
 					return nil, err
 				}
 			}
-			logRecordsAssert := &RecordAssert{
+			logRecordsAssert := &validator.TaggedAssert{
 				TagID:    expectedLogRecords.TagID,
-				Expected: expectedLogRecord,
+				Expected: expectedRecord,
 				Actual:   actualLogRecord,
 			}
 			_, filename := toolbox.URLSplit(logRecord.URL)
-			logValidation, err := criteria.Assert(context, fmt.Sprintf("%v:%v", filename, logRecord.Number), expectedLogRecord, actualLogRecord)
+			logValidation, err := criteria.Assert(context, fmt.Sprintf("%v:%v", filename, logRecord.Number), expectedRecord, actualLogRecord)
 			if err != nil {
 				return nil, err
 			}
@@ -154,12 +111,53 @@ func (s *service) assert(context *endly.Context, request *AssertRequest) (*Asser
 			context.Publish(logValidation)
 			validation.MergeFrom(logValidation)
 		}
-
 	}
 	return response, nil
 }
 
-func (s *service) getLogTypeMeta(expectedLogRecords *ExpectedRecord) (*TypeMeta, error) {
+func (s *service) waitForRecord(context *endly.Context, recordIterator toolbox.Iterator, request *AssertRequest) bool {
+	for j := 0; j < request.LogWaitRetryCount; j++ {
+		if recordIterator.HasNext() {
+			return true
+		}
+		s.Sleep(context, int(request.LogWaitTimeMs)/int(time.Millisecond))
+	}
+	return recordIterator.HasNext()
+}
+
+func (s *service) matchLogRecord(typeMeta *TypeMeta, expectedRecord interface{}, logRecordIterator toolbox.Iterator) (*Record, error) {
+	var calledNext = false
+	var logRecord *Record
+	if typeMeta.LogType.UseIndex() {
+		if expr, err := typeMeta.LogType.GetIndexExpr(); err == nil {
+			var expectedTextRecord = toolbox.AsString(expectedRecord)
+			if toolbox.IsMap(expectedRecord) || toolbox.IsSlice(expectedRecord) || toolbox.IsStruct(expectedRecord) {
+				expectedTextRecord, _ = toolbox.AsJSONText(expectedRecord)
+			}
+			var indexValue = matchLogIndex(expr, expectedTextRecord)
+			if indexValue != "" {
+				indexedLogRecord := &IndexedRecord{
+					IndexValue: indexValue,
+				}
+				err = logRecordIterator.Next(indexedLogRecord)
+				if err != nil {
+					return nil, err
+				}
+				calledNext = true
+				logRecord = indexedLogRecord.Record
+			}
+		}
+	}
+
+	if !calledNext {
+		if err := logRecordIterator.Next(&logRecord); err != nil {
+			return nil, err
+		}
+	}
+	return logRecord, nil
+}
+
+func (s *service) getLogTypeMeta(expectedLogRecords *TypedRecord) (*TypeMeta, error) {
 	var key = logTypeMetaKey(expectedLogRecords.Type)
 	s.Mutex().Lock()
 	defer s.Mutex().Unlock()

@@ -2,7 +2,7 @@ package exec
 
 import (
 	"fmt"
-	"github.com/viant/endly/msg"
+	"github.com/viant/endly/model/msg"
 )
 
 //StdinEvent represents an execution event start
