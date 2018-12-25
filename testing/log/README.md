@@ -14,9 +14,9 @@
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| validator/log | listen | start listening for log file changes on specified location  |  [ListenRequest](service_contract.go) | [ListenResponse](service_contract.go)  |
-| validator/log | reset | discard logs detected by listener | [ResetRequest](service_contract.go) | [ResetResponse](service_contract.go)  |
-| validator/log | assert | perform validation on provided expected log records against actual log file records. | [AssertRequest](service_contract.go) | [AssertResponse](service_contract.go)  |
+| validator/log | listen | start listening for log file changes on specified location  |  [ListenRequest](contract.go) | [ListenResponse](contract.go)  |
+| validator/log | reset | discard logs detected by listener | [ResetRequest](contract.go) | [ResetResponse](contract.go)  |
+| validator/log | assert | perform validation on provided expected log records against actual log file records. | [AssertRequest](contract.go) | [AssertResponse](contract.go)  |
 
 
 ### Validation strategies:

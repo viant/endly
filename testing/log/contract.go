@@ -14,7 +14,7 @@ type AssertRequest struct {
 	LogWaitRetryCount   int
 	Description         string
 	DescriptionTemplate string
-	Expect              []*ExpectedRecord `required:"true" description:"expected log data"`
+	Expect              []*TypedRecord `required:"true" description:"expected log data"`
 }
 
 //Init converts yaml kv pairs to a map if applicable
@@ -34,6 +34,15 @@ func (r *AssertRequest) Init() error {
 			}
 		}
 	}
+	if r.DescriptionTemplate == "" {
+		r.DescriptionTemplate = "Log Validation: $logType"
+	}
+	if r.LogWaitTimeMs == 0 {
+		r.LogWaitTimeMs = 500
+	}
+	if r.LogWaitRetryCount == 0 {
+		r.LogWaitRetryCount = 3
+	}
 	return nil
 }
 
@@ -50,8 +59,8 @@ func (r *AssertRequest) Validate() error {
 	return nil
 }
 
-//ExpectedRecord represents an expected log record.
-type ExpectedRecord struct {
+//TypedRecord represents an expected log record.
+type TypedRecord struct {
 	TagID   string `description:"neatly tag id for matching validation summary"`
 	Type    string `required:"true" description:"log type register with listener"`
 	Records []interface{}
