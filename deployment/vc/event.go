@@ -2,7 +2,7 @@ package vc
 
 import (
 	"fmt"
-	"github.com/viant/endly/msg"
+	"github.com/viant/endly/model/msg"
 )
 
 //Items returns tag messages

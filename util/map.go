@@ -4,8 +4,6 @@ import (
 	"github.com/viant/toolbox"
 )
 
-
-
 //NormalizeMap normalizes keyValuePairs from map or slice (map with preserved key order)
 func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{}, error) {
 	var result = make(map[string]interface{})
@@ -17,7 +15,7 @@ func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{},
 		//inline map key
 		result[key] = value
 		if deep {
-			if normalized, err := toolbox.NormalizeKVPairs(value);err == nil {
+			if normalized, err := toolbox.NormalizeKVPairs(value); err == nil {
 				result[key] = normalized
 			}
 
@@ -26,7 +24,6 @@ func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{},
 	})
 	return result, err
 }
-
 
 //AppendMap source to dest map
 func Append(dest, source map[string]interface{}, override bool) {

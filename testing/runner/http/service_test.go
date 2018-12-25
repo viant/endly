@@ -538,8 +538,6 @@ func TestHttpRunnerService_Run_StressTest(t *testing.T) {
 
 }
 
-
-
 func TestRequest_FROMYaml(t *testing.T) {
 	var JSON = `{
 	"requests": [
@@ -596,16 +594,16 @@ func TestRequest_FROMYaml(t *testing.T) {
 			}
 		]
 	]
-}`;
+}`
 
-	var aMap = make(map[string]interface{});
+	var aMap = make(map[string]interface{})
 	err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(JSON)).Decode(&aMap)
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		log.Fatal(err)
 	}
-	var request  = &runner.SendRequest{}
+	var request = &runner.SendRequest{}
 	err = toolbox.DefaultConverter.AssignConverted(request, aMap)
-	if ! assert.Nil(t, err) {
+	if !assert.Nil(t, err) {
 		log.Fatal(err)
 	}
 

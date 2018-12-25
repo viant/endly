@@ -2,7 +2,7 @@ package dsunit
 
 import (
 	"fmt"
-	"github.com/viant/endly/msg"
+	"github.com/viant/endly/model/msg"
 )
 
 //Messages returns messages
