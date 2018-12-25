@@ -1,3 +1,9 @@
+## December 25 2018 0.24.0
+    * Added smtp endpoint
+    * Moved event reporting msg package to model/msg
+    * Enhanced inline workflow node data substitution
+    * Minor patches
+
 ## December 19 2018 0.23.1
     * Added logging option on abstract node level
     * Patched action tracking for cli execution path reporter  
