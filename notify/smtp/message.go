@@ -3,38 +3,11 @@ package smtp
 import (
 	"errors"
 	"fmt"
-	"github.com/viant/toolbox/url"
 	"strings"
 )
 
-//SendRequest represents send request.
-type SendRequest struct {
-	Target *url.Resource `required:"true" description:"SMTP endpoint"`
-	Mail   *MailMessage  `required:"true"`
-	UDF    string        `description:"body UDF"`
-}
-
-//SendResponse represents send response.
-type SendResponse struct {
-	SendPayloadSize int
-}
-
-//Validate validates send request.
-func (r *SendRequest) Validate() error {
-	if r.Target == nil {
-		return errors.New("target was nil")
-	}
-	if r.Target.Credentials == "" {
-		return errors.New("credentials was empty")
-	}
-	if r.Mail == nil {
-		return errors.New("mail was nil")
-	}
-	return r.Mail.Validate()
-}
-
-//MailMessage represent an email
-type MailMessage struct {
+//Message represent an email
+type Message struct {
 	From        string `required:"true" description:"sender, has to match email from target.credentials"`
 	To          []string
 	Cc          []string
@@ -45,7 +18,7 @@ type MailMessage struct {
 }
 
 //Validate checks if mail message is valid
-func (m *MailMessage) Validate() error {
+func (m *Message) Validate() error {
 	if m.From == "" {
 		return errors.New("mail.from was empty")
 	}
@@ -66,7 +39,7 @@ func getHeader(key string, values ...string) string {
 }
 
 //Receivers returns all receivers for this email message
-func (m *MailMessage) Receivers() []string {
+func (m *Message) Receivers() []string {
 	var result = make([]string, 0)
 	result = append(result, m.To...)
 	result = append(result, m.Cc...)
@@ -75,7 +48,7 @@ func (m *MailMessage) Receivers() []string {
 }
 
 //Payload returns mail payload.
-func (m *MailMessage) Payload() []byte {
+func (m *Message) Payload() []byte {
 	var result = ""
 	result += getHeader("From", m.From)
 	result += getHeader("To", m.To...)

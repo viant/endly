@@ -24,31 +24,31 @@ func TestSMTPSendRequest_Validate(t *testing.T) {
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.MailMessage{}}
+		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.Message{}}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.MailMessage{
+		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.Message{
 			Subject: "abc",
 		}}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.MailMessage{
+		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.Message{
 			Subject: "abc",
 			From:    "abc@a.pl",
 		}}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.MailMessage{
+		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.Message{
 			From: "abc@a.pl",
 			To:   []string{"abc@a.pl"},
 		}}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.MailMessage{
+		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.Message{
 			Subject: "abc",
 			From:    "abc@a.pl",
 			To:      []string{"abc@a.pl"},
@@ -59,7 +59,7 @@ func TestSMTPSendRequest_Validate(t *testing.T) {
 }
 
 func TestMailMessage_Receivers(t *testing.T) {
-	var mail = &smtp.MailMessage{
+	var mail = &smtp.Message{
 		Subject: "abc",
 		From:    "abc@a.pl",
 		To:      []string{"abc@a.pl"},
@@ -70,7 +70,7 @@ func TestMailMessage_Receivers(t *testing.T) {
 func TestMailMessage_Payload(t *testing.T) {
 
 	{
-		mail := &smtp.MailMessage{
+		mail := &smtp.Message{
 			Subject: "abc",
 			From:    "abc@a.pl",
 			To:      []string{"abc@a.pl"},
@@ -80,7 +80,7 @@ func TestMailMessage_Payload(t *testing.T) {
 	}
 
 	{
-		mail := &smtp.MailMessage{
+		mail := &smtp.Message{
 			Subject:     "abc",
 			From:        "abc@a.pl",
 			To:          []string{"abc@a.pl"},
