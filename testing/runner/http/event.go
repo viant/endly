@@ -2,7 +2,7 @@ package http
 
 import (
 	"fmt"
-	"github.com/viant/endly/msg"
+	"github.com/viant/endly/model/msg"
 	"github.com/viant/toolbox"
 )
 

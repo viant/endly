@@ -137,8 +137,6 @@ func (r *LoadRequest) Validate() error {
 	return nil
 }
 
-
-
 //LoadRequest represents a stress test response
 type LoadResponse struct {
 	SendResponse
@@ -151,6 +149,3 @@ type LoadResponse struct {
 	AvgResponseTimeInMs float64
 	MaxResponseTimeInMs float64
 }
-
-
-
