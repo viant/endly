@@ -320,7 +320,7 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	command := context.Expand(extractCommand.Command)
 	options := request.Options
 	terminators := getTerminators(options, session, extractCommand)
-	isSuperUserCmd :=  strings.Contains(command, "sudo ")  || request.SuperUser
+	isSuperUserCmd := strings.Contains(command, "sudo ") || request.SuperUser
 	if extractCommand.When != "" {
 		var state = s.buildExecutionState(response, context)
 		if ok, err := criteria.Evaluate(context, state, extractCommand.When, "Cmd.When", true); !ok {
