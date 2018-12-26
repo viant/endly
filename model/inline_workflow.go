@@ -17,6 +17,8 @@ const (
 	//ExplicitActionAttributePrefix represent model attribute prefix
 	ExplicitActionAttributePrefix  = ":"
 	ExplicitRequestAttributePrefix = "@"
+
+	requestKey = "request"
 )
 
 var multiActionKeys = []string{"multiaction", "async"}
@@ -86,17 +88,21 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 	dataRequest := data.NewMap()
 	var err error
 
-	if request, ok := actionAttributes["request"]; ok && toolbox.IsString(request) {
-		request := toolbox.AsString(actionAttributes["request"])
+	if request, ok := actionAttributes[requestKey]; ok && toolbox.IsString(request) {
+		request := toolbox.AsString(actionAttributes[requestKey])
 		if strings.HasPrefix(request, "@") {
-			requestMap, err = util.LoadMap([]string{p.tagPathURL, p.baseURL}, request)
+			requestMap, err = util.LoadMap([]string{p.tagPathURL, toolbox.URLPathJoin(p.baseURL, "default"), p.baseURL}, request)
+			if err == nil {
+				delete(actionAttributes, requestKey)
+				delete(actionRequest, requestKey)
+			}
 			if state != nil {
 				requestMap = toolbox.AsMap(state.Expand(requestMap))
 			}
 		} else {
-			requestMap, err = toolbox.ToMap(actionAttributes["request"])
+			requestMap, err = toolbox.ToMap(actionAttributes[requestKey])
 		}
-		delete(actionAttributes, "request")
+		delete(actionAttributes, requestKey)
 		if err != nil {
 			return err
 		}
@@ -298,7 +304,7 @@ func (p *InlineWorkflow) buildAction(name string, actionAttributes, actionReques
 	util.Append(actionRequest, p.Defaults, false)
 
 	if action, ok := actionAttributes["action"]; ok {
-		actionAttributes["request"], _ = util.NormalizeMap(actionRequest, false)
+		actionAttributes[requestKey], _ = util.NormalizeMap(actionRequest, false)
 		selector := ActionSelector(toolbox.AsString(action))
 		actionAttributes["service"] = selector.Service()
 		actionAttributes["action"] = selector.Action()
@@ -306,7 +312,7 @@ func (p *InlineWorkflow) buildAction(name string, actionAttributes, actionReques
 		workflow := toolbox.AsString(actionAttributes["workflow"])
 		actionAttributes["action"] = "run"
 		selector := WorkflowSelector(workflow)
-		actionAttributes["request"] = map[string]interface{}{
+		actionAttributes[requestKey] = map[string]interface{}{
 			"params": actionRequest,
 			"tasks":  selector.Tasks(),
 			"URL":    selector.URL(),
