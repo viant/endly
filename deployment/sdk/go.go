@@ -7,7 +7,6 @@ import (
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
-	"os"
 )
 
 //TODO complete implementation
@@ -16,13 +15,6 @@ type goService struct{}
 func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, error) {
 	var result = &Info{}
 	var sdkHome = "/opt/sdk/go"
-	goPath, ok := request.Env["GOPATH"]
-	if !ok || goPath == "" {
-		goPath = os.Getenv("GOPATH")
-	}
-	if goPath != "" {
-		_ = endly.Run(context, exec.NewRunRequest(request.Target, false, fmt.Sprintf("export GOPATH='%v'", goPath)), nil)
-	}
 	var runResponse = &exec.RunResponse{}
 	hasGoRoot := endly.Run(context, exec.NewRunRequest(request.Target, false, "ls -al /usr/local/go"), nil) == nil
 	if err := endly.Run(context, exec.NewExtractRequest(request.Target, nil, exec.NewExtractCommand("ls -al /opt/sdk/go", "", nil, nil)), runResponse); err == nil {
