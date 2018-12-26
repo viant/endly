@@ -69,7 +69,7 @@ func (t *Template) Expand(task *Task, parentTag string, inline *InlineWorkflow) 
 }
 
 func (t *Template) loadWorkflowData(tagPath string, workflowData data.Map, state data.Map) error {
-	var baseURLs = []string{tagPath, t.inline.baseURL}
+	var baseURLs = []string{tagPath, toolbox.URLPathJoin(t.inline.baseURL, "default"), t.inline.baseURL}
 	var err error
 	for k, v := range t.Data {
 		k = state.ExpandAsText(k)
