@@ -1,6 +1,0 @@
-Workflow,,,Name,Description,Tasks,,,
-,,,regresion,Regression test,%Tasks,,,
-[]Tasks,,,Name,Description,Actions,,,
-,,,test,Defines test requests,%Test,,,
-[]Test{1..002},Subpath,Service,Action,Description,Request,uri,runner,TagDescription
-,use_cases/${index}*,$runner,send,send test request,@post,/v1/echo, @runner,@use_case.txt
