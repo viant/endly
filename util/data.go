@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/data/udf"
 	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 	"path"
@@ -145,17 +146,24 @@ func LoadMap(baseURLs []string, URI string) (map[string]interface{}, error) {
 
 	if len(result) == 0 {
 		result = make(map[string]interface{})
-		resource, err = LoadResourceFromBaseURLs(baseURLs, mainAssetURI, &result)
-		if err != nil {
+		if resource, err = LoadResourceFromBaseURLs(baseURLs, mainAssetURI, &result); err != nil {
 			return nil, err
 		}
-		for i := 1; i < len(URIs); i++ {
-			var aMap = data.NewMap()
-			if resource, err = LoadResourceFromBaseURLs(baseURLs, URIs[i], &aMap); err != nil {
-				return nil, err
-			}
-			result = toolbox.AsMap(aMap.Expand(result))
+	}
+
+	if len(URIs) > 1 {
+		if normalized, err := NormalizeMap(result, true); err == nil {
+			result = normalized
 		}
+	}
+
+	for i := 1; i < len(URIs); i++ {
+		var aMap = data.NewMap()
+		if resource, err = LoadResourceFromBaseURLs(baseURLs, URIs[i], &aMap); err != nil {
+			return nil, err
+		}
+		udf.Register(aMap)
+		result = toolbox.AsMap(aMap.Expand(result))
 	}
 	if err != nil {
 		return nil, err
