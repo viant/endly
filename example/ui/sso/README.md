@@ -33,14 +33,14 @@ git clone https://github.com/viant/endly
 cd endly/example/ui/sso/e2e/
 ```
 
-## run test with [manager](endly/manager.csv) workflow:
+## run test with [run](e2e/run.yaml) workflow:
 ```text
-endly -w=manager
+endly r=run
 ```
 
 ## To check manager workflow tasks list
 ```text
-endly -w=manager -t='?'
+endly -t='?'
  
 ```
 

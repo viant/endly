@@ -1,49 +1,65 @@
 tasks: $tasks
+
+init:
+  buildTarget:
+    URL: scp://127.0.0.1/tmp/build/sso/
+    credentials: localhost
+
+  appTarget:
+    URL: scp://127.0.0.1/opt/sso/
+    credentials: localhost
+
+  target:
+    URL: scp://127.0.0.1/
+    credentials: localhost
+
 defaults:
-  app: $app
-  sdk: $sdk
   target: $target
-  buildTarget: $buildTarget
-  appTarget: $appTarget
 
 pipeline:
 
-  build:
-    workflow: app/build
-    origin:
-      URL: ./../
-    commands:
-      - cd $buildPath/app
-      - go get -u github.com/viant/endly
-      - go get -u github.com/viant/endly/endly
-      - go build -o $app
-      - chmod +x $app
-    download:
-      /$buildPath/app/${app}: $releasePath
-      /$buildPath/e2e/config/config.json: $releasePath
-      /$buildPath/static/: $releasePath/static/
 
-  deploy:
-    workflow: app/deploy
-    init:
-      - mkdir -p $appPath
-      - mkdir -p $appPath/config
-      - chown -R ${os.user} $appPath
-    upload:
-      ${releasePath}/${app}: $appPath
-      ${releasePath}/config.json: $appPath
-    commands:
-      - echo 'deployed'
+  build:
+    checkout:
+      action: version/control:checkout
+      origin:
+        URL: ./../
+      dest: $buildTarget
+    set-sdk:
+      action: sdk:set
+      sdk: go:1.11
+    build-app:
+      action: exec:run
+      commands:
+        - cd /tmp/build/sso/app
+        - go build sso.go
+        - chmod +x sso
+    deploy:
+      mkdir:
+       action: exec:run
+       commands:
+         - sudo rm -rf /opt/sso/
+         - sudo mkdir -p /opt/sso
+         - sudo chown -R ${os.user} /opt/sso
+
+      install:
+        action: storage:copy
+        source: $buildTarget
+        dest: $appTarget
+        assets:
+          app/sso: sso
+          config/config.json: config.json
+          static: static
 
   stop:
     action: process:stop-all
-    input: ${app}
+    input: sso
 
   start:
     action: process:start
-    directory: $appPath
+    directory: /opt/sso
     immuneToHangups: true
-    command: ./${app}
+    command: ./sso
     arguments:
       - "-config"
       - "config.json"

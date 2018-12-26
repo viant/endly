@@ -1,0 +1,16 @@
+pipeline:
+  start:
+    action: "selenium:start"
+    target: $target
+    sdk: jdk
+    sdkVersion: 1.8
+    version: 3.4
+    port: $seleniumServerPort
+    timeSleepMs: 1000
+  open:
+    action: "selenium:open"
+    remoteSelenium:
+      URL: http://${targetHost}:$seleniumServerPort/
+    browser: firefox
+post:
+  - SeleniumSessionID = ${open.SessionID}
