@@ -611,7 +611,7 @@ _Relative external request_ path
 
 In the above example in the action2, a request is loaded from external using relative path,
 when relative path is used endly first look into tag dynamically expanded path, 
-in case when resource is not found it uses workflow path as fallback.
+in case when resource is not found it uses 'Workflow Path/default' and 'Workflow Path' as fallbacks.
 
 Note that @ is used for referencing external resource, if file has .json, .yaml .txt extension you can skip it.
 
@@ -636,6 +636,10 @@ i.e
  endly -r=simple.yaml  -i=simple_Test_dir001_xx
 ```
 
+
+_Controlling tag appearance_
+
+Tag attribute in action template allows tag customization 
 
 **Grouping actions**
 

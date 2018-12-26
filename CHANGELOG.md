@@ -2,7 +2,11 @@
     * Added smtp endpoint
     * Moved event reporting msg package to model/msg
     * Enhanced inline workflow node data substitution
+    * Migrated e2e example to inline workflows and go 1.11 build
+    * Added workflow/default to fallback chain in external resource loading (inline workflow)
+    * Patched processing unexported struct field (toolbox)  
     * Minor patches
+
 
 ## December 19 2018 0.23.1
     * Added logging option on abstract node level
