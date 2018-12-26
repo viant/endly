@@ -1,9 +1,0 @@
-{
-  "report": [
-    {
-      "id": "$db1.sequence.report",
-      "name": "report2",
-      "type": "pivot"
-    }
-  ]
-}

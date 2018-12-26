@@ -1,0 +1,52 @@
+pipeline:
+  init:
+    data:
+      action: run
+      request: '@data_init'
+      comments: set initial app state
+
+  test:
+    tag: Test
+    description: '@use_case'
+    data:
+      'db1.[]setup': '@user'
+    comments: add setup data
+
+    subPath: 'use_cases/${index}*'
+    range: 1..002
+    template:
+      skip-tag:
+        action: nop
+        skip: $HasResource(${subPath}/skip.txt)
+        comments: skip tag Id if subdirectory has skip.txt file present
+
+      register-report:
+        action: 'rest/runner:send'
+        request: '@test_register'
+        comments: test with rest runner
+        uri: /v1/reporter/register/
+
+      run-report:
+        action: 'rest/runner:send'
+        request: '@test_run'
+        comments: test with rest runner
+        uri: /v1/reporter/run/
+
+
+      db1-expect:
+        when: '$HasResource(${path}/expect/${db})'
+        action: dsunit:expect
+        request: '@req/expect'
+        db: db1
+        comments: verify test $db state after use case
+
+      seq-up:
+        action: nop
+        init:
+          db1.sequence.report: $db1.sequence.report++
+
+
+    post-test-sleep:
+      action: nop
+      sleepTimeMs: 1000
+      comments: sleep for extra debuging

@@ -39,20 +39,17 @@ git clone https://github.com/viant/endly
 cd endly/example/ws/reporter/e2e/
 ```
 
-## run test with [manager](endly/manager.csv) workflow:
-```text
-endly -w=manager
-```
+## run test with [run](e2e/run.csv) workflow:
+
 
 ## run test with inline workflow[run](endly/run.yaml) request
 ```text
 endly -r=run
 ```
 
-## To check manager workflow tasks list
+## To check run workflow tasks list
 ```text
-endly -w=manager -t='?'
- 
+endly  r=run -t='?'
 ```
 
 
