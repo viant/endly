@@ -15,6 +15,7 @@ func GetPath(candidates *model.Activities, runner *Runner, fullPath bool) string
 		}
 		activities = append(activities, candidates.Get(i))
 	}
+
 	if len(activities) > 2 {
 		activities = activities[len(activities)-2:]
 	}

@@ -323,25 +323,21 @@ func (r *Runner) processAssertable(event msg.Event) bool {
 
 func (r *Runner) processActivityStart(event msg.Event) bool {
 
-	var eventValue = event.Value()
-
 	if r.activityEnded {
-		if _, ok := eventValue.(*model.Activity); !ok {
-			return false
-		}
-		r.activityEnded = false
 		r.Pop()
+		r.activityEnded = false
 	}
 
+	var eventValue = event.Value()
 	activity, ok := eventValue.(*model.Activity)
 	if !ok {
 		return false
 	}
 
-	if r.activityEnded || (r.activity != nil && (activity.Caller != r.activity.Caller)) {
+	if r.activity != nil && (activity.Caller != r.activity.Caller) {
 		r.activityEnded = false
-		r.Pop()
 	}
+
 	r.resetRepeated()
 	r.Push(activity)
 	r.activity = activity
@@ -390,6 +386,8 @@ func (r *Runner) processEvent(event msg.Event, filter map[string]bool) {
 	if event.Value() == nil {
 		return
 	}
+
+	r.processActivityEnd(event)
 	if r.processActivityStart(event) {
 		return
 	}
@@ -402,7 +400,7 @@ func (r *Runner) processEvent(event msg.Event, filter map[string]bool) {
 	if r.processReporter(event, filter) {
 		return
 	}
-	r.processActivityEnd(event)
+
 }
 
 type runnerLog struct {
