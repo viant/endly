@@ -1,0 +1,27 @@
+pipeline:
+  register:
+    action: dsunit:init
+    datastore: db1
+    config:
+      driverName: aerospike
+      descriptor: tcp([host]:3000)/[namespace]
+      parameters:
+        dbname: db1
+        namespace: db1
+        host: $targetHost
+        port: 3000
+        dateFormat: yyyy-MM-dd hh:mm:ss
+        keyColumnName: email
+    recreate: true
+
+  prepare:
+    data:
+      action: nop
+      init:
+        - db1key = data.db1.setup
+        - db1Setup = $AsTableRecords(data.db1.setup)
+
+    setup:
+      datastore: db1
+      action: dsunit:prepare
+      data: $db1Setup
