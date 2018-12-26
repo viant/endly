@@ -180,7 +180,7 @@ func (s *service) checkoutArtifact(context *endly.Context, versionControlType st
 			Dest:   dest,
 		})
 	case "local":
-		err = endly.Run(context, storage.NewCopyRequest(nil, storage.NewTransfer(origin, dest, true, false, nil)), nil)
+		err = endly.Run(context, storage.NewCopyRequest(nil, storage.NewTransfer(origin, dest, false, false, nil)), nil)
 		info = &Info{Origin: origin.URL}
 	default:
 		err = fmt.Errorf("unsupported version control type: '%v'", versionControlType)
