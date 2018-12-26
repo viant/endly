@@ -1,4 +1,6 @@
 {
+  "URL" :"http://${targetHost}:8085$uri",
+  "Method":"POST",
   "Request": {
     "Name": "report1",
     "Datastore": "db1",

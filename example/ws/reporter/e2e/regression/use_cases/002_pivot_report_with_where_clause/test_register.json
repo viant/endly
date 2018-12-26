@@ -1,8 +1,10 @@
 {
+  "URL": "http://${targetHost}:8085$uri",
+  "Method": "POST",
   "Request": {
     "ReportType": "pivot",
     "Report": {
-      "Name": "report1",
+      "Name": "report2",
       "From": "expenditure",
       "Values": [
         {
@@ -18,7 +20,8 @@
       ],
       "Groups": [
         "year"
-      ]
+      ],
+      "Where": " year IN ($years)"
     }
   },
   "Expect": {
