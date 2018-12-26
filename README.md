@@ -546,13 +546,6 @@ You can build, deploy and test them end to end all with endly.
    * [Logger](example/rt/elogger)
        - Test with HTTP Runner
        - Log Validation
-5) **Automation** - simple 3rd party echo app
-    * [Echo](example/au/echo)
-        - Build 3rd party application binary in docker container
-        - Build application docker image
-        - Optionally publish app image to the docker registry
-        - Deploy app to docker container
-        - Test an app with REST and HTTP runner
 
 
 <a name="Documentation"></a>
