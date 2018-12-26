@@ -278,14 +278,9 @@ func (s *execService) validateStdout(stdout string, command string, execution *E
 }
 
 func (s *execService) authSuperUserIfNeeded(stdout string, context *endly.Context, session *model.Session, extractCommand *ExtractCommand, response *RunResponse, request *ExtractRequest) (err error) {
-	if !request.SuperUser {
-		return nil
-	}
-
 	if session.SuperUSerAuth && !(util.EscapedContains(stdout, "Sorry, try again.") && util.EscapedContains(stdout, "Password")) {
 		return nil
 	}
-
 	if util.EscapedContains(stdout, "Password") {
 		session.SuperUSerAuth = true
 		if len(request.Secrets) == 0 {
@@ -325,6 +320,7 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	command := context.Expand(extractCommand.Command)
 	options := request.Options
 	terminators := getTerminators(options, session, extractCommand)
+	isSuperUserCmd :=  strings.Contains(command, "sudo ")  || request.SuperUser
 	if extractCommand.When != "" {
 		var state = s.buildExecutionState(response, context)
 		if ok, err := criteria.Evaluate(context, state, extractCommand.When, "Cmd.When", true); !ok {
@@ -335,7 +331,7 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 		command = state.ExpandAsText(command)
 	}
 
-	if request.SuperUser {
+	if isSuperUserCmd {
 		if !session.SuperUSerAuth {
 			terminators = append(terminators, "Password")
 		}
@@ -368,10 +364,14 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	if err = s.validateStdout(stdout, command, extractCommand); err != nil {
 		return err
 	}
-	err = s.authSuperUserIfNeeded(stdout, context, session, extractCommand, response, request)
-	if err != nil {
-		return err
+
+	if isSuperUserCmd {
+		err = s.authSuperUserIfNeeded(stdout, context, session, extractCommand, response, request)
+		if err != nil {
+			return err
+		}
 	}
+
 	stdout = response.Cmd[len(response.Cmd)-1].Stdout
 	return extractCommand.Extraction.Extract(context, response.Data, strings.Split(stdout, "\n")...)
 }
