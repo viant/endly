@@ -88,7 +88,7 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 	dataRequest := data.NewMap()
 	var err error
 
-	if request, ok := actionAttributes[requestKey]; ok && toolbox.IsString(request) {
+	if req, ok := actionAttributes[requestKey]; ok {
 		request := toolbox.AsString(actionAttributes[requestKey])
 		if strings.HasPrefix(request, "@") {
 			requestMap, err = util.LoadMap([]string{p.tagPathURL, toolbox.URLPathJoin(p.baseURL, "default"), p.baseURL}, request)
@@ -100,7 +100,7 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 				requestMap = toolbox.AsMap(state.Expand(requestMap))
 			}
 		} else {
-			requestMap, err = toolbox.ToMap(actionAttributes[requestKey])
+			requestMap, err = util.NormalizeMap(req, true)
 		}
 		delete(actionAttributes, requestKey)
 		if err != nil {
@@ -112,6 +112,7 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 	if len(dataRequest) > 0 {
 		requestMap = toolbox.AsMap(dataRequest.Expand(requestMap))
 	}
+
 	if isNormalizableRequest(actionAttributes) {
 		requestMap, err = util.NormalizeMap(requestMap, true)
 		if err != nil {
@@ -419,7 +420,6 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 			nodeAttributes[textKey] = value
 		}
 		flagAsMultiActionIfMatched(textKey, task, value)
-
 		if !toolbox.IsSlice(value) {
 			return true
 		}
