@@ -113,8 +113,6 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 		}
 	}()
 	var request interface{}
-	state.Put("tagId", action.TagID)
-
 	err = s.runNode(context, "action", process, action.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
 		process.Push(activity)
 		startEvent := s.Begin(context, activity)
