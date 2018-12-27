@@ -116,6 +116,20 @@ func LoadData(baseURLs []string, URI string) (interface{}, error) {
 	URI = strings.TrimSpace(URI)
 	URIs := getURIa(URI)
 	mainAssetURI := URIs[0]
+
+	rawContent := ""
+	_, err := LoadResourceFromBaseURLs(baseURLs, mainAssetURI, &rawContent)
+	if err != nil {
+		return nil, err
+	}
+	matched, err := expandMapWithArgumentsIfMatched(baseURLs, URIs, rawContent)
+	if err != nil {
+		return nil, err
+	}
+	if matched != nil {
+		return matched, nil
+	}
+
 	if _, err := LoadResourceFromBaseURLs(baseURLs, mainAssetURI, &result); err != nil {
 		return nil, err
 	}
@@ -125,6 +139,7 @@ func LoadData(baseURLs []string, URI string) (interface{}, error) {
 			return nil, err
 		}
 		result = aMap.Expand(result)
+
 	}
 	return result, nil
 }
@@ -139,9 +154,13 @@ func LoadMap(baseURLs []string, URI string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	result, err := expandMapWithArgumentsIfMatched(baseURLs, URIs, rawContent)
+	matched, err := expandMapWithArgumentsIfMatched(baseURLs, URIs, rawContent)
 	if err != nil {
 		return nil, err
+	}
+	var result map[string]interface{}
+	if matched != nil {
+		result = toolbox.AsMap(result)
 	}
 
 	if len(result) == 0 {
@@ -191,28 +210,58 @@ func getURIa(URI string) []string {
 
 //If main content has $arg{index} or $args{index}, it will expand with corresponding URIs[index-1]
 // the fist one has full content of the resource, the latter  removes the first '{' and the last '}' characters.
-func expandMapWithArgumentsIfMatched(baseURLs []string, URIs []string, mainContent string) (map[string]interface{}, error) {
+func expandMapWithArgumentsIfMatched(baseURLs []string, URIs []string, mainContent string) (interface{}, error) {
 	if len(URIs) < 2 {
 		return nil, nil
 	}
 	if strings.Contains(mainContent, "$arg") || strings.Contains(mainContent, "${arg") {
-		var state = data.NewMap()
-		for i := 1; i < len(URIs); i++ {
-			var text = ""
-			if _, err := LoadResourceFromBaseURLs(baseURLs, URIs[i], &text); err != nil {
-				return nil, err
-			}
-			state.Put(fmt.Sprintf("arg%d", i-1), text)
-			trimText := string(text[strings.Index(text, "{")+1 : strings.LastIndex(text, "}")-1])
-			state.Put(fmt.Sprintf("args%d", i-1), trimText)
-
+		isDataArgument := strings.Contains(mainContent, "argData")
+		if isDataArgument {
+			return expandArgumentAsData(baseURLs, URIs, mainContent)
 		}
-		mainContent = state.ExpandAsText(mainContent)
-		var result = make(map[string]interface{})
-		err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(mainContent)).Decode(&result)
-		return result, err
+		return expandArgumentAsLiterals(baseURLs, URIs, mainContent)
 	}
 	return nil, nil
+}
+
+func expandArgumentAsData(baseURLs []string, URIs []string, mainContent string) (interface{}, error) {
+	var result interface{}
+	if err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(mainContent)).Decode(&result); err != nil {
+		return nil, err
+	}
+	for i := 1; i < len(URIs); i++ {
+		argData, err := LoadData(baseURLs, URIs[i])
+		if err != nil {
+			return nil, err
+		}
+		aMap := data.NewMap()
+		aMap.Put(fmt.Sprintf("argData%d", i-1), argData)
+		result = aMap.Expand(result)
+	}
+	return result, nil
+}
+
+func expandArgumentAsLiterals(baseURLs []string, URIs []string, mainContent string) (interface{}, error) {
+	var aMap = data.NewMap()
+	for i := 1; i < len(URIs); i++ {
+		var text = ""
+		if _, err := LoadResourceFromBaseURLs(baseURLs, URIs[i], &text); err != nil {
+			return nil, err
+		}
+		aMap.Put(fmt.Sprintf("arg%d", i-1), text)
+		trimText := strings.TrimSpace(text)
+		if strings.Index(trimText, "{") < strings.Index(trimText, "[") {
+			trimText = string(text[strings.Index(text, "{")+1 : strings.LastIndex(text, "}")-1])
+		} else {
+			trimText = string(text[strings.Index(trimText, "[")+1 : strings.LastIndex(trimText, "]")-1])
+		}
+		aMap.Put(fmt.Sprintf("args%d", i-1), trimText)
+
+	}
+	mainContent = aMap.ExpandAsText(mainContent)
+	var result interface{}
+	err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(mainContent)).Decode(&result)
+	return result, err
 }
 
 //LoadResourceFromBaseURLs loads resource from base URLs and URI, returns the first successfully loaded resource or error
