@@ -86,6 +86,9 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, reque
 		response.UpdateCookies(cookies)
 		sessionCookies.AddCookies(httpResponse.Cookies()...)
 		err = response.TransformBodyIfNeeded(context, request)
+		if request.DataSource == "response" {
+			return toolbox.AsMap(response), err
+		}
 		return response.Body, err
 	}
 
@@ -101,7 +104,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, reque
 
 	trips.setData(sendGroupResponse.Data)
 
-	trips.addResponse(response)
+	_ = trips.addResponse(response)
 	endEvent := s.End(context)(startEvent, response)
 	response.TimeTakenMs = int(endEvent.Timestamp().Sub(startEvent.Timestamp()) / time.Millisecond)
 	return nil

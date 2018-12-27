@@ -16,8 +16,8 @@ import (
 //ServiceRequest represents an http request
 type Request struct {
 	*model.Repeater
-	When        string `description:"criteria to send this request"`
-	Method      string `required:"true" description:"HTTP Method"`
+	When           string `description:"criteria to send this request"`
+	Method         string `required:"true" description:"HTTP Method"`
 	URL         string
 	Header      http.Header
 	Cookies     Cookies
@@ -26,6 +26,7 @@ type Request struct {
 	Replace     map[string]string      `description:"response body key value pair replacement"`
 	RequestUdf  string                 `description:"user defined function in context.state key, i,e, json to protobuf"`
 	ResponseUdf string                 `description:"user defined function in context.state key, i,e, protobuf to json"`
+	DataSource  string                 `description:"variable input: response or response.body by default"`
 	Expect      map[string]interface{} `description:"desired http response"`
 }
 
@@ -44,6 +45,7 @@ func (r *Request) Clone(context *endly.Context) *Request {
 		Replace:     r.Replace,
 		RequestUdf:  r.RequestUdf,
 		ResponseUdf: r.ResponseUdf,
+		DataSource:  r.DataSource,
 	}
 }
 
@@ -63,7 +65,6 @@ func (r *Request) Build(context *endly.Context, sessionCookies Cookies) (*http.R
 		}
 	}
 	request := r.Clone(context)
-
 	var reader io.Reader
 	var expectBinary = false
 	var err error
