@@ -19,7 +19,7 @@ func AsDataMap(source interface{}) data.Map {
 	}
 	var aMap = make(map[string]interface{})
 	if toolbox.IsStruct(source) {
-		toolbox.DefaultConverter.AssignConverted(&aMap, source)
+		_ = toolbox.DefaultConverter.AssignConverted(&aMap, source)
 	} else if toolbox.IsMap(source) {
 		aMap = toolbox.AsMap(source)
 	}
@@ -118,11 +118,11 @@ func LoadData(baseURLs []string, URI string) (interface{}, error) {
 	mainAssetURI := URIs[0]
 
 	rawContent := ""
-	_, err := LoadResourceFromBaseURLs(baseURLs, mainAssetURI, &rawContent)
+	mainResource, err := LoadResourceFromBaseURLs(baseURLs, mainAssetURI, &rawContent)
 	if err != nil {
 		return nil, err
 	}
-	matched, err := expandMapWithArgumentsIfMatched(baseURLs, URIs, rawContent)
+	matched, err := expandMapWithArgumentsIfMatched(baseURLs, URIs, mainResource, rawContent)
 	if err != nil {
 		return nil, err
 	}
@@ -154,13 +154,13 @@ func LoadMap(baseURLs []string, URI string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	matched, err := expandMapWithArgumentsIfMatched(baseURLs, URIs, rawContent)
+	matched, err := expandMapWithArgumentsIfMatched(baseURLs, URIs, resource, rawContent)
 	if err != nil {
 		return nil, err
 	}
 	var result map[string]interface{}
 	if matched != nil {
-		result = toolbox.AsMap(result)
+		result = toolbox.AsMap(matched)
 	}
 
 	if len(result) == 0 {
@@ -210,23 +210,23 @@ func getURIa(URI string) []string {
 
 //If main content has $arg{index} or $args{index}, it will expand with corresponding URIs[index-1]
 // the fist one has full content of the resource, the latter  removes the first '{' and the last '}' characters.
-func expandMapWithArgumentsIfMatched(baseURLs []string, URIs []string, mainContent string) (interface{}, error) {
+func expandMapWithArgumentsIfMatched(baseURLs []string, URIs []string, mainResource *url.Resource, mainContent string) (interface{}, error) {
 	if len(URIs) < 2 {
 		return nil, nil
 	}
 	if strings.Contains(mainContent, "$arg") || strings.Contains(mainContent, "${arg") {
 		isDataArgument := strings.Contains(mainContent, "argData")
 		if isDataArgument {
-			return expandArgumentAsData(baseURLs, URIs, mainContent)
+			return expandArgumentAsData(baseURLs, URIs, mainResource, mainContent)
 		}
-		return expandArgumentAsLiterals(baseURLs, URIs, mainContent)
+		return expandArgumentAsLiterals(baseURLs, URIs, mainResource, mainContent)
 	}
 	return nil, nil
 }
 
-func expandArgumentAsData(baseURLs []string, URIs []string, mainContent string) (interface{}, error) {
-	var result interface{}
-	if err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(mainContent)).Decode(&result); err != nil {
+func expandArgumentAsData(baseURLs []string, URIs []string, mainResource *url.Resource, mainContent string) (interface{}, error) {
+	result, err := decodeResourceContent(mainResource, mainContent)
+	if err != nil {
 		return nil, err
 	}
 	for i := 1; i < len(URIs); i++ {
@@ -235,13 +235,14 @@ func expandArgumentAsData(baseURLs []string, URIs []string, mainContent string) 
 			return nil, err
 		}
 		aMap := data.NewMap()
-		aMap.Put(fmt.Sprintf("argData%d", i-1), argData)
+		key := fmt.Sprintf("argData%d", i-1)
+		aMap.Put(key, argData)
 		result = aMap.Expand(result)
 	}
 	return result, nil
 }
 
-func expandArgumentAsLiterals(baseURLs []string, URIs []string, mainContent string) (interface{}, error) {
+func expandArgumentAsLiterals(baseURLs []string, URIs []string, mainResource *url.Resource, mainContent string) (interface{}, error) {
 	var aMap = data.NewMap()
 	for i := 1; i < len(URIs); i++ {
 		var text = ""
@@ -259,9 +260,16 @@ func expandArgumentAsLiterals(baseURLs []string, URIs []string, mainContent stri
 
 	}
 	mainContent = aMap.ExpandAsText(mainContent)
+	return decodeResourceContent(mainResource, mainContent)
+}
+
+func decodeResourceContent(resource *url.Resource, content string) (interface{}, error) {
 	var result interface{}
-	err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(mainContent)).Decode(&result)
-	return result, err
+	err := resource.DecoderFactory().Create(strings.NewReader(content)).Decode(&result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode %v, %v", resource.URL, err)
+	}
+	return toolbox.NormalizeKVPairs(result)
 }
 
 //LoadResourceFromBaseURLs loads resource from base URLs and URI, returns the first successfully loaded resource or error
