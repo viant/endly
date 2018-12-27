@@ -36,7 +36,7 @@ import (
 	_ "github.com/viant/endly/deployment/deploy"
 	_ "github.com/viant/endly/deployment/sdk"
 	_ "github.com/viant/endly/deployment/vc"
-	_ "github.com/viant/endly/messaging"
+	_ "github.com/viant/endly/msg"
 
 	_ "github.com/viant/endly/notify/smtp"
 	_ "github.com/viant/endly/system/daemon"
