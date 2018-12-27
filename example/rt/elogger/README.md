@@ -20,7 +20,6 @@ cat ~/.secret/localhost.json
 ```
 
 
-
 #### Run E-logger app workflow
 
 Run the following command:
@@ -30,23 +29,16 @@ git clone https://github.com/viant/endly
 cd endly/example/rt/elogger/e2e/
 ```
 
-## run test with [manager](endly/manager.csv) workflow:
-```text
-endly -w=manager
-```
-## run test with inline workflow[run](endly/run.yaml) request
+
+## run test with inline workflow[run](e2e/run.yaml)
 ```text
 endly -r=run
 ```
 
-## To check manager workflow tasks list
+## To check workflow tasks list
 ```text
-endly -w=manager -t='?'
- 
+endly -t='?'
 ```
 
-
-
-  
 
 

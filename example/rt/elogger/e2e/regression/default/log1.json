@@ -1,0 +1,5 @@
+{
+  "Type":"event1",
+  "TagId":"$tagId",
+  "Records": "$argData0"
+}

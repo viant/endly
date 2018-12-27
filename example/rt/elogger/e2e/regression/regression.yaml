@@ -1,0 +1,75 @@
+init:
+  eventLogs: []
+pipeline:
+  init:
+    cleanup-logs:
+      action: exec:run
+      target: $target
+      comments: remove existing logs
+      commands:
+        - rm -f /opt/elogger/logs/*
+        - mkdir -p /opt/elogger/logs/
+    register-log-listener:
+      register-event1:
+        action: validator/log:listen
+        source: $logLocation
+        types:
+          - name: event1
+            inclusion: /event1/
+            format: json
+            mask: elog*.log
+            indexRegExpr: EventID":"([^"]+)
+
+          - name: event2
+            inclusion: /event2/
+            format: json
+            mask: elog*.log
+
+
+  test:
+    tag: Test
+    description: '@use_case'
+    data:
+      '${tagId}.[]event1': '@log1 @event1'
+      '${tagId}.[]event2': '@log2 @event2'
+
+    comments: add setup data
+
+    subPath: 'use_cases/${index}*'
+    range: 1..002
+    template:
+      skip-tag:
+        action: nop
+        skip: $HasResource(${subPath}/skip.txt)
+        comments: skip tag Id if subdirectory has skip.txt file present
+
+      generate-logs:
+        action: http/runner:send
+        request: '@http_test'
+        db: db1
+        comments: verify test $db state after use case
+        post:
+          event1_ID1: $Data.event1_ID1
+          event1_ID2: $Data.event1_ID2
+          event2_ID1: $Data.event2_ID1
+
+      queue-logs:
+        action: nop
+        comments: push logs with header retreved id to desired log queueu
+        init:
+          - '->eventLogs = ${<-data.${tagId}.event1}'
+          - '->eventLogs = ${<-data.${tagId}.event2}'
+
+
+
+    post-test-sleep:
+      action: nop
+      sleepTimeMs: 1000
+      comments: sleep for extra debuging
+
+    validate-logs:
+      action: validator/log:assert
+      logWaitTimeMs: 5000
+      logWaitRetryCount: 5
+      description: E-logger event log validation
+      expect: "$eventLogs"

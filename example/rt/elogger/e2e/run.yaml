@@ -1,4 +1,14 @@
-init: "@var/init"
+init:
+  targetHost: 127.0.0.1
+  eLoggerHost: ${targetHost}:8777
+  target:
+    URL: scp://127.0.0.1/
+    credentials: localhost
+  serviceTarget: $target
+  appLogPath: /opt/elogger/logs
+  logLocation:
+    URL: $appLogPath
+
 defaults:
   app: $app
   sdk: $sdk
@@ -14,7 +24,7 @@ pipeline:
       tasks: "*"
   test:
     action: run
-    name: regresion
+    request: '@regression/regression'
     tasks: "*"
   destroy:
     app:
