@@ -1,12 +1,12 @@
 **Http runner service**
 
 Http runner sends one or more HTTP request to the specified endpoint; 
-it manages cookie within [SendRequest](service_contract.go).
+it manages cookie within [SendRequest](contract.go).
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| http/runner | send | Sends one or more http request to the specified endpoint. | [SendRequest](service_contract.go) | [SendResponse](service_contract.go) |
-| http/runner | load | Stress test http endpoint. | [LoadRequest](service_contract.go) | [LoadResponse](service_contract.go) |
+| http/runner | send | Sends one or more http request to the specified endpoint. | [SendRequest](contract.go) | [SendResponse](contract.go) |
+| http/runner | load | Stress test http endpoint. | [LoadRequest](contract.go) | [LoadResponse](contract.go) |
 
 
 ## Usage
