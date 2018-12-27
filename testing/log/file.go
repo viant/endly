@@ -89,23 +89,27 @@ func (f *File) PushLogRecord(record *Record) {
 		f.Records = make([]*Record, 0)
 	}
 
-	if f.Type.Debug {
-		info, _ := toolbox.AsJSONText(record)
-		_ = endly.Run(f.context, &workflow.PrintRequest{
-			Style:   msg.MessageStyleInput,
-			Message: fmt.Sprintf("push [%v] <- %v", f.Type.Name, info),
-		}, nil)
-	}
-
+	indexValue := ""
 	f.Records = append(f.Records, record)
 	if f.UseIndex() {
 		if expr, err := f.GetIndexExpr(); err == nil {
-			var indexValue = matchLogIndex(expr, record.Line)
+			indexValue = matchLogIndex(expr, record.Line)
 			if indexValue != "" {
 				f.IndexedRecords[indexValue] = record
 			}
 		}
 	}
+	if f.Type.Debug {
+		if indexValue != "" {
+			indexValue = " idx:" + indexValue
+		}
+		info, _ := toolbox.AsJSONText(record)
+		_ = endly.Run(f.context, &workflow.PrintRequest{
+			Style:   msg.MessageStyleInput,
+			Message: fmt.Sprintf("push [%v%v] <- %v", f.Type.Name, indexValue, info),
+		}, nil)
+	}
+
 }
 
 //Reset resets processing state
