@@ -140,7 +140,17 @@ where
 }
 ```
 
-The executable node ancestor represent one or more grouped tasks, that run sequentially or can be filtered with endly -t=task1,taskN switch.
+In addition the following pseudo argument indexed based variables are present:
+    - _$argX_ - literal context of asset
+    - _$argsX_ - literal context of asset [] or {} truncated 
+    - _$argDataX_ - data structure representation of asset
+
+where X represent subsequent arguments starting from zero.
+
+
+##### Pipeline nodes
+
+The _executable node ancestor_ represent one or more grouped tasks, that run sequentially or can be filtered with endly -t=task1,taskN switch.
 Option  -t='*' run all tasks.
 
 By default each executable node is also converted to a task with only one action, so that endly -t=taskname allows you to select one or more nodes to run at a time.
@@ -751,7 +761,7 @@ pipeline:
       tag: Test2
       subPath: bulk/sub_${index}
       data:
-        '$tagId.[]x': '@*_xx'
+        '${tagId}.[]x': '@*_xx'
       range: 1..0002
       template:
         action1:
