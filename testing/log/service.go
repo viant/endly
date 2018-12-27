@@ -66,13 +66,13 @@ func (s *service) assert(context *endly.Context, request *AssertRequest) (*Asser
 	for _, expectedLogRecords := range request.Expect {
 		typeMeta, err := s.getLogTypeMeta(expectedLogRecords)
 		if err != nil {
-			return nil, err
+			return response, err
 		}
 		var recordIterator = typeMeta.Iterator()
 
 		var aMap = data.NewMap()
 		aMap.Put("logType", expectedLogRecords.Type)
-		aMap.Put("TagID", expectedLogRecords.TagID)
+		aMap.Put("tagID", expectedLogRecords.TagID)
 
 		for _, expectedRecord := range expectedLogRecords.Records {
 			var validation = &assertly.Validation{
@@ -80,6 +80,7 @@ func (s *service) assert(context *endly.Context, request *AssertRequest) (*Asser
 				Description: aMap.ExpandAsText(request.DescriptionTemplate),
 			}
 			response.Validations = append(response.Validations, validation)
+
 			if !s.waitForRecord(context, recordIterator, request) {
 				validation.AddFailure(assertly.NewFailure("", fmt.Sprintf("[%v]", expectedLogRecords.TagID), "missing log record", expectedRecord, nil))
 				return response, nil
@@ -88,13 +89,13 @@ func (s *service) assert(context *endly.Context, request *AssertRequest) (*Asser
 			var logRecord = &Record{}
 			logRecord, err := s.matchLogRecord(typeMeta, expectedRecord, recordIterator)
 			if err != nil {
-				return nil, err
+				return response, err
 			}
 			var actualLogRecord interface{} = logRecord.Line
 			if isLogStructured := toolbox.IsMap(expectedRecord); isLogStructured {
 				actualLogRecord, err = logRecord.AsMap()
 				if err != nil {
-					return nil, err
+					return response, err
 				}
 			}
 			logRecordsAssert := &validator.TaggedAssert{
@@ -105,7 +106,7 @@ func (s *service) assert(context *endly.Context, request *AssertRequest) (*Asser
 			_, filename := toolbox.URLSplit(logRecord.URL)
 			logValidation, err := criteria.Assert(context, fmt.Sprintf("%v:%v", filename, logRecord.Number), expectedRecord, actualLogRecord)
 			if err != nil {
-				return nil, err
+				return response, err
 			}
 			context.Publish(logRecordsAssert)
 			context.Publish(logValidation)
@@ -120,7 +121,7 @@ func (s *service) waitForRecord(context *endly.Context, recordIterator toolbox.I
 		if recordIterator.HasNext() {
 			return true
 		}
-		s.Sleep(context, int(request.LogWaitTimeMs)/int(time.Millisecond))
+		s.Sleep(context, int(request.LogWaitTimeMs))
 	}
 	return recordIterator.HasNext()
 }
@@ -134,7 +135,7 @@ func (s *service) matchLogRecord(typeMeta *TypeMeta, expectedRecord interface{},
 			if toolbox.IsMap(expectedRecord) || toolbox.IsSlice(expectedRecord) || toolbox.IsStruct(expectedRecord) {
 				expectedTextRecord, _ = toolbox.AsJSONText(expectedRecord)
 			}
-			var indexValue = matchLogIndex(expr, expectedTextRecord)
+			indexValue := matchLogIndex(expr, expectedTextRecord)
 			if indexValue != "" {
 				indexedLogRecord := &IndexedRecord{
 					IndexValue: indexValue,
