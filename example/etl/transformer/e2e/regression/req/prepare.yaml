@@ -1,0 +1,3 @@
+action: dsunit:preapre
+datastore: $db
+URL: ${path}/prepare/$db

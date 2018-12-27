@@ -1,0 +1,5 @@
+URL: http://${targetHost}:8889$uri
+method: POST
+request: $argData0
+expect:
+  Status: ok

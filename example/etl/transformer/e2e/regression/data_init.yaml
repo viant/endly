@@ -1,0 +1,23 @@
+pipeline:
+  db3:
+    register:
+      action: dsunit:register
+      datastore: db3
+      config:
+        driverName: mysql
+        descriptor: "[username]:[password]@tcp(${serviceHost}:3306)/[dbname]?parseTime=true"
+        credentials: "$mysqlCredentials"
+  db4:
+    register:
+      action: dsunit:register
+      datastore: db4
+      config:
+        driverName: aerospike
+        descriptor: tcp([host]:3000)/[namespace]
+        parameters:
+          dbname: db4
+          namespace: db4
+          host: "$serviceHost"
+          port: '3000'
+          dateFormat: yyyy-MM-dd hh:mm:ss
+          keyColumnName: id

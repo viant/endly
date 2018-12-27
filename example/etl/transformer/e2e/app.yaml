@@ -1,47 +1,61 @@
 tasks: $tasks
+init:
+  buildTarget:
+    URL: scp://127.0.0.1/tmp/build/transformer/
+    credentials: localhost
+  appTarget:
+    URL: scp://127.0.0.1/opt/transformer/
+    credentials: localhost
+  target:
+    URL: scp://127.0.0.1/
+    credentials: localhost
 defaults:
-  app: $app
-  sdk: $sdk
   target: $target
-  buildTarget: $buildTarget
-  appTarget: $appTarget
 
 pipeline:
 
   build:
-    workflow: app/build
-    origin:
-      URL: ./../
-    commands:
-      - cd $buildPath/app
-      - go get -u .
-      - go build -o $app
-      - chmod +x $app
-    download:
-      /$buildPath/app/${app}: $releasePath
-      /$buildPath/e2e/config/config.json: $releasePath
+    checkout:
+      action: version/control:checkout
+      origin:
+        URL: ./../
+      dest: $buildTarget
+    set-sdk:
+      action: sdk:set
+      sdk: go:1.11
+    build-app:
+      action: exec:run
+      commands:
+        - cd /tmp/build/transformer/app
+        - go build transformer.go
+        - chmod +x transformer
+    deploy:
+      mkdir:
+        action: exec:run
+        commands:
+          - sudo rm -rf /opt/transformer/
+          - sudo mkdir -p /opt/transformer
+          - sudo chown -R ${os.user} /opt/transformer
 
-  deploy:
-    workflow: app/deploy
-    init:
-      - mkdir -p $appPath
-      - mkdir -p $appPath/config
-      - chown -R ${os.user} $appPath
-    upload:
-      ${releasePath}/${app}: $appPath
-      ${releasePath}/config.json: $appPath
-    commands:
-      - echo 'deployed'
+      install:
+        action: storage:copy
+        source: $buildTarget
+        dest: $appTarget
+        expand: true
+        assets:
+          app/transformer: transformer
+          config/config.json: config.json
+
 
   stop:
     action: process:stop-all
-    input: ${app}
+    input: transformer
 
   start:
     action: process:start
-    directory: $appPath
+    directory: /opt/transformer
     immuneToHangups: true
-    command: ./${app}
+    command: ./transformer
     arguments:
       - "-config"
       - "config.json"

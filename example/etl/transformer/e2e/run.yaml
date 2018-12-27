@@ -1,11 +1,12 @@
-init: "@var/init"
-defaults:
-  app: $app
-  sdk: $sdk
-  target: $target
-  buildTarget: $buildTarget
-  serviceTarget: $serviceTarget
-  appTarget: $appTarget
+init:
+  mysqlCredentials: mysql
+  target:
+    URL: scp://127.0.0.1/
+    credentials: localhost
+  serviceTarget: $target
+  targetHost: 127.0.0.1
+  serviceHost: 127.0.0.1
+  mysqlVersion: 5.7
 
 pipeline:
   init:
@@ -23,7 +24,7 @@ pipeline:
       tasks: "*"
   test:
     action: run
-    name: regresion
+    request: '@regression/regression'
     tasks: "*"
   destroy:
     app:
