@@ -1,47 +1,67 @@
 tasks: $tasks
+
+init:
+  buildTarget:
+    URL: scp://127.0.0.1/tmp/build/elogger/
+    credentials: localhost
+
+  appTarget:
+    URL: scp://127.0.0.1/opt/elogger/
+    credentials: localhost
+
+  target:
+    URL: scp://127.0.0.1/
+    credentials: localhost
+
 defaults:
-  app: $app
-  sdk: $sdk
   target: $target
-  buildTarget: $buildTarget
-  appTarget: $appTarget
 
 pipeline:
 
-  build:
-    workflow: app/build
-    origin:
-      URL: ./../
-    commands:
-      - cd $buildPath/app
-      - go get -u .
-      - go build -o $app
-      - chmod +x $app
-    download:
-      /$buildPath/app/${app}: $releasePath
-      /$buildPath/e2e/config/config.json: $releasePath
 
-  deploy:
-    workflow: app/deploy
-    init:
-      - mkdir -p $appPath
-      - mkdir -p $appPath/config
-      - chown -R ${os.user} $appPath
-    upload:
-      ${releasePath}/${app}: $appPath
-      ${releasePath}/config.json: $appPath
-    commands:
-      - echo 'deployed'
+  build:
+    checkout:
+      action: version/control:checkout
+      origin:
+        URL: ./../
+      dest: $buildTarget
+    set-sdk:
+      action: sdk:set
+      sdk: go:1.11
+    build-app:
+      action: exec:run
+      commands:
+        - cd /tmp/build/elogger/app
+        - go build elogger.go
+        - chmod +x elogger
+        -
+    deploy:
+      mkdir:
+        action: exec:run
+        commands:
+          - sudo rm -rf /opt/elogger/
+          - sudo mkdir -p /opt/elogger
+          - sudo chown -R ${os.user} /opt/elogger
+      install:
+        action: storage:copy
+        source: $buildTarget
+        dest: $appTarget
+        expand: true
+        assets:
+          app/elogger: elogger
+          config/config.json: config.json
+
 
   stop:
     action: process:stop-all
-    input: ${app}
+    input: elogger
 
   start:
     action: process:start
-    directory: $appPath
+    directory: /opt/elogger
     immuneToHangups: true
-    command: ./${app}
+    command: ./elogger
     arguments:
       - "-config"
       - "config.json"
+

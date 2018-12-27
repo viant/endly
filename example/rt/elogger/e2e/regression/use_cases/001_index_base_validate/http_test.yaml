@@ -1,0 +1,27 @@
+requests:
+  - method: GET
+    URL: http://${eLoggerHost}/event1/?k1=v1&k2=v2
+    expect:
+      Code: 200
+    dataSource: response
+    variables:
+      - name: event1_ID1
+        from: Header.Eventid[0]
+
+  - method: GET
+    URL: http://${eLoggerHost}/event1/?k10=v1&k2=v2
+    expect:
+      Code: 200
+    dataSource: response
+    variables:
+      - name: event1_ID2
+        from: Header.Eventid[0]
+
+  - method: GET
+    URL: http://${eLoggerHost}/event2/?k1=v1&k2=v2
+    expect:
+      Code: 200
+    dataSource: response
+    variables:
+      - name: event2_ID1
+        from: Header.Eventid[0]

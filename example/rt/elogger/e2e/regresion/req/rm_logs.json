@@ -1,6 +1,0 @@
-{
-  "Target": "$appTarget",
-  "Commands":[
-    "rm -f $appLogPath/*"
-  ]
-}
