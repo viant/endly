@@ -316,6 +316,7 @@ func (r *Runner) processAssertable(event msg.Event) bool {
 	if len(validations) == 0 {
 		return true
 	}
+
 	r.resetRepeated()
 	r.reportAssertion(event, validations...)
 	return true
@@ -386,7 +387,6 @@ func (r *Runner) processEvent(event msg.Event, filter map[string]bool) {
 	if event.Value() == nil {
 		return
 	}
-
 	r.processActivityEnd(event)
 	if r.processActivityStart(event) {
 		return
