@@ -87,3 +87,11 @@ func (r *ExpectResponse) Assertion() []*assertly.Validation {
 	}
 	return result
 }
+
+//Assertion returns validation slice
+func (r *QueryResponse) Assertion() []*assertly.Validation {
+	if r == nil || r.Validation == nil {
+		return []*assertly.Validation{}
+	}
+	return []*assertly.Validation{r.Validation}
+}
