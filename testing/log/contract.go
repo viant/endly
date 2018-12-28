@@ -35,7 +35,7 @@ func (r *AssertRequest) Init() error {
 		}
 	}
 	if r.DescriptionTemplate == "" {
-		r.DescriptionTemplate = "$tagID: log $logType"
+		r.DescriptionTemplate = "$tagIndex: log $logType"
 	}
 	if r.LogWaitTimeMs == 0 {
 		r.LogWaitTimeMs = 500
