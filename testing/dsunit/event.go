@@ -77,7 +77,7 @@ func (r *SequenceResponse) Messages() []*msg.Message {
 
 //Messages returns messages
 func (r *PrepareRequest) Messages() []*msg.Message {
-	r.Load()
+	_ = r.Load()
 	if r.DatasetResource == nil || len(r.Datasets) == 0 {
 		return []*msg.Message{}
 	}
@@ -87,4 +87,10 @@ func (r *PrepareRequest) Messages() []*msg.Message {
 			msg.NewMessage(msg.NewStyled(fmt.Sprintf("(%v) %v: %v", r.Datastore, dataset.Table, len(dataset.Records)), msg.MessageStyleGeneric), msg.NewStyled("populate", msg.MessageStyleGeneric)))
 	}
 	return result
+}
+
+//Messages returns messages
+func (r *QueryRequest) Messages() []*msg.Message {
+	message := msg.NewMessage(msg.NewStyled(fmt.Sprintf("(%v) %v", r.Datastore, r.SQL), msg.MessageStyleGeneric), msg.NewStyled("populate", msg.MessageStyleGeneric))
+	return []*msg.Message{message}
 }

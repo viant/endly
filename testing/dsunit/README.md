@@ -16,18 +16,18 @@ Datastore service uses [dsunit](https://github.com/viant/dsunit/) service to cre
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| dsunit | register | register database connection |  [RegisterRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L46) | [RegisterResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#70)  |
-| dsunit | recreate | recreate database/datastore |  [RecreateRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L76) | [RecreateResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#98)  |    
-| dsunit | sql | run SQL commands |  [RunSQLRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L103) | [RunSQLResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#126)  |
-| dsunit | script | run SQL script |  [RunScriptRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L132) | [RunSQLResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#126)  |
-| dsunit | mapping | register database table mapping (view), |  [MappingRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L155) | [MappingResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#217)  |
-| dsunit | init | initialize datastore (register, recreate, run sql, add mapping) |  [InitRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L225) | [MappingResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#286)  |
-| dsunit | prepare | populate databstore with provided data |  [PrepareRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L293) | [MappingResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#323)  |
-| dsunit | expect | verify databstore with provided data |  [ExpectRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L340) | [MappingResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#380)  |
-| dsunit | query | run SQL query |  [QueryRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L407) | [QueryResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#419)  |
-| dsunit | sequence | get sequence values for supplied tables |  [SequenceRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L388) | [SequenceResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#400)  |
-| dsunit | freeze | create a dataset from existing datastore |  [FreezeRequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L453) | [FreezeResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#463)  |
-| dsunit | dump | create DDL schema from existing databasse|  [Dumpequest](https://github.com/viant/dsunit/blob/master/service_contract.go#L470) | [DumpResponse](https://github.com/viant/dsunit/blob/master/service_contract.go#477)  |
+| dsunit | register | register database connection |  [RegisterRequest](https://github.com/viant/dsunit/blob/master/contract.go#L46) | [RegisterResponse](https://github.com/viant/dsunit/blob/master/contract.go#70)  |
+| dsunit | recreate | recreate database/datastore |  [RecreateRequest](https://github.com/viant/dsunit/blob/master/contract.go#L76) | [RecreateResponse](https://github.com/viant/dsunit/blob/master/contract.go#98)  |    
+| dsunit | sql | run SQL commands |  [RunSQLRequest](https://github.com/viant/dsunit/blob/master/contract.go#L103) | [RunSQLResponse](https://github.com/viant/dsunit/blob/master/contract.go#126)  |
+| dsunit | script | run SQL script |  [RunScriptRequest](https://github.com/viant/dsunit/blob/master/contract.go#L132) | [RunSQLResponse](https://github.com/viant/dsunit/blob/master/contract.go#126)  |
+| dsunit | mapping | register database table mapping (view), |  [MappingRequest](https://github.com/viant/dsunit/blob/master/contract.go#L155) | [MappingResponse](https://github.com/viant/dsunit/blob/master/contract.go#217)  |
+| dsunit | init | initialize datastore (register, recreate, run sql, add mapping) |  [InitRequest](https://github.com/viant/dsunit/blob/master/contract.go#L225) | [MappingResponse](https://github.com/viant/dsunit/blob/master/contract.go#286)  |
+| dsunit | prepare | populate databstore with provided data |  [PrepareRequest](https://github.com/viant/dsunit/blob/master/contract.go#L293) | [MappingResponse](https://github.com/viant/dsunit/blob/master/contract.go#323)  |
+| dsunit | expect | verify databstore with provided data |  [ExpectRequest](https://github.com/viant/dsunit/blob/master/contract.go#L340) | [MappingResponse](https://github.com/viant/dsunit/blob/master/contract.go#380)  |
+| dsunit | query | run SQL query |  [QueryRequest](https://github.com/viant/dsunit/blob/master/contract.go#L407) | [QueryResponse](https://github.com/viant/dsunit/blob/master/contract.go#419)  |
+| dsunit | sequence | get sequence values for supplied tables |  [SequenceRequest](https://github.com/viant/dsunit/blob/master/contract.go#L388) | [SequenceResponse](https://github.com/viant/dsunit/blob/master/contract.go#400)  |
+| dsunit | freeze | create a dataset from existing datastore |  [FreezeRequest](https://github.com/viant/dsunit/blob/master/contract.go#L453) | [FreezeResponse](https://github.com/viant/dsunit/blob/master/contract.go#463)  |
+| dsunit | dump | create DDL schema from existing databasse|  [Dumpequest](https://github.com/viant/dsunit/blob/master/contract.go#L470) | [DumpResponse](https://github.com/viant/dsunit/blob/master/contract.go#477)  |
 
 
 <a name="usage"></a>
