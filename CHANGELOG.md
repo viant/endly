@@ -1,12 +1,17 @@
-## December 25 2018 0.24.0
+## December 28 2018 0.24.0
     * Added smtp endpoint
     * Moved event reporting msg package to model/msg
+    * Moved messaging package to msg
     * Enhanced inline workflow node data substitution
     * Migrated e2e example to inline workflows and go 1.11 build
+    * Ehnaced muli resource substitution with $argDataX and main yaml resource support
+    * Added dataSource customization (response, response.Body) (http/runner:send)
     * Added workflow/default to fallback chain in external resource loading (inline workflow)
-    * Patched processing unexported struct field (toolbox)  
+    * Patched processing unexported struct field (viant/toolbox)
+    * Added QueryEscape udf (viant/toolbox)
+    * BQ Streaming insert customization (viant/bgc)
+    * Added Expect attribute in Query operation for optional valiation (SQL based validation) (viant/dsunit)   
     * Minor patches
-
 
 ## December 19 2018 0.23.1
     * Added logging option on abstract node level
