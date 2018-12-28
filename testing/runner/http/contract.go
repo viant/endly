@@ -40,6 +40,8 @@ func (s *SendRequest) Init() error {
 	}
 	if hasExpectedResponse {
 		s.Expect["Responses"] = expectedResponses
+	} else if len(s.Expect) == 0 {
+		s.Expect = nil
 	}
 	return nil
 }
