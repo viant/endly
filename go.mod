@@ -5,6 +5,7 @@ require (
 	git.apache.org/thrift.git v0.0.0-20181205211409-17a9cffabb74 // indirect
 	github.com/adrianwit/mgc v0.1.0
 	github.com/aerospike/aerospike-client-go v1.37.0 // indirect
+	github.com/alexbrainman/odbc v0.0.0-20181122072825-9f8c46d67b52
 	github.com/aws/aws-sdk-go v1.15.90
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emersion/go-smtp v0.0.0-20180917150411-7162b2ca3bcb
@@ -47,9 +48,9 @@ require (
 	github.com/viant/assertly v0.2.2
 	github.com/viant/bgc v0.3.0
 	github.com/viant/dsc v0.3.0
-	github.com/viant/dsunit v0.4.0
+	github.com/viant/dsunit v0.4.1
 	github.com/viant/neatly v0.6.0
-	github.com/viant/toolbox v0.5.4
+	github.com/viant/toolbox v0.6.0
 	github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227 // indirect
 	go.opencensus.io v0.18.0 // indirect
 	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9

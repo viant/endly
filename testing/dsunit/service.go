@@ -581,6 +581,37 @@ func (s *service) registerRoutes() {
 		},
 	})
 
+
+	s.Register(&endly.Route{
+		Action: "compare",
+		RequestInfo: &endly.ActionInfo{
+			Description: "compare data based on SQL for various databases",
+			Examples: []*endly.UseCase{
+
+			},
+		},
+		RequestProvider: func() interface{} {
+			return &CompareRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &CompareResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*CompareRequest); ok {
+				var dsRequest = dsunit.CompareRequest(*req)
+				request = &dsRequest
+			}
+			if req, ok := request.(*dsunit.CompareRequest); ok {
+				resp := s.Service.Compare(req)
+				response := CompareResponse(*resp)
+				var err = response.Error()
+				return &response, err
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+
 	s.Register(&endly.Route{
 		Action: "sequence",
 		RequestInfo: &endly.ActionInfo{

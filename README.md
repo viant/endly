@@ -412,6 +412,62 @@ endly -r=freeze
 ```
 
 
+**e) Comparing SQL based data sets**
+
+```bash
+endly -r=compare
+```
+
+@compare.yaml
+```yaml
+pipeline:
+  register:
+    verticadb:
+      action: dsunit:register
+      datastore: db1
+      config:
+        driverName: odbc
+        descriptor: driver=Vertica;Database=[database];ServerName=[server];port=5433;user=[username];password=[password]
+        credentials: db1
+        parameters:
+          database: db1
+          server: x.y.z.a
+          TIMEZONE: UTC
+    bigquerydb:
+      action: dsunit:register
+      datastore: db2
+      config:
+        driverName: bigquery
+        credentials: db2
+        parameters:
+          datasetId: db2
+  compare:
+    action: dsunit:compare
+    maxRowDiscrepancy: 10
+    ignore:
+      - field10
+      - fieldN
+    directives:
+      "@numericPrecisionPoint@": 7
+      "@coalesceWithZero@": true
+      "@caseSensitive@": false
+    
+    source1:
+      datastore: db1
+      SQL: SELECT * 
+           FROM db1.mytable 
+           WHERE DATE(ts) BETWEEN '2018-12-01' AND '2018-12-02' 
+           ORDER BY 1
+
+    source2:
+      datastore: db2
+      SQL: SELECT *
+           FROM db1.mytable
+           WHERE DATE(ts) BETWEEN '2018-12-01' AND '2018-12-02'
+           ORDER BY 1
+```
+
+
 **e) Testing**
 
 For instance: the following  define inline workflow to run test with selenium runner:

@@ -1,3 +1,6 @@
+## December 30 2018 0.24.1
+    * Added dsunit.CompareRequest to check SQL based data from various db.
+    
 ## December 28 2018 0.24.0
     * Added smtp endpoint
     * Moved event reporting msg package to model/msg
