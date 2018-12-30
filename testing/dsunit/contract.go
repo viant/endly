@@ -74,6 +74,14 @@ type DumpRequest dsunit.DumpRequest
 //DumpResponse represents a dump response
 type DumpResponse dsunit.DumpResponse
 
+
+//CompareRequest represents a compare request
+type CompareRequest dsunit.CompareRequest
+
+//CompareResponse represents a compare response
+type CompareResponse dsunit.CompareResponse
+
+
 //Assertion returns description with validation slice
 func (r *ExpectResponse) Assertion() []*assertly.Validation {
 	var result = make([]*assertly.Validation, 0)
@@ -90,6 +98,15 @@ func (r *ExpectResponse) Assertion() []*assertly.Validation {
 
 //Assertion returns validation slice
 func (r *QueryResponse) Assertion() []*assertly.Validation {
+	if r == nil || r.Validation == nil {
+		return []*assertly.Validation{}
+	}
+	return []*assertly.Validation{r.Validation}
+}
+
+
+//Assertion returns validation slice
+func (r *CompareResponse) Assertion() []*assertly.Validation {
 	if r == nil || r.Validation == nil {
 		return []*assertly.Validation{}
 	}
