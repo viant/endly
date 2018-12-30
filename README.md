@@ -462,7 +462,7 @@ pipeline:
     source2:
       datastore: db2
       SQL: SELECT *
-           FROM db1.mytable
+           FROM db2.mytable
            WHERE DATE(ts) BETWEEN '2018-12-01' AND '2018-12-02'
            ORDER BY 1
 ```
