@@ -468,7 +468,7 @@ pipeline:
 ```
 
 
-**e) Testing**
+**f) Testing**
 
 For instance: the following  define inline workflow to run test with selenium runner:
 
@@ -519,7 +519,7 @@ endly -r=test
 ```
 
 
-**f) Stress testing:**
+**g) Stress testing:**
 
 The following  define inline workflow that loads request and desired responses from data folder for stress testing.
 
