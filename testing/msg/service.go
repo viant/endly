@@ -3,6 +3,8 @@ package msg
 import (
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/testing/validator"
+	"github.com/viant/endly/udf"
 	"github.com/viant/toolbox"
 )
 
@@ -15,8 +17,6 @@ const (
 type service struct {
 	*endly.AbstractService
 }
-
-//TODO UDFs support and example
 
 func (s *service) registerRoutes() {
 	s.Register(&endly.Route{
@@ -106,7 +106,14 @@ func (s *service) push(context *endly.Context, request *PushRequest) (interface{
 	dest := expandResource(context, request.Dest)
 	var state = context.State()
 	for _, message := range request.Messages {
-		result, err := client.Push(dest, message.Expand(state))
+		expanded := message.Expand(state)
+		if request.UDF != "" {
+			expanded.Data, err = udf.TransformWithUDF(context, request.UDF, fmt.Sprintf("%v/%v", request.Dest.Type, request.Dest.Name), expanded.Data)
+			if err != nil {
+				return nil, err
+			}
+		}
+		result, err := client.Push(dest, expanded)
 		if err != nil {
 			return response, err
 		}
@@ -124,7 +131,19 @@ func (s *service) pull(context *endly.Context, request *PullRequest) (interface{
 	}
 	source := expandResource(context, request.Source)
 	defer client.Close()
-	response.Messages, err = client.PullN(source, request.Count)
+	if response.Messages, err = client.PullN(source, request.Count, request.Nack); err == nil {
+		for _, message := range response.Messages {
+			if request.UDF != "" {
+				message.Transformed, err = udf.TransformWithUDF(context, request.UDF, fmt.Sprintf("%v/%v", request.Source.Type, request.Source.Name), message.Data)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+		if request.Expect != nil {
+			response.Assert, err = validator.Assert(context, request, request.Expect, response.Messages, "msg.response", "assert msg response")
+		}
+	}
 	return response, err
 }
 

@@ -2,6 +2,7 @@ package msg
 
 import (
 	"fmt"
+	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
@@ -30,6 +31,11 @@ func (r *CreateRequest) Init() error {
 func (r *CreateRequest) Validate() error {
 	if len(r.Resources) == 0 {
 		return fmt.Errorf("resources was empty")
+	}
+	for _, resource := range r.Resources {
+		if err := resource.Validate(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -126,6 +132,7 @@ func (r *PushRequest) Validate() error {
 			return fmt.Errorf("resource can not be a folder: " + resource.URL)
 		}
 	}
+
 	if len(r.Messages) == 0 {
 		return fmt.Errorf("messages were empty")
 	}
@@ -142,7 +149,9 @@ type PullRequest struct {
 	Source    *Resource
 	TimeoutMs int
 	Count     int
+	Nack      bool `description:"flag indicates that the client will not or cannot process a Message passed to the Subscriber.Receive callback."`
 	UDF       string
+	Expect    []map[string]interface{}
 }
 
 func (r *PullRequest) Init() error {
@@ -162,13 +171,15 @@ func (r *PullRequest) Validate() error {
 //PullRequest represents a pull response
 type PullResponse struct {
 	Messages []*Message
+	Assert   *validator.AssertResponse
 }
 
 type Message struct {
-	ID         string
-	Subject    string
-	Attributes map[string]string
-	Data       interface{}
+	ID          string
+	Subject     string
+	Attributes  map[string]string
+	Data        interface{}
+	Transformed interface{} `description:"udf transformed data"`
 }
 
 func (m *Message) Expand(state data.Map) *Message {

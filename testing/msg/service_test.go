@@ -62,8 +62,8 @@ func TestService_PushPull(t *testing.T) {
 	}{
 		{
 			description: "google cloud push messages use case",
-			dest:        NewResource("", "/projects/${pubsub.projectID}/topics/e2eTopic", "am"),
-			source:      NewResource("", "/projects/${pubsub.projectID}/subscriptions/e2eSubscription", "am"),
+			dest:        NewResource("", "/projects/${msg.projectID}/topics/e2eTopic", "am"),
+			source:      NewResource("", "/projects/${msg.projectID}/subscriptions/e2eSubscription", "am"),
 			messages: []*Message{
 				{
 					Attributes: map[string]string{
