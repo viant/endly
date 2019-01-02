@@ -4,14 +4,15 @@ pipeline:
   init:
     cleanup-logs:
       action: exec:run
-      target: $target
       comments: remove existing logs
+      target: $target
       commands:
         - rm -f /opt/elogger/logs/*
         - mkdir -p /opt/elogger/logs/
     register-log-listener:
       register-event1:
         action: validator/log:listen
+        comments: register log listener for event1 and event 2
         source: $logLocation
         types:
           - name: event1
@@ -40,14 +41,14 @@ pipeline:
     template:
       skip-tag:
         action: nop
+        comments: skip tag Id (use case) if skip.txt is present
         skip: $HasResource(${subPath}/skip.txt)
-        comments: skip tag Id if subdirectory has skip.txt file present
 
       generate-logs:
         action: http/runner:send
         request: '@http_test'
         db: db1
-        comments: verify test $db state after use case
+        comments: generate logs and extract event IDs from HTTP header
         post:
           event1_ID1: $Data.event1_ID1
           event1_ID2: $Data.event1_ID2
@@ -55,7 +56,7 @@ pipeline:
 
       queue-logs:
         action: nop
-        comments: push logs with header retreved id to desired log queueu
+        comments: push logs with header retreved id to log validation queue
         init:
           - '->eventLogs = ${<-data.${tagId}.event1}'
           - '->eventLogs = ${<-data.${tagId}.event2}'
@@ -69,6 +70,7 @@ pipeline:
 
     validate-logs:
       action: validator/log:assert
+      comments: validate desired logs
       logWaitTimeMs: 5000
       logWaitRetryCount: 5
       description: E-logger event log validation
