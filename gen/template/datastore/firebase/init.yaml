@@ -1,0 +1,10 @@
+action: dsunit:init
+datastore: $db
+recreate: true
+config:
+  driverName: fbc
+  credentials: $fbCredentials
+  parameters:
+    dbname: $db
+    databaseURL: https://myproject.firebaseio.com
+    projectID: myproject

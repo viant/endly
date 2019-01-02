@@ -1,0 +1,10 @@
+id: casandra
+name: Casandra
+kind: RDBMS
+dictionary: dictionary/
+data: data/
+sequence: false
+schema: ddl/schema.sql
+tables:
+  - dummy
+  - dummy_type
