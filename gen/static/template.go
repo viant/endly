@@ -1099,6 +1099,97 @@ recreate: true
 		}
 	}
 	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/casandra/ddl/schema.sql", bytes.NewReader([]byte(`DROP TABLE IF EXISTS dummy_type;
+CREATE OR REPLACE TABLE dummy_type (
+  id       float PRIMARY KEY,
+  name     STRING,
+  modified TIMESTAMP
+);
+
+
+DROP TABLE IF EXISTS dummy;
+CREATE OR REPLACE TABLE dummy (
+  id         float PRIMARY KEY,
+  type_id    float,
+  name       STRING,
+  modified   TIMESTAMP
+);
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/casandra/ddl/schema.sql %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/casandra/dictionary/dummy_type.json", bytes.NewReader([]byte(`[
+  {},
+  {
+    "id": 1,
+    "name": "type1"
+  },
+  {
+    "id": 2,
+    "name": "type2"
+  }
+]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/casandra/dictionary/dummy_type.json %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/casandra/register.yaml", bytes.NewReader([]byte(`action: dsunit:register
+datastore: $db
+config:
+  driverName: bigquery
+  credentials: $bqCredentials
+  parameters:
+    datasetId: $db  #projectId is read from secret.json file
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/casandra/register.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/casandra/meta.yaml", bytes.NewReader([]byte(`id: casandra
+name: Casandra
+kind: RDBMS
+dictionary: dictionary/
+data: data/
+sequence: false
+schema: ddl/schema.sql
+tables:
+  - dummy
+  - dummy_type
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/casandra/meta.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/casandra/data/dummy.json", bytes.NewReader([]byte(`[]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/casandra/data/dummy.json %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/casandra/init.yaml", bytes.NewReader([]byte(`datastore: mydb
+config:
+  driverName: cql
+  descriptor: 127.0.0.1?keyspace=mydb
+  params:
+    keyspace: mydb
+admin:
+  datastore: admin
+  config:
+    driverName: cql
+    descriptor: 127.0.0.1
+recreate: true
+scripts:
+  - URL: ddl/schema.ddl`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/casandra/init.yaml %v", err)
+		}
+	}
+	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/pg/ddl/schema.sql", bytes.NewReader([]byte(`DROP TABLE IF EXISTS dummy_type;
 
 CREATE TABLE dummy_type (
@@ -1195,6 +1286,76 @@ admin:
     credentials: $pgCredentials`)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/pg/init.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/firebase/dictionary/dummy_type.json", bytes.NewReader([]byte(`[
+  {},
+  {
+    "id": 1,
+    "name": "type1"
+  },
+  {
+    "id": 2,
+    "name": "type2"
+  }
+]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/firebase/dictionary/dummy_type.json %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/firebase/register.yaml", bytes.NewReader([]byte(`action: dsunit:register
+datastore: $db
+config:
+  driverName: fbc
+  credentials: $fbCredentials
+  parameters:
+    dbname: $db
+    databaseURL: https://myproject.firebaseio.com
+    projectID: myproject
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/firebase/register.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/firebase/meta.yaml", bytes.NewReader([]byte(`id: firebase
+name: Firebase
+kind: NoSQL
+tag: firebase
+dictionary: dictionary/
+credentials: $fbCredentials
+data: data/
+sequence: false
+tables:
+  - dummy
+  - dummy_type
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/firebase/meta.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/firebase/data/dummy.json", bytes.NewReader([]byte(`[]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/firebase/data/dummy.json %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/firebase/init.yaml", bytes.NewReader([]byte(`action: dsunit:init
+datastore: $db
+recreate: true
+config:
+  driverName: fbc
+  credentials: $fbCredentials
+  parameters:
+    dbname: $db
+    databaseURL: https://myproject.firebaseio.com
+    projectID: myproject
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/firebase/init.yaml %v", err)
 		}
 	}
 	{

@@ -1,0 +1,14 @@
+datastore: mydb
+config:
+  driverName: cql
+  descriptor: 127.0.0.1?keyspace=mydb
+  params:
+    keyspace: mydb
+admin:
+  datastore: admin
+  config:
+    driverName: cql
+    descriptor: 127.0.0.1
+recreate: true
+scripts:
+  - URL: ddl/schema.ddl
