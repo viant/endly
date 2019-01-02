@@ -10,7 +10,7 @@ import (
 
 //SendRequest represents a send http request.
 type SendRequest struct {
-	Options  []*toolbox.HttpOptions `description:"http client options: key value pairs, where key is one of the following: HTTP options:RequestTimeoutMs,TimeoutMs,KeepAliveTimeMs,TLSHandshakeTimeoutMs,ResponseHeaderTimeoutMs,MaxIdleConns"`
+	Options  []*toolbox.HttpOptions `description:"http client options: key value pairs, where key is one of the following: HTTP options:RequestTimeoutMs,TimeoutMs,KeepAliveTimeMs,TLSHandshakeTimeoutMs,ResponseHeaderTimeoutMs,MaxIdleConns,FollowRedirects"`
 	Requests []*Request
 	Expect   map[string]interface{} `description:"If specified it will validated response as actual"`
 }
