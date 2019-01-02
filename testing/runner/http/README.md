@@ -415,13 +415,13 @@ pipeline:
   task1:
     action: http/runner:send
     options:
-      FollowRedirects: true
+      FollowRedirects: false
       TimeoutMs: 3000 
         
     requests:
       - url: http://www.wp.pl
         expect:
-          Code: 200
+          Code: 301
 ```
 
 **Supported options with defaults:**
