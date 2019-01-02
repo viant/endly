@@ -19,25 +19,25 @@ func main() {
 		{
 			SourceURL:      toolbox.FileSchema + path.Join(parent, "shared/meta"),
 			DestinationURI: path.Join(endly.Namespace, "meta"),
-			TargetFile:     path.Join(parent, "static", "meta.go"),
+			TargetFile:     path.Join(parent, "shared/static", "meta.go"),
 			TargetPackage:  "static",
 		},
 		{
 			SourceURL:      toolbox.FileSchema + path.Join(parent, "shared/workflow"),
 			DestinationURI: path.Join(endly.Namespace, "workflow"),
-			TargetFile:     path.Join(parent, "static", "workflow.go"),
+			TargetFile:     path.Join(parent, "shared/static", "workflow.go"),
 			TargetPackage:  "static",
 		},
 		{
 			SourceURL:      toolbox.FileSchema + path.Join(parent, "shared/req"),
 			DestinationURI: path.Join(endly.Namespace, "req"),
-			TargetFile:     path.Join(parent, "static", "req.go"),
+			TargetFile:     path.Join(parent, "shared/static", "req.go"),
 			TargetPackage:  "static",
 		},
 		{
 			SourceURL:      toolbox.FileSchema + path.Join(parent, "Version"),
 			DestinationURI: path.Join(endly.Namespace, "Version"),
-			TargetFile:     path.Join(parent, "static", "version.go"),
+			TargetFile:     path.Join(parent, "shared/static", "version.go"),
 			TargetPackage:  "static",
 		},
 	}

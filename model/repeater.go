@@ -3,7 +3,7 @@ package model
 import (
 	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/endly/criteria"
+	"github.com/viant/endly/model/criteria"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 )

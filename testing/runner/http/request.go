@@ -16,8 +16,8 @@ import (
 //ServiceRequest represents an http request
 type Request struct {
 	*model.Repeater
-	When           string `description:"criteria to send this request"`
-	Method         string `required:"true" description:"HTTP Method"`
+	When        string `description:"criteria to send this request"`
+	Method      string `required:"true" description:"HTTP Method"`
 	URL         string
 	Header      http.Header
 	Cookies     Cookies

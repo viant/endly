@@ -1,4 +1,7 @@
 ## December 30 2018 0.24.1
+    * Moved msg service to testing/msg package
+    * Patched embeded non pointer struct conversion (toolbox)
+    * Added firebase, casandra dependency (driver, template) 
     * Added dsunit.CompareRequest to check SQL based data from various db.
     
 ## December 28 2018 0.24.0

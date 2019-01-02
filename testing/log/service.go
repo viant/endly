@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
-	"github.com/viant/endly/criteria"
+	"github.com/viant/endly/model/criteria"
 	estorage "github.com/viant/endly/system/storage"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/endly/udf"

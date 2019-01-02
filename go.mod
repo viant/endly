@@ -2,15 +2,18 @@ module github.com/viant/endly
 
 require (
 	cloud.google.com/go v0.34.0
+	firebase.google.com/go v3.5.0+incompatible // indirect
 	git.apache.org/thrift.git v0.0.0-20181205211409-17a9cffabb74 // indirect
-	github.com/adrianwit/mgc v0.1.0
+	github.com/MichaelS11/go-cql-driver v0.0.0-20181029231409-81aad8db3731
+	github.com/adrianwit/fbc v0.1.0
+	github.com/adrianwit/mgc v0.1.2
 	github.com/aerospike/aerospike-client-go v1.37.0 // indirect
-	github.com/alexbrainman/odbc v0.0.0-20181122072825-9f8c46d67b52
 	github.com/aws/aws-sdk-go v1.15.90
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emersion/go-smtp v0.0.0-20180917150411-7162b2ca3bcb
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
 	github.com/go-sql-driver/mysql v1.4.1
+	github.com/gocql/gocql v0.0.0-20181124151448-70385f88b28b // indirect
 	github.com/golang/lint v0.0.0-20181026193005-c67002cb31c3 // indirect
 	github.com/golang/protobuf v1.2.0
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
@@ -47,10 +50,10 @@ require (
 	github.com/viant/asc v0.2.0
 	github.com/viant/assertly v0.2.2
 	github.com/viant/bgc v0.3.0
-	github.com/viant/dsc v0.3.0
-	github.com/viant/dsunit v0.4.1
+	github.com/viant/dsc v0.3.1
+	github.com/viant/dsunit v0.4.2
 	github.com/viant/neatly v0.6.0
-	github.com/viant/toolbox v0.6.0
+	github.com/viant/toolbox v0.6.1
 	github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227 // indirect
 	go.opencensus.io v0.18.0 // indirect
 	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9

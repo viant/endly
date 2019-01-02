@@ -6,20 +6,19 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	_ "github.com/adrianwit/fbc"
 	_ "github.com/adrianwit/mgc"
+
+	_ "github.com/MichaelS11/go-cql-driver"
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/viant/asc"
 	_ "github.com/viant/bgc"
 
-	"github.com/viant/endly"
-	_ "github.com/viant/endly/cloud/ec2"
-	_ "github.com/viant/endly/cloud/gce"
 	_ "github.com/viant/endly/gen/static"
-	_ "github.com/viant/endly/static" //load external resource like .csv .json files to mem storage
-	_ "github.com/viant/endly/testing/endpoint/http"
+	_ "github.com/viant/endly/shared/static" //load external resource like .csv .json files to mem storage
+
 	_ "github.com/viant/endly/workflow"
-	"github.com/viant/toolbox/data"
 	_ "github.com/viant/toolbox/storage/aws"
 	_ "github.com/viant/toolbox/storage/gs"
 	_ "github.com/viant/toolbox/storage/scp"
@@ -28,6 +27,9 @@ import (
 	_ "github.com/viant/endly/testing/log"
 	_ "github.com/viant/endly/testing/validator"
 
+	_ "github.com/viant/endly/testing/endpoint/http"
+	_ "github.com/viant/endly/testing/endpoint/smtp"
+	_ "github.com/viant/endly/testing/msg"
 	_ "github.com/viant/endly/testing/runner/http"
 	_ "github.com/viant/endly/testing/runner/rest"
 	_ "github.com/viant/endly/testing/runner/selenium"
@@ -36,9 +38,11 @@ import (
 	_ "github.com/viant/endly/deployment/deploy"
 	_ "github.com/viant/endly/deployment/sdk"
 	_ "github.com/viant/endly/deployment/vc"
-	_ "github.com/viant/endly/msg"
 
 	_ "github.com/viant/endly/notify/smtp"
+
+	_ "github.com/viant/endly/system/cloud/ec2"
+	_ "github.com/viant/endly/system/cloud/gce"
 	_ "github.com/viant/endly/system/daemon"
 	_ "github.com/viant/endly/system/docker"
 	_ "github.com/viant/endly/system/exec"
@@ -46,10 +50,9 @@ import (
 	_ "github.com/viant/endly/system/process"
 	_ "github.com/viant/endly/system/storage"
 
-	_ "github.com/viant/endly/testing/endpoint/smtp"
-
 	"bufio"
 	"errors"
+	"github.com/viant/endly"
 	"github.com/viant/endly/cli"
 	"github.com/viant/endly/gen/web"
 	"github.com/viant/endly/meta"
@@ -57,6 +60,7 @@ import (
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"golang.org/x/crypto/ssh/terminal"
 

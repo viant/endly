@@ -581,14 +581,11 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-
 	s.Register(&endly.Route{
 		Action: "compare",
 		RequestInfo: &endly.ActionInfo{
 			Description: "compare data based on SQL for various databases",
-			Examples: []*endly.UseCase{
-
-			},
+			Examples:    []*endly.UseCase{},
 		},
 		RequestProvider: func() interface{} {
 			return &CompareRequest{}
@@ -610,7 +607,6 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
-
 
 	s.Register(&endly.Route{
 		Action: "sequence",
