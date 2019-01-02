@@ -402,6 +402,42 @@ pipeline:
 ```
 
 
+**Sending http request with custom http client option**
+
+
+```bash
+endly -r=http_with_options
+```
+
+@http_with_options.yaml
+```yaml
+pipeline:
+  task1:
+    action: http/runner:send
+    options:
+      FollowRedirects: true
+      TimeoutMs: 3000 
+        
+    requests:
+      - url: http://www.wp.pl
+        expect:
+          Code: 200
+```
+
+**Supported options with defaults:**
+
+- _RequestTimeoutMs_      = 30 * time.Second
+- _KeepAliveTimeMs_       = 30 * time.Second
+- _TLSHandshakeTimeoutMs_ = 10 * time.Second
+- _ExpectContinueTimeout_ = 1 * time.Second
+- _IdleConnTimeout_       = 90 * time.Second
+- _DualStack_             = true
+- _MaxIdleConnsPerHost_   = http.DefaultMaxIdleConnsPerHost
+- _MaxIdleConns_          = 100
+- _FollowRedirects_		  = true
+- _ResponseHeaderTimeoutMs_ time.Duration
+- _TimeoutMs_               time.Duration
+
 
 
 <a name="load"></a>
