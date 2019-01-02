@@ -40,6 +40,7 @@ func (r *Request) Clone(context *endly.Context) *Request {
 		URL:         context.Expand(r.URL),
 		Body:        context.Expand(r.Body),
 		JSONBody:    r.JSONBody,
+		Cookies:     r.Cookies,
 		Header:      header,
 		Repeater:    r.Repeater,
 		Replace:     r.Replace,
