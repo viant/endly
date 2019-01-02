@@ -3,7 +3,7 @@ package validator
 import (
 	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/endly/criteria"
+	"github.com/viant/endly/model/criteria"
 	"github.com/viant/toolbox"
 )
 

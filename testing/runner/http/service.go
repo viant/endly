@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/endly/criteria"
+	"github.com/viant/endly/model/criteria"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
 	"io/ioutil"

@@ -6,7 +6,7 @@ import (
 	"github.com/emersion/go-smtp"
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
-	"github.com/viant/endly/criteria"
+	"github.com/viant/endly/model/criteria"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"

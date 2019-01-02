@@ -3,7 +3,7 @@ package criteria_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
-	"github.com/viant/endly/criteria"
+	"github.com/viant/endly/model/criteria"
 	"testing"
 )
 

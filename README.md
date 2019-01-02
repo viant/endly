@@ -575,7 +575,6 @@ endly -r=load
 ```
 
 
-
 To see _Endly_ in action,
  
 In addition a few examples of fully functioning applications are included.

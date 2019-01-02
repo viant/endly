@@ -36,7 +36,7 @@ A initial test project workflows:
 
 **Regression workflow:**
 
-  regression.csv define a regression test workflow using [neatly format](https://github.com/viant/neatly).
+  regression.yaml|csv define a regression test workflow using either [inline](../inline) or [neatly](https://github.com/viant/neatly) format.
 
 The typical workflow performs the following task:
 

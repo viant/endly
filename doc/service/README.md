@@ -96,37 +96,40 @@ The following diagram shows service with its component.
 ![Service diagram](diagram.png)
 
 
-1) **System services**
+1) **Workflow service**
+   - [Workflow Service](../../workflow/)
+
+2) **System services**
     - [SSH Executor Service](../../system/exec)
     - [Storage Service](../../system/storage)
     - [Process Service](../../system/process)
     - [Daemon Service](../..//system/daemon)
     - [Network Service](../../system/network)
     - [Docker Service](../../system/docker)
-2) **Cloud services**
-    - [Amazon Elastic Compute Cloud Service](../../cloud/ec2)
-    - [Google Compute Engine Service](../../cloud/gce)
+    - [Cloud Service](../../system/cloud)
+        - [Amazon Elastic Compute Cloud Service](../../cloud/ec2)
+        - [Google Compute Engine Service](../../cloud/gce)
+
 3) **Build and Deployment Services**
     - [Sdk Service](../../deployment/sdk)
     - [Version Control Service](../../deployment/vc)
-    - [Build Service](../../deployment/build)
     - [Deplyment Service](../../deployment/deploy)
-6) **Testing Services**
+
+4) **Testing Services**
    - [Validator](../../testing/validator)
    - [Log Validator Service](../../testing/log)
    - [Datastore Preparation and Validation Service](../../testing/dsunit)
    - **Endpoint Services**
-      - [Http Endpoint Service](../../testing/endpoint/http) 
+      - [HTTP Endpoint Service](../../testing/endpoint/http) 
+      - [SMTP Endpoint Service](../../testing/endpoint/smtp) 
    - **Runner Services**
       - [Http Runner Service](../../testing/runner/http) 
       - [REST Runner Service](../../testing/runner/rest) 
       - [Selenium Runner Service](../../testing/runner/selenium) 
-
-   
-7) **Notification Services**
+   - [Messaging Service](../../testing/msg)
+     
+5) **Notification Services**
    - [SMTP Service](../../notify/smtp)
-8) **Workflow service**
-   - [Workflow Service](../../workflow/)
  
 
 

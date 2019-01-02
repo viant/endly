@@ -13,6 +13,7 @@ import (
 	"sync"
 )
 
+//deprecated - it is schedule to be removed from the service list, use inline workflow instead
 const (
 	//ServiceID represent build service id
 	ServiceID = "build"
