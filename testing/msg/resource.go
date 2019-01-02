@@ -1,6 +1,7 @@
 package msg
 
 import (
+	"fmt"
 	"strings"
 	"time"
 )
@@ -24,6 +25,9 @@ type Resource struct {
 
 //Init initializes resource
 func (r *Resource) Init() error {
+	if r == nil {
+		return fmt.Errorf("resource was empty")
+	}
 	if r.URL != "" {
 		r.projectID = extractSubPath(r.URL, "project")
 		if r.Name == "" {
@@ -71,6 +75,19 @@ func (r *ResourceSetup) Init() error {
 		_ = r.Config.Topic.Init()
 	}
 	return r.Resource.Init()
+}
+
+func (r *ResourceSetup) Validate() error {
+	if r.Type == ResourceTypeSubscription && r.Vendor == "gc" {
+		if r.Config == nil {
+			return fmt.Errorf("subscription config was empty")
+		}
+		if r.Config.Topic == nil {
+			return fmt.Errorf("subscription config.Topic was empty")
+		}
+	}
+
+	return nil
 }
 
 //NewResourceSetup creates a new URL

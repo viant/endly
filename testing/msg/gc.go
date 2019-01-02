@@ -138,6 +138,7 @@ func (s *gcPubSubClient) Push(dest *Resource, message *Message) (Result, error) 
 	var pubMessage = &pubsub.Message{
 		Attributes: message.Attributes,
 	}
+
 	if message.Data != nil {
 		switch data := message.Data.(type) {
 		case string:
@@ -152,6 +153,7 @@ func (s *gcPubSubClient) Push(dest *Resource, message *Message) (Result, error) 
 			pubMessage.Data = []byte(JSONText)
 		}
 	}
+
 	response := topic.Publish(s.ctx, pubMessage)
 	serverId, err := response.Get(s.ctx)
 	if err != nil {
@@ -165,7 +167,7 @@ func (s *gcPubSubClient) Push(dest *Resource, message *Message) (Result, error) 
 	return serverId, err
 }
 
-func (s *gcPubSubClient) PullN(source *Resource, max int) ([]*Message, error) {
+func (s *gcPubSubClient) PullN(source *Resource, max int, nack bool) ([]*Message, error) {
 	subscription, err := s.getSubscription(source)
 	if err != nil {
 		return nil, err
@@ -195,7 +197,11 @@ func (s *gcPubSubClient) PullN(source *Resource, max int) ([]*Message, error) {
 		if max > 0 && pulledCount >= max {
 			cancel()
 		}
-		msg.Ack()
+		if nack {
+			msg.Nack()
+		} else {
+			msg.Ack()
+		}
 	})
 	return messages, err
 }

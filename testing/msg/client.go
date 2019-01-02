@@ -14,7 +14,7 @@ const (
 type Client interface {
 	Push(dest *Resource, message *Message) (Result, error)
 
-	PullN(source *Resource, count int) ([]*Message, error)
+	PullN(source *Resource, count int, nack bool) ([]*Message, error)
 
 	Create(resource *ResourceSetup) (*Resource, error)
 
@@ -34,7 +34,7 @@ func NewPubSubClient(context *endly.Context, dest *Resource, timeout time.Durati
 	}
 	state := context.State()
 	if credConfig.ProjectID != "" {
-		state.SetValue("pubsub.projectID", credConfig.ProjectID)
+		state.SetValue("msg.projectID", credConfig.ProjectID)
 	}
 	dest = expandResource(context, dest)
 	switch dest.Vendor {

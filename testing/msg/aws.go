@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/viant/endly/cloud/ec2"
+	"github.com/viant/endly/system/cloud/ec2"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"strings"
@@ -86,7 +86,7 @@ func (c *awsPubSub) Push(dest *Resource, message *Message) (Result, error) {
 	return nil, fmt.Errorf("unsupported resource type: %v", dest.Type)
 }
 
-func (c *awsPubSub) PullN(source *Resource, count int) ([]*Message, error) {
+func (c *awsPubSub) PullN(source *Resource, count int, nack bool) ([]*Message, error) {
 	queueURL, err := c.getQueueURL(source.Name)
 	if err != nil {
 		return nil, err
@@ -125,6 +125,7 @@ func (c *awsPubSub) PullN(source *Resource, count int) ([]*Message, error) {
 				message.Attributes[k] = val
 			}
 		}
+
 	}
 	return result, nil
 }
