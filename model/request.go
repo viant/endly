@@ -52,7 +52,7 @@ func (r *ServiceRequest) NewAction() *Action {
 			Description: r.Description,
 		},
 		ServiceRequest: r,
-		NeatlyTag:      &NeatlyTag{},
+		MetaTag:        &MetaTag{},
 		Repeater:       repeater.Init(),
 	}
 }

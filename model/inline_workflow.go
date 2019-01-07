@@ -42,7 +42,7 @@ type InlineWorkflow struct {
 }
 
 func (p InlineWorkflow) updateReservedAttributes(aMap map[string]interface{}) {
-	for _, key := range []string{"action", "workflow", "skip", "when", "post"} {
+	for _, key := range []string{"action", "workflow", "skip", "when", "post", "comments", "description"} {
 		if val, ok := aMap[key]; ok {
 			if _, has := aMap[ExplicitActionAttributePrefix+key]; has {
 				continue
@@ -350,6 +350,9 @@ func (p *InlineWorkflow) hasActionNode(source interface{}) bool {
 	}
 
 	_ = toolbox.ProcessMap(attributes, func(key, value interface{}) bool {
+		if value == nil {
+			return true
+		}
 		if !(toolbox.IsMap(value) || toolbox.IsStruct(value) || toolbox.IsSlice(value)) {
 			return true
 		}
@@ -385,6 +388,11 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 	}
 
 	if isActionNode(actionAttributes) {
+		if isNormalizableRequest(actionAttributes) {
+			if normalized, err := util.NormalizeMap(actionRequest, true); err == nil {
+				actionRequest = normalized
+			}
+		}
 		action, err := p.buildAction(name, actionAttributes, actionRequest, tagID)
 		if err != nil {
 			return err

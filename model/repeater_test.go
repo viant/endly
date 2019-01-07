@@ -23,7 +23,7 @@ func TestRepeatable_Run(t *testing.T) {
 	{ //Test exit criteria with variable extraction from a map
 
 		repeataable := &model.Repeater{
-			//Extraction   Extracts //data extraction
+			//Extract   Extracts //data extraction
 			Variables: []*model.Variable{
 				{
 					Name: "status",
@@ -60,7 +60,7 @@ func TestRepeatable_Run(t *testing.T) {
 	{ //Test exit criteria with variable extraction from a map
 
 		repeataable := &model.Repeater{
-			//Extraction   Extracts //data extraction
+			//Extract   Extracts //data extraction
 			Variables: []*model.Variable{
 				{
 					Name: "status",
@@ -97,7 +97,7 @@ func TestRepeatable_Run(t *testing.T) {
 	{ //Test exit criteria with variable extraction from a JSON text
 
 		repeataable := &model.Repeater{
-			//Extraction   Extracts //data extraction
+			//Extract   Extracts //data extraction
 			Variables: []*model.Variable{
 				{
 					Name: "status",
@@ -134,7 +134,7 @@ func TestRepeatable_Run(t *testing.T) {
 	{ //Test exit criteria with variable extraction from a []byte  JSON
 
 		repeataable := &model.Repeater{
-			//Extraction   Extracts //data extraction
+			//Extract   Extracts //data extraction
 			Variables: []*model.Variable{
 				{
 					Name: "status",
@@ -171,7 +171,7 @@ func TestRepeatable_Run(t *testing.T) {
 	{ //Test exit criteria with variable extraction from a invalid JSON text vi $value key
 
 		repeataable := &model.Repeater{
-			//Extraction   Extracts //data extraction
+			//Extract   Extracts //data extraction
 			Variables: []*model.Variable{
 				{
 					Name: "status",
@@ -207,7 +207,7 @@ func TestRepeatable_Run(t *testing.T) {
 	{ //Test exit criteria with variable extraction from a invalid JSON text vi $value key
 
 		repeataable := &model.Repeater{
-			//Extraction   Extracts //data extraction
+			//Extract   Extracts //data extraction
 			Variables: []*model.Variable{
 				{
 					Name: "status",
@@ -249,8 +249,8 @@ func TestRepeatable_Run(t *testing.T) {
 					From: "testStatus",
 				},
 			},
-			//Extraction   Extracts //data extraction
-			Extraction: []*model.Extract{
+			//Extract   Extracts //data extraction
+			Extract: []*model.Extract{
 				{
 					RegExpr: `"testStatus":"([^"]+)"`,
 					Key:     "status",
@@ -287,14 +287,14 @@ func TestRepeatable_Run(t *testing.T) {
 	{ //Test exit criteria with variable extraction from a invalid JSON text vi $value key
 
 		repeataable := &model.Repeater{
-			//Extraction   Extracts //data extraction
+			//Extract   Extracts //data extraction
 			Variables: []*model.Variable{
 				{
 					Name: "status",
 					From: "testStatus",
 				},
 			},
-			Extraction: []*model.Extract{
+			Extract: []*model.Extract{
 				{
 					RegExpr: `"testStatus":"([^"]+)"`,
 					Key:     "status",
@@ -331,7 +331,7 @@ func TestRepeatable_Run(t *testing.T) {
 	{ //Test  error
 
 		repeataable := &model.Repeater{
-			//Extraction   Extracts //data extraction
+			//Extract   Extracts //data extraction
 			Variables: []*model.Variable{
 				{
 					Name: "status",
@@ -357,7 +357,7 @@ func TestRepeatable_Run(t *testing.T) {
 	{ //Test  invalid regexpr
 
 		repeataable := &model.Repeater{
-			//Extraction   Extracts //data extraction
+			//Extract   Extracts //data extraction
 			Variables: []*model.Variable{
 				{
 					Name: "status",
@@ -365,7 +365,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 
-			Extraction: []*model.Extract{
+			Extract: []*model.Extract{
 				{
 					RegExpr: `"testStatus":"(.?+*))"`,
 					Key:     "status",
@@ -390,7 +390,7 @@ func TestRepeatable_Run(t *testing.T) {
 	{ //Test invalid criteria error
 
 		repeataable := &model.Repeater{
-			//Extraction   Extracts //data extraction
+			//Extract   Extracts //data extraction
 			Variables: []*model.Variable{
 				{
 					Name: "status",
@@ -398,7 +398,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 
-			Extraction: []*model.Extract{
+			Extract: []*model.Extract{
 				{
 					RegExpr: `"testStatus":"(.?+*))"`,
 					Key:     "status",
