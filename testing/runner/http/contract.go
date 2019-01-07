@@ -10,8 +10,8 @@ import (
 
 //SendRequest represents a send http request.
 type SendRequest struct {
-	Options   map[string]interface{} `description:"http client options: key value pairs, where key is one of the following: HTTP options:RequestTimeoutMs,TimeoutMs,KeepAliveTimeMs,TLSHandshakeTimeoutMs,ResponseHeaderTimeoutMs,MaxIdleConns,FollowRedirects"`
-	options []*toolbox.HttpOptions
+	Options  map[string]interface{} `description:"http client options: key value pairs, where key is one of the following: HTTP options:RequestTimeoutMs,TimeoutMs,KeepAliveTimeMs,TLSHandshakeTimeoutMs,ResponseHeaderTimeoutMs,MaxIdleConns,FollowRedirects"`
+	options  []*toolbox.HttpOptions
 	Requests []*Request
 	Expect   map[string]interface{} `description:"If specified it will validated response as actual"`
 }
@@ -23,16 +23,14 @@ func (s *SendRequest) Init() error {
 		s.Expect = make(map[string]interface{})
 	}
 
-
 	if len(s.Requests) == 0 {
 		return nil
 	}
 
-
 	if len(s.Options) > 0 {
 		s.options = make([]*toolbox.HttpOptions, 0)
 		for k, v := range s.Options {
-			s.options = append(s.options, &toolbox.HttpOptions{Key:k, Value:v})
+			s.options = append(s.options, &toolbox.HttpOptions{Key: k, Value: v})
 		}
 	}
 
@@ -143,7 +141,7 @@ func (r *LoadRequest) Validate() error {
 		if len(request.Variables) > 0 {
 			return fmt.Errorf("scraping variables is not supported in stress test mode")
 		}
-		if len(request.Extraction) > 0 {
+		if len(request.Extract) > 0 {
 			return fmt.Errorf("scraping data is not supported in stress test mode")
 		}
 	}
