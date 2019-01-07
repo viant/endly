@@ -23,6 +23,26 @@ func (a *Activities) Push(activity *Activity) {
 	a.Activity = activity
 }
 
+//Range iterates over all activities
+func (a *Activities) Range(handler func(activity *Activity) bool, reverse bool) {
+	a.mux.Lock()
+	activities := a.activities
+	a.mux.Unlock()
+	if reverse {
+		for i := len(activities) - 1; i >= 0; i-- {
+			if !handler(activities[i]) {
+				return
+			}
+		}
+		return
+	}
+	for _, activity := range activities {
+		if !handler(activity) {
+			return
+		}
+	}
+}
+
 //Pop removes last activity
 func (a *Activities) Pop() *Activity {
 	a.mux.Lock()
@@ -46,7 +66,7 @@ func (a *Activities) Get(index int) *Activity {
 func (a *Activities) Last() *Activity {
 	if a.Activity == nil {
 		a.Activity = &Activity{
-			NeatlyTag: &NeatlyTag{Tag: "main"},
+			MetaTag: &MetaTag{Tag: "main"},
 		}
 	}
 	return a.Activity
