@@ -78,7 +78,7 @@ func (c *Context) Clone() *Context {
 	result := &Context{}
 	result.Wait = &sync.WaitGroup{}
 	result.Context = c.Context.Clone()
-	result.state = NewDefaultState()
+	result.state = NewDefaultState(c)
 	result.state.Apply(c.state)
 	result.SessionID = c.SessionID
 	result.Listener = c.Listener
@@ -176,7 +176,7 @@ func (c *Context) Deffer(functions ...func()) []func() {
 //State returns a context state map.
 func (c *Context) State() data.Map {
 	if c.state == nil {
-		c.state = NewDefaultState()
+		c.state = NewDefaultState(c)
 	}
 	return c.state
 }
@@ -229,13 +229,13 @@ func (c *Context) AsRequest(serviceName, action string, source map[string]interf
 	}
 	defer func() {
 
-		//if r := recover(); r != nil {
-		//	var info = toolbox.AsString(source)
-		//	if JSONSource, err := toolbox.AsJSONText(source); err == nil {
-		//		info = JSONSource
-		//	}
-		//	err = fmt.Errorf("unable to create %v request %v, request: %v", serviceName+":"+action, err, info)
-		//}
+		if r := recover(); r != nil {
+			var info = toolbox.AsString(source)
+			if JSONSource, err := toolbox.AsJSONText(source); err == nil {
+				info = JSONSource
+			}
+			err = fmt.Errorf("unable to create %v request %v, request: %v, %v", serviceName+":"+action, err, info, r)
+		}
 	}()
 	expanded := c.state.Expand(source)
 	source = toolbox.AsMap(expanded)
@@ -285,7 +285,7 @@ It comes with the following registered keys:
 	*.env.XXX where XXX is the ID of the env variable to return
 	* all UFD registry functions
 */
-func NewDefaultState() data.Map {
+func NewDefaultState(ctx *Context) data.Map {
 	var result = data.NewMap()
 	var now = time.Now()
 	source := rand.NewSource(now.UnixNano())
@@ -362,6 +362,23 @@ func NewDefaultState() data.Map {
 	result.Put("env", func(key string) interface{} {
 		return os.Getenv(key)
 	})
+
+	if ctx != nil {
+		result.Put("secrets", func(key string) interface{} {
+			if ctx.Secrets == nil {
+				return ""
+			}
+			config, err := ctx.Secrets.GetCredentials(key)
+			if err == nil {
+				var result = make(map[string]interface{})
+				if err = toolbox.DefaultConverter.AssignConverted(&result, config); err == nil {
+
+				}
+				return data.Map(result)
+			}
+			return ""
+		})
+	}
 
 	neatly.AddStandardUdf(result)
 	for k, v := range UdfRegistry {
