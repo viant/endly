@@ -6,7 +6,7 @@ require (
 	git.apache.org/thrift.git v0.0.0-20181205211409-17a9cffabb74 // indirect
 	github.com/MichaelS11/go-cql-driver v0.0.0-20181029231409-81aad8db3731
 	github.com/adrianwit/fbc v0.1.1
-    github.com/adrianwit/fsc v0.1.0
+	github.com/adrianwit/fsc v0.1.0
 	github.com/adrianwit/mgc v0.1.2
 	github.com/aerospike/aerospike-client-go v1.37.0 // indirect
 	github.com/aws/aws-sdk-go v1.15.90
