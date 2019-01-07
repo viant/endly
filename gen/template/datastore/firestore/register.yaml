@@ -1,0 +1,9 @@
+action: dsunit:register
+datastore: $db
+config:
+  driverName: fsc
+  credentials: $fbCredentials
+  parameters:
+    dbname: $db
+    databaseURL: https://myproject.firebaseio.com
+    projectID: myproject

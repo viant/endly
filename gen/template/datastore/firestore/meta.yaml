@@ -1,0 +1,10 @@
+id: firestore
+name: Firestore
+kind: NoSQL
+dictionary: dictionary/
+credentials: $fbCredentials
+data: data/
+sequence: false
+tables:
+  - dummy
+  - dummy_type

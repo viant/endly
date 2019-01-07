@@ -15,9 +15,9 @@ data:
   action: nop
   init:
     -  ${db}key = data.${db}.setup
-    -  ${db}Setup = $AsTableRecords($${db}key)
+    -  ${db}Setup = $AsTableRecords(${dbKey}key)
 setup:
   datastore: $db
   action: dsunit:prepare
   URL: regression/data/$db/
-  data: $${db}Setup
+  data: ${dbKey}Setup
