@@ -88,6 +88,8 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 	dataRequest := data.NewMap()
 	var err error
 
+	normalizable := isNormalizableRequest(actionAttributes)
+
 	if req, ok := actionAttributes[requestKey]; ok {
 		request := toolbox.AsString(actionAttributes[requestKey])
 		if strings.HasPrefix(request, "@") {
@@ -96,7 +98,7 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 				delete(actionAttributes, requestKey)
 				delete(actionRequest, requestKey)
 			}
-			if state != nil {
+			if state != nil && normalizable {
 				requestMap = toolbox.AsMap(state.Expand(requestMap))
 			}
 		} else {
@@ -109,11 +111,11 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 		util.Append(dataRequest, actionAttributes, true)
 	}
 
-	if len(dataRequest) > 0 {
+	if len(dataRequest) > 0 && normalizable {
 		requestMap = toolbox.AsMap(dataRequest.Expand(requestMap))
 	}
 
-	if isNormalizableRequest(actionAttributes) {
+	if normalizable {
 		requestMap, err = util.NormalizeMap(requestMap, true)
 		if err != nil {
 			return err
