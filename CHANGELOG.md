@@ -1,3 +1,7 @@
+## November 7 2018 0.25.1
+    * Resolved template variable collision with sub workflow templates
+    * Patched non writable map data type mutation
+    
 ## November 6 2018 0.25.0
     * Moved msg service to testing/msg package
     * Patched embeded non pointer struct conversion (toolbox)
