@@ -11,7 +11,7 @@ import (
 )
 
 func TestNewDefaultState(t *testing.T) {
-	state := endly.NewDefaultState()
+	state := endly.NewDefaultState(nil)
 
 	for _, expr := range []string{"$rand", "${env.HOME}", "$time", "$ts", "$tmpDir", "$uuid.get", "$uuid.next", "$timestamp.now", "$timestamp.tomorrow", "$timestamp.yesterday"} {
 		var expanded = state.ExpandAsText(expr)
