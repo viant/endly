@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	_ "github.com/adrianwit/fbc"
+	_ "github.com/adrianwit/fsc"
 	_ "github.com/adrianwit/mgc"
 
 	_ "github.com/MichaelS11/go-cql-driver"
@@ -110,7 +111,9 @@ func init() {
 
 	flag.Bool("m", false, "interactive mode (does not terminates process after workflow completes)")
 
-	mysql.SetLogger(&emptyLogger{})
+	flag.Int("e", 5, "max number of failures CLI reported per validation, 0 - all failures reported")
+
+	_ = mysql.SetLogger(&emptyLogger{})
 
 }
 
@@ -554,6 +557,9 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 	err := request.Init()
 	if value, ok := flagset["i"]; ok {
 		request.TagIDs = value
+	}
+	if value, ok := flagset["e"]; ok {
+		request.FailureCount = toolbox.AsInt(value)
 	}
 	updateBaseRunWithOptions(request, flagset)
 	return request, err
