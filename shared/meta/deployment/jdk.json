@@ -32,7 +32,7 @@
           "Commands": [
             {
               "Command": "java -version",
-              "Extraction": [
+              "Extract": [
                 {
                   "Key": "Version",
                   "RegExpr": "build (\\d\\.\\d).+"

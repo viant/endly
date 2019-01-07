@@ -48,7 +48,7 @@
           "Commands": [
             {
               "Command": "sh tomcat/bin/version.sh",
-              "Extraction": [
+              "Extract": [
                 {
                   "Key": "Version",
                   "RegExpr": "Apache Tomcat/(\\d+\\.\\d+\\.\\d+)"

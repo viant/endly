@@ -16,6 +16,13 @@ type StartRequest struct {
 	ImmuneToHangups bool `description:"start process as nohup"`
 }
 
+//NewStartRequestFromURL creates a new request from URL
+func NewStartRequestFromURL(URL string) (*StartRequest, error) {
+	var request = &StartRequest{}
+	resource := url.NewResource(URL)
+	return request, resource.Decode(request)
+}
+
 //StartResponse represents a start response
 type StartResponse struct {
 	Command string

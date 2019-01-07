@@ -3,6 +3,7 @@ package exec
 import (
 	"fmt"
 	"github.com/viant/endly/model/msg"
+	"strings"
 )
 
 //StdinEvent represents an execution event start
@@ -23,7 +24,7 @@ func (e *StdinEvent) Messages() []*msg.Message {
 func NewSdtinEvent(sessionID string, stdin string) *StdinEvent {
 	return &StdinEvent{
 		SessionID: sessionID,
-		Stdin:     stdin,
+		Stdin:     strings.Trim(stdin, "\n\r"),
 	}
 }
 

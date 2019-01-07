@@ -14,7 +14,7 @@
       "Success": [
         "Tomcat started."
       ],
-      "Extraction": [
+      "Extract": [
         {
           "Key": "Version",
           "RegExpr": "Server number: (\\d+\\.\\d+\\.\\d+)"

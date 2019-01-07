@@ -32,10 +32,10 @@ endly -s=exec -a=close
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
-| exec | open | open SSH session on the target resource. | [OpenSessionRequest](service_contract.go) | [OpenSessionResponse](service_contract.go) |
-| exec | close | close SSH session | [CloseSessionRequest](service_contract.go) | [CloseSessionResponse](service_contract.go) |
-| exec | run | execute basic commands | [RunRequest](service_contract.go) | [RunResponse](service_contract.go) |
-| exec | extract | execute commands with ability to extract data, define error or success state | [ExtractRequest](service_contract.go) | [RunResponse](service_contract.go) |
+| exec | open | open SSH session on the target resource. | [OpenSessionRequest](contract.go) | [OpenSessionResponse](contract.go) |
+| exec | close | close SSH session | [CloseSessionRequest](contract.go) | [CloseSessionResponse](contract.go) |
+| exec | run | execute basic commands | [RunRequest](contract.go) | [RunResponse](contract.go) |
+| exec | extract | execute commands with ability to extract data, define error or success state | [ExtractRequest](contract.go) | [RunResponse](contract.go) |
 
 
 **RunRequest example**
@@ -64,7 +64,12 @@ commands:
   - whoami
   - ${cmd[0].stdout}:/root/?  mkdir -p /tmp/app
   - ${cmd[0].stdout}:!/root/? mkdir ~/app
-  - echo cmd[0].stdout  
+  - echo cmd[0].stdout
+  - grep /etc/hosts  
+extract:
+  - key: aliases
+    regExpr: (?sm).+(^.+)127.0.0.1
+- 
 ```
 
 **ExtractRequest example**
@@ -80,7 +85,7 @@ commands:
 	"Commands": [
 	  {
 		"Command": "go version",
-		"Extraction": [
+		"Extract": [
 		  {
 			"RegExpr": "go(\\d\\.\\d)",
 			"Key": "Version"

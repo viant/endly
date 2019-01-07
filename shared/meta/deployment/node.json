@@ -35,7 +35,7 @@
           "Commands": [
             {
               "Command": "node -v",
-              "Extraction": [
+              "Extract": [
                 {
                   "Key": "Version",
                   "RegExpr": "v(\\d\\.\\d)"

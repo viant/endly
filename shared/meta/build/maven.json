@@ -35,7 +35,7 @@
             "Success": [
               "BUILD SUCCESS"
             ],
-            "Extraction": [
+            "Extract": [
               {
                 "Key": "Artifact",
                 "RegExpr": "Building jar:[^\/]+(.+)"
