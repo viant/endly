@@ -3,16 +3,17 @@ description: "golang: simple web/rest app (dsc/toolbox)"
 config: config/config.yaml
 build: build/go
 dependency: go get -u -v github.com/viant/endly/bootstrap
-docker: true
+docker: false
 sdk: go:1.11
 dbconfigpath:  datastore
+originurl: "./../"
+buildcmd: cd app && go build -o ../$app
 assets:
   - config/config.yaml
   - static/
 args:
   - "-configURL"
   - config/config.yaml
-originurl: "./../"
 selenium:
   url: http://127.0.0.1:8080/form.html
   in: id

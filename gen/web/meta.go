@@ -28,6 +28,7 @@ type AppMeta struct {
 	Name            string
 	Description     string
 	hasAppDirectory bool
+	BuildCmd        string
 	OriginURL       string
 	Sdk             string
 	Docker          bool

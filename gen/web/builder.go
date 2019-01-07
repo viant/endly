@@ -210,6 +210,7 @@ func removeComments(assets map[string]string) {
 func (b *builder) buildApp(meta *AppMeta, sdkMeta *SdkMeta, request *RunRequest, assets map[string]string) error {
 	buildRequest := request.Build
 	var state = data.NewMap()
+	state.Put("buildCmd", meta.BuildCmd)
 	var err error
 	removeComments(assets)
 	request.Build.path = meta.Build
@@ -753,6 +754,7 @@ func (b *builder) addRegressionData(appMeta *AppMeta, request *RunRequest) error
 
 	for i, datastore := range request.Datastore {
 		state.Put("db", datastore.Name)
+		state.Put("dbKey", "$"+datastore.Name)
 		var prepare Map
 
 		switch request.Testing.UseCaseData {

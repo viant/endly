@@ -12,12 +12,12 @@ func init() {
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/web/meta.yaml", bytes.NewReader([]byte(`name: go/web
 description: "golang: web hello world"
 build: build/go
-docker: true
+originurl: "./../"
+buildcmd: go build -o $app
+docker: false
 sdk: go:1.11
 dbconfigpath:  datastore
-assets:
 args:
-originurl: "./../"
 selenium:
   url: http://127.0.0.1:8080/
   in: name
@@ -133,6 +133,44 @@ func NewConfigFromURL(URL string) (*Config, error) {
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/go/webdb/config.go %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/go.mod", bytes.NewReader([]byte(`module webdb
+
+require (
+	cloud.google.com/go v0.34.0 // indirect
+	github.com/adrianwit/mgc v0.1.2
+	github.com/aerospike/aerospike-client-go v1.37.0 // indirect
+	github.com/gin-gonic/gin v1.3.0 // indirect
+	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
+	github.com/go-sql-driver/mysql v1.4.1
+	github.com/json-iterator/go v1.1.5 // indirect
+	github.com/lib/pq v1.0.0
+	github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a // indirect
+	github.com/mattn/go-sqlite3 v1.10.0 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/onsi/ginkgo v1.7.0 // indirect
+	github.com/onsi/gomega v1.4.3 // indirect
+	github.com/pkg/errors v0.8.1 // indirect
+	github.com/stretchr/testify v1.3.0 // indirect
+	github.com/viant/asc v0.2.0
+	github.com/viant/assertly v0.2.2 // indirect
+	github.com/viant/bgc v0.3.0
+	github.com/viant/dsc v0.3.1
+	github.com/viant/dsunit v0.4.2 // indirect
+	github.com/viant/toolbox v0.6.3
+	github.com/yuin/gopher-lua v0.0.0-20181231133414-1e6e6e1918e0 // indirect
+	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc // indirect
+	golang.org/x/net v0.0.0-20181220203305-927f97764cc3 // indirect
+	google.golang.org/api v0.1.0 // indirect
+	google.golang.org/appengine v1.4.0 // indirect
+	gopkg.in/yaml.v2 v2.2.2 // indirect
+)
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/go/webdb/go.mod %v", err)
 		}
 	}
 	{
@@ -313,9 +351,8 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/viant/asc"
 	_ "github.com/viant/bgc"
-
 	/*remove
-	.  ".."
+	.  "webdb"
 	"log"
 	"os"
 	"fmt"
@@ -690,16 +727,17 @@ description: "golang: simple web/rest app (dsc/toolbox)"
 config: config/config.yaml
 build: build/go
 dependency: go get -u -v github.com/viant/endly/bootstrap
-docker: true
+docker: false
 sdk: go:1.11
 dbconfigpath:  datastore
+originurl: "./../"
+buildcmd: cd app && go build -o ../$app
 assets:
   - config/config.yaml
   - static/
 args:
   - "-configURL"
   - config/config.yaml
-originurl: "./../"
 selenium:
   url: http://127.0.0.1:8080/form.html
   in: id
@@ -1009,6 +1047,75 @@ rest:
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/datastore.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/firestore/dictionary/dummy_type.json", bytes.NewReader([]byte(`[
+  {},
+  {
+    "id": 1,
+    "name": "type1"
+  },
+  {
+    "id": 2,
+    "name": "type2"
+  }
+]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/firestore/dictionary/dummy_type.json %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/firestore/register.yaml", bytes.NewReader([]byte(`action: dsunit:register
+datastore: $db
+config:
+  driverName: fsc
+  credentials: $fbCredentials
+  parameters:
+    dbname: $db
+    databaseURL: https://myproject.firebaseio.com
+    projectID: myproject
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/firestore/register.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/firestore/meta.yaml", bytes.NewReader([]byte(`id: firestore
+name: Firestore
+kind: NoSQL
+dictionary: dictionary/
+credentials: $fbCredentials
+data: data/
+sequence: false
+tables:
+  - dummy
+  - dummy_type
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/firestore/meta.yaml %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/firestore/data/dummy.json", bytes.NewReader([]byte(`[]`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/firestore/data/dummy.json %v", err)
+		}
+	}
+	{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/firestore/init.yaml", bytes.NewReader([]byte(`action: dsunit:init
+datastore: $db
+recreate: true
+config:
+  driverName: fsc
+  credentials: $fbCredentials
+  parameters:
+    dbname: $db
+    databaseURL: https://myproject.firebaseio.com
+    projectID: myproject
+`)))
+		if err != nil {
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/firestore/init.yaml %v", err)
 		}
 	}
 	{
@@ -1790,12 +1897,12 @@ data:
   action: nop
   init:
     -  ${db}key = data.${db}.setup
-    -  ${db}Setup = $AsTableRecords($${db}key)
+    -  ${db}Setup = $AsTableRecords(${dbKey}key)
 setup:
   datastore: $db
   action: dsunit:prepare
   URL: regression/data/$db/
-  data: $${db}Setup
+  data: ${dbKey}Setup
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/regression/data.yaml %v", err)
@@ -1895,8 +2002,6 @@ build: build/default
     URL: ssh://127.0.0.1/
     credentials: localhost
   serviceTarget: $target
-  buildTarget: $target
-  appTarget: $target
   targetHost: $Hostname($target.URL)
   appHost: $Hostname($appTarget.URL)
   seleniumServerPort: 8077
@@ -1944,51 +2049,69 @@ pipeline:
 	}
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/build/go/app.yaml", bytes.NewReader([]byte(`tasks: $tasks
+init:
+  buildTarget:
+    URL: scp://127.0.0.1/tmp/build/${app}/
+    credentials: localhost
+  appTarget:
+    URL: scp://127.0.0.1/opt/${app}/
+    credentials: localhost
+  target:
+    URL: scp://127.0.0.1/
+    credentials: localhost
 defaults:
-  app: $app
-  sdk: $sdk
   target: $target
-  buildTarget: $buildTarget
-  appTarget: $appTarget
-
 pipeline:
-
   build:
-    workflow: app/build
-    origin:
-      URL: $originURL
-    commands:
-      - export GOPATH=/tmp/go$dependency$appDirectory
-      - go build -o $app
-      - chmod +x $app
+    checkout:
+      action: version/control:checkout
+      origin:
+        URL: ./../
+      dest: $buildTarget
+    set-sdk:
+      action: sdk:set
+      sdk: go:1.11
+    build-app:
+      action: exec:run
+      commands:
+        - mkdir -p /tmp/build/${app}/config
+        - mkdir -p /tmp/build/${app}/static
+        - cd /tmp/build/${app}
+        - $buildCmd
+        - chmod +x ${app}
 
+    deploy:
+      mkdir:
+        action: exec:run
+        commands:
+          - sudo rm -rf /opt/${app}/
+          - sudo mkdir -p /opt/${app}
+          - sudo chown -R ${os.user} /opt/${app}
+          - mkdir -p /opt/${app}/config
+          - mkdir -p /opt/${app}/static
+      install:
+        action: storage:copy
+        source: $buildTarget
+        dest: $appTarget
+        expand: true
+        assets:
+          ${app}: ${app}
+          config: config
+          static: static
     download:
-      ${buildPath}/app/${app}: $releasePath
-
-  deploy:
-    workflow: app/deploy
-    init:
-      - mkdir -p $appPath
-      - mkdir -p $appPath/config
-      - mkdir -p $appPath/static
-      - chown -R ${os.user} $appPath
-    upload:
-      ${releasePath}/${app}: $appPath
-      ${releasePath}/config.yaml: $appPath
-      ${releasePath}/static: ${appPath}/static/
-    commands:
-      - echo 'deployed'
-
+      ${buildPath}/${app}: $releasePath
   stop:
     action: process:stop-all
     input: ${app}
-
   start:
     action: process:start
-    directory: $appPath
+    directory: /opt/${app}/
     immuneToHangups: true
     command: ./${app}
-    arguments: $args
+    arguments: []
+  deploy:
+    upload:
+      ${releasePath}/${app}: $appPath
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/build/go/app.yaml %v", err)
@@ -2110,45 +2233,69 @@ pipeline:
 	}
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/build/default/app.yaml", bytes.NewReader([]byte(`tasks: $tasks
+init:
+  buildTarget:
+    URL: scp://127.0.0.1/tmp/build/${app}/
+    credentials: localhost
+  appTarget:
+    URL: scp://127.0.0.1/opt/${app}/
+    credentials: localhost
+  target:
+    URL: scp://127.0.0.1/
+    credentials: localhost
 defaults:
-  app: $app
-  sdk: $sdk
   target: $target
-  buildTarget: $buildTarget
-  appTarget: $appTarget
-
 pipeline:
-
   build:
-    workflow: app/build
-    origin:
-      URL: $originURL
-    commands:
-      - echo 'build app'
+    checkout:
+      action: version/control:checkout
+      origin:
+        URL: ./../
+      dest: $buildTarget
+    set-sdk:
+      action: sdk:set
+      sdk: go:1.11
+    build-app:
+      action: exec:run
+      commands:
+        - mkdir -p /tmp/build/${app}/config
+        - mkdir -p /tmp/build/${app}/static
+        - cd /tmp/build/${app}
+        - touch $app
+        - echo 'build you app here'
+        - chmod +x ${app}
+
+    deploy:
+      mkdir:
+        action: exec:run
+        commands:
+          - sudo rm -rf /opt/${app}/
+          - sudo mkdir -p /opt/${app}
+          - sudo chown -R ${os.user} /opt/${app}
+          - mkdir -p /opt/${app}/config
+          - mkdir -p /opt/${app}/static
+      install:
+        action: storage:copy
+        source: $buildTarget
+        dest: $appTarget
+        assets:
+          ${app}: ${app}
+          config: config
+          static: static
     download:
-      ${buildPath}/app/${app}: $releasePath
-
-  deploy:
-    workflow: app/deploy
-    init:
-      - mkdir -p $appPath
-      - mkdir -p $appPath/config
-      - chown -R ${os.user} $appPath
-    upload:
-      ${releasePath}/${app}: $appPath
-    commands:
-      - echo 'deployed'
-
+      ${buildPath}/${app}: $releasePath
   stop:
     action: process:stop-all
     input: ${app}
-
   start:
     action: process:start
-    directory: $appPath
+    directory: /opt/${app}/
     immuneToHangups: true
     command: ./${app}
-    arguments: $args
+    arguments: []
+  deploy:
+    upload:
+      ${releasePath}/${app}: $appPath
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/build/default/app.yaml %v", err)

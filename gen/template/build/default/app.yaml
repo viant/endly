@@ -1,40 +1,64 @@
 tasks: $tasks
+init:
+  buildTarget:
+    URL: scp://127.0.0.1/tmp/build/${app}/
+    credentials: localhost
+  appTarget:
+    URL: scp://127.0.0.1/opt/${app}/
+    credentials: localhost
+  target:
+    URL: scp://127.0.0.1/
+    credentials: localhost
 defaults:
-  app: $app
-  sdk: $sdk
   target: $target
-  buildTarget: $buildTarget
-  appTarget: $appTarget
-
 pipeline:
-
   build:
-    workflow: app/build
-    origin:
-      URL: $originURL
-    commands:
-      - echo 'build app'
+    checkout:
+      action: version/control:checkout
+      origin:
+        URL: ./../
+      dest: $buildTarget
+    set-sdk:
+      action: sdk:set
+      sdk: go:1.11
+    build-app:
+      action: exec:run
+      commands:
+        - mkdir -p /tmp/build/${app}/config
+        - mkdir -p /tmp/build/${app}/static
+        - cd /tmp/build/${app}
+        - touch $app
+        - echo 'build you app here'
+        - chmod +x ${app}
+
+    deploy:
+      mkdir:
+        action: exec:run
+        commands:
+          - sudo rm -rf /opt/${app}/
+          - sudo mkdir -p /opt/${app}
+          - sudo chown -R ${os.user} /opt/${app}
+          - mkdir -p /opt/${app}/config
+          - mkdir -p /opt/${app}/static
+      install:
+        action: storage:copy
+        source: $buildTarget
+        dest: $appTarget
+        assets:
+          ${app}: ${app}
+          config: config
+          static: static
     download:
-      ${buildPath}/app/${app}: $releasePath
-
-  deploy:
-    workflow: app/deploy
-    init:
-      - mkdir -p $appPath
-      - mkdir -p $appPath/config
-      - chown -R ${os.user} $appPath
-    upload:
-      ${releasePath}/${app}: $appPath
-    commands:
-      - echo 'deployed'
-
+      ${buildPath}/${app}: $releasePath
   stop:
     action: process:stop-all
     input: ${app}
-
   start:
     action: process:start
-    directory: $appPath
+    directory: /opt/${app}/
     immuneToHangups: true
     command: ./${app}
-    arguments: $args
+    arguments: []
+  deploy:
+    upload:
+      ${releasePath}/${app}: $appPath

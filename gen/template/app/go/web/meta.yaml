@@ -1,12 +1,12 @@
 name: go/web
 description: "golang: web hello world"
 build: build/go
-docker: true
+originurl: "./../"
+buildcmd: go build -o $app
+docker: false
 sdk: go:1.11
 dbconfigpath:  datastore
-assets:
 args:
-originurl: "./../"
 selenium:
   url: http://127.0.0.1:8080/
   in: name
