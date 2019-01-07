@@ -9,12 +9,12 @@ import (
 	"strings"
 )
 
-//Extracts represents an extracted data collection
+//Extracts represents an expected data collection
 type Extracts []*Extract
 
-//Extracts extract data from provided inputs, the result is placed to extracted map, or error
-func (d *Extracts) Extract(context *endly.Context, extracted map[string]interface{}, input ...string) error {
-	if len(*d) == 0 || len(input) == 0 {
+//Extracts extract data from provided inputs, the result is placed to expected map, or error
+func (d *Extracts) Extract(context *endly.Context, extracted map[string]interface{}, inputs ...string) error {
+	if len(*d) == 0 || len(inputs) == 0 {
 		return nil
 	}
 	for _, extract := range *d {
@@ -22,18 +22,32 @@ func (d *Extracts) Extract(context *endly.Context, extracted map[string]interfac
 			delete(extracted, extract.Key)
 		}
 	}
+
+	cleanedInputs := make([]string, 0)
+	for _, line := range inputs {
+		cleanedInputs = append(cleanedInputs, vtclean.Clean(line, false))
+	}
+
+	cleanMultiLines := strings.Join(cleanedInputs, "\n")
+	multiLines := strings.Join(inputs, "\n")
+
 	for _, extract := range *d {
 		compiledExpression, err := regexp.Compile(extract.RegExpr)
 		if err != nil {
 			return fmt.Errorf("failed to extract data - invlid regexpr: %v,  %v", extract.RegExpr, err)
 		}
-		for _, line := range input {
+		if !matchExpression(compiledExpression, multiLines, extract, context, extracted) {
+			if matchExpression(compiledExpression, cleanMultiLines, extract, context, extracted) {
+				continue
+			}
+		}
+		for _, line := range inputs {
 			if len(line) == 0 {
 				continue
 			}
 			if !matchExpression(compiledExpression, line, extract, context, extracted) {
-				line = vtclean.Clean(line, false)
-				matchExpression(compiledExpression, line, extract, context, extracted)
+				cleanedLine := vtclean.Clean(line, false)
+				matchExpression(compiledExpression, cleanedLine, extract, context, extracted)
 			}
 		}
 	}
@@ -56,9 +70,9 @@ func NewExtracts() Extracts {
 
 //Extract represents a data extraction
 type Extract struct {
-	RegExpr string `description:"regular expression with oval bracket to extract match pattern" example:"go(\d\.\d)"` //regular expression
-	Key     string `description:"state key to store a match"`                                                         //state key to store a match
-	Reset   bool   `description:"reset the key in the context before evaluating this data extraction rule"`           //reset the key in the context before evaluating this data extraction rule
+	RegExpr string `description:"regular expression with oval bracket to extract match pattern"`            //regular expression
+	Key     string `description:"state key to store a match"`                                               //state key to store a match
+	Reset   bool   `description:"reset the key in the context before evaluating this data extraction rule"` //reset the key in the context before evaluating this data extraction rule
 }
 
 //NewExtract creates a new data extraction
@@ -70,16 +84,16 @@ func NewExtract(key, regExpr string, reset bool) *Extract {
 	}
 }
 
-//ExtractionEvent  represents data extraction event
-type ExtractionEvent struct {
+//ExtractEvent  represents data extraction event
+type ExtractEvent struct {
 	Output           string
 	StructuredOutput interface{}
 	Data             interface{}
 }
 
 //NewExtractEvent creates a new event.
-func NewExtractEvent(output string, structuredOutput, extracted interface{}) *ExtractionEvent {
-	return &ExtractionEvent{
+func NewExtractEvent(output string, structuredOutput, extracted interface{}) *ExtractEvent {
+	return &ExtractEvent{
 		Output:           output,
 		StructuredOutput: structuredOutput,
 		Data:             extracted,

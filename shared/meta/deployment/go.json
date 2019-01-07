@@ -34,7 +34,7 @@
           "Commands": [
             {
               "Command": "go version",
-              "Extraction": [
+              "Extract": [
                 {
                   "Key": "Version",
                   "RegExpr": "go(\\d\\.\\d)"

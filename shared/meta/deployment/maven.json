@@ -31,7 +31,7 @@
           "Commands": [
             {
               "Command": "mvn -version",
-              "Extraction": [
+              "Extract": [
                 {
                   "Key": "Version",
                   "RegExpr": "Apache Maven (\\d+\\.\\d+\\.\\d+)"

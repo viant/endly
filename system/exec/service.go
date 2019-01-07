@@ -159,7 +159,13 @@ func (s *execService) setEnvVariable(context *endly.Context, session *model.Sess
 		}
 	}
 	session.EnvVariables[name] = newValue
-	_, err := s.rumCommandTemplate(context, session, "export %v='%v'", name, newValue)
+	var err error
+	newValue = strings.TrimSpace(newValue)
+	if strings.Contains(newValue, " ") {
+		_, err = s.rumCommandTemplate(context, session, "export %v='%v'", name, newValue)
+	} else {
+		_, err = s.rumCommandTemplate(context, session, "export %v=%v", name, newValue)
+	}
 	return err
 }
 
@@ -350,11 +356,15 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	}
 	s.Begin(context, NewSdtinEvent(session.ID, command))
 	listener = func(stdout string, hasMore bool) {
-		context.Publish(NewStdoutEvent(session.ID, stdout, err))
+		if stdout != "" {
+			context.Publish(NewStdoutEvent(session.ID, stdout, err))
+		}
 	}
 	stdout, err := s.run(context, session, cmd, listener, options.TimeoutMs, terminators...)
 	if len(response.Output) > 0 {
-		response.Output += "\n"
+		if !strings.HasSuffix(response.Output, "\n") {
+			response.Output += "\n"
+		}
 	}
 	response.Output += stdout
 	response.Add(NewCommandLog(command, stdout, err))
@@ -373,7 +383,7 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	}
 
 	stdout = response.Cmd[len(response.Cmd)-1].Stdout
-	return extractCommand.Extraction.Extract(context, response.Data, strings.Split(stdout, "\n")...)
+	return extractCommand.Extract.Extract(context, response.Data, strings.Split(stdout, "\n")...)
 }
 
 func getTerminators(options *Options, session *model.Session, execution *ExtractCommand) []string {
@@ -389,7 +399,17 @@ func getTerminators(options *Options, session *model.Session, execution *Extract
 }
 
 func (s *execService) runCommands(context *endly.Context, request *RunRequest) (*RunResponse, error) {
-	return s.runExtractCommands(context, request.AsExtractRequest())
+	response, err := s.runExtractCommands(context, request.AsExtractRequest())
+	if err != nil {
+		return nil, err
+	}
+	if len(request.Extract) > 0 {
+		if len(response.Data) == 0 {
+			response.Data = data.NewMap()
+		}
+		err = request.Extract.Extract(context, response.Data, strings.Split(response.Output, "\n")...)
+	}
+	return response, err
 }
 
 func (s *execService) runExtractCommands(context *endly.Context, request *ExtractRequest) (*RunResponse, error) {
@@ -418,6 +438,7 @@ func (s *execService) runExtractCommands(context *endly.Context, request *Extrac
 			if !strings.Contains(command, "&&") {
 				var directory = strings.TrimSpace(string(command[3:]))
 				stdout, err := s.changeDirectory(context, session, response, directory)
+				response.Add(NewCommandLog(command, stdout, err))
 				if err == nil {
 					err = s.validateStdout(stdout, command, extractCommand)
 				}
@@ -437,6 +458,7 @@ func (s *execService) runExtractCommands(context *endly.Context, request *Extrac
 					value := strings.TrimSpace(keyValuePair[1])
 					value = strings.Trim(value, "'\"")
 					err = s.setEnvVariable(context, session, key, value)
+					response.Add(NewCommandLog(command, "", err))
 					continue
 				}
 			}
@@ -591,7 +613,7 @@ const (
 	"Commands": [
 	  {
 		"Command": "go version",
-		"Extraction": [
+		"Extract": [
 		  {
 			"RegExpr": "go(\\d\\.\\d)",
 			"Key": "Version"
