@@ -5,7 +5,8 @@ require (
 	firebase.google.com/go v3.5.0+incompatible // indirect
 	git.apache.org/thrift.git v0.0.0-20181205211409-17a9cffabb74 // indirect
 	github.com/MichaelS11/go-cql-driver v0.0.0-20181029231409-81aad8db3731
-	github.com/adrianwit/fbc v0.1.0
+	github.com/adrianwit/fbc v0.1.1
+    github.com/adrianwit/fsc v0.1.0
 	github.com/adrianwit/mgc v0.1.2
 	github.com/aerospike/aerospike-client-go v1.37.0 // indirect
 	github.com/aws/aws-sdk-go v1.15.90
@@ -53,7 +54,7 @@ require (
 	github.com/viant/dsc v0.3.1
 	github.com/viant/dsunit v0.4.2
 	github.com/viant/neatly v0.6.0
-	github.com/viant/toolbox v0.6.2
+	github.com/viant/toolbox v0.6.4
 	github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227 // indirect
 	go.opencensus.io v0.18.0 // indirect
 	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
