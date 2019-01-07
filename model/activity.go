@@ -9,7 +9,7 @@ import (
 
 //Activity represents pipeline or workflow activity
 type Activity struct {
-	*NeatlyTag
+	*MetaTag
 	Caller          string
 	Task            string
 	Service         string
@@ -37,15 +37,15 @@ func NewActivity(context *endly.Context, action *Action, state data.Map) *Activi
 	var result = &Activity{
 		Action:          state.ExpandAsText(action.Action),
 		Service:         state.ExpandAsText(action.Service),
-		NeatlyTag:       action.NeatlyTag,
+		MetaTag:         action.MetaTag,
 		Description:     context.Expand(action.AbstractNode.Description),
 		Request:         action.Request,
 		Response:        make(map[string]interface{}),
 		StartTime:       time.Now(),
 		ServiceResponse: &endly.ServiceResponse{},
 	}
-	if result.NeatlyTag == nil {
-		result.NeatlyTag = &NeatlyTag{}
+	if result.MetaTag == nil {
+		result.MetaTag = &MetaTag{}
 	}
 	if toolbox.IsString(result.Request) {
 		result.Request = state.Expand(result.Request)

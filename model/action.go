@@ -4,7 +4,7 @@ package model
 type Action struct {
 	*AbstractNode
 	*ServiceRequest
-	*NeatlyTag
+	*MetaTag
 	*Repeater
 	Async bool   `description:"flag to run action async"`
 	Skip  string `description:"criteria to skip current TagID"`
@@ -21,8 +21,8 @@ func (a *Action) Init() error {
 	if a.Repeater == nil {
 		a.Repeater = &Repeater{}
 	}
-	if a.NeatlyTag == nil {
-		a.NeatlyTag = &NeatlyTag{}
+	if a.MetaTag == nil {
+		a.MetaTag = &MetaTag{}
 	}
 
 	if a.Action != "" && a.Service == "" {
@@ -65,10 +65,11 @@ func (a *Action) ID() string {
 	return a.Service + "_" + a.Action
 }
 
-//NeatlyTag represent a neatly tag
-type NeatlyTag struct {
-	Tag            string //neatly tag
-	TagIndex       string //neatly tag index
-	TagID          string //neatly tag id
+//MetaTag represent a node tag
+type MetaTag struct {
+	Tag            string //tag
+	TagIndex       string //tag index
+	TagID          string //tag id
 	TagDescription string //tag description
+	Comments       string
 }
