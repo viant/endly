@@ -597,7 +597,7 @@ func getServiceAction(context *endly.Context, actionRequest *model.ServiceReques
 	var result = actionRequest.NewAction()
 
 	if activity != nil {
-		result.NeatlyTag = activity.NeatlyTag
+		result.MetaTag = activity.MetaTag
 		result.Name = activity.Action
 		if result.AbstractNode.Description == "" {
 			result.AbstractNode.Description = activity.Description
