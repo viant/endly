@@ -6,8 +6,6 @@ init:
     URL: ssh://127.0.0.1/
     credentials: localhost
   serviceTarget: $target
-  buildTarget: $target
-  appTarget: $target
   targetHost: $Hostname($target.URL)
   appHost: $Hostname($appTarget.URL)
   seleniumServerPort: 8077

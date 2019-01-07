@@ -219,17 +219,14 @@ func (s *Service) handleBuild(builder *builder, request *RunRequest) error {
 	if err != nil {
 		return err
 	}
-
 	if request.Build.Sdk == "" {
 		request.Build.Sdk = appMeta.Sdk
 	}
-
 	var sdkURL = toolbox.URLPathJoin(s.baseTemplateURL, "sdk")
 	sdkAssets, err := DownloadAll(sdkURL)
 	if err != nil {
 		return err
 	}
-
 	var sdk = strings.Split(request.Build.Sdk, ":")[0]
 	sdkMeta, err := s.loadSdkMeta(sdk+"/meta.yaml", sdkAssets)
 	if err != nil {

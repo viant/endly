@@ -6,9 +6,8 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/viant/asc"
 	_ "github.com/viant/bgc"
-
 	/*remove
-	.  ".."
+	.  "webdb"
 	"log"
 	"os"
 	"fmt"
