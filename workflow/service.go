@@ -93,6 +93,7 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 		activity = model.NewActivity(context, action, state)
 		return nil
 	})
+	process.State.Put("index", action.TagIndex)
 	defer func() {
 		var resultKey = action.Name
 		if resultKey == "" {
