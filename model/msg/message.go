@@ -1,6 +1,8 @@
 package msg
 
-import "time"
+import (
+	"time"
+)
 
 const (
 	MessageStyleGeneric = iota
@@ -31,6 +33,11 @@ type RunnerOutput interface {
 type Styled struct {
 	Text  string
 	Style int
+}
+
+//Equals returns true if styled is equal
+func (s *Styled) Equals(styled *Styled) bool {
+	return s.Style == styled.Style && s.Text == s.Text
 }
 
 //NewStyled creates a new message
@@ -68,4 +75,13 @@ type Repeated struct {
 	Spent time.Duration
 	Count int
 	Type  string
+}
+
+//Reset reset count and spent time
+func (r *Repeated) Reset() {
+	if r == nil {
+		return
+	}
+	r.Count = 0
+	r.Spent = 0
 }
