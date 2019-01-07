@@ -1,8 +1,15 @@
-## December 30 2018 0.24.1
+## November 6 2018 0.25.0
     * Moved msg service to testing/msg package
     * Patched embeded non pointer struct conversion (toolbox)
     * Added firebase, casandra dependency (driver, template) 
     * Added dsunit.CompareRequest to check SQL based data from various db.
+    * Added $context.secrets.${key} to expose credential config details like projectID, etc...
+    * Add FollowRedirects option to http clinet (viant/toolbox)
+    * Patched slice yaml variable conversion
+    * Added message grouping
+    * Added template tag failure level reporting for sub workflows
+    * Stremlined CLI reporter
+    
     
 ## December 28 2018 0.24.0
     * Added smtp endpoint
