@@ -132,8 +132,8 @@ func (s *service) resetContext(context *endly.Context, request *SendRequest) {
 	state := context.State()
 	state.Delete(TripsKey)
 	for _, request := range request.Requests {
-		if request.Repeater != nil && len(request.Extraction) > 0 {
-			request.Extraction.Reset(state)
+		if request.Repeater != nil && len(request.Extract) > 0 {
+			request.Extract.Reset(state)
 		}
 	}
 }

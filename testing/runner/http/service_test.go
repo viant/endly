@@ -59,7 +59,7 @@ func TestHttpRunnerService_Run(t *testing.T) {
 				},
 
 				Repeater: &model.Repeater{
-					Extraction: []*model.Extract{
+					Extract: []*model.Extract{
 						{
 							Key:     "send_arg1",
 							RegExpr: "send1 (.+)",
@@ -72,7 +72,7 @@ func TestHttpRunnerService_Run(t *testing.T) {
 				Method: "POST",
 				Body:   "0123456789",
 				Repeater: &model.Repeater{
-					Extraction: []*model.Extract{
+					Extract: []*model.Extract{
 						{
 							Key:     "send_arg2",
 							RegExpr: "send1 (.+)",
@@ -117,7 +117,7 @@ func TestHttpRunnerService_Repeat(t *testing.T) {
 				Method: "POST",
 				Body:   "0123456789",
 				Repeater: &model.Repeater{
-					Extraction: []*model.Extract{
+					Extract: []*model.Extract{
 						{
 							Key:     "send_arg1",
 							RegExpr: "send1 (.+)",
@@ -175,7 +175,7 @@ func TestHttpRunnerService_RepeatWthExitCriteria(t *testing.T) {
 				Method: "POST",
 				Body:   "0123456789",
 				Repeater: &model.Repeater{
-					Extraction: []*model.Extract{
+					Extract: []*model.Extract{
 						{
 							Key:     "var1",
 							RegExpr: "send1 (.+)",
