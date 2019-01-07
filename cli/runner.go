@@ -1,23 +1,21 @@
 package cli
 
 import (
-	"fmt"
-	"github.com/viant/assertly"
-	"github.com/viant/endly"
-	"github.com/viant/endly/testing/runner/selenium"
-	"github.com/viant/toolbox/data"
-	"sync"
-
 	"bytes"
 	"encoding/json"
 	"encoding/xml"
+	"fmt"
 	"github.com/lunixbochs/vtclean"
+	"github.com/viant/assertly"
+	"github.com/viant/endly"
 	"github.com/viant/endly/cli/xunit"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/msg"
 	"github.com/viant/endly/system/exec"
+	"github.com/viant/endly/testing/runner/selenium"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
@@ -37,25 +35,6 @@ const (
 	messageTypeTagDescription
 )
 
-//EventTag represents an event tag
-type EventTag struct {
-	Description string
-	Caller      string
-	TagID       string
-	Events      []msg.Event
-	Validation  []*assertly.Validation
-	PassedCount int
-	FailedCount int
-}
-
-//AddEvent add provided event
-func (e *EventTag) AddEvent(event msg.Event) {
-	if len(e.Events) == 0 {
-		e.Events = make([]msg.Event, 0)
-	}
-	e.Events = append(e.Events, event)
-}
-
 //ReportSummaryEvent represents event xUnitSummary
 type ReportSummaryEvent struct {
 	ElapsedMs      int
@@ -66,63 +45,20 @@ type ReportSummaryEvent struct {
 
 //Testing represents command line runner
 type Runner struct {
-	request *workflow.RunRequest
+	*Style
 	*Renderer
-	*model.Activities
-	xUnitSummary  *xunit.Testsuite
-	context       *endly.Context
-	filter        map[string]bool
-	manager       endly.Manager
-	tags          []*EventTag
-	indexedTag    map[string]*EventTag
-	eventTag      *EventTag
-	report        *ReportSummaryEvent
-	activity      *model.Activity
-	repeated      *msg.Repeated
-	mutex         *sync.RWMutex
-	tagIdIndex    map[string]string
-	repeatedCount int
-	activityEnded bool
-
+	*Events
+	request               *workflow.RunRequest
+	xUnitSummary          *xunit.Testsuite
+	context               *endly.Context
+	filter                map[string]bool
+	manager               endly.Manager
+	report                *ReportSummaryEvent
+	repeated              *msg.Repeated
+	activityEnded         bool
 	hasValidationFailures bool
 	err                   error
-
-	MessageStyleColor  map[int]string
-	InputColor         string
-	OutputColor        string
-	TagColor           string
-	InverseTag         bool
-	ServiceActionColor string
-	PathColor          string
-	SuccessColor       string
-	ErrorColor         string
-}
-
-//AddTag adds reporting tag
-func (r *Runner) AddTag(eventTag *EventTag) {
-	r.tags = append(r.tags, eventTag)
-	r.indexedTag[eventTag.TagID] = eventTag
-}
-
-//EventTag returns an event tag
-func (r *Runner) EventTag() *EventTag {
-	if r.Len() == 0 {
-		if r.eventTag == nil {
-			r.eventTag = &EventTag{}
-			r.tags = append(r.tags, r.eventTag)
-		}
-		return r.eventTag
-	}
-
-	activity := r.Last()
-	if _, has := r.indexedTag[activity.TagID]; !has {
-		eventTag := &EventTag{
-			Caller: activity.Caller,
-			TagID:  activity.TagID,
-		}
-		r.AddTag(eventTag)
-	}
-	return r.indexedTag[activity.TagID]
+	group                 *MessageGroup
 }
 
 func (r *Runner) printInput(output string) {
@@ -134,7 +70,7 @@ func (r *Runner) printOutput(output string) {
 }
 
 func (r *Runner) printError(output string) {
-	r.Printf("%v\n", r.ColorText(output, r.ErrorColor))
+	r.Printf("%v\n", r.ColorText(output, r.Renderer.ErrorColor))
 }
 
 func (r *Runner) printShortMessage(messageType int, message string, messageInfoType int, messageInfo string) {
@@ -142,6 +78,8 @@ func (r *Runner) printShortMessage(messageType int, message string, messageInfoT
 }
 
 func (r *Runner) overrideShortMessage(messageType int, message string, messageInfoType int, messageInfo string) {
+	r.setPendingLine(false)
+	defer r.setPendingLine(true)
 	r.Printf("\r%v", r.formatShortMessage(messageType, message, messageInfoType, messageInfo))
 }
 
@@ -192,24 +130,13 @@ func (r *Runner) formatShortMessage(messageType int, message string, messageInfo
 
 func (r *Runner) getRepeated(event msg.Event) *msg.Repeated {
 	var repeatedType = fmt.Sprintf("%T", event.Value)
-	r.repeatedCount = -1
 	if r.repeated != nil && r.repeated.Type == repeatedType {
 		return r.repeated
 	}
 	r.repeated = &msg.Repeated{
 		Type: repeatedType,
 	}
-
 	return r.repeated
-}
-
-func (r *Runner) resetRepeated() {
-	if r.repeated != nil {
-		if r.repeated.Count > r.repeatedCount {
-			fmt.Printf("\n")
-		}
-		r.repeatedCount = r.repeated.Count
-	}
 }
 
 func (r *Runner) processRepeated(reporter msg.RepeatedReporter, event msg.Event) {
@@ -228,20 +155,34 @@ func (r *Runner) processRepeated(reporter msg.RepeatedReporter, event msg.Event)
 }
 
 func (r *Runner) processMessages(reporter msg.Reporter) {
-	for _, message := range reporter.Messages() {
+	messages := reporter.Messages()
+	for _, message := range messages {
 		tag := message.Tag
 		header := message.Header
-		if header != nil {
+		if header == nil {
+			r.group.Reset()
+		}
+		if header != nil && !r.group.EnableIfMatched(message) {
 			r.printShortMessage(header.Style, header.Text, tag.Style, tag.Text)
 		}
-		if len(message.Items) > 0 {
-			for _, item := range message.Items {
-				if color, ok := r.MessageStyleColor[item.Style]; ok {
-					r.Printf("%v\n", r.ColorText(item.Text, color))
-				} else {
-					r.Printf("%v\n", item.Text)
-				}
+		if len(message.Items) == 0 {
+			continue
+		}
+
+		for _, item := range message.Items {
+			suffix := "\n"
+
+			if strings.Count(item.Text, "\n")+strings.Count(item.Text, "\r") > 0 {
+				r.pendingNewLine = false
+				suffix = ""
 			}
+
+			if color, ok := r.MessageStyleColor[item.Style]; ok {
+				r.Printf("%v%v", r.ColorText(item.Text, color), suffix)
+			} else {
+				r.Printf("%v%v", item.Text, suffix)
+			}
+			r.group.item = item
 		}
 	}
 }
@@ -283,7 +224,6 @@ func (r *Runner) processReporter(event msg.Event, filter map[string]bool) bool {
 	}
 	messageReporter, isMessageReporter := eventValue.(msg.Reporter)
 	repeatedReporter, isRepeatedReporter := eventValue.(msg.RepeatedReporter)
-
 	if !(isMessageReporter || isRepeatedReporter) {
 		return false
 	}
@@ -300,7 +240,6 @@ func (r *Runner) processReporter(event msg.Event, filter map[string]bool) bool {
 		}
 		return true
 	}
-	r.resetRepeated()
 	if isMessageReporter {
 		r.processMessages(messageReporter)
 	}
@@ -316,65 +255,43 @@ func (r *Runner) processAssertable(event msg.Event) bool {
 	if len(validations) == 0 {
 		return true
 	}
-
-	r.resetRepeated()
 	r.reportAssertion(event, validations...)
 	return true
 }
 
 func (r *Runner) processActivityStart(event msg.Event) bool {
-
 	if r.activityEnded {
 		r.Pop()
 		r.activityEnded = false
 	}
-
 	var eventValue = event.Value()
 	activity, ok := eventValue.(*model.Activity)
 	if !ok {
 		return false
 	}
-
 	if r.activity != nil && (activity.Caller != r.activity.Caller) {
 		r.activityEnded = false
 	}
-
-	r.resetRepeated()
 	r.Push(activity)
-	r.activity = activity
-	if activity.TagIndex != "" {
-		r.mutex.Lock()
-		r.tagIdIndex[activity.TagID] = activity.TagIndex
-		r.mutex.Unlock()
-	}
-
 	if activity.Logging != nil && !*activity.Logging {
 		return true
 	}
-
-	if activity.TagDescription != "" {
-		if r.repeated != nil {
-			r.repeated.Count = 0
-			r.repeated.Spent = 0
-		}
+	if activity.TagIndex != "" {
+		r.repeated.Reset()
 		r.printShortMessage(messageTypeAction, activity.TagID, messageTypeAction, "tag.id")
-		r.printShortMessage(messageTypeTagDescription, activity.TagDescription, messageTypeTagDescription, "use case")
-		eventTag := r.EventTag()
-		eventTag.Description = activity.TagDescription
+		if activity.TagDescription != "" {
+			r.printShortMessage(messageTypeTagDescription, activity.TagDescription, messageTypeTagDescription, "use case")
+			eventTag := r.EventTag()
+			eventTag.Description = activity.TagDescription
+		}
 	}
-	var serviceAction = fmt.Sprintf("%v.%v", activity.Service, activity.Action)
-	r.printShortMessage(messageTypeAction, activity.Description, messageTypeAction, serviceAction)
+	info := activity.Description
+	if info == "" {
+		info = activity.Comments
+	}
+	serviceAction := fmt.Sprintf("%v.%v", activity.Service, activity.Action)
+	r.printShortMessage(messageTypeAction, info, messageTypeAction, serviceAction)
 	return true
-}
-
-func (r *Runner) getIndex(tagID string) string {
-	r.mutex.RLock()
-
-	defer r.mutex.RUnlock()
-	if result, ok := r.tagIdIndex[tagID]; ok {
-		return result
-	}
-	return ""
 }
 
 func (r *Runner) processActivityEnd(event msg.Event) {
@@ -423,7 +340,6 @@ func (r *Runner) extractRunnerLogs(candidates []msg.Event, offset, maxIndex int)
 		if eventValue == nil {
 			continue
 		}
-
 		if i <= maxIndex {
 			_, ok := eventValue.(msg.RunnerInput)
 			if ok {
@@ -471,7 +387,7 @@ func (r *Runner) hasFailureMatch(failure *assertly.Failure, runnerLogs map[strin
 	return false
 }
 
-func (r *Runner) reportFailureWithMatchSource(tag *EventTag, event msg.Event, validation *assertly.Validation, eventCandidates []msg.Event, offset, maxIndex int) *runnerLog {
+func (r *Runner) reportFailureWithMatchSource(tag *Event, event msg.Event, validation *assertly.Validation, eventCandidates []msg.Event, offset, maxIndex int) *runnerLog {
 	var runnerLog *runnerLog
 	var theFirstFailure = validation.Failures[0]
 	firstFailurePathIndex := theFirstFailure.Index()
@@ -492,7 +408,6 @@ func (r *Runner) reportFailureWithMatchSource(tag *EventTag, event msg.Event, va
 				}
 			}
 		}
-
 		if !matched {
 			for _, logs := range runnerLogs {
 				runnerLog = logs[0]
@@ -501,14 +416,16 @@ func (r *Runner) reportFailureWithMatchSource(tag *EventTag, event msg.Event, va
 			}
 		}
 	}
-	var counter = 0
+	var counter = 1
 	for _, failure := range validation.Failures {
 		failurePath := failure.Path
 		if failure.Index() != -1 {
 			failurePath = fmt.Sprintf("%v:%v", failure.Index(), failure.Path)
 		}
-		r.printMessage(failurePath, msg.MessageStyleError, failure.Message, msg.MessageStyleError, "Failed")
-		if firstFailurePathIndex != failure.Index() || counter >= 3 {
+		r.printMessage(r.ColorText(failurePath, r.InputColor), msg.MessageStyleError, "", msg.MessageStyleError, "Failed")
+		r.Printf("%v\n", r.ColorText(failure.Message, r.Style.ErrorColor))
+		//TODO match input for various failure index group: firstFailurePathIndex != failure.Index()
+		if r.request.FailureCount > 0 && counter >= r.request.FailureCount {
 			break
 		}
 		counter++
@@ -549,21 +466,11 @@ func (r *Runner) reportAssertion(event msg.Event, validations ...*assertly.Valid
 		return
 	}
 	for _, validation := range validations {
-		var tagID = validation.TagID
-		if tagID == "" {
-			wrkFflow := workflow.Last(r.context)
-			if wrkFflow != nil {
-				activity := wrkFflow.Last()
-				if activity != nil {
-					tagID = activity.TagID
-				}
-			}
+
+		if validation.PassedCount+validation.FailedCount == 0 {
+			continue
 		}
-		_, ok := r.indexedTag[tagID]
-		if !ok {
-			r.AddTag(&EventTag{TagID: tagID})
-		}
-		eventTag := r.indexedTag[tagID]
+		eventTag := r.TemplateEvent(r.context, validation.TagID)
 		if validation.HasFailure() {
 			r.hasValidationFailures = true
 			eventTag.FailedCount += validation.FailedCount
@@ -578,8 +485,8 @@ func (r *Runner) reportAssertion(event msg.Event, validations ...*assertly.Valid
 			messageType = msg.MessageStyleError
 		}
 		var aMap = data.NewMap()
-		aMap.Put("tagIndex", r.getIndex(tagID))
-		aMap.Put("tagID", tagID)
+		aMap.Put("tagIndex", eventTag.Index)
+		aMap.Put("tagID", eventTag.TagID)
 		message := fmt.Sprintf("Passed %v/%v %v", validation.PassedCount, validation.PassedCount+validation.FailedCount, aMap.ExpandAsText(validation.Description))
 		r.printShortMessage(messageType, message, messageType, messageInfo)
 	}
@@ -587,7 +494,6 @@ func (r *Runner) reportAssertion(event msg.Event, validations ...*assertly.Valid
 }
 
 func (r *Runner) reportTagSummary() {
-
 	var useCaseCount = 0
 	for _, tag := range r.tags {
 
@@ -620,7 +526,11 @@ func (r *Runner) reportTagSummary() {
 				}
 				if validation.HasFailure() {
 					var maxIndex = i - 1
-					runnerLog := r.reportFailureWithMatchSource(tag, event, validation, tag.Events, offset, maxIndex)
+					candidates := tag.Events
+					if tag.subEvent != nil {
+						candidates = tag.subEvent.Events
+					}
+					runnerLog := r.reportFailureWithMatchSource(tag, event, validation, candidates, offset, maxIndex)
 					if runnerLog != nil {
 						failureLog = runnerLog
 					}
@@ -685,7 +595,7 @@ func (r *Runner) AsListener() msg.Listener {
 			lastEvent = event
 			r.report.ElapsedMs = int(lastEvent.Timestamp().UnixNano()-firstEvent.Timestamp().UnixNano()) / int(time.Millisecond)
 		}
-		r.reportEvent(r.context, event, r.filter)
+		_ = r.reportEvent(r.context, event, r.filter)
 	}
 }
 
@@ -797,29 +707,11 @@ func (r *Runner) processErrorEvent(event msg.Event) bool {
 //New creates a new command line runner
 func New() *Runner {
 	return &Runner{
-		manager:            endly.New(),
-		Activities:         model.NewActivities(),
-		Renderer:           NewRenderer(os.Stdout, 120),
-		tags:               make([]*EventTag, 0),
-		indexedTag:         make(map[string]*EventTag),
-		InputColor:         "blue",
-		OutputColor:        "green",
-		TagColor:           "brown",
-		PathColor:          "brown",
-		ServiceActionColor: "gray",
-		ErrorColor:         "red",
-		InverseTag:         true,
-		tagIdIndex:         map[string]string{},
-		mutex:              &sync.RWMutex{},
-		xUnitSummary:       xunit.NewTestsuite(),
-		MessageStyleColor: map[int]string{
-			messageTypeTagDescription: "cyan",
-			msg.MessageStyleError:     "red",
-			msg.MessageStyleSuccess:   "green",
-			msg.MessageStyleGeneric:   "black",
-			msg.MessageStyleInput:     "blue",
-			msg.MessageStyleOutput:    "green",
-			msg.MessageStyleGroup:     "bold",
-		},
+		manager:      endly.New(),
+		Events:       NewEventTags(),
+		Renderer:     NewRenderer(os.Stdout, 120),
+		group:        &MessageGroup{},
+		xUnitSummary: xunit.NewTestsuite(),
+		Style:        NewStyle(),
 	}
 }

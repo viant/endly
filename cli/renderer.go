@@ -27,15 +27,28 @@ var colors = map[string]func(arg interface{}) aurora.Value{
 
 //Renderer represents a renderer
 type Renderer struct {
-	ErrorColor string
-	writer     io.Writer
-	minColumns int
-	lines      int
+	ErrorColor     string
+	writer         io.Writer
+	minColumns     int
+	lines          int
+	pendingNewLine bool
 }
 
 //Printf formats and print supplied text with arguments
 func (r *Renderer) Printf(text string, args ...interface{}) {
+	r.flushPendingLineIfNeeded()
 	r.Print(aurora.Sprintf(text, args...))
+}
+
+func (r *Renderer) setPendingLine(flag bool) {
+	r.pendingNewLine = flag
+}
+
+func (r *Renderer) flushPendingLineIfNeeded() {
+	if r.pendingNewLine {
+		r.Print("\n")
+		r.pendingNewLine = false
+	}
 }
 
 //Sprintf returns formatted text with arguments
@@ -45,12 +58,13 @@ func (r *Renderer) Sprintf(text string, args ...interface{}) string {
 
 //Println returns formatted text with arguments
 func (r *Renderer) Println(text string) {
+	r.flushPendingLineIfNeeded()
 	r.Print(text + "\n")
 }
 
 //Print prints supplied message
 func (r *Renderer) Print(message string) {
-	r.writer.Write([]byte(message))
+	_, _ = r.writer.Write([]byte(message))
 }
 
 //ColorText returns text with ANCI color
@@ -158,7 +172,6 @@ func (r *Renderer) normalizeCellData(data []string, columnSize []int) ([][]strin
 				maxDepth = len(result[i])
 			}
 		}
-
 	}
 	return result, maxDepth
 }
