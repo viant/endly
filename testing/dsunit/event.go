@@ -91,6 +91,6 @@ func (r *PrepareRequest) Messages() []*msg.Message {
 
 //Messages returns messages
 func (r *QueryRequest) Messages() []*msg.Message {
-	message := msg.NewMessage(msg.NewStyled(fmt.Sprintf("(%v) %v", r.Datastore, r.SQL), msg.MessageStyleGeneric), msg.NewStyled("populate", msg.MessageStyleGeneric))
+	message := msg.NewMessage(msg.NewStyled(fmt.Sprintf("(%v) %v", r.Datastore, r.SQL), msg.MessageStyleGeneric), msg.NewStyled("query", msg.MessageStyleGeneric))
 	return []*msg.Message{message}
 }
