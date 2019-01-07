@@ -15,7 +15,6 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
 
 
-
 ## Motivation
 
 _An end to end testing_ is a methodology which comprehensively tests an application in the environment closely imitating production system with all network communication, user, datastore and other dependencies interaction.
@@ -374,7 +373,6 @@ pipeline:
 ```bash
 endly -r=datastore
 ```
-
 
 **d) Creating setup / verification dataset from existing datastore**
 
