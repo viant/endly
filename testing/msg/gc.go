@@ -30,12 +30,14 @@ func (s *gcPubSubClient) createSubscription(resource *ResourceSetup) (*pubsub.Su
 	if err != nil {
 		return nil, err
 	}
+
 	if exists && resource.Recreate {
 		exists = false
 		if err = subscription.Delete(s.ctx); err != nil {
 			return nil, err
 		}
 	}
+
 	if !exists {
 		config := resource.Config
 		if config.Topic == nil {
@@ -54,7 +56,9 @@ func (s *gcPubSubClient) createSubscription(resource *ResourceSetup) (*pubsub.Su
 			RetentionDuration:   config.RetentionDuration,
 		}
 
-		subscription, err = s.client.CreateSubscription(s.ctx, subscription.ID(), subscriptionConfig)
+		if subscription, err = s.client.CreateSubscription(s.ctx, subscription.ID(), subscriptionConfig); err != nil {
+			return nil, err
+		}
 	}
 	return subscription, err
 }
