@@ -13,11 +13,11 @@ const SliceKey = "data"
 
 //Repeater represent repeated execution
 type Repeater struct {
-	Extraction  Extracts  //textual regexp based data extraction
+	Extract     Extracts  //textual regexp based data extraction
 	Variables   Variables //structure data based data extraction
 	Repeat      int       //how many time send this request
 	SleepTimeMs int       //Sleep time after request send, this only makes sense with repeat option
-	Exit        string    //Exit criteria, it uses extracted variable to determine repeat termination
+	Exit        string    //Exit criteria, it uses expected variable to determine repeat termination
 }
 
 //Get returns non empty instance of default instance
@@ -72,7 +72,7 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 		err = r.Variables.Apply(extracted, extracted)
 	}
 
-	err = r.Extraction.Extract(context, extracted, extractableOutput)
+	err = r.Extract.Extract(context, extracted, extractableOutput)
 	if err != nil {
 		return false, err
 	}
