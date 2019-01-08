@@ -17,6 +17,9 @@ type service struct {
 	*endly.AbstractService
 }
 
+
+
+
 func (s *service) fetchInstanceList(context *endly.Context, request *CallRequest) (CallResponse, error) {
 	var response interface{}
 	config, err := context.Secrets.GetCredentials(request.Credentials)
