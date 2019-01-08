@@ -9,6 +9,7 @@ require (
 	github.com/adrianwit/fsc v0.1.0
 	github.com/adrianwit/mgc v0.1.2
 	github.com/aerospike/aerospike-client-go v1.37.0 // indirect
+	github.com/alexbrainman/odbc v0.0.0-20190102080306-cf37ce290779
 	github.com/aws/aws-sdk-go v1.15.90
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emersion/go-smtp v0.0.0-20180917150411-7162b2ca3bcb
@@ -49,10 +50,10 @@ require (
 	github.com/stretchr/testify v1.2.2
 	github.com/tebeka/selenium v0.9.3
 	github.com/viant/asc v0.2.0
-	github.com/viant/assertly v0.2.2
+	github.com/viant/assertly v0.3.0
 	github.com/viant/bgc v0.3.0
 	github.com/viant/dsc v0.3.1
-	github.com/viant/dsunit v0.4.2
+	github.com/viant/dsunit v0.4.3
 	github.com/viant/neatly v0.6.0
 	github.com/viant/toolbox v0.6.5
 	github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227 // indirect
