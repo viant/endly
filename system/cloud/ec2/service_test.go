@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/endly/cloud/ec2"
+	"github.com/viant/endly/system/cloud/ec2"
 	"github.com/viant/toolbox"
 	"testing"
 )

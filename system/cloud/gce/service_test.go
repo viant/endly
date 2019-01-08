@@ -3,7 +3,7 @@ package gce_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/endly/cloud/gce"
+	"github.com/viant/endly/system/cloud/gce"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/secret"
 	"google.golang.org/api/compute/v1"

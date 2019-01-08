@@ -26,3 +26,4 @@ func (r *CallRequest) Validate() error {
 
 //CallResponse represents GCE call response
 type CallResponse interface{}
+
