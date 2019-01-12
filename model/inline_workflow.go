@@ -100,6 +100,10 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 			}
 			if state != nil && normalizable {
 				requestMap = toolbox.AsMap(state.Expand(requestMap))
+			} else {
+				parentState := data.NewMap()
+				parentState.Put("parent", state)
+				requestMap = toolbox.AsMap(parentState.Expand(requestMap))
 			}
 		} else {
 			requestMap, err = util.NormalizeMap(req, true)
@@ -111,7 +115,7 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 		util.Append(dataRequest, actionAttributes, true)
 	}
 
-	if len(dataRequest) > 0 && normalizable {
+	if len(dataRequest) > 0 {
 		requestMap = toolbox.AsMap(dataRequest.Expand(requestMap))
 	}
 
