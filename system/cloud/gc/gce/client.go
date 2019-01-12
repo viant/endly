@@ -2,29 +2,24 @@ package gce
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
+	"github.com/viant/endly/system/cloud/gc"
 	"github.com/viant/toolbox/cred"
-	"golang.org/x/net/context"
 	netcontext "golang.org/x/net/context"
-	"golang.org/x/oauth2"
 	"google.golang.org/api/compute/v1"
 	"reflect"
 )
 
 //NewComputeService creates a new compute service.
 func NewComputeService(credConfig *cred.Config) (*compute.Service, netcontext.Context, error) {
-	if credConfig == nil {
-		return nil, nil, errors.New("credentail config was empty")
-	}
-	jwtConfig, err := credConfig.NewJWTConfig(compute.CloudPlatformScope)
+	ctx, httpClient, err := gc.GetGCAuthClient(nil, credConfig, compute.CloudPlatformScope)
 	if err != nil {
 		return nil, nil, err
 	}
-	ctx := context.Background()
-	httpClient := oauth2.NewClient(ctx, jwtConfig.TokenSource(ctx))
-	cilent, err := compute.New(httpClient)
-	return cilent, ctx, err
+	client, err := compute.New(httpClient)
+	return client, ctx, err
 }
+
+
 
 //GetComputeService returns specialised compute service for provided service name.
 func GetComputeService(client *compute.Service, service string) (interface{}, error) {
