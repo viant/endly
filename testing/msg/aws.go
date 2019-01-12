@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/viant/endly/system/cloud/ec2"
+	eaws "github.com/viant/endly/system/cloud/aws"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"strings"
@@ -283,7 +283,7 @@ func (c *awsPubSub) Close() error {
 }
 
 func newAwsSqsClient(credConfig *cred.Config, timeout time.Duration) (Client, error) {
-	config, err := ec2.GetAWSCredentialConfig(credConfig)
+	config, err := eaws.GetAWSCredentialConfig(credConfig)
 	if err != nil {
 		return nil, err
 	}
