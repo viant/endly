@@ -53,6 +53,12 @@ func NewActivity(context *endly.Context, action *Action, state data.Map) *Activi
 	if result.Request == nil {
 		result.Request = map[string]interface{}{}
 	}
+	if result.Comments != "" {
+		result.Comments = state.ExpandAsText(result.Comments)
+	}
+	if result.Description != "" {
+		result.Description = state.ExpandAsText(result.Description)
+	}
 
 	if action.Logging != nil {
 		result.Logging = action.Logging
