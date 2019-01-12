@@ -52,17 +52,17 @@ func TestContext_NewRequest(t *testing.T) {
 	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
 	{
-		request, err := context.NewRequest("nop", "nop")
+		request, err := context.NewRequest("nop", "nop", map[string]interface{}{})
 		if assert.Nil(t, err) {
 			assert.NotNil(t, request)
 		}
 	}
 	{
-		_, err := context.NewRequest("invalid", "nop")
+		_, err := context.NewRequest("invalid", "nop", nil)
 		assert.NotNil(t, err)
 	}
 	{
-		_, err := context.NewRequest("nop", "abc")
+		_, err := context.NewRequest("nop", "abc", nil)
 		assert.NotNil(t, err)
 	}
 
