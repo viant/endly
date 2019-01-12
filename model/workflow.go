@@ -6,7 +6,7 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//Workflow repesents a workflow
+//Workflow represents a workflow
 type Workflow struct {
 	Source *url.Resource //source definition of the workflow
 	Data   data.Map      //workflow data
