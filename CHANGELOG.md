@@ -1,3 +1,13 @@
+## November 9 2018 0.26.0
+    * Added endly Route OnRawRequest hook
+    * Added aws/iam service
+    * Added aws/apigateway service
+    * Added aws/iam service
+    * Added aws/lambda service
+    * Added aws/s3 service
+    * Added aws/ses service
+    * Refactored aws/ec2 service
+    
 ## November 7 2018 0.25.1
     * Resolved template variable collision with sub workflow templates
     * Patched non writable map data type mutation
