@@ -6,6 +6,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/aws"
+	"github.com/viant/endly/system/cloud/aws/iam"
+	"github.com/viant/toolbox"
 	"log"
 	"sync"
 	"sync/atomic"
@@ -22,10 +24,6 @@ type service struct {
 }
 
 func (s *service) recreateFunction(context *endly.Context, request *RecreateFunctionInput) (configuration *lambda.FunctionConfiguration, err error) {
-	client, err := GetClient(context)
-	if err != nil {
-		return nil, err
-	}
 	wait := &sync.WaitGroup{}
 	wait.Add(1)
 	var done uint32 = 0
@@ -40,22 +38,31 @@ func (s *service) recreateFunction(context *endly.Context, request *RecreateFunc
 	}()
 	go func() {
 		defer wait.Done()
-		output, _ := client.GetFunction(&lambda.GetFunctionInput{
-			FunctionName: request.FunctionName,
-		})
-		if output != nil && output.Code != nil {
-			if _, err = client.DeleteFunction(&lambda.DeleteFunctionInput{
-				FunctionName: request.FunctionName,
-			}); err != nil {
-				return
-			}
-		}
-		lambdaRequest := lambda.CreateFunctionInput(*request)
-		configuration, err = client.CreateFunction(&lambdaRequest)
-		request.Code = nil
+		configuration, err = s.recreateFunctionInBackground(context, request)
 	}()
 	wait.Wait()
 	atomic.StoreUint32(&done, 1)
+	return configuration, err
+}
+
+func (s *service) recreateFunctionInBackground(context *endly.Context, request *RecreateFunctionInput) (configuration *lambda.FunctionConfiguration, err error) {
+	client, err := GetClient(context)
+	if err != nil {
+		return nil, err
+	}
+	output, _ := client.GetFunction(&lambda.GetFunctionInput{
+		FunctionName: request.FunctionName,
+	})
+	if output != nil && output.Code != nil {
+		if _, err = client.DeleteFunction(&lambda.DeleteFunctionInput{
+			FunctionName: request.FunctionName,
+		}); err != nil {
+			return
+		}
+	}
+	lambdaRequest := lambda.CreateFunctionInput(*request)
+	configuration, err = client.CreateFunction(&lambdaRequest)
+	request.Code = nil
 	return configuration, err
 }
 
@@ -78,19 +85,24 @@ func (s *service) setupPermission(context *endly.Context, request *SetupPermissi
 		FunctionName: request.FunctionName,
 	})
 	if getResponse.Policy != nil {
-		policy := Policy{}
+		policy := &iam.PolicyDocument{}
 		if err = json.Unmarshal([]byte(*getResponse.Policy), &policy); err != nil {
 			return nil, err
 		}
 		if len(policy.Statement) > 0 {
 			for _, statement := range policy.Statement {
-				if statement.Action != *request.Action {
+				if toolbox.AsString(statement.Action) != *request.Action {
 					continue
 				}
-				if arnLike, ok := statement.Condition["ArnLike"]; ok {
-					for _, v := range arnLike {
-						if v == *request.SourceArn {
-							return &lambda.AddPermissionOutput{Statement:&statement.Sid}, nil
+				condition, _ := statement.Condition.Value()
+				if conditionMap, ok := condition.(map[string]interface{}); ok {
+					if arnLike, ok := conditionMap["ArnLike"]; ok {
+						if arnLikeMap, ok := arnLike.(map[string]interface{}); ok {
+							for _, v := range arnLikeMap {
+								if v == *request.SourceArn {
+									return &lambda.AddPermissionOutput{Statement: statement.Sid}, nil
+								}
+							}
 						}
 					}
 				}
@@ -99,6 +111,64 @@ func (s *service) setupPermission(context *endly.Context, request *SetupPermissi
 	}
 	addPermission := lambda.AddPermissionInput(*request)
 	return client.AddPermission(&addPermission)
+}
+
+func (s *service) setupFunction(context *endly.Context, request *SetupFunctionInput) (output *SetupFunctionOutput, err error) {
+	wait := &sync.WaitGroup{}
+	wait.Add(1)
+	var done uint32 = 0
+	go func() {
+		for ; ; {
+			if atomic.LoadUint32(&done) == 1 {
+				break
+			}
+			s.Sleep(context, 2000)
+		}
+	}()
+	go func() {
+		defer wait.Done()
+		output, err = s.setupFunctionInBackground(context, request)
+	}()
+	wait.Wait()
+	atomic.StoreUint32(&done, 1)
+	return output, err
+}
+
+func (s *service) setupFunctionInBackground(context *endly.Context, request *SetupFunctionInput) (*SetupFunctionOutput, error) {
+	client, err := GetClient(context)
+	if err != nil {
+		return nil, err
+	}
+	output := &SetupFunctionOutput{}
+	output.RoleInfo = &iam.GetRoleInfoOutput{}
+	if err = endly.Run(context, request.SetupRolePolicyInput, &output.RoleInfo); err != nil {
+		return nil, err
+	}
+	request.Role = output.RoleInfo.Role.Arn
+	var functionConfig *lambda.FunctionConfiguration
+	functionOutput, _ := client.GetFunction(&lambda.GetFunctionInput{
+		FunctionName: request.FunctionName,
+	});
+	if functionOutput != nil && functionOutput.Configuration != nil {
+		functionConfig = functionOutput.Configuration
+		createFunction := request.CreateFunctionInput
+		if functionConfig, err = client.UpdateFunctionCode(&lambda.UpdateFunctionCodeInput{
+			FunctionName:    createFunction.FunctionName,
+			ZipFile:         createFunction.Code.ZipFile,
+			S3Bucket:        createFunction.Code.S3Bucket,
+			S3Key:           createFunction.Code.S3Key,
+			S3ObjectVersion: createFunction.Code.S3ObjectVersion,
+			Publish:         createFunction.Publish,
+		}); err != nil {
+			return nil, err
+		}
+	} else {
+		if functionConfig, err = client.CreateFunction(request.CreateFunctionInput); err != nil {
+			return nil, err
+		}
+	}
+	output.FunctionConfiguration = functionConfig
+	return output, nil
 }
 
 func (s *service) registerRoutes() {
@@ -113,9 +183,13 @@ func (s *service) registerRoutes() {
 		s.Register(route)
 	}
 	s.Register(&endly.Route{
-		Action:       "recreateFunction",
-		RequestInfo:  &endly.ActionInfo{},
-		ResponseInfo: &endly.ActionInfo{},
+		Action: "recreateFunction",
+		RequestInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T.%v(%T)", s, "recreateFunction", &RecreateFunctionInput{}),
+		},
+		ResponseInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T", &lambda.FunctionConfiguration{}),
+		},
 		RequestProvider: func() interface{} {
 			return &RecreateFunctionInput{}
 		},
@@ -130,11 +204,14 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
-
 	s.Register(&endly.Route{
-		Action:       "setupPermission",
-		RequestInfo:  &endly.ActionInfo{},
-		ResponseInfo: &endly.ActionInfo{},
+		Action: "setupPermission",
+		RequestInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T.%v(%T)", s, "setupPermission", &SetupPermissionInput{}),
+		},
+		ResponseInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T", &lambda.AddPermissionOutput{}),
+		},
 		RequestProvider: func() interface{} {
 			return &SetupPermissionInput{}
 		},
@@ -149,7 +226,28 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
-
+	s.Register(&endly.Route{
+		Action: "setupFunction",
+		RequestInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T.%v(%T)", s, "setupFunction", &SetupFunctionInput{}),
+		},
+		ResponseInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T", &SetupFunctionOutput{}),
+		},
+		RequestProvider: func() interface{} {
+			return &SetupFunctionInput{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SetupFunctionOutput{}
+		},
+		OnRawRequest: setClient,
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*SetupFunctionInput); ok {
+				return s.setupFunction(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 }
 
 //New creates a new AWS Ec2 service.
