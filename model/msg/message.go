@@ -37,7 +37,7 @@ type Styled struct {
 
 //Equals returns true if styled is equal
 func (s *Styled) Equals(styled *Styled) bool {
-	return s.Style == styled.Style && s.Text == s.Text
+	return s.Style == styled.Style && s.Text == styled.Text
 }
 
 //NewStyled creates a new message

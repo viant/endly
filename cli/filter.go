@@ -17,6 +17,10 @@ func DefaultFilter() map[string]bool {
 	result["endly"] = true
 	result["workflow"] = true
 	result["msg"] = true
+	result["lambda"] = true
+	result["apigateway"] = true
+	result["iam"] = true
+
 	return result
 }
 

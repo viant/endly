@@ -18,12 +18,13 @@ func (g *MessageGroup) EnableIfMatched(message *msg.Message) bool {
 	if message.Header == nil {
 		return false
 	}
+
 	if hasPrevious := g.message != nil; !hasPrevious {
 		g.Set(message)
 		return false
 	}
 
-	if g.message.Header.Equals(message.Header) && g.message.Tag.Equals(message.Tag) {
+	if g.message.Header.Equals(message.Header) && g.message.Tag.Equals(message.Tag)   {
 		g.Set(message)
 		return true
 	}
