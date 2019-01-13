@@ -156,12 +156,14 @@ func (r *Runner) processRepeated(reporter msg.RepeatedReporter, event msg.Event)
 
 func (r *Runner) processMessages(reporter msg.Reporter) {
 	messages := reporter.Messages()
-	for _, message := range messages {
+	for i := range messages {
+		message := messages[i]
 		tag := message.Tag
 		header := message.Header
 		if header == nil {
 			r.group.Reset()
 		}
+
 		if header != nil && !r.group.EnableIfMatched(message) {
 			r.printShortMessage(header.Style, header.Text, tag.Style, tag.Text)
 		}
@@ -171,7 +173,6 @@ func (r *Runner) processMessages(reporter msg.Reporter) {
 
 		for _, item := range message.Items {
 			suffix := "\n"
-
 			if strings.Count(item.Text, "\n")+strings.Count(item.Text, "\r") > 0 {
 				r.pendingNewLine = false
 				suffix = ""
