@@ -25,6 +25,9 @@ func setClient(context *endly.Context, rawRequest map[string]interface{}) error 
 
 func getClient(context *endly.Context) (interface{}, error)  {
 	client :=  &apigateway.APIGateway{}
+	if ! context.Contains(clientKey) {
+		_ = setClient(context, map[string]interface{}{"client": 1})
+	}
 	if !context.GetInto(clientKey, &client) {
 		return nil, fmt.Errorf("unable to locate client %T, please add Credentials atribute ", client)
 	}

@@ -8,6 +8,23 @@ import (
 	"strings"
 )
 
+//SetupRestAPIInput represent a request to setup API with specified resources
+type SetupRestAPIInput struct {
+	*apigateway.CreateRestApiInput
+	Resources []*SetupResourceInput
+	*apigateway.CreateDeploymentInput
+}
+
+//SetupRestAPIInput represent setup API response
+type SetupRestAPIOutput struct {
+	*apigateway.RestApi
+	Resources []*SetupResourceOutput
+	Stage *apigateway.Stage
+	EndpointURL string
+	Region string
+}
+
+//SetupResourceInput represents resource input
 type SetupResourceInput struct {
 	Path string
 	*apigateway.CreateResourceInput
@@ -21,18 +38,6 @@ type ResourceMethod struct {
 	*apigateway.PutMethodInput
 	*apigateway.PutIntegrationInput
 	*lambda.AddPermissionInput
-}
-
-//SetupRestAPIInput represent a request to setup API with specified resources
-type SetupRestAPIInput struct {
-	*apigateway.CreateRestApiInput
-	Resources []*SetupResourceInput
-}
-
-//SetupRestAPIInput represent setup API response
-type SetupRestAPIOutput struct {
-	*apigateway.RestApi
-	Resources []*SetupResourceOutput
 }
 
 //SetupResourceOutput represents setup resource output
@@ -53,6 +58,7 @@ func (i *SetupRestAPIInput) Init() error {
 	return nil
 }
 
+//Validate checks is input is valud
 func (i *SetupRestAPIInput) Validate() error {
 	if len(i.Resources) == 0 {
 		return fmt.Errorf("resources was empty")
@@ -62,9 +68,18 @@ func (i *SetupRestAPIInput) Validate() error {
 			return err
 		}
 	}
+	createDeployment := i.CreateDeploymentInput
+	if createDeployment  == nil {
+		i.CreateDeploymentInput = &apigateway.CreateDeploymentInput{}
+		createDeployment = i.CreateDeploymentInput
+	}
+	if createDeployment.StageName == nil {
+		createDeployment.StageName = aws.String("e2e")
+	}
 	return nil
 }
 
+//Init initialize input
 func (i *SetupResourceInput) Init() error {
 	if i.Path == "" {
 		if i.PathPart != nil {
@@ -90,6 +105,7 @@ func (i *SetupResourceInput) Init() error {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -265,5 +281,26 @@ func (i PutIntegrationInput) Diff(source *apigateway.Integration) []*apigateway.
 			result = append(result, patch)
 		}
 	}
+	return result
+}
+
+
+type SetupDeploymentInput apigateway.CreateDeploymentInput
+
+func (i *SetupDeploymentInput) Diff(source *apigateway.CreateDeploymentInput) []*apigateway.PatchOperation {
+	var result = make([]*apigateway.PatchOperation, 0)
+	if patch, ok := patchString(source.StageName, i.StageName, "/stageName"); ok {
+		result = append(result, patch)
+	}
+	if patch, ok := patchString(source.Description, i.Description, "/description"); ok {
+		result = append(result, patch)
+	}
+	if patch, ok := patchString(source.StageDescription, i.StageDescription, "/stageDescription"); ok {
+		result = append(result, patch)
+	}
+	if patch, ok := patchBool(source.CacheClusterEnabled, i.CacheClusterEnabled, "/cacheClusterEnabled"); ok {
+		result = append(result, patch)
+	}
+	
 	return result
 }

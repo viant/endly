@@ -18,7 +18,7 @@ On top of that service implements the following helper methods:
 - recreateFunction: drop if exists and create new function
 - dropFunction: drop function with dependencies
 - setupPermission: add permission if it does not exists
-- setupFunction: creates or modifies function with specified options
+- setupFunction: creates or modifies function with specified policies
 
 ### Usage:
 
@@ -73,8 +73,11 @@ pipeline:
 ```
 
 
-#### Invoke function
 
+
+
+
+#### Invoke function
 
 
 ```bash
@@ -87,6 +90,7 @@ endly -r=trigger
 ```yaml
 init:
   functionName: HelloWorld
+  awsCredentials: aws
 pipeline:
   trigger:
     action: aws/lambda:invoke

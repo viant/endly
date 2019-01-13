@@ -17,14 +17,17 @@ func setClient(context *endly.Context, rawRequest map[string]interface{}) error 
 	if err != nil || config == nil {
 		return err
 	}
-	session := session.Must(session.NewSession())
-	client :=  ec2.New(session, config)
+	sess := session.Must(session.NewSession())
+	client :=  ec2.New(sess, config)
 	return context.Put(clientKey, client)
 }
 
 
 func getClient(context *endly.Context) (interface{}, error)  {
 	client :=  &ec2.EC2{}
+	if ! context.Contains(clientKey) {
+		_ = setClient(context, map[string]interface{}{"client": 1})
+	}
 	if !context.GetInto(clientKey, &client) {
 		return nil, fmt.Errorf("unable to locate client %T, please add Credentials atribute ", client)
 	}

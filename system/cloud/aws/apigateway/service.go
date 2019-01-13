@@ -2,6 +2,7 @@ package apigateway
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/apigateway"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/viant/endly"
@@ -21,6 +22,7 @@ const (
 type service struct {
 	*endly.AbstractService
 }
+
 
 func (s *service) setupResetAPI(context *endly.Context, request *SetupRestAPIInput) (*SetupRestAPIOutput, error) {
 	restAPI, resources, err := s.getOrCreateRestAPI(context, request.CreateRestApiInput)
@@ -48,6 +50,25 @@ func (s *service) setupResetAPI(context *endly.Context, request *SetupRestAPIInp
 			return nil, err
 		}
 		response.Resources = append(response.Resources, resourceOutput)
+		if len(resourceOutput.ResourceMethods) > 0 {
+			for _, v := range resourceOutput.ResourceMethods {
+				if v.MethodIntegration != nil {
+					if ARN, err := arn.Parse(*v.MethodIntegration.Uri);err == nil {
+						response.Region  = ARN.Region
+					}
+				}
+			}
+		}
+	}
+	request.CreateDeploymentInput.RestApiId = restAPI.Id
+	if response.Stage, err = s.setupDeployment(context, request.CreateDeploymentInput); err != nil {
+		return nil, err
+	}
+	if response.Region != "" {
+		response.EndpointURL  = fmt.Sprintf("https://%s.execute-api.%s.amazonaws.com/%v/" ,
+			*response.Id,
+			response.Region,
+			*response.Stage.StageName)
 	}
 	return response, nil
 }
@@ -107,10 +128,10 @@ func (s *service) registerRoutes() {
 	s.Register(&endly.Route{
 		Action: "setupRestAPI",
 		RequestInfo: &endly.ActionInfo{
-			Description: "",
+			Description: fmt.Sprintf("%T.%v(%T)", s, "setupRestAPI", &SetupRestAPIInput{}),
 		},
 		ResponseInfo: &endly.ActionInfo{
-			Description: "",
+			Description: fmt.Sprintf("%T", &SetupRestAPIOutput{}),
 		},
 		RequestProvider: func() interface{} {
 			return &SetupRestAPIInput{}
@@ -130,7 +151,7 @@ func (s *service) registerRoutes() {
 
 func (s *service) setupResource(context *endly.Context, setup *SetupResourceInput, api *apigateway.RestApi, resources map[string]*apigateway.Resource) (*SetupResourceOutput, error) {
 	response := &SetupResourceOutput{
-		ResourceMethods:make(map[string]*apigateway.Method),
+		ResourceMethods: make(map[string]*apigateway.Method),
 	}
 	resourceInput := setup.CreateResourceInput
 	client, err := GetClient(context)
@@ -146,7 +167,7 @@ func (s *service) setupResource(context *endly.Context, setup *SetupResourceInpu
 		resources[*resource.Path] = resource
 	}
 	response.Resource = resource
-	if err = s.removeUnlistedMethods(client,api,  resource, setup);err != nil {
+	if err = s.removeUnlistedMethods(client, api, resource, setup); err != nil {
 		return nil, err
 	}
 	for _, resourceMethod := range setup.Methods {
@@ -160,8 +181,8 @@ func (s *service) setupResource(context *endly.Context, setup *SetupResourceInpu
 }
 
 
-func (s *service) setupResourceMethod(context *endly.Context, api *apigateway.RestApi, resource *apigateway.Resource, resourceMethod *ResourceMethod) (*apigateway.Method, error) {
 
+func (s *service) setupResourceMethod(context *endly.Context, api *apigateway.RestApi, resource *apigateway.Resource, resourceMethod *ResourceMethod) (*apigateway.Method, error) {
 	lambdaClient, err := clambda.GetClient(context)
 	if err != nil {
 		return nil, err
@@ -192,7 +213,6 @@ func (s *service) setupResourceMethod(context *endly.Context, api *apigateway.Re
 	method.MethodIntegration, err = s.setupMethodIntegration(context, method, resourceMethod.PutIntegrationInput)
 	permissionInput := resourceMethod.AddPermissionInput
 	if resourceMethod.Function != "" && permissionInput != nil {
-
 		*permissionInput.SourceArn = state.ExpandAsText(*permissionInput.SourceArn)
 		*permissionInput.StatementId = state.ExpandAsText(*permissionInput.StatementId)
 		request := clambda.SetupPermissionInput(*permissionInput)
@@ -202,8 +222,6 @@ func (s *service) setupResourceMethod(context *endly.Context, api *apigateway.Re
 	}
 	return method, nil
 }
-
-
 
 func (s *service) setupMethodIntegration(context *endly.Context, method *apigateway.Method, request *apigateway.PutIntegrationInput) (*apigateway.Integration, error) {
 	client, err := GetClient(context)
@@ -254,26 +272,63 @@ func (s *service) setupMethod(context *endly.Context, request *SetupMethodInput)
 	})
 }
 
-
-
-
-func (s *service) removeUnlistedMethods(client *apigateway.APIGateway, api *apigateway.RestApi,  resource *apigateway.Resource, input *SetupResourceInput) error {
+func (s *service) removeUnlistedMethods(client *apigateway.APIGateway, api *apigateway.RestApi, resource *apigateway.Resource, input *SetupResourceInput) error {
 	var listedMethods = make(map[string]bool)
-	for _, method:= range input.Methods {
+	for _, method := range input.Methods {
 		listedMethods[method.HttpMethod] = true
 	}
-	for k:= range resource.ResourceMethods {
+	for k := range resource.ResourceMethods {
 		if _, ok := listedMethods[k]; !ok {
-			if _ , err := client.DeleteMethod(&apigateway.DeleteMethodInput{
-				HttpMethod:&k,
-				ResourceId:resource.Id,
-				RestApiId:api.Id,
-			});err != nil {
+			if _, err := client.DeleteMethod(&apigateway.DeleteMethodInput{
+				HttpMethod: &k,
+				ResourceId: resource.Id,
+				RestApiId:  api.Id,
+			}); err != nil {
 				return err
 			}
 		}
 	}
 	return nil
+}
+
+func (s *service) setupDeployment(context *endly.Context, request *apigateway.CreateDeploymentInput) (*apigateway.Stage, error) {
+	client, err := GetClient(context)
+	if err != nil {
+		return nil, err
+	}
+	if deployment, _ := client.GetDeployment(&apigateway.GetDeploymentInput{
+		RestApiId: request.RestApiId,
+	}); deployment != nil {
+
+		if stage, err := s.getStage(context, deployment, *request.RestApiId, *request.StageName); err == nil {
+			return stage, err
+		}
+	}
+	deployment, err := client.CreateDeployment(request)
+	if err != nil {
+		return nil, err
+	}
+	return s.getStage(context, deployment, *request.RestApiId, *request.StageName)
+}
+
+func (s *service) getStage(context *endly.Context, deployment *apigateway.Deployment, restApiId, stageName string) (*apigateway.Stage, error) {
+	client, err := GetClient(context)
+	if err != nil {
+		return nil, err
+	}
+	stages, err := client.GetStages(&apigateway.GetStagesInput{
+		DeploymentId: deployment.Id,
+		RestApiId:    &restApiId,
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range stages.Item {
+		if *item.StageName == stageName {
+			return item, nil
+		}
+	}
+	return nil, fmt.Errorf("failed to lookup stage for name: %v, api %v", stageName, restApiId)
 }
 
 //New creates a new AWS API Gateway service.
