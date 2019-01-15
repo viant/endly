@@ -3,10 +3,7 @@ package apigateway
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/apigateway"
-	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/viant/endly"
 	"github.com/viant/toolbox/data"
 )
 
@@ -87,19 +84,9 @@ func patchString(source, target *string, path string) (*apigateway.PatchOperatio
 }
 
 
-func buildFunctionState(context *endly.Context, function *lambda.FunctionConfiguration, restAPI *apigateway.RestApi) data.Map {
-	functionState := data.NewMap()
-	functionState.Put("arn", function.FunctionArn)
-	if ARN, err := arn.Parse(*function.FunctionArn); err == nil {
-		functionState.Put("region", ARN.Region)
-		functionState.Put("accountID", ARN.AccountID)
-	}
-	state := context.State()
-	state.SetValue("restAPI.ID", *restAPI.Id)
-	functionState.Put("name", function.FunctionName)
-	state.Put("function", functionState)
-	return state
+
+
+func SetAPIInfo(restAPI *apigateway.RestApi, aMap data.Map) {
+	aMap.SetValue("restAPI.ID", *restAPI.Id)
 }
-
-
 

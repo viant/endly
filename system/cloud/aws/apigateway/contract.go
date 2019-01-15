@@ -10,31 +10,31 @@ import (
 
 //SetupRestAPIInput represent a request to setup API with specified resources
 type SetupRestAPIInput struct {
-	*apigateway.CreateRestApiInput
+	apigateway.CreateRestApiInput
 	Resources []*SetupResourceInput
-	*apigateway.CreateDeploymentInput
+	apigateway.CreateDeploymentInput
 }
 
 //SetupRestAPIInput represent setup API response
 type SetupRestAPIOutput struct {
 	*apigateway.RestApi
-	Resources []*SetupResourceOutput
-	Stage *apigateway.Stage
+	Resources   []*SetupResourceOutput
+	Stage       *apigateway.Stage
 	EndpointURL string
-	Region string
+	Region      string
 }
 
 //SetupResourceInput represents resource input
 type SetupResourceInput struct {
 	Path string
-	*apigateway.CreateResourceInput
+	apigateway.CreateResourceInput
 	Methods []*ResourceMethod
 }
 
 //ResourceMethod represents resource method
 type ResourceMethod struct {
-	Function string
-	HttpMethod string
+	FunctionName string
+	HttpMethod   string
 	*apigateway.PutMethodInput
 	*apigateway.PutIntegrationInput
 	*lambda.AddPermissionInput
@@ -68,11 +68,7 @@ func (i *SetupRestAPIInput) Validate() error {
 			return err
 		}
 	}
-	createDeployment := i.CreateDeploymentInput
-	if createDeployment  == nil {
-		i.CreateDeploymentInput = &apigateway.CreateDeploymentInput{}
-		createDeployment = i.CreateDeploymentInput
-	}
+	createDeployment := &i.CreateDeploymentInput
 	if createDeployment.StageName == nil {
 		createDeployment.StageName = aws.String("e2e")
 	}
@@ -87,9 +83,6 @@ func (i *SetupResourceInput) Init() error {
 		} else {
 			i.Path = "/"
 		}
-	}
-	if i.CreateResourceInput == nil {
-		i.CreateResourceInput = &apigateway.CreateResourceInput{}
 	}
 	if i.PathPart == nil {
 		parts := strings.Split(i.Path, "/")
@@ -111,7 +104,7 @@ func (i *SetupResourceInput) Init() error {
 
 func (i *SetupResourceInput) Validate() error {
 	resourceInput := i.CreateResourceInput
-	if resourceInput == nil || resourceInput.PathPart == nil {
+	if resourceInput.PathPart == nil {
 		return fmt.Errorf("pathPart was empty")
 	}
 	if len(i.Methods) == 0 {
@@ -170,7 +163,6 @@ func (i *ResourceMethod) Init() error {
 		methodInput.AuthorizationType = aws.String("NONE")
 	}
 
-
 	if methodInput.ApiKeyRequired == nil {
 		methodInput.ApiKeyRequired = aws.Bool(false)
 	}
@@ -195,16 +187,18 @@ func (i *ResourceMethod) Init() error {
 		integrationInput.Type = aws.String("AWS_PROXY")
 	}
 
-	if i.Function != "" {
+	if i.FunctionName != "" {
 		if integrationInput.Uri == nil {
 			integrationInput.Uri = aws.String("arn:aws:apigateway:${function.region}:lambda:path/2015-03-31/functions/${function.arn}/invocations")
 		}
-		permissionInput :=i.AddPermissionInput
+		permissionInput := i.AddPermissionInput
 		if i.AddPermissionInput == nil {
 			i.AddPermissionInput = &lambda.AddPermissionInput{
-				FunctionName:&i.Function,
 			}
-			permissionInput= i.AddPermissionInput
+			permissionInput = i.AddPermissionInput
+		}
+		if permissionInput.FunctionName == nil {
+			permissionInput.FunctionName = &i.FunctionName
 		}
 		if permissionInput.Action == nil {
 			permissionInput.Action = aws.String("lambda:InvokeFunction")
@@ -221,6 +215,7 @@ func (i *ResourceMethod) Init() error {
 	}
 	return nil
 }
+
 
 func (i *ResourceMethod) Validate() error {
 	if i.HttpMethod == "" {
@@ -284,7 +279,6 @@ func (i PutIntegrationInput) Diff(source *apigateway.Integration) []*apigateway.
 	return result
 }
 
-
 type SetupDeploymentInput apigateway.CreateDeploymentInput
 
 func (i *SetupDeploymentInput) Diff(source *apigateway.CreateDeploymentInput) []*apigateway.PatchOperation {
@@ -301,6 +295,6 @@ func (i *SetupDeploymentInput) Diff(source *apigateway.CreateDeploymentInput) []
 	if patch, ok := patchBool(source.CacheClusterEnabled, i.CacheClusterEnabled, "/cacheClusterEnabled"); ok {
 		result = append(result, patch)
 	}
-	
+
 	return result
 }

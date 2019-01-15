@@ -34,7 +34,7 @@ pipeline:
       - path: /ip
         methods:
           - httpMethod: ANY
-            function: lookupIp
+            functionName: lookupIp
 
   info:
     action: print

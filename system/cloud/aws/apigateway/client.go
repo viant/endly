@@ -36,7 +36,7 @@ func getClient(context *endly.Context) (interface{}, error)  {
 
 
 
-//GetClient returns iam client from context
+//GetClient returns apigateway client from context
 func GetClient(context *endly.Context) (*apigateway.APIGateway, error) {
 	client, err := getClient(context)
 	if err != nil {

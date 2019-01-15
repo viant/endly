@@ -15,7 +15,7 @@ type DropRoleInput iam.DeleteRoleInput
 
 //SetupRolePolicyInput represents setup role policy input
 type SetupRolePolicyInput struct {
-	*iam.CreateRoleInput
+	iam.CreateRoleInput
 	DefaultPolicyDocument *string
 	Attach []*iam.AttachRolePolicyInput
 	Define []*iam.PutRolePolicyInput
@@ -24,7 +24,7 @@ type SetupRolePolicyInput struct {
 
 //Validate checks if input is valid
 func (i *SetupRolePolicyInput) Validate() error {
-	if i.CreateRoleInput == nil {
+	if i.CreateRoleInput.RoleName == nil {
 		return fmt.Errorf("roleName was empty")
 	}
 	return nil

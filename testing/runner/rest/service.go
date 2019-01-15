@@ -66,7 +66,7 @@ const restSendExample = `
 				"Values": [
 					{
 						"Column": "expenditure",
-						"Function": "SUM"
+						"FunctionName": "SUM"
 					}
 				]
 			},

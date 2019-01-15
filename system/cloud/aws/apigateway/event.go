@@ -6,25 +6,29 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type RestMethod struct {
+
+//Represents reset method event part
+type RestMethodInfo struct {
 	HTTPMethod        string
 	URI               *string
 	Type              *string
 	AuthorizationType *string
 }
 
-type RestResource struct {
+//Represents reset resource event part
+type RestResourceInfo struct {
 	Path    string
 	ID      string
-	Methods []*RestMethod
+	Methods []*RestMethodInfo
 	TestCLI string
 }
 
+//ResetAPIEvent represents rest API event
 type ResetAPIEvent struct {
 	Name      string
 	ID        string
 	Endpoint  string
-	Resources []*RestResource
+	Resources []*RestResourceInfo
 }
 
 func (e *ResetAPIEvent) Messages() []*msg.Message {
@@ -45,21 +49,21 @@ func NewResetAPIEvent(output *SetupRestAPIOutput) *ResetAPIEvent {
 		Name:      *output.Name,
 		ID:        *output.Id,
 		Endpoint:  output.EndpointURL,
-		Resources: make([]*RestResource, 0),
+		Resources: make([]*RestResourceInfo, 0),
 	}
 	if len(output.Resources) == 0 {
 		return result
 	}
 	for _, resource := range output.Resources {
-		restResource := &RestResource{
+		restResource := &RestResourceInfo{
 			Path:    *resource.Path,
 			ID:      *resource.Id,
-			Methods: make([]*RestMethod, 0),
+			Methods: make([]*RestMethodInfo, 0),
 			TestCLI:fmt.Sprintf(`aws apigateway test-invoke-method --rest-api-id %s  --resource-id %s --http-method "GET"`, *output.Id, *resource.Id),
 		}
 		if len(resource.ResourceMethods) > 0 {
 			for k, v := range resource.ResourceMethods {
-				method := &RestMethod{
+				method := &RestMethodInfo{
 					HTTPMethod:        k,
 					AuthorizationType: v.AuthorizationType,
 				}
