@@ -34,3 +34,17 @@ func getClient(context *endly.Context) (interface{}, error)  {
 	return client, nil
 }
 
+
+
+//GetClient returns s3 client from context
+func GetClient(context *endly.Context) (*s3.S3, error) {
+	client, err := getClient(context)
+	if err != nil {
+		return nil, err
+	}
+	s3Client, ok := client.(*s3.S3)
+	if !  ok {
+		return nil, fmt.Errorf("unexpected client type: %T", client)
+	}
+	return s3Client, nil
+}

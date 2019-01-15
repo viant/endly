@@ -76,7 +76,8 @@ func (s *service) dropFunction(context *endly.Context, request *DropFunctionInpu
 	})
 }
 
-func (s *service) setupPermission(context *endly.Context, request *SetupPermissionInput) (*lambda.AddPermissionOutput, error) {
+//*iam.Statement
+func (s *service) setupPermission(context *endly.Context, request *SetupPermissionInput) (interface{}, error) {
 	client, err := GetClient(context)
 	if err != nil {
 		return nil, err
@@ -91,7 +92,8 @@ func (s *service) setupPermission(context *endly.Context, request *SetupPermissi
 		}
 		if len(policy.Statement) > 0 {
 			for _, statement := range policy.Statement {
-				if toolbox.AsString(statement.Action) != *request.Action {
+				action, _ :=statement.Action.Value()
+				if toolbox.AsString(action) != *request.Action {
 					continue
 				}
 				condition, _ := statement.Condition.Value()
@@ -141,17 +143,38 @@ func (s *service) setupFunctionInBackground(context *endly.Context, request *Set
 	}
 	output := &SetupFunctionOutput{}
 	output.RoleInfo = &iam.GetRoleInfoOutput{}
-	if err = endly.Run(context, request.SetupRolePolicyInput, &output.RoleInfo); err != nil {
+	if err = endly.Run(context, &request.SetupRolePolicyInput, &output.RoleInfo); err != nil {
 		return nil, err
 	}
 	request.Role = output.RoleInfo.Role.Arn
 	var functionConfig *lambda.FunctionConfiguration
-	functionOutput, _ := client.GetFunction(&lambda.GetFunctionInput{
+	functionOutput, foundErr := client.GetFunction(&lambda.GetFunctionInput{
 		FunctionName: request.FunctionName,
 	});
-	if functionOutput != nil && functionOutput.Configuration != nil {
+	if foundErr == nil {
 		functionConfig = functionOutput.Configuration
 		createFunction := request.CreateFunctionInput
+		if _, err = client.UpdateFunctionConfiguration(&lambda.UpdateFunctionConfigurationInput{
+			FunctionName:     request.FunctionName,
+			Description:      request.Description,
+			Handler:          request.Handler,
+			KMSKeyArn:        request.KMSKeyArn,
+			MemorySize:       request.MemorySize,
+			Role:             request.Role,
+			Runtime:          request.Runtime,
+			Timeout:          request.Timeout,
+			TracingConfig:    request.TracingConfig,
+			VpcConfig:        request.VpcConfig,
+			Environment:      request.Environment,
+			DeadLetterConfig: request.DeadLetterConfig,
+		}); err != nil {
+			return nil, err
+		}
+
+		if createFunction.Code.ZipFile != nil && ! hasDataChanged(createFunction.Code.ZipFile, *functionConfig.CodeSha256) {
+			output.FunctionConfiguration = functionOutput.Configuration
+			return output, nil
+		}
 		if functionConfig, err = client.UpdateFunctionCode(&lambda.UpdateFunctionCodeInput{
 			FunctionName:    createFunction.FunctionName,
 			ZipFile:         createFunction.Code.ZipFile,
@@ -162,8 +185,9 @@ func (s *service) setupFunctionInBackground(context *endly.Context, request *Set
 		}); err != nil {
 			return nil, err
 		}
+
 	} else {
-		if functionConfig, err = client.CreateFunction(request.CreateFunctionInput); err != nil {
+		if functionConfig, err = client.CreateFunction(&request.CreateFunctionInput); err != nil {
 			return nil, err
 		}
 	}

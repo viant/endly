@@ -20,7 +20,6 @@ type service struct {
 }
 
 
-
 func (s *service) registerRoutes() {
 	client := &ec2.EC2{}
 	routes, err := aws.BuildRoutes(client, getClient)
@@ -33,9 +32,6 @@ func (s *service) registerRoutes() {
 		s.Register(route)
 	}
 }
-
-
-
 
 
 //New creates a new AWS IAM service.

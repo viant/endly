@@ -22,7 +22,7 @@ import (
 	_ "github.com/viant/endly/shared/static" //load external resource like .csv .json files to mem storage
 
 	_ "github.com/viant/endly/workflow"
-	_ "github.com/viant/toolbox/storage/aws"
+	_ "github.com/viant/toolbox/storage/s3"
 	_ "github.com/viant/toolbox/storage/gs"
 	_ "github.com/viant/toolbox/storage/scp"
 

@@ -1,7 +1,7 @@
 package iam
 
 import (
-	"github.com/viant/endly/util"
+	"github.com/viant/toolbox"
 )
 
 //Policy represent policy
@@ -41,10 +41,10 @@ type Principal struct {
 type Statement struct {
 	Sid       *string
 	Effect    string
-	Action    util.AnyType
-	Resource  util.AnyType
-	Principal util.AnyType
-	Condition util.AnyType
+	Action    toolbox.AnyJSONType
+	Resource  toolbox.AnyJSONType
+	Principal toolbox.AnyJSONType
+	Condition toolbox.AnyJSONType
 }
 
 //PolicyDocument represent policy document

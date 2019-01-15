@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/apigateway"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/aws"
-	clambda "github.com/viant/endly/system/cloud/aws/lambda"
+	"github.com/viant/endly/system/cloud/aws/lambda"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/data"
 	"log"
 )
 
@@ -23,9 +21,8 @@ type service struct {
 	*endly.AbstractService
 }
 
-
 func (s *service) setupResetAPI(context *endly.Context, request *SetupRestAPIInput) (*SetupRestAPIOutput, error) {
-	restAPI, resources, err := s.getOrCreateRestAPI(context, request.CreateRestApiInput)
+	restAPI, resources, err := s.getOrCreateRestAPI(context, &request.CreateRestApiInput)
 	if err != nil {
 		return nil, err
 	}
@@ -53,19 +50,20 @@ func (s *service) setupResetAPI(context *endly.Context, request *SetupRestAPIInp
 		if len(resourceOutput.ResourceMethods) > 0 {
 			for _, v := range resourceOutput.ResourceMethods {
 				if v.MethodIntegration != nil {
-					if ARN, err := arn.Parse(*v.MethodIntegration.Uri);err == nil {
-						response.Region  = ARN.Region
+					if ARN, err := arn.Parse(*v.MethodIntegration.Uri); err == nil {
+						response.Region = ARN.Region
 					}
 				}
 			}
 		}
 	}
-	request.CreateDeploymentInput.RestApiId = restAPI.Id
-	if response.Stage, err = s.setupDeployment(context, request.CreateDeploymentInput); err != nil {
+	deploymentInput := &request.CreateDeploymentInput
+	deploymentInput.RestApiId = restAPI.Id
+	if response.Stage, err = s.setupDeployment(context, deploymentInput); err != nil {
 		return nil, err
 	}
 	if response.Region != "" {
-		response.EndpointURL  = fmt.Sprintf("https://%s.execute-api.%s.amazonaws.com/%v/" ,
+		response.EndpointURL = fmt.Sprintf("https://%s.execute-api.%s.amazonaws.com/%v/",
 			*response.Id,
 			response.Region,
 			*response.Stage.StageName)
@@ -153,7 +151,7 @@ func (s *service) setupResource(context *endly.Context, setup *SetupResourceInpu
 	response := &SetupResourceOutput{
 		ResourceMethods: make(map[string]*apigateway.Method),
 	}
-	resourceInput := setup.CreateResourceInput
+	resourceInput := &setup.CreateResourceInput
 	client, err := GetClient(context)
 	if err != nil {
 		return nil, err
@@ -180,22 +178,16 @@ func (s *service) setupResource(context *endly.Context, setup *SetupResourceInpu
 	return response, err
 }
 
-
-
 func (s *service) setupResourceMethod(context *endly.Context, api *apigateway.RestApi, resource *apigateway.Resource, resourceMethod *ResourceMethod) (*apigateway.Method, error) {
-	lambdaClient, err := clambda.GetClient(context)
-	if err != nil {
-		return nil, err
-	}
-	var state data.Map
-	if resourceMethod.Function != "" {
-		functionOutput, err := lambdaClient.GetFunction(&lambda.GetFunctionInput{
-			FunctionName: &resourceMethod.Function,
-		})
+	var state = context.State()
+	state = state.Clone()
+	if resourceMethod.FunctionName != "" {
+		function, err := lambda.GetFunctionConfiguration(context, resourceMethod.FunctionName)
 		if err != nil {
 			return nil, err
 		}
-		state = buildFunctionState(context, functionOutput.Configuration, api)
+		lambda.SetFunctionInfo(function, state)
+		SetAPIInfo(api, state)
 		*resourceMethod.Uri = state.ExpandAsText(*resourceMethod.Uri)
 	}
 
@@ -212,10 +204,12 @@ func (s *service) setupResourceMethod(context *endly.Context, api *apigateway.Re
 	integrationInput.HttpMethod = setupMethod.HttpMethod
 	method.MethodIntegration, err = s.setupMethodIntegration(context, method, resourceMethod.PutIntegrationInput)
 	permissionInput := resourceMethod.AddPermissionInput
-	if resourceMethod.Function != "" && permissionInput != nil {
+
+	if resourceMethod.FunctionName != "" && permissionInput != nil {
 		*permissionInput.SourceArn = state.ExpandAsText(*permissionInput.SourceArn)
 		*permissionInput.StatementId = state.ExpandAsText(*permissionInput.StatementId)
-		request := clambda.SetupPermissionInput(*permissionInput)
+
+		request := lambda.SetupPermissionInput(*permissionInput)
 		if err = endly.Run(context, &request, nil); err != nil {
 			return nil, err
 		}

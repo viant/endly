@@ -32,6 +32,7 @@ func (e *RoleEventInfo) Messages() []*msg.Message {
 }
 
 func NewRoleEventInfo(output *GetRoleInfoOutput) *RoleEventInfo {
+
 	return &RoleEventInfo{
 		Role:     *output.Role.RoleName,
 		Arn:      *output.Role.Arn,
@@ -115,11 +116,17 @@ func NewUserEventInfo(output *GetUserInfoOutput) *UserEventInfo {
 }
 
 func (o *GetRoleInfoOutput) Messages() []*msg.Message {
+	if o==nil {
+		return nil
+	}
 	event := NewRoleEventInfo(o)
 	return event.Messages()
 }
 
 func (o *GetUserInfoOutput) Messages() []*msg.Message {
+	if o==nil {
+		return nil
+	}
 	event := NewUserEventInfo(o)
 	return event.Messages()
 }

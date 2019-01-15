@@ -85,12 +85,13 @@ func (s *service) setupRole(context *endly.Context, request *SetupRolePolicyInpu
 		return nil, err
 	}
 
-	roleOutput, _ := client.GetRole(&iam.GetRoleInput{
+	roleOutput, foundErr := client.GetRole(&iam.GetRoleInput{
 		RoleName: request.RoleName,
 	})
+
 	var role *iam.Role
-	if roleOutput == nil {
-		createRole := request.CreateRoleInput
+	if foundErr !=  nil{
+		createRole := &request.CreateRoleInput
 		if createRole.AssumeRolePolicyDocument == nil {
 			createRole.AssumeRolePolicyDocument = request.DefaultPolicyDocument
 		}
@@ -110,6 +111,9 @@ func (s *service) setupRole(context *endly.Context, request *SetupRolePolicyInpu
 			}
 		}
 	}
+
+
+
 	if err = s.setupAttachedRolePolicy(context, role, request); err != nil {
 		return nil, err
 	}
@@ -179,6 +183,9 @@ func (s *service) setupAttachedRolePolicy(context *endly.Context, role *iam.Role
 	}
 	if len(request.Attach) == 0 {
 		return err
+	}
+	if role == nil {
+		return fmt.Errorf("role was empty %v", request.RoleName)
 	}
 
 	var alreadyAttached = make(map[string]bool)

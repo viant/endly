@@ -16,18 +16,13 @@ type DropFunctionInput lambda.DeleteFunctionInput
 
 //SetupFunctionInput setup function, creates or updates existing one
 type SetupFunctionInput struct {
-	*lambda.CreateFunctionInput
-	*ciam.SetupRolePolicyInput
+	lambda.CreateFunctionInput
+	ciam.SetupRolePolicyInput
 }
 
 
 
-
 func (i *SetupFunctionInput) Init() error {
-	if i.SetupRolePolicyInput == nil {
-		return nil
-	}
-
 	if i.DefaultPolicyDocument == nil {
 		policyDocument := string(DefaultTrustPolicy)
 		i.DefaultPolicyDocument = &policyDocument
@@ -37,13 +32,13 @@ func (i *SetupFunctionInput) Init() error {
 }
 
 func (i *SetupFunctionInput) Validate() error {
-	if i.CreateFunctionInput == nil {
+	if i.CreateFunctionInput.FunctionName == nil {
 		return fmt.Errorf("functionName was empty")
 	}
 	if i.CreateFunctionInput.Code == nil {
 		return fmt.Errorf("code was empty")
 	}
-	if i.SetupRolePolicyInput == nil {
+	if i.SetupRolePolicyInput.RoleName == nil {
 		return fmt.Errorf("roleName was empty")
 	}
 
