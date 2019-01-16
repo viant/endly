@@ -16,9 +16,9 @@ type Client interface {
 
 	PullN(source *Resource, count int, nack bool) ([]*Message, error)
 
-	Create(resource *ResourceSetup) (*Resource, error)
+	SetupResource(resource *ResourceSetup) (*Resource, error)
 
-	Delete(resource *Resource) error
+	DeleteResource(resource *Resource) error
 
 	Close() error
 }

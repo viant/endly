@@ -423,6 +423,11 @@ func (s *Service) runNode(context *endly.Context, nodeType string, process *mode
 	if !process.CanRun() {
 		return nil
 	}
+	original := context.Logging
+	context.Logging = node.Logging
+	defer func() {
+		context.Logging = original
+	}()
 	var state = context.State()
 	canRun, err := criteria.Evaluate(context, context.State(), node.When, fmt.Sprintf("%v.When", nodeType), true)
 	if err != nil || !canRun {

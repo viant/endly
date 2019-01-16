@@ -87,7 +87,7 @@ func (s *gcPubSubClient) createTopic(resource *ResourceSetup) (*pubsub.Topic, er
 	return topic, nil
 }
 
-func (s *gcPubSubClient) Create(resource *ResourceSetup) (*Resource, error) {
+func (s *gcPubSubClient) SetupResource(resource *ResourceSetup) (*Resource, error) {
 	var err error
 	var result = resource.Resource
 	switch resource.Type {
@@ -109,7 +109,7 @@ func (s *gcPubSubClient) Create(resource *ResourceSetup) (*Resource, error) {
 	return &result, err
 }
 
-func (s *gcPubSubClient) Delete(resource *Resource) error {
+func (s *gcPubSubClient) DeleteResource(resource *Resource) error {
 	switch resource.Type {
 	case ResourceTypeTopic:
 		topic, err := s.getTopic(resource)
@@ -139,8 +139,13 @@ func (s *gcPubSubClient) Push(dest *Resource, message *Message) (Result, error) 
 	if !ok {
 		return nil, fmt.Errorf("topic %v does not exist", dest)
 	}
-	var pubMessage = &pubsub.Message{
-		Attributes: message.Attributes,
+
+	var pubMessage = &pubsub.Message{}
+	if len(message.Attributes) > 0 {
+		pubMessage.Attributes = make(map[string]string)
+		for k, v := range message.Attributes {
+			pubMessage.Attributes[k] = toolbox.AsString(v)
+		}
 	}
 
 	if message.Data != nil {
@@ -192,11 +197,17 @@ func (s *gcPubSubClient) PullN(source *Resource, max int, nack bool) ([]*Message
 	err = subscription.Receive(ctx, func(ctx context2.Context, msg *pubsub.Message) {
 		mutex.Lock()
 		defer mutex.Unlock()
-		messages = append(messages, &Message{
-			ID:         msg.ID,
-			Attributes: msg.Attributes,
-			Data:       msg.Data,
-		})
+		pulledMessage := &Message{
+			ID:   msg.ID,
+			Data: msg.Data,
+		}
+		if len(msg.Attributes) > 0 {
+			pulledMessage.Attributes = make(map[string]interface{})
+			for k, v := range msg.Attributes {
+				pulledMessage.Attributes[k] = v
+			}
+		}
+		messages = append(messages, pulledMessage)
 		pulledCount := int(atomic.AddInt32(&pulledCounter, 1))
 		if max > 0 && pulledCount >= max {
 			cancel()

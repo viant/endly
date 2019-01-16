@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/viant/endly/system/cloud/ec2"
+	eaws "github.com/viant/endly/system/cloud/aws"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"strings"
@@ -21,23 +21,19 @@ type awsPubSub struct {
 }
 
 func (c *awsPubSub) sendMessage(dest *Resource, message *Message) (Result, error) {
+
 	queueURL, err := c.getQueueURL(dest.Name)
 	if err != nil {
 		return nil, err
 	}
 	input := &sqs.SendMessageInput{
-		DelaySeconds:      aws.Int64(1),
-		MessageAttributes: map[string]*sqs.MessageAttributeValue{},
-		QueueUrl:          &queueURL,
+		DelaySeconds: aws.Int64(1),
+		QueueUrl:     &queueURL,
 	}
 
 	if len(message.Attributes) > 0 {
-		for k, v := range message.Attributes {
-			input.MessageAttributes[k] = &sqs.MessageAttributeValue{
-				DataType:    aws.String("String"),
-				StringValue: aws.String(v),
-			}
-		}
+		input.MessageAttributes = make(map[string]*sqs.MessageAttributeValue)
+		putSqsMessageAttributes(message.Attributes, input.MessageAttributes)
 	}
 	var body = toolbox.AsString(message.Data)
 	input.MessageBody = aws.String(body)
@@ -58,12 +54,8 @@ func (c *awsPubSub) publishMessage(dest *Resource, message *Message) (Result, er
 		TopicArn:          aws.String(topicARN),
 	}
 	if len(message.Attributes) > 0 {
-		for k, v := range message.Attributes {
-			input.MessageAttributes[k] = &sns.MessageAttributeValue{
-				DataType:    aws.String("String"),
-				StringValue: aws.String(v),
-			}
-		}
+		input.MessageAttributes = make(map[string]*sns.MessageAttributeValue)
+		putSnsMessageAttributes(message.Attributes, input.MessageAttributes)
 	}
 	var body = toolbox.AsString(message.Data)
 	input.Message = aws.String(body)
@@ -111,7 +103,7 @@ func (c *awsPubSub) PullN(source *Resource, count int, nack bool) ([]*Message, e
 	for _, msg := range output.Messages {
 		message := &Message{
 			ID:         *msg.MessageId,
-			Attributes: map[string]string{},
+			Attributes: make(map[string]interface{}),
 		}
 		if msg.Body != nil {
 			message.Data = *msg.Body
@@ -146,7 +138,6 @@ func (c *awsPubSub) createSubscription(topicURL, queueURL string) (*Resource, er
 
 func (c *awsPubSub) createQueue(resource *ResourceSetup) (*Resource, error) {
 	var name = resource.Name
-
 	if resource.Recreate {
 		if _, err := c.getQueueURL(resource.Name); err == nil {
 			if err = c.deleteQueue(&resource.Resource); err != nil {
@@ -154,12 +145,11 @@ func (c *awsPubSub) createQueue(resource *ResourceSetup) (*Resource, error) {
 			}
 		}
 	}
-
 	input := &sqs.CreateQueueInput{
-		QueueName:  aws.String(name),
-		Attributes: map[string]*string{},
+		QueueName: aws.String(name),
 	}
 	if resource.Config != nil && len(resource.Config.Attributes) > 0 {
+		input.Attributes = make(map[string]*string)
 		for k, v := range resource.Config.Attributes {
 			input.Attributes[k] = aws.String(v)
 		}
@@ -169,7 +159,7 @@ func (c *awsPubSub) createQueue(resource *ResourceSetup) (*Resource, error) {
 		return nil, err
 	}
 	var resultResource = &Resource{URL: *result.QueueUrl, Name: name}
-	if resource.Config.Topic != nil {
+	if resource.Config != nil && resource.Config.Topic != nil {
 		topicURL, err := c.getTopicARN(resource.Config.Topic.URL)
 		if err != nil {
 			return nil, err
@@ -216,7 +206,6 @@ func (c *awsPubSub) getQueueURL(queueName string) (string, error) {
 
 func (c *awsPubSub) createTopic(resource *ResourceSetup) (*Resource, error) {
 	var name = resource.Name
-
 	if resource.Recreate {
 		if arn, _ := c.getTopicARN(resource.Name); arn != "" {
 			if err := c.deleteTopic(&resource.Resource); err != nil {
@@ -226,8 +215,16 @@ func (c *awsPubSub) createTopic(resource *ResourceSetup) (*Resource, error) {
 	}
 
 	input := &sns.CreateTopicInput{
-		Name: aws.String(name),
+		Name:       aws.String(name),
+		Attributes: make(map[string]*string),
 	}
+
+	if resource.Config != nil && len(resource.Config.Attributes) > 0 {
+		for k, v := range resource.Config.Attributes {
+			input.Attributes[k] = aws.String(v)
+		}
+	}
+
 	result, err := c.sns.CreateTopic(input)
 	if err != nil {
 		return nil, err
@@ -236,7 +233,8 @@ func (c *awsPubSub) createTopic(resource *ResourceSetup) (*Resource, error) {
 	return resultResource, nil
 }
 
-func (c *awsPubSub) Create(resource *ResourceSetup) (*Resource, error) {
+func (c *awsPubSub) SetupResource(resource *ResourceSetup) (*Resource, error) {
+
 	switch resource.Type {
 	case ResourceTypeTopic:
 		return c.createTopic(resource)
@@ -268,7 +266,7 @@ func (c *awsPubSub) deleteTopic(resource *Resource) error {
 	return nil
 }
 
-func (c *awsPubSub) Delete(resource *Resource) error {
+func (c *awsPubSub) DeleteResource(resource *Resource) error {
 	switch resource.Type {
 	case ResourceTypeQueue:
 		return c.deleteQueue(resource)
@@ -283,7 +281,7 @@ func (c *awsPubSub) Close() error {
 }
 
 func newAwsSqsClient(credConfig *cred.Config, timeout time.Duration) (Client, error) {
-	config, err := ec2.GetAWSCredentialConfig(credConfig)
+	config, err := eaws.GetAWSCredentialConfig(credConfig)
 	if err != nil {
 		return nil, err
 	}

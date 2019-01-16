@@ -38,7 +38,7 @@ func (s *Server) requestService(serviceName, action string, httpRequest *http.Re
 		return nil, err
 	}
 	context := s.manager.NewContext(toolbox.NewContext())
-	serviceRequest, err = context.NewRequest(serviceName, action)
+	serviceRequest, err = context.NewRequest(serviceName, action, map[string]interface{}{})
 	if err != nil {
 		return nil, err
 	}

@@ -34,6 +34,7 @@ type Context struct {
 	Listener        msg.Listener
 	Source          *url.Resource
 	state           data.Map
+	Logging         *bool
 	toolbox.Context
 	cloned []*Context
 	closed int32
@@ -104,6 +105,13 @@ func (c *Context) parentURLCandidates() []string {
 	}
 
 	return result
+}
+
+func (c *Context) IsLoggingEnabled() bool {
+	if c.Logging == nil {
+		return true
+	}
+	return *c.Logging
 }
 
 //ExpandResource substitutes any $ expression with the key value from the state map if it is present.
@@ -209,8 +217,9 @@ func (s *Context) PublishAndRestore(values map[string]interface{}) func() {
 }
 
 //NewRequest creates a new request for service and action
-func (c *Context) NewRequest(serviceName, action string) (interface{}, error) {
-	service, err := c.Service(serviceName)
+func (c *Context) NewRequest(serviceName, action string, rawRequest map[string]interface{}) (result interface{}, err error) {
+	var service Service
+	service, err = c.Service(serviceName)
 	if err != nil {
 		return nil, err
 	}
@@ -218,28 +227,35 @@ func (c *Context) NewRequest(serviceName, action string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return route.RequestProvider(), nil
+
+	defer func() {
+		if r := recover(); r != nil {
+			var info = toolbox.AsString(rawRequest)
+			if JSONSource, err := toolbox.AsJSONText(rawRequest); err == nil {
+				info = JSONSource
+			}
+			err = fmt.Errorf("unable to create %v request: %v, %v", serviceName+":"+action, r, info)
+		}
+	}()
+	request := route.RequestProvider()
+	if route.OnRawRequest != nil {
+		if err = route.OnRawRequest(c, rawRequest); err != nil {
+			return nil, err
+		}
+	}
+	err = toolbox.DefaultConverter.AssignConverted(request, rawRequest)
+	return request, err
 }
 
 //AsRequest converts a source map into request for provided service and action.
 func (c *Context) AsRequest(serviceName, action string, source map[string]interface{}) (request interface{}, err error) {
 
-	if request, err = c.NewRequest(serviceName, action); err != nil {
-		return request, fmt.Errorf("unable to create %v request %v", serviceName+":"+action, err)
-	}
-	defer func() {
-
-		if r := recover(); r != nil {
-			var info = toolbox.AsString(source)
-			if JSONSource, err := toolbox.AsJSONText(source); err == nil {
-				info = JSONSource
-			}
-			err = fmt.Errorf("unable to create %v request %v, request: %v, %v", serviceName+":"+action, err, info, r)
-		}
-	}()
 	expanded := c.state.Expand(source)
 	source = toolbox.AsMap(expanded)
-	err = toolbox.DefaultConverter.AssignConverted(request, source)
+	if request, err = c.NewRequest(serviceName, action, source); err != nil {
+		return request, fmt.Errorf("unable to create %v request %v", serviceName+":"+action, err)
+	}
+
 	return request, err
 }
 

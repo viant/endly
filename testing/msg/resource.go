@@ -78,12 +78,17 @@ func (r *ResourceSetup) Init() error {
 }
 
 func (r *ResourceSetup) Validate() error {
-	if r.Type == ResourceTypeSubscription && r.Vendor == "gc" {
+	if r.Type == ResourceTypeSubscription && r.Vendor == ResourceVendorGoogleCloud {
 		if r.Config == nil {
 			return fmt.Errorf("subscription config was empty")
 		}
 		if r.Config.Topic == nil {
 			return fmt.Errorf("subscription config.Topic was empty")
+		}
+	}
+	if r.Type == ResourceTypeQueue {
+		if r.Name == "" {
+			return fmt.Errorf("Name was empty")
 		}
 	}
 
