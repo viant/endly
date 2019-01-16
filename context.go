@@ -34,6 +34,7 @@ type Context struct {
 	Listener        msg.Listener
 	Source          *url.Resource
 	state           data.Map
+	Logging         *bool
 	toolbox.Context
 	cloned []*Context
 	closed int32
@@ -104,6 +105,13 @@ func (c *Context) parentURLCandidates() []string {
 	}
 
 	return result
+}
+
+func (c *Context) IsLoggingEnabled() bool {
+	if c.Logging == nil {
+		return true
+	}
+	return *c.Logging
 }
 
 //ExpandResource substitutes any $ expression with the key value from the state map if it is present.
