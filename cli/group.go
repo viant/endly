@@ -24,7 +24,7 @@ func (g *MessageGroup) EnableIfMatched(message *msg.Message) bool {
 		return false
 	}
 
-	if g.message.Header.Equals(message.Header) && g.message.Tag.Equals(message.Tag)   {
+	if g.message.Header.Equals(message.Header) && g.message.Tag.Equals(message.Tag) {
 		g.Set(message)
 		return true
 	}
