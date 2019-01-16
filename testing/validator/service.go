@@ -20,7 +20,7 @@ type validatorService struct {
 func (s *validatorService) Assert(context *endly.Context, request *AssertRequest) (response *AssertResponse, err error) {
 	var state = context.State()
 	var actual = request.Actual
-	var expected = request.Expected
+	var expect = request.Expect
 	response = &AssertResponse{}
 	if toolbox.IsString(request.Actual) {
 		if actualValue, ok := state.GetValue(toolbox.AsString(request.Actual)); ok {
@@ -32,7 +32,7 @@ func (s *validatorService) Assert(context *endly.Context, request *AssertRequest
 		name = "/"
 	}
 
-	response.Validation, err = criteria.Assert(context, name, expected, actual)
+	response.Validation, err = criteria.Assert(context, name, expect, actual)
 	if err != nil {
 		return nil, err
 	}

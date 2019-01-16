@@ -1,20 +1,42 @@
 package validator
 
-import "github.com/viant/assertly"
+import (
+	"github.com/viant/assertly"
+	"github.com/viant/toolbox"
+)
 
 //AssertRequest represent assert request
 type AssertRequest struct {
-	TagID       string
-	Name        string
-	Description string
-	Actual      interface{} `required:"true" description:"actual value/data structure"`
-	Expected    interface{} `required:"true" description:"expected value/data structure"`
-	Source      interface{} //optional validation source
+	TagID            string
+	Name             string
+	Description      string
+	Actual           interface{} `required:"true" description:"actual value/data structure"`
+	Expect           interface{} `required:"true" description:"expected value/data structure"`
+	Expected         interface{} //Deprecated
+	Source           interface{} //optional validation source
+	NormalizeKVPairs bool        //flag to normalize kv pairs into map if possible (i.e, when using yaml)
 }
 
 //AssertResponse represent validation response
 type AssertResponse struct {
 	*assertly.Validation
+}
+
+func (r *AssertRequest) Init() error {
+	if r.Expect == nil {
+		r.Expect = r.Expected
+	}
+
+	if r.Expect == nil {
+		return nil
+	}
+
+	if r.NormalizeKVPairs {
+		if normalized, err := toolbox.NormalizeKVPairs(r.Expect); err == nil {
+			r.Expect = normalized
+		}
+	}
+	return nil
 }
 
 //Assertion returns validation slice
