@@ -35,9 +35,15 @@ func (a *Activity) FormatTag() string {
 //NewActivity returns a new workflow Activity.
 func NewActivity(context *endly.Context, action *Action, state data.Map) *Activity {
 	var result = &Activity{
-		Action:          state.ExpandAsText(action.Action),
-		Service:         state.ExpandAsText(action.Service),
-		MetaTag:         action.MetaTag,
+		Action:  state.ExpandAsText(action.Action),
+		Service: state.ExpandAsText(action.Service),
+		MetaTag: &MetaTag{
+			Tag:            action.Tag,
+			TagIndex:       action.TagIndex,
+			TagID:          action.TagID,
+			TagDescription: action.TagDescription,
+			Comments:       action.Comments,
+		},
 		Description:     context.Expand(action.AbstractNode.Description),
 		Request:         action.Request,
 		Response:        make(map[string]interface{}),
