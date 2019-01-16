@@ -9,12 +9,8 @@ import (
 	"net/http"
 )
 
-
-
-
-
 //GetGCAuthClient creates a new compute service.
-func GetGCAuthClient(ctx context.Context, credConfig *cred.Config, scopes ... string) (context.Context, *http.Client, error) {
+func GetGCAuthClient(ctx context.Context, credConfig *cred.Config, scopes ...string) (context.Context, *http.Client, error) {
 	if credConfig == nil {
 		return nil, nil, errors.New("credential config was empty")
 	}
