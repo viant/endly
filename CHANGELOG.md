@@ -3,6 +3,7 @@
     * Added aws/* services
     * Refactored aws/ec2 service
     * Added context level Loging for action
+    * Minor patches
     
     
 ## November 7 2018 0.25.1
