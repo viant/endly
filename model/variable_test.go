@@ -159,8 +159,6 @@ func TestVariable_Apply(t *testing.T) {
 				"var1": 123,
 			},
 		},
-
-
 	}
 	for _, useCase := range useCases {
 		var input = data.Map(useCase.Input)
@@ -287,9 +285,9 @@ func TestVariableExpression_AsVariable(t *testing.T) {
 			Expected:    NewVariable("var1", "", "$in.var2 > 10", false, []interface{}{1.0, 2.0, 3.0}, "3", nil, false),
 		},
 		{
-			Description:"URL glitch",
-			Expression:"var1 = http://127.0.0.1:8080/test.json?key=%7B%22code%22:%220104346441f6f1624178%22%7D",
-			Expected:    NewVariable("var1", "", "", false, "http://127.0.0.1:8080/test.json?key=%7B%22code%22:%220104346441f6f1624178%22%7D" , nil, nil, false),
+			Description: "URL glitch",
+			Expression:  "var1 = http://127.0.0.1:8080/test.json?key=%7B%22code%22:%220104346441f6f1624178%22%7D",
+			Expected:    NewVariable("var1", "", "", false, "http://127.0.0.1:8080/test.json?key=%7B%22code%22:%220104346441f6f1624178%22%7D", nil, nil, false),
 		},
 		{
 			Description: "error assignment ",
