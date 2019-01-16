@@ -317,8 +317,9 @@ func extractFromValue(value string, variable *Variable) {
 	}
 	var whenIndex = strings.Index(value, "?")
 	if whenIndex != -1 {
-		variable.When = strings.TrimSpace(string(value[:whenIndex]))
+		predicate := strings.TrimSpace(string(value[:whenIndex]))
 		value := strings.TrimSpace(string(value[whenIndex+1:]))
+		variable.When = predicate
 		variable.Value = value
 		elseIndex := strings.LastIndex(value, ":")
 		if elseIndex != -1 {
@@ -329,9 +330,21 @@ func extractFromValue(value string, variable *Variable) {
 	variable.Value = normalizeVariableValue(toolbox.AsString(variable.Value))
 }
 
+func isValidPredicate(candidate string) bool {
+	if ! strings.Contains(candidate, "$") {
+		return false
+	}
+	_, err := criteria.NewParser().Parse(candidate);
+	return err == nil
+}
+
 func hasConditionalAssignment(candidate string) bool {
 	questionMarkCount := strings.Count(candidate, "?")
 	if questionMarkCount != 1 {
+		return false
+	}
+	parts := strings.SplitN(candidate,  "?", 2)
+	if ! isValidPredicate(parts[0]) {
 		return false
 	}
 	elseCount := strings.Count(candidate, ":")
