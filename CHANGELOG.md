@@ -1,12 +1,9 @@
 ## November 9 2018 0.26.0
     * Added endly Route OnRawRequest hook
-    * Added aws/iam service
-    * Added aws/apigateway service
-    * Added aws/iam service
-    * Added aws/lambda service
-    * Added aws/s3 service
-    * Added aws/ses service
+    * Added aws/* services
     * Refactored aws/ec2 service
+    * Added context level Loging for action
+    
     
 ## November 7 2018 0.25.1
     * Resolved template variable collision with sub workflow templates
@@ -23,7 +20,6 @@
     * Added message grouping
     * Added template tag failure level reporting for sub workflows
     * Stremlined CLI reporter
-    
     
 ## December 28 2018 0.24.0
     * Added smtp endpoint
