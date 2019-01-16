@@ -121,7 +121,7 @@ func (s *execService) openSession(context *endly.Context, request *OpenSessionRe
 	}
 	if !request.Transient {
 		context.Deffer(func() {
-			_, _ =  s.closeSession(context, &CloseSessionRequest{
+			_, _ = s.closeSession(context, &CloseSessionRequest{
 				SessionID: sessionID,
 			})
 		})
