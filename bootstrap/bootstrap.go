@@ -10,7 +10,7 @@ import (
 	_ "github.com/adrianwit/fsc"
 	_ "github.com/adrianwit/mgc"
 
-	_ "github.com/alexbrainman/odbc"
+//	_ "github.com/alexbrainman/odbc"
 
 	_ "github.com/MichaelS11/go-cql-driver"
 	"github.com/go-sql-driver/mysql"
