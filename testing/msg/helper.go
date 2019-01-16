@@ -3,6 +3,9 @@ package msg
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/sns"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
@@ -66,5 +69,39 @@ func expandResource(context *endly.Context, resource *Resource) *Resource {
 		Name:        state.ExpandAsText(resource.Name),
 		Vendor:      resource.Vendor,
 		Credentials: state.ExpandAsText(resource.Credentials),
+	}
+}
+
+func getAttributeDataType(value interface{}) string {
+	dataType := "String"
+	if toolbox.IsInt(value) || toolbox.IsFloat(value) {
+		dataType = "Number"
+	}
+	return dataType
+}
+
+func putSqsMessageAttributes(attributes map[string]interface{}, target map[string]*sqs.MessageAttributeValue) {
+	for k, v := range attributes {
+		if v == nil {
+			continue
+		}
+		dataType := getAttributeDataType(v)
+		target[k] = &sqs.MessageAttributeValue{
+			DataType:    &dataType,
+			StringValue: aws.String(toolbox.AsString(v)),
+		}
+	}
+}
+
+func putSnsMessageAttributes(attributes map[string]interface{}, target map[string]*sns.MessageAttributeValue) {
+	for k, v := range attributes {
+		if v == nil {
+			continue
+		}
+		dataType := getAttributeDataType(v)
+		target[k] = &sns.MessageAttributeValue{
+			DataType:    &dataType,
+			StringValue: aws.String(toolbox.AsString(v)),
+		}
 	}
 }
