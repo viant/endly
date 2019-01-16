@@ -14,6 +14,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emersion/go-smtp v0.0.0-20180917150411-7162b2ca3bcb
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
+	github.com/go-errors/errors v1.0.1
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gocql/gocql v0.0.0-20181124151448-70385f88b28b // indirect
 	github.com/golang/lint v0.0.0-20181026193005-c67002cb31c3 // indirect

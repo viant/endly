@@ -22,8 +22,8 @@ import (
 	_ "github.com/viant/endly/shared/static" //load external resource like .csv .json files to mem storage
 
 	_ "github.com/viant/endly/workflow"
-	_ "github.com/viant/toolbox/storage/s3"
 	_ "github.com/viant/toolbox/storage/gs"
+	_ "github.com/viant/toolbox/storage/s3"
 	_ "github.com/viant/toolbox/storage/scp"
 
 	_ "github.com/viant/endly/testing/dsunit"
@@ -45,11 +45,17 @@ import (
 	_ "github.com/viant/endly/notify/smtp"
 
 	_ "github.com/viant/endly/system/cloud/aws/apigateway"
+	_ "github.com/viant/endly/system/cloud/aws/cloudwatch"
+	_ "github.com/viant/endly/system/cloud/aws/dynamodb"
 	_ "github.com/viant/endly/system/cloud/aws/ec2"
 	_ "github.com/viant/endly/system/cloud/aws/iam"
+	_ "github.com/viant/endly/system/cloud/aws/kinesis"
 	_ "github.com/viant/endly/system/cloud/aws/lambda"
+	_ "github.com/viant/endly/system/cloud/aws/logs"
 	_ "github.com/viant/endly/system/cloud/aws/s3"
 	_ "github.com/viant/endly/system/cloud/aws/ses"
+	_ "github.com/viant/endly/system/cloud/aws/sns"
+	_ "github.com/viant/endly/system/cloud/aws/sqs"
 
 	_ "github.com/viant/endly/system/cloud/gc/gce"
 	_ "github.com/viant/endly/system/daemon"
