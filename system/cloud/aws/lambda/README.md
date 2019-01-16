@@ -25,10 +25,11 @@ On top of that service implements the following helper methods:
 #### Create function
 
 
+**Deployoment with recreateFunction**
+
 ```bash
 endly -r=setup
 ```
-
 
 @setup.yaml
 ```yaml
@@ -74,6 +75,47 @@ pipeline:
 
 
 
+**Deployoment with setupFunction**
+
+
+@setup.yaml
+```yaml
+init:
+  functionRole: lambda-helloworld-executor
+  functionName: HelloWorld
+  codeZip: /tmp/hello/main.zip
+  awsCredentials: aws
+pipeline:
+  deploy:
+   build:
+      action: exec:run
+      target: $target
+      sleepTimeMs: 1500
+      errors:
+        - ERROR
+      commands:
+        - cd ${appPath}loginfo/app
+        - unset GOPATH
+        - export GOOS=linux
+        - export GOARCH=amd64
+        - go build -o loginfo
+        - zip -j loginfo.zip loginfo
+
+    setupFunction:
+      action: aws/lambda:setupFunction
+      credentials: $awsCredentials
+      functionname: $functionName
+      runtime:  go1.x
+      handler: loginfo
+      code:
+        zipfile: $LoadBinary(${codeZip})
+      rolename: lambda-loginfo-executor
+      define:
+        - policyname: s3-mye2e-bucket-role
+          policydocument: $Cat('${privilegePolicy}')
+      attach:
+        - policyarn: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+```
 
 
 

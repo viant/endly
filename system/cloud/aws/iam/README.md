@@ -8,7 +8,7 @@ To check all supported method run
     endly -s="aws/iam"
 ```
 
-To check method contract run endly -s="aws/lambda" -a=methodName
+To check method contract run endly -s="aws/iam" -a=methodName
 ```bash
     endly -s="aws/iam" -a=listRoles
 ```

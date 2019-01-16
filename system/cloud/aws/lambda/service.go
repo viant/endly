@@ -82,6 +82,7 @@ func (s *service) setupPermission(context *endly.Context, request *SetupPermissi
 	if err != nil {
 		return nil, err
 	}
+
 	getResponse, _ := client.GetPolicy(&lambda.GetPolicyInput{
 		FunctionName: request.FunctionName,
 	})
@@ -92,7 +93,7 @@ func (s *service) setupPermission(context *endly.Context, request *SetupPermissi
 		}
 		if len(policy.Statement) > 0 {
 			for _, statement := range policy.Statement {
-				action, _ :=statement.Action.Value()
+				action, _ := statement.Action.Value()
 				if toolbox.AsString(action) != *request.Action {
 					continue
 				}
@@ -141,6 +142,7 @@ func (s *service) setupFunctionInBackground(context *endly.Context, request *Set
 	if err != nil {
 		return nil, err
 	}
+
 	output := &SetupFunctionOutput{}
 	output.RoleInfo = &iam.GetRoleInfoOutput{}
 	if err = endly.Run(context, &request.SetupRolePolicyInput, &output.RoleInfo); err != nil {
@@ -192,8 +194,87 @@ func (s *service) setupFunctionInBackground(context *endly.Context, request *Set
 		}
 	}
 	output.FunctionConfiguration = functionConfig
-	return output, nil
+
+	if len(request.Triggers) > 0 {
+		triggersOutput, err := s.setupTriggerSource(context, &SetupTriggerSourceInput{FunctionName: request.FunctionName, Triggers: request.Triggers})
+		if err != nil {
+			return nil, err
+		}
+		output.EventMappings = triggersOutput.EventMappings
+	}
+	return output, err
 }
+
+/*
+This method uses EventSourceMappingsInput, so only the following source are supported at the moment,
+
+	//    * Amazon Kinesis - The ARN of the data stream or a stream consumer.
+	//    * Amazon DynamoDB Streams - The ARN of the stream.
+	//    * Amazon Simple Queue Service - The ARN of the queue.
+
+ */
+func (s *service) setupTriggerSource(context *endly.Context, request *SetupTriggerSourceInput) (*SetupTriggerSourceOutput, error) {
+	client, err := GetClient(context)
+	if err != nil {
+		return nil, err
+	}
+	response := &SetupTriggerSourceOutput{
+		EventMappings:make([]*lambda.EventSourceMappingConfiguration, 0),
+	}
+	for _, trigger := range request.Triggers {
+
+		if trigger.SourceARN == nil {
+			switch trigger.Type {
+			case "sqs":
+				trigger.SourceARN, err = getSqsURL(context, trigger.Source)
+			case "kinesisStream":
+				trigger.SourceARN, err = getKinesisStreamARN(context, trigger.Source)
+			case "kinesisConsumer":
+				trigger.SourceARN, err = getKinesisConsumerARN(context, trigger.Source)
+			case "dynamodb":
+				trigger.SourceARN, err = getDynamoDBTableARN(context, trigger.Source)
+			}
+			if err != nil {
+				return nil, err
+			}
+		}
+		listOutput, _ := client.ListEventSourceMappings(&lambda.ListEventSourceMappingsInput{
+			FunctionName: request.FunctionName,
+			EventSourceArn:trigger.SourceARN,
+		})
+		if listOutput == nil || len(listOutput.EventSourceMappings) == 0 {
+			mappingConfig, err := client.CreateEventSourceMapping(&lambda.CreateEventSourceMappingInput{
+				Enabled: trigger.Enabled,
+				BatchSize: trigger.BatchSize,
+				EventSourceArn: trigger.SourceARN,
+				FunctionName: request.FunctionName,
+				StartingPosition: trigger.StartingPosition,
+				StartingPositionTimestamp: trigger.StartingPositionTimestamp,
+			})
+			if err != nil {
+				return nil, err
+			}
+			response.EventMappings = append(response.EventMappings, mappingConfig)
+			continue
+		}
+		for _, eventMapping := range listOutput.EventSourceMappings {
+			mappingConfig, err := client.UpdateEventSourceMapping(&lambda.UpdateEventSourceMappingInput{
+				UUID:eventMapping.UUID,
+				Enabled: trigger.Enabled,
+				BatchSize: trigger.BatchSize,
+				FunctionName: request.FunctionName,
+			})
+			if err != nil {
+				return nil, err
+			}
+			response.EventMappings = append(response.EventMappings, mappingConfig)
+		}
+	}
+	return response, nil
+}
+
+
+
 
 func (s *service) registerRoutes() {
 	client := &lambda.Lambda{}
@@ -268,6 +349,29 @@ func (s *service) registerRoutes() {
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*SetupFunctionInput); ok {
 				return s.setupFunction(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "setupTriggerSource",
+		RequestInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T.%v(%T)", s, "setupTriggerSource", &SetupTriggerSourceInput{}),
+		},
+		ResponseInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T", &SetupTriggerSourceOutput{}),
+		},
+		RequestProvider: func() interface{} {
+			return &SetupTriggerSourceInput{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SetupTriggerSourceOutput{}
+		},
+		OnRawRequest: setClient,
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*SetupTriggerSourceInput); ok {
+				return s.setupTriggerSource(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},

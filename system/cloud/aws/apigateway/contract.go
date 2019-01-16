@@ -1,6 +1,7 @@
 package apigateway
 
 import (
+	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/apigateway"
@@ -45,6 +46,19 @@ type SetupResourceOutput struct {
 	*apigateway.Resource
 	ResourceMethods map[string]*apigateway.Method
 }
+
+//RemoveRestAPI removes API for supplied name
+type RemoveRestAPIInput struct {
+	Name *string
+}
+
+func (i *RemoveRestAPIInput) Validate() error {
+	if i.Name == nil {
+		return errors.New("name was empty")
+	}
+	return nil
+}
+
 
 func (i *SetupRestAPIInput) Init() error {
 	if len(i.Resources) == 0 {

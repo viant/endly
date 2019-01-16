@@ -110,7 +110,7 @@ func (s *service) registerRoutes() {
 	s.Register(&endly.Route{
 		Action: "setupBucketNotification",
 		RequestInfo: &endly.ActionInfo{
-			Description: fmt.Sprintf("%T.%v(%T)", s, "setupFunction", &SetupBucketNotificationInput{}),
+			Description: fmt.Sprintf("%T.%v(%T)", s, "setupBucketNotification", &SetupBucketNotificationInput{}),
 		},
 		ResponseInfo: &endly.ActionInfo{
 			Description: fmt.Sprintf("%T", &SetupBucketNotificationOutput{}),

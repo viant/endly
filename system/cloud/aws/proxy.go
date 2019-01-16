@@ -19,6 +19,7 @@ func BuildRoutes(service interface{}, clientProvider func(context *endly.Context
 		if method.Type.Out(1).Kind() != reflect.Interface {
 			return nil
 		}
+
 		action := normalizeAction(method.Name)
 		route := &endly.Route{
 			Action: action,
@@ -36,6 +37,7 @@ func BuildRoutes(service interface{}, clientProvider func(context *endly.Context
 			},
 
 			Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+
 				client, err := clientProvider(context)
 				if err != nil {
 					return nil, err
@@ -43,9 +45,13 @@ func BuildRoutes(service interface{}, clientProvider func(context *endly.Context
 				output := method.Func.Call([]reflect.Value{reflect.ValueOf(client), reflect.ValueOf(request)})
 				errOutput := output[1].Interface()
 				if errOutput != nil {
-					return nil,  fmt.Errorf("unable to run %v, %v", action, errOutput)
+					return nil, fmt.Errorf("unable to run %v, %v", action, errOutput)
 				}
-				return output[0].Interface(), nil
+				result := output[0].Interface()
+				if context.IsLoggingEnabled() {
+					context.Publish(NewOutputEvent(method.Name, "proxy", result))
+				}
+				return result, nil
 			},
 		}
 		result = append(result, route)
@@ -53,8 +59,6 @@ func BuildRoutes(service interface{}, clientProvider func(context *endly.Context
 	})
 	return result, err
 }
-
-
 
 func normalizeAction(name string) string {
 	if index := strings.LastIndex(name, "."); index != -1 {

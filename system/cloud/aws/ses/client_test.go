@@ -1,7 +1,7 @@
 package ses
 
 import (
-	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
@@ -29,10 +29,7 @@ func TestClient(t *testing.T) {
 	client, err :=  getClient(context)
 	assert.Nil(t, err)
 	assert.NotNil(t, client)
-	iamClient, ok := client.(*iam.IAM)
+	_, ok := client.(*ses.SES)
 	assert.True(t, ok)
-	output, err := iamClient.GetUser(&iam.GetUserInput{})
-	assert.Nil(t, err)
-	assert.NotNil(t, output)
 
 }
