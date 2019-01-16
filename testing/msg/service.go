@@ -56,7 +56,7 @@ func (s *service) registerRoutes() {
 		},
 	})
 	s.Register(&endly.Route{
-		Action: "create",
+		Action: "setupResource",
 		RequestInfo: &endly.ActionInfo{
 			Description: "create pubsub resources",
 		},
@@ -74,7 +74,7 @@ func (s *service) registerRoutes() {
 		},
 	})
 	s.Register(&endly.Route{
-		Action: "delete",
+		Action: "deleteResource",
 		RequestInfo: &endly.ActionInfo{
 			Description: "delete pubsub resources",
 		},
@@ -147,7 +147,7 @@ func (s *service) pull(context *endly.Context, request *PullRequest) (interface{
 	return response, err
 }
 
-func (s *service) createResource(context *endly.Context, resource *ResourceSetup) (*Resource, error) {
+func (s *service) setupResource(context *endly.Context, resource *ResourceSetup) (*Resource, error) {
 	var duration, _ = toolbox.NewDuration(defaultTimeoutMs, toolbox.DurationMillisecond)
 	client, err := NewPubSubClient(context, &resource.Resource, duration)
 	if err != nil {
@@ -156,7 +156,7 @@ func (s *service) createResource(context *endly.Context, resource *ResourceSetup
 	var state = context.State()
 	resource.URL = state.ExpandAsText(resource.URL)
 	defer client.Close()
-	return client.Create(resource)
+	return client.SetupResource(resource)
 }
 
 func (s *service) create(context *endly.Context, request *CreateRequest) (interface{}, error) {
@@ -164,7 +164,7 @@ func (s *service) create(context *endly.Context, request *CreateRequest) (interf
 		Resources: make([]*Resource, 0),
 	}
 	for _, resource := range request.Resources {
-		responseResource, err := s.createResource(context, resource)
+		responseResource, err := s.setupResource(context, resource)
 		if err != nil {
 			return nil, err
 		}
@@ -191,7 +191,7 @@ func (s *service) deleteResource(context *endly.Context, resource *Resource) err
 	defer client.Close()
 	var state = context.State()
 	resource.URL = state.ExpandAsText(resource.URL)
-	return client.Delete(resource)
+	return client.DeleteResource(resource)
 }
 
 //New creates a new NoOperation service.

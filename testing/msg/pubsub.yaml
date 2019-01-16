@@ -1,11 +1,12 @@
 pipeline:
   create:
-    action: msg:create
+    action: msg:setupResource
     resources:
       - URL: myTopic
         type: topic
         vendor: gc
         credentials: am
+
 
       - URL: mySubscription
         type: subscription

@@ -78,6 +78,7 @@ type Route struct {
 	RequestProvider  func() interface{}
 	ResponseProvider func() interface{}
 	Handler          func(context *Context, request interface{}) (interface{}, error)
+	OnRawRequest     func(context *Context, rawRequest map[string]interface{}) error //when specified it is called each time action literal is used when match
 }
 
 //Description represents example use case

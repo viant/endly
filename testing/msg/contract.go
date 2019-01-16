@@ -13,7 +13,8 @@ const defaultTimeoutMs = 10000
 
 //CreateRequest represents a create resource request
 type CreateRequest struct {
-	Resources []*ResourceSetup
+	Credentials string
+	Resources   []*ResourceSetup
 }
 
 func (r *CreateRequest) Init() error {
@@ -23,6 +24,9 @@ func (r *CreateRequest) Init() error {
 	for _, resource := range r.Resources {
 		if err := resource.Init(); err != nil {
 			return err
+		}
+		if resource.Credentials == "" {
+			resource.Credentials = r.Credentials
 		}
 	}
 	return nil
@@ -36,6 +40,7 @@ func (r *CreateRequest) Validate() error {
 		if err := resource.Validate(); err != nil {
 			return err
 		}
+
 	}
 	return nil
 }
@@ -47,7 +52,8 @@ type CreateResponse struct {
 
 //DeleteRequest represents a delete resource request
 type DeleteRequest struct {
-	Resources []*Resource
+	Credentials string
+	Resources   []*Resource
 }
 
 func (r *DeleteRequest) Init() error {
@@ -56,6 +62,9 @@ func (r *DeleteRequest) Init() error {
 	}
 	for _, resource := range r.Resources {
 		_ = resource.Init()
+		if resource.Credentials == "" {
+			resource.Credentials = r.Credentials
+		}
 	}
 	return nil
 }
@@ -65,6 +74,7 @@ type DeleteResponse struct{}
 
 //PushRequest represents push request
 type PushRequest struct {
+	Credentials   string
 	Dest          *Resource
 	Messages      []*Message
 	Source        *url.Resource
@@ -77,7 +87,9 @@ func (r *PushRequest) Init() error {
 	if r.isInitialized {
 		return nil
 	}
+
 	if r.Source != nil {
+
 		var resource = r.Source
 		if err := resource.Init(); err != nil {
 			return err
@@ -108,6 +120,9 @@ func (r *PushRequest) Init() error {
 		if err := r.Dest.Init(); err != nil {
 			return err
 		}
+		if r.Dest.Credentials == "" {
+			r.Dest.Credentials = r.Credentials
+		}
 	}
 	if r.TimeoutMs == 0 {
 		r.TimeoutMs = defaultTimeoutMs
@@ -119,6 +134,7 @@ func (r *PushRequest) Validate() error {
 	if r.Dest == nil {
 		return fmt.Errorf("dest was empty")
 	}
+
 	if resource := r.Source; resource != nil {
 		storageService, err := storage.NewServiceForURL(resource.URL, resource.Credentials)
 		if err != nil {
@@ -146,17 +162,21 @@ type PushResponse struct {
 
 //PullRequest represents a pull request
 type PullRequest struct {
-	Source    *Resource
-	TimeoutMs int
-	Count     int
-	Nack      bool `description:"flag indicates that the client will not or cannot process a Message passed to the Subscriber.Receive callback."`
-	UDF       string
-	Expect    []map[string]interface{}
+	Credentials string
+	Source      *Resource
+	TimeoutMs   int
+	Count       int
+	Nack        bool `description:"flag indicates that the client will not or cannot process a Message passed to the Subscriber.Receive callback."`
+	UDF         string
+	Expect      []map[string]interface{}
 }
 
 func (r *PullRequest) Init() error {
 	if r.TimeoutMs == 0 {
 		r.TimeoutMs = defaultTimeoutMs
+	}
+	if r.Source.Credentials == "" {
+		r.Source.Credentials = r.Credentials
 	}
 	return r.Source.Init()
 }
@@ -177,18 +197,18 @@ type PullResponse struct {
 type Message struct {
 	ID          string
 	Subject     string
-	Attributes  map[string]string
+	Attributes  map[string]interface{}
 	Data        interface{}
 	Transformed interface{} `description:"udf transformed data"`
 }
 
 func (m *Message) Expand(state data.Map) *Message {
 	var result = &Message{
-		Attributes: make(map[string]string),
+		Attributes: make(map[string]interface{}),
 	}
 	if len(m.Attributes) > 0 {
 		for k, v := range m.Attributes {
-			result.Attributes[state.ExpandAsText(k)] = state.ExpandAsText(v)
+			result.Attributes[state.ExpandAsText(k)] = state.Expand(v)
 		}
 	}
 	if m.Data != nil {

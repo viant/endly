@@ -1,0 +1,9 @@
+pipeline:
+  setup:
+    action: msg:setupResource
+    credentials: $awsCredentials
+    resources:
+      - URL: mye2eQueue
+        type: queue
+        vendor: aws
+
