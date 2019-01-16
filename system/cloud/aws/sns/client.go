@@ -1,30 +1,27 @@
-package apigateway
+package sns
 
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/apigateway"
+	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/aws"
 )
 
-
-
-var clientKey = (*apigateway.APIGateway)(nil)
+var clientKey = (*sns.SNS)(nil)
 
 func setClient(context *endly.Context, rawRequest map[string]interface{}) error {
 	config, err := aws.InitAws(context, rawRequest, clientKey)
 	if err != nil || config == nil {
 		return err
 	}
-	sess := session.Must(session.NewSession())
-	client :=  apigateway.New(sess, config)
+	snss := session.Must(session.NewSession())
+	client := sns.New(snss, config)
 	return context.Put(clientKey, client)
 }
 
-
-func getClient(context *endly.Context) (interface{}, error)  {
-	client :=  &apigateway.APIGateway{}
+func getClient(context *endly.Context) (interface{}, error) {
+	client := &sns.SNS{}
 	if ! context.Contains(clientKey) {
 		_ = setClient(context, map[string]interface{}{"client": 1})
 	}
@@ -35,16 +32,15 @@ func getClient(context *endly.Context) (interface{}, error)  {
 }
 
 
-
-//GetClient returns apigateway client from context
-func GetClient(context *endly.Context) (*apigateway.APIGateway, error) {
+//GetClient returns sns client from context
+func GetClient(context *endly.Context) (*sns.SNS, error) {
 	client, err := getClient(context)
 	if err != nil {
 		return nil, err
 	}
-	apigatewayClient, ok := client.(*apigateway.APIGateway)
+	s3Client, ok := client.(*sns.SNS)
 	if !  ok {
 		return nil, fmt.Errorf("unexpected client type: %T", client)
 	}
-	return apigatewayClient, nil
+	return s3Client, nil
 }

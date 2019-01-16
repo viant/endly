@@ -1,7 +1,7 @@
-package ses
+package kinesis
 
 import (
-	"github.com/aws/aws-sdk-go/service/ses"
+	"github.com/aws/aws-sdk-go/service/kinesis"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
@@ -29,7 +29,8 @@ func TestClient(t *testing.T) {
 	client, err :=  getClient(context)
 	assert.Nil(t, err)
 	assert.NotNil(t, client)
-	_, ok := client.(*ses.SES)
+	kinesisClient, ok := client.(*kinesis.Kinesis)
 	assert.True(t, ok)
+	assert.NotNil(t, kinesisClient)
 
 }

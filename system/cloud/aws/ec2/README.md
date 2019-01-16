@@ -1,4 +1,4 @@
-# APIGateway EC2
+# Amazon Elastic Compute service
 
 This service is github.com/aws/aws-sdk-go/service/ec2.EC2 proxy 
 
@@ -7,7 +7,7 @@ To check all supported method run
     endly -s="aws/ec2"
 ```
 
-To check method contract run endly -s="aws/apigateway" -a=methodName
+To check method contract run endly -s="aws/ec2" -a=methodName
 ```bash
     endly -s="aws/ec2" -a='stopInstances'
 ```

@@ -3,9 +3,14 @@ package lambda
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
 	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/kinesis"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/viant/endly"
+	"github.com/viant/endly/system/cloud/aws"
 	"github.com/viant/toolbox/data"
 )
 
@@ -41,3 +46,89 @@ func SetFunctionInfo(function *lambda.FunctionConfiguration, aMap data.Map) {
 	functionState.Put("name", function.FunctionName)
 	aMap.Put("function", functionState)
 }
+
+
+func getKinesisStreamARN(context *endly.Context, name string) (*string, error) {
+	client := &kinesis.Kinesis{}
+	err := aws.GetClient(context, kinesis.New, &client);
+	if err == nil {
+		streamOutput, err := client.DescribeStream(&kinesis.DescribeStreamInput{
+			StreamName:&name,
+		});
+		if err != nil  {
+			return nil, err
+		}
+		if streamOutput.StreamDescription == nil {
+			return nil, fmt.Errorf("streamDescription was empty ")
+		}
+		return streamOutput.StreamDescription.StreamARN, nil
+	}
+	return nil, err
+}
+
+func getKinesisConsumerARN(context *endly.Context, name string) (*string, error) {
+	client := &kinesis.Kinesis{}
+	err := aws.GetClient(context, kinesis.New, &client);
+	if err == nil {
+		streamOutput, err := client.DescribeStreamConsumer(&kinesis.DescribeStreamConsumerInput{
+			ConsumerName:&name,
+		});
+		if err != nil  {
+			return nil, err
+		}
+		if streamOutput.ConsumerDescription == nil {
+			return nil, fmt.Errorf("consumerDescription was empty ")
+		}
+		return streamOutput.ConsumerDescription.ConsumerARN, nil
+	}
+	return nil, err
+}
+
+func getSqsURL(context *endly.Context, name string) (*string, error) {
+	client := &sqs.SQS{}
+	if err := aws.GetClient(context, sqs.New, &client); err != nil {
+		return nil, err
+	}
+	urlOutput, err := client.GetQueueUrl(&sqs.GetQueueUrlInput{
+		QueueName: &name,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var arnAttribute = "QueueArn"
+	output, err := client.GetQueueAttributes(&sqs.GetQueueAttributesInput{
+		QueueUrl: urlOutput.QueueUrl,
+		AttributeNames:[]*string{&arnAttribute},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+	ARN, ok :=  output.Attributes[arnAttribute]
+	if ! ok {
+		return nil, fmt.Errorf("unable to get queue %v ARN", urlOutput.QueueUrl)
+	}
+	return ARN, nil
+}
+
+
+func getDynamoDBTableARN(context *endly.Context, name string) (*string, error) {
+	client := &dynamodb.DynamoDB{}
+	if err := aws.GetClient(context, dynamodb.New, &client); err != nil {
+		return nil, err
+	}
+	output, err := client.DescribeGlobalTable(&dynamodb.DescribeGlobalTableInput{
+		GlobalTableName: &name,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	if output.GlobalTableDescription == nil {
+		return nil, fmt.Errorf("globalTableDescription was empty")
+	}
+	return  output.GlobalTableDescription.GlobalTableArn, nil
+}
+

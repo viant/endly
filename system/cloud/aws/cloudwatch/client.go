@@ -1,16 +1,15 @@
-package apigateway
+package cloudwatch
 
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/apigateway"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/aws"
 )
 
 
-
-var clientKey = (*apigateway.APIGateway)(nil)
+var clientKey = (*cloudwatch.CloudWatch)(nil)
 
 func setClient(context *endly.Context, rawRequest map[string]interface{}) error {
 	config, err := aws.InitAws(context, rawRequest, clientKey)
@@ -18,13 +17,13 @@ func setClient(context *endly.Context, rawRequest map[string]interface{}) error 
 		return err
 	}
 	sess := session.Must(session.NewSession())
-	client :=  apigateway.New(sess, config)
+	client :=  cloudwatch.New(sess, config)
 	return context.Put(clientKey, client)
 }
 
 
 func getClient(context *endly.Context) (interface{}, error)  {
-	client :=  &apigateway.APIGateway{}
+	client :=  &cloudwatch.CloudWatch{}
 	if ! context.Contains(clientKey) {
 		_ = setClient(context, map[string]interface{}{"client": 1})
 	}
@@ -35,16 +34,16 @@ func getClient(context *endly.Context) (interface{}, error)  {
 }
 
 
-
-//GetClient returns apigateway client from context
-func GetClient(context *endly.Context) (*apigateway.APIGateway, error) {
+//GetClient returns cloudwatch client from context
+func GetClient(context *endly.Context) (*cloudwatch.CloudWatch, error) {
 	client, err := getClient(context)
 	if err != nil {
 		return nil, err
 	}
-	apigatewayClient, ok := client.(*apigateway.APIGateway)
+	cloudwatchClient, ok := client.(*cloudwatch.CloudWatch)
 	if !  ok {
 		return nil, fmt.Errorf("unexpected client type: %T", client)
 	}
-	return apigatewayClient, nil
+
+	return cloudwatchClient, nil
 }

@@ -71,6 +71,10 @@ func (s *service) setupResetAPI(context *endly.Context, request *SetupRestAPIInp
 	return response, nil
 }
 
+
+
+
+
 func (s *service) getOrCreateRestAPI(context *endly.Context, request *apigateway.CreateRestApiInput) (*apigateway.RestApi, *apigateway.GetResourcesOutput, error) {
 	client, err := GetClient(context)
 	if err != nil {
@@ -110,42 +114,6 @@ func (s *service) getOrCreateRestAPI(context *endly.Context, request *apigateway
 	return restAPI, resources, err
 }
 
-func (s *service) registerRoutes() {
-	client := &apigateway.APIGateway{}
-	routes, err := aws.BuildRoutes(client, getClient)
-	if err != nil {
-		log.Printf("unable register service %v actions: %v\n", ServiceID, err)
-		return
-	}
-
-	for _, route := range routes {
-		route.OnRawRequest = setClient
-		s.Register(route)
-	}
-
-	s.Register(&endly.Route{
-		Action: "setupRestAPI",
-		RequestInfo: &endly.ActionInfo{
-			Description: fmt.Sprintf("%T.%v(%T)", s, "setupRestAPI", &SetupRestAPIInput{}),
-		},
-		ResponseInfo: &endly.ActionInfo{
-			Description: fmt.Sprintf("%T", &SetupRestAPIOutput{}),
-		},
-		RequestProvider: func() interface{} {
-			return &SetupRestAPIInput{}
-		},
-		ResponseProvider: func() interface{} {
-			return &SetupRestAPIOutput{}
-		},
-		OnRawRequest: setClient,
-		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*SetupRestAPIInput); ok {
-				return s.setupResetAPI(context, req)
-			}
-			return nil, fmt.Errorf("unsupported request type: %T", request)
-		},
-	})
-}
 
 func (s *service) setupResource(context *endly.Context, setup *SetupResourceInput, api *apigateway.RestApi, resources map[string]*apigateway.Resource) (*SetupResourceOutput, error) {
 	response := &SetupResourceOutput{
@@ -324,6 +292,95 @@ func (s *service) getStage(context *endly.Context, deployment *apigateway.Deploy
 	}
 	return nil, fmt.Errorf("failed to lookup stage for name: %v, api %v", stageName, restApiId)
 }
+
+
+
+
+func (s *service) removeRestAPI(context *endly.Context, request *RemoveRestAPIInput) (*apigateway.DeleteRestApiOutput, error) {
+	client, err := GetClient(context)
+	if err != nil {
+		return  nil, err
+	}
+	keysResponse, err := client.GetRestApis(&apigateway.GetRestApisInput{})
+	if err != nil {
+		return nil, err
+	}
+	var restAPI *apigateway.RestApi
+
+	for _, item := range keysResponse.Items {
+		if *item.Name == *request.Name {
+			restAPI = item
+			break
+		}
+	}
+	if restAPI == nil {
+		return nil, nil
+	}
+	return client.DeleteRestApi(&apigateway.DeleteRestApiInput{
+		RestApiId:restAPI.Id,
+	})
+}
+
+func (s *service) registerRoutes() {
+	client := &apigateway.APIGateway{}
+	routes, err := aws.BuildRoutes(client, getClient)
+	if err != nil {
+		log.Printf("unable register service %v actions: %v\n", ServiceID, err)
+		return
+	}
+
+	for _, route := range routes {
+		route.OnRawRequest = setClient
+		s.Register(route)
+	}
+
+	s.Register(&endly.Route{
+		Action: "setupRestAPI",
+		RequestInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T.%v(%T)", s, "setupRestAPI", &SetupRestAPIInput{}),
+		},
+		ResponseInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T", &SetupRestAPIOutput{}),
+		},
+		RequestProvider: func() interface{} {
+			return &SetupRestAPIInput{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SetupRestAPIOutput{}
+		},
+		OnRawRequest: setClient,
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*SetupRestAPIInput); ok {
+				return s.setupResetAPI(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "removeRestAPI",
+		RequestInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T.%v(%T)", s, "removeRestAPI", &RemoveRestAPIInput{}),
+		},
+		ResponseInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T", &apigateway.DeleteRestApiOutput{}),
+		},
+		RequestProvider: func() interface{} {
+			return &RemoveRestAPIInput{}
+		},
+		ResponseProvider: func() interface{} {
+			return &apigateway.DeleteRestApiOutput{}
+		},
+		OnRawRequest: setClient,
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*RemoveRestAPIInput); ok {
+				return s.removeRestAPI(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+}
+
 
 //New creates a new AWS API Gateway service.
 func New() endly.Service {

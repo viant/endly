@@ -1,7 +1,7 @@
-package ses
+package sqs
 
 import (
-	"github.com/aws/aws-sdk-go/service/ses"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
@@ -29,7 +29,6 @@ func TestClient(t *testing.T) {
 	client, err :=  getClient(context)
 	assert.Nil(t, err)
 	assert.NotNil(t, client)
-	_, ok := client.(*ses.SES)
+	_, ok := client.(*sqs.SQS)
 	assert.True(t, ok)
-
 }

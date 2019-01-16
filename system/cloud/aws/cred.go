@@ -6,12 +6,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/go-errors/errors"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
+	"reflect"
 	"strings"
 )
-
 
 var configKey = (*aws.Config)(nil)
 
@@ -26,7 +27,7 @@ func GetAWSCredentialConfig(config *cred.Config) (*aws.Config, error) {
 	awsConfig := aws.NewConfig().WithRegion(config.Region).WithCredentials(awsCredentials)
 	if config.AccountID == "" {
 		iamSession := session.Must(session.NewSession())
-		iamClient :=  iam.New(iamSession, awsConfig)
+		iamClient := iam.New(iamSession, awsConfig)
 		output, err := iamClient.GetUser(&iam.GetUserInput{})
 		if err != nil {
 			return nil, err
@@ -38,17 +39,15 @@ func GetAWSCredentialConfig(config *cred.Config) (*aws.Config, error) {
 	return awsConfig, nil
 }
 
-
-//GetOrCreateAwsConfig get or creates aws credential config
-func GetOrCreateAwsConfig(context *endly.Context, rawRequest map[string]interface{}, key interface{}) (*aws.Config, error) {
+//InitAws get or creates aws credential config
+func InitAws(context *endly.Context, rawRequest map[string]interface{}, key interface{}) (*aws.Config, error) {
 	if len(rawRequest) == 0 {
 		return nil, fmt.Errorf("request was empty")
 	}
 	secrets := &struct {
 		Credentials string
-	}{};
-
-	if err := toolbox.DefaultConverter.AssignConverted(secrets, rawRequest);err != nil {
+	}{}
+	if err := toolbox.DefaultConverter.AssignConverted(secrets, rawRequest); err != nil {
 		return nil, err
 	}
 	if secrets.Credentials == "" {
@@ -65,9 +64,9 @@ func GetOrCreateAwsConfig(context *endly.Context, rawRequest map[string]interfac
 	}
 	config, err := context.Secrets.GetCredentials(secrets.Credentials)
 	if err != nil {
-		return  nil, err
+		return nil, err
 	}
-	if  context.Contains(key) {
+	if context.Contains(key) {
 		context.Remove(key)
 	}
 	if context.Contains(configKey) {
@@ -78,7 +77,22 @@ func GetOrCreateAwsConfig(context *endly.Context, rawRequest map[string]interfac
 	if err != nil {
 		return nil, err
 	}
-	_= context.Put(configKey, awsConfig)
+	_ = context.Put(configKey, awsConfig)
 	return awsConfig, err
 }
 
+//InitAws get or creates aws credential config
+func GetClient(context *endly.Context, provider interface{}, client interface{}) error {
+	if !context.Contains(configKey) {
+		return errors.New("unable to lookup aws.Config")
+	}
+	awsConfig := &aws.Config{}
+	if !context.GetInto(configKey, &awsConfig) {
+		return errors.New("unable to fetch aws.Config")
+	}
+	sess := session.Must(session.NewSession())
+	output := toolbox.CallFunction(provider, sess, awsConfig)
+	//TODO safety check
+	reflect.ValueOf(client).Elem().Set(reflect.ValueOf(output[0]))
+	return nil
+}

@@ -13,7 +13,7 @@ import (
 var clientKey = (*s3.S3)(nil)
 
 func setClient(context *endly.Context, rawRequest map[string]interface{}) error {
-	config, err := aws.GetOrCreateAwsConfig(context, rawRequest, clientKey)
+	config, err := aws.InitAws(context, rawRequest, clientKey)
 	if err != nil || config == nil {
 		return err
 	}
