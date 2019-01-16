@@ -20,6 +20,7 @@ func DefaultFilter() map[string]bool {
 	result["lambda"] = true
 	result["apigateway"] = true
 	result["iam"] = true
+	result["aws"] = true
 
 	return result
 }
