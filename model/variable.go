@@ -331,10 +331,10 @@ func extractFromValue(value string, variable *Variable) {
 }
 
 func isValidPredicate(candidate string) bool {
-	if ! strings.Contains(candidate, "$") {
+	if !strings.Contains(candidate, "$") {
 		return false
 	}
-	_, err := criteria.NewParser().Parse(candidate);
+	_, err := criteria.NewParser().Parse(candidate)
 	return err == nil
 }
 
@@ -343,8 +343,8 @@ func hasConditionalAssignment(candidate string) bool {
 	if questionMarkCount != 1 {
 		return false
 	}
-	parts := strings.SplitN(candidate,  "?", 2)
-	if ! isValidPredicate(parts[0]) {
+	parts := strings.SplitN(candidate, "?", 2)
+	if !isValidPredicate(parts[0]) {
 		return false
 	}
 	elseCount := strings.Count(candidate, ":")
