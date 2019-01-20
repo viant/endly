@@ -7,8 +7,6 @@ import (
 	"flag"
 	"fmt"
 
-
-
 	//Database/datastore dependencies
 
 	_ "github.com/MichaelS11/go-cql-driver"
@@ -17,14 +15,12 @@ import (
 	_ "github.com/viant/asc"
 	_ "github.com/viant/bgc"
 
+	_ "github.com/adrianwit/dyndb"
 	_ "github.com/adrianwit/fbc"
 	_ "github.com/adrianwit/fsc"
 	_ "github.com/adrianwit/mgc"
-	_ "github.com/adrianwit/dyndb"
 
 	//	_ "github.com/alexbrainman/odbc"
-
-
 
 	_ "github.com/viant/endly/gen/static"
 	_ "github.com/viant/endly/shared/static" //load external resource like .csv .json files to mem storage
@@ -69,7 +65,6 @@ import (
 	_ "github.com/viant/endly/system/cloud/gc/cloudfunctions"
 	_ "github.com/viant/endly/system/cloud/gc/compute"
 	_ "github.com/viant/endly/system/cloud/gc/pubsub"
-
 
 	_ "github.com/viant/endly/system/daemon"
 	_ "github.com/viant/endly/system/docker/ssh"
