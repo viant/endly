@@ -3,6 +3,7 @@ package endly
 import (
 	"fmt"
 	"github.com/viant/endly/model/msg"
+	_ "github.com/viant/endly/unsafe"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
@@ -123,7 +124,9 @@ func (s *AbstractService) Route(action string) (*Route, error) {
 //Sleep sleeps for provided time in ms
 func (s *AbstractService) Sleep(context *Context, sleepTimeMs int) {
 	if sleepTimeMs > 0 {
-		context.Publish(msg.NewSleepEvent(sleepTimeMs))
+		if context.IsLoggingEnabled() {
+			context.Publish(msg.NewSleepEvent(sleepTimeMs))
+		}
 		time.Sleep(time.Millisecond * time.Duration(sleepTimeMs))
 	}
 }
