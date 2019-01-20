@@ -8,13 +8,13 @@ import (
 )
 
 func init() {
-	_= toolbox.SetUnexportedFieldHandler(func(structField *toolbox.StructField) bool {
+	_ = toolbox.SetUnexportedFieldHandler(func(structField *toolbox.StructField) bool {
 		fieldValue := structField.Value
 		isPointer := fieldValue.Kind() == reflect.Ptr
 		if strings.Contains(structField.Type.PkgPath, "github.com/viant/") {
 			return false
 		}
-		if ! fieldValue.CanAddr() &&  ! fieldValue.CanInterface() {
+		if !fieldValue.CanAddr() && !fieldValue.CanInterface() {
 			return false
 		}
 		ptr := unsafe.Pointer(fieldValue.UnsafeAddr())
