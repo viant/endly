@@ -1,4 +1,4 @@
-package docker_test
+package ssh_test
 
 import (
 	"fmt"

@@ -1,4 +1,6 @@
-** Docker service**
+## Docker service
+
+This implementation uses SSH based command docker cli with output scraping, it uses exec SSH endly service
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- | 
@@ -20,7 +22,6 @@
 | docker | push | copy image to supplied repository| [PushRequest](service_contract.go) | [PushResponse](service_contract.go) |
 | docker | composeUp | docker compose up| [ComposeUpRequest](service_contract.go) | [ComposeResponse](service_contract.go) |
 | docker | comoseDown | docker compose down | [ComposeDownRequest](service_contract.go) | [ComposeResponse](service_contract.go) |
-
 
 
 Example of using docker service for building and deploying an app.
