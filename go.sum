@@ -7,6 +7,7 @@ git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGy
 git.apache.org/thrift.git v0.0.0-20181205211409-17a9cffabb74/go.mod h1:fPE2ZNJGynbRyZ4dJvy6G277gSllfV2HJqblrnkyeyg=
 github.com/MichaelS11/go-cql-driver v0.0.0-20181029231409-81aad8db3731 h1:EZFP4yF/O1BJ/dUmN7s7NBaiQOC3cGeofm4gZwSHm2Q=
 github.com/MichaelS11/go-cql-driver v0.0.0-20181029231409-81aad8db3731/go.mod h1:nW8K1gl1mu8o29Ns1Sv/EvYe9BBrh1T/GqucnYcO9PI=
+github.com/adrianwit/dyndb v0.1.0 h1:5NgteyB4FAJnd2BvqwXzbjSpCjkemqTn5uoSsj9MgaM=
 github.com/adrianwit/dyndb v0.1.0/go.mod h1:7FfwrUDSJQrCs4HoeL3M4igur1TSmuknHeao4JUd5E8=
 github.com/adrianwit/fbc v0.1.0 h1:kO8OA3P6Op6T4t+Z5wArgkYErJn2Di5yJX86f3bO9UY=
 github.com/adrianwit/fbc v0.1.0/go.mod h1:hRwycYmaJ/kp6IlYiHsnRk2zAkx/sGVQcgvUuFctzvk=
