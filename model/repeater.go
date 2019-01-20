@@ -51,7 +51,6 @@ func (r *Repeater) EvaluateExitCriteria(callerInfo string, context *endly.Contex
 }
 
 func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, context *endly.Context, handler func() (interface{}, error), extracted map[string]interface{}) (bool, error) {
-	defer service.Sleep(context, r.SleepTimeMs)
 	out, err := handler()
 	if err != nil {
 		return false, err
@@ -96,6 +95,7 @@ func (r *Repeater) Run(service *endly.AbstractService, callerInfo string, contex
 		if err != nil || !shouldContinue {
 			return err
 		}
+		service.Sleep(context, r.SleepTimeMs)
 	}
 	return nil
 }
