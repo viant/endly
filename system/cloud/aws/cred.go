@@ -39,7 +39,6 @@ func GetAWSCredentialConfig(config *cred.Config) (*aws.Config, error) {
 	return awsConfig, nil
 }
 
-
 //InitCredentials get or creates aws credential config
 func InitCredentials(context *endly.Context, rawRequest map[string]interface{}, key interface{}) (*aws.Config, error) {
 	if len(rawRequest) == 0 {
