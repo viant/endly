@@ -1,5 +1,0 @@
-credentials: $awsCredentials
-method: $method
-input:
-  instanceIds:
-    - $ec2InstanceId
