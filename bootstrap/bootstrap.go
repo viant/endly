@@ -6,17 +6,25 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	_ "github.com/adrianwit/fbc"
-	_ "github.com/adrianwit/fsc"
-	_ "github.com/adrianwit/mgc"
 
-//	_ "github.com/alexbrainman/odbc"
+
+
+	//Database/datastore dependencies
 
 	_ "github.com/MichaelS11/go-cql-driver"
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/viant/asc"
 	_ "github.com/viant/bgc"
+
+	_ "github.com/adrianwit/fbc"
+	_ "github.com/adrianwit/fsc"
+	_ "github.com/adrianwit/mgc"
+	_ "github.com/adrianwit/dyndb"
+
+	//	_ "github.com/alexbrainman/odbc"
+
+
 
 	_ "github.com/viant/endly/gen/static"
 	_ "github.com/viant/endly/shared/static" //load external resource like .csv .json files to mem storage
@@ -57,9 +65,14 @@ import (
 	_ "github.com/viant/endly/system/cloud/aws/sns"
 	_ "github.com/viant/endly/system/cloud/aws/sqs"
 
-	_ "github.com/viant/endly/system/cloud/gc/gce"
+	_ "github.com/viant/endly/system/cloud/gc/bigquery"
+	_ "github.com/viant/endly/system/cloud/gc/cloudfunctions"
+	_ "github.com/viant/endly/system/cloud/gc/compute"
+	_ "github.com/viant/endly/system/cloud/gc/pubsub"
+
+	
 	_ "github.com/viant/endly/system/daemon"
-	_ "github.com/viant/endly/system/docker"
+	_ "github.com/viant/endly/system/docker/ssh"
 	_ "github.com/viant/endly/system/exec"
 	_ "github.com/viant/endly/system/network"
 	_ "github.com/viant/endly/system/process"
