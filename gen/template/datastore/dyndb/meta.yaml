@@ -1,0 +1,9 @@
+id: dyndb
+name: DynamoDB
+king: NoSQL
+dictionary: dictionary/
+data: data/
+sequence: false
+tables:
+  - dummy
+  - dummy_type
