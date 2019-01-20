@@ -1,0 +1,6 @@
+pipeline:
+  start:
+    info:
+      action: gc/bigquery:datasetsList
+      credentials: gc
+      projectID: myProject

@@ -1,0 +1,67 @@
+init:
+  instanceId: 11230632249892XXXX
+pipeline:
+  start:
+    info:
+      action: gc/compute:instancesGet
+      logging: false
+      credentials: gc
+      zone: us-central1-f
+      instance: $instanceId
+
+    print:
+      action: print
+      message: Instance $instanceId is $info.Status
+
+    check:
+      when: $info.Status = 'RUNNING'
+      action: exit
+
+    instanceUp:
+      when: $info.Status = 'TERMINATED'
+      action: gc/compute:instancesStart
+      logging: false
+      zone: us-central1-f
+      instance: $instanceId
+
+    waitForStart:
+      action: nop
+      logging: false
+      sleepTimeMs: 5000
+
+    gotoStart:
+      action: goto
+      task: start
+
+
+  stop:
+    info:
+      action: gc/compute:instancesGet
+      logging: false
+      credentials: gc
+      zone: us-central1-f
+      instance: $instanceId
+
+    print:
+      action: print
+      message: Instance $instanceId is $info.Status
+
+    check:
+      when: $info.Status = 'TERMINATED'
+      action: exit
+
+    instanceDown:
+      when: $info.Status = 'RUNNING'
+      action:  gc/compute:instancesStop
+      credentials: gc
+      zone: us-central1-f
+      instance: $instanceId
+        
+    waitForStop:
+      action: nop
+      logging: false
+      sleepTimeMs: 5000
+
+    gotoStop:
+      action: goto
+      task: stop
