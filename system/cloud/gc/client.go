@@ -15,7 +15,7 @@ type CtxClient interface {
 //AbstractClient represents an abstract client
 type AbstractClient struct {
 	context context.Context
-	scopes []string
+	scopes  []string
 }
 
 func (c *AbstractClient) SetContext(ctx context.Context) {
@@ -25,4 +25,3 @@ func (c *AbstractClient) SetContext(ctx context.Context) {
 func (c *AbstractClient) Context() context.Context {
 	return c.context
 }
-

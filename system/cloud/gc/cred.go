@@ -13,7 +13,6 @@ import (
 	"strings"
 )
 
-
 var configKey = (*gcCredConfig)(nil)
 
 type gcCredConfig struct {
@@ -21,9 +20,8 @@ type gcCredConfig struct {
 	scopes []string
 }
 
-
 //GetClient creates a new google cloud client.
-func GetClient(eContext *endly.Context, provider,  key interface{}, target interface{}, defaultScopes ...string) error {
+func GetClient(eContext *endly.Context, provider, key interface{}, target interface{}, defaultScopes ...string) error {
 	if eContext.Contains(key) {
 		if eContext.GetInto(key, target) {
 			return nil
@@ -40,7 +38,7 @@ func GetClient(eContext *endly.Context, provider,  key interface{}, target inter
 	}
 	scopes := credConfig.scopes
 	if len(scopes) == 0 {
-		scopes  = defaultScopes
+		scopes = defaultScopes
 	}
 	if len(scopes) == 0 {
 		return errors.New("scopes were empty")
@@ -59,19 +57,18 @@ func GetClient(eContext *endly.Context, provider,  key interface{}, target inter
 		return err
 	}
 
-	service := output[0];
+	service := output[0]
 
-	ctxService, ok := reflect.ValueOf(target).Elem().Interface().(CtxClient);
-	if ! ok {
+	ctxService, ok := reflect.ValueOf(target).Elem().Interface().(CtxClient)
+	if !ok {
 		return fmt.Errorf("invalid target type: %T", target)
 	}
 	ctxService.SetContext(ctx)
-	if err = ctxService.SetService(service);err!= nil {
+	if err = ctxService.SetService(service); err != nil {
 		return err
 	}
 	return eContext.Replace(key, reflect.ValueOf(target).Elem().Interface())
 }
-
 
 //InitCredentials get or creates aws credential config
 func InitCredentials(context *endly.Context, rawRequest map[string]interface{}) (*gcCredConfig, error) {
@@ -99,8 +96,8 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}) 
 		return nil, err
 	}
 
-	config := &gcCredConfig{Config:credConfig}
-	if scopes, ok := rawRequest["scopes"]; ok{
+	config := &gcCredConfig{Config: credConfig}
+	if scopes, ok := rawRequest["scopes"]; ok {
 		if toolbox.IsString(scopes) {
 			config.scopes = strings.Split(toolbox.AsString(scopes), ",")
 		} else if toolbox.IsSlice(scopes) {
@@ -115,7 +112,6 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}) 
 	return config, err
 }
 
-
 //UpdateActionRequest updates raw request with project, service
 func UpdateActionRequest(rawRequest map[string]interface{}, config *gcCredConfig, client CtxClient) {
 	for v, key := range []string{"Project"} {
@@ -129,10 +125,10 @@ func UpdateActionRequest(rawRequest map[string]interface{}, config *gcCredConfig
 	}
 
 	var URLParams = make(gensupport.URLParams)
-	if urlParams, ok  := rawRequest["urlParams"]; ok {
+	if urlParams, ok := rawRequest["urlParams"]; ok {
 		if toolbox.IsMap(urlParams) {
 			for k, v := range toolbox.AsMap(urlParams) {
-				URLParams[k]=[]string{toolbox.AsString(v)}
+				URLParams[k] = []string{toolbox.AsString(v)}
 			}
 		}
 	}
