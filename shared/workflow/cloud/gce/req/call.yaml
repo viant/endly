@@ -1,7 +1,0 @@
-credentials: $gceCredentials
-service: Instances
-method: $method
-parameters:
-  - $gceProject
-  - $gceZone
-  - $gceInstance
