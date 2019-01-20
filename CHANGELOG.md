@@ -1,19 +1,20 @@
-## November 9 2018 0.27.0
+## Jan 20 2019 0.27.0
     * Added gc/* services
     * Refactored and broke compatibility with former ec2/gce services
+    * Moved system/docker to system/docker/ssh package    
     
-## November 9 2018 0.26.0
+## Jan 9 2019 0.26.0
     * Added endly Route OnRawRequest hook
     * Added aws/* services
     * Refactored aws/ec2 service
     * Added context level Loging for action
     * Minor patches
     
-## November 7 2018 0.25.1
+## Jan 7 2019 0.25.1
     * Resolved template variable collision with sub workflow templates
     * Patched non writable map data type mutation
     
-## November 6 2018 0.25.0
+## Jan 6 2019 0.25.0
     * Moved msg service to testing/msg package
     * Patched embeded non pointer struct conversion (toolbox)
     * Added firebase, casandra dependency (driver, template) 
