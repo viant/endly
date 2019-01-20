@@ -12,7 +12,7 @@ import (
 var clientKey = (*cloudwatch.CloudWatch)(nil)
 
 func setClient(context *endly.Context, rawRequest map[string]interface{}) error {
-	config, err := aws.InitAws(context, rawRequest, clientKey)
+	config, err := aws.InitCredentials(context, rawRequest, clientKey)
 	if err != nil || config == nil {
 		return err
 	}
