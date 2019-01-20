@@ -39,8 +39,9 @@ func GetAWSCredentialConfig(config *cred.Config) (*aws.Config, error) {
 	return awsConfig, nil
 }
 
-//InitAws get or creates aws credential config
-func InitAws(context *endly.Context, rawRequest map[string]interface{}, key interface{}) (*aws.Config, error) {
+
+//InitCredentials get or creates aws credential config
+func InitCredentials(context *endly.Context, rawRequest map[string]interface{}, key interface{}) (*aws.Config, error) {
 	if len(rawRequest) == 0 {
 		return nil, fmt.Errorf("request was empty")
 	}
@@ -81,7 +82,7 @@ func InitAws(context *endly.Context, rawRequest map[string]interface{}, key inte
 	return awsConfig, err
 }
 
-//InitAws get or creates aws credential config
+//GetClient get or creates aws client
 func GetClient(context *endly.Context, provider interface{}, client interface{}) error {
 	if !context.Contains(configKey) {
 		return errors.New("unable to lookup aws.Config")

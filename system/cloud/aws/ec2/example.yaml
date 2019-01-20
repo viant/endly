@@ -1,23 +1,3 @@
-# Amazon Elastic Compute service
-
-This service is github.com/aws/aws-sdk-go/service/ec2.EC2 proxy 
-
-To check all supported method run
-```bash
-    endly -s="aws/ec2"
-```
-
-To check method contract run endly -s="aws/ec2" -a=methodName
-```bash
-    endly -s="aws/ec2" -a='stopInstances'
-```
-
-#### Usage:
-
-##### Starting instance
-
-@start.yaml
-```yaml
 init:
   instanceId: i-0064b6c35XXXXX
 pipeline:
@@ -53,15 +33,6 @@ pipeline:
       action: goto
       task: start
 
-```
-
-
-##### Stop instance
-@stop.yaml
-```yaml
-init:
-  instanceId: i-0064b6c35XXXXX
-pipeline:
   stop:
     info:
       action: aws/ec2:describeInstances
@@ -91,4 +62,3 @@ pipeline:
     gotoStop:
       action: goto
       task: stop
-```

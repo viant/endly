@@ -36,7 +36,7 @@ func Test_GetClient(t *testing.T) {
 	manager := endly.New()
 	context := manager.NewContext(nil)
 	var key = struct{}{}
-	_, err := InitAws(context, map[string]interface{}{
+	_, err := InitCredentials(context, map[string]interface{}{
 		"Credentials": "aws",
 	}, key)
 	assert.Nil(t, err)
