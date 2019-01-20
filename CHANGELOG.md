@@ -1,10 +1,13 @@
+## November 9 2018 0.27.0
+    * Added gc/* services
+    * Refactored and broke compatibility with former ec2/gce services
+    
 ## November 9 2018 0.26.0
     * Added endly Route OnRawRequest hook
     * Added aws/* services
     * Refactored aws/ec2 service
     * Added context level Loging for action
     * Minor patches
-    
     
 ## November 7 2018 0.25.1
     * Resolved template variable collision with sub workflow templates
