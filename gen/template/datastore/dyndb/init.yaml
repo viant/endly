@@ -1,0 +1,16 @@
+action: dsunit:init
+datastore: $db
+recreate: true
+config:
+  driverName: dyndb
+  parameters:
+    dbname: $db
+Tables:
+  - Table: dummy
+    PkColumns:
+      - id
+    SchemaURL: ddl/dummy.json
+  - Table: dummy_type
+    PkColumns:
+      - id
+    SchemaURL: ddl/dummy_type.json
