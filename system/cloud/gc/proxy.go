@@ -16,7 +16,7 @@ func extractServices(owner interface{}, serviceFields *[]*toolbox.StructField) e
 		if fieldType.PkgPath != "" {
 			return nil
 		}
-		if ! toolbox.IsStruct(fieldType.Type) {
+		if !toolbox.IsStruct(fieldType.Type) {
 			return nil
 		}
 		*serviceFields = append(*serviceFields, &toolbox.StructField{Type: fieldType, Value: field})
@@ -46,9 +46,9 @@ func BuildRoutes(service interface{}, clientProvider func(context *endly.Context
 				return nil
 			}
 			requestType := method.Type.Out(0)
-			doMethod, hasDo := requestType.MethodByName("Do");
-			contextMethod, hasContext := requestType.MethodByName("Context");
-			if ! hasDo || ! hasContext {
+			doMethod, hasDo := requestType.MethodByName("Do")
+			contextMethod, hasContext := requestType.MethodByName("Context")
+			if !hasDo || !hasContext {
 				return nil
 			}
 			responseType := doMethod.Func.Type().Out(0)
@@ -119,14 +119,13 @@ func normalizeAction(name string) string {
 	return name
 }
 
-
-func normalizeMap(dataMap map[string]interface{}) map[string]interface{}{
+func normalizeMap(dataMap map[string]interface{}) map[string]interface{} {
 	if len(dataMap) == 0 {
 		return dataMap
 	}
 	for k, v := range dataMap {
 		if v != nil && toolbox.IsMap(v) {
-			dataMap[k]= normalizeMap(toolbox.AsMap(v))
+			dataMap[k] = normalizeMap(toolbox.AsMap(v))
 			continue
 		}
 		if toolbox.IsSlice(v) {
@@ -134,15 +133,15 @@ func normalizeMap(dataMap map[string]interface{}) map[string]interface{}{
 			if len(aSlice) == 0 {
 				continue
 			}
-			if _, ok := aSlice[0].(byte);ok {
+			if _, ok := aSlice[0].(byte); ok {
 				rawData := toolbox.AsString(v)
 				aMap := make(map[string]interface{})
-				if err := json.Unmarshal([]byte(rawData), &aMap);err == nil {
+				if err := json.Unmarshal([]byte(rawData), &aMap); err == nil {
 					dataMap[k] = aMap
 				}
 			}
 			for i, item := range aSlice {
-				if ! toolbox.IsMap(item) {
+				if !toolbox.IsMap(item) {
 					break
 				}
 				aSlice[i] = normalizeMap(toolbox.AsMap(item))
