@@ -17,13 +17,18 @@ type Router struct {
 	mem      storage.Service
 	service  *Service
 	callback func(request *http.Request)
+	*http.ServeMux
 }
 
 func (r *Router) route() {
-
+	//for app engine
 	http.Handle(baseURI+"/", r.api())
 	http.Handle("/", r.static())
 	http.Handle("/download/", r.download())
+
+	r.Handle(baseURI+"/", r.api())
+	r.Handle("/", r.static())
+	r.Handle("/download/", r.download())
 
 }
 
@@ -184,11 +189,14 @@ func (r *Router) static() http.Handler {
 }
 
 func NewRouter(service *Service, callback func(request *http.Request)) *Router {
-	srv := storage.NewMemoryService()
+	srv := storage.NewService()
+	_ = srv.Register("file", storage.NewFileStorage())
+	_ = srv.Register("mem", storage.NewMemoryService())
 	var result = &Router{
 		service:  service,
 		mem:      srv,
 		callback: callback,
+		ServeMux: &http.ServeMux{},
 	}
 	result.route()
 	return result

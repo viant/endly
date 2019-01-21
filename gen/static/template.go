@@ -999,7 +999,7 @@ rest:
   register:
     action: dsunit:register
     datastore: $db
-    config: $confog
+    config: $config
   dump:
     action: dsunit:dump
     datastore: $db
@@ -1016,7 +1016,7 @@ rest:
   register:
     action: dsunit:register
     datastore: $db
-    config: $confog
+    config: $config
   freeze:
     action: dsunit:freeze
     datastore: $db
@@ -1807,7 +1807,7 @@ config:
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/dyndb/ddl/dummy.json", bytes.NewReader([]byte(`{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/dyndb/schema/dummy.json", bytes.NewReader([]byte(`{
   "AttributeDefinitions": [
     {
       "AttributeName": "id",
@@ -1826,11 +1826,11 @@ config:
   }
 }`)))
 		if err != nil {
-			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/dyndb/ddl/dummy.json %v", err)
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/dyndb/schema/dummy.json %v", err)
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/dyndb/ddl/dummy_type.json", bytes.NewReader([]byte(`{
+		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/dyndb/schema/dummy_type.json", bytes.NewReader([]byte(`{
   "AttributeDefinitions": [
     {
       "AttributeName": "id",
@@ -1849,7 +1849,7 @@ config:
   }
 }`)))
 		if err != nil {
-			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/dyndb/ddl/dummy_type.json %v", err)
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/dyndb/schema/dummy_type.json %v", err)
 		}
 	}
 	{
@@ -1915,11 +1915,11 @@ Tables:
   - Table: dummy
     PkColumns:
       - id
-    SchemaURL: ddl/dummy.json
+    SchemaURL: datastore/${db}/schema/dummy.json
   - Table: dummy_type
     PkColumns:
       - id
-    SchemaURL: ddl/dummy_type.json
+    SchemaURL: datastore/${db}/schema/dummy_type.json
 `)))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/template/datastore/dyndb/init.yaml %v", err)

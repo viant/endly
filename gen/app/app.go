@@ -1,13 +1,12 @@
 package main
 
 import (
-	//"fmt"
-	//"github.com/viant/endly"
 	"fmt"
 	"github.com/viant/endly"
 	_ "github.com/viant/endly/gen/static"
 	"github.com/viant/endly/gen/web"
 	"github.com/viant/toolbox"
+	"log"
 	"net/http"
 )
 
@@ -22,7 +21,11 @@ func main() {
 		toolbox.URLPathJoin(baseURL, "template"),
 		toolbox.URLPathJoin(baseURL, "asset"),
 	)
-	web.NewRouter(service, func(request *http.Request) {})
-	http.ListenAndServe(":8071", nil)
+
+	router := web.NewRouter(service, func(request *http.Request) {})
+
+	server := &http.Server{Addr: ":8071", Handler: router}
+	server.SetKeepAlivesEnabled(false)
+	log.Fatal(server.ListenAndServe())
 
 }

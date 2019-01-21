@@ -82,7 +82,7 @@ func (b *builder) addDatastore(assets map[string]string, meta *DbMeta, request *
 			if strings.HasPrefix(k, meta.Dictionary) {
 				k = string(k[len(meta.Dictionary):])
 				assetURL := path.Join(dictionaryURL, k)
-				b.UploadToEndly(assetURL, strings.NewReader(v))
+				_ = b.UploadToEndly(assetURL, strings.NewReader(v))
 			}
 		}
 		state.Put("dictionary", dictionaryURL)
@@ -91,6 +91,14 @@ func (b *builder) addDatastore(assets map[string]string, meta *DbMeta, request *
 			return err
 		}
 		b.populateDb.Put(request.Name, prepare)
+	}
+
+	for k, v := range assets {
+		schemaURL := fmt.Sprintf("datastore/%v/", request.Name)
+		if strings.HasPrefix(k, "schema/") {
+			assetURL := path.Join(schemaURL, k)
+			_ = b.UploadToEndly(assetURL, strings.NewReader(v))
+		}
 	}
 	return nil
 }
@@ -119,7 +127,7 @@ func (b *builder) addDatastoreService(assets map[string]string, meta *DbMeta, re
 			return fmt.Errorf("unable locate %v service config: %v", request.Driver, meta.Config)
 		}
 		var configURL = fmt.Sprintf("datastore/%v", meta.Config)
-		b.UploadToEndly(configURL, strings.NewReader(toolbox.AsString(config)))
+		_ = b.UploadToEndly(configURL, strings.NewReader(toolbox.AsString(config)))
 		service.Put("config", configURL)
 	}
 
@@ -399,9 +407,8 @@ func (b *builder) addSourceCode(meta *AppMeta, request *Build, assets map[string
 		if k == "meta.yaml" || k == "regression" {
 			continue
 		}
-		b.Upload(k, strings.NewReader(v))
+		_ = b.Upload(k, strings.NewReader(v))
 	}
-
 	return nil
 }
 
@@ -468,7 +475,7 @@ func (b *builder) addRun(appMeta *AppMeta, request *RunRequest) error {
 		if inlineWorkflowFormat == request.Testing.Regression {
 			content = strings.Replace(content, "name: regression", "request: '@regression/regression'", 1)
 		}
-		b.UploadToEndly("run.yaml", strings.NewReader(content))
+		_ = b.UploadToEndly("run.yaml", strings.NewReader(content))
 	}
 	return err
 }
@@ -503,7 +510,7 @@ func (b *builder) buildSystem() error {
 	stopImagesMap.Put("images", b.tags)
 	var content string
 	if content, err = toolbox.AsYamlText(system); err == nil {
-		b.UploadToEndly("system.yaml", strings.NewReader(content))
+		_ = b.UploadToEndly("system.yaml", strings.NewReader(content))
 	}
 	return err
 }
@@ -518,7 +525,7 @@ func (b *builder) buildDatastore() error {
 	pipeline.Put("prepare", b.populateDb)
 	var content string
 	if content, err = toolbox.AsYamlText(datastore); err == nil {
-		b.UploadToEndly("datastore.yaml", strings.NewReader(content))
+		_ = b.UploadToEndly("datastore.yaml", strings.NewReader(content))
 	}
 	return err
 }
@@ -756,7 +763,13 @@ func (b *builder) addRegressionData(appMeta *AppMeta, request *RunRequest) error
 		state.Put("db", datastore.Name)
 		state.Put("dbKey", "$"+datastore.Name)
 		var prepare Map
-
+		dump, err := b.Download("util/dump.yaml", state)
+		if err == nil {
+			_ = b.UploadToEndly(fmt.Sprintf("util/%v/dump.yaml", datastore.Name), strings.NewReader(dump))
+		}
+		if freeze, err := b.Download("util/freeze.yaml", state); err == nil {
+			_ = b.UploadToEndly(fmt.Sprintf("util/%v/freeze.yaml", datastore.Name), strings.NewReader(freeze))
+		}
 		switch request.Testing.UseCaseData {
 		case "preload":
 			prepare, err = b.NewMapFromURI("datastore/regression/data.yaml", state)
@@ -1094,7 +1107,6 @@ func (b *builder) UploadToEndly(URI string, reader io.Reader) error {
 func (b *builder) Upload(URI string, reader io.Reader) error {
 	URL := toolbox.URLPathJoin(b.destURL, URI)
 	content, _ := ioutil.ReadAll(reader)
-	//fmt.Printf("%v\n%s\n", URL, content)
 	return b.destService.Upload(URL, bytes.NewReader(content))
 }
 

@@ -9,8 +9,8 @@ Tables:
   - Table: dummy
     PkColumns:
       - id
-    SchemaURL: ddl/dummy.json
+    SchemaURL: datastore/${db}/schema/dummy.json
   - Table: dummy_type
     PkColumns:
       - id
-    SchemaURL: ddl/dummy_type.json
+    SchemaURL: datastore/${db}/schema/dummy_type.json
