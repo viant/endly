@@ -2,9 +2,11 @@ var app = {};
 var db = {};
 
 
+console.log('doc ready ? ');
+
 $(document).ready(function () {
 
-
+    console.log('ready');
 
 
     $("#origin").change(function () {
@@ -101,6 +103,9 @@ $(document).ready(function () {
         return submit(e);
     });
 });
+
+
+console.log('doc ready loaded ? ');
 
 
 function submit(e) {

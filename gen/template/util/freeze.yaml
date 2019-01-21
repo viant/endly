@@ -2,7 +2,7 @@ pipeline:
   register:
     action: dsunit:register
     datastore: $db
-    config: $confog
+    config: $config
   freeze:
     action: dsunit:freeze
     datastore: $db
