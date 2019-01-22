@@ -1,10 +1,9 @@
-package cloudfunctions
+package storage
 
 import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/gc"
-	"google.golang.org/api/cloudfunctions/v1beta2"
 	"google.golang.org/api/storage/v1"
 )
 
@@ -13,13 +12,13 @@ var clientKey = (*CtxClient)(nil)
 //CtxClient represents context client
 type CtxClient struct {
 	*gc.AbstractClient
-	service *cloudfunctions.Service
+	service *storage.Service
 }
 
 func (s *CtxClient) SetService(service interface{}) error {
 	var ok bool
-	s.service, ok = service.(*cloudfunctions.Service)
-	if !ok {
+	s.service, ok = service.(*storage.Service)
+	if ! ok {
 		return fmt.Errorf("unable to set service: %T", service)
 	}
 	return nil
@@ -50,6 +49,6 @@ func GetClient(context *endly.Context) (*CtxClient, error) {
 	client := &CtxClient{
 		AbstractClient: &gc.AbstractClient{},
 	}
-	err := gc.GetClient(context, cloudfunctions.New, clientKey, &client, cloudfunctions.CloudPlatformScope, storage.DevstorageFullControlScope)
+	err := gc.GetClient(context, storage.New, clientKey, &client, storage.CloudPlatformScope, storage.PubsubScope)
 	return client, err
 }

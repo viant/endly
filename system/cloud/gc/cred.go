@@ -63,6 +63,8 @@ func GetClient(eContext *endly.Context, provider, key interface{}, target interf
 	if !ok {
 		return fmt.Errorf("invalid target type: %T", target)
 	}
+	ctxService.SetCredConfig(credConfig.Config)
+	ctxService.SetHttpClient(httpClient)
 	ctxService.SetContext(ctx)
 	if err = ctxService.SetService(service); err != nil {
 		return err
@@ -123,7 +125,9 @@ func UpdateActionRequest(rawRequest map[string]interface{}, config *gcCredConfig
 	if _, has := rawRequest["project"]; !has {
 		rawRequest["project"] = config.ProjectID
 	}
-
+	if _, has := rawRequest["region"]; ! has && config.Region != "" {
+		rawRequest["region"] = config.Region
+	}
 	var URLParams = make(gensupport.URLParams)
 	if urlParams, ok := rawRequest["urlParams"]; ok {
 		if toolbox.IsMap(urlParams) {
