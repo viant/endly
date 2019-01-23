@@ -22,7 +22,7 @@ pipeline:
       name: endly
       ports:
         "22": "7722"
-
-      //docker run  -v /var/run/docker.sock:/var/run/docker.sock -d -p 22:7722  --name endly
-
-  docker cp endly:/usr/bin/docker .
+#
+#      //docker run  -v /var/run/docker.sock:/var/run/docker.sock -d -p 22:7722  --name endly
+#
+#  docker cp endly:/usr/bin/docker .
