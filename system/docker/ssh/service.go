@@ -514,7 +514,10 @@ func (s *service) build(context *endly.Context, request *BuildRequest) (*BuildRe
 	}
 	if request.Path == "" {
 		request.Path = "."
+	} else {
+		request.Path = url.NewResource(request.Path).ParsedURL.Path
 	}
+
 	commandInfo, err := s.executeDockerCommand(nil, context, target, dockerIgnoreErrors, fmt.Sprintf("docker build %v %v", args, request.Path))
 	if err != nil {
 		return nil, err
@@ -977,6 +980,27 @@ func (s *service) registerRoutes() {
 		},
 	})
 
+
+	s.Register(&endly.Route{
+		Action: "copy",
+		RequestInfo: &endly.ActionInfo{
+			Description: "copy asset from container",
+		},
+		RequestProvider: func() interface{} {
+			return &CopyRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &CopyResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*CopyRequest); ok {
+				return s.copy(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+
 	s.Register(&endly.Route{
 		Action: "pull",
 		RequestInfo: &endly.ActionInfo{
@@ -1359,6 +1383,29 @@ func (s *service) registerRoutes() {
 		},
 	})
 }
+
+
+
+func (s *service) copy(context *endly.Context, request *CopyRequest) (*CopyResponse, error) {
+	var response = &CopyResponse{}
+	source, err := context.ExpandResource(request.Source)
+	if err != nil {
+		return nil, err
+	}
+
+	state := context.State()
+	for k, v := range request.Assets {
+		sourcePath := state.ExpandAsText(k)
+		dest := url.NewResource(state.ExpandAsText(v)).ParsedURL.Path
+		_, err = s.executeSecureDockerCommand(true, nil, context, source, dockerErrors, fmt.Sprintf("docker cp %v:%v %v", request.Name, sourcePath, dest))
+		if err != nil {
+			return nil, err
+		}
+	}
+	return response, err
+}
+
+
 
 //New creates a new docker service.
 func New() endly.Service {
