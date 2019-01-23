@@ -3,12 +3,17 @@ package http
 import (
 	"bytes"
 	"fmt"
+	"github.com/viant/assertly"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model/criteria"
+	"github.com/viant/endly/model/msg"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -23,7 +28,7 @@ type service struct {
 }
 
 func (s *service) send(context *endly.Context, sendGroupRequest *SendRequest) (*SendResponse, error) {
-	client, err := toolbox.NewHttpClient(s.applyDefaultTimeoutIfNeeded(sendGroupRequest.options)...)
+	client, err := toolbox.NewHttpClient(s.applyDefaultTimeoutIfNeeded(sendGroupRequest.options_)...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send req: %v", err)
 	}
@@ -115,6 +120,8 @@ func (s *service) applyDefaultTimeoutIfNeeded(options []*toolbox.HttpOptions) []
 	if len(options) > 0 {
 		return options
 	}
+
+	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = 100
 	return []*toolbox.HttpOptions{
 		{
 			Key:   "RequestTimeoutMs",
@@ -138,35 +145,59 @@ func (s *service) resetContext(context *endly.Context, request *SendRequest) {
 	}
 }
 
-func (s *service) handleRequest(client *http.Client, trip *stressTestTrip) {
+func (s *service) handleRequest(client *http.Client, metric *runtimeMetric, trip *stressTestTrip) {
 	defer func() {
 		trip.waitGroup.Done()
 	}()
+
 	trip.requestTime = time.Now()
 	var response *http.Response
-	response, trip.err = client.Do(trip.request)
-
-	trip.responseTime = time.Now()
-	trip.elapsed = trip.responseTime.Sub(trip.requestTime)
-	if trip.err != nil {
+	var err error
+	if atomic.LoadInt64(&metric.startTime) == 0 {
+		atomic.CompareAndSwapInt64(&metric.startTime, 0, trip.requestTime.UnixNano())
+	}
+	response, err = client.Do(trip.request)
+	if err, ok := err.(net.Error); ok && err.Timeout() {
+		trip.timeout = true
+		atomic.AddUint32(&metric.timeouts, 1)
+		return
+	} else if err != nil {
+		trip.err = err
+		metric.err = err
+		atomic.AddUint32(&metric.errors, 1)
 		return
 	}
-	if trip.expected {
-		if response.ContentLength > 0 {
-			content, _ := ioutil.ReadAll(response.Body)
-			response.Body.Close()
-			response.Body = ioutil.NopCloser(bytes.NewReader(content))
-		}
-		trip.response = response
+	defer response.Body.Close()
+	atomic.AddUint32(&metric.count, 1)
+	trip.responseTime = time.Now()
+	if trip.err != nil || trip.timeout {
+		return
 	}
+	var content []byte
+	if response.ContentLength > 0 {
+		content, err = ioutil.ReadAll(response.Body)
+	}
+
+	if trip.expected {
+		trip.response = &http.Response{
+			Header:        response.Header,
+			Status:        response.Status,
+			StatusCode:    response.StatusCode,
+			ContentLength: response.ContentLength,
+			Body:          ioutil.NopCloser(strings.NewReader("")),
+		}
+		if len(content) > 0 {
+			trip.response.Body = ioutil.NopCloser(bytes.NewReader(content))
+		}
+	}
+
 }
 
-func (s *service) handleRequests(client *http.Client, sendChannel chan *stressTestTrip, done *uint32) {
-
+func (s *service) handleRequests(client *http.Client, sendChannel chan *stressTestTrip, metric *runtimeMetric, done *uint32) {
 	for {
 		select {
 		case trip := <-sendChannel:
-			s.handleRequest(client, trip)
+			s.handleRequest(client, metric, trip)
 		case <-time.After(15 * time.Second):
 			return
 		}
@@ -176,22 +207,29 @@ func (s *service) handleRequests(client *http.Client, sendChannel chan *stressTe
 	}
 }
 
+type runtimeMetric struct {
+	count     uint32
+	startTime int64
+	timeouts  uint32
+	errors    uint32
+	err       error
+}
+
 func (s *service) stressTest(context *endly.Context, request *LoadRequest) (*LoadResponse, error) {
 	var waitGroup = &sync.WaitGroup{}
-	var sendChannel = make(chan *stressTestTrip, 2*request.ThreadCount)
+	capacity := 1024 * request.ThreadCount
+	var sendChannel = make(chan *stressTestTrip, capacity)
 	var done uint32 = 0
-	if _, err := s.initClients(request, sendChannel, &done); err != nil {
+	metrics := &runtimeMetric{}
+
+	go s.emitMetrics(context, metrics, &done, request.Message)
+	if _, err := s.initClients(request, sendChannel, metrics, &done); err != nil {
 		return nil, err
 	}
-	trips, err := buildStressTestTrip(request, context, waitGroup)
+	partialTrips := newPartialStressTrips(capacity, sendChannel, waitGroup)
+	trips, err := buildStressTestTrip(request, context, partialTrips)
 	if err != nil {
 		return nil, err
-	}
-	waitGroup.Add(len(trips))
-	for _, trip := range trips {
-		select {
-		case sendChannel <- trip:
-		}
 	}
 	waitGroup.Wait()
 	atomic.StoreUint32(&done, 1)
@@ -201,13 +239,43 @@ func (s *service) stressTest(context *endly.Context, request *LoadRequest) (*Loa
 	if err = collectTripResponses(context, trips, response, request); err != nil {
 		return nil, err
 	}
+
+	response.Assert = &validator.AssertResponse{Validation: &assertly.Validation{}}
+	var actual = make([]interface{}, 0)
+	var expected = make([]interface{}, 0)
+
 	if request.Expect != nil {
-		var actual = map[string]interface{}{
-			"Responses": response.Responses,
+		for _, trip := range trips {
+			if !trip.expected {
+				continue
+			}
+			if trip.index >= len(request.Requests) {
+				continue
+			}
+			expect := request.Requests[trip.index].Expect
+			if expect == nil {
+				continue
+			}
+			actualResponse := response.NewResponse()
+			var index = trip.index
+			if trip.response != nil {
+				response.StatusCodes[trip.response.StatusCode]++
+				actualResponse.Merge(trip.response, trip.expectBinary)
+				err := actualResponse.TransformBodyIfNeeded(context, request.Requests[index])
+				if err != nil {
+					continue
+				}
+				if toolbox.IsCompleteJSON(actualResponse.Body) {
+					actualResponse.JSONBody, _ = toolbox.JSONToMap(actualResponse.Body)
+				}
+			}
+			actual = append(actual, actualResponse)
+			expected = append(expected, expect)
+
 		}
-		response.Assert, err = validator.Assert(context, request, request.Expect, actual, "HTTP.responses", "assert http responses")
+		response.Assert, err = validator.Assert(context, request, expected, actual, "HTTP.Responses", "assert http responses")
 	}
-	return response, nil
+	return response, err
 }
 
 func collectTripResponses(context *endly.Context, trips []*stressTestTrip, response *LoadResponse, request *LoadRequest) error {
@@ -215,12 +283,18 @@ func collectTripResponses(context *endly.Context, trips []*stressTestTrip, respo
 	endTime := trips[0].responseTime
 	minResponse := trips[0].elapsed
 	maxResponse := trips[0].elapsed
+
+	response.StatusCodes = make(map[int]int)
 	var cumulativeResponse time.Duration
 	//collect responses and build validation collection
 	for _, trip := range trips {
 		if trip.err != nil {
-			response.Status = "error"
+			response.ErrorCount++
 			response.Error = trip.err.Error()
+		}
+
+		if trip.timeout {
+			response.TimeoutCount++
 		}
 		if !trip.expected {
 			continue
@@ -238,20 +312,8 @@ func collectTripResponses(context *endly.Context, trips []*stressTestTrip, respo
 			maxResponse = trip.elapsed
 		}
 		cumulativeResponse += trip.elapsed
-		tripResponse := response.NewResponse()
-		var index = trip.index
-		if trip.response != nil {
-			tripResponse.Merge(trip.response, trip.expectBinary)
-			err := tripResponse.TransformBodyIfNeeded(context, request.Requests[index])
-			if err != nil {
-				return err
-			}
-			if toolbox.IsCompleteJSON(tripResponse.Body) {
-				tripResponse.JSONBody, _ = toolbox.JSONToMap(tripResponse.Body)
-			}
-		}
-		response.Responses[trip.index] = tripResponse
 	}
+
 	response.MinResponseTimeInMs = float64(minResponse) / float64(time.Millisecond)
 	response.MaxResponseTimeInMs = float64(maxResponse) / float64(time.Millisecond)
 	avg := float64(cumulativeResponse) / float64(len(trips))
@@ -266,6 +328,7 @@ func collectTripResponses(context *endly.Context, trips []*stressTestTrip, respo
 type stressTestTrip struct {
 	index        int
 	err          error
+	timeout      bool
 	expectBinary bool
 	request      *http.Request
 	response     *http.Response
@@ -276,7 +339,7 @@ type stressTestTrip struct {
 	elapsed      time.Duration
 }
 
-func buildStressTestTrip(request *LoadRequest, context *endly.Context, waitGroup *sync.WaitGroup) ([]*stressTestTrip, error) {
+func buildStressTestTrip(request *LoadRequest, context *endly.Context, partials *partialStressTrips) ([]*stressTestTrip, error) {
 	var sessionCookies = []*http.Cookie{}
 	var err error
 	var trips = make([]*stressTestTrip, 0)
@@ -297,30 +360,38 @@ func buildStressTestTrip(request *LoadRequest, context *endly.Context, waitGroup
 		req.Expand(state)
 		for i := 0; i < req.Repeat; i++ {
 			trip := &stressTestTrip{
-				waitGroup: waitGroup,
+				waitGroup: partials.WaitGroup,
 				index:     index,
 			}
-			if i == 0 && index < len(expectedResponses) { //add validation to the first response from repeated
+			if (i == 0 || (i%request.AssertMod) == 0) && index < len(expectedResponses) { //add validation to the first response from repeated
 				trip.expected = true
 			}
 			if trip.request, trip.expectBinary, err = req.Build(context, sessionCookies); err != nil {
 				return nil, err
 			}
 			trips = append(trips, trip)
+			partials.append(trip)
+
 		}
+	}
+
+	if partials.index > 0 {
+		partials.flush(partials.index + 1)
 	}
 	return trips, nil
 }
 
-func (s *service) initClients(request *LoadRequest, sendChannel chan *stressTestTrip, done *uint32) ([]*http.Client, error) {
+func (s *service) initClients(request *LoadRequest, sendChannel chan *stressTestTrip, metric *runtimeMetric, done *uint32) ([]*http.Client, error) {
 	var clients = make([]*http.Client, request.ThreadCount)
 	var err error
 	for i := 0; i < request.ThreadCount; i++ {
 		var client *http.Client
-		if client, err = toolbox.NewHttpClient(s.applyDefaultTimeoutIfNeeded(request.options)...); err != nil {
+		options := s.applyDefaultTimeoutIfNeeded(request.options_)
+		if client, err = toolbox.NewHttpClient(options...); err != nil {
 			return nil, err
 		}
-		go s.handleRequests(client, sendChannel, done)
+
+		go s.handleRequests(client, sendChannel, metric, done)
 		clients[i] = client
 	}
 	return clients, nil
@@ -421,6 +492,43 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
+}
+
+func (s *service) emitMetrics(context *endly.Context, metric *runtimeMetric, done *uint32, message string) {
+	if message == "" {
+		return
+	}
+	state := context.State()
+	private := state.Clone()
+	for atomic.LoadUint32(done) == 0 {
+		count := atomic.LoadUint32(&metric.count)
+		if count == 0 {
+			time.Sleep(time.Second)
+			continue
+		}
+		timeTakenNs := time.Now().UnixNano() - atomic.LoadInt64(&metric.startTime)
+		timeTakenSec := float64(timeTakenNs) / float64(time.Second)
+		qps := 0.0
+		if timeTakenSec > 0 {
+			qps = float64(count) / timeTakenSec
+		}
+
+		loadInfo := data.NewMap()
+		loadInfo.Put("QPS", fmt.Sprintf("%9v", float64(int(qps*10.0))/10.0))
+		loadInfo.Put("Count", fmt.Sprintf("%9v", count))
+		loadInfo.Put("Elapsed", fmt.Sprintf("%9v", fmt.Sprintf("%s", (time.Duration(timeTakenSec)*time.Second))))
+		loadInfo.Put("Errors", fmt.Sprintf("%4v", atomic.LoadUint32(&metric.errors)))
+		loadInfo.Put("Timeouts", fmt.Sprintf("%4v", atomic.LoadUint32(&metric.timeouts)))
+		errMessage := ""
+		if metric.err != nil {
+			errMessage = metric.err.Error()
+		}
+		loadInfo.Put("Error", errMessage)
+		private.Put("load", loadInfo)
+		eventMessage := private.ExpandAsText(message)
+		context.Publish(msg.NewRepeatedEvent(eventMessage, "loadTest"))
+		time.Sleep(time.Second)
+	}
 }
 
 //New creates a new http runner service

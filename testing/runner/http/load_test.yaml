@@ -1,0 +1,64 @@
+init:
+  testEndpoint: 127.0.0.1:8988
+pipeline:
+  startEndpoint:
+    action: http/endpoint:listen
+    port: 8988
+    rotate: true
+    baseDirectory: test/stress
+  init:
+    action: print
+    message: starting load testing
+  loadTest:
+    action: 'http/runner:load'
+    '@repeat': 100000
+    assertMod: 1024
+    threadCount: 10
+
+    options:
+      TimeoutMs: 500
+    requests:
+      - Body: '000'
+        Method: POST
+        URL: http://${testEndpoint}/send0
+        Expect:
+          Body: '1000'
+          Code: 200
+
+      - Body: '111'
+        Method: POST
+        URL: http://${testEndpoint}/send1
+        Expect:
+          Body: '1111'
+          Code: 200
+
+      - Body: '222'
+        Method: POST
+        URL: http://${testEndpoint}/send2
+        Expect:
+          Body: '1222'
+          Code: 200
+
+      - Body: '333'
+        Method: POST
+        URL: http://${testEndpoint}/send3
+        Expect:
+          Body: '3333'
+          Code: 200
+
+      - Body: '444'
+        Method: POST
+        URL: http://${testEndpoint}/send4
+        Expect:
+          Body: '1444'
+          Code: 200
+
+      - Body: '555'
+        Method: POST
+        URL: http://${testEndpoint}/send5
+        Expect:
+          Body: '1555'
+          Code: 200
+  summary:
+    action: print
+    message: 'Count: $loadTest.RequestCount, QPS: $loadTest.QPS: Response: min: $loadTest.MinResponseTimeInMs ms, avg: $loadTest.AvgResponseTimeInMs ms max: $loadTest.MaxResponseTimeInMs ms, errors: $loadTest.ErrorCount, timeouts: $loadTest.TimeoutCount'
