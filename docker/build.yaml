@@ -1,0 +1,28 @@
+init:
+  version: 0.27.0
+  target:
+    URL: ssh://127.0.0.1/
+    credentials: localhost
+
+pipeline:
+  build:
+    action: docker:build
+    target: $target
+    path: build/
+    tag:
+      image: endly
+      version: $version
+  extract:
+    start:
+      action: docker:run
+      target: $target
+      image: endly:$version
+      mount:
+        '/var/run/docker.sock': /var/run/docker.sock
+      name: endly
+      ports:
+        "22": "7722"
+
+      //docker run  -v /var/run/docker.sock:/var/run/docker.sock -d -p 22:7722  --name endly
+
+  docker cp endly:/usr/bin/docker .

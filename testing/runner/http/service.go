@@ -170,6 +170,7 @@ func (s *service) handleRequest(client *http.Client, metric *runtimeMetric, trip
 	defer response.Body.Close()
 	atomic.AddUint32(&metric.count, 1)
 	trip.responseTime = time.Now()
+	trip.elapsed  = trip.requestTime.Sub(trip.requestTime)
 	if trip.err != nil || trip.timeout {
 		return
 	}
@@ -296,9 +297,6 @@ func collectTripResponses(context *endly.Context, trips []*stressTestTrip, respo
 		if trip.timeout {
 			response.TimeoutCount++
 		}
-		if !trip.expected {
-			continue
-		}
 		if trip.requestTime.Before(startTime) {
 			startTime = trip.requestTime
 		}
@@ -312,6 +310,9 @@ func collectTripResponses(context *endly.Context, trips []*stressTestTrip, respo
 			maxResponse = trip.elapsed
 		}
 		cumulativeResponse += trip.elapsed
+		if !trip.expected {
+			continue
+		}
 	}
 
 	response.MinResponseTimeInMs = float64(minResponse) / float64(time.Millisecond)
