@@ -157,20 +157,19 @@ func (s *service) handleRequest(client *http.Client, metric *runtimeMetric, trip
 		atomic.CompareAndSwapInt64(&metric.startTime, 0, trip.requestTime.UnixNano())
 	}
 	response, err = client.Do(trip.request)
+	trip.responseTime = time.Now()
+	trip.elapsed  = trip.responseTime.Sub(trip.requestTime)
+	atomic.AddUint32(&metric.count, 1)
+
 	if err, ok := err.(net.Error); ok && err.Timeout() {
 		trip.timeout = true
 		atomic.AddUint32(&metric.timeouts, 1)
-		return
 	} else if err != nil {
 		trip.err = err
 		metric.err = err
 		atomic.AddUint32(&metric.errors, 1)
-		return
 	}
 	defer response.Body.Close()
-	atomic.AddUint32(&metric.count, 1)
-	trip.responseTime = time.Now()
-	trip.elapsed  = trip.requestTime.Sub(trip.requestTime)
 	if trip.err != nil || trip.timeout {
 		return
 	}
@@ -178,7 +177,6 @@ func (s *service) handleRequest(client *http.Client, metric *runtimeMetric, trip
 	if response.ContentLength > 0 {
 		content, err = ioutil.ReadAll(response.Body)
 	}
-
 	if trip.expected {
 		trip.response = &http.Response{
 			Header:        response.Header,
@@ -191,7 +189,6 @@ func (s *service) handleRequest(client *http.Client, metric *runtimeMetric, trip
 			trip.response.Body = ioutil.NopCloser(bytes.NewReader(content))
 		}
 	}
-
 }
 
 func (s *service) handleRequests(client *http.Client, sendChannel chan *stressTestTrip, metric *runtimeMetric, done *uint32) {
@@ -237,7 +234,8 @@ func (s *service) stressTest(context *endly.Context, request *LoadRequest) (*Loa
 	var response = &LoadResponse{
 		Status: "ok",
 	}
-	if err = collectTripResponses(context, trips, response, request); err != nil {
+
+	if err = collectTripResponses(trips, response, request); err != nil {
 		return nil, err
 	}
 
@@ -279,7 +277,7 @@ func (s *service) stressTest(context *endly.Context, request *LoadRequest) (*Loa
 	return response, err
 }
 
-func collectTripResponses(context *endly.Context, trips []*stressTestTrip, response *LoadResponse, request *LoadRequest) error {
+func collectTripResponses(trips []*stressTestTrip, response *LoadResponse, request *LoadRequest) error {
 	startTime := trips[0].requestTime
 	endTime := trips[0].responseTime
 	minResponse := trips[0].elapsed
@@ -314,7 +312,6 @@ func collectTripResponses(context *endly.Context, trips []*stressTestTrip, respo
 			continue
 		}
 	}
-
 	response.MinResponseTimeInMs = float64(minResponse) / float64(time.Millisecond)
 	response.MaxResponseTimeInMs = float64(maxResponse) / float64(time.Millisecond)
 	avg := float64(cumulativeResponse) / float64(len(trips))
@@ -493,6 +490,7 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
+
 }
 
 func (s *service) emitMetrics(context *endly.Context, metric *runtimeMetric, done *uint32, message string) {
