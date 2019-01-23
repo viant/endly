@@ -51,6 +51,15 @@ func (p InlineWorkflow) updateReservedAttributes(aMap map[string]interface{}) {
 			aMap[ExplicitActionAttributePrefix+key] = val
 		}
 	}
+	for _, key := range []string{"tag"} {
+		if val, ok := aMap[key]; ok {
+			if _, has := aMap[ExplicitRequestAttributePrefix+key]; has {
+				continue
+			}
+			delete(aMap, key)
+			aMap[ExplicitRequestAttributePrefix+key] = val
+		}
+	}
 }
 
 var normalizationBlacklist = map[string]bool{
