@@ -445,34 +445,55 @@ pipeline:
 
 
 HTTP runner provides stress testing capabilities to generate a HTTP endpoint load and to validate desired responses.
-Note that this service  should not be consider as replacement for a load testing tools like [wrk](https://github.com/wg/wrk) or [jmeter](https://jmeter.apache.org/)
 
 
-@load.yaml
+```bash
+endly -r=load_test
+```
+
+[@load_test.yaml](load_test.yaml)
+
+
 ```yaml
+init:
+  testEndpoint: 127.0.0.1:8988
 pipeline:
-  task1:
-    action: http/runner:load
-    request: "@load.json" 
+  startEndpoint:
+    action: http/endpoint:listen
+    port: 8988
+    rotate: true
+    baseDirectory: test/stress
+  init:
+    action: print
+    message: starting load testing
+  loadTest:
+    action: 'http/runner:load'
+    '@repeat': 100000
+    assertMod: 16
+    threadCount: 10
+    options:
+      TimeoutMs: 500
+    requests:
+      - Body: '000'
+        Method: POST
+        URL: http://${testEndpoint}/send0
+        Expect:
+          Body: '1000'
+          Code: 200
+
+      - Body: '111'
+        Method: POST
+        URL: http://${testEndpoint}/send1
+        Expect:
+          Body: '1111'
+          Code: 200
+
+  summary:
+    action: print
+    message: 'Count: $loadTest.RequestCount, QPS: $loadTest.QPS: Response: min: $loadTest.MinResponseTimeInMs ms, avg: $loadTest.AvgResponseTimeInMs ms max: $loadTest.MaxResponseTimeInMs ms, errors: $loadTest.ErrorCount, timeouts: $loadTest.TimeoutCount'
 ```
 
-where 
-[@load.json](test/stress/load.json)
 
-```json
-{
-  "ThreadCount": 6,
-  "Repeat": 30,
-  "Requests": [
-    //...
-  ],
-  "Expect": {
-    "Responses": [
-       //... 
-    ]
-  }
-}
-```
 
 
 ## Bulk requests loading for stress testing
@@ -518,6 +539,9 @@ Where
 ```bash
 endly -r=regression
 ```
+
+
+
 
 
 <a name="data_organization"></a>
