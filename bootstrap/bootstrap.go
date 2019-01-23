@@ -19,7 +19,7 @@ import (
 	_ "github.com/adrianwit/fsc"
 	_ "github.com/adrianwit/mgc"
 
-	_ "github.com/alexbrainman/odbc"
+	//odbc _ "github.com/alexbrainman/odbc"
 
 	_ "github.com/viant/endly/gen/static"
 	_ "github.com/viant/endly/shared/static" //load external resource like .csv .json files to mem storage
