@@ -1,6 +1,5 @@
 package bootstrap
 
-
 import (
 	"encoding/json"
 	"flag"
