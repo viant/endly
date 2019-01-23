@@ -12,7 +12,7 @@ pipeline:
   loadTest:
     action: 'http/runner:load'
     '@repeat': 100000
-    assertMod: 1024
+    assertMod: 16
     threadCount: 10
 
     options:
