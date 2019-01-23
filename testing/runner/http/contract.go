@@ -10,8 +10,8 @@ import (
 
 //SendRequest represents a send http request.
 type SendRequest struct {
-	Options  map[string]interface{} `description:"http client options: key value pairs, where key is one of the following: HTTP options:RequestTimeoutMs,TimeoutMs,KeepAliveTimeMs,TLSHandshakeTimeoutMs,ResponseHeaderTimeoutMs,MaxIdleConns,FollowRedirects"`
-	options  []*toolbox.HttpOptions
+	Options  map[string]interface{} `description:"http client options_: key value pairs, where key is one of the following: HTTP options_:RequestTimeoutMs,TimeoutMs,KeepAliveTimeMs,TLSHandshakeTimeoutMs,ResponseHeaderTimeoutMs,MaxIdleConns,FollowRedirects"`
+	options_ []*toolbox.HttpOptions
 	Requests []*Request
 	Expect   map[string]interface{} `description:"If specified it will validated response as actual"`
 }
@@ -28,15 +28,21 @@ func (s *SendRequest) Init() error {
 	}
 
 	if len(s.Options) > 0 {
-		s.options = make([]*toolbox.HttpOptions, 0)
+		s.options_ = make([]*toolbox.HttpOptions, 0)
 		for k, v := range s.Options {
-			s.options = append(s.options, &toolbox.HttpOptions{Key: k, Value: v})
+			s.options_ = append(s.options_, &toolbox.HttpOptions{Key: k, Value: v})
 		}
 	}
-
 	if _, has := s.Expect["Responses"]; has {
+		for i, expect := range toolbox.AsSlice(s.Expect["Responses"]) {
+			if i >= len(s.Requests) {
+				break
+			}
+			s.Requests[i].Expect = toolbox.AsMap(expect)
+		}
 		return nil
 	}
+
 	var hasExpectedResponse = false
 	var emptyMap = make(map[string]interface{})
 	var expectedResponses = make([]interface{}, 0)
@@ -102,8 +108,10 @@ func NewSendResponseFromURL(URL string) (*SendResponse, error) {
 //LoadRequest represents a send http request.
 type LoadRequest struct {
 	*SendRequest
-	ThreadCount int `description:"defines number of http client sending request concurrently, default 3"`
-	Repeat      int `description:"defines how many times repeat individual request, default 1"`
+	ThreadCount int    `description:"defines number of http client sending request concurrently, default 3"`
+	Repeat      int    `description:"defines how many times repeat individual request, default 1"`
+	AssertMod   int    `description:"defines modulo for assertion on repeated request (make sure you have enough memory)"`
+	Message     string `description:"reporting message during stress test, the following is available: $load.[QPS|Count|Elapsed|Timeouts|Errors|Error]"`
 }
 
 func (r *LoadRequest) Init() error {
@@ -127,6 +135,13 @@ func (r *LoadRequest) Init() error {
 		}
 	}
 
+	if r.AssertMod == 0 {
+		r.AssertMod = 1024
+	}
+
+	if r.Message == "" {
+		r.Message = " $load.Elapsed: Count: $load.Count, QPS: $load.QPS, Timeouts: $load.Timeouts, Errors: $load.Errors, Error: $load.Error"
+	}
 	return r.SendRequest.Init()
 }
 
@@ -155,6 +170,9 @@ type LoadResponse struct {
 	Status              string
 	Error               string
 	QPS                 float64
+	TimeoutCount        int
+	ErrorCount          int
+	StatusCodes         map[int]int
 	TestDurationSec     float64
 	RequestCount        int
 	MinResponseTimeInMs float64

@@ -43,11 +43,8 @@ func TestHttpRunnerService_Run(t *testing.T) {
 	assert.NotNil(t, service)
 	context := manager.NewContext(toolbox.NewContext())
 	response := service.Run(context, &runner.SendRequest{
-		Options: []*toolbox.HttpOptions{
-			{
-				Key:   "RequestTimeoutMs",
-				Value: 12000,
-			},
+		Options: map[string]interface{}{
+			"RequestTimeoutMs": 12000,
 		},
 		Requests: []*runner.Request{
 			{
@@ -411,6 +408,7 @@ func TestHttpRunnerService_Run_StressTest(t *testing.T) {
 				"Body": "1" + strings.Repeat(toolbox.AsString(i), 3),
 			})
 	}
+
 	request.Expect = map[string]interface{}{
 		"Responses": expected,
 	}
