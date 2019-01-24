@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/logrusorgru/aurora"
 	"github.com/viant/toolbox"
-	"golang.org/x/net/context"
 	"io"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -79,13 +79,16 @@ func (r *Renderer) ColorText(text string, textColors ...string) string {
 
 //Columns reutnrs terminal column count
 func (r *Renderer) Columns() int {
-	ctx := context.Background()
-	cmd := exec.CommandContext(ctx, "tput", "cols")
-	output, err := cmd.CombinedOutput()
-	if err == nil {
-		r.lines, err = strconv.Atoi(strings.TrimSpace(string(output)))
-		if err != nil {
-			r.lines = minColumns
+	cmd := exec.Command("stty", "size")
+	cmd.Stdin = os.Stdin
+	output, err := cmd.Output()
+ 	if err == nil && len(output) > 0 {
+ 		parts := strings.Split(string(output), " ")
+ 		if len(parts) > 1 {
+			r.lines, err = strconv.Atoi(strings.TrimSpace(parts[1]))
+			if err != nil {
+				r.lines = minColumns
+			}
 		}
 	}
 	if r.lines < minColumns {
