@@ -1,5 +1,4 @@
-# Endly docker service
-
+# Endly docker image
 
 [Endly docker repository](https://cloud.docker.com/repository/docker/endly/endly)
 
