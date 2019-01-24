@@ -11,8 +11,8 @@ pipeline:
     message: starting load testing
   loadTest:
     action: 'http/runner:load'
-    '@repeat': 100000
-    assertMod: 16
+    '@repeat': 1000000
+    assertMod: 1024
     threadCount: 10
 
     options:

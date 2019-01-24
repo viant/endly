@@ -37,7 +37,7 @@ func (r *BuildRequest) Validate() error {
 		return errors.New("target was nil")
 	}
 	if r.Path == "" {
-		return errors.New("Dockerfile location was empty")
+		return errors.New("dockerfile location was empty")
 	}
 	return nil
 }
