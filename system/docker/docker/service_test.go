@@ -1,7 +1,9 @@
-package ssh_test
+package docker_test
+
 
 import (
 	"fmt"
+	"github.com/viant/endly/system/docker/docker"
 	"log"
 	"path"
 	"testing"
@@ -9,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
-	"github.com/viant/endly/system/docker"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"

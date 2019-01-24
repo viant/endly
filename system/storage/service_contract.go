@@ -198,6 +198,9 @@ func (r *CopyRequest) Init() error {
 		}
 		return nil
 	}
+
+
+
 	r.Transfers = r.Assets.AsTransfer(r.Transfer)
 	return nil
 }
@@ -241,18 +244,21 @@ func (t *AssetTransfer) AsTransfer(base *Transfer) []*Transfer {
 		if !ok {
 			continue
 		}
+		transfer := &Transfer{
+			Expand:  base.Expand,
+			Source:url.NewResource(source),
+			Dest:url.NewResource(dest),
+			Replace: base.Replace,
+		}
 		if isSourceRootPath {
 			source = url.NewResource(source).ParsedURL.Path
+			transfer.Source = joinIfNeeded(destBase, source)
 		}
 		if isDestRootPath {
 			dest = url.NewResource(dest).ParsedURL.Path
+			transfer.Dest = joinIfNeeded(destBase, dest)
 		}
-		transfers = append(transfers, &Transfer{
-			Source:  joinIfNeeded(sourceBase, source),
-			Dest:    joinIfNeeded(destBase, dest),
-			Expand:  base.Expand,
-			Replace: base.Replace,
-		})
+		transfers = append(transfers, transfer)
 	}
 	return transfers
 }

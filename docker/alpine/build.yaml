@@ -1,0 +1,117 @@
+init:
+  buildPath: /tmp/endly
+  version: $TrimSpace($Cat('../../Version'))
+  target:
+    URL: ssh://127.0.0.1/
+    credentials: localhost
+
+defaults:
+  target:
+    URL: ssh://127.0.0.1/
+    credentials: localhost
+
+
+pipeline:
+
+  clean:
+    action: storage:remove
+    assets:
+      - URL: ${buildPath}/build
+      - URL: ${buildPath}/compact
+
+  mkdir:
+    action: exec:run
+    commands:
+      - mkdir -p  ${buildPath}/compact/usr/lib/
+      - mkdir -p  ${buildPath}/compact/usr/local/bin/
+
+  init:
+    action: storage:copy
+    source: $target
+    dest: $target
+    assets:
+      build: ${buildPath}/build
+      compact: ${buildPath}/compact
+
+
+  build:
+    action: docker:build
+    path: ${buildPath}/build/
+    arguments:
+      '--no-cache': ''
+    tag:
+      image: go_endly
+      version: $version
+
+  extract:
+    start:
+      action: docker:run
+      image: go_endly:$version
+      name: goEndly
+      ports:
+        "8822": 22
+
+    copy:
+      action: docker:copy
+      source: $target
+      name: goEndly
+      assets:
+        '/endly/endly/endly': ${buildPath}/compact/usr/local/bin/
+        '/usr/bin/docker':  ${buildPath}/compact/usr/local/bin/
+        '/usr/lib/libltdl.so.7.3.1':  ${buildPath}/compact/usr/lib/libltdl.so.7
+    stopGoEndly:
+      action: docker:stop
+      name: goEndly
+
+  compact:
+    build:
+      action: docker:build
+      force: true
+      path: ${buildPath}/compact/
+      arguments:
+        '--no-cache': ''
+      tag:
+        image: endly
+        version: ${version}-alpine3.8
+
+    tagVersion:
+      action: docker:tag
+      sourceTag:
+        image: endly
+        version: ${version}-alpine3.8
+      targetTag:
+        image: endly
+        username: endly
+        version: ${version}-alpine3.8
+
+    tagLatestVersion:
+      action: docker:tag
+      sourceTag:
+        image: endly
+        version: ${version}-alpine3.8
+      targetTag:
+        image: endly
+        username: endly
+        version: latest-alpine3.8
+
+  deploy:
+    auth:
+      action: docker:login
+      repository: index.docker.io/endly
+      credentials: dockerHubEndly
+
+    pushVersion:
+      action: docker:push
+      tag:
+        image: endly
+        username: endly
+        version: ${version}-alpine3.8
+
+    pushLatestVersion:
+      action: docker:push
+      tag:
+        image: endly
+        username: endly
+        version: latest-alpine3.8
+
+

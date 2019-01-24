@@ -1,6 +1,6 @@
 ## Docker service
 
-This implementation uses SSH based command docker cli with output scraping, it uses exec SSH endly service
+This implementation uses SSH based docker command cli with output scraping, it uses exec SSH endly service
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- | 

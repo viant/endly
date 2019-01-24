@@ -1,4 +1,4 @@
-package ssh
+package docker
 
 import (
 	"errors"
@@ -23,7 +23,7 @@ type BuildResponse struct {
 
 //Init initialises default values
 func (r *BuildRequest) Init() {
-	if len(r.Arguments) == 0 && r.Tag != nil {
+	if len(r.Arguments) == 0  {
 		r.Arguments = make(map[string]string)
 	}
 	if r.Tag != nil {

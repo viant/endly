@@ -1,4 +1,4 @@
-package ssh
+package docker
 
 import "github.com/viant/endly"
 
