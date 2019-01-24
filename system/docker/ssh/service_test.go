@@ -30,7 +30,7 @@ func TestDockerService_ComposeUp(t *testing.T) {
 		description string
 		baseDir     string
 		target      *url.Resource
-		request     *docker.ComposeRequestUp
+		request     *ssh.ComposeRequestUp
 		expected    interface{}
 		HasError    bool
 	}{
@@ -39,7 +39,7 @@ func TestDockerService_ComposeUp(t *testing.T) {
 			description: "Docker Compose up request",
 			target:      target,
 			baseDir:     "test/compose/up/darwin",
-			request:     &docker.ComposeRequestUp{&docker.ComposeRequest{Target: target, Source: url.NewResource("test/compose/up/docker-compose.yaml")}, true},
+			request:     &ssh.ComposeRequestUp{&ssh.ComposeRequest{Target: target, Source: url.NewResource("test/compose/up/docker-compose.yaml")}, true},
 			expected: `{
   "Containers": [
     {	
@@ -62,7 +62,7 @@ func TestDockerService_ComposeUp(t *testing.T) {
 			log.Fatal(err)
 		}
 
-		var response = &docker.ComposeResponse{}
+		var response = &ssh.ComposeResponse{}
 		err = endly.Run(context, useCase.request, response)
 		if useCase.HasError {
 			assert.NotNil(t, err, useCase.description)
@@ -88,7 +88,7 @@ func TestDockerService_ComposeDown(t *testing.T) {
 		description string
 		baseDir     string
 		target      *url.Resource
-		request     *docker.ComposeRequestDown
+		request     *ssh.ComposeRequestDown
 		expected    interface{}
 		HasError    bool
 	}{
@@ -97,7 +97,7 @@ func TestDockerService_ComposeDown(t *testing.T) {
 			description: "Docker Compose down request",
 			target:      target,
 			baseDir:     "test/compose/down/darwin",
-			request:     &docker.ComposeRequestDown{&docker.ComposeRequest{Target: target, Source: url.NewResource("test/compose/up/docker-compose.yaml")}},
+			request:     &ssh.ComposeRequestDown{&ssh.ComposeRequest{Target: target, Source: url.NewResource("test/compose/up/docker-compose.yaml")}},
 			expected:    `{"Containers":[]}`,
 		},
 	}
@@ -109,7 +109,7 @@ func TestDockerService_ComposeDown(t *testing.T) {
 			log.Fatal(err)
 		}
 
-		var response = &docker.ComposeResponse{}
+		var response = &ssh.ComposeResponse{}
 		err = endly.Run(context, useCase.request, response)
 		if useCase.HasError {
 			assert.NotNil(t, err, useCase.description)
@@ -135,14 +135,14 @@ func TestDockerService_Images(t *testing.T) {
 		target     *url.Resource
 		Repository string
 		Tag        string
-		Expected   []*docker.ImageInfo
+		Expected   []*ssh.ImageInfo
 	}{
 		{
 			"test/images/darwin",
 			target,
 			"mysql",
 			"5.6",
-			[]*docker.ImageInfo{
+			[]*ssh.ImageInfo{
 				{
 					Repository: "mysql",
 					Tag:        "5.6",
@@ -156,7 +156,7 @@ func TestDockerService_Images(t *testing.T) {
 			target,
 			"",
 			"",
-			[]*docker.ImageInfo{
+			[]*ssh.ImageInfo{
 				{
 					Repository: "mysql",
 					Tag:        "5.6",
@@ -176,7 +176,7 @@ func TestDockerService_Images(t *testing.T) {
 			target,
 			"mysql",
 			"5.6",
-			[]*docker.ImageInfo{
+			[]*ssh.ImageInfo{
 				{
 					Repository: "mysql",
 					Tag:        "5.6",
@@ -193,8 +193,8 @@ func TestDockerService_Images(t *testing.T) {
 
 			if assert.Nil(t, err) {
 
-				var request = docker.NewImagesRequest(useCase.target, useCase.Repository, useCase.Tag)
-				var response = &docker.ImagesResponse{}
+				var request = ssh.NewImagesRequest(useCase.target, useCase.Repository, useCase.Tag)
+				var response = &ssh.ImagesResponse{}
 				err := endly.Run(context, request, response)
 				var baseCase = useCase.baseDir + " " + useCase.Repository
 				if !assert.Nil(t, err, baseCase) {
@@ -234,14 +234,14 @@ func TestDockerService_Run(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir    string
-		Request    *docker.RunRequest
-		Expected   *docker.ContainerInfo
+		Request    *ssh.RunRequest
+		Expected   *ssh.ContainerInfo
 		TargetName string
 		Error      string
 	}{
 		{
 			"test/run/existing/darwin",
-			&docker.RunRequest{
+			&ssh.RunRequest{
 				Target: target,
 				Image:  "mysql:5.6",
 				Ports: map[string]string{
@@ -257,7 +257,7 @@ func TestDockerService_Run(t *testing.T) {
 					"**mysql**": mySQLcredentialFile,
 				},
 			},
-			&docker.ContainerInfo{
+			&ssh.ContainerInfo{
 				Status:      "up",
 				Names:       "testMysql",
 				ContainerID: "83ed7b545cbf",
@@ -267,7 +267,7 @@ func TestDockerService_Run(t *testing.T) {
 		},
 		{
 			"test/run/new/darwin",
-			&docker.RunRequest{
+			&ssh.RunRequest{
 
 				Target: target,
 				Image:  "mysql:5.6",
@@ -284,7 +284,7 @@ func TestDockerService_Run(t *testing.T) {
 					"**mysql**": mySQLcredentialFile,
 				},
 			},
-			&docker.ContainerInfo{
+			&ssh.ContainerInfo{
 				Status:      "up",
 				Names:       "testMysql",
 				ContainerID: "98a28566ba7a",
@@ -294,7 +294,7 @@ func TestDockerService_Run(t *testing.T) {
 		},
 		{
 			"test/run/error/darwin",
-			&docker.RunRequest{
+			&ssh.RunRequest{
 				Target: target,
 				Image:  "mysql:5.6",
 				Ports: map[string]string{
@@ -310,13 +310,13 @@ func TestDockerService_Run(t *testing.T) {
 					"**mysql**": mySQLcredentialFile,
 				},
 			},
-			&docker.ContainerInfo{},
+			&ssh.ContainerInfo{},
 			"testMysql01",
 			"error executing docker run --name testMysql01 -e MYSQL_ROOT_PASSWORD=**mysql** -v /tmp/my.cnf:/etc/my.cnf -p 3306:3306  -d mysql:5.6 , c3d9749a1dc43332bb5a58330187719d14c9c23cee55f583cb83bbb3bbb98a80\ndocker: Error response from daemon: driver failed programming external connectivity on endpoint testMysql01 (5c9925d698dfee79f14483fbc42a3837abfb482e30c70e53d830d3d9cfd6f0da): Error starting userland proxy: Bind for 0.0.0.0:3306 failed: port is already allocated.\n at docker.run",
 		},
 		{
 			"test/run/active/darwin",
-			docker.NewRunRequest(target, "testMysql",
+			ssh.NewRunRequest(target, "testMysql",
 				map[string]string{
 					"**mysql**": mySQLcredentialFile,
 				}, "mysql:5.6", "", map[string]string{
@@ -326,7 +326,7 @@ func TestDockerService_Run(t *testing.T) {
 				}, map[string]string{
 					"3306": "3306",
 				}, nil, ""),
-			&docker.ContainerInfo{
+			&ssh.ContainerInfo{
 				Status:      "up",
 				Names:       "testMysql",
 				ContainerID: "84df38a810f7",
@@ -344,7 +344,7 @@ func TestDockerService_Run(t *testing.T) {
 			defer context.Close()
 			if assert.Nil(t, err) {
 				useCase.Request.Name = useCase.TargetName
-				var response = &docker.RunResponse{}
+				var response = &ssh.RunResponse{}
 				err := endly.Run(context, useCase.Request, response)
 				var description = useCase.baseDir + " " + useCase.TargetName
 				if useCase.Error != "" {
@@ -376,14 +376,14 @@ func TestDockerService_ExecRequest(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir    string
-		Request    *docker.ExecRequest
+		Request    *ssh.ExecRequest
 		Expected   string
 		TargetName string
 		Error      string
 	}{
 		{
 			"test/command/export/darwin",
-			docker.NewExecRequest(docker.NewBaseRequest(target, "testMysql"),
+			ssh.NewExecRequest(ssh.NewBaseRequest(target, "testMysql"),
 				"mysqldump  -uroot -p***mysql*** --all-databases --routines | grep -v 'Warning' > /tmp/dump.sql",
 				map[string]string{
 					"***mysql***": mySQLcredentialFile,
@@ -394,8 +394,8 @@ func TestDockerService_ExecRequest(t *testing.T) {
 		},
 		{
 			"test/command/import/darwin",
-			&docker.ExecRequest{
-				BaseRequest: &docker.BaseRequest{
+			&ssh.ExecRequest{
+				BaseRequest: &ssh.BaseRequest{
 					Target: target,
 				},
 				Interactive: true,
@@ -418,7 +418,7 @@ func TestDockerService_ExecRequest(t *testing.T) {
 			if assert.Nil(t, err) {
 				useCase.Request.Name = useCase.TargetName
 				var description = useCase.baseDir + " " + useCase.TargetName
-				response := &docker.ExecResponse{}
+				response := &ssh.ExecResponse{}
 				err := endly.Run(context, useCase.Request, response)
 				if useCase.Error != "" {
 					assert.EqualValues(t, useCase.Error, fmt.Sprintf("%v", err), description)
@@ -441,18 +441,18 @@ func TestDockerService_Pull(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
-		Request  *docker.PullRequest
-		Expected *docker.ImageInfo
+		Request  *ssh.PullRequest
+		Expected *ssh.ImageInfo
 		Error    string
 	}{
 		{
 			"test/pull/linux",
-			&docker.PullRequest{
+			&ssh.PullRequest{
 				Target:     target,
 				Repository: "mysql",
 				Tag:        "5.7",
 			},
-			&docker.ImageInfo{
+			&ssh.ImageInfo{
 				Repository: "mysql",
 				Tag:        "5.7",
 				ImageID:    "5709795eeffa",
@@ -467,7 +467,7 @@ func TestDockerService_Pull(t *testing.T) {
 		var target = useCase.Request.Target
 		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
 		if assert.Nil(t, err) {
-			service, err := context.Service(docker.ServiceID)
+			service, err := context.Service(ssh.ServiceID)
 			assert.Nil(t, err)
 			if assert.Nil(t, err) {
 				serviceResponse := service.Run(context, useCase.Request)
@@ -475,7 +475,7 @@ func TestDockerService_Pull(t *testing.T) {
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				actual, ok := serviceResponse.Response.(*docker.PullResponse)
+				actual, ok := serviceResponse.Response.(*ssh.PullResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -506,17 +506,17 @@ func TestDockerService_Status(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
-		Request  *docker.ContainerStatusRequest
-		Expected *docker.ContainerStatusResponse
+		Request  *ssh.ContainerStatusRequest
+		Expected *ssh.ContainerStatusResponse
 		Error    string
 	}{
 		{
 			"test/status/up/linux",
-			&docker.ContainerStatusRequest{
+			&ssh.ContainerStatusRequest{
 				Target: target,
 			},
-			&docker.ContainerStatusResponse{
-				Containers: []*docker.ContainerInfo{
+			&ssh.ContainerStatusResponse{
+				Containers: []*ssh.ContainerInfo{
 					{
 						ContainerID: "b5bcc949f075",
 						Port:        "0.0.0.0:3306->3306/tcp",
@@ -537,7 +537,7 @@ func TestDockerService_Status(t *testing.T) {
 		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
 		exec.GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
-			service, err := context.Service(docker.ServiceID)
+			service, err := context.Service(ssh.ServiceID)
 			assert.Nil(t, err)
 			defer context.Close()
 			if assert.Nil(t, err) {
@@ -546,7 +546,7 @@ func TestDockerService_Status(t *testing.T) {
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				response, ok := serviceResponse.Response.(*docker.ContainerStatusResponse)
+				response, ok := serviceResponse.Response.(*ssh.ContainerStatusResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process resonse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -577,19 +577,19 @@ func TestDockerService_Start(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
-		Request  *docker.StartRequest
-		Expected *docker.ContainerInfo
+		Request  *ssh.StartRequest
+		Expected *ssh.ContainerInfo
 		Error    string
 	}{
 		{
 			"test/start/linux",
-			&docker.StartRequest{
-				BaseRequest: &docker.BaseRequest{
+			&ssh.StartRequest{
+				BaseRequest: &ssh.BaseRequest{
 					Target: target,
 					Name:   "db1",
 				},
 			},
-			&docker.ContainerInfo{
+			&ssh.ContainerInfo{
 				ContainerID: "b5bcc949f075",
 				Port:        "0.0.0.0:3306->3306/tcp",
 				Command:     "docker-entrypoint...",
@@ -606,7 +606,7 @@ func TestDockerService_Start(t *testing.T) {
 		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
 		exec.GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
-			service, err := context.Service(docker.ServiceID)
+			service, err := context.Service(ssh.ServiceID)
 			assert.Nil(t, err)
 
 			if assert.Nil(t, err) {
@@ -615,7 +615,7 @@ func TestDockerService_Start(t *testing.T) {
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				response, ok := serviceResponse.Response.(*docker.StartResponse)
+				response, ok := serviceResponse.Response.(*ssh.StartResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -646,19 +646,19 @@ func TestDockerService_Stop(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
-		Request  *docker.StopRequest
-		Expected *docker.ContainerInfo
+		Request  *ssh.StopRequest
+		Expected *ssh.ContainerInfo
 		Error    string
 	}{
 		{
 			"test/stop/linux",
-			&docker.StopRequest{
-				BaseRequest: &docker.BaseRequest{
+			&ssh.StopRequest{
+				BaseRequest: &ssh.BaseRequest{
 					Target: target,
 					Name:   "db1",
 				},
 			},
-			&docker.ContainerInfo{
+			&ssh.ContainerInfo{
 				ContainerID: "b5bcc949f075",
 				Port:        "0.0.0.0:3306->3306/tcp",
 				Command:     "docker-entrypoint...",
@@ -675,7 +675,7 @@ func TestDockerService_Stop(t *testing.T) {
 		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
 		exec.GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
-			service, err := context.Service(docker.ServiceID)
+			service, err := context.Service(ssh.ServiceID)
 			assert.Nil(t, err)
 
 			defer context.Close()
@@ -684,7 +684,7 @@ func TestDockerService_Stop(t *testing.T) {
 
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
-				response, ok := serviceResponse.Response.(*docker.StopResponse)
+				response, ok := serviceResponse.Response.(*ssh.StopResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -712,14 +712,14 @@ func TestDockerService_Remove(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
-		Request  *docker.RemoveRequest
+		Request  *ssh.RemoveRequest
 		Expected string
 		Error    string
 	}{
 		{
 			"test/remove/linux",
-			&docker.RemoveRequest{
-				BaseRequest: &docker.BaseRequest{
+			&ssh.RemoveRequest{
+				BaseRequest: &ssh.BaseRequest{
 					Target: target,
 					Name:   "db1",
 				},
@@ -734,7 +734,7 @@ func TestDockerService_Remove(t *testing.T) {
 		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
 		exec.GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
-			service, err := context.Service(docker.ServiceID)
+			service, err := context.Service(ssh.ServiceID)
 			assert.Nil(t, err)
 
 			defer context.Close()
@@ -744,7 +744,7 @@ func TestDockerService_Remove(t *testing.T) {
 				var baseCase = useCase.baseDir + " "
 				assert.Equal(t, useCase.Error, serviceResponse.Error, baseCase)
 
-				response, ok := serviceResponse.Response.(*docker.RemoveResponse)
+				response, ok := serviceResponse.Response.(*ssh.RemoveResponse)
 				if !ok {
 					assert.Fail(t, fmt.Sprintf("process serviceResponse was empty %v %T", baseCase, serviceResponse.Response))
 					continue
@@ -774,14 +774,14 @@ func TestDockerService_Login(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir          string
-		Request          *docker.LoginRequest
+		Request          *ssh.LoginRequest
 		ExpectedUserName string
 		ExpectedStdout   string
 		Error            bool
 	}{
 		{
 			"test/login/gcr_key/darwin",
-			&docker.LoginRequest{
+			&ssh.LoginRequest{
 
 				Target:      target,
 				Repository:  "us.gcr.io/myproj",
@@ -805,7 +805,7 @@ func TestDockerService_Login(t *testing.T) {
 		//},
 		{
 			"test/login/std/darwin",
-			&docker.LoginRequest{
+			&ssh.LoginRequest{
 
 				Target:      target,
 				Repository:  "repo.com/myproj",
@@ -822,7 +822,7 @@ func TestDockerService_Login(t *testing.T) {
 		context, err := exec.NewSSHReplayContext(manager, target, useCase.baseDir)
 		exec.GetReplayService(useCase.baseDir)
 		if assert.Nil(t, err) {
-			service, err := context.Service(docker.ServiceID)
+			service, err := context.Service(ssh.ServiceID)
 			defer context.Close()
 
 			if assert.Nil(t, err) {
@@ -831,19 +831,19 @@ func TestDockerService_Login(t *testing.T) {
 
 				if useCase.Error {
 					assert.True(t, serviceResponse.Error != "")
-					serviceResponse = service.Run(context, &docker.LogoutRequest{
+					serviceResponse = service.Run(context, &ssh.LogoutRequest{
 						Target:     useCase.Request.Target,
 						Repository: useCase.Request.Repository,
 					})
 					continue
 				}
 				if assert.EqualValues(t, "", serviceResponse.Error, useCase.baseDir) {
-					response, ok := serviceResponse.Response.(*docker.LoginResponse)
+					response, ok := serviceResponse.Response.(*ssh.LoginResponse)
 					if assert.True(t, ok) {
 						assert.EqualValues(t, useCase.ExpectedUserName, response.Username)
 						assert.EqualValues(t, useCase.ExpectedStdout, response.Stdout)
 					}
-					serviceResponse = service.Run(context, &docker.LogoutRequest{
+					serviceResponse = service.Run(context, &ssh.LogoutRequest{
 						Target:     useCase.Request.Target,
 						Repository: useCase.Request.Repository,
 					})
@@ -864,11 +864,11 @@ func TestDockerService_Build(t *testing.T) {
 		return
 	}
 	defer context.Close()
-	service, _ := context.Service(docker.ServiceID)
+	service, _ := context.Service(ssh.ServiceID)
 
-	response := service.Run(context, &docker.BuildRequest{
+	response := service.Run(context, &ssh.BuildRequest{
 		Target: target,
-		Tag: &docker.Tag{
+		Tag: &ssh.Tag{
 			Username: "viant",
 			Image:    "site_profile_backup",
 			Version:  "0.1",
@@ -905,10 +905,10 @@ func TestDockerService_Push(t *testing.T) {
 		if !assert.Nil(t, err) {
 			return
 		}
-		service, _ := context.Service(docker.ServiceID)
-		response := service.Run(context, &docker.PushRequest{
+		service, _ := context.Service(ssh.ServiceID)
+		response := service.Run(context, &ssh.PushRequest{
 			Target: target,
-			Tag: &docker.Tag{
+			Tag: &ssh.Tag{
 				Username: "viant",
 				Image:    "site_profile_backup",
 				Version:  "0.1",
@@ -935,15 +935,15 @@ func TestDockerService_Inspect(t *testing.T) {
 		return
 	}
 	defer context.Close()
-	service, _ := context.Service(docker.ServiceID)
-	serviceResponse := service.Run(context, &docker.InspectRequest{
-		BaseRequest: &docker.BaseRequest{
+	service, _ := context.Service(ssh.ServiceID)
+	serviceResponse := service.Run(context, &ssh.InspectRequest{
+		BaseRequest: &ssh.BaseRequest{
 			Target: target,
 			Name:   "site_backup",
 		},
 	})
 	assert.EqualValues(t, "", serviceResponse.Error)
-	response, ok := serviceResponse.Response.(*docker.InspectResponse)
+	response, ok := serviceResponse.Response.(*ssh.InspectResponse)
 	if assert.True(t, ok) {
 		if assert.True(t, response.Stdout != "") {
 			assert.NotNil(t, response.Info)
@@ -959,23 +959,23 @@ func TestDockerService_Inspect(t *testing.T) {
 
 func TestDockerLoginRequest_Validate(t *testing.T) {
 	{
-		request := &docker.LoginRequest{}
+		request := &ssh.LoginRequest{}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.LoginRequest{
+		request := &ssh.LoginRequest{
 			Target: url.NewResource("abc"),
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.LoginRequest{
+		request := &ssh.LoginRequest{
 			Repository: "abc",
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.LoginRequest{
+		request := &ssh.LoginRequest{
 			Repository: "abc",
 			Target:     url.NewResource("abc"),
 		}
@@ -985,33 +985,33 @@ func TestDockerLoginRequest_Validate(t *testing.T) {
 
 func Test_DockerBuildRequest_Validate(t *testing.T) {
 	{
-		request := docker.BuildRequest{}
+		request := ssh.BuildRequest{}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := docker.BuildRequest{Target: url.NewResource("abc"), Tag: &docker.Tag{}}
+		request := ssh.BuildRequest{Target: url.NewResource("abc"), Tag: &ssh.Tag{}}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := docker.BuildRequest{Target: url.NewResource("abc"),
+		request := ssh.BuildRequest{Target: url.NewResource("abc"),
 			Arguments: map[string]string{
 				"-t": "image:1.0",
 			},
 			Path: "/",
-			Tag:  &docker.Tag{Image: "abc"}}
+			Tag:  &ssh.Tag{Image: "abc"}}
 		assert.Nil(t, request.Validate())
 	}
 
 	{
-		request := docker.BuildRequest{Target: url.NewResource("abc"),
+		request := ssh.BuildRequest{Target: url.NewResource("abc"),
 			Path: "/",
-			Tag:  &docker.Tag{Image: "abc"}}
+			Tag:  &ssh.Tag{Image: "abc"}}
 		assert.Nil(t, request.Validate())
 	}
 	{
-		request := docker.BuildRequest{Target: url.NewResource("abc"),
+		request := ssh.BuildRequest{Target: url.NewResource("abc"),
 
-			Tag: &docker.Tag{Image: "abc"}}
+			Tag: &ssh.Tag{Image: "abc"}}
 		assert.NotNil(t, request.Validate())
 	}
 }
@@ -1019,58 +1019,58 @@ func Test_DockerBuildRequest_Validate(t *testing.T) {
 func TestDockerTag_Validate(t *testing.T) {
 
 	{
-		request := &docker.TagRequest{}
+		request := &ssh.TagRequest{}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.TagRequest{
+		request := &ssh.TagRequest{
 			Target: url.NewResource("abc"),
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.TagRequest{
+		request := &ssh.TagRequest{
 			Target:    url.NewResource("abc"),
-			SourceTag: &docker.Tag{},
+			SourceTag: &ssh.Tag{},
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.TagRequest{
+		request := &ssh.TagRequest{
 			Target:    url.NewResource("abc"),
-			SourceTag: &docker.Tag{},
-			TargetTag: &docker.Tag{},
+			SourceTag: &ssh.Tag{},
+			TargetTag: &ssh.Tag{},
 		}
 		assert.NotNil(t, request.Validate())
 	}
 
 	{
-		request := &docker.TagRequest{
+		request := &ssh.TagRequest{
 			Target:    url.NewResource("abc"),
-			SourceTag: &docker.Tag{},
-			TargetTag: &docker.Tag{
+			SourceTag: &ssh.Tag{},
+			TargetTag: &ssh.Tag{
 				Image: "abc",
 			},
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.TagRequest{
+		request := &ssh.TagRequest{
 			Target: url.NewResource("abc"),
-			SourceTag: &docker.Tag{
+			SourceTag: &ssh.Tag{
 				Image: "abc",
 			},
-			TargetTag: &docker.Tag{},
+			TargetTag: &ssh.Tag{},
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		request := &docker.TagRequest{
+		request := &ssh.TagRequest{
 			Target: url.NewResource("abc"),
-			SourceTag: &docker.Tag{
+			SourceTag: &ssh.Tag{
 				Image: "abc",
 			},
-			TargetTag: &docker.Tag{
+			TargetTag: &ssh.Tag{
 				Image: "abc",
 			},
 		}
@@ -1081,20 +1081,20 @@ func TestDockerTag_Validate(t *testing.T) {
 
 func TestDockerTag_String(t *testing.T) {
 	{
-		tag := &docker.Tag{
+		tag := &ssh.Tag{
 			Image: "abc",
 		}
 		assert.EqualValues(t, "abc", tag.String())
 	}
 	{
-		tag := &docker.Tag{
+		tag := &ssh.Tag{
 			Image:   "abc",
 			Version: "latest",
 		}
 		assert.EqualValues(t, "abc:latest", tag.String())
 	}
 	{
-		tag := &docker.Tag{
+		tag := &ssh.Tag{
 			Registry: "reg.org",
 			Image:    "abc",
 			Version:  "latest",
@@ -1102,7 +1102,7 @@ func TestDockerTag_String(t *testing.T) {
 		assert.EqualValues(t, "reg.org/abc:latest", tag.String())
 	}
 	{
-		tag := &docker.Tag{
+		tag := &ssh.Tag{
 			Username: "reg.org",
 			Image:    "abc",
 			Version:  "latest",

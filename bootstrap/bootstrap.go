@@ -65,7 +65,7 @@ import (
 	_ "github.com/viant/endly/system/cloud/gc/pubsub"
 
 	_ "github.com/viant/endly/system/daemon"
-	_ "github.com/viant/endly/system/docker/docker"
+	_ "github.com/viant/endly/system/docker/ssh"
 	_ "github.com/viant/endly/system/exec"
 	_ "github.com/viant/endly/system/network"
 	_ "github.com/viant/endly/system/process"
