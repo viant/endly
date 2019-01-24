@@ -9,7 +9,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 - [Motivation](#Motivation)
 - [Introduction](#Introduction)
-- [GettingStarted](#GettingStarted)
+- [GettingStarted](#Getting Started)
 - [Documentation](#Documentation)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
@@ -155,26 +155,23 @@ While the above build task example was a trivial workflow usage, the power of en
 - flexible service architecture
 
 
-<a name="GettingStarted"></a>
 
 ## Getting Started
 
+
+##### Installation
+  - [Install/Download](doc/installation)
+  - [Endly docker image](docker/)
+
+
+#####  Project generator
+ 
 Good workflow and data organization is the key for success, e2e project generator is the great place to start.
 
-[Create test project for your app](doc/generator).
-
-[![test project generator](project_generator.png)](http://endly-external.appspot.com/)
+- [Create test project for your app](doc/generator). [![test project generator](project_generator.png)](http://endly-external.appspot.com/)
 
 
-
-Endly uses various text data format (YAML, JSON, CSV), so here is some IDEs  selection to consider:
-
-a) [Atom](https://ide.atom.io/) with tablr plugin  (apm install tablr)
-
-b) [IntelJ](https://www.jetbrains.com/idea/)  with [CSV plugin](https://www.jetbrains.com/help/idea/editing-csv-and-tsv-files.html)
-
-
-Endly automate sequence of actions into reusable tasks and workflows, here are some examples:
+##### Examples:
 
 
 **a) System preparation**
@@ -272,50 +269,67 @@ pipeline:
 
 **As Standalone app** (with predefined shared workflow)
 
-@app.yaml
 
+@app.yaml
 ```yaml
-tasks: $tasks
+init:
+  buildTarget:
+    URL: scp://127.0.0.1/tmp/build/myApp/
+    credentials: localhost
+  appTarget:
+    URL: scp://127.0.0.1/opt/myApp/
+    credentials: localhost
+  target:
+    URL: scp://127.0.0.1/
+    credentials: localhost
 defaults:
-  app: myApp
-  sdk: go:1.8
+  target: $target
 
 pipeline:
 
   build:
-    workflow: app/build
-    origin:
-      URL: ./../
-    commands:
-      - cd $buildPath/app
-      - go get -u .
-      - go build -o $app
-      - chmod +x $app
-    download:
-      /$buildPath/app/${app}: $releasePath
-      /$buildPath/endly/config/config.json: $releasePath
+    checkout:
+      action: version/control:checkout
+      origin:
+        URL: ./../ 
+        #or https://github.com/myRepo/myApp
+      dest: $buildTarget
+    set-sdk:
+      action: sdk:set
+      sdk: go:1.11
+    build-app:
+      action: exec:run
+      commands:
+        - cd /tmp/build/myApp/app
+        - export GO111MODULE=on
+        - go build myApp.go
+        - chmod +x myApp
+    deploy:
+      mkdir:
+        action: exec:run
+        commands:
+          - sudo rm -rf /opt/myApp/
+          - sudo mkdir -p /opt/myApp
+          - sudo chown -R ${os.user} /opt/myApp
 
-  deploy:
-    workflow: app/deploy
-    init:
-      - mkdir -p $appPath
-      - mkdir -p $appPath/config
-      - chown -R ${os.user} $appPath
-    upload:
-      ${releasePath}/${app}: $appPath
-      ${releasePath}/config.json: $appPath
-    commands:
-      - echo 'deployed'
+      install:
+        action: storage:copy
+        source: $buildTarget
+        dest: $appTarget
+        expand: true
+        assets:
+          app/myApp: myApp
+          config/config.json: config.json
 
   stop:
     action: process:stop-all
-    input: ${app}
+    input: myApp
 
   start:
     action: process:start
-    directory: $appPath
+    directory: /opt/myApp
     immuneToHangups: true
-    command: ./${app}
+    command: ./myApp
     arguments:
       - "-config"
       - "config.json"
@@ -592,7 +606,7 @@ You can build, deploy and test them end to end all with endly.
         - Mocking 3rd party REST API with [http/endpoint service](testing/endpoint/http) 
         
 3) **Extract, Transform and Load (ETL)**
-   * [Transformer](example/etl/transformer) - datastore to datastore transformer (i.e. aerospike to mysql)
+   * [Transformer](example/etl/myApp) - datastore to datastore myApp (i.e. aerospike to mysql)
        - Test with Rest Runner
        - Data Preparation and Validation (aersopike, mysql)
 
