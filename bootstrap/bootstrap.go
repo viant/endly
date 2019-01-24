@@ -194,12 +194,18 @@ func Bootstrap() {
 		if err != nil && !strings.Contains(err.Error(), "no such file or directory") {
 			log.Fatal(err)
 		}
+
 		if request == nil {
-			delete(flagset, "r")
+
 			flagset["w"] = flag.Lookup("w").Value.String()
-			request, err = getRunRequestWithOptions(flagset)
-			if err != nil && !strings.Contains(err.Error(), "no such file or directory") {
-				log.Fatal(err)
+			if request, err = getRunRequestWithOptions(flagset); err == nil {
+				delete(flagset, "r")
+			}
+			if err != nil {
+				if !strings.Contains(err.Error(), "no such file or directory") {
+					log.Fatal(err)
+				}
+				request, _ = getRunRequestWithOptions(flagset)
 			}
 		}
 	}
