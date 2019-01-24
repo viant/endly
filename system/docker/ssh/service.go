@@ -1397,7 +1397,7 @@ func (s *service) copy(context *endly.Context, request *CopyRequest) (*CopyRespo
 	for k, v := range request.Assets {
 		sourcePath := state.ExpandAsText(k)
 		dest := url.NewResource(state.ExpandAsText(v)).ParsedURL.Path
-		_, err = s.executeSecureDockerCommand(true, nil, context, source, dockerErrors, fmt.Sprintf("docker cp %v:%v %v", request.Name, sourcePath, dest))
+		_, err = s.executeSecureDockerCommand(false, nil, context, source, dockerErrors, fmt.Sprintf("docker cp %v:%v %v", request.Name, sourcePath, dest))
 		if err != nil {
 			return nil, err
 		}
