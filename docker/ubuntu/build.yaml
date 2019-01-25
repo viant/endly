@@ -55,28 +55,62 @@ pipeline:
     copy:
       action: docker:copy
       source: $target
-      name: goEndly
+      name: goendly
       assets:
         'compact.tar.gz': ${buildPath}/compact/compact.tar.gz
       stopGoEndly:
         action: docker:stop
-        name: goEndly
+        name: goendly
 
   compact:
     build:
       action: docker:build
       path: ${buildPath}/compact/
       arguments:
-        '--no-cache': ''
-      tag:
+#        '--no-cache': ''
+    tag:
         image: endly
         version: ${version}-ubuntu16.04
-    start:
-      action: docker:run
-      image: endly:${version}-ubuntu16.04
-      name: endly
-      ports:
-        "7722": 22
-      mount:
-        '${env.HOME}/e2e': /e2e
-        '${env.HOME}/.secret/': /root/.secret/
+ 
+    tagVersion:
+      action: docker:tag
+      sourceTag:
+        image: endly
+        version: ${version}-ubuntu16.04
+      targetTag:
+        image: endly
+        username: endly
+        version: ${version}-ubuntu16.04
+
+    tagLatestVersion:
+      action: docker:tag
+      sourceTag:
+        image: endly
+        version: ${version}-ubuntu16.04
+      targetTag:
+        image: endly
+        username: endly
+        version: latest-ubuntu16.04
+
+    deploy:
+      auth:
+        action: docker:login
+        repository: index.docker.io/endly
+        credentials: dockerHubEndly
+
+      pushVersion:
+        action: docker:push
+        tag:
+          image: endly
+          username: endly
+          version: ${version}-ubuntu16.04
+
+      pushLatestVersion:
+        action: docker:push
+        tag:
+          image: endly
+          username: endly
+          version: latest-ubuntu16.04
+
+
+     

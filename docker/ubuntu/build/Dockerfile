@@ -63,7 +63,7 @@ RUN go build endly.go
 RUN cp endly /usr/local/bin/
 
 WORKDIR /
-RUN tar cvzf compact.tar.gz /usr/local/bin/endly  /usr/local/bin/docker /usr/local/bin/docker-compose \
+RUN tar cvzf /compact.tar.gz /usr/local/bin/endly  /usr/local/bin/docker /usr/local/bin/docker-compose \
     /usr/bin/python2.7 /usr/bin/python2 /usr/bin/python /usr/lib/python2.7 /usr/local/lib/python2.7/dist-packages \
     /usr/lib/google-cloud-sdk/ /usr/bin/gcloud /usr/local/lib/l* \
     /etc/vertica.ini /etc/odbcinst.ini /opt/vertica
