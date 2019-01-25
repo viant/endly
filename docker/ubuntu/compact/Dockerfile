@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-RUN apt-get update -y && apt-get install -y wget make gcc git unixodbc curl bash bash-completion openssh-server
+RUN apt-get update -y && apt-get install -y git unixodbc curl bash bash-completion openssh-server
 
 ENV NOTVISIBLE "in users profile"
 RUN rm /etc/ssh/ssh_host_rsa_key
@@ -14,7 +14,7 @@ RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so
 RUN echo "export VISIBLE=now" >> /etc/profile
 
 WORKDIR /
-ADD compact.tar.gz .
+COPY compact.tar.gz /
 RUN tar xvzf compact.tar.gz && rm compact.tar.gz
 
 RUN [ "/bin/bash", "-c", "mkdir -p /var/run/sshd" ]
