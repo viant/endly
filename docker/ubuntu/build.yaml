@@ -1,0 +1,82 @@
+init:
+  buildPath: /tmp/endly
+  version: $TrimSpace($Cat('../../Version'))
+  target:
+    URL: ssh://127.0.0.1/
+    credentials: localhost
+
+defaults:
+  target:
+    URL: ssh://127.0.0.1/
+    credentials: localhost
+
+pipeline:
+
+  buildAll:
+    clean:
+      action: storage:remove
+      assets:
+        - URL: ${buildPath}/build
+        - URL: ${buildPath}/compact
+
+
+    mkdir:
+      action: exec:run
+      commands:
+        - mkdir -p  ${buildPath}/compact/usr/lib/
+        - mkdir -p  ${buildPath}/compact/usr/local/bin/
+
+    init:
+      action: storage:copy
+      source: $target
+      dest: $target
+      assets:
+        build: ${buildPath}/build
+        compact: ${buildPath}/compact
+        'cgo/dep.tar.gz': ${buildPath}/build
+
+    build:
+      action: docker:build
+      path: ${buildPath}/build/
+      arguments:
+#        '--no-cache': ''
+      tag:
+        image: goendly
+        version: ${version}-ubuntu16.04
+
+  extract:
+    start:
+      action: docker:run
+      image: goendly:${version}-ubuntu16.04
+      name: goendly
+      ports:
+        "8822": 22
+
+    copy:
+      action: docker:copy
+      source: $target
+      name: goEndly
+      assets:
+        'compact.tar.gz': ${buildPath}/compact/compact.tar.gz
+      stopGoEndly:
+        action: docker:stop
+        name: goEndly
+
+  compact:
+    build:
+      action: docker:build
+      path: ${buildPath}/compact/
+      arguments:
+        '--no-cache': ''
+      tag:
+        image: endly
+        version: ${version}-ubuntu16.04
+    start:
+      action: docker:run
+      image: endly:${version}-ubuntu16.04
+      name: endly
+      ports:
+        "7722": 22
+      mount:
+        '${env.HOME}/e2e': /e2e
+        '${env.HOME}/.secret/': /root/.secret/
