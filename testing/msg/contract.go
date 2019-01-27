@@ -205,6 +205,7 @@ type Message struct {
 func (m *Message) Expand(state data.Map) *Message {
 	var result = &Message{
 		Attributes: make(map[string]interface{}),
+		Subject:    m.Subject,
 	}
 	if len(m.Attributes) > 0 {
 		for k, v := range m.Attributes {

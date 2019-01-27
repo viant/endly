@@ -150,11 +150,11 @@ func (s *service) setupResourceMethod(context *endly.Context, api *apigateway.Re
 	var state = context.State()
 	state = state.Clone()
 	if resourceMethod.FunctionName != "" {
-		function, err := lambda.GetFunctionConfiguration(context, resourceMethod.FunctionName)
+		function, err := aws.GetFunctionConfiguration(context, resourceMethod.FunctionName)
 		if err != nil {
 			return nil, err
 		}
-		lambda.SetFunctionInfo(function, state)
+		aws.SetFunctionInfo(function, state)
 		SetAPIInfo(api, state)
 		*resourceMethod.Uri = state.ExpandAsText(*resourceMethod.Uri)
 	}

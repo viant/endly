@@ -24,6 +24,10 @@ type EventSourceMapping struct {
 	StartingPositionTimestamp *time.Time `type:"timestamp"`
 }
 
+
+
+
+
 //SetupFunctionInput setup function, creates or updates existing one
 type SetupFunctionInput struct {
 	lambda.CreateFunctionInput
@@ -38,6 +42,7 @@ type SetupFunctionOutput struct {
 	RoleInfo *ciam.GetRoleInfoOutput
 	EventMappings []*lambda.EventSourceMappingConfiguration
 }
+
 
 //SetupPermissionInput creates a permission if it does not exists
 type SetupPermissionInput lambda.AddPermissionInput
@@ -62,7 +67,6 @@ func (i *SetupFunctionInput) Init() error {
 		policyDocument := string(DefaultTrustPolicy)
 		i.DefaultPolicyDocument = &policyDocument
 	}
-
 	return nil
 }
 
