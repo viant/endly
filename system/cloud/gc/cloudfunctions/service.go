@@ -5,7 +5,7 @@ import (
 	"github.com/viant/endly/system/cloud/gc"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/storage"
-	"google.golang.org/api/cloudfunctions/v1beta2"
+	"google.golang.org/api/cloudfunctions/v1"
 	"log"
 )
 
@@ -76,7 +76,7 @@ func (s *service) Deploy(context *endly.Context, httpRequest *DeployRequest) (in
 		createCall.Context(ctxClient.Context())
 		return createCall.Do()
 	}
-	updateCall := projectService.Update(httpRequest.Name, cloudFunction)
+	updateCall := projectService.Patch(httpRequest.Name, cloudFunction)
 	updateCall.Context(ctxClient.Context())
 	return updateCall.Do()
 }
