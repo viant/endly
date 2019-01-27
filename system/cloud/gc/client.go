@@ -2,8 +2,8 @@ package gc
 
 import (
 	"context"
-	"net/http"
 	"github.com/viant/toolbox/cred"
+	"net/http"
 )
 
 //CtxClient represents generic google cloud service client
@@ -14,7 +14,6 @@ type CtxClient interface {
 	Service() interface{}
 	SetCredConfig(config *cred.Config)
 	SetHttpClient(client *http.Client)
-
 }
 
 //AbstractClient represents an abstract client
@@ -36,7 +35,6 @@ func (c *AbstractClient) Context() context.Context {
 func (c *AbstractClient) SetCredConfig(config *cred.Config) {
 	c.CredConfig = config
 }
-
 
 func (c *AbstractClient) SetHttpClient(client *http.Client) {
 	c.HttpClinet = client

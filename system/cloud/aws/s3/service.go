@@ -69,11 +69,11 @@ func (s *service) updateBucketNotification(ctx *endly.Context, currentConfig *s3
 			lambdaConfig.Events = configuration.Events
 			lambdaConfig.Filter = configuration.Filter.ToNotificationConfigurationFilter()
 		} else {
-			function, err := lambda.GetFunctionConfiguration(ctx, funcName)
+			function, err := aws.GetFunctionConfiguration(ctx, funcName)
 			if err != nil {
 				return nil, err
 			}
-			lambda.SetFunctionInfo(function, state)
+			aws.SetFunctionInfo(function, state)
 			lambdaConfig = &configuration.LambdaFunctionConfiguration
 			lambdaConfig.LambdaFunctionArn = function.FunctionArn
 		}
