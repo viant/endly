@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/gc"
-	"google.golang.org/api/cloudfunctions/v1beta2"
+	"google.golang.org/api/cloudfunctions/v1"
 	"google.golang.org/api/storage/v1"
 )
 
