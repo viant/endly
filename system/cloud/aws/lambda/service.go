@@ -76,13 +76,13 @@ func (s *service) dropFunction(context *endly.Context, request *DropFunctionInpu
 	})
 }
 
-//*iam.Statement
-func (s *service) setupPermission(context *endly.Context, request *SetupPermissionInput) (interface{}, error) {
+
+
+func (s *service) setupPermission(context *endly.Context, request *SetupPermissionInput) (*lambda.AddPermissionOutput, error) {
 	client, err := GetClient(context)
 	if err != nil {
 		return nil, err
 	}
-
 	getResponse, _ := client.GetPolicy(&lambda.GetPolicyInput{
 		FunctionName: request.FunctionName,
 	})
@@ -194,7 +194,6 @@ func (s *service) setupFunctionInBackground(context *endly.Context, request *Set
 		}
 	}
 	output.FunctionConfiguration = functionConfig
-
 	if len(request.Triggers) > 0 {
 		triggersOutput, err := s.setupTriggerSource(context, &SetupTriggerSourceInput{FunctionName: request.FunctionName, Triggers: request.Triggers})
 		if err != nil {
@@ -204,6 +203,9 @@ func (s *service) setupFunctionInBackground(context *endly.Context, request *Set
 	}
 	return output, err
 }
+
+
+
 
 /*
 This method uses EventSourceMappingsInput, so only the following source are supported at the moment,
@@ -226,13 +228,13 @@ func (s *service) setupTriggerSource(context *endly.Context, request *SetupTrigg
 		if trigger.SourceARN == nil {
 			switch trigger.Type {
 			case "sqs":
-				trigger.SourceARN, err = getSqsURL(context, trigger.Source)
+				trigger.SourceARN, err = aws.GetSqsURL(context, trigger.Source)
 			case "kinesisStream":
-				trigger.SourceARN, err = getKinesisStreamARN(context, trigger.Source)
+				trigger.SourceARN, err = aws.GetKinesisStreamARN(context, trigger.Source)
 			case "kinesisConsumer":
-				trigger.SourceARN, err = getKinesisConsumerARN(context, trigger.Source)
+				trigger.SourceARN, err = aws.GetKinesisConsumerARN(context, trigger.Source)
 			case "dynamodb":
-				trigger.SourceARN, err = getDynamoDBTableARN(context, trigger.Source)
+				trigger.SourceARN, err = aws.GetDynamoDBTableARN(context, trigger.Source)
 			}
 			if err != nil {
 				return nil, err
@@ -377,6 +379,7 @@ func (s *service) registerRoutes() {
 		},
 	})
 }
+
 
 //New creates a new AWS Ec2 service.
 func New() endly.Service {

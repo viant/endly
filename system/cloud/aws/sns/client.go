@@ -38,9 +38,9 @@ func GetClient(context *endly.Context) (*sns.SNS, error) {
 	if err != nil {
 		return nil, err
 	}
-	s3Client, ok := client.(*sns.SNS)
+	snsClient, ok := client.(*sns.SNS)
 	if !  ok {
 		return nil, fmt.Errorf("unexpected client type: %T", client)
 	}
-	return s3Client, nil
+	return snsClient, nil
 }
