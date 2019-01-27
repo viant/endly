@@ -125,7 +125,7 @@ func UpdateActionRequest(rawRequest map[string]interface{}, config *gcCredConfig
 	if _, has := rawRequest["project"]; !has {
 		rawRequest["project"] = config.ProjectID
 	}
-	if _, has := rawRequest["region"]; ! has && config.Region != "" {
+	if _, has := rawRequest["region"]; !has && config.Region != "" {
 		rawRequest["region"] = config.Region
 	}
 	var URLParams = make(gensupport.URLParams)

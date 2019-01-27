@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-
 type EventTriggerInfo struct {
 	// The identifier of the event source mapping.
 	UUID *string `yaml:"uuid,omitempty" type:"string"`
@@ -32,12 +31,10 @@ type EventTriggerInfo struct {
 }
 
 
-
 type SetupFunctionEvent struct {
-	Function *FunctionInfo
-	Triggers []*EventTriggerInfo
+	Function     *FunctionInfo
+	Triggers     []*EventTriggerInfo `yaml:"triggers,omitempty"`
 }
-
 
 
 func (e *SetupFunctionEvent) Messages() []*msg.Message {
@@ -69,12 +66,12 @@ func NewSetupFunctionEvent(output *SetupFunctionOutput) *SetupFunctionEvent {
 	if len(output.EventMappings) > 0 {
 		for _, mapping := range output.EventMappings {
 			result.Triggers = append(result.Triggers, &EventTriggerInfo{
-				UUID:mapping.UUID,
-				BatchSize:mapping.BatchSize,
-				EventSourceArn:mapping.EventSourceArn,
-				LastModified:mapping.LastModified,
-				LastProcessingResult:mapping.LastProcessingResult,
-				StateTransitionReason:mapping.StateTransitionReason,
+				UUID:                  mapping.UUID,
+				BatchSize:             mapping.BatchSize,
+				EventSourceArn:        mapping.EventSourceArn,
+				LastModified:          mapping.LastModified,
+				LastProcessingResult:  mapping.LastProcessingResult,
+				StateTransitionReason: mapping.StateTransitionReason,
 			})
 		}
 	}
