@@ -9,7 +9,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 - [Motivation](#Motivation)
 - [Introduction](#Introduction)
-- [GettingStarted](#Getting Started)
+- [Getting Started](#Getting-Started)
 - [Documentation](#Documentation)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
