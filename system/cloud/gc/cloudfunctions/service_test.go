@@ -64,7 +64,7 @@ func TestService_Deploy(t *testing.T) {
 			Name:         "HelloWorld",
 			EntryPoint:   "HelloWorld",
 			Runtime:      "go1.11",
-			HttpsTrigger: &cloudfunctions.HTTPSTrigger{},
+			HttpsTrigger: &cloudfunctions.HttpsTrigger{},
 		},
 		Location: "us-central1",
 		Source:   url.NewResource(path.Join(parent, "test/hello.zip")),

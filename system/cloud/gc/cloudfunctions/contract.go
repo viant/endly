@@ -2,7 +2,7 @@ package cloudfunctions
 
 import (
 	"github.com/viant/toolbox/url"
-	"google.golang.org/api/cloudfunctions/v1beta2"
+	"google.golang.org/api/cloudfunctions/v1"
 )
 
 type DeployRequest struct {
