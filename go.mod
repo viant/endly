@@ -2,6 +2,7 @@ module github.com/viant/endly
 
 require (
 	cloud.google.com/go v0.34.0
+	contrib.go.opencensus.io/exporter/stackdriver v0.9.1 // indirect
 	firebase.google.com/go v3.5.0+incompatible // indirect
 	git.apache.org/thrift.git v0.0.0-20181205211409-17a9cffabb74 // indirect
 	github.com/MichaelS11/go-cql-driver v0.0.0-20181029231409-81aad8db3731
@@ -66,7 +67,7 @@ require (
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	golang.org/x/sys v0.0.0-20181205085412-a5c9d58dba9a // indirect
 	golang.org/x/tools v0.0.0-20181205014116-22934f0fdb62 // indirect
-	google.golang.org/api v0.0.0-20181203233308-6142e720c068
+	google.golang.org/api v0.0.0-20180910000450-7ca32eb868bf
 	google.golang.org/appengine v1.3.0 // indirect
 	google.golang.org/genproto v0.0.0-20181202183823-bd91e49a0898 // indirect
 	google.golang.org/grpc v1.17.0 // indirect
