@@ -14,7 +14,6 @@ type ServiceRequest struct {
 	Service     string      `description:"service ID"`
 	Action      string      `description:"service's'action "`
 	Request     interface{} `description:"service request"`
-	Description string
 }
 
 //Init initialises action
@@ -49,7 +48,6 @@ func (r *ServiceRequest) NewAction() *Action {
 	var repeater = &Repeater{}
 	return &Action{
 		AbstractNode: &AbstractNode{
-			Description: r.Description,
 		},
 		ServiceRequest: r,
 		MetaTag:        &MetaTag{},

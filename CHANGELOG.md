@@ -1,3 +1,7 @@
+## Jan 20 2019 0.27.1
+    * Added -j endly cli option to list UDFs
+    * Updated init attribute node without prefix  as action attribute
+    
 ## Jan 20 2019 0.27.0
     * Added gc/* services
     * Refactored and broke compatibility with former ec2/gce services
