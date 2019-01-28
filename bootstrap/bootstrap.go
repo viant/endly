@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"sort"
 
 	//Database/datastore dependencies
 
@@ -118,6 +119,7 @@ func init() {
 	flag.Bool("h", false, "print help")
 	flag.Bool("v", false, "print version")
 
+	flag.Bool("j", false, "list user defined function (UDF)")
 	flag.String("s", "", "<serviceID> print service details, -s='*' prints all service IDs")
 	flag.String("a", "", "<action> prints service action request/response detail")
 
@@ -128,9 +130,7 @@ func init() {
 	flag.Bool("g", false, "open test project generator")
 
 	flag.String("u", "", "start HTTP recorder for the supplied URLs (testing/endpoint/http)")
-
 	flag.Bool("m", false, "interactive mode (does not terminates process after workflow completes)")
-
 	flag.Int("e", 5, "max number of failures CLI reported per validation, 0 - all failures reported")
 
 	_ = mysql.SetLogger(&emptyLogger{})
@@ -170,6 +170,10 @@ func Bootstrap() {
 		return
 	}
 
+	if _, ok := flagset["j"]; ok {
+		printUDFs()
+		return
+	}
 	if _, ok := flagset["c"]; ok {
 		generateSecret(flag.Lookup("c").Value.String())
 		return
@@ -237,9 +241,30 @@ func Bootstrap() {
 	time.Sleep(time.Second)
 }
 
+
+
+func printUDFs() {
+	manager := endly.New()
+	context := manager.NewContext(nil)
+	state := context.State()
+	var udfs = make([]string, 0)
+	for k, v := range  state {
+		if toolbox.IsFunc(v) {
+			udfs = append(udfs, k)
+		}
+	}
+	sort.Strings(udfs)
+	fmt.Printf("User defined functions:\n")
+	for _, name:= range udfs {
+		fmt.Printf("\t$%v()\n", name)
+	}
+
+}
+
+
 func openbrowser(url string) {
 	log.Printf("opening http://127.0.0.1:8071/ ...")
-	exec.Command("open", url).Start()
+	_ = exec.Command("open", url).Start()
 }
 
 func makeInteractive() {
