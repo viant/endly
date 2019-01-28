@@ -42,7 +42,7 @@ type InlineWorkflow struct {
 }
 
 func (p InlineWorkflow) updateReservedAttributes(aMap map[string]interface{}) {
-	for _, key := range []string{"action", "workflow", "skip", "when", "post", "comments", "description"} {
+	for _, key := range []string{"action", "workflow", "skip", "when", "post", "init", "comments", "description"} {
 		if val, ok := aMap[key]; ok {
 			if _, has := aMap[ExplicitActionAttributePrefix+key]; has {
 				continue
@@ -417,7 +417,9 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 			task = p.buildTask(name, map[string]interface{}{})
 			parentTask.Tasks = append(parentTask.Tasks, task)
 		}
-
+		if action.Description != "" && task.Description == "" {
+			task.Description =  action.Description
+		}
 		task.Actions = append(task.Actions, action)
 		return nil
 	}
@@ -439,7 +441,7 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 		if isTemplateNode && "template" == textKey {
 			return true
 		}
-		if textKey == "logging" || textKey == "when" { //abstract node attributes
+		if textKey == "logging" || textKey == "when" || textKey == "description" { //abstract node attributes
 			nodeAttributes[textKey] = value
 		}
 		flagAsMultiActionIfMatched(textKey, task, value)
@@ -470,6 +472,7 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 						task.Post = tempTask.Post
 						task.When = tempTask.When
 						task.Logging = tempTask.Logging
+						task.Description = tempTask.Description
 					}
 				}
 			}

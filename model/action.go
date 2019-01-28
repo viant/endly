@@ -38,13 +38,6 @@ func (a *Action) Init() error {
 		return err
 	}
 
-	var setNonEmpty = func(ptr1, ptr2 *string) {
-		if *ptr1 != "" {
-			*ptr2 = *ptr2
-		} else {
-			*ptr2 = *ptr1
-		}
-	}
 	var setNonZero = func(ptr1, ptr2 *int) {
 		if *ptr1 != 0 {
 			*ptr2 = *ptr2
@@ -53,7 +46,6 @@ func (a *Action) Init() error {
 		}
 	}
 	setNonZero(&a.Repeater.SleepTimeMs, &a.AbstractNode.SleepTimeMs)
-	setNonEmpty(&a.ServiceRequest.Description, &a.ServiceRequest.Description)
 	return nil
 }
 

@@ -244,20 +244,27 @@ func (t *AssetTransfer) AsTransfer(base *Transfer) []*Transfer {
 		if !ok {
 			continue
 		}
-		transfer := &Transfer{
-			Expand:  base.Expand,
-			Source:url.NewResource(source),
-			Dest:url.NewResource(dest),
-			Replace: base.Replace,
-		}
 		if isSourceRootPath {
 			source = url.NewResource(source).ParsedURL.Path
-			transfer.Source = joinIfNeeded(destBase, source)
 		}
 		if isDestRootPath {
 			dest = url.NewResource(dest).ParsedURL.Path
+		}
+
+		transfer := &Transfer{
+			Source:   url.NewResource(source),
+			Dest:     url.NewResource(dest),
+			Expand:  base.Expand,
+			Replace: base.Replace,
+		}
+		if sourceBase != nil  {
+			transfer.Source = joinIfNeeded(sourceBase, source)
+		}
+		if sourceBase != nil {
 			transfer.Dest = joinIfNeeded(destBase, dest)
 		}
+
+
 		transfers = append(transfers, transfer)
 	}
 	return transfers
