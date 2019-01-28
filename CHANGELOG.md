@@ -1,6 +1,7 @@
 ## Jan 20 2019 0.27.1
     * Added -j endly cli option to list UDFs
     * Updated init attribute node without prefix  as action attribute
+    * Patch storage.copy asset join with source and dest
     
 ## Jan 20 2019 0.27.0
     * Added gc/* services
