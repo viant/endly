@@ -21,10 +21,10 @@ type ListenResponse struct {
 //Validate checks if request is valid.
 func (r ListenRequest) Validate() error {
 	if r.BaseDirectory == "" {
-		return errors.New("BaseDirectory was empty")
+		return errors.New("baseDirectory was empty")
 	}
 	if r.Port == 0 {
-		return errors.New("Port was empty")
+		return errors.New("port was empty")
 	}
 	return nil
 }
