@@ -1,4 +1,8 @@
-## Jan 20 2019 0.27.1
+## Jan 29 2019 0.27.2
+    * Patched nil pointer on trip runner/http:stressTest
+    * Added endpoint:http file:// path support
+
+## Jan 28 2019 0.27.1
     * Added -j endly cli option to list UDFs
     * Updated init attribute node without prefix  as action attribute
     * Patch storage.copy asset join with source and dest
