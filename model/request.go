@@ -11,9 +11,9 @@ var emptyRequest = map[string]interface{}{}
 
 //ServiceRequest represent an action request
 type ServiceRequest struct {
-	Service     string      `description:"service ID"`
-	Action      string      `description:"service's'action "`
-	Request     interface{} `description:"service request"`
+	Service string      `description:"service ID"`
+	Action  string      `description:"service's'action "`
+	Request interface{} `description:"service request"`
 }
 
 //Init initialises action
@@ -47,8 +47,7 @@ func (r *ServiceRequest) Validate() error {
 func (r *ServiceRequest) NewAction() *Action {
 	var repeater = &Repeater{}
 	return &Action{
-		AbstractNode: &AbstractNode{
-		},
+		AbstractNode:   &AbstractNode{},
 		ServiceRequest: r,
 		MetaTag:        &MetaTag{},
 		Repeater:       repeater.Init(),
