@@ -38,7 +38,7 @@ pipeline:
     action: docker:build
     path: ${buildPath}/build/
     arguments:
-      '--no-cache': ''
+#      '--no-cache': ''
     tag:
       image: go_endly
       version: $version
@@ -69,7 +69,7 @@ pipeline:
       force: true
       path: ${buildPath}/compact/
       arguments:
-        '--no-cache': ''
+#        '--no-cache': ''
       tag:
         image: endly
         version: ${version}-alpine3.8
@@ -113,5 +113,4 @@ pipeline:
         image: endly
         username: endly
         version: latest-alpine3.8
-
 
