@@ -82,9 +82,9 @@ func (r *Renderer) Columns() int {
 	cmd := exec.Command("stty", "size")
 	cmd.Stdin = os.Stdin
 	output, err := cmd.Output()
- 	if err == nil && len(output) > 0 {
- 		parts := strings.Split(string(output), " ")
- 		if len(parts) > 1 {
+	if err == nil && len(output) > 0 {
+		parts := strings.Split(string(output), " ")
+		if len(parts) > 1 {
 			r.lines, err = strconv.Atoi(strings.TrimSpace(parts[1]))
 			if err != nil {
 				r.lines = minColumns

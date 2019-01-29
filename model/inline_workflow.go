@@ -418,7 +418,7 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 			parentTask.Tasks = append(parentTask.Tasks, task)
 		}
 		if action.Description != "" && task.Description == "" {
-			task.Description =  action.Description
+			task.Description = action.Description
 		}
 		task.Actions = append(task.Actions, action)
 		return nil
