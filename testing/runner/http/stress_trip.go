@@ -10,6 +10,9 @@ type partialStressTrips struct {
 }
 
 func (t *partialStressTrips) append(trip *stressTestTrip) {
+	if trip == nil {
+		return
+	}
 	if t.index >= len(t.trips) {
 		t.flush(len(t.trips))
 		t.index = 0
@@ -19,8 +22,11 @@ func (t *partialStressTrips) append(trip *stressTestTrip) {
 }
 
 func (t *partialStressTrips) flush(count int) {
-	t.Add(count)
 	for i := 0; i < count; i++ {
+		if t.trips[i] == nil {
+			continue
+		}
+		t.Add(1)
 		t.channel <- t.trips[i]
 	}
 }
