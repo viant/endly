@@ -241,26 +241,23 @@ func Bootstrap() {
 	time.Sleep(time.Second)
 }
 
-
-
 func printUDFs() {
 	manager := endly.New()
 	context := manager.NewContext(nil)
 	state := context.State()
 	var udfs = make([]string, 0)
-	for k, v := range  state {
+	for k, v := range state {
 		if toolbox.IsFunc(v) {
 			udfs = append(udfs, k)
 		}
 	}
 	sort.Strings(udfs)
 	fmt.Printf("User defined functions:\n")
-	for _, name:= range udfs {
+	for _, name := range udfs {
 		fmt.Printf("\t$%v()\n", name)
 	}
 
 }
-
 
 func openbrowser(url string) {
 	log.Printf("opening http://127.0.0.1:8071/ ...")
