@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/toolbox/url"
 )
 
 const (
@@ -15,13 +16,15 @@ type service struct {
 	*endly.AbstractService
 }
 
-func (s *service) listen(request *ListenRequest) (*ListenResponse, error) {
+func (s *service) listen(context *endly.Context, request *ListenRequest) (*ListenResponse, error) {
+	state := context.State()
+	request.BaseDirectory = url.NewResource(state.ExpandAsText(request.BaseDirectory)).ParsedURL.Path
 	key := ServiceID + ":" + request.BaseDirectory
 	s.Mutex().Lock()
 	var response *ListenResponse
 	defer s.Mutex().Unlock()
-	var state = s.State()
-	value := state.Get(key)
+	var serviceState = s.State()
+	value := serviceState.Get(key)
 	if value != nil {
 		if response = value.(*ListenResponse); response != nil {
 			return response, nil
@@ -35,7 +38,7 @@ func (s *service) listen(request *ListenRequest) (*ListenResponse, error) {
 	response = &ListenResponse{
 		Trips: trips.Trips,
 	}
-	state.Put(key, response)
+	serviceState.Put(key, response)
 	return response, nil
 }
 
@@ -53,7 +56,7 @@ func (s *service) registerRoutes() {
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*ListenRequest); ok {
-				return s.listen(req)
+				return s.listen(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},

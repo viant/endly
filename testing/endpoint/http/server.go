@@ -139,13 +139,9 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 				index = 0
 				break;
 			}
-
 		}
 
-
-
 		response := responses.Responses[index]
-
 		for k, headerValues := range response.Header {
 			for _, headerValue := range headerValues {
 				writer.Header().Set(k, headerValue)
