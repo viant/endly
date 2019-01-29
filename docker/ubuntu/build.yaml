@@ -68,7 +68,7 @@ pipeline:
       path: ${buildPath}/compact/
       arguments:
 #        '--no-cache': ''
-    tag:
+      tag:
         image: endly
         version: ${version}-ubuntu16.04
  
