@@ -50,7 +50,7 @@ func (r *RunRequest) Init() (err error) {
 	}
 	if r.InlineWorkflow != nil && len(r.InlineWorkflow.Pipeline) > 0 {
 		if r.AssetURL == "" {
-			return fmt.Errorf("Asset URL is required for inline workflow")
+			return fmt.Errorf("asset URL is required for inline workflow")
 		}
 		name := r.Name
 		baseURL, URI := toolbox.URLSplit(r.AssetURL)
