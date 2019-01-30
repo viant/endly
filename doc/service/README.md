@@ -30,6 +30,15 @@ pipeline:
 In this case action selector specifies service:action, while the other keys define action actual request data structure.
 
 
+### Testing service action from cli
+
+```bash
+    endly -s=validator -a=assert  #to check "validator:assert contract
+    endly -run="validator:assert" actual=1 expect=3
+    endly -run="validator:assert" -req='@assert.json'
+```
+
+
 ### Workflow
 
 ```bash
@@ -105,15 +114,16 @@ The following diagram shows service with its component.
     - [Process Service](../../system/process)
     - [Daemon Service](../..//system/daemon)
     - [Network Service](../../system/network)
-    - [Docker Service](../../system/docker)
+    - [Docker Service](../../system/docker/ssh)
     - [Cloud Service](../../system/cloud)
-        - [Amazon Elastic Compute Cloud Service](../../cloud/ec2)
-        - [Google Compute Engine Service](../../cloud/gce)
+        - [Amazon Elastic Compute Cloud Service](../../system/cloud/aws)
+        - [Google Compute Engine Service](../../system/cloud/gc)
 
 3) **Build and Deployment Services**
     - [Sdk Service](../../deployment/sdk)
     - [Version Control Service](../../deployment/vc)
     - [Deplyment Service](../../deployment/deploy)
+
 
 4) **Testing Services**
    - [Validator](../../testing/validator)

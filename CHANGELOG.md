@@ -1,6 +1,9 @@
-## Jan 29 2019 0.27.2
+## Jan 29 2019 0.28.0
+    * Added direct cli level action call with command line parameters (-run=)
     * Patched nil pointer on trip runner/http:stressTest
     * Added endpoint:http file:// path support
+    * Added workflow:setEnv action
+    * Added docker:copy
 
 ## Jan 28 2019 0.27.1
     * Added -j endly cli option to list UDFs
