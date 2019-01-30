@@ -4,6 +4,8 @@
     * Added endpoint:http file:// path support
     * Added workflow:setEnv action
     * Added docker:copy
+    * Loading new line delimited JSON patched
+    * Minor patches
 
 ## Jan 28 2019 0.27.1
     * Added -j endly cli option to list UDFs
