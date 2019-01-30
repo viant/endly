@@ -124,20 +124,19 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 			return
 		}
 
-
 		var index uint32
-		for ;; {
+		for {
 			index := atomic.LoadUint32(&responses.Index)
 			if atomic.CompareAndSwapUint32(&responses.Index, index, index+1) {
-				if int(index) >= len(trips.Trips)  {
-					if  !trips.Rotate {
+				if int(index) >= len(trips.Trips) {
+					if !trips.Rotate {
 						http.NotFound(writer, request)
 						return
 					}
 				}
 				atomic.StoreUint32(&responses.Index, 0)
 				index = 0
-				break;
+				break
 			}
 		}
 
