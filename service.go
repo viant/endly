@@ -9,6 +9,7 @@ import (
 	"github.com/viant/toolbox/url"
 	"reflect"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -172,6 +173,28 @@ func (s *AbstractService) ID() string {
 //State returns this service state map.
 func (s *AbstractService) State() data.Map {
 	return s.state
+}
+
+func (s *AbstractService) RunInBackground(context *Context, handler func() error) (err error) {
+	wait := &sync.WaitGroup{}
+	wait.Add(1)
+	var done uint32 = 0
+	go func() {
+		for {
+			if atomic.LoadUint32(&done) == 1 {
+				break
+			}
+			s.Sleep(context, 2000)
+		}
+	}()
+	go func() {
+		defer wait.Done()
+		err = handler()
+
+	}()
+	wait.Wait()
+	atomic.StoreUint32(&done, 1)
+	return err
 }
 
 //NewAbstractService creates a new abstract service.
