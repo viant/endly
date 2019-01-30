@@ -38,6 +38,7 @@ type InlineWorkflow struct {
 	Defaults   map[string]interface{}
 	Data       map[string]interface{}
 	Pipeline   []*MapEntry
+	State      data.Map
 	workflow   *Workflow //inline workflow from pipeline
 }
 
@@ -228,7 +229,6 @@ func (p *InlineWorkflow) AsWorkflow(name string, baseURL string) (*Workflow, err
 		TasksNode: &TasksNode{
 			Tasks: []*Task{},
 		},
-
 		Data:   p.Data,
 		Source: url.NewResource(toolbox.URLPathJoin(baseURL, name+".yaml")),
 	}
@@ -246,7 +246,7 @@ func (p *InlineWorkflow) AsWorkflow(name string, baseURL string) (*Workflow, err
 	root := p.buildTask("", map[string]interface{}{})
 	tagID := name
 	for _, entry := range p.Pipeline {
-		if err = p.buildWorkflowNodes(entry.Key, entry.Value, root, tagID, nil); err != nil {
+		if err = p.buildWorkflowNodes(entry.Key, entry.Value, root, tagID, p.State); err != nil {
 			return nil, err
 		}
 	}

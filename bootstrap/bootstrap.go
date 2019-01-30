@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/viant/endly/util"
 	"sort"
 
 	//Database/datastore dependencies
@@ -132,7 +133,8 @@ func init() {
 	flag.String("u", "", "start HTTP recorder for the supplied URLs (testing/endpoint/http)")
 	flag.Bool("m", false, "interactive mode (does not terminates process after workflow completes)")
 	flag.Int("e", 5, "max number of failures CLI reported per validation, 0 - all failures reported")
-
+	flag.String("run", "", "run specified service action it expect valid service:action to run")
+	flag.String("req", "", "optional request URL when run option is specified")
 	_ = mysql.SetLogger(&emptyLogger{})
 
 }
@@ -188,6 +190,14 @@ func Bootstrap() {
 		return
 	}
 
+	if run, ok := flagset["run"]; ok {
+		err := runAction(run, flagset)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
 	request, err := getRunRequestWithOptions(flagset)
 	if err != nil {
 		log.Fatal(err)
@@ -225,19 +235,56 @@ func Bootstrap() {
 		printWorkflowTasks(request)
 		return
 	}
+	interactive, ok := flagset["m"]
+	runWorkflow(request, ok && toolbox.AsBoolean(interactive))
+}
 
+func runAction(run string, flagset map[string]string) error {
+	request, err := loadInlineWorkflow("mem://github.com/viant/endly/workflow/adhoc.yaml")
+	if err != nil {
+		return err
+	}
+	baseURL, _ := toolbox.URLSplit(request.AssetURL)
+	currentURL := url.NewResource("").URL
+	argsMap, err := util.GetArguments(currentURL, baseURL)
+	if err != nil {
+		return err
+	}
+	if req, ok := flagset["req"]; ok {
+		requestData, err := util.LoadData([]string{baseURL}, req)
+		if err != nil {
+			return err
+		}
+		reqMap := data.Map(argsMap)
+		argsMap = toolbox.AsMap(reqMap.Expand(requestData))
+	}
+
+	request.InlineWorkflow.State = data.NewMap()
+	request.InlineWorkflow.State.Put("run", run)
+	request.InlineWorkflow.State.Put("request", argsMap)
+	err = updateBaseRunWithOptions(request, flagset)
+	if err != nil {
+		return err
+	}
+	if value, ok := flagset["p"]; ok && toolbox.AsBoolean(value) {
+		printWorkflow(request)
+		return nil
+	}
+	interactive, ok := flagset["m"]
+	runWorkflow(request, ok && toolbox.AsBoolean(interactive))
+	return nil
+}
+
+func runWorkflow(request *workflow.RunRequest, interactive bool) {
 	runner := cli.New()
-	err = runner.Run(request)
+	err := runner.Run(request)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	interactive, ok := flagset["m"]
-	if ok && toolbox.AsBoolean(interactive) {
+	if interactive {
 		log.Printf("terminate by ctr-c\n")
 		makeInteractive()
 	}
-
 	time.Sleep(time.Second)
 }
 
@@ -265,7 +312,6 @@ func openbrowser(url string) {
 }
 
 func makeInteractive() {
-
 	signal_chan := make(chan os.Signal, 1)
 	signal.Notify(signal_chan,
 		syscall.SIGHUP,
@@ -285,7 +331,6 @@ func makeInteractive() {
 	}()
 	code := <-exit_chan
 	os.Exit(code)
-
 }
 
 func openTestGenerator() {
@@ -570,29 +615,16 @@ func getRunRequestURL(URL string) (*url.Resource, error) {
 
 func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, error) {
 	var request *workflow.RunRequest
-	var URL string
+	var err error
 	if value, ok := flagset["w"]; ok {
-		URL = value
 		request = &workflow.RunRequest{
 			URL: value,
 		}
 	}
 	assetURL := ""
 	if value, ok := flagset["r"]; ok {
-		URL = value
-		resource, err := getRunRequestURL(value)
-		if err != nil {
+		if request, err = loadInlineWorkflow(value); err != nil {
 			return nil, err
-		}
-		request = &workflow.RunRequest{}
-		err = resource.Decode(request)
-		if err != nil {
-			return nil, fmt.Errorf("failed to locate workflow run request: %v %v", value, err)
-		}
-		assetURL = resource.URL
-		request.Source = resource
-		if request.Name == "" {
-			request.Name = model.WorkflowSelector(URL).Name()
 		}
 	}
 	if request == nil {
@@ -605,19 +637,43 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 		request.SummaryFormat = value
 	}
 	request.AssetURL = assetURL
-	err := request.Init()
+	err = request.Init()
 	if value, ok := flagset["i"]; ok {
 		request.TagIDs = value
 	}
-	if value, ok := flagset["e"]; ok {
-		request.FailureCount = toolbox.AsInt(value)
+
+	if err == nil {
+		err = updateBaseRunWithOptions(request, flagset)
 	}
-	updateBaseRunWithOptions(request, flagset)
 	return request, err
 }
 
-func updateBaseRunWithOptions(request *workflow.RunRequest, flagset map[string]string) {
-	var params = toolbox.Pairs(getArguments()...)
+func loadInlineWorkflow(URL string) (*workflow.RunRequest, error) {
+	resource, err := getRunRequestURL(URL)
+	if err != nil {
+		return nil, err
+	}
+	request := &workflow.RunRequest{}
+	err = resource.Decode(request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to locate workflow run request: %v %v", URL, err)
+	}
+
+	request.Source = resource
+	if request.Name == "" {
+		request.Name = model.WorkflowSelector(URL).Name()
+	}
+	request.AssetURL = resource.URL
+	return request, err
+}
+
+func updateBaseRunWithOptions(request *workflow.RunRequest, flagset map[string]string) error {
+	currentPath := url.NewResource("")
+	parentURL, _ := toolbox.URLSplit(request.Source.URL)
+	params, err := util.GetArguments(currentPath.URL, parentURL)
+	if err != nil {
+		return err
+	}
 	if request != nil {
 		if len(request.Params) == 0 {
 			request.Params = params
@@ -631,44 +687,10 @@ func updateBaseRunWithOptions(request *workflow.RunRequest, flagset map[string]s
 			request.LogDirectory = flag.Lookup("l").Value.String()
 		}
 	}
-}
-
-func normalizeArgument(value string) interface{} {
-	value = strings.Trim(value, " \"'")
-	if strings.HasPrefix(value, "#") || strings.HasPrefix(value, "@") {
-		resource := url.NewResource(string(value[1:]))
-		var dataStructure = map[string]interface{}{}
-		if err := resource.Decode(&dataStructure); err == nil {
-			return dataStructure
-		}
-		if text, err := resource.DownloadText(); err == nil {
-			return text
-		}
+	if value, ok := flagset["e"]; ok {
+		request.FailureCount = toolbox.AsInt(value)
 	}
-	return value
-}
-
-func getArguments() []interface{} {
-	var arguments = make([]interface{}, 0)
-	if len(os.Args) > 1 {
-		for i := 1; i < len(os.Args); i++ {
-			var candidate = os.Args[i]
-			if strings.HasPrefix(candidate, "-") {
-				if !strings.Contains(candidate, "=") {
-					i++
-				}
-				continue
-			}
-			keyValuePair := strings.SplitN(candidate, "=", 2)
-			if len(keyValuePair) == 2 {
-				arguments = append(arguments, keyValuePair[0], normalizeArgument(keyValuePair[1]))
-			} else {
-				arguments = append(arguments, normalizeArgument(candidate))
-			}
-			arguments = append(arguments)
-		}
-	}
-	return arguments
+	return nil
 }
 
 func startRecorder(URLs []string) {
