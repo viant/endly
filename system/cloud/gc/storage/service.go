@@ -22,7 +22,7 @@ type service struct {
 
 func (s *service) registerRoutes() {
 	client := &storage.Service{}
-	routes, err := gc.BuildRoutes(client, getClient)
+	routes, err := gc.BuildRoutes(client, nil,  getClient)
 	if err != nil {
 		log.Printf("unable register service %v actions: %v\n", ServiceID, err)
 		return

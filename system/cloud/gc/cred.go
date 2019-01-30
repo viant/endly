@@ -8,12 +8,17 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gensupport"
+	"google.golang.org/api/option"
+	htransport "google.golang.org/api/transport/http"
+	"net/http"
 	"reflect"
 	"strings"
 )
 
 var configKey = (*gcCredConfig)(nil)
+var userAgent = "endly/e2e"
 
 type gcCredConfig struct {
 	*cred.Config
@@ -27,7 +32,7 @@ func GetClient(eContext *endly.Context, provider, key interface{}, target interf
 			return nil
 		}
 	}
-
+	var err error
 	var credConfig *gcCredConfig
 	if eContext.Contains(configKey) {
 		credConfig = &gcCredConfig{}
@@ -43,22 +48,36 @@ func GetClient(eContext *endly.Context, provider, key interface{}, target interf
 	if len(scopes) == 0 {
 		return errors.New("scopes were empty")
 	}
-	context.Background()
-	jwtConfig, err := credConfig.NewJWTConfig(scopes...)
-	if err != nil {
-		return err
-	}
-	ctx := context.Background()
-	httpClient := oauth2.NewClient(ctx, jwtConfig.TokenSource(ctx))
-	output := toolbox.CallFunction(provider, httpClient)
 
+	ctx := context.Background()
+
+	if credConfig.ProjectID == "" {
+		credentials, err := google.FindDefaultCredentials(ctx, scopes...)
+		if err != nil {
+			return err
+		}
+		credConfig.ProjectID = credentials.ProjectID
+	}
+
+	var httpClient *http.Client
+
+	if credConfig.ClientEmail != "" {
+		jwtConfig, err := credConfig.NewJWTConfig(scopes...)
+		if err != nil {
+			return err
+		}
+		httpClient = oauth2.NewClient(ctx, jwtConfig.TokenSource(ctx))
+	} else {
+		if httpClient, err = getDefaultClient(ctx, scopes...); err != nil {
+			return err
+		}
+	}
+	output := toolbox.CallFunction(provider, httpClient)
 	if output[1] != nil {
 		err := output[1].(error)
 		return err
 	}
-
 	service := output[0]
-
 	ctxService, ok := reflect.ValueOf(target).Elem().Interface().(CtxClient)
 	if !ok {
 		return fmt.Errorf("invalid target type: %T", target)
@@ -91,11 +110,11 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}) 
 				return credConfig, nil
 			}
 		}
-		return nil, fmt.Errorf("unable to locate Google API client, credentials attribute was empty")
 	}
+
 	credConfig, err := context.Secrets.GetCredentials(secrets.Credentials)
 	if err != nil {
-		return nil, err
+		credConfig = &cred.Config{}
 	}
 
 	config := &gcCredConfig{Config: credConfig}
@@ -111,7 +130,16 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}) 
 		}
 	}
 	_ = context.Replace(configKey, config)
-	return config, err
+	return config, nil
+}
+
+func getDefaultClient(ctx context.Context, scopes ...string) (*http.Client, error) {
+	o := []option.ClientOption{
+		option.WithScopes(scopes...),
+		option.WithUserAgent(userAgent),
+	}
+	httpClient, _, err := htransport.NewClient(ctx, o...)
+	return httpClient, err
 }
 
 //UpdateActionRequest updates raw request with project, service
