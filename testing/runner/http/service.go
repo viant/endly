@@ -158,7 +158,7 @@ func (s *service) handleRequest(client *http.Client, metric *runtimeMetric, trip
 	}
 	response, err = client.Do(trip.request)
 	trip.responseTime = time.Now()
-	trip.elapsed  = trip.responseTime.Sub(trip.requestTime)
+	trip.elapsed = trip.responseTime.Sub(trip.requestTime)
 	atomic.AddUint32(&metric.count, 1)
 
 	if err, ok := err.(net.Error); ok && err.Timeout() {
