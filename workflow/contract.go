@@ -229,6 +229,16 @@ type NopParrotRequest struct {
 	In interface{}
 }
 
+//SetEnvRequest represents set env request
+type SetEnvRequest struct {
+	Env map[string]string `description:"dynamically change current run endly os environment variables"`
+}
+
+//SetEnvResponse returns original env setup
+type SetEnvResponse struct {
+	Env map[string]string
+}
+
 //PrintRequest represent print request
 type PrintRequest struct {
 	Message string

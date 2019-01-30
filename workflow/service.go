@@ -11,6 +11,7 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"log"
+	"os"
 	"path"
 	"strings"
 	"sync"
@@ -872,6 +873,25 @@ func (s *Service) registerRoutes() {
 	})
 
 	s.AbstractService.Register(&endly.Route{
+		Action: "setEnv",
+		RequestInfo: &endly.ActionInfo{
+			Description: "set endly os environment",
+		},
+		RequestProvider: func() interface{} {
+			return &SetEnvRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SetEnvResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*SetEnvRequest); ok {
+				return s.setEnv(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.AbstractService.Register(&endly.Route{
 		Action: "fail",
 		RequestInfo: &endly.ActionInfo{
 			Description: "fail workflow execution",
@@ -935,7 +955,24 @@ func (s *Service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", req)
 		},
 	})
+}
 
+func (s *Service) setEnv(context *endly.Context, request *SetEnvRequest) (*SetEnvResponse, error) {
+	var response = &SetEnvResponse{
+		Env: make(map[string]string),
+	}
+	for _, key := range os.Environ() {
+		response.Env[key] = os.Getenv(key)
+	}
+	if len(request.Env) == 0 {
+		return response, nil
+	}
+	for k, v := range request.Env {
+		if err := os.Setenv(k, v); err != nil {
+			return nil, err
+		}
+	}
+	return response, nil
 }
 
 //New returns a new workflow Service.
