@@ -30,7 +30,7 @@ func extractServices(owner interface{}, serviceFields *[]*toolbox.StructField) e
 
 }
 
-func BuildRoutes(service interface{}, clientProvider func(context *endly.Context) (CtxClient, error)) ([]*endly.Route, error) {
+func BuildRoutes(service interface{}, nameTransformer func(name string) string, clientProvider func(context *endly.Context) (CtxClient, error)) ([]*endly.Route, error) {
 	var fields = make([]*toolbox.StructField, 0)
 	err := extractServices(service, &fields)
 	if err != nil {
@@ -55,7 +55,13 @@ func BuildRoutes(service interface{}, clientProvider func(context *endly.Context
 			if responseType.Kind() == reflect.Interface {
 				responseType = reflect.TypeOf(&EmptyOutput{})
 			}
-			action := normalizeAction(fieldType.Name + method.Name)
+
+			action := fieldType.Name + method.Name
+			if nameTransformer != nil {
+				action = nameTransformer(action)
+			}
+			action = normalizeAction(action)
+
 			route := &endly.Route{
 				Action: action,
 				RequestInfo: &endly.ActionInfo{
