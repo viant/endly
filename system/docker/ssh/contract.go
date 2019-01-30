@@ -23,7 +23,7 @@ type BuildResponse struct {
 
 //Init initialises default values
 func (r *BuildRequest) Init() {
-	if len(r.Arguments) == 0  {
+	if len(r.Arguments) == 0 {
 		r.Arguments = make(map[string]string)
 	}
 	if r.Tag != nil {
@@ -283,7 +283,7 @@ type PushResponse struct {
 
 //PushResponse represents a docker push request
 type CopyRequest struct {
-	Name string  `description:"container name"`
+	Name   string `description:"container name"`
 	Source *url.Resource
 	Assets map[string]string
 }
@@ -292,20 +292,17 @@ func (r *CopyRequest) Validate() error {
 	if len(r.Assets) == 0 {
 		return fmt.Errorf("asset was empty")
 	}
-	if  r.Source == nil{
+	if r.Source == nil {
 		return fmt.Errorf("source was empty")
 	}
-	if  r.Name == ""{
+	if r.Name == "" {
 		return fmt.Errorf("name was empty")
 	}
 	return nil
 }
 
-
 type CopyResponse struct {
-
 }
-
 
 //RunRequest represents a docker run request
 type RunRequest struct {
@@ -321,8 +318,6 @@ type RunRequest struct {
 	Workdir string            `description:"working directory inside the container, docker -w option"`
 	Reuse   bool              `description:"reuse existing container if exists, otherwise always removes"`
 }
-
-
 
 func NewRunRequest(target *url.Resource, name string, secrets map[string]string, image string, port string, env map[string]string, mount map[string]string, ports map[string]string, params map[string]string, workdir string) *RunRequest {
 	return &RunRequest{
