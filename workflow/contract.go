@@ -42,13 +42,16 @@ func (r *RunRequest) Init() (err error) {
 			err = fmt.Errorf("%v (%v)", err, r.AssetURL)
 		}
 	}()
+
 	if r.Params, err = util.NormalizeMap(r.Params, true); err != nil {
 		return err
 	}
 	if r.Tasks == "" || r.Tasks == "$tasks" {
 		r.Tasks = "*"
 	}
-	if r.InlineWorkflow != nil && len(r.InlineWorkflow.Pipeline) > 0 {
+
+
+	if r.InlineWorkflow != nil && (len(r.InlineWorkflow.Pipeline) > 0 || strings.HasSuffix(r.AssetURL, ".yaml")) {
 		if r.AssetURL == "" {
 			return fmt.Errorf("asset URL is required for inline workflow")
 		}
