@@ -76,6 +76,32 @@ func (s *service) dropFunction(context *endly.Context, request *DropFunctionInpu
 	})
 }
 
+func (s *service) call(context *endly.Context, request *CallInput) (*CallOutput, error) {
+	client, err := GetClient(context)
+	if err != nil {
+		return nil, err
+	}
+	input := lambda.InvokeInput(*request)
+	output, err := client.Invoke(&input)
+	if err != nil {
+		return nil, err
+	}
+	response:=&CallOutput{
+		InvokeOutput:output,
+	}
+	if len(output.Payload) > 0 {
+		payloadText := toolbox.AsString(output.Payload)
+		if toolbox.IsCompleteJSON(payloadText) {
+			if err= json.Unmarshal(output.Payload, &response.Response);err == nil {
+				output.Payload = nil
+			}
+		} else {
+			response.Response = payloadText
+			output.Payload = nil
+		}
+	}
+	return response, err
+}
 
 
 func (s *service) setupPermission(context *endly.Context, request *SetupPermissionInput) (*lambda.AddPermissionOutput, error) {
@@ -116,34 +142,22 @@ func (s *service) setupPermission(context *endly.Context, request *SetupPermissi
 	return client.AddPermission(&addPermission)
 }
 
-func (s *service) setupFunction(context *endly.Context, request *SetupFunctionInput) (output *SetupFunctionOutput, err error) {
-	wait := &sync.WaitGroup{}
-	wait.Add(1)
-	var done uint32 = 0
-	go func() {
-		for ; ; {
-			if atomic.LoadUint32(&done) == 1 {
-				break
-			}
-			s.Sleep(context, 2000)
-		}
-	}()
-	go func() {
-		defer wait.Done()
+func (s *service) deploy(context *endly.Context, request *DeployInput) (output *DeployOutput, err error) {
+	output = &DeployOutput{}
+	err = s.AbstractService.RunInBackground(context, func() error {
 		output, err = s.setupFunctionInBackground(context, request)
-	}()
-	wait.Wait()
-	atomic.StoreUint32(&done, 1)
+		return err
+	})
 	return output, err
 }
 
-func (s *service) setupFunctionInBackground(context *endly.Context, request *SetupFunctionInput) (*SetupFunctionOutput, error) {
+func (s *service) setupFunctionInBackground(context *endly.Context, request *DeployInput) (*DeployOutput, error) {
 	client, err := GetClient(context)
 	if err != nil {
 		return nil, err
 	}
 
-	output := &SetupFunctionOutput{}
+	output := &DeployOutput{}
 	output.RoleInfo = &iam.GetRoleInfoOutput{}
 	if err = endly.Run(context, &request.SetupRolePolicyInput, &output.RoleInfo); err != nil {
 		return nil, err
@@ -333,24 +347,26 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
+
+
 	s.Register(&endly.Route{
-		Action: "setupFunction",
+		Action: "deploy",
 		RequestInfo: &endly.ActionInfo{
-			Description: fmt.Sprintf("%T.%v(%T)", s, "setupFunction", &SetupFunctionInput{}),
+			Description: fmt.Sprintf("%T.%v(%T)", s, "deploy", &DeployInput{}),
 		},
 		ResponseInfo: &endly.ActionInfo{
-			Description: fmt.Sprintf("%T", &SetupFunctionOutput{}),
+			Description: fmt.Sprintf("%T", &DeployOutput{}),
 		},
 		RequestProvider: func() interface{} {
-			return &SetupFunctionInput{}
+			return &DeployInput{}
 		},
 		ResponseProvider: func() interface{} {
-			return &SetupFunctionOutput{}
+			return &DeployOutput{}
 		},
 		OnRawRequest: setClient,
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*SetupFunctionInput); ok {
-				return s.setupFunction(context, req)
+			if req, ok := request.(*DeployInput); ok {
+				return s.deploy(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -378,7 +394,32 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
+
+	s.Register(&endly.Route{
+		Action: "call",
+		RequestInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T.%v(%T)", s, "call", &CallInput{}),
+		},
+		ResponseInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T", &CallOutput{}),
+		},
+		RequestProvider: func() interface{} {
+			return &CallInput{}
+		},
+		ResponseProvider: func() interface{} {
+			return &CallOutput{}
+		},
+		OnRawRequest: setClient,
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*CallInput); ok {
+				return s.call(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 }
+
+
 
 
 //New creates a new AWS Ec2 service.

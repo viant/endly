@@ -48,7 +48,7 @@ pipeline:
         - zip -j filemeta.zip filemeta
 
     setupFunction:
-      action: aws/lambda:setupFunction
+      action: aws/lambda:deploy
       credentials: $awsCredentials
       functionname: $functionName
       runtime:  go1.x

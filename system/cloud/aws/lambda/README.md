@@ -102,7 +102,7 @@ pipeline:
         - zip -j loginfo.zip loginfo
 
     setupFunction:
-      action: aws/lambda:setupFunction
+      action: aws/lambda:deploy
       credentials: $awsCredentials
       functionname: $functionName
       runtime:  go1.x

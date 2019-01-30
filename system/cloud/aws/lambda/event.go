@@ -55,7 +55,7 @@ type FunctionInfo struct {
 	Arn  string
 }
 
-func NewSetupFunctionEvent(output *SetupFunctionOutput) *SetupFunctionEvent {
+func NewSetupFunctionEvent(output *DeployOutput) *SetupFunctionEvent {
 	var result = &SetupFunctionEvent{
 		Function: &FunctionInfo{
 			Name: *output.FunctionName,
@@ -79,7 +79,7 @@ func NewSetupFunctionEvent(output *SetupFunctionOutput) *SetupFunctionEvent {
 	return result
 }
 
-func (i *SetupFunctionOutput) Messages() []*msg.Message {
+func (i *DeployOutput) Messages() []*msg.Message {
 	if i == nil || i.FunctionConfiguration == nil || i.RoleInfo == nil {
 		return nil
 	}

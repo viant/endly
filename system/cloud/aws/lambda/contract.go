@@ -28,8 +28,8 @@ type EventSourceMapping struct {
 
 
 
-//SetupFunctionInput setup function, creates or updates existing one
-type SetupFunctionInput struct {
+//DeployInput setup function, creates or updates existing one
+type DeployInput struct {
 	lambda.CreateFunctionInput
 	ciam.SetupRolePolicyInput
 	Triggers []*EventSourceMapping
@@ -37,7 +37,7 @@ type SetupFunctionInput struct {
 
 
 
-type SetupFunctionOutput struct {
+type DeployOutput struct {
 	*lambda.FunctionConfiguration
 	RoleInfo *ciam.GetRoleInfoOutput
 	EventMappings []*lambda.EventSourceMappingConfiguration
@@ -62,7 +62,19 @@ type SetupTriggerSourceOutput struct {
 }
 
 
-func (i *SetupFunctionInput) Init() error {
+
+//CallInput represents a call request
+type CallInput lambda.InvokeInput
+
+
+//CallOutput represents a call response
+type CallOutput struct {
+	*lambda.InvokeOutput
+	Response interface{}
+}
+
+
+func (i *DeployInput) Init() error {
 	if i.DefaultPolicyDocument == nil {
 		policyDocument := string(DefaultTrustPolicy)
 		i.DefaultPolicyDocument = &policyDocument
@@ -70,7 +82,7 @@ func (i *SetupFunctionInput) Init() error {
 	return nil
 }
 
-func (i *SetupFunctionInput) Validate() error {
+func (i *DeployInput) Validate() error {
 	if i.CreateFunctionInput.FunctionName == nil {
 		return fmt.Errorf("functionName was empty")
 	}
@@ -104,3 +116,5 @@ func (i *SetupTriggerSourceInput) Validate() error {
 	}
 	return nil
 }
+
+
