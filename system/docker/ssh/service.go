@@ -980,7 +980,6 @@ func (s *service) registerRoutes() {
 		},
 	})
 
-
 	s.Register(&endly.Route{
 		Action: "copy",
 		RequestInfo: &endly.ActionInfo{
@@ -999,7 +998,6 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
-
 
 	s.Register(&endly.Route{
 		Action: "pull",
@@ -1384,8 +1382,6 @@ func (s *service) registerRoutes() {
 	})
 }
 
-
-
 func (s *service) copy(context *endly.Context, request *CopyRequest) (*CopyResponse, error) {
 	var response = &CopyResponse{}
 	source, err := context.ExpandResource(request.Source)
@@ -1404,8 +1400,6 @@ func (s *service) copy(context *endly.Context, request *CopyRequest) (*CopyRespo
 	}
 	return response, err
 }
-
-
 
 //New creates a new docker service.
 func New() endly.Service {
