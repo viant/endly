@@ -13,12 +13,12 @@ type Message struct {
 
 
 // HelloWorld prints "Hello, World!" or Hello, $message.From"
-func HelloWorld(w http.ResponseWriter, r *http.Request) {
+func HelloWorldFn(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	message := &Message{}
-	if err := decoder.Decode(&message); err == nil {
-		fmt.Fprintf(w, fmt.Sprintf("Hello, %v!", message.From))
+	if err := decoder.Decode(&message); err == nil && message.From != "" {
+		_, _ = fmt.Fprintf(w, fmt.Sprintf("Hello, %v!", message.From))
 		return
 	}
-	fmt.Fprintf(w, "Hello, World!")
+	_, _ = fmt.Fprintf(w, "Hello, World!")
 }

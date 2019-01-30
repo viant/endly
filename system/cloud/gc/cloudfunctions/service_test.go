@@ -11,7 +11,6 @@ import (
 	"os"
 	"path"
 	"testing"
-	"time"
 )
 
 func TestNew(t *testing.T) {
@@ -59,25 +58,20 @@ func TestService_Deploy(t *testing.T) {
 	if !assert.Nil(t, err) {
 		return
 	}
-	srv := &service{}
-
 	parent := toolbox.CallerDirectory(3)
-
-	response, err := srv.Deploy(context, &DeployRequest{
+	var response = make(map[string]interface{})
+	err = endly.Run(context, &DeployRequest{
 		CloudFunction: &cloudfunctions.CloudFunction{
-			Name:         "HelloWorld",
+			Name:         "HelloWorldFn",
 			EntryPoint:   "HelloWorld",
 			Runtime:      "go111",
 			HttpsTrigger: &cloudfunctions.HttpsTrigger{},
+
 		},
-		Location: "us-central1",
-		Source:   url.NewResource(path.Join(parent, "test/hello.zip")),
-	})
-	fmt.Printf("%v\n", time.Now())
+		Source:   url.NewResource(path.Join(parent, "test/")),
+	}, &response)
+
 	if !assert.Nil(t, err) {
 		return
 	}
-
-	toolbox.DumpIndent(response, true)
-
 }
