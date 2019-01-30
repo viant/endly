@@ -621,7 +621,6 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 			URL: value,
 		}
 	}
-	assetURL := ""
 	if value, ok := flagset["r"]; ok {
 		if request, err = loadInlineWorkflow(value); err != nil {
 			return nil, err
@@ -636,7 +635,6 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 	if value, ok := flagset["x"]; ok {
 		request.SummaryFormat = value
 	}
-	request.AssetURL = assetURL
 	err = request.Init()
 	if value, ok := flagset["i"]; ok {
 		request.TagIDs = value
