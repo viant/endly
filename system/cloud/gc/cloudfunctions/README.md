@@ -10,8 +10,8 @@ To check all supported method run
 To check method contract run endly -s='gc/cloudfunctions' -a=methodName
 ```bash
     endly -s='gc/cloudfunctions' -a='operationsList'
-
 ```
+
 
 _References:_
 - [Cloud Functions API](https://cloud.google.com/functions/docs/reference/rest/)
@@ -19,70 +19,106 @@ _References:_
 
 #### Example
 
+###### Testing
 
-###### Calling function
+```go
+endly -r=test
 
-
-```bash
-endly -r=call
 ```
-
-@call.yaml
+[@test.yaml](test.yaml)
 ```yaml
 defaults:
   credentials: am
 pipeline:
-  getInfo:
-    action: gc/cloudfunctions:functionsGet
-    '@name': projects/myProject/locations/us-central1/functions/HelloWorld
+  deploy:
+    action: gc/cloudfunctions:deploy
+    '@name': HelloWorld
+    entryPoint: HelloWorldFn
+    runtime: go111
+    source:
+      URL: test/
   test:
+    action: gc/cloudfunctions:call
+    logging: false
+    '@name': HelloWorld
+    data:
+      from: Endly
+  info:
     action: print
-    message: 'TriggerURL: $info.HttpsTrigger.Url'
-  callFunction:
-    action: gc/cloudfunctions:functionsCall
-    '@name': 'projects/myProject/locations/us-central1/functions/HelloWorld1'
-    callfunctionrequest:
-      data:
-  printOutput:
-    action: print
-    message: $callFunction.Result
+    message: $test.Result
+  assert:
+    action: validator:assert
+    expect: /Endly/
+    actual: $test.Result
+  undeploy:
+    action: gc/cloudfunctions:delete
+    '@name': HelloWorld
+    
+
+```
+
+###### Deploying function
+
+
+1. Deploying http trigger function with archive
+    ```bash
+    endly -r=deploy
+    ```
+    [@deploy.yaml](deploy.yaml)
+    ```yaml
+    pipeline:
+      deploy:
+        action: gc/cloudfunctions:deploy
+        '@name': HelloWorld
+        runtime: go111
+        source:
+          URL: test/hello.zip
+    
+    ```
+2. Deploying http trigger function with source path (use .gcloudignore to control upload)
+    @deploy.yaml
+    ```yaml
+    pipeline:
+      deploy:
+        action: gc/cloudfunctions:deploy
+        '@name': HelloWorldFn
+        entryPoint Hello
+        runtime: go111
+        source:
+          URL: test/
+    ```
+
+###### Calling function
+
+1. Calling from workflow
+    ```bash
+    endly -r=call
+    ```
+    @call.yaml
+    ```yaml
+    pipeline:
+      call:
+        action: gc/cloudfunctions:call
+        logging: false
+       '@name': HelloWorld
+        data:
+          from: Endly
+    ```
+2. Calling from cli
+    ```bash
+    endly -run='gc/cloudfunctions:call' name=HelloWorld data.from=Endly
+    ``` 
+
+
+###### Getting function info
+
+```bash
+    endly -run='gc/cloudfunctions:get' name=HelloWorld 
 ```
 
 
 ###### Listing functions
 
 ```bash
-endy -r=listFunctions
+    endly -run='gc/cloudfunctions:list'  
 ```
-
-@listFunctions.yaml
-```yaml
-defaults:
-  credentials: am
-pipeline:
-  list:
-    info:
-      action: gc/cloudfunctions:functionsList
-      parent: projects/myProject/locations/-
-```
-
-
-###### Operation list:
-
-```bash
-endy -r=list
-```
-
-@list.yaml
-```yaml
-defaults:
-  credentials: am
-pipeline:
-  list:
-    info:
-      action: gc/cloudfunctions:operationsList
-      urlParams:
-        filter: project:myProject,latest:true
-```
-
-

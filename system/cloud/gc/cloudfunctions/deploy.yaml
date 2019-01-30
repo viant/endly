@@ -1,0 +1,11 @@
+defaults:
+  credentials: am
+pipeline:
+  deploy:
+    action: gc/cloudfunctions:deploy
+    '@name': HelloWorld
+    entryPoint: HelloWorld
+    runtime: go111
+    source:
+      URL: test/hello.zip
+

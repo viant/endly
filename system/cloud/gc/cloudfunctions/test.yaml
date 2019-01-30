@@ -1,0 +1,26 @@
+defaults:
+  credentials: am
+pipeline:
+  deploy:
+    action: gc/cloudfunctions:deploy
+    '@name': HelloWorld
+    entryPoint: HelloWorldFn
+    runtime: go111
+    source:
+      URL: test/
+  test:
+    action: gc/cloudfunctions:call
+    logging: false
+    '@name': HelloWorld
+    data:
+      from: Endly
+  info:
+    action: print
+    message: $test.Result
+  assert:
+    action: validator:assert
+    expect: /Endly/
+    actual: $test.Result
+  undeploy:
+    action: gc/cloudfunctions:delete
+    '@name': HelloWorld
