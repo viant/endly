@@ -543,7 +543,7 @@ endly -r=loop
 @loop.yaml
 ```yaml
 init:
-  - i = 0
+  i: 0
 pipeline:
   loop:
     multiAction: true
@@ -553,7 +553,7 @@ pipeline:
     increment:
       action: nop
       init:
-        - i = $i++
+        _: $i++
     goto:
       when: $i < 10
       action: goto
