@@ -1,3 +1,9 @@
+## Jan 30 2019 0.29.0
+    * Added gc/cloudfuncton:deploy 
+    * Added gc/cloudfuncton:call
+    * Renamed aws/lamda:setupFunction to aws/lamda:deploy - this is breaking change.
+    * Added RunInBackground helper method for long running action
+
 ## Jan 29 2019 0.28.0
     * Added direct cli level action call with command line parameters (-run=)
     * Patched nil pointer on trip runner/http:stressTest
