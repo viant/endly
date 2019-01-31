@@ -50,7 +50,6 @@ func (r *RunRequest) Init() (err error) {
 		r.Tasks = "*"
 	}
 
-
 	if r.InlineWorkflow != nil && (len(r.InlineWorkflow.Pipeline) > 0) {
 		if r.AssetURL == "" {
 			return fmt.Errorf("asset URL is required for inline workflow")
