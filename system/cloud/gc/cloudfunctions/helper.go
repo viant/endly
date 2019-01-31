@@ -37,5 +37,11 @@ func getIgnoreList(service storage.Service, URL string) []string {
 	if err != nil {
 		return list
 	}
-	return strings.Split(toolbox.AsString(content),",")
+	for _, item := range  strings.Split(toolbox.AsString(content),",") {
+		if strings.HasPrefix(item, "#") {
+			continue
+		}
+		list = append(list, item)
+	}
+	return list
 }

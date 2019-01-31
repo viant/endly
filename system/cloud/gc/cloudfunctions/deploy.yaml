@@ -2,6 +2,7 @@ defaults:
   credentials: am
 pipeline:
   deploy:
+    when: false
     action: gc/cloudfunctions:deploy
     '@name': HelloWorld
     entryPoint: HelloWorld

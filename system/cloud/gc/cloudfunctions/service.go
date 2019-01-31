@@ -26,8 +26,6 @@ const (
 	ServiceID = "gc/cloudfunctions"
 )
 
-
-
 //no operation service
 type service struct {
 	*endly.AbstractService
@@ -64,6 +62,11 @@ func (s *service) Deploy(context *endly.Context, request *DeployRequest) (*Deplo
 	response.Function, err = s.get(context, &GetRequest{
 		Name: request.Name,
 	})
+
+	if response.Function.Status == "OFFLINE" {
+		context.Publish(gc.NewOutputEvent(request.Name, "deploy", response))
+		return nil, fmt.Errorf("failed to deploy funciton")
+	}
 	return response, err
 }
 
@@ -100,27 +103,24 @@ func (s *service) get(context *endly.Context, request *GetRequest) (*cloudfuncti
 
 }
 
-
-
-
 func (s *service) getFunctionPackageReader(resource *url.Resource) (io.ReadCloser, error) {
 	storageService, err := storage.NewServiceForURL(resource.URL, resource.Credentials)
 	if err != nil {
 		return nil, err
 	}
-	object, err  := storageService.StorageObject(resource.URL)
+	object, err := storageService.StorageObject(resource.URL)
 	if err != nil {
 		return nil, err
 	}
 	if object.IsContent() {
-		return  storageService.DownloadWithURL(resource.URL)
+		return storageService.DownloadWithURL(resource.URL)
 	}
 	ignoreList := getIgnoreList(storageService, toolbox.URLPathJoin(resource.URL, ".gcloudignore"))
 	writer := new(bytes.Buffer)
 	archive := zip.NewWriter(writer)
 	err = storage.ArchiveWithFilter(storageService, resource.URL, archive, func(candidate storage.Object) bool {
 		candidateName := candidate.FileInfo().Name()
-		if strings.HasSuffix(candidateName, ".zip")  || strings.HasPrefix(candidateName, "gcloudignore"){
+		if strings.HasSuffix(candidateName, ".zip") || strings.HasPrefix(candidateName, "gcloudignore") {
 			return false
 		}
 		if len(ignoreList) == 0 {
@@ -139,7 +139,6 @@ func (s *service) getFunctionPackageReader(resource *url.Resource) (io.ReadClose
 	return ioutil.NopCloser(bytes.NewReader(payload)), err
 }
 
-
 func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloudfunctions.Operation, error) {
 	ctxClient, err := GetClient(context)
 	if err != nil {
@@ -147,6 +146,13 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 	}
 	parent := s.expandWithContext(context, ctxClient.CredConfig, request.Region, parentLocationTemplate)
 	request.Name = s.expandWithContext(context, ctxClient.CredConfig, request.Region, request.Name)
+
+
+	//TODO add support for simple name based on trigger type
+	if request.EventTrigger != nil {
+		request.EventTrigger.Resource = s.expandWithContext(context, ctxClient.CredConfig, request.Region, request.EventTrigger.Resource)
+	}
+
 	projectService := cloudfunctions.NewProjectsLocationsFunctionsService(ctxClient.service)
 	cloudFunction, err := projectService.Get(request.Name).Do()
 	if err != nil {
@@ -186,7 +192,6 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 	return updateCall.Do()
 }
 
-
 func (s *service) list(context *endly.Context, request *ListRequest) (*ListResponse, error) {
 	ctxClient, err := GetClient(context)
 	if err != nil {
@@ -196,15 +201,14 @@ func (s *service) list(context *endly.Context, request *ListRequest) (*ListRespo
 	parent := s.expandWithContext(context, ctxClient.CredConfig, request.Region, parentLocationTemplate)
 	listCall := projectService.List(parent)
 	listCall.Context(ctxClient.Context())
-	list , err := listCall.Do()
+	list, err := listCall.Do()
 	if err != nil {
 		return nil, err
 	}
 	return &ListResponse{
-		Function:list.Functions,
+		Function: list.Functions,
 	}, nil
 }
-
 
 func (s *service) delete(context *endly.Context, request *DeleteRequest) (*DeleteResponse, error) {
 	ctxClient, err := GetClient(context)
@@ -241,7 +245,7 @@ func (s *service) call(context *endly.Context, request *CallRequest) (*cloudfunc
 	projectService := cloudfunctions.NewProjectsLocationsFunctionsService(ctxClient.service)
 	request.Name = s.expandWithContext(context, ctxClient.CredConfig, request.Region, request.Name)
 	callFunctionRequest := &cloudfunctions.CallFunctionRequest{}
-	if request.Data != nil {//TODO check for binary to encode with base64
+	if request.Data != nil { //TODO check for binary to encode with base64
 		dataText := ""
 		if toolbox.IsMap(request.Data) || toolbox.IsSlice(request.Data) {
 			JSON, err := toolbox.AsJSONText(request.Data)
@@ -258,7 +262,6 @@ func (s *service) call(context *endly.Context, request *CallRequest) (*cloudfunc
 	call.Context(ctxClient.Context())
 	return call.Do()
 }
-
 
 func (s *service) registerRoutes() {
 	client := &cloudfunctions.Service{}
@@ -409,14 +412,13 @@ func (s *service) registerRoutes() {
 		},
 	})
 	for _, route := range routes {
-		 if _, err := s.Route(route.Action);err == nil {
-		 	continue
-		 }
+		if _, err := s.Route(route.Action); err == nil {
+			continue
+		}
 		route.OnRawRequest = InitRequest
 		s.Register(route)
 	}
 }
-
 
 //New creates a new Dataflow service
 func New() endly.Service {
