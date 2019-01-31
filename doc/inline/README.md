@@ -456,8 +456,7 @@ pipeline:
       when: $var1 = failNow
       action: fail
       message: execption in action 2
-
-    action2:
+    action3:
       action: print
       message: hello action 3
 
@@ -491,8 +490,7 @@ pipeline:
     action2:
       action: fail
       message: execption in action 2
-
-    action2:
+    action3:
       action: print
       message: hello action 3
   defer:

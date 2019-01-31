@@ -46,3 +46,5 @@ pipeline:
     commands:
       - echo 'Hello World $name'
 ```
+
+[See more examples](http://github.com/adrianwit/endly-introduction)
