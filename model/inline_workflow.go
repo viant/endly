@@ -255,6 +255,7 @@ func (p *InlineWorkflow) AsWorkflow(name string, baseURL string) (*Workflow, err
 	}
 
 	if len(root.Tasks) > 0 {
+		p.normalize(root.TasksNode)
 		workflow.TasksNode = root.TasksNode
 	} else {
 		workflow.TasksNode = &TasksNode{

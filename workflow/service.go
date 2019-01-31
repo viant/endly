@@ -493,6 +493,7 @@ func (s *Service) runOnErrorTask(context *endly.Context, process *model.Process,
 
 func (s *Service) runTasks(context *endly.Context, process *model.Process, tasks *model.TasksNode) (err error) {
 	defer func() {
+
 		e := s.runDeferredTask(context, process, tasks)
 		if err == nil {
 			err = e

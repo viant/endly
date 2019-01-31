@@ -212,6 +212,16 @@ endly -s='SERVICE_ID' -a='ACTION'
 ```
 
 
+In most of the cases action call are defined within the workflow, you can also run an action from a comand line
+
+with  ```endly -run='SERVICE:ACTION' CONTRACT_KV_PAIRS```  i.e.
+
+```bash
+endly -run='validator:assert' actual A expect B
+```
+
+
+
 <a name="workflow"></a>
 ### Sub workflow invocation
 
@@ -316,10 +326,7 @@ The following pipeline provide example of using WorkingDirectory and FormatTime 
  ```yaml
 init:
   appPath: $WorkingDirectory(../)
-  bqTimeFormatArgs:
-    - now
-    - yyyy-MM-dd HH:mm:ss.SSSZ
-  bqTimestamp: $FormatTime($bqTimeFormatArgs)
+  bqTimestamp: $FormatTime('5daysAgo', 'yyyy-MM-dd HH:mm:ss.SSSZ')
 
 pipeline:
   run:
@@ -330,6 +337,12 @@ pipeline:
 
 ```bash
 endly -r=run
+```
+
+
+To list supported udf run
+```bash
+ endly -j
 ```
 
 Post processing state modification.

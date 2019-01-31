@@ -51,7 +51,7 @@ func (r *RunRequest) Init() (err error) {
 	}
 
 
-	if r.InlineWorkflow != nil && (len(r.InlineWorkflow.Pipeline) > 0 || strings.HasSuffix(r.AssetURL, ".yaml")) {
+	if r.InlineWorkflow != nil && (len(r.InlineWorkflow.Pipeline) > 0) {
 		if r.AssetURL == "" {
 			return fmt.Errorf("asset URL is required for inline workflow")
 		}
