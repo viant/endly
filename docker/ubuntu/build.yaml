@@ -39,7 +39,7 @@ pipeline:
       action: docker:build
       path: ${buildPath}/build/
       arguments:
-#        '--no-cache': ''
+        '--no-cache': ''
       tag:
         image: goendly
         version: ${version}-ubuntu16.04
@@ -67,7 +67,7 @@ pipeline:
       action: docker:build
       path: ${buildPath}/compact/
       arguments:
-#        '--no-cache': ''
+        '--no-cache': ''
       tag:
         image: endly
         version: ${version}-ubuntu16.04

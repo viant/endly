@@ -42,7 +42,7 @@ func TestNew(t *testing.T) {
 	response := make(map[string]interface{})
 	err = endly.Run(context, request, &response)
 	assert.Nil(t, err)
-	toolbox.DumpIndent(response, true)
+
 }
 
 
@@ -66,7 +66,6 @@ func TestService_Deploy(t *testing.T) {
 			EntryPoint:   "HelloWorld",
 			Runtime:      "go111",
 			HttpsTrigger: &cloudfunctions.HttpsTrigger{},
-
 		},
 		Source:   url.NewResource(path.Join(parent, "test/")),
 	}, &response)

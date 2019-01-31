@@ -245,12 +245,15 @@ func (p *InlineWorkflow) AsWorkflow(name string, baseURL string) (*Workflow, err
 	}
 	root := p.buildTask("", map[string]interface{}{})
 	tagID := name
-	for _, entry := range p.Pipeline {
-		if err = p.buildWorkflowNodes(entry.Key, entry.Value, root, tagID, p.State); err != nil {
-			return nil, err
+
+	if len( p.Pipeline) > 0 {
+		for _, entry := range p.Pipeline {
+			if err = p.buildWorkflowNodes(entry.Key, entry.Value, root, tagID, p.State); err != nil {
+				return nil, err
+			}
 		}
 	}
-	p.normalize(root.TasksNode)
+
 	if len(root.Tasks) > 0 {
 		workflow.TasksNode = root.TasksNode
 	} else {
@@ -260,8 +263,9 @@ func (p *InlineWorkflow) AsWorkflow(name string, baseURL string) (*Workflow, err
 	}
 	p.workflow = workflow
 	return workflow, nil
-
 }
+
+
 
 func (p *InlineWorkflow) normalize(node *TasksNode) {
 	for _, task := range node.Tasks {

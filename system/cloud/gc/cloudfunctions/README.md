@@ -87,6 +87,23 @@ pipeline:
         source:
           URL: test/
     ```
+3. Deploying with eventTrigger
+    @deploy_with_trigger
+    ```yaml
+    pipeline:
+      deploy:
+        action: gc/cloudfunctions:deploy
+        '@name': MyFunction
+        entryPoint: MyFunctionFN
+        runtime: go111
+        eventTrigger:
+          eventType: google.storage.object.finalize
+          resource: projects/_/buckets/myBucket
+        source:
+          URL: test/
+    
+    ```
+
 
 ###### Calling function
 
