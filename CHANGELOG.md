@@ -1,3 +1,7 @@
+## Jan 31 2019 0.29.1
+    * Pachted defer inline workflow task
+     
+    
 ## Jan 30 2019 0.29.0
     * Added gc/cloudfuncton:deploy 
     * Added gc/cloudfuncton:call
