@@ -622,7 +622,7 @@ pipeline:
 
 ```
 
-**h) Serverless e2e testing with lambda function**
+**i) Serverless e2e testing with lambda function**
 
 @test.yaml
 ```yaml
