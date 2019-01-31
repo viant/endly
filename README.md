@@ -559,7 +559,7 @@ pipeline:
           Responses: $data.Responses
       load-info:
         action: print
-        message: '$load.QPS: Response: min: $load.MinResponseTimeInMs ms, avg: $load.AvgResponseTimeInMs ms max: $load.MaxResponseTimeInMs ms'
+        message: 'QPS: $load.QPS: Response: min: $load.MinResponseTimeInMs ms, avg: $load.AvgResponseTimeInMs ms max: $load.MaxResponseTimeInMs ms'
 
 ```
 
@@ -587,6 +587,105 @@ endly -r=load
 ```
 
 
+
+**h) Serverless e2e testing with cloud function**
+
+
+@test.yaml
+```yaml
+defaults:
+  credentials: am
+pipeline:
+  deploy:
+    action: gc/cloudfunctions:deploy
+    '@name': HelloWorld
+    entryPoint: HelloWorldFn
+    runtime: go111
+    source:
+      URL: test/
+  test:
+    action: gc/cloudfunctions:call
+    logging: false
+    '@name': HelloWorld
+    data:
+      from: Endly
+  info:
+    action: print
+    message: $test.Result
+  assert:
+    action: validator:assert
+    expect: /Endly/
+    actual: $test.Result
+  undeploy:
+    action: gc/cloudfunctions:delete
+    '@name': HelloWorld
+
+```
+
+**h) Serverless e2e testing with lambda function**
+
+@test.yaml
+```yaml
+init:
+  functionRole: lambda-loginfo-executor
+  functionName: LoginfoFn
+  codeZip: ${appPath}/loginfo/app/loginfo.zip
+  privilegePolicy: ${parent.path}/privilege-policy.json
+pipeline:
+  deploy:
+    build:
+      action: exec:run
+      target: $target
+      errors:
+        - ERROR
+      commands:
+        - cd ${appPath}loginfo/app
+        - unset GOPATH
+        - export GOOS=linux
+        - export GOARCH=amd64
+        - go build -o loginfo
+        - zip -j loginfo.zip loginfo
+
+    setupFunction:
+      action: aws/lambda:deploy
+      credentials: $awsCredentials
+      functionname: $functionName
+      runtime:  go1.x
+      handler: loginfo
+      code:
+        zipfile: $LoadBinary(${codeZip})
+      rolename: lambda-loginfo-executor
+      define:
+        - policyname: s3-mye2e-bucket-role
+          policydocument: $Cat('${privilegePolicy}')
+      attach:
+        - policyarn: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+    setupAPI:
+      action: aws/apigateway:setupRestAPI
+      credentials: aws
+      '@name': loginfoAPI
+      resources:
+        - path: /{proxy+}
+          methods:
+            - httpMethod: ANY
+              functionname: $functionName
+    sleepTimeMs: 10000
+
+  test:
+    action: rest/runner:send
+    URL: ${setupAPI.EndpointURL}oginfo
+    method: post
+     '@request':
+      region: ${awsSecrets.Region}
+      URL: s3://mye2e-bucket/folder1/
+    expect:
+      Status: ok
+      FileCount: 2
+      LinesCount: 52
+
+```
+
 To see _Endly_ in action,
  
 In addition a few examples of fully functioning applications are included.
@@ -597,6 +696,7 @@ You can build, deploy and test them end to end all with endly.
    * [Reporter](example/ws/reporter) - a pivot table report builder.
         - Test with Rest Runner
         - Data Preparation and Validation (mysql)
+        
 2) **User Interface**
    * [SSO](example/ui/sso)  - user registration and login application.
         - Test with Selenium Runner
@@ -615,8 +715,7 @@ You can build, deploy and test them end to end all with endly.
        - Test with HTTP Runner
        - Log Validation
 
-
-4) **Serverless**  - serverless (lambda/cloud function/dataflow)
+5) **Serverless**  - serverless (lambda/cloud function/dataflow)
    * [Serverless](https://github.com/adrianwit/serverless_e2e)
     
     
@@ -649,11 +748,12 @@ commands:
 
 ## External resources
 
+- [Endly introduction](https://github.com/adrianwit/endly-introduction)
 - [ETL end to end testing with docker, NoSQL, RDBMS and Big Query](https://medium.com/@adrianwit/etl-end-to-end-testing-with-docker-nosql-rdbms-and-big-query-35b13b7fada8)
 - [Data testing strategy reinvented](https://medium.com/@adrianwit/killing-data-testing-swamp-6c3e11fb92c6)
 - [Go lang e2e testing](https://github.com/adrianwit/golang-e2e-testing)
-- [Endly introduction](https://github.com/adrianwit/endly-introduction)    
 - [Endly UI e2e testing demo](https://www.youtube.com/watch?v=W6R4lk_iF0k&t=12s)
+
          	
 <a name="License"></a>
 ## License
