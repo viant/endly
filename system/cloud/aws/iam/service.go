@@ -75,6 +75,10 @@ func (s *service) recreateRole(context *endly.Context, request *RecreateRoleInpu
 			return nil, err
 		}
 	}
+	state := context.State()
+	if request.AssumeRolePolicyDocument != nil {
+		*request.AssumeRolePolicyDocument = state.ExpandAsText(*request.AssumeRolePolicyDocument)
+	}
 	iamRequest := iam.CreateRoleInput(*request)
 	return client.CreateRole(&iamRequest)
 }
@@ -89,12 +93,18 @@ func (s *service) setupRole(context *endly.Context, request *SetupRolePolicyInpu
 		RoleName: request.RoleName,
 	})
 
+	state := context.State()
 	var role *iam.Role
 	if foundErr !=  nil{
 		createRole := &request.CreateRoleInput
 		if createRole.AssumeRolePolicyDocument == nil {
 			createRole.AssumeRolePolicyDocument = request.DefaultPolicyDocument
 		}
+
+		if request.AssumeRolePolicyDocument != nil {
+			*request.AssumeRolePolicyDocument = state.ExpandAsText(*request.AssumeRolePolicyDocument)
+		}
+
 		created, err := client.CreateRole(createRole)
 		if err != nil {
 			return nil, err
@@ -130,6 +140,7 @@ func (s *service) setupRolePolicy(context *endly.Context, role *iam.Role, reques
 	if err != nil {
 		return err
 	}
+	state := context.State()
 	if len(request.Define) == 0 {
 		return err
 	}
@@ -144,6 +155,8 @@ func (s *service) setupRolePolicy(context *endly.Context, role *iam.Role, reques
 	}
 
 	for _, define := range request.Define {
+		*define.PolicyDocument = state.ExpandAsText(*define.PolicyDocument)
+
 		if _, has := alreadyDefined[*define.PolicyName]; has {
 			delete(alreadyDefined, *define.PolicyName)
 			policy, _ := client.GetRolePolicy(&iam.GetRolePolicyInput{
