@@ -14,12 +14,11 @@ type CallRequest struct {
 	Data   interface{}
 }
 
-
 //DeployRequest represents deploy request
 type DeployRequest struct {
 	*cloudfunctions.CloudFunction
-	Source      *url.Resource
-	Region      string
+	Source *url.Resource
+	Region string
 }
 
 //DeployResponse represents deploy response
@@ -28,8 +27,6 @@ type DeployResponse struct {
 	Meta      interface{}
 	Function  *cloudfunctions.CloudFunction
 }
-
-
 
 //GetRequest represents get function requests
 type GetRequest struct {
@@ -47,13 +44,11 @@ type ListResponse struct {
 	Function []*cloudfunctions.CloudFunction
 }
 
-
 //DeleteRequest represents delete function requests
 type DeleteRequest struct {
 	Name   string
 	Region string
 }
-
 
 //DeleteResponse represents delete response
 type DeleteResponse struct {
@@ -61,13 +56,11 @@ type DeleteResponse struct {
 	Meta      interface{}
 }
 
-
 //Init initializes request
 func (r *ListRequest) Init() error {
 	r.Region = initRegion(r.Region)
 	return nil
 }
-
 
 //Init initializes request
 func (r *CallRequest) Init() error {
@@ -120,7 +113,7 @@ func (r *DeployRequest) Init() error {
 		}
 	}
 	r.Labels["deployment-tool"] = "endly"
-	return  r.Source.Init()
+	return r.Source.Init()
 }
 
 //Init initializes request

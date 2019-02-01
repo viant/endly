@@ -45,8 +45,6 @@ func TestNew(t *testing.T) {
 
 }
 
-
-
 func TestService_Deploy(t *testing.T) {
 	context := endly.New().NewContext(nil)
 	if !toolbox.FileExists(path.Join(os.Getenv("HOME"), ".secret/am.json")) {
@@ -67,7 +65,7 @@ func TestService_Deploy(t *testing.T) {
 			Runtime:      "go111",
 			HttpsTrigger: &cloudfunctions.HttpsTrigger{},
 		},
-		Source:   url.NewResource(path.Join(parent, "test/")),
+		Source: url.NewResource(path.Join(parent, "test/")),
 	}, &response)
 
 	if !assert.Nil(t, err) {

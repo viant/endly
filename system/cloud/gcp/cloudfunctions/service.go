@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/gcp"
+	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/data"
@@ -31,7 +32,7 @@ type service struct {
 	*endly.AbstractService
 }
 
-func (s *service) expandWithContext(context *endly.Context, credConfig *cred.Config, region, text string) (string) {
+func (s *service) expandWithContext(context *endly.Context, credConfig *cred.Config, region, text string) string {
 	state := context.State()
 	gcNode := data.NewMap()
 	gcNode.Put("projectID", credConfig.ProjectID)
@@ -45,7 +46,7 @@ func (s *service) Deploy(context *endly.Context, request *DeployRequest) (*Deplo
 	if err != nil {
 		return nil, err
 	}
-	if ! output.Done {
+	if !output.Done {
 		if err = s.AbstractService.RunInBackground(context, func() error {
 			output, err = s.waitForOperationCompletion(context, output.Name)
 			return err
@@ -76,7 +77,7 @@ func (s *service) waitForOperationCompletion(context *endly.Context, name string
 		return nil, err
 	}
 	operationService := cloudfunctions.NewOperationsService(ctxClient.service)
-	for ; ; {
+	for {
 		getCall := operationService.Get(name)
 		getCall.Context(ctxClient.Context())
 		operation, err := getCall.Do()
@@ -115,20 +116,21 @@ func (s *service) getFunctionPackageReader(resource *url.Resource) (io.ReadClose
 	if object.IsContent() {
 		return storageService.DownloadWithURL(resource.URL)
 	}
-	ignoreList := getIgnoreList(storageService, toolbox.URLPathJoin(resource.URL, ".gcloudignore"))
+	ignoreList := util.GetIgnoreList(storageService, toolbox.URLPathJoin(resource.URL, ".gcloudignore"))
+
 	writer := new(bytes.Buffer)
 	archive := zip.NewWriter(writer)
 	err = storage.ArchiveWithFilter(storageService, resource.URL, archive, func(candidate storage.Object) bool {
 		candidateName := candidate.FileInfo().Name()
-		if strings.HasSuffix(candidateName, ".zip") || strings.HasPrefix(candidateName, "gcloudignore") {
+		if strings.HasSuffix(candidateName, ".zip") {
 			return false
 		}
 		if len(ignoreList) == 0 {
 			return true
 		}
 		for _, expr := range ignoreList {
-
-			if strings.HasPrefix(candidateName, expr) || strings.HasSuffix(candidateName, expr) {
+			ignore := strings.HasPrefix(candidateName, expr) || strings.HasSuffix(candidateName, expr)
+			if ignore {
 				return false
 			}
 		}
@@ -146,7 +148,6 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 	}
 	parent := s.expandWithContext(context, ctxClient.CredConfig, request.Region, parentLocationTemplate)
 	request.Name = s.expandWithContext(context, ctxClient.CredConfig, request.Region, request.Name)
-
 
 	//TODO add support for simple name based on trigger type
 	if request.EventTrigger != nil {
@@ -220,7 +221,13 @@ func (s *service) delete(context *endly.Context, request *DeleteRequest) (*Delet
 	deleteCall := projectService.Delete(request.Name)
 	deleteCall.Context(ctxClient.Context())
 	output, err := deleteCall.Do()
-	if ! output.Done {
+	if err != nil {
+
+	}
+	if err != nil {
+		return nil, err
+	}
+	if output != nil && !output.Done {
 		if err = s.AbstractService.RunInBackground(context, func() error {
 			output, err = s.waitForOperationCompletion(context, output.Name)
 			return err
