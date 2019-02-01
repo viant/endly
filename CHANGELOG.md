@@ -3,6 +3,7 @@
     * Added gcc, remove gsunit from endly docker image
     * Added aws/iam policy variable substitution
     * Patched persiting rows with nil values (dsc)
+    * Renamed package system/cloud/gc to system/cloud/gcp 
     
 ## Jan 30 2019 0.29.0
     * Added gc/cloudfuncton:deploy 
