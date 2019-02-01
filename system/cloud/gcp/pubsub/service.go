@@ -2,7 +2,7 @@ package pubsub
 
 import (
 	"github.com/viant/endly"
-	"github.com/viant/endly/system/cloud/gc"
+	"github.com/viant/endly/system/cloud/gcp"
 	"google.golang.org/api/pubsub/v1"
 	"log"
 )
@@ -22,7 +22,7 @@ type service struct {
 
 func (s *service) registerRoutes() {
 	client := &pubsub.Service{}
-	routes, err := gc.BuildRoutes(client,  nil, getClient)
+	routes, err := gcp.BuildRoutes(client,  nil, getClient)
 	if err != nil {
 		log.Printf("unable register service %v actions: %v\n", ServiceID, err)
 		return

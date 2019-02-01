@@ -3,7 +3,7 @@ package storage
 import (
 	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/endly/system/cloud/gc"
+	"github.com/viant/endly/system/cloud/gcp"
 	"google.golang.org/api/storage/v1"
 )
 
@@ -11,7 +11,7 @@ var clientKey = (*CtxClient)(nil)
 
 //CtxClient represents context client
 type CtxClient struct {
-	*gc.AbstractClient
+	*gcp.AbstractClient
 	service *storage.Service
 }
 
@@ -29,7 +29,7 @@ func (s *CtxClient) Service() interface{} {
 }
 
 func InitRequest(context *endly.Context, rawRequest map[string]interface{}) error {
-	config, err := gc.InitCredentials(context, rawRequest)
+	config, err := gcp.InitCredentials(context, rawRequest)
 	if err != nil {
 		return err
 	}
@@ -37,18 +37,18 @@ func InitRequest(context *endly.Context, rawRequest map[string]interface{}) erro
 	if err != nil {
 		return err
 	}
-	gc.UpdateActionRequest(rawRequest, config, client)
+	gcp.UpdateActionRequest(rawRequest, config, client)
 	return nil
 }
 
-func getClient(context *endly.Context) (gc.CtxClient, error) {
+func getClient(context *endly.Context) (gcp.CtxClient, error) {
 	return GetClient(context)
 }
 
 func GetClient(context *endly.Context) (*CtxClient, error) {
 	client := &CtxClient{
-		AbstractClient: &gc.AbstractClient{},
+		AbstractClient: &gcp.AbstractClient{},
 	}
-	err := gc.GetClient(context, storage.New, clientKey, &client, storage.CloudPlatformScope, storage.PubsubScope)
+	err := gcp.GetClient(context, storage.New, clientKey, &client, storage.CloudPlatformScope, storage.DevstorageFullControlScope)
 	return client, err
 }

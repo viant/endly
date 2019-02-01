@@ -1,16 +1,16 @@
-package bigquery
+package storage
 
 import (
 	"github.com/viant/endly"
-	"github.com/viant/endly/system/cloud/gc"
-	"google.golang.org/api/bigquery/v2"
+	"github.com/viant/endly/system/cloud/gcp"
+	"google.golang.org/api/storage/v1"
 	"log"
 )
 
 
 const (
-	//ServiceID Google BigQuery Service ID.
-	ServiceID = "gc/bigquery"
+	//ServiceID Google StorageService ID.
+	ServiceID = "gc/storage"
 )
 
 
@@ -21,8 +21,8 @@ type service struct {
 
 
 func (s *service) registerRoutes() {
-	client := &bigquery.Service{}
-	routes, err := gc.BuildRoutes(client, nil,  getClient)
+	client := &storage.Service{}
+	routes, err := gcp.BuildRoutes(client, nil,  getClient)
 	if err != nil {
 		log.Printf("unable register service %v actions: %v\n", ServiceID, err)
 		return
@@ -34,7 +34,7 @@ func (s *service) registerRoutes() {
 }
 
 
-//New creates a new BigQuery service.
+//New creates a new Storage service
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

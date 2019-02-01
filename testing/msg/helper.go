@@ -56,7 +56,7 @@ func inferResourceTypeFromCredentialConfig(credConfig *cred.Config) string {
 	if credConfig.Key != "" && credConfig.Secret != "" {
 		return ResourceVendorAmazonWebService
 	} else if credConfig.ProjectID != "" {
-		return ResourceVendorGoogleCloud
+		return ResourceVendorGoogleCloudPlatform
 	}
 	return ""
 }
