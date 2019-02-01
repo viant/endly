@@ -1,6 +1,8 @@
 ## Jan 31 2019 0.29.1
     * Pachted defer inline workflow task
-     
+    * Added gcc, remove gsunit from endly docker image
+    * Added aws/iam policy variable substitution
+    * Patched persiting rows with nil values (dsc)
     
 ## Jan 30 2019 0.29.0
     * Added gc/cloudfuncton:deploy 
