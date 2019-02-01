@@ -8,6 +8,7 @@ import (
 
 const (
 	ResourceVendorGoogleCloud      = "gc"
+	ResourceVendorGoogleCloudPlatform      = "gcp"
 	ResourceVendorAmazonWebService = "aws"
 )
 
@@ -38,7 +39,7 @@ func NewPubSubClient(context *endly.Context, dest *Resource, timeout time.Durati
 	}
 	dest = expandResource(context, dest)
 	switch dest.Vendor {
-	case ResourceVendorGoogleCloud:
+	case ResourceVendorGoogleCloud, ResourceVendorGoogleCloudPlatform:
 		return newCloudPubSub(credConfig, dest.URL, timeout)
 	case ResourceVendorAmazonWebService:
 		return newAwsSqsClient(credConfig, timeout)

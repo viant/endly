@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/endly/system/cloud/gc"
+	"github.com/viant/endly/system/cloud/gcp"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"google.golang.org/api/cloudfunctions/v1"
@@ -26,7 +26,7 @@ func TestNew(t *testing.T) {
 		return
 	}
 
-	credConfig, err := gc.InitCredentials(context, map[string]interface{}{
+	credConfig, err := gcp.InitCredentials(context, map[string]interface{}{
 		"Credentials": "am",
 	})
 	if !assert.Nil(t, err) {

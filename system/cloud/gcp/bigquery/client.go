@@ -1,25 +1,24 @@
-package cloudfunctions
+package bigquery
 
 import (
 	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/endly/system/cloud/gc"
-	"google.golang.org/api/cloudfunctions/v1"
-	"google.golang.org/api/storage/v1"
+	"github.com/viant/endly/system/cloud/gcp"
+	"google.golang.org/api/bigquery/v2"
 )
 
 var clientKey = (*CtxClient)(nil)
 
 //CtxClient represents context client
 type CtxClient struct {
-	*gc.AbstractClient
-	service *cloudfunctions.Service
+	*gcp.AbstractClient
+	service *bigquery.Service
 }
 
 func (s *CtxClient) SetService(service interface{}) error {
 	var ok bool
-	s.service, ok = service.(*cloudfunctions.Service)
-	if !ok {
+	s.service, ok = service.(*bigquery.Service)
+	if ! ok {
 		return fmt.Errorf("unable to set service: %T", service)
 	}
 	return nil
@@ -30,7 +29,7 @@ func (s *CtxClient) Service() interface{} {
 }
 
 func InitRequest(context *endly.Context, rawRequest map[string]interface{}) error {
-	config, err := gc.InitCredentials(context, rawRequest)
+	config, err := gcp.InitCredentials(context, rawRequest)
 	if err != nil {
 		return err
 	}
@@ -38,18 +37,18 @@ func InitRequest(context *endly.Context, rawRequest map[string]interface{}) erro
 	if err != nil {
 		return err
 	}
-	gc.UpdateActionRequest(rawRequest, config, client)
+	gcp.UpdateActionRequest(rawRequest, config, client)
 	return nil
 }
 
-func getClient(context *endly.Context) (gc.CtxClient, error) {
+func getClient(context *endly.Context) (gcp.CtxClient, error) {
 	return GetClient(context)
 }
 
 func GetClient(context *endly.Context) (*CtxClient, error) {
 	client := &CtxClient{
-		AbstractClient: &gc.AbstractClient{},
+		AbstractClient: &gcp.AbstractClient{},
 	}
-	err := gc.GetClient(context, cloudfunctions.New, clientKey, &client, cloudfunctions.CloudPlatformScope, storage.DevstorageFullControlScope)
+	err := gcp.GetClient(context, bigquery.New, clientKey, &client, bigquery.CloudPlatformScope, bigquery.BigqueryScope, bigquery.BigqueryInsertdataScope)
 	return client, err
 }

@@ -61,11 +61,12 @@ import (
 	_ "github.com/viant/endly/system/cloud/aws/sns"
 	_ "github.com/viant/endly/system/cloud/aws/sqs"
 
-	_ "github.com/viant/endly/system/cloud/gc/bigquery"
-	_ "github.com/viant/endly/system/cloud/gc/cloudfunctions"
-	_ "github.com/viant/endly/system/cloud/gc/compute"
-	_ "github.com/viant/endly/system/cloud/gc/pubsub"
-
+	_ "github.com/viant/endly/system/cloud/gcp/bigquery"
+	_ "github.com/viant/endly/system/cloud/gcp/cloudfunctions"
+	_ "github.com/viant/endly/system/cloud/gcp/compute"
+	_ "github.com/viant/endly/system/cloud/gcp/pubsub"
+	_ "github.com/viant/endly/system/cloud/gcp/storage"
+	
 	_ "github.com/viant/endly/system/daemon"
 	_ "github.com/viant/endly/system/docker/ssh"
 	_ "github.com/viant/endly/system/exec"

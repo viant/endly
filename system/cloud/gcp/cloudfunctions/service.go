@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/endly/system/cloud/gc"
+	"github.com/viant/endly/system/cloud/gcp"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/data"
@@ -64,7 +64,7 @@ func (s *service) Deploy(context *endly.Context, request *DeployRequest) (*Deplo
 	})
 
 	if response.Function.Status == "OFFLINE" {
-		context.Publish(gc.NewOutputEvent(request.Name, "deploy", response))
+		context.Publish(gcp.NewOutputEvent(request.Name, "deploy", response))
 		return nil, fmt.Errorf("failed to deploy funciton")
 	}
 	return response, err
@@ -172,7 +172,7 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 	}
 
 	defer reader.Close()
-	if err = gc.Upload(http.DefaultClient, uploadResponse.UploadUrl, reader); err != nil {
+	if err = gcp.Upload(http.DefaultClient, uploadResponse.UploadUrl, reader); err != nil {
 		return nil, err
 	}
 	request.SourceUploadUrl = uploadResponse.UploadUrl
@@ -265,7 +265,7 @@ func (s *service) call(context *endly.Context, request *CallRequest) (*cloudfunc
 
 func (s *service) registerRoutes() {
 	client := &cloudfunctions.Service{}
-	routes, err := gc.BuildRoutes(client, func(name string) string {
+	routes, err := gcp.BuildRoutes(client, func(name string) string {
 		return strings.Replace(name, "Functions", "", 1)
 	}, getClient)
 	if err != nil {
@@ -294,7 +294,7 @@ func (s *service) registerRoutes() {
 				if err != nil {
 					return nil, err
 				}
-				context.Publish(gc.NewOutputEvent(req.Name, "deploy", output))
+				context.Publish(gcp.NewOutputEvent(req.Name, "deploy", output))
 				return output, err
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -321,7 +321,7 @@ func (s *service) registerRoutes() {
 				if err != nil {
 					return nil, err
 				}
-				context.Publish(gc.NewOutputEvent(req.Name, "get", output))
+				context.Publish(gcp.NewOutputEvent(req.Name, "get", output))
 				return output, err
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -349,7 +349,7 @@ func (s *service) registerRoutes() {
 				if err != nil {
 					return nil, err
 				}
-				context.Publish(gc.NewOutputEvent(req.Name, "delete", output))
+				context.Publish(gcp.NewOutputEvent(req.Name, "delete", output))
 				return output, err
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -377,7 +377,7 @@ func (s *service) registerRoutes() {
 				if err != nil {
 					return nil, err
 				}
-				context.Publish(gc.NewOutputEvent(req.Name, "call", output))
+				context.Publish(gcp.NewOutputEvent(req.Name, "call", output))
 				return output, err
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -405,7 +405,7 @@ func (s *service) registerRoutes() {
 				if err != nil {
 					return nil, err
 				}
-				context.Publish(gc.NewOutputEvent("...", "list", output))
+				context.Publish(gcp.NewOutputEvent("...", "list", output))
 				return output, err
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)

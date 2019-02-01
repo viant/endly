@@ -1,4 +1,4 @@
-package gc
+package gcp
 
 import (
 	"github.com/viant/endly/model/msg"
