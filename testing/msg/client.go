@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	ResourceVendorGoogleCloud      = "gc"
-	ResourceVendorGoogleCloudPlatform      = "gcp"
-	ResourceVendorAmazonWebService = "aws"
+	ResourceVendorGoogleCloud         = "gc"
+	ResourceVendorGoogleCloudPlatform = "gcp"
+	ResourceVendorAmazonWebService    = "aws"
 )
 
 type Client interface {
