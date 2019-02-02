@@ -78,7 +78,7 @@ func (r *ResourceSetup) Init() error {
 }
 
 func (r *ResourceSetup) Validate() error {
-	if r.Type == ResourceTypeSubscription && (r.Vendor == ResourceVendorGoogleCloud || r.Vendor == ResourceVendorGoogleCloudPlatform ) {
+	if r.Type == ResourceTypeSubscription && (r.Vendor == ResourceVendorGoogleCloud || r.Vendor == ResourceVendorGoogleCloudPlatform) {
 		if r.Config == nil {
 			return fmt.Errorf("subscription config was empty")
 		}
