@@ -1,5 +1,6 @@
 ## Feb 1 2019 0.29.2
     * Pachted nil pointer on cloudfunctions:delete
+    * Patched .gcloudignore functionality when deploy function
     
 ## Jan 31 2019 0.29.1
     * Pachted defer inline workflow task
