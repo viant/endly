@@ -95,8 +95,6 @@ func GetClient(eContext *endly.Context, provider, key interface{}, target interf
 	return eContext.Replace(key, reflect.ValueOf(target).Elem().Interface())
 }
 
-
-
 //InitCredentials get or creates aws credential config
 func InitCredentials(context *endly.Context, rawRequest map[string]interface{}) (*gcpCredConfig, error) {
 	if len(rawRequest) == 0 {
@@ -160,15 +158,15 @@ func UpdateActionRequest(rawRequest map[string]interface{}, config *gcpCredConfi
 	}
 
 	mappings := util.BuildLowerCaseMapping(rawRequest)
-	if _, has := mappings["project"]; ! has {
+	if _, has := mappings["project"]; !has {
 		rawRequest["project"] = config.ProjectID
 	}
-	if _, has := mappings["region"]; ! has {
+	if _, has := mappings["region"]; !has {
 		rawRequest["region"] = config.Region
 	}
 
 	var URLParams = make(gensupport.URLParams)
-	if paramsKey, has := mappings["urlparams"];has {
+	if paramsKey, has := mappings["urlparams"]; has {
 		params := rawRequest[paramsKey]
 		if toolbox.IsMap(params) {
 			for k, v := range toolbox.AsMap(params) {
