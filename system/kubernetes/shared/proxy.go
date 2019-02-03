@@ -25,7 +25,7 @@ func BuildRoutes(service interface{}, clientPrefix string) ([]*endly.Route, erro
 		}
 		returnType := method.Type.Out(0)
 		candidate := returnType.String()
-		if ! strings.HasSuffix(candidate, "Interface") {
+		if !strings.HasSuffix(candidate, "Interface") {
 			return nil
 		}
 		holder := &ServiceHolder{
@@ -56,7 +56,7 @@ func BuildRoutes(service interface{}, clientPrefix string) ([]*endly.Route, erro
 			ifaceTypeName := holder.IFace.String()
 			id := ifaceTypeName + "." + method.Name
 			adapter, has := registry.Get(id)
-			if ! has {
+			if !has {
 				return nil
 			}
 			requestType := reflect.ValueOf(adapter).Type().Elem()
@@ -125,14 +125,14 @@ func getServce(clientCtx *CtxClient, clientPrefix string, kindService string) (i
 	}
 	clientSetValue := reflect.ValueOf(clientset)
 	methodType, ok := clientSetValue.Type().MethodByName(clientID)
-	if ! ok {
+	if !ok {
 		return nil, fmt.Errorf("failed to locate %v", clientID)
 	}
 	getClientMethod := clientSetValue.MethodByName(clientID).Interface()
 	results := toolbox.CallFunction(getClientMethod)
 	clientValue := reflect.ValueOf(results[0])
 	methodType, ok = clientValue.Type().MethodByName(kindService)
-	if ! ok {
+	if !ok {
 		return nil, fmt.Errorf("failed to locate %v.%v", clientID, kindService)
 	}
 

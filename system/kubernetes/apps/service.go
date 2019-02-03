@@ -7,12 +7,10 @@ import (
 	"log"
 )
 
-
 const (
 	//ServiceID Kubernetes apps service ID.
 	ServiceID = "kubernetes/apps"
 )
-
 
 //no operation service
 type service struct {
@@ -26,7 +24,7 @@ func (s *service) registerRoutes() {
 }
 
 func (s *service) registerClientRoutes(client interface{}, clientPrefix string) {
-	routes, err :=  shared.BuildRoutes(client, clientPrefix );
+	routes, err := shared.BuildRoutes(client, clientPrefix)
 	if err != nil {
 		log.Printf("unable register service %v actions: %v\n", ServiceID, err)
 		return
@@ -36,8 +34,6 @@ func (s *service) registerClientRoutes(client interface{}, clientPrefix string) 
 	}
 
 }
-
-
 
 //New creates a new Storage service
 func New() endly.Service {

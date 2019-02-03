@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 )
 
-
 var clientKey = (*CtxClient)(nil)
 
 //CtxClient represents generic google cloud service client
@@ -30,7 +29,7 @@ func (c *CtxClient) ConfigPath() string {
 	if c.configPath != "" {
 		return c.configPath
 	}
-	c.configPath  = filepath.Join(os.Getenv("HOME"), ".kube", "config")
+	c.configPath = filepath.Join(os.Getenv("HOME"), ".kube", "config")
 	return c.configPath
 }
 
@@ -41,7 +40,6 @@ func buildConfigFromFlags(context, kubeconfigPath string) (*rest.Config, error) 
 			CurrentContext: context,
 		}).ClientConfig()
 }
-
 
 func (c *CtxClient) Clientset() (*kubernetes.Clientset, error) {
 	if c.clientSet != nil {
@@ -56,12 +54,11 @@ func (c *CtxClient) Clientset() (*kubernetes.Clientset, error) {
 		config, err = clientcmd.BuildConfigFromFlags(c.masterURL, configPath)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("unable to build conifg %v, %v", configPath, err )
+		return nil, fmt.Errorf("unable to build conifg %v, %v", configPath, err)
 	}
 	c.clientSet, err = kubernetes.NewForConfig(config)
 	return c.clientSet, err
 }
-
 
 //GetCtxClient get or creates a new  kubernetess client.
 func GetCtxClient(context *endly.Context) (*CtxClient, error) {
@@ -75,10 +72,8 @@ func GetCtxClient(context *endly.Context) (*CtxClient, error) {
 	return client, err
 }
 
-
-
 //InitClient get or creates client
-func InitClient(context *endly.Context, rawRequest map[string]interface{}) (error) {
+func InitClient(context *endly.Context, rawRequest map[string]interface{}) error {
 	if len(rawRequest) == 0 {
 		return nil
 	}
@@ -87,24 +82,23 @@ func InitClient(context *endly.Context, rawRequest map[string]interface{}) (erro
 		context.GetInto(clientKey, &client)
 	}
 	mappings := util.BuildLowerCaseMapping(rawRequest)
-	if key, ok := mappings["kubeconfig"];ok {
+	if key, ok := mappings["kubeconfig"]; ok {
 		client.configPath = toolbox.AsString(rawRequest[key])
 		client.clientSet = nil
 	}
-	if key, ok := mappings["context"];ok {
+	if key, ok := mappings["context"]; ok {
 		client.cfgContext = toolbox.AsString(rawRequest[key])
 		client.clientSet = nil
 	}
-	if key, ok := mappings["masterurl"];ok {
+	if key, ok := mappings["masterurl"]; ok {
 		client.masterURL = toolbox.AsString(rawRequest[key])
 		client.cfgContext = ""
 		client.clientSet = nil
 	}
-	if key, ok := mappings["apiversion"];ok {
-		client.ApiVersion = toolbox.ToCaseFormat(toolbox.AsString(rawRequest[key]), toolbox.CaseLowerCamel,toolbox.CaseUpperCamel)
+	if key, ok := mappings["apiversion"]; ok {
+		client.ApiVersion = toolbox.ToCaseFormat(toolbox.AsString(rawRequest[key]), toolbox.CaseLowerCamel, toolbox.CaseUpperCamel)
 	} else {
 		client.ApiVersion = "V1"
 	}
 	return nil
 }
-
