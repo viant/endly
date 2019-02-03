@@ -7,9 +7,6 @@ import (
 	"testing"
 )
 
-
-
-
 func TestGenerator_Generate(t *testing.T) {
 
 	parentDir := toolbox.CallerDirectory(3)

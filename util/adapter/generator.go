@@ -60,14 +60,14 @@ type typeMeta struct {
 	SimpleOwnerType string
 	Imports         string
 	TypeName        string
-	Methods               string
-	Fields                string
-	Func                  string
-	Params                string
-	Result                string
-	OwnerPackage          string
-	importPrefix string
-	aliasImports map[string]string
+	Methods         string
+	Fields          string
+	Func            string
+	Params          string
+	Result          string
+	OwnerPackage    string
+	importPrefix    string
+	aliasImports    map[string]string
 }
 
 type fileMeta struct {
@@ -212,7 +212,7 @@ func (g *Generator) Generate(source, typeName string, predicate func(receiver *t
 	var types = make([]string, 0)
 	var register = make([]string, 0)
 	for _, receiver := range typeInfo.Receivers() {
-		if ! predicate(receiver) {
+		if !predicate(receiver) {
 			continue
 		}
 		if len(receiver.ResultsFields) > 2 {
@@ -221,14 +221,13 @@ func (g *Generator) Generate(source, typeName string, predicate func(receiver *t
 
 		typeMeta := &typeMeta{
 			Func:            receiver.Name,
-			importPrefix: fmt.Sprintf("vvc"),//import colision prefix
+			importPrefix:    fmt.Sprintf("vvc"), //import colision prefix
 			SimpleOwnerType: typeInfo.Name,
 			aliasImports:    make(map[string]string),
 			OwnerType:       typeInfo.Package + "." + typeInfo.Name,
 			OwnerPackage:    typeInfo.Package,
 			TypeName:        typeNameProvider(typeName, receiver), // typePrefix + receiver.Name + typeSuffix,
 		}
-
 
 		if err = g.buildTypeFields(typeInfo, typeMeta, receiver); err == nil {
 			err = g.buildTypeMethods(typeInfo, typeMeta, receiver)
@@ -248,8 +247,8 @@ func (g *Generator) Generate(source, typeName string, predicate func(receiver *t
 		methods = append(methods, typeMeta.Methods)
 		types = append(types, typeText)
 
-		for k:=range typeMeta.aliasImports {
-			importMap[k]= fileInfo.Imports[k]
+		for k := range typeMeta.aliasImports {
+			importMap[k] = fileInfo.Imports[k]
 		}
 		if path, hasCollision := importMap[typeInfo.Package]; hasCollision {
 			delete(importMap, typeInfo.Package)
@@ -265,7 +264,6 @@ func (g *Generator) Generate(source, typeName string, predicate func(receiver *t
 		imports = append(imports, fmt.Sprintf(`	%s %s`, k, v))
 	}
 
-
 	fileMeta := &fileMeta{
 		Imports:  strings.Join(imports, "\n"),
 		Types:    strings.Join(types, "\n"),
@@ -278,7 +276,7 @@ func (g *Generator) Generate(source, typeName string, predicate func(receiver *t
 
 func (g *Generator) expandTemplate(templateId string, data interface{}) (string, error) {
 	textTemplate, ok := g.templates[templateId]
-	if ! ok {
+	if !ok {
 		return "", fmt.Errorf("failed to lookup template: %v", templateId)
 	}
 	tmpl, err := template.New(templateId).Parse(textTemplate)
