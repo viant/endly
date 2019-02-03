@@ -2,6 +2,7 @@ package util
 
 import (
 	"github.com/viant/toolbox"
+	"strings"
 )
 
 //NormalizeMap normalizes keyValuePairs from map or slice (map with preserved key order)
@@ -33,4 +34,13 @@ func Append(dest, source map[string]interface{}, override bool) {
 		}
 		dest[k] = v
 	}
+}
+
+//BuildLowerCaseMapping build lowercase key to key map mapping
+func BuildLowerCaseMapping(aMap map[string]interface{}) map[string]string {
+	var result = make(map[string]string)
+	for k := range aMap {
+		result[strings.ToLower(k)] = k
+	}
+	return result
 }
