@@ -10,7 +10,7 @@ import (
 
 const (
 	//ServiceID Google Cloud Compute Service ID.
-	ServiceID = "gc/compute"
+	ServiceID = "gcp/compute"
 )
 
 

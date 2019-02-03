@@ -10,7 +10,7 @@ import (
 
 const (
 	//ServiceID Google StorageService ID.
-	ServiceID = "gc/storage"
+	ServiceID = "gcp/storage"
 )
 
 

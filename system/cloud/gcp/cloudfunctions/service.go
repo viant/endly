@@ -24,7 +24,7 @@ import (
 
 const (
 	//ServiceID Google Cloud Function Service Id
-	ServiceID = "gc/cloudfunctions"
+	ServiceID = "gcp/cloudfunctions"
 )
 
 //no operation service

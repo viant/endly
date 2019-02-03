@@ -4,12 +4,12 @@ This service is google.golang.org/api/cloudfunctions/v1beta2.Service proxy
 
 To check all supported method run
 ```bash
-     endly -s='gc/cloudfunctions'
+     endly -s='gcp/cloudfunctions'
 ```
 
-To check method contract run endly -s='gc/cloudfunctions' -a=methodName
+To check method contract run endly -s='gcp/cloudfunctions' -a=methodName
 ```bash
-    endly -s='gc/cloudfunctions' -a='operationsList'
+    endly -s='gcp/cloudfunctions' -a='operationsList'
 ```
 
 
@@ -31,14 +31,14 @@ defaults:
   credentials: am
 pipeline:
   deploy:
-    action: gc/cloudfunctions:deploy
+    action: gcp/cloudfunctions:deploy
     '@name': HelloWorld
     entryPoint: HelloWorldFn
     runtime: go111
     source:
       URL: test/
   test:
-    action: gc/cloudfunctions:call
+    action: gcp/cloudfunctions:call
     logging: false
     '@name': HelloWorld
     data:
@@ -51,7 +51,7 @@ pipeline:
     expect: /Endly/
     actual: $test.Result
   undeploy:
-    action: gc/cloudfunctions:delete
+    action: gcp/cloudfunctions:delete
     '@name': HelloWorld
     
 
@@ -68,7 +68,7 @@ pipeline:
     ```yaml
     pipeline:
       deploy:
-        action: gc/cloudfunctions:deploy
+        action: gcp/cloudfunctions:deploy
         '@name': HelloWorld
         runtime: go111
         source:
@@ -80,7 +80,7 @@ pipeline:
     ```yaml
     pipeline:
       deploy:
-        action: gc/cloudfunctions:deploy
+        action: gcp/cloudfunctions:deploy
         '@name': HelloWorldFn
         entryPoint Hello
         runtime: go111
@@ -92,7 +92,7 @@ pipeline:
     ```yaml
     pipeline:
       deploy:
-        action: gc/cloudfunctions:deploy
+        action: gcp/cloudfunctions:deploy
         '@name': MyFunction
         entryPoint: MyFunctionFN
         runtime: go111
@@ -115,7 +115,7 @@ pipeline:
     ```yaml
     pipeline:
       call:
-        action: gc/cloudfunctions:call
+        action: gcp/cloudfunctions:call
         logging: false
        '@name': HelloWorld
         data:
@@ -123,19 +123,19 @@ pipeline:
     ```
 2. Calling from cli
     ```bash
-    endly -run='gc/cloudfunctions:call' name=HelloWorld data.from=Endly
+    endly -run='gcp/cloudfunctions:call' name=HelloWorld data.from=Endly
     ``` 
 
 
 ###### Getting function info
 
 ```bash
-    endly -run='gc/cloudfunctions:get' name=HelloWorld 
+    endly -run='gcp/cloudfunctions:get' name=HelloWorld 
 ```
 
 
 ###### Listing functions
 
 ```bash
-    endly -run='gc/cloudfunctions:list'  
+    endly -run='gcp/cloudfunctions:list'  
 ```

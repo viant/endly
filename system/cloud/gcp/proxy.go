@@ -79,6 +79,7 @@ func BuildRoutes(service interface{}, nameTransformer func(name string) string, 
 					return reflect.New(responseType.Elem()).Interface()
 				},
 				Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+
 					client, err := clientProvider(context)
 					if err != nil {
 						return nil, err

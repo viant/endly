@@ -4,7 +4,7 @@ This service is google.golang.org/api/compute/v1/compute.Service proxy
 
 To check all supported method run
 ```bash
-     endly -s='gc/compute'
+     endly -s='gcp/compute'
 ```
 
 To check method contract run endly -s="gc/compute" -a=methodName
@@ -32,7 +32,7 @@ init:
 pipeline:
   start:
     info:
-      action: gc/compute:instancesGet
+      action: gcp/compute:instancesGet
       logging: false
       credentials: gc
       zone: us-central1-f
@@ -48,7 +48,7 @@ pipeline:
 
     instanceUp:
       when: $info.Status = 'TERMINATED'
-      action: gc/compute:instancesStart
+      action: gcp/compute:instancesStart
       logging: false
       zone: us-central1-f
       instance: $instanceId
@@ -70,7 +70,7 @@ init:
   instanceId: 11230632249892XXXXX
 stop:
     info:
-      action: gc/compute:instancesGet
+      action: gcp/compute:instancesGet
       logging: false
       credentials: gc
       zone: us-central1-f

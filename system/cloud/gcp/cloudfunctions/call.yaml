@@ -2,7 +2,7 @@ defaults:
   credentials: am
 pipeline:
   deploy:
-    action: gc/cloudfunctions:call
+    action: gcp/cloudfunctions:call
     '@name': HelloWorld
     data:
       From: Endly
