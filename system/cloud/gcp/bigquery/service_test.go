@@ -25,3 +25,16 @@ func TestNew(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, request)
 }
+
+
+func Test_Meta(t *testing.T) {
+
+	context := endly.New().NewContext(nil)
+	//client := &bigquery.Service{}
+	assert.NotNil(t, context)
+
+	jjj := &QueryRequest{}
+	toolbox.InitStruct(jjj)
+
+
+}

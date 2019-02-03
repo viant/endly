@@ -1,6 +1,6 @@
 pipeline:
   start:
     info:
-      action: gc/pubsub:topicsList
+      action: gcp/pubsub:topicsList
       credentials: am
       project: projects/myProject

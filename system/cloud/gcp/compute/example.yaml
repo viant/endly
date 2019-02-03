@@ -3,7 +3,7 @@ init:
 pipeline:
   start:
     info:
-      action: gc/compute:instancesGet
+      action: gcp/compute:instancesGet
       logging: false
       credentials: gc
       zone: us-central1-f
@@ -19,7 +19,7 @@ pipeline:
 
     instanceUp:
       when: $info.Status = 'TERMINATED'
-      action: gc/compute:instancesStart
+      action: gcp/compute:instancesStart
       logging: false
       zone: us-central1-f
       instance: $instanceId
@@ -36,7 +36,7 @@ pipeline:
 
   stop:
     info:
-      action: gc/compute:instancesGet
+      action: gcp/compute:instancesGet
       logging: false
       credentials: gc
       zone: us-central1-f

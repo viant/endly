@@ -8,7 +8,7 @@ The set of google cloud services provice procy of various google.golang.org/api 
 
 To check all supported method run
 ```bash
-     endly -s='gc/GOOGLE COULD SERVICE'
+     endly -s='gcp/GOOGLE COULD SERVICE'
 ```
 
 i.e 
@@ -28,7 +28,7 @@ endly -r=test
 pipeline:
   start:
     info:
-      action: gc/compute:instancesGet
+      action: gcp/compute:instancesGet
       logging: false
       credentials: gc
       zone: us-central1-f

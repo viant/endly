@@ -1,0 +1,19 @@
+init:
+  dataset: myDataset
+defaults:
+  credentials: gc
+pipeline:
+  query:
+    action: gcp/bigquery:query
+    query: SELECT * FROM mySourceTable
+    allowlargeresults: false
+    defaultdataset:
+      projectid: ${gcp.projectID}
+      datasetid: $dataset
+    destinationtable:
+      projectid: ${gcp.projectID}
+      datasetid: $dataset
+      tableid: myTable
+    writedisposition: WRITE_APPEND
+
+

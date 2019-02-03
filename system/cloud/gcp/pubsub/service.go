@@ -10,7 +10,7 @@ import (
 
 const (
 	//ServiceID Google Pubsub Service ID.
-	ServiceID = "gc/pubsub"
+	ServiceID = "gcp/pubsub"
 )
 
 

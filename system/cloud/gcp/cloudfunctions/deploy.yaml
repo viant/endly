@@ -3,7 +3,7 @@ defaults:
 pipeline:
   deploy:
     when: false
-    action: gc/cloudfunctions:deploy
+    action: gcp/cloudfunctions:deploy
     '@name': HelloWorld
     entryPoint: HelloWorld
     runtime: go111

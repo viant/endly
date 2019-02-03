@@ -4,12 +4,12 @@ This service is google.golang.org/api/pubsub/v1.Service proxy
 
 To check all supported method run
 ```bash
-     endly -s='gc/pubsub'
+     endly -s='gcp/pubsub'
 ```
 
-To check method contract run endly -s='gc/pubsub' -a=methodName
+To check method contract run endly -s='gcp/pubsub' -a=methodName
 ```bash
-    endly -s='gc/pubsub' -a='subscriptionsList'
+    endly -s='gcp/pubsub' -a='subscriptionsList'
 
 ```
 
@@ -28,7 +28,7 @@ endy -r=list
 pipeline:
   start:
     info:
-      action: gc/pubsub:topicsList
+      action: gcp/pubsub:topicsList
       credentials: gc
       projectID: myProject-p1
 ```

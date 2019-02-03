@@ -4,12 +4,12 @@ This service is google.golang.org/api/pubsub/v1.Service proxy
 
 To check all supported method run
 ```bash
-     endly -s='gc/storage'
+     endly -s='gcp/storage'
 ```
 
-To check method contract run endly -s='gc/storage' -a=methodName
+To check method contract run endly -s='gcp/storage' -a=methodName
 ```bash
-    endly -s='gc/storage' -a='subscriptionsList'
+    endly -s='gcp/storage' -a='subscriptionsList'
 
 ```
 
