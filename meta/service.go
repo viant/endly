@@ -27,7 +27,7 @@ func (m *Service) Lookup(serviceID, action string) (*Action, error) {
 	toolbox.InitStruct(request)
 	result.Request = request
 	result.RequestMeta = toolbox.GetStructMeta(request)
-	JSON, err := json.Marshal(request);
+	JSON, err := json.Marshal(request)
 	if err == nil {
 		if isEmpty := toolbox.AsString(JSON) == "{}"; isEmpty {
 			result.Request = result.RequestMeta.Message()
