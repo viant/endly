@@ -597,14 +597,14 @@ defaults:
   credentials: am
 pipeline:
   deploy:
-    action: gc/cloudfunctions:deploy
+    action: gcp/cloudfunctions:deploy
     '@name': HelloWorld
     entryPoint: HelloWorldFn
     runtime: go111
     source:
       URL: test/
   test:
-    action: gc/cloudfunctions:call
+    action: gcp/cloudfunctions:call
     logging: false
     '@name': HelloWorld
     data:
@@ -617,7 +617,7 @@ pipeline:
     expect: /Endly/
     actual: $test.Result
   undeploy:
-    action: gc/cloudfunctions:delete
+    action: gcp/cloudfunctions:delete
     '@name': HelloWorld
 
 ```

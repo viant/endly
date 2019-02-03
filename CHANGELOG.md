@@ -1,3 +1,9 @@
+## Feb 1 2019 0.30.0
+    * Renamed gc/* to gcp/* service ids - workflow breaking change
+    * Added kubernetes/core and kubernetes/apps services
+    * Added contract adapter code genrator util/adapter
+    * Added BuildLowerCaseMapping utility
+
 ## Feb 1 2019 0.29.2
     * Pachted nil pointer on cloudfunctions:delete
     * Patched .gcloudignore functionality when deploy function
