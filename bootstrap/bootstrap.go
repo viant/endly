@@ -67,6 +67,9 @@ import (
 	_ "github.com/viant/endly/system/cloud/gcp/pubsub"
 	_ "github.com/viant/endly/system/cloud/gcp/storage"
 
+	_ "github.com/viant/endly/system/kubernetes/core"
+	_ "github.com/viant/endly/system/kubernetes/apps"
+
 	_ "github.com/viant/endly/system/daemon"
 	_ "github.com/viant/endly/system/docker/ssh"
 	_ "github.com/viant/endly/system/exec"
@@ -508,9 +511,15 @@ func printServiceActions() {
 	var serviceID = flag.Lookup("s").Value.String()
 
 	if serviceID == "*" {
+		services := endly.Services(manager)
 		fmt.Printf("endly services:\n")
-		for k, v := range endly.Services(manager) {
-			fmt.Printf("%v %T\n", k, v)
+		var ids  = make([]string, 0)
+		for k := range services {
+			ids = append(ids, k)
+		}
+		sort.Strings(ids)
+		for _,k := range ids{
+			fmt.Printf("%v %T\n", k, services[k])
 		}
 		return
 	}

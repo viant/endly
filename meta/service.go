@@ -13,7 +13,6 @@ type Service struct {
 
 //Lookup returns service action info for supplied serviceID and action
 func (m *Service) Lookup(serviceID, action string) (*Action, error) {
-
 	var result = &Action{}
 	context := m.NewContext(toolbox.NewContext())
 	service, err := context.Service(serviceID)
@@ -28,7 +27,8 @@ func (m *Service) Lookup(serviceID, action string) (*Action, error) {
 	toolbox.InitStruct(request)
 	result.Request = request
 	result.RequestMeta = toolbox.GetStructMeta(request)
-	if JSON, err := json.Marshal(request); err == nil {
+	JSON, err := json.Marshal(request);
+	if err == nil {
 		if isEmpty := toolbox.AsString(JSON) == "{}"; isEmpty {
 			result.Request = result.RequestMeta.Message()
 		}

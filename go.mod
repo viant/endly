@@ -75,4 +75,5 @@ require (
 	gopkg.in/linkedin/goavro.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 	honnef.co/go/tools v0.0.0-20180920025451-e3ad64cb4ed3 // indirect
+	k8s.io/sample-cli-plugin v0.0.0-20190131175619-6460b6df5f2a // indirect
 )
