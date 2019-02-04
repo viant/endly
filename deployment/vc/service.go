@@ -106,7 +106,9 @@ func (s *service) checkout(context *endly.Context, request *CheckoutRequest) (*C
 		var moduleOrigin = origin.Clone()
 		var targetModule = target.Clone()
 		if module != "" {
-			moduleOrigin.URL = toolbox.URLPathJoin(origin.URL, module)
+			if request.Type != "git" {
+				moduleOrigin.URL = toolbox.URLPathJoin(origin.URL, module)
+			}
 			targetModule.URL = toolbox.URLPathJoin(target.URL, module)
 		}
 		info, err := s.checkoutArtifact(context, request.Type, moduleOrigin, targetModule, request.RemoveLocalChanges)
