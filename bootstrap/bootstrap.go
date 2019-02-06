@@ -67,8 +67,16 @@ import (
 	_ "github.com/viant/endly/system/cloud/gcp/pubsub"
 	_ "github.com/viant/endly/system/cloud/gcp/storage"
 
+	_ "github.com/viant/endly/system/kubernetes"
 	_ "github.com/viant/endly/system/kubernetes/apps"
+	_ "github.com/viant/endly/system/kubernetes/autoscaling"
+	_ "github.com/viant/endly/system/kubernetes/batch"
 	_ "github.com/viant/endly/system/kubernetes/core"
+	_ "github.com/viant/endly/system/kubernetes/extensions"
+	_ "github.com/viant/endly/system/kubernetes/networking"
+	_ "github.com/viant/endly/system/kubernetes/policy"
+	_ "github.com/viant/endly/system/kubernetes/rbac"
+	_ "github.com/viant/endly/system/kubernetes/storage"
 
 	_ "github.com/viant/endly/system/daemon"
 	_ "github.com/viant/endly/system/docker/ssh"
