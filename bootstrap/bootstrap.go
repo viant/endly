@@ -22,8 +22,13 @@ import (
 
 	//cgo _ "github.com/alexbrainman/odbc"
 
+
+	_ "github.com/alexbrainman/odbc"
+
 	_ "github.com/viant/endly/gen/static"
 	_ "github.com/viant/endly/shared/static" //load external resource like .csv .json files to mem storage
+
+
 
 	_ "github.com/viant/endly/workflow"
 	_ "github.com/viant/toolbox/storage/gs"

@@ -1,3 +1,12 @@
+## Feb 5 2019 0.30.1
+    * Patched ShowTable sql embedding issue (dsc)
+    * Patched contract description (toolbox)
+    * Added Elapsed,Sum,Count,AsNumber udf (toolbox)
+    * Patched init database with recreate flag=true (dsunit)
+    * Patched data comparision on time values with incomptible types (dsunit)
+    * Aded kubernetes:get, kubernetes:create
+    * Integrated more kubernetes resources
+
 ## Feb 1 2019 0.30.0
     * Renamed gc/* to gcp/* service ids - workflow breaking change
     * Added kubernetes/core and kubernetes/apps services
