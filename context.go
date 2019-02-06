@@ -115,7 +115,6 @@ func (c *Context) IsLoggingEnabled() bool {
 	return *c.Logging
 }
 
-
 //SetLogging set logging on and off
 func (c *Context) SetLogging(flag bool) {
 	c.Logging = &flag
