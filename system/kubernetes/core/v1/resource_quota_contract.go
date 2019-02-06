@@ -16,32 +16,32 @@ import (
 //ResourceQuotaCreateRequest represents request
 type ResourceQuotaCreateRequest struct {
   service_ v1.ResourceQuotaInterface
-  Quota *vvc.ResourceQuota
+   *vvc.ResourceQuota
 }
 
 //ResourceQuotaUpdateRequest represents request
 type ResourceQuotaUpdateRequest struct {
   service_ v1.ResourceQuotaInterface
-  Quota *vvc.ResourceQuota
+   *vvc.ResourceQuota
 }
 
 //ResourceQuotaUpdateStatusRequest represents request
 type ResourceQuotaUpdateStatusRequest struct {
   service_ v1.ResourceQuotaInterface
-  Quota *vvc.ResourceQuota
+   *vvc.ResourceQuota
 }
 
 //ResourceQuotaDeleteRequest represents request
 type ResourceQuotaDeleteRequest struct {
   service_ v1.ResourceQuotaInterface
   Name string
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
 }
 
 //ResourceQuotaDeleteCollectionRequest represents request
 type ResourceQuotaDeleteCollectionRequest struct {
   service_ v1.ResourceQuotaInterface
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
   ListOptions metav1.ListOptions
 }
 
@@ -49,19 +49,19 @@ type ResourceQuotaDeleteCollectionRequest struct {
 type ResourceQuotaGetRequest struct {
   service_ v1.ResourceQuotaInterface
   Name string
-  Options metav1.GetOptions
+   metav1.GetOptions
 }
 
 //ResourceQuotaListRequest represents request
 type ResourceQuotaListRequest struct {
   service_ v1.ResourceQuotaInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //ResourceQuotaWatchRequest represents request
 type ResourceQuotaWatchRequest struct {
   service_ v1.ResourceQuotaInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //ResourceQuotaPatchRequest represents request
@@ -99,12 +99,12 @@ func (r * ResourceQuotaCreateRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Create(r.Quota)
+	result, err = r.service_.Create(r.ResourceQuota)
 	return result, err	
 }
 
 func (r * ResourceQuotaCreateRequest) GetId() string {
-	return "v1.ResourceQuotaInterface.Create";	
+	return "v1.ResourceQuota.Create";	
 }
 
 func (r * ResourceQuotaUpdateRequest) SetService(service interface{}) error {
@@ -119,12 +119,12 @@ func (r * ResourceQuotaUpdateRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Update(r.Quota)
+	result, err = r.service_.Update(r.ResourceQuota)
 	return result, err	
 }
 
 func (r * ResourceQuotaUpdateRequest) GetId() string {
-	return "v1.ResourceQuotaInterface.Update";	
+	return "v1.ResourceQuota.Update";	
 }
 
 func (r * ResourceQuotaUpdateStatusRequest) SetService(service interface{}) error {
@@ -139,12 +139,12 @@ func (r * ResourceQuotaUpdateStatusRequest) Call() (result interface{}, err erro
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.UpdateStatus(r.Quota)
+	result, err = r.service_.UpdateStatus(r.ResourceQuota)
 	return result, err	
 }
 
 func (r * ResourceQuotaUpdateStatusRequest) GetId() string {
-	return "v1.ResourceQuotaInterface.UpdateStatus";	
+	return "v1.ResourceQuota.UpdateStatus";	
 }
 
 func (r * ResourceQuotaDeleteRequest) SetService(service interface{}) error {
@@ -159,12 +159,12 @@ func (r * ResourceQuotaDeleteRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.Delete(r.Name,r.Options)
+	err = r.service_.Delete(r.Name,r.DeleteOptions)
 	return result, err	
 }
 
 func (r * ResourceQuotaDeleteRequest) GetId() string {
-	return "v1.ResourceQuotaInterface.Delete";	
+	return "v1.ResourceQuota.Delete";	
 }
 
 func (r * ResourceQuotaDeleteCollectionRequest) SetService(service interface{}) error {
@@ -179,12 +179,12 @@ func (r * ResourceQuotaDeleteCollectionRequest) Call() (result interface{}, err 
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.DeleteCollection(r.Options,r.ListOptions)
+	err = r.service_.DeleteCollection(r.DeleteOptions,r.ListOptions)
 	return result, err	
 }
 
 func (r * ResourceQuotaDeleteCollectionRequest) GetId() string {
-	return "v1.ResourceQuotaInterface.DeleteCollection";	
+	return "v1.ResourceQuota.DeleteCollection";	
 }
 
 func (r * ResourceQuotaGetRequest) SetService(service interface{}) error {
@@ -199,12 +199,12 @@ func (r * ResourceQuotaGetRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Get(r.Name,r.Options)
+	result, err = r.service_.Get(r.Name,r.GetOptions)
 	return result, err	
 }
 
 func (r * ResourceQuotaGetRequest) GetId() string {
-	return "v1.ResourceQuotaInterface.Get";	
+	return "v1.ResourceQuota.Get";	
 }
 
 func (r * ResourceQuotaListRequest) SetService(service interface{}) error {
@@ -219,12 +219,12 @@ func (r * ResourceQuotaListRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.List(r.Opts)
+	result, err = r.service_.List(r.ListOptions)
 	return result, err	
 }
 
 func (r * ResourceQuotaListRequest) GetId() string {
-	return "v1.ResourceQuotaInterface.List";	
+	return "v1.ResourceQuota.List";	
 }
 
 func (r * ResourceQuotaWatchRequest) SetService(service interface{}) error {
@@ -239,12 +239,12 @@ func (r * ResourceQuotaWatchRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Watch(r.Opts)
+	result, err = r.service_.Watch(r.ListOptions)
 	return result, err	
 }
 
 func (r * ResourceQuotaWatchRequest) GetId() string {
-	return "v1.ResourceQuotaInterface.Watch";	
+	return "v1.ResourceQuota.Watch";	
 }
 
 func (r * ResourceQuotaPatchRequest) SetService(service interface{}) error {
@@ -264,5 +264,5 @@ func (r * ResourceQuotaPatchRequest) Call() (result interface{}, err error) {
 }
 
 func (r * ResourceQuotaPatchRequest) GetId() string {
-	return "v1.ResourceQuotaInterface.Patch";	
+	return "v1.ResourceQuota.Patch";	
 }

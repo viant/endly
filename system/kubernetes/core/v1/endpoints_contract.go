@@ -16,26 +16,26 @@ import (
 //EndpointsCreateRequest represents request
 type EndpointsCreateRequest struct {
   service_ v1.EndpointsInterface
-  Endpoints *vvc.Endpoints
+   *vvc.Endpoints
 }
 
 //EndpointsUpdateRequest represents request
 type EndpointsUpdateRequest struct {
   service_ v1.EndpointsInterface
-  Endpoints *vvc.Endpoints
+   *vvc.Endpoints
 }
 
 //EndpointsDeleteRequest represents request
 type EndpointsDeleteRequest struct {
   service_ v1.EndpointsInterface
   Name string
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
 }
 
 //EndpointsDeleteCollectionRequest represents request
 type EndpointsDeleteCollectionRequest struct {
   service_ v1.EndpointsInterface
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
   ListOptions metav1.ListOptions
 }
 
@@ -43,19 +43,19 @@ type EndpointsDeleteCollectionRequest struct {
 type EndpointsGetRequest struct {
   service_ v1.EndpointsInterface
   Name string
-  Options metav1.GetOptions
+   metav1.GetOptions
 }
 
 //EndpointsListRequest represents request
 type EndpointsListRequest struct {
   service_ v1.EndpointsInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //EndpointsWatchRequest represents request
 type EndpointsWatchRequest struct {
   service_ v1.EndpointsInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //EndpointsPatchRequest represents request
@@ -97,7 +97,7 @@ func (r * EndpointsCreateRequest) Call() (result interface{}, err error) {
 }
 
 func (r * EndpointsCreateRequest) GetId() string {
-	return "v1.EndpointsInterface.Create";	
+	return "v1.Endpoints.Create";	
 }
 
 func (r * EndpointsUpdateRequest) SetService(service interface{}) error {
@@ -117,7 +117,7 @@ func (r * EndpointsUpdateRequest) Call() (result interface{}, err error) {
 }
 
 func (r * EndpointsUpdateRequest) GetId() string {
-	return "v1.EndpointsInterface.Update";	
+	return "v1.Endpoints.Update";	
 }
 
 func (r * EndpointsDeleteRequest) SetService(service interface{}) error {
@@ -132,12 +132,12 @@ func (r * EndpointsDeleteRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.Delete(r.Name,r.Options)
+	err = r.service_.Delete(r.Name,r.DeleteOptions)
 	return result, err	
 }
 
 func (r * EndpointsDeleteRequest) GetId() string {
-	return "v1.EndpointsInterface.Delete";	
+	return "v1.Endpoints.Delete";	
 }
 
 func (r * EndpointsDeleteCollectionRequest) SetService(service interface{}) error {
@@ -152,12 +152,12 @@ func (r * EndpointsDeleteCollectionRequest) Call() (result interface{}, err erro
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.DeleteCollection(r.Options,r.ListOptions)
+	err = r.service_.DeleteCollection(r.DeleteOptions,r.ListOptions)
 	return result, err	
 }
 
 func (r * EndpointsDeleteCollectionRequest) GetId() string {
-	return "v1.EndpointsInterface.DeleteCollection";	
+	return "v1.Endpoints.DeleteCollection";	
 }
 
 func (r * EndpointsGetRequest) SetService(service interface{}) error {
@@ -172,12 +172,12 @@ func (r * EndpointsGetRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Get(r.Name,r.Options)
+	result, err = r.service_.Get(r.Name,r.GetOptions)
 	return result, err	
 }
 
 func (r * EndpointsGetRequest) GetId() string {
-	return "v1.EndpointsInterface.Get";	
+	return "v1.Endpoints.Get";	
 }
 
 func (r * EndpointsListRequest) SetService(service interface{}) error {
@@ -192,12 +192,12 @@ func (r * EndpointsListRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.List(r.Opts)
+	result, err = r.service_.List(r.ListOptions)
 	return result, err	
 }
 
 func (r * EndpointsListRequest) GetId() string {
-	return "v1.EndpointsInterface.List";	
+	return "v1.Endpoints.List";	
 }
 
 func (r * EndpointsWatchRequest) SetService(service interface{}) error {
@@ -212,12 +212,12 @@ func (r * EndpointsWatchRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Watch(r.Opts)
+	result, err = r.service_.Watch(r.ListOptions)
 	return result, err	
 }
 
 func (r * EndpointsWatchRequest) GetId() string {
-	return "v1.EndpointsInterface.Watch";	
+	return "v1.Endpoints.Watch";	
 }
 
 func (r * EndpointsPatchRequest) SetService(service interface{}) error {
@@ -237,5 +237,5 @@ func (r * EndpointsPatchRequest) Call() (result interface{}, err error) {
 }
 
 func (r * EndpointsPatchRequest) GetId() string {
-	return "v1.EndpointsInterface.Patch";	
+	return "v1.Endpoints.Patch";	
 }

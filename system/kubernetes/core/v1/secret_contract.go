@@ -16,26 +16,26 @@ import (
 //SecretCreateRequest represents request
 type SecretCreateRequest struct {
   service_ v1.SecretInterface
-  Secret *vvc.Secret
+   *vvc.Secret
 }
 
 //SecretUpdateRequest represents request
 type SecretUpdateRequest struct {
   service_ v1.SecretInterface
-  Secret *vvc.Secret
+   *vvc.Secret
 }
 
 //SecretDeleteRequest represents request
 type SecretDeleteRequest struct {
   service_ v1.SecretInterface
   Name string
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
 }
 
 //SecretDeleteCollectionRequest represents request
 type SecretDeleteCollectionRequest struct {
   service_ v1.SecretInterface
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
   ListOptions metav1.ListOptions
 }
 
@@ -43,19 +43,19 @@ type SecretDeleteCollectionRequest struct {
 type SecretGetRequest struct {
   service_ v1.SecretInterface
   Name string
-  Options metav1.GetOptions
+   metav1.GetOptions
 }
 
 //SecretListRequest represents request
 type SecretListRequest struct {
   service_ v1.SecretInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //SecretWatchRequest represents request
 type SecretWatchRequest struct {
   service_ v1.SecretInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //SecretPatchRequest represents request
@@ -97,7 +97,7 @@ func (r * SecretCreateRequest) Call() (result interface{}, err error) {
 }
 
 func (r * SecretCreateRequest) GetId() string {
-	return "v1.SecretInterface.Create";	
+	return "v1.Secret.Create";	
 }
 
 func (r * SecretUpdateRequest) SetService(service interface{}) error {
@@ -117,7 +117,7 @@ func (r * SecretUpdateRequest) Call() (result interface{}, err error) {
 }
 
 func (r * SecretUpdateRequest) GetId() string {
-	return "v1.SecretInterface.Update";	
+	return "v1.Secret.Update";	
 }
 
 func (r * SecretDeleteRequest) SetService(service interface{}) error {
@@ -132,12 +132,12 @@ func (r * SecretDeleteRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.Delete(r.Name,r.Options)
+	err = r.service_.Delete(r.Name,r.DeleteOptions)
 	return result, err	
 }
 
 func (r * SecretDeleteRequest) GetId() string {
-	return "v1.SecretInterface.Delete";	
+	return "v1.Secret.Delete";	
 }
 
 func (r * SecretDeleteCollectionRequest) SetService(service interface{}) error {
@@ -152,12 +152,12 @@ func (r * SecretDeleteCollectionRequest) Call() (result interface{}, err error) 
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.DeleteCollection(r.Options,r.ListOptions)
+	err = r.service_.DeleteCollection(r.DeleteOptions,r.ListOptions)
 	return result, err	
 }
 
 func (r * SecretDeleteCollectionRequest) GetId() string {
-	return "v1.SecretInterface.DeleteCollection";	
+	return "v1.Secret.DeleteCollection";	
 }
 
 func (r * SecretGetRequest) SetService(service interface{}) error {
@@ -172,12 +172,12 @@ func (r * SecretGetRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Get(r.Name,r.Options)
+	result, err = r.service_.Get(r.Name,r.GetOptions)
 	return result, err	
 }
 
 func (r * SecretGetRequest) GetId() string {
-	return "v1.SecretInterface.Get";	
+	return "v1.Secret.Get";	
 }
 
 func (r * SecretListRequest) SetService(service interface{}) error {
@@ -192,12 +192,12 @@ func (r * SecretListRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.List(r.Opts)
+	result, err = r.service_.List(r.ListOptions)
 	return result, err	
 }
 
 func (r * SecretListRequest) GetId() string {
-	return "v1.SecretInterface.List";	
+	return "v1.Secret.List";	
 }
 
 func (r * SecretWatchRequest) SetService(service interface{}) error {
@@ -212,12 +212,12 @@ func (r * SecretWatchRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Watch(r.Opts)
+	result, err = r.service_.Watch(r.ListOptions)
 	return result, err	
 }
 
 func (r * SecretWatchRequest) GetId() string {
-	return "v1.SecretInterface.Watch";	
+	return "v1.Secret.Watch";	
 }
 
 func (r * SecretPatchRequest) SetService(service interface{}) error {
@@ -237,5 +237,5 @@ func (r * SecretPatchRequest) Call() (result interface{}, err error) {
 }
 
 func (r * SecretPatchRequest) GetId() string {
-	return "v1.SecretInterface.Patch";	
+	return "v1.Secret.Patch";	
 }

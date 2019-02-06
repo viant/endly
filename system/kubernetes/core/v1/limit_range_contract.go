@@ -16,26 +16,26 @@ import (
 //LimitRangeCreateRequest represents request
 type LimitRangeCreateRequest struct {
   service_ v1.LimitRangeInterface
-  Range *vvc.LimitRange
+   *vvc.LimitRange
 }
 
 //LimitRangeUpdateRequest represents request
 type LimitRangeUpdateRequest struct {
   service_ v1.LimitRangeInterface
-  Range *vvc.LimitRange
+   *vvc.LimitRange
 }
 
 //LimitRangeDeleteRequest represents request
 type LimitRangeDeleteRequest struct {
   service_ v1.LimitRangeInterface
   Name string
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
 }
 
 //LimitRangeDeleteCollectionRequest represents request
 type LimitRangeDeleteCollectionRequest struct {
   service_ v1.LimitRangeInterface
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
   ListOptions metav1.ListOptions
 }
 
@@ -43,19 +43,19 @@ type LimitRangeDeleteCollectionRequest struct {
 type LimitRangeGetRequest struct {
   service_ v1.LimitRangeInterface
   Name string
-  Options metav1.GetOptions
+   metav1.GetOptions
 }
 
 //LimitRangeListRequest represents request
 type LimitRangeListRequest struct {
   service_ v1.LimitRangeInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //LimitRangeWatchRequest represents request
 type LimitRangeWatchRequest struct {
   service_ v1.LimitRangeInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //LimitRangePatchRequest represents request
@@ -92,12 +92,12 @@ func (r * LimitRangeCreateRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Create(r.Range)
+	result, err = r.service_.Create(r.LimitRange)
 	return result, err	
 }
 
 func (r * LimitRangeCreateRequest) GetId() string {
-	return "v1.LimitRangeInterface.Create";	
+	return "v1.LimitRange.Create";	
 }
 
 func (r * LimitRangeUpdateRequest) SetService(service interface{}) error {
@@ -112,12 +112,12 @@ func (r * LimitRangeUpdateRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Update(r.Range)
+	result, err = r.service_.Update(r.LimitRange)
 	return result, err	
 }
 
 func (r * LimitRangeUpdateRequest) GetId() string {
-	return "v1.LimitRangeInterface.Update";	
+	return "v1.LimitRange.Update";	
 }
 
 func (r * LimitRangeDeleteRequest) SetService(service interface{}) error {
@@ -132,12 +132,12 @@ func (r * LimitRangeDeleteRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.Delete(r.Name,r.Options)
+	err = r.service_.Delete(r.Name,r.DeleteOptions)
 	return result, err	
 }
 
 func (r * LimitRangeDeleteRequest) GetId() string {
-	return "v1.LimitRangeInterface.Delete";	
+	return "v1.LimitRange.Delete";	
 }
 
 func (r * LimitRangeDeleteCollectionRequest) SetService(service interface{}) error {
@@ -152,12 +152,12 @@ func (r * LimitRangeDeleteCollectionRequest) Call() (result interface{}, err err
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.DeleteCollection(r.Options,r.ListOptions)
+	err = r.service_.DeleteCollection(r.DeleteOptions,r.ListOptions)
 	return result, err	
 }
 
 func (r * LimitRangeDeleteCollectionRequest) GetId() string {
-	return "v1.LimitRangeInterface.DeleteCollection";	
+	return "v1.LimitRange.DeleteCollection";	
 }
 
 func (r * LimitRangeGetRequest) SetService(service interface{}) error {
@@ -172,12 +172,12 @@ func (r * LimitRangeGetRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Get(r.Name,r.Options)
+	result, err = r.service_.Get(r.Name,r.GetOptions)
 	return result, err	
 }
 
 func (r * LimitRangeGetRequest) GetId() string {
-	return "v1.LimitRangeInterface.Get";	
+	return "v1.LimitRange.Get";	
 }
 
 func (r * LimitRangeListRequest) SetService(service interface{}) error {
@@ -192,12 +192,12 @@ func (r * LimitRangeListRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.List(r.Opts)
+	result, err = r.service_.List(r.ListOptions)
 	return result, err	
 }
 
 func (r * LimitRangeListRequest) GetId() string {
-	return "v1.LimitRangeInterface.List";	
+	return "v1.LimitRange.List";	
 }
 
 func (r * LimitRangeWatchRequest) SetService(service interface{}) error {
@@ -212,12 +212,12 @@ func (r * LimitRangeWatchRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Watch(r.Opts)
+	result, err = r.service_.Watch(r.ListOptions)
 	return result, err	
 }
 
 func (r * LimitRangeWatchRequest) GetId() string {
-	return "v1.LimitRangeInterface.Watch";	
+	return "v1.LimitRange.Watch";	
 }
 
 func (r * LimitRangePatchRequest) SetService(service interface{}) error {
@@ -237,5 +237,5 @@ func (r * LimitRangePatchRequest) Call() (result interface{}, err error) {
 }
 
 func (r * LimitRangePatchRequest) GetId() string {
-	return "v1.LimitRangeInterface.Patch";	
+	return "v1.LimitRange.Patch";	
 }

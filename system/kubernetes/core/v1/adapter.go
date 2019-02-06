@@ -1,5 +1,5 @@
 package v1
 
-import "github.com/viant/endly/system/kubernetes/registry"
+import "github.com/viant/endly/system/kubernetes/shared"
 
-var register = registry.Register
+var register= shared.Register

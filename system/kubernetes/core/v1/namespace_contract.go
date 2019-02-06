@@ -16,45 +16,45 @@ import (
 //NamespaceCreateRequest represents request
 type NamespaceCreateRequest struct {
   service_ v1.NamespaceInterface
-  Namespace *vvc.Namespace
+   *vvc.Namespace
 }
 
 //NamespaceUpdateRequest represents request
 type NamespaceUpdateRequest struct {
   service_ v1.NamespaceInterface
-  Namespace *vvc.Namespace
+   *vvc.Namespace
 }
 
 //NamespaceUpdateStatusRequest represents request
 type NamespaceUpdateStatusRequest struct {
   service_ v1.NamespaceInterface
-  Namespace *vvc.Namespace
+   *vvc.Namespace
 }
 
 //NamespaceDeleteRequest represents request
 type NamespaceDeleteRequest struct {
   service_ v1.NamespaceInterface
   Name string
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
 }
 
 //NamespaceGetRequest represents request
 type NamespaceGetRequest struct {
   service_ v1.NamespaceInterface
   Name string
-  Options metav1.GetOptions
+   metav1.GetOptions
 }
 
 //NamespaceListRequest represents request
 type NamespaceListRequest struct {
   service_ v1.NamespaceInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //NamespaceWatchRequest represents request
 type NamespaceWatchRequest struct {
   service_ v1.NamespaceInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //NamespacePatchRequest represents request
@@ -96,7 +96,7 @@ func (r * NamespaceCreateRequest) Call() (result interface{}, err error) {
 }
 
 func (r * NamespaceCreateRequest) GetId() string {
-	return "v1.NamespaceInterface.Create";	
+	return "v1.Namespace.Create";	
 }
 
 func (r * NamespaceUpdateRequest) SetService(service interface{}) error {
@@ -116,7 +116,7 @@ func (r * NamespaceUpdateRequest) Call() (result interface{}, err error) {
 }
 
 func (r * NamespaceUpdateRequest) GetId() string {
-	return "v1.NamespaceInterface.Update";	
+	return "v1.Namespace.Update";	
 }
 
 func (r * NamespaceUpdateStatusRequest) SetService(service interface{}) error {
@@ -136,7 +136,7 @@ func (r * NamespaceUpdateStatusRequest) Call() (result interface{}, err error) {
 }
 
 func (r * NamespaceUpdateStatusRequest) GetId() string {
-	return "v1.NamespaceInterface.UpdateStatus";	
+	return "v1.Namespace.UpdateStatus";	
 }
 
 func (r * NamespaceDeleteRequest) SetService(service interface{}) error {
@@ -151,12 +151,12 @@ func (r * NamespaceDeleteRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.Delete(r.Name,r.Options)
+	err = r.service_.Delete(r.Name,r.DeleteOptions)
 	return result, err	
 }
 
 func (r * NamespaceDeleteRequest) GetId() string {
-	return "v1.NamespaceInterface.Delete";	
+	return "v1.Namespace.Delete";	
 }
 
 func (r * NamespaceGetRequest) SetService(service interface{}) error {
@@ -171,12 +171,12 @@ func (r * NamespaceGetRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Get(r.Name,r.Options)
+	result, err = r.service_.Get(r.Name,r.GetOptions)
 	return result, err	
 }
 
 func (r * NamespaceGetRequest) GetId() string {
-	return "v1.NamespaceInterface.Get";	
+	return "v1.Namespace.Get";	
 }
 
 func (r * NamespaceListRequest) SetService(service interface{}) error {
@@ -191,12 +191,12 @@ func (r * NamespaceListRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.List(r.Opts)
+	result, err = r.service_.List(r.ListOptions)
 	return result, err	
 }
 
 func (r * NamespaceListRequest) GetId() string {
-	return "v1.NamespaceInterface.List";	
+	return "v1.Namespace.List";	
 }
 
 func (r * NamespaceWatchRequest) SetService(service interface{}) error {
@@ -211,12 +211,12 @@ func (r * NamespaceWatchRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Watch(r.Opts)
+	result, err = r.service_.Watch(r.ListOptions)
 	return result, err	
 }
 
 func (r * NamespaceWatchRequest) GetId() string {
-	return "v1.NamespaceInterface.Watch";	
+	return "v1.Namespace.Watch";	
 }
 
 func (r * NamespacePatchRequest) SetService(service interface{}) error {
@@ -236,5 +236,5 @@ func (r * NamespacePatchRequest) Call() (result interface{}, err error) {
 }
 
 func (r * NamespacePatchRequest) GetId() string {
-	return "v1.NamespaceInterface.Patch";	
+	return "v1.Namespace.Patch";	
 }

@@ -16,32 +16,32 @@ import (
 //PersistentVolumeClaimCreateRequest represents request
 type PersistentVolumeClaimCreateRequest struct {
   service_ v1.PersistentVolumeClaimInterface
-  Claim *vvc.PersistentVolumeClaim
+   *vvc.PersistentVolumeClaim
 }
 
 //PersistentVolumeClaimUpdateRequest represents request
 type PersistentVolumeClaimUpdateRequest struct {
   service_ v1.PersistentVolumeClaimInterface
-  Claim *vvc.PersistentVolumeClaim
+   *vvc.PersistentVolumeClaim
 }
 
 //PersistentVolumeClaimUpdateStatusRequest represents request
 type PersistentVolumeClaimUpdateStatusRequest struct {
   service_ v1.PersistentVolumeClaimInterface
-  Claim *vvc.PersistentVolumeClaim
+   *vvc.PersistentVolumeClaim
 }
 
 //PersistentVolumeClaimDeleteRequest represents request
 type PersistentVolumeClaimDeleteRequest struct {
   service_ v1.PersistentVolumeClaimInterface
   Name string
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
 }
 
 //PersistentVolumeClaimDeleteCollectionRequest represents request
 type PersistentVolumeClaimDeleteCollectionRequest struct {
   service_ v1.PersistentVolumeClaimInterface
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
   ListOptions metav1.ListOptions
 }
 
@@ -49,19 +49,19 @@ type PersistentVolumeClaimDeleteCollectionRequest struct {
 type PersistentVolumeClaimGetRequest struct {
   service_ v1.PersistentVolumeClaimInterface
   Name string
-  Options metav1.GetOptions
+   metav1.GetOptions
 }
 
 //PersistentVolumeClaimListRequest represents request
 type PersistentVolumeClaimListRequest struct {
   service_ v1.PersistentVolumeClaimInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //PersistentVolumeClaimWatchRequest represents request
 type PersistentVolumeClaimWatchRequest struct {
   service_ v1.PersistentVolumeClaimInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //PersistentVolumeClaimPatchRequest represents request
@@ -99,12 +99,12 @@ func (r * PersistentVolumeClaimCreateRequest) Call() (result interface{}, err er
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Create(r.Claim)
+	result, err = r.service_.Create(r.PersistentVolumeClaim)
 	return result, err	
 }
 
 func (r * PersistentVolumeClaimCreateRequest) GetId() string {
-	return "v1.PersistentVolumeClaimInterface.Create";	
+	return "v1.PersistentVolumeClaim.Create";	
 }
 
 func (r * PersistentVolumeClaimUpdateRequest) SetService(service interface{}) error {
@@ -119,12 +119,12 @@ func (r * PersistentVolumeClaimUpdateRequest) Call() (result interface{}, err er
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Update(r.Claim)
+	result, err = r.service_.Update(r.PersistentVolumeClaim)
 	return result, err	
 }
 
 func (r * PersistentVolumeClaimUpdateRequest) GetId() string {
-	return "v1.PersistentVolumeClaimInterface.Update";	
+	return "v1.PersistentVolumeClaim.Update";	
 }
 
 func (r * PersistentVolumeClaimUpdateStatusRequest) SetService(service interface{}) error {
@@ -139,12 +139,12 @@ func (r * PersistentVolumeClaimUpdateStatusRequest) Call() (result interface{}, 
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.UpdateStatus(r.Claim)
+	result, err = r.service_.UpdateStatus(r.PersistentVolumeClaim)
 	return result, err	
 }
 
 func (r * PersistentVolumeClaimUpdateStatusRequest) GetId() string {
-	return "v1.PersistentVolumeClaimInterface.UpdateStatus";	
+	return "v1.PersistentVolumeClaim.UpdateStatus";	
 }
 
 func (r * PersistentVolumeClaimDeleteRequest) SetService(service interface{}) error {
@@ -159,12 +159,12 @@ func (r * PersistentVolumeClaimDeleteRequest) Call() (result interface{}, err er
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.Delete(r.Name,r.Options)
+	err = r.service_.Delete(r.Name,r.DeleteOptions)
 	return result, err	
 }
 
 func (r * PersistentVolumeClaimDeleteRequest) GetId() string {
-	return "v1.PersistentVolumeClaimInterface.Delete";	
+	return "v1.PersistentVolumeClaim.Delete";	
 }
 
 func (r * PersistentVolumeClaimDeleteCollectionRequest) SetService(service interface{}) error {
@@ -179,12 +179,12 @@ func (r * PersistentVolumeClaimDeleteCollectionRequest) Call() (result interface
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.DeleteCollection(r.Options,r.ListOptions)
+	err = r.service_.DeleteCollection(r.DeleteOptions,r.ListOptions)
 	return result, err	
 }
 
 func (r * PersistentVolumeClaimDeleteCollectionRequest) GetId() string {
-	return "v1.PersistentVolumeClaimInterface.DeleteCollection";	
+	return "v1.PersistentVolumeClaim.DeleteCollection";	
 }
 
 func (r * PersistentVolumeClaimGetRequest) SetService(service interface{}) error {
@@ -199,12 +199,12 @@ func (r * PersistentVolumeClaimGetRequest) Call() (result interface{}, err error
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Get(r.Name,r.Options)
+	result, err = r.service_.Get(r.Name,r.GetOptions)
 	return result, err	
 }
 
 func (r * PersistentVolumeClaimGetRequest) GetId() string {
-	return "v1.PersistentVolumeClaimInterface.Get";	
+	return "v1.PersistentVolumeClaim.Get";	
 }
 
 func (r * PersistentVolumeClaimListRequest) SetService(service interface{}) error {
@@ -219,12 +219,12 @@ func (r * PersistentVolumeClaimListRequest) Call() (result interface{}, err erro
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.List(r.Opts)
+	result, err = r.service_.List(r.ListOptions)
 	return result, err	
 }
 
 func (r * PersistentVolumeClaimListRequest) GetId() string {
-	return "v1.PersistentVolumeClaimInterface.List";	
+	return "v1.PersistentVolumeClaim.List";	
 }
 
 func (r * PersistentVolumeClaimWatchRequest) SetService(service interface{}) error {
@@ -239,12 +239,12 @@ func (r * PersistentVolumeClaimWatchRequest) Call() (result interface{}, err err
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Watch(r.Opts)
+	result, err = r.service_.Watch(r.ListOptions)
 	return result, err	
 }
 
 func (r * PersistentVolumeClaimWatchRequest) GetId() string {
-	return "v1.PersistentVolumeClaimInterface.Watch";	
+	return "v1.PersistentVolumeClaim.Watch";	
 }
 
 func (r * PersistentVolumeClaimPatchRequest) SetService(service interface{}) error {
@@ -264,5 +264,5 @@ func (r * PersistentVolumeClaimPatchRequest) Call() (result interface{}, err err
 }
 
 func (r * PersistentVolumeClaimPatchRequest) GetId() string {
-	return "v1.PersistentVolumeClaimInterface.Patch";	
+	return "v1.PersistentVolumeClaim.Patch";	
 }

@@ -16,26 +16,26 @@ import (
 //ServiceAccountCreateRequest represents request
 type ServiceAccountCreateRequest struct {
   service_ v1.ServiceAccountInterface
-  Account *vvc.ServiceAccount
+   *vvc.ServiceAccount
 }
 
 //ServiceAccountUpdateRequest represents request
 type ServiceAccountUpdateRequest struct {
   service_ v1.ServiceAccountInterface
-  Account *vvc.ServiceAccount
+   *vvc.ServiceAccount
 }
 
 //ServiceAccountDeleteRequest represents request
 type ServiceAccountDeleteRequest struct {
   service_ v1.ServiceAccountInterface
   Name string
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
 }
 
 //ServiceAccountDeleteCollectionRequest represents request
 type ServiceAccountDeleteCollectionRequest struct {
   service_ v1.ServiceAccountInterface
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
   ListOptions metav1.ListOptions
 }
 
@@ -43,19 +43,19 @@ type ServiceAccountDeleteCollectionRequest struct {
 type ServiceAccountGetRequest struct {
   service_ v1.ServiceAccountInterface
   Name string
-  Options metav1.GetOptions
+   metav1.GetOptions
 }
 
 //ServiceAccountListRequest represents request
 type ServiceAccountListRequest struct {
   service_ v1.ServiceAccountInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //ServiceAccountWatchRequest represents request
 type ServiceAccountWatchRequest struct {
   service_ v1.ServiceAccountInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //ServiceAccountPatchRequest represents request
@@ -92,12 +92,12 @@ func (r * ServiceAccountCreateRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Create(r.Account)
+	result, err = r.service_.Create(r.ServiceAccount)
 	return result, err	
 }
 
 func (r * ServiceAccountCreateRequest) GetId() string {
-	return "v1.ServiceAccountInterface.Create";	
+	return "v1.ServiceAccount.Create";	
 }
 
 func (r * ServiceAccountUpdateRequest) SetService(service interface{}) error {
@@ -112,12 +112,12 @@ func (r * ServiceAccountUpdateRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Update(r.Account)
+	result, err = r.service_.Update(r.ServiceAccount)
 	return result, err	
 }
 
 func (r * ServiceAccountUpdateRequest) GetId() string {
-	return "v1.ServiceAccountInterface.Update";	
+	return "v1.ServiceAccount.Update";	
 }
 
 func (r * ServiceAccountDeleteRequest) SetService(service interface{}) error {
@@ -132,12 +132,12 @@ func (r * ServiceAccountDeleteRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.Delete(r.Name,r.Options)
+	err = r.service_.Delete(r.Name,r.DeleteOptions)
 	return result, err	
 }
 
 func (r * ServiceAccountDeleteRequest) GetId() string {
-	return "v1.ServiceAccountInterface.Delete";	
+	return "v1.ServiceAccount.Delete";	
 }
 
 func (r * ServiceAccountDeleteCollectionRequest) SetService(service interface{}) error {
@@ -152,12 +152,12 @@ func (r * ServiceAccountDeleteCollectionRequest) Call() (result interface{}, err
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.DeleteCollection(r.Options,r.ListOptions)
+	err = r.service_.DeleteCollection(r.DeleteOptions,r.ListOptions)
 	return result, err	
 }
 
 func (r * ServiceAccountDeleteCollectionRequest) GetId() string {
-	return "v1.ServiceAccountInterface.DeleteCollection";	
+	return "v1.ServiceAccount.DeleteCollection";	
 }
 
 func (r * ServiceAccountGetRequest) SetService(service interface{}) error {
@@ -172,12 +172,12 @@ func (r * ServiceAccountGetRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Get(r.Name,r.Options)
+	result, err = r.service_.Get(r.Name,r.GetOptions)
 	return result, err	
 }
 
 func (r * ServiceAccountGetRequest) GetId() string {
-	return "v1.ServiceAccountInterface.Get";	
+	return "v1.ServiceAccount.Get";	
 }
 
 func (r * ServiceAccountListRequest) SetService(service interface{}) error {
@@ -192,12 +192,12 @@ func (r * ServiceAccountListRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.List(r.Opts)
+	result, err = r.service_.List(r.ListOptions)
 	return result, err	
 }
 
 func (r * ServiceAccountListRequest) GetId() string {
-	return "v1.ServiceAccountInterface.List";	
+	return "v1.ServiceAccount.List";	
 }
 
 func (r * ServiceAccountWatchRequest) SetService(service interface{}) error {
@@ -212,12 +212,12 @@ func (r * ServiceAccountWatchRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Watch(r.Opts)
+	result, err = r.service_.Watch(r.ListOptions)
 	return result, err	
 }
 
 func (r * ServiceAccountWatchRequest) GetId() string {
-	return "v1.ServiceAccountInterface.Watch";	
+	return "v1.ServiceAccount.Watch";	
 }
 
 func (r * ServiceAccountPatchRequest) SetService(service interface{}) error {
@@ -237,5 +237,5 @@ func (r * ServiceAccountPatchRequest) Call() (result interface{}, err error) {
 }
 
 func (r * ServiceAccountPatchRequest) GetId() string {
-	return "v1.ServiceAccountInterface.Patch";	
+	return "v1.ServiceAccount.Patch";	
 }

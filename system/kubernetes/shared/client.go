@@ -11,18 +11,22 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var clientKey = (*CtxClient)(nil)
 
+var defaultNamespace = "default"
+
 //CtxClient represents generic google cloud service client
 type CtxClient struct {
-	ApiVersion string
 	CredConfig *cred.Config
 	masterURL  string
 	cfgContext string
 	configPath string
+	Namespace  string
 	clientSet  *kubernetes.Clientset
+	RawRequest map[string]interface{}
 }
 
 func (c *CtxClient) ConfigPath() string {
@@ -72,33 +76,38 @@ func GetCtxClient(context *endly.Context) (*CtxClient, error) {
 	return client, err
 }
 
-//InitClient get or creates client
-func InitClient(context *endly.Context, rawRequest map[string]interface{}) error {
+//Init get or creates context, client
+func Init(context *endly.Context, rawRequest map[string]interface{}) error {
 	if len(rawRequest) == 0 {
 		return nil
 	}
-	client := &CtxClient{}
+	ctxClient := &CtxClient{}
 	if context.Contains(clientKey) {
-		context.GetInto(clientKey, &client)
+		context.GetInto(clientKey, &ctxClient)
 	}
+	ctxClient.RawRequest = rawRequest
 	mappings := util.BuildLowerCaseMapping(rawRequest)
 	if key, ok := mappings["kubeconfig"]; ok {
-		client.configPath = toolbox.AsString(rawRequest[key])
-		client.clientSet = nil
+		ctxClient.configPath = toolbox.AsString(rawRequest[key])
+		ctxClient.clientSet = nil
 	}
 	if key, ok := mappings["context"]; ok {
-		client.cfgContext = toolbox.AsString(rawRequest[key])
-		client.clientSet = nil
+		ctxClient.cfgContext = toolbox.AsString(rawRequest[key])
+		ctxClient.clientSet = nil
 	}
+	if ctxClient.Namespace == "" {
+		ctxClient.Namespace = defaultNamespace
+	}
+
+	if key, ok := mappings["namespace"]; ok && key != "" {
+		ctxClient.Namespace = toolbox.AsString(rawRequest[key])
+		ctxClient.Namespace = strings.Replace(ctxClient.Namespace, "*", "", 1)
+	}
+
 	if key, ok := mappings["masterurl"]; ok {
-		client.masterURL = toolbox.AsString(rawRequest[key])
-		client.cfgContext = ""
-		client.clientSet = nil
+		ctxClient.masterURL = toolbox.AsString(rawRequest[key])
+		ctxClient.cfgContext = ""
+		ctxClient.clientSet = nil
 	}
-	if key, ok := mappings["apiversion"]; ok {
-		client.ApiVersion = toolbox.ToCaseFormat(toolbox.AsString(rawRequest[key]), toolbox.CaseLowerCamel, toolbox.CaseUpperCamel)
-	} else {
-		client.ApiVersion = "V1"
-	}
-	return nil
+	return context.Replace(clientKey, ctxClient)
 }

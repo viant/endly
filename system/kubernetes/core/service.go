@@ -22,8 +22,8 @@ func (s *service) registerRoutes() {
 	s.registerClientRoutes(clientSet.CoreV1(), "Core")
 }
 
-func (s *service) registerClientRoutes(client interface{}, clientPrefix string) {
-	routes, err := shared.BuildRoutes(client, clientPrefix)
+func (s *service) registerClientRoutes(client interface{}, APIPrefix string) {
+	routes, err := shared.BuildRoutes(client, APIPrefix)
 	if err != nil {
 		log.Printf("unable register service %v actions: %v\n", ServiceID, err)
 		return

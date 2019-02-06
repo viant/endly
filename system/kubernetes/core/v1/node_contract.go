@@ -16,32 +16,32 @@ import (
 //NodeCreateRequest represents request
 type NodeCreateRequest struct {
   service_ v1.NodeInterface
-  Node *vvc.Node
+   *vvc.Node
 }
 
 //NodeUpdateRequest represents request
 type NodeUpdateRequest struct {
   service_ v1.NodeInterface
-  Node *vvc.Node
+   *vvc.Node
 }
 
 //NodeUpdateStatusRequest represents request
 type NodeUpdateStatusRequest struct {
   service_ v1.NodeInterface
-  Node *vvc.Node
+   *vvc.Node
 }
 
 //NodeDeleteRequest represents request
 type NodeDeleteRequest struct {
   service_ v1.NodeInterface
   Name string
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
 }
 
 //NodeDeleteCollectionRequest represents request
 type NodeDeleteCollectionRequest struct {
   service_ v1.NodeInterface
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
   ListOptions metav1.ListOptions
 }
 
@@ -49,19 +49,19 @@ type NodeDeleteCollectionRequest struct {
 type NodeGetRequest struct {
   service_ v1.NodeInterface
   Name string
-  Options metav1.GetOptions
+   metav1.GetOptions
 }
 
 //NodeListRequest represents request
 type NodeListRequest struct {
   service_ v1.NodeInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //NodeWatchRequest represents request
 type NodeWatchRequest struct {
   service_ v1.NodeInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //NodePatchRequest represents request
@@ -104,7 +104,7 @@ func (r * NodeCreateRequest) Call() (result interface{}, err error) {
 }
 
 func (r * NodeCreateRequest) GetId() string {
-	return "v1.NodeInterface.Create";	
+	return "v1.Node.Create";	
 }
 
 func (r * NodeUpdateRequest) SetService(service interface{}) error {
@@ -124,7 +124,7 @@ func (r * NodeUpdateRequest) Call() (result interface{}, err error) {
 }
 
 func (r * NodeUpdateRequest) GetId() string {
-	return "v1.NodeInterface.Update";	
+	return "v1.Node.Update";	
 }
 
 func (r * NodeUpdateStatusRequest) SetService(service interface{}) error {
@@ -144,7 +144,7 @@ func (r * NodeUpdateStatusRequest) Call() (result interface{}, err error) {
 }
 
 func (r * NodeUpdateStatusRequest) GetId() string {
-	return "v1.NodeInterface.UpdateStatus";	
+	return "v1.Node.UpdateStatus";	
 }
 
 func (r * NodeDeleteRequest) SetService(service interface{}) error {
@@ -159,12 +159,12 @@ func (r * NodeDeleteRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.Delete(r.Name,r.Options)
+	err = r.service_.Delete(r.Name,r.DeleteOptions)
 	return result, err	
 }
 
 func (r * NodeDeleteRequest) GetId() string {
-	return "v1.NodeInterface.Delete";	
+	return "v1.Node.Delete";	
 }
 
 func (r * NodeDeleteCollectionRequest) SetService(service interface{}) error {
@@ -179,12 +179,12 @@ func (r * NodeDeleteCollectionRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.DeleteCollection(r.Options,r.ListOptions)
+	err = r.service_.DeleteCollection(r.DeleteOptions,r.ListOptions)
 	return result, err	
 }
 
 func (r * NodeDeleteCollectionRequest) GetId() string {
-	return "v1.NodeInterface.DeleteCollection";	
+	return "v1.Node.DeleteCollection";	
 }
 
 func (r * NodeGetRequest) SetService(service interface{}) error {
@@ -199,12 +199,12 @@ func (r * NodeGetRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Get(r.Name,r.Options)
+	result, err = r.service_.Get(r.Name,r.GetOptions)
 	return result, err	
 }
 
 func (r * NodeGetRequest) GetId() string {
-	return "v1.NodeInterface.Get";	
+	return "v1.Node.Get";	
 }
 
 func (r * NodeListRequest) SetService(service interface{}) error {
@@ -219,12 +219,12 @@ func (r * NodeListRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.List(r.Opts)
+	result, err = r.service_.List(r.ListOptions)
 	return result, err	
 }
 
 func (r * NodeListRequest) GetId() string {
-	return "v1.NodeInterface.List";	
+	return "v1.Node.List";	
 }
 
 func (r * NodeWatchRequest) SetService(service interface{}) error {
@@ -239,12 +239,12 @@ func (r * NodeWatchRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Watch(r.Opts)
+	result, err = r.service_.Watch(r.ListOptions)
 	return result, err	
 }
 
 func (r * NodeWatchRequest) GetId() string {
-	return "v1.NodeInterface.Watch";	
+	return "v1.Node.Watch";	
 }
 
 func (r * NodePatchRequest) SetService(service interface{}) error {
@@ -264,5 +264,5 @@ func (r * NodePatchRequest) Call() (result interface{}, err error) {
 }
 
 func (r * NodePatchRequest) GetId() string {
-	return "v1.NodeInterface.Patch";	
+	return "v1.Node.Patch";	
 }

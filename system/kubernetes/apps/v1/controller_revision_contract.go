@@ -16,26 +16,26 @@ import (
 //ControllerRevisionCreateRequest represents request
 type ControllerRevisionCreateRequest struct {
   service_ v1.ControllerRevisionInterface
-  Revision *vvc.ControllerRevision
+   *vvc.ControllerRevision
 }
 
 //ControllerRevisionUpdateRequest represents request
 type ControllerRevisionUpdateRequest struct {
   service_ v1.ControllerRevisionInterface
-  Revision *vvc.ControllerRevision
+   *vvc.ControllerRevision
 }
 
 //ControllerRevisionDeleteRequest represents request
 type ControllerRevisionDeleteRequest struct {
   service_ v1.ControllerRevisionInterface
   Name string
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
 }
 
 //ControllerRevisionDeleteCollectionRequest represents request
 type ControllerRevisionDeleteCollectionRequest struct {
   service_ v1.ControllerRevisionInterface
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
   ListOptions metav1.ListOptions
 }
 
@@ -43,19 +43,19 @@ type ControllerRevisionDeleteCollectionRequest struct {
 type ControllerRevisionGetRequest struct {
   service_ v1.ControllerRevisionInterface
   Name string
-  Options metav1.GetOptions
+   metav1.GetOptions
 }
 
 //ControllerRevisionListRequest represents request
 type ControllerRevisionListRequest struct {
   service_ v1.ControllerRevisionInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //ControllerRevisionWatchRequest represents request
 type ControllerRevisionWatchRequest struct {
   service_ v1.ControllerRevisionInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //ControllerRevisionPatchRequest represents request
@@ -92,12 +92,12 @@ func (r * ControllerRevisionCreateRequest) Call() (result interface{}, err error
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Create(r.Revision)
+	result, err = r.service_.Create(r.ControllerRevision)
 	return result, err	
 }
 
 func (r * ControllerRevisionCreateRequest) GetId() string {
-	return "v1.ControllerRevisionInterface.Create";	
+	return "apps/v1.ControllerRevision.Create";	
 }
 
 func (r * ControllerRevisionUpdateRequest) SetService(service interface{}) error {
@@ -112,12 +112,12 @@ func (r * ControllerRevisionUpdateRequest) Call() (result interface{}, err error
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Update(r.Revision)
+	result, err = r.service_.Update(r.ControllerRevision)
 	return result, err	
 }
 
 func (r * ControllerRevisionUpdateRequest) GetId() string {
-	return "v1.ControllerRevisionInterface.Update";	
+	return "apps/v1.ControllerRevision.Update";	
 }
 
 func (r * ControllerRevisionDeleteRequest) SetService(service interface{}) error {
@@ -132,12 +132,12 @@ func (r * ControllerRevisionDeleteRequest) Call() (result interface{}, err error
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.Delete(r.Name,r.Options)
+	err = r.service_.Delete(r.Name,r.DeleteOptions)
 	return result, err	
 }
 
 func (r * ControllerRevisionDeleteRequest) GetId() string {
-	return "v1.ControllerRevisionInterface.Delete";	
+	return "apps/v1.ControllerRevision.Delete";	
 }
 
 func (r * ControllerRevisionDeleteCollectionRequest) SetService(service interface{}) error {
@@ -152,12 +152,12 @@ func (r * ControllerRevisionDeleteCollectionRequest) Call() (result interface{},
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.DeleteCollection(r.Options,r.ListOptions)
+	err = r.service_.DeleteCollection(r.DeleteOptions,r.ListOptions)
 	return result, err	
 }
 
 func (r * ControllerRevisionDeleteCollectionRequest) GetId() string {
-	return "v1.ControllerRevisionInterface.DeleteCollection";	
+	return "apps/v1.ControllerRevision.DeleteCollection";	
 }
 
 func (r * ControllerRevisionGetRequest) SetService(service interface{}) error {
@@ -172,12 +172,12 @@ func (r * ControllerRevisionGetRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Get(r.Name,r.Options)
+	result, err = r.service_.Get(r.Name,r.GetOptions)
 	return result, err	
 }
 
 func (r * ControllerRevisionGetRequest) GetId() string {
-	return "v1.ControllerRevisionInterface.Get";	
+	return "apps/v1.ControllerRevision.Get";	
 }
 
 func (r * ControllerRevisionListRequest) SetService(service interface{}) error {
@@ -192,12 +192,12 @@ func (r * ControllerRevisionListRequest) Call() (result interface{}, err error) 
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.List(r.Opts)
+	result, err = r.service_.List(r.ListOptions)
 	return result, err	
 }
 
 func (r * ControllerRevisionListRequest) GetId() string {
-	return "v1.ControllerRevisionInterface.List";	
+	return "apps/v1.ControllerRevision.List";	
 }
 
 func (r * ControllerRevisionWatchRequest) SetService(service interface{}) error {
@@ -212,12 +212,12 @@ func (r * ControllerRevisionWatchRequest) Call() (result interface{}, err error)
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Watch(r.Opts)
+	result, err = r.service_.Watch(r.ListOptions)
 	return result, err	
 }
 
 func (r * ControllerRevisionWatchRequest) GetId() string {
-	return "v1.ControllerRevisionInterface.Watch";	
+	return "apps/v1.ControllerRevision.Watch";	
 }
 
 func (r * ControllerRevisionPatchRequest) SetService(service interface{}) error {
@@ -237,5 +237,5 @@ func (r * ControllerRevisionPatchRequest) Call() (result interface{}, err error)
 }
 
 func (r * ControllerRevisionPatchRequest) GetId() string {
-	return "v1.ControllerRevisionInterface.Patch";	
+	return "apps/v1.ControllerRevision.Patch";	
 }

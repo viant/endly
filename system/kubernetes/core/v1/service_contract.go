@@ -16,45 +16,45 @@ import (
 //ServiceCreateRequest represents request
 type ServiceCreateRequest struct {
   service_ v1.ServiceInterface
-  Service *vvc.Service
+   *vvc.Service
 }
 
 //ServiceUpdateRequest represents request
 type ServiceUpdateRequest struct {
   service_ v1.ServiceInterface
-  Service *vvc.Service
+   *vvc.Service
 }
 
 //ServiceUpdateStatusRequest represents request
 type ServiceUpdateStatusRequest struct {
   service_ v1.ServiceInterface
-  Service *vvc.Service
+   *vvc.Service
 }
 
 //ServiceDeleteRequest represents request
 type ServiceDeleteRequest struct {
   service_ v1.ServiceInterface
   Name string
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
 }
 
 //ServiceGetRequest represents request
 type ServiceGetRequest struct {
   service_ v1.ServiceInterface
   Name string
-  Options metav1.GetOptions
+   metav1.GetOptions
 }
 
 //ServiceListRequest represents request
 type ServiceListRequest struct {
   service_ v1.ServiceInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //ServiceWatchRequest represents request
 type ServiceWatchRequest struct {
   service_ v1.ServiceInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //ServicePatchRequest represents request
@@ -96,7 +96,7 @@ func (r * ServiceCreateRequest) Call() (result interface{}, err error) {
 }
 
 func (r * ServiceCreateRequest) GetId() string {
-	return "v1.ServiceInterface.Create";	
+	return "v1.Service.Create";	
 }
 
 func (r * ServiceUpdateRequest) SetService(service interface{}) error {
@@ -116,7 +116,7 @@ func (r * ServiceUpdateRequest) Call() (result interface{}, err error) {
 }
 
 func (r * ServiceUpdateRequest) GetId() string {
-	return "v1.ServiceInterface.Update";	
+	return "v1.Service.Update";	
 }
 
 func (r * ServiceUpdateStatusRequest) SetService(service interface{}) error {
@@ -136,7 +136,7 @@ func (r * ServiceUpdateStatusRequest) Call() (result interface{}, err error) {
 }
 
 func (r * ServiceUpdateStatusRequest) GetId() string {
-	return "v1.ServiceInterface.UpdateStatus";	
+	return "v1.Service.UpdateStatus";	
 }
 
 func (r * ServiceDeleteRequest) SetService(service interface{}) error {
@@ -151,12 +151,12 @@ func (r * ServiceDeleteRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.Delete(r.Name,r.Options)
+	err = r.service_.Delete(r.Name,r.DeleteOptions)
 	return result, err	
 }
 
 func (r * ServiceDeleteRequest) GetId() string {
-	return "v1.ServiceInterface.Delete";	
+	return "v1.Service.Delete";	
 }
 
 func (r * ServiceGetRequest) SetService(service interface{}) error {
@@ -171,12 +171,12 @@ func (r * ServiceGetRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Get(r.Name,r.Options)
+	result, err = r.service_.Get(r.Name,r.GetOptions)
 	return result, err	
 }
 
 func (r * ServiceGetRequest) GetId() string {
-	return "v1.ServiceInterface.Get";	
+	return "v1.Service.Get";	
 }
 
 func (r * ServiceListRequest) SetService(service interface{}) error {
@@ -191,12 +191,12 @@ func (r * ServiceListRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.List(r.Opts)
+	result, err = r.service_.List(r.ListOptions)
 	return result, err	
 }
 
 func (r * ServiceListRequest) GetId() string {
-	return "v1.ServiceInterface.List";	
+	return "v1.Service.List";	
 }
 
 func (r * ServiceWatchRequest) SetService(service interface{}) error {
@@ -211,12 +211,12 @@ func (r * ServiceWatchRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Watch(r.Opts)
+	result, err = r.service_.Watch(r.ListOptions)
 	return result, err	
 }
 
 func (r * ServiceWatchRequest) GetId() string {
-	return "v1.ServiceInterface.Watch";	
+	return "v1.Service.Watch";	
 }
 
 func (r * ServicePatchRequest) SetService(service interface{}) error {
@@ -236,5 +236,5 @@ func (r * ServicePatchRequest) Call() (result interface{}, err error) {
 }
 
 func (r * ServicePatchRequest) GetId() string {
-	return "v1.ServiceInterface.Patch";	
+	return "v1.Service.Patch";	
 }
