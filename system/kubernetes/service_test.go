@@ -5,6 +5,7 @@ import (
 	"github.com/viant/endly"
 	_ "github.com/viant/endly/system/kubernetes/apps"
 	_ "github.com/viant/endly/system/kubernetes/core"
+	"github.com/viant/endly/system/kubernetes/core/v1"
 	"github.com/viant/toolbox"
 	"log"
 	"testing"
@@ -48,3 +49,18 @@ func TestService_Get(t *testing.T) {
 	}
 
 }
+
+func Test_Request(t *testing.T) {
+
+	JSON := `{
+	"kind": "pod",
+	"labelSelector": "run=load-balancer-example",
+	"outputTemplate": "*"
+	}`
+	reqMap, err :=toolbox.JSONToMap(JSON)
+	assert.Nil(t, err)
+	request := &v1.PodListRequest{}
+	converter.AssignConverted(request, reqMap)
+	toolbox.DumpIndent(request, true)
+}
+

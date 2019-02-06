@@ -150,12 +150,13 @@ func (s *service) Get(context *endly.Context, request *GetRequest) (GetResponse,
 	if err != nil {
 		return nil, err
 	}
+
 	var resultMap = make(map[string]interface{})
 	if err := converter.AssignConverted(resultMap, response); err != nil {
 		return nil, err
 	}
 	outputRules := getOutputRules(request.OutputTemplate, request.Kind, request.OutputPaths)
-	if len(outputRules) == 0 {
+	if len(outputRules) == 0 || request.OutputTemplate == "*" {
 		return resultMap, nil
 	}
 	resultMap = toolbox.DeleteEmptyKeys(resultMap)
@@ -164,7 +165,11 @@ func (s *service) Get(context *endly.Context, request *GetRequest) (GetResponse,
 		transformOutput(outputRules, resultMap, result)
 	} else {
 		transformedItems := make([]interface{}, 0)
-		items := toolbox.AsSlice(resultMap["items"])
+		itemValue, ok := resultMap["items"]
+		if ! ok || itemValue == nil {
+			return resultMap, nil
+		}
+		items := toolbox.AsSlice(itemValue)
 		for _, item := range items {
 			itemMap := toolbox.AsMap(item)
 			var transformed = make(map[string]interface{})
@@ -181,10 +186,7 @@ func buildRequest(context *endly.Context, target shared.ContractAdapter, request
 	if err != nil {
 		return err
 	}
-	if err = converter.AssignConverted(target, ctxClient.RawRequest); err == nil {
-		err = converter.AssignConverted(target, request)
-	}
-	return err
+	return converter.AssignConverted(target, ctxClient.RawRequest)
 }
 
 //New creates a new Storage service
