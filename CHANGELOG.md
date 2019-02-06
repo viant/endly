@@ -1,3 +1,6 @@
+## Feb 5 2019 0.30.2
+    * Patched docker compose yaml port parsing 
+
 ## Feb 5 2019 0.30.1
     * Patched ShowTable sql embedding issue (dsc)
     * Patched contract description (toolbox)

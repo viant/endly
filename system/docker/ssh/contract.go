@@ -522,13 +522,13 @@ func NewComposeError(msg string, composeURL *url.Resource) ComposeError {
 
 // Represents a native docker-compose file
 type Compose struct {
-	Version  string                    `yaml:"version,omitempty"`  //Docker-compose version
-	Services map[string]*DockerService `yaml:"services,omitempty"` //Definition of all services by custom name
-	Volumes  map[string]*Volume        `yaml:"volumes,omitempty"`  //Definition of all volumes to be mounted
-	Networks map[string]*Network       `yaml:"networks,omitempty"` //Definition of all networks
+	Version  string                           `yaml:"version,omitempty"`  //Docker-compose version
+	Services map[string]*DockerComposeService `yaml:"services,omitempty"` //Definition of all services by custom name
+	Volumes  map[string]*Volume               `yaml:"volumes,omitempty"`  //Definition of all volumes to be mounted
+	Networks map[string]*Network              `yaml:"networks,omitempty"` //Definition of all networks
 }
 
-type DockerService struct {
+type DockerComposeService struct {
 	Image         string      `yaml:"image,omitempty"`  //Image registry path
 	Ports         Ports       `yaml:"ports,omitempty"`  //Ports mapping from host machine to docker container
 	InternalPorts ExposePorts `yaml:"expose,omitempty"` //Ports will NOT be exposed from the container to the host machine. But they will be accessible to the linked containers
@@ -537,19 +537,15 @@ type DockerService struct {
 /*
 	Maps to "ports:" section of the compose file
 	Ports will be exposed from the container to the host machine
-	Format is host port:container port e.g. "8080":"8080"
+	Format is host port:container port e.g. 8080:8080
 */
-type Ports struct {
-	port map[string]string //Per specification to be string instead of number
-}
+type Ports []string //Per specification to be string instead of number
 
 /*
 	Maps to "expose:" section of the compose file
 	Ports will NOT be exposed from the container to the host machine. But they will be accessible to the linked containers
 */
-type ExposePorts struct {
-	ports []string
-}
+type ExposePorts []string
 
 /*
 	Maps to "volumes:" section of the compose file
