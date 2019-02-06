@@ -16,26 +16,26 @@ import (
 //EventCreateRequest represents request
 type EventCreateRequest struct {
   service_ v1.EventInterface
-  Event *vvc.Event
+   *vvc.Event
 }
 
 //EventUpdateRequest represents request
 type EventUpdateRequest struct {
   service_ v1.EventInterface
-  Event *vvc.Event
+   *vvc.Event
 }
 
 //EventDeleteRequest represents request
 type EventDeleteRequest struct {
   service_ v1.EventInterface
   Name string
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
 }
 
 //EventDeleteCollectionRequest represents request
 type EventDeleteCollectionRequest struct {
   service_ v1.EventInterface
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
   ListOptions metav1.ListOptions
 }
 
@@ -43,19 +43,19 @@ type EventDeleteCollectionRequest struct {
 type EventGetRequest struct {
   service_ v1.EventInterface
   Name string
-  Options metav1.GetOptions
+   metav1.GetOptions
 }
 
 //EventListRequest represents request
 type EventListRequest struct {
   service_ v1.EventInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //EventWatchRequest represents request
 type EventWatchRequest struct {
   service_ v1.EventInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //EventPatchRequest represents request
@@ -97,7 +97,7 @@ func (r * EventCreateRequest) Call() (result interface{}, err error) {
 }
 
 func (r * EventCreateRequest) GetId() string {
-	return "v1.EventInterface.Create";	
+	return "v1.Event.Create";	
 }
 
 func (r * EventUpdateRequest) SetService(service interface{}) error {
@@ -117,7 +117,7 @@ func (r * EventUpdateRequest) Call() (result interface{}, err error) {
 }
 
 func (r * EventUpdateRequest) GetId() string {
-	return "v1.EventInterface.Update";	
+	return "v1.Event.Update";	
 }
 
 func (r * EventDeleteRequest) SetService(service interface{}) error {
@@ -132,12 +132,12 @@ func (r * EventDeleteRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.Delete(r.Name,r.Options)
+	err = r.service_.Delete(r.Name,r.DeleteOptions)
 	return result, err	
 }
 
 func (r * EventDeleteRequest) GetId() string {
-	return "v1.EventInterface.Delete";	
+	return "v1.Event.Delete";	
 }
 
 func (r * EventDeleteCollectionRequest) SetService(service interface{}) error {
@@ -152,12 +152,12 @@ func (r * EventDeleteCollectionRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.DeleteCollection(r.Options,r.ListOptions)
+	err = r.service_.DeleteCollection(r.DeleteOptions,r.ListOptions)
 	return result, err	
 }
 
 func (r * EventDeleteCollectionRequest) GetId() string {
-	return "v1.EventInterface.DeleteCollection";	
+	return "v1.Event.DeleteCollection";	
 }
 
 func (r * EventGetRequest) SetService(service interface{}) error {
@@ -172,12 +172,12 @@ func (r * EventGetRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Get(r.Name,r.Options)
+	result, err = r.service_.Get(r.Name,r.GetOptions)
 	return result, err	
 }
 
 func (r * EventGetRequest) GetId() string {
-	return "v1.EventInterface.Get";	
+	return "v1.Event.Get";	
 }
 
 func (r * EventListRequest) SetService(service interface{}) error {
@@ -192,12 +192,12 @@ func (r * EventListRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.List(r.Opts)
+	result, err = r.service_.List(r.ListOptions)
 	return result, err	
 }
 
 func (r * EventListRequest) GetId() string {
-	return "v1.EventInterface.List";	
+	return "v1.Event.List";	
 }
 
 func (r * EventWatchRequest) SetService(service interface{}) error {
@@ -212,12 +212,12 @@ func (r * EventWatchRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Watch(r.Opts)
+	result, err = r.service_.Watch(r.ListOptions)
 	return result, err	
 }
 
 func (r * EventWatchRequest) GetId() string {
-	return "v1.EventInterface.Watch";	
+	return "v1.Event.Watch";	
 }
 
 func (r * EventPatchRequest) SetService(service interface{}) error {
@@ -237,5 +237,5 @@ func (r * EventPatchRequest) Call() (result interface{}, err error) {
 }
 
 func (r * EventPatchRequest) GetId() string {
-	return "v1.EventInterface.Patch";	
+	return "v1.Event.Patch";	
 }

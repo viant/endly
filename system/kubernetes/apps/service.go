@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	//ServiceID Kubernetes apps service ID.
+	//ServiceID Kubernetes Apps service ID.
 	ServiceID = "kubernetes/apps"
 )
 

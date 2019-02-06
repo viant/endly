@@ -16,32 +16,32 @@ import (
 //PodCreateRequest represents request
 type PodCreateRequest struct {
   service_ v1.PodInterface
-  Pod *vvc.Pod
+   *vvc.Pod
 }
 
 //PodUpdateRequest represents request
 type PodUpdateRequest struct {
   service_ v1.PodInterface
-  Pod *vvc.Pod
+   *vvc.Pod
 }
 
 //PodUpdateStatusRequest represents request
 type PodUpdateStatusRequest struct {
   service_ v1.PodInterface
-  Pod *vvc.Pod
+   *vvc.Pod
 }
 
 //PodDeleteRequest represents request
 type PodDeleteRequest struct {
   service_ v1.PodInterface
   Name string
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
 }
 
 //PodDeleteCollectionRequest represents request
 type PodDeleteCollectionRequest struct {
   service_ v1.PodInterface
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
   ListOptions metav1.ListOptions
 }
 
@@ -49,19 +49,19 @@ type PodDeleteCollectionRequest struct {
 type PodGetRequest struct {
   service_ v1.PodInterface
   Name string
-  Options metav1.GetOptions
+   metav1.GetOptions
 }
 
 //PodListRequest represents request
 type PodListRequest struct {
   service_ v1.PodInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //PodWatchRequest represents request
 type PodWatchRequest struct {
   service_ v1.PodInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //PodPatchRequest represents request
@@ -104,7 +104,7 @@ func (r * PodCreateRequest) Call() (result interface{}, err error) {
 }
 
 func (r * PodCreateRequest) GetId() string {
-	return "v1.PodInterface.Create";	
+	return "v1.Pod.Create";	
 }
 
 func (r * PodUpdateRequest) SetService(service interface{}) error {
@@ -124,7 +124,7 @@ func (r * PodUpdateRequest) Call() (result interface{}, err error) {
 }
 
 func (r * PodUpdateRequest) GetId() string {
-	return "v1.PodInterface.Update";	
+	return "v1.Pod.Update";	
 }
 
 func (r * PodUpdateStatusRequest) SetService(service interface{}) error {
@@ -144,7 +144,7 @@ func (r * PodUpdateStatusRequest) Call() (result interface{}, err error) {
 }
 
 func (r * PodUpdateStatusRequest) GetId() string {
-	return "v1.PodInterface.UpdateStatus";	
+	return "v1.Pod.UpdateStatus";	
 }
 
 func (r * PodDeleteRequest) SetService(service interface{}) error {
@@ -159,12 +159,12 @@ func (r * PodDeleteRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.Delete(r.Name,r.Options)
+	err = r.service_.Delete(r.Name,r.DeleteOptions)
 	return result, err	
 }
 
 func (r * PodDeleteRequest) GetId() string {
-	return "v1.PodInterface.Delete";	
+	return "v1.Pod.Delete";	
 }
 
 func (r * PodDeleteCollectionRequest) SetService(service interface{}) error {
@@ -179,12 +179,12 @@ func (r * PodDeleteCollectionRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.DeleteCollection(r.Options,r.ListOptions)
+	err = r.service_.DeleteCollection(r.DeleteOptions,r.ListOptions)
 	return result, err	
 }
 
 func (r * PodDeleteCollectionRequest) GetId() string {
-	return "v1.PodInterface.DeleteCollection";	
+	return "v1.Pod.DeleteCollection";	
 }
 
 func (r * PodGetRequest) SetService(service interface{}) error {
@@ -199,12 +199,12 @@ func (r * PodGetRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Get(r.Name,r.Options)
+	result, err = r.service_.Get(r.Name,r.GetOptions)
 	return result, err	
 }
 
 func (r * PodGetRequest) GetId() string {
-	return "v1.PodInterface.Get";	
+	return "v1.Pod.Get";	
 }
 
 func (r * PodListRequest) SetService(service interface{}) error {
@@ -219,12 +219,12 @@ func (r * PodListRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.List(r.Opts)
+	result, err = r.service_.List(r.ListOptions)
 	return result, err	
 }
 
 func (r * PodListRequest) GetId() string {
-	return "v1.PodInterface.List";	
+	return "v1.Pod.List";	
 }
 
 func (r * PodWatchRequest) SetService(service interface{}) error {
@@ -239,12 +239,12 @@ func (r * PodWatchRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Watch(r.Opts)
+	result, err = r.service_.Watch(r.ListOptions)
 	return result, err	
 }
 
 func (r * PodWatchRequest) GetId() string {
-	return "v1.PodInterface.Watch";	
+	return "v1.Pod.Watch";	
 }
 
 func (r * PodPatchRequest) SetService(service interface{}) error {
@@ -264,5 +264,5 @@ func (r * PodPatchRequest) Call() (result interface{}, err error) {
 }
 
 func (r * PodPatchRequest) GetId() string {
-	return "v1.PodInterface.Patch";	
+	return "v1.Pod.Patch";	
 }

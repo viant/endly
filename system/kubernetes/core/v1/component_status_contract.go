@@ -16,26 +16,26 @@ import (
 //ComponentStatusCreateRequest represents request
 type ComponentStatusCreateRequest struct {
   service_ v1.ComponentStatusInterface
-  Status *vvc.ComponentStatus
+   *vvc.ComponentStatus
 }
 
 //ComponentStatusUpdateRequest represents request
 type ComponentStatusUpdateRequest struct {
   service_ v1.ComponentStatusInterface
-  Status *vvc.ComponentStatus
+   *vvc.ComponentStatus
 }
 
 //ComponentStatusDeleteRequest represents request
 type ComponentStatusDeleteRequest struct {
   service_ v1.ComponentStatusInterface
   Name string
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
 }
 
 //ComponentStatusDeleteCollectionRequest represents request
 type ComponentStatusDeleteCollectionRequest struct {
   service_ v1.ComponentStatusInterface
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
   ListOptions metav1.ListOptions
 }
 
@@ -43,19 +43,19 @@ type ComponentStatusDeleteCollectionRequest struct {
 type ComponentStatusGetRequest struct {
   service_ v1.ComponentStatusInterface
   Name string
-  Options metav1.GetOptions
+   metav1.GetOptions
 }
 
 //ComponentStatusListRequest represents request
 type ComponentStatusListRequest struct {
   service_ v1.ComponentStatusInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //ComponentStatusWatchRequest represents request
 type ComponentStatusWatchRequest struct {
   service_ v1.ComponentStatusInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //ComponentStatusPatchRequest represents request
@@ -92,12 +92,12 @@ func (r * ComponentStatusCreateRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Create(r.Status)
+	result, err = r.service_.Create(r.ComponentStatus)
 	return result, err	
 }
 
 func (r * ComponentStatusCreateRequest) GetId() string {
-	return "v1.ComponentStatusInterface.Create";	
+	return "v1.ComponentStatus.Create";	
 }
 
 func (r * ComponentStatusUpdateRequest) SetService(service interface{}) error {
@@ -112,12 +112,12 @@ func (r * ComponentStatusUpdateRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Update(r.Status)
+	result, err = r.service_.Update(r.ComponentStatus)
 	return result, err	
 }
 
 func (r * ComponentStatusUpdateRequest) GetId() string {
-	return "v1.ComponentStatusInterface.Update";	
+	return "v1.ComponentStatus.Update";	
 }
 
 func (r * ComponentStatusDeleteRequest) SetService(service interface{}) error {
@@ -132,12 +132,12 @@ func (r * ComponentStatusDeleteRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.Delete(r.Name,r.Options)
+	err = r.service_.Delete(r.Name,r.DeleteOptions)
 	return result, err	
 }
 
 func (r * ComponentStatusDeleteRequest) GetId() string {
-	return "v1.ComponentStatusInterface.Delete";	
+	return "v1.ComponentStatus.Delete";	
 }
 
 func (r * ComponentStatusDeleteCollectionRequest) SetService(service interface{}) error {
@@ -152,12 +152,12 @@ func (r * ComponentStatusDeleteCollectionRequest) Call() (result interface{}, er
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.DeleteCollection(r.Options,r.ListOptions)
+	err = r.service_.DeleteCollection(r.DeleteOptions,r.ListOptions)
 	return result, err	
 }
 
 func (r * ComponentStatusDeleteCollectionRequest) GetId() string {
-	return "v1.ComponentStatusInterface.DeleteCollection";	
+	return "v1.ComponentStatus.DeleteCollection";	
 }
 
 func (r * ComponentStatusGetRequest) SetService(service interface{}) error {
@@ -172,12 +172,12 @@ func (r * ComponentStatusGetRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Get(r.Name,r.Options)
+	result, err = r.service_.Get(r.Name,r.GetOptions)
 	return result, err	
 }
 
 func (r * ComponentStatusGetRequest) GetId() string {
-	return "v1.ComponentStatusInterface.Get";	
+	return "v1.ComponentStatus.Get";	
 }
 
 func (r * ComponentStatusListRequest) SetService(service interface{}) error {
@@ -192,12 +192,12 @@ func (r * ComponentStatusListRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.List(r.Opts)
+	result, err = r.service_.List(r.ListOptions)
 	return result, err	
 }
 
 func (r * ComponentStatusListRequest) GetId() string {
-	return "v1.ComponentStatusInterface.List";	
+	return "v1.ComponentStatus.List";	
 }
 
 func (r * ComponentStatusWatchRequest) SetService(service interface{}) error {
@@ -212,12 +212,12 @@ func (r * ComponentStatusWatchRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Watch(r.Opts)
+	result, err = r.service_.Watch(r.ListOptions)
 	return result, err	
 }
 
 func (r * ComponentStatusWatchRequest) GetId() string {
-	return "v1.ComponentStatusInterface.Watch";	
+	return "v1.ComponentStatus.Watch";	
 }
 
 func (r * ComponentStatusPatchRequest) SetService(service interface{}) error {
@@ -237,5 +237,5 @@ func (r * ComponentStatusPatchRequest) Call() (result interface{}, err error) {
 }
 
 func (r * ComponentStatusPatchRequest) GetId() string {
-	return "v1.ComponentStatusInterface.Patch";	
+	return "v1.ComponentStatus.Patch";	
 }

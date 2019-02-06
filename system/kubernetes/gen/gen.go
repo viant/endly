@@ -6,7 +6,13 @@ import (
 	"github.com/viant/toolbox"
 	"io/ioutil"
 	_ "k8s.io/client-go/kubernetes/typed/apps/v1"
+	_ "k8s.io/client-go/kubernetes/typed/batch/v1"
+	_ "k8s.io/client-go/kubernetes/typed/batch/v1beta1"
 	_ "k8s.io/client-go/kubernetes/typed/core/v1"
+	_ "k8s.io/client-go/kubernetes/typed/extensions/v1beta1"
+	_ "k8s.io/client-go/kubernetes/typed/rbac/v1"
+
+	_ "k8s.io/client-go/kubernetes/typed/autoscaling/v1"
 	_ "k8s.io/client-go/kubernetes/typed/networking/v1"
 	_ "k8s.io/client-go/kubernetes/typed/storage/v1"
 
@@ -20,32 +26,48 @@ func main() {
 	parent, _ := path.Split(string(currentPath[:len(currentPath)-1]))
 	goPath := string(parent[:strings.Index(parent, "/src/")])
 
+	generateCode(goPath, parent, "autoscaling/v1")
 	generateCode(goPath, parent, "core/v1")
 	generateCode(goPath, parent, "apps/v1")
+	generateCode(goPath, parent, "batch/v1")
+	generateCode(goPath, parent, "batch/v1beta1")
+	generateCode(goPath, parent, "extensions/v1beta1")
+	generateCode(goPath, parent, "rbac/v1")
+	generateCode(goPath, parent, "policy/v1beta1")
+
 	generateCode(goPath, parent, "storage/v1")
 	generateCode(goPath, parent, "networking/v1")
 
 }
 
-func generateCode(goPath string, parent, suffix string) {
-	corePath := path.Join(goPath, fmt.Sprintf("src/k8s.io/client-go/kubernetes/typed/%v/", suffix))
+func generateCode(goPath string, parent, apiVersion string) {
+	corePath := path.Join(goPath, fmt.Sprintf("src/k8s.io/client-go/kubernetes/typed/%v/", apiVersion))
 	gen := adapter.New()
 	generated, err := gen.GenerateMatched(corePath, func(typeName string) bool {
 		return strings.HasSuffix(typeName, "Interface")
 	}, func(receiver *toolbox.FunctionInfo) bool {
 		return len(receiver.ParameterFields) > 0
 
-	}, func(typeName string, receiver *toolbox.FunctionInfo) string {
-		prefix := strings.Replace(typeName, "Interface", "", 1)
-		return prefix + receiver.Name + "Request"
+	}, func(meta *adapter.TypeMeta, receiver *toolbox.FunctionInfo) {
+		typeNamePrefix := strings.Replace(meta.SourceType, "Interface", "", 1)
+		meta.TypeName = typeNamePrefix + receiver.Name + "Request"
+		API := strings.Replace(apiVersion, "core/", "", 1)
+		meta.ID = API + "." + strings.Replace(meta.SimpleOwnerType, "Interface", "", 1) + "." + meta.Func
+		if receiver.Name != "Patch" {
+			//if receiver.Name == "Get" || receiver.Name == "List" || len(receiver.ParameterFields) == 1 {
+			meta.Embed = true
+		}
 	})
+
+	apiParts := strings.Split(apiVersion, "/")
+	packageName := apiParts[len(apiParts)-1]
 	if err != nil {
 		log.Fatal(err)
 	}
 	for k, v := range generated {
 		name := getFilename(k)
-		filename := path.Join(parent, suffix, name)
-		code := "package v1\n\n" + v
+		filename := path.Join(parent, apiVersion, name)
+		code := fmt.Sprintf("package %s\n\n", packageName) + v
 		if err := ioutil.WriteFile(filename, []byte(code), 0644); err != nil {
 			log.Fatal(err)
 		}

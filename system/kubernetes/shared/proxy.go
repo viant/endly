@@ -3,59 +3,24 @@ package shared
 import (
 	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/endly/system/kubernetes/registry"
+	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"reflect"
 	"strings"
 )
 
-type ServiceHolder struct {
-	Name  string
-	Impl  interface{}
-	IFace reflect.Type
-}
-
-func BuildRoutes(service interface{}, clientPrefix string) ([]*endly.Route, error) {
+func BuildRoutes(service interface{}, apiPrefix string) ([]*endly.Route, error) {
 	var result = make([]*endly.Route, 0)
-
-	var services = make(map[string]*ServiceHolder)
-	err := toolbox.ScanStructMethods(service, 1, func(method reflect.Method) error {
-		if method.Type.NumOut() != 1 {
-			return nil
-		}
-		returnType := method.Type.Out(0)
-		candidate := returnType.String()
-		if !strings.HasSuffix(candidate, "Interface") {
-			return nil
-		}
-		holder := &ServiceHolder{
-			Name:  method.Name,
-			IFace: method.Type.Out(0),
-		}
-		var result []interface{}
-		if method.Type.NumIn() == 2 {
-			if method.Type.In(1).Kind() != reflect.String {
-				return nil
-			}
-			result = toolbox.CallFunction(method.Func.Interface(), service, "")
-		} else {
-			result = toolbox.CallFunction(method.Func.Interface(), service)
-		}
-		resultValue := reflect.ValueOf(result[0])
-		if resultValue.IsNil() {
-			return nil
-		}
-		holder.Impl = result[0]
-		services[method.Name] = holder
-		return nil
-	})
-
-	for i := range services {
-		holder := services[i]
-		err = toolbox.ScanStructMethods(holder.Impl, 1, func(method reflect.Method) error {
-			ifaceTypeName := holder.IFace.String()
-			id := ifaceTypeName + "." + method.Name
-			adapter, has := registry.Get(id)
+	apis, err := buildAPIHolders(service, apiPrefix)
+	if err != nil {
+		return nil, err
+	}
+	for i := range apis {
+		holder := apis[i]
+		err = toolbox.ScanStructMethods(holder.impl, 1, func(method reflect.Method) error {
+			ifaceTypeName := holder.iFace.String()
+			id := holder.id + "." + method.Name
+			adapter, has := Get(id)
 			if !has {
 				return nil
 			}
@@ -67,7 +32,7 @@ func BuildRoutes(service interface{}, clientPrefix string) ([]*endly.Route, erro
 			action := actionName(holder, method)
 			route := &endly.Route{
 				Action:       action,
-				OnRawRequest: InitClient,
+				OnRawRequest: Init,
 				RequestInfo: &endly.ActionInfo{
 					Description: fmt.Sprintf("%s.%v(%T)", removeNamespace(ifaceTypeName), method.Name, adapter),
 				},
@@ -81,13 +46,12 @@ func BuildRoutes(service interface{}, clientPrefix string) ([]*endly.Route, erro
 					return reflect.New(responseType).Interface()
 				},
 				Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-					adapter := request.(registry.ContractAdapter)
+					adapter := request.(ContractAdapter)
 					clientCtx, err := GetCtxClient(context)
 					if err != nil {
 						return nil, err
 					}
-
-					service, err := getServce(clientCtx, clientPrefix, holder.Name)
+					service, err := getService(clientCtx, holder)
 					if err != nil {
 						return nil, err
 					}
@@ -105,7 +69,9 @@ func BuildRoutes(service interface{}, clientPrefix string) ([]*endly.Route, erro
 						resultMap = toolbox.DeleteEmptyKeys(resultMap)
 						eventValue = resultMap
 					}
-					context.Publish(NewOutputEvent(method.Name, "proxy", eventValue))
+					if context.IsLoggingEnabled() {
+						context.Publish(NewOutputEvent(method.Name, "proxy", eventValue))
+					}
 					return result, nil
 				},
 			}
@@ -117,40 +83,84 @@ func BuildRoutes(service interface{}, clientPrefix string) ([]*endly.Route, erro
 	return result, err
 }
 
-func getServce(clientCtx *CtxClient, clientPrefix string, kindService string) (interface{}, error) {
-	clientID := clientPrefix + clientCtx.ApiVersion
+func buildAPIHolders(service interface{}, apiPrefix string) (map[string]*apiHolder, error) {
+	var services = make(map[string]*apiHolder)
+	err := toolbox.ScanStructMethods(service, 1, func(method reflect.Method) error {
+		if method.Type.NumOut() != 1 {
+			return nil
+		}
+		returnType := method.Type.Out(0)
+		candidate := returnType.String()
+		if !strings.HasSuffix(candidate, "Interface") {
+			return nil
+		}
+		holder := newServiceHolder(strings.ToLower(apiPrefix), method)
+		var result []interface{}
+		if method.Type.NumIn() == 2 {
+			if method.Type.In(1).Kind() != reflect.String {
+				return nil
+			}
+			result = toolbox.CallFunction(method.Func.Interface(), service, "")
+		} else {
+			result = toolbox.CallFunction(method.Func.Interface(), service)
+		}
+		resultValue := reflect.ValueOf(result[0])
+		if resultValue.IsNil() {
+			return nil
+		}
+		holder.impl = result[0]
+		services[method.Name] = holder
+		return nil
+	})
+	return services, err
+}
+
+func getService(clientCtx *CtxClient, holder *apiHolder) (interface{}, error) {
+	apiVersion, err := LookupAPIVersion(holder.kind)
+	if err != nil {
+		return nil, err
+	}
+
+	apiVersion = strings.Title(apiVersion)
+
+	if strings.Contains(apiVersion, "/") {
+		apiVersion = strings.Replace(apiVersion, "/", "", 1)
+	} else {
+		apiVersion = "Core" + apiVersion
+	}
+
 	clientset, err := clientCtx.Clientset()
 	if err != nil {
 		return nil, err
 	}
 	clientSetValue := reflect.ValueOf(clientset)
-	methodType, ok := clientSetValue.Type().MethodByName(clientID)
+	kindServiceMethod, ok := clientSetValue.Type().MethodByName(apiVersion)
 	if !ok {
-		return nil, fmt.Errorf("failed to locate %v", clientID)
+		return nil, fmt.Errorf("failed to locate api %v", apiVersion)
 	}
-	getClientMethod := clientSetValue.MethodByName(clientID).Interface()
-	results := toolbox.CallFunction(getClientMethod)
-	clientValue := reflect.ValueOf(results[0])
-	methodType, ok = clientValue.Type().MethodByName(kindService)
-	if !ok {
-		return nil, fmt.Errorf("failed to locate %v.%v", clientID, kindService)
-	}
+	apiVersionValue := clientSetValue.Method(kindServiceMethod.Index).Interface()
+	results := toolbox.CallFunction(apiVersionValue)
 
-	getServiceMethod := clientValue.MethodByName(kindService)
-	if methodType.Type.NumIn() == 1 {
-		results = toolbox.CallFunction(getServiceMethod.Interface())
+	apiVersionClient := reflect.ValueOf(results[0])
+	kindServiceMethod, ok = apiVersionClient.Type().MethodByName(holder.name)
+	if !ok {
+		return nil, fmt.Errorf("failed to locate kind %v.%v", apiVersion, holder.name)
+	}
+	kindServiceValue := apiVersionClient.MethodByName(holder.name)
+	if kindServiceMethod.Type.NumIn() == 1 {
+		results = toolbox.CallFunction(kindServiceValue.Interface())
 	} else {
-		results = toolbox.CallFunction(getServiceMethod.Interface(), "")
+		results = toolbox.CallFunction(kindServiceValue.Interface(), clientCtx.Namespace)
 	}
 	return results[0], nil
 }
 
-func actionName(holder *ServiceHolder, method reflect.Method) string {
-	interfaceType := holder.IFace.String()
+func actionName(holder *apiHolder, method reflect.Method) string {
+	interfaceType := holder.iFace.String()
 	kindName := kindName(interfaceType)
 	var action = ""
 	if method.Name == "List" {
-		action = method.Name + holder.Name
+		action = "get" + holder.name
 	} else {
 		action = method.Name + kindName
 	}
@@ -171,4 +181,26 @@ func removeNamespace(name string) string {
 func kindName(name string) string {
 	name = strings.Replace(name, "Interface", "", 1)
 	return removeNamespace(name)
+}
+
+type apiHolder struct {
+	name  string
+	id    string
+	impl  interface{}
+	iFace reflect.Type
+	kind  string
+}
+
+func newServiceHolder(apiPrefix string, method reflect.Method) *apiHolder {
+	apiPrefix = strings.Replace(apiPrefix, "core", "", 1)
+	if apiPrefix != "" {
+		apiPrefix += "/"
+	}
+	resultType := method.Type.Out(0)
+	return &apiHolder{
+		id:    apiPrefix + strings.Replace(resultType.String(), "Interface", "", 1),
+		name:  method.Name,
+		iFace: resultType,
+		kind:  util.SimpleTypeName(strings.Replace(resultType.String(), "Interface", "", 1)),
+	}
 }

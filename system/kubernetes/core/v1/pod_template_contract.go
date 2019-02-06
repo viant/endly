@@ -16,26 +16,26 @@ import (
 //PodTemplateCreateRequest represents request
 type PodTemplateCreateRequest struct {
   service_ v1.PodTemplateInterface
-  Template *vvc.PodTemplate
+   *vvc.PodTemplate
 }
 
 //PodTemplateUpdateRequest represents request
 type PodTemplateUpdateRequest struct {
   service_ v1.PodTemplateInterface
-  Template *vvc.PodTemplate
+   *vvc.PodTemplate
 }
 
 //PodTemplateDeleteRequest represents request
 type PodTemplateDeleteRequest struct {
   service_ v1.PodTemplateInterface
   Name string
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
 }
 
 //PodTemplateDeleteCollectionRequest represents request
 type PodTemplateDeleteCollectionRequest struct {
   service_ v1.PodTemplateInterface
-  Options *metav1.DeleteOptions
+   *metav1.DeleteOptions
   ListOptions metav1.ListOptions
 }
 
@@ -43,19 +43,19 @@ type PodTemplateDeleteCollectionRequest struct {
 type PodTemplateGetRequest struct {
   service_ v1.PodTemplateInterface
   Name string
-  Options metav1.GetOptions
+   metav1.GetOptions
 }
 
 //PodTemplateListRequest represents request
 type PodTemplateListRequest struct {
   service_ v1.PodTemplateInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //PodTemplateWatchRequest represents request
 type PodTemplateWatchRequest struct {
   service_ v1.PodTemplateInterface
-  Opts metav1.ListOptions
+   metav1.ListOptions
 }
 
 //PodTemplatePatchRequest represents request
@@ -92,12 +92,12 @@ func (r * PodTemplateCreateRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Create(r.Template)
+	result, err = r.service_.Create(r.PodTemplate)
 	return result, err	
 }
 
 func (r * PodTemplateCreateRequest) GetId() string {
-	return "v1.PodTemplateInterface.Create";	
+	return "v1.PodTemplate.Create";	
 }
 
 func (r * PodTemplateUpdateRequest) SetService(service interface{}) error {
@@ -112,12 +112,12 @@ func (r * PodTemplateUpdateRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Update(r.Template)
+	result, err = r.service_.Update(r.PodTemplate)
 	return result, err	
 }
 
 func (r * PodTemplateUpdateRequest) GetId() string {
-	return "v1.PodTemplateInterface.Update";	
+	return "v1.PodTemplate.Update";	
 }
 
 func (r * PodTemplateDeleteRequest) SetService(service interface{}) error {
@@ -132,12 +132,12 @@ func (r * PodTemplateDeleteRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.Delete(r.Name,r.Options)
+	err = r.service_.Delete(r.Name,r.DeleteOptions)
 	return result, err	
 }
 
 func (r * PodTemplateDeleteRequest) GetId() string {
-	return "v1.PodTemplateInterface.Delete";	
+	return "v1.PodTemplate.Delete";	
 }
 
 func (r * PodTemplateDeleteCollectionRequest) SetService(service interface{}) error {
@@ -152,12 +152,12 @@ func (r * PodTemplateDeleteCollectionRequest) Call() (result interface{}, err er
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	err = r.service_.DeleteCollection(r.Options,r.ListOptions)
+	err = r.service_.DeleteCollection(r.DeleteOptions,r.ListOptions)
 	return result, err	
 }
 
 func (r * PodTemplateDeleteCollectionRequest) GetId() string {
-	return "v1.PodTemplateInterface.DeleteCollection";	
+	return "v1.PodTemplate.DeleteCollection";	
 }
 
 func (r * PodTemplateGetRequest) SetService(service interface{}) error {
@@ -172,12 +172,12 @@ func (r * PodTemplateGetRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Get(r.Name,r.Options)
+	result, err = r.service_.Get(r.Name,r.GetOptions)
 	return result, err	
 }
 
 func (r * PodTemplateGetRequest) GetId() string {
-	return "v1.PodTemplateInterface.Get";	
+	return "v1.PodTemplate.Get";	
 }
 
 func (r * PodTemplateListRequest) SetService(service interface{}) error {
@@ -192,12 +192,12 @@ func (r * PodTemplateListRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.List(r.Opts)
+	result, err = r.service_.List(r.ListOptions)
 	return result, err	
 }
 
 func (r * PodTemplateListRequest) GetId() string {
-	return "v1.PodTemplateInterface.List";	
+	return "v1.PodTemplate.List";	
 }
 
 func (r * PodTemplateWatchRequest) SetService(service interface{}) error {
@@ -212,12 +212,12 @@ func (r * PodTemplateWatchRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.Watch(r.Opts)
+	result, err = r.service_.Watch(r.ListOptions)
 	return result, err	
 }
 
 func (r * PodTemplateWatchRequest) GetId() string {
-	return "v1.PodTemplateInterface.Watch";	
+	return "v1.PodTemplate.Watch";	
 }
 
 func (r * PodTemplatePatchRequest) SetService(service interface{}) error {
@@ -237,5 +237,5 @@ func (r * PodTemplatePatchRequest) Call() (result interface{}, err error) {
 }
 
 func (r * PodTemplatePatchRequest) GetId() string {
-	return "v1.PodTemplateInterface.Patch";	
+	return "v1.PodTemplate.Patch";	
 }
