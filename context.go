@@ -107,11 +107,18 @@ func (c *Context) parentURLCandidates() []string {
 	return result
 }
 
+//IsLoggingEnabled returns tru if logging is enabled
 func (c *Context) IsLoggingEnabled() bool {
 	if c.Logging == nil {
 		return true
 	}
 	return *c.Logging
+}
+
+
+//SetLogging set logging on and off
+func (c *Context) SetLogging(flag bool) {
+	c.Logging = &flag
 }
 
 //ExpandResource substitutes any $ expression with the key value from the state map if it is present.
