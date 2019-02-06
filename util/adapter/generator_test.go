@@ -14,8 +14,8 @@ func TestGenerator_Generate(t *testing.T) {
 
 	code, err := gen.Generate(path.Join(parentDir, "test"), "MyInterface", func(receiver *toolbox.FunctionInfo) bool {
 		return true
-	}, func(typeName string, receiver *toolbox.FunctionInfo) string {
-		return receiver.Name
+	}, func(metaType *TypeMeta, receiver *toolbox.FunctionInfo) {
+
 	})
 	assert.Nil(t, err)
 	assert.NotNil(t, code)

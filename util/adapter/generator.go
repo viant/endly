@@ -3,6 +3,7 @@ package adapter
 import (
 	"bytes"
 	"fmt"
+	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"strings"
 	"text/template"
@@ -33,7 +34,7 @@ func (r * {{.TypeName}}) Call() (result interface{}, err error) {
 }`,
 	"func": `
 func (r * {{.TypeName}}) GetId() string {
-	return "{{.OwnerPackage}}.{{.SimpleOwnerType}}.{{.Func}}";	
+	return "{{.ID}}";	
 }`,
 	"register": `	register(&{{.TypeName}}{})`,
 
@@ -55,19 +56,23 @@ func init() {
 `,
 }
 
-type typeMeta struct {
+type TypeMeta struct {
+	ID              string
+	OwnerPackage    string
 	OwnerType       string
 	SimpleOwnerType string
-	Imports         string
-	TypeName        string
-	Methods         string
-	Fields          string
-	Func            string
-	Params          string
-	Result          string
-	OwnerPackage    string
-	importPrefix    string
-	aliasImports    map[string]string
+
+	TypeName     string
+	SourceType   string
+	Imports      string
+	Methods      string
+	Fields       string
+	Func         string
+	Params       string
+	Result       string
+	Embed        bool
+	importPrefix string
+	aliasImports map[string]string
 }
 
 type fileMeta struct {
@@ -82,7 +87,7 @@ type Generator struct {
 	templates map[string]string
 }
 
-func (g *Generator) buildTypeFields(typeInfo *toolbox.TypeInfo, typeMeta *typeMeta, receiver *toolbox.FunctionInfo) error {
+func (g *Generator) buildTypeFields(typeInfo *toolbox.TypeInfo, typeMeta *TypeMeta, receiver *toolbox.FunctionInfo) error {
 	var fields = make([]string, 0)
 	serviceField, err := g.expandTemplate("field", &toolbox.FieldInfo{
 		Name:     "service_",
@@ -90,7 +95,9 @@ func (g *Generator) buildTypeFields(typeInfo *toolbox.TypeInfo, typeMeta *typeMe
 	})
 	fields = append(fields, serviceField)
 	var params = make([]string, 0)
+	embedded := false
 	for _, param := range receiver.ParameterFields {
+
 		param.Name = strings.Title(param.Name)
 		if param.TypePackage != "" {
 			if param.TypePackage == typeMeta.OwnerPackage {
@@ -102,18 +109,31 @@ func (g *Generator) buildTypeFields(typeInfo *toolbox.TypeInfo, typeMeta *typeMe
 		if param.IsVariant {
 			suffix = "..."
 		}
-		params = append(params, "r."+param.Name+suffix)
+
+		embedable := typeMeta.Embed && !embedded && !isBasicType(param.TypeName)
+		if embedable {
+			param.Name = ""
+			embedded = true
+		}
+
 		if serviceField, err = g.expandTemplate("field", param); err != nil {
 			return err
 		}
 		fields = append(fields, serviceField)
+
+		if embedable {
+			param.Name = util.SimpleTypeName(param.TypeName)
+		}
+
+		params = append(params, "r."+param.Name+suffix)
+
 	}
 	typeMeta.Params = strings.Join(params, ",")
 	typeMeta.Fields = strings.Join(fields, "\n")
 	return nil
 }
 
-func (g *Generator) buildTypeMethods(typeInfo *toolbox.TypeInfo, typeMeta *typeMeta, receiver *toolbox.FunctionInfo) error {
+func (g *Generator) buildTypeMethods(typeInfo *toolbox.TypeInfo, typeMeta *TypeMeta, receiver *toolbox.FunctionInfo) error {
 	switch len(receiver.ResultsFields) {
 	case 1:
 		if receiver.ResultsFields[0].TypeName == "error" {
@@ -153,7 +173,7 @@ func (g *Generator) buildTypeMethods(typeInfo *toolbox.TypeInfo, typeMeta *typeM
 }
 
 //GenerateMatched generated code for all matched types
-func (g *Generator) GenerateMatched(source string, matcher func(typeName string) bool, predicate func(receiver *toolbox.FunctionInfo) bool, typeNameProvider func(typeName string, receiver *toolbox.FunctionInfo) string) (map[string]string, error) {
+func (g *Generator) GenerateMatched(source string, matcher func(typeName string) bool, predicate func(receiver *toolbox.FunctionInfo) bool, metaUpdater func(metaType *TypeMeta, receiver *toolbox.FunctionInfo)) (map[string]string, error) {
 	fileset, err := toolbox.NewFileSetInfo(source)
 	if err != nil {
 		return nil, err
@@ -162,7 +182,7 @@ func (g *Generator) GenerateMatched(source string, matcher func(typeName string)
 	for _, fileInfo := range fileset.FilesInfo() {
 		for _, typeInfo := range fileInfo.Types() {
 			if matcher(typeInfo.Name) {
-				code, err := g.Generate(source, typeInfo.Name, predicate, typeNameProvider)
+				code, err := g.Generate(source, typeInfo.Name, predicate, metaUpdater)
 				if err != nil {
 					return nil, err
 				}
@@ -177,7 +197,7 @@ func (g *Generator) GenerateMatched(source string, matcher func(typeName string)
 }
 
 //Generate generates code
-func (g *Generator) Generate(source, typeName string, predicate func(receiver *toolbox.FunctionInfo) bool, typeNameProvider func(typeName string, receiver *toolbox.FunctionInfo) string) (*string, error) {
+func (g *Generator) Generate(source, typeName string, predicate func(receiver *toolbox.FunctionInfo) bool, metaUpdater func(metaType *TypeMeta, receiver *toolbox.FunctionInfo)) (*string, error) {
 	fileset, err := toolbox.NewFileSetInfo(source)
 	if err != nil {
 		return nil, err
@@ -219,14 +239,21 @@ func (g *Generator) Generate(source, typeName string, predicate func(receiver *t
 			continue
 		}
 
-		typeMeta := &typeMeta{
+		typeMeta := &TypeMeta{
 			Func:            receiver.Name,
 			importPrefix:    fmt.Sprintf("vvc"), //import colision prefix
 			SimpleOwnerType: typeInfo.Name,
 			aliasImports:    make(map[string]string),
 			OwnerType:       typeInfo.Package + "." + typeInfo.Name,
 			OwnerPackage:    typeInfo.Package,
-			TypeName:        typeNameProvider(typeName, receiver), // typePrefix + receiver.Name + typeSuffix,
+			SourceType:      typeName,
+		}
+		metaUpdater(typeMeta, receiver)
+		if typeMeta.ID == "" {
+			return nil, fmt.Errorf("id was empty - revisit meta type updater logic")
+		}
+		if typeMeta.TypeName == "" {
+			return nil, fmt.Errorf("typeName was empty - revisit meta type updater logic")
 		}
 
 		if err = g.buildTypeFields(typeInfo, typeMeta, receiver); err == nil {
@@ -239,11 +266,11 @@ func (g *Generator) Generate(source, typeName string, predicate func(receiver *t
 		if err != nil {
 			return nil, err
 		}
-		reisterMethod, err := g.expandTemplate("register", typeMeta)
+		registerMethod, err := g.expandTemplate("register", typeMeta)
 		if err != nil {
 			return nil, err
 		}
-		register = append(register, reisterMethod)
+		register = append(register, registerMethod)
 		methods = append(methods, typeMeta.Methods)
 		types = append(types, typeText)
 
