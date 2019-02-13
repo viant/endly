@@ -1,9 +1,9 @@
 package webdb
 
 import (
+	"fmt"
 	"github.com/viant/dsc"
 	"net/http"
-	"fmt"
 )
 
 const (
@@ -39,7 +39,6 @@ func indexDummyType(response *GetTypeResponse) map[int]*DummyType {
 	}
 	return result
 }
-
 
 //GetAll returns all dummy
 func (s *Service) GetAll(request *GetRequest) *GetResponse {

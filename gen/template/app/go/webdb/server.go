@@ -1,20 +1,19 @@
 package webdb
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"context"
 	"time"
-	"log"
-	"fmt"
 )
 
 type Server struct {
 	*http.Server
 	termination chan bool
 }
-
 
 func (s *Server) shutdown() {
 	<-s.termination
@@ -25,7 +24,7 @@ func (s *Server) shutdown() {
 	}
 }
 
-func (s *Server) StopOnSiginals(siginals ... os.Signal) {
+func (s *Server) StopOnSiginals(siginals ...os.Signal) {
 	notification := make(chan os.Signal, 1)
 	signal.Notify(notification, siginals...)
 	<-notification

@@ -45,7 +45,6 @@ type GetResponse struct {
 	Data []*Dummy
 }
 
-
 type GetTypeRequest struct {
 	Id int
 }

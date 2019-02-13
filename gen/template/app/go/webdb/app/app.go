@@ -15,7 +15,6 @@ import (
 	"flag"
 )
 
-
 var configURL = flag.String("configURL", "", "path to config file (JSON or YAML")
 
 func main() {
