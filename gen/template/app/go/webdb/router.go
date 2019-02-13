@@ -1,9 +1,9 @@
 package webdb
 
 import (
-	"net/http"
-	"github.com/viant/toolbox"
 	"fmt"
+	"github.com/viant/toolbox"
+	"net/http"
 )
 
 const baseURI = "/v1/api"
@@ -14,10 +14,9 @@ type Router struct {
 }
 
 func (r Router) route() {
-	r.ServeMux.Handle(baseURI + "/", r.api())
+	r.ServeMux.Handle(baseURI+"/", r.api())
 	r.ServeMux.Handle("/", r.static())
 }
-
 
 func (r Router) api() http.Handler {
 	router := toolbox.NewServiceRouter(
@@ -75,7 +74,7 @@ func (r Router) api() http.Handler {
 		},
 	)
 	return http.HandlerFunc(func(writer http.ResponseWriter, reader *http.Request) {
-		if err := router.Route(writer, reader);err != nil {
+		if err := router.Route(writer, reader); err != nil {
 			http.Error(writer, err.Error(), 500)
 		}
 
