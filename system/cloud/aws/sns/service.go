@@ -16,7 +16,6 @@ const (
 	ServiceID = "aws/sns"
 )
 
-
 var snsPrincipal = "sns.amazonaws.com"
 
 //no operation service
@@ -26,7 +25,7 @@ type service struct {
 
 func (s *service) matchTopic(client *sns.SNS, name string) (*sns.Topic, error) {
 	var nextToken *string
-	for ; ; {
+	for {
 		list, err := client.ListTopics(&sns.ListTopicsInput{
 			NextToken: nextToken,
 		})
@@ -67,10 +66,9 @@ func (s *service) setupTopic(context *endly.Context, request *SetupTopicInput) (
 	}, nil
 }
 
-
 func (s *service) matchSubscription(client *sns.SNS, request *SetupSubscriptionInput) (*sns.Subscription, error) {
 	var nextToken *string
-	for ; ; {
+	for {
 		list, err := client.ListSubscriptions(&sns.ListSubscriptionsInput{NextToken: nextToken})
 		if err != nil {
 			return nil, err
@@ -98,7 +96,7 @@ func (s *service) updateSubscriptionEndpointIfNeeded(context *endly.Context, req
 	default:
 		return nil
 	}
-	_, err := arn.Parse(*request.Endpoint);
+	_, err := arn.Parse(*request.Endpoint)
 	if err == nil {
 		return nil
 	}
@@ -128,7 +126,7 @@ func (s *service) setupSubscription(context *endly.Context, request *SetupSubscr
 		Name: request.Topic,
 	})
 	request.TopicArn = topic.TopicArn
-	if err = s.updateSubscriptionEndpointIfNeeded(context, request);err != nil {
+	if err = s.updateSubscriptionEndpointIfNeeded(context, request); err != nil {
 		return nil, err
 	}
 	subscription, err := s.matchSubscription(client, request)
@@ -151,14 +149,14 @@ func (s *service) setupSubscription(context *endly.Context, request *SetupSubscr
 	if *subscription.Protocol == "lambda" {
 		permissionInput := &lambda.SetupPermissionInput{}
 		functionARN, _ := arn.Parse(*request.Endpoint)
-		functionName := strings.Replace(functionARN.Resource, "function:" ,"", 1)
+		functionName := strings.Replace(functionARN.Resource, "function:", "", 1)
 		permissionInput.FunctionName = &functionName
 		permissionInput.SourceArn = subscription.TopicArn
 		permissionInput.Action = &aws.LambdaInvoke
-		permissionInput.Principal =  &snsPrincipal
+		permissionInput.Principal = &snsPrincipal
 		statementID := state.ExpandAsText(fmt.Sprintf("%v_%v_${uuid.next}", request.Topic, functionName))
 		permissionInput.StatementId = &statementID
-		if err  := endly.Run(context, permissionInput, nil);err != nil {
+		if err := endly.Run(context, permissionInput, nil); err != nil {
 			return nil, err
 		}
 	}
@@ -215,7 +213,7 @@ func (s *service) registerRoutes() {
 		OnRawRequest: setClient,
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*SetupSubscriptionInput); ok {
-				output, err :=  s.setupSubscription(context, req)
+				output, err := s.setupSubscription(context, req)
 				if err != nil {
 					return nil, err
 				}

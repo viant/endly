@@ -59,7 +59,6 @@ func (i *RemoveRestAPIInput) Validate() error {
 	return nil
 }
 
-
 func (i *SetupRestAPIInput) Init() error {
 	if len(i.Resources) == 0 {
 		return nil
@@ -165,7 +164,7 @@ func (i *SetupResourceInput) ParentPath() string {
 	-	$restAPI.ID
 	-	$uuid.next
 
- */
+*/
 func (i *ResourceMethod) Init() error {
 
 	methodInput := i.PutMethodInput
@@ -207,8 +206,7 @@ func (i *ResourceMethod) Init() error {
 		}
 		permissionInput := i.AddPermissionInput
 		if i.AddPermissionInput == nil {
-			i.AddPermissionInput = &lambda.AddPermissionInput{
-			}
+			i.AddPermissionInput = &lambda.AddPermissionInput{}
 			permissionInput = i.AddPermissionInput
 		}
 		if permissionInput.FunctionName == nil {
@@ -229,7 +227,6 @@ func (i *ResourceMethod) Init() error {
 	}
 	return nil
 }
-
 
 func (i *ResourceMethod) Validate() error {
 	if i.HttpMethod == "" {

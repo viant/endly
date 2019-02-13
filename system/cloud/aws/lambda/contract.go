@@ -24,10 +24,6 @@ type EventSourceMapping struct {
 	StartingPositionTimestamp *time.Time `type:"timestamp"`
 }
 
-
-
-
-
 //DeployInput setup function, creates or updates existing one
 type DeployInput struct {
 	lambda.CreateFunctionInput
@@ -35,19 +31,14 @@ type DeployInput struct {
 	Triggers []*EventSourceMapping
 }
 
-
-
 type DeployOutput struct {
 	*lambda.FunctionConfiguration
-	RoleInfo *ciam.GetRoleInfoOutput
+	RoleInfo      *ciam.GetRoleInfoOutput
 	EventMappings []*lambda.EventSourceMappingConfiguration
 }
 
-
 //SetupPermissionInput creates a permission if it does not exists
 type SetupPermissionInput lambda.AddPermissionInput
-
-
 
 //SetupTriggerSourceInput represents setup triggers input
 type SetupTriggerSourceInput struct {
@@ -55,24 +46,19 @@ type SetupTriggerSourceInput struct {
 	Triggers     []*EventSourceMapping
 }
 
-
 //SetupTriggerSourceOutput represents  setup triggers output
 type SetupTriggerSourceOutput struct {
 	EventMappings []*lambda.EventSourceMappingConfiguration
 }
 
-
-
 //CallInput represents a call request
 type CallInput lambda.InvokeInput
-
 
 //CallOutput represents a call response
 type CallOutput struct {
 	*lambda.InvokeOutput
 	Response interface{}
 }
-
 
 func (i *DeployInput) Init() error {
 	if i.DefaultPolicyDocument == nil {
@@ -96,7 +82,6 @@ func (i *DeployInput) Validate() error {
 	return nil
 }
 
-
 func (i *SetupTriggerSourceInput) Validate() error {
 	if i.FunctionName == nil {
 		return errors.New("functionName was empty")
@@ -116,5 +101,3 @@ func (i *SetupTriggerSourceInput) Validate() error {
 	}
 	return nil
 }
-
-

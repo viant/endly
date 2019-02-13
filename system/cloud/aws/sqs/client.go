@@ -22,7 +22,7 @@ func setClient(context *endly.Context, rawRequest map[string]interface{}) error 
 
 func getClient(context *endly.Context) (interface{}, error) {
 	client := &sqs.SQS{}
-	if ! context.Contains(clientKey) {
+	if !context.Contains(clientKey) {
 		_ = setClient(context, map[string]interface{}{"client": 1})
 	}
 	if !context.GetInto(clientKey, &client) {
@@ -31,7 +31,6 @@ func getClient(context *endly.Context) (interface{}, error) {
 	return client, nil
 }
 
-
 //GetClient returns sqs client from context
 func GetClient(context *endly.Context) (*sqs.SQS, error) {
 	client, err := getClient(context)
@@ -39,7 +38,7 @@ func GetClient(context *endly.Context) (*sqs.SQS, error) {
 		return nil, err
 	}
 	s3Client, ok := client.(*sqs.SQS)
-	if !  ok {
+	if !ok {
 		return nil, fmt.Errorf("unexpected client type: %T", client)
 	}
 	return s3Client, nil

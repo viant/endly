@@ -12,7 +12,6 @@ type SetupSubscriptionInput struct {
 	Topic *string
 }
 
-
 func (i *SetupSubscriptionInput) Validate() error {
 	if i.Topic == nil && (i.SubscribeInput == nil || i.TopicArn == nil) {
 		return fmt.Errorf("topic was empty")

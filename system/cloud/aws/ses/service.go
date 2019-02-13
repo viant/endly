@@ -7,18 +7,15 @@ import (
 	"log"
 )
 
-
 const (
 	//ServiceID aws Simple Email Service ID.
 	ServiceID = "aws/ses"
 )
 
-
 //no operation service
 type service struct {
 	*endly.AbstractService
 }
-
 
 func (s *service) registerRoutes() {
 	client := &ses.SES{}
@@ -32,7 +29,6 @@ func (s *service) registerRoutes() {
 		s.Register(route)
 	}
 }
-
 
 //New creates a new AWS SES service.
 func New() endly.Service {

@@ -36,24 +36,22 @@ func (s *service) setupBucketNotification(context *endly.Context, request *Setup
 	return s.updateBucketNotification(context, currentConfig, request)
 }
 
-
-func (s *service) updateBucketNotification(ctx *endly.Context, currentConfig *s3.NotificationConfiguration, request *SetupBucketNotificationInput)  (*SetupBucketNotificationOutput, error)  {
+func (s *service) updateBucketNotification(ctx *endly.Context, currentConfig *s3.NotificationConfiguration, request *SetupBucketNotificationInput) (*SetupBucketNotificationOutput, error) {
 	client, err := GetClient(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-
 	input := &s3.PutBucketNotificationConfigurationInput{
 		Bucket: request.Bucket,
-		NotificationConfiguration:&s3.NotificationConfiguration{
+		NotificationConfiguration: &s3.NotificationConfiguration{
 			LambdaFunctionConfigurations: make([]*s3.LambdaFunctionConfiguration, 0),
 			QueueConfigurations:          request.NotificationConfiguration.QueueConfigurations,
 			TopicConfigurations:          request.NotificationConfiguration.TopicConfigurations,
 		},
 	}
 	response := &SetupBucketNotificationOutput{
-		Bucket:                    request.Bucket,
+		Bucket: request.Bucket,
 		NotificationConfiguration: input.NotificationConfiguration,
 		Permissions:               make([]*lambda.SetupPermissionInput, 0),
 	}
@@ -63,7 +61,7 @@ func (s *service) updateBucketNotification(ctx *endly.Context, currentConfig *s3
 	state = state.Clone()
 
 	for _, configuration := range request.NotificationConfiguration.LambdaFunctionConfigurations {
-		funcName:= *configuration.FunctionName
+		funcName := *configuration.FunctionName
 		lambdaConfig, ok := existingFunction[funcName]
 		if ok {
 			lambdaConfig.Events = configuration.Events
@@ -83,18 +81,16 @@ func (s *service) updateBucketNotification(ctx *endly.Context, currentConfig *s3
 		*permissionInput.SourceArn = state.ExpandAsText(*permissionInput.SourceArn)
 		*configuration.Id = state.ExpandAsText(*configuration.Id)
 		input.NotificationConfiguration.LambdaFunctionConfigurations = append(input.NotificationConfiguration.LambdaFunctionConfigurations, lambdaConfig)
-		if err  := endly.Run(ctx, permissionInput, nil);err != nil {
+		if err := endly.Run(ctx, permissionInput, nil); err != nil {
 			return nil, err
 		}
 		response.Permissions = append(response.Permissions, &configuration.SetupPermissionInput)
 	}
-	if _, err = client.PutBucketNotificationConfiguration(input);err != nil {
+	if _, err = client.PutBucketNotificationConfiguration(input); err != nil {
 		return nil, fmt.Errorf("unable put bucket notification: %v", err)
 	}
 	return response, nil
 }
-
-
 
 func (s *service) registerRoutes() {
 	client := &s3.S3{}
@@ -130,7 +126,6 @@ func (s *service) registerRoutes() {
 		},
 	})
 }
-
 
 //New creates a new AWS S3 service.
 func New() endly.Service {

@@ -55,10 +55,10 @@ type PolicyDocument struct {
 }
 
 type InfoStatement struct {
-	SID      *string `yaml:"sid,omitempty"`
-	Effect   string
-	Action   interface{}
-	Resource interface{} `yaml:"resource,omitempty"`
+	SID       *string `yaml:"sid,omitempty"`
+	Effect    string
+	Action    interface{}
+	Resource  interface{} `yaml:"resource,omitempty"`
 	Condition interface{} `yaml:"condition,omitempty"`
 	Principal interface{} `yaml:"principal,omitempty"`
 }

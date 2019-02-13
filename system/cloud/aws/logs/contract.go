@@ -2,7 +2,6 @@ package logs
 
 import "github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 
-
 //FilterLogEventMessagesInput represents fetch log request
 type FilterLogEventMessagesInput struct {
 	cloudwatchlogs.FilterLogEventsInput
@@ -10,10 +9,8 @@ type FilterLogEventMessagesInput struct {
 	Include []string //include log event where message contains include fragment
 }
 
-
 //FilterLogEventMessagesOutput represents response
 type FilterLogEventMessagesOutput struct {
-	Messages []interface{}
+	Messages           []interface{}
 	SearchedLogStreams []*cloudwatchlogs.SearchedLogStream
 }
-

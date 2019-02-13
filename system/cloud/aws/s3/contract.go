@@ -13,15 +13,11 @@ type SetupBucketNotificationInput struct {
 	*NotificationConfiguration
 }
 
-
-
 type LambdaFunctionConfiguration struct {
 	s3.LambdaFunctionConfiguration
 	Filter *NotificationFilter
 	lambda.SetupPermissionInput
 }
-
-
 
 type NotificationConfiguration struct {
 	*s3.NotificationConfiguration

@@ -7,18 +7,15 @@ import (
 	"log"
 )
 
-
 const (
 	//ServiceID aws DynamoDB service id.
 	ServiceID = "aws/dynamodb"
 )
 
-
 //no operation service
 type service struct {
 	*endly.AbstractService
 }
-
 
 func (s *service) registerRoutes() {
 	client := &dynamodb.DynamoDB{}
@@ -32,7 +29,6 @@ func (s *service) registerRoutes() {
 		s.Register(route)
 	}
 }
-
 
 //New creates a new AWS DynamoDB service.
 func New() endly.Service {

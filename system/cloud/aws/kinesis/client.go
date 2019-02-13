@@ -8,7 +8,6 @@ import (
 	"github.com/viant/endly/system/cloud/aws"
 )
 
-
 var clientKey = (*kinesis.Kinesis)(nil)
 
 func setClient(context *endly.Context, rawRequest map[string]interface{}) error {
@@ -17,14 +16,13 @@ func setClient(context *endly.Context, rawRequest map[string]interface{}) error 
 		return err
 	}
 	sess := session.Must(session.NewSession())
-	client :=  kinesis.New(sess, config)
+	client := kinesis.New(sess, config)
 	return context.Put(clientKey, client)
 }
 
-
-func getClient(context *endly.Context) (interface{}, error)  {
-	client :=  &kinesis.Kinesis{}
-	if ! context.Contains(clientKey) {
+func getClient(context *endly.Context) (interface{}, error) {
+	client := &kinesis.Kinesis{}
+	if !context.Contains(clientKey) {
 		_ = setClient(context, map[string]interface{}{"client": 1})
 	}
 	if !context.GetInto(clientKey, &client) {
@@ -33,7 +31,6 @@ func getClient(context *endly.Context) (interface{}, error)  {
 	return client, nil
 }
 
-
 //GetClient returns kinesis client from context
 func GetClient(context *endly.Context) (*kinesis.Kinesis, error) {
 	client, err := getClient(context)
@@ -41,7 +38,7 @@ func GetClient(context *endly.Context) (*kinesis.Kinesis, error) {
 		return nil, err
 	}
 	kinesisClient, ok := client.(*kinesis.Kinesis)
-	if !  ok {
+	if !ok {
 		return nil, fmt.Errorf("unexpected client type: %T", client)
 	}
 

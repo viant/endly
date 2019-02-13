@@ -23,7 +23,7 @@ func indexResource(resources []*apigateway.Resource) map[string]*apigateway.Reso
    { "path": "/a/b/c", "op": "add", "value": "foo" }
    { "value": "foo", "path": "/a/b/c", "op": "add" }
 
- */
+*/
 
 func patchBool(source, target *bool, path string) (*apigateway.PatchOperation, bool) {
 	if source == nil {
@@ -83,10 +83,6 @@ func patchString(source, target *string, path string) (*apigateway.PatchOperatio
 	}, true
 }
 
-
-
-
 func SetAPIInfo(restAPI *apigateway.RestApi, aMap data.Map) {
 	aMap.SetValue("restAPI.ID", *restAPI.Id)
 }
-

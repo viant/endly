@@ -7,12 +7,10 @@ import (
 	"log"
 )
 
-
 const (
 	//ServiceID aws Simple Queue Service ID.
 	ServiceID = "aws/sqs"
 )
-
 
 //no operation service
 type service struct {
@@ -31,7 +29,6 @@ func (s *service) registerRoutes() {
 		s.Register(route)
 	}
 }
-
 
 //New creates a new AWS SQS service.
 func New() endly.Service {
