@@ -12,6 +12,16 @@ import (
 	"time"
 )
 
+//RunWithoutLogging runs action with logging disabled for supplied context request and response. Response has to be pointer or nil
+func RunWithoutLogging(context *Context, request, result interface{}) error {
+	logging := context.Logging
+	context.SetLogging(false)
+	defer func() {
+		context.Logging = logging
+	}()
+	return Run(context, request, result)
+}
+
 //Run runs action for supplied context request and response. Response has to be pointer or nil
 func Run(context *Context, request, result interface{}) error {
 	if context == nil {
@@ -77,7 +87,7 @@ func (m *manager) Service(input interface{}) (Service, error) {
 		}
 	}
 	var available = toolbox.MapKeysToStringSlice(m.serviceByID)
-	return nil, fmt.Errorf("failed to lookup service: '%v' in [%v]", input, strings.Join(available, ","))
+	return nil, fmt.Errorf("failed to lookup service: '%T' in [%v]", input, strings.Join(available, ","))
 }
 
 func (m *manager) Register(service Service) {
