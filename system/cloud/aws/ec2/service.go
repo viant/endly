@@ -7,18 +7,15 @@ import (
 	"log"
 )
 
-
 const (
 	//ServiceID aws iam service id.
 	ServiceID = "aws/ec2"
 )
 
-
 //no operation service
 type service struct {
 	*endly.AbstractService
 }
-
 
 func (s *service) registerRoutes() {
 	client := &ec2.EC2{}
@@ -32,7 +29,6 @@ func (s *service) registerRoutes() {
 		s.Register(route)
 	}
 }
-
 
 //New creates a new AWS IAM service.
 func New() endly.Service {

@@ -29,7 +29,7 @@ func (s *service) recreateFunction(context *endly.Context, request *RecreateFunc
 	var done uint32 = 0
 
 	go func() {
-		for ; ; {
+		for {
 			if atomic.LoadUint32(&done) == 1 {
 				break
 			}
@@ -86,13 +86,13 @@ func (s *service) call(context *endly.Context, request *CallInput) (*CallOutput,
 	if err != nil {
 		return nil, err
 	}
-	response:=&CallOutput{
-		InvokeOutput:output,
+	response := &CallOutput{
+		InvokeOutput: output,
 	}
 	if len(output.Payload) > 0 {
 		payloadText := toolbox.AsString(output.Payload)
 		if toolbox.IsCompleteJSON(payloadText) {
-			if err= json.Unmarshal(output.Payload, &response.Response);err == nil {
+			if err = json.Unmarshal(output.Payload, &response.Response); err == nil {
 				output.Payload = nil
 			}
 		} else {
@@ -102,7 +102,6 @@ func (s *service) call(context *endly.Context, request *CallInput) (*CallOutput,
 	}
 	return response, err
 }
-
 
 func (s *service) setupPermission(context *endly.Context, request *SetupPermissionInput) (*lambda.AddPermissionOutput, error) {
 	client, err := GetClient(context)
@@ -166,7 +165,7 @@ func (s *service) setupFunctionInBackground(context *endly.Context, request *Dep
 	var functionConfig *lambda.FunctionConfiguration
 	functionOutput, foundErr := client.GetFunction(&lambda.GetFunctionInput{
 		FunctionName: request.FunctionName,
-	});
+	})
 	if foundErr == nil {
 		functionConfig = functionOutput.Configuration
 		createFunction := request.CreateFunctionInput
@@ -187,7 +186,7 @@ func (s *service) setupFunctionInBackground(context *endly.Context, request *Dep
 			return nil, err
 		}
 
-		if createFunction.Code.ZipFile != nil && ! hasDataChanged(createFunction.Code.ZipFile, *functionConfig.CodeSha256) {
+		if createFunction.Code.ZipFile != nil && !hasDataChanged(createFunction.Code.ZipFile, *functionConfig.CodeSha256) {
 			output.FunctionConfiguration = functionOutput.Configuration
 			return output, nil
 		}
@@ -218,9 +217,6 @@ func (s *service) setupFunctionInBackground(context *endly.Context, request *Dep
 	return output, err
 }
 
-
-
-
 /*
 This method uses EventSourceMappingsInput, so only the following source are supported at the moment,
 
@@ -228,14 +224,14 @@ This method uses EventSourceMappingsInput, so only the following source are supp
 	//    * Amazon DynamoDB Streams - The ARN of the stream.
 	//    * Amazon Simple Queue Service - The ARN of the queue.
 
- */
+*/
 func (s *service) setupTriggerSource(context *endly.Context, request *SetupTriggerSourceInput) (*SetupTriggerSourceOutput, error) {
 	client, err := GetClient(context)
 	if err != nil {
 		return nil, err
 	}
 	response := &SetupTriggerSourceOutput{
-		EventMappings:make([]*lambda.EventSourceMappingConfiguration, 0),
+		EventMappings: make([]*lambda.EventSourceMappingConfiguration, 0),
 	}
 	for _, trigger := range request.Triggers {
 
@@ -255,16 +251,16 @@ func (s *service) setupTriggerSource(context *endly.Context, request *SetupTrigg
 			}
 		}
 		listOutput, _ := client.ListEventSourceMappings(&lambda.ListEventSourceMappingsInput{
-			FunctionName: request.FunctionName,
-			EventSourceArn:trigger.SourceARN,
+			FunctionName:   request.FunctionName,
+			EventSourceArn: trigger.SourceARN,
 		})
 		if listOutput == nil || len(listOutput.EventSourceMappings) == 0 {
 			mappingConfig, err := client.CreateEventSourceMapping(&lambda.CreateEventSourceMappingInput{
-				Enabled: trigger.Enabled,
-				BatchSize: trigger.BatchSize,
-				EventSourceArn: trigger.SourceARN,
-				FunctionName: request.FunctionName,
-				StartingPosition: trigger.StartingPosition,
+				Enabled:                   trigger.Enabled,
+				BatchSize:                 trigger.BatchSize,
+				EventSourceArn:            trigger.SourceARN,
+				FunctionName:              request.FunctionName,
+				StartingPosition:          trigger.StartingPosition,
 				StartingPositionTimestamp: trigger.StartingPositionTimestamp,
 			})
 			if err != nil {
@@ -275,9 +271,9 @@ func (s *service) setupTriggerSource(context *endly.Context, request *SetupTrigg
 		}
 		for _, eventMapping := range listOutput.EventSourceMappings {
 			mappingConfig, err := client.UpdateEventSourceMapping(&lambda.UpdateEventSourceMappingInput{
-				UUID:eventMapping.UUID,
-				Enabled: trigger.Enabled,
-				BatchSize: trigger.BatchSize,
+				UUID:         eventMapping.UUID,
+				Enabled:      trigger.Enabled,
+				BatchSize:    trigger.BatchSize,
 				FunctionName: request.FunctionName,
 			})
 			if err != nil {
@@ -288,9 +284,6 @@ func (s *service) setupTriggerSource(context *endly.Context, request *SetupTrigg
 	}
 	return response, nil
 }
-
-
-
 
 func (s *service) registerRoutes() {
 	client := &lambda.Lambda{}
@@ -347,7 +340,6 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
-
 
 	s.Register(&endly.Route{
 		Action: "deploy",
@@ -418,9 +410,6 @@ func (s *service) registerRoutes() {
 		},
 	})
 }
-
-
-
 
 //New creates a new AWS Ec2 service.
 func New() endly.Service {

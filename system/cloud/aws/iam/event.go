@@ -42,10 +42,10 @@ func NewRoleEventInfo(output *GetRoleInfoOutput) *RoleEventInfo {
 }
 
 type GroupEventInfo struct {
-	Group   *string
-	Arn     *string
-	Users   []string          `yaml:"users,omitempty"`
-	Defined []*PolicyEvenInfo `yaml:"defined,omitempty"`
+	Group    *string
+	Arn      *string
+	Users    []string          `yaml:"users,omitempty"`
+	Defined  []*PolicyEvenInfo `yaml:"defined,omitempty"`
 	Attached []*PolicyEvenInfo `yaml:"attached,omitempty"`
 }
 
@@ -64,11 +64,11 @@ func (e *GroupEventInfo) Messages() []*msg.Message {
 
 func NewGroupEventInfo(output *GetGroupInfoOutput, includeUsers bool) *GroupEventInfo {
 	var result = &GroupEventInfo{
-		Group:   output.Group.GroupName,
-		Arn:     output.Group.Arn,
-		Defined: getPolicies(output.Defined),
+		Group:    output.Group.GroupName,
+		Arn:      output.Group.Arn,
+		Defined:  getPolicies(output.Defined),
 		Attached: getPolicies(output.Attached),
-		Users:   make([]string, 0),
+		Users:    make([]string, 0),
 	}
 	if includeUsers && len(output.Users) > 0 {
 		for _, user := range output.Users {
@@ -105,7 +105,7 @@ func NewUserEventInfo(output *GetUserInfoOutput) *UserEventInfo {
 		Arn:      output.User.Arn,
 		Attached: getPolicies(output.Attached),
 		Defined:  getPolicies(output.Defined),
-		Groups:make([]*GroupEventInfo, 0),
+		Groups:   make([]*GroupEventInfo, 0),
 	}
 	if len(output.Groups) > 0 {
 		for _, groupOutput := range output.Groups {
@@ -116,7 +116,7 @@ func NewUserEventInfo(output *GetUserInfoOutput) *UserEventInfo {
 }
 
 func (o *GetRoleInfoOutput) Messages() []*msg.Message {
-	if o==nil {
+	if o == nil {
 		return nil
 	}
 	event := NewRoleEventInfo(o)
@@ -124,7 +124,7 @@ func (o *GetRoleInfoOutput) Messages() []*msg.Message {
 }
 
 func (o *GetUserInfoOutput) Messages() []*msg.Message {
-	if o==nil {
+	if o == nil {
 		return nil
 	}
 	event := NewUserEventInfo(o)

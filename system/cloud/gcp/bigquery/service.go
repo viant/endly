@@ -9,13 +9,11 @@ import (
 	"time"
 )
 
-
 const (
 	//ServiceID Google BigQuery Service ID.
-	ServiceID = "gcp/bigquery"
+	ServiceID  = "gcp/bigquery"
 	doneStatus = "DONE"
 )
-
 
 //no operation service
 type service struct {
@@ -30,10 +28,10 @@ func (s *service) load(context *endly.Context, request *LoadRequest) (*bigquery.
 	jobService := bigquery.NewJobsService(client.service)
 
 	insertCall := jobService.Insert(request.Project, &bigquery.Job{
-		Configuration:&bigquery.JobConfiguration{
-			Load:&request.JobConfigurationLoad,
+		Configuration: &bigquery.JobConfiguration{
+			Load: &request.JobConfigurationLoad,
 		},
-		JobReference:request.Job,
+		JobReference: request.Job,
 	})
 
 	job, err := insertCall.Do()
@@ -44,7 +42,6 @@ func (s *service) load(context *endly.Context, request *LoadRequest) (*bigquery.
 		Job: job.JobReference,
 	})
 }
-
 
 func (s *service) query(context *endly.Context, request *QueryRequest) (*bigquery.Job, error) {
 	client, err := GetClient(context)
@@ -54,10 +51,10 @@ func (s *service) query(context *endly.Context, request *QueryRequest) (*bigquer
 	jobService := bigquery.NewJobsService(client.service)
 
 	insertCall := jobService.Insert(request.Project, &bigquery.Job{
-		Configuration:&bigquery.JobConfiguration{
-			Query:&request.JobConfigurationQuery,
+		Configuration: &bigquery.JobConfiguration{
+			Query: &request.JobConfigurationQuery,
 		},
-		JobReference:request.Job,
+		JobReference: request.Job,
 	})
 
 	job, err := insertCall.Do()
@@ -68,7 +65,6 @@ func (s *service) query(context *endly.Context, request *QueryRequest) (*bigquer
 		Job: job.JobReference,
 	})
 }
-
 
 func (s *service) copy(context *endly.Context, request *CopyRequest) (*bigquery.Job, error) {
 	client, err := GetClient(context)
@@ -78,10 +74,10 @@ func (s *service) copy(context *endly.Context, request *CopyRequest) (*bigquery.
 	jobService := bigquery.NewJobsService(client.service)
 
 	insertCall := jobService.Insert(request.Project, &bigquery.Job{
-		Configuration:&bigquery.JobConfiguration{
-			Copy:&request.JobConfigurationTableCopy,
+		Configuration: &bigquery.JobConfiguration{
+			Copy: &request.JobConfigurationTableCopy,
 		},
-		JobReference:request.Job,
+		JobReference: request.Job,
 	})
 
 	job, err := insertCall.Do()
@@ -93,9 +89,7 @@ func (s *service) copy(context *endly.Context, request *CopyRequest) (*bigquery.
 	})
 }
 
-
-
-func (s *service) jobWait(context *endly.Context, request *JobWaitRequest) (response *bigquery.Job,  err error) {
+func (s *service) jobWait(context *endly.Context, request *JobWaitRequest) (response *bigquery.Job, err error) {
 	err = s.RunInBackground(context, func() error {
 		response, err = s.waitForOperationCompletion(context, request.Job)
 		return err
@@ -103,7 +97,7 @@ func (s *service) jobWait(context *endly.Context, request *JobWaitRequest) (resp
 	return response, err
 }
 
-func (s *service) waitForOperationCompletion(context *endly.Context,  job *bigquery.JobReference) (*bigquery.Job, error) {
+func (s *service) waitForOperationCompletion(context *endly.Context, job *bigquery.JobReference) (*bigquery.Job, error) {
 	client, err := GetClient(context)
 	if err != nil {
 		return nil, err
@@ -116,18 +110,16 @@ func (s *service) waitForOperationCompletion(context *endly.Context,  job *bigqu
 		if err != nil {
 			return nil, err
 		}
-		if job.Status.State== doneStatus {
+		if job.Status.State == doneStatus {
 			return job, err
 		}
 		time.Sleep(time.Second)
 	}
 }
 
-
-
 func (s *service) registerRoutes() {
 	client := &bigquery.Service{}
-	routes, err := gcp.BuildRoutes(client, nil,  getClient)
+	routes, err := gcp.BuildRoutes(client, nil, getClient)
 	if err != nil {
 		log.Printf("unable register service %v actions: %v\n", ServiceID, err)
 		return
@@ -136,7 +128,6 @@ func (s *service) registerRoutes() {
 		route.OnRawRequest = InitRequest
 		s.Register(route)
 	}
-
 
 	s.Register(&endly.Route{
 		Action: "query",
@@ -165,7 +156,6 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
-
 
 	s.Register(&endly.Route{
 		Action: "load",
@@ -251,8 +241,6 @@ func (s *service) registerRoutes() {
 		},
 	})
 }
-
-
 
 //New creates a new BigQuery service.
 func New() endly.Service {

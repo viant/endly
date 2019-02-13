@@ -6,7 +6,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-
 //Represents reset method event part
 type RestMethodInfo struct {
 	HTTPMethod        string
@@ -59,7 +58,7 @@ func NewResetAPIEvent(output *SetupRestAPIOutput) *ResetAPIEvent {
 			Path:    *resource.Path,
 			ID:      *resource.Id,
 			Methods: make([]*RestMethodInfo, 0),
-			TestCLI:fmt.Sprintf(`aws apigateway test-invoke-method --rest-api-id %s  --resource-id %s --http-method "GET"`, *output.Id, *resource.Id),
+			TestCLI: fmt.Sprintf(`aws apigateway test-invoke-method --rest-api-id %s  --resource-id %s --http-method "GET"`, *output.Id, *resource.Id),
 		}
 		if len(resource.ResourceMethods) > 0 {
 			for k, v := range resource.ResourceMethods {

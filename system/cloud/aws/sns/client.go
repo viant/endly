@@ -22,7 +22,7 @@ func setClient(context *endly.Context, rawRequest map[string]interface{}) error 
 
 func getClient(context *endly.Context) (interface{}, error) {
 	client := &sns.SNS{}
-	if ! context.Contains(clientKey) {
+	if !context.Contains(clientKey) {
 		_ = setClient(context, map[string]interface{}{"client": 1})
 	}
 	if !context.GetInto(clientKey, &client) {
@@ -31,7 +31,6 @@ func getClient(context *endly.Context) (interface{}, error) {
 	return client, nil
 }
 
-
 //GetClient returns sns client from context
 func GetClient(context *endly.Context) (*sns.SNS, error) {
 	client, err := getClient(context)
@@ -39,7 +38,7 @@ func GetClient(context *endly.Context) (*sns.SNS, error) {
 		return nil, err
 	}
 	snsClient, ok := client.(*sns.SNS)
-	if !  ok {
+	if !ok {
 		return nil, fmt.Errorf("unexpected client type: %T", client)
 	}
 	return snsClient, nil

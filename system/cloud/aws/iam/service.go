@@ -95,7 +95,7 @@ func (s *service) setupRole(context *endly.Context, request *SetupRolePolicyInpu
 
 	state := context.State()
 	var role *iam.Role
-	if foundErr !=  nil{
+	if foundErr != nil {
 		createRole := &request.CreateRoleInput
 		if createRole.AssumeRolePolicyDocument == nil {
 			createRole.AssumeRolePolicyDocument = request.DefaultPolicyDocument
@@ -122,8 +122,6 @@ func (s *service) setupRole(context *endly.Context, request *SetupRolePolicyInpu
 		}
 	}
 
-
-
 	if err = s.setupAttachedRolePolicy(context, role, request); err != nil {
 		return nil, err
 	}
@@ -135,7 +133,7 @@ func (s *service) setupRole(context *endly.Context, request *SetupRolePolicyInpu
 	})
 }
 
-func (s *service) setupRolePolicy(context *endly.Context, role *iam.Role, request *SetupRolePolicyInput) (error) {
+func (s *service) setupRolePolicy(context *endly.Context, role *iam.Role, request *SetupRolePolicyInput) error {
 	client, err := GetClient(context)
 	if err != nil {
 		return err
@@ -189,7 +187,7 @@ func (s *service) setupRolePolicy(context *endly.Context, role *iam.Role, reques
 	return err
 }
 
-func (s *service) setupAttachedRolePolicy(context *endly.Context, role *iam.Role, request *SetupRolePolicyInput) (error) {
+func (s *service) setupAttachedRolePolicy(context *endly.Context, role *iam.Role, request *SetupRolePolicyInput) error {
 	client, err := GetClient(context)
 	if err != nil {
 		return err
@@ -238,11 +236,11 @@ func (s *service) getPolicyVersion(context *endly.Context, policyArn string) (*i
 	}
 	policyOutput, err := client.GetPolicy(&iam.GetPolicyInput{
 		PolicyArn: &policyArn,
-	});
+	})
 	policyVersion, err := client.GetPolicyVersion(&iam.GetPolicyVersionInput{
 		PolicyArn: &policyArn,
 		VersionId: policyOutput.Policy.DefaultVersionId,
-	});
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -297,15 +295,13 @@ func (s *service) getRoleInfo(context *endly.Context, request *GetRoleInfoInput)
 	return output, nil
 }
 
-
-
 func (s *service) getGroupInfo(context *endly.Context, request *GetGroupInfoInput) (*GetGroupInfoOutput, error) {
 	client, err := GetClient(context)
 	if err != nil {
 		return nil, err
 	}
 	output := &GetGroupInfoOutput{
-		Defined:  make([]*Policy, 0),
+		Defined: make([]*Policy, 0),
 	}
 	groupOutput, err := client.GetGroup(&iam.GetGroupInput{GroupName: request.GroupName})
 	if err != nil {
@@ -346,7 +342,6 @@ func (s *service) getGroupInfo(context *endly.Context, request *GetGroupInfoInpu
 	return output, nil
 }
 
-
 func (s *service) getUserInfo(context *endly.Context, request *GetUserInfoInput) (*GetUserInfoOutput, error) {
 	client, err := GetClient(context)
 	if err != nil {
@@ -355,8 +350,7 @@ func (s *service) getUserInfo(context *endly.Context, request *GetUserInfoInput)
 	output := &GetUserInfoOutput{
 		Defined:  make([]*Policy, 0),
 		Attached: make([]*Policy, 0),
-		Groups:make([]*GetGroupInfoOutput, 0),
-
+		Groups:   make([]*GetGroupInfoOutput, 0),
 	}
 	userOutput, err := client.GetUser(&iam.GetUserInput{UserName: request.UserName})
 	if err != nil {
@@ -395,7 +389,7 @@ func (s *service) getUserInfo(context *endly.Context, request *GetUserInfoInput)
 		UserName: request.UserName,
 	}); groupsOutput != nil && len(groupsOutput.Groups) > 0 {
 		for _, group := range groupsOutput.Groups {
-			groupInfo, err := s.getGroupInfo(context, &GetGroupInfoInput{GroupName:group.GroupName})
+			groupInfo, err := s.getGroupInfo(context, &GetGroupInfoInput{GroupName: group.GroupName})
 			if err != nil {
 				return nil, err
 			}
@@ -404,8 +398,6 @@ func (s *service) getUserInfo(context *endly.Context, request *GetUserInfoInput)
 	}
 	return output, nil
 }
-
-
 
 func (s *service) registerRoutes() {
 	client := &iam.IAM{}

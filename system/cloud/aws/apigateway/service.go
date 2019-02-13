@@ -37,7 +37,7 @@ func (s *service) setupResetAPI(context *endly.Context, request *SetupRestAPIInp
 
 	for _, resource := range request.Resources {
 		parent, ok := byPath[resource.ParentPath()]
-		if ! ok {
+		if !ok {
 			available := toolbox.MapKeysToStringSlice(byPath)
 			return nil, fmt.Errorf("unable locate parent resource: %v, for part %v,  available: %s", resource.ParentPath(), *resource.PathPart, available)
 		}
@@ -70,10 +70,6 @@ func (s *service) setupResetAPI(context *endly.Context, request *SetupRestAPIInp
 	}
 	return response, nil
 }
-
-
-
-
 
 func (s *service) getOrCreateRestAPI(context *endly.Context, request *apigateway.CreateRestApiInput) (*apigateway.RestApi, *apigateway.GetResourcesOutput, error) {
 	client, err := GetClient(context)
@@ -114,7 +110,6 @@ func (s *service) getOrCreateRestAPI(context *endly.Context, request *apigateway
 	return restAPI, resources, err
 }
 
-
 func (s *service) setupResource(context *endly.Context, setup *SetupResourceInput, api *apigateway.RestApi, resources map[string]*apigateway.Resource) (*SetupResourceOutput, error) {
 	response := &SetupResourceOutput{
 		ResourceMethods: make(map[string]*apigateway.Method),
@@ -125,7 +120,7 @@ func (s *service) setupResource(context *endly.Context, setup *SetupResourceInpu
 		return nil, err
 	}
 	resource, ok := resources[setup.Path]
-	if ! ok {
+	if !ok {
 		resourceInput.RestApiId = api.Id
 		if resource, err = client.CreateResource(resourceInput); err != nil {
 			return nil, err
@@ -162,7 +157,7 @@ func (s *service) setupResourceMethod(context *endly.Context, api *apigateway.Re
 	setupMethod := SetupMethodInput(*resourceMethod.PutMethodInput)
 	setupMethod.RestApiId = api.Id
 	setupMethod.ResourceId = resource.Id
-	method, err := s.setupMethod(context, &setupMethod);
+	method, err := s.setupMethod(context, &setupMethod)
 	if err != nil {
 		return nil, err
 	}
@@ -293,13 +288,10 @@ func (s *service) getStage(context *endly.Context, deployment *apigateway.Deploy
 	return nil, fmt.Errorf("failed to lookup stage for name: %v, api %v", stageName, restApiId)
 }
 
-
-
-
 func (s *service) removeRestAPI(context *endly.Context, request *RemoveRestAPIInput) (*apigateway.DeleteRestApiOutput, error) {
 	client, err := GetClient(context)
 	if err != nil {
-		return  nil, err
+		return nil, err
 	}
 	keysResponse, err := client.GetRestApis(&apigateway.GetRestApisInput{})
 	if err != nil {
@@ -317,7 +309,7 @@ func (s *service) removeRestAPI(context *endly.Context, request *RemoveRestAPIIn
 		return nil, nil
 	}
 	return client.DeleteRestApi(&apigateway.DeleteRestApiInput{
-		RestApiId:restAPI.Id,
+		RestApiId: restAPI.Id,
 	})
 }
 
@@ -380,7 +372,6 @@ func (s *service) registerRoutes() {
 		},
 	})
 }
-
 
 //New creates a new AWS API Gateway service.
 func New() endly.Service {

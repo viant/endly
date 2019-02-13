@@ -11,7 +11,6 @@ type Message struct {
 	Message string `json:"message"`
 }
 
-
 // HelloWorld prints "Hello, World!" or Hello, $message.From"
 func HelloWorldFn(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)

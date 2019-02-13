@@ -11,16 +11,13 @@ type RecreateRoleInput iam.CreateRoleInput
 //DropRoleInput deattaches all role polices and deletes role
 type DropRoleInput iam.DeleteRoleInput
 
-
-
 //SetupRolePolicyInput represents setup role policy input
 type SetupRolePolicyInput struct {
 	iam.CreateRoleInput
 	DefaultPolicyDocument *string
-	Attach []*iam.AttachRolePolicyInput
-	Define []*iam.PutRolePolicyInput
+	Attach                []*iam.AttachRolePolicyInput
+	Define                []*iam.PutRolePolicyInput
 }
-
 
 //Validate checks if input is valid
 func (i *SetupRolePolicyInput) Validate() error {
@@ -30,30 +27,26 @@ func (i *SetupRolePolicyInput) Validate() error {
 	return nil
 }
 
-
-
 type GetRoleInfoInput iam.GetRoleInput
 type GetRoleInfoOutput struct {
-	Role *iam.Role
+	Role     *iam.Role
 	Attached []*Policy
-	Defined []*Policy
+	Defined  []*Policy
 }
-
 
 type GetUserInfoInput iam.GetUserInput
 type GetUserInfoOutput struct {
-	User *iam.User
+	User     *iam.User
 	Attached []*Policy
-	Defined []*Policy
-	Groups []*GetGroupInfoOutput
+	Defined  []*Policy
+	Groups   []*GetGroupInfoOutput
 }
-
 
 type GetGroupInfoInput iam.GetGroupInput
 
 type GetGroupInfoOutput struct {
-	Group *iam.Group
-	Users []*iam.User
+	Group    *iam.Group
+	Users    []*iam.User
 	Attached []*Policy
-	Defined []*Policy
+	Defined  []*Policy
 }

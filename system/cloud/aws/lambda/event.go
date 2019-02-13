@@ -30,12 +30,10 @@ type EventTriggerInfo struct {
 	StateTransitionReason *string `yaml:"stateTransitionReason,omitempty" type:"string"`
 }
 
-
 type SetupFunctionEvent struct {
-	Function     *FunctionInfo
-	Triggers     []*EventTriggerInfo `yaml:"triggers,omitempty"`
+	Function *FunctionInfo
+	Triggers []*EventTriggerInfo `yaml:"triggers,omitempty"`
 }
-
 
 func (e *SetupFunctionEvent) Messages() []*msg.Message {
 	info := ""

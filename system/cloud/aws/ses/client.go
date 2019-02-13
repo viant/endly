@@ -22,7 +22,7 @@ func setClient(context *endly.Context, rawRequest map[string]interface{}) error 
 
 func getClient(context *endly.Context) (interface{}, error) {
 	client := &ses.SES{}
-	if ! context.Contains(clientKey) {
+	if !context.Contains(clientKey) {
 		_ = setClient(context, map[string]interface{}{"client": 1})
 	}
 	if !context.GetInto(clientKey, &client) {

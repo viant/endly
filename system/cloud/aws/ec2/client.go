@@ -8,8 +8,6 @@ import (
 	"github.com/viant/endly/system/cloud/aws"
 )
 
-
-
 var clientKey = (*ec2.EC2)(nil)
 
 func setClient(context *endly.Context, rawRequest map[string]interface{}) error {
@@ -18,14 +16,13 @@ func setClient(context *endly.Context, rawRequest map[string]interface{}) error 
 		return err
 	}
 	sess := session.Must(session.NewSession())
-	client :=  ec2.New(sess, config)
+	client := ec2.New(sess, config)
 	return context.Put(clientKey, client)
 }
 
-
-func getClient(context *endly.Context) (interface{}, error)  {
-	client :=  &ec2.EC2{}
-	if ! context.Contains(clientKey) {
+func getClient(context *endly.Context) (interface{}, error) {
+	client := &ec2.EC2{}
+	if !context.Contains(clientKey) {
 		_ = setClient(context, map[string]interface{}{"client": 1})
 	}
 	if !context.GetInto(clientKey, &client) {
@@ -34,7 +31,6 @@ func getClient(context *endly.Context) (interface{}, error)  {
 	return client, nil
 }
 
-
 //GetClient returns ec2 client from context
 func GetClient(context *endly.Context) (*ec2.EC2, error) {
 	client, err := getClient(context)
@@ -42,7 +38,7 @@ func GetClient(context *endly.Context) (*ec2.EC2, error) {
 		return nil, err
 	}
 	ec2Client, ok := client.(*ec2.EC2)
-	if !  ok {
+	if !ok {
 		return nil, fmt.Errorf("unexpected client type: %T", client)
 	}
 

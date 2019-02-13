@@ -18,7 +18,7 @@ type CtxClient struct {
 func (s *CtxClient) SetService(service interface{}) error {
 	var ok bool
 	s.service, ok = service.(*bigquery.Service)
-	if ! ok {
+	if !ok {
 		return fmt.Errorf("unable to set service: %T", service)
 	}
 	return nil

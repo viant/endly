@@ -12,20 +12,17 @@ import (
 func TestNew(t *testing.T) {
 
 	context := endly.New().NewContext(nil)
-	if ! toolbox.FileExists(path.Join(os.Getenv("HOME"), ".secret/am.json")) {
+	if !toolbox.FileExists(path.Join(os.Getenv("HOME"), ".secret/am.json")) {
 		return
 	}
 	err := InitRequest(context, map[string]interface{}{
-		"Credentials":"am",
+		"Credentials": "am",
 	})
 	assert.Nil(t, err)
 	request, err := context.NewRequest(ServiceID, "subscriptionsList", map[string]interface{}{
-		"project":" projects/abstractmeta-p1",
+		"project": " projects/abstractmeta-p1",
 	})
 	assert.Nil(t, err)
 	assert.NotNil(t, request)
-
-
-
 
 }

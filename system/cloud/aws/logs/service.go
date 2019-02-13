@@ -14,12 +14,10 @@ const (
 	ServiceID = "aws/logs"
 )
 
-
 //no operation service
 type service struct {
 	*endly.AbstractService
 }
-
 
 func (s *service) fetchLogEvents(context *endly.Context, request *FilterLogEventMessagesInput) (response *FilterLogEventMessagesOutput, err error) {
 	client, err := GetClient(context)
@@ -31,24 +29,25 @@ func (s *service) fetchLogEvents(context *endly.Context, request *FilterLogEvent
 		return nil, err
 	}
 	response = &FilterLogEventMessagesOutput{
-		Messages:make([]interface{}, 0),
-		SearchedLogStreams:output.SearchedLogStreams,
+		Messages:           make([]interface{}, 0),
+		SearchedLogStreams: output.SearchedLogStreams,
 	}
-	defer func(){
+	defer func() {
 		normalizeMessages(response.Messages)
 		if context.IsLoggingEnabled() {
 			context.Publish(aws.NewOutputEvent("filterLogEventMessages", "proxy", response))
 		}
 	}()
 
-	if len(request.Exclude) + len(request.Include) == 0 {
+	if len(request.Exclude)+len(request.Include) == 0 {
 		for _, event := range output.Events {
 			response.Messages = append(response.Messages, event.Message)
 		}
 		return response, nil
 	}
 	exclusion := len(request.Exclude) > 0
-	outer : for _, candidate := range output.Events {
+outer:
+	for _, candidate := range output.Events {
 		if exclusion {
 			for _, fragment := range request.Exclude {
 				if strings.Contains(*candidate.Message, fragment) {
@@ -69,8 +68,6 @@ func (s *service) fetchLogEvents(context *endly.Context, request *FilterLogEvent
 	}
 	return response, nil
 }
-
-
 
 func (s *service) registerRoutes() {
 	client := &cloudwatchlogs.CloudWatchLogs{}
@@ -106,7 +103,6 @@ func (s *service) registerRoutes() {
 		},
 	})
 }
-
 
 //New creates a new AWS Cloudwatch service.
 func New() endly.Service {

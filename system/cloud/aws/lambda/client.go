@@ -8,8 +8,6 @@ import (
 	"github.com/viant/endly/system/cloud/aws"
 )
 
-
-
 var clientKey = (*lambda.Lambda)(nil)
 
 func setClient(context *endly.Context, rawRequest map[string]interface{}) error {
@@ -18,14 +16,13 @@ func setClient(context *endly.Context, rawRequest map[string]interface{}) error 
 		return err
 	}
 	sess := session.Must(session.NewSession())
-	client :=  lambda.New(sess, config)
+	client := lambda.New(sess, config)
 	return context.Put(clientKey, client)
 }
 
-
-func getClient(context *endly.Context) (interface{}, error)  {
-	client :=  &lambda.Lambda{}
-	if ! context.Contains(clientKey) {
+func getClient(context *endly.Context) (interface{}, error) {
+	client := &lambda.Lambda{}
+	if !context.Contains(clientKey) {
 		_ = setClient(context, map[string]interface{}{"client": 1})
 	}
 	if !context.GetInto(clientKey, &client) {
@@ -34,8 +31,6 @@ func getClient(context *endly.Context) (interface{}, error)  {
 	return client, nil
 }
 
-
-
 //GetClient returns lambda client from context
 func GetClient(context *endly.Context) (*lambda.Lambda, error) {
 	client, err := getClient(context)
@@ -43,7 +38,7 @@ func GetClient(context *endly.Context) (*lambda.Lambda, error) {
 		return nil, err
 	}
 	lambdaClient, ok := client.(*lambda.Lambda)
-	if !  ok {
+	if !ok {
 		return nil, fmt.Errorf("unexpected client type: %T", client)
 	}
 	return lambdaClient, nil
