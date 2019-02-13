@@ -48,6 +48,7 @@ require (
 	github.com/linkedin/goavro v2.1.0+incompatible
 	github.com/logrusorgru/aurora v0.0.0-20181002194514-a7b3b318ed4e
 	github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a
+	github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
@@ -65,12 +66,12 @@ require (
 	github.com/stretchr/testify v1.2.2
 	github.com/tebeka/selenium v0.9.3
 	github.com/viant/asc v0.2.0
-	github.com/viant/assertly v0.4.1
+	github.com/viant/assertly v0.4.3
 	github.com/viant/bgc v0.5.0
 	github.com/viant/dsc v0.4.3
-	github.com/viant/dsunit v0.6.2
+	github.com/viant/dsunit v0.6.3
 	github.com/viant/neatly v0.7.0
-	github.com/viant/toolbox v0.15.2
+	github.com/viant/toolbox v0.17.0
 	github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227 // indirect
 	go.opencensus.io v0.18.0 // indirect
 	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
@@ -92,6 +93,7 @@ require (
 	k8s.io/client-go v10.0.0+incompatible
 	k8s.io/klog v0.1.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20190202092118-df6fb93e6113 // indirect
+	k8s.io/kubernetes v1.13.3
 	sigs.k8s.io/yaml v1.1.0 // indirect
 
 )
