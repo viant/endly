@@ -1,4 +1,4 @@
-package core
+package apps
 
 import (
 	"github.com/viant/endly"
@@ -19,12 +19,12 @@ type service struct {
 
 func (s *service) registerRoutes() {
 	clientSet := fake.NewSimpleClientset()
-
-	s.registerClientRoutes(clientSet.AppsV1(), "Apps")
+	s.registerClientRoutes(clientSet.AppsV1(), "Apps", "")
+	s.registerClientRoutes(clientSet.AppsV1beta2(), "Apps", "v1b2")
 }
 
-func (s *service) registerClientRoutes(client interface{}, clientPrefix string) {
-	routes, err := shared.BuildRoutes(client, clientPrefix)
+func (s *service) registerClientRoutes(client interface{}, clientPrefix, actionPrefix string) {
+	routes, err := shared.BuildRoutesWithPrefix(client, clientPrefix, actionPrefix)
 	if err != nil {
 		log.Printf("unable register service %v actions: %v\n", ServiceID, err)
 		return

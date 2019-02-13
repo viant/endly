@@ -1,0 +1,8 @@
+pipeline:
+  runJob:
+    action: kubernetes:run
+    name: pi
+    image: perl
+    schedule: 0/1 * * * ?
+    commands:
+      - "perl -Mbignum=bpi -wle 'print bpi(2000)'"

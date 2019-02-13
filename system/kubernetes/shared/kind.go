@@ -2,7 +2,10 @@ package shared
 
 import (
 	"fmt"
+	"github.com/viant/toolbox"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"reflect"
+	"runtime/debug"
 	"strings"
 )
 
@@ -11,12 +14,34 @@ type KindOperations struct {
 	Methods map[string]ContractAdapter
 }
 
+var converter = toolbox.NewConverter("", "json")
+
 func (r *KindOperations) Lookup(method string) (ContractAdapter, error) {
-	result, ok := r.Methods[method]
+	if method == "" {
+		debug.PrintStack()
+		return nil, fmt.Errorf("method was empty")
+	}
+	adapter, ok := r.Methods[method]
 	if !ok {
 		return nil, fmt.Errorf("failed to lookup method: %v on %v.%v", method, r.APIVersion, r.Kind)
 	}
-	return result, nil
+	result := reflect.New(reflect.ValueOf(adapter).Elem().Type()).Interface()
+	resultAdapter, ok := result.(ContractAdapter)
+	if !ok {
+		return nil, fmt.Errorf("unable to cast %T to ContractAdapter", result)
+	}
+	return resultAdapter, nil
+}
+
+func (r *KindOperations) NewRequest(method string, requestData interface{}) (interface{}, error) {
+	request, err := r.Lookup(method)
+	if err != nil {
+		return nil, err
+	}
+	if err := converter.AssignConverted(request, requestData); err != nil {
+		return nil, err
+	}
+	return request, nil
 }
 
 type KindMethodMeta struct {

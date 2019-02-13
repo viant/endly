@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: content}
+data:
+  index.html: '<html><body><h1>Hello world</h1></body></html>'
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata: {name: lb}
+spec:
+  selector: {matchLabels: {name: lb}}
+  template:
+    metadata: {labels: {name: lb}}
+    spec:
+      volumes:
+        - name: content
+          configMap: {name: content}
+      containers:
+        - name: httpd
+          image: busybox
+          args: [httpd, -f, -v, -p, '8111', -h, /content]
+          volumeMounts:
+            - name: content
+              mountPath: /content
+          ports:
+            - name: http
+              containerPort: 8111
+---
+apiVersion: v1
+kind: Service
+metadata: {name: lb}
+spec:
+  selector: {name: lb}
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 8181
+      targetPort: http
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata: {name: np}
+spec:
+  selector: {matchLabels: {name: np}}
+  template:
+    metadata: {labels: {name: np}}
+    spec:
+      volumes:
+        - name: content
+          configMap: {name: content}
+      containers:
+        - name: httpd
+          image: busybox
+          args: [httpd, -f, -v, -p, '8222', -h, /content]
+          volumeMounts:
+            - name: content
+              mountPath: /content
+          ports:
+            - name: http
+              containerPort: 8222
+---
+apiVersion: v1
+kind: Service
+metadata: {name: np}
+spec:
+  selector: {name: np}
+  type: NodePort
+  ports:
+    - name: http
+      port: 8282
+targetPort: http

@@ -1,0 +1,8 @@
+pipeline:
+  runHazelcast:
+    action: kubernetes:run
+    name: hazelcast
+    image: hazelcast
+    labels:
+      app: hazelcast
+      env: prod

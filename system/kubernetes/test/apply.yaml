@@ -1,0 +1,4 @@
+pipeline:
+  applyNginx:
+    action: kubernetes:apply
+    URL: someURL.yaml
