@@ -9,7 +9,12 @@ import (
 	"strings"
 )
 
+//BuildRoutes build routes
 func BuildRoutes(service interface{}, apiPrefix string) ([]*endly.Route, error) {
+	return BuildRoutesWithPrefix(service, apiPrefix, "")
+}
+
+func BuildRoutesWithPrefix(service interface{}, apiPrefix, actionPrefix string) ([]*endly.Route, error) {
 	var result = make([]*endly.Route, 0)
 	apis, err := buildAPIHolders(service, apiPrefix)
 	if err != nil {
@@ -29,7 +34,7 @@ func BuildRoutes(service interface{}, apiPrefix string) ([]*endly.Route, error) 
 			if responseType.Kind() == reflect.Ptr {
 				responseType = responseType.Elem()
 			}
-			action := actionName(holder, method)
+			action := actionPrefix + actionName(holder, method)
 			route := &endly.Route{
 				Action:       action,
 				OnRawRequest: Init,
@@ -60,6 +65,9 @@ func BuildRoutes(service interface{}, apiPrefix string) ([]*endly.Route, error) 
 					}
 					result, err := adapter.Call()
 					if err != nil {
+						if IsNotFound(err) {
+							return &NotFound{Message: err.Error()}, nil
+						}
 						return nil, err
 					}
 
@@ -90,8 +98,8 @@ func buildAPIHolders(service interface{}, apiPrefix string) (map[string]*apiHold
 			return nil
 		}
 		returnType := method.Type.Out(0)
-		candidate := returnType.String()
-		if !strings.HasSuffix(candidate, "Interface") {
+		//candidate := returnType.String()
+		if returnType.Kind() != reflect.Interface {
 			return nil
 		}
 		holder := newServiceHolder(strings.ToLower(apiPrefix), method)
@@ -116,13 +124,7 @@ func buildAPIHolders(service interface{}, apiPrefix string) (map[string]*apiHold
 }
 
 func getService(clientCtx *CtxClient, holder *apiHolder) (interface{}, error) {
-	apiVersion, err := LookupAPIVersion(holder.kind)
-	if err != nil {
-		return nil, err
-	}
-
-	apiVersion = strings.Title(apiVersion)
-
+	apiVersion := strings.Title(holder.apiVersion)
 	if strings.Contains(apiVersion, "/") {
 		apiVersion = strings.Replace(apiVersion, "/", "", 1)
 	} else {
@@ -158,12 +160,7 @@ func getService(clientCtx *CtxClient, holder *apiHolder) (interface{}, error) {
 func actionName(holder *apiHolder, method reflect.Method) string {
 	interfaceType := holder.iFace.String()
 	kindName := kindName(interfaceType)
-	var action = ""
-	if method.Name == "List" {
-		action = "get" + holder.name
-	} else {
-		action = method.Name + kindName
-	}
+	action := method.Name + kindName
 	return toolbox.ToCaseFormat(action, toolbox.CaseUpperCamel, toolbox.CaseLowerCamel)
 }
 
@@ -184,11 +181,12 @@ func kindName(name string) string {
 }
 
 type apiHolder struct {
-	name  string
-	id    string
-	impl  interface{}
-	iFace reflect.Type
-	kind  string
+	name       string
+	id         string
+	impl       interface{}
+	iFace      reflect.Type
+	kind       string
+	apiVersion string
 }
 
 func newServiceHolder(apiPrefix string, method reflect.Method) *apiHolder {
@@ -197,10 +195,16 @@ func newServiceHolder(apiPrefix string, method reflect.Method) *apiHolder {
 		apiPrefix += "/"
 	}
 	resultType := method.Type.Out(0)
+	apiVersion := apiPrefix
+	apiType := resultType.String()
+	if index := strings.Index(apiType, "."); index != -1 {
+		apiVersion += string(apiType[:index])
+	}
 	return &apiHolder{
-		id:    apiPrefix + strings.Replace(resultType.String(), "Interface", "", 1),
-		name:  method.Name,
-		iFace: resultType,
-		kind:  util.SimpleTypeName(strings.Replace(resultType.String(), "Interface", "", 1)),
+		id:         apiPrefix + strings.Replace(resultType.String(), "Interface", "", 1),
+		name:       method.Name,
+		iFace:      resultType,
+		kind:       util.SimpleTypeName(strings.Replace(resultType.String(), "Interface", "", 1)),
+		apiVersion: apiVersion,
 	}
 }

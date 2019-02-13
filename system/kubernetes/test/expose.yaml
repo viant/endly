@@ -1,0 +1,6 @@
+pipeline:
+  applyNginx:
+    action: kubernetes:expose
+    name: myService
+    resource: Deployment/myApp
+    port: 8080

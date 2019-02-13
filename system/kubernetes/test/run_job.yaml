@@ -1,0 +1,8 @@
+pipeline:
+  runJob:
+    action: kubernetes:run
+    name: pi
+    image: perl
+    restartPolicy: OnFailure
+    commands:
+      - "perl -Mbignum=bpi -wle 'print bpi(2000)'"

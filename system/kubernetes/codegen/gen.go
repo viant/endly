@@ -29,6 +29,8 @@ func main() {
 	generateCode(goPath, parent, "autoscaling/v1")
 	generateCode(goPath, parent, "core/v1")
 	generateCode(goPath, parent, "apps/v1")
+	generateCode(goPath, parent, "apps/v1beta2")
+
 	generateCode(goPath, parent, "batch/v1")
 	generateCode(goPath, parent, "batch/v1beta1")
 	generateCode(goPath, parent, "extensions/v1beta1")

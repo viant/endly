@@ -1,0 +1,6 @@
+pipeline:
+  runNgix:
+    action: kubernetes:run
+    name: nginx
+    image: nginx
+    replicas: 5

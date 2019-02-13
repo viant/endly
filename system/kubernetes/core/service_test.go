@@ -9,5 +9,3 @@ func TestNew(t *testing.T) {
 	service := New()
 	assert.NotNil(t, service)
 }
-
-
