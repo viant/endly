@@ -76,7 +76,7 @@ Create resource(s) with create API method call.
               restartPolicy: Always
     ```
 
-## Apply resources state
+## Apply - create or patch resources
 Create resource(s) with create API method call or apply patch.
 
 1. Apply with external resource:
