@@ -1,6 +1,13 @@
-## Feb 5 2019 0.30.2
-    * Patched docker compose yaml port parsing 
-
+## Feb 13 2019 0.31.0
+    * Patched docker compose yaml port parsing
+    * Patch json conversion
+    * Added Select,Sum,Count,AsNumber udfs (toolbox/data/udf)
+    * Patched Required mapping column name (dsunit)
+    * Added <ds:empty> macro
+    * Patched assertly NumericPresssion with zero value
+    * Enhanced kubernetes service integraton (i.e. additional helper methods like: expose, run) 
+    * RunWithoutLogging helper method
+    
 ## Feb 5 2019 0.30.1
     * Patched ShowTable sql embedding issue (dsc)
     * Patched contract description (toolbox)
