@@ -16,7 +16,7 @@ type CallRequest struct {
 
 //DeployRequest represents deploy request
 type DeployRequest struct {
-	*cloudfunctions.CloudFunction
+	*cloudfunctions.CloudFunction `yaml:",inline" json:",inline"`
 	Source *url.Resource
 	Region string
 }

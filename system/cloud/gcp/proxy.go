@@ -47,7 +47,7 @@ func BuildRoutes(service interface{}, nameTransformer func(name string) string, 
 			}
 			requestType := method.Type.Out(0)
 			doMethod, hasDo := requestType.MethodByName("Do")
-			contextMethod, hasContext := requestType.MethodByName("Context")
+			_, hasContext := requestType.MethodByName("Context")
 			if !hasDo || !hasContext {
 				return nil
 			}
@@ -84,8 +84,14 @@ func BuildRoutes(service interface{}, nameTransformer func(name string) string, 
 					if err != nil {
 						return nil, err
 					}
-					_ = toolbox.CallFunction(contextMethod.Func.Interface(), request, client.Context())
-					output := toolbox.CallFunction(doMethod.Func.Interface(), request)
+
+
+					requestValue := reflect.ValueOf(request)
+					contextReceiver := requestValue.MethodByName("Context")
+					doReceiver := requestValue.MethodByName("Do")
+
+					_ = toolbox.CallFunction(contextReceiver.Interface(), client.Context())
+					output := toolbox.CallFunction(doReceiver.Interface())
 					if len(output) > 1 {
 						errOutput := output[1]
 						if errOutput != nil {

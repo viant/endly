@@ -2,6 +2,10 @@
 
 The set of google cloud services provice procy of various google.golang.org/api APIs 
 
+#### Global variables
+
+- $gcp.projectID: expands with project ID
+
 #### Usage:
 
 
