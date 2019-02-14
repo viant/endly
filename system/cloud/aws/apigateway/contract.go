@@ -11,9 +11,9 @@ import (
 
 //SetupRestAPIInput represent a request to setup API with specified resources
 type SetupRestAPIInput struct {
-	apigateway.CreateRestApiInput
+	apigateway.CreateRestApiInput `yaml:",inline" json:",inline"`
 	Resources []*SetupResourceInput
-	apigateway.CreateDeploymentInput
+	apigateway.CreateDeploymentInput `yaml:",inline" json:",inline"`
 }
 
 //SetupRestAPIInput represent setup API response
@@ -28,7 +28,7 @@ type SetupRestAPIOutput struct {
 //SetupResourceInput represents resource input
 type SetupResourceInput struct {
 	Path string
-	apigateway.CreateResourceInput
+	apigateway.CreateResourceInput `yaml:",inline" json:",inline"`
 	Methods []*ResourceMethod
 }
 
@@ -43,7 +43,7 @@ type ResourceMethod struct {
 
 //SetupResourceOutput represents setup resource output
 type SetupResourceOutput struct {
-	*apigateway.Resource
+	*apigateway.Resource `yaml:",inline" json:",inline"`
 	ResourceMethods map[string]*apigateway.Method
 }
 
