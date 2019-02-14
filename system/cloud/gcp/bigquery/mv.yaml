@@ -1,0 +1,13 @@
+pipeline:
+  query:
+    action: gcp/bigquery:tablesInsert
+    kind: bigquery#table
+    projectId: ${gcp.projectID}
+    datasetId: myDataset
+    table:
+      tableReference:
+        projectId: ${gcp.projectID}
+        datasetId: myDataset
+        tableId: myTable_mv
+      materializedView:
+        query: SELECT SUM(columnA) AS columnA, MIN(columnA) AS min_columnA FROM myTable
