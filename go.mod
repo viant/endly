@@ -1,7 +1,7 @@
 module github.com/viant/endly
 
 require (
-	cloud.google.com/go v0.34.0
+	cloud.google.com/go v0.36.0
 	contrib.go.opencensus.io/exporter/stackdriver v0.9.1 // indirect
 	firebase.google.com/go v3.5.0+incompatible // indirect
 	git.apache.org/thrift.git v0.0.0-20181205211409-17a9cffabb74 // indirect
@@ -13,7 +13,6 @@ require (
 	github.com/aerospike/aerospike-client-go v1.37.0 // indirect
 	github.com/alexbrainman/odbc v0.0.0-20190102080306-cf37ce290779
 	github.com/aws/aws-sdk-go v1.15.90
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emersion/go-smtp v0.0.0-20180917150411-7162b2ca3bcb
 	github.com/evanphx/json-patch v4.1.0+incompatible // indirect
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
@@ -25,10 +24,8 @@ require (
 	github.com/golang/protobuf v1.2.0
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/gomarkdown/markdown v0.0.0-20181104084050-d1d0edeb5d85 // indirect
-	github.com/google/btree v0.0.0-20180813153112-4030bb1f1f0c // indirect
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf // indirect
 	github.com/google/gops v0.3.5
-	github.com/google/martian v2.1.0+incompatible // indirect
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/googleapis/gnostic v0.2.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190203031600-7a902570cb17 // indirect
@@ -42,8 +39,6 @@ require (
 	github.com/klauspost/cpuid v1.2.0 // indirect
 	github.com/klauspost/crc32 v1.2.0 // indirect
 	github.com/klauspost/pgzip v1.2.1 // indirect
-	github.com/kr/pretty v0.1.0 // indirect
-	github.com/kr/pty v1.1.3 // indirect
 	github.com/lib/pq v1.0.0
 	github.com/linkedin/goavro v2.1.0+incompatible
 	github.com/logrusorgru/aurora v0.0.0-20181002194514-a7b3b318ed4e
@@ -57,7 +52,6 @@ require (
 	github.com/openzipkin/zipkin-go v0.1.3 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.8.0
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v0.9.1 // indirect
 	github.com/prometheus/common v0.0.0-20181126121408-4724e9255275 // indirect
 	github.com/prometheus/procfs v0.0.0-20181204211112-1dc9a6cbc91a // indirect
@@ -73,18 +67,12 @@ require (
 	github.com/viant/neatly v0.7.0
 	github.com/viant/toolbox v0.17.0
 	github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227 // indirect
-	go.opencensus.io v0.18.0 // indirect
 	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
 	golang.org/x/net v0.0.0-20181201002055-351d144fa1fc
 	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
-	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
 	golang.org/x/sys v0.0.0-20181205085412-a5c9d58dba9a // indirect
-	golang.org/x/time v0.0.0-20181108054448-85acf8d2951c // indirect
 	golang.org/x/tools v0.0.0-20181205014116-22934f0fdb62 // indirect
-	google.golang.org/api v0.0.0-20180910000450-7ca32eb868bf
-	google.golang.org/appengine v1.3.0 // indirect
-	google.golang.org/genproto v0.0.0-20181202183823-bd91e49a0898 // indirect
-	google.golang.org/grpc v1.17.0 // indirect
+	google.golang.org/api v0.1.0
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/linkedin/goavro.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.2.2
