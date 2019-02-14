@@ -1,9 +1,7 @@
 ## Kubernetes service
 
-Work in progress ... !!!!
-
-
 This service is *k8s.io/client-go/kubernetes.Clientset proxy 
+
 
 It defines helper method to deal with basic operation in a friendly way.
 
@@ -176,15 +174,24 @@ Expose resource(s) port via service port.
         name: myService
         resource: Deployment/myApp
     ```
-## Copy
-
-## Logs
-
 ## Delete
-
+1. Delete resource
+    ```bash
+    endly -run='kubernetes:delete' kind=pod name=myPod
+    ```
+2. Delete resources 
+    ```bash
+    endly -run='kubernetes:delete' kind='*' name=myPod
+    ```
+3. Delete resource from file
+    ```bash
+    endly -run='kubernetes:delete' URL=resources.yaml
+    ```
 ## Config Maps
 
+
 ## Secrets
+
 
 
 ## Global contract parameters

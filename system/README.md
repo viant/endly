@@ -7,7 +7,8 @@ as [Resource](https://raw.githubusercontent.com/viant/toolbox/master/url/resourc
 - [Storage Service](storage)
 - [Process Service](process)
 - [Daemon Service](daemon)
-- [Docker Service](docker)
+- [Docker Service](docker/ssh)
+- [Kubernetes Service](kubernetes)
 - [Cloud Service](cloud)
 - [Network Service](network)
 
