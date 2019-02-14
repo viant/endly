@@ -10,11 +10,11 @@ import (
 //SetupBucketNotificationInput setup permission for specified bucket
 type SetupBucketNotificationInput struct {
 	Bucket *string
-	*NotificationConfiguration
+	*NotificationConfiguration `yaml:",inline" json:",inline"`
 }
 
 type LambdaFunctionConfiguration struct {
-	s3.LambdaFunctionConfiguration
+	s3.LambdaFunctionConfiguration `yaml:",inline" json:",inline"`
 	Filter *NotificationFilter
 	lambda.SetupPermissionInput
 }
@@ -26,7 +26,7 @@ type NotificationConfiguration struct {
 
 type SetupBucketNotificationOutput struct {
 	Bucket *string
-	*s3.NotificationConfiguration
+	*s3.NotificationConfiguration `yaml:",inline" json:",inline"`
 	Permissions []*lambda.SetupPermissionInput
 }
 

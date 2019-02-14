@@ -33,7 +33,7 @@ func NewTransfer(source, dest *url.Resource, compress, expand bool, replace map[
 
 //CopyRequest represents a resources copy request
 type CopyRequest struct {
-	*Transfer `description:"if asset uses relative path it will be joined with this URL"`
+	*Transfer `description:"if asset uses relative path it will be joined with this URL" yaml:",inline" json:",inline"`
 	Assets    AssetTransfer `description:"map entry can either represent a transfer struct or simple key is the source and the value destination relative path"` // transfers
 	Transfers []*Transfer   `description:"actual transfer assets, if empty it derives from assets or source/desc "`
 	Udf       string        `description:"custom user defined function to returns a CopyHandler type func which performs the copy"`

@@ -8,7 +8,7 @@ import (
 type SetupTopicInput sns.CreateTopicInput
 
 type SetupSubscriptionInput struct {
-	*sns.SubscribeInput
+	*sns.SubscribeInput `yaml:",inline" json:",inline"`
 	Topic *string
 }
 

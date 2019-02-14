@@ -13,7 +13,7 @@ type DropRoleInput iam.DeleteRoleInput
 
 //SetupRolePolicyInput represents setup role policy input
 type SetupRolePolicyInput struct {
-	iam.CreateRoleInput
+	iam.CreateRoleInput `yaml:",inline" json:",inline"`
 	DefaultPolicyDocument *string
 	Attach                []*iam.AttachRolePolicyInput
 	Define                []*iam.PutRolePolicyInput

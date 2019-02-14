@@ -209,7 +209,7 @@ func (s *execService) run(context *endly.Context, session *model.Session, comman
 		session.EnvVariables = make(map[string]string)
 		session.CurrentDirectory = ""
 		for k, v := range env {
-			s.setEnvVariable(context, session, k, v)
+			_= s.setEnvVariable(context, session, k, v)
 		}
 		runResponse := &RunResponse{}
 		s.changeDirectory(context, session, runResponse, currentDirectory)
