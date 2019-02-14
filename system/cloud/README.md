@@ -1,5 +1,5 @@
 # Cloud services
 
 - [Amazon Web Service](aws)
-- [Google Cloud Service](gc)
+- [Google Cloud Service](gcp)
 
