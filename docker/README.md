@@ -47,4 +47,4 @@ pipeline:
       - echo 'Hello World $name'
 ```
 
-[See more examples](http://github.com/adrianwit/endly-introduction)
+[Endly introduction](http://github.com/adrianwit/endly-introduction)
