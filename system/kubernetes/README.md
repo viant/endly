@@ -22,7 +22,6 @@ or to check service contract ```endly -s='kubernetes' -a=ACTION```
 
 ## Get k8s resource info
 
-
 ```bash
 endly -run='kubernetes:get' kind=pod
 ```
@@ -187,13 +186,60 @@ Expose resource(s) port via service port.
     ```bash
     endly -run='kubernetes:delete' URL=resources.yaml
     ```
+
 ## Config Maps
+1. Creating config maps with yaml resource file
+    * endly -r=create_config
+    * [@create_config.yaml](test/create_config.yaml)  [@config.yaml](test/config.yaml)
+    ```yaml
+    pipeline:
+      createConfig:
+        action: kubernetes:create
+        URL: config.yaml
+        expand: true
+    ```
+2. Creating config maps
+    * ``endly -r=configmaps``
+    * [@configmap](test/configmap.yaml)
+    ```yaml
+    pipeline:
+      createConfig:
+        action: kubernetes:create
+        kind: ConfigMap
+        apiVersion: v1
+        metadata:
+          name: examplecfg
+        data:
+          config.property.1: value1
+          config.property.2: value2
+          config.properties: |-
+            property.1=value-1
+            property.2=value-2
+            property.3=value-3
+        binaryData:
+          foo: L3Jvb3QvMTAw
+    ```
 
-
+3. Creating config maps for folder/URL
+    * ```endly -r=configmap_from_file```
+    * [@configmap_from_file.yaml](test/configmap_from_file.yaml)
+    ```yaml
+    pipeline:
+      createConfig:
+        action: kubernetes:create
+        kind: ConfigMap
+        apiVersion: v1
+        metadata:
+          name: mycfg
+        data: $AssetsToMap('config/')
+        binaryData: $BinaryAssetsToMap('config/bin')
+    ```
 ## Secrets
-
+    
 
 
 ## Global contract parameters
 - context
 - namespace
+- kubeconfig
+- masterurl
