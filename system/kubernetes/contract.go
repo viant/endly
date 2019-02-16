@@ -32,6 +32,7 @@ type GetResponse ResourceInfoResponse
 type CreateRequest struct {
 	*ResourceMeta
 	*url.Resource
+	Expand bool `description:"flag to expand resource with $ expression"`
 }
 
 //CreateResponse represents create response
@@ -51,6 +52,7 @@ type DeleteResponse ResourceInfoResponse
 //ApplyRequest represents apply request
 type ApplyRequest struct {
 	*url.Resource
+	Expand bool `description:"flag to expand resource with $ expression"`
 }
 
 //ApplyResponse represents apply response
@@ -261,6 +263,7 @@ func (r *DeleteRequest) Init() (err error) {
 	}
 	return nil
 }
+
 
 func (r *DeleteRequest) AsGetRequest() *GetRequest {
 	result := &GetRequest{
