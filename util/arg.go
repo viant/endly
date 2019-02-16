@@ -39,6 +39,9 @@ func GetArguments(baseURLs ...string) (map[string]interface{}, error) {
 		}
 	}
 	for i := 0; i < len(arguments); i += 2 {
+		if i+1 >= len(arguments) {
+			break
+		}
 		args.SetValue(toolbox.AsString(arguments[i]), arguments[i+1])
 	}
 	return args, nil
