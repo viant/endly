@@ -12,18 +12,21 @@ import (
 	"strings"
 )
 
-func ProcessResource(context *endly.Context, resource *url.Resource, reverse bool, handler func(meta *ResourceMeta, data map[string]interface{}) error) error {
+func ProcessResource(context *endly.Context, expand bool, resource *url.Resource, reverse bool, handler func(meta *ResourceMeta, data map[string]interface{}) error) error {
 	resource, err := context.ExpandResource(resource)
 	if err != nil {
 		return err
 	}
-	var meta = &ResourceMeta{}
+	state := context.State()
+	meta := &ResourceMeta{}
 	var data = make(map[string]interface{})
-
 	ext := path.Ext(resource.URL)
 	if ext == ".json" {
 		if err = resource.Decode(&data); err != nil {
 			return err
+		}
+		if expand {
+			data = toolbox.AsMap(state.Expand(data))
 		}
 		if err = converter.AssignConverted(meta, data); err == nil {
 			err = handler(meta, data)
@@ -39,7 +42,7 @@ func ProcessResource(context *endly.Context, resource *url.Resource, reverse boo
 	docs := strings.Split(text, "---\n")
 	if reverse {
 		for i := len(docs); i >= 0; i-- {
-			if err = handleResource(docs[i], data, handler); err != nil {
+			if err = handleResource(docs[i], expand, state, data, handler); err != nil {
 				return err
 			}
 
@@ -47,14 +50,14 @@ func ProcessResource(context *endly.Context, resource *url.Resource, reverse boo
 	}
 
 	for _, doc := range docs {
-		if err = handleResource(doc, data, handler); err != nil {
+		if err = handleResource(doc, expand, state, data, handler); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func handleResource(doc string, data map[string]interface{}, handler func(meta *ResourceMeta, data map[string]interface{}) error) error {
+func handleResource(doc string, expand bool, state data.Map, data map[string]interface{}, handler func(meta *ResourceMeta, data map[string]interface{}) error) error {
 	var meta = &ResourceMeta{}
 	if err := yaml.Unmarshal([]byte(doc), &data); err != nil {
 		return err
@@ -62,6 +65,9 @@ func handleResource(doc string, data map[string]interface{}, handler func(meta *
 	normalized, err := toolbox.NormalizeKVPairs(data)
 	if err == nil {
 		data = toolbox.AsMap(normalized)
+	}
+	if expand {
+		data = toolbox.AsMap(state.Expand(data))
 	}
 	if err = converter.AssignConverted(meta, data); err == nil && len(data) > 0 {
 		err = handler(meta, data)
