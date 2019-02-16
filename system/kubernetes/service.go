@@ -532,7 +532,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//New creates a new Storage service
+//New creates a new service
 func New() *service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),
