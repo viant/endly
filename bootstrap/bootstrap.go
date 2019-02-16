@@ -74,6 +74,7 @@ import (
 	_ "github.com/viant/endly/system/kubernetes/core"
 	_ "github.com/viant/endly/system/kubernetes/extensions"
 	_ "github.com/viant/endly/system/kubernetes/networking"
+	_ "github.com/viant/endly/system/kubernetes/settings"
 	_ "github.com/viant/endly/system/kubernetes/policy"
 	_ "github.com/viant/endly/system/kubernetes/rbac"
 	_ "github.com/viant/endly/system/kubernetes/storage"
