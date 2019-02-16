@@ -39,6 +39,7 @@ func main() {
 
 	generateCode(goPath, parent, "storage/v1")
 	generateCode(goPath, parent, "networking/v1")
+	generateCode(goPath, parent, "settings/v1alpha1")
 
 }
 
