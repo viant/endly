@@ -7,7 +7,6 @@ import (
 	"github.com/viant/endly/system/kubernetes/shared"
 	"github.com/viant/toolbox"
 	"io"
-	"time"
 )
 
 const (
@@ -42,7 +41,8 @@ func (s *service) Create(context *endly.Context, request *CreateRequest) (*Creat
 		if err != nil {
 			return nil, err
 		}
-		err = s.createResource(context, createRequest, request.ResourceMeta, response, getRequest)
+		watchRequest, _ := operations.NewRequest("Watch", request.Metadata)
+		err = s.createResource(context, createRequest, request.ResourceMeta, response, getRequest, watchRequest)
 		return response, err
 	}
 	err = s.createResources(context, request, response)
@@ -53,7 +53,7 @@ func (s *service) createResources(context *endly.Context, request *CreateRequest
 	if request.Resource == nil {
 		return nil
 	}
-	return ProcessResource(context, request.Resource, false, func(meta *ResourceMeta, requestData map[string]interface{}) error {
+	return ProcessResource(context, request.Expand, request.Resource, false, func(meta *ResourceMeta, requestData map[string]interface{}) error {
 		operations, err := shared.Lookup(meta.APIVersion, meta.Kind)
 		if err != nil {
 			return err
@@ -62,6 +62,7 @@ func (s *service) createResources(context *endly.Context, request *CreateRequest
 		if err != nil {
 			return err
 		}
+		watchRequest, _ := operations.NewRequest("Watch", requestData)
 		getRequest, err := operations.NewRequest("Get", meta.Metadata)
 		if err != nil {
 			return err
@@ -69,37 +70,24 @@ func (s *service) createResources(context *endly.Context, request *CreateRequest
 		if err != nil {
 			return err
 		}
-		return s.createResource(context, createRequest, meta, response, getRequest)
+		return s.createResource(context, createRequest, meta, response, getRequest, watchRequest)
 	})
 }
 
-func (s *service) createResource(context *endly.Context, createRequest interface{}, meta *ResourceMeta, response *CreateResponse, getRequest interface{}) error {
+func (s *service) createResource(context *endly.Context, createRequest interface{}, meta *ResourceMeta, response *CreateResponse, getRequest, watchRequest interface{}) error {
 	createResponse := &ResourceInfo{}
-	err := endly.RunWithoutLogging(context, createRequest, &createResponse)
-	if err == nil {
-		createResponse.TypeMeta = meta.TypeMeta
-		createResponse.Name = meta.Metadata.Name
-		createResponse.Labels = meta.Metadata.Labels
-		response.Items = append(response.Items, createResponse)
+	watcher, err := getWatcher(context, watchRequest)
+	if err != nil {
+		return err
 	}
-	return err
-	//return waitUntilReady(context, getRequest)
-}
-
-const maxStatusWaitTimeInSec = 10
-
-func waitUntilReady(context *endly.Context, getRequest interface{}) error {
-	for i := 0; i < maxStatusWaitTimeInSec; i++ {
-		info := ResourceInfo{}
-		if err := endly.RunWithoutLogging(context, getRequest, &info); err != nil {
-			return err
-		}
-		if info.IsReady() {
-			break
-		}
-		time.Sleep(time.Second)
+	if err = endly.RunWithoutLogging(context, createRequest, &createResponse); err != nil {
+		return err
 	}
-	return nil
+	createResponse.TypeMeta = meta.TypeMeta
+	createResponse.Name = meta.Metadata.Name
+	createResponse.Labels = meta.Metadata.Labels
+	response.Items = append(response.Items, createResponse)
+	return waitUntilReady(watcher)
 }
 
 //Apply create or apply patch for specified resources
@@ -107,7 +95,7 @@ func (s *service) Apply(context *endly.Context, request *ApplyRequest) (*ApplyRe
 	response := &ApplyResponse{
 		Items: make([]*ResourceInfo, 0),
 	}
-	err := ProcessResource(context, request.Resource, false, func(meta *ResourceMeta, requestData map[string]interface{}) error {
+	err := ProcessResource(context, request.Expand, request.Resource, false, func(meta *ResourceMeta, requestData map[string]interface{}) error {
 		operations, err := shared.Lookup(meta.APIVersion, meta.Kind)
 		if err != nil {
 			return err
@@ -226,7 +214,7 @@ func (s *service) Delete(context *endly.Context, request *DeleteRequest) (*Delet
 
 func (s *service) deleteResources(context *endly.Context, request *DeleteRequest, response *DeleteResponse) error {
 	if request.Resource != nil {
-		return ProcessResource(context, request.Resource, true, func(meta *ResourceMeta, requestData map[string]interface{}) error {
+		return ProcessResource(context, false, request.Resource, true, func(meta *ResourceMeta, requestData map[string]interface{}) error {
 			response.Items = append(response.Items, &ResourceInfo{
 				TypeMeta:   meta.TypeMeta,
 				ObjectMeta: meta.Metadata,
