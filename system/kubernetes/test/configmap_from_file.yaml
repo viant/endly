@@ -1,0 +1,9 @@
+pipeline:
+  createConfig:
+    action: kubernetes:create
+    kind: ConfigMap
+    apiVersion: v1
+    metadata:
+      name: mycfg
+    data: $AssetsToMap('config/')
+    binaryData: $BinaryAssetsToMap('config/bin')

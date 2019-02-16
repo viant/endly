@@ -1,0 +1,13 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: examplecfg
+data:
+  config.property.1: value1
+  config.property.2: value2
+  config.properties: |-
+    property.1=value-1
+    property.2=value-2
+    property.3=value-3
+binaryData:
+  bar: L3Jvb3QvMTAw
