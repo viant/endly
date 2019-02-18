@@ -16,7 +16,7 @@ type CallRequest struct {
 
 //DeployRequest represents deploy request
 type DeployRequest struct {
-	*cloudfunctions.CloudFunction `yaml:",inline" json:",inline"`
+	cloudfunctions.CloudFunction `yaml:",inline" json:",inline"`
 	Source *url.Resource
 	Region string
 }
@@ -79,7 +79,7 @@ func (r *CallRequest) Validate() error {
 
 //Validate checks if request was valid
 func (r *DeployRequest) Validate() error {
-	if r.CloudFunction == nil {
+	if r.CloudFunction.Name == "" {
 		return errors.New("name was empty")
 	}
 	if r.Runtime == "" {
@@ -93,10 +93,9 @@ func (r *DeployRequest) Init() error {
 	if r.Region == "" {
 		r.Region = defaultRegion
 	}
-	if r.CloudFunction == nil {
+	if r.CloudFunction.Name =="" {
 		return nil
 	}
-
 	r.Name = initFullyQualifiedName(r.Name)
 	r.Region = initRegion(r.Region)
 	if len(r.Labels) == 0 {

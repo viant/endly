@@ -5,7 +5,7 @@ import (
 )
 
 const defaultRegion = "us-central1"
-const parentLocationTemplate = "projects/${gc.projectID}/locations/${gc.region}"
+const parentLocationTemplate = "projects/${gcp.projectID}/locations/${gcp.region}"
 
 func initFullyQualifiedName(name string) string {
 	if strings.HasPrefix(name, "projects/") {

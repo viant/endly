@@ -34,7 +34,7 @@ pipeline:
     info:
       action: gcp/compute:instancesGet
       logging: false
-      credentials: gc
+      credentials: gcp
       zone: us-central1-f
       instance: $instanceId
       project: myProject
@@ -45,5 +45,5 @@ pipeline:
         filter: project:* 
 ```
 
-The first action for given service has to define service account credentials i.e (~/.secret/gc.json)
+The first action for given service has to define service account credentials i.e (~/.secret/gcp.json)
 Project and scopes are set by default from secrets file, so they can be skipped

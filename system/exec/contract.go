@@ -178,7 +178,7 @@ func (c Command) WhenAndCommand() (string, string) {
 //RunRequest represents a simple command
 type RunRequest struct {
 	Target   *url.Resource `required:"true" description:"host where command runs" ` //execution target - destination where to run a command.
-	*Options `yaml:",inline"`
+	*Options
 	Commands []Command      `required:"true" description:"command list" `      //list of commands to run
 	Extract  model.Extracts `description:"stdout data extraction instruction"` //Stdout data extraction instruction
 }
