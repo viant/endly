@@ -32,7 +32,7 @@ type DeployInput struct {
 }
 
 type DeployOutput struct {
-	*lambda.FunctionConfiguration `yaml:",inline" json:",inline"`
+	*lambda.FunctionConfiguration `json:",inline"`
 	RoleInfo      *ciam.GetRoleInfoOutput
 	EventMappings []*lambda.EventSourceMappingConfiguration
 }

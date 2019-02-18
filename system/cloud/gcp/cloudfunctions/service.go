@@ -34,10 +34,10 @@ type service struct {
 
 func (s *service) expandWithContext(context *endly.Context, credConfig *cred.Config, region, text string) string {
 	state := context.State()
-	gcNode := data.NewMap()
-	gcNode.Put("projectID", credConfig.ProjectID)
-	gcNode.Put("region", region)
-	state.Put("gc", gcNode)
+	gcpNode := data.NewMap()
+	gcpNode.Put("projectID", credConfig.ProjectID)
+	gcpNode.Put("region", region)
+	state.Put("gcp", gcpNode)
 	return state.ExpandAsText(text)
 }
 
@@ -148,7 +148,6 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 	}
 	parent := s.expandWithContext(context, ctxClient.CredConfig, request.Region, parentLocationTemplate)
 	request.Name = s.expandWithContext(context, ctxClient.CredConfig, request.Region, request.Name)
-
 	//TODO add support for simple name based on trigger type
 	if request.EventTrigger != nil {
 		request.EventTrigger.Resource = s.expandWithContext(context, ctxClient.CredConfig, request.Region, request.EventTrigger.Resource)
@@ -178,7 +177,7 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 	}
 	request.SourceUploadUrl = uploadResponse.UploadUrl
 	if cloudFunction == nil {
-		createCall := projectService.Create(parent, request.CloudFunction)
+		createCall := projectService.Create(parent, &request.CloudFunction)
 		createCall.Context(ctxClient.Context())
 		output, err := createCall.Do()
 		if err != nil {
@@ -186,7 +185,7 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 		}
 		return output, err
 	} else {
-		cloudFunction = request.CloudFunction
+		cloudFunction = &request.CloudFunction
 	}
 	updateCall := projectService.Patch(request.Name, cloudFunction)
 	updateCall.Context(ctxClient.Context())
