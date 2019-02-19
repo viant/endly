@@ -1,5 +1,10 @@
+# SMTP service
 
-## Endly inline workflow
+- [Usage](#usage)
+- [Endly service actions](#endly)
+- [Handling errors](#errors)
+
+## Usage
 
 ```bash
 endly -r=send
@@ -35,11 +40,12 @@ pipeline:
 
 
 <a name="endly"></a>
-## Endly service action integration
+## Endly service actions
 
-Run the following command for exec service operation details:
+Run the following command for smtp service operation details:
 
 ```bash
+endly -s=smtp 
 endly -s=smtp -a=send
 ```
 
@@ -48,9 +54,7 @@ endly -s=smtp -a=send
 
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- | 
-| smtp | send | send an email to supplied recipients | [SendRequest](service_smtp_send.go#L10) | [SendResponse](service_smtp_send.go#L17) | 
-
-
+| smtp | send | send an email to supplied recipients | [SendRequest](contract.go#L10) | [SendResponse](contract.go#L17) | 
 
 **RunRequest example**
 
@@ -96,7 +100,8 @@ pipeline:
 ```
 
 
-**Catching and seding errors**
+<a name="errors"> </a>
+## Handling errors
 
 
 [@run.yaml](test/send_err.yaml)

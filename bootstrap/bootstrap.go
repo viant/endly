@@ -47,6 +47,8 @@ import (
 	_ "github.com/viant/endly/deployment/vc"
 
 	_ "github.com/viant/endly/notify/smtp"
+	_ "github.com/viant/endly/notify/slack"
+
 
 	_ "github.com/viant/endly/system/cloud/aws/apigateway"
 	_ "github.com/viant/endly/system/cloud/aws/cloudwatch"
