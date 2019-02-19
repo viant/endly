@@ -61,11 +61,10 @@ func NewMessageFromEvent(event *slack.MessageEvent, client *slack.Client) ([]*Me
 			if err != nil {
 				return nil, err
 			}
-			if file.Filetype == "json" {
-				_ = json.Unmarshal(buf.Bytes(), &message.Asset.Data)
-			}
 			if file.Filetype == "yaml" || file.Filetype == "yml" {
 				_ = yaml.Unmarshal(buf.Bytes(), &message.Asset.Data)
+			} else {
+				_ = json.Unmarshal(buf.Bytes(), &message.Asset.Data)
 			}
 
 		}
