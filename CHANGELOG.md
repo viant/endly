@@ -1,3 +1,10 @@
+## Feb 13 2019 0.32.0
+    * Added slack service
+    * Added $AssetsToMap $BinaryAssetsToMap udfs (configmaps)
+    * Renamed $gc. to $gcp. 
+    * Patched inline yaml annotation error
+    * Minor patches
+    
 ## Feb 13 2019 0.31.0
     * Patched docker compose yaml port parsing
     * Patch json conversion
