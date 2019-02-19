@@ -5,6 +5,7 @@
 - [AWS](#aws)
 - [MySQL](#mysql)
 - [Posgress](#pg)
+- [Slack](#slack)
     
 Endly on its core uses SSH and other system/cloud service requiring credentials.
 These service accept either an URL or just a name of filename without extension from ~/.secret/ folder
@@ -96,3 +97,12 @@ Provide username root, and your password
 endly -c=pg
 ```
 Provide username root, and your password
+
+
+<a name="slack"></a>
+### Slack Credentials   
+
+```bash
+endly -c=slack
+```
+Provide username as you bot name, and bot token as a password
