@@ -264,7 +264,6 @@ func (r *DeleteRequest) Init() (err error) {
 	return nil
 }
 
-
 func (r *DeleteRequest) AsGetRequest() *GetRequest {
 	result := &GetRequest{
 		Name: r.Name,

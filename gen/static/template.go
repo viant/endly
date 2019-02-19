@@ -45,7 +45,6 @@ import (
 	"net/http"
 )
 
-
 func hello(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, index)
 }
@@ -54,8 +53,6 @@ func main() {
 	http.HandleFunc("/", hello)
 	http.ListenAndServe(":8080", nil)
 }
-
-
 
 var index = `+"`"+`
 	<!DOCTYPE html>
@@ -114,7 +111,7 @@ import (
 
 //Config representa an application config
 type Config struct {
-	Port int
+	Port      int
 	Datastore *dsc.Config
 }
 
@@ -122,7 +119,6 @@ type Config struct {
 func NewConfig(port int, config *dsc.Config) *Config {
 	return &Config{Port: port, Datastore: config}
 }
-
 
 //NewConfig creates a new app config from supplied URL
 func NewConfigFromURL(URL string) (*Config, error) {
@@ -177,20 +173,19 @@ require (
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/server.go", bytes.NewReader([]byte(`package webdb
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"context"
 	"time"
-	"log"
-	"fmt"
 )
 
 type Server struct {
 	*http.Server
 	termination chan bool
 }
-
 
 func (s *Server) shutdown() {
 	<-s.termination
@@ -201,7 +196,7 @@ func (s *Server) shutdown() {
 	}
 }
 
-func (s *Server) StopOnSiginals(siginals ... os.Signal) {
+func (s *Server) StopOnSiginals(siginals ...os.Signal) {
 	notification := make(chan os.Signal, 1)
 	signal.Notify(notification, siginals...)
 	<-notification
@@ -232,9 +227,9 @@ func NewServer(service *Service, port int) *Server {
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/service.go", bytes.NewReader([]byte(`package webdb
 
 import (
+	"fmt"
 	"github.com/viant/dsc"
 	"net/http"
-	"fmt"
 )
 
 const (
@@ -270,7 +265,6 @@ func indexDummyType(response *GetTypeResponse) map[int]*DummyType {
 	}
 	return result
 }
-
 
 //GetAll returns all dummy
 func (s *Service) GetAll(request *GetRequest) *GetResponse {
@@ -359,7 +353,6 @@ import (
 	remove*/
 	"flag"
 )
-
 
 var configURL = flag.String("configURL", "", "path to config file (JSON or YAML")
 
@@ -710,10 +703,9 @@ function setSystemError(error) {
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/dummy_type.go", bytes.NewReader([]byte(`package webdb
 
-
 //DummyType represents a dummy type object
 type DummyType struct {
-	Id int `+"`"+`primaryKey:"true"`+"`"+`
+	Id   int `+"`"+`primaryKey:"true"`+"`"+`
 	Name string
 }
 `)))
@@ -817,7 +809,6 @@ type GetResponse struct {
 	Data []*Dummy
 }
 
-
 type GetTypeRequest struct {
 	Id int
 }
@@ -859,9 +850,9 @@ type Dummy struct {
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/router.go", bytes.NewReader([]byte(`package webdb
 
 import (
-	"net/http"
-	"github.com/viant/toolbox"
 	"fmt"
+	"github.com/viant/toolbox"
+	"net/http"
 )
 
 const baseURI = "/v1/api"
@@ -872,10 +863,9 @@ type Router struct {
 }
 
 func (r Router) route() {
-	r.ServeMux.Handle(baseURI + "/", r.api())
+	r.ServeMux.Handle(baseURI+"/", r.api())
 	r.ServeMux.Handle("/", r.static())
 }
-
 
 func (r Router) api() http.Handler {
 	router := toolbox.NewServiceRouter(
@@ -933,7 +923,7 @@ func (r Router) api() http.Handler {
 		},
 	)
 	return http.HandlerFunc(func(writer http.ResponseWriter, reader *http.Request) {
-		if err := router.Route(writer, reader);err != nil {
+		if err := router.Route(writer, reader); err != nil {
 			http.Error(writer, err.Error(), 500)
 		}
 
