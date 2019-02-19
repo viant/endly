@@ -85,7 +85,6 @@ func BuildRoutes(service interface{}, nameTransformer func(name string) string, 
 						return nil, err
 					}
 
-
 					requestValue := reflect.ValueOf(request)
 					contextReceiver := requestValue.MethodByName("Context")
 					doReceiver := requestValue.MethodByName("Do")
