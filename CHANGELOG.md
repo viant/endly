@@ -1,4 +1,4 @@
-## Feb 19 2019 0.32.0
+## Feb 18 2019 0.32.0
     * Added slack service
     * Added $AssetsToMap $BinaryAssetsToMap udfs (configmaps)
     * Renamed $gc. to $gcp. 
