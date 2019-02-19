@@ -1,8 +1,10 @@
 package slack
 
 import (
+	"bytes"
 	"github.com/nlopes/slack"
-	"github.com/viant/toolbox/url"
+	"gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/util/json"
 )
 
 //Asset represents a file asset
@@ -51,14 +53,21 @@ func NewMessageFromEvent(event *slack.MessageEvent, client *slack.Client) ([]*Me
 			Content:  file.Preview,
 		}
 		if file.URLPrivateDownload != "" {
-			resource := url.NewResource(file.URLPrivateDownload)
-			message.Asset.Content, err = resource.DownloadText()
+			buf := new(bytes.Buffer)
+			if err := client.GetFile(file.URLPrivateDownload, buf);err != nil {
+				return nil, err
+			}
+			message.Asset.Content = buf.String()
 			if err != nil {
 				return nil, err
 			}
-			if file.Filetype == "json" || file.Filetype == "yaml" {
-				_ = resource.Decode(&message.Asset.Data)
+			if file.Filetype == "json" {
+				_ = json.Unmarshal(buf.Bytes(), &message.Asset.Data)
 			}
+			if file.Filetype == "yaml" || file.Filetype == "yml" {
+				_ = yaml.Unmarshal(buf.Bytes(), &message.Asset.Data)
+			}
+
 		}
 		result = append(result, message)
 	}
