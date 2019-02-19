@@ -1,0 +1,20 @@
+init:
+  channel: '#serverless'
+defaults:
+  credentials: slack
+pipeline:
+  listen:
+    action: slack:listen
+    description: listen for incoming slack messages
+    channel: $channel
+  post:
+    action: slack:post
+    channel: $channel
+    messages:
+      - text: test is 1st test message
+      - text: test is 2nd test message
+  validate:
+    action: slack:pull
+    expect:
+      - text: test is 1st test message
+      - text: test is 2nd test message

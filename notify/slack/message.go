@@ -1,0 +1,66 @@
+package slack
+
+import (
+	"github.com/nlopes/slack"
+	"github.com/viant/toolbox/url"
+)
+
+//Asset represents a file asset
+type Asset struct {
+	Title         string
+	Filename      string
+	Type          string
+	Content       string
+	Data          interface{} //content data structure
+	BinaryContent []byte
+}
+
+//Message represent a slack message
+type Message struct {
+	Channel  string
+	Username string
+	Text     string
+	Asset    *Asset
+}
+
+//NewMessageFromEvent creates a new message form a message event
+func NewMessageFromEvent(event *slack.MessageEvent, client *slack.Client) ([]*Message, error) {
+	result := make([]*Message, 0)
+	channel, err := client.GetChannelInfo(event.Channel)
+	if err != nil {
+		return nil, err
+	}
+	message := &Message{}
+	message.Channel = channel.Name
+	message.Text = event.Text
+	message.Username = event.Username
+	if event.Text != "" {
+		result = append(result, message)
+	}
+	if len(event.Files) == 0 {
+		return result, nil
+	}
+
+	for _, file := range event.Files {
+		message := &Message{}
+		message.Channel = channel.Name
+		message.Asset = &Asset{
+			Title:    file.Title,
+			Filename: file.Name,
+			Type:     file.Filetype,
+			Content:  file.Preview,
+		}
+		if file.URLPrivateDownload != "" {
+			resource := url.NewResource(file.URLPrivateDownload)
+			message.Asset.Content, err = resource.DownloadText()
+			if err != nil {
+				return nil, err
+			}
+			if file.Filetype == "json" || file.Filetype == "yaml" {
+				_ = resource.Decode(&message.Asset.Data)
+			}
+		}
+		result = append(result, message)
+	}
+	return result, nil
+}
