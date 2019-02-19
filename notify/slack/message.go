@@ -54,7 +54,7 @@ func NewMessageFromEvent(event *slack.MessageEvent, client *slack.Client) ([]*Me
 		}
 		if file.URLPrivateDownload != "" {
 			buf := new(bytes.Buffer)
-			if err := client.GetFile(file.URLPrivateDownload, buf);err != nil {
+			if err := client.GetFile(file.URLPrivateDownload, buf); err != nil {
 				return nil, err
 			}
 			message.Asset.Content = buf.String()
