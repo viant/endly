@@ -1,3 +1,7 @@
+## Feb 23 2019 0.32.1
+    * Added $Concat, $Merge udfs (toolbox/data)
+    * Added available keys limit (assertly)
+
 ## Feb 18 2019 0.32.0
     * Added slack service
     * Added $AssetsToMap $BinaryAssetsToMap udfs (configmaps)
