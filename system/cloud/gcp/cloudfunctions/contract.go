@@ -17,8 +17,10 @@ type CallRequest struct {
 //DeployRequest represents deploy request
 type DeployRequest struct {
 	cloudfunctions.CloudFunction `yaml:",inline" json:",inline"`
-	Source *url.Resource
-	Region string
+	Source                       *url.Resource
+	Public                       bool     `description:"set this flag to make function public"`
+	Members                      []string `description:"members with roles/cloudfunctions.invoker role"`
+	Region                       string
 }
 
 //DeployResponse represents deploy response
@@ -93,7 +95,7 @@ func (r *DeployRequest) Init() error {
 	if r.Region == "" {
 		r.Region = defaultRegion
 	}
-	if r.CloudFunction.Name =="" {
+	if r.CloudFunction.Name == "" {
 		return nil
 	}
 	r.Name = initFullyQualifiedName(r.Name)
@@ -110,6 +112,9 @@ func (r *DeployRequest) Init() error {
 		if len(fragments) > 0 {
 			r.EntryPoint = fragments[len(fragments)-1]
 		}
+	}
+	if r.Public {
+		r.Members = []string{"allUsers"}
 	}
 	r.Labels["deployment-tool"] = "endly"
 	return r.Source.Init()

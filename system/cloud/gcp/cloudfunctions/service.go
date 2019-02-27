@@ -25,6 +25,8 @@ import (
 const (
 	//ServiceID Google Cloud Function Service Id
 	ServiceID = "gcp/cloudfunctions"
+
+	functionInvokerRole = "roles/cloudfunctions.invoker"
 )
 
 //no operation service
@@ -67,6 +69,9 @@ func (s *service) Deploy(context *endly.Context, request *DeployRequest) (*Deplo
 	if response.Function.Status == "OFFLINE" {
 		context.Publish(gcp.NewOutputEvent(request.Name, "deploy", response))
 		return nil, fmt.Errorf("failed to deploy funciton")
+	}
+	if len(request.Members) > 0  {
+		err = s.updateInvokers(context, response.Function.Name, request.Members...)
 	}
 	return response, err
 }
@@ -158,7 +163,6 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 	if err != nil {
 		cloudFunction = nil
 	}
-
 	generateRequest := &cloudfunctions.GenerateUploadUrlRequest{}
 	uploadCall := cloudfunctions.NewProjectsLocationsFunctionsService(ctxClient.service).GenerateUploadUrl(parent, generateRequest)
 	uploadCall.Context(ctxClient.Context())
@@ -191,6 +195,51 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 	updateCall.Context(ctxClient.Context())
 	return updateCall.Do()
 }
+
+
+
+
+
+func (s *service) updateInvokers(context *endly.Context, resource string, members ...string) (error) {
+	ctxClient, err := GetClient(context)
+	if err != nil {
+		return  err
+	}
+	projectService := cloudfunctions.NewProjectsLocationsFunctionsService(ctxClient.service)
+	call := projectService.GetIamPolicy(resource)
+	call.Context(ctxClient.Context())
+	policy, err := call.Do()
+	if err != nil || policy == nil {
+		return nil
+	}
+
+	if len(policy.Bindings) == 0 {
+		policy.Bindings = make([]*cloudfunctions.Binding, 0)
+	}
+	updated := false
+	for  _, binding := range policy.Bindings {
+		if binding.Role == functionInvokerRole {
+			binding.Members = members
+			updated =true
+			break;
+		}
+	}
+	if ! updated {
+		policy.Bindings = append(policy.Bindings, &cloudfunctions.Binding{
+			Members:members,
+			Role:functionInvokerRole,
+		})
+	}
+	policyRequest := &cloudfunctions.SetIamPolicyRequest{
+		Policy:policy,
+	}
+	updatePolicyCall := projectService.SetIamPolicy(resource, policyRequest)
+	updatePolicyCall.Context(ctxClient.Context())
+	_, err = updatePolicyCall.Do()
+	return err
+}
+
+
 
 func (s *service) list(context *endly.Context, request *ListRequest) (*ListResponse, error) {
 	ctxClient, err := GetClient(context)
