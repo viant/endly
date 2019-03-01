@@ -100,7 +100,7 @@ func (s *service) Apply(context *endly.Context, request *ApplyRequest) (*ApplyRe
 		if err != nil {
 			return err
 		}
-		applyResponse := &ResourceInfo{}
+		createResponse := &ResourceInfo{}
 		createRequest, err := operations.NewRequest("Create", requestData)
 		if err != nil {
 			return err
@@ -110,34 +110,37 @@ func (s *service) Apply(context *endly.Context, request *ApplyRequest) (*ApplyRe
 			return err
 		}
 		var getResponse interface{}
-		err = endly.RunWithoutLogging(context, getRequest, &getResponse)
-		if err != nil {
-			if !shared.IsNotFound(getResponse) {
+		if err = endly.RunWithoutLogging(context, getRequest, &getResponse); err != nil {
+			return err
+		}
+
+		if shared.IsNotFound(getResponse) {
+			if err = endly.RunWithoutLogging(context, createRequest, &createResponse); err != nil {
 				return err
 			}
-			if err = endly.RunWithoutLogging(context, createRequest, &applyResponse); err != nil {
-				return err
-			}
-			response.Items = append(response.Items, applyResponse)
+			response.Items = append(response.Items, createResponse)
 			return nil
 		}
+
+
 		pathData, err := NewResourcePatch(meta, getResponse, createRequest)
 		if err != nil {
 			return err
 		}
 
 		if !pathData.HasChanged {
-			response.Items = append(response.Items, applyResponse)
+			_ = converter.AssignConverted(createResponse, getResponse)
+			response.Items = append(response.Items, createResponse)
 			return nil
 		}
 		patchRequest, err := operations.NewRequest("Patch", pathData)
 		if err != nil {
 			return err
 		}
-		if err = endly.RunWithoutLogging(context, patchRequest, &applyResponse); err != nil {
+		if err = endly.RunWithoutLogging(context, patchRequest, &createResponse); err != nil {
 			return err
 		}
-		response.Items = append(response.Items, applyResponse)
+		response.Items = append(response.Items, createResponse)
 		return nil
 	})
 	return response, err
@@ -278,11 +281,11 @@ func (s *service) get(context *endly.Context, request *GetRequest, handler func(
 			return err
 		}
 		var response interface{}
+
 		if err = endly.RunWithoutLogging(context, getRequest, &response); err != nil {
-			if err != nil {
 				return err
-			}
 		}
+
 		if shared.IsNotFound(response) {
 			if len(request.kinds) == 1 {
 				return fmt.Errorf("%v", response)
@@ -294,6 +297,8 @@ func (s *service) get(context *endly.Context, request *GetRequest, handler func(
 		if err = converter.AssignConverted(&responseMap, response); err != nil {
 			return err
 		}
+
+
 		responseMap = toolbox.DeleteEmptyKeys(responseMap)
 		itemsValue, ok := responseMap["items"]
 		if !ok || itemsValue == nil || !toolbox.IsSlice(itemsValue) {
