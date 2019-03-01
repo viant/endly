@@ -153,16 +153,16 @@ func (i *ResourceInfo) IsReady() bool {
 
 //ResourcesMetaInfo represents resource meta info
 type ResourcesMetaInfo struct {
-	*ResourceMeta `json:",omitempty"`
-	Items         []*ResourceMeta `json:"items,omitempty"`
+	*ResourceMeta `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	Items         []*ResourceMeta `json:"items,omitempty" yaml:"items,omitempty"`
 }
+
 
 //ToResourceMetas converts *ResourceInfo slice to []*ResourceMeta
 func ToResourceMetas(items []*ResourceInfo) *ResourcesMetaInfo {
 	var result = &ResourcesMetaInfo{
 		Items: make([]*ResourceMeta, 0),
 	}
-
 	switch len(items) {
 	case 0:
 	case 1:
@@ -171,6 +171,7 @@ func ToResourceMetas(items []*ResourceInfo) *ResourcesMetaInfo {
 		for _, item := range items {
 			result.Items = append(result.Items, &ResourceMeta{TypeMeta: item.TypeMeta, Metadata: item.ObjectMeta})
 		}
+		result.ResourceMeta = nil
 	}
 	return result
 }
