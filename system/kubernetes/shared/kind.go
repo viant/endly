@@ -38,6 +38,11 @@ func (r *KindOperations) NewRequest(method string, requestData interface{}) (int
 	if err != nil {
 		return nil, err
 	}
+
+
+
+
+
 	if err := converter.AssignConverted(request, requestData); err != nil {
 		return nil, err
 	}
