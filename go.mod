@@ -2,9 +2,11 @@ module github.com/viant/endly
 
 require (
 	cloud.google.com/go v0.36.0
+	contrib.go.opencensus.io/exporter/ocagent v0.4.6 // indirect
 	contrib.go.opencensus.io/exporter/stackdriver v0.9.1 // indirect
 	firebase.google.com/go v3.5.0+incompatible // indirect
 	git.apache.org/thrift.git v0.0.0-20181205211409-17a9cffabb74 // indirect
+	github.com/Azure/go-autorest v11.5.0+incompatible // indirect
 	github.com/MichaelS11/go-cql-driver v0.0.0-20181029231409-81aad8db3731
 	github.com/adrianwit/dyndb v0.1.0
 	github.com/adrianwit/fbc v0.1.1
@@ -13,6 +15,7 @@ require (
 	github.com/aerospike/aerospike-client-go v1.37.0 // indirect
 	github.com/alexbrainman/odbc v0.0.0-20190102080306-cf37ce290779
 	github.com/aws/aws-sdk-go v1.15.90
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/emersion/go-smtp v0.0.0-20180917150411-7162b2ca3bcb
 	github.com/evanphx/json-patch v4.1.0+incompatible // indirect
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
@@ -28,6 +31,7 @@ require (
 	github.com/google/gops v0.3.5
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/googleapis/gnostic v0.2.0 // indirect
+	github.com/gophercloud/gophercloud v0.0.0-20190227173556-cfa8434422e7 // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190203031600-7a902570cb17 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.5.1 // indirect
@@ -67,12 +71,11 @@ require (
 	github.com/viant/dsc v0.5.0
 	github.com/viant/dsunit v0.6.3
 	github.com/viant/neatly v0.8.0
-	github.com/viant/toolbox v0.18.0
+	github.com/viant/toolbox v0.18.1
 	github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227 // indirect
-	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
+	golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67
 	golang.org/x/net v0.0.0-20181201002055-351d144fa1fc
 	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
-	golang.org/x/sys v0.0.0-20181205085412-a5c9d58dba9a // indirect
 	golang.org/x/tools v0.0.0-20181205014116-22934f0fdb62 // indirect
 	google.golang.org/api v0.1.0
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect

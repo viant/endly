@@ -1,6 +1,7 @@
 ## Feb 23 2019 0.32.2
     * Added Public flag to cloud function deploy
     * Added Members field to cloud function deploy
+    * Added Kubernetes auth plugin package
 
 ## Feb 23 2019 0.32.1
     * Added $Concat, $Merge udfs (toolbox/data)
