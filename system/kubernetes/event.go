@@ -122,5 +122,10 @@ func normalizeOutput(response interface{}) interface{} {
 		return err
 	}
 	aMap = toolbox.DeleteEmptyKeys(aMap)
+	if items, ok := aMap["items"]; ok {
+		if len(toolbox.AsSlice(items)) > 1 {
+			delete(aMap, "metadata")
+		}
+	}
 	return aMap
 }
