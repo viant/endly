@@ -38,6 +38,7 @@ func (s *AbstractService) Register(routes ...*Route) {
 	}
 }
 
+
 func (s *AbstractService) addRouteIfConvertible(request interface{}) *Route {
 	var requestType = reflect.TypeOf(request)
 	if requestType != nil {
