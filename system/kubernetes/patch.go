@@ -73,6 +73,11 @@ func deleteRemoval(operations []jsonpatch.JsonPatchOperation) []jsonpatch.JsonPa
 		if operation.Operation == "remove" {
 			continue
 		}
+		if operation.Operation == "replace" {
+			if operation.Value == nil || (toolbox.IsNumber(operation.Value) && toolbox.AsInt(operation.Value) == 0) {
+				continue
+			}
+		}
 		result = append(result, operation)
 	}
 	return result
