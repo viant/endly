@@ -234,10 +234,57 @@ Expose resource(s) port via service port.
         data: $AssetsToMap('config/')
         binaryData: $BinaryAssetsToMap('config/bin')
     ```
+
 ## Secrets
+  
+1. Creating secrets from literals
+    * ``endly -r=raw_secrets``
+    * [@raw_secrets](test/raw_secrets.yaml)
+    ```yaml
+    init:
+      username: $Cat(somefile.txt)
+      password: dev
+    pipeline:
+      setSecrets:
+        action: kubernetes:apply
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: my-secrets
+        type: Opaque
+        data:
+          username: $Base64Encode($username)
+          password: $Base64Encode($password)    
+      ```
+2. Creating secrets with endly secrets 
+    * ``endly -r=endly_secrets``
+    * [@endly_secrets](test/endly_secrets.yaml)
+    ```yaml
+    init:
+      devSecrets: $secrets.dev
+    pipeline:
+      info:
+        action: print
+        message: $devSecrets.Data
     
-
-
+      setSecrets:
+        action: kubernetes:apply
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: dev-secrets
+        type: Opaque
+        data:
+          dev.json: $Base64Encode($devSecrets.Data)
+          username: $Base64Encode($devSecrets.Username)
+          password: $Base64Encode($devSecrets.Password)
+    
+    ```
+3. Testing secrets without pipeline
+    * ```endly kubernetes:get secrets kind=secret name=dev-secrets```
+    * ```endly kubernetes:get secrets kind=secret```
+    * ```endly kubernetes:apply url=dev-secrets.yaml```
+     
 ## Global contract parameters
 - context
 - namespace
