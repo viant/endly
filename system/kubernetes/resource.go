@@ -40,13 +40,17 @@ func ProcessResource(context *endly.Context, expand bool, resource *url.Resource
 	}
 
 	docs := strings.Split(text, "---\n")
+	if len(docs) == 0 {
+		return nil
+	}
 	if reverse {
-		for i := len(docs); i >= 0; i-- {
+		for i := len(docs) - 1; i >= 0; i-- {
 			if err = handleResource(docs[i], expand, state, data, handler); err != nil {
 				return err
 			}
 
 		}
+		return nil
 	}
 
 	for _, doc := range docs {
@@ -101,6 +105,8 @@ type ResourceInfo struct {
 	Spec              interface{}
 	Status            interface{}
 	Raw               interface{} `yaml:"-"`
+	Data              interface{}
+	Type              interface{}
 }
 
 func (i *ResourceInfo) ResourceStatus() *ResourceStatus {
@@ -156,7 +162,6 @@ type ResourcesMetaInfo struct {
 	*ResourceMeta `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 	Items         []*ResourceMeta `json:"items,omitempty" yaml:"items,omitempty"`
 }
-
 
 //ToResourceMetas converts *ResourceInfo slice to []*ResourceMeta
 func ToResourceMetas(items []*ResourceInfo) *ResourcesMetaInfo {

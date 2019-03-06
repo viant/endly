@@ -95,55 +95,73 @@ func (s *service) Apply(context *endly.Context, request *ApplyRequest) (*ApplyRe
 	response := &ApplyResponse{
 		Items: make([]*ResourceInfo, 0),
 	}
+	err := s.appleResources(request, context, response)
+	return response, err
+}
+
+func (s *service) appleResources(request *ApplyRequest, context *endly.Context, response *ApplyResponse) error {
+	if request.ResourceMeta != nil && request.Kind != "" {
+		ctxClient, err := shared.GetCtxClient(context)
+		if err != nil {
+			return err
+		}
+		return s.appleResource(context, request, response, request.ResourceMeta, ctxClient.RawRequest)
+	}
+	if request.Resource == nil {
+		return nil
+	}
 	err := ProcessResource(context, request.Expand, request.Resource, false, func(meta *ResourceMeta, requestData map[string]interface{}) error {
-		operations, err := shared.Lookup(meta.APIVersion, meta.Kind)
-		if err != nil {
-			return err
-		}
-		createResponse := &ResourceInfo{}
-		createRequest, err := operations.NewRequest("Create", requestData)
-		if err != nil {
-			return err
-		}
-		getRequest, err := operations.NewRequest("Get", meta.Metadata)
-		if err != nil {
-			return err
-		}
-		var getResponse interface{}
-		if err = endly.RunWithoutLogging(context, getRequest, &getResponse); err != nil {
-			return err
-		}
+		return s.appleResource(context, request, response, meta, requestData)
+	})
+	return err
+}
 
-		if shared.IsNotFound(getResponse) {
-			if err = endly.RunWithoutLogging(context, createRequest, &createResponse); err != nil {
-				return err
-			}
-			response.Items = append(response.Items, createResponse)
-			return nil
-		}
+func (s *service) appleResource(context *endly.Context, request *ApplyRequest, response *ApplyResponse, meta *ResourceMeta, requestData map[string]interface{}) error {
+	operations, err := shared.Lookup(meta.APIVersion, meta.Kind)
+	if err != nil {
+		return err
+	}
+	createResponse := &ResourceInfo{}
+	createRequest, err := operations.NewRequest("Create", requestData)
+	if err != nil {
+		return err
+	}
+	getRequest, err := operations.NewRequest("Get", meta.Metadata)
+	if err != nil {
+		return err
+	}
+	var getResponse interface{}
+	if err = endly.RunWithoutLogging(context, getRequest, &getResponse); err != nil {
+		return err
+	}
 
-
-		pathData, err := NewResourcePatch(meta, getResponse, createRequest)
-		if err != nil {
-			return err
-		}
-
-		if !pathData.HasChanged {
-			_ = converter.AssignConverted(createResponse, getResponse)
-			response.Items = append(response.Items, createResponse)
-			return nil
-		}
-		patchRequest, err := operations.NewRequest("Patch", pathData)
-		if err != nil {
-			return err
-		}
-		if err = endly.RunWithoutLogging(context, patchRequest, &createResponse); err != nil {
+	if shared.IsNotFound(getResponse) {
+		if err = endly.RunWithoutLogging(context, createRequest, &createResponse); err != nil {
 			return err
 		}
 		response.Items = append(response.Items, createResponse)
 		return nil
-	})
-	return response, err
+	}
+
+	pathData, err := NewResourcePatch(meta, getResponse, createRequest)
+	if err != nil {
+		return err
+	}
+
+	if !pathData.HasChanged {
+		_ = converter.AssignConverted(createResponse, getResponse)
+		response.Items = append(response.Items, createResponse)
+		return nil
+	}
+	patchRequest, err := operations.NewRequest("Patch", pathData)
+	if err != nil {
+		return err
+	}
+	if err = endly.RunWithoutLogging(context, patchRequest, &createResponse); err != nil {
+		return err
+	}
+	response.Items = append(response.Items, createResponse)
+	return nil
 }
 
 /*
@@ -226,6 +244,9 @@ func (s *service) deleteResources(context *endly.Context, request *DeleteRequest
 			if err != nil {
 				return err
 			}
+			if meta.Metadata.Name != "" {
+				requestData["Name"] = meta.Metadata.Name
+			}
 			request, err := operations.NewRequest("Delete", requestData)
 			if err != nil {
 				return err
@@ -283,7 +304,7 @@ func (s *service) get(context *endly.Context, request *GetRequest, handler func(
 		var response interface{}
 
 		if err = endly.RunWithoutLogging(context, getRequest, &response); err != nil {
-				return err
+			return err
 		}
 
 		if shared.IsNotFound(response) {
@@ -297,7 +318,6 @@ func (s *service) get(context *endly.Context, request *GetRequest, handler func(
 		if err = converter.AssignConverted(&responseMap, response); err != nil {
 			return err
 		}
-
 
 		responseMap = toolbox.DeleteEmptyKeys(responseMap)
 		itemsValue, ok := responseMap["items"]

@@ -66,6 +66,13 @@ var outputTemplates = map[string]map[string]string{
 		"labels":   "$labels",
 		"nodeInfo": "$status.nodeInfo",
 	},
+	"secret": {
+		"name":   "$name",
+		"kind":   "$kind",
+		"labels": "$labels",
+		"data":   "$AsStringMap($data)",
+		"type":   "$type",
+	},
 }
 
 func transformOutput(outputPaths map[string]string, source, target map[string]interface{}) {

@@ -52,6 +52,7 @@ type DeleteResponse ResourceInfoResponse
 //ApplyRequest represents apply request
 type ApplyRequest struct {
 	*url.Resource
+	*ResourceMeta
 	Expand bool `description:"flag to expand resource with $ expression"`
 }
 
@@ -274,4 +275,9 @@ func (r *DeleteRequest) AsGetRequest() *GetRequest {
 	result.TypeMeta = r.TypeMeta
 	result.LabelSelector = r.LabelSelector
 	return result
+}
+
+//Init initializes request
+func (r *ApplyRequest) Init() error {
+	return nil
 }
