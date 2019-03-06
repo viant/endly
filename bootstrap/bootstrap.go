@@ -161,6 +161,14 @@ func Bootstrap() {
 		flagset[f.Name] = f.Value.String()
 	})
 
+	if len(os.Args) > 1 {
+		if _, ok := flagset["run"]; !ok && strings.Contains(os.Args[1], ":") {
+			flagset["run"] = os.Args[1]
+		} else 	if _, ok := flagset["r"]; !ok && strings.Contains(os.Args[1], ".") {
+			flagset["r"] = os.Args[1]
+		}
+	}
+
 	_, shouldQuit := flagset["v"]
 	flagset["v"] = flag.Lookup("v").Value.String()
 

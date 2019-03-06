@@ -1,6 +1,24 @@
-name: cloud/ec2
-tasks: start
-  params:
-    awsCredential: ~/.secret/aws.json
-    ec2InstanceId: i-0ef8d9260eaf47fdd
-
+pipeline:
+  service:
+    workflow: service/mysql
+    tasks: start
+  create-db:
+    action: dsunit:init
+    scripts:
+      - URL: datastore/db1/schema.ddl
+    datastore: db1
+    recreate: true
+    config:
+      driverName: mysql
+      descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+      credentials: $mysqlCredentials
+    admin:
+      datastore: mysql
+      config:
+        driverName: mysql
+        descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"
+        credentials: $mysqlCredentials
+  populate:
+    action: dsunit:prepare
+    datastore: db1
+    URL: datastore/db1/dictionary

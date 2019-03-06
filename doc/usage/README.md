@@ -5,15 +5,15 @@
 
 There are a few ways to execute workflow/action
 
-1) Run workflow with inline parameters
-    - endly -w=workflowname param1=value params2=value2
-2) Run single workflow with run request
-    -  endly -r=[run](runs.yaml)   
-2) Run inline workflow run request.
-    -  endly -r=[run](runm.yaml)   
 
-
-
+1) Run inline workflow
+    -  endly -r=[runs](runs.yaml)   
+2) Run inline workflow
+    -  endly [runs.yaml](runs.yaml)   
+3) Run endly service action
+    -  endly validator:assert actual=3 expect=4
+    -  kubernetes:get secrets kind=secret
+    
 To check endly other options run the following:
 
 ```text
