@@ -1,12 +1,21 @@
 package core
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/msg"
 	"github.com/viant/endly/system/cloud/gcp"
 	"github.com/viant/endly/system/kubernetes/shared"
 	"github.com/viant/toolbox"
 	"io"
+	"k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/portforward"
+	"k8s.io/client-go/transport/spdy"
+	"log"
+	"net/http"
+	"net/url"
+	"time"
 )
 
 const (
@@ -251,7 +260,7 @@ func (s *service) deleteResources(context *endly.Context, request *DeleteRequest
 			if err != nil {
 				return err
 			}
-			return endly.Run(context, request, nil)
+			return endly.RunWithoutLogging(context, request, nil)
 		})
 	}
 	return nil
@@ -291,22 +300,14 @@ func (s *service) get(context *endly.Context, request *GetRequest, handler func(
 	}
 
 	for _, kind := range request.kinds {
-		ctxClient.RawRequest["kind"] = kind
-		apiVersion := request.APIVersion
-		operations, err := shared.Lookup(apiVersion, kind)
+		operations, err := shared.Lookup(request.APIVersion, kind)
 		if err != nil {
 			return err
 		}
-		getRequest, err := operations.NewRequest(request.apiKindMethod_, ctxClient.RawRequest)
+		response, err := s.getResource(context, request, kind)
 		if err != nil {
 			return err
 		}
-		var response interface{}
-
-		if err = endly.RunWithoutLogging(context, getRequest, &response); err != nil {
-			return err
-		}
-
 		if shared.IsNotFound(response) {
 			if len(request.kinds) == 1 {
 				return fmt.Errorf("%v", response)
@@ -346,6 +347,26 @@ func (s *service) get(context *endly.Context, request *GetRequest, handler func(
 		}
 	}
 	return nil
+}
+
+func (s *service) getResource(context *endly.Context, request *GetRequest, kind string) (interface{}, error) {
+	ctxClient, err := shared.GetCtxClient(context)
+	if err != nil {
+		return nil, err
+	}
+	ctxClient.RawRequest["kind"] = kind
+	apiVersion := request.APIVersion
+	operations, err := shared.Lookup(apiVersion, kind)
+	if err != nil {
+		return nil, err
+	}
+	getRequest, err := operations.NewRequest(request.apiKindMethod_, ctxClient.RawRequest)
+	if err != nil {
+		return nil, err
+	}
+	var response interface{}
+	err = endly.RunWithoutLogging(context, getRequest, &response)
+	return response, nil
 }
 
 //RunTemplate applies k8 resource template based on supplied parameters and create a resource
@@ -555,6 +576,138 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
+
+	s.Register(&endly.Route{
+		Action: "forwardPorts",
+		RequestInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T.%v(%T)", s, "expose", &ForwardPortsRequest{}),
+		},
+		ResponseInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T", &ForwardPortsResponse{}),
+		},
+		RequestProvider: func() interface{} {
+			return &ForwardPortsRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &ForwardPortsResponse{}
+		},
+		OnRawRequest: shared.Init,
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*ForwardPortsRequest); ok {
+				output, err := s.Forward(context, req)
+				if err != nil {
+					return nil, err
+				}
+				return output, err
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+}
+
+func (s *service) getPod(context *endly.Context, request *GetRequest) (*v1.Pod, error) {
+	ctxClient, err := shared.GetCtxClient(context)
+	if err != nil {
+		return nil, err
+	}
+	if err = converter.AssignConverted(&ctxClient.RawRequest, request); err != nil {
+		return nil, err
+	}
+	resource, err := s.getResource(context, request, request.Kind)
+	if err != nil {
+		return nil, err
+	}
+	getPodRequest := &GetRequest{}
+	getPodRequest.Kind = "Pod"
+	switch val := resource.(type) {
+	case *v1.Pod:
+		return val, nil
+	case *v1.PodList:
+		if len(val.Items) == 0 {
+			return nil, fmt.Errorf("unable to locate pod")
+		}
+		for _, candidate := range val.Items {
+			if candidate.Status.Phase == "Running" {
+				return &candidate, nil
+			}
+		}
+		return &val.Items[0], nil
+	default:
+		resourceInfo := &ResourceInfo{}
+		if err = converter.AssignConverted(resourceInfo, resource); err != nil {
+			return nil, err
+		}
+		var specMap = make(map[string]interface{})
+		if err = converter.AssignConverted(&specMap, resourceInfo.Spec); err != nil {
+			return nil, err
+		}
+		rawSelector, _ := specMap["Selector"]
+		switch selector := rawSelector.(type) {
+		case string:
+			getPodRequest.LabelSelector = selector
+		case map[string]string:
+			getPodRequest.LabelSelector = shared.ToSelector(selector)
+		}
+		_ = getPodRequest.Init()
+		if getPodRequest.LabelSelector == "" {
+			return nil, fmt.Errorf("service selector was empty")
+		}
+
+		return s.getPod(context, getPodRequest)
+	}
+}
+
+func (s *service) Forward(context *endly.Context, request *ForwardPortsRequest) (*ForwardPortsResponse, error) {
+	getRequest, err := request.AsGetRequest()
+	if err != nil {
+		return nil, err
+	}
+	pod, err := s.getPod(context, getRequest)
+	if err != nil {
+		return nil, err
+	}
+	response := &ForwardPortsResponse{
+		Name: pod.Name,
+	}
+	ctxClient, err := shared.GetCtxClient(context)
+	if err != nil {
+		return nil, err
+	}
+	roundTripper, upgrader, err := spdy.RoundTripperFor(ctxClient.ResetConfig)
+	if err != nil {
+		return nil, err
+	}
+	forwardURL := &url.URL{Scheme: "https", Path: fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", ctxClient.Namespace, pod.Name), Host: ctxClient.EndpointIP()}
+	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: roundTripper}, http.MethodPost, forwardURL)
+	stopChan, readyChan := make(chan struct{}, 1), make(chan struct{}, 1)
+	context.Deffer(func() {
+		stop := struct{}{}
+		select {
+		case stopChan <- stop:
+		case <-time.After(time.Millisecond):
+		}
+	})
+	out, errOut := new(bytes.Buffer), new(bytes.Buffer)
+	forwarder, err := portforward.New(dialer, request.Ports, stopChan, readyChan, out, errOut)
+	if err != nil {
+		return nil, err
+	}
+	go func() {
+		select {
+		case <-readyChan:
+		}
+		if len(errOut.String()) != 0 {
+			context.Publish(msg.NewErrorEvent(errOut.String()))
+		} else if len(out.String()) != 0 {
+			context.Publish(shared.NewOutputEvent(forwardURL.String(), "forwardPort", out.String()))
+		}
+	}()
+	go func() {
+		if err = forwarder.ForwardPorts(); err != nil {
+			log.Print(err)
+		}
+	}()
+	return response, nil
 }
 
 //New creates a new service

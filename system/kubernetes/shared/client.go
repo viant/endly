@@ -26,8 +26,14 @@ type CtxClient struct {
 	cfgContext string
 	configPath string
 	Namespace  string
+	ResetConfig *rest.Config
 	clientSet  *kubernetes.Clientset
 	RawRequest map[string]interface{}
+}
+
+
+func (c *CtxClient) EndpointIP() string {
+	return strings.TrimLeft(c.ResetConfig.Host, "htps:/")
 }
 
 func (c *CtxClient) ConfigPath() string {
@@ -52,16 +58,16 @@ func (c *CtxClient) Clientset() (*kubernetes.Clientset, error) {
 	}
 	var err error
 	configPath := c.ConfigPath()
-	var config *rest.Config
+
 	if c.cfgContext != "" {
-		config, err = buildConfigFromFlags(c.cfgContext, configPath)
+		c.ResetConfig, err = buildConfigFromFlags(c.cfgContext, configPath)
 	} else {
-		config, err = clientcmd.BuildConfigFromFlags(c.masterURL, configPath)
+		c.ResetConfig, err = clientcmd.BuildConfigFromFlags(c.masterURL, configPath)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("unable to build conifg %v, %v", configPath, err)
 	}
-	c.clientSet, err = kubernetes.NewForConfig(config)
+	c.clientSet, err = kubernetes.NewForConfig(c.ResetConfig)
 	return c.clientSet, err
 }
 
