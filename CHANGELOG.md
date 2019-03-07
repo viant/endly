@@ -1,6 +1,7 @@
 ## Feb 23 2019 0.32.2
     * Updated endly usage endly [service:action | inlineworkflow.yaml]
     * Patched kubernetes:apply
+    * Added kubernetes:forwardPorts
     * Updated kubernetes secrets documentation  
     * Added Public flag to cloud function deploy
     * Added Members field to cloud function deploy

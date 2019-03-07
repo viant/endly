@@ -31,6 +31,7 @@ type RunRequest struct {
 	AssetURL          string
 	TagIDs            string `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
 	Tasks             string `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequentially"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
+	Interactive       bool
 	*model.InlineWorkflow
 	workflow *model.Workflow //inline workflow from pipeline
 }
