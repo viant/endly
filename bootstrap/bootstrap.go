@@ -299,6 +299,7 @@ func runAction(run string, flagset map[string]string) error {
 
 func runWorkflow(request *workflow.RunRequest, interactive bool) {
 	runner := cli.New()
+	request.Interactive = interactive
 	err := runner.Run(request)
 	if err != nil {
 		log.Fatal(err)
