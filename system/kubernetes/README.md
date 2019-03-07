@@ -300,29 +300,29 @@ Expose resource(s) port via service port.
      
 ## Forwarding ports
 1. Forwarding port for service in interactive mode (-m)
-```endly -r=forward -m```
-[@forward.yaml](test/forward.yaml)
-```yaml
-pipeline:
-  setup:
-    action: kubernetes:forwardPorts
-    kind: service
-    name: mysql
-    ports:
-      - 3306:3306
-```
+    * ```endly -r=forward -m```
+    * [@forward.yaml](test/forward.yaml)
+    ```yaml
+    pipeline:
+      setup:
+        action: kubernetes:forwardPorts
+        kind: service
+        name: mysql
+        ports:
+          - 3306:3306
+    ```
 2. Forwarding port for pod
-```endly -r=forward```
-[@forward.yaml](test/forward.yaml)
-```yaml
-pipeline:
-  setup:
-    action: kubernetes:forwardPorts
-    kind: pod
-    name: mysql-648d67bf7c-prfgs
-    ports:
-      - 3306:3306
-```
+    * ```endly -r=forward```
+    * [@forward.yaml](test/forward.yaml)
+    ```yaml
+    pipeline:
+      setup:
+        action: kubernetes:forwardPorts
+        kind: pod
+        name: mysql-648d67bf7c-prfgs
+        ports:
+          - 3306:3306
+    ```
 
      
 ## Global contract parameters
