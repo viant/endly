@@ -675,7 +675,7 @@ func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 		if r.err != nil {
 			err = r.err
 		}
-		if ! request.Interactive {
+		if !request.Interactive {
 			r.context.Close()
 		}
 		if r.hasValidationFailures || err != nil {
