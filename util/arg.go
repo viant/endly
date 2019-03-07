@@ -13,7 +13,11 @@ func GetArguments(baseURLs ...string) (map[string]interface{}, error) {
 	var args = data.NewMap()
 	var arguments = make([]interface{}, 0)
 	if len(os.Args) > 1 {
-		for i := 1; i < len(os.Args); i++ {
+		offset := 1
+		if strings.Contains(os.Args[1], ":") || strings.Contains(os.Args[1], ".") && len(os.Args) > 2 {
+			offset = 2
+		}
+		for i := offset ; i < len(os.Args); i++ {
 			var candidate = os.Args[i]
 			if strings.HasPrefix(candidate, "-") {
 				if !strings.Contains(candidate, "=") {
