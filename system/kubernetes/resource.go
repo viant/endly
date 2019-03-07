@@ -105,8 +105,6 @@ type ResourceInfo struct {
 	Spec              interface{}
 	Status            interface{}
 	Raw               interface{} `yaml:"-"`
-	Data              interface{}
-	Type              interface{}
 }
 
 func (i *ResourceInfo) ResourceStatus() *ResourceStatus {

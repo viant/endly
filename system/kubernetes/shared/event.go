@@ -13,7 +13,15 @@ type OutputEvent struct {
 
 func (e *OutputEvent) Messages() []*msg.Message {
 	info := ""
-	if content, err := yaml.Marshal(e.Value); err == nil {
+	if e.Value == nil {
+		return []*msg.Message{
+			msg.NewMessage(msg.NewStyled(e.Message, msg.MessageStyleGeneric),
+				msg.NewStyled(e.Tag, msg.MessageStyleGeneric)),
+		}
+	}
+	if text, ok := e.Value.(string);ok {
+		info = text
+	} else if content, err := yaml.Marshal(e.Value); err == nil {
 		info = string(content)
 	}
 	return []*msg.Message{

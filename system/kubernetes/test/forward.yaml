@@ -1,0 +1,7 @@
+pipeline:
+  setup:
+    action: kubernetes:forwardPorts
+    kind: service
+    name: mysql
+    ports:
+      - 3306:3306

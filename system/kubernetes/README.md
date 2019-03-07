@@ -1,7 +1,19 @@
 ## Kubernetes service
 
-This service is *k8s.io/client-go/kubernetes.Clientset proxy 
+- [Usage](#usage)
+- [Get k8s resource info](#get-k8s-resource-info)
+- [Create resources](#create-resources)
+- [Apply - create or patch resources](#apply---create-or-patch-resources)
+- [Run - crete resource from template](#run---crete-resource-from-template)
+- [Expose resource](#expose-resources)
+- [Delete Resource](#delete-resources)
+- [Config Maps](#config-maps)
+- [Secrets](#secrets)
+- [Forwarding ports](#forwarding-ports)
+- [Global contract parameters](#global-contract-parameters)
 
+
+This service is *k8s.io/client-go/kubernetes.Clientset proxy 
 
 It defines helper method to deal with basic operation in a friendly way.
 
@@ -23,15 +35,15 @@ or to check service contract ```endly -s='kubernetes' -a=ACTION```
 ## Get k8s resource info
 
 ```bash
-endly -run='kubernetes:get' kind=pod
+endly kubernetes:get kind=pod
 ```
 
 ```bash
- endly -run=kubernetes:get kind=pod labelSelector="run=load-balancer-example"
+ endly kubernetes:get kind=pod labelSelector="run=load-balancer-example"
 ```
 
 ```bash
-endly -run=kubernetes:get kind=endpoints 
+endly kubernetes:get kind=endpoints 
 ```
 
 
@@ -157,7 +169,7 @@ Create resource(s) with create API method call or apply patch.
           - "perl -Mbignum=bpi -wle 'print bpi(2000)'"
     ```
 
-## Expose
+## Expose resources
 Expose resource(s) port via service port.
 
 1. Create a service for a explicit resource and port
@@ -173,7 +185,7 @@ Expose resource(s) port via service port.
         name: myService
         resource: Deployment/myApp
     ```
-## Delete
+## Delete resources
 1. Delete resource
     ```bash
     endly -run='kubernetes:delete' kind=pod name=myPod
@@ -284,6 +296,34 @@ Expose resource(s) port via service port.
     * ```endly kubernetes:get secrets kind=secret name=dev-secrets```
     * ```endly kubernetes:get secrets kind=secret```
     * ```endly kubernetes:apply url=dev-secrets.yaml```
+     
+     
+## Forwarding ports
+1. Forwarding port for service in interactive mode (-m)
+```endly -r=forward -m```
+[@forward.yaml](test/forward.yaml)
+```yaml
+pipeline:
+  setup:
+    action: kubernetes:forwardPorts
+    kind: service
+    name: mysql
+    ports:
+      - 3306:3306
+```
+2. Forwarding port for pod
+```endly -r=forward```
+[@forward.yaml](test/forward.yaml)
+```yaml
+pipeline:
+  setup:
+    action: kubernetes:forwardPorts
+    kind: pod
+    name: mysql-648d67bf7c-prfgs
+    ports:
+      - 3306:3306
+```
+
      
 ## Global contract parameters
 - context

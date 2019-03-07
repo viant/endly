@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"github.com/go-errors/errors"
 	"github.com/viant/endly/system/kubernetes/shared"
 	"github.com/viant/toolbox/url"
 	"k8s.io/api/core/v1"
@@ -109,16 +110,17 @@ type ExposeRequest struct {
 //ExposeResponse represent expose response
 type ExposeResponse ResourceInfoResponse
 
-type CopyRequest struct {
+//ForwardPortsRequest represents forward port request
+type ForwardPortsRequest struct {
+	Name            string `description:"resource name"`
+	LabelSelector   string `json:"selector" yaml:"selector" description:"selector for matching pod or resource with pod spec"`
+	metav1.TypeMeta `json:",inline"`
+	Ports           []string `description:"ports to forward in dest:source or just port"`
 }
 
-type CopyResponse struct {
-}
-
-type ExecRequest struct {
-}
-
-type ExecResponse struct {
+//ForwardPortsRequest represents forward port response
+type ForwardPortsResponse struct {
+	Name string
 }
 
 //Init initialises request
@@ -265,6 +267,7 @@ func (r *DeleteRequest) Init() (err error) {
 	return nil
 }
 
+//AsGetRequest returns get request
 func (r *DeleteRequest) AsGetRequest() *GetRequest {
 	result := &GetRequest{
 		Name: r.Name,
@@ -280,4 +283,21 @@ func (r *DeleteRequest) AsGetRequest() *GetRequest {
 //Init initializes request
 func (r *ApplyRequest) Init() error {
 	return nil
+}
+
+func (r *ForwardPortsRequest) Validate() error {
+	if r.Kind == "" {
+		return errors.New("kind was empty")
+	}
+	return nil
+}
+
+//AsGetRequest returns get request
+func (r *ForwardPortsRequest) AsGetRequest() (*GetRequest, error) {
+	result := &GetRequest{
+		Name: r.Name,
+	}
+	result.TypeMeta = r.TypeMeta
+	result.LabelSelector = r.LabelSelector
+	return result, result.Init()
 }

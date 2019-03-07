@@ -28,7 +28,7 @@ var outputTemplates = map[string]map[string]string{
 		"clusterIP":  "$spec.clusterIP",
 		"externalIP": "$spec.externalIPs",
 		"labels":     "$meta.labels",
-		"selector":   "$selector",
+		"selector":   "$spec.selector",
 		"ports":      "$spec.ports",
 	},
 	"replicaset": {
