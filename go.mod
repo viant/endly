@@ -16,8 +16,10 @@ require (
 	github.com/alexbrainman/odbc v0.0.0-20190102080306-cf37ce290779
 	github.com/aws/aws-sdk-go v1.15.90
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/emersion/go-smtp v0.0.0-20180917150411-7162b2ca3bcb
 	github.com/evanphx/json-patch v4.1.0+incompatible // indirect
+	github.com/gin-gonic/gin v1.3.0 // indirect
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
 	github.com/go-errors/errors v1.0.1
 	github.com/go-sql-driver/mysql v1.4.1
@@ -67,7 +69,7 @@ require (
 	github.com/tebeka/selenium v0.9.3
 	github.com/viant/asc v0.2.0
 	github.com/viant/assertly v0.4.4
-	github.com/viant/bgc v0.5.0
+	github.com/viant/bgc v0.5.2
 	github.com/viant/dsc v0.5.0
 	github.com/viant/dsunit v0.6.3
 	github.com/viant/neatly v0.8.0

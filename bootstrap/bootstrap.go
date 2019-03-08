@@ -203,14 +203,17 @@ func Bootstrap() {
 		return
 	}
 
-	if _, ok := flagset["a"]; ok {
-		printServiceActionRequest()
-		return
-	}
+
 	if _, ok := flagset["s"]; ok {
 		printServiceActions()
 		return
 	}
+
+	if _, ok := flagset["a"]; ok {
+		printServiceActionRequest()
+		return
+	}
+
 
 	if run, ok := flagset["run"]; ok {
 		err := runAction(run, flagset)
@@ -529,6 +532,17 @@ func printServiceActions() {
 
 	var serviceID = flag.Lookup("s").Value.String()
 
+
+
+	if strings.Contains(serviceID, ":") {
+		pair := strings.SplitN(serviceID, ":", 2)
+		_ = flag.CommandLine.Set("s", pair[0])
+		_ = flag.CommandLine.Set("a", pair[1])
+		printServiceActionRequest()
+		return
+	}
+
+
 	if serviceID == "*" {
 		services := endly.Services(manager)
 		fmt.Printf("endly services:\n")
@@ -696,7 +710,10 @@ func loadInlineWorkflow(URL string) (*workflow.RunRequest, error) {
 
 func updateBaseRunWithOptions(request *workflow.RunRequest, flagset map[string]string) error {
 	currentPath := url.NewResource("")
-	parentURL, _ := toolbox.URLSplit(request.Source.URL)
+	parentURL, _ := toolbox.URLSplit(currentPath.URL)
+	if request.Source != nil {
+		parentURL, _ = toolbox.URLSplit(request.Source.URL)
+	}
 	params, err := util.GetArguments(currentPath.URL, parentURL)
 	if err != nil {
 		return err
