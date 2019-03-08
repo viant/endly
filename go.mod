@@ -65,6 +65,7 @@ require (
 	github.com/prometheus/procfs v0.0.0-20181204211112-1dc9a6cbc91a // indirect
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/spf13/pflag v1.0.3 // indirect
+	github.com/src-d/go-git v4.7.0+incompatible // indirect
 	github.com/stretchr/testify v1.2.2
 	github.com/tebeka/selenium v0.9.3
 	github.com/viant/asc v0.2.0
@@ -73,7 +74,7 @@ require (
 	github.com/viant/dsc v0.5.0
 	github.com/viant/dsunit v0.6.3
 	github.com/viant/neatly v0.8.0
-	github.com/viant/toolbox v0.18.2
+	github.com/viant/toolbox v0.18.3
 	github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227 // indirect
 	golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67
 	golang.org/x/net v0.0.0-20181201002055-351d144fa1fc
