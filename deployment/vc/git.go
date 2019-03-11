@@ -172,8 +172,86 @@ func (s *git) checkout(context *endly.Context, request *CheckoutRequest) (*Info,
 			return nil, err
 		}
 	}
+
 	var info = &Info{}
 	err = s.runSecureCommand(context, request.Type, origin, dest, fmt.Sprintf("git clone %v %v", origin.CredentialURL(username, ""), projectName), info, useParentDirectory)
+	return info, err
+}
+
+func (s *git) sparseCheckout(context *endly.Context, request *CheckoutRequest, modules []string) (*Info, error) {
+	origin, err := context.ExpandResource(request.Origin)
+	if err != nil {
+		return nil, err
+	}
+
+	dest, err := context.ExpandResource(request.Dest)
+	if err != nil {
+		return nil, err
+	}
+
+	username := ""
+	if origin.Credentials != "" {
+		username, err = util.GetUsername(context.Secrets, origin.Credentials)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var parent, projectName = path.Split(dest.DirectoryPath())
+	var useParentDirectory = true
+	var _, originProjectName = path.Split(origin.DirectoryPath())
+
+	if originProjectName == projectName {
+		projectName = "."
+		if dest.DirectoryPath() != "/" {
+			if err := endly.Run(context, exec.NewRunRequest(dest, false, fmt.Sprintf("mkdir -p %v", dest.DirectoryPath())), nil); err != nil {
+				return nil, nil
+			}
+		}
+		useParentDirectory = false
+	} else {
+		if err := endly.Run(context, exec.NewRunRequest(dest, false, fmt.Sprintf("cd %v", parent)), nil); err != nil {
+			return nil, err
+		}
+	}
+
+	var info = &Info{}
+	var response *StatusResponse
+	response, err = s.checkInfo(context, &StatusRequest{Source: dest, Type: request.Type})
+	if err != nil {
+		return nil, err
+	}
+	vcManaged := response.IsVersionControlManaged
+	if !vcManaged {
+		err = s.runSecureCommand(context, request.Type, origin, dest, fmt.Sprintf("git clone --no-checkout %v %v", origin.CredentialURL(username, ""), projectName), info, useParentDirectory)
+		if err != nil {
+			return info, err
+		}
+	}
+
+	err = s.runSecureCommand(context, request.Type, origin, dest, "git config core.sparseCheckout true", info, false)
+	if err != nil {
+		return info, err
+	}
+
+	if err = endly.Run(context, exec.NewRunRequest(dest, false, fmt.Sprintf("rm -f %v", ".git/info/sparse-checkout")), nil); err != nil {
+		return nil, err
+	}
+
+	for _, module := range modules {
+		err = s.runSecureCommand(context, request.Type, origin, dest, fmt.Sprintf("echo \"%v\" >> .git/info/sparse-checkout", module), info, false)
+		if err != nil {
+			return info, err
+		}
+	}
+
+	if !vcManaged {
+		err = s.runSecureCommand(context, request.Type, origin, dest, "git checkout", info, false)
+		if err != nil {
+			return info, err
+		}
+	}
+
 	return info, err
 }
 
