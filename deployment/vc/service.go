@@ -102,24 +102,43 @@ func (s *service) checkout(context *endly.Context, request *CheckoutRequest) (*C
 		return nil, err
 	}
 
-	for _, module := range modules {
+	switch request.Type {
+	case "git":
 		var moduleOrigin = origin.Clone()
 		var targetModule = target.Clone()
-		if module != "" {
-			if request.Type != "git" {
-				moduleOrigin.URL = toolbox.URLPathJoin(origin.URL, module)
+		if len(modules[0]) > 0 {
+			sparseCheckoutRequest := &CheckoutRequest{
+				Origin: moduleOrigin,
+				Dest:   targetModule,
 			}
-			targetModule.URL = toolbox.URLPathJoin(target.URL, module)
+			_, err := s.sparseCheckout(context, sparseCheckoutRequest, modules)
+			if err != nil {
+				return nil, err
+			}
 		}
 		info, err := s.checkoutArtifact(context, request.Type, moduleOrigin, targetModule, request.RemoveLocalChanges)
 		if err != nil {
 			return nil, err
 		}
 		response.Checkouts[moduleOrigin.URL] = info
+		break
+	default:
+		for _, module := range modules {
+			var moduleOrigin = origin.Clone()
+			var targetModule = target.Clone()
+			if module != "" {
+				moduleOrigin.URL = toolbox.URLPathJoin(origin.URL, module)
+				targetModule.URL = toolbox.URLPathJoin(target.URL, module)
+			}
+			info, err := s.checkoutArtifact(context, request.Type, moduleOrigin, targetModule, request.RemoveLocalChanges)
+			if err != nil {
+				return nil, err
+			}
+			response.Checkouts[moduleOrigin.URL] = info
+		}
 	}
 	return response, nil
 }
-
 func (s *service) checkoutArtifact(context *endly.Context, versionControlType string, origin, dest *url.Resource, removeLocalChanges bool) (info *Info, err error) {
 	defer func() {
 		if err != nil {
