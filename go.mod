@@ -71,10 +71,10 @@ require (
 	github.com/viant/asc v0.2.0
 	github.com/viant/assertly v0.4.4
 	github.com/viant/bgc v0.5.2
-	github.com/viant/dsc v0.5.0
-	github.com/viant/dsunit v0.6.3
+	github.com/viant/dsc v0.6.1
+	github.com/viant/dsunit v0.7.0
 	github.com/viant/neatly v0.8.0
-	github.com/viant/toolbox v0.18.3
+	github.com/viant/toolbox v0.18.4
 	github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227 // indirect
 	golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67
 	golang.org/x/net v0.0.0-20181201002055-351d144fa1fc
