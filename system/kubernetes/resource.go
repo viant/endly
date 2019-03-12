@@ -38,6 +38,9 @@ func ProcessResource(context *endly.Context, expand bool, resource *url.Resource
 	if err != nil {
 		return err
 	}
+	if expand {
+		text= state.ExpandAsText(text)
+	}
 
 	docs := strings.Split(text, "---\n")
 	if len(docs) == 0 {

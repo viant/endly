@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const maxStatusWaitTimeInSec = 10
+const maxStatusWaitTimeInSec = 30
 
 func getWatcher(context *endly.Context, watchRequest interface{}) (watch.Interface, error) {
 	if watchRequest == nil {
@@ -24,6 +24,21 @@ func getWatcher(context *endly.Context, watchRequest interface{}) (watch.Interfa
 		return result, nil
 	}
 	return nil, fmt.Errorf("unsupported type: %T\n", watchResponse)
+}
+
+func waitForEvent(watcher watch.Interface) (*watch.Event, error) {
+	if watcher == nil {
+		return nil, nil
+	}
+	defer watcher.Stop()
+	channel := watcher.ResultChan()
+	select {
+		case event:= <-channel:
+			return &event, nil
+		case <-time.After(maxStatusWaitTimeInSec * time.Second):
+			break
+	}
+	return nil, nil
 }
 
 func waitUntilReady(watcher watch.Interface) error {

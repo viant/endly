@@ -5,7 +5,6 @@ import (
 	"github.com/viant/toolbox"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
-	"runtime/debug"
 	"strings"
 )
 
@@ -18,7 +17,6 @@ var converter = toolbox.NewConverter("", "json")
 
 func (r *KindOperations) Lookup(method string) (ContractAdapter, error) {
 	if method == "" {
-		debug.PrintStack()
 		return nil, fmt.Errorf("method was empty")
 	}
 	adapter, ok := r.Methods[method]
@@ -38,11 +36,6 @@ func (r *KindOperations) NewRequest(method string, requestData interface{}) (int
 	if err != nil {
 		return nil, err
 	}
-
-
-
-
-
 	if err := converter.AssignConverted(request, requestData); err != nil {
 		return nil, err
 	}

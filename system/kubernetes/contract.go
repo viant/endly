@@ -12,6 +12,10 @@ import (
 	"strings"
 )
 
+const defaultWaitTimeoutMs = 45000
+
+
+//ResourceInfoResponse represents info response
 type ResourceInfoResponse struct {
 	Items []*ResourceInfo
 }
@@ -45,6 +49,7 @@ type DeleteRequest struct {
 	LabelSelector   string
 	metav1.TypeMeta `json:",inline"`
 	*url.Resource
+	TimeoutMs int
 }
 
 //DeleteResponse represents delete response
@@ -116,6 +121,7 @@ type ForwardPortsRequest struct {
 	LabelSelector   string `json:"selector" yaml:"selector" description:"selector for matching pod or resource with pod spec"`
 	metav1.TypeMeta `json:",inline"`
 	Ports           []string `description:"ports to forward in dest:source or just port"`
+	TimeoutMs       int      `description:"maximum wait time for pod getting ready"`
 }
 
 //ForwardPortsRequest represents forward port response
@@ -264,6 +270,9 @@ func (r *DeleteRequest) Init() (err error) {
 			return err
 		}
 	}
+	if r.TimeoutMs == 0 {
+		r.TimeoutMs = defaultWaitTimeoutMs
+	}
 	return nil
 }
 
@@ -285,6 +294,15 @@ func (r *ApplyRequest) Init() error {
 	return nil
 }
 
+//Validate checks if request is valid
+func (r *ForwardPortsRequest) Init() error {
+	if r.TimeoutMs == 0 {
+		r.TimeoutMs = defaultWaitTimeoutMs
+	}
+	return nil
+}
+
+//Validate checks if request is valid
 func (r *ForwardPortsRequest) Validate() error {
 	if r.Kind == "" {
 		return errors.New("kind was empty")

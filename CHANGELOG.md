@@ -1,4 +1,5 @@
 ## Feb 23 2019 0.32.2
+    * Added dsunit:init ping option to wait for database get online
     * Updated endly usage endly [service:action | inlineworkflow.yaml]
     * Patched kubernetes:apply
     * Added kubernetes:forwardPorts
