@@ -687,6 +687,7 @@ pipeline:
 ```
 
 To see _Endly_ in action,
+### End to end testing examples
  
 In addition a few examples of fully functioning applications are included.
 You can build, deploy and test them end to end all with endly.
