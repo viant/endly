@@ -15,6 +15,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 )
 
@@ -219,22 +220,7 @@ func (s *service) Delete(context *endly.Context, request *DeleteRequest) (*Delet
 	}
 	if request.Kind != "" {
 		err := s.get(context, request.AsGetRequest(), func(item *ResourceInfo) error {
-			if item.Name == "" {
-				return nil
-			}
-			operations, err := shared.Lookup(item.APIVersion, item.Kind)
-			if err != nil {
-				return err
-			}
-			response.Items = append(response.Items, &ResourceInfo{
-				TypeMeta:   item.TypeMeta,
-				ObjectMeta: item.ObjectMeta,
-			})
-			deleteRequest, err := operations.NewRequest("Delete", item.Raw)
-			if err != nil {
-				return err
-			}
-			return endly.RunWithoutLogging(context, deleteRequest, nil)
+			return s.deleteResource(context, request, response, item)
 		})
 		return response, err
 	}
@@ -242,25 +228,44 @@ func (s *service) Delete(context *endly.Context, request *DeleteRequest) (*Delet
 	return response, err
 }
 
+func (s *service) deleteResource(context *endly.Context, request *DeleteRequest, response *DeleteResponse, item *ResourceInfo) error {
+	if item.Name == "" {
+		return nil
+	}
+	operations, err := shared.Lookup(item.APIVersion, item.Kind)
+	if err != nil {
+		return err
+	}
+	response.Items = append(response.Items, &ResourceInfo{
+		TypeMeta:   item.TypeMeta,
+		ObjectMeta: item.ObjectMeta,
+	})
+
+	if item.Name != "" && toolbox.IsMap(item.Raw) {
+		rawRequest := toolbox.AsMap(item.Raw)
+		rawRequest["Name"] = item.Name
+	}
+
+	getRequest, _ := operations.NewRequest("Get", item.Raw)
+
+	deleteRequest, err := operations.NewRequest("Delete", item.Raw)
+	if err != nil {
+		return err
+	}
+	if err = endly.RunWithoutLogging(context, deleteRequest, nil); err != nil {
+		return err
+	}
+	return s.waitForNotFound(context, getRequest, request.TimeoutMs)
+}
+
 func (s *service) deleteResources(context *endly.Context, request *DeleteRequest, response *DeleteResponse) error {
 	if request.Resource != nil {
 		return ProcessResource(context, false, request.Resource, true, func(meta *ResourceMeta, requestData map[string]interface{}) error {
-			response.Items = append(response.Items, &ResourceInfo{
-				TypeMeta:   meta.TypeMeta,
-				ObjectMeta: meta.Metadata,
-			})
-			operations, err := shared.Lookup(meta.APIVersion, meta.Kind)
-			if err != nil {
-				return err
-			}
-			if meta.Metadata.Name != "" {
-				requestData["Name"] = meta.Metadata.Name
-			}
-			request, err := operations.NewRequest("Delete", requestData)
-			if err != nil {
-				return err
-			}
-			return endly.RunWithoutLogging(context, request, nil)
+			item := &ResourceInfo{}
+			item.TypeMeta = meta.TypeMeta
+			item.ObjectMeta = meta.Metadata
+			item.Raw = requestData
+			return s.deleteResource(context, request, response, item)
 		})
 	}
 	return nil
@@ -304,7 +309,7 @@ func (s *service) get(context *endly.Context, request *GetRequest, handler func(
 		if err != nil {
 			return err
 		}
-		response, err := s.getResource(context, request, kind)
+		response, err := s.getResource(context, request, kind, ctxClient.RawRequest)
 		if err != nil {
 			return err
 		}
@@ -349,7 +354,7 @@ func (s *service) get(context *endly.Context, request *GetRequest, handler func(
 	return nil
 }
 
-func (s *service) getResource(context *endly.Context, request *GetRequest, kind string) (interface{}, error) {
+func (s *service) getResource(context *endly.Context, request *GetRequest, kind string, requestData interface{}) (interface{}, error) {
 	ctxClient, err := shared.GetCtxClient(context)
 	if err != nil {
 		return nil, err
@@ -360,7 +365,7 @@ func (s *service) getResource(context *endly.Context, request *GetRequest, kind 
 	if err != nil {
 		return nil, err
 	}
-	getRequest, err := operations.NewRequest(request.apiKindMethod_, ctxClient.RawRequest)
+	getRequest, err := operations.NewRequest(request.apiKindMethod_, requestData)
 	if err != nil {
 		return nil, err
 	}
@@ -605,7 +610,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-func (s *service) getPod(context *endly.Context, request *GetRequest) (*v1.Pod, error) {
+func (s *service) getPod(context *endly.Context, request *GetRequest, timeoutMs int) (*v1.Pod, error) {
 	ctxClient, err := shared.GetCtxClient(context)
 	if err != nil {
 		return nil, err
@@ -613,48 +618,57 @@ func (s *service) getPod(context *endly.Context, request *GetRequest) (*v1.Pod, 
 	if err = converter.AssignConverted(&ctxClient.RawRequest, request); err != nil {
 		return nil, err
 	}
-	resource, err := s.getResource(context, request, request.Kind)
-	if err != nil {
-		return nil, err
-	}
-	getPodRequest := &GetRequest{}
-	getPodRequest.Kind = "Pod"
-	switch val := resource.(type) {
-	case *v1.Pod:
-		return val, nil
-	case *v1.PodList:
-		if len(val.Items) == 0 {
-			return nil, fmt.Errorf("unable to locate pod")
-		}
-		for _, candidate := range val.Items {
-			if candidate.Status.Phase == "Running" {
-				return &candidate, nil
-			}
-		}
-		return &val.Items[0], nil
-	default:
-		resourceInfo := &ResourceInfo{}
-		if err = converter.AssignConverted(resourceInfo, resource); err != nil {
-			return nil, err
-		}
-		var specMap = make(map[string]interface{})
-		if err = converter.AssignConverted(&specMap, resourceInfo.Spec); err != nil {
-			return nil, err
-		}
-		rawSelector, _ := specMap["Selector"]
-		switch selector := rawSelector.(type) {
-		case string:
-			getPodRequest.LabelSelector = selector
-		case map[string]string:
-			getPodRequest.LabelSelector = shared.ToSelector(selector)
-		}
-		_ = getPodRequest.Init()
-		if getPodRequest.LabelSelector == "" {
-			return nil, fmt.Errorf("service selector was empty")
-		}
 
-		return s.getPod(context, getPodRequest)
+	startTime := time.Now()
+	timeout := time.Duration(timeoutMs) * time.Millisecond
+
+
+	for ;time.Now().Sub(startTime) < timeout; {
+		resource, err := s.getResource(context, request, request.Kind, ctxClient.RawRequest)
+		if err != nil {
+			return nil, err
+		}
+		getPodRequest := &GetRequest{}
+		getPodRequest.Kind = "Pod"
+		switch val := resource.(type) {
+		case *v1.Pod:
+			return val, nil
+		case *v1.PodList:
+			if len(val.Items) == 0 {
+				time.Sleep(time.Second)
+				continue
+			}
+			for _, candidate := range val.Items {
+				if candidate.Status.Phase == v1.PodRunning {
+					return &candidate, nil
+				}
+			}
+			return &val.Items[0], nil
+		default:
+			resourceInfo := &ResourceInfo{}
+			if err = converter.AssignConverted(resourceInfo, resource); err != nil {
+				return nil, err
+			}
+			var specMap= make(map[string]interface{})
+			if err = converter.AssignConverted(&specMap, resourceInfo.Spec); err != nil {
+				return nil, err
+			}
+			rawSelector, _ := specMap["Selector"]
+			switch selector := rawSelector.(type) {
+			case string:
+				getPodRequest.LabelSelector = selector
+			case map[string]string:
+				getPodRequest.LabelSelector = shared.ToSelector(selector)
+			}
+			_ = getPodRequest.Init()
+			if getPodRequest.LabelSelector == "" {
+				return nil, fmt.Errorf("service selector was empty")
+			}
+
+			return s.getPod(context, getPodRequest, timeoutMs)
+		}
 	}
+	return nil, fmt.Errorf("getPod timeout exceeded")
 }
 
 func (s *service) Forward(context *endly.Context, request *ForwardPortsRequest) (*ForwardPortsResponse, error) {
@@ -662,10 +676,14 @@ func (s *service) Forward(context *endly.Context, request *ForwardPortsRequest) 
 	if err != nil {
 		return nil, err
 	}
-	pod, err := s.getPod(context, getRequest)
+	pod, err := s.getPod(context, getRequest, request.TimeoutMs)
 	if err != nil {
 		return nil, err
 	}
+	if err = s.waitForPodReadyIfNeeded(context, pod, request.TimeoutMs); err != nil {
+		return nil, err
+	}
+
 	response := &ForwardPortsResponse{
 		Name: pod.Name,
 	}
@@ -692,6 +710,8 @@ func (s *service) Forward(context *endly.Context, request *ForwardPortsRequest) 
 	if err != nil {
 		return nil, err
 	}
+
+
 	go func() {
 		select {
 		case <-readyChan:
@@ -702,12 +722,70 @@ func (s *service) Forward(context *endly.Context, request *ForwardPortsRequest) 
 			context.Publish(shared.NewOutputEvent(forwardURL.String(), "forwardPort", out.String()))
 		}
 	}()
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 	go func() {
+		context.Publish(shared.NewOutputEvent(forwardURL.String(), "forwardPort", nil))
+		wg.Done()
 		if err = forwarder.ForwardPorts(); err != nil {
 			log.Print(err)
 		}
 	}()
+	wg.Wait()
 	return response, nil
+}
+
+func (s *service) waitForPodReadyIfNeeded(context *endly.Context, pod *v1.Pod, timeoutMs int) error {
+	getPodRequest := &GetRequest{}
+	getPodRequest.Kind = "pod"
+	getPodRequest.Name = pod.Name
+	_ = getPodRequest.Init()
+	timeout := time.Duration(timeoutMs) * time.Millisecond
+	startTime := time.Now()
+	var ok bool
+	phase := ""
+	for ; time.Now().Sub(startTime) <= timeout; {
+		response, err := s.getResource(context, getPodRequest, "pod", getPodRequest)
+		if err != nil {
+			return err
+		}
+		if shared.IsNotFound(response) {
+			time.Sleep(time.Second)
+			continue
+		}
+		pod, ok = response.(*v1.Pod)
+		if ! ok {
+			return fmt.Errorf("unable determine pod type expected %T but had: %T", pod, response)
+		}
+		if phase != string(pod.Status.Phase) {
+			context.Publish(shared.NewOutputEvent(fmt.Sprintf("pod/%v - %v", pod.Name, pod.Status.Phase), "waitForPod", nil))
+		}
+		phase = string(pod.Status.Phase)
+		if pod.Status.Phase == v1.PodRunning {
+			return nil
+		}
+		s.Sleep(context, 1000)
+	}
+	return fmt.Errorf("podRunning timeout exceeded")
+}
+
+func (s *service) waitForNotFound(context *endly.Context, getRequest interface{}, timeoutMs int) error {
+	var response interface{}
+
+	timeout := time.Duration(timeoutMs) * time.Millisecond
+	startTime := time.Now()
+	for ; time.Now().Sub(startTime) <= timeout; {
+		if err := endly.RunWithoutLogging(context, getRequest, &response); err != nil {
+			return err
+		}
+		if shared.IsNotFound(response) {
+			return nil
+		}
+		time.Sleep(time.Second)
+	}
+
+	return fmt.Errorf("timeout exceeded")
 }
 
 //New creates a new service
