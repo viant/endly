@@ -9,6 +9,7 @@ config:
   credentials: $pgCredentials
 admin:
   datastore: postgres
+  ping: true
   config:
     driverName: postgres
     descriptor: "host=127.0.0.1 port=5432 user=[username] password=[password] dbname=[dbname] sslmode=disable"

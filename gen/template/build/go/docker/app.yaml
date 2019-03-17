@@ -20,7 +20,7 @@ pipeline:
       /$buildPath/${app}: $releasePath
   stop:
     target: $target
-    action: docker:stop-images
+    action: docker:stop
     images:
     - $app
   deploy:

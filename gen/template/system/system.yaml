@@ -4,7 +4,7 @@ defaults:
 pipeline:
   destroy:
     stop-images:
-      action: docker:stop-images
+      action: docker:stop
       images: $tags
   init:
     services: $services

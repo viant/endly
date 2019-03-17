@@ -1,0 +1,7 @@
+deploy:
+  mysql:
+    action: docker:run
+    image: mysql:5.7
+    name: ${db}
+    ports:
+      3306: 3306
