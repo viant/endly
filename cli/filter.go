@@ -23,6 +23,7 @@ func DefaultFilter() map[string]bool {
 	result["aws"] = true
 	result["gcp"] = true
 	result["shared"] = true
+	result["docker"] = true
 	return result
 }
 

@@ -81,6 +81,7 @@ import (
 	_ "github.com/viant/endly/system/kubernetes/storage"
 
 	_ "github.com/viant/endly/system/daemon"
+	_ "github.com/viant/endly/system/docker"
 	_ "github.com/viant/endly/system/docker/ssh"
 	_ "github.com/viant/endly/system/exec"
 	_ "github.com/viant/endly/system/network"
@@ -203,7 +204,6 @@ func Bootstrap() {
 		return
 	}
 
-
 	if _, ok := flagset["s"]; ok {
 		printServiceActions()
 		return
@@ -213,7 +213,6 @@ func Bootstrap() {
 		printServiceActionRequest()
 		return
 	}
-
 
 	if run, ok := flagset["run"]; ok {
 		err := runAction(run, flagset)
@@ -532,8 +531,6 @@ func printServiceActions() {
 
 	var serviceID = flag.Lookup("s").Value.String()
 
-
-
 	if strings.Contains(serviceID, ":") {
 		pair := strings.SplitN(serviceID, ":", 2)
 		_ = flag.CommandLine.Set("s", pair[0])
@@ -541,7 +538,6 @@ func printServiceActions() {
 		printServiceActionRequest()
 		return
 	}
-
 
 	if serviceID == "*" {
 		services := endly.Services(manager)

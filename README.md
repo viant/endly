@@ -186,7 +186,7 @@ defaults:
 pipeline:
   destroy:
     stop-images:
-      action: docker:stop-images
+      action: docker:stop
       images:
         - mysql
         - aerospike
