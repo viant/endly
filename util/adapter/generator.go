@@ -15,8 +15,8 @@ type {{.TypeName}} struct {
 {{.Fields}}
 }
 `,
-	"field": `  {{.Name}} {{.TypeName}}`,
-	"setService": `
+	"field": `  {{.Name}} {{.TypeName}} {{.Tag}}`,
+	"setService": `//SetService sets service
 func (r * {{.TypeName}}) SetService(service interface{}) error {
 	var ok bool
 	if r.service_, ok = service.({{.OwnerType}}); !ok {
@@ -24,7 +24,13 @@ func (r * {{.TypeName}}) SetService(service interface{}) error {
 	}
 	return nil
 }`,
-	"call": `
+
+	"setContext": `//SetContext sets context
+func (r * {{.TypeName}}) SetContext(ctx context.Context)  {
+	r.ctx = ctx
+}`,
+
+	"call": `//Call calls service
 func (r * {{.TypeName}}) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
@@ -32,7 +38,7 @@ func (r * {{.TypeName}}) Call() (result interface{}, err error) {
 	{{.Result}}r.service_.{{.Func}}({{.Params}})
 	return result, err	
 }`,
-	"func": `
+	"func": `//GetId returns request id
 func (r * {{.TypeName}}) GetId() string {
 	return "{{.ID}}";	
 }`,
@@ -71,6 +77,7 @@ type TypeMeta struct {
 	Params       string
 	Result       string
 	Embed        bool
+	hasContext   bool
 	importPrefix string
 	aliasImports map[string]string
 }
@@ -89,16 +96,31 @@ type Generator struct {
 
 func (g *Generator) buildTypeFields(typeInfo *toolbox.TypeInfo, typeMeta *TypeMeta, receiver *toolbox.FunctionInfo) error {
 	var fields = make([]string, 0)
+	serviceType := typeInfo.Package + "." + typeInfo.Name
+	if typeInfo.IsStruct {
+		serviceType = "*" + serviceType
+	}
+
+	serviceTypeName := typeInfo.Package + "." + typeInfo.Name
+	if typeInfo.IsStruct {
+		serviceTypeName = "*" + serviceTypeName
+	}
 	serviceField, err := g.expandTemplate("field", &toolbox.FieldInfo{
 		Name:     "service_",
-		TypeName: typeInfo.Package + "." + typeInfo.Name,
+		TypeName: serviceTypeName,
 	})
+
 	fields = append(fields, serviceField)
 	var params = make([]string, 0)
 	embedded := false
 	for _, param := range receiver.ParameterFields {
 
-		param.Name = strings.Title(param.Name)
+		if param.TypeName == "context.Context" {
+			param.Name = "ctx"
+			typeMeta.hasContext = true
+		} else {
+			param.Name = strings.Title(param.Name)
+		}
 		if param.TypePackage != "" {
 			if param.TypePackage == typeMeta.OwnerPackage {
 				param.TypeName = strings.Replace(param.TypeName, param.TypePackage, typeMeta.importPrefix, 1)
@@ -111,17 +133,16 @@ func (g *Generator) buildTypeFields(typeInfo *toolbox.TypeInfo, typeMeta *TypeMe
 		}
 
 		embedable := typeMeta.Embed && !embedded && !isBasicType(param.TypeName)
-		if embedable {
+		if embedable && param.Name != "ctx" && param.TypeName != "io.Reader" {
 			param.Name = ""
 			embedded = true
 		}
-
 		if serviceField, err = g.expandTemplate("field", param); err != nil {
 			return err
 		}
 		fields = append(fields, serviceField)
 
-		if embedable {
+		if embedable && param.Name != "ctx" && param.TypeName != "io.Reader" {
 			param.Name = util.SimpleTypeName(param.TypeName)
 		}
 
@@ -221,7 +242,7 @@ func (g *Generator) Generate(source, typeName string, predicate func(receiver *t
 	var imports = make([]string, 0)
 
 	var methods = make([]string, 0)
-	imports = append(imports, `	"fmt"`, `"errors"`)
+	imports = append(imports, `	"fmt"`, `	"errors"`)
 	srcIndex := strings.Index(source, "/src/")
 
 	if srcIndex != -1 {
@@ -239,12 +260,17 @@ func (g *Generator) Generate(source, typeName string, predicate func(receiver *t
 			continue
 		}
 
+		ownerType := typeInfo.Package + "." + typeInfo.Name
+		if typeInfo.IsStruct {
+			ownerType = "*" + ownerType
+		}
+
 		typeMeta := &TypeMeta{
 			Func:            receiver.Name,
 			importPrefix:    fmt.Sprintf("vvc"), //import colision prefix
 			SimpleOwnerType: typeInfo.Name,
 			aliasImports:    make(map[string]string),
-			OwnerType:       typeInfo.Package + "." + typeInfo.Name,
+			OwnerType:       ownerType,
 			OwnerPackage:    typeInfo.Package,
 			SourceType:      typeName,
 		}
@@ -259,6 +285,14 @@ func (g *Generator) Generate(source, typeName string, predicate func(receiver *t
 		if err = g.buildTypeFields(typeInfo, typeMeta, receiver); err == nil {
 			err = g.buildTypeMethods(typeInfo, typeMeta, receiver)
 		}
+		if typeMeta.hasContext {
+			setContext, err := g.expandTemplate("setContext", typeMeta)
+			if err != nil {
+				return nil, err
+			}
+			methods = append(methods, setContext)
+		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -270,12 +304,13 @@ func (g *Generator) Generate(source, typeName string, predicate func(receiver *t
 		if err != nil {
 			return nil, err
 		}
+
 		register = append(register, registerMethod)
 		methods = append(methods, typeMeta.Methods)
 		types = append(types, typeText)
 
 		for k := range typeMeta.aliasImports {
-			importMap[k] = fileInfo.Imports[k]
+			importMap[k] = receiver.Imports[k]
 		}
 		if path, hasCollision := importMap[typeInfo.Package]; hasCollision {
 			delete(importMap, typeInfo.Package)
