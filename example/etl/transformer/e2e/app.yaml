@@ -25,6 +25,8 @@ pipeline:
       sdk: go:1.11
     build-app:
       action: exec:run
+      errors:
+        - error
       commands:
         - cd /tmp/build/transformer/app
         - go build transformer.go

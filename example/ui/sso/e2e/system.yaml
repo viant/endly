@@ -1,26 +1,46 @@
 tasks: $tasks
-defaults:
-  target: $serviceTarget
 pipeline:
   destroy:
-    stop-images:
-      action: docker:stop-images
-      images:
-        - aerospike
-        - memcached
+    action: docker:stop
+    images:
+      - aerospike
+      - memcached
   init:
+    config:
+      action: storage:copy
+      assets:
+        config/aerospike.conf: /tmp/mydb1.conf
+
     services:
       aerospike:
-        workflow: "service/aerospike:start"
-        name: db1
-        config: config/aerospike.conf
-        version: 3.16.0.6
+        action: docker:run
+        image: 'aerospike/aerospike-server:3.16.0.6'
+        name: mydb1
+        mount:
+          /tmp/mydb1.conf: /opt/aerospike/etc/aerospike.conf
+        ports:
+          3000: 3000
+          3001: 3001
+          3002: 3002
+          3003: 3003
+          8081: 8081
+        cmd:
+          - asd
+          - --config-file
+          - /opt/aerospike/etc/aerospike.conf
+        entrypoint:
+          - /entrypoint.sh
+
       memcached:
-        workflow: "service/memcached:start"
+        action: docker:run
         name: myCache
-        maxMemory: 512
-      iplookup:
+        image: library/memcached:alpine
+        hostConfig:
+          memory: 536870912
+
+        iplookup:
         action: http/endpoint:listen
         port: 8383
         rotate: true
         baseDirectory: ipinfo/
+
