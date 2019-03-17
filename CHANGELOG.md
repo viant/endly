@@ -1,3 +1,11 @@
+## March 17 2019 0.33.0
+    * Renamed ssh scraping based docker service to docker/ssh (breaking backward compatibility change)
+    * Introduced docker service based on docker API client 
+    * Updated/patched examples
+    * Added dsunit.init - ping flag to wait for database getting online (dsunit)
+    * Minor patches
+
+
 ## Feb 23 2019 0.32.2
     * Added dsunit:init ping option to wait for database get online
     * Updated endly usage endly [service:action | inlineworkflow.yaml]
