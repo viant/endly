@@ -6,13 +6,13 @@ pipeline:
       comments: set initial app state
 
   test:
-    tag: Test
+    tag: $pathMatch
     description: '@use_case'
     data:
       'db1.[]setup': '@user'
     comments: add setup data
 
-    subPath: 'use_cases/${index}*'
+    subPath: 'use_cases/${index}_*'
     range: 1..002
     template:
       skip-tag:
@@ -43,7 +43,7 @@ pipeline:
       seq-up:
         action: nop
         init:
-          db1.sequence.report: $db1.sequence.report++
+          _: $db1.sequence.report++
 
 
     post-test-sleep:

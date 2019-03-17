@@ -3,10 +3,8 @@ init:
   target:
     URL: scp://127.0.0.1/
     credentials: localhost
-  serviceTarget: $target
   targetHost: 127.0.0.1
   serviceHost: 127.0.0.1
-  mysqlVersion: 5.7
 
 pipeline:
   init:

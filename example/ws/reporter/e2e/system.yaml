@@ -1,16 +1,27 @@
 tasks: $tasks
-defaults:
-  target: $serviceTarget
+init:
+  mydb1: ${secrets.${mysqlCredentials}}
+
 pipeline:
   destroy:
-    stop-images:
-      action: docker:stop-images
+    cleanup:
+      action: docker:stop
       images:
         - mysql
+
   init:
+    config:
+      action: storage:copy
+      assets:
+        config/my.cnf: /tmp/mydb1.cnf
     services:
-      workflow: "service/mysql:start"
-      name: mydb1
-      version: $mysqlVersion
-      credentials: $mysqlCredentials
-      config: config/my.cnf
+      mysql:
+        action: docker:run
+        image: mysql:5.7
+        name: mydb1
+        ports:
+          3306: 3306
+        mount:
+          /tmp/mydb1.cnf: /etc/my.cnf
+        env:
+          MYSQL_ROOT_PASSWORD: ${mydb1.Password}

@@ -6,7 +6,7 @@ init:
 
   serviceTarget: $target
   targetHost: 127.0.0.1
-  mysqlVersion: 5.7
+
 pipeline:
   init:
     system:

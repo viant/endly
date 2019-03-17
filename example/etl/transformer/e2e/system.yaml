@@ -1,22 +1,47 @@
 tasks: $tasks
-defaults:
-  target: $serviceTarget
+init:
+  mydb3: ${secrets.${mysqlCredentials}}
+
 pipeline:
   destroy:
-    stop-images:
-      action: docker:stop-images
-      images:
-        - mysql
-        - aerospike
+    action: docker:stop
+    images:
+      - mysql
+      - aerospike
+
   init:
+    config:
+      action: storage:copy
+      assets:
+        config/my.cnf: /tmp/mydb3.cnf
+        config/aerospike.conf: /tmp/mydb4.conf
     services:
       mysql:
-        workflow: "service/mysql:start"
+        action: docker:run
+        image: mysql:5.7
         name: mydb3
-        version: $mysqlVersion
-        credentials: $mysqlCredentials
-        config: config/my.cnf
+        ports:
+          3306: 3306
+        mount:
+          /tmp/mydb3.cnf: /etc/my.cnf
+        env:
+          MYSQL_ROOT_PASSWORD: ${mydb3.Password}
+
       aerospike:
-        workflow: "service/aerospike:start"
+        action: docker:run
+        image: 'aerospike/aerospike-server:3.16.0.6'
         name: mydb4
-        config: config/aerospike.conf
+        mount:
+          /tmp/mydb4.conf: /opt/aerospike/etc/aerospike.conf
+        ports:
+          3000: 3000
+          3001: 3001
+          3002: 3002
+          3003: 3003
+          8081: 8081
+        cmd:
+          - asd
+          - --config-file
+          - /opt/aerospike/etc/aerospike.conf
+        entrypoint:
+          - /entrypoint.sh
