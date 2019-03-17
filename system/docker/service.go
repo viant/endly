@@ -455,15 +455,6 @@ func (s *service) copyFromContainer(context *endly.Context, name, source, dest s
 	if stat.LinkTarget != "" {
 		return s.copyToContainer(context, name, stat.LinkTarget, dest)
 	}
-	if !stat.Mode.IsDir() {
-		_, name := path.Split(source)
-		if toolbox.IsDirectory(dest) {
-			dest = path.Join(dest, name)
-		}
-		parent, _ := path.Split(dest)
-		_ = toolbox.CreateDirIfNotExist(parent)
-		return ioutil.WriteFile(dest, data, stat.Mode)
-	}
 	tarReader := tar.NewReader(bytes.NewReader(data))
 	return UnTar(tarReader, dest)
 }
