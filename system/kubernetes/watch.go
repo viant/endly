@@ -33,10 +33,10 @@ func waitForEvent(watcher watch.Interface) (*watch.Event, error) {
 	defer watcher.Stop()
 	channel := watcher.ResultChan()
 	select {
-		case event:= <-channel:
-			return &event, nil
-		case <-time.After(maxStatusWaitTimeInSec * time.Second):
-			break
+	case event := <-channel:
+		return &event, nil
+	case <-time.After(maxStatusWaitTimeInSec * time.Second):
+		break
 	}
 	return nil, nil
 }

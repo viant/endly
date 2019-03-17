@@ -622,8 +622,7 @@ func (s *service) getPod(context *endly.Context, request *GetRequest, timeoutMs 
 	startTime := time.Now()
 	timeout := time.Duration(timeoutMs) * time.Millisecond
 
-
-	for ;time.Now().Sub(startTime) < timeout; {
+	for time.Now().Sub(startTime) < timeout {
 		resource, err := s.getResource(context, request, request.Kind, ctxClient.RawRequest)
 		if err != nil {
 			return nil, err
@@ -634,22 +633,26 @@ func (s *service) getPod(context *endly.Context, request *GetRequest, timeoutMs 
 		case *v1.Pod:
 			return val, nil
 		case *v1.PodList:
-			if len(val.Items) == 0 {
+			switch len(val.Items) {
+			case 0:
 				time.Sleep(time.Second)
 				continue
+			case 1:
+				return &val.Items[0], nil
 			}
-			for _, candidate := range val.Items {
-				if candidate.Status.Phase == v1.PodRunning {
-					return &candidate, nil
+			pod := &val.Items[0]
+			for i := 1; i < len(val.Items); i++ {
+				if val.Items[i].CreationTimestamp.After(pod.CreationTimestamp.Time) {
+					pod = &val.Items[i]
 				}
 			}
-			return &val.Items[0], nil
+			return pod, nil
 		default:
 			resourceInfo := &ResourceInfo{}
 			if err = converter.AssignConverted(resourceInfo, resource); err != nil {
 				return nil, err
 			}
-			var specMap= make(map[string]interface{})
+			var specMap = make(map[string]interface{})
 			if err = converter.AssignConverted(&specMap, resourceInfo.Spec); err != nil {
 				return nil, err
 			}
@@ -711,7 +714,6 @@ func (s *service) Forward(context *endly.Context, request *ForwardPortsRequest) 
 		return nil, err
 	}
 
-
 	go func() {
 		select {
 		case <-readyChan:
@@ -745,7 +747,7 @@ func (s *service) waitForPodReadyIfNeeded(context *endly.Context, pod *v1.Pod, t
 	startTime := time.Now()
 	var ok bool
 	phase := ""
-	for ; time.Now().Sub(startTime) <= timeout; {
+	for time.Now().Sub(startTime) <= timeout {
 		response, err := s.getResource(context, getPodRequest, "pod", getPodRequest)
 		if err != nil {
 			return err
@@ -755,7 +757,7 @@ func (s *service) waitForPodReadyIfNeeded(context *endly.Context, pod *v1.Pod, t
 			continue
 		}
 		pod, ok = response.(*v1.Pod)
-		if ! ok {
+		if !ok {
 			return fmt.Errorf("unable determine pod type expected %T but had: %T", pod, response)
 		}
 		if phase != string(pod.Status.Phase) {
@@ -772,10 +774,9 @@ func (s *service) waitForPodReadyIfNeeded(context *endly.Context, pod *v1.Pod, t
 
 func (s *service) waitForNotFound(context *endly.Context, getRequest interface{}, timeoutMs int) error {
 	var response interface{}
-
 	timeout := time.Duration(timeoutMs) * time.Millisecond
 	startTime := time.Now()
-	for ; time.Now().Sub(startTime) <= timeout; {
+	for time.Now().Sub(startTime) <= timeout {
 		if err := endly.RunWithoutLogging(context, getRequest, &response); err != nil {
 			return err
 		}

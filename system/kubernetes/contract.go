@@ -12,8 +12,7 @@ import (
 	"strings"
 )
 
-const defaultWaitTimeoutMs = 45000
-
+const defaultWaitTimeoutMs = 60000
 
 //ResourceInfoResponse represents info response
 type ResourceInfoResponse struct {
