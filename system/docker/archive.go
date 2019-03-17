@@ -40,6 +40,7 @@ func UnTar(reader *tar.Reader, dest string) error {
 			return err
 		}
 		if header.Size == 0 {
+			_ = toolbox.CreateDirIfNotExist(path.Join(dest, header.Name))
 			continue
 		}
 		var data = make([]byte, header.Size)
@@ -48,7 +49,12 @@ func UnTar(reader *tar.Reader, dest string) error {
 		if readBytes != int(header.Size) {
 			return fmt.Errorf("failed to read: %v, %v", header.Name, err)
 		}
-		filename := path.Join(dest, header.Name)
+		var filename string
+		if ! toolbox.IsDirectory(dest) {
+			filename = dest
+		} else {
+			filename = path.Join(dest, header.Name)
+		}
 		parent, _ := path.Split(filename)
 		if _, has := dirs[parent]; !has {
 			dirs[parent] = true
