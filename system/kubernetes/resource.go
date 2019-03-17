@@ -39,7 +39,7 @@ func ProcessResource(context *endly.Context, expand bool, resource *url.Resource
 		return err
 	}
 	if expand {
-		text= state.ExpandAsText(text)
+		text = state.ExpandAsText(text)
 	}
 
 	docs := strings.Split(text, "---\n")

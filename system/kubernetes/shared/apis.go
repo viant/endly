@@ -9,8 +9,19 @@ var defaultKindAPIVersion = map[string][]string{
 	"CertificateSigningRequest": {"certificates.k8s.io/v1beta1"},
 }
 
+var kindMap = map[string]string{
+	"svc":"Service",
+	"pvc":"PersistentVolumeClaim",
+}
+
 func LookupAPIVersions(kind string) ([]string, error) {
+
 	result, ok := defaultKindAPIVersion[kind]
+	if ! ok {
+		if mappedKind, ok := kindMap[kind];ok {
+			result, ok = defaultKindAPIVersion[mappedKind]
+		}
+	}
 	if !ok {
 		return []string{}, fmt.Errorf("failed to lookup api: for %v", kind)
 	}
