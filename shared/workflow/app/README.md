@@ -149,7 +149,7 @@ pipeline:
     download:
       /$buildPath/${app}: $releasePath
   stop:
-    action: docker:stop-images
+    action: docker:stop
     images:
     - testApp
   deploy:
