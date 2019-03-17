@@ -255,8 +255,8 @@ func (s *Service) handleBuild(builder *builder, request *RunRequest) error {
 		err = builder.addRun(appMeta, request)
 	}
 	requestJSON, _ := toolbox.AsIndentJSONText(request)
-	builder.Upload(".gen", strings.NewReader(requestJSON))
-	builder.UploadToEndly(".ver", strings.NewReader(fmt.Sprintf("%v %v\n", endly.AppName, endly.GetVersion())))
+	_ = builder.Upload(".gen", strings.NewReader(requestJSON))
+	_ = builder.UploadToEndly(".ver", strings.NewReader(fmt.Sprintf("%v %v\n", endly.AppName, endly.GetVersion())))
 	return err
 }
 

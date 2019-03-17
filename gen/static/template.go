@@ -2033,7 +2033,7 @@ defaults:
 pipeline:
   destroy:
     stop-images:
-      action: docker:stop-images
+      action: docker:stop
       images: $tags
   init:
     services: $services
@@ -2249,7 +2249,7 @@ pipeline:
       /$buildPath/${app}: $releasePath
   stop:
     target: $target
-    action: docker:stop-images
+    action: docker:stop
     images:
     - $app
   deploy:
@@ -2430,7 +2430,7 @@ pipeline:
       /$buildPath/${app}: $releasePath
   stop:
     target: $target
-    action: docker:stop-images
+    action: docker:stop
     images:
     - $app
   deploy:
