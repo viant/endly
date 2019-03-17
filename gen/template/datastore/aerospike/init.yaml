@@ -4,6 +4,7 @@ recreate: true
 config:
   driverName: aerospike
   descriptor: "tcp([host]:3000)/[namespace]"
+  ping: true
   parameters:
     dbname: $db
     namespace: test

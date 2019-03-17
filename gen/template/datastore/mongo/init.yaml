@@ -3,6 +3,7 @@ datastore: $db
 recreate: true
 config:
   driverName: mgc
+  ping: true
   parameters:
     dbname: $db
     host: "127.0.0.1"

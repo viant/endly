@@ -7,6 +7,7 @@ config:
   credentials: $mysqlCredentials
 admin:
   datastore: mysql
+  ping: true
   config:
     driverName: mysql
     descriptor: "[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true"

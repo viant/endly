@@ -1,0 +1,15 @@
+init:
+  $db: ${secrets.${${db}Credentials}}
+config:
+  config/my.cnf: /tmp/${db}.cnf
+deploy:
+  mysql:
+    action: docker:run
+    image: mysql:5.7
+    name: ${db}
+    ports:
+      3306: 3306
+    mount:
+      /tmp/${db}.cnf: /etc/my.cnf
+    env:
+      MYSQL_ROOT_PASSWORD: ${${db}.Password}

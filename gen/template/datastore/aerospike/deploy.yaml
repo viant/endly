@@ -1,0 +1,20 @@
+config:
+  config/aerospike.conf: /tmp/${db}.conf
+deploy:
+  action: docker:run
+    image: 'aerospike/aerospike-server:3.16.0.6'
+    name: $db
+    mount:
+      /tmp/${db}.conf: /opt/aerospike/etc/aerospike.conf
+    ports:
+      3000: 3000
+      3001: 3001
+      3002: 3002
+      3003: 3003
+      8081: 8081
+    cmd:
+      - asd
+      - --config-file
+      - /opt/aerospike/etc/aerospike.conf
+    entrypoint:
+      - /entrypoint.sh
