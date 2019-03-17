@@ -1,0 +1,26 @@
+pipeline:
+
+  transient:
+    build:
+      action: docker:build
+      path: .
+      noCache: true
+      tag:
+        image: helloworld
+        version: '1.0'
+    start:
+      action: docker:run
+      image: helloworld:1.0
+      name: helloworld
+    add:
+      action: docker:copy
+      name: helloworld
+    extract:
+      action: docker:copy
+      name: helloworld
+      assets:
+        'helloworld:/app/': /tmp/
+    stop:
+      action: docker:remove
+      name: helloworld
+

@@ -1,0 +1,14 @@
+pipeline:
+  run:
+    action: docker:run
+    credentials: gcr
+    name: dbsync
+    mount:
+      ~/sync/config/: /config/
+      ~/e2e/.secret: /root/.secret
+    env:
+      ENDLY: test
+    image: us.gcr.io/tech-ops-poc/dbsync:1.12
+    command: ["./sync", "-s","/config/"]
+    ports:
+      8082: 8082

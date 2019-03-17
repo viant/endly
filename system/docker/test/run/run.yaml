@@ -1,0 +1,13 @@
+pipeline:
+  run:
+    action: docker:run
+    image: endly/endly:latest-ubuntu16.04
+    name: endly
+    ports:
+      7722: 22
+    mount:
+      /var/run/docker.sock: /var/run/docker.sock
+      ~/e2e:/e2e: /e2e
+      ~/e2e/.secret: /root/.secret
+    env:
+      ENDLY: test
