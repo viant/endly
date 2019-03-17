@@ -1,0 +1,31 @@
+init:
+  version: '1.0'
+  image: helloworld
+pipeline:
+  build:
+    action: docker:build
+    path: .
+    noCache: true
+    tag:
+      image: $image
+      version: $version
+  tag:
+    action: docker:tag
+    sourceTag:
+      image: $image
+      version: $version
+    targetTag:
+      image: $image
+      username: myUser
+      version: $version
+  auth:
+    action: docker:login
+    repository: index.docker.io/myUser
+    credentials: dockerHubmyUser
+  pushImage:
+    action: docker:push
+    tag:
+      image: $image
+      username: myUser
+      version: $version
+

@@ -17,7 +17,7 @@ import (
 
 const (
 	//ServiceID represents docker service id
-	ServiceID = "docker"
+	ServiceID = "docker/ssh"
 
 	containerInUse    = "is already in use by container"
 	unableToFindImage = "unable to find image"

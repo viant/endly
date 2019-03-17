@@ -1,0 +1,33 @@
+init:
+  workingDir: $Pwd()
+pipeline:
+  transient:
+    build:
+      action: docker:build
+      path: transient
+      noCache: true
+      tag:
+        image: helloworld
+        version: '1.0-transient'
+    deploy:
+      action: docker:run
+      image: 'helloworld:1.0-transient'
+      name: helloworld
+    extract:
+      action: docker:copy
+      assets:
+        'helloworld:/app/helloworld': ${workingDir}/final/helloworld
+    cleanup:
+      action: docker:remove
+      name: helloworld
+      images:
+        - 'helloworld:1.0-transient'
+  final:
+    build:
+      action: docker:build
+      path: final
+      noCache: true
+      tag:
+        image: helloworld
+        version: '1.0'
+

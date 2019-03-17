@@ -1,0 +1,22 @@
+pipeline:
+  auth:
+    action: docker:login
+    credentials: gcr
+    repository: us.gcr.io/tech-ops-poc
+
+  run:
+    action: docker:run
+    name: dbsync
+    mount:
+      ~/sync/config/: /config/
+      ~/e2e/.secret: /root/.secret
+    env:
+      ENDLY: test
+    image: us.gcr.io/tech-ops-poc/dbsync:1.12
+    command: ["./sync", "-s","/config/"]
+    ports:
+      8082: 8082
+
+  unauth:
+    action: docker:logout
+    repository: us.gcr.io/tech-ops-poc

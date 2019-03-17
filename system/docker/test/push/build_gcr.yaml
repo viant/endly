@@ -1,0 +1,32 @@
+init:
+  version: '1.0'
+  image: helloworld
+pipeline:
+  build:
+    action: docker:build
+    path: .
+    noCache: true
+    tag:
+      image: $image
+      version: $version
+  tag:
+    action: docker:tag
+    sourceTag:
+      image: $image
+      version: $version
+    targetTag:
+      image: $image
+      registry: us.gcr.io
+      username: myUser
+      version: $version
+  auth:
+    action: docker:login
+    repository: us.gcr.io/myUser
+    credentials: gcr
+  pushImage:
+    action: docker:push
+    tag:
+      image: $image
+      registry: us.gcr.io
+      username: myUser
+      version: $version

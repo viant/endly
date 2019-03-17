@@ -1,0 +1,8 @@
+pipeline:
+  build:
+    action: docker:build
+    path: .
+    noCache: true
+    tag:
+      image: helloworld
+      version: '1.0'

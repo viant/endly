@@ -1,0 +1,6 @@
+pipeline:
+  extract:
+    action: docker:copy
+    assets:
+      'container:/folder/.': dest1
+      'container:/folder/': dest2

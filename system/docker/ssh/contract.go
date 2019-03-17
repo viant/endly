@@ -301,6 +301,7 @@ func (r *CopyRequest) Validate() error {
 	return nil
 }
 
+//CopyResponse represents a copy response
 type CopyResponse struct {
 }
 
