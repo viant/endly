@@ -1,4 +1,4 @@
-FROM golang:1.11.5-alpine3.8
+FROM golang:1.12.1-alpine3.9
 
 ENV NOTVISIBLE "in users profile"
 ENV GO111MODULE=on

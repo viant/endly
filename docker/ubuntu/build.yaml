@@ -5,69 +5,63 @@ init:
     URL: ssh://127.0.0.1/
     credentials: localhost
 
-defaults:
-  target:
-    URL: ssh://127.0.0.1/
-    credentials: localhost
-
 pipeline:
 
-  buildAll:
+  transient:
+
     clean:
       action: storage:remove
       assets:
-        - URL: ${buildPath}/build
-        - URL: ${buildPath}/compact
+        - URL: ${buildPath}/transient
+        - URL: ${buildPath}/final
 
 
     mkdir:
       action: exec:run
+      target: $target
       commands:
-        - mkdir -p  ${buildPath}/compact/usr/lib/
-        - mkdir -p  ${buildPath}/compact/usr/local/bin/
+        - mkdir -p  ${buildPath}/transient/usr/lib/
+        - mkdir -p  ${buildPath}/transient/usr/local/bin/
 
     init:
       action: storage:copy
-      source: $target
-      dest: $target
       assets:
-        build: ${buildPath}/build
-        compact: ${buildPath}/compact
-        'cgo/dep.tar.gz': ${buildPath}/build
+        transient: ${buildPath}/transient
+        final: ${buildPath}/final
+        'cgo/dep.tar.gz': ${buildPath}/transient
 
     build:
       action: docker:build
-      path: ${buildPath}/build/
-      arguments:
-        '--no-cache': ''
+      path: ${buildPath}/transient/
+#      nocache: true
       tag:
-        image: goendly
+        image: endly_utransient
         version: ${version}-ubuntu16.04
 
   extract:
     start:
       action: docker:run
-      image: goendly:${version}-ubuntu16.04
-      name: goendly
+      image: endly_utransient:${version}-ubuntu16.04
+      name: endly_utransient
       ports:
         "8822": 22
 
     copy:
       action: docker:copy
-      source: $target
-      name: goendly
       assets:
-        'compact.tar.gz': ${buildPath}/compact/compact.tar.gz
-      stopGoEndly:
-        action: docker:stop
-        name: goendly
+        'endly_utransient:/compact.tar.gz': ${buildPath}/final/compact.tar.gz
+
+
+#    cleaup:
+#      action: docker:remove
+#      name: endly_utransient
+#
 
   compact:
     build:
       action: docker:build
-      path: ${buildPath}/compact/
-      arguments:
-        '--no-cache': ''
+      path: ${buildPath}/final
+#      nocache: true
       tag:
         image: endly
         version: ${version}-ubuntu16.04
@@ -82,6 +76,7 @@ pipeline:
         username: endly
         version: ${version}-ubuntu16.04
 
+
     tagLatestVersion:
       action: docker:tag
       sourceTag:
@@ -92,25 +87,23 @@ pipeline:
         username: endly
         version: latest-ubuntu16.04
 
-    deploy:
-      auth:
-        action: docker:login
-        repository: index.docker.io/endly
-        credentials: dockerHubEndly
 
-      pushVersion:
-        action: docker:push
-        tag:
-          image: endly
-          username: endly
-          version: ${version}-ubuntu16.04
+      deploy:
+        auth:
+          action: docker:login
+          repository: index.docker.io/endly
+          credentials: dockerHubEndly
 
-      pushLatestVersion:
-        action: docker:push
-        tag:
-          image: endly
-          username: endly
-          version: latest-ubuntu16.04
+        pushVersion:
+          action: docker:push
+          tag:
+            image: endly
+            username: endly
+            version: ${version}-ubuntu16.04
 
-
-     
+        pushLatestVersion:
+          action: docker:push
+          tag:
+            image: endly
+            username: endly
+            version: latest-ubuntu16.04

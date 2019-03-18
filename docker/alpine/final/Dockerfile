@@ -1,4 +1,4 @@
-FROM alpine:3.8
+FROM alpine:3.9
 
 ENV NOTVISIBLE "in users profile"
 ENV GO111MODULE=on
