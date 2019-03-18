@@ -33,7 +33,7 @@ pipeline:
     build:
       action: docker:build
       path: ${buildPath}/transient/
-#      nocache: true
+      nocache: true
       tag:
         image: endly_utransient
         version: ${version}-ubuntu16.04
@@ -52,16 +52,16 @@ pipeline:
         'endly_utransient:/compact.tar.gz': ${buildPath}/final/compact.tar.gz
 
 
-#    cleaup:
-#      action: docker:remove
-#      name: endly_utransient
-#
+    cleaup:
+      action: docker:remove
+      name: endly_utransient
+
 
   compact:
     build:
       action: docker:build
       path: ${buildPath}/final
-#      nocache: true
+      nocache: true
       tag:
         image: endly
         version: ${version}-ubuntu16.04
@@ -87,23 +87,22 @@ pipeline:
         username: endly
         version: latest-ubuntu16.04
 
+    deploy:
+      auth:
+        action: docker:login
+        repository: index.docker.io/endly
+        credentials: dockerHubEndly
 
-      deploy:
-        auth:
-          action: docker:login
-          repository: index.docker.io/endly
-          credentials: dockerHubEndly
+      pushVersion:
+        action: docker:push
+        tag:
+          image: endly
+          username: endly
+          version: ${version}-ubuntu16.04
 
-        pushVersion:
-          action: docker:push
-          tag:
-            image: endly
-            username: endly
-            version: ${version}-ubuntu16.04
-
-        pushLatestVersion:
-          action: docker:push
-          tag:
-            image: endly
-            username: endly
-            version: latest-ubuntu16.04
+      pushLatestVersion:
+        action: docker:push
+        tag:
+          image: endly
+          username: endly
+          version: latest-ubuntu16.04
