@@ -3,7 +3,7 @@ config:
 deploy:
   action: docker:run
     image: 'aerospike/aerospike-server:3.16.0.6'
-    name: $db
+    name: endly_${db}
     mount:
       /tmp/${db}.conf: /opt/aerospike/etc/aerospike.conf
     ports:

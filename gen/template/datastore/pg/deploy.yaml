@@ -5,9 +5,9 @@ config:
 deploy:
   action: docker:run
   image: postgres:9.6-alpine
-  name: ${db}
+  name: endly_${db}
   ports:
     5432: 5432
   env:
-    POSTGRES_USER: ${${db}.Username}
+    POSTGRES_USER: ${${db}Secrets.Username}
     POSTGRES_PASSWORD: ${${db}Secrets.Password

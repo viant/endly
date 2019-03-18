@@ -5,7 +5,7 @@ config:
 deploy:
   action: docker:run
   image: mysql:5.7
-  name: ${db}
+  name: endly_${db}
   ports:
     3306: 3306
   mount:
