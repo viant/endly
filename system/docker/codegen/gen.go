@@ -40,13 +40,13 @@ func generateCode(goPath string, parent string) error {
 		}
 		return false
 	}, func(meta *adapter.TypeMeta, receiver *toolbox.FunctionInfo) {
-		meta.TypeName =  receiver.Name + "Request"
-		meta.ID = 	toolbox.ToCaseFormat(meta.TypeName, toolbox.CaseUpperCamel, toolbox.CaseLowerCamel)
+		meta.TypeName = receiver.Name + "Request"
+		meta.ID = toolbox.ToCaseFormat(meta.TypeName, toolbox.CaseUpperCamel, toolbox.CaseLowerCamel)
 
 		for _, param := range receiver.ParameterFields {
 			if strings.Contains(strings.ToLower(param.Name), "option") {
 				meta.Embed = true
-				param.Tag = "`"  +`json:",inline" yaml:",inline"`+ "`"
+				param.Tag = "`" + `json:",inline" yaml:",inline"` + "`"
 				break
 			}
 		}
@@ -54,8 +54,8 @@ func generateCode(goPath string, parent string) error {
 	})
 
 	for _, v := range generated {
-		name :="contract_gen.go"
-		filename := path.Join(parent,  name)
+		name := "contract_gen.go"
+		filename := path.Join(parent, name)
 		code := fmt.Sprintf("package %s\n\n", "docker") + v
 		fmt.Printf("%v \b %v\n", filename, code)
 
@@ -65,4 +65,3 @@ func generateCode(goPath string, parent string) error {
 	}
 	return err
 }
-

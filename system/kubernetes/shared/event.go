@@ -19,7 +19,7 @@ func (e *OutputEvent) Messages() []*msg.Message {
 				msg.NewStyled(e.Tag, msg.MessageStyleGeneric)),
 		}
 	}
-	if text, ok := e.Value.(string);ok {
+	if text, ok := e.Value.(string); ok {
 		info = text
 	} else if content, err := yaml.Marshal(e.Value); err == nil {
 		info = string(content)

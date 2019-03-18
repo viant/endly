@@ -8,21 +8,20 @@ import (
 	"reflect"
 )
 
-
 var iFace interface{}
-var inerfacePtrType  = reflect.TypeOf(&iFace)
+var inerfacePtrType = reflect.TypeOf(&iFace)
 
 var quantityPtrType = reflect.TypeOf(&resource.Quantity{})
-var stringType  = reflect.TypeOf("")
+var stringType = reflect.TypeOf("")
 var resourceListType = reflect.TypeOf(v1.ResourceList{})
 
 func TextToQuantity(target, source interface{}) error {
-	dest, ok  := target.(*resource.Quantity)
-	if ! ok {
+	dest, ok := target.(*resource.Quantity)
+	if !ok {
 		return fmt.Errorf("expected %T, but had: %T", dest, target)
 	}
 	src, ok := source.(string)
-	if ! ok {
+	if !ok {
 		return fmt.Errorf("expected %T, but had: %T", src, source)
 	}
 	srcQuantity, err := resource.ParseQuantity(src)
@@ -33,27 +32,24 @@ func TextToQuantity(target, source interface{}) error {
 	return nil
 }
 
-
 func ResourceListToInterface(target, source interface{}) error {
 	dest, ok := target.(*interface{})
-	if ! ok {
+	if !ok {
 		return fmt.Errorf("expected %T, but had: %T", dest, target)
 	}
-	src, ok  := source.(v1.ResourceList)
-	if ! ok {
+	src, ok := source.(v1.ResourceList)
+	if !ok {
 		return fmt.Errorf("expected %T, but had: %T", src, source)
 	}
 	var result = make(map[string]interface{})
 	for k, v := range src {
-		result[string(k)]=v.String()
+		result[string(k)] = v.String()
 	}
 	*dest = result
 	return nil
 }
 
-
-
-func init()  {
+func init() {
 	toolbox.RegisterConverter(quantityPtrType, stringType, TextToQuantity)
 	toolbox.RegisterConverter(inerfacePtrType, resourceListType, ResourceListToInterface)
 

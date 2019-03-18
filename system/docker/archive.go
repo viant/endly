@@ -50,7 +50,7 @@ func UnTar(reader *tar.Reader, dest string) error {
 			return fmt.Errorf("failed to read: %v, %v", header.Name, err)
 		}
 		var filename string
-		if ! toolbox.IsDirectory(dest) {
+		if !toolbox.IsDirectory(dest) {
 			filename = dest
 		} else {
 			filename = path.Join(dest, header.Name)
