@@ -28,39 +28,38 @@ type DataStream struct {
 	Id          string     `json:"id"`
 	ErrorDetail *DataError `json:"errorDetail"`
 	Aux         *DataAux   `json:"aux"`
+	Error       string     `json:"error"`
 }
 
 func (s *DataStream) Data() string {
-	if s.Stream != "" {
-		return s.Stream
-	}
+	result := ""
 
 	if s.ErrorDetail != nil && s.ErrorDetail.Message != "" {
 		return s.ErrorDetail.Message
 	}
 
-	if s.Status == "" && s.Progress == "" {
-		return ""
+	if strings.TrimSpace(s.Stream) != "" {
+		return s.Stream
 	}
-
-	line := ""
+	if s.Status == "" && s.Progress == "" {
+		return s.Stream
+	}
 	status := s.Status
 	hasExtendedStatus := len(status) >= 30
 	if hasExtendedStatus {
-		line = s.Status + "\n"
+		result = s.Status + "\n"
 		status = strings.Repeat(" ", 29)
 	}
 
 	progress := strings.Replace(s.Progress, "\n", "", 1)
-	line += fmt.Sprintf("%-30s%v", status, progress)
-
-	if strings.Count(line, "\n") == 0 {
-		line = "\r" + line
+	result += fmt.Sprintf("%-30s%v", status, progress)
+	if strings.Count(result, "\n") == 0 {
+		result = "\r" + result
 	}
 	if hasExtendedStatus {
-		line += "\n"
+		result += "\n"
 	}
-	return line
+	return result
 }
 
 func readStream(context *endly.Context, tag string, reader io.Reader, stdout *[]string, callback func(stream *DataStream)) error {
@@ -74,6 +73,9 @@ func readStream(context *endly.Context, tag string, reader io.Reader, stdout *[]
 			continue
 		}
 		data := stream.Data()
+		if data == "" {
+			data = string(rawData)
+		}
 		if status != stream.Status ||
 			stream.Status == "" && strings.Count(data, "\n") == 0 {
 			data += "\n"

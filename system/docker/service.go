@@ -50,22 +50,24 @@ func (s *service) build(context *endly.Context, request *BuildRequest) (*BuildRe
 	}
 	defer imgBuildResponse.Body.Close()
 	errorMessage := ""
-	err = readStream(context, "build", imgBuildResponse.Body, &buildResponse.Stdout, func(stream *DataStream) {
-		if stream.ErrorDetail != nil {
+	if err = readStream(context, "build", imgBuildResponse.Body, &buildResponse.Stdout, func(stream *DataStream) {
+		if stream.ErrorDetail != nil && stream.ErrorDetail.Message != "" {
 			errorMessage = stream.ErrorDetail.Message
+		}
+		if stream.Error != "" {
+			errorMessage = stream.Error
 		}
 		indexOf := strings.LastIndex(stream.Stream, "fully built")
 		if indexOf != -1 {
 			buildResponse.ImageID = strings.TrimSpace(string(stream.Stream[indexOf+12:]))
 		}
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, err
 	}
 	if errorMessage != "" {
 		err = errors.New(errorMessage)
 	}
-	return buildResponse, nil
+	return buildResponse, err
 }
 
 func (s *service) expandSecrets(context *endly.Context, request *RunRequest) error {

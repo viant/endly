@@ -280,7 +280,7 @@ func (s *service) Copy(request *CopyRequest) *CopyResponse {
 	if err != nil {
 		return response
 	}
-	_ =  destinationManager.TableDescriptorRegistry().Register(request.Destination.AsTableDescription())
+	_ = destinationManager.TableDescriptorRegistry().Register(request.Destination.AsTableDescription())
 	keys := []interface{}{}
 	err = s.copyData(sourceManager, destinationManager, request, response, keys)
 	s.updateResponse(response, err)

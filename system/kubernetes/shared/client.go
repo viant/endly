@@ -7,9 +7,9 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,16 +21,15 @@ var defaultNamespace = "default"
 
 //CtxClient represents generic google cloud service client
 type CtxClient struct {
-	CredConfig *cred.Config
-	masterURL  string
-	cfgContext string
-	configPath string
-	Namespace  string
+	CredConfig  *cred.Config
+	masterURL   string
+	cfgContext  string
+	configPath  string
+	Namespace   string
 	ResetConfig *rest.Config
-	clientSet  *kubernetes.Clientset
-	RawRequest map[string]interface{}
+	clientSet   *kubernetes.Clientset
+	RawRequest  map[string]interface{}
 }
-
 
 func (c *CtxClient) EndpointIP() string {
 	return strings.TrimLeft(c.ResetConfig.Host, "htps:/")

@@ -10,15 +10,15 @@ var defaultKindAPIVersion = map[string][]string{
 }
 
 var kindMap = map[string]string{
-	"svc":"Service",
-	"pvc":"PersistentVolumeClaim",
+	"svc": "Service",
+	"pvc": "PersistentVolumeClaim",
 }
 
 func LookupAPIVersions(kind string) ([]string, error) {
 
 	result, ok := defaultKindAPIVersion[kind]
-	if ! ok {
-		if mappedKind, ok := kindMap[kind];ok {
+	if !ok {
+		if mappedKind, ok := kindMap[kind]; ok {
 			result, ok = defaultKindAPIVersion[mappedKind]
 		}
 	}
