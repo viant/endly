@@ -5,94 +5,89 @@ init:
     URL: ssh://127.0.0.1/
     credentials: localhost
 
-defaults:
-  target:
-    URL: ssh://127.0.0.1/
-    credentials: localhost
-
-
 pipeline:
 
-  clean:
-    action: storage:remove
-    assets:
-      - URL: ${buildPath}/build
-      - URL: ${buildPath}/compact
-
-  mkdir:
-    action: exec:run
-    commands:
-      - mkdir -p  ${buildPath}/compact/usr/lib/
-      - mkdir -p  ${buildPath}/compact/usr/local/bin/
-
-  init:
-    action: storage:copy
-    source: $target
-    dest: $target
-    assets:
-      build: ${buildPath}/build
-      compact: ${buildPath}/compact
-
-
-  build:
-    action: docker:build
-    path: ${buildPath}/build/
-    arguments:
-      '--no-cache': ''
-    tag:
-      image: go_endly
-      version: $version
-
-  extract:
-    start:
-      action: docker:run
-      image: go_endly:$version
-      name: goEndly
-      ports:
-        "8822": 22
-
-    copy:
-      action: docker:copy
-      source: $target
-      name: goEndly
+  transient:
+    clean:
+      action: storage:remove
       assets:
-        '/endly/endly/endly': ${buildPath}/compact/usr/local/bin/
-        '/usr/bin/docker':  ${buildPath}/compact/usr/local/bin/
-        '/usr/lib/libltdl.so.7.3.1':  ${buildPath}/compact/usr/lib/libltdl.so.7
-    stopGoEndly:
-      action: docker:stop
-      name: goEndly
+        - URL: ${buildPath}/tansient
+        - URL: ${buildPath}/final
+
+    mkdir:
+      action: exec:run
+      target: $target
+      commands:
+        - mkdir -p  ${buildPath}/final/usr/lib/
+        - mkdir -p  ${buildPath}/final/usr/local/bin/
+
+    init:
+      action: storage:copy
+      source: $target
+      dest: $target
+      assets:
+        tansient: ${buildPath}/tansient
+        final: ${buildPath}/final
+
+    build:
+      action: docker:build
+      path: ${buildPath}/tansient/
+      nocache: true
+      tag:
+        image: endly_transient
+        version: $version
+
+    extract:
+      deploy:
+        action: docker:run
+        image: endly_transient:$version
+        name: endly_transient
+        ports:
+          "8822": 22
+
+      copy:
+        action: docker:copy
+        source: $target
+        name: goEndly
+        assets:
+          'endly_transient:/endly/endly/endly': ${buildPath}/final/usr/local/bin/
+          'endly_transient:/usr/bin/docker':  ${buildPath}/final/usr/local/bin/
+          'endly_transient:/usr/lib/libltdl.so.7.3.1':  ${buildPath}/final/usr/lib/libltdl.so.7
+          'endly_transient:/etc/hosts':  ${buildPath}/final/usr/local/bin/hosts
+
+      cleanup:
+        action: docker:remove
+        name: endly_transient
 
   compact:
     build:
       action: docker:build
       force: true
-      path: ${buildPath}/compact/
-      arguments:
-        '--no-cache': ''
+      path: ${buildPath}/final/
+      nocache: true
       tag:
         image: endly
-        version: ${version}-alpine3.8
+        version: ${version}-alpine3.9
 
     tagVersion:
       action: docker:tag
       sourceTag:
         image: endly
-        version: ${version}-alpine3.8
+        version: ${version}-alpine3.9
       targetTag:
         image: endly
         username: endly
-        version: ${version}-alpine3.8
+        version: ${version}-alpine3.9
 
     tagLatestVersion:
       action: docker:tag
       sourceTag:
         image: endly
-        version: ${version}-alpine3.8
+        version: ${version}-alpine3.9
       targetTag:
         image: endly
         username: endly
-        version: latest-alpine3.8
+        version: latest-alpine3.9
 
   deploy:
     auth:
@@ -105,12 +100,12 @@ pipeline:
       tag:
         image: endly
         username: endly
-        version: ${version}-alpine3.8
+        version: ${version}-alpine3.9
 
     pushLatestVersion:
       action: docker:push
       tag:
         image: endly
         username: endly
-        version: latest-alpine3.8
+        version: latest-alpine3.9
 

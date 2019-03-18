@@ -43,9 +43,9 @@ RUN wget https://download.docker.com/linux/static/stable/x86_64/docker-18.09.1.t
     rm docker-18.09.1.tgz && \
     cp /usr/local/docker/docker /usr/local/bin/docker
 
-RUN wget https://dl.google.com/go/go1.11.5.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go1.11.5.linux-amd64.tar.gz && \
-    rm go1.11.5.linux-amd64.tar.gz && \
+RUN wget https://dl.google.com/go/go1.12.1.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.12.1.linux-amd64.tar.gz && \
+    rm go1.12.1.linux-amd64.tar.gz && \
     ln -s /usr/local/go/bin/go /usr/local/bin/go
 
 WORKDIR /
