@@ -4,6 +4,7 @@
   "Targets": [
     {
       "MinReleaseVersion": {
+        "1.12": "1",
         "1.11": "5",
         "1.10": "5",
         "1.9": "4",
@@ -20,7 +21,7 @@
         },
         "Transfer": {
           "Source": {
-            "URL": "https://redirector.gvt1.com/edgedl/go/go${artifact.Version}.${os.System}-${os.Architecture}.tar.gz"
+            "URL": "https://dl.google.com/go/go${artifact.Version}.${os.System}-${os.Architecture}.tar.gz"
           },
           "Dest": {
             "URL": "scp://${buildHost}/opt/sdk/go_${artifact.Version}.tar.gz",
@@ -37,7 +38,7 @@
               "Extract": [
                 {
                   "Key": "Version",
-                  "RegExpr": "go(\\d\\.\\d)"
+                  "RegExpr": "go(\\d+\\.\\d+)"
                 }
               ]
             }
