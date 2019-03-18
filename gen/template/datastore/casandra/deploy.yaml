@@ -1,7 +1,7 @@
 deploy:
   action: docker:run
     image: 'cassandra:2.1'
-    name: $db
+    name: endly_${db}
     ports:
       7000: 7000
       7001: 7001

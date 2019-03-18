@@ -1486,7 +1486,7 @@ CREATE OR REPLACE TABLE dummy (
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/casandra/deploy.yaml", bytes.NewReader([]byte(`deploy:
   action: docker:run
     image: 'cassandra:2.1'
-    name: $db
+    name: endly_${db}
     ports:
       7000: 7000
       7001: 7001
@@ -1600,11 +1600,11 @@ config:
 deploy:
   action: docker:run
   image: postgres:9.6-alpine
-  name: ${db}
+  name: endly_${db}
   ports:
     5432: 5432
   env:
-    POSTGRES_USER: ${${db}.Username}
+    POSTGRES_USER: ${${db}Secrets.Username}
     POSTGRES_PASSWORD: ${${db}Secrets.Password
 `)))
 		if err != nil {
@@ -1844,7 +1844,7 @@ namespace test {
 deploy:
   action: docker:run
     image: 'aerospike/aerospike-server:3.16.0.6'
-    name: $db
+    name: endly_${db}
     mount:
       /tmp/${db}.conf: /opt/aerospike/etc/aerospike.conf
     ports:
@@ -1985,7 +1985,7 @@ config:
 deploy:
   action: docker:run
   image: mysql:5.7
-  name: ${db}
+  name: endly_${db}
   ports:
     3306: 3306
   mount:
@@ -2076,7 +2076,7 @@ admin:
 		err := memStorage.Upload("mem://github.com/viant/endly/template/datastore/mongo/deploy.yaml", bytes.NewReader([]byte(`deploy:
   action: docker:run
   image: mongo:latest
-  name: ${db}
+  name: endly_${db}
   ports:
     27017: 27017
 `)))
