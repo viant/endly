@@ -4,7 +4,7 @@ config: config/config.yaml
 build: build/go
 dependency: go get -u -v github.com/viant/endly/bootstrap
 docker: false
-sdk: go:1.11
+sdk: go:1.12
 dbconfigpath:  datastore
 originurl: "./../"
 buildcmd: cd app && go build -o ../$app

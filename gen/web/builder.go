@@ -28,7 +28,8 @@ type builder struct {
 	destService, storage storage.Service
 	registerDb           []Map
 	services             Map
-	tags                 []string
+	serviceImages        []string
+	serviceInit          map[string]interface{}
 	createDb             Map
 	dbMeta               []*DbMeta
 	populateDb           Map
@@ -107,37 +108,63 @@ func (b *builder) addDatastoreService(assets map[string]string, meta *DbMeta, re
 	if b.services.Has(request.Driver) || meta.Service == "" {
 		return nil
 	}
+
+	var state = data.NewMap()
+	state.Put("db", request.Name)
+	state.Put("driver", request.Driver)
+	state.Put("credentials", meta.Credentials)
+
+	if _, has := assets[meta.Service]; !has {
+		return fmt.Errorf("service was empty %v", meta.Service)
+	}
+
+	useConifg := request.Config && meta.Config != ""
+
+	deploy, err := b.NewAssetMap(assets, meta.Service, state)
+	if err != nil {
+		return fmt.Errorf("failed to load service deployment: %v", err)
+	}
+
 	var service = NewMap()
-	service.Put("workflow", meta.Service)
-	service.Put("name", "endly_"+request.Name)
-	var version = request.Version
-	if version == "" {
-		version = meta.Version
+
+	if deploy.Has("init") {
+		aMap := toolbox.AsMap(deploy.Get("init"))
+		for k, v := range aMap {
+			b.serviceInit[k] = v
+		}
 	}
-	if version == "" {
-		version = "latest"
+
+	if deploy.Has("deploy") {
+
+		deployService := deploy.GetMap("deploy")
+		if !useConifg {
+			deployService = deployService.Remove("mount")
+		}
+		image := deployService.Get("image")
+		if imageParts := strings.Split(toolbox.AsString(image), ":"); len(imageParts) == 2 {
+			b.serviceImages = append(b.serviceImages, imageParts[0])
+		}
+		service = deployService
 	}
-	service.Put("version", version)
-	if meta.Credentials != "" {
-		service.Put("credentials", meta.Credentials)
-	}
-	if request.Config && meta.Config != "" {
+
+	if useConifg {
 		config, ok := assets[meta.Config]
 		if !ok {
 			return fmt.Errorf("unable locate %v service config: %v", request.Driver, meta.Config)
 		}
 		var configURL = fmt.Sprintf("datastore/%v", meta.Config)
 		_ = b.UploadToEndly(configURL, strings.NewReader(toolbox.AsString(config)))
-		service.Put("config", configURL)
+		//service.Put("config", configURL)
+
+		if deploy.Has("config") {
+			copy := NewMap()
+			copy.Put("action", "storage:copy")
+			copy.Put("assets", deploy.Get("conifg"))
+			b.services.Put(request.Driver+"-config", copy)
+		}
 	}
 
 	b.services.Put(request.Driver, service)
-	if meta.Tag != "" {
-		b.tags = append(b.tags, meta.Tag)
-	}
-	var state = data.NewMap()
-	state.Put("db", request.Name)
-	state.Put("driver", request.Driver)
 	ReadIp, _ := b.NewMapFromURI("datastore/ip.yaml", state)
 	b.services.Put(request.Driver+"-ip", ReadIp)
 	return nil
@@ -504,10 +531,17 @@ func (b *builder) buildSystem() error {
 	if err != nil {
 		return err
 	}
+
+	if len(b.serviceInit) > 0 {
+		system.Put("init", b.serviceInit)
+	} else {
+		system = system.Remove("init")
+	}
+
 	initMap := system.SubMap("pipeline.init")
 	initMap.Put("services", b.services)
 	stopImagesMap := system.SubMap("pipeline.destroy.stop-images")
-	stopImagesMap.Put("images", b.tags)
+	stopImagesMap.Put("images", b.serviceImages)
 	var content string
 	if content, err = toolbox.AsYamlText(system); err == nil {
 		_ = b.UploadToEndly("system.yaml", strings.NewReader(content))
@@ -823,6 +857,7 @@ func (b *builder) addRegressionData(appMeta *AppMeta, request *RunRequest) error
 		} else {
 			dbNode.Put(fmt.Sprintf("%v-ip", datastore.Driver), readIp)
 		}
+
 		dbNode.Put("register", b.registerDb[i])
 
 		if request.Testing.UseCaseData == "test" {
@@ -1132,13 +1167,14 @@ func (b *builder) buildInlineWorkflowAssets(meta *AppMeta, request *RunRequest) 
 
 func newBuilder(baseURL string) *builder {
 	return &builder{
-		baseURL:     baseURL,
-		tags:        make([]string, 0),
-		services:    NewMap(),
-		createDb:    NewMap(),
-		populateDb:  NewMap(),
-		destURL:     "mem:///e2e/",
-		destService: storage.NewPrivateMemoryService(),
-		storage:     storage.NewMemoryService(),
+		baseURL:       baseURL,
+		serviceImages: make([]string, 0),
+		serviceInit:   make(map[string]interface{}),
+		services:      NewMap(),
+		createDb:      NewMap(),
+		populateDb:    NewMap(),
+		destURL:       "mem:///e2e/",
+		destService:   storage.NewPrivateMemoryService(),
+		storage:       storage.NewMemoryService(),
 	}
 }

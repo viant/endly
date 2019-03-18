@@ -1,5 +1,5 @@
 id: mongo
-service: service/mongo
+service: deploy.yaml
 name: MongoDB
 king: NoSQL
 tag: mongo

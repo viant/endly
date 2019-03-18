@@ -1,4 +1,5 @@
 tasks: $tasks
+init: $init
 defaults:
   target: $serviceTarget
 pipeline:

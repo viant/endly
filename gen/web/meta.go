@@ -13,8 +13,6 @@ type DbMeta struct {
 	Name        string
 	Kind        string
 	Service     string
-	Version     string
-	Tag         string
 	Credentials string
 	Config      string
 	Schema      string
