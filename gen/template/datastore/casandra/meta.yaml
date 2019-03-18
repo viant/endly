@@ -1,6 +1,7 @@
 id: casandra
 name: Casandra
 kind: RDBMS
+service: deploy.yaml
 dictionary: dictionary/
 data: data/
 sequence: false

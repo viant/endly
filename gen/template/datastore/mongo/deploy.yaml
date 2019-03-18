@@ -1,7 +1,6 @@
 deploy:
-  mysql:
-    action: docker:run
-    image: mysql:5.7
-    name: ${db}
-    ports:
-      3306: 3306
+  action: docker:run
+  image: mongo:latest
+  name: ${db}
+  ports:
+    27017: 27017

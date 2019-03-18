@@ -119,7 +119,6 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 		if builder.dbMeta[i].Service != "" {
 			hasSystem = true
 		}
-
 	}
 	if hasSystem {
 		if err := builder.buildSystem(); err != nil {
@@ -141,8 +140,8 @@ func (s *Service) Run(request *RunRequest) (*RunResponse, error) {
 	if err = storage.Archive(builder.destService, destURL, archive); err != nil {
 		return nil, err
 	}
-	archive.Flush()
-	archive.Close()
+	_ = archive.Flush()
+	_ = archive.Close()
 	//Local debugging
 	//err = storage.Copy(builder.destService, destURL, storage.NewFileStorage(), "file:///Projects/go/workspace/zz", nil, nil)
 	response.Data = writer.Bytes()

@@ -1,8 +1,7 @@
 id: aerospike
-service: service/aerospike
+service: deploy.yaml
 name: Aerospike
 kind: NoSQL
-tag: aerospike
 config: config/aerospike.conf
 dictionary: dictionary/
 data: data/

@@ -4,7 +4,7 @@ build: build/go
 originurl: "./../"
 buildcmd: go build -o $app
 docker: false
-sdk: go:1.11
+sdk: go:1.12
 dbconfigpath:  datastore
 args:
 selenium:
