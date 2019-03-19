@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/msg"
 	"github.com/viant/toolbox"
 	"os"
 	"reflect"
@@ -60,7 +61,7 @@ func publishEvent(context *endly.Context, method string, value interface{}) {
 			eventValue = aMap
 		}
 	}
-	context.Publish(NewOutputEvent(method, "docker", eventValue))
+	context.Publish(&OutputEvent{msg.NewOutputEvent(method, "docker", eventValue)})
 }
 
 func expandHomeDirectory(location string) string {

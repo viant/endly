@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/msg"
 	"io"
 	"strings"
 )
@@ -86,7 +87,7 @@ func readStream(context *endly.Context, tag string, reader io.Reader, stdout *[]
 			callback(stream)
 		}
 		*stdout = append(*stdout, data)
-		context.Publish(NewStdoutEvent(tag, data))
+		context.Publish(msg.NewStdoutEvent(tag, data))
 	}
 	return nil
 }
