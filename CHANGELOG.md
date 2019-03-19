@@ -1,3 +1,6 @@
+## March 18 2019 0.34.0
+    * Added vc/git service to use go client, (original vc service uses SSH scraping)
+
 ## March 18 2019 0.33.0
     * Renamed ssh scraping based docker service to docker/ssh (breaking backward compatibility change)
     * Introduced docker service based on docker API client 
