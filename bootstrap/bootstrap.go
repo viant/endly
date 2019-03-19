@@ -45,6 +45,7 @@ import (
 	_ "github.com/viant/endly/deployment/deploy"
 	_ "github.com/viant/endly/deployment/sdk"
 	_ "github.com/viant/endly/deployment/vc"
+	_ "github.com/viant/endly/deployment/vc/git"
 
 	_ "github.com/viant/endly/notify/slack"
 	_ "github.com/viant/endly/notify/smtp"
