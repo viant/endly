@@ -28,7 +28,7 @@ func (r *CheckoutRequest) Init() error {
 	if r.Dest == nil {
 		return nil
 	}
-	versionControlRequestInit(r.Origin, &r.Type)
+	_ = versionControlRequestInit(r.Origin, &r.Type)
 	if r.Type == "" || r.Type == "local" {
 		_ = r.Origin.Init()
 		if r.Origin.ParsedURL.Scheme == "file" {

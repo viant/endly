@@ -1,5 +1,7 @@
 **Version Control Service**
 
+This service uses SSH (exec) scraping to implement git/svn commands
+
 | Service Id | Action | Description | Request | Response |
 | --- | --- | --- | --- | --- |
 | version/control | status | run version control check on provided URL | [StatusRequest](serivce_contract.go) | [Info](serivce_contract.go)  |
