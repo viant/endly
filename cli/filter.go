@@ -24,6 +24,7 @@ func DefaultFilter() map[string]bool {
 	result["gcp"] = true
 	result["shared"] = true
 	result["docker"] = true
+	result["git"] = true
 	return result
 }
 
