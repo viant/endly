@@ -1,0 +1,8 @@
+pipeline:
+  checkout:
+    action: vc/git:checkout
+    origin:
+      URL: https://github.com/src-d/go-git
+    dest:
+      URL: /tmp/foo
+  

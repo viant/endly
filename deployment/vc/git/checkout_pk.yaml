@@ -1,0 +1,8 @@
+pipeline:
+  checkout:
+    action: vc/git:checkout
+    origin:
+      URL: git@github.com/myacount/myrepo.git
+      credentials: myrepopk
+    dest:
+      URL: /tmp/myrepo
