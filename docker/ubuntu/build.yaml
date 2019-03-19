@@ -5,6 +5,7 @@ init:
     URL: ssh://127.0.0.1/
     credentials: localhost
 
+
 pipeline:
 
   transient:
@@ -14,7 +15,6 @@ pipeline:
       assets:
         - URL: ${buildPath}/transient
         - URL: ${buildPath}/final
-
 
     mkdir:
       action: exec:run
@@ -65,7 +65,7 @@ pipeline:
       tag:
         image: endly
         version: ${version}-ubuntu16.04
- 
+
     tagVersion:
       action: docker:tag
       sourceTag:
@@ -86,6 +86,7 @@ pipeline:
         image: endly
         username: endly
         version: latest-ubuntu16.04
+
 
     deploy:
       auth:
