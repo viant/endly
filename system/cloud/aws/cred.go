@@ -10,6 +10,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
+	"github.com/viant/toolbox/data"
 	"reflect"
 	"strings"
 )
@@ -41,6 +42,7 @@ func GetAWSCredentialConfig(config *cred.Config) (*aws.Config, error) {
 
 //InitCredentials get or creates aws credential config
 func InitCredentials(context *endly.Context, rawRequest map[string]interface{}, key interface{}) (*aws.Config, error) {
+
 	if len(rawRequest) == 0 {
 		return nil, fmt.Errorf("request was empty")
 	}
@@ -77,6 +79,12 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}, 
 	if err != nil {
 		return nil, err
 	}
+
+	state := context.State()
+	awsMap := data.NewMap()
+	awsMap.Put("region", awsConfig.Region)
+	awsMap.Put("accountID", config.AccountID)
+	state.Put("aws", awsMap)
 	_ = context.Put(configKey, awsConfig)
 	return awsConfig, err
 }

@@ -11,8 +11,8 @@ import (
 
 //SetupRestAPIInput represent a request to setup API with specified resources
 type SetupRestAPIInput struct {
-	apigateway.CreateRestApiInput `yaml:",inline" json:",inline"`
-	Resources []*SetupResourceInput
+	apigateway.CreateRestApiInput    `yaml:",inline" json:",inline"`
+	Resources                        []*SetupResourceInput
 	apigateway.CreateDeploymentInput `yaml:",inline" json:",inline"`
 }
 
@@ -27,9 +27,9 @@ type SetupRestAPIOutput struct {
 
 //SetupResourceInput represents resource input
 type SetupResourceInput struct {
-	Path string
+	Path                           string
 	apigateway.CreateResourceInput `yaml:",inline" json:",inline"`
-	Methods []*ResourceMethod
+	Methods                        []*ResourceMethod
 }
 
 //ResourceMethod represents resource method
@@ -44,7 +44,7 @@ type ResourceMethod struct {
 //SetupResourceOutput represents setup resource output
 type SetupResourceOutput struct {
 	*apigateway.Resource `yaml:",inline" json:",inline"`
-	ResourceMethods map[string]*apigateway.Method
+	ResourceMethods      map[string]*apigateway.Method
 }
 
 //RemoveRestAPI removes API for supplied name

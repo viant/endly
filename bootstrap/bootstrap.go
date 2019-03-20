@@ -62,6 +62,9 @@ import (
 	_ "github.com/viant/endly/system/cloud/aws/ses"
 	_ "github.com/viant/endly/system/cloud/aws/sns"
 	_ "github.com/viant/endly/system/cloud/aws/sqs"
+	_ "github.com/viant/endly/system/cloud/aws/kms"
+	_ "github.com/viant/endly/system/cloud/aws/ssm"
+
 
 	_ "github.com/viant/endly/system/cloud/gcp/bigquery"
 	_ "github.com/viant/endly/system/cloud/gcp/cloudfunctions"
