@@ -1,6 +1,5 @@
 init:
   password: changeMe
-
 pipeline:
   setupKey:
     credentials: aws
@@ -9,7 +8,7 @@ pipeline:
 
   encrypt:
     action: aws/ssm:setParameter
-    name: password
+    name: myAppPassword
     '@description': my
     overwrite: true
     type: SecureString
