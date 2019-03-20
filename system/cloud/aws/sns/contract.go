@@ -9,7 +9,7 @@ type SetupTopicInput sns.CreateTopicInput
 
 type SetupSubscriptionInput struct {
 	*sns.SubscribeInput `json:",inline"`
-	Topic *string
+	Topic               *string
 }
 
 func (i *SetupSubscriptionInput) Validate() error {

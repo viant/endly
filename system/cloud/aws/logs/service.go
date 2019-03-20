@@ -69,6 +69,22 @@ outer:
 	return response, nil
 }
 
+func (s *service) setupLogGroup(context *endly.Context, input *SetupLogGroupInput) (interface{}, error) {
+	client, err := GetClient(context)
+	if err != nil {
+		return nil, err
+	}
+	request := cloudwatchlogs.CreateLogGroupInput(*input)
+
+	logGroup, err := client.DescribeLogGroups(&cloudwatchlogs.DescribeLogGroupsInput{
+		LogGroupNamePrefix: request.LogGroupName,
+	})
+	if err != nil {
+		return client.CreateLogGroup(&request)
+	}
+	return logGroup, nil
+}
+
 func (s *service) registerRoutes() {
 	client := &cloudwatchlogs.CloudWatchLogs{}
 	routes, err := aws.BuildRoutes(client, getClient)
@@ -98,6 +114,29 @@ func (s *service) registerRoutes() {
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*FilterLogEventMessagesInput); ok {
 				return s.fetchLogEvents(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "setupLogGroup",
+		RequestInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T.%v(%T)", s, "setupLogGroup", &SetupLogGroupInput{}),
+		},
+		ResponseInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T", &cloudwatchlogs.CreateLogGroupOutput{}),
+		},
+		RequestProvider: func() interface{} {
+			return &SetupLogGroupInput{}
+		},
+		ResponseProvider: func() interface{} {
+			return &cloudwatchlogs.CreateLogGroupOutput{}
+		},
+		OnRawRequest: setClient,
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*SetupLogGroupInput); ok {
+				return s.setupLogGroup(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},

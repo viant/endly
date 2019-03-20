@@ -27,12 +27,12 @@ type EventSourceMapping struct {
 //DeployInput setup function, creates or updates existing one
 type DeployInput struct {
 	lambda.CreateFunctionInput `yaml:",inline" json:",inline"`
-	ciam.SetupRolePolicyInput `yaml:",inline" json:",inline"`
-	Triggers []*EventSourceMapping
+	ciam.SetupRolePolicyInput  ` json:",inline"`
+	Triggers                   []*EventSourceMapping
 }
 
 type DeployOutput struct {
-	*lambda.FunctionConfiguration `json:",inline"`
+	*lambda.FunctionConfiguration
 	RoleInfo      *ciam.GetRoleInfoOutput
 	EventMappings []*lambda.EventSourceMappingConfiguration
 }

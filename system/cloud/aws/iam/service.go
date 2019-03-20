@@ -6,6 +6,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/aws"
 	"log"
+	"time"
 )
 
 const (
@@ -88,7 +89,6 @@ func (s *service) setupRole(context *endly.Context, request *SetupRolePolicyInpu
 	if err != nil {
 		return nil, err
 	}
-
 	roleOutput, foundErr := client.GetRole(&iam.GetRoleInput{
 		RoleName: request.RoleName,
 	})
@@ -122,12 +122,15 @@ func (s *service) setupRole(context *endly.Context, request *SetupRolePolicyInpu
 		}
 	}
 
+	time.Sleep(time.Second)
 	if err = s.setupAttachedRolePolicy(context, role, request); err != nil {
 		return nil, err
 	}
+	time.Sleep(time.Second)
 	if err = s.setupRolePolicy(context, role, request); err != nil {
 		return nil, err
 	}
+	time.Sleep(time.Second)
 	return s.getRoleInfo(context, &GetRoleInfoInput{
 		RoleName: request.RoleName,
 	})

@@ -1,0 +1,17 @@
+init:
+  password: changeMe
+
+pipeline:
+  setupKey:
+    credentials: aws
+    action: aws/kms:setupKey
+    aliasName: alias/myappKey
+
+  encrypt:
+    action: aws/ssm:setParameter
+    name: password
+    '@description': my
+    overwrite: true
+    type: SecureString
+    keyId: alias/myappKey
+    value: $password
