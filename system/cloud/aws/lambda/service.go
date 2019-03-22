@@ -404,7 +404,11 @@ func (s *service) registerRoutes() {
 		OnRawRequest: setClient,
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*CallInput); ok {
-				return s.call(context, req)
+				response, err := s.call(context, req)
+				if err == nil{
+					context.Publish(aws.NewOutputEvent("call", "lambda", response))
+				}
+				return response, err
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
