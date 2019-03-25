@@ -114,6 +114,7 @@ func (s *service) setupResource(context *endly.Context, setup *SetupResourceInpu
 	response := &SetupResourceOutput{
 		ResourceMethods: make(map[string]*apigateway.Method),
 	}
+
 	resourceInput := &setup.CreateResourceInput
 	client, err := GetClient(context)
 	if err != nil {
@@ -122,11 +123,14 @@ func (s *service) setupResource(context *endly.Context, setup *SetupResourceInpu
 	resource, ok := resources[setup.Path]
 	if !ok {
 		resourceInput.RestApiId = api.Id
+		resourceInput.PathPart = setup.PathPart
 		if resource, err = client.CreateResource(resourceInput); err != nil {
 			return nil, err
 		}
+		resource.PathPart = resourceInput.PathPart
 		resources[*resource.Path] = resource
 	}
+
 	response.Resource = resource
 	if err = s.removeUnlistedMethods(client, api, resource, setup); err != nil {
 		return nil, err
