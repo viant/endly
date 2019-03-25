@@ -216,17 +216,17 @@ func (r *RunRequest) Init() error {
 		}
 	}
 	if len(r.Ports) > 0 {
+		portsBindings := map[nat.Port][]nat.PortBinding{}
 		for source, dest := range r.Ports {
 			if !strings.Contains(dest, "/") {
 				dest += "/tcp"
 			}
-			ports := []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: source}}
-			var portsBindings = make(map[nat.Port][]nat.PortBinding)
-			portsBindings[nat.Port(dest)] = ports
-			if err := toolbox.DefaultConverter.AssignConverted(&r.HostConfig.PortBindings, portsBindings);err != nil {
-				return err
-			}
+			portsBindings[nat.Port(dest)] =  []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: string(source)}}
 		}
+		if err := toolbox.DefaultConverter.AssignConverted(&r.HostConfig.PortBindings, portsBindings);err != nil {
+			return err
+		}
+
 	}
 	if len(r.Env) > 0 {
 		r.Config.Env = make([]string, 0)
