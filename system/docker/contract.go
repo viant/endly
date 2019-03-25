@@ -216,8 +216,6 @@ func (r *RunRequest) Init() error {
 		}
 	}
 	if len(r.Ports) > 0 {
-
-		r.HostConfig.PortBindings = make(map[nat.Port][]nat.PortBinding)
 		for source, dest := range r.Ports {
 			if !strings.Contains(dest, "/") {
 				dest += "/tcp"
