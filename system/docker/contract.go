@@ -7,6 +7,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
 	"github.com/go-errors/errors"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/url"
 	"strings"
@@ -209,7 +210,10 @@ func (r *RunRequest) Init() error {
 		}
 	}
 	if r.Port != "" {
-		r.Config.ExposedPorts = nat.PortSet{nat.Port(r.Port): struct{}{}}
+		portSet := nat.PortSet{nat.Port(r.Port): struct{}{}}
+		if err := toolbox.DefaultConverter.AssignConverted(&r.Config.ExposedPorts, portSet);err != nil {
+			return err
+		}
 	}
 	if len(r.Ports) > 0 {
 
@@ -218,7 +222,12 @@ func (r *RunRequest) Init() error {
 			if !strings.Contains(dest, "/") {
 				dest += "/tcp"
 			}
-			r.HostConfig.PortBindings[nat.Port(dest)] = []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: source}}
+			ports := []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: source}}
+			var portsBindings = make(map[nat.Port][]nat.PortBinding)
+			portsBindings[nat.Port(dest)] = ports
+			if err := toolbox.DefaultConverter.AssignConverted(&r.HostConfig.PortBindings, portsBindings);err != nil {
+				return err
+			}
 		}
 	}
 	if len(r.Env) > 0 {
