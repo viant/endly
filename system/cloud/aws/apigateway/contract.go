@@ -63,11 +63,30 @@ func (i *SetupRestAPIInput) Init() error {
 	if len(i.Resources) == 0 {
 		return nil
 	}
+
+	var URIs = make(map[string]bool)
+	var resources = make([]*SetupResourceInput, 0)
+
 	for _, resource := range i.Resources {
 		if err := resource.Init(); err != nil {
 			return err
 		}
+		URIs[resource.Path] = true
+
+		parts := strings.Split(resource.Path, "/")
+
+		for i := 1; i < len(parts)-1; i++ {
+			ancestor := strings.Join(parts[0:i+1], "/")
+			if URIs[ancestor] {
+				continue
+			}
+			ancestorResource := &SetupResourceInput{Path: ancestor}
+			_ = ancestorResource.Init()
+			resources = append(resources, ancestorResource)
+		}
+		resources = append(resources, resource)
 	}
+	i.Resources = resources
 	return nil
 }
 
@@ -111,7 +130,6 @@ func (i *SetupResourceInput) Init() error {
 			return err
 		}
 	}
-
 	return nil
 }
 
@@ -120,10 +138,7 @@ func (i *SetupResourceInput) Validate() error {
 	if resourceInput.PathPart == nil {
 		return fmt.Errorf("pathPart was empty")
 	}
-	if len(i.Methods) == 0 {
-		return fmt.Errorf("methods were empty")
-	}
-	if len(i.Methods) == 0 {
+	if len(i.Methods) > 0 {
 		for _, method := range i.Methods {
 			if err := method.Validate(); err != nil {
 				return err
@@ -142,7 +157,14 @@ func (i *SetupResourceInput) ParentPath() string {
 	if index == -1 {
 		return i.Path
 	}
-	return string(i.Path[:index])
+	result := string(i.Path[:index])
+	if result == "/" {
+		return result
+	}
+	if strings.HasSuffix(result, "/") {
+		return string(result[:len(result)-1])
+	}
+	return result
 }
 
 /*
