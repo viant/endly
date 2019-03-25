@@ -1,7 +1,7 @@
 module github.com/viant/endly/example/etl/transformer
 
 require (
-	github.com/aerospike/aerospike-client-go v1.39.0 // indirect
+	github.com/aerospike/aerospike-client-go v2.0.0+incompatible // indirect
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
