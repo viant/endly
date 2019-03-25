@@ -12,7 +12,8 @@ require (
 	github.com/adrianwit/fbc v0.1.1
 	github.com/adrianwit/fsc v0.2.0
 	github.com/adrianwit/mgc v0.2.0
-	github.com/aerospike/aerospike-client-go v1.37.0 // indirect
+	github.com/aerospike/aerospike-client-go v2.0.0+incompatible // indirect
+
 	github.com/aws/aws-sdk-go v1.15.90
 	github.com/bitly/go-hostpool v0.0.0-20171023180738-a3a6125de932 // indirect
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869 // indirect
@@ -24,8 +25,8 @@ require (
 	github.com/docker/go-units v0.3.3 // indirect
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/elazarl/goproxy v0.0.0-20181111060418-2ce16c963a8a // indirect
+	github.com/emersion/go-smtp v0.10.1-0.20190322210132-5381b0b934c0
 
-	github.com/emersion/go-smtp v0.0.0-20180917150411-7162b2ca3bcb
 	github.com/evanphx/json-patch v4.1.0+incompatible // indirect
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
 	github.com/go-errors/errors v1.0.1
@@ -74,7 +75,8 @@ require (
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/stretchr/testify v1.2.2
 	github.com/tebeka/selenium v0.9.3
-	github.com/viant/asc v0.3.0
+	github.com/viant/asc v0.4.0
+
 	github.com/viant/assertly v0.4.4
 	github.com/viant/bgc v0.5.2
 	github.com/viant/dsc v0.6.2
