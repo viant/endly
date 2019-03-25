@@ -10,7 +10,7 @@ require (
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/stretchr/testify v1.3.0
-	github.com/viant/asc v0.2.0
+	github.com/viant/asc v0.4.0
 	github.com/viant/assertly v0.4.4 // indirect
 	github.com/viant/dsc v0.6.1
 	github.com/viant/dsunit v0.7.0 // indirect
