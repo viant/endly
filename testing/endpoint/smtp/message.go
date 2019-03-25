@@ -16,6 +16,25 @@ type Message struct {
 	Body    string
 }
 
+func (m *Message) Decode() {
+	lines := strings.Split(m.Raw, "\n")
+	for i, line := range lines {
+		pair := strings.SplitN(line, ":", 2)
+		if len(pair) != 2 {
+			if i+1 < len(lines) {
+				m.Body = strings.Join(lines[i+1:], "\n")
+			}
+			break
+		}
+		if pair[0] == "Subject" {
+			m.Subject = strings.TrimSpace(pair[1])
+		}
+		m.Header[pair[0]] = pair[1]
+	}
+}
+
+
+
 func NewMessage(from string, to []string, reader io.Reader) (*Message, error) {
 	result := &Message{
 		From:   from,
@@ -27,19 +46,6 @@ func NewMessage(from string, to []string, reader io.Reader) (*Message, error) {
 		return nil, err
 	}
 	result.Raw = string(content)
-	lines := strings.Split(result.Raw, "\n")
-	for i, line := range lines {
-		pair := strings.SplitN(line, ":", 2)
-		if len(pair) != 2 {
-			if i+1 < len(lines) {
-				result.Body = strings.Join(lines[i+1:], "\n")
-			}
-			break
-		}
-		if pair[0] == "Subject" {
-			result.Subject = strings.TrimSpace(pair[1])
-		}
-		result.Header[pair[0]] = pair[1]
-	}
+	result.Decode()
 	return result, nil
 }
