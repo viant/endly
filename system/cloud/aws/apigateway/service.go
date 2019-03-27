@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/apigateway"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/aws"
+
 	"github.com/viant/endly/system/cloud/aws/lambda"
 	"github.com/viant/toolbox"
 	"log"
@@ -49,7 +50,7 @@ func (s *service) setupResetAPI(context *endly.Context, request *SetupRestAPIInp
 		response.Resources = append(response.Resources, resourceOutput)
 		if len(resourceOutput.ResourceMethods) > 0 {
 			for _, v := range resourceOutput.ResourceMethods {
-				if v.MethodIntegration != nil {
+				if v.MethodIntegration != nil && v.MethodIntegration.Uri != nil {
 					if ARN, err := arn.Parse(*v.MethodIntegration.Uri); err == nil {
 						response.Region = ARN.Region
 					}
@@ -59,7 +60,7 @@ func (s *service) setupResetAPI(context *endly.Context, request *SetupRestAPIInp
 	}
 	deploymentInput := &request.CreateDeploymentInput
 	deploymentInput.RestApiId = restAPI.Id
-	if response.Stage, err = s.setupDeployment(context, deploymentInput); err != nil {
+	if response.Stage, err = s.setupDeployment(context, deploymentInput, request.Redeploy); err != nil {
 		return nil, err
 	}
 	if response.Region != "" {
@@ -155,6 +156,9 @@ func (s *service) setupResourceMethod(context *endly.Context, api *apigateway.Re
 		}
 		aws.SetFunctionInfo(function, state)
 		SetAPIInfo(api, state)
+
+	}
+	if resourceMethod.Uri != nil {
 		*resourceMethod.Uri = state.ExpandAsText(*resourceMethod.Uri)
 	}
 
@@ -170,6 +174,9 @@ func (s *service) setupResourceMethod(context *endly.Context, api *apigateway.Re
 	integrationInput.ResourceId = resource.Id
 	integrationInput.HttpMethod = setupMethod.HttpMethod
 	method.MethodIntegration, err = s.setupMethodIntegration(context, method, resourceMethod.PutIntegrationInput)
+	if err != nil {
+		return nil, err
+	}
 	permissionInput := resourceMethod.AddPermissionInput
 
 	if resourceMethod.FunctionName != "" && permissionInput != nil {
@@ -189,6 +196,7 @@ func (s *service) setupMethodIntegration(context *endly.Context, method *apigate
 	if err != nil {
 		return nil, err
 	}
+
 	if method.MethodIntegration == nil || method.MethodIntegration.Uri == nil {
 		return client.PutIntegration(request)
 	}
@@ -217,10 +225,12 @@ func (s *service) setupMethod(context *endly.Context, request *SetupMethodInput)
 		ResourceId: request.ResourceId,
 		HttpMethod: request.HttpMethod,
 	})
+
 	if err != nil || existingMethod == nil {
 		putMethod := apigateway.PutMethodInput(*request)
 		return client.PutMethod(&putMethod)
 	}
+
 	patchOperations := request.Diff(existingMethod)
 	if len(patchOperations) == 0 {
 		return existingMethod, nil
@@ -252,17 +262,28 @@ func (s *service) removeUnlistedMethods(client *apigateway.APIGateway, api *apig
 	return nil
 }
 
-func (s *service) setupDeployment(context *endly.Context, request *apigateway.CreateDeploymentInput) (*apigateway.Stage, error) {
+func (s *service) setupDeployment(context *endly.Context, request *apigateway.CreateDeploymentInput, redeploy bool) (*apigateway.Stage, error) {
 	client, err := GetClient(context)
 	if err != nil {
 		return nil, err
 	}
+
 	if deployment, _ := client.GetDeployment(&apigateway.GetDeploymentInput{
 		RestApiId: request.RestApiId,
 	}); deployment != nil {
-
 		if stage, err := s.getStage(context, deployment, *request.RestApiId, *request.StageName); err == nil {
-			return stage, err
+			if redeploy {
+				_, _ = client.DeleteStage(&apigateway.DeleteStageInput{
+					RestApiId: request.RestApiId,
+					StageName: stage.StageName,
+				})
+				_, _ = client.DeleteDeployment(&apigateway.DeleteDeploymentInput{
+					DeploymentId: deployment.Id,
+					RestApiId:    request.RestApiId,
+				})
+			} else {
+				return stage, err
+			}
 		}
 	}
 	deployment, err := client.CreateDeployment(request)

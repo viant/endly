@@ -11,9 +11,10 @@ import (
 
 //SetupRestAPIInput represent a request to setup API with specified resources
 type SetupRestAPIInput struct {
-	apigateway.CreateRestApiInput    `yaml:",inline" json:",inline"`
+	apigateway.CreateRestApiInput    ` json:",inline"`
 	Resources                        []*SetupResourceInput
-	apigateway.CreateDeploymentInput `yaml:",inline" json:",inline"`
+	apigateway.CreateDeploymentInput ` json:",inline"`
+	Redeploy                         bool
 }
 
 //SetupRestAPIInput represent setup API response
@@ -28,7 +29,7 @@ type SetupRestAPIOutput struct {
 //SetupResourceInput represents resource input
 type SetupResourceInput struct {
 	Path                           string
-	apigateway.CreateResourceInput `yaml:",inline" json:",inline"`
+	apigateway.CreateResourceInput `json:",inline"`
 	Methods                        []*ResourceMethod
 }
 
@@ -43,7 +44,7 @@ type ResourceMethod struct {
 
 //SetupResourceOutput represents setup resource output
 type SetupResourceOutput struct {
-	*apigateway.Resource `yaml:",inline" json:",inline"`
+	*apigateway.Resource `json:",inline"`
 	ResourceMethods      map[string]*apigateway.Method
 }
 
@@ -218,11 +219,12 @@ func (i *ResourceMethod) Init() error {
 	if integrationInput.IntegrationHttpMethod == nil {
 		integrationInput.IntegrationHttpMethod = aws.String("POST")
 	}
-	if integrationInput.Type == nil {
-		integrationInput.Type = aws.String("AWS_PROXY")
-	}
 
 	if i.FunctionName != "" {
+		if integrationInput.Type == nil {
+			integrationInput.Type = aws.String("AWS_PROXY")
+		}
+
 		if integrationInput.Uri == nil {
 			integrationInput.Uri = aws.String("arn:aws:apigateway:${function.region}:lambda:path/2015-03-31/functions/${function.arn}/invocations")
 		}
@@ -253,6 +255,9 @@ func (i *ResourceMethod) Init() error {
 func (i *ResourceMethod) Validate() error {
 	if i.HttpMethod == "" {
 		return fmt.Errorf("httpMethod was empty")
+	}
+	if i.Type == nil {
+		return fmt.Errorf("type was empty")
 	}
 	return nil
 }
