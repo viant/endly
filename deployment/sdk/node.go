@@ -3,6 +3,7 @@ package sdk
 import (
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/deployment/deploy"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
@@ -14,6 +15,7 @@ func (s *nodeService) setSdk(context *endly.Context, request *SetRequest) (*Info
 	var result = &Info{}
 	var sdkHome = "/opt/sdk/node"
 	var runResponse = &exec.RunResponse{}
+
 	var extractRequest = exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand("node -v", "", nil, nil,
 			model.NewExtract("version", "v([^\\s]+)", false)),
@@ -31,8 +33,8 @@ func (s *nodeService) setSdk(context *endly.Context, request *SetRequest) (*Info
 	if version, ok := runResponse.Data["version"]; ok {
 		result.Version = version.(string)
 	}
-	if result.Version == "" {
-		result.Version = request.Version
+	if !deploy.MatchVersion(request.Version, result.Version) {
+		return nil, errSdkNotFound
 	}
 	return result, nil
 }
