@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-RUN apt-get update -y && apt-get install -y wget build-essential gcc git unixodbc openssh-server curl python-pip bash lsb-release bash-completion
+RUN apt-get update -y && apt-get install -y wget libc-bin  build-essential gcc git g++ unixodbc libaio1 openssh-server curl python-pip bash lsb-release bash-completion pkg-config
 
 ENV NOTVISIBLE "in users profile"
 RUN rm /etc/ssh/ssh_host_rsa_key
@@ -32,9 +32,7 @@ RUN wget http://www.unixodbc.org/unixODBC-2.3.5.tar.gz &&\
     rm -rf unixODBC-2.3.5 unixODBC-2.3.5.tar.gz
 
 
-COPY dep.tar.gz .
-RUN tar xvzf dep.tar.gz && \
-    rm dep.tar.gz
+
 
 
 WORKDIR /usr/local
@@ -48,9 +46,18 @@ RUN wget https://dl.google.com/go/go1.12.1.linux-amd64.tar.gz && \
     rm go1.12.1.linux-amd64.tar.gz && \
     ln -s /usr/local/go/bin/go /usr/local/bin/go
 
+
 WORKDIR /
 RUN git clone https://github.com/viant/endly.git
+COPY dep.tar.gz .
+RUN tar xvzf dep.tar.gz && \
+    rm dep.tar.gz && \
+    cp oci8.pc /endly/endly
+
+
 WORKDIR /endly/endly
+ENV LD_LIBRARY_PATH=/usr/lib/oracle/12.2/client64/lib/
+ENV PKG_CONFIG_PATH=/endly/endly
 
 RUN sed -i 's/\/\/cgo/ /g' /endly/bootstrap/bootstrap.go
 RUN go build endly.go
@@ -59,7 +66,8 @@ RUN cp endly /usr/local/bin/
 WORKDIR /
 RUN tar cvzf /compact.tar.gz /usr/local/bin/endly  /usr/local/bin/docker /usr/local/bin/docker-compose \
     /usr/bin/python2.7 /usr/bin/python2 /usr/bin/python /usr/lib/python2.7 /usr/local/lib/python2.7/dist-packages \
-     /usr/local/lib/l* /etc/vertica.ini /etc/odbcinst.ini /opt/vertica
+    /usr/local/lib/l* /etc/vertica.ini /etc/odbcinst.ini /opt/vertica /usr/lib/oracle /etc/environment
+
 
 
 RUN [ "/bin/bash", "-c", "mkdir -p /var/run/sshd" ]

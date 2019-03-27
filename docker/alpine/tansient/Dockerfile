@@ -17,8 +17,6 @@ WORKDIR /
 RUN git clone https://github.com/viant/endly.git
 WORKDIR /endly/endly
 
-RUN sed -i 's/\/\/cgo/ /g' /endly/bootstrap/bootstrap.go
-
 RUN cd /endly/endly && go build endly.go
 RUN cp endly /bin/
 
