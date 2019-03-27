@@ -1,3 +1,6 @@
+## March 18 2019 0.34.1
+    * Patched deployment discovery
+    
 ## March 18 2019 0.34.0
     * Added vc/git service to use go client, (original vc service uses SSH scraping)
     * Added aws/kms, aws/ssm services
