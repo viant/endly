@@ -77,10 +77,12 @@ func (s *systemSdkService) checkSdkOnSession(context *endly.Context, target *url
 	if !ok {
 		return false
 	}
+
 	if sdkInfo.Version == "" && request.Version == "" {
 		response.SdkInfo = sdkInfo
 		return true
 	}
+
 	if deploy.MatchVersion(request.Version, sdkInfo.Version) {
 		response.SdkInfo = sdkInfo
 		return true
@@ -124,7 +126,9 @@ func (s *systemSdkService) setSdk(context *endly.Context, request *SetRequest) (
 	default:
 		return nil, fmt.Errorf("unsupported jdk: %v", request.Sdk)
 	}
-	s.updateSessionSdk(context, target, response.SdkInfo)
+	if err == nil {
+		err = s.updateSessionSdk(context, target, response.SdkInfo)
+	}
 	return response, err
 }
 
