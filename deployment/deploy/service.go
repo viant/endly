@@ -156,6 +156,7 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 	state.Put(artifactKey, artifact)
 	var versioningFragments = strings.Split(meta.Versioning, ".")
 	var requestedVersionFragment = strings.Split(request.Version, ".")
+
 	if len(deploymentTarget.MinReleaseVersion) == 0 || len(versioningFragments) == len(requestedVersionFragment) {
 		artifact.Put(versionKey, request.Version)
 		for i, fragmentKey := range versioningFragments {
@@ -163,6 +164,20 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 		}
 
 	} else {
+
+		if len(requestedVersionFragment) == 1 && len(requestedVersionFragment) < len(versioningFragments) {
+			for _, target := range meta.Targets {
+				for k := range target.MinReleaseVersion {
+					parts := strings.Split(k, ".")
+					if parts[0] == request.Version {
+						request.Version = k
+						versioningFragments = strings.Split(meta.Versioning, ".")
+						break
+					}
+				}
+			}
+		}
+
 		service, err := storage.GetStorageService(context, source)
 		if err != nil {
 			return nil, err
@@ -190,6 +205,7 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 			} else {
 				artifact.Put(versionKey, fmt.Sprintf("%v.%v", request.Version, i))
 			}
+
 			var sourceURL = context.Expand(source.URL)
 			exists, _ := service.Exists(sourceURL)
 			if exists {
