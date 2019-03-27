@@ -90,7 +90,7 @@ outer:
 		case selector:
 			webSelector = WebSelector(token.Matched[1 : len(token.Matched)-1])
 			token, err = p.expectOptionalWhitespaceFollowedBy(tokenizer, "'.' method selector", dot)
-			if token.Token != dot {
+			if err != nil || token.Token != dot {
 				return nil, err
 			}
 			token, err = p.expectOptionalWhitespaceFollowedBy(tokenizer, "'.' method", id)
