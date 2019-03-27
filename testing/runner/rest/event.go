@@ -10,10 +10,12 @@ import (
 func (r *Request) Messages() []*msg.Message {
 	var response = make([]*msg.Message, 0)
 	response = append(response, msg.NewMessage(msg.NewStyled(fmt.Sprintf("%v %v", r.Method, r.URL), msg.MessageStyleGeneric), msg.NewStyled("rest.Request", msg.MessageStyleGeneric)))
-	requestJSON, _ := toolbox.AsJSONText(r.Request)
-	response = append(response, msg.NewMessage(msg.NewStyled("Request", msg.MessageStyleGeneric), msg.NewStyled("rest.Request", msg.MessageStyleGeneric),
-		msg.NewStyled(requestJSON, msg.MessageStyleInput),
-	))
+	if r.Request != nil {
+		requestJSON, _ := toolbox.AsJSONText(r.Request)
+		response = append(response, msg.NewMessage(msg.NewStyled("Request", msg.MessageStyleGeneric), msg.NewStyled("rest.Request", msg.MessageStyleGeneric),
+			msg.NewStyled(requestJSON, msg.MessageStyleInput),
+		))
+	}
 	return response
 }
 
