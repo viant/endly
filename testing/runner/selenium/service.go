@@ -14,6 +14,7 @@ import (
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
 	"strings"
+	"time"
 )
 
 const (
@@ -83,6 +84,8 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 		return response, nil
 	}
 	var state = context.State()
+
+	actionDelay := time.Duration(request.ActionDelaysInMs) * time.Millisecond
 	for _, action := range request.Actions {
 		for _, call := range action.Calls {
 			if len(call.Parameters) > 0 {
@@ -115,6 +118,9 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 				response.LookupErrors = append(response.LookupErrors, callResponse.LookupError)
 			}
 			util.Append(response.Data, callResponse.Data, true)
+			if actionDelay > 0 {
+				time.Sleep(actionDelay)
+			}
 		}
 	}
 	var err error
@@ -267,6 +273,13 @@ func (s *service) stop(context *endly.Context, request *StopRequest) (*StopRespo
 	serviceResponse := processService.Run(context, &process.StopAllRequest{
 		Target: target,
 		Input:  fmt.Sprintf("selenium-server-standalone.jar -port %v", toolbox.AsString(request.Port)),
+	})
+	if serviceResponse.Error != "" {
+		return nil, errors.New(serviceResponse.Error)
+	}
+	serviceResponse = processService.Run(context, &process.StopAllRequest{
+		Target: target,
+		Input:  "/opt/selenium/geckodriver",
 	})
 	if serviceResponse.Error != "" {
 		return nil, errors.New(serviceResponse.Error)

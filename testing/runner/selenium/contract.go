@@ -125,12 +125,13 @@ type WebElementCallResponse struct {
 
 //RunRequest represents group of selenium web elements calls
 type RunRequest struct {
-	SessionID      string
-	Browser        string
-	RemoteSelenium *url.Resource //remote selenium resource
-	Actions        []*Action
-	Commands       []interface{} `description:"list of selenium command: {web element selector}.WebElementMethod(params),  or WebDriverMethod(params), or wait map "`
-	Expect         interface{}   `description:"If specified it will validated response as actual"`
+	SessionID        string
+	Browser          string
+	RemoteSelenium   *url.Resource //remote selenium resource
+	Actions          []*Action
+	ActionDelaysInMs int           `description:"slows down action with specified delay"`
+	Commands         []interface{} `description:"list of selenium command: {web element selector}.WebElementMethod(params),  or WebDriverMethod(params), or wait map "`
+	Expect           interface{}   `description:"If specified it will validated response as actual"`
 }
 
 func (r *RunRequest) asWaitAction(parser *parser, candidate interface{}) (*Action, error) {
