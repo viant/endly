@@ -1,5 +1,6 @@
-## March 18 2019 0.34.1
+## March 28 2019 0.34.2
     * Patched deployment discovery
+    * Minor patches
     
 ## March 18 2019 0.34.0
     * Added vc/git service to use go client, (original vc service uses SSH scraping)

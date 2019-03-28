@@ -3,7 +3,7 @@ FROM golang:1.12.1-alpine3.9
 ENV NOTVISIBLE "in users profile"
 ENV GO111MODULE=on
 
-RUN apk add --no-cache curl py-pip jq make gcc unixodbc-dev musl-dev git docker bash openssh-server sudo && \
+RUN apk add --no-cache curl py-pip jq make gcc musl-dev git docker bash openssh-server sudo && \
     pip install --no-cache-dir docker-compose
 
 RUN echo 'root:dev' | chpasswd && \

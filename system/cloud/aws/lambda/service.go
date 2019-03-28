@@ -405,7 +405,7 @@ func (s *service) registerRoutes() {
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*CallInput); ok {
 				response, err := s.call(context, req)
-				if err == nil{
+				if err == nil {
 					context.Publish(aws.NewOutputEvent("call", "lambda", response))
 				}
 				return response, err

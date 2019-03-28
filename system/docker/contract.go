@@ -211,7 +211,7 @@ func (r *RunRequest) Init() error {
 	}
 	if r.Port != "" {
 		portSet := nat.PortSet{nat.Port(r.Port): struct{}{}}
-		if err := toolbox.DefaultConverter.AssignConverted(&r.Config.ExposedPorts, portSet);err != nil {
+		if err := toolbox.DefaultConverter.AssignConverted(&r.Config.ExposedPorts, portSet); err != nil {
 			return err
 		}
 	}
@@ -221,9 +221,9 @@ func (r *RunRequest) Init() error {
 			if !strings.Contains(dest, "/") {
 				dest += "/tcp"
 			}
-			portsBindings[nat.Port(dest)] =  []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: string(source)}}
+			portsBindings[nat.Port(dest)] = []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: string(source)}}
 		}
-		if err := toolbox.DefaultConverter.AssignConverted(&r.HostConfig.PortBindings, portsBindings);err != nil {
+		if err := toolbox.DefaultConverter.AssignConverted(&r.HostConfig.PortBindings, portsBindings); err != nil {
 			return err
 		}
 
