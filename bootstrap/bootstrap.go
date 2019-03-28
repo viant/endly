@@ -20,10 +20,8 @@ import (
 	_ "github.com/adrianwit/fsc"
 	_ "github.com/adrianwit/mgc"
 
-
 	//cgo _ "github.com/alexbrainman/odbc"
 	//cgo _"github.com/mattn/go-oci8"
-
 
 	_ "github.com/viant/endly/gen/static"
 	_ "github.com/viant/endly/shared/static" //load external resource like .csv .json files to mem storage
@@ -59,15 +57,14 @@ import (
 	_ "github.com/viant/endly/system/cloud/aws/ec2"
 	_ "github.com/viant/endly/system/cloud/aws/iam"
 	_ "github.com/viant/endly/system/cloud/aws/kinesis"
+	_ "github.com/viant/endly/system/cloud/aws/kms"
 	_ "github.com/viant/endly/system/cloud/aws/lambda"
 	_ "github.com/viant/endly/system/cloud/aws/logs"
 	_ "github.com/viant/endly/system/cloud/aws/s3"
 	_ "github.com/viant/endly/system/cloud/aws/ses"
 	_ "github.com/viant/endly/system/cloud/aws/sns"
 	_ "github.com/viant/endly/system/cloud/aws/sqs"
-	_ "github.com/viant/endly/system/cloud/aws/kms"
 	_ "github.com/viant/endly/system/cloud/aws/ssm"
-
 
 	_ "github.com/viant/endly/system/cloud/gcp/bigquery"
 	_ "github.com/viant/endly/system/cloud/gcp/cloudfunctions"

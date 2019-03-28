@@ -33,8 +33,6 @@ func (m *Message) Decode() {
 	}
 }
 
-
-
 func NewMessage(from string, to []string, reader io.Reader) (*Message, error) {
 	result := &Message{
 		From:   from,

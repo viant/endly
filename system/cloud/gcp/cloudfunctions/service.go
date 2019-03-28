@@ -70,7 +70,7 @@ func (s *service) Deploy(context *endly.Context, request *DeployRequest) (*Deplo
 		context.Publish(gcp.NewOutputEvent(request.Name, "deploy", response))
 		return nil, fmt.Errorf("failed to deploy funciton")
 	}
-	if len(request.Members) > 0  {
+	if len(request.Members) > 0 {
 		err = s.updateInvokers(context, response.Function.Name, request.Members...)
 	}
 	return response, err
@@ -196,14 +196,10 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 	return updateCall.Do()
 }
 
-
-
-
-
-func (s *service) updateInvokers(context *endly.Context, resource string, members ...string) (error) {
+func (s *service) updateInvokers(context *endly.Context, resource string, members ...string) error {
 	ctxClient, err := GetClient(context)
 	if err != nil {
-		return  err
+		return err
 	}
 	projectService := cloudfunctions.NewProjectsLocationsFunctionsService(ctxClient.service)
 	call := projectService.GetIamPolicy(resource)
@@ -217,29 +213,27 @@ func (s *service) updateInvokers(context *endly.Context, resource string, member
 		policy.Bindings = make([]*cloudfunctions.Binding, 0)
 	}
 	updated := false
-	for  _, binding := range policy.Bindings {
+	for _, binding := range policy.Bindings {
 		if binding.Role == functionInvokerRole {
 			binding.Members = members
-			updated =true
-			break;
+			updated = true
+			break
 		}
 	}
-	if ! updated {
+	if !updated {
 		policy.Bindings = append(policy.Bindings, &cloudfunctions.Binding{
-			Members:members,
-			Role:functionInvokerRole,
+			Members: members,
+			Role:    functionInvokerRole,
 		})
 	}
 	policyRequest := &cloudfunctions.SetIamPolicyRequest{
-		Policy:policy,
+		Policy: policy,
 	}
 	updatePolicyCall := projectService.SetIamPolicy(resource, policyRequest)
 	updatePolicyCall.Context(ctxClient.Context())
 	_, err = updatePolicyCall.Do()
 	return err
 }
-
-
 
 func (s *service) list(context *endly.Context, request *ListRequest) (*ListResponse, error) {
 	ctxClient, err := GetClient(context)

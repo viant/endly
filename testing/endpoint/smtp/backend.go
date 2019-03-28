@@ -20,7 +20,7 @@ func (b *backend) Login(state *smtp.ConnectionState, username, password string) 
 				return &session{
 					messages: b.messages,
 					username: username,
-					backend:b,
+					backend:  b,
 				}, nil
 			}
 			break
@@ -29,14 +29,13 @@ func (b *backend) Login(state *smtp.ConnectionState, username, password string) 
 	return nil, fmt.Errorf("invalid user or credentials: %v", username)
 }
 
-
 // Called if the client attempts to send mail without logging in first.
 // Return smtp.ErrAuthRequired if you don't want to support this.
 func (b *backend) AnonymousLogin(state *smtp.ConnectionState) (smtp.Session, error) {
 	return &session{
 		messages: b.messages,
 		username: "",
-		backend:b,
+		backend:  b,
 	}, nil
 }
 
@@ -54,8 +53,8 @@ type session struct {
 
 func (s *session) Reset() {
 	s.msg = &Message{
-		To:make([]string, 0),
-		Header:make(map[string]string),
+		To:     make([]string, 0),
+		Header: make(map[string]string),
 	}
 }
 
