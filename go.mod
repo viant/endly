@@ -77,7 +77,7 @@ require (
 	github.com/tebeka/selenium v0.9.3
 	github.com/viant/asc v0.4.0
 
-	github.com/viant/assertly v0.4.4
+	github.com/viant/assertly v0.4.5
 	github.com/viant/bgc v0.5.2
 	github.com/viant/dsc v0.6.2
 	github.com/viant/dsunit v0.8.1
