@@ -12,11 +12,11 @@ import (
 func TestNew(t *testing.T) {
 
 	context := endly.New().NewContext(nil)
-	if !toolbox.FileExists(path.Join(os.Getenv("HOME"), ".secret/am.json")) {
+	if !gcp.HasTestCredentials() {
 		return
 	}
 	err := InitRequest(context, map[string]interface{}{
-		"Credentials": "am",
+		"Credentials": "gcp-e2e",
 	})
 	assert.Nil(t, err)
 	request, err := context.NewRequest(ServiceID, "instancesList", map[string]interface{}{

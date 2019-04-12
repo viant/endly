@@ -1,5 +1,5 @@
 defaults:
-  credentials: am
+  credentials: gcp-e2e
 pipeline:
   deploy:
     action: gcp/cloudfunctions:call

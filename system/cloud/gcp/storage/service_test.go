@@ -1,26 +1,27 @@
 package storage
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox"
-	"os"
-	"path"
+	"github.com/viant/endly/system/cloud/gcp"
 	"testing"
 )
 
 func TestNew(t *testing.T) {
 
 	context := endly.New().NewContext(nil)
-	if !toolbox.FileExists(path.Join(os.Getenv("HOME"), ".secret/am.json")) {
+	if !gcp.HasTestCredentials() {
 		return
 	}
 	err := InitRequest(context, map[string]interface{}{
-		"Credentials": "am",
+		"Credentials": "gcp-e2e",
 	})
 	assert.Nil(t, err)
+
+	cred, _ := context.Secrets.GetCredentials("gcp-e2e")
 	request, err := context.NewRequest(ServiceID, "subscriptionsList", map[string]interface{}{
-		"project": " projects/abstractmeta-p1",
+		"project": fmt.Sprintf("projects/%v", cred.ProjectID),
 	})
 	assert.Nil(t, err)
 	assert.NotNil(t, request)

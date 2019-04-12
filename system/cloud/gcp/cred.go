@@ -5,13 +5,10 @@ import (
 	"fmt"
 	"github.com/go-errors/errors"
 	"github.com/viant/endly"
-	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
-	"github.com/viant/toolbox/data"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	"google.golang.org/api/gensupport"
 	"google.golang.org/api/option"
 	htransport "google.golang.org/api/transport/http"
 	"net/http"
@@ -22,7 +19,7 @@ import (
 var configKey = (*gcpCredConfig)(nil)
 
 const userAgent = "endly/e2e"
-const defaultRegion = "us-central1"
+const DefaultRegion = "us-central1"
 
 type gcpCredConfig struct {
 	*cred.Config
@@ -100,7 +97,6 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}) 
 	if len(rawRequest) == 0 {
 		return nil, fmt.Errorf("request was empty")
 	}
-
 	secrets := &struct {
 		Credentials string
 	}{}
@@ -137,6 +133,14 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}) 
 	return config, nil
 }
 
+func getCredentials(context *endly.Context) (*gcpCredConfig, error) {
+	credConfig := &gcpCredConfig{}
+	if context.GetInto(configKey, &credConfig) {
+		return credConfig, nil
+	}
+	return nil, fmt.Errorf("gcp credentials not found")
+}
+
 func getDefaultClient(ctx context.Context, scopes ...string) (*http.Client, error) {
 	o := []option.ClientOption{
 		option.WithScopes(scopes...),
@@ -144,38 +148,4 @@ func getDefaultClient(ctx context.Context, scopes ...string) (*http.Client, erro
 	}
 	httpClient, _, err := htransport.NewClient(ctx, o...)
 	return httpClient, err
-}
-
-//UpdateActionRequest updates raw request with project, service
-func UpdateActionRequest(rawRequest map[string]interface{}, config *gcpCredConfig, client CtxClient) {
-	state := data.NewMap()
-	state.SetValue("gcp.projectID", config.ProjectID)
-	for k, v := range rawRequest {
-		rawRequest[k] = state.Expand(v)
-	}
-	if config.Region == "" {
-		config.Region = defaultRegion
-	}
-
-	mappings := util.BuildLowerCaseMapping(rawRequest)
-	if _, has := mappings["project"]; !has {
-		rawRequest["project"] = config.ProjectID
-	}
-	if _, has := mappings["region"]; !has {
-		rawRequest["region"] = config.Region
-	}
-
-	var URLParams = make(gensupport.URLParams)
-	if paramsKey, has := mappings["urlparams"]; has {
-		params := rawRequest[paramsKey]
-		if toolbox.IsMap(params) {
-			for k, v := range toolbox.AsMap(params) {
-				URLParams[k] = []string{toolbox.AsString(v)}
-			}
-		}
-	}
-
-	rawRequest["urlParams_"] = URLParams
-	rawRequest["s"] = client.Service()
-
 }

@@ -18,11 +18,11 @@ func TestClient(t *testing.T) {
 	assert.NotNil(t, err)
 	_, err = GetClient(context)
 	assert.NotNil(t, err)
-	if !toolbox.FileExists(path.Join(os.Getenv("HOME"), ".secret/am.json")) {
+	if !gcp.HasTestCredentials() {
 		return
 	}
 	err = InitRequest(context, map[string]interface{}{
-		"Credentials": "am",
+		"Credentials": "gcp-e2e",
 	})
 	assert.Nil(t, err)
 	client, err := GetClient(context)
