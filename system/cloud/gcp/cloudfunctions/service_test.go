@@ -16,18 +16,18 @@ import (
 func TestNew(t *testing.T) {
 
 	context := endly.New().NewContext(nil)
-	if !toolbox.FileExists(path.Join(os.Getenv("HOME"), ".secret/am.json")) {
+	if !gcp.HasTestCredentials() {
 		return
 	}
 	err := InitRequest(context, map[string]interface{}{
-		"Credentials": "am",
+		"Credentials": "gcp-e2e",
 	})
 	if !assert.Nil(t, err) {
 		return
 	}
 
 	credConfig, err := gcp.InitCredentials(context, map[string]interface{}{
-		"Credentials": "am",
+		"Credentials": "gcp-e2e",
 	})
 	if !assert.Nil(t, err) {
 		return
@@ -47,11 +47,11 @@ func TestNew(t *testing.T) {
 
 func TestService_Deploy(t *testing.T) {
 	context := endly.New().NewContext(nil)
-	if !toolbox.FileExists(path.Join(os.Getenv("HOME"), ".secret/am.json")) {
+	if !gcp.HasTestCredentials() {
 		return
 	}
 	err := InitRequest(context, map[string]interface{}{
-		"Credentials": "am",
+		"Credentials": "gcp-e2e",
 	})
 	if !assert.Nil(t, err) {
 		return

@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox"
+	"github.com/viant/endly/system/cloud/gcp"
 	"google.golang.org/api/pubsub/v1"
-	"os"
-	"path"
 	"testing"
 )
 
@@ -19,11 +17,11 @@ func TestClient(t *testing.T) {
 	assert.NotNil(t, err)
 	_, err = GetClient(context)
 	assert.NotNil(t, err)
-	if !toolbox.FileExists(path.Join(os.Getenv("HOME"), ".secret/am.json")) {
+	if !gcp.HasTestCredentials() {
 		return
 	}
 	err = InitRequest(context, map[string]interface{}{
-		"Credentials": "am",
+		"Credentials": "gcp-e2e",
 	})
 	assert.Nil(t, err)
 	client, err := GetClient(context)
@@ -35,9 +33,9 @@ func TestClient(t *testing.T) {
 		return
 	}
 	assert.NotNil(t, service)
-	instance := service.Projects.Topics.List("projects/abstractmeta-p1")
+	cred, _ := context.Secrets.GetCredentials("gcp-e2e")
+	instance := service.Projects.Topics.List(fmt.Sprintf("projects/%v", cred.ProjectID))
 	assert.NotNil(t, instance)
-	output, err := instance.Do()
-	fmt.Printf("%v %v\n", output, err)
-	toolbox.DumpIndent(output, true)
+	_, err := instance.Do()
+	assert.Nil(t, err)
 }

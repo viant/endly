@@ -2,5 +2,5 @@ pipeline:
   start:
     info:
       action: gcp/pubsub:topicsList
-      credentials: am
+      credentials: gcp-e2e
       project: projects/myProject

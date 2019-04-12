@@ -4,11 +4,8 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox"
 	"google.golang.org/api/compute/v1"
 	"log"
-	"os"
-	"path"
 	"testing"
 )
 
@@ -33,13 +30,13 @@ var testCtxServiceKey = (*testCtxClient)(nil)
 
 func TestGetClient(t *testing.T) {
 
-	if !toolbox.FileExists(path.Join(os.Getenv("HOME"), ".secret/am.json")) {
+	if !HasTestCredentials() {
 		return
 	}
 	manager := endly.New()
 	context := manager.NewContext(nil)
 	_, err := InitCredentials(context, map[string]interface{}{
-		"Credentials": "am",
+		"Credentials": "gcp-e2e",
 	})
 	assert.Nil(t, err)
 
@@ -52,7 +49,5 @@ func TestGetClient(t *testing.T) {
 	if !assert.Nil(t, err) {
 		log.Print(err)
 	}
-
-	//provider := compute.New
 
 }
