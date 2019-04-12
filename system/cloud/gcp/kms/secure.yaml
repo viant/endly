@@ -1,0 +1,26 @@
+pipeline:
+  secure:
+    deployKey:
+      action: gcp/kms:deployKey
+      credentials: gcp-e2e
+      ring: my_ring
+      key: my_key
+      purpose: ENCRYPT_DECRYPT
+    encrypt:
+      action: gcp/kms:encrypt
+      logging: false
+      ring: my_ring
+      key: my_key
+      plainData: this is test
+      dest:
+        URL: /tmp/config.json.enc
+    decrypt:
+      action: gcp/kms:decrypt
+      logging: false
+      ring: my_ring
+      key: my_key
+      source:
+        URL: /tmp/config.json.enc
+    info:
+      action: print
+      message: $AsString(${decrypt.PlainData})

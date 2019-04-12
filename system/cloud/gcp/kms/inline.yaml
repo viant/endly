@@ -1,0 +1,23 @@
+pipeline:
+  secure:
+    deployKey:
+      action: gcp/kms:deployKey
+      credentials: gcp-e2e
+      ring: my_ring
+      key: my_key
+      purpose: ENCRYPT_DECRYPT
+    encrypt:
+      action: gcp/kms:encrypt
+      ring: my_ring
+      key: my_key
+      plainData: this is test
+      logging: false
+    decrypt:
+      action: gcp/kms:decrypt
+      ring: my_ring
+      key: my_key
+      cipherBase64Text: ${encrypt.CipherBase64Text}
+      logging: false
+    info:
+      action: print
+      message: 'decrypted:  $AsString(${decrypt.PlainData})'
