@@ -69,6 +69,7 @@ import (
 	_ "github.com/viant/endly/system/cloud/gcp/bigquery"
 	_ "github.com/viant/endly/system/cloud/gcp/cloudfunctions"
 	_ "github.com/viant/endly/system/cloud/gcp/compute"
+	_ "github.com/viant/endly/system/cloud/gcp/kms"
 	_ "github.com/viant/endly/system/cloud/gcp/pubsub"
 	_ "github.com/viant/endly/system/cloud/gcp/storage"
 
