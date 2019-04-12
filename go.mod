@@ -43,7 +43,6 @@ require (
 	github.com/gorilla/mux v1.7.0 // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190203031600-7a902570cb17 // indirect
-	github.com/grpc-ecosystem/grpc-gateway v1.5.1 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/jhump/protoreflect v1.1.0
 	github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af // indirect
@@ -84,10 +83,10 @@ require (
 	github.com/viant/neatly v0.8.0
 	github.com/viant/toolbox v0.19.1
 	github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227 // indirect
-	golang.org/x/crypto v0.0.0-20190211182817-74369b46fc67
-	golang.org/x/net v0.0.0-20181201002055-351d144fa1fc
-	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890
-	google.golang.org/api v0.1.0
+	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+	golang.org/x/net v0.0.0-20190311183353-d8887717615a
+	golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421
+	google.golang.org/api v0.2.0
 	gopkg.in/linkedin/goavro.v1 v1.0.5 // indirect
 	gopkg.in/src-d/go-git.v4 v4.10.0
 	gopkg.in/yaml.v2 v2.2.2
