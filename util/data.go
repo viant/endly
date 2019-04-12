@@ -252,9 +252,10 @@ func expandArgumentAsLiterals(baseURLs []string, URIs []string, mainResource *ur
 		aMap.Put(fmt.Sprintf("arg%d", i-1), text)
 		trimText := strings.TrimSpace(text)
 		if strings.Index(trimText, "{") < strings.Index(trimText, "[") {
-			trimText = string(text[strings.Index(text, "{")+1 : strings.LastIndex(text, "}")-1])
-		} else {
-			trimText = string(text[strings.Index(trimText, "[")+1 : strings.LastIndex(trimText, "]")-1])
+			trimText = string(trimText[strings.Index(trimText, "{")+1 : strings.LastIndex(trimText, "}")-1])
+		} else if strings.LastIndex(trimText, "]") < len(trimText) &&
+			strings.Index(trimText, "[") > 0 && strings.Index(trimText, "[") < strings.LastIndex(trimText, "]") {
+			trimText = string(trimText[strings.Index(trimText, "[")+1 : strings.LastIndex(trimText, "]")-1])
 		}
 		aMap.Put(fmt.Sprintf("args%d", i-1), trimText)
 
