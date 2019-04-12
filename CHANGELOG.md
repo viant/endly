@@ -1,6 +1,6 @@
-## March 28 2019 0.34.2
-    * Patched deployment discovery
-    * Minor patches
+## April 14 2019 0.35.0
+    * added gcp/kms service
+    * updates gcp/* test
     
 ## March 18 2019 0.34.0
     * Added vc/git service to use go client, (original vc service uses SSH scraping)
