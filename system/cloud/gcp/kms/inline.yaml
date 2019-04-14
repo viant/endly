@@ -6,6 +6,11 @@ pipeline:
       ring: my_ring
       key: my_key
       purpose: ENCRYPT_DECRYPT
+
+    keyInfo:
+      action: print
+      message: $AsJSON($deployKey)
+
     encrypt:
       action: gcp/kms:encrypt
       ring: my_ring

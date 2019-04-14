@@ -1,7 +1,6 @@
 package kms
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/gcp"
@@ -20,13 +19,6 @@ func TestNew(t *testing.T) {
 		"Credentials": "gcp-e2e",
 	})
 	assert.Nil(t, err)
-	cred, _ := context.Secrets.GetCredentials("gcp-e2e")
-	request, err := context.NewRequest(ServiceID, "subscriptionsList", map[string]interface{}{
-		"project": fmt.Sprintf("projects/%v", cred.ProjectID),
-	})
-	assert.Nil(t, err)
-	assert.NotNil(t, request)
-
 }
 
 func Test_Keys(t *testing.T) {
