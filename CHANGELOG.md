@@ -1,5 +1,7 @@
 ## April 14 2019 0.35.0
     * added gcp/kms service
+    * added gcp/run service
+    * added gcp/container service
     * updates gcp/* test
     
 ## March 18 2019 0.34.0
