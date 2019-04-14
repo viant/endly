@@ -1,9 +1,10 @@
 module github.com/viant/endly
 
 require (
-	cloud.google.com/go v0.36.0
-	contrib.go.opencensus.io/exporter/ocagent v0.4.6 // indirect
-	firebase.google.com/go v3.5.0+incompatible // indirect
+	cloud.google.com/go v0.37.0
+	contrib.go.opencensus.io/exporter/ocagent v0.4.12 // indirect
+	firebase.google.com/go v3.7.0+incompatible // indirect
+	git.apache.org/thrift.git v0.12.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Azure/go-autorest v11.5.0+incompatible // indirect
 	github.com/MichaelS11/go-cql-driver v0.0.0-20181029231409-81aad8db3731
@@ -32,9 +33,7 @@ require (
 	github.com/go-errors/errors v1.0.1
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gocql/gocql v0.0.0-20181124151448-70385f88b28b // indirect
-	github.com/gogo/protobuf v1.2.0 // indirect
-	github.com/golang/protobuf v1.2.0
-	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
+	github.com/golang/protobuf v1.3.1
 	github.com/gomarkdown/markdown v0.0.0-20181104084050-d1d0edeb5d85 // indirect
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf // indirect
 	github.com/google/gops v0.3.5
@@ -63,8 +62,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/morikuni/aec v0.0.0-20170113033406-39771216ff4c // indirect
 	github.com/nlopes/slack v0.5.1-0.20190214144636-e73b432e20b0
-	github.com/onsi/ginkgo v1.7.0 // indirect
-	github.com/onsi/gomega v1.4.3 // indirect
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
@@ -81,12 +78,12 @@ require (
 	github.com/viant/dsc v0.6.4
 	github.com/viant/dsunit v0.8.1
 	github.com/viant/neatly v0.8.0
-	github.com/viant/toolbox v0.19.3
+	github.com/viant/toolbox v0.19.4
 	github.com/yuin/gopher-lua v0.0.0-20181109042959-a0dfe84f6227 // indirect
 	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a
 	golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421
-	google.golang.org/api v0.2.0
+	google.golang.org/api v0.3.2
 	gopkg.in/linkedin/goavro.v1 v1.0.5 // indirect
 	gopkg.in/src-d/go-git.v4 v4.10.0
 	gopkg.in/yaml.v2 v2.2.2
