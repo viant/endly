@@ -20,6 +20,9 @@ import (
 	"time"
 )
 
+//EndlyPanic env key name to skip recover in case of panic, export ENDLY_PANIC=true
+const EndlyPanic = "ENDLY_PANIC"
+
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
 
@@ -235,6 +238,10 @@ func (c *Context) NewRequest(serviceName, action string, rawRequest map[string]i
 	}
 
 	defer func() {
+
+		if toolbox.AsBoolean(os.Getenv("ENDLY_PANIC")) {
+			return
+		}
 		if r := recover(); r != nil {
 			var info = toolbox.AsString(rawRequest)
 			if JSONSource, err := toolbox.AsJSONText(rawRequest); err == nil {
