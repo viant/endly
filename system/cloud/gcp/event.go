@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"github.com/viant/endly/model/msg"
+	"github.com/viant/toolbox"
 	"gopkg.in/yaml.v2"
 )
 
@@ -13,6 +14,12 @@ type OutputEvent struct {
 
 func (e *OutputEvent) Messages() []*msg.Message {
 	info := ""
+
+	if e.Value != nil && toolbox.IsMap(e.Value) && toolbox.IsStruct(e.Value) {
+		aMap := toolbox.AsMap(e.Value)
+		e.Value = toolbox.DeleteEmptyKeys(aMap)
+	}
+
 	if content, err := yaml.Marshal(e.Value); err == nil {
 		info = string(content)
 	}

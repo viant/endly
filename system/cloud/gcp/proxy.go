@@ -6,6 +6,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -37,7 +38,11 @@ func BuildRoutes(service interface{}, nameTransformer func(name string) string, 
 		return nil, err
 	}
 	var result = make([]*endly.Route, 0)
-	for _, structField := range fields {
+	var actionCount = make(map[string]int)
+
+	structFields := toolbox.StructFields(fields)
+	sort.Sort(structFields)
+	for _, structField := range structFields {
 		fieldType := structField.Type
 		service := reflect.New(fieldType.Type.Elem()).Interface()
 		if err = toolbox.ScanStructMethods(service, 1, func(method reflect.Method) error {
@@ -61,7 +66,10 @@ func BuildRoutes(service interface{}, nameTransformer func(name string) string, 
 				action = nameTransformer(action)
 			}
 			action = normalizeAction(action)
-
+			actionCount[action]++
+			if actionCount[action] > 1 {
+				action = action + fmt.Sprintf("v%d", actionCount[action])
+			}
 			route := &endly.Route{
 				Action: action,
 				RequestInfo: &endly.ActionInfo{
@@ -161,4 +169,14 @@ func normalizeMap(dataMap map[string]interface{}) map[string]interface{} {
 		}
 	}
 	return dataMap
+}
+
+func getSimpleServiceName(name string) string {
+	if dotPosition := strings.Index(name, "."); dotPosition != -1 {
+		name = string(name[dotPosition+1:])
+	}
+	if servicePosition := strings.LastIndex(name, "Service"); servicePosition != -1 {
+		name = string(name[:servicePosition])
+	}
+	return name
 }

@@ -34,6 +34,11 @@ pipeline:
       ring: my_ring
       key: my_key
       purpose: ENCRYPT_DECRYPT
+
+    keyInfo:
+      action: print
+      message: 'Deployed Key: $deployKey.Name'
+
     encrypt:
       action: gcp/kms:encrypt
       ring: my_ring
@@ -48,7 +53,7 @@ pipeline:
       logging: false
     info:
       action: print
-      message: $AsString(${decrypt.PlainData})
+      message: 'decrypted:  $AsString(${decrypt.PlainData})'
 ```
 
 ##### Google Storage asset encryption/decryption (on top of native encryption)
