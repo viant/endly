@@ -72,6 +72,9 @@ import (
 	_ "github.com/viant/endly/system/cloud/gcp/kms"
 	_ "github.com/viant/endly/system/cloud/gcp/pubsub"
 	_ "github.com/viant/endly/system/cloud/gcp/storage"
+	_ "github.com/viant/endly/system/cloud/gcp/run"
+	_ "github.com/viant/endly/system/cloud/gcp/container"
+
 
 	_ "github.com/viant/endly/system/kubernetes"
 	_ "github.com/viant/endly/system/kubernetes/apps"
@@ -92,6 +95,7 @@ import (
 	_ "github.com/viant/endly/system/network"
 	_ "github.com/viant/endly/system/process"
 	_ "github.com/viant/endly/system/storage"
+
 
 	"bufio"
 	"errors"
