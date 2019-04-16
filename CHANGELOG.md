@@ -4,6 +4,9 @@
     * added gcp/container service
     * updates gcp/* test
     * added generator function with $generator.next, $generator.prev, $generator.value
+    * updated sleep handling
+    * updated async repeated action
+    * minor pached
     
 ## March 18 2019 0.34.0
     * Added vc/git service to use go client, (original vc service uses SSH scraping)
