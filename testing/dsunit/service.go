@@ -228,6 +228,7 @@ func (s *service) registerRoutes() {
 
 			if req, ok := request.(*dsunit.RegisterRequest); ok {
 				if req.Config != nil {
+					expandConfigParameters(context, req.Config.Parameters)
 					s.publishConfigParameters(context, req.Config)
 				}
 				resp := s.Service.Register(req)
@@ -390,6 +391,7 @@ func (s *service) registerRoutes() {
 
 			if req, ok := request.(*dsunit.InitRequest); ok {
 				if req.Config != nil {
+					expandConfigParameters(context, req.Config.Parameters)
 					s.publishConfigParameters(context, req.Config)
 				}
 				resp := s.Service.Init(req)
@@ -638,6 +640,16 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
+}
+
+func expandConfigParameters(context *endly.Context, params map[string]interface{}) {
+	if len(params) == 0 {
+		return
+	}
+	state := context.State()
+	for i, param := range params {
+		params[i] = state.Expand(param)
+	}
 }
 
 func (s service) publishConfigParameters(context *endly.Context, config *dsc.Config) {
