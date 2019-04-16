@@ -298,6 +298,8 @@ var yyyyMMDDLayout = toolbox.DateFormatToLayout("yyyy-MM-dd")
 var yyyMMDDHHMMSSLayout = toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss")
 var numberDateLayout = toolbox.DateFormatToLayout("yyyyMMddhhmmSSS")
 
+var atomicInt int64
+
 /*
 NewDefaultState returns a new default state.
 It comes with the following registered keys:
@@ -342,6 +344,20 @@ func NewDefaultState(ctx *Context) data.Map {
 			return cachedUUID.String()
 		}
 		return ""
+	})
+
+	result.Put("generator", func(key string) interface{} {
+		switch key {
+		case "next":
+			return atomic.AddInt64(&atomicInt, 1)
+		case "prev":
+			return atomic.AddInt64(&atomicInt, -1)
+		case "reset":
+			atomic.StoreInt64(&atomicInt, 0)
+			return atomic.LoadInt64(&atomicInt)
+		default:
+			return atomic.LoadInt64(&atomicInt)
+		}
 	})
 
 	//returns time in ms
