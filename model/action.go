@@ -49,6 +49,22 @@ func (a *Action) Init() error {
 	return nil
 }
 
+//Clone clones this actions
+func (a *Action) Clone() *Action {
+	abstract := *a.AbstractNode
+	serviceRequest := *a.ServiceRequest
+	metaTag := *a.MetaTag
+	repeater := *a.Repeater
+	return &Action{
+		AbstractNode:   &abstract,
+		ServiceRequest: &serviceRequest,
+		MetaTag:        &metaTag,
+		Repeater:       &repeater,
+		Async:          a.Async,
+		Skip:           a.Skip,
+	}
+}
+
 //ID returns action identified
 func (a *Action) ID() string {
 	if a.Name == "" {
