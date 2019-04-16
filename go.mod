@@ -74,8 +74,8 @@ require (
 	github.com/viant/asc v0.4.0
 
 	github.com/viant/assertly v0.4.5
-	github.com/viant/bgc v0.5.2
-	github.com/viant/dsc v0.6.4
+	github.com/viant/bgc v0.6.0
+	github.com/viant/dsc v0.6.5
 	github.com/viant/dsunit v0.8.1
 	github.com/viant/neatly v0.8.0
 	github.com/viant/toolbox v0.19.4
