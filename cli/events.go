@@ -42,6 +42,8 @@ type Events struct {
 
 //AddTag adds reporting tag
 func (r *Events) AddTag(event *Event) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 	r.tags = append(r.tags, event)
 	r.indexedTag[event.TagID] = event
 }
@@ -56,7 +58,12 @@ func (r *Events) EventTag() *Event {
 		}
 	}
 	activity := r.Last()
-	if _, has := r.indexedTag[activity.TagID]; !has {
+
+	r.mutex.RLock()
+	_, has := r.indexedTag[activity.TagID]
+	r.mutex.RUnlock()
+
+	if !has {
 		eventTag := &Event{
 			Caller: activity.Caller,
 			TagID:  activity.TagID,
@@ -64,6 +71,8 @@ func (r *Events) EventTag() *Event {
 		}
 		r.AddTag(eventTag)
 	}
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
 	return r.indexedTag[activity.TagID]
 }
 

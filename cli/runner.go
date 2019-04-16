@@ -235,7 +235,6 @@ func (r *Runner) processReporter(event msg.Event, filter map[string]bool) bool {
 
 	if isRepeatedReporter {
 		r.processRepeated(repeatedReporter, event)
-
 		if isMessageReporter {
 			r.processMessages(messageReporter)
 		}
@@ -252,6 +251,7 @@ func (r *Runner) processAssertable(event msg.Event) bool {
 	if !ok {
 		return false
 	}
+	r.repeated = nil
 	validations := asserted.Assertion()
 	if len(validations) == 0 {
 		return true
