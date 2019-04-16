@@ -64,8 +64,19 @@ func (t *Task) HasTagID(tagIDs map[string]bool) bool {
 func (t *Task) AsyncActions() []*Action {
 	var result = make([]*Action, 0)
 	for _, candidate := range t.Actions {
+
 		if candidate.Async {
-			result = append(result, candidate)
+			if candidate.Repeat > 1 {
+				repeat := candidate.Repeat
+				action := candidate.Clone()
+				_ = action.Init()
+				action.Repeat = 1
+				for i := 0; i < repeat; i++ {
+					result = append(result, action)
+				}
+			} else {
+				result = append(result, candidate)
+			}
 		}
 	}
 	return result
