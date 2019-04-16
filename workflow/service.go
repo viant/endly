@@ -94,7 +94,10 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 		activity = model.NewActivity(context, action, state)
 		return nil
 	})
+	s.Mutex().Lock()
 	process.State.Put("index", action.TagIndex)
+	s.Mutex().Unlock()
+
 	defer func() {
 		var resultKey = action.Name
 		if resultKey == "" {
@@ -203,7 +206,11 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 	})
 
 	if len(asyncActions) > 0 {
-		asyncGroup.Wait()
+		_ = s.RunInBackground(context, func() error {
+			context.Publish(msg.NewStdoutEvent("async", "waiting for actions ..."))
+			asyncGroup.Wait()
+			return nil
+		})
 		if err == nil && asyncError != nil {
 			err = asyncError
 		}
