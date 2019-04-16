@@ -124,11 +124,27 @@ func (s *AbstractService) Route(action string) (*Route, error) {
 
 //Sleep sleeps for provided time in ms
 func (s *AbstractService) Sleep(context *Context, sleepTimeMs int) {
-	if sleepTimeMs > 0 {
+	if sleepTimeMs == 0 {
+		return
+	}
+	sleepTime := time.Millisecond * time.Duration(sleepTimeMs)
+	if sleepTime < time.Minute {
 		if context.IsLoggingEnabled() {
 			context.Publish(msg.NewSleepEvent(sleepTimeMs))
 		}
-		time.Sleep(time.Millisecond * time.Duration(sleepTimeMs))
+		time.Sleep(sleepTime)
+		return
+	}
+
+	startTime := time.Now()
+	for {
+		if context.IsLoggingEnabled() {
+			context.Publish(msg.NewSleepEvent(1000))
+		}
+		if time.Now().Sub(startTime) >= sleepTime {
+			break
+		}
+		time.Sleep(time.Second)
 	}
 }
 
@@ -187,6 +203,7 @@ func (s *AbstractService) RunInBackground(context *Context, handler func() error
 			s.Sleep(context, 2000)
 		}
 	}()
+
 	go func() {
 		defer wait.Done()
 		err = handler()
