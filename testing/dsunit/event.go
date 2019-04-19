@@ -28,7 +28,7 @@ func (r *RegisterRequest) Messages() []*msg.Message {
 	if r.Config == nil {
 		return []*msg.Message{}
 	}
-	var descriptor = r.Config.SecureDescriptor
+	var descriptor = r.Config.Descriptor
 	return []*msg.Message{
 		msg.NewMessage(msg.NewStyled(fmt.Sprintf("Datastore: %v, %v:%v", r.Datastore, r.Config.DriverName, descriptor), msg.MessageStyleGeneric), msg.NewStyled("register", msg.MessageStyleGeneric)),
 	}
