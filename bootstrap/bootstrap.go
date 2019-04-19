@@ -621,8 +621,6 @@ func printInFormat(source interface{}, errorTemplate string, hideEmpty bool) {
 	fmt.Printf("%s\n", buf)
 }
 
-
-
 func printHelp() {
 	_, name := path.Split(os.Args[0])
 	fmt.Fprintf(os.Stderr, "Usage of %s:\n", name)
