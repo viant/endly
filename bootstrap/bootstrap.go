@@ -397,9 +397,10 @@ func generateSecret(credentialsFile string) {
 	}
 	var privateKeyPath = flag.Lookup("k").Value.String()
 	privateKeyPath = strings.Replace(privateKeyPath, "~", os.Getenv("HOME"), 1)
-	if toolbox.FileExists(privateKeyPath) && !cred.IsKeyEncrypted(privateKeyPath) {
-		config.PrivateKeyPath = privateKeyPath
+	if privateKeyPath != "" && toolbox.FileExists(privateKeyPath) {
+		log.Fatalf("unable to locate private key: %v \n", privateKeyPath)
 	}
+	config.PrivateKeyPath = privateKeyPath
 	var secretFile = path.Join(secretPath, fmt.Sprintf("%v.json", credentialsFile))
 	err = config.Save(secretFile)
 	if err != nil {
@@ -619,6 +620,8 @@ func printInFormat(source interface{}, errorTemplate string, hideEmpty bool) {
 	}
 	fmt.Printf("%s\n", buf)
 }
+
+
 
 func printHelp() {
 	_, name := path.Split(os.Args[0])
