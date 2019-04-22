@@ -1,10 +1,10 @@
-FROM golang:1.12.1-alpine3.9
+FROM golang:1.12-alpine3.9
 
 ENV NOTVISIBLE "in users profile"
 ENV GO111MODULE=on
 
-RUN apk add --no-cache curl py-pip jq make gcc musl-dev git docker bash openssh-server sudo && \
-    pip install --no-cache-dir docker-compose
+RUN apk add --no-cache curl python py-pip jq make gcc musl-dev git docker bash openssh-server
+RUN pip install --no-cache-dir docker-compose
 
 RUN echo 'root:dev' | chpasswd && \
     sed -i s/#PermitRootLogin.*/PermitRootLogin\ yes/ /etc/ssh/sshd_config && \

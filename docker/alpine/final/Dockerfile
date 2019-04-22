@@ -4,7 +4,7 @@ ENV NOTVISIBLE "in users profile"
 ENV GO111MODULE=on
 
 
-RUN apk add --no-cache curl py-pip bash bash-completion make gcc zip git openssh-server
+RUN apk add --no-cache curl python2.7  libpython2.7-dev libffi-dev py-pip bash bash-completion make gcc zip git openssh-server
 RUN pip install --no-cache-dir docker-compose
 RUN echo 'root:dev' | chpasswd && \
     sed -i s/#PermitRootLogin.*/PermitRootLogin\ yes/ /etc/ssh/sshd_config && \
