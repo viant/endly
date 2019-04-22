@@ -58,7 +58,7 @@ require (
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/stretchr/testify v1.2.2
 	github.com/tebeka/selenium v0.9.3
-	github.com/viant/asc v0.4.0
+	github.com/viant/asc v0.5.0
 
 	github.com/viant/assertly v0.4.5
 	github.com/viant/bgc v0.7.0
