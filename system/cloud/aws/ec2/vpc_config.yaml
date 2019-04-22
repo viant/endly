@@ -1,0 +1,21 @@
+pipeline:
+  byVpc:
+    vpcConfigInfo1:
+      action: aws/ec2:getVpcConfig
+      credentials: aws-e2e
+      vpc:
+        name: aero
+    info:
+      action: print
+      message: $AsJSON($vpcConfigInfo1)
+
+  byInstance:
+    vpcConfigInfo2:
+      action: aws/ec2:getVpcConfig
+      credentials: aws-e2e
+      instance:
+        name: e2e-aero
+    info:
+      action: print
+      message: $AsJSON($vpcConfigInfo2)
+

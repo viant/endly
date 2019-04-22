@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/aws"
+	"github.com/viant/endly/system/cloud/aws/ec2"
 	"github.com/viant/endly/system/cloud/aws/iam"
 	"github.com/viant/toolbox"
 	"log"
@@ -144,16 +145,26 @@ func (s *service) setupPermission(context *endly.Context, request *SetupPermissi
 func (s *service) deploy(context *endly.Context, request *DeployInput) (output *DeployOutput, err error) {
 	output = &DeployOutput{}
 	err = s.AbstractService.RunInBackground(context, func() error {
-		output, err = s.setupFunctionInBackground(context, request)
+		output, err = s.deployFunctionInBackground(context, request)
 		return err
 	})
 	return output, err
 }
 
-func (s *service) setupFunctionInBackground(context *endly.Context, request *DeployInput) (*DeployOutput, error) {
+func (s *service) deployFunctionInBackground(context *endly.Context, request *DeployInput) (*DeployOutput, error) {
 	client, err := GetClient(context)
 	if err != nil {
 		return nil, err
+	}
+	if request.VpcMatcher != nil {
+		vpcOutput := &ec2.GetVpcConfigOutput{}
+		if err = endly.Run(context, request.VpcMatcher, vpcOutput);err != nil {
+			return nil, err
+		}
+		request.VpcConfig = &lambda.VpcConfig{
+			SecurityGroupIds:vpcOutput.SecurityGroupIds,
+			SubnetIds:vpcOutput.SubnetIds,
+		}
 	}
 
 	output := &DeployOutput{}

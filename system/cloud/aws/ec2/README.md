@@ -92,3 +92,63 @@ pipeline:
       action: goto
       task: stop
 ```
+
+### Getting instance by tag name
+
+
+```endly -r=instance```
+
+[@instance.yaml](instance.yaml)
+```yaml
+pipeline:
+  instanceInfo:
+    action: aws/ec2:getInstance
+    credentials: aws-e2e
+    '@name': e2e-aero
+  info:
+    action: print
+    message: $AsJSON($instanceInfo)
+```
+
+### Getting vpc by tag name
+
+```yaml
+pipeline:
+  vpcInfo:
+    action: aws/ec2:getVpc
+    credentials: aws-e2e
+    '@name': aero
+  info:
+    action: print
+    message: $AsJSON($vpcInfo)
+```
+
+### Getting vpcConifg
+
+
+```endly -r=vpc_config```
+
+[@vpc_config](vpc_config.yaml)
+```yaml
+pipeline:
+  byVpc:
+    vpcConfigInfo1:
+      action: aws/ec2:getVpcConfig
+      credentials: aws-e2e
+      vpc:
+        name: aero
+    info:
+      action: print
+      message: $AsJSON($vpcConfigInfo1)
+
+  byInstance:
+    vpcConfigInfo2:
+      action: aws/ec2:getVpcConfig
+      credentials: aws-e2e
+      instance:
+        name: e2e-aero
+    info:
+      action: print
+      message: $AsJSON($vpcConfigInfo2)
+
+```
