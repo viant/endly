@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/go-errors/errors"
+	"github.com/viant/endly/system/cloud/aws/ec2"
 	ciam "github.com/viant/endly/system/cloud/aws/iam"
 	"time"
 )
@@ -28,6 +29,7 @@ type EventSourceMapping struct {
 type DeployInput struct {
 	lambda.CreateFunctionInput `yaml:",inline" json:",inline"`
 	ciam.SetupRolePolicyInput  ` json:",inline"`
+	VpcMatcher                 *ec2.GetVpcConfigInput
 	Triggers                   []*EventSourceMapping
 }
 
@@ -60,10 +62,14 @@ type CallOutput struct {
 	Response interface{}
 }
 
+//Init initializes deploy request
 func (i *DeployInput) Init() error {
 	if i.DefaultPolicyDocument == nil {
 		policyDocument := string(DefaultTrustPolicy)
 		i.DefaultPolicyDocument = &policyDocument
+	}
+	if i.VpcMatcher != nil {
+		_ = i.VpcMatcher.Init()
 	}
 	return nil
 }

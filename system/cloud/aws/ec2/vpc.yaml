@@ -1,0 +1,8 @@
+pipeline:
+  vpcInfo:
+    action: aws/ec2:getVpc
+    credentials: aws-e2e
+    '@name': aero
+  info:
+    action: print
+    message: $AsJSON($vpcInfo)
