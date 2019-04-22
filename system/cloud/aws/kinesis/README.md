@@ -1,6 +1,6 @@
 # Amazon Kinesis service
 
-This service is github.com/aws/aws-sdk-go/service/cloudwatch.CloudWatch proxy 
+This service is github.com/aws/aws-sdk-go/service/kinesis.Kinesis proxy 
 
 To check all supported method run
 ```bash

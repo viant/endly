@@ -1,9 +1,13 @@
+## April 21 2019 0.36.0
+
+    * Added VpcFilter to aws:lamba/deploy to match vpc by vpc or instance name
+    
 ## April 14 2019 0.35.0
     * added gcp/kms service
     * added gcp/run service
     * added gcp/container service
     * updates gcp/* test
-    * added generator function with $generator.next, $generator.prev, $generator.value
+    * added generator function with $generator.next, $generator.prev, $generator.value, $generator.reset
     * updated sleep handling
     * updated async repeated action
     * minor pached

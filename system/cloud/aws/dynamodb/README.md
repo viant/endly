@@ -1,6 +1,6 @@
 # Amazon CloudWatch service
 
-This service is github.com/aws/aws-sdk-go/service/cloudwatch.CloudWatch proxy 
+This service is github.com/aws/aws-sdk-go/service/dynamodb.DynamoDB proxy 
 
 To check all supported method run
 ```bash
