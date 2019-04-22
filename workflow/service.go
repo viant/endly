@@ -172,7 +172,6 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 			if process.HasTagID && !process.TagIDs[action.TagID] {
 				continue
 			}
-
 			var handler = func(action *model.Action) func() (interface{}, error) {
 				return func() (interface{}, error) {
 					var response, err = s.runAction(context, action, process)
