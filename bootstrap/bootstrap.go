@@ -60,6 +60,7 @@ import (
 	_ "github.com/viant/endly/system/cloud/aws/kms"
 	_ "github.com/viant/endly/system/cloud/aws/lambda"
 	_ "github.com/viant/endly/system/cloud/aws/logs"
+	_ "github.com/viant/endly/system/cloud/aws/rds"
 	_ "github.com/viant/endly/system/cloud/aws/s3"
 	_ "github.com/viant/endly/system/cloud/aws/ses"
 	_ "github.com/viant/endly/system/cloud/aws/sns"
