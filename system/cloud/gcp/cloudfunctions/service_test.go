@@ -8,7 +8,6 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"google.golang.org/api/cloudfunctions/v1"
-	"os"
 	"path"
 	"testing"
 )
@@ -59,7 +58,7 @@ func TestService_Deploy(t *testing.T) {
 	parent := toolbox.CallerDirectory(3)
 	var response = make(map[string]interface{})
 	err = endly.Run(context, &DeployRequest{
-		CloudFunction: &cloudfunctions.CloudFunction{
+		CloudFunction: cloudfunctions.CloudFunction{
 			Name:         "HelloWorldFn",
 			EntryPoint:   "HelloWorld",
 			Runtime:      "go111",
