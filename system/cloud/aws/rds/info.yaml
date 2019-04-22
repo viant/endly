@@ -1,0 +1,13 @@
+
+pipeline:
+  getInfo:
+    action: aws/rds:describeDBInstances
+    credentials: aws-e2e
+    dbinstanceidentifier: db
+    logging: false
+    post:
+      dbIP: $DBInstances[0].Endpoint.Address
+
+  showEndpint:
+    action: print
+    message: 'RDS endpoint: $dbIP'
