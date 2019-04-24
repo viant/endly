@@ -17,7 +17,7 @@ func assertWithService(expected, actual interface{}) (int, error) {
 	}
 	context := manager.NewContext(toolbox.NewContext())
 	response := service.Run(context, &validator.AssertRequest{
-		Expected: expected,
+		Expect: expected,
 		Actual:   actual,
 	})
 
