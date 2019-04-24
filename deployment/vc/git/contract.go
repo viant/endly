@@ -16,6 +16,41 @@ type CheckoutRequest struct {
 //CheckoutResponse represents checkout response
 type CheckoutResponse StatusResponse
 
+//StatusResponse represents version control status response
+type StatusResponse struct {
+	*Info
+}
+
+//Info represents version control info
+type Info struct {
+	IsVersionControlManaged bool   //returns true if directory is source controlled managed
+	Origin                  string //Origin URL
+	Revision                string //Origin Revision
+	Branch                  string //current branch
+	IsUptoDate              bool
+	Added                   []string //new files
+	Untracked               []string //untracked files
+	Modified                []string //modified files
+	Deleted                 []string //deleted files
+}
+
+//StatusRequest represents version control status
+type StatusRequest struct {
+	Source *url.Resource `required:"true"`
+}
+
+//CommitRequest represents a commit request
+type CommitRequest struct {
+	Source      *url.Resource `required:"true" description:"location to local source code"`
+	Message     string        `required:"true"`
+	Credentials string
+}
+
+//CommitResponse represents a commit response
+type CommitResponse struct {
+	*Info
+}
+
 //Init initializes request
 func (r *CheckoutRequest) Init() error {
 	if r.Origin == nil {
@@ -43,14 +78,30 @@ func (r *CheckoutRequest) Validate() error {
 	return nil
 }
 
+//Init initializes request
+func (r *CommitRequest) Init() error {
+	if r.Source != nil {
+		if err := r.Source.Init(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+//Validate validates request
+func (r *CommitRequest) Validate() error {
+	if r.Source == nil {
+		return fmt.Errorf("source was empty")
+	}
+	if r.Message == "" {
+		return fmt.Errorf("message was empty")
+	}
+	return nil
+}
+
 //HasPendingChanges returns true if there are any untracked, new, modified, deleted files.
 func (r *Info) HasPendingChanges() bool {
 	return len(r.Added) > 0 || len(r.Untracked) > 0 || len(r.Deleted) > 0 || len(r.Modified) > 0
-}
-
-//StatusRequest represents version control status
-type StatusRequest struct {
-	Source *url.Resource `required:"true"`
 }
 
 //Init initializes request
@@ -67,24 +118,6 @@ func (r *StatusRequest) Validate() error {
 		return fmt.Errorf("source type was empty")
 	}
 	return nil
-}
-
-//StatusResponse represents version control status response
-type StatusResponse struct {
-	*Info
-}
-
-//Info represents version control info
-type Info struct {
-	IsVersionControlManaged bool   //returns true if directory is source controlled managed
-	Origin                  string //Origin URL
-	Revision                string //Origin Revision
-	Branch                  string //current branch
-	IsUptoDate              bool
-	Added                   []string //new files
-	Untracked               []string //untracked files
-	Modified                []string //modified files
-	Deleted                 []string //deleted files
 }
 
 //NewInfo create new info
