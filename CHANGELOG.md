@@ -1,6 +1,8 @@
 ## April 21 2019 0.36.0
 
-    * Added VpcFilter to aws:lamba/deploy to match vpc by vpc or instance name
+    * Added VpcMatcher to aws:lamba/deploy to match vpc by vpc or instance name
+    * Added vc/git:commit
+    * Minot patches
     
 ## April 14 2019 0.35.0
     * added gcp/kms service

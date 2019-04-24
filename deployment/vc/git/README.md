@@ -55,3 +55,35 @@ This service uses gopkg.in/src-d/go-git.v4 git client
         dest:
           URL: /tmp/myrepo
     ```
+
+### Committing changes
+  * endly -c=myacount
+    * ```endly -r=commit```
+    * [@commit.yaml](commit.yaml)
+    ```yaml
+    init:
+      target:
+        URL: ssh://127.0.0.1
+        credentials: localhost
+    
+    pipeline:
+      checkout:
+        action: vc/git:checkout
+        origin:
+          URL: https://github.com/adrianwit/echo
+        dest:
+          URL: /tmp/echo
+    
+      update:
+        action: exec:run
+        target: $target
+        commands:
+          - echo ' ' >> /tmp/echo/app.go
+    
+      commit:
+        action: vc/git:commit
+        message: test commit
+        credentials: git
+        source:
+          URL: /tmp/echo
+    ```

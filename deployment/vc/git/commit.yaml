@@ -1,0 +1,27 @@
+init:
+  target:
+    URL: ssh://127.0.0.1
+    credentials: localhost
+
+pipeline:
+  checkout:
+    action: vc/git:checkout
+    origin:
+      URL: https://github.com/adrianwit/echo
+    dest:
+      URL: /tmp/echo
+
+  update:
+    action: exec:run
+    target: $target
+    commands:
+      - echo ' ' >> /tmp/echo/app.go
+
+  commit:
+    action: vc/git:commit
+    message: test commit
+    credentials: git
+    source:
+      URL: /tmp/echo
+
+    # where credentials: git  is ~/.secret/git.json, created with endly -c=git
