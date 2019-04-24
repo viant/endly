@@ -10,14 +10,14 @@ import (
 //ServiceID represents validator service id
 const ServiceID = "validator"
 
-//ValidatorServiceAssertAction represents assert action
-const ValidatorServiceAssertAction = "assert"
+//AssertAction represents assert action
+const AssertAction = "assert"
 
-type validatorService struct {
+type service struct {
 	*endly.AbstractService
 }
 
-func (s *validatorService) Assert(context *endly.Context, request *AssertRequest) (response *AssertResponse, err error) {
+func (s *service) Assert(context *endly.Context, request *AssertRequest) (response *AssertResponse, err error) {
 	var state = context.State()
 	var actual = request.Actual
 	var expect = request.Expect
@@ -67,7 +67,7 @@ const validationExample = `{
   }
 }`
 
-func (s *validatorService) registerRoutes() {
+func (s *service) registerRoutes() {
 	s.Register(&endly.Route{
 		Action: "assert",
 		RequestInfo: &endly.ActionInfo{
@@ -96,7 +96,7 @@ func (s *validatorService) registerRoutes() {
 
 //New creates a new validation service
 func New() endly.Service {
-	var result = &validatorService{
+	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),
 	}
 	result.AbstractService.Service = result
