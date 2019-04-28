@@ -399,7 +399,7 @@ func generateSecret(credentialsFile string) {
 	var privateKeyPath = flag.Lookup("k").Value.String()
 	privateKeyPath = strings.Replace(privateKeyPath, "~", os.Getenv("HOME"), 1)
 
-	if privateKeyPath != "" && ! toolbox.FileExists(privateKeyPath) {
+	if privateKeyPath != "" && !toolbox.FileExists(privateKeyPath) {
 		log.Fatalf("unable to locate private key: %v \n", privateKeyPath)
 	}
 	config.PrivateKeyPath = privateKeyPath
