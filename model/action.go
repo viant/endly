@@ -38,15 +38,18 @@ func (a *Action) Init() error {
 		return err
 	}
 
-	var setNonZero = func(ptr1, ptr2 *int) {
-		if *ptr1 != 0 {
-			*ptr2 = *ptr2
-		} else {
-			*ptr2 = *ptr1
-		}
-	}
-	setNonZero(&a.Repeater.SleepTimeMs, &a.AbstractNode.SleepTimeMs)
+	a.initSleepTime()
 	return nil
+}
+
+/*
+initSleepTimeMs initializes sleep time to be control by abstract node
+*/
+func (a *Action) initSleepTime() {
+	if sleepTimeMs := a.Repeater.SleepTimeMs; sleepTimeMs > 0 {
+		a.AbstractNode.SleepTimeMs = sleepTimeMs
+		a.Repeater.SleepTimeMs = 0
+	}
 }
 
 //Clone clones this actions
