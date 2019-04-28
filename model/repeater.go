@@ -59,7 +59,6 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 		return true, nil
 	}
 	extractableOutput, structuredOutput := util.AsExtractable(out)
-
 	if len(structuredOutput) > 0 {
 		if len(r.Variables) > 0 {
 			err = r.Variables.Apply(structuredOutput, extracted)
@@ -76,8 +75,7 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 		return false, err
 	}
 	if extractableOutput != "" {
-		//TODO rename to output
-		extracted["value"] = extractableOutput //string output is published as $value
+		extracted["output"] = extractableOutput //string output is published as $value
 	}
 	if r.Exit != "" {
 		context.Publish(NewExtractEvent(extractableOutput, structuredOutput, extracted))
