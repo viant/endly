@@ -189,6 +189,7 @@ func (s *service) encrypt(context *endly.Context, request *EncryptRequest) (*Enc
 	if len(request.PlainData) > 0 {
 		plainBase64Text = base64.StdEncoding.EncodeToString(request.PlainData)
 	}
+
 	call := service.Encrypt(keyURI, &cloudkms.EncryptRequest{
 		Plaintext: plainBase64Text,
 	})

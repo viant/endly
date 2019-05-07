@@ -275,11 +275,6 @@ func (s *service) matchInstance(output *ec2.DescribeInstancesOutput, filter *Fil
 
 func (s *service) matchSecurityGroups(output *ec2.DescribeSecurityGroupsOutput, filter *Filter, matched *[]*ec2.SecurityGroup) {
 	for _, candidate := range output.SecurityGroups {
-		if len(filter.SubnetExclusionTags) > 0 {
-			if matchesByTags(filter.SubnetExclusionTags, candidate.Tags) {
-				continue
-			}
-		}
 		if candidate.VpcId != nil && filter.VpcID != "" && *candidate.VpcId == filter.VpcID {
 			*matched = append(*matched, candidate)
 		}
@@ -294,6 +289,11 @@ func (s *service) matchSecurityGroups(output *ec2.DescribeSecurityGroupsOutput, 
 
 func (s *service) matchSubnets(output *ec2.DescribeSubnetsOutput, filter *Filter, matched *[]*ec2.Subnet) {
 	for _, candidate := range output.Subnets {
+		if len(filter.SubnetExclusionTags) > 0 {
+			if matchesByTags(filter.SubnetExclusionTags, candidate.Tags) {
+				continue
+			}
+		}
 		if candidate.VpcId != nil && filter.VpcID != "" && *candidate.VpcId == filter.VpcID {
 			*matched = append(*matched, candidate)
 		}
