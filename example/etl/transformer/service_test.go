@@ -109,7 +109,7 @@ func TestService_CopyWithTransformer(t *testing.T) {
 //
 //	response := service.Copy(&transformer.CopyRequest{
 //		InsertMode: true,
-//		BatchSize:  2,
+//		MaxThreads:  2,
 //		Source: &transformer.DatasetResource{
 //			DsConfig: sourceConfig,
 //			Table:    "users",

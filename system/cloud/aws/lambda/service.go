@@ -158,12 +158,12 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 	}
 	if request.VpcMatcher != nil {
 		vpcOutput := &ec2.GetVpcConfigOutput{}
-		if err = endly.Run(context, request.VpcMatcher, vpcOutput);err != nil {
+		if err = endly.Run(context, request.VpcMatcher, vpcOutput); err != nil {
 			return nil, err
 		}
 		request.VpcConfig = &lambda.VpcConfig{
-			SecurityGroupIds:vpcOutput.SecurityGroupIds,
-			SubnetIds:vpcOutput.SubnetIds,
+			SecurityGroupIds: vpcOutput.SecurityGroupIds,
+			SubnetIds:        vpcOutput.SubnetIds,
 		}
 	}
 
