@@ -4,10 +4,11 @@ import "github.com/aws/aws-sdk-go/service/ec2"
 
 //Filter represents a filter
 type Filter struct {
-	ID    string `description:"if specified ID match"`
-	VpcID string
-	Name  string            `description:"name is a tags.Name helper"`
-	Tags  map[string]string `description:"matching tags"`
+	ID                  string `description:"if specified ID match"`
+	VpcID               string
+	Name                string            `description:"name is a tags.Name helper"`
+	Tags                map[string]string `description:"matching tags"`
+	SubnetExclusionTags map[string]string `description:"if specied exclude matched subnet"`
 }
 
 //GetVpcInput represents vpc request
@@ -36,7 +37,6 @@ type GetVpcConfigInput struct {
 	Instance *Filter
 }
 
-
 //GetSecurityGroupInput represents request
 type GetSecurityGroupInput struct {
 	Filter
@@ -56,7 +56,6 @@ type GetSubnetsInput struct {
 type GetSubnetsOutput struct {
 	Subnets []*ec2.Subnet
 }
-
 
 //GetVpcConfigInput represents get vpc config response
 type GetVpcConfigOutput struct {

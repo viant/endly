@@ -275,6 +275,11 @@ func (s *service) matchInstance(output *ec2.DescribeInstancesOutput, filter *Fil
 
 func (s *service) matchSecurityGroups(output *ec2.DescribeSecurityGroupsOutput, filter *Filter, matched *[]*ec2.SecurityGroup) {
 	for _, candidate := range output.SecurityGroups {
+		if len(filter.SubnetExclusionTags) > 0 {
+			if matchesByTags(filter.SubnetExclusionTags, candidate.Tags) {
+				continue
+			}
+		}
 		if candidate.VpcId != nil && filter.VpcID != "" && *candidate.VpcId == filter.VpcID {
 			*matched = append(*matched, candidate)
 		}
@@ -323,7 +328,7 @@ func (s *service) getInstance(context *endly.Context, input *GetInstanceInput) (
 	}
 	output := &GetInstanceOutput{}
 	var nextToken *string
-	for ; ; {
+	for {
 		describeOutput, err := client.DescribeInstances(&ec2.DescribeInstancesInput{
 			NextToken: nextToken,
 		})
@@ -350,7 +355,7 @@ func (s *service) getSecurityGroups(context *endly.Context, input *GetSecurityGr
 		return nil, err
 	}
 	var nextToken *string
-	for ; ; {
+	for {
 		describeOutput, err := client.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
 			NextToken: nextToken,
 		})

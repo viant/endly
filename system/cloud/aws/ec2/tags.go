@@ -7,15 +7,14 @@ func matchesByTags(expect map[string]string, actual []*ec2.Tag) bool {
 		return false
 	}
 	actualTags := indexTags(actual)
-	for key, expecValue:= range expect  {
+	for key, expecValue := range expect {
 		actualValue, ok := actualTags[key]
-		if ! ok || expecValue != actualValue {
+		if !ok || expecValue != actualValue {
 			return false
 		}
 	}
 	return true
 }
-
 
 func indexTags(tags []*ec2.Tag) map[string]string {
 	var result = make(map[string]string)
