@@ -211,9 +211,18 @@ func (s *service) getVpcConfig(context *endly.Context, input *GetVpcConfigInput)
 	if output.VpcID == nil {
 		return nil, fmt.Errorf("failed to find vpc, %v", input)
 	}
-	subnetsOutput, err := s.getSubnets(context, &GetSubnetsInput{
-		Filter: Filter{VpcID: *output.VpcID},
-	})
+	subnetInput := &GetSubnetsInput{
+		Filter: Filter{VpcID: *output.VpcID, },
+	}
+
+	if input.Instance != nil {
+		subnetInput.SubnetExclusionTags = input.Instance.SubnetExclusionTags
+	}
+	if input.Vpc != nil {
+		subnetInput.SubnetExclusionTags = input.Vpc.SubnetExclusionTags
+	}
+
+	subnetsOutput, err := s.getSubnets(context, subnetInput)
 	if err != nil {
 		return nil, err
 	}
