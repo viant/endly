@@ -46,6 +46,7 @@ require (
 	github.com/logrusorgru/aurora v0.0.0-20181002194514-a7b3b318ed4e
 	github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a
 	github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a
+	github.com/mattn/go-oci8 v0.0.0-20190502120605-b4ff95311f59
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
@@ -62,16 +63,16 @@ require (
 
 	github.com/viant/assertly v0.4.8
 	github.com/viant/bgc v0.7.0
-	github.com/viant/dsc v0.8.2
-	github.com/viant/dsunit v0.8.1
+	github.com/viant/dsc v0.9.1
+	github.com/viant/dsunit v0.8.2
 	github.com/viant/neatly v0.8.0
-	github.com/viant/toolbox v0.20.2
+	github.com/viant/toolbox v0.21.0
 	github.com/yuin/gopher-lua v0.0.0-20190206043414-8bfc7677f583 // indirect
 	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a
 	golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421
 	golang.org/x/tools v0.0.0-20190424031103-cb2dda6eabdf
-	google.golang.org/api v0.3.2
+	google.golang.org/api v0.3.1
 	gopkg.in/src-d/go-git.v4 v4.10.0
 	gopkg.in/yaml.v2 v2.2.2
 	k8s.io/api v0.0.0-20190111032252-67edc246be36
