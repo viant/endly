@@ -1,4 +1,4 @@
-## April 21 2019 0.36.1
+## May 7 2019 0.37.0
     * Added VpcMatcher.Filter.SubnetExclusionTags (aws/ec2)
     * Minor patches
         
