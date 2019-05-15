@@ -2,8 +2,6 @@ module github.com/viant/endly
 
 require (
 	cloud.google.com/go v0.37.0
-	contrib.go.opencensus.io/exporter/ocagent v0.4.12 // indirect
-	firebase.google.com/go v3.7.0+incompatible // indirect
 	github.com/Azure/go-autorest v11.7.1+incompatible // indirect
 	github.com/MichaelS11/go-cql-driver v0.0.0-20181029231409-81aad8db3731
 	github.com/adrianwit/dyndb v0.1.0
@@ -56,7 +54,6 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.8.0
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
-	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/stretchr/testify v1.2.2
 	github.com/tebeka/selenium v0.9.3
 	github.com/viant/asc v0.5.0
@@ -67,7 +64,6 @@ require (
 	github.com/viant/dsunit v0.8.2
 	github.com/viant/neatly v0.8.0
 	github.com/viant/toolbox v0.21.1
-	github.com/yuin/gopher-lua v0.0.0-20190206043414-8bfc7677f583 // indirect
 	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 	golang.org/x/net v0.0.0-20190311183353-d8887717615a
 	golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421
@@ -77,9 +73,5 @@ require (
 	gopkg.in/yaml.v2 v2.2.2
 	k8s.io/api v0.0.0-20190111032252-67edc246be36
 	k8s.io/apimachinery v0.0.0-20190201131811-df262fa1a1ba
-	k8s.io/client-go v10.0.0+incompatible
-	k8s.io/klog v0.3.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20190401085232-94e1e7b7574c // indirect
 	k8s.io/kubernetes v1.13.3
-	sigs.k8s.io/yaml v1.1.0 // indirect
 )
