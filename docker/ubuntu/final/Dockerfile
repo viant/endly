@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-RUN apt-get update -y && apt-get install -y git libaio1 libc-bin unixodbc zip gcc curl bash bash-completion openssh-server
+RUN apt-get update -y && apt-get install -y git libaio1 libc-bin unixodbc pkg-config unixodbc-dev zip gcc curl bash bash-completion openssh-server
 
 ENV NOTVISIBLE "in users profile"
 RUN rm /etc/ssh/ssh_host_rsa_key

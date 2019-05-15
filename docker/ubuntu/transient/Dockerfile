@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-RUN apt-get update -y && apt-get install -y wget libc-bin  build-essential gcc git g++ unixodbc libaio1 openssh-server curl python-pip bash lsb-release bash-completion pkg-config
+RUN apt-get update -y && apt-get install -y wget libc-bin  build-essential gcc git g++ unixodbc pkg-config unixodbc-dev libaio1 openssh-server curl python-pip bash lsb-release bash-completion pkg-config
 
 ENV NOTVISIBLE "in users profile"
 RUN rm /etc/ssh/ssh_host_rsa_key
@@ -52,7 +52,8 @@ RUN git clone https://github.com/viant/endly.git
 COPY dep.tar.gz .
 RUN tar xvzf dep.tar.gz && \
     rm dep.tar.gz && \
-    cp oci8.pc /endly/endly
+    cp oci8.pc /endly/endly && \
+    cp oci8.pc /usr/lib/oracle/12.2/client64/lib/
 
 
 WORKDIR /endly/endly
