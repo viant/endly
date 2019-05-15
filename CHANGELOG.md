@@ -1,7 +1,8 @@
 ## May 14 2019 0.37.1
     * Patched AsString conversion from []interface{} (viant/toolbox)
+    * Added docker:deploy mem literal
     * Updated ubuntu endly docker build
-
+    
 ## May 7 2019 0.37.0
     * Added VpcMatcher.Filter.SubnetExclusionTags (aws/ec2)
     * Minor patches
