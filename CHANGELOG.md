@@ -1,4 +1,4 @@
-## May 15 2019 0.37.3
+## May 15 2019 0.37.4
     * Patched AsString conversion from []interface{} (viant/toolbox)
     * Added docker:deploy mem literal
     * Updated ubuntu endly docker build
