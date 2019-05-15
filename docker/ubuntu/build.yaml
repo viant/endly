@@ -32,8 +32,9 @@ pipeline:
 
     build:
       action: docker:build
+      #mem: 8g
       path: ${buildPath}/transient/
-      nocache: true
+      #nocache: true
       tag:
         image: endly_utransient
         version: ${version}-ubuntu16.04
