@@ -13,13 +13,16 @@ import (
 
 var minColumns = 120
 
+
 var colors = map[string]func(arg interface{}) aurora.Value{
 	"red":     aurora.Red,
 	"green":   aurora.Green,
 	"blue":    aurora.Blue,
 	"bold":    aurora.Bold,
 	"brown":   aurora.Brown,
-	"gray":    aurora.Gray,
+	"gray": func(arg interface{}) aurora.Value {
+		return aurora.Gray(4, arg)
+	},
 	"cyan":    aurora.Cyan,
 	"magenta": aurora.Magenta,
 	"inverse": aurora.Inverse,
