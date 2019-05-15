@@ -41,6 +41,7 @@ type BuildRequest struct {
 	Tag                     *Tag   `required:"true" description:"build docker tag"`
 	Path                    string `description:"location of dockerfile"`
 	types.ImageBuildOptions `json:",inline" yaml:",inline"`
+	Mem                     string
 }
 
 func (r *BuildRequest) Init() error {
@@ -51,6 +52,14 @@ func (r *BuildRequest) Init() error {
 		r.Tags = make([]string, 0)
 		if r.Tag != nil {
 			r.Tags = append(r.Tags, r.Tag.String())
+		}
+	}
+	if r.Mem != "" {
+		mem := strings.ToLower(r.Mem)
+		if gbPos := strings.Index(mem, "g"); gbPos != -1 {
+			r.Memory = int64(toolbox.AsInt(string(mem[gbPos:])) * 1024 * 1024 * 1024)
+		} else if mbPos := strings.Index(mem, "m"); mbPos != -1 {
+			r.Memory = int64(toolbox.AsInt(string(mem[mbPos:])) * 1024 * 1024)
 		}
 	}
 	return nil
