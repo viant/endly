@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-RUN apt-get update -y && apt-get install -y git libaio1 libc-bin unixodbc pkg-config unixodbc-dev zip gcc curl bash bash-completion openssh-server
+RUN apt-get update -y && apt-get install -y git libaio1 libc-bin unixodbc unixodbc-dev pkg-config tzdata unixodbc-dev zip gcc curl bash bash-completion openssh-server
 
 ENV NOTVISIBLE "in users profile"
 RUN rm /etc/ssh/ssh_host_rsa_key
@@ -12,7 +12,7 @@ RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/s
 # SSH login fix. Otherwise user is kicked off after login
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 RUN echo "export VISIBLE=now" >> /etc/profile
-
+RUN rm /etc/localtime && ln -fs /usr/share/zoneinfo/UTC  /etc/localtime
 WORKDIR /
 COPY compact.tar.gz /
 RUN tar xvzf compact.tar.gz && rm compact.tar.gz
