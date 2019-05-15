@@ -12,7 +12,7 @@ RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/s
 # SSH login fix. Otherwise user is kicked off after login
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 RUN echo "export VISIBLE=now" >> /etc/profile
-RUN rm /etc/localtime && ln -fs /usr/share/zoneinfo/UTC  /etc/localtime
+RUN rm /etc/localtime && ln -fs /usr/share/zoneinfo/UTC /etc/localtime
 WORKDIR /
 COPY compact.tar.gz /
 RUN tar xvzf compact.tar.gz && rm compact.tar.gz
