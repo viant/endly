@@ -2,9 +2,9 @@ package slack
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/nlopes/slack"
 	"gopkg.in/yaml.v2"
-	"k8s.io/apimachinery/pkg/util/json"
 )
 
 //Asset represents a file asset
