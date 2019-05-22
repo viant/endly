@@ -1,11 +1,11 @@
 package slack
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/go-errors/errors"
 	"github.com/viant/endly/testing/validator"
 	"gopkg.in/yaml.v2"
-	"k8s.io/apimachinery/pkg/util/json"
 	"strings"
 )
 
