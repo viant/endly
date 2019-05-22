@@ -24,6 +24,7 @@ type Options struct {
 	Env         map[string]string `description:"environment variables to be set before command runs"`                                                                                            //environment variables to be set before command runs
 	SuperUser   bool              `description:"flag to run as super user, in this case sudo will be added to all individual commands unless present, and Target.Secrets password will be used"` ///flag to run it as super user
 	Secrets     secret.Secrets    `description:"secrets map see https://github.com/viant/toolbox/tree/master/secret"`
+	CheckError  bool              `description:"check after command execution if status is <> 0, then throws error"`
 }
 
 //DefaultOptions creates a default execution options

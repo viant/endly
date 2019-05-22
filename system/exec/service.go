@@ -366,6 +366,15 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 			response.Output += "\n"
 		}
 	}
+	if request.CheckError {
+		if stdout, err = s.run(context, session, "echo $?", nil, options.TimeoutMs, terminators...); err == nil {
+			exitStatus := strings.TrimSpace(stdout)
+			if exitStatus != "0" {
+				return fmt.Errorf("exit code: %v, command: %v", exitStatus, command)
+			}
+		}
+	}
+
 	response.Output += stdout
 	response.Add(NewCommandLog(command, stdout, err))
 	if err != nil {

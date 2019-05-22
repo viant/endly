@@ -72,6 +72,31 @@ extract:
 - 
 ```
 
+
+**Endly build workflow with enabled command error status check**
+
+```endly -r=build```
+
+@build.yaml
+```yaml
+init:
+  target:
+    url:  ssh://127.0.0.1/
+    credentials: ${env.HOME}/.secret/localhost.json
+pipeline:
+  package:
+    action: exec:run
+    target: $target
+    checkError: true
+    commands:
+      - unset GOPATH
+      - cd ${appPath}/
+      - go mod vendor
+      - go build
+
+```
+
+
 **ExtractRequest example**
 
 
