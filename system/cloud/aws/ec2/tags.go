@@ -16,7 +16,6 @@ func matchesByTags(expect map[string]string, actual []*ec2.Tag) bool {
 	return true
 }
 
-
 func indexTags(tags []*ec2.Tag) map[string]string {
 	var result = make(map[string]string)
 	if len(tags) == 0 {

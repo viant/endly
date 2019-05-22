@@ -212,7 +212,7 @@ func (s *service) getVpcConfig(context *endly.Context, input *GetVpcConfigInput)
 		return nil, fmt.Errorf("failed to find vpc, %v", input)
 	}
 	subnetInput := &GetSubnetsInput{
-		Filter: Filter{VpcID: *output.VpcID, },
+		Filter: Filter{VpcID: *output.VpcID},
 	}
 
 	if input.Instance != nil {
