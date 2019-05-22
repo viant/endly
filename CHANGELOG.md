@@ -1,3 +1,6 @@
+## May 22 2019 0.38.0
+    * Added CheckError to SSH executor (exec), to detect command exit code based error 
+
 ## May 15 2019 0.37.4
     * Patched AsString conversion from []interface{} (viant/toolbox)
     * Added docker:deploy mem literal
