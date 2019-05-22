@@ -6,6 +6,7 @@ import (
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/criteria"
 	"github.com/viant/endly/util"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/secret"
@@ -368,8 +369,8 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	}
 	if request.CheckError {
 		if stdout, err = s.run(context, session, "echo $?", nil, options.TimeoutMs, terminators...); err == nil {
-			exitStatus := strings.TrimSpace(stdout)
-			if exitStatus != "0" {
+			exitStatus := toolbox.AsInt(strings.TrimSpace(stdout))
+			if exitStatus != 0 {
 				return fmt.Errorf("exit code: %v, command: %v", exitStatus, command)
 			}
 		}
