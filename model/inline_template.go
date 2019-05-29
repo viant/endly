@@ -143,12 +143,13 @@ func (t *Template) buildTagState(index string, tag *neatly.Tag) data.Map {
 	if t.SubPath != "" {
 		tag.SetSubPath(state.ExpandAsText(t.SubPath))
 	}
-	tagPath := toolbox.URLPathJoin(t.inline.baseURL, tag.Subpath)
+	tagPathURL := toolbox.URLPathJoin(t.inline.baseURL, tag.Subpath)
 	state.Put("subpath", tag.Subpath)
 	state.Put("tagId", tag.TagID())
 	state.Put("subPath", tag.Subpath)
 	state.Put("pathMatch", tag.PathMatch)
-	state.Put("path", tagPath)
+	state.Put("URL", tagPathURL)
+	state.Put("path", url.NewResource(tagPathURL).ParsedURL.Path)
 	return state
 }
 
