@@ -170,10 +170,13 @@ func (s *service) startProcess(context *endly.Context, request *StartRequest) (*
 	}
 
 	var runRequest = exec.NewRunRequest(request.Target, request.AsSuperUser, changeDirCommand, startCommand)
-	runRequest.Errors = append(runRequest.Errors, "Exit 1")
+
 	if request.Options != nil {
 		runRequest.Options = request.Options
+	} else if runRequest.Options == nil {
+		runRequest.Options = &exec.Options{}
 	}
+	runRequest.CheckError = true
 	if err = endly.Run(context, runRequest, nil); err != nil {
 		return nil, err
 	}
