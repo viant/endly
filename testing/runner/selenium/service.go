@@ -312,8 +312,8 @@ func (s *service) start(context *endly.Context, request *StartRequest) (*StartRe
 		Command: "java",
 		Target:  target,
 		Options: &exec.Options{
-			Directory: "/opt/selenium",
-			CheckError:true,
+			Directory:  "/opt/selenium",
+			CheckError: true,
 		},
 		Arguments:       []string{"-jar", fmt.Sprintf("-Dwebdriver.gecko.driver=%v", response.GeckodriverPath), "-jar", response.ServerPath, "-port", toolbox.AsString(request.Port)},
 		ImmuneToHangups: true,

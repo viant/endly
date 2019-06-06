@@ -1,4 +1,8 @@
-## May 22 2019 0.38.0
+## June 6 2019 0.39.0
+    * Added cross vendor create table DDL with dsunit:dump
+    * patched @queryFrom@ SQL builder 
+ 
+## June 4 2019 0.38.0
     * Added command exit code check with CheckError attrbibute to SSH executor (exec)
     * Set CheckError on process:start
     * Embed exec.Options on process:start
