@@ -9,8 +9,7 @@ import (
 type StartRequest struct {
 	Target          *url.Resource `required:"true" description:"host where process will be started"`
 	Command         string        `required:"true" description:"command to start process"`
-	Options         *exec.Options
-	Directory       string
+	*exec.Options
 	Arguments       []string
 	AsSuperUser     bool
 	ImmuneToHangups bool `description:"start process as nohup"`
