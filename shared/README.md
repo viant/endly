@@ -1,6 +1,6 @@
-#Shared/global workflow 
+# Shared/global workflow 
 
-## TODO: deprecated 
+## TODO: deprecate 
 
 Threat this functionality as deprecated, inline workflow are simply enough thus no need for shared/global workflows.
 
@@ -10,8 +10,6 @@ Shared workflow provide predefined workflows (old neatly format):
 
 - [Services](workflow/service) (datastore/caching services)
 - [App](workflow/app) (build/deployment,publishing including docker)
-- [Cloud](workflow/cloud) (ec2, gce)
-- [Testing](assert) (assert)
 
 
 
