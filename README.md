@@ -405,18 +405,30 @@ pipeline:
         credentials: bq
         parameters:
           datasetId: adlogs
+
     reverse:
-      action: dsunit:freeze
-      datastore: db1
-      destURL: db1/prepare/raw_logs.json
-      omitEmpty: true
-      ignore:
-        - request.postBody
-      replace:
-        request.timestamp: $$ts
-      sql:  SELECT request, meta, fee
-            FROM raw_logs 
-            WHERE requests.sessionID IN(x, y, z)
+      takeSchemaSnapshot:
+        action: dsunit:dump
+        datastore: db1
+        # leave empty for all tables
+        tables:
+          - raw_logs
+        #optionally target for target vendor if different that source  
+        target: mysql 
+        destURL: schema.sql
+        
+      takeDataSnapshot:
+        action: dsunit:freeze
+        datastore: db1
+        destURL: db1/prepare/raw_logs.json
+        omitEmpty: true
+        ignore:
+          - request.postBody
+        replace:
+          request.timestamp: $$ts
+        sql:  SELECT request, meta, fee
+                FROM raw_logs 
+                WHERE requests.sessionID IN(x, y, z)
 ```
 
 ```bash
