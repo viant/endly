@@ -34,8 +34,7 @@ pipeline:
 ```
 
 
- 
-Avro Validation:
+Avro Reader UDF data validation:
 
 
 ```endly -r=test```
