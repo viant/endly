@@ -1,5 +1,7 @@
 ## May 22 2019 0.38.0
-    * Added CheckError to SSH executor (exec), to detect command exit code based error 
+    * Added command exit code check with CheckError attrbibute to SSH executor (exec)
+    * Set CheckError on process:start
+    * Embed exec.Options on process:start
 
 ## May 15 2019 0.37.4
     * Patched AsString conversion from []interface{} (viant/toolbox)
