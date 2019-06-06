@@ -7,6 +7,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/deployment/deploy"
 	"github.com/viant/endly/deployment/sdk"
+	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/process"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/endly/util"
@@ -308,9 +309,12 @@ func (s *service) start(context *endly.Context, request *StartRequest) (*StartRe
 	})
 	processService, _ := context.Service(process.ServiceID)
 	serviceResponse := processService.Run(context, &process.StartRequest{
-		Command:         "java",
-		Target:          target,
-		Directory:       "/opt/selenium",
+		Command: "java",
+		Target:  target,
+		Options: &exec.Options{
+			Directory: "/opt/selenium",
+			CheckError:true,
+		},
 		Arguments:       []string{"-jar", fmt.Sprintf("-Dwebdriver.gecko.driver=%v", response.GeckodriverPath), "-jar", response.ServerPath, "-port", toolbox.AsString(request.Port)},
 		ImmuneToHangups: true,
 	})
