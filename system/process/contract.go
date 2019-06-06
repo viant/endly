@@ -7,8 +7,8 @@ import (
 
 //StartRequest represents a start request
 type StartRequest struct {
-	Target          *url.Resource `required:"true" description:"host where process will be started"`
-	Command         string        `required:"true" description:"command to start process"`
+	Target  *url.Resource `required:"true" description:"host where process will be started"`
+	Command string        `required:"true" description:"command to start process"`
 	*exec.Options
 	Arguments       []string
 	AsSuperUser     bool
