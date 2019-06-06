@@ -34,6 +34,44 @@ pipeline:
 ```
 
 
+ 
+Avro Validation:
+
+
+```endly -r=test```
+
+@test.yaml
+```yaml
+pipeline:
+  loadData:
+    action: storage:download
+    udf: AvroReader
+    source:
+      URL: gs://mye2ebucket/data/output/1/app_data00000.avro
+    credentials: $gcpSecrets
+    destKey: matchedData
+    post:
+      myData: $Transformed
+
+  infoMyData:
+    action: print
+    message: $AsJSON(${myData})
+
+  infoMatched:
+    action: print
+    message: $AsJSON(${matchedData})
+
+  infoAll:
+    action: print
+    message: $AsJSON(${loadData})
+    
+  assert:
+    action: validator:assert
+    actual: $AsData(${matchedData})
+    expect: $Cat(${parent.path}/expect/mydata.json)
+    
+```
+
 ### Predefined UDF Providers
 
 | Provider | Arguments | 
