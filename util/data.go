@@ -47,7 +47,7 @@ func AsExtractable(input interface{}) (string, map[string]interface{}) {
 		structuredOutput = AsDataMap(value)
 	}
 	if extractableOutput != "" {
-		if toolbox.IsCompleteJSON(extractableOutput) {
+		if toolbox.IsStructuredJSON(extractableOutput) {
 			if strings.HasPrefix(strings.Trim(extractableOutput, " \r\n"), "[") {
 				structuredOutput = data.NewMap()
 				if aSlice, err := toolbox.JSONToSlice(extractableOutput); err == nil {

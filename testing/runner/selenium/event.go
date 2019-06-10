@@ -13,7 +13,7 @@ func (r *RunResponse) Messages() []*msg.Message {
 	var dataMessages = []*msg.Styled{}
 	for k, v := range r.Data {
 		value := v
-		if toolbox.IsCompleteJSON(toolbox.AsString(v)) {
+		if toolbox.IsStructuredJSON(toolbox.AsString(v)) {
 			value, _ = toolbox.AsJSONText(v)
 		}
 		dataMessages = append(dataMessages, msg.NewStyled(fmt.Sprintf("%v = %v", k, value), msg.MessageStyleOutput))

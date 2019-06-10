@@ -92,7 +92,7 @@ func (s *service) call(context *endly.Context, request *CallInput) (*CallOutput,
 	}
 	if len(output.Payload) > 0 {
 		payloadText := toolbox.AsString(output.Payload)
-		if toolbox.IsCompleteJSON(payloadText) {
+		if toolbox.IsStructuredJSON(payloadText) {
 			if err = json.Unmarshal(output.Payload, &response.Response); err == nil {
 				output.Payload = nil
 			}

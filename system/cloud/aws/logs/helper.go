@@ -11,7 +11,7 @@ func normalizeMessages(messages []interface{}) {
 			continue
 		}
 		textMessage := *textMessagePrt
-		if toolbox.IsCompleteJSON(textMessage) {
+		if toolbox.IsStructuredJSON(textMessage) {
 			if data, err := toolbox.JSONToInterface(textMessage); err == nil {
 				messages[i] = data
 			}
