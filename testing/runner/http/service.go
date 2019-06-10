@@ -102,7 +102,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, reque
 	if err != nil {
 		return err
 	}
-	if toolbox.IsCompleteJSON(response.Body) {
+	if toolbox.IsStructuredJSON(response.Body) {
 		response.JSONBody, err = toolbox.JSONToMap(response.Body)
 	}
 
@@ -264,7 +264,7 @@ func (s *service) stressTest(context *endly.Context, request *LoadRequest) (*Loa
 				if err != nil {
 					continue
 				}
-				if toolbox.IsCompleteJSON(actualResponse.Body) {
+				if toolbox.IsStructuredJSON(actualResponse.Body) {
 					actualResponse.JSONBody, _ = toolbox.JSONToMap(actualResponse.Body)
 				}
 			}

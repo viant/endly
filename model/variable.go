@@ -292,7 +292,7 @@ func normalizeVariableValue(value string) interface{} {
 	if strings.HasPrefix(value, "'") {
 		return strings.Trim(value, "'")
 	}
-	if toolbox.IsCompleteJSON(value) {
+	if toolbox.IsStructuredJSON(value) {
 		if JSON, err := toolbox.JSONToInterface(value); err == nil {
 			return JSON
 		}
