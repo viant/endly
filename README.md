@@ -255,12 +255,12 @@ pipeline:
         version: 0.1.0
   stop:
     target: $appTarget
-    action: docker:composeDown
+    action: docker/ssh:composeDown
     source:
       URL: config/docker-compose.yaml
   deploy:
     target: $appTarget
-    action: docker:composeUp
+    action: docker/ssh:composeUp
     runInBackground: true
     source:
       URL: config/docker-compose.yaml
