@@ -75,7 +75,7 @@ pipeline:
         version: 0.1.0
   stop:
     target: $appTarget
-    action: docker:composeDown
+    action: docker/ssh:composeDown
     source:
       URL: config/docker-compose.yaml
   deploy:
