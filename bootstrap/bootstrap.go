@@ -148,7 +148,7 @@ func init() {
 	flag.String("a", "", "<action> prints service action request/response detail")
 
 	flag.String("c", "", "<credentials>, generate secret credentials file: ~/.secret/<credentials>.json")
-	flag.String("k", "", "<private key path>,  works only with -c options, i.e -k="+path.Join(os.Getenv("HOME"), ".secret/id_rsa.pub"))
+	flag.String("k", "", "<private key path>,  works only with -c options, i.e -k="+path.Join(os.Getenv("HOME"), ".secret/id_rsa"))
 
 	flag.String("x", "", "xunit summary report format: xml|yaml|json")
 	flag.Bool("g", false, "open test project generator")
