@@ -1,3 +1,8 @@
+## June 12 2019 0.39.1
+    * Update SSH session ID to use username@host:port
+    * Added default ssh target for env.USER if ~/.secret/id_rsa or ~/.ssh/id_rsa is found
+    * Patch ssh command output
+    
 ## June 6 2019 0.39.0
     * Added cross vendor create table DDL with dsunit:dump
     * patched @queryFrom@ SQL builder 
