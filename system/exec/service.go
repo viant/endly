@@ -89,7 +89,11 @@ func (s *execService) openSession(context *endly.Context, request *OpenSessionRe
 		}
 	}
 
-	var sessionID = target.Host()
+	username := ""
+	if config, _ := context.Secrets.GetCredentials(target.Credentials); config != nil {
+		username = config.Username
+	}
+	var sessionID = username + "@" + target.Host()
 	if sessions.Has(sessionID) {
 		s.Lock()
 		SShSession := sessions[sessionID]
@@ -213,7 +217,7 @@ func (s *execService) run(context *endly.Context, session *model.Session, comman
 			_ = s.setEnvVariable(context, session, k, v)
 		}
 		runResponse := &RunResponse{}
-		s.changeDirectory(context, session, runResponse, currentDirectory)
+		_, _ = s.changeDirectory(context, session, runResponse, currentDirectory)
 		return session.Run(command, listener, timeoutMs, terminators...)
 	}
 	return stdout, err
@@ -367,16 +371,17 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 			response.Output += "\n"
 		}
 	}
+	response.Output += stdout
+
 	if request.CheckError {
-		if stdout, err = s.run(context, session, "echo $?", nil, options.TimeoutMs, terminators...); err == nil {
-			exitStatus := toolbox.AsInt(strings.TrimSpace(stdout))
+		if errorCode, err := s.run(context, session, "echo $?", nil, options.TimeoutMs, terminators...); err == nil {
+			exitStatus := toolbox.AsInt(strings.TrimSpace(errorCode))
 			if exitStatus != 0 {
 				return fmt.Errorf("exit code: %v, command: %v", exitStatus, command)
 			}
 		}
 	}
 
-	response.Output += stdout
 	response.Add(NewCommandLog(command, stdout, err))
 	if err != nil {
 		return err
