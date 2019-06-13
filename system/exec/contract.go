@@ -123,6 +123,7 @@ func (r *ExtractRequest) Init() error {
 			}
 		}
 	}
+	r.Target = SetDefaultTargetIfEmpty(r.Target)
 	return nil
 }
 
@@ -189,6 +190,7 @@ func (r *RunRequest) Init() error {
 	if r.Options == nil {
 		r.Options = DefaultOptions()
 	}
+	r.Target = SetDefaultTargetIfEmpty(r.Target)
 	return nil
 }
 
