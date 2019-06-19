@@ -89,11 +89,7 @@ func (s *execService) openSession(context *endly.Context, request *OpenSessionRe
 		}
 	}
 
-	username := ""
-	if config, _ := context.Secrets.GetCredentials(target.Credentials); config != nil {
-		username = config.Username
-	}
-	var sessionID = username + "@" + target.Host()
+	var sessionID = SessionID(context, target)
 	if sessions.Has(sessionID) {
 		s.Lock()
 		SShSession := sessions[sessionID]

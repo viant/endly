@@ -28,13 +28,24 @@ func TerminalSessions(context *endly.Context) model.Sessions {
 	return *result
 }
 
+//SessionID returns session I
+func SessionID(context *endly.Context, target *url.Resource) string {
+	username := ""
+	if config, _ := context.Secrets.GetCredentials(target.Credentials); config != nil {
+		username = config.Username
+	}
+	return  username + "@" + target.Host()
+}
+
 //TerminalSession returns Session for passed in target resource.
 func TerminalSession(context *endly.Context, target *url.Resource) (*model.Session, error) {
 	sessions := TerminalSessions(context)
 	if target == nil {
 		return nil, errors.New("target was empty")
 	}
-	if !sessions.Has(target.Host()) {
+	var sessionID = SessionID(context, target)
+
+	if !sessions.Has(sessionID) {
 		service, err := context.Service(ServiceID)
 		if err != nil {
 			return nil, err
@@ -46,7 +57,7 @@ func TerminalSession(context *endly.Context, target *url.Resource) (*model.Sessi
 			return nil, response.Err
 		}
 	}
-	return sessions[target.Host()], nil
+	return sessions[sessionID], nil
 }
 
 //Os returns operating system for provide session
