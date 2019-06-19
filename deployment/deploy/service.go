@@ -73,7 +73,8 @@ func (s *service) matchDeployment(context *endly.Context, version string, target
 	if openSessionResponse.Error != "" {
 		return nil, errors.New(openSessionResponse.Error)
 	}
-	operatingSystem := exec.OperatingSystem(context, target.Host())
+	sessionID := exec.SessionID(context, target)
+	operatingSystem := exec.OperatingSystem(context, sessionID)
 	if operatingSystem == nil {
 		return nil, fmt.Errorf("failed to detect operating system on %v", target.Host())
 	}
@@ -236,7 +237,8 @@ func (s *service) deployDependenciesIfNeeded(context *endly.Context, target *url
 }
 
 func (s *service) updateOperatingSystem(context *endly.Context, target *url.Resource) {
-	operatingSystem := exec.OperatingSystem(context, target.Host())
+	sessionID := exec.SessionID(context, target)
+	operatingSystem := exec.OperatingSystem(context, sessionID)
 	if operatingSystem != nil {
 		osMap := data.NewMap()
 		osMap.Put("System", operatingSystem.System)

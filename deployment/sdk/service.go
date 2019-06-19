@@ -16,14 +16,14 @@ const (
 	ServiceID = "sdk"
 )
 
-type systemSdkService struct {
+type service struct {
 	*endly.AbstractService
 	jdkService  *jdkService
 	goService   *goService
 	nodeService *nodeService
 }
 
-func (s *systemSdkService) updateSessionSdk(context *endly.Context, target *url.Resource, sdkInfo *Info) error {
+func (s *service) updateSessionSdk(context *endly.Context, target *url.Resource, sdkInfo *Info) error {
 	if sdkInfo == nil {
 		return nil
 	}
@@ -37,7 +37,7 @@ func (s *systemSdkService) updateSessionSdk(context *endly.Context, target *url.
 	return nil
 }
 
-func (s *systemSdkService) deploySdk(context *endly.Context, request *SetRequest) error {
+func (s *service) deploySdk(context *endly.Context, request *SetRequest) error {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil
@@ -62,9 +62,12 @@ func (s *systemSdkService) deploySdk(context *endly.Context, request *SetRequest
 	return nil
 }
 
-func (s *systemSdkService) checkSdkOnSession(context *endly.Context, target *url.Resource, request *SetRequest, response *SetResponse) bool {
+func (s *service) checkSdkOnSession(context *endly.Context, target *url.Resource, request *SetRequest, response *SetResponse) bool {
 	session, err := exec.TerminalSession(context, target)
 	if err != nil {
+		return false
+	}
+	if session == nil {
 		return false
 	}
 	session.Mutex.RLock()
@@ -90,7 +93,7 @@ func (s *systemSdkService) checkSdkOnSession(context *endly.Context, target *url
 	return false
 }
 
-func (s *systemSdkService) setSdk(context *endly.Context, request *SetRequest) (response *SetResponse, err error) {
+func (s *service) setSdk(context *endly.Context, request *SetRequest) (response *SetResponse, err error) {
 	response = &SetResponse{}
 	service, err := context.Service(exec.ServiceID)
 	if err != nil {
@@ -132,7 +135,7 @@ func (s *systemSdkService) setSdk(context *endly.Context, request *SetRequest) (
 	return response, err
 }
 
-func (s *systemSdkService) setSdkAndDeployIfNeeded(context *endly.Context, request *SetRequest) (response *SetResponse, err error) {
+func (s *service) setSdkAndDeployIfNeeded(context *endly.Context, request *SetRequest) (response *SetResponse, err error) {
 	response, err = s.setSdk(context, request)
 	if err == errSdkNotFound {
 		err = s.deploySdk(context, request)
@@ -167,7 +170,7 @@ const sdkNodeSetExample = `{
   }
 }`
 
-func (s *systemSdkService) registerRoutes() {
+func (s *service) registerRoutes() {
 	s.Register(&endly.Route{
 		Action: "set",
 		RequestInfo: &endly.ActionInfo{
@@ -197,7 +200,7 @@ func (s *systemSdkService) registerRoutes() {
 
 //New creates a new  sdk service.
 func New() endly.Service {
-	var result = &systemSdkService{
+	var result = &service{
 		jdkService:      &jdkService{},
 		goService:       &goService{},
 		nodeService:     &nodeService{},
