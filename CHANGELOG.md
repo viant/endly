@@ -1,3 +1,10 @@
+## June 19 2019 0.39.1
+    * Patch dsunit:expect CheckPolicy (dsunit)
+        - BREAKING CHANGE, update dsunit.expect checkPolicy: 
+            1 (SnapshotDatasetCheckPolicy) to get back to previous behaviour
+              
+    * Added exec.SessionID, and update terminal session access  
+    
 ## June 12 2019 0.39.1
     * Update SSH session ID to use username@host:port
     * Added default ssh target for env.USER if ~/.secret/id_rsa or ~/.ssh/id_rsa is found
