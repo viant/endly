@@ -40,7 +40,8 @@ func TestNewExecService(t *testing.T) {
 		defer context.Close()
 		if assert.Nil(t, err) {
 			var target = useCase.target
-			actual := exec.OperatingSystem(context, target.Host())
+			sessionID := exec.SessionID(context, target)
+			actual := exec.OperatingSystem(context, sessionID)
 			if assert.NotNil(t, actual) {
 				expected := useCase.expected
 				assert.Equal(t, expected.Name, actual.Name, "os.name")
