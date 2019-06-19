@@ -50,7 +50,8 @@ func (s *jdkService) getJavaHomeCheckCommand(context *endly.Context, request *Se
 	if err != nil {
 		return ""
 	}
-	operatingSystem := exec.OperatingSystem(context, target.Host())
+	sessionID := exec.SessionID(context, target)
+	operatingSystem := exec.OperatingSystem(context, sessionID)
 	if operatingSystem.System == "darwin" {
 		return fmt.Sprintf("/usr/libexec/java_home -v%v", request.Version)
 	}
