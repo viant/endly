@@ -38,7 +38,7 @@ pipeline:
         hostConfig:
           memory: 536870912
 
-        iplookup:
+      iplookup:
         action: http/endpoint:listen
         port: 8383
         rotate: true
