@@ -1,3 +1,6 @@
+## June 19 2019 0.39.2
+    * Added @strictMapCheck@ validation directive (assertly)
+    
 ## June 19 2019 0.39.1
     * Patch dsunit:expect CheckPolicy (dsunit)
         - BREAKING CHANGE, update dsunit.expect checkPolicy: 
