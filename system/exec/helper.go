@@ -34,7 +34,7 @@ func SessionID(context *endly.Context, target *url.Resource) string {
 	if config, _ := context.Secrets.GetCredentials(target.Credentials); config != nil {
 		username = config.Username
 	}
-	return  username + "@" + target.Host()
+	return username + "@" + target.Host()
 }
 
 //TerminalSession returns Session for passed in target resource.
