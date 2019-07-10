@@ -109,3 +109,27 @@ func (r *CompareResponse) Assertion() []*assertly.Validation {
 	}
 	return []*assertly.Validation{r.Validation}
 }
+
+//CheckSchemaRequest represents a check schema request
+type CheckSchemaRequest dsunit.CheckSchemaRequest
+
+//CheckSchemaResponse represents a check schema response
+type CheckSchemaResponse dsunit.CheckSchemaResponse
+
+//Assertion returns validation slice
+func (r *CheckSchemaResponse) Assertion() []*assertly.Validation {
+	var result = make([]*assertly.Validation, 0)
+	if r.Validation != nil {
+		result = append(result, r.Validation)
+	}
+	if len(r.Tables) > 0 {
+		for i := range r.Tables {
+			if validation := r.Tables[i].Validation; validation != nil {
+				validation.Description = r.Tables[i].Table
+				result = append(result, validation)
+			}
+
+		}
+	}
+	return result
+}
