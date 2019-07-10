@@ -611,6 +611,33 @@ func (s *service) registerRoutes() {
 	})
 
 	s.Register(&endly.Route{
+		Action: "checkSchema",
+		RequestInfo: &endly.ActionInfo{
+			Description: "check schema",
+			Examples:    []*endly.UseCase{},
+		},
+		RequestProvider: func() interface{} {
+			return &CheckSchemaRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &CheckSchemaResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*CheckSchemaRequest); ok {
+				var dsRequest = dsunit.CheckSchemaRequest(*req)
+				request = &dsRequest
+			}
+			if req, ok := request.(*dsunit.CheckSchemaRequest); ok {
+				resp := s.Service.CheckSchema(req)
+				response := CheckSchemaResponse(*resp)
+				var err = response.Error()
+				return &response, err
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&endly.Route{
 		Action: "sequence",
 		RequestInfo: &endly.ActionInfo{
 			Description: "get sequence for supplied tables",
