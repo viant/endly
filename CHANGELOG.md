@@ -1,3 +1,7 @@
+## July 10 2019 0.40.0
+    * Added task.fail to control final endly workflow in case there was catch task
+    * Added dsunit:checkSchema
+
 ## June 19 2019 0.39.2
     * Added @strictMapCheck@ validation directive (assertly)
     
