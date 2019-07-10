@@ -150,7 +150,9 @@ func (s *service) registerRoutes() {
 				if err != nil {
 					return nil, err
 				}
-				context.Publish(gcp.NewOutputEvent("...", "list", output))
+				if context.IsLoggingEnabled() {
+					context.Publish(gcp.NewOutputEvent("...", "query", output))
+				}
 				return output, err
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -178,7 +180,9 @@ func (s *service) registerRoutes() {
 				if err != nil {
 					return nil, err
 				}
-				context.Publish(gcp.NewOutputEvent("...", "list", output))
+				if context.IsLoggingEnabled() {
+					context.Publish(gcp.NewOutputEvent("...", "load", output))
+				}
 				return output, err
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -206,7 +210,9 @@ func (s *service) registerRoutes() {
 				if err != nil {
 					return nil, err
 				}
-				context.Publish(gcp.NewOutputEvent("...", "list", output))
+				if context.IsLoggingEnabled() {
+					context.Publish(gcp.NewOutputEvent("...", "copy", output))
+				}
 				return output, err
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
@@ -234,7 +240,9 @@ func (s *service) registerRoutes() {
 				if err != nil {
 					return nil, err
 				}
-				context.Publish(gcp.NewOutputEvent("...", "list", output))
+				if context.IsLoggingEnabled() {
+					context.Publish(gcp.NewOutputEvent("...", "list", output))
+				}
 				return output, err
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
