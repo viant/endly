@@ -59,13 +59,13 @@ require (
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/tebeka/selenium v0.9.3
-	github.com/viant/asc v0.5.0
+	github.com/viant/asc v0.5.1
 	github.com/viant/assertly v0.5.0
 	github.com/viant/bgc v0.7.0
 	github.com/viant/dsc v0.10.2
-	github.com/viant/dsunit v0.9.2
+	github.com/viant/dsunit v0.10.0
 	github.com/viant/neatly v0.8.0
-	github.com/viant/toolbox v0.24.0
+	github.com/viant/toolbox v0.24.1
 	github.com/yuin/gopher-lua v0.0.0-20190514113301-1cd887cd7036 // indirect
 	golang.org/x/crypto v0.0.0-20190618222545-ea8f1a30c443
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
