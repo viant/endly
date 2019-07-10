@@ -11,14 +11,28 @@ import (
 const (
 	//CatchTask  represent a task name that execute if error occurred and defined
 	CatchTask = "catch"
-
 	//DeferredTask represent a task name that always execute if defined
 	DeferredTask = "defer"
 	//ExplicitActionAttributePrefix represent model attribute prefix
 	ExplicitActionAttributePrefix  = ":"
 	ExplicitRequestAttributePrefix = "@"
 
-	requestKey = "request"
+	requestKey     = "request"
+	failKey        = "fail"
+	parentKey      = "parent"
+	actionKey      = "action"
+	whenKey        = "when"
+	serviceKey     = "service"
+	workflowKey    = "workflow"
+	skipKey        = "skip"
+	loggingKey     = "logging"
+	descriptionKey = "description"
+	commentsKey    = "comments"
+	initKey        = "init"
+	postKey        = "post"
+	exitKey        = "exit"
+	tagKey         = "tag"
+	defaultPath    = "default"
 )
 
 var multiActionKeys = []string{"multiaction", "async"}
@@ -43,7 +57,7 @@ type InlineWorkflow struct {
 }
 
 func (p InlineWorkflow) updateReservedAttributes(aMap map[string]interface{}) {
-	for _, key := range []string{"action", "workflow", "skip", "when", "post", "init", "comments", "description"} {
+	for _, key := range []string{actionKey, workflowKey, skipKey, whenKey, postKey, initKey, commentsKey, descriptionKey, failKey} {
 		if val, ok := aMap[key]; ok {
 			if _, has := aMap[ExplicitActionAttributePrefix+key]; has {
 				continue
@@ -52,7 +66,7 @@ func (p InlineWorkflow) updateReservedAttributes(aMap map[string]interface{}) {
 			aMap[ExplicitActionAttributePrefix+key] = val
 		}
 	}
-	for _, key := range []string{"tag"} {
+	for _, key := range []string{tagKey} {
 		if val, ok := aMap[key]; ok {
 			if _, has := aMap[ExplicitRequestAttributePrefix+key]; has {
 				continue
@@ -73,18 +87,18 @@ func isNormalizableRequest(actionAttributes map[string]interface{}) bool {
 	if len(actionAttributes) == 0 {
 		return true
 	}
-	if _, ok := actionAttributes["workflow"]; ok {
+	if _, ok := actionAttributes[workflowKey]; ok {
 		return false
 	}
 
 	action := ""
-	if val, ok := actionAttributes["action"]; ok {
+	if val, ok := actionAttributes[actionKey]; ok {
 		action = toolbox.AsString(val)
 		action = strings.Replace(action, ".", ":", 1)
 	}
 	if strings.Count(action, ":") == 0 {
-		service := "workflow"
-		if val, ok := actionAttributes["service"]; ok {
+		service := workflowKey
+		if val, ok := actionAttributes[serviceKey]; ok {
 			service = toolbox.AsString(val)
 		}
 		action = service + ":" + action
@@ -103,7 +117,7 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 	if req, ok := actionAttributes[requestKey]; ok {
 		request := toolbox.AsString(actionAttributes[requestKey])
 		if strings.HasPrefix(request, "@") {
-			requestMap, err = util.LoadMap([]string{p.tagPathURL, toolbox.URLPathJoin(p.baseURL, "default"), p.baseURL}, request)
+			requestMap, err = util.LoadMap([]string{p.tagPathURL, toolbox.URLPathJoin(p.baseURL, defaultPath), p.baseURL}, request)
 			if err == nil {
 				delete(actionAttributes, requestKey)
 				delete(actionRequest, requestKey)
@@ -112,7 +126,7 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 				requestMap = toolbox.AsMap(state.Expand(requestMap))
 			} else {
 				parentState := data.NewMap()
-				parentState.Put("parent", state)
+				parentState.Put(parentKey, state)
 				requestMap = toolbox.AsMap(parentState.Expand(requestMap))
 			}
 		} else {
@@ -140,7 +154,7 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 			requestMap["defaults"] = defaults
 		}
 	}
-	for _, key := range []string{"when", "init", "post", "skip", "exit"} {
+	for _, key := range []string{whenKey, initKey, postKey, skipKey, exitKey, failKey} {
 		if node, ok := actionAttributes[key]; ok {
 			node = dataRequest.Expand(node)
 			actionAttributes[key] = state.Expand(node)
@@ -188,15 +202,15 @@ func (p InlineWorkflow) groupAttributes(source interface{}, state data.Map) (map
 	if err = p.loadRequest(actionAttributes, actionRequest, state); err != nil {
 		return nil, nil, err
 	}
-	if value, ok := actionAttributes["logging"]; ok {
-		actionAttributes["logging"] = toolbox.AsBoolean(value)
+	if value, ok := actionAttributes[loggingKey]; ok {
+		actionAttributes[loggingKey] = toolbox.AsBoolean(value)
 	}
 	err = p.loadVariables(actionAttributes, state)
 	return actionAttributes, actionRequest, err
 }
 
 func (p *InlineWorkflow) loadVariables(actionAttributes map[string]interface{}, state data.Map) error {
-	for _, key := range []string{"init", "post"} {
+	for _, key := range []string{initKey, postKey} {
 		value, ok := actionAttributes[key]
 		if !ok {
 			continue
@@ -296,8 +310,8 @@ func isActionNode(attributes map[string]interface{}) bool {
 	if len(attributes) == 0 {
 		return false
 	}
-	_, action := attributes["action"]
-	_, workflow := attributes["workflow"]
+	_, action := attributes[actionKey]
+	_, workflow := attributes[workflowKey]
 	return action || workflow
 }
 
@@ -322,14 +336,14 @@ func (p *InlineWorkflow) buildAction(name string, actionAttributes, actionReques
 
 	util.Append(actionRequest, p.Defaults, false)
 
-	if action, ok := actionAttributes["action"]; ok {
+	if action, ok := actionAttributes[actionKey]; ok {
 		actionAttributes[requestKey], _ = util.NormalizeMap(actionRequest, false)
 		selector := ActionSelector(toolbox.AsString(action))
-		actionAttributes["service"] = selector.Service()
-		actionAttributes["action"] = selector.Action()
+		actionAttributes[serviceKey] = selector.Service()
+		actionAttributes[actionKey] = selector.Action()
 	} else {
-		workflow := toolbox.AsString(actionAttributes["workflow"])
-		actionAttributes["action"] = "run"
+		workflow := toolbox.AsString(actionAttributes[workflowKey])
+		actionAttributes[actionKey] = "run"
 		selector := WorkflowSelector(workflow)
 		actionAttributes[requestKey] = map[string]interface{}{
 			"params": actionRequest,
@@ -420,10 +434,16 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 			task = p.buildTask(name, map[string]interface{}{})
 			parentTask.Tasks = append(parentTask.Tasks, task)
 		}
+
 		if action.Description != "" && task.Description == "" {
 			task.Description = action.Description
 		}
 		task.Actions = append(task.Actions, action)
+
+		if reset, ok := actionAttributes[failKey]; ok {
+			fail := toolbox.AsBoolean(reset)
+			task.Fail = &fail
+		}
 		return nil
 	}
 
@@ -444,7 +464,7 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 		if isTemplateNode && "template" == textKey {
 			return true
 		}
-		if textKey == "logging" || textKey == "when" || textKey == "description" { //abstract node attributes
+		if textKey == loggingKey || textKey == whenKey || textKey == descriptionKey || textKey == failKey { //abstract node attributes
 			nodeAttributes[textKey] = value
 		}
 		flagAsMultiActionIfMatched(textKey, task, value)
@@ -464,8 +484,7 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 	if task == nil {
 		task = parentTask
 	}
-	if _, actionNode := nodeAttributes["action"]; !actionNode && !isTemplateNode {
-
+	if _, actionNode := nodeAttributes[actionKey]; !actionNode && !isTemplateNode {
 		if taskAttributes, _, err := p.groupAttributes(nodeAttributes, state); err == nil {
 			if len(taskAttributes) > 0 {
 				tempTask := &Task{}
@@ -475,15 +494,14 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 						task.Post = tempTask.Post
 						task.When = tempTask.When
 						task.Logging = tempTask.Logging
+						task.Fail = tempTask.Fail
 						task.Description = tempTask.Description
 					}
 				}
 			}
 		}
 	}
-
 	return buildErr
-
 }
 
 func flagAsMultiActionIfMatched(textKey string, task *Task, value interface{}) {
