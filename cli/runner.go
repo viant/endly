@@ -696,6 +696,13 @@ func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 }
 
 func (r *Runner) processErrorEvent(event msg.Event) bool {
+	if _, ok := event.Value().(*msg.ResetError); ok {
+		r.report.Error = false
+		r.err = nil
+		r.xUnitSummary.Errors = ""
+		r.xUnitSummary.ErrorsDetail = ""
+		return true
+	}
 	if errorEvent, ok := event.Value().(*msg.ErrorEvent); ok {
 		r.err = fmt.Errorf("%v", errorEvent.Error)
 		r.xUnitSummary.Errors = "1"
