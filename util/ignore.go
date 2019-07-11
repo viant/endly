@@ -31,3 +31,68 @@ func GetIgnoreList(service storage.Service, URL string) []string {
 	}
 	return list
 }
+
+
+
+func ShouldIgnoreLocation(location string, ignoreList []string) bool {
+
+	filename := location
+	if index := strings.LastIndex(location, "/");index !=-1 {
+		filename = string(location[index+1:])
+	}
+
+	for _, expr := range ignoreList {
+
+
+		if filename == expr {
+			return true
+		} else if strings.HasPrefix(expr,"/") {
+			prefix := expr[1:]
+			if strings.HasPrefix(location,prefix) && prefix != location {
+				return true
+			}
+		 } else if strings.HasSuffix(expr, "/**") {
+			index := strings.LastIndex(expr, "/**")
+			prefix := string(expr[0:index])
+			if strings.HasPrefix(location,prefix) {
+				return true
+			}
+		} else if strings.HasSuffix(expr, "/") {
+			index := strings.LastIndex(expr, "/")
+			prefix := string(expr[0:index])
+			if strings.HasPrefix(location,prefix) {
+				return true
+			}
+		}else if strings.HasPrefix(expr, "**/") {
+			index := strings.Index(expr,"**/")
+			suffix := string(expr[index+3:])
+			if strings.HasSuffix(location,suffix) {
+				return true
+			}
+		}else if strings.HasSuffix(expr,"*") {
+		 	index := strings.Index(expr,"*")
+		 	prefix := expr[:index]
+		 	if strings.HasPrefix(filename,prefix) {
+				return true
+			}
+
+	     }else if strings.HasPrefix(expr,"*") {
+			index := strings.Index(expr,"*")
+			suffix := expr[index+1:]
+			if strings.HasSuffix(filename,suffix) {
+				return true
+			}
+
+		}else if strings.Contains(expr,"*") {
+			index := strings.Index(expr,"*")
+			prefix := expr[:index]
+			suffix := expr[index+1:]
+			if strings.HasPrefix(filename,prefix) && strings.HasSuffix(filename,suffix)   {
+				return true
+			}
+
+		}
+	}
+	return false
+}
+
