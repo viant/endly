@@ -441,8 +441,7 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 		task.Actions = append(task.Actions, action)
 
 		if reset, ok := actionAttributes[failKey]; ok {
-			fail := toolbox.AsBoolean(reset)
-			task.Fail = &fail
+			task.Fail = toolbox.AsBoolean(reset)
 		}
 		return nil
 	}
