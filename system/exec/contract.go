@@ -25,6 +25,7 @@ type Options struct {
 	SuperUser   bool              `description:"flag to run as super user, in this case sudo will be added to all individual commands unless present, and Target.Secrets password will be used"` ///flag to run it as super user
 	Secrets     secret.Secrets    `description:"secrets map see https://github.com/viant/toolbox/tree/master/secret"`
 	CheckError  bool              `description:"check after command execution if status is <> 0, then throws error"`
+	AutoSudo    bool              `description:"when this flag is set, in case of permission denied error for non root user retry command with sudo"`
 }
 
 //DefaultOptions creates a default execution options
@@ -167,9 +168,12 @@ func (c Command) String() string {
 func (c Command) WhenAndCommand() (string, string) {
 	var expr = c.String()
 	var when, command string
-	var variableIndex = strings.Index(expr, "$")
+	var evalExpressionIndex = strings.Index(expr, "$")
+	if evalExpressionIndex == -1 {
+		evalExpressionIndex = strings.Index(expr, "=")
+	}
 	var criteriaEndIndex = strings.LastIndex(expr, "?")
-	if variableIndex == -1 || variableIndex > criteriaEndIndex {
+	if evalExpressionIndex == -1 || evalExpressionIndex > criteriaEndIndex {
 		return when, expr
 	}
 	when = string(expr[:criteriaEndIndex])

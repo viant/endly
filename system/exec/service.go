@@ -276,8 +276,8 @@ func (s *execService) validateStdout(stdout string, command string, execution *E
 		return fmt.Errorf("encounter error fragment: (%v), command:%v, stdout: %v", errorMatch, command, stdout)
 	}
 	if len(execution.Success) > 0 {
-		sucessMatch := match(stdout, execution.Success...)
-		if sucessMatch == "" {
+		hasMatch := match(stdout, execution.Success...)
+		if hasMatch == "" {
 			return fmt.Errorf("failed to match any fragment: '%v', command: %v; stdout: %v", strings.Join(execution.Success, ","), command, stdout)
 		}
 	}
@@ -344,8 +344,8 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 		}
 		command = s.commandAsSuperUser(session, command)
 	}
-	var cmd = command
 
+	var cmd = command
 	if cmd, err = context.Secrets.Expand(cmd, request.Secrets); err != nil {
 		return err
 	}
@@ -361,10 +361,25 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 			context.Publish(NewStdoutEvent(session.ID, stdout, err))
 		}
 	}
+
 	stdout, err := s.run(context, session, cmd, listener, options.TimeoutMs, terminators...)
 	if len(response.Output) > 0 {
 		if !strings.HasSuffix(response.Output, "\n") {
 			response.Output += "\n"
+		}
+	}
+
+	if request.AutoSudo && !util.IsPermitted(stdout) {
+		if session.Username != "root" && !strings.HasPrefix(command, "sudo") {
+			stdout, err = s.retryWithSudo(context, session, cmd, listener, options.TimeoutMs, terminators...)
+			isSuperUserCmd = true
+		}
+	}
+
+	if isSuperUserCmd {
+		err = s.authSuperUserIfNeeded(stdout, context, session, extractCommand, response, request)
+		if err != nil {
+			return err
 		}
 	}
 	response.Output += stdout
@@ -386,15 +401,14 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 		return err
 	}
 
-	if isSuperUserCmd {
-		err = s.authSuperUserIfNeeded(stdout, context, session, extractCommand, response, request)
-		if err != nil {
-			return err
-		}
-	}
-
 	stdout = response.Cmd[len(response.Cmd)-1].Stdout
 	return extractCommand.Extract.Extract(context, response.Data, strings.Split(stdout, "\n")...)
+}
+
+func (s *execService) retryWithSudo(context *endly.Context, session *model.Session, command string, listener ssh.Listener, timeoutMs int, terminators ...string) (string, error) {
+	terminators = append(terminators, "Password")
+	command = s.commandAsSuperUser(session, command)
+	return s.run(context, session, command, listener, timeoutMs, terminators...)
 }
 
 func getTerminators(options *Options, session *model.Session, execution *ExtractCommand) []string {
@@ -643,7 +657,6 @@ const (
 )
 
 func (s *execService) registerRoutes() {
-
 	s.Register(&endly.Route{
 		Action: "open",
 		RequestInfo: &endly.ActionInfo{
