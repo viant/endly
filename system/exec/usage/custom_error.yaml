@@ -1,0 +1,9 @@
+pipeline:
+  task1:
+    action: exec:run
+    errors:
+      - myError
+    commands:
+      - echo 'starting .. '
+      - echo ' myError'
+      - echo 'done.'

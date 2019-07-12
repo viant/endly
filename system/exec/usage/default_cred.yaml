@@ -1,0 +1,6 @@
+pipeline:
+  task1:
+    action: exec:run
+    commands:
+      - hostname
+      - echo 'welcome ${os.user} on $TrimSpace($cmd[0].stdout)'

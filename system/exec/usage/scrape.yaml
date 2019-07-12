@@ -1,0 +1,13 @@
+pipeline:
+  extract:
+    action: exec:run
+    commands:
+      - whoami
+      - cat /etc/hosts
+    extract:
+      - key: aliases
+        regExpr: (?sm)\s+127.0.0.1(.+)
+
+  info:
+    action: print
+    message: "Extracted: ${extract.Data.aliases}"

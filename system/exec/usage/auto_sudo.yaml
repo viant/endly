@@ -1,0 +1,16 @@
+init:
+  target:
+    URL: ssh://127.0.0.1/
+    credentials: localhost
+
+pipeline:
+  myConTask:
+    action: exec:run
+    target: $target
+    autoSudo: true
+    commands:
+      - whoami
+      - mkdir /myapp
+      - chown ${os.user} /myapp
+      - ls -al /myapp
+
