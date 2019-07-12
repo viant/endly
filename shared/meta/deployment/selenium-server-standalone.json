@@ -8,16 +8,16 @@
       },
       "Deployment": {
         "Pre": {
-          "SuperUser": true,
+          "AutoSudo": true,
           "Commands": [
-            "mkdir -p /opt/selenium/",
-            "chmod a+rw /opt/selenium/"
+            "mkdir -p ${deploy.baseLocation}/selenium/",
+            "chmod a+rw ${deploy.baseLocation}/selenium/"
           ]
         },
         "Transfer": {
           "Dest": {
-            "URL": "scp://${targetHost}/opt/selenium/selenium-server-standalone.jar",
-            "Credentials": "${targetHostCredentials}"
+            "URL": "scp://${deploy.target.host}${deploy.baseLocation}/selenium/selenium-server-standalone.jar",
+            "Credentials": "${deploy.target.credentials}"
           },
           "Source": {
             "URL": "http://selenium-release.storage.googleapis.com/${artifact.MajorVersion}.${artifact.MinorVersion}/selenium-server-standalone-${artifact.Version}.jar"
@@ -25,5 +25,7 @@
         }
       }
     }
-  ]
+  ],
+  "BaseLocation": "/usr/local"
+
 }

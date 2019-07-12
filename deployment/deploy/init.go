@@ -3,7 +3,7 @@ package deploy
 import "github.com/viant/endly"
 
 func init() {
-	endly.Registry.Register(func() endly.Service {
+	_ = endly.Registry.Register(func() endly.Service {
 		return New()
 	})
 }

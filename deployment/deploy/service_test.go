@@ -3,7 +3,7 @@ package deploy_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly/deployment/deploy"
-	_ "github.com/viant/endly/static"
+	_ "github.com/viant/endly/gen/static"
 	"github.com/viant/endly/system/storage"
 	"github.com/viant/toolbox/url"
 	"testing"

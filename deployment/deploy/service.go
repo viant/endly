@@ -216,6 +216,9 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 		}
 	}
 	transfer.Source = source
+	if dest, err := context.ExpandResource(transfer.Dest);err == nil {
+		transfer.Dest = dest
+	}
 	return transfer, nil
 }
 
@@ -251,27 +254,31 @@ func (s *service) updateOperatingSystem(context *endly.Context, target *url.Reso
 	}
 }
 
-func (s *service) deploy(context *endly.Context, request *Request) (*Response, error) {
-	request = &Request{
-		AppName: context.Expand(request.AppName),
-		Version: context.Expand(request.Version),
-		Target:  request.Target,
-	}
 
+func (s *service) updateDeployState(context *endly.Context, target *url.Resource) {
+
+	state := context.State()
+
+	deploySetting := data.NewMap()
+	state.Put("deploy", deploySetting)
+
+	targetSettings := data.NewMap()
+	targetSettings.Put("host", target.ParsedURL.Host)
+	targetSettings.Put("URL", target.URL)
+	targetSettings.Put("credentials", target.Credentials)
+	deploySetting.Put("target", targetSettings)
+}
+
+func (s *service) deploy(context *endly.Context, request *Request) (*Response, error) {
+	request = request.Expand(context)
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
 
+	s.updateDeployState(context, target)
 	state := context.State()
-	if !state.Has("targetHost") || !state.Has("targetHostCredentials") {
-		state.Put("targetHost", target.ParsedURL.Host)
-		state.Put("targetHostCredentials", target.Credentials)
-	}
-	if !state.Has("buildHost") || !state.Has("buildHostCredentials") {
-		state.Put("buildHost", target.ParsedURL.Host)
-		state.Put("buildHostCredentials", target.Credentials)
-	}
+
 
 	var response = &Response{}
 	if s.checkIfDeployedOnSession(context, target, request) {
@@ -291,12 +298,16 @@ func (s *service) deploy(context *endly.Context, request *Request) (*Response, e
 		return nil, err
 	}
 
+	baseLocation := request.BaseLocation
+	if baseLocation == "" {
+		baseLocation =  meta.BaseLocation
+	}
+	state.SetValue("deploy.baseLocation", baseLocation)
 	var expectedVersion = context.Expand(request.Version)
 	deploymentTarget, err := s.matchDeployment(context, expectedVersion, target, meta)
 	if err != nil {
 		return nil, err
 	}
-
 	s.updateOperatingSystem(context, target)
 	err = s.deployDependenciesIfNeeded(context, target, deploymentTarget.Dependencies)
 	if err != nil {
@@ -325,16 +336,15 @@ func (s *service) deploy(context *endly.Context, request *Request) (*Response, e
 		return nil, fmt.Errorf("failed to deploy: %v", err)
 	}
 	if deploymentTarget.Deployment.Run != nil {
-		if err = endly.Run(context, deploymentTarget.Deployment.Run.Clone(target), nil); err != nil {
+		runRequest := deploymentTarget.Deployment.Run.Clone(target)
+		if err = endly.Run(context,runRequest, nil); err != nil {
 			return nil, fmt.Errorf("failed to init deploy app to %v: %v", target, err)
 		}
 	}
-
 	err = s.deployAddition(context, target, deploymentTarget.Deployment.Post)
 	if err != nil {
 		return nil, err
 	}
-
 	if deployed, _ := s.checkIfDeployedOnSystem(context, target, deploymentTarget, request); deployed {
 		var version = request.Version
 		if version == "" {

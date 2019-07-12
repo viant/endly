@@ -54,6 +54,7 @@ func (s *service) deploySdk(context *endly.Context, request *SetRequest) error {
 	serviceResponse := deploymentService.Run(ctx, &deploy.Request{
 		Target:  target,
 		AppName: request.Sdk,
+		BaseLocation:request.BaseLocation,
 		Version: request.Version,
 	})
 	if serviceResponse.Err != nil {

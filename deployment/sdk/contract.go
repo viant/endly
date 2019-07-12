@@ -8,10 +8,11 @@ import (
 
 //SetRequest represents sdk set request
 type SetRequest struct {
-	Sdk     string //request sdk jdk, go
-	Version string //requested version
-	Env     map[string]string
-	Target  *url.Resource //target host
+	Sdk          string //request sdk jdk, go
+	Version      string //requested version
+	Env          map[string]string
+	Target       *url.Resource //target host
+	BaseLocation string
 }
 
 //Init initializes request
@@ -20,6 +21,9 @@ func (r *SetRequest) Init() error {
 		var fragments = strings.SplitN(r.Sdk, ":", 2)
 		r.Sdk = fragments[0]
 		r.Version = fragments[1]
+	}
+	if r.BaseLocation == "" {
+		r.BaseLocation = baseLocation
 	}
 	return nil
 }
