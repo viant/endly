@@ -4,19 +4,19 @@
   "Targets": [
     {
       "MinReleaseVersion": {
-        "1.12": "1",
+        "1.13": "2",
+        "1.12": "7",
         "1.11": "5",
         "1.10": "5",
         "1.9": "4",
-        "1.8": "5",
-        "1.2": "2"
+        "1.8": "5"
       },
       "Deployment": {
         "Pre": {
-          "SuperUser": true,
+          "AutoSudo": true,
           "Commands": [
-            "mkdir -p /opt/sdk/",
-            "chmod a+rw /opt/sdk/"
+            "mkdir -p ${deploy.baseLocation}",
+            "chmod a+rw ${deploy.baseLocation}"
           ]
         },
         "Transfer": {
@@ -24,13 +24,13 @@
             "URL": "https://dl.google.com/go/go${artifact.Version}.${os.System}-${os.Architecture}.tar.gz"
           },
           "Dest": {
-            "URL": "scp://${buildHost}/opt/sdk/go_${artifact.Version}.tar.gz",
-            "Credentials": "${buildHostCredentials}"
+            "URL": "scp://${deploy.target.host}${deploy.baseLocation}go_${artifact.Version}.tar.gz",
+            "Credentials": "${deploy.target.credentials}"
           }
         },
         "VersionCheck": {
           "SystemPaths": [
-            "/opt/sdk/go/bin"
+            "${deploy.baseLocation}go/bin"
           ],
           "Commands": [
             {
@@ -49,7 +49,7 @@
           "TimeoutMs": 120000,
           "Commands": [
             {
-              "Command": "/bin/bash -c '[[ -e /opt/sdk/go ]] && rm -rf /opt/sdk/go'"
+              "Command": "/bin/bash -c '[[ -e ${deploy.baseLocation}go ]] && rm -rf ${deploy.baseLocation}go'"
             },
             {
               "Command": "tar xvzf go_${artifact.Version}.tar.gz",
@@ -61,5 +61,6 @@
         }
       }
     }
-  ]
+  ],
+  "BaseLocation": "/usr/local"
 }

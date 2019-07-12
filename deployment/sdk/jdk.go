@@ -15,9 +15,7 @@ type jdkService struct{}
 
 func (s *jdkService) checkJavaVersion(context *endly.Context, jdkCandidate string, request *SetRequest) (*Info, error) {
 	var result = &Info{}
-
 	jdkCandidate = strings.Replace(jdkCandidate, "/jre", "", 1)
-
 	extractRequest := exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand(jdkCandidate+"java -version", "", nil,
 			util.StdErrors,
@@ -35,14 +33,13 @@ func (s *jdkService) checkJavaVersion(context *endly.Context, jdkCandidate strin
 			if build == request.Version {
 				result.Version = build.(string)
 				result.Home = strings.Replace(javaHome.(string), "/jre", "", 1)
-				endly.Run(context, exec.NewRunRequest(request.Target, false, fmt.Sprintf("export JAVA_HOME='%v'", result.Home)), nil)
+				_ = endly.Run(context, exec.NewRunRequest(request.Target, false, fmt.Sprintf("export JAVA_HOME='%v'", result.Home)), nil)
 				return result, nil
 			}
 			return nil, fmt.Errorf("invalid version was found expected: %v, but had: %v", request.Version, build)
 		}
 	}
 	return nil, errors.New("failed to check java version")
-
 }
 
 func (s *jdkService) getJavaHomeCheckCommand(context *endly.Context, request *SetRequest) string {

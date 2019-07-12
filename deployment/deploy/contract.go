@@ -3,6 +3,7 @@ package deploy
 import (
 	"errors"
 	"fmt"
+	"github.com/viant/endly"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
@@ -11,11 +12,28 @@ import (
 
 //ServiceRequest represent a deploy request
 type Request struct {
-	Target  *url.Resource `required:"true" description:"target host"`                                                                                   //target host
-	MetaURL string        `description:"optional URL for meta deployment file, if left empty the meta URL is construct as meta/deployment/**AppName**"` //deployment URL for meta deployment instruction
-	AppName string        `required:"true" description:"application name, as defined in meta deployment file"`                                          //app name
-	Version string        `description:"min required version, it can be 1, or 1.2 or specific version 1.2.1"`                                           //requested version
-	Force   bool          `description:"force deployment even if app has been already installed"`                                                       //flag force deployment, by default if requested version matches the one from command version check. deployment is skipped.
+	Target       *url.Resource `required:"true" description:"target host"`                                                                                   //target host
+	MetaURL      string        `description:"optional URL for meta deployment file, if left empty the meta URL is construct as meta/deployment/**AppName**"` //deployment URL for meta deployment instruction
+	AppName      string        `required:"true" description:"application name, as defined in meta deployment file"`                                          //app name
+	Version      string        `description:"min required version, it can be 1, or 1.2 or specific version 1.2.1"`                                           //requested version
+	Force        bool          `description:"force deployment even if app has been already installed"`                                                       //flag force deployment, by default if requested version matches the one from command version check. deployment is skipped.
+	BaseLocation string        `description:" variable source: $deploy.baseLocation"`
+}
+
+
+func (r *Request) Expand(context *endly.Context) *Request {
+	expanded :=  &Request{
+		AppName: context.Expand(r.AppName),
+		Version: context.Expand(r.Version),
+		BaseLocation:r.BaseLocation,
+		Target: r.Target,
+		Force:r.Force,
+		MetaURL:context.Expand(r.MetaURL),
+	}
+	if target, err := context.ExpandResource(r.Target);err != nil {
+		expanded.Target = target
+	}
+	return expanded
 }
 
 //Validate check if request is valid otherwise returns error.
@@ -46,9 +64,10 @@ type LoadMetaResponse struct {
 
 //Meta represents description of deployment instructions for various operating system
 type Meta struct {
-	Name       string        //app name
-	Versioning string        `required:"true" description:"versioning template for dynamic discovery i.e. Major.Minor.Release"` //versioning system, i.e. Major.Minor.Release
-	Targets    []*TargetMeta `required:"true" description:"deployment instruction for various version and operating systems"`
+	Name         string                                                                                                           //app name
+	Versioning   string        `required:"true" description:"versioning template for dynamic discovery i.e. Major.Minor.Release"` //versioning system, i.e. Major.Minor.Release
+	Targets      []*TargetMeta `required:"true" description:"deployment instruction for various version and operating systems"`
+	BaseLocation string        `description:"default base location"`
 }
 
 //Dependency represents deployment dependency
@@ -59,7 +78,7 @@ type Dependency struct {
 
 //TargetMeta represents specific instruction for given os deployment.
 type TargetMeta struct {
-	Version           string            //version of the software
+	Version           string                                                                                                                        //version of the software
 	MinReleaseVersion map[string]string `required:"true" description:"min release version, key is major.minor, value is release or update version"` //min release version, key is major.minor, value is release or update version
 	OsTarget          *model.OsTarget   `description:"operating system match"`                                                                      //if specified matches current os
 	Deployment        *Deployment       `required:"true" description:"actual deployment instructions"`                                              //actual deployment instruction
@@ -78,6 +97,7 @@ type Deployment struct {
 //Addition represents deployment additions.
 type Addition struct {
 	SuperUser bool
+	AutoSudo  bool
 	Commands  []string            `description:"os command"`
 	Transfers []*storage.Transfer `description:"asset transfer"`
 }
@@ -113,7 +133,9 @@ func (m *Meta) Validate() error {
 
 //AsRunRequest creates a exec run request.
 func (a *Addition) AsRunRequest(target *url.Resource) *exec.RunRequest {
-	return exec.NewRunRequest(target, a.SuperUser, a.Commands...)
+	request := exec.NewRunRequest(target, a.SuperUser, a.Commands...)
+	request.AutoSudo = a.AutoSudo
+	return request
 }
 
 //MatchVersion checks expected and actual version returns true if matches.

@@ -4,14 +4,18 @@
   "Targets": [
     {
       "MinReleaseVersion": {
-        "3.5": "2"
+        "3.5": "4"
+
       },
       "Deployment": {
         "Pre": {
-          "SuperUser": true,
+          "AutoSudo": true,
           "Commands": [
-            "mkdir -p /opt/build/",
-            "chmod a+rw /opt/build/"
+            "rm -rf ${deploy.baseLocation}/maven",
+            "mkdir -p ${deploy.baseLocation}/apache-maven-${artifact.Version}",
+            "chown -R ${os.user} ${deploy.baseLocation}/apache-maven-${artifact.Version}",
+            "touch ${deploy.baseLocation}/apache-maven-${artifact.Version}-bin.tar.gz",
+            "chown ${os.user} ${deploy.baseLocation}/apache-maven-${artifact.Version}-bin.tar.gz"
           ]
         },
         "Transfer": {
@@ -20,13 +24,13 @@
           },
           "Dest": {
             "Name": "apache-maven",
-            "URL": "scp://${buildHost}/opt/build/",
-            "Credentials": "$buildHostCredentials"
+            "URL": "scp://${deploy.target.host}${deploy.baseLocation}/",
+            "Credentials": "$deploy.target.credentials"
           }
         },
         "VersionCheck": {
           "SystemPaths": [
-            "/opt/build/maven/bin"
+            "${deploy.baseLocation}/maven/bin"
           ],
           "Commands": [
             {
@@ -41,7 +45,8 @@
           ]
         },
         "Run": {
-          "Directory": "/opt/build/",
+          "Directory": "${deploy.baseLocation}/",
+          "AutoSudo": true,
           "Commands": [
             {
               "Command": "tar xvzf apache-maven-${artifact.Version}-bin.tar.gz",
@@ -50,10 +55,10 @@
               ]
             },
             {
-              "Command": "/bin/bash -c '[[ -e /opt/build/maven ]] && rm -rf /opt/build/maven'"
+              "Command": "/bin/bash -c '[[ -e ${deploy.baseLocation}/maven ]] && rm -rf ${deploy.baseLocation}/maven'"
             },
             {
-              "Command": "mv apache-maven-${artifact.Version} maven",
+              "Command": "mv -f apache-maven-${artifact.Version} maven",
               "Error": [
                 "No"
               ]
@@ -62,5 +67,6 @@
         }
       }
     }
-  ]
+  ],
+  "BaseLocation": "/usr/local"
 }

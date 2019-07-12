@@ -4,16 +4,20 @@
   "Targets": [
     {
       "MinReleaseVersion": {
-        "7.0": "82"
+        "7.0": "94",
+        "8.5": "43",
+        "9.0": "22"
       },
       "Deployment": {
         "Pre": {
-          "SuperUser": true,
+          "AutoSudo": true,
           "Commands": [
-            "rm -rf $appDirectory",
-            "mkdir -p $appDirectory",
-            "chmod  -R a+rw $appDirectory",
-            "cd $appDirectory"
+            "rm -rf ${deploy.baseLocation}/tomcat",
+            "mkdir -p ${deploy.baseLocation}",
+            "chmod  -R a+rw ${deploy.baseLocation}",
+            "touch ${deploy.baseLocation}/apache-tomcat-${artifact.Version}.tar.gz",
+            "chown ${os.user} ${deploy.baseLocation}/apache-tomcat-${artifact.Version}.tar.gz",
+            "cd ${deploy.baseLocation}"
           ]
         },
         "Transfer": {
@@ -23,12 +27,12 @@
           "Dest": {
             "Name": "tomcat",
             "Version": "$tomcatVersion",
-            "URL": "scp://${targetHost}/${appDirectory}/apache-tomcat-${artifact.Version}.tar.gz",
-            "Credentials": "$targetHostCredential"
+            "URL": "scp://${deploy.target.host}/${deploy.baseLocation}/apache-tomcat-${artifact.Version}.tar.gz",
+            "Credentials": "${deploy.target.credentials}"
           }
         },
         "Run": {
-          "Directory": "$appDirectory",
+          "Directory": "${deploy.baseLocation}",
           "Commands": [
             {
               "Command": "tar xvzf apache-tomcat-${artifact.Version}.tar.gz",
@@ -47,7 +51,7 @@
         "VersionCheck": {
           "Commands": [
             {
-              "Command": "sh tomcat/bin/version.sh",
+              "Command": "sh ${deploy.baseLocation}/tomcat/bin/version.sh",
               "Extract": [
                 {
                   "Key": "Version",
@@ -59,25 +63,13 @@
         },
         "Post": {
           "Commands": [
-            "mkdir -p $appDirectory/tomcat/logs",
-            "mkdir -p $appDirectory/tomcat/conf",
-            "chmod  -R a+rw $appDirectory"
-          ],
-          "Transfers": [
-            {
-              "Source": {
-                "URL": "$configUrl",
-                "Credentials": "$configURLCredential"
-              },
-              "Dest": {
-                "URL": "scp://${targetHost}${appDirectory}/tomcat/conf/server.xml",
-                "Credentials": "$targetHostCredential"
-              },
-              "Expand": true
-            }
+            "mkdir -p ${deploy.baseLocation}/tomcat/logs",
+            "mkdir -p ${deploy.baseLocation}/tomcat/conf",
+            "chmod  -R a+rw ${deploy.baseLocation}"
           ]
         }
       }
     }
-  ]
+  ],
+  "BaseLocation": "/usr/local"
 }

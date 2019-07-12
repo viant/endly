@@ -7,15 +7,15 @@ import (
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
+	"path"
 )
 
 type nodeService struct{}
 
 func (s *nodeService) setSdk(context *endly.Context, request *SetRequest) (*Info, error) {
 	var result = &Info{}
-	var sdkHome = "/opt/sdk/node"
+	var sdkHome = path.Join(request.BaseLocation, "node")
 	var runResponse = &exec.RunResponse{}
-
 	var extractRequest = exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand("node -v", "", nil, nil,
 			model.NewExtract("version", "v([^\\s]+)", false)),

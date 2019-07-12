@@ -15,10 +15,10 @@
       },
       "Deployment": {
         "Pre": {
-          "SuperUser": true,
+          "AutoSudo": true,
           "Commands": [
-            "mkdir -p /opt/sdk/",
-            "chmod a+rw /opt/sdk/"
+            "mkdir -p ${deploy.baseLocation}/",
+            "chmod a+rw ${deploy.baseLocation}/"
           ]
         },
         "Transfer": {
@@ -26,13 +26,13 @@
             "URL": "https://nodejs.org/dist/v${artifact.Version}/node-v${artifact.Version}-${os.System}-${os.Arch}.tar.gz"
           },
           "Dest": {
-            "URL": "scp://${buildHost}/opt/sdk/node_${artifact.Version}.tar.gz",
-            "Credentials": "${buildHostCredentials}"
+            "URL": "scp://${deploy.target.host}${deploy.baseLocation}/node_${artifact.Version}.tar.gz",
+            "Credentials": "${deploy.target.credentials}"
           }
         },
         "VersionCheck": {
           "SystemPaths": [
-            "/opt/sdk/node/bin"
+            "${deploy.baseLocation}/node/bin"
           ],
           "Commands": [
             {
@@ -47,11 +47,11 @@
           ]
         },
         "Run": {
-          "Directory": "/opt/sdk",
+          "Directory": "${deploy.baseLocation}",
           "TimeoutMs": 120000,
           "Commands": [
             {
-              "Command": "/bin/bash -c '[[ -e /opt/sdk/node ]] && rm -rf /opt/sdk/node'"
+              "Command": "/bin/bash -c '[[ -e ${deploy.baseLocation}/node ]] && rm -rf ${deploy.baseLocation}/node'"
             },
             {
               "Command": "tar xvzf node_${artifact.Version}.tar.gz",
@@ -71,5 +71,7 @@
         }
       }
     }
-  ]
+  ],
+  "BaseLocation": "/usr/local"
+
 }

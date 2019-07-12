@@ -8,7 +8,7 @@
       },
       "Deployment": {
         "Pre": {
-          "SuperUser": true,
+          "AutoSudo": true,
           "Commands": [
             "mkdir -p /opt/sdk/jdk",
             "chmod a+rw /opt/sdk/jdk",
@@ -21,8 +21,8 @@
             "URL": "sdk/jdk-7u80-linux-x64.tar.gz"
           },
           "Dest": {
-            "URL": "scp://${buildHost}/opt/sdk/jdk/jdk-7u80-linux-x64.tar.gz",
-            "Credentials": "${buildHostCredentials}"
+            "URL": "scp://${deploy.target.host}/opt/sdk/jdk/jdk-7u80-linux-x64.tar.gz",
+            "Credentials": "${deploy.target.credentials}"
           }
         },
         "VersionCheck": {
