@@ -3,7 +3,9 @@
     * Added dsunit:checkSchema
     * Added exec:run AutoSudo mode
     * Patched .gcloudingnore filtering
-
+    * Added baseLocation to deployment,sdk 
+    * Remove config.xml transfer on tomcat deployment
+    
 
 ## June 19 2019 0.39.2
     * Added @strictMapCheck@ validation directive (assertly)
