@@ -6,14 +6,27 @@ import (
 	"unicode"
 )
 
-const CommandNotFound = "command not found"
-const NoSuchFileOrDirectory = "no such file or directory"
-const ProgramCanBeFound = "can be found in the following packages"
-const ErrorIsNotRecoverable = "Error is not recoverable"
-const NotInstalled = "not installed"
-const CanNotOpen = "can't open"
+const (
+	PermissionDenied      = "denied"
+	OperationNotPermitted = "not permitted"
+	CommandNotFound       = "command not found"
+	NoSuchFileOrDirectory = "no such file or directory"
+	ProgramCanBeFound     = "can be found in the following packages"
+	ErrorIsNotRecoverable = "Error is not recoverable"
+	NotInstalled          = "not installed"
+	CanNotOpen            = "can't open"
+)
 
 var StdErrors = []string{CommandNotFound, NoSuchFileOrDirectory, ProgramCanBeFound}
+
+//IsPermitted returns true when output does not have permission deinied or not permitted
+func IsPermitted(stdout ...string) bool {
+	if len(stdout) == 0 {
+		return false
+	}
+	candidate := strings.ToLower(strings.Join(stdout, "\n"))
+	return !(strings.Contains(candidate, PermissionDenied) || strings.Contains(candidate, OperationNotPermitted))
+}
 
 //CheckNoSuchFileOrDirectory checks for no such file or directory message in the provided stdout.
 func CheckNoSuchFileOrDirectory(stdout ...string) bool {
