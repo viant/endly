@@ -164,6 +164,9 @@ func init() {
 
 func detectFirstArguments(flagset map[string]string) {
 	candidate := os.Args[1]
+	if strings.Contains(candidate , "=") {
+		return
+	}
 	if strings.Contains(candidate, ":") {
 		flagset["run"] = os.Args[1]
 	} else if strings.Contains(candidate, ".") {
