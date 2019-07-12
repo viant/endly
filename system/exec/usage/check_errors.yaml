@@ -1,0 +1,9 @@
+pipeline:
+  build:
+    action: exec:run
+    checkError: true
+    commands:
+      - export GO111MODULE=on
+      - unset GOPATH
+      - cd $appPath
+      - go build

@@ -1,0 +1,9 @@
+pipeline:
+  task1:
+    action: exec:run
+    target:
+      URL: ssh://myhost:com/
+      credentials: myuser-myhost
+    commands:
+      - hostname
+      - echo 'welcome ${os.user} on $TrimSpace($cmd[0].stdout)'

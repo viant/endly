@@ -1,0 +1,19 @@
+
+pipeline:
+  myConTask:
+    action: exec:run
+    commands:
+      - ls -al /tmp/myapp
+      - ${cmd[0].stdout}:/No such file or directory/?  mkdir -p /tmp/myapp
+      - ls -al /tmp/myapp
+      - ${cmd[2].stdout}:/No such file or directory/? echo 'failed to create app folder'
+
+
+  debugInfo:
+    action: print
+    message: $AsJSON($myConTask)
+
+  nextStep:
+    when: ${myConTask.Output}:!/failed/
+    action: print
+    message: Created app folder, moving to next step ...

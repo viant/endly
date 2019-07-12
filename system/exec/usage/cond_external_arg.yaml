@@ -1,0 +1,9 @@
+pipeline:
+  myConTask:
+    action: exec:run
+    commands:
+      - $p = 123 ? echo 'p was $p'
+      - echo 'done'
+  myDebugInfo:
+    action: print
+    message: $myConTask.Output
