@@ -491,8 +491,8 @@ func (s *Service) runOnErrorTask(context *endly.Context, process *model.Process,
 		if e != nil {
 			return fmt.Errorf("failed to catch: %v, %v", err, e)
 		}
-		//Reset workflow fail status
-		if task.Fail != nil && !*task.Fail {
+		//Reset workflow fail status by default
+		if !task.Fail {
 			context.Publish(&msg.ResetError{})
 		}
 		_, err = s.runTask(context, process, task)
