@@ -19,7 +19,7 @@ func (e *Error) Unshift(pathFragments ...string) {
 
 //Error returns en error
 func (e *Error) Error() string {
-	return fmt.Sprintf("%v at %v", e.error, strings.Join(e.Path, "/"))
+	return fmt.Sprintf("%v at %v ", e.error, strings.Join(e.Path, "/"))
 }
 
 //NewError returns new workflow exception or update path
