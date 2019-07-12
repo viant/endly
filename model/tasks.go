@@ -9,7 +9,7 @@ import (
 type TasksNode struct {
 	Tasks        []*Task //sub tasks
 	OnErrorTask  string  //task that will run if error occur, the final workflow will return this task response
-	Fail         *bool   //reset error, otherwise in case of error endly returns failed status
+	Fail         bool    //controls if return fail status workflow on catch task
 	DeferredTask string  //task that will always run if there has been previous  error or not
 }
 
