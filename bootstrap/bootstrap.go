@@ -162,22 +162,33 @@ func init() {
 
 }
 
-func Bootstrap() {
-	flag.Usage = printHelp
-	flag.Parse()
-	flagset := make(map[string]string)
-	flag.Visit(func(f *flag.Flag) {
-		flagset[f.Name] = f.Value.String()
-	})
-
-	if len(os.Args) > 1 {
-		if _, ok := flagset["run"]; !ok && strings.Contains(os.Args[1], ":") {
-			flagset["run"] = os.Args[1]
-		} else if _, ok := flagset["r"]; !ok && strings.Contains(os.Args[1], ".") {
-			flagset["r"] = os.Args[1]
-		}
+func detectFirstArguments(flagset map[string]string) {
+	candidate := os.Args[1]
+	if strings.Contains(candidate, ":") {
+		flagset["run"] = os.Args[1]
+	} else if strings.Contains(candidate, ".") {
+		flagset["r"] = os.Args[1]
+	} else {
+		return
 	}
+	if len(os.Args) > 2 {
+		os.Args = append([]string{os.Args[0]}, os.Args[2:]...)
+	}
+}
 
+func Bootstrap() {
+
+	flagset := make(map[string]string)
+	flag.Usage = printHelp
+
+	detectFirstArguments(flagset)
+	flag.Parse()
+
+	flag.Visit(func(f *flag.Flag) {
+		if f.Value.String() != "" {
+			flagset[f.Name] = f.Value.String()
+		}
+	})
 	_, shouldQuit := flagset["v"]
 	flagset["v"] = flag.Lookup("v").Value.String()
 
