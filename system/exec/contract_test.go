@@ -72,6 +72,14 @@ func TestCommand_WhenAndCommand(t *testing.T) {
 			ExpectedWhen:    "$stdout:/end/",
 			ExpectedCommand: "q",
 		},
+
+		{
+			Description:     "simple when and command ",
+			Expression:      "$p = true ? echo '1'",
+			ExpectedWhen:    "$p = true ",
+			ExpectedCommand: "echo '1'",
+		},
+
 		{
 			Description:     "when and command ",
 			Expression:      "$stdout:/end/ AND $cound >  1 ? q",
