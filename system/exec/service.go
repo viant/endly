@@ -356,11 +356,18 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 		command = cmd
 	}
 	s.Begin(context, NewSdtinEvent(session.ID, command))
+
+	commandRetry:= false
 	listener = func(stdout string, hasMore bool) {
+		if ! commandRetry && request.AutoSudo && !util.IsPermitted(stdout) {
+			return
+		}
+
 		if stdout != "" {
 			context.Publish(NewStdoutEvent(session.ID, stdout, err))
 		}
 	}
+
 
 	stdout, err := s.run(context, session, cmd, listener, options.TimeoutMs, terminators...)
 	if len(response.Output) > 0 {
@@ -369,7 +376,9 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 		}
 	}
 
+
 	if request.AutoSudo && !util.IsPermitted(stdout) {
+		commandRetry = true
 		if session.Username != "root" && !strings.HasPrefix(command, "sudo") {
 			stdout, err = s.retryWithSudo(context, session, cmd, listener, options.TimeoutMs, terminators...)
 			isSuperUserCmd = true
