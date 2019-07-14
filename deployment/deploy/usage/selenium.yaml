@@ -1,0 +1,11 @@
+init:
+  target:
+    URL: ssh://127.0.0.1
+    Credentials: localhost
+
+pipeline:
+  task1:
+    action: deployment:deploy
+    target: $target
+    appName: selenium-server-standalone
+    version: 3.4

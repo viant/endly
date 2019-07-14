@@ -15,8 +15,9 @@
         "Pre": {
           "AutoSudo": true,
           "Commands": [
-            "mkdir -p ${deploy.baseLocation}",
-            "chmod a+rw ${deploy.baseLocation}"
+            "mkdir -p ${deploy.baseLocation}/go",
+            "rm -rf ${deploy.baseLocation}/go",
+            "rm -rf /tmp/go"
           ]
         },
         "Transfer": {
@@ -24,13 +25,13 @@
             "URL": "https://dl.google.com/go/go${artifact.Version}.${os.System}-${os.Architecture}.tar.gz"
           },
           "Dest": {
-            "URL": "scp://${deploy.target.host}${deploy.baseLocation}go_${artifact.Version}.tar.gz",
+            "URL": "scp://${deploy.target.host}/tmp/go_${artifact.Version}.tar.gz",
             "Credentials": "${deploy.target.credentials}"
           }
         },
         "VersionCheck": {
           "SystemPaths": [
-            "${deploy.baseLocation}go/bin"
+            "${deploy.baseLocation}/go/bin"
           ],
           "Commands": [
             {
@@ -45,17 +46,18 @@
           ]
         },
         "Run": {
-          "Directory": "/opt/sdk",
+          "Directory": "/tmp",
           "TimeoutMs": 120000,
+          "AutoSudo": true,
           "Commands": [
             {
-              "Command": "/bin/bash -c '[[ -e ${deploy.baseLocation}go ]] && rm -rf ${deploy.baseLocation}go'"
-            },
-            {
-              "Command": "tar xvzf go_${artifact.Version}.tar.gz",
+              "Command": "tar xvzf /tmp/go_${artifact.Version}.tar.gz",
               "Error": [
                 "Error"
               ]
+            },
+            {
+              "Command": "mv /tmp/go ${deploy.baseLocation}/go"
             }
           ]
         }

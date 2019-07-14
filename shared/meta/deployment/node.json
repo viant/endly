@@ -11,14 +11,15 @@
         "9.0": "0",
         "9.9": "0",
         "10.15": "0",
-        "11.12": "0"
+        "11.12": "0",
+        "12.6": "0"
       },
       "Deployment": {
         "Pre": {
           "AutoSudo": true,
           "Commands": [
-            "mkdir -p ${deploy.baseLocation}/",
-            "chmod a+rw ${deploy.baseLocation}/"
+            "mkdir -p /tmp/node",
+            "rm -rf ${deploy.baseLocation}/node"
           ]
         },
         "Transfer": {
@@ -26,7 +27,7 @@
             "URL": "https://nodejs.org/dist/v${artifact.Version}/node-v${artifact.Version}-${os.System}-${os.Arch}.tar.gz"
           },
           "Dest": {
-            "URL": "scp://${deploy.target.host}${deploy.baseLocation}/node_${artifact.Version}.tar.gz",
+            "URL": "scp://${deploy.target.host}/tmp/node_${artifact.Version}.tar.gz",
             "Credentials": "${deploy.target.credentials}"
           }
         },
@@ -47,21 +48,19 @@
           ]
         },
         "Run": {
-          "Directory": "${deploy.baseLocation}",
+          "Directory": "/tmp",
           "TimeoutMs": 120000,
+          "AutoSudo": true,
           "Commands": [
             {
-              "Command": "/bin/bash -c '[[ -e ${deploy.baseLocation}/node ]] && rm -rf ${deploy.baseLocation}/node'"
-            },
-            {
-              "Command": "tar xvzf node_${artifact.Version}.tar.gz",
+              "Command": "tar xvzf /tmp/node_${artifact.Version}.tar.gz",
               "Error": [
                 "Error",
                 "No such file or directory"
               ]
             },
             {
-              "Command": "mv node-v${artifact.Version}-${os.System}-${os.Arch} node",
+              "Command": "mv /tmp/node-v${artifact.Version}-${os.System}-${os.Arch} ${deploy.baseLocation}/node",
               "Error": [
                 "Error",
                 "No such file or directory"

@@ -4,14 +4,21 @@
   "Targets": [
     {
       "MinReleaseVersion": {
-        "3.4": "0"
+        "3.4": "0",
+        "3.5": "0",
+        "3.6": "0",
+        "3.7": "0",
+        "3.8": "0"
+
       },
       "Deployment": {
         "Pre": {
           "AutoSudo": true,
           "Commands": [
             "mkdir -p ${deploy.baseLocation}/selenium/",
-            "chmod a+rw ${deploy.baseLocation}/selenium/"
+            "chmod a+rw ${deploy.baseLocation}/selenium/",
+            "chown -R ${os.user} ${deploy.baseLocation}/selenium/"
+
           ]
         },
         "Transfer": {

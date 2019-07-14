@@ -10,7 +10,9 @@
           "AutoSudo": true,
           "Commands": [
             "mkdir -p ${deploy.baseLocation}/selenium/",
-            "chmod a+rw ${deploy.baseLocation}/selenium/"
+            "chmod a+rw ${deploy.baseLocation}/selenium/",
+            "chown -R ${os.user} ${deploy.baseLocation}/selenium/"
+
           ]
         },
         "Transfer": {
@@ -44,7 +46,8 @@
           "AutoSudo": true,
           "Commands": [
             "mkdir -p ${deploy.baseLocation}/selenium/",
-            "chmod a+rw ${deploy.baseLocation}/selenium/"
+            "chmod a+rw ${deploy.baseLocation}/selenium/",
+            "chown -R ${os.user} ${deploy.baseLocation}/selenium/"
           ]
         },
         "Transfer": {
