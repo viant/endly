@@ -8,7 +8,7 @@
       },
       "Deployment": {
         "Pre": {
-          "AutoSudo": true,
+          "SuperUser": true,
           "Commands": [
             "mkdir -p /opt/sdk/jdk",
             "chmod a+rw /opt/sdk/jdk",
@@ -43,6 +43,7 @@
         },
         "Run": {
           "Directory": "/opt/sdk/jdk",
+          "SuperUser": true,
           "Commands": [
             {
               "Command": "tar xvzf jdk-7u80-linux-x64.tar.gz",
