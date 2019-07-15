@@ -163,6 +163,9 @@ func init() {
 }
 
 func detectFirstArguments(flagset map[string]string) {
+	if len(os.Args) == 1 {
+		return
+	}
 	candidate := os.Args[1]
 	if strings.Contains(candidate , "=") {
 		return
