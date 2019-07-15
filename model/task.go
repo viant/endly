@@ -5,6 +5,7 @@ type Task struct {
 	*AbstractNode
 	Actions []*Action //actions
 	*TasksNode
+	Fail    bool //controls if return fail status workflow on catch task
 
 	//internal only for inline workflow meta data
 
