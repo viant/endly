@@ -113,7 +113,23 @@ pipeline:
 ### Node SDK
 
 
+```endly nodesdk.yaml```
+[@nodesdk.yaml](usage/nodesdk.yaml)
 
-### JDK SDK
 
+```yaml
+init:
+  target:
+    URL: ssh://127.0.0.1
+    Credentials: localhost
+
+pipeline:
+  task1:
+    action: deployment:deploy
+    target: $target
+    baseLocation: /usr/local
+    appName: node
+    version: 12.6
+
+```
 
