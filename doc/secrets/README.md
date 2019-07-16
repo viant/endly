@@ -7,16 +7,11 @@
 - [Posgress](#pg)
 - [Slack](#slack)
     
-Endly on its core uses SSH and other system/cloud service requiring credentials.
-These service accept either an URL or just a name of filename without extension from ~/.secret/ folder
+Endly, on its core, uses SSH and other system/cloud service requiring credentials. These services accept either an URL or just a name of filename without an extension from ~/.secret/ folder
 
+Endly uses the credential config stored in $HOME/.secret/ folder, it uses blowfish encrypted password when created by "endly -c option."
 
-Endly uses  [Credentail Config](https://github.com/viant/toolbox/blob/master/cred/config.go)
-stored in $HOME/.secret/ folder, it uses blowfish encrypted password when created by "endly -c option"
-
-Endly service was design in a way to  hide user secrets, for example, if sudo access is needed,
-endly will output **sudo** in the execution event log and screen rather actual password.
-
+Endly was designed in a way to hide user secrets. For example, if sudo access is needed, endly will output sudo in the execution event log and screen rather actual password.
 
 
 
