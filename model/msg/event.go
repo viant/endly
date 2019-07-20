@@ -17,15 +17,13 @@ type Event interface {
 	IsLoggable() bool
 }
 
-
 //event represents an event
 type event struct {
 	init      Event
 	timestamp time.Time
-	loggable bool
+	loggable  bool
 	value     interface{}
 }
-
 
 func (e *event) SetLoggable(loggable bool) {
 	e.loggable = loggable

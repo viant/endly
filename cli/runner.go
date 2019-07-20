@@ -315,7 +315,6 @@ func (r *Runner) processEvent(event msg.Event, filter map[string]bool) {
 		return
 	}
 
-
 	if r.processAssertable(event) {
 		return
 	}
@@ -671,9 +670,6 @@ func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 	exec.TerminalSessions(r.context)
 	exec.SetDefaultTarget(r.context, nil)
 	selenium.Sessions(r.context)
-
-
-
 
 	r.report = &ReportSummaryEvent{}
 	r.context.CLIEnabled = true
