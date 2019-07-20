@@ -49,6 +49,7 @@ func (c *Context) Publish(value interface{}) msg.Event {
 	if !ok {
 		event = msg.NewEvent(value)
 	}
+	event.SetLoggable(c.IsLoggingEnabled())
 	if c.Listener != nil {
 		c.Listener(event)
 	}
@@ -58,6 +59,7 @@ func (c *Context) Publish(value interface{}) msg.Event {
 //PublishWithStartEvent publishes event to listeners, it updates current run details like activity workflow name etc ...
 func (c *Context) PublishWithStartEvent(value interface{}, init msg.Event) msg.Event {
 	event := msg.NewEventWithInit(value, init)
+	event.SetLoggable(true)
 	if c.Listener != nil {
 		c.Listener(event)
 	}

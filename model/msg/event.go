@@ -13,13 +13,26 @@ type Event interface {
 	Value() interface{}
 	Timestamp() time.Time
 	Init() Event
+	SetLoggable(bool)
+	IsLoggable() bool
 }
+
 
 //event represents an event
 type event struct {
 	init      Event
 	timestamp time.Time
+	loggable bool
 	value     interface{}
+}
+
+
+func (e *event) SetLoggable(loggable bool) {
+	e.loggable = loggable
+}
+
+func (e *event) IsLoggable() bool {
+	return e.loggable
 }
 
 func (e *event) Value() interface{} {

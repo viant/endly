@@ -270,6 +270,7 @@ func (r *Runner) processActivityStart(event msg.Event) bool {
 	if !ok {
 		return false
 	}
+	event.SetLoggable(true)
 	if r.activity != nil && (activity.Caller != r.activity.Caller) {
 		r.activityEnded = false
 	}
@@ -298,6 +299,7 @@ func (r *Runner) processActivityStart(event msg.Event) bool {
 func (r *Runner) processActivityEnd(event msg.Event) {
 	if _, ended := event.Value().(*model.ActivityEndEvent); ended {
 		r.activityEnded = ended
+		event.SetLoggable(true)
 	}
 }
 
@@ -312,7 +314,12 @@ func (r *Runner) processEvent(event msg.Event, filter map[string]bool) {
 	if r.processErrorEvent(event) {
 		return
 	}
+
+
 	if r.processAssertable(event) {
+		return
+	}
+	if !event.IsLoggable() {
 		return
 	}
 	if r.processReporter(event, filter) {
@@ -662,7 +669,11 @@ func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 	r.context = r.manager.NewContext(toolbox.NewContext())
 	//init shared session
 	exec.TerminalSessions(r.context)
+	exec.SetDefaultTarget(r.context, nil)
 	selenium.Sessions(r.context)
+
+
+
 
 	r.report = &ReportSummaryEvent{}
 	r.context.CLIEnabled = true
@@ -696,6 +707,7 @@ func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 }
 
 func (r *Runner) processErrorEvent(event msg.Event) bool {
+
 	if _, ok := event.Value().(*msg.ResetError); ok {
 		r.report.Error = false
 		r.err = nil
@@ -704,6 +716,7 @@ func (r *Runner) processErrorEvent(event msg.Event) bool {
 		return true
 	}
 	if errorEvent, ok := event.Value().(*msg.ErrorEvent); ok {
+		event.SetLoggable(true)
 		r.err = fmt.Errorf("%v", errorEvent.Error)
 		r.xUnitSummary.Errors = "1"
 		r.xUnitSummary.ErrorsDetail = errorEvent.Error
