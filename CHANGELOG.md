@@ -1,3 +1,13 @@
+## July 20 2019 0.41.0
+    * Removed process:stop-all - BREAKING CHANGE - please use process:stop
+    * Extended process:stop to handle command match
+    * Added Watch attribute to process:start
+    * Added default target to process, sdk, deploy services
+    * Streamined scp upload
+    * Added logging flag to generic event
+    * Patched exec secrets
+    * Patched storage with multi asset and empty source
+ 
 ## July 10 2019 0.40.0
     * Added task.fail to control final endly workflow in case there was catch task
     * Added dsunit:checkSchema
