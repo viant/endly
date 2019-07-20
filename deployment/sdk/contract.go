@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"github.com/pkg/errors"
+	"github.com/viant/endly/system/exec"
 	"github.com/viant/toolbox/url"
 	"strings"
 )
@@ -25,6 +26,7 @@ func (r *SetRequest) Init() error {
 	if r.BaseLocation == "" {
 		r.BaseLocation = baseLocation
 	}
+	r.Target = exec.GetServiceTarget(r.Target)
 	return nil
 }
 

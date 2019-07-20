@@ -59,7 +59,7 @@ func (s *execService) isSupportedScheme(target *url.Resource) bool {
 }
 
 func (s *execService) initSession(context *endly.Context, target *url.Resource, session *model.Session, env map[string]string) error {
-	_, _ = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
+	//_, _ = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
 	for k, v := range env {
 		if err := s.setEnvVariable(context, session, k, v); err != nil {
 			return err
@@ -137,6 +137,12 @@ func (s *execService) openSession(context *endly.Context, request *OpenSessionRe
 	SSHSession.Os, err = s.detectOperatingSystem(SSHSession)
 	if err != nil {
 		return nil, err
+	}
+
+	if currentDirectory, err := os.Getwd(); err == nil {
+		if _, err = SSHSession.Run(fmt.Sprintf("cd %v", currentDirectory), nil, 0); err == nil {
+			SSHSession.CurrentDirectory = currentDirectory
+		}
 	}
 	return SSHSession, nil
 }
@@ -321,66 +327,80 @@ func (s *execService) buildExecutionState(response *RunResponse, context *endly.
 	return result
 }
 
+func hasTerminator(stdout string, terminators []string) bool {
+	if len(terminators) == 0 {
+		return false
+	}
+	for i := range terminators {
+		if strings.Index(stdout, terminators[i]) != -1 {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *execService) executeCommand(context *endly.Context, session *model.Session, extractCommand *ExtractCommand, response *RunResponse, request *ExtractRequest) (err error) {
 	var state = context.State()
 	state.SetValue("os.user", session.Username)
-	command := context.Expand(extractCommand.Command)
+
+	securedCommand := context.Expand(extractCommand.Command)
 	options := request.Options
 	terminators := getTerminators(options, session, extractCommand)
-	isSuperUserCmd := strings.Contains(command, "sudo ") || request.SuperUser
+	isSuperUserCmd := strings.Contains(securedCommand, "sudo ") || request.SuperUser
+
 	if extractCommand.When != "" {
 		var state = s.buildExecutionState(response, context)
 		if ok, err := criteria.Evaluate(context, state, extractCommand.When, "Cmd.When", true); !ok {
+			response.Add(NewCommandLog(securedCommand, "", err))
 			return err
 		}
-	} else if strings.Contains(command, "$") {
+	} else if strings.Contains(securedCommand, "$") {
 		var state = s.buildExecutionState(response, context)
-		command = state.ExpandAsText(command)
+		securedCommand = state.ExpandAsText(securedCommand)
 	}
 
 	if isSuperUserCmd {
 		if !session.SuperUSerAuth {
 			terminators = append(terminators, "Password")
 		}
-		command = s.commandAsSuperUser(session, command)
+		securedCommand = s.commandAsSuperUser(session, securedCommand)
 	}
 
-	var cmd = command
-	if cmd, err = context.Secrets.Expand(cmd, request.Secrets); err != nil {
+	var insecureCommand = securedCommand
+	insecureCommand, err = context.Secrets.Expand(insecureCommand, request.Secrets)
+	if err != nil {
 		return err
 	}
+
 	var listener ssh.Listener
 
 	//troubleshooting secrets - DO NOT USE unless really needed
 	if os.Getenv("ENDLY_SECRET_REVEAL") == "true" {
-		command = cmd
+		securedCommand = insecureCommand
 	}
-	s.Begin(context, NewSdtinEvent(session.ID, command))
+	s.Begin(context, NewSdtinEvent(session.ID, securedCommand))
 
-	commandRetry:= false
+	commandRetry := false
 	listener = func(stdout string, hasMore bool) {
-		if ! commandRetry && request.AutoSudo && !util.IsPermitted(stdout) {
+		if !commandRetry && request.AutoSudo && !util.IsPermitted(stdout) {
 			return
 		}
-
 		if stdout != "" {
 			context.Publish(NewStdoutEvent(session.ID, stdout, err))
 		}
 	}
 
-
-	stdout, err := s.run(context, session, cmd, listener, options.TimeoutMs, terminators...)
+	stdout, err := s.run(context, session, insecureCommand, listener, options.TimeoutMs, terminators...)
 	if len(response.Output) > 0 {
 		if !strings.HasSuffix(response.Output, "\n") {
 			response.Output += "\n"
 		}
 	}
 
-
 	if request.AutoSudo && !util.IsPermitted(stdout) {
 		commandRetry = true
-		if session.Username != "root" && !strings.HasPrefix(command, "sudo") {
-			stdout, err = s.retryWithSudo(context, session, cmd, listener, options.TimeoutMs, terminators...)
+		if session.Username != "root" && !strings.HasPrefix(securedCommand, "sudo") {
+			stdout, err = s.retryWithSudo(context, session, insecureCommand, listener, options.TimeoutMs, terminators...)
 			isSuperUserCmd = true
 		}
 	}
@@ -393,20 +413,20 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	}
 	response.Output += stdout
 
-	if request.CheckError {
+	if request.CheckError && !hasTerminator(stdout, terminators) {
 		if errorCode, err := s.run(context, session, "echo $?", nil, options.TimeoutMs, terminators...); err == nil {
 			exitStatus := toolbox.AsInt(strings.TrimSpace(errorCode))
 			if exitStatus != 0 {
-				return fmt.Errorf("exit code: %v, command: %v", exitStatus, command)
+				return fmt.Errorf("exit code: %v, command: %v", exitStatus, securedCommand)
 			}
 		}
 	}
 
-	response.Add(NewCommandLog(command, stdout, err))
+	response.Add(NewCommandLog(securedCommand, stdout, err))
 	if err != nil {
 		return err
 	}
-	if err = s.validateStdout(stdout, command, extractCommand); err != nil {
+	if err = s.validateStdout(stdout, securedCommand, extractCommand); err != nil {
 		return err
 	}
 
@@ -464,7 +484,6 @@ func (s *execService) runExtractCommands(context *endly.Context, request *Extrac
 	response = NewRunResponse(session.ID)
 	for _, extractCommand := range request.Commands {
 		var command = context.Expand(extractCommand.Command)
-
 		if strings.Contains(command, "rm ") && strings.Contains(command, session.CurrentDirectory) {
 			session.CurrentDirectory = "" //reset path
 		}
@@ -616,6 +635,15 @@ func (s *execService) captureCommandIfNeeded(context *endly.Context, replayComma
 	return err
 }
 
+func (service *execService) setTarget(context *endly.Context, request *SetTargetRequest) (*SetTargetResponse, error) {
+	target, err := context.ExpandResource(request.Resource)
+	if err != nil {
+		return nil, err
+	}
+	SetDefaultTarget(context, target)
+	return &SetTargetResponse{}, nil
+}
+
 const (
 	execServiceOpenExample = `{
   "Target": {
@@ -764,6 +792,26 @@ func (s *execService) registerRoutes() {
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*CloseSessionRequest); ok {
 				return s.closeSession(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "setTarget",
+		RequestInfo: &endly.ActionInfo{
+			Description: "set default target",
+			Examples:    []*endly.UseCase{},
+		},
+		RequestProvider: func() interface{} {
+			return &SetTargetRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &SetTargetResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*SetTargetRequest); ok {
+				return s.setTarget(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},

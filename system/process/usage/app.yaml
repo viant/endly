@@ -1,0 +1,23 @@
+init:
+  appPath: $Pwd()/my-app
+pipeline:
+  setSdk:
+    action: sdk:set
+    sdk: node:12
+  build:
+    action: exec:run
+    checkError: true
+    commands:
+      - cd $appPath
+      - npm install
+      - npm test
+  stop:
+    action: process:stop-all
+    input: react-scripts/scripts/start.js
+
+  start:
+    action: process:start
+    directory: $appPath/
+    watch: true
+    immuneToHangups: true
+    command: npm start

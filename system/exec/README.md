@@ -38,6 +38,18 @@ pipeline:
 
 ```
 
+You can also set default credentials with the following
+
+```yaml
+pipeline:
+  task1:
+    action: exec:setTarget
+    url: ssh://myCloudMatchine/
+    credentials: myCloudCredentials
+```
+
+In that case you can skip defining target in all service using SSH exec service.
+
 
 #### Custom credentials 
 When default method is not available you can generate encrypted credentials for your user useing the 

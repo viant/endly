@@ -52,10 +52,10 @@ func (s *service) deploySdk(context *endly.Context, request *SetRequest) error {
 	state.Put("buildHost", target.ParsedURL.Host)
 	state.Put("buildHostCredential", target.Credentials)
 	serviceResponse := deploymentService.Run(ctx, &deploy.Request{
-		Target:  target,
-		AppName: request.Sdk,
-		BaseLocation:request.BaseLocation,
-		Version: request.Version,
+		Target:       target,
+		AppName:      request.Sdk,
+		BaseLocation: request.BaseLocation,
+		Version:      request.Version,
 	})
 	if serviceResponse.Err != nil {
 		return serviceResponse.Err

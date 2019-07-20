@@ -124,7 +124,7 @@ func (r *ExtractRequest) Init() error {
 			}
 		}
 	}
-	r.Target = SetDefaultTargetIfEmpty(r.Target)
+	r.Target = GetServiceTarget(r.Target)
 	return nil
 }
 
@@ -148,6 +148,14 @@ func NewExtractRequest(target *url.Resource, options *Options, commands ...*Extr
 		Commands: commands,
 	}
 }
+
+//SetTargetRequest represents set default target request
+type SetTargetRequest struct {
+	*url.Resource
+}
+
+//SetTargetRequest represents set default target response
+type SetTargetResponse struct{}
 
 //NewExtractRequestFromURL creates a new request from URL
 func NewExtractRequestFromURL(URL string) (*ExtractRequest, error) {
@@ -194,7 +202,7 @@ func (r *RunRequest) Init() error {
 	if r.Options == nil {
 		r.Options = DefaultOptions()
 	}
-	r.Target = SetDefaultTargetIfEmpty(r.Target)
+	r.Target = GetServiceTarget(r.Target)
 	return nil
 }
 

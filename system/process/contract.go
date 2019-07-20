@@ -13,6 +13,7 @@ type StartRequest struct {
 	Arguments       []string
 	AsSuperUser     bool
 	ImmuneToHangups bool `description:"start process as nohup"`
+	Watch           bool `description:"watch command output, work with nohup mode"`
 }
 
 //NewStartRequestFromURL creates a new request from URL
@@ -26,6 +27,8 @@ func NewStartRequestFromURL(URL string) (*StartRequest, error) {
 type StartResponse struct {
 	Command string
 	Info    []*Info
+	Pid     int
+	Stdout  string
 }
 
 //StatusRequest represents a status check request
@@ -55,6 +58,7 @@ type Info struct {
 type StopRequest struct {
 	Target *url.Resource
 	Pid    int
+	Input  string `description:"if specified, matches all process PID to stop"`
 }
 
 //StopResponse represents a stop response
@@ -62,13 +66,16 @@ type StopResponse struct {
 	Stdout string
 }
 
-//StopAllRequest represents a stop all processes matching provided name request
-type StopAllRequest struct {
-	Target *url.Resource
-	Input  string
+func (r *StartRequest) Init() error {
+	r.Target = exec.GetServiceTarget(r.Target)
+	return nil
 }
 
-//StopAllResponse represents a stop all response
-type StopAllResponse struct {
-	Stdout string
+//NewStopRequest creates a stop request
+func NewStopRequest(pid int, target *url.Resource) *StopRequest {
+	return &StopRequest{Target: target, Pid: pid}
+}
+
+func NewStatusRequest(command string, target *url.Resource) *StatusRequest {
+	return &StatusRequest{Target: target, Command: command}
 }
