@@ -216,7 +216,7 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 		}
 	}
 	transfer.Source = source
-	if dest, err := context.ExpandResource(transfer.Dest);err == nil {
+	if dest, err := context.ExpandResource(transfer.Dest); err == nil {
 		transfer.Dest = dest
 	}
 	return transfer, nil
@@ -254,7 +254,6 @@ func (s *service) updateOperatingSystem(context *endly.Context, target *url.Reso
 	}
 }
 
-
 func (s *service) updateDeployState(context *endly.Context, target *url.Resource) {
 
 	state := context.State()
@@ -279,7 +278,6 @@ func (s *service) deploy(context *endly.Context, request *Request) (*Response, e
 	s.updateDeployState(context, target)
 	state := context.State()
 
-
 	var response = &Response{}
 	if s.checkIfDeployedOnSession(context, target, request) {
 		response.Version = request.Version
@@ -300,7 +298,7 @@ func (s *service) deploy(context *endly.Context, request *Request) (*Response, e
 
 	baseLocation := request.BaseLocation
 	if baseLocation == "" {
-		baseLocation =  meta.BaseLocation
+		baseLocation = meta.BaseLocation
 	}
 	state.SetValue("deploy.baseLocation", baseLocation)
 	var expectedVersion = context.Expand(request.Version)
@@ -337,7 +335,7 @@ func (s *service) deploy(context *endly.Context, request *Request) (*Response, e
 	}
 	if deploymentTarget.Deployment.Run != nil {
 		runRequest := deploymentTarget.Deployment.Run.Clone(target)
-		if err = endly.Run(context,runRequest, nil); err != nil {
+		if err = endly.Run(context, runRequest, nil); err != nil {
 			return nil, fmt.Errorf("failed to init deploy app to %v: %v", target, err)
 		}
 	}

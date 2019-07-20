@@ -4,9 +4,13 @@ import (
 	"fmt"
 	"github.com/lunixbochs/vtclean"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/msg"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
+	"io/ioutil"
+	"os"
+	"path"
 	"strings"
 	"time"
 )
@@ -18,18 +22,21 @@ type service struct {
 	*endly.AbstractService
 }
 
-func (s *service) stopAllProcesses(context *endly.Context, request *StopAllRequest) (*StopAllResponse, error) {
+func (s *service) stopAllProcesses(context *endly.Context, request *StopRequest) (*StopResponse, error) {
+	target := exec.GetServiceTarget(request.Target)
+
 	status, err := s.checkProcess(context, &StatusRequest{
-		Target:  request.Target,
+		Target:  target,
 		Command: request.Input,
 	})
+
 	if err != nil {
 		return nil, err
 	}
-	var response = &StopAllResponse{}
+	var response = &StopResponse{}
 	for _, info := range status.Processes {
 		commandResponse, err := s.stopProcess(context, &StopRequest{
-			Target: request.Target,
+			Target: target,
 			Pid:    info.Pid,
 		})
 		if err != nil {
@@ -122,8 +129,12 @@ func (s *service) checkProcess(context *endly.Context, request *StatusRequest) (
 }
 
 func (s *service) stopProcess(context *endly.Context, request *StopRequest) (*StopResponse, error) {
-	var extractRequest = exec.NewExtractRequest(request.Target, exec.DefaultOptions(), exec.NewExtractCommand(fmt.Sprintf("kill -9 %v", request.Pid), "", nil, nil))
-	extractRequest.SuperUser = true
+	if request.Pid == 0 && request.Input != "" {
+		return s.stopAllProcesses(context, request)
+	}
+	target := exec.GetServiceTarget(request.Target)
+	var extractRequest = exec.NewExtractRequest(target, exec.DefaultOptions(), exec.NewExtractCommand(fmt.Sprintf("kill -9 %v", request.Pid), "", nil, nil))
+	extractRequest.AutoSudo = true
 	var runResponse = &exec.RunResponse{}
 	if err := endly.Run(context, extractRequest, runResponse); err != nil {
 		return nil, err
@@ -134,71 +145,102 @@ func (s *service) stopProcess(context *endly.Context, request *StopRequest) (*St
 
 }
 
-func indexProcesses(processes ...*Info) map[int]*Info {
-	var result = make(map[int]*Info)
-	for _, process := range processes {
-		result[process.Pid] = process
-	}
-	return result
-}
-
-func (s *service) startProcess(context *endly.Context, request *StartRequest) (*StartResponse, error) {
-	origProcesses, err := s.checkProcess(context, &StatusRequest{
-		Target:  request.Target,
-		Command: request.Command,
-	})
-
-	var result = &StartResponse{}
+func (s *service) stopExistingProcess(context *endly.Context, request *StartRequest) error {
+	origProcesses, err := s.checkProcess(context, NewStatusRequest(request.Command, request.Target))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	for _, process := range origProcesses.Processes {
 		if strings.Join(process.Arguments, " ") == strings.Join(request.Arguments, " ") {
-			_, err := s.stopProcess(context, &StopRequest{
-				Pid:    process.Pid,
-				Target: request.Target,
-			})
-			if err != nil {
-				return nil, err
+			if _, err := s.stopProcess(context, NewStopRequest(process.Pid, request.Target)); err != nil {
+				return err
 			}
 		}
 	}
+	return nil
+}
+
+func (s *service) buildStartProcessCommand(request *StartRequest) *exec.RunRequest {
 	changeDirCommand := fmt.Sprintf("cd %v ", request.Directory)
 	var startCommand = request.Command + " " + strings.Join(request.Arguments, " ") + " &"
+	outputFile := path.Join(request.Directory, "nohup.out")
+	var createNoHup = fmt.Sprintf("touch %v && chmod 666 %v", outputFile, outputFile)
 	if request.ImmuneToHangups {
+		toolbox.RemoveFileIfExist(outputFile)
 		startCommand = fmt.Sprintf("nohup  %v", startCommand)
 	}
-
-	var runRequest = exec.NewRunRequest(request.Target, request.AsSuperUser, changeDirCommand, startCommand)
-
+	var runRequest = exec.NewRunRequest(request.Target, request.AsSuperUser, changeDirCommand, createNoHup, startCommand)
 	if request.Options != nil {
 		runRequest.Options = request.Options
 	} else if runRequest.Options == nil {
 		runRequest.Options = &exec.Options{}
 	}
 	runRequest.CheckError = true
-	if err = endly.Run(context, runRequest, nil); err != nil {
-		return nil, err
-	}
-	time.Sleep(time.Second)
-	newProcesses, err := s.checkProcess(context, &StatusRequest{
-		Target:  request.Target,
-		Command: request.Command,
-	})
+	return runRequest
+}
+
+func (s *service) startProcess(context *endly.Context, request *StartRequest) (*StartResponse, error) {
+	var response = &StartResponse{}
+	err := s.stopExistingProcess(context, request)
 	if err != nil {
 		return nil, err
 	}
+	outputFile := path.Join(request.Directory, "nohup.out")
+	startProcessRequest := s.buildStartProcessCommand(request)
+	startProcessResponse := &exec.RunResponse{}
+	if err = endly.Run(context, startProcessRequest, startProcessResponse); err != nil {
+		return nil, err
+	}
+	response.Stdout = startProcessResponse.Output
+	time.Sleep(time.Second)
 
-	result.Info = make([]*Info, 0)
-	existingProcesses := indexProcesses(origProcesses.Processes...)
+	status, err := s.checkProcess(context, NewStatusRequest(request.Command, request.Target))
+	if err != nil {
+		return nil, err
+	}
+	response.Info = status.Processes
+	response.Pid = status.Pid
 
-	for _, candidate := range newProcesses.Processes {
-		if _, has := existingProcesses[candidate.Pid]; !has {
-			result.Info = append(result.Info, candidate)
-			break
+	if request.ImmuneToHangups {
+		stdout, err := s.readOutput(outputFile)
+		if err == nil {
+			response.Stdout += stdout
+			context.Publish(msg.NewStdoutEvent("nohoup", stdout))
+		}
+		if request.Watch {
+			go s.watchOutput(context, outputFile, len(stdout))
 		}
 	}
-	return result, nil
+
+	return response, nil
+}
+
+func (s *service) watchOutput(context *endly.Context, location string, position int) {
+	for !context.IsClosed() {
+		stdout, err := s.readOutput(location)
+		if err != nil {
+			return
+		}
+		if position < len(stdout) {
+			output := string(stdout[position:])
+			context.Publish(msg.NewStdoutEvent("nohoup", output))
+			position = len(stdout)
+		}
+		time.Sleep(time.Second)
+	}
+}
+
+func (s *service) readOutput(location string) (string, error) {
+	file, err := os.Open(location)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 func (s *service) registerRoutes() {
@@ -254,25 +296,6 @@ func (s *service) registerRoutes() {
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*StatusRequest); ok {
 				return s.checkProcess(context, req)
-			}
-			return nil, fmt.Errorf("unsupported request type: %T", request)
-		},
-	})
-
-	s.Register(&endly.Route{
-		Action: "stop-all",
-		RequestInfo: &endly.ActionInfo{
-			Description: "stop all matching processes",
-		},
-		RequestProvider: func() interface{} {
-			return &StopAllRequest{}
-		},
-		ResponseProvider: func() interface{} {
-			return &StopAllResponse{}
-		},
-		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*StopAllRequest); ok {
-				return s.stopAllProcesses(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},

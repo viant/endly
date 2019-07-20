@@ -178,9 +178,12 @@ func (r *CopyRequest) Init() error {
 		if r.Source == nil && r.Dest == nil {
 			return nil
 		}
-		for _, transfer := range r.Transfers {
 
+		for _, transfer := range r.Transfers {
 			if transfer.Source != nil {
+				if r.Source == nil {
+					r.Source = url.NewResource("/")
+				}
 				transfer.Source = joinIfNeeded(r.Source, transfer.Source.URL)
 			}
 			if transfer.Dest != nil {
@@ -250,15 +253,16 @@ func (t *AssetTransfer) AsTransfer(base *Transfer) []*Transfer {
 		}
 
 		transfer := &Transfer{
-			Source:  url.NewResource(source),
-			Dest:    url.NewResource(dest),
-			Expand:  base.Expand,
-			Replace: base.Replace,
+			Source:   url.NewResource(source),
+			Dest:     url.NewResource(dest),
+			Expand:   base.Expand,
+			Replace:  base.Replace,
+			Compress: base.Compress,
 		}
 		if sourceBase != nil {
 			transfer.Source = joinIfNeeded(sourceBase, source)
 		}
-		if sourceBase != nil {
+		if destBase != nil {
 			transfer.Dest = joinIfNeeded(destBase, dest)
 		}
 

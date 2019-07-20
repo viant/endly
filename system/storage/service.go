@@ -118,31 +118,33 @@ func (s *service) copy(context *endly.Context, request *CopyRequest) (*CopyRespo
 	var result = &CopyResponse{
 		TransferredURL: make([]string, 0),
 	}
+
 	for _, transfer := range request.Transfers {
 		sourceResource, sourceService, err := s.getResourceAndService(context, transfer.Source)
 		if err != nil {
 			return nil, err
 		}
 		defer sourceService.Close()
-		targetResource, targetService, err := s.getResourceAndService(context, transfer.Dest)
+		destResource, destService, err := s.getResourceAndService(context, transfer.Dest)
 		if err != nil {
 			return nil, err
 		}
-		defer targetService.Close()
+		defer destService.Close()
 
 		var handler = s.getModificationHandler(context, transfer)
 
 		if has, _ := sourceService.Exists(sourceResource.URL); !has {
-			return nil, fmt.Errorf(" %v %v - source does not exists (%T)", sourceResource.URL, targetResource.URL, sourceService)
+			return nil, fmt.Errorf(" %v %v - source does not exists (%T)", sourceResource.URL, destResource.URL, sourceService)
 		}
 
-		compressed := transfer.Compress && IsShellCompressable(sourceResource.ParsedURL.Scheme) && IsShellCompressable(targetResource.ParsedURL.Scheme)
+		useCompression := transfer.Compress && IsShellCompressable(sourceResource.ParsedURL.Scheme) && IsShellCompressable(destResource.ParsedURL.Scheme)
 		object, err := sourceService.StorageObject(sourceResource.URL)
 		if err != nil {
 			return nil, err
 		}
-		if compressed {
-			err = s.compressSource(context, sourceResource, targetResource, object)
+
+		if useCompression {
+			err = s.compressSource(context, sourceResource, destResource, object)
 			if err != nil {
 				return nil, err
 			}
@@ -158,12 +160,12 @@ func (s *service) copy(context *endly.Context, request *CopyRequest) (*CopyRespo
 			copyHandler = udf.(storage.CopyHandler)
 		}
 
-		err = storage.Copy(sourceService, sourceResource.URL, targetService, targetResource.URL, handler, copyHandler)
+		err = storage.Copy(sourceService, sourceResource.URL, destService, destResource.URL, handler, copyHandler)
 		if err != nil {
 			return result, err
 		}
-		if compressed {
-			err = s.decompressTarget(context, sourceResource, targetResource, object)
+		if useCompression {
+			err = s.decompressTarget(context, sourceResource, destResource, object)
 			if err != nil {
 				return nil, err
 			}

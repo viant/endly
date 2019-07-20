@@ -20,20 +20,25 @@ type Request struct {
 	BaseLocation string        `description:" variable source: $deploy.baseLocation"`
 }
 
-
 func (r *Request) Expand(context *endly.Context) *Request {
-	expanded :=  &Request{
-		AppName: context.Expand(r.AppName),
-		Version: context.Expand(r.Version),
-		BaseLocation:r.BaseLocation,
-		Target: r.Target,
-		Force:r.Force,
-		MetaURL:context.Expand(r.MetaURL),
+	expanded := &Request{
+		AppName:      context.Expand(r.AppName),
+		Version:      context.Expand(r.Version),
+		BaseLocation: r.BaseLocation,
+		Target:       r.Target,
+		Force:        r.Force,
+		MetaURL:      context.Expand(r.MetaURL),
 	}
-	if target, err := context.ExpandResource(r.Target);err != nil {
+	if target, err := context.ExpandResource(r.Target); err != nil {
 		expanded.Target = target
 	}
 	return expanded
+}
+
+//Validate check if request is valid otherwise returns error.
+func (r *Request) Init() error {
+	r.Target = exec.GetServiceTarget(r.Target)
+	return nil
 }
 
 //Validate check if request is valid otherwise returns error.
@@ -64,7 +69,7 @@ type LoadMetaResponse struct {
 
 //Meta represents description of deployment instructions for various operating system
 type Meta struct {
-	Name         string                                                                                                           //app name
+	Name         string        //app name
 	Versioning   string        `required:"true" description:"versioning template for dynamic discovery i.e. Major.Minor.Release"` //versioning system, i.e. Major.Minor.Release
 	Targets      []*TargetMeta `required:"true" description:"deployment instruction for various version and operating systems"`
 	BaseLocation string        `description:"default base location"`
@@ -78,7 +83,7 @@ type Dependency struct {
 
 //TargetMeta represents specific instruction for given os deployment.
 type TargetMeta struct {
-	Version           string                                                                                                                        //version of the software
+	Version           string            //version of the software
 	MinReleaseVersion map[string]string `required:"true" description:"min release version, key is major.minor, value is release or update version"` //min release version, key is major.minor, value is release or update version
 	OsTarget          *model.OsTarget   `description:"operating system match"`                                                                      //if specified matches current os
 	Deployment        *Deployment       `required:"true" description:"actual deployment instructions"`                                              //actual deployment instruction
