@@ -271,14 +271,14 @@ func (s *service) stop(context *endly.Context, request *StopRequest) (*StopRespo
 	}
 
 	processService, _ := context.Service(process.ServiceID)
-	serviceResponse := processService.Run(context, &process.StopAllRequest{
+	serviceResponse := processService.Run(context, &process.StopRequest{
 		Target: target,
 		Input:  fmt.Sprintf("selenium-server-standalone.jar -port %v", toolbox.AsString(request.Port)),
 	})
 	if serviceResponse.Error != "" {
 		return nil, errors.New(serviceResponse.Error)
 	}
-	serviceResponse = processService.Run(context, &process.StopAllRequest{
+	serviceResponse = processService.Run(context, &process.StopRequest{
 		Target: target,
 		Input:  "/opt/selenium/geckodriver",
 	})
