@@ -167,15 +167,19 @@ func detectFirstArguments(flagset map[string]string) {
 		return
 	}
 	candidate := os.Args[1]
-	if strings.Contains(candidate , "=") {
+	if strings.Contains(candidate, "=") {
 		return
 	}
 	if strings.Contains(candidate, ":") {
 		flagset["run"] = os.Args[1]
-	} else if strings.Contains(candidate, ".") {
-		flagset["r"] = os.Args[1]
 	} else {
-		return
+		if strings.Contains(candidate, ".") {
+			flagset["r"] = os.Args[1]
+		} else if toolbox.FileExists(fmt.Sprintf("%v.yaml", candidate)) {
+			flagset["r"] = fmt.Sprintf("%v.yaml", candidate)
+		} else {
+			return
+		}
 	}
 	if len(os.Args) > 2 {
 		os.Args = append([]string{os.Args[0]}, os.Args[2:]...)
