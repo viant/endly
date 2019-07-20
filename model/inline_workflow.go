@@ -486,7 +486,7 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 	if _, actionNode := nodeAttributes[actionKey]; !actionNode && !isTemplateNode {
 		if taskAttributes, _, err := p.groupAttributes(nodeAttributes, state); err == nil {
 			if len(taskAttributes) > 0 {
-				tempTask := &Task{TasksNode:&TasksNode{}}
+				tempTask := &Task{TasksNode: &TasksNode{}}
 				if err = toolbox.DefaultConverter.AssignConverted(&tempTask, taskAttributes); err == nil {
 					if tempTask.AbstractNode != nil {
 						task.Init = tempTask.Init
