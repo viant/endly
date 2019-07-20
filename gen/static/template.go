@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	var memStorage = storage.NewMemoryService();
+	var memStorage = storage.NewMemoryService()
 	{
 		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/web/meta.yaml", bytes.NewReader([]byte(`name: go/web
 description: "golang: web hello world"
@@ -759,7 +759,7 @@ rest:
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/service_contract.go", bytes.NewReader([]byte(`package webdb
+		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/contract.go", bytes.NewReader([]byte(`package webdb
 
 import (
 	"net/http"
@@ -825,7 +825,7 @@ type PersistResponse struct {
 }
 `)))
 		if err != nil {
-			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/go/webdb/service_contract.go %v", err)
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/go/webdb/contract.go %v", err)
 		}
 	}
 	{
