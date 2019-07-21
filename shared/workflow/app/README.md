@@ -83,7 +83,7 @@ pipeline:
       - echo 'deployed'
 
   stop:
-    action: process:stop-all
+    action: process:stop
     input: ${app}
 
   start:

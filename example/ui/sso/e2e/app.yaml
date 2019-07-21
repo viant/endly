@@ -52,7 +52,7 @@ pipeline:
           static: static
 
   stop:
-    action: process:stop-all
+    action: process:stop
     input: sso
 
   start:

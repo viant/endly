@@ -26,7 +26,7 @@ pipeline:
       - npm install
       - npm test
   stop:
-    action: process:stop-all
+    action: process:stop
     input: react-scripts/scripts/start.js
 
   start:

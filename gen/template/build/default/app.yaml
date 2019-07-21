@@ -51,7 +51,7 @@ pipeline:
     download:
       ${buildPath}/${app}: $releasePath
   stop:
-    action: process:stop-all
+    action: process:stop
     input: ${app}
   start:
     action: process:start

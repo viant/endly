@@ -1,5 +1,5 @@
-## July 20 2019 0.41.0
-    * Removed process:stop-all - BREAKING CHANGE - please use process:stop
+## July 21 2019 0.41.0
+    * Removed process:stopAll - BREAKING CHANGE - please use process:stop
     * Extended process:stop to handle command match
     * Added Watch attribute to process:start
     * Added default target to process, sdk, deploy services
