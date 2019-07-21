@@ -1,4 +1,5 @@
 init:
+
   buildPath: /tmp/endly
   version: $TrimSpace($Cat('../../Version'))
   target:

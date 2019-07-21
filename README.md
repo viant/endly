@@ -322,7 +322,7 @@ pipeline:
           config/config.json: config.json
 
   stop:
-    action: process:stop-all
+    action: process:stop
     input: myApp
 
   start:

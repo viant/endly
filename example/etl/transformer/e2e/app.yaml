@@ -50,7 +50,7 @@ pipeline:
 
 
   stop:
-    action: process:stop-all
+    action: process:stop
     input: transformer
 
   start:

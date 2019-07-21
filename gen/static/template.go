@@ -759,7 +759,7 @@ rest:
 		}
 	}
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/contract.go", bytes.NewReader([]byte(`package webdb
+		err := memStorage.Upload("mem://github.com/viant/endly/template/app/go/webdb/service_contract.go", bytes.NewReader([]byte(`package webdb
 
 import (
 	"net/http"
@@ -825,7 +825,7 @@ type PersistResponse struct {
 }
 `)))
 		if err != nil {
-			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/go/webdb/contract.go %v", err)
+			log.Printf("failed to upload: mem://github.com/viant/endly/template/app/go/webdb/service_contract.go %v", err)
 		}
 	}
 	{
@@ -2299,7 +2299,7 @@ pipeline:
     download:
       ${buildPath}/${app}: $releasePath
   stop:
-    action: process:stop-all
+    action: process:stop
     input: ${app}
   start:
     action: process:start
@@ -2483,7 +2483,7 @@ pipeline:
     download:
       ${buildPath}/${app}: $releasePath
   stop:
-    action: process:stop-all
+    action: process:stop
     input: ${app}
   start:
     action: process:start
