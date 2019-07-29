@@ -8,7 +8,7 @@ To check all supported method run
 ```
 
 
-To check method contract run endly -s="aws/sqs" -a=methodName
+To check method contract run endly -s="aws/ssm" -a=methodName
 ```bash
     endly -s="aws/kms:"
 ```

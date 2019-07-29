@@ -1,3 +1,8 @@
+## July 21 2019 0.41.1
+    * Updated gcp:kms with policy binding
+    * Added $gcp.serviceAccount variable for gcp:* services
+    
+    
 ## July 21 2019 0.41.0
     * Removed process:stopAll - BREAKING CHANGE - please use process:stop
     * Extended process:stop to handle command match
