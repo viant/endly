@@ -151,7 +151,19 @@ func (s *service) deploy(context *endly.Context, request *DeployInput) (output *
 	return output, err
 }
 
+
+func (s *service) expand(context *endly.Context, values ...*string) {
+	state := context.State()
+	for i := range values {
+		if values[i] == nil {
+			continue
+		}
+		*values[i] = state.ExpandAsText(*values[i])
+	}
+}
+
 func (s *service) deployFunctionInBackground(context *endly.Context, request *DeployInput) (*DeployOutput, error) {
+
 	client, err := GetClient(context)
 	if err != nil {
 		return nil, err
@@ -166,6 +178,8 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 			SubnetIds:        vpcOutput.SubnetIds,
 		}
 	}
+
+	s.expand(context, request.FunctionName, request.RoleName, request.AssumeRolePolicyDocument)
 
 	output := &DeployOutput{}
 	output.RoleInfo = &iam.GetRoleInfoOutput{}
