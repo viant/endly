@@ -1,0 +1,11 @@
+pipeline:
+  encrypt:
+    action: gcp/kms:encrypt
+    credentials: gcp-e2e
+    logging: false
+    ring: my_ring
+    key: my_key
+    source:
+      URL: data.txt
+    dest:
+      URL: data.enc
