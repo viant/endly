@@ -20,29 +20,31 @@ func ExpandMeta(context *endly.Context, text string) string {
 	state := data.NewMap()
 	state.SetValue("gcp.projectID", gcpCred.ProjectID)
 	state.SetValue("gcp.region", gcpCred.Region)
+	state.SetValue("gcp.serviceAccount", gcpCred.ClientEmail)
 	return state.ExpandAsText(text)
 }
 
 //UpdateActionRequest updates raw request with project, service
-func UpdateActionRequest(rawRequest map[string]interface{}, config *gcpCredConfig, client CtxClient) {
+func UpdateActionRequest(rawRequest map[string]interface{}, credConfig *gcpCredConfig, client CtxClient) {
 	state := data.NewMap()
 
-	if config.Region == "" {
-		config.Region = DefaultRegion
+	if credConfig.Region == "" {
+		credConfig.Region = DefaultRegion
 	}
 
-	state.SetValue("gcp.projectID", config.ProjectID)
-	state.SetValue("gcp.region", config.Region)
+	state.SetValue("gcp.projectID", credConfig.ProjectID)
+	state.SetValue("gcp.region", credConfig.Region)
+	state.SetValue("gcp.serviceAccount", credConfig.ClientEmail)
 	for k, v := range rawRequest {
 		rawRequest[k] = state.Expand(v)
 	}
 
 	mappings := util.BuildLowerCaseMapping(rawRequest)
 	if _, has := mappings["project"]; !has {
-		rawRequest["project"] = config.ProjectID
+		rawRequest["project"] = credConfig.ProjectID
 	}
 	if _, has := mappings["region"]; !has {
-		rawRequest["region"] = config.Region
+		rawRequest["region"] = credConfig.Region
 	}
 
 	var URLParams = make(gensupport.URLParams)
