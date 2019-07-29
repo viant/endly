@@ -18,13 +18,25 @@ _References:_
 
 #### Usage:
 
-##### Inline data symetric encryption/decryption 
+##### Creating a symmetric key
 
+- **With gcloud**
 ```bash
-endy -r=inline
+gcloud kms keyrings create my_ring --location us-central1
+
+gcloud kms keys create my_key --location us-central1 \
+  --keyring my_ring --purpose encryption
+
 ```
 
-[@inline.yaml](inline.yaml)
+- **With endly**
+
+```bash
+endly deploy
+```
+
+[@deploy.yaml](usage/deploy.yaml)
+
 ```yaml
 pipeline:
   secure:
@@ -34,10 +46,122 @@ pipeline:
       ring: my_ring
       key: my_key
       purpose: ENCRYPT_DECRYPT
+      bindings:
+        - role: roles/cloudkms.cryptoKeyEncrypterDecrypter
+          members:
+            - user:awitas@vindicotech.com
+            - serviceAccount:${gcp.serviceAccount}
 
     keyInfo:
       action: print
-      message: 'Deployed Key: $deployKey.Name'
+      message: 'Deployed key: ${deployKey.Primary.Name}'
+
+```
+
+##### Encryption with a symmetric key 
+
+
+- **With gcloud**
+
+```bash
+gcloud kms encrypt \
+  --location=us-central1  \
+  --keyring=my_ring \
+  --key=my_key \
+  --version=1 \
+  --plaintext-file=data.txt \
+  --ciphertext-file=data.enc
+```
+
+
+- **With endly**
+
+
+```bash
+endly decrypt
+```
+
+[@encrypt.yaml](usage/encrypt.yaml)
+```yaml
+pipeline:
+  encrypt:
+    action: gcp/kms:encrypt
+    logging: false
+    ring: my_ring
+    key: my_key
+    source:
+      URL: data.txt
+    dest:
+      URL: data.enc
+```
+
+##### Decryption with a symmetric key 
+
+
+- **With gcloud**
+
+
+```bash
+
+gcloud kms decrypt \
+  --location=us-central1 \
+  --keyring=my_ring \
+  --key=my_key \
+  --ciphertext-file=data.enc \
+  --plaintext-file=data.dec
+```
+
+
+- **With endly**
+
+
+```bash
+endly decrypt
+```
+
+[@encrypt.yaml](usage/decrypt.yaml)
+
+```yaml
+pipeline:
+  encrypt:
+    action: gcp/kms:encrypt
+    logging: false
+    ring: my_ring
+    key: my_key
+    source:
+      URL: data.txt
+    dest:
+      URL: data.enc
+```
+
+
+
+##### Inline encryption/decryption
+
+```bash
+endy -r=inline
+```
+
+[@inline.yaml](usage/inline.yaml)
+```yaml
+pipeline:
+  secure:
+    deployKey:
+      action: gcp/kms:deployKey
+      credentials: gcp-e2e
+      ring: my_ring
+      key: my_key
+      purpose: ENCRYPT_DECRYPT
+      logging: false
+      bindings:
+        - role: roles/cloudkms.cryptoKeyEncrypterDecrypter
+          members:
+            - user:awitas@vindicotech.com
+            - serviceAccount:${gcp.serviceAccount}
+
+    keyInfo:
+      action: print
+      message: 'Deployed key: ${deployKey.Primary.Name}'
 
     encrypt:
       action: gcp/kms:encrypt
@@ -45,6 +169,7 @@ pipeline:
       key: my_key
       plainData: this is test
       logging: false
+      
     decrypt:
       action: gcp/kms:decrypt
       ring: my_ring
@@ -56,13 +181,16 @@ pipeline:
       message: 'decrypted:  $AsString(${decrypt.PlainData})'
 ```
 
-##### Google Storage asset encryption/decryption (on top of native encryption)
+
+
+##### Google storage asset encryption/decryption
+
 
 ```bash
 endy -r=secure
 ```
 
-@secure.yaml
+[@secure.yaml](usage/secure.yaml)
 ```yaml
 pipeline:
   secure:
@@ -71,7 +199,13 @@ pipeline:
       credentials: gcp-e2e
       ring: my_ring
       key: my_key
+      logging: false
       purpose: ENCRYPT_DECRYPT
+      bindings:
+        - role: roles/cloudkms.cryptoKeyEncrypterDecrypter
+          members:
+            - serviceAccount:$gcp.serviceAccount
+
     encrypt:
       action: gcp/kms:encrypt
       logging: false
@@ -79,18 +213,20 @@ pipeline:
       key: my_key
       plainData: this is test
       dest:
-        URL: gs://myBucket/config.json.enc
+        URL: /tmp/config.json.enc
     decrypt:
       action: gcp/kms:decrypt
       logging: false
       ring: my_ring
       key: my_key
       source:
-        URL: gs://myBucket/config.json.enc
+        URL: /tmp/config.json.enc
     info:
       action: print
       message: $AsString(${decrypt.PlainData})
+
 ```
+
 
 ##### Accessing encrypted URL asset 
  

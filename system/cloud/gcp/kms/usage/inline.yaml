@@ -6,10 +6,16 @@ pipeline:
       ring: my_ring
       key: my_key
       purpose: ENCRYPT_DECRYPT
+      logging: false
+      bindings:
+        - role: roles/cloudkms.cryptoKeyEncrypterDecrypter
+          members:
+            - user:awitas@vindicotech.com
+            - serviceAccount:${gcp.serviceAccount}
 
     keyInfo:
       action: print
-      message: $AsJSON($deployKey)
+      message: 'Deployed key: ${deployKey.Primary.Name}'
 
     encrypt:
       action: gcp/kms:encrypt
