@@ -5,7 +5,13 @@ pipeline:
       credentials: gcp-e2e
       ring: my_ring
       key: my_key
+      logging: false
       purpose: ENCRYPT_DECRYPT
+      bindings:
+        - role: roles/cloudkms.cryptoKeyEncrypterDecrypter
+          members:
+            - serviceAccount:$gcp.serviceAccount
+
     encrypt:
       action: gcp/kms:encrypt
       logging: false

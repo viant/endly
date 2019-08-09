@@ -72,6 +72,7 @@ func (s *service) setParameter(context *endly.Context, input *SetParameterInput)
 	})
 
 	found := err == nil && getOutput != nil
+
 	if found && *getOutput.Parameter.Value == *input.Value {
 		return &ssm.PutParameterOutput{
 			Version: getOutput.Parameter.Version,
