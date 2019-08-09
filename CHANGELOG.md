@@ -1,3 +1,10 @@
+## July 29 2019 0.41.1
+    * Updated gcp:kms with policy binding
+    * Added $gcp.serviceAccount variable for gcp:* services
+    * Patched MySQL script parsing
+    * Update KMS encrupt/decrypt to be compatible with gcloud
+    * Update lambda attribute parsing
+    
 ## July 21 2019 0.41.0
     * Removed process:stopAll - BREAKING CHANGE - please use process:stop
     * Extended process:stop to handle command match

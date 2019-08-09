@@ -1,0 +1,14 @@
+
+pipeline:
+  decrypt:
+    action: gcp/kms:decrypt
+    credentials: gcp-e2e
+    ring: my_ring
+    key: my_key
+    logging: false
+    source:
+      URL: data.enc
+  info:
+    action: print
+    message: $AsString($decrypt.PlainData)
+

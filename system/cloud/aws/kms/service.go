@@ -65,7 +65,6 @@ func (s *service) getAlias(context *endly.Context, aliasName string) (*kms.Alias
 	if err != nil {
 		return nil, err
 	}
-
 	var nextMarker *string
 	for {
 		output, err := client.ListAliases(&kms.ListAliasesInput{

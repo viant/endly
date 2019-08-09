@@ -21,6 +21,8 @@ type DeployKeyRequest struct {
 	KeyInfo
 	Labels  map[string]string
 	Purpose string
+	*Policy
+	PolicyVersion int64
 	ringURI string
 	parent  string
 }
@@ -28,13 +30,23 @@ type DeployKeyRequest struct {
 //DeployKeyRequest represents a deploy KeyInfo response
 type DeployKeyResponse struct {
 	*cloudkms.CryptoKey
+	Policy *Policy
 }
+
+/*
+   members:
+   - serviceAccount:engineering-e2e-test-sc@viant-e2e.iam.gserviceaccount.com
+   role: roles/cloudkms.admin
+
+
+ */
 
 //EncryptRequest represents encrypt request
 type EncryptRequest struct {
 	KeyInfo
 	PlainBase64Text string
 	PlainData       []byte
+	Source 			*url.Resource
 	Dest            *url.Resource
 }
 
@@ -101,6 +113,11 @@ func (r *EncryptRequest) Init() error {
 			return err
 		}
 	}
+	if r.Source != nil {
+		if err := r.Source.Init(); err != nil {
+			return err
+		}
+	}
 	return r.KeyInfo.Init()
 }
 
@@ -132,7 +149,7 @@ func (r *EncryptRequest) Validate() error {
 	if r.Ring == "" {
 		return errors.New("ring was empty")
 	}
-	if len(r.PlainData) == 0 {
+	if len(r.PlainData) == 0 && r.Source == nil {
 		return errors.New("plainData was empty")
 	}
 	return nil

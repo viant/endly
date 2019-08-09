@@ -1,6 +1,8 @@
 package kms
 
 import (
+	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"github.com/viant/endly"
@@ -8,8 +10,9 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"google.golang.org/api/cloudkms/v1"
+	"io/ioutil"
 	"log"
-	"strings"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -123,6 +126,35 @@ func (s *service) registerRoutes() {
 	})
 }
 
+func (s *service) getKeyPolicy(ctx context.Context, service *cloudkms.ProjectsLocationsKeyRingsCryptoKeysService, keyURI string) (*Policy, error) {
+	policyCall := service.GetIamPolicy(keyURI)
+	policyCall.Context(ctx)
+	policyResponse, err := policyCall.Do()
+	if err != nil {
+		err = toolbox.ReclassifyNotFoundIfMatched(err, keyURI)
+		if toolbox.IsNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &Policy{
+		Bindings: policyResponse.Bindings,
+		Version:  policyResponse.Version,
+	}, nil
+}
+
+
+func (s *service) updateKeyPolicy(policy *Policy, ctx context.Context, service *cloudkms.ProjectsLocationsKeyRingsCryptoKeysService, keyURI string) (err error) {
+	request := &cloudkms.SetIamPolicyRequest{Policy: &cloudkms.Policy{
+		Bindings: policy.Bindings,
+	}}
+	setPolicyCall := service.SetIamPolicy(keyURI, request)
+	setPolicyCall.Context(ctx)
+	_, err = setPolicyCall.Do()
+	return err
+}
+
+
 func (s *service) deploy(context *endly.Context, request *DeployKeyRequest) (*DeployKeyResponse, error) {
 	response := &DeployKeyResponse{}
 	client, err := GetClient(context)
@@ -161,7 +193,14 @@ func (s *service) deploy(context *endly.Context, request *DeployKeyRequest) (*De
 	}
 	if cryptoKey != nil {
 		response.CryptoKey = cryptoKey
-		return response, nil
+		if response.Policy, err = s.getKeyPolicy(client.Context(), service, keyURI); err != nil {
+			return nil, err
+		}
+		if ShallUpdatePolicy(response.Policy, request.Policy) {
+			response.Policy = request.Policy
+			err = s.updateKeyPolicy(request.Policy, client.Context(), service, keyURI)
+		}
+		return response, err
 	}
 	createCall := service.Create(keyRing.Name, &cloudkms.CryptoKey{
 		Purpose: request.Purpose,
@@ -171,8 +210,12 @@ func (s *service) deploy(context *endly.Context, request *DeployKeyRequest) (*De
 	createCall.CryptoKeyId(request.Key)
 	key, err := createCall.Do()
 	if err == nil {
+		if request.Policy != nil {
+			err = s.updateKeyPolicy(request.Policy, client.Context(), service, keyURI)
+		}
+		response.Policy = request.Policy
 		response.CryptoKey = key
-		return response, nil
+		return response, err
 	}
 	return nil, err
 }
@@ -184,6 +227,12 @@ func (s *service) encrypt(context *endly.Context, request *EncryptRequest) (*Enc
 	}
 	keyURI := gcp.ExpandMeta(context, request.keyURI)
 	service := cloudkms.NewProjectsLocationsKeyRingsCryptoKeysService(client.service)
+
+	if request.Source != nil {
+		if request.PlainBase64Text, err = request.Source.DownloadBase64();err != nil {
+			return nil, err
+		}
+	}
 
 	plainBase64Text := request.PlainBase64Text
 	if len(request.PlainData) > 0 {
@@ -198,19 +247,21 @@ func (s *service) encrypt(context *endly.Context, request *EncryptRequest) (*Enc
 	if err != nil {
 		return nil, err
 	}
+	cipherData, err := base64.StdEncoding.DecodeString(response.Ciphertext)
+	if err != nil {
+		return nil, err
+	}
+
 	if request.Dest != nil {
 		storageService, err := storage.NewServiceForURL(request.Dest.URL, request.Dest.Credentials)
 		if err != nil {
 			return nil, err
 		}
-		if err = storageService.Upload(request.Dest.URL, strings.NewReader(response.Ciphertext)); err != nil {
+		if err = storageService.Upload(request.Dest.URL, bytes.NewReader(cipherData)); err != nil {
 			return nil, err
 		}
 	}
-	cipherData, err := base64.StdEncoding.DecodeString(response.Ciphertext)
-	if err != nil {
-		return nil, err
-	}
+
 	return &EncryptResponse{
 		CipherData:       cipherData,
 		CipherBase64Text: response.Ciphertext,
@@ -229,8 +280,20 @@ func (s *service) decrypt(context *endly.Context, request *DecryptRequest) (*Dec
 		if err != nil {
 			return nil, err
 		}
-		if request.CipherBase64Text, err = storage.DownloadText(storageService, request.Source.URL); err != nil {
+		reader, err := storage.Download(storageService, request.Source.URL);
+		if err != nil {
 			return nil, err
+		}
+		defer reader.Close()
+		data, err := ioutil.ReadAll(reader)
+		if err != nil {
+			return nil, err
+		}
+		_, err = base64.StdEncoding.DecodeString(string(data))
+		if err == nil {
+			request.CipherBase64Text = string(data)
+		} else {
+			request.CipherBase64Text = base64.StdEncoding.EncodeToString(data)
 		}
 	}
 
@@ -238,13 +301,17 @@ func (s *service) decrypt(context *endly.Context, request *DecryptRequest) (*Dec
 	if len(request.CipherData) > 0 {
 		cipherText = base64.StdEncoding.EncodeToString(request.CipherData)
 	}
+
+	if cipherText == ""{
+		return  nil, fmt.Errorf("cipher data was empty")
+	}
 	decryptCall := service.Decrypt(keyURI, &cloudkms.DecryptRequest{
 		Ciphertext: cipherText,
 	})
 	decryptCall.Context(client.Context())
 	response, err := decryptCall.Do()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to decrypt with " + keyURI)
 	}
 	plainData, _ := base64.StdEncoding.DecodeString(response.Plaintext)
 	return &DecryptResponse{
