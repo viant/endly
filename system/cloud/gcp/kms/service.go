@@ -253,7 +253,13 @@ func (s *service) encrypt(context *endly.Context, request *EncryptRequest) (*Enc
 	}
 
 	if request.Dest != nil {
-		storageService, err := storage.NewServiceForURL(request.Dest.URL, request.Dest.Credentials)
+		credentials := request.Dest.Credentials
+		if credentials != "" {
+			if location, err := context.Secrets.CredentialsLocation(credentials);err == nil {
+				credentials= location
+			}
+		}
+		storageService, err := storage.NewServiceForURL(request.Dest.URL, credentials)
 		if err != nil {
 			return nil, err
 		}

@@ -17,6 +17,9 @@ type service struct {
 	*endly.AbstractService
 }
 
+
+
+
 func (s *service) registerRoutes() {
 	client := &storage.Service{}
 	routes, err := gcp.BuildRoutes(client, nil, getClient)
@@ -24,6 +27,7 @@ func (s *service) registerRoutes() {
 		log.Printf("unable register service %v actions: %v\n", ServiceID, err)
 		return
 	}
+
 	for _, route := range routes {
 		route.OnRawRequest = InitRequest
 		s.Register(route)
