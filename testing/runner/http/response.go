@@ -15,7 +15,7 @@ type Response struct {
 	Header      http.Header
 	Cookies     map[string]*http.Cookie
 	Body        string
-	JSONBody    map[string]interface{} `description:"structure data if Body was JSON"`
+	JSONBody    interface{} `description:"structure data if Body was JSON"`
 	TimeTakenMs int
 	Error       string
 }
