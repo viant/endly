@@ -168,7 +168,7 @@ type PullRequest struct {
 	Count       int
 	Nack        bool `description:"flag indicates that the client will not or cannot process a Message passed to the Subscriber.Receive callback."`
 	UDF         string
-	Expect      []map[string]interface{}
+	Expect      interface{}
 }
 
 func (r *PullRequest) Init() error {
