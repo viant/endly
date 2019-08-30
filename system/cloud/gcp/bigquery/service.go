@@ -26,7 +26,6 @@ func (s *service) load(context *endly.Context, request *LoadRequest) (*bigquery.
 		return nil, err
 	}
 	jobService := bigquery.NewJobsService(client.service)
-
 	insertCall := jobService.Insert(request.Project, &bigquery.Job{
 		Configuration: &bigquery.JobConfiguration{
 			Load: &request.JobConfigurationLoad,
