@@ -1,3 +1,7 @@
+## July 29 2019 0.41.2
+    * Patched KMS GCP storage credentials relative naming
+    * Change expect contract on msg:pull
+
 ## July 29 2019 0.41.1
     * Updated gcp:kms with policy binding
     * Added $gcp.serviceAccount variable for gcp:* services
