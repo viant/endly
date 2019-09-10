@@ -71,45 +71,53 @@ Example credentials 'am' is name of [google secrets](./../../doc/secrets) placed
 
 
 ```bash
-endly -r=topic.yaml
+endly -r=queue.yaml
 ```
 
 
-@topic.yaml
+[@queue.yaml](usage/aws/queue.yaml)
 ```yaml
+init:
+  awsCredentials: aws-e2e
 pipeline:
   setup:
     action: msg:setupResource
     credentials: $awsCredentials
     resources:
-      - URL: mye2eQueue
+      - URL: mye2eQueue1
         type: queue
         vendor: aws
+
   trigger:
     action: msg:push
-    sleepTimeMs: 30000
     credentials: $awsCredentials
+    sleepTimeMs: 5000
     dest:
-      URL: mye2eQueue
+      URL: mye2eQueue1
       type: queue
       vendor: aws
     messages:
       - data: 'Test: this is my 1st message'
       - data: 'Test: this is my 2nd message'
-    validate:
-        action: msg:pull
-        credentials: aws
-        count: 2
-        source:
-          URL: mye2eQueue
-          type: queue
-          vendor: aws
-        expect:
-          - Data: "Test: this is my 1st message"
-          - Data: "Test: this is my 2nd message"
+
+  validate:
+    action: msg:pull
+    credentials: $awsCredentials
+    timeoutMs: 20000
+    count: 2
+    source:
+      URL: mye2eQueue1
+      type: queue
+      vendor: aws
+    expect:
+      - '@indexBy@': 'Data'
+      - Data: "Test: this is my 1st message"
+      - Data: "Test: this is my 2nd message"
+  info:
+    action: print
+    message: $AsJSON($validate)
 ```
 
 
-### Amazon Simple Notifiation Service
-
+### Amazon Simple Notification Service
 

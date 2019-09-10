@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/pkg/errors"
 	eaws "github.com/viant/endly/system/cloud/aws"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
@@ -14,6 +15,7 @@ import (
 )
 
 type awsPubSub struct {
+	config  *aws.Config
 	session *session.Session
 	sqs     *sqs.SQS
 	sns     *sns.SNS
@@ -21,7 +23,6 @@ type awsPubSub struct {
 }
 
 func (c *awsPubSub) sendMessage(dest *Resource, message *Message) (Result, error) {
-
 	queueURL, err := c.getQueueURL(dest.Name)
 	if err != nil {
 		return nil, err
@@ -30,7 +31,6 @@ func (c *awsPubSub) sendMessage(dest *Resource, message *Message) (Result, error
 		DelaySeconds: aws.Int64(1),
 		QueueUrl:     &queueURL,
 	}
-
 	if len(message.Attributes) > 0 {
 		input.MessageAttributes = make(map[string]*sqs.MessageAttributeValue)
 		putSqsMessageAttributes(message.Attributes, input.MessageAttributes)
@@ -83,43 +83,54 @@ func (c *awsPubSub) PullN(source *Resource, count int, nack bool) ([]*Message, e
 	if err != nil {
 		return nil, err
 	}
-	input := &sqs.ReceiveMessageInput{
-		QueueUrl: aws.String(queueURL),
-		AttributeNames: aws.StringSlice([]string{
-			"All",
-		}),
-		MaxNumberOfMessages: aws.Int64(int64(count)),
-		MessageAttributeNames: aws.StringSlice([]string{
-			"All",
-		}),
-		WaitTimeSeconds: aws.Int64(int64(c.timeout * time.Second)),
-	}
-	// Receive a message from the SQS queue with long polling enabled.
-	output, err := c.sqs.ReceiveMessage(input)
 	var result = make([]*Message, 0)
-	if err != nil || len(output.Messages) == 0 {
-		return result, err
+	waitTime := int64(c.timeout / time.Second)
+	if waitTime > 20 {
+		waitTime = 20
 	}
-	for _, msg := range output.Messages {
-		message := &Message{
-			ID:         *msg.MessageId,
-			Attributes: make(map[string]interface{}),
-		}
-		if msg.Body != nil {
-			message.Data = *msg.Body
-		}
-		if len(msg.MessageAttributes) > 0 {
-			for k, v := range msg.MessageAttributes {
-				val := ""
-				if v != nil {
-					val = *v.StringValue
-				}
-				message.Attributes[k] = val
-			}
-		}
+	if err := c.processMessages(queueURL, !nack, true, count, waitTime, func(msg *sqs.Message) (bool, error) {
+		message := buildMessage(msg)
+		result = append(result, message)
+		return len(result) < count, nil
 
+	}); err != nil {
+		return nil, err
 	}
 	return result, nil
+}
+
+func buildReceiveMessageInput(queueURL string, pullCount int, waitTime int64, includeAttr bool) *sqs.ReceiveMessageInput {
+	input := &sqs.ReceiveMessageInput{
+		QueueUrl:            aws.String(queueURL),
+		MaxNumberOfMessages: aws.Int64(int64(pullCount)),
+		WaitTimeSeconds:     aws.Int64(waitTime),
+		VisibilityTimeout:   aws.Int64(1),
+	}
+	if includeAttr {
+		input.MessageAttributeNames = aws.StringSlice([]string{"All"})
+		input.AttributeNames = aws.StringSlice([]string{"All"})
+	}
+	return input
+}
+
+func buildMessage(msg *sqs.Message) *Message {
+	message := &Message{
+		ID:         *msg.MessageId,
+		Attributes: make(map[string]interface{}),
+	}
+	if msg.Body != nil {
+		message.Data = *msg.Body
+	}
+	if len(msg.MessageAttributes) > 0 {
+		for k, v := range msg.MessageAttributes {
+			val := ""
+			if v != nil {
+				val = *v.StringValue
+			}
+			message.Attributes[k] = val
+		}
+	}
+	return message
 }
 
 func (c *awsPubSub) createSubscription(topicURL, queueURL string) (*Resource, error) {
@@ -136,15 +147,91 @@ func (c *awsPubSub) createSubscription(topicURL, queueURL string) (*Resource, er
 	return &Resource{URL: *output.SubscriptionArn}, nil
 }
 
-func (c *awsPubSub) createQueue(resource *ResourceSetup) (*Resource, error) {
-	var name = resource.Name
-	if resource.Recreate {
-		if _, err := c.getQueueURL(resource.Name); err == nil {
-			if err = c.deleteQueue(&resource.Resource); err != nil {
-				return nil, fmt.Errorf("failed to delete queue: %v, %v", name, err)
-			}
+func (c *awsPubSub) processMessages(queueURL string, delete, includeAttributes bool, maxCount int, waitTimeSec int64, handler func(message *sqs.Message) (bool, error)) error {
+	count := maxCount
+	if count == 0 {
+		input := &sqs.GetQueueAttributesInput{
+			QueueUrl:       &queueURL,
+			AttributeNames: []*string{aws.String("All")},
+		}
+		result, err := c.sqs.GetQueueAttributes(input)
+		if err != nil {
+			return errors.Wrapf(err, "failed to clean queue messages: %v", queueURL)
+		}
+		value := result.Attributes[sqs.QueueAttributeNameApproximateNumberOfMessages]
+		if value == nil {
+			return nil
+		}
+		count := toolbox.AsInt(*value)
+
+		if count == 0 {
+			return nil
 		}
 	}
+
+	isTerminated := false
+	pullCount := 10
+	for i := 0; i < count && !isTerminated; {
+		if pullCount+i > count {
+			pullCount = count % 10
+		}
+		receivedInput := buildReceiveMessageInput(queueURL, pullCount, waitTimeSec, includeAttributes)
+		output, err := c.sqs.ReceiveMessage(receivedInput)
+		if err != nil {
+			return errors.Wrapf(err, "failed to clean queue messages: %v", queueURL)
+		}
+		i += len(output.Messages)
+		time.Sleep(time.Second + 1)
+		deleteInput := &sqs.DeleteMessageBatchInput{
+			Entries:  make([]*sqs.DeleteMessageBatchRequestEntry, 0),
+			QueueUrl: aws.String(queueURL),
+		}
+
+		for _, msg := range output.Messages {
+			if delete {
+				deleteInput.Entries = append(deleteInput.Entries, &sqs.DeleteMessageBatchRequestEntry{
+					Id:            msg.MessageId,
+					ReceiptHandle: msg.ReceiptHandle,
+				})
+			}
+			if handler != nil {
+				toContinue, err := handler(msg)
+				if err != nil {
+					return err
+				}
+				if !toContinue {
+					isTerminated = true
+					break
+				}
+			}
+		}
+		if len(deleteInput.Entries) > 0 {
+			_, err = c.sqs.DeleteMessageBatch(deleteInput)
+		}
+		if err != nil {
+			return errors.Wrapf(err, "failed to clean queue messages: %v", queueURL)
+		}
+	}
+	return nil
+}
+
+func (c *awsPubSub) createQueue(resource *ResourceSetup) (*Resource, error) {
+	var name = resource.Name
+	queueURL, _ := c.getQueueURL(resource.Name)
+	if resource.Recreate {
+		if queueURL != "" {
+			if err := c.deleteQueue(&resource.Resource); err != nil {
+				return nil, fmt.Errorf("failed to delete queue: %v, %v", name, err)
+			}
+			time.Sleep(time.Minute + 1)
+		}
+	} else if queueURL != "" {
+		//process and deletes outstanding messages
+		if err := c.processMessages(queueURL, true, false, 0, 20, nil); err != nil {
+			return nil, err
+		}
+	}
+
 	input := &sqs.CreateQueueInput{
 		QueueName: aws.String(name),
 	}
@@ -252,7 +339,7 @@ func (c *awsPubSub) deleteQueue(resource *Resource) error {
 	_, err = c.sqs.DeleteQueue(&sqs.DeleteQueueInput{
 		QueueUrl: aws.String(queueURL),
 	})
-	return nil
+	return err
 }
 
 func (c *awsPubSub) deleteTopic(resource *Resource) error {
@@ -276,6 +363,16 @@ func (c *awsPubSub) DeleteResource(resource *Resource) error {
 	return fmt.Errorf("unsupported resource type: %v", resource.Type)
 }
 
+func (c *awsPubSub) connect() (err error) {
+
+	if c.session, err = session.NewSession(c.config); err != nil {
+		return err
+	}
+	c.sqs = sqs.New(c.session)
+	c.sns = sns.New(c.session)
+	return nil
+}
+
 func (c *awsPubSub) Close() error {
 	return nil
 }
@@ -285,13 +382,11 @@ func newAwsSqsClient(credConfig *cred.Config, timeout time.Duration) (Client, er
 	if err != nil {
 		return nil, err
 	}
+	config.Region = &credConfig.Region
+
 	var client = &awsPubSub{
 		timeout: timeout,
+		config:  config,
 	}
-	if client.session, err = session.NewSession(config); err != nil {
-		return nil, err
-	}
-	client.sqs = sqs.New(client.session)
-	client.sns = sns.New(client.session)
-	return client, nil
+	return client, client.connect()
 }
