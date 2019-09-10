@@ -131,7 +131,8 @@ func (s *service) pull(context *endly.Context, request *PullRequest) (interface{
 	}
 	source := expandResource(context, request.Source)
 	defer client.Close()
-	if response.Messages, err = client.PullN(source, request.Count, request.Nack); err == nil {
+	response.Messages, err = client.PullN(source, request.Count, request.Nack)
+	if err == nil {
 		for _, message := range response.Messages {
 			if request.UDF != "" {
 				message.Transformed, err = udf.TransformWithUDF(context, request.UDF, fmt.Sprintf("%v/%v", request.Source.Type, request.Source.Name), message.Data)
@@ -144,6 +145,7 @@ func (s *service) pull(context *endly.Context, request *PullRequest) (interface{
 			response.Assert, err = validator.Assert(context, request, request.Expect, response.Messages, "msg.response", "assert msg response")
 		}
 	}
+
 	return response, err
 }
 
