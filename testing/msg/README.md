@@ -6,13 +6,13 @@
 
 The following workflow define simple topic/subscription producing and consuming example.
 
-Example credentials 'am' is name of [google secrets](./../../doc/secrets) placed to  ~/.secret/am.json
+Example credentials 'gcp-e2e' is name of [google secrets](./../../doc/secrets) placed to  ~/.secret/gcp-e2e.json
 
 
-```endly -r=pubsub.yaml```
+```endly pubsub```
 
 
-[@pubsub.yaml](pubsub.yaml)
+[@pubsub.yaml](usage/gcp/pubsub.yaml)
 ```yaml
 pipeline:
   create:
@@ -21,12 +21,12 @@ pipeline:
       - URL: myTopic
         type: topic
         vendor: gc
-        credentials: am
+        credentials: gcp-e2e
 
       - URL: mySubscription
         type: subscription
         vendor: gc
-        credentials: am
+        credentials: gcp-e2e
         config:
           topic:
             URL: /projects/${msg.projectID}/topics/myTopic
@@ -35,7 +35,7 @@ pipeline:
     action: msg:push
     dest:
       URL: /projects/${msg.projectID}/topics/myTopic
-      credentials: am
+      credentials: gcp-e2e
     messages:
       - data: "this is my 1st message"
         attributes:
@@ -50,7 +50,7 @@ pipeline:
     nack: true
     source:
       URL: /projects/${msg.projectID}/subscriptions/mySubscription
-      credentials: am
+      credentials: gcp-e2e
     expect:
       - '@indexBy@': 'Attributes.attr1'
       - Data: "this is my 1st message"
@@ -67,11 +67,11 @@ pipeline:
 
 The following workflow define simple topic/subscription producing and consuming example.
 
-Example credentials 'am' is name of [google secrets](./../../doc/secrets) placed to  ~/.secret/am.json
+Example credentials 'aws-e2e' is name of [aws secrets](./../../doc/secrets) placed to  ~/.secret/aws-e2e.json
 
 
 ```bash
-endly -r=queue.yaml
+endly queue
 ```
 
 
