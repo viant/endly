@@ -1,7 +1,7 @@
 # Secrets / Credentials
 
 - [SSH](#ssh)
-- [Google Cloud](#gc)
+- [Google Cloud Plaform](#gc)
 - [AWS](#aws)
 - [MySQL](#mysql)
 - [Posgress](#pg)
