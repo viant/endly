@@ -1,3 +1,6 @@
+## September 11 2019 0.41.3
+    * Patch, streamling sqs testing
+    
 ## July 29 2019 0.41.2
     * Patched KMS GCP storage credentials relative naming
     * Change expect contract on msg:pull
