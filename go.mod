@@ -63,7 +63,7 @@ require (
 	github.com/viant/assertly v0.5.1
 	github.com/viant/bgc v0.7.3
 	github.com/viant/dsc v0.14.1
-	github.com/viant/dsunit v0.10.4
+	github.com/viant/dsunit v0.10.5
 	github.com/viant/neatly v0.8.0
 	github.com/viant/toolbox v0.26.3
 	github.com/yuin/gopher-lua v0.0.0-20190514113301-1cd887cd7036 // indirect
