@@ -238,11 +238,13 @@ func (s *git) sparseCheckout(context *endly.Context, request *CheckoutRequest, m
 		return nil, err
 	}
 
+	moduleSparseCheckoutStr := ""
 	for _, module := range modules {
-		err = s.runSecureCommand(context, request.Type, origin, dest, fmt.Sprintf("echo \"%v\" >> .git/info/sparse-checkout", module), info, false)
-		if err != nil {
-			return info, err
-		}
+		moduleSparseCheckoutStr += fmt.Sprintf("%v\n", module)
+	}
+	err = s.runSecureCommand(context, request.Type, origin, dest, fmt.Sprintf("echo \"%v\" >> .git/info/sparse-checkout", moduleSparseCheckoutStr), info, false)
+	if err != nil {
+		return info, err
 	}
 
 	if !vcManaged {
