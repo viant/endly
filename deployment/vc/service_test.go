@@ -5,7 +5,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/deployment/vc"
-	_ "github.com/viant/endly/static"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
 	_ "github.com/viant/toolbox/storage/scp"
