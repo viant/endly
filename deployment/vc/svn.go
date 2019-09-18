@@ -29,8 +29,8 @@ func (s *svnService) checkInfo(context *endly.Context, request *StatusRequest) (
 	extractRequest := exec.NewExtractRequest(target,
 		exec.DefaultOptions(),
 		exec.NewExtractCommand(fmt.Sprintf("svn info"), "", nil, nil,
-			model.NewExtract("origin", "^URL:[\\t\\s]+([^\\s]+)", false),
-			model.NewExtract("revision", "Revision:\\s+([^\\s]+)", false)),
+			model.NewExtract("origin", "^URL:[\\t\\s]+([^\\s]+)", false, false),
+			model.NewExtract("revision", "Revision:\\s+([^\\s]+)", false, false)),
 		exec.NewExtractCommand(fmt.Sprintf("svn stat"), "", nil, nil))
 
 	if err = endly.Run(context, extractRequest, runResponse); err != nil {
