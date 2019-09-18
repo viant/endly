@@ -156,8 +156,8 @@ func (s *service) determineCheckCommand(context *endly.Context, target *url.Reso
 		if info.Pid > 0 {
 			var runResponse = &exec.RunResponse{}
 			var extractRequest = exec.NewExtractRequest(target, exec.DefaultOptions(), exec.NewExtractCommand(fmt.Sprintf("launchctl procinfo %v", info.Pid), "", nil, []string{"Unrecognized"},
-				model.NewExtract("path", "program path[\\s|\\t]+=[\\s|\\t]+([^\\s]+)", false),
-				model.NewExtract("state", "state = (running)", false)))
+				model.NewExtract("path", "program path[\\s|\\t]+=[\\s|\\t]+([^\\s]+)", false, false),
+				model.NewExtract("state", "state = (running)", false, false)))
 			extractRequest.SuperUser = true
 
 			err = endly.Run(context, extractRequest, runResponse)
@@ -220,10 +220,10 @@ func (s *service) checkService(context *endly.Context, request *StatusRequest) (
 
 	commandResult, err := s.executeCommand(context, serviceType, target, exec.NewExtractRequest(
 		target, options, exec.NewExtractCommand(command, "", nil, nil,
-			model.NewExtract("pid", "[^└]+└─(\\d+).+", true),
-			model.NewExtract("pid", "Main PID: (\\d+).+", false),
-			model.NewExtract("state", "[\\s|\\t]+Active:\\s+(\\S+)", false),
-			model.NewExtract("path", "[^└]+└─\\d+[\\s\\t].(.+)", false)),
+			model.NewExtract("pid", "[^└]+└─(\\d+).+", true, false),
+			model.NewExtract("pid", "Main PID: (\\d+).+", false, false),
+			model.NewExtract("state", "[\\s|\\t]+Active:\\s+(\\S+)", false, false),
+			model.NewExtract("path", "[^└]+└─\\d+[\\s\\t].(.+)", false, false)),
 		exec.NewExtractCommand("Q", "(END)", nil, nil)))
 
 	if err != nil {
