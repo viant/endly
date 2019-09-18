@@ -81,7 +81,7 @@ type Extract struct {
 	RegExpr  string `description:"regular expression with oval bracket to extract match pattern"`            //regular expression
 	Key      string `description:"state key to store a match"`                                               //state key to store a match
 	Reset    bool   `description:"reset the key in the context before evaluating this data extraction rule"` //reset the key in the context before evaluating this data extraction rule
-  Required bool   `description:"require that at least one pattern match is returned"`                      //require that at least one pattern match is returned
+	Required bool   `description:"require that at least one pattern match is returned"`                      //require that at least one pattern match is returned
 }
 
 //NewExtract creates a new data extraction
