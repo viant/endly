@@ -23,7 +23,7 @@ func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, 
 
 	var extractRequest = exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand("go version", "", nil, nil,
-			model.NewExtract("version", "go version go([^\\s]+)", false)),
+			model.NewExtract("version", "go version go([^\\s]+)", false, false)),
 	)
 
 	extractRequest.SystemPaths = append(extractRequest.SystemPaths, fmt.Sprintf("%v/bin", sdkHome))

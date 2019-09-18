@@ -18,7 +18,7 @@ func (s *nodeService) setSdk(context *endly.Context, request *SetRequest) (*Info
 	var runResponse = &exec.RunResponse{}
 	var extractRequest = exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand("node -v", "", nil, nil,
-			model.NewExtract("version", "v([^\\s]+)", false)),
+			model.NewExtract("version", "v([^\\s]+)", false, false)),
 	)
 	extractRequest.SystemPaths = append(extractRequest.SystemPaths, fmt.Sprintf("%v/bin", sdkHome))
 	if err := endly.Run(context, extractRequest, runResponse); err != nil {
