@@ -41,14 +41,22 @@ func (d *Extracts) Extract(context *endly.Context, extracted map[string]interfac
 				continue
 			}
 		}
+    matched := false
 		for _, line := range inputs {
 			if len(line) == 0 {
 				continue
 			}
-			if !matchExpression(compiledExpression, line, extract, context, extracted) {
-				cleanedLine := vtclean.Clean(line, false)
-				matchExpression(compiledExpression, cleanedLine, extract, context, extracted)
+			if matchExpression(compiledExpression, line, extract, context, extracted) {
+				matched = true
+				continue
 			}
+			cleanedLine := vtclean.Clean(line, false)
+			if(matchExpression(compiledExpression, cleanedLine, extract, context, extracted)) {
+				matched = true
+			}
+		}
+		if extract.Required && !matched {
+			return fmt.Errorf("failed to extract required data - no match found for regexpr: %v,  %v", extract.RegExpr, multiLines)
 		}
 	}
 	return nil
@@ -70,17 +78,19 @@ func NewExtracts() Extracts {
 
 //Extract represents a data extraction
 type Extract struct {
-	RegExpr string `description:"regular expression with oval bracket to extract match pattern"`            //regular expression
-	Key     string `description:"state key to store a match"`                                               //state key to store a match
-	Reset   bool   `description:"reset the key in the context before evaluating this data extraction rule"` //reset the key in the context before evaluating this data extraction rule
+	RegExpr  string `description:"regular expression with oval bracket to extract match pattern"`            //regular expression
+	Key      string `description:"state key to store a match"`                                               //state key to store a match
+	Reset    bool   `description:"reset the key in the context before evaluating this data extraction rule"` //reset the key in the context before evaluating this data extraction rule
+	Required bool   `description:"require that at least one pattern match is returned"`                      //require that at least one pattern match is returned
 }
 
 //NewExtract creates a new data extraction
-func NewExtract(key, regExpr string, reset bool) *Extract {
+func NewExtract(key, regExpr string, reset bool, required bool) *Extract {
 	return &Extract{
 		RegExpr: regExpr,
 		Key:     key,
 		Reset:   reset,
+		Required: required,
 	}
 }
 
