@@ -90,7 +90,7 @@ func NewExtract(key, regExpr string, reset bool, required bool) *Extract {
 		RegExpr: regExpr,
 		Key:     key,
 		Reset:   reset,
-    Required: required,
+		Required: required,
 	}
 }
 
