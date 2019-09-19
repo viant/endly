@@ -33,6 +33,10 @@ On top of that service implements the following helper methods:
 
 ## Usage
 
+Prerequisites:
+
+[AWS credentials](https://github.com/viant/endly/tree/master/doc/secrets#aws)
+
 #### Deployment
 
 ##### Basic
