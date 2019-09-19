@@ -31,6 +31,7 @@ type DeployInput struct {
 	ciam.SetupRolePolicyInput  ` json:",inline"`
 	VpcMatcher                 *ec2.GetVpcConfigInput
 	Triggers                   []*EventSourceMapping
+	Schedule                   *Schedule
 }
 
 type DeployOutput struct {
@@ -71,7 +72,22 @@ func (i *DeployInput) Init() error {
 	if i.VpcMatcher != nil {
 		_ = i.VpcMatcher.Init()
 	}
-	return nil
+	var err error
+	if i.Schedule != nil {
+		if i.Schedule.Expression == nil {
+			return fmt.Errorf("schedule.Expression was empty")
+		}
+		err = i.Schedule.Init()
+
+		if i.TracingConfig == nil {
+			i.TracingConfig = &lambda.TracingConfig{}
+		}
+		if i.TracingConfig.Mode == nil {
+			passThroMode := "PassThrough"
+			i.TracingConfig.Mode = &passThroMode
+		}
+	}
+	return err
 }
 
 func (i *DeployInput) Validate() error {
