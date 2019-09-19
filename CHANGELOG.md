@@ -1,3 +1,10 @@
+## September 19 2019 0.42.0
+    * Added "aws/cloudwatchevents" service
+    * Added  model.Extract.Required attribute
+    * ForeignKey check switch patched for MySQL 
+    * Added Schedule option to aws/lambda:deploy
+    * Updated lambda various deployment docmentation
+    
 ## September 11 2019 0.41.3
     * Patch, streamling sqs testing
     
@@ -499,11 +506,3 @@
     * Update big query to support DDL schema file
     * Minor patches
 
-
-
-
-    
-
-
-
-    
