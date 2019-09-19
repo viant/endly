@@ -1,0 +1,40 @@
+init:
+  functionRole: lambda-mysqsfunction-executor
+  functionName: MySQSFunction
+  codeZip: ${appPath}mysqsfunction/mysqsfunction.zip
+  privilegePolicy: privilege-policy.json
+pipeline:
+  deploy:
+    build:
+      action: exec:run
+      target: $target
+      sleepTimeMs: 1500
+      checkError: true
+      commands:
+        - cd ${appPath}mysqsfunction
+        - unset GOPATH
+        - export GOOS=linux
+        - export GOARCH=amd64
+        - go build -o mysqsfunction
+        - zip -j mysqsfunction.zip mysqsfunction
+
+    setupFunction:
+      action: aws/lambda:deploy
+      credentials: $awsCredentials
+      functionname: $functionName
+      runtime:  go1.x
+      handler: mysqsfunction
+      code:
+        zipfile: $LoadBinary(${codeZip})
+      rolename: lambda-mysqsfunction-executor
+      define:
+        - policyname: sqs-my-queue-role
+          policydocument: $Cat('${privilegePolicy}')
+      attach:
+        - policyarn: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      triggers:
+        - source: myQueue
+          type: sqs
+          enabled: true
+          batchSize: 10
+  

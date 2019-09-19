@@ -1,0 +1,34 @@
+init:
+  functionRole: lambda-helloworld-executor
+  functionName: HelloWorld
+  codeZip: /tmp/hello/main.zip
+  awsCredentials: aws
+  privilegePolicy: privilege-policy.json
+pipeline:
+  build:
+    action: exec:run
+    target: $target
+    sleepTimeMs: 1500
+    checkError: true
+    commands:
+      - cd ${appPath}helloworld/app
+      - unset GOPATH
+      - export GOOS=linux
+      - export GOARCH=amd64
+      - go build -o helloworld
+      - zip -j helloworld.zip helloworld
+
+    deploy:
+      action: aws/lambda:deploy
+      credentials: $awsCredentials
+      functionname: $functionName
+      runtime:  go1.x
+      handler: helloworld
+      code:
+        zipfile: $LoadBinary(${codeZip})
+      rolename: lambda-helloworld-executor
+      define:
+        - policyname: s3-mye2e-bucket-role
+          policydocument: $Cat('${privilegePolicy}')
+      attach:
+        - policyarn: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole

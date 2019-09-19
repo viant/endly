@@ -1,0 +1,38 @@
+init:
+  functionRole: lambda-helloworld-executor
+  functionName: HelloWorld
+  codeZip: /tmp/hello/main.zip
+  awsCredentials: aws
+pipeline:
+  deploy:
+    build:
+      action: exec:run
+      target: $target
+      sleepTimeMs: 1500
+      errors:
+        - ERROR
+      commands:
+        - cd /tmp/hello
+        - export GOOS=linux
+        - export GOARCH=amd64
+        - go build -o main
+        - zip -j main.zip main
+    createRole:
+      credentials: $awsCredentials
+      action: aws/iam:recreateRole
+      rolename: $functionRole
+      assumerolepolicydocument: $Cat('/tmp/hello/trust-policy.json')
+    attachPolicy:
+      action: aws/iam:attachRolePolicy
+      comments: attaching policy to ${createRole.Role.Arn}
+      rolename: $functionRole
+      policyarn: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      sleepTimeMs: 10000
+    createFunction:
+      action: aws/lambda:recreateFunction
+      role: $createRole.Role.Arn
+      functionname: ${functionName}
+      runtime:  go1.x
+      handler: main
+      code:
+        zipfile: $LoadBinary($codeZip)

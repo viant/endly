@@ -1,0 +1,33 @@
+init:
+  functionRole: lambda-scheduled-executor
+  functionName: ScheduledFn
+  codeZip: ${appPath}scheduled/scheduled.zip
+  privilegePolicy: ${parent.path}/privilege-policy.json
+pipeline:
+  deploy:
+    build:
+      action: exec:run
+      target: $target
+      sleepTimeMs: 1500
+      checkError: true
+      commands:
+        - cd ${appPath}scheduled
+        - unset GOPATH
+        - export GOOS=linux
+        - export GOARCH=amd64
+        - go build -o scheduled
+        - zip -j scheduled.zip scheduled
+
+    setupFunction:
+      action: aws/lambda:deploy
+      credentials: $awsCredentials
+      functionname: $functionName
+      runtime:  go1.x
+      handler: scheduled
+      code:
+        zipfile: $LoadBinary(${codeZip})
+      schedule:
+        expression: rate(1 minute)
+      rolename: lambda-scheduled-executor
+      attach:
+        - policyarn: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole

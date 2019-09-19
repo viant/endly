@@ -1,0 +1,40 @@
+init:
+  functionRole: lambda-mysnsfunc-executor
+  functionName: AggFn
+  codeZip: ${appPath}mysnsfunc/app/mysnsfunc.zip
+  privilegePolicy: privilege-policy.json
+pipeline:
+  deploy:
+    build:
+      action: exec:run
+      target: $target
+      sleepTimeMs: 1500
+      checkError: true
+      commands:
+        - cd ${appPath}mysnsfunc/app
+        - unset GOPATH
+        - export GOOS=linux
+        - export GOARCH=amd64
+        - go build -o mysnsfunc
+        - zip -j mysnsfunc.zip mysnsfunc
+
+    deployFunction:
+      action: aws/lambda:deploy
+      credentials: $awsCredentials
+      functionname: $functionName
+      runtime:  go1.x
+      handler: mysnsfunc
+      code:
+        zipfile: $LoadBinary(${codeZip})
+      rolename: lambda-mysnsfunc-executor
+      define:
+        - policyname: lambda-sns-execution-role
+          policydocument: $Cat('${privilegePolicy}')
+      attach:
+        - policyarn: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+    setupSubscription:
+      action: aws/sns:setupSubscription
+      protocol: lambda
+      endpoint: $functionName
+      topic: myTopic
