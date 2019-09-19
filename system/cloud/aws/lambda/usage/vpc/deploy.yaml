@@ -1,0 +1,48 @@
+init:
+  functionRole: lambda-myvpcfunc-executor
+  functionName: MyVpcFunc
+  codeZip: ${appPath}/myvpcfunc/app/myvpcfunc.zip
+  privilegePolicy: privilege-policy.json
+pipeline:
+
+  build:
+    action: exec:run
+    target: $target
+    sleepTimeMs: 1500
+    checkError: true
+    commands:
+      - cd ${appPath}/myvpcfunc/app
+      - unset GOPATH
+      - export GOOS=linux
+      - export GOARCH=amd64
+      - go build -o myvpcfunc
+      - zip -j myvpcfunc.zip myvpcfunc
+
+  deploy:
+    action: aws/lambda:deploy
+    credentials: $awsSecrets
+    functionname: $functionName
+    runtime:  go1.x
+    handler: myvpcfunc
+    environment:
+      variables:
+        CONFIG: $AsString($myvpcfuncConfig)
+    code:
+      zipfile: $LoadBinary(${codeZip})
+    rolename: lambda-myvpcfunc-executor
+    define:
+      - policyname: ${myvpcfuncConfig}-role
+        policydocument: $Cat('${privilegePolicy}')
+    attach:
+      - policyarn: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      - policyarn: arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+    vpcMatcher:
+      instance:
+        name: myHostWithVpcTemplateSettings
+        # vpcConfig:
+        #  securityGroupIds:
+        #   - sg-XXXXXXX
+        #subnetIds:
+        # - subnet-YYYYYY
+    timeout: 900
+    memorySize: 200

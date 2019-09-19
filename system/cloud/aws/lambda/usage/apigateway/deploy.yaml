@@ -1,0 +1,52 @@
+init:
+  functionRole: lambda-myapigwfunc-executor
+  functionName: DsTransferFn
+  codeZip: ${appPath}myapigwfunc/app/myapigwfunc.zip
+  privilegePolicy: privilege-policy.json
+
+pipeline:
+  deploy:
+    build:
+      action: exec:run
+      target: $target
+      sleepTimeMs: 1500
+      checkError: true
+      commands:
+        - cd ${appPath}myapigwfunc/app
+        - unset GOPATH
+        - export GOOS=linux
+        - export GOARCH=amd64
+        - go build -o myapigwfunc
+        - zip -j myapigwfunc.zip myapigwfunc
+
+    deployFunction:
+      action: aws/lambda:deploy
+      credentials: $awsCredentials
+      functionname: $functionName
+      runtime:  go1.x
+      handler: myapigwfunc
+      timeout: 360
+      environment:
+        variables:
+          CONFIG: $AsString($config)
+      code:
+        zipfile: $LoadBinary(${codeZip})
+      rolename: lambda-myapigwfunc-executor
+      define:
+        - policyname: kms-myapigwfunce2e-role
+          policydocument: $Cat('${privilegePolicy}')
+      attach:
+        - policyarn: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+    setupAPI:
+      action: aws/apigateway:setupRestAPI
+      credentials: $awsCredentials
+      '@name': myapigwfuncAPI
+      resources:
+        - path: /{proxy+}
+          methods:
+            - httpMethod: ANY
+              functionname: $functionName
+    sleepTimeMs: 15000
+post:
+  endpointURL: ${setupAPI.EndpointURL}

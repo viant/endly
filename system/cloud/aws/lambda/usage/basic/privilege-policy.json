@@ -1,0 +1,34 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ssm:DescribeParameters"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "Stmt1482841904000",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:GetParameters",
+        "ssm:GetParameter"
+      ],
+      "Resource": [
+        "arn:aws:ssm:${aws.region}:${aws.accountID}:parameter/dstransfer.*"
+      ]
+    },
+    {
+      "Sid": "Stmt1482841948000",
+      "Effect": "Allow",
+      "Action": [
+        "kms:Decrypt"
+      ],
+      "Resource": [
+        "arn:aws:kms:${aws.region}:${aws.accountID}:alias/dstransfer",
+        "arn:aws:kms:${aws.region}:${aws.accountID}:key/*"
+      ]
+    }
+  ]
+}

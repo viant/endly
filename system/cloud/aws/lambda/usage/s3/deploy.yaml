@@ -1,0 +1,51 @@
+init:
+  functionRole: lambda-mystoragefunction-executor
+  functionName: MyStorageFuncton
+  codeZip: ${appPath}mystoragefunction/app/mystoragefunction.zip
+  privilegePolicy: privilege-policy.json
+  myBucket: testBucket
+
+pipeline:
+  build:
+    action: exec:run
+    target: $target
+    sleepTimeMs: 1500
+    checkError: true
+    commands:
+      - cd ${appPath}mystoragefunction/app
+      - unset GOPATH
+      - export GOOS=linux
+      - export GOARCH=amd64
+      - go build -o mystoragefunction
+      - zip -j mystoragefunction.zip mystoragefunction
+
+  deploy:
+    action: aws/lambda:deploy
+    credentials: $awsCredentials
+    functionname: $functionName
+    runtime:  go1.x
+    handler: mystoragefunction
+    code:
+      zipfile: $LoadBinary(${codeZip})
+    rolename: lambda-mystoragefunction-executor
+    define:
+      - policyname: s3-${testBucketPrefix}2-role
+        policydocument: $Cat('${privilegePolicy}')
+    attach:
+      - policyarn: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  notification:
+    action: aws/s3:setupBucketNotification
+    credentials: $awsCredentials
+    sleepTimeMs: 20000
+    bucket: ${myBucket}
+    lambdaFunctionConfigurations:
+      - functionName: $functionName
+        id: ObjectCreatedEvents
+        events:
+          - s3:ObjectCreated:*
+        filter:
+          prefix:
+            - folder1
+          suffix:
+            - .csv
