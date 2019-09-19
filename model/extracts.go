@@ -41,7 +41,7 @@ func (d *Extracts) Extract(context *endly.Context, extracted map[string]interfac
 				continue
 			}
 		}
-    matched := false
+		matched := false
 		for _, line := range inputs {
 			if len(line) == 0 {
 				continue
@@ -51,7 +51,7 @@ func (d *Extracts) Extract(context *endly.Context, extracted map[string]interfac
 				continue
 			}
 			cleanedLine := vtclean.Clean(line, false)
-			if(matchExpression(compiledExpression, cleanedLine, extract, context, extracted)) {
+			if matchExpression(compiledExpression, cleanedLine, extract, context, extracted) {
 				matched = true
 			}
 		}
@@ -87,9 +87,9 @@ type Extract struct {
 //NewExtract creates a new data extraction
 func NewExtract(key, regExpr string, reset bool, required bool) *Extract {
 	return &Extract{
-		RegExpr: regExpr,
-		Key:     key,
-		Reset:   reset,
+		RegExpr:  regExpr,
+		Key:      key,
+		Reset:    reset,
 		Required: required,
 	}
 }
