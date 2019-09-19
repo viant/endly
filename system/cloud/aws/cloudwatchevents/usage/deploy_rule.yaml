@@ -1,0 +1,29 @@
+init:
+  event:
+    vendor: myvendor
+    event: myevent
+
+pipeline:
+  deploy:
+    action: aws/cloudwatchevents:deployRule
+    credentials: aws
+    '@name': MyRule
+    scheduleexpression: rate(1 minute)
+    roleName: AggFnSchduler
+    targets:
+      - function: AggFn
+
+
+  putEvent:
+    action: aws/cloudwatchevents:putEvents
+    entries:
+      - source: com.company.app
+        detailType: appRequestSubmitted
+        detail: $AsJSON($event)
+        resource:
+          - $deploy.Rule.Arn
+
+  delete:
+    action: aws/cloudwatchevents:deleteRule
+    name: MyRule
+    force: true

@@ -1,0 +1,4 @@
+pipeline:
+  list:
+    action: aws/cloudwatchevents:listRules
+    credentials: aws

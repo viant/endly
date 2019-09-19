@@ -1,0 +1,5 @@
+pipeline:
+  list:
+    action: aws/cloudwatchevents:getRule
+    name: MyRule
+    credentials: aws
