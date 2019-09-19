@@ -3,9 +3,12 @@ package lambda
 import (
 	"encoding/json"
 	"fmt"
+	aaws "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/aws"
+	"github.com/viant/endly/system/cloud/aws/cloudwatchevents"
 	"github.com/viant/endly/system/cloud/aws/ec2"
 	"github.com/viant/endly/system/cloud/aws/iam"
 	"github.com/viant/toolbox"
@@ -142,6 +145,8 @@ func (s *service) setupPermission(context *endly.Context, request *SetupPermissi
 	return client.AddPermission(&addPermission)
 }
 
+
+
 func (s *service) deploy(context *endly.Context, request *DeployInput) (output *DeployOutput, err error) {
 	output = &DeployOutput{}
 	err = s.AbstractService.RunInBackground(context, func() error {
@@ -171,28 +176,36 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 	if request.VpcMatcher != nil {
 		vpcOutput := &ec2.GetVpcConfigOutput{}
 		if err = endly.Run(context, request.VpcMatcher, vpcOutput); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to match vpc")
 		}
 		request.VpcConfig = &lambda.VpcConfig{
 			SecurityGroupIds: vpcOutput.SecurityGroupIds,
 			SubnetIds:        vpcOutput.SubnetIds,
 		}
 	}
-
 	s.expand(context, request.FunctionName, request.RoleName, request.AssumeRolePolicyDocument)
-
 	output := &DeployOutput{}
 	output.RoleInfo = &iam.GetRoleInfoOutput{}
 	if err = endly.Run(context, &request.SetupRolePolicyInput, &output.RoleInfo); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to setup policy")
 	}
 	request.Role = output.RoleInfo.Role.Arn
 	var functionConfig *lambda.FunctionConfiguration
 	functionOutput, foundErr := client.GetFunction(&lambda.GetFunctionInput{
 		FunctionName: request.FunctionName,
 	})
+
 	if foundErr == nil {
 		functionConfig = functionOutput.Configuration
+
+
+		if request.Schedule == nil && functionConfig != nil {
+			if err = endly.Run(context, &cloudwatchevents.DeleteRuleInput{
+				TargetArn: functionConfig.FunctionArn,
+			}, nil); err != nil {
+				return nil, errors.Wrap(err, "failed to delete schedule rule")
+			}
+		}
 		createFunction := request.CreateFunctionInput
 		if _, err = client.UpdateFunctionConfiguration(&lambda.UpdateFunctionConfigurationInput{
 			FunctionName:     request.FunctionName,
@@ -208,7 +221,7 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 			Environment:      request.Environment,
 			DeadLetterConfig: request.DeadLetterConfig,
 		}); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to update function")
 		}
 
 		if createFunction.Code.ZipFile != nil && !hasDataChanged(createFunction.Code.ZipFile, *functionConfig.CodeSha256) {
@@ -223,24 +236,89 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 			S3ObjectVersion: createFunction.Code.S3ObjectVersion,
 			Publish:         createFunction.Publish,
 		}); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to update function code")
 		}
 
 	} else {
 		if functionConfig, err = client.CreateFunction(&request.CreateFunctionInput); err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to create function")
 		}
 	}
 	output.FunctionConfiguration = functionConfig
 	if len(request.Triggers) > 0 {
 		triggersOutput, err := s.setupTriggerSource(context, &SetupTriggerSourceInput{FunctionName: request.FunctionName, Triggers: request.Triggers})
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to setup trigger")
 		}
 		output.EventMappings = triggersOutput.EventMappings
+	} else {
+		output.EventMappings, err = s.getEventSourceMappings(context, functionConfig.FunctionName)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if request.Schedule != nil {
+		scheduleOutput := &cloudwatchevents.DeployRuleOutput{}
+		scheduleRule :=  request.ScheduleDeployRule()
+		if err = endly.Run(context, request.ScheduleDeployRule(), scheduleOutput); err != nil {
+			return nil, errors.Wrapf(err, "failed to put schedule rule: %s", scheduleRule)
+		}
+
+		id, err := aws.NextID()
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to generate id")
+		}
+		if _, err = s.setupPermission(context, &SetupPermissionInput{
+			StatementId:&id,
+			SourceArn:scheduleOutput.Rule.Arn,
+			FunctionName: request.FunctionName,
+			Action:aaws.String("lambda:InvokeFunction"),
+			Principal:aaws.String("events.amazonaws.com"),
+		});  err != nil {
+			return nil, errors.Wrapf(err, "failed to add permission to %v", scheduleOutput.Rule.Arn)
+		}
+
+
+
+		scheduleEventInput, err := request.ScheduleEventsInput(scheduleOutput.Rule.Arn)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to create put schedule event input %s", scheduleEventInput)
+		}
+		if err = endly.Run(context, scheduleEventInput, nil); err != nil {
+			return nil, errors.Wrapf(err, "failed to put schedule event %s", scheduleEventInput)
+		}
+
 	}
 	return output, err
 }
+
+func (s *service) getEventSourceMappings(context *endly.Context, functionName *string) ([]*lambda.EventSourceMappingConfiguration, error) {
+	client, err := GetClient(context)
+	if err != nil {
+		return nil, err
+	}
+	var result = make([]*lambda.EventSourceMappingConfiguration, 0)
+	var nextMarker *string
+	for ;; {
+		listOutput, err := client.ListEventSourceMappings(&lambda.ListEventSourceMappingsInput{
+			FunctionName: functionName,
+			Marker:nextMarker,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if listOutput != nil && len(listOutput.EventSourceMappings) > 0 {
+			result = append(result, listOutput.EventSourceMappings...)
+		}
+		nextMarker = listOutput.NextMarker
+		if nextMarker == nil {
+			break
+		}
+	}
+	return result, nil
+}
+
 
 /*
 This method uses EventSourceMappingsInput, so only the following source are supported at the moment,
@@ -258,8 +336,8 @@ func (s *service) setupTriggerSource(context *endly.Context, request *SetupTrigg
 	response := &SetupTriggerSourceOutput{
 		EventMappings: make([]*lambda.EventSourceMappingConfiguration, 0),
 	}
-	for _, trigger := range request.Triggers {
 
+	for _, trigger := range request.Triggers {
 		if trigger.SourceARN == nil {
 			switch trigger.Type {
 			case "sqs":

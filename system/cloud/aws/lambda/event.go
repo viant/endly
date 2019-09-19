@@ -19,14 +19,14 @@ type EventTriggerInfo struct {
 	// The date that the event source mapping was last updated, in Unix time seconds.
 	LastModified *time.Time `yaml:"modified,omitempty" type:"timestamp"`
 
-	// The result of the last AWS Lambda invocation of your Lambda function.
+	// The result of the last AWS Function invocation of your Function function.
 	LastProcessingResult *string `yaml:"lastProcessingResult,omitempty" type:"string"`
 
 	// The state of the event source mapping. It can be one of the following: Creating,
 	// Enabling, Enabled, Disabling, Disabled, Updating, or Deleting.
 	State *string `yaml:"state,omitempty" type:"string"`
 
-	// The cause of the last state change, either User initiated or Lambda initiated.
+	// The cause of the last state change, either User initiated or Function initiated.
 	StateTransitionReason *string `yaml:"stateTransitionReason,omitempty" type:"string"`
 }
 
