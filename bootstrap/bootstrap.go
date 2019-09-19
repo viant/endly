@@ -53,6 +53,8 @@ import (
 
 	_ "github.com/viant/endly/system/cloud/aws/apigateway"
 	_ "github.com/viant/endly/system/cloud/aws/cloudwatch"
+	_ "github.com/viant/endly/system/cloud/aws/cloudwatchevents"
+
 	_ "github.com/viant/endly/system/cloud/aws/dynamodb"
 	_ "github.com/viant/endly/system/cloud/aws/ec2"
 	_ "github.com/viant/endly/system/cloud/aws/iam"
