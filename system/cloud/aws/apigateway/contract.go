@@ -176,7 +176,7 @@ func (i *SetupResourceInput) ParentPath() string {
 		<li>HttpMethod: ANY</li>
 		<li>ApiKeyRequired: false</li>
 		<li>IntegrationHttpMethod: POST</li>
-		<li>Type: AWS_PROXY</li>
+		<li>DetailType: AWS_PROXY</li>
 		<li>Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/${function.arn}/invocations</li>
 	</ul>
 
