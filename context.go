@@ -1,6 +1,7 @@
 package endly
 
 import (
+	"context"
 	"fmt"
 	uuid "github.com/satori/go.uuid"
 	"github.com/viant/endly/model/msg"
@@ -28,6 +29,7 @@ var deferFunctionsKey = (*[]func())(nil)
 
 //Context represents a workflow session context/state
 type Context struct {
+	background context.Context
 	SessionID       string
 	CLIEnabled      bool
 	HasLogger       bool
@@ -41,6 +43,14 @@ type Context struct {
 	toolbox.Context
 	cloned []*Context
 	closed int32
+}
+
+func (c *Context) Background() context.Context {
+	if c.background != nil {
+		return c.background
+	}
+	c.background = context.Background()
+	return c.background
 }
 
 //Publish publishes event to listeners, it updates current run details like activity workflow name etc ...
@@ -152,6 +162,7 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 	}
 	result.Cache = c.Expand(resource.Cache)
 	result.CacheExpiryMs = resource.CacheExpiryMs
+	result.CustomKey = resource.CustomKey
 	return result, nil
 }
 

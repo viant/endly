@@ -3,6 +3,7 @@ package storage
 import (
 	"bytes"
 	"github.com/viant/endly"
+	"github.com/viant/endly/system/storage/contract"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
@@ -67,20 +68,6 @@ func UseMemoryService(context *endly.Context) storage.Service {
 	return storage.NewMemoryService()
 }
 
-//GetStorageService return toolbox storage service
-func GetStorageService(context *endly.Context, resource *url.Resource) (storage.Service, error) {
-	var state = context.State()
-	if state.Has(useMemoryService) {
-		return storage.NewMemoryService(), nil
-	}
-	if resource.Credentials != "" {
-		var err error
-		if resource.Credentials, err = context.Secrets.CredentialsLocation(resource.Credentials); err != nil {
-			return nil, err
-		}
-	}
-	return storage.NewServiceForURL(resource.URL, resource.Credentials)
-}
 
 //IsShellCompressable returns true if resource can be compress via shell command.
 func IsShellCompressable(protScheme string) bool {
@@ -88,7 +75,7 @@ func IsShellCompressable(protScheme string) bool {
 }
 
 //Copy transfers data for provided transfer definition.
-func Copy(context *endly.Context, transfers ...*Transfer) (interface{}, error) {
+func Copy(context *endly.Context, transfers ...*transfer.Transfer) (interface{}, error) {
 	if transfers == nil {
 		return nil, nil
 	}
@@ -101,36 +88,4 @@ func Copy(context *endly.Context, transfers ...*Transfer) (interface{}, error) {
 		return nil, response.Err
 	}
 	return nil, nil
-}
-
-func joinIfNeeded(parent *url.Resource, URI string) (result *url.Resource) {
-	defer func() {
-		if parent != nil {
-			result.Credentials = parent.Credentials
-		}
-	}()
-
-	if strings.Contains(URI, ":/") {
-		result = url.NewResource(URI)
-	} else if !(strings.HasPrefix(URI, "/") || strings.HasPrefix(URI, "$")) {
-		var hostname = parent.ParsedURL.Hostname()
-		if hostname == "" || hostname == "127.0.0.1" || hostname == "localhost" {
-			var candidate = url.NewResource(URI)
-			if toolbox.FileExists(candidate.ParsedURL.Path) {
-				result = candidate
-			}
-		}
-		if result == nil {
-			result = url.NewResource(toolbox.URLPathJoin(parent.URL, URI))
-		}
-
-	} else if parent != nil {
-		result = url.NewResource(toolbox.URLPathJoin(parent.URL, URI))
-	} else {
-		result = url.NewResource(URI)
-	}
-	if strings.HasPrefix(URI, "$") { //has to expand to be re-evaluated
-		result.URL = URI
-	}
-	return result
 }

@@ -1,6 +1,0 @@
-{
-  "Endpoint": {
-    "Hostname":"$endpoint.host",
-    "Port":"$endpoint.port"
-  }
-}

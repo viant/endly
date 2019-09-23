@@ -122,7 +122,7 @@ func TestAbstractService_Sleep(t *testing.T) {
 }
 
 func TestAbstractService_Actions(t *testing.T) {
-	endly.Registry.Register(func() endly.Service {
+	_ = endly.Registry.Register(func() endly.Service {
 		return newService()
 	})
 }
