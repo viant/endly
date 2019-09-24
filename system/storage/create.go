@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-//CreateRequest represents a resources upload request, it takes context state key to upload to target destination.
+//CreateRequest represents a resources Upload request, it takes context state key to Upload to target destination.
 type CreateRequest struct {
 	SourceKey string `required:"true" description:"state key with asset content"`
 	Mode      int    `description:"os.FileMode"`
@@ -21,21 +21,38 @@ type CreateRequest struct {
 }
 
 
-//CreateResponse represents a upload response
+//CreateResponse represents a Upload response
 type CreateResponse struct {
 	Size int
 	URL  string
 }
 
 
-func (s *service) create(context *endly.Context, request *CreateRequest) (*CreateResponse, error) {
+//Create creates a resource
+func (s *service) Create(context *endly.Context, request *CreateRequest) (*CreateResponse, error) {
 	var response = &CreateResponse{}
+	err := s.create(context, request, response)
+	return response, err
+}
 
-	resource, service, err := s.getResourceAndService(context, request.Dest)
+
+func (s *service) create(context *endly.Context,  request *CreateRequest, response *CreateResponse) (error) {
+	options := gerReaderOption(request, context, response)
+	dest, storageOpts, err := GetResourceWithOptions(context, request.Dest, options...)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	fs, err := StorageService(context, dest)
+	if err != nil {
+		return err
+	}
+	response.URL = dest.URL
+	return fs.Create(context.Background(), dest.URL, os.FileMode(request.Mode), request.IsDir, storageOpts...)
+}
 
+
+
+func gerReaderOption(request *CreateRequest, context *endly.Context, response *CreateResponse) []storage.Option{
 	var options = make([]storage.Option, 0)
 	if ! request.IsDir {
 		var state = context.State()
@@ -45,17 +62,11 @@ func (s *service) create(context *endly.Context, request *CreateRequest) (*Creat
 			response.Size = len(data)
 		}
 	}
-	err = service.Create(context.Background(), resource.URL, os.FileMode(request.Mode),request.IsDir, options...)
-	if err != nil {
-		return nil, err
-	}
-	response.URL = resource.URL
-	return response, nil
-
+	return options
 }
 
 
-//Init initialises upload request
+//Init initialises Upload request
 func (r *CreateRequest) Init() error {
 	if r.Mode == 0 {
 		if r.IsDir {
@@ -66,8 +77,6 @@ func (r *CreateRequest) Init() error {
 	}
 	return nil
 }
-
-
 
 
 //Validate checks if request is valid

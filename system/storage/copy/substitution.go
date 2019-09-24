@@ -1,4 +1,4 @@
-package transfer
+package copy
 
 //Substitution represents transfer data substitution
 type Substitution struct {
