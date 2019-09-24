@@ -3,8 +3,8 @@ package storage
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/viant/endly/system/storage/transfer"
 	"github.com/viant/assertly"
+	"github.com/viant/endly/system/storage/copy"
 	"github.com/viant/toolbox/url"
 	"testing"
 )
@@ -154,7 +154,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
 	}
 
 	for i, useCase := range useCases {
-		request, err := NewCopyRequestFromuRL(useCase.URL)
+		request, err := NewCopyRequestFromURL(useCase.URL)
 		if useCase.HasError {
 			assert.NotNil(t, err, useCase.Description)
 			continue
@@ -176,21 +176,21 @@ func TestCopyRequest_Validate(t *testing.T) {
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = NewCopyRequest(nil, transfer.New(nil, url.NewResource("abc"), false, false, nil))
+		var request = NewCopyRequest(nil, copy.New(nil, url.NewResource("abc"), false, false, nil))
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = NewCopyRequest(nil, transfer.New(url.NewResource("abc"), nil, false, false, nil))
+		var request = NewCopyRequest(nil, copy.New(url.NewResource("abc"), nil, false, false, nil))
 		err := request.Init()
 		assert.Nil(t, err)
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = NewCopyRequest(nil, transfer.New(url.NewResource("abc"), url.NewResource("abc"), false, false, nil))
+		var request = NewCopyRequest(nil, copy.New(url.NewResource("abc"), url.NewResource("abc"), false, false, nil))
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = NewCopyRequest(nil, transfer.New(url.NewResource("abc"), url.NewResource("abc"), false, false, nil))
+		var request = NewCopyRequest(nil, copy.New(url.NewResource("abc"), url.NewResource("abc"), false, false, nil))
 		err := request.Init()
 		assert.Nil(t, err)
 		assert.Nil(t, request.Validate())

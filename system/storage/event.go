@@ -5,6 +5,11 @@ import (
 	"github.com/viant/endly/model/msg"
 )
 
+/*
+Message events control runner reporter and stdout
+ */
+
+
 //Items returns tag messages
 func (r *RemoveRequest) Messages() []*msg.Message {
 	if len(r.Assets) == 0 {
@@ -15,7 +20,7 @@ func (r *RemoveRequest) Messages() []*msg.Message {
 		fragments = append(fragments, msg.NewStyled(fmt.Sprintf("SourceURL: %v", resource.URL), msg.MessageStyleInput))
 	}
 	return []*msg.Message{msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
-		msg.NewStyled("remove", msg.MessageStyleGeneric),
+		msg.NewStyled("Remove", msg.MessageStyleGeneric),
 		fragments...),
 	}
 }
@@ -26,7 +31,7 @@ func (r *UploadRequest) Messages() []*msg.Message {
 		return []*msg.Message{}
 	}
 	return []*msg.Message{msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
-		msg.NewStyled("upload", msg.MessageStyleGeneric),
+		msg.NewStyled("Upload", msg.MessageStyleGeneric),
 		msg.NewStyled(fmt.Sprintf("SourcKey: %v", r.SourceKey), msg.MessageStyleInput),
 		msg.NewStyled(fmt.Sprintf("DestURL: %v", r.Dest.URL), msg.MessageStyleOutput),
 	)}
@@ -38,7 +43,7 @@ func (r *DownloadRequest) Messages() []*msg.Message {
 		return []*msg.Message{}
 	}
 	return []*msg.Message{msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
-		msg.NewStyled("upload", msg.MessageStyleGeneric),
+		msg.NewStyled("Upload", msg.MessageStyleGeneric),
 		msg.NewStyled(fmt.Sprintf("Source: %v", r.Source.URL), msg.MessageStyleInput),
 		msg.NewStyled(fmt.Sprintf("DestKey: %v", r.DestKey), msg.MessageStyleOutput),
 	)}
@@ -46,7 +51,7 @@ func (r *DownloadRequest) Messages() []*msg.Message {
 
 //Items returns event messages
 func (r *CopyRequest) Messages() []*msg.Message {
-	r.Init()
+	_ = r.Init()
 	if len(r.Transfers) == 0 {
 		return []*msg.Message{}
 	}
@@ -56,7 +61,7 @@ func (r *CopyRequest) Messages() []*msg.Message {
 			continue
 		}
 		result = append(result, msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
-			msg.NewStyled("copy", msg.MessageStyleGeneric),
+			msg.NewStyled("Copy", msg.MessageStyleGeneric),
 			msg.NewStyled(fmt.Sprintf("compress: %v, expand: %v", transfer.Compress, transfer.Expand), msg.MessageStyleGeneric),
 			msg.NewStyled(fmt.Sprintf("SourceURL: %v", transfer.Source.URL), msg.MessageStyleInput),
 			msg.NewStyled(fmt.Sprintf("DestURL: %v", transfer.Dest.URL), msg.MessageStyleOutput),

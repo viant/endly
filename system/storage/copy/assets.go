@@ -1,4 +1,4 @@
-package transfer
+package copy
 
 import (
 	"github.com/viant/toolbox/url"
@@ -12,7 +12,6 @@ type Assets map[string]string
 //AsTransfer converts map to transfer or transfers
 func (t Assets) AsTransfer(base *Rule) []*Rule {
 	var sourceBase, destBase = base.Source, base.Dest
-
 	var transfers = make([]*Rule, 0)
 	var isSourceRootPath = sourceBase != nil && sourceBase.ParsedURL != nil && sourceBase.ParsedURL.Path == "/"
 	var isDestRootPath = destBase != nil && destBase.ParsedURL != nil && destBase.ParsedURL.Path == "/"

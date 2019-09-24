@@ -29,7 +29,7 @@ func (s *service) compressSource(context *endly.Context, source, target *url.Res
 		fmt.Sprintf("cd %v", baseDirectory),
 		fmt.Sprintf("tar cvzf %v %v", archiveName, archiveSource),
 	)
-	runRequest.TimeoutMs = CompressionTimeout
+	runRequest.TimeoutMs = compressionTimeoutMs
 	runResponse := &exec.RunResponse{}
 	if err = endly.Run(context, runRequest, runResponse); err != nil {
 		return err
@@ -73,7 +73,7 @@ func (s *service) decompressTarget(context *endly.Context, source, target *url.R
 		fmt.Sprintf("tar xvzf %v", name),
 		fmt.Sprintf("rm %v", name),
 		fmt.Sprintf("cd %v", source.DirectoryPath()))
-	runRequest.TimeoutMs = CompressionTimeout
+	runRequest.TimeoutMs = compressionTimeoutMs
 	return endly.Run(context, runRequest, nil)
 }
 

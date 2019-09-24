@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"errors"
 	"github.com/viant/endly"
+	"github.com/pkg/errors"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/endly/udf"
 	"github.com/viant/endly/util"
@@ -11,7 +11,7 @@ import (
 	"io/ioutil"
 )
 
-//DownloadRequest represents a resources download request, it downloads source into context.state target key
+//DownloadRequest represents a resources Download request, it downloads source into context.state target key
 type DownloadRequest struct {
 	Source  *url.Resource `required:"true" description:"source asset or directory"`
 	DestKey string        `required:"true" description:"state map key destination"`
@@ -19,8 +19,7 @@ type DownloadRequest struct {
 	Expect  interface{}   `description:"if specified expected file content used for validation"`
 }
 
-
-//DownloadResponse represents a download response
+//DownloadResponse represents a Download response
 type DownloadResponse struct {
 	Info        toolbox.FileInfo
 	Payload     string //source content, if binary then is will be prefixed base64: followed by based 64 encoded content.
@@ -29,26 +28,38 @@ type DownloadResponse struct {
 }
 
 
-func (s *service) download(context *endly.Context, request *DownloadRequest) (*DownloadResponse, error) {
-	var response = &DownloadResponse{}
-	resource, service, err := s.getResourceAndService(context, request.Source)
-	if err != nil {
-		return nil, err
-	}
 
-	reader, err := service.DownloadWithURL(context.Background(), resource.URL)
+func (s *service) Download(context *endly.Context, request *DownloadRequest) (*DownloadResponse, error) {
+	var response = &DownloadResponse{}
+	return response, s.download(context, request, response)
+}
+
+func (s *service) download(context *endly.Context, request *DownloadRequest, response *DownloadResponse) error {
+	source, storageOpts, err := GetResourceWithOptions(context, request.Source)
 	if err != nil {
-		return nil, err
+		return err
+	}
+	fs, err := StorageService(context, source)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = fs.Close(source.URL)
+	}()
+
+	reader, err := fs.DownloadWithURL(context.Background(), source.URL, storageOpts...)
+	if err != nil {
+		return err
 	}
 	defer func() { _ = reader.Close() }()
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return nil, err
+		return errors.Wrapf(err, "unable to read %v", source.URL)
 	}
 	if request.Udf != "" {
-		response.Transformed, err = udf.TransformWithUDF(context, request.Udf, resource.URL, data)
+		response.Transformed, err = udf.TransformWithUDF(context, request.Udf, source.URL, data)
 		if err != nil {
-			return nil, err
+			return errors.Wrapf(err, "failed to transform with %v udf, source: %v", request.Udf, source.URL)
 		}
 	}
 	response.Payload = util.AsPayload(data)
@@ -64,10 +75,9 @@ func (s *service) download(context *endly.Context, request *DownloadRequest) (*D
 		state.Put(request.DestKey, payload)
 	}
 	if request.Expect != nil {
-		response.Assert, err = validator.Assert(context, request, request.Expect, payload, "Download.Payload", "assert download responses")
+		response.Assert, err = validator.Assert(context, request, request.Expect, payload, "Download.Payload", "assert Download responses")
 	}
-	return response, nil
-
+	return nil
 }
 
 

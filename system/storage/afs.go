@@ -16,23 +16,31 @@ const sshScheme = "ssh"
 var fs = afs.New()
 var fsFaker = afs.NewFaker()
 
-//GetStorageService return toolbox storage service
-func GetStorageService(ctx *endly.Context, resource *url.Resource) (afs.Service, error) {
+//StorageService return afs storage service
+func StorageService(ctx *endly.Context, resources ... *url.Resource) (afs.Service, error) {
 	var state = ctx.State()
 	if state.Has(useMemoryService) {
 		return fsFaker, nil
 	}
-	_ = fs.Close(resource.URL)
-	options, err := StorageOpts(ctx, resource)
-	if err != nil {
-		return nil, err
+	for _, resource := range resources {
+		_ = fs.Close(resource.URL)
 	}
-	return fs, fs.Init(context.Background(), resource.URL, options...)
+
+	for _, resource := range resources {
+		options, err := StorageOptions(ctx, resource)
+		if err != nil {
+			return nil, err
+		}
+		if err = fs.Init(context.Background(), resource.URL, options...);err != nil {
+			return nil, err
+		}
+	}
+	return fs, nil
 }
 
-//StorageOpts returns storage option for supplied resource
-func StorageOpts(ctx *endly.Context, resource *url.Resource) ([]storage.Option, error) {
-	var result = make([]storage.Option, 0)
+//StorageOptions returns storage option for supplied resource
+func StorageOptions(ctx *endly.Context, resource *url.Resource, options ... storage.Option) ([]storage.Option, error) {
+	var result = options
 	if resource.CustomKey != nil {
 		if err := resource.CustomKey.Init(); err != nil {
 			return nil, err

@@ -10,53 +10,60 @@ import (
 	"strings"
 )
 
-//UploadRequest represents a resources upload request, it takes context state key to upload to target destination.
+//UploadRequest represents a resources Upload request, it takes context state key to Upload to target destination.
 type UploadRequest struct {
-	SourceKey string `required:"true" description:"state key with asset content"`
-	Mode      int `description:"os.FileMode"`
+	SourceKey string        `required:"true" description:"state key with asset content"`
+	Mode      int           `description:"os.FileMode"`
 	Dest      *url.Resource `required:"true" description:"destination asset or directory"` //target URL with credentials
 }
 
-//UploadResponse represents a upload response
+//UploadResponse represents a Upload response
 type UploadResponse struct {
-	UploadSize int
-	UploadURL  string
+	Size int
+	URL  string
 }
 
-
-func (s *service) upload(context *endly.Context, request *UploadRequest) (*UploadResponse, error) {
+//Upload upload content defined by sourceKey to dest
+func (s *service) Upload(context *endly.Context, request *UploadRequest) (*UploadResponse, error) {
 	var response = &UploadResponse{}
+	return response, s.upload(context, request, response)
+}
 
-	resource, service, err := s.getResourceAndService(context, request.Dest)
+func (s *service) upload(context *endly.Context, request *UploadRequest, response *UploadResponse) error {
+	dest, storageOpts, err := GetResourceWithOptions(context, request.Dest)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
+	fs, err := StorageService(context, dest)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = fs.Close(dest.URL)
+	}()
 	var state = context.State()
 	if !state.Has(request.SourceKey) {
-		return nil, fmt.Errorf("sourcekey %v value was empty", request.SourceKey)
+		return fmt.Errorf("sourcekey %v value was empty", request.SourceKey)
 
 	}
-
 	data := state.GetString(request.SourceKey)
-	err = service.Upload(context.Background(), resource.URL, os.FileMode(request.Mode), strings.NewReader(data))
+	err = fs.Upload(context.Background(), dest.URL, os.FileMode(request.Mode), strings.NewReader(data), storageOpts...)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	response.UploadSize = len(data)
-	response.UploadURL = resource.URL
-	return response, nil
+	response.Size = len(data)
+	response.URL = dest.URL
+	return nil
 
 }
 
-//Init initialises upload request
+//Init initialises Upload request
 func (r *UploadRequest) Init() error {
 	if r.Mode == 0 {
 		r.Mode = int(file.DefaultFileOsMode)
 	}
 	return nil
 }
-
 
 //Validate checks if request is valid
 func (r *UploadRequest) Validate() error {
