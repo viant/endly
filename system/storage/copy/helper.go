@@ -1,11 +1,10 @@
 package copy
 
 import (
-	"strings"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
+	"strings"
 )
-
 
 //JoinIfNeeded routes parent resource with URI when needed
 func JoinIfNeeded(parent *url.Resource, URI string) (result *url.Resource) {

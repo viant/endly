@@ -7,8 +7,7 @@ import (
 
 /*
 Message events control runner reporter and stdout
- */
-
+*/
 
 //Items returns tag messages
 func (r *RemoveRequest) Messages() []*msg.Message {

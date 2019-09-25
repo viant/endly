@@ -2,12 +2,10 @@ package copy
 
 import (
 	"github.com/viant/toolbox/url"
-
 )
 
 //Assets represents transfer assets
 type Assets map[string]string
-
 
 //AsTransfer converts map to transfer or transfers
 func (t Assets) AsTransfer(base *Rule) []*Rule {
@@ -26,10 +24,10 @@ func (t Assets) AsTransfer(base *Rule) []*Rule {
 			dest = url.NewResource(dest).ParsedURL.Path
 		}
 		transfer := &Rule{
-			Source:   url.NewResource(source),
-			Dest:     url.NewResource(dest),
-			Substitution:base.Substitution,
-			Compress: base.Compress,
+			Source:       url.NewResource(source),
+			Dest:         url.NewResource(dest),
+			Substitution: base.Substitution,
+			Compress:     base.Compress,
 		}
 		if sourceBase != nil {
 			transfer.Source = JoinIfNeeded(sourceBase, source)
@@ -42,4 +40,3 @@ func (t Assets) AsTransfer(base *Rule) []*Rule {
 	}
 	return transfers
 }
-

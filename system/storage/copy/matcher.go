@@ -14,20 +14,18 @@ type Matcher struct {
 	UpdatedAfter  string
 }
 
-
-
 //Matcher return match handler or error
 func (m Matcher) Matcher() (match option.Matcher, err error) {
 	useTimeBased := m.UpdatedBefore != "" || m.UpdatedAfter != ""
-	useBasic :=  m.Basic != nil
+	useBasic := m.Basic != nil
 	var before, after *time.Time
 	if m.UpdatedAfter != "" {
-		if after, err = toolbox.TimeAt(m.UpdatedAfter);err != nil {
+		if after, err = toolbox.TimeAt(m.UpdatedAfter); err != nil {
 			return nil, err
 		}
 	}
 	if m.UpdatedBefore != "" {
-		if before, err = toolbox.TimeAt(m.UpdatedBefore);err != nil {
+		if before, err = toolbox.TimeAt(m.UpdatedBefore); err != nil {
 			return nil, err
 		}
 	}
@@ -35,7 +33,7 @@ func (m Matcher) Matcher() (match option.Matcher, err error) {
 	if useBasic {
 		basic, err := matcher.NewBasic(m.Prefix, m.Suffix, m.Filter)
 		if err != nil {
-			return nil,  err
+			return nil, err
 		}
 		match = basic.Match
 		matchers = append(matchers, basic.Match)
@@ -45,4 +43,3 @@ func (m Matcher) Matcher() (match option.Matcher, err error) {
 	}
 	return match, err
 }
-

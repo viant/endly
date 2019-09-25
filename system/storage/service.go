@@ -5,17 +5,15 @@ import (
 	"github.com/viant/endly"
 )
 
-
 const (
 	//ServiceID represents transfer service id
 	ServiceID = "storage"
 
 	//useMemoryService flag in the context to ignore
-	useMemoryService   = "useMemoryService"
+	useMemoryService = "useMemoryService"
 	//compressionTimeoutMs max SSH execution time before timing out
 	compressionTimeoutMs = 120000
 )
-
 
 type service struct {
 	*endly.AbstractService

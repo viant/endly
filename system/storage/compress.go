@@ -2,12 +2,12 @@ package storage
 
 import (
 	"fmt"
-	"github.com/viant/endly"
 	"github.com/viant/afs/storage"
 	arl "github.com/viant/afs/url"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
+	"github.com/viant/toolbox/url"
 	"path"
 )
 
@@ -63,8 +63,6 @@ func (s *service) compressSource(context *endly.Context, source, target *url.Res
 	return err
 }
 
-
-
 func (s *service) decompressTarget(context *endly.Context, source, target *url.Resource, sourceObject storage.Object) error {
 	var baseDir, name = path.Split(target.ParsedURL.Path)
 	var runRequest = exec.NewRunRequest(target, false,
@@ -76,4 +74,3 @@ func (s *service) decompressTarget(context *endly.Context, source, target *url.R
 	runRequest.TimeoutMs = compressionTimeoutMs
 	return endly.Run(context, runRequest, nil)
 }
-
