@@ -35,10 +35,7 @@ func (s *service) remove(context *endly.Context, request *RemoveRequest, respons
 	}
 	var baseURLs = make(map[string]bool)
 	for _, resource := range request.Assets {
-		resource, err = removeResource(context, resource, fs)
-		if err != nil {
-			return err
-		}
+		resource, _ = removeResource(context, resource, fs)
 		response.Removed = append(response.Removed, resource.URL)
 		baseURL, _ := arl.Base(resource.URL, file.Scheme)
 		baseURLs[baseURL] = true

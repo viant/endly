@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"github.com/viant/afs/file"
 	arl "github.com/viant/afs/url"
 	"github.com/viant/endly"
 	"github.com/viant/endly/testing/validator"
@@ -10,8 +11,7 @@ import (
 
 //ExistsRequest represents exists request
 type ExistsRequest struct {
-	Source *url.Resource   `required:"true" description:"source asset or directory"`
-	Assets []string        `description:"assets locations, joined with source URL"`
+	Assets []*url.Resource `required:"true" description:"source asset or directory"`
 	Expect map[string]bool `description:"map of asset and exists flag"`
 }
 
@@ -31,45 +31,29 @@ func (s *service) Exists(context *endly.Context, request *ExistsRequest) (*Exist
 }
 
 func (s *service) exists(context *endly.Context, request *ExistsRequest, response *ExistsResponse) error {
-	source, storageOpts, err := GetResourceWithOptions(context, request.Source)
+	fs, err := StorageService(context, request.Assets...)
 	if err != nil {
 		return err
 	}
-	fs, err := StorageService(context, source)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = fs.Close(source.URL)
-	}()
-	if len(request.Assets) == 0 {
+	var baseURLs = make(map[string]bool)
+	for _, asset := range request.Assets {
+		source, storageOpts, err := GetResourceWithOptions(context, asset)
+		if err != nil {
+			return err
+		}
 		exists, err := fs.Exists(context.Background(), source.URL, storageOpts...)
 		if err != nil {
 			return err
 		}
 		response.Exists[source.URL] = exists
-	} else {
-		for i := range request.Assets {
-			URL := arl.Join(source.URL, request.Assets[i])
-			response.Exists[request.Assets[i]], err = fs.Exists(context.Background(), URL, storageOpts...)
-			if err != nil {
-				return err
-			}
-		}
+		baseURL, _ := arl.Base(source.URL, file.Scheme)
+		baseURLs[baseURL] = true
 	}
 	if request.Expect != nil {
 		response.Assert, err = validator.Assert(context, request, request.Expect, response.Exists, "Exists", "assert Exists responses")
 	}
-	return nil
-}
-
-//Init initialises Upload request
-func (r *ExistsRequest) Init() error {
-	if len(r.Expect) > 0 && len(r.Assets) == 0 {
-		r.Assets = make([]string, 0)
-		for k := range r.Expect {
-			r.Assets = append(r.Assets, k)
-		}
+	for baseURL := range baseURLs {
+		_ = fs.Close(baseURL)
 	}
 
 	return nil
@@ -77,8 +61,8 @@ func (r *ExistsRequest) Init() error {
 
 //Validate checks if request is valid
 func (r *ExistsRequest) Validate() error {
-	if r.Source == nil {
-		return errors.New("source was empty")
+	if r.Assets == nil {
+		return errors.New("assets was empty")
 	}
 	return nil
 }
