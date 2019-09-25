@@ -3,9 +3,9 @@ package storage
 import (
 	"errors"
 
-	"github.com/viant/endly"
-	"github.com/viant/afs/storage"
 	"github.com/viant/afs/file"
+	"github.com/viant/afs/storage"
+	"github.com/viant/endly"
 	"github.com/viant/toolbox/url"
 	"io"
 	"os"
@@ -14,19 +14,17 @@ import (
 
 //CreateRequest represents a resources Upload request, it takes context state key to Upload to target destination.
 type CreateRequest struct {
-	SourceKey string `required:"true" description:"state key with asset content"`
-	Mode      int    `description:"os.FileMode"`
-	IsDir     bool  `description:"is directory flag"`
+	SourceKey string        `required:"true" description:"state key with asset content"`
+	Mode      int           `description:"os.FileMode"`
+	IsDir     bool          `description:"is directory flag"`
 	Dest      *url.Resource `required:"true" description:"destination asset or directory"` //target URL with credentials
 }
-
 
 //CreateResponse represents a Upload response
 type CreateResponse struct {
 	Size int
 	URL  string
 }
-
 
 //Create creates a resource
 func (s *service) Create(context *endly.Context, request *CreateRequest) (*CreateResponse, error) {
@@ -35,8 +33,7 @@ func (s *service) Create(context *endly.Context, request *CreateRequest) (*Creat
 	return response, err
 }
 
-
-func (s *service) create(context *endly.Context,  request *CreateRequest, response *CreateResponse) (error) {
+func (s *service) create(context *endly.Context, request *CreateRequest, response *CreateResponse) error {
 	options := gerReaderOption(request, context, response)
 	dest, storageOpts, err := GetResourceWithOptions(context, request.Dest, options...)
 	if err != nil {
@@ -50,11 +47,9 @@ func (s *service) create(context *endly.Context,  request *CreateRequest, respon
 	return fs.Create(context.Background(), dest.URL, os.FileMode(request.Mode), request.IsDir, storageOpts...)
 }
 
-
-
-func gerReaderOption(request *CreateRequest, context *endly.Context, response *CreateResponse) []storage.Option{
+func gerReaderOption(request *CreateRequest, context *endly.Context, response *CreateResponse) []storage.Option {
 	var options = make([]storage.Option, 0)
-	if ! request.IsDir {
+	if !request.IsDir {
 		var state = context.State()
 		if state.Has(request.SourceKey) {
 			data := state.GetString(request.SourceKey)
@@ -64,7 +59,6 @@ func gerReaderOption(request *CreateRequest, context *endly.Context, response *C
 	}
 	return options
 }
-
 
 //Init initialises Upload request
 func (r *CreateRequest) Init() error {
@@ -77,7 +71,6 @@ func (r *CreateRequest) Init() error {
 	}
 	return nil
 }
-
 
 //Validate checks if request is valid
 func (r *CreateRequest) Validate() error {

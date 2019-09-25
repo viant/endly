@@ -63,7 +63,6 @@ func TestNewModifier(t *testing.T) {
 			expect: " bar is ${msg}a",
 		},
 
-
 		{
 			description: "replace only, do not expand due to binary data ",
 			replacement: map[string]string{
@@ -101,7 +100,7 @@ func TestNewModifier(t *testing.T) {
 			when: &Matcher{
 				Basic: &matcher.Basic{Suffix: ".json"},
 			},
-			info:file.NewInfo("test.txt", 4, 0644, now, false),
+			info:   file.NewInfo("test.txt", 4, 0644, now, false),
 			text:   "foo is great",
 			expect: "foo is great",
 		},
@@ -113,7 +112,7 @@ func TestNewModifier(t *testing.T) {
 			when: &Matcher{
 				Basic: &matcher.Basic{Suffix: ".txt"},
 			},
-			info:file.NewInfo("test.txt", 4, 0644, now, false),
+			info:   file.NewInfo("test.txt", 4, 0644, now, false),
 			text:   "foo is great",
 			expect: "bar is great",
 		},
@@ -122,7 +121,7 @@ func TestNewModifier(t *testing.T) {
 			replacement: map[string]string{
 				"foo": "bar",
 			},
-			expand:true,
+			expand: true,
 			text:   "",
 			expect: "",
 		},
@@ -132,9 +131,9 @@ func TestNewModifier(t *testing.T) {
 				"foo": "bar",
 			},
 			when: &Matcher{
-				UpdatedBefore:"hourAgo",
+				UpdatedBefore: "hourAgo",
 			},
-			info:file.NewInfo("test.txt", 4, 0644, now, false),
+			info:   file.NewInfo("test.txt", 4, 0644, now, false),
 			text:   "foo is great",
 			expect: "foo is great",
 		},
@@ -144,10 +143,10 @@ func TestNewModifier(t *testing.T) {
 				"foo": "bar",
 			},
 			when: &Matcher{
-				Basic: &matcher.Basic{Suffix: ".txt"},
-				UpdatedAfter:"hourAgo",
+				Basic:        &matcher.Basic{Suffix: ".txt"},
+				UpdatedAfter: "hourAgo",
 			},
-			info:file.NewInfo("test.txt", 4, 0644, now, false),
+			info:   file.NewInfo("test.txt", 4, 0644, now, false),
 			text:   "foo is great",
 			expect: "bar is great",
 		},
@@ -157,8 +156,8 @@ func TestNewModifier(t *testing.T) {
 				"foo": "bar",
 			},
 			when: &Matcher{
-				Basic: &matcher.Basic{Suffix: ".txt"},
-				UpdatedAfter:"bladh",
+				Basic:        &matcher.Basic{Suffix: ".txt"},
+				UpdatedAfter: "bladh",
 			},
 			info:        file.NewInfo("test.txt", 4, 0644, now, false),
 			text:        "foo is great",
@@ -170,8 +169,8 @@ func TestNewModifier(t *testing.T) {
 				"foo": "bar",
 			},
 			when: &Matcher{
-				Basic: &matcher.Basic{Suffix: ".txt"},
-				UpdatedBefore:"bladh",
+				Basic:         &matcher.Basic{Suffix: ".txt"},
+				UpdatedBefore: "bladh",
 			},
 			info:        file.NewInfo("test.txt", 4, 0644, now, false),
 			text:        "foo is great",
@@ -198,7 +197,7 @@ func TestNewModifier(t *testing.T) {
 			assert.NotNil(t, err, useCase.description)
 			continue
 		}
-		if ! assert.Nil(t, err, useCase.description) {
+		if !assert.Nil(t, err, useCase.description) {
 			continue
 		}
 

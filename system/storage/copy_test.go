@@ -196,4 +196,3 @@ func TestCopyRequest_Validate(t *testing.T) {
 		assert.Nil(t, request.Validate())
 	}
 }
-

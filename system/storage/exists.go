@@ -2,11 +2,10 @@ package storage
 
 import (
 	"errors"
+	arl "github.com/viant/afs/url"
 	"github.com/viant/endly"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox/url"
-	arl "github.com/viant/afs/url"
-
 )
 
 //ExistsRequest represents exists request
@@ -22,18 +21,16 @@ type ExistsResponse struct {
 	Assert *validator.AssertResponse
 }
 
-
-
 //Exists checks if supplied asset exists
 func (s *service) Exists(context *endly.Context, request *ExistsRequest) (*ExistsResponse, error) {
 	var response = &ExistsResponse{
-		Exists:make(map[string]bool),
+		Exists: make(map[string]bool),
 	}
 	err := s.exists(context, request, response)
 	return response, err
 }
 
-func (s *service) exists(context *endly.Context,  request *ExistsRequest, response *ExistsResponse) error {
+func (s *service) exists(context *endly.Context, request *ExistsRequest, response *ExistsResponse) error {
 	source, storageOpts, err := GetResourceWithOptions(context, request.Source)
 	if err != nil {
 		return err
@@ -66,20 +63,17 @@ func (s *service) exists(context *endly.Context,  request *ExistsRequest, respon
 	return nil
 }
 
-
 //Init initialises Upload request
 func (r *ExistsRequest) Init() error {
-	if len(r.Expect) > 0 && len(r.Assets) == 0  {
+	if len(r.Expect) > 0 && len(r.Assets) == 0 {
 		r.Assets = make([]string, 0)
-		for k:= range r.Expect {
+		for k := range r.Expect {
 			r.Assets = append(r.Assets, k)
 		}
 	}
 
-
 	return nil
 }
-
 
 //Validate checks if request is valid
 func (r *ExistsRequest) Validate() error {

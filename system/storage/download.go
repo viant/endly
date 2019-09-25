@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"github.com/viant/endly"
 	"github.com/pkg/errors"
+	"github.com/viant/endly"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/endly/udf"
 	"github.com/viant/endly/util"
@@ -26,8 +26,6 @@ type DownloadResponse struct {
 	Transformed interface{}
 	Assert      *validator.AssertResponse
 }
-
-
 
 func (s *service) Download(context *endly.Context, request *DownloadRequest) (*DownloadResponse, error) {
 	var response = &DownloadResponse{}
@@ -79,8 +77,6 @@ func (s *service) download(context *endly.Context, request *DownloadRequest, res
 	}
 	return nil
 }
-
-
 
 //Validate checks if request is valid
 func (r *DownloadRequest) Validate() error {

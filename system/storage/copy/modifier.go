@@ -2,9 +2,9 @@ package copy
 
 import (
 	"bytes"
+	"github.com/viant/afs/option"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
-	"github.com/viant/afs/option"
 	"io"
 	"io/ioutil"
 	"os"
@@ -20,7 +20,7 @@ func NewModifier(context *endly.Context, when *Matcher, replaceMap map[string]st
 		return nil, err
 	}
 	return func(info os.FileInfo, reader io.ReadCloser) (io.ReadCloser, error) {
-		if ! matchHandler("", info) {
+		if !matchHandler("", info) {
 			return reader, nil
 		}
 		var isUpdated = false

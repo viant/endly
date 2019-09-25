@@ -2,10 +2,10 @@ package storage
 
 import (
 	"errors"
-	"github.com/viant/endly"
 	"github.com/viant/afs"
-	arl "github.com/viant/afs/url"
 	"github.com/viant/afs/file"
+	arl "github.com/viant/afs/url"
+	"github.com/viant/endly"
 	"github.com/viant/toolbox/url"
 )
 
@@ -58,7 +58,6 @@ func removeResource(context *endly.Context, resource *url.Resource, fs afs.Servi
 	}
 	return resource, fs.Delete(context.Background(), resource.URL, storageOpts...)
 }
-
 
 //NewRemoveRequest creates a new Remove request
 func NewRemoveRequest(assets ...*url.Resource) *RemoveRequest {

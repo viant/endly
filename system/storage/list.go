@@ -54,13 +54,13 @@ func (s *service) list(context *endly.Context, request *ListRequest, response *L
 		_ = fs.Close(source.URL)
 	}()
 	for _, object := range objects {
-		var resource  *asset.Resource
+		var resource *asset.Resource
 		if object.IsDir() {
 			resource = asset.NewDir(object.URL(), object.Mode())
 		} else {
 			resource = asset.NewFile(object.URL(), nil, object.Mode())
 		}
-		if request.IncludeContent && ! object.IsDir() {
+		if request.IncludeContent && !object.IsDir() {
 			reader, err := fs.Download(context.Background(), object)
 			if err != nil {
 				return errors.Wrapf(err, "failed to download listed content %v", object.URL())
@@ -78,7 +78,6 @@ func (s *service) list(context *endly.Context, request *ListRequest, response *L
 	}
 	return nil
 }
-
 
 func getMatcherOptions(request *ListRequest) ([]storage.Option, error) {
 	var options = make([]storage.Option, 0)

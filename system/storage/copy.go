@@ -39,7 +39,7 @@ func (s *service) copy(context *endly.Context, request *CopyRequest, response *C
 			return errors.Wrapf(err, "failed to Copy")
 		}
 		udfModifier, ok := UDF.(option.Modifier)
-		if ! ok {
+		if !ok {
 			return fmt.Errorf("udf %v does not implement %T", UDF, udfModifier)
 		}
 	}
@@ -50,7 +50,6 @@ func (s *service) copy(context *endly.Context, request *CopyRequest, response *C
 	}
 	return nil
 }
-
 
 func (s *service) transfer(context *endly.Context, rule *copy.Rule, udfModifier option.Modifier, response *CopyResponse) error {
 	source, sourceOpts, err := getSourceWithOptions(context, rule, udfModifier)
@@ -96,7 +95,6 @@ func (s *service) transfer(context *endly.Context, rule *copy.Rule, udfModifier 
 	return nil
 }
 
-
 //CopyRequest creates a new Copy request
 func NewCopyRequest(assets copy.Assets, transfers ...*copy.Rule) *CopyRequest {
 	var super *copy.Rule
@@ -120,8 +118,6 @@ func NewCopyRequestFromURL(URL string) (*CopyRequest, error) {
 	}
 	return request, nil
 }
-
-
 
 //Init initialises request
 func (r *CopyRequest) Init() error {

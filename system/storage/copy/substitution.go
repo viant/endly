@@ -6,4 +6,3 @@ type Substitution struct {
 	Replace map[string]string `description:"replacements map, if key if found in the conent it wil be replaced with corresponding value."`
 	When    *Matcher          `description:"substitution source matcher"`
 }
-
