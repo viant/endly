@@ -7,7 +7,6 @@ import (
 	"github.com/viant/endly/testing/log"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
-	_ "github.com/viant/toolbox/storage/scp"
 	"github.com/viant/toolbox/url"
 	"io/ioutil"
 	"os"
@@ -17,6 +16,10 @@ import (
 	"testing"
 	"time"
 )
+
+/*
+	TODO rewrite all these test - this is mess
+*/
 
 var templateLog = map[string]interface{}{
 	"k1": "v1",
@@ -67,7 +70,7 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 		var logName = fmt.Sprintf("test%v.log", i)
 		var fullLogname = path.Join(tempPath, logName)
 
-		toolbox.RemoveFileIfExist(fullLogname)
+		_ = toolbox.RemoveFileIfExist(fullLogname)
 		var logContent = BuildLogContent(1, 3, i+1, template)
 		err = ioutil.WriteFile(fullLogname, []byte(logContent), 0644)
 		if err != nil {
@@ -78,8 +81,12 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 
 	assert.Equal(t, "", response.Error)
 	var listenResponse, ok = response.Response.(*log.ListenResponse)
-	assert.True(t, ok)
-	assert.NotNil(t, listenResponse)
+	if !assert.True(t, ok) {
+		return
+	}
+	if !assert.NotNil(t, listenResponse) {
+		return
+	}
 
 	logTypeMeta, ok := listenResponse.Meta["t"]
 	assert.True(t, ok)
@@ -167,7 +174,7 @@ func TestLogValidatorService_TestIndexedRecord(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 	defer context.Close()
 	tempLog := path.Join(os.TempDir(), "endly_test_indexed.log")
-	toolbox.RemoveFileIfExist(tempLog)
+	_ = toolbox.RemoveFileIfExist(tempLog)
 	err = ioutil.WriteFile(tempLog, []byte(indexedLogRecords), 0644)
 	assert.Nil(t, err)
 

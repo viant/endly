@@ -2,11 +2,11 @@ package log
 
 import (
 	"fmt"
+	"github.com/viant/afs/storage"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model/msg"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/storage"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -116,8 +116,8 @@ func (f *File) PushLogRecord(record *Record) {
 func (f *File) Reset(object storage.Object) {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
-	f.Size = int(object.FileInfo().Size())
-	f.LastModified = object.FileInfo().ModTime()
+	f.Size = int(object.Size())
+	f.LastModified = object.ModTime()
 	f.ProcessingState.Reset()
 }
 
