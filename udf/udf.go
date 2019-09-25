@@ -11,11 +11,11 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
+	"github.com/viant/afs/option"
 	"github.com/viant/endly"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/afs/option"
 	"github.com/viant/toolbox/url"
 )
 
@@ -135,7 +135,6 @@ func FromProtobufMessage(source interface{}, state data.Map, sourceMessage proto
 	return nil, fmt.Errorf("expected string but had:%T", source)
 }
 
-
 //GZipper copy modifier, mofidies source using zip udf
 func GZipper(source interface{}, state data.Map) (interface{}, error) {
 	// Get UDFs to Zip from context
@@ -163,9 +162,6 @@ func GZipper(source interface{}, state data.Map) (interface{}, error) {
 	}
 	return nil, errors.New("unable to find udf with name Zip")
 }
-
-
-
 
 // GZipContentCorrupter corrupt zip content modifier
 func GZipContentCorrupter(source interface{}, state data.Map) (interface{}, error) {
@@ -197,7 +193,6 @@ func GZipContentCorrupter(source interface{}, state data.Map) (interface{}, erro
 	}
 	return nil, errors.New("unable to find udf with name Zip")
 }
-
 
 //RegisterProviders register the supplied providers
 func RegisterProviders(providers []*endly.UdfProvider) error {
