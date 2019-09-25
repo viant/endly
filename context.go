@@ -29,7 +29,7 @@ var deferFunctionsKey = (*[]func())(nil)
 
 //Context represents a workflow session context/state
 type Context struct {
-	background context.Context
+	background      context.Context
 	SessionID       string
 	CLIEnabled      bool
 	HasLogger       bool
