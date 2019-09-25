@@ -44,9 +44,22 @@ func (r Rule) Clone() *Rule {
 	}
 }
 
-//StorageOpts returns rule afs store options
-func (r *Rule) StorageOpts(context *endly.Context, udfModifier option.Modifier) ([]storage.Option, error) {
+//SourceStorageOpts returns rule source store options
+func (r *Rule) SourceStorageOpts(context *endly.Context) ([]storage.Option, error) {
 	var result = make([]storage.Option, 0)
+	if r.Matcher != nil {
+		matcher, err := r.Matcher.Matcher()
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, matcher)
+	}
+	return result, nil
+}
+
+//DestStorageOpts returns rule destination store options
+func (r *Rule) DestStorageOpts(context *endly.Context, udfModifier option.Modifier) ([]storage.Option, error) {
+	var result= make([]storage.Option, 0)
 	if udfModifier != nil {
 		result = append(result, udfModifier)
 	} else if r.Expand || len(r.Replace) > 0 {
@@ -56,16 +69,9 @@ func (r *Rule) StorageOpts(context *endly.Context, udfModifier option.Modifier) 
 		}
 		result = append(result, modifier)
 	}
-	if r.Matcher != nil {
-		matcher, err := r.Matcher.Matcher()
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, matcher)
-
-	}
 	return result, nil
 }
+
 
 //Init initialises transfer
 func (r *Rule) Init() error {

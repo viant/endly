@@ -52,11 +52,11 @@ func (s *service) copy(context *endly.Context, request *CopyRequest, response *C
 }
 
 func (s *service) transfer(context *endly.Context, rule *copy.Rule, udfModifier option.Modifier, response *CopyResponse) error {
-	source, sourceOpts, err := getSourceWithOptions(context, rule, udfModifier)
+	source, sourceOpts, err := getSourceWithOptions(context, rule)
 	if err != nil {
 		return err
 	}
-	dest, destOpts, err := getDestWithOptions(context, rule)
+	dest, destOpts, err := getDestWithOptions(context, rule, udfModifier)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,6 @@ func (s *service) transfer(context *endly.Context, rule *copy.Rule, udfModifier 
 	if err != nil {
 		return errors.Wrapf(err, "%v: source not found", source.URL)
 	}
-
 	if useCompression {
 		err = s.compressSource(context, source, dest, object)
 		if err != nil {

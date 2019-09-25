@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/afs/option"
 	"github.com/viant/endly"
@@ -9,39 +10,45 @@ import (
 	"testing"
 )
 
-func TestService_Upload(t *testing.T) {
+func TestService_Create(t *testing.T) {
 
-	resource := url.NewResource("mem://localhost/data/storage/upload/case004/data.txt")
+	resource := url.NewResource("mem://localhost/data/storage/create/case004/data.txt")
 	resource.CustomKey = &option.AES256Key{
 		Key: []byte("invalid_key"),
 	}
 
 	var useCases = []struct {
 		description string
-		request     *UploadRequest
+		request     *CreateRequest
 		expectError bool
 		data        string
 	}{
 		{
-			description: "basic upload",
+			description: "crate basic asset with content",
 			data:        "this is test 1",
-			request: &UploadRequest{
-				Dest:      url.NewResource("mem://localhost/data/storage/upload/case001/data.txt"),
+			request: &CreateRequest{
+				Dest:      url.NewResource("mem://localhost/data/storage/create/case001/data.txt"),
 				SourceKey: "key1",
 			},
 		},
+
 		{
-			description: "error - key is empty",
-			data:        "this is test 1",
-			request: &UploadRequest{
-				Dest: url.NewResource("mem://localhost/data/storage/upload/case002/data.txt"),
+			description: "create directory",
+			request: &CreateRequest{
+				Dest:  url.NewResource("mem://localhost/data/storage/create/case002/folder1"),
+				IsDir: true,
 			},
+		},
+
+		{
+			description: "error - dest is empty",
+			request:     &CreateRequest{},
 			expectError: true,
 		},
 		{
 			description: "error invalid custom key",
 			data:        "this is test 1",
-			request: &UploadRequest{
+			request: &CreateRequest{
 				Dest:      resource,
 				SourceKey: "key2",
 			},
@@ -56,15 +63,26 @@ func TestService_Upload(t *testing.T) {
 			state := ctx.State()
 			state.Put(useCase.request.SourceKey, useCase.data)
 		}
-		response := &UploadResponse{}
+		response := &CreateResponse{}
 		err := endly.Run(ctx, useCase.request, response)
 		if useCase.expectError {
 			assert.NotNil(t, err, useCase.description)
 			continue
 		}
 		if !assert.Nil(t, err, useCase.description) {
+			fmt.Printf("%v\n", err)
 			continue
 		}
+
+		ok, err := fs.Exists(ctx.Background(), useCase.request.Dest.URL)
+		if !assert.Nil(t, err, useCase.description) {
+			continue
+		}
+		assert.True(t, ok, useCase.description)
+		if useCase.request.IsDir {
+			continue
+		}
+
 		reader, err := fs.DownloadWithURL(ctx.Background(), useCase.request.Dest.URL)
 		if !assert.Nil(t, err, useCase.description) {
 			continue

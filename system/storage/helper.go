@@ -9,12 +9,12 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-func getSourceWithOptions(context *endly.Context, rule *copy.Rule, modifier option.Modifier) (*url.Resource, *option.Source, error) {
+func getSourceWithOptions(context *endly.Context, rule *copy.Rule) (*url.Resource, *option.Source, error) {
 	source, err := context.ExpandResource(rule.Source)
 	if err != nil {
 		return nil, nil, err
 	}
-	ruleOptions, err := rule.StorageOpts(context, modifier)
+	ruleOptions, err := rule.SourceStorageOpts(context)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -25,12 +25,16 @@ func getSourceWithOptions(context *endly.Context, rule *copy.Rule, modifier opti
 	return source, option.NewSource(sourceOptions...), nil
 }
 
-func getDestWithOptions(context *endly.Context, rule *copy.Rule) (*url.Resource, *option.Dest, error) {
+func getDestWithOptions(context *endly.Context, rule *copy.Rule, modifier option.Modifier) (*url.Resource, *option.Dest, error) {
+	ruleOptions, err := rule.DestStorageOpts(context, modifier)
+	if err != nil {
+		return nil, nil, err
+	}
 	dest, err := context.ExpandResource(rule.Dest)
 	if err != nil {
 		return nil, nil, err
 	}
-	sourceOptions, err := StorageOptions(context, dest)
+	sourceOptions, err := StorageOptions(context, dest, ruleOptions...)
 	if err != nil {
 		return nil, nil, err
 	}

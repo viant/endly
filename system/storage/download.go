@@ -44,7 +44,6 @@ func (s *service) download(context *endly.Context, request *DownloadRequest, res
 	defer func() {
 		_ = fs.Close(source.URL)
 	}()
-
 	reader, err := fs.DownloadWithURL(context.Background(), source.URL, storageOpts...)
 	if err != nil {
 		return err
@@ -67,7 +66,6 @@ func (s *service) download(context *endly.Context, request *DownloadRequest, res
 	} else {
 		payload = response.Payload
 	}
-
 	if request.DestKey != "" {
 		var state = context.State()
 		state.Put(request.DestKey, payload)
@@ -75,7 +73,7 @@ func (s *service) download(context *endly.Context, request *DownloadRequest, res
 	if request.Expect != nil {
 		response.Assert, err = validator.Assert(context, request, request.Expect, payload, "Download.Payload", "assert Download responses")
 	}
-	return nil
+	return err
 }
 
 //Validate checks if request is valid

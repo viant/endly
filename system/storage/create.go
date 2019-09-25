@@ -77,8 +77,5 @@ func (r *CreateRequest) Validate() error {
 	if r.Dest == nil {
 		return errors.New("dest was empty")
 	}
-	if r.SourceKey == "" {
-		return errors.New("sourceKey was empty")
-	}
 	return nil
 }
