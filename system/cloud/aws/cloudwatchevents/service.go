@@ -2,12 +2,12 @@ package cloudwatchevents
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/cloudwatchevents"
+	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
 	ciam "github.com/viant/endly/system/cloud/aws/iam"
-	"github.com/pkg/errors"
 	"log"
 )
 
@@ -28,7 +28,7 @@ func getRuleTargets(context *endly.Context, name string) ([]*cloudwatchevents.Ta
 		return nil, err
 	}
 	var pageToken *string
-	for ; ; {
+	for {
 		output, err := client.ListTargetsByRule(&cloudwatchevents.ListTargetsByRuleInput{
 			Rule: &name,
 		})
@@ -50,7 +50,7 @@ func getRule(context *endly.Context, name string) (*cloudwatchevents.Rule, error
 		return nil, err
 	}
 	var pageToken *string
-	for ; ; {
+	for {
 		output, err := client.ListRules(&cloudwatchevents.ListRulesInput{NextToken: pageToken})
 		if err != nil {
 			return nil, err
@@ -187,7 +187,7 @@ func (s *service) getRuleNamesByTarget(context *endly.Context, targetARN *string
 		return nil, err
 	}
 	var pageToken *string
-	for ; ; {
+	for {
 		output, err := client.ListRuleNamesByTarget(&cloudwatchevents.ListRuleNamesByTargetInput{
 			TargetArn: targetARN,
 		})

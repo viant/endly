@@ -12,7 +12,7 @@ func init() {
 	endly.UdfRegistry["URLJoin"] = URLJoin
 	endly.UdfRegistry["URLPath"] = URLPath
 	endly.UdfRegistry["Hostname"] = Hostname
-	endly.UdfRegistry["ZGipModifier"] = GZipper
+	endly.UdfRegistry["GZipper"] = GZipper
 	endly.UdfRegistry["GZipContentCorrupter"] = GZipContentCorrupter
 	endly.UdfRegistry["AvroReader"] = NewAvroReader
 

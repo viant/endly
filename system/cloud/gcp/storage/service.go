@@ -17,9 +17,6 @@ type service struct {
 	*endly.AbstractService
 }
 
-
-
-
 func (s *service) registerRoutes() {
 	client := &storage.Service{}
 	routes, err := gcp.BuildRoutes(client, nil, getClient)

@@ -23,8 +23,8 @@ type DeployKeyRequest struct {
 	Purpose string
 	*Policy
 	PolicyVersion int64
-	ringURI string
-	parent  string
+	ringURI       string
+	parent        string
 }
 
 //DeployKeyRequest represents a deploy KeyInfo response
@@ -39,14 +39,14 @@ type DeployKeyResponse struct {
    role: roles/cloudkms.admin
 
 
- */
+*/
 
 //EncryptRequest represents encrypt request
 type EncryptRequest struct {
 	KeyInfo
 	PlainBase64Text string
 	PlainData       []byte
-	Source 			*url.Resource
+	Source          *url.Resource
 	Dest            *url.Resource
 }
 
