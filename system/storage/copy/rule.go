@@ -38,8 +38,9 @@ func (r Rule) Clone() *Rule {
 		Compress: r.Compress,
 		Matcher:  r.Matcher,
 		Substitution: Substitution{
-			Expand:  r.Expand,
-			Replace: r.Replace,
+			Expand:   r.Expand,
+			Replace:  r.Replace,
+			ExpandIf: r.ExpandIf,
 		},
 	}
 }
@@ -63,7 +64,7 @@ func (r *Rule) DestStorageOpts(context *endly.Context, udfModifier option.Modifi
 	if udfModifier != nil {
 		result = append(result, udfModifier)
 	} else if r.Expand || len(r.Replace) > 0 {
-		modifier, err := NewModifier(context, r.When, r.Replace, r.Expand)
+		modifier, err := NewModifier(context, r.ExpandIf, r.Replace, r.Expand)
 		if err != nil {
 			return nil, err
 		}

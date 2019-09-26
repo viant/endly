@@ -76,20 +76,17 @@ Copy operation provides two way for asset content substitution:
 
 ```go
 
-
     import   "github.com/viant/endly/storage"
-    import _ "github.com/viant/toolbox/storage/aws"
+    import _ "github.com/viant/afsc/aws"
     import   "github.com/viant/endly"
     import   "log"
 
 
     func copy() {
     	
-    	var manager = endly.New()
-    	var context := manager.NewContext(nil)
     	var s3CredentialLocation = ""
     	var request = storage.NewCopyRequest(nil, NewTransfer(url.NewResource("s3://mybucket/asset1", s3CredentialLocation), url.NewResource("/tmp/asset1"), false, false, nil))
-    	err := endly.Run(context, request, nil)
+    	err := endly.Run(nil, request, nil)
     	if err != nil {
     		log.Fatal(err)
     	}
@@ -232,9 +229,9 @@ transfers:
       }
     }
   ],
-  "CopyHandlerUdf": "CopyWithCompression"
+  "Udf": "GZipper"
 }
-
 ```
+
 
 [See more](./../../../udf/) how to register common codec UDF (avro, protobuf) with custom schema 

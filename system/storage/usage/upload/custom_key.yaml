@@ -1,0 +1,28 @@
+init:
+  data: $Cat('lorem.txt')
+  bucket: e2etst
+  customerKey:
+    key: this is secret :3rd party phrase
+
+pipeline:
+  upload:
+    action: storage:upload
+    sourceKey: data
+    dest:
+      URL: gs://$bucket/secured/lorem.txt
+      credentials: gcp-e2e
+      customKey: $customerKey
+  list:
+    action: storage:list
+    source:
+      URL: gs://$bucket/secured/
+      credentials: gcp-e2e
+  download:
+    action: storage:download
+    source:
+      URL: gs://$bucket/secured/lorem.txt
+      credentials: gcp-e2e
+      customKey: $customerKey
+  info:
+    action: print
+    message: 'Downloaded: $AsString(${download.Payload})'

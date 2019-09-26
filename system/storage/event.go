@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"github.com/viant/endly/model/msg"
+	"strings"
 )
 
 /*
@@ -67,4 +68,24 @@ func (r *CopyRequest) Messages() []*msg.Message {
 		))
 	}
 	return result
+}
+
+//Items returns event messages
+func (r *ListResponse) Messages() []*msg.Message {
+	if r.Assets == nil {
+		return []*msg.Message{}
+	}
+	assets := make([]string, 0)
+	for i := range r.Assets {
+		content := ""
+		if len(r.Assets[i].Data) > 0 {
+			content = fmt.Sprintf("\n%v\n\n", string(r.Assets[i].Data))
+		}
+		assets = append(assets, fmt.Sprintf("%s %v%v", r.Assets[i].Mode.String(), r.Assets[i].Name, content))
+	}
+	return []*msg.Message{msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
+		msg.NewStyled("List", msg.MessageStyleGeneric),
+		msg.NewStyled(fmt.Sprintf("Source: %v", r.URL), msg.MessageStyleInput),
+		msg.NewStyled(strings.Join(assets, "\n")+"\n", msg.MessageStyleOutput),
+	)}
 }

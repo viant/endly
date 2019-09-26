@@ -35,8 +35,9 @@ func NewModifier(context *endly.Context, when *Matcher, replaceMap map[string]st
 		var result = string(content)
 		if expand && canExpand(content) {
 			result = context.Expand(result)
-			isUpdated = len(result) != len(content)
+			isUpdated = result != string(content)
 		}
+
 		if replaced, substituted := substituteWithMap(result, replaceMap); replaced {
 			result = substituted
 			isUpdated = replaced

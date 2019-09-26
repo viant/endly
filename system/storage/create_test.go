@@ -70,7 +70,6 @@ func TestService_Create(t *testing.T) {
 			continue
 		}
 		if !assert.Nil(t, err, useCase.description) {
-			fmt.Printf("%v\n", err)
 			continue
 		}
 
