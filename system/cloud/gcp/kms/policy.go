@@ -9,7 +9,7 @@ import (
 //Policy represents kms policy
 type Policy struct {
 	Bindings []*cloudkms.Binding
-	Version int64
+	Version  int64
 }
 
 //ShallUpdatePolicy returns true if policy needs to be updated
@@ -17,7 +17,7 @@ func ShallUpdatePolicy(prev, policy *Policy) bool {
 	if policy == nil {
 		return false
 	}
-	if prev == nil  {
+	if prev == nil {
 		return true
 	}
 
@@ -30,10 +30,9 @@ func ShallUpdatePolicy(prev, policy *Policy) bool {
 	sourceRoles := make(map[string][]string)
 	indexBindings(sourceRoles, prev.Bindings)
 
-
 	for k, destMembers := range destRoles {
 		sourceMembers, ok := sourceRoles[k]
-		if ! ok {
+		if !ok {
 			return true
 		}
 		if !reflect.DeepEqual(sourceMembers, destMembers) {
@@ -42,8 +41,6 @@ func ShallUpdatePolicy(prev, policy *Policy) bool {
 	}
 	return false
 }
-
-
 
 func indexBindings(index map[string][]string, bindings []*cloudkms.Binding) {
 	if len(bindings) == 0 {

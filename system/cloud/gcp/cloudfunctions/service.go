@@ -122,7 +122,6 @@ func (s *service) getFunctionPackageReader(resource *url.Resource) (io.ReadClose
 		return storageService.DownloadWithURL(resource.URL)
 	}
 
-
 	gitIgnorePath := toolbox.URLPathJoin(resource.URL, ".gcloudignore")
 	ignoreList := util.GetIgnoreList(storageService, gitIgnorePath)
 	writer := new(bytes.Buffer)
@@ -135,14 +134,14 @@ func (s *service) getFunctionPackageReader(resource *url.Resource) (io.ReadClose
 		if len(ignoreList) == 0 {
 			return true
 		}
-        relativePath := candidate.URL()
-		if relativePathIndex := strings.Index(relativePath, resource.URL);relativePathIndex !=-1 {
+		relativePath := candidate.URL()
+		if relativePathIndex := strings.Index(relativePath, resource.URL); relativePathIndex != -1 {
 			relativePath = string(relativePath[relativePathIndex+len(resource.URL):])
 			if strings.HasPrefix(relativePath, "/") {
 				relativePath = string(relativePath[1:])
 			}
 		}
-		return !util.ShouldIgnoreLocation(relativePath,ignoreList)
+		return !util.ShouldIgnoreLocation(relativePath, ignoreList)
 
 	})
 	err = archive.Close()

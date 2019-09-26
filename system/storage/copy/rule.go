@@ -38,9 +38,9 @@ func (r Rule) Clone() *Rule {
 		Compress: r.Compress,
 		Matcher:  r.Matcher,
 		Substitution: Substitution{
-			Expand:   r.Expand,
-			Replace:  r.Replace,
-			ExpandIf: r.ExpandIf,
+			Expand:  r.Expand,
+			Replace: r.Replace,
+			ExpandIf:    r.ExpandIf,
 		},
 	}
 }
@@ -60,7 +60,7 @@ func (r *Rule) SourceStorageOpts(context *endly.Context) ([]storage.Option, erro
 
 //DestStorageOpts returns rule destination store options
 func (r *Rule) DestStorageOpts(context *endly.Context, udfModifier option.Modifier) ([]storage.Option, error) {
-	var result= make([]storage.Option, 0)
+	var result = make([]storage.Option, 0)
 	if udfModifier != nil {
 		result = append(result, udfModifier)
 	} else if r.Expand || len(r.Replace) > 0 {
@@ -72,7 +72,6 @@ func (r *Rule) DestStorageOpts(context *endly.Context, udfModifier option.Modifi
 	}
 	return result, nil
 }
-
 
 //Init initialises transfer
 func (r *Rule) Init() error {

@@ -1,6 +1,5 @@
 package cloudwatchevents
 
-
 //DefaultRolePolicy represents defaul role policy
 const DefaultRolePolicy = `{
    "Version": "2012-10-17",
@@ -20,7 +19,6 @@ const DefaultRolePolicy = `{
    ]
 }`
 
-
 //DefaultTrustRelationship represents default trust relationship
 const DefaultTrustRelationship = `{
    "Version": "2012-10-17",
@@ -38,6 +36,5 @@ const DefaultTrustRelationship = `{
       }      
    ]
 }`
-
 
 //appRequestSubmitted
