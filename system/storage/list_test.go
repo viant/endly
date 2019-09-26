@@ -53,10 +53,6 @@ func TestService_List(t *testing.T) {
 			expect: `{
 	"Assets": [
 		{
-			"Dir": true,
-			"Name": "mem://localhost/data/storage/list/case002"
-		},
-		{
 			"Dir": false,
 			"Name": "mem://localhost/data/storage/list/case002/f2"
 		}
@@ -74,7 +70,7 @@ func TestService_List(t *testing.T) {
 			},
 			request: &ListRequest{
 				Source: url.NewResource("mem://localhost/data/storage/list/case003"),
-				Matcher: &copy.Matcher{
+				Match: &copy.Matcher{
 					Basic: &matcher.Basic{Suffix: ".txt"},
 				},
 			},
@@ -108,15 +104,11 @@ func TestService_List(t *testing.T) {
 				asset.NewFile("f10", []byte("test1"), 0644),
 			},
 			request: &ListRequest{
-				Source:         url.NewResource("mem://localhost/data/storage/list/case006"),
-				IncludeContent: true,
+				Source:  url.NewResource("mem://localhost/data/storage/list/case006"),
+				Content: true,
 			},
 			expect: `{
 	"Assets": [
-		{
-			"Dir": true,
-			"Name": "mem://localhost/data/storage/list/case006"
-		},
 		{
 			"Dir": false,
 			"Name": "mem://localhost/data/storage/list/case006/f10",	

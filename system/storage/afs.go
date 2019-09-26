@@ -3,6 +3,10 @@ package storage
 import (
 	"context"
 	"github.com/viant/afs"
+	"github.com/viant/afs/file"
+
+	arl "github.com/viant/afs/url"
+
 	"github.com/viant/afs/scp"
 	"github.com/viant/afs/storage"
 	"github.com/viant/afsc/gs"
@@ -60,23 +64,28 @@ func StorageOptions(ctx *endly.Context, resource *url.Resource, options ...stora
 			result = append(result, &s3.Region{Name: credConfig.Region})
 		}
 		payload := ([]byte)(credConfig.Data)
-		if resource.ParsedURL != nil {
-			switch resource.ParsedURL.Scheme {
-			case gs.Scheme:
-				auth, err := gs.NewJwtConfig(payload)
-				if err != nil {
-					return nil, err
-				}
-				result = append(result, auth)
-			case s3.Scheme:
-				auth, err := s3.NewAuthConfig(payload)
-				if err != nil {
-					return nil, err
-				}
-				result = append(result, auth)
-			case scp.Scheme, sshScheme:
-				result = append(result, credConfig)
+
+		scheme := arl.Scheme(resource.URL, file.Scheme)
+		extension := arl.SchemeExtensionURL(resource.URL)
+		if extension != "" {
+			scheme = arl.Scheme(extension, file.Scheme)
+		}
+
+		switch scheme {
+		case gs.Scheme:
+			auth, err := gs.NewJwtConfig(payload)
+			if err != nil {
+				return nil, err
 			}
+			result = append(result, auth)
+		case s3.Scheme:
+			auth, err := s3.NewAuthConfig(payload)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, auth)
+		case scp.Scheme, sshScheme:
+			result = append(result, credConfig)
 		}
 	}
 	return result, nil

@@ -7,14 +7,14 @@ import (
 	"time"
 )
 
-//Matcher represents transfer source matcher
+//Match represents transfer source matcher
 type Matcher struct {
 	*matcher.Basic
 	UpdatedBefore string
 	UpdatedAfter  string
 }
 
-//Matcher return match handler or error
+//Match return match handler or error
 func (m Matcher) Matcher() (match option.Matcher, err error) {
 	useTimeBased := m.UpdatedBefore != "" || m.UpdatedAfter != ""
 	useBasic := m.Basic != nil
@@ -31,7 +31,7 @@ func (m Matcher) Matcher() (match option.Matcher, err error) {
 	}
 	var matchers = make([]option.Matcher, 0)
 	if useBasic {
-		basic, err := matcher.NewBasic(m.Prefix, m.Suffix, m.Filter)
+		basic, err := matcher.NewBasic(m.Prefix, m.Suffix, m.Filter, m.Directory)
 		if err != nil {
 			return nil, err
 		}

@@ -1,8 +1,10 @@
 package storage
 
 import (
+	"context"
 	"github.com/pkg/errors"
 	"github.com/viant/afs/asset"
+	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/storage"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/storage/copy"
@@ -13,14 +15,16 @@ import (
 
 //DownloadRequest represents a resources Download request, it downloads source into context.state target key
 type ListRequest struct {
-	Source         *url.Resource `required:"true" description:"source asset or directory"`
-	Matcher        *copy.Matcher
-	IncludeContent bool
-	Expect         interface{}
+	Source    *url.Resource `required:"true" description:"source asset or directory"`
+	Match     *copy.Matcher
+	Content   bool
+	Recursive bool
+	Expect    interface{}
 }
 
 //DownloadResponse represents a Download response
 type ListResponse struct {
+	URL    string
 	Assets []*asset.Resource
 	Assert *validator.AssertResponse
 }
@@ -42,25 +46,40 @@ func (s *service) list(context *endly.Context, request *ListRequest, response *L
 	if err != nil {
 		return err
 	}
+	response.URL = source.URL
 	fs, err := StorageService(context, source)
-	if err != nil {
-		return err
-	}
-	objects, err := fs.List(context.Background(), source.URL, storageOpts...)
 	if err != nil {
 		return err
 	}
 	defer func() {
 		_ = fs.Close(source.URL)
 	}()
-	for _, object := range objects {
+	if err = listResource(context.Background(), source.URL, storageOpts, request, response); err != nil {
+		return err
+	}
+	if request.Expect != nil {
+		response.Assert, err = validator.Assert(context, request, request.Expect, response.Assets, "List", "assert list responses")
+	}
+	return nil
+}
+
+func listResource(ctx context.Context, URL string, storageOptions []storage.Option, request *ListRequest, response *ListResponse) error {
+	objects, err := fs.List(context.Background(), URL, storageOptions...)
+	if err != nil {
+		return err
+	}
+
+	for i, object := range objects {
 		var resource *asset.Resource
 		if object.IsDir() {
+			if i == 0 {
+				continue
+			}
 			resource = asset.NewDir(object.URL(), object.Mode())
 		} else {
 			resource = asset.NewFile(object.URL(), nil, object.Mode())
 		}
-		if request.IncludeContent && !object.IsDir() {
+		if request.Content && !object.IsDir() {
 			reader, err := fs.Download(context.Background(), object)
 			if err != nil {
 				return errors.Wrapf(err, "failed to download listed content %v", object.URL())
@@ -73,16 +92,32 @@ func (s *service) list(context *endly.Context, request *ListRequest, response *L
 		}
 		response.Assets = append(response.Assets, resource)
 	}
-	if request.Expect != nil {
-		response.Assert, err = validator.Assert(context, request, request.Expect, response.Assets, "List", "assert list responses")
+
+	if request.Recursive {
+		dirMatcher := &matcher.Basic{Directory: &request.Recursive}
+		objects, err := fs.List(ctx, URL, dirMatcher.Match)
+		if err != nil {
+			return err
+		}
+
+		for i, object := range objects {
+			if i == 0 {
+				continue
+			}
+			if err = listResource(context.Background(), object.URL(), storageOptions, request, response); err != nil {
+				return err
+			}
+
+		}
 	}
+
 	return nil
 }
 
 func getMatcherOptions(request *ListRequest) ([]storage.Option, error) {
 	var options = make([]storage.Option, 0)
-	if request.Matcher != nil {
-		matcher, err := request.Matcher.Matcher()
+	if request.Match != nil {
+		matcher, err := request.Match.Matcher()
 		if err != nil {
 			return nil, err
 		}

@@ -139,7 +139,7 @@ func TestService_Copy(t *testing.T) {
 						Replace: map[string]string{
 							"test": "replaced from",
 						},
-						When: &copy.Matcher{
+						ExpandIf: &copy.Matcher{
 							Basic: &matcher.Basic{Suffix: "f4.txt"},
 						},
 					},

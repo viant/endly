@@ -1,0 +1,36 @@
+init:
+  i: 0
+  bucket: e2etst
+  baseURL: gs://$bucket/timefilter
+  data: test
+pipeline:
+
+  batchUpload:
+    upload:
+      init:
+        _: $i++
+      action: storage:upload
+      sleepTimeMs: 1200
+      sourceKey: data
+      dest:
+        credentials: gcp-e2e
+        URL: ${baseURL}/subdir/file_${i}.txt
+    goto:
+      when: $i < 3
+      action: goto
+      task: batchUpload
+
+  list:
+    action: storage:list
+    recursive: true
+    logging: false
+    content: true
+    match:
+      suffix: .txt
+      updatedAfter: 2secAgo
+
+    source:
+      credentials: gcp-e2e
+      URL: $baseURL
+
+    message: $AsString($list.Assets)
