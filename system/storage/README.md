@@ -40,7 +40,7 @@ For example to check all copy method contract options run:
 
 ## Usage
 
-You can integration storage service for unit, integration and end to end testing.
+You can integrate storage service with unit, integration and end to end tests.
 For example to copy assets from local file system to Google Storage using automation workflow you can use the following:
 
 ```endly cp```
