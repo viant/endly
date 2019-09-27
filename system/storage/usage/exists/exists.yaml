@@ -1,0 +1,16 @@
+pipeline:
+  check:
+    action: storage:exists
+    assets:
+      - URL: data/f1.txt
+        credentials: localhost
+      - URL: data/f2.txt
+      - URL: data/f3.txt
+      - URL: gs://blach/resource/assset1.txt
+        credentials: gcp-e2e
+
+    expect:
+      'data/f1.txt': true
+      'data/f2.txt': false
+      'data/f3.txt': true
+      'gs://blach/resource/assset1.txt': false
