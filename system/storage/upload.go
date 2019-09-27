@@ -38,9 +38,6 @@ func (s *service) upload(context *endly.Context, request *UploadRequest, respons
 	if err != nil {
 		return err
 	}
-	defer func() {
-		_ = fs.Close(dest.URL)
-	}()
 	var state = context.State()
 	if !state.Has(request.SourceKey) {
 		return fmt.Errorf("sourcekey %v value was empty", request.SourceKey)

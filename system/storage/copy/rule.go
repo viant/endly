@@ -38,9 +38,9 @@ func (r Rule) Clone() *Rule {
 		Compress: r.Compress,
 		Matcher:  r.Matcher,
 		Substitution: Substitution{
-			Expand:  r.Expand,
-			Replace: r.Replace,
-			ExpandIf:    r.ExpandIf,
+			Expand:   r.Expand,
+			Replace:  r.Replace,
+			ExpandIf: r.ExpandIf,
 		},
 	}
 }

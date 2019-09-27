@@ -2,8 +2,6 @@ package storage
 
 import (
 	"errors"
-	"github.com/viant/afs/file"
-	arl "github.com/viant/afs/url"
 	"github.com/viant/endly"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox/url"
@@ -35,7 +33,6 @@ func (s *service) exists(context *endly.Context, request *ExistsRequest, respons
 	if err != nil {
 		return err
 	}
-	var baseURLs = make(map[string]bool)
 	for _, asset := range request.Assets {
 		URL := context.Expand(asset.URL)
 		source, storageOpts, err := GetResourceWithOptions(context, asset)
@@ -47,16 +44,10 @@ func (s *service) exists(context *endly.Context, request *ExistsRequest, respons
 			return err
 		}
 		response.Exists[URL] = exists
-		baseURL, _ := arl.Base(source.URL, file.Scheme)
-		baseURLs[baseURL] = true
 	}
 	if request.Expect != nil {
 		response.Assert, err = validator.Assert(context, request, request.Expect, response.Exists, "Exists", "assert Exists responses")
 	}
-	for baseURL := range baseURLs {
-		_ = fs.Close(baseURL)
-	}
-
 	return nil
 }
 

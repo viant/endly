@@ -65,10 +65,6 @@ func (s *service) transfer(context *endly.Context, rule *copy.Rule, udfModifier 
 	if err != nil {
 		return err
 	}
-	defer func() {
-		_ = fs.Close(source.URL)
-		_ = fs.Close(dest.URL)
-	}()
 	useCompression := rule.Compress && IsCompressable(source.ParsedURL.Scheme) && IsCompressable(dest.ParsedURL.Scheme)
 	object, err := fs.Object(context.Background(), source.URL)
 	if err != nil {

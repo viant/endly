@@ -11,6 +11,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
+	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
 	"github.com/viant/endly"
 	"github.com/viant/endly/util"
@@ -140,9 +141,9 @@ func GZipper(source interface{}, state data.Map) (interface{}, error) {
 	// Get UDFs to Zip from context
 	if zipUdf, has := getUdfFromContext("Zip", state); has {
 		var modifier option.Modifier
-		modifier = func(info os.FileInfo, reader io.ReadCloser) (io.ReadCloser, error) {
+		modifier = func(info os.FileInfo, reader io.ReadCloser) (os.FileInfo, io.ReadCloser, error) {
 			if info.IsDir() {
-				return reader, nil
+				return info, reader, nil
 			}
 			defer func() {
 				_ = reader.Close()
@@ -150,13 +151,15 @@ func GZipper(source interface{}, state data.Map) (interface{}, error) {
 			// Zip source contents
 			contents, err := ioutil.ReadAll(reader)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to read %v", info.Name())
+				return nil, nil, errors.Wrapf(err, "failed to read %v", info.Name())
 			}
 			zippedContents, err := zipUdf(contents, nil)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to zip %v", info.Name())
+				return nil, nil, errors.Wrapf(err, "failed to zip %v", info.Name())
 			}
-			return ioutil.NopCloser(bytes.NewReader(zippedContents.([]byte))), nil
+			payload := zippedContents.([]byte)
+			info = file.AdjustInfoSize(info, len(payload))
+			return info, ioutil.NopCloser(bytes.NewReader(payload)), nil
 		}
 		return modifier, nil
 	}
@@ -169,9 +172,9 @@ func GZipContentCorrupter(source interface{}, state data.Map) (interface{}, erro
 	if zipUdf, has := getUdfFromContext("Zip", state); has {
 		// Build copy handler
 		var modifier option.Modifier
-		modifier = func(info os.FileInfo, reader io.ReadCloser) (io.ReadCloser, error) {
+		modifier = func(info os.FileInfo, reader io.ReadCloser) (os.FileInfo, io.ReadCloser, error) {
 			if info.IsDir() {
-				return reader, nil
+				return info, reader, nil
 			}
 			defer func() {
 				_ = reader.Close()
@@ -180,14 +183,16 @@ func GZipContentCorrupter(source interface{}, state data.Map) (interface{}, erro
 			// Zip source contents
 			contents, err := ioutil.ReadAll(reader)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to read %v", info.Name())
+				return nil, nil, errors.Wrapf(err, "failed to read %v", info.Name())
 			}
 			contents = append(contents, '*')
 			zippedContents, err := zipUdf(contents, nil)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to zip %v", info.Name())
+				return nil, nil, errors.Wrapf(err, "failed to zip %v", info.Name())
 			}
-			return ioutil.NopCloser(bytes.NewReader(zippedContents.([]byte))), nil
+			payload := zippedContents.([]byte)
+			info = file.AdjustInfoSize(info, len(payload))
+			return info, ioutil.NopCloser(bytes.NewReader(payload)), nil
 		}
 		return modifier, nil
 	}

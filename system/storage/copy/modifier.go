@@ -2,6 +2,7 @@ package copy
 
 import (
 	"bytes"
+	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
@@ -20,9 +21,9 @@ func NewModifier(context *endly.Context, when *Matcher, replaceMap map[string]st
 	if err != nil {
 		return nil, err
 	}
-	return func(info os.FileInfo, reader io.ReadCloser) (io.ReadCloser, error) {
+	return func(info os.FileInfo, reader io.ReadCloser) (os.FileInfo, io.ReadCloser, error) {
 		if !matchHandler("", info) {
-			return reader, nil
+			return info, reader, nil
 		}
 		var isUpdated = false
 		defer func() {
@@ -30,7 +31,7 @@ func NewModifier(context *endly.Context, when *Matcher, replaceMap map[string]st
 		}()
 		content, err := ioutil.ReadAll(reader)
 		if err != nil {
-			return nil, err
+			return info, nil, err
 		}
 		var result = string(content)
 		if expand && canExpand(content) {
@@ -42,10 +43,12 @@ func NewModifier(context *endly.Context, when *Matcher, replaceMap map[string]st
 			result = substituted
 			isUpdated = replaced
 		}
+
+		info = file.AdjustInfoSize(info, len(result))
 		if isUpdated {
-			return ioutil.NopCloser(strings.NewReader(toolbox.AsString(result))), nil
+			return info, ioutil.NopCloser(strings.NewReader(toolbox.AsString(result))), nil
 		}
-		return ioutil.NopCloser(bytes.NewReader(content)), nil
+		return info, ioutil.NopCloser(bytes.NewReader(content)), nil
 	}, nil
 }
 
