@@ -4,6 +4,7 @@ init:
 pipeline:
   copy:
     action: storage:copy
+    suffix: .txt
     source:
       URL: data
     dest:

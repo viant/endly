@@ -1,0 +1,10 @@
+
+pipeline:
+  copy:
+    action: storage:copy
+    compress: true
+    source:
+      URL: data/
+    dest:
+      URL: /tmp/compressed/data
+

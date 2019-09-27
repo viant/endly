@@ -1,0 +1,9 @@
+
+pipeline:
+  copy:
+    action: storage:copy
+    source:
+      URL: /tmp/folder
+    dest:
+      URL: s3://mybucket/data
+      credentials: aws-e2e
