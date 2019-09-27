@@ -89,3 +89,18 @@ func (r *ListResponse) Messages() []*msg.Message {
 		msg.NewStyled(strings.Join(assets, "\n")+"\n", msg.MessageStyleOutput),
 	)}
 }
+
+//Items returns event messages
+func (r *ExistsResponse) Messages() []*msg.Message {
+	if r.Exists == nil {
+		return []*msg.Message{}
+	}
+	assets := make([]string, 0)
+	for URL, exists := range r.Exists {
+		assets = append(assets, fmt.Sprintf("%s: %v", URL, exists))
+	}
+	return []*msg.Message{msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
+		msg.NewStyled("Exists", msg.MessageStyleGeneric),
+		msg.NewStyled(strings.Join(assets, "\n")+"\n", msg.MessageStyleOutput),
+	)}
+}

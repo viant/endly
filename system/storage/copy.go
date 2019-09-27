@@ -34,11 +34,12 @@ func (s *service) Copy(context *endly.Context, request *CopyRequest) (*CopyRespo
 func (s *service) copy(context *endly.Context, request *CopyRequest, response *CopyResponse) error {
 	var udfModifier option.Modifier
 	if request.Udf != "" {
+		var ok bool
 		UDF, err := udf.TransformWithUDF(context, request.Udf, "", nil)
 		if err != nil {
-			return errors.Wrapf(err, "failed to Copy")
+			return errors.Wrapf(err, "failed to get udf: %v", request.Udf)
 		}
-		udfModifier, ok := UDF.(option.Modifier)
+		udfModifier, ok = UDF.(option.Modifier)
 		if !ok {
 			return fmt.Errorf("udf %v does not implement %T", UDF, udfModifier)
 		}
@@ -60,7 +61,6 @@ func (s *service) transfer(context *endly.Context, rule *copy.Rule, udfModifier 
 	if err != nil {
 		return err
 	}
-
 	fs, err := StorageService(context, source, dest)
 	if err != nil {
 		return err
