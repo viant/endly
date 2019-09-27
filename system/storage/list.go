@@ -47,13 +47,6 @@ func (s *service) list(context *endly.Context, request *ListRequest, response *L
 		return err
 	}
 	response.URL = source.URL
-	fs, err := StorageService(context, source)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = fs.Close(source.URL)
-	}()
 	if err = listResource(context.Background(), source.URL, storageOpts, request, response); err != nil {
 		return err
 	}

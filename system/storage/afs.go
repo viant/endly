@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/viant/afs"
 	"github.com/viant/afs/file"
+	"sync/atomic"
 
 	arl "github.com/viant/afs/url"
 
@@ -19,6 +20,7 @@ const sshScheme = "ssh"
 
 var fs = afs.New()
 var fsFaker = afs.NewFaker()
+var scheduledClosed = uint32(0)
 
 //StorageService return afs storage service
 func StorageService(ctx *endly.Context, resources ...*url.Resource) (afs.Service, error) {
@@ -26,10 +28,11 @@ func StorageService(ctx *endly.Context, resources ...*url.Resource) (afs.Service
 	if state.Has(useMemoryService) {
 		return fsFaker, nil
 	}
-	for _, resource := range resources {
-		_ = fs.Close(resource.URL)
+	if atomic.CompareAndSwapUint32(&scheduledClosed, 0, 1) {
+		ctx.Deffer(func() {
+			_ = fs.CloseAll()
+		})
 	}
-
 	for _, resource := range resources {
 		options, err := StorageOptions(ctx, resource)
 		if err != nil {

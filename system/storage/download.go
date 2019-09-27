@@ -41,9 +41,6 @@ func (s *service) download(context *endly.Context, request *DownloadRequest, res
 	if err != nil {
 		return err
 	}
-	defer func() {
-		_ = fs.Close(source.URL)
-	}()
 	reader, err := fs.DownloadWithURL(context.Background(), source.URL, storageOpts...)
 	if err != nil {
 		return err
