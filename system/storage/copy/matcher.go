@@ -31,7 +31,8 @@ func (m Matcher) Matcher() (match option.Matcher, err error) {
 	}
 	var matchers = make([]option.Matcher, 0)
 	if useBasic {
-		basic, err := matcher.NewBasic(m.Prefix, m.Suffix, m.Filter, m.Directory)
+		var basic *matcher.Basic
+		basic, err = matcher.NewBasic(m.Prefix, m.Suffix, m.Filter, m.Directory)
 		if err != nil {
 			return nil, err
 		}
