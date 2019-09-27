@@ -1,6 +1,6 @@
 ## September 19 2019 0.43.0
     Integrated storage service with https://github.com/viant/afs
-    Reanme CopyWithCompression udf to GZipper - breaking change
+    Reanmed CopyWithCompression udf to GZipper - breaking change
     Renamed CopyWithCompressionAndCorruption udf to GZipContentCorrupter - breaking chagnge
     
     
