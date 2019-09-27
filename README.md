@@ -7,12 +7,13 @@ This library is compatible with Go 1.11+
 
 Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes.
 
-- [Motivation](#Motivation)
-- [Introduction](#Introduction)
-- [Getting Started](#Getting-Started)
-- [Documentation](#Documentation)
-- [License](#License)
-- [Credits and Acknowledgements](#Credits-and-Acknowledgements)
+- [Motivation](#motivation)
+- [Introduction](#introduction)
+- [Getting Started](#getting-started)
+- [Documentation](#documentation)
+- [License](#license)
+
+- [Credits and Acknowledgements](#credits-and-acknowledgements)
 
 
 ## Motivation
@@ -768,7 +769,6 @@ commands:
 - [Endly UI e2e testing demo](https://www.youtube.com/watch?v=W6R4lk_iF0k&t=12s)
 
          	
-<a name="License"></a>
 ## License
 
 The source code is made available under the terms of the Apache License, Version 2, as stated in the file `LICENSE`.
@@ -777,7 +777,21 @@ Individual files may be made available under their own specific license,
 all compatible with Apache License, Version 2. Please see individual files for details.
 
 
-<a name="Credits-and-Acknowledgements"></a>
+## TODO
+
+- [ ] documentation improvements
+- [ ] knative integration
+- [ ] gcp/containers integration
+- [ ] gcp/cloudfunctions viant/afs integration
+- [ ] ufd self describing meta data
+- [ ] kafka testing/msg integration
+- [ ] afs docker connector
+
+
+## Contributing to endly
+
+endly is an open source project and contributors are welcome!
+
 
 ##  Credits and Acknowledgements
 
