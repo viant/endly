@@ -16,6 +16,8 @@ This service uses [Abstract File Storage](https://github.com/viant/afs).
 - [Listing location content](#listing-location-content)
   * [Applying browsing basic criteria](#applying-browsing-basic-criteria)
   * [Applying browsing time criteria](#applying-browsing-time-criteria)  
+- [Data validation](#data-validation)
+
 
 ## Introduction
 
@@ -417,3 +419,53 @@ pipeline:
     message: $AsString($list.Assets)
 ```
 
+## Data validation
+
+The following service operations provide validation integration by 'expect' attriubte
+ - storage:list
+ - storage:exists
+ - storage:download
+ 
+When defining expect attribute you can use rule based [assertly validation expressioa](https://github.com/viant/assertly/#validation)
+
+For example to dynamically uncompress data/events.json.gz to 
+perform [structured data](usage/download/data/expect.json) validation you can 
+use the following workflow:
+
+[@download.yaml](usage/download/download.yaml)
+
+```yaml
+init:
+  expect: $Cat('data/expect.json')
+
+pipeline:
+  check:
+    action: storage:download
+    udf: UnzipText
+    source:
+      URL: data/events.json.gz
+    expect: $expect
+```
+
+
+To validate if files exists you can you the following workflow:
+
+[@exists.yaml](usage/exists/exists.yaml)
+```yaml
+pipeline:
+  check:
+    action: storage:exists
+    assets:
+      - URL: data/f1.txt
+        credentials: localhost
+      - URL: data/f2.txt
+      - URL: data/f3.txt
+      - URL: gs://blach/resource/assset1.txt
+        credentials: gcp-e2e
+
+    expect:
+      'data/f1.txt': true
+      'data/f2.txt': false
+      'data/f3.txt': true
+      'gs://blach/resource/assset1.txt': false
+```
