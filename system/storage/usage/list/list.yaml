@@ -5,6 +5,7 @@ pipeline:
   list:
     action: storage:list
     recursive: true
+    content: false
     source:
       credentials: gcp-e2e
       URL: gs://$bucket/somepath

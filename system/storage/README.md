@@ -1,237 +1,419 @@
-#Storage Service
+#Storage Service - storage automation and testing
 
-Storage  service represents local or remote storage to provide unified storage operations.
-Remote storage could be any cloud storage i.e. google cloud, amazon s3, or simple SCP or HTTP.
+This service uses [Abstract File Storage](https://github.com/viant/afs).
 
 
-<a name="endly"></a>
+- [Introduction](#introduction)
+- [Usage](#usage)
+- [Data copy](#data-copy)
+  * [Multi asset copy](#multi-asset-copy)
+  * [Expanding transferred data](#expanding-transferred-data)
+  * [Expanding conditionally transferred data](#expanding-conditionally-transferred-data)
+  * [Compressing transferred data](#compressing-transferred-data)  
+  * [Archive transfer](#archive-transfer)
+  * [Archive substitution transfer](#archive-substitution-transfer)
+  * [Assets udf transformation](#assets-udf-transformation)
+- [Listing location content](#listing-location-content)
+  * [Applying browsing basic criteria](#applying-browsing-basic-criteria)
+  * [Applying browsing time criteria](#applying-browsing-time-criteria)  
 
-## Endly inline workflow
+## Introduction
 
-```bash
-endly -r=copy
+This service provides local, remote and cloud storage utilities, 
+for simple build automation, test preparation and verification.
+
+
+To check all storage service methods run
+
+```endly -s=storage```
+
+To check individual method contract run:
+
+```endly -s=storage:method```
+
+For example to check all copy method contract options run:
+
+```endly -s=storage:copy```
+
+
+## Usage
+
+You can integration storage service for unit, integration and end to end testing.
+For example to copy assets from local file system to Google Storage using automation workflow you can use the following:
+
+```endly cp```
+
+[@cp.ymal](usage/copy/cp.yaml)
+```yaml
+pipeline:
+  copy:
+    action: storage:copy
+    source:
+      URL: /tmp/folder
+    dest:
+      URL: s3://mybucket/data
+      credentials: aws-e2e
+    
 ```
 
 
-@copy.yaml
+
+to use API you can use the following snippet:
+
+```go
+
+import (
+	"github.com/viant/endly"
+	"github.com/viant/endly/system/storage"
+	"github.com/viant/endly/system/storage/copy"
+	"github.com/viant/toolbox/url"
+
+	"log"
+)
+
+func main() {
+	request := storage.NewCopyRequest(nil, copy.New(url.NewResource("/tmp/folder"), url.NewResource("s3://mybucket/data", "aws-e2e"), false, true, nil))
+	response := &storage.CopyResponse{}
+	err := endly.Run(nil, request, response)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+```
+
+
+## Data copy
+
+To copy data from source to destination you can use the following workflow 
+You can optionally specify prefix, suffix or filter expression that will match assets in a source location. 
+
+[@copy.yaml](usage/copy/copy.yaml)
 ```yaml
+init:
+  bucket: e2etst
 
 pipeline:
-  transfer:
-    action: storage:copy  
+  copy:
+    action: storage:copy
+    suffix: .txt
     source:
-      URL: s3://mybucket/dir
-      credentials: aws-west
+      URL: data
     dest:
-      URL: scp://dest/dir2
-      credential: dest
+      credentials: gcp-e2e
+      URL: gs://$bucket/copy/data
+  list:
+    action: storage:list
+    source:
+      credentials: gcp-e2e
+      URL: gs://$bucket/copy/data
+
+```
+
+### Multi asset copy
+
+To copy only a few asset from source location to destination you can use the following workflow:
+
+
+[@multi_cp.yaml](usage/copy/multi_cp.yaml)
+
+```yaml
+pipeline:
+  copy:
+    action: storage:copy
+    source:
+      URL: data/
+    dest:
+      URL: /tmp/data/multi/
     assets:
-      file1.txt:
-      file2.txt: renamedFile2      
+      'lorem1.txt': 'lorem1.txt'
+      'lorem2.txt': renamedLorem2.txt
+```
+
+
+### Expanding transferred data
+
+When data is transferred between source and destination you can set expand flag to dynamically evaluate and workflow state variable, 
+or you can provide a replacement map.
+
+For example to substitute $expandMe expression and Lorem fragment when copying data from [@data/lorem2.txt](usage/copy/data/lorem2.txt) 
+to destination you can use the the following workflow.
+
+
+[@expanded_cp.yaml](usage/copy/expanded_cp.yaml)
+```yaml
+init:
+  bucket: e2etst
+  expandMe: '#dynamicly expanded#'
+
+pipeline:
+  copy:
+    action: storage:copy
+    expand: true
+    replace:
+      Lorem: blah
+    source:
+      URL: data
+    dest:
+      credentials: gcp-e2e
+      URL: gs://$bucket/copy/modified
+
+  list:
+    action: storage:list
+    content: true
+    source:
+      credentials: gcp-e2e
+      URL: gs://$bucket/copy/modified
+
+```
+
+**expand** attribute instruct runner to expand any state variable matching '$'expression
+**replace** defines key value pairs for basic text replacements.
+
+
+### Expanding conditionally transferred data
+
+When transferring and expanding data, you can also provide matcher expression to expand only specific asset.
+
+For example to apply substitution only to file with _suffix_ lorem2.txt you can use expandif node with suffix attribute.
+
+[@expandedif_cp.yaml](usage/copy/expandedif_cp.yaml)
+```yaml
+init:
+  bucket: e2etst
+  expandMe: '#dynamicly expanded#'
+
+pipeline:
+  copy:
+    action: storage:copy
+    expandIf:
+      suffix: lorem2.txt
+    expand: true
+    replace:
+      Lorem: blah
+    source:
+      URL: data
+    dest:
+      credentials: gcp-e2e
+      URL: gs://$bucket/copy/filter_modified
+
+  list:
+    action: storage:list
+    content: true
+    source:
+      credentials: gcp-e2e
+      URL: gs://$bucket/copy/filter_modified
 
 ```
 
 
-## Endly workflow service action
+### Compressing transferred data
 
-Run the following command for storage service operation details:
+When dealing with large files amount you can compress them on the source location, transfer archive
+and uncompress on the destination location with **compress** flag set.
 
-```bash
-
-endly -s=storage
-
-endly -s=storage -a=copy
-endly -s=storage -a=remove
-endly -s=storage -a=upload
-endly -s=storage -a=download
-
-```
- 
-
-
-| Service Id | Action | Description | Request | Response |
-| --- | --- | --- | --- | --- |
-| storage | copy | copy one or more asset from the source to destination | [CopyRequest](service_storage_copy.go) | [CopyResponse](service_storage_copy.go) |
-| storage | remove | remove or more resources if exsit | [RemoveRequest](service_storage_remove.go) | [RemoveResponse](service_storage_remove.go) |
-| storage | upload | upload content pointed by context state key to target destination. | [UploadRequest](service_storage_copy.go) | [UploadResponse](service_storage_upload.go) |
-| storage | download | copy source content into context state key | [DownloadRequest](service_storage_download.go) | [DownloadResponse](service_storage_download.go) |
-
-
-Storage service uses undelying [Storage Service](https://github.com/viant/toolbox/tree/master/storage)
-
-
-
-
-## Asset copy
-
-Copy request provides flexible way of transferring  assets from source to destination.
-
-Make sure that when using cloud or other more specific URI scheme, the corresponding [imports](https://github.com/viant/toolbox/tree/master/storage#import) are in place.
-
-Copy operation provides two way for asset content substitution:
-1) Replace - simple brute force key value pair replacement mechanism
-2) $ expression substitution from context.State()  mechanism
-
-
-
-```go
-
-    import   "github.com/viant/endly/storage"
-    import _ "github.com/viant/afsc/aws"
-    import   "github.com/viant/endly"
-    import   "log"
-
-
-    func copy() {
-    	
-    	var s3CredentialLocation = ""
-    	var request = storage.NewCopyRequest(nil, NewTransfer(url.NewResource("s3://mybucket/asset1", s3CredentialLocation), url.NewResource("/tmp/asset1"), false, false, nil))
-    	err := endly.Run(nil, request, nil)
-    	if err != nil {
-    		log.Fatal(err)
-    	}
-    }
-
+[@compressed_cp.yaml](usage/copy/compressed_cp.yaml)
+```yaml
+pipeline:
+  copy:
+    action: storage:copy
+    compress: true
+    source:
+      URL: data/
+    dest:
+      URL: /tmp/compressed/data
 
 ```
 
-**Loading request from URL**
+Currently this option is only supported with local or scp transfer type.
 
-[CopyRequest](service_contract.go) can be loaded from URL pointing either to JSON or YAML resource.
+### Archive transfer
 
-```go
-    copyReq1, err := storage.NewCopyRequestFromURL("copy.yaml")
-    copyReq2, err := storage.NewCopyRequestFromURL("copy.json")
+When transferring data, destination can be any supported by [Abstract File Storage](https://github.com/viant/afs) URL.
+
+
+For example to copy local folder to zip archive on Google Storage you can run the following workflow.
+
+[@archive.yaml](usage/copy/archive.yaml)
+```yaml
+init:
+  bucket: e2etst
+
+pipeline:
+  copy:
+    action: storage:copy
+    source:
+      URL: data
+    dest:
+      credentials: gcp-e2e
+      URL: gs:$bucket/copy/archive/data.zip/zip:///data
+  listStorage:
+    action: storage:list
+    source:
+      credentials: gcp-e2e
+      URL: gs://$bucket/copy/archive
+
+  listArchive:
+    action: storage:list
+    source:
+      credentials: gcp-e2e
+      URL: gs:$bucket/copy/archive/data.zip/zip:///
 
 ```
 
+When _gs://$bucket/copy/archive/data.zip_ archive does not exists it will be created on the fly, if already does
+the source assets will be appended or replaced to existing archive.
 
-**Single asset transfer**
+
+### Archive substitution transfer
+
+To dynamically append/replace asset with dynamic data substitution you can use the following workflow.
+
+[@archive_update.yaml](usage/copy/archive_update.yaml)
+```yaml
+init:
+  changeMe: this is my secret
+
+pipeline:
+  copy:
+    action: storage:copy
+    source:
+      URL: app/app.war
+    dest:
+      URL: /tmp/app.war
+
+  updateArchive:
+    action: storage:copy
+    expand: true
+    source:
+      URL: app/config.properties
+    dest:
+      URL: file:/tmp/app.war/zip://localhost/WEB-INF/classes/
+
+  checkUpdate:
+    action: storage:download
+    source:
+      URL: file:/tmp/app.war/zip://localhost/WEB-INF/classes/config.properties
+    destKey: config
+
+  info:
+    action: print
+    message: $checkUpdate.Payload
+```
 
 
-@copy.yaml
+### Assets udf transformation.
+
+When transferring data you can apply transformation to each transferred asset using pre defined UDF:
+For example to apply Gziper udf to copied file you can you the following:
+
+[@udf.yaml](usage/copy/udf.yaml)
+```yaml
+init:
+pipeline:
+  upload:
+    action: storage:copy
+    source:
+      URL: data/lorem1.txt
+    udf: GZipper
+    dest:
+      URL: /tmp/lorem.txt.gz
+```
+
+
+## Listing location content
+
+To list location content you can use storage service list method
+
+To list recursively gs://$bucket/somepath content you can use the following:
+
+[@list.yaml](usage/list/list.yaml)
+```yaml
+init:
+  bucket: myBucket
+pipeline:
+
+  list:
+    action: storage:list
+    recursive: true
+    content: false
+    source:
+      credentials: gcp-e2e
+      URL: gs://$bucket/somepath
+
+```
+
+when **content** attribute is set, list operation downloads asset content.
+
+### Applying browsing basic criteria
+
+
+When listing content you can specify a [Basic](https://github.com/viant/afs/blob/master/matcher/basic.go) matcher criteria.
+
+[@filter.yaml](usage/list/filter.yaml)
+```yaml
+init:
+  bucket: e2etst
+pipeline:
+
+  list:
+    action: storage:list
+    recursive: true
+    match:
+      suffix: .txt
+    source:
+      credentials: gcp-e2e
+      URL: gs://$bucket/
+
+```
+
+### Applying browsing time criteria
+
+In some situation exact file name may be dynamically generated with UUID generator, so in that case
+you can use ```updatedAfter``` or ```updatedBefore``` [TimeAt expression](https://github.com/viant/toolbox/#time-utilities)
+to matched desired asset.
+
+For example the following workflow create assets in Google Storage and then lists it by time expression.
+
+[@time_filter.yaml](usage/list/time_filter.yaml)
+```yaml
+
 
 ```yaml
-source:
-  URL: mem://yaml1/dir
-dest:
-  URL: mem://dest/dir2
-``` 
+init:
+  i: 0
+  bucket: e2etst
+  baseURL: gs://$bucket/timefilter
+  data: test
+pipeline:
 
+  batchUpload:
+    upload:
+      init:
+        _: $i++
+      action: storage:upload
+      sleepTimeMs: 1200
+      sourceKey: data
+      dest:
+        credentials: gcp-e2e
+        URL: ${baseURL}/subdir/file_${i}.txt
+    goto:
+      when: $i < 3
+      action: goto
+      task: batchUpload
 
+  list:
+    action: storage:list
+    recursive: true
+    logging: false
+    content: true
+    match:
+      suffix: .txt
+      updatedAfter: 2secAgo
 
-**Multi asset transfer with asset** 
-In this scenario source and dest are used to build full URL with assets
+    source:
+      credentials: gcp-e2e
+      URL: $baseURL
 
-
-@copy.yaml
-
-```yaml
-source:
-  URL: mem://yaml1/dir
-dest:
-  URL: mem://dest/dir2
-assets:
-  file1.txt:
-  file2.txt: renamedFile2  
+    message: $AsString($list.Assets)
 ```
 
-**Multi asset transfer with transfers and compression**
- 
-@copy.yaml
-
-```yaml
-transfers:
-- expand: true
-  source:
-    url: file1.txt
-  dest:
-    url: file101.txt
-- source:
-    url: largefile.txt
-  dest:
-    url: file201.txt
-  compress: true
-```
-
-**Single asset transfer with replace data substitution**
-
-
-@copy.json
-```json
-{
-  "Source": {
-    "URL": "mem://yaml1/dir"
-  },
-  "Dest": {
-    "URL": "mem://dest/dir2"
-  },
-  "Compress":true,
-  "Expand": true,
-  "Replace": {
-    "k1": "1",
-    "k2": "2"
-  }
-}
-```
-
-
-
-**Single asset transfer with $expression data substitution**
-
-
-```go
-
-  func copy() {
-    	
-    	var manager = endly.New()
-    	  
-    	var context := manager.NewContext(nil)
-    	var state = context.State()
-    	
-    	state.PutValue("settings.port", "8080")
-    	state.PutValue("settings.host", "abc.com")
-    	
-    	var request = storage.NewCopyRequest(nil, NewTransfer(url.NewResource("myconfig.json"), url.NewResource("/app/config/"), false, true, nil))
-    	err := endly.Run(context, request, nil)
-    	if err != nil {
-    		log.Fatal(err)
-    	}
-    }
-
-
-```
-
-@myconfig.json
-```json
-{
-    "Port":"$settings.port",
-    "Host":"$settings.host"
-}
-
-```
-
-
-**Single asset transfer with custom copy handler using an UDF (User defined function). Below is an example to use custom UDF CopyWithCompression that gzips target file**
-
-
-```json
-{
-  "Transfers": [
-    {
-      "Source": {
-        "URL": "s3://mybucket1/project1/Transfers/",
-        "Credentials": "${env.HOME}/.secret/s3.json"
-      },
-      "Dest": {
-        "URL": "gs://mybucket2/project1/Transfers/",
-        "Credentials": "${env.HOME}/.secret/gs.gz"
-      }
-    }
-  ],
-  "Udf": "GZipper"
-}
-```
-
-
-[See more](./../../../udf/) how to register common codec UDF (avro, protobuf) with custom schema 
