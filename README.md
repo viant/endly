@@ -780,12 +780,11 @@ all compatible with Apache License, Version 2. Please see individual files for d
 ## TODO
 
 - [ ] documentation improvements
-- [ ] knative integration
 - [ ] gcp/containers integration
 - [ ] gcp/cloudfunctions viant/afs integration
 - [ ] ufd self describing meta data
 - [ ] kafka testing/msg integration
-- [ ] afs docker connector
+- [ ] viant/afs docker connector
 
 
 ## Contributing to endly
