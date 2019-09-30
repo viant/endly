@@ -1,0 +1,9 @@
+init:
+pipeline:
+  upload:
+    action: storage:copy
+    source:
+      URL: data/lorem1.txt
+    udf: GZipper
+    dest:
+      URL: /tmp/lorem.txt.gz

@@ -1,0 +1,17 @@
+init:
+  bucket: e2etst
+
+pipeline:
+  copy:
+    action: storage:copy
+    suffix: .txt
+    source:
+      URL: data
+    dest:
+      credentials: gcp-e2e
+      URL: gs://$bucket/copy/data
+  list:
+    action: storage:list
+    source:
+      credentials: gcp-e2e
+      URL: gs://$bucket/copy/data

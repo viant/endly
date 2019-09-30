@@ -1,3 +1,11 @@
+## September 19 2019 0.43.0
+    Integrated storage service with https://github.com/viant/afs
+    Reanmed CopyWithCompression udf to GZipper - breaking change
+    Renamed CopyWithCompressionAndCorruption udf to GZipContentCorrupter - breaking chagnge
+    Added new storage operations:
+       - storage:list
+       - storage:exists
+    
 ## September 19 2019 0.42.0
     * Added "aws/cloudwatchevents" service
     * Added  model.Extract.Required attribute

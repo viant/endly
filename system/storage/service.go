@@ -2,378 +2,28 @@ package storage
 
 import (
 	"fmt"
-	"io"
-	"io/ioutil"
-	url2 "net/url"
-	"path"
-	"strings"
-
 	"github.com/viant/endly"
-	"github.com/viant/endly/system/exec"
-	"github.com/viant/endly/testing/validator"
-	"github.com/viant/endly/udf"
-	"github.com/viant/endly/util"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox/url"
 )
 
-//ServiceID represents transfer service id
-const ServiceID = "storage"
+const (
+	//ServiceID represents transfer service id
+	ServiceID = "storage"
 
-//useMemoryService flag in the context to ignore
-const useMemoryService = "useMemoryService"
-
-//CompressionTimeout compression/decompression timeout
-var CompressionTimeout = 120000
+	//useMemoryService flag in the context to ignore
+	useMemoryService = "useMemoryService"
+	//compressionTimeoutMs max SSH execution time before timing out
+	compressionTimeoutMs = 120000
+)
 
 type service struct {
 	*endly.AbstractService
 }
-
-func (s *service) getResourceAndService(context *endly.Context, resource *url.Resource) (*url.Resource, storage.Service, error) {
-	expandedResource, err := context.ExpandResource(resource)
-	if err != nil {
-		return nil, nil, err
-	}
-	service, err := GetStorageService(context, expandedResource)
-	if err != nil {
-		return nil, nil, err
-	}
-	return expandedResource, service, nil
-}
-
-func (s *service) getModificationHandler(context *endly.Context, transfer *Transfer) func(reader io.ReadCloser) (io.ReadCloser, error) {
-	var handler func(reader io.ReadCloser) (io.ReadCloser, error)
-	if transfer.Expand || len(transfer.Replace) > 0 {
-		handler = NewExpandedContentHandler(context, transfer.Replace, transfer.Expand)
-	}
-	return handler
-}
-
-func (s *service) compressSource(context *endly.Context, source, target *url.Resource, sourceObject storage.Object) (err error) {
-	var baseDirectory, name = path.Split(source.ParsedURL.Path)
-	var archiveSource = name
-
-	if sourceObject.IsFolder() {
-		baseDirectory = source.DirectoryPath()
-		_, name = path.Split(baseDirectory)
-		archiveSource = "."
-	}
-	var archiveName = fmt.Sprintf("%v.tar.gz", name)
-
-	if source.ParsedURL.Scheme == "file" && source.Credentials == "" {
-		source.Credentials = "localhost"
-	}
-	var runRequest = exec.NewRunRequest(source, false,
-		fmt.Sprintf("cd %v", baseDirectory),
-		fmt.Sprintf("tar cvzf %v %v", archiveName, archiveSource),
-	)
-	runRequest.TimeoutMs = CompressionTimeout
-	runResponse := &exec.RunResponse{}
-	if err = endly.Run(context, runRequest, runResponse); err != nil {
-		return err
-	}
-	if util.CheckNoSuchFileOrDirectory(runResponse.Stdout()) {
-		return fmt.Errorf("faied to compress: %v, %v", fmt.Sprintf("tar cvzf %v %v", archiveName, archiveSource), runResponse.Stdout())
-	}
-
-	if sourceObject.IsFolder() {
-		source.URL = toolbox.URLPathJoin(source.URL, archiveName)
-		source.ParsedURL, _ = url2.Parse(source.URL)
-		target.URL = toolbox.URLPathJoin(target.URL, archiveName)
-		target.ParsedURL, _ = url2.Parse(target.URL)
-		return nil
-	}
-
-	if err = source.Rename(archiveName); err == nil {
-		if path.Ext(target.ParsedURL.Path) != "" {
-			_, targetName := path.Split(target.ParsedURL.Path)
-			if name != targetName {
-				err = target.Rename(fmt.Sprintf("%v.tar.gz", targetName))
-			} else {
-				err = target.Rename(archiveName)
-			}
-		} else {
-			target.URL = toolbox.URLPathJoin(target.URL, archiveName)
-			target.ParsedURL, _ = url2.Parse(target.URL)
-		}
-	}
-	return err
-}
-
-func (s *service) decompressTarget(context *endly.Context, source, target *url.Resource, sourceObject storage.Object) error {
-	var baseDir, name = path.Split(target.ParsedURL.Path)
-	var runRequest = exec.NewRunRequest(target, false,
-		fmt.Sprintf("mkdir -p %v", baseDir),
-		fmt.Sprintf("cd %v", baseDir),
-		fmt.Sprintf("tar xvzf %v", name),
-		fmt.Sprintf("rm %v", name),
-		fmt.Sprintf("cd %v", source.DirectoryPath()))
-	runRequest.TimeoutMs = CompressionTimeout
-	return endly.Run(context, runRequest, nil)
-}
-
-func (s *service) copy(context *endly.Context, request *CopyRequest) (*CopyResponse, error) {
-	var result = &CopyResponse{
-		TransferredURL: make([]string, 0),
-	}
-
-	for _, transfer := range request.Transfers {
-		sourceResource, sourceService, err := s.getResourceAndService(context, transfer.Source)
-		if err != nil {
-			return nil, err
-		}
-		defer sourceService.Close()
-		destResource, destService, err := s.getResourceAndService(context, transfer.Dest)
-		if err != nil {
-			return nil, err
-		}
-		defer destService.Close()
-
-		var handler = s.getModificationHandler(context, transfer)
-
-		if has, _ := sourceService.Exists(sourceResource.URL); !has {
-			return nil, fmt.Errorf(" %v %v - source does not exists (%T)", sourceResource.URL, destResource.URL, sourceService)
-		}
-
-		useCompression := transfer.Compress && IsShellCompressable(sourceResource.ParsedURL.Scheme) && IsShellCompressable(destResource.ParsedURL.Scheme)
-		object, err := sourceService.StorageObject(sourceResource.URL)
-		if err != nil {
-			return nil, err
-		}
-
-		if useCompression {
-			err = s.compressSource(context, sourceResource, destResource, object)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		// Custom CopyHandler wrapped as UDFs
-		var copyHandler storage.CopyHandler
-		if request.Udf != "" && object.IsContent() {
-			udf, err := udf.TransformWithUDF(context, request.Udf, transfer.Source.URL, nil)
-			if err != nil {
-				return nil, err
-			}
-			copyHandler = udf.(storage.CopyHandler)
-		}
-
-		err = storage.Copy(sourceService, sourceResource.URL, destService, destResource.URL, handler, copyHandler)
-		if err != nil {
-			return result, err
-		}
-		if useCompression {
-			err = s.decompressTarget(context, sourceResource, destResource, object)
-			if err != nil {
-				return nil, err
-			}
-		}
-		result.TransferredURL = append(result.TransferredURL, object.URL())
-	}
-	return result, nil
-}
-
-func (s *service) remove(context *endly.Context, request *RemoveRequest) (*RemoveResponse, error) {
-	var response = &RemoveResponse{
-		Removed: make([]string, 0),
-	}
-	for _, resource := range request.Assets {
-		resource, service, err := s.getResourceAndService(context, resource)
-		if err != nil {
-			return nil, err
-		}
-		object, err := service.StorageObject(resource.URL)
-		if err == nil && object != nil {
-			err = service.Delete(object)
-			if err != nil {
-				return nil, err
-			}
-			response.Removed = append(response.Removed, resource.URL)
-		}
-	}
-	return response, nil
-}
-
-func (s *service) download(context *endly.Context, request *DownloadRequest) (*DownloadResponse, error) {
-	var response = &DownloadResponse{}
-	resource, service, err := s.getResourceAndService(context, request.Source)
-	if err != nil {
-		return nil, err
-	}
-	object, err := service.StorageObject(resource.URL)
-	if err != nil {
-		return nil, err
-	}
-	if object == nil {
-		return nil, fmt.Errorf("failed to lookup resource: %v", resource.URL)
-	}
-	reader, err := service.Download(object)
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-	data, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return nil, err
-	}
-
-	if request.Udf != "" {
-		response.Transformed, err = udf.TransformWithUDF(context, request.Udf, resource.URL, data)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	response.Payload = util.AsPayload(data)
-	var payload interface{}
-
-	if response.Transformed != nil {
-		payload = response.Transformed
-	} else {
-		payload = response.Payload
-	}
-
-	if request.DestKey != "" {
-		var state = context.State()
-		state.Put(request.DestKey, payload)
-	}
-	if request.Expect != nil {
-		response.Assert, err = validator.Assert(context, request, request.Expect, payload, "Download.Payload", "assert download responses")
-	}
-	return response, nil
-
-}
-
-func (s *service) upload(context *endly.Context, request *UploadRequest) (*UploadResponse, error) {
-	var response = &UploadResponse{}
-
-	resource, service, err := s.getResourceAndService(context, request.Dest)
-	if err != nil {
-		return nil, err
-	}
-
-	var state = context.State()
-	if !state.Has(request.SourceKey) {
-		return nil, fmt.Errorf("sourcekey %v value was empty", request.SourceKey)
-
-	}
-
-	data := state.GetString(request.SourceKey)
-	err = service.Upload(resource.URL, strings.NewReader(data))
-	if err != nil {
-		return nil, err
-	}
-	response.UploadSize = len(data)
-	response.UploadURL = resource.URL
-	return response, nil
-
-}
-
-const (
-	storageCopySimpleExample = `{
-      "Source": {
-        "URL": "https://svn.viantinc.com/svn/project/db/schema.ddl",
-        "Credentials": "${env.HOME}/.secret/svn.json"
-      },
-      "Dest": {
-        "URL": "build/db/"
-      }
-}`
-	storageCopyRemoteTransferExample = `{
-  "Transfers": [
-    {
-      "Source": {
-        "URL": "s3://mybucket1/project1/Transfers/",
-        "Credentials": "${env.HOME}/.secret/s3.json"
-      },
-      "Dest": {
-         "URL": "gs://mybucket2/project1/Transfers/",
-          "Credentials": "${env.HOME}/.secret/gs.gz"
-      }
-    }
-  ],
-  "UDFs": "CopyWithCompression"
-}`
-	storageCopyRemoteTransferWithCorruptionExample = `{
-  "Transfers": [
-    {
-      "Source": {
-        "URL": "s3://mybucket1/project1/Transfers/",
-        "Credentials": "${env.HOME}/.secret/s3.json"
-      },
-      "Dest": {
-         "URL": "gs://mybucket2/project1/Transfers/",
-          "Credentials": "${env.HOME}/.secret/gs.gz"
-      }
-    }
-  ],
-  "UDFs": "CopyWithCompressionAndCorruption"
-}`
-
-	storageBatchCopyTransferExample = `{
-	"Source": {
-		"URL": "s3://mybucket1/",
-		"Credentials": "${env.HOME}/.secret/s3.json"
-    },
-	"Dest": {
-		 "URL": "gs://mybucket2/",
-		  "Credentials": "${env.HOME}/.secret/gs.json"
-    },
-	"Assets":{
-		"project1/data/":"archive/data/",
-		"project1/config/":"setting/config/"
-	}
-}`
-
-	storageCopyReplacementTransferExample = `{
-  "Transfers": [
-    {
-      "Source": {
-        "URL": "scp://127.0.0.1/build/app/target/classes/server.properties",
-        "Credentials": "${env.HOME}/.secret/localhost.json"
-      },
-      "Dest": {
-        "URL": "scp://127.0.0.1/build/app/target/target/build/WEB-INF/classes/dserver.properties",
-        "Credentials": "${env.HOME}/.secret/localhost.json"
-      },
-      "Replace": {
-        "10.2.1.1": "127.0.0.1",
-        "xxx.enabled=false": "xxx.enabled=true"
-      }
-    }
-  ]
-}`
-)
 
 func (s *service) registerRoutes() {
 	s.Register(&endly.Route{
 		Action: "copy",
 		RequestInfo: &endly.ActionInfo{
 			Description: "transfer content (files or directory structure) from source into destination, both source and destination can use local or remote file system (s3, gs, scp)",
-			Examples: []*endly.UseCase{
-				{
-					Description: "simple copy",
-					Data:        storageCopySimpleExample,
-				},
-				{
-					Description: "remote to remote data transfer",
-					Data:        storageCopyRemoteTransferExample,
-				},
-				{
-					Description: "remote to remote data transfer with corruption",
-					Data:        storageCopyRemoteTransferWithCorruptionExample,
-				},
-				{
-					Description: "copy with replacement",
-					Data:        storageCopyReplacementTransferExample,
-				},
-				{
-					Description: "batch coopy",
-					Data:        storageBatchCopyTransferExample,
-				},
-			},
 		},
 		RequestProvider: func() interface{} {
 			return &CopyRequest{}
@@ -383,7 +33,7 @@ func (s *service) registerRoutes() {
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*CopyRequest); ok {
-				return s.copy(context, req)
+				return s.Copy(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -392,7 +42,7 @@ func (s *service) registerRoutes() {
 	s.Register(&endly.Route{
 		Action: "remove",
 		RequestInfo: &endly.ActionInfo{
-			Description: "remove Transfers from local or remote file system",
+			Description: "Remove Transfers from local or remote file system",
 		},
 		RequestProvider: func() interface{} {
 			return &RemoveRequest{}
@@ -402,7 +52,7 @@ func (s *service) registerRoutes() {
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*RemoveRequest); ok {
-				return s.remove(context, req)
+				return s.Remove(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -411,7 +61,7 @@ func (s *service) registerRoutes() {
 	s.Register(&endly.Route{
 		Action: "upload",
 		RequestInfo: &endly.ActionInfo{
-			Description: "upload content of state map source key into target destination",
+			Description: "Upload content of state map source key into target destination",
 		},
 		RequestProvider: func() interface{} {
 			return &UploadRequest{}
@@ -421,7 +71,26 @@ func (s *service) registerRoutes() {
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*UploadRequest); ok {
-				return s.upload(context, req)
+				return s.Upload(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "create",
+		RequestInfo: &endly.ActionInfo{
+			Description: "Create folder or file into target destination, optionally content can be uploaded from sourceKey",
+		},
+		RequestProvider: func() interface{} {
+			return &CreateRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &CreateResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*CreateRequest); ok {
+				return s.Create(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -430,7 +99,7 @@ func (s *service) registerRoutes() {
 	s.Register(&endly.Route{
 		Action: "download",
 		RequestInfo: &endly.ActionInfo{
-			Description: "download content from source into state map key",
+			Description: "Download content from source into state map key",
 		},
 		RequestProvider: func() interface{} {
 			return &DownloadRequest{}
@@ -440,7 +109,45 @@ func (s *service) registerRoutes() {
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*DownloadRequest); ok {
-				return s.download(context, req)
+				return s.Download(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "exists",
+		RequestInfo: &endly.ActionInfo{
+			Description: "Check if supplied asset exists",
+		},
+		RequestProvider: func() interface{} {
+			return &ExistsRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &ExistsResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*ExistsRequest); ok {
+				return s.Exists(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "list",
+		RequestInfo: &endly.ActionInfo{
+			Description: "List supplied location",
+		},
+		RequestProvider: func() interface{} {
+			return &ListRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &ListResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*ListRequest); ok {
+				return s.List(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},

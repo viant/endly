@@ -6,15 +6,17 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
+	"github.com/viant/afs/file"
+	"github.com/viant/afs/option"
 	"github.com/viant/endly"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 )
 
@@ -105,7 +107,7 @@ func AsProtobufMessage(source interface{}, state data.Map, target proto.Message)
 	}
 	buf := new(bytes.Buffer)
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)
-	encoder.Write(protodata)
+	_, _ = encoder.Write(protodata)
 	err = encoder.Close()
 	return fmt.Sprintf("base64:%v", string(buf.Bytes())), err
 }
@@ -134,64 +136,65 @@ func FromProtobufMessage(source interface{}, state data.Map, sourceMessage proto
 	return nil, fmt.Errorf("expected string but had:%T", source)
 }
 
-// UDFs to provide a CopyHandler that performs compression before copy source to destination
-// Compatible only with Object that is a content and not a directory
-func CopyWithCompression(source interface{}, state data.Map) (interface{}, error) {
+//GZipper copy modifier, mofidies source using zip udf
+func GZipper(source interface{}, state data.Map) (interface{}, error) {
 	// Get UDFs to Zip from context
 	if zipUdf, has := getUdfFromContext("Zip", state); has {
-		// Build copy handler
-		var copyHandlerWithCompression storage.CopyHandler
-		copyHandlerWithCompression = func(sourceObject storage.Object, reader io.Reader, destinationService storage.Service, destinationURL string) error {
+		var modifier option.Modifier
+		modifier = func(info os.FileInfo, reader io.ReadCloser) (os.FileInfo, io.ReadCloser, error) {
+			if info.IsDir() {
+				return info, reader, nil
+			}
+			defer func() {
+				_ = reader.Close()
+			}()
 			// Zip source contents
 			contents, err := ioutil.ReadAll(reader)
 			if err != nil {
-				return fmt.Errorf("error when reading object content before zipping source %v: %v", sourceObject.URL(), err)
+				return nil, nil, errors.Wrapf(err, "failed to read %v", info.Name())
 			}
 			zippedContents, err := zipUdf(contents, nil)
 			if err != nil {
-				return fmt.Errorf("error during zipping source %v: %v", sourceObject.URL(), err)
+				return nil, nil, errors.Wrapf(err, "failed to zip %v", info.Name())
 			}
-
-			//Upload zipped contents
-			if err := destinationService.Upload(destinationURL, bytes.NewReader(zippedContents.([]byte))); err != nil {
-				return fmt.Errorf("error during upload, %v %v %v", sourceObject.URL(), destinationURL, err)
-			}
-			return nil
+			payload := zippedContents.([]byte)
+			info = file.AdjustInfoSize(info, len(payload))
+			return info, ioutil.NopCloser(bytes.NewReader(payload)), nil
 		}
-		return copyHandlerWithCompression, nil
+		return modifier, nil
 	}
 	return nil, errors.New("unable to find udf with name Zip")
 }
 
-// UDFs to provide a CopyHandler that performs compression and corruption before copy source to destination
-// Compatible only with Object that is a content and not a directory
-func CopyWithCompressionAndCorruption(source interface{}, state data.Map) (interface{}, error) {
+// GZipContentCorrupter corrupt zip content modifier
+func GZipContentCorrupter(source interface{}, state data.Map) (interface{}, error) {
 	// Get UDFs to Zip from context
 	if zipUdf, has := getUdfFromContext("Zip", state); has {
 		// Build copy handler
-		var copyHandlerWithCompressionAndCorruption storage.CopyHandler
-		copyHandlerWithCompressionAndCorruption = func(sourceObject storage.Object, reader io.Reader, destinationService storage.Service, destinationURL string) error {
+		var modifier option.Modifier
+		modifier = func(info os.FileInfo, reader io.ReadCloser) (os.FileInfo, io.ReadCloser, error) {
+			if info.IsDir() {
+				return info, reader, nil
+			}
+			defer func() {
+				_ = reader.Close()
+			}()
+
 			// Zip source contents
 			contents, err := ioutil.ReadAll(reader)
 			if err != nil {
-				return fmt.Errorf("error when reading object content before zipping source %v: %v", sourceObject.URL(), err)
+				return nil, nil, errors.Wrapf(err, "failed to read %v", info.Name())
 			}
-
-			//adding few bytes to corrupt the file
 			contents = append(contents, '*')
-
 			zippedContents, err := zipUdf(contents, nil)
 			if err != nil {
-				return fmt.Errorf("error during zipping source %v: %v", sourceObject.URL(), err)
+				return nil, nil, errors.Wrapf(err, "failed to zip %v", info.Name())
 			}
-
-			//Upload zipped contents
-			if err := destinationService.Upload(destinationURL, bytes.NewReader(zippedContents.([]byte))); err != nil {
-				return fmt.Errorf("error during upload, %v %v %v", sourceObject.URL(), destinationURL, err)
-			}
-			return nil
+			payload := zippedContents.([]byte)
+			info = file.AdjustInfoSize(info, len(payload))
+			return info, ioutil.NopCloser(bytes.NewReader(payload)), nil
 		}
-		return copyHandlerWithCompressionAndCorruption, nil
+		return modifier, nil
 	}
 	return nil, errors.New("unable to find udf with name Zip")
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/viant/endly/deployment/vc"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
-	_ "github.com/viant/toolbox/storage/scp"
 	"github.com/viant/toolbox/url"
 	"strings"
 	"testing"

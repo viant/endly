@@ -3,8 +3,8 @@ package cloudwatchevents
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/cloudwatchevents"
-	ciam "github.com/viant/endly/system/cloud/aws/iam"
 	"github.com/aws/aws-sdk-go/service/iam"
+	ciam "github.com/viant/endly/system/cloud/aws/iam"
 )
 
 //DeployRuleInput represents deploy rule input
@@ -17,7 +17,6 @@ type DeployRuleInput struct {
 //DeployRuleOutput represents deployRule rule output
 type DeployRuleOutput GetRuleOutput
 
-
 //GetRuleInput represents get rule input
 type GetRuleInput struct {
 	Name *string
@@ -29,7 +28,6 @@ type GetRuleOutput struct {
 	Targets  []*cloudwatchevents.Target
 	RoleInfo *ciam.GetRoleInfoOutput
 }
-
 
 //Init initialises request
 func (i *DeployRuleInput) Init() error {
@@ -59,7 +57,6 @@ func (i DeployRuleInput) Validate() error {
 	return nil
 }
 
-
 //DeleteRuleInput represents delete rule input
 type DeleteRuleInput struct {
 	cloudwatchevents.DeleteRuleInput
@@ -72,4 +69,3 @@ func (i *DeleteRuleInput) Validate() error {
 	}
 	return nil
 }
-

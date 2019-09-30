@@ -15,7 +15,7 @@ type Targets []*Target
 func (t Targets) targets() []*cloudwatchevents.Target {
 	var result = make([]*cloudwatchevents.Target, len(t))
 	for i := range t {
-		result[i] =  &t[i].Target
+		result[i] = &t[i].Target
 	}
 	return result
 }
@@ -34,7 +34,7 @@ func (t Targets) hasChanged(targets []*cloudwatchevents.Target) bool {
 	}
 	for k := range dest {
 		src, ok := source[k]
-		if ! ok {
+		if !ok {
 			return true
 		}
 		if hasTargerChanged(src, dest[k]) {
@@ -47,21 +47,20 @@ func (t Targets) hasChanged(targets []*cloudwatchevents.Target) bool {
 }
 
 func isStringPtrEqual(val1, val2 *string) bool {
-	if val1 == nil || val2  == nil {
-		return  val2 == val1
+	if val1 == nil || val2 == nil {
+		return val2 == val1
 	}
 	return *val2 == *val1
 }
 
-
 func hasTargerChanged(source, dest *cloudwatchevents.Target) bool {
-	if ! isStringPtrEqual(dest.RoleArn, source.RoleArn) {
+	if !isStringPtrEqual(dest.RoleArn, source.RoleArn) {
 		return true
 	}
-	if ! isStringPtrEqual(dest.Input, source.Input) {
+	if !isStringPtrEqual(dest.Input, source.Input) {
 		return true
 	}
-	if ! isStringPtrEqual(dest.InputPath, source.InputPath) {
+	if !isStringPtrEqual(dest.InputPath, source.InputPath) {
 		return true
 	}
 	return false

@@ -1,0 +1,11 @@
+
+pipeline:
+  copy:
+    action: storage:copy
+    source:
+      URL: data/
+    dest:
+      URL: /tmp/data/multi/
+    assets:
+      'lorem1.txt': 'lorem1.txt'
+      'lorem2.txt': renamedLorem2.txt

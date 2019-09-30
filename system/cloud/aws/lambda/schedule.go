@@ -8,7 +8,6 @@ import (
 	"github.com/viant/endly/system/cloud/aws/cloudwatchevents"
 )
 
-
 var defaultEventSource = "com.company.app"
 var defaultEventType = "appRequestSubmitted"
 
@@ -20,10 +19,9 @@ type ScheduleEvent struct {
 
 //Schedule represents schedule
 type Schedule struct {
-	Expression  *string
-	Event *ScheduleEvent
+	Expression *string
+	Event      *ScheduleEvent
 }
-
 
 func (e *ScheduleEvent) Init() error {
 	if e.Source == nil {
@@ -34,12 +32,11 @@ func (e *ScheduleEvent) Init() error {
 	}
 	if e.Detail == nil {
 		var detail = ""
-		e.Detail =  &detail
+		e.Detail = &detail
 	}
 
 	return nil
 }
-
 
 func (s *Schedule) Init() error {
 	if s.Event == nil {
@@ -72,7 +69,7 @@ func (i *DeployInput) ScheduleEventsInput(resourceARN *string) (*acloudwatcheven
 		Entries: make([]*acloudwatchevents.PutEventsRequestEntry, 0),
 	}
 	if resourceARN == nil {
-		return  nil, fmt.Errorf("schedule rule arn was empty")
+		return nil, fmt.Errorf("schedule rule arn was empty")
 	}
 	schedule := i.Schedule
 	event := schedule.Event
@@ -86,10 +83,10 @@ func (i *DeployInput) ScheduleEventsInput(resourceARN *string) (*acloudwatcheven
 	}
 
 	input.Entries = append(input.Entries, &acloudwatchevents.PutEventsRequestEntry{
-		Detail: &detail,
-		Source: event.Source,
-		DetailType:event.DetailType,
-		Resources: []*string{resourceARN},
+		Detail:     &detail,
+		Source:     event.Source,
+		DetailType: event.DetailType,
+		Resources:  []*string{resourceARN},
 	})
 	return input, nil
 

@@ -3,7 +3,12 @@ package storage
 import (
 	"fmt"
 	"github.com/viant/endly/model/msg"
+	"strings"
 )
+
+/*
+Message events control runner reporter and stdout
+*/
 
 //Items returns tag messages
 func (r *RemoveRequest) Messages() []*msg.Message {
@@ -15,7 +20,7 @@ func (r *RemoveRequest) Messages() []*msg.Message {
 		fragments = append(fragments, msg.NewStyled(fmt.Sprintf("SourceURL: %v", resource.URL), msg.MessageStyleInput))
 	}
 	return []*msg.Message{msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
-		msg.NewStyled("remove", msg.MessageStyleGeneric),
+		msg.NewStyled("Remove", msg.MessageStyleGeneric),
 		fragments...),
 	}
 }
@@ -26,7 +31,7 @@ func (r *UploadRequest) Messages() []*msg.Message {
 		return []*msg.Message{}
 	}
 	return []*msg.Message{msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
-		msg.NewStyled("upload", msg.MessageStyleGeneric),
+		msg.NewStyled("Upload", msg.MessageStyleGeneric),
 		msg.NewStyled(fmt.Sprintf("SourcKey: %v", r.SourceKey), msg.MessageStyleInput),
 		msg.NewStyled(fmt.Sprintf("DestURL: %v", r.Dest.URL), msg.MessageStyleOutput),
 	)}
@@ -38,7 +43,7 @@ func (r *DownloadRequest) Messages() []*msg.Message {
 		return []*msg.Message{}
 	}
 	return []*msg.Message{msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
-		msg.NewStyled("upload", msg.MessageStyleGeneric),
+		msg.NewStyled("Upload", msg.MessageStyleGeneric),
 		msg.NewStyled(fmt.Sprintf("Source: %v", r.Source.URL), msg.MessageStyleInput),
 		msg.NewStyled(fmt.Sprintf("DestKey: %v", r.DestKey), msg.MessageStyleOutput),
 	)}
@@ -46,7 +51,7 @@ func (r *DownloadRequest) Messages() []*msg.Message {
 
 //Items returns event messages
 func (r *CopyRequest) Messages() []*msg.Message {
-	r.Init()
+	_ = r.Init()
 	if len(r.Transfers) == 0 {
 		return []*msg.Message{}
 	}
@@ -56,11 +61,46 @@ func (r *CopyRequest) Messages() []*msg.Message {
 			continue
 		}
 		result = append(result, msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
-			msg.NewStyled("copy", msg.MessageStyleGeneric),
+			msg.NewStyled("Copy", msg.MessageStyleGeneric),
 			msg.NewStyled(fmt.Sprintf("compress: %v, expand: %v", transfer.Compress, transfer.Expand), msg.MessageStyleGeneric),
 			msg.NewStyled(fmt.Sprintf("SourceURL: %v", transfer.Source.URL), msg.MessageStyleInput),
 			msg.NewStyled(fmt.Sprintf("DestURL: %v", transfer.Dest.URL), msg.MessageStyleOutput),
 		))
 	}
 	return result
+}
+
+//Items returns event messages
+func (r *ListResponse) Messages() []*msg.Message {
+	if r.Assets == nil {
+		return []*msg.Message{}
+	}
+	assets := make([]string, 0)
+	for i := range r.Assets {
+		content := ""
+		if len(r.Assets[i].Data) > 0 {
+			content = fmt.Sprintf("\n%v\n\n", string(r.Assets[i].Data))
+		}
+		assets = append(assets, fmt.Sprintf("%s %v%v", r.Assets[i].Mode.String(), r.Assets[i].Name, content))
+	}
+	return []*msg.Message{msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
+		msg.NewStyled("List", msg.MessageStyleGeneric),
+		msg.NewStyled(fmt.Sprintf("Source: %v", r.URL), msg.MessageStyleInput),
+		msg.NewStyled(strings.Join(assets, "\n")+"\n", msg.MessageStyleOutput),
+	)}
+}
+
+//Items returns event messages
+func (r *ExistsResponse) Messages() []*msg.Message {
+	if r.Exists == nil {
+		return []*msg.Message{}
+	}
+	assets := make([]string, 0)
+	for URL, exists := range r.Exists {
+		assets = append(assets, fmt.Sprintf("%s: %v", URL, exists))
+	}
+	return []*msg.Message{msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
+		msg.NewStyled("Exists", msg.MessageStyleGeneric),
+		msg.NewStyled(strings.Join(assets, "\n")+"\n", msg.MessageStyleOutput),
+	)}
 }

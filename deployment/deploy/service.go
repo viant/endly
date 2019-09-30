@@ -6,6 +6,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
+	"github.com/viant/endly/system/storage/copy"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -117,15 +118,15 @@ func (s *service) checkIfDeployedOnSystem(context *endly.Context, target *url.Re
 		return MatchVersion(request.Version, actualVersion), nil
 	}
 
-	transferTarget, err := context.ExpandResource(deploymentTarget.Deployment.Transfer.Dest)
+	dest, storageOpts, err := storage.GetResourceWithOptions(context, deploymentTarget.Deployment.Transfer.Dest)
 	if err != nil {
 		return false, err
 	}
-	service, err := storage.GetStorageService(context, transferTarget)
+	service, err := storage.StorageService(context, dest)
 	if err != nil {
 		return false, err
 	}
-	return service.Exists(transferTarget.URL)
+	return service.Exists(context.Background(), dest.URL, storageOpts...)
 }
 
 func (s *service) updateSessionDeployment(context *endly.Context, target *url.Resource, app, version string) error {
@@ -140,19 +141,16 @@ func (s *service) updateSessionDeployment(context *endly.Context, target *url.Re
 	return nil
 }
 
-func (s *service) discoverTransfer(context *endly.Context, request *Request, meta *Meta, deploymentTarget *TargetMeta) (*storage.Transfer, error) {
+//TODO break it down - too large and messy
+func (s *service) discoverTransfer(context *endly.Context, request *Request, meta *Meta, deploymentTarget *TargetMeta) (*copy.Rule, error) {
 	var state = context.State()
+	transfer := deploymentTarget.Deployment.Transfer
 	if meta.Versioning == "" || request.Version == "" {
-		return deploymentTarget.Deployment.Transfer, nil
-	}
-	var transfer = &storage.Transfer{
-		Dest:     deploymentTarget.Deployment.Transfer.Dest,
-		Expand:   deploymentTarget.Deployment.Transfer.Expand,
-		Replace:  deploymentTarget.Deployment.Transfer.Replace,
-		Compress: deploymentTarget.Deployment.Transfer.Compress,
+		return transfer, nil
 	}
 
-	var source = deploymentTarget.Deployment.Transfer.Source
+	transfer = transfer.Clone()
+	var source = transfer.Source
 	var artifact = data.NewMap()
 	state.Put(artifactKey, artifact)
 	var versioningFragments = strings.Split(meta.Versioning, ".")
@@ -165,7 +163,6 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 		}
 
 	} else {
-
 		if len(requestedVersionFragment) == 1 && len(requestedVersionFragment) < len(versioningFragments) {
 			for _, target := range meta.Targets {
 				for k := range target.MinReleaseVersion {
@@ -179,10 +176,15 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 			}
 		}
 
-		service, err := storage.GetStorageService(context, source)
+		source, storageOpts, err := storage.GetResourceWithOptions(context, source)
 		if err != nil {
 			return nil, err
 		}
+		fs, err := storage.StorageService(context, source)
+		if err != nil {
+			return nil, err
+		}
+
 		var releaseFragmentKey = versioningFragments[len(versioningFragments)-1]
 		for i, versionFragment := range requestedVersionFragment {
 			artifact.Put(versioningFragments[i], versionFragment)
@@ -208,7 +210,7 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 			}
 
 			var sourceURL = context.Expand(source.URL)
-			exists, _ := service.Exists(sourceURL)
+			exists, _ := fs.Exists(context.Background(), sourceURL, storageOpts...)
 			if exists {
 				source = url.NewResource(sourceURL, source.Credentials)
 				break
