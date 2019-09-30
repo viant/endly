@@ -145,8 +145,6 @@ func (s *service) setupPermission(context *endly.Context, request *SetupPermissi
 	return client.AddPermission(&addPermission)
 }
 
-
-
 func (s *service) deploy(context *endly.Context, request *DeployInput) (output *DeployOutput, err error) {
 	output = &DeployOutput{}
 	err = s.AbstractService.RunInBackground(context, func() error {
@@ -155,7 +153,6 @@ func (s *service) deploy(context *endly.Context, request *DeployInput) (output *
 	})
 	return output, err
 }
-
 
 func (s *service) expand(context *endly.Context, values ...*string) {
 	state := context.State()
@@ -197,7 +194,6 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 
 	if foundErr == nil {
 		functionConfig = functionOutput.Configuration
-
 
 		if request.Schedule == nil && functionConfig != nil {
 			if err = endly.Run(context, &cloudwatchevents.DeleteRuleInput{
@@ -260,7 +256,7 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 
 	if request.Schedule != nil {
 		scheduleOutput := &cloudwatchevents.DeployRuleOutput{}
-		scheduleRule :=  request.ScheduleDeployRule()
+		scheduleRule := request.ScheduleDeployRule()
 		if err = endly.Run(context, request.ScheduleDeployRule(), scheduleOutput); err != nil {
 			return nil, errors.Wrapf(err, "failed to put schedule rule: %s", scheduleRule)
 		}
@@ -270,16 +266,14 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 			return nil, errors.Wrapf(err, "failed to generate id")
 		}
 		if _, err = s.setupPermission(context, &SetupPermissionInput{
-			StatementId:&id,
-			SourceArn:scheduleOutput.Rule.Arn,
+			StatementId:  &id,
+			SourceArn:    scheduleOutput.Rule.Arn,
 			FunctionName: request.FunctionName,
-			Action:aaws.String("lambda:InvokeFunction"),
-			Principal:aaws.String("events.amazonaws.com"),
-		});  err != nil {
+			Action:       aaws.String("lambda:InvokeFunction"),
+			Principal:    aaws.String("events.amazonaws.com"),
+		}); err != nil {
 			return nil, errors.Wrapf(err, "failed to add permission to %v", scheduleOutput.Rule.Arn)
 		}
-
-
 
 		scheduleEventInput, err := request.ScheduleEventsInput(scheduleOutput.Rule.Arn)
 		if err != nil {
@@ -300,10 +294,10 @@ func (s *service) getEventSourceMappings(context *endly.Context, functionName *s
 	}
 	var result = make([]*lambda.EventSourceMappingConfiguration, 0)
 	var nextMarker *string
-	for ;; {
+	for {
 		listOutput, err := client.ListEventSourceMappings(&lambda.ListEventSourceMappingsInput{
 			FunctionName: functionName,
-			Marker:nextMarker,
+			Marker:       nextMarker,
 		})
 		if err != nil {
 			return nil, err
@@ -318,7 +312,6 @@ func (s *service) getEventSourceMappings(context *endly.Context, functionName *s
 	}
 	return result, nil
 }
-
 
 /*
 This method uses EventSourceMappingsInput, so only the following source are supported at the moment,

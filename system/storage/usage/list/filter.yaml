@@ -1,0 +1,13 @@
+init:
+  bucket: e2etst
+pipeline:
+
+  list:
+    action: storage:list
+    recursive: true
+    match:
+      suffix: .txt
+    source:
+      credentials: gcp-e2e
+      URL: gs://$bucket/
+

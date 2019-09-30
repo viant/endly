@@ -1,0 +1,21 @@
+init:
+  settings: $Cat('settings.json')
+  settingsMap: $AsMap('$settings')
+  config:
+    key1: val1
+    key2: val2
+    featureX: ${settingsMap.featureX}
+
+
+pipeline:
+  info:
+    action: print
+    message: $AsString('$config')
+
+  dynamic:
+    init:
+      cfg: $AsJSON('$config')
+    action: storage:upload
+    sourceKey: cfg
+    dest:
+      URL: /tmp/app.json

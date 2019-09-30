@@ -3,6 +3,8 @@ package log
 import (
 	"bytes"
 	"fmt"
+	"github.com/viant/afs"
+	"github.com/viant/afs/storage"
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model/criteria"
@@ -11,7 +13,6 @@ import (
 	"github.com/viant/endly/udf"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 	"io"
 	"io/ioutil"
@@ -171,10 +172,10 @@ func (s *service) getLogTypeMeta(expectedLogRecords *TypedRecord) (*TypeMeta, er
 }
 
 //tryReadSnapshot tries to read file snapshot, since file may change any time, this method attempts to get a stable snapshot read withhout actual change in file content while it is read.
-func (s *service) tryReadSnapshot(service storage.Service, object storage.Object, attemptsCount int) (io.Reader, error) {
-	fileSize := object.FileInfo().Size()
+func (s *service) tryReadSnapshot(context *endly.Context, fs afs.Service, object storage.Object, attemptsCount int) (io.Reader, error) {
+	fileSize := object.Size()
 	for i := 0; i < attemptsCount; i++ {
-		reader, err := service.Download(object)
+		reader, err := fs.Download(context.Background(), object)
 		if err != nil {
 			return nil, err
 		}
@@ -183,18 +184,18 @@ func (s *service) tryReadSnapshot(service storage.Service, object storage.Object
 		if err != nil {
 			return nil, err
 		}
-		if recentSnapshot, err := service.StorageObject(object.URL()); err == nil {
-			if recentSnapshot.FileInfo().Size() == fileSize { //no content modification since last content download, it safe to return snapshot
+		if recentSnapshot, err := fs.Object(context.Background(), object.URL()); err == nil {
+			if recentSnapshot.Size() == fileSize { //no content modification since last content download, it safe to return snapshot
 				return bytes.NewReader(content), nil
 			}
-			fileSize = recentSnapshot.FileInfo().Size()
+			fileSize = recentSnapshot.Size()
 		}
 		time.Sleep(300 * time.Millisecond)
 	}
 	return nil, nil
 }
 
-func (s *service) readLogFile(context *endly.Context, source *url.Resource, service storage.Service, candidate storage.Object, logType *Type) (*TypeMeta, error) {
+func (s *service) readLogFile(context *endly.Context, source *url.Resource, fs afs.Service, candidate storage.Object, logType *Type) (*TypeMeta, error) {
 	var result *TypeMeta
 	var key = logTypeMetaKey(logType.Name)
 	s.Mutex().Lock()
@@ -204,14 +205,15 @@ func (s *service) readLogFile(context *endly.Context, source *url.Resource, serv
 		state.Put(key, NewTypeMeta(source, logType))
 	}
 
-	if logTypeMeta, ok := state.Get(key).(*TypeMeta); ok {
-		result = logTypeMeta
+	result, ok := state.Get(key).(*TypeMeta)
+	if !ok {
+		return nil, fmt.Errorf("failed to fwtch type meta")
 	}
 
 	var isNewLogFile = false
 	_, name := toolbox.URLSplit(candidate.URL())
 	logFile, has := result.LogFiles[name]
-	fileInfo := candidate.FileInfo()
+	fileInfo := candidate
 	if !has {
 		isNewLogFile = true
 		logFile = &File{
@@ -234,7 +236,7 @@ func (s *service) readLogFile(context *endly.Context, source *url.Resource, serv
 		return result, nil
 	}
 
-	reader, err := s.tryReadSnapshot(service, candidate, 3)
+	reader, err := s.tryReadSnapshot(context, fs, candidate, 3)
 	if err != nil || reader == nil {
 		return nil, err
 	}
@@ -281,20 +283,18 @@ func (s *service) readLogFile(context *endly.Context, source *url.Resource, serv
 	return result, nil
 }
 
-func (s *service) readLogFiles(context *endly.Context, service storage.Service, source *url.Resource, logTypes ...*Type) (TypesMeta, error) {
-	var err error
-	source, err = context.ExpandResource(source)
+func (s *service) readLogFiles(context *endly.Context, fs afs.Service, source *url.Resource, logTypes ...*Type) (TypesMeta, error) {
+	source, storageOptions, err := estorage.GetResourceWithOptions(context, source)
 	if err != nil {
 		return nil, err
 	}
-
 	var response TypesMeta = make(map[string]*TypeMeta)
-	candidates, err := service.List(source.URL)
+	candidates, err := fs.List(context.Background(), source.URL, storageOptions...)
 	if err != nil {
 		return nil, err
 	}
 	for _, candidate := range candidates {
-		if candidate.IsFolder() {
+		if candidate.IsDir() {
 			continue
 		}
 		for _, logType := range logTypes {
@@ -305,7 +305,7 @@ func (s *service) readLogFiles(context *endly.Context, service storage.Service, 
 			}
 			_, name := toolbox.URLSplit(candidate.URL())
 			if maskExpression.MatchString(name) {
-				logTypeMeta, err := s.readLogFile(context, source, service, candidate, logType)
+				logTypeMeta, err := s.readLogFile(context, source, fs, candidate, logType)
 				if err != nil {
 					return nil, err
 				}
@@ -321,18 +321,18 @@ func (s *service) listenForChanges(context *endly.Context, request *ListenReques
 	if err != nil {
 		return err
 	}
-	service, err := estorage.GetStorageService(context, target)
+	fs, err := estorage.StorageService(context, target)
 	if err != nil {
 		return err
 	}
 	go func() {
-		defer service.Close()
+		defer fs.Close(request.Source.URL)
 		frequency := time.Duration(request.FrequencyMs) * time.Millisecond
 		if request.FrequencyMs <= 0 {
 			frequency = 400 * time.Millisecond
 		}
 		for !context.IsClosed() {
-			_, err := s.readLogFiles(context, service, target, request.Types...)
+			_, err := s.readLogFiles(context, fs, target, request.Types...)
 			if err != nil {
 				log.Printf("failed to load log types %v", err)
 				break
@@ -355,12 +355,18 @@ func (s *service) listen(context *endly.Context, request *ListenRequest) (*Liste
 			return nil, fmt.Errorf("listener has been already register for %v", logType.Name)
 		}
 	}
-	service, err := storage.NewServiceForURL(source.URL, source.Credentials)
+
+	fs, err := estorage.StorageService(context, source)
 	if err != nil {
 		return nil, err
 	}
-	defer service.Close()
-	logTypeMetas, err := s.readLogFiles(context, service, source, request.Types...)
+	source, storageOpts, err := estorage.GetResourceWithOptions(context, source)
+	err = fs.Init(context.Background(), source.URL, storageOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	logTypeMetas, err := s.readLogFiles(context, fs, source, request.Types...)
 	if err != nil {
 		return nil, err
 	}

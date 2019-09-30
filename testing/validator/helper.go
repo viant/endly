@@ -1,7 +1,6 @@
 package validator
 
 import (
-	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/util"
 	"github.com/viant/endly/workflow"
@@ -10,25 +9,21 @@ import (
 
 //NewAssertRequestFromContext creates a new assert rquest from context for current activity
 func NewAssertRequestFromContext(context *endly.Context, source, expected, actual interface{}, name, description string) (*AssertRequest, error) {
-	process := workflow.Last(context)
-	if process == nil {
-		return nil, errors.New("process was empty")
+	tagID := ""
+	if process := workflow.Last(context); process != nil {
+		if activity := process.Last(); activity != nil {
+			if description == "" {
+				description = activity.Description
+			}
+			tagID = activity.TagID
+		}
 	}
-	activity := process.Last()
-	if process == nil {
-		return nil, errors.New("activity was empty")
-	}
-
-	if description == "" {
-		description = activity.Description
-	}
-
 	if expected != nil && toolbox.IsSlice(expected) {
 		if normalized, err := util.NormalizeMap(expected, true); err == nil {
 			expected = normalized
 		}
 	}
-	return NewAssertRequest(activity.TagID, name, description, source, expected, actual), nil
+	return NewAssertRequest(tagID, name, description, source, expected, actual), nil
 
 }
 

@@ -4,7 +4,7 @@ import "github.com/viant/endly"
 
 //init initialises UDFs functions and register service
 func init() {
-	endly.Registry.Register(func() endly.Service {
+	_ = endly.Registry.Register(func() endly.Service {
 		return New()
 	})
 
@@ -12,8 +12,8 @@ func init() {
 	endly.UdfRegistry["URLJoin"] = URLJoin
 	endly.UdfRegistry["URLPath"] = URLPath
 	endly.UdfRegistry["Hostname"] = Hostname
-	endly.UdfRegistry["CopyWithCompression"] = CopyWithCompression
-	endly.UdfRegistry["CopyWithCompressionAndCorruption"] = CopyWithCompressionAndCorruption
+	endly.UdfRegistry["GZipper"] = GZipper
+	endly.UdfRegistry["GZipContentCorrupter"] = GZipContentCorrupter
 	endly.UdfRegistry["AvroReader"] = NewAvroReader
 
 	endly.UdfRegistryProvider["AvroWriter"] = NewAvroWriter

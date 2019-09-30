@@ -1,0 +1,31 @@
+init:
+  changeMe: this is my secret
+
+pipeline:
+  copy:
+    action: storage:copy
+    source:
+      URL: app/app.war
+    dest:
+      URL: /tmp/app.war
+
+  updateArchive:
+    action: storage:copy
+    expand: true
+    source:
+      URL: app/config.properties
+    dest:
+      URL: file:/tmp/app.war/zip://localhost/WEB-INF/classes/
+
+  checkUpdate:
+    action: storage:download
+    source:
+      URL: file:/tmp/app.war/zip://localhost/WEB-INF/classes/config.properties
+    destKey: config
+
+  info:
+    action: print
+    message: $checkUpdate.Payload
+
+
+

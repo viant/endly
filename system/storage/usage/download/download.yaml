@@ -1,0 +1,10 @@
+init:
+  expect: $Cat('data/expect.json')
+
+pipeline:
+  check:
+    action: storage:download
+    udf: UnzipText
+    source:
+      URL: data/events.json.gz
+    expect: $expect

@@ -8,19 +8,19 @@ func hasRuleChanged(rule *cloudwatchevents.Rule, input *cloudwatchevents.PutRule
 	if rule == nil {
 		return true
 	}
-	if input.State != nil && ! isStringPtrEqual(input.State, rule.State) {
+	if input.State != nil && !isStringPtrEqual(input.State, rule.State) {
 		return true
 	}
-	if input.Description != nil && ! isStringPtrEqual(input.Description, rule.Description) {
+	if input.Description != nil && !isStringPtrEqual(input.Description, rule.Description) {
 		return true
 	}
-	if input.EventPattern != nil && ! isStringPtrEqual(input.EventPattern, rule.EventPattern) {
+	if input.EventPattern != nil && !isStringPtrEqual(input.EventPattern, rule.EventPattern) {
 		return true
 	}
-	if input.ScheduleExpression != nil && ! isStringPtrEqual(input.ScheduleExpression, rule.ScheduleExpression) {
+	if input.ScheduleExpression != nil && !isStringPtrEqual(input.ScheduleExpression, rule.ScheduleExpression) {
 		return true
 	}
-	if input.RoleArn != nil && ! isStringPtrEqual(input.RoleArn, rule.RoleArn) {
+	if input.RoleArn != nil && !isStringPtrEqual(input.RoleArn, rule.RoleArn) {
 		return true
 	}
 	return false

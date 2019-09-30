@@ -34,9 +34,6 @@ type GetRoleInfoOutput struct {
 	Defined  []*Policy
 }
 
-
-
-
 type GetUserInfoInput iam.GetUserInput
 type GetUserInfoOutput struct {
 	User     *iam.User

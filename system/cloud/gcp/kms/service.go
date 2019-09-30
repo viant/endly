@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/gcp"
 	"github.com/viant/toolbox"
@@ -12,7 +13,6 @@ import (
 	"google.golang.org/api/cloudkms/v1"
 	"io/ioutil"
 	"log"
-	"github.com/pkg/errors"
 )
 
 const (
@@ -143,7 +143,6 @@ func (s *service) getKeyPolicy(ctx context.Context, service *cloudkms.ProjectsLo
 	}, nil
 }
 
-
 func (s *service) updateKeyPolicy(policy *Policy, ctx context.Context, service *cloudkms.ProjectsLocationsKeyRingsCryptoKeysService, keyURI string) (err error) {
 	request := &cloudkms.SetIamPolicyRequest{Policy: &cloudkms.Policy{
 		Bindings: policy.Bindings,
@@ -153,7 +152,6 @@ func (s *service) updateKeyPolicy(policy *Policy, ctx context.Context, service *
 	_, err = setPolicyCall.Do()
 	return err
 }
-
 
 func (s *service) deploy(context *endly.Context, request *DeployKeyRequest) (*DeployKeyResponse, error) {
 	response := &DeployKeyResponse{}
@@ -229,7 +227,7 @@ func (s *service) encrypt(context *endly.Context, request *EncryptRequest) (*Enc
 	service := cloudkms.NewProjectsLocationsKeyRingsCryptoKeysService(client.service)
 
 	if request.Source != nil {
-		if request.PlainBase64Text, err = request.Source.DownloadBase64();err != nil {
+		if request.PlainBase64Text, err = request.Source.DownloadBase64(); err != nil {
 			return nil, err
 		}
 	}
@@ -255,8 +253,8 @@ func (s *service) encrypt(context *endly.Context, request *EncryptRequest) (*Enc
 	if request.Dest != nil {
 		credentials := request.Dest.Credentials
 		if credentials != "" {
-			if location, err := context.Secrets.CredentialsLocation(credentials);err == nil {
-				credentials= location
+			if location, err := context.Secrets.CredentialsLocation(credentials); err == nil {
+				credentials = location
 			}
 		}
 		storageService, err := storage.NewServiceForURL(request.Dest.URL, credentials)
@@ -286,7 +284,7 @@ func (s *service) decrypt(context *endly.Context, request *DecryptRequest) (*Dec
 		if err != nil {
 			return nil, err
 		}
-		reader, err := storage.Download(storageService, request.Source.URL);
+		reader, err := storage.Download(storageService, request.Source.URL)
 		if err != nil {
 			return nil, err
 		}
@@ -308,8 +306,8 @@ func (s *service) decrypt(context *endly.Context, request *DecryptRequest) (*Dec
 		cipherText = base64.StdEncoding.EncodeToString(request.CipherData)
 	}
 
-	if cipherText == ""{
-		return  nil, fmt.Errorf("cipher data was empty")
+	if cipherText == "" {
+		return nil, fmt.Errorf("cipher data was empty")
 	}
 	decryptCall := service.Decrypt(keyURI, &cloudkms.DecryptRequest{
 		Ciphertext: cipherText,
@@ -317,7 +315,7 @@ func (s *service) decrypt(context *endly.Context, request *DecryptRequest) (*Dec
 	decryptCall.Context(client.Context())
 	response, err := decryptCall.Do()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to decrypt with " + keyURI)
+		return nil, errors.Wrap(err, "failed to decrypt with "+keyURI)
 	}
 	plainData, _ := base64.StdEncoding.DecodeString(response.Plaintext)
 	return &DecryptResponse{

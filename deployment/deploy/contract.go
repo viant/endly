@@ -6,7 +6,8 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/system/exec"
-	"github.com/viant/endly/system/storage"
+	"github.com/viant/endly/system/storage/copy"
+
 	"github.com/viant/toolbox/url"
 )
 
@@ -93,7 +94,7 @@ type TargetMeta struct {
 //Deployment represents deployment instruction
 type Deployment struct {
 	Pre          *Addition            `description:"initialization deployment instruction"`
-	Transfer     *storage.Transfer    `required:"true" description:"software deployment instruction"` //actual copy instruction
+	Transfer     *copy.Rule           `required:"true" description:"software deployment instruction"` //actual copy instruction
 	Run          *exec.ExtractRequest `description:"post deployment commands, i.e. tar xvzf"`         //post deployment command like tar xvzf
 	VersionCheck *exec.ExtractRequest `description:"version extraction command"`                      //command to check version
 	Post         *Addition            `description:"post deployment instruction"`
@@ -103,8 +104,8 @@ type Deployment struct {
 type Addition struct {
 	SuperUser bool
 	AutoSudo  bool
-	Commands  []string            `description:"os command"`
-	Transfers []*storage.Transfer `description:"asset transfer"`
+	Commands  []string     `description:"os command"`
+	Transfers []*copy.Rule `description:"asset transfer"`
 }
 
 //Validate checks if request if valid
