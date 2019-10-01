@@ -15,7 +15,7 @@ type Matcher struct {
 }
 
 //Match return match handler or error
-func (m Matcher) Matcher() (match option.Matcher, err error) {
+func (m Matcher) Matcher() (match option.Match, err error) {
 	useTimeBased := m.UpdatedBefore != "" || m.UpdatedAfter != ""
 	useBasic := m.Basic != nil
 	var before, after *time.Time
@@ -29,7 +29,7 @@ func (m Matcher) Matcher() (match option.Matcher, err error) {
 			return nil, err
 		}
 	}
-	var matchers = make([]option.Matcher, 0)
+	var matchers = make([]option.Match, 0)
 	if useBasic {
 		var basic *matcher.Basic
 		basic, err = matcher.NewBasic(m.Prefix, m.Suffix, m.Filter, m.Directory)

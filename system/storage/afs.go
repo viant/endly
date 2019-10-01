@@ -73,7 +73,6 @@ func StorageOptions(ctx *endly.Context, resource *url.Resource, options ...stora
 		if extension != "" {
 			scheme = arl.Scheme(extension, file.Scheme)
 		}
-
 		switch scheme {
 		case gs.Scheme:
 			auth, err := gs.NewJwtConfig(payload)
