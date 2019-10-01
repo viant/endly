@@ -52,7 +52,7 @@ func NewModifier(context *endly.Context, when *Matcher, replaceMap map[string]st
 	}, nil
 }
 
-func substitutionMatcher(matcher *Matcher) (result option.Matcher, err error) {
+func substitutionMatcher(matcher *Matcher) (result option.Match, err error) {
 	if matcher != nil {
 		if result, err = matcher.Matcher(); err != nil {
 			return nil, err

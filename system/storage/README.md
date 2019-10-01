@@ -15,7 +15,10 @@ This service uses [Abstract File Storage](https://github.com/viant/afs).
   * [Assets udf transformation](#assets-udf-transformation)
 - [Listing location content](#listing-location-content)
   * [Applying browsing basic criteria](#applying-browsing-basic-criteria)
-  * [Applying browsing time criteria](#applying-browsing-time-criteria)  
+  * [Applying browsing time criteria](#applying-browsing-time-criteria)
+- [Data upload](#data-upload)  
+  * [Customer key data encryption](#customer-key-data-encryption)
+  * [Dynamic conifg/state](#dynamic-configstate-upload)
 - [Data validation](#data-validation)
 
 
@@ -417,6 +420,77 @@ pipeline:
       URL: $baseURL
 
     message: $AsString($list.Assets)
+```
+
+
+## Data upload
+
+Data upload enables to upload workflow state directly to desired storage location.
+
+
+### Customer key data encryption
+
+
+[@custom_key.yaml](usage/upload/custom_key.yaml)
+```yaml
+init:
+  data: $Cat('lorem.txt')
+  bucket: e2etst
+  customerKey:
+    key: this is secret :3rd party phrase
+
+pipeline:
+  upload:
+    action: storage:upload
+    sourceKey: data
+    dest:
+      URL: gs://$bucket/secured/lorem.txt
+      credentials: gcp-e2e
+      customKey: $customerKey
+  list:
+    action: storage:list
+    source:
+      URL: gs://$bucket/secured/
+      credentials: gcp-e2e
+  download:
+    action: storage:download
+    source:
+      URL: gs://$bucket/secured/lorem.txt
+      credentials: gcp-e2e
+      customKey: $customerKey
+  info:
+    action: print
+    message: 'Downloaded: $AsString(${download.Payload})'
+```
+
+
+### Dynamic config/state upload
+
+
+
+[@dynamic.yaml](usage/upload/dynamic.yaml)
+```yaml
+init:
+  settings: $Cat('settings.json')
+  settingsMap: $AsMap('$settings')
+  config:
+    key1: val1
+    key2: val2
+    featureX: ${settingsMap.featureX}
+
+
+pipeline:
+  info:
+    action: print
+    message: $AsString('$config')
+
+  dynamic:
+    init:
+      cfg: $AsJSON('$config')
+    action: storage:upload
+    sourceKey: cfg
+    dest:
+      URL: /tmp/app.json
 ```
 
 ## Data validation
