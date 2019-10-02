@@ -1,6 +1,6 @@
-## October 1 2019 0.43.1
-    Stremlined afs.Matcher integration
-    
+## October 2 2019 0.43.1
+    * Stremlined afs.Matcher integration
+    * Patched storage:copy batch upload
 
 ## September 30 2019 0.43.0
     Integrated storage service with https://github.com/viant/afs
