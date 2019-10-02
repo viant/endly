@@ -409,10 +409,6 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	}
 
 	filteredTasks := workflow.TasksNode.Select(taskSelector)
-	if err != nil {
-		return response, err
-	}
-
 	err = s.runNode(context, "workflow", process, workflow.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
 		err = s.runTasks(context, process, filteredTasks)
 		return state, response.Data, err
