@@ -1,0 +1,67 @@
+init:
+  '!awsCredentials': $params.authWith
+  appPath: $Pwd('.')
+  codeZip: hello.zip
+  handler: hello
+  functionName: Hello
+  privilegePolicy: privilege-policy.json
+  myBucket: my-teest-bucket
+
+pipeline:
+
+  setup:
+    action: storage:create
+    isDir: true
+    dest:
+      URL: s3://${myBucket}
+      credentials: $awsCredentials
+
+  deploy:
+    builc:
+      action: exec:run
+      target: $target
+      checkError: true
+      commands:
+        - cd ${appPath}
+        - unset GOPATH
+        - export GOOS=linux
+        - export GOARCH=amd64
+        - go build -o $handler
+        - zip -j hello.zip hello
+
+    deployLambda:
+      action: aws/lambda:deploy
+      credentials: $awsCredentials
+      functionname: $functionName
+      runtime:  go1.x
+      handler: $handler
+      code:
+        zipfile: $LoadBinary(${codeZip})
+      rolename: lambda-${functionName}-executor
+      define:
+        - policyname: s3-${functionName}-${myBucket}-role
+          policydocument: $Cat('${privilegePolicy}')
+      attach:
+        - policyarn: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  setLambdaNotification:
+    action: aws/s3:setupBucketNotification
+    credentials: $awsCredentials
+    bucket: ${myBucket}
+    lambdaFunctionConfigurations:
+      - functionName: $functionName
+        id: ObjectCreatedEvents-${functionName}-${myBucket}
+        events:
+          - s3:ObjectCreated:*
+        filter:
+          prefix:
+            - data
+          suffix:
+            - .txt
+
+  test:
+    action: storage:upload
+    sourceKey: appPath
+    dest:
+      URL: s3://${bucket}/data/location.txt
+      credentials: $awsCredentials
