@@ -1,0 +1,12 @@
+init:
+  '!awsCredentials': $params.authWith
+
+pipeline:
+  setupPermission:
+    action: aws/sns:setupPermission
+    credentials: $awsCredentials
+    queue: ms-dataflowStorageMirrorQueue
+    AWSAccountId:
+      - ${aws.accountID}
+    actionName:
+      - 'publish'
