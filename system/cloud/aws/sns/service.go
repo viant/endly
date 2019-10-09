@@ -1,12 +1,17 @@
 package sns
 
 import (
+	"encoding/json"
 	"fmt"
+	aaws "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/sns"
+	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/aws"
+	"github.com/viant/endly/system/cloud/aws/iam"
 	"github.com/viant/endly/system/cloud/aws/lambda"
+	"github.com/viant/toolbox"
 	"log"
 	"strings"
 )
@@ -14,9 +19,10 @@ import (
 const (
 	//ServiceID aws Simple Notification Service ID.
 	ServiceID = "aws/sns"
-)
 
-var snsPrincipal = "sns.amazonaws.com"
+	policyAttribute = "Policy"
+	snsPrincipal    = "sns.amazonaws.com"
+)
 
 //no operation service
 type service struct {
@@ -122,10 +128,16 @@ func (s *service) setupSubscription(context *endly.Context, request *SetupSubscr
 	if err != nil {
 		return nil, err
 	}
-	topic, err := s.setupTopic(context, &SetupTopicInput{
-		Name: request.Topic,
-	})
-	request.TopicArn = topic.TopicArn
+	if request.TopicArn == nil {
+		topic, err := s.setupTopic(context, &SetupTopicInput{
+			Name: request.Topic,
+		})
+		if err != nil {
+			return nil, err
+		}
+		request.TopicArn = topic.TopicArn
+	}
+
 	if err = s.updateSubscriptionEndpointIfNeeded(context, request); err != nil {
 		return nil, err
 	}
@@ -153,7 +165,7 @@ func (s *service) setupSubscription(context *endly.Context, request *SetupSubscr
 		permissionInput.FunctionName = &functionName
 		permissionInput.SourceArn = subscription.TopicArn
 		permissionInput.Action = &aws.LambdaInvoke
-		permissionInput.Principal = &snsPrincipal
+		permissionInput.Principal = aaws.String(snsPrincipal)
 		statementID := state.ExpandAsText(fmt.Sprintf("%v_%v_${uuid.next}", request.Topic, functionName))
 		permissionInput.StatementId = &statementID
 		if err := endly.Run(context, permissionInput, nil); err != nil {
@@ -225,6 +237,107 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
+
+	s.Register(&endly.Route{
+		Action: "setupPermission",
+		RequestInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T.%v(%T)", s, "setupPermission", &SetupPermissionInput{}),
+		},
+		ResponseInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T", &sns.AddPermissionOutput{}),
+		},
+		RequestProvider: func() interface{} {
+			return &SetupPermissionInput{}
+		},
+		ResponseProvider: func() interface{} {
+			return &sns.AddPermissionOutput{}
+		},
+		OnRawRequest: setClient,
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*SetupPermissionInput); ok {
+				return s.setupPermission(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+}
+
+func (s *service) setupPermission(context *endly.Context, request *SetupPermissionInput) (*sns.AddPermissionOutput, error) {
+	client, err := GetClient(context)
+	if err != nil {
+		return nil, err
+	}
+	if request.TopicArn == nil {
+		if request.TopicArn, err = aws.GetTopicARN(context, request.Topic); err != nil {
+			return nil, err
+		}
+	}
+
+	*request.Label = context.Expand(*request.Label)
+
+	_, _ = client.RemovePermission(&sns.RemovePermissionInput{
+		TopicArn: request.TopicArn,
+		Label:    request.Label,
+	})
+
+	if len(request.AWSAccountId) > 0 {
+		for i, acount := range request.AWSAccountId {
+			if acount != nil {
+				*request.AWSAccountId[i] = context.Expand(*acount)
+			}
+		}
+	}
+
+	output, err := client.AddPermission(&request.AddPermissionInput)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to add permission: %v", request.AddPermissionInput)
+		return nil, err
+	}
+	if request.Everybody || request.SourceArn != "" {
+		if err = s.adjustPermissionPrincipal(context, request); err != nil {
+			return nil, err
+		}
+	}
+	return output, err
+}
+
+func (s *service) adjustPermissionPrincipal(context *endly.Context, request *SetupPermissionInput) error {
+	client, err := GetClient(context)
+	if err != nil {
+		return err
+	}
+	topicAttributes, err := client.GetTopicAttributes(&sns.GetTopicAttributesInput{
+		TopicArn: request.TopicArn,
+	})
+	if err == nil {
+		policyPayload, ok := topicAttributes.Attributes[policyAttribute]
+		if ok {
+			policy := &iam.PolicyDocument{}
+			if err = json.Unmarshal([]byte(*policyPayload), &policy); err != nil {
+				return errors.Wrapf(err, "failed to decode policy: %s", *policyPayload)
+			}
+			for i := range policy.Statement {
+				if *policy.Statement[i].Sid == *request.Label {
+					if request.Everybody {
+						policy.Statement[i].Principal = toolbox.AnyJSONType(`{"AWS":"*"}`)
+					}
+					if request.SourceArn != "" {
+						policy.Statement[i].Condition = toolbox.AnyJSONType(fmt.Sprintf(`{"StringEquals": {"aws:SourceArn": "%s"}}`, request.SourceArn))
+					}
+				}
+			}
+			updated, err := json.Marshal(policy)
+			if err != nil {
+				return errors.Wrapf(err, "failed to decode policy: %s", *policyPayload)
+			}
+			_, err = client.SetTopicAttributes(&sns.SetTopicAttributesInput{
+				TopicArn:       request.TopicArn,
+				AttributeName:  aaws.String(policyAttribute),
+				AttributeValue: aaws.String(string(updated)),
+			})
+		}
+	}
+	return err
 }
 
 //New creates a new AWS SNS service.
