@@ -41,10 +41,10 @@ type Principal struct {
 type Statement struct {
 	Sid       *string
 	Effect    string
-	Action    toolbox.AnyJSONType
-	Resource  toolbox.AnyJSONType
-	Principal toolbox.AnyJSONType
-	Condition toolbox.AnyJSONType
+	Action    toolbox.AnyJSONType `json:",omitempty"`
+	Resource  toolbox.AnyJSONType `json:",omitempty"`
+	Principal toolbox.AnyJSONType `json:",omitempty"`
+	Condition toolbox.AnyJSONType `json:",omitempty"`
 }
 
 //PolicyDocument represent policy document
@@ -55,12 +55,12 @@ type PolicyDocument struct {
 }
 
 type InfoStatement struct {
-	SID       *string `yaml:"sid,omitempty"`
+	SID       *string `yaml:"sid,omitempty" json:",omitempty"`
 	Effect    string
 	Action    interface{}
-	Resource  interface{} `yaml:"resource,omitempty"`
-	Condition interface{} `yaml:"condition,omitempty"`
-	Principal interface{} `yaml:"principal,omitempty"`
+	Resource  interface{} `yaml:"resource,omitempty"  json:",omitempty"`
+	Condition interface{} `yaml:"condition,omitempty"  json:",omitempty"`
+	Principal interface{} `yaml:"principal,omitempty"  json:",omitempty"`
 }
 
 type PolicyInfo struct {
