@@ -1,0 +1,13 @@
+init:
+  '!awsCredentials': $params.authWith
+
+
+pipeline:
+  setupPermission:
+    action: aws/sqs:setupPermission
+    credentials: $awsCredentials
+    queue: ms-dataflowStorageMirrorQueue
+    AWSAccountIds:
+      - ${aws.accountID}
+    actions:
+      - '*'
