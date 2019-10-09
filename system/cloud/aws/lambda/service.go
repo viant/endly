@@ -5,12 +5,14 @@ import (
 	"fmt"
 	aaws "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	asqs "github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/aws"
 	"github.com/viant/endly/system/cloud/aws/cloudwatchevents"
 	"github.com/viant/endly/system/cloud/aws/ec2"
 	"github.com/viant/endly/system/cloud/aws/iam"
+	"github.com/viant/endly/system/cloud/aws/sqs"
 	"github.com/viant/toolbox"
 	"log"
 	"sync"
@@ -187,6 +189,7 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 		return nil, errors.Wrap(err, "failed to setup policy")
 	}
 	request.Role = output.RoleInfo.Role.Arn
+
 	var functionConfig *lambda.FunctionConfiguration
 	functionOutput, foundErr := client.GetFunction(&lambda.GetFunctionInput{
 		FunctionName: request.FunctionName,
@@ -194,7 +197,6 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 
 	if foundErr == nil {
 		functionConfig = functionOutput.Configuration
-
 		if request.Schedule == nil && functionConfig != nil {
 			if err = endly.Run(context, &cloudwatchevents.DeleteRuleInput{
 				TargetArn: functionConfig.FunctionArn,
@@ -237,12 +239,12 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 
 	} else {
 		if functionConfig, err = client.CreateFunction(&request.CreateFunctionInput); err != nil {
-			return nil, errors.Wrap(err, "failed to create function")
+			return nil, errors.Wrapf(err, "failed to create function %s", request.CreateFunctionInput)
 		}
 	}
 	output.FunctionConfiguration = functionConfig
 	if len(request.Triggers) > 0 {
-		triggersOutput, err := s.setupTriggerSource(context, &SetupTriggerSourceInput{FunctionName: request.FunctionName, Triggers: request.Triggers})
+		triggersOutput, err := s.setupTriggerSource(context, &SetupTriggerSourceInput{FunctionName: request.FunctionName, Triggers: request.Triggers, Timeout: request.Timeout})
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to setup trigger")
 		}
@@ -334,7 +336,14 @@ func (s *service) setupTriggerSource(context *endly.Context, request *SetupTrigg
 		if trigger.SourceARN == nil {
 			switch trigger.Type {
 			case "sqs":
-				trigger.SourceARN, err = aws.GetSqsURL(context, trigger.Source)
+				if trigger.SourceARN, err = aws.GetSqsURL(context, trigger.Source); err != nil {
+					return nil, err
+				}
+				if request.Timeout != nil {
+					if err = s.adjustQueueVisibilityIfNeeded(context, trigger.Source, *request.Timeout); err != nil {
+						return nil, err
+					}
+				}
 			case "kinesisStream":
 				trigger.SourceARN, err = aws.GetKinesisStreamARN(context, trigger.Source)
 			case "kinesisConsumer":
@@ -346,6 +355,7 @@ func (s *service) setupTriggerSource(context *endly.Context, request *SetupTrigg
 				return nil, err
 			}
 		}
+
 		listOutput, _ := client.ListEventSourceMappings(&lambda.ListEventSourceMappingsInput{
 			FunctionName:   request.FunctionName,
 			EventSourceArn: trigger.SourceARN,
@@ -379,6 +389,43 @@ func (s *service) setupTriggerSource(context *endly.Context, request *SetupTrigg
 		}
 	}
 	return response, nil
+}
+
+func (s *service) adjustQueueVisibilityIfNeeded(context *endly.Context, queue string, timeout int64) error {
+	client, err := sqs.GetClient(context)
+	if err != nil {
+		return err
+	}
+	queueURLOutput, err := client.GetQueueUrl(&asqs.GetQueueUrlInput{
+		QueueName: &queue,
+	})
+	if err != nil {
+		return err
+	}
+	queueURL := queueURLOutput.QueueUrl
+	input := &asqs.GetQueueAttributesInput{
+		QueueUrl: queueURL,
+		AttributeNames: []*string{
+			aaws.String(asqs.QueueAttributeNameVisibilityTimeout),
+		},
+	}
+	output, err := client.GetQueueAttributes(input)
+	if err != nil {
+		return err
+	}
+	visibility, ok := output.Attributes[asqs.QueueAttributeNameVisibilityTimeout]
+	if ok {
+		if visibilityInt := toolbox.AsInt(*visibility); visibilityInt >= int(timeout) {
+			return nil
+		}
+	}
+	_, err = client.SetQueueAttributes(&asqs.SetQueueAttributesInput{
+		QueueUrl: queueURL,
+		Attributes: map[string]*string{
+			asqs.QueueAttributeNameVisibilityTimeout: aaws.String(fmt.Sprintf("%v", timeout)),
+		},
+	})
+	return err
 }
 
 func (s *service) registerRoutes() {
