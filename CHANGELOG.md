@@ -1,3 +1,11 @@
+## October 2 2019 0.44.0
+    * Added aws/sns:setupPermission
+    * Added aws/sqs:setupPermission
+    * Updated aws/s3:setupBucketNotification with lambda,sqs,sns
+    
+## October 2 2019 0.43.2
+    * Added storage:upload upload data substitution
+    
 ## October 2 2019 0.43.1
     * Stremlined afs.Matcher integration
     * Patched storage:copy batch upload
