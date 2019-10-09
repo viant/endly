@@ -14,6 +14,8 @@ const (
 	ServiceID = "aws/iam"
 )
 
+var permissionPropagation = 5 * time.Second
+
 //no operation service
 type service struct {
 	*endly.AbstractService
@@ -94,56 +96,56 @@ func (s *service) setupRole(context *endly.Context, request *SetupRolePolicyInpu
 	})
 
 	state := context.State()
+	if request.AssumeRolePolicyDocument != nil {
+		*request.AssumeRolePolicyDocument = state.ExpandAsText(*request.AssumeRolePolicyDocument)
+	}
+
 	var role *iam.Role
 	if foundErr != nil {
-		createRole := &request.CreateRoleInput
-		if createRole.AssumeRolePolicyDocument == nil {
-			createRole.AssumeRolePolicyDocument = request.DefaultPolicyDocument
-		}
-
-		if request.AssumeRolePolicyDocument != nil {
-			*request.AssumeRolePolicyDocument = state.ExpandAsText(*request.AssumeRolePolicyDocument)
-		}
-
-		created, err := client.CreateRole(createRole)
+		_, err := client.CreateRole(&request.CreateRoleInput)
 		if err != nil {
 			return nil, err
 		}
-		role = created.Role
-	} else {
-		role = roleOutput.Role
-		if request.AssumeRolePolicyDocument != nil {
-			if _, err = client.UpdateAssumeRolePolicy(&iam.UpdateAssumeRolePolicyInput{
-				PolicyDocument: request.AssumeRolePolicyDocument,
-				RoleName:       request.RoleName,
-			}); err != nil {
-				return nil, err
-			}
+		//wait for role to propagate
+		time.Sleep(permissionPropagation)
+		roleOutput, _ = client.GetRole(&iam.GetRoleInput{
+			RoleName: request.RoleName,
+		})
+	}
+	role = roleOutput.Role
+	if request.AssumeRolePolicyDocument != nil {
+		if _, err = client.UpdateAssumeRolePolicy(&iam.UpdateAssumeRolePolicyInput{
+			PolicyDocument: request.AssumeRolePolicyDocument,
+			RoleName:       request.RoleName,
+		}); err != nil {
+			return nil, err
 		}
 	}
+	attached := false
+	if attached, err = s.setupAttachedRolePolicy(context, role, request); err != nil {
+		return nil, err
+	}
 
-	time.Sleep(time.Second)
-	if err = s.setupAttachedRolePolicy(context, role, request); err != nil {
+	updated := false
+	if updated, err = s.setupRolePolicy(context, role, request); err != nil {
 		return nil, err
 	}
-	time.Sleep(time.Second)
-	if err = s.setupRolePolicy(context, role, request); err != nil {
-		return nil, err
+	if attached || updated {
+		time.Sleep(permissionPropagation)
 	}
-	time.Sleep(time.Second)
 	return s.getRoleInfo(context, &GetRoleInfoInput{
 		RoleName: request.RoleName,
 	})
 }
 
-func (s *service) setupRolePolicy(context *endly.Context, role *iam.Role, request *SetupRolePolicyInput) error {
+func (s *service) setupRolePolicy(context *endly.Context, role *iam.Role, request *SetupRolePolicyInput) (bool, error) {
 	client, err := GetClient(context)
 	if err != nil {
-		return err
+		return false, err
 	}
 	state := context.State()
 	if len(request.Define) == 0 {
-		return err
+		return false, err
 	}
 	var alreadyDefined = make(map[string]bool)
 	outputList, _ := client.ListRolePolicies(&iam.ListRolePoliciesInput{
@@ -155,6 +157,7 @@ func (s *service) setupRolePolicy(context *endly.Context, role *iam.Role, reques
 		}
 	}
 
+	updated := 0
 	for _, define := range request.Define {
 		*define.PolicyDocument = state.ExpandAsText(*define.PolicyDocument)
 
@@ -171,12 +174,13 @@ func (s *service) setupRolePolicy(context *endly.Context, role *iam.Role, reques
 				PolicyName: define.PolicyName,
 				RoleName:   role.RoleName,
 			}); err != nil {
-				return err
+				return false, err
 			}
 		}
 		define.RoleName = role.RoleName
+		updated++
 		if _, err = client.PutRolePolicy(define); err != nil {
-			return err
+			return false, err
 		}
 	}
 	for policyName := range alreadyDefined {
@@ -184,24 +188,24 @@ func (s *service) setupRolePolicy(context *endly.Context, role *iam.Role, reques
 			PolicyName: &policyName,
 			RoleName:   role.RoleName,
 		}); err != nil {
-			return err
+			return false, err
 		}
 	}
-	return err
+	return updated > 0, err
 }
 
-func (s *service) setupAttachedRolePolicy(context *endly.Context, role *iam.Role, request *SetupRolePolicyInput) error {
+func (s *service) setupAttachedRolePolicy(context *endly.Context, role *iam.Role, request *SetupRolePolicyInput) (bool, error) {
 	client, err := GetClient(context)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if len(request.Attach) == 0 {
-		return err
+		return false, err
 	}
 	if role == nil {
-		return fmt.Errorf("role was empty %v", request.RoleName)
+		return false, fmt.Errorf("role was empty %v", request.RoleName)
 	}
-
+	attachedCount := 0
 	var alreadyAttached = make(map[string]bool)
 	attachedOutput, _ := client.ListAttachedRolePolicies(&iam.ListAttachedRolePoliciesInput{RoleName: role.RoleName})
 	if attachedOutput != nil && len(attachedOutput.AttachedPolicies) > 0 {
@@ -214,11 +218,12 @@ func (s *service) setupAttachedRolePolicy(context *endly.Context, role *iam.Role
 			delete(alreadyAttached, *attach.PolicyArn)
 			continue
 		}
+		attachedCount++
 		if _, err = client.AttachRolePolicy(&iam.AttachRolePolicyInput{
 			RoleName:  role.RoleName,
 			PolicyArn: attach.PolicyArn,
 		}); err != nil {
-			return err
+			return false, err
 		}
 	}
 	for arn := range alreadyAttached {
@@ -226,10 +231,10 @@ func (s *service) setupAttachedRolePolicy(context *endly.Context, role *iam.Role
 			PolicyArn: &arn,
 			RoleName:  role.RoleName,
 		}); err != nil {
-			return err
+			return false, err
 		}
 	}
-	return err
+	return attachedCount > 0, err
 }
 
 func (s *service) getPolicyVersion(context *endly.Context, policyArn string) (*iam.PolicyVersion, error) {
