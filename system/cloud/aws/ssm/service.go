@@ -3,6 +3,7 @@ package ssm
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/aws"
 	"log"
@@ -66,20 +67,27 @@ func (s *service) setParameter(context *endly.Context, input *SetParameterInput)
 		return nil, err
 	}
 	withDecryption := true
+	*input.Name = context.Expand(*input.Name)
+	*input.Value = context.Expand(*input.Value)
+
 	getOutput, err := client.GetParameter(&ssm.GetParameterInput{
 		Name:           input.Name,
 		WithDecryption: &withDecryption,
 	})
-
 	found := err == nil && getOutput != nil
-
 	if found && *getOutput.Parameter.Value == *input.Value {
 		return &ssm.PutParameterOutput{
 			Version: getOutput.Parameter.Version,
 		}, nil
 	}
+
 	putParameter := ssm.PutParameterInput(*input)
-	return client.PutParameter(&putParameter)
+
+	output, err := client.PutParameter(&putParameter)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to put parameters: %v", putParameter)
+	}
+	return output, err
 }
 
 //New creates a new AWS Simple Systems Manager service.
