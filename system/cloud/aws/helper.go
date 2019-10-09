@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/kinesis"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/google/uuid"
 	"github.com/viant/endly"
@@ -131,7 +132,7 @@ func GetDynamoDBTableARN(context *endly.Context, name string) (*string, error) {
 //GetQueueARN returns qeueue arn
 func GetQueueARN(context *endly.Context, name string) (*string, error) {
 	client := &sqs.SQS{}
-	if err := GetClient(context, dynamodb.New, &client); err != nil {
+	if err := GetClient(context, sqs.New, &client); err != nil {
 		return nil, err
 	}
 	output, err := client.GetQueueUrl(&sqs.GetQueueUrlInput{
@@ -142,12 +143,41 @@ func GetQueueARN(context *endly.Context, name string) (*string, error) {
 	}
 	queueAttributes, err := client.GetQueueAttributes(&sqs.GetQueueAttributesInput{
 		QueueUrl:       output.QueueUrl,
-		AttributeNames: []*string{aws.String("QueueArn")},
+		AttributeNames: []*string{aws.String(sqs.QueueAttributeNameQueueArn)},
 	})
 	if err != nil {
 		return nil, err
 	}
-	return queueAttributes.Attributes["QueueArn"], nil
+	return queueAttributes.Attributes[sqs.QueueAttributeNameQueueArn], nil
+}
+
+//GetTopicARN returns topic arn
+func GetTopicARN(context *endly.Context, name string) (*string, error) {
+	client := &sns.SNS{}
+	if err := GetClient(context, sns.New, &client); err != nil {
+		return nil, err
+	}
+
+	var nextToken *string
+	for {
+		output, err := client.ListTopics(&sns.ListTopicsInput{
+			NextToken: nextToken,
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, topic := range output.Topics {
+			ARN, _ := arn.Parse(*topic.TopicArn)
+			if ARN.Resource == name {
+				return topic.TopicArn, nil
+			}
+		}
+		nextToken = output.NextToken
+		if nextToken == nil {
+			break
+		}
+	}
+	return nil, fmt.Errorf("failed to lookup topic: %v", name)
 }
 
 //NextID return new ID
