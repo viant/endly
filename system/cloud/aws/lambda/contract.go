@@ -46,6 +46,7 @@ type SetupPermissionInput lambda.AddPermissionInput
 //SetupTriggerSourceInput represents setup triggers input
 type SetupTriggerSourceInput struct {
 	FunctionName *string
+	Timeout      *int64
 	Triggers     []*EventSourceMapping
 }
 
