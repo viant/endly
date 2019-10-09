@@ -27,6 +27,14 @@ func (i *SetupRolePolicyInput) Validate() error {
 	return nil
 }
 
+//Validate checks if input is valid
+func (i *SetupRolePolicyInput) Init() error {
+	if i.AssumeRolePolicyDocument == nil {
+		i.AssumeRolePolicyDocument = i.DefaultPolicyDocument
+	}
+	return nil
+}
+
 type GetRoleInfoInput iam.GetRoleInput
 type GetRoleInfoOutput struct {
 	Role     *iam.Role
