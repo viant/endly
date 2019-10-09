@@ -3,9 +3,11 @@ package s3
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/aws"
 	"github.com/viant/endly/system/cloud/aws/lambda"
+
 	"log"
 )
 
@@ -28,12 +30,21 @@ func (s *service) setupBucketNotification(context *endly.Context, request *Setup
 	currentConfig, err := client.GetBucketNotificationConfiguration(&s3.GetBucketNotificationConfigurationRequest{
 		Bucket: request.Bucket,
 	})
+
 	if err != nil {
 		currentConfig = &s3.NotificationConfiguration{
 			LambdaFunctionConfigurations: make([]*s3.LambdaFunctionConfiguration, 0),
 		}
 	}
-	return s.updateBucketNotification(context, currentConfig, request)
+	response, err := s.updateBucketNotification(context, currentConfig, request)
+	if err != nil {
+		return nil, err
+	}
+	currentConfig, err = client.GetBucketNotificationConfiguration(&s3.GetBucketNotificationConfigurationRequest{
+		Bucket: request.Bucket,
+	})
+	response.NotificationConfiguration = currentConfig
+	return response, err
 }
 
 func (s *service) updateBucketNotification(ctx *endly.Context, currentConfig *s3.NotificationConfiguration, request *SetupBucketNotificationInput) (*SetupBucketNotificationOutput, error) {
@@ -41,55 +52,137 @@ func (s *service) updateBucketNotification(ctx *endly.Context, currentConfig *s3
 	if err != nil {
 		return nil, err
 	}
-
 	input := &s3.PutBucketNotificationConfigurationInput{
 		Bucket: request.Bucket,
-		NotificationConfiguration: &s3.NotificationConfiguration{
-			LambdaFunctionConfigurations: make([]*s3.LambdaFunctionConfiguration, 0),
-			QueueConfigurations:          request.NotificationConfiguration.QueueConfigurations,
-			TopicConfigurations:          request.NotificationConfiguration.TopicConfigurations,
-		},
+		NotificationConfiguration: &s3.NotificationConfiguration{},
 	}
+
 	response := &SetupBucketNotificationOutput{
 		Bucket: request.Bucket,
 		NotificationConfiguration: input.NotificationConfiguration,
-		Permissions:               make([]*lambda.SetupPermissionInput, 0),
+		LambdaPermissions:         make([]*lambda.SetupPermissionInput, 0),
 	}
+
+	if len(request.LambdaFunctionConfigurations) > 0 {
+		if input.NotificationConfiguration.LambdaFunctionConfigurations, err = s.setupLambdaNotification(ctx, currentConfig, request, response); err != nil {
+			return nil, err
+		}
+	}
+	if len(request.QueueConfigurations) > 0 {
+		if input.NotificationConfiguration.QueueConfigurations, err = s.setupQueueNotification(ctx, currentConfig, request, response); err != nil {
+			return nil, err
+		}
+	}
+	if len(request.TopicConfigurations) > 0 {
+		if input.NotificationConfiguration.TopicConfigurations, err = s.setupTopicNotification(ctx, currentConfig, request, response); err != nil {
+			return nil, err
+		}
+	}
+
+	_, err = client.PutBucketNotificationConfiguration(input)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unable put bucket notification: %v", input)
+	}
+
+	return response, nil
+}
+
+func (s *service) setupLambdaNotification(ctx *endly.Context, currentConfig *s3.NotificationConfiguration, request *SetupBucketNotificationInput, response *SetupBucketNotificationOutput) ([]*s3.LambdaFunctionConfiguration, error) {
+	var result = make([]*s3.LambdaFunctionConfiguration, 0)
 	configuredLambdaFunctions := currentConfig.LambdaFunctionConfigurations
 	existingFunction := indexLambdaFunction(configuredLambdaFunctions)
 	var state = ctx.State()
 	state = state.Clone()
 
-	for _, configuration := range request.NotificationConfiguration.LambdaFunctionConfigurations {
-		funcName := *configuration.FunctionName
+	for _, config := range request.NotificationConfiguration.LambdaFunctionConfigurations {
+		funcName := *config.FunctionName
 		lambdaConfig, ok := existingFunction[funcName]
 		if ok {
-			lambdaConfig.Events = configuration.Events
-			lambdaConfig.Filter = configuration.Filter.ToNotificationConfigurationFilter()
+			lambdaConfig.Events = config.Events
+			lambdaConfig.Filter = config.Filter.ToNotificationConfigurationFilter()
 		} else {
 			function, err := aws.GetFunctionConfiguration(ctx, funcName)
 			if err != nil {
 				return nil, err
 			}
 			aws.SetFunctionInfo(function, state)
-			lambdaConfig = &configuration.LambdaFunctionConfiguration
+			lambdaConfig = &config.LambdaFunctionConfiguration
 			lambdaConfig.LambdaFunctionArn = function.FunctionArn
 		}
-		lambdaConfig.Filter = configuration.Filter.ToNotificationConfigurationFilter()
-		permissionInput := &configuration.SetupPermissionInput
+		lambdaConfig.Filter = config.Filter.ToNotificationConfigurationFilter()
+		permissionInput := &config.SetupPermissionInput
 		*permissionInput.StatementId = state.ExpandAsText(*permissionInput.StatementId)
 		*permissionInput.SourceArn = state.ExpandAsText(*permissionInput.SourceArn)
-		*configuration.Id = state.ExpandAsText(*configuration.Id)
-		input.NotificationConfiguration.LambdaFunctionConfigurations = append(input.NotificationConfiguration.LambdaFunctionConfigurations, lambdaConfig)
+
+		if config.Id != nil {
+			*config.Id = state.ExpandAsText(*config.Id)
+		}
+
+		result = append(result, lambdaConfig)
 		if err := endly.Run(ctx, permissionInput, nil); err != nil {
 			return nil, err
 		}
-		response.Permissions = append(response.Permissions, &configuration.SetupPermissionInput)
+		response.LambdaPermissions = append(response.LambdaPermissions, &config.SetupPermissionInput)
 	}
-	if _, err = client.PutBucketNotificationConfiguration(input); err != nil {
-		return nil, fmt.Errorf("unable put bucket notification: %v", err)
+	return result, nil
+}
+
+func (s *service) setupQueueNotification(context *endly.Context, configuration *s3.NotificationConfiguration, input *SetupBucketNotificationInput, output *SetupBucketNotificationOutput) ([]*s3.QueueConfiguration, error) {
+	var err error
+	state := context.State()
+	var result = make([]*s3.QueueConfiguration, 0)
+
+	//getBucketPolicy
+
+	for i := range input.QueueConfigurations {
+		config := input.QueueConfigurations[i]
+		if config.QueueArn == nil {
+			config.Queue = context.Expand(config.Queue)
+			if config.QueueArn, err = aws.GetQueueARN(context, config.Queue); err != nil {
+				return nil, err
+			}
+			config.QueueConfiguration.Filter = config.Filter.ToNotificationConfigurationFilter()
+			if config.Id != nil {
+				*config.Id = state.ExpandAsText(*config.Id)
+			}
+			config.SetupPermissionInput.Queue = config.Queue
+			config.SetupPermissionInput.Everybody = true
+			config.SetupPermissionInput.SourceArn = fmt.Sprintf("arn:aws:s3:::%s", *input.Bucket)
+			if err := endly.Run(context, &config.SetupPermissionInput, nil); err != nil {
+				return nil, err
+			}
+		}
+		result = append(result, &config.QueueConfiguration)
 	}
-	return response, nil
+	return result, nil
+}
+
+func (s *service) setupTopicNotification(context *endly.Context, configuration *s3.NotificationConfiguration,
+	input *SetupBucketNotificationInput, output *SetupBucketNotificationOutput) ([]*s3.TopicConfiguration, error) {
+	var err error
+	var result = make([]*s3.TopicConfiguration, 0)
+	for i := range input.TopicConfigurations {
+		config := input.TopicConfigurations[i]
+		if config.TopicArn == nil {
+			config.Topic = context.Expand(config.Topic)
+			if config.TopicArn, err = aws.GetTopicARN(context, config.Topic); err != nil {
+				return nil, err
+			}
+			config.TopicConfiguration.Filter = config.Filter.ToNotificationConfigurationFilter()
+			if config.Id != nil {
+				*config.Id = context.Expand(*config.Id)
+			}
+
+			config.SetupPermissionInput.Topic = config.Topic
+			config.SetupPermissionInput.Everybody = true
+			config.SetupPermissionInput.SourceArn = fmt.Sprintf("arn:aws:s3:::%s", *input.Bucket)
+			if err := endly.Run(context, &config.SetupPermissionInput, nil); err != nil {
+				return nil, err
+			}
+		}
+		result = append(result, &config.TopicConfiguration)
+	}
+	return result, nil
 }
 
 func (s *service) registerRoutes() {
@@ -120,7 +213,12 @@ func (s *service) registerRoutes() {
 		OnRawRequest: setClient,
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*SetupBucketNotificationInput); ok {
-				return s.setupBucketNotification(context, req)
+				response, err := s.setupBucketNotification(context, req)
+				if err != nil {
+					return nil, err
+				}
+				context.Publish(aws.NewOutputEvent("notification", "s3", response))
+				return response, err
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
