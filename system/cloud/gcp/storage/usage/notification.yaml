@@ -1,0 +1,49 @@
+init:
+  '!gcpCredentials': $params.authWith
+  triggerBucket: mye2e_topic_bucket
+  topic: proxySourceTopic
+  appPath: $Pwd('.')
+
+pipeline:
+
+  setTopic:
+    action: msg:setupResource
+    resources:
+      - URL: $topic
+        type: topic
+        vendor: gcp
+        credentials: $gcpCredentials
+  createBucket:
+    action: storage:create
+    isDir: true
+    dest:
+      credentials: $gcpCredentials
+      URL: gs://${triggerBucket}/
+  setBucketNotificiation:
+    action: gcp/storage:setNotification
+    credentials: $gcpCredentials
+    bucket: $triggerBucket
+    topic: $topic
+    payloadFormat: JSON_API_V1
+    eventTypes:
+      - OBJECT_FINALIZE
+
+  deploy:
+    action: gcp/cloudfunctions:deploy
+    '@name': HelloStoragePubsubNotificiation
+    credentials: $gcpCredentials
+    entryPoint: Hello
+    runtime: go111
+    eventTrigger:
+      eventType: google.pubsub.topic.publish
+      resource: projects/${gcp.projectID}/topics/$topic
+    source:
+      URL: ${appPath}
+
+  testIt:
+    action: storage:upload
+    sourceKey: appPath
+    dest:
+      URL: gs://${triggerBucket}/data/abc.txt
+      credentials: $gcpCredentials
+
