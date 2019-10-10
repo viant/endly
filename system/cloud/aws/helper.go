@@ -181,19 +181,18 @@ func GetTopicARN(context *endly.Context, name string) (*string, error) {
 	return nil, fmt.Errorf("failed to lookup topic: %v", name)
 }
 
-
 //ArnName returns arn name
 func ArnName(uri string) (string, error) {
 	if uri == "" {
 		return "", fmt.Errorf("uri was empty")
 	}
-	ARN, err:= arn.Parse(uri)
+	ARN, err := arn.Parse(uri)
 	if err != nil {
 		return "", err
 	}
 	name := ARN.Resource
 	pairs := strings.Split(name, ":")
-	if len(pairs)==2 {
+	if len(pairs) == 2 {
 		name = pairs[1]
 	}
 	return name, nil
