@@ -5,8 +5,9 @@ import (
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"google.golang.org/api/gensupport"
 )
+
+type URLParams map[string][]string
 
 //ExpandMeta expand meta data
 func ExpandMeta(context *endly.Context, text string) string {
@@ -47,7 +48,7 @@ func UpdateActionRequest(rawRequest map[string]interface{}, credConfig *gcpCredC
 		rawRequest["region"] = credConfig.Region
 	}
 
-	var URLParams = make(gensupport.URLParams)
+	var URLParams = make(URLParams)
 	if paramsKey, has := mappings["urlparams"]; has {
 		params := rawRequest[paramsKey]
 		if toolbox.IsMap(params) {
