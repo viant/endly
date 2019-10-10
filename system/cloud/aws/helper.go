@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox/data"
+	"strings"
 )
 
 //LambdaInvoke represents lambda action permission
@@ -167,8 +168,8 @@ func GetTopicARN(context *endly.Context, name string) (*string, error) {
 			return nil, err
 		}
 		for _, topic := range output.Topics {
-			ARN, _ := arn.Parse(*topic.TopicArn)
-			if ARN.Resource == name {
+			topicName, _ := ArnName(*topic.TopicArn)
+			if topicName == name {
 				return topic.TopicArn, nil
 			}
 		}
@@ -178,6 +179,24 @@ func GetTopicARN(context *endly.Context, name string) (*string, error) {
 		}
 	}
 	return nil, fmt.Errorf("failed to lookup topic: %v", name)
+}
+
+
+//ArnName returns arn name
+func ArnName(uri string) (string, error) {
+	if uri == "" {
+		return "", fmt.Errorf("uri was empty")
+	}
+	ARN, err:= arn.Parse(uri)
+	if err != nil {
+		return "", err
+	}
+	name := ARN.Resource
+	pairs := strings.Split(name, ":")
+	if len(pairs)==2 {
+		name = pairs[1]
+	}
+	return name, nil
 }
 
 //NextID return new ID

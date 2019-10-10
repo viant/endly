@@ -2,7 +2,6 @@ package cloudwatchevents
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/cloudwatchevents"
 	"github.com/pkg/errors"
 	"github.com/viant/endly"
@@ -168,10 +167,10 @@ func (s *service) getRule(context *endly.Context, input *GetRuleInput) (*GetRule
 		return nil, err
 	}
 	if output.Rule != nil && output.Rule.RoleArn != nil {
-		ARN, _ := arn.Parse(*output.Rule.RoleArn)
+		ruleName, _ := aws.ArnName(*output.Rule.RoleArn)
 		output.RoleInfo = &ciam.GetRoleInfoOutput{}
 		if err = endly.Run(context, &ciam.GetRoleInfoInput{
-			RoleName: &ARN.Resource,
+			RoleName: &ruleName,
 		}, &output.RoleInfo); err != nil {
 			return nil, err
 		}

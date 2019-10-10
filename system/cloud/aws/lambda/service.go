@@ -222,6 +222,7 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 			return nil, errors.Wrap(err, "failed to update function")
 		}
 
+
 		if createFunction.Code.ZipFile != nil && !hasDataChanged(createFunction.Code.ZipFile, *functionConfig.CodeSha256) {
 			output.FunctionConfiguration = functionOutput.Configuration
 			return output, nil
