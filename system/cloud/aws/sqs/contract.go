@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
-	eaws "github.com/viant/endly/system/cloud/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	eaws "github.com/viant/endly/system/cloud/aws"
 )
 
 const (

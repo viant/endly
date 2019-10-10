@@ -38,7 +38,7 @@ func (s *service) matchTopic(client *sns.SNS, name string) (*sns.Topic, error) {
 			return nil, err
 		}
 		for _, candidate := range list.Topics {
-			topicName, _  := aws.ArnName(*candidate.TopicArn)
+			topicName, _ := aws.ArnName(*candidate.TopicArn)
 			if topicName == name {
 				return candidate, nil
 			}
@@ -113,7 +113,6 @@ func (s *service) updateSubscriptionEndpointIfNeeded(context *endly.Context, req
 
 		request.Endpoint = config.FunctionArn
 
-
 	case "sqs":
 		ARN, err := aws.GetQueueARN(context, *request.Endpoint)
 		if err != nil {
@@ -168,7 +167,7 @@ func (s *service) setupSubscription(context *endly.Context, request *SetupSubscr
 		permissionInput.Principal = aaws.String(snsPrincipal)
 		statementID := state.ExpandAsText(fmt.Sprintf("%v_%v_${uuid.next}", request.Topic, functionName))
 		permissionInput.StatementId = &statementID
-		err = endly.Run(context, permissionInput, nil);
+		err = endly.Run(context, permissionInput, nil)
 		fmt.Printf("setting lambda permission: %v %v\n", permissionInput, err)
 		if err != nil {
 			return nil, err
