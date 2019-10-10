@@ -1,6 +1,0 @@
-pipeline:
-  start:
-    info:
-      action: gcp/pubsub:topicsList
-      credentials: gcp-e2e
-      project: projects/myProject

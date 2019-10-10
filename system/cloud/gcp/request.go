@@ -18,24 +18,26 @@ func ExpandMeta(context *endly.Context, text string) string {
 	if gcpCred.Region == "" {
 		gcpCred.Region = DefaultRegion
 	}
+	state := createCredState(gcpCred)
+	return state.ExpandAsText(text)
+}
+
+func createCredState(gcpCred *gcpCredConfig) data.Map {
 	state := data.NewMap()
 	state.SetValue("gcp.projectID", gcpCred.ProjectID)
+	state.SetValue("gcp.projectId", gcpCred.ProjectID)
 	state.SetValue("gcp.region", gcpCred.Region)
 	state.SetValue("gcp.serviceAccount", gcpCred.ClientEmail)
-	return state.ExpandAsText(text)
+	return state
 }
 
 //UpdateActionRequest updates raw request with project, service
 func UpdateActionRequest(rawRequest map[string]interface{}, credConfig *gcpCredConfig, client CtxClient) {
-	state := data.NewMap()
 
 	if credConfig.Region == "" {
 		credConfig.Region = DefaultRegion
 	}
-
-	state.SetValue("gcp.projectID", credConfig.ProjectID)
-	state.SetValue("gcp.region", credConfig.Region)
-	state.SetValue("gcp.serviceAccount", credConfig.ClientEmail)
+	state := createCredState(credConfig)
 	for k, v := range rawRequest {
 		rawRequest[k] = state.Expand(v)
 	}
