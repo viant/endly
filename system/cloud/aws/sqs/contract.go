@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
+	eaws "github.com/viant/endly/system/cloud/aws"
 	"github.com/aws/aws-sdk-go/service/sqs"
 )
 
@@ -23,10 +23,7 @@ type SetupPermissionInput struct {
 
 func (i *SetupPermissionInput) Init() error {
 	if i.Label == nil {
-		source := ""
-		if ARN, err := arn.Parse(i.SourceArn); err == nil {
-			source = ARN.Resource + "-"
-		}
+		source, _ := eaws.ArnName(i.SourceArn)
 		i.Label = aws.String(fmt.Sprintf("%s%vPermission", source, i.Queue))
 	}
 	if len(i.AWSAccountIds) == 0 {

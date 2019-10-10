@@ -13,7 +13,6 @@ import (
 	"github.com/viant/endly/system/cloud/aws/lambda"
 	"github.com/viant/toolbox"
 	"log"
-	"strings"
 )
 
 const (
@@ -39,8 +38,7 @@ func (s *service) matchTopic(client *sns.SNS, name string) (*sns.Topic, error) {
 			return nil, err
 		}
 		for _, candidate := range list.Topics {
-			ARN, _ := arn.Parse(*candidate.TopicArn)
-			topicName := strings.Replace(ARN.Resource, "topic:", "", 1)
+			topicName, _  := aws.ArnName(*candidate.TopicArn)
 			if topicName == name {
 				return candidate, nil
 			}
@@ -112,7 +110,10 @@ func (s *service) updateSubscriptionEndpointIfNeeded(context *endly.Context, req
 		if err != nil {
 			return err
 		}
+
 		request.Endpoint = config.FunctionArn
+
+
 	case "sqs":
 		ARN, err := aws.GetQueueARN(context, *request.Endpoint)
 		if err != nil {
@@ -160,15 +161,16 @@ func (s *service) setupSubscription(context *endly.Context, request *SetupSubscr
 	state := context.State()
 	if *subscription.Protocol == "lambda" {
 		permissionInput := &lambda.SetupPermissionInput{}
-		functionARN, _ := arn.Parse(*request.Endpoint)
-		functionName := strings.Replace(functionARN.Resource, "function:", "", 1)
+		functionName, _ := aws.ArnName(*request.Endpoint)
 		permissionInput.FunctionName = &functionName
 		permissionInput.SourceArn = subscription.TopicArn
 		permissionInput.Action = &aws.LambdaInvoke
 		permissionInput.Principal = aaws.String(snsPrincipal)
 		statementID := state.ExpandAsText(fmt.Sprintf("%v_%v_${uuid.next}", request.Topic, functionName))
 		permissionInput.StatementId = &statementID
-		if err := endly.Run(context, permissionInput, nil); err != nil {
+		err = endly.Run(context, permissionInput, nil);
+		fmt.Printf("setting lambda permission: %v %v\n", permissionInput, err)
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -229,9 +231,8 @@ func (s *service) registerRoutes() {
 				if err != nil {
 					return nil, err
 				}
-				ARN, _ := arn.Parse(*output.SubscriptionArn)
-				topic := string(ARN.Resource[:strings.Index(ARN.Resource, ":")])
-				context.Publish(aws.NewOutputEvent(fmt.Sprintf("%v", topic), "subscription", output))
+				topicName, _ := aws.ArnName(*output.SubscriptionArn)
+				context.Publish(aws.NewOutputEvent(fmt.Sprintf("%v", topicName), "subscription", output))
 				return output, err
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
