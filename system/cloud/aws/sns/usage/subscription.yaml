@@ -1,0 +1,70 @@
+init:
+  '!awsCredentials': $params.authWith
+  appPath: $Pwd('.')
+  codeZip: hello.zip
+  handler: hello
+  functionName: HelloTopic
+  privilegePolicy: privilege-policy.json
+  topic: mye2eTopic
+
+
+pipeline:
+
+  setup:
+    setupTopic:
+      action: msg:setupResource
+      credentials: $awsCredentials
+      resources:
+        - URL: $topic
+          type: topic
+          vendor: aws
+
+
+  deploy:
+    builc:
+      action: exec:run
+      target: $target
+      checkError: true
+      commands:
+        - cd ${appPath}
+        - unset GOPATH
+        - export GOOS=linux
+        - export GOARCH=amd64
+        - go build -o $handler
+        - zip -j hello.zip hello
+
+    deployLambda:
+      action: aws/lambda:deploy
+      credentials: $awsCredentials
+      functionname: $functionName
+      runtime:  go1.x
+      handler: $handler
+      code:
+        zipfile: $LoadBinary(${codeZip})
+      rolename: lambda-${functionName}-executor
+      define:
+        - policyname: s3-${functionName}-sns-role
+          policydocument: $Cat('${privilegePolicy}')
+      attach:
+        - policyarn: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+
+    setupLambdaSubscription:
+      action: aws/sns:setupSubscription
+      protocol: lambda
+      endpoint: $functionName
+      topic: $topic
+
+
+  trigger:
+    action: msg:push
+    credentials: $awsCredentials
+    dest:
+      URL: $topic
+      type: topic
+      vendor: aws
+    messages:
+      - subject: Test subject
+        data: '{"EventType":33, "Timestamp":"${tzTime.now}"}'
+        attributes:
+          id: 1
