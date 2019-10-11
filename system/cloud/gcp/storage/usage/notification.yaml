@@ -18,7 +18,22 @@ pipeline:
     isDir: true
     dest:
       credentials: $gcpCredentials
-      URL: gs://${triggerBucket}/
+init:
+  self.var1: 20
+
+pipeline:
+  task1:
+    action1:
+      action: print
+      init:
+        newVar: ${self.var1 +  20}
+        _ : ${self.var1}++
+      message: child message ${self.var1}
+
+post:
+  myResult1: $newVar
+  myResult2: $self.var1      URL: gs://${triggerBucket}/
+
   setBucketNotificiation:
     action: gcp/storage:setNotification
     credentials: $gcpCredentials

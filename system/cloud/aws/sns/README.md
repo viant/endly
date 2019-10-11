@@ -15,6 +15,25 @@ To check method contract run endly -s="aws/sqs" -a=methodName
 
 #### Usage:
 
+Set subscription
+
+```bash
+endly subscription.yaml authWith=myAWSSecret.json
+```
+
+[@subscription.yaml](usage/subscription.yaml)
+```yaml
+pipeline:
+  setupLambdaSubscription:
+    action: aws/sns:setupSubscription
+    protocol: lambda
+    endpoint: $functionName
+    topic: $topic
+```
+
+
+**Set permission**
+
 ```bash
 endly set_permission.yaml authWith=myAWSSecret.json
 ``` 
@@ -36,3 +55,6 @@ pipeline:
       - 'publish'
     everybody: true 
 ```
+
+
+See also [Message resource setup and testing](https://github.com/viant/endly/tree/master/testing/msg)

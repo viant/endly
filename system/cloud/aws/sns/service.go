@@ -71,12 +71,16 @@ func (s *service) setupTopic(context *endly.Context, request *SetupTopicInput) (
 }
 
 func (s *service) matchSubscription(client *sns.SNS, request *SetupSubscriptionInput) (*sns.Subscription, error) {
+
+	var matched = make(map[string]*sns.Subscription)
 	var nextToken *string
 	for {
 		list, err := client.ListSubscriptions(&sns.ListSubscriptionsInput{NextToken: nextToken})
 		if err != nil {
 			return nil, err
 		}
+
+
 		for _, candidate := range list.Subscriptions {
 			if *candidate.TopicArn != *request.TopicArn {
 				continue
@@ -84,22 +88,27 @@ func (s *service) matchSubscription(client *sns.SNS, request *SetupSubscriptionI
 			if *candidate.Protocol != *request.Protocol {
 				continue
 			}
-			return candidate, nil
+			if candidate.Endpoint == nil {
+				continue
+			}
+			matched[*candidate.Endpoint]= candidate
 		}
 		nextToken = list.NextToken
 		if nextToken == nil {
 			break
 		}
 	}
-	return nil, nil
+	return  matched[*request.Endpoint], nil
 }
 
 func (s *service) updateSubscriptionEndpointIfNeeded(context *endly.Context, request *SetupSubscriptionInput) error {
+
 	switch *request.Protocol {
 	case "lambda", "sqs":
 	default:
 		return nil
 	}
+
 	_, err := arn.Parse(*request.Endpoint)
 	if err == nil {
 		return nil
@@ -168,7 +177,6 @@ func (s *service) setupSubscription(context *endly.Context, request *SetupSubscr
 		statementID := state.ExpandAsText(fmt.Sprintf("%v_%v_${uuid.next}", request.Topic, functionName))
 		permissionInput.StatementId = &statementID
 		err = endly.Run(context, permissionInput, nil)
-		fmt.Printf("setting lambda permission: %v %v\n", permissionInput, err)
 		if err != nil {
 			return nil, err
 		}

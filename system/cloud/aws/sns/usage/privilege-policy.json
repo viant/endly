@@ -1,0 +1,21 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sns:*"
+      ],
+      "Resource": "arn:aws:sqs:*:${aws.accountID}:${topic}"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "lambda:InvokeFunction"
+      ],
+      "Resource": [
+        "arn:aws:lambda:${aws.region}:${aws.accountID}:function:*"
+      ]
+    }
+  ]
+}
