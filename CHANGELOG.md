@@ -1,4 +1,4 @@
-## October 11 2019 0.44.0
+## October 14 2019 0.44.0
     * Added aws/sns:setupPermission
     * Added aws/sqs:setupPermission
     * Added gcp/storage:setNotification
