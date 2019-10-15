@@ -180,7 +180,7 @@ func TestRepeatable_Run(t *testing.T) {
 			},
 			Repeat:      10,
 			SleepTimeMs: 100,
-			Exit:        "$value:!/running/", //this is contains
+			Exit:        "$output:!/running/", //this is contains
 		}
 
 		manager := endly.New()
@@ -216,7 +216,7 @@ func TestRepeatable_Run(t *testing.T) {
 			},
 			Repeat:      10,
 			SleepTimeMs: 100,
-			Exit:        "$value:!/running/", //this is contains
+			Exit:        "$output:!/running/", //this is contains
 		}
 
 		manager := endly.New()
@@ -302,7 +302,7 @@ func TestRepeatable_Run(t *testing.T) {
 			},
 			Repeat:      10,
 			SleepTimeMs: 100,
-			Exit:        "$value:!/running/", //this is contains
+			Exit:        "$output:!/running/", //this is contains
 		}
 
 		manager := endly.New()

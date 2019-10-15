@@ -16,6 +16,7 @@ func TestExtracts_Extract(t *testing.T) {
 		inputs     []string
 		expected   map[string]interface{}
 		hasError   bool
+		alreadyExtracted map[string]interface{}
 	}{
 		{
 			desription: "single line expresssion",
@@ -88,11 +89,84 @@ versionId: '2'`, "\n"),
 			},
 			hasError: true,
 		},
+		{
+			desription: "single line required expression",
+			extracts: []*Extract{
+				{
+					Key:     "status",
+					RegExpr: `"testStatus":"([^\"]+)"`,
+					Required: true,
+				},
+			},
+			inputs: []string{
+				`"testStatus":"running"`,
+			},
+			expected: map[string]interface{}{
+				"status": "running",
+			},
+		},
+		{
+			desription: "single line missing required expression",
+			extracts: []*Extract{
+				{
+					Key:     "status",
+					RegExpr: `"testStatus":"([^\"]+)"`,
+					Required: true,
+				},
+			},
+			inputs: []string{
+				`"runtatus":"running"`,
+			},
+			expected: map[string]interface{}{
+			},
+			hasError: true,
+		},
+		{
+			desription: "override existing variable",
+			extracts: []*Extract{
+				{
+					Key:     "status",
+					RegExpr: `"testStatus":"([^\"]+)"`,
+					Required: true,
+				},
+			},
+			inputs: []string{
+				`"testStatus":"stopped"`,
+			},
+			expected: map[string]interface{}{
+				"status": "stopped",
+			},
+			alreadyExtracted : map[string]interface{}{
+				"status": "running",
+			},
+		},
+		{
+			desription: "no error when no match, but var already exists",
+			extracts: []*Extract{
+				{
+					Key:     "status",
+					RegExpr: `"testStatus":"([^\"]+)"`,
+					Required: true,
+				},
+			},
+			inputs: []string{
+				`"status":"stopped"`,
+			},
+			expected: map[string]interface{}{
+				"status": "running",
+			},
+			alreadyExtracted : map[string]interface{}{
+				"status": "running",
+			},
+		},
 	}
 
 	for _, useCase := range useCases {
 
 		var actual = map[string]interface{}{}
+		if useCase.alreadyExtracted != nil {
+			actual = useCase.alreadyExtracted
+		}
 		err := useCase.extracts.Extract(ctx, actual, useCase.inputs...)
 		if useCase.hasError {
 			assert.NotNil(t, err, useCase.desription)
