@@ -1,11 +1,10 @@
-package cloudfunctions
+package cloudscheduler
 
 import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/gcp"
-	"google.golang.org/api/cloudfunctions/v1"
-	"google.golang.org/api/storage/v1"
+	"google.golang.org/api/cloudscheduler/v1beta1"
 )
 
 var clientKey = (*CtxClient)(nil)
@@ -13,18 +12,15 @@ var clientKey = (*CtxClient)(nil)
 //CtxClient represents context client
 type CtxClient struct {
 	*gcp.AbstractClient
-	service *cloudfunctions.Service
+	service *cloudscheduler.Service
 }
 
 func (s *CtxClient) SetService(service interface{}) error {
 	var ok bool
-	s.service, ok = service.(*cloudfunctions.Service)
+	s.service, ok = service.(*cloudscheduler.Service)
 	if !ok {
 		return fmt.Errorf("unable to set service: %T", service)
 	}
-
-
-
 	return nil
 }
 
@@ -53,6 +49,6 @@ func GetClient(context *endly.Context) (*CtxClient, error) {
 	client := &CtxClient{
 		AbstractClient: &gcp.AbstractClient{},
 	}
-	err := gcp.GetClient(context, cloudfunctions.New, clientKey, &client, cloudfunctions.CloudPlatformScope, storage.DevstorageFullControlScope)
+	err := gcp.GetClient(context, cloudscheduler.New, clientKey, &client, cloudscheduler.CloudPlatformScope)
 	return client, err
 }
