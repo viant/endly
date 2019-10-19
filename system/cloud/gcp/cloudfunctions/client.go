@@ -22,6 +22,9 @@ func (s *CtxClient) SetService(service interface{}) error {
 	if !ok {
 		return fmt.Errorf("unable to set service: %T", service)
 	}
+
+
+
 	return nil
 }
 
