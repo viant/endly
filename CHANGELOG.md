@@ -1,3 +1,10 @@
+## October 22 2019 0.45.0
+   * Added gcp/cloudscheduler
+   * Added gcp/cloudscheduler:deploy
+
+## October 14 2019 0.44.1
+    * Added retry flag on gcp/cloudfunctions:deploy
+
 ## October 14 2019 0.44.0
     * Added aws/sns:setupPermission
     * Added aws/sqs:setupPermission
