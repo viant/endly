@@ -6,6 +6,7 @@ import (
 	"github.com/viant/endly/model/criteria"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 )
 
 //SliceKey represents slice key
@@ -58,8 +59,18 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 	if out == nil {
 		return true, nil
 	}
+
 	extractableOutput, structuredOutput := util.AsExtractable(out)
 	if len(structuredOutput) > 0 {
+		if extractedData, ok := structuredOutput["Data"]; ok {
+			extractedDataMap := extractedData.(data.Map)
+			for k,v := range extractedDataMap {
+				// don't overwrite existing keys
+				if _, ok := extracted[k]; !ok {
+					extracted[k] = v
+				}
+			}
+		}
 		if len(r.Variables) > 0 {
 			err = r.Variables.Apply(structuredOutput, extracted)
 		}

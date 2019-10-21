@@ -17,6 +17,7 @@ func (d *Extracts) Extract(context *endly.Context, extracted map[string]interfac
 	if len(*d) == 0 || len(inputs) == 0 {
 		return nil
 	}
+
 	for _, extract := range *d {
 		if extract.Reset {
 			delete(extracted, extract.Key)
@@ -53,9 +54,14 @@ func (d *Extracts) Extract(context *endly.Context, extracted map[string]interfac
 			cleanedLine := vtclean.Clean(line, false)
 			if matchExpression(compiledExpression, cleanedLine, extract, context, extracted) {
 				matched = true
+				continue
 			}
 		}
 		if extract.Required && !matched {
+			if _, ok := extracted[extract.Key]; ok {
+				// we found a value at some point, continue
+				continue
+			}
 			return fmt.Errorf("failed to extract required data - no match found for regexpr: %v,  %v", extract.RegExpr, multiLines)
 		}
 	}
