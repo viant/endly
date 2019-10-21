@@ -80,7 +80,6 @@ func (s *service) matchSubscription(client *sns.SNS, request *SetupSubscriptionI
 			return nil, err
 		}
 
-
 		for _, candidate := range list.Subscriptions {
 			if *candidate.TopicArn != *request.TopicArn {
 				continue
@@ -91,14 +90,14 @@ func (s *service) matchSubscription(client *sns.SNS, request *SetupSubscriptionI
 			if candidate.Endpoint == nil {
 				continue
 			}
-			matched[*candidate.Endpoint]= candidate
+			matched[*candidate.Endpoint] = candidate
 		}
 		nextToken = list.NextToken
 		if nextToken == nil {
 			break
 		}
 	}
-	return  matched[*request.Endpoint], nil
+	return matched[*request.Endpoint], nil
 }
 
 func (s *service) updateSubscriptionEndpointIfNeeded(context *endly.Context, request *SetupSubscriptionInput) error {

@@ -16,4 +16,5 @@ func TestNew(t *testing.T) {
 		"Credentials": "gcp-e2e",
 	})
 	assert.Nil(t, err)
+
 }

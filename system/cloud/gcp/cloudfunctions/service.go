@@ -4,8 +4,8 @@ import (
 	"archive/zip"
 	"bytes"
 	"encoding/json"
-	"github.com/pkg/errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/gcp"
 	"github.com/viant/endly/util"
@@ -162,8 +162,6 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 		request.EventTrigger.Resource = s.expandWithContext(context, ctxClient.CredConfig, request.Region, request.EventTrigger.Resource)
 	}
 
-
-
 	projectService := cloudfunctions.NewProjectsLocationsFunctionsService(ctxClient.service)
 	cloudFunction, err := projectService.Get(request.Name).Do()
 	if err != nil {
@@ -192,7 +190,7 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 		output, err := createCall.Do()
 		if err != nil {
 			JSON, _ := json.Marshal(request.CloudFunction)
-			return nil, errors.Wrapf(err, "failed to create function: %v; %s",  request.Name, JSON)
+			return nil, errors.Wrapf(err, "failed to create function: %v; %s", request.Name, JSON)
 		}
 		return output, err
 	} else {
@@ -200,7 +198,7 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 	}
 	updateCall := projectService.Patch(request.Name, cloudFunction)
 	updateCall.Context(ctxClient.Context())
-	operation, err :=  updateCall.Do()
+	operation, err := updateCall.Do()
 	if err != nil {
 		JSON, _ := json.Marshal(request.CloudFunction)
 		return nil, errors.Wrapf(err, "failed to update function: %v; %s", request.Name, JSON)
