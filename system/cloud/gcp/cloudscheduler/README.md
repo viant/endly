@@ -18,6 +18,23 @@ _References:_
 
 #### Usage:
 
-##### Creating cluster
+##### Deploying schedule job
 
-TODO add examples
+```endly deploy authWith=myGoogleSecret.json```
+
+[@deploy.yaml](usage/deploy.yaml)
+```yaml
+pipeline:
+  deploy:
+    action: gcp/cloudscheduler:deploy
+    credentials: viant-e2e
+    name: Replay
+    schedule: 0 * * * *
+    body: body comes here
+    httpTarget:
+      headers:
+      "User-Agent": Google-Cloud-Scheduler"
+      httpMethod: POST
+      uri: https://us-central1-viant-e2e.cloudfunctions.net/BqTailReplay
+
+```

@@ -26,6 +26,7 @@ func createCredState(gcpCred *gcpCredConfig) data.Map {
 	state := data.NewMap()
 	state.SetValue("gcp.projectID", gcpCred.ProjectID)
 	state.SetValue("gcp.projectId", gcpCred.ProjectID)
+	state.SetValue("gcp.ProjectID", gcpCred.ProjectID)
 	state.SetValue("gcp.region", gcpCred.Region)
 	state.SetValue("gcp.serviceAccount", gcpCred.ClientEmail)
 	return state

@@ -21,7 +21,7 @@ type DeployRequest struct {
 	Public                       bool     `description:"set this flag to make function public"`
 	Members                      []string `description:"members with roles/cloudfunctions.invoker role"`
 	Region                       string
-	Retry bool
+	Retry                        bool
 }
 
 //DeployResponse represents deploy response
@@ -119,10 +119,9 @@ func (r *DeployRequest) Init() error {
 	}
 	r.Labels["deployment-tool"] = "endly"
 
-
 	if r.Retry && r.EventTrigger != nil {
 		r.EventTrigger.FailurePolicy = &cloudfunctions.FailurePolicy{
-			Retry:&cloudfunctions.Retry{},
+			Retry: &cloudfunctions.Retry{},
 		}
 	}
 	return r.Source.Init()
