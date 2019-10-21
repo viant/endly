@@ -71,6 +71,7 @@ import (
 
 	_ "github.com/viant/endly/system/cloud/gcp/bigquery"
 	_ "github.com/viant/endly/system/cloud/gcp/cloudfunctions"
+	_ "github.com/viant/endly/system/cloud/gcp/cloudscheduler"
 	_ "github.com/viant/endly/system/cloud/gcp/compute"
 	_ "github.com/viant/endly/system/cloud/gcp/container"
 	_ "github.com/viant/endly/system/cloud/gcp/kms"
