@@ -14,6 +14,7 @@ require (
 	github.com/adrianwit/fsc v0.2.0
 	github.com/adrianwit/mgc v0.2.0
 	github.com/aerospike/aerospike-client-go v2.2.0+incompatible // indirect
+	github.com/aws/aws-lambda-go v1.13.2
 	github.com/aws/aws-sdk-go v1.20.6
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v0.7.3-0.20190515030239-f4b9142210e9
@@ -66,7 +67,7 @@ require (
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/spf13/pflag v1.0.3 // indirect
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.4.0
 	github.com/tebeka/selenium v0.9.3
 	github.com/viant/afs v0.4.0
 	github.com/viant/afsc v0.3.0
@@ -84,7 +85,7 @@ require (
 	google.golang.org/api v0.6.0
 	gopkg.in/linkedin/goavro.v1 v1.0.5 // indirect
 	gopkg.in/src-d/go-git.v4 v4.12.0
-	gopkg.in/yaml.v2 v2.2.2
+	gopkg.in/yaml.v2 v2.2.4
 	gotest.tools v2.2.0+incompatible // indirect
 	k8s.io/api v0.0.0-20190111032252-67edc246be36
 	k8s.io/apimachinery v0.0.0-20190201131811-df262fa1a1ba

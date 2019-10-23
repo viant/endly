@@ -16,7 +16,7 @@ import (
 //RunRequest represents a docker runAdapter request
 type RunRequest struct {
 	Credentials                 string `description:"credentials"`
-	Name                        string
+	Name                        string `yaml:"serviceName"`
 	Image                       string            `required:"true" description:"container image to runAdapter" example:"mysql:5.6"`
 	Port                        string            `description:"publish a container’s port(s) to the host, docker -p option"`
 	Env                         map[string]string `description:"set docker container an environment variable, docker -e KEY=VAL  option"`
