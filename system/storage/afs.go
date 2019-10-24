@@ -67,7 +67,6 @@ func StorageOptions(ctx *endly.Context, resource *url.Resource, options ...stora
 			result = append(result, &s3.Region{Name: credConfig.Region})
 		}
 		payload := ([]byte)(credConfig.Data)
-
 		scheme := arl.Scheme(resource.URL, file.Scheme)
 		extension := arl.SchemeExtensionURL(resource.URL)
 		if extension != "" {
