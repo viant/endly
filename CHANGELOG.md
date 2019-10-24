@@ -1,4 +1,4 @@
-## October 22 2019 0.45.0
+## October 24 2019 0.45.0
    * Added gcp/cloudscheduler
    * Added gcp/cloudscheduler:deploy
 
