@@ -70,6 +70,22 @@ func (r *CopyRequest) Messages() []*msg.Message {
 	return result
 }
 
+
+//Items returns event messages
+func (r *GenerateRequest) Messages() []*msg.Message {
+	_ = r.Init()
+
+	if r.Dest == nil {
+		return []*msg.Message{}
+	}
+	return []*msg.Message{msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
+		msg.NewStyled("Generate", msg.MessageStyleGeneric),
+		msg.NewStyled(fmt.Sprintf("Size: %v", r.Size), msg.MessageStyleInput),
+		msg.NewStyled(fmt.Sprintf("DestURL: %v", r.Dest.URL), msg.MessageStyleOutput),
+	)}
+}
+
+
 //Items returns event messages
 func (r *ListResponse) Messages() []*msg.Message {
 	if r.Assets == nil {
