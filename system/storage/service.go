@@ -152,6 +152,25 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
+
+	s.Register(&endly.Route{
+		Action: "generate",
+		RequestInfo: &endly.ActionInfo{
+			Description: "Create asset with specified size and template",
+		},
+		RequestProvider: func() interface{} {
+			return &GenerateRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &GenerateResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*GenerateRequest); ok {
+				return s.Generate(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 }
 
 //New creates a new service

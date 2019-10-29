@@ -1,0 +1,4 @@
+pipeline:
+
+  createTestAsset:
+    action: storage:generate
