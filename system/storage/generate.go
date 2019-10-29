@@ -4,12 +4,9 @@ import (
 	"errors"
 	"io"
 	"strings"
-
 	"github.com/viant/afs/file"
-
 	"github.com/viant/endly"
 	"github.com/viant/toolbox/url"
-
 	"os"
 )
 
@@ -48,16 +45,30 @@ func (s *service) generate(context *endly.Context, request *GenerateRequest, res
 		return err
 	}
 	response.URL = dest.URL
-	reader := generateContent(request)
+	reader := generateContent(context, request)
 	return fs.Upload(context.Background(), dest.URL, os.FileMode(request.Mode), reader, storageOpts...)
 }
 
-func generateContent(request *GenerateRequest) io.Reader {
+func generateContent(context *endly.Context, request *GenerateRequest) io.Reader {
 	if request.Template == "" {
 		request.Template = " "
 	}
 	repeat := request.Size / len(request.Template)
-	text := strings.Repeat(request.Template, repeat+1)
+
+	if ! strings.Contains(request.Template, "$") {
+		text := strings.Repeat(request.Template, repeat+1)
+		return strings.NewReader(string(text[:request.Size]))
+	}
+
+	state := context.State()
+	state = state.Clone()
+	items := make([]string, repeat + 1)
+
+	for i := range items {
+		state.Put("i", i)
+		items[i] = state.ExpandAsText(request.Template)
+	}
+	text := strings.Join(items, "")
 	return strings.NewReader(string(text[:request.Size]))
 }
 
