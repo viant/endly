@@ -1,3 +1,7 @@
+## October 29 2019 0.46.0
+   * Added storage:generate to create dynamically test assets
+   * viant/afs streaming improvements 
+
 ## October 24 2019 0.45.0
    * Added gcp/cloudscheduler
    * Added gcp/cloudscheduler:deploy
