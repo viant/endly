@@ -548,3 +548,27 @@ pipeline:
 
 ### Generating file
 
+
+To create dynamically file for specified size you can use the following workflow
+
+[@generate.yaml](usage/generate/generate.yaml)
+```yaml
+pipeline:
+
+  createTestAsset1:
+    action: storage:generate
+    sizeInMb: 20
+    lineTemplate: '$i,name $i,address $i'
+    dest:
+      URL: /tmp/myasset.csv
+
+  createTestAsset2:
+    action: storage:generate
+    sizeInMb: 300
+    dest:
+      URL: /tmp/myasset.txt
+
+
+```
+
+- TODO add UDF (i.e to compress)
