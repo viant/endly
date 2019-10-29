@@ -20,7 +20,7 @@ This service uses [Abstract File Storage](https://github.com/viant/afs).
   * [Customer key data encryption](#customer-key-data-encryption)
   * [Dynamic conifg/state](#dynamic-configstate-upload)
 - [Data validation](#data-validation)
-
+- [Generating file](#generating-file)
 
 ## Introduction
 
@@ -543,3 +543,8 @@ pipeline:
       'data/f3.txt': true
       'gs://blach/resource/assset1.txt': false
 ```
+
+
+
+### Generating file
+
