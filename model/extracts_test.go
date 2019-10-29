@@ -11,11 +11,11 @@ func TestExtracts_Extract(t *testing.T) {
 
 	ctx := endly.New().NewContext(nil)
 	useCases := []struct {
-		desription string
-		extracts   Extracts
-		inputs     []string
-		expected   map[string]interface{}
-		hasError   bool
+		desription       string
+		extracts         Extracts
+		inputs           []string
+		expected         map[string]interface{}
+		hasError         bool
 		alreadyExtracted map[string]interface{}
 	}{
 		{
@@ -93,8 +93,8 @@ versionId: '2'`, "\n"),
 			desription: "single line required expression",
 			extracts: []*Extract{
 				{
-					Key:     "status",
-					RegExpr: `"testStatus":"([^\"]+)"`,
+					Key:      "status",
+					RegExpr:  `"testStatus":"([^\"]+)"`,
 					Required: true,
 				},
 			},
@@ -109,24 +109,23 @@ versionId: '2'`, "\n"),
 			desription: "single line missing required expression",
 			extracts: []*Extract{
 				{
-					Key:     "status",
-					RegExpr: `"testStatus":"([^\"]+)"`,
+					Key:      "status",
+					RegExpr:  `"testStatus":"([^\"]+)"`,
 					Required: true,
 				},
 			},
 			inputs: []string{
 				`"runtatus":"running"`,
 			},
-			expected: map[string]interface{}{
-			},
+			expected: map[string]interface{}{},
 			hasError: true,
 		},
 		{
 			desription: "override existing variable",
 			extracts: []*Extract{
 				{
-					Key:     "status",
-					RegExpr: `"testStatus":"([^\"]+)"`,
+					Key:      "status",
+					RegExpr:  `"testStatus":"([^\"]+)"`,
 					Required: true,
 				},
 			},
@@ -136,7 +135,7 @@ versionId: '2'`, "\n"),
 			expected: map[string]interface{}{
 				"status": "stopped",
 			},
-			alreadyExtracted : map[string]interface{}{
+			alreadyExtracted: map[string]interface{}{
 				"status": "running",
 			},
 		},
@@ -144,8 +143,8 @@ versionId: '2'`, "\n"),
 			desription: "no error when no match, but var already exists",
 			extracts: []*Extract{
 				{
-					Key:     "status",
-					RegExpr: `"testStatus":"([^\"]+)"`,
+					Key:      "status",
+					RegExpr:  `"testStatus":"([^\"]+)"`,
 					Required: true,
 				},
 			},
@@ -155,7 +154,7 @@ versionId: '2'`, "\n"),
 			expected: map[string]interface{}{
 				"status": "running",
 			},
-			alreadyExtracted : map[string]interface{}{
+			alreadyExtracted: map[string]interface{}{
 				"status": "running",
 			},
 		},
