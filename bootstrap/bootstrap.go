@@ -513,8 +513,32 @@ func printServiceActionInfo(renderer *cli.Renderer, info *endly.ActionInfo, colo
 	buf, _ := json.MarshalIndent(req, "", "\t")
 	renderer.Println(string(buf) + "\n")
 	renderer.Printf(renderer.ColorText(fmt.Sprintf("YAML %v: \n", infoType), color, "bold"))
-	buf, _ = yaml.Marshal(req)
+	reqMap := map[string]interface{}{}
+	_ = toolbox.DefaultConverter.AssignConverted(&reqMap, req)
+	reqMap = toLowerCaseCamel(reqMap)
+	buf, _ = yaml.Marshal(reqMap)
 	renderer.Println(string(buf) + "\n")
+}
+
+func toLowerCaseCamel(req map[string]interface{}) map[string]interface{} {
+	var result = make(map[string]interface{})
+
+	for k, v := range req {
+		k = toolbox.ToCaseFormat(k, toolbox.CaseUpperCamel, toolbox.CaseLowerCamel)
+		if toolbox.IsMap(v) {
+			v = toLowerCaseCamel(toolbox.AsMap(v))
+		} else if toolbox.IsSlice(v) {
+			aSlice := toolbox.AsSlice(v)
+			for i := range aSlice {
+				if aSlice[i] != nil && toolbox.IsMap(aSlice[i]) {
+					aSlice[i] = toLowerCaseCamel(toolbox.AsMap(aSlice[i]))
+				}
+			}
+			v = aSlice
+		}
+		result[k] = v
+	}
+	return result
 }
 
 func structMetaToArray(meta *toolbox.StructMeta) ([]string, [][]string) {
