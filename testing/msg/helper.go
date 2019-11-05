@@ -69,6 +69,11 @@ func expandResource(context *endly.Context, resource *Resource) *Resource {
 		Name:        state.ExpandAsText(resource.Name),
 		Vendor:      resource.Vendor,
 		Credentials: state.ExpandAsText(resource.Credentials),
+		Brokers:resource.Brokers,
+		Partitions:resource.Partitions,
+		Partition:resource.Partition,
+		Offset:resource.Offset,
+		ReplicationFactor: resource.ReplicationFactor,
 	}
 }
 

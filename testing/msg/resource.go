@@ -1,9 +1,12 @@
 package msg
 
 import (
+	"github.com/pkg/errors"
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
+
 )
 
 const (
@@ -14,7 +17,13 @@ const (
 
 type Resource struct {
 	URL         string
+	Brokers     []string
 	Credentials string
+	Offset      int
+	GroupID     string
+	Partition   int
+	ReplicationFactor int
+	Partitions  int
 	ID          string
 	Name        string
 	Type        string `description:"resource type: topic, subscription"`
@@ -38,6 +47,15 @@ func (r *Resource) Init() error {
 			}
 			if index != -1 {
 				r.Name = string(r.URL[index+1:])
+			}
+		}
+		if r.Vendor == ResourceVendorKafka {
+			if len(r.Brokers) == 0 {
+				parsedURL, err := url.Parse(r.URL)
+				if err != nil {
+					return errors.Wrapf(err, "invalid kafka url: %v", r.URL)
+				}
+				r.Brokers = []string{parsedURL.Host}
 			}
 		}
 	}
@@ -71,6 +89,7 @@ func (r *ResourceSetup) Init() error {
 		}
 	}
 
+
 	if r.Config != nil && r.Config.Topic != nil {
 		_ = r.Config.Topic.Init()
 	}
@@ -78,7 +97,7 @@ func (r *ResourceSetup) Init() error {
 }
 
 func (r *ResourceSetup) Validate() error {
-	if r.Type == ResourceTypeSubscription && (r.Vendor == ResourceVendorGoogleCloud || r.Vendor == ResourceVendorGoogleCloudPlatform) {
+	if r.Type == ResourceTypeSubscription && r.Vendor == ResourceVendorGoogleCloudPlatform {
 		if r.Config == nil {
 			return fmt.Errorf("subscription config was empty")
 		}
@@ -86,9 +105,16 @@ func (r *ResourceSetup) Validate() error {
 			return fmt.Errorf("subscription config.Topic was empty")
 		}
 	}
+
+	if r.Type== ResourceVendorKafka {
+		if len(r.Brokers) == 0 {
+			return fmt.Errorf("brokers where empty")
+		}
+	}
+
 	if r.Type == ResourceTypeQueue {
 		if r.Name == "" {
-			return fmt.Errorf("Name was empty")
+			return fmt.Errorf("name was empty")
 		}
 	}
 
@@ -102,7 +128,9 @@ func NewResourceSetup(resourceType, URL, credentials string, recreate bool, conf
 			Type:        resourceType,
 			Credentials: credentials,
 			URL:         URL,
+
 		},
+
 		Recreate: recreate,
 		Config:   config,
 	}
