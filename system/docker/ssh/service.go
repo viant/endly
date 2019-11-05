@@ -465,7 +465,7 @@ func (s *service) executeSecureDockerCommand(asRoot bool, secrets map[string]str
 	extractRequest.TimeoutMs = 600000
 	extractRequest.SystemPaths = s.SysPath
 	extractRequest.Secrets = secret.NewSecrets(secrets)
-	extractRequest.SuperUser = asRoot
+	extractRequest.AutoSudo = asRoot
 
 	var runResponse = &exec.RunResponse{}
 

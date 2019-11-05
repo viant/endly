@@ -46,6 +46,7 @@ require (
 	github.com/klauspost/cpuid v1.2.1 // indirect
 	github.com/klauspost/pgzip v1.2.1 // indirect
 	github.com/lib/pq v1.1.1
+    github.com/segmentio/kafka-go v0.3.4
 	github.com/linkedin/goavro v2.1.0+incompatible
 	github.com/logrusorgru/aurora v0.0.0-20190428105938-cea283e61946
 	github.com/lunixbochs/vtclean v1.0.0

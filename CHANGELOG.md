@@ -1,7 +1,9 @@
-## October 29 2019 0.46.0
+## November 5 2019 0.46.0
    * Added storage:generate to create dynamically test assets
-   * viant/afs streaming improvements 
-
+   * viant/afs streaming improvements
+   * Added kafka testing/msg support
+   * Added default credentials fallback to docker/ssh service
+   
 ## October 24 2019 0.45.0
    * Added gcp/cloudscheduler
    * Added gcp/cloudscheduler:deploy

@@ -30,6 +30,14 @@ type Request struct {
 	Target    *url.Resource     `required:"true" description:"build location, host and path" `
 }
 
+
+//Init initialises request
+func (r *Request) Init() error {
+	r.Target = exec.GetServiceTarget(r.Target)
+	return nil
+}
+
+
 //Response represents a build response.
 type Response struct {
 	CommandInfo *exec.RunResponse
