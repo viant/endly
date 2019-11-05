@@ -3,6 +3,7 @@ package docker
 import (
 	"errors"
 	"fmt"
+	"github.com/viant/endly/system/exec"
 
 	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
@@ -23,6 +24,7 @@ type BuildResponse struct {
 
 //Init initialises default values
 func (r *BuildRequest) Init() {
+	r.Target = exec.GetServiceTarget(r.Target)
 	if len(r.Arguments) == 0 {
 		r.Arguments = make(map[string]string)
 	}
@@ -70,6 +72,7 @@ func NewBaseRequest(target *url.Resource, name string) *BaseRequest {
 
 //Init initializes request
 func (r *BaseRequest) Init() error {
+	r.Target = exec.GetServiceTarget(r.Target)
 	if r == nil || r.Target == nil {
 		return nil
 	}
@@ -463,8 +466,9 @@ type ComposeRequestDown struct {
 }
 
 func (r *ComposeRequest) Init() error {
+	r.Target = exec.GetServiceTarget(r.Target)
 	if r.Source != nil {
-		r.Source.Init()
+		return r.Source.Init()
 	}
 	return nil
 }

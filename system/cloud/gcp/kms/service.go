@@ -251,6 +251,7 @@ func (s *service) encrypt(context *endly.Context, request *EncryptRequest) (*Enc
 	}
 
 	if request.Dest != nil {
+
 		credentials := request.Dest.Credentials
 		if credentials != "" {
 			if location, err := context.Secrets.CredentialsLocation(credentials); err == nil {
