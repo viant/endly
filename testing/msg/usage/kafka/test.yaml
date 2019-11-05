@@ -1,0 +1,57 @@
+
+pipeline:
+  startUp:
+    action: docker/ssh:composeUp
+    comments: setup kafka cluster
+    sleepTimeMs: 10000
+    runInBackground: true
+    source:
+      URL: docker-compose.yml
+
+  create:
+    sleepTimeMs: 10000
+    action: msg:setupResource
+    comments: create topic and wait for a leadership election
+    resources:
+      - URL: myTopic
+        type: topic
+        replicationFactor: 1
+        partitions: 1
+        brokers:
+          - localhost:9092
+
+
+  setup:
+    action: msg:push
+    dest:
+      url: tcp://localhost:9092/myTopic
+      vendor: kafka
+
+    messages:
+      - data: "this is my 1st message"
+        attributes:
+          key: abc
+      - data: "this is my 2nd message"
+        attributes:
+          key: xyz
+
+  validate:
+    action: msg:pull
+    count: 2
+    nack: true
+    source:
+      url: tcp://localhost:9092/myTopic
+      vendor: kafka
+    expect:
+      - '@indexBy@': 'Attributes.key'
+      - Data: "this is my 1st message"
+        Attributes:
+          key: abc
+      - Data: "this is my 2nd message"
+        Attributes:
+          key: xyz
+
+  cleanUp:
+    action: docker/ssh:composeDown
+    source:
+      URL: docker-compose.yml

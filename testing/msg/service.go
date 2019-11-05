@@ -1,8 +1,10 @@
 package msg
 
 import (
+	"github.com/pkg/errors"
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/system/storage"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/endly/udf"
 	"github.com/viant/toolbox"
@@ -97,12 +99,23 @@ func (s *service) push(context *endly.Context, request *PushRequest) (interface{
 	response := PushResponse{
 		Results: make([]Result, 0),
 	}
+
+	if request.Source != nil {
+		download := &storage.DownloadResponse{}
+		err  := endly.Run(context, &storage.DownloadRequest{Source:request.Source}, download)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to download push source: %v", request.Source)
+		}
+		request.Messages = loadMessages([]byte(download.Payload))
+	}
+
 	var duration, _ = toolbox.NewDuration(request.TimeoutMs, toolbox.DurationMillisecond)
 	client, err := NewPubSubClient(context, request.Dest, duration)
 	if err != nil {
 		return response, err
 	}
 	defer client.Close()
+
 	dest := expandResource(context, request.Dest)
 	var state = context.State()
 	for _, message := range request.Messages {
@@ -113,7 +126,7 @@ func (s *service) push(context *endly.Context, request *PushRequest) (interface{
 				return nil, err
 			}
 		}
-		result, err := client.Push(dest, expanded)
+		result, err := client.Push(context.Background(), dest, expanded)
 		if err != nil {
 			return response, err
 		}
@@ -131,7 +144,7 @@ func (s *service) pull(context *endly.Context, request *PullRequest) (interface{
 	}
 	source := expandResource(context, request.Source)
 	defer client.Close()
-	response.Messages, err = client.PullN(source, request.Count, request.Nack)
+	response.Messages, err = client.PullN(context.Background(), source, request.Count, request.Nack)
 	if err == nil {
 		for _, message := range response.Messages {
 			if request.UDF != "" {

@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
-	"io/ioutil"
 )
 
 const defaultTimeoutMs = 10000
@@ -87,35 +85,6 @@ func (r *PushRequest) Init() error {
 	if r.isInitialized {
 		return nil
 	}
-
-	if r.Source != nil {
-
-		var resource = r.Source
-		if err := resource.Init(); err != nil {
-			return err
-		}
-		storageService, err := storage.NewServiceForURL(resource.URL, resource.Credentials)
-		if err != nil {
-			return err
-		}
-		object, err := storageService.StorageObject(resource.URL)
-		if err != nil {
-			return err
-		}
-		if object.IsFolder() {
-			return nil
-		}
-		reader, err := storageService.Download(object)
-		if err != nil {
-			return err
-		}
-		content, err := ioutil.ReadAll(reader)
-		if err != nil {
-			return err
-		}
-		r.Messages = loadMessages(content)
-	}
-
 	if r.Dest != nil {
 		if err := r.Dest.Init(); err != nil {
 			return err
@@ -134,22 +103,7 @@ func (r *PushRequest) Validate() error {
 	if r.Dest == nil {
 		return fmt.Errorf("dest was empty")
 	}
-
-	if resource := r.Source; resource != nil {
-		storageService, err := storage.NewServiceForURL(resource.URL, resource.Credentials)
-		if err != nil {
-			return err
-		}
-		object, err := storageService.StorageObject(resource.URL)
-		if err != nil {
-			return err
-		}
-		if object.IsFolder() {
-			return fmt.Errorf("resource can not be a folder: " + resource.URL)
-		}
-	}
-
-	if len(r.Messages) == 0 {
+	if len(r.Messages) == 0 && r.Source == nil {
 		return fmt.Errorf("messages were empty")
 	}
 	return nil

@@ -1,6 +1,7 @@
 package msg
 
 import (
+	"context"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -14,7 +15,9 @@ import (
 	"time"
 )
 
-type awsPubSub struct {
+
+
+type awsClient struct {
 	config  *aws.Config
 	session *session.Session
 	sqs     *sqs.SQS
@@ -22,7 +25,7 @@ type awsPubSub struct {
 	timeout time.Duration
 }
 
-func (c *awsPubSub) sendMessage(dest *Resource, message *Message) (Result, error) {
+func (c *awsClient) sendMessage(dest *Resource, message *Message) (Result, error) {
 	queueURL, err := c.getQueueURL(dest.Name)
 	if err != nil {
 		return nil, err
@@ -44,7 +47,7 @@ func (c *awsPubSub) sendMessage(dest *Resource, message *Message) (Result, error
 	return *result.MessageId, nil
 }
 
-func (c *awsPubSub) publishMessage(dest *Resource, message *Message) (Result, error) {
+func (c *awsClient) publishMessage(dest *Resource, message *Message) (Result, error) {
 	topicARN, err := c.getTopicARN(dest.Name)
 	if err != nil {
 		return nil, err
@@ -67,7 +70,7 @@ func (c *awsPubSub) publishMessage(dest *Resource, message *Message) (Result, er
 	return *output.MessageId, nil
 }
 
-func (c *awsPubSub) Push(dest *Resource, message *Message) (Result, error) {
+func (c *awsClient) Push(ctx context.Context, dest *Resource, message *Message) (Result, error) {
 	switch dest.Type {
 	case ResourceTypeTopic:
 		return c.publishMessage(dest, message)
@@ -78,7 +81,7 @@ func (c *awsPubSub) Push(dest *Resource, message *Message) (Result, error) {
 	return nil, fmt.Errorf("unsupported resource type: %v", dest.Type)
 }
 
-func (c *awsPubSub) PullN(source *Resource, count int, nack bool) ([]*Message, error) {
+func (c *awsClient) PullN(ctx context.Context,  source *Resource, count int, nack bool) ([]*Message, error) {
 	queueURL, err := c.getQueueURL(source.Name)
 	if err != nil {
 		return nil, err
@@ -133,7 +136,7 @@ func buildMessage(msg *sqs.Message) *Message {
 	return message
 }
 
-func (c *awsPubSub) createSubscription(topicURL, queueURL string) (*Resource, error) {
+func (c *awsClient) createSubscription(topicURL, queueURL string) (*Resource, error) {
 	input := &sns.SubscribeInput{
 		Endpoint:              aws.String(queueURL),
 		Protocol:              aws.String("sqs"),
@@ -147,7 +150,7 @@ func (c *awsPubSub) createSubscription(topicURL, queueURL string) (*Resource, er
 	return &Resource{URL: *output.SubscriptionArn}, nil
 }
 
-func (c *awsPubSub) processMessages(queueURL string, delete, includeAttributes bool, maxCount int, waitTimeSec int64, handler func(message *sqs.Message) (bool, error)) error {
+func (c *awsClient) processMessages(queueURL string, delete, includeAttributes bool, maxCount int, waitTimeSec int64, handler func(message *sqs.Message) (bool, error)) error {
 	count := maxCount
 	if count == 0 {
 		input := &sqs.GetQueueAttributesInput{
@@ -215,7 +218,7 @@ func (c *awsPubSub) processMessages(queueURL string, delete, includeAttributes b
 	return nil
 }
 
-func (c *awsPubSub) createQueue(resource *ResourceSetup) (*Resource, error) {
+func (c *awsClient) createQueue(resource *ResourceSetup) (*Resource, error) {
 	var name = resource.Name
 	queueURL, _ := c.getQueueURL(resource.Name)
 	if resource.Recreate {
@@ -259,7 +262,7 @@ func (c *awsPubSub) createQueue(resource *ResourceSetup) (*Resource, error) {
 	return resultResource, nil
 }
 
-func (c *awsPubSub) getTopicARN(topicURL string) (string, error) {
+func (c *awsClient) getTopicARN(topicURL string) (string, error) {
 	input := &sns.ListTopicsInput{}
 	for { //TODO look into better way to get topic URL
 		output, err := c.sns.ListTopics(input)
@@ -281,7 +284,7 @@ func (c *awsPubSub) getTopicARN(topicURL string) (string, error) {
 	return "", fmt.Errorf("failed to lookup topic URL %v", topicURL)
 }
 
-func (c *awsPubSub) getQueueURL(queueName string) (string, error) {
+func (c *awsClient) getQueueURL(queueName string) (string, error) {
 	result, err := c.sqs.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: aws.String(queueName),
 	})
@@ -291,7 +294,7 @@ func (c *awsPubSub) getQueueURL(queueName string) (string, error) {
 	return *result.QueueUrl, nil
 }
 
-func (c *awsPubSub) createTopic(resource *ResourceSetup) (*Resource, error) {
+func (c *awsClient) createTopic(resource *ResourceSetup) (*Resource, error) {
 	var name = resource.Name
 	if resource.Recreate {
 		if arn, _ := c.getTopicARN(resource.Name); arn != "" {
@@ -320,7 +323,7 @@ func (c *awsPubSub) createTopic(resource *ResourceSetup) (*Resource, error) {
 	return resultResource, nil
 }
 
-func (c *awsPubSub) SetupResource(resource *ResourceSetup) (*Resource, error) {
+func (c *awsClient) SetupResource(resource *ResourceSetup) (*Resource, error) {
 
 	switch resource.Type {
 	case ResourceTypeTopic:
@@ -331,7 +334,7 @@ func (c *awsPubSub) SetupResource(resource *ResourceSetup) (*Resource, error) {
 	return nil, fmt.Errorf("unsupported resource type: %v", resource.Type)
 }
 
-func (c *awsPubSub) deleteQueue(resource *Resource) error {
+func (c *awsClient) deleteQueue(resource *Resource) error {
 	queueURL, err := c.getQueueURL(resource.Name)
 	if err != nil {
 		return err
@@ -342,7 +345,7 @@ func (c *awsPubSub) deleteQueue(resource *Resource) error {
 	return err
 }
 
-func (c *awsPubSub) deleteTopic(resource *Resource) error {
+func (c *awsClient) deleteTopic(resource *Resource) error {
 	queueURL, err := c.getTopicARN(resource.Name)
 	if err != nil {
 		return err
@@ -353,7 +356,7 @@ func (c *awsPubSub) deleteTopic(resource *Resource) error {
 	return nil
 }
 
-func (c *awsPubSub) DeleteResource(resource *Resource) error {
+func (c *awsClient) DeleteResource(resource *Resource) error {
 	switch resource.Type {
 	case ResourceTypeQueue:
 		return c.deleteQueue(resource)
@@ -363,7 +366,7 @@ func (c *awsPubSub) DeleteResource(resource *Resource) error {
 	return fmt.Errorf("unsupported resource type: %v", resource.Type)
 }
 
-func (c *awsPubSub) connect() (err error) {
+func (c *awsClient) connect() (err error) {
 
 	if c.session, err = session.NewSession(c.config); err != nil {
 		return err
@@ -373,7 +376,7 @@ func (c *awsPubSub) connect() (err error) {
 	return nil
 }
 
-func (c *awsPubSub) Close() error {
+func (c *awsClient) Close() error {
 	return nil
 }
 
@@ -384,7 +387,7 @@ func newAwsSqsClient(credConfig *cred.Config, timeout time.Duration) (Client, er
 	}
 	config.Region = &credConfig.Region
 
-	var client = &awsPubSub{
+	var client = &awsClient{
 		timeout: timeout,
 		config:  config,
 	}
