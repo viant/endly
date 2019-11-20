@@ -571,4 +571,56 @@ pipeline:
 
 ```
 
+
+To generate 100 line JSON file with the following template use the following:
+
+
+[@json.yaml](usage/generate/json.yaml)
+```yaml
+pipeline:
+  generate:
+    action: storage:generate
+    indexVariable: id
+    lines: 100
+    index: 55
+    lineTemplate: '{"id": ${id}, "name": "dummy ${id}", "type_id": ${id % 3} } '
+    dest:
+      URL: dummy.json
+
+```
+
+To generate 12 files in the background use the following:
+
+[@stress.yaml](usage/generate/stress.yaml)
+```yaml
+init:
+  'self.i': 1
+  'self.cnt': 0
+
+pipeline:
+  trigger:
+    generate:
+      action: storage:generate
+      fileCount: 4
+      inBackground: true
+      indexVariable: id
+      lines: 1
+      index: ${self.i}
+      lineTemplate: '{"id": ${id}, "name": "dummy ${id}", "type_id": ${id %4}}'
+      dest:
+        URL: gs://mybucket/test/data${self.cnt++}_$fileNo.json
+    inc:
+      action: nop
+      sleepTimeMs: 500
+      logging: false
+      init:
+        'self.i': ${self.i + 4}
+
+    goto:
+      when: ${self.i} < 12
+      action: goto
+      task: trigger
+```
+
+
 - TODO add UDF (i.e to compress)
