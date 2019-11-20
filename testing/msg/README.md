@@ -12,7 +12,7 @@ Example credentials 'gcp-e2e' is name of [google secrets](./../../doc/secrets) p
 ```endly test```
 
 
-[@test.yaml](usage/gcp/test.yaml)
+[@test.yaml](usage/external/test.yaml)
 
 ```yaml
 init:

@@ -170,6 +170,13 @@ func (s *service) setupResource(context *endly.Context, resource *ResourceSetup)
 	}
 	var state = context.State()
 	resource.URL = state.ExpandAsText(resource.URL)
+	resource.projectID = state.ExpandAsText(resource.projectID)
+	if resource.Config != nil {
+		if resource.Config.Topic != nil {
+			resource.Config.Topic.URL = state.ExpandAsText(resource.Config.Topic.URL)
+			resource.Config.Topic.projectID = state.ExpandAsText(resource.Config.Topic.projectID)
+		}
+	}
 	defer client.Close()
 	return client.SetupResource(resource)
 }

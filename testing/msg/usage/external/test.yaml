@@ -1,0 +1,43 @@
+init:
+  gcpCredentials: viant-e2e
+
+pipeline:
+  create:
+    action: msg:setupResource
+    resources:
+      - URL: myTopic
+        type: topic
+        vendor: gcp
+        credentials: $gcpCredentials
+
+      - URL: mySubscription
+        type: subscription
+        vendor: gcp
+        credentials: $gcpCredentials
+        config:
+          topic:
+            URL: /projects/${msg.projectID}/topics/myTopic
+
+  setup:
+    action: msg:push
+    dest:
+      URL: /projects/${msg.projectID}/topics/myTopic
+      credentials: $gcpCredentials
+    source:
+      URL: data.json
+
+  validate:
+    action: msg:pull
+    count: 2
+    nack: true
+    source:
+      URL: /projects/${msg.projectID}/subscriptions/mySubscription
+      credentials: $gcpCredentials
+    expect:
+      - '@indexBy@': 'Attributes.attr1'
+      - Data: "this is my 1st message"
+        Attributes:
+          attr1: abc
+      - Data: "this is my 2nd message"
+        Attributes:
+          attr1: xyz
