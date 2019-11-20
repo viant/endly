@@ -70,7 +70,6 @@ func (r *CopyRequest) Messages() []*msg.Message {
 	return result
 }
 
-
 //Items returns event messages
 func (r *GenerateRequest) Messages() []*msg.Message {
 	_ = r.Init()
@@ -81,10 +80,23 @@ func (r *GenerateRequest) Messages() []*msg.Message {
 	return []*msg.Message{msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
 		msg.NewStyled("Generate", msg.MessageStyleGeneric),
 		msg.NewStyled(fmt.Sprintf("Size: %v", r.Size), msg.MessageStyleInput),
+		msg.NewStyled(fmt.Sprintf("Lines: %v", r.Lines), msg.MessageStyleInput),
 		msg.NewStyled(fmt.Sprintf("DestURL: %v", r.Dest.URL), msg.MessageStyleOutput),
 	)}
 }
 
+//Items returns event messages
+func (r *GenerateResponse) Messages() []*msg.Message {
+
+	assets := make([]string, 0)
+	for i := range r.URLs {
+		assets = append(assets, fmt.Sprintf("%s", r.URLs[i]))
+	}
+	return []*msg.Message{msg.NewMessage(msg.NewStyled("", msg.MessageStyleGeneric),
+		msg.NewStyled("Generated", msg.MessageStyleGeneric),
+		msg.NewStyled(strings.Join(assets, "\n")+"\n", msg.MessageStyleOutput),
+	)}
+}
 
 //Items returns event messages
 func (r *ListResponse) Messages() []*msg.Message {

@@ -1,0 +1,9 @@
+pipeline:
+  generate:
+    action: storage:generate
+    indexVariable: id
+    lines: 100
+    index: 55
+    lineTemplate: '{"id": ${id}, "name": "dummy ${id}", "type_id": ${id % 3} } '
+    dest:
+      URL: dummy.json

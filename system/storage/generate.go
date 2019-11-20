@@ -2,30 +2,41 @@ package storage
 
 import (
 	"errors"
-	"io"
-	"strings"
+	"fmt"
 	"github.com/viant/afs/file"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/msg"
 	"github.com/viant/toolbox/url"
+	"io"
 	"os"
+	"strings"
+	"sync"
 )
 
-const defaultLineTemplate = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+const (
+	defaultLineTemplate = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+	fileNumberExpr      = "$fileNo"
+)
 
 //CreateRequest represents a resources Upload request, it takes context state key to Upload to target destination.
 type GenerateRequest struct {
-	Template     string
-	LineTemplate string
-	Size         int
-	SizeInMb     int
-	Mode         int           `description:"os.FileMode"`
-	Dest         *url.Resource `required:"true" description:"destination asset or directory"` //target URL with credentials
+	Template      string
+	LineTemplate  string
+	Lines         int
+	Size          int
+	SizeInMb      int
+	Index         int
+	IndexVariable string
+	Mode          int           `description:"os.FileMode"`
+	Dest          *url.Resource `required:"true" description:"destination asset or directory"` //target URL with credentials
+	FileCount     int
+	InBackground  bool
 }
 
 //CreateResponse represents a Upload response
 type GenerateResponse struct {
 	Size int
-	URL  string
+	URLs []string
 }
 
 //Create creates a resource
@@ -44,32 +55,87 @@ func (s *service) generate(context *endly.Context, request *GenerateRequest, res
 	if err != nil {
 		return err
 	}
-	response.URL = dest.URL
-	reader := generateContent(context, request)
-	return fs.Upload(context.Background(), dest.URL, os.FileMode(request.Mode), reader, storageOpts...)
+
+	fileCount := request.FileCount
+	if fileCount == 0 {
+		fileCount = 1
+	}
+	URLs := []string{}
+	readers := []io.Reader{}
+	for i := 0; i < fileCount; i++ {
+		reader := generateContent(context, request)
+		readers = append(readers, reader)
+		fileNumber := fmt.Sprintf("%04d", i)
+		destURL := strings.Replace(dest.URL, fileNumberExpr, fileNumber, 1)
+		URLs = append(URLs, destURL)
+	}
+	response.URLs = URLs
+	waitGroup := &sync.WaitGroup{}
+	for i := 0; i < fileCount; i++ {
+		waitGroup.Add(1)
+		go func(index int) {
+			defer waitGroup.Done()
+			e := fs.Upload(context.Background(), URLs[index], os.FileMode(request.Mode), readers[index], storageOpts...)
+			if e != nil {
+				if request.InBackground {
+					context.Publish(msg.NewErrorEvent(e.Error()))
+				}
+				err = e
+			}
+		}(i)
+	}
+	if request.InBackground {
+
+		return err
+	}
+	waitGroup.Wait()
+	return err
 }
 
 func generateContent(context *endly.Context, request *GenerateRequest) io.Reader {
 	if request.Template == "" {
 		request.Template = " "
 	}
-	repeat := request.Size / len(request.Template)
-
-	if ! strings.Contains(request.Template, "$") {
-		text := strings.Repeat(request.Template, repeat+1)
-		return strings.NewReader(string(text[:request.Size]))
+	repeat := request.Lines
+	if repeat == 0 {
+		repeat = request.Size/len(request.Template) + 1
+	}
+	separator := ""
+	if request.Lines > 0 {
+		separator = "\n"
 	}
 
+	if !strings.Contains(request.Template, "$") {
+		text := strings.Repeat(request.Template+separator, repeat)
+		if request.Lines == 0 && request.Size > 0 {
+			text = string(text[:request.Size])
+		} else {
+			text = strings.TrimSpace(text)
+		}
+		return strings.NewReader(text)
+	}
 	state := context.State()
-	state = state.Clone()
-	items := make([]string, repeat + 1)
-
-	for i := range items {
-		state.Put("i", i)
-		items[i] = state.ExpandAsText(request.Template)
+	indexVariable := request.IndexVariable
+	if indexVariable == "" {
+		indexVariable = "i"
 	}
-	text := strings.Join(items, "")
-	return strings.NewReader(string(text[:request.Size]))
+	state = state.Clone()
+	items := make([]string, repeat)
+	for i := range items {
+		state.Put(indexVariable, request.Index)
+		request.Index++
+		items[i] = state.ExpandAsText(request.Template)
+		if request.Lines > 0 {
+			items[i] = strings.TrimSpace(items[i])
+		}
+	}
+
+	text := strings.Join(items, separator)
+
+	if request.Lines == 0 && request.Size > 0 {
+		text = string(text[:request.Size])
+	}
+	return strings.NewReader(text)
 }
 
 //Init initialises Upload request
@@ -94,9 +160,11 @@ func (r *GenerateRequest) Validate() error {
 	if r.Dest == nil {
 		return errors.New("dest was empty")
 	}
-	if r.Size == 0 && r.SizeInMb == 0 {
+	if r.Size == 0 && r.SizeInMb == 0 && r.Lines == 0 {
 		return errors.New("size was empty")
 	}
-
+	if r.FileCount > 1 && !strings.Contains(r.Dest.URL, fileNumberExpr) {
+		return fmt.Errorf("dest.URL is missing %v variable for multi file generation, %v", fileNumberExpr, r.Dest.URL)
+	}
 	return nil
 }
