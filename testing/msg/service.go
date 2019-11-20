@@ -1,8 +1,8 @@
 package msg
 
 import (
-	"github.com/pkg/errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/storage"
 	"github.com/viant/endly/testing/validator"
@@ -102,7 +102,7 @@ func (s *service) push(context *endly.Context, request *PushRequest) (interface{
 
 	if request.Source != nil {
 		download := &storage.DownloadResponse{}
-		err  := endly.Run(context, &storage.DownloadRequest{Source:request.Source}, download)
+		err := endly.Run(context, &storage.DownloadRequest{Source: request.Source}, download)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to download push source: %v", request.Source)
 		}
