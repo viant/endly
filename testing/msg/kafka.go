@@ -18,9 +18,9 @@ type kafkaClient struct {
 
 func (k *kafkaClient) Push(ctx context.Context, dest *Resource, message *Message) (Result, error) {
 	config := kafka.WriterConfig{
-		Brokers:      dest.Brokers,
-		Topic:        dest.Name,
-		Balancer:     &kafka.LeastBytes{},
+		Brokers:  dest.Brokers,
+		Topic:    dest.Name,
+		Balancer: &kafka.LeastBytes{},
 	}
 	body := toolbox.AsString(message.Data)
 	writer := kafka.NewWriter(config)
@@ -74,7 +74,7 @@ func (k *kafkaClient) PullN(ctx context.Context, source *Resource, count int, na
 			msg.Attributes[keyAttribute] = string(message.Key)
 		}
 		result = append(result, msg)
-		if ! nack {
+		if !nack {
 			if err = reader.CommitMessages(ctx, message); err != nil {
 				return nil, errors.Wrapf(err, "failed to commit message: %v", msg)
 			}
@@ -92,9 +92,9 @@ func (k *kafkaClient) SetupResource(resource *ResourceSetup) (*Resource, error) 
 		_ = conn.DeleteTopics(resource.Name)
 	}
 	topicConfig := kafka.TopicConfig{
-		Topic:         resource.Name,
-		ReplicationFactor:resource.ReplicationFactor,
-		NumPartitions: resource.Partitions,
+		Topic:             resource.Name,
+		ReplicationFactor: resource.ReplicationFactor,
+		NumPartitions:     resource.Partitions,
 	}
 	return &resource.Resource, conn.CreateTopics(topicConfig)
 }

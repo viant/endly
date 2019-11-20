@@ -176,7 +176,7 @@ func (s *gcpClient) Push(ctx context.Context, dest *Resource, message *Message) 
 	return serverId, err
 }
 
-func (s *gcpClient) PullN(ctx context.Context,  source *Resource, max int, nack bool) ([]*Message, error) {
+func (s *gcpClient) PullN(ctx context.Context, source *Resource, max int, nack bool) ([]*Message, error) {
 	subscription, err := s.getSubscription(source)
 	if err != nil {
 		return nil, err

@@ -15,8 +15,6 @@ import (
 	"time"
 )
 
-
-
 type awsClient struct {
 	config  *aws.Config
 	session *session.Session
@@ -81,7 +79,7 @@ func (c *awsClient) Push(ctx context.Context, dest *Resource, message *Message) 
 	return nil, fmt.Errorf("unsupported resource type: %v", dest.Type)
 }
 
-func (c *awsClient) PullN(ctx context.Context,  source *Resource, count int, nack bool) ([]*Message, error) {
+func (c *awsClient) PullN(ctx context.Context, source *Resource, count int, nack bool) ([]*Message, error) {
 	queueURL, err := c.getQueueURL(source.Name)
 	if err != nil {
 		return nil, err

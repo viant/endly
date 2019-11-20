@@ -1,12 +1,11 @@
 package msg
 
 import (
-	"github.com/pkg/errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"net/url"
 	"strings"
 	"time"
-
 )
 
 const (
@@ -16,20 +15,20 @@ const (
 )
 
 type Resource struct {
-	URL         string
-	Brokers     []string
-	Credentials string
-	Offset      int
-	GroupID     string
-	Partition   int
+	URL               string
+	Brokers           []string
+	Credentials       string
+	Offset            int
+	GroupID           string
+	Partition         int
 	ReplicationFactor int
-	Partitions  int
-	ID          string
-	Name        string
-	Type        string `description:"resource type: topic, subscription"`
-	Vendor      string
-	Config      interface{} `description:"vendor client config"`
-	projectID   string
+	Partitions        int
+	ID                string
+	Name              string
+	Type              string `description:"resource type: topic, subscription"`
+	Vendor            string
+	Config            interface{} `description:"vendor client config"`
+	projectID         string
 }
 
 //Init initializes resource
@@ -89,7 +88,6 @@ func (r *ResourceSetup) Init() error {
 		}
 	}
 
-
 	if r.Config != nil && r.Config.Topic != nil {
 		_ = r.Config.Topic.Init()
 	}
@@ -106,7 +104,7 @@ func (r *ResourceSetup) Validate() error {
 		}
 	}
 
-	if r.Type== ResourceVendorKafka {
+	if r.Type == ResourceVendorKafka {
 		if len(r.Brokers) == 0 {
 			return fmt.Errorf("brokers where empty")
 		}
@@ -128,7 +126,6 @@ func NewResourceSetup(resourceType, URL, credentials string, recreate bool, conf
 			Type:        resourceType,
 			Credentials: credentials,
 			URL:         URL,
-
 		},
 
 		Recreate: recreate,

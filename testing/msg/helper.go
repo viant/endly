@@ -64,15 +64,15 @@ func inferResourceTypeFromCredentialConfig(credConfig *cred.Config) string {
 func expandResource(context *endly.Context, resource *Resource) *Resource {
 	state := context.State()
 	return &Resource{
-		URL:         state.ExpandAsText(resource.URL),
-		Type:        state.ExpandAsText(resource.Type),
-		Name:        state.ExpandAsText(resource.Name),
-		Vendor:      resource.Vendor,
-		Credentials: state.ExpandAsText(resource.Credentials),
-		Brokers:resource.Brokers,
-		Partitions:resource.Partitions,
-		Partition:resource.Partition,
-		Offset:resource.Offset,
+		URL:               state.ExpandAsText(resource.URL),
+		Type:              state.ExpandAsText(resource.Type),
+		Name:              state.ExpandAsText(resource.Name),
+		Vendor:            resource.Vendor,
+		Credentials:       state.ExpandAsText(resource.Credentials),
+		Brokers:           resource.Brokers,
+		Partitions:        resource.Partitions,
+		Partition:         resource.Partition,
+		Offset:            resource.Offset,
 		ReplicationFactor: resource.ReplicationFactor,
 	}
 }
