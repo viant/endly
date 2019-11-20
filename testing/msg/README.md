@@ -13,20 +13,20 @@ Example credentials 'gcp-e2e' is name of [google secrets](./../../doc/secrets) p
 
 
 [@test.yaml](usage/gcp/test.yaml)
-```yaml
+init:
+  gcpCredentials: gcp-e2e
 pipeline:
   create:
     action: msg:setupResource
     resources:
       - URL: myTopic
         type: topic
-        vendor: gc
-        credentials: gcp-e2e
-
+        vendor: gcp
+        credentials: $gcpCredentials
       - URL: mySubscription
         type: subscription
-        vendor: gc
-        credentials: gcp-e2e
+        vendor: gcp
+        credentials: $gcpCredentials
         config:
           topic:
             URL: /projects/${msg.projectID}/topics/myTopic
@@ -35,7 +35,7 @@ pipeline:
     action: msg:push
     dest:
       URL: /projects/${msg.projectID}/topics/myTopic
-      credentials: gcp-e2e
+      credentials: $gcpCredentials
     messages:
       - data: "this is my 1st message"
         attributes:
@@ -50,7 +50,7 @@ pipeline:
     nack: true
     source:
       URL: /projects/${msg.projectID}/subscriptions/mySubscription
-      credentials: gcp-e2e
+      credentials: $gcpCredentials
     expect:
       - '@indexBy@': 'Attributes.attr1'
       - Data: "this is my 1st message"
@@ -59,6 +59,7 @@ pipeline:
       - Data: "this is my 2nd message"
         Attributes:
           attr1: xyz
+
 ```
 
 
