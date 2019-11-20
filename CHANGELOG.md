@@ -1,3 +1,7 @@
+## November 20 2019 0.46.1
+  * Extended storage:generate contract for lines and concurrency (stress testing) 
+  * Updated abstract storage dependency (viant/afs(c))
+  
 ## November 5 2019 0.46.0
    * Added storage:generate to create dynamically test assets
    * viant/afs streaming improvements
