@@ -75,7 +75,7 @@ type PushRequest struct {
 	Credentials   string
 	Dest          *Resource
 	Messages      []*Message
-	Source        *url.Resource
+	Source        *url.Resource `description:"source for message data  currently JSON or new line delimitered json are supported that conform []*Message type "`
 	TimeoutMs     int
 	UDF           string
 	isInitialized bool
