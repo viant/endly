@@ -13,6 +13,8 @@ Example credentials 'gcp-e2e' is name of [google secrets](./../../doc/secrets) p
 
 
 [@test.yaml](usage/gcp/test.yaml)
+
+```yaml
 init:
   gcpCredentials: gcp-e2e
 pipeline:
@@ -59,8 +61,8 @@ pipeline:
       - Data: "this is my 2nd message"
         Attributes:
           attr1: xyz
-
 ```
+
 
 
 ### Amazon Simple Queue Service
