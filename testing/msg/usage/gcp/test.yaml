@@ -1,17 +1,18 @@
+init:
+  gcpCredentials: gcp-e2e
 pipeline:
   create:
     action: msg:setupResource
     resources:
       - URL: myTopic
         type: topic
-        vendor: gc
-        credentials: am
-
+        vendor: gcp
+        credentials: $gcpCredentials
 
       - URL: mySubscription
         type: subscription
-        vendor: gc
-        credentials: am
+        vendor: gcp
+        credentials: $gcpCredentials
         config:
           topic:
             URL: /projects/${msg.projectID}/topics/myTopic
@@ -20,7 +21,7 @@ pipeline:
     action: msg:push
     dest:
       URL: /projects/${msg.projectID}/topics/myTopic
-      credentials: am
+      credentials: $gcpCredentials
     messages:
       - data: "this is my 1st message"
         attributes:
@@ -35,7 +36,7 @@ pipeline:
     nack: true
     source:
       URL: /projects/${msg.projectID}/subscriptions/mySubscription
-      credentials: am
+      credentials: $gcpCredentials
     expect:
       - '@indexBy@': 'Attributes.attr1'
       - Data: "this is my 1st message"
