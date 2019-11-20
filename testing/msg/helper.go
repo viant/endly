@@ -15,6 +15,7 @@ import (
 func loadMessages(data []byte) []*Message {
 	var result = make([]*Message, 0)
 	var text = string(data)
+
 	if toolbox.IsNewLineDelimitedJSON(text) {
 		if records, err := toolbox.NewLineDelimitedJSON(text); err == nil {
 			for _, record := range records {

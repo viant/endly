@@ -66,7 +66,7 @@ func TestService_PushPull(t *testing.T) {
 			source:      NewResource("", "/projects/${msg.projectID}/subscriptions/e2eSubscription", "am"),
 			messages: []*Message{
 				{
-					Attributes: map[string]string{
+					Attributes: map[string]interface{}{
 						"attr1": "abc",
 					},
 					Data: "hello e2e topic",

@@ -1,0 +1,14 @@
+[
+  {
+    "data": "this is my 1st message",
+    "attributes": {
+      "attr1": "abc"
+    }
+  },
+  {
+    "data": "this is my 2nd message",
+    "attributes": {
+      "attr1": "xyz"
+    }
+  }
+]

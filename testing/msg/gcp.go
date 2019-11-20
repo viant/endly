@@ -3,12 +3,15 @@ package msg
 import (
 	"cloud.google.com/go/pubsub"
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	context2 "golang.org/x/net/context"
 	"google.golang.org/api/option"
 	"log"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -56,8 +59,10 @@ func (s *gcpClient) createSubscription(resource *ResourceSetup) (*pubsub.Subscri
 			RetentionDuration:   config.RetentionDuration,
 		}
 
-		if subscription, err = s.client.CreateSubscription(s.ctx, subscription.ID(), subscriptionConfig); err != nil {
-			return nil, err
+		ID := subscription.ID()
+		if subscription, err = s.client.CreateSubscription(s.ctx, ID, subscriptionConfig); err != nil {
+			JSON, _ := json.Marshal(subscriptionConfig)
+			return nil, errors.Wrapf(err, "failed to create subscription: %v, %s", ID, JSON)
 		}
 	}
 	return subscription, err
@@ -94,13 +99,13 @@ func (s *gcpClient) SetupResource(resource *ResourceSetup) (*Resource, error) {
 	case ResourceTypeTopic:
 		topic, err := s.createTopic(resource)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "failed to setup topic: %v", resource.URL)
 		}
 		result.ID = topic.ID()
 	case ResourceTypeSubscription:
 		subscription, err := s.createSubscription(resource)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "failed to setup subscription: %v", resource.URL)
 		}
 		result.ID = subscription.ID()
 	default:
@@ -259,10 +264,9 @@ func newCloudPubSub(credConfig *cred.Config, URL string, timeout time.Duration) 
 		return nil, fmt.Errorf("failed to create pubsub client: %v", err)
 	}
 	var projectID = extractSubPath(URL, "project")
-	if projectID == "" {
+	if projectID == "" || strings.HasPrefix(projectID, "$") {
 		projectID = credConfig.ProjectID
 	}
-
 	var service = &gcpClient{
 		client:    client,
 		ctx:       ctx,
