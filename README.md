@@ -763,7 +763,8 @@ commands:
 ## External resources
 
 - [Endly introduction](https://github.com/adrianwit/endly-introduction)
-- [Software Developement Automation](https://medium.com/@adrianwit/software-development-automation-e68b3bcc70c9?)
+- [Software Developement Automation - Part I](https://medium.com/@adrianwit/software-development-automation-e68b3bcc70c9?)
+- [Software Developement Automation - Part II](https://medium.com/@adrianwit/software-development-automation-part-ii-bf961cfdd88a)
 - [ETL end to end testing with docker, NoSQL, RDBMS and Big Query](https://medium.com/@adrianwit/etl-end-to-end-testing-with-docker-nosql-rdbms-and-big-query-35b13b7fada8)
 - [Data testing strategy reinvented](https://medium.com/@adrianwit/killing-data-testing-swamp-6c3e11fb92c6)
 - [Go lang e2e testing](https://github.com/adrianwit/golang-e2e-testing)
