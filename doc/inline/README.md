@@ -4,6 +4,7 @@
 - [Inline Workflow format](#format)
 - [Action invocation](#action)
 - [Workflow invocation](#workflow)
+- [Inline Workflow invocation](#inline_invocation)
 - [State modification](#state)
 - [Workflow control](#control)
 - [Actions template](#template)
@@ -249,6 +250,28 @@ endly -r=test
       expected: 10
       actual: 1
  ```
+
+<a name="inline_invocation"></a>
+### Inline Workflow invocation
+
+If I want to invoke the workflow of another .yaml file, it can be done by using the run action with a request parameter.
+In the following example, we invoke the child.yaml workflow from task2 of parent.yaml.
+
+@parent.yaml
+```yaml
+pipeline:
+  task1:
+    action: print
+    message: hello sub action 1
+​
+  task2:
+    action: run
+    request: '@child'
+​
+  info:
+    action: print
+    message: $task2.myResult1
+```
 
 
 <a name="state"></a>
