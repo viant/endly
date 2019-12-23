@@ -70,8 +70,8 @@ require (
 	github.com/stretchr/testify v1.3.0
 	github.com/tebeka/selenium v0.9.3
 	github.com/viant/afs v0.10.6
-	github.com/viant/afsc v0.11.0
-	github.com/viant/asc v0.5.0
+	github.com/viant/afsc v0.12.0
+	github.com/viant/asc v0.12.0
 	github.com/viant/assertly v0.5.1
 	github.com/viant/bgc v0.7.3
 	github.com/viant/dsc v0.14.1

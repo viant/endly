@@ -1,3 +1,7 @@
+## December 20 2019 0.46.2
+  * Added gcp/bigquery:patch operation
+  * Added gcp/bigquery:table operation
+  
 ## November 20 2019 0.46.1
   * Extended storage:generate contract for lines and concurrency (stress testing) 
   * Updated abstract storage dependency (viant/afs(c))
