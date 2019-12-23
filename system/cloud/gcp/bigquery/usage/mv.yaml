@@ -1,6 +1,11 @@
+init:
+  '!gcpCredentials': $params.authWith
+
 pipeline:
   query:
     action: gcp/bigquery:tablesInsert
+    credentials:  gcpCredettials
+
     kind: bigquery#table
     projectId: ${gcp.projectID}
     datasetId: myDataset
