@@ -6,7 +6,6 @@ import (
 	"github.com/viant/endly/system/cloud/gcp"
 	"google.golang.org/api/bigquery/v2"
 	"log"
-	"time"
 )
 
 const (
@@ -20,101 +19,8 @@ type service struct {
 	*endly.AbstractService
 }
 
-func (s *service) load(context *endly.Context, request *LoadRequest) (*bigquery.Job, error) {
-	client, err := GetClient(context)
-	if err != nil {
-		return nil, err
-	}
-	jobService := bigquery.NewJobsService(client.service)
-	insertCall := jobService.Insert(request.Project, &bigquery.Job{
-		Configuration: &bigquery.JobConfiguration{
-			Load: &request.JobConfigurationLoad,
-		},
-		JobReference: request.Job,
-	})
 
-	job, err := insertCall.Do()
-	if request.Async || err != nil {
-		return job, err
-	}
-	return s.jobWait(context, &JobWaitRequest{
-		Job: job.JobReference,
-	})
-}
 
-func (s *service) query(context *endly.Context, request *QueryRequest) (*bigquery.Job, error) {
-	client, err := GetClient(context)
-	if err != nil {
-		return nil, err
-	}
-	jobService := bigquery.NewJobsService(client.service)
-
-	insertCall := jobService.Insert(request.Project, &bigquery.Job{
-		Configuration: &bigquery.JobConfiguration{
-			Query: &request.JobConfigurationQuery,
-		},
-		JobReference: request.Job,
-	})
-
-	job, err := insertCall.Do()
-	if request.Async || err != nil {
-		return job, err
-	}
-	return s.jobWait(context, &JobWaitRequest{
-		Job: job.JobReference,
-	})
-}
-
-func (s *service) copy(context *endly.Context, request *CopyRequest) (*bigquery.Job, error) {
-	client, err := GetClient(context)
-	if err != nil {
-		return nil, err
-	}
-	jobService := bigquery.NewJobsService(client.service)
-
-	insertCall := jobService.Insert(request.Project, &bigquery.Job{
-		Configuration: &bigquery.JobConfiguration{
-			Copy: &request.JobConfigurationTableCopy,
-		},
-		JobReference: request.Job,
-	})
-
-	job, err := insertCall.Do()
-	if request.Async || err != nil {
-		return job, err
-	}
-	return s.jobWait(context, &JobWaitRequest{
-		Job: job.JobReference,
-	})
-}
-
-func (s *service) jobWait(context *endly.Context, request *JobWaitRequest) (response *bigquery.Job, err error) {
-	err = s.RunInBackground(context, func() error {
-		response, err = s.waitForOperationCompletion(context, request.Job)
-		return err
-	})
-	return response, err
-}
-
-func (s *service) waitForOperationCompletion(context *endly.Context, job *bigquery.JobReference) (*bigquery.Job, error) {
-	client, err := GetClient(context)
-	if err != nil {
-		return nil, err
-	}
-	service := bigquery.NewJobsService(client.service)
-	for {
-		getCall := service.Get(job.ProjectId, job.JobId)
-		getCall.Context(client.Context())
-		job, err := getCall.Do()
-		if err != nil {
-			return nil, err
-		}
-		if job.Status.State == doneStatus {
-			return job, err
-		}
-		time.Sleep(time.Second)
-	}
-}
 
 func (s *service) registerRoutes() {
 	client := &bigquery.Service{}
@@ -211,6 +117,67 @@ func (s *service) registerRoutes() {
 				}
 				if context.IsLoggingEnabled() {
 					context.Publish(gcp.NewOutputEvent("...", "copy", output))
+				}
+				return output, err
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "table",
+		RequestInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T.%v(%T)", s, "table", &TableRequest{}),
+		},
+		ResponseInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T", &TableResponse{}),
+		},
+		RequestProvider: func() interface{} {
+			return &TableRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &TableResponse{}
+		},
+		OnRawRequest: InitRequest,
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*TableRequest); ok {
+				output, err := s.Table(context, req)
+				if err != nil {
+					return nil, err
+				}
+				if context.IsLoggingEnabled() {
+					context.Publish(gcp.NewOutputEvent("...", "table", output))
+				}
+				return output, err
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+
+	s.Register(&endly.Route{
+		Action: "patch",
+		RequestInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T.%v(%T)", s, "patch", &PatchRequest{}),
+		},
+		ResponseInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T", &bigquery.Table{}),
+		},
+		RequestProvider: func() interface{} {
+			return &PatchRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &bigquery.Table{}
+		},
+		OnRawRequest: InitRequest,
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*PatchRequest); ok {
+				output, err := s.patch(context, req)
+				if err != nil {
+					return nil, err
+				}
+				if context.IsLoggingEnabled() {
+					context.Publish(gcp.NewOutputEvent("...", "table", output))
 				}
 				return output, err
 			}

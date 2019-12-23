@@ -1,10 +1,11 @@
 init:
   dataset: myDataset
-defaults:
-  credentials: gc
+  '!gcpCredentials': $params.authWith
+
 pipeline:
   query:
     action: gcp/bigquery:query
+    credentials: $gcpCredentials
     query: SELECT * FROM mySourceTable
     allowlargeresults: false
     defaultdataset:
@@ -15,5 +16,4 @@ pipeline:
       datasetid: $dataset
       tableid: myTable
     writedisposition: WRITE_APPEND
-
 

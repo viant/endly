@@ -1,0 +1,50 @@
+init:
+  'gcpCredentials': $params.authWith
+  gcpSecrets: ${secrets.$gcpCredentials}
+  projectID: $gcpSecrets.ProjectID
+  '!template': $params.template
+  '!dataset': $params.dataset
+  '!criteria': $params.criteria
+  i: 0
+
+
+pipeline:
+  registerSource:
+    action: dsunit:register
+    datastore: ${dataset}
+    config:
+      driverName: bigquery
+      credentials: $gcpCredentials
+      parameters:
+        datasetId: $dataset
+
+  readTables:
+    action: dsunit:query
+    datastore: $dataset
+    SQL: SELECT project_id, dataset_id, table_id  FROM `${projectID}.${dataset}.__TABLES__` WHERE table_id LIKE '%${criteria}%'
+    post:
+      tables: $Records
+
+
+  patchTable:
+    loop:
+      action: print
+      message: Patching $i/$Len($tables) -> $tables[$i].table_id
+
+    patch:
+      action: gcp/bigquery:patch
+      logging: false
+      template: $template
+      tableId: $tables[$i].table_id
+      datasetId: $tables[$i].dataset_id
+      projectId: $tables[$i].project_id
+      credentials: $gcpCredentials
+
+    inc:
+      action: nop
+      init:
+        _: $i++
+    goto:
+      when: $i < $Len($tables)
+      action: goto
+      task: patchTable

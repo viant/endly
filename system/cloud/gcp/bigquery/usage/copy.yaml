@@ -1,0 +1,56 @@
+init:
+  '!gcpCredentials': $params.authWith
+  gcpSecrets: ${secrets.$gcpCredentials}
+  i: 0
+
+  src:
+    projectID: $gcpSecrets.ProjectID
+    datasetID: db1
+  dest:
+    projectID: $gcpSecrets.ProjectID
+    datasetID: db1e2e
+
+pipeline:
+  registerSource:
+    action: dsunit:register
+    datastore: ${src.datasetID}
+    config:
+      driverName: bigquery
+      credentials: $gcpCredentials
+      parameters:
+        datasetId: $src.datasetID
+
+  readTables:
+    action: dsunit:query
+    datastore: ${src.datasetID}
+    SQL: SELECT table_id AS table FROM `${src.projectID}.${src.datasetID}.__TABLES__`
+    post:
+      dataset: $Records
+
+
+  copyTables:
+    loop:
+      action: print
+      message: $i/$Len($dataset) -> $dataset[$i].table
+
+    copyTable:
+      action: gcp/bigquery:copy
+      logging: false
+      credentials: $gcpCredentials
+      sourceTable:
+        projectID: ${src.projectID}
+        datasetID: ${src.datasetID}
+        tableID: $dataset[$i].table
+      destinationTable:
+        projectID: ${dest.projectID}
+        datasetID: ${dest.datasetID}
+        tableID: $dataset[$i].table
+
+    inc:
+      action: nop
+      init:
+        _ : $i++
+    goto:
+      when: $i < $Len($dataset)
+      action: goto
+      task: copyTables

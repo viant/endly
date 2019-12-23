@@ -1,0 +1,36 @@
+init:
+  '!gcpCredentials': $params.authWith
+  gcpSecrets: ${secrets.$gcpCredentials}
+  projectID: ${gcpSecrets.ProjectID}
+
+pipeline:
+  init-db:
+    action: dsunit:init
+    datastore: bqtail
+    config:
+      driverName: bigquery
+      credentials: $gcpCredentials
+      parameters:
+        datasetId: bqtail
+    scripts:
+      - URL: schema.sql
+
+  getTable:
+    action: gcp/bigquery:table
+    logging: false
+    credentials: $gcpCredentials
+    table: ${projectID}:bqtail.dummy_template
+    dest:
+      URL: /tmp/mytable.json
+
+
+  patch:
+    init:
+      table: $Cat('/tmp/mytable.json')
+      tableMap: $AsMap($table)
+      schema: $tableMap.schema
+    action: gcp/bigquery:patch
+    credentials: $gcpCredentials
+    table: ${projectID}:bqtail.dummy
+    schema: $schema
+

@@ -11,6 +11,7 @@ import (
 	"strings"
 )
 
+
 //NewAvroReader creates a new avro reader UDFs
 func NewAvroReader(source interface{}, state data.Map) (interface{}, error) {
 	var reader io.Reader
