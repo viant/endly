@@ -63,11 +63,13 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 	extractableOutput, structuredOutput := util.AsExtractable(out)
 	if len(structuredOutput) > 0 {
 		if extractedData, ok := structuredOutput["Data"]; ok {
-			extractedDataMap := extractedData.(data.Map)
-			for k, v := range extractedDataMap {
-				// don't overwrite existing keys
-				if _, ok := extracted[k]; !ok {
-					extracted[k] = v
+			extractedDataMap, ok := extractedData.(data.Map)
+			if ok {
+				for k, v := range extractedDataMap {
+					// don't overwrite existing keys
+					if _, ok := extracted[k]; !ok {
+						extracted[k] = v
+					}
 				}
 			}
 		}
