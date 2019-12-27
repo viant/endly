@@ -515,7 +515,9 @@ func printServiceActionInfo(renderer *cli.Renderer, info *endly.ActionInfo, colo
 	renderer.Printf(renderer.ColorText(fmt.Sprintf("YAML %v: \n", infoType), color, "bold"))
 	reqMap := map[string]interface{}{}
 	_ = toolbox.DefaultConverter.AssignConverted(&reqMap, req)
-	reqMap = toLowerCaseCamel(reqMap)
+	if reqMap != nil {
+		reqMap = toLowerCaseCamel(reqMap)
+	}
 	buf, _ = yaml.Marshal(reqMap)
 	renderer.Println(string(buf) + "\n")
 }
