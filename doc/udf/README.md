@@ -89,7 +89,7 @@ In data substitution case if UDF returns error data will NOT be expanded with co
 
 | UDF | Description | Inline Example |
 |---|----|----|
-| DateOfBirth | provides formatted date of birth, it take  desired age, optionally month, day and timeformat | $Dob([yeaysAgo,monthsAgo,daysAgo,"yyyy"]) |
+| DateOfBirth | provides formatted date of birth, it take  desired age, optionally month, day and timeformat | $Dob(yeaysAgo,monthsAgo,daysAgo,"yyyy") |
 | URLJoin | joins base URL and URI path | $URLJoin($baseURL, $URI) |
 | Hostname | extracts host from URL | $Hostname($URL) |
 | AvroReader | Avro reader | n/a | 
@@ -115,13 +115,13 @@ In data substitution case if UDF returns error data will NOT be expanded with co
 | WorkingDirectory | returns working directory joined with supplied sub path,  '../' is supported | $WorkingDirectory(../) |
 | LoadNeatly | loads neatly document as data structure. | n/a | 
 | Length or Len | returns length of slice, map or string | $Len($failures) | 
-| FormatTime | takes two arguments, date or data literal like 'now' or '2hoursahead', followed by java style date format | $FormatTime(["now","yyyyMMdd"]) | 
+| FormatTime | takes two arguments, date or data literal like 'now' or '2hoursahead', followed by java style date format | $FormatTime("now","yyyyMMdd") | 
 | Zip | takes []byte or string to compress it. | n/a | 
 | Unzip | takes []byte to uncompress it into []byte. | n/a | 
 | UnzipText | takes []byte to uncompress it into string.| n/a | 
 | Markdown | generate HTML for suppied markdown| $Markdown($md) | 
 | Cat | returns content of supplied filename | $Cat("/etc/hosts") |  
-| Increment | increments state key value with supplied delta  | $Increment(['counterKey', -2]), | 
+| Increment | increments state key value with supplied delta  | $Increment('counterKey', -2), | 
 
 
 
