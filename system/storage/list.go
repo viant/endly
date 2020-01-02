@@ -61,7 +61,6 @@ func listResource(ctx context.Context, URL string, storageOptions []storage.Opti
 	if err != nil {
 		return err
 	}
-
 	for i, object := range objects {
 		var resource *asset.Resource
 		if object.IsDir() {
@@ -88,7 +87,8 @@ func listResource(ctx context.Context, URL string, storageOptions []storage.Opti
 
 	if request.Recursive {
 		dirMatcher := &matcher.Basic{Directory: &request.Recursive}
-		objects, err := fs.List(ctx, URL, dirMatcher.Match)
+		recursiveOptions := append(storageOptions, dirMatcher.Match)
+		objects, err := fs.List(ctx, URL, recursiveOptions...)
 		if err != nil {
 			return err
 		}
