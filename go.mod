@@ -29,7 +29,6 @@ require (
 	github.com/gocql/gocql v0.0.0-20190610222256-e00e8c6226e8 // indirect
 	github.com/gogo/protobuf v1.2.1 // indirect
 	github.com/golang/protobuf v1.3.1
-	github.com/golang/snappy v0.0.1 // indirect
 	github.com/gomarkdown/markdown v0.0.0-20190222000725-ee6a7931a1e4 // indirect
 	github.com/google/gofuzz v1.0.0 // indirect
 	github.com/google/gops v0.3.6
@@ -46,7 +45,6 @@ require (
 	github.com/klauspost/cpuid v1.2.1 // indirect
 	github.com/klauspost/pgzip v1.2.1 // indirect
 	github.com/lib/pq v1.1.1
-    github.com/segmentio/kafka-go v0.3.4
 	github.com/linkedin/goavro v2.1.0+incompatible
 	github.com/logrusorgru/aurora v0.0.0-20190428105938-cea283e61946
 	github.com/lunixbochs/vtclean v1.0.0
@@ -65,6 +63,7 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
+	github.com/segmentio/kafka-go v0.3.4
 	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/spf13/pflag v1.0.3 // indirect
 	github.com/stretchr/testify v1.3.0
