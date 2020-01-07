@@ -63,7 +63,8 @@ type ExtractCommand struct {
 	Extract     model.Extracts `description:"stdout data extraction instruction"`                                                                               //Stdout data extraction instruction
 	Errors      []string       `description:"fragments that will terminate execution with error if matched with standard output, in most cases leave empty"`    //fragments that will terminate execution with error if matched with standard output
 	Success     []string       `description:"if specified absence of all of the these fragment will terminate execution with error, in most cases leave empty"` //if specified absence of all of the these fragment will terminate execution with error.
-	TimeoutMs int            `description:"timeoutMs stdout wati tinmeout "`
+	Terminators []string       `description:"terminators"`
+	TimeoutMs   int            `description:"timeoutMs stdout wait timeout "`
 }
 
 func (c *ExtractCommand) Init() error {

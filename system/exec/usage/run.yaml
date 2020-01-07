@@ -1,0 +1,32 @@
+pipeline:
+  testMe:
+    action: exec:extract
+    systemPaths:
+      - /opt/sdk/go/bin
+    commands:
+      - command: go version
+        extract:
+          - Key: Version
+            RegExpr: go(\d\.\d\d)
+      - command: echo 'YOUR GO VERSION is $Version'
+
+      - command: passwd tester
+        terminators:
+          - Old Password
+        timeoutMs: 10000
+
+      - command: changme
+        success:
+          - New Password
+        timeoutMs: 10000
+
+      - command: testerPass@1
+        success:
+          - Retype New Password
+        timeoutMs: 10000
+
+      - command: testerPass@1
+        success:
+          - Retype New Password
+
+      - command: echo 'Done'

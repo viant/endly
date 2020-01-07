@@ -445,7 +445,12 @@ func (s *execService) retryWithSudo(context *endly.Context, session *model.Sessi
 }
 
 func getTerminators(options *Options, session *model.Session, execution *ExtractCommand) []string {
-	var terminators = append([]string{}, options.Terminators...)
+	var terminators = make([]string, 0)
+	if len(execution.Terminators) > 0 {
+		terminators = append(terminators, execution.Terminators...)
+	} else {
+		terminators = append(terminators, options.Terminators...)
+	}
 	terminators = append(terminators, "$ ")
 	superUserPrompt := string(strings.Replace(session.ShellPrompt(), "$", "#", 1))
 	if strings.Contains(superUserPrompt, "bash") {
@@ -453,6 +458,7 @@ func getTerminators(options *Options, session *model.Session, execution *Extract
 	}
 	terminators = append(terminators, superUserPrompt)
 	terminators = append(terminators, execution.Errors...)
+	terminators = append(terminators, execution.Success...)
 	return terminators
 }
 
