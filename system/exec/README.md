@@ -9,6 +9,75 @@ Service keeps tracking the session current directory commands, env variable sett
 - [Code Level Integration](#code-level-integration)
 
 
+
+### Command execution
+
+Command executor uses SSH service, to run all commands. 
+
+
+Each command is defined with the following:
+
+   - When: optional run match criteria i.e.  $stdout:/password/"
+   - Command: command to be send to STDIN
+   - Extract: optional data scraping rules
+   - Errors: optional matching fragments resulting in error (blacklist) 
+   - Success: optional matching fragment defining success (whitelist) 
+   - TimeoutMs: optional command timeout 
+
+Each command has access to previous commands output with:
+    - current workflow state
+    - $stdout all run request commands output upto execution point 
+    - $cmd[ index ].stdout individual command output  
+
+ 
+Each command is sent to SSH session STDIN with optional response timeout and custom terminators to detect command result.
+Besides the custom terminators, shell prompt is also used to detect command ended.
+If stdout produces no output or no output is match, run command wait specified timeout (default 20sec).
+
+```go
+    sshSession.Run(command, listener, timeoutMs, terminators...)
+````
+
+Optionally after each step, command execution code is check with ```echo $?``` if checkError flag is set (false by default). 
+
+
+[@run.yaml](usage/run.yaml)
+```yaml
+pipeline:
+  testMe:
+    action: exec:extract
+    systemPaths:
+      - /opt/sdk/go/bin
+    commands:
+      - command: go version
+        extract:
+          - Key: Version
+            RegExpr: go(\d\.\d\d)
+      - command: echo 'YOUR GO VERSION is $Version'
+
+      - command: passwd tester
+        terminators:
+          - Old Password
+        timeoutMs: 10000
+
+      - command: changme
+        success:
+          - New Password
+        timeoutMs: 10000
+
+      - command: testerPass@1
+        success:
+          - Retype New Password
+        timeoutMs: 10000
+
+      - command: testerPass@1
+        success:
+          - Retype New Password
+
+      - command: echo 'Done'
+```
+    
+
 ## Usage
 
 
@@ -49,6 +118,8 @@ pipeline:
 ```
 
 In that case you can skip defining target in all service using SSH exec service.
+
+
 
 
 #### Custom credentials 
@@ -154,6 +225,11 @@ pipeline:
     message: "Extracted: ${extract.Data.aliases}"
 
 ```
+
+
+
+
+
 
 ### Super user mode
 
@@ -283,6 +359,9 @@ Imaging that you have to build an app that uses private git repository.
           - '${cmd[3].stdout}:/Username/? $gitSecrets.Username'
           - '${output}:/Password/? $gitSecrets.Password'
     ```
+
+
+
 
 
 
