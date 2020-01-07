@@ -458,7 +458,6 @@ func getTerminators(options *Options, session *model.Session, execution *Extract
 	}
 	terminators = append(terminators, superUserPrompt)
 	terminators = append(terminators, execution.Errors...)
-	terminators = append(terminators, execution.Success...)
 	return terminators
 }
 

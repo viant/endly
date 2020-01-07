@@ -16,17 +16,19 @@ pipeline:
         timeoutMs: 10000
 
       - command: changme
+        terminators:
+          - New Password
         success:
           - New Password
         timeoutMs: 10000
 
       - command: testerPass@1
-        success:
+        terminators:
           - Retype New Password
         timeoutMs: 10000
 
       - command: testerPass@1
-        success:
+        terminators:
           - Retype New Password
 
       - command: echo 'Done'
