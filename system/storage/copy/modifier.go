@@ -2,6 +2,7 @@ package copy
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
 	"github.com/viant/endly"
@@ -22,6 +23,9 @@ func NewModifier(context *endly.Context, when *Matcher, replaceMap map[string]st
 		return nil, err
 	}
 	return func(info os.FileInfo, reader io.ReadCloser) (os.FileInfo, io.ReadCloser, error) {
+		if reader == nil {
+			return nil, nil, fmt.Errorf("reader was empty")
+		}
 		if !matchHandler("", info) {
 			return info, reader, nil
 		}

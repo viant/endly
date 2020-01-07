@@ -390,7 +390,11 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 		}
 	}
 
-	stdout, err := s.run(context, session, insecureCommand, listener, options.TimeoutMs, terminators...)
+	timeoutMs := options.TimeoutMs
+	if extractCommand.TimeoutMs > 0 {
+		timeoutMs = extractCommand.TimeoutMs
+	}
+	stdout, err := s.run(context, session, insecureCommand, listener, timeoutMs, terminators...)
 	if len(response.Output) > 0 {
 		if !strings.HasSuffix(response.Output, "\n") {
 			response.Output += "\n"
