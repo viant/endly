@@ -524,9 +524,12 @@ func printServiceActionInfo(renderer *cli.Renderer, info *endly.ActionInfo, colo
 
 func toLowerCaseCamel(req map[string]interface{}) map[string]interface{} {
 	var result = make(map[string]interface{})
-
 	for k, v := range req {
 		k = toolbox.ToCaseFormat(k, toolbox.CaseUpperCamel, toolbox.CaseLowerCamel)
+		if v == nil {
+			result[k] = v
+			continue
+		}
 		if toolbox.IsMap(v) {
 			v = toLowerCaseCamel(toolbox.AsMap(v))
 		} else if toolbox.IsSlice(v) {
