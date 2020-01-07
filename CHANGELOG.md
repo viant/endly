@@ -1,7 +1,5 @@
 ## Jan 8 2019 0.46.3
   * Added exec service command.Terminators, command.TimeoutMs override options
-  * Add exec service command.Success to command terminators (could be breaking change)  
-
 
 ## December 20 2019 0.46.2
   * Added gcp/bigquery:patch operation
