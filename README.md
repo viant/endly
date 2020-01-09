@@ -782,10 +782,10 @@ all compatible with Apache License, Version 2. Please see individual files for d
 ## TODO
 
 - [ ] documentation improvements
+- [ ] command executor with os/exec.Command
 - [ ] gcp/containers integration
 - [ ] gcp/cloudfunctions viant/afs integration
 - [ ] ufd self describing meta data
-- [ ] kafka testing/msg integration
 - [ ] viant/afs docker connector
 
 
