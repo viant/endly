@@ -72,7 +72,7 @@ func (c *ExtractCommand) Init() error {
 		return nil
 	}
 	if strings.TrimSpace(c.When) != "" {
-		if strings.Index(c.When, "$") == -1 {//if no matching source is specified use $stdout
+		if strings.Index(c.When, "$") == -1 { //if no matching source is specified use $stdout
 			c.When = fmt.Sprintf("$stdout :/%v/", c.When)
 		}
 	}

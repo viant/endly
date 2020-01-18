@@ -1,3 +1,6 @@
+## Jan 8 2019 0.46.4
+  * Patch nil pointer on storage copy with expand flag
+
 ## Jan 8 2019 0.46.3
   * Added exec service command.Terminators, command.TimeoutMs override options
 
