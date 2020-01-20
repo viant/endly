@@ -1,3 +1,6 @@
+## Jan 20 2019 0.47.0
+  * Added aws/apigateway:getRestAPI
+  
 ## Jan 8 2019 0.46.4
   * Patch nil pointer on storage copy with expand flag
 

@@ -22,6 +22,40 @@ type service struct {
 	*endly.AbstractService
 }
 
+func (s *service) getRestApi(context *endly.Context, request *GetRestAPIInput) (*GetRestAPIOutput, error) {
+	client, err := GetClient(context)
+	if err != nil {
+		return nil, err
+	}
+	keysResponse, err := client.GetRestApis(&apigateway.GetRestApisInput{})
+	if err != nil {
+		return nil, err
+	}
+	var restAPI *apigateway.RestApi
+	for _, item := range keysResponse.Items {
+		if *item.Name == *request.Name {
+			restAPI = item
+			break
+		}
+	}
+	output := &GetRestAPIOutput{
+		RestApi: restAPI,
+	}
+	if restAPI == nil {
+		return output, nil
+	}
+	region := ""
+	if client.Config.Region != nil {
+		region = *client.Config.Region
+	}
+	output.EndpointURL = fmt.Sprintf("https://%s.execute-api.%s.amazonaws.com/%s/",
+		*restAPI.Id,
+		region,
+		*request.StageName)
+	return output, nil
+}
+
+
 func (s *service) setupResetAPI(context *endly.Context, request *SetupRestAPIInput) (*SetupRestAPIOutput, error) {
 	restAPI, resources, err := s.getOrCreateRestAPI(context, &request.CreateRestApiInput)
 	if err != nil {
@@ -392,6 +426,29 @@ func (s *service) registerRoutes() {
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*RemoveRestAPIInput); ok {
 				return s.removeRestAPI(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "getRestAPI",
+		RequestInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T.%v(%T)", s, "getRestAPI", &GetRestAPIInput{}),
+		},
+		ResponseInfo: &endly.ActionInfo{
+			Description: fmt.Sprintf("%T", &GetRestAPIOutput{}),
+		},
+		RequestProvider: func() interface{} {
+			return &GetRestAPIInput{}
+		},
+		ResponseProvider: func() interface{} {
+			return &GetRestAPIOutput{}
+		},
+		OnRawRequest: setClient,
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*GetRestAPIInput); ok {
+				return s.getRestApi(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},

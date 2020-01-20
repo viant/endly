@@ -9,6 +9,33 @@ import (
 	"strings"
 )
 
+
+//GetRestAPIInput endpoint URL inpit
+type GetRestAPIInput struct {
+	Name *string `json:",inline"`
+	StageName *string ` json:",inline"`
+}
+
+func (i *GetRestAPIInput) Init() error {
+	if i.StageName == nil {
+		i.StageName= aws.String("e2e")
+	}
+	return nil
+}
+
+func (i *GetRestAPIInput) Validate() error {
+	if i.Name == nil {
+		return errors.New("name was empty")
+	}
+	return nil
+}
+
+//GetRestAPIInput endpoint URL output
+type GetRestAPIOutput struct {
+	*apigateway.RestApi
+	EndpointURL string ` json:",inline"`
+}
+
 //SetupRestAPIInput represent a request to setup API with specified resources
 type SetupRestAPIInput struct {
 	apigateway.CreateRestApiInput    ` json:",inline"`
