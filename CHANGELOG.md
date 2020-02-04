@@ -1,3 +1,6 @@
+## Feb 4 2020 0.47.1
+  * Patched "@fromQuery@" variable substitution (viant/dsunit dep)
+
 ## Jan 20 2019 0.47.0
   * Added aws/apigateway:getRestAPI
   
