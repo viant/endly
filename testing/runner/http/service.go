@@ -28,7 +28,7 @@ type service struct {
 }
 
 func (s *service) send(context *endly.Context, sendGroupRequest *SendRequest) (*SendResponse, error) {
-	client, err := toolbox.NewHttpClient(s.applyDefaultTimeoutIfNeeded(sendGroupRequest.options_)...)
+	client, err := toolbox.NewHttpClient(s.applyDefaultTimeoutIfNeeded(sendGroupRequest.httpOptions)...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send req: %v", err)
 	}
@@ -384,7 +384,7 @@ func (s *service) initClients(request *LoadRequest, sendChannel chan *stressTest
 	var err error
 	for i := 0; i < request.ThreadCount; i++ {
 		var client *http.Client
-		options := s.applyDefaultTimeoutIfNeeded(request.options_)
+		options := s.applyDefaultTimeoutIfNeeded(request.httpOptions)
 		if client, err = toolbox.NewHttpClient(options...); err != nil {
 			return nil, err
 		}
