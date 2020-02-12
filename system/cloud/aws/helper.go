@@ -19,7 +19,7 @@ import (
 var LambdaInvoke = "lambda:InvokeFunction"
 
 //SetFunctionInfo sets function info into map
-func SetFunctionInfo(function *lambda.FunctionConfiguration, aMap data.Map) {
+func SetFunctionInfo(key string, function *lambda.FunctionConfiguration, aMap data.Map) {
 	functionState := data.NewMap()
 	functionState.Put("arn", function.FunctionArn)
 	if ARN, err := arn.Parse(*function.FunctionArn); err == nil {
@@ -27,7 +27,7 @@ func SetFunctionInfo(function *lambda.FunctionConfiguration, aMap data.Map) {
 		functionState.Put("accountID", ARN.AccountID)
 	}
 	functionState.Put("name", function.FunctionName)
-	aMap.Put("function", functionState)
+	aMap.Put(key, functionState)
 }
 
 //GetFunctionConfiguration returns function configuration
