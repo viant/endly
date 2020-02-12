@@ -29,7 +29,7 @@ func (s *restService) sendRequest(context *endly.Context, request *Request) (*Re
 
 	handler := func() (interface{}, error) {
 		var JSONResponse = make(map[string]interface{})
-		err := toolbox.RouteToService(request.Method, context.Expand(request.URL), req, &JSONResponse)
+		err := toolbox.RouteToService(request.Method, context.Expand(request.URL), req, &JSONResponse, request.httpOptions...)
 		if err != nil {
 			return nil, err
 		}
