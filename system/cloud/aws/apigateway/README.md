@@ -27,7 +27,7 @@ endly -r=setup
 ```yaml
 pipeline:
   createAPI:
-    action: aws/apigateway:setupRestAPI
+    action: aws/apigateway:deployAPI
     credentials: aws
     '@name': ipLookupAPI
     resources:

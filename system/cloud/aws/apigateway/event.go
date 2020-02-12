@@ -12,6 +12,7 @@ type RestMethodInfo struct {
 	URI               *string
 	Type              *string
 	AuthorizationType *string
+	AuthorizerID *string
 }
 
 //Represents reset resource event part
@@ -61,10 +62,12 @@ func NewResetAPIEvent(output *SetupRestAPIOutput) *ResetAPIEvent {
 			TestCLI: fmt.Sprintf(`aws apigateway test-invoke-method --rest-api-id %s  --resource-id %s --http-method "GET"`, *output.Id, *resource.Id),
 		}
 		if len(resource.ResourceMethods) > 0 {
+
 			for k, v := range resource.ResourceMethods {
 				method := &RestMethodInfo{
 					HTTPMethod:        k,
 					AuthorizationType: v.AuthorizationType,
+					AuthorizerID: v.AuthorizerId,
 				}
 				if v.MethodIntegration != nil {
 					method.URI = v.MethodIntegration.Uri

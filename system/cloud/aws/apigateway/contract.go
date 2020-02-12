@@ -9,16 +9,15 @@ import (
 	"strings"
 )
 
-
 //GetRestAPIInput endpoint URL inpit
 type GetRestAPIInput struct {
-	Name *string `json:",inline"`
+	Name      *string `json:",inline"`
 	StageName *string ` json:",inline"`
 }
 
 func (i *GetRestAPIInput) Init() error {
 	if i.StageName == nil {
-		i.StageName= aws.String("e2e")
+		i.StageName = aws.String("e2e")
 	}
 	return nil
 }
@@ -41,13 +40,56 @@ type SetupRestAPIInput struct {
 	apigateway.CreateRestApiInput    ` json:",inline"`
 	Resources                        []*SetupResourceInput
 	apigateway.CreateDeploymentInput ` json:",inline"`
-	Redeploy                         bool
+
+	Authorizers     []*CreateAuthorizerInput
+	GatewayResponse []*apigateway.PutGatewayResponseInput
+	Redeploy        bool
 }
+
+
+
+type CreateAuthorizerInput struct {
+	apigateway.CreateAuthorizerInput
+	FunctionName string
+}
+
+//Diff computes patches
+func (i CreateAuthorizerInput) Diff(source *apigateway.Authorizer) []*apigateway.PatchOperation {
+	var result = make([]*apigateway.PatchOperation, 0)
+	if patch, ok := patchString(source.AuthorizerUri, i.AuthorizerUri, "/authorizerUri"); ok {
+		result = append(result, patch)
+	}
+	if patch, ok := patchString(source.AuthType, i.AuthType, "/authType"); ok {
+		result = append(result, patch)
+	}
+	if patch, ok := patchString(source.Type, i.Type, "/authorizerType"); ok {
+		result = append(result, patch)
+	}
+	if patch, ok := patchString(source.Name, i.Name, "/name"); ok {
+		result = append(result, patch)
+	}
+	if patch, ok := patchString(source.AuthorizerCredentials, i.AuthorizerCredentials, "/authorizerCredentials"); ok {
+		result = append(result, patch)
+	}
+	if patch, ok := patchString(source.IdentitySource, i.IdentitySource, "/identitySource"); ok {
+		result = append(result, patch)
+	}
+	if patch, ok := patchString(source.IdentityValidationExpression, i.IdentityValidationExpression, "/identityValidationExpression"); ok {
+		result = append(result, patch)
+	}
+	if patch, ok := pathInt64(source.AuthorizerResultTtlInSeconds, i.AuthorizerResultTtlInSeconds, "/authorizerResultTtlInSeconds"); ok {
+		result = append(result, patch)
+	}
+
+	return result
+}
+
 
 //SetupRestAPIInput represent setup API response
 type SetupRestAPIOutput struct {
 	*apigateway.RestApi
 	Resources   []*SetupResourceOutput
+	Authorizers []*apigateway.Authorizer
 	Stage       *apigateway.Stage
 	EndpointURL string
 	Region      string
@@ -63,6 +105,7 @@ type SetupResourceInput struct {
 //ResourceMethod represents resource method
 type ResourceMethod struct {
 	FunctionName string
+	Authorizer   string
 	HttpMethod   string
 	*apigateway.PutMethodInput
 	*apigateway.PutIntegrationInput
@@ -94,6 +137,12 @@ func (i *SetupRestAPIInput) Init() error {
 
 	var URIs = make(map[string]bool)
 	var resources = make([]*SetupResourceInput, 0)
+
+	if len(i.Authorizers) > 0 {
+		for _, auth:= range i.Authorizers {
+			_ = auth.Init()
+		}
+	}
 
 	for _, resource := range i.Resources {
 		if err := resource.Init(); err != nil {
@@ -222,10 +271,10 @@ func (i *ResourceMethod) Init() error {
 		i.PutMethodInput = &apigateway.PutMethodInput{}
 		methodInput = i.PutMethodInput
 	}
-	if methodInput != nil {
+
+	if methodInput.AuthorizationType == nil {
 		methodInput.AuthorizationType = aws.String("NONE")
 	}
-
 	if methodInput.ApiKeyRequired == nil {
 		methodInput.ApiKeyRequired = aws.Bool(false)
 	}
@@ -251,7 +300,6 @@ func (i *ResourceMethod) Init() error {
 		if integrationInput.Type == nil {
 			integrationInput.Type = aws.String("AWS_PROXY")
 		}
-
 		if integrationInput.Uri == nil {
 			integrationInput.Uri = aws.String("arn:aws:apigateway:${function.region}:lambda:path/2015-03-31/functions/${function.arn}/invocations")
 		}
@@ -276,6 +324,20 @@ func (i *ResourceMethod) Init() error {
 			permissionInput.SourceArn = aws.String("arn:aws:execute-api:${function.region}:${function.accountID}:${restAPI.ID}/*/*/*")
 		}
 	}
+	return nil
+}
+
+func (i *CreateAuthorizerInput) Init() error {
+	if i.FunctionName != "" {
+		i.AuthorizerUri = aws.String("arn:aws:apigateway:${authorizer.region}:lambda:path/2015-03-31/functions/${authorizer.arn}/invocations")
+	}
+	if i.AuthType == nil {
+		i.AuthType= aws.String("custom")
+	}
+	if i.AuthorizerResultTtlInSeconds == nil {
+		i.AuthorizerResultTtlInSeconds = aws.Int64(0)
+	}
+
 	return nil
 }
 

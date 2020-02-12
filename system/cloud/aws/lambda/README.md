@@ -286,7 +286,7 @@ pipeline:
         - policyarn: arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
 
     setupAPI:
-      action: aws/apigateway:setupRestAPI
+      action: aws/apigateway:deployAPI
       credentials: $awsCredentials
       '@name': myapigwfuncAPI
       resources:

@@ -105,7 +105,7 @@ func (s *service) setupLambdaNotification(ctx *endly.Context, currentConfig *s3.
 			if err != nil {
 				return nil, err
 			}
-			aws.SetFunctionInfo(function, state)
+			aws.SetFunctionInfo("function", function, state)
 			lambdaConfig = &config.LambdaFunctionConfiguration
 			lambdaConfig.LambdaFunctionArn = function.FunctionArn
 		}

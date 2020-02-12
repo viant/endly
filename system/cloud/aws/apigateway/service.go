@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/apigateway"
+	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/aws"
+	"time"
 
 	"github.com/viant/endly/system/cloud/aws/lambda"
 	"github.com/viant/toolbox"
@@ -55,8 +57,21 @@ func (s *service) getRestApi(context *endly.Context, request *GetRestAPIInput) (
 	return output, nil
 }
 
+func (s *service) getAuthorizers(context *endly.Context, restAPI string) ([]*apigateway.Authorizer, error) {
+	client, err := GetClient(context)
+	if err != nil {
+		return nil, err
+	}
+	output, err := client.GetAuthorizers(&apigateway.GetAuthorizersInput{
+		RestApiId: &restAPI,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return output.Items, nil
+}
 
-func (s *service) setupResetAPI(context *endly.Context, request *SetupRestAPIInput) (*SetupRestAPIOutput, error) {
+func (s *service) deployAPI(context *endly.Context, request *SetupRestAPIInput) (*SetupRestAPIOutput, error) {
 	restAPI, resources, err := s.getOrCreateRestAPI(context, &request.CreateRestApiInput)
 	if err != nil {
 		return nil, err
@@ -68,8 +83,20 @@ func (s *service) setupResetAPI(context *endly.Context, request *SetupRestAPIInp
 	if len(request.Resources) == 0 {
 		return response, nil
 	}
-	var byPath = indexResource(resources.Items)
+	request.RestApiId = restAPI.Id
+	response.Authorizers, _ = s.getAuthorizers(context, *restAPI.Id)
+	authorizedByName := indexAuthorizers(response.Authorizers, func(auth *apigateway.Authorizer) string {
+		return *auth.Name
+	})
 
+	if err := s.deployGatewayResponse(context, request); err != nil {
+		return nil, err
+	}
+
+	if err := s.deployAuthorizers(context, request, authorizedByName); err != nil {
+		return nil, err
+	}
+	var byPath = indexResource(resources.Items)
 	for _, resource := range request.Resources {
 		parent, ok := byPath[resource.ParentPath()]
 		if !ok {
@@ -77,7 +104,7 @@ func (s *service) setupResetAPI(context *endly.Context, request *SetupRestAPIInp
 			return nil, fmt.Errorf("unable locate parent resource: %v, for part %v,  available: %s", resource.ParentPath(), *resource.PathPart, available)
 		}
 		resource.ParentId = parent.Id
-		resourceOutput, err := s.setupResource(context, resource, restAPI, byPath)
+		resourceOutput, err := s.setupResource(context, resource, restAPI, byPath, authorizedByName)
 		if err != nil {
 			return nil, err
 		}
@@ -105,6 +132,103 @@ func (s *service) setupResetAPI(context *endly.Context, request *SetupRestAPIInp
 	}
 	return response, nil
 }
+
+func (s *service) deployGatewayResponse(context *endly.Context, request *SetupRestAPIInput) error {
+	if len(request.GatewayResponse) == 0 {
+		return nil
+	}
+	client, err := GetClient(context)
+	if err != nil {
+		return err
+	}
+	list, err := client.GetGatewayResponses(&apigateway.GetGatewayResponsesInput{RestApiId: request.RestApiId})
+	if err != nil {
+		return err
+	}
+	responses := indexGatewayResponseOutput(list)
+	for _, gwResponse:= range request.GatewayResponse {
+		if existing, ok := responses[*gwResponse.StatusCode]; ok {
+			if _, err = client.DeleteGatewayResponse(&apigateway.DeleteGatewayResponseInput{
+				ResponseType:existing.ResponseType,
+				RestApiId:request.RestApiId,
+			});err != nil {
+					return err
+			}
+		}
+		gwResponse.RestApiId = request.RestApiId
+		_, err := client.PutGatewayResponse(gwResponse)
+		if err != nil {
+			return errors.Wrapf(err, "failed to putGatewayResponse with %v", gwResponse)
+		}
+	}
+	return nil
+}
+
+
+
+func indexGatewayResponseOutput(list *apigateway.GetGatewayResponsesOutput) map[string]*apigateway.UpdateGatewayResponseOutput {
+	index := map[string]*apigateway.UpdateGatewayResponseOutput{}
+	for i, item := range list.Items {
+		index[*item.StatusCode] = list.Items[i]
+	}
+	return index
+}
+
+func (s *service) deployAuthorizers(context *endly.Context, request *SetupRestAPIInput, authorizers map[string]*apigateway.Authorizer) error {
+	if len(request.Authorizers) == 0 {
+		return nil
+	}
+	state := context.State()
+	client, err := GetClient(context)
+	if err != nil {
+		return err
+	}
+
+	for _, authorizer := range request.Authorizers {
+		if authorizer.FunctionName != "" {
+			function, err := aws.GetFunctionConfiguration(context, authorizer.FunctionName)
+			if err != nil {
+				return err
+			}
+			aws.SetFunctionInfo("authorizer", function, state)
+		}
+		*authorizer.AuthorizerUri = state.ExpandAsText(*authorizer.AuthorizerUri)
+		authorizer.RestApiId = request.RestApiId
+		existing, ok := authorizers[*authorizer.Name]
+		if ok {
+			patchOperations := authorizer.Diff(existing)
+			updateRequest := &apigateway.UpdateAuthorizerInput{
+				AuthorizerId:    existing.Id,
+				PatchOperations: patchOperations,
+				RestApiId:       request.RestApiId,
+			}
+			if _, err = client.UpdateAuthorizer(updateRequest); err != nil {
+				return errors.Wrapf(err, "failed to patch authorizer with %v", updateRequest)
+			}
+			return nil
+		}
+		output, err := client.CreateAuthorizer(&authorizer.CreateAuthorizerInput)
+		if err != nil {
+			return errors.Wrapf(err, "failed to create authorizer with %v", authorizer.CreateAuthorizerInput)
+		}
+		//let add extra time to  propagate changes
+		time.Sleep(time.Second)
+		authorizers[*output.Id] = output
+	}
+	return nil
+}
+
+func indexAuthorizers(authorizers []*apigateway.Authorizer, fn func(auth *apigateway.Authorizer) string) map[string]*apigateway.Authorizer {
+	var index = make(map[string]*apigateway.Authorizer)
+	if len(authorizers) == 0 {
+		return index
+	}
+	for i, auth := range authorizers {
+		index[fn(auth)] = authorizers[i]
+	}
+	return index
+}
+
 
 func (s *service) getOrCreateRestAPI(context *endly.Context, request *apigateway.CreateRestApiInput) (*apigateway.RestApi, *apigateway.GetResourcesOutput, error) {
 	client, err := GetClient(context)
@@ -145,12 +269,13 @@ func (s *service) getOrCreateRestAPI(context *endly.Context, request *apigateway
 	return restAPI, resources, err
 }
 
-func (s *service) setupResource(context *endly.Context, setup *SetupResourceInput, api *apigateway.RestApi, resources map[string]*apigateway.Resource) (*SetupResourceOutput, error) {
+func (s *service) setupResource(context *endly.Context, setup *SetupResourceInput, api *apigateway.RestApi, resources map[string]*apigateway.Resource, authorizers map[string]*apigateway.Authorizer) (*SetupResourceOutput, error) {
 	response := &SetupResourceOutput{
 		ResourceMethods: make(map[string]*apigateway.Method),
 	}
 
 	resourceInput := &setup.CreateResourceInput
+
 	client, err := GetClient(context)
 	if err != nil {
 		return nil, err
@@ -171,6 +296,14 @@ func (s *service) setupResource(context *endly.Context, setup *SetupResourceInpu
 		return nil, err
 	}
 	for _, resourceMethod := range setup.Methods {
+		if resourceMethod.Authorizer != "" && resourceMethod.AuthorizationType != nil && "CUSTOM" == *resourceMethod.AuthorizationType {
+			authorizer, ok := authorizers[resourceMethod.Authorizer]
+			if ! ok {
+				return nil, errors.Errorf("failed to loolup %v authorizer", resourceMethod.Authorizer)
+			}
+			resourceMethod.AuthorizerId = authorizer.Id
+		}
+
 		method, err := s.setupResourceMethod(context, api, resource, resourceMethod)
 		if err != nil {
 			return nil, err
@@ -188,7 +321,7 @@ func (s *service) setupResourceMethod(context *endly.Context, api *apigateway.Re
 		if err != nil {
 			return nil, err
 		}
-		aws.SetFunctionInfo(function, state)
+		aws.SetFunctionInfo("function", function, state)
 		SetAPIInfo(api, state)
 
 	}
@@ -201,7 +334,7 @@ func (s *service) setupResourceMethod(context *endly.Context, api *apigateway.Re
 	setupMethod.ResourceId = resource.Id
 	method, err := s.setupMethod(context, &setupMethod)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to setup method integration: %v, %v", method, resourceMethod.PutIntegrationInput)
 	}
 	integrationInput := resourceMethod.PutIntegrationInput
 	integrationInput.RestApiId = api.Id
@@ -209,7 +342,7 @@ func (s *service) setupResourceMethod(context *endly.Context, api *apigateway.Re
 	integrationInput.HttpMethod = setupMethod.HttpMethod
 	method.MethodIntegration, err = s.setupMethodIntegration(context, method, resourceMethod.PutIntegrationInput)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to create method integration: %v, %v", method, resourceMethod.PutIntegrationInput)
 	}
 	permissionInput := resourceMethod.AddPermissionInput
 
@@ -262,19 +395,38 @@ func (s *service) setupMethod(context *endly.Context, request *SetupMethodInput)
 
 	if err != nil || existingMethod == nil {
 		putMethod := apigateway.PutMethodInput(*request)
-		return client.PutMethod(&putMethod)
+		method, err := client.PutMethod(&putMethod)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to create method input: %v", putMethod)
+		}
+		return method, nil
 	}
 
 	patchOperations := request.Diff(existingMethod)
 	if len(patchOperations) == 0 {
 		return existingMethod, nil
 	}
-	return client.UpdateMethod(&apigateway.UpdateMethodInput{
+	updateRequest := &apigateway.UpdateMethodInput{
 		HttpMethod:      existingMethod.HttpMethod,
 		ResourceId:      request.ResourceId,
 		RestApiId:       request.RestApiId,
 		PatchOperations: patchOperations,
-	})
+	}
+
+	method, err := client.UpdateMethod(updateRequest)
+	if err != nil {
+		client.DeleteMethod(&apigateway.DeleteMethodInput{
+			RestApiId:  request.RestApiId,
+			ResourceId: request.ResourceId,
+			HttpMethod: request.HttpMethod,
+		})
+		putMethod := apigateway.PutMethodInput(*request)
+		method, err = client.PutMethod(&putMethod)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to recreate method input: %v", putMethod)
+		}
+	}
+	return method, nil
 }
 
 func (s *service) removeUnlistedMethods(client *apigateway.APIGateway, api *apigateway.RestApi, resource *apigateway.Resource, input *SetupResourceInput) error {
@@ -386,9 +538,9 @@ func (s *service) registerRoutes() {
 	}
 
 	s.Register(&endly.Route{
-		Action: "setupRestAPI",
+		Action: "deployAPI",
 		RequestInfo: &endly.ActionInfo{
-			Description: fmt.Sprintf("%T.%v(%T)", s, "setupRestAPI", &SetupRestAPIInput{}),
+			Description: fmt.Sprintf("%T.%v(%T)", s, "deployAPI", &SetupRestAPIInput{}),
 		},
 		ResponseInfo: &endly.ActionInfo{
 			Description: fmt.Sprintf("%T", &SetupRestAPIOutput{}),
@@ -402,7 +554,7 @@ func (s *service) registerRoutes() {
 		OnRawRequest: setClient,
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*SetupRestAPIInput); ok {
-				return s.setupResetAPI(context, req)
+				return s.deployAPI(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
