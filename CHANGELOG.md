@@ -1,7 +1,9 @@
-## Feb 4 2020 0.47.1
+## Feb 4 2020 0.48.0
   * Patched "@fromQuery@" variable substitution (viant/dsunit dep)
-
-## Jan 20 2019 0.47.0
+  * Added rest/runner http options
+  * Enhanced and renamed aws/apigateway:setupRestAPI to  aws/apigateway:deployAPI (BREAKING CHANGE) 
+  
+## Jan 12 2020 0.47.0
   * Added aws/apigateway:getRestAPI
   
 ## Jan 8 2019 0.46.4
