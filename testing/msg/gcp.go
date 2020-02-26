@@ -206,6 +206,15 @@ func (s *gcpClient) PullN(ctx context.Context, source *Resource, max int, nack b
 			ID:   msg.ID,
 			Data: msg.Data,
 		}
+
+		if len(msg.Data) > 0 {
+			aMap := map[string]interface{}{}
+			_ = json.Unmarshal(msg.Data, &aMap)
+			if len(aMap) > 0 {
+				pulledMessage.Transformed = aMap
+			}
+		}
+
 		if len(msg.Attributes) > 0 {
 			pulledMessage.Attributes = make(map[string]interface{})
 			for k, v := range msg.Attributes {
