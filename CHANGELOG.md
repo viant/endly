@@ -1,3 +1,7 @@
+## Feb 24 2020 0.48.1
+ * Removed default errors on exec:run, please use CheckErrors instead of define you custom errors.
+ 
+
 ## Feb 4 2020 0.48.0
   * Patched "@fromQuery@" variable substitution (viant/dsunit dep)
   * Added rest/runner http options
