@@ -229,14 +229,13 @@ func (r *RunRequest) AsExtractRequest() *ExtractRequest {
 	if len(r.Errors) == 0 {
 		r.Errors = []string{}
 	}
-	var commandErrors = append(CommandErrors, r.Errors...)
 	for _, command := range r.Commands {
 		when, runCommand := command.WhenAndCommand()
 		request.Commands = append(request.Commands,
 			&ExtractCommand{
 				When:    when,
 				Command: runCommand,
-				Errors:  commandErrors,
+				Errors:  r.Errors,
 			},
 		)
 	}
