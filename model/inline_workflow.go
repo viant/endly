@@ -467,7 +467,7 @@ func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, par
 			nodeAttributes[textKey] = value
 		}
 		flagAsMultiActionIfMatched(textKey, task, value)
-		if !toolbox.IsSlice(value) {
+		if value == nil || !toolbox.IsSlice(value) {
 			return true
 		}
 		buildErr = p.buildWorkflowNodes(toolbox.AsString(key), value, task, tagID+"_"+task.Name, state)
