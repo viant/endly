@@ -1,5 +1,7 @@
 module github.com/viant/endly/example/ui/sso
 
+go 1.14
+
 require (
 	github.com/aerospike/aerospike-client-go v1.39.0 // indirect
 	github.com/go-errors/errors v1.0.1 // indirect

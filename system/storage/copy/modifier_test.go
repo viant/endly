@@ -201,7 +201,6 @@ func TestNewModifier(t *testing.T) {
 			continue
 		}
 
-
 		readerCloser := ioutil.NopCloser(strings.NewReader(useCase.text))
 		_, reader, err := matcher(useCase.info, readerCloser)
 		assert.Nil(t, err, useCase.description)

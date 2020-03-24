@@ -66,14 +66,15 @@ require (
 	github.com/segmentio/kafka-go v0.3.4
 	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/spf13/pflag v1.0.3 // indirect
+	github.com/sspencer/go-ini v0.0.0-20141212062048-adb75e3175bb // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/tebeka/selenium v0.9.3
 	github.com/viant/afs v0.15.0
 	github.com/viant/afsc v0.14.0
 	github.com/viant/asc v0.5.0
 	github.com/viant/assertly v0.5.3
-	github.com/viant/bgc v0.7.3
-	github.com/viant/dsc v0.14.1
+	github.com/viant/bgc v0.8.0
+	github.com/viant/dsc v0.16.2
 	github.com/viant/dsunit v0.10.10
 	github.com/viant/neatly v0.8.0
 	github.com/viant/toolbox v0.29.6
@@ -82,6 +83,7 @@ require (
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	google.golang.org/api v0.6.0
+	gopkg.in/ini.v1 v1.52.0 // indirect
 	gopkg.in/linkedin/goavro.v1 v1.0.5 // indirect
 	gopkg.in/src-d/go-git.v4 v4.12.0
 	gopkg.in/yaml.v2 v2.2.2
