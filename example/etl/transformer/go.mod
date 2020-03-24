@@ -1,5 +1,7 @@
 module github.com/viant/endly/example/etl/transformer
 
+go 1.14
+
 require (
 	github.com/aerospike/aerospike-client-go v2.0.0+incompatible // indirect
 	github.com/go-errors/errors v1.0.1 // indirect

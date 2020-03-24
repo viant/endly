@@ -179,6 +179,8 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 		return nil, err
 	}
 
+
+
 	defer reader.Close()
 	if err = gcp.Upload(http.DefaultClient, uploadResponse.UploadUrl, reader); err != nil {
 		return nil, err

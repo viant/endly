@@ -1,5 +1,7 @@
 module github.com/viant/endly/example/ws/reporter
 
+go 1.14
+
 require (
 	github.com/go-errors/errors v1.0.1 // indirect
 	github.com/go-sql-driver/mysql v1.4.1

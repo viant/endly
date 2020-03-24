@@ -1,3 +1,6 @@
+## March 24 2020 0.48.2
+ * updated dependencies
+ 
 ## Feb 24 2020 0.48.1
  * Removed default errors on exec:run, please use CheckErrors instead of define you custom errors.
  
