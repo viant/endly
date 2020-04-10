@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/viant/afs"
 	"github.com/viant/afs/file"
+	"github.com/viant/afs/option"
 	"sync/atomic"
 
 	arl "github.com/viant/afs/url"
@@ -59,12 +60,16 @@ func StorageOptions(ctx *endly.Context, resource *url.Resource, options ...stora
 	}
 
 	if resource.Credentials != "" {
+
 		credConfig, err := ctx.Secrets.GetCredentials(resource.Credentials)
 		if err != nil {
 			return nil, err
 		}
-		if credConfig.Region != "" {
-			result = append(result, &s3.Region{Name: credConfig.Region})
+
+		region := &option.Region{}
+		_, hasRegion := option.Assign(options, &region)
+		if ! hasRegion && credConfig.Region != "" {
+			result = append(result, &option.Region{Name: credConfig.Region})
 		}
 		payload := ([]byte)(credConfig.Data)
 		scheme := arl.Scheme(resource.URL, file.Scheme)

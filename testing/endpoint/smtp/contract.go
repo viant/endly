@@ -45,6 +45,7 @@ func (r *ListenRequest) Init() error {
 	return nil
 }
 
+
 func (r *ListenRequest) Validate() error {
 	if len(r.Users) == 0 {
 		return fmt.Errorf("users were empty")

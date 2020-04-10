@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"github.com/viant/afs/option"
 
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/storage"
@@ -15,6 +16,7 @@ import (
 //CreateRequest represents a resources Upload request, it takes context state key to Upload to target destination.
 type CreateRequest struct {
 	SourceKey string        `required:"true" description:"state key with asset content"`
+	Region    string        `description:"cloud storage region"`
 	Mode      int           `description:"os.FileMode"`
 	IsDir     bool          `description:"is directory flag"`
 	Dest      *url.Resource `required:"true" description:"destination asset or directory"` //target URL with credentials
@@ -35,6 +37,9 @@ func (s *service) Create(context *endly.Context, request *CreateRequest) (*Creat
 
 func (s *service) create(context *endly.Context, request *CreateRequest, response *CreateResponse) error {
 	options := gerReaderOption(request, context, response)
+	if request.Region != "" {
+		options = append(options, option.NewRegion(request.Region))
+	}
 	dest, storageOpts, err := GetResourceWithOptions(context, request.Dest, options...)
 	if err != nil {
 		return err

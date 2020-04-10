@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/afs/option"
 	"github.com/viant/endly"
