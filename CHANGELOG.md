@@ -1,3 +1,6 @@
+## April 10 2020 0.49.0
+ * Added region option for storage.create, storage.upload
+
 ## March 24 2020 0.48.2
  * updated dependencies
  

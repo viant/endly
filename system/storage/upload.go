@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/viant/afs/file"
+	"github.com/viant/afs/option"
+	"github.com/viant/afs/storage"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox/url"
 	"os"
@@ -13,6 +15,7 @@ import (
 //UploadRequest represents a resources Upload request, it takes context state key to Upload to target destination.
 type UploadRequest struct {
 	SourceKey string        `required:"true" description:"state key with asset content"`
+	Region    string        `description:"cloud storage region"`
 	Mode      int           `description:"os.FileMode"`
 	Dest      *url.Resource `required:"true" description:"destination asset or directory"` //target URL with credentials
 }
@@ -30,7 +33,11 @@ func (s *service) Upload(context *endly.Context, request *UploadRequest) (*Uploa
 }
 
 func (s *service) upload(context *endly.Context, request *UploadRequest, response *UploadResponse) error {
-	dest, storageOpts, err := GetResourceWithOptions(context, request.Dest)
+	var options = []storage.Option{}
+	if request.Region != "" {
+		options = append(options, option.NewRegion(request.Region))
+	}
+	dest, storageOpts, err := GetResourceWithOptions(context, request.Dest, options...)
 	if err != nil {
 		return err
 	}
