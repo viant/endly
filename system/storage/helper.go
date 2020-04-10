@@ -42,12 +42,12 @@ func getDestWithOptions(context *endly.Context, rule *copy.Rule, modifier option
 }
 
 //GetResourceWithOptions returns resource with afs storage option
-func GetResourceWithOptions(context *endly.Context, resource *url.Resource,   options ...storage.Option) (*url.Resource, []storage.Option, error) {
+func GetResourceWithOptions(context *endly.Context, resource *url.Resource, options ...storage.Option) (*url.Resource, []storage.Option, error) {
 	resource, err := context.ExpandResource(resource)
 	if err != nil {
 		return nil, nil, err
 	}
-	sourceOptions, err := StorageOptions(context,  resource)
+	sourceOptions, err := StorageOptions(context, resource)
 	if len(options) > 0 {
 		sourceOptions = append(sourceOptions, options...)
 	}
