@@ -68,7 +68,7 @@ func StorageOptions(ctx *endly.Context, resource *url.Resource, options ...stora
 
 		region := &option.Region{}
 		_, hasRegion := option.Assign(options, &region)
-		if ! hasRegion && credConfig.Region != "" {
+		if !hasRegion && credConfig.Region != "" {
 			result = append(result, &option.Region{Name: credConfig.Region})
 		}
 		payload := ([]byte)(credConfig.Data)
