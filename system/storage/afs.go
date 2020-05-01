@@ -50,13 +50,19 @@ func StorageService(ctx *endly.Context, resources ...*url.Resource) (afs.Service
 func StorageOptions(ctx *endly.Context, resource *url.Resource, options ...storage.Option) ([]storage.Option, error) {
 	var result = options
 	if resource.CustomKey != nil {
-		if err := resource.CustomKey.Init(); err != nil {
+		var customKey = &option.AES256Key{
+			Key:                 resource.CustomKey.Key,
+			Base64Key:           resource.CustomKey.Base64Key,
+			Base64KeyMd5Hash:    resource.CustomKey.Base64KeyMd5Hash,
+			Base64KeySha256Hash: resource.CustomKey.Base64KeySha256Hash,
+		}
+		if err := customKey.Init(); err != nil {
 			return nil, err
 		}
-		if err := resource.CustomKey.Validate(); err != nil {
+		if err := customKey.Validate(); err != nil {
 			return nil, err
 		}
-		result = append(result, resource.CustomKey)
+		result = append(result, customKey)
 	}
 
 	if resource.Credentials != "" {

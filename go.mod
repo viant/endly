@@ -69,7 +69,7 @@ require (
 	github.com/sspencer/go-ini v0.0.0-20141212062048-adb75e3175bb // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/tebeka/selenium v0.9.3
-	github.com/viant/afs v0.17.0
+	github.com/viant/afs v0.17.1
 	github.com/viant/afsc v0.16.0
 	github.com/viant/asc v0.5.0
 	github.com/viant/assertly v0.5.3
@@ -77,7 +77,7 @@ require (
 	github.com/viant/dsc v0.16.2
 	github.com/viant/dsunit v0.10.10
 	github.com/viant/neatly v0.8.0
-	github.com/viant/toolbox v0.31.2
+	github.com/viant/toolbox v0.31.3
 	github.com/yuin/gopher-lua v0.0.0-20190514113301-1cd887cd7036 // indirect
 	golang.org/x/crypto v0.0.0-20190618222545-ea8f1a30c443
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
