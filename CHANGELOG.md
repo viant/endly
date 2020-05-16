@@ -1,3 +1,7 @@
+## April 10 2020 0.49.1
+ * Added LoadJSON udf
+ * Minor patches
+
 ## April 10 2020 0.49.0
  * Added region option for storage.create, storage.upload
 
