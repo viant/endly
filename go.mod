@@ -77,7 +77,7 @@ require (
 	github.com/viant/dsc v0.16.2
 	github.com/viant/dsunit v0.10.10
 	github.com/viant/neatly v0.8.0
-	github.com/viant/toolbox v0.31.3
+	github.com/viant/toolbox v0.32.2
 	github.com/yuin/gopher-lua v0.0.0-20190514113301-1cd887cd7036 // indirect
 	golang.org/x/crypto v0.0.0-20190618222545-ea8f1a30c443
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
@@ -87,7 +87,7 @@ require (
 	gopkg.in/linkedin/goavro.v1 v1.0.5 // indirect
 	gopkg.in/src-d/go-git.v4 v4.12.0
 	gopkg.in/yaml.v2 v2.2.2
-	gotest.tools v2.2.0+incompatible // indirect
+	gotest.tools v2.2.0+incompatible // indirec
 	k8s.io/api v0.0.0-20190111032252-67edc246be36
 	k8s.io/apimachinery v0.0.0-20190201131811-df262fa1a1ba
 	k8s.io/client-go v10.0.0+incompatible

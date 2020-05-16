@@ -16,7 +16,6 @@ type service struct {
 	*endly.AbstractService
 }
 
-
 func (s *service) listen(context *endly.Context, request *ListenRequest) (*ListenResponse, error) {
 	state := context.State()
 	request.BaseDirectory = url.NewResource(state.ExpandAsText(request.BaseDirectory)).ParsedURL.Path
