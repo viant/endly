@@ -197,7 +197,7 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 		if repeatCount == 0 {
 			repeatCount = 1
 		}
-		var maxReleaseVersion = strings.Repeat("9", repeatCount)
+		var maxReleaseVersion = strings.Repeat("9", repeatCount+1)
 		var min = toolbox.AsInt(minReleaseVersion)
 		var max = toolbox.AsInt(maxReleaseVersion)
 
