@@ -19,7 +19,7 @@ func (s *jdkService) checkJavaVersion(context *endly.Context, jdkCandidate strin
 	extractRequest := exec.NewExtractRequest(request.Target, exec.DefaultOptions(),
 		exec.NewExtractCommand(jdkCandidate+"java -version", "", nil,
 			util.StdErrors,
-			model.NewExtract("build", "build (\\d\\.\\d).+", false, false)),
+			model.NewExtract("build", "version \"(\\d+\\.\\d).+", false, false)),
 		exec.NewExtractCommand(fmt.Sprintf(jdkCandidate+"jrunscript -e 'java.lang.System.out.println(java.lang.System.getProperty(\"java.home\"));'"), "", nil,
 			util.StdErrors,
 			model.NewExtract("JAVA_HOME", "(.+)", false, false)))
