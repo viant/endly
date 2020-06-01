@@ -10,7 +10,7 @@
   "Directory": "$appDirectory",
   "Commands": [
     {
-      "Command": "tomcat/bin/catalina.sh jpda start",
+        "Command": "tomcat/bin/catalina.sh jpda start",
       "Success": [
         "Tomcat started."
       ],
