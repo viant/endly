@@ -165,18 +165,26 @@ func (s *service) handleRequest(client *http.Client, metric *runtimeMetric, trip
 		trip.timeout = true
 		atomic.AddUint32(&metric.timeouts, 1)
 	} else if err != nil {
+		fmt.Printf("%v\n", err)
 		trip.err = err
 		metric.err = err
 		atomic.AddUint32(&metric.errors, 1)
+		return
 	}
-	defer response.Body.Close()
-	if trip.err != nil || trip.timeout {
+	defer func() {
+		if response != nil && response.Body != nil {
+			response.Body.Close()
+		}
+	}()
+
+	if trip.err != nil || trip.timeout || response == nil {
 		return
 	}
 	var content []byte
 	if response.ContentLength > 0 {
 		content, err = ioutil.ReadAll(response.Body)
 	}
+
 	if trip.expected {
 		trip.response = &http.Response{
 			Header:        response.Header,
