@@ -20,7 +20,6 @@ import (
 type ProtoCodec struct {
 	registry            *msgregistry.MessageRegistry
 	msgType             string
-	convertToLowerCamel bool
 }
 
 func (c *ProtoCodec) AsMessage(msgType string, data []byte) (interface{}, error) {
@@ -63,18 +62,21 @@ func (c *ProtoCodec) AsBinary(msgType string, msg interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if c.convertToLowerCamel {
+
+
+	protoMsg := dynamic.NewMessage(msgDescriptor)
+	err = protoMsg.UnmarshalJSON(data)
+	if err != nil {
 		data, err = c.toLowerCamel(err, data)
 		if err != nil {
 			err = errors.Wrapf(err, "failed to convert to lowerCase fields")
 			return nil, err
 		}
-	}
-	protoMsg := dynamic.NewMessage(msgDescriptor)
-	err = protoMsg.UnmarshalJSON(data)
-	if err != nil {
-		err = errors.Wrapf(err, "failed to UnmarshalJSON")
-		return nil, err
+		err = protoMsg.UnmarshalJSON(data)
+		if err != nil {
+			err = errors.Wrapf(err, "failed to UnmarshalJSON")
+			return nil, err
+		}
 	}
 	return protoMsg.Marshal()
 }
@@ -115,7 +117,6 @@ func NewProtoCodec(schemaFile, importPath string, msgType string, lowercaseKey b
 	return &ProtoCodec{
 		registry:            registry,
 		msgType:             msgType,
-		convertToLowerCamel: lowercaseKey,
 	}, nil
 
 }
