@@ -18,8 +18,8 @@ import (
 
 //ProtoCodec represent a proto codec
 type ProtoCodec struct {
-	registry            *msgregistry.MessageRegistry
-	msgType             string
+	registry *msgregistry.MessageRegistry
+	msgType  string
 }
 
 func (c *ProtoCodec) AsMessage(msgType string, data []byte) (interface{}, error) {
@@ -63,7 +63,6 @@ func (c *ProtoCodec) AsBinary(msgType string, msg interface{}) ([]byte, error) {
 		return nil, err
 	}
 
-
 	protoMsg := dynamic.NewMessage(msgDescriptor)
 	err = protoMsg.UnmarshalJSON(data)
 	if err != nil {
@@ -80,7 +79,6 @@ func (c *ProtoCodec) AsBinary(msgType string, msg interface{}) ([]byte, error) {
 	}
 	return protoMsg.Marshal()
 }
-
 
 func (c *ProtoCodec) toLowerCamel(err error, data []byte) ([]byte, error) {
 	aMap := map[string]interface{}{}
@@ -101,7 +99,6 @@ func (c *ProtoCodec) toLowerCamel(err error, data []byte) ([]byte, error) {
 	return json.Marshal(transformed)
 }
 
-
 //NewProtoCodec creates a new protobuf codec
 func NewProtoCodec(schemaFile, importPath string, msgType string, lowercaseKey bool) (*ProtoCodec, error) {
 	parser := protoparse.Parser{ImportPaths: []string{importPath}, IncludeSourceCodeInfo: true}
@@ -115,8 +112,8 @@ func NewProtoCodec(schemaFile, importPath string, msgType string, lowercaseKey b
 		registry.AddFile(baseURL, desc)
 	}
 	return &ProtoCodec{
-		registry:            registry,
-		msgType:             msgType,
+		registry: registry,
+		msgType:  msgType,
 	}, nil
 
 }
@@ -128,7 +125,7 @@ func getProtoCodec(source string, args []interface{}) (*ProtoCodec, error) {
 	schemaFile := toolbox.AsString(args[0])
 	messageType := toolbox.AsString(args[1])
 	importPath, filename := path.Split(schemaFile)
-	if len(args) > 2 && args[2] != nil  {
+	if len(args) > 2 && args[2] != nil {
 		importPath = toolbox.AsString(args[2])
 	} else {
 		schemaFile = filename
