@@ -1,3 +1,6 @@
+## April 10 2020 0.49.2
+ * Added $weekday support
+ 
 ## April 10 2020 0.49.1
  * Added LoadJSON udf
  * Minor patches
