@@ -337,6 +337,15 @@ func NewDefaultState(ctx *Context) data.Map {
 	result.Put("date", now.Format(yyyyMMDDLayout))
 	result.Put("time", now.Format(yyyMMDDHHMMSSLayout))
 	result.Put("ts", now.Unix())
+	result.Put("weekday", func(key string) interface{} {
+		loc := time.UTC
+		if key != "" {
+			if l, err := time.LoadLocation(key); err != nil {
+				loc = l
+			}
+		}
+		return now.In(loc).Weekday()
+	})
 
 	result.Put("tmpDir", func(key string) interface{} {
 		tempPath := path.Join(os.TempDir(), key)
