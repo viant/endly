@@ -312,7 +312,7 @@ The following predefined in [context.go](./../../context.go#282) variables are f
 - _timestamp_: return timestamp in ms for any expression likes ${timestamp.now} or ${timestamp.5hoursAgo}, etc ...
 - _unix_: return timestamp in sec for any expression likes ${unix.tomorrow} or ${unix.5daysAhead}, etc ...
 - _tzTime_: return formatted time with time.RFC3339 yyyy-MM-ddThh:mm:ss.SSS Z  i.e ${tzTime.4daysAgoInUTC}
-
+- _weekday_: returns weekday with specified timezone i.e ${weekday.UTC}
 
 
 For more advanced usage you can also delegate variable declaration to a separate JSON file  
