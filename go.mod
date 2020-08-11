@@ -3,7 +3,11 @@ module github.com/viant/endly
 go 1.12
 
 require (
-	cloud.google.com/go v0.40.0
+	cloud.google.com/go v0.63.0 // indirect
+	cloud.google.com/go/firestore v1.3.0 // indirect
+	cloud.google.com/go/pubsub v1.3.1
+	cloud.google.com/go/bigquery v1.10.0
+	github.com/golang/protobuf v1.4.2
 	firebase.google.com/go v3.8.1+incompatible // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Azure/go-autorest/autorest v0.2.0 // indirect
@@ -14,6 +18,7 @@ require (
 	github.com/adrianwit/fsc v0.2.0
 	github.com/adrianwit/mgc v0.2.0
 	github.com/aerospike/aerospike-client-go v2.2.0+incompatible // indirect
+	github.com/aws/aws-lambda-go v1.19.0
 	github.com/aws/aws-sdk-go v1.20.6
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v0.7.3-0.20190515030239-f4b9142210e9
@@ -27,8 +32,6 @@ require (
 	github.com/go-errors/errors v1.0.1
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gocql/gocql v0.0.0-20190610222256-e00e8c6226e8 // indirect
-	github.com/gogo/protobuf v1.2.1 // indirect
-	github.com/golang/protobuf v1.3.1
 	github.com/gomarkdown/markdown v0.0.0-20190222000725-ee6a7931a1e4 // indirect
 	github.com/google/gofuzz v1.0.0 // indirect
 	github.com/google/gops v0.3.6
@@ -39,7 +42,7 @@ require (
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79 // indirect
 	github.com/imdario/mergo v0.3.7 // indirect
-	github.com/jhump/protoreflect v1.6.0
+	github.com/jhump/protoreflect v1.7.0
 	github.com/json-iterator/go v1.1.6 // indirect
 	github.com/klauspost/compress v1.7.1 // indirect
 	github.com/klauspost/cpuid v1.2.1 // indirect
@@ -66,8 +69,7 @@ require (
 	github.com/segmentio/kafka-go v0.3.4
 	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/spf13/pflag v1.0.3 // indirect
-	github.com/sspencer/go-ini v0.0.0-20141212062048-adb75e3175bb // indirect
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.6.1
 	github.com/tebeka/selenium v0.9.3
 	github.com/viant/afs v0.17.1
 	github.com/viant/afsc v0.16.0
@@ -79,15 +81,16 @@ require (
 	github.com/viant/neatly v0.8.0
 	github.com/viant/toolbox v0.32.2
 	github.com/yuin/gopher-lua v0.0.0-20190514113301-1cd887cd7036 // indirect
-	golang.org/x/crypto v0.0.0-20190618222545-ea8f1a30c443
-	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
-	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
-	google.golang.org/api v0.6.0
-	gopkg.in/ini.v1 v1.52.0 // indirect
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
+	google.golang.org/api v0.30.0
+	google.golang.org/grpc v1.31.0
+	google.golang.org/protobuf v1.25.0
 	gopkg.in/linkedin/goavro.v1 v1.0.5 // indirect
 	gopkg.in/src-d/go-git.v4 v4.12.0
 	gopkg.in/yaml.v2 v2.2.2
-	gotest.tools v2.2.0+incompatible // indirec
+	gotest.tools v2.2.0+incompatible // indirect; indirec
 	k8s.io/api v0.0.0-20190111032252-67edc246be36
 	k8s.io/apimachinery v0.0.0-20190201131811-df262fa1a1ba
 	k8s.io/client-go v10.0.0+incompatible

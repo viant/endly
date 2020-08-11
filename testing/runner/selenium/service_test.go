@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model"
-	_ "github.com/viant/endly/static"
+	_ "github.com/viant/endly/shared/static"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
 	endpoint "github.com/viant/endly/testing/endpoint/http"

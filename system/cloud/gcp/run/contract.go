@@ -105,7 +105,6 @@ func (r *DeployRequest) Service(context *endly.Context) (*run.Service, error) {
 		Metadata: &run.ObjectMeta{
 			Annotations:  make(map[string]string),
 			Labels:       make(map[string]string),
-			Initializers: &run.Initializers{},
 			Name:         r.Name,
 			Namespace:    gcp.ExpandMeta(context, r.Namespace), //project
 		},
