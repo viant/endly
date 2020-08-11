@@ -16,8 +16,9 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	_ "github.com/viant/endly/cli"
 
-	_ "github.com/viant/endly/cloud/ec2"
-	_ "github.com/viant/endly/cloud/gce"
+	_ "github.com/viant/endly/system/cloud/aws/ec2"
+	_ "github.com/viant/endly/system/cloud/gcp/compute"
+
 	_ "github.com/viant/endly/testing/endpoint/http"
 
 	_ "github.com/viant/endly/testing/dsunit"
@@ -40,7 +41,7 @@ import (
 	_ "github.com/viant/toolbox/storage"
 	_ "github.com/viant/toolbox/storage/scp"
 
-	_ "github.com/viant/endly/static"
+	 _ "github.com/viant/endly/shared/static"
 
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/workflow"

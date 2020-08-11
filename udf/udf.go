@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"google.golang.org/protobuf/proto"
 	"io"
 	"io/ioutil"
 	"os"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
+
 	"github.com/pkg/errors"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
