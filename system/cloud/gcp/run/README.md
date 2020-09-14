@@ -1,6 +1,6 @@
 # Google Cloud Run Service
 
-This service is google.golang.org/api/run/v1alpha1/APIService proxy 
+This service is google.golang.org/api/run/v1/APIService proxy 
 
 To check all supported method run
 ```bash

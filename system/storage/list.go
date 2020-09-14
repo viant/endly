@@ -72,7 +72,7 @@ func listResource(ctx context.Context, URL string, storageOptions []storage.Opti
 			resource = asset.NewFile(object.URL(), nil, object.Mode())
 		}
 		if request.Content && !object.IsDir() {
-			reader, err := fs.Download(context.Background(), object)
+			reader, err := fs.Open(context.Background(), object)
 			if err != nil {
 				return errors.Wrapf(err, "failed to download listed content %v", object.URL())
 			}

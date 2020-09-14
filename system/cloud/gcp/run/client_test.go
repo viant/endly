@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/gcp"
-	"google.golang.org/api/run/v1"
+	"google.golang.org/api/run/v1alpha1"
 	"testing"
 )
 

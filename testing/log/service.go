@@ -175,7 +175,7 @@ func (s *service) getLogTypeMeta(expectedLogRecords *TypedRecord) (*TypeMeta, er
 func (s *service) tryReadSnapshot(context *endly.Context, fs afs.Service, object storage.Object, attemptsCount int) (io.Reader, error) {
 	fileSize := object.Size()
 	for i := 0; i < attemptsCount; i++ {
-		reader, err := fs.Download(context.Background(), object)
+		reader, err := fs.Open(context.Background(), object)
 		if err != nil {
 			return nil, err
 		}
