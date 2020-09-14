@@ -65,7 +65,7 @@ func TestService_Upload(t *testing.T) {
 		if !assert.Nil(t, err, useCase.description) {
 			continue
 		}
-		reader, err := fs.DownloadWithURL(ctx.Background(), useCase.request.Dest.URL)
+		reader, err := fs.OpenURL(ctx.Background(), useCase.request.Dest.URL)
 		if !assert.Nil(t, err, useCase.description) {
 			continue
 		}

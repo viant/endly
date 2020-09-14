@@ -13,6 +13,7 @@ RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/s
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 RUN echo "export VISIBLE=now" >> /etc/profile
 RUN apt-get install -y ca-certificates
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir docker-compose
 
 WORKDIR /

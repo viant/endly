@@ -7,6 +7,8 @@ import (
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
 	"github.com/viant/endly/system/storage/copy"
+	"github.com/viant/afs"
+	storage2 "github.com/viant/afs/storage"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -200,7 +202,7 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 		var maxReleaseVersion = strings.Repeat("9", repeatCount+1)
 		var min = toolbox.AsInt(minReleaseVersion)
 		var max = toolbox.AsInt(maxReleaseVersion)
-
+		var exists = false
 		for i := min; i <= max; i++ {
 			artifact.Put(releaseFragmentKey, toolbox.AsString(i))
 			if minReleaseVersion == "" && i == 0 {
@@ -209,19 +211,31 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 				artifact.Put(versionKey, fmt.Sprintf("%v.%v", request.Version, i))
 			}
 
-			var sourceURL = context.Expand(source.URL)
-			exists, _ := fs.Exists(context.Background(), sourceURL, storageOpts...)
-			if exists {
-				source = url.NewResource(sourceURL, source.Credentials)
+			if s.checkResource(context, source, fs, storageOpts) {
+				exists = true
+				source = url.NewResource(context.Expand(source.URL), source.Credentials)
 				break
 			}
 		}
+		if ! exists {
+			artifact.Put(versionKey, request.Version)
+			if s.checkResource(context, source, fs, storageOpts) {
+				source = url.NewResource(context.Expand(source.URL), source.Credentials)
+			}
+		}
 	}
+
 	transfer.Source = source
 	if dest, err := context.ExpandResource(transfer.Dest); err == nil {
 		transfer.Dest = dest
 	}
 	return transfer, nil
+}
+
+func (s *service) checkResource(context *endly.Context, source *url.Resource, fs afs.Service, storageOpts []storage2.Option) bool {
+	var sourceURL = context.Expand(source.URL)
+	exists, _ := fs.Exists(context.Background(), sourceURL, storageOpts...)
+	return exists
 }
 
 func (s *service) deployDependenciesIfNeeded(context *endly.Context, target *url.Resource, dependencies []*Dependency) (err error) {
