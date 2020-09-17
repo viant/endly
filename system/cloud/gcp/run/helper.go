@@ -1,7 +1,7 @@
 package run
 
 import (
-	"google.golang.org/api/run/v1alpha1"
+	"google.golang.org/api/run/v1"
 	"math/rand"
 	"time"
 )
@@ -23,7 +23,11 @@ func generateRandomASCII(length int) string {
 	return string(result)
 }
 
-func isServiceReady(conditions []*run.ServiceCondition) bool {
+func isServiceReady(status *run.ServiceStatus) bool {
+	if status == nil {
+		return true
+	}
+	conditions :=  status.Conditions
 	if len(conditions) == 0 {
 		return false
 	}

@@ -6,8 +6,6 @@ require (
 	cloud.google.com/go v0.63.0 // indirect
 	cloud.google.com/go/firestore v1.3.0 // indirect
 	cloud.google.com/go/pubsub v1.3.1
-	cloud.google.com/go/bigquery v1.10.0
-	github.com/golang/protobuf v1.4.2
 	firebase.google.com/go v3.8.1+incompatible // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Azure/go-autorest/autorest v0.2.0 // indirect
@@ -85,7 +83,6 @@ require (
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
 	google.golang.org/api v0.30.0
-	google.golang.org/grpc v1.31.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/linkedin/goavro.v1 v1.0.5 // indirect
 	gopkg.in/src-d/go-git.v4 v4.12.0

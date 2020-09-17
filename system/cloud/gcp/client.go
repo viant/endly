@@ -22,6 +22,7 @@ type AbstractClient struct {
 	scopes     []string
 	CredConfig *cred.Config
 	HttpClinet *http.Client
+	service    interface{}
 }
 
 func (c *AbstractClient) SetContext(ctx context.Context) {
@@ -38,4 +39,14 @@ func (c *AbstractClient) SetCredConfig(config *cred.Config) {
 
 func (c *AbstractClient) SetHttpClient(client *http.Client) {
 	c.HttpClinet = client
+}
+
+
+func (c *AbstractClient) SetService(service interface{}) error {
+	c.service = service
+	return nil
+}
+
+func (c *AbstractClient) Service() interface{} {
+	return c.service
 }

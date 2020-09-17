@@ -3,9 +3,7 @@ package cloudfunctions
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox"
-	"os"
-	"path"
+	"github.com/viant/endly/system/cloud/gcp"
 	"testing"
 )
 

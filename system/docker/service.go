@@ -33,6 +33,8 @@ func (s *service) build(context *endly.Context, request *BuildRequest) (*BuildRe
 		Stdout: make([]string, 0),
 	}
 	location := request.Path
+
+
 	if !toolbox.IsDirectory(location) {
 		location, _ = path.Split(request.Path)
 	}
@@ -329,10 +331,9 @@ func (s *service) remove(context *endly.Context, request *RemoveRequest) (*Remov
 func (s *service) tag(context *endly.Context, request *TagRequest) (*TagResponse, error) {
 	response := &TagResponse{}
 	tagRequest := &ImageTagRequest{
-		Source: request.SourceTag.String(),
-		Target: request.TargetTag.String(),
+		Source: context.Expand(request.SourceTag.String()),
+		Target: context.Expand(request.TargetTag.String()),
 	}
-
 	err := runAdapter(context, tagRequest, nil)
 	if err == nil {
 		publishEvent(context, "tag", tagRequest)

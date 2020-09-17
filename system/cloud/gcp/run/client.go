@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/gcp"
-	"google.golang.org/api/run/v1alpha1"
+	"google.golang.org/api/run/v1"
 )
 
 const baseURLTemplate = "https://%s-run.googleapis.com/"

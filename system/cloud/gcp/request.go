@@ -19,6 +19,7 @@ func ExpandMeta(context *endly.Context, text string) string {
 		gcpCred.Region = DefaultRegion
 	}
 	state := createCredState(gcpCred)
+
 	return state.ExpandAsText(text)
 }
 
