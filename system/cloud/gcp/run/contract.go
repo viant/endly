@@ -2,37 +2,47 @@ package run
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/gcp"
-	"google.golang.org/api/run/v1alpha1"
+	"github.com/viant/toolbox"
+	"google.golang.org/api/run/v1"
 	"strings"
 )
 
 const (
-	apiVersion = "serving.knative.dev/v1alpha1"
-	kind       = "Service"
-	nonceLabel = "client.knative.dev/nonce"
-	userImage  = "client.knative.dev/user-image"
-	memory     = "memory"
+	apiVersion     = "serving.knative.dev/v1"
+	kind           = "Service"
+	clientName     = "run.googleapis.com/client-name"
+	clientImage    = "client.knative.dev/user-image"
+	autoScalingMax = "autoscaling.knative.dev/maxScale"
+	client         = "run.googleapis.com/client-name"
+
+	memory = "memory"
+	cpu    = "cpu"
 )
 
 //DeployRequest represents deploy request
 type DeployRequest struct {
-	Name            string
-	Namespace       string
-	Public          bool `description:"allows unauthenticated access"`
-	Concurrency     int
-	Connectivity    string `description:"valid values external or internal"`
-	Image           string
-	Memory          string
-	Region          string
-	Cluster         string
-	ClusterLocation string
-	Replace         bool
-	Environments    map[string]string
-	Members         []string `description:"members with roles/run.invoker role"`
-	parent          string
-	resource        string
+	Name           string
+	Namespace      string
+	Public         bool `description:"allows unauthenticated access"`
+	Concurrency    int
+	TimeoutSeconds int
+	Connectivity   string `description:"valid values external or internal"`
+	Container      *run.Container
+	Env            map[string]string
+	Image          string
+	MemoryMb       int
+	CPU            int
+	Port           int
+	Region         string
+	MaxAutoScale   int
+	ServiceAccount string
+	Replace        bool
+	Members        []string `description:"members with roles/run.invoker role"`
+	parent         string
+	resource       string
 }
 
 type DeployResponse struct {
@@ -63,21 +73,93 @@ type GetConfigurationResponse struct {
 }
 
 //Init initializes request
+func (r *DeployRequest) Validate() error {
+	if r.Container == nil && r.Image == "" {
+		return errors.Errorf("container was empty")
+	}
+	if r.Container.Image == "" && r.Image == "" {
+		return errors.Errorf("container.Image was empty")
+	}
+	return nil
+}
+
+
+//Init initializes request
 func (r *DeployRequest) Init() error {
 	if r.Namespace == "" {
 		r.Namespace = "$gcp.projectID"
 	}
+	if r.MemoryMb == 0 {
+		r.MemoryMb = 128
+	}
+	if r.CPU == 0 {
+		r.CPU = 1000
+	}
+	if r.Port == 0 {
+		r.Port = 8080
+	}
+	if r.MaxAutoScale == 0 {
+		r.MaxAutoScale = 1000
+	}
+	if r.Concurrency == 0 {
+		r.Concurrency = 1000
+	}
 	if r.Region == "" {
 		r.Region = gcp.DefaultRegion
 	}
-	if r.Name == "" && r.Image != "" {
-		if imageNamePosition := strings.LastIndex(r.Image, "/"); imageNamePosition != -1 {
-			name := string(r.Image[imageNamePosition+1:])
+
+	if r.Container == nil && r.Image != "" {
+		r.Container = &run.Container{
+			Image: r.Image,
+		}
+	}
+	if len(r.Env) > 0 {
+		if len(r.Container.Env) == 0 {
+			r.Container.Env = make([]*run.EnvVar, 0)
+			for k, v := range r.Env {
+				r.Container.Env = append(r.Container.Env, &run.EnvVar{
+					Name:  k,
+					Value: v,
+				})
+			}
+		}
+	}
+	if r.Port > 0 {
+		if len(r.Container.Ports) == 0 {
+			r.Container.Ports = make([]*run.ContainerPort, 0)
+			r.Container.Ports = append(r.Container.Ports, &run.ContainerPort{
+				ContainerPort: int64(r.Port),
+			})
+		}
+
+	}
+
+	if r.Name == "" && r.Container.Image != "" {
+		if imageNamePosition := strings.LastIndex(r.Container.Image, "/"); imageNamePosition != -1 {
+			name := r.Container.Image[imageNamePosition+1:]
 			if versionPosition := strings.Index(name, ":"); versionPosition != -1 {
-				name = string(name[:versionPosition])
+				name = name[:versionPosition]
 			}
 			r.Name = name
 		}
+	}
+	if r.Container.Resources == nil {
+		r.Container.Resources = &run.ResourceRequirements{}
+	}
+	if len(r.Container.Resources.Limits) == 0 {
+		r.Container.Resources.Limits = map[string]string{}
+	}
+	if len(r.Container.Resources.Requests) == 0 {
+		r.Container.Resources.Requests = map[string]string{}
+	}
+	if r.MemoryMb > 0 {
+		r.Container.Resources.Limits[memory] = fmt.Sprintf("%vMi", r.MemoryMb)
+	}
+	if r.CPU > 0 {
+		r.Container.Resources.Limits[cpu] = fmt.Sprintf("%vm", r.CPU)
+	}
+	if r.TimeoutSeconds == 0 {
+		r.TimeoutSeconds = 300
 	}
 	r.parent = "namespaces/${gcp.projectID}"
 	r.resource = fmt.Sprintf("projects/${gcp.projectID}/locations/%v/services/%v", r.Region, r.Name)
@@ -103,42 +185,35 @@ func (r *DeployRequest) Service(context *endly.Context) (*run.Service, error) {
 		ApiVersion: apiVersion,
 		Kind:       kind,
 		Metadata: &run.ObjectMeta{
-			Annotations:  make(map[string]string),
-			Labels:       make(map[string]string),
-			Name:         r.Name,
-			Namespace:    gcp.ExpandMeta(context, r.Namespace), //project
+			Annotations: map[string]string{
+				clientImage: r.Container.Image,
+				clientName:  endly.AppName,
+			},
+			Labels:    make(map[string]string),
+			Name:      r.Name,
+			Namespace: gcp.ExpandMeta(context, r.Namespace), //project
 		},
 		Spec: &run.ServiceSpec{
-			RunLatest: &run.ServiceSpecRunLatest{
-				Configuration: &run.ConfigurationSpec{
-					RevisionTemplate: &run.RevisionTemplate{
-						Metadata: &run.ObjectMeta{
-							Labels: map[string]string{
-								nonceLabel: strings.ToLower(generateRandomASCII(10)),
-							},
-						},
-						Spec: &run.RevisionSpec{
-							Container: &run.Container{
-								Image: r.Image,
-							},
-						},
+			Template: &run.RevisionTemplate{
+				Metadata: &run.ObjectMeta{
+					Annotations: map[string]string{
+						autoScalingMax: toolbox.AsString(r.MaxAutoScale),
+						clientImage: r.Container.Image,
+						clientName:  endly.AppName,
 					},
+					Labels:    make(map[string]string),
+					Name: r.Name + "-" + strings.ToLower(generateRandomASCII(10)),
+				},
+				Spec: &run.RevisionSpec{
+					ContainerConcurrency: int64(r.Concurrency),
+					ServiceAccountName:   r.ServiceAccount,
+					TimeoutSeconds:       int64(r.TimeoutSeconds),
+					Containers: []*run.Container{r.Container},
 				},
 			},
 		},
 		Status: &run.ServiceStatus{},
 	}
 
-	if r.Memory != "" {
-		result.Spec.RunLatest.Configuration.RevisionTemplate.Spec.Container.Resources = &run.ResourceRequirements{
-			Limits:   make(map[string]string),
-			Requests: make(map[string]string),
-		}
-		result.Spec.RunLatest.Configuration.RevisionTemplate.Spec.Container.Resources.Limits[memory] = r.Memory
-	}
-	if r.Concurrency > 0 {
-		result.Spec.RunLatest.Configuration.RevisionTemplate.Spec.ContainerConcurrency = int64(r.Concurrency)
-	}
-	result.Metadata.Annotations[userImage] = r.Image
 	return result, nil
 }

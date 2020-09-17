@@ -32,7 +32,7 @@ pipeline:
       action: gcp/run:deploy
       credentials: gcp-e2e
       image: gcr.io/cloudrun/hello
-      memory: 256M
+      memoryMb: 256M
       replace: true   #if service already exist, redeploy
       public: true
     info:

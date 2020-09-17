@@ -86,7 +86,7 @@ func (s *service) registerRoutes() {
 			return &GetInstanceInput{}
 		},
 		ResponseProvider: func() interface{} {
-			return &GetVpcOutput{}
+			return &GetInstanceOutput{}
 		},
 		OnRawRequest: setClient,
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {

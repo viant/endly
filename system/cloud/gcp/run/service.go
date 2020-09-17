@@ -2,10 +2,11 @@ package run
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/gcp"
 	"github.com/viant/toolbox"
-	"google.golang.org/api/run/v1alpha1"
+	"google.golang.org/api/run/v1"
 	"log"
 	"time"
 )
@@ -171,15 +172,15 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*Deplo
 	service := run.NewNamespacesServicesService(client.service)
 	getRequest := &GetServiceRequest{Name: request.Name}
 	getResponse := &GetServiceResponse{}
-	if err = endly.Run(context, getRequest, getResponse); err != nil {
+	err = endly.Run(context, getRequest, getResponse)
+	if err != nil {
 		return nil, err
 	}
 
 	srv, err := request.Service(context)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to extract service from request")
 	}
-
 	if getResponse.Service == nil {
 		parent := gcp.ExpandMeta(context, request.parent)
 		createCall := service.Create(parent, srv)
@@ -209,7 +210,7 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*Deplo
 	if err == nil {
 		response.Configuration = configResponse.Configuration
 	}
-	response.Endpoint = getResponse.Status.Domain
+	response.Endpoint = getResponse.Status.Url
 	response.Header = nil
 
 	if len(request.Members) > 0 {
@@ -269,7 +270,7 @@ func (s *service) waitForServiceDeployment(context *endly.Context, request *GetS
 		if err != nil {
 			return nil, err
 		}
-		if isServiceReady(response.Status.Conditions) && response.Status.Domain != "" {
+		if isServiceReady(response.Status) {
 			return response, nil
 		}
 		if time.Now().Sub(startTime) >= timeout {

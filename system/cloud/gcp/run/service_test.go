@@ -1,10 +1,10 @@
 package run
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/gcp"
-	"log"
 	"testing"
 )
 
@@ -30,15 +30,18 @@ func TestService_Deploy(t *testing.T) {
 	err := InitRequest(context, map[string]interface{}{
 		"Credentials": "gcp-e2e",
 	})
+	
+	
 	assert.Nil(t, err)
 	request := &DeployRequest{
-		Image:   "gcr.io/cloudrun/hello",
+		Image:   "us.gcr.io/viant-e2e/sitelistmatch:latest",
 		Replace: true,
 		Public:  true,
 	}
+	request.Init()
 	deployResponse := &DeployResponse{}
 	err = endly.Run(context, request, &deployResponse)
 	if !assert.Nil(t, err) {
-		log.Print(err)
+		fmt.Printf("%v\n", err)
 	}
 }

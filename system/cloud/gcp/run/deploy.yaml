@@ -2,7 +2,7 @@ pipeline:
   deploy:
     action: gcp/run:deploy
     image: gcr.io/cloudrun/hello
-    memory: 256M
+    MemoryMb: 256
   info:
     action: print
     message: 'endpoint: $deploy.Endpoint'
