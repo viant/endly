@@ -19,9 +19,6 @@ type service struct {
 	*endly.AbstractService
 }
 
-
-
-
 func (s *service) registerRoutes() {
 	client := &bigquery.Service{}
 	routes, err := gcp.BuildRoutes(client, nil, getClient)
@@ -153,7 +150,6 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
-
 
 	s.Register(&endly.Route{
 		Action: "patch",

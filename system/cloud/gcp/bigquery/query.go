@@ -6,7 +6,6 @@ import (
 	"google.golang.org/api/bigquery/v2"
 )
 
-
 //QueryRequest represents query request
 type QueryRequest struct {
 	bigquery.JobConfigurationQuery

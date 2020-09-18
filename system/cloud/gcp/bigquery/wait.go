@@ -11,7 +11,6 @@ type JobWaitRequest struct {
 	Job *bigquery.JobReference
 }
 
-
 func (s *service) jobWait(context *endly.Context, request *JobWaitRequest) (response *bigquery.Job, err error) {
 	err = s.RunInBackground(context, func() error {
 		response, err = s.waitForOperationCompletion(context, request.Job)
@@ -19,7 +18,6 @@ func (s *service) jobWait(context *endly.Context, request *JobWaitRequest) (resp
 	})
 	return response, err
 }
-
 
 func (s *service) waitForOperationCompletion(context *endly.Context, job *bigquery.JobReference) (*bigquery.Job, error) {
 	client, err := GetClient(context)
@@ -40,8 +38,6 @@ func (s *service) waitForOperationCompletion(context *endly.Context, job *bigque
 		time.Sleep(time.Second)
 	}
 }
-
-
 
 //Validate checks if request is valid
 func (r *JobWaitRequest) Validate() error {

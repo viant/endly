@@ -46,8 +46,6 @@ type SetupRestAPIInput struct {
 	Redeploy        bool
 }
 
-
-
 type CreateAuthorizerInput struct {
 	apigateway.CreateAuthorizerInput
 	FunctionName string
@@ -83,7 +81,6 @@ func (i CreateAuthorizerInput) Diff(source *apigateway.Authorizer) []*apigateway
 
 	return result
 }
-
 
 //SetupRestAPIInput represent setup API response
 type SetupRestAPIOutput struct {
@@ -139,7 +136,7 @@ func (i *SetupRestAPIInput) Init() error {
 	var resources = make([]*SetupResourceInput, 0)
 
 	if len(i.Authorizers) > 0 {
-		for _, auth:= range i.Authorizers {
+		for _, auth := range i.Authorizers {
 			_ = auth.Init()
 		}
 	}
@@ -332,7 +329,7 @@ func (i *CreateAuthorizerInput) Init() error {
 		i.AuthorizerUri = aws.String("arn:aws:apigateway:${authorizer.region}:lambda:path/2015-03-31/functions/${authorizer.arn}/invocations")
 	}
 	if i.AuthType == nil {
-		i.AuthType= aws.String("custom")
+		i.AuthType = aws.String("custom")
 	}
 	if i.AuthorizerResultTtlInSeconds == nil {
 		i.AuthorizerResultTtlInSeconds = aws.Int64(0)

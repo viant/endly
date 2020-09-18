@@ -14,7 +14,6 @@ type CopyRequest struct {
 	Async   bool `description:"if set true, function does not wait for job completion"`
 }
 
-
 //Validate checks if request is valid
 func (r *CopyRequest) Validate() error {
 	if r.DestinationTable == nil {
@@ -48,4 +47,3 @@ func (s *service) copy(context *endly.Context, request *CopyRequest) (*bigquery.
 		Job: job.JobReference,
 	})
 }
-

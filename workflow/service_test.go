@@ -41,7 +41,7 @@ import (
 	_ "github.com/viant/toolbox/storage"
 	_ "github.com/viant/toolbox/storage/scp"
 
-	 _ "github.com/viant/endly/shared/static"
+	_ "github.com/viant/endly/shared/static"
 
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/workflow"

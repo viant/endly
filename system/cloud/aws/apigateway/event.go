@@ -12,7 +12,7 @@ type RestMethodInfo struct {
 	URI               *string
 	Type              *string
 	AuthorizationType *string
-	AuthorizerID *string
+	AuthorizerID      *string
 }
 
 //Represents reset resource event part
@@ -67,7 +67,7 @@ func NewResetAPIEvent(output *SetupRestAPIOutput) *ResetAPIEvent {
 				method := &RestMethodInfo{
 					HTTPMethod:        k,
 					AuthorizationType: v.AuthorizationType,
-					AuthorizerID: v.AuthorizerId,
+					AuthorizerID:      v.AuthorizerId,
 				}
 				if v.MethodIntegration != nil {
 					method.URI = v.MethodIntegration.Uri

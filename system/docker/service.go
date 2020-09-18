@@ -34,7 +34,6 @@ func (s *service) build(context *endly.Context, request *BuildRequest) (*BuildRe
 	}
 	location := request.Path
 
-
 	if !toolbox.IsDirectory(location) {
 		location, _ = path.Split(request.Path)
 	}

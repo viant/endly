@@ -3,12 +3,12 @@ package deploy
 import (
 	"errors"
 	"fmt"
+	"github.com/viant/afs"
+	storage2 "github.com/viant/afs/storage"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
 	"github.com/viant/endly/system/storage/copy"
-	"github.com/viant/afs"
-	storage2 "github.com/viant/afs/storage"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -217,7 +217,7 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 				break
 			}
 		}
-		if ! exists {
+		if !exists {
 			artifact.Put(versionKey, request.Version)
 			if s.checkResource(context, source, fs, storageOpts) {
 				source = url.NewResource(context.Expand(source.URL), source.Credentials)
