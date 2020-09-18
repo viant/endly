@@ -27,7 +27,7 @@ func isServiceReady(status *run.ServiceStatus) bool {
 	if status == nil {
 		return true
 	}
-	conditions :=  status.Conditions
+	conditions := status.Conditions
 	if len(conditions) == 0 {
 		return false
 	}

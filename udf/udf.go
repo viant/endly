@@ -10,7 +10,6 @@ import (
 	"os"
 	"strings"
 
-
 	"github.com/pkg/errors"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"

@@ -146,13 +146,13 @@ func (s *service) deployGatewayResponse(context *endly.Context, request *SetupRe
 		return err
 	}
 	responses := indexGatewayResponseOutput(list)
-	for _, gwResponse:= range request.GatewayResponse {
+	for _, gwResponse := range request.GatewayResponse {
 		if existing, ok := responses[*gwResponse.StatusCode]; ok {
 			if _, err = client.DeleteGatewayResponse(&apigateway.DeleteGatewayResponseInput{
-				ResponseType:existing.ResponseType,
-				RestApiId:request.RestApiId,
-			});err != nil {
-					return err
+				ResponseType: existing.ResponseType,
+				RestApiId:    request.RestApiId,
+			}); err != nil {
+				return err
 			}
 		}
 		gwResponse.RestApiId = request.RestApiId
@@ -163,8 +163,6 @@ func (s *service) deployGatewayResponse(context *endly.Context, request *SetupRe
 	}
 	return nil
 }
-
-
 
 func indexGatewayResponseOutput(list *apigateway.GetGatewayResponsesOutput) map[string]*apigateway.UpdateGatewayResponseOutput {
 	index := map[string]*apigateway.UpdateGatewayResponseOutput{}
@@ -228,7 +226,6 @@ func indexAuthorizers(authorizers []*apigateway.Authorizer, fn func(auth *apigat
 	}
 	return index
 }
-
 
 func (s *service) getOrCreateRestAPI(context *endly.Context, request *apigateway.CreateRestApiInput) (*apigateway.RestApi, *apigateway.GetResourcesOutput, error) {
 	client, err := GetClient(context)
@@ -298,7 +295,7 @@ func (s *service) setupResource(context *endly.Context, setup *SetupResourceInpu
 	for _, resourceMethod := range setup.Methods {
 		if resourceMethod.Authorizer != "" && resourceMethod.AuthorizationType != nil && "CUSTOM" == *resourceMethod.AuthorizationType {
 			authorizer, ok := authorizers[resourceMethod.Authorizer]
-			if ! ok {
+			if !ok {
 				return nil, errors.Errorf("failed to loolup %v authorizer", resourceMethod.Authorizer)
 			}
 			resourceMethod.AuthorizerId = authorizer.Id

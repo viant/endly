@@ -30,8 +30,7 @@ func TestService_Deploy(t *testing.T) {
 	err := InitRequest(context, map[string]interface{}{
 		"Credentials": "gcp-e2e",
 	})
-	
-	
+
 	assert.Nil(t, err)
 	request := &DeployRequest{
 		Image:   "us.gcr.io/viant-e2e/sitelistmatch:latest",

@@ -43,4 +43,3 @@ func (s *service) load(context *endly.Context, request *LoadRequest) (*bigquery.
 		Job: job.JobReference,
 	})
 }
-

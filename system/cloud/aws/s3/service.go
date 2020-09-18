@@ -53,12 +53,12 @@ func (s *service) updateBucketNotification(ctx *endly.Context, currentConfig *s3
 		return nil, err
 	}
 	input := &s3.PutBucketNotificationConfigurationInput{
-		Bucket: request.Bucket,
+		Bucket:                    request.Bucket,
 		NotificationConfiguration: &s3.NotificationConfiguration{},
 	}
 
 	response := &SetupBucketNotificationOutput{
-		Bucket: request.Bucket,
+		Bucket:                    request.Bucket,
 		NotificationConfiguration: input.NotificationConfiguration,
 		LambdaPermissions:         make([]*lambda.SetupPermissionInput, 0),
 	}

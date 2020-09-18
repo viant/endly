@@ -83,7 +83,6 @@ func patchString(source, target *string, path string) (*apigateway.PatchOperatio
 	}, true
 }
 
-
 func pathInt64(source, target *int64, path string) (*apigateway.PatchOperation, bool) {
 	if source == nil {
 		if target == nil {

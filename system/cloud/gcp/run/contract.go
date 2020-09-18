@@ -83,7 +83,6 @@ func (r *DeployRequest) Validate() error {
 	return nil
 }
 
-
 //Init initializes request
 func (r *DeployRequest) Init() error {
 	if r.Namespace == "" {
@@ -198,17 +197,17 @@ func (r *DeployRequest) Service(context *endly.Context) (*run.Service, error) {
 				Metadata: &run.ObjectMeta{
 					Annotations: map[string]string{
 						autoScalingMax: toolbox.AsString(r.MaxAutoScale),
-						clientImage: r.Container.Image,
-						clientName:  endly.AppName,
+						clientImage:    r.Container.Image,
+						clientName:     endly.AppName,
 					},
-					Labels:    make(map[string]string),
-					Name: r.Name + "-" + strings.ToLower(generateRandomASCII(10)),
+					Labels: make(map[string]string),
+					Name:   r.Name + "-" + strings.ToLower(generateRandomASCII(10)),
 				},
 				Spec: &run.RevisionSpec{
 					ContainerConcurrency: int64(r.Concurrency),
 					ServiceAccountName:   r.ServiceAccount,
 					TimeoutSeconds:       int64(r.TimeoutSeconds),
-					Containers: []*run.Container{r.Container},
+					Containers:           []*run.Container{r.Container},
 				},
 			},
 		},

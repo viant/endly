@@ -41,7 +41,6 @@ func (c *AbstractClient) SetHttpClient(client *http.Client) {
 	c.HttpClinet = client
 }
 
-
 func (c *AbstractClient) SetService(service interface{}) error {
 	c.service = service
 	return nil

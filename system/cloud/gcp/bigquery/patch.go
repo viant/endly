@@ -6,14 +6,13 @@ import (
 	"google.golang.org/api/bigquery/v2"
 )
 
-
 //PatchRequest represents a patch request
 type PatchRequest struct {
 	*bigquery.TableReference
-	Table string
+	Table       string
 	TemplateRef *bigquery.TableReference
-	Template string
-	Schema *bigquery.TableSchema
+	Template    string
+	Schema      *bigquery.TableSchema
 }
 
 type PatchResponse struct {
@@ -22,19 +21,18 @@ type PatchResponse struct {
 
 //Init initialises request
 func (r *PatchRequest) Init() (err error) {
-	if  r.Table != "" && (r.TableReference == nil || r.TableReference.TableId == "") {
+	if r.Table != "" && (r.TableReference == nil || r.TableReference.TableId == "") {
 		if r.TableReference, err = NewTableReference(r.Table); err != nil {
 			return err
 		}
 	}
 	if r.TemplateRef == nil && r.Template != "" {
-		if r.TemplateRef, err = NewTableReference(r.Template);err != nil {
+		if r.TemplateRef, err = NewTableReference(r.Template); err != nil {
 			return err
 		}
 	}
 	return err
 }
-
 
 //Validate checks if request is valid
 func (r *PatchRequest) Validate() (err error) {
@@ -46,7 +44,6 @@ func (r *PatchRequest) Validate() (err error) {
 	}
 	return nil
 }
-
 
 func (s *service) patch(context *endly.Context, request *PatchRequest) (*PatchResponse, error) {
 	client, err := GetClient(context)
@@ -69,22 +66,22 @@ func (s *service) patch(context *endly.Context, request *PatchRequest) (*PatchRe
 	}
 	table.Schema = schema
 	request.Schema = schema
-	call := tableService.Patch(request.ProjectId,request.DatasetId, request.TableId, table)
+	call := tableService.Patch(request.ProjectId, request.DatasetId, request.TableId, table)
 	call.Context(context.Background())
 	response, err := call.Do()
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to patch table: %v:%v.%v, %v", request.ProjectId,request.DatasetId, request.TableId, table)
+		return nil, errors.Wrapf(err, "failed to patch table: %v:%v.%v, %v", request.ProjectId, request.DatasetId, request.TableId, table)
 	}
 	return &PatchResponse{
 		Table: &bigquery.Table{
-			TableReference:response.TableReference,
-			Id:response.Id,
-			Description:response.Description,
-			Schema:response.Schema,
-			Clustering:response.Clustering,
-			CreationTime:response.CreationTime,
-			RangePartitioning:response.RangePartitioning,
-			NumRows:response.NumRows,
+			TableReference:    response.TableReference,
+			Id:                response.Id,
+			Description:       response.Description,
+			Schema:            response.Schema,
+			Clustering:        response.Clustering,
+			CreationTime:      response.CreationTime,
+			RangePartitioning: response.RangePartitioning,
+			NumRows:           response.NumRows,
 		},
 	}, nil
 

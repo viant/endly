@@ -60,7 +60,6 @@ func GetClient(eContext *endly.Context, provider, key interface{}, target interf
 		credConfig.ProjectID = credentials.ProjectID
 	}
 
-
 	var httpClient *http.Client
 
 	if credConfig.ClientEmail != "" {
@@ -87,8 +86,6 @@ func GetClient(eContext *endly.Context, provider, key interface{}, target interf
 	ctxService.SetCredConfig(credConfig.Config)
 	ctxService.SetHttpClient(httpClient)
 	ctxService.SetContext(ctx)
-
-
 
 	if err = ctxService.SetService(service); err != nil {
 		return err

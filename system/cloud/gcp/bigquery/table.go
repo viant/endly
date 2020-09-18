@@ -59,13 +59,12 @@ func (s *service) Table(context *endly.Context, request *TableRequest) (*TableRe
 		key := fmt.Sprintf("%v_%v", tableKey+request.TableId)
 		state := context.State()
 		state.Put(key, data)
-		if err = endly.Run(context, &storage.UploadRequest{SourceKey:key, Dest:dest}, nil);err != nil {
+		if err = endly.Run(context, &storage.UploadRequest{SourceKey: key, Dest: dest}, nil); err != nil {
 			return nil, err
 		}
 	}
 	return response, nil
 }
-
 
 //Table returns bif query table
 func (s *service) table(context *endly.Context, reference *bigquery.TableReference) (table *bigquery.Table, err error) {
@@ -80,5 +79,3 @@ func (s *service) table(context *endly.Context, reference *bigquery.TableReferen
 	}
 	return table, err
 }
-
-
