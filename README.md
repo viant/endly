@@ -28,7 +28,7 @@ While there are many great frameworks selection helping with an integration test
 web UI integration testing: 
  - [Selenium](https://www.seleniumhq.org/)
  - [Cypress.io](https://www.cypress.io/) 
- - [Procrator](https://www.protractortest.org/)
+ - [Protractor](https://www.protractortest.org/)
 
 or database integration testing:
  - [dbunit](http://dbunit.sourceforge.net/)
