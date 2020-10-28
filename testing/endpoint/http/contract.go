@@ -42,3 +42,9 @@ func (r ListenRequest) AsHTTPServerTrips() *HTTPServerTrips {
 		Mutex:         &sync.Mutex{},
 	}
 }
+
+
+//ShutdownRequest represent http endpoint shutdown request
+type ShutdownRequest struct {
+	Port int
+}
