@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox/url"
+	"net/http"
 )
 
 const (
@@ -14,6 +15,18 @@ const (
 //service represents http endpoint service, that has ability to replay HTTP trips
 type service struct {
 	*endly.AbstractService
+	servers map[int]*http.Server
+}
+
+func (s *service) shutdown(context *endly.Context, req *ShutdownRequest) (interface{}, error) {
+	s.Mutex().Lock()
+	defer s.Mutex().Unlock()
+	server, ok := s.servers[req.Port]
+	if !ok {
+		return nil, fmt.Errorf("ednpoint at %v, not found", req.Port)
+	}
+	err := server.Shutdown(context.Background())
+	return &struct{}{}, err
 }
 
 func (s *service) listen(context *endly.Context, request *ListenRequest) (*ListenResponse, error) {
@@ -21,8 +34,8 @@ func (s *service) listen(context *endly.Context, request *ListenRequest) (*Liste
 	request.BaseDirectory = url.NewResource(state.ExpandAsText(request.BaseDirectory)).ParsedURL.Path
 	key := ServiceID + ":" + request.BaseDirectory
 	s.Mutex().Lock()
-	var response *ListenResponse
 	defer s.Mutex().Unlock()
+	var response *ListenResponse
 	var serviceState = s.State()
 	value := serviceState.Get(key)
 	if value != nil {
@@ -31,10 +44,12 @@ func (s *service) listen(context *endly.Context, request *ListenRequest) (*Liste
 		}
 	}
 	trips := request.AsHTTPServerTrips()
-	err := StartServer(request.Port, trips)
+	server, err := StartServer(request.Port, trips)
 	if err != nil {
 		return nil, err
 	}
+
+	s.servers[request.Port] = server
 	response = &ListenResponse{
 		Trips: trips.Trips,
 	}
@@ -60,12 +75,32 @@ func (s *service) registerRoutes() {
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
-	})
+	},
+		&endly.Route{
+			Action: "shutdown",
+			RequestInfo: &endly.ActionInfo{
+				Description: "stop HTTP endpoint",
+			},
+			RequestProvider: func() interface{} {
+				return &ShutdownRequest{}
+			},
+			ResponseProvider: func() interface{} {
+				return &struct{}{}
+			},
+			Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+				if req, ok := request.(*ShutdownRequest); ok {
+					return s.shutdown(context, req)
+				}
+				return nil, fmt.Errorf("unsupported request type: %T", request)
+			},
+		})
 }
+
 
 //New creates a new HTTP endpoint service, to replay previously recorded HTTP trips.
 func New() endly.Service {
 	var result = &service{
+		servers:         make(map[int]*http.Server),
 		AbstractService: endly.NewAbstractService(ServiceID),
 	}
 	result.AbstractService.Service = result
