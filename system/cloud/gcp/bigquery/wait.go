@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/viant/endly"
 	"google.golang.org/api/bigquery/v2"
+	"strings"
 	"time"
 )
 
@@ -30,8 +31,14 @@ func (s *service) waitForOperationCompletion(context *endly.Context, job *bigque
 		getCall.Context(client.Context())
 		job, err := getCall.Do()
 		if err != nil {
+			if strings.Contains(err.Error(), "backendError") {
+				time.Sleep(time.Second)
+				continue
+			}
 			return nil, err
 		}
+
+
 		if job.Status.State == doneStatus {
 			return job, err
 		}
