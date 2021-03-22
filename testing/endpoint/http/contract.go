@@ -80,6 +80,7 @@ type AppendResponse struct {
 
 //AsHTTPServerTrips return a new HTTP trips.
 func (r AppendRequest) AsHTTPServerTrips(rotate bool, indexKeys []string) *HTTPServerTrips {
+
 	return &HTTPServerTrips{
 		Rotate:        rotate,
 		BaseDirectory: r.BaseDirectory,
