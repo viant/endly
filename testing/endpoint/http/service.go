@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox/url"
+	"strconv"
 )
 
 const (
@@ -30,8 +31,10 @@ func (s *service) shutdown(context *endly.Context, req *ShutdownRequest) (interf
 
 func (s *service) listen(context *endly.Context, request *ListenRequest) (*ListenResponse, error) {
 	state := context.State()
-	request.BaseDirectory = url.NewResource(state.ExpandAsText(request.BaseDirectory)).ParsedURL.Path
-	key := ServiceID + ":" + request.BaseDirectory
+	if request.BaseDirectory != "" {
+		request.BaseDirectory = url.NewResource(state.ExpandAsText(request.BaseDirectory)).ParsedURL.Path
+	}
+	key := ServiceID + ":" + strconv.Itoa(request.Port)
 	s.Mutex().Lock()
 	defer s.Mutex().Unlock()
 	var response *ListenResponse
