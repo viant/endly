@@ -1,4 +1,4 @@
-## April 10 2020 0.51.0
+## March 22 2021 0.51.0
  * Added http/endpoint:append to lazily add http trips
  * Expose req/resp template in http/endpoint service
     **Breaking change**:
