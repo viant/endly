@@ -19,4 +19,3 @@ func HeaderProvider(header string) HTTPRequestKeyProvider {
 		return "", fmt.Errorf("unsupported request type %T", source)
 	}
 }
-

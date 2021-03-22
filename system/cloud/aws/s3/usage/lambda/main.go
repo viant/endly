@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"log"
 	"os"
 )
 
@@ -25,5 +25,3 @@ func handleEvent(ctx context.Context, s3Event events.S3Event) {
 func main() {
 	lambda.Start(handleEvent)
 }
-
-

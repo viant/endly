@@ -8,4 +8,3 @@ type HTTPResponses struct {
 	Responses []*bridge.HttpResponse
 	Index     uint32
 }
-

@@ -85,4 +85,3 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 		}
 	}
 }
-

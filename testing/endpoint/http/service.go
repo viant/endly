@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox/url"
-	"net/http"
 )
 
 const (
@@ -15,7 +14,7 @@ const (
 //service represents http endpoint service, that has ability to replay HTTP trips
 type service struct {
 	*endly.AbstractService
-	servers map[int]*http.Server
+	servers map[int]*Server
 }
 
 func (s *service) shutdown(context *endly.Context, req *ShutdownRequest) (interface{}, error) {
@@ -44,7 +43,8 @@ func (s *service) listen(context *endly.Context, request *ListenRequest) (*Liste
 		}
 	}
 	trips := request.AsHTTPServerTrips()
-	server, err := StartServer(request.Port, trips)
+
+	server, err := StartServer(request.Port, trips, request.RequestTemplate, request.ResponseTemplate)
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +77,24 @@ func (s *service) registerRoutes() {
 		},
 	},
 		&endly.Route{
+			Action: "append",
+			RequestInfo: &endly.ActionInfo{
+				Description: "append http trips",
+			},
+			RequestProvider: func() interface{} {
+				return &AppendRequest{}
+			},
+			ResponseProvider: func() interface{} {
+				return &AppendResponse{}
+			},
+			Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+				if req, ok := request.(*AppendRequest); ok {
+					return s.append(context, req)
+				}
+				return nil, fmt.Errorf("unsupported request type: %T", request)
+			},
+		},
+		&endly.Route{
 			Action: "shutdown",
 			RequestInfo: &endly.ActionInfo{
 				Description: "stop HTTP endpoint",
@@ -96,11 +114,12 @@ func (s *service) registerRoutes() {
 		})
 }
 
-
-//New creates a new HTTP endpoint service, to replay previously recorded HTTP trips.
+//New creates
+//
+//a new HTTP endpoint service, to replay previously recorded HTTP trips.
 func New() endly.Service {
 	var result = &service{
-		servers:         make(map[int]*http.Server),
+		servers:         make(map[int]*Server),
 		AbstractService: endly.NewAbstractService(ServiceID),
 	}
 	result.AbstractService.Service = result
