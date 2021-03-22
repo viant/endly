@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"log"
 	"os"
 )
 
@@ -28,8 +28,6 @@ func handleEvent(ctx context.Context, sqsEvent events.SNSEvent) (err error) {
 	}
 	return err
 }
-
-
 
 func main() {
 	lambda.Start(handleEvent)

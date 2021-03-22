@@ -1,3 +1,10 @@
+## April 10 2020 0.51.0
+ * Added http/endpoint:append to lazily add http trips
+ * Expose req/resp template in http/endpoint service
+    **Breaking change**:
+     - previous template were: "bridge.HttpRequest-%v.json", "bridge.HttpResponse-%v.json" )
+     - current template are: %02d-req.json, %02d-resp.json
+     
 ## April 10 2020 0.49.2
  * Added $weekday support
  

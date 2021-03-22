@@ -56,8 +56,6 @@ func initProviders() {
 	}
 }
 
-
-
 func stripProtoAndHost(URL string) string {
 	if index := strings.Index(URL, "://"); index != -1 {
 		URL = string(URL[index+3:])
@@ -73,7 +71,7 @@ func buildKeyValue(keys []string, request interface{}) (string, error) {
 	for _, key := range keys {
 		provider, has := HTTPRequestKeyProviders[key]
 		if !has {
-			if strings.HasPrefix(key ,"Header.") {
+			if strings.HasPrefix(key, "Header.") {
 				HTTPRequestKeyProviders[key] = HeaderProvider(strings.Replace(key, "Header.", "", 1))
 				provider = HTTPRequestKeyProviders[key]
 			} else {
@@ -88,4 +86,3 @@ func buildKeyValue(keys []string, request interface{}) (string, error) {
 	}
 	return strings.Join(values, ","), nil
 }
-

@@ -1,7 +1,5 @@
 package http
 
-
-
 const (
 	//URLKey represents url key
 	URLKey = "URL"
@@ -13,4 +11,9 @@ const (
 	MethodKey = "Method"
 	//BodyKey represents http body key
 	BodyKey = "Body"
+
+	//DefaultRequestTemplate request template
+	DefaultRequestTemplate = "%02d-req.json"
+	//DefaultResponseTemplate response tempalte
+	DefaultResponseTemplate = "%02d-resp.json"
 )

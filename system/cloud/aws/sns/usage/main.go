@@ -21,8 +21,6 @@ func handleEvent(ctx context.Context, sqsEvent events.SNSEvent) (err error) {
 	return err
 }
 
-
-
 func main() {
 	lambda.Start(handleEvent)
 }

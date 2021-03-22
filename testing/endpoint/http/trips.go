@@ -16,10 +16,10 @@ type HTTPServerTrips struct {
 	Mutex         *sync.Mutex
 }
 
-func (t *HTTPServerTrips) loadTripsIfNeeded() error {
+func (t *HTTPServerTrips) loadTripsIfNeeded(reqTemplate string, respTemplate string) error {
 	if t.BaseDirectory != "" {
 		t.Trips = make(map[string]*HTTPResponses)
-		httpTrips, err := bridge.ReadRecordedHttpTrips(t.BaseDirectory)
+		httpTrips, err := bridge.ReadRecordedHttpTripsWithTemplate(t.BaseDirectory, reqTemplate, respTemplate)
 		if err != nil {
 			return err
 		}
@@ -45,11 +45,11 @@ func (t *HTTPServerTrips) loadTripsIfNeeded() error {
 }
 
 //Init initialises trips
-func (t *HTTPServerTrips) Init() error {
+func (t *HTTPServerTrips) Init(requestTemplate string, respTemplate string) error {
 	if t.Mutex == nil {
 		t.Mutex = &sync.Mutex{}
 	}
-	err := t.loadTripsIfNeeded()
+	err := t.loadTripsIfNeeded(requestTemplate, respTemplate)
 	if err != nil {
 		return fmt.Errorf("failed to load trips: %w", err)
 	}

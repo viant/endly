@@ -38,7 +38,6 @@ func (s *service) waitForOperationCompletion(context *endly.Context, job *bigque
 			return nil, err
 		}
 
-
 		if job.Status.State == doneStatus {
 			return job, err
 		}
