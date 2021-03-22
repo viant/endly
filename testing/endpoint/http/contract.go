@@ -32,9 +32,6 @@ func (r *ListenRequest) Init() error {
 
 //Validate checks if request is valid.
 func (r ListenRequest) Validate() error {
-	if r.BaseDirectory == "" {
-		return errors.New("baseDirectory was empty")
-	}
 	if r.Port == 0 {
 		return errors.New("port was empty")
 	}
