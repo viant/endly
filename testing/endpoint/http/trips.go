@@ -1,7 +1,6 @@
 package http
 
 import (
-	"errors"
 	"fmt"
 	"github.com/viant/toolbox/bridge"
 	"sync"
@@ -52,9 +51,6 @@ func (t *HTTPServerTrips) Init(requestTemplate string, respTemplate string) erro
 	err := t.loadTripsIfNeeded(requestTemplate, respTemplate)
 	if err != nil {
 		return fmt.Errorf("failed to load trips: %w", err)
-	}
-	if len(t.Trips) == 0 {
-		return errors.New("trips were empty")
 	}
 	return nil
 }
