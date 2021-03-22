@@ -46,12 +46,10 @@ func StartServer(port int, trips *HTTPServerTrips, reqTemplate, respTemplate str
 		return nil, fmt.Errorf("failed to start http server :%v, %v", port, err)
 	}
 
-	var httpServer *http.Server
 	var httpHandler = &httpHandler{
 		running: 1,
 	}
 
-	httpHandler.handler = getServerHandler(httpServer, httpHandler, trips)
 	server := &Server{
 		rotate:           trips.Rotate,
 		indexKeys:        trips.IndexKeys,
@@ -61,11 +59,13 @@ func StartServer(port int, trips *HTTPServerTrips, reqTemplate, respTemplate str
 		requestTemplate:  reqTemplate,
 		responseTemplate: respTemplate,
 	}
+	httpHandler.handler = getServerHandler(&server.Server, httpHandler, trips)
+
 
 	errorNotification := make(chan bool, 1)
 	go func() {
 		fmt.Printf("Starting server on %v\n", port)
-		err = httpServer.ListenAndServe()
+		err = server.Server.ListenAndServe()
 		atomic.StoreInt32(&httpHandler.running, 0)
 		errorNotification <- true
 		if err != nil {
