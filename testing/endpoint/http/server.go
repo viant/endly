@@ -36,7 +36,7 @@ func (s *Server) Append(trips *HTTPServerTrips) {
 			trips.Trips[k] = v
 		}
 	}
-	s.handler = getServerHandler(&s.Server, s.httpHandler, trips)
+	s.httpHandler.handler = getServerHandler(&s.Server, s.httpHandler, trips)
 }
 
 //StartServer starts http request, the server has ability to replay recorded  HTTP trips with https://github.com/viant/toolbox/blob/master/bridge/http_bridge_recording_util.go#L82
