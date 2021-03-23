@@ -19,6 +19,7 @@ func (s *service) append(context *endly.Context, req *AppendRequest) (*AppendRes
 	if err != nil {
 		return nil, err
 	}
+
 	server.Append(trips)
 	resp.Trips = trips.Trips
 	return resp, nil
