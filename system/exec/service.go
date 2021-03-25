@@ -623,12 +623,20 @@ func (s *execService) detectOperatingSystem(session *model.Session) (*model.Oper
 		operatingSystem.Architecture = "amd64"
 		operatingSystem.Arch = "x64"
 	}
+	if isArm64Architecture(operatingSystem.Hardware) {
+		operatingSystem.Architecture = "arm64"
+		operatingSystem.Arch = "aarch64"
+	}
 
 	operatingSystem.System = session.System()
 	if err = s.extractOsPath(session, operatingSystem); err == nil {
 		err = s.extractOsUser(session, operatingSystem)
 	}
 	return operatingSystem, err
+}
+
+func isArm64Architecture(hardware string) bool {
+	return strings.Contains(hardware, "aarch64")
 }
 
 func (s *execService) captureCommandIfNeeded(context *endly.Context, replayCommands *ssh.ReplayCommands, sshService ssh.Service) (err error) {
