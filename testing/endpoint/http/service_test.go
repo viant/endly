@@ -64,7 +64,7 @@ func TestHTTPEndpointService_Run_WithError(t *testing.T) {
 		response := service.Run(context, &endpoint.ListenRequest{
 			Port: 1,
 		})
-		assert.True(t, response.Error != "")
+		assert.True(t, response.Error == "", response.Error)
 	}
 
 }
