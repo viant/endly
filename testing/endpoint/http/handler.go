@@ -12,13 +12,23 @@ import (
 )
 
 type httpHandler struct {
-	running int32
-	handler func(writer http.ResponseWriter, request *http.Request)
+	running   int32
+	handler   func(writer http.ResponseWriter, request *http.Request)
+	thinkTime time.Duration
 }
 
+const (
+	thinkTimeHeaderMs = "Think-Time-Ms"
+)
+
 func (h *httpHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	if thinkTime := request.Header.Get(thinkTimeHeaderMs); thinkTime != "" {
+		h.thinkTime = time.Duration(toolbox.AsInt(thinkTime)) * time.Millisecond
+		fmt.Printf("Updated think time: %s\n", h.thinkTime)
+	}
 	h.handler(writer, request)
 }
+
 
 func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *HTTPServerTrips) func(writer http.ResponseWriter, request *http.Request) {
 	return func(writer http.ResponseWriter, request *http.Request) {
@@ -63,6 +73,10 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 			for _, headerValue := range headerValues {
 				writer.Header().Set(k, headerValue)
 			}
+		}
+
+		if httpHandler.thinkTime > 0 {
+			time.Sleep(httpHandler.thinkTime)
 		}
 		writer.WriteHeader(response.Code)
 		if response.Body != "" {
