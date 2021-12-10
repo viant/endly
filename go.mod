@@ -1,9 +1,9 @@
 module github.com/viant/endly
 
-go 1.12
+go 1.16
 
 require (
-	cloud.google.com/go v0.63.0 // indirect
+	cloud.google.com/go v0.66.0 // indirect
 	cloud.google.com/go/firestore v1.3.0 // indirect
 	cloud.google.com/go/pubsub v1.3.1
 	firebase.google.com/go v3.8.1+incompatible // indirect
@@ -49,7 +49,6 @@ require (
 	github.com/linkedin/goavro v2.1.0+incompatible
 	github.com/logrusorgru/aurora v0.0.0-20190428105938-cea283e61946
 	github.com/lunixbochs/vtclean v1.0.0
-	github.com/lusis/go-slackbot v0.0.0-20180109053408-401027ccfef5 // indirect
 	github.com/lusis/slack-test v0.0.0-20190426140909-c40012f20018 // indirect
 	github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a
 	github.com/mattn/go-sqlite3 v1.10.0
@@ -72,7 +71,7 @@ require (
 	github.com/viant/afs v1.12.0
 	github.com/viant/afsc v1.5.5
 	github.com/viant/asc v0.5.0
-	github.com/viant/assertly v0.5.3
+	github.com/viant/assertly v0.9.1-0.20211210213130-9fc39dc0d8f0
 	github.com/viant/bgc v0.8.0
 	github.com/viant/dsc v0.16.2
 	github.com/viant/dsunit v0.10.10
@@ -80,9 +79,9 @@ require (
 	github.com/viant/toolbox v0.34.0
 	github.com/yuin/gopher-lua v0.0.0-20190514113301-1cd887cd7036 // indirect
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20200707034311-ab3426394381
-	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d
-	google.golang.org/api v0.30.0
+	golang.org/x/net v0.0.0-20200904194848-62affa334b73
+	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
+	google.golang.org/api v0.31.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/linkedin/goavro.v1 v1.0.5 // indirect
 	gopkg.in/src-d/go-git.v4 v4.12.0
