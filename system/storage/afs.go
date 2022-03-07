@@ -5,9 +5,10 @@ import (
 	"github.com/viant/afs"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
+	"github.com/viant/afsc/auth"
 	"sync/atomic"
 
-	arl "github.com/viant/afs/url"
+	aurl "github.com/viant/afs/url"
 
 	"github.com/viant/afs/scp"
 	"github.com/viant/afs/storage"
@@ -78,14 +79,14 @@ func StorageOptions(ctx *endly.Context, resource *url.Resource, options ...stora
 			result = append(result, &option.Region{Name: credConfig.Region})
 		}
 		payload := ([]byte)(credConfig.Data)
-		scheme := arl.Scheme(resource.URL, file.Scheme)
-		extension := arl.SchemeExtensionURL(resource.URL)
+		scheme := aurl.Scheme(resource.URL, file.Scheme)
+		extension := aurl.SchemeExtensionURL(resource.URL)
 		if extension != "" {
-			scheme = arl.Scheme(extension, file.Scheme)
+			scheme = aurl.Scheme(extension, file.Scheme)
 		}
 		switch scheme {
 		case gs.Scheme:
-			auth, err := gs.NewJwtConfig(payload)
+			auth, err := auth.NewJwtConfig(payload)
 			if err != nil {
 				return nil, err
 			}

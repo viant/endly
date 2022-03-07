@@ -13,7 +13,6 @@ func (s *service) append(context *endly.Context, req *AppendRequest) (*AppendRes
 		req.BaseDirectory = url.NewResource(state.ExpandAsText(req.BaseDirectory)).ParsedURL.Path
 	}
 
-
 	trips := req.AsHTTPServerTrips(server.rotate, server.indexKeys)
 	err := trips.Init(server.requestTemplate, server.responseTemplate)
 	if err != nil {

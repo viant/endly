@@ -1,13 +1,16 @@
 package storage
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"github.com/viant/endly"
+	"github.com/viant/endly/udf"
 	"github.com/viant/toolbox/url"
+	"io"
 	"os"
 	"strings"
 )
@@ -17,7 +20,8 @@ type UploadRequest struct {
 	SourceKey string        `required:"true" description:"state key with asset content"`
 	Region    string        `description:"cloud storage region"`
 	Mode      int           `description:"os.FileMode"`
-	Dest      *url.Resource `required:"true" description:"destination asset or directory"` //target URL with credentials
+	Udf       string        `description:"name of udf to transform payload before placing into state map"` //name of udf function that will be used to transform payload
+	Dest      *url.Resource `required:"true" description:"destination asset or directory"`                 //target URL with credentials
 }
 
 //UploadResponse represents a Upload response
@@ -51,7 +55,19 @@ func (s *service) upload(context *endly.Context, request *UploadRequest, respons
 	}
 	data := state.GetString(request.SourceKey)
 	data = context.Expand(data)
-	err = fs.Upload(context.Background(), dest.URL, os.FileMode(request.Mode), strings.NewReader(data), storageOpts...)
+	var reader io.Reader = strings.NewReader(data)
+	if request.Udf != "" {
+		transformed, err := udf.TransformWithUDF(context, request.Udf, request.SourceKey, string(data))
+		if err != nil {
+			return fmt.Errorf("failed to tranformed: %v with %v, due to: %v", data, request.Udf, err)
+		}
+		payload, ok := transformed.([]byte)
+		if !ok {
+			return fmt.Errorf("failed to tranformed: %v with %v", data, request.Udf)
+		}
+		reader = bytes.NewReader(payload)
+	}
+	err = fs.Upload(context.Background(), dest.URL, os.FileMode(request.Mode), reader, storageOpts...)
 	if err != nil {
 		return err
 	}
