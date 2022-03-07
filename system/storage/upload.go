@@ -63,8 +63,6 @@ func (s *service) upload(context *endly.Context, request *UploadRequest, respons
 		if err != nil {
 			return fmt.Errorf("failed to transform: %v with %v, due to: %w", data, request.Udf, err)
 		}
-
-		var reader io.Reader
 		switch v := transformed.(type) {
 		case []byte:
 			reader = bytes.NewReader(v)
