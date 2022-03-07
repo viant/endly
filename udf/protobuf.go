@@ -2,6 +2,7 @@ package udf
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/jhump/protoreflect/desc/protoparse"
@@ -25,11 +26,17 @@ type ProtoCodec struct {
 func (c *ProtoCodec) AsMessage(msgType string, data []byte) (interface{}, error) {
 	msgDescriptor, err := c.registry.FindMessageTypeByUrl(msgType)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("faild to lookup message type: %v, %v", msgType, err)
 	}
 	protoMsg := dynamic.NewMessage(msgDescriptor)
-	if err = protoMsg.Unmarshal(data); err != nil {
-		return nil, err
+
+	err = protoMsg.Unmarshal(data)
+	if err != nil {
+		protoMsg = dynamic.NewMessage(msgDescriptor)
+		err = protoMsg.UnmarshalMergeText(data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal message: %v, due to %w", msgType, err)
+		}
 	}
 	JSON, err := protoMsg.MarshalJSON()
 	if err != nil {
@@ -168,6 +175,19 @@ func NewProtoReader(args ...interface{}) (func(source interface{}, state data.Ma
 		binaryData, err := ioutil.ReadAll(reader)
 		if err != nil {
 			return nil, err
+		}
+		if strings.HasPrefix(string(binaryData), "rawbase64:") {
+			raw := binaryData[10:]
+			binaryData, err = base64.RawURLEncoding.DecodeString(string(raw))
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode base64: %w, text: '%s'", err, string(raw))
+			}
+		} else if strings.HasPrefix(string(binaryData), "base64:") {
+			raw := binaryData[7:]
+			binaryData, err = base64.RawURLEncoding.DecodeString(string(raw))
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode base64: %w, text: '%s'", err, string(raw))
+			}
 		}
 		return codec.AsMessage(codec.msgType, binaryData)
 	}, nil
