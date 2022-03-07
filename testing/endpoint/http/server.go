@@ -61,7 +61,6 @@ func StartServer(port int, trips *HTTPServerTrips, reqTemplate, respTemplate str
 	}
 	httpHandler.handler = getServerHandler(&server.Server, httpHandler, trips)
 
-
 	errorNotification := make(chan bool, 1)
 	go func() {
 		fmt.Printf("Starting server on %v\n", port)

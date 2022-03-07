@@ -1,3 +1,6 @@
+## March 7 2022 0.52.0
+ * Added udf option to storage.upload
+
 ## March 22 2021 0.51.0
  * Added http/endpoint:append to lazily add http trips
  * Expose req/resp template in http/endpoint service

@@ -29,7 +29,6 @@ func (h *httpHandler) ServeHTTP(writer http.ResponseWriter, request *http.Reques
 	h.handler(writer, request)
 }
 
-
 func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *HTTPServerTrips) func(writer http.ResponseWriter, request *http.Request) {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		trips.Mutex.Lock()

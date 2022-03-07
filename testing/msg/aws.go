@@ -216,6 +216,7 @@ func (c *awsClient) processMessages(queueURL string, delete, includeAttributes b
 	return nil
 }
 
+
 func (c *awsClient) createQueue(resource *ResourceSetup) (*Resource, error) {
 	var name = resource.Name
 	queueURL, _ := c.getQueueURL(resource.Name)
@@ -281,6 +282,7 @@ func (c *awsClient) getTopicARN(topicURL string) (string, error) {
 	}
 	return "", fmt.Errorf("failed to lookup topic URL %v", topicURL)
 }
+
 
 func (c *awsClient) getQueueURL(queueName string) (string, error) {
 	result, err := c.sqs.GetQueueUrl(&sqs.GetQueueUrlInput{
@@ -377,6 +379,7 @@ func (c *awsClient) connect() (err error) {
 func (c *awsClient) Close() error {
 	return nil
 }
+
 
 func newAwsSqsClient(credConfig *cred.Config, timeout time.Duration) (Client, error) {
 	config, err := eaws.GetAWSCredentialConfig(credConfig)
