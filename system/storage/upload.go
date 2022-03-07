@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/viant/afs/file"
@@ -26,8 +27,9 @@ type UploadRequest struct {
 
 //UploadResponse represents a Upload response
 type UploadResponse struct {
-	Size int
-	URL  string
+	Size        int
+	Transformed string
+	URL         string
 }
 
 //Upload upload content defined by sourceKey to dest
@@ -59,14 +61,27 @@ func (s *service) upload(context *endly.Context, request *UploadRequest, respons
 	if request.Udf != "" {
 		transformed, err := udf.TransformWithUDF(context, request.Udf, request.SourceKey, string(data))
 		if err != nil {
-			return fmt.Errorf("failed to tranformed: %v with %v, due to: %v", data, request.Udf, err)
+			return fmt.Errorf("failed to transform: %v with %v, due to: %w", data, request.Udf, err)
 		}
-		payload, ok := transformed.([]byte)
-		if !ok {
-			return fmt.Errorf("failed to tranformed: %v with %v", data, request.Udf)
+
+		var reader io.Reader
+		switch v := transformed.(type) {
+		case []byte:
+			reader = bytes.NewReader(v)
+			response.Transformed = string(v)
+		case map[string]interface{}:
+			data, _ := json.Marshal(v)
+			reader = strings.NewReader(string(data))
+			response.Transformed = string(data)
+		case string:
+			response.Transformed = v
+			reader = strings.NewReader(v)
 		}
-		reader = bytes.NewReader(payload)
+		if reader == nil {
+			return fmt.Errorf("invalid tranformation type:%T", transformed)
+		}
 	}
+
 	err = fs.Upload(context.Background(), dest.URL, os.FileMode(request.Mode), reader, storageOpts...)
 	if err != nil {
 		return err
