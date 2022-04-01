@@ -1,10 +1,11 @@
 package model
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/viant/endly"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly"
 )
 
 func TestExtracts_Extract(t *testing.T) {
@@ -103,6 +104,22 @@ versionId: '2'`, "\n"),
 			},
 			expected: map[string]interface{}{
 				"status": "running",
+			},
+		},
+		{
+			desription: "single line no capture group",
+			extracts: []*Extract{
+				{
+					Key:      "status",
+					RegExpr:  `"testStatus":"[^\"]+"`,
+					Required: true,
+				},
+			},
+			inputs: []string{
+				`"testStatus":"running"`,
+			},
+			expected: map[string]interface{}{
+				"status": `"testStatus":"running"`,
 			},
 		},
 		{
