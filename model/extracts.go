@@ -2,11 +2,12 @@ package model
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
+
 	"github.com/lunixbochs/vtclean"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox/data"
-	"regexp"
-	"strings"
 )
 
 //Extracts represents an expected data collection
@@ -119,12 +120,17 @@ func NewExtractEvent(output string, structuredOutput, extracted interface{}) *Ex
 func matchExpression(compiledExpression *regexp.Regexp, line string, extract *Extract, context *endly.Context, extracted map[string]interface{}) bool {
 	if compiledExpression.MatchString(line) {
 		matched := compiledExpression.FindStringSubmatch(line)
+		// if there is a capture group use that as the extracted value, otherwise use the entire match
+		matchIndex := 0
+		if len(matched) > 1 {
+			matchIndex = 1
+		}
 		if extract.Key != "" {
 			var state = context.State()
 			var keyFragments = strings.Split(extract.Key, ".")
 			for i, keyFragment := range keyFragments {
 				if i+1 == len(keyFragments) {
-					state.Put(extract.Key, matched[1])
+					state.Put(extract.Key, matched[matchIndex])
 					continue
 				}
 				if !state.Has(keyFragment) {
@@ -134,7 +140,7 @@ func matchExpression(compiledExpression *regexp.Regexp, line string, extract *Ex
 
 			}
 		}
-		extracted[extract.Key] = matched[1]
+		extracted[extract.Key] = matched[matchIndex]
 		return true
 	}
 	return false
