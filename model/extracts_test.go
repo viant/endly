@@ -123,6 +123,20 @@ versionId: '2'`, "\n"),
 			},
 		},
 		{
+			desription: "single line no capture group, no match",
+			extracts: []*Extract{
+				{
+					Key:      "status",
+					RegExpr:  `"test-status":"[^\"]+"`,
+					Required: true,
+				},
+			},
+			inputs: []string{
+				`"testStatus":"running"`,
+			},
+			hasError: true,
+		},
+		{
 			desription: "single line missing required expression",
 			extracts: []*Extract{
 				{
