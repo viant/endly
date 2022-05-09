@@ -181,7 +181,8 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*Deplo
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to extract service from request")
 	}
-	if getResponse.Service == nil {
+
+	if getResponse.Service == nil || getResponse.Service.Spec == nil {
 		parent := gcp.ExpandMeta(context, request.parent)
 		createCall := service.Create(parent, srv)
 		createCall.Context(client.Context())
@@ -269,6 +270,12 @@ func (s *service) waitForServiceDeployment(context *endly.Context, request *GetS
 		response, err = s.getService(context, request)
 		if err != nil {
 			return nil, err
+		}
+		if response == nil {
+			return &GetServiceResponse{}, nil
+		}
+		if response.Service == nil {
+			return response, nil
 		}
 		if isServiceReady(response.Status) {
 			return response, nil
