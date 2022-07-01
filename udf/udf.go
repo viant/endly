@@ -8,6 +8,8 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -66,6 +68,40 @@ func URLJoin(source interface{}, state data.Map) (interface{}, error) {
 	var baseURL = strings.Trim(toolbox.AsString(args[0]), " '\"")
 	var URI = strings.Trim(toolbox.AsString(args[1]), " '\"")
 	return toolbox.URLPathJoin(baseURL, URI), nil
+}
+
+func LoadData(source interface{}, state data.Map) (interface{}, error) {
+	if toolbox.IsString(source) {
+		url := toolbox.AsString(source)
+		dir := path.Dir(url)
+		n := path.Base(url)
+		n = "@" + n[:len(n)-len(filepath.Ext(n))]
+		d, err := util.LoadData([]string{dir}, n)
+		if err != nil {
+			return nil, err
+		}
+
+		var s []interface{}
+		if toolbox.IsSlice(d) && len(d.([]interface{})) > 0 {
+			s = d.([]interface{})
+		} else {
+			s = append(s, d)
+		}
+
+		c := data.NewCollection()
+		_, ok := s[0].(map[string]interface{})
+		if ok {
+			for _, rec := range s {
+				c.Push(rec)
+			}
+		} else {
+			return nil, fmt.Errorf("loaded data must be []map[string]interface{}: %v", d)
+		}
+
+		return c, nil
+	}
+
+	return nil, fmt.Errorf("udf LoadData arguments must be string: v%", source)
 }
 
 //URLPath return path from URL

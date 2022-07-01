@@ -20,9 +20,15 @@ type TableData struct {
 //AutoGenerateIfNeeded retrieves auto generated values
 func (d *TableData) AutoGenerateIfNeeded(state data.Map) error {
 	for k, v := range d.AutoGenerate {
-		value, has := state.GetValue(v)
-		if !has {
-			return fmt.Errorf("failed to autogenerate value for %v - unable to eval: %v", k, v)
+		var value interface{}
+		if v[0:2] == "${" && v[len(v)-1:len(v)] == "}" {
+			value = state.Expand(v)
+		} else {
+			var has bool
+			value, has = state.GetValue(v)
+			if !has {
+				return fmt.Errorf("failed to autogenerate value for %v - unable to eval: %v", k, v)
+			}
 		}
 		state.SetValue(k, value)
 	}
