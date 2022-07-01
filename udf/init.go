@@ -8,6 +8,7 @@ func init() {
 		return New()
 	})
 
+	endly.UdfRegistry["LoadData"] = LoadData
 	endly.UdfRegistry["Dob"] = DateOfBirth
 	endly.UdfRegistry["URLJoin"] = URLJoin
 	endly.UdfRegistry["URLPath"] = URLPath
