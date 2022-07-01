@@ -15,8 +15,13 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 		return nil, fmt.Errorf("state was nil")
 	}
 	source, has := state.GetValue(toolbox.AsString(dataKey))
+
 	if !has || source == nil {
-		return nil, fmt.Errorf("value for specified key was empty: %v", dataKey)
+		if result, ok := dataKey.(*data.Collection); ok {
+			source = result
+		} else {
+			return nil, fmt.Errorf("value for specified key was empty: %v", dataKey)
+		}
 	}
 
 	if state.Has(recordsKey) {
