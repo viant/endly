@@ -51,6 +51,7 @@ func (e *SetupFunctionEvent) Messages() []*msg.Message {
 type FunctionInfo struct {
 	Name string
 	Arn  string
+	URL  string
 }
 
 func NewSetupFunctionEvent(output *DeployOutput) *SetupFunctionEvent {
@@ -58,6 +59,7 @@ func NewSetupFunctionEvent(output *DeployOutput) *SetupFunctionEvent {
 		Function: &FunctionInfo{
 			Name: *output.FunctionName,
 			Arn:  *output.FunctionArn,
+			URL:  output.URL,
 		},
 		Triggers: make([]*EventTriggerInfo, 0),
 	}

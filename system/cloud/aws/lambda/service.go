@@ -237,10 +237,34 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 			return nil, errors.Wrap(err, "failed to update function code")
 		}
 
+		if request.Http != nil {
+			_, _ = client.DeleteFunctionUrlConfig(&lambda.DeleteFunctionUrlConfigInput{FunctionName: functionOutput.Configuration.FunctionArn})
+			request.Http.FunctionName = functionOutput.Configuration.FunctionArn
+			response, err := client.CreateFunctionUrlConfig(request.Http)
+			if err != nil {
+				return nil, err
+			}
+			if response.FunctionUrl != nil {
+				output.URL = *response.FunctionUrl
+			}
+		}
+
 	} else {
 		if functionConfig, err = client.CreateFunction(&request.CreateFunctionInput); err != nil {
 			return nil, errors.Wrapf(err, "failed to create function %s", request.CreateFunctionInput)
 		}
+
+		if request.Http != nil {
+			request.Http.FunctionName = functionConfig.FunctionArn
+			response, err := client.CreateFunctionUrlConfig(request.Http)
+			if err != nil {
+				return nil, err
+			}
+			if response.FunctionUrl != nil {
+				output.URL = *response.FunctionUrl
+			}
+		}
+
 	}
 	output.FunctionConfiguration = functionConfig
 	if len(request.Triggers) > 0 {
