@@ -31,11 +31,13 @@ type DeployInput struct {
 	ciam.SetupRolePolicyInput  ` json:",inline"`
 	VpcMatcher                 *ec2.GetVpcConfigInput
 	Triggers                   []*EventSourceMapping
+	Http                       *lambda.CreateFunctionUrlConfigInput
 	Schedule                   *Schedule
 }
 
 type DeployOutput struct {
 	*lambda.FunctionConfiguration
+	URL           string
 	RoleInfo      *ciam.GetRoleInfoOutput
 	EventMappings []*lambda.EventSourceMappingConfiguration
 }
