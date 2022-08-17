@@ -20,6 +20,12 @@ import (
 	_ "github.com/adrianwit/fsc"
 	_ "github.com/adrianwit/mgc"
 
+	_ "github.com/viant/afsc/aws"
+	_ "github.com/viant/afsc/gcp"
+	_ "github.com/viant/endly/system/secret"
+	_ "github.com/viant/scy/kms/blowfish"
+	_ "github.com/viant/scy/kms/gcp"
+
 	//cgo _ "github.com/alexbrainman/odbc"
 	//cgo _"github.com/mattn/go-oci8"
 
