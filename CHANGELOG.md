@@ -1,3 +1,6 @@
+## March Aug 17 0.54
+ * Added secret manager integration
+
 ## March 7 2022 0.52.0
  * Added udf option to storage.upload
 
