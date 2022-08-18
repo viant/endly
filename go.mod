@@ -77,7 +77,7 @@ require (
 	github.com/viant/dsc v0.16.2
 	github.com/viant/dsunit v0.10.10
 	github.com/viant/neatly v0.8.0
-	github.com/viant/scy v0.3.1
+	github.com/viant/scy v0.3.2-0.20220818145333-129333b79ae7
 	github.com/viant/toolbox v0.34.6-0.20220701174423-a46fd679bbc5
 	github.com/yuin/gopher-lua v0.0.0-20190514113301-1cd887cd7036 // indirect
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122
@@ -160,3 +160,5 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 )
+
+replace github.com/viant/scy v0.3.1 => /Users/awitas/go/src/github.com/viant/scy

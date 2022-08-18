@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	sjwt "github.com/golang-jwt/jwt/v4"
 	"github.com/viant/afs"
 	"github.com/viant/scy"
 	"github.com/viant/scy/auth/jwt"
@@ -90,10 +91,12 @@ type RevealResponse struct {
 }
 
 type SignJWTRequest struct {
-	PrivateKey  *scy.Resource
-	ExpiryInSec int
-	ClaimsURL   string
-	Claims      *jwt.Claims
+	PrivateKey   *scy.Resource
+	ExpiryInSec  int
+	ClaimsURL    string
+	UseClaimsMap bool
+	ClaimsMap    map[string]interface{}
+	Claims       *jwt.Claims
 }
 
 func (r *SignJWTRequest) Init() error {
@@ -104,7 +107,12 @@ func (r *SignJWTRequest) Init() error {
 			return err
 		}
 		r.Claims = &jwt.Claims{}
-		return json.Unmarshal(data, r.Claims)
+		if err = json.Unmarshal(data, r.Claims); err != nil {
+			return err
+		}
+		if err = json.Unmarshal(data, &r.ClaimsMap); err != nil {
+			return err
+		}
 	}
 	if r.ExpiryInSec == 0 {
 		r.ExpiryInSec = 360
@@ -113,7 +121,7 @@ func (r *SignJWTRequest) Init() error {
 }
 
 func (r *SignJWTRequest) Validate() error {
-	if r.Claims == nil {
+	if r.Claims == nil && len(r.ClaimsMap) == 0 {
 		return fmt.Errorf("claims was empty")
 	}
 	if r.PrivateKey == nil {
@@ -149,6 +157,7 @@ func (r *VerifyJWTRequest) Validate() error {
 type VerifyJWTResponse struct {
 	Error  string
 	Valid  bool
+	Token  *sjwt.Token
 	Claims *jwt.Claims
 }
 

@@ -21,7 +21,7 @@ type TableData struct {
 func (d *TableData) AutoGenerateIfNeeded(state data.Map) error {
 	for k, v := range d.AutoGenerate {
 		var value interface{}
-		if v[0:2] == "${" && v[len(v)-1:len(v)] == "}" {
+		if v[0:2] == "${" && v[len(v)-1:] == "}" {
 			value = state.Expand(v)
 		} else {
 			var has bool
