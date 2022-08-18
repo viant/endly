@@ -21,14 +21,16 @@ type service struct {
 }
 
 func (s *service) secure(context *endly.Context, request *SecureRequest) (*SecureResponse, error) {
-	secret := &scy.Secret{Resource: request.Resource}
-	secret.Data = request.Data
+	var secret *scy.Secret
+
 	if request._target != nil {
-		secret.SetTarget(request._target)
-		secret.Target = reflect.New(request._target).Interface()
-		if err := json.Unmarshal(secret.Data, secret.Target); err != nil {
+		instance := reflect.New(request._target).Interface()
+		if err := json.Unmarshal(request.Source, instance); err != nil {
 			return nil, err
 		}
+		secret = scy.NewSecret(instance, request.Resource)
+	} else {
+		secret = scy.NewSecret(string(request.Source), request.Resource)
 	}
 	err := s.Service.Store(context.Background(), secret)
 	if err != nil {
@@ -63,11 +65,16 @@ func (s *service) reveal(context *endly.Context, request *RevealRequest) (*Revea
 
 func (s *service) signJWT(context *endly.Context, request *SignJWTRequest) (*SignJWTResponse, error) {
 	jwtSigner := signer.New(&signer.Config{RSA: request.PrivateKey})
+
 	if err := jwtSigner.Init(context.Background()); err != nil {
 		return nil, err
 	}
 
-	token, err := jwtSigner.Create(time.Duration(request.ExpiryInSec)*time.Second, request.Claims)
+	var claims interface{} = request.Claims
+	if request.Claims == nil || request.UseClaimsMap {
+		claims = request.ClaimsMap
+	}
+	token, err := jwtSigner.Create(time.Duration(request.ExpiryInSec)*time.Second, claims)
 	if err != nil {
 		return nil, err
 	}
@@ -89,6 +96,7 @@ func (s *service) verifyJWT(context *endly.Context, request *VerifyJWTRequest) (
 		response.Error = err.Error()
 		return response, nil
 	}
+	response.Token, _ = jwtVerifier.ValidaToken(context.Background(), request.Token)
 	response.Claims = jwtClaims
 	return response, nil
 }
