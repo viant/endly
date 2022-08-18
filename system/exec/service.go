@@ -359,6 +359,8 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 		securedCommand = state.ExpandAsText(securedCommand)
 	}
 
+	securedCommand = strings.ReplaceAll(securedCommand, "${qMark}", "?")
+
 	if isSuperUserCmd {
 		if !session.SuperUSerAuth {
 			terminators = append(terminators, "Password")
