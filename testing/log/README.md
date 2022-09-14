@@ -8,7 +8,7 @@
    2) run log validation. Log validation verifies actual and expected log records, shifting record from actual logs pending queue.
    3) reset - optionally reset log queues, to discard pending validation logs.
 
-### Supported actions:
+### Supportend actions:
 
 
 
