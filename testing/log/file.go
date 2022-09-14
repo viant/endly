@@ -49,11 +49,11 @@ func (f *File) ShiftLogRecord() *Record {
 }
 
 //ShiftLogRecordByIndex returns and remove the first log record if present
-func (f *File) ShiftLogRecordByIndex(value string) *Record {
+func (f *File) ShiftLogRecordByIndex(value string) (*Record, bool) {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
 	if len(f.Records) == 0 {
-		return nil
+		return nil, false
 	}
 	result, has := f.IndexedRecords[value]
 	if !has {
@@ -78,7 +78,7 @@ func (f *File) ShiftLogRecordByIndex(value string) *Record {
 		}, nil)
 	}
 
-	return result
+	return result, has
 }
 
 //PushLogRecord appends provided log record to the records.
