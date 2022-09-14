@@ -34,8 +34,16 @@ func (i *logRecordIterator) HasNext() bool {
 func (i *logRecordIterator) Next(itemPointer interface{}) error {
 	var indexRecordPointer, ok = itemPointer.(*IndexedRecord)
 	if ok {
-		logFile := i.logFiles[i.logFileIndex]
-		logRecord := logFile.ShiftLogRecordByIndex(indexRecordPointer.IndexValue)
+		logFileIndex := i.logFileIndex
+		var found bool
+		var logRecord *Record
+		for !found && logFileIndex < len(i.logFiles) {
+			logFile := i.logFiles[logFileIndex]
+			logRecord, found = logFile.ShiftLogRecordByIndex(indexRecordPointer.IndexValue)
+			if !found {
+				logFileIndex++
+			}
+		}
 		indexRecordPointer.Record = logRecord
 		return nil
 	}
