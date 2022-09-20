@@ -289,12 +289,11 @@ func (s *service) registerRoutes() {
 				var dsRequest = dsunit.RunScriptRequest(*req)
 				request = &dsRequest
 			}
-			var err error
 			if req, ok := request.(*dsunit.RunScriptRequest); ok {
 				for i, script := range req.Scripts {
-					req.Scripts[i], err = context.ExpandResource(script)
-					if err != nil {
-						return nil, err
+					req.Scripts[i].URL = context.Expand(script.URL)
+					if script.Credentials != "" {
+						req.Scripts[i].Credentials = context.Expand(script.Credentials)
 					}
 				}
 				resp := s.Service.RunScript(req)
