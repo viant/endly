@@ -1,3 +1,6 @@
+## March Aug 17 0.55
+* Updated dsunit dep
+
 ## March Aug 17 0.54
  * Added secret manager integration
 
