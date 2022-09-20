@@ -10,7 +10,7 @@ require (
 	firebase.google.com/go v3.8.1+incompatible // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Azure/go-autorest/autorest v0.2.0 // indirect
-	github.com/MichaelS11/go-cql-driver v0.0.0-20190315050006-6dafc35aac9b
+	github.com/MichaelS11/go-cql-driver v0.1.1
 	github.com/Microsoft/go-winio v0.4.12 // indirect
 	github.com/adrianwit/dyndb v0.1.0
 	github.com/adrianwit/fbc v0.1.1
@@ -29,8 +29,8 @@ require (
 	github.com/evanphx/json-patch v4.5.0+incompatible // indirect
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
 	github.com/go-errors/errors v1.4.2
-	github.com/go-sql-driver/mysql v1.4.1
-	github.com/gocql/gocql v0.0.0-20190610222256-e00e8c6226e8 // indirect
+	github.com/go-sql-driver/mysql v1.6.0
+	github.com/gocql/gocql v0.0.0-20200815110948-5378c8f664e9 // indirect
 	github.com/gomarkdown/markdown v0.0.0-20190222000725-ee6a7931a1e4 // indirect
 	github.com/google/gofuzz v1.0.0 // indirect
 	github.com/google/gops v0.3.6
@@ -46,13 +46,13 @@ require (
 	github.com/klauspost/compress v1.7.1 // indirect
 	github.com/klauspost/cpuid v1.2.1 // indirect
 	github.com/klauspost/pgzip v1.2.1 // indirect
-	github.com/lib/pq v1.1.1
+	github.com/lib/pq v1.10.5
 	github.com/linkedin/goavro v2.1.0+incompatible
 	github.com/logrusorgru/aurora v0.0.0-20190428105938-cea283e61946
 	github.com/lunixbochs/vtclean v1.0.0
 	github.com/lusis/slack-test v0.0.0-20190426140909-c40012f20018 // indirect
 	github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a
-	github.com/mattn/go-sqlite3 v1.10.0
+	github.com/mattn/go-sqlite3 v1.14.12
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
@@ -75,7 +75,7 @@ require (
 	github.com/viant/assertly v0.9.1-0.20211210213130-9fc39dc0d8f0
 	github.com/viant/bgc v0.8.0
 	github.com/viant/dsc v0.16.2
-	github.com/viant/dsunit v0.10.10
+	github.com/viant/dsunit v0.10.11-0.20220920170042-7f4539f0dcc2
 	github.com/viant/neatly v0.8.0
 	github.com/viant/scy v0.3.2-0.20220818145333-129333b79ae7
 	github.com/viant/toolbox v0.34.6-0.20220701174423-a46fd679bbc5
@@ -162,4 +162,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 )
 
-replace github.com/viant/scy v0.3.1 => /Users/awitas/go/src/github.com/viant/scy
