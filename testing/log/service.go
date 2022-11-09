@@ -89,7 +89,7 @@ func (s *service) assert(context *endly.Context, request *AssertRequest) (*Asser
 
 			var logRecord = &Record{}
 			logRecord, err := s.matchLogRecord(typeMeta, expectedRecord, recordIterator)
-			if err != nil {
+			if err != nil || logRecord == nil {
 				return response, err
 			}
 			var actualLogRecord interface{} = logRecord.Line
