@@ -75,7 +75,7 @@ require (
 	github.com/viant/assertly v0.9.1-0.20211210213130-9fc39dc0d8f0
 	github.com/viant/bgc v0.8.0
 	github.com/viant/dsc v0.16.2
-	github.com/viant/dsunit v0.10.11-0.20220920170042-7f4539f0dcc2
+	github.com/viant/dsunit v0.10.11-0.20221109235512-bdf35cb0327e
 	github.com/viant/neatly v0.8.0
 	github.com/viant/scy v0.3.2-0.20220818145333-129333b79ae7
 	github.com/viant/toolbox v0.34.6-0.20220701174423-a46fd679bbc5
@@ -161,4 +161,3 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
 )
-
