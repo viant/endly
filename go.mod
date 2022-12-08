@@ -12,7 +12,7 @@ require (
 	github.com/Azure/go-autorest/autorest v0.2.0 // indirect
 	github.com/MichaelS11/go-cql-driver v0.1.1
 	github.com/Microsoft/go-winio v0.4.12 // indirect
-	github.com/adrianwit/dyndb v0.1.0
+	github.com/adrianwit/dyndb v0.2.0
 	github.com/adrianwit/fbc v0.1.1
 	github.com/adrianwit/fsc v0.2.0
 	github.com/adrianwit/mgc v0.2.0
