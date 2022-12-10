@@ -12,13 +12,13 @@ require (
 	github.com/Azure/go-autorest/autorest v0.2.0 // indirect
 	github.com/MichaelS11/go-cql-driver v0.1.1
 	github.com/Microsoft/go-winio v0.4.12 // indirect
-	github.com/adrianwit/dyndb v0.2.0
+	github.com/adrianwit/dyndb v0.2.1-0.20221210015531-e4c4fdf40805
 	github.com/adrianwit/fbc v0.1.1
 	github.com/adrianwit/fsc v0.2.0
 	github.com/adrianwit/mgc v0.2.0
 	github.com/aerospike/aerospike-client-go v2.2.0+incompatible // indirect
 	github.com/aws/aws-lambda-go v1.31.0
-	github.com/aws/aws-sdk-go v1.44.12
+	github.com/aws/aws-sdk-go v1.44.156
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v0.7.3-0.20190515030239-f4b9142210e9
 	github.com/docker/go-connections v0.4.0
@@ -29,7 +29,7 @@ require (
 	github.com/evanphx/json-patch v4.5.0+incompatible // indirect
 	github.com/globalsign/mgo v0.0.0-20181015135952-eeefdecb41b8 // indirect
 	github.com/go-errors/errors v1.4.2
-	github.com/go-sql-driver/mysql v1.6.0
+	github.com/go-sql-driver/mysql v1.7.0
 	github.com/gocql/gocql v0.0.0-20200815110948-5378c8f664e9 // indirect
 	github.com/gomarkdown/markdown v0.0.0-20190222000725-ee6a7931a1e4 // indirect
 	github.com/google/gofuzz v1.0.0 // indirect
@@ -52,7 +52,7 @@ require (
 	github.com/lunixbochs/vtclean v1.0.0
 	github.com/lusis/slack-test v0.0.0-20190426140909-c40012f20018 // indirect
 	github.com/mattbaird/jsonpatch v0.0.0-20171005235357-81af80346b1a
-	github.com/mattn/go-sqlite3 v1.14.12
+	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
@@ -67,7 +67,7 @@ require (
 	github.com/segmentio/kafka-go v0.3.4
 	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/spf13/pflag v1.0.3 // indirect
-	github.com/stretchr/testify v1.7.1
+	github.com/stretchr/testify v1.8.1
 	github.com/tebeka/selenium v0.9.3
 	github.com/viant/afs v1.16.1-0.20220601210902-dc23d64dda15
 	github.com/viant/afsc v1.8.1-0.20220525154204-272d99aaa19a
@@ -81,8 +81,8 @@ require (
 	github.com/viant/toolbox v0.34.6-0.20220701174423-a46fd679bbc5
 	github.com/yuin/gopher-lua v0.0.0-20190514113301-1cd887cd7036 // indirect
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122
-	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e
-	golang.org/x/oauth2 v0.0.0-20220622183110-fd043fe589d2
+	golang.org/x/net v0.3.0
+	golang.org/x/oauth2 v0.3.0
 	google.golang.org/api v0.90.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/linkedin/goavro.v1 v1.0.5 // indirect
@@ -145,12 +145,14 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/src-d/gcfg v1.4.0 // indirect
+	github.com/viant/parsly v0.0.0-20220913214053-cb272791c00f // indirect
+	github.com/viant/sqlparser v0.2.0 // indirect
 	github.com/xanzy/ssh-agent v0.2.1 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
-	golang.org/x/sys v0.0.0-20220624220833-87e55d714810 // indirect
-	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/term v0.3.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -159,5 +161,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/src-d/go-billy.v4 v4.3.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/adrianwit/dyndb => /Users/awitas/go/src/github.com/adrianwit/dyndb
