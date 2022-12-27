@@ -22,6 +22,11 @@ func (s *service) Assert(context *endly.Context, request *AssertRequest) (respon
 	var actual = request.Actual
 	var expect = request.Expect
 	response = &AssertResponse{}
+
+	if request.Ignore != nil {
+		actual, expect = s.applyIgnore(request, actual, expect)
+	}
+
 	if toolbox.IsString(request.Actual) {
 		if actualValue, ok := state.GetValue(toolbox.AsString(request.Actual)); ok {
 			actual = actualValue
@@ -37,6 +42,35 @@ func (s *service) Assert(context *endly.Context, request *AssertRequest) (respon
 		return nil, err
 	}
 	return response, nil
+}
+
+func (s *service) applyIgnore(request *AssertRequest, actual interface{}, expect interface{}) (interface{}, interface{}) {
+
+	if request.Ignore == nil {
+		return actual, expect
+	}
+	ignoreKey := request.IgnoreKeys()
+	if len(ignoreKey) == 0 {
+		return actual, expect
+	}
+	actualMap, _ := request.Actual.(map[string]interface{})
+	exoectedMap, _ := request.Actual.(map[string]interface{})
+
+	if len(actualMap) > 0 {
+		for _, key := range ignoreKey {
+			delete(actualMap, toolbox.AsString(key))
+		}
+		request.Actual = actualMap
+		actual = request.Actual
+	}
+	if len(exoectedMap) > 0 {
+		for _, key := range ignoreKey {
+			delete(exoectedMap, toolbox.AsString(key))
+		}
+	}
+	request.Expect = exoectedMap
+	expect = request.Expect
+	return actual, expect
 }
 
 const validationExample = `{
