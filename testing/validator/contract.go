@@ -14,7 +14,27 @@ type AssertRequest struct {
 	Expect           interface{} `required:"true" description:"expected value/data structure"`
 	Expected         interface{} //Deprecated
 	Source           interface{} //optional validation source
-	NormalizeKVPairs bool        //flag to normalize kv pairs into map if possible (i.e, when using yaml)
+	Ignore           interface{}
+	NormalizeKVPairs bool //flag to normalize kv pairs into map if possible (i.e, when using yaml)
+}
+
+func (r *AssertRequest) IgnoreKeys() []interface{} {
+	var keys = make([]interface{}, 0)
+	switch actual := r.Ignore.(type) {
+	case []interface{}:
+		for i := range actual {
+			keys = append(keys, actual[i])
+		}
+	case map[string]interface{}:
+		for k := range actual {
+			keys = append(keys, k)
+		}
+	case map[interface{}]interface{}:
+		for k := range actual {
+			keys = append(keys, k)
+		}
+	}
+	return keys
 }
 
 //AssertResponse represent validation response
