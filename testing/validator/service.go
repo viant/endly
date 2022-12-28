@@ -52,7 +52,7 @@ func (s *service) applyIgnore(request *AssertRequest, actual interface{}, expect
 
 	if request.OmitEmpty && len(expectMap) > 0 {
 		for k, v := range expectMap {
-			if v == "" || v == "0" || v == "0.0" || v == 0 {
+			if v == "" || v == "0" || v == "0.0" || v == 0 || v == "false" || v == false {
 				ignoreKey = append(ignoreKey, k)
 			}
 		}
