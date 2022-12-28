@@ -23,7 +23,7 @@ func (s *service) Assert(context *endly.Context, request *AssertRequest) (respon
 	var expect = request.Expect
 	response = &AssertResponse{}
 
-	if request.Ignore != nil {
+	if request.Ignore != nil || request.OmitEmpty {
 		actual, expect = s.applyIgnore(request, actual, expect)
 	}
 
@@ -45,15 +45,21 @@ func (s *service) Assert(context *endly.Context, request *AssertRequest) (respon
 }
 
 func (s *service) applyIgnore(request *AssertRequest, actual interface{}, expect interface{}) (interface{}, interface{}) {
-	if request.Ignore == nil {
-		return actual, expect
-	}
+	actualMap, _ := request.Actual.(map[string]interface{})
+	expectMap, _ := request.Expect.(map[string]interface{})
+
 	ignoreKey := request.IgnoreKeys()
+
+	if request.OmitEmpty && len(expectMap) > 0 {
+		for k, v := range expectMap {
+			if v == "" || v == "0" || v == "0.0" || v == 0 {
+				ignoreKey = append(ignoreKey, k)
+			}
+		}
+	}
 	if len(ignoreKey) == 0 {
 		return actual, expect
 	}
-	actualMap, _ := request.Actual.(map[string]interface{})
-	expectMap, _ := request.Expect.(map[string]interface{})
 
 	if len(actualMap) > 0 {
 		for _, key := range ignoreKey {

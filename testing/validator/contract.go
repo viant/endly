@@ -15,6 +15,7 @@ type AssertRequest struct {
 	Expected         interface{} //Deprecated
 	Source           interface{} //optional validation source
 	Ignore           interface{}
+	OmitEmpty        bool
 	NormalizeKVPairs bool //flag to normalize kv pairs into map if possible (i.e, when using yaml)
 }
 
