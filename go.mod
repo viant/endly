@@ -164,4 +164,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/adrianwit/dyndb => /Users/awitas/go/src/github.com/adrianwit/dyndb

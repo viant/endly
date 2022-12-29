@@ -101,6 +101,8 @@ github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAE
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
 github.com/StackExchange/wmi v0.0.0-20170410192909-ea383cf3ba6e/go.mod h1:3eOhrUMpNV+6aFIbp5/iudMxNCF27Vw2OZgy4xEx0Fg=
+github.com/adrianwit/dyndb v0.2.1-0.20221210015531-e4c4fdf40805 h1:Lu0inE9uZHKogDnzTVmzyVWf3JoSIjhCGeBWae+ckiU=
+github.com/adrianwit/dyndb v0.2.1-0.20221210015531-e4c4fdf40805/go.mod h1:7FfwrUDSJQrCs4HoeL3M4igur1TSmuknHeao4JUd5E8=
 github.com/adrianwit/fbc v0.1.1 h1:rLic3cauQWi+aGKN2mJGRvMWj+iyjoOhJWpDuMLGEd4=
 github.com/adrianwit/fbc v0.1.1/go.mod h1:hRwycYmaJ/kp6IlYiHsnRk2zAkx/sGVQcgvUuFctzvk=
 github.com/adrianwit/fsc v0.2.0 h1:aQ3oVhf/sRpFQITjgA4RDuhStOVKEXkGjTV1RalWfNE=
