@@ -335,15 +335,18 @@ func NewDefaultState(ctx *Context) data.Map {
 	var result = data.NewMap()
 	var now = time.Now()
 
-	minuteOfTheDay := int(now.Minute())
-	hour := now.Hour()
-	minuteOfTheDay += int(hour) * 60
 	source := rand.NewSource(now.UnixNano())
 	result.Put("rand", source.Int63())
 	result.Put("date", now.Format(yyyyMMDDLayout))
 	result.Put("time", now.Format(yyyMMDDHHMMSSLayout))
 	result.Put("ts", now.Unix())
-	result.Put("minuteofday", minuteOfTheDay)
+	result.Put("minuteofday", func(key string) interface{} {
+		now := time.Now()
+		if strings.ToLower(key) == "utc" {
+			now = now.UTC()
+		}
+		return int(now.Minute()) + int(now.Hour())*60
+	})
 	result.Put("weekday", func(key string) interface{} {
 		loc := time.UTC
 		if key != "" {
