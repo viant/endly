@@ -34,7 +34,9 @@ func (t *Template) Expand(task *Task, parentTag string, inline *InlineWorkflow) 
 	var workflowData = data.Map(t.inline.Data)
 
 	for tag.HasActiveIterator() {
+
 		tempTask := NewTask(task.Name, true)
+		tag.Group = task.Name
 		index := iterator.Index()
 		state := t.buildTagState(index, tag)
 		tagPath := state.GetString("path")
