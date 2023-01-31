@@ -342,6 +342,11 @@ func hasTerminator(stdout string, terminators []string) bool {
 func (s *execService) executeCommand(context *endly.Context, session *model.Session, extractCommand *ExtractCommand, response *RunResponse, request *ExtractRequest) (err error) {
 	var state = context.State()
 	state.SetValue("os.user", session.Username)
+	state.SetValue("os.arch", session.Os.Arch)
+	state.SetValue("os.system", session.Os.System)
+	state.SetValue("os.name", session.Os.Name)
+	state.SetValue("os.hardware", session.Os.Hardware)
+	state.SetValue("os.architecture", session.Os.Architecture)
 
 	securedCommand := context.Expand(extractCommand.Command)
 	options := request.Options
