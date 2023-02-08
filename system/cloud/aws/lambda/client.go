@@ -17,6 +17,7 @@ func setClient(context *endly.Context, rawRequest map[string]interface{}) error 
 	}
 	sess := session.Must(session.NewSession())
 	client := lambda.New(sess, config)
+	client.ListFunctions()
 	return context.Put(clientKey, client)
 }
 
