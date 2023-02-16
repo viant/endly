@@ -1,0 +1,35 @@
+init:
+  target:
+    URL: ssh://localhost
+    Credentials: localhost
+  appPath: $WorkingDirectory(./..)
+  Ver: $Cat(${appPath}/Version)
+
+pipeline:
+  set_sdk:
+    action: sdk.set
+    target: $target
+    sdk: go:1.17
+  build:
+    action: exec:run
+    target: $target
+    checkError: true
+    commands:
+     # - export GO111MODULE=on
+      - cd ${appPath}/endly
+     # - go mod download
+     # - go mod tidy
+      - export GOOS=linux
+      - export GOARCH=amd64
+      - go build -ldflags="-X 'main.Version=${Ver}'"
+      - tar cvzf endly_linux_${Ver}_amd64.tar.gz endly
+      - export GOOS=windows
+      - go build -ldflags="-X 'main.Version=${Ver}'"
+      - tar cvzf endly_windows_${Ver}_amd64.tar.gz endly
+      - export GOOS=darwin
+      - go build -ldflags="-X 'main.Version=${Ver}'"
+      - tar cvzf endly_darwin_${Ver}_amd64.tar.gz endly
+      - export GOOS=darwin
+      - export GOARCH=arm64
+      - go build -ldflags="-X 'main.Version=${Ver}'"
+      - tar cvzf endly_darwin_${Ver}_arm64.tar.gz endly
