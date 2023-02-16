@@ -73,7 +73,7 @@ require (
 	github.com/viant/asc v0.5.0
 	github.com/viant/assertly v0.9.1-0.20211210213130-9fc39dc0d8f0
 	github.com/viant/bgc v0.8.0
-	github.com/viant/dsc v0.16.3-0.20230211172111-4bddbb01026d
+	github.com/viant/dsc v0.16.3-0.20230216180920-9279ced1a21a
 	github.com/viant/dsunit v0.10.11-0.20230206200841-24715d3637af
 	github.com/viant/neatly v0.8.1-0.20230118003138-9e5c5757ae6e
 	github.com/viant/scy v0.3.2-0.20220818145333-129333b79ae7
@@ -113,6 +113,7 @@ require (
 	github.com/census-instrumentation/opencensus-proto v0.2.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.0-20210816181553-5444fa50b93d // indirect
+	github.com/denisenkom/go-mssqldb v0.12.3 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/emersion/go-sasl v0.0.0-20161116183048-7e096a0a6197 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
@@ -162,4 +163,3 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
