@@ -80,7 +80,7 @@ require (
 	github.com/viant/toolbox v0.34.6-0.20220701174423-a46fd679bbc5
 	github.com/yuin/gopher-lua v0.0.0-20190514113301-1cd887cd7036 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
-	golang.org/x/net v0.6.0
+	golang.org/x/net v0.7.0
 	golang.org/x/oauth2 v0.5.0
 	google.golang.org/api v0.90.0
 	google.golang.org/protobuf v1.28.0
