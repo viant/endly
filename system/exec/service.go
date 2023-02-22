@@ -643,7 +643,7 @@ func (s *execService) detectOperatingSystem(session *model.Session) (*model.Oper
 }
 
 func isArm64Architecture(hardware string) bool {
-	return strings.Contains(hardware, "aarch64")
+	return strings.Contains(hardware, "aarch64") || strings.Contains(hardware, "arm64")
 }
 
 func (s *execService) captureCommandIfNeeded(context *endly.Context, replayCommands *ssh.ReplayCommands, sshService ssh.Service) (err error) {
