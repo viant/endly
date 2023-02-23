@@ -6,7 +6,6 @@ import (
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/criteria"
 	"github.com/viant/endly/util"
-	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/secret"
@@ -634,6 +633,10 @@ func (s *execService) detectOperatingSystem(session *model.Session) (*model.Oper
 		operatingSystem.Architecture = "arm64"
 		operatingSystem.Arch = "aarch64"
 	}
+	if isAppleArm64Architecture(operatingSystem.Hardware) {
+		operatingSystem.Architecture = "arm64"
+		operatingSystem.Arch = "x64"
+	}
 
 	operatingSystem.System = session.System()
 	if err = s.extractOsPath(session, operatingSystem); err == nil {
@@ -644,6 +647,10 @@ func (s *execService) detectOperatingSystem(session *model.Session) (*model.Oper
 
 func isArm64Architecture(hardware string) bool {
 	return strings.Contains(hardware, "aarch64")
+}
+
+func isAppleArm64Architecture(hardware string) bool {
+	return strings.Contains(hardware, "arm64")
 }
 
 func (s *execService) captureCommandIfNeeded(context *endly.Context, replayCommands *ssh.ReplayCommands, sshService ssh.Service) (err error) {
