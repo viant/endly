@@ -27,11 +27,14 @@ pipeline:
       dest: $buildTarget
     set-sdk:
       action: sdk:set
-      sdk: go:1.12
+      sdk: go:1.17
     build-app:
       action: exec:run
+      checkError: true
       commands:
         - cd /tmp/build/sso/app
+        - go mod tidy
+        - go mod download
         - go build sso.go
         - chmod +x sso
     deploy:

@@ -1,4 +1,11 @@
 pipeline:
+  setEnv:
+    action: exec:run
+    target: $target
+    env:
+      JAVA_HOME: /Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home
+    commands:
+      - export PATH=$PATH:/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home
   start:
     action: "selenium:start"
     target: $target
