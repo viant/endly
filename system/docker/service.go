@@ -123,10 +123,13 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 		}
 	}
 
-	if _, err := s.pull(context, &PullRequest{
-		Image:       request.Image,
-		Credentials: request.Credentials,
-	}); err != nil {
+	pullRequest := &PullRequest{
+		Image:            request.Image,
+		Credentials:      request.Credentials,
+		ImagePullOptions: request.ImagePullOptions,
+	}
+
+	if _, err := s.pull(context, pullRequest); err != nil {
 		return nil, fmt.Errorf("unable to pull %v, %v", request.Image, err)
 	}
 

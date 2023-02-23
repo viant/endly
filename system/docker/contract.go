@@ -28,6 +28,7 @@ type RunRequest struct {
 	Entrypoint                  []string
 	types.ContainerCreateConfig `json:",inline" yaml:",inline"`
 	Secrets                     map[secret.SecretKey]secret.Secret `description:"map of secrets used within env"`
+	types.ImagePullOptions
 }
 
 type RunResponse struct {
