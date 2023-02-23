@@ -297,7 +297,7 @@ pipeline:
       dest: $buildTarget
     set-sdk:
       action: sdk:set
-      sdk: go:1.11
+      sdk: go:1.17
     build-app:
       action: exec:run
       commands:

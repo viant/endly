@@ -44,3 +44,16 @@ pipeline:
         rotate: true
         baseDirectory: ipinfo/
 
+
+  selenium:
+    action: deployment:deploy
+    target: $target
+    baseLocation: /opt/
+    appName: selenium-server-standalone
+    version: 3.4
+
+  geckodriver:
+    action: deployment:deploy
+    target: $target
+    baseLocation: /opt/
+    appName: geckodriver
