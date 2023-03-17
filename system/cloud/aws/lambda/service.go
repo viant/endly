@@ -123,7 +123,13 @@ func (s *service) setupPermission(context *endly.Context, request *SetupPermissi
 			return nil, err
 		}
 		if len(policy.Statement) > 0 {
-			for _, statement := range policy.Statement {
+			for i, statement := range policy.Statement {
+				if statement.Sid != nil && request.StatementId != nil && *statement.Sid == *request.StatementId {
+					if _, err := client.RemovePermission(&lambda.RemovePermissionInput{StatementId: statement.Sid, FunctionName: request.FunctionName}); err != nil {
+						return nil, err
+					}
+					break
+				}
 				action, _ := statement.Action.Value()
 				if toolbox.AsString(action) != *request.Action {
 					continue
@@ -133,7 +139,7 @@ func (s *service) setupPermission(context *endly.Context, request *SetupPermissi
 					if arnLike, ok := conditionMap["ArnLike"]; ok {
 						if arnLikeMap, ok := arnLike.(map[string]interface{}); ok {
 							for _, v := range arnLikeMap {
-								if v == *request.SourceArn {
+								if v == *request.SourceArn && i+1 == len(policy.Statement) {
 									return &lambda.AddPermissionOutput{Statement: statement.Sid}, nil
 								}
 							}
@@ -247,6 +253,7 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 			if response.FunctionUrl != nil {
 				output.URL = *response.FunctionUrl
 			}
+
 		}
 
 	} else {
@@ -263,6 +270,16 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 			if response.FunctionUrl != nil {
 				output.URL = *response.FunctionUrl
 			}
+			if _, err = s.setupPermission(context, &SetupPermissionInput{
+				StatementId:         aaws.String("FunctionURLAllowPublicAccess"),
+				FunctionName:        request.FunctionName,
+				Action:              aaws.String("lambda:InvokeFunctionUrl"),
+				Principal:           aaws.String("*"),
+				FunctionUrlAuthType: request.Http.AuthType,
+			}); err != nil {
+				return nil, errors.Wrapf(err, "failed to add FunctionURLAllowPublicAccess to %v", *request.FunctionName)
+			}
+
 		}
 
 	}
