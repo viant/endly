@@ -158,6 +158,7 @@ func init() {
 
 	flag.String("c", "", "<credentials>, generate secret credentials file: ~/.secret/<credentials>.json")
 	flag.String("k", "", "<private key path>,  works only with -c options, i.e -k="+path.Join(os.Getenv("HOME"), ".secret/id_rsa"))
+	flag.String("endpoint", "", "<endpoint for generated secrets credentials>,  works only with -c options, i.e -endpoint=127.0.0.1")
 
 	flag.String("x", "", "xunit summary report format: xml|yaml|json")
 	flag.Bool("g", false, "open test project generator")
@@ -428,6 +429,10 @@ func generateSecret(credentialsFile string) {
 	}
 	var privateKeyPath = flag.Lookup("k").Value.String()
 	privateKeyPath = strings.Replace(privateKeyPath, "~", os.Getenv("HOME"), 1)
+
+	if endpoint := flag.Lookup("endpoint"); endpoint != nil {
+		config.Endpoint = endpoint.Value.String()
+	}
 
 	if privateKeyPath != "" && !toolbox.FileExists(privateKeyPath) {
 		log.Fatalf("unable to locate private key: %v \n", privateKeyPath)
