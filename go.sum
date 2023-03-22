@@ -513,10 +513,8 @@ github.com/viant/neatly v0.8.1-0.20230118003138-9e5c5757ae6e h1:YO2JEwvGdglS97nO
 github.com/viant/neatly v0.8.1-0.20230118003138-9e5c5757ae6e/go.mod h1:bwPo68RpiUBxiEM81im5b9PkWA4dACQAPQrPqtVov7A=
 github.com/viant/parsly v0.0.0-20220913214053-cb272791c00f h1:cpnXF1e4ywkykZmNqjjnjbRXIK+zfom2wRbrGqB63eM=
 github.com/viant/parsly v0.0.0-20220913214053-cb272791c00f/go.mod h1:4PKQzioRT9R99ceIhZ6tCD3tp0H0n2dEoIOaLulVvrg=
-github.com/viant/scy v0.3.2-0.20220818145333-129333b79ae7 h1:dJ0U1LSr8KwlNpZQ0egjTiYAMZZTCEH2MW4E+/golH0=
-github.com/viant/scy v0.3.2-0.20220818145333-129333b79ae7/go.mod h1:n9aw1NKilNgadT5NKbDLAAdSeQGm0UY45e2P2X8UeS4=
-github.com/viant/scy v0.4.2 h1:ZsbuqfNxspF/OjF1ksdOoIo5XrlfQZq5L9+PjtbA9f4=
-github.com/viant/scy v0.4.2/go.mod h1:8DdAWhNVjY6OGOT9+2O7FEAPGDRqy2e+fG6cwIY6jNo=
+github.com/viant/scy v0.5.0 h1:xFjCoPElf5hdlebhw7AUEv3rYj/PC+dhOPUKpBTXsHg=
+github.com/viant/scy v0.5.0/go.mod h1:8DdAWhNVjY6OGOT9+2O7FEAPGDRqy2e+fG6cwIY6jNo=
 github.com/viant/sqlparser v0.2.0 h1:8VCxyq5wwmz6QkhdgMwYAdgsvpZ9vIwG2tRDHGN/C2k=
 github.com/viant/sqlparser v0.2.0/go.mod h1:ffKCsz9eb+tv0/nfDguYCcvpYmco/rLHhxhf/kMzKzw=
 github.com/viant/toolbox v0.34.6-0.20220701174423-a46fd679bbc5 h1:pVpg+vp+O8fTRNmmzxmJBKJbHnLC6jE1OxrSFMi4rNY=

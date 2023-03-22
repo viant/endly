@@ -92,6 +92,7 @@ type RevealResponse struct {
 
 type SignJWTRequest struct {
 	PrivateKey   *scy.Resource
+	HMAC         *scy.Resource
 	ExpiryInSec  int
 	ClaimsURL    string
 	UseClaimsMap bool
@@ -136,6 +137,7 @@ type SignJWTResponse struct {
 
 type VerifyJWTRequest struct {
 	PublicKey *scy.Resource
+	HMAC      *scy.Resource
 	CertURL   string
 	Token     string
 }
