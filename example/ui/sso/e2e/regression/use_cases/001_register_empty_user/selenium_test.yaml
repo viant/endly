@@ -14,7 +14,7 @@ expect:
   dateOfBirth:
     Text: Data of birth can not be empty
   email:
-    Text: Email can not be empty
+    Text: Email can not be AGSAFSE
   name:
     Text: Name can not be empty
   password:
