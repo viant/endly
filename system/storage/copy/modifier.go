@@ -22,7 +22,7 @@ func NewModifier(context *endly.Context, when *Matcher, replaceMap map[string]st
 	if err != nil {
 		return nil, err
 	}
-	return func(info os.FileInfo, reader io.ReadCloser) (os.FileInfo, io.ReadCloser, error) {
+	return func(parent string, info os.FileInfo, reader io.ReadCloser) (os.FileInfo, io.ReadCloser, error) {
 		if reader == nil {
 			return nil, nil, fmt.Errorf("reader was empty")
 		}
