@@ -125,8 +125,8 @@ func (r *SignJWTRequest) Validate() error {
 	if r.Claims == nil && len(r.ClaimsMap) == 0 {
 		return fmt.Errorf("claims was empty")
 	}
-	if r.PrivateKey == nil {
-		return fmt.Errorf("PrivateKey „as empty")
+	if r.PrivateKey == nil || r.HMAC == nil {
+		return fmt.Errorf("PrivateKey/HMAC „as empty")
 	}
 	return nil
 }
