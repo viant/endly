@@ -23,7 +23,6 @@ require (
 	github.com/viant/dsunit v0.8.0 // indirect
 	github.com/viant/toolbox v0.19.1
 	github.com/yuin/gopher-lua v0.0.0-20190206043414-8bfc7677f583 // indirect
-	golang.org/x/crypto v0.0.0-20190313024323-a1f597ede03a // indirect
-	golang.org/x/net v0.0.0-20190313220215-9f648a60d977 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	google.golang.org/api v0.2.0 // indirect
 )
