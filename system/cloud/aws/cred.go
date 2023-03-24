@@ -6,11 +6,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/go-errors/errors"
 	"github.com/viant/endly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/data"
+	"os"
 	"reflect"
 	"strings"
 )
@@ -23,6 +25,10 @@ func GetAWSCredentialConfig(config *cred.Config) (*aws.Config, error) {
 	_, err := awsCredentials.Get()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get aws credential: %v, %v", config.Key, err)
+	}
+
+	if err != nil {
+		return nil, err
 	}
 
 	awsConfig := aws.NewConfig().WithRegion(config.Region).WithCredentials(awsCredentials)
@@ -79,7 +85,24 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}, 
 	if err != nil {
 		return nil, err
 	}
-
+	if config.RoleARN != "" {
+		sess, err := session.NewSession(&aws.Config{
+			Region:      aws.String(os.Getenv("AWS_REGION")),
+			Credentials: credentials.NewStaticCredentials(config.Key, config.Secret, ""),
+		})
+		if err != nil {
+			return nil, err
+		}
+		svc := sts.New(sess)
+		result, err := svc.AssumeRole(&sts.AssumeRoleInput{
+			RoleArn:         &config.RoleARN,
+			RoleSessionName: aws.String("endly-e2e"),
+		})
+		if err != nil {
+			return nil, err
+		}
+		awsConfig = awsConfig.WithCredentials(credentials.NewStaticCredentials(*result.Credentials.AccessKeyId, *result.Credentials.SecretAccessKey, *result.Credentials.SessionToken))
+	}
 	state := context.State()
 	awsMap := data.NewMap()
 	awsMap.Put("region", awsConfig.Region)
