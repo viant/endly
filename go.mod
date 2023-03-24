@@ -77,7 +77,7 @@ require (
 	github.com/viant/dsunit v0.10.11-0.20230206200841-24715d3637af
 	github.com/viant/neatly v0.8.1-0.20230118003138-9e5c5757ae6e
 	github.com/viant/scy v0.5.1
-	github.com/viant/toolbox v0.34.6-0.20220701174423-a46fd679bbc5
+	github.com/viant/toolbox v0.34.6-0.20230324143540-849d06c4e1ae
 	github.com/yuin/gopher-lua v0.0.0-20190514113301-1cd887cd7036 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 	golang.org/x/net v0.6.0
