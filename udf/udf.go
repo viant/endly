@@ -177,7 +177,7 @@ func GZipper(source interface{}, state data.Map) (interface{}, error) {
 	// Get UDFs to Zip from context
 	if zipUdf, has := getUdfFromContext("Zip", state); has {
 		var modifier option.Modifier
-		modifier = func(info os.FileInfo, reader io.ReadCloser) (os.FileInfo, io.ReadCloser, error) {
+		modifier = func(parent string, info os.FileInfo, reader io.ReadCloser) (os.FileInfo, io.ReadCloser, error) {
 			if info.IsDir() {
 				return info, reader, nil
 			}
@@ -208,7 +208,7 @@ func GZipContentCorrupter(source interface{}, state data.Map) (interface{}, erro
 	if zipUdf, has := getUdfFromContext("Zip", state); has {
 		// Build copy handler
 		var modifier option.Modifier
-		modifier = func(info os.FileInfo, reader io.ReadCloser) (os.FileInfo, io.ReadCloser, error) {
+		modifier = func(parent string, info os.FileInfo, reader io.ReadCloser) (os.FileInfo, io.ReadCloser, error) {
 			if info.IsDir() {
 				return info, reader, nil
 			}
