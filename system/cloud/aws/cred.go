@@ -86,8 +86,12 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}, 
 		return nil, err
 	}
 	if config.RoleARN != "" {
+		region := config.Region
+		if region == "" {
+			region = os.Getenv("AWS_REGION")
+		}
 		sess, err := session.NewSession(&aws.Config{
-			Region:      aws.String(os.Getenv("AWS_REGION")),
+			Region:      &region,
 			Credentials: credentials.NewStaticCredentials(config.Key, config.Secret, ""),
 		})
 		if err != nil {
