@@ -1,6 +1,7 @@
 package log
 
 import (
+	"bufio"
 	"fmt"
 	"github.com/viant/afs/storage"
 	"github.com/viant/endly"
@@ -141,9 +142,19 @@ func (f *File) readLogRecords(reader io.Reader) error {
 	var startLine = f.ProcessingState.Line
 	var lineIndex = startLine
 	var dataProcessed = 0
-	for i := startPosition; i < len(data); i++ {
-		dataProcessed++
-		aChar := string(data[i])
+
+	r := bufio.NewReader(strings.NewReader(string(data[startPosition:])))
+	for {
+		code, size, err := r.ReadRune()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		aChar := string(code)
+		dataProcessed += size
 		if aChar != "\n" && aChar != "\r" {
 			line += aChar
 			continue
