@@ -29,7 +29,7 @@ var templateLog = map[string]interface{}{
 		"s1": 1,
 		"s2": "%v",
 	},
-	"k5": "%v",
+	"k5": "— -%v",
 }
 
 func BuildLogContent(from, to, multiplier int, template string) string {
@@ -103,16 +103,16 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 				Type: "t",
 				Records: []interface{}{
 					map[string]interface{}{
-						"k5": "10",
+						"k5": "— -10",
 					},
 					map[string]interface{}{
-						"k5": "20",
+						"k5": "— -20",
 					},
 					map[string]interface{}{
-						"k5": "30",
+						"k5": "— -30",
 					},
 					map[string]interface{}{
-						"k5": "10",
+						"k5": "— -10",
 					},
 				},
 			},
@@ -129,7 +129,6 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 			if !assert.Nil(t, logValidatorAssertResponse.Validations[i].Failures) {
 				assert.FailNow(t, toolbox.AsString(i)+" "+logValidatorAssertResponse.Validations[i].Failures[0].Message)
 			}
-
 		}
 		response = service.Run(context, &log.AssertRequest{
 			Expect: []*log.TypedRecord{
@@ -137,7 +136,7 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 					Type: "t",
 					Records: []interface{}{
 						map[string]interface{}{
-							"k5": "20",
+							"k5": "— -20",
 						},
 					},
 				},
@@ -148,7 +147,11 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 		logValidatorAssertResponse, ok = response.Response.(*log.AssertResponse)
 		assert.True(t, ok)
 		assert.NotNil(t, logValidatorAssertResponse)
-		assert.Equal(t, 0, len(logValidatorAssertResponse.Validations[0].Failures))
+		if !assert.Equal(t, 0, len(logValidatorAssertResponse.Validations[0].Failures)) {
+			if !assert.Nil(t, logValidatorAssertResponse.Validations[0].Failures) {
+				assert.FailNow(t, toolbox.AsString(0)+" "+logValidatorAssertResponse.Validations[0].Failures[0].Message)
+			}
+		}
 
 	}
 	{
@@ -242,4 +245,105 @@ func TestLogValidatorService_TestIndexedRecord(t *testing.T) {
 
 func Test_TT(t *testing.T) {
 	fmt.Printf(regexp.QuoteMeta("events[v3].csv]"))
+}
+
+var templateLogUTF8 = map[string]interface{}{
+	"dash":    "—",
+	"english": "The quick brown fox jumps over the lazy dog.",
+	"russian": "Быстрая коричневая лиса перепрыгнула через ленивую собаку.",
+	"chinese": "你好",
+	"polish":  "zażółć gęślą jaźń ZAŻÓŁĆ GĘŚLĄ JAŹŃ",
+}
+
+func TestLogWithUTF8ValidatorService_NewRequest(t *testing.T) {
+	manager := endly.New()
+	service, err := manager.Service(log.ServiceID)
+	assert.Nil(t, err)
+	assert.NotNil(t, service)
+	context := manager.NewContext(toolbox.NewContext())
+	defer context.Close()
+	tempPath := path.Join(os.TempDir(), toolbox.AsString(time.Now().Unix()))
+	err = os.Mkdir(tempPath, 0755)
+	assert.Nil(t, err)
+	var template, _ = toolbox.AsJSONText(templateLogUTF8)
+
+	var fileURL = strings.Replace(url.NewResource(tempPath).URL, "file://", "scp://127.0.0.1", 1)
+	credentials, err := util.GetDummyCredential()
+	assert.Nil(t, err)
+
+	var response = service.Run(context, &log.ListenRequest{
+		Source: url.NewResource(fileURL, credentials),
+		Types: []*log.Type{
+			{
+				Name:   "t",
+				Format: "json",
+				Mask:   "*.log",
+			},
+		},
+	})
+
+	var i = 0
+	var logName = fmt.Sprintf("test%v.log", i)
+	var fullLogname = path.Join(tempPath, logName)
+
+	_ = toolbox.RemoveFileIfExist(fullLogname)
+	var logContent = fmt.Sprintf(template)
+
+	err = ioutil.WriteFile(fullLogname, []byte(logContent), 0644)
+	if err != nil {
+		assert.FailNow(t, fmt.Sprintf("%v", err))
+	}
+	time.Sleep(time.Second)
+
+	//fmt.Println("File log path: ", fullLogname)
+
+	assert.Equal(t, "", response.Error)
+	var listenResponse, ok = response.Response.(*log.ListenResponse)
+	if !assert.True(t, ok) {
+		return
+	}
+	if !assert.NotNil(t, listenResponse) {
+		return
+	}
+
+	logTypeMeta, ok := listenResponse.Meta["t"]
+	assert.True(t, ok)
+	assert.NotNil(t, logTypeMeta)
+	assert.True(t, strings.HasSuffix(logTypeMeta.Source.URL, tempPath))
+	assert.True(t, len(logTypeMeta.LogFiles) >= 1)
+
+	response = service.Run(context, &log.AssertRequest{
+		LogWaitTimeMs:     3000,
+		LogWaitRetryCount: 3,
+		Expect: []*log.TypedRecord{
+			{
+				Type: "t",
+				Records: []interface{}{
+					map[string]interface{}{
+						"dash":    "—",
+						"english": "The quick brown fox jumps over the lazy dog.",
+						"russian": "Быстрая коричневая лиса перепрыгнула через ленивую собаку.",
+						"chinese": "你好",
+						"polish":  "zażółć gęślą jaźń ZAŻÓŁĆ GĘŚLĄ JAŹŃ",
+					},
+				},
+			},
+		},
+	})
+
+	assert.Equal(t, "", response.Error)
+
+	logValidatorAssertResponse, ok := response.Response.(*log.AssertResponse)
+
+	if assert.True(t, ok) {
+		assert.NotNil(t, logValidatorAssertResponse)
+		assert.Equal(t, 1, len(logValidatorAssertResponse.Validations))
+		for i := 0; i < 1; i++ {
+			assert.Equal(t, 0, len(logValidatorAssertResponse.Validations[i].Failures))
+			if !assert.Nil(t, logValidatorAssertResponse.Validations[i].Failures) {
+				assert.FailNow(t, toolbox.AsString(i)+" "+logValidatorAssertResponse.Validations[i].Failures[0].Message)
+			}
+
+		}
+	}
 }
