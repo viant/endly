@@ -25,7 +25,7 @@
         },
         "Transfer": {
           "Source": {
-            "URL": "https://dl.google.com/go/go${artifact.Version}.${os.System}-${os.Architecture}.tar.gz"
+            "URL": "https://go.dev/dl/go${artifact.Version}.${os.System}-${os.Architecture}.tar.gz"
           },
           "Dest": {
             "URL": "scp://${deploy.target.host}/tmp/go_${artifact.Version}.tar.gz",
