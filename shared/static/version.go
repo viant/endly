@@ -9,7 +9,7 @@ import (
 func init() {
 	var memStorage = storage.NewMemoryService()
 	{
-		err := memStorage.Upload("mem://github.com/viant/endly/Version", bytes.NewReader([]byte{48, 46, 54, 52, 46, 49}))
+		err := memStorage.Upload("mem://github.com/viant/endly/Version", bytes.NewReader([]byte{48, 46, 54, 53, 46, 48}))
 		if err != nil {
 			log.Printf("failed to upload: mem://github.com/viant/endly/Version %v", err)
 		}
