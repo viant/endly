@@ -29,6 +29,7 @@ type EventSourceMapping struct {
 type DeployInput struct {
 	lambda.CreateFunctionInput `yaml:",inline" json:",inline"`
 	ciam.SetupRolePolicyInput  ` json:",inline"`
+	PresetRoleName             string `description:"in case that role is set - deployment skip permission setup"`
 	VpcMatcher                 *ec2.GetVpcConfigInput
 	Triggers                   []*EventSourceMapping
 	Http                       *lambda.CreateFunctionUrlConfigInput
@@ -86,8 +87,8 @@ func (i *DeployInput) Init() error {
 			i.TracingConfig = &lambda.TracingConfig{}
 		}
 		if i.TracingConfig.Mode == nil {
-			passThroMode := "PassThrough"
-			i.TracingConfig.Mode = &passThroMode
+			passThrough := "PassThrough"
+			i.TracingConfig.Mode = &passThrough
 		}
 	}
 	return err
@@ -100,8 +101,9 @@ func (i *DeployInput) Validate() error {
 	if i.CreateFunctionInput.Code == nil {
 		return fmt.Errorf("code was empty")
 	}
-	if i.SetupRolePolicyInput.RoleName == nil {
-		return fmt.Errorf("roleName was empty")
+
+	if i.SetupRolePolicyInput.RoleName == nil && i.PresetRoleName == "" {
+		return fmt.Errorf("roleName/presetRoleName was empty")
 	}
 
 	return nil

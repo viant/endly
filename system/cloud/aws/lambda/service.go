@@ -188,14 +188,10 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 			SubnetIds:        vpcOutput.SubnetIds,
 		}
 	}
-	s.expand(context, request.FunctionName, request.RoleName, request.AssumeRolePolicyDocument)
 	output := &DeployOutput{}
-	output.RoleInfo = &iam.GetRoleInfoOutput{}
-	if err = endly.Run(context, &request.SetupRolePolicyInput, &output.RoleInfo); err != nil {
-		return nil, errors.Wrap(err, "failed to setup policy")
+	if request.Role, err = s.setupLambdaRole(context, request, err, output); err != nil {
+		return nil, err
 	}
-	request.Role = output.RoleInfo.Role.Arn
-
 	var functionConfig *lambda.FunctionConfiguration
 	functionOutput, foundErr := client.GetFunction(&lambda.GetFunctionInput{
 		FunctionName: request.FunctionName,
@@ -253,7 +249,6 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 			if response.FunctionUrl != nil {
 				output.URL = *response.FunctionUrl
 			}
-
 		}
 
 	} else {
@@ -279,9 +274,7 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 			}); err != nil {
 				return nil, errors.Wrapf(err, "failed to add FunctionURLAllowPublicAccess to %v", *request.FunctionName)
 			}
-
 		}
-
 	}
 	output.FunctionConfiguration = functionConfig
 	if len(request.Triggers) > 0 {
@@ -328,6 +321,23 @@ func (s *service) deployFunctionInBackground(context *endly.Context, request *De
 
 	}
 	return output, err
+}
+
+func (s *service) setupLambdaRole(context *endly.Context, request *DeployInput, err error, output *DeployOutput) (*string, error) {
+	var roleARN *string
+	roleInfo := &iam.GetRoleInfoOutput{}
+	if request.PresetRoleName == "" {
+		s.expand(context, request.FunctionName, request.RoleName, request.AssumeRolePolicyDocument)
+		if err = endly.Run(context, &request.SetupRolePolicyInput, &output.RoleInfo); err != nil {
+			return nil, errors.Wrap(err, "failed to setup policy")
+		}
+	} else {
+		if err = endly.Run(context, &iam.GetRoleInfoInput{RoleName: &request.PresetRoleName}, &output.RoleInfo); err != nil {
+			return nil, errors.Wrap(err, "failed to setup policy")
+		}
+	}
+	roleARN = roleInfo.Role.Arn
+	return roleARN, nil
 }
 
 func (s *service) getEventSourceMappings(context *endly.Context, functionName *string) ([]*lambda.EventSourceMappingConfiguration, error) {
