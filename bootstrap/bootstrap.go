@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/viant/endly/util"
 	"sort"
+
+	"github.com/viant/endly/util"
 
 	//Database/datastore dependencies
 
@@ -32,6 +33,7 @@ import (
 	_ "github.com/viant/endly/gen/static"
 	_ "github.com/viant/endly/shared/static" //load external resource like .csv .json files to mem storage
 
+	_ "github.com/viant/endly/migrator"
 	_ "github.com/viant/endly/workflow"
 	_ "github.com/viant/toolbox/storage/gs"
 	_ "github.com/viant/toolbox/storage/s3"
@@ -107,6 +109,7 @@ import (
 
 	"bufio"
 	"errors"
+
 	"github.com/viant/endly"
 	"github.com/viant/endly/cli"
 	"github.com/viant/endly/gen/web"
@@ -119,9 +122,6 @@ import (
 	"github.com/viant/toolbox/url"
 	"golang.org/x/crypto/ssh/terminal"
 
-	"github.com/google/gops/agent"
-	rec "github.com/viant/endly/testing/endpoint/http"
-	"gopkg.in/yaml.v2"
 	"log"
 	"net/http"
 	"os"
@@ -131,6 +131,10 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/google/gops/agent"
+	rec "github.com/viant/endly/testing/endpoint/http"
+	"gopkg.in/yaml.v2"
 )
 
 func init() {
@@ -243,13 +247,13 @@ func Bootstrap() {
 		return
 	}
 
-	if _, ok := flagset["s"]; ok {
-		printServiceActions()
+	if _, ok := flagset["a"]; ok {
+		printServiceActionRequest()
 		return
 	}
 
-	if _, ok := flagset["a"]; ok {
-		printServiceActionRequest()
+	if _, ok := flagset["s"]; ok {
+		printServiceActions()
 		return
 	}
 
@@ -705,7 +709,7 @@ func printVersion() {
 func getRunRequestURL(URL string) (*url.Resource, error) {
 	resource := url.NewResource(URL)
 	var candidates = make([]string, 0)
-	if path.Ext(resource.ParsedURL.Path) == "" {
+	if resource.ParsedURL != nil && path.Ext(resource.ParsedURL.Path) == "" {
 		candidates = append(candidates, URL+".json", URL+".yaml")
 	} else {
 		candidates = append(candidates, URL)
