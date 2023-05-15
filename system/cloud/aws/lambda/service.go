@@ -331,10 +331,13 @@ func (s *service) setupLambdaRole(context *endly.Context, request *DeployInput, 
 		if err = endly.Run(context, &request.SetupRolePolicyInput, &output.RoleInfo); err != nil {
 			return nil, errors.Wrap(err, "failed to setup policy")
 		}
+		roleInfo = output.RoleInfo
+
 	} else {
 		if err = endly.Run(context, &iam.GetRoleInfoInput{RoleName: &request.PresetRoleName}, &output.RoleInfo); err != nil {
 			return nil, errors.Wrap(err, "failed to setup policy")
 		}
+		roleInfo = output.RoleInfo
 	}
 	roleARN = roleInfo.Role.Arn
 	return roleARN, nil
