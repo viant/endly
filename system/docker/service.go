@@ -4,18 +4,21 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
-	"github.com/go-errors/errors"
-	"github.com/viant/endly"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"io"
 	"io/ioutil"
 	"log"
 	"path"
 	"strings"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/go-errors/errors"
+	"github.com/viant/endly"
+	"github.com/viant/endly/model/msg"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
 )
 
 const (
@@ -111,7 +114,10 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 				return response, nil
 			}
 			_, err := s.start(context, &StartRequest{
-				IDs: []string{containerInfo.ID},
+				StatusRequest: StatusRequest{
+					IDs: []string{containerInfo.ID},
+				},
+				Foreground: request.Foreground,
 			})
 			return response, err
 		}
@@ -146,7 +152,10 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 		return nil, err
 	}
 	response.ContainerID = createResponse.ID
-	startRequest := &StartRequest{IDs: []string{createResponse.ID}}
+	startRequest := &StartRequest{
+		StatusRequest: StatusRequest{IDs: []string{createResponse.ID}},
+		Foreground:    request.Foreground,
+	}
 
 	if _, err := s.start(context, startRequest); err != nil {
 		return nil, err
@@ -414,7 +423,42 @@ func (s *service) start(context *endly.Context, request *StartRequest) (*StartRe
 		if err = runAdapter(context, startRequest, nil); err != nil {
 			return nil, err
 		}
+
+		if !request.Foreground {
+			continue
+		}
+
+		err = func() error {
+			attachRequest := &ContainerAttachRequest{
+				Container: candidate.ID,
+				ContainerAttachOptions: types.ContainerAttachOptions{
+					Stream: true,
+					Stdout: true,
+					Stderr: true,
+				},
+			}
+
+			resp := new(types.HijackedResponse)
+			err := runAdapter(context, attachRequest, resp)
+			if err != nil {
+				return err
+			}
+
+			defer resp.Close()
+			stdout := new(strings.Builder)
+			stderr := new(strings.Builder)
+			_, err = stdcopy.StdCopy(stdout, stderr, resp.Reader)
+			context.Publish(msg.NewStdoutEvent("run", stdout.String()))
+			context.Publish(msg.NewStdoutEvent("run:stderr", stderr.String()))
+			return err
+
+		}()
+
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	return response, nil
 }
 
