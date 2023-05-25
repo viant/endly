@@ -163,8 +163,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/viant/dsunit => /Users/awitas/go/src/github.com/viant/dsunit
-
-replace github.com/viant/dsc => /Users/awitas/go/src/github.com/viant/dsc
 
 exclude google.golang.org/grpc v1.55.0
