@@ -77,7 +77,7 @@ func (r *SequenceResponse) Messages() []*msg.Message {
 
 //Messages returns messages
 func (r *PrepareRequest) Messages() []*msg.Message {
-	_ = r.Load()
+	err := r.Load()
 	if r.DatasetResource == nil || len(r.Datasets) == 0 {
 		return []*msg.Message{}
 	}
@@ -86,6 +86,11 @@ func (r *PrepareRequest) Messages() []*msg.Message {
 		result = append(result,
 			msg.NewMessage(msg.NewStyled(fmt.Sprintf("(%v) %v: %v", r.Datastore, dataset.Table, len(dataset.Records)), msg.MessageStyleGeneric), msg.NewStyled("populate", msg.MessageStyleGeneric)))
 	}
+	if err != nil {
+		result = append(result,
+			msg.NewMessage(msg.NewStyled(fmt.Sprintf("[ERROR] %v: %v", r.Datastore, err), msg.MessageStyleGeneric), msg.NewStyled("populate", msg.MessageStyleError)))
+	}
+
 	return result
 }
 
