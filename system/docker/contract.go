@@ -2,6 +2,8 @@ package docker
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -10,7 +12,6 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/url"
-	"strings"
 )
 
 //RunRequest represents a docker runAdapter request
@@ -24,6 +25,7 @@ type RunRequest struct {
 	Ports                       map[string]string `description:"publish a container’s port(s) to the host, docker -p option"`
 	Workdir                     string            `description:"working directory inside the container, docker -w option"`
 	Reuse                       bool              `description:"reuse existing container if exists, otherwise always removes"`
+	Foreground                  bool              `description:"wait for container to stop"`
 	Cmd                         []string
 	Entrypoint                  []string
 	types.ContainerCreateConfig `json:",inline" yaml:",inline"`
@@ -118,7 +120,10 @@ type StatusResponse struct {
 }
 
 //StartRequest start request
-type StartRequest StatusRequest
+type StartRequest struct {
+	StatusRequest
+	Foreground bool
+}
 
 //StartResponse represents docker start response
 type StartResponse StopResponse
@@ -310,7 +315,7 @@ func (r *RemoveRequest) AsStatusRequest() *StatusRequest {
 
 //StatusRequest returns status request
 func (r *StartRequest) AsStatusRequest() *StatusRequest {
-	result := StatusRequest(*r)
+	result := StatusRequest((*r).StatusRequest)
 	return &result
 }
 
