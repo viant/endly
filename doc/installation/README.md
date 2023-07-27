@@ -11,6 +11,7 @@
 2) Build from source
    a) install go 1.11+
    b) run the following commands:
+   [Note: If you run into go version related issue while running 'go build endly.go' command, try running 'go mod tidy' or if you need specific version try running 'sudo go mod tidy -go=<Insert version number here>']
 
 ```bash
 git clone https://github.com/viant/endly.git
