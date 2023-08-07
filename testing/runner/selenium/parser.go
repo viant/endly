@@ -36,7 +36,7 @@ var matchers = map[int]toolbox.Matcher{
 	method:     toolbox.LiteralMatcher{},
 }
 
-//parser represents selenium command action parser
+// parser represents selenium command action parser
 type parser struct{}
 
 func (p *parser) expectOptionalWhitespaceFollowedBy(tokenizer *toolbox.Tokenizer, expectedTokensMessage string, expected ...int) (*toolbox.Token, error) {
@@ -65,7 +65,7 @@ func (p *parser) expectOptionalWhitespaceFollowedBy(tokenizer *toolbox.Tokenizer
 	return token, nil
 }
 
-//Parse parses supplied expression. It returns criteria or parsing error.
+// Parse parses supplied expression. It returns criteria or parsing error.
 func (p *parser) Parse(command string) (*Action, error) {
 	result := &Action{
 		Calls: []*MethodCall{{}},
@@ -144,7 +144,7 @@ outer:
 	return result, nil
 }
 
-//NewParser creates a new criteria parser
+// NewParser creates a new criteria parser
 func NewParser() *parser {
 	return &parser{}
 }

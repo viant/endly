@@ -23,7 +23,7 @@ func processes(context *endly.Context) *model.Processes {
 	return result
 }
 
-//Push push process to context
+// Push push process to context
 func Push(context *endly.Context, process *model.Process) {
 	var processes = processes(context)
 	if process.Source != nil {
@@ -32,7 +32,7 @@ func Push(context *endly.Context, process *model.Process) {
 	processes.Push(process)
 }
 
-//Remove push process to context
+// Remove push process to context
 func Pop(context *endly.Context) *model.Process {
 	var processes = processes(context)
 	var process = processes.Pop()
@@ -42,25 +42,25 @@ func Pop(context *endly.Context) *model.Process {
 	return process
 }
 
-//Last returns last process
+// Last returns last process
 func Last(context *endly.Context) *model.Process {
 	var processes = processes(context)
 	return processes.Last()
 }
 
-//LastWorkflow returns last workflow
+// LastWorkflow returns last workflow
 func LastWorkflow(context *endly.Context) *model.Process {
 	var processes = processes(context)
 	return processes.LastWorkflow()
 }
 
-//FirstWorkflow returns last workflow
+// FirstWorkflow returns last workflow
 func FirstWorkflow(context *endly.Context) *model.Process {
 	var processes = processes(context)
 	return processes.FirstWorkflow()
 }
 
-//GetResource returns workflow resource
+// GetResource returns workflow resource
 func GetResource(dao *Dao, state data.Map, URL string) *url.Resource {
 	for _, candidate := range getURLs(URL) {
 		resource := url.NewResource(candidate)

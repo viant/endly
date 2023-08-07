@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-//FromPayload return bytes from
+// FromPayload return bytes from
 func FromPayload(payload string) ([]byte, error) {
 	if strings.HasPrefix(payload, "text:") {
 		return []byte(payload[5:]), nil
@@ -28,7 +28,7 @@ func FromPayload(payload string) ([]byte, error) {
 	return []byte(payload), nil
 }
 
-//AsPayload return string optionally encoded as base64 data has binary data.
+// AsPayload return string optionally encoded as base64 data has binary data.
 func AsPayload(data []byte) string {
 	if toolbox.IsASCIIText(string(data)) {
 		return string(data)

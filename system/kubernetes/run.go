@@ -15,7 +15,7 @@ const (
 	CronJobV1Beta1GeneratorName   = "cronjob/v1beta1"
 )
 
-//RunTemplateParams represents run template parameters
+// RunTemplateParams represents run template parameters
 type RunTemplateParams struct {
 	*RunRequest
 	Ports         []*v1.ContainerPort
@@ -24,7 +24,7 @@ type RunTemplateParams struct {
 	Envs          []v1.EnvVar
 }
 
-//NewRunTemplateParams create a new run template parameters for supplied run request
+// NewRunTemplateParams create a new run template parameters for supplied run request
 func NewRunTemplateParams(request *RunRequest) (*RunTemplateParams, error) {
 	result := &RunTemplateParams{
 		RunRequest:    request,

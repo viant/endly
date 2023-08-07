@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-//Represents a generic event
+// Represents a generic event
 type Event interface {
 	Type() string
 	Package() string
@@ -17,7 +17,7 @@ type Event interface {
 	IsLoggable() bool
 }
 
-//event represents an event
+// event represents an event
 type event struct {
 	init      Event
 	timestamp time.Time
@@ -51,7 +51,7 @@ func (e *event) Package() string {
 	return strings.Replace(fragments[0], "*", "", 1)
 }
 
-//Type returns event type (simple package and struct name)
+// Type returns event type (simple package and struct name)
 func (e *event) Type() string {
 	var eventType = fmt.Sprintf("%T", e.value)
 	eventType = strings.Replace(eventType, "*", "", len(eventType))
@@ -62,7 +62,7 @@ func (e *event) Type() string {
 	return strings.Join(fragments, "_")
 }
 
-//NewEvent creates a new event
+// NewEvent creates a new event
 func NewEvent(value interface{}) *event {
 	return &event{
 		timestamp: time.Now(),
@@ -70,7 +70,7 @@ func NewEvent(value interface{}) *event {
 	}
 }
 
-//NewEvent creates a new event
+// NewEvent creates a new event
 func NewEventWithInit(value interface{}, init Event) Event {
 	return &event{
 		init:      init,

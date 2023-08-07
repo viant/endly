@@ -171,7 +171,7 @@ func (s *service) getLogTypeMeta(expectedLogRecords *TypedRecord) (*TypeMeta, er
 	return logTypeMeta, nil
 }
 
-//tryReadSnapshot tries to read file snapshot, since file may change any time, this method attempts to get a stable snapshot read withhout actual change in file content while it is read.
+// tryReadSnapshot tries to read file snapshot, since file may change any time, this method attempts to get a stable snapshot read withhout actual change in file content while it is read.
 func (s *service) tryReadSnapshot(context *endly.Context, fs afs.Service, object storage.Object, attemptsCount int) (io.Reader, error) {
 	fileSize := object.Size()
 	for i := 0; i < attemptsCount; i++ {
@@ -518,7 +518,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//New creates a new log validator service.
+// New creates a new log validator service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

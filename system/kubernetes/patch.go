@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-//ResourcePatch represents resource patch
+// ResourcePatch represents resource patch
 type ResourcePatch struct {
 	metav1.TypeMeta `json:",inline"`
 	Name            string
@@ -19,7 +19,7 @@ type ResourcePatch struct {
 
 var patchableKeys = []string{"spec", "metadata"}
 
-//NewResourcePatch returns a new resource patch
+// NewResourcePatch returns a new resource patch
 func NewResourcePatch(meta *ResourceMeta, original, target interface{}) (*ResourcePatch, error) {
 	patch := &ResourcePatch{
 		TypeMeta: meta.TypeMeta,

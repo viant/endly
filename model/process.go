@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 )
 
-//Process represents a running instance of workflow/pipeline process.
+// Process represents a running instance of workflow/pipeline process.
 type Process struct {
 	Source   *url.Resource
 	Owner    string
@@ -24,12 +24,12 @@ type Process struct {
 	*ExecutionError
 }
 
-//Terminate flags current workflow as terminated
+// Terminate flags current workflow as terminated
 func (p *Process) Terminate() {
 	atomic.StoreInt32(&p.Terminated, 1)
 }
 
-//SetTask sets process task
+// SetTask sets process task
 func (p *Process) SetTask(task *Task) {
 	p.Task = task
 	p.HasTagID = false
@@ -38,17 +38,17 @@ func (p *Process) SetTask(task *Task) {
 	}
 }
 
-//CanRun returns true if current workflow can run
+// CanRun returns true if current workflow can run
 func (p *Process) CanRun() bool {
 	return !(p.IsTerminated() || p.Scheduled != nil)
 }
 
-//IsTerminated returns true if current workflow has been terminated
+// IsTerminated returns true if current workflow has been terminated
 func (p *Process) IsTerminated() bool {
 	return atomic.LoadInt32(&p.Terminated) == 1
 }
 
-//Push adds supplied activity
+// Push adds supplied activity
 func (p *Process) Push(activity *Activity) {
 	if p.Workflow != nil {
 		activity.Caller = p.Workflow.Name
@@ -56,14 +56,14 @@ func (p *Process) Push(activity *Activity) {
 	p.Activities.Push(activity)
 }
 
-//Push adds a workflow to the workflow stack.
+// Push adds a workflow to the workflow stack.
 func (p *Process) AddTagIDs(tagIDs ...string) {
 	for _, tagID := range tagIDs {
 		p.TagIDs[tagID] = true
 	}
 }
 
-//NewProcess creates a new workflow, pipeline process
+// NewProcess creates a new workflow, pipeline process
 func NewProcess(source *url.Resource, workflow *Workflow, upstream *Process) *Process {
 	var process = &Process{
 		Source:         source,
@@ -83,20 +83,20 @@ func NewProcess(source *url.Resource, workflow *Workflow, upstream *Process) *Pr
 	return process
 }
 
-//processes  represents running workflow/pipe process stack.
+// processes  represents running workflow/pipe process stack.
 type Processes struct {
 	mux       *sync.RWMutex
 	processes []*Process
 }
 
-//Push adds a workflow to the workflow stack.
+// Push adds a workflow to the workflow stack.
 func (p *Processes) Push(process *Process) {
 	p.mux.Lock()
 	defer p.mux.Unlock()
 	p.processes = append(p.processes, process)
 }
 
-//Pop removes the first workflow from the workflow stack.
+// Pop removes the first workflow from the workflow stack.
 func (p *Processes) Pop() *Process {
 	p.mux.Lock()
 	defer p.mux.Unlock()
@@ -108,7 +108,7 @@ func (p *Processes) Pop() *Process {
 	return result
 }
 
-//Last returns the last process.
+// Last returns the last process.
 func (p *Processes) Last() *Process {
 	p.mux.RLock()
 	defer p.mux.RUnlock()
@@ -118,7 +118,7 @@ func (p *Processes) Last() *Process {
 	return nil
 }
 
-//Recent returns the most reset process.
+// Recent returns the most reset process.
 func (p *Processes) Recent(count int) []*Process {
 	p.mux.RLock()
 	defer p.mux.RUnlock()
@@ -132,7 +132,7 @@ func (p *Processes) Recent(count int) []*Process {
 	return result
 }
 
-//LastWorkflow returns the last workflow.
+// LastWorkflow returns the last workflow.
 func (p *Processes) LastWorkflow() *Process {
 	p.mux.RLock()
 	defer p.mux.RUnlock()
@@ -144,7 +144,7 @@ func (p *Processes) LastWorkflow() *Process {
 	return nil
 }
 
-//FirstWorkflow returns the first workflow.
+// FirstWorkflow returns the first workflow.
 func (p *Processes) FirstWorkflow() *Process {
 	p.mux.RLock()
 	defer p.mux.RUnlock()
@@ -156,7 +156,7 @@ func (p *Processes) FirstWorkflow() *Process {
 	return nil
 }
 
-//First returns the first process.
+// First returns the first process.
 func (p *Processes) First() *Process {
 	p.mux.RLock()
 	defer p.mux.RUnlock()
@@ -166,7 +166,7 @@ func (p *Processes) First() *Process {
 	return nil
 }
 
-//NewProcesses creates a new processes
+// NewProcesses creates a new processes
 func NewProcesses() *Processes {
 	return &Processes{
 		processes: make([]*Process, 0),
@@ -174,7 +174,7 @@ func NewProcesses() *Processes {
 	}
 }
 
-//Error represent workflow error
+// Error represent workflow error
 type ExecutionError struct {
 	Error    string
 	Caller   string
@@ -183,7 +183,7 @@ type ExecutionError struct {
 	Response interface{}
 }
 
-//AsMap returns error map
+// AsMap returns error map
 func (e *ExecutionError) AsMap() map[string]interface{} {
 	var result = map[string]interface{}{}
 	toolbox.DefaultConverter.AssignConverted(&result, e)

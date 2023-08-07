@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-//Rule represents transfer rule
+// Rule represents transfer rule
 type Rule struct {
 	Matcher  *Matcher
 	Compress bool `description:"flag to compress asset before sending over wire and to decompress (this option is only supported on scp or file scheme)"` //flag to compress asset before sending over wirte and to decompress (this option is only supported on scp or file proto)
@@ -18,7 +18,7 @@ type Rule struct {
 	Dest   *url.Resource `required:"true" description:"destination asset or directory"`
 }
 
-//New creates a new transfer
+// New creates a new transfer
 func New(source, dest *url.Resource, compress, expand bool, replace map[string]string) *Rule {
 	return &Rule{
 		Source:   source,
@@ -45,7 +45,7 @@ func (r Rule) Clone() *Rule {
 	}
 }
 
-//SourceStorageOpts returns rule source store options
+// SourceStorageOpts returns rule source store options
 func (r *Rule) SourceStorageOpts(context *endly.Context) ([]storage.Option, error) {
 	var result = make([]storage.Option, 0)
 	if r.Matcher != nil {
@@ -58,7 +58,7 @@ func (r *Rule) SourceStorageOpts(context *endly.Context) ([]storage.Option, erro
 	return result, nil
 }
 
-//DestStorageOpts returns rule destination store options
+// DestStorageOpts returns rule destination store options
 func (r *Rule) DestStorageOpts(context *endly.Context, udfModifier option.Modifier) ([]storage.Option, error) {
 	var result = make([]storage.Option, 0)
 	if udfModifier != nil {
@@ -73,7 +73,7 @@ func (r *Rule) DestStorageOpts(context *endly.Context, udfModifier option.Modifi
 	return result, nil
 }
 
-//Init initialises transfer
+// Init initialises transfer
 func (r *Rule) Init() error {
 	if r.Source != nil {
 		if !strings.HasPrefix(r.Source.URL, "$") {
@@ -92,7 +92,7 @@ func (r *Rule) Init() error {
 	return nil
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *Rule) Validate() error {
 	if r.Source == nil {
 		return errors.New("source was empty")

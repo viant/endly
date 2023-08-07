@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-//File represents a log file
+// File represents a log file
 type File struct {
 	URL     string
 	Content string
@@ -30,7 +30,7 @@ type File struct {
 	context         *endly.Context
 }
 
-//ShiftLogRecord returns and remove the first log record if present
+// ShiftLogRecord returns and remove the first log record if present
 func (f *File) ShiftLogRecord() *Record {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
@@ -49,7 +49,7 @@ func (f *File) ShiftLogRecord() *Record {
 	return result
 }
 
-//ShiftLogRecordByIndex returns and remove the first log record if present
+// ShiftLogRecordByIndex returns and remove the first log record if present
 func (f *File) ShiftLogRecordByIndex(value string) (*Record, bool) {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
@@ -82,7 +82,7 @@ func (f *File) ShiftLogRecordByIndex(value string) (*Record, bool) {
 	return result, has
 }
 
-//PushLogRecord appends provided log record to the records.
+// PushLogRecord appends provided log record to the records.
 func (f *File) PushLogRecord(record *Record) {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
@@ -113,7 +113,7 @@ func (f *File) PushLogRecord(record *Record) {
 
 }
 
-//Reset resets processing state
+// Reset resets processing state
 func (f *File) Reset(object storage.Object) {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()
@@ -122,7 +122,7 @@ func (f *File) Reset(object storage.Object) {
 	f.ProcessingState.Reset()
 }
 
-//HasPendingLogs returns true if file has pending validation records
+// HasPendingLogs returns true if file has pending validation records
 func (f *File) HasPendingLogs() bool {
 	f.Mutex.Lock()
 	defer f.Mutex.Unlock()

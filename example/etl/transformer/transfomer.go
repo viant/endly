@@ -5,17 +5,17 @@ import (
 	"github.com/viant/toolbox"
 )
 
-//Transformer represents transformer function
+// Transformer represents transformer function
 type Transformer func(source map[string]interface{}) ([]map[string]interface{}, error)
 
-//Transformers represents transformer registry
+// Transformers represents transformer registry
 var Transformers = make(map[string]Transformer)
 
 func init() {
 	Transformers["Flatten"] = Flatten
 }
 
-//Flatten converts map to slice
+// Flatten converts map to slice
 func Flatten(source map[string]interface{}) ([]map[string]interface{}, error) {
 	var result = make([]map[string]interface{}, 0)
 

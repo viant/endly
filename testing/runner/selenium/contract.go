@@ -11,7 +11,7 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//StartRequest represents a selenium server start request
+// StartRequest represents a selenium server start request
 type StartRequest struct {
 	Target     *url.Resource
 	Port       int
@@ -33,7 +33,7 @@ func (r *StartRequest) Validate() error {
 	return nil
 }
 
-//NewStartRequestFromURL creates a new start request from URL
+// NewStartRequestFromURL creates a new start request from URL
 func NewStartRequestFromURL(URL string) (*StartRequest, error) {
 	var result = &StartRequest{}
 	var resource = url.NewResource(URL)
@@ -41,20 +41,20 @@ func NewStartRequestFromURL(URL string) (*StartRequest, error) {
 	return result, err
 }
 
-//StartResponse repreents a selenium server stop request
+// StartResponse repreents a selenium server stop request
 type StartResponse struct {
 	Pid             int
 	ServerPath      string
 	GeckodriverPath string
 }
 
-//StopRequest represents server stop request
+// StopRequest represents server stop request
 type StopRequest struct {
 	Target *url.Resource
 	Port   int
 }
 
-//NewStopRequestFromURL creates a new start request from URL
+// NewStopRequestFromURL creates a new start request from URL
 func NewStopRequestFromURL(URL string) (*StopRequest, error) {
 	var result = &StopRequest{}
 	var resource = url.NewResource(URL)
@@ -62,21 +62,21 @@ func NewStopRequestFromURL(URL string) (*StopRequest, error) {
 	return result, err
 }
 
-//StopResponse represents a selenium stop request
+// StopResponse represents a selenium stop request
 type StopResponse struct {
 }
 
-//OpenSessionResponse represents open session response.
+// OpenSessionResponse represents open session response.
 type OpenSessionResponse struct {
 	SessionID string
 }
 
-//CloseSessionRequest represents close session request.
+// CloseSessionRequest represents close session request.
 type CloseSessionRequest struct {
 	SessionID string
 }
 
-//NewCloseSessionRequestFromURL creates a new close session request from URL
+// NewCloseSessionRequestFromURL creates a new close session request from URL
 func NewCloseSessionRequestFromURL(URL string) (*CloseSessionRequest, error) {
 	var result = &CloseSessionRequest{}
 	var resource = url.NewResource(URL)
@@ -84,46 +84,46 @@ func NewCloseSessionRequestFromURL(URL string) (*CloseSessionRequest, error) {
 	return result, err
 }
 
-//CloseSessionResponse represents close session response.
+// CloseSessionResponse represents close session response.
 type CloseSessionResponse struct {
 	SessionID string
 }
 
-//WebDriverCallRequest represents selenium call driver request
+// WebDriverCallRequest represents selenium call driver request
 type WebDriverCallRequest struct {
 	SessionID string
 	Key       string
 	Call      *MethodCall
 }
 
-//ServiceCallResponse represents selenium call response
+// ServiceCallResponse represents selenium call response
 type ServiceCallResponse struct {
 	Result []interface{}
 	Data   data.Map
 }
 
-//WebElementSelector represents a web element selector
+// WebElementSelector represents a web element selector
 type WebElementSelector struct {
 	By    string //selector type
 	Value string //selector value
 	Key   string //optional result key
 }
 
-//WebElementCallRequest represents a web element call reqesut
+// WebElementCallRequest represents a web element call reqesut
 type WebElementCallRequest struct {
 	SessionID string
 	Selector  *WebElementSelector
 	Call      *MethodCall
 }
 
-//WebElementCallResponse represents seleniun web element response
+// WebElementCallResponse represents seleniun web element response
 type WebElementCallResponse struct {
 	Result      []interface{}
 	LookupError string
 	Data        map[string]interface{}
 }
 
-//RunRequest represents group of selenium web elements calls
+// RunRequest represents group of selenium web elements calls
 type RunRequest struct {
 	SessionID        string
 	Browser          string
@@ -200,7 +200,7 @@ func (r *RunRequest) Init() error {
 	return nil
 }
 
-//NewRunRequest creates a new run request
+// NewRunRequest creates a new run request
 func NewRunRequest(sessionID, browser string, remote *url.Resource, actions ...*Action) *RunRequest {
 	return &RunRequest{
 		SessionID:      sessionID,
@@ -210,14 +210,14 @@ func NewRunRequest(sessionID, browser string, remote *url.Resource, actions ...*
 	}
 }
 
-//NewRunRequestFromURL creates a new request from URL
+// NewRunRequestFromURL creates a new request from URL
 func NewRunRequestFromURL(URL string) (*RunRequest, error) {
 	resource := url.NewResource(URL)
 	var result = &RunRequest{}
 	return result, resource.Decode(result)
 }
 
-//RunResponse represents selenium call response
+// RunResponse represents selenium call response
 type RunResponse struct {
 	SessionID    string
 	Data         map[string]interface{}
@@ -225,21 +225,21 @@ type RunResponse struct {
 	Assert       *validator.AssertResponse
 }
 
-//MethodCall represents selenium call.
+// MethodCall represents selenium call.
 type MethodCall struct {
 	Wait       *model.Repeater
 	Method     string
 	Parameters []interface{}
 }
 
-//Action represents various calls on web element
+// Action represents various calls on web element
 type Action struct {
 	Key      string //optional result key
 	Selector *WebElementSelector
 	Calls    []*MethodCall
 }
 
-//NewAction creates a new action
+// NewAction creates a new action
 func NewAction(key, selector string, method string, params ...interface{}) *Action {
 	var result = &Action{
 		Key: key,
@@ -259,7 +259,7 @@ func NewAction(key, selector string, method string, params ...interface{}) *Acti
 	return result
 }
 
-//Validate validates run request.
+// Validate validates run request.
 func (r *RunRequest) Validate() error {
 	if r.SessionID == "" {
 		if r.RemoteSelenium == nil {
@@ -282,7 +282,7 @@ func (r *RunRequest) Validate() error {
 	return nil
 }
 
-//NewMethodCall creates a new method call
+// NewMethodCall creates a new method call
 func NewMethodCall(method string, repeatable *model.Repeater, parameters ...interface{}) *MethodCall {
 	return &MethodCall{
 		Wait:       repeatable,
@@ -291,14 +291,14 @@ func NewMethodCall(method string, repeatable *model.Repeater, parameters ...inte
 	}
 }
 
-//OpenSessionRequest represents open session request
+// OpenSessionRequest represents open session request
 type OpenSessionRequest struct {
 	Browser        string
 	RemoteSelenium *url.Resource `description:"http selenium server endpoint"`
 	SessionID      string        `description:"if specified this ID will be used for a sessionID"`
 }
 
-//Validate validate open session request
+// Validate validate open session request
 func (r *OpenSessionRequest) Validate() error {
 	if r.RemoteSelenium == nil {
 		return errors.New("remote (remote selenium endpoint) was empty")
@@ -312,7 +312,7 @@ func (r *OpenSessionRequest) Validate() error {
 	return nil
 }
 
-//NewOpenSessionRequest creates a new open session request
+// NewOpenSessionRequest creates a new open session request
 func NewOpenSessionRequest(browser string, remote *url.Resource) *OpenSessionRequest {
 	return &OpenSessionRequest{
 		Browser:        browser,

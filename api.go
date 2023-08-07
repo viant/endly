@@ -6,13 +6,13 @@ import (
 	"sync"
 )
 
-//AppName represents endly application name
+// AppName represents endly application name
 const AppName = "endly"
 
-//Namespace represents endly namespace
+// Namespace represents endly namespace
 const Namespace = "github.com/viant/endly/"
 
-//Manager represents a endly service manager
+// Manager represents a endly service manager
 type Manager interface {
 	//Name returns an application ID
 	Name() string
@@ -33,7 +33,7 @@ type Manager interface {
 	Run(context *Context, request interface{}) (interface{}, error)
 }
 
-//Service represents an endly service
+// Service represents an endly service
 type Service interface {
 	//service id
 	ID() string
@@ -52,17 +52,17 @@ type Service interface {
 	Actions() []string
 }
 
-//Validator represents generic validator
+// Validator represents generic validator
 type Validator interface {
 	Validate() error
 }
 
-//Initializer represents generic initializer
+// Initializer represents generic initializer
 type Initializer interface {
 	Init() error
 }
 
-//ServiceResponse service response
+// ServiceResponse service response
 type ServiceResponse struct {
 	Status   string
 	Error    string
@@ -70,7 +70,7 @@ type ServiceResponse struct {
 	Err      error
 }
 
-//Route represents service action route
+// Route represents service action route
 type Route struct {
 	Action           string
 	RequestInfo      *ActionInfo
@@ -81,13 +81,13 @@ type Route struct {
 	OnRawRequest     func(context *Context, rawRequest map[string]interface{}) error //when specified it is called each time action literal is used when match
 }
 
-//Description represents example use case
+// Description represents example use case
 type UseCase struct {
 	Description string
 	Data        string
 }
 
-//ActionInfo represent an action info
+// ActionInfo represent an action info
 type ActionInfo struct {
 	Description string
 	Examples    []*UseCase

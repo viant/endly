@@ -10,10 +10,10 @@ import (
 	"github.com/viant/toolbox/data"
 )
 
-//Extracts represents an expected data collection
+// Extracts represents an expected data collection
 type Extracts []*Extract
 
-//Extracts extract data from provided inputs, the result is placed to expected map, or error
+// Extracts extract data from provided inputs, the result is placed to expected map, or error
 func (d *Extracts) Extract(context *endly.Context, extracted map[string]interface{}, inputs ...string) error {
 	if len(*d) == 0 || len(inputs) == 0 {
 		return nil
@@ -69,7 +69,7 @@ func (d *Extracts) Extract(context *endly.Context, extracted map[string]interfac
 	return nil
 }
 
-//Reset removes key from supplied state map.
+// Reset removes key from supplied state map.
 func (d *Extracts) Reset(state data.Map) {
 	for _, extract := range *d {
 		if extract.Reset {
@@ -78,12 +78,12 @@ func (d *Extracts) Reset(state data.Map) {
 	}
 }
 
-//NewExtracts creates a new NewExtracts
+// NewExtracts creates a new NewExtracts
 func NewExtracts() Extracts {
 	return make([]*Extract, 0)
 }
 
-//Extract represents a data extraction
+// Extract represents a data extraction
 type Extract struct {
 	RegExpr  string `description:"regular expression with oval bracket to extract match pattern"`            //regular expression
 	Key      string `description:"state key to store a match"`                                               //state key to store a match
@@ -91,7 +91,7 @@ type Extract struct {
 	Required bool   `description:"require that at least one pattern match is returned"`                      //require that at least one pattern match is returned
 }
 
-//NewExtract creates a new data extraction
+// NewExtract creates a new data extraction
 func NewExtract(key, regExpr string, reset bool, required bool) *Extract {
 	return &Extract{
 		RegExpr:  regExpr,
@@ -101,14 +101,14 @@ func NewExtract(key, regExpr string, reset bool, required bool) *Extract {
 	}
 }
 
-//ExtractEvent  represents data extraction event
+// ExtractEvent  represents data extraction event
 type ExtractEvent struct {
 	Output           string
 	StructuredOutput interface{}
 	Data             interface{}
 }
 
-//NewExtractEvent creates a new event.
+// NewExtractEvent creates a new event.
 func NewExtractEvent(output string, structuredOutput, extracted interface{}) *ExtractEvent {
 	return &ExtractEvent{
 		Output:           output,

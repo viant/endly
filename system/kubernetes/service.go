@@ -24,12 +24,12 @@ const (
 	ServiceID = "kubernetes"
 )
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
 
-//Create creates a specified resources
+// Create creates a specified resources
 func (s *service) Create(context *endly.Context, request *CreateRequest) (*CreateResponse, error) {
 	response := &CreateResponse{
 		Items: make([]*ResourceInfo, 0),
@@ -100,7 +100,7 @@ func (s *service) createResource(context *endly.Context, createRequest interface
 	return waitUntilReady(watcher)
 }
 
-//Apply create or apply patch for specified resources
+// Apply create or apply patch for specified resources
 func (s *service) Apply(context *endly.Context, request *ApplyRequest) (*ApplyResponse, error) {
 	response := &ApplyResponse{
 		Items: make([]*ResourceInfo, 0),
@@ -175,8 +175,8 @@ func (s *service) appleResource(context *endly.Context, request *ApplyRequest, r
 }
 
 /*
-	Expose a resource as a new Kubernetes service.
-	If kind is not specified it lookup the first resource of "Deployment", "Service", "ReplicaSet", "ReplicationController", "Pod" kind.
+Expose a resource as a new Kubernetes service.
+If kind is not specified it lookup the first resource of "Deployment", "Service", "ReplicaSet", "ReplicationController", "Pod" kind.
 */
 func (s *service) Expose(context *endly.Context, request *ExposeRequest) (*ExposeResponse, error) {
 	ctxClient, err := shared.GetCtxClient(context)
@@ -213,7 +213,7 @@ func (s *service) Expose(context *endly.Context, request *ExposeRequest) (*Expos
 	return &response, err
 }
 
-//Delete deletes supplied resources
+// Delete deletes supplied resources
 func (s *service) Delete(context *endly.Context, request *DeleteRequest) (*DeleteResponse, error) {
 	response := &DeleteResponse{
 		Items: make([]*ResourceInfo, 0),
@@ -271,7 +271,7 @@ func (s *service) deleteResources(context *endly.Context, request *DeleteRequest
 	return nil
 }
 
-//Get returns information about resource(s) for supplied resources kind or name
+// Get returns information about resource(s) for supplied resources kind or name
 func (s *service) Get(context *endly.Context, request *GetRequest) (*GetResponse, error) {
 	response := &GetResponse{
 		Items: make([]*ResourceInfo, 0),
@@ -374,7 +374,7 @@ func (s *service) getResource(context *endly.Context, request *GetRequest, kind 
 	return response, nil
 }
 
-//RunTemplate applies k8 resource template based on supplied parameters and create a resource
+// RunTemplate applies k8 resource template based on supplied parameters and create a resource
 func (s *service) RunTemplate(context *endly.Context, request *RunRequest) (*RunResponse, error) {
 	ctxClient, err := shared.GetCtxClient(context)
 	if err != nil {
@@ -789,7 +789,7 @@ func (s *service) waitForNotFound(context *endly.Context, getRequest interface{}
 	return fmt.Errorf("timeout exceeded")
 }
 
-//New creates a new service
+// New creates a new service
 func New() *service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

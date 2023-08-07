@@ -15,7 +15,7 @@ const (
 	ServiceID = "msg"
 )
 
-//service represent SMTP service
+// service represent SMTP service
 type service struct {
 	*endly.AbstractService
 }
@@ -216,7 +216,7 @@ func (s *service) deleteResource(context *endly.Context, resource *Resource) err
 	return client.DeleteResource(resource)
 }
 
-//New creates a new NoOperation service.
+// New creates a new NoOperation service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

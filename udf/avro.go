@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-//NewAvroReader creates a new avro reader UDFs
+// NewAvroReader creates a new avro reader UDFs
 func NewAvroReader(source interface{}, state data.Map) (interface{}, error) {
 	var reader io.Reader
 	switch data := source.(type) {
@@ -48,7 +48,7 @@ func getAvroSchema(args interface{}) (string, error) {
 	}
 }
 
-//NewAvroWriter creates a new avro writer provider
+// NewAvroWriter creates a new avro writer provider
 func NewAvroWriter(args ...interface{}) (func(source interface{}, state data.Map) (interface{}, error), error) {
 	if len(args) == 0 {
 		return nil, fmt.Errorf("no sufficent args |usage: NewAvroWriter(avroSchema|URL, compression)")

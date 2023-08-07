@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-//CreateRequest represents a resources Upload request, it takes context state key to Upload to target destination.
+// CreateRequest represents a resources Upload request, it takes context state key to Upload to target destination.
 type CreateRequest struct {
 	SourceKey string        `required:"true" description:"state key with asset content"`
 	Region    string        `description:"cloud storage region"`
@@ -22,13 +22,13 @@ type CreateRequest struct {
 	Dest      *url.Resource `required:"true" description:"destination asset or directory"` //target URL with credentials
 }
 
-//CreateResponse represents a Upload response
+// CreateResponse represents a Upload response
 type CreateResponse struct {
 	Size int
 	URL  string
 }
 
-//Create creates a resource
+// Create creates a resource
 func (s *service) Create(context *endly.Context, request *CreateRequest) (*CreateResponse, error) {
 	var response = &CreateResponse{}
 	err := s.create(context, request, response)
@@ -65,7 +65,7 @@ func gerReaderOption(request *CreateRequest, context *endly.Context, response *C
 	return options
 }
 
-//Init initialises Upload request
+// Init initialises Upload request
 func (r *CreateRequest) Init() error {
 	if r.Mode == 0 {
 		if r.IsDir {
@@ -77,7 +77,7 @@ func (r *CreateRequest) Init() error {
 	return nil
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *CreateRequest) Validate() error {
 	if r.Dest == nil {
 		return errors.New("dest was empty")

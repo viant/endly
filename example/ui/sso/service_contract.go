@@ -4,7 +4,7 @@ import (
 	"errors"
 )
 
-//SignUpRequest represents signup request
+// SignUpRequest represents signup request
 type SignUpRequest struct {
 	*User
 	DataOfBirth string `json:"dateOfBirth"`
@@ -12,14 +12,14 @@ type SignUpRequest struct {
 	LandingPage string `json:"landingPage"`
 }
 
-//SignUpResponse represents signup response
+// SignUpResponse represents signup response
 type SignUpResponse struct {
 	*BaseResponse
 	*User
 	LandingPage string `json:"landingPage"`
 }
 
-//SignInRequest represents signin request
+// SignInRequest represents signin request
 type SignInRequest struct {
 	Email       string `json:"email"`
 	Password    string `json:"password"`
@@ -27,21 +27,21 @@ type SignInRequest struct {
 	LandingPage string `json:"landingPage"`
 }
 
-//SignInResponse represents signin response
+// SignInResponse represents signin response
 type SignInResponse struct {
 	*BaseResponse
 	*User
 	LandingPage string `json:"landingPage"`
 }
 
-//BaseResponse represents base response
+// BaseResponse represents base response
 type BaseResponse struct {
 	Status      string `json:"status"`
 	Error       string `json:"error"`
 	ErrorSource string `json:"errorSource"`
 }
 
-//Validate check request all data if it is provided or valid.
+// Validate check request all data if it is provided or valid.
 func (r *SignUpRequest) Validate() (string, error) {
 	if r.User == nil || r.Name == "" {
 		return "name", errors.New("name was empty")

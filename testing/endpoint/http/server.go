@@ -8,10 +8,10 @@ import (
 	"time"
 )
 
-//HTTPRequestKeyProvider represents request key provider to extract a request field.
+// HTTPRequestKeyProvider represents request key provider to extract a request field.
 type HTTPRequestKeyProvider func(source interface{}) (string, error)
 
-//HTTPRequestKeyProviders represents key providers
+// HTTPRequestKeyProviders represents key providers
 var HTTPRequestKeyProviders = make(map[string]HTTPRequestKeyProvider)
 
 type Server struct {
@@ -39,7 +39,7 @@ func (s *Server) Append(trips *HTTPServerTrips) {
 	s.httpHandler.handler = getServerHandler(&s.Server, s.httpHandler, trips)
 }
 
-//StartServer starts http request, the server has ability to replay recorded  HTTP trips with https://github.com/viant/toolbox/blob/master/bridge/http_bridge_recording_util.go#L82
+// StartServer starts http request, the server has ability to replay recorded  HTTP trips with https://github.com/viant/toolbox/blob/master/bridge/http_bridge_recording_util.go#L82
 func StartServer(port int, trips *HTTPServerTrips, reqTemplate, respTemplate string) (*Server, error) {
 	err := trips.Init(reqTemplate, respTemplate)
 	if err != nil {

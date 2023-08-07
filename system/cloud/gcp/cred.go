@@ -26,7 +26,7 @@ type gcpCredConfig struct {
 	scopes []string
 }
 
-//GetClient creates a new google cloud client.
+// GetClient creates a new google cloud client.
 func GetClient(eContext *endly.Context, provider, key interface{}, target interface{}, defaultScopes ...string) error {
 	if eContext.Contains(key) {
 		if eContext.GetInto(key, target) {
@@ -93,7 +93,7 @@ func GetClient(eContext *endly.Context, provider, key interface{}, target interf
 	return eContext.Replace(key, reflect.ValueOf(target).Elem().Interface())
 }
 
-//InitCredentials get or creates aws credential config
+// InitCredentials get or creates aws credential config
 func InitCredentials(context *endly.Context, rawRequest map[string]interface{}) (*gcpCredConfig, error) {
 	if len(rawRequest) == 0 {
 		return nil, fmt.Errorf("request was empty")

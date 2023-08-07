@@ -40,7 +40,7 @@ var matchers = map[int]toolbox.Matcher{
 	assertlyExprMatcher: toolbox.NewSequenceMatcher("&&", "||"),
 }
 
-//Parser represents endly criteria parser
+// Parser represents endly criteria parser
 type Parser struct{}
 
 func (p *Parser) expectOptionalWhitespaceFollowedBy(tokenizer *toolbox.Tokenizer, expectedTokensMessage string, expected ...int) (*toolbox.Token, error) {
@@ -69,7 +69,7 @@ func (p *Parser) expectOptionalWhitespaceFollowedBy(tokenizer *toolbox.Tokenizer
 	return token, nil
 }
 
-//Parse parses supplied expression. It returns criteria or parsing error.
+// Parse parses supplied expression. It returns criteria or parsing error.
 func (p *Parser) Parse(expression string) (*Predicate, error) {
 	result := NewPredicate("")
 	tokenizer := toolbox.NewTokenizer(expression, illegal, eof, matchers)
@@ -201,7 +201,7 @@ outer:
 	return result, nil
 }
 
-//NewParser creates a new criteria parser
+// NewParser creates a new criteria parser
 func NewParser() *Parser {
 	return &Parser{}
 }

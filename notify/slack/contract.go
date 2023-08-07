@@ -11,43 +11,43 @@ import (
 
 const PullDefaultTimeoutMs = 30000
 
-//PostRequest represents post request
+// PostRequest represents post request
 type PostRequest struct {
 	Credentials string
 	Channel     string
 	Messages    []*Message
 }
 
-//PostResponse represnets a post response
+// PostResponse represnets a post response
 type PostResponse struct {
 	Channel   string
 	Timestamp string
 }
 
-//ListenRequest represents a listen request
+// ListenRequest represents a listen request
 type ListenRequest struct {
 	Credentials string
 	Channels    []string
 	channels    map[string]bool
 }
 
-//ListenResponse represents listen response
+// ListenResponse represents listen response
 type ListenResponse struct{}
 
-//AssertRequest represents assert request
+// AssertRequest represents assert request
 type PullRequest struct {
 	Expect    []*Message
 	TimeoutMs int
 	Count     int
 }
 
-//AssertResponse represents assert response
+// AssertResponse represents assert response
 type PullResponse struct {
 	Messages []*Message
 	Assert   *validator.AssertResponse
 }
 
-//Init initializes request
+// Init initializes request
 func (r *PostRequest) Init() error {
 	if r.Channel != "" && len(r.Messages) > 0 {
 		for _, message := range r.Messages {
@@ -76,7 +76,7 @@ func (r *PostRequest) Init() error {
 	return nil
 }
 
-//Validate check if a request is valid
+// Validate check if a request is valid
 func (r *PostRequest) Validate() error {
 	if r.Credentials == "" {
 		return errors.New("credentials were empty")
@@ -96,7 +96,7 @@ func (r *PostRequest) Validate() error {
 	return nil
 }
 
-//Init init a request
+// Init init a request
 func (r *ListenRequest) Init() error {
 	r.channels = make(map[string]bool)
 	if len(r.Channels) > 0 {
@@ -107,7 +107,7 @@ func (r *ListenRequest) Init() error {
 	return nil
 }
 
-//Validate check if a request is valid
+// Validate check if a request is valid
 func (r *ListenRequest) Validate() error {
 	if r.Credentials == "" {
 		return errors.New("credentials were empty")
@@ -116,7 +116,7 @@ func (r *ListenRequest) Validate() error {
 	return nil
 }
 
-//Init initializes request
+// Init initializes request
 func (r *PullRequest) Init() error {
 	if r.Count == 0 {
 		r.Count = len(r.Expect)

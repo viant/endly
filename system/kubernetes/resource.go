@@ -82,7 +82,7 @@ func handleResource(doc string, expand bool, state data.Map, data map[string]int
 	return err
 }
 
-//ResourceMeta represents a k8 resource meta
+// ResourceMeta represents a k8 resource meta
 type ResourceMeta struct {
 	metav1.TypeMeta
 	Metadata metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
@@ -101,7 +101,7 @@ type ResourceStatus struct {
 	PublishNotReadyAddresses *bool
 }
 
-//ResourceInfo represents generic  resource info
+// ResourceInfo represents generic  resource info
 type ResourceInfo struct {
 	metav1.TypeMeta   `yaml:",inline"`
 	metav1.ObjectMeta `yaml:"metadata"`
@@ -158,13 +158,13 @@ func (i *ResourceInfo) IsReady() bool {
 	return true
 }
 
-//ResourcesMetaInfo represents resource meta info
+// ResourcesMetaInfo represents resource meta info
 type ResourcesMetaInfo struct {
 	*ResourceMeta `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 	Items         []*ResourceMeta `json:"items,omitempty" yaml:"items,omitempty"`
 }
 
-//ToResourceMetas converts *ResourceInfo slice to []*ResourceMeta
+// ToResourceMetas converts *ResourceInfo slice to []*ResourceMeta
 func ToResourceMetas(items []*ResourceInfo) *ResourcesMetaInfo {
 	var result = &ResourcesMetaInfo{
 		Items: make([]*ResourceMeta, 0),

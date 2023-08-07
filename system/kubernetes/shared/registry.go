@@ -9,7 +9,7 @@ import (
 var registry = make(map[string]ContractAdapter, 0)
 var typeMetaRegistry byAPI = make(map[string]byKind)
 
-//Register register an adapter
+// Register register an adapter
 func Register(adapter ContractAdapter) {
 	id := adapter.GetId()
 	registry[id] = adapter
@@ -17,13 +17,13 @@ func Register(adapter ContractAdapter) {
 	typeMetaRegistry.Put(meta, adapter)
 }
 
-//Get returns contract adapter
+// Get returns contract adapter
 func Get(id string) (ContractAdapter, bool) {
 	result, ok := registry[id]
 	return result, ok
 }
 
-//Lookup returns KindOperations with all defined operations or error
+// Lookup returns KindOperations with all defined operations or error
 func Lookup(apiVersion, kind string) (*KindOperations, error) {
 	if kind == "" {
 		return nil, fmt.Errorf("kind was empty")
@@ -88,7 +88,7 @@ func (by *byKind) Put(meta *KindMethodMeta, adapter ContractAdapter) {
 	(*by)[meta.Kind].Methods[meta.Method] = adapter
 }
 
-//MetaTypes returns meta types
+// MetaTypes returns meta types
 func MetaTypes() []string {
 	var index = make(map[string]bool)
 	var result = make([]string, 0)
@@ -104,7 +104,7 @@ func MetaTypes() []string {
 	return result
 }
 
-//MatchedMetaTypes returns matched kinds
+// MatchedMetaTypes returns matched kinds
 func MatchedMetaTypes(kinds ...string) []string {
 	var index = make(map[string]bool)
 	for _, kind := range kinds {

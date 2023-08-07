@@ -26,7 +26,7 @@ type Client interface {
 	Close() error
 }
 
-//NewPubSubClient creates a new Client
+// NewPubSubClient creates a new Client
 func NewPubSubClient(context *endly.Context, dest *Resource, timeout time.Duration) (Client, error) {
 
 	credConfig := &cred.Config{}

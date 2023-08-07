@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-//ServiceRequest represents an http request
+// ServiceRequest represents an http request
 type Request struct {
 	*model.Repeater
 	When        string `description:"criteria to send this request"`
@@ -30,7 +30,7 @@ type Request struct {
 	Expect      map[string]interface{} `description:"desired http response"`
 }
 
-//Clone substitute request data with matching context map state.
+// Clone substitute request data with matching context map state.
 func (r *Request) Clone(context *endly.Context) *Request {
 	header := make(map[string][]string)
 	copyExpandedHeaders(r.Header, header, context)
@@ -50,13 +50,13 @@ func (r *Request) Clone(context *endly.Context) *Request {
 	}
 }
 
-//Clone substitute request data with matching context map state.
+// Clone substitute request data with matching context map state.
 func (r *Request) Expand(state data.Map) {
 	r.URL = state.ExpandAsText(r.URL)
 	r.Body = state.ExpandAsText(r.Body)
 }
 
-//Build builds an http.Request
+// Build builds an http.Request
 func (r *Request) Build(context *endly.Context, sessionCookies Cookies) (*http.Request, bool, error) {
 	if r.Body == "" && r.JSONBody != nil {
 		var err error

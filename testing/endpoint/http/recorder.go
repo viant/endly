@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-//StartRecorder starts HTTP recorded for supplied URLs
+// StartRecorder starts HTTP recorded for supplied URLs
 func StartRecorder(targetURLs ...string) error {
 	if len(targetURLs) == 0 {
 		return fmt.Errorf("target URLs were empty")

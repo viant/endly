@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-//TableData represents table data
+// TableData represents table data
 type TableData struct {
 	Table         string
 	Value         interface{} //deprecated, use Data attribute instead
@@ -17,7 +17,7 @@ type TableData struct {
 	Key           string
 }
 
-//AutoGenerateIfNeeded retrieves auto generated values
+// AutoGenerateIfNeeded retrieves auto generated values
 func (d *TableData) AutoGenerateIfNeeded(state data.Map) error {
 	for k, v := range d.AutoGenerate {
 		var value interface{}
@@ -35,7 +35,7 @@ func (d *TableData) AutoGenerateIfNeeded(state data.Map) error {
 	return nil
 }
 
-//PostIncrementIfNeeded increments all specified counters by one.
+// PostIncrementIfNeeded increments all specified counters by one.
 func (d *TableData) PostIncrementIfNeeded(state data.Map) {
 	for _, key := range d.PostIncrement {
 		keyText := toolbox.AsString(key)
@@ -47,7 +47,7 @@ func (d *TableData) PostIncrementIfNeeded(state data.Map) {
 	}
 }
 
-//GetValues a table records.
+// GetValues a table records.
 func (d *TableData) GetValues(state data.Map) []map[string]interface{} {
 	if d.Data == nil { //backward compatible check
 		d.Data = d.Value
@@ -87,7 +87,7 @@ func hasNumericKeys(aMap map[string]interface{}) bool {
 	return false
 }
 
-//GetValue returns record.
+// GetValue returns record.
 func (d *TableData) GetValue(state data.Map, source interface{}) map[string]interface{} {
 	expanded := state.Expand(source)
 	value := toolbox.AsMap(expanded)

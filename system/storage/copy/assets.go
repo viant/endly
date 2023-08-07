@@ -4,10 +4,10 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//Assets represents transfer assets
+// Assets represents transfer assets
 type Assets map[string]string
 
-//AsTransfer converts map to transfer or transfers
+// AsTransfer converts map to transfer or transfers
 func (t Assets) AsTransfer(base *Rule) []*Rule {
 	var sourceBase, destBase = base.Source, base.Dest
 	var transfers = make([]*Rule, 0)

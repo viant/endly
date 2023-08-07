@@ -9,10 +9,10 @@ import (
 	"github.com/viant/toolbox/data"
 )
 
-//SliceKey represents slice key
+// SliceKey represents slice key
 const SliceKey = "data"
 
-//Repeater represent repeated execution
+// Repeater represent repeated execution
 type Repeater struct {
 	Extract     Extracts  //textual regexp based data extraction
 	Variables   Variables //structure data based data extraction
@@ -21,7 +21,7 @@ type Repeater struct {
 	Exit        string    //Exit criteria, it uses expected variable to determine repeat termination
 }
 
-//Get returns non empty instance of default instance
+// Get returns non empty instance of default instance
 func (r *Repeater) Init() *Repeater {
 	if r == nil {
 		repeater := NewRepeater()
@@ -33,7 +33,7 @@ func (r *Repeater) Init() *Repeater {
 	return r
 }
 
-//EvaluateExitCriteria check is exit criteria is met.
+// EvaluateExitCriteria check is exit criteria is met.
 func (r *Repeater) EvaluateExitCriteria(callerInfo string, context *endly.Context, extracted map[string]interface{}) (bool, error) {
 	var state = context.State()
 	var extractedState = state.Clone()
@@ -99,7 +99,7 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 	return true, nil
 }
 
-//Run repeats x times supplied handler
+// Run repeats x times supplied handler
 func (r *Repeater) Run(service *endly.AbstractService, callerInfo string, context *endly.Context, handler func() (interface{}, error), extracted map[string]interface{}) error {
 	for i := 0; i < r.Repeat; i++ {
 		shouldContinue, err := r.runOnce(service, callerInfo, context, handler, extracted)
@@ -111,7 +111,7 @@ func (r *Repeater) Run(service *endly.AbstractService, callerInfo string, contex
 	return nil
 }
 
-//NewRepeater creates a new repeatable struct
+// NewRepeater creates a new repeatable struct
 func NewRepeater() *Repeater {
 	return &Repeater{
 		Repeat: 1,

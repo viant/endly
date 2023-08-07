@@ -5,7 +5,7 @@ import (
 	"github.com/viant/toolbox"
 )
 
-//Action represents service action meta
+// Action represents service action meta
 type Action struct {
 	*endly.Route
 	Request      interface{}

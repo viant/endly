@@ -7,7 +7,7 @@ import (
 	"github.com/viant/toolbox/data"
 )
 
-//EvalEvent represents criteria event
+// EvalEvent represents criteria event
 type EvalEvent struct {
 	Type             string
 	Default          bool
@@ -17,7 +17,7 @@ type EvalEvent struct {
 	Error            string
 }
 
-//NewEvalEvent creates a new evaluation event.
+// NewEvalEvent creates a new evaluation event.
 func NewEvalEvent(criteriaType string, defaultValue, evaluation bool, criteria, expendedCriteria string, err error) *EvalEvent {
 	var result = &EvalEvent{
 		Type:             criteriaType,
@@ -32,7 +32,7 @@ func NewEvalEvent(criteriaType string, defaultValue, evaluation bool, criteria, 
 	return result
 }
 
-//Evaluate evaluates passed in criteria
+// Evaluate evaluates passed in criteria
 func Evaluate(context *endly.Context, state data.Map, expression, eventType string, defaultValue bool) (bool, error) {
 	if expression == "" {
 		return defaultValue, nil
@@ -50,7 +50,7 @@ func Evaluate(context *endly.Context, state data.Map, expression, eventType stri
 	return result, err
 }
 
-//Assert validates expected against actual
+// Assert validates expected against actual
 func Assert(context *endly.Context, root string, expected, actual interface{}) (*assertly.Validation, error) {
 	ctx := assertly.NewDefaultContext()
 	ctx.Context = context.Context

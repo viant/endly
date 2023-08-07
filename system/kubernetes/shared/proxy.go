@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-//BuildRoutes build routes
+// BuildRoutes build routes
 func BuildRoutes(service interface{}, apiPrefix string) ([]*endly.Route, error) {
 	return BuildRoutesWithPrefix(service, apiPrefix, "")
 }

@@ -4,20 +4,20 @@ import "sync"
 
 var messagesKey = "messages"
 
-//Messages messages holder
+// Messages messages holder
 type Messages struct {
 	messages []*Message
 	mux      *sync.Mutex
 }
 
-//Push append a message
+// Push append a message
 func (m *Messages) Push(message *Message) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
 	m.messages = append(m.messages, message)
 }
 
-//Shift removes a message
+// Shift removes a message
 func (m *Messages) Shift() *Message {
 	m.mux.Lock()
 	defer m.mux.Unlock()
@@ -29,7 +29,7 @@ func (m *Messages) Shift() *Message {
 	return result
 }
 
-//NewMessages creates a new messages
+// NewMessages creates a new messages
 func NewMessages() *Messages {
 	return &Messages{
 		messages: make([]*Message, 0),

@@ -19,7 +19,7 @@ import (
 
 var configKey = (*aws.Config)(nil)
 
-//GetAWSCredentialConfig returns *aws.Config for provided credential
+// GetAWSCredentialConfig returns *aws.Config for provided credential
 func GetAWSCredentialConfig(config *cred.Config) (*aws.Config, error) {
 	awsCredentials := credentials.NewStaticCredentials(config.Key, config.Secret, "")
 	_, err := awsCredentials.Get()
@@ -46,7 +46,7 @@ func GetAWSCredentialConfig(config *cred.Config) (*aws.Config, error) {
 	return awsConfig, nil
 }
 
-//InitCredentials get or creates aws credential config
+// InitCredentials get or creates aws credential config
 func InitCredentials(context *endly.Context, rawRequest map[string]interface{}, key interface{}) (*aws.Config, error) {
 
 	if len(rawRequest) == 0 {
@@ -116,7 +116,7 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}, 
 	return awsConfig, err
 }
 
-//GetClient get or creates aws client
+// GetClient get or creates aws client
 func GetClient(context *endly.Context, provider interface{}, client interface{}) error {
 	if !context.Contains(configKey) {
 		return errors.New("unable to lookup aws.Config")

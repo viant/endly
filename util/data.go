@@ -26,7 +26,7 @@ func AsDataMap(source interface{}) data.Map {
 	return data.Map(aMap)
 }
 
-//AsExtractable returns  text and data structure
+// AsExtractable returns  text and data structure
 func AsExtractable(input interface{}) (string, map[string]interface{}) {
 	var extractableOutput string
 	var structuredOutput data.Map
@@ -61,7 +61,7 @@ func AsExtractable(input interface{}) (string, map[string]interface{}) {
 	return extractableOutput, structuredOutput
 }
 
-//ListResource returns list of matcher resource URL
+// ListResource returns list of matcher resource URL
 func ListResource(baseURLs []string, URI string) ([]string, error) {
 	if strings.HasPrefix(URI, "@") {
 		URI = string(URI[1:])
@@ -110,7 +110,7 @@ func ListResource(baseURLs []string, URI string) ([]string, error) {
 	return nil, nil
 }
 
-//LoadData load and decode URI into a pointer
+// LoadData load and decode URI into a pointer
 func LoadData(baseURLs []string, URI string) (interface{}, error) {
 	var result interface{}
 	URI = strings.TrimSpace(URI)
@@ -144,7 +144,7 @@ func LoadData(baseURLs []string, URI string) (interface{}, error) {
 	return result, nil
 }
 
-//LoadMap load and decode URI into map
+// LoadMap load and decode URI into map
 func LoadMap(baseURLs []string, URI string) (map[string]interface{}, error) {
 	URI = strings.TrimSpace(URI)
 	URIs := getURIa(URI)
@@ -208,7 +208,7 @@ func getURIa(URI string) []string {
 	return result
 }
 
-//If main content has $arg{index} or $args{index}, it will expand with corresponding URIs[index-1]
+// If main content has $arg{index} or $args{index}, it will expand with corresponding URIs[index-1]
 // the fist one has full content of the resource, the latter  removes the first '{' and the last '}' characters.
 func expandMapWithArgumentsIfMatched(baseURLs []string, URIs []string, mainResource *url.Resource, mainContent string) (interface{}, error) {
 	if len(URIs) < 2 {
@@ -273,7 +273,7 @@ func decodeResourceContent(resource *url.Resource, content string) (interface{},
 	return toolbox.NormalizeKVPairs(result)
 }
 
-//LoadResourceFromBaseURLs loads resource from base URLs and URI, returns the first successfully loaded resource or error
+// LoadResourceFromBaseURLs loads resource from base URLs and URI, returns the first successfully loaded resource or error
 func LoadResourceFromBaseURLs(baseURLs []string, URI string, result interface{}) (*url.Resource, error) {
 	var err error
 	var resource *url.Resource
@@ -306,7 +306,7 @@ func LoadResourceFromBaseURLs(baseURLs []string, URI string, result interface{})
 	return nil, err
 }
 
-//LoadResource load and decode URI into result pointer
+// LoadResource load and decode URI into result pointer
 func LoadResource(baseURL, URI string, result interface{}) (*url.Resource, error) {
 	if !strings.HasPrefix(URI, "@") {
 		return nil, fmt.Errorf("expected @ prefix but had: %v\n", URI)

@@ -9,7 +9,7 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//BuildRequest represents docker build request
+// BuildRequest represents docker build request
 type BuildRequest struct {
 	Target    *url.Resource     `required:"true" description:"host with docker service"` //target host
 	Tag       *Tag              `required:"true" description:"build docker tag"`
@@ -17,12 +17,12 @@ type BuildRequest struct {
 	Arguments map[string]string `description:"docker build command line arguments, see more: https://docs.docker.com/engine/reference/commandline/build/#description "` //https://docs.docker.com/engine/reference/commandline/build/#description
 }
 
-//BuildResponse represents docker build response
+// BuildResponse represents docker build response
 type BuildResponse struct {
 	Stdout string
 }
 
-//Init initialises default values
+// Init initialises default values
 func (r *BuildRequest) Init() {
 	r.Target = exec.GetServiceTarget(r.Target)
 	if len(r.Arguments) == 0 {
@@ -33,7 +33,7 @@ func (r *BuildRequest) Init() {
 	}
 }
 
-//Validate check if request is valid
+// Validate check if request is valid
 func (r *BuildRequest) Validate() error {
 	if r.Target == nil {
 		return errors.New("target was nil")
@@ -44,25 +44,25 @@ func (r *BuildRequest) Validate() error {
 	return nil
 }
 
-//ContainerStatusRequest represents a docker check container status request
+// ContainerStatusRequest represents a docker check container status request
 type ContainerStatusRequest struct {
 	Target *url.Resource `required:"true" description:"host with docker service"` //target host
 	Names  string
 	Image  string
 }
 
-//ContainerStatusResponse represents a docker container check response
+// ContainerStatusResponse represents a docker container check response
 type ContainerStatusResponse struct {
 	Containers []*ContainerInfo
 }
 
-//BaseRequest represents container base request
+// BaseRequest represents container base request
 type BaseRequest struct {
 	Target *url.Resource `required:"true" description:"host with docker service"`                //target host
 	Name   string        `description:"container name to inspect, if empty it uses target.Name"` //docker container name
 }
 
-//NewBaseRequest creates a new base request
+// NewBaseRequest creates a new base request
 func NewBaseRequest(target *url.Resource, name string) *BaseRequest {
 	return &BaseRequest{
 		Target: target,
@@ -70,7 +70,7 @@ func NewBaseRequest(target *url.Resource, name string) *BaseRequest {
 	}
 }
 
-//Init initializes request
+// Init initializes request
 func (r *BaseRequest) Init() error {
 	r.Target = exec.GetServiceTarget(r.Target)
 	if r == nil || r.Target == nil {
@@ -82,7 +82,7 @@ func (r *BaseRequest) Init() error {
 	return nil
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *BaseRequest) Validate() error {
 	if r == nil {
 		return errors.New("base container request was nil")
@@ -96,37 +96,37 @@ func (r *BaseRequest) Validate() error {
 	return nil
 }
 
-//StartRequest represents a docker container start request.
+// StartRequest represents a docker container start request.
 type StartRequest struct {
 	*BaseRequest
 }
 
-//StartResponse represents a docker container start response
+// StartResponse represents a docker container start response
 type StartResponse struct {
 	*ContainerInfo
 }
 
-//RemoveRequest represents a docker remove container request
+// RemoveRequest represents a docker remove container request
 type RemoveRequest struct {
 	*BaseRequest
 }
 
-//RemoveResponse represents a docker remove container response
+// RemoveResponse represents a docker remove container response
 type RemoveResponse struct {
 	Stdout string
 }
 
-//StopRequest represents a docker stop container request.
+// StopRequest represents a docker stop container request.
 type StopRequest struct {
 	*BaseRequest
 }
 
-//StopResponse represents a docker stop container response.
+// StopResponse represents a docker stop container response.
 type StopResponse struct {
 	*ContainerInfo
 }
 
-//ExecRequest represents a docker run container command.
+// ExecRequest represents a docker run container command.
 type ExecRequest struct {
 	*BaseRequest
 	Command            string
@@ -136,7 +136,7 @@ type ExecRequest struct {
 	RunInTheBackground bool
 }
 
-//NewExecRequest creates a new request to run command inside container
+// NewExecRequest creates a new request to run command inside container
 func NewExecRequest(super *BaseRequest, command string, secrets map[string]string, interactive bool, allocateTerminal bool, runInTheBackground bool) *ExecRequest {
 	return &ExecRequest{
 		BaseRequest:        super,
@@ -148,30 +148,30 @@ func NewExecRequest(super *BaseRequest, command string, secrets map[string]strin
 	}
 }
 
-//NewExecRequestFromURL creates a new container run request
+// NewExecRequestFromURL creates a new container run request
 func NewExecRequestFromURL(URL string) (*ExecRequest, error) {
 	request := &ExecRequest{}
 	resource := url.NewResource(URL)
 	return request, resource.Decode(request)
 }
 
-//ExecResponse represents a docker run command  response
+// ExecResponse represents a docker run command  response
 type ExecResponse struct {
 	Stdout string
 }
 
-//InspectRequest represents a docker inspect request, target name refers to container name
+// InspectRequest represents a docker inspect request, target name refers to container name
 type InspectRequest struct {
 	*BaseRequest
 }
 
-//InspectResponse represents a docker inspect request
+// InspectResponse represents a docker inspect request
 type InspectResponse struct {
 	Stdout string
 	Info   interface{} //you can extract any instance default, for instance to get Ip you can use Info[0].NetworkSettings.IPAddress in the variable action post from key
 }
 
-//ContainerInfo represents a docker container info
+// ContainerInfo represents a docker container info
 type ContainerInfo struct {
 	ContainerID string
 	Image       string
@@ -181,24 +181,24 @@ type ContainerInfo struct {
 	Names       string
 }
 
-//LogsRequest represents docker runner container logs to take stdout
+// LogsRequest represents docker runner container logs to take stdout
 type LogsRequest struct {
 	*BaseRequest
 }
 
-//LogsResponse represents docker container logs response
+// LogsResponse represents docker container logs response
 type LogsResponse struct {
 	Stdout string
 }
 
-//ImagesRequest represents docker check image request
+// ImagesRequest represents docker check image request
 type ImagesRequest struct {
 	Target     *url.Resource `required:"true" description:"host with docker service"` //target host
 	Repository string        `required:"true"`
 	Tag        string        `required:"true"`
 }
 
-//NewImagesRequest creates a new image request
+// NewImagesRequest creates a new image request
 func NewImagesRequest(target *url.Resource, repository, tag string) *ImagesRequest {
 	return &ImagesRequest{
 		Target:     target,
@@ -207,19 +207,19 @@ func NewImagesRequest(target *url.Resource, repository, tag string) *ImagesReque
 	}
 }
 
-//NewImagesRequestFromURL creates a new request from URL
+// NewImagesRequestFromURL creates a new request from URL
 func NewImagesRequestFromURL(URL string) (*ImagesRequest, error) {
 	var request = &ImagesRequest{}
 	var resource = url.NewResource(URL)
 	return request, resource.Decode(request)
 }
 
-//ImagesResponse represents a docker check image response
+// ImagesResponse represents a docker check image response
 type ImagesResponse struct {
 	Images []*ImageInfo
 }
 
-//ImageInfo represents docker image info
+// ImageInfo represents docker image info
 type ImageInfo struct {
 	Repository string
 	Tag        string
@@ -227,20 +227,20 @@ type ImageInfo struct {
 	Size       int
 }
 
-//LoginRequest represents a docker pull request
+// LoginRequest represents a docker pull request
 type LoginRequest struct {
 	Target      *url.Resource `required:"true" description:"host with docker service"` //target host
 	Credentials string        `required:"true" description:"credentials path"`
 	Repository  string        `required:"true" description:"repository url"`
 }
 
-//LoginResponse represents a docker pull request
+// LoginResponse represents a docker pull request
 type LoginResponse struct {
 	Stdout   string
 	Username string
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *LoginRequest) Validate() error {
 	if r.Target == nil {
 		return errors.New("target was nil")
@@ -251,40 +251,40 @@ func (r *LoginRequest) Validate() error {
 	return nil
 }
 
-//LogoutRequest represents a docker pull request
+// LogoutRequest represents a docker pull request
 type LogoutRequest struct {
 	Target     *url.Resource `required:"true" description:"host with docker service"` //target host
 	Repository string        `required:"true" description:"repository URL"`
 }
 
-//LogoutResponse represents a docker pull request
+// LogoutResponse represents a docker pull request
 type LogoutResponse struct {
 	Stdout string
 }
 
-//PullRequest represents a docker pull request
+// PullRequest represents a docker pull request
 type PullRequest struct {
 	Target     *url.Resource `required:"true" description:"host with docker service"` //target host
 	Repository string        `required:"true"`
 	Tag        string        `required:"true"`
 }
 
-//PullResponse represents a docker pull response
+// PullResponse represents a docker pull response
 type PullResponse struct {
 	*ImageInfo
 }
 
-//PushRequest represents a docker push request
+// PushRequest represents a docker push request
 type PushRequest struct {
 	Target *url.Resource `required:"true" description:"host with docker service"` //target host
 	Tag    *Tag          `required:"true"`
 }
 
-//PushResponse represents a docker push request
+// PushResponse represents a docker push request
 type PushResponse struct {
 }
 
-//PushResponse represents a docker push request
+// PushResponse represents a docker push request
 type CopyRequest struct {
 	Name   string `description:"container name"`
 	Source *url.Resource
@@ -304,11 +304,11 @@ func (r *CopyRequest) Validate() error {
 	return nil
 }
 
-//CopyResponse represents a copy response
+// CopyResponse represents a copy response
 type CopyResponse struct {
 }
 
-//RunRequest represents a docker run request
+// RunRequest represents a docker run request
 type RunRequest struct {
 	Target  *url.Resource     `required:"true" description:"host with docker service"`                //target host
 	Name    string            `description:"container name to inspect, if empty it uses target.Name"` //docker container name
@@ -338,14 +338,14 @@ func NewRunRequest(target *url.Resource, name string, secrets map[string]string,
 	}
 }
 
-//NewRunRequestFromURL creates a new request from URL
+// NewRunRequestFromURL creates a new request from URL
 func NewRunRequestFromURL(URL string) (*RunRequest, error) {
 	var request = &RunRequest{}
 	var resource = url.NewResource(URL)
 	return request, resource.Decode(request)
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *RunRequest) Validate() error {
 	if r.Target == nil {
 		return fmt.Errorf("target was nil")
@@ -359,12 +359,12 @@ func (r *RunRequest) Validate() error {
 	return nil
 }
 
-//RunResponse represents a docker run response
+// RunResponse represents a docker run response
 type RunResponse struct {
 	*ContainerInfo
 }
 
-//StopImagesRequest represents docker stop running images request
+// StopImagesRequest represents docker stop running images request
 type StopImagesRequest struct {
 	Target *url.Resource `required:"true" description:"host with docker service"` //target host
 	Images []string      `required:"true"`
@@ -380,19 +380,19 @@ func (r StopImagesRequest) Validate() error {
 	return nil
 }
 
-//StopImagesResponse represents docker stop images response
+// StopImagesResponse represents docker stop images response
 type StopImagesResponse struct {
 	StoppedImages []string
 }
 
-//TagRequest represents docker tag request
+// TagRequest represents docker tag request
 type TagRequest struct {
 	Target    *url.Resource `required:"true" description:"host with docker service"` //target host
 	SourceTag *Tag          `required:"true"`
 	TargetTag *Tag          `required:"true"`
 }
 
-//Tag represent a docker tag
+// Tag represent a docker tag
 type Tag struct {
 	Username string
 	Registry string
@@ -400,12 +400,12 @@ type Tag struct {
 	Version  string
 }
 
-//TagResponse represents docker tag response
+// TagResponse represents docker tag response
 type TagResponse struct {
 	Stdout string
 }
 
-//Validate checks if request valid
+// Validate checks if request valid
 func (r *TagRequest) Validate() error {
 	if r.Target == nil {
 		return errors.New("target was empty")
@@ -422,7 +422,7 @@ func (r *TagRequest) Validate() error {
 	return r.TargetTag.Validate()
 }
 
-//Validate checks if tag is valid
+// Validate checks if tag is valid
 func (t *Tag) Validate() error {
 	if t.Image == "" {
 		return errors.New("image was empty")
@@ -430,7 +430,7 @@ func (t *Tag) Validate() error {
 	return nil
 }
 
-//String stringify docker tag
+// String stringify docker tag
 func (t *Tag) String() string {
 	var result = t.Username
 	if result == "" {
@@ -540,22 +540,22 @@ type DockerComposeService struct {
 }
 
 /*
-	Maps to "ports:" section of the compose file
-	Ports will be exposed from the container to the host machine
-	Format is host port:container port e.g. 8080:8080
+Maps to "ports:" section of the compose file
+Ports will be exposed from the container to the host machine
+Format is host port:container port e.g. 8080:8080
 */
 type Ports []string //Per specification to be string instead of number
 
 /*
-	Maps to "expose:" section of the compose file
-	Ports will NOT be exposed from the container to the host machine. But they will be accessible to the linked containers
+Maps to "expose:" section of the compose file
+Ports will NOT be exposed from the container to the host machine. But they will be accessible to the linked containers
 */
 type ExposePorts []string
 
 /*
-	Maps to "volumes:" section of the compose file
-	Used to specify the path in host machine to be mounted and available within container and in which path.
-	Format is host path:container path e.g /data/endly:/etc/endly
+Maps to "volumes:" section of the compose file
+Used to specify the path in host machine to be mounted and available within container and in which path.
+Format is host path:container path e.g /data/endly:/etc/endly
 */
 type Volume struct {
 	Driver        string            `yaml:"driver,omitempty"`      //Specifies the volume driver. Default is local

@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-//GetArguments extract cli arguments into a map
+// GetArguments extract cli arguments into a map
 func GetArguments(baseURLs ...string) (map[string]interface{}, error) {
 	var args = data.NewMap()
 	var arguments = make([]interface{}, 0)

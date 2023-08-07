@@ -9,7 +9,7 @@ import (
 
 type URLParams map[string][]string
 
-//ExpandMeta expand meta data
+// ExpandMeta expand meta data
 func ExpandMeta(context *endly.Context, text string) string {
 	gcpCred, err := getCredentials(context)
 	if err != nil {
@@ -33,7 +33,7 @@ func createCredState(gcpCred *gcpCredConfig) data.Map {
 	return state
 }
 
-//UpdateActionRequest updates raw request with project, service
+// UpdateActionRequest updates raw request with project, service
 func UpdateActionRequest(rawRequest map[string]interface{}, credConfig *gcpCredConfig, client CtxClient) {
 
 	if credConfig.Region == "" {

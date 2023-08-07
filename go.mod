@@ -73,7 +73,7 @@ require (
 	github.com/viant/assertly v0.9.1-0.20211210213130-9fc39dc0d8f0
 	github.com/viant/bgc v0.8.0
 	github.com/viant/dsc v0.16.3
-	github.com/viant/dsunit v0.11.0
+	github.com/viant/dsunit v0.11.1-0.20230807202149-fc0ce4fc7442
 	github.com/viant/neatly v0.8.1-0.20230118003138-9e5c5757ae6e
 	github.com/viant/scy v0.5.2
 	github.com/viant/toolbox v0.34.6-0.20230324143540-849d06c4e1ae

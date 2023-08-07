@@ -22,13 +22,13 @@ import (
 	"time"
 )
 
-//EndlyPanic env key name to skip recover in case of panic, export ENDLY_PANIC=true
+// EndlyPanic env key name to skip recover in case of panic, export ENDLY_PANIC=true
 const EndlyPanic = "ENDLY_PANIC"
 
 var serviceManagerKey = (*manager)(nil)
 var deferFunctionsKey = (*[]func())(nil)
 
-//Context represents a workflow session context/state
+// Context represents a workflow session context/state
 type Context struct {
 	background      context.Context
 	SessionID       string
@@ -54,7 +54,7 @@ func (c *Context) Background() context.Context {
 	return c.background
 }
 
-//Publish publishes event to listeners, it updates current run details like activity workflow name etc ...
+// Publish publishes event to listeners, it updates current run details like activity workflow name etc ...
 func (c *Context) Publish(value interface{}) msg.Event {
 	event, ok := value.(msg.Event)
 	if !ok {
@@ -67,7 +67,7 @@ func (c *Context) Publish(value interface{}) msg.Event {
 	return event
 }
 
-//PublishWithStartEvent publishes event to listeners, it updates current run details like activity workflow name etc ...
+// PublishWithStartEvent publishes event to listeners, it updates current run details like activity workflow name etc ...
 func (c *Context) PublishWithStartEvent(value interface{}, init msg.Event) msg.Event {
 	event := msg.NewEventWithInit(value, init)
 	event.SetLoggable(true)
@@ -77,17 +77,17 @@ func (c *Context) PublishWithStartEvent(value interface{}, init msg.Event) msg.E
 	return event
 }
 
-//SetListener sets context event Listener
+// SetListener sets context event Listener
 func (c *Context) SetListener(listener msg.Listener) {
 	c.Listener = listener
 }
 
-//IsClosed returns true if it is closed.
+// IsClosed returns true if it is closed.
 func (c *Context) IsClosed() bool {
 	return atomic.LoadInt32(&c.closed) == 1
 }
 
-//Clone clones the context.
+// Clone clones the context.
 func (c *Context) Clone() *Context {
 	if len(c.cloned) == 0 {
 		c.cloned = make([]*Context, 0)
@@ -123,7 +123,7 @@ func (c *Context) parentURLCandidates() []string {
 	return result
 }
 
-//IsLoggingEnabled returns tru if logging is enabled
+// IsLoggingEnabled returns tru if logging is enabled
 func (c *Context) IsLoggingEnabled() bool {
 	if c.Logging == nil {
 		return true
@@ -131,12 +131,12 @@ func (c *Context) IsLoggingEnabled() bool {
 	return *c.Logging
 }
 
-//SetLogging set logging on and off
+// SetLogging set logging on and off
 func (c *Context) SetLogging(flag bool) {
 	c.Logging = &flag
 }
 
-//ExpandResource substitutes any $ expression with the key value from the state map if it is present.
+// ExpandResource substitutes any $ expression with the key value from the state map if it is present.
 func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) {
 	if resource == nil {
 		return nil, msg.ReportError(fmt.Errorf("resource  was empty"))
@@ -167,7 +167,7 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 	return result, nil
 }
 
-//Manager returns workflow manager or error
+// Manager returns workflow manager or error
 func (c *Context) Manager() (Manager, error) {
 	if c == nil {
 		return nil, fmt.Errorf("context was nil")
@@ -179,7 +179,7 @@ func (c *Context) Manager() (Manager, error) {
 	return manager, nil
 }
 
-//Service returns a service fo provided id or error.
+// Service returns a service fo provided id or error.
 func (c *Context) Service(name string) (Service, error) {
 	manager, err := c.Manager()
 	if err != nil {
@@ -188,7 +188,7 @@ func (c *Context) Service(name string) (Service, error) {
 	return manager.Service(name)
 }
 
-//Deffer add function to be executed if context closes. If returns currently registered functions.
+// Deffer add function to be executed if context closes. If returns currently registered functions.
 func (c *Context) Deffer(functions ...func()) []func() {
 	var result *[]func()
 	if !c.Contains(deferFunctionsKey) {
@@ -204,7 +204,7 @@ func (c *Context) Deffer(functions ...func()) []func() {
 	return *result
 }
 
-//State returns a context state map.
+// State returns a context state map.
 func (c *Context) State() data.Map {
 	if c.state == nil {
 		c.state = NewDefaultState(c)
@@ -212,18 +212,18 @@ func (c *Context) State() data.Map {
 	return c.state
 }
 
-//SetState sets a new state map
+// SetState sets a new state map
 func (c *Context) SetState(state data.Map) {
 	c.state = state
 }
 
-//Expand substitute $ expression if present in the text and state map.
+// Expand substitute $ expression if present in the text and state map.
 func (c *Context) Expand(text string) string {
 	state := c.State()
 	return state.ExpandAsText(text)
 }
 
-//PublishAndRestore sets supplied value and returns func restoring original values
+// PublishAndRestore sets supplied value and returns func restoring original values
 func (s *Context) PublishAndRestore(values map[string]interface{}) func() {
 	var backup = map[string]interface{}{}
 	for k, v := range values {
@@ -239,7 +239,7 @@ func (s *Context) PublishAndRestore(values map[string]interface{}) func() {
 	}
 }
 
-//NewRequest creates a new request for service and action
+// NewRequest creates a new request for service and action
 func (c *Context) NewRequest(serviceName, action string, rawRequest map[string]interface{}) (result interface{}, err error) {
 	var service Service
 	service, err = c.Service(serviceName)
@@ -274,7 +274,7 @@ func (c *Context) NewRequest(serviceName, action string, rawRequest map[string]i
 	return request, err
 }
 
-//AsRequest converts a source map into request for provided service and action.
+// AsRequest converts a source map into request for provided service and action.
 func (c *Context) AsRequest(serviceName, action string, source map[string]interface{}) (request interface{}, err error) {
 
 	expanded := c.state.Expand(source)
@@ -286,7 +286,7 @@ func (c *Context) AsRequest(serviceName, action string, source map[string]interf
 	return request, err
 }
 
-//Close closes this context, it executes all deferred function and set closed flag.
+// Close closes this context, it executes all deferred function and set closed flag.
 func (c *Context) Close() {
 	atomic.StoreInt32(&c.closed, 1)
 	for _, context := range c.cloned {

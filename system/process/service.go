@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-//ServiceID represents a system process service id
+// ServiceID represents a system process service id
 const ServiceID = "process"
 
 type service struct {
@@ -302,7 +302,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//New creates new system process service.
+// New creates new system process service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

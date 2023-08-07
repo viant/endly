@@ -16,7 +16,7 @@ import (
 	"strings"
 )
 
-//UploadRequest represents a resources Upload request, it takes context state key to Upload to target destination.
+// UploadRequest represents a resources Upload request, it takes context state key to Upload to target destination.
 type UploadRequest struct {
 	SourceKey string        `required:"true" description:"state key with asset content"`
 	Region    string        `description:"cloud storage region"`
@@ -25,14 +25,14 @@ type UploadRequest struct {
 	Dest      *url.Resource `required:"true" description:"destination asset or directory"`                 //target URL with credentials
 }
 
-//UploadResponse represents a Upload response
+// UploadResponse represents a Upload response
 type UploadResponse struct {
 	Size        int
 	Transformed string
 	URL         string
 }
 
-//Upload upload content defined by sourceKey to dest
+// Upload upload content defined by sourceKey to dest
 func (s *service) Upload(context *endly.Context, request *UploadRequest) (*UploadResponse, error) {
 	var response = &UploadResponse{}
 	return response, s.upload(context, request, response)
@@ -90,7 +90,7 @@ func (s *service) upload(context *endly.Context, request *UploadRequest, respons
 
 }
 
-//Init initialises Upload request
+// Init initialises Upload request
 func (r *UploadRequest) Init() error {
 	if r.Mode == 0 {
 		r.Mode = int(file.DefaultFileOsMode)
@@ -98,7 +98,7 @@ func (r *UploadRequest) Init() error {
 	return nil
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *UploadRequest) Validate() error {
 	if r.Dest == nil {
 		return errors.New("dest was empty")

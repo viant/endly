@@ -1,2 +1,2 @@
-//Package storage implements storage operation
+// Package storage implements storage operation
 package storage

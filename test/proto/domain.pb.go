@@ -5,9 +5,11 @@
 Package gmetric is a generated protocol buffer package.
 
 It is generated from these files:
+
 	domain.proto
 
 It has these top-level messages:
+
 	Message
 */
 package proto

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-//SleepEvent represents a Sleep
+// SleepEvent represents a Sleep
 type SleepEvent struct {
 	SleepTimeMs int
 }
@@ -24,7 +24,7 @@ func (e *SleepEvent) Message(repeated *Repeated) *Message {
 	return NewMessage(title, tag)
 }
 
-//NewSleepEvent create a new sleep event
+// NewSleepEvent create a new sleep event
 func NewSleepEvent(sleepTimeMs int) *SleepEvent {
 	return &SleepEvent{SleepTimeMs: sleepTimeMs}
 }

@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-//GetPath returns hierarchical path to the latest Activity
+// GetPath returns hierarchical path to the latest Activity
 func GetPath(candidates *model.Activities, runner *Runner, fullPath bool) string {
 	var activityPath = make([]string, 0)
 	var activities = make([]*model.Activity, 0)

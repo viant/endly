@@ -18,7 +18,7 @@ func IsContainerUp(container *types.Container) bool {
 	return strings.Contains(strings.ToLower(container.Status), "up")
 }
 
-//runAdapter runs adapter request
+// runAdapter runs adapter request
 func runAdapter(context *endly.Context, adapter ContractAdapter, response interface{}) error {
 	ctxClient, err := GetCtxClient(context)
 	if err != nil {

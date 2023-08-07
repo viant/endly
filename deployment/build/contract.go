@@ -10,7 +10,7 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//Spec represents build specification.
+// Spec represents build specification.
 type Spec struct {
 	Name       string `required:"true" description:"build system name, i.e go, mvn, node, yarn, build system meta is defined in meta/build/XXX"`
 	Version    string `required:"true" description:"build system version"`
@@ -21,7 +21,7 @@ type Spec struct {
 	SdkVersion string
 }
 
-//ServiceRequest represents a build request.
+// ServiceRequest represents a build request.
 type Request struct {
 	MetaURL   string            `description:"build meta URL"`
 	BuildSpec *Spec             `required:"true" description:"build specification" `
@@ -30,18 +30,18 @@ type Request struct {
 	Target    *url.Resource     `required:"true" description:"build location, host and path" `
 }
 
-//Init initialises request
+// Init initialises request
 func (r *Request) Init() error {
 	r.Target = exec.GetServiceTarget(r.Target)
 	return nil
 }
 
-//Response represents a build response.
+// Response represents a build response.
 type Response struct {
 	CommandInfo *exec.RunResponse
 }
 
-//Validate validates if request is valid
+// Validate validates if request is valid
 func (r *Request) Validate() error {
 	if r.BuildSpec == nil {
 		return errors.New("buildSpec was empty")
@@ -55,12 +55,12 @@ func (r *Request) Validate() error {
 	return nil
 }
 
-//LoadMetaRequest represents a loading Meta request
+// LoadMetaRequest represents a loading Meta request
 type LoadMetaRequest struct {
 	Source *url.Resource `required:"true" description:"URL with build meta JSON"`
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *LoadMetaRequest) Validate() error {
 	if r.Source == nil {
 		return errors.New("source was empty")
@@ -68,12 +68,12 @@ func (r *LoadMetaRequest) Validate() error {
 	return nil
 }
 
-//LoadMetaResponse represents build meta response.
+// LoadMetaResponse represents build meta response.
 type LoadMetaResponse struct {
 	Meta *Meta //url to size
 }
 
-//Goal builds goal represents a build goal
+// Goal builds goal represents a build goal
 type Goal struct {
 	Name          string               `required:"true"`
 	InitTransfers *storage.CopyRequest `description:"files transfer before build command"`
@@ -82,7 +82,7 @@ type Goal struct {
 	Verify        *exec.ExtractRequest
 }
 
-//Meta build meta provides instruction how to build an app
+// Meta build meta provides instruction how to build an app
 type Meta struct {
 	Name         string               `required:"true" description:"name of build system"`
 	Goals        []*Goal              `required:"true" description:"build goals"`
@@ -90,7 +90,7 @@ type Meta struct {
 	goalsIndex   map[string]*Goal
 }
 
-//Validate validates build meta.
+// Validate validates build meta.
 func (m *Meta) Validate() error {
 	if m.Name == "" {
 		return fmt.Errorf("metaBuild.Names %v", m.Name)

@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-//Message represent an email
+// Message represent an email
 type Message struct {
 	From        string `required:"true" description:"sender, has to match email from target.credentials"`
 	To          []string
@@ -17,7 +17,7 @@ type Message struct {
 	ContentType string
 }
 
-//Validate checks if mail message is valid
+// Validate checks if mail message is valid
 func (m *Message) Validate() error {
 	if m.From == "" {
 		return errors.New("mail.from was empty")
@@ -38,7 +38,7 @@ func getHeader(key string, values ...string) string {
 	return fmt.Sprintf("%v: %s\r\n", key, strings.Join(values, ";"))
 }
 
-//Receivers returns all receivers for this email message
+// Receivers returns all receivers for this email message
 func (m *Message) Receivers() []string {
 	var result = make([]string, 0)
 	result = append(result, m.To...)
@@ -47,7 +47,7 @@ func (m *Message) Receivers() []string {
 	return result
 }
 
-//Payload returns mail payload.
+// Payload returns mail payload.
 func (m *Message) Payload() []byte {
 	var result = ""
 	result += getHeader("From", m.From)

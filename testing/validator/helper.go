@@ -7,7 +7,7 @@ import (
 	"github.com/viant/toolbox"
 )
 
-//NewAssertRequestFromContext creates a new assert rquest from context for current activity
+// NewAssertRequestFromContext creates a new assert rquest from context for current activity
 func NewAssertRequestFromContext(context *endly.Context, source, expected, actual interface{}, name, description string) (*AssertRequest, error) {
 	tagID := ""
 	if process := workflow.Last(context); process != nil {
@@ -27,7 +27,7 @@ func NewAssertRequestFromContext(context *endly.Context, source, expected, actua
 
 }
 
-//Assert compares provided expected amd actual
+// Assert compares provided expected amd actual
 func Assert(context *endly.Context, source, expected, actual interface{}, name, description string) (*AssertResponse, error) {
 	var request, err = NewAssertRequestFromContext(context, source, expected, actual, name, description)
 	if err != nil {

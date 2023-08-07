@@ -1,6 +1,6 @@
 package model
 
-//Action represents a workflow service action
+// Action represents a workflow service action
 type Action struct {
 	*AbstractNode
 	*ServiceRequest
@@ -10,7 +10,7 @@ type Action struct {
 	Skip  string `description:"criteria to skip current TagID"`
 }
 
-//NewActivity returns pipeline activity
+// NewActivity returns pipeline activity
 func (a *Action) Init() error {
 	if a.AbstractNode == nil {
 		a.AbstractNode = &AbstractNode{}
@@ -52,7 +52,7 @@ func (a *Action) initSleepTime() {
 	}
 }
 
-//Clone clones this actions
+// Clone clones this actions
 func (a *Action) Clone() *Action {
 	abstract := *a.AbstractNode
 	serviceRequest := *a.ServiceRequest
@@ -68,7 +68,7 @@ func (a *Action) Clone() *Action {
 	}
 }
 
-//ID returns action identified
+// ID returns action identified
 func (a *Action) ID() string {
 	if a.Name == "" {
 		return a.Name
@@ -76,7 +76,7 @@ func (a *Action) ID() string {
 	return a.Service + "_" + a.Action
 }
 
-//MetaTag represent a node tag
+// MetaTag represent a node tag
 type MetaTag struct {
 	Tag            string //tag
 	TagIndex       string //tag index

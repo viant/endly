@@ -10,12 +10,12 @@ func ReportError(err error) error {
 	return fmt.Errorf("%v at %v:%v -> %v", err, fileName, line, funcName)
 }
 
-//ErrorEvent represents a Sleep
+// ErrorEvent represents a Sleep
 type ErrorEvent struct {
 	Error string
 }
 
-//Messages returns messages
+// Messages returns messages
 func (e *ErrorEvent) Messages() []*Message {
 
 	error := NewStyled(fmt.Sprintf("%v\n", e.Error), MessageStyleError)
@@ -23,7 +23,7 @@ func (e *ErrorEvent) Messages() []*Message {
 		NewMessage(NewStyled("", MessageStyleError), NewStyled("error", MessageStyleError), error)}
 }
 
-//NewErrorEvent creates a new error event
+// NewErrorEvent creates a new error event
 func NewErrorEvent(message string) *ErrorEvent {
 	return &ErrorEvent{
 		Error: message,

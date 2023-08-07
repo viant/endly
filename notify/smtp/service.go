@@ -12,7 +12,7 @@ const (
 	ServiceID = "smtp"
 )
 
-//service represent SMTP service
+// service represent SMTP service
 type service struct {
 	*endly.AbstractService
 }
@@ -131,7 +131,7 @@ func (s *service) registerRoutes() {
 
 }
 
-//New creates a new NoOperation service.
+// New creates a new NoOperation service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

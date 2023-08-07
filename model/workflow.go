@@ -6,7 +6,7 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//Workflow represents a workflow
+// Workflow represents a workflow
 type Workflow struct {
 	Source *url.Resource //source definition of the workflow
 	Data   data.Map      //workflow data
@@ -14,7 +14,7 @@ type Workflow struct {
 	*TasksNode //workflow tasks
 }
 
-//Validate validates this workflow
+// Validate validates this workflow
 func (w *Workflow) Init() error {
 	for _, task := range w.Tasks {
 		if w.Logging != nil && task.Logging == nil {
@@ -27,7 +27,7 @@ func (w *Workflow) Init() error {
 	return nil
 }
 
-//Validate validates this workflow
+// Validate validates this workflow
 func (w *Workflow) Validate() error {
 	if len(w.Tasks) == 0 {
 		return errors.New("tasks were empty")

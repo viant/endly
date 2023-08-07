@@ -41,7 +41,7 @@ func getDestWithOptions(context *endly.Context, rule *copy.Rule, modifier option
 	return dest, option.NewDest(sourceOptions...), nil
 }
 
-//GetResourceWithOptions returns resource with afs storage option
+// GetResourceWithOptions returns resource with afs storage option
 func GetResourceWithOptions(context *endly.Context, resource *url.Resource, options ...storage.Option) (*url.Resource, []storage.Option, error) {
 	resource, err := context.ExpandResource(resource)
 	if err != nil {
@@ -54,19 +54,19 @@ func GetResourceWithOptions(context *endly.Context, resource *url.Resource, opti
 	return resource, sourceOptions, err
 }
 
-//UseMemoryService sets flag on context to always use memory service (testing only)
+// UseMemoryService sets flag on context to always use memory service (testing only)
 func UseMemoryService(context *endly.Context) afs.Service {
 	state := context.State()
 	state.Put(useMemoryService, true)
 	return fsFaker
 }
 
-//IsCompressable returns true if resource can be compress via shell command.
+// IsCompressable returns true if resource can be compress via shell command.
 func IsCompressable(protScheme string) bool {
 	return protScheme == "" || protScheme == "scp" || protScheme == "file" || protScheme == "ssh"
 }
 
-//Copy transfers data for provided transfer definition.
+// Copy transfers data for provided transfer definition.
 func Copy(context *endly.Context, transfers ...*copy.Rule) (interface{}, error) {
 	if transfers == nil {
 		return nil, nil

@@ -1,6 +1,6 @@
 package msg
 
-//RepeatedEvent represents a generic repeated message
+// RepeatedEvent represents a generic repeated message
 type RepeatedEvent struct {
 	tag     string
 	message string
@@ -12,7 +12,7 @@ func (e *RepeatedEvent) Message(repeated *Repeated) *Message {
 	return NewMessage(title, tag)
 }
 
-//NewSleepEvent create a new sleep event
+// NewSleepEvent create a new sleep event
 func NewRepeatedEvent(message, tag string) *RepeatedEvent {
 	return &RepeatedEvent{message: message, tag: tag}
 }

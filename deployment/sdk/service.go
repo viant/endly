@@ -199,7 +199,7 @@ func (s *service) registerRoutes() {
 
 }
 
-//New creates a new  sdk service.
+// New creates a new  sdk service.
 func New() endly.Service {
 	var result = &service{
 		jdkService:      &jdkService{},

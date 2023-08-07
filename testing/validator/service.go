@@ -7,10 +7,10 @@ import (
 	"github.com/viant/toolbox"
 )
 
-//ServiceID represents validator service id
+// ServiceID represents validator service id
 const ServiceID = "validator"
 
-//AssertAction represents assert action
+// AssertAction represents assert action
 const AssertAction = "assert"
 
 type service struct {
@@ -133,7 +133,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//New creates a new validation service
+// New creates a new validation service
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

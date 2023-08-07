@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-//Message represent event log message
+// Message represent event log message
 type Message struct {
 	Timestamp time.Time
 	EventType string
@@ -19,7 +19,7 @@ type Message struct {
 	Error     string
 }
 
-//NewMessage creates a new message for provided request.
+// NewMessage creates a new message for provided request.
 func NewMessage(request *http.Request) *Message {
 	var scheme = "http"
 	var result = &Message{

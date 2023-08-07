@@ -23,7 +23,7 @@ const (
 	ServiceID = "docker"
 )
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
@@ -851,7 +851,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//New creates a new Docker service.
+// New creates a new Docker service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

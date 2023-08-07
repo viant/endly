@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-//Service represents transformer service
+// Service represents transformer service
 type Service interface {
 	Copy(request *CopyRequest) *CopyResponse
 
@@ -260,7 +260,7 @@ func (s *service) openKeyFiles(keyPath string) ([]*os.File, error) {
 	return result, nil
 }
 
-//Copy copy data from source to destination
+// Copy copy data from source to destination
 func (s *service) Copy(request *CopyRequest) *CopyResponse {
 	var response = &CopyResponse{BaseResponse: &BaseResponse{Status: "ok", StartTime: time.Now()}, TaskInfo: &TaskInfo{StatusCode: StatusTaskRunning}}
 	response.StatusCode = 1
@@ -287,7 +287,7 @@ func (s *service) Copy(request *CopyRequest) *CopyResponse {
 	return response
 }
 
-//TaskList returns a list of copy tasks
+// TaskList returns a list of copy tasks
 func (s *service) TaskList(request *TaskListRequest) *TaskListResponse {
 	var response = &TaskListResponse{Status: "ok",
 		Tasks: make([]*Task, 0),
@@ -302,7 +302,7 @@ func (s *service) TaskList(request *TaskListRequest) *TaskListResponse {
 	return response
 }
 
-//KillTask changes status of task to stop it
+// KillTask changes status of task to stop it
 func (s *service) KillTask(request *KillTaskRequest) *KillTaskResponse {
 	var response = &KillTaskResponse{BaseResponse: &BaseResponse{StartTime: time.Now()}}
 	for _, candidate := range s.tasks {
@@ -315,7 +315,7 @@ func (s *service) KillTask(request *KillTaskRequest) *KillTaskResponse {
 	return response
 }
 
-//NewService returns new transformer service
+// NewService returns new transformer service
 func NewService() Service {
 	return &service{
 		tasks: make(map[string]*Task),

@@ -1,6 +1,6 @@
 package xunit
 
-//TestCase represents an error test-case nodes
+// TestCase represents an error test-case nodes
 type TestCase struct {
 	Name string `xml:"name,attr,omitempty" yaml:"name,omitempty"  json:"name,omitempty"`
 
@@ -21,7 +21,7 @@ type TestCase struct {
 	Syserr         string `xml:"syserr,omitempty"  yaml:"syserr,omitempty"  json:"syserr,omitempty"`
 }
 
-//NewTestCase creates a new test case
+// NewTestCase creates a new test case
 func NewTestCase() *TestCase {
 	return &TestCase{}
 }

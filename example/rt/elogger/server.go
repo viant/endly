@@ -6,13 +6,13 @@ import (
 	"net/http"
 )
 
-//Server represents a server
+// Server represents a server
 type Server struct {
 	service Service
 	config  *Config
 }
 
-//Start start server
+// Start start server
 func (s *Server) Start() error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
@@ -27,7 +27,7 @@ func (s *Server) Start() error {
 	return nil
 }
 
-//NewServer creates a new server with supplied config.
+// NewServer creates a new server with supplied config.
 func NewServer(config *Config, service Service) (*Server, error) {
 	return &Server{
 		service: service,

@@ -163,28 +163,28 @@ type VerifyJWTResponse struct {
 	Claims *jwt.Claims
 }
 
-//NewSecureRequestFromURL creates a request from URL
+// NewSecureRequestFromURL creates a request from URL
 func NewSecureRequestFromURL(URL string) (*SecureRequest, error) {
 	var request = &SecureRequest{}
 	resource := url.NewResource(URL)
 	return request, resource.Decode(request)
 }
 
-//NewRevealRequestFromURL creates a request from URL
+// NewRevealRequestFromURL creates a request from URL
 func NewRevealRequestFromURL(URL string) (*RevealRequest, error) {
 	var request = &RevealRequest{}
 	resource := url.NewResource(URL)
 	return request, resource.Decode(request)
 }
 
-//NewSignJWTRequest creates a request from URL
+// NewSignJWTRequest creates a request from URL
 func NewSignJWTRequest(URL string) (*SignJWTRequest, error) {
 	var request = &SignJWTRequest{}
 	resource := url.NewResource(URL)
 	return request, resource.Decode(request)
 }
 
-//NewVerifyJWTResponse creates a request from URL
+// NewVerifyJWTResponse creates a request from URL
 func NewVerifyJWTResponse(URL string) (*VerifyJWTResponse, error) {
 	var request = &VerifyJWTResponse{}
 	resource := url.NewResource(URL)

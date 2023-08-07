@@ -7,14 +7,14 @@ import (
 	"net/http"
 )
 
-//Server represents http server
+// Server represents http server
 type Server struct {
 	service       Service
 	config        *Config
 	serviceRouter *toolbox.ServiceRouter
 }
 
-//Start start server
+// Start start server
 func (s *Server) Start() {
 	http.HandleFunc("/api/", func(writer http.ResponseWriter, reader *http.Request) {
 		err := s.serviceRouter.Route(writer, reader)
@@ -31,7 +31,7 @@ func (s *Server) Start() {
 	log.Fatal(http.ListenAndServe(":"+s.config.Port, nil))
 }
 
-//NewServer creates a new http server
+// NewServer creates a new http server
 func NewServer(config *Config, service Service) (*Server, error) {
 	serviceRouter := toolbox.NewServiceRouter(
 		toolbox.ServiceRouting{

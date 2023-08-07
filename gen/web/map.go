@@ -29,7 +29,7 @@ func (m *mapSlice) Put(key string, value interface{}) {
 	*m = append(*m, yaml.MapItem{key, value})
 }
 
-//Get returns a value for provided key
+// Get returns a value for provided key
 func (s *mapSlice) Range(handler func(key string, value interface{})) {
 	for _, item := range *s {
 		handler(toolbox.AsString(item.Key), item.Value)

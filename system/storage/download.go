@@ -11,7 +11,7 @@ import (
 	"io/ioutil"
 )
 
-//DownloadRequest represents a resources Download request, it downloads source into context.state target key
+// DownloadRequest represents a resources Download request, it downloads source into context.state target key
 type DownloadRequest struct {
 	Source  *url.Resource `required:"true" description:"source asset or directory"`
 	DestKey string        `required:"true" description:"state map key destination"`
@@ -19,7 +19,7 @@ type DownloadRequest struct {
 	Expect  interface{}   `description:"if specified expected file content used for validation"`
 }
 
-//DownloadResponse represents a Download response
+// DownloadResponse represents a Download response
 type DownloadResponse struct {
 	Info        toolbox.FileInfo
 	Payload     string //source content, if binary then is will be prefixed base64: followed by based 64 encoded content.
@@ -73,7 +73,7 @@ func (s *service) download(context *endly.Context, request *DownloadRequest, res
 	return err
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *DownloadRequest) Validate() error {
 	if r.Source == nil {
 		return errors.New("source was empty")

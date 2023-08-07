@@ -25,7 +25,7 @@ func newTrips() Trips {
 	return t
 }
 
-//addRequest add HTTP Request to Trips
+// addRequest add HTTP Request to Trips
 func (t Trips) addRequest(request *Request) error {
 	return t.add(TripRequests, request)
 }
@@ -35,7 +35,7 @@ func (t Trips) setData(data data.Map) {
 	t[TripData] = data
 }
 
-//addResponse addd HTTP Response to Trips
+// addResponse addd HTTP Response to Trips
 func (t Trips) addResponse(response *Response) error {
 	return t.add(TripResponses, response)
 }

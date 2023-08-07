@@ -14,12 +14,12 @@ import (
 
 const defaultWaitTimeoutMs = 60000
 
-//ResourceInfoResponse represents info response
+// ResourceInfoResponse represents info response
 type ResourceInfoResponse struct {
 	Items []*ResourceInfo
 }
 
-//GetRequest represents get request
+// GetRequest represents get request
 type GetRequest struct {
 	Name string
 	metav1.ListOptions
@@ -29,20 +29,20 @@ type GetRequest struct {
 	kinds          []string
 }
 
-//GetResponse represents get response
+// GetResponse represents get response
 type GetResponse ResourceInfoResponse
 
-//CreateRequest represents create request
+// CreateRequest represents create request
 type CreateRequest struct {
 	*ResourceMeta
 	*url.Resource
 	Expand bool `description:"flag to expand resource with $ expression"`
 }
 
-//CreateResponse represents create response
+// CreateResponse represents create response
 type CreateResponse ResourceInfoResponse
 
-//DeleteRequest represents delete response
+// DeleteRequest represents delete response
 type DeleteRequest struct {
 	Name            string
 	LabelSelector   string
@@ -51,20 +51,20 @@ type DeleteRequest struct {
 	TimeoutMs int
 }
 
-//DeleteResponse represents delete response
+// DeleteResponse represents delete response
 type DeleteResponse ResourceInfoResponse
 
-//ApplyRequest represents apply request
+// ApplyRequest represents apply request
 type ApplyRequest struct {
 	*url.Resource
 	*ResourceMeta
 	Expand bool `description:"flag to expand resource with $ expression"`
 }
 
-//ApplyResponse represents apply response
+// ApplyResponse represents apply response
 type ApplyResponse ResourceInfoResponse
 
-//RunRequest represents run request
+// RunRequest represents run request
 type RunRequest struct {
 	Expose          bool
 	Replicas        int
@@ -86,10 +86,10 @@ type RunRequest struct {
 	HostPort        int                `description:"spec.containers[].ports[].hostPort"`
 }
 
-//RunResponse represents run response
+// RunResponse represents run response
 type RunResponse ResourceInfoResponse
 
-//ExposeRequest represent expose request
+// ExposeRequest represent expose request
 type ExposeRequest struct {
 	Resource     string `description:"a target resource name to be exposed"`
 	ResourceKind string `description:"optional target resource kind"`
@@ -111,10 +111,10 @@ type ExposeRequest struct {
 	kinds []string
 }
 
-//ExposeResponse represent expose response
+// ExposeResponse represent expose response
 type ExposeResponse ResourceInfoResponse
 
-//ForwardPortsRequest represents forward port request
+// ForwardPortsRequest represents forward port request
 type ForwardPortsRequest struct {
 	Name            string `description:"resource name"`
 	LabelSelector   string `json:"selector" yaml:"selector" description:"selector for matching pod or resource with pod spec"`
@@ -123,12 +123,12 @@ type ForwardPortsRequest struct {
 	TimeoutMs       int      `description:"maximum wait time for pod getting ready"`
 }
 
-//ForwardPortsRequest represents forward port response
+// ForwardPortsRequest represents forward port response
 type ForwardPortsResponse struct {
 	Name string
 }
 
-//Init initialises request
+// Init initialises request
 func (r *ExposeRequest) Init() error {
 	if r.Protocol == "" {
 		r.Protocol = "TCP"
@@ -161,7 +161,7 @@ func (r *ExposeRequest) Init() error {
 	return nil
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *ExposeRequest) Validate() error {
 	if r.Resource == "" {
 		return fmt.Errorf("resource was empty")
@@ -275,7 +275,7 @@ func (r *DeleteRequest) Init() (err error) {
 	return nil
 }
 
-//AsGetRequest returns get request
+// AsGetRequest returns get request
 func (r *DeleteRequest) AsGetRequest() *GetRequest {
 	result := &GetRequest{
 		Name: r.Name,
@@ -288,12 +288,12 @@ func (r *DeleteRequest) AsGetRequest() *GetRequest {
 	return result
 }
 
-//Init initializes request
+// Init initializes request
 func (r *ApplyRequest) Init() error {
 	return nil
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *ForwardPortsRequest) Init() error {
 	if r.TimeoutMs == 0 {
 		r.TimeoutMs = defaultWaitTimeoutMs
@@ -301,7 +301,7 @@ func (r *ForwardPortsRequest) Init() error {
 	return nil
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *ForwardPortsRequest) Validate() error {
 	if r.Kind == "" {
 		return errors.New("kind was empty")
@@ -309,7 +309,7 @@ func (r *ForwardPortsRequest) Validate() error {
 	return nil
 }
 
-//AsGetRequest returns get request
+// AsGetRequest returns get request
 func (r *ForwardPortsRequest) AsGetRequest() (*GetRequest, error) {
 	result := &GetRequest{
 		Name: r.Name,

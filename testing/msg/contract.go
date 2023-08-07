@@ -9,7 +9,7 @@ import (
 
 const defaultTimeoutMs = 10000
 
-//CreateRequest represents a create resource request
+// CreateRequest represents a create resource request
 type CreateRequest struct {
 	Credentials string
 	Resources   []*ResourceSetup
@@ -43,12 +43,12 @@ func (r *CreateRequest) Validate() error {
 	return nil
 }
 
-//CreateResponse represents a create resource response
+// CreateResponse represents a create resource response
 type CreateResponse struct {
 	Resources []*Resource
 }
 
-//DeleteRequest represents a delete resource request
+// DeleteRequest represents a delete resource request
 type DeleteRequest struct {
 	Credentials string
 	Resources   []*Resource
@@ -67,10 +67,10 @@ func (r *DeleteRequest) Init() error {
 	return nil
 }
 
-//DeleteResponse represents a delete resource response
+// DeleteResponse represents a delete resource response
 type DeleteResponse struct{}
 
-//PushRequest represents push request
+// PushRequest represents push request
 type PushRequest struct {
 	Credentials   string
 	Dest          *Resource
@@ -109,12 +109,12 @@ func (r *PushRequest) Validate() error {
 	return nil
 }
 
-//PushResponse represents a push response
+// PushResponse represents a push response
 type PushResponse struct {
 	Results []Result
 }
 
-//PullRequest represents a pull request
+// PullRequest represents a pull request
 type PullRequest struct {
 	Credentials string
 	Source      *Resource
@@ -142,7 +142,7 @@ func (r *PullRequest) Validate() error {
 	return nil
 }
 
-//PullRequest represents a pull response
+// PullRequest represents a pull response
 type PullResponse struct {
 	Messages []*Message
 	Assert   *validator.AssertResponse

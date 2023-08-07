@@ -6,17 +6,17 @@ import (
 	"sort"
 )
 
-//TypesMeta represents log type meta details
+// TypesMeta represents log type meta details
 type TypesMeta map[string]*TypeMeta
 
-//TypeMeta represents a log type meta
+// TypeMeta represents a log type meta
 type TypeMeta struct {
 	Source   *url.Resource
 	LogType  *Type
 	LogFiles map[string]*File
 }
 
-//Iterator returns log record iterator
+// Iterator returns log record iterator
 func (m *TypeMeta) Iterator() toolbox.Iterator {
 	logFileProvider := func() []*File {
 		var result = make([]*File, 0)
@@ -40,7 +40,7 @@ func (m *TypeMeta) Iterator() toolbox.Iterator {
 	}
 }
 
-//NewTypeMeta creates a nre log type meta.
+// NewTypeMeta creates a nre log type meta.
 func NewTypeMeta(source *url.Resource, logType *Type) *TypeMeta {
 	return &TypeMeta{
 		Source:   source,

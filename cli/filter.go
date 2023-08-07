@@ -2,7 +2,7 @@ package cli
 
 //Filter reporting filter (use package name, or package name request/event prefix
 
-//DefaultFilter create default filter
+// DefaultFilter create default filter
 func DefaultFilter() map[string]bool {
 	var result = make(map[string]bool)
 	result["dsunit"] = true
@@ -29,7 +29,7 @@ func DefaultFilter() map[string]bool {
 	return result
 }
 
-//WildcardFilter
+// WildcardFilter
 func WildcardFilter() map[string]bool {
 	return map[string]bool{
 		"*": true,

@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-//Message represent an email
+// Message represent an email
 type Message struct {
 	From    string
 	To      []string

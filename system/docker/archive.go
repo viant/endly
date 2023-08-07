@@ -13,7 +13,7 @@ import (
 	"path"
 )
 
-//AsTarReader creates a tar reader for supplied URL
+// AsTarReader creates a tar reader for supplied URL
 func AsTarReader(resource *url.Resource, includeOwnerDir bool) (io.Reader, error) {
 	storageService, err := storage.NewServiceForURL(resource.URL, resource.Credentials)
 	if err != nil {
@@ -28,7 +28,7 @@ func AsTarReader(resource *url.Resource, includeOwnerDir bool) (io.Reader, error
 	return writer, err
 }
 
-//UnTar write archive content to dest
+// UnTar write archive content to dest
 func UnTar(reader *tar.Reader, dest string) error {
 	var dirs = make(map[string]bool)
 	for {

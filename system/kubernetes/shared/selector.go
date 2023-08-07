@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-//ToSelector returns selector
+// ToSelector returns selector
 func ToSelector(selectorMap map[string]string) string {
 	var selector = make([]string, 0)
 	for k, v := range selectorMap {

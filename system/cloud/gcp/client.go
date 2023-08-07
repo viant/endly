@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-//CtxClient represents generic google cloud service client
+// CtxClient represents generic google cloud service client
 type CtxClient interface {
 	SetContext(ctx context.Context)
 	Context() context.Context
@@ -16,7 +16,7 @@ type CtxClient interface {
 	SetHttpClient(client *http.Client)
 }
 
-//AbstractClient represents an abstract client
+// AbstractClient represents an abstract client
 type AbstractClient struct {
 	context    context.Context
 	scopes     []string

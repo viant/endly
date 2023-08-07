@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-//ServiceID represents http runner service id.
+// ServiceID represents http runner service id.
 const ServiceID = "http/runner"
 const RunnerID = "HttpRunner"
 
@@ -134,7 +134,7 @@ func (s *service) applyDefaultTimeoutIfNeeded(options []*toolbox.HttpOptions) []
 	}
 }
 
-//resetContext resets context for variables with Reset flag set, and removes PreviousTripStateKey
+// resetContext resets context for variables with Reset flag set, and removes PreviousTripStateKey
 func (s *service) resetContext(context *endly.Context, request *SendRequest) {
 	state := context.State()
 	state.Delete(TripsKey)
@@ -538,7 +538,7 @@ func (s *service) emitMetrics(context *endly.Context, metric *runtimeMetric, don
 	}
 }
 
-//New creates a new http runner service
+// New creates a new http runner service
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

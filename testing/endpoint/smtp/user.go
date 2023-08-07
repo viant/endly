@@ -1,6 +1,6 @@
 package smtp
 
-//User represent email user
+// User represent email user
 type User struct {
 	Username    string
 	Password    string

@@ -10,7 +10,7 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//CopyRequest represents a resources Copy request
+// CopyRequest represents a resources Copy request
 type CopyRequest struct {
 	*copy.Rule `description:"if asset uses relative path it will be joined with this URL" json:",inline"`
 	Assets     copy.Assets  `description:"map entry can either represent a transfer struct or simple key is the source and the value destination relative path"` // transfers
@@ -18,12 +18,12 @@ type CopyRequest struct {
 	Udf        string       `description:"custom user defined function to return github.com/viant/afs/option.Modifier type to modify copied content"`
 }
 
-//CopyResponse represents a resources Copy response
+// CopyResponse represents a resources Copy response
 type CopyResponse struct {
 	URLs []string //transferred URLs
 }
 
-//Copy copy source to dest
+// Copy copy source to dest
 func (s *service) Copy(context *endly.Context, request *CopyRequest) (*CopyResponse, error) {
 	var response = &CopyResponse{
 		URLs: make([]string, 0),
@@ -90,7 +90,7 @@ func (s *service) transfer(context *endly.Context, rule *copy.Rule, udfModifier 
 	return nil
 }
 
-//CopyRequest creates a new Copy request
+// CopyRequest creates a new Copy request
 func NewCopyRequest(assets copy.Assets, transfers ...*copy.Rule) *CopyRequest {
 	var super *copy.Rule
 	if len(transfers) > 0 {
@@ -104,7 +104,7 @@ func NewCopyRequest(assets copy.Assets, transfers ...*copy.Rule) *CopyRequest {
 	}
 }
 
-//NewCopyRequestFromURL creates a new request from URL (JSON or YAML format are supported)
+// NewCopyRequestFromURL creates a new request from URL (JSON or YAML format are supported)
 func NewCopyRequestFromURL(URL string) (*CopyRequest, error) {
 	var request = &CopyRequest{}
 	resource := url.NewResource(URL)
@@ -114,7 +114,7 @@ func NewCopyRequestFromURL(URL string) (*CopyRequest, error) {
 	return request, nil
 }
 
-//Init initialises request
+// Init initialises request
 func (r *CopyRequest) Init() error {
 	if r.Rule == nil {
 		r.Rule = &copy.Rule{}
@@ -156,7 +156,7 @@ func (r *CopyRequest) Init() error {
 	return nil
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *CopyRequest) Validate() error {
 	if len(r.Transfers) == 0 {
 		return errors.New("transfers were empty")

@@ -5,14 +5,14 @@ import (
 	"github.com/viant/endly"
 )
 
-//Session represents a selenium session
+// Session represents a selenium session
 type Session struct {
 	ID      string
 	Browser string
 	driver  selenium.WebDriver
 }
 
-//SeleniumSessions reprents selenium sessions.
+// SeleniumSessions reprents selenium sessions.
 type sessions struct {
 	Sessions map[string]*Session
 }

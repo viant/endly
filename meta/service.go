@@ -6,12 +6,12 @@ import (
 	"github.com/viant/toolbox"
 )
 
-//Service represents service action meta service
+// Service represents service action meta service
 type Service struct {
 	endly.Manager
 }
 
-//Lookup returns service action info for supplied serviceID and action
+// Lookup returns service action info for supplied serviceID and action
 func (m *Service) Lookup(serviceID, action string) (*Action, error) {
 	var result = &Action{}
 	context := m.NewContext(toolbox.NewContext())
@@ -40,7 +40,7 @@ func (m *Service) Lookup(serviceID, action string) (*Action, error) {
 	return result, nil
 }
 
-//New creates a new meta service
+// New creates a new meta service
 func New() *Service {
 	return &Service{endly.New()}
 }

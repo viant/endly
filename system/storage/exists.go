@@ -7,19 +7,19 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//ExistsRequest represents exists request
+// ExistsRequest represents exists request
 type ExistsRequest struct {
 	Assets []*url.Resource `required:"true" description:"source asset or directory"`
 	Expect map[string]bool `description:"map of asset and exists flag"`
 }
 
-//ExistsResponse represents exists response
+// ExistsResponse represents exists response
 type ExistsResponse struct {
 	Exists map[string]bool `description:"locations with exists flag, when assets uses only asset location otherwise source URL"`
 	Assert *validator.AssertResponse
 }
 
-//Exists checks if supplied asset exists
+// Exists checks if supplied asset exists
 func (s *service) Exists(context *endly.Context, request *ExistsRequest) (*ExistsResponse, error) {
 	var response = &ExistsResponse{
 		Exists: make(map[string]bool),
@@ -51,7 +51,7 @@ func (s *service) exists(context *endly.Context, request *ExistsRequest, respons
 	return nil
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *ExistsRequest) Validate() error {
 	if r.Assets == nil {
 		return errors.New("assets was empty")

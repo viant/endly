@@ -5,7 +5,7 @@ import (
 	"github.com/viant/toolbox"
 )
 
-//AssertRequest represent assert request
+// AssertRequest represent assert request
 type AssertRequest struct {
 	TagID            string
 	Name             string
@@ -38,7 +38,7 @@ func (r *AssertRequest) IgnoreKeys() []interface{} {
 	return keys
 }
 
-//AssertResponse represent validation response
+// AssertResponse represent validation response
 type AssertResponse struct {
 	*assertly.Validation
 }
@@ -60,7 +60,7 @@ func (r *AssertRequest) Init() error {
 	return nil
 }
 
-//Assertion returns validation slice
+// Assertion returns validation slice
 func (r *AssertResponse) Assertion() []*assertly.Validation {
 	if r == nil {
 		return []*assertly.Validation{}
@@ -68,7 +68,7 @@ func (r *AssertResponse) Assertion() []*assertly.Validation {
 	return []*assertly.Validation{r.Validation}
 }
 
-//NewAssertRequest creates a new assertRequest
+// NewAssertRequest creates a new assertRequest
 func NewAssertRequest(tagID string, name string, description string, source, expected, actual interface{}) *AssertRequest {
 	return &AssertRequest{
 		Source:      source,

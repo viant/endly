@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-//GenerateRequest converts request with provided template and call handler with meta and request data.
+// GenerateRequest converts request with provided template and call handler with meta and request data.
 func GenerateRequest(name string, templates map[string]string, templateParams interface{}, handler func(meta *ResourceMeta, data map[string]interface{}) error) error {
 	var templateParamMap = make(map[string]interface{})
 	err := converter.AssignConverted(&templateParamMap, templateParams)

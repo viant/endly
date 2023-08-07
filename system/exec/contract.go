@@ -14,7 +14,7 @@ import (
 
 var CommandErrors = []string{util.CommandNotFound, util.NoSuchFileOrDirectory, util.ErrorIsNotRecoverable}
 
-//Options represents an execution options
+// Options represents an execution options
 type Options struct {
 	SystemPaths []string          `description:"path that will be appended to the current SSH execution session the current and future commands"`                                                //path that will be added to the system paths
 	Terminators []string          `description:"fragment that helps identify that command has been completed - the best is to leave it empty, which is the detected bash prompt"`                //fragment that helps identify that command has been completed - the best is to leave it empty, which is the detected bash prompt
@@ -28,7 +28,7 @@ type Options struct {
 	AutoSudo    bool              `description:"when this flag is set, in case of permission denied error for non root user retry command with sudo"`
 }
 
-//DefaultOptions creates a default execution options
+// DefaultOptions creates a default execution options
 func DefaultOptions() *Options {
 	return &Options{
 		SystemPaths: make([]string, 0),
@@ -56,7 +56,7 @@ func NewOptions(secrets, env map[string]string, terminators, path []string, supe
 	}
 }
 
-//Extracts represents an execution instructions
+// Extracts represents an execution instructions
 type ExtractCommand struct {
 	When        string         `description:"only run this command is criteria is matched i.e $stdout:/password/"`                                              //only run this execution is output from a previous command is matched
 	Command     string         `required:"true" description:"shell command to be executed"`                                                                     //command to be executed
@@ -79,7 +79,7 @@ func (c *ExtractCommand) Init() error {
 	return nil
 }
 
-//Validate validates managed command request
+// Validate validates managed command request
 func (r *ExtractRequest) Validate() error {
 	if r.Target == nil {
 		return fmt.Errorf("target was empty")
@@ -90,7 +90,7 @@ func (r *ExtractRequest) Validate() error {
 	return nil
 }
 
-//NewExtractCommand creates a new extract command
+// NewExtractCommand creates a new extract command
 func NewExtractCommand(command, when string, success, errors []string, extractions ...*model.Extract) *ExtractCommand {
 	if len(success) == 0 {
 		success = []string{}
@@ -107,14 +107,14 @@ func NewExtractCommand(command, when string, success, errors []string, extractio
 	}
 }
 
-//ExtractRequest represents managed command request
+// ExtractRequest represents managed command request
 type ExtractRequest struct {
 	Target *url.Resource `required:"true" description:"host where command runs" ` //execution target - destination where to run a command.
 	*Options
 	Commands []*ExtractCommand `description:"command with data extraction instruction "` //extract command
 }
 
-//Init initialises request
+// Init initialises request
 func (r *ExtractRequest) Init() error {
 	if r.Options == nil {
 		r.Options = DefaultOptions()
@@ -130,7 +130,7 @@ func (r *ExtractRequest) Init() error {
 	return nil
 }
 
-//Clones clones requst with supplide target
+// Clones clones requst with supplide target
 func (r *ExtractRequest) Clone(target *url.Resource) *ExtractRequest {
 	if target == nil {
 		target = r.Target
@@ -142,7 +142,7 @@ func (r *ExtractRequest) Clone(target *url.Resource) *ExtractRequest {
 	}
 }
 
-//NewExtractRequest returns a new command request
+// NewExtractRequest returns a new command request
 func NewExtractRequest(target *url.Resource, options *Options, commands ...*ExtractCommand) *ExtractRequest {
 	return &ExtractRequest{
 		Target:   target,
@@ -151,30 +151,30 @@ func NewExtractRequest(target *url.Resource, options *Options, commands ...*Extr
 	}
 }
 
-//SetTargetRequest represents set default target request
+// SetTargetRequest represents set default target request
 type SetTargetRequest struct {
 	*url.Resource
 }
 
-//SetTargetRequest represents set default target response
+// SetTargetRequest represents set default target response
 type SetTargetResponse struct{}
 
-//NewExtractRequestFromURL creates a new request from URL
+// NewExtractRequestFromURL creates a new request from URL
 func NewExtractRequestFromURL(URL string) (*ExtractRequest, error) {
 	var resource = url.NewResource(URL)
 	var result = &ExtractRequest{}
 	return result, resource.Decode(result)
 }
 
-//Command represents a command expression:  [when criteria ?] command
+// Command represents a command expression:  [when criteria ?] command
 type Command string
 
-//String returns command string
+// String returns command string
 func (c Command) String() string {
 	return string(c)
 }
 
-//WhenAndCommand extract when criteria and command
+// WhenAndCommand extract when criteria and command
 func (c Command) WhenAndCommand() (string, string) {
 	var expr = c.String()
 	var when, command string
@@ -191,7 +191,7 @@ func (c Command) WhenAndCommand() (string, string) {
 	return when, command
 }
 
-//RunRequest represents a simple command
+// RunRequest represents a simple command
 type RunRequest struct {
 	Target *url.Resource `required:"true" description:"host where command runs" ` //execution target - destination where to run a command.
 	*Options
@@ -199,7 +199,7 @@ type RunRequest struct {
 	Extract  model.Extracts `description:"stdout data extraction instruction"` //Stdout data extraction instruction
 }
 
-//Init initialises request
+// Init initialises request
 func (r *RunRequest) Init() error {
 	if r.Options == nil {
 		r.Options = DefaultOptions()
@@ -208,7 +208,7 @@ func (r *RunRequest) Init() error {
 	return nil
 }
 
-//Validate validates managed command request
+// Validate validates managed command request
 func (r *RunRequest) Validate() error {
 	if r.Target == nil {
 		return fmt.Errorf("target was empty")
@@ -219,7 +219,7 @@ func (r *RunRequest) Validate() error {
 	return nil
 }
 
-//AsExtractRequest returns ExtractRequest for this requests
+// AsExtractRequest returns ExtractRequest for this requests
 func (r *RunRequest) AsExtractRequest() *ExtractRequest {
 	var request = &ExtractRequest{
 		Options:  r.Options,
@@ -242,7 +242,7 @@ func (r *RunRequest) AsExtractRequest() *ExtractRequest {
 	return request
 }
 
-//NewRunRequest creates a new request
+// NewRunRequest creates a new request
 func NewRunRequest(target *url.Resource, superUser bool, commands ...string) *RunRequest {
 	requestCommands := make([]Command, 0)
 	for _, command := range commands {
@@ -258,21 +258,21 @@ func NewRunRequest(target *url.Resource, superUser bool, commands ...string) *Ru
 	return result
 }
 
-//NewExtractRequestFromURL creates a new request from URL
+// NewExtractRequestFromURL creates a new request from URL
 func NewRunRequestFromURL(URL string) (*RunRequest, error) {
 	var resource = url.NewResource(URL)
 	var result = &RunRequest{}
 	return result, resource.Decode(result)
 }
 
-//Log represents an executed command with Stdin, Stdout or Error
+// Log represents an executed command with Stdin, Stdout or Error
 type Log struct {
 	Stdin  string
 	Stdout string
 	Error  string
 }
 
-//RunResponse represents a command response with logged commands.
+// RunResponse represents a command response with logged commands.
 type RunResponse struct {
 	Session string
 	Cmd     []*Log
@@ -281,7 +281,7 @@ type RunResponse struct {
 	Error   string
 }
 
-//OpenSessionRequest represents an open session request.
+// OpenSessionRequest represents an open session request.
 type OpenSessionRequest struct {
 	Target        *url.Resource      //Session is created from target host (servername, port)
 	Config        *ssh.SessionConfig //ssh configuration
@@ -292,7 +292,7 @@ type OpenSessionRequest struct {
 	ReplayService ssh.Service //use Ssh ReplayService instead of actual SSH service (for unit test only)
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *OpenSessionRequest) Validate() error {
 	if r.Target == nil {
 		return errors.New("target was empty")
@@ -300,7 +300,7 @@ func (r *OpenSessionRequest) Validate() error {
 	return nil
 }
 
-//NewOpenSessionRequest creates a new session if transient flag is true, caller is responsible for closing session, otherwise session is closed as context is closed
+// NewOpenSessionRequest creates a new session if transient flag is true, caller is responsible for closing session, otherwise session is closed as context is closed
 func NewOpenSessionRequest(target *url.Resource, systemPaths []string, env map[string]string, transient bool, basedir string) *OpenSessionRequest {
 	if len(systemPaths) == 0 {
 		systemPaths = []string{}
@@ -317,22 +317,22 @@ func NewOpenSessionRequest(target *url.Resource, systemPaths []string, env map[s
 	}
 }
 
-//OpenSessionResponse represents a session id
+// OpenSessionResponse represents a session id
 type OpenSessionResponse struct {
 	SessionID string
 }
 
-//CloseSessionRequest closes session
+// CloseSessionRequest closes session
 type CloseSessionRequest struct {
 	SessionID string
 }
 
-//CloseSessionResponse closes session response
+// CloseSessionResponse closes session response
 type CloseSessionResponse struct {
 	SessionID string
 }
 
-//Add appends provided log into commands slice.
+// Add appends provided log into commands slice.
 func (i *RunResponse) Add(log *Log) {
 	if len(i.Cmd) == 0 {
 		i.Cmd = make([]*Log, 0)
@@ -340,7 +340,7 @@ func (i *RunResponse) Add(log *Log) {
 	i.Cmd = append(i.Cmd, log)
 }
 
-//Stdout returns stdout for provided index, or all concatenated otherwise
+// Stdout returns stdout for provided index, or all concatenated otherwise
 func (i *RunResponse) Stdout(indexes ...int) string {
 	if len(indexes) == 0 {
 		var result = make([]string, len(i.Cmd))
@@ -358,7 +358,7 @@ func (i *RunResponse) Stdout(indexes ...int) string {
 	return strings.Join(result, "\r\n")
 }
 
-//NewRunResponse creates a new RunResponse
+// NewRunResponse creates a new RunResponse
 func NewRunResponse(session string) *RunResponse {
 	return &RunResponse{
 		Session: session,
@@ -367,7 +367,7 @@ func NewRunResponse(session string) *RunResponse {
 	}
 }
 
-//NewCommandLog creates a new command log
+// NewCommandLog creates a new command log
 func NewCommandLog(stdin, stdout string, err error) *Log {
 	result := &Log{
 		Stdin: stdin,

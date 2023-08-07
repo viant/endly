@@ -7,7 +7,7 @@ import (
 	"reflect"
 )
 
-//BuildRoutes build proxy routes
+// BuildRoutes build proxy routes
 func BuildRoutes(service interface{}, clientProvider func(context *endly.Context) (*CtxClient, error)) ([]*endly.Route, error) {
 	var result = make([]*endly.Route, 0)
 	err := toolbox.ScanStructMethods(service, 1, func(method reflect.Method) error {

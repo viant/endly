@@ -613,7 +613,7 @@ func (s *service) registerRoutes() {
 
 }
 
-//NewSeleniumService creates a new selenium service
+// NewSeleniumService creates a new selenium service
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

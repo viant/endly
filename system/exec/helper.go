@@ -13,7 +13,7 @@ import (
 
 var sessionsKey = (*model.Sessions)(nil)
 
-//TerminalSessions returns system sessions
+// TerminalSessions returns system sessions
 func TerminalSessions(context *endly.Context) model.Sessions {
 	var result *model.Sessions
 
@@ -28,7 +28,7 @@ func TerminalSessions(context *endly.Context) model.Sessions {
 	return *result
 }
 
-//SessionID returns session I
+// SessionID returns session I
 func SessionID(context *endly.Context, target *url.Resource) string {
 	username := ""
 	if config, _ := context.Secrets.GetCredentials(target.Credentials); config != nil {
@@ -37,7 +37,7 @@ func SessionID(context *endly.Context, target *url.Resource) string {
 	return username + "@" + target.Host()
 }
 
-//TerminalSession returns Session for passed in target resource.
+// TerminalSession returns Session for passed in target resource.
 func TerminalSession(context *endly.Context, target *url.Resource) (*model.Session, error) {
 	sessions := TerminalSessions(context)
 	if target == nil {
@@ -60,7 +60,7 @@ func TerminalSession(context *endly.Context, target *url.Resource) (*model.Sessi
 	return sessions[sessionID], nil
 }
 
-//Os returns operating system for provide session
+// Os returns operating system for provide session
 func OperatingSystem(context *endly.Context, sessionName string) *model.OperatingSystem {
 	var sessions = TerminalSessions(context)
 	if session, has := sessions[sessionName]; has {
@@ -85,14 +85,14 @@ func openSSHSession(context *endly.Context, target *url.Resource, commandDirecto
 	return nil
 }
 
-//NewSSHRecodingContext open recorder context (to capture SSH command)
+// NewSSHRecodingContext open recorder context (to capture SSH command)
 func NewSSHRecodingContext(manager endly.Manager, target *url.Resource, sessionDir string) (*endly.Context, error) {
 	return NewSSHMultiRecordingContext(manager, map[string]*url.Resource{
 		sessionDir: target,
 	})
 }
 
-//NewSSHMultiRecordingContext open multi recorded session
+// NewSSHMultiRecordingContext open multi recorded session
 func NewSSHMultiRecordingContext(manager endly.Manager, sessions map[string]*url.Resource) (*endly.Context, error) {
 	context := manager.NewContext(toolbox.NewContext())
 	fileName, _, _ := toolbox.CallerInfo(4)
@@ -107,7 +107,7 @@ func NewSSHMultiRecordingContext(manager endly.Manager, sessions map[string]*url
 
 }
 
-//GetReplayService return replay service
+// GetReplayService return replay service
 func GetReplayService(basedir string) (ssh.Service, error) {
 	fileName, _, _ := toolbox.DiscoverCaller(3, 10, "helper.go")
 	parent, _ := path.Split(fileName)
@@ -127,14 +127,14 @@ func GetReplayService(basedir string) (ssh.Service, error) {
 	return service, nil
 }
 
-//NewSSHReplayContext opens test context with SSH commands to replay
+// NewSSHReplayContext opens test context with SSH commands to replay
 func NewSSHReplayContext(manager endly.Manager, target *url.Resource, basedir string) (*endly.Context, error) {
 	return NewSSHMultiReplayContext(manager, map[string]*url.Resource{
 		basedir: target,
 	})
 }
 
-//OpenMultiSessionTestContext opens test context with multi SSH replay/mocks session
+// OpenMultiSessionTestContext opens test context with multi SSH replay/mocks session
 func NewSSHMultiReplayContext(manager endly.Manager, sessions map[string]*url.Resource) (*endly.Context, error) {
 	context := manager.NewContext(nil)
 	for baseDir, target := range sessions {

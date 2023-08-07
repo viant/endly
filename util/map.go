@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-//NormalizeMap normalizes keyValuePairs from map or slice (map with preserved key order)
+// NormalizeMap normalizes keyValuePairs from map or slice (map with preserved key order)
 func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{}, error) {
 	var result = make(map[string]interface{})
 	if keyValuePairs == nil {
@@ -26,7 +26,7 @@ func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{},
 	return result, err
 }
 
-//AppendMap source to dest map
+// AppendMap source to dest map
 func Append(dest, source map[string]interface{}, override bool) {
 	for k, v := range source {
 		if _, ok := dest[k]; ok && !override {
@@ -36,7 +36,7 @@ func Append(dest, source map[string]interface{}, override bool) {
 	}
 }
 
-//BuildLowerCaseMapping build lowercase key to key map mapping
+// BuildLowerCaseMapping build lowercase key to key map mapping
 func BuildLowerCaseMapping(aMap map[string]interface{}) map[string]string {
 	var result = make(map[string]string)
 	for k := range aMap {

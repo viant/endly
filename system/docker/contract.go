@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-//RunRequest represents a docker runAdapter request
+// RunRequest represents a docker runAdapter request
 type RunRequest struct {
 	Credentials                 string `description:"credentials"`
 	Name                        string
@@ -37,7 +37,7 @@ type RunResponse struct {
 	Stdout      string
 }
 
-//BuildRequest represents docker build request
+// BuildRequest represents docker build request
 type BuildRequest struct {
 	Tag                     *Tag   `required:"true" description:"build docker tag"`
 	Path                    string `description:"location of dockerfile"`
@@ -66,45 +66,45 @@ func (r *BuildRequest) Init() error {
 	return nil
 }
 
-//BuildResponse represents image ID
+// BuildResponse represents image ID
 type BuildResponse struct {
 	ImageID string
 	Stdout  []string
 }
 
-//LoginRequest represents a docker pull request
+// LoginRequest represents a docker pull request
 type LoginRequest struct {
 	Credentials string `required:"true" description:"credentials path"`
 	Repository  string `required:"true" description:"repository url"`
 }
 
-//LoginResponse represents login response
+// LoginResponse represents login response
 type LoginResponse struct {
 }
 
-//TagRequest represents docker tag request
+// TagRequest represents docker tag request
 type TagRequest struct {
 	SourceTag *Tag `required:"true"`
 	TargetTag *Tag `required:"true"`
 }
 
-//TagResponse represents docker tag response
+// TagResponse represents docker tag response
 type TagResponse struct {
 	Stdout string
 }
 
-//PushRequest represents a docker push request
+// PushRequest represents a docker push request
 type PushRequest struct {
 	Credentials string
 	Tag         *Tag `required:"true"`
 }
 
-//PushResponse represents push response
+// PushResponse represents push response
 type PushResponse struct {
 	Stdout []string
 }
 
-//StatusRequest represents a docker check container status request
+// StatusRequest represents a docker check container status request
 type StatusRequest struct {
 	Name   string
 	Names  []string
@@ -112,73 +112,73 @@ type StatusRequest struct {
 	IDs    []string
 }
 
-//StatusResponse represents status response
+// StatusResponse represents status response
 type StatusResponse struct {
 	Containers []types.Container
 }
 
-//StartRequest start request
+// StartRequest start request
 type StartRequest StatusRequest
 
-//StartResponse represents docker start response
+// StartResponse represents docker start response
 type StartResponse StopResponse
 
-//StopRequest represents docker stop running images/containers request
+// StopRequest represents docker stop running images/containers request
 type StopRequest StatusRequest
 
-//StopImagesResponse represents docker stop images response
+// StopImagesResponse represents docker stop images response
 type StopResponse StatusResponse
 
-//RemoveRequest represents docker remove request
+// RemoveRequest represents docker remove request
 type RemoveRequest StatusRequest
 
-//RemoveResponse represents remove response
+// RemoveResponse represents remove response
 type RemoveResponse StatusResponse
 
-//LogsRequest represents docker runner container logs to take stdout
+// LogsRequest represents docker runner container logs to take stdout
 type LogsRequest struct {
 	StatusRequest
 	*types.ContainerLogsOptions
 }
 
-//LogsResponse represents docker container logs response
+// LogsResponse represents docker container logs response
 type LogsResponse struct {
 	Stdout string
 }
 
-//PullRequest represents pull request
+// PullRequest represents pull request
 type PullRequest struct {
 	Credentials            string
 	Image                  string
 	types.ImagePullOptions `json:",inline" yaml:",inline"`
 }
 
-//PullResponse represents pull response
+// PullResponse represents pull response
 type PullResponse struct {
 	types.ImageSummary
 	Stdout []string
 }
 
-//LogoutRequest represents a docker logout request
+// LogoutRequest represents a docker logout request
 type LogoutRequest struct {
 	Repository string `required:"true" description:"repository URL"`
 }
 
-//LogoutResponse represents a docker logout response
+// LogoutResponse represents a docker logout response
 type LogoutResponse struct{}
 
-//PushResponse represents a docker push request
+// PushResponse represents a docker push request
 type CopyRequest struct {
 	Assets map[string]string
 }
 
-//CopyResponse represents a copy response
+// CopyResponse represents a copy response
 type CopyResponse struct{}
 
-//InspectRequest represents a docker inspect request, target name refers to container name
+// InspectRequest represents a docker inspect request, target name refers to container name
 type InspectRequest StatusRequest
 
-//InspectResponse represents a docker inspect request
+// InspectResponse represents a docker inspect request
 type InspectResponse struct {
 	Info []types.ContainerJSON //you can extract any instance default, for instance to get Ip you can use Info[0].NetworkSettings.IPAddress in the variable action post from key
 }
@@ -296,36 +296,36 @@ func (r *StatusRequest) Init() error {
 	return nil
 }
 
-//StatusRequest returns status request
+// StatusRequest returns status request
 func (r *StopRequest) AsStatusRequest() *StatusRequest {
 	result := StatusRequest(*r)
 	return &result
 }
 
-//StatusRequest returns status request
+// StatusRequest returns status request
 func (r *RemoveRequest) AsStatusRequest() *StatusRequest {
 	result := StatusRequest(*r)
 	return &result
 }
 
-//StatusRequest returns status request
+// StatusRequest returns status request
 func (r *StartRequest) AsStatusRequest() *StatusRequest {
 	result := StatusRequest(*r)
 	return &result
 }
 
-//StatusRequest returns status request
+// StatusRequest returns status request
 func (r *InspectRequest) AsStatusRequest() *StatusRequest {
 	result := StatusRequest(*r)
 	return &result
 }
 
-//StatusRequest returns status request
+// StatusRequest returns status request
 func (r *LogsRequest) AsStatusRequest() *StatusRequest {
 	return &r.StatusRequest
 }
 
-//StatusRequest returns status request
+// StatusRequest returns status request
 func (r *LogsRequest) Init() error {
 	if r.ContainerLogsOptions == nil {
 		r.ContainerLogsOptions = &types.ContainerLogsOptions{

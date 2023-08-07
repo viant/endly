@@ -83,7 +83,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//New creates a new network service.
+// New creates a new network service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(NetworkServiceID),
