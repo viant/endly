@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-//DataError represent data error
+// DataError represent data error
 type DataError struct {
 	Message string `json:"message"`
 }
@@ -21,7 +21,7 @@ type DataAux struct {
 	Size   int
 }
 
-//DataStream represents a data strem
+// DataStream represents a data strem
 type DataStream struct {
 	Stream      string     `json:"stream"`
 	Progress    string     `json:"progress"`

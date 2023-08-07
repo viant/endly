@@ -13,7 +13,7 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//RunRequest represents workflow runWorkflow request
+// RunRequest represents workflow runWorkflow request
 type RunRequest struct {
 	EnableLogging     bool                   `description:"flag to enable logging"`
 	LogDirectory      string                 `description:"log directory"`
@@ -36,7 +36,7 @@ type RunRequest struct {
 	workflow *model.Workflow //inline workflow from pipeline
 }
 
-//Init initialises request
+// Init initialises request
 func (r *RunRequest) Init() (err error) {
 	defer func() {
 		if err != nil {
@@ -89,7 +89,7 @@ func (r *RunRequest) Init() (err error) {
 	return nil
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *RunRequest) Validate() error {
 	if r.workflow != nil {
 		return r.workflow.Validate()
@@ -104,7 +104,7 @@ func (r *RunRequest) Validate() error {
 	return nil
 }
 
-//NewRunRequest creates a new runWorkflow request
+// NewRunRequest creates a new runWorkflow request
 func NewRunRequest(workflow string, params map[string]interface{}, publishParams bool) *RunRequest {
 	selector := model.WorkflowSelector(workflow)
 	return &RunRequest{
@@ -116,25 +116,25 @@ func NewRunRequest(workflow string, params map[string]interface{}, publishParams
 	}
 }
 
-//NewRunRequestFromURL creates a new request from URL
+// NewRunRequestFromURL creates a new request from URL
 func NewRunRequestFromURL(URL string) (*RunRequest, error) {
 	var request = &RunRequest{}
 	var resource = url.NewResource(URL)
 	return request, resource.Decode(request)
 }
 
-//RunResponse represents workflow runWorkflow response
+// RunResponse represents workflow runWorkflow response
 type RunResponse struct {
 	Data      map[string]interface{} //  data populated by  .Post variable section.
 	SessionID string                 //session id
 }
 
-//RegisterRequest represents workflow register request
+// RegisterRequest represents workflow register request
 type RegisterRequest struct {
 	*model.Workflow
 }
 
-//RegisterResponse represents workflow register response
+// RegisterResponse represents workflow register response
 type RegisterResponse struct {
 	Source *url.Resource
 }
@@ -144,7 +144,7 @@ type LoadRequest struct {
 	Source *url.Resource
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *LoadRequest) Validate() error {
 	if r.Source == nil {
 		return errors.New("source was empty")
@@ -171,7 +171,7 @@ type SwitchRequest struct {
 	Default   *SwitchCase   `description:"in case no value was match case"`
 }
 
-//Match matches source with supplied action request.
+// Match matches source with supplied action request.
 func (r *SwitchRequest) Match(source interface{}) *SwitchCase {
 	for _, switchCase := range r.Cases {
 		if toolbox.AsString(switchCase.Value) == toolbox.AsString(source) {
@@ -184,7 +184,7 @@ func (r *SwitchRequest) Match(source interface{}) *SwitchCase {
 // SwitchResponse represents actual action or task response
 type SwitchResponse interface{}
 
-//Validate checks if workflow is valid
+// Validate checks if workflow is valid
 func (r *SwitchRequest) Validate() error {
 	if r.SourceKey == "" {
 		return errors.New("sourceKey was empty")
@@ -224,32 +224,32 @@ type FailRequest struct {
 // FailResponse represents workflow exit response
 type FailResponse struct{}
 
-//NopRequest represent no operation
+// NopRequest represent no operation
 type NopRequest struct{}
 
-//NopParrotRequest represent parrot request
+// NopParrotRequest represent parrot request
 type NopParrotRequest struct {
 	In interface{}
 }
 
-//SetEnvRequest represents set env request
+// SetEnvRequest represents set env request
 type SetEnvRequest struct {
 	Env map[string]string `description:"dynamically change current run endly os environment variables"`
 }
 
-//SetEnvResponse returns original env setup
+// SetEnvResponse returns original env setup
 type SetEnvResponse struct {
 	Env map[string]string
 }
 
-//PrintRequest represent print request
+// PrintRequest represent print request
 type PrintRequest struct {
 	Message string
 	Style   int
 	Error   string
 }
 
-//Messages returns messages
+// Messages returns messages
 func (r *PrintRequest) Messages() []*msg.Message {
 
 	var result = msg.NewMessage(nil, nil)

@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-//Variable represents a variable
+// Variable represents a variable
 type Variable struct {
 	Name              string            `description:"name"`
 	Value             interface{}       `description:"default value"`
@@ -30,7 +30,7 @@ func (v *Variable) tempfile() string {
 	return path.Join(os.Getenv("TMPDIR"), v.Name+".var")
 }
 
-//PersistValue persist variable
+// PersistValue persist variable
 func (v *Variable) PersistValue() error {
 	if v.Value != nil {
 		var filename = v.tempfile()
@@ -47,7 +47,7 @@ func (v *Variable) PersistValue() error {
 	return nil
 }
 
-//Load loads persisted variable value.
+// Load loads persisted variable value.
 func (v *Variable) Load() error {
 	var err error
 	var encoded []byte
@@ -219,7 +219,7 @@ func (v *Variable) Apply(in, out data.Map) error {
 	return nil
 }
 
-//NewVariable creates a new variable
+// NewVariable creates a new variable
 func NewVariable(name, form, when string, required bool, value, elseValue interface{}, replace map[string]string, emptyIfUnexpanded bool) *Variable {
 	return &Variable{
 		Name:              name,
@@ -233,10 +233,10 @@ func NewVariable(name, form, when string, required bool, value, elseValue interf
 	}
 }
 
-//Variables a slice of variables
+// Variables a slice of variables
 type Variables []*Variable
 
-//Apply evaluates all variable from in map to out map
+// Apply evaluates all variable from in map to out map
 func (v *Variables) Apply(in, out data.Map) error {
 	if out == nil {
 		return fmt.Errorf("out state was empty")
@@ -255,7 +255,7 @@ func (v *Variables) Apply(in, out data.Map) error {
 	return nil
 }
 
-//String returns a variable info
+// String returns a variable info
 func (v Variables) String() string {
 	var result = ""
 	for _, item := range v {
@@ -267,11 +267,11 @@ func (v Variables) String() string {
 	return result
 }
 
-//VariableExpression represent a variable expression [!] VariableName = [when  ?] value : otherwiseValue,
+// VariableExpression represent a variable expression [!] VariableName = [when  ?] value : otherwiseValue,
 // exclamation mark flags variable as required
 type VariableExpression string
 
-//AsVariable converts expression to variable
+// AsVariable converts expression to variable
 func (e *VariableExpression) AsVariable() (*Variable, error) {
 	var value = strings.TrimSpace(string(*e))
 	var result = &Variable{}

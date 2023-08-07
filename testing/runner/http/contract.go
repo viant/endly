@@ -8,7 +8,7 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//SendRequest represents a send http request.
+// SendRequest represents a send http request.
 type SendRequest struct {
 	Options     map[string]interface{} `description:"http client httpOptions: key value pairs, where key is one of the following: HTTP httpOptions:RequestTimeoutMs,TimeoutMs,KeepAliveTimeMs,TLSHandshakeTimeoutMs,ResponseHeaderTimeoutMs,MaxIdleConns,FollowRedirects"`
 	httpOptions []*toolbox.HttpOptions
@@ -16,7 +16,7 @@ type SendRequest struct {
 	Expect      map[string]interface{} `description:"If specified it will validated response as actual"`
 }
 
-//Init initializes send request
+// Init initializes send request
 func (s *SendRequest) Init() error {
 
 	if s.Expect == nil {
@@ -62,21 +62,21 @@ func (s *SendRequest) Init() error {
 	return nil
 }
 
-//NewSendRequestFromURL create new request from URL
+// NewSendRequestFromURL create new request from URL
 func NewSendRequestFromURL(URL string) (*SendRequest, error) {
 	resource := url.NewResource(URL)
 	var request = &SendRequest{}
 	return request, resource.Decode(request)
 }
 
-//SendResponse represnets a send response
+// SendResponse represnets a send response
 type SendResponse struct {
 	Responses []*Response
 	Data      data.Map
 	Assert    *validator.AssertResponse
 }
 
-//NewResponse creates and appends a response
+// NewResponse creates and appends a response
 func (r *SendResponse) NewResponse() *Response {
 	response := NewResponse()
 	if len(r.Responses) == 0 {
@@ -86,7 +86,7 @@ func (r *SendResponse) NewResponse() *Response {
 	return response
 }
 
-//Expands expands data ($httpTrips.Data) attribute shared across requests within a group
+// Expands expands data ($httpTrips.Data) attribute shared across requests within a group
 func (r *SendResponse) Expand(state data.Map) {
 	if len(r.Data) == 0 {
 		return
@@ -98,14 +98,14 @@ func (r *SendResponse) Expand(state data.Map) {
 	}
 }
 
-//NewSendRequestFromURL create new request from URL
+// NewSendRequestFromURL create new request from URL
 func NewSendResponseFromURL(URL string) (*SendResponse, error) {
 	resource := url.NewResource(URL)
 	var request = &SendResponse{}
 	return request, resource.Decode(request)
 }
 
-//LoadRequest represents a send http request.
+// LoadRequest represents a send http request.
 type LoadRequest struct {
 	*SendRequest
 	ThreadCount int    `description:"defines number of http client sending request concurrently, default 3"`
@@ -164,7 +164,7 @@ func (r *LoadRequest) Validate() error {
 	return nil
 }
 
-//LoadRequest represents a stress test response
+// LoadRequest represents a stress test response
 type LoadResponse struct {
 	SendResponse
 	Status              string

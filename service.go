@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-//AbstractService represenst an abstract service.
+// AbstractService represenst an abstract service.
 type AbstractService struct {
 	Service
 	*sync.RWMutex
@@ -24,12 +24,12 @@ type AbstractService struct {
 	state          data.Map
 }
 
-//Mutex returns a mutex.
+// Mutex returns a mutex.
 func (s *AbstractService) Mutex() *sync.RWMutex {
 	return s.RWMutex
 }
 
-//Register register action routes
+// Register register action routes
 func (s *AbstractService) Register(routes ...*Route) {
 	for _, route := range routes {
 		s.routeByAction[route.Action] = route
@@ -65,7 +65,7 @@ func (s *AbstractService) addRouteIfConvertible(request interface{}) *Route {
 	return nil
 }
 
-//Run returns a service action for supplied action
+// Run returns a service action for supplied action
 func (s *AbstractService) Run(context *Context, request interface{}) (response *ServiceResponse) {
 	response = &ServiceResponse{Status: "ok"}
 	startEvent := s.Begin(context, request)
@@ -114,7 +114,7 @@ func (s *AbstractService) Run(context *Context, request interface{}) (response *
 	return response
 }
 
-//Route returns a service action route for supplied action
+// Route returns a service action route for supplied action
 func (s *AbstractService) Route(action string) (*Route, error) {
 	if result, ok := s.routeByAction[action]; ok {
 		return result, nil
@@ -122,7 +122,7 @@ func (s *AbstractService) Route(action string) (*Route, error) {
 	return nil, fmt.Errorf("unknown %v.%v service action", s.id, action)
 }
 
-//Sleep sleeps for provided time in ms
+// Sleep sleeps for provided time in ms
 func (s *AbstractService) Sleep(context *Context, sleepTimeMs int) {
 	if sleepTimeMs == 0 {
 		return
@@ -148,7 +148,7 @@ func (s *AbstractService) Sleep(context *Context, sleepTimeMs int) {
 	}
 }
 
-//GetHostAndSSHPort return host and ssh port
+// GetHostAndSSHPort return host and ssh port
 func (s *AbstractService) GetHostAndSSHPort(target *url.Resource) (string, int) {
 	if target == nil {
 		return "", 0
@@ -164,29 +164,29 @@ func (s *AbstractService) GetHostAndSSHPort(target *url.Resource) (string, int) 
 	return hostname, port
 }
 
-//Actions returns service actions
+// Actions returns service actions
 func (s *AbstractService) Actions() []string {
 	return s.actions
 }
 
-//Begin add starting event
+// Begin add starting event
 func (s *AbstractService) Begin(context *Context, value interface{}) msg.Event {
 	return context.Publish(value)
 }
 
-//End adds finishing event.
+// End adds finishing event.
 func (s *AbstractService) End(context *Context) func(startEvent msg.Event, value interface{}) msg.Event {
 	return func(startEvent msg.Event, value interface{}) msg.Event {
 		return context.PublishWithStartEvent(value, startEvent)
 	}
 }
 
-//ID returns this service id.
+// ID returns this service id.
 func (s *AbstractService) ID() string {
 	return s.id
 }
 
-//State returns this service state map.
+// State returns this service state map.
 func (s *AbstractService) State() data.Map {
 	return s.state
 }
@@ -214,7 +214,7 @@ func (s *AbstractService) RunInBackground(context *Context, handler func() error
 	return err
 }
 
-//NewAbstractService creates a new abstract service.
+// NewAbstractService creates a new abstract service.
 func NewAbstractService(id string) *AbstractService {
 	return &AbstractService{
 		id:             id,
@@ -226,12 +226,12 @@ func NewAbstractService(id string) *AbstractService {
 	}
 }
 
-//NopRequest represent no operation to be deprecated
+// NopRequest represent no operation to be deprecated
 type NopRequest struct {
 	In interface{}
 }
 
-//nopService represents no operation nopService (deprecated, use workflow, nop instead)
+// nopService represents no operation nopService (deprecated, use workflow, nop instead)
 type nopService struct {
 	*AbstractService
 }
@@ -257,7 +257,7 @@ func (s *nopService) registerRoutes() {
 	})
 }
 
-//newNopService creates a new NoOperation nopService.
+// newNopService creates a new NoOperation nopService.
 func newNopService() Service {
 	var result = &nopService{
 		AbstractService: NewAbstractService("nop"),

@@ -24,7 +24,7 @@ type service struct {
 	*svnService
 }
 
-//checkInfo returns version control info
+// checkInfo returns version control info
 func (s *service) checkInfo(context *endly.Context, request *StatusRequest) (*StatusResponse, error) {
 	source, err := context.ExpandResource(request.Source)
 	if err != nil {
@@ -45,7 +45,7 @@ func (s *service) checkInfo(context *endly.Context, request *StatusRequest) (*St
 	return nil, fmt.Errorf("unsupported vc type: %v for URL %v", request.Type, source.URL)
 }
 
-//commit commits local changes to the version control
+// commit commits local changes to the version control
 func (s *service) commit(context *endly.Context, request *CommitRequest) (*CommitResponse, error) {
 	target, err := context.ExpandResource(request.Source)
 	if err != nil {
@@ -65,7 +65,7 @@ func (s *service) commit(context *endly.Context, request *CommitRequest) (*Commi
 	return nil, fmt.Errorf("unsupported type: %v for URL %v", request.Type, target.URL)
 }
 
-//pull retrieves the latest changes from the origin
+// pull retrieves the latest changes from the origin
 func (s *service) pull(context *endly.Context, request *PullRequest) (*PullResponse, error) {
 	target, err := context.ExpandResource(request.Dest)
 	if err != nil {
@@ -83,7 +83,7 @@ func (s *service) pull(context *endly.Context, request *PullRequest) (*PullRespo
 	return nil, fmt.Errorf("unsupported type: %v for URL %v", request.Type, target.URL)
 }
 
-//checkout If target directory exist and already contains matching origin URL, only taking the latest changes without overriding local if performed, otherwise full checkout
+// checkout If target directory exist and already contains matching origin URL, only taking the latest changes without overriding local if performed, otherwise full checkout
 func (s *service) checkout(context *endly.Context, request *CheckoutRequest) (*CheckoutResponse, error) {
 	var response = &CheckoutResponse{
 		Checkouts: make(map[string]*Info),
@@ -409,7 +409,7 @@ If target directory exist and contains matching origin URL, only latest changes 
 	})
 }
 
-//New creates a new version control service (git,svn)
+// New creates a new version control service (git,svn)
 func New() endly.Service {
 	var service = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

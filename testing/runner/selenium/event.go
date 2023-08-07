@@ -6,7 +6,7 @@ import (
 	"github.com/viant/toolbox"
 )
 
-//Messages returns messages
+// Messages returns messages
 func (r *RunResponse) Messages() []*msg.Message {
 	var result = make([]*msg.Message, 0)
 
@@ -30,7 +30,7 @@ func (r *RunResponse) Messages() []*msg.Message {
 	return result
 }
 
-//IsInput returns this request (CLI reporter interface)
+// IsInput returns this request (CLI reporter interface)
 func (r *RunRequest) Messages() []*msg.Message {
 	var result = make([]*msg.Message, 0)
 
@@ -54,12 +54,12 @@ func (r *RunRequest) Messages() []*msg.Message {
 	return result
 }
 
-//IsInput returns this request (CLI reporter interface)
+// IsInput returns this request (CLI reporter interface)
 func (r *RunRequest) IsInput() bool {
 	return true
 }
 
-//IsOutput returns this response (CLI reporter interface)
+// IsOutput returns this response (CLI reporter interface)
 func (r *RunResponse) IsOutput() bool {
 	return true
 }

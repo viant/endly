@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-//ServiceID represents system daemon service
+// ServiceID represents system daemon service
 const ServiceID = "daemon"
 
 const (
@@ -400,7 +400,7 @@ func (s *service) registerRoutes() {
 
 }
 
-//NewDaemonService creates a new system service.
+// NewDaemonService creates a new system service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

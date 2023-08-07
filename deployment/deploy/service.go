@@ -17,7 +17,7 @@ import (
 	"sync"
 )
 
-//ServiceID represents a deployment service id.
+// ServiceID represents a deployment service id.
 const ServiceID = "deployment"
 
 const artifactKey = "artifact"
@@ -143,7 +143,7 @@ func (s *service) updateSessionDeployment(context *endly.Context, target *url.Re
 	return nil
 }
 
-//TODO break it down - too large and messy
+// TODO break it down - too large and messy
 func (s *service) discoverTransfer(context *endly.Context, request *Request, meta *Meta, deploymentTarget *TargetMeta) (*copy.Rule, error) {
 	var state = context.State()
 	transfer := deploymentTarget.Deployment.Transfer
@@ -487,7 +487,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//New creates a new deployment service
+// New creates a new deployment service
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

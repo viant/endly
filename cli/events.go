@@ -9,7 +9,7 @@ import (
 	"sync"
 )
 
-//Event represents an tagged event
+// Event represents an tagged event
 type Event struct {
 	Description string
 	Caller      string
@@ -22,7 +22,7 @@ type Event struct {
 	subEvent    *Event
 }
 
-//AddEvent add provided event
+// AddEvent add provided event
 func (e *Event) AddEvent(event msg.Event) {
 	if len(e.Events) == 0 {
 		e.Events = make([]msg.Event, 0)
@@ -30,7 +30,7 @@ func (e *Event) AddEvent(event msg.Event) {
 	e.Events = append(e.Events, event)
 }
 
-//Events represents tags
+// Events represents tags
 type Events struct {
 	*model.Activities
 	activity   *model.Activity
@@ -40,7 +40,7 @@ type Events struct {
 	mutex      *sync.RWMutex
 }
 
-//AddTag adds reporting tag
+// AddTag adds reporting tag
 func (r *Events) AddTag(event *Event) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
@@ -48,7 +48,7 @@ func (r *Events) AddTag(event *Event) {
 	r.indexedTag[event.TagID] = event
 }
 
-//Event returns an event tag
+// Event returns an event tag
 func (r *Events) EventTag() *Event {
 	if r.Len() == 0 {
 		if r.eventTag == nil {
@@ -76,7 +76,7 @@ func (r *Events) EventTag() *Event {
 	return r.indexedTag[activity.TagID]
 }
 
-//Push Events
+// Push Events
 func (r *Events) Push(activity *model.Activity) {
 	r.Activities.Push(activity)
 	if activity.TagIndex != "" {
@@ -124,7 +124,7 @@ func (r *Events) TemplateEvent(context *endly.Context, candidateTagID string) *E
 	return event
 }
 
-//NewEventTags returns new events
+// NewEventTags returns new events
 func NewEventTags() *Events {
 	return &Events{
 		Activities: model.NewActivities(),

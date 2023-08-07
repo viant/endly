@@ -5,7 +5,7 @@ import (
 	"github.com/viant/endly/model/msg"
 )
 
-//Messages returns messages
+// Messages returns messages
 func (r *InitRequest) Messages() []*msg.Message {
 	if r.RegisterRequest == nil {
 		return []*msg.Message{}
@@ -23,7 +23,7 @@ func (r *InitRequest) Messages() []*msg.Message {
 	return result
 }
 
-//Messages returns messages
+// Messages returns messages
 func (r *RegisterRequest) Messages() []*msg.Message {
 	if r.Config == nil {
 		return []*msg.Message{}
@@ -34,7 +34,7 @@ func (r *RegisterRequest) Messages() []*msg.Message {
 	}
 }
 
-//Messages returns messages
+// Messages returns messages
 func (r *MappingRequest) Messages() []*msg.Message {
 	if len(r.Mappings) == 0 {
 		return []*msg.Message{}
@@ -48,7 +48,7 @@ func (r *MappingRequest) Messages() []*msg.Message {
 
 }
 
-//Messages returns messages
+// Messages returns messages
 func (r *RunScriptRequest) Messages() []*msg.Message {
 	if len(r.Scripts) == 0 {
 		return []*msg.Message{}
@@ -62,7 +62,7 @@ func (r *RunScriptRequest) Messages() []*msg.Message {
 	return result
 }
 
-//Messages returns messages
+// Messages returns messages
 func (r *SequenceResponse) Messages() []*msg.Message {
 	if len(r.Sequences) == 0 {
 		return []*msg.Message{}
@@ -75,7 +75,7 @@ func (r *SequenceResponse) Messages() []*msg.Message {
 	return result
 }
 
-//Messages returns messages
+// Messages returns messages
 func (r *PrepareRequest) Messages() []*msg.Message {
 	err := r.Load()
 	if r.DatasetResource == nil || len(r.Datasets) == 0 {
@@ -94,7 +94,7 @@ func (r *PrepareRequest) Messages() []*msg.Message {
 	return result
 }
 
-//Messages returns messages
+// Messages returns messages
 func (r *QueryRequest) Messages() []*msg.Message {
 	message := msg.NewMessage(msg.NewStyled(fmt.Sprintf("(%v) %v", r.Datastore, r.SQL), msg.MessageStyleGeneric), msg.NewStyled("query", msg.MessageStyleGeneric))
 	return []*msg.Message{message}

@@ -19,7 +19,7 @@ var clientKey = (*CtxClient)(nil)
 
 var defaultNamespace = "default"
 
-//CtxClient represents generic google cloud service client
+// CtxClient represents generic google cloud service client
 type CtxClient struct {
 	CredConfig  *cred.Config
 	masterURL   string
@@ -70,7 +70,7 @@ func (c *CtxClient) Clientset() (*kubernetes.Clientset, error) {
 	return c.clientSet, err
 }
 
-//GetCtxClient get or creates a new  kubernetess client.
+// GetCtxClient get or creates a new  kubernetess client.
 func GetCtxClient(context *endly.Context) (*CtxClient, error) {
 	client := &CtxClient{}
 	if context.Contains(clientKey) {
@@ -82,7 +82,7 @@ func GetCtxClient(context *endly.Context) (*CtxClient, error) {
 	return client, err
 }
 
-//Init get or creates context, client
+// Init get or creates context, client
 func Init(context *endly.Context, rawRequest map[string]interface{}) error {
 	if len(rawRequest) == 0 {
 		return nil

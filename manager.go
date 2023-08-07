@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-//RunWithoutLogging runs action with logging disabled for supplied context request and response. Response has to be pointer or nil
+// RunWithoutLogging runs action with logging disabled for supplied context request and response. Response has to be pointer or nil
 func RunWithoutLogging(context *Context, request, result interface{}) error {
 	logging := context.Logging
 	context.SetLogging(false)
@@ -22,7 +22,7 @@ func RunWithoutLogging(context *Context, request, result interface{}) error {
 	return Run(context, request, result)
 }
 
-//Run runs action for supplied context request and response. Response has to be pointer or nil
+// Run runs action for supplied context request and response. Response has to be pointer or nil
 func Run(context *Context, request, result interface{}) error {
 	if context == nil {
 		manager := New()
@@ -75,7 +75,7 @@ func (m *manager) Version() string {
 	return m.version
 }
 
-//Service returns service for supplied request or name.
+// Service returns service for supplied request or name.
 func (m *manager) Service(input interface{}) (Service, error) {
 	if serviceID, ok := input.(string); ok {
 		if result, found := m.serviceByID[serviceID]; found {
@@ -119,7 +119,7 @@ func (m *manager) NewContext(ctx toolbox.Context) *Context {
 	return result
 }
 
-//New returns a new manager.
+// New returns a new manager.
 func New() Manager {
 	var result = &manager{
 		name:                 AppName,
@@ -135,7 +135,7 @@ func New() Manager {
 	return result
 }
 
-//Run runs action for supplied request, returns service action response or error
+// Run runs action for supplied request, returns service action response or error
 func (m *manager) Run(context *Context, request interface{}) (interface{}, error) {
 	if !toolbox.IsStruct(request) {
 		return nil, fmt.Errorf("expected request but had %T", request)
@@ -156,7 +156,7 @@ func (m *manager) Run(context *Context, request interface{}) (interface{}, error
 	return response.Response, response.Err
 }
 
-//Services returns manager serviceByID or error
+// Services returns manager serviceByID or error
 func Services(mgr interface{}) map[string]Service {
 	var manager, ok = mgr.(*manager)
 	if !ok {
@@ -165,7 +165,7 @@ func Services(mgr interface{}) map[string]Service {
 	return manager.serviceByID
 }
 
-//GetVersion returns endly version
+// GetVersion returns endly version
 func GetVersion() string {
 	resource := url.NewResource(fmt.Sprintf("mem://%v/Version", Namespace))
 	version, _ := resource.DownloadText()

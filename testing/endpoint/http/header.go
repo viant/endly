@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-//HeaderProvider return a header value for supplied source
+// HeaderProvider return a header value for supplied source
 func HeaderProvider(header string) HTTPRequestKeyProvider {
 	return func(source interface{}) (string, error) {
 		switch request := source.(type) {

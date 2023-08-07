@@ -93,7 +93,7 @@ func getOutputRules(kind string) map[string]string {
 	return outputTemplates[strings.ToLower(kind)]
 }
 
-//ShortResourceResponse returns short info
+// ShortResourceResponse returns short info
 func ShortItemInfo(kind string, item map[string]interface{}) map[string]interface{} {
 	rules := getOutputRules(kind)
 	if len(rules) == 0 {
@@ -104,12 +104,12 @@ func ShortItemInfo(kind string, item map[string]interface{}) map[string]interfac
 	return result
 }
 
-//ShortResourceResponse represents resource meta info
+// ShortResourceResponse represents resource meta info
 type ShortResourceResponse struct {
 	Items []interface{}
 }
 
-//NewShortResourceResponse create short response
+// NewShortResourceResponse create short response
 func NewShortResourceResponse(response ResourceInfoResponse) *ShortResourceResponse {
 	result := &ShortResourceResponse{
 		Items: make([]interface{}, 0),

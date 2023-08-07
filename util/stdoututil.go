@@ -19,7 +19,7 @@ const (
 
 var StdErrors = []string{CommandNotFound, NoSuchFileOrDirectory, ProgramCanBeFound}
 
-//IsPermitted returns true when output does not have permission deinied or not permitted
+// IsPermitted returns true when output does not have permission deinied or not permitted
 func IsPermitted(stdout ...string) bool {
 	if len(stdout) == 0 {
 		return false
@@ -28,7 +28,7 @@ func IsPermitted(stdout ...string) bool {
 	return !(strings.Contains(candidate, PermissionDenied) || strings.Contains(candidate, OperationNotPermitted))
 }
 
-//CheckNoSuchFileOrDirectory checks for no such file or directory message in the provided stdout.
+// CheckNoSuchFileOrDirectory checks for no such file or directory message in the provided stdout.
 func CheckNoSuchFileOrDirectory(stdout ...string) bool {
 	if len(stdout) == 0 {
 		return false
@@ -37,7 +37,7 @@ func CheckNoSuchFileOrDirectory(stdout ...string) bool {
 	return strings.Contains(candidate, NoSuchFileOrDirectory)
 }
 
-//CheckCommandNotFound checks for command not found message in the provided stdout.
+// CheckCommandNotFound checks for command not found message in the provided stdout.
 func CheckCommandNotFound(stdout ...string) bool {
 	if len(stdout) == 0 {
 		return false
@@ -46,7 +46,7 @@ func CheckCommandNotFound(stdout ...string) bool {
 	return strings.Contains(candidate, CommandNotFound) || strings.Contains(candidate, NotInstalled) || strings.Contains(candidate, CanNotOpen)
 }
 
-//ExtractColumn extract a column from the line for provided index
+// ExtractColumn extract a column from the line for provided index
 func ExtractColumn(line string, columnIndex int) (string, bool) {
 	var columns, has = ExtractColumns(line)
 	if !has {
@@ -58,7 +58,7 @@ func ExtractColumn(line string, columnIndex int) (string, bool) {
 	return "", false
 }
 
-//ExtractColumns extract all column from the line
+// ExtractColumns extract all column from the line
 func ExtractColumns(line string) ([]string, bool) {
 	if line == "" {
 		return []string{}, false

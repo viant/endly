@@ -7,13 +7,13 @@ import (
 	"net/http"
 )
 
-//Server represents server
+// Server represents server
 type Server struct {
 	port          string
 	serviceRouter *toolbox.ServiceRouter
 }
 
-//Start starts server
+// Start starts server
 func (s *Server) Start() {
 
 	http.HandleFunc("/v1/", func(writer http.ResponseWriter, reader *http.Request) {
@@ -26,7 +26,7 @@ func (s *Server) Start() {
 	log.Fatal(http.ListenAndServe(":"+s.port, nil))
 }
 
-//NewServer creates a new server
+// NewServer creates a new server
 func NewServer(port string, service Service) *Server {
 
 	serviceRouter := toolbox.NewServiceRouter(

@@ -7,7 +7,7 @@ import (
 	"github.com/viant/toolbox/data"
 )
 
-//AsTableRecords converts data spcified by dataKey into slice of *TableData to create dsunit data as map[string][]map[string]interface{} (table with records)
+// AsTableRecords converts data spcified by dataKey into slice of *TableData to create dsunit data as map[string][]map[string]interface{} (table with records)
 func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 	var recordsKey = fmt.Sprintf("%v.tableRecord", dataKey)
 	var result = make(map[string][]map[string]interface{})

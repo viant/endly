@@ -10,7 +10,7 @@ import (
 Message events control runner reporter and stdout
 */
 
-//Items returns tag messages
+// Items returns tag messages
 func (r *RemoveRequest) Messages() []*msg.Message {
 	if len(r.Assets) == 0 {
 		return []*msg.Message{}
@@ -25,7 +25,7 @@ func (r *RemoveRequest) Messages() []*msg.Message {
 	}
 }
 
-//Items returns event messages
+// Items returns event messages
 func (r *UploadRequest) Messages() []*msg.Message {
 	if r.Dest == nil {
 		return []*msg.Message{}
@@ -37,7 +37,7 @@ func (r *UploadRequest) Messages() []*msg.Message {
 	)}
 }
 
-//Items returns event messages
+// Items returns event messages
 func (r *DownloadRequest) Messages() []*msg.Message {
 	if r.Source == nil {
 		return []*msg.Message{}
@@ -49,7 +49,7 @@ func (r *DownloadRequest) Messages() []*msg.Message {
 	)}
 }
 
-//Items returns event messages
+// Items returns event messages
 func (r *CopyRequest) Messages() []*msg.Message {
 	_ = r.Init()
 	if len(r.Transfers) == 0 {
@@ -70,7 +70,7 @@ func (r *CopyRequest) Messages() []*msg.Message {
 	return result
 }
 
-//Items returns event messages
+// Items returns event messages
 func (r *GenerateRequest) Messages() []*msg.Message {
 	_ = r.Init()
 
@@ -85,7 +85,7 @@ func (r *GenerateRequest) Messages() []*msg.Message {
 	)}
 }
 
-//Items returns event messages
+// Items returns event messages
 func (r *GenerateResponse) Messages() []*msg.Message {
 
 	assets := make([]string, 0)
@@ -98,7 +98,7 @@ func (r *GenerateResponse) Messages() []*msg.Message {
 	)}
 }
 
-//Items returns event messages
+// Items returns event messages
 func (r *ListResponse) Messages() []*msg.Message {
 	if r.Assets == nil {
 		return []*msg.Message{}
@@ -118,7 +118,7 @@ func (r *ListResponse) Messages() []*msg.Message {
 	)}
 }
 
-//Items returns event messages
+// Items returns event messages
 func (r *ExistsResponse) Messages() []*msg.Message {
 	if r.Exists == nil {
 		return []*msg.Message{}

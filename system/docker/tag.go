@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-//Tag represent a docker tag
+// Tag represent a docker tag
 type Tag struct {
 	Username string
 	Registry string
@@ -20,7 +20,7 @@ func (t *Tag) Repository() string {
 	return fmt.Sprintf("%v/%v", t.Registry, t.Username)
 }
 
-//String stringify docker tag
+// String stringify docker tag
 func (t *Tag) String() string {
 	result := t.Registry
 	if result == "" {
@@ -38,7 +38,7 @@ func (t *Tag) String() string {
 	return result
 }
 
-//NewTag returns new tag
+// NewTag returns new tag
 func NewTag(imageTag string) *Tag {
 	tag := &Tag{}
 	parts := strings.SplitN(imageTag, ":", 2)

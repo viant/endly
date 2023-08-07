@@ -22,7 +22,7 @@ const (
 	ServiceID = "workflow"
 )
 
-//Service represents a workflow service.
+// Service represents a workflow service.
 type Service struct {
 	*endly.AbstractService
 	Dao       *Dao
@@ -40,7 +40,7 @@ func (s *Service) registerWorkflow(request *RegisterRequest) (*RegisterResponse,
 	return response, nil
 }
 
-//Register register workflow.
+// Register register workflow.
 func (s *Service) Register(workflow *model.Workflow) error {
 	err := workflow.Validate()
 	if err != nil {
@@ -50,13 +50,13 @@ func (s *Service) Register(workflow *model.Workflow) error {
 	return nil
 }
 
-//HasWorkflow returns true if service has registered workflow.
+// HasWorkflow returns true if service has registered workflow.
 func (s *Service) HasWorkflow(name string) bool {
 	_, found := s.registry[name]
 	return found
 }
 
-//Workflow returns a workflow for supplied name.
+// Workflow returns a workflow for supplied name.
 func (s *Service) Workflow(name string) (*model.Workflow, error) {
 	s.Lock()
 	defer s.Unlock()
@@ -982,7 +982,7 @@ func (s *Service) setEnv(context *endly.Context, request *SetEnvRequest) (*SetEn
 	return response, nil
 }
 
-//New returns a new workflow Service.
+// New returns a new workflow Service.
 func New() endly.Service {
 	var result = &Service{
 		AbstractService: endly.NewAbstractService(ServiceID),

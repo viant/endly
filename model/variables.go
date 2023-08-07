@@ -83,7 +83,7 @@ func loadVariablesFromSlice(aSlice []interface{}) (Variables, error) {
 	return result, nil
 }
 
-//GetVariables returns variables from Variables ([]*Variable), []string (as expression) or from []interface{} (where interface is a map matching Variable struct)
+// GetVariables returns variables from Variables ([]*Variable), []string (as expression) or from []interface{} (where interface is a map matching Variable struct)
 func GetVariables(baseURLs []string, source interface{}) (Variables, error) {
 	if source == nil {
 		return nil, nil

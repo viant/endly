@@ -7,7 +7,7 @@ import (
 
 var clientKey = (*AbstractClient)(nil)
 
-//GetProject returns project info
+// GetProject returns project info
 func GetProject(ctx *endly.Context) (*cloudresourcemanager.Project, error) {
 	client := &AbstractClient{}
 	err := GetClient(ctx, cloudresourcemanager.New, clientKey, &client, cloudresourcemanager.CloudPlatformScope)

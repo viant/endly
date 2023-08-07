@@ -13,7 +13,7 @@ type MessageGroup struct {
 	pendingLine bool
 }
 
-//EnableIfMatched enable group if matched or first message, returns true if previous group matched
+// EnableIfMatched enable group if matched or first message, returns true if previous group matched
 func (g *MessageGroup) EnableIfMatched(message *msg.Message) bool {
 	if message.Header == nil {
 		return false

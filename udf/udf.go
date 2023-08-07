@@ -22,7 +22,7 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//TransformWithUDF transform payload with provided UDFs name.
+// TransformWithUDF transform payload with provided UDFs name.
 func TransformWithUDF(context *endly.Context, udfName, source string, payload interface{}) (interface{}, error) {
 	var state = context.State()
 	var udf, has = endly.UdfRegistry[udfName]
@@ -48,7 +48,7 @@ func getUdfFromContext(udfName string, state data.Map) (func(interface{}, data.M
 	return nil, false
 }
 
-//DateOfBirth returns formatted date of birth, it take  desired age,  [month], [day], [timeformat]
+// DateOfBirth returns formatted date of birth, it take  desired age,  [month], [day], [timeformat]
 func DateOfBirth(source interface{}, state data.Map) (interface{}, error) {
 	if !toolbox.IsSlice(source) {
 		return nil, fmt.Errorf("expected slice but had: %T %v", source, source)
@@ -56,7 +56,7 @@ func DateOfBirth(source interface{}, state data.Map) (interface{}, error) {
 	return toolbox.NewDateOfBirthrovider().Get(toolbox.NewContext(), toolbox.AsSlice(source)...)
 }
 
-//URLJoin joins base URL and URI path
+// URLJoin joins base URL and URI path
 func URLJoin(source interface{}, state data.Map) (interface{}, error) {
 	if !toolbox.IsSlice(source) {
 		return nil, fmt.Errorf("expected slice but had: %T %v", source, source)
@@ -104,19 +104,19 @@ func LoadData(source interface{}, state data.Map) (interface{}, error) {
 	return nil, fmt.Errorf("udf LoadData arguments must be string: v%", source)
 }
 
-//URLPath return path from URL
+// URLPath return path from URL
 func URLPath(source interface{}, state data.Map) (interface{}, error) {
 	resource := url.NewResource(toolbox.AsString(source))
 	return resource.ParsedURL.Path, nil
 }
 
-//Hostname return host from URL
+// Hostname return host from URL
 func Hostname(source interface{}, state data.Map) (interface{}, error) {
 	resource := url.NewResource(toolbox.AsString(source))
 	return resource.ParsedURL.Hostname(), nil
 }
 
-//AsProtobufMessage generic method for converting a map, or json string into a proto message
+// AsProtobufMessage generic method for converting a map, or json string into a proto message
 func AsProtobufMessage(source interface{}, state data.Map, target proto.Message) (interface{}, error) {
 	var requestMap map[string]interface{}
 	if toolbox.IsString(source) {
@@ -148,7 +148,7 @@ func AsProtobufMessage(source interface{}, state data.Map, target proto.Message)
 	return fmt.Sprintf("base64:%v", string(buf.Bytes())), err
 }
 
-//FromProtobufMessage generic method for converting a proto message into a map
+// FromProtobufMessage generic method for converting a proto message into a map
 func FromProtobufMessage(source interface{}, state data.Map, sourceMessage proto.Message) (interface{}, error) {
 	if toolbox.IsString(source) {
 		textSource := toolbox.AsString(source)
@@ -172,7 +172,7 @@ func FromProtobufMessage(source interface{}, state data.Map, sourceMessage proto
 	return nil, fmt.Errorf("expected string but had:%T", source)
 }
 
-//GZipper copy modifier, mofidies source using zip udf
+// GZipper copy modifier, mofidies source using zip udf
 func GZipper(source interface{}, state data.Map) (interface{}, error) {
 	// Get UDFs to Zip from context
 	if zipUdf, has := getUdfFromContext("Zip", state); has {
@@ -235,7 +235,7 @@ func GZipContentCorrupter(source interface{}, state data.Map) (interface{}, erro
 	return nil, errors.New("unable to find udf with name Zip")
 }
 
-//RegisterProviders register the supplied providers
+// RegisterProviders register the supplied providers
 func RegisterProviders(providers []*endly.UdfProvider) error {
 	if len(providers) == 0 {
 		return nil

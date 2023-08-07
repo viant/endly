@@ -13,7 +13,7 @@ import (
 	"sync"
 )
 
-//deprecated - it is schedule to be removed from the service list, use inline workflow instead
+// deprecated - it is schedule to be removed from the service list, use inline workflow instead
 const (
 	//ServiceID represent build service id
 	ServiceID = "build"
@@ -304,7 +304,7 @@ func (s *service) registerRoutes() {
 
 }
 
-//New creates a new build service
+// New creates a new build service
 func New() endly.Service {
 	var result = &service{
 		registry:        make(map[string]*Meta),

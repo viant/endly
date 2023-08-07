@@ -149,7 +149,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//New create a new SMTP endpoint service
+// New create a new SMTP endpoint service
 func New() endly.Service {
 	var result = &service{
 		messages:        NewMessages(),

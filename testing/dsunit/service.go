@@ -19,14 +19,14 @@ const (
 	ServiceID = "dsunit"
 )
 
-//PopulateDatastoreEvent represents a populate Datastore event
+// PopulateDatastoreEvent represents a populate Datastore event
 type PopulateDatastoreEvent struct {
 	Datastore string `required:"true" description:"register datastore name"` //target host
 	Table     string
 	Rows      int
 }
 
-//RunSQLcriptEvent represents run script event
+// RunSQLcriptEvent represents run script event
 type RunSQLcriptEvent struct {
 	Datastore string
 	URL       string
@@ -694,7 +694,7 @@ func (s *service) Run(context *endly.Context, request interface{}) *endly.Servic
 	return s.AbstractService.Run(context, request)
 }
 
-//New creates a new Datastore unit service
+// New creates a new Datastore unit service
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

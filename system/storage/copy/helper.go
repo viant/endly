@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-//JoinIfNeeded routes parent resource with URI when needed
+// JoinIfNeeded routes parent resource with URI when needed
 func JoinIfNeeded(parent *url.Resource, URI string) (result *url.Resource) {
 	defer func() {
 		if parent != nil {

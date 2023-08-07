@@ -17,7 +17,7 @@ import (
 	"strings"
 )
 
-//ProtoCodec represent a proto codec
+// ProtoCodec represent a proto codec
 type ProtoCodec struct {
 	registry *msgregistry.MessageRegistry
 	msgType  string
@@ -106,7 +106,7 @@ func (c *ProtoCodec) toLowerCamel(err error, data []byte) ([]byte, error) {
 	return json.Marshal(transformed)
 }
 
-//NewProtoCodec creates a new protobuf codec
+// NewProtoCodec creates a new protobuf codec
 func NewProtoCodec(schemaFile, importPath string, msgType string, lowercaseKey bool) (*ProtoCodec, error) {
 	parser := protoparse.Parser{ImportPaths: []string{importPath}, IncludeSourceCodeInfo: true}
 	descriptors, err := parser.ParseFiles(schemaFile)
@@ -144,7 +144,7 @@ func getProtoCodec(source string, args []interface{}) (*ProtoCodec, error) {
 	return NewProtoCodec(schemaFile, importPath, messageType, lowercaseKey)
 }
 
-//NewProtoWriter creates a new proto writer provider
+// NewProtoWriter creates a new proto writer provider
 func NewProtoWriter(args ...interface{}) (func(source interface{}, state data.Map) (interface{}, error), error) {
 	codec, err := getProtoCodec("NewProtoWriter", args)
 	if err != nil {
@@ -156,7 +156,7 @@ func NewProtoWriter(args ...interface{}) (func(source interface{}, state data.Ma
 	}, nil
 }
 
-//NewProtoWriter creates a new proto writer provider
+// NewProtoWriter creates a new proto writer provider
 func NewProtoReader(args ...interface{}) (func(source interface{}, state data.Map) (interface{}, error), error) {
 	codec, err := getProtoCodec("NewProtoReader", args)
 	if err != nil {

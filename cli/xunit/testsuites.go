@@ -1,6 +1,6 @@
 package xunit
 
-//Testsuite represents an error test-suite nodes
+// Testsuite represents an error test-suite nodes
 type Testsuite struct {
 	Name string `xml:"name,attr,omitempty" yaml:"name,omitempty"  json:"name,omitempty" `
 

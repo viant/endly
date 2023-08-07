@@ -178,7 +178,7 @@ func (p InlineWorkflow) asVariables(source interface{}) ([]map[string]interface{
 	return result, err
 }
 
-//groupAttributes splits key value pair into workflow action attribute and action request data,
+// groupAttributes splits key value pair into workflow action attribute and action request data,
 // while ':' key prefix assign pair to workflow action, '@' assign to request data, if none is matched pair is assign to both
 func (p InlineWorkflow) groupAttributes(source interface{}, state data.Map) (map[string]interface{}, map[string]interface{}, error) {
 	aMap, err := util.NormalizeMap(source, false)

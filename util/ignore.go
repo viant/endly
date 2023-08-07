@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-//GetIgnoreList returns ignore list
+// GetIgnoreList returns ignore list
 func GetIgnoreList(service storage.Service, URL string) []string {
 	var list = make([]string, 0)
 	reader, err := service.DownloadWithURL(URL)

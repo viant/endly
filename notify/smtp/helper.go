@@ -8,7 +8,7 @@ import (
 	"net/smtp"
 )
 
-//NewClient creates a new SMTP client.
+// NewClient creates a new SMTP client.
 func NewClient(target *url.Resource, credConfig *cred.Config) (*smtp.Client, error) {
 	var targetURL = target.ParsedURL
 	tlsConfig := &tls.Config{

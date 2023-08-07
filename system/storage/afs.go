@@ -24,7 +24,7 @@ var fs = afs.New()
 var fsFaker = afs.NewFaker()
 var scheduledClosed = uint32(0)
 
-//StorageService return afs storage service
+// StorageService return afs storage service
 func StorageService(ctx *endly.Context, resources ...*url.Resource) (afs.Service, error) {
 	var state = ctx.State()
 	if state.Has(useMemoryService) {
@@ -47,7 +47,7 @@ func StorageService(ctx *endly.Context, resources ...*url.Resource) (afs.Service
 	return fs, nil
 }
 
-//StorageOptions returns storage option for supplied resource
+// StorageOptions returns storage option for supplied resource
 func StorageOptions(ctx *endly.Context, resource *url.Resource, options ...storage.Option) ([]storage.Option, error) {
 	var result = options
 	if resource.CustomKey != nil {

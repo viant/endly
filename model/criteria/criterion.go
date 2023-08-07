@@ -7,7 +7,7 @@ import (
 	"github.com/viant/toolbox/data"
 )
 
-//Criterion represent evaluation criterion
+// Criterion represent evaluation criterion
 type Criterion struct {
 	*Predicate
 	LeftOperand  interface{}
@@ -35,7 +35,7 @@ func checkUndefined(err error, left, right interface{}, operator string) error {
 	return err
 }
 
-//Apply evaluates criterion with supplied context and state map . Dolar prefixed $expression will be expanded before evaluation.
+// Apply evaluates criterion with supplied context and state map . Dolar prefixed $expression will be expanded before evaluation.
 func (c *Criterion) Apply(state data.Map) (bool, error) {
 	if c.Predicate != nil && len(c.Predicate.Criteria) > 0 {
 		return c.Predicate.Apply(state)
@@ -107,7 +107,7 @@ func (c *Criterion) Apply(state data.Map) (bool, error) {
 	return false, err
 }
 
-//NewCriterion creates a new criterion
+// NewCriterion creates a new criterion
 func NewCriterion(leftOperand interface{}, operator string, rightOperand interface{}) *Criterion {
 	return &Criterion{
 		LeftOperand:  leftOperand,

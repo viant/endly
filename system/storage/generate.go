@@ -18,7 +18,7 @@ const (
 	fileNumberExpr      = "$fileNo"
 )
 
-//CreateRequest represents a resources Upload request, it takes context state key to Upload to target destination.
+// CreateRequest represents a resources Upload request, it takes context state key to Upload to target destination.
 type GenerateRequest struct {
 	Template      string
 	LineTemplate  string
@@ -33,13 +33,13 @@ type GenerateRequest struct {
 	InBackground  bool
 }
 
-//CreateResponse represents a Upload response
+// CreateResponse represents a Upload response
 type GenerateResponse struct {
 	Size int
 	URLs []string
 }
 
-//Create creates a resource
+// Create creates a resource
 func (s *service) Generate(context *endly.Context, request *GenerateRequest) (*GenerateResponse, error) {
 	var response = &GenerateResponse{}
 	err := s.generate(context, request, response)
@@ -138,7 +138,7 @@ func generateContent(context *endly.Context, request *GenerateRequest) io.Reader
 	return strings.NewReader(text)
 }
 
-//Init initialises Upload request
+// Init initialises Upload request
 func (r *GenerateRequest) Init() error {
 	if r.Mode == 0 {
 		r.Mode = int(file.DefaultFileOsMode)
@@ -155,7 +155,7 @@ func (r *GenerateRequest) Init() error {
 	return nil
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *GenerateRequest) Validate() error {
 	if r.Dest == nil {
 		return errors.New("dest was empty")

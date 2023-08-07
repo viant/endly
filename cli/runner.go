@@ -25,7 +25,7 @@ import (
 	"time"
 )
 
-//OnError exit system with os.Exit with supplied code.
+// OnError exit system with os.Exit with supplied code.
 var OnError = func(code int) {
 	os.Exit(code)
 }
@@ -35,7 +35,7 @@ const (
 	messageTypeTagDescription
 )
 
-//ReportSummaryEvent represents event xUnitSummary
+// ReportSummaryEvent represents event xUnitSummary
 type ReportSummaryEvent struct {
 	ElapsedMs      int
 	TotalTagPassed int
@@ -43,7 +43,7 @@ type ReportSummaryEvent struct {
 	Error          bool
 }
 
-//Testing represents command line runner
+// Testing represents command line runner
 type Runner struct {
 	*Style
 	*Renderer
@@ -662,7 +662,7 @@ func (r *Runner) printSummary() {
 
 }
 
-//Run run Caller for the supplied run request and runner options.
+// Run run Caller for the supplied run request and runner options.
 func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 	r.request = request
 	r.context = r.manager.NewContext(toolbox.NewContext())
@@ -723,7 +723,7 @@ func (r *Runner) processErrorEvent(event msg.Event) bool {
 	return false
 }
 
-//New creates a new command line runner
+// New creates a new command line runner
 func New() *Runner {
 	return &Runner{
 		manager:      endly.New(),

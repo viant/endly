@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-//ListenRequest represents a new listen request
+// ListenRequest represents a new listen request
 type ListenRequest struct {
 	ServerName   string
 	Port         int
@@ -57,17 +57,17 @@ func (r *ListenRequest) Validate() error {
 	return nil
 }
 
-//ListenResponse represents a new listen response
+// ListenResponse represents a new listen response
 type ListenResponse struct{}
 
-//UserMessage represents desired user message
+// UserMessage represents desired user message
 type UserMessage struct {
 	User    string
 	TagID   string
 	Message interface{}
 }
 
-//AssertRequest represents a log assert request
+// AssertRequest represents a log assert request
 type AssertRequest struct {
 	DescriptionTemplate string
 	Expect              []*UserMessage `required:"true" description:"expected user messagesByUser"`
@@ -80,12 +80,12 @@ func (r *AssertRequest) Init() error {
 	return nil
 }
 
-//AssertResponse represents a smtp message assert response
+// AssertResponse represents a smtp message assert response
 type AssertResponse struct {
 	Validations []*assertly.Validation
 }
 
-//Assertion returns description with validation slice
+// Assertion returns description with validation slice
 func (r *AssertResponse) Assertion() []*assertly.Validation {
 	return r.Validations
 }

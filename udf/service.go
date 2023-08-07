@@ -10,7 +10,7 @@ const (
 	ServiceID = "udf"
 )
 
-//service represents no operation service (deprecated, use workflow, nop instead)
+// service represents no operation service (deprecated, use workflow, nop instead)
 type service struct {
 	*endly.AbstractService
 }
@@ -49,7 +49,7 @@ func (s *service) register(context *endly.Context, request *RegisterRequest) (in
 	return &RegisterResponse{}, nil
 }
 
-//New creates a new udf service.
+// New creates a new udf service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

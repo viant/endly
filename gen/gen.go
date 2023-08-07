@@ -8,7 +8,7 @@ import (
 	"path"
 )
 
-//main generate file with static from asset and template into memory storage
+// main generate file with static from asset and template into memory storage
 func main() {
 	parent := toolbox.CallerDirectory(3)
 	mappings := []*storage.StorageMapping{

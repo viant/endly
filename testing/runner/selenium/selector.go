@@ -18,7 +18,7 @@ var selectors = map[string]bool{
 	selenium.ByPartialLinkText: true,
 }
 
-//Validate checks is selector is valid.
+// Validate checks is selector is valid.
 func (s *WebElementSelector) Init() error {
 	if s.Value != "" && s.By == "" {
 		s.By, _ = WebSelector(s.Value).ByAndValue()
@@ -26,7 +26,7 @@ func (s *WebElementSelector) Init() error {
 	return nil
 }
 
-//Validate checks is selector is valid.
+// Validate checks is selector is valid.
 func (s *WebElementSelector) Validate() error {
 	if s.Value == "" {
 		return fmt.Errorf("value was empty")
@@ -35,7 +35,7 @@ func (s *WebElementSelector) Validate() error {
 	return nil
 }
 
-//NewWebElementSelector creates a new instance of web element selector
+// NewWebElementSelector creates a new instance of web element selector
 func NewWebElementSelector(by, value string) *WebElementSelector {
 	return &WebElementSelector{
 		By:    by,

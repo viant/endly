@@ -1,6 +1,6 @@
 package model
 
-//OsTarget represents operating system target
+// OsTarget represents operating system target
 type OsTarget struct {
 	System             string
 	Name               string

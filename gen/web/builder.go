@@ -373,7 +373,7 @@ func extractTag(composeContent string) *Tag {
 	return result
 }
 
-//TODO java, node, react autodiscovery and initial test setup
+// TODO java, node, react autodiscovery and initial test setup
 func (b *builder) autoDiscover(request *Build, URL string) {
 	service, err := storage.NewServiceForURL(request.Origin, "")
 	if err != nil {

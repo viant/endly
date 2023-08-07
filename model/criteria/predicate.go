@@ -4,13 +4,13 @@ import (
 	"github.com/viant/toolbox/data"
 )
 
-//Predicate represents logical criteria
+// Predicate represents logical criteria
 type Predicate struct {
 	LogicalOperator string
 	Criteria        []*Criterion
 }
 
-//Apply evaluates criteria with supplied context and state map . Dolar prefixed $expression will be expanded before evaluation.
+// Apply evaluates criteria with supplied context and state map . Dolar prefixed $expression will be expanded before evaluation.
 func (c *Predicate) Apply(state data.Map) (bool, error) {
 	if c.LogicalOperator == "||" {
 		for _, criterion := range c.Criteria {
@@ -30,7 +30,7 @@ func (c *Predicate) Apply(state data.Map) (bool, error) {
 	return true, nil
 }
 
-//NewPredicate creates a new criteria for supplied logical operator and criteria
+// NewPredicate creates a new criteria for supplied logical operator and criteria
 func NewPredicate(operator string, criteria ...*Criterion) *Predicate {
 	return &Predicate{
 		LogicalOperator: operator,

@@ -9,13 +9,13 @@ import (
 	"net/http"
 )
 
-//Request represents service request.
+// Request represents service request.
 type Request struct {
 	Data           map[string]interface{}
 	ServiceRequest interface{}
 }
 
-//Response service response
+// Response service response
 type Response struct {
 	Status   string
 	Error    string
@@ -23,7 +23,7 @@ type Response struct {
 	Data     map[string]interface{}
 }
 
-//Server represents a server
+// Server represents a server
 type Server struct {
 	port    string
 	manager endly.Manager
@@ -98,7 +98,7 @@ func (s *Server) routeHandler(serviceRouting *toolbox.ServiceRouting, httpReques
 
 }
 
-//Start starts server
+// Start starts server
 func (s *Server) Start() error {
 
 	router := toolbox.NewServiceRouter(
@@ -121,7 +121,7 @@ func (s *Server) Start() error {
 	return nil
 }
 
-//New createss a new server for provided port.
+// New createss a new server for provided port.
 func New(port string) *Server {
 	return &Server{
 		port:    port,

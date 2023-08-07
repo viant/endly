@@ -15,10 +15,10 @@ import (
 	"strings"
 )
 
-//LambdaInvoke represents lambda action permission
+// LambdaInvoke represents lambda action permission
 var LambdaInvoke = "lambda:InvokeFunction"
 
-//SetFunctionInfo sets function info into map
+// SetFunctionInfo sets function info into map
 func SetFunctionInfo(key string, function *lambda.FunctionConfiguration, aMap data.Map) {
 	functionState := data.NewMap()
 	functionState.Put("arn", function.FunctionArn)
@@ -30,7 +30,7 @@ func SetFunctionInfo(key string, function *lambda.FunctionConfiguration, aMap da
 	aMap.Put(key, functionState)
 }
 
-//GetFunctionConfiguration returns function configuration
+// GetFunctionConfiguration returns function configuration
 func GetFunctionConfiguration(context *endly.Context, functionName string) (*lambda.FunctionConfiguration, error) {
 	client := &lambda.Lambda{}
 	err := GetClient(context, lambda.New, &client)
@@ -46,7 +46,7 @@ func GetFunctionConfiguration(context *endly.Context, functionName string) (*lam
 	return functionOutput.Configuration, nil
 }
 
-//GetKinesisStreamARN returns stream arn
+// GetKinesisStreamARN returns stream arn
 func GetKinesisStreamARN(context *endly.Context, name string) (*string, error) {
 	client := &kinesis.Kinesis{}
 	err := GetClient(context, kinesis.New, &client)
@@ -65,7 +65,7 @@ func GetKinesisStreamARN(context *endly.Context, name string) (*string, error) {
 	return nil, err
 }
 
-//GetKinesisConsumerARN get consumer arn
+// GetKinesisConsumerARN get consumer arn
 func GetKinesisConsumerARN(context *endly.Context, name string) (*string, error) {
 	client := &kinesis.Kinesis{}
 	err := GetClient(context, kinesis.New, &client)
@@ -84,7 +84,7 @@ func GetKinesisConsumerARN(context *endly.Context, name string) (*string, error)
 	return nil, err
 }
 
-//GetSqsURL returns sqs URL
+// GetSqsURL returns sqs URL
 func GetSqsURL(context *endly.Context, name string) (*string, error) {
 	client := &sqs.SQS{}
 	if err := GetClient(context, sqs.New, &client); err != nil {
@@ -111,7 +111,7 @@ func GetSqsURL(context *endly.Context, name string) (*string, error) {
 	return ARN, nil
 }
 
-//GetDynamoDBTableARN returns dynamo db ARN
+// GetDynamoDBTableARN returns dynamo db ARN
 func GetDynamoDBTableARN(context *endly.Context, name string) (*string, error) {
 	client := &dynamodb.DynamoDB{}
 	if err := GetClient(context, dynamodb.New, &client); err != nil {
@@ -130,7 +130,7 @@ func GetDynamoDBTableARN(context *endly.Context, name string) (*string, error) {
 	return output.GlobalTableDescription.GlobalTableArn, nil
 }
 
-//GetQueueARN returns qeueue arn
+// GetQueueARN returns qeueue arn
 func GetQueueARN(context *endly.Context, name string) (*string, error) {
 	client := &sqs.SQS{}
 	if err := GetClient(context, sqs.New, &client); err != nil {
@@ -152,7 +152,7 @@ func GetQueueARN(context *endly.Context, name string) (*string, error) {
 	return queueAttributes.Attributes[sqs.QueueAttributeNameQueueArn], nil
 }
 
-//GetTopicARN returns topic arn
+// GetTopicARN returns topic arn
 func GetTopicARN(context *endly.Context, name string) (*string, error) {
 	client := &sns.SNS{}
 	if err := GetClient(context, sns.New, &client); err != nil {
@@ -181,7 +181,7 @@ func GetTopicARN(context *endly.Context, name string) (*string, error) {
 	return nil, fmt.Errorf("failed to lookup topic: %v", name)
 }
 
-//ArnName returns arn name
+// ArnName returns arn name
 func ArnName(uri string) (string, error) {
 	if uri == "" {
 		return "", fmt.Errorf("uri was empty")
@@ -198,7 +198,7 @@ func ArnName(uri string) (string, error) {
 	return name, nil
 }
 
-//NextID return new ID
+// NextID return new ID
 func NextID() (string, error) {
 	UUID, err := uuid.NewUUID()
 	if err != nil {

@@ -9,7 +9,7 @@ pipeline:
   set_sdk:
     action: sdk.set
     target: $target
-    sdk: go:1.17
+    sdk: go:1.20
   build:
     action: exec:run
     target: $target

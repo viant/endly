@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-//Service represents sso service
+// Service represents sso service
 type Service interface {
 	SignUp(*SignUpRequest, *http.Request) *SignUpResponse
 
@@ -134,7 +134,7 @@ func (s service) SignIn(request *SignInRequest) *SignInResponse {
 	return response
 }
 
-//NewService creates a new SSO service.
+// NewService creates a new SSO service.
 func NewService(config *Config) (Service, error) {
 	if config.DsConfig == nil {
 		return nil, errors.New("DsConfig was empty")

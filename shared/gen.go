@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-//main generate file with static content from meta, workflow, req folders so that they can be compiled into final binary
+// main generate file with static content from meta, workflow, req folders so that they can be compiled into final binary
 func main() {
 	callerDir := toolbox.CallerDirectory(3)
 	parent := strings.Replace(callerDir, "/shared/", "", 1)

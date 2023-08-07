@@ -6,7 +6,7 @@ import (
 	"github.com/viant/toolbox"
 )
 
-//Request represents a send request
+// Request represents a send request
 type Request struct {
 	Options     map[string]interface{} `description:"http client options_: key value pairs, where key is one of the following: HTTP options_:RequestTimeoutMs,TimeoutMs,KeepAliveTimeMs,TLSHandshakeTimeoutMs,ResponseHeaderTimeoutMs,MaxIdleConns,FollowRedirects"`
 	httpOptions []*toolbox.HttpOptions
@@ -27,7 +27,7 @@ func (r *Request) Init() error {
 	return nil
 }
 
-//Response represents a rest response
+// Response represents a rest response
 type Response struct {
 	Response interface{}
 	Assert   *validator.AssertResponse

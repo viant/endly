@@ -12,7 +12,7 @@ const (
 	ServiceID = "http/endpoint"
 )
 
-//service represents http endpoint service, that has ability to replay HTTP trips
+// service represents http endpoint service, that has ability to replay HTTP trips
 type service struct {
 	*endly.AbstractService
 	servers map[int]*Server
@@ -117,9 +117,9 @@ func (s *service) registerRoutes() {
 		})
 }
 
-//New creates
+// New creates
 //
-//a new HTTP endpoint service, to replay previously recorded HTTP trips.
+// a new HTTP endpoint service, to replay previously recorded HTTP trips.
 func New() endly.Service {
 	var result = &service{
 		servers:         make(map[int]*Server),

@@ -8,7 +8,7 @@ type logRecordIterator struct {
 	logFileIndex    int
 }
 
-//HasNext returns true if iterator has next element.
+// HasNext returns true if iterator has next element.
 func (i *logRecordIterator) HasNext() bool {
 	var logFileCount = len(i.logFiles)
 	if i.logFileIndex >= logFileCount {
@@ -30,7 +30,7 @@ func (i *logRecordIterator) HasNext() bool {
 	return true
 }
 
-//Next sets item pointer with next element.
+// Next sets item pointer with next element.
 func (i *logRecordIterator) Next(itemPointer interface{}) error {
 	var indexRecordPointer, ok = itemPointer.(*IndexedRecord)
 	if ok {

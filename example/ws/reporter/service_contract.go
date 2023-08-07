@@ -1,30 +1,30 @@
 package reporter
 
-//Response represents generic response
+// Response represents generic response
 type Response struct {
 	Status string
 	Error  string
 }
 
-//RegisterReportRequest represents register request
+// RegisterReportRequest represents register request
 type RegisterReportRequest struct {
 	ReportType string
 	Report     interface{}
 }
 
-//RegisterReportResponse represents register response
+// RegisterReportResponse represents register response
 type RegisterReportResponse struct {
 	*Response
 }
 
-//RunReportRequest represents run request
+// RunReportRequest represents run request
 type RunReportRequest struct {
 	Name       string
 	Datastore  string
 	Parameters map[string]interface{}
 }
 
-//RunReportResponse represents run response
+// RunReportResponse represents run response
 type RunReportResponse struct {
 	*Response
 	Name    string

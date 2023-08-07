@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-//authConfigToken returns auth token
+// authConfigToken returns auth token
 func authConfigToken(authConfig *types.AuthConfig) (string, error) {
 	encodedJSON, err := json.Marshal(authConfig)
 	if err != nil {
@@ -17,7 +17,7 @@ func authConfigToken(authConfig *types.AuthConfig) (string, error) {
 	return base64.URLEncoding.EncodeToString(encodedJSON), nil
 }
 
-//authCredentialsToken returns auth token
+// authCredentialsToken returns auth token
 func authCredentialsToken(context *endly.Context, credentials string) (string, error) {
 	cred, err := context.Secrets.GetCredentials(credentials)
 	if err != nil {

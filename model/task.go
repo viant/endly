@@ -1,6 +1,6 @@
 package model
 
-//Task represents a group of action
+// Task represents a group of action
 type Task struct {
 	*AbstractNode
 	Actions []*Action //actions
@@ -48,7 +48,7 @@ func (t *Task) init() error {
 	return nil
 }
 
-//HasTagID checks if task has supplied tagIDs
+// HasTagID checks if task has supplied tagIDs
 func (t *Task) HasTagID(tagIDs map[string]bool) bool {
 	if tagIDs == nil {
 		return false
@@ -61,7 +61,7 @@ func (t *Task) HasTagID(tagIDs map[string]bool) bool {
 	return false
 }
 
-//AsyncActions returns async actions
+// AsyncActions returns async actions
 func (t *Task) AsyncActions() []*Action {
 	var result = make([]*Action, 0)
 	for _, candidate := range t.Actions {
@@ -83,7 +83,7 @@ func (t *Task) AsyncActions() []*Action {
 	return result
 }
 
-//NewTask creates a new task
+// NewTask creates a new task
 func NewTask(name string, multiAction bool) *Task {
 	return &Task{
 		AbstractNode: &AbstractNode{

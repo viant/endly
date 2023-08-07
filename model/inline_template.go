@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-//Template represents inline workflow template to dynamically Expand actions - idea borrowed from neatly format: https://github.com/viant/neatly/
+// Template represents inline workflow template to dynamically Expand actions - idea borrowed from neatly format: https://github.com/viant/neatly/
 type Template struct {
 	SubPath     string            `description:"sub path for dynamic resource template expansion: i.e. use_cases/${index}*"`
 	Tag         string            `description:"grouping tag i.e Test"`

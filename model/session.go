@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-//Session represents a system terminal session
+// Session represents a system terminal session
 type Session struct {
 	ID string
 	ssh.MultiCommandSession
@@ -22,7 +22,7 @@ type Session struct {
 	Mutex            *sync.RWMutex
 }
 
-//NewSession create a new client session
+// NewSession create a new client session
 func NewSession(id string, connection ssh.Service) (*Session, error) {
 	return &Session{
 		ID:           id,
@@ -34,10 +34,10 @@ func NewSession(id string, connection ssh.Service) (*Session, error) {
 	}, nil
 }
 
-//Sessions represents a map of client sessions keyed by session id
+// Sessions represents a map of client sessions keyed by session id
 type Sessions map[string]*Session
 
-//Has checks if client session exists for provided id.
+// Has checks if client session exists for provided id.
 func (s *Sessions) Has(id string) bool {
 	_, has := (*s)[id]
 	return has

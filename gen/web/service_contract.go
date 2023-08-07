@@ -45,7 +45,7 @@ func (a DbTemplates) Less(i, j int) bool {
 	return a[i].Id < a[j].Id
 }
 
-//Tag represent a docker tag
+// Tag represent a docker tag
 type Tag struct {
 	Username string
 	Registry string

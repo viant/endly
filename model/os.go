@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-//Os represents an Os
+// Os represents an Os
 type OperatingSystem struct {
 	System       string
 	Name         string
@@ -16,7 +16,7 @@ type OperatingSystem struct {
 	Version      string
 }
 
-//Matches returns true if operating system matches provided target
+// Matches returns true if operating system matches provided target
 func (s *OperatingSystem) Matches(target *OsTarget) bool {
 	if target == nil {
 		return true

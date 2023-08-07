@@ -7,7 +7,7 @@ import (
 	"github.com/viant/toolbox"
 )
 
-//ServiceID represents rest service id.
+// ServiceID represents rest service id.
 const ServiceID = "rest/runner"
 
 type restService struct {
@@ -101,7 +101,7 @@ func (s *restService) registerRoutes() {
 	})
 }
 
-//NewRestService creates a new reset service
+// NewRestService creates a new reset service
 func New() endly.Service {
 	var result = &restService{
 		AbstractService: endly.NewAbstractService(ServiceID),

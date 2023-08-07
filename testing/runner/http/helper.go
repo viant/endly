@@ -22,7 +22,7 @@ func initializeContext(c *endly.Context) {
 	}
 }
 
-//copyHeaders copy source to target headers
+// copyHeaders copy source to target headers
 func copyHeaders(source http.Header, target http.Header) {
 	for key, values := range source {
 		if _, has := target[key]; !has {
@@ -39,7 +39,7 @@ func copyHeaders(source http.Header, target http.Header) {
 	}
 }
 
-//copyExpandedHeaders copy and expand headers
+// copyExpandedHeaders copy and expand headers
 func copyExpandedHeaders(source http.Header, target http.Header, context *endly.Context) {
 	for key, values := range source {
 		if _, has := target[key]; !has {
@@ -55,7 +55,7 @@ func copyExpandedHeaders(source http.Header, target http.Header, context *endly.
 	}
 }
 
-//readBody reads and transform response body if needed
+// readBody reads and transform response body if needed
 func readBody(httpResponse *http.Response, response *Response, expectBinary bool) {
 	body, err := ioutil.ReadAll(httpResponse.Body)
 	defer httpResponse.Body.Close()
@@ -75,7 +75,7 @@ func readBody(httpResponse *http.Response, response *Response, expectBinary bool
 	}
 }
 
-//getRequestBodyReader returns request body reader
+// getRequestBodyReader returns request body reader
 func getRequestBodyReader(request *http.Request, repeat int) (func() io.ReadCloser, error) {
 	if repeat == 0 || request.ContentLength == 0 {
 		return func() io.ReadCloser {

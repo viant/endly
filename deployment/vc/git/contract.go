@@ -5,7 +5,7 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//CheckoutRequest represents checkout request. If target directory exist and contains matching origin URL,
+// CheckoutRequest represents checkout request. If target directory exist and contains matching origin URL,
 // only taking the latest changes without overriding local if performed, otherwise full checkout
 type CheckoutRequest struct {
 	Origin *url.Resource `required:"true" description:"checkout source for git or svn or simply file::/path"`
@@ -13,15 +13,15 @@ type CheckoutRequest struct {
 	Depth  int
 }
 
-//CheckoutResponse represents checkout response
+// CheckoutResponse represents checkout response
 type CheckoutResponse StatusResponse
 
-//StatusResponse represents version control status response
+// StatusResponse represents version control status response
 type StatusResponse struct {
 	*Info
 }
 
-//Info represents version control info
+// Info represents version control info
 type Info struct {
 	IsVersionControlManaged bool   //returns true if directory is source controlled managed
 	Origin                  string //Origin URL
@@ -34,24 +34,24 @@ type Info struct {
 	Deleted                 []string //deleted files
 }
 
-//StatusRequest represents version control status
+// StatusRequest represents version control status
 type StatusRequest struct {
 	Source *url.Resource `required:"true"`
 }
 
-//CommitRequest represents a commit request
+// CommitRequest represents a commit request
 type CommitRequest struct {
 	Source      *url.Resource `required:"true" description:"location to local source code"`
 	Message     string        `required:"true"`
 	Credentials string
 }
 
-//CommitResponse represents a commit response
+// CommitResponse represents a commit response
 type CommitResponse struct {
 	*Info
 }
 
-//Init initializes request
+// Init initializes request
 func (r *CheckoutRequest) Init() error {
 	if r.Origin == nil {
 		return nil
@@ -64,7 +64,7 @@ func (r *CheckoutRequest) Init() error {
 	return nil
 }
 
-//Validate validates request
+// Validate validates request
 func (r *CheckoutRequest) Validate() error {
 	if r.Origin == nil {
 		return fmt.Errorf("origin was empty")
@@ -78,7 +78,7 @@ func (r *CheckoutRequest) Validate() error {
 	return nil
 }
 
-//Init initializes request
+// Init initializes request
 func (r *CommitRequest) Init() error {
 	if r.Source != nil {
 		if err := r.Source.Init(); err != nil {
@@ -88,7 +88,7 @@ func (r *CommitRequest) Init() error {
 	return nil
 }
 
-//Validate validates request
+// Validate validates request
 func (r *CommitRequest) Validate() error {
 	if r.Source == nil {
 		return fmt.Errorf("source was empty")
@@ -99,12 +99,12 @@ func (r *CommitRequest) Validate() error {
 	return nil
 }
 
-//HasPendingChanges returns true if there are any untracked, new, modified, deleted files.
+// HasPendingChanges returns true if there are any untracked, new, modified, deleted files.
 func (r *Info) HasPendingChanges() bool {
 	return len(r.Added) > 0 || len(r.Untracked) > 0 || len(r.Deleted) > 0 || len(r.Modified) > 0
 }
 
-//Init initializes request
+// Init initializes request
 func (r *StatusRequest) Init() error {
 	if r.Source == nil {
 		return nil
@@ -112,7 +112,7 @@ func (r *StatusRequest) Init() error {
 	return r.Source.Init()
 }
 
-//Validate validates request
+// Validate validates request
 func (r *StatusRequest) Validate() error {
 	if r.Source == nil {
 		return fmt.Errorf("source type was empty")
@@ -120,7 +120,7 @@ func (r *StatusRequest) Validate() error {
 	return nil
 }
 
-//NewInfo create new info
+// NewInfo create new info
 func NewInfo() *Info {
 	return &Info{
 		Added:     make([]string, 0),

@@ -543,7 +543,7 @@ func (s *service) tag(context *endly.Context, request *TagRequest) (*TagResponse
 	return response, nil
 }
 
-//IsGoogleCloudRegistry returns true if url is google docker cloud registry
+// IsGoogleCloudRegistry returns true if url is google docker cloud registry
 func IsGoogleCloudRegistry(URL string) bool {
 	return strings.Contains(URL, "gcr.io")
 }
@@ -573,7 +573,8 @@ func (s *service) runDockerProcessChecklist(context *endly.Context, target *url.
 	return runResponse.Output, nil
 }
 
-/**
+/*
+*
 on osx when hitting Errors saving credentials: error storing credentials - err: exit status 1, out: `User interaction is not allowed.`
 on docker service -> preferences -> and I untick "Securely store docker logins in macOS keychain" this problem goes away.
 */
@@ -658,9 +659,9 @@ func (s *service) push(context *endly.Context, request *PushRequest) (*PushRespo
 }
 
 /*
-	Build, re-create and start docker services and their linked/dependent services.
-	This will force stop any previous containers and recreates all containers.
-	ComposeError is returned on any failure
+Build, re-create and start docker services and their linked/dependent services.
+This will force stop any previous containers and recreates all containers.
+ComposeError is returned on any failure
 */
 func (s *service) composeUp(context *endly.Context, request *ComposeRequestUp) (*ComposeResponse, error) {
 	//Expand variables
@@ -698,7 +699,7 @@ func (s *service) composeUp(context *endly.Context, request *ComposeRequestUp) (
 }
 
 /*
-	Stop all the services that were brought up by compose up
+Stop all the services that were brought up by compose up
 */
 func (s *service) composeDown(context *endly.Context, request *ComposeRequestDown) (*ComposeResponse, error) {
 	//Expand variables
@@ -1401,7 +1402,7 @@ func (s *service) copy(context *endly.Context, request *CopyRequest) (*CopyRespo
 	return response, err
 }
 
-//New creates a new docker service.
+// New creates a new docker service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

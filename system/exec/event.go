@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 
-//StdinEvent represents an execution event start
+// StdinEvent represents an execution event start
 type StdinEvent struct {
 	SessionID string
 	Stdin     string
 }
 
-//Messages returns messages
+// Messages returns messages
 func (e *StdinEvent) Messages() []*msg.Message {
 	return []*msg.Message{
 		msg.NewMessage(msg.NewStyled(fmt.Sprintf("%v", e.SessionID), msg.MessageStyleGeneric), msg.NewStyled("stdin", msg.MessageStyleGeneric),
@@ -20,7 +20,7 @@ func (e *StdinEvent) Messages() []*msg.Message {
 	}
 }
 
-//NewSdtinEvent crates a new execution start event value
+// NewSdtinEvent crates a new execution start event value
 func NewSdtinEvent(sessionID string, stdin string) *StdinEvent {
 	return &StdinEvent{
 		SessionID: sessionID,
@@ -28,14 +28,14 @@ func NewSdtinEvent(sessionID string, stdin string) *StdinEvent {
 	}
 }
 
-//StdoutEvent represents an execution event end
+// StdoutEvent represents an execution event end
 type StdoutEvent struct {
 	SessionID string
 	Stdout    string
 	Error     string
 }
 
-//Messages returns messages
+// Messages returns messages
 func (e *StdoutEvent) Messages() []*msg.Message {
 	return []*msg.Message{
 		msg.NewMessage(msg.NewStyled(fmt.Sprintf("%v", e.SessionID), msg.MessageStyleGeneric), msg.NewStyled("stdout", msg.MessageStyleGeneric),
@@ -43,7 +43,7 @@ func (e *StdoutEvent) Messages() []*msg.Message {
 	}
 }
 
-//NewStdoutEvent crates a new execution start event value
+// NewStdoutEvent crates a new execution start event value
 func NewStdoutEvent(sessionID string, stdout string, err error) *StdoutEvent {
 	return &StdoutEvent{
 		SessionID: sessionID,

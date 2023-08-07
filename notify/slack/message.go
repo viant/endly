@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-//Asset represents a file asset
+// Asset represents a file asset
 type Asset struct {
 	Title         string
 	Filename      string
@@ -17,7 +17,7 @@ type Asset struct {
 	BinaryContent []byte
 }
 
-//Message represent a slack message
+// Message represent a slack message
 type Message struct {
 	Channel  string
 	Username string
@@ -25,7 +25,7 @@ type Message struct {
 	Asset    *Asset
 }
 
-//NewMessageFromEvent creates a new message form a message event
+// NewMessageFromEvent creates a new message form a message event
 func NewMessageFromEvent(event *slack.MessageEvent, client *slack.Client) ([]*Message, error) {
 	result := make([]*Message, 0)
 	channel, err := client.GetChannelInfo(event.Channel)

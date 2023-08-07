@@ -13,7 +13,7 @@ import (
 	"sync"
 )
 
-//Logger represent event logger to drop event details in the provied directory.
+// Logger represent event logger to drop event details in the provied directory.
 type Logger struct {
 	*model.Activities
 	Listener         msg.Listener
@@ -86,7 +86,7 @@ func (l *Logger) getAndIncrementTag(tag string) int {
 	return l.tagCount[tag]
 }
 
-//OnEvent handles supplied event.
+// OnEvent handles supplied event.
 func (l *Logger) OnEvent(event msg.Event) {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
@@ -141,7 +141,7 @@ func (l *Logger) OnEvent(event msg.Event) {
 	_, _ = file.Write(buf)
 }
 
-//AsEventListener returns an event Listener
+// AsEventListener returns an event Listener
 func (l *Logger) AsEventListener() msg.Listener {
 	return func(event msg.Event) {
 		if l.Listener != nil {
@@ -151,7 +151,7 @@ func (l *Logger) AsEventListener() msg.Listener {
 	}
 }
 
-//New creates a new event logger
+// New creates a new event logger
 func NewLogger(directory string, listener msg.Listener) *Logger {
 	var result = &Logger{
 		Activities:   model.NewActivities(),

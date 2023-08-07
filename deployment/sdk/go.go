@@ -10,7 +10,7 @@ import (
 	"path"
 )
 
-//TODO complete implementation
+// TODO complete implementation
 type goService struct{}
 
 func (s *goService) setSdk(context *endly.Context, request *SetRequest) (*Info, error) {

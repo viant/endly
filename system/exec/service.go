@@ -17,10 +17,10 @@ import (
 	"strings"
 )
 
-//ServiceID represent system executor service id
+// ServiceID represent system executor service id
 const ServiceID = "exec"
 
-//SudoCredentialKey represent obsucated password sudo credentials key (target.Credentials)
+// SudoCredentialKey represent obsucated password sudo credentials key (target.Credentials)
 const SudoCredentialKey = "**sudo**"
 
 type execService struct {
@@ -850,7 +850,7 @@ func (s *execService) registerRoutes() {
 	})
 }
 
-//New creates a new execution service
+// New creates a new execution service
 func New() endly.Service {
 	var result = &execService{
 		credentials:     make(map[string]*cred.Config),

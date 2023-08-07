@@ -32,14 +32,14 @@ func NewOutputEvent(message string, tag string, value interface{}) *OutputEvent 
 	}
 }
 
-//StdoutEvent represents an execution event end
+// StdoutEvent represents an execution event end
 type StdoutEvent struct {
 	Info   string
 	Stdout string
 	Error  string
 }
 
-//Messages returns messages
+// Messages returns messages
 func (e *StdoutEvent) Messages() []*Message {
 	return []*Message{
 		NewMessage(NewStyled(fmt.Sprintf("%v", e.Info), MessageStyleGeneric), NewStyled("stdout", MessageStyleGeneric),
@@ -47,7 +47,7 @@ func (e *StdoutEvent) Messages() []*Message {
 	}
 }
 
-//NewStdoutEvent crates a new execution start event value
+// NewStdoutEvent crates a new execution start event value
 func NewStdoutEvent(info string, stdout string) *StdoutEvent {
 	return &StdoutEvent{
 		Info:   info,

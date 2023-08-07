@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-//Activities represents activities
+// Activities represents activities
 type Activities struct {
 	mux        *sync.RWMutex
 	activities []*Activity
@@ -15,7 +15,7 @@ func (a *Activities) Len() int {
 	return len(a.activities)
 }
 
-//Push add activity
+// Push add activity
 func (a *Activities) Push(activity *Activity) {
 	a.mux.Lock()
 	defer a.mux.Unlock()
@@ -23,7 +23,7 @@ func (a *Activities) Push(activity *Activity) {
 	a.Activity = activity
 }
 
-//Range iterates over all activities
+// Range iterates over all activities
 func (a *Activities) Range(handler func(activity *Activity) bool, reverse bool) {
 	a.mux.Lock()
 	activities := a.activities
@@ -43,7 +43,7 @@ func (a *Activities) Range(handler func(activity *Activity) bool, reverse bool) 
 	}
 }
 
-//Pop removes last activity
+// Pop removes last activity
 func (a *Activities) Pop() *Activity {
 	a.mux.Lock()
 	defer a.mux.Unlock()
@@ -58,7 +58,7 @@ func (a *Activities) Pop() *Activity {
 	return result
 }
 
-//Get returns activity for index
+// Get returns activity for index
 func (a *Activities) Get(index int) *Activity {
 	return a.activities[index]
 }
@@ -79,7 +79,7 @@ func (a *Activities) First() *Activity {
 	return a.Activity
 }
 
-//NewActivities creates a new activites
+// NewActivities creates a new activites
 func NewActivities() *Activities {
 	return &Activities{
 		mux:        &sync.RWMutex{},

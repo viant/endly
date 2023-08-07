@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-//SetRequest represents sdk set request
+// SetRequest represents sdk set request
 type SetRequest struct {
 	Sdk          string //request sdk jdk, go
 	Version      string //requested version
@@ -16,7 +16,7 @@ type SetRequest struct {
 	BaseLocation string
 }
 
-//Init initializes request
+// Init initializes request
 func (r *SetRequest) Init() error {
 	if r.Version == "" && strings.Contains(r.Sdk, ":") {
 		var fragments = strings.SplitN(r.Sdk, ":", 2)
@@ -30,7 +30,7 @@ func (r *SetRequest) Init() error {
 	return nil
 }
 
-//Validate checks if request if valid
+// Validate checks if request if valid
 func (r *SetRequest) Validate() error {
 	if r.Sdk == "" {
 		return errors.New("sdk was empty")
@@ -41,7 +41,7 @@ func (r *SetRequest) Validate() error {
 	return nil
 }
 
-//NewSetRequest creates a new sdk request
+// NewSetRequest creates a new sdk request
 func NewSetRequest(target *url.Resource, sdk string, version string, env map[string]string) *SetRequest {
 	if len(env) == 0 {
 		env = make(map[string]string)
@@ -54,19 +54,19 @@ func NewSetRequest(target *url.Resource, sdk string, version string, env map[str
 	}
 }
 
-//NewSetRequestFromURL creates a new set request from URL
+// NewSetRequestFromURL creates a new set request from URL
 func NewSetRequestFromURL(URL string) (*SetRequest, error) {
 	var response = &SetRequest{}
 	resource := url.NewResource(URL)
 	return response, resource.Decode(response)
 }
 
-//SetResponse represents sdk response
+// SetResponse represents sdk response
 type SetResponse struct {
 	SdkInfo *Info
 }
 
-//Info represents a system sdk
+// Info represents a system sdk
 type Info struct {
 	Home      string //sdk path
 	Build     string //sdk build version

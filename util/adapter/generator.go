@@ -89,7 +89,7 @@ type fileMeta struct {
 	Methods  string
 }
 
-//Generate contract for API that use interface or functions style
+// Generate contract for API that use interface or functions style
 type Generator struct {
 	templates map[string]string
 }
@@ -193,7 +193,7 @@ func (g *Generator) buildTypeMethods(typeInfo *toolbox.TypeInfo, typeMeta *TypeM
 	return nil
 }
 
-//GenerateMatched generated code for all matched types
+// GenerateMatched generated code for all matched types
 func (g *Generator) GenerateMatched(source string, matcher func(typeName string) bool, predicate func(receiver *toolbox.FunctionInfo) bool, metaUpdater func(metaType *TypeMeta, receiver *toolbox.FunctionInfo)) (map[string]string, error) {
 	fileset, err := toolbox.NewFileSetInfo(source)
 	if err != nil {
@@ -217,7 +217,7 @@ func (g *Generator) GenerateMatched(source string, matcher func(typeName string)
 	return result, nil
 }
 
-//Generate generates code
+// Generate generates code
 func (g *Generator) Generate(source, typeName string, predicate func(receiver *toolbox.FunctionInfo) bool, metaUpdater func(metaType *TypeMeta, receiver *toolbox.FunctionInfo)) (*string, error) {
 	fileset, err := toolbox.NewFileSetInfo(source)
 	if err != nil {

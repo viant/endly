@@ -2,13 +2,13 @@ package model
 
 import "strings"
 
-//Path represents a system path
+// Path represents a system path
 type Path struct {
 	index map[string]bool
 	Items []string
 }
 
-//Unshift add path at the begining to the system paths
+// Unshift add path at the begining to the system paths
 func (p *Path) Unshift(paths ...string) {
 	for _, path := range paths {
 		if strings.Contains(path, "\n") {
@@ -22,12 +22,12 @@ func (p *Path) Unshift(paths ...string) {
 	}
 }
 
-//EnvValue returns evn values
+// EnvValue returns evn values
 func (p *Path) EnvValue() string {
 	return strings.Join(p.Items, ":")
 }
 
-//NewSystemPath create a new system path.
+// NewSystemPath create a new system path.
 func NewPath(items ...string) *Path {
 	return &Path{
 		index: make(map[string]bool),

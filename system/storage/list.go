@@ -13,7 +13,7 @@ import (
 	"io/ioutil"
 )
 
-//DownloadRequest represents a resources Download request, it downloads source into context.state target key
+// DownloadRequest represents a resources Download request, it downloads source into context.state target key
 type ListRequest struct {
 	Source    *url.Resource `required:"true" description:"source asset or directory"`
 	Match     *copy.Matcher
@@ -22,14 +22,14 @@ type ListRequest struct {
 	Expect    interface{}
 }
 
-//DownloadResponse represents a Download response
+// DownloadResponse represents a Download response
 type ListResponse struct {
 	URL    string
 	Assets []*asset.Resource
 	Assert *validator.AssertResponse
 }
 
-//Remove removes supplied assets
+// Remove removes supplied assets
 func (s *service) List(context *endly.Context, request *ListRequest) (*ListResponse, error) {
 	var response = &ListResponse{
 		Assets: make([]*asset.Resource, 0),
@@ -119,7 +119,7 @@ func getMatcherOptions(request *ListRequest) ([]storage.Option, error) {
 	return options, nil
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *ListRequest) Validate() error {
 	if r.Source == nil {
 		return errors.New("source was empty")

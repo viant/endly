@@ -2,13 +2,13 @@ package msg
 
 import "sync"
 
-//Events represents events
+// Events represents events
 type Events struct {
 	mux    *sync.Mutex
 	Events []Event
 }
 
-//AsListener returns a listener
+// AsListener returns a listener
 func (e *Events) AsListener() Listener {
 	return func(event Event) {
 		e.mux.Lock()
@@ -17,7 +17,7 @@ func (e *Events) AsListener() Listener {
 	}
 }
 
-//NewEvents creates a new events
+// NewEvents creates a new events
 func NewEvents() *Events {
 	return &Events{
 		mux:    &sync.Mutex{},

@@ -57,7 +57,7 @@ func initDefaultTarget() {
 	}
 }
 
-//GetServiceTarget sets default target URL, credentials if emtpy
+// GetServiceTarget sets default target URL, credentials if emtpy
 func GetServiceTarget(target *url.Resource) *url.Resource {
 	if target != nil && target.Credentials != "" {
 		return target

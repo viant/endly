@@ -5,10 +5,10 @@ import (
 	"github.com/viant/toolbox/data"
 )
 
-//UdfRegistry represents a udf registry
+// UdfRegistry represents a udf registry
 var UdfRegistry = make(map[string]func(source interface{}, state data.Map) (interface{}, error))
 
-//UdfRegistryProvider represents udf registry provider (i.e. to register parameterized udf dynamically)
+// UdfRegistryProvider represents udf registry provider (i.e. to register parameterized udf dynamically)
 var UdfRegistryProvider = make(map[string]func(args ...interface{}) (func(source interface{}, state data.Map) (interface{}, error), error))
 
 type UdfProvider struct {
@@ -17,13 +17,13 @@ type UdfProvider struct {
 	Params   []interface{} `description:"provider parameters"`
 }
 
-//ServiceProvider represents a service provider
+// ServiceProvider represents a service provider
 type ServiceProvider func() Service
 
-//ServiceRegistry  represents a service registry
+// ServiceRegistry  represents a service registry
 type ServiceRegistry []ServiceProvider
 
-//Register register service provider.
+// Register register service provider.
 func (r *ServiceRegistry) Register(serviceProvider ServiceProvider) error {
 	if serviceProvider == nil {
 		return errors.New("provider was empty")
@@ -34,5 +34,5 @@ func (r *ServiceRegistry) Register(serviceProvider ServiceProvider) error {
 
 var registry ServiceRegistry = make([]ServiceProvider, 0)
 
-//Registry global service provider registry
+// Registry global service provider registry
 var Registry = &registry

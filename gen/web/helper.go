@@ -34,7 +34,7 @@ func download(service storage.Service, URL string, result map[string]string) (er
 	return nil
 }
 
-//DownloadAll downloads assets from supplied URL
+// DownloadAll downloads assets from supplied URL
 func DownloadAll(URL string) (map[string]string, error) {
 	service, err := storage.NewServiceForURL(URL, "")
 	if err != nil {

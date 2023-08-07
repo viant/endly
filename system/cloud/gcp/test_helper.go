@@ -7,7 +7,7 @@ import (
 	"path"
 )
 
-//HasTestCredentialSetup returns true if e2e test credentials are set
+// HasTestCredentialSetup returns true if e2e test credentials are set
 func HasTestCredentials() bool {
 	secretPath := path.Join(os.Getenv("HOME"), ".secret/gcp-e2e.json")
 	if toolbox.FileExists(path.Join(os.Getenv("HOME"), ".secret/gcp-e2e.json")) {

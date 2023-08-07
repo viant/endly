@@ -15,7 +15,7 @@ import (
 
 var maxExpandableContentSize = int64(1024 * 128)
 
-//NewModifier return a new reader that can substitute content with state map, replacement data provided in replacement map.
+// NewModifier return a new reader that can substitute content with state map, replacement data provided in replacement map.
 func NewModifier(context *endly.Context, when *Matcher, replaceMap map[string]string, expand bool) (option.Modifier, error) {
 
 	matchHandler, err := substitutionMatcher(when)

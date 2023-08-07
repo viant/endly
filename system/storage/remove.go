@@ -7,17 +7,17 @@ import (
 	"github.com/viant/toolbox/url"
 )
 
-//RemoveRequest represents a resources Remove request
+// RemoveRequest represents a resources Remove request
 type RemoveRequest struct {
 	Assets []*url.Resource `required:"true" description:"resources to Remove"`
 }
 
-//RemoveResponse represents a resources Remove response, it returns url of all resource that have been removed.
+// RemoveResponse represents a resources Remove response, it returns url of all resource that have been removed.
 type RemoveResponse struct {
 	Removed []string
 }
 
-//Remove removes supplied assets
+// Remove removes supplied assets
 func (s *service) Remove(context *endly.Context, request *RemoveRequest) (*RemoveResponse, error) {
 	var response = &RemoveResponse{
 		Removed: make([]string, 0),
@@ -25,7 +25,7 @@ func (s *service) Remove(context *endly.Context, request *RemoveRequest) (*Remov
 	return response, s.remove(context, request, response)
 }
 
-//Remove removes supplied assets
+// Remove removes supplied assets
 func (s *service) remove(context *endly.Context, request *RemoveRequest, response *RemoveResponse) error {
 	fs, err := StorageService(context, request.Assets...)
 	if err != nil {
@@ -38,7 +38,7 @@ func (s *service) remove(context *endly.Context, request *RemoveRequest, respons
 	return nil
 }
 
-//removeResource removes supplied resource
+// removeResource removes supplied resource
 func removeResource(context *endly.Context, resource *url.Resource, fs afs.Service) (*url.Resource, error) {
 	resource, storageOpts, err := GetResourceWithOptions(context, resource)
 	if err != nil {
@@ -47,14 +47,14 @@ func removeResource(context *endly.Context, resource *url.Resource, fs afs.Servi
 	return resource, fs.Delete(context.Background(), resource.URL, storageOpts...)
 }
 
-//NewRemoveRequest creates a new Remove request
+// NewRemoveRequest creates a new Remove request
 func NewRemoveRequest(assets ...*url.Resource) *RemoveRequest {
 	return &RemoveRequest{
 		Assets: assets,
 	}
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *RemoveRequest) Validate() error {
 	if len(r.Assets) == 0 {
 		return errors.New("assets was empty")

@@ -27,7 +27,7 @@ var colors = map[string]func(arg interface{}) aurora.Value{
 	"inverse": aurora.Inverse,
 }
 
-//Renderer represents a renderer
+// Renderer represents a renderer
 type Renderer struct {
 	ErrorColor     string
 	writer         io.Writer
@@ -36,7 +36,7 @@ type Renderer struct {
 	pendingNewLine bool
 }
 
-//Printf formats and print supplied text with arguments
+// Printf formats and print supplied text with arguments
 func (r *Renderer) Printf(text string, args ...interface{}) {
 	r.flushPendingLineIfNeeded()
 	r.Print(aurora.Sprintf(text, args...))
@@ -53,23 +53,23 @@ func (r *Renderer) flushPendingLineIfNeeded() {
 	}
 }
 
-//Sprintf returns formatted text with arguments
+// Sprintf returns formatted text with arguments
 func (r *Renderer) Sprintf(text string, args ...interface{}) string {
 	return aurora.Sprintf(text, args...)
 }
 
-//Println returns formatted text with arguments
+// Println returns formatted text with arguments
 func (r *Renderer) Println(text string) {
 	r.flushPendingLineIfNeeded()
 	r.Print(text + "\n")
 }
 
-//Print prints supplied message
+// Print prints supplied message
 func (r *Renderer) Print(message string) {
 	_, _ = r.writer.Write([]byte(message))
 }
 
-//ColorText returns text with ANCI color
+// ColorText returns text with ANCI color
 func (r *Renderer) ColorText(text string, textColors ...string) string {
 	for _, color := range textColors {
 		if color, has := colors[color]; has {
@@ -79,7 +79,7 @@ func (r *Renderer) ColorText(text string, textColors ...string) string {
 	return text
 }
 
-//Columns reutnrs terminal column count
+// Columns reutnrs terminal column count
 func (r *Renderer) Columns() int {
 	cmd := exec.Command("stty", "size")
 	cmd.Stdin = os.Stdin
@@ -204,13 +204,13 @@ func (r *Renderer) printTableData(caption string, headers []string, data [][]str
 
 }
 
-//PrintTable prints supplied  table data
+// PrintTable prints supplied  table data
 func (r *Renderer) PrintTable(caption string, headers []string, data [][]string, maxSize int) {
 	r.printTableHeader(caption, headers, data, maxSize)
 	r.printTableData(caption, headers, data, maxSize)
 }
 
-//NewRenderer creates a new renderer
+// NewRenderer creates a new renderer
 func NewRenderer(writer io.Writer, minColumns int) *Renderer {
 	return &Renderer{
 		ErrorColor: "red",

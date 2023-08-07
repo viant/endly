@@ -31,7 +31,7 @@ type Resource struct {
 	projectID         string
 }
 
-//Init initializes resource
+// Init initializes resource
 func (r *Resource) Init() error {
 	if r == nil {
 		return fmt.Errorf("resource was empty")
@@ -61,7 +61,7 @@ func (r *Resource) Init() error {
 	return nil
 }
 
-//NewResource creates a new resource
+// NewResource creates a new resource
 func NewResource(resourceType, URL, credentials string) *Resource {
 	return &Resource{
 		Type:        resourceType,
@@ -70,14 +70,14 @@ func NewResource(resourceType, URL, credentials string) *Resource {
 	}
 }
 
-//Resource represents resource setup
+// Resource represents resource setup
 type ResourceSetup struct {
 	Resource
 	Recreate bool
 	Config   *Config
 }
 
-//Init initializes setup resource
+// Init initializes setup resource
 func (r *ResourceSetup) Init() error {
 	if r.Type == "" {
 		if isTopic := r.Config == nil || r.Config.Topic == nil; isTopic {
@@ -119,7 +119,7 @@ func (r *ResourceSetup) Validate() error {
 	return nil
 }
 
-//NewResourceSetup creates a new URL
+// NewResourceSetup creates a new URL
 func NewResourceSetup(resourceType, URL, credentials string, recreate bool, config *Config) *ResourceSetup {
 	return &ResourceSetup{
 		Resource: Resource{
@@ -133,7 +133,7 @@ func NewResourceSetup(resourceType, URL, credentials string, recreate bool, conf
 	}
 }
 
-//Config represent a subscription config
+// Config represent a subscription config
 type Config struct {
 	Topic               *Resource
 	Labels              map[string]string
@@ -143,7 +143,7 @@ type Config struct {
 	RetainAckedMessages bool
 }
 
-//NewConfig create new config
+// NewConfig create new config
 func NewConfig(topic string) *Config {
 	return &Config{
 		Topic: &Resource{Name: topic, Type: ResourceTypeTopic},

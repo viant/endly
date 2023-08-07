@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-//HTTPServerTrips represents http trips
+// HTTPServerTrips represents http trips
 type HTTPServerTrips struct {
 	BaseDirectory string
 	Rotate        bool
@@ -43,7 +43,7 @@ func (t *HTTPServerTrips) loadTripsIfNeeded(reqTemplate string, respTemplate str
 	return nil
 }
 
-//Init initialises trips
+// Init initialises trips
 func (t *HTTPServerTrips) Init(requestTemplate string, respTemplate string) error {
 	if t.Mutex == nil {
 		t.Mutex = &sync.Mutex{}

@@ -2,7 +2,7 @@ package udf
 
 import "github.com/viant/endly"
 
-//init initialises UDFs functions and register service
+// init initialises UDFs functions and register service
 func init() {
 	_ = endly.Registry.Register(func() endly.Service {
 		return New()

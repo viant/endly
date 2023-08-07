@@ -42,7 +42,7 @@ func loadMessages(data []byte) []*Message {
 	return result
 }
 
-//extractSubPath extract a next matched path fragment i.e iPath /proejcts/x/topics/t1,  returns t1 for 'topics' match
+// extractSubPath extract a next matched path fragment i.e iPath /proejcts/x/topics/t1,  returns t1 for 'topics' match
 func extractSubPath(aPath, match string) string {
 	fragments := strings.Split(aPath, "/")
 	for i := 0; i < len(fragments)-1; i++ {

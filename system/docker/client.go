@@ -10,7 +10,7 @@ import (
 
 var clientKey = (*CtxClient)(nil)
 
-//CtxClient represents generic docker client
+// CtxClient represents generic docker client
 type CtxClient struct {
 	Client     *client.Client
 	Context    context.Context
@@ -18,7 +18,7 @@ type CtxClient struct {
 	AuthToken  map[string]string
 }
 
-//GetCtxClient get or creates a new  kubernetess client.
+// GetCtxClient get or creates a new  kubernetess client.
 func GetCtxClient(ctx *endly.Context) (*CtxClient, error) {
 	result := &CtxClient{}
 	if ctx.Contains(clientKey) {
@@ -44,7 +44,7 @@ func GetCtxClient(ctx *endly.Context) (*CtxClient, error) {
 	return result, err
 }
 
-//initClient get or creates context client
+// initClient get or creates context client
 func initClient(context *endly.Context, rawRequest map[string]interface{}) error {
 	if len(rawRequest) == 0 {
 		return nil

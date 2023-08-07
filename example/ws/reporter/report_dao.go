@@ -5,7 +5,7 @@ import (
 	"github.com/viant/toolbox"
 )
 
-//ReportRecord represents a report record
+// ReportRecord represents a report record
 type ReportRecord struct {
 	Id     int    `autoincrement:"true"`
 	Name   string `column:"name"`

@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-//Service represents report service
+// Service represents report service
 type Service interface {
 	Register(request *RegisterReportRequest) *RegisterReportResponse
 
@@ -111,7 +111,7 @@ func (s *service) ReportProviders() ReportProviders {
 	return s.providers
 }
 
-//NewService creates a new service
+// NewService creates a new service
 func NewService(config *Config) (Service, error) {
 
 	if config.RepositoryDatastore == "" {

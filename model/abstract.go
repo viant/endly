@@ -1,6 +1,6 @@
 package model
 
-//AbstractNode represents an abstract workflow node(of a workflow, task or acton type)
+// AbstractNode represents an abstract workflow node(of a workflow, task or acton type)
 type AbstractNode struct {
 	Name        string
 	Description string

@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-//Response represents Http response
+// Response represents Http response
 type Response struct {
 	//ServiceRequest     *ServiceRequest
 	Code        int
@@ -43,7 +43,7 @@ func (r *Response) UpdateCookies(target data.Map) {
 	}
 }
 
-//Merge merge response from HTTP response
+// Merge merge response from HTTP response
 func (r *Response) Merge(httpResponse *http.Response, expectBinary bool) {
 	r.Code = httpResponse.StatusCode
 	r.Header = make(map[string][]string)
@@ -53,7 +53,7 @@ func (r *Response) Merge(httpResponse *http.Response, expectBinary bool) {
 	r.Cookies = responseCookies.IndexByName()
 }
 
-//NewResponse creates a new response
+// NewResponse creates a new response
 func NewResponse() *Response {
 	var response = &Response{}
 	response.Header = make(map[string][]string)

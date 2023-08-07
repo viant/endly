@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-//Activity represents pipeline or workflow activity
+// Activity represents pipeline or workflow activity
 type Activity struct {
 	*MetaTag
 	Caller          string
@@ -24,7 +24,7 @@ type Activity struct {
 	Logging         *bool
 }
 
-//FormatTag return a formatted tag
+// FormatTag return a formatted tag
 func (a *Activity) FormatTag() string {
 	if a.TagIndex != "" {
 		return "[" + a.Tag + a.TagIndex + "]"
@@ -32,7 +32,7 @@ func (a *Activity) FormatTag() string {
 	return "[" + a.Tag + "]"
 }
 
-//NewActivity returns a new workflow Activity.
+// NewActivity returns a new workflow Activity.
 func NewActivity(context *endly.Context, action *Action, state data.Map) *Activity {
 	var result = &Activity{
 		Action:  state.ExpandAsText(action.Action),
@@ -71,12 +71,12 @@ func NewActivity(context *endly.Context, action *Action, state data.Map) *Activi
 	return result
 }
 
-//ActivityEndEvent represents Activity end event type.
+// ActivityEndEvent represents Activity end event type.
 type ActivityEndEvent struct {
 	Response interface{}
 }
 
-//NewActivityEndEvent creates a new ActivityEndEvent
+// NewActivityEndEvent creates a new ActivityEndEvent
 func NewActivityEndEvent(response interface{}) *ActivityEndEvent {
 	return &ActivityEndEvent{
 		Response: response,

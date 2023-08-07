@@ -9,14 +9,14 @@ const defaultServiceID = "workflow"
 
 var emptyRequest = map[string]interface{}{}
 
-//ServiceRequest represent an action request
+// ServiceRequest represent an action request
 type ServiceRequest struct {
 	Service string      `description:"service ID"`
 	Action  string      `description:"service's'action "`
 	Request interface{} `description:"service request"`
 }
 
-//Init initialises action
+// Init initialises action
 func (r *ServiceRequest) Init() *ServiceRequest {
 	if r == nil {
 		r = &ServiceRequest{}
@@ -30,7 +30,7 @@ func (r *ServiceRequest) Init() *ServiceRequest {
 	return r
 }
 
-//Validate check is action request is valid
+// Validate check is action request is valid
 func (r *ServiceRequest) Validate() error {
 	if r.Service == "" {
 		return errors.New("service  was empty")

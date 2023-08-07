@@ -12,7 +12,7 @@ const (
 	ServiceID = "kubernetes/core"
 )
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
@@ -33,7 +33,7 @@ func (s *service) registerClientRoutes(client interface{}, APIPrefix string) {
 	}
 }
 
-//New creates a new service
+// New creates a new service
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),
