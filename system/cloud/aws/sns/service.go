@@ -23,7 +23,7 @@ const (
 	snsPrincipal    = "sns.amazonaws.com"
 )
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
@@ -347,7 +347,7 @@ func (s *service) adjustPermissionPrincipal(context *endly.Context, request *Set
 	return err
 }
 
-//New creates a new AWS SNS service.
+// New creates a new AWS SNS service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

@@ -16,7 +16,7 @@ type KeyInfo struct {
 	keyURI string
 }
 
-//DeployKeyRequest represents a deploy KeyInfo request
+// DeployKeyRequest represents a deploy KeyInfo request
 type DeployKeyRequest struct {
 	KeyInfo
 	Labels  map[string]string
@@ -27,7 +27,7 @@ type DeployKeyRequest struct {
 	parent        string
 }
 
-//DeployKeyRequest represents a deploy KeyInfo response
+// DeployKeyRequest represents a deploy KeyInfo response
 type DeployKeyResponse struct {
 	*cloudkms.CryptoKey
 	Policy *Policy
@@ -41,7 +41,7 @@ type DeployKeyResponse struct {
 
 */
 
-//EncryptRequest represents encrypt request
+// EncryptRequest represents encrypt request
 type EncryptRequest struct {
 	KeyInfo
 	PlainBase64Text string
@@ -50,13 +50,13 @@ type EncryptRequest struct {
 	Dest            *url.Resource
 }
 
-//EncryptResponse represents encrypt response
+// EncryptResponse represents encrypt response
 type EncryptResponse struct {
 	CipherData       []byte
 	CipherBase64Text string
 }
 
-//DecryptRequest represents decrypt response
+// DecryptRequest represents decrypt response
 type DecryptRequest struct {
 	KeyInfo
 	CipherData       []byte
@@ -64,13 +64,13 @@ type DecryptRequest struct {
 	Source           *url.Resource
 }
 
-//DecryptResponse represents decrypt response
+// DecryptResponse represents decrypt response
 type DecryptResponse struct {
 	PlainData []byte
 	PlainText string
 }
 
-//NewEncryptRequest creates a new DecryptRequest
+// NewEncryptRequest creates a new DecryptRequest
 func NewDecryptRequest(region, ring, keyId string, data []byte) *DecryptRequest {
 	return &DecryptRequest{
 		KeyInfo: KeyInfo{
@@ -82,7 +82,7 @@ func NewDecryptRequest(region, ring, keyId string, data []byte) *DecryptRequest 
 	}
 }
 
-//NewEncryptRequest creates a new EncryptRequest
+// NewEncryptRequest creates a new EncryptRequest
 func NewEncryptRequest(region, ring, keyId string, plainData []byte) *EncryptRequest {
 	return &EncryptRequest{
 		KeyInfo: KeyInfo{
@@ -94,7 +94,7 @@ func NewEncryptRequest(region, ring, keyId string, plainData []byte) *EncryptReq
 	}
 }
 
-//NewDeployKeyRequest creates a new DeployKeyRequest
+// NewDeployKeyRequest creates a new DeployKeyRequest
 func NewDeployKeyRequest(region, ring, keyId, purpose string) *DeployKeyRequest {
 	return &DeployKeyRequest{
 		KeyInfo: KeyInfo{
@@ -106,7 +106,7 @@ func NewDeployKeyRequest(region, ring, keyId, purpose string) *DeployKeyRequest 
 	}
 }
 
-//Init initializes request
+// Init initializes request
 func (r *EncryptRequest) Init() error {
 	if r.Dest != nil {
 		if err := r.Dest.Init(); err != nil {
@@ -121,7 +121,7 @@ func (r *EncryptRequest) Init() error {
 	return r.KeyInfo.Init()
 }
 
-//Init initializes request
+// Init initializes request
 func (r *DecryptRequest) Init() error {
 	if r.Source != nil {
 		if err := r.Source.Init(); err != nil {
@@ -131,7 +131,7 @@ func (r *DecryptRequest) Init() error {
 	return r.KeyInfo.Init()
 }
 
-//Init initializes key
+// Init initializes key
 func (r *KeyInfo) Init() error {
 	if r.Region == "" {
 		r.Region = gcp.DefaultRegion

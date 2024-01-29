@@ -31,7 +31,7 @@ func getClient(context *endly.Context) (interface{}, error) {
 	return client, nil
 }
 
-//GetClient returns lambda client from context
+// GetClient returns lambda client from context
 func GetClient(context *endly.Context) (*lambda.Lambda, error) {
 	client, err := getClient(context)
 	if err != nil {

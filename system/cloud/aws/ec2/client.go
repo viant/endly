@@ -31,7 +31,7 @@ func getClient(context *endly.Context) (interface{}, error) {
 	return client, nil
 }
 
-//GetClient returns ec2 client from context
+// GetClient returns ec2 client from context
 func GetClient(context *endly.Context) (*ec2.EC2, error) {
 	client, err := getClient(context)
 	if err != nil {

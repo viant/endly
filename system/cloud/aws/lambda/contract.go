@@ -9,10 +9,10 @@ import (
 	"time"
 )
 
-//RecreateFunctionInput drops function if exist to create a new one
+// RecreateFunctionInput drops function if exist to create a new one
 type RecreateFunctionInput lambda.CreateFunctionInput
 
-//DropFunctionInput remove a function with all dependencies
+// DropFunctionInput remove a function with all dependencies
 type DropFunctionInput lambda.DeleteFunctionInput
 
 type EventSourceMapping struct {
@@ -25,7 +25,7 @@ type EventSourceMapping struct {
 	StartingPositionTimestamp *time.Time `type:"timestamp"`
 }
 
-//DeployInput setup function, creates or updates existing one
+// DeployInput setup function, creates or updates existing one
 type DeployInput struct {
 	lambda.CreateFunctionInput `yaml:",inline" json:",inline"`
 	ciam.SetupRolePolicyInput  ` json:",inline"`
@@ -43,31 +43,31 @@ type DeployOutput struct {
 	EventMappings []*lambda.EventSourceMappingConfiguration
 }
 
-//SetupPermissionInput creates a permission if it does not exists
+// SetupPermissionInput creates a permission if it does not exists
 type SetupPermissionInput lambda.AddPermissionInput
 
-//SetupTriggerSourceInput represents setup triggers input
+// SetupTriggerSourceInput represents setup triggers input
 type SetupTriggerSourceInput struct {
 	FunctionName *string
 	Timeout      *int64
 	Triggers     []*EventSourceMapping
 }
 
-//SetupTriggerSourceOutput represents  setup triggers output
+// SetupTriggerSourceOutput represents  setup triggers output
 type SetupTriggerSourceOutput struct {
 	EventMappings []*lambda.EventSourceMappingConfiguration
 }
 
-//CallInput represents a call request
+// CallInput represents a call request
 type CallInput lambda.InvokeInput
 
-//CallOutput represents a call response
+// CallOutput represents a call response
 type CallOutput struct {
 	*lambda.InvokeOutput
 	Response interface{}
 }
 
-//Init initializes deploy request
+// Init initializes deploy request
 func (i *DeployInput) Init() error {
 	if i.DefaultPolicyDocument == nil {
 		policyDocument := string(DefaultTrustPolicy)

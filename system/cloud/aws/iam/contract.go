@@ -5,13 +5,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/iam"
 )
 
-//RecreateRoleInput drops role if exist to create a new one
+// RecreateRoleInput drops role if exist to create a new one
 type RecreateRoleInput iam.CreateRoleInput
 
-//DropRoleInput deattaches all role polices and deletes role
+// DropRoleInput deattaches all role polices and deletes role
 type DropRoleInput iam.DeleteRoleInput
 
-//SetupRolePolicyInput represents setup role policy input
+// SetupRolePolicyInput represents setup role policy input
 type SetupRolePolicyInput struct {
 	iam.CreateRoleInput   `yaml:",inline" json:",inline"`
 	DefaultPolicyDocument *string
@@ -19,7 +19,7 @@ type SetupRolePolicyInput struct {
 	Define                []*iam.PutRolePolicyInput
 }
 
-//Validate checks if input is valid
+// Validate checks if input is valid
 func (i *SetupRolePolicyInput) Validate() error {
 	if i.CreateRoleInput.RoleName == nil {
 		return fmt.Errorf("roleName was empty")
@@ -27,7 +27,7 @@ func (i *SetupRolePolicyInput) Validate() error {
 	return nil
 }
 
-//Validate checks if input is valid
+// Validate checks if input is valid
 func (i *SetupRolePolicyInput) Init() error {
 	if i.AssumeRolePolicyDocument == nil {
 		i.AssumeRolePolicyDocument = i.DefaultPolicyDocument

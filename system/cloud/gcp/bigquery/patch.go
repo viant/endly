@@ -6,7 +6,7 @@ import (
 	"google.golang.org/api/bigquery/v2"
 )
 
-//PatchRequest represents a patch request
+// PatchRequest represents a patch request
 type PatchRequest struct {
 	*bigquery.TableReference
 	Table       string
@@ -19,7 +19,7 @@ type PatchResponse struct {
 	*bigquery.Table
 }
 
-//Init initialises request
+// Init initialises request
 func (r *PatchRequest) Init() (err error) {
 	if r.Table != "" && (r.TableReference == nil || r.TableReference.TableId == "") {
 		if r.TableReference, err = NewTableReference(r.Table); err != nil {
@@ -34,7 +34,7 @@ func (r *PatchRequest) Init() (err error) {
 	return err
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *PatchRequest) Validate() (err error) {
 	if r.TableReference == nil {
 		return errors.New("table was empty")

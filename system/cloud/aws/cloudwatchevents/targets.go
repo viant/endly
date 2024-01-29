@@ -2,16 +2,16 @@ package cloudwatchevents
 
 import "github.com/aws/aws-sdk-go/service/cloudwatchevents"
 
-//Target represents target
+// Target represents target
 type Target struct {
 	cloudwatchevents.Target
 	Function *string `description:"lambda function name"`
 }
 
-//Target represents targets
+// Target represents targets
 type Targets []*Target
 
-//Targets returns targets
+// Targets returns targets
 func (t Targets) targets() []*cloudwatchevents.Target {
 	var result = make([]*cloudwatchevents.Target, len(t))
 	for i := range t {

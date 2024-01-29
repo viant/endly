@@ -7,7 +7,7 @@ import (
 	"google.golang.org/api/storage/v1"
 )
 
-//SetNotification setup notification
+// SetNotification setup notification
 func (s *service) SetNotification(context *endly.Context, request *SetupNotificationRequest) (*SetupNotificationResponse, error) {
 	response := &SetupNotificationResponse{}
 	return response, s.setupNotification(context, request, response)

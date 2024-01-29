@@ -6,7 +6,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-//Represents reset method event part
+// Represents reset method event part
 type RestMethodInfo struct {
 	HTTPMethod        string
 	URI               *string
@@ -15,7 +15,7 @@ type RestMethodInfo struct {
 	AuthorizerID      *string
 }
 
-//Represents reset resource event part
+// Represents reset resource event part
 type RestResourceInfo struct {
 	Path    string
 	ID      string
@@ -23,7 +23,7 @@ type RestResourceInfo struct {
 	TestCLI string
 }
 
-//ResetAPIEvent represents rest API event
+// ResetAPIEvent represents rest API event
 type ResetAPIEvent struct {
 	Name      string
 	ID        string
@@ -81,7 +81,7 @@ func NewResetAPIEvent(output *SetupRestAPIOutput) *ResetAPIEvent {
 	return result
 }
 
-//Messages returns messages
+// Messages returns messages
 func (o *SetupRestAPIOutput) Messages() []*msg.Message {
 	if o == nil {
 		return nil

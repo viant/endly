@@ -13,7 +13,7 @@ const (
 	ServiceID = "aws/kms"
 )
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
@@ -110,7 +110,7 @@ func (s *service) setupKey(context *endly.Context, input *SetupKeyInput) (interf
 	return s.getAlias(context, *input.AliasName)
 }
 
-//New creates a new AWS Key Management  service.
+// New creates a new AWS Key Management  service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

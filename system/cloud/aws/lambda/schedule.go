@@ -17,7 +17,7 @@ type ScheduleEvent struct {
 	DetailType *string
 }
 
-//Schedule represents schedule
+// Schedule represents schedule
 type Schedule struct {
 	Expression *string
 	Event      *ScheduleEvent
@@ -45,7 +45,7 @@ func (s *Schedule) Init() error {
 	return s.Event.Init()
 }
 
-//ScheduleDeployRule returns DeployRuleInput
+// ScheduleDeployRule returns DeployRuleInput
 func (i *DeployInput) ScheduleDeployRule() *cloudwatchevents.DeployRuleInput {
 	if i.Schedule == nil || i.Schedule.Expression == nil {
 		return nil

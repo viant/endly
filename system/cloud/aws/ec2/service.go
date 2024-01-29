@@ -13,7 +13,7 @@ const (
 	ServiceID = "aws/ec2"
 )
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
@@ -396,7 +396,7 @@ func (s *service) getSubnets(context *endly.Context, input *GetSubnetsInput) (*G
 	return output, nil
 }
 
-//New creates a new EC2 service.
+// New creates a new EC2 service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

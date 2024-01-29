@@ -31,7 +31,7 @@ func getClient(context *endly.Context) (interface{}, error) {
 	return client, nil
 }
 
-//GetClient returns kms client from context
+// GetClient returns kms client from context
 func GetClient(context *endly.Context) (*kms.KMS, error) {
 	client, err := getClient(context)
 	if err != nil {

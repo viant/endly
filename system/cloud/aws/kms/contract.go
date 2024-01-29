@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-//SetupKeyInput setup key with alias
+// SetupKeyInput setup key with alias
 type SetupKeyInput struct {
 	kms.CreateKeyInput   `json:",inline" yaml:",inline"`
 	kms.CreateAliasInput `json:",inline" yaml:",inline"`

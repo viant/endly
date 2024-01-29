@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-//NewTableReference creates a table reference for table in the following syntax [project:]dataset.table
+// NewTableReference creates a table reference for table in the following syntax [project:]dataset.table
 func NewTableReference(table string) (*bigquery.TableReference, error) {
 	dotIndex := strings.LastIndex(table, ".")
 	if dotIndex == -1 {

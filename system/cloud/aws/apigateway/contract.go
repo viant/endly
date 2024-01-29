@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-//GetRestAPIInput endpoint URL inpit
+// GetRestAPIInput endpoint URL inpit
 type GetRestAPIInput struct {
 	Name      *string `json:",inline"`
 	StageName *string ` json:",inline"`
@@ -29,13 +29,13 @@ func (i *GetRestAPIInput) Validate() error {
 	return nil
 }
 
-//GetRestAPIInput endpoint URL output
+// GetRestAPIInput endpoint URL output
 type GetRestAPIOutput struct {
 	*apigateway.RestApi
 	EndpointURL string ` json:",inline"`
 }
 
-//SetupRestAPIInput represent a request to setup API with specified resources
+// SetupRestAPIInput represent a request to setup API with specified resources
 type SetupRestAPIInput struct {
 	apigateway.CreateRestApiInput    ` json:",inline"`
 	Resources                        []*SetupResourceInput
@@ -51,7 +51,7 @@ type CreateAuthorizerInput struct {
 	FunctionName string
 }
 
-//Diff computes patches
+// Diff computes patches
 func (i CreateAuthorizerInput) Diff(source *apigateway.Authorizer) []*apigateway.PatchOperation {
 	var result = make([]*apigateway.PatchOperation, 0)
 	if patch, ok := patchString(source.AuthorizerUri, i.AuthorizerUri, "/authorizerUri"); ok {
@@ -82,7 +82,7 @@ func (i CreateAuthorizerInput) Diff(source *apigateway.Authorizer) []*apigateway
 	return result
 }
 
-//SetupRestAPIInput represent setup API response
+// SetupRestAPIInput represent setup API response
 type SetupRestAPIOutput struct {
 	*apigateway.RestApi
 	Resources   []*SetupResourceOutput
@@ -92,14 +92,14 @@ type SetupRestAPIOutput struct {
 	Region      string
 }
 
-//SetupResourceInput represents resource input
+// SetupResourceInput represents resource input
 type SetupResourceInput struct {
 	Path                           string
 	apigateway.CreateResourceInput `json:",inline"`
 	Methods                        []*ResourceMethod
 }
 
-//ResourceMethod represents resource method
+// ResourceMethod represents resource method
 type ResourceMethod struct {
 	FunctionName string
 	Authorizer   string
@@ -109,13 +109,13 @@ type ResourceMethod struct {
 	*lambda.AddPermissionInput
 }
 
-//SetupResourceOutput represents setup resource output
+// SetupResourceOutput represents setup resource output
 type SetupResourceOutput struct {
 	*apigateway.Resource `json:",inline"`
 	ResourceMethods      map[string]*apigateway.Method
 }
 
-//RemoveRestAPI removes API for supplied name
+// RemoveRestAPI removes API for supplied name
 type RemoveRestAPIInput struct {
 	Name *string
 }
@@ -164,7 +164,7 @@ func (i *SetupRestAPIInput) Init() error {
 	return nil
 }
 
-//Validate checks is input is valud
+// Validate checks is input is valud
 func (i *SetupRestAPIInput) Validate() error {
 	if len(i.Resources) == 0 {
 		return fmt.Errorf("resources was empty")
@@ -181,7 +181,7 @@ func (i *SetupRestAPIInput) Validate() error {
 	return nil
 }
 
-//Init initialize input
+// Init initialize input
 func (i *SetupResourceInput) Init() error {
 	if i.Path == "" {
 		if i.PathPart != nil {
@@ -222,7 +222,7 @@ func (i *SetupResourceInput) Validate() error {
 	return nil
 }
 
-//ParentPath returns parent path
+// ParentPath returns parent path
 func (i *SetupResourceInput) ParentPath() string {
 	if i.PathPart == nil {
 		return i.Path
@@ -242,24 +242,25 @@ func (i *SetupResourceInput) ParentPath() string {
 }
 
 /*
-	Initialise resource with the following defaults
+Initialise resource with the following defaults
 
-	<ul>
-		<li>AuthorizationType: NONE</li>
-		<li>HttpMethod: ANY</li>
-		<li>ApiKeyRequired: false</li>
-		<li>IntegrationHttpMethod: POST</li>
-		<li>Type: AWS_PROXY</li>
-		<li>Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/${function.arn}/invocations</li>
-	</ul>
+<ul>
 
-	It supports data substitution on uri attribute i.e.
-	- 	$function.arn
-	-	$function.region
-	-	$function.accountID
-	-	$restAPI.ID
-	-	$uuid.next
+	<li>AuthorizationType: NONE</li>
+	<li>HttpMethod: ANY</li>
+	<li>ApiKeyRequired: false</li>
+	<li>IntegrationHttpMethod: POST</li>
+	<li>Type: AWS_PROXY</li>
+	<li>Uri: arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/${function.arn}/invocations</li>
 
+</ul>
+
+It supports data substitution on uri attribute i.e.
+- 	$function.arn
+-	$function.region
+-	$function.accountID
+-	$restAPI.ID
+-	$uuid.next
 */
 func (i *ResourceMethod) Init() error {
 
@@ -348,10 +349,10 @@ func (i *ResourceMethod) Validate() error {
 	return nil
 }
 
-//SetupMethodInput setups method input
+// SetupMethodInput setups method input
 type SetupMethodInput apigateway.PutMethodInput
 
-//Diff computes patches
+// Diff computes patches
 func (i SetupMethodInput) Diff(source *apigateway.Method) []*apigateway.PatchOperation {
 	var result = make([]*apigateway.PatchOperation, 0)
 	if patch, ok := patchBool(source.ApiKeyRequired, i.ApiKeyRequired, "/apiKeyRequired"); ok {
@@ -374,7 +375,7 @@ func (i SetupMethodInput) Diff(source *apigateway.Method) []*apigateway.PatchOpe
 
 type PutIntegrationInput apigateway.PutIntegrationInput
 
-//Diff computes patches
+// Diff computes patches
 func (i PutIntegrationInput) Diff(source *apigateway.Integration) []*apigateway.PatchOperation {
 	var result = make([]*apigateway.PatchOperation, 0)
 	if patch, ok := patchString(source.Uri, i.Uri, "/uri"); ok {

@@ -12,7 +12,7 @@ const (
 	ServiceID = "gcp/container"
 )
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
@@ -30,7 +30,7 @@ func (s *service) registerRoutes() {
 	}
 }
 
-//New creates a new container service
+// New creates a new container service
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

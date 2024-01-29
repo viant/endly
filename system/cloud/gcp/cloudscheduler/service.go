@@ -16,7 +16,7 @@ const (
 	ServiceID = "gcp/cloudscheduler"
 )
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
@@ -110,7 +110,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//New creates a new cloudscheduler service
+// New creates a new cloudscheduler service
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

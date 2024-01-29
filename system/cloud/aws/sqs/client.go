@@ -31,7 +31,7 @@ func getClient(context *endly.Context) (interface{}, error) {
 	return client, nil
 }
 
-//GetClient returns sqs client from context
+// GetClient returns sqs client from context
 func GetClient(context *endly.Context) (*sqs.SQS, error) {
 	client, err := getClient(context)
 	if err != nil {

@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-//DeployJobRequest represents deploy job request
+// DeployJobRequest represents deploy job request
 type DeployRequest struct {
 	cloudscheduler.Job
 	Region  string
@@ -48,7 +48,7 @@ func (r *DeployRequest) Init() error {
 	return nil
 }
 
-//DeployJobResponse represents deploy job response
+// DeployJobResponse represents deploy job response
 type DeployResponse struct {
 	*cloudscheduler.Job
 }

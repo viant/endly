@@ -31,7 +31,7 @@ func getClient(context *endly.Context) (interface{}, error) {
 	return client, nil
 }
 
-//GetClient returns dynamodb client from context
+// GetClient returns dynamodb client from context
 func GetClient(context *endly.Context) (*dynamodb.DynamoDB, error) {
 	client, err := getClient(context)
 	if err != nil {

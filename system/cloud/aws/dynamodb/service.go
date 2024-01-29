@@ -12,7 +12,7 @@ const (
 	ServiceID = "aws/dynamodb"
 )
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
@@ -30,7 +30,7 @@ func (s *service) registerRoutes() {
 	}
 }
 
-//New creates a new AWS DynamoDB service.
+// New creates a new AWS DynamoDB service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

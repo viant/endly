@@ -24,7 +24,7 @@ const (
 	ServiceID = "aws/lambda"
 )
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
@@ -375,7 +375,6 @@ This method uses EventSourceMappingsInput, so only the following source are supp
 	//    * Amazon Kinesis - The ARN of the data stream or a stream consumer.
 	//    * Amazon DynamoDB Streams - The ARN of the stream.
 	//    * Amazon Simple Queue Service - The ARN of the queue.
-
 */
 func (s *service) setupTriggerSource(context *endly.Context, request *SetupTriggerSourceInput) (*SetupTriggerSourceOutput, error) {
 	client, err := GetClient(context)
@@ -612,7 +611,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//New creates a new AWS Ec2 service.
+// New creates a new AWS Ec2 service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

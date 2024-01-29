@@ -11,7 +11,7 @@ const baseURLTemplate = "https://%s-run.googleapis.com/"
 
 var clientKey = (*CtxClient)(nil)
 
-//CtxClient represents context client
+// CtxClient represents context client
 type CtxClient struct {
 	*gcp.AbstractClient
 	service *run.APIService

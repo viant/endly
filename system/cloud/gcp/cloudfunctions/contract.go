@@ -7,14 +7,14 @@ import (
 	"strings"
 )
 
-//CallRequest represents a call request
+// CallRequest represents a call request
 type CallRequest struct {
 	Name   string
 	Region string
 	Data   interface{}
 }
 
-//DeployRequest represents deploy request
+// DeployRequest represents deploy request
 type DeployRequest struct {
 	cloudfunctions.CloudFunction `yaml:",inline" json:",inline"`
 	Source                       *url.Resource
@@ -24,55 +24,55 @@ type DeployRequest struct {
 	Retry                        bool
 }
 
-//DeployResponse represents deploy response
+// DeployResponse represents deploy response
 type DeployResponse struct {
 	Operation string
 	Meta      interface{}
 	Function  *cloudfunctions.CloudFunction
 }
 
-//GetRequest represents get function requests
+// GetRequest represents get function requests
 type GetRequest struct {
 	Name   string
 	Region string
 }
 
-//GetRequest represents list function requests
+// GetRequest represents list function requests
 type ListRequest struct {
 	Region string
 }
 
-//GetRequest represents list function response
+// GetRequest represents list function response
 type ListResponse struct {
 	Function []*cloudfunctions.CloudFunction
 }
 
-//DeleteRequest represents delete function requests
+// DeleteRequest represents delete function requests
 type DeleteRequest struct {
 	Name   string
 	Region string
 }
 
-//DeleteResponse represents delete response
+// DeleteResponse represents delete response
 type DeleteResponse struct {
 	Operation string
 	Meta      interface{}
 }
 
-//Init initializes request
+// Init initializes request
 func (r *ListRequest) Init() error {
 	r.Region = initRegion(r.Region)
 	return nil
 }
 
-//Init initializes request
+// Init initializes request
 func (r *CallRequest) Init() error {
 	r.Name = initFullyQualifiedName(r.Name)
 	r.Region = initRegion(r.Region)
 	return nil
 }
 
-//Validate checks if request was valid
+// Validate checks if request was valid
 func (r *CallRequest) Validate() error {
 	if r.Name == "" {
 		return errors.New("name was empty")
@@ -80,7 +80,7 @@ func (r *CallRequest) Validate() error {
 	return nil
 }
 
-//Validate checks if request was valid
+// Validate checks if request was valid
 func (r *DeployRequest) Validate() error {
 	if r.CloudFunction.Name == "" {
 		return errors.New("name was empty")
@@ -91,7 +91,7 @@ func (r *DeployRequest) Validate() error {
 	return nil
 }
 
-//Init initializes request
+// Init initializes request
 func (r *DeployRequest) Init() error {
 	if r.Region == "" {
 		r.Region = defaultRegion
@@ -127,14 +127,14 @@ func (r *DeployRequest) Init() error {
 	return r.Source.Init()
 }
 
-//Init initializes request
+// Init initializes request
 func (r *GetRequest) Init() error {
 	r.Name = initFullyQualifiedName(r.Name)
 	r.Region = initRegion(r.Region)
 	return nil
 }
 
-//Validate checks if request was valid
+// Validate checks if request was valid
 func (r *GetRequest) Validate() error {
 	if r.Name == "" {
 		return errors.New("name was empty")
@@ -142,14 +142,14 @@ func (r *GetRequest) Validate() error {
 	return nil
 }
 
-//Init initializes request
+// Init initializes request
 func (r *DeleteRequest) Init() error {
 	r.Name = initFullyQualifiedName(r.Name)
 	r.Region = initRegion(r.Region)
 	return nil
 }
 
-//Validate checks if request was valid
+// Validate checks if request was valid
 func (r *DeleteRequest) Validate() error {
 	if r.Name == "" {
 		return errors.New("name was empty")

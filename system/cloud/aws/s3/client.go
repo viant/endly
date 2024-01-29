@@ -31,7 +31,7 @@ func getClient(context *endly.Context) (interface{}, error) {
 	return client, nil
 }
 
-//GetClient returns s3 client from context
+// GetClient returns s3 client from context
 func GetClient(context *endly.Context) (*s3.S3, error) {
 	client, err := getClient(context)
 	if err != nil {

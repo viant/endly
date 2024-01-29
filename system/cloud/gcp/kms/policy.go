@@ -6,13 +6,13 @@ import (
 	"sort"
 )
 
-//Policy represents kms policy
+// Policy represents kms policy
 type Policy struct {
 	Bindings []*cloudkms.Binding
 	Version  int64
 }
 
-//ShallUpdatePolicy returns true if policy needs to be updated
+// ShallUpdatePolicy returns true if policy needs to be updated
 func ShallUpdatePolicy(prev, policy *Policy) bool {
 	if policy == nil {
 		return false
