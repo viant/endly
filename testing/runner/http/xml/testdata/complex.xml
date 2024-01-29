@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<forecast-response response-time="2024-01-27T10:42:21.611-08:00" elasped-time="0">
+    <forecasting-response all-done="true">
+        <view-request view-id="TOTAL" view-name="total" cache-id="total/$client-info=adeguzman_viant_devtest&amp;channelV2=1,2,3,6,7&amp;exclude_viant_segment=1329146,1329128,1329149&amp;from=2024-01-17-08:00&amp;include_location_dim=US/CA/&amp;include_media_type=nv,mv&amp;include_uniqs=true&amp;to=2024-01-30-08:00&amp;user_identifier_type=1" hashed-cache-id="" status="COMPLETE" wait-in-seconds="232" runtime-in-seconds="5" seconds-to-expire="3419" priority="0" submit-time="2024-01-27T18:35:23Z" last-poll-time="1706380761" cache-hits="1" client-info="adeguzman_viant_devtest" from="2024-01-17T00:00:00-08:00" to="2024-01-30T00:00:00-08:00">
+            <result>
+                <columns>
+                    <column id="inventory" type="long"/>
+                    <column id="uniques" type="long"/>
+                    <column id="hh_uniques" type="long"/>
+                    <column id="clearing_price" type="double"/>
+                </columns>
+                <rows>
+                    <r>
+                        <c lg="2669672"></c>
+                        <c lg="1149901"></c>
+                        <c lg="127100"></c>
+                        <c db="6.61"></c>
+                    </r>
+                </rows>
+            </result>
+            <sql>
+                <![CDATA[SELECT  .. FROM t    LIMIT 25]]>
+            </sql>
+            <filter>
+                <location include-ids="US,CA"/>
+                <viant_segment exclude-ids="1329146,1329128,1329149"/>
+                <media-type />
+            </filter>
+        </view-request>
+    </forecasting-response>
+</forecast-response>
