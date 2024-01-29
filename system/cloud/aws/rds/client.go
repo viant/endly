@@ -31,7 +31,7 @@ func getClient(context *endly.Context) (interface{}, error) {
 	return client, nil
 }
 
-//GetClient returns rds client from context
+// GetClient returns rds client from context
 func GetClient(context *endly.Context) (*rds.RDS, error) {
 	client, err := getClient(context)
 	if err != nil {

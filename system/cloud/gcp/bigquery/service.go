@@ -14,7 +14,7 @@ const (
 	doneStatus = "DONE"
 )
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
@@ -212,7 +212,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//New creates a new BigQuery service.
+// New creates a new BigQuery service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

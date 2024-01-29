@@ -7,19 +7,19 @@ import (
 	"strings"
 )
 
-//SetNotification represents setup notification request
+// SetNotification represents setup notification request
 type SetupNotificationRequest struct {
 	Bucket    string
 	ProjectID string
 	storage.Notification
 }
 
-//SetNotification represents setup notification response
+// SetNotification represents setup notification response
 type SetupNotificationResponse struct {
 	*storage.Notification
 }
 
-//Init initialises request
+// Init initialises request
 func (r *SetupNotificationRequest) Init() error {
 	elements := strings.Split(r.Topic, "/")
 	if len(elements) == 1 {
@@ -33,7 +33,7 @@ func (r *SetupNotificationRequest) Init() error {
 	return nil
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *SetupNotificationRequest) Validate() error {
 	if r.Bucket == "" {
 		return errors.New("bucket was empty")

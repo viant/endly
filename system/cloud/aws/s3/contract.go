@@ -14,7 +14,7 @@ const (
 	publishAction     = "publish"
 )
 
-//SetupBucketNotificationInput setup permission for specified bucket
+// SetupBucketNotificationInput setup permission for specified bucket
 type SetupBucketNotificationInput struct {
 	Bucket                     *string
 	*NotificationConfiguration `json:",inline"`

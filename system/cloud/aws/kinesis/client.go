@@ -31,7 +31,7 @@ func getClient(context *endly.Context) (interface{}, error) {
 	return client, nil
 }
 
-//GetClient returns kinesis client from context
+// GetClient returns kinesis client from context
 func GetClient(context *endly.Context) (*kinesis.Kinesis, error) {
 	client, err := getClient(context)
 	if err != nil {

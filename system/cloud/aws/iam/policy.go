@@ -4,7 +4,7 @@ import (
 	"github.com/viant/toolbox"
 )
 
-//Policy represent policy
+// Policy represent policy
 type Policy struct {
 	PolicyName     *string
 	PolicyArn      *string
@@ -32,12 +32,12 @@ func (p *Policy) PolicyInfo() []*InfoStatement {
 	return result.Statement
 }
 
-//Principal represents policy principal
+// Principal represents policy principal
 type Principal struct {
 	Service string
 }
 
-//Statement represents policy document statement
+// Statement represents policy document statement
 type Statement struct {
 	Sid       *string
 	Effect    string
@@ -47,7 +47,7 @@ type Statement struct {
 	Condition toolbox.AnyJSONType `json:",omitempty"`
 }
 
-//PolicyDocument represent policy document
+// PolicyDocument represent policy document
 type PolicyDocument struct {
 	Version   string
 	ID        string `json:"Id"`

@@ -20,7 +20,7 @@ const (
 	ServiceID = "gcp/kms"
 )
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
@@ -325,7 +325,7 @@ func (s *service) decrypt(context *endly.Context, request *DecryptRequest) (*Dec
 	}, nil
 }
 
-//New creates a new cloudkms service
+// New creates a new cloudkms service
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

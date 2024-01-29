@@ -6,7 +6,7 @@ import (
 	"google.golang.org/api/bigquery/v2"
 )
 
-//QueryRequest represents query request
+// QueryRequest represents query request
 type QueryRequest struct {
 	bigquery.JobConfigurationQuery
 	Job     *bigquery.JobReference
@@ -14,7 +14,7 @@ type QueryRequest struct {
 	Async   bool `description:"if set true, function does not wait for job completion"`
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *QueryRequest) Validate() error {
 	if r.Query == "" {
 		return errors.New("query was empty")

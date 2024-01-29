@@ -45,7 +45,7 @@ func (s *service) waitForOperationCompletion(context *endly.Context, job *bigque
 	}
 }
 
-//Validate checks if request is valid
+// Validate checks if request is valid
 func (r *JobWaitRequest) Validate() error {
 	if r.Job == nil {
 		return errors.New("job was empty")

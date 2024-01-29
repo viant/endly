@@ -7,29 +7,29 @@ import (
 	ciam "github.com/viant/endly/system/cloud/aws/iam"
 )
 
-//DeployRuleInput represents deploy rule input
+// DeployRuleInput represents deploy rule input
 type DeployRuleInput struct {
 	cloudwatchevents.PutRuleInput
 	ciam.SetupRolePolicyInput ` json:",inline"`
 	Targets                   Targets
 }
 
-//DeployRuleOutput represents deployRule rule output
+// DeployRuleOutput represents deployRule rule output
 type DeployRuleOutput GetRuleOutput
 
-//GetRuleInput represents get rule input
+// GetRuleInput represents get rule input
 type GetRuleInput struct {
 	Name *string
 }
 
-//GetRuleOutput represents get rule output
+// GetRuleOutput represents get rule output
 type GetRuleOutput struct {
 	Rule     *cloudwatchevents.Rule
 	Targets  []*cloudwatchevents.Target
 	RoleInfo *ciam.GetRoleInfoOutput
 }
 
-//Init initialises request
+// Init initialises request
 func (i *DeployRuleInput) Init() error {
 	if i.RoleName != nil {
 		if i.DefaultPolicyDocument == nil {
@@ -49,7 +49,7 @@ func (i *DeployRuleInput) Init() error {
 	return nil
 }
 
-//Validate checks if input is valid
+// Validate checks if input is valid
 func (i DeployRuleInput) Validate() error {
 	if i.Name == nil {
 		return fmt.Errorf("name was empty")
@@ -57,7 +57,7 @@ func (i DeployRuleInput) Validate() error {
 	return nil
 }
 
-//DeleteRuleInput represents delete rule input
+// DeleteRuleInput represents delete rule input
 type DeleteRuleInput struct {
 	cloudwatchevents.DeleteRuleInput
 	TargetArn *string

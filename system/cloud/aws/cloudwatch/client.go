@@ -31,7 +31,7 @@ func getClient(context *endly.Context) (interface{}, error) {
 	return client, nil
 }
 
-//GetClient returns cloudwatch client from context
+// GetClient returns cloudwatch client from context
 func GetClient(context *endly.Context) (*cloudwatch.CloudWatch, error) {
 	client, err := getClient(context)
 	if err != nil {

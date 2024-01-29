@@ -10,7 +10,7 @@ import (
 
 var clientKey = (*CtxClient)(nil)
 
-//CtxClient represents context client
+// CtxClient represents context client
 type CtxClient struct {
 	*gcp.AbstractClient
 	service *cloudfunctions.Service

@@ -22,7 +22,7 @@ const (
 	cpu    = "cpu"
 )
 
-//DeployRequest represents deploy request
+// DeployRequest represents deploy request
 type DeployRequest struct {
 	Name           string
 	Namespace      string
@@ -50,29 +50,29 @@ type DeployResponse struct {
 	*run.Configuration
 }
 
-//GetServiceRequest represents getService service request
+// GetServiceRequest represents getService service request
 type GetServiceRequest struct {
 	Name string
 	uri  string
 }
 
-//GetServiceResponse represents getService response
+// GetServiceResponse represents getService response
 type GetServiceResponse struct {
 	*run.Service
 }
 
-//GetServiceRequest represents getService service request
+// GetServiceRequest represents getService service request
 type GetConfigurationRequest struct {
 	Name string
 	uri  string
 }
 
-//GetServiceResponse represents getService response
+// GetServiceResponse represents getService response
 type GetConfigurationResponse struct {
 	*run.Configuration
 }
 
-//Init initializes request
+// Init initializes request
 func (r *DeployRequest) Validate() error {
 	if r.Container == nil && r.Image == "" {
 		return errors.Errorf("container was empty")
@@ -83,7 +83,7 @@ func (r *DeployRequest) Validate() error {
 	return nil
 }
 
-//Init initializes request
+// Init initializes request
 func (r *DeployRequest) Init() error {
 	if r.Namespace == "" {
 		r.Namespace = "$gcp.projectID"

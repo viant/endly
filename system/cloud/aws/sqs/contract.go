@@ -13,7 +13,7 @@ const (
 	allActions     = "*"
 )
 
-//SetupPermissionInput creates a permission if it does not exists
+// SetupPermissionInput creates a permission if it does not exists
 type SetupPermissionInput struct {
 	sqs.AddPermissionInput
 	Everybody bool

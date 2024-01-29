@@ -18,7 +18,7 @@ const (
 	runInvokerRole = "roles/run.invoker"
 )
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
@@ -288,7 +288,7 @@ func (s *service) waitForServiceDeployment(context *endly.Context, request *GetS
 	return response, nil
 }
 
-//New creates a new run service
+// New creates a new run service
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

@@ -1,6 +1,6 @@
 package lambda
 
-//DefaultTrustPolicy represents default trust policy
+// DefaultTrustPolicy represents default trust policy
 const DefaultTrustPolicy = `{
   "Version": "2012-10-17",
   "Statement": [

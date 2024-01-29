@@ -16,7 +16,7 @@ const (
 
 var permissionPropagation = 5 * time.Second
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
@@ -511,7 +511,7 @@ func (s *service) registerRoutes() {
 	})
 }
 
-//New creates a new AWS IAM service.
+// New creates a new AWS IAM service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

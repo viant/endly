@@ -14,7 +14,7 @@ const (
 	ServiceID = "aws/ssm"
 )
 
-//no operation service
+// no operation service
 type service struct {
 	*endly.AbstractService
 }
@@ -90,7 +90,7 @@ func (s *service) setParameter(context *endly.Context, input *SetParameterInput)
 	return output, err
 }
 
-//New creates a new AWS Simple Systems Manager service.
+// New creates a new AWS Simple Systems Manager service.
 func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),

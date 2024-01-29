@@ -31,7 +31,7 @@ func getClient(context *endly.Context) (interface{}, error) {
 	return client, nil
 }
 
-//GetClient returns ssm client from context
+// GetClient returns ssm client from context
 func GetClient(context *endly.Context) (*ssm.SSM, error) {
 	client, err := getClient(context)
 	if err != nil {

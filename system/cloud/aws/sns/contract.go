@@ -12,16 +12,16 @@ const (
 	currentAccount = "${aws.accountID}"
 )
 
-//SetupTopicInput represents setup topic request
+// SetupTopicInput represents setup topic request
 type SetupTopicInput sns.CreateTopicInput
 
-//SetupSubscriptionInput represets setup subscription request
+// SetupSubscriptionInput represets setup subscription request
 type SetupSubscriptionInput struct {
 	*sns.SubscribeInput `json:",inline"`
 	Topic               *string
 }
 
-//SetupPermissionInput creates a permission if it does not exists
+// SetupPermissionInput creates a permission if it does not exists
 type SetupPermissionInput struct {
 	sns.AddPermissionInput
 	Everybody bool
@@ -29,7 +29,7 @@ type SetupPermissionInput struct {
 	Topic     string
 }
 
-//SetupSubscriptionInput check if request is valid
+// SetupSubscriptionInput check if request is valid
 func (i *SetupSubscriptionInput) Validate() error {
 	if i.Topic == nil && (i.SubscribeInput == nil || i.TopicArn == nil) {
 		return fmt.Errorf("topic was empty")

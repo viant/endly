@@ -12,7 +12,7 @@ import (
 
 const tableKey = "bigqery_table"
 
-//TableRequest table request
+// TableRequest table request
 type TableRequest struct {
 	Table string
 	*bigquery.TableReference
@@ -33,12 +33,12 @@ func (r *TableRequest) Validate() (err error) {
 	return nil
 }
 
-//TableResponse table response
+// TableResponse table response
 type TableResponse struct {
 	Table *bigquery.Table
 }
 
-//Table returns a table
+// Table returns a table
 func (s *service) Table(context *endly.Context, request *TableRequest) (*TableResponse, error) {
 	table, err := s.table(context, request.TableReference)
 	if err != nil {
@@ -66,7 +66,7 @@ func (s *service) Table(context *endly.Context, request *TableRequest) (*TableRe
 	return response, nil
 }
 
-//Table returns bif query table
+// Table returns bif query table
 func (s *service) table(context *endly.Context, reference *bigquery.TableReference) (table *bigquery.Table, err error) {
 	client, err := GetClient(context)
 	if err != nil {
