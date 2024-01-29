@@ -2,11 +2,14 @@ package http
 
 import (
 	"bytes"
+	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model/criteria"
 	"github.com/viant/endly/model/msg"
+	exml "github.com/viant/endly/testing/runner/http/xml"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -102,7 +105,18 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, reque
 	if err != nil {
 		return err
 	}
-	if toolbox.IsStructuredJSON(response.Body) {
+
+	if strings.HasPrefix(strings.TrimSpace(response.Body), "<?xml") {
+		node := &exml.Node{}
+		if err = xml.Unmarshal([]byte(response.Body), node); err != nil {
+			return err
+		}
+		xmlData, err := json.Marshal(node)
+		if err != nil {
+			return err
+		}
+		response.JSONBody, err = toolbox.JSONToInterface(string(xmlData))
+	} else if toolbox.IsStructuredJSON(response.Body) {
 		response.JSONBody, err = toolbox.JSONToInterface(response.Body)
 	}
 

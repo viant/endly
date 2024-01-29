@@ -34,13 +34,13 @@ func TestService_Download(t *testing.T) {
 			},
 		},
 		{
-			description: "basic asset download with AsMap udf",
+			description: "basic asset download with AsNode udf",
 			data:        `{"k1":123}`,
 			expectState: map[string]interface{}{
 				"k1": 123,
 			},
 			request: &DownloadRequest{
-				Udf:     "AsMap",
+				Udf:     "AsNode",
 				Source:  url.NewResource("mem://127.0.0.1/test/storage/download/case003/f1"),
 				DestKey: "k2",
 			},
@@ -61,11 +61,11 @@ func TestService_Download(t *testing.T) {
 			request:     &DownloadRequest{},
 		},
 		{
-			description: "transformation error AsMap udf",
+			description: "transformation error AsNode udf",
 			data:        `[1,2]`,
 			expectError: true,
 			request: &DownloadRequest{
-				Udf:     "AsMap",
+				Udf:     "AsNode",
 				Source:  url.NewResource("mem://127.0.0.1/test/storage/download/case006/f1"),
 				DestKey: "k2",
 			},

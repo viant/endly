@@ -1,0 +1,135 @@
+{
+  "Name": "forecast-response",
+  "Attrs": {
+    "elasped-time": "0",
+    "response-time": "2024-01-27T10:42:21.611-08:00"
+  },
+  "Children": [
+    {
+      "Name": "forecasting-response",
+      "Attrs": {
+        "all-done": "true"
+      },
+      "Children": [
+        {
+          "Name": "view-request",
+          "Attrs": {
+            "cache-hits": "1",
+            "cache-id": "total/$client-info=adeguzman_viant_devtest\u0026channelV2=1,2,3,6,7\u0026exclude_viant_segment=1329146,1329128,1329149\u0026from=2024-01-17-08:00\u0026include_location_dim=US/CA/\u0026include_media_type=nv,mv\u0026include_uniqs=true\u0026to=2024-01-30-08:00\u0026user_identifier_type=1",
+            "client-info": "adeguzman_viant_devtest",
+            "from": "2024-01-17T00:00:00-08:00",
+            "hashed-cache-id": "",
+            "last-poll-time": "1706380761",
+            "priority": "0",
+            "runtime-in-seconds": "5",
+            "seconds-to-expire": "3419",
+            "status": "COMPLETE",
+            "submit-time": "2024-01-27T18:35:23Z",
+            "to": "2024-01-30T00:00:00-08:00",
+            "view-id": "TOTAL",
+            "view-name": "total",
+            "wait-in-seconds": "232"
+          },
+          "Children": [
+            {
+              "Name": "result",
+              "Children": [
+                {
+                  "Name": "columns",
+                  "Children": [
+                    {
+                      "Name": "column",
+                      "Attrs": {
+                        "id": "inventory",
+                        "type": "long"
+                      }
+                    },
+                    {
+                      "Name": "column",
+                      "Attrs": {
+                        "id": "uniques",
+                        "type": "long"
+                      }
+                    },
+                    {
+                      "Name": "column",
+                      "Attrs": {
+                        "id": "hh_uniques",
+                        "type": "long"
+                      }
+                    },
+                    {
+                      "Name": "column",
+                      "Attrs": {
+                        "id": "clearing_price",
+                        "type": "double"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "Name": "rows",
+                  "Children": [
+                    {
+                      "Name": "r",
+                      "Children": [
+                        {
+                          "Name": "c",
+                          "Attrs": {
+                            "lg": "2669672"
+                          }
+                        },
+                        {
+                          "Name": "c",
+                          "Attrs": {
+                            "lg": "1149901"
+                          }
+                        },
+                        {
+                          "Name": "c",
+                          "Attrs": {
+                            "lg": "127100"
+                          }
+                        },
+                        {
+                          "Name": "c",
+                          "Attrs": {
+                            "db": "6.61"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "Name": "sql",
+              "Value": "SELECT  .. FROM t    LIMIT 25"
+            },
+            {
+              "Name": "filter",
+              "Children": [
+                {
+                  "Name": "location",
+                  "Attrs": {
+                    "include-ids": "US,CA"
+                  }
+                },
+                {
+                  "Name": "viant_segment",
+                  "Attrs": {
+                    "exclude-ids": "1329146,1329128,1329149"
+                  }
+                },
+                {
+                  "Name": "media-type"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
