@@ -3,3 +3,4 @@
 .tar.gz
 .gz
 local_test.go
+.vscode/
