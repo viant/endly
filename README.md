@@ -18,145 +18,55 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 ## Motivation
 
-_An end to end testing_ is a methodology which comprehensively tests an application in the environment closely imitating production system with all network communication, user, datastore and other dependencies interaction.
-
-It takes great length to manually prepare an application and its data for testing. And it can be serious bottleneck if this process is manual or relies on the 3rd party.
-Complex regression test plan execution and data organization can be yet additional challenge with hundreds business use cases to test. 
-
-While there are many great frameworks selection helping with an integration testing: 
-
-web UI integration testing: 
- - [Selenium](https://www.seleniumhq.org/)
- - [Cypress.io](https://www.cypress.io/) 
- - [Protractor](https://www.protractortest.org/)
-
-or database integration testing:
- - [dbunit](http://dbunit.sourceforge.net/)
- - [dsunit](http://github.com/viant/dsunit)
-
-or application build and deployment:
- - [Docker](https://www.docker.com/)
-
-None of these tools on its own have a comprehensive end to end testing and automation capabilities. 
-What is worst some of these tools are coupled with a particular frameworks or specific language.
-
-Endly takes declarative approach to test an application written in any language. The testing weight moves towards input and desired application output definition.
-This framework provides an ability to maintain and operate on hundreds of use cases effectively and cohesively, on top of that it can also automate system, data and application preparation related tasks.
-Endly can easily orchestrate e2e testing process of n-tier distributed application where backend, middleware and front-end each uses different stack.
-
-
-Some typical e2e testing tasks supported by **endly**:
-- Local or remote system preparation including all services required by the application (with or without docker).
-- Checking out the application code
-- Building and deploying the application (with or without docker).
-- Database and data preparation
-- Setting application state 
-- Regression test execution (HTTP, REST, Selenium)
-- Data and application output verification (UI changes, transaction logs, database changes)
-
-
-<a name="introduction"></a>
+Endly is comprehensive workflow based automation and end-to-end (E2E) testing tool designed to simulate a production environment as closely as possible. 
+This includes the full spectrum of network communications, user interactions, data storage, and other dependencies. 
+By doing so, it aims to ensure that systems are thoroughly tested under conditions that mimic real-world operations, 
+helping to identify and address potential issues before deployment.
 
 ## Introduction
 
-Endly uses a generic workflow system to automate development and testing processes. 
-Each process defines a sequence of task and actions.
-While a task act like a grouping element, an action does the actual job.
-For instance a regression test task; it may involve many small activities like
-sending HTTP request and checking response, validating database state,
-validating log records produced by the application, etc. 
+Endly is a highly versatile automation and orchestration platform that provides a wide range of services to support various aspects of software development, 
+testing, deployment, and operations. 
+Below is a summary of the types of services Endly can orchestrate, grouped by their primary functionality:
 
-Various endly services expose a set of actions that can be directly invoked by a user-defined workflow. 
+### Platform, Infrastructure and Cloud Providers:
+#### Docker:
+Provides services for managing Docker containers and executing commands over SSH within Docker environments, enhancing container management and deployment.
+#### AWS Services: 
+Offers orchestration for numerous AWS services, including API Gateway, CloudWatch, DynamoDB, EC2, IAM, Kinesis, KMS, Lambda, RDS, S3, SES, SNS, SQS, and SSM. These services enable management and automation of AWS resources, monitoring, notification, and security.
+#### GCP Services: 
+Supports Google Cloud Platform resources such as BigQuery, Cloud Functions, Cloud Scheduler, Compute Engine, GKE (Google Kubernetes Engine), KMS, Pub/Sub, Cloud Run, and Cloud Storage. These services are essential for managing Google Cloud resources, data analysis, event-driven computing, and storage.
+#### Kubernetes: 
+Automates tasks within Kubernetes clusters, covering apps, autoscaling, batch processing, core services, extensions, networking, policy management, RBAC (Role-Based Access Control), settings, and storage. This facilitates the deployment, scaling, and management of containerized applications.
 
-Imagine _an application build task_, which may involve the following
-- code checkout
-- setting up SDK 
-- setting build tools
-- setting environment
-- build an app 
+### Environment/System Management
+#### Exec: 
+This service is central to executing shell commands, allowing for automation of tasks that interact directly with the operating system. This capability is essential for setting up environments, running scripts, and performing system-level operations, thereby serving as a foundation for environment and system management within Endly's orchestration capabilities.
+#### Process: 
+Manages processes or daemons on the system, enabling control over the lifecycle of various applications or services running in the background. This service is key for ensuring that necessary services are operational during testing or deployment, and for automating start, stop, and restart operations of system services as part of environment setup and maintenance.
+#### Storage: 
+Facilitates the management of file-based assets, including uploading, downloading, and managing files. This service is crucial for handling configuration files, test data, and other file-based resources needed throughout the automation, testing, and deployment processes. It supports the simulation of real-world environments by ensuring the correct setup of file systems and data storage scenarios.
+#### Secret: 
+Manages safe access to secrets, such as passwords and API keys, crucial for maintaining security in automated processes.
+#### Development and Deployment
+Build and Deployment: Includes services for building software and deploying applications, encompassing general build and deployment tasks, version control with Git, and specific deployment strategies.
 
-An endly workflow accomplishing this task  may look like the following:
+### Database and Data Management
+#### DSUnit: 
+Facilitates database testing, supporting the setup and teardown of database states for testing purposes.
 
-```yaml
-init:
-  xxCredentials: ${env.HOME}/.secret/secret.json
-  appPath: $WorkingDirectory(../)
-  target:
-    URL: ssh://127.0.0.1/
-    credentials: localhost
-pipeline:
-  build-app:
-    checkout:
-      action: version/control:checkout
-      origin:
-        URL: https://github.com/some_repo/app
-      dest:
-        URL: $appPath
-    set_sdk:
-      set_jdk:
-        action: sdk:set
-        sdk: jdk:1.8
-      set_build_runner:
-        action: deployment:deploy
-        appName: maven
-        version: 3.5
-      set_env:
-        action: exec:run
-        target: $target
-        commands:
-          - export XXX_CREDENTIALS=$xxCredentials
-    get-schema:
-      action: storage:copy
-      source:
-        URL: https://raw.githubusercontent.com/some_repo/db/schema.sql
-      dest:
-        URL: $appPath/schema.sql
-    build:
-      action: exec:run
-      request: '@build.yaml'
-       
-```
-
-@build.yaml
-```yaml
-target: $target
-commands:
-  - echo 'building app'
-  - cd $appPath
-  - mvn clean test
-```
-
-In the following inline workflow, I have used
- - version/control service with checkout operation
- - sdk service with set operation
- - deployment service with deploy operation
- - storage service with copy operation
- - exec service with run operation
-
-Endly exposes services in the RESTful manner, where each service provides a list of supported operation alongside with corresponding contracts.
-Any service request can be defined either directly within workflow or delegated to external request file using YAML or JSON format. 
-
-For instance to find out what request/response contract is supported by exec:run (which uses SSH session) you can simply run 
-
-```bash
-endly -s=exec -a=run
-```
-
-The following command provide list of currently supported endly services
-```bash
-endly -s='*'
-```
-
-While the above build task example was a trivial workflow usage, the power of endly comes with 
-- flexible workflow definition
-- workflow reusability
-- full stateful workflow execution control (i.e., defer task, on error task, loops, switch/case, concurrent action execution etc)
-- ability to organize regression workflow with thousands of use cases in a cohesive manner
-- ability to comprehensively control testing application state
-- flexible service architecture
-
-
-
+### Testing and Integration
+#### HTTP/REST: 
+Provides tools for testing and interacting with HTTP endpoints and RESTful APIs. This service is instrumental in API testing, allowing for the automation of requests, response validation, and the simulation of various API usage scenarios. It supports both the verification of external services and the testing of application interfaces, making it a vital component for ensuring the functionality and reliability of web services and applications.
+#### HTTP/Endpoint: 
+This service extends Endly's capabilities into the realm of HTTP communication testing by allowing users to listen to existing HTTP interactions, record them, and subsequently mock these interactions for the purpose of testing. This functionality is particularly useful for simulating third-party HTTP integrations without the need for the third-party services to be actively involved in the testing process. By capturing and replicating the behavior of external HTTP services, it enables developers to conduct thorough testing of application integrations in a controlled, predictable environment. This approach ensures that applications can gracefully handle external HTTP requests and responses, facilitating the validation of integration points with external APIs and services. The ability to mock external HTTP interactions is invaluable for continuous integration and testing workflows, where external dependencies must be accurately simulated to verify application functionality and resilience.
+#### Selenium: 
+Supports browser-based testing and automation, essential for web application testing.
+### Validator: 
+Provides validation services, including log validation, to ensure that applications behave as expected.
+Communication and Messaging
+#### SMTP, Slack: 
+Services for sending emails and Slack messages, enabling notifications and alerts as part of the automation workflows.
 ## Getting Started
 
 
@@ -165,17 +75,11 @@ While the above build task example was a trivial workflow usage, the power of en
   - [Endly docker image](docker/)
 
 
-#####  Project generator
- 
-Good workflow and data organization is the key for success, e2e project generator is the great place to start.
-
-- [Create test project for your app](doc/generator). [![test project generator](project_generator.png)](http://endly-external.appspot.com/)
-
 
 ##### Examples:
 
 
-**a) System preparation**
+**a) Infrastructure/Environment preparation**
 
 For instance: the following define inline workflow to prepare app system services:
 

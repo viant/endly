@@ -654,12 +654,15 @@ func (s *service) registerRoutes() {
 			return &SequenceResponse{}
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			toolbox.DumpIndent(request, true)
 			if req, ok := request.(*SequenceRequest); ok {
 				var dsRequest = dsunit.SequenceRequest(*req)
 				request = &dsRequest
 			}
 			if req, ok := request.(*dsunit.SequenceRequest); ok {
 				resp := s.Service.Sequence(req)
+				toolbox.DumpIndent(resp, true)
+
 				response := SequenceResponse(*resp)
 				return &response, response.Error()
 			}

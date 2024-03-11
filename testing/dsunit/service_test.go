@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/dsc"
 	"github.com/viant/dsunit"
+	durl "github.com/viant/dsunit/url"
 	"github.com/viant/endly"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
@@ -45,7 +46,7 @@ func getRegisteredDsUnitService(manager endly.Manager, context *endly.Context, d
 		dsunit.NewRegisterRequest(dbname, config),
 		nil,
 		nil,
-		dsunit.NewRunScriptRequest(dbname, url.NewResource(fmt.Sprintf("test/%v.sql", dbname)))))
+		dsunit.NewRunScriptRequest(dbname, durl.NewResource(fmt.Sprintf("test/%v.sql", dbname)))))
 
 	if response.Error != "" {
 		return nil, errors.New(response.Error)
@@ -73,7 +74,7 @@ func TestDsUnitService(t *testing.T) {
 		serviceResponse = service.Run(context, &dsunit.MappingRequest{
 			Mappings: []*dsunit.Mapping{
 				{
-					Resource: url.NewResource("test/user_account.json"),
+					Resource: durl.NewResource("test/user_account.json"),
 				},
 			},
 		})
@@ -106,8 +107,8 @@ func TestDsUnitService(t *testing.T) {
 
 		serviceResponse = service.Run(context, &dsunit.RunScriptRequest{
 			Datastore: "mydb1",
-			Scripts: []*url.Resource{
-				url.NewResource("test/mydb1.sql"),
+			Scripts: []*durl.Resource{
+				durl.NewResource("test/mydb1.sql"),
 			},
 		})
 		{

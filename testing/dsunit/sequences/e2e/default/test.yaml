@@ -1,0 +1,4 @@
+pipeline:
+  t:
+    action: print
+    message: gello
