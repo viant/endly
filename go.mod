@@ -1,6 +1,6 @@
 module github.com/viant/endly
 
-go 1.17
+go 1.21
 
 require (
 	cloud.google.com/go/container v1.18.1 // indirect
@@ -70,13 +70,13 @@ require (
 	github.com/viant/afs v1.23.1-0.20230322174251-e9eb06d43c87
 	github.com/viant/afsc v1.9.0
 	github.com/viant/asc v0.5.0
-	github.com/viant/assertly v0.9.1-0.20211210213130-9fc39dc0d8f0
+	github.com/viant/assertly v0.9.1-0.20220620174148-bab013f93a60
 	github.com/viant/bgc v0.8.0
-	github.com/viant/dsc v0.16.3
+	github.com/viant/dsc v0.18.0
 	github.com/viant/dsunit v0.11.1-0.20230807202149-fc0ce4fc7442
 	github.com/viant/neatly v0.8.1-0.20230118003138-9e5c5757ae6e
 	github.com/viant/scy v0.5.2
-	github.com/viant/toolbox v0.34.6-0.20230324143540-849d06c4e1ae
+	github.com/viant/toolbox v0.35.0
 	github.com/yuin/gopher-lua v0.0.0-20190514113301-1cd887cd7036 // indirect
 	golang.org/x/crypto v0.7.0
 	golang.org/x/net v0.9.0
@@ -147,6 +147,8 @@ require (
 	github.com/src-d/gcfg v1.4.0 // indirect
 	github.com/viant/parsly v0.0.0-20220913214053-cb272791c00f // indirect
 	github.com/viant/sqlparser v0.2.0 // indirect
+	github.com/viant/xreflect v0.0.0-20230303201326-f50afb0feb0d // indirect
+	github.com/viant/xunsafe v0.9.2 // indirect
 	github.com/xanzy/ssh-agent v0.2.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
@@ -166,3 +168,4 @@ require (
 
 exclude google.golang.org/grpc v1.55.0
 
+replace github.com/viant/dsunit => ../../../github.com/viant/dsunit

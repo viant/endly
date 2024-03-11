@@ -1,12 +1,18 @@
 package model
 
 import (
+	"context"
 	"fmt"
+	"github.com/viant/afs"
+	"github.com/viant/afs/file"
+	"github.com/viant/afs/storage"
+	aurl "github.com/viant/afs/url"
 	"github.com/viant/endly/util"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
+	"path"
 	"strings"
 )
 
@@ -39,6 +45,7 @@ func (t *Template) Expand(task *Task, parentTag string, inline *InlineWorkflow) 
 		tag.Group = task.Name
 		index := iterator.Index()
 		state := t.buildTagState(index, tag)
+		toolbox.DumpIndent(state, true)
 		tagPath := state.GetString("path")
 		t.inline.tagPathURL = tagPath
 		if len(t.Data) > 0 {
@@ -71,15 +78,16 @@ func (t *Template) Expand(task *Task, parentTag string, inline *InlineWorkflow) 
 }
 
 func (t *Template) loadWorkflowData(tagPath string, workflowData data.Map, state data.Map) error {
+
 	var baseURLs = []string{tagPath, toolbox.URLPathJoin(t.inline.baseURL, "default"), t.inline.baseURL}
 	var err error
 
-	for k, v := range t.Data {
+	for k, loc := range t.Data {
 		k = state.ExpandAsText(k)
-		hasWildCard := strings.Contains(v, "*")
+		hasWildCard := strings.Contains(loc, "*")
 		var resourceURLs = make([]string, 0)
 		if hasWildCard {
-			resourceURLs, err = util.ListResource(baseURLs, v)
+			resourceURLs, err = util.ListResource(baseURLs, loc)
 			if util.IsNotSuchResourceError(err) {
 				continue
 			}
@@ -87,6 +95,7 @@ func (t *Template) loadWorkflowData(tagPath string, workflowData data.Map, state
 				return err
 			}
 		}
+
 		if len(resourceURLs) > 0 {
 			for _, resourceURL := range resourceURLs {
 				base, URI := toolbox.URLSplit(resourceURL)
@@ -98,7 +107,23 @@ func (t *Template) loadWorkflowData(tagPath string, workflowData data.Map, state
 			}
 			continue
 		}
-		loaded, err := util.LoadData(baseURLs, v)
+		URI := strings.Replace(loc, "@", "", 1)
+		if len(baseURLs) == 3 {
+			fs := afs.New()
+			object, err := fs.Object(context.Background(), aurl.Join(baseURLs[0], URI))
+			if err != nil {
+				return err
+			}
+			if object.IsDir() {
+				loaded, err := loadKeyedAssets(fs, object, baseURLs, state)
+				if err != nil {
+					return err
+				}
+				addLoadedMapData(loaded, state, k, workflowData)
+				return nil
+			}
+		}
+		loaded, err := util.LoadData(baseURLs, loc)
 		if util.IsNotSuchResourceError(err) {
 			continue
 		}
@@ -108,6 +133,67 @@ func (t *Template) loadWorkflowData(tagPath string, workflowData data.Map, state
 		addLoadedData(loaded, state, k, workflowData)
 	}
 	return nil
+}
+
+func loadKeyedAssets(fs afs.Service, object storage.Object, baseURLs []string, state data.Map) (map[string]interface{}, error) {
+	items, err := fs.List(context.Background(), object.URL())
+	if err != nil {
+		return nil, err
+	}
+	var assets = map[string]interface{}{}
+	var URLs = make([]string, 3)
+	copy(URLs, baseURLs)
+	for _, item := range items {
+		if item.IsDir() {
+			continue
+		}
+		URLs[0] = item.URL()
+		key := item.Name()
+		if index := strings.LastIndex(key, "."); index != -1 {
+			key = key[:index]
+		}
+		baseURL, URI := aurl.Split(item.URL(), file.Scheme)
+		var loaded interface{}
+		if _, err := util.LoadResource(baseURL, "@"+URI, &loaded); err != nil {
+			return nil, err
+		}
+		if err != nil {
+			return nil, err
+		}
+		assets[key] = loaded
+	}
+	return assets, nil
+}
+
+func addLoadedMapData(loaded map[string]interface{}, state data.Map, stateKey string, workflowData data.Map) {
+	collectionSignatureCount := strings.Count(stateKey, "[]")
+	if collectionSignatureCount > 0 {
+		stateKey = strings.Replace(stateKey, "[]", "", collectionSignatureCount)
+	}
+
+	for key, value := range loaded {
+		k := stateKey + "." + key
+		value = state.Expand(value)
+		var collection *data.Collection
+		collectionValue, ok := workflowData.GetValue(k)
+		if !ok {
+			collection = data.NewCollection()
+			workflowData.SetValue(k, collection)
+		} else {
+			collection, _ = collectionValue.(*data.Collection)
+		}
+		if collection == nil {
+			collection = data.NewCollection()
+			workflowData.SetValue(k, collection)
+		}
+		if toolbox.IsSlice(value) {
+			for _, item := range toolbox.AsSlice(value) {
+				collection.Push(item)
+			}
+		} else {
+			collection.Push(value)
+		}
+	}
 }
 
 func addLoadedData(loaded interface{}, state data.Map, k string, workflowData data.Map) {
@@ -145,6 +231,10 @@ func (t *Template) buildTagState(index string, tag *neatly.Tag) data.Map {
 	if t.SubPath != "" {
 		tag.SetSubPath(state.ExpandAsText(t.SubPath))
 	}
+	_, leaf := path.Split(tag.Subpath)
+	leaf = strings.Replace(leaf, index+"_", "", 1)
+	state.Put("tag", leaf)
+
 	tagPathURL := toolbox.URLPathJoin(t.inline.baseURL, tag.Subpath)
 	state.Put("subpath", tag.Subpath)
 	state.Put("tagId", tag.TagID())
@@ -152,6 +242,7 @@ func (t *Template) buildTagState(index string, tag *neatly.Tag) data.Map {
 	state.Put("pathMatch", tag.PathMatch)
 	state.Put("URL", tagPathURL)
 	state.Put("path", url.NewResource(tagPathURL).ParsedURL.Path)
+
 	return state
 }
 
