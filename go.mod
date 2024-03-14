@@ -18,7 +18,7 @@ require (
 	github.com/aerospike/aerospike-client-go v2.2.0+incompatible // indirect
 	github.com/aws/aws-lambda-go v1.31.0
 	github.com/aws/aws-sdk-go v1.44.156
-	github.com/docker/distribution v2.7.1+incompatible // indirect
+	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker v0.7.3-0.20190515030239-f4b9142210e9
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.4.0 // indirect
