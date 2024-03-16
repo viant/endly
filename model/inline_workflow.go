@@ -56,7 +56,7 @@ type InlineWorkflow struct {
 	workflow   *Workflow //inline workflow from pipeline
 }
 
-func (p InlineWorkflow) updateReservedAttributes(aMap map[string]interface{}) {
+func (p InlineWorkflow) updatereservedAttributes(aMap map[string]interface{}) {
 	for _, key := range []string{actionKey, workflowKey, skipKey, whenKey, postKey, initKey, commentsKey, descriptionKey, failKey} {
 		if val, ok := aMap[key]; ok {
 			if _, has := aMap[ExplicitActionAttributePrefix+key]; has {
@@ -184,7 +184,7 @@ func (p InlineWorkflow) groupAttributes(source interface{}, state data.Map) (map
 	aMap, err := util.NormalizeMap(source, false)
 	var actionAttributes = make(map[string]interface{})
 	var actionRequest = make(map[string]interface{})
-	p.updateReservedAttributes(aMap)
+	p.updatereservedAttributes(aMap)
 
 	for k, v := range aMap {
 		if strings.HasPrefix(k, ExplicitActionAttributePrefix) {
@@ -321,7 +321,7 @@ func getTemplateNode(source interface{}) *Template {
 	}
 	var template = &Template{}
 	err := toolbox.DefaultConverter.AssignConverted(template, source)
-	if err != nil || len(template.Template) == 0 || template.Range == "" {
+	if err != nil || len(template.Template) == 0 || template.SubPath == "" {
 		return nil
 	}
 	return template

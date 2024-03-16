@@ -6,7 +6,7 @@ import (
 	"github.com/viant/afs"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/storage"
-	aurl "github.com/viant/afs/url"
+	url "github.com/viant/afs/url"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
@@ -28,22 +28,43 @@ type Template struct {
 
 func (t *Template) Expand(task *Task, parentTag string, inline *InlineWorkflow) error {
 	if t.Tag == "" {
-		if t.Tag = task.Name; t.Tag == "" {
-			t.Tag = parentTag
+		t.Tag = "$pathMatch"
+		//if t.Tag = task.Name; t.Tag == "" {
+		//	t.Tag = parentTag
+		//}
+	}
+
+	fs := afs.New()
+
+	t.inline = inline
+	var instances *Instances
+
+	if t.SubPath != "" {
+		templateURL := toolbox.URLPathJoin(t.inline.baseURL, t.SubPath)
+		parent, name := toolbox.URLSplit(templateURL)
+		holder, err := fs.Object(context.Background(), parent)
+		if err != nil {
+			err = fmt.Errorf("failed to lookup parent: %v, %v", parent, err)
+		}
+		objects, err := fs.List(context.Background(), parent)
+		if err != nil {
+			return err
+		}
+		instances = NewInstances(holder.URL(), name, objects)
+		if t.Range == "" {
+			t.Range = instances.Range()
 		}
 	}
-	t.inline = inline
+
 	tag := buildTag(t, inline)
 	task.multiAction = true
 	iterator := tag.Iterator
 	var workflowData = data.Map(t.inline.Data)
-
 	for tag.HasActiveIterator() {
-
 		tempTask := NewTask(task.Name, true)
 		tag.Group = task.Name
 		index := iterator.Index()
-		state := t.buildTagState(index, tag)
+		state := t.buildTagState(index, tag, instances)
 		tagPath := state.GetString("path")
 		t.inline.tagPathURL = tagPath
 		if len(t.Data) > 0 {
@@ -107,7 +128,7 @@ func (t *Template) loadWorkflowData(tagPath string, workflowData data.Map, state
 		}
 		URI := strings.Replace(loc, "@", "", 1)
 		fs := afs.New()
-		object, _ := fs.Object(context.Background(), aurl.Join(baseURLs[0], URI))
+		object, _ := fs.Object(context.Background(), url.Join(baseURLs[0], URI))
 		if object != nil && object.IsDir() {
 			loaded, err := loadKeyedAssets(fs, object, baseURLs, state)
 			if err != nil {
@@ -145,7 +166,7 @@ func loadKeyedAssets(fs afs.Service, object storage.Object, baseURLs []string, s
 		if index := strings.LastIndex(key, "."); index != -1 {
 			key = key[:index]
 		}
-		baseURL, URI := aurl.Split(item.URL(), file.Scheme)
+		baseURL, URI := url.Split(item.URL(), file.Scheme)
 		var loaded interface{}
 		if _, err := util.LoadResource(baseURL, "@"+URI, &loaded); err != nil {
 			return nil, err
@@ -218,15 +239,21 @@ func addLoadedData(loaded interface{}, state data.Map, k string, workflowData da
 	}
 }
 
-func (t *Template) buildTagState(index string, tag *Tag) data.Map {
+func (t *Template) buildTagState(index string, tag *Tag, instances *Instances) data.Map {
 	var state = data.NewMap()
 	state.Put("index", index)
 	if t.SubPath != "" {
-		tag.SetSubPath(state.ExpandAsText(t.SubPath))
+		instance := instances.Lookup(toolbox.AsInt(index))
+		if index := strings.LastIndex(t.SubPath, "/"); index != -1 {
+			parent, _ := path.Split(t.SubPath)
+			tag.Subpath = path.Join(parent, instance.Object.Name())
+
+		} else {
+			tag.Subpath = instance.Object.Name()
+		}
+		tag.PathMatch = instance.Tag
+		state.Put("tag", instance.Tag)
 	}
-	_, leaf := path.Split(tag.Subpath)
-	leaf = strings.Replace(leaf, index+"_", "", 1)
-	state.Put("tag", leaf)
 
 	tagPathURL := toolbox.URLPathJoin(t.inline.baseURL, tag.Subpath)
 	state.Put("subpath", tag.Subpath)
