@@ -1,11 +1,13 @@
 package cloudfunctions
 
 import (
-	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/viant/afs"
+	"github.com/viant/afs/option"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/cloud/gcp"
@@ -13,12 +15,12 @@ import (
 	"github.com/viant/scy/cred"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/storage"
 	"google.golang.org/api/cloudfunctions/v1"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"path"
 	"strings"
 	"time"
 )
@@ -33,6 +35,7 @@ const (
 // no operation service
 type service struct {
 	*endly.AbstractService
+	fs afs.Service
 }
 
 func (s *service) expandWithContext(context *endly.Context, credConfig *cred.Generic, region, text string) string {
@@ -107,47 +110,48 @@ func (s *service) get(context *endly.Context, request *GetRequest) (*cloudfuncti
 	getCall := service.Get(request.Name)
 	getCall.Context(ctxClient.Context())
 	return getCall.Do()
-
 }
 
-func (s *service) getFunctionPackageReader(resource *location.Resource) (io.ReadCloser, error) {
-	storageService, err := storage.NewServiceForURL(resource.URL, resource.Credentials)
+func (s *service) getFunctionPackageReader(ctx context.Context, resource *location.Resource) (io.ReadCloser, error) {
+	object, err := s.fs.Object(context.Background(), resource.URL)
 	if err != nil {
 		return nil, err
 	}
-	object, err := storageService.StorageObject(resource.URL)
-	if err != nil {
-		return nil, err
+	if !object.IsDir() {
+		return s.fs.OpenURL(ctx, resource.URL)
 	}
-	if object.IsContent() {
-		return storageService.DownloadWithURL(resource.URL)
-	}
-
 	gitIgnorePath := toolbox.URLPathJoin(resource.URL, ".gcloudignore")
-	ignoreList := util.GetIgnoreList(storageService, gitIgnorePath)
-	writer := new(bytes.Buffer)
-	archive := zip.NewWriter(writer)
-	err = storage.ArchiveWithFilter(storageService, resource.URL, archive, func(candidate storage.Object) bool {
-		candidateName := candidate.FileInfo().Name()
+	ignoreList := util.GetIgnoreList(ctx, s.fs, gitIgnorePath)
+	seq := time.Now().UnixMicro()
+	sourcePath := resource.Path()
+	transientURL := fmt.Sprintf("mem://localhost/tmp/%v", seq)
+	destURL := fmt.Sprintf("mem:localhost/tmp/%v/zip://localhost/", seq)
+	var filter option.Match = func(parent string, info os.FileInfo) bool {
+		candidateName := info.Name()
 		if strings.HasSuffix(candidateName, ".zip") {
 			return false
 		}
 		if len(ignoreList) == 0 {
 			return true
 		}
-		relativePath := candidate.URL()
-		if relativePathIndex := strings.Index(relativePath, resource.URL); relativePathIndex != -1 {
-			relativePath = string(relativePath[relativePathIndex+len(resource.URL):])
-			if strings.HasPrefix(relativePath, "/") {
-				relativePath = string(relativePath[1:])
+		if index := strings.Index(sourcePath, parent); index != -1 {
+			relative := sourcePath[:index]
+			if util.ShouldIgnoreLocation(relative, ignoreList) {
+				return false
 			}
 		}
-		return !util.ShouldIgnoreLocation(relativePath, ignoreList)
-
-	})
-	err = archive.Close()
-	payload := writer.Bytes()
-	return ioutil.NopCloser(bytes.NewReader(payload)), err
+		filename := path.Join(parent, info.Name())
+		return !util.ShouldIgnoreLocation(filename, ignoreList)
+	}
+	if err = s.fs.Copy(ctx, resource.URL, destURL, filter); err != nil {
+		return nil, err
+	}
+	archive, err := s.fs.DownloadWithURL(ctx, transientURL)
+	if err != nil {
+		return nil, err
+	}
+	_ = s.fs.Delete(ctx, transientURL)
+	return io.NopCloser(bytes.NewReader(archive)), nil
 }
 
 func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloudfunctions.Operation, error) {
@@ -161,7 +165,6 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 	if request.EventTrigger != nil {
 		request.EventTrigger.Resource = s.expandWithContext(context, ctxClient.CredConfig, request.Region, request.EventTrigger.Resource)
 	}
-
 	projectService := cloudfunctions.NewProjectsLocationsFunctionsService(ctxClient.service)
 	cloudFunction, err := projectService.Get(request.Name).Do()
 	if err != nil {
@@ -174,11 +177,10 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to generate source url")
 	}
-	reader, err := s.getFunctionPackageReader(request.Source)
+	reader, err := s.getFunctionPackageReader(context.Background(), request.Source)
 	if err != nil {
 		return nil, err
 	}
-
 	defer reader.Close()
 	if err = gcp.Upload(http.DefaultClient, uploadResponse.UploadUrl, reader); err != nil {
 		return nil, err
@@ -202,7 +204,6 @@ func (s *service) deploy(context *endly.Context, request *DeployRequest) (*cloud
 	if err != nil {
 		JSON, _ := json.Marshal(request.CloudFunction)
 		return nil, errors.Wrapf(err, "failed to update function: %v; %s", request.Name, JSON)
-
 	}
 	return operation, nil
 }
@@ -483,6 +484,7 @@ func (s *service) registerRoutes() {
 // New creates a new Dataflow service
 func New() endly.Service {
 	var result = &service{
+		fs:              afs.New(),
 		AbstractService: endly.NewAbstractService(ServiceID),
 	}
 	result.AbstractService.Service = result

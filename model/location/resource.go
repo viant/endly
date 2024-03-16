@@ -15,17 +15,15 @@ import (
 	"strings"
 )
 
-
-//Resource represents
+// Resource represents
 type Resource struct {
 	URL         string            `description:"resource URL or relative or absolute path" required:"true"` //URL of resource
 	Credentials string            `description:"credentials file"`                                          //name of credential file or credential key depending on implementation
 	CustomKey   *option.AES256Key `description:" content encryption key"`
 	Key         string            `description:" secret key"`
-
 }
 
-//CredentialURL returns url's with provided credential
+// CredentialURL returns url's with provided credential
 func (r *Resource) CredentialURL(username, password string) string {
 	var urlCredential = ""
 	if username != "" {
@@ -39,14 +37,13 @@ func (r *Resource) CredentialURL(username, password string) string {
 	return result
 }
 
-
-//Host return hostname[:port]
+// Host return hostname[:port]
 func (r *Resource) Host() string {
 	ret := url.Host(r.URL)
 	return ret
 }
 
-//Hostname return hostname
+// Hostname return hostname
 func (r *Resource) Hostname() string {
 	ret := r.Host()
 	if index := strings.LastIndex(ret, ":"); index != -1 {
@@ -55,11 +52,11 @@ func (r *Resource) Hostname() string {
 	return ret
 }
 
-func (r *Resource) Path()  string {
+func (r *Resource) Path() string {
 	return url.Path(r.URL)
 }
 
-//Resource 
+// Resource
 func (r *Resource) DecoderFactory() toolbox.DecoderFactory {
 	ext := path.Ext(url.Path(r.URL))
 	switch ext {
@@ -101,7 +98,7 @@ func (r *Resource) YAMLDecode(ctx context.Context, fs afs.Service, target interf
 	return nil
 }
 
-//DownloadBase64 loads base64 resource content
+// DownloadBase64 loads base64 resource content
 func (r *Resource) DownloadBase64(ctx context.Context, fs afs.Service) (string, error) {
 	data, err := fs.DownloadWithURL(ctx, r.URL)
 	if err != nil {
@@ -139,8 +136,6 @@ func (r *Resource) DecodeWith(ctx context.Context, fs afs.Service, target interf
 	return err
 }
 
-
-
 func (r *Resource) Port() string {
 	host := r.Hostname()
 	if index := strings.Index(host, ":"); index != -1 {
@@ -170,20 +165,30 @@ func (r *Resource) Decode(request interface{}) error {
 	return r.DecodeWith(ctx, fs, request, r.DecoderFactory())
 }
 
-func (r *Resource) Rename(name string)  {
+func (r *Resource) Rename(name string) {
 	var _, currentName = url.Split(r.URL, file.Scheme)
 	if currentName == "" && strings.HasSuffix(r.URL, "/") {
 		_, currentName = url.Split(r.URL[:len(r.URL)-1], file.Scheme)
 		currentName += "/"
 	}
-	if index := strings.LastIndex(r.URL, currentName);index != -1 {
+	if index := strings.LastIndex(r.URL, currentName); index != -1 {
 		r.URL = r.URL[:index] + name
 	}
 }
 
 func (r *Resource) Clone() *Resource {
-	ret  := *r
+	ret := *r
 	return &ret
+}
+
+func (r *Resource) DownloadText() (string, error) {
+	fs := afs.New()
+	ctx := context.Background()
+	data, err := fs.DownloadWithURL(ctx, r.URL)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
 }
 
 type Option func(o *Resource)

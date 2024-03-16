@@ -3,8 +3,8 @@ package smtp_test
 import (
 	"github.com/stretchr/testify/assert"
 
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/notify/smtp"
-	"github.com/viant/toolbox/url"
 	"testing"
 )
 
@@ -15,40 +15,40 @@ func TestSMTPSendRequest_Validate(t *testing.T) {
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &smtp.SendRequest{Target: url.NewResource("abc")}
+		var request = &smtp.SendRequest{Target: location.NewResource("abc")}
 		assert.NotNil(t, request.Validate())
 	}
 	{
 
-		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc")}
+		var request = &smtp.SendRequest{Target: location.NewResource("abc", "abc")}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.Message{}}
+		var request = &smtp.SendRequest{Target: location.NewResource("abc", "abc"), Mail: &smtp.Message{}}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.Message{
+		var request = &smtp.SendRequest{Target: location.NewResource("abc", "abc"), Mail: &smtp.Message{
 			Subject: "abc",
 		}}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.Message{
+		var request = &smtp.SendRequest{Target: location.NewResource("abc", "abc"), Mail: &smtp.Message{
 			Subject: "abc",
 			From:    "abc@a.pl",
 		}}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.Message{
+		var request = &smtp.SendRequest{Target: location.NewResource("abc", "abc"), Mail: &smtp.Message{
 			From: "abc@a.pl",
 			To:   []string{"abc@a.pl"},
 		}}
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = &smtp.SendRequest{Target: url.NewResource("abc", "abc"), Mail: &smtp.Message{
+		var request = &smtp.SendRequest{Target: location.NewResource("abc", "abc"), Mail: &smtp.Message{
 			Subject: "abc",
 			From:    "abc@a.pl",
 			To:      []string{"abc@a.pl"},

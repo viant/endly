@@ -4,7 +4,7 @@ import (
 	"flag"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/viant/endly/example/ws/reporter"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"log"
 )
 
@@ -14,7 +14,7 @@ var port = flag.String("port", "8085", "service port")
 func main() {
 	flag.Parse()
 	config := &reporter.Config{}
-	configResource := url.NewResource(*configURI)
+	configResource := location.NewResource(*configURI)
 	err := configResource.Decode(config)
 	if err != nil {
 		log.Fatal(err)

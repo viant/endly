@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/cloud/gcp"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"google.golang.org/api/cloudfunctions/v1"
 	"path"
 	"testing"
@@ -64,7 +64,7 @@ func TestService_Deploy(t *testing.T) {
 			Runtime:      "go111",
 			HttpsTrigger: &cloudfunctions.HttpsTrigger{},
 		},
-		Source: url.NewResource(path.Join(parent, "test/")),
+		Source: location.NewResource(path.Join(parent, "test/")),
 	}, &response)
 
 	if !assert.Nil(t, err) {

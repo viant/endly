@@ -3,13 +3,12 @@ package process
 import (
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
-	"github.com/viant/toolbox/url"
 )
 
 // StartRequest represents a start request
 type StartRequest struct {
 	Target  *location.Resource `required:"true" description:"host where process will be started"`
-	Command string        `required:"true" description:"command to start process"`
+	Command string             `required:"true" description:"command to start process"`
 	*exec.Options
 	Arguments       []string
 	AsSuperUser     bool
@@ -20,7 +19,7 @@ type StartRequest struct {
 // NewStartRequestFromURL creates a new request from URL
 func NewStartRequestFromURL(URL string) (*StartRequest, error) {
 	var request = &StartRequest{}
-	resource := url.NewResource(URL)
+	resource := location.NewResource(URL)
 	return request, resource.Decode(request)
 }
 

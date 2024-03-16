@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/notify/smtp"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"log"
 	"path"
 	"testing"
@@ -40,7 +40,7 @@ func Test_Listen(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 	err = endly.Run(context, &smtp.SendRequest{
-		Target: url.NewResource("smtp://localhost:1465", credentialFile),
+		Target: location.NewResource("smtp://localhost:1465", credentialFile),
 		Mail: &smtp.Message{
 			From:    "tester@localhost",
 			To:      []string{"bob@localhost"},

@@ -11,7 +11,6 @@ import (
 	"github.com/viant/endly/model/msg"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 )
 
 // RunRequest represents workflow runWorkflow request
@@ -27,8 +26,8 @@ type RunRequest struct {
 	SharedState       bool                   `description:"by default workflow uses a separate cloned context copy, if this is flag context will be shared with a caller workflow state"`
 	URL               string                 `description:"workflow URL if workflow is not found in the registry, it is loaded"`
 	Name              string                 `required:"true" description:"name defined in workflow document"`
-	StateKey          string             `description:"if specified workflow params and data will be visible globally with this key, default is inherited from workflow name"`
-	Source            *location.Resource `description:"run request location "`
+	StateKey          string                 `description:"if specified workflow params and data will be visible globally with this key, default is inherited from workflow name"`
+	Source            *location.Resource     `description:"run request location "`
 	AssetURL          string
 	TagIDs            string `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
 	Tasks             string `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequentially"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
@@ -120,7 +119,7 @@ func NewRunRequest(workflow string, params map[string]interface{}, publishParams
 // NewRunRequestFromURL creates a new request from URL
 func NewRunRequestFromURL(URL string) (*RunRequest, error) {
 	var request = &RunRequest{}
-	var resource = url.NewResource(URL)
+	var resource = location.NewResource(URL)
 	return request, resource.Decode(request)
 }
 

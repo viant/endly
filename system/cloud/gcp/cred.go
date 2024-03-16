@@ -2,7 +2,6 @@ package gcp
 
 import (
 	"context"
-	"github.com/viant/afs/url"
 	"github.com/viant/scy/auth/gcp"
 	"github.com/viant/scy/auth/gcp/client"
 
@@ -59,16 +58,23 @@ func GetClient(eContext *endly.Context, provider, key interface{}, target interf
 	ctx := context.Background()
 	var options = make([]option.ClientOption, 0)
 	options = append(options, option.WithScopes(scopes...))
-	if credConfig.Secret != nil && credConfig.Secret.URL != "" {
-		location := url.Path(credConfig.Secret.URL)
-		options = append(options, option.WithCredentialsFile(location))
+	isAuth := false
+	if credConfig.Secret != nil {
+		if data := credConfig.Secret.String(); data != "" {
+			options = append(options, option.WithCredentialsJSON([]byte(data)))
+			isAuth = true
+		}
+
 	}
-	gcpService := gcp.New(client.NewScy())
-	httpClient, err := gcpService.AuthClient(context.Background(), append(gcp.Scopes, scopes...)...)
-	if err == nil && httpClient != nil {
-		options = append(options, option.WithHTTPClient(httpClient))
+
+	var httpClient *http.Client
+	if !isAuth {
+		gcpService := gcp.New(client.NewScy())
+		if httpClient, err = gcpService.AuthClient(context.Background()); err == nil && httpClient != nil {
+			options = append(options, option.WithHTTPClient(httpClient))
+		}
 	}
-	var args = make([]interface{}, 1 + len(options))
+	var args = make([]interface{}, 1+len(options))
 	args[0] = ctx
 	for i := range options {
 		args[i+1] = options[i]
@@ -84,10 +90,10 @@ func GetClient(eContext *endly.Context, provider, key interface{}, target interf
 	if !ok {
 		return fmt.Errorf("invalid target type: %T", target)
 	}
+
 	ctxService.SetCredConfig(credConfig.Generic)
 	ctxService.SetHttpClient(httpClient)
 	ctxService.SetContext(ctx)
-
 	if err = ctxService.SetService(service); err != nil {
 		return err
 	}
@@ -115,7 +121,7 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}) 
 	}
 
 	config := &gcpCredConfig{Generic: &cred.Generic{}}
-	if config.Secret, _ = context.Secrets.Lookup(context.Background(), secret.Resource(secrets.Credentials));config.Secret != nil {
+	if config.Secret, _ = context.Secrets.Lookup(context.Background(), secret.Resource(secrets.Credentials)); config.Secret != nil {
 		config.Generic, _ = config.Secret.Target.(*cred.Generic)
 	}
 	if scopes, ok := rawRequest["scopes"]; ok {

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/testing/log"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"io/ioutil"
 	"os"
 	"path"
@@ -52,11 +52,11 @@ func TestLogValidatorService_NewRequest(t *testing.T) {
 	assert.Nil(t, err)
 	var template, _ = toolbox.AsJSONText(templateLog)
 
-	var fileURL = strings.Replace(url.NewResource(tempPath).URL, "file://", "scp://127.0.0.1", 1)
+	var fileURL = strings.Replace(location.NewResource(tempPath).URL, "file://", "scp://127.0.0.1", 1)
 	credentials, err := util.GetDummyCredential()
 	assert.Nil(t, err)
 	var response = service.Run(context, &log.ListenRequest{
-		Source: url.NewResource(fileURL, credentials),
+		Source: location.NewResource(fileURL, credentials),
 		Types: []*log.Type{
 			{
 				Name:   "t",
@@ -182,7 +182,7 @@ func TestLogValidatorService_TestIndexedRecord(t *testing.T) {
 	assert.Nil(t, err)
 
 	var response = service.Run(context, &log.ListenRequest{
-		Source: url.NewResource(tempLog),
+		Source: location.NewResource(tempLog),
 		Types: []*log.Type{
 			{
 				Name:         "t",
@@ -267,12 +267,12 @@ func TestLogWithUTF8ValidatorService_NewRequest(t *testing.T) {
 	assert.Nil(t, err)
 	var template, _ = toolbox.AsJSONText(templateLogUTF8)
 
-	var fileURL = strings.Replace(url.NewResource(tempPath).URL, "file://", "scp://127.0.0.1", 1)
+	var fileURL = strings.Replace(location.NewResource(tempPath).URL, "file://", "scp://127.0.0.1", 1)
 	credentials, err := util.GetDummyCredential()
 	assert.Nil(t, err)
 
 	var response = service.Run(context, &log.ListenRequest{
-		Source: url.NewResource(fileURL, credentials),
+		Source: location.NewResource(fileURL, credentials),
 		Types: []*log.Type{
 			{
 				Name:   "t",

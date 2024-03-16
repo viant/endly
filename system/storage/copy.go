@@ -8,7 +8,6 @@ import (
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/storage/copy"
 	"github.com/viant/endly/udf"
-	"github.com/viant/toolbox/url"
 )
 
 // CopyRequest represents a resources Copy request
@@ -108,7 +107,7 @@ func NewCopyRequest(assets copy.Assets, transfers ...*copy.Rule) *CopyRequest {
 // NewCopyRequestFromURL creates a new request from URL (JSON or YAML format are supported)
 func NewCopyRequestFromURL(URL string) (*CopyRequest, error) {
 	var request = &CopyRequest{}
-	resource := url.NewResource(URL)
+	resource := location.NewResource(URL)
 	if err := resource.Decode(request); err != nil {
 		return nil, err
 	}

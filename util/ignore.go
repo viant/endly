@@ -1,21 +1,19 @@
 package util
 
 import (
+	"context"
+	"github.com/viant/afs"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/storage"
-	"io/ioutil"
 	"strings"
 )
 
 // GetIgnoreList returns ignore list
-func GetIgnoreList(service storage.Service, URL string) []string {
+func GetIgnoreList(ctx context.Context, fs afs.Service, URL string) []string {
 	var list = make([]string, 0)
-	reader, err := service.DownloadWithURL(URL)
-	if err != nil {
-		return list
+	if ok, _ := fs.Exists(ctx, URL); !ok {
+		return []string{}
 	}
-	defer reader.Close()
-	content, err := ioutil.ReadAll(reader)
+	content, err := fs.DownloadWithURL(ctx, URL)
 	if err != nil {
 		return list
 	}

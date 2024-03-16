@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/process"
 	"github.com/viant/endly/util"
-	"github.com/viant/toolbox/url"
 	"testing"
 )
 
@@ -15,7 +15,7 @@ func TestProcessService_Status(t *testing.T) {
 
 	var credentialFile, err = util.GetDummyCredential()
 	assert.Nil(t, err)
-	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile) //
+	var target = location.NewResource("scp://127.0.0.1:22/", credentialFile) //
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir      string

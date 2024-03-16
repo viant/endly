@@ -4,7 +4,7 @@ import (
 	"flag"
 	_ "github.com/viant/asc"
 	"github.com/viant/endly/example/ui/sso"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"log"
 )
 
@@ -13,7 +13,7 @@ var configURI = flag.String("config", "config/config.json", "path to json config
 func main() {
 	flag.Parse()
 	config := &sso.Config{}
-	configResource := url.NewResource(*configURI)
+	configResource := location.NewResource(*configURI)
 	err := configResource.Decode(config)
 	if err != nil {
 		log.Fatal(err)

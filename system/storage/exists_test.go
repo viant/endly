@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"strings"
 	"testing"
 )
@@ -21,30 +21,30 @@ func TestService_Exists(t *testing.T) {
 		{
 			description: "single asset exists",
 			populate: []*location.Resource{
-				url.NewResource("mem://127.0.0.1/test/storage/exists/case001/f1"),
+				location.NewResource("mem://127.0.0.1/test/storage/exists/case001/f1"),
 			},
 			expect: map[string]bool{
-				url.NewResource("mem://127.0.0.1/test/storage/exists/case001/f1").URL: true,
+				location.NewResource("mem://127.0.0.1/test/storage/exists/case001/f1").URL: true,
 			},
 			request: &ExistsRequest{
 				Assets: []*location.Resource{
-					url.NewResource("mem://127.0.0.1/test/storage/exists/case001/f1"),
+					location.NewResource("mem://127.0.0.1/test/storage/exists/case001/f1"),
 				},
 			},
 		},
 		{
 			description: "multi asset exists",
 			populate: []*location.Resource{
-				url.NewResource("mem://127.0.0.1/test/storage/exists/case002/f1"),
+				location.NewResource("mem://127.0.0.1/test/storage/exists/case002/f1"),
 			},
 			expect: map[string]bool{
-				url.NewResource("mem://127.0.0.1/test/storage/exists/case002/f1").URL: true,
-				url.NewResource("mem://127.0.0.1/test/storage/exists/case002/f2").URL: false,
+				location.NewResource("mem://127.0.0.1/test/storage/exists/case002/f1").URL: true,
+				location.NewResource("mem://127.0.0.1/test/storage/exists/case002/f2").URL: false,
 			},
 			request: &ExistsRequest{
 				Assets: []*location.Resource{
-					url.NewResource("mem://127.0.0.1/test/storage/exists/case002/f1"),
-					url.NewResource("mem://127.0.0.1/test/storage/exists/case002/f2"),
+					location.NewResource("mem://127.0.0.1/test/storage/exists/case002/f1"),
+					location.NewResource("mem://127.0.0.1/test/storage/exists/case002/f2"),
 				},
 			},
 		},
@@ -58,8 +58,8 @@ func TestService_Exists(t *testing.T) {
 			description: "invalid asset URL error",
 			request: &ExistsRequest{
 				Assets: []*location.Resource{
-					url.NewResource("mem://127.0.0.1/test/storage/exists/case003/f1"),
-					url.NewResource("err://127.0.0.1/test/storage/exists/case003/f2"),
+					location.NewResource("mem://127.0.0.1/test/storage/exists/case003/f1"),
+					location.NewResource("err://127.0.0.1/test/storage/exists/case003/f2"),
 				},
 			},
 			expectError: true,
@@ -67,20 +67,20 @@ func TestService_Exists(t *testing.T) {
 		{
 			description: "multi asset exists with assert",
 			populate: []*location.Resource{
-				url.NewResource("mem://127.0.0.1/test/storage/exists/case004/f1"),
+				location.NewResource("mem://127.0.0.1/test/storage/exists/case004/f1"),
 			},
 			expect: map[string]bool{
-				url.NewResource("mem://127.0.0.1/test/storage/exists/case004/f1").URL: true,
-				url.NewResource("mem://127.0.0.1/test/storage/exists/case004/f2").URL: false,
+				location.NewResource("mem://127.0.0.1/test/storage/exists/case004/f1").URL: true,
+				location.NewResource("mem://127.0.0.1/test/storage/exists/case004/f2").URL: false,
 			},
 			request: &ExistsRequest{
 				Assets: []*location.Resource{
-					url.NewResource("mem://127.0.0.1/test/storage/exists/case004/f1"),
-					url.NewResource("mem://127.0.0.1/test/storage/exists/case004/f2"),
+					location.NewResource("mem://127.0.0.1/test/storage/exists/case004/f1"),
+					location.NewResource("mem://127.0.0.1/test/storage/exists/case004/f2"),
 				},
 				Expect: map[string]bool{
-					url.NewResource("mem://127.0.0.1/test/storage/exists/case004/f1").URL: true,
-					url.NewResource("mem://127.0.0.1/test/storage/exists/case004/f2").URL: false,
+					location.NewResource("mem://127.0.0.1/test/storage/exists/case004/f1").URL: true,
+					location.NewResource("mem://127.0.0.1/test/storage/exists/case004/f2").URL: false,
 				},
 			},
 		},

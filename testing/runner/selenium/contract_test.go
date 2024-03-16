@@ -3,7 +3,7 @@ package selenium
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"testing"
 )
 
@@ -206,16 +206,16 @@ func TestRunRequest_Validate(t *testing.T) {
 		assert.NotNil(t, req.Validate(), "empty remote")
 	}
 	{
-		var req = NewRunRequest("", "", url.NewResource("abc"), nil)
+		var req = NewRunRequest("", "", location.NewResource("abc"), nil)
 		assert.NotNil(t, req.Validate(), "empty browser")
 	}
 
 	{
-		var req = NewRunRequest("", "firefox", url.NewResource("abc"))
+		var req = NewRunRequest("", "firefox", location.NewResource("abc"))
 		assert.NotNil(t, req.Validate(), "action empty")
 	}
 	{
-		var req = NewRunRequest("", "firefox", url.NewResource("abc"), NewAction("", "", "get", "localhost"))
+		var req = NewRunRequest("", "firefox", location.NewResource("abc"), NewAction("", "", "get", "localhost"))
 		assert.Nil(t, req.Validate(), "valid request")
 	}
 	{
@@ -250,12 +250,12 @@ func TestOpenSessionRequest_Validate(t *testing.T) {
 		assert.NotNil(t, req.Validate())
 	}
 	{
-		var req = NewOpenSessionRequest("", url.NewResource("abc"))
+		var req = NewOpenSessionRequest("", location.NewResource("abc"))
 		assert.NotNil(t, req.Validate())
 	}
 
 	{
-		var req = NewOpenSessionRequest("forefox", url.NewResource("abc"))
+		var req = NewOpenSessionRequest("forefox", location.NewResource("abc"))
 		assert.Nil(t, req.Validate())
 	}
 }

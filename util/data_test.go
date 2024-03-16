@@ -3,8 +3,8 @@ package util
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"path"
 	"testing"
 )
@@ -58,7 +58,7 @@ func TestLoadMap(t *testing.T) {
 	parentDirectory := path.Join(toolbox.CallerDirectory(3), "test")
 
 	for _, useCase := range useCases {
-		aMap, err := LoadMap([]string{url.NewResource(parentDirectory).URL}, useCase.URI)
+		aMap, err := LoadMap([]string{location.NewResource(parentDirectory).URL}, useCase.URI)
 		if useCase.hasError {
 			assert.NotNil(t, err, useCase.description)
 			continue

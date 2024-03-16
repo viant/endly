@@ -105,8 +105,6 @@ import (
 	"github.com/viant/scy/cred"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
-
 	"log"
 	"os"
 	"os/exec"
@@ -280,7 +278,7 @@ func runAction(ctx context.Context, run string, flagset map[string]string) error
 		return err
 	}
 	baseURL, _ := toolbox.URLSplit(request.AssetURL)
-	currentURL := url.NewResource("").URL
+	currentURL := location.NewResource("").URL
 	argsMap, err := util.GetArguments(currentURL, baseURL)
 	if err != nil {
 		return err
@@ -659,7 +657,7 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 	var request *workflow.RunRequest
 	var err error
 	if value, ok := flagset["r"]; ok {
-		if path.Ext(value) == ""{
+		if path.Ext(value) == "" {
 			value += ".yaml"
 		}
 		if request, err = loadInlineWorkflow(context.Background(), value); err != nil {

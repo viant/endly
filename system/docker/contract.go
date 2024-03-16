@@ -7,9 +7,9 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
 	"github.com/go-errors/errors"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"strings"
 )
 
@@ -47,7 +47,7 @@ type BuildRequest struct {
 
 func (r *BuildRequest) Init() error {
 	if r.Path == "" {
-		r.Path = url.NewResource(".").ParsedURL.Path
+		r.Path = location.NewResource(".").Path()
 	}
 	if len(r.Tags) == 0 {
 		r.Tags = make([]string, 0)
@@ -211,7 +211,7 @@ func (r *RunRequest) Init() error {
 				dest = parts[1]
 			}
 			source = expandHomeDirectory(source)
-			source = url.NewResource(source).ParsedURL.Path
+			source = location.NewResource(source).Path()
 			r.HostConfig.Mounts = append(r.HostConfig.Mounts, mount.Mount{
 				Type:   mount.TypeBind,
 				Source: source,

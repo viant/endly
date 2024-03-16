@@ -6,7 +6,7 @@ import (
 
 	"flag"
 	"github.com/viant/endly/example/etl/transformer"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"log"
 )
 
@@ -15,7 +15,7 @@ var configURI = flag.String("config", "", "path to json config file")
 func main() {
 	flag.Parse()
 	config := &transformer.Config{}
-	configResource := url.NewResource(*configURI)
+	configResource := location.NewResource(*configURI)
 	err := configResource.Decode(config)
 	if err != nil {
 		log.Fatal(err)

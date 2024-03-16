@@ -11,7 +11,6 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"io"
 	"io/ioutil"
 	"log"
@@ -492,7 +491,7 @@ func (s *service) copy(context *endly.Context, request *CopyRequest) (*CopyRespo
 		if strings.Count(source, ":") == 1 {
 			parts := strings.SplitN(source, ":", 2)
 			dest = expandHomeDirectory(dest)
-			dest = url.NewResource(dest).ParsedURL.Path
+			dest = location.NewResource(dest).Path()
 			if err := s.copyFromContainer(context, parts[0], parts[1], dest); err != nil {
 				return nil, err
 			}
@@ -502,7 +501,7 @@ func (s *service) copy(context *endly.Context, request *CopyRequest) (*CopyRespo
 		if strings.Count(dest, ":") == 1 {
 			parts := strings.SplitN(dest, ":", 2)
 			source = expandHomeDirectory(source)
-			source = url.NewResource(source).ParsedURL.Path
+			source = location.NewResource(source).Path()
 			if err := s.copyToContainer(context, parts[0], source, parts[1]); err != nil {
 				return nil, err
 			}

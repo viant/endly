@@ -14,7 +14,6 @@ import (
 	runner "github.com/viant/endly/testing/runner/selenium"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
 	"testing"
@@ -32,7 +31,7 @@ const code = `
 func TestSeleniumService_Start(t *testing.T) {
 
 	var credentialFile, err = util.GetDummyCredential()
-	var target = url.NewResource("scp://127.0.0.1:22/", credentialFile)
+	var target = location.NewResource("scp://127.0.0.1:22/", credentialFile)
 	assert.Nil(t, err)
 	var manager = endly.New()
 	var useCases = []struct {
@@ -52,7 +51,7 @@ func TestSeleniumService_Start(t *testing.T) {
 				"scp://127.0.0.1:22/opt/selenium-server-standalone.jar",
 			},
 			[]byte("test"),
-			url.NewResource("scp://127.0.0.1:22/", credentialFile),
+			location.NewResource("scp://127.0.0.1:22/", credentialFile),
 			&runner.StartRequest{
 				Target:     target,
 				Sdk:        "jdk",
@@ -71,7 +70,7 @@ func TestSeleniumService_Start(t *testing.T) {
 				"scp://127.0.0.1:22/opt/selenium-server-standalone.jar",
 			},
 			[]byte("test"),
-			url.NewResource("scp://127.0.0.1:22/", credentialFile),
+			location.NewResource("scp://127.0.0.1:22/", credentialFile),
 			&runner.StartRequest{
 				Target:     target,
 				Sdk:        "jdk",
@@ -129,7 +128,7 @@ func TestSeleniumService_Calls(t *testing.T) {
 
 	context := manager.NewContext(toolbox.NewContext())
 	var targetHost = "127.0.0.1:5619"
-	var target = url.NewResource(fmt.Sprintf("http://%v/", targetHost))
+	var target = location.NewResource(fmt.Sprintf("http://%v/", targetHost))
 
 	var openResponse = &exec.OpenSessionResponse{}
 	if err := endly.Run(context, &runner.OpenSessionRequest{
@@ -255,7 +254,7 @@ func TestSeleniumService_Run(t *testing.T) {
 
 	context := manager.NewContext(toolbox.NewContext())
 	var targetHost = "127.0.0.1:8118"
-	var target = url.NewResource(fmt.Sprintf("http://%v/", targetHost))
+	var target = location.NewResource(fmt.Sprintf("http://%v/", targetHost))
 
 	serviceResponse := service.Run(context, &runner.RunRequest{
 		RemoteSelenium: target,

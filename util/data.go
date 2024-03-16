@@ -9,7 +9,6 @@ import (
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/data/udf"
 	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox/url"
 	"path"
 	"regexp"
 	"sort"
@@ -86,7 +85,7 @@ func ListResource(baseURLs []string, URI string) ([]string, error) {
 			regExprText = ".+" + regExprText
 		}
 		regExpression := regexp.MustCompile(regExprText)
-		resource := url.NewResource(baseURL)
+		resource := location.NewResource(baseURL)
 		storageService, err := storage.NewServiceForURL(resource.URL, "")
 		if err != nil {
 			return nil, err
@@ -266,8 +265,6 @@ func expandArgumentAsLiterals(baseURLs []string, URIs []string, mainResource *lo
 	mainContent = aMap.ExpandAsText(mainContent)
 	return decodeResourceContent(mainResource, mainContent)
 }
-
-
 
 func decodeResourceContent(resource *location.Resource, content string) (interface{}, error) {
 	var result interface{}

@@ -3,7 +3,7 @@ package http
 import (
 	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"strconv"
 )
 
@@ -32,7 +32,7 @@ func (s *service) shutdown(context *endly.Context, req *ShutdownRequest) (interf
 func (s *service) listen(context *endly.Context, request *ListenRequest) (*ListenResponse, error) {
 	state := context.State()
 	if request.BaseDirectory != "" {
-		request.BaseDirectory = url.NewResource(state.ExpandAsText(request.BaseDirectory)).ParsedURL.Path
+		request.BaseDirectory = location.NewResource(state.ExpandAsText(request.BaseDirectory)).Path()
 	}
 	key := ServiceID + ":" + strconv.Itoa(request.Port)
 	s.Mutex().Lock()

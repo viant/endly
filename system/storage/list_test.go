@@ -7,9 +7,9 @@ import (
 	"github.com/viant/afs/mem"
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/storage/copy"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"testing"
 )
 
@@ -29,7 +29,7 @@ func TestService_List(t *testing.T) {
 				asset.NewFile("f1", []byte("test1"), 0644),
 			},
 			request: &ListRequest{
-				Source: url.NewResource("mem://localhost/data/storage/list/case001/f1"),
+				Source: location.NewResource("mem://localhost/data/storage/list/case001/f1"),
 			},
 			expect: `{
 	"Assets": [
@@ -48,7 +48,7 @@ func TestService_List(t *testing.T) {
 				asset.NewFile("f2", []byte("test1"), 0644),
 			},
 			request: &ListRequest{
-				Source: url.NewResource("mem://localhost/data/storage/list/case002"),
+				Source: location.NewResource("mem://localhost/data/storage/list/case002"),
 			},
 			expect: `{
 	"Assets": [
@@ -69,7 +69,7 @@ func TestService_List(t *testing.T) {
 				asset.NewFile("f3.txt", []byte("test1"), 0644),
 			},
 			request: &ListRequest{
-				Source: url.NewResource("mem://localhost/data/storage/list/case003"),
+				Source: location.NewResource("mem://localhost/data/storage/list/case003"),
 				Match: &copy.Matcher{
 					Basic: &matcher.Basic{Suffix: ".txt"},
 				},
@@ -92,7 +92,7 @@ func TestService_List(t *testing.T) {
 		{
 			description: "invalid path error",
 			request: &ListRequest{
-				Source: url.NewResource("mem://localhost/data/storage/list/case005"),
+				Source: location.NewResource("mem://localhost/data/storage/list/case005"),
 			},
 			expectError: true,
 		},
@@ -104,7 +104,7 @@ func TestService_List(t *testing.T) {
 				asset.NewFile("f10", []byte("test1"), 0644),
 			},
 			request: &ListRequest{
-				Source:  url.NewResource("mem://localhost/data/storage/list/case006"),
+				Source:  location.NewResource("mem://localhost/data/storage/list/case006"),
 				Content: true,
 			},
 			expect: `{
