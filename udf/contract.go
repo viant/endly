@@ -2,7 +2,7 @@ package udf
 
 import (
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 )
 
 // RegisterRequest represents a register udf request
@@ -12,7 +12,7 @@ type RegisterRequest struct {
 
 func NewRegisterRequestFromURL(URL string) (*RegisterRequest, error) {
 	var request = &RegisterRequest{}
-	resource := url.NewResource(URL)
+	resource := location.NewResource(URL)
 	return request, resource.Decode(request)
 }
 

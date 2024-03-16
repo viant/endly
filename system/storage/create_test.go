@@ -4,14 +4,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/afs/option"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"io/ioutil"
 	"testing"
 )
 
 func TestService_Create(t *testing.T) {
 
-	resource := url.NewResource("mem://localhost/data/storage/create/case004/data.txt")
+	resource := location.NewResource("mem://localhost/data/storage/create/case004/data.txt")
 	resource.CustomKey = &option.AES256Key{
 		Key: []byte("invalid_key"),
 	}
@@ -26,7 +26,7 @@ func TestService_Create(t *testing.T) {
 			description: "crate basic asset with content",
 			data:        "this is test 1",
 			request: &CreateRequest{
-				Dest:      url.NewResource("mem://localhost/data/storage/create/case001/data.txt"),
+				Dest:      location.NewResource("mem://localhost/data/storage/create/case001/data.txt"),
 				SourceKey: "key1",
 			},
 		},
@@ -34,7 +34,7 @@ func TestService_Create(t *testing.T) {
 		{
 			description: "create directory",
 			request: &CreateRequest{
-				Dest:  url.NewResource("mem://localhost/data/storage/create/case002/folder1"),
+				Dest:  location.NewResource("mem://localhost/data/storage/create/case002/folder1"),
 				IsDir: true,
 			},
 		},

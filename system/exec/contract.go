@@ -8,14 +8,10 @@ import (
 	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/ssh"
-	"github.com/viant/toolbox/url"
 	"strings"
 )
 
-
 const defaultTargetURL = "ssh://localhost/"
-
-
 
 var localhostTarget = location.NewResource(defaultTargetURL)
 
@@ -26,8 +22,6 @@ func GetServiceTarget(target *location.Resource) *location.Resource {
 	}
 	return localhostTarget
 }
-
-
 
 // Options represents an execution options
 type Options struct {
@@ -42,7 +36,6 @@ type Options struct {
 	CheckError  bool              `description:"check after command execution if status is <> 0, then throws error"`
 	AutoSudo    bool              `description:"when this flag is set, in case of permission denied error for non root user retry command with sudo"`
 }
-
 
 // DefaultOptions creates a default execution options
 func DefaultOptions() *Options {
@@ -177,7 +170,7 @@ type SetTargetResponse struct{}
 
 // NewExtractRequestFromURL creates a new request from URL
 func NewExtractRequestFromURL(URL string) (*ExtractRequest, error) {
-	var resource = url.NewResource(URL)
+	var resource = location.NewResource(URL)
 	var result = &ExtractRequest{}
 	return result, resource.Decode(result)
 }
@@ -276,7 +269,7 @@ func NewRunRequest(target *location.Resource, superUser bool, commands ...string
 
 // NewExtractRequestFromURL creates a new request from URL
 func NewRunRequestFromURL(URL string) (*RunRequest, error) {
-	var resource = url.NewResource(URL)
+	var resource = location.NewResource(URL)
 	var result = &RunRequest{}
 	return result, resource.Decode(result)
 }
@@ -299,12 +292,12 @@ type RunResponse struct {
 
 // OpenSessionRequest represents an open session request.
 type OpenSessionRequest struct {
-	Target        *location.Resource //Session is created from target host (servername, port)
-	Config        *ssh.SessionConfig //ssh configuration
-	SystemPaths   []string           //system path that are applied to the ssh session
-	Env           map[string]string
-	Transient     bool        //if this flag is true, caller is responsible for closing session, othewise session is closed as context is closed
-	Basedir       string      //capture all ssh service command in supplied dir (for unit test only)
+	Target      *location.Resource //Session is created from target host (servername, port)
+	Config      *ssh.SessionConfig //ssh configuration
+	SystemPaths []string           //system path that are applied to the ssh session
+	Env         map[string]string
+	Transient   bool   //if this flag is true, caller is responsible for closing session, othewise session is closed as context is closed
+	Basedir     string //capture all ssh service command in supplied dir (for unit test only)
 }
 
 // Validate checks if request is valid

@@ -7,11 +7,10 @@ import (
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/storage"
 	aurl "github.com/viant/afs/url"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/util"
-	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
 )
@@ -219,7 +218,7 @@ func addLoadedData(loaded interface{}, state data.Map, k string, workflowData da
 	}
 }
 
-func (t *Template) buildTagState(index string, tag *neatly.Tag) data.Map {
+func (t *Template) buildTagState(index string, tag *Tag) data.Map {
 	var state = data.NewMap()
 	state.Put("index", index)
 	if t.SubPath != "" {
@@ -235,12 +234,12 @@ func (t *Template) buildTagState(index string, tag *neatly.Tag) data.Map {
 	state.Put("subPath", tag.Subpath)
 	state.Put("pathMatch", tag.PathMatch)
 	state.Put("URL", tagPathURL)
-	state.Put("path", url.NewResource(tagPathURL).ParsedURL.Path)
+	state.Put("path", location.NewResource(tagPathURL).Path())
 
 	return state
 }
 
-func flattenAction(parent *Task, task *Task, tag *neatly.Tag, description string) []*Action {
+func flattenAction(parent *Task, task *Task, tag *Tag, description string) []*Action {
 	var result = make([]*Action, 0)
 	isRootTask := parent == task
 	if !isRootTask {
@@ -268,9 +267,9 @@ func flattenAction(parent *Task, task *Task, tag *neatly.Tag, description string
 	return result
 }
 
-func buildTag(t *Template, inline *InlineWorkflow) *neatly.Tag {
+func buildTag(t *Template, inline *InlineWorkflow) *Tag {
 	key := t.Tag + "{" + t.Range + "}"
 	ownerURL := toolbox.URLPathJoin(inline.baseURL, inline.name+".yaml")
-	tag := neatly.NewTag(inline.name, url.NewResource(ownerURL), key, 0)
+	tag := NewTag(inline.name, location.NewResource(ownerURL), key, 0)
 	return tag
 }

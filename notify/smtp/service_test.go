@@ -5,10 +5,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/notify/smtp"
-	"github.com/viant/toolbox"
 	"github.com/viant/scy/cred/secret"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/toolbox"
 	"path"
 	"testing"
 	"time"
@@ -22,7 +22,7 @@ func TestService_Run(t *testing.T) {
 	service, _ := context.Service(smtp.ServiceID)
 	{ //missing subject
 		serviceResponse := service.Run(context, &smtp.SendRequest{
-			Target: url.NewResource("smtp://smtp.gmail.com:465", credentials+"a"),
+			Target: location.NewResource("smtp://smtp.gmail.com:465", credentials+"a"),
 			Mail: &smtp.Message{
 				From:        "adrianwit@gmail.com",
 				To:          []string{"viantemailtester@gmail.com"},
@@ -34,7 +34,7 @@ func TestService_Run(t *testing.T) {
 	}
 	{ //invalid credentials subject
 		serviceResponse := service.Run(context, &smtp.SendRequest{
-			Target: url.NewResource("smtp://smtp.gmail.com:465", credentials+"aa"),
+			Target: location.NewResource("smtp://smtp.gmail.com:465", credentials+"aa"),
 			Mail: &smtp.Message{
 				From:        "adrianwit@gmail.com",
 				To:          []string{"viantemailtester@gmail.com"},
@@ -46,7 +46,7 @@ func TestService_Run(t *testing.T) {
 	}
 	{ //sending message
 		serviceResponse := service.Run(context, &smtp.SendRequest{
-			Target: url.NewResource("smtp://smtp.gmail.com:465", credentials),
+			Target: location.NewResource("smtp://smtp.gmail.com:465", credentials),
 			Mail: &smtp.Message{
 				From:        "adrianwit@gmail.com",
 				To:          []string{"viantemailtester@gmail.com"},
@@ -70,7 +70,7 @@ func TestNewSMTPClient(t *testing.T) {
 
 	{
 
-		var target = url.NewResource("smtp://smtp.gmail.com:465")
+		var target = location.NewResource("smtp://smtp.gmail.com:465")
 		var parent = toolbox.CallerDirectory(3)
 		credentials := path.Join(parent, "test/secret.json")
 		credConfig, _ := secret.New("", false).GetCredentials(credentials)
@@ -83,7 +83,7 @@ func TestNewSMTPClient(t *testing.T) {
 
 	{
 
-		var target = url.NewResource("smtp://smtp.gmail.com:465")
+		var target = location.NewResource("smtp://smtp.gmail.com:465")
 		var parent = toolbox.CallerDirectory(3)
 		credentials := path.Join(parent, "test/invalid_secret.json")
 		credConfig, _ := secret.New("", false).GetCredentials(credentials)

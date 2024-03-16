@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"os"
 	"path"
 	"testing"
@@ -30,7 +30,7 @@ func Test_Meta(t *testing.T) {
 
 	parent := toolbox.CallerDirectory(3)
 
-	resource := url.NewResource(path.Join(parent, "mv.yaml"))
+	resource := location.NewResource(path.Join(parent, "mv.yaml"))
 
 	rawRequest := map[string]interface{}{}
 

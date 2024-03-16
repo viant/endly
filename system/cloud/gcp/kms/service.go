@@ -10,10 +10,10 @@ import (
 	"github.com/viant/afs/file"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/gcp"
+	estorage "github.com/viant/endly/system/storage"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/storage"
+
 	"google.golang.org/api/cloudkms/v1"
-	"io/ioutil"
 	"log"
 )
 
@@ -254,11 +254,14 @@ func (s *service) encrypt(context *endly.Context, request *EncryptRequest) (*Enc
 	}
 
 	if request.Dest != nil {
-		fs := afs.New()
 		if err != nil {
 			return nil, err
 		}
-		if err = fs.Upload(context.Background(), request.Dest.URL, file.DefaultFileOsMode, bytes.NewReader(cipherData)); err != nil {
+		options, err := estorage.StorageOptions(context, request.Dest)
+		if err != nil {
+			return nil, err
+		}
+		if err = s.fs.Upload(context.Background(), request.Dest.URL, file.DefaultFileOsMode, bytes.NewReader(cipherData), options...); err != nil {
 			return nil, err
 		}
 	}
@@ -277,16 +280,11 @@ func (s *service) decrypt(context *endly.Context, request *DecryptRequest) (*Dec
 	keyURI := gcp.ExpandMeta(context, request.keyURI)
 	service := cloudkms.NewProjectsLocationsKeyRingsCryptoKeysService(client.service)
 	if request.Source != nil {
-		storageService, err := storage.NewServiceForURL(request.Source.URL, request.Source.Credentials)
+		options, err := estorage.StorageOptions(context, request.Source)
 		if err != nil {
 			return nil, err
 		}
-		reader, err := storage.Download(storageService, request.Source.URL)
-		if err != nil {
-			return nil, err
-		}
-		defer reader.Close()
-		data, err := ioutil.ReadAll(reader)
+		data, err := s.fs.DownloadWithURL(context.Background(), request.Source.URL, options...)
 		if err != nil {
 			return nil, err
 		}
@@ -324,7 +322,7 @@ func (s *service) decrypt(context *endly.Context, request *DecryptRequest) (*Dec
 // New creates a new cloudkms service
 func New() endly.Service {
 	var result = &service{
-		fs:afs.New(),
+		fs:              afs.New(),
 		AbstractService: endly.NewAbstractService(ServiceID),
 	}
 	result.AbstractService.Service = result

@@ -2,10 +2,10 @@ package http
 
 import (
 	"fmt"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 )
 
 // SendRequest represents a send http request.
@@ -64,7 +64,7 @@ func (s *SendRequest) Init() error {
 
 // NewSendRequestFromURL create new request from URL
 func NewSendRequestFromURL(URL string) (*SendRequest, error) {
-	resource := url.NewResource(URL)
+	resource := location.NewResource(URL)
 	var request = &SendRequest{}
 	return request, resource.Decode(request)
 }
@@ -100,7 +100,7 @@ func (r *SendResponse) Expand(state data.Map) {
 
 // NewSendRequestFromURL create new request from URL
 func NewSendResponseFromURL(URL string) (*SendResponse, error) {
-	resource := url.NewResource(URL)
+	resource := location.NewResource(URL)
 	var request = &SendResponse{}
 	return request, resource.Decode(request)
 }

@@ -6,10 +6,10 @@ import (
 	"fmt"
 	sjwt "github.com/golang-jwt/jwt/v4"
 	"github.com/viant/afs"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/scy"
 	"github.com/viant/scy/auth/jwt"
 	"github.com/viant/scy/cred"
-	"github.com/viant/toolbox/url"
 	"reflect"
 )
 
@@ -166,27 +166,27 @@ type VerifyJWTResponse struct {
 // NewSecureRequestFromURL creates a request from URL
 func NewSecureRequestFromURL(URL string) (*SecureRequest, error) {
 	var request = &SecureRequest{}
-	resource := url.NewResource(URL)
+	resource := location.NewResource(URL)
 	return request, resource.Decode(request)
 }
 
 // NewRevealRequestFromURL creates a request from URL
 func NewRevealRequestFromURL(URL string) (*RevealRequest, error) {
 	var request = &RevealRequest{}
-	resource := url.NewResource(URL)
+	resource := location.NewResource(URL)
 	return request, resource.Decode(request)
 }
 
 // NewSignJWTRequest creates a request from URL
 func NewSignJWTRequest(URL string) (*SignJWTRequest, error) {
 	var request = &SignJWTRequest{}
-	resource := url.NewResource(URL)
+	resource := location.NewResource(URL)
 	return request, resource.Decode(request)
 }
 
 // NewVerifyJWTResponse creates a request from URL
 func NewVerifyJWTResponse(URL string) (*VerifyJWTResponse, error) {
 	var request = &VerifyJWTResponse{}
-	resource := url.NewResource(URL)
+	resource := location.NewResource(URL)
 	return request, resource.Decode(request)
 }

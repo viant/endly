@@ -4,7 +4,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
-	"github.com/viant/toolbox/url"
 	"strings"
 )
 
@@ -58,7 +57,7 @@ func NewSetRequest(target *location.Resource, sdk string, version string, env ma
 // NewSetRequestFromURL creates a new set request from URL
 func NewSetRequestFromURL(URL string) (*SetRequest, error) {
 	var response = &SetRequest{}
-	resource := url.NewResource(URL)
+	resource := location.NewResource(URL)
 	return response, resource.Decode(response)
 }
 

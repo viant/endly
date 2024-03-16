@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"strings"
 	"testing"
 )
@@ -22,14 +22,14 @@ func TestService_Download(t *testing.T) {
 			description: "basic asset download",
 			data:        "this is test",
 			request: &DownloadRequest{
-				Source: url.NewResource("mem://127.0.0.1/test/storage/download/case001/f1"),
+				Source: location.NewResource("mem://127.0.0.1/test/storage/download/case001/f1"),
 			},
 		},
 		{
 			description: "basic asset download with dest key",
 			data:        "this is test",
 			request: &DownloadRequest{
-				Source:  url.NewResource("mem://127.0.0.1/test/storage/download/case002/f1"),
+				Source:  location.NewResource("mem://127.0.0.1/test/storage/download/case002/f1"),
 				DestKey: "k2",
 			},
 		},
@@ -41,7 +41,7 @@ func TestService_Download(t *testing.T) {
 			},
 			request: &DownloadRequest{
 				Udf:     "AsNode",
-				Source:  url.NewResource("mem://127.0.0.1/test/storage/download/case003/f1"),
+				Source:  location.NewResource("mem://127.0.0.1/test/storage/download/case003/f1"),
 				DestKey: "k2",
 			},
 		},
@@ -51,7 +51,7 @@ func TestService_Download(t *testing.T) {
 			expectError: true,
 			request: &DownloadRequest{
 				Udf:    "blahblah",
-				Source: url.NewResource("mem://127.0.0.1/test/storage/download/case004/f1"),
+				Source: location.NewResource("mem://127.0.0.1/test/storage/download/case004/f1"),
 			},
 		},
 		{
@@ -66,7 +66,7 @@ func TestService_Download(t *testing.T) {
 			expectError: true,
 			request: &DownloadRequest{
 				Udf:     "AsNode",
-				Source:  url.NewResource("mem://127.0.0.1/test/storage/download/case006/f1"),
+				Source:  location.NewResource("mem://127.0.0.1/test/storage/download/case006/f1"),
 				DestKey: "k2",
 			},
 		},
@@ -75,14 +75,14 @@ func TestService_Download(t *testing.T) {
 			data:        "",
 			expectError: true,
 			request: &DownloadRequest{
-				Source: url.NewResource("mem://127.0.0.1/test/storage/download/case007/f1"),
+				Source: location.NewResource("mem://127.0.0.1/test/storage/download/case007/f1"),
 			},
 		},
 		{
 			description: "basic asset download with assert",
 			data:        "this is test",
 			request: &DownloadRequest{
-				Source: url.NewResource("mem://127.0.0.1/test/storage/download/case008/f1"),
+				Source: location.NewResource("mem://127.0.0.1/test/storage/download/case008/f1"),
 				Expect: "/test/",
 			},
 		},

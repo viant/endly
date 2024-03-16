@@ -416,7 +416,7 @@ By default session is open in non transient mode, which means once context.Close
     
         manager := endly.New()
         context := manager.NewContext(toolbox.NewContext())
-        target := url.NewResource("ssh://127.0.0.1", "~/.secret/localhost.json")
+        target := location.NewResource("ssh://127.0.0.1", "~/.secret/localhost.json")
         defer context.Close() // session closes as part of context.Close
         response, err := manager.Run(context, exec.NewOpenSessionRequest(target, []string{"/usr/local/bin"}, map[string]string{"M2_HOME":"/users/test/.m2/"},false, "/"))
         if err != nil {
@@ -450,7 +450,7 @@ Command in RunRequest can represents one of the following:
 
     manager := endly.New()
     context := manager.NewContext(toolbox.NewContext())
-    var target= url.NewResource("ssh://127.0.0.1", "localhost")
+    var target= location.NewResource("ssh://127.0.0.1", "localhost")
     var runRequest = exec.NewRunRequest(target, true, "whoami", "$stdout:/root/? echo 'hello root'")
     var runResponse = &exec.RunResponse{}
     err := endly.Run(context, runRequest, runResponse)
@@ -492,7 +492,7 @@ If you use **sudo**. any **secret or credentials** make sure that you rename it 
 
 ```go
 	manager := endly.New()
-	target := url.NewResource("ssh://127.0.0.1", "~/.secret/localhost.json")
+	target := location.NewResource("ssh://127.0.0.1", "~/.secret/localhost.json")
 	context, err :=  exec.NewSSHRecodingContext(manager, target, "test/session/context")
 	if err != nil {
 		log.Fatal(err)
@@ -514,7 +514,7 @@ a test SSHService, use location of stored SSH conversation  as parameter, then c
 	if err != nil {
 		log.Fatal(err)
 	}
-	target := url.NewResource("ssh://127.0.0.1", credentials)
+	target := location.NewResource("ssh://127.0.0.1", credentials)
 	context, err := exec.NewSSHReplayContext(manager, target, "test/session/transient")
 	if err != nil {
 		log.Fatal(err)

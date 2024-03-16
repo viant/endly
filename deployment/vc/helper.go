@@ -6,7 +6,6 @@ import (
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/util"
 	"github.com/viant/scy/cred/secret"
-	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
 )
@@ -24,7 +23,6 @@ func versionControlRequestInit(resource *location.Resource, vcType *string) erro
 	}
 	return nil
 }
-
 
 var errorRewrites = map[string]func(*secret.Service, *location.Resource) string{
 	"authentication failed": func(service *secret.Service, resource *location.Resource) string {
@@ -53,8 +51,8 @@ func checkVersionControlAuthErrors(err error, service *secret.Service, resource 
 }
 
 func normalizeVCPath(URL string) string {
-	var resource = url.NewResource(URL)
-	var result = resource.ParsedURL.Hostname() + resource.ParsedURL.Path
+	var resource = location.NewResource(URL)
+	var result = resource.Hostname() + resource.Path()
 	ext := path.Ext(result)
 	if ext != "" {
 		result = string(result[:len(result)-len(ext)])

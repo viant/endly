@@ -241,14 +241,14 @@ import (
 	"google.golang.org/api/option"
 	"log"
 	_ "github.com/viant/toolbox/storage/gs"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"os"
 	"path"
 )
 
 func main() {
 
-	resource := url.NewResource("gs://myBucket/config.json.enc")
+	resource := location.NewResource("gs://myBucket/config.json.enc")
 	keyURI := "projects/MY_PROJECT/locations/REGION/keyRings/my_ring/cryptoKeys/my_key"
 	plain, err := decrypt(keyURI, resource)
 	if err != nil {

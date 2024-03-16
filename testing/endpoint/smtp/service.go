@@ -7,9 +7,9 @@ import (
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model/criteria"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 	"log"
 	"path"
 )
@@ -53,7 +53,7 @@ func (s *service) initServer(server *smtp.Server, request *ListenRequest) error 
 	server.AllowInsecureAuth = true
 	if request.EnableTLS {
 		server.TLSConfig = &tls.Config{MinVersion: tls.VersionSSL30}
-		location := url.NewResource(request.CertLocation).ParsedURL.Path
+		location := location.NewResource(request.CertLocation).Path()
 		certFile := path.Join(location, "cert.pem")
 		keyFile := path.Join(location, "key.pem")
 		certificate, err := tls.LoadX509KeyPair(certFile, keyFile)

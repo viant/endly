@@ -5,9 +5,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/deployment/vc"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
-	"github.com/viant/toolbox/url"
 	"strings"
 	"testing"
 )
@@ -15,7 +15,7 @@ import (
 func TestVc_Status(t *testing.T) {
 	credentialFile, err := util.GetDummyCredential()
 	assert.Nil(t, err)
-	var target = url.NewResource("ssh://127.0.0.1/Projects/project1/trunk", credentialFile) //
+	var target = location.NewResource("ssh://127.0.0.1/Projects/project1/trunk", credentialFile) //
 
 	var manager = endly.New()
 	var useCases = []struct {
@@ -94,8 +94,8 @@ func TestVc_Checkout(t *testing.T) {
 			"test/svn/checkout/error/darwin",
 			&vc.CheckoutRequest{
 				Type:   "svn",
-				Dest:   url.NewResource("scp://127.0.0.1:22/tmp/project2/trunk", credentialFile),
-				Origin: url.NewResource("http://svn.viant.com/svn/projects/project1/trunk", credentialFile),
+				Dest:   location.NewResource("scp://127.0.0.1:22/tmp/project2/trunk", credentialFile),
+				Origin: location.NewResource("http://svn.viant.com/svn/projects/project1/trunk", credentialFile),
 			},
 			&vc.CheckoutResponse{},
 			"failed to authenticate username: awitas with",
@@ -104,8 +104,8 @@ func TestVc_Checkout(t *testing.T) {
 			"test/svn/checkout/new/darwin",
 			&vc.CheckoutRequest{
 				Type:   "svn",
-				Dest:   url.NewResource("scp://127.0.0.1:22/tmp/project1/trunk", credentialFile),
-				Origin: url.NewResource("http://svn.viant.com/svn/projects/project1/trunk", credentialFile),
+				Dest:   location.NewResource("scp://127.0.0.1:22/tmp/project1/trunk", credentialFile),
+				Origin: location.NewResource("http://svn.viant.com/svn/projects/project1/trunk", credentialFile),
 			},
 			&vc.CheckoutResponse{
 				Checkouts: map[string]*vc.Info{
@@ -125,8 +125,8 @@ func TestVc_Checkout(t *testing.T) {
 			"test/svn/checkout/existing/darwin",
 			&vc.CheckoutRequest{
 				Type:   "svn",
-				Dest:   url.NewResource("scp://127.0.0.1:22/tmp/project1/trunk", credentialFile),
-				Origin: url.NewResource("http://svn.viant.com/svn/projects/project1/trunk", credentialFile),
+				Dest:   location.NewResource("scp://127.0.0.1:22/tmp/project1/trunk", credentialFile),
+				Origin: location.NewResource("http://svn.viant.com/svn/projects/project1/trunk", credentialFile),
 			},
 			&vc.CheckoutResponse{
 				Checkouts: map[string]*vc.Info{
@@ -145,8 +145,8 @@ func TestVc_Checkout(t *testing.T) {
 			"test/svn/checkout/modules/darwin",
 			&vc.CheckoutRequest{
 				Type:    "svn",
-				Dest:    url.NewResource("scp://127.0.0.1:22/tmp/project3/", credentialFile),
-				Origin:  url.NewResource("http://svn.viant.com/svn/projects/", credentialFile),
+				Dest:    location.NewResource("scp://127.0.0.1:22/tmp/project3/", credentialFile),
+				Origin:  location.NewResource("http://svn.viant.com/svn/projects/", credentialFile),
 				Modules: []string{"project1/trunk", "project2/trunk"},
 			},
 			&vc.CheckoutResponse{
@@ -173,8 +173,8 @@ func TestVc_Checkout(t *testing.T) {
 			"test/git/checkout/private/error/linux",
 			&vc.CheckoutRequest{
 
-				Dest:   url.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
-				Origin: url.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
+				Dest:   location.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
+				Origin: location.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
 			},
 			&vc.CheckoutResponse{},
 			"failed to authenticate username: adrianwit",
@@ -182,8 +182,8 @@ func TestVc_Checkout(t *testing.T) {
 		{
 			"test/git/checkout/private/new/linux",
 			&vc.CheckoutRequest{
-				Dest:   url.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
-				Origin: url.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
+				Dest:   location.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
+				Origin: location.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
 			},
 			&vc.CheckoutResponse{
 				Checkouts: map[string]*vc.Info{
@@ -201,8 +201,8 @@ func TestVc_Checkout(t *testing.T) {
 		{
 			"test/git/checkout/private/existing/linux",
 			&vc.CheckoutRequest{
-				Dest:   url.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
-				Origin: url.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
+				Dest:   location.NewResource("scp://127.0.0.1:22/tmp/myproj", credentialFile),
+				Origin: location.NewResource("https://github.com/adrianwit/projectA", gitCredentialFile),
 			},
 			&vc.CheckoutResponse{
 				Checkouts: map[string]*vc.Info{

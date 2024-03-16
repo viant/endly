@@ -4,14 +4,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/afs/option"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"io/ioutil"
 	"testing"
 )
 
 func TestService_Upload(t *testing.T) {
 
-	resource := url.NewResource("mem://localhost/data/storage/upload/case004/data.txt")
+	resource := location.NewResource("mem://localhost/data/storage/upload/case004/data.txt")
 	resource.CustomKey = &option.AES256Key{
 		Key: []byte("invalid_key"),
 	}
@@ -26,7 +26,7 @@ func TestService_Upload(t *testing.T) {
 			description: "basic upload",
 			data:        "this is test 1",
 			request: &UploadRequest{
-				Dest:      url.NewResource("mem://localhost/data/storage/upload/case001/data.txt"),
+				Dest:      location.NewResource("mem://localhost/data/storage/upload/case001/data.txt"),
 				SourceKey: "key1",
 			},
 		},
@@ -34,7 +34,7 @@ func TestService_Upload(t *testing.T) {
 			description: "error - key is empty",
 			data:        "this is test 1",
 			request: &UploadRequest{
-				Dest: url.NewResource("mem://localhost/data/storage/upload/case002/data.txt"),
+				Dest: location.NewResource("mem://localhost/data/storage/upload/case002/data.txt"),
 			},
 			expectError: true,
 		},

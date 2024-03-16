@@ -3,8 +3,8 @@ package model
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"gopkg.in/yaml.v2"
 	"path"
 	"strings"
@@ -64,7 +64,7 @@ func TestTemplate_Expand(t *testing.T) {
 		}
 
 		var expectedURL = useCase.workflowPrefixURL + ".json"
-		expectedResource := url.NewResource(expectedURL)
+		expectedResource := location.NewResource(expectedURL)
 		if expected, err := expectedResource.DownloadText(); err == nil {
 			if !assertly.AssertValues(t, expected, workflow, useCase.description) {
 				toolbox.DumpIndent(workflow, true)
@@ -77,7 +77,7 @@ func TestTemplate_Expand(t *testing.T) {
 }
 
 func loadInlineWorkflow(URL string) (*InlineWorkflow, error) {
-	var inlineURL = url.NewResource(URL)
+	var inlineURL = location.NewResource(URL)
 	YAMLText, err := inlineURL.DownloadText()
 	if err != nil {
 		return nil, err

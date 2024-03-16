@@ -16,10 +16,10 @@ import (
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 )
 
 // TransformWithUDF transform payload with provided UDFs name.
@@ -106,14 +106,14 @@ func LoadData(source interface{}, state data.Map) (interface{}, error) {
 
 // URLPath return path from URL
 func URLPath(source interface{}, state data.Map) (interface{}, error) {
-	resource := url.NewResource(toolbox.AsString(source))
-	return resource.ParsedURL.Path, nil
+	resource := location.NewResource(toolbox.AsString(source))
+	return resource.Path(), nil
 }
 
 // Hostname return host from URL
 func Hostname(source interface{}, state data.Map) (interface{}, error) {
-	resource := url.NewResource(toolbox.AsString(source))
-	return resource.ParsedURL.Hostname(), nil
+	resource := location.NewResource(toolbox.AsString(source))
+	return resource.Hostname(), nil
 }
 
 // AsProtobufMessage generic method for converting a map, or json string into a proto message

@@ -8,9 +8,9 @@ import (
 	"github.com/viant/afs/mem"
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/storage/copy"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"testing"
 )
 
@@ -35,8 +35,8 @@ func TestService_Copy(t *testing.T) {
 			},
 			request: &CopyRequest{
 				Rule: &copy.Rule{
-					Source: url.NewResource("mem://localhost/data/storage/copy/case001/src"),
-					Dest:   url.NewResource("mem://localhost/data/storage/copy/case001/dst"),
+					Source: location.NewResource("mem://localhost/data/storage/copy/case001/src"),
+					Dest:   location.NewResource("mem://localhost/data/storage/copy/case001/dst"),
 				},
 			},
 		},
@@ -53,8 +53,8 @@ func TestService_Copy(t *testing.T) {
 			},
 			request: &CopyRequest{
 				Rule: &copy.Rule{
-					Source: url.NewResource("mem://localhost/data/storage/copy/case002/src/f1"),
-					Dest:   url.NewResource("mem://localhost/data/storage/copy/case002/dst"),
+					Source: location.NewResource("mem://localhost/data/storage/copy/case002/src/f1"),
+					Dest:   location.NewResource("mem://localhost/data/storage/copy/case002/dst"),
 				},
 			},
 		},
@@ -75,8 +75,8 @@ func TestService_Copy(t *testing.T) {
 			},
 			request: &CopyRequest{
 				Rule: &copy.Rule{
-					Source: url.NewResource("mem://localhost/data/storage/copy/case003/src"),
-					Dest:   url.NewResource("mem://localhost/data/storage/copy/case003/dst"),
+					Source: location.NewResource("mem://localhost/data/storage/copy/case003/src"),
+					Dest:   location.NewResource("mem://localhost/data/storage/copy/case003/dst"),
 					Matcher: &copy.Matcher{
 						Basic: &matcher.Basic{Suffix: ".txt"},
 					},
@@ -100,8 +100,8 @@ func TestService_Copy(t *testing.T) {
 			},
 			request: &CopyRequest{
 				Rule: &copy.Rule{
-					Source: url.NewResource("mem://localhost/data/storage/copy/case004/src"),
-					Dest:   url.NewResource("mem://localhost/data/storage/copy/case004/dst"),
+					Source: location.NewResource("mem://localhost/data/storage/copy/case004/src"),
+					Dest:   location.NewResource("mem://localhost/data/storage/copy/case004/dst"),
 					Matcher: &copy.Matcher{
 						Basic: &matcher.Basic{Suffix: ".txt"},
 					},
@@ -130,8 +130,8 @@ func TestService_Copy(t *testing.T) {
 			},
 			request: &CopyRequest{
 				Rule: &copy.Rule{
-					Source: url.NewResource("mem://localhost/data/storage/copy/case005/src"),
-					Dest:   url.NewResource("mem://localhost/data/storage/copy/case005/dst"),
+					Source: location.NewResource("mem://localhost/data/storage/copy/case005/src"),
+					Dest:   location.NewResource("mem://localhost/data/storage/copy/case005/dst"),
 					Matcher: &copy.Matcher{
 						Basic: &matcher.Basic{Suffix: ".txt"},
 					},
@@ -364,21 +364,21 @@ func TestCopyRequest_Validate(t *testing.T) {
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = NewCopyRequest(nil, copy.New(nil, url.NewResource("abc"), false, false, nil))
+		var request = NewCopyRequest(nil, copy.New(nil, location.NewResource("abc"), false, false, nil))
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = NewCopyRequest(nil, copy.New(url.NewResource("abc"), nil, false, false, nil))
+		var request = NewCopyRequest(nil, copy.New(location.NewResource("abc"), nil, false, false, nil))
 		err := request.Init()
 		assert.Nil(t, err)
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = NewCopyRequest(nil, copy.New(url.NewResource("abc"), url.NewResource("abc"), false, false, nil))
+		var request = NewCopyRequest(nil, copy.New(location.NewResource("abc"), location.NewResource("abc"), false, false, nil))
 		assert.NotNil(t, request.Validate())
 	}
 	{
-		var request = NewCopyRequest(nil, copy.New(url.NewResource("abc"), url.NewResource("abc"), false, false, nil))
+		var request = NewCopyRequest(nil, copy.New(location.NewResource("abc"), location.NewResource("abc"), false, false, nil))
 		err := request.Init()
 		assert.Nil(t, err)
 		assert.Nil(t, request.Validate())

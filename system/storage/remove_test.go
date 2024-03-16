@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"strings"
 	"testing"
 )
@@ -21,7 +21,7 @@ func TestService_Remove(t *testing.T) {
 			description: "single asset removal",
 			request: &RemoveRequest{
 				Assets: []*location.Resource{
-					url.NewResource("mem://127.0.0.1/test/storageRemove/case001/f1"),
+					location.NewResource("mem://127.0.0.1/test/storageRemove/case001/f1"),
 				},
 			},
 		},
@@ -29,8 +29,8 @@ func TestService_Remove(t *testing.T) {
 			description: "multi asset removal",
 			request: &RemoveRequest{
 				Assets: []*location.Resource{
-					url.NewResource("mem://127.0.0.1/test/storageRemove/case002/f1"),
-					url.NewResource("mem://127.0.0.1/test/storageRemove/case002/f2"),
+					location.NewResource("mem://127.0.0.1/test/storageRemove/case002/f1"),
+					location.NewResource("mem://127.0.0.1/test/storageRemove/case002/f2"),
 				},
 			},
 		},

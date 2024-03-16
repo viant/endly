@@ -2,7 +2,6 @@ package copy
 
 import (
 	"github.com/viant/endly/model/location"
-	"github.com/viant/toolbox/url"
 )
 
 // Assets represents transfer assets
@@ -19,10 +18,10 @@ func (t Assets) AsTransfer(base *Rule) []*Rule {
 			dest = source
 		}
 		if isSourceRootPath {
-			source = url.NewResource(source).ParsedURL.Path
+			source = location.NewResource(source).Path()
 		}
 		if isDestRootPath {
-			dest = url.NewResource(dest).ParsedURL.Path
+			dest = location.NewResource(dest).Path()
 		}
 		transfer := &Rule{
 			Source:       location.NewResource(source),

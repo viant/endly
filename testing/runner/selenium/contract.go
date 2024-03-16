@@ -9,7 +9,6 @@ import (
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 )
 
 // StartRequest represents a selenium server start request
@@ -37,7 +36,7 @@ func (r *StartRequest) Validate() error {
 // NewStartRequestFromURL creates a new start request from URL
 func NewStartRequestFromURL(URL string) (*StartRequest, error) {
 	var result = &StartRequest{}
-	var resource = url.NewResource(URL)
+	var resource = location.NewResource(URL)
 	err := resource.Decode(result)
 	return result, err
 }
@@ -58,7 +57,7 @@ type StopRequest struct {
 // NewStopRequestFromURL creates a new start request from URL
 func NewStopRequestFromURL(URL string) (*StopRequest, error) {
 	var result = &StopRequest{}
-	var resource = url.NewResource(URL)
+	var resource = location.NewResource(URL)
 	err := resource.Decode(result)
 	return result, err
 }
@@ -80,7 +79,7 @@ type CloseSessionRequest struct {
 // NewCloseSessionRequestFromURL creates a new close session request from URL
 func NewCloseSessionRequestFromURL(URL string) (*CloseSessionRequest, error) {
 	var result = &CloseSessionRequest{}
-	var resource = url.NewResource(URL)
+	var resource = location.NewResource(URL)
 	err := resource.Decode(result)
 	return result, err
 }
@@ -213,7 +212,7 @@ func NewRunRequest(sessionID, browser string, remote *location.Resource, actions
 
 // NewRunRequestFromURL creates a new request from URL
 func NewRunRequestFromURL(URL string) (*RunRequest, error) {
-	resource := url.NewResource(URL)
+	resource := location.NewResource(URL)
 	var result = &RunRequest{}
 	return result, resource.Decode(result)
 }
@@ -296,7 +295,7 @@ func NewMethodCall(method string, repeatable *model.Repeater, parameters ...inte
 type OpenSessionRequest struct {
 	Browser        string
 	RemoteSelenium *location.Resource `description:"http selenium server endpoint"`
-	SessionID      string        `description:"if specified this ID will be used for a sessionID"`
+	SessionID      string             `description:"if specified this ID will be used for a sessionID"`
 }
 
 // Validate validate open session request

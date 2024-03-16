@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 )
 
 func Upload(httpClient *http.Client, uploadURL string, reader io.Reader) error {
-	data, err := ioutil.ReadAll(reader)
+	data, err := io.ReadAll(reader)
 	if err != nil {
 		return err
 	}
@@ -26,7 +25,7 @@ func Upload(httpClient *http.Client, uploadURL string, reader io.Reader) error {
 	}
 	var message []byte
 	if response.ContentLength > 0 {
-		message, err = ioutil.ReadAll(response.Body)
+		message, err = io.ReadAll(response.Body)
 	}
 	if response.StatusCode/100 != 2 {
 		return fmt.Errorf("failed to upload code: %v, %s", response.Status, message)

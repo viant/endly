@@ -9,10 +9,10 @@ import (
 	"github.com/viant/dsunit"
 	durl "github.com/viant/dsunit/url"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 	"os/exec"
 	"path"
 	"testing"
@@ -46,7 +46,7 @@ func getRegisteredDsUnitService(manager endly.Manager, context *endly.Context, d
 		dsunit.NewRegisterRequest(dbname, config),
 		nil,
 		nil,
-		dsunit.NewRunScriptRequest(dbname, durl.NewResource(fmt.Sprintf("test/%v.sql", dbname)))))
+		dsunit.NewRunScriptRequest(dbname, dlocation.NewResource(fmt.Sprintf("test/%v.sql", dbname)))))
 
 	if response.Error != "" {
 		return nil, errors.New(response.Error)
@@ -60,11 +60,11 @@ func TestDsUnitService(t *testing.T) {
 	context := manager.NewContext(toolbox.NewContext())
 	service, err := getRegisteredDsUnitService(manager, context, "mydb1")
 	if assert.Nil(t, err) {
-		serviceResponse := service.Run(context, dsunit.NewPrepareRequest(dsunit.NewDatasetResource("mydb1", url.NewResource("test/dataset1").URL, "prepare_", "")))
+		serviceResponse := service.Run(context, dsunit.NewPrepareRequest(dsunit.NewDatasetResource("mydb1", location.NewResource("test/dataset1").URL, "prepare_", "")))
 		assert.Equal(t, "", serviceResponse.Error)
 
 		serviceResponse = service.Run(context, dsunit.NewExpectRequest(0,
-			dsunit.NewDatasetResource("mydb1", url.NewResource("test/dataset1").URL, "verify_", "")))
+			dsunit.NewDatasetResource("mydb1", location.NewResource("test/dataset1").URL, "verify_", "")))
 
 		assert.Equal(t, "", serviceResponse.Error)
 		verifyResponse, ok := serviceResponse.Response.(*ExpectResponse)
@@ -74,7 +74,7 @@ func TestDsUnitService(t *testing.T) {
 		serviceResponse = service.Run(context, &dsunit.MappingRequest{
 			Mappings: []*dsunit.Mapping{
 				{
-					Resource: durl.NewResource("test/user_account.json"),
+					Resource: dlocation.NewResource("test/user_account.json"),
 				},
 			},
 		})
@@ -108,7 +108,7 @@ func TestDsUnitService(t *testing.T) {
 		serviceResponse = service.Run(context, &dsunit.RunScriptRequest{
 			Datastore: "mydb1",
 			Scripts: []*dlocation.Resource{
-				durl.NewResource("test/mydb1.sql"),
+				dlocation.NewResource("test/mydb1.sql"),
 			},
 		})
 		{

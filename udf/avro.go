@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/linkedin/goavro"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 	"io"
 	"strings"
 )
@@ -43,7 +43,8 @@ func getAvroSchema(args interface{}) (string, error) {
 	if strings.HasPrefix(textArg, "{") {
 		return textArg, nil
 	} else {
-		resource := url.NewResource(textArg)
+		resource := location.NewResource(textArg)
+
 		return resource.DownloadText()
 	}
 }
