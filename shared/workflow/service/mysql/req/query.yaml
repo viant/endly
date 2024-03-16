@@ -1,3 +1,0 @@
-datastore: testdb
-sql: SELECT NOW()
-ignoreError: true

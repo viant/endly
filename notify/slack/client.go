@@ -6,7 +6,7 @@ import (
 )
 
 func getClient(context *endly.Context, credentials string) (*slack.Client, error) {
-	credConfig, err := context.Secrets.GetCredentials(credentials)
+	credConfig, err := context.Secrets.GetCredentials(context.Background(), credentials)
 	if err != nil {
 		return nil, err
 	}

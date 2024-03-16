@@ -3,8 +3,8 @@ package endly
 import (
 	"fmt"
 	"github.com/satori/go.uuid"
+	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/url"
 	"reflect"
 	"strings"
@@ -113,7 +113,7 @@ func (m *manager) NewContext(ctx toolbox.Context) *Context {
 		Context:         ctx,
 		Wait:            &sync.WaitGroup{},
 		AsyncUnsafeKeys: make(map[interface{}]bool),
-		Secrets:         secret.New("", false),
+		Secrets:         secret.New(),
 	}
 	_ = result.Put(serviceManagerKey, m)
 	return result

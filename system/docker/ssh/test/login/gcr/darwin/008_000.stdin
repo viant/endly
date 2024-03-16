@@ -1,1 +1,0 @@
-echo '**docker-secret**' | sudo docker login -u oauth2accesstoken  us.gcr.io/myproj --password-stdin

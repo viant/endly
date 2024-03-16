@@ -7,8 +7,8 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
 	"github.com/go-errors/errors"
+	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/url"
 	"strings"
 )
@@ -27,7 +27,7 @@ type RunRequest struct {
 	Cmd                         []string
 	Entrypoint                  []string
 	types.ContainerCreateConfig `json:",inline" yaml:",inline"`
-	Secrets                     map[secret.SecretKey]secret.Secret `description:"map of secrets used within env"`
+	Secrets                     map[secret.Key]secret.Resource `description:"map of secrets used within env"`
 	types.ImagePullOptions
 }
 

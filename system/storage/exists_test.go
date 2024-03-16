@@ -14,27 +14,27 @@ func TestService_Exists(t *testing.T) {
 	var useCases = []struct {
 		description string
 		request     *ExistsRequest
-		populate    []*url.Resource
+		populate    []*location.Resource
 		expectError bool
 		expect      map[string]bool
 	}{
 		{
 			description: "single asset exists",
-			populate: []*url.Resource{
+			populate: []*location.Resource{
 				url.NewResource("mem://127.0.0.1/test/storage/exists/case001/f1"),
 			},
 			expect: map[string]bool{
 				url.NewResource("mem://127.0.0.1/test/storage/exists/case001/f1").URL: true,
 			},
 			request: &ExistsRequest{
-				Assets: []*url.Resource{
+				Assets: []*location.Resource{
 					url.NewResource("mem://127.0.0.1/test/storage/exists/case001/f1"),
 				},
 			},
 		},
 		{
 			description: "multi asset exists",
-			populate: []*url.Resource{
+			populate: []*location.Resource{
 				url.NewResource("mem://127.0.0.1/test/storage/exists/case002/f1"),
 			},
 			expect: map[string]bool{
@@ -42,7 +42,7 @@ func TestService_Exists(t *testing.T) {
 				url.NewResource("mem://127.0.0.1/test/storage/exists/case002/f2").URL: false,
 			},
 			request: &ExistsRequest{
-				Assets: []*url.Resource{
+				Assets: []*location.Resource{
 					url.NewResource("mem://127.0.0.1/test/storage/exists/case002/f1"),
 					url.NewResource("mem://127.0.0.1/test/storage/exists/case002/f2"),
 				},
@@ -57,7 +57,7 @@ func TestService_Exists(t *testing.T) {
 		{
 			description: "invalid asset URL error",
 			request: &ExistsRequest{
-				Assets: []*url.Resource{
+				Assets: []*location.Resource{
 					url.NewResource("mem://127.0.0.1/test/storage/exists/case003/f1"),
 					url.NewResource("err://127.0.0.1/test/storage/exists/case003/f2"),
 				},
@@ -66,7 +66,7 @@ func TestService_Exists(t *testing.T) {
 		},
 		{
 			description: "multi asset exists with assert",
-			populate: []*url.Resource{
+			populate: []*location.Resource{
 				url.NewResource("mem://127.0.0.1/test/storage/exists/case004/f1"),
 			},
 			expect: map[string]bool{
@@ -74,7 +74,7 @@ func TestService_Exists(t *testing.T) {
 				url.NewResource("mem://127.0.0.1/test/storage/exists/case004/f2").URL: false,
 			},
 			request: &ExistsRequest{
-				Assets: []*url.Resource{
+				Assets: []*location.Resource{
 					url.NewResource("mem://127.0.0.1/test/storage/exists/case004/f1"),
 					url.NewResource("mem://127.0.0.1/test/storage/exists/case004/f2"),
 				},

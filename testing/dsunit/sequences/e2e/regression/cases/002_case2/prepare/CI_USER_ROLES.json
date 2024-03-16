@@ -1,11 +1,11 @@
 [
   {
-    "USER_ID": "$sequencer.CI_CONTACTS/${tag}.1",
+    "USER_ID": "$Sequences.CI_CONTACTS/${tag}.1",
     "AUTHORITY": "ROLE_BUSINESS_OWNER",
     "CREATED_USER": 10
   },
   {
-    "USER_ID": "$sequencer.CI_CONTACTS/${tag}.2",
+    "USER_ID": "$Sequences.CI_CONTACTS/${tag}.2",
     "AUTHORITY": "ROLE_BUSINESS_OWNER",
     "CREATED_USER": 11
   }

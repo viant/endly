@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/viant/scy/cred"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/cred"
 	context2 "golang.org/x/net/context"
 	"google.golang.org/api/option"
 	"log"
@@ -259,7 +259,7 @@ func (s *gcpClient) getTopic(dest *Resource) (*pubsub.Topic, error) {
 	return s.client.TopicInProject(dest.Name, dest.projectID), nil
 }
 
-func newCloudPubSub(credConfig *cred.Config, URL string, timeout time.Duration) (Client, error) {
+func newCloudPubSub(credConfig *cred.Generic, URL string, timeout time.Duration) (Client, error) {
 	ctx := context.Background()
 	jwtConfig, err := credConfig.NewJWTConfig(pubsub.ScopePubSub)
 	if err != nil {

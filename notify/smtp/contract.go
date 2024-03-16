@@ -2,12 +2,12 @@ package smtp
 
 import (
 	"errors"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 )
 
 // SendRequest represents send request.
 type SendRequest struct {
-	Target *url.Resource `required:"true" description:"SMTP endpoint"`
+	Target *location.Resource `required:"true" description:"SMTP endpoint"`
 	Mail   *Message      `required:"true"`
 	UDF    string        `description:"body UDF"`
 }

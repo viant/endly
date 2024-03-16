@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/storage"
-	"github.com/viant/toolbox/url"
 	"google.golang.org/api/bigquery/v2"
 )
 
@@ -16,7 +16,7 @@ const tableKey = "bigqery_table"
 type TableRequest struct {
 	Table string
 	*bigquery.TableReference
-	Dest *url.Resource
+	Dest *location.Resource
 }
 
 func (r *TableRequest) Init() (err error) {

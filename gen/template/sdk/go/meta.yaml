@@ -1,3 +1,0 @@
-sdk: go
-version: 1.12
-build: build/go

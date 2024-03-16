@@ -2,10 +2,14 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"github.com/viant/afs"
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
 	"github.com/viant/afsc/auth"
+	"github.com/viant/endly/model/location"
+	"github.com/viant/scy/cred"
+	"github.com/viant/scy/cred/secret"
 	"sync/atomic"
 
 	aurl "github.com/viant/afs/url"
@@ -15,7 +19,6 @@ import (
 	"github.com/viant/afsc/gs"
 	"github.com/viant/afsc/s3"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
 )
 
 const sshScheme = "ssh"
@@ -25,7 +28,7 @@ var fsFaker = afs.NewFaker()
 var scheduledClosed = uint32(0)
 
 // StorageService return afs storage service
-func StorageService(ctx *endly.Context, resources ...*url.Resource) (afs.Service, error) {
+func StorageService(ctx *endly.Context, resources ...*location.Resource) (afs.Service, error) {
 	var state = ctx.State()
 	if state.Has(useMemoryService) {
 		return fsFaker, nil
@@ -48,7 +51,7 @@ func StorageService(ctx *endly.Context, resources ...*url.Resource) (afs.Service
 }
 
 // StorageOptions returns storage option for supplied resource
-func StorageOptions(ctx *endly.Context, resource *url.Resource, options ...storage.Option) ([]storage.Option, error) {
+func StorageOptions(ctx *endly.Context, resource *location.Resource, options ...storage.Option) ([]storage.Option, error) {
 	var result = options
 	if resource.CustomKey != nil {
 		var customKey = &option.AES256Key{
@@ -68,9 +71,14 @@ func StorageOptions(ctx *endly.Context, resource *url.Resource, options ...stora
 
 	if resource.Credentials != "" {
 
-		credConfig, err := ctx.Secrets.GetCredentials(resource.Credentials)
+		aSecret, err := ctx.Secrets.Lookup(context.Background(), secret.Resource(resource.Credentials))
+
 		if err != nil {
 			return nil, err
+		}
+		credConfig, ok := aSecret.Target.(*cred.Generic)
+		if !ok {
+			return nil, fmt.Errorf("invalid secret type: %T", aSecret.Target)
 		}
 
 		region := &option.Region{}
@@ -78,7 +86,7 @@ func StorageOptions(ctx *endly.Context, resource *url.Resource, options ...stora
 		if !hasRegion && credConfig.Region != "" {
 			result = append(result, &option.Region{Name: credConfig.Region})
 		}
-		payload := ([]byte)(credConfig.Data)
+		payload := ([]byte)(aSecret.String())
 		scheme := aurl.Scheme(resource.URL, file.Scheme)
 		extension := aurl.SchemeExtensionURL(resource.URL)
 		if extension != "" {

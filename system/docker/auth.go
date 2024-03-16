@@ -3,8 +3,11 @@ package docker
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/viant/endly"
+	"github.com/viant/scy/cred"
+	"github.com/viant/scy/cred/secret"
 	"strings"
 )
 
@@ -19,24 +22,29 @@ func authConfigToken(authConfig *types.AuthConfig) (string, error) {
 
 // authCredentialsToken returns auth token
 func authCredentialsToken(context *endly.Context, credentials string) (string, error) {
-	cred, err := context.Secrets.GetCredentials(credentials)
+	secret, err := context.Secrets.Lookup(context.Background(), secret.Resource(credentials))
 	if err != nil {
 		return "", err
 	}
-	if cred.Username != "" && cred.Password != "" {
+	generic, ok := secret.Target.(*cred.Generic)
+	if !ok {
+		return "", fmt.Errorf("unsupported secret type: %T, expected: %T", secret.Target, generic)
+	}
+	if generic.Username != "" && generic.Password != "" {
 		return authConfigToken(&types.AuthConfig{
-			Username: cred.Username,
-			Password: cred.Password,
+			Username: generic.Username,
+			Password: generic.Password,
 		})
 	}
-	if cred.PrivateKeyID != "" {
+	if generic.PrivateKeyID != "" {
 		return authConfigToken(&types.AuthConfig{
 			Username: "_json_key",
-			Password: strings.Replace(cred.Data, "\n", " ", len(cred.Data)),
+			Password: strings.ReplaceAll(secret.String(), "\n", " "),
 		})
 	}
-	return base64.URLEncoding.EncodeToString([]byte(cred.Data)), nil
+	return base64.URLEncoding.EncodeToString([]byte(secret.String())), nil
 }
+
 
 func getAuthToken(context *endly.Context, repository, credentials string) (string, error) {
 	ctxClient, err := GetCtxClient(context)

@@ -45,7 +45,6 @@ func (t *Template) Expand(task *Task, parentTag string, inline *InlineWorkflow) 
 		tag.Group = task.Name
 		index := iterator.Index()
 		state := t.buildTagState(index, tag)
-		toolbox.DumpIndent(state, true)
 		tagPath := state.GetString("path")
 		t.inline.tagPathURL = tagPath
 		if len(t.Data) > 0 {
@@ -108,20 +107,15 @@ func (t *Template) loadWorkflowData(tagPath string, workflowData data.Map, state
 			continue
 		}
 		URI := strings.Replace(loc, "@", "", 1)
-		if len(baseURLs) == 3 {
-			fs := afs.New()
-			object, err := fs.Object(context.Background(), aurl.Join(baseURLs[0], URI))
+		fs := afs.New()
+		object, _ := fs.Object(context.Background(), aurl.Join(baseURLs[0], URI))
+		if object != nil && object.IsDir() {
+			loaded, err := loadKeyedAssets(fs, object, baseURLs, state)
 			if err != nil {
 				return err
 			}
-			if object.IsDir() {
-				loaded, err := loadKeyedAssets(fs, object, baseURLs, state)
-				if err != nil {
-					return err
-				}
-				addLoadedMapData(loaded, state, k, workflowData)
-				return nil
-			}
+			addLoadedMapData(loaded, state, k, workflowData)
+			return nil
 		}
 		loaded, err := util.LoadData(baseURLs, loc)
 		if util.IsNotSuchResourceError(err) {

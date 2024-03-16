@@ -5,13 +5,15 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/criteria"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/util"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/cred"
+	"github.com/viant/gosh"
+	"github.com/viant/gosh/runner"
+	"github.com/viant/gosh/runner/local"
+	"github.com/viant/gosh/runner/ssh"
+	"github.com/viant/scy/cred"
+	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/secret"
-	"github.com/viant/toolbox/ssh"
-	"github.com/viant/toolbox/url"
 	"os"
 	"path"
 	"strings"
@@ -21,11 +23,12 @@ import (
 const ServiceID = "exec"
 
 // SudoCredentialKey represent obsucated password sudo credentials key (target.Credentials)
-const SudoCredentialKey = "**sudo**"
+const SudoCredentialKey = "sudoer"
 
 type execService struct {
+	exec *gosh.Service
 	*endly.AbstractService
-	credentials map[string]*cred.Config
+	credentials map[string]*cred.Generic
 }
 
 func (s *execService) open(context *endly.Context, request *OpenSessionRequest) (*OpenSessionResponse, error) {
@@ -38,27 +41,44 @@ func (s *execService) open(context *endly.Context, request *OpenSessionRequest) 
 	}, nil
 }
 
-func (s *execService) openSSHService(context *endly.Context, request *OpenSessionRequest) (ssh.Service, error) {
-	if request.ReplayService != nil {
-		return request.ReplayService, nil
+func (s *execService) openExecService(context *endly.Context, request *OpenSessionRequest) (*gosh.Service, error) {
+
+	if request.Target.URL == "" {
+		return gosh.New(context.Background(), local.New(runner.WithEnvironment(request.Env), runner.WithSystemPaths(request.SystemPaths)))
 	}
+
+
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
 	}
-	authConfig, err := context.Secrets.GetOrCreate(target.Credentials)
+	if target.Hostname() == "localhost" {
+		return gosh.New(context.Background(), local.New(runner.WithEnvironment(request.Env), runner.WithSystemPaths(request.SystemPaths), runner.WithPath(target.Path())))
+	}
+
+
+	genericCred, err := context.Secrets.GetCredentials(context.Background(), target.Credentials)
 	if err != nil {
 		return nil, err
 	}
-	hostname, port := s.GetHostAndSSHPort(target)
-	return ssh.NewService(hostname, port, authConfig)
+
+	config, err := genericCred.SSH.Config(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	hostname := target.Host()
+	if ! strings.Contains(hostname, ":") {
+		hostname += ":22"
+	}
+	return gosh.New(context.Background(), ssh.New(hostname, config, runner.WithEnvironment(request.Env), runner.WithSystemPaths(request.SystemPaths), runner.WithPath(target.Path())))
 }
 
-func (s *execService) isSupportedScheme(target *url.Resource) bool {
-	return target.ParsedURL.Scheme == "ssh" || target.ParsedURL.Scheme == "scp" || target.ParsedURL.Scheme == "file"
+func (s *execService) isSupportedScheme(target *location.Resource) bool {
+	return target.Scheme() == "ssh" || target.Scheme() == "scp" || target.Scheme() == "file"
 }
 
-func (s *execService) initSession(context *endly.Context, target *url.Resource, session *model.Session, env map[string]string) error {
+func (s *execService) initSession(context *endly.Context, target *location.Resource, session *model.Session, env map[string]string) error {
 	//_, _ = s.changeDirectory(context, session, nil, target.ParsedURL.Path)
 	for k, v := range env {
 		if err := s.setEnvVariable(context, session, k, v); err != nil {
@@ -69,25 +89,19 @@ func (s *execService) initSession(context *endly.Context, target *url.Resource, 
 }
 
 func (s *execService) openSession(context *endly.Context, request *OpenSessionRequest) (*model.Session, error) {
-	target, err := context.ExpandResource(request.Target)
-	if err != nil {
-		return nil, err
-	}
-	if !s.isSupportedScheme(target) {
-		return nil, fmt.Errorf("failed to open sessionID: invalid schema: %v in url: %v", target.ParsedURL.Scheme, target.URL)
-	}
-
-	s.Lock()
-	sessions := TerminalSessions(context)
-	s.Unlock()
-
-	var replayCommands *ssh.ReplayCommands
-	if request.Basedir != "" {
-		replayCommands, err = ssh.NewReplayCommands(request.Basedir)
+	target := request.Target
+	var err error
+	if request.Target != nil && request.Target.URL != "" {
+		expandedTarget, err := context.ExpandResource(request.Target)
 		if err != nil {
 			return nil, err
 		}
+		target = expandedTarget
+
 	}
+	s.Lock()
+	sessions := TerminalSessions(context)
+	s.Unlock()
 
 	var sessionID = SessionID(context, target)
 	if sessions.Has(sessionID) {
@@ -100,23 +114,21 @@ func (s *execService) openSession(context *endly.Context, request *OpenSessionRe
 		}
 		return SShSession, err
 	}
-	sshService, err := s.openSSHService(context, request)
-	if err == nil {
-		err = s.captureCommandIfNeeded(context, replayCommands, sshService)
-	}
+
+	execService, err := s.openExecService(context, request)
+
 	if err != nil {
 		return nil, err
 	}
-	SSHSession, err := model.NewSession(sessionID, sshService)
+	execSession, err := model.NewSession(sessionID, execService)
 	if err != nil {
 		return nil, err
 	}
 	if !request.Transient {
 		context.Deffer(func() {
-			_ = sshService.Close()
+			_ = execService.Close()
 		})
 	}
-	SSHSession.MultiCommandSession, err = SSHSession.Service.OpenMultiCommandSession(request.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -127,24 +139,14 @@ func (s *execService) openSession(context *endly.Context, request *OpenSessionRe
 			})
 		})
 	}
-	err = s.initSession(context, target, SSHSession, request.Env)
+	err = s.initSession(context, target, execSession, request.Env)
 	if err != nil {
 		return nil, err
 	}
 	s.Lock()
-	sessions[sessionID] = SSHSession
+	sessions[sessionID] = execSession
 	s.Unlock()
-	SSHSession.Os, err = s.detectOperatingSystem(SSHSession)
-	if err != nil {
-		return nil, err
-	}
-
-	if currentDirectory, err := os.Getwd(); err == nil {
-		if _, err = SSHSession.Run(fmt.Sprintf("cd %v", currentDirectory), nil, 0); err == nil {
-			SSHSession.CurrentDirectory = currentDirectory
-		}
-	}
-	return SSHSession, nil
+	return execSession, nil
 }
 
 func (s *execService) setEnvVariables(context *endly.Context, session *model.Session, env map[string]string) error {
@@ -202,43 +204,24 @@ func (s *execService) changeDirectory(context *endly.Context, session *model.Ses
 	return result, err
 }
 
-func (s *execService) run(context *endly.Context, session *model.Session, command string, listener ssh.Listener, timeoutMs int, terminators ...string) (stdout string, err error) {
-	if stdout, err = session.Run(command, listener, timeoutMs, terminators...); err == nil {
-		return stdout, err
-	}
-	if err == ssh.ErrTerminated {
-		err := session.Reconnect()
-		if err != nil {
-			return "", err
-		}
-		currentDirectory := session.CurrentDirectory
-		env := session.EnvVariables
-		session.EnvVariables = make(map[string]string)
-		session.CurrentDirectory = ""
-		for k, v := range env {
-			_ = s.setEnvVariable(context, session, k, v)
-		}
-		runResponse := &RunResponse{}
-		_, _ = s.changeDirectory(context, session, runResponse, currentDirectory)
-		return session.Run(command, listener, timeoutMs, terminators...)
-	}
-	return stdout, err
+func (s *execService) run(context *endly.Context, session *model.Session, command string, listener runner.Listener, timeoutMs int, terminators ...string) (stdout string, code int,  err error) {
+	return session.Run(context.Background(), command, runner.WithListener(listener),runner.WithTimeout(timeoutMs),runner.WithTerminators(terminators))
 }
 
 func (s *execService) rumCommandTemplate(context *endly.Context, session *model.Session, commandTemplate string, arguments ...interface{}) (string, error) {
 	command := fmt.Sprintf(commandTemplate, arguments...)
 	startEvent := s.Begin(context, NewSdtinEvent(session.ID, command))
-	stdout, err := session.Run(command, nil, 1000)
+	stdout, _, err := session.Run(context.Background(), command, runner.WithTimeout(1000))
 	s.End(context)(startEvent, NewStdoutEvent(session.ID, stdout, err))
 	return stdout, err
 }
 
 func (s *execService) applyCommandOptions(context *endly.Context, options *Options, session *model.Session, info *RunResponse) error {
 	if len(options.SystemPaths) > 0 {
-		session.Path.Unshift(options.SystemPaths...)
-		if err := s.setEnvVariable(context, session, "PATH", session.Path.EnvValue()); err != nil {
-			return err
-		}
+		//session.Path.Unshift(options.SystemPaths...)
+		//if err := s.setEnvVariable(context, session, "PATH", session.Path.EnvValue()); err != nil {
+		//	return err
+		//}
 	}
 	err := s.setEnvVariables(context, session, options.Env)
 	if err != nil {
@@ -298,7 +281,7 @@ func (s *execService) authSuperUserIfNeeded(stdout string, context *endly.Contex
 		session.SuperUSerAuth = true
 		if len(request.Secrets) == 0 {
 			request.Secrets = secret.NewSecrets(nil)
-			request.Secrets[SudoCredentialKey] = secret.Secret(request.Target.Credentials)
+			request.Secrets[SudoCredentialKey] = secret.Resource(request.Target.Credentials)
 		}
 		extractCommand := NewExtractCommand(SudoCredentialKey, "", nil, []string{"Password", util.CommandNotFound})
 		err = s.executeCommand(context, session, extractCommand, response, request)
@@ -327,26 +310,10 @@ func (s *execService) buildExecutionState(response *RunResponse, context *endly.
 	return result
 }
 
-func hasTerminator(stdout string, terminators []string) bool {
-	if len(terminators) == 0 {
-		return false
-	}
-	for i := range terminators {
-		if strings.Index(stdout, terminators[i]) != -1 {
-			return true
-		}
-	}
-	return false
-}
-
 func (s *execService) executeCommand(context *endly.Context, session *model.Session, extractCommand *ExtractCommand, response *RunResponse, request *ExtractRequest) (err error) {
 	var state = context.State()
-	state.SetValue("os.user", session.Username)
-	state.SetValue("os.arch", session.Os.Arch)
-	state.SetValue("os.system", session.Os.System)
-	state.SetValue("os.name", session.Os.Name)
-	state.SetValue("os.hardware", session.Os.Hardware)
-	state.SetValue("os.architecture", session.Os.Architecture)
+	_ = s.extractOsUser(session)
+	s.updateSystemInfo(state, session)
 
 	securedCommand := context.Expand(extractCommand.Command)
 	options := request.Options
@@ -374,12 +341,12 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	}
 
 	var insecureCommand = securedCommand
-	insecureCommand, err = context.Secrets.Expand(insecureCommand, request.Secrets)
+	insecureCommand, err = context.Secrets.Expand(context.Background(), insecureCommand, request.Secrets)
 	if err != nil {
 		return err
 	}
 
-	var listener ssh.Listener
+	var listener runner.Listener
 
 	//troubleshooting secrets - DO NOT USE unless really needed
 	if os.Getenv("ENDLY_SECRET_REVEAL") == "true" {
@@ -401,7 +368,7 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	if extractCommand.TimeoutMs > 0 {
 		timeoutMs = extractCommand.TimeoutMs
 	}
-	stdout, err := s.run(context, session, insecureCommand, listener, timeoutMs, terminators...)
+	stdout, statusCode, err := s.run(context, session, insecureCommand, listener, timeoutMs, terminators...)
 	if len(response.Output) > 0 {
 		if !strings.HasSuffix(response.Output, "\n") {
 			response.Output += "\n"
@@ -411,8 +378,8 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	if request.AutoSudo && !util.IsPermitted(stdout) {
 		commandRetry = true
 		if session.Username != "root" && !strings.HasPrefix(securedCommand, "sudo") {
-			stdout, err = s.retryWithSudo(context, session, insecureCommand, listener, options.TimeoutMs, terminators...)
-			isSuperUserCmd = true
+			stdout, statusCode, err = s.retryWithSudo(context, session, insecureCommand, listener, options.TimeoutMs, terminators...)
+				isSuperUserCmd = true
 		}
 	}
 
@@ -422,14 +389,11 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 			return err
 		}
 	}
-	response.Output += stdout
 
-	if request.CheckError && !hasTerminator(stdout, terminators) {
-		if errorCode, err := s.run(context, session, "echo $?", nil, options.TimeoutMs, terminators...); err == nil {
-			exitStatus := toolbox.AsInt(strings.TrimSpace(errorCode))
-			if exitStatus != 0 {
-				return fmt.Errorf("exit code: %v, command: %v", exitStatus, securedCommand)
-			}
+	response.Output += stdout
+	if request.CheckError {
+		if statusCode != 0 {
+			return fmt.Errorf("exit code: %v, command: %v", statusCode, securedCommand)
 		}
 	}
 
@@ -445,7 +409,16 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	return extractCommand.Extract.Extract(context, response.Data, strings.Split(stdout, "\n")...)
 }
 
-func (s *execService) retryWithSudo(context *endly.Context, session *model.Session, command string, listener ssh.Listener, timeoutMs int, terminators ...string) (string, error) {
+func (s *execService) updateSystemInfo(state data.Map, session *model.Session) {
+	state.SetValue("os.user", session.Username)
+	state.SetValue("os.arch", session.Service.HardwareInfo().Arch)
+	state.SetValue("os.system", session.Service.OsInfo().System)
+	state.SetValue("os.name", session.Service.OsInfo().Name)
+	state.SetValue("os.hardware", session.Service.HardwareInfo().Hardware)
+	state.SetValue("os.architecture", session.Service.HardwareInfo().Architecture)
+}
+
+func (s *execService) retryWithSudo(context *endly.Context, session *model.Session, command string, listener runner.Listener, timeoutMs int, terminators ...string) (string, int,  error) {
 	terminators = append(terminators, "Password")
 	command = s.commandAsSuperUser(session, command)
 	return s.run(context, session, command, listener, timeoutMs, terminators...)
@@ -458,15 +431,9 @@ func getTerminators(options *Options, session *model.Session, execution *Extract
 	} else {
 		terminators = append(terminators, options.Terminators...)
 	}
-	terminators = append(terminators, "$ ")
-	superUserPrompt := string(strings.Replace(session.ShellPrompt(), "$", "#", 1))
-	if strings.Contains(superUserPrompt, "bash") {
-		superUserPrompt = string(superUserPrompt[2:])
-	}
-	terminators = append(terminators, superUserPrompt)
-	terminators = append(terminators, execution.Errors...)
 	return terminators
 }
+
 
 func (s *execService) runCommands(context *endly.Context, request *RunRequest) (*RunResponse, error) {
 	response, err := s.runExtractCommands(context, request.AsExtractRequest())
@@ -545,7 +512,6 @@ func (s *execService) runExtractCommands(context *endly.Context, request *Extrac
 func (s *execService) closeSession(context *endly.Context, request *CloseSessionRequest) (*CloseSessionResponse, error) {
 	clientSessions := TerminalSessions(context)
 	if session, has := clientSessions[request.SessionID]; has {
-		session.MultiCommandSession.Close()
 		session.Close()
 		delete(clientSessions, request.SessionID)
 	}
@@ -554,127 +520,13 @@ func (s *execService) closeSession(context *endly.Context, request *CloseSession
 	}, nil
 }
 
-func isAmd64Architecture(candidate string) bool {
-	return strings.Contains(candidate, "amd64") || strings.Contains(candidate, "x86_64")
-}
 
-func (s *execService) extractOsPath(session *model.Session, os *model.OperatingSystem) error {
-	output, err := session.Run("echo $PATH", nil, 0)
-	if err != nil {
-		return err
-	}
-	lines := strings.Split(output, "\r\n")
-	for i := 0; i < len(lines); i++ {
-		var line = lines[i]
-		if !strings.Contains(line, ":") || !strings.Contains(line, "/") {
-			continue
-		}
-		session.Path = model.NewPath(strings.Split(line, ":")...)
-		break
 
-	}
+func (s *execService) extractOsUser(session *model.Session) error {
+	session.Username = session.Service.User()
 	return nil
 }
 
-func (s *execService) extractOsUser(session *model.Session, os *model.OperatingSystem) error {
-	output, err := session.Run("echo $USER", nil, 0)
-	if err != nil {
-		return err
-	}
-	output = util.EscapeStdout(output)
-	strings.Replace(output, "\n", "", len(output))
-	session.Username = output
-	return nil
-}
-
-func (s *execService) detectOperatingSystem(session *model.Session) (*model.OperatingSystem, error) {
-	operatingSystem := &model.OperatingSystem{}
-	session.Path = model.NewPath()
-
-	varsionCheckCommand := "lsb_release -a"
-	if session.MultiCommandSession.System() == "darwin" {
-		varsionCheckCommand = "sw_vers"
-	}
-	output, err := session.Run(varsionCheckCommand, nil, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	lines := strings.Split(output, "\r\n")
-	for i := 0; i < len(lines); i++ {
-		line := lines[i]
-		if isAmd64Architecture(line) {
-			operatingSystem.Architecture = "amd64"
-		}
-		pair := strings.Split(line, ":")
-		if len(pair) != 2 {
-			continue
-		}
-
-		var key = strings.Replace(strings.ToLower(pair[0]), " ", "", len(pair[0]))
-		var val = strings.Replace(strings.Trim(pair[1], " \t\r"), " ", "", len(line))
-		switch key {
-		case "productname", "distributorid":
-			operatingSystem.Name = strings.ToLower(val)
-		case "productversion", "release":
-			operatingSystem.Version = strings.ToLower(val)
-		}
-
-	}
-	operatingSystem.Hardware, err = session.Run("uname -m", nil, 0)
-	if err != nil {
-		return nil, err
-	}
-	operatingSystem.Arch = operatingSystem.Architecture
-	if isAmd64Architecture(operatingSystem.Hardware) {
-		operatingSystem.Architecture = "amd64"
-		operatingSystem.Arch = "x64"
-	}
-	if isArm64Architecture(operatingSystem.Hardware) {
-		operatingSystem.Architecture = "arm64"
-		operatingSystem.Arch = "aarch64"
-	}
-	if isAppleArm64Architecture(operatingSystem.Hardware) {
-		operatingSystem.Architecture = "arm64"
-		operatingSystem.Arch = "x64"
-	}
-
-	operatingSystem.System = session.System()
-	if err = s.extractOsPath(session, operatingSystem); err == nil {
-		err = s.extractOsUser(session, operatingSystem)
-	}
-	return operatingSystem, err
-}
-
-func isArm64Architecture(hardware string) bool {
-	return strings.Contains(hardware, "aarch64") || strings.Contains(hardware, "arm64")
-}
-
-func isAppleArm64Architecture(hardware string) bool {
-	return strings.Contains(hardware, "arm64")
-}
-
-func (s *execService) captureCommandIfNeeded(context *endly.Context, replayCommands *ssh.ReplayCommands, sshService ssh.Service) (err error) {
-	if replayCommands != nil {
-		err = replayCommands.Enable(sshService)
-		if err != nil {
-			return err
-		}
-		context.Deffer(func() {
-			_ = replayCommands.Store()
-		})
-	}
-	return err
-}
-
-func (service *execService) setTarget(context *endly.Context, request *SetTargetRequest) (*SetTargetResponse, error) {
-	target, err := context.ExpandResource(request.Resource)
-	if err != nil {
-		return nil, err
-	}
-	SetDefaultTarget(context, target)
-	return &SetTargetResponse{}, nil
-}
 
 const (
 	execServiceOpenExample = `{
@@ -829,31 +681,11 @@ func (s *execService) registerRoutes() {
 		},
 	})
 
-	s.Register(&endly.Route{
-		Action: "setTarget",
-		RequestInfo: &endly.ActionInfo{
-			Description: "set default target",
-			Examples:    []*endly.UseCase{},
-		},
-		RequestProvider: func() interface{} {
-			return &SetTargetRequest{}
-		},
-		ResponseProvider: func() interface{} {
-			return &SetTargetResponse{}
-		},
-		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*SetTargetRequest); ok {
-				return s.setTarget(context, req)
-			}
-			return nil, fmt.Errorf("unsupported request type: %T", request)
-		},
-	})
 }
 
 // New creates a new execution service
 func New() endly.Service {
 	var result = &execService{
-		credentials:     make(map[string]*cred.Config),
 		AbstractService: endly.NewAbstractService(ServiceID),
 	}
 	result.AbstractService.Service = result

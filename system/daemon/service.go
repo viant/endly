@@ -5,10 +5,10 @@ import (
 	"github.com/lunixbochs/vtclean"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"path"
 	"strings"
 )
@@ -28,7 +28,7 @@ type service struct {
 	*endly.AbstractService
 }
 
-func (s *service) getDarwinLaunchServiceInfo(context *endly.Context, target *url.Resource, request *StatusRequest, info *Info) error {
+func (s *service) getDarwinLaunchServiceInfo(context *endly.Context, target *location.Resource, request *StatusRequest, info *Info) error {
 
 	if request.Exclusion != "" {
 		request.Exclusion = " | grep -v " + request.Exclusion
@@ -66,7 +66,7 @@ func (s *service) getDarwinLaunchServiceInfo(context *endly.Context, target *url
 	return nil
 }
 
-func (s *service) determineServiceType(context *endly.Context, service, exclusion string, target *url.Resource) (int, error) {
+func (s *service) determineServiceType(context *endly.Context, service, exclusion string, target *location.Resource) (int, error) {
 	session, err := exec.TerminalSession(context, target)
 	if err != nil {
 		return 0, err
@@ -134,7 +134,7 @@ func extractServiceInfo(stdout string, state map[string]interface{}, info *Info)
 	}
 }
 
-func (s *service) executeCommand(context *endly.Context, serviceType int, target *url.Resource, request *exec.ExtractRequest) (*exec.RunResponse, error) {
+func (s *service) executeCommand(context *endly.Context, serviceType int, target *location.Resource, request *exec.ExtractRequest) (*exec.RunResponse, error) {
 	var runResponse = &exec.RunResponse{}
 	if serviceType != serviceTypeLaunchCtl {
 		request.SuperUser = true
@@ -146,7 +146,7 @@ func (s *service) isLaunchCtlDomainMissing(info *Info) bool {
 	return (info.Path == "" || info.Domain == "") && info.Type == serviceTypeLaunchCtl
 }
 
-func (s *service) determineCheckCommand(context *endly.Context, target *url.Resource, serviceType int, info *Info) (command string, err error) {
+func (s *service) determineCheckCommand(context *endly.Context, target *location.Resource, serviceType int, info *Info) (command string, err error) {
 	switch serviceType {
 	case serviceTypeError:
 		return "", fmt.Errorf("unknown daemon service type")

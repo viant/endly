@@ -2,7 +2,7 @@ package cloudfunctions
 
 import (
 	"errors"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"google.golang.org/api/cloudfunctions/v1"
 	"strings"
 )
@@ -17,7 +17,7 @@ type CallRequest struct {
 // DeployRequest represents deploy request
 type DeployRequest struct {
 	cloudfunctions.CloudFunction `yaml:",inline" json:",inline"`
-	Source                       *url.Resource
+	Source                       *location.Resource
 	Public                       bool     `description:"set this flag to make function public"`
 	Members                      []string `description:"members with roles/cloudfunctions.invoker role"`
 	Region                       string
@@ -124,7 +124,7 @@ func (r *DeployRequest) Init() error {
 			Retry: &cloudfunctions.Retry{},
 		}
 	}
-	return r.Source.Init()
+	return nil
 }
 
 // Init initializes request

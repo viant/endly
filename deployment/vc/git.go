@@ -5,10 +5,10 @@ import (
 	"github.com/lunixbochs/vtclean"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
-	"github.com/viant/toolbox/secret"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/scy/cred/secret"
 	"path"
 	"strings"
 )
@@ -83,7 +83,7 @@ func (s *git) checkInfo(context *endly.Context, request *StatusRequest) (*Status
 	}
 	var result = &StatusResponse{&Info{}}
 	var runResponse = &exec.RunResponse{}
-	if err := endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.DirectoryPath())), runResponse); err != nil || util.CheckCommandNotFound(runResponse.Stdout()) {
+	if err := endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.Path())), runResponse); err != nil || util.CheckCommandNotFound(runResponse.Stdout()) {
 		return result, nil
 	}
 
@@ -130,7 +130,7 @@ func (s *git) pull(context *endly.Context, request *PullRequest) (*PullResponse,
 		Info: &Info{},
 	}
 
-	if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.DirectoryPath())), nil); err != nil {
+	if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.Path())), nil); err != nil {
 		return nil, err
 	}
 	return response, s.runSecureCommand(context, request.Type, origin, target, "git pull", response.Info, false)
@@ -155,14 +155,14 @@ func (s *git) checkout(context *endly.Context, request *CheckoutRequest) (*Info,
 		}
 	}
 
-	var parent, projectName = path.Split(dest.DirectoryPath())
+	var parent, projectName = path.Split(dest.Path())
 	var useParentDirectory = true
-	var _, originProjectName = path.Split(origin.DirectoryPath())
+	var _, originProjectName = path.Split(origin.Path())
 
 	if originProjectName == projectName {
 		projectName = "."
-		if dest.DirectoryPath() != "/" {
-			if err := endly.Run(context, exec.NewRunRequest(dest, false, fmt.Sprintf("mkdir -p %v", dest.DirectoryPath())), nil); err != nil {
+		if dest.Path() != "/" {
+			if err := endly.Run(context, exec.NewRunRequest(dest, false, fmt.Sprintf("mkdir -p %v", dest.Path())), nil); err != nil {
 				return nil, nil
 			}
 		}
@@ -197,14 +197,14 @@ func (s *git) sparseCheckout(context *endly.Context, request *CheckoutRequest, m
 		}
 	}
 
-	var parent, projectName = path.Split(dest.DirectoryPath())
+	var parent, projectName = path.Split(dest.Path())
 	var useParentDirectory = true
-	var _, originProjectName = path.Split(origin.DirectoryPath())
+	var _, originProjectName = path.Split(origin.Path())
 
 	if originProjectName == projectName {
 		projectName = "."
-		if dest.DirectoryPath() != "/" {
-			if err := endly.Run(context, exec.NewRunRequest(dest, false, fmt.Sprintf("mkdir -p %v", dest.DirectoryPath())), nil); err != nil {
+		if dest.Path() != "/" {
+			if err := endly.Run(context, exec.NewRunRequest(dest, false, fmt.Sprintf("mkdir -p %v", dest.Path())), nil); err != nil {
 				return nil, nil
 			}
 		}
@@ -257,7 +257,7 @@ func (s *git) sparseCheckout(context *endly.Context, request *CheckoutRequest, m
 	return info, err
 }
 
-func (s *git) runSecureCommand(context *endly.Context, versionControlType string, origin, source *url.Resource, command string, info *Info, useParentDirectory bool) (err error) {
+func (s *git) runSecureCommand(context *endly.Context, versionControlType string, origin, source *location.Resource, command string, info *Info, useParentDirectory bool) (err error) {
 	var secrets = make(map[string]string)
 	secrets[CredentialKey] = origin.Credentials
 	commandTarget, _ := context.ExpandResource(source)

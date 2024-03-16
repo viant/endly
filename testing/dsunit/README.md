@@ -235,6 +235,7 @@ To effectively handle this scenario, it's crucial to meticulously organize test 
 Addressing the challenge of unknown primary key values, dsunit offers a solution by enabling the capture of current sequence values for specified tables. 
 These values are then made available as variables within the workflow's state, facilitating dynamic reference to newly inserted records. 
 This method allows for precise and flexible test data management, ensuring that automated tests can be conducted efficiently and accurately.
+Note that ${tag}[.1..N] expression  after sequences expression is used  as placeholder to access specific record during the test execution.
 
 
 The following workflow demonstrates the process of capturing sequence values and preparing data for testing:

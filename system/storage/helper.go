@@ -5,11 +5,11 @@ import (
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/storage/copy"
-	"github.com/viant/toolbox/url"
 )
 
-func getSourceWithOptions(context *endly.Context, rule *copy.Rule) (*url.Resource, *option.Source, error) {
+func getSourceWithOptions(context *endly.Context, rule *copy.Rule) (*location.Resource, *option.Source, error) {
 	source, err := context.ExpandResource(rule.Source)
 	if err != nil {
 		return nil, nil, err
@@ -25,7 +25,7 @@ func getSourceWithOptions(context *endly.Context, rule *copy.Rule) (*url.Resourc
 	return source, option.NewSource(sourceOptions...), nil
 }
 
-func getDestWithOptions(context *endly.Context, rule *copy.Rule, modifier option.Modifier) (*url.Resource, *option.Dest, error) {
+func getDestWithOptions(context *endly.Context, rule *copy.Rule, modifier option.Modifier) (*location.Resource, *option.Dest, error) {
 	ruleOptions, err := rule.DestStorageOpts(context, modifier)
 	if err != nil {
 		return nil, nil, err
@@ -42,7 +42,7 @@ func getDestWithOptions(context *endly.Context, rule *copy.Rule, modifier option
 }
 
 // GetResourceWithOptions returns resource with afs storage option
-func GetResourceWithOptions(context *endly.Context, resource *url.Resource, options ...storage.Option) (*url.Resource, []storage.Option, error) {
+func GetResourceWithOptions(context *endly.Context, resource *location.Resource, options ...storage.Option) (*location.Resource, []storage.Option, error) {
 	resource, err := context.ExpandResource(resource)
 	if err != nil {
 		return nil, nil, err

@@ -2,19 +2,19 @@ package model
 
 import (
 	"github.com/pkg/errors"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 )
 
 // Workflow represents a workflow
 type Workflow struct {
-	Source *url.Resource //source definition of the workflow
-	Data   data.Map      //workflow data
+	Source *location.Resource //source definition of the workflow
+	Data   data.Map           //workflow data
 	*AbstractNode
 	*TasksNode //workflow tasks
 }
 
-// Validate validates this workflow
+// Init validates this workflow
 func (w *Workflow) Init() error {
 	for _, task := range w.Tasks {
 		if w.Logging != nil && task.Logging == nil {

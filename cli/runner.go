@@ -577,7 +577,7 @@ func (r *Runner) reportTagSummary() {
 		if val, ok := r.request.Params["app"]; ok {
 			r.xUnitSummary.Name = toolbox.AsString(val)
 		} else if r.request.Source != nil {
-			workflowPath := r.request.Source.DirectoryPath()
+			workflowPath := r.request.Source.Path()
 			if strings.HasSuffix(workflowPath, "/") {
 				workflowPath = string(workflowPath[:len(workflowPath)-1])
 			}
@@ -668,7 +668,6 @@ func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 	r.context = r.manager.NewContext(toolbox.NewContext())
 	//init shared session
 	exec.TerminalSessions(r.context)
-	exec.SetDefaultTarget(r.context, nil)
 	selenium.Sessions(r.context)
 
 	r.report = &ReportSummaryEvent{}

@@ -7,7 +7,7 @@ import (
 
 	"github.com/viant/endly/notify/smtp"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/secret"
+	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox/url"
 	"path"
 	"testing"

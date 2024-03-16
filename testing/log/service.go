@@ -8,12 +8,12 @@ import (
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model/criteria"
+	"github.com/viant/endly/model/location"
 	estorage "github.com/viant/endly/system/storage"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/endly/udf"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 	"io"
 	"io/ioutil"
 	"log"
@@ -195,7 +195,7 @@ func (s *service) tryReadSnapshot(context *endly.Context, fs afs.Service, object
 	return nil, nil
 }
 
-func (s *service) readLogFile(context *endly.Context, source *url.Resource, fs afs.Service, candidate storage.Object, logType *Type) (*TypeMeta, error) {
+func (s *service) readLogFile(context *endly.Context, source *location.Resource, fs afs.Service, candidate storage.Object, logType *Type) (*TypeMeta, error) {
 	var result *TypeMeta
 	var key = logTypeMetaKey(logType.Name)
 	s.Mutex().Lock()
@@ -283,7 +283,7 @@ func (s *service) readLogFile(context *endly.Context, source *url.Resource, fs a
 	return result, nil
 }
 
-func (s *service) readLogFiles(context *endly.Context, fs afs.Service, source *url.Resource, logTypes ...*Type) (TypesMeta, error) {
+func (s *service) readLogFiles(context *endly.Context, fs afs.Service, source *location.Resource, logTypes ...*Type) (TypesMeta, error) {
 	source, storageOptions, err := estorage.GetResourceWithOptions(context, source)
 	if err != nil {
 		return nil, err

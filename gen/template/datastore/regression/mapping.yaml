@@ -1,7 +1,0 @@
-mapping:
-  datastore: $db
-  action: dsunit.mapping
-  mappings:
-    - URL: regression/$db/mapping.json
-  post:
-    tables: $Tables

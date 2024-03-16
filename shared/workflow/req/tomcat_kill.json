@@ -1,7 +1,0 @@
-{
-  "Target": {
-    "URL": "ssh://${targetHost}${appDirectory}/",
-    "Credentials": "$targetHostCredential"
-  },
-  "Pid": "$tomcatPid"
-}

@@ -19,7 +19,7 @@ func TestProcessService_Status(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir      string
-		target       *url.Resource
+		target       *location.Resource
 		command      string
 		exactCommand bool
 		expected     []*process.Info

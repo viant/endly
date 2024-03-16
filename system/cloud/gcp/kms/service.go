@@ -6,6 +6,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/viant/afs"
+	"github.com/viant/afs/file"
 	"github.com/viant/endly"
 	"github.com/viant/endly/system/cloud/gcp"
 	"github.com/viant/toolbox"
@@ -23,6 +25,7 @@ const (
 // no operation service
 type service struct {
 	*endly.AbstractService
+	fs afs.Service
 }
 
 func (s *service) registerRoutes() {
@@ -227,7 +230,7 @@ func (s *service) encrypt(context *endly.Context, request *EncryptRequest) (*Enc
 	service := cloudkms.NewProjectsLocationsKeyRingsCryptoKeysService(client.service)
 
 	if request.Source != nil {
-		if request.PlainBase64Text, err = request.Source.DownloadBase64(); err != nil {
+		if request.PlainBase64Text, err = request.Source.DownloadBase64(context.Background(), s.fs); err != nil {
 			return nil, err
 		}
 	}
@@ -251,18 +254,11 @@ func (s *service) encrypt(context *endly.Context, request *EncryptRequest) (*Enc
 	}
 
 	if request.Dest != nil {
-
-		credentials := request.Dest.Credentials
-		if credentials != "" {
-			if location, err := context.Secrets.CredentialsLocation(credentials); err == nil {
-				credentials = location
-			}
-		}
-		storageService, err := storage.NewServiceForURL(request.Dest.URL, credentials)
+		fs := afs.New()
 		if err != nil {
 			return nil, err
 		}
-		if err = storageService.Upload(request.Dest.URL, bytes.NewReader(cipherData)); err != nil {
+		if err = fs.Upload(context.Background(), request.Dest.URL, file.DefaultFileOsMode, bytes.NewReader(cipherData)); err != nil {
 			return nil, err
 		}
 	}
@@ -328,6 +324,7 @@ func (s *service) decrypt(context *endly.Context, request *DecryptRequest) (*Dec
 // New creates a new cloudkms service
 func New() endly.Service {
 	var result = &service{
+		fs:afs.New(),
 		AbstractService: endly.NewAbstractService(ServiceID),
 	}
 	result.AbstractService.Service = result

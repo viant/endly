@@ -1,11 +1,11 @@
 package git
 
 import (
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"gopkg.in/src-d/go-git.v4"
 )
 
-func matchesOrigin(repository *git.Repository, resource *url.Resource) bool {
+func matchesOrigin(repository *git.Repository, resource *location.Resource) bool {
 	remotes, err := repository.Remotes()
 	if err != nil || len(remotes) == 0 {
 		return false
@@ -18,11 +18,11 @@ func matchesOrigin(repository *git.Repository, resource *url.Resource) bool {
 			if URL == resource.URL {
 				return true
 			}
-			actual := url.NewResource(URL)
-			if actual.ParsedURL.Host != resource.ParsedURL.Host {
+			actual := location.NewResource(URL)
+			if actual.Hostname() != resource.Hostname() {
 				continue
 			}
-			if actual.ParsedURL.Path != resource.ParsedURL.Path {
+			if actual.Path() != resource.Path() {
 				continue
 			}
 			return true

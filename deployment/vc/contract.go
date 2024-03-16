@@ -2,15 +2,15 @@ package vc
 
 import (
 	"fmt"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 )
 
 // CheckoutRequest represents checkout request. If target directory exist and contains matching origin URL,
 // only taking the latest changes without overriding local if performed, otherwise full checkout
 type CheckoutRequest struct {
 	Type               string        `required:"true" description:"version control type: git, svn"`
-	Origin             *url.Resource `required:"true" description:"checkout source for git or svn or simply file::/path"`
-	Dest               *url.Resource `required:"true" description:"checkout dest defined by host and path URL"`
+	Origin             *location.Resource `required:"true" description:"checkout source for git or svn or simply file::/path"`
+	Dest               *location.Resource `required:"true" description:"checkout dest defined by host and path URL"`
 	Modules            []string      `description:"list of modules to checkout"`
 	RemoveLocalChanges bool          `description:"flat to remove local directory before checkout"`
 }
@@ -30,8 +30,7 @@ func (r *CheckoutRequest) Init() error {
 	}
 	_ = versionControlRequestInit(r.Origin, &r.Type)
 	if r.Type == "" || r.Type == "local" {
-		_ = r.Origin.Init()
-		if r.Origin.ParsedURL.Scheme == "file" {
+		if r.Origin.Scheme() == "file" {
 			r.Type = "local"
 		}
 
@@ -58,7 +57,7 @@ func (r *CheckoutRequest) Validate() error {
 
 // CommitRequest represents a commit request
 type CommitRequest struct {
-	Source  *url.Resource `required:"true" description:"location to local source code"`
+	Source  *location.Resource `required:"true" description:"location to local source code"`
 	Type    string        `description:"version control type: git,svn"`
 	Message string        `required:"true"`
 }
@@ -105,8 +104,8 @@ func (r *Info) HasPendingChanges() bool {
 // PullRequest represents a pull request
 type PullRequest struct {
 	Type   string
-	Dest   *url.Resource `required:"true"`
-	Origin *url.Resource `required:"true"` //version control origin
+	Dest   *location.Resource `required:"true"`
+	Origin *location.Resource `required:"true"` //version control origin
 }
 
 // Init initializes request
@@ -132,7 +131,7 @@ type PullResponse struct {
 
 // StatusRequest represents version control status
 type StatusRequest struct {
-	Source *url.Resource `required:"true"`
+	Source *location.Resource `required:"true"`
 	Type   string
 }
 

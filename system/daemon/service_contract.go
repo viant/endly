@@ -1,13 +1,13 @@
 package daemon
 
 import (
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"strings"
 )
 
 // StartRequest represents service request start
 type StartRequest struct {
-	Target    *url.Resource `required:"true" description:"target host"`                                                                //target host
+	Target    *location.Resource `required:"true" description:"target host"`                                                                //target host
 	Service   string        `required:"true" `                                                                                         //service name
 	Exclusion string        `description:"optional exclusion fragment in case there are more then one matching provided name service"` //exclusion if there is more than one service matching service group
 }
@@ -19,7 +19,7 @@ type StartResponse struct {
 
 // StatusRequest represents status request
 type StatusRequest struct {
-	Target    *url.Resource `required:"true" description:"target host"` //target host
+	Target    *location.Resource `required:"true" description:"target host"` //target host
 	Service   string        `required:"true" `                          //service name
 	Exclusion string        //exclusion if there is more than one service matching service group
 }
@@ -42,7 +42,7 @@ type Info struct {
 
 // StopRequest represents a stop request.
 type StopRequest struct {
-	Target    *url.Resource `required:"true" description:"target host"` //target host
+	Target    *location.Resource `required:"true" description:"target host"` //target host
 	Service   string        `required:"true"`                           //service name
 	Exclusion string        //exclusion if there is more than one service matching service group
 }

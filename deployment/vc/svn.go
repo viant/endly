@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
-	"github.com/viant/toolbox/secret"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/scy/cred/secret"
 	"path"
 	"strings"
 )
@@ -21,7 +21,7 @@ func (s *svnService) checkInfo(context *endly.Context, request *StatusRequest) (
 	}
 	var result = &StatusResponse{&Info{}}
 	var runResponse = &exec.RunResponse{}
-	if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.DirectoryPath())), runResponse); err != nil ||
+	if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.Path())), runResponse); err != nil ||
 		util.CheckCommandNotFound(runResponse.Stdout()) {
 		return result, nil
 	}
@@ -100,11 +100,11 @@ func (s *svnService) checkout(context *endly.Context, request *CheckoutRequest) 
 		return nil, err
 	}
 	var vcInfo = &Info{}
-	err = s.runSecureSvnCommand(context, dest, request.Origin, vcInfo, "co", request.Origin.URL, dest.DirectoryPath())
+	err = s.runSecureSvnCommand(context, dest, request.Origin, vcInfo, "co", request.Origin.URL, dest.Path())
 	return vcInfo, err
 }
 
-func (s *svnService) runSecureSvnCommand(context *endly.Context, source *url.Resource, origin *url.Resource, info *Info, command string, arguments ...string) error {
+func (s *svnService) runSecureSvnCommand(context *endly.Context, source *location.Resource, origin *location.Resource, info *Info, command string, arguments ...string) error {
 	var username, err = util.GetUsername(context.Secrets, origin.Credentials)
 	if err != nil {
 		return err

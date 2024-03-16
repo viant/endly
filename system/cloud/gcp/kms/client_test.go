@@ -11,7 +11,7 @@ import (
 func TestClient(t *testing.T) {
 	context := endly.New().NewContext(nil)
 	err := InitRequest(context, map[string]interface{}{
-		"Credentials": "4234234dasdasde",
+		//"Credentials": "4234234dasdasde",
 	})
 	assert.NotNil(t, err)
 	_, err = GetClient(context)
@@ -32,4 +32,5 @@ func TestClient(t *testing.T) {
 		return
 	}
 	assert.NotNil(t, service)
+
 }

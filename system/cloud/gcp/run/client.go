@@ -53,7 +53,7 @@ func GetClient(context *endly.Context) (*CtxClient, error) {
 	}
 	//TODO run valid region validation
 
-	err := gcp.GetClient(context, run.New, clientKey, &client, run.CloudPlatformScope)
+	err := gcp.GetClient(context, run.NewService, clientKey, &client, run.CloudPlatformScope)
 	if client.service != nil {
 		client.service.BasePath = fmt.Sprintf(baseURLTemplate, client.CredConfig.Region)
 	}

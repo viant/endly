@@ -107,7 +107,7 @@ func TestDsUnitService(t *testing.T) {
 
 		serviceResponse = service.Run(context, &dsunit.RunScriptRequest{
 			Datastore: "mydb1",
-			Scripts: []*durl.Resource{
+			Scripts: []*dlocation.Resource{
 				durl.NewResource("test/mydb1.sql"),
 			},
 		})

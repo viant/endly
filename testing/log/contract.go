@@ -3,8 +3,8 @@ package log
 import (
 	"fmt"
 	"github.com/viant/assertly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"regexp"
 )
 
@@ -92,7 +92,7 @@ type Type struct {
 // ListenRequest represents listen for a logs request.
 type ListenRequest struct {
 	FrequencyMs int
-	Source      *url.Resource `required:"true" description:"log location"`
+	Source      *location.Resource `required:"true" description:"log location"`
 	Types       []*Type       `required:"true" description:"log types"`
 }
 

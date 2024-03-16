@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/afs/option"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/storage/copy"
 	"github.com/viant/endly/udf"
 	"github.com/viant/toolbox/url"
@@ -65,7 +66,7 @@ func (s *service) transfer(context *endly.Context, rule *copy.Rule, udfModifier 
 	if err != nil {
 		return err
 	}
-	useCompression := rule.Compress && IsCompressable(source.ParsedURL.Scheme) && IsCompressable(dest.ParsedURL.Scheme)
+	useCompression := rule.Compress && IsCompressable(source.Scheme()) && IsCompressable(dest.Scheme())
 	object, err := fs.Object(context.Background(), source.URL)
 	if err != nil {
 		return errors.Wrapf(err, "%v: source not found", source.URL)
@@ -133,7 +134,7 @@ func (r *CopyRequest) Init() error {
 		for _, rule := range r.Transfers {
 			if rule.Source != nil {
 				if r.Source == nil {
-					r.Source = url.NewResource("/")
+					r.Source = location.NewResource("/")
 				}
 				rule.Source = copy.JoinIfNeeded(r.Source, rule.Source.URL)
 			}

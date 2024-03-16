@@ -49,6 +49,6 @@ func GetClient(context *endly.Context) (*CtxClient, error) {
 	client := &CtxClient{
 		AbstractClient: &gcp.AbstractClient{},
 	}
-	err := gcp.GetClient(context, storage.New, clientKey, &client, storage.CloudPlatformScope, storage.DevstorageFullControlScope)
+	err := gcp.GetClient(context, storage.NewService, clientKey, &client, storage.CloudPlatformScope, storage.DevstorageFullControlScope)
 	return client, err
 }

@@ -19,7 +19,7 @@ func TestNew(t *testing.T) {
 	})
 	assert.Nil(t, err)
 
-	cred, _ := context.Secrets.GetCredentials("gcp-e2e")
+	cred, _ := context.Secrets.GetCredentials(context.Background(),"gcp-e2e")
 	request, err := context.NewRequest(ServiceID, "subscriptionsList", map[string]interface{}{
 		"project": fmt.Sprintf("projects/%v", cred.ProjectID),
 	})

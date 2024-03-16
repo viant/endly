@@ -21,7 +21,7 @@ func TestClient(t *testing.T) {
 		return
 	}
 	err = InitRequest(context, map[string]interface{}{
-		"Credentials": "gcp-e2e",
+		"Credentials": "viant-e2e",
 	})
 	assert.Nil(t, err)
 	client, err := GetClient(context)
@@ -33,9 +33,9 @@ func TestClient(t *testing.T) {
 		return
 	}
 	assert.NotNil(t, service)
-	cred, _ := context.Secrets.GetCredentials("gcp-e2e")
+	cred, _ := context.Secrets.GetCredentials(context.Background(), "viant-e2e")
 	instance := service.Projects.Topics.List(fmt.Sprintf("projects/%v", cred.ProjectID))
 	assert.NotNil(t, instance)
-	_, err := instance.Do()
+	_, err = instance.Do()
 	assert.Nil(t, err)
 }

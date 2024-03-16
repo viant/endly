@@ -257,7 +257,7 @@ func main() {
 	fmt.Printf("%s\n", plain)
 }
 
-func decrypt(key string, resource *url.Resource) ([]byte, error) {
+func decrypt(key string, resource *location.Resource) ([]byte, error) {
 	data, err := resource.DownloadText()
 	if err != nil {
 		return nil, err

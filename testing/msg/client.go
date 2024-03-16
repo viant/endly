@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/cred"
+	"github.com/viant/scy/cred"
 	"time"
 )
 
@@ -29,10 +29,10 @@ type Client interface {
 // NewPubSubClient creates a new Client
 func NewPubSubClient(context *endly.Context, dest *Resource, timeout time.Duration) (Client, error) {
 
-	credConfig := &cred.Config{}
+	credConfig := &cred.Generic{}
 	var err error
 	if dest.Credentials != "" {
-		credConfig, err = context.Secrets.GetCredentials(dest.Credentials)
+		credConfig, err = context.Secrets.GetCredentials(context.Background(), dest.Credentials)
 	}
 	if err != nil {
 		return nil, err

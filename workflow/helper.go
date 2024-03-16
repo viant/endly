@@ -1,12 +1,14 @@
 package workflow
 
 import (
+	"context"
 	"fmt"
+	"github.com/viant/afs"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox/url"
 	"strings"
 )
 
@@ -61,9 +63,9 @@ func FirstWorkflow(context *endly.Context) *model.Process {
 }
 
 // GetResource returns workflow resource
-func GetResource(dao *Dao, state data.Map, URL string) *url.Resource {
+func GetResource(ctx context.Context, state data.Map, URL string) *location.Resource {
 	for _, candidate := range getURLs(URL) {
-		resource := url.NewResource(candidate)
+		resource := location.NewResource(candidate)
 		storageService, err := storage.NewServiceForURL(resource.URL, "")
 		if err != nil {
 			return nil
@@ -77,17 +79,10 @@ func GetResource(dao *Dao, state data.Map, URL string) *url.Resource {
 		return nil
 	}
 	//Lookup shared workflow
+	fs := afs.New()
 	for _, candidate := range getURLs(URL) {
-		resource, err := dao.NewRepoResource(state, fmt.Sprintf("workflow/%v", candidate))
-		if err != nil {
-			continue
-		}
-		storageService, err := storage.NewServiceForURL(resource.URL, "")
-		if err != nil {
-			return nil
-		}
-		if exists, _ := storageService.Exists(resource.URL); exists {
-			return resource
+		if ok, _ := fs.Exists(ctx, candidate); ok {
+			return location.NewResource(candidate)
 		}
 	}
 	return nil

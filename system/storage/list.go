@@ -7,15 +7,15 @@ import (
 	"github.com/viant/afs/matcher"
 	"github.com/viant/afs/storage"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/storage/copy"
 	"github.com/viant/endly/testing/validator"
-	"github.com/viant/toolbox/url"
 	"io/ioutil"
 )
 
 // DownloadRequest represents a resources Download request, it downloads source into context.state target key
 type ListRequest struct {
-	Source    *url.Resource `required:"true" description:"source asset or directory"`
+	Source    *location.Resource `required:"true" description:"source asset or directory"`
 	Match     *copy.Matcher
 	Content   bool
 	Recursive bool

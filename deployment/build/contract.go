@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/viant/endly/deployment/deploy"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
-	"github.com/viant/toolbox/secret"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/scy/cred/secret"
 )
 
 // Spec represents build specification.
@@ -27,7 +27,7 @@ type Request struct {
 	BuildSpec *Spec             `required:"true" description:"build specification" `
 	Secrets   secret.Secrets    `description:"key value pair of placeholder and credentials files, check build meta file for used placeholders i.e for 'go' build: ##git## - git usernamem, **git** - git password"`
 	Env       map[string]string `description:"environmental variables"`
-	Target    *url.Resource     `required:"true" description:"build location, host and path" `
+	Target    *location.Resource     `required:"true" description:"build location, host and path" `
 }
 
 // Init initialises request
@@ -57,7 +57,7 @@ func (r *Request) Validate() error {
 
 // LoadMetaRequest represents a loading Meta request
 type LoadMetaRequest struct {
-	Source *url.Resource `required:"true" description:"URL with build meta JSON"`
+	Source *location.Resource `required:"true" description:"URL with build meta JSON"`
 }
 
 // Validate checks if request is valid

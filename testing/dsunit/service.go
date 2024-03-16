@@ -240,7 +240,7 @@ func (s *service) registerRoutes() {
 	})
 
 	s.Register(&endly.Route{
-		Action: "recreate",
+		Action: "create",
 		RequestInfo: &endly.ActionInfo{
 			Description: "create datastore",
 			Examples:    []*endly.UseCase{},

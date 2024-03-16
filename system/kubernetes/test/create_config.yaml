@@ -1,5 +1,0 @@
-pipeline:
-  createConfig:
-    action: kubernetes:create
-    URL: config.yaml
-    expand: true

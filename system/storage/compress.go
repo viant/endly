@@ -5,24 +5,24 @@ import (
 	"github.com/viant/afs/storage"
 	arl "github.com/viant/afs/url"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/util"
-	"github.com/viant/toolbox/url"
 	"path"
 )
 
-func (s *service) compressSource(context *endly.Context, source, target *url.Resource, sourceObject storage.Object) (err error) {
-	var baseDirectory, name = path.Split(source.ParsedURL.Path)
+func (s *service) compressSource(context *endly.Context, source, target *location.Resource, sourceObject storage.Object) (err error) {
+	var baseDirectory, name = path.Split(source.Path())
 	var archiveSource = name
 
 	if sourceObject.IsDir() {
-		baseDirectory = source.DirectoryPath()
+		baseDirectory = source.Path()
 		_, name = path.Split(baseDirectory)
 		archiveSource = "."
 	}
 	var archiveName = fmt.Sprintf("%v.tar.gz", name)
 
-	if source.ParsedURL.Scheme == "file" && source.Credentials == "" {
+	if source.Scheme() == "file" && source.Credentials == "" {
 		source.Credentials = "localhost"
 	}
 	var runRequest = exec.NewRunRequest(source, false,
@@ -40,37 +40,32 @@ func (s *service) compressSource(context *endly.Context, source, target *url.Res
 
 	if sourceObject.IsDir() {
 		source.URL = arl.Join(source.URL, archiveName)
-		_ = source.Init()
-
 		target.URL = arl.Join(target.URL, archiveName)
-		_ = target.Init()
 		return nil
 	}
 
-	if err = source.Rename(archiveName); err == nil {
-		if path.Ext(target.ParsedURL.Path) != "" {
-			_, targetName := path.Split(target.ParsedURL.Path)
-			if name != targetName {
-				err = target.Rename(fmt.Sprintf("%v.tar.gz", targetName))
-			} else {
-				err = target.Rename(archiveName)
-			}
+	source.Rename(archiveName)
+	if path.Ext(target.Path()) != "" {
+		_, targetName := path.Split(target.Path())
+		if name != targetName {
+			target.Rename(fmt.Sprintf("%v.tar.gz", targetName))
 		} else {
-			target.URL = arl.Join(target.URL, archiveName)
-			_ = target.Init()
+			target.Rename(archiveName)
 		}
+	} else {
+		target.URL = arl.Join(target.URL, archiveName)
 	}
 	return err
 }
 
-func (s *service) decompressTarget(context *endly.Context, source, target *url.Resource, sourceObject storage.Object) error {
-	var baseDir, name = path.Split(target.ParsedURL.Path)
+func (s *service) decompressTarget(context *endly.Context, source, target *location.Resource, sourceObject storage.Object) error {
+	var baseDir, name = path.Split(target.Path())
 	var runRequest = exec.NewRunRequest(target, false,
 		fmt.Sprintf("mkdir -p %v", baseDir),
 		fmt.Sprintf("cd %v", baseDir),
 		fmt.Sprintf("tar xvzf %v", name),
 		fmt.Sprintf("rm %v", name),
-		fmt.Sprintf("cd %v", source.DirectoryPath()))
+		fmt.Sprintf("cd %v", source.Path()))
 	runRequest.TimeoutMs = compressionTimeoutMs
 	return endly.Run(context, runRequest, nil)
 }

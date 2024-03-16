@@ -3,19 +3,20 @@ package vc
 import (
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
 	"github.com/viant/endly/system/storage/copy"
 	"github.com/viant/toolbox"
 
-	"github.com/viant/toolbox/url"
+
 )
 
 const (
 	//ServiceID version control service id
 	ServiceID = "version/control"
 	//CredentialKey represents credentials key
-	CredentialKey = "***vc***"
+	CredentialKey = "vc"
 )
 
 type service struct {
@@ -52,7 +53,7 @@ func (s *service) commit(context *endly.Context, request *CommitRequest) (*Commi
 		return nil, err
 	}
 
-	if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.DirectoryPath())), nil); err != nil {
+	if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.Path())), nil); err != nil {
 		return nil, err
 	}
 	switch request.Type {
@@ -71,7 +72,7 @@ func (s *service) pull(context *endly.Context, request *PullRequest) (*PullRespo
 	if err != nil {
 		return nil, err
 	}
-	if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.DirectoryPath())), nil); err != nil {
+	if err = endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.Path())), nil); err != nil {
 		return nil, err
 	}
 	switch request.Type {
@@ -140,14 +141,14 @@ func (s *service) checkout(context *endly.Context, request *CheckoutRequest) (*C
 	}
 	return response, nil
 }
-func (s *service) checkoutArtifact(context *endly.Context, versionControlType string, origin, dest *url.Resource, removeLocalChanges bool) (info *Info, err error) {
+func (s *service) checkoutArtifact(context *endly.Context, versionControlType string, origin, dest *location.Resource, removeLocalChanges bool) (info *Info, err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("failed to checkout %v, %v", origin.URL, err)
 		}
 	}()
 
-	var directoryPath = dest.DirectoryPath()
+	var directoryPath = dest.Path()
 	storageService, err := storage.StorageService(context, dest)
 	if err != nil {
 		return nil, err

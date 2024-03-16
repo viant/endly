@@ -3,13 +3,13 @@ package storage
 import (
 	"errors"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/testing/validator"
-	"github.com/viant/toolbox/url"
 )
 
 // ExistsRequest represents exists request
 type ExistsRequest struct {
-	Assets []*url.Resource `required:"true" description:"source asset or directory"`
+	Assets []*location.Resource `required:"true" description:"source asset or directory"`
 	Expect map[string]bool `description:"map of asset and exists flag"`
 }
 

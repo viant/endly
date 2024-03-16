@@ -1,2 +1,0 @@
-c3d9749a1dc43332bb5a58330187719d14c9c23cee55f583cb83bbb3bbb98a80
-docker: Error response from daemon: driver failed programming external connectivity on endpoint testMysql01 (5c9925d698dfee79f14483fbc42a3837abfb482e30c70e53d830d3d9cfd6f0da): Error starting userland proxy: Bind for 0.0.0.0:3306 failed: port is already allocated.

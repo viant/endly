@@ -1,6 +1,7 @@
 package copy
 
 import (
+	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox/url"
 )
 
@@ -11,8 +12,8 @@ type Assets map[string]string
 func (t Assets) AsTransfer(base *Rule) []*Rule {
 	var sourceBase, destBase = base.Source, base.Dest
 	var transfers = make([]*Rule, 0)
-	var isSourceRootPath = sourceBase != nil && sourceBase.ParsedURL != nil && sourceBase.ParsedURL.Path == "/"
-	var isDestRootPath = destBase != nil && destBase.ParsedURL != nil && destBase.ParsedURL.Path == "/"
+	var isSourceRootPath = sourceBase != nil && sourceBase.URL != "" && sourceBase.Path() == "/"
+	var isDestRootPath = destBase != nil && destBase.Path() == "/"
 	for source, dest := range t {
 		if dest == "" {
 			dest = source
@@ -24,8 +25,8 @@ func (t Assets) AsTransfer(base *Rule) []*Rule {
 			dest = url.NewResource(dest).ParsedURL.Path
 		}
 		transfer := &Rule{
-			Source:       url.NewResource(source),
-			Dest:         url.NewResource(dest),
+			Source:       location.NewResource(source),
+			Dest:         location.NewResource(dest),
 			Substitution: base.Substitution,
 			Compress:     base.Compress,
 		}

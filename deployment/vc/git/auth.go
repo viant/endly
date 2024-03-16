@@ -8,7 +8,7 @@ import (
 )
 
 func getAuth(context *endly.Context, credentials string) (transport.AuthMethod, error) {
-	credConifg, err := context.Secrets.GetCredentials(credentials)
+	credConifg, err := context.Secrets.GetCredentials(context.Background(), credentials)
 	if err != nil {
 		return nil, err
 	}

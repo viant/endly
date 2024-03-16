@@ -67,6 +67,8 @@ Provides validation services, including log validation, to ensure that applicati
 Communication and Messaging
 #### SMTP, Slack: 
 Services for sending emails and Slack messages, enabling notifications and alerts as part of the automation workflows.
+
+
 ## Getting Started
 
 

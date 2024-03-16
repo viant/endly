@@ -2,14 +2,14 @@ package git
 
 import (
 	"fmt"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 )
 
 // CheckoutRequest represents checkout request. If target directory exist and contains matching origin URL,
 // only taking the latest changes without overriding local if performed, otherwise full checkout
 type CheckoutRequest struct {
-	Origin *url.Resource `required:"true" description:"checkout source for git or svn or simply file::/path"`
-	Dest   *url.Resource `required:"true" description:"checkout dest defined by host and path URL"`
+	Origin *location.Resource `required:"true" description:"checkout source for git or svn or simply file::/path"`
+	Dest   *location.Resource `required:"true" description:"checkout dest defined by host and path URL"`
 	Depth  int
 }
 
@@ -36,13 +36,13 @@ type Info struct {
 
 // StatusRequest represents version control status
 type StatusRequest struct {
-	Source *url.Resource `required:"true"`
+	Source *location.Resource `required:"true"`
 }
 
 // CommitRequest represents a commit request
 type CommitRequest struct {
-	Source      *url.Resource `required:"true" description:"location to local source code"`
-	Message     string        `required:"true"`
+	Source      *location.Resource `required:"true" description:"location to local source code"`
+	Message     string             `required:"true"`
 	Credentials string
 }
 
@@ -56,11 +56,9 @@ func (r *CheckoutRequest) Init() error {
 	if r.Origin == nil {
 		return nil
 	}
-	_ = r.Origin.Init()
 	if r.Dest == nil {
 		return nil
 	}
-	_ = r.Dest.Init()
 	return nil
 }
 
@@ -72,19 +70,14 @@ func (r *CheckoutRequest) Validate() error {
 	if r.Dest == nil {
 		return fmt.Errorf("dest was empty")
 	}
-	if r.Dest.ParsedURL.Scheme != "file" {
-		return fmt.Errorf("unsupported dest scheme: %v, supported scheme: file", r.Dest.ParsedURL.Scheme)
+	if r.Dest.Scheme() != "file" {
+		return fmt.Errorf("unsupported dest scheme: %v, supported scheme: file", r.Dest.Scheme())
 	}
 	return nil
 }
 
 // Init initializes request
 func (r *CommitRequest) Init() error {
-	if r.Source != nil {
-		if err := r.Source.Init(); err != nil {
-			return err
-		}
-	}
 	return nil
 }
 
@@ -106,10 +99,7 @@ func (r *Info) HasPendingChanges() bool {
 
 // Init initializes request
 func (r *StatusRequest) Init() error {
-	if r.Source == nil {
-		return nil
-	}
-	return r.Source.Init()
+	return nil
 }
 
 // Validate validates request

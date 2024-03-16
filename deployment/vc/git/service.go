@@ -29,12 +29,12 @@ func (s *service) clone(context *endly.Context, request *CheckoutRequest) (*git.
 			return nil, err
 		}
 	}
-	return git.PlainClone(request.Dest.ParsedURL.Path, false, options)
+	return git.PlainClone(request.Dest.Path(), false, options)
 
 }
 
 func (s *service) checkout(context *endly.Context, request *CheckoutRequest) (*CheckoutResponse, error) {
-	destFile := request.Dest.ParsedURL.Path
+	destFile := request.Dest.Path()
 	repository, err := git.PlainOpen(destFile)
 	freshCheckout := false
 
@@ -78,7 +78,7 @@ func (s *service) checkout(context *endly.Context, request *CheckoutRequest) (*C
 
 func (s *service) status(context *endly.Context, request *StatusRequest) (*StatusResponse, error) {
 	response := &StatusResponse{NewInfo()}
-	destLocation := request.Source.ParsedURL.Path
+	destLocation := request.Source.Path()
 	repository, err := git.PlainOpen(destLocation)
 	if err != nil {
 		response.IsVersionControlManaged = false
@@ -204,7 +204,7 @@ func (s *service) author(context *endly.Context, credentials string) *object.Sig
 	if credentials == "" {
 		return author
 	}
-	credConfig, err := context.Secrets.GetCredentials(credentials)
+	credConfig, err := context.Secrets.GetCredentials(context.Background(), credentials)
 	if err != nil {
 		return author
 	}
@@ -223,7 +223,7 @@ func (s *service) author(context *endly.Context, credentials string) *object.Sig
 }
 
 func (s *service) commit(context *endly.Context, request *CommitRequest) (*CommitResponse, error) {
-	destLocation := request.Source.ParsedURL.Path
+	destLocation := request.Source.Path()
 	repository, err := git.PlainOpen(destLocation)
 	if err != nil {
 		return nil, err

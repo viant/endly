@@ -1,11 +1,15 @@
 package workflow
 
 import (
+	"context"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/viant/afs"
+	"github.com/viant/afs/url"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/criteria"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/model/msg"
 	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
@@ -25,9 +29,9 @@ const (
 // Service represents a workflow service.
 type Service struct {
 	*endly.AbstractService
-	Dao       *Dao
 	registry  map[string]*model.Workflow
 	converter *toolbox.Converter
+	fs        afs.Service
 }
 
 func (s *Service) registerWorkflow(request *RegisterRequest) (*RegisterResponse, error) {
@@ -71,19 +75,6 @@ func (s *Service) addVariableEvent(name string, variables model.Variables, conte
 		return
 	}
 	context.Publish(model.NewModifiedStateEvent(variables, in, out))
-}
-
-func (s *Service) loadWorkflowIfNeeded(context *endly.Context, request *RunRequest) (err error) {
-	if !s.HasWorkflow(request.Name) {
-		resource := GetResource(s.Dao, context.State(), request.URL)
-		if resource == nil {
-			return fmt.Errorf("unable to locate workflow: %v, %v", request.Name, request.URL)
-		}
-		if _, err := s.loadWorkflow(context, &LoadRequest{Source: resource}); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (s *Service) runAction(context *endly.Context, action *model.Action, process *model.Process) (response map[string]interface{}, err error) {
@@ -302,6 +293,20 @@ func (s *Service) enableLoggingIfNeeded(context *endly.Context, request *RunRequ
 	}
 }
 
+// NewRepoResource returns new woorkflow repo resource, it takes context map and resource URI
+func (d *Service) NewRepoResource(ctx context.Context, state data.Map, URI string) (*location.Resource, error) {
+	URI  = state.ExpandAsText(URI)
+	ok, err := d.fs.Exists(ctx, URI)
+	if ok {
+		return location.NewResource(URI), nil
+	}
+	URL := url.Join("mem://github.com/viant/endly",URI)
+	if ok, _ = d.fs.Exists(ctx, URL);ok {
+		return location.NewResource(URL), nil
+	}
+	return location.NewResource(URI), err
+}
+
 func (s *Service) publishParameters(request *RunRequest, context *endly.Context) map[string]interface{} {
 	var state = context.State()
 	params := buildParamsMap(request, context)
@@ -318,10 +323,6 @@ func (s *Service) getWorkflow(context *endly.Context, request *RunRequest) (*mod
 	if request.workflow != nil {
 		context.Publish(NewLoadedEvent(request.workflow))
 		return request.workflow, nil
-	}
-	err := s.loadWorkflowIfNeeded(context, request)
-	if err != nil {
-		return nil, err
 	}
 	workflow, err := s.Workflow(request.Name)
 	if err != nil {
@@ -538,22 +539,6 @@ func buildParamsMap(request *RunRequest, context *endly.Context) data.Map {
 	return params
 }
 
-func (s *Service) loadWorkflow(context *endly.Context, request *LoadRequest) (*LoadResponse, error) {
-	workflow, err := s.Dao.Load(context, request.Source)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load workflow: %v, %v", request.Source.URL, err)
-	}
-	s.Lock()
-	defer s.Unlock()
-	err = s.Register(workflow)
-	if err != nil {
-		return nil, fmt.Errorf("failed to register workflow: %v, %v", request.Source.URL, err)
-	}
-	return &LoadResponse{
-		Workflow: workflow,
-	}, nil
-}
-
 func (s *Service) startSession(context *endly.Context) bool {
 	s.RLock()
 	var state = context.State()
@@ -767,25 +752,6 @@ func (s *Service) registerRoutes() {
 	})
 
 	s.AbstractService.Register(&endly.Route{
-		Action: "load",
-		RequestInfo: &endly.ActionInfo{
-			Description: "load workflow from URL",
-		},
-		RequestProvider: func() interface{} {
-			return &LoadRequest{}
-		},
-		ResponseProvider: func() interface{} {
-			return &LoadResponse{}
-		},
-		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
-			if req, ok := request.(*LoadRequest); ok {
-				return s.loadWorkflow(context, req)
-			}
-			return nil, fmt.Errorf("unsupported request type: %T", request)
-		},
-	})
-
-	s.AbstractService.Register(&endly.Route{
 		Action: "register",
 		RequestInfo: &endly.ActionInfo{
 			Description: "register workflow",
@@ -985,8 +951,9 @@ func (s *Service) setEnv(context *endly.Context, request *SetEnvRequest) (*SetEn
 // New returns a new workflow Service.
 func New() endly.Service {
 	var result = &Service{
+
 		AbstractService: endly.NewAbstractService(ServiceID),
-		Dao:             NewDao(),
+		fs:              afs.New(),
 		registry:        make(map[string]*model.Workflow),
 	}
 	result.AbstractService.Service = result

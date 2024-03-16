@@ -1,17 +1,17 @@
 [
   {
-    "ID": "$sequencer.CI_CONTACTS/${tag}.1",
+    "ID": "$Sequences.CI_CONTACTS/${tag}.1",
     "ACCOUNT_ID": 197,
     "FIRST_NAME": "Dept",
     "EMAIL": "dev2@adelphic.com",
     "PHONE": "PHONE_2",
-    "STR_ID": "STR_ID_${sequencer.CI_CONTACTS}"
+    "STR_ID": "STR_ID_${Sequences.CI_CONTACTS}"
   },
   {
-    "ID": "$sequencer.CI_CONTACTS/${tag}.2",
+    "ID": "$Sequences.CI_CONTACTS/${tag}.2",
     "ACCOUNT_ID": 197,
     "EMAIL": "dev2@adelphic.com",
     "PHONE": "PHONE_2",
-    "STR_ID": "STR_ID_${sequencer.CI_CONTACTS}"
+    "STR_ID": "STR_ID_${Sequences.CI_CONTACTS}"
   }
 ]

@@ -6,7 +6,7 @@ import (
 	"github.com/viant/endly"
 
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/secret"
+	"github.com/viant/scy/cred/secret"
 	"os"
 	"path"
 	"testing"

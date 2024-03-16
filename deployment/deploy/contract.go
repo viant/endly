@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage/copy"
-
-	"github.com/viant/toolbox/url"
 )
 
 // ServiceRequest represent a deploy request
 type Request struct {
-	Target       *url.Resource `required:"true" description:"target host"`                                                                                   //target host
+	Target       *location.Resource `required:"true" description:"target host"`                                                                                   //target host
 	MetaURL      string        `description:"optional URL for meta deployment file, if left empty the meta URL is construct as meta/deployment/**AppName**"` //deployment URL for meta deployment instruction
 	AppName      string        `required:"true" description:"application name, as defined in meta deployment file"`                                          //app name
 	Version      string        `description:"min required version, it can be 1, or 1.2 or specific version 1.2.1"`                                           //requested version
@@ -60,7 +59,8 @@ type Response struct {
 
 // LoadMetaRequest represents Meta register request.
 type LoadMetaRequest struct {
-	Source *url.Resource `required:"true" description:"deployment meta location"`
+	Source *
+		location.Resource `required:"true" description:"deployment meta location"`
 }
 
 // LoadMetaResponse represents deployment response
@@ -138,7 +138,7 @@ func (m *Meta) Validate() error {
 }
 
 // AsRunRequest creates a exec run request.
-func (a *Addition) AsRunRequest(target *url.Resource) *exec.RunRequest {
+func (a *Addition) AsRunRequest(target *location.Resource) *exec.RunRequest {
 	request := exec.NewRunRequest(target, a.SuperUser, a.Commands...)
 	request.AutoSudo = a.AutoSudo
 	return request

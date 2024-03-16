@@ -9,8 +9,8 @@ import (
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/udf"
-	"github.com/viant/toolbox/url"
 	"io"
 	"os"
 	"strings"
@@ -22,7 +22,7 @@ type UploadRequest struct {
 	Region    string        `description:"cloud storage region"`
 	Mode      int           `description:"os.FileMode"`
 	Udf       string        `description:"name of udf to transform payload before placing into state map"` //name of udf function that will be used to transform payload
-	Dest      *url.Resource `required:"true" description:"destination asset or directory"`                 //target URL with credentials
+	Dest      *location.Resource `required:"true" description:"destination asset or directory"`                 //target URL with credentials
 }
 
 // UploadResponse represents a Upload response

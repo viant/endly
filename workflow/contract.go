@@ -3,6 +3,7 @@ package workflow
 import (
 	"errors"
 	"fmt"
+	"github.com/viant/endly/model/location"
 	"path"
 	"strings"
 
@@ -26,8 +27,8 @@ type RunRequest struct {
 	SharedState       bool                   `description:"by default workflow uses a separate cloned context copy, if this is flag context will be shared with a caller workflow state"`
 	URL               string                 `description:"workflow URL if workflow is not found in the registry, it is loaded"`
 	Name              string                 `required:"true" description:"name defined in workflow document"`
-	StateKey          string                 `description:"if specified workflow params and data will be visible globally with this key, default is inherited from workflow name"`
-	Source            *url.Resource          `description:"run request location "`
+	StateKey          string             `description:"if specified workflow params and data will be visible globally with this key, default is inherited from workflow name"`
+	Source            *location.Resource `description:"run request location "`
 	AssetURL          string
 	TagIDs            string `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
 	Tasks             string `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequentially"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
@@ -64,7 +65,7 @@ func (r *RunRequest) Init() (err error) {
 		if err != nil {
 			return err
 		}
-		r.workflow.Source = url.NewResource(r.AssetURL)
+		r.workflow.Source = location.NewResource(r.AssetURL)
 		if r.StateKey == "" {
 			r.StateKey = r.Name
 		}
@@ -136,12 +137,12 @@ type RegisterRequest struct {
 
 // RegisterResponse represents workflow register response
 type RegisterResponse struct {
-	Source *url.Resource
+	Source *location.Resource
 }
 
 // LoadRequest represents workflow load request from the specified source
 type LoadRequest struct {
-	Source *url.Resource
+	Source *location.Resource
 }
 
 // Validate checks if request is valid
@@ -210,7 +211,7 @@ type GotoResponse interface{}
 
 // ExitRequest represents workflow exit request, to exit a caller workflow
 type ExitRequest struct {
-	Source *url.Resource
+	Source *location.Resource
 }
 
 // ExitResponse represents workflow exit response

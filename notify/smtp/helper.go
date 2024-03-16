@@ -3,25 +3,25 @@ package smtp
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/viant/toolbox/cred"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
+	"github.com/viant/scy/cred"
 	"net/smtp"
 )
 
 // NewClient creates a new SMTP client.
-func NewClient(target *url.Resource, credConfig *cred.Config) (*smtp.Client, error) {
-	var targetURL = target.ParsedURL
+func NewClient(target *location.Resource, credConfig *cred.Generic) (*smtp.Client, error) {
+
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
-		ServerName:         targetURL.Host,
+		ServerName:         target.Host(),
 	}
-	auth := smtp.PlainAuth("", credConfig.Username, credConfig.Password, targetURL.Host)
+	auth := smtp.PlainAuth("", credConfig.Username, credConfig.Password, target.Hostname())
 
-	conn, err := tls.Dial("tcp", targetURL.Host, tlsConfig)
+	conn, err := tls.Dial("tcp", target.Hostname(), tlsConfig)
 	if err != nil {
 		return nil, err
 	}
-	client, err := smtp.NewClient(conn, targetURL.Host)
+	client, err := smtp.NewClient(conn, target.Hostname())
 	if err != nil {
 		return nil, err
 	}

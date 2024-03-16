@@ -196,7 +196,7 @@ func TestTransferService_Remove(t *testing.T) {
 	assert.NotNil(t, object)
 
 	serviceResponse := storageService.Run(context, &storage.RemoveRequest{
-		Assets: []*url.Resource{
+		Assets: []*location.Resource{
 			url.NewResource("mem:///test/Remove/storage/config1.json"),
 			url.NewResource("mem:///dummy"),
 		},
@@ -410,7 +410,7 @@ func TestStorageUploadRemove_Validate(t *testing.T) {
 
 	{
 		request := storage.RemoveRequest{
-			Assets: []*url.Resource{
+			Assets: []*location.Resource{
 
 				url.NewResource("a"),
 			},

@@ -3,17 +3,17 @@ package storage
 import (
 	"github.com/pkg/errors"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/endly/udf"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"io/ioutil"
 )
 
 // DownloadRequest represents a resources Download request, it downloads source into context.state target key
 type DownloadRequest struct {
-	Source  *url.Resource `required:"true" description:"source asset or directory"`
+	Source  *location.Resource `required:"true" description:"source asset or directory"`
 	DestKey string        `required:"true" description:"state map key destination"`
 	Udf     string        `description:"name of udf to transform payload before placing into state map"` //name of udf function that will be used to transform payload
 	Expect  interface{}   `description:"if specified expected file content used for validation"`

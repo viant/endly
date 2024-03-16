@@ -49,6 +49,6 @@ func GetClient(context *endly.Context) (*CtxClient, error) {
 	client := &CtxClient{
 		AbstractClient: &gcp.AbstractClient{},
 	}
-	err := gcp.GetClient(context, cloudkms.New, clientKey, &client, cloudkms.CloudPlatformScope, cloudkms.CloudkmsScope)
+	err := gcp.GetClient(context, cloudkms.NewService, clientKey, &client, cloudkms.CloudPlatformScope, cloudkms.CloudkmsScope)
 	return client, err
 }

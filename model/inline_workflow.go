@@ -1,10 +1,10 @@
 package model
 
 import (
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 	"strings"
 )
 
@@ -244,7 +244,7 @@ func (p *InlineWorkflow) AsWorkflow(name string, baseURL string) (*Workflow, err
 			Tasks: []*Task{},
 		},
 		Data:   p.Data,
-		Source: url.NewResource(toolbox.URLPathJoin(baseURL, name+".yaml")),
+		Source: location.NewResource(toolbox.URLPathJoin(baseURL, name+".yaml")),
 	}
 	var err error
 	if p.Init != nil {
