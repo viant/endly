@@ -1,11 +1,11 @@
 package model
 
 import (
+	"github.com/viant/afs/file"
+	"github.com/viant/afs/url"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/storage"
-	"path"
 	"strings"
 	"unicode"
 )
@@ -36,64 +36,34 @@ func (t *Tag) expandPathIfNeeded(subpath string) (string, string) {
 	if !strings.HasSuffix(subpath, "*") {
 		return subpath, ""
 	}
-	parentURL, _ := toolbox.URLSplit(t.OwnerSource.URL)
-	var leafDirectory = ""
-	var subPathParent = ""
-	subPathElements := strings.Split(subpath, "/")
-	for _, candidate := range subPathElements {
-		if strings.Contains(candidate, "*") {
-			leafDirectory = strings.Replace(candidate, "*", "", 1)
-			break
-		}
-		subPathParent = path.Join(subPathParent, candidate)
-		parentURL = toolbox.URLPathJoin(parentURL, candidate)
-	}
-	storageService, err := storage.NewServiceForURL(parentURL, t.OwnerSource.Credentials)
-	if err == nil {
-		candidates, err := storageService.List(parentURL)
-		if err == nil {
-			for _, candidate := range candidates {
-				if candidate.URL() == parentURL {
-					continue
-				}
-				_, candidateName := toolbox.URLSplit(candidate.URL())
-				if strings.HasPrefix(candidateName, leafDirectory) {
-
-					if subPathParent != "" {
-						return path.Join(subPathParent, candidateName), string(candidateName[len(leafDirectory):])
-					}
-					return candidateName, string(candidateName[len(leafDirectory):])
-				}
-			}
-		}
-	}
-	return subpath, ""
+	return url.Split(t.OwnerSource.URL, file.Scheme)
 }
 
-// setMeta sets Tag, optionally TagIndex and Subpath to the provided object
-func (t *Tag) setMeta(object data.Map, record map[string]interface{}) {
-	object["Tag"] = t.Name
-	if t.HasActiveIterator() {
-		object["TagIndex"] = t.Iterator.Index()
-	}
-
-	value, has := record["Subpath"]
-	if has {
-		t.SetSubPath(toolbox.AsString(value))
-	}
-	if t.Subpath != "" {
-		object["Subpath"] = t.Subpath
-	}
-
-	if t.PathMatch != "" {
-		object["PathMatch"] = t.PathMatch
-	}
-	if value, has := record["Group"]; has {
-		t.Group = toolbox.AsString(value)
-	}
-	object["TagID"] = t.TagID()
-
-}
+//
+//// setMeta sets Tag, optionally TagIndex and Subpath to the provided object
+//func (t *Tag) setMeta(object data.Map, record map[string]interface{}) {
+//	object["Tag"] = t.Name
+//	if t.HasActiveIterator() {
+//		object["TagIndex"] = t.Iterator.Index()
+//	}
+//
+//	value, has := record["Subpath"]
+//	if has {
+//		t.SetSubPath(toolbox.AsString(value))
+//	}
+//	if t.Subpath != "" {
+//		object["Subpath"] = t.Subpath
+//	}
+//
+//	if t.PathMatch != "" {
+//		object["PathMatch"] = t.PathMatch
+//	}
+//	if value, has := record["Group"]; has {
+//		t.Group = toolbox.AsString(value)
+//	}
+//	object["TagID"] = t.TagID()
+//
+//}
 
 func (t *Tag) Expand(text string) string {
 	var aMap = data.NewMap()
@@ -104,11 +74,6 @@ func (t *Tag) Expand(text string) string {
 		aMap.Put("idx", toolbox.AsInt(t.Iterator.Index()))
 	}
 	return aMap.ExpandAsText(text)
-}
-
-// SetSubPath set subpath for the tag
-func (t *Tag) SetSubPath(subpath string) {
-	t.Subpath, t.PathMatch = t.expandPathIfNeeded(subpath)
 }
 
 // TagID returns tag ID
