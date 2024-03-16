@@ -1,35 +1,26 @@
 package util
 
 import (
+	"context"
 	"fmt"
-	"github.com/viant/toolbox/cred"
-	"github.com/viant/toolbox/secret"
-	"os"
-	"path"
-	"time"
+	"github.com/viant/scy/cred"
+	"github.com/viant/scy/cred/secret"
 )
 
-func GetDummyCredential() (string, error) {
-	return GetCredential("dummy", os.Getenv("USER"), "***")
-}
 
-func GetCredential(name, username, password string) (string, error) {
-	var credentialFile = path.Join(os.TempDir(), fmt.Sprintf("%v%v.json", name, time.Now().Hour()))
-	authConfig := cred.Config{
-		Username: username,
-		Password: password,
-	}
-	err := authConfig.Save(credentialFile)
-	return credentialFile, err
-}
+
 
 func GetUsername(service *secret.Service, credentials string) (string, error) {
 	var username string
-	credConfig, err := service.GetCredentials(credentials)
+	secret, err := service.Lookup(context.Background(), secret.Resource(credentials))
 	if err != nil {
 		return "", err
 	}
-	username = credConfig.Username
+	generic, ok := secret.Target.(*cred.Generic)
+	if ! ok {
+		return "", fmt.Errorf("unsupported secret type: %T, expected: %T", secret.Target, generic)
+	}
+	username = generic.Username
 	if username == "" {
 		return "", fmt.Errorf("username was empty %v", credentials)
 	}

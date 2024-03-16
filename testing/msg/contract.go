@@ -2,9 +2,9 @@ package msg
 
 import (
 	"fmt"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 )
 
 const defaultTimeoutMs = 10000
@@ -75,7 +75,7 @@ type PushRequest struct {
 	Credentials   string
 	Dest          *Resource
 	Messages      []*Message
-	Source        *url.Resource `description:"source for message data  currently JSON or new line delimitered json are supported that conform []*Message type "`
+	Source        *location.Resource `description:"source for message data  currently JSON or new line delimitered json are supported that conform []*Message type "`
 	TimeoutMs     int
 	UDF           string
 	isInitialized bool

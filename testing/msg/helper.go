@@ -7,8 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/viant/endly"
+	"github.com/viant/scy/cred"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/cred"
 	"strings"
 )
 
@@ -53,7 +53,7 @@ func extractSubPath(aPath, match string) string {
 	return ""
 }
 
-func inferResourceTypeFromCredentialConfig(credConfig *cred.Config) string {
+func inferResourceTypeFromCredentialConfig(credConfig *cred.Generic) string {
 	if credConfig.Key != "" && credConfig.Secret != "" {
 		return ResourceVendorAmazonWebService
 	} else if credConfig.ProjectID != "" {

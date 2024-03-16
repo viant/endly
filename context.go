@@ -3,15 +3,15 @@ package endly
 import (
 	"context"
 	"fmt"
-
 	uuid "github.com/satori/go.uuid"
+	"github.com/viant/afs/url"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/model/msg"
 	"github.com/viant/neatly"
+	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox/url"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -30,15 +30,15 @@ var deferFunctionsKey = (*[]func())(nil)
 
 // Context represents a workflow session context/state
 type Context struct {
-	background      context.Context
-	SessionID       string
+	context   context.Context
+	SessionID string
 	CLIEnabled      bool
 	HasLogger       bool
 	AsyncUnsafeKeys map[interface{}]bool
 	Secrets         *secret.Service
 	Wait            *sync.WaitGroup
 	Listener        msg.Listener
-	Source          *url.Resource
+	Source          *location.Resource
 	state           data.Map
 	Logging         *bool
 	toolbox.Context
@@ -47,11 +47,11 @@ type Context struct {
 }
 
 func (c *Context) Background() context.Context {
-	if c.background != nil {
-		return c.background
+	if c.context != nil {
+		return c.context
 	}
-	c.background = context.Background()
-	return c.background
+	c.context = context.Background()
+	return c.context
 }
 
 // Publish publishes event to listeners, it updates current run details like activity workflow name etc ...
@@ -137,7 +137,7 @@ func (c *Context) SetLogging(flag bool) {
 }
 
 // ExpandResource substitutes any $ expression with the key value from the state map if it is present.
-func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) {
+func (c *Context) ExpandResource(resource *location.Resource) (*location.Resource, error) {
 	if resource == nil {
 		return nil, msg.ReportError(fmt.Errorf("resource  was empty"))
 	}
@@ -151,18 +151,14 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 			if err != nil {
 				continue
 			}
-			var candidateURL = toolbox.URLPathJoin(parentCandidate, resource.URL)
+			var candidateURL = url.Join(parentCandidate, resource.URL)
 			if exists, err := service.Exists(candidateURL); exists && err == nil {
 				resource.URL = candidateURL
 			}
 		}
 	}
-	var result = url.NewResource(c.Expand(resource.URL), c.Expand(resource.Credentials))
-	if result.ParsedURL == nil {
-		return nil, fmt.Errorf("failed to parse URL %v", result.URL)
-	}
-	result.Cache = c.Expand(resource.Cache)
-	result.CacheExpiryMs = resource.CacheExpiryMs
+
+	var result = location.NewResource(c.Expand(resource.URL), location.WithCredentials(c.Expand(resource.Credentials)))
 	result.CustomKey = resource.CustomKey
 	return result, nil
 }
@@ -445,13 +441,13 @@ func NewDefaultState(ctx *Context) data.Map {
 			if ctx.Secrets == nil {
 				return ""
 			}
-			config, err := ctx.Secrets.GetCredentials(key)
+			genericCred, err := ctx.Secrets.GetCredentials(ctx.Background(), key)
 			if err == nil {
 				var result = make(map[string]interface{})
-				if err = toolbox.DefaultConverter.AssignConverted(&result, config); err == nil {
-
+				if err = toolbox.DefaultConverter.AssignConverted(&result, genericCred); err == nil {
+					return data.Map(result)
 				}
-				return data.Map(result)
+
 			}
 			return ""
 		})

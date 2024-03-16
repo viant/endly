@@ -4,15 +4,30 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/endly/model"
-	"github.com/viant/endly/util"
+	"github.com/viant/endly/model/location"
+	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/ssh"
 	"github.com/viant/toolbox/url"
 	"strings"
 )
 
-var CommandErrors = []string{util.CommandNotFound, util.NoSuchFileOrDirectory, util.ErrorIsNotRecoverable}
+
+const defaultTargetURL = "ssh://localhost/"
+
+
+
+var localhostTarget = location.NewResource(defaultTargetURL)
+
+// GetServiceTarget sets default target URL, credentials if emtpy
+func GetServiceTarget(target *location.Resource) *location.Resource {
+	if target != nil && target.Credentials != "" {
+		return target
+	}
+	return localhostTarget
+}
+
+
 
 // Options represents an execution options
 type Options struct {
@@ -27,6 +42,7 @@ type Options struct {
 	CheckError  bool              `description:"check after command execution if status is <> 0, then throws error"`
 	AutoSudo    bool              `description:"when this flag is set, in case of permission denied error for non root user retry command with sudo"`
 }
+
 
 // DefaultOptions creates a default execution options
 func DefaultOptions() *Options {
@@ -109,7 +125,7 @@ func NewExtractCommand(command, when string, success, errors []string, extractio
 
 // ExtractRequest represents managed command request
 type ExtractRequest struct {
-	Target *url.Resource `required:"true" description:"host where command runs" ` //execution target - destination where to run a command.
+	Target *location.Resource `required:"true" description:"host where command runs" ` //execution target - destination where to run a command.
 	*Options
 	Commands []*ExtractCommand `description:"command with data extraction instruction "` //extract command
 }
@@ -131,7 +147,7 @@ func (r *ExtractRequest) Init() error {
 }
 
 // Clones clones requst with supplide target
-func (r *ExtractRequest) Clone(target *url.Resource) *ExtractRequest {
+func (r *ExtractRequest) Clone(target *location.Resource) *ExtractRequest {
 	if target == nil {
 		target = r.Target
 	}
@@ -143,7 +159,7 @@ func (r *ExtractRequest) Clone(target *url.Resource) *ExtractRequest {
 }
 
 // NewExtractRequest returns a new command request
-func NewExtractRequest(target *url.Resource, options *Options, commands ...*ExtractCommand) *ExtractRequest {
+func NewExtractRequest(target *location.Resource, options *Options, commands ...*ExtractCommand) *ExtractRequest {
 	return &ExtractRequest{
 		Target:   target,
 		Options:  options,
@@ -153,7 +169,7 @@ func NewExtractRequest(target *url.Resource, options *Options, commands ...*Extr
 
 // SetTargetRequest represents set default target request
 type SetTargetRequest struct {
-	*url.Resource
+	*location.Resource
 }
 
 // SetTargetRequest represents set default target response
@@ -193,7 +209,7 @@ func (c Command) WhenAndCommand() (string, string) {
 
 // RunRequest represents a simple command
 type RunRequest struct {
-	Target *url.Resource `required:"true" description:"host where command runs" ` //execution target - destination where to run a command.
+	Target *location.Resource `required:"true" description:"host where command runs" ` //execution target - destination where to run a command.
 	*Options
 	Commands []Command      `required:"true" description:"command list" `      //list of commands to run
 	Extract  model.Extracts `description:"stdout data extraction instruction"` //Stdout data extraction instruction
@@ -243,7 +259,7 @@ func (r *RunRequest) AsExtractRequest() *ExtractRequest {
 }
 
 // NewRunRequest creates a new request
-func NewRunRequest(target *url.Resource, superUser bool, commands ...string) *RunRequest {
+func NewRunRequest(target *location.Resource, superUser bool, commands ...string) *RunRequest {
 	requestCommands := make([]Command, 0)
 	for _, command := range commands {
 		requestCommands = append(requestCommands, Command(command))
@@ -283,13 +299,12 @@ type RunResponse struct {
 
 // OpenSessionRequest represents an open session request.
 type OpenSessionRequest struct {
-	Target        *url.Resource      //Session is created from target host (servername, port)
+	Target        *location.Resource //Session is created from target host (servername, port)
 	Config        *ssh.SessionConfig //ssh configuration
 	SystemPaths   []string           //system path that are applied to the ssh session
 	Env           map[string]string
 	Transient     bool        //if this flag is true, caller is responsible for closing session, othewise session is closed as context is closed
 	Basedir       string      //capture all ssh service command in supplied dir (for unit test only)
-	ReplayService ssh.Service //use Ssh ReplayService instead of actual SSH service (for unit test only)
 }
 
 // Validate checks if request is valid
@@ -301,7 +316,7 @@ func (r *OpenSessionRequest) Validate() error {
 }
 
 // NewOpenSessionRequest creates a new session if transient flag is true, caller is responsible for closing session, otherwise session is closed as context is closed
-func NewOpenSessionRequest(target *url.Resource, systemPaths []string, env map[string]string, transient bool, basedir string) *OpenSessionRequest {
+func NewOpenSessionRequest(target *location.Resource, systemPaths []string, env map[string]string, transient bool, basedir string) *OpenSessionRequest {
 	if len(systemPaths) == 0 {
 		systemPaths = []string{}
 	}

@@ -2,7 +2,7 @@ package gcp
 
 import (
 	"context"
-	"github.com/viant/toolbox/cred"
+	"github.com/viant/scy/cred"
 	"net/http"
 )
 
@@ -12,7 +12,7 @@ type CtxClient interface {
 	Context() context.Context
 	SetService(client interface{}) error
 	Service() interface{}
-	SetCredConfig(config *cred.Config)
+	SetCredConfig(config *cred.Generic)
 	SetHttpClient(client *http.Client)
 }
 
@@ -20,7 +20,7 @@ type CtxClient interface {
 type AbstractClient struct {
 	context    context.Context
 	scopes     []string
-	CredConfig *cred.Config
+	CredConfig *cred.Generic
 	HttpClinet *http.Client
 	service    interface{}
 }
@@ -33,7 +33,7 @@ func (c *AbstractClient) Context() context.Context {
 	return c.context
 }
 
-func (c *AbstractClient) SetCredConfig(config *cred.Config) {
+func (c *AbstractClient) SetCredConfig(config *cred.Generic) {
 	c.CredConfig = config
 }
 

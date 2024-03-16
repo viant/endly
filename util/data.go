@@ -1,7 +1,10 @@
 package util
 
 import (
+	"context"
 	"fmt"
+	"github.com/viant/afs"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/data/udf"
@@ -210,7 +213,7 @@ func getURIa(URI string) []string {
 
 // If main content has $arg{index} or $args{index}, it will expand with corresponding URIs[index-1]
 // the fist one has full content of the resource, the latter  removes the first '{' and the last '}' characters.
-func expandMapWithArgumentsIfMatched(baseURLs []string, URIs []string, mainResource *url.Resource, mainContent string) (interface{}, error) {
+func expandMapWithArgumentsIfMatched(baseURLs []string, URIs []string, mainResource *location.Resource, mainContent string) (interface{}, error) {
 	if len(URIs) < 2 {
 		return nil, nil
 	}
@@ -224,7 +227,7 @@ func expandMapWithArgumentsIfMatched(baseURLs []string, URIs []string, mainResou
 	return nil, nil
 }
 
-func expandArgumentAsData(baseURLs []string, URIs []string, mainResource *url.Resource, mainContent string) (interface{}, error) {
+func expandArgumentAsData(baseURLs []string, URIs []string, mainResource *location.Resource, mainContent string) (interface{}, error) {
 	result, err := decodeResourceContent(mainResource, mainContent)
 	if err != nil {
 		return nil, err
@@ -242,7 +245,7 @@ func expandArgumentAsData(baseURLs []string, URIs []string, mainResource *url.Re
 	return result, nil
 }
 
-func expandArgumentAsLiterals(baseURLs []string, URIs []string, mainResource *url.Resource, mainContent string) (interface{}, error) {
+func expandArgumentAsLiterals(baseURLs []string, URIs []string, mainResource *location.Resource, mainContent string) (interface{}, error) {
 	var aMap = data.NewMap()
 	for i := 1; i < len(URIs); i++ {
 		var text = ""
@@ -264,7 +267,9 @@ func expandArgumentAsLiterals(baseURLs []string, URIs []string, mainResource *ur
 	return decodeResourceContent(mainResource, mainContent)
 }
 
-func decodeResourceContent(resource *url.Resource, content string) (interface{}, error) {
+
+
+func decodeResourceContent(resource *location.Resource, content string) (interface{}, error) {
 	var result interface{}
 	err := resource.DecoderFactory().Create(strings.NewReader(content)).Decode(&result)
 	if err != nil {
@@ -274,9 +279,9 @@ func decodeResourceContent(resource *url.Resource, content string) (interface{},
 }
 
 // LoadResourceFromBaseURLs loads resource from base URLs and URI, returns the first successfully loaded resource or error
-func LoadResourceFromBaseURLs(baseURLs []string, URI string, result interface{}) (*url.Resource, error) {
+func LoadResourceFromBaseURLs(baseURLs []string, URI string, result interface{}) (*location.Resource, error) {
 	var err error
-	var resource *url.Resource
+	var resource *location.Resource
 
 	for _, baseURL := range baseURLs {
 		resource, err = LoadResource(baseURL, URI, result)
@@ -307,7 +312,7 @@ func LoadResourceFromBaseURLs(baseURLs []string, URI string, result interface{})
 }
 
 // LoadResource load and decode URI into result pointer
-func LoadResource(baseURL, URI string, result interface{}) (*url.Resource, error) {
+func LoadResource(baseURL, URI string, result interface{}) (*location.Resource, error) {
 	if !strings.HasPrefix(URI, "@") {
 		return nil, fmt.Errorf("expected @ prefix but had: %v\n", URI)
 	}
@@ -315,15 +320,15 @@ func LoadResource(baseURL, URI string, result interface{}) (*url.Resource, error
 	if baseURL != "" && (!strings.Contains(URI, ":/") && !strings.HasPrefix(URI, "/")) {
 		URI = toolbox.URLPathJoin(baseURL, URI)
 	}
-	resource := url.NewResource(URI)
+	resource := location.NewResource(URI)
 	var loadError, err error
+	fs := afs.New()
 	for _, ext := range []string{".json", ".yaml", ".yml", ".txt", ""} {
-		resource := url.NewResource(URI + ext)
+		resource := location.NewResource(URI + ext)
 		if stringPointer, ok := result.(*string); ok {
-			text := ""
-			text, err = resource.DownloadText()
+			data, err := fs.DownloadWithURL(context.Background(), resource.URL)
 			if err == nil {
-				*stringPointer = text
+				*stringPointer = string(data)
 				return resource, nil
 			}
 		} else {
@@ -331,7 +336,9 @@ func LoadResource(baseURL, URI string, result interface{}) (*url.Resource, error
 				return resource, nil
 			}
 		}
-		err = ClassifyErrorIfMatched(err)
+		if err != nil {
+			err = ClassifyErrorIfMatched(err)
+		}
 		if !IsNotSuchResourceError(err) {
 			loadError = err
 		}

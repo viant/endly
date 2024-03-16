@@ -1,8 +1,8 @@
 package log
 
 import (
+	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"sort"
 )
 
@@ -11,7 +11,7 @@ type TypesMeta map[string]*TypeMeta
 
 // TypeMeta represents a log type meta
 type TypeMeta struct {
-	Source   *url.Resource
+	Source   *location.Resource
 	LogType  *Type
 	LogFiles map[string]*File
 }
@@ -41,7 +41,7 @@ func (m *TypeMeta) Iterator() toolbox.Iterator {
 }
 
 // NewTypeMeta creates a nre log type meta.
-func NewTypeMeta(source *url.Resource, logType *Type) *TypeMeta {
+func NewTypeMeta(source *location.Resource, logType *Type) *TypeMeta {
 	return &TypeMeta{
 		Source:   source,
 		LogType:  logType,

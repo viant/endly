@@ -19,7 +19,7 @@ func TestDaemonService_Status(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
-		target   *url.Resource
+		target   *location.Resource
 		service  string
 		expected bool
 		pid      int
@@ -97,7 +97,7 @@ func TestDaemonService_Start(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
-		target   *url.Resource
+		target   *location.Resource
 		service  string
 		expected bool
 		pid      int
@@ -190,7 +190,7 @@ func TestDaemonService_Stop(t *testing.T) {
 	var manager = endly.New()
 	var useCases = []struct {
 		baseDir  string
-		target   *url.Resource
+		target   *location.Resource
 		service  string
 		expected bool
 		pid      int

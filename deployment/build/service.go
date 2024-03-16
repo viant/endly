@@ -5,11 +5,12 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/deployment/deploy"
 	"github.com/viant/endly/deployment/sdk"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
+
 	"sync"
 )
 
@@ -38,7 +39,7 @@ func (s *service) getMeta(context *endly.Context, request *Request) (*Meta, erro
 				return nil, err
 			}
 			if workflowService, ok := service.(*workflow.Service); ok {
-				workflowResource, err := workflowService.Dao.NewRepoResource(state, fmt.Sprintf("meta/build/%v.json", request.BuildSpec.Name))
+				workflowResource, err := workflowService.NewRepoResource(context.Background(), state, fmt.Sprintf("meta/build/%v.json", request.BuildSpec.Name))
 				if err != nil {
 					return nil, err
 				}
@@ -51,7 +52,7 @@ func (s *service) getMeta(context *endly.Context, request *Request) (*Meta, erro
 			credentials = mainWorkflow.Source.Credentials
 		}
 		response, err := s.loadMeta(context, &LoadMetaRequest{
-			Source: url.NewResource(metaURL, credentials),
+			Source: location.NewResource(metaURL, location.WithCredentials(credentials)),
 		})
 		if err != nil {
 			return nil, err
@@ -81,7 +82,7 @@ func (s *service) loadMeta(context *endly.Context, request *LoadMetaRequest) (*L
 	}, nil
 }
 
-func (s *service) deployDependencyIfNeeded(context *endly.Context, meta *Meta, spec *Spec, target *url.Resource) error {
+func (s *service) deployDependencyIfNeeded(context *endly.Context, meta *Meta, spec *Spec, target *location.Resource) error {
 	if len(meta.Dependencies) == 0 {
 		return nil
 	}
@@ -197,7 +198,7 @@ func (s *service) build(context *endly.Context, request *Request) (*Response, er
 	}
 	return result, nil
 }
-func newBuildState(buildSepc *Spec, target *url.Resource, request *Request, context *endly.Context) (data.Map, error) {
+func newBuildState(buildSepc *Spec, target *location.Resource, request *Request, context *endly.Context) (data.Map, error) {
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -207,8 +208,8 @@ func newBuildState(buildSepc *Spec, target *url.Resource, request *Request, cont
 	build.Put("version", buildSepc.Version)
 	build.Put("args", buildSepc.Args)
 	build.Put("goal", buildSepc.BuildGoal)
-	build.Put("path", target.ParsedURL.Path)
-	build.Put("host", target.ParsedURL.Host)
+	build.Put("path", target.Path())
+	build.Put("host", target.Host())
 	build.Put("credentials", target.Credentials)
 	build.Put("target", target)
 	build.Put("sdk", buildSepc.Sdk)

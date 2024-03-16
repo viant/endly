@@ -9,8 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/go-errors/errors"
 	"github.com/viant/endly"
+	"github.com/viant/scy/cred"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/data"
 	"os"
 	"reflect"
@@ -20,7 +20,7 @@ import (
 var configKey = (*aws.Config)(nil)
 
 // GetAWSCredentialConfig returns *aws.Config for provided credential
-func GetAWSCredentialConfig(config *cred.Config) (*aws.Config, error) {
+func GetAWSCredentialConfig(config *cred.Generic) (*aws.Config, error) {
 	awsCredentials := credentials.NewStaticCredentials(config.Key, config.Secret, "")
 	_, err := awsCredentials.Get()
 	if err != nil {
@@ -32,7 +32,7 @@ func GetAWSCredentialConfig(config *cred.Config) (*aws.Config, error) {
 	}
 
 	awsConfig := aws.NewConfig().WithRegion(config.Region).WithCredentials(awsCredentials)
-	if config.AccountID == "" {
+	if config.Id == "" {
 		iamSession := session.Must(session.NewSession())
 		iamClient := iam.New(iamSession, awsConfig)
 		output, err := iamClient.GetUser(&iam.GetUserInput{})
@@ -40,7 +40,7 @@ func GetAWSCredentialConfig(config *cred.Config) (*aws.Config, error) {
 			return nil, err
 		}
 		if output.User.Arn != nil {
-			config.AccountID = strings.Split(*output.User.Arn, ":")[4]
+			config.Id = strings.Split(*output.User.Arn, ":")[4]
 		}
 	}
 	return awsConfig, nil
@@ -70,7 +70,7 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}, 
 		}
 		return nil, fmt.Errorf("unable to create clinet %T, credentials attribute was empty", key)
 	}
-	config, err := context.Secrets.GetCredentials(secrets.Credentials)
+	generic, err := context.Secrets.GetCredentials(context.Background(), secrets.Credentials)
 	if err != nil {
 		return nil, err
 	}
@@ -81,40 +81,43 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}, 
 		context.Remove(configKey)
 	}
 
-	awsConfig, err := GetAWSCredentialConfig(config)
+	awsCred, err := GetAWSCredentialConfig(generic)
 	if err != nil {
 		return nil, err
 	}
-	if config.RoleARN != "" {
-		region := config.Region
+	credSession := generic.Session
+	if credSession != nil && credSession.RoleArn != "" {
+		region := generic.Region
 		if region == "" {
 			region = os.Getenv("AWS_REGION")
 		}
 		sess, err := session.NewSession(&aws.Config{
 			Region:      &region,
-			Credentials: credentials.NewStaticCredentials(config.Key, config.Secret, ""),
+			Credentials: credentials.NewStaticCredentials(generic.Key, generic.Secret, ""),
 		})
 		if err != nil {
 			return nil, err
 		}
 		svc := sts.New(sess)
 		result, err := svc.AssumeRole(&sts.AssumeRoleInput{
-			RoleArn:         &config.RoleARN,
+			RoleArn:         &credSession.RoleArn,
 			RoleSessionName: aws.String("endly-e2e"),
 		})
 		if err != nil {
 			return nil, err
 		}
-		awsConfig = awsConfig.WithCredentials(credentials.NewStaticCredentials(*result.Credentials.AccessKeyId, *result.Credentials.SecretAccessKey, *result.Credentials.SessionToken))
+		awsCred = awsCred.WithCredentials(credentials.NewStaticCredentials(*result.Credentials.AccessKeyId, *result.Credentials.SecretAccessKey, *result.Credentials.SessionToken))
 	}
 	state := context.State()
 	awsMap := data.NewMap()
-	awsMap.Put("region", awsConfig.Region)
-	awsMap.Put("accountID", config.AccountID)
+	awsMap.Put("region", generic.Region)
+	awsMap.Put("accountID", generic.Id)
 	state.Put("aws", awsMap)
-	_ = context.Put(configKey, awsConfig)
-	return awsConfig, err
+	_ = context.Put(configKey, awsCred)
+	return awsCred, err
 }
+
+
 
 // GetClient get or creates aws client
 func GetClient(context *endly.Context, provider interface{}, client interface{}) error {

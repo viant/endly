@@ -1,13 +1,14 @@
 package process
 
 import (
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/toolbox/url"
 )
 
 // StartRequest represents a start request
 type StartRequest struct {
-	Target  *url.Resource `required:"true" description:"host where process will be started"`
+	Target  *location.Resource `required:"true" description:"host where process will be started"`
 	Command string        `required:"true" description:"command to start process"`
 	*exec.Options
 	Arguments       []string
@@ -33,7 +34,7 @@ type StartResponse struct {
 
 // StatusRequest represents a status check request
 type StatusRequest struct {
-	Target       *url.Resource
+	Target       *location.Resource
 	Command      string `description:"command identifying a process, by default it is check that command is ps -ef suffix or is terminated by space / or dot "`
 	ExactCommand bool   `description:"if this flag set do not try detect actual command but return all processes matched by command"`
 }
@@ -56,7 +57,7 @@ type Info struct {
 
 // StopRequest represents a stop request
 type StopRequest struct {
-	Target *url.Resource
+	Target *location.Resource
 	Pid    int
 	Input  string `description:"if specified, matches all process PID to stop"`
 }
@@ -72,10 +73,10 @@ func (r *StartRequest) Init() error {
 }
 
 // NewStopRequest creates a stop request
-func NewStopRequest(pid int, target *url.Resource) *StopRequest {
+func NewStopRequest(pid int, target *location.Resource) *StopRequest {
 	return &StopRequest{Target: target, Pid: pid}
 }
 
-func NewStatusRequest(command string, target *url.Resource) *StatusRequest {
+func NewStatusRequest(command string, target *location.Resource) *StatusRequest {
 	return &StatusRequest{Target: target, Command: command}
 }

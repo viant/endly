@@ -1,1 +1,0 @@
-sudo docker-compose -f /Projects/go/workspace/src/github.com/viant/endly/system/docker/test/compose/up/docker-compose.yaml down

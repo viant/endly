@@ -1,4 +1,0 @@
-target: $appTarget
-timeoutMs: 40000
-superUser: true
-commands: $init

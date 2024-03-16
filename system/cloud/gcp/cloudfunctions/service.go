@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/cloud/gcp"
 	"github.com/viant/endly/util"
+	"github.com/viant/scy/cred"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox/url"
 	"google.golang.org/api/cloudfunctions/v1"
 	"io"
 	"io/ioutil"
@@ -35,7 +35,7 @@ type service struct {
 	*endly.AbstractService
 }
 
-func (s *service) expandWithContext(context *endly.Context, credConfig *cred.Config, region, text string) string {
+func (s *service) expandWithContext(context *endly.Context, credConfig *cred.Generic, region, text string) string {
 	state := context.State()
 	gcpNode := data.NewMap()
 	gcpNode.Put("projectID", credConfig.ProjectID)
@@ -110,7 +110,7 @@ func (s *service) get(context *endly.Context, request *GetRequest) (*cloudfuncti
 
 }
 
-func (s *service) getFunctionPackageReader(resource *url.Resource) (io.ReadCloser, error) {
+func (s *service) getFunctionPackageReader(resource *location.Resource) (io.ReadCloser, error) {
 	storageService, err := storage.NewServiceForURL(resource.URL, resource.Credentials)
 	if err != nil {
 		return nil, err

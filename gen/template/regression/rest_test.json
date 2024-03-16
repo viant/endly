@@ -1,6 +1,0 @@
-{
-  "URL": "$url",
-  "Method": "$method",
-  "Request": "$request",
-  "Expect": "$expect"
-}

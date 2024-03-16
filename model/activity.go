@@ -24,6 +24,7 @@ type Activity struct {
 	Logging         *bool
 }
 
+
 // FormatTag return a formatted tag
 func (a *Activity) FormatTag() string {
 	if a.TagIndex != "" {

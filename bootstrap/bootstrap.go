@@ -1,9 +1,13 @@
 package bootstrap
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/viant/afs"
+	"github.com/viant/endly/model/location"
+	"github.com/viant/scy"
 	"sort"
 
 	"github.com/viant/endly/util"
@@ -24,14 +28,14 @@ import (
 	_ "github.com/viant/afsc/aws"
 	_ "github.com/viant/afsc/gcp"
 	_ "github.com/viant/endly/system/secret"
+	"github.com/viant/scy/cred/secret/term"
 	_ "github.com/viant/scy/kms/blowfish"
 	_ "github.com/viant/scy/kms/gcp"
 
 	//cgo _ "github.com/alexbrainman/odbc"
 	//cgo _"github.com/mattn/go-oci8"
 
-	_ "github.com/viant/endly/gen/static"
-	_ "github.com/viant/endly/shared/static" //load external resource like .csv .json files to mem storage
+	_ "github.com/viant/endly/shared" //load external resource like .csv .json files to mem storage
 
 	_ "github.com/viant/endly/migrator"
 	_ "github.com/viant/endly/workflow"
@@ -87,43 +91,23 @@ import (
 	_ "github.com/viant/endly/system/cloud/gcp/run"
 	_ "github.com/viant/endly/system/cloud/gcp/storage"
 
-	_ "github.com/viant/endly/system/kubernetes"
-	_ "github.com/viant/endly/system/kubernetes/apps"
-	_ "github.com/viant/endly/system/kubernetes/autoscaling"
-	_ "github.com/viant/endly/system/kubernetes/batch"
-	_ "github.com/viant/endly/system/kubernetes/core"
-	_ "github.com/viant/endly/system/kubernetes/extensions"
-	_ "github.com/viant/endly/system/kubernetes/networking"
-	_ "github.com/viant/endly/system/kubernetes/policy"
-	_ "github.com/viant/endly/system/kubernetes/rbac"
-	_ "github.com/viant/endly/system/kubernetes/settings"
-	_ "github.com/viant/endly/system/kubernetes/storage"
-
 	_ "github.com/viant/endly/system/daemon"
 	_ "github.com/viant/endly/system/docker"
-	_ "github.com/viant/endly/system/docker/ssh"
 	_ "github.com/viant/endly/system/exec"
-	_ "github.com/viant/endly/system/network"
 	_ "github.com/viant/endly/system/process"
 	_ "github.com/viant/endly/system/storage"
 
-	"bufio"
-	"errors"
-
 	"github.com/viant/endly"
 	"github.com/viant/endly/cli"
-	"github.com/viant/endly/gen/web"
 	"github.com/viant/endly/meta"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/workflow"
+	"github.com/viant/scy/cred"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/url"
-	"golang.org/x/crypto/ssh/terminal"
 
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -142,7 +126,6 @@ func init() {
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 
 	flag.String("r", "run", "<path/url to workflow run request in YAML or JSON format>")
-	flag.String("w", "manager", "<workflow name>  if both -r or -p and -w are specified, -w is ignored")
 	flag.String("i", "", "<coma separated tagID list> to filter")
 
 	flag.String("t", "*", "<task/s to run>, t='?' to list all tasks for selected workflow")
@@ -228,11 +211,6 @@ func Bootstrap() {
 		}
 	}
 
-	if toolbox.AsBoolean(flagset["g"]) {
-		openTestGenerator()
-		return
-	}
-
 	if _, ok := flagset["h"]; ok {
 		printHelp()
 		return
@@ -258,7 +236,7 @@ func Bootstrap() {
 	}
 
 	if run, ok := flagset["run"]; ok {
-		err := runAction(run, flagset)
+		err := runAction(context.Background(), run, flagset)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -277,17 +255,7 @@ func Bootstrap() {
 		}
 
 		if request == nil {
-
-			flagset["w"] = flag.Lookup("w").Value.String()
-			if request, err = getRunRequestWithOptions(flagset); err == nil {
-				delete(flagset, "r")
-			}
-			if err != nil {
-				if !strings.Contains(err.Error(), "no such file or directory") {
-					log.Fatal(err)
-				}
-				request, _ = getRunRequestWithOptions(flagset)
-			}
+			request, err = getRunRequestWithOptions(flagset)
 		}
 	}
 	if request == nil {
@@ -306,8 +274,8 @@ func Bootstrap() {
 	runWorkflow(request, ok && toolbox.AsBoolean(interactive))
 }
 
-func runAction(run string, flagset map[string]string) error {
-	request, err := loadInlineWorkflow("mem://github.com/viant/endly/workflow/adhoc.yaml")
+func runAction(ctx context.Context, run string, flagset map[string]string) error {
+	request, err := loadInlineWorkflow(ctx, "mem://github.com/viant/endly/workflow/adhoc.yaml")
 	if err != nil {
 		return err
 	}
@@ -401,50 +369,40 @@ func makeInteractive() {
 	os.Exit(code)
 }
 
-func openTestGenerator() {
-
-	baseURL := fmt.Sprintf("mem://%v", endly.Namespace)
-	service := web.NewService(
-		toolbox.URLPathJoin(baseURL, "template"),
-		toolbox.URLPathJoin(baseURL, "asset"),
-	)
-	web.NewRouter(service, func(request *http.Request) {})
-	go http.ListenAndServe(":8071", nil)
-	time.Sleep(time.Second)
-	openbrowser("http://127.0.0.1:8071/")
-	makeInteractive()
-
-}
-
 func generateSecret(credentialsFile string) {
 	secretPath := path.Join(os.Getenv("HOME"), ".secret")
 	if !toolbox.FileExists(secretPath) {
 		os.Mkdir(secretPath, 0744)
 	}
-	username, password, err := credentials()
+	username, password, err := term.ReadUserAndPassword(term.ReadingCredentialTimeout)
 	if err != nil {
 		fmt.Printf("\n")
 		log.Fatal(err)
 	}
 	fmt.Println("")
-	config := &cred.Config{
-		Username: username,
-		Password: password,
+	genericCred := &cred.Generic{
+		SSH: cred.SSH{
+			Basic: cred.Basic{
+				Username: username,
+				Password: password,
+			},
+		},
 	}
+
 	var privateKeyPath = flag.Lookup("k").Value.String()
 	privateKeyPath = strings.Replace(privateKeyPath, "~", os.Getenv("HOME"), 1)
-
 	if endpoint := flag.Lookup("endpoint"); endpoint != nil {
-		config.Endpoint = endpoint.Value.String()
+		genericCred.Endpoint = endpoint.Value.String()
 	}
-
 	if privateKeyPath != "" && !toolbox.FileExists(privateKeyPath) {
 		log.Fatalf("unable to locate private key: %v \n", privateKeyPath)
 	}
-	config.PrivateKeyPath = privateKeyPath
+	genericCred.PrivateKeyPath = privateKeyPath
 	var secretFile = path.Join(secretPath, fmt.Sprintf("%v.json", credentialsFile))
-	err = config.Save(secretFile)
-	if err != nil {
+	scyService := scy.New()
+	resource := scy.NewResource(genericCred, secretFile, "blowfish://default")
+	secret := scy.NewSecret(genericCred, resource)
+	if err = scyService.Store(context.Background(), secret); err != nil {
 		fmt.Printf("\n")
 		log.Fatal(err)
 	}
@@ -454,28 +412,6 @@ func enableDiagnostics() {
 	if err := agent.Listen(agent.Options{}); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func credentials() (string, string, error) {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter Username: ")
-	username, _ := reader.ReadString('\n')
-	fmt.Print("Enter Password: ")
-	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
-	if err != nil {
-		log.Fatalf("failed to read password %v", err)
-	}
-	fmt.Print("\nRetype Password: ")
-	bytePassword2, err := terminal.ReadPassword(int(syscall.Stdin))
-	if err != nil {
-		log.Fatalf("failed to read password %v", err)
-	}
-
-	password := string(bytePassword)
-	if string(bytePassword2) != password {
-		return "", "", errors.New("Password did not match")
-	}
-	return strings.TrimSpace(username), strings.TrimSpace(password), nil
 }
 
 func printWorkflowTasks(request *workflow.RunRequest) {
@@ -648,14 +584,7 @@ func getWorkflow(request *workflow.RunRequest) (*model.Workflow, error) {
 		name = strings.Replace(name, path.Ext(name), "", 1)
 		return request.AsWorkflow(name, baseURL)
 	}
-	manager := endly.New()
-	context := manager.NewContext(nil)
-	var response = &workflow.LoadResponse{}
-	var source = workflow.GetResource(workflow.NewDao(), context.State(), request.URL)
-	if err := endly.Run(context, &workflow.LoadRequest{Source: source}, response); err != nil {
-		return nil, err
-	}
-	return response.Workflow, nil
+	return nil, fmt.Errorf("only yaml workflow are supported")
 }
 
 func printWorkflow(request *workflow.RunRequest) {
@@ -706,25 +635,21 @@ func printVersion() {
 	fmt.Fprintf(os.Stdout, "%v %v\n", endly.AppName, endly.GetVersion())
 }
 
-func getRunRequestURL(URL string) (*url.Resource, error) {
-	resource := url.NewResource(URL)
+func getRunRequestURL(ctx context.Context, URL string) (*location.Resource, error) {
+	resource := location.NewResource(URL)
 	var candidates = make([]string, 0)
-	if resource.ParsedURL != nil && path.Ext(resource.ParsedURL.Path) == "" {
+	if path.Ext(resource.Path()) == "" {
 		candidates = append(candidates, URL+".json", URL+".yaml")
 	} else {
 		candidates = append(candidates, URL)
 	}
+	fs := afs.New()
 
 	var err error
 	for _, candidate := range candidates {
-		resource = url.NewResource(candidate)
-		_, err = resource.Download()
-		if err == nil {
+		resource = location.NewResource(candidate)
+		if ok, _ := fs.Exists(ctx, resource.URL); ok {
 			break
-		}
-		resource = url.NewResource(fmt.Sprintf("mem://%v/req/%v", endly.Namespace, candidate))
-		if _, memError := resource.Download(); memError != nil {
-			continue
 		}
 	}
 	return resource, err
@@ -733,16 +658,15 @@ func getRunRequestURL(URL string) (*url.Resource, error) {
 func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, error) {
 	var request *workflow.RunRequest
 	var err error
-	if value, ok := flagset["w"]; ok {
-		request = &workflow.RunRequest{
-			URL: value,
-		}
-	}
 	if value, ok := flagset["r"]; ok {
-		if request, err = loadInlineWorkflow(value); err != nil {
+		if path.Ext(value) == ""{
+			value += ".yaml"
+		}
+		if request, err = loadInlineWorkflow(context.Background(), value); err != nil {
 			return nil, err
 		}
 	}
+
 	if request == nil {
 		return nil, nil
 	}
@@ -763,11 +687,12 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 	return request, err
 }
 
-func loadInlineWorkflow(URL string) (*workflow.RunRequest, error) {
-	resource, err := getRunRequestURL(URL)
+func loadInlineWorkflow(ctx context.Context, URL string) (*workflow.RunRequest, error) {
+	resource, err := getRunRequestURL(ctx, URL)
 	if err != nil {
 		return nil, err
 	}
+
 	request := &workflow.RunRequest{}
 	err = resource.Decode(request)
 	if err != nil {
@@ -783,7 +708,7 @@ func loadInlineWorkflow(URL string) (*workflow.RunRequest, error) {
 }
 
 func updateBaseRunWithOptions(request *workflow.RunRequest, flagset map[string]string) error {
-	currentPath := url.NewResource("")
+	currentPath := location.NewResource("")
 	parentURL, _ := toolbox.URLSplit(currentPath.URL)
 	if request.Source != nil {
 		parentURL, _ = toolbox.URLSplit(request.Source.URL)

@@ -6,7 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model"
-	_ "github.com/viant/endly/shared/static"
+	"github.com/viant/endly/model/location"
+	_ "github.com/viant/endly/shared"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
 	endpoint "github.com/viant/endly/testing/endpoint/http"
@@ -38,7 +39,7 @@ func TestSeleniumService_Start(t *testing.T) {
 		baseDir     string
 		DataURLs    []string
 		DataPayload []byte
-		target      *url.Resource
+		target      *location.Resource
 		request     *runner.StartRequest
 		Pid         int
 	}{

@@ -1,15 +1,15 @@
 [
   {
-    "ID": "$sequencer.APP_USERS/${tag}.1",
+    "ID": "$Sequences.APP_USERS/${tag}.1",
     "ACCOUNT_ID": 197,
     "FIRST_NAME": "Dept",
     "PHONE": "PHONE_2",
-    "STR_ID": "STR_ID_${sequencer.APP_USERS}"
+    "STR_ID": "STR_ID_${Sequences.APP_USERS}"
   },
   {
-    "ID": "$sequencer.APP_USERS/${tag}.2",
+    "ID": "$Sequences.APP_USERS/${tag}.2",
     "ACCOUNT_ID": 197,
     "PHONE": "PHONE_2",
-    "STR_ID": "STR_ID_${sequencer.APP_USERS}"
+    "STR_ID": "STR_ID_${Sequences.APP_USERS}"
   }
 ]

@@ -4,12 +4,12 @@ import (
 	"errors"
 	"github.com/viant/afs"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 )
 
 // RemoveRequest represents a resources Remove request
 type RemoveRequest struct {
-	Assets []*url.Resource `required:"true" description:"resources to Remove"`
+	Assets []*location.Resource `required:"true" description:"resources to Remove"`
 }
 
 // RemoveResponse represents a resources Remove response, it returns url of all resource that have been removed.
@@ -39,7 +39,7 @@ func (s *service) remove(context *endly.Context, request *RemoveRequest, respons
 }
 
 // removeResource removes supplied resource
-func removeResource(context *endly.Context, resource *url.Resource, fs afs.Service) (*url.Resource, error) {
+func removeResource(context *endly.Context, resource *location.Resource, fs afs.Service) (*location.Resource, error) {
 	resource, storageOpts, err := GetResourceWithOptions(context, resource)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func removeResource(context *endly.Context, resource *url.Resource, fs afs.Servi
 }
 
 // NewRemoveRequest creates a new Remove request
-func NewRemoveRequest(assets ...*url.Resource) *RemoveRequest {
+func NewRemoveRequest(assets ...*location.Resource) *RemoveRequest {
 	return &RemoveRequest{
 		Assets: assets,
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/go-errors/errors"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
 	"io"
@@ -32,12 +33,12 @@ func (s *service) build(context *endly.Context, request *BuildRequest) (*BuildRe
 	var buildResponse = &BuildResponse{
 		Stdout: make([]string, 0),
 	}
-	location := request.Path
+	loc := request.Path
 
-	if !toolbox.IsDirectory(location) {
-		location, _ = path.Split(request.Path)
+	if !toolbox.IsDirectory(loc) {
+		loc, _ = path.Split(request.Path)
 	}
-	tarReader, err := AsTarReader(url.NewResource(location), false)
+	tarReader, err := AsTarReader(location.NewResource(loc), false)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +78,7 @@ func (s *service) expandSecrets(context *endly.Context, request *RunRequest) err
 	}
 	var err error
 	for i, env := range request.Config.Env {
-		request.Config.Env[i], err = context.Secrets.Expand(env, request.Secrets)
+		request.Config.Env[i], err = context.Secrets.Expand(context.Background(), env, request.Secrets)
 		if err != nil {
 			return err
 		}
@@ -465,7 +466,7 @@ func (s *service) copyFromContainer(context *endly.Context, name, source, dest s
 }
 
 func (s *service) copyToContainer(context *endly.Context, name, source, dest string) error {
-	reader, err := AsTarReader(url.NewResource(source), true)
+	reader, err := AsTarReader(location.NewResource(source), true)
 	if err != nil {
 		return err
 	}

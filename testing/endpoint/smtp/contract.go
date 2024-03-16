@@ -1,10 +1,10 @@
 package smtp
 
 import (
+	"context"
 	"fmt"
 	"github.com/viant/assertly"
-	"github.com/viant/toolbox/secret"
-	"os"
+	"github.com/viant/scy/cred/secret"
 )
 
 // ListenRequest represents a new listen request
@@ -29,10 +29,10 @@ func (r *ListenRequest) Init() error {
 		r.MaxBodySize = 1024 * 1024
 	}
 	if len(r.Users) > 0 {
-		secretService := secret.New(os.Getenv("HOME"), false)
+		secretService := secret.New()
 		for _, user := range r.Users {
 			if user.Credentials != "" && user.Password == "" {
-				if cred, err := secretService.GetCredentials(user.Credentials); err == nil {
+				if cred, err := secretService.GetCredentials(context.Background(), user.Credentials); err == nil {
 					user.Password = cred.Password
 					if user.Username == "" {
 						user.Username = cred.Username

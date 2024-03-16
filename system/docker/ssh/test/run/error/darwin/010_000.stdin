@@ -1,1 +1,0 @@
-sudo docker run --name testMysql01 -e MYSQL_ROOT_PASSWORD=dev -v /tmp/my.cnf:/etc/my.cnf -p 3306:3306  -d mysql:5.6 

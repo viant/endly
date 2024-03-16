@@ -24,7 +24,7 @@ func (s *service) send(context *endly.Context, request *SendRequest) (*SendRespo
 		return nil, err
 	}
 
-	credConfig, err := context.Secrets.GetCredentials(target.Credentials)
+	credConfig, err := context.Secrets.GetCredentials(context.Background(), target.Credentials)
 	if err != nil {
 		return nil, err
 	}

@@ -1,5 +1,0 @@
-target:
-  credentials: localhost
-  URL: ssh://127.0.0.1/
-commands:
-  - echo 'hi from $WorkingDirectory()'

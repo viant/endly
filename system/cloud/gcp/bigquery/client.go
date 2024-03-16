@@ -49,6 +49,6 @@ func GetClient(context *endly.Context) (*CtxClient, error) {
 	client := &CtxClient{
 		AbstractClient: &gcp.AbstractClient{},
 	}
-	err := gcp.GetClient(context, bigquery.New, clientKey, &client, bigquery.CloudPlatformScope, bigquery.BigqueryScope, bigquery.BigqueryInsertdataScope)
+	err := gcp.GetClient(context, bigquery.NewService, clientKey, &client, bigquery.CloudPlatformScope, bigquery.BigqueryScope, bigquery.BigqueryInsertdataScope)
 	return client, err
 }

@@ -5,8 +5,7 @@ import (
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
-	"strings"
+	"github.com/viant/endly/model/location"
 )
 
 // Rule represents transfer rule
@@ -14,12 +13,12 @@ type Rule struct {
 	Matcher  *Matcher
 	Compress bool `description:"flag to compress asset before sending over wire and to decompress (this option is only supported on scp or file scheme)"` //flag to compress asset before sending over wirte and to decompress (this option is only supported on scp or file proto)
 	Substitution
-	Source *url.Resource `required:"true" description:"source asset or directory"`
-	Dest   *url.Resource `required:"true" description:"destination asset or directory"`
+	Source *location.Resource `required:"true" description:"source asset or directory"`
+	Dest   *location.Resource `required:"true" description:"destination asset or directory"`
 }
 
 // New creates a new transfer
-func New(source, dest *url.Resource, compress, expand bool, replace map[string]string) *Rule {
+func New(source, dest *location.Resource, compress, expand bool, replace map[string]string) *Rule {
 	return &Rule{
 		Source:   source,
 		Dest:     dest,
@@ -75,20 +74,6 @@ func (r *Rule) DestStorageOpts(context *endly.Context, udfModifier option.Modifi
 
 // Init initialises transfer
 func (r *Rule) Init() error {
-	if r.Source != nil {
-		if !strings.HasPrefix(r.Source.URL, "$") {
-			if err := r.Source.Init(); err != nil {
-				return err
-			}
-		}
-	}
-	if r.Dest != nil {
-		if !strings.HasPrefix(r.Dest.URL, "$") {
-			if err := r.Dest.Init(); err != nil {
-				return err
-			}
-		}
-	}
 	return nil
 }
 

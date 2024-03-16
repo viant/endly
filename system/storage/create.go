@@ -3,11 +3,12 @@ package storage
 import (
 	"errors"
 	"github.com/viant/afs/option"
+	"github.com/viant/endly/model/location"
 
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/storage"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
+
 	"io"
 	"os"
 	"strings"
@@ -19,7 +20,7 @@ type CreateRequest struct {
 	Region    string        `description:"cloud storage region"`
 	Mode      int           `description:"os.FileMode"`
 	IsDir     bool          `description:"is directory flag"`
-	Dest      *url.Resource `required:"true" description:"destination asset or directory"` //target URL with credentials
+	Dest      *location.Resource `required:"true" description:"destination asset or directory"` //target URL with credentials
 }
 
 // CreateResponse represents a Upload response

@@ -246,7 +246,7 @@ func TestOpenSessionRequest_Validate(t *testing.T) {
 		assert.NotNil(t, req.Validate())
 	}
 	{
-		var req = NewOpenSessionRequest("forefox", &url.Resource{})
+		var req = NewOpenSessionRequest("forefox", &location.Resource{})
 		assert.NotNil(t, req.Validate())
 	}
 	{

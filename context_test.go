@@ -30,7 +30,7 @@ func TestContext_Expand_Resource(t *testing.T) {
 
 	_, err := context.ExpandResource(nil)
 	assert.NotNil(t, err)
-	_, err = context.ExpandResource(&url.Resource{})
+	_, err = context.ExpandResource(&location.Resource{})
 	assert.NotNil(t, err)
 
 	{

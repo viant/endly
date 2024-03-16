@@ -14,11 +14,11 @@ pipeline:
     datastore: db1
     tables: $StringKeys(${data.dbsetup})
     post:
-      - sequencer: $Sequences
+      - Sequences: $Sequences
 
   printSequences:
     action: print
-    message: $AsJSON($sequencer)
+    message: $AsJSON($Sequences)
 
   allocateSequences:
     action: nop

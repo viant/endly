@@ -6,13 +6,13 @@ import (
 	"github.com/viant/afs"
 	storage2 "github.com/viant/afs/storage"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/storage"
 	"github.com/viant/endly/system/storage/copy"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 	"strings"
 	"sync"
 )
@@ -27,9 +27,10 @@ type service struct {
 	*endly.AbstractService
 	registry map[string]*Meta
 	mutex    *sync.RWMutex
+	fs afs.Service
 }
 
-func (s *service) extractVersion(context *endly.Context, target *url.Resource, deployment *Deployment) (string, error) {
+func (s *service) extractVersion(context *endly.Context, target *location.Resource, deployment *Deployment) (string, error) {
 
 	if deployment.VersionCheck == nil {
 		return "", nil
@@ -47,7 +48,7 @@ func (s *service) extractVersion(context *endly.Context, target *url.Resource, d
 	return "", nil
 }
 
-func (s *service) deployAddition(context *endly.Context, target *url.Resource, addition *Addition) (err error) {
+func (s *service) deployAddition(context *endly.Context, target *location.Resource, addition *Addition) (err error) {
 	if addition != nil {
 		if len(addition.Commands) > 0 {
 			if err = endly.Run(context, addition.AsRunRequest(target), nil); err != nil {
@@ -65,7 +66,7 @@ func (s *service) deployAddition(context *endly.Context, target *url.Resource, a
 	return nil
 }
 
-func (s *service) matchDeployment(context *endly.Context, version string, target *url.Resource, meta *Meta) (*TargetMeta, error) {
+func (s *service) matchDeployment(context *endly.Context, version string, target *location.Resource, meta *Meta) (*TargetMeta, error) {
 	execService, err := context.Service(exec.ServiceID)
 	if err != nil {
 		return nil, err
@@ -79,7 +80,7 @@ func (s *service) matchDeployment(context *endly.Context, version string, target
 	sessionID := exec.SessionID(context, target)
 	operatingSystem := exec.OperatingSystem(context, sessionID)
 	if operatingSystem == nil {
-		return nil, fmt.Errorf("failed to detect operating system on %v", target.Host())
+		return nil, fmt.Errorf("failed to detect operating system on %v", target.Hostname())
 	}
 
 	deployment := meta.Match(operatingSystem, version)
@@ -89,14 +90,14 @@ func (s *service) matchDeployment(context *endly.Context, version string, target
 	return deployment, nil
 }
 
-func (s *service) checkIfDeployedOnSession(context *endly.Context, target *url.Resource, request *Request) bool {
+func (s *service) checkIfDeployedOnSession(context *endly.Context, target *location.Resource, request *Request) bool {
 	session, err := exec.TerminalSession(context, target)
 	if err != nil {
 		return false
 	}
 	session.Mutex.RLock()
 	defer session.Mutex.RUnlock()
-	var key = request.AppName + target.ParsedURL.Path
+	var key = request.AppName + target.Path()
 	deployedVersion, has := session.Deployed[key]
 	if !has {
 		return false
@@ -107,7 +108,7 @@ func (s *service) checkIfDeployedOnSession(context *endly.Context, target *url.R
 	return MatchVersion(request.Version, deployedVersion)
 }
 
-func (s *service) checkIfDeployedOnSystem(context *endly.Context, target *url.Resource, deploymentTarget *TargetMeta, request *Request) (bool, error) {
+func (s *service) checkIfDeployedOnSystem(context *endly.Context, target *location.Resource, deploymentTarget *TargetMeta, request *Request) (bool, error) {
 
 	if deploymentTarget.Deployment.VersionCheck != nil {
 		actualVersion, err := s.extractVersion(context, target, deploymentTarget.Deployment)
@@ -131,14 +132,14 @@ func (s *service) checkIfDeployedOnSystem(context *endly.Context, target *url.Re
 	return service.Exists(context.Background(), dest.URL, storageOpts...)
 }
 
-func (s *service) updateSessionDeployment(context *endly.Context, target *url.Resource, app, version string) error {
+func (s *service) updateSessionDeployment(context *endly.Context, target *location.Resource, app, version string) error {
 	session, err := exec.TerminalSession(context, target)
 	if err != nil {
 		return err
 	}
 	session.Mutex.Lock()
 	defer session.Mutex.Unlock()
-	key := app + target.ParsedURL.Path
+	key := app + target.Path()
 	session.Deployed[key] = version
 	return nil
 }
@@ -213,14 +214,14 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 
 			if s.checkResource(context, source, fs, storageOpts) {
 				exists = true
-				source = url.NewResource(context.Expand(source.URL), source.Credentials)
+				source = location.NewResource(context.Expand(source.URL), location.WithCredentials(source.Credentials))
 				break
 			}
 		}
 		if !exists {
 			artifact.Put(versionKey, request.Version)
 			if s.checkResource(context, source, fs, storageOpts) {
-				source = url.NewResource(context.Expand(source.URL), source.Credentials)
+				source = location.NewResource(context.Expand(source.URL), location.WithCredentials(source.Credentials))
 			}
 		}
 	}
@@ -232,13 +233,13 @@ func (s *service) discoverTransfer(context *endly.Context, request *Request, met
 	return transfer, nil
 }
 
-func (s *service) checkResource(context *endly.Context, source *url.Resource, fs afs.Service, storageOpts []storage2.Option) bool {
+func (s *service) checkResource(context *endly.Context, source *location.Resource, fs afs.Service, storageOpts []storage2.Option) bool {
 	var sourceURL = context.Expand(source.URL)
 	exists, _ := fs.Exists(context.Background(), sourceURL, storageOpts...)
 	return exists
 }
 
-func (s *service) deployDependenciesIfNeeded(context *endly.Context, target *url.Resource, dependencies []*Dependency) (err error) {
+func (s *service) deployDependenciesIfNeeded(context *endly.Context, target *location.Resource, dependencies []*Dependency) (err error) {
 	if len(dependencies) == 0 {
 		return nil
 	}
@@ -255,7 +256,7 @@ func (s *service) deployDependenciesIfNeeded(context *endly.Context, target *url
 	return err
 }
 
-func (s *service) updateOperatingSystem(context *endly.Context, target *url.Resource) {
+func (s *service) updateOperatingSystem(context *endly.Context, target *location.Resource) {
 	sessionID := exec.SessionID(context, target)
 	operatingSystem := exec.OperatingSystem(context, sessionID)
 	if operatingSystem != nil {
@@ -270,7 +271,7 @@ func (s *service) updateOperatingSystem(context *endly.Context, target *url.Reso
 	}
 }
 
-func (s *service) updateDeployState(context *endly.Context, target *url.Resource) {
+func (s *service) updateDeployState(context *endly.Context, target *location.Resource) {
 
 	state := context.State()
 
@@ -278,7 +279,7 @@ func (s *service) updateDeployState(context *endly.Context, target *url.Resource
 	state.Put("deploy", deploySetting)
 
 	targetSettings := data.NewMap()
-	targetSettings.Put("host", target.ParsedURL.Host)
+	targetSettings.Put("host", target.Hostname())
 	targetSettings.Put("URL", target.URL)
 	targetSettings.Put("credentials", target.Credentials)
 	deploySetting.Put("target", targetSettings)
@@ -300,8 +301,8 @@ func (s *service) deploy(context *endly.Context, request *Request) (*Response, e
 		return response, nil
 	}
 
-	if target.ParsedURL.Path != "" {
-		if err := endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.ParsedURL.Path)), nil); err != nil {
+	if target.Path() != "" {
+		if err := endly.Run(context, exec.NewRunRequest(target, false, fmt.Sprintf("cd %v", target.Path())), nil); err != nil {
 			if err := endly.Run(context, exec.NewRunRequest(target, false, "cd /"), nil); err != nil {
 				return nil, err
 			}
@@ -396,7 +397,7 @@ func (s *service) getMeta(context *endly.Context, request *Request) (*Meta, erro
 	s.mutex.RLock()
 	result, hasMeta := s.registry[request.AppName]
 	s.mutex.RUnlock()
-	var state = context.State()
+
 	if !hasMeta {
 		var metaURL = request.MetaURL
 		if metaURL == "" {
@@ -405,12 +406,11 @@ func (s *service) getMeta(context *endly.Context, request *Request) (*Meta, erro
 				return nil, err
 			}
 			if workflowService, ok := service.(*workflow.Service); ok {
-				workflowResource, err := workflowService.Dao.NewRepoResource(state, fmt.Sprintf("meta/deployment/%v.json", request.AppName))
+				workflowResource, err := workflowService.NewRepoResource(context.Background(), context.State(), fmt.Sprintf("meta/deployment/%v.json", request.AppName))
 				if err != nil {
 					return nil, err
 				}
 				metaURL = workflowResource.URL
-
 			}
 		}
 		var credentials = ""
@@ -419,7 +419,7 @@ func (s *service) getMeta(context *endly.Context, request *Request) (*Meta, erro
 			credentials = mainWorkflow.Source.Credentials
 		}
 		response, err := s.loadMeta(context, &LoadMetaRequest{
-			Source: url.NewResource(metaURL, credentials),
+			Source: location.NewResource(metaURL, location.WithCredentials(credentials)),
 		})
 		if err != nil {
 			return nil, err
@@ -490,6 +490,7 @@ func (s *service) registerRoutes() {
 // New creates a new deployment service
 func New() endly.Service {
 	var result = &service{
+		fs:			  afs.New(),
 		AbstractService: endly.NewAbstractService(ServiceID),
 		mutex:           &sync.RWMutex{},
 		registry:        make(map[string]*Meta),

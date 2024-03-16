@@ -1,5 +1,0 @@
-REPOSITORY                   TAG                 IMAGE ID            CREATED             SIZE
-aerospike/aerospike-server   latest              2a9043089b47        3 weeks ago         201MB
-memcached                    alpine              7934b99fd018        3 weeks ago         7.02MB
-mysql                        5.6                 96dc914914f5        3 weeks ago         299MB
-mysql                        5.7                 5709795eeffa        3 weeks ago         408MB

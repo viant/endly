@@ -1,4 +1,0 @@
-target: $buildTarget
-timeoutMs: 40000
-superUser: $superUser
-commands: $init

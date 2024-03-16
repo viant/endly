@@ -4,9 +4,9 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox/url"
 	"io"
 	"io/ioutil"
 	"os"
@@ -14,7 +14,7 @@ import (
 )
 
 // AsTarReader creates a tar reader for supplied URL
-func AsTarReader(resource *url.Resource, includeOwnerDir bool) (io.Reader, error) {
+func AsTarReader(resource *location.Resource, includeOwnerDir bool) (io.Reader, error) {
 	storageService, err := storage.NewServiceForURL(resource.URL, resource.Credentials)
 	if err != nil {
 		return nil, err

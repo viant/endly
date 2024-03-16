@@ -1,5 +1,0 @@
-target:
-  URL: ssh://127.0.0.1/
-  credentials: localhost
-repository: mysql
-tag: 5.6

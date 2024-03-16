@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/viant/gosh"
 	"github.com/viant/toolbox"
 	"math"
 	"strings"
@@ -8,12 +9,8 @@ import (
 
 // Os represents an Os
 type OperatingSystem struct {
-	System       string
-	Name         string
-	Hardware     string
-	Architecture string
-	Arch         string //architecture abbreviation
-	Version      string
+	*gosh.OSInfo
+	*gosh.HardwareInfo
 }
 
 // Matches returns true if operating system matches provided target

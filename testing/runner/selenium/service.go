@@ -7,13 +7,13 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/deployment/deploy"
 	"github.com/viant/endly/deployment/sdk"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/endly/system/process"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 	"strings"
 	"time"
 )
@@ -226,7 +226,7 @@ func (s *service) close(context *endly.Context, request *CloseSessionRequest) (*
 	return response, err
 }
 
-func (s *service) deployServerIfNeeded(context *endly.Context, request *StartRequest, target *url.Resource) (*StartResponse, error) {
+func (s *service) deployServerIfNeeded(context *endly.Context, request *StartRequest, target *location.Resource) (*StartResponse, error) {
 	deploymentService, _ := context.Service(deploy.ServiceID)
 
 	deployServerResponse := deploymentService.Run(context, &deploy.Request{
@@ -343,7 +343,7 @@ func (s *service) openSession(context *endly.Context, request *OpenSessionReques
 
 	sessionID := request.SessionID
 	if sessionID == "" {
-		sessionID = resource.Host()
+		sessionID = resource.Hostname()
 	}
 	sessions := Sessions(context)
 	seleniumSession, ok := sessions[sessionID]
@@ -359,7 +359,7 @@ func (s *service) openSession(context *endly.Context, request *OpenSessionReques
 		}
 	}
 	caps := selenium.Capabilities{"browserName": request.Browser}
-	seleniumEndpoint := fmt.Sprintf("http://%v/wd/hub", resource.ParsedURL.Host)
+	seleniumEndpoint := fmt.Sprintf("http://%v/wd/hub", resource.Host())
 	seleniumSession.driver, err = selenium.NewRemote(caps, seleniumEndpoint)
 
 	if err != nil {

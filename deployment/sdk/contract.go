@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"github.com/pkg/errors"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
 	"github.com/viant/toolbox/url"
 	"strings"
@@ -12,7 +13,7 @@ type SetRequest struct {
 	Sdk          string //request sdk jdk, go
 	Version      string //requested version
 	Env          map[string]string
-	Target       *url.Resource //target host
+	Target       *location.Resource //target host
 	BaseLocation string
 }
 
@@ -42,7 +43,7 @@ func (r *SetRequest) Validate() error {
 }
 
 // NewSetRequest creates a new sdk request
-func NewSetRequest(target *url.Resource, sdk string, version string, env map[string]string) *SetRequest {
+func NewSetRequest(target *location.Resource, sdk string, version string, env map[string]string) *SetRequest {
 	if len(env) == 0 {
 		env = make(map[string]string)
 	}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/viant/endly/model"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/testing/validator"
 	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
@@ -13,7 +14,7 @@ import (
 
 // StartRequest represents a selenium server start request
 type StartRequest struct {
-	Target     *url.Resource
+	Target     *location.Resource
 	Port       int
 	Sdk        string
 	SdkVersion string
@@ -50,7 +51,7 @@ type StartResponse struct {
 
 // StopRequest represents server stop request
 type StopRequest struct {
-	Target *url.Resource
+	Target *location.Resource
 	Port   int
 }
 
@@ -127,7 +128,7 @@ type WebElementCallResponse struct {
 type RunRequest struct {
 	SessionID        string
 	Browser          string
-	RemoteSelenium   *url.Resource //remote selenium resource
+	RemoteSelenium   *location.Resource //remote selenium resource
 	Actions          []*Action
 	ActionDelaysInMs int           `description:"slows down action with specified delay"`
 	Commands         []interface{} `description:"list of selenium command: {web element selector}.WebElementMethod(params),  or WebDriverMethod(params), or wait map "`
@@ -201,7 +202,7 @@ func (r *RunRequest) Init() error {
 }
 
 // NewRunRequest creates a new run request
-func NewRunRequest(sessionID, browser string, remote *url.Resource, actions ...*Action) *RunRequest {
+func NewRunRequest(sessionID, browser string, remote *location.Resource, actions ...*Action) *RunRequest {
 	return &RunRequest{
 		SessionID:      sessionID,
 		Browser:        browser,
@@ -294,7 +295,7 @@ func NewMethodCall(method string, repeatable *model.Repeater, parameters ...inte
 // OpenSessionRequest represents open session request
 type OpenSessionRequest struct {
 	Browser        string
-	RemoteSelenium *url.Resource `description:"http selenium server endpoint"`
+	RemoteSelenium *location.Resource `description:"http selenium server endpoint"`
 	SessionID      string        `description:"if specified this ID will be used for a sessionID"`
 }
 
@@ -313,7 +314,7 @@ func (r *OpenSessionRequest) Validate() error {
 }
 
 // NewOpenSessionRequest creates a new open session request
-func NewOpenSessionRequest(browser string, remote *url.Resource) *OpenSessionRequest {
+func NewOpenSessionRequest(browser string, remote *location.Resource) *OpenSessionRequest {
 	return &OpenSessionRequest{
 		Browser:        browser,
 		RemoteSelenium: remote,

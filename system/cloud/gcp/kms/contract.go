@@ -3,9 +3,9 @@ package kms
 import (
 	"fmt"
 	"github.com/go-errors/errors"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/cloud/gcp"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"google.golang.org/api/cloudkms/v1"
 )
 
@@ -46,8 +46,8 @@ type EncryptRequest struct {
 	KeyInfo
 	PlainBase64Text string
 	PlainData       []byte
-	Source          *url.Resource
-	Dest            *url.Resource
+	Source          *location.Resource
+	Dest            *location.Resource
 }
 
 // EncryptResponse represents encrypt response
@@ -61,7 +61,7 @@ type DecryptRequest struct {
 	KeyInfo
 	CipherData       []byte
 	CipherBase64Text string
-	Source           *url.Resource
+	Source           *location.Resource
 }
 
 // DecryptResponse represents decrypt response
@@ -108,26 +108,11 @@ func NewDeployKeyRequest(region, ring, keyId, purpose string) *DeployKeyRequest 
 
 // Init initializes request
 func (r *EncryptRequest) Init() error {
-	if r.Dest != nil {
-		if err := r.Dest.Init(); err != nil {
-			return err
-		}
-	}
-	if r.Source != nil {
-		if err := r.Source.Init(); err != nil {
-			return err
-		}
-	}
 	return r.KeyInfo.Init()
 }
 
 // Init initializes request
 func (r *DecryptRequest) Init() error {
-	if r.Source != nil {
-		if err := r.Source.Init(); err != nil {
-			return err
-		}
-	}
 	return r.KeyInfo.Init()
 }
 

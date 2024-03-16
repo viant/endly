@@ -1,4 +1,4 @@
-package main
+package shared
 
 import (
 	"github.com/viant/endly"
@@ -28,12 +28,7 @@ func main() {
 			TargetFile:     path.Join(parent, "shared/static", "workflow.go"),
 			TargetPackage:  "static",
 		},
-		{
-			SourceURL:      toolbox.FileSchema + path.Join(parent, "shared/req"),
-			DestinationURI: path.Join(endly.Namespace, "req"),
-			TargetFile:     path.Join(parent, "shared/static", "req.go"),
-			TargetPackage:  "static",
-		},
+
 		{
 			SourceURL:      toolbox.FileSchema + path.Join(parent, "Version"),
 			DestinationURI: path.Join(endly.Namespace, "Version"),

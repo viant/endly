@@ -2,13 +2,18 @@ package gcp
 
 import (
 	"context"
+	"github.com/viant/afs/url"
+	"github.com/viant/scy/auth/gcp"
+	"github.com/viant/scy/auth/gcp/client"
+
 	"fmt"
 	"github.com/go-errors/errors"
 	"github.com/viant/endly"
+	"github.com/viant/scy"
+	"github.com/viant/scy/cred"
+	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/cred"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
+
 	"google.golang.org/api/option"
 	htransport "google.golang.org/api/transport/http"
 	"net/http"
@@ -22,7 +27,8 @@ const userAgent = "endly/e2e"
 const DefaultRegion = "us-central1"
 
 type gcpCredConfig struct {
-	*cred.Config
+	*cred.Generic
+	*scy.Secret
 	scopes []string
 }
 
@@ -51,29 +57,24 @@ func GetClient(eContext *endly.Context, provider, key interface{}, target interf
 	}
 
 	ctx := context.Background()
-
-	if credConfig.ProjectID == "" {
-		credentials, err := google.FindDefaultCredentials(ctx, scopes...)
-		if err != nil {
-			return err
-		}
-		credConfig.ProjectID = credentials.ProjectID
+	var options = make([]option.ClientOption, 0)
+	options = append(options, option.WithScopes(scopes...))
+	if credConfig.Secret != nil && credConfig.Secret.URL != "" {
+		location := url.Path(credConfig.Secret.URL)
+		options = append(options, option.WithCredentialsFile(location))
+	}
+	gcpService := gcp.New(client.NewScy())
+	httpClient, err := gcpService.AuthClient(context.Background(), append(gcp.Scopes, scopes...)...)
+	if err == nil && httpClient != nil {
+		options = append(options, option.WithHTTPClient(httpClient))
+	}
+	var args = make([]interface{}, 1 + len(options))
+	args[0] = ctx
+	for i := range options {
+		args[i+1] = options[i]
 	}
 
-	var httpClient *http.Client
-
-	if credConfig.ClientEmail != "" {
-		jwtConfig, err := credConfig.NewJWTConfig(scopes...)
-		if err != nil {
-			return err
-		}
-		httpClient = oauth2.NewClient(ctx, jwtConfig.TokenSource(ctx))
-	} else {
-		if httpClient, err = getDefaultClient(ctx, scopes...); err != nil {
-			return err
-		}
-	}
-	output := toolbox.CallFunction(provider, httpClient)
+	output := toolbox.CallFunction(provider, args...)
 	if output[1] != nil {
 		err := output[1].(error)
 		return err
@@ -83,7 +84,7 @@ func GetClient(eContext *endly.Context, provider, key interface{}, target interf
 	if !ok {
 		return fmt.Errorf("invalid target type: %T", target)
 	}
-	ctxService.SetCredConfig(credConfig.Config)
+	ctxService.SetCredConfig(credConfig.Generic)
 	ctxService.SetHttpClient(httpClient)
 	ctxService.SetContext(ctx)
 
@@ -113,12 +114,10 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}) 
 		}
 	}
 
-	credConfig, err := context.Secrets.GetCredentials(secrets.Credentials)
-	if err != nil {
-		credConfig = &cred.Config{}
+	config := &gcpCredConfig{Generic: &cred.Generic{}}
+	if config.Secret, _ = context.Secrets.Lookup(context.Background(), secret.Resource(secrets.Credentials));config.Secret != nil {
+		config.Generic, _ = config.Secret.Target.(*cred.Generic)
 	}
-
-	config := &gcpCredConfig{Config: credConfig}
 	if scopes, ok := rawRequest["scopes"]; ok {
 		if toolbox.IsString(scopes) {
 			config.scopes = strings.Split(toolbox.AsString(scopes), ",")

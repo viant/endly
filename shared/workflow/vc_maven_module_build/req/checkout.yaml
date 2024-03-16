@@ -1,3 +1,0 @@
-origin: $origin
-modules: $modules
-dest: $buildTarget

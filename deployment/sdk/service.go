@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/deployment/deploy"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
-	"github.com/viant/toolbox/url"
 )
 
 var errSdkNotFound = errors.New("SDK NOT FUND")
@@ -23,7 +23,7 @@ type service struct {
 	nodeService *nodeService
 }
 
-func (s *service) updateSessionSdk(context *endly.Context, target *url.Resource, sdkInfo *Info) error {
+func (s *service) updateSessionSdk(context *endly.Context, target *location.Resource, sdkInfo *Info) error {
 	if sdkInfo == nil {
 		return nil
 	}
@@ -49,7 +49,7 @@ func (s *service) deploySdk(context *endly.Context, request *SetRequest) error {
 
 	ctx := context.Clone()
 	state := ctx.State()
-	state.Put("buildHost", target.ParsedURL.Host)
+	state.Put("buildHost", target.Hostname())
 	state.Put("buildHostCredential", target.Credentials)
 	serviceResponse := deploymentService.Run(ctx, &deploy.Request{
 		Target:       target,
@@ -63,7 +63,7 @@ func (s *service) deploySdk(context *endly.Context, request *SetRequest) error {
 	return nil
 }
 
-func (s *service) checkSdkOnSession(context *endly.Context, target *url.Resource, request *SetRequest, response *SetResponse) bool {
+func (s *service) checkSdkOnSession(context *endly.Context, target *location.Resource, request *SetRequest, response *SetResponse) bool {
 	session, err := exec.TerminalSession(context, target)
 	if err != nil {
 		return false

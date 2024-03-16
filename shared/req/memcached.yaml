@@ -1,7 +1,0 @@
-name: service/memcached
-tasks: $tasks
-params:
-  maxMemory: $maxMemory
-  serviceTarget: $serviceTarget
-  name: $instance
-  version: latest

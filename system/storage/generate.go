@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/viant/afs/file"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/model/msg"
-	"github.com/viant/toolbox/url"
 	"io"
 	"os"
 	"strings"
@@ -28,7 +28,7 @@ type GenerateRequest struct {
 	Index         int
 	IndexVariable string
 	Mode          int           `description:"os.FileMode"`
-	Dest          *url.Resource `required:"true" description:"destination asset or directory"` //target URL with credentials
+	Dest          *location.Resource `required:"true" description:"destination asset or directory"` //target URL with credentials
 	FileCount     int
 	InBackground  bool
 }

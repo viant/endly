@@ -1,20 +1,18 @@
 package model
 
 import (
-	"github.com/viant/toolbox/ssh"
+	"github.com/viant/gosh"
 	"sync"
 )
 
 // Session represents a system terminal session
 type Session struct {
 	ID string
-	ssh.MultiCommandSession
+	*gosh.Service
 	DaemonType       int
-	Service          ssh.Service
-	Os               *OperatingSystem
 	Username         string
 	SuperUSerAuth    bool
-	Path             *Path
+	//Path             *Path
 	EnvVariables     map[string]string
 	CurrentDirectory string
 	Deployed         map[string]string
@@ -22,8 +20,9 @@ type Session struct {
 	Mutex            *sync.RWMutex
 }
 
+
 // NewSession create a new client session
-func NewSession(id string, connection ssh.Service) (*Session, error) {
+func NewSession(id string, connection *gosh.Service) (*Session, error) {
 	return &Session{
 		ID:           id,
 		Service:      connection,
