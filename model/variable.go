@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/viant/endly/model/criteria"
-	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
+)
+
+const (
+	OwnerURL = "ownerURL"
 )
 
 // Variable represents a variable
@@ -130,7 +133,7 @@ func (v *Variable) formatStateInfo(state data.Map) string {
 func (v *Variable) validate(value interface{}, in data.Map) error {
 	val := toolbox.AsString(value)
 	if v.Required {
-		source := in.GetString(neatly.OwnerURL)
+		source := in.GetString(OwnerURL)
 		if value == nil || toolbox.AsString(value) == "" {
 			return fmt.Errorf("variable '%v' is required by %v, but was empty,  \n\tstate dump: %v", v.Name, source, v.formatStateInfo(in))
 		}

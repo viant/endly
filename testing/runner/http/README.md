@@ -599,17 +599,3 @@ pipeline:
     request: "@send.json @payloads" 
 ```
 
-
-
--  [neatly](https://github.com/viant/neatly#external-resources-loading-with-content-substitution-and-user-defined-function-udf-use-case) workflow format
-
-@test.csv
-
-|Workflow|Name|Tasks| | |
-|---|---|---|---| --- |
-| |test|%Tasks|| |
-|**[]Tasks**|**Name**|**Actions**| |
-| |task1|%Actions| |
-|**[]Actions**|**Service**|**Action**|**Request**|**Description**|
-| |http/runner|send|@http_send @payloads | send http requests |
-

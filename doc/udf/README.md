@@ -101,7 +101,7 @@ In data substitution case if UDF returns error data will NOT be expanded with co
 | AsTableRecords | udf converting []*DsUnitTableData into map[string][]map[string]interface{} (used by prepare/expect dsunit service), as table record udf provide sequencing and random id generation functionality for supplied data . | 
 
 
-**Defined in [neatly project](https://github.com/viant/neatly/blob/master/udf.go)**
+
 
 
 | UDF | Description | Inline Example |
@@ -113,7 +113,6 @@ In data substitution case if UDF returns error data will NOT be expanded with co
 | HasResource | returns true if external resource exists | $HasResource(/opt/location/) |
 | Md5 | generates md5 for provided parameter | $Md5($var) | 
 | WorkingDirectory | returns working directory joined with supplied sub path,  '../' is supported | $WorkingDirectory(../) |
-| LoadNeatly | loads neatly document as data structure. | n/a | 
 | Length or Len | returns length of slice, map or string | $Len($failures) | 
 | FormatTime | takes two arguments, date or data literal like 'now' or '2hoursahead', followed by java style date format | $FormatTime("now","yyyyMMdd") | 
 | Zip | takes []byte or string to compress it. | n/a | 

@@ -61,7 +61,7 @@ func (r *AssertRequest) Validate() error {
 
 // TypedRecord represents an expected log record.
 type TypedRecord struct {
-	TagID   string `description:"neatly tag id for matching validation summary"`
+	TagID   string `description:"case tag id for reporting and selection"`
 	Type    string `required:"true" description:"log type register with listener"`
 	Records []interface{}
 }
@@ -93,7 +93,7 @@ type Type struct {
 type ListenRequest struct {
 	FrequencyMs int
 	Source      *location.Resource `required:"true" description:"log location"`
-	Types       []*Type       `required:"true" description:"log types"`
+	Types       []*Type            `required:"true" description:"log types"`
 }
 
 // ListenResponse represents a log validation listen response.
