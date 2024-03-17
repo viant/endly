@@ -291,8 +291,6 @@ github.com/viant/assertly v0.9.1-0.20220620174148-bab013f93a60 h1:VFJvCOHKXv4IqX
 github.com/viant/assertly v0.9.1-0.20220620174148-bab013f93a60/go.mod h1:aGifi++jvCrUaklKEKT0BU95igDNaqkvz+49uaYMPRU=
 github.com/viant/gosh v0.0.0-20240315215121-a5efb9835616 h1:0uM73VZsvYh6tpC7Uz6Z4GmUTLuPep4zNnvPCKTIopo=
 github.com/viant/gosh v0.0.0-20240315215121-a5efb9835616/go.mod h1:I/EJ39XLZL9vAme3CrvZ4WeiASneHJPd+pMF2njt/Mw=
-github.com/viant/neatly v0.8.1-0.20230118003138-9e5c5757ae6e h1:YO2JEwvGdglS97nOl8+mLeSh4tV3sbhIp1Kit7iXTv0=
-github.com/viant/neatly v0.8.1-0.20230118003138-9e5c5757ae6e/go.mod h1:bwPo68RpiUBxiEM81im5b9PkWA4dACQAPQrPqtVov7A=
 github.com/viant/parsly v0.0.0-20220913214053-cb272791c00f h1:cpnXF1e4ywkykZmNqjjnjbRXIK+zfom2wRbrGqB63eM=
 github.com/viant/parsly v0.0.0-20220913214053-cb272791c00f/go.mod h1:4PKQzioRT9R99ceIhZ6tCD3tp0H0n2dEoIOaLulVvrg=
 github.com/viant/scy v0.8.0 h1:XYRKFTcoOAno9bFkfCYXDOEwEJu5LmcNrmmjBZNCLkw=

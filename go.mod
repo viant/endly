@@ -28,14 +28,14 @@ require (
 	github.com/go-errors/errors v1.5.1
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gocql/gocql v0.0.0-20200815110948-5378c8f664e9 // indirect
-	github.com/gomarkdown/markdown v0.0.0-20220310201231-552c6011c0b8 // indirect
+	github.com/gomarkdown/markdown v0.0.0-20220310201231-552c6011c0b8
 	github.com/google/gops v0.3.6
 	github.com/google/uuid v1.4.0
 	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/jhump/protoreflect v1.15.6
 	github.com/klauspost/compress v1.15.1 // indirect
-	github.com/klauspost/pgzip v1.2.5 // indirect
+	github.com/klauspost/pgzip v1.2.5
 	github.com/lib/pq v1.10.5
 	github.com/linkedin/goavro v2.1.0+incompatible
 	github.com/logrusorgru/aurora v0.0.0-20190428105938-cea283e61946
@@ -61,7 +61,6 @@ require (
 	github.com/viant/bgc v0.8.0
 	github.com/viant/dsc v0.18.0
 	github.com/viant/dsunit v0.11.1-0.20240315154953-016b93c322c2
-	github.com/viant/neatly v0.8.1-0.20230118003138-9e5c5757ae6e
 	github.com/viant/scy v0.8.0
 	github.com/viant/toolbox v0.35.0
 	github.com/yuin/gopher-lua v0.0.0-20190514113301-1cd887cd7036 // indirect
