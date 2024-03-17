@@ -11,7 +11,6 @@ import (
 	"github.com/viant/endly/model/criteria"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/model/msg"
-	"github.com/viant/neatly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"log"
@@ -295,13 +294,13 @@ func (s *Service) enableLoggingIfNeeded(context *endly.Context, request *RunRequ
 
 // NewRepoResource returns new woorkflow repo resource, it takes context map and resource URI
 func (d *Service) NewRepoResource(ctx context.Context, state data.Map, URI string) (*location.Resource, error) {
-	URI  = state.ExpandAsText(URI)
+	URI = state.ExpandAsText(URI)
 	ok, err := d.fs.Exists(ctx, URI)
 	if ok {
 		return location.NewResource(URI), nil
 	}
-	URL := url.Join("mem://github.com/viant/endly",URI)
-	if ok, _ = d.fs.Exists(ctx, URL);ok {
+	URL := url.Join("mem://github.com/viant/endly", URI)
+	if ok, _ = d.fs.Exists(ctx, URL); ok {
 		return location.NewResource(URL), nil
 	}
 	return location.NewResource(URI), err
@@ -388,7 +387,7 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 
 	upstreamTasks, hasUpstreamTasks := state.GetValue(tasksStateKey)
 	restore := context.PublishAndRestore(toolbox.Pairs(
-		neatly.OwnerURL, workflow.Source.URL,
+		model.OwnerURL, workflow.Source.URL,
 		tasksStateKey, request.Tasks,
 	))
 	defer restore()
