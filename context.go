@@ -7,7 +7,6 @@ import (
 	"github.com/viant/afs/url"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/model/msg"
-	"github.com/viant/neatly"
 	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -30,8 +29,8 @@ var deferFunctionsKey = (*[]func())(nil)
 
 // Context represents a workflow session context/state
 type Context struct {
-	context   context.Context
-	SessionID string
+	context         context.Context
+	SessionID       string
 	CLIEnabled      bool
 	HasLogger       bool
 	AsyncUnsafeKeys map[interface{}]bool
@@ -452,8 +451,6 @@ func NewDefaultState(ctx *Context) data.Map {
 			return ""
 		})
 	}
-
-	neatly.AddStandardUdf(result)
 	for k, v := range UdfRegistry {
 		result.Put(k, v)
 	}
