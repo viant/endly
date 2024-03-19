@@ -10,7 +10,11 @@ func parseCriteria(cursor *parsly.Cursor, qualify *ast.Qualify) error {
 	binary := &ast.Binary{}
 	err := parseQualify(cursor, binary, false)
 	if binary.Op == "" && binary.Y == nil && binary.X != nil {
-		qualify.X = &ast.Unary{X: binary.X, Op: ""}
+		if unary, ok := binary.X.(*ast.Unary);ok {
+			qualify.X = unary
+		} else {
+			qualify.X = &ast.Unary{X: binary.X, Op: ""}
+		}
 		return err
 	}
 
@@ -37,7 +41,7 @@ func parseQualify(cursor *parsly.Cursor, binary *ast.Binary, withDeclare bool) (
 		}
 	}
 	if binary.Op == "" {
-		match := cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, binaryOperatorMatcher, logicalOperatorMatcher, unaryOperatorMatcher)
+		match := cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, unaryOperatorMatcher, binaryOperatorMatcher, logicalOperatorMatcher)
 		op := match.Text(cursor)
 		switch match.Code {
 		case unaryOperator:
@@ -117,7 +121,8 @@ func expectOperand(cursor *parsly.Cursor) (ast.Node, error) {
 		matched := match.Text(cursor)
 		return &ast.Literal{Value: matched[1 : len(matched)-1], Type: "string", Quote: `"`}, nil
 	case unaryOperator:
-		unary := &ast.Unary{Op: match.Text(cursor)}
+		op := match.Text(cursor)
+		unary := &ast.Unary{Op: op}
 		unary.X, err = expectOperand(cursor)
 		if err != nil {
 			return nil, err

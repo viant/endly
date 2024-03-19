@@ -6,9 +6,9 @@ import (
 )
 
 
-func ParseDeclaration(input string) (when string, expr string, elseExpr string, err error) {
+func ParseDeclaration(input string) (when string, thenExpr string, elseExpr string, err error) {
 	cursor := parsly.NewCursor("", []byte(input), 0)
-	return parseDeclare(input, err, cursor, when, expr, elseExpr)
+	return parseDeclare(input, err, cursor, when, thenExpr, elseExpr)
 }
 
 

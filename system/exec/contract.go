@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/criteria/eval"
+	"github.com/viant/endly/model/criteria/parser"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox/data"
@@ -70,6 +71,7 @@ func NewOptions(secrets, env map[string]string, terminators, path []string, supe
 type ExtractCommand struct {
 	When        string         `description:"only run this command is criteria is matched i.e $stdout:/password/"`                                              //only run this execution is output from a previous command is matched
 	Command     string         `required:"true" description:"shell command to be executed"`                                                                     //command to be executed
+	ElseCommand string         `required:"true" description:"shell command to be executed when if when criteria is not met"`                                    //shell command to be executed when if when criteria is not met
 	Extract     model.Extracts `description:"stdout data extraction instruction"`                                                                               //Stdout data extraction instruction
 	Errors      []string       `description:"fragments that will terminate execution with error if matched with standard output, in most cases leave empty"`    //fragments that will terminate execution with error if matched with standard output
 	Success     []string       `description:"if specified absence of all of the these fragment will terminate execution with error, in most cases leave empty"` //if specified absence of all of the these fragment will terminate execution with error.
@@ -84,7 +86,7 @@ func (c *ExtractCommand) Init() error {
 	}
 	if strings.TrimSpace(c.When) != "" {
 		if strings.Index(c.When, "$") == -1 { //if no matching source is specified use $stdout
-			c.When = fmt.Sprintf("$stdout :/%v/", c.When)
+			c.When = fmt.Sprintf("$stdout contains %v", c.When)
 		}
 	}
 	return nil
@@ -186,20 +188,13 @@ func (c Command) String() string {
 }
 
 // WhenAndCommand extract when criteria and command
-func (c Command) WhenAndCommand() (string, string) {
+func (c Command) WhenAndCommand() (string, string, string) {
 	var expr = c.String()
-	var when, command string
-	var evalExpressionIndex = strings.Index(expr, "$")
-	if evalExpressionIndex == -1 {
-		evalExpressionIndex = strings.Index(expr, "=")
+	when, thenExpr, elseExpr, _ := parser.ParseDeclaration(expr)
+	if when == "" {
+		return "", expr, ""
 	}
-	var criteriaEndIndex = strings.LastIndex(expr, "?")
-	if evalExpressionIndex == -1 || evalExpressionIndex > criteriaEndIndex {
-		return when, expr
-	}
-	when = string(expr[:criteriaEndIndex])
-	command = strings.TrimSpace(string(expr[criteriaEndIndex+1:]))
-	return when, command
+	return when, thenExpr, elseExpr
 }
 
 // RunRequest represents a simple command
@@ -241,12 +236,13 @@ func (r *RunRequest) AsExtractRequest() *ExtractRequest {
 		r.Errors = []string{}
 	}
 	for _, command := range r.Commands {
-		when, runCommand := command.WhenAndCommand()
+		when, thenCmd, elseCmd := command.WhenAndCommand()
 		request.Commands = append(request.Commands,
 			&ExtractCommand{
-				When:    when,
-				Command: runCommand,
-				Errors:  r.Errors,
+				When:        when,
+				Command:     thenCmd,
+				ElseCommand: elseCmd,
+				Errors:      r.Errors,
 			},
 		)
 	}

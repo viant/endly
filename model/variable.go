@@ -266,19 +266,3 @@ func extractFromValue(value string, variable *Variable) {
 	variable.Value = normalizeVariableValue(toolbox.AsString(variable.Value))
 }
 
-func isValidPredicate(candidate string) bool {
-	if !strings.Contains(candidate, "$") {
-		return false
-	}
-	_, err := criteria.NewParser().Parse(candidate)
-	return err == nil
-}
-
-func hasConditionalAssignment(candidate string) bool {
-	questionMarkCount := strings.Count(candidate, "?")
-	if questionMarkCount == 0 {
-		return false
-	}
-	when, _, _, _ := parser.ParseDeclaration(candidate)
-	return when != ""
-}

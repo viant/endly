@@ -313,18 +313,27 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	_ = s.extractOsUser(session)
 	s.updateSystemInfo(state, session)
 
-	securedCommand := context.Expand(extractCommand.Command)
+	command := extractCommand.Command
+	if extractCommand.When != "" {
+		var state = s.buildExecutionState(response, context)
+		 ok, err := criteria.Evaluate(context, state, extractCommand.When, &extractCommand.whenEval, "Cmd.When", true)
+		 if err != nil {
+			return err
+		}
+		if ! ok {
+			command = extractCommand.ElseCommand
+		}
+	}
+	if strings.TrimSpace(command) == "" {
+		return
+	}
+	securedCommand := context.Expand(command)
 	options := request.Options
 	terminators := getTerminators(options, session, extractCommand)
 	isSuperUserCmd := strings.Contains(securedCommand, "sudo ") || request.SuperUser
 
-	if extractCommand.When != "" {
-		var state = s.buildExecutionState(response, context)
-		if ok, err := criteria.Evaluate(context, state, extractCommand.When, &extractCommand.whenEval, "Cmd.When", true); !ok {
-			response.Add(NewCommandLog(securedCommand, "", err))
-			return err
-		}
-	} else if strings.Contains(securedCommand, "$") {
+
+	if strings.Contains(securedCommand, "$") {
 		var state = s.buildExecutionState(response, context)
 		securedCommand = state.ExpandAsText(securedCommand)
 	}

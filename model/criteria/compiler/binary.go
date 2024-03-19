@@ -10,11 +10,13 @@ import (
 
 type binary struct {
 	x, y *operand
+	trim bool
+
 }
 
 func NewBinary(op string, operands ...*Operand) New {
 	switch op {
-	case "=", "==", ":", ":!", "<>", "!=", "<", ">", "<=", ">=", "contains", "contains!", "&&", "||":
+	case "=", "==", ":/", ":!/", ":~/", ":", ":!", "<>", "!=", "<", ">", "<=", ">=", "contains", "contains!", "&&", "||":
 	default:
 		return func() (eval.Compute, error) {
 			return nil, fmt.Errorf("unsupported operator: %v", op)
@@ -25,6 +27,7 @@ func NewBinary(op string, operands ...*Operand) New {
 		expr := &binary{
 			x: operands[0].operand(),
 			y: operands[1].operand(),
+			trim: strings.Contains(op, ":/"),
 		}
 		switch op {
 		case ":", "=", "==":
@@ -39,9 +42,9 @@ func NewBinary(op string, operands ...*Operand) New {
 			return expr.lessThanEqual, nil
 		case ">=":
 			return expr.greaterThanEqual, nil
-		case "contains":
+		case "contains", ":/":
 			return expr.contains, nil
-		case "contains!":
+		case "contains!", ":!/":
 			return expr.notContains, nil
 		case "&&":
 			return expr.and, nil
@@ -201,6 +204,9 @@ func (b *binary) contains(state data.Map) (interface{}, bool, error) {
 	}
 	xText := toolbox.AsString(x)
 	yText := toolbox.AsString(y)
+	if b.trim {
+		yText = strings.TrimRight(yText, "/")
+	}
 	return strings.Contains(xText, yText), true, nil
 }
 
@@ -238,7 +244,7 @@ func (b *binary) and(state data.Map) (interface{}, bool, error) {
 		return false, false, nil
 	}
 	xBool := toolbox.AsBoolean(x)
-	if ! xBool {
+	if !xBool {
 		return false, true, nil
 	}
 	yBool := toolbox.AsBoolean(y)

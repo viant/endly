@@ -31,29 +31,26 @@ func (n *selector) Match(cursor *parsly.Cursor) (matched int) {
 			}
 			matched++
 		case ')':
+			matched++
 			if depth == 0 {
 				depthBracket--
 				if depthBracket == 0 {
 					return matched
 				}
 			}
-			matched++
-
 		case '{':
 			if depthBracket == 0 {
 				depth++
 			}
 			matched++
 		case '}':
+			matched++
 			if depthBracket == 0 {
 				depth--
 				if depth == 0 {
 					return matched
 				}
 			}
-			matched++
-
-
 		default:
 			if depth > 0 || depthBracket > 0 {
 				matched++
