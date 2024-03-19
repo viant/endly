@@ -191,6 +191,12 @@ func (r *Resource) DownloadText() (string, error) {
 	return string(data), nil
 }
 
+func (r *Resource) Join(uri string) *Resource {
+	ret := *r
+	ret.URL = url.Join(r.URL, uri)
+	return &ret
+}
+
 type Option func(o *Resource)
 
 func WithCredentials(cred string) Option {

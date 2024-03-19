@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/endly"
+	"github.com/viant/endly/internal/udf"
 	"github.com/viant/endly/system/storage"
 	"github.com/viant/endly/testing/validator"
-	"github.com/viant/endly/udf"
 	"github.com/viant/toolbox"
 )
 

@@ -452,7 +452,7 @@ func (r *Runner) reportSummaryEvent() {
 
 	contextMessage = fmt.Sprintf("%v%v", contextMessage, r.ColorText(contextMessageStatus, contextMessageColor))
 	var totalTagValidated = (r.report.TotalTagPassed + r.report.TotalTagFailed)
-	var validationInfo = fmt.Sprintf("Passed %v/%v (Cases).", r.report.TotalTagPassed, totalTagValidated)
+	var validationInfo = fmt.Sprintf("Passed %v/%v.", r.report.TotalTagPassed, totalTagValidated)
 	if totalTagValidated == 0 {
 		validationInfo = ""
 	}

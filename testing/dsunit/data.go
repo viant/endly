@@ -25,6 +25,9 @@ func (d *TableData) AutoGenerateIfNeeded(state data.Map) error {
 			value = state.Expand(v)
 		} else {
 			var has bool
+			if strings.HasPrefix(v, "uuid.") {
+				v = "_udf." + v
+			}
 			value, has = state.GetValue(v)
 			if !has {
 				return fmt.Errorf("failed to autogenerate value for %v - unable to eval: %v", k, v)

@@ -3,9 +3,10 @@ package http
 import (
 	"bytes"
 	"github.com/viant/endly"
+	"github.com/viant/endly/internal/udf"
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model"
-	"github.com/viant/endly/udf"
-	"github.com/viant/endly/util"
+	"github.com/viant/endly/model/criteria/eval"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"io"
@@ -17,6 +18,7 @@ import (
 type Request struct {
 	*model.Repeater
 	When        string `description:"criteria to send this request"`
+	whenEval eval.Compute
 	Method      string `required:"true" description:"HTTP Method"`
 	URL         string
 	Header      http.Header

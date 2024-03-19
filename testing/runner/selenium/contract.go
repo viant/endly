@@ -3,10 +3,10 @@ package selenium
 import (
 	"errors"
 	"fmt"
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/testing/validator"
-	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 )

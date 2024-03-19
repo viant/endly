@@ -1,7 +1,7 @@
 ## Inline Workflow
 
 - [Introduction](#introduction)
-- [Inline Workflow format](#format)
+- [Workflow format](#format)
 - [Action invocation](#action)
 - [Workflow invocation](#workflow)
 - [Inline Workflow invocation](#inline_invocation)
@@ -14,7 +14,7 @@
 <a name="introduction"></a>
 ### Introduction
 
-Endly uses [Inline Workflow](../../model/inline_workflow.go) to define a sequential tasks with yaml files.
+Endly uses [Workflow](../../model/inline_workflow.go) to define a sequential tasks with yaml files.
 For instance the following workflow runs SSH command (service: exec, action: run).
 
 
@@ -37,7 +37,7 @@ pipeline:
 
 
 <a name="format"></a>
-### Inline Workflow format
+### Workflow format
 
 The general inline workflow syntax: 
 
@@ -226,17 +226,6 @@ endly -run='validator:assert' actual A expect B
 <a name="workflow"></a>
 ### Sub workflow invocation
 
-The generic external workflow invocation syntax:
-
-```yaml
-pipeline:
-  task1:
-     workflow: WORKFLOW_NAME[:TASKS_TO_RUN]
-     param1: val1
-     paramX: valX
-```
-
-for example the following workflow task1: invokes predefined [assert workflow](../../shared/workflow/assert/assert.csv) with task:'assert' 
 
 ```bash
 endly -r=test
@@ -263,11 +252,10 @@ pipeline:
   task1:
     action: print
     message: hello sub action 1
-​
+
   task2:
     action: run
     request: '@child'
-​
   info:
     action: print
     message: $task2.myResult1

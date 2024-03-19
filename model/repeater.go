@@ -3,8 +3,9 @@ package model
 import (
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model/criteria"
-	"github.com/viant/endly/util"
+	"github.com/viant/endly/model/criteria/eval"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 )
@@ -19,6 +20,7 @@ type Repeater struct {
 	Repeat      int       //how many time send this request
 	SleepTimeMs int       //Sleep time after request send, this only makes sense with repeat option
 	Exit        string    //Exit criteria, it uses expected variable to determine repeat termination
+	exitEval    eval.Compute
 }
 
 // Get returns non empty instance of default instance
@@ -40,7 +42,7 @@ func (r *Repeater) EvaluateExitCriteria(callerInfo string, context *endly.Contex
 	for k, v := range extracted {
 		extractedState[k] = v
 	}
-	canBreak, err := criteria.Evaluate(context, extractedState, r.Exit, callerInfo, false)
+	canBreak, err := criteria.Evaluate(context, extractedState, r.Exit, &r.exitEval, callerInfo, false)
 	if err != nil {
 		return true, fmt.Errorf("failed to check %v exit criteia: %v", callerInfo, err)
 	}

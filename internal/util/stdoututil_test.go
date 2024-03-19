@@ -2,7 +2,7 @@ package util_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/viant/endly/util"
+	"github.com/viant/endly/internal/util"
 	"testing"
 )
 

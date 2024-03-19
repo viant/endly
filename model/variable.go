@@ -1,14 +1,12 @@
 package model
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/viant/endly/model/criteria"
+	"github.com/viant/endly/model/criteria/eval"
+	"github.com/viant/endly/model/criteria/parser"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"io/ioutil"
-	"os"
-	"path"
 	"strings"
 )
 
@@ -23,59 +21,14 @@ type Variable struct {
 	From              string            `description:"context state map key to pull data"`
 	When              string            `description:"criteria if specified this variable will be set only if evaluated criteria is true (it can use $in, and $out state variables)"`
 	Else              interface{}       `description:"if when criteria is not met then else can provide variable value alternative"`
-	Persist           bool              `description:"stores in tmp directory to be used as backup if data is not in the cotnext"`
 	Required          bool              `description:"flag that validates that from returns non empty value or error is generated"`
 	EmptyIfUnexpanded bool              `description:"threat variable value empty if it was not expanded"`
 	Replace           map[string]string `description:"replacements map, if key if specified substitute variable value with corresponding value. This will work only for string replacements"`
+	whenEval          eval.Compute
 }
 
-func (v *Variable) tempfile() string {
-	return path.Join(os.Getenv("TMPDIR"), v.Name+".var")
-}
 
-// PersistValue persist variable
-func (v *Variable) PersistValue() error {
-	if v.Value != nil {
-		var filename = v.tempfile()
-		_ = toolbox.RemoveFileIfExist(filename)
-		file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		if err = toolbox.NewJSONEncoderFactory().Create(file).Encode(v.Value); err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
-// Load loads persisted variable value.
-func (v *Variable) Load() error {
-	var err error
-	var encoded []byte
-	if v.Value == nil {
-		var filename = v.tempfile()
-		if !toolbox.FileExists(filename) {
-			return nil
-		}
-		encoded, _ = ioutil.ReadFile(filename)
-		err = toolbox.NewJSONDecoderFactory().Create(bytes.NewReader(encoded)).Decode(&v.Value)
-	}
-	return err
-}
-
-func (v *Variable) fromVariable() *Variable {
-	var fromExpr = v.From
-	fromExpr = strings.Replace(fromExpr, "<-", "", 1)
-	dotPosition := strings.Index(fromExpr, ".")
-	if dotPosition != -1 {
-		fromExpr = string(fromExpr[:dotPosition])
-	}
-	return &Variable{
-		Name: fromExpr,
-	}
-}
 
 func (v *Variable) getValueFromInput(in data.Map) (interface{}, error) {
 	var value interface{}
@@ -84,27 +37,15 @@ func (v *Variable) getValueFromInput(in data.Map) (interface{}, error) {
 		from = v.Name
 	}
 	if from != "" {
-		var has bool
-
 		if strings.Contains(from, "$") {
-			value, has = in.GetValue(in.ExpandAsText(from))
+			value, _ = in.GetValue(in.ExpandAsText(from))
 		} else {
-			value, has = in.GetValue(from)
-		}
-		if !has {
-			fromVariable := v.fromVariable()
-			err := fromVariable.Load()
-			if fromVariable.Value != nil {
-				in.SetValue(fromVariable.Name, fromVariable.Value)
-				value, _ = in.GetValue(from)
-			}
-			if err != nil {
-				return err, nil
-			}
+			value, _ = in.GetValue(from)
 		}
 	}
 	return value, nil
 }
+
 
 func (v *Variable) formatStateInfo(state data.Map) string {
 	var aMap = state.AsEncodableMap()
@@ -152,7 +93,7 @@ func (v *Variable) canApply(in, out data.Map) bool {
 	for k, v := range in {
 		state[k] = v
 	}
-	result, _ := criteria.Evaluate(nil, state, v.When, "", false)
+	result, _ := criteria.Evaluate(nil, state, v.When, &v.whenEval,"", false)
 	return result
 }
 
@@ -314,22 +255,14 @@ func extractFromKey(key string, variable *Variable) {
 }
 
 func extractFromValue(value string, variable *Variable) {
-	if !hasConditionalAssignment(value) {
+	when, whenExpr, elseExpr, _ := parser.ParseDeclaration(value)
+	if when == "" {
 		variable.Value = normalizeVariableValue(value)
 		return
 	}
-	var whenIndex = strings.Index(value, "?")
-	if whenIndex != -1 {
-		predicate := strings.TrimSpace(string(value[:whenIndex]))
-		value := strings.TrimSpace(string(value[whenIndex+1:]))
-		variable.When = predicate
-		variable.Value = value
-		elseIndex := strings.LastIndex(value, ":")
-		if elseIndex != -1 {
-			variable.Value = string(value[:elseIndex])
-			variable.Else = normalizeVariableValue(string(value[elseIndex+1:]))
-		}
-	}
+	variable.When = when
+	variable.Value = whenExpr
+	variable.Else = elseExpr
 	variable.Value = normalizeVariableValue(toolbox.AsString(variable.Value))
 }
 
@@ -343,16 +276,9 @@ func isValidPredicate(candidate string) bool {
 
 func hasConditionalAssignment(candidate string) bool {
 	questionMarkCount := strings.Count(candidate, "?")
-	if questionMarkCount != 1 {
+	if questionMarkCount == 0 {
 		return false
 	}
-	parts := strings.SplitN(candidate, "?", 2)
-	if !isValidPredicate(parts[0]) {
-		return false
-	}
-	elseCount := strings.Count(candidate, ":")
-	if elseCount == 0 {
-		return true
-	}
-	return strings.Index(candidate, "?") < strings.LastIndex(candidate, ":")
+	when, _, _, _ := parser.ParseDeclaration(candidate)
+	return when != ""
 }

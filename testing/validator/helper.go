@@ -2,7 +2,7 @@ package validator
 
 import (
 	"github.com/viant/endly"
-	"github.com/viant/endly/util"
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/workflow"
 	"github.com/viant/toolbox"
 )

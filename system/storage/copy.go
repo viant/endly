@@ -5,9 +5,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/viant/afs/option"
 	"github.com/viant/endly"
+	"github.com/viant/endly/internal/udf"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/storage/copy"
-	"github.com/viant/endly/udf"
 )
 
 // CopyRequest represents a resources Copy request

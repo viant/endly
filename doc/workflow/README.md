@@ -117,19 +117,11 @@ pipeline:
 ```
 
 
-*Neatly*
-
-For originally developed workflow endly uses [Neatly](https://github.com/viant/neatly) format 
-to represent a workflow. In that case neatly is responsible for converting a tabular document (.csv) 
-with json/yaml and other sub path dependencies into workflow object tree as shown in the [diagram](diagram.png).
-
-
-
 *Printing workflow model representation*
 
 ```bash
 
-endly -w=WORKFLOW_NAME -p   -f=yaml|json
+endly -r=name -p   -f=yaml|json
 
 ```
 
