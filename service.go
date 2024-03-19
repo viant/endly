@@ -2,9 +2,9 @@ package endly
 
 import (
 	"fmt"
+	_ "github.com/viant/endly/internal/unsafe"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/model/msg"
-	_ "github.com/viant/endly/unsafe"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"reflect"
@@ -148,8 +148,8 @@ func (s *AbstractService) Sleep(context *Context, sleepTimeMs int) {
 	}
 }
 
-// GetHostAndSSHPort return host and ssh port
-func (s *AbstractService) GetHostAndSSHPort(target *location.Resource) (string, int) {
+// GetHostname return host and ssh port
+func (s *AbstractService) GetHostname(target *location.Resource) (string, int) {
 	if target == nil {
 		return "", 0
 	}
@@ -158,7 +158,7 @@ func (s *AbstractService) GetHostAndSSHPort(target *location.Resource) (string, 
 		port = 22
 	}
 	hostname := target.Hostname()
-		return hostname, port
+	return hostname, port
 }
 
 // Actions returns service actions

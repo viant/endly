@@ -5,9 +5,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/deployment/vc"
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
-	"github.com/viant/endly/util"
 	"strings"
 	"testing"
 )

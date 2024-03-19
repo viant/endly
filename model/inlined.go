@@ -1,8 +1,8 @@
 package model
 
 import (
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model/location"
-	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"strings"
@@ -42,7 +42,8 @@ type MapEntry struct {
 	Value interface{} `description:"preserved order map entry value"`
 }
 
-type InlineWorkflow struct {
+// Inlined represents inline workflow
+type Inlined struct {
 	baseURL    string
 	tagPathURL string
 	name       string
@@ -56,7 +57,7 @@ type InlineWorkflow struct {
 	workflow   *Workflow //inline workflow from pipeline
 }
 
-func (p InlineWorkflow) updatereservedAttributes(aMap map[string]interface{}) {
+func (p Inlined) updatereservedAttributes(aMap map[string]interface{}) {
 	for _, key := range []string{actionKey, workflowKey, skipKey, whenKey, postKey, initKey, commentsKey, descriptionKey, failKey} {
 		if val, ok := aMap[key]; ok {
 			if _, has := aMap[ExplicitActionAttributePrefix+key]; has {
@@ -107,7 +108,7 @@ func isNormalizableRequest(actionAttributes map[string]interface{}) bool {
 	return !has
 }
 
-func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]interface{}, state data.Map) error {
+func (p Inlined) loadRequest(actionAttributes, actionRequest map[string]interface{}, state data.Map) error {
 	requestMap := actionRequest
 	dataRequest := data.NewMap()
 	var err error
@@ -165,7 +166,7 @@ func (p InlineWorkflow) loadRequest(actionAttributes, actionRequest map[string]i
 	return nil
 }
 
-func (p InlineWorkflow) asVariables(source interface{}) ([]map[string]interface{}, error) {
+func (p Inlined) asVariables(source interface{}) ([]map[string]interface{}, error) {
 	if source == nil {
 		return nil, nil
 	}
@@ -180,7 +181,7 @@ func (p InlineWorkflow) asVariables(source interface{}) ([]map[string]interface{
 
 // groupAttributes splits key value pair into workflow action attribute and action request data,
 // while ':' key prefix assign pair to workflow action, '@' assign to request data, if none is matched pair is assign to both
-func (p InlineWorkflow) groupAttributes(source interface{}, state data.Map) (map[string]interface{}, map[string]interface{}, error) {
+func (p Inlined) groupAttributes(source interface{}, state data.Map) (map[string]interface{}, map[string]interface{}, error) {
 	aMap, err := util.NormalizeMap(source, false)
 	var actionAttributes = make(map[string]interface{})
 	var actionRequest = make(map[string]interface{})
@@ -209,7 +210,7 @@ func (p InlineWorkflow) groupAttributes(source interface{}, state data.Map) (map
 	return actionAttributes, actionRequest, err
 }
 
-func (p *InlineWorkflow) loadVariables(actionAttributes map[string]interface{}, state data.Map) error {
+func (p *Inlined) loadVariables(actionAttributes map[string]interface{}, state data.Map) error {
 	for _, key := range []string{initKey, postKey} {
 		value, ok := actionAttributes[key]
 		if !ok {
@@ -226,7 +227,7 @@ func (p *InlineWorkflow) loadVariables(actionAttributes map[string]interface{}, 
 	return nil
 }
 
-func (p *InlineWorkflow) AsWorkflow(name string, baseURL string) (*Workflow, error) {
+func (p *Inlined) AsWorkflow(name string, baseURL string) (*Workflow, error) {
 	if p.workflow != nil {
 		return p.workflow, nil
 	}
@@ -280,7 +281,7 @@ func (p *InlineWorkflow) AsWorkflow(name string, baseURL string) (*Workflow, err
 	return workflow, nil
 }
 
-func (p *InlineWorkflow) normalize(node *TasksNode) {
+func (p *Inlined) normalize(node *TasksNode) {
 	for _, task := range node.Tasks {
 		if task.Name == CatchTask {
 			node.OnErrorTask = task.Name
@@ -292,7 +293,7 @@ func (p *InlineWorkflow) normalize(node *TasksNode) {
 	}
 }
 
-func (p *InlineWorkflow) buildTask(name string, source interface{}) *Task {
+func (p *Inlined) buildTask(name string, source interface{}) *Task {
 	var task = &Task{}
 	if toolbox.IsSlice(source) && toolbox.IsMap(source) {
 		_ = toolbox.DefaultConverter.AssignConverted(task, source)
@@ -327,7 +328,7 @@ func getTemplateNode(source interface{}) *Template {
 	return template
 }
 
-func (p *InlineWorkflow) buildAction(name string, actionAttributes, actionRequest map[string]interface{}, tagId string) (*Action, error) {
+func (p *Inlined) buildAction(name string, actionAttributes, actionRequest map[string]interface{}, tagId string) (*Action, error) {
 	var result = &Action{
 		AbstractNode:   &AbstractNode{},
 		ServiceRequest: &ServiceRequest{},
@@ -370,7 +371,7 @@ func (p *InlineWorkflow) buildAction(name string, actionAttributes, actionReques
 	return result, nil
 }
 
-func (p *InlineWorkflow) hasActionNode(source interface{}) bool {
+func (p *Inlined) hasActionNode(source interface{}) bool {
 	if source == nil {
 		return false
 	}
@@ -397,7 +398,7 @@ func (p *InlineWorkflow) hasActionNode(source interface{}) bool {
 	return result
 }
 
-func (p *InlineWorkflow) buildWorkflowNodes(name string, source interface{}, parentTask *Task, tagID string, state data.Map) error {
+func (p *Inlined) buildWorkflowNodes(name string, source interface{}, parentTask *Task, tagID string, state data.Map) error {
 	if state != nil {
 		source = state.Expand(source)
 	}

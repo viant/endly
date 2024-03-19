@@ -3,7 +3,7 @@ package docker
 import (
 	"github.com/docker/docker/client"
 	"github.com/viant/endly"
-	"github.com/viant/endly/util"
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/toolbox"
 	"golang.org/x/net/context"
 )

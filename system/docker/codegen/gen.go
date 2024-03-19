@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/viant/endly/util/adapter"
+	"github.com/viant/endly/internal/util/adapter"
 	"github.com/viant/toolbox"
 	"io/ioutil"
 	"log"

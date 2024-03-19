@@ -2,7 +2,7 @@ package http
 
 import (
 	"github.com/viant/endly"
-	"github.com/viant/endly/udf"
+	"github.com/viant/endly/internal/udf"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"net/http"

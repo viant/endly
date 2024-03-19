@@ -10,7 +10,7 @@ import (
 	"github.com/viant/scy"
 	"sort"
 
-	"github.com/viant/endly/util"
+	"github.com/viant/endly/internal/util"
 
 	//Database/datastore dependencies
 
@@ -292,9 +292,9 @@ func runAction(ctx context.Context, run string, flagset map[string]string) error
 		argsMap = toolbox.AsMap(reqMap.Expand(requestData))
 	}
 
-	request.InlineWorkflow.State = data.NewMap()
-	request.InlineWorkflow.State.Put("run", run)
-	request.InlineWorkflow.State.Put("request", argsMap)
+	request.Inlined.State = data.NewMap()
+	request.Inlined.State.Put("run", run)
+	request.Inlined.State.Put("request", argsMap)
 	err = updateBaseRunWithOptions(request, flagset)
 	if err != nil {
 		return err
@@ -577,7 +577,7 @@ func printServiceActions() {
 }
 
 func getWorkflow(request *workflow.RunRequest) (*model.Workflow, error) {
-	if request.InlineWorkflow != nil && len(request.Pipeline) > 0 {
+	if request.Inlined != nil && len(request.Pipeline) > 0 {
 		baseURL, name := toolbox.URLSplit(request.AssetURL)
 		name = strings.Replace(name, path.Ext(name), "", 1)
 		return request.AsWorkflow(name, baseURL)
@@ -606,6 +606,7 @@ func printInFormat(source interface{}, errorTemplate string, hideEmpty bool) {
 	format := flag.Lookup("f").Value.String()
 	var buf []byte
 	var err error
+
 	switch format {
 	case "yaml":
 		buf, err = yaml.Marshal(source)

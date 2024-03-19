@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/deployment/deploy"
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/system/exec"
-	"github.com/viant/endly/util"
 	"path"
 )
 

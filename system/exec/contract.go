@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/endly/model"
+	"github.com/viant/endly/model/criteria/eval"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox/data"
@@ -74,6 +75,7 @@ type ExtractCommand struct {
 	Success     []string       `description:"if specified absence of all of the these fragment will terminate execution with error, in most cases leave empty"` //if specified absence of all of the these fragment will terminate execution with error.
 	Terminators []string       `description:"terminators"`
 	TimeoutMs   int            `description:"timeoutMs stdout wait timeout "`
+	whenEval    eval.Compute   //evaluator for when criteria
 }
 
 func (c *ExtractCommand) Init() error {

@@ -1,5 +1,7 @@
 package model
 
+import "github.com/viant/endly/model/criteria/eval"
+
 // Action represents a workflow service action
 type Action struct {
 	*AbstractNode
@@ -8,6 +10,11 @@ type Action struct {
 	*Repeater
 	Async bool   `description:"flag to run action async"`
 	Skip  string `description:"criteria to skip current TagID"`
+	skipEvan eval.Compute
+}
+
+func (a *Action) SkipEval() *eval.Compute {
+	return &a.skipEvan
 }
 
 // NewActivity returns pipeline activity

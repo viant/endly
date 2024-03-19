@@ -9,5 +9,5 @@ func init() {
 		service := New()
 		return service
 	})
-	endly.UdfRegistry["AsTableRecords"] = AsTableRecords
+	endly.PredefinedUdfs["AsTableRecords"] = AsTableRecords
 }

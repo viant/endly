@@ -3,7 +3,7 @@ package adapter
 import (
 	"bytes"
 	"fmt"
-	"github.com/viant/endly/util"
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/toolbox"
 	"strings"
 	"text/template"

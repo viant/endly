@@ -3,121 +3,97 @@ package criteria_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
-	"github.com/viant/endly/model/criteria"
+	"github.com/viant/endly/model/criteria/compiler"
+	"github.com/viant/toolbox/data"
 	"testing"
 )
 
 func TestCriteriaParser_Parse(t *testing.T) {
 
-	parser := criteria.NewParser()
-
 	var useCases = []struct {
-		Description string
-		Expression  string
-		Expected    *criteria.Predicate
-		HasError    bool
+		description string
+		state       data.Map
+		expression string
+		expect bool
+		hasError   bool
 	}{
 
 		{
-			Description: "Unicode operator criterion",
-			Expression:  "$counter \u003e 10",
-			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$counter", ">", "10")),
+			description: "Unicode operator criterion",
+			expression:  "$counter \u003e 10",
+			state: map[string]interface{}{
+				"counter":11,
+			},
+			expect: true,
 		},
 		{
-			Description: "Empty left operand criterion",
-			Expression:  ":!$value",
-			Expected:    criteria.NewPredicate("", criteria.NewCriterion(nil, ":", "!$value")),
+			description: "Empty left operand criterion",
+			expression:  ":!$value",
+			expect: false,
 		},
 		{
-			Description: "UDFs criterion",
-			Expression:  "$HasResource(${buildHost}${buildDirectory}/pom.xml):false",
-			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$HasResource(${buildHost}${buildDirectory}/pom.xml)", ":", "false")),
+			description: "UDFs criterion",
+			expression:  "$HasResource(${buildHost}${buildDirectory}/pom.xml):false",
+			expect: false,
 		},
 
 		{
-			Description: "Simple criterion",
-			Expression:  "$key1 = 123",
-			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$key1", "=", "123")),
+			description: "Simple criterion",
+			expression:  "$key1 = 123",
+			state: map[string]interface{}{
+				"key1":123,
+			},
+			expect: true,
 		},
 		{
-			Description: "AND criteria",
-			Expression:  "$key1 = 123 && $key2 > 12",
-			Expected:    criteria.NewPredicate("&&", criteria.NewCriterion("$key1", "=", "123"), criteria.NewCriterion("$key2", ">", "12")),
+			description: "AND criteria",
+			expression:  "$key1 = 123 && $key2 > 12",
+			state: map[string]interface{}{
+				"key1":123,
+				"key2":13,
+			},
+			expect: true,
 		},
 		{
-			Description: "OR criteria",
-			Expression:  "$key1 = 123 && $key2 > 12 || $k3: /123/ || $z",
-			Expected: criteria.NewPredicate("&&",
-				criteria.NewCriterion("$key1", "=", "123"),
-				criteria.NewCriterion("$key2", ">", "12"),
-				&criteria.Criterion{
-					Predicate: criteria.NewPredicate("||",
-						criteria.NewCriterion("$k3", ":", "/123/"),
-						criteria.NewCriterion("$z", "", nil)),
-				}),
+			description: "AND criteria",
+			expression:  "$key1 = 123 && $key2 > 12",
+			state: map[string]interface{}{
+				"key1":123,
+				"key2":11,
+			},
+			expect: false,
 		},
 		{
-			Description: "Grouping criterion",
-			Expression:  "$k0 && ($k1 || $k2)",
-			Expected: criteria.NewPredicate("&&",
-				criteria.NewCriterion("$k0", "", nil),
-				&criteria.Criterion{
-					Predicate: criteria.NewPredicate("||",
-						criteria.NewCriterion("$k1", "", nil),
-						criteria.NewCriterion("$k2", "", nil)),
-				},
-			),
+			description: "OR criteria - true",
+			expression:  "($key1 = 123 && $key2 > 12) || $k3 contains 123 || $z",
+			state: map[string]interface{}{
+				"k3":"123",
+			},
+			expect: true,
 		},
 		{
-			Description: "assertly criterion",
-			Expression:  "$key1 : 123 3",
-			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$key1", ":", "123 3")),
+			description: "OR criteria - false",
+			expression:  "($key1 = 123 && $key2 > 12) || $k3 contains 123 || $z",
+			state: map[string]interface{}{
+				"k3":"1",
+			},
+			expect: false,
 		},
-		{
-			Description: "left operand criterion",
-			Expression:  "$key1",
-			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$key1", "", nil)),
-		},
-		{
-			Description: "expected logical conjunction patch",
-			Expression:  "$stdout :/(END)/",
-			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$stdout", ":", "/(END)/")),
-		},
-
-		{
-			Description: "quoted operand criterion",
-			Expression:  "$key1 = 'abc'",
-			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$key1", "=", "abc")),
-		},
-
-		{
-			Description: "uni operan boolean expression",
-			Expression:  "$key1",
-			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$key1", "!=", nil)),
-		},
-		{
-			Description: "uni operand boolean expression",
-			Expression:  "$HasResource(file:///tmp/req/print.json)",
-			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$HasResource(file:///tmp/req/print.json)", "!=", nil)),
-		},
-
-		{
-			Description: "udf usage",
-			Expression:  "$i < $Len($params.requests)",
-			Expected:    criteria.NewPredicate("", criteria.NewCriterion("$i", "<", "$Len($params.requests)")),
-		},
-
-		//$stdout :/(END)/
 	}
 
 	for _, useCase := range useCases {
-		predicate, err := parser.Parse(useCase.Expression)
-		if useCase.HasError {
-			assert.NotNil(t, err, useCase.Description)
+		newCompute, err := compiler.Compile(useCase.expression)
+		if ! assert.Nil(t, err, useCase.description) {
 			continue
 		}
-		assert.Nil(t, err, useCase.Description)
-		assertly.AssertValues(t, useCase.Expected, predicate)
+		compute, _ := newCompute()
+		actual, _, err := compute(useCase.state)
+		if useCase.hasError {
+			assert.NotNil(t, err, useCase.description)
+			continue
+		}
+		assert.Nil(t, err, useCase.description)
+		assertly.AssertValues(t, useCase.expect, actual, useCase.description)
 	}
 
 }

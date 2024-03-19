@@ -174,7 +174,7 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 					return response, nil
 				}
 			}
-			moveToNextTag, err := criteria.Evaluate(context, context.State(), action.Skip, "Skip", false)
+			moveToNextTag, err := criteria.Evaluate(context, context.State(), action.Skip, action.SkipEval(), "Skip", false)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -229,6 +229,7 @@ func (s *Service) runAsyncAction(parent, context *endly.Context, process *model.
 			return response, nil
 		}
 	}
+
 	var extractable = make(map[string]interface{})
 	err := action.Repeater.Run(s.AbstractService, "action", context, handler(action), extractable)
 	if err != nil {
@@ -354,7 +355,7 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	upstreamState := upstreamContext.State()
 	if request.StateKey != "" {
 		if upstreamState.Has(request.StateKey) {
-			log.Print("detected workflow state key: %v is taken by: %v, skiping consider stateKey customiztion", request.StateKey, upstreamState.Get(request.StateKey))
+			log.Printf("detected workflow state key: %v is taken by: %v, skiping consider stateKey customiztion\n", request.StateKey, upstreamState.Get(request.StateKey))
 		}
 		upstreamState.Put(request.StateKey, process.State)
 		defer func() {
@@ -407,7 +408,6 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 			}
 		}
 	}
-
 	filteredTasks := workflow.TasksNode.Select(taskSelector)
 	err = s.runNode(context, "workflow", process, workflow.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
 		err = s.runTasks(context, process, filteredTasks)
@@ -432,7 +432,7 @@ func (s *Service) runNode(context *endly.Context, nodeType string, process *mode
 		context.Logging = original
 	}()
 	var state = context.State()
-	canRun, err := criteria.Evaluate(context, context.State(), node.When, fmt.Sprintf("%v.When", nodeType), true)
+	canRun, err := criteria.Evaluate(context, context.State(), node.When, node.WhenEval(), fmt.Sprintf("%v.When", nodeType), true)
 	if err != nil || !canRun {
 		return err
 	}
@@ -574,10 +574,11 @@ func (s *Service) runGoto(context *endly.Context, request *GotoRequest) (GotoRes
 		err := fmt.Errorf("no active workflow")
 		return nil, err
 	}
-	var task *model.Task
-	task, err := process.Workflow.Task(request.Task)
+	var err error
+	var nextTask *model.Task
+	nextTask, err = process.Workflow.Task(request.Task)
 	if err == nil {
-		process.Scheduled = task
+		process.Scheduled = nextTask
 	}
 	return response, err
 }

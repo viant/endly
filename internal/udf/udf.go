@@ -16,8 +16,8 @@ import (
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/option"
 	"github.com/viant/endly"
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model/location"
-	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 )
@@ -25,7 +25,7 @@ import (
 // TransformWithUDF transform payload with provided UDFs name.
 func TransformWithUDF(context *endly.Context, udfName, source string, payload interface{}) (interface{}, error) {
 	var state = context.State()
-	var udf, has = endly.UdfRegistry[udfName]
+	var udf, has = endly.PredefinedUdfs[udfName]
 	if !has {
 		udf, has = getUdfFromContext(udfName, state)
 	}
@@ -251,7 +251,7 @@ func RegisterProviders(providers []*endly.UdfProvider) error {
 		if err != nil {
 			return fmt.Errorf("failed to get udf from provider %v %v", meta.Provider, err)
 		}
-		endly.UdfRegistry[meta.ID] = udf
+		endly.PredefinedUdfs[meta.ID] = udf
 	}
 	return nil
 }

@@ -7,9 +7,9 @@ import (
 	"path"
 	"strings"
 
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/msg"
-	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 )
 
@@ -32,7 +32,7 @@ type RunRequest struct {
 	TagIDs            string `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
 	Tasks             string `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequentially"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
 	Interactive       bool
-	*model.InlineWorkflow
+	*model.Inlined
 	workflow *model.Workflow //inline workflow from pipeline
 }
 
@@ -51,7 +51,7 @@ func (r *RunRequest) Init() (err error) {
 		r.Tasks = "*"
 	}
 
-	if r.InlineWorkflow != nil && (len(r.InlineWorkflow.Pipeline) > 0) {
+	if r.Inlined != nil && (len(r.Inlined.Pipeline) > 0) {
 		if r.AssetURL == "" {
 			return fmt.Errorf("asset URL is required for inline workflow")
 		}
@@ -60,7 +60,7 @@ func (r *RunRequest) Init() (err error) {
 		if name == "" && r.Name != "" {
 			name = strings.Replace(URI, path.Ext(URI), "", 1)
 		}
-		r.workflow, err = r.InlineWorkflow.AsWorkflow(name, baseURL)
+		r.workflow, err = r.Inlined.AsWorkflow(name, baseURL)
 		if err != nil {
 			return err
 		}

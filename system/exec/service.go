@@ -3,10 +3,10 @@ package exec
 import (
 	"fmt"
 	"github.com/viant/endly"
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/criteria"
 	"github.com/viant/endly/model/location"
-	"github.com/viant/endly/util"
 	"github.com/viant/gosh"
 	"github.com/viant/gosh/runner"
 	"github.com/viant/gosh/runner/local"
@@ -47,7 +47,6 @@ func (s *execService) openExecService(context *endly.Context, request *OpenSessi
 		return gosh.New(context.Background(), local.New(runner.WithEnvironment(request.Env), runner.WithSystemPaths(request.SystemPaths)))
 	}
 
-
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -55,7 +54,6 @@ func (s *execService) openExecService(context *endly.Context, request *OpenSessi
 	if target.Hostname() == "localhost" {
 		return gosh.New(context.Background(), local.New(runner.WithEnvironment(request.Env), runner.WithSystemPaths(request.SystemPaths), runner.WithPath(target.Path())))
 	}
-
 
 	genericCred, err := context.Secrets.GetCredentials(context.Background(), target.Credentials)
 	if err != nil {
@@ -68,7 +66,7 @@ func (s *execService) openExecService(context *endly.Context, request *OpenSessi
 	}
 
 	hostname := target.Host()
-	if ! strings.Contains(hostname, ":") {
+	if !strings.Contains(hostname, ":") {
 		hostname += ":22"
 	}
 	return gosh.New(context.Background(), ssh.New(hostname, config, runner.WithEnvironment(request.Env), runner.WithSystemPaths(request.SystemPaths), runner.WithPath(target.Path())))
@@ -204,8 +202,8 @@ func (s *execService) changeDirectory(context *endly.Context, session *model.Ses
 	return result, err
 }
 
-func (s *execService) run(context *endly.Context, session *model.Session, command string, listener runner.Listener, timeoutMs int, terminators ...string) (stdout string, code int,  err error) {
-	return session.Run(context.Background(), command, runner.WithListener(listener),runner.WithTimeout(timeoutMs),runner.WithTerminators(terminators))
+func (s *execService) run(context *endly.Context, session *model.Session, command string, listener runner.Listener, timeoutMs int, terminators ...string) (stdout string, code int, err error) {
+	return session.Run(context.Background(), command, runner.WithListener(listener), runner.WithTimeout(timeoutMs), runner.WithTerminators(terminators))
 }
 
 func (s *execService) rumCommandTemplate(context *endly.Context, session *model.Session, commandTemplate string, arguments ...interface{}) (string, error) {
@@ -322,7 +320,7 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 
 	if extractCommand.When != "" {
 		var state = s.buildExecutionState(response, context)
-		if ok, err := criteria.Evaluate(context, state, extractCommand.When, "Cmd.When", true); !ok {
+		if ok, err := criteria.Evaluate(context, state, extractCommand.When, &extractCommand.whenEval, "Cmd.When", true); !ok {
 			response.Add(NewCommandLog(securedCommand, "", err))
 			return err
 		}
@@ -379,7 +377,7 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 		commandRetry = true
 		if session.Username != "root" && !strings.HasPrefix(securedCommand, "sudo") {
 			stdout, statusCode, err = s.retryWithSudo(context, session, insecureCommand, listener, options.TimeoutMs, terminators...)
-				isSuperUserCmd = true
+			isSuperUserCmd = true
 		}
 	}
 
@@ -418,7 +416,7 @@ func (s *execService) updateSystemInfo(state data.Map, session *model.Session) {
 	state.SetValue("os.architecture", session.Service.HardwareInfo().Architecture)
 }
 
-func (s *execService) retryWithSudo(context *endly.Context, session *model.Session, command string, listener runner.Listener, timeoutMs int, terminators ...string) (string, int,  error) {
+func (s *execService) retryWithSudo(context *endly.Context, session *model.Session, command string, listener runner.Listener, timeoutMs int, terminators ...string) (string, int, error) {
 	terminators = append(terminators, "Password")
 	command = s.commandAsSuperUser(session, command)
 	return s.run(context, session, command, listener, timeoutMs, terminators...)
@@ -433,7 +431,6 @@ func getTerminators(options *Options, session *model.Session, execution *Extract
 	}
 	return terminators
 }
-
 
 func (s *execService) runCommands(context *endly.Context, request *RunRequest) (*RunResponse, error) {
 	response, err := s.runExtractCommands(context, request.AsExtractRequest())
@@ -520,13 +517,10 @@ func (s *execService) closeSession(context *endly.Context, request *CloseSession
 	}, nil
 }
 
-
-
 func (s *execService) extractOsUser(session *model.Session) error {
 	session.Username = session.Service.User()
 	return nil
 }
-
 
 const (
 	execServiceOpenExample = `{

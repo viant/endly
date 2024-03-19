@@ -43,7 +43,7 @@ func TestRegisterProviders(t *testing.T) {
 			},
 		})
 		assert.Nil(t, err)
-		_, ok := endly.UdfRegistry["userAvro"]
+		_, ok := endly.PredefinedUdfs["userAvro"]
 		assert.True(t, ok)
 	}
 	{

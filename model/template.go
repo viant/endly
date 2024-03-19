@@ -7,8 +7,8 @@ import (
 	"github.com/viant/afs/file"
 	"github.com/viant/afs/storage"
 	url "github.com/viant/afs/url"
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model/location"
-	"github.com/viant/endly/util"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"path"
@@ -23,10 +23,10 @@ type Template struct {
 	Description string            `description:"reference to file containing tagDescription i.e. @use_case,  file reference has to start with @"`
 	Data        map[string]string `description:"map of data references, where key is workflow.data target, and value is a file within expanded dynamically subpath or workflow path fallback. Value has to start with @"`
 	Template    []interface{}
-	inline      *InlineWorkflow
+	inline      *Inlined
 }
 
-func (t *Template) Expand(task *Task, parentTag string, inline *InlineWorkflow) error {
+func (t *Template) Expand(task *Task, parentTag string, inline *Inlined) error {
 	if t.Tag == "" {
 		t.Tag = "$pathMatch"
 		//if t.Tag = task.Name; t.Tag == "" {
@@ -294,7 +294,7 @@ func flattenAction(parent *Task, task *Task, tag *Tag, description string) []*Ac
 	return result
 }
 
-func buildTag(t *Template, inline *InlineWorkflow) *Tag {
+func buildTag(t *Template, inline *Inlined) *Tag {
 	key := t.Tag + "{" + t.Range + "}"
 	ownerURL := toolbox.URLPathJoin(inline.baseURL, inline.name+".yaml")
 	tag := NewTag(inline.name, location.NewResource(ownerURL), key, 0)

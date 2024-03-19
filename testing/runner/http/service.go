@@ -68,7 +68,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, reque
 	trips := Trips(state.GetMap(TripsKey))
 	request.Expand(state)
 
-	canRun, err := criteria.Evaluate(context, context.State(), request.When, fmt.Sprintf("%v.When", "HttpRequest"), true)
+	canRun, err := criteria.Evaluate(context, context.State(), request.When, &request.whenEval, fmt.Sprintf("%v.When", "HttpRequest"), true)
 	if err != nil || !canRun {
 		return err
 	}

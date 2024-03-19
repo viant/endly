@@ -9,8 +9,8 @@ import (
 	"github.com/viant/afs/option"
 	"github.com/viant/afs/storage"
 	"github.com/viant/endly"
+	"github.com/viant/endly/internal/udf"
 	"github.com/viant/endly/model/location"
-	"github.com/viant/endly/udf"
 	"io"
 	"os"
 	"strings"
@@ -18,10 +18,10 @@ import (
 
 // UploadRequest represents a resources Upload request, it takes context state key to Upload to target destination.
 type UploadRequest struct {
-	SourceKey string        `required:"true" description:"state key with asset content"`
-	Region    string        `description:"cloud storage region"`
-	Mode      int           `description:"os.FileMode"`
-	Udf       string        `description:"name of udf to transform payload before placing into state map"` //name of udf function that will be used to transform payload
+	SourceKey string             `required:"true" description:"state key with asset content"`
+	Region    string             `description:"cloud storage region"`
+	Mode      int                `description:"os.FileMode"`
+	Udf       string             `description:"name of udf to transform payload before placing into state map"` //name of udf function that will be used to transform payload
 	Dest      *location.Resource `required:"true" description:"destination asset or directory"`                 //target URL with credentials
 }
 

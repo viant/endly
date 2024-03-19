@@ -5,9 +5,9 @@ import (
 	"github.com/viant/afs/storage"
 	arl "github.com/viant/afs/url"
 	"github.com/viant/endly"
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/system/exec"
-	"github.com/viant/endly/util"
 	"path"
 )
 

@@ -76,7 +76,7 @@ func TestTemplate_Expand(t *testing.T) {
 
 }
 
-func loadInlineWorkflow(URL string) (*InlineWorkflow, error) {
+func loadInlineWorkflow(URL string) (*Inlined, error) {
 	var inlineURL = location.NewResource(URL)
 	YAMLText, err := inlineURL.DownloadText()
 	if err != nil {
@@ -91,7 +91,7 @@ func loadInlineWorkflow(URL string) (*InlineWorkflow, error) {
 	for _, entry := range *YAML {
 		aMap[toolbox.AsString(entry.Key)] = entry.Value
 	}
-	inline := &InlineWorkflow{}
+	inline := &Inlined{}
 	err = toolbox.DefaultConverter.AssignConverted(inline, aMap)
 	return inline, err
 }

@@ -7,9 +7,6 @@ import (
 	"github.com/viant/scy/cred/secret"
 )
 
-
-
-
 func GetUsername(service *secret.Service, credentials string) (string, error) {
 	var username string
 	secret, err := service.Lookup(context.Background(), secret.Resource(credentials))
@@ -17,7 +14,7 @@ func GetUsername(service *secret.Service, credentials string) (string, error) {
 		return "", err
 	}
 	generic, ok := secret.Target.(*cred.Generic)
-	if ! ok {
+	if !ok {
 		return "", fmt.Errorf("unsupported secret type: %T, expected: %T", secret.Target, generic)
 	}
 	username = generic.Username
