@@ -443,7 +443,7 @@ Command in RunRequest can represents one of the following:
 
 1) Simple command: i.e echo $HOME   
 2) Conditional command: [criteria ?] command
-    i.e. $stdout:/root/? echo 'hello root'",  
+    i.e. $stdout contains root ? echo 'hello root': echo "hello non root",  
        
 
 ```go

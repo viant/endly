@@ -23,6 +23,7 @@ func (n *fragment) Match(cursor *parsly.Cursor) (matched int) {
 		matched++
 		if objectDepth == 0 && arrayDepth == 0 {
 			if matcher.IsWhiteSpace(input[i]) {
+				matched--
 				return matched
 			}
 		}

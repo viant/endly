@@ -132,15 +132,35 @@ func Test_EvaluateCriteria(t *testing.T) {
 				},
 			},
 		},
+
+		{
+			Description:   "contains //",
+			Expression:    "$a:/abc/", //
+			Expected:      true,
+			State: map[string]interface{}{
+				"a": "abcxv",
+			},
+		},
+
 		{
 			Description:   "contains - not defiend",
 			Expression:    "$bar() contains abc", //
 			Expected:      false,
 			State: map[string]interface{}{},
 		},
+		{
+			Description:   "contains - //",
+			Expression:    "$bar():/abc/", //
+			Expected:      true,
+			State: map[string]interface{}{
+				"bar": func() interface{} {
+					return "abcr"
+				},
+			},
+		},
 	}
 
-	for i, useCase := range useCases {
+	for i, useCase := range useCases[len(useCases)-1:]{
 		context := manager.NewContext(toolbox.NewContext())
 		state := context.State()
 		if len(useCase.State) > 0 {

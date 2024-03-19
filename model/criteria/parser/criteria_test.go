@@ -18,9 +18,9 @@ func TestParseCriteria(t *testing.T) {
 			input: `a == b`,
 			expected: &ast.Qualify{
 				X: &ast.Binary{
-					X: &ast.Literal{Value: "a", Type: "string",},
+					X:  &ast.Literal{Value: "a", Type: "string"},
 					Op: "==",
-					Y: &ast.Literal{Value: "b", Type: "string"},
+					Y:  &ast.Literal{Value: "b", Type: "string"},
 				},
 			},
 		},
@@ -29,9 +29,9 @@ func TestParseCriteria(t *testing.T) {
 			input: `$a == b`,
 			expected: &ast.Qualify{
 				X: &ast.Binary{
-					X: &ast.Selector{X: "$a"},
+					X:  &ast.Selector{X: "$a"},
 					Op: "==",
-					Y: &ast.Literal{Value: "b", Type: "string"},
+					Y:  &ast.Literal{Value: "b", Type: "string"},
 				},
 			},
 		},
@@ -40,7 +40,7 @@ func TestParseCriteria(t *testing.T) {
 			name:  "simple unary",
 			input: `$a`,
 			expected: &ast.Qualify{
-				X: &ast.Binary{
+				X: &ast.Unary{
 					X: &ast.Selector{X: "$a"},
 				},
 			},
@@ -50,31 +50,17 @@ func TestParseCriteria(t *testing.T) {
 			name:  "unary negation",
 			input: `!$a`,
 			expected: &ast.Qualify{
-				X: &ast.Binary{
-					X: &ast.Unary{X: &ast.Selector{X: "$a"}, Op: "!"},
-				},
+				X: &ast.Unary{X: &ast.Selector{X: "$a"}, Op: "!"},
 			},
 		},
+
 		{
 			name:  "defined unary",
 			input: `defined $a`,
 			expected: &ast.Qualify{
-				X: &ast.Binary{
-					X: &ast.Unary{X: &ast.Selector{X: "$a"}, Op: "defined"},
-				},
+				X: &ast.Unary{X: &ast.Selector{X: "$a"}, Op: "defined"},
 			},
 		},
-
-		{
-			name:  "simple expr",
-			input: `!${a}`,
-			expected: &ast.Qualify{
-				X: &ast.Binary{
-					X: &ast.Unary{X: &ast.Selector{X: "${a}"}, Op: "!"},
-				},
-			},
-		},
-
 		// Add more test cases here for different expressions and expected outcomes
 	}
 

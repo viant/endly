@@ -1,12 +1,12 @@
 package parser
 
-
 import (
 	smatcher "github.com/viant/endly/model/criteria/matcher"
 	"github.com/viant/parsly"
 	"github.com/viant/parsly/matcher"
 	"github.com/viant/parsly/matcher/option"
 )
+
 const (
 	whitespaceCode int = iota
 	parenthesesCode
@@ -29,13 +29,11 @@ const (
 	colon
 )
 
-
-
 var whitespaceMatcher = parsly.NewToken(whitespaceCode, "whitespace", matcher.NewWhiteSpace())
 var parenthesesMatcher = parsly.NewToken(parenthesesCode, "()", matcher.NewBlock('(', ')', '\\'))
 
-var unaryOperatorMatcher = parsly.NewToken(unaryOperator, "unary OPERATOR", matcher.NewSpacedSet([]string{"!","not", "defined"}, &option.Case{}))
-var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", matcher.NewSpacedSet([]string{"!=",  ":!",":", ">=", "<=", "==", "=", ">", "<",  "contains", "contains!"}, &option.Case{}))
+var unaryOperatorMatcher = parsly.NewToken(unaryOperator, "unary OPERATOR", matcher.NewSpacedSet([]string{"!", "not", "defined"}, &option.Case{}))
+var binaryOperatorMatcher = parsly.NewToken(binaryOperator, "binary OPERATOR", matcher.NewSpacedSet([]string{"!=", ":!/", ":/", ":!", ":", ">=", "<=", "==", "=", ">", "<", "contains", "contains!"}, &option.Case{}))
 var logicalOperatorMatcher = parsly.NewToken(logicalOperator, "AND|OR", matcher.NewSet([]string{"&&", "||"}, &option.Case{}))
 var boolLiteralMatcher = parsly.NewToken(boolLiteral, "true|false", matcher.NewSet([]string{"true", "false"}, &option.Case{}))
 var singleQuotedStringLiteralMatcher = parsly.NewToken(singleQuotedStringLiteral, `'...'`, matcher.NewByteQuote('\'', '\\'))
