@@ -316,11 +316,11 @@ func isActionNode(attributes map[string]interface{}) bool {
 	return action || workflow
 }
 
-func getTemplateNode(source interface{}) *Template {
+func getTemplateNode(source interface{}) *TransientTemplate {
 	if source == nil || !(toolbox.IsSlice(source) || toolbox.IsMap(source)) {
 		return nil
 	}
-	var template = &Template{}
+	var template = &TransientTemplate{}
 	err := toolbox.DefaultConverter.AssignConverted(template, source)
 	if err != nil || len(template.Template) == 0 || template.SubPath == "" {
 		return nil

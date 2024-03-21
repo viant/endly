@@ -15,11 +15,11 @@ const SliceKey = "data"
 
 // Repeater represent repeated execution
 type Repeater struct {
-	Extract     Extracts  //textual regexp based data extraction
-	Variables   Variables //structure data based data extraction
-	Repeat      int       //how many time send this request
-	SleepTimeMs int       //Sleep time after request send, this only makes sense with repeat option
-	Exit        string    //Exit criteria, it uses expected variable to determine repeat termination
+	Extract     Extracts  `yaml:",omitempty"` //textual regexp based data extraction
+	Variables   Variables `yaml:",omitempty"` //structure data based data extraction
+	Repeat      int       `yaml:",omitempty"` //how many time send this request
+	ThinkTimeMs int       `yaml:",omitempty"` //Sleep time after request send, this only makes sense with repeat option
+	Exit        string    `yaml:",omitempty"` //Exit criteria, it uses expected variable to determine repeat termination
 	exitEval    eval.Compute
 }
 
@@ -108,7 +108,7 @@ func (r *Repeater) Run(service *endly.AbstractService, callerInfo string, contex
 		if err != nil || !shouldContinue {
 			return err
 		}
-		service.Sleep(context, r.SleepTimeMs)
+		service.Sleep(context, r.ThinkTimeMs)
 	}
 	return nil
 }

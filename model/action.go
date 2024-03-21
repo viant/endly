@@ -4,13 +4,13 @@ import "github.com/viant/endly/model/criteria/eval"
 
 // Action represents a workflow service action
 type Action struct {
-	*AbstractNode
-	*ServiceRequest
-	*MetaTag
-	*Repeater
-	Async bool   `description:"flag to run action async"`
-	Skip  string `description:"criteria to skip current TagID"`
-	skipEvan eval.Compute
+	*AbstractNode   `yaml:",inline"`
+	*ServiceRequest `yaml:",inline"`
+	*MetaTag        `yaml:",inline"`
+	*Repeater       `yaml:",inline"`
+	Async           bool   `description:"flag to run action async" yaml:",omitempty"`
+	Skip            string `description:"criteria to skip current TagID"  yaml:",omitempty"`
+	skipEvan        eval.Compute
 }
 
 func (a *Action) SkipEval() *eval.Compute {
@@ -53,9 +53,9 @@ func (a *Action) Init() error {
 initSleepTimeMs initializes sleep time to be control by abstract node
 */
 func (a *Action) initSleepTime() {
-	if sleepTimeMs := a.Repeater.SleepTimeMs; sleepTimeMs > 0 {
+	if sleepTimeMs := a.Repeater.ThinkTimeMs; sleepTimeMs > 0 {
 		a.AbstractNode.SleepTimeMs = sleepTimeMs
-		a.Repeater.SleepTimeMs = 0
+		a.Repeater.ThinkTimeMs = 0
 	}
 }
 
@@ -85,9 +85,9 @@ func (a *Action) ID() string {
 
 // MetaTag represent a node tag
 type MetaTag struct {
-	Tag            string //tag
-	TagIndex       string //tag index
-	TagID          string //tag id
-	TagDescription string //tag description
-	Comments       string
+	Tag            string `yaml:",omitempty"` //tag
+	TagIndex       string `yaml:",omitempty"` //tag index
+	TagID          string `yaml:",omitempty"` //tag id
+	TagDescription string `yaml:",omitempty"` //tag description
+	Comments       string `yaml:",omitempty"`
 }

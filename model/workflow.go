@@ -8,10 +8,10 @@ import (
 
 // Workflow represents a workflow
 type Workflow struct {
-	Source *location.Resource //source definition of the workflow
-	Data   data.Map           //workflow data
-	*AbstractNode
-	*TasksNode //workflow tasks
+	Source        *location.Resource ` yaml:",omitempty"` //source definition of the workflow
+	Data          data.Map           `yaml:"-"`           //workflow data
+	*AbstractNode `yaml:",inline"`   //workflow node`
+	*TasksNode    `yaml:"pipeline"`  ///workflow tasks
 }
 
 // Init validates this workflow

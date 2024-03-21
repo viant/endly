@@ -2,21 +2,39 @@ package model
 
 // Task represents a group of action
 type Task struct {
-	*AbstractNode
-	Actions []*Action //actions
-	*TasksNode
-	Fail bool //controls if return fail status workflow on catch task
-
+	*AbstractNode `yaml:",inline"` //abstract node
+	Actions       []*Action        ` yaml:",omitempty"` //actions
+	*TasksNode    ` yaml:",inline"`
+	Fail          bool      ` yaml:",omitempty"` //controls if return fail status workflow on catch task
+	Template      *Template ` yaml:",omitempty"`
 	//internal only for inline workflow meta data
 
 	multiAction bool //flag directing grouping actions (otherwise each action has its own task)
-
 	//publish data in parent workflow
 	data map[string]string
 
 	//these attribute if present dynamically load actions from subpath
 	tagRange string
 	subpath  string
+}
+
+//func (t Task) MarshalYAML() (interface{}, error) {
+//	var result = make(map[string]interface{})
+//
+//
+//	return result, nil
+//}
+
+func (t *Task) Clone() *Task {
+	var result = *t
+	result.Actions = make([]*Action, len(t.Actions))
+	copy(result.Actions, t.Actions)
+	for i, item := range result.Actions {
+		result.Actions[i] = item.Clone()
+	}
+	result.TasksNode = t.TasksNode.Clone()
+	result.AbstractNode = t.AbstractNode.Clone()
+	return &result
 }
 
 func (t *Task) init() error {

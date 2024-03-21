@@ -17,10 +17,10 @@ import (
 
 // Resource represents
 type Resource struct {
-	URL         string            `description:"resource URL or relative or absolute path" required:"true"` //URL of resource
-	Credentials string            `description:"credentials file"`                                          //name of credential file or credential key depending on implementation
-	CustomKey   *option.AES256Key `description:" content encryption key"`
-	Key         string            `description:" secret key"`
+	URL         string            `description:"resource URL or relative or absolute path" required:"true" yaml:",omitempty"` //URL of resource
+	Credentials string            `description:"credentials file" yaml:",omitempty"`                                          //name of credential file or credential key depending on implementation
+	CustomKey   *option.AES256Key `description:" content encryption key" yaml:",omitempty"`
+	Key         string            `description:" secret key"  yaml:",omitempty"`
 }
 
 // CredentialURL returns url's with provided credential

@@ -3,6 +3,8 @@ package workflow
 import (
 	"errors"
 	"fmt"
+	"github.com/viant/afs/file"
+	"github.com/viant/afs/url"
 	"github.com/viant/endly/model/location"
 	"path"
 	"strings"
@@ -56,7 +58,8 @@ func (r *RunRequest) Init() (err error) {
 			return fmt.Errorf("asset URL is required for inline workflow")
 		}
 		name := r.Name
-		baseURL, URI := toolbox.URLSplit(r.AssetURL)
+		r.AssetURL = url.Normalize(r.AssetURL, file.Scheme)
+		baseURL, URI := url.Split(r.AssetURL, file.Scheme)
 		if name == "" && r.Name != "" {
 			name = strings.Replace(URI, path.Ext(URI), "", 1)
 		}
