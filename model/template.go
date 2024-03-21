@@ -9,24 +9,34 @@ import (
 	url "github.com/viant/afs/url"
 	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model/location"
+	"github.com/viant/endly/model/transformer/graph"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"path"
 	"strings"
 )
 
-// Template represents inline workflow template to dynamically Expand actions - idea borrowed from neatly format: https://github.com/viant/neatly/
 type Template struct {
 	SubPath     string            `description:"sub path for dynamic resource template expansion: i.e. use_cases/${index}*"`
 	Tag         string            `description:"grouping tag i.e Test"`
 	Range       string            `description:"range expression i.e 2..003  where upper bound number drives padding $index variable"`
 	Description string            `description:"reference to file containing tagDescription i.e. @use_case,  file reference has to start with @"`
 	Data        map[string]string `description:"map of data references, where key is workflow.data target, and value is a file within expanded dynamically subpath or workflow path fallback. Value has to start with @"`
-	Template    []interface{}
+	Tasks       []*Task           `description:"tasks to expand"`
+}
+
+// TransientTemplate represents inline workflow template to dynamically Expand actions - idea borrowed from neatly format: https://github.com/viant/neatly/
+type TransientTemplate struct {
+	SubPath     string            `description:"sub path for dynamic resource template expansion: i.e. use_cases/${index}*"`
+	Tag         string            `description:"grouping tag i.e Test"`
+	Range       string            `description:"range expression i.e 2..003  where upper bound number drives padding $index variable"`
+	Description string            `description:"reference to file containing tagDescription i.e. @use_case,  file reference has to start with @"`
+	Data        map[string]string `description:"map of data references, where key is workflow.data target, and value is a file within expanded dynamically subpath or workflow path fallback. Value has to start with @"`
+	Template    []interface{}     `description:"template to expand"`
 	inline      *Inlined
 }
 
-func (t *Template) Expand(task *Task, parentTag string, inline *Inlined) error {
+func (t *TransientTemplate) Expand(task *Task, parentTag string, inline *Inlined) error {
 	if t.Tag == "" {
 		t.Tag = "$pathMatch"
 		//if t.Tag = task.Name; t.Tag == "" {
@@ -37,20 +47,20 @@ func (t *Template) Expand(task *Task, parentTag string, inline *Inlined) error {
 	fs := afs.New()
 
 	t.inline = inline
-	var instances *Instances
+	var instances *graph.Instances
 
 	if t.SubPath != "" {
-		templateURL := toolbox.URLPathJoin(t.inline.baseURL, t.SubPath)
-		parent, name := toolbox.URLSplit(templateURL)
+		templateURL := url.Join(t.inline.baseURL, t.SubPath)
+		parent, name := url.Split(templateURL, file.Scheme)
 		holder, err := fs.Object(context.Background(), parent)
 		if err != nil {
-			err = fmt.Errorf("failed to lookup parent: %v, %v", parent, err)
+			err = fmt.Errorf("failed to LookupValueNode parent: %v, %v", parent, err)
 		}
 		objects, err := fs.List(context.Background(), parent)
 		if err != nil {
 			return err
 		}
-		instances = NewInstances(holder.URL(), name, objects)
+		instances = graph.NewInstances(holder.URL(), name, objects)
 		if t.Range == "" {
 			t.Range = instances.Range()
 		}
@@ -96,7 +106,7 @@ func (t *Template) Expand(task *Task, parentTag string, inline *Inlined) error {
 	return nil
 }
 
-func (t *Template) loadWorkflowData(tagPath string, workflowData data.Map, state data.Map) error {
+func (t *TransientTemplate) loadWorkflowData(tagPath string, workflowData data.Map, state data.Map) error {
 
 	var baseURLs = []string{tagPath, toolbox.URLPathJoin(t.inline.baseURL, "default"), t.inline.baseURL}
 	var err error
@@ -239,7 +249,7 @@ func addLoadedData(loaded interface{}, state data.Map, k string, workflowData da
 	}
 }
 
-func (t *Template) buildTagState(index string, tag *Tag, instances *Instances) data.Map {
+func (t *TransientTemplate) buildTagState(index string, tag *Tag, instances *graph.Instances) data.Map {
 	var state = data.NewMap()
 	state.Put("index", index)
 	if t.SubPath != "" {
@@ -294,7 +304,7 @@ func flattenAction(parent *Task, task *Task, tag *Tag, description string) []*Ac
 	return result
 }
 
-func buildTag(t *Template, inline *Inlined) *Tag {
+func buildTag(t *TransientTemplate, inline *Inlined) *Tag {
 	key := t.Tag + "{" + t.Range + "}"
 	ownerURL := toolbox.URLPathJoin(inline.baseURL, inline.name+".yaml")
 	tag := NewTag(inline.name, location.NewResource(ownerURL), key, 0)

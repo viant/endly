@@ -1,0 +1,16 @@
+[
+  {
+    "ID": "$Sequences.CONTACTS/${tag}.1",
+    "NAME": "Dept",
+    "PHONE": "PHONE_2",
+    "ENABLED": 1,
+    "STR_ID": "STR_ID_${Sequences.CONTACTS}"
+  },
+  {
+    "ID": "$Sequences.CONTACTS/${tag}.2",
+    "NAME": "IP",
+    "ENABLED": 1,
+    "PHONE": "PHONE_2",
+    "STR_ID": "STR_ID_${Sequences.CONTACTS}"
+  }
+]

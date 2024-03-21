@@ -13,7 +13,7 @@ var emptyRequest = map[string]interface{}{}
 type ServiceRequest struct {
 	Service string      `description:"service ID"`
 	Action  string      `description:"service's'action "`
-	Request interface{} `description:"service request"`
+	Request interface{} `description:"service request" `
 }
 
 // Init initialises action

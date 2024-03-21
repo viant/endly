@@ -116,7 +116,7 @@ import (
 
 	"github.com/google/gops/agent"
 	rec "github.com/viant/endly/testing/endpoint/http"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func init() {
@@ -595,13 +595,13 @@ func printWorkflow(request *workflow.RunRequest) {
 }
 
 func printInFormat(source interface{}, errorTemplate string, hideEmpty bool) {
-	if hideEmpty {
-		var aMap = map[string]interface{}{}
-		if err := toolbox.DefaultConverter.AssignConverted(&aMap, source); err == nil {
-			mapSource := data.Map(toolbox.DeleteEmptyKeys(aMap))
-			source = mapSource.AsEncodableMap()
-		}
-	}
+	//if hideEmpty {
+	//	var aMap = map[string]interface{}{}
+	//	if err := toolbox.DefaultConverter.AssignConverted(&aMap, source); err == nil {
+	//		mapSource := data.Map(toolbox.DeleteEmptyKeys(aMap))
+	//		source = mapSource.AsEncodableMap()
+	//	}
+	//}
 
 	format := flag.Lookup("f").Value.String()
 	var buf []byte

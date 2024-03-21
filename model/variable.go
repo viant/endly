@@ -5,14 +5,43 @@ import (
 	"github.com/viant/endly/model/criteria"
 	"github.com/viant/endly/model/criteria/eval"
 	"github.com/viant/endly/model/criteria/parser"
+	"github.com/viant/endly/model/yml"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"gopkg.in/yaml.v3"
 	"strings"
 )
 
 const (
 	OwnerURL = "ownerURL"
 )
+
+func (v *Variable) MarshalYAML() (interface{}, error) {
+	type variable Variable
+
+	customVar := variable(*v)
+	orig := &yaml.Node{}
+	err := orig.Encode(&customVar)
+	if err != nil {
+		return nil, err
+	}
+	value := yml.Nodes(orig.Content).LookupValueNode("value")
+	result := yaml.Node{
+		Kind:    yaml.MappingNode,
+		Tag:     orig.Tag,
+		Content: []*yaml.Node{},
+	}
+	result.Content = yml.Nodes(result.Content).AppendScalar(v.Name)
+	if v.When != "" {
+		textValue := v.When + " ? " + toolbox.AsString(v.Value)
+		if v.Else != nil {
+			textValue += " : " + toolbox.AsString(v.Else)
+		}
+		value.Value = textValue
+	}
+	result.Content = append(result.Content, value)
+	return &result, err
+}
 
 // Variable represents a variable
 type Variable struct {
@@ -26,9 +55,6 @@ type Variable struct {
 	Replace           map[string]string `description:"replacements map, if key if specified substitute variable value with corresponding value. This will work only for string replacements"`
 	whenEval          eval.Compute
 }
-
-
-
 
 func (v *Variable) getValueFromInput(in data.Map) (interface{}, error) {
 	var value interface{}
@@ -45,7 +71,6 @@ func (v *Variable) getValueFromInput(in data.Map) (interface{}, error) {
 	}
 	return value, nil
 }
-
 
 func (v *Variable) formatStateInfo(state data.Map) string {
 	var aMap = state.AsEncodableMap()
@@ -93,7 +118,7 @@ func (v *Variable) canApply(in, out data.Map) bool {
 	for k, v := range in {
 		state[k] = v
 	}
-	result, _ := criteria.Evaluate(nil, state, v.When, &v.whenEval,"", false)
+	result, _ := criteria.Evaluate(nil, state, v.When, &v.whenEval, "", false)
 	return result
 }
 
@@ -111,21 +136,6 @@ func (v *Variable) getElse(in data.Map) interface{} {
 		value = in.Expand(value)
 	}
 	return value
-}
-
-func (v *Variable) replaceValue(value interface{}) interface{} {
-	if len(v.Replace) == 0 {
-		return value
-	}
-	text, ok := value.(string)
-	if !ok {
-		return value
-	}
-
-	for k, v := range v.Replace {
-		text = strings.Replace(text, k, v, 1)
-	}
-	return text
 }
 
 func (v *Variable) applyElse(in, out data.Map) interface{} {
@@ -155,8 +165,6 @@ func (v *Variable) Apply(in, out data.Map) error {
 	if err := v.validate(value, in); err != nil {
 		return err
 	}
-
-	value = v.replaceValue(value)
 	if v.Name != "" {
 		out.SetValue(v.Name, value)
 	}
@@ -166,49 +174,13 @@ func (v *Variable) Apply(in, out data.Map) error {
 // NewVariable creates a new variable
 func NewVariable(name, form, when string, required bool, value, elseValue interface{}, replace map[string]string, emptyIfUnexpanded bool) *Variable {
 	return &Variable{
-		Name:              name,
-		From:              form,
-		When:              when,
-		Required:          required,
-		Value:             value,
-		Else:              elseValue,
-		Replace:           replace,
-		EmptyIfUnexpanded: emptyIfUnexpanded,
+		Name:     name,
+		From:     form,
+		When:     when,
+		Required: required,
+		Value:    value,
+		Else:     elseValue,
 	}
-}
-
-// Variables a slice of variables
-type Variables []*Variable
-
-// Apply evaluates all variable from in map to out map
-func (v *Variables) Apply(in, out data.Map) error {
-	if out == nil {
-		return fmt.Errorf("out state was empty")
-	}
-	if in == nil {
-		in = data.NewMap()
-	}
-	for _, variable := range *v {
-		if variable == nil {
-			continue
-		}
-		if err := variable.Apply(in, out); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// String returns a variable info
-func (v Variables) String() string {
-	var result = ""
-	for _, item := range v {
-		if item == nil {
-			continue
-		}
-		result += fmt.Sprintf("{Name:%v From:%v Value:%v},", item.Name, item.From, item.Value)
-	}
-	return result
 }
 
 // VariableExpression represent a variable expression [!] VariableName = [when  ?] value : otherwiseValue,
@@ -265,4 +237,3 @@ func extractFromValue(value string, variable *Variable) {
 	variable.Else = elseExpr
 	variable.Value = normalizeVariableValue(toolbox.AsString(variable.Value))
 }
-

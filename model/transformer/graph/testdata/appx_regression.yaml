@@ -1,0 +1,115 @@
+init:
+  transactionLogs:
+    ci_req: [ ]
+
+
+pipeline:
+  updateArch:
+    action: exec:run
+    target: $target
+    commands:
+      - echo 'mly-server_${os.system}_${os.architecture}'
+    extract:
+      - regExpr: (mly-server_[\w]+)
+        key: archMlyBinary
+    post:
+      - mlyBinary: ${Data.archMlyBinary}
+  init:
+    when: $debugger!=on
+    cleanup:
+      action: run
+      request: '@cleanup.yaml'
+    datastore:
+      action: run
+      request: '@datastore.yaml'
+    rule:
+      action: run
+      request: '@index'
+    siteAggregator:
+      action: exec:run
+      target: $target
+      commands:
+        - /opt/app/bin/site_aggr -d=sitelet_v2 -n=ns_memory -i=/opt/app/data/sitelet_aggr${PathQualifier}.json.gz -b=800
+    uProfileAggregator:
+      action: exec:run
+      target: $target
+      commands:
+        - /opt/app/bin/profile_aggr -d=upv2 -n=udb -i=/opt/app/data/profile_aggr${PathQualifier}.json.gz -b=900
+    iProfileAggregator:
+      action: exec:run
+      target: $target
+      commands:
+        - /opt/app/bin/profile_aggr -d=ipv2 -n=udb -i=/opt/app/data/profile_aggr${PathQualifier}.json.gz -b=900
+    app:
+      #      when: $debugger!=on
+      action: run
+      request: '@app'
+    logs:
+      action: run
+      request: '@log'
+      tasks: listenLogs,resetLogs
+    udf:
+      action: udf:register
+      udfs:
+        - id: AsBrxBidRequest
+          provider: ProtoWriter
+          params:
+            - ${appPath}/filter/endpoint/brx/brx.proto
+            - BidRequest
+        - id: FromBrxBidResponse
+          provider: ProtoReader
+          params:
+            - ${appPath}/filter/endpoint/brx/brx.proto
+            - BidResponse
+        - id: AsAdxBidRequest
+          provider: ProtoWriter
+          params:
+            - ${appPath}/filter/endpoint/adx/adx.proto
+            - BidRequest
+        - id: FromAdxBidResponse
+          provider: ProtoReader
+          params:
+            - ${appPath}/filter/endpoint/adx/adx.proto
+            - BidResponse
+
+  test:
+    tag: $pathMatch
+    description: '@info'
+    subPath: 'cases/${index}_*'
+    data:
+      '[]sitelet_v2': '@sitelet'
+      '[]ad_order': '@ad_order'
+      '[]site': '@siteProfile'
+      '[]adsTxt': '@adsTxt'
+      '[]profile': '@profile'
+      '[]ip': '@ip'
+      '[]dv_ip_fraud': '@dv_ip_fraud'
+      '[]ias_ip_fraud': '@ias_ip_fraud'
+      '[]postalcode': '@postalcode'
+      '[]cap': '@cap'
+      '[]ipcap': '@ipcap'
+      '[]iplku': '@iplku'
+      '[]video': '@video'
+      '[]adelaide': '@adelaide'
+      '[]bidallocv2': '@bidallocv2'
+
+    range: 1..782
+
+    template:
+      checkSkip:
+        action: nop
+        comments: use case init
+        skip: $HasResource(${path}/skip.txt)
+      test:
+        action: run
+        request: '@test'
+
+  sleep:
+    action: nop
+    description: Sleep to let logs populate
+    sleepTimeMs: 5000
+
+  validateLogs:
+    action: run
+    request: '@log'
+    tasks: validateLogs
