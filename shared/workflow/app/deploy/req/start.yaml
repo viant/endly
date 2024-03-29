@@ -1,5 +1,0 @@
-target: $appTarget
-directory: $appPath
-immuneToHangups: true
-command: $startCmd
-arguments: $startArgs

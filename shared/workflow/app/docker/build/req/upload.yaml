@@ -1,5 +1,0 @@
-source: $target
-dest:   $buildTarget
-replace: $replace
-expand: $expand
-assets: $upload

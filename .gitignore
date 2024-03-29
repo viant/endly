@@ -4,3 +4,5 @@
 .gz
 local_test.go
 .vscode/
+project/
+ui/

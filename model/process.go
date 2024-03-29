@@ -1,16 +1,16 @@
 package model
 
 import (
+	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/url"
 	"sync"
 	"sync/atomic"
 )
 
 // Process represents a running instance of workflow/pipeline process.
 type Process struct {
-	Source   *url.Resource
+	Source   *location.Resource
 	Owner    string
 	TagIDs   map[string]bool
 	HasTagID bool
@@ -64,7 +64,7 @@ func (p *Process) AddTagIDs(tagIDs ...string) {
 }
 
 // NewProcess creates a new workflow, pipeline process
-func NewProcess(source *url.Resource, workflow *Workflow, upstream *Process) *Process {
+func NewProcess(source *location.Resource, workflow *Workflow, upstream *Process) *Process {
 	var process = &Process{
 		Source:         source,
 		ExecutionError: &ExecutionError{},

@@ -5,7 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model"
-	"github.com/viant/endly/workflow"
+	"github.com/viant/endly/service/workflow"
 	"github.com/viant/toolbox"
 	"testing"
 )
@@ -31,7 +31,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:      10,
-			SleepTimeMs: 100,
+			ThinkTimeMs: 100,
 			Exit:        "$status:!running",
 		}
 
@@ -68,7 +68,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:      10,
-			SleepTimeMs: 100,
+			ThinkTimeMs: 100,
 			Exit:        "$status:!running",
 		}
 
@@ -105,7 +105,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:      10,
-			SleepTimeMs: 100,
+			ThinkTimeMs: 100,
 			Exit:        "$status:!running",
 		}
 
@@ -142,7 +142,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:      10,
-			SleepTimeMs: 100,
+			ThinkTimeMs: 100,
 			Exit:        "$status:!running",
 		}
 
@@ -179,7 +179,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:      10,
-			SleepTimeMs: 100,
+			ThinkTimeMs: 100,
 			Exit:        "$output:!/running/", //this is contains
 		}
 
@@ -215,7 +215,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:      10,
-			SleepTimeMs: 100,
+			ThinkTimeMs: 100,
 			Exit:        "$output:!/running/", //this is contains
 		}
 
@@ -257,7 +257,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:      10,
-			SleepTimeMs: 100,
+			ThinkTimeMs: 100,
 			Exit:        "$status:!/running/", //this is contains
 		}
 
@@ -301,7 +301,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:      10,
-			SleepTimeMs: 100,
+			ThinkTimeMs: 100,
 			Exit:        "$output:!/running/", //this is contains
 		}
 
@@ -339,7 +339,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:      10,
-			SleepTimeMs: 100,
+			ThinkTimeMs: 100,
 			Exit:        "$status:!running",
 		}
 
@@ -372,7 +372,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:      10,
-			SleepTimeMs: 100,
+			ThinkTimeMs: 100,
 			Exit:        "$status:!running",
 		}
 
@@ -405,7 +405,7 @@ func TestRepeatable_Run(t *testing.T) {
 				},
 			},
 			Repeat:      10,
-			SleepTimeMs: 100,
+			ThinkTimeMs: 100,
 			Exit:        "$status!=running",
 		}
 

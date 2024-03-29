@@ -1,3 +1,0 @@
-"${driver}-ip": $ip
-register: $register
-prepare: $prepare

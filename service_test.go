@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"testing"
 )
 
@@ -98,17 +98,17 @@ func TestAbstractService_Route(t *testing.T) {
 func TestAbstractService_GetHostAndSSHPort(t *testing.T) {
 	srv := newService()
 	{
-		host, port := srv.GetHostAndSSHPort(nil)
+		host, port := srv.GetHostname(nil)
 		assert.Equal(t, host, "")
 		assert.Equal(t, port, 0)
 	}
 	{
-		host, port := srv.GetHostAndSSHPort(url.NewResource("scp://127.0.0.1:22"))
+		host, port := srv.GetHostname(location.NewResource("scp://127.0.0.1:22"))
 		assert.Equal(t, host, "127.0.0.1")
 		assert.Equal(t, port, 22)
 	}
 	{
-		host, port := srv.GetHostAndSSHPort(url.NewResource("file:///avc"))
+		host, port := srv.GetHostname(location.NewResource("file:///avc"))
 		assert.Equal(t, host, "127.0.0.1")
 		assert.Equal(t, port, 22)
 	}

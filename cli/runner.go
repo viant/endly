@@ -11,9 +11,9 @@ import (
 	"github.com/viant/endly/cli/xunit"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/msg"
-	"github.com/viant/endly/system/exec"
-	"github.com/viant/endly/testing/runner/selenium"
-	"github.com/viant/endly/workflow"
+	"github.com/viant/endly/service/system/exec"
+	"github.com/viant/endly/service/testing/runner/selenium"
+	"github.com/viant/endly/service/workflow"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"gopkg.in/yaml.v2"
@@ -452,7 +452,7 @@ func (r *Runner) reportSummaryEvent() {
 
 	contextMessage = fmt.Sprintf("%v%v", contextMessage, r.ColorText(contextMessageStatus, contextMessageColor))
 	var totalTagValidated = (r.report.TotalTagPassed + r.report.TotalTagFailed)
-	var validationInfo = fmt.Sprintf("Passed %v/%v (TagIDs).", r.report.TotalTagPassed, totalTagValidated)
+	var validationInfo = fmt.Sprintf("Passed %v/%v.", r.report.TotalTagPassed, totalTagValidated)
 	if totalTagValidated == 0 {
 		validationInfo = ""
 	}
@@ -577,7 +577,7 @@ func (r *Runner) reportTagSummary() {
 		if val, ok := r.request.Params["app"]; ok {
 			r.xUnitSummary.Name = toolbox.AsString(val)
 		} else if r.request.Source != nil {
-			workflowPath := r.request.Source.DirectoryPath()
+			workflowPath := r.request.Source.Path()
 			if strings.HasSuffix(workflowPath, "/") {
 				workflowPath = string(workflowPath[:len(workflowPath)-1])
 			}
@@ -668,7 +668,6 @@ func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 	r.context = r.manager.NewContext(toolbox.NewContext())
 	//init shared session
 	exec.TerminalSessions(r.context)
-	exec.SetDefaultTarget(r.context, nil)
 	selenium.Sessions(r.context)
 
 	r.report = &ReportSummaryEvent{}

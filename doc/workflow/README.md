@@ -39,6 +39,7 @@ To list endly supported services run the following:
 endly -s='*'
 ```
 
+
 To list supported services actions run the following ```endly -s=[service name]```:
 
 i.e
@@ -116,53 +117,11 @@ pipeline:
 ```
 
 
-*Neatly*
-
-For originally developed workflow endly uses [Neatly](https://github.com/viant/neatly) format 
-to represent a workflow. In that case neatly is responsible for converting a tabular document (.csv) 
-with json/yaml and other sub path dependencies into workflow object tree as shown in the [diagram](diagram.png).
-
-
-
-
-Find out more about neatly:
-[Neatly introduction](https://github.com/adrianwit/neatly-introduction)
-
-
-To see neatly converted workflow  [*model.Workflow](../../model/workflow.go) run the following
-
-
-i.e.
-@regression.csv
-
-|**Workflow**| | |**Name**|**Description**|**Tasks**| | |**Init**| |
-|---|---|---|---|---|---|---|---|---|---|
-| | |regression|$app app regresion test|%Tasks| | | @var/init| |
-|[]**Tasks**| | |**Name**|**Description**|**Actions**| | | | |
-| | |prepare|prepare data for test use cases|%Prepare| | | | |
-|[]**Prepare**| |**Service**|**Action**|**Description**|**Request**| | | | |
-| |workflow|run|init selenium|@req/selenium_init| | | | |
-| |workflow|run|init test data|@req/data| | | | |
-|[]**Tasks**| | |**Name**|**Description**|**Actions**| | | | |
-| | |test|Defines test requests|%Test| | | | |
-|[]**Test{1..002}**|**Subpath**|**Service**|**Action**|**Description**|**Request**|**Skip**|**When**|**Init**|**/Data.db.[]setup**|**TagDescription**
-|use_cases/${index}*| |nop|skip this group if skip.txt is present|{}|$HasResource(${subPath}/skip.txt):true| | @var/test_init| |@use_case.txt
-|use_cases/${index}*| |nop|push test data|{}| |$HasResource(${subPath}/db1_data.json):true| | @db1_data|
-|use_cases/${index}*|selenium|run|run selenium test| @selenium_test| | | | |
-|use_cases/${index}*|http/runner|send|run HTTP test| @http_test| | | | |
-|use_cases/${index}*|rest/runner|send|run REST test| @rest_test| | | | |
-|[]**Tasks**| | |**Name**|**Description**|**Actions**| | | | |
-| | |clean|stop test services|%Clean| | | | |
-|[]**Clean**| |**Service**|**Action**|**Description**|**Request**|**SleepTimeMs**| | | |
-| | |nop|sleep for easy debuging|{}|1000| | | |
-| | |run|close and stop seleniun|@req/selenium_destroy| | | | |
-
-
 *Printing workflow model representation*
 
 ```bash
 
-endly -w=WORKFLOW_NAME -p   -f=yaml|json
+endly -r=name -p   -f=yaml|json
 
 ```
 

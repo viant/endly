@@ -1,1 +1,0 @@
-sudo docker exec -it testMysql mysqldump  -uroot -pdev --all-databases --routines | grep -v 'Warning' > /tmp/dump.sql

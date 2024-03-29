@@ -1,6 +1,0 @@
-deploy:
-  action: docker:run
-  image: mongo:latest
-  name: endly_${db}
-  ports:
-    27017: 27017

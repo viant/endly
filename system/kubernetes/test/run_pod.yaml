@@ -1,6 +1,0 @@
-pipeline:
-  runPod:
-    action: kubernetes:run
-    name: nginx
-    image: nginx
-    restartPolicy: Never

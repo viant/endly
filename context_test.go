@@ -3,8 +3,8 @@ package endly_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/url"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -30,19 +30,19 @@ func TestContext_Expand_Resource(t *testing.T) {
 
 	_, err := context.ExpandResource(nil)
 	assert.NotNil(t, err)
-	_, err = context.ExpandResource(&url.Resource{})
+	_, err = context.ExpandResource(&location.Resource{})
 	assert.NotNil(t, err)
 
 	{
 		state := context.State()
 		state.Put("host", "127.0.0.1")
-		expanded, err := context.ExpandResource(url.NewResource("scp://${host}/as"))
+		expanded, err := context.ExpandResource(location.NewResource("scp://${host}/as"))
 		if assert.Nil(t, err) {
 			assert.EqualValues(t, "scp://127.0.0.1/as", expanded.URL)
 		}
 	}
 	{
-		_, err := context.ExpandResource(url.NewResource("path"))
+		_, err := context.ExpandResource(location.NewResource("path"))
 		assert.Nil(t, err)
 	}
 

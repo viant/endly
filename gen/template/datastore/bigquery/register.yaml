@@ -1,7 +1,0 @@
-action: dsunit:register
-datastore: $db
-config:
-  driverName: bigquery
-  credentials: $bqCredentials
-  parameters:
-    datasetId: $db  #projectId is read from secret.json file

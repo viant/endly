@@ -35,7 +35,7 @@ With this method, you can run any endly service action directly (including workf
 
         manager := endly.New()
         var context = manager.NewContext(nil)
-        var target = url.NewResource("ssh://127.0.0.1/", "localhost")
+        var target = location.NewResource("ssh://127.0.0.1/", "localhost")
         var runRequest = &docker.RunRequest{
            Target: target,
            Image:  "mysql:5.6",

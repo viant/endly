@@ -1,3 +1,0 @@
-datastore: testdb
-sql: SELECT id FROM dummy
-ignoreError: true

@@ -1,3 +1,0 @@
-CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                    NAMES
-98cbdad653df        mysql:latest                   "docker-entrypoint.s…"   2 hours ago         Up 2 hours          0.0.0.0:3306->3306/tcp   endly_db1
-383513fa9015        rastasheep/ubuntu-sshd:14.04   "/usr/sbin/sshd -D"      2 weeks ago         Up 3 hours          0.0.0.0:7722->22/tcp     go_build

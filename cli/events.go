@@ -5,7 +5,7 @@ import (
 	"github.com/viant/endly"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/msg"
-	"github.com/viant/endly/workflow"
+	"github.com/viant/endly/service/workflow"
 	"sync"
 )
 

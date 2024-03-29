@@ -1,0 +1,12 @@
+[
+  {
+    "USER_ID": "$Sequences.CONTACTS/${tag}.1",
+    "AUTHORITY": "ROLE_BUSINESS_OWNER",
+    "CREATED_USER": 10
+  },
+  {
+    "USER_ID": "$Sequences.CONTACTS/${tag}.2",
+    "AUTHORITY": "ROLE_BUSINESS_OWNER",
+    "CREATED_USER": 11
+  }
+]

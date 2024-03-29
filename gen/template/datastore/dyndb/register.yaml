@@ -1,8 +1,0 @@
-action: dsunit:register
-datastore: $db
-config:
-  driverName: dyndb
-  parameters:
-    dbname: $db
-    host: "127.0.0.1"
-    keyColumnName: "id"

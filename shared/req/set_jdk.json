@@ -1,8 +1,0 @@
-{
-  "Target": {
-    "URL": "ssh://${targetHost}/",
-    "Credentials": "$targetHostCredential"
-  },
-  "Sdk": "jdk",
-  "Version": "$jdkVersion"
-}

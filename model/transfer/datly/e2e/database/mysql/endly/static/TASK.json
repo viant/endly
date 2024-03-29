@@ -1,0 +1,165 @@
+[
+  {
+    "ID": "projectx/run.yaml/init",
+    "WORKFLOW_ID": "projectx/run.yaml",
+    "TAG": "init",
+    "SERVICE": "workflow"
+  },
+  {
+    "ID": "projectx/run.yaml/init/system",
+    "WORKFLOW_ID": "projectx/run.yaml",
+    "PARENT_ID": "projectx/run.yaml/init",
+    "TAG": "system",
+    "SERVICE": "workflow",
+    "ACTION": "run",
+    "INPUT": "{\"request\":\"@system\"}"
+  },
+  {
+    "ID": "projectx/run.yaml/init/database",
+    "WORKFLOW_ID": "projectx/run.yaml",
+    "PARENT_ID": "projectx/run.yaml/init",
+    "POSITION": 1,
+    "TAG": "database",
+    "SERVICE": "workflow",
+    "ACTION": "run",
+    "INPUT": "{\"request\":\"@database/database\"}"
+  },
+  {
+    "ID": "projectx/run.yaml/runTest",
+    "WORKFLOW_ID": "projectx/run.yaml",
+    "POSITION": 1,
+    "TAG": "runTest",
+    "SERVICE": "workflow",
+    "SUB_PATH": "regression/cases/${index}_*",
+    "DATA": "{\"[]dbsetup\":\"@prepare\"}"
+  },
+  {
+    "ID": "projectx/run.yaml/runTest/test",
+    "WORKFLOW_ID": "projectx/run.yaml",
+    "PARENT_ID": "projectx/run.yaml/runTest",
+    "TAG": "test",
+    "INIT": "[\"tag: $tag\"]",
+    "SERVICE": "workflow",
+    "ACTION": "run",
+    "INPUT": "{\"request\":\"@test\"}",
+    "IS_TEMPLATE": true
+  },
+  {
+    "ID": "projectx/run.yaml/validate",
+    "WORKFLOW_ID": "projectx/run.yaml",
+    "POSITION": 2,
+    "TAG": "validate",
+    "SERVICE": "workflow",
+    "ACTION": "print",
+    "INPUT": "{\"message\":\"validation ...\"}"
+  },
+  {
+    "ID": "projectx/system.yaml/stop",
+    "WORKFLOW_ID": "projectx/system.yaml",
+    "TAG": "stop",
+    "SERVICE": "workflow"
+  },
+  {
+    "ID": "projectx/system.yaml/stop/services",
+    "WORKFLOW_ID": "projectx/system.yaml",
+    "PARENT_ID": "projectx/system.yaml/stop",
+    "TAG": "services",
+    "SERVICE": "docker",
+    "ACTION": "stop",
+    "INPUT": "{\"images\":\"\"}"
+  },
+  {
+    "ID": "projectx/system.yaml/services",
+    "WORKFLOW_ID": "projectx/system.yaml",
+    "POSITION": 1,
+    "TAG": "services",
+    "SERVICE": "workflow"
+  },
+  {
+    "ID": "projectx/system.yaml/services/mysql_db1",
+    "WORKFLOW_ID": "projectx/system.yaml",
+    "PARENT_ID": "projectx/system.yaml/services",
+    "TAG": "mysql_db1",
+    "SERVICE": "docker",
+    "ACTION": "run",
+    "INPUT": "{\"env\":\"\",\"image\":\"mysql:5.7\",\"name\":\"mysql_db1\",\"platform\":\"linux/amd64\",\"ports\":\"\"}",
+    "SLEEP_TIME_MS": 2000
+  },
+  {
+    "ID": "projectx/database/database.yaml/register",
+    "WORKFLOW_ID": "projectx/database/database.yaml",
+    "TAG": "register",
+    "DESCRIPTION": "register data store db with mysql dsn",
+    "SERVICE": "dsunit",
+    "ACTION": "init",
+    "INPUT": "{\"admin\":\"\",\"config\":\"\",\"datastore\":\"db1\",\"scripts\":\"\"}"
+  },
+  {
+    "ID": "projectx/database/database.yaml/loadSequences",
+    "WORKFLOW_ID": "projectx/database/database.yaml",
+    "POSITION": 1,
+    "TAG": "loadSequences",
+    "POST": "[\"Sequences: $Sequences\"]",
+    "DESCRIPTION": "task returns values of the sequence for supplied tables",
+    "SERVICE": "dsunit",
+    "ACTION": "sequence",
+    "INPUT": "{\"datastore\":\"db1\",\"tables\":\"$StringKeys(${data.dbsetup})\"}"
+  },
+  {
+    "ID": "projectx/database/database.yaml/printSequences",
+    "WORKFLOW_ID": "projectx/database/database.yaml",
+    "POSITION": 2,
+    "TAG": "printSequences",
+    "SERVICE": "workflow",
+    "ACTION": "print",
+    "INPUT": "{\"message\":\"$AsJSON($Sequences)\"}"
+  },
+  {
+    "ID": "projectx/database/database.yaml/allocateSequences",
+    "WORKFLOW_ID": "projectx/database/database.yaml",
+    "POSITION": 3,
+    "TAG": "allocateSequences",
+    "INIT": "null",
+    "SERVICE": "workflow",
+    "ACTION": "nop",
+    "INPUT": "{}"
+  },
+  {
+    "ID": "projectx/database/database.yaml/recordInfo",
+    "WORKFLOW_ID": "projectx/database/database.yaml",
+    "POSITION": 4,
+    "TAG": "recordInfo",
+    "SERVICE": "workflow",
+    "ACTION": "print",
+    "INPUT": "{\"message\":\"$AsJSON($records)\"}"
+  },
+  {
+    "ID": "projectx/database/database.yaml/populate",
+    "WORKFLOW_ID": "projectx/database/database.yaml",
+    "POSITION": 5,
+    "TAG": "populate",
+    "WHEN_EXPR": "$Len($records) \u003e 0",
+    "SERVICE": "dsunit",
+    "ACTION": "prepare",
+    "INPUT": "{\"data\":\"$records\",\"datastore\":\"db1\"}"
+  },
+  {
+    "ID": "projectx/default/test.yaml/test",
+    "WORKFLOW_ID": "projectx/default/test.yaml",
+    "TAG": "test",
+    "SERVICE": "workflow",
+    "ACTION": "print",
+    "INPUT": "{\"message\":\"$tag: setup data  $AsJSON(${setup})\"}",
+    "INSTANCE_TAG": "default"
+  },
+  {
+    "ID": "projectx/regression/cases/003_case3/test.yaml/test",
+    "WORKFLOW_ID": "projectx/regression/cases/003_case3/test.yaml",
+    "TAG": "test",
+    "SERVICE": "workflow",
+    "ACTION": "print",
+    "INPUT": "{\"message\":\"$tag: setup data  $AsJSON(${setup})\"}",
+    "INSTANCE_INDEX": 3,
+    "INSTANCE_TAG": "case3"
+  }
+]

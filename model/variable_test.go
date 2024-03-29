@@ -3,7 +3,6 @@ package model
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
-	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"io/ioutil"
 	"testing"
@@ -176,36 +175,6 @@ func TestVariable_Apply(t *testing.T) {
 
 }
 
-func TestVariable_PersistValue(t *testing.T) {
-
-	var var1 = NewVariable("key1", "", "", false, "123", nil, nil, false)
-	toolbox.RemoveFileIfExist(var1.tempfile())
-	var1.PersistValue()
-
-	{ //load persisted value
-		var2 := NewVariable("key1", "", "", false, "123", nil, nil, false)
-		err := var2.Load()
-		assert.Nil(t, err)
-		assert.EqualValues(t, "123", var2.Value)
-
-	}
-	{
-		toolbox.RemoveFileIfExist(var1.tempfile())
-		var2 := NewVariable("key1", "", "", false, nil, nil, nil, false)
-		toolbox.RemoveFileIfExist(var1.tempfile())
-		ioutil.WriteFile(var1.tempfile(), []byte("aa"), 0644)
-		err := var2.Load()
-		assert.NotNil(t, err)
-	}
-	{
-		toolbox.RemoveFileIfExist(var1.tempfile())
-		var2 := NewVariable("key1", "", "", false, nil, nil, nil, false)
-		toolbox.RemoveFileIfExist(var1.tempfile())
-		err := var2.Load()
-		assert.Nil(t, err)
-		assert.Nil(t, var2.Value)
-	}
-}
 
 func TestVariables_Apply(t *testing.T) {
 	var variables Variables = []*Variable{

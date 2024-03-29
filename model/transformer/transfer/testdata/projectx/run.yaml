@@ -1,0 +1,33 @@
+init:
+  mysqlCred: mysql-e2e.json
+  mysqlSecrets: ${secrets.$mysqlCred}
+  records: []
+  workflowPath: $WorkingDirectory(.)
+  CONTACTS: {}
+  blah: '@blah'
+pipeline:
+
+  init:
+    system:
+      action: run
+      request: '@system'
+
+    database:
+      action: run
+      request: '@database/database'
+
+  runTest:
+    tag: $pathMatch
+    data:
+      ## each use case folder place table setup data into prepare folder
+      '[]dbsetup': '@prepare'
+    subPath: 'regression/cases/${index}_*'
+    template:
+      test:
+        action: run
+        init:
+          tag: $tag
+        request: '@test'
+  validate:
+    action: print
+    message: validation ...

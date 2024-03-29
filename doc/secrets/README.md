@@ -18,10 +18,7 @@ Endly was designed in a way to hide user secrets. For example, if sudo access is
 <a name="ssh"></a>
 ### SSH Credentials   
 
-
-
-
-To generate credentials file to enable endly exec service to run on localhost:
+To generate credentials file to enable endly exec service to run on remote/local:
 
 Provide a username and password to login to your box.
 
