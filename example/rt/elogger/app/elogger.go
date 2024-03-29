@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"github.com/viant/endly/example/rt/elogger"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"log"
 )
 
@@ -13,7 +13,7 @@ func main() {
 	flag.Parse()
 	config := &elogger.Config{}
 
-	configResource := url.NewResource(*configURI)
+	configResource := location.NewResource(*configURI)
 	err := configResource.Decode(config)
 	if err != nil {
 		log.Fatal(err)

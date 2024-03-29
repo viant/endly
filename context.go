@@ -3,16 +3,16 @@ package endly
 import (
 	"context"
 	"fmt"
-
 	uuid "github.com/satori/go.uuid"
+	"github.com/viant/afs/url"
+	"github.com/viant/endly/internal/debug"
+	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/model/msg"
-	"github.com/viant/neatly"
+	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"github.com/viant/toolbox/secret"
+	tudf "github.com/viant/toolbox/data/udf"
 	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox/url"
-	"math/rand"
 	"os"
 	"os/exec"
 	"path"
@@ -30,7 +30,7 @@ var deferFunctionsKey = (*[]func())(nil)
 
 // Context represents a workflow session context/state
 type Context struct {
-	background      context.Context
+	context         context.Context
 	SessionID       string
 	CLIEnabled      bool
 	HasLogger       bool
@@ -38,20 +38,23 @@ type Context struct {
 	Secrets         *secret.Service
 	Wait            *sync.WaitGroup
 	Listener        msg.Listener
-	Source          *url.Resource
-	state           data.Map
-	Logging         *bool
+	Source          *location.Resource
+	Debugger        *debug.Debugger
+
+	state   data.Map
+	udfs    data.Map
+	Logging *bool
 	toolbox.Context
 	cloned []*Context
 	closed int32
 }
 
 func (c *Context) Background() context.Context {
-	if c.background != nil {
-		return c.background
+	if c.context != nil {
+		return c.context
 	}
-	c.background = context.Background()
-	return c.background
+	c.context = context.Background()
+	return c.context
 }
 
 // Publish publishes event to listeners, it updates current run details like activity workflow name etc ...
@@ -137,7 +140,7 @@ func (c *Context) SetLogging(flag bool) {
 }
 
 // ExpandResource substitutes any $ expression with the key value from the state map if it is present.
-func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) {
+func (c *Context) ExpandResource(resource *location.Resource) (*location.Resource, error) {
 	if resource == nil {
 		return nil, msg.ReportError(fmt.Errorf("resource  was empty"))
 	}
@@ -151,18 +154,13 @@ func (c *Context) ExpandResource(resource *url.Resource) (*url.Resource, error) 
 			if err != nil {
 				continue
 			}
-			var candidateURL = toolbox.URLPathJoin(parentCandidate, resource.URL)
+			var candidateURL = url.Join(parentCandidate, resource.URL)
 			if exists, err := service.Exists(candidateURL); exists && err == nil {
 				resource.URL = candidateURL
 			}
 		}
 	}
-	var result = url.NewResource(c.Expand(resource.URL), c.Expand(resource.Credentials))
-	if result.ParsedURL == nil {
-		return nil, fmt.Errorf("failed to parse URL %v", result.URL)
-	}
-	result.Cache = c.Expand(resource.Cache)
-	result.CacheExpiryMs = resource.CacheExpiryMs
+	var result = location.NewResource(c.Expand(resource.URL), location.WithCredentials(c.Expand(resource.Credentials)))
 	result.CustomKey = resource.CustomKey
 	return result, nil
 }
@@ -198,7 +196,6 @@ func (c *Context) Deffer(functions ...func()) []func() {
 	} else {
 		c.GetInto(deferFunctionsKey, &result)
 	}
-
 	*result = append(*result, functions...)
 	_ = c.Put(deferFunctionsKey, &result)
 	return *result
@@ -252,7 +249,6 @@ func (c *Context) NewRequest(serviceName, action string, rawRequest map[string]i
 	}
 
 	defer func() {
-
 		if toolbox.AsBoolean(os.Getenv("ENDLY_PANIC")) {
 			return
 		}
@@ -308,10 +304,6 @@ func (c *Context) MakeAsyncSafe() *msg.Events {
 	return result
 }
 
-var yyyyMMDDLayout = toolbox.DateFormatToLayout("yyyy-MM-dd")
-var yyyMMDDHHMMSSLayout = toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss")
-var numberDateLayout = toolbox.DateFormatToLayout("yyyyMMddhhmmSSS")
-
 var atomicInt int64
 
 /*
@@ -333,13 +325,35 @@ It comes with the following registered keys:
 
 func NewDefaultState(ctx *Context) data.Map {
 	var result = data.NewMap()
-	var now = time.Now()
+	result.Put("ts", time.Now().Unix())
+	if ctx.udfs == nil {
+		ctx.udfs = predefinedRegistry()
+		ctx.udfs.Put("secrets", func(key string) interface{} {
+			if ctx.Secrets == nil {
+				return ""
+			}
+			genericCred, err := ctx.Secrets.GetCredentials(ctx.Background(), key)
+			if err == nil {
+				var result = make(map[string]interface{})
+				if err = toolbox.DefaultConverter.AssignConverted(&result, genericCred); err == nil {
+					return data.Map(result)
+				}
+			}
+			return ""
+		})
+	}
+	result.Put(data.UDFKey, ctx.udfs)
+	return result
+}
 
-	source := rand.NewSource(now.UnixNano())
-	result.Put("rand", source.Int63())
-	result.Put("date", now.Format(yyyyMMDDLayout))
-	result.Put("time", now.Format(yyyMMDDHHMMSSLayout))
-	result.Put("ts", now.Unix())
+func predefinedRegistry() data.Map {
+	var result = data.NewMap()
+	for k, v := range tudf.Predefined {
+		result[k] = v
+	}
+	for k, v := range PredefinedUdfs {
+		result.Put(k, v)
+	}
 	result.Put("minuteofday", func(key string) interface{} {
 		now := time.Now()
 		if strings.ToLower(key) == "utc" {
@@ -348,6 +362,7 @@ func NewDefaultState(ctx *Context) data.Map {
 		return int(now.Minute()) + int(now.Hour())*60
 	})
 	result.Put("weekday", func(key string) interface{} {
+		now := time.Now()
 		loc := time.UTC
 		if key != "" {
 			if l, err := time.LoadLocation(key); err != nil {
@@ -439,27 +454,5 @@ func NewDefaultState(ctx *Context) data.Map {
 	result.Put("env", func(key string) interface{} {
 		return os.Getenv(key)
 	})
-
-	if ctx != nil {
-		result.Put("secrets", func(key string) interface{} {
-			if ctx.Secrets == nil {
-				return ""
-			}
-			config, err := ctx.Secrets.GetCredentials(key)
-			if err == nil {
-				var result = make(map[string]interface{})
-				if err = toolbox.DefaultConverter.AssignConverted(&result, config); err == nil {
-
-				}
-				return data.Map(result)
-			}
-			return ""
-		})
-	}
-
-	neatly.AddStandardUdf(result)
-	for k, v := range UdfRegistry {
-		result.Put(k, v)
-	}
 	return result
 }

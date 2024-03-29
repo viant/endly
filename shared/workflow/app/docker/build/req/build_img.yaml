@@ -1,3 +1,0 @@
-target: $target
-tag: $sourceTag
-path: $releasePath

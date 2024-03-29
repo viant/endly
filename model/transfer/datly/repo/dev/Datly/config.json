@@ -1,0 +1,36 @@
+{
+	"APIKeys": [
+		{
+			"Header": "App-Secret-Id",
+			"URI": "/v1/api/dev/secured",
+			"Value": "changeme"
+		}
+	],
+	"APIPrefix": "/v1/api",
+	"ContentURL": "/Users/awitas/go/src/github.com/viant/endly/model/transfer/datly/repo/dev/Datly/content",
+	"DependencyURL": "/Users/awitas/go/src/github.com/viant/endly/model/transfer/datly/repo/dev/Datly/dependencies",
+	"DisableCors": false,
+	"Endpoint": {
+		"MaxHeaderBytes": 0,
+		"Port": 8080,
+		"ReadTimeoutMs": 0,
+		"WriteTimeoutMs": 0
+	},
+	"MaxJobs": 0,
+	"Meta": {
+		"CacheWarmURI": "/v1/api/cache/warmup",
+		"ConfigURI": "/v1/api/meta/config",
+		"MetricURI": "/v1/api/meta/metric",
+		"OpenApiURI": "/v1/api/meta/openapi",
+		"StateURI": "/v1/api/meta/state",
+		"StatusURI": "/v1/api/meta/status",
+		"StructURI": "/v1/api/meta/struct",
+		"ViewURI": "/v1/api/meta/view"
+	},
+	"PluginsURL": "/Users/awitas/go/src/github.com/viant/endly/model/transfer/datly/repo/dev/Datly/plugins",
+	"RevealMetric": true,
+	"RouteURL": "/Users/awitas/go/src/github.com/viant/endly/model/transfer/datly/repo/dev/Datly/routes",
+	"SyncFrequencyMs": 0,
+	"URL": "/Users/awitas/go/src/github.com/viant/endly/model/transfer/datly/repo/dev/Datly/config.json",
+	"UseCacheFS": false
+}

@@ -1,3 +1,0 @@
-target: $target
-repository: $registry
-credentials: $registryCredentials

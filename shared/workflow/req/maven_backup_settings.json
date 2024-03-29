@@ -1,8 +1,0 @@
-{
-  "SourceKey": "originalMavenSettings",
-  "Dest": {
-    "URL": "${env.HOME}/.m2/settings.xml.backup",
-    "Credentials": "${targetHostCredentials}",
-    "Name": "backupMavenSettings"
-  }
-}

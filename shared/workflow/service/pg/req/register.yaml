@@ -1,5 +1,0 @@
-datastore: testdb
-config:
-  descriptor: "host=127.0.0.1 port=5432 user=[username] password=[password] dbname=postgres sslmode=disable"
-  driverName: postgres
-  credentials: $credentials

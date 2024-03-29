@@ -1,0 +1,18 @@
+init:
+  mysqlCred: mysql-e2e.json
+  mysqlSecrets: ${secrets.$mysqlCred}
+  records: []
+  workflowPath: $WorkingDirectory(.)
+  CONTACTS: {}
+  blah: '@blah'
+pipeline:
+
+  init:
+#    system:
+#      action: run
+#      request: '@system'
+
+    database:
+      action: run
+      request: '@database/database'
+

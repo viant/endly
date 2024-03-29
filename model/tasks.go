@@ -7,10 +7,12 @@ import (
 
 // TasksNode represents a task node
 type TasksNode struct {
-	Tasks        []*Task //sub tasks
-	OnErrorTask  string  //task that will run if error occur, the final workflow will return this task response
-	DeferredTask string  //task that will always run if there has been previous  error or not
+	Tasks        Tasks  ` yaml:",omitempty"` //sub tasks
+	OnErrorTask  string ` yaml:",omitempty"` //task that will run if error occur, the final workflow will return this task response
+	DeferredTask string ` yaml:",omitempty"` //task that will always run if there has been previous  error or not
 }
+
+type Tasks []*Task
 
 // Select selects tasks matching supplied selector
 func (t *TasksNode) Select(selector TasksSelector) *TasksNode {
@@ -55,7 +57,7 @@ func (t *TasksNode) Select(selector TasksSelector) *TasksNode {
 // Task returns a task for supplied name
 func (t *TasksNode) Task(name string) (*Task, error) {
 	if len(t.Tasks) == 0 {
-		return nil, fmt.Errorf("failed to lookup task: %v", name)
+		return nil, fmt.Errorf("failed to LookupValueNode task: %v", name)
 	}
 	name = strings.TrimSpace(name)
 	for _, candidate := range t.Tasks {
@@ -68,7 +70,7 @@ func (t *TasksNode) Task(name string) (*Task, error) {
 			}
 		}
 	}
-	return nil, fmt.Errorf("failed to lookup task: %v", name)
+	return nil, fmt.Errorf("failed to LookupValueNode task: %v", name)
 }
 
 // Task returns a task for supplied name
@@ -78,4 +80,9 @@ func (t *TasksNode) Has(name string) bool {
 	}
 	_, err := t.Task(name)
 	return err == nil
+}
+
+func (t *TasksNode) Clone() *TasksNode {
+	ret := *t
+	return &ret
 }

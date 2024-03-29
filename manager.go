@@ -1,11 +1,11 @@
 package endly
 
 import (
+	_ "embed"
 	"fmt"
 	"github.com/satori/go.uuid"
+	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/secret"
-	"github.com/viant/toolbox/url"
 	"reflect"
 	"strings"
 	"sync"
@@ -113,7 +113,7 @@ func (m *manager) NewContext(ctx toolbox.Context) *Context {
 		Context:         ctx,
 		Wait:            &sync.WaitGroup{},
 		AsyncUnsafeKeys: make(map[interface{}]bool),
-		Secrets:         secret.New("", false),
+		Secrets:         secret.New(),
 	}
 	_ = result.Put(serviceManagerKey, m)
 	return result
@@ -165,9 +165,10 @@ func Services(mgr interface{}) map[string]Service {
 	return manager.serviceByID
 }
 
+//go:embed Version
+var version string
+
 // GetVersion returns endly version
 func GetVersion() string {
-	resource := url.NewResource(fmt.Sprintf("mem://%v/Version", Namespace))
-	version, _ := resource.DownloadText()
 	return version
 }

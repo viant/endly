@@ -1,0 +1,20 @@
+
+pipeline:
+  stop:
+    services:
+      action: docker:stop
+      images:
+        - mysql
+
+  services:
+    mysql_db1:
+      action: docker:run
+      sleepTimeMs: 2000
+      image: mysql:5.7
+      platform: linux/amd64
+      name: mysql_db1
+      ports:
+        3306: 3306
+      env:
+        MYSQL_ROOT_PASSWORD: ${mysqlSecrets.Password}
+

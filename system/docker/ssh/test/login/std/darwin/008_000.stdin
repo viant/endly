@@ -1,1 +1,0 @@
-echo 'test' | docker login -u abc  repo.com/myproj --password-stdin

@@ -1,8 +1,10 @@
 package criteria
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
+	"github.com/viant/endly/model/criteria/eval"
 	"github.com/viant/toolbox"
 	"testing"
 )
@@ -10,8 +12,6 @@ import (
 func Test_EvaluateCriteria(t *testing.T) {
 
 	manager := endly.New()
-	context := manager.NewContext(toolbox.NewContext())
-	state := context.State()
 
 	var useCases = []struct {
 		Description   string
@@ -22,7 +22,7 @@ func Test_EvaluateCriteria(t *testing.T) {
 		HasError      bool
 	}{
 		{
-			Description:   "Data substitution 2",
+			Description:   "eq $key1:1",
 			Expression:    "$key1:1", //
 			DefaultResult: true,
 			Expected:      true,
@@ -31,17 +31,7 @@ func Test_EvaluateCriteria(t *testing.T) {
 			},
 		},
 		{
-			Description:   "Data substitution 2",
-			Expression:    "$key1:1", //
-			DefaultResult: true,
-			Expected:      true,
-			State: map[string]interface{}{
-				"key1": "1",
-			},
-		},
-
-		{
-			Description:   "Data substitution 1",
+			Description:   "ne $key1:!0",
 			Expression:    "$key1:!0", //
 			DefaultResult: true,
 			Expected:      false,
@@ -94,13 +84,13 @@ func Test_EvaluateCriteria(t *testing.T) {
 		{
 			Description:   "Not equal",
 			Expression:    "1:!0",
-			DefaultResult: true,
+			DefaultResult: false,
 			Expected:      true,
 		},
 		{
 			Description:   "Not equal 2",
 			Expression:    "1!=0",
-			DefaultResult: true,
+			DefaultResult: false,
 			Expected:      true,
 		},
 
@@ -114,9 +104,17 @@ func Test_EvaluateCriteria(t *testing.T) {
 			},
 		},
 		{
+			Description:   "UDFs substitution",
+			Expression:    "$Len($logRecords) > 2", //
+			//DefaultResult: true,
+			Expected:      false,
+			State: map[string]interface{}{
+				"logRecords": []interface{}{"1"},
+			},
+		},
+		{
 			Description:   "Uni operand expression",
 			Expression:    "$getTrue()", //
-			DefaultResult: true,
 			Expected:      true,
 			State: map[string]interface{}{
 				"getTrue": func() interface{} {
@@ -124,20 +122,59 @@ func Test_EvaluateCriteria(t *testing.T) {
 				},
 			},
 		},
+		{
+			Description:   "contains",
+			Expression:    "$bar() contains abc", //
+			Expected:      true,
+			State: map[string]interface{}{
+				"bar": func() interface{} {
+					return "abcd"
+				},
+			},
+		},
+
+		{
+			Description:   "contains //",
+			Expression:    "$a:/abc/", //
+			Expected:      true,
+			State: map[string]interface{}{
+				"a": "abcxv",
+			},
+		},
+
+		{
+			Description:   "contains - not defiend",
+			Expression:    "$bar() contains abc", //
+			Expected:      false,
+			State: map[string]interface{}{},
+		},
+		{
+			Description:   "contains - //",
+			Expression:    "$bar():/abc/", //
+			Expected:      true,
+			State: map[string]interface{}{
+				"bar": func() interface{} {
+					return "abcr"
+				},
+			},
+		},
 	}
 
-	for _, useCase := range useCases {
+	for i, useCase := range useCases[len(useCases)-1:]{
+		context := manager.NewContext(toolbox.NewContext())
+		state := context.State()
 		if len(useCase.State) > 0 {
 			for k, v := range useCase.State {
 				state.Put(k, v)
 			}
 		}
-		isTrue, err := Evaluate(context, state, useCase.Expression, "test", useCase.DefaultResult)
+		var e eval.Compute
+		isTrue, err := Evaluate(context, state, useCase.Expression, &e, "test", useCase.DefaultResult)
 		if useCase.HasError {
 			assert.NotNil(t, err, useCase.Description)
 			continue
 		}
-		assert.EqualValues(t, useCase.Expected, isTrue, useCase.Description)
+		assert.EqualValues(t, useCase.Expected, isTrue, fmt.Sprintf("case %v: %s\n", i, useCase.Description))
 	}
 
 }

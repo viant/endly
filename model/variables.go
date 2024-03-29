@@ -2,10 +2,58 @@ package model
 
 import (
 	"fmt"
-	"github.com/viant/endly/util"
+	"github.com/viant/endly/internal/util"
+	"github.com/viant/endly/model/yml"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
+	"gopkg.in/yaml.v3"
 	"strings"
 )
+
+// Variables a slice of variables
+type Variables []*Variable
+
+func (v Variables) MarshalYAML() (interface{}, error) {
+	type variables Variables
+	customVar := variables(v)
+	orig := &yaml.Node{}
+	err := orig.Encode(&customVar)
+	if err != nil {
+		return nil, err
+	}
+	return yml.Nodes(orig.Content).Map()
+}
+
+// Apply evaluates all variable from in map to out map
+func (v *Variables) Apply(in, out data.Map) error {
+	if out == nil {
+		return fmt.Errorf("out state was empty")
+	}
+	if in == nil {
+		in = data.NewMap()
+	}
+	for _, variable := range *v {
+		if variable == nil {
+			continue
+		}
+		if err := variable.Apply(in, out); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// String returns a variable info
+func (v Variables) String() string {
+	var result = ""
+	for _, item := range v {
+		if item == nil {
+			continue
+		}
+		result += fmt.Sprintf("{Name:%v From:%v Value:%v},", item.Name, item.From, item.Value)
+	}
+	return result
+}
 
 func loadVariablesFromResource(baseURLs []string, resourceURI string) (Variables, error) {
 	resourceURI = strings.TrimSpace(resourceURI)

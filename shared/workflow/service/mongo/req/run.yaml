@@ -1,6 +1,0 @@
-target: $serviceTarget
-name: $name
-image: $image
-ports:
-  "27017": "27017"
-env: $environment

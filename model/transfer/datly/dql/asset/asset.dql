@@ -1,0 +1,22 @@
+/* {"URI": "/{ProjectID}/"} */
+
+
+#set( $_ = $ProjectID<string>(path/ProjectID).WithPredicate(0, 'exists', 'a', 'WORKFLOW_ID', 'w', 'WORKFLOW', 'ID', 'PROJECT_ID'))
+#set( $_ = $ID<[]string>(form/id).WithPredicate(0, 'in', 'a', 'ID'))
+
+#set( $_ = $WorkflowID<string>(form/wid).WithPredicate(0, 'equal', 'a', 'WORKFLOW_ID').Optional())
+#set( $_ = $Status<?>(output/status).WithTag('anonymous:"true"'))
+
+
+#set( $_ = $Data<?>(output/view))
+#set( $_ = $Metrics<?>(output/metrics))
+
+
+SELECT
+asset.*
+FROM (
+  SELECT *
+  FROM ASSET a
+  WHERE 1=1
+  ${predicate.Builder().CombineOr($predicate.FilterGroup(0, "AND")).Build("AND")}
+) asset

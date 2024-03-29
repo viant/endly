@@ -1,6 +1,0 @@
-target: $serviceTarget
-name: $name
-command: mysql  -uroot -p**mysql** < $dump
-interactive: true
-secrets:
-  mysql: "$credentials"

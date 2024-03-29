@@ -4,7 +4,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly/example/ws/reporter"
-	"github.com/viant/toolbox/url"
+	"github.com/viant/endly/model/location"
 	"os"
 	"testing"
 )
@@ -16,7 +16,7 @@ func Test_Service(t *testing.T) {
 	}
 
 	config := &reporter.Config{}
-	configResource := url.NewResource("endly/config/config.json")
+	configResource := location.NewResource("endly/config/config.json")
 	err := configResource.Decode(config)
 	if assert.Nil(t, err) {
 		service, err := reporter.NewService(config)

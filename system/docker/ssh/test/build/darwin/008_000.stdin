@@ -1,1 +1,0 @@
-docker build -t viant/site_profile_backup:0.1  /Users/awitas/go/src/github.vianttech.com/etl/site_profile_backup

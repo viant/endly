@@ -1,3 +1,0 @@
-action: dsunit:expect
-datastore: $db
-URL: ${path}/expect/$db
