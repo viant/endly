@@ -1,18 +1,21 @@
 package transformer
 
-import "embed"
+import (
+	"embed"
+	"github.com/viant/endly/model/graph"
+)
 
 type Option func(o *Options)
 
-func WithDependencies() Option {
+func WithDependencies(flag bool) Option {
 	return func(o *Options) {
-		o.WithDependencies = true
+		o.WithDependencies = flag
 	}
 }
 
-func WithAssets() Option {
+func WithAssets(flag bool) Option {
 	return func(o *Options) {
-		o.WithAssets = true
+		o.WithAssets = flag
 	}
 }
 
@@ -37,5 +40,38 @@ func WithProjectID(projectID string) Option {
 func WithTemplate(template string) Option {
 	return func(o *Options) {
 		o.Template = template
+	}
+}
+
+
+func WithBaseURL(baseURL string) Option {
+	return func(o *Options) {
+		o.BaseURL = baseURL
+	}
+}
+
+
+func WithIsRoot(flag bool) Option {
+	return func(o *Options) {
+		o.Root = &flag
+	}
+}
+
+func WithAssetsManager(assets *graph.AssetManager) Option {
+	return func(o *Options) {
+		o.Assets = assets
+	}
+}
+
+func WithParentWorkflowID(parentWorkflowID string) Option {
+	return func(o *Options) {
+		o.ParentWorkflowID = parentWorkflowID
+	}
+}
+
+
+func WithInstance(instance *graph.Instance) Option {
+	return func(o *Options) {
+		o.Instance = instance
 	}
 }

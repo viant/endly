@@ -40,11 +40,11 @@ func (t *Tag) expandPathIfNeeded(subpath string) (string, string) {
 }
 
 //
-//// setMeta sets Tag, optionally TagIndex and Subpath to the provided object
+//// setMeta sets Tag, optionally Instance and Subpath to the provided object
 //func (t *Tag) setMeta(object data.Map, record map[string]interface{}) {
 //	object["Tag"] = t.Name
 //	if t.HasActiveIterator() {
-//		object["TagIndex"] = t.Iterator.Index()
+//		object["Instance"] = t.Iterator.Index()
 //	}
 //
 //	value, has := record["Subpath"]
