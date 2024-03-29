@@ -1,0 +1,195 @@
+ColumnsDiscovery: true
+Resource:
+    ModTime: "0001-01-01T00:00:00Z"
+    Parameters:
+        - In:
+            Kind: path
+            Name: ProjectID
+          Name: ProjectID
+          Predicates:
+            - Args:
+                - a
+                - WORKFLOW_ID
+                - w
+                - WORKFLOW
+                - ID
+                - PROJECT_ID
+              Ensure: false
+              Group: 0
+              Name: exists
+          Required: true
+          Schema:
+            Cardinality: One
+            DataType: string
+        - In:
+            Kind: form
+            Name: id
+          Name: ID
+          Predicates:
+            - Args:
+                - a
+                - ID
+              Ensure: false
+              Group: 0
+              Name: in
+          Schema:
+            Cardinality: Many
+            DataType: string
+        - In:
+            Kind: form
+            Name: wid
+          Name: WorkflowID
+          Predicates:
+            - Args:
+                - a
+                - WORKFLOW_ID
+              Ensure: false
+              Group: 0
+              Name: equal
+          Required: false
+          Schema:
+            Cardinality: One
+            DataType: string
+    Types:
+        - DataType: struct{ProjectID bool; ID bool; WorkflowID bool; }
+          Name: AssetInputHas
+          Package: asset
+        - DataType: struct{ProjectID string `parameter:",kind=path,in=ProjectID" predicate:"exists,group=0,a,WORKFLOW_ID,w,WORKFLOW,ID,PROJECT_ID"`; ID []string `parameter:",kind=form,in=id" predicate:"in,group=0,a,ID"`; WorkflowID string `parameter:",kind=form,in=wid" predicate:"equal,group=0,a,WORKFLOW_ID"`; Has *AssetInputHas `setMarker:"true" format:"-" sqlx:"-" diff:"-"`; }
+          Name: AssetInput
+          Package: asset
+        - DataType: struct{Id string `sqlx:"ID" velty:"names=ID|Id"`; Location string `sqlx:"LOCATION" velty:"names=LOCATION|Location"`; Description *string `sqlx:"DESCRIPTION" velty:"names=DESCRIPTION|Description"`; WorkflowId string `sqlx:"WORKFLOW_ID" velty:"names=WORKFLOW_ID|WorkflowId"`; IsDir *int `sqlx:"IS_DIR" velty:"names=IS_DIR|IsDir"`; Template *string `sqlx:"TEMPLATE" velty:"names=TEMPLATE|Template"`; InstanceIndex *int `sqlx:"INSTANCE_INDEX" velty:"names=INSTANCE_INDEX|InstanceIndex"`; InstanceTag *string `sqlx:"INSTANCE_TAG" velty:"names=INSTANCE_TAG|InstanceTag"`; Position *int `sqlx:"POSITION" velty:"names=POSITION|Position"`; Source *string `sqlx:"SOURCE" velty:"names=SOURCE|Source"`; Format *string `sqlx:"FORMAT" velty:"names=FORMAT|Format"`; Codec *string `sqlx:"CODEC" velty:"names=CODEC|Codec"`; }
+          Name: AssetView
+          Package: asset
+    Views:
+        - Connector:
+            Ref: endly
+          Mode: SQLQuery
+          Module: endly/asset
+          Name: asset
+          Schema:
+            Cardinality: Many
+            DataType: '*AssetView'
+            Name: AssetView
+            Package: asset
+          Selector:
+            Constraints:
+                Criteria: true
+                Filterable:
+                    - '*'
+                Limit: true
+                Offset: true
+                OrderBy: false
+                Projection: true
+            Limit: 25
+            Namespace: as
+          Table: ASSET
+          Template:
+            Parameters:
+                - Ref: ProjectID
+                - Ref: ID
+                - Ref: WorkflowID
+            SourceURL: asset/asset.sql
+Routes:
+    - Cors:
+        AllowCredentials: true
+        AllowHeaders:
+            - '*'
+        AllowMethods:
+            - '*'
+        AllowOrigins:
+            - '*'
+        ExposeHeaders:
+            - '*'
+      EnableAudit: true
+      Input:
+        Type:
+            Cardinality: One
+            Name: AssetInput
+            Package: asset
+            Parameters:
+                - In:
+                    Kind: path
+                    Name: ProjectID
+                  Name: ProjectID
+                  Predicates:
+                    - Args:
+                        - a
+                        - WORKFLOW_ID
+                        - w
+                        - WORKFLOW
+                        - ID
+                        - PROJECT_ID
+                      Ensure: false
+                      Group: 0
+                      Name: exists
+                  Required: true
+                  Schema:
+                    Cardinality: One
+                    DataType: string
+                - In:
+                    Kind: form
+                    Name: id
+                  Name: ID
+                  Predicates:
+                    - Args:
+                        - a
+                        - ID
+                      Ensure: false
+                      Group: 0
+                      Name: in
+                  Schema:
+                    Cardinality: Many
+                    DataType: string
+                - In:
+                    Kind: form
+                    Name: wid
+                  Name: WorkflowID
+                  Predicates:
+                    - Args:
+                        - a
+                        - WORKFLOW_ID
+                      Ensure: false
+                      Group: 0
+                      Name: equal
+                  Required: false
+                  Schema:
+                    Cardinality: One
+                    DataType: string
+      Method: GET
+      Output:
+        Cardinality: Many
+        CaseFormat: lc
+        Type:
+            Package: asset
+            Parameters:
+                - In:
+                    Kind: output
+                    Name: status
+                  Name: Status
+                  Schema:
+                    Cardinality: One
+                    Name: response.Status
+                  Tag: anonymous:"true"
+                - In:
+                    Kind: output
+                    Name: view
+                  Name: Data
+                  Schema:
+                    Cardinality: Many
+                    DataType: '*AssetView'
+                    Name: AssetView
+                    Package: asset
+                  Tag: ' typeName:"AssetView"'
+                - In:
+                    Kind: output
+                    Name: metrics
+                  Name: Metrics
+                  Schema:
+                    Cardinality: Many
+                    Name: response.Metrics
+      Service: Reader
+      URI: /v1/api/endly/asset/{ProjectID}
+      View:
+        Ref: asset
+With:
+    - connections

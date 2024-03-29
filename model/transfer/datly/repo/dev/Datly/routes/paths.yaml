@@ -1,0 +1,58 @@
+Items:
+    - SourceURL: endly/workflow/workflow.yaml
+      Routes:
+        - URI: /v1/api/endly/workflow/{ProjectID}
+          Method: GET
+          Cors:
+            AllowCredentials: true
+            AllowHeaders:
+                - '*'
+            AllowMethods:
+                - '*'
+            AllowOrigins:
+                - '*'
+            ExposeHeaders:
+                - '*'
+          revealmetric: null
+          With: []
+      revealmetric: null
+      With:
+        - connections
+    - SourceURL: endly/asset/asset.yaml
+      Routes:
+        - URI: /v1/api/endly/asset/{ProjectID}
+          Method: GET
+          Cors:
+            AllowCredentials: true
+            AllowHeaders:
+                - '*'
+            AllowMethods:
+                - '*'
+            AllowOrigins:
+                - '*'
+            ExposeHeaders:
+                - '*'
+          revealmetric: null
+          With: []
+      revealmetric: null
+      With:
+        - connections
+    - SourceURL: endly/workflow/asset/asset.yaml
+      Routes:
+        - URI: /v1/api/endly/workflow/asset/{WorkflowID}
+          Method: GET
+          Cors:
+            AllowCredentials: true
+            AllowHeaders:
+                - '*'
+            AllowMethods:
+                - '*'
+            AllowOrigins:
+                - '*'
+            ExposeHeaders:
+                - '*'
+          revealmetric: null
+          With: []
+      revealmetric: null
+      With:
+        - connections

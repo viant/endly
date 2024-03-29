@@ -16,7 +16,7 @@ type binary struct {
 
 func NewBinary(op string, operands ...*Operand) New {
 	switch op {
-	case "=", "==", ":/", ":!/", ":~/", ":", ":!", "<>", "!=", "<", ">", "<=", ">=", "contains", "contains!", "&&", "||":
+	case "!","=", "==", ":/", ":!/", ":~/", ":", ":!", "<>", "!=", "<", ">", "<=", ">=", "contains", "contains!", "&&", "||":
 	default:
 		return func() (eval.Compute, error) {
 			return nil, fmt.Errorf("unsupported operator: %v", op)
@@ -32,7 +32,7 @@ func NewBinary(op string, operands ...*Operand) New {
 		switch op {
 		case ":", "=", "==":
 			return expr.equal, nil
-		case "<>", ":!", "!=":
+		case "!", "<>", ":!", "!=":
 			return expr.notEqual, nil
 		case "<":
 			return expr.lessThan, nil

@@ -226,4 +226,4 @@ func init() {
 	})
 }
 ```
-- Add a new service package to [bootstrap](./../../bootstrap/bootstrap.go) import.
+- Add a new service package to [bootstrap](../../service/bootstrap/bootstrap.go) import.

@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// TagIterator represents tag iterator to produce TagIndex
+// TagIterator represents tag iterator to produce Instance
 type TagIterator struct {
 	Template string
 	Min      int

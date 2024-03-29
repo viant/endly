@@ -1,103 +1,62 @@
 package transfer
 
+import "encoding/json"
+
 type (
-
-	// Project represents a project
 	Project struct {
-		//ID represents project ID
-		ID string
-		//Name represents project name
-		Name string
-		//Description represents project description
-		Description string
+		ID          string `json:"ID,omitempty"`
+		Name        string `json:"NAME,omitempty"`
+		Description string `json:"DESCRIPTION,omitempty"`
 	}
-
-	// Workflow represents a workflow
 	Workflow struct {
-		//ID represents workflow ID
-		ID string
-		//
-		Revision string
-		//URI represents workflow
-		URI string
-		//ProjectID represents project ID
-		ProjectID string
-		//Name represents workflow name
-		Name string
-		//	Description represents workflow description
-		Init []string `jsonx:"inline"`
-		//	Description represents workflow description
-		Post []string `jsonx:"inline"`
-		//	Description represents workflow description
-		Steps []*Task
-		//Template represents workflow template
-		Template string
+		ID            string  `json:"ID,omitempty"`
+		Position      int     `json:"POSITION,omitempty"`
+		ParentId      string  `json:"PARENT_ID,omitempty"`
+		Revision      string  `json:"REVISION,omitempty"`
+		URI           string  `json:"URI,omitempty"`
+		ProjectID     string  `json:"PROJECT_ID,omitempty"`
+		Name          string  `json:"NAME,omitempty"`
+		Init          string  `jsonx:"inline" json:"INIT,omitempty"`
+		Post          string  `jsonx:"inline" json:"POST,omitempty"`
+		Steps         []*Task `json:"-"`
+		Template      string  `json:"TEMPLATE,omitempty"`
+		InstanceIndex int     `json:"INSTANCE_INDEX,omitempty"`
+		InstanceTag   string  `json:"INSTANCE_TAG,omitempty"`
 	}
 
-	// Task represents a workflow step
 	Task struct {
-		//ID represents step ID
-		ID string
-		//ParentId represents parent step ID
-		ParentId string
-		//Index represents step index within parent
-		Index int `sqlx:"IDX"`
-		//Tag represents step tag
-		Tag string
-		//TagIndex represent index within template
-		TagIndex int
-		//Init represents step init variables
-		Init []string `jsonx:"inline"`
-		//Post represents step post variables
-		Post []string `jsonx:"inline"`
-		//Description represents step description
-		Description string
-		//When represents step when expression
-		When string `sqlx:"WHEN_EXPR"`
-		//Exit represents step exit expression
-		Exit string
-		//OnError represents task to continue on error
-		OnError string
-		//Deferred represents step deffered expression
-		Deferred string
-
-		//action attributes
-		//Service represents action service
-		Service string
-		//Action represents action name
-		Action string
-		//Request represents action request
-		Request string
-		//RequestURI represents action request reference
-		RequestURI string
-		//Async represents action async flag
-		Async bool
-		//Skip       represents action skip flag
-		Skip string
-		//Template task
-		Template bool
-		//SubPath template subpath
-		SubPath string
-		//Range represents template range
-		Range string
-		//Data represents template data
-		Data map[string]string `jsonx:"inline"`
-
-		//repeater attributes
-		//Variables represents repeater variables
-		Variables []string `jsonx:"inline"`
-		//Extracts represents repeater extracts
-		Extracts Extracts `jsonx:"inline"`
-		//SleepTimeMs represents repeater sleep time in milliseconds
-		SleepTimeMs int
-		//ThinkTimeMs represents repeater think time in milliseconds
-		ThinkTimeMs int
-		//Logging represents repeater logging flag
-		Logging *bool
-		//Repeat represents repeater repeat count
-		Repeat int
+		ID          string   `json:"ID,omitempty"`
+		WorkflowID  string   `json:"WORKFLOW_ID,omitempty"`
+		ParentId    string   `json:"PARENT_ID,omitempty"`
+		Position    int      `json:"POSITION,omitempty"`
+		Tag         string   `json:"TAG,omitempty"`
+		Init        string   `jsonx:"inline" json:"INIT,omitempty"`
+		Post        string   `jsonx:"inline" json:"POST,omitempty"`
+		Description string   `json:"DESCRIPTION,omitempty"`
+		When        string   `sqlx:"WHEN_EXPR" json:"WHEN_EXPR,omitempty"`
+		Exit        string   `sqlx:"EXIT_EXPR" json:"EXIT_EXPR,omitempty"`
+		OnError     string   `json:"ON_ERROR,omitempty"`
+		Deferred    string   `json:"DEFERRED,omitempty"`
+		Service     string   `json:"SERVICE,omitempty"`
+		Action      string   `json:"ACTION,omitempty"`
+		Input       string   `json:"INPUT,omitempty"`
+		InputURI    string   `json:"INPUT_URI,omitempty"`
+		Async       bool     `json:"ASYNC,omitempty"`
+		Skip        string   `sqlx:"SKIP_EXPR" json:"SKIP_EXPR,omitempty"`
+		Fail        bool     `json:"FAIL,omitempty"`
+		IsTemplate  bool     `json:"IS_TEMPLATE,omitempty"`
+		SubPath     string   `json:"SUB_PATH,omitempty"`
+		Range       string   `sqlx:"RANGE_EXPR" json:"RANGE_EXPR,omitempty"`
+		Data        string   `jsonx:"inline" json:"DATA,omitempty"`
+		Variables   string   `jsonx:"inline" json:"VARIABLES,omitempty"`
+		Extracts    Extracts `jsonx:"inline" json:"EXTRACTS,omitempty"`
+		SleepTimeMs int      `json:"SLEEP_TIME_MS,omitempty"`
+		ThinkTimeMs int      `json:"THINK_TIME_MS,omitempty"`
+		Logging     *bool    `json:"LOGGING,omitempty"`
+		Repeat      int      `sqlx:"REPEAT_RUN" json:"REPEAT_RUN,omitempty"`
+		InstanceIndex int     `json:"INSTANCE_INDEX,omitempty"`
+		InstanceTag   string  `json:"INSTANCE_TAG,omitempty"`
 	}
-
 	//Revision represents a workflow revision
 	Revision struct {
 		//ID represents revision ID
@@ -119,6 +78,14 @@ type (
 
 	Extracts []*Extract
 )
+
+func (t *Task) GetData() map[string]string {
+	data := make(map[string]string)
+	if err := json.Unmarshal([]byte(t.Data), &data); err != nil {
+		return nil
+	}
+	return data
+}
 
 func (t *Task) SetID(prefix, name string) {
 	t.ID = prefix + "/" + name

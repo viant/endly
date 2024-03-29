@@ -1,0 +1,36 @@
+
+
+pipeline:
+
+  register:
+    action: dsunit:register
+    description: register data store db with mysql dsn
+    datastore: endly
+    config:
+      driver: mysql
+      dsn: '[username]:[password]@tcp(127.0.0.1:3306)/endly?parseTime=true'
+      credentials: $mysqlCred
+
+  init:
+    action: dsunit:init
+    description: register data store db with mysql dsn
+    datastore: endly
+    config:
+      driver: mysql
+      dsn: '[username]:[password]@tcp(127.0.0.1:3306)/endly?parseTime=true'
+      credentials: $mysqlCred
+    admin:
+      datastore: mysql
+      ping: true
+      config:
+        driver: mysql
+        dsn: '[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true'
+        credentials: $mysqlCred
+    scripts:
+      - URL: ${workflowPath}/database/mysql/endly/script/schema.sql
+
+
+  populate:
+    action: dsunit:prepare
+    datastore: endly
+    url: ${workflowPath}/database/mysql/endly/static/

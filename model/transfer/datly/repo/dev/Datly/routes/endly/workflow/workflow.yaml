@@ -1,0 +1,227 @@
+ColumnsDiscovery: true
+Resource:
+    ModTime: "0001-01-01T00:00:00Z"
+    Parameters:
+        - In:
+            Kind: path
+            Name: ProjectID
+          Name: ProjectID
+          Required: true
+          Schema:
+            Cardinality: One
+            DataType: string
+        - In:
+            Kind: form
+            Name: id
+          Name: ID
+          Predicates:
+            - Args:
+                - w
+                - ID
+              Ensure: false
+              Group: 0
+              Name: in
+          Schema:
+            Cardinality: Many
+            DataType: string
+    Types:
+        - DataType: struct{ProjectID bool; ID bool; }
+          Name: WorkflowInputHas
+          Package: workflow
+        - DataType: struct{ProjectID string `parameter:",kind=path,in=ProjectID"`; ID []string `parameter:",kind=form,in=id" predicate:"in,group=0,w,ID"`; Has *WorkflowInputHas `setMarker:"true" format:"-" sqlx:"-" diff:"-"`; }
+          Name: WorkflowInput
+          Package: workflow
+        - DataType: struct{Id string `sqlx:"ID" velty:"names=ID|Id"`; WorkflowId string `sqlx:"WORKFLOW_ID" velty:"names=WORKFLOW_ID|WorkflowId"`; ParentId *string `sqlx:"PARENT_ID" velty:"names=PARENT_ID|ParentId"`; Position *int `sqlx:"POSITION" velty:"names=POSITION|Position"`; Tag string `sqlx:"TAG" velty:"names=TAG|Tag"`; Init *string `jsonx:"inline" sqlx:"INIT" velty:"names=INIT|Init"`; Post *string `jsonx:"inline" sqlx:"POST" velty:"names=POST|Post"`; Description *string `sqlx:"DESCRIPTION" velty:"names=DESCRIPTION|Description"`; WhenExpr *string `sqlx:"WHEN_EXPR" velty:"names=WHEN_EXPR|WhenExpr"`; ExitExpr *string `sqlx:"EXIT_EXPR" velty:"names=EXIT_EXPR|ExitExpr"`; OnError *string `sqlx:"ON_ERROR" velty:"names=ON_ERROR|OnError"`; Deferred *string `sqlx:"DEFERRED" velty:"names=DEFERRED|Deferred"`; Service *string `sqlx:"SERVICE" velty:"names=SERVICE|Service"`; Action *string `sqlx:"ACTION" velty:"names=ACTION|Action"`; Input *string `sqlx:"INPUT" velty:"names=INPUT|Input"`; InputUri *string `sqlx:"INPUT_URI" velty:"names=INPUT_URI|InputUri"`; Async *int `sqlx:"ASYNC" velty:"names=ASYNC|Async"`; SkipExpr *string `sqlx:"SKIP_EXPR" velty:"names=SKIP_EXPR|SkipExpr"`; IsTemplate *int `sqlx:"IS_TEMPLATE" velty:"names=IS_TEMPLATE|IsTemplate"`; SubPath *string `sqlx:"SUB_PATH" velty:"names=SUB_PATH|SubPath"`; RangeExpr *string `sqlx:"RANGE_EXPR" velty:"names=RANGE_EXPR|RangeExpr"`; Data *string `jsonx:"inline" sqlx:"DATA" velty:"names=DATA|Data"`; Variables *string `jsonx:"inline" sqlx:"VARIABLES" velty:"names=VARIABLES|Variables"`; Extracts *string `jsonx:"inline" sqlx:"EXTRACTS" velty:"names=EXTRACTS|Extracts"`; SleepTimeMs *int `sqlx:"SLEEP_TIME_MS" velty:"names=SLEEP_TIME_MS|SleepTimeMs"`; ThinkTimeMs *int `sqlx:"THINK_TIME_MS" velty:"names=THINK_TIME_MS|ThinkTimeMs"`; Logging *int `sqlx:"LOGGING" velty:"names=LOGGING|Logging"`; RepeatRun *int `sqlx:"REPEAT_RUN" velty:"names=REPEAT_RUN|RepeatRun"`; InstanceIndex *int `sqlx:"INSTANCE_INDEX" velty:"names=INSTANCE_INDEX|InstanceIndex"`; InstanceTag *string `sqlx:"INSTANCE_TAG" velty:"names=INSTANCE_TAG|InstanceTag"`; }
+          Name: TaskView
+          Package: workflow
+        - DataType: struct{Id string `sqlx:"ID" velty:"names=ID|Id"`; Location string `sqlx:"LOCATION" velty:"names=LOCATION|Location"`; Description *string `sqlx:"DESCRIPTION" velty:"names=DESCRIPTION|Description"`; WorkflowId string `sqlx:"WORKFLOW_ID" velty:"names=WORKFLOW_ID|WorkflowId"`; IsDir *int `sqlx:"IS_DIR" velty:"names=IS_DIR|IsDir"`; Template *string `sqlx:"TEMPLATE" velty:"names=TEMPLATE|Template"`; InstanceIndex *int `sqlx:"INSTANCE_INDEX" velty:"names=INSTANCE_INDEX|InstanceIndex"`; InstanceTag *string `sqlx:"INSTANCE_TAG" velty:"names=INSTANCE_TAG|InstanceTag"`; Position *int `sqlx:"POSITION" velty:"names=POSITION|Position"`; Format *string `sqlx:"FORMAT" velty:"names=FORMAT|Format"`; Codec *string `sqlx:"CODEC" velty:"names=CODEC|Codec"`; }
+          Name: AssetView
+          Package: workflow
+        - DataType: struct{Id string `sqlx:"ID" velty:"names=ID|Id"`; ParentId *string `sqlx:"PARENT_ID" velty:"names=PARENT_ID|ParentId"`; Position *int `sqlx:"POSITION" velty:"names=POSITION|Position"`; Revision *string `sqlx:"REVISION" velty:"names=REVISION|Revision"`; Uri string `sqlx:"URI" velty:"names=URI|Uri"`; ProjectId string `sqlx:"PROJECT_ID" velty:"names=PROJECT_ID|ProjectId"`; Name string `sqlx:"NAME" velty:"names=NAME|Name"`; Init *string `jsonx:"inline" sqlx:"INIT" velty:"names=INIT|Init"`; Post *string `jsonx:"inline" sqlx:"POST" velty:"names=POST|Post"`; Template *string `sqlx:"TEMPLATE" velty:"names=TEMPLATE|Template"`; InstanceIndex *int `sqlx:"INSTANCE_INDEX" velty:"names=INSTANCE_INDEX|InstanceIndex"`; InstanceTag *string `sqlx:"INSTANCE_TAG" velty:"names=INSTANCE_TAG|InstanceTag"`; Task []*TaskView `on:"Id:ID=WorkflowId:WORKFLOW_ID" sql:"SELECT *\n  FROM TASK"`; Asset []*AssetView `on:"Id:ID=WorkflowId:WORKFLOW_ID" sql:"SELECT\n   ID,\n   LOCATION,\n   DESCRIPTION,\n   WORKFLOW_ID,\n   IS_DIR,\n      TEMPLATE,\n      INSTANCE_INDEX,\n      INSTANCE_TAG,\n      POSITION,\n      FORMAT,\n      CODEC\n  FROM ASSET"`; }
+          Name: WorkflowView
+          Package: workflow
+    Views:
+        - ColumnsConfig:
+            INIT:
+                Name: INIT
+                Tag: jsonx:"inline"
+            POST:
+                Name: POST
+                Tag: jsonx:"inline"
+          Connector:
+            Ref: endly
+          Mode: SQLQuery
+          Module: endly/workflow
+          Name: workflow
+          Schema:
+            Cardinality: Many
+            DataType: '*WorkflowView'
+            Name: WorkflowView
+            Package: workflow
+          Selector:
+            Constraints:
+                Criteria: true
+                Filterable:
+                    - '*'
+                Limit: true
+                Offset: true
+                OrderBy: false
+                Projection: true
+            Limit: 25
+            Namespace: wo
+          Table: WORKFLOW
+          Template:
+            Parameters:
+                - Ref: ProjectID
+                - Ref: ID
+            SourceURL: workflow/workflow.sql
+          With:
+            - Cardinality: Many
+              Holder: Task
+              IncludeColumn: true
+              Name: task
+              Of:
+                Name: task#
+                "On":
+                    - Column: WORKFLOW_ID
+                      Field: WorkflowId
+                Ref: task
+              "On":
+                - Column: ID
+                  Field: Id
+            - Cardinality: Many
+              Holder: Asset
+              IncludeColumn: true
+              Name: asset
+              Of:
+                Name: asset#
+                "On":
+                    - Column: WORKFLOW_ID
+                      Field: WorkflowId
+                Ref: asset
+              "On":
+                - Column: ID
+                  Field: Id
+        - ColumnsConfig:
+            DATA:
+                Name: DATA
+                Tag: jsonx:"inline"
+            EXTRACTS:
+                Name: EXTRACTS
+                Tag: jsonx:"inline"
+            INIT:
+                Name: INIT
+                Tag: jsonx:"inline"
+            POST:
+                Name: POST
+                Tag: jsonx:"inline"
+            VARIABLES:
+                Name: VARIABLES
+                Tag: jsonx:"inline"
+          Connector:
+            Ref: endly
+          Mode: SQLQuery
+          Name: task
+          Schema:
+            Cardinality: Many
+            Name: TaskView
+            Package: workflow
+          Selector:
+            Constraints:
+                Criteria: true
+                Filterable:
+                    - '*'
+                Limit: true
+                Offset: true
+                OrderBy: false
+                Projection: true
+            Limit: 40
+            Namespace: ta
+          Table: TASK
+          Template:
+            SourceURL: workflow/task.sql
+        - Connector:
+            Ref: endly
+          Mode: SQLQuery
+          Name: asset
+          Schema:
+            Cardinality: Many
+            Name: AssetView
+            Package: workflow
+          Selector:
+            Constraints:
+                Criteria: true
+                Filterable:
+                    - '*'
+                Limit: true
+                Offset: true
+                OrderBy: false
+                Projection: true
+            Limit: 40
+            Namespace: as
+          Table: ASSET
+          Template:
+            SourceURL: workflow/asset.sql
+Routes:
+    - Cors:
+        AllowCredentials: true
+        AllowHeaders:
+            - '*'
+        AllowMethods:
+            - '*'
+        AllowOrigins:
+            - '*'
+        ExposeHeaders:
+            - '*'
+      EnableAudit: true
+      Input:
+        Type:
+            Cardinality: One
+            Name: WorkflowInput
+            Package: workflow
+            Parameters:
+                - In:
+                    Kind: path
+                    Name: ProjectID
+                  Name: ProjectID
+                  Required: true
+                  Schema:
+                    Cardinality: One
+                    DataType: string
+                - In:
+                    Kind: form
+                    Name: id
+                  Name: ID
+                  Predicates:
+                    - Args:
+                        - w
+                        - ID
+                      Ensure: false
+                      Group: 0
+                      Name: in
+                  Schema:
+                    Cardinality: Many
+                    DataType: string
+      Method: GET
+      Output:
+        Cardinality: Many
+        CaseFormat: lc
+        Type:
+            Package: workflow
+            Parameters:
+                - In:
+                    Kind: output
+                    Name: view
+                  Name: Data
+                  Schema:
+                    Cardinality: Many
+                    DataType: '*WorkflowView'
+                    Name: WorkflowView
+                    Package: workflow
+                  Tag: ' typeName:"WorkflowView"'
+      Service: Reader
+      URI: /v1/api/endly/workflow/{ProjectID}
+      View:
+        Ref: workflow
+With:
+    - connections
