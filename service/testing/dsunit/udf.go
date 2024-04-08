@@ -16,9 +16,6 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 		outputPrefix = key[index+1:]
 		dataKey = key[:index]
 	}
-
-
-
 	var recordsKey = fmt.Sprintf("%v.tableRecord", dataKey)
 	var result = make(map[string][]map[string]interface{})
 	if state == nil {
