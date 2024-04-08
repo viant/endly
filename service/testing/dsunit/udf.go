@@ -17,15 +17,18 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 		dataKey = key[:index]
 	}
 
+
+
 	var recordsKey = fmt.Sprintf("%v.tableRecord", dataKey)
 	var result = make(map[string][]map[string]interface{})
 	if state == nil {
 		return nil, fmt.Errorf("state was nil")
 	}
-
 	source, has := state.GetValue(toolbox.AsString(dataKey))
+
 	if multiTables, ok := source.(data.Map); ok {
-		return convertMultiTables(multiTables, state, outputPrefix)
+		data, err := convertMultiTables(multiTables, state, outputPrefix)
+		return data, err
 	}
 
 	if !has || source == nil {
@@ -72,13 +75,25 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 	return result, nil
 }
 
+const sequencerKey = "dsunitSequencer"
+
 func convertMultiTables(tables map[string]interface{}, state data.Map, prefix string) (map[string][]map[string]interface{}, error) {
 	var result = make(map[string][]map[string]interface{})
-	var tablesMapping = data.NewMap()
+	sequencerMapping := state.GetMap(sequencerKey)
 	var sequencer string
+	if sequencerMapping	 == nil {
+		sequencerMapping = data.NewMap()
+		state.SetValue(sequencerKey, sequencerMapping)
+	} else {
+		for k := range sequencerMapping {
+			sequencer = k
+			break
+		}
+	}
 	if prefix != "" && ! strings.HasSuffix(prefix, ".") {
 		prefix +="."
 	}
+
 	for table, tableData := range tables {
 		var tableDataSlice = toolbox.AsSlice(tableData)
 		if len(tableDataSlice) == 0 {
@@ -88,9 +103,9 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 		for i, item := range tableDataSlice {
 			itemMap, ok := item.(map[string]interface{})
 			if !ok {
-				return nil, fmt.Errorf("item %v was not %T", item)
+				return nil, fmt.Errorf("item %v was not %T", item, itemMap)
 			}
-			if seq := allocateTableSequence(itemMap, table, state, tablesMapping, prefix); seq != "" {
+			if seq := allocateTableSequence(itemMap, table, state, sequencerMapping, prefix); seq != "" {
 				sequencer = seq
 			}
 			tableDataSlice[i] = itemMap
@@ -102,9 +117,10 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 		if len(tableDataSlice) == 0 {
 			return nil, fmt.Errorf("table %v has no records", table)
 		}
+
 		for i, item := range tableDataSlice {
 			itemMap := item.(map[string]interface{})
-			sequencerData := tablesMapping.GetMap(sequencer)
+			sequencerData := sequencerMapping.GetMap(sequencer)
 			for k, v := range itemMap {
 				value := toolbox.AsString(v)
 				if strings.Contains(value, "$") {
