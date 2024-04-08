@@ -10,6 +10,13 @@ import (
 
 // AsTableRecords converts data spcified by dataKey into slice of *TableData to create dsunit data as map[string][]map[string]interface{} (table with records)
 func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
+	var outputPrefix string
+	if key := toolbox.AsString(dataKey); strings.Count(key, "/") == 1 {
+		index := strings.Index(key, "/")
+		outputPrefix = key[index+1:]
+		dataKey = key[:index]
+	}
+
 	var recordsKey = fmt.Sprintf("%v.tableRecord", dataKey)
 	var result = make(map[string][]map[string]interface{})
 	if state == nil {
@@ -18,7 +25,7 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 
 	source, has := state.GetValue(toolbox.AsString(dataKey))
 	if multiTables, ok := source.(data.Map); ok {
-		return convertMultiTables(multiTables, state)
+		return convertMultiTables(multiTables, state, outputPrefix)
 	}
 
 	if !has || source == nil {
@@ -65,11 +72,13 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 	return result, nil
 }
 
-func convertMultiTables(tables map[string]interface{}, state data.Map) (map[string][]map[string]interface{}, error) {
+func convertMultiTables(tables map[string]interface{}, state data.Map, prefix string) (map[string][]map[string]interface{}, error) {
 	var result = make(map[string][]map[string]interface{})
 	var tablesMapping = data.NewMap()
 	var sequencer string
-
+	if prefix != "" && ! strings.HasSuffix(prefix, ".") {
+		prefix +="."
+	}
 	for table, tableData := range tables {
 		var tableDataSlice = toolbox.AsSlice(tableData)
 		if len(tableDataSlice) == 0 {
@@ -81,7 +90,7 @@ func convertMultiTables(tables map[string]interface{}, state data.Map) (map[stri
 			if !ok {
 				return nil, fmt.Errorf("item %v was not %T", item)
 			}
-			if seq := allocateTableSequence(itemMap, table, state, tablesMapping); seq != "" {
+			if seq := allocateTableSequence(itemMap, table, state, tablesMapping, prefix); seq != "" {
 				sequencer = seq
 			}
 			tableDataSlice[i] = itemMap
@@ -132,7 +141,7 @@ func getSequencerExpr(value string, sequencer string) (string, string) {
 	return expr, value
 }
 
-func allocateTableSequence(values map[string]interface{}, table string, state data.Map, tablesMapping data.Map) string {
+func allocateTableSequence(values map[string]interface{}, table string, state data.Map, tablesMapping data.Map, prefix string) string {
 	var seqValue int
 	var seqKey string
 	var stateKey string
@@ -161,7 +170,7 @@ func allocateTableSequence(values map[string]interface{}, table string, state da
 		key := getKey(value, table)
 		if key != "" {
 			sequencerKey := seqKey + "/" + key
-			stateKey = table + "." + key
+			stateKey = prefix + table + "." + key
 			tablesMapping.SetValue(sequencerKey, seqValue)
 		}
 		break
