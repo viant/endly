@@ -84,7 +84,13 @@ func WorkingDirectory(source interface{}, state data.Map) (interface{}, error) {
 
 // Unzip uncompress supplied []byte or error
 func Unzip(source interface{}, state data.Map) (interface{}, error) {
+
 	payload, ok := source.([]byte)
+	if !ok {
+		if literal, ok := source.(string); ok {
+			payload = []byte(literal)
+		}
+	}
 	if !ok {
 		return nil, fmt.Errorf("invalid Unzip input, expected %T, but had %T", []byte{}, source)
 	}
