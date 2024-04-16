@@ -87,7 +87,8 @@ func Unzip(source interface{}, state data.Map) (interface{}, error) {
 
 	payload, ok := source.([]byte)
 	if !ok {
-		if literal, ok := source.(string); ok {
+		var literal string
+		if literal, ok = source.(string); ok {
 			payload = []byte(literal)
 		}
 	}
