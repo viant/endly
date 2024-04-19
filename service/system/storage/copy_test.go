@@ -215,7 +215,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
   "Dest": {
     "URL": "mem://dest/dir2"
   },
-  "Assets": {
+  "assets": {
     "file2.txt": "renamedFile2"
   },
   "Transfers": [
@@ -321,7 +321,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
     "URL": "ssh://127.0.0.1/",
     "Credentials": "/Users/awitas/.secret/localhost.json"
   },
-  "Assets": {
+  "assets": {
     "/echo": "/tmp/echo/"
   },
   "Transfers": [

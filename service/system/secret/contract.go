@@ -3,11 +3,13 @@ package secret
 import (
 	"context"
 	"encoding/json"
+	firebase "firebase.google.com/go/v4"
 	"fmt"
 	sjwt "github.com/golang-jwt/jwt/v4"
 	"github.com/viant/afs"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/scy"
+	"github.com/viant/scy/auth"
 	"github.com/viant/scy/auth/jwt"
 	"github.com/viant/scy/cred"
 	"reflect"
@@ -98,6 +100,17 @@ type SignJWTRequest struct {
 	UseClaimsMap bool
 	ClaimsMap    map[string]interface{}
 	Claims       *jwt.Claims
+}
+
+type FirebaseAuthRequest struct {
+	Secret        *scy.Resource
+	Credentials   *cred.Basic
+	ServiceSecret *scy.Resource
+	Config        *firebase.Config
+}
+
+type FirebaseAuthResponse struct {
+	Token *auth.Token
 }
 
 func (r *SignJWTRequest) Init() error {

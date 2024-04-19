@@ -32,7 +32,7 @@ func TestService_List(t *testing.T) {
 				Source: location.NewResource("mem://localhost/data/storage/list/case001/f1"),
 			},
 			expect: `{
-	"Assets": [
+	"assets": [
 		{
 			"Dir": false,
 			"Mode": 420,
@@ -51,7 +51,7 @@ func TestService_List(t *testing.T) {
 				Source: location.NewResource("mem://localhost/data/storage/list/case002"),
 			},
 			expect: `{
-	"Assets": [
+	"assets": [
 		{
 			"Dir": false,
 			"Name": "mem://localhost/data/storage/list/case002/f2"
@@ -75,7 +75,7 @@ func TestService_List(t *testing.T) {
 				},
 			},
 			expect: `{
-	"Assets": [
+	"assets": [
 		{
 			"Dir": false,
 			"Name": "mem://localhost/data/storage/list/case003/f3.txt"
@@ -108,7 +108,7 @@ func TestService_List(t *testing.T) {
 				Content: true,
 			},
 			expect: `{
-	"Assets": [
+	"assets": [
 		{
 			"Dir": false,
 			"Name": "mem://localhost/data/storage/list/case006/f10",	

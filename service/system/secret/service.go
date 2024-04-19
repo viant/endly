@@ -3,11 +3,17 @@ package secret
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/viant/afs/url"
 	"github.com/viant/endly"
 	"github.com/viant/scy"
+	"github.com/viant/scy/auth/firebase"
+	"github.com/viant/scy/auth/gcp"
+	"github.com/viant/scy/auth/gcp/client"
 	"github.com/viant/scy/auth/jwt/signer"
 	"github.com/viant/scy/auth/jwt/verifier"
 	"github.com/viant/scy/cred"
+	"github.com/viant/scy/cred/secret"
+	"google.golang.org/api/option"
 	"reflect"
 	"time"
 )
@@ -18,6 +24,7 @@ const ServiceID = "secret"
 type service struct {
 	*endly.AbstractService
 	*scy.Service
+	Secret *secret.Service
 }
 
 func (s *service) secure(context *endly.Context, request *SecureRequest) (*SecureResponse, error) {
@@ -37,6 +44,68 @@ func (s *service) secure(context *endly.Context, request *SecureRequest) (*Secur
 		return nil, err
 	}
 	return &SecureResponse{}, nil
+}
+
+func (s *service) firebaseAuth(context *endly.Context, request *FirebaseAuthRequest) (*FirebaseAuthResponse, error) {
+
+	gcpService := gcp.New(client.NewScy())
+	var opts []option.ClientOption
+	if serviceSecret := request.ServiceSecret; serviceSecret != nil && serviceSecret.URL != "" {
+		request.ServiceSecret.SetTarget(reflect.TypeOf(&cred.Generic{}))
+		aSecret, err := s.loadSecret(context, request.ServiceSecret)
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts, option.WithCredentialsJSON([]byte(aSecret.String())))
+	} else {
+		tokenSource := gcpService.TokenSource("https://www.googleapis.com/auth/cloud-platform")
+		opts = append(opts, option.WithTokenSource(tokenSource))
+	}
+	identity, err := firebase.New(context.Background(), nil, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	var genericCred *cred.Generic
+	if request.Credentials == nil {
+		if request.Secret == nil {
+			return nil, fmt.Errorf("secret was empty")
+		}
+		request.Secret.SetTarget(reflect.TypeOf(&cred.Generic{}))
+		aSecret, err := s.loadSecret(context, request.Secret)
+		if err != nil {
+			return nil, err
+		}
+		genericCred = aSecret.Target.(*cred.Generic)
+	}
+	token, err := identity.InitiateBasicAuth(context.Background(), genericCred.Username, genericCred.Password)
+	if err != nil {
+		return nil, err
+	}
+	result := &FirebaseAuthResponse{
+		Token: token,
+	}
+	return result, nil
+}
+
+func (s *service) loadSecret(context *endly.Context, resource *scy.Resource) (*scy.Secret, error) {
+	var err error
+	var aSecret *scy.Secret
+	if url.IsRelative(resource.URL) {
+		loc := resource.URL
+		if resource.Key != "" {
+			loc = loc + "|" + resource.Key
+		}
+		if aSecret, err = s.Secret.Lookup(context.Background(), secret.Resource(loc)); err != nil {
+			return nil, err
+		}
+	} else {
+		resource.SetTarget(reflect.TypeOf(&cred.Generic{}))
+		if aSecret, err = s.Service.Load(context.Background(), resource); err != nil {
+			return nil, err
+		}
+	}
+	return aSecret, nil
 }
 
 func (s *service) reveal(context *endly.Context, request *RevealRequest) (*RevealResponse, error) {
@@ -196,6 +265,24 @@ func (s *service) registerRoutes() {
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
 	})
+	s.Register(&endly.Route{
+		Action: "firebaseAuth",
+		RequestInfo: &endly.ActionInfo{
+			Description: "authenticate with Firebase",
+		},
+		RequestProvider: func() interface{} {
+			return &FirebaseAuthRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &FirebaseAuthResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*FirebaseAuthRequest); ok {
+				return s.firebaseAuth(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
 
 }
 
@@ -204,6 +291,7 @@ func New() endly.Service {
 	var result = &service{
 		AbstractService: endly.NewAbstractService(ServiceID),
 		Service:         scy.New(),
+		Secret:          secret.New(),
 	}
 	result.AbstractService.Service = result
 	result.registerRoutes()
