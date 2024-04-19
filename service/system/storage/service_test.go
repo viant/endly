@@ -61,7 +61,7 @@ func TestTransferService_Copy(t *testing.T) {
 		{
 			"test/Copy/compress/dir/darwin",
 			&storage.CopyRequest{
-				Transfers: []*storage.Transfer{
+				Transfers: []*storage.Load{
 
 					{
 						Source: location.NewResource("scp://127.0.0.1:22/tmp/copy2_source"),
@@ -78,7 +78,7 @@ func TestTransferService_Copy(t *testing.T) {
 			"test/Copy/compress/file1/darwin",
 			&storage.CopyRequest{
 
-				Transfers: []*storage.Transfer{
+				Transfers: []*storage.Load{
 					{
 						Compress: true,
 						Source:   location.NewResource("scp://127.0.0.1:22/tmp/copy2_source/config1.json"),
@@ -94,7 +94,7 @@ func TestTransferService_Copy(t *testing.T) {
 		{
 			"test/Copy/compress/file2/darwin",
 			&storage.CopyRequest{
-				Transfers: []*storage.Transfer{
+				Transfers: []*storage.Load{
 					{
 						Source:   location.NewResource("scp://127.0.0.1:22/tmp/copy2_source/config2.json"),
 						Dest:     location.NewResource("/tmp/copy4_target/config4.json"),
@@ -110,7 +110,7 @@ func TestTransferService_Copy(t *testing.T) {
 		{
 			"test/Copy/compress/file2/darwin",
 			&storage.CopyRequest{
-				Transfers: []*storage.Transfer{
+				Transfers: []*storage.Load{
 					{
 						Source:   location.NewResource("scp://127.0.0.1:22/tmp/copy5_source/config5.json"),
 						Dest:     location.NewResource("/tmp/copy5_target/config5.gz"),
@@ -127,7 +127,7 @@ func TestTransferService_Copy(t *testing.T) {
 		{
 			"test/Copy/compress/file2/darwin",
 			&storage.CopyRequest{
-				Transfers: []*storage.Transfer{
+				Transfers: []*storage.Load{
 					{
 						Source:   location.NewResource("scp://127.0.0.1:22/tmp/copy5_source/config5.json"),
 						Dest:     location.NewResource("/tmp/copy5_target/config5_corruption.gz"),
@@ -196,7 +196,7 @@ func TestTransferService_Remove(t *testing.T) {
 	assert.NotNil(t, object)
 
 	serviceResponse := storageService.Run(context, &storage.RemoveRequest{
-		Assets: []*location.Resource{
+		assets: []*location.Resource{
 			location.NewResource("mem:///test/Remove/storage/config1.json"),
 			location.NewResource("mem:///dummy"),
 		},
@@ -292,14 +292,14 @@ func TestStorageCopyRequest_Validate(t *testing.T) {
 	}
 	{
 		request := storage.CopyRequest{
-			Transfers: []*storage.Transfer{},
+			Transfers: []*storage.Load{},
 		}
 		assert.NotNil(t, request.Validate())
 	}
 
 	{
 		request := storage.CopyRequest{
-			Transfers: []*storage.Transfer{
+			Transfers: []*storage.Load{
 				{
 					Source: location.NewResource("abc"),
 				},
@@ -309,7 +309,7 @@ func TestStorageCopyRequest_Validate(t *testing.T) {
 	}
 	{
 		request := storage.CopyRequest{
-			Transfers: []*storage.Transfer{
+			Transfers: []*storage.Load{
 				{
 					Dest: location.NewResource("abc"),
 				},
@@ -324,14 +324,14 @@ func TestStorageCopyRequest_Validate(t *testing.T) {
 	}
 	{
 		request := storage.CopyRequest{
-			Transfers: []*storage.Transfer{},
+			Transfers: []*storage.Load{},
 		}
 		assert.NotNil(t, request.Validate())
 	}
 
 	{
 		request := storage.CopyRequest{
-			Transfers: []*storage.Transfer{
+			Transfers: []*storage.Load{
 				{
 					Source: location.NewResource("abc"),
 				},
@@ -341,7 +341,7 @@ func TestStorageCopyRequest_Validate(t *testing.T) {
 	}
 	{
 		request := storage.CopyRequest{
-			Transfers: []*storage.Transfer{
+			Transfers: []*storage.Load{
 				{
 					Dest:   location.NewResource("abc"),
 					Source: location.NewResource("xyz"),
@@ -410,7 +410,7 @@ func TestStorageUploadRemove_Validate(t *testing.T) {
 
 	{
 		request := storage.RemoveRequest{
-			Assets: []*location.Resource{
+			assets: []*location.Resource{
 
 				location.NewResource("a"),
 			},
