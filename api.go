@@ -14,13 +14,13 @@ const Namespace = "github.com/viant/endly/"
 
 // Manager represents a endly service manager
 type Manager interface {
-	//Name returns an application ID
+	//Name returns an application SessionID
 	Name() string
 
 	//Version returns an application version
 	Version() string
 
-	//Service return a workflow service for provided ID, request,  or error
+	//Service return a workflow service for provided SessionID, request,  or error
 	Service(input interface{}) (Service, error)
 
 	//Register register service in this manager

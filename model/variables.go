@@ -3,7 +3,7 @@ package model
 import (
 	"fmt"
 	"github.com/viant/endly/internal/util"
-	"github.com/viant/endly/model/yml"
+	"github.com/viant/endly/model/graph/yml"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"gopkg.in/yaml.v3"

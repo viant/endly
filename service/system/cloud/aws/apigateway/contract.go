@@ -259,7 +259,7 @@ It supports data substitution on uri attribute i.e.
 - 	$function.arn
 -	$function.region
 -	$function.accountID
--	$restAPI.ID
+-	$restAPI.SessionID
 -	$uuid.next
 */
 func (i *ResourceMethod) Init() error {
@@ -319,7 +319,7 @@ func (i *ResourceMethod) Init() error {
 			permissionInput.StatementId = aws.String("${uuid.next}")
 		}
 		if permissionInput.SourceArn == nil {
-			permissionInput.SourceArn = aws.String("arn:aws:execute-api:${function.region}:${function.accountID}:${restAPI.ID}/*/*/*")
+			permissionInput.SourceArn = aws.String("arn:aws:execute-api:${function.region}:${function.accountID}:${restAPI.SessionID}/*/*/*")
 		}
 	}
 	return nil

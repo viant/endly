@@ -51,16 +51,16 @@ require (
 	github.com/segmentio/kafka-go v0.3.4
 	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/stretchr/testify v1.9.0
-	github.com/tebeka/selenium v0.9.3
-	github.com/viant/afs v1.25.1-0.20240315182541-4e60ffd52287
-	github.com/viant/afsc v1.9.1
+	github.com/tebeka/selenium v0.9.10-0.20211105214847-e9100b7f5ac1
+	github.com/viant/afs v1.25.1
+	github.com/viant/afsc v1.9.2-0.20240422173805-b3d0ac5529a7
 	github.com/viant/asc v0.5.0
 	github.com/viant/assertly v0.9.1-0.20220620174148-bab013f93a60
 	github.com/viant/bgc v0.9.0
 	github.com/viant/dsc v0.19.0
 	github.com/viant/dsunit v0.11.1-0.20240315154953-016b93c322c2
 	github.com/viant/scy v0.9.1
-	github.com/viant/toolbox v0.36.1-0.20240317233530-c01f67964ef7
+	github.com/viant/toolbox v0.37.0
 	github.com/yuin/gopher-lua v0.0.0-20221210110428-332342483e3f // indirect
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/net v0.22.0
@@ -116,6 +116,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.23.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.6 // indirect
 	github.com/aws/smithy-go v1.20.2 // indirect
+	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/bufbuild/protocompile v0.8.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
@@ -149,6 +150,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mazznoer/csscolorparser v0.1.3 // indirect
+	github.com/mediabuyerbot/go-crx3 v1.3.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
@@ -204,4 +206,3 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
-

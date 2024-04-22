@@ -38,7 +38,7 @@ func TestService_LoadWorkflow(t *testing.T) {
 	assert.True(t, ok)
 	assert.Equal(t, "1..782", rng)
 	tmplData := test.Data()
-	assert.Equal(t, 15, len(tmplData))
+	assert.Equal(t, 352, len(tmplData))
 	var templateTask []string
 	template := test.Template()
 	assert.NotNil(t, template)

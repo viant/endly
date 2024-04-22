@@ -24,7 +24,9 @@ func (s *OperatingSystem) Matches(target *OsTarget) bool {
 	if target.System != "" && target.System != s.System {
 		return false
 	}
-
+	if target.Architecture != "" && target.Architecture != s.Architecture {
+		return false
+	}
 	if target.MinRequiredVersion == "" && target.MaxAllowedVersion == "" {
 		return true
 	}

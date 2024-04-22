@@ -12,7 +12,6 @@ type AssertRequest struct {
 	Description      string
 	Actual           interface{} `required:"true" description:"actual value/data structure"`
 	Expect           interface{} `required:"true" description:"expected value/data structure"`
-	Expected         interface{} //Deprecated
 	Source           interface{} //optional validation source
 	Ignore           interface{}
 	OmitEmpty        bool
@@ -45,13 +44,8 @@ type AssertResponse struct {
 
 func (r *AssertRequest) Init() error {
 	if r.Expect == nil {
-		r.Expect = r.Expected
-	}
-
-	if r.Expect == nil {
 		return nil
 	}
-
 	if r.NormalizeKVPairs {
 		if normalized, err := toolbox.NormalizeKVPairs(r.Expect); err == nil {
 			r.Expect = normalized
@@ -75,7 +69,7 @@ func NewAssertRequest(tagID string, name string, description string, source, exp
 		TagID:       tagID,
 		Name:        name,
 		Description: description,
-		Expected:    expected,
+		Expect:      expected,
 		Actual:      actual,
 	}
 }

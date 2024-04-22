@@ -1,0 +1,117 @@
+{
+  "Name": "chromedriver",
+  "Targets": [
+    {
+      "OsTarget": {
+        "System": "darwin",
+        "Architecture": "arm64"
+      },
+      "Deployment": {
+        "Pre": {
+          "AutoSudo": true,
+          "Commands": [
+            "mkdir -p ${deploy.baseLocation}/webdriver/",
+            "chmod a+rw ${deploy.baseLocation}/webdriver/",
+            "chown -R ${os.user} ${deploy.baseLocation}/webdriver/"
+
+          ]
+        },
+        "Transfer": {
+          "Source": {
+            "URL": "https://storage.googleapis.com/chrome-for-testing-public/123.0.6312.122/mac-arm64/chromedriver-mac-arm64.zip"
+          },
+          "Dest": {
+            "URL": "${deploy.baseLocation}/webdriver/chromedriver-mac-arm64.zip"
+          }
+        },
+        "Run": {
+          "Directory": "${deploy.baseLocation}/webdriver",
+          "CheckError": true,
+          "Commands": [
+            {
+              "Command": "cd ${deploy.baseLocation}/webdriver"
+            },
+            {
+              "Command": "unzip chromedriver-mac-arm64.zip"
+            },
+            {
+              "Command": "cp chromedriver-mac-arm64/chromedriver chromedriver"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "OsTarget": {
+        "System": "darwin",
+        "Architecture": "amd64"
+      },
+      "Deployment": {
+        "Pre": {
+          "AutoSudo": true,
+          "Commands": [
+            "mkdir -p ${deploy.baseLocation}/webdriver/",
+            "chmod a+rw ${deploy.baseLocation}/webdriver/",
+            "chown -R ${os.user} ${deploy.baseLocation}/webdriver/"
+
+          ]
+        },
+        "Transfer": {
+          "Source": {
+            "URL": "https://storage.googleapis.com/chrome-for-testing-public/123.0.6312.122/mac-x64/chromedriver-mac-x64.zip"
+          },
+          "Dest": {
+            "URL": "${deploy.baseLocation}/webdriver/chromedriver-mac-x64.zip"
+          }
+        },
+        "Run": {
+          "Directory": "${deploy.baseLocation}/webdriver",
+          "Commands": [
+            {
+              "Command": "unip chromedriver-mac-x64.zip"
+            },
+            {
+              "Command": "cp chromedriver-mac-x64/chromedriver chromedriver"
+            }
+          ]
+        }
+      }
+    },
+
+    {
+      "OsTarget": {
+        "System": "linux"
+      },
+      "Deployment": {
+        "Pre": {
+          "AutoSudo": true,
+          "Commands": [
+            "mkdir -p ${deploy.baseLocation}/webdriver/",
+            "chmod a+rw ${deploy.baseLocation}/webdriver/",
+            "chown -R ${os.user} ${deploy.baseLocation}/webdriver/"
+          ]
+        },
+        "Transfer": {
+          "Source": {
+            "URL": "https://storage.googleapis.com/chrome-for-testing-public/125.0.6422.4/linux64/chromedriver-linux64.zip"
+          },
+          "Dest": {
+            "URL": "/{deploy.baseLocation}/webdriver/"
+          }
+        },
+        "Run": {
+          "Directory": "${deploy.baseLocation}/webdriver",
+          "Commands": [
+            {
+              "Command": "unzip chromedriver-linux64.zip"
+            },
+            {
+              "Command": "cp chromedriver-linux64/chromedriver chromedriver"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "BaseLocation": "/opt/local"
+}

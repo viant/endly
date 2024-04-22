@@ -185,7 +185,7 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 				continue
 			}
 			var extractable = make(map[string]interface{})
-			err = action.Repeater.Run(s.AbstractService, "action", context, handler(task.Actions[i]), extractable)
+			err = action.Repeater.Run(context, "action", s.AbstractService, handler(task.Actions[i]), extractable)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -231,7 +231,7 @@ func (s *Service) runAsyncAction(parent, context *endly.Context, process *model.
 	}
 
 	var extractable = make(map[string]interface{})
-	err := action.Repeater.Run(s.AbstractService, "action", context, handler(action), extractable)
+	err := action.Repeater.Run(context, "action", s.AbstractService, handler(action), extractable)
 	if err != nil {
 		return err
 	}
@@ -645,7 +645,7 @@ const (
     "awsCredential": "${env.HOME}/.secret/aws-west.json",
     "ec2InstanceId": "i-0139209d5358e60a4"
   },
-  "Tasks": "start"
+  "tasks": "start"
 }`
 
 	inlineWorkflowServiceRunExample = `{
@@ -685,7 +685,7 @@ const (
 		}
 	},
 	"PublishParameters": true,
-	"Tasks": "*",
+	"tasks": "*",
 	"URL": "app/build.csv"
 }`
 

@@ -1,0 +1,22 @@
+
+
+pipeline:
+
+  register:
+    action: dsunit:init
+    description: register data store db with mysql dsn
+    datastore: db1
+    config:
+      driver: mysql
+      dsn: '[username]:[password]@tcp(127.0.0.1:3306)/db1?parseTime=true'
+      credentials: $mysqlCred
+    admin:
+      datastore: mysql
+      ping: true
+      config:
+        driver: mysql
+        dsn: '[username]:[password]@tcp(127.0.0.1:3306)/[dbname]?parseTime=true'
+        credentials: $mysqlCred
+    scripts:
+      - URL: ${workflowPath}/database/db1/script/schema.sql
+

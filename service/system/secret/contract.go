@@ -58,8 +58,9 @@ type SecureResponse struct{}
 
 type RevealRequest struct {
 	*scy.Resource
-	Target  string
-	_target reflect.Type
+	Target        string
+	ServiceSecret *scy.Resource
+	_target       reflect.Type
 }
 
 func (r *RevealRequest) Init() error {

@@ -1,5 +1,5 @@
 {
-  "Name": "selenium-server-standalone",
+  "Name": "webdriver-server-standalone",
   "Versioning":"MajorVersion.MinorVersion.ReleaseVersion",
   "Targets": [
     {
@@ -15,24 +15,24 @@
         "Pre": {
           "AutoSudo": true,
           "Commands": [
-            "mkdir -p ${deploy.baseLocation}/selenium/",
-            "chmod a+rw ${deploy.baseLocation}/selenium/",
-            "chown -R ${os.user} ${deploy.baseLocation}/selenium/"
+            "mkdir -p ${deploy.baseLocation}/webdriver/",
+            "chmod a+rw ${deploy.baseLocation}/webdriver/",
+            "chown -R ${os.user} ${deploy.baseLocation}/webdriver/"
 
           ]
         },
         "Transfer": {
           "Dest": {
-            "URL": "scp://${deploy.target.host}${deploy.baseLocation}/selenium/selenium-server-standalone.jar",
+            "URL": "scp://${deploy.target.host}${deploy.baseLocation}/webdriver/webdriver-server-standalone.jar",
             "Credentials": "${deploy.target.credentials}"
           },
           "Source": {
-            "URL": "http://selenium-release.storage.googleapis.com/${artifact.MajorVersion}.${artifact.MinorVersion}/selenium-server-standalone-${artifact.Version}.jar"
+            "URL": "http://webdriver-release.storage.googleapis.com/${artifact.MajorVersion}.${artifact.MinorVersion}/webdriver-server-standalone-${artifact.Version}.jar"
           }
         }
       }
     }
   ],
-  "BaseLocation": "/usr/local"
+  "BaseLocation": "/opt/local"
 
 }

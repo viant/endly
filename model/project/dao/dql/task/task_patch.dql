@@ -1,0 +1,8 @@
+/* { "Method":"PATCH", "URI":"/{ProjectID}/"}  */
+
+
+#set( $_ = $Status<?>(output/status).WithTag('anonymous:"true"'))
+#set( $_ = $Data<?>(body/).Output())
+
+SELECT task.*
+FROM (select * from TASK ) task

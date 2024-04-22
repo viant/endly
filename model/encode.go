@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/viant/endly/model/yml"
+	"github.com/viant/endly/model/graph/yml"
 	"gopkg.in/yaml.v3"
 )
 
@@ -42,7 +42,6 @@ func updateWorkflowFormat(parent, n *yaml.Node) {
 		}
 		adjusted = append(adjusted, node)
 	}
-
 	if parent != nil && len(adjusted) > 0 {
 		n.Content = adjusted
 	}

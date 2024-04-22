@@ -1,0 +1,6 @@
+init:
+  setup: ${db1.CONTACTS.${tag}.1}
+pipeline:
+  test:
+    action: print
+    message: '$tag: setup data  $AsJSON(${setup})'

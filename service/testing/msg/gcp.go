@@ -24,9 +24,6 @@ type gcpClient struct {
 	timeout   time.Duration
 }
 
-
-
-
 func (s *gcpClient) createSubscription(resource *ResourceSetup) (*pubsub.Subscription, error) {
 	subscription, err := s.getSubscription(&resource.Resource)
 	if err != nil {
@@ -244,7 +241,7 @@ func (s *gcpClient) Close() error {
 
 func (s *gcpClient) getSubscription(dest *Resource) (*pubsub.Subscription, error) {
 	if dest.Name == "" && dest.URL == "" {
-		return nil, fmt.Errorf("subscription name and URL was empty, expected /projects/[PROJECT ID]/subscriptions/[SUBSCRIPTION] URL or subscription name")
+		return nil, fmt.Errorf("subscription name and URL was empty, expected /projects/[PROJECT SessionID]/subscriptions/[SUBSCRIPTION] URL or subscription name")
 	}
 	if dest.projectID == "" {
 		return s.client.Subscription(dest.Name), nil
@@ -254,7 +251,7 @@ func (s *gcpClient) getSubscription(dest *Resource) (*pubsub.Subscription, error
 
 func (s *gcpClient) getTopic(dest *Resource) (*pubsub.Topic, error) {
 	if dest.Name == "" && dest.URL == "" {
-		return nil, fmt.Errorf("subscription name and URL was empty, expected /projects/[PROJECT ID]/topics/[SUBSCRIPTION] URL or topic name")
+		return nil, fmt.Errorf("subscription name and URL was empty, expected /projects/[PROJECT SessionID]/topics/[SUBSCRIPTION] URL or topic name")
 	}
 	if dest.projectID == "" {
 		return s.client.Topic(dest.Name), nil

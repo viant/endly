@@ -53,7 +53,7 @@ func (r *Repeater) EvaluateExitCriteria(callerInfo string, context *endly.Contex
 
 }
 
-func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, context *endly.Context, handler func() (interface{}, error), extracted map[string]interface{}) (bool, error) {
+func (r *Repeater) runOnce(context *endly.Context, callerInfo string, handler func() (interface{}, error), extracted map[string]interface{}) (bool, error) {
 	out, err := handler()
 	if err != nil {
 		return false, err
@@ -62,9 +62,18 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 		return true, nil
 	}
 
+	return r.Eval(context, callerInfo, out, extracted)
+}
+
+func (r *Repeater) Eval(context *endly.Context, callerInfo string, out interface{}, extracted map[string]interface{}) (bool, error) {
+
+	if _, ok := out.([]interface{}); ok {
+		return true, nil
+	}
 	extractableOutput, structuredOutput := util.AsExtractable(out)
+	var err error
 	if len(structuredOutput) > 0 {
-		if extractedData, ok := structuredOutput["Data"]; ok {
+		if extractedData, ok := structuredOutput["TableData"]; ok {
 			extractedDataMap, ok := extractedData.(data.Map)
 			if ok {
 				for k, v := range extractedDataMap {
@@ -102,9 +111,9 @@ func (r *Repeater) runOnce(service *endly.AbstractService, callerInfo string, co
 }
 
 // Run repeats x times supplied handler
-func (r *Repeater) Run(service *endly.AbstractService, callerInfo string, context *endly.Context, handler func() (interface{}, error), extracted map[string]interface{}) error {
+func (r *Repeater) Run(context *endly.Context, callerInfo string, service *endly.AbstractService, handler func() (interface{}, error), extracted map[string]interface{}) error {
 	for i := 0; i < r.Repeat; i++ {
-		shouldContinue, err := r.runOnce(service, callerInfo, context, handler, extracted)
+		shouldContinue, err := r.runOnce(context, callerInfo, handler, extracted)
 		if err != nil || !shouldContinue {
 			return err
 		}

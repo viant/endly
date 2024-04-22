@@ -1,23 +1,11 @@
 pipeline:
-  setEnv:
-    action: exec:run
-    target: $target
-    env:
-      JAVA_HOME: /Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home
-    commands:
-      - export PATH=$PATH:/Library/Java/JavaVirtualMachines/jdk1.8.0_202.jdk/Contents/Home
   start:
-    action: "selenium:start"
+    action: webdriver:start
     target: $target
-    sdk: jdk
-    sdkVersion: 1.8
-    version: 3.4
-    port: $seleniumServerPort
-    timeSleepMs: 1000
   open:
-    action: "selenium:open"
+    action: webdriver:open
     remoteSelenium:
       URL: http://${targetHost}:$seleniumServerPort/
-    browser: firefox
+
 post:
   - SeleniumSessionID = ${open.SessionID}

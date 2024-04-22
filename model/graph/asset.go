@@ -12,6 +12,7 @@ import (
 	"sync"
 )
 
+// Asset represents an asset
 type Asset struct {
 	Name string
 	URI  string
@@ -59,7 +60,7 @@ func (m *AssetManager) LoadAsset(ctx context.Context, loc string) (*Asset, bool,
 		if asset != nil {
 			return asset, false, nil
 		}
-		if asset, _ = m.loadAsset(ctx, candidate);asset != nil {
+		if asset, _ = m.loadAsset(ctx, candidate); asset != nil {
 			return asset, true, nil
 		}
 	}

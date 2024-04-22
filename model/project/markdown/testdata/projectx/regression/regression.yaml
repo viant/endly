@@ -1,0 +1,21 @@
+
+
+pipeline:
+
+  database:
+    action: run
+    request: '@regression/database/database'
+
+
+  test:
+    tag: $pathMatch
+    data:
+      ## each use case folder place table setup data into prepare folder
+      '[]dbsetup': '@prepare'
+    subPath: 'cases/${index}_*'
+    template:
+      step1:
+        action: run
+        init:
+          tag: $tag
+        request: '@test'

@@ -25,7 +25,7 @@ func TestNewAvroWriterProvider(t *testing.T) {
 	assert.NotNil(t, transformed)
 	output, err := NewAvroReader(transformed, nil)
 	assert.Nil(t, err)
-	assertly.AssertValues(t, "{\"Desc\":\"test\",\"ID\":1}", output)
+	assertly.AssertValues(t, "{\"Desc\":\"test\",\"SessionID\":1}", output)
 }
 
 func TestRegisterProviders(t *testing.T) {

@@ -40,7 +40,7 @@ func (r * {{.TypeName}}) Call() (result interface{}, err error) {
 }`,
 	"func": `//GetId returns request id
 func (r * {{.TypeName}}) GetId() string {
-	return "{{.ID}}";	
+	return "{{.SessionID}}";	
 }`,
 	"register": `	register(&{{.TypeName}}{})`,
 

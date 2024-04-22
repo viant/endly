@@ -1,0 +1,58 @@
+/* {"URI": "/{ProjectID}/"} */
+
+#set( $_ = $ProjectID<string>(path/ProjectID))
+
+#set( $_ = $ID<[]string>(form/id).WithPredicate(0, 'in', 'w', 'ID'))
+#set( $_ = $Name<[]string>(form/name).WithPredicate(0, 'in', 'w', 'NAME'))
+#set( $_ = $Template<[]string>(form/template).WithPredicate(0, 'in', 'w', 'TEMPLATE'))
+#set( $_ = $Standalone<bool>(form/standalone).WithPredicate(0, 'is_null', 'w', 'TEMPLATE'))
+#set( $_ = $InstanceTag<[]string>(form/template_tag).WithPredicate(0, 'in', 'w', 'INSTANCE_TAG'))
+#set( $_ = $InstanceIndex<[]int>(form/template_index).WithPredicate(0, 'in', 'w', 'INSTANCE_INDEX'))
+
+
+#set( $_ = $Data<?>(output/view))
+#set( $_ = $Metrics<?>(output/metrics))
+
+
+SELECT
+
+workflow.*,
+task.*,
+asset.*,
+tag(workflow.INIT, 'jsonx:"inline"'),
+tag(workflow.POST, 'jsonx:"inline"'),
+
+tag(task.INIT, 'jsonx:"inline"'),
+tag(task.POST, 'jsonx:"inline"'),
+tag(task.VARIABLES, 'jsonx:"inline"'),
+tag(task.DATA, 'jsonx:"inline"'),
+tag(task.EXTRACTS, 'jsonx:"inline"'),
+cast(task.ASYNC as bool),
+cast(task.FAIL as bool),
+cast(task.IS_TEMPLATE as bool),
+cast(task.LOGGING as *bool)
+FROM (
+  SELECT *
+  FROM WORKFLOW w
+  WHERE w.PROJECT_ID = ${ProjectID}
+     ${predicate.Builder().CombineOr($predicate.FilterGroup(0, "AND")).Build("AND")}
+) workflow
+JOIN (
+  SELECT *
+  FROM TASK
+) task ON workflow.ID = task.WORKFLOW_ID
+JOIN (
+  SELECT
+   ID,
+   LOCATION,
+   DESCRIPTION,
+   WORKFLOW_ID,
+   IS_DIR,
+      TEMPLATE,
+      INSTANCE_INDEX,
+      INSTANCE_TAG,
+      POSITION,
+      FORMAT,
+      CODEC
+  FROM ASSET
+) asset ON workflow.ID = asset.WORKFLOW_ID AND 1=1
