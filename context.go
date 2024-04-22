@@ -319,7 +319,7 @@ It comes with the following registered keys:
 	* tmpDir - temp directory
 	* uuid.next - generate unique id
 	* uuid.Get - returns previously generated unique id, or generate new
-	*.env.XXX where XXX is the ID of the env variable to return
+	*.env.XXX where XXX is the SessionID of the env variable to return
 	* all UFD registry functions
 */
 

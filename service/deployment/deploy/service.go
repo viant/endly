@@ -27,7 +27,7 @@ type service struct {
 	*endly.AbstractService
 	registry map[string]*Meta
 	mutex    *sync.RWMutex
-	fs afs.Service
+	fs       afs.Service
 }
 
 func (s *service) extractVersion(context *endly.Context, target *location.Resource, deployment *Deployment) (string, error) {
@@ -271,18 +271,28 @@ func (s *service) updateOperatingSystem(context *endly.Context, target *location
 	}
 }
 
-func (s *service) updateDeployState(context *endly.Context, target *location.Resource) {
-
+func (s *service) updateDeployState(context *endly.Context, target *location.Resource, variables map[string]string) {
 	state := context.State()
-
 	deploySetting := data.NewMap()
 	state.Put("deploy", deploySetting)
-
 	targetSettings := data.NewMap()
+	hostname := target.Hostname()
+	if hostname == "" {
+		hostname = "localhost"
+	}
 	targetSettings.Put("host", target.Hostname())
 	targetSettings.Put("URL", target.URL)
-	targetSettings.Put("credentials", target.Credentials)
+	credentials := target.Credentials
+	if credentials == "" {
+		credentials = "localhost"
+	}
+	targetSettings.Put("credentials", credentials)
 	deploySetting.Put("target", targetSettings)
+	if len(variables) > 0 {
+		for k, v := range variables {
+			deploySetting[k] = v
+		}
+	}
 }
 
 func (s *service) deploy(context *endly.Context, request *Request) (*Response, error) {
@@ -292,7 +302,7 @@ func (s *service) deploy(context *endly.Context, request *Request) (*Response, e
 		return nil, err
 	}
 
-	s.updateDeployState(context, target)
+	s.updateDeployState(context, target, request.Variables)
 	state := context.State()
 
 	var response = &Response{}
@@ -419,7 +429,8 @@ func (s *service) getMeta(context *endly.Context, request *Request) (*Meta, erro
 			credentials = mainWorkflow.Source.Credentials
 		}
 		response, err := s.loadMeta(context, &LoadMetaRequest{
-			Source: location.NewResource(metaURL, location.WithCredentials(credentials)),
+			Source:    location.NewResource(metaURL, location.WithCredentials(credentials)),
+			Variables: request.Variables,
 		})
 		if err != nil {
 			return nil, err
@@ -490,7 +501,7 @@ func (s *service) registerRoutes() {
 // New creates a new deployment service
 func New() endly.Service {
 	var result = &service{
-		fs:			  afs.New(),
+		fs:              afs.New(),
 		AbstractService: endly.NewAbstractService(ServiceID),
 		mutex:           &sync.RWMutex{},
 		registry:        make(map[string]*Meta),

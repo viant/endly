@@ -1,0 +1,52 @@
+init:
+  endlyCredURL: gcp://secretmanager/projects/viant-e2e/secrets/xx
+  ## https://www.lambdatest.com/blog/complete-guide-for-using-xpath-in-selenium-with-examples/
+pipeline:
+
+  endlyCred:
+    action: secret:reveal
+    URL: $endlyCredURL
+    Key: blowfish://default
+    ServiceSecret:
+      URL: viant-e2e
+
+  init:
+    action: webdriver:start
+
+  test:
+    action: webdriver:run
+    commands:
+      - get(http://localhost:5173/)
+      - (xpath://input[@aria-labelledby="Email"]).clear
+      - (xpath://input[@aria-labelledby="Email"]).sendKeys($endlyCred.Generic.Username)
+      - (xpath://input[@aria-labelledby="Password"]).clear
+      - (xpath://input[@aria-labelledby="Password"]).sendKeys($endlyCred.Generic.Password)
+      - (xpath://button[@aria-labelledby="Sign in"]).click
+      - (xpath://button[@aria-label="Toggle Navigation Bar"]).click
+      - (xpath://div[@aria-labelledby="Forecasting"]).click
+      - (xpath://a[@aria-labelledby="Real Time"]).click
+      - (xpath://table[@aria-label="Probing Orders"]//tr[1]/td[2]).click
+      - probingTable = (xpath://table[@aria-label="Probing Orders"]).TableData('objects:_,id,name,status,isActive,expiry')
+      - (xpath://table[@aria-label="Probing Orders"]//tr[1]/td[2]).click
+  #    - Page = PageSource()
+    post:
+    #  Page: $Data.Page
+      #ProbingTable: $Data.probingTable
+      Row1Id: ${Data.row1Id}
+
+
+  info:
+    action: print
+    message: $AsJSON(${test})
+    sleepTimeMs: 10000
+#
+#  storePage:
+#    action: storage:upload
+#    sourceKey: Page
+#    sleepTimeMs: 10000
+#    dest:
+#      URL: /Users/awitas/go/src/github.com/viant/endly/service/testing/runner/webdriver/test/test.html
+
+
+  defer:
+    action: webdriver:stop

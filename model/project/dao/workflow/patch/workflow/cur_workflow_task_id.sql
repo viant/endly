@@ -1,0 +1,1 @@
+? SELECT ARRAY_AGG(Id) AS Values FROM  `/Task` LIMIT 1

@@ -149,7 +149,7 @@ func TestTasksSelector(t *testing.T) {
 		},
 	}
 	for _, useCase := range useCases {
-		assert.EqualValues(t, useCase.Expected, useCase.Selector.Tasks(), "Tasks() "+useCase.Description)
+		assert.EqualValues(t, useCase.Expected, useCase.Selector.Tasks(), "tasks() "+useCase.Description)
 		assert.EqualValues(t, useCase.RunAll, useCase.Selector.RunAll(), "RunAll() "+useCase.Description)
 	}
 }

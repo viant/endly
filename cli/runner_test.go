@@ -73,7 +73,7 @@ package cli_test
 //	{
 //		err := runner.Run(&model.ProcessRequest{
 //			URL: "action",
-//			Tasks:       "run",
+//			tasks:       "run",
 //			Params: map[string]interface{}{
 //				"service": "logger",
 //				"action":  "print",
@@ -87,7 +87,7 @@ package cli_test
 //
 //		err := runner.Run(&model.ProcessRequest{
 //			URL: "action",
-//			Tasks:       "run",
+//			tasks:       "run",
 //			Params: map[string]interface{}{
 //				"service": "workflow",
 //				"action":  "fail",

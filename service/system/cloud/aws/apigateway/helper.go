@@ -113,5 +113,5 @@ func pathInt64(source, target *int64, path string) (*apigateway.PatchOperation, 
 }
 
 func SetAPIInfo(restAPI *apigateway.RestApi, aMap data.Map) {
-	aMap.SetValue("restAPI.ID", *restAPI.Id)
+	aMap.SetValue("restAPI.SessionID", *restAPI.Id)
 }

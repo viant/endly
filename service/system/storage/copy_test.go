@@ -212,7 +212,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
   "Source": {
     "URL": "mem://yaml1/dir"
   },
-  "Dest": {
+  "Target": {
     "URL": "mem://dest/dir2"
   },
   "assets": {
@@ -223,7 +223,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
       "Source": {
         "URL": "mem://yaml1/dir/file2.txt"
       },
-      "Dest": {
+      "Target": {
         "URL": "mem://dest/dir2/renamedFile2"
       }
     }
@@ -237,7 +237,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
   "Source": {
     "URL": "mem://yaml1/dir"
   },
-  "Dest": {
+  "Target": {
     "URL": "mem://dest/dir2"
   },
   "Compress": true,
@@ -251,7 +251,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
       "Source": {
         "URL": "mem://yaml1/dir"
       },
-      "Dest": {
+      "Target": {
         "URL": "mem://dest/dir2"
       }
     }
@@ -269,7 +269,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
       "Source": {
         "URL": "file1.txt"
       },
-      "Dest": {
+      "Target": {
         "URL": "file101.txt"
       }
     },
@@ -278,7 +278,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
       "Source": {
         "URL": "file2.txt"
       },
-      "Dest": {
+      "Target": {
         "URL": "file201.txt"
       }
     }
@@ -293,7 +293,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
   "Source": {
     "URL": "mem://yaml1/dir"
   },
-  "Dest": {
+  "Target": {
     "URL": "mem://dest/dir2"
   },
   "Transfers": [
@@ -301,7 +301,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
       "Source": {
         "URL": "mem://yaml1/dir/file1.txt"
       },
-      "Dest": {
+      "Target": {
         "URL": "mem://dest/file1.txt"
       }
     }
@@ -317,7 +317,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
     "URL": "scp://127.0.0.1:7722/echo",
     "Credentials": "mem://github.com/viant/endly/service/workflow/docker/build/secret/build.json"
   },
-  "Dest": {
+  "Target": {
     "URL": "ssh://127.0.0.1/",
     "Credentials": "/Users/awitas/.secret/localhost.json"
   },
@@ -330,7 +330,7 @@ func TestNewCopyRequestFromURL(t *testing.T) {
         "URL": "scp://127.0.0.1:7722/echo",
         "Credentials": "mem://github.com/viant/endly/service/workflow/docker/build/secret/build.json"
       },
-      "Dest": {
+      "Target": {
         "URL": "ssh://127.0.0.1/tmp/echo/",
         "Credentials": "/Users/awitas/.secret/localhost.json"
       }

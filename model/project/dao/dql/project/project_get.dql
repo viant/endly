@@ -1,0 +1,16 @@
+/* {"URI": "/"} */
+
+
+#set( $_ = $Status<?>(output/status).WithTag('anonymous:"true"'))
+
+#set( $_ = $Data<?>(output/view))
+#set( $_ = $Metrics<?>(output/metrics))
+
+SELECT
+project.*
+FROM (
+  SELECT *
+  FROM PROJECT p
+  WHERE 1=1
+  ${predicate.Builder().CombineOr($predicate.FilterGroup(0, "AND")).Build("AND")}
+) project

@@ -65,7 +65,7 @@ func TestTransferService_Copy(t *testing.T) {
 
 					{
 						Source: location.NewResource("scp://127.0.0.1:22/tmp/copy2_source"),
-						Dest:   location.NewResource("/tmp/copy2_target"),
+						Target:   location.NewResource("/tmp/copy2_target"),
 					},
 				},
 			},
@@ -82,7 +82,7 @@ func TestTransferService_Copy(t *testing.T) {
 					{
 						Compress: true,
 						Source:   location.NewResource("scp://127.0.0.1:22/tmp/copy2_source/config1.json"),
-						Dest:     location.NewResource("/tmp/copy3_target"),
+						Target:     location.NewResource("/tmp/copy3_target"),
 					},
 				},
 			},
@@ -97,7 +97,7 @@ func TestTransferService_Copy(t *testing.T) {
 				Transfers: []*storage.Load{
 					{
 						Source:   location.NewResource("scp://127.0.0.1:22/tmp/copy2_source/config2.json"),
-						Dest:     location.NewResource("/tmp/copy4_target/config4.json"),
+						Target:     location.NewResource("/tmp/copy4_target/config4.json"),
 						Compress: true,
 					},
 				},
@@ -113,7 +113,7 @@ func TestTransferService_Copy(t *testing.T) {
 				Transfers: []*storage.Load{
 					{
 						Source:   location.NewResource("scp://127.0.0.1:22/tmp/copy5_source/config5.json"),
-						Dest:     location.NewResource("/tmp/copy5_target/config5.gz"),
+						Target:     location.NewResource("/tmp/copy5_target/config5.gz"),
 						Compress: false,
 					},
 				},
@@ -130,7 +130,7 @@ func TestTransferService_Copy(t *testing.T) {
 				Transfers: []*storage.Load{
 					{
 						Source:   location.NewResource("scp://127.0.0.1:22/tmp/copy5_source/config5.json"),
-						Dest:     location.NewResource("/tmp/copy5_target/config5_corruption.gz"),
+						Target:     location.NewResource("/tmp/copy5_target/config5_corruption.gz"),
 						Compress: false,
 					},
 				},
@@ -248,7 +248,7 @@ func TestTransferService_Upload(t *testing.T) {
 
 	serviceResponse := storageService.Run(context, &storage.UploadRequest{
 		SourceKey: "key10",
-		Dest:      location.NewResource("mem:///test/storage/Upload/config1.json"),
+		Target:      location.NewResource("mem:///test/storage/Upload/config1.json"),
 	})
 
 	if assert.Equal(t, serviceResponse.Error, "") {
@@ -279,7 +279,7 @@ func TestTransferService_Upload_Error(t *testing.T) {
 
 	serviceResponse := storageService.Run(context, &storage.UploadRequest{
 		SourceKey: "key10",
-		Dest:      location.NewResource("mem:///test/storage/Upload/config1.json"),
+		Target:      location.NewResource("mem:///test/storage/Upload/config1.json"),
 	})
 	assert.Equal(t, "sourcekey key10 value was empty at storage.Upload", serviceResponse.Error)
 }
@@ -311,7 +311,7 @@ func TestStorageCopyRequest_Validate(t *testing.T) {
 		request := storage.CopyRequest{
 			Transfers: []*storage.Load{
 				{
-					Dest: location.NewResource("abc"),
+					Target: location.NewResource("abc"),
 				},
 			},
 		}
@@ -343,7 +343,7 @@ func TestStorageCopyRequest_Validate(t *testing.T) {
 		request := storage.CopyRequest{
 			Transfers: []*storage.Load{
 				{
-					Dest:   location.NewResource("abc"),
+					Target:   location.NewResource("abc"),
 					Source: location.NewResource("xyz"),
 				},
 			},
@@ -388,13 +388,13 @@ func TestStorageUploadRequest_Validate(t *testing.T) {
 	}
 	{
 		request := storage.UploadRequest{
-			Dest: location.NewResource("abc"),
+			Target: location.NewResource("abc"),
 		}
 		assert.NotNil(t, request.Validate())
 	}
 	{
 		request := storage.UploadRequest{
-			Dest:      location.NewResource("abc"),
+			Target:      location.NewResource("abc"),
 			SourceKey: "a",
 		}
 		assert.Nil(t, request.Validate())

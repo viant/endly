@@ -12,7 +12,7 @@ import (
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/msg"
 	"github.com/viant/endly/service/system/exec"
-	"github.com/viant/endly/service/testing/runner/selenium"
+	"github.com/viant/endly/service/testing/runner/webdriver"
 	"github.com/viant/endly/service/workflow"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -668,7 +668,7 @@ func (r *Runner) Run(request *workflow.RunRequest) (err error) {
 	r.context = r.manager.NewContext(toolbox.NewContext())
 	//init shared session
 	exec.TerminalSessions(r.context)
-	selenium.Sessions(r.context)
+	webdriver.Sessions(r.context)
 
 	r.report = &ReportSummaryEvent{}
 	r.context.CLIEnabled = true

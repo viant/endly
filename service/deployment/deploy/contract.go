@@ -13,17 +13,17 @@ import (
 // ServiceRequest represent a deploy request
 type Request struct {
 	Target       *location.Resource `required:"true" description:"target host"`                                                                                   //target host
-	MetaURL      string        `description:"optional URL for meta deployment file, if left empty the meta URL is construct as meta/deployment/**AppName**"` //deployment URL for meta deployment instruction
-	AppName      string        `required:"true" description:"application name, as defined in meta deployment file"`                                          //app name
-	Version      string        `description:"min required version, it can be 1, or 1.2 or specific version 1.2.1"`                                           //requested version
-	Force        bool          `description:"force deployment even if app has been already installed"`                                                       //flag force deployment, by default if requested version matches the one from command version check. deployment is skipped.
-	BaseLocation string        `description:" variable source: $deploy.baseLocation"`
+	MetaURL      string             `description:"optional URL for meta deployment file, if left empty the meta URL is construct as meta/deployment/**AppName**"` //deployment URL for meta deployment instruction
+	AppName      string             `required:"true" description:"application name, as defined in meta deployment file"`                                          //app name
+	Version      string             `description:"version of the app to deploy, if left empty the version is extracted from meta deployment file"`                //version of the app to deploy
+	Variables    map[string]string  `description:"variables to expand in meta deployment file"`
+	Force        bool               `description:"force deployment even if app has been already installed"` //flag force deployment, by default if requested version matches the one from command version check. deployment is skipped.
+	BaseLocation string             `description:" variable source: $deploy.baseLocation"`
 }
 
 func (r *Request) Expand(context *endly.Context) *Request {
 	expanded := &Request{
 		AppName:      context.Expand(r.AppName),
-		Version:      context.Expand(r.Version),
 		BaseLocation: r.BaseLocation,
 		Target:       r.Target,
 		Force:        r.Force,
@@ -35,7 +35,7 @@ func (r *Request) Expand(context *endly.Context) *Request {
 	return expanded
 }
 
-// Validate check if request is valid otherwise returns error.
+// Init initialises request
 func (r *Request) Init() error {
 	r.Target = exec.GetServiceTarget(r.Target)
 	return nil
@@ -59,8 +59,8 @@ type Response struct {
 
 // LoadMetaRequest represents Meta register request.
 type LoadMetaRequest struct {
-	Source *
-		location.Resource `required:"true" description:"deployment meta location"`
+	Source    *location.Resource `required:"true" description:"deployment meta location"`
+	Variables map[string]string
 }
 
 // LoadMetaResponse represents deployment response
@@ -71,7 +71,7 @@ type LoadMetaResponse struct {
 // Meta represents description of deployment instructions for various operating system
 type Meta struct {
 	Name         string        //app name
-	Versioning   string        `required:"true" description:"versioning template for dynamic discovery i.e. Major.Minor.Release"` //versioning system, i.e. Major.Minor.Release
+	Versioning   string        `required:"true" description:x"versioning template for dynamic discovery i.e. Major.Minor.Release"` //versioning system, i.e. Major.Minor.Release
 	Targets      []*TargetMeta `required:"true" description:"deployment instruction for various version and operating systems"`
 	BaseLocation string        `description:"default base location"`
 }
@@ -171,6 +171,7 @@ func (m *Meta) Match(operatingSystem *model.OperatingSystem, requestedVersion st
 				continue
 			}
 		}
+
 		if operatingSystem.Matches(candidate.OsTarget) {
 			return candidate
 		}

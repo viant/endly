@@ -36,7 +36,7 @@ func (s *restService) sendRequest(context *endly.Context, request *Request) (*Re
 		response.Response = JSONResponse
 		return JSONResponse, nil
 	}
-	err := repeater.Run(s.AbstractService, "RESTRunner", context, handler, extracted)
+	err := repeater.Run(context, "RESTRunner", s.AbstractService, handler, extracted)
 	if err != nil {
 		return response, err
 	}

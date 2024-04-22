@@ -11,7 +11,7 @@ var emptyRequest = map[string]interface{}{}
 
 // ServiceRequest represent an action request
 type ServiceRequest struct {
-	Service string      `description:"service ID"`
+	Service string      `description:"service SessionID"`
 	Action  string      `description:"service's'action "`
 	Request interface{} `description:"service request" `
 }

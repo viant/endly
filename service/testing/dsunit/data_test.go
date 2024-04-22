@@ -37,7 +37,7 @@ var JSON2 = `
          {
 			"id": "1",
             "800": [
-				"${featureAggData.featureAgg[0].ID}"
+				"${featureAggData.featureAgg[0].SessionID}"
 			]
          }
       ]
@@ -56,10 +56,10 @@ func Test_DsUnitUdfGetTableRecords2(t *testing.T) {
 
 	var collection = data.NewCollection()
 	collection.Push(map[string]interface{}{
-		"ID": 4,
+		"SessionID": 4,
 	})
 	collection.Push(map[string]interface{}{
-		"ID": 2,
+		"SessionID": 2,
 	})
 	var featureAggData = data.NewMap()
 	featureAggData.Put("featureAgg", collection)

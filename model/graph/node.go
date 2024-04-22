@@ -3,7 +3,7 @@ package graph
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/viant/endly/model/yml"
+	"github.com/viant/endly/model/graph/yml"
 	"github.com/viant/toolbox"
 	"gopkg.in/yaml.v3"
 	"strings"
@@ -18,17 +18,19 @@ const (
 )
 
 type (
+	//Type represents a node type
 	Type int
 
+	//Node represents a workflow node
 	Node struct {
 		*yml.Node
-		Type Type
-		Name string
+		Type       Type
+		Name       string
 		IsTemplate bool
 	}
 )
 
-var reservcedKeys = map[string]bool{
+var reservedKeys = map[string]bool{
 	"init":        true,
 	"post":        true,
 	"variables":   true,
@@ -43,42 +45,6 @@ var reservcedKeys = map[string]bool{
 	"action":      true,
 	"service":     true,
 	"extract":     true,
-}
-
-func (n *Node) Value() interface{} {
-	switch n.Kind {
-	case yaml.ScalarNode:
-		switch n.Tag {
-		case "!!str":
-			return n.Node.Value
-		case "!!bool":
-			return toolbox.AsBoolean(n.Node.Value)
-		case "!!nil":
-			return nil
-		case "!!float":
-			return toolbox.AsFloat(n.Node.Value)
-		case "!!int":
-			return toolbox.AsInt(n.Node.Value)
-		default:
-			return n.Node.Value
-		}
-	case yaml.MappingNode:
-		var aMap = make(map[string]interface{})
-		for i := 0; i < len(n.Content); i += 2 {
-			key := n.Content[i].Value
-			value := &Node{Node: (*yml.Node)(n.Content[i+1])}
-			aMap[key] = value.Value()
-		}
-		return aMap
-	case yaml.SequenceNode:
-		var aSlice []interface{}
-		for i := 0; i < len(n.Content); i++ {
-			value := &Node{Node: (*yml.Node)(n.Content[i+1])}
-			aSlice = append(aSlice, value.Value())
-		}
-		return aSlice
-	}
-	return nil
 }
 
 func (n *Node) HasInit() {
@@ -119,7 +85,9 @@ func (n *Node) IsTaskNode() bool {
 				result = isTask
 			}
 		case TypeAction:
-			result = true
+			if action := node.Lookup("action"); action != nil {
+				result = true
+			}
 		}
 		return nil
 	})
@@ -165,14 +133,15 @@ func (n *Node) Variables(ns string) (string, error) {
 	if vars == nil {
 		return "", nil
 	}
-	if n.IsTaskNode() {
+	varsNode := &Node{Node: vars}
+	if varsNode.IsTaskNode() {
 		return "", nil
 	}
 
-	var result []string
+	var result []interface{}
 	err := n.variables(func(name string, node *Node) error {
 		value := ""
-		switch actual := node.Value().(type) {
+		switch actual := node.Interface().(type) {
 		case map[string]interface{}, []interface{}:
 			enc, err := json.Marshal(actual)
 			if err != nil {
@@ -185,7 +154,10 @@ func (n *Node) Variables(ns string) (string, error) {
 			value = toolbox.AsString(actual)
 		}
 
-		variable := name + ": " + value
+		variable := map[string]interface{}{
+			"name":  name,
+			"value": value,
+		}
 		result = append(result, variable)
 		return nil
 	}, vars)
@@ -230,10 +202,11 @@ func (n *Node) Request() (interface{}, error) {
 	input := n.Node.Lookup("input")
 	if input != nil {
 		valueNode := &Node{Node: input}
-		return valueNode.Value(), nil
+		return valueNode.Interface(), nil
 	}
 	var result = make(map[string]interface{})
 	err := n.Pairs(func(key string, node *yml.Node) error {
+		value := &Node{Node: node}
 		if strings.HasPrefix(key, ":") { //explicit action attribute
 			result[key[1:]] = node.Value
 			return nil
@@ -241,10 +214,10 @@ func (n *Node) Request() (interface{}, error) {
 		if strings.HasPrefix(key, "@") { //explicit action attribute
 			return nil
 		}
-		if reservcedKeys[strings.ToLower(key)] {
+		if reservedKeys[strings.ToLower(key)] {
 			return nil
 		}
-		result[key] = node.Value
+		result[key] = value.Interface()
 		return nil
 	})
 	return result, err
@@ -264,7 +237,7 @@ func (n *Node) Scalar(name string) (interface{}, bool) {
 		return nil, false
 	}
 	node := &Node{Node: match}
-	return node.Value(), true
+	return node.Interface(), true
 }
 
 // ActionMap returns action map
@@ -278,6 +251,8 @@ func (n *Node) ActionMap() (map[string]interface{}, error) {
 		switch strings.ToLower(key) {
 		case "repeat", "thinktimems", "exit", "action", "service", "async", "skip":
 			result[key] = node.Value
+		case "uri":
+			result["inputuri"] = node.Value
 		}
 		return nil
 	})
@@ -308,6 +283,7 @@ func (n *Node) TaskMap() (map[string]interface{}, error) {
 	err = n.Pairs(func(key string, node *yml.Node) error {
 		switch strings.ToLower(key) {
 		case "defer", "onerror", "fail", "subpath", "tag", "range":
+
 			result[key] = node.Value
 		}
 		return nil

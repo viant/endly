@@ -53,7 +53,7 @@ import (
 	_ "github.com/viant/endly/service/testing/msg"
 	_ "github.com/viant/endly/service/testing/runner/http"
 	_ "github.com/viant/endly/service/testing/runner/rest"
-	_ "github.com/viant/endly/service/testing/runner/selenium"
+	_ "github.com/viant/endly/service/testing/runner/webdriver"
 
 	_ "github.com/viant/endly/service/deployment/build"
 	_ "github.com/viant/endly/service/deployment/deploy"
@@ -376,6 +376,10 @@ func generateSecret(credentialsFile string) {
 	if err != nil {
 		fmt.Printf("\n")
 		log.Fatal(err)
+	}
+	if password == "" {
+		fmt.Printf("password was empty")
+		return
 	}
 	fmt.Println("")
 	genericCred := &cred.Generic{

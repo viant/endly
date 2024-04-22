@@ -101,7 +101,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, reque
 		return response.Body, err
 	}
 
-	err = repeater.Run(s.AbstractService, RunnerID, context, handler, sendGroupResponse.Data)
+	err = repeater.Run(context, RunnerID, s.AbstractService, handler, sendGroupResponse.Data)
 	if err != nil {
 		return err
 	}

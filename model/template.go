@@ -145,7 +145,7 @@ func (t *TransientTemplate) loadWorkflowData(tagPath string, workflowData data.M
 				return err
 			}
 			addLoadedMapData(loaded, state, k, workflowData)
-			return nil
+			continue
 		}
 		loaded, err := util.LoadData(baseURLs, loc)
 		if util.IsNotSuchResourceError(err) {

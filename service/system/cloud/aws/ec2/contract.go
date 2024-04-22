@@ -4,7 +4,7 @@ import "github.com/aws/aws-sdk-go/service/ec2"
 
 // Filter represents a filter
 type Filter struct {
-	ID                  string `description:"if specified ID match"`
+	ID                  string `description:"if specified SessionID match"`
 	VpcID               string
 	Name                string            `description:"name is a tags.Name helper"`
 	Tags                map[string]string `description:"matching tags"`

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/viant/afs/url"
+	"github.com/viant/afsc/gs"
 	"github.com/viant/endly"
 	"github.com/viant/scy"
 	"github.com/viant/scy/auth/firebase"
@@ -109,6 +110,14 @@ func (s *service) loadSecret(context *endly.Context, resource *scy.Resource) (*s
 }
 
 func (s *service) reveal(context *endly.Context, request *RevealRequest) (*RevealResponse, error) {
+	if serviceSecret := request.ServiceSecret; serviceSecret != nil && serviceSecret.URL != "" {
+		request.ServiceSecret.SetTarget(reflect.TypeOf(&cred.Generic{}))
+		aSecret, err := s.loadSecret(context, request.ServiceSecret)
+		if err != nil {
+			return nil, err
+		}
+		request.Options = append(request.Options, gs.ClientOptions([]option.ClientOption{option.WithCredentialsJSON([]byte(aSecret.String()))}))
+	}
 	secret, err := s.Service.Load(context.Background(), request.Resource)
 	if err != nil {
 		return nil, err

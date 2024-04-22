@@ -5,7 +5,7 @@ import (
 	"github.com/viant/endly/model/criteria"
 	"github.com/viant/endly/model/criteria/eval"
 	"github.com/viant/endly/model/criteria/parser"
-	"github.com/viant/endly/model/yml"
+	"github.com/viant/endly/model/graph/yml"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"gopkg.in/yaml.v3"

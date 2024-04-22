@@ -1,0 +1,25 @@
+init:
+  mysqlCred: mysql-e2e.json
+  mysqlSecrets: ${secrets.$mysqlCred}
+  records: []
+  workflowPath: $WorkingDirectory(.)
+  db1: {}
+pipeline:
+
+  init:
+    system:
+      action: run
+      request: '@system'
+
+    database:
+      action: run
+      request: '@database/database'
+
+
+  test:
+    action: run
+    request: '@regression/regression'
+
+  validate:
+    action: print
+    message: validation ...

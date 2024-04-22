@@ -145,7 +145,7 @@ const (
 
 	dsunitDataPrepareExaple = ` {
 		"Datastore": "db1",
-		"Data": {
+		"TableData": {
 			"table1": [
 				{
 					"id": 1,
@@ -476,7 +476,7 @@ func (s *service) registerRoutes() {
 					for _, validation := range response.Validation {
 						context.Publish(&validator.AssertRequest{
 							Description: validation.Description,
-							Expected:    validation.Expected,
+							Expect:      validation.Expected,
 							Actual:      validation.Actual,
 							Source:      validation.Dataset,
 						})

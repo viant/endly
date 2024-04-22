@@ -29,7 +29,7 @@ func TestPipelines_AsWorkflow(t *testing.T) {
  `,
 			Expected: `{
 	"OnErrorTask": "catch",
-	"Tasks": [
+	"tasks": [
 		{
 			"Actions": [
 				{
@@ -84,7 +84,7 @@ pipeline:
 
 `,
 			Expected: `{
-	"Tasks": [
+	"tasks": [
 		{
 			"Actions": [
 				{
@@ -161,7 +161,7 @@ pipeline:
 			"Value": "$var10"
 		}
 	],
-	"Tasks": [
+	"tasks": [
 		{
 			"Actions": [
 				{
@@ -198,10 +198,10 @@ pipeline:
 			Expected: `{
 	"DeferredTask": "defer",
 	"OnErrorTask": "catch",
-	"Tasks": [
+	"tasks": [
 		{
 			"Name": "service",
-			"Tasks": [
+			"tasks": [
 				{
 					"Actions": [
 						{
@@ -282,7 +282,7 @@ pipeline:
 			Expected: `{
 	"DeferredTask": "defer",
 	"OnErrorTask": "catch",
-	"Tasks": [
+	"tasks": [
 		{
 			"Actions": [
 				{
@@ -355,7 +355,7 @@ pipeline:
 
 `,
 			Expected: `{
-	"Tasks": [
+	"tasks": [
 		{
 			"Actions": [
 				{

@@ -198,7 +198,7 @@ func ArnName(uri string) (string, error) {
 	return name, nil
 }
 
-// NextID return new ID
+// NextID return new SessionID
 func NextID() (string, error) {
 	UUID, err := uuid.NewUUID()
 	if err != nil {

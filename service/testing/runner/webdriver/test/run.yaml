@@ -1,0 +1,30 @@
+pipeline:
+
+  start:
+    action: webdriver:start
+  test:
+    action: webdriver:run
+    commands:
+      - get(http://play.golang.org/?simple=1)
+      - (#code).clear
+      - (#code).sendKeys(package main
+
+          import "fmt"
+
+          func main() {
+              fmt.Println("Hello Endly!")
+          }
+        )
+
+      - command: (#run).click
+      - command: stdout = (.stdout).text
+        exit: $stdout.Text:/Endly/
+        waitTimeMs: 60000
+        repeat: 10
+      - close
+    expect:
+      stdout:
+        Text: /Hello Endly!/
+
+  defer:
+    action: webdriver:stop

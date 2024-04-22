@@ -1,0 +1,22 @@
+/* { "Method":"PATCH", "URI":"/{ProjectID}/"}  */
+
+
+#set( $_ = $Status<?>(output/status).WithTag('anonymous:"true"'))
+#set( $_ = $Data<?>(body/).Output())
+
+SELECT workflow.*   /* { "Cardinality": "One" } */,
+cardinality(workflow, 'One')
+FROM (select * from WORKFLOW ) workflow
+JOIN (
+  SELECT *
+  FROM TASK
+) task ON workflow.ID = task.WORKFLOW_ID
+JOIN (
+  SELECT *
+  FROM ASSET
+) asset ON workflow.ID = asset.WORKFLOW_ID
+
+JOIN (
+  SELECT *
+  FROM PROJECT
+) project ON project.ID = workflow.PROJECT_ID

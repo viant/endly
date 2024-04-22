@@ -66,7 +66,7 @@ func (r *BuildRequest) Init() error {
 	return nil
 }
 
-// BuildResponse represents image ID
+// BuildResponse represents image SessionID
 type BuildResponse struct {
 	ImageID string
 	Stdout  []string

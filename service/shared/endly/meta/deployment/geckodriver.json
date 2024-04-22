@@ -9,9 +9,9 @@
         "Pre": {
           "AutoSudo": true,
           "Commands": [
-            "mkdir -p ${deploy.baseLocation}/selenium/",
-            "chmod a+rw ${deploy.baseLocation}/selenium/",
-            "chown -R ${os.user} ${deploy.baseLocation}/selenium/"
+            "mkdir -p ${deploy.baseLocation}/webdriver/",
+            "chmod a+rw ${deploy.baseLocation}/webdriver/",
+            "chown -R ${os.user} ${deploy.baseLocation}/webdriver/"
 
           ]
         },
@@ -20,12 +20,12 @@
             "URL": "https://github.com/mozilla/geckodriver/releases/download/v0.23.0/geckodriver-v0.23.0-macos.tar.gz"
           },
           "Dest": {
-            "URL": "scp://${deploy.target.host}${deploy.baseLocation}/selenium/geckodriver-v0.23.0-macos.tar.gz",
+            "URL": "scp://${deploy.target.host}${deploy.baseLocation}/webdriver/geckodriver-v0.23.0-macos.tar.gz",
             "Credentials": "${deploy.target.credentials}"
           }
         },
         "Run": {
-          "Directory": "${deploy.baseLocation}/selenium",
+          "Directory": "${deploy.baseLocation}/webdriver",
           "Commands": [
             {
               "Command": "tar xvzf geckodriver-v0.23.0-macos.tar.gz",
@@ -45,9 +45,9 @@
         "Pre": {
           "AutoSudo": true,
           "Commands": [
-            "mkdir -p ${deploy.baseLocation}/selenium/",
-            "chmod a+rw ${deploy.baseLocation}/selenium/",
-            "chown -R ${os.user} ${deploy.baseLocation}/selenium/"
+            "mkdir -p ${deploy.baseLocation}/webdriver/",
+            "chmod a+rw ${deploy.baseLocation}/webdriver/",
+            "chown -R ${os.user} ${deploy.baseLocation}/webdriver/"
           ]
         },
         "Transfer": {
@@ -55,23 +55,20 @@
             "URL": "https://github.com/mozilla/geckodriver/releases/download/v0.23.0/geckodriver-v0.23.0-linux64.tar.gz"
           },
           "Dest": {
-            "URL": "scp://${deploy.target.host}${deploy.baseLocation}/selenium/",
+            "URL": "file://${deploy.target.host}${deploy.baseLocation}/webdriver/",
             "Credentials": "${deploy.target.credentials}"
           }
         },
         "Run": {
-          "Directory": "${deploy.baseLocation}/selenium",
+          "Directory": "${deploy.baseLocation}/webdriver",
           "Commands": [
             {
-              "Command": "tar xvzf geckodriver-v0.23.0-linux64.tar.gz",
-              "Errors": [
-                "Error"
-              ]
+              "Command": "tar xvzf geckodriver-v0.23.0-linux64.tar.gz"
             }
           ]
         }
       }
     }
   ],
-  "BaseLocation": "/usr/local"
+  "BaseLocation": "/opt/local"
 }
