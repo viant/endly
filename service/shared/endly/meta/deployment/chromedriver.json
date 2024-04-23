@@ -68,7 +68,7 @@
           "Directory": "${deploy.baseLocation}/webdriver",
           "Commands": [
             {
-              "Command": "unip chromedriver-mac-x64.zip"
+              "Command": "unzip chromedriver-mac-x64.zip"
             },
             {
               "Command": "cp chromedriver-mac-x64/chromedriver chromedriver"
