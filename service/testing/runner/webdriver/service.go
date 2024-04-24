@@ -244,7 +244,7 @@ func (s *service) call(context *endly.Context, driver selenium.WebDriver, caller
 				return false, err
 			}
 			s.addResultIfPresent(response.Result, response.Data, elementPath...)
-			if call.Exit != "" {
+			if call.Repeater != nil && call.Exit != "" {
 				var result interface{}
 				if len(response.Result) > 0 {
 					result = response.Result[0]
