@@ -73,14 +73,17 @@ func (s *service) addResultIfPresent(callResult []interface{}, result data.Map, 
 	}
 	var key = strings.Join(resultPath, ".")
 	result.SetValue(key, responseData)
+
 	return true
 }
 
-func (s *service) getResultPath(key string, call *MethodCall) []string {
+func (s *service) getResultPath(key string, call *MethodCall, kind PathKind) []string {
+	if kind == PathKindSimple {
+		return []string{key}
+	}
 	var method = call.Method
 	if len(call.Parameters) == 1 && toolbox.IsString(call.Parameters[0]) {
-		method = strings.Replace(method, "Get", "", 1)
-		method = strings.Replace(method, "Property", "", 1)
+		method = strings.Replace(method, "Get", "", 1) + "." + toolbox.AsString(call.Parameters[0])
 	}
 	return []string{key, method}
 }
@@ -110,8 +113,7 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 	}
 	var state = context.State()
 
-	actionDelay := time.Duration(request.ActionDelaysInMs) * time.Millisecond
-
+	actionDelay := time.Duration(request.ActionDelaysMs) * time.Millisecond
 	for _, action := range request.Actions {
 		for _, call := range action.Calls {
 			if len(call.Parameters) > 0 {
@@ -124,17 +126,20 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 					Key:       action.Key,
 					SessionID: request.SessionID,
 					Call:      call,
+					PathKind:  action.PathKind,
 				})
 				if err != nil {
 					return nil, err
 				}
-				util.Append(response.Data, callResponse.Data, true)
+				util.MergeMap(response.Data, callResponse.Data)
 				continue
 			}
+
 			callResponse, err := s.callWebElement(context, &WebElementCallRequest{
 				SessionID: request.SessionID,
 				Selector:  action.Selector,
 				Call:      call,
+				PathKind:  action.PathKind,
 			})
 			if err != nil {
 				return nil, err
@@ -142,7 +147,7 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 			if callResponse.LookupError != "" {
 				response.LookupErrors = append(response.LookupErrors, callResponse.LookupError)
 			}
-			util.Append(response.Data, callResponse.Data, true)
+			util.MergeMap(response.Data, callResponse.Data)
 			if actionDelay > 0 {
 				time.Sleep(actionDelay)
 			}
@@ -160,14 +165,21 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 	return response, err
 }
 
-// TableData returns table data in the specified format, format uses the following values: json, csv, objects, tabular, optionally you can specify header columns after ':'
-func (s *service) TableData(webElement selenium.WebElement, format string) (interface{}, error) {
+// Data returns table" data in the specified format, format uses the following values: json, csv, objects, tabular, optionally you can specify header columns after ':'
+func (s *service) Data(webElement selenium.WebElement, format string) (interface{}, error) {
+	//TODO add support for form
 	var header = ""
 	if index := strings.Index(format, ":"); index != -1 {
 		header = format[index+1:]
 		format = format[:index]
 	}
-	headers := strings.Split(header, ",")
+	if format == "" {
+		format = "objects"
+	}
+	var headers []string
+	if header != "" {
+		headers = strings.Split(header, ",")
+	}
 	tagName, err := webElement.TagName()
 	if err != nil {
 		return nil, err
@@ -192,7 +204,7 @@ func (s *service) TableData(webElement selenium.WebElement, format string) (inte
 
 func (s *service) callMethod(owner interface{}, methodName string, response *ServiceCallResponse, parameters []interface{}) (err error) {
 	switch methodName {
-	case "TableData":
+	case "Data":
 		parameters = append([]interface{}{owner}, parameters...)
 		owner = s
 	}
@@ -225,7 +237,6 @@ func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRe
 
 func (s *service) call(context *endly.Context, driver selenium.WebDriver, caller interface{}, call *MethodCall, response *ServiceCallResponse, elementPath ...string) (err error) {
 	repeater := call.Wait.Init()
-
 	if call.WaitTimeMs > 0 {
 		err = driver.WaitWithTimeout(func(wd selenium.WebDriver) (bool, error) {
 			err = s.callMethod(caller, call.Method, response, call.Parameters)
@@ -234,15 +245,23 @@ func (s *service) call(context *endly.Context, driver selenium.WebDriver, caller
 			}
 			s.addResultIfPresent(response.Result, response.Data, elementPath...)
 			if call.Exit != "" {
-				if done, err := repeater.Eval(context, runnerCaller, response.Result, map[string]interface{}{}); done {
+				var result interface{}
+				if len(response.Result) > 0 {
+					result = response.Result[0]
+				}
+				if done, err := repeater.Eval(context, runnerCaller, result, response.Data); done {
 					return done, err
 				}
 				return false, err
 			}
 			return true, nil
 		}, time.Duration(call.WaitTimeMs)*time.Millisecond)
+		if call.IgnoreTimeout {
+			return nil
+		}
 		return err
 	}
+
 	var handler = func() (interface{}, error) {
 		err = s.callMethod(caller, call.Method, response, call.Parameters)
 		if err != nil {
@@ -281,14 +300,17 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 		response.LookupError = fmt.Sprintf("failed to lookup element: %v %v, %v", selector.By, selector.Value, err)
 		return response, nil
 	}
-	elementPath := s.getResultPath(request.Selector.Key, request.Call)
+	elementPath := s.getResultPath(request.Selector.Key, request.Call, request.PathKind)
 	callResponse := &ServiceCallResponse{
 		Data: make(map[string]interface{}),
 	}
 
 	switch request.Call.Method {
 	case "Click", "SendKeys", "Clear", "Submit":
-		s.ensureVisible(element)
+		if err = s.ensureVisible(element); err != nil {
+			response.LookupError = fmt.Sprintf("element %s is not visible: %w", request.Selector.Value, err)
+			return nil, err
+		}
 	}
 
 	err = s.call(context, session.driver, element, request.Call, callResponse, elementPath...)
@@ -300,13 +322,16 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 	return response, nil
 }
 
-func (s *service) ensureVisible(element selenium.WebElement) {
-	for i := 0; i < 100; i++ {
-		if ok, _ := element.IsDisplayed(); ok {
+func (s *service) ensureVisible(element selenium.WebElement) error {
+	var err error
+	var ok bool
+	for i := 0; i < 10; i++ {
+		if ok, err = element.IsDisplayed(); ok {
 			break
 		}
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Millisecond * 200)
 	}
+	return err
 }
 
 func (s *service) open(context *endly.Context, request *OpenSessionRequest) (*OpenSessionResponse, error) {

@@ -145,7 +145,7 @@ const (
 
 	dsunitDataPrepareExaple = ` {
 		"Datastore": "db1",
-		"TableData": {
+		"Data": {
 			"table1": [
 				{
 					"id": 1,

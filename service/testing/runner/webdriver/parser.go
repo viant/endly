@@ -35,7 +35,8 @@ type parser struct{}
 // Parse parses supplied expression. It returns criteria or parsing error.
 func (p *parser) Parse(command string) (*Action, error) {
 	result := &Action{
-		Calls: []*MethodCall{{}},
+		PathKind: PathKindSimple,
+		Calls:    []*MethodCall{{}},
 	}
 	cursor := parsly.NewCursor("", []byte(command), 0)
 	var call = result.Calls[0]

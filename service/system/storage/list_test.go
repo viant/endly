@@ -112,7 +112,7 @@ func TestService_List(t *testing.T) {
 		{
 			"Dir": false,
 			"Name": "mem://localhost/data/storage/list/case006/f10",	
-			"TableData": "test1"
+			"Data": "test1"
 		}
 	]
 }`,
