@@ -39,11 +39,11 @@ func TestParser(t *testing.T) {
 			name: "Table with nested elements",
 			html: `
 				<table>
-					<tr><td>TableData <b>1</b></td><td>TableData <i>2</i></td></tr>
+					<tr><td>Data <b>1</b></td><td>Data <i>2</i></td></tr>
 				</table>
 			`,
 			expected: [][]string{
-				{"TableData 1", "TableData 2"},
+				{"Data 1", "Data 2"},
 			},
 		},
 	}

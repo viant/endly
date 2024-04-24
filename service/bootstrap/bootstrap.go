@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/viant/afs"
+	"github.com/viant/endly/internal/webplanner"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/service/meta"
 	"github.com/viant/scy"
@@ -153,6 +154,8 @@ func init() {
 	flag.Int("e", 5, "max number of failures CLI reported per validation, 0 - all failures reported")
 	flag.String("run", "", "run specified service action it expect valid service:action to run")
 	flag.String("req", "", "optional request URL when run option is specified")
+	flag.String("w", "", "start HTTP webdriver test planner")
+
 	_ = mysql.SetLogger(&emptyLogger{})
 
 }
@@ -196,6 +199,12 @@ func Bootstrap() {
 	})
 	_, shouldQuit := flagset["v"]
 	flagset["v"] = flag.Lookup("v").Value.String()
+
+	if webplannerPort, ok := flagset["w"]; ok {
+		planner := webplanner.New(&webplanner.Config{Port: toolbox.AsInt(webplannerPort)})
+		planner.Start()
+		return
+	}
 
 	if URLs, ok := flagset["u"]; ok {
 		startRecorder(strings.Split(URLs, " "))

@@ -165,7 +165,7 @@ require (
 	github.com/viant/gmetric v0.3.1-0.20230405233616-cc90deee60c4 // indirect
 	github.com/viant/godiff v0.4.1 // indirect
 	github.com/viant/govalidator v0.2.2-0.20230629211659-f2a3f0659b0b // indirect
-	github.com/viant/igo v0.2.0 // indirect
+	github.com/viant/igo v0.2.1 // indirect
 	github.com/viant/pgo v0.11.0 // indirect
 	github.com/viant/sqlparser v0.6.0 // indirect
 	github.com/viant/sqlx v0.12.1-0.20240215212756-d8cc9d22ff38 // indirect

@@ -1313,6 +1313,8 @@ github.com/viant/govalidator v0.2.2-0.20230629211659-f2a3f0659b0b h1:IxRf961iRIo
 github.com/viant/govalidator v0.2.2-0.20230629211659-f2a3f0659b0b/go.mod h1:D35Dwx0R8rR1knRxhlseoYvOkiqo24kpMg1/o977i9Y=
 github.com/viant/igo v0.2.0 h1:ygWmTCinnGPaeV7omJLiyneOpzYZ5kiw7oYz7mUJZVQ=
 github.com/viant/igo v0.2.0/go.mod h1:7V6AWsLhKWeGzXNTNH3AZiIEKa0m33DrQbdWtapsI74=
+github.com/viant/igo v0.2.1 h1:uXRu32PHPIgPffkucby7TEQt4jM7G1+z8DrTzcMi4FY=
+github.com/viant/igo v0.2.1/go.mod h1:7V6AWsLhKWeGzXNTNH3AZiIEKa0m33DrQbdWtapsI74=
 github.com/viant/parsly v0.3.3-0.20240228194022-a61fc21f83e1 h1:H5efJbAmps+gcjnfY52qppjhzU0XjHAVfd9WyLgZSIA=
 github.com/viant/parsly v0.3.3-0.20240228194022-a61fc21f83e1/go.mod h1:85fneXJbErKMGhSQto3A5ElTQCwl3t74U9cSV0waBHw=
 github.com/viant/pgo v0.11.0 h1:PNuYVhwTfyrAHGBO6lxaMFuHP4NkjKV8ULecz3OWk8c=

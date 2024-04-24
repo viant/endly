@@ -86,7 +86,7 @@ func (r *SendResponse) NewResponse() *Response {
 	return response
 }
 
-// Expands expands data ($httpTrips.TableData) attribute shared across requests within a group
+// Expands expands data ($httpTrips.Data) attribute shared across requests within a group
 func (r *SendResponse) Expand(state data.Map) {
 	if len(r.Data) == 0 {
 		return

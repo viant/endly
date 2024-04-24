@@ -50,7 +50,6 @@ func (r *Repeater) EvaluateExitCriteria(callerInfo string, context *endly.Contex
 		return true, nil
 	}
 	return false, nil
-
 }
 
 func (r *Repeater) runOnce(context *endly.Context, callerInfo string, handler func() (interface{}, error), extracted map[string]interface{}) (bool, error) {
@@ -66,14 +65,13 @@ func (r *Repeater) runOnce(context *endly.Context, callerInfo string, handler fu
 }
 
 func (r *Repeater) Eval(context *endly.Context, callerInfo string, out interface{}, extracted map[string]interface{}) (bool, error) {
-
 	if _, ok := out.([]interface{}); ok {
 		return true, nil
 	}
 	extractableOutput, structuredOutput := util.AsExtractable(out)
 	var err error
 	if len(structuredOutput) > 0 {
-		if extractedData, ok := structuredOutput["TableData"]; ok {
+		if extractedData, ok := structuredOutput["Data"]; ok {
 			extractedDataMap, ok := extractedData.(data.Map)
 			if ok {
 				for k, v := range extractedDataMap {

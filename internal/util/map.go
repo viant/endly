@@ -2,6 +2,7 @@ package util
 
 import (
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/data"
 	"strings"
 )
 
@@ -26,11 +27,26 @@ func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{},
 	return result, err
 }
 
-// AppendMap source to dest map
+// Append source to dest map
 func Append(dest, source map[string]interface{}, override bool) {
 	for k, v := range source {
 		if _, ok := dest[k]; ok && !override {
 			continue
+		}
+		dest[k] = v
+	}
+}
+
+// MergeMap merges source map into dest map
+func MergeMap(dest, source map[string]interface{}) {
+	for k, v := range source {
+		if destValue, ok := dest[k]; ok {
+			if destMap, ok := destValue.(data.Map); ok {
+				if sourceMap, ok := v.(data.Map); ok {
+					MergeMap(destMap, sourceMap)
+					continue
+				}
+			}
 		}
 		dest[k] = v
 	}

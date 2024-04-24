@@ -1,0 +1,78 @@
+<html>
+<style>
+    fieldset {
+        border: 1px solid;
+        width: 400px;
+        margin: 0 auto;
+        text-align: left;
+    }
+    .error {
+        color: red;
+    }
+</style>
+<body>
+
+
+<script>
+
+    function setError(error) {
+        document.querySelector('#errorMsg').innerHTML = error
+    }
+
+    function submit() {
+        const plan = document.querySelector('#plan').value
+
+        const values = {
+            plan: plan
+        }
+        try {
+
+            const URL = window.location.href + "run"
+            const response = fetch(URL, {
+                method: 'POST', // Method you want to use
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(values),
+            })
+                .then(response => response.json())
+                .then((payload) => {
+                    if (payload.Status === "error") {
+                        setError(payload.Message)
+                    }
+                    if (payload.Status === "ok") {
+                        document.querySelector('#history').value += payload.Plan + "\n"
+                        document.querySelector('#output').value = payload.Output
+                    }
+
+                }).catch((error) => {
+                    setError(error);
+                })
+
+        } catch (error) {
+            setError(error);
+        }
+
+    }
+</script>
+<div>
+    <fieldset>
+        <legend>Webdriver Planner</legend>
+        <textarea id="plan" name="plan" rows="10" cols="80">get(http://localhost:5173/)</textarea><br>
+        <input value="Submit" type="button" onclick="submit()"><br>
+        <span id="errorMsg" class="error"></span>
+    </fieldset>
+
+    <fieldset >
+        <legend>Output</legend>
+        <textarea id="output" name="output" rows="5" cols="80" disabled></textarea><br>
+    </fieldset>
+
+    <fieldset>
+        <legend>History</legend>
+        <textarea id="history" name="history" rows="5" cols="80"></textarea><br>
+    </fieldset>
+
+</div>
+</body>
+</html>

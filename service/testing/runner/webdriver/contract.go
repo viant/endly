@@ -8,9 +8,20 @@ import (
 	"github.com/viant/endly/service/testing/validator"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"strconv"
+	"strings"
 )
 
 const defaultTarget = "/opt/local/webdriver"
+const defaultExitWaitTimeMs = 1000
+
+type PathKind int
+
+const (
+	PathKindUndefined = PathKind(iota)
+	PathKindSimple
+	PathKindComposite
+)
 
 // StartRequest represents a selenium server start request
 type StartRequest struct {
@@ -111,6 +122,7 @@ type CloseSessionResponse struct {
 type WebDriverCallRequest struct {
 	SessionID string
 	Key       string
+	PathKind  PathKind
 	Call      *MethodCall
 }
 
@@ -132,6 +144,7 @@ type WebElementCallRequest struct {
 	SessionID string
 	Selector  *WebElementSelector
 	Call      *MethodCall
+	PathKind  PathKind
 }
 
 // WebElementCallResponse represents seleniun web element response
@@ -143,13 +156,13 @@ type WebElementCallResponse struct {
 
 // RunRequest represents group of selenium web elements calls
 type RunRequest struct {
-	SessionID        string
-	Browser          string
-	RemoteSelenium   string //remote selenium resource
-	Actions          []*Action
-	ActionDelaysInMs int           `description:"slows down action with specified delay"`
-	Commands         []interface{} `description:"list of selenium command: {web element selector}.WebElementMethod(params),  or WebDriverMethod(params), or wait map "`
-	Expect           interface{}   `description:"If specified it will validated response as actual"`
+	SessionID      string
+	Browser        string
+	RemoteSelenium string //remote selenium resource
+	Actions        []*Action
+	ActionDelaysMs int           `description:"slows down action with specified delay"`
+	Commands       []interface{} `description:"list of selenium command: {web element selector}.WebElementMethod(params),  or WebDriverMethod(params), or wait map "`
+	Expect         interface{}   `description:"If specified it will validated response as actual"`
 }
 
 func (r *RunRequest) asWaitAction(parser *parser, candidate interface{}) (*Action, error) {
@@ -162,7 +175,9 @@ func (r *RunRequest) asWaitAction(parser *parser, candidate interface{}) (*Actio
 		if err != nil {
 			return nil, err
 		}
-
+		if action.PathKind == PathKindUndefined {
+			action.PathKind = PathKindSimple
+		}
 		err = toolbox.DefaultConverter.AssignConverted(&action.Calls[0].Wait, aMap)
 		return action, err
 	}
@@ -191,6 +206,7 @@ func (r *RunRequest) Init() error {
 		return nil
 	}
 
+	expectMap := r.expectMap()
 	r.Actions = make([]*Action, 0)
 	var previousAction *Action
 	parser := &parser{}
@@ -210,14 +226,50 @@ func (r *RunRequest) Init() error {
 		}
 		if previousAction != nil {
 			if previousAction.Selector != nil && action.Selector != nil && previousAction.Selector.Value == action.Selector.Value {
-				previousAction.Calls = append(previousAction.Calls, action.Calls[0])
-				continue
+				if action.Key == "" && isReadMethod(action.Calls[0].Method) && isReadMethod(previousAction.Calls[0].Method) {
+					previousAction.Calls = append(previousAction.Calls, action.Calls[0])
+					previousAction.PathKind = PathKindComposite
+					continue
+				}
 			}
 		}
 		r.Actions = append(r.Actions, action)
 		previousAction = action
+		call := action.Calls[0]
+		if call.Repeater == nil || call.Repeater.Exit == "" {
+			if expectValue, ok := expectMap[action.Key]; ok && expectValue != nil {
+				switch actual := expectValue.(type) {
+				case string:
+					r.ensureRepeater(call)
+					call.Exit = "contains(" + action.Selector.Value + "," + strconv.Quote(toolbox.AsString(actual)) + ")"
+				case bool:
+					r.ensureRepeater(call)
+					call.Exit = action.Selector.Value
+				case int, float64, int64, float32, uint64, int32, uint32, uint:
+					r.ensureRepeater(call)
+					call.Exit = action.Selector.Value + " == " + toolbox.AsString(expectValue)
+				}
+				if call.Repeater != nil && call.Exit != "" {
+					if call.WaitTimeMs == 0 {
+						call.WaitTimeMs = defaultExitWaitTimeMs
+					}
+					call.IgnoreTimeout = true
+				}
+			}
+		}
+
 	}
 	return nil
+}
+
+func (r *RunRequest) ensureRepeater(call *MethodCall) {
+	if call.Repeater == nil {
+		call.Repeater = &model.Repeater{}
+	}
+}
+
+func isReadMethod(method string) bool {
+	return strings.HasPrefix(method, "Get") || strings.HasPrefix(method, "Text")
 }
 
 // NewRunRequest creates a new run request
@@ -253,13 +305,15 @@ type MethodCall struct {
 }
 
 type Wait struct {
-	WaitTimeMs int
+	WaitTimeMs    int
+	IgnoreTimeout bool
 	*model.Repeater
 }
 
 // Action represents various calls on web element
 type Action struct {
-	Key      string //optional result key
+	Key string //optional result key
+	PathKind
 	Selector *WebElementSelector
 	Calls    []*MethodCall
 }
@@ -337,4 +391,14 @@ func NewOpenSessionRequest(browser string, remote string) *OpenSessionRequest {
 		Browser: browser,
 		Remote:  remote,
 	}
+}
+
+func (r *RunRequest) expectMap() map[string]interface{} {
+	var expectMap = map[string]interface{}{}
+	if r.Expect != nil {
+		if value, ok := r.Expect.(map[string]interface{}); ok {
+			expectMap = value
+		}
+	}
+	return expectMap
 }
