@@ -65,13 +65,15 @@ func (s *service) checkProcess(context *endly.Context, request *StatusRequest) (
 	if err := endly.Run(context, extractRequest, runResponse); err != nil {
 		return nil, err
 	}
+	stdout := runResponse.Stdout()
+	hasCR := strings.Contains(stdout, "\r")
+	if hasCR {
+		stdout = strings.ReplaceAll(stdout, "\r", "")
+	}
+	lines := strings.Split(stdout, "\n")
 
 	actualCommand := request.Command
-	if index := strings.Index(actualCommand, "grep "); index != -1 {
-		actualCommand = string(actualCommand[index+5:])
-	}
-
-	for _, line := range strings.Split(runResponse.Stdout(), "\r\n") {
+	for _, line := range lines {
 		line = vtclean.Clean(line, false)
 		if strings.Contains(line, "grep") {
 			continue
@@ -310,4 +312,9 @@ func New() endly.Service {
 	result.AbstractService.Service = result
 	result.registerRoutes()
 	return result
+}
+
+func buildSeparator(text string) (string, bool) {
+	hasCR := strings.Contains(text, "\r")
+	return "\n", hasCR
 }
