@@ -25,7 +25,7 @@ func NewEvalEvent(criteriaType string, defaultValue, evaluation bool, criteria s
 		Type:       criteriaType,
 		Default:    defaultValue,
 		Evaluation: evaluation,
-		Has: 	  has,
+		Has:        has,
 		Criteria:   criteria,
 	}
 	if err != nil {
@@ -33,9 +33,6 @@ func NewEvalEvent(criteriaType string, defaultValue, evaluation bool, criteria s
 	}
 	return result
 }
-
-
-
 
 func Evaluate(context *endly.Context, state data.Map, expression string, compute *eval.Compute, eventType string, defaultValue bool) (bool, error) {
 	if expression == "" {
@@ -46,11 +43,11 @@ func Evaluate(context *endly.Context, state data.Map, expression string, compute
 		evaluator = *compute
 	}
 	if evaluator == nil {
-		compute, err := compiler.Compile(expression)
+		cmp, err := compiler.Compile(expression)
 		if err != nil {
 			return defaultValue, err
 		}
-		evaluator, err = compute()
+		evaluator, err = cmp()
 		if err != nil {
 			return defaultValue, err
 		}
@@ -71,7 +68,6 @@ func Evaluate(context *endly.Context, state data.Map, expression string, compute
 	}
 	return ret, nil
 }
-
 
 // Assert validates expected against actual
 func Assert(context *endly.Context, root string, expected, actual interface{}) (*assertly.Validation, error) {

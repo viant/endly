@@ -50,12 +50,15 @@ func (e *Exporter) exportObjects(headers []string, data [][]string) []map[string
 	var objects []map[string]interface{}
 	for _, row := range data[offset:] {
 		if len(row) != len(headers) {
-			fmt.Printf("skipping row %v %v\n", len(row), len(headers))
 			continue // skip rows that do not match header length
 		}
 		obj := make(map[string]interface{})
 		for i, header := range headers {
+			if header == "" {
+				continue
+			}
 			obj[header] = row[i]
+
 		}
 		objects = append(objects, obj)
 	}
