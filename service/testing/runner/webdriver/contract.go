@@ -3,12 +3,11 @@ package webdriver
 import (
 	"fmt"
 	"github.com/viant/endly/internal/util"
-	"github.com/viant/endly/model"
+	"github.com/viant/endly/model/criteria/eval"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/service/testing/validator"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"strconv"
 	"strings"
 )
 
@@ -217,6 +216,7 @@ func (r *RunRequest) Init() error {
 			if err != nil {
 				return err
 			}
+			r.setWaitExitIfNeeded(action.Calls[0], expectMap, action)
 			r.Actions = append(r.Actions, action)
 			continue
 		}
@@ -236,35 +236,30 @@ func (r *RunRequest) Init() error {
 		r.Actions = append(r.Actions, action)
 		previousAction = action
 		call := action.Calls[0]
-		if call.Repeater == nil || call.Repeater.Exit == "" {
-			if expectValue, ok := expectMap[action.Key]; ok && expectValue != nil {
-				switch actual := expectValue.(type) {
-				case string:
-					r.ensureRepeater(call)
-					call.Exit = "contains(" + action.Selector.Value + "," + strconv.Quote(toolbox.AsString(actual)) + ")"
-				case bool:
-					r.ensureRepeater(call)
-					call.Exit = action.Selector.Value
-				case int, float64, int64, float32, uint64, int32, uint32, uint:
-					r.ensureRepeater(call)
-					call.Exit = action.Selector.Value + " == " + toolbox.AsString(expectValue)
-				}
-				if call.Repeater != nil && call.Exit != "" {
-					if call.WaitTimeMs == 0 {
-						call.WaitTimeMs = defaultExitWaitTimeMs
-					}
-					call.IgnoreTimeout = true
-				}
-			}
-		}
+		r.setWaitExitIfNeeded(call, expectMap, action)
 
 	}
 	return nil
 }
 
-func (r *RunRequest) ensureRepeater(call *MethodCall) {
-	if call.Repeater == nil {
-		call.Repeater = &model.Repeater{}
+func (r *RunRequest) setWaitExitIfNeeded(call *MethodCall, expectMap map[string]interface{}, action *Action) {
+	if call.Exit == "" {
+		if expectValue, ok := expectMap[action.Key]; ok && expectValue != nil {
+			switch actual := expectValue.(type) {
+			case string:
+				call.Exit = "$" + action.Key + " contains " + actual
+			case int, int64, int32, int16, int8, uint, uint64, uint32, uint16, uint8:
+				call.Exit = "$" + action.Key + " = " + toolbox.AsString(expectValue)
+			case float64:
+				call.Exit = "$" + action.Key + " = " + toolbox.AsString(expectValue)
+			}
+			if call.Exit != "" {
+				if call.WaitTimeMs == 0 {
+					call.WaitTimeMs = defaultExitWaitTimeMs
+				}
+				call.IgnoreTimeout = true
+			}
+		}
 	}
 }
 
@@ -306,8 +301,10 @@ type MethodCall struct {
 
 type Wait struct {
 	WaitTimeMs    int
+	ThinkTimeMs   int
 	IgnoreTimeout bool
-	*model.Repeater
+	Exit          string
+	criteria      eval.Compute
 }
 
 // Action represents various calls on web element
@@ -356,15 +353,6 @@ func (r *RunRequest) Validate() error {
 		}
 	}
 	return nil
-}
-
-// NewMethodCall creates a new method call
-func NewMethodCall(method string, repeatable *model.Repeater, parameters ...interface{}) *MethodCall {
-	return &MethodCall{
-		Wait:       Wait{Repeater: repeatable},
-		Method:     method,
-		Parameters: parameters,
-	}
 }
 
 // OpenSessionRequest represents open session request

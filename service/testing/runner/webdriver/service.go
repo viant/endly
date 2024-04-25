@@ -10,6 +10,7 @@ import (
 	"github.com/viant/afs/url"
 	"github.com/viant/endly"
 	"github.com/viant/endly/internal/util"
+	"github.com/viant/endly/model/criteria"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/service/deployment/deploy"
 	"github.com/viant/endly/service/deployment/sdk"
@@ -36,6 +37,8 @@ const (
 	FirefoxBrowser = "firefox"
 	Selenium       = "webdriver"
 	runnerCaller   = "runnerCaller"
+
+	defaultFindElementTimeout = 10 * time.Second
 )
 
 type service struct {
@@ -134,13 +137,20 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 				util.MergeMap(response.Data, callResponse.Data)
 				continue
 			}
-
 			callResponse, err := s.callWebElement(context, &WebElementCallRequest{
 				SessionID: request.SessionID,
 				Selector:  action.Selector,
 				Call:      call,
 				PathKind:  action.PathKind,
 			})
+			if IsStaleElementError(err) {
+				callResponse, err = s.callWebElement(context, &WebElementCallRequest{
+					SessionID: request.SessionID,
+					Selector:  action.Selector,
+					Call:      call,
+					PathKind:  action.PathKind,
+				})
+			}
 			if err != nil {
 				return nil, err
 			}
@@ -217,6 +227,12 @@ func (s *service) callMethod(owner interface{}, methodName string, response *Ser
 		return err
 	}
 	response.Result = toolbox.CallFunction(method, parameters...)
+	value := response.Result[len(response.Result)-1]
+	if value != nil {
+		if err, ok := value.(error); ok {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -236,41 +252,38 @@ func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRe
 }
 
 func (s *service) call(context *endly.Context, driver selenium.WebDriver, caller interface{}, call *MethodCall, response *ServiceCallResponse, elementPath ...string) (err error) {
-	repeater := call.Wait.Init()
-	if call.WaitTimeMs > 0 {
-		err = driver.WaitWithTimeout(func(wd selenium.WebDriver) (bool, error) {
-			err = s.callMethod(caller, call.Method, response, call.Parameters)
-			if err != nil {
-				return false, err
-			}
-			s.addResultIfPresent(response.Result, response.Data, elementPath...)
-			if call.Repeater != nil && call.Exit != "" {
-				var result interface{}
-				if len(response.Result) > 0 {
-					result = response.Result[0]
-				}
-				if done, err := repeater.Eval(context, runnerCaller, result, response.Data); done {
-					return done, err
-				}
-				return false, err
-			}
-			return true, nil
-		}, time.Duration(call.WaitTimeMs)*time.Millisecond)
-		if call.IgnoreTimeout {
-			return nil
-		}
-		return err
-	}
-
-	var handler = func() (interface{}, error) {
-		err = s.callMethod(caller, call.Method, response, call.Parameters)
-		if err != nil {
-			return nil, err
+	if call.WaitTimeMs == 0 {
+		if err = s.callMethod(caller, call.Method, response, call.Parameters); err != nil {
+			return err
 		}
 		s.addResultIfPresent(response.Result, response.Data, elementPath...)
-		return response.Result, nil
+		if call.ThinkTimeMs > 0 {
+			time.Sleep(time.Millisecond * time.Duration(call.ThinkTimeMs))
+		}
+		return nil
 	}
-	return repeater.Run(context, runnerCaller, s.AbstractService, handler, response.Data)
+
+	err = driver.WaitWithTimeout(func(wd selenium.WebDriver) (bool, error) {
+		err = s.callMethod(caller, call.Method, response, call.Parameters)
+		if err != nil {
+			return false, err
+		}
+		s.addResultIfPresent(response.Result, response.Data, elementPath...)
+		if call.Exit == "" {
+			return true, nil
+		}
+		evalData := data.Map{}
+		util.MergeMap(evalData, response.Data)
+		return criteria.Evaluate(context, evalData, call.Exit, &call.criteria, runnerCaller, true)
+	}, time.Duration(call.WaitTimeMs)*time.Millisecond)
+
+	if IsStaleElementError(err) {
+		return err
+	}
+	if call.IgnoreTimeout {
+		return nil
+	}
+	return err
 }
 
 func (s *service) callWebElement(context *endly.Context, request *WebElementCallRequest) (*WebElementCallResponse, error) {
@@ -294,17 +307,17 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 			return true, nil
 		}
 		return false, nil
-	}, time.Second*3)
+	}, defaultFindElementTimeout)
 
 	if err != nil || element == nil {
 		response.LookupError = fmt.Sprintf("failed to lookup element: %v %v, %v", selector.By, selector.Value, err)
 		return response, nil
 	}
+
 	elementPath := s.getResultPath(request.Selector.Key, request.Call, request.PathKind)
 	callResponse := &ServiceCallResponse{
 		Data: make(map[string]interface{}),
 	}
-
 	switch request.Call.Method {
 	case "Click", "SendKeys", "Clear", "Submit":
 		if err = s.ensureVisible(element); err != nil {
@@ -328,6 +341,9 @@ func (s *service) ensureVisible(element selenium.WebElement) error {
 	for i := 0; i < 10; i++ {
 		if ok, err = element.IsDisplayed(); ok {
 			break
+		}
+		if IsStaleElementError(err) {
+			return err
 		}
 		time.Sleep(time.Millisecond * 200)
 	}

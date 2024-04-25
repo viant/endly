@@ -21,6 +21,7 @@ func Test_EvaluateCriteria(t *testing.T) {
 		Expected      bool
 		HasError      bool
 	}{
+
 		{
 			Description:   "eq $key1:1",
 			Expression:    "$key1:1", //
@@ -104,18 +105,18 @@ func Test_EvaluateCriteria(t *testing.T) {
 			},
 		},
 		{
-			Description:   "UDFs substitution",
-			Expression:    "$Len($logRecords) > 2", //
+			Description: "UDFs substitution",
+			Expression:  "$Len($logRecords) > 2", //
 			//DefaultResult: true,
-			Expected:      false,
+			Expected: false,
 			State: map[string]interface{}{
 				"logRecords": []interface{}{"1"},
 			},
 		},
 		{
-			Description:   "Uni operand expression",
-			Expression:    "$getTrue()", //
-			Expected:      true,
+			Description: "Uni operand expression",
+			Expression:  "$getTrue()", //
+			Expected:    true,
 			State: map[string]interface{}{
 				"getTrue": func() interface{} {
 					return true
@@ -123,9 +124,9 @@ func Test_EvaluateCriteria(t *testing.T) {
 			},
 		},
 		{
-			Description:   "contains",
-			Expression:    "$bar() contains abc", //
-			Expected:      true,
+			Description: "contains",
+			Expression:  "$bar() contains abc", //
+			Expected:    true,
 			State: map[string]interface{}{
 				"bar": func() interface{} {
 					return "abcd"
@@ -134,24 +135,24 @@ func Test_EvaluateCriteria(t *testing.T) {
 		},
 
 		{
-			Description:   "contains //",
-			Expression:    "$a:/abc/", //
-			Expected:      true,
+			Description: "contains //",
+			Expression:  "$a:/abc/", //
+			Expected:    true,
 			State: map[string]interface{}{
 				"a": "abcxv",
 			},
 		},
 
 		{
-			Description:   "contains - not defiend",
-			Expression:    "$bar() contains abc", //
-			Expected:      false,
-			State: map[string]interface{}{},
+			Description: "contains - not defiend",
+			Expression:  "$bar() contains abc", //
+			Expected:    false,
+			State:       map[string]interface{}{},
 		},
 		{
-			Description:   "contains - //",
-			Expression:    "$bar():/abc/", //
-			Expected:      true,
+			Description: "contains - //",
+			Expression:  "$bar():/abc/", //
+			Expected:    true,
 			State: map[string]interface{}{
 				"bar": func() interface{} {
 					return "abcr"
@@ -160,7 +161,7 @@ func Test_EvaluateCriteria(t *testing.T) {
 		},
 	}
 
-	for i, useCase := range useCases[len(useCases)-1:]{
+	for i, useCase := range useCases[len(useCases)-1:] {
 		context := manager.NewContext(toolbox.NewContext())
 		state := context.State()
 		if len(useCase.State) > 0 {
