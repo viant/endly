@@ -24,11 +24,12 @@ const (
 
 // StartRequest represents a selenium server start request
 type StartRequest struct {
-	Target *location.Resource
-	Driver string
-	Server string
-	Sdk    string
-	Port   int
+	Target       *location.Resource
+	Driver       string
+	Server       string
+	Sdk          string
+	Capabilities []string
+	Port         int
 }
 
 func (r *StartRequest) Init() error {

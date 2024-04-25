@@ -472,9 +472,9 @@ func (s *service) start(context *endly.Context, request *StartRequest) (*StartRe
 		session = &Session{SessionID: sessionID}
 		sessions[sessionID] = session
 	}
-
 	useSelenium := request.Server != ""
 	if !useSelenium {
+		session.Capabilities = request.Capabilities
 		switch request.Driver {
 		case ChromeDriver:
 			if session.service, err = selenium.NewChromeDriverService(response.DriverPath, request.Port); err != nil {
@@ -550,6 +550,9 @@ func (s *service) openSession(context *endly.Context, request *OpenSessionReques
 
 	caps := selenium.Capabilities{}
 	if session.Pid == 0 {
+		if len(session.Capabilities) > 0 && len(request.Capabilities) == 0 {
+			request.Capabilities = session.Capabilities
+		}
 		switch session.Browser {
 		case ChromeBrowser:
 			caps.AddChrome(chrome.Capabilities{Args: request.Capabilities})
