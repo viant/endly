@@ -202,6 +202,10 @@ func Bootstrap() {
 
 	if webplannerPort, ok := flagset["w"]; ok {
 		planner := webplanner.New(&webplanner.Config{Port: toolbox.AsInt(webplannerPort)})
+		go func() {
+			time.Sleep(time.Second)
+			openbrowser(fmt.Sprintf("http://localhost:%v/", webplannerPort))
+		}()
 		planner.Start()
 		return
 	}
@@ -350,7 +354,7 @@ func printUDFs() {
 }
 
 func openbrowser(url string) {
-	log.Printf("opening http://127.0.0.1:8071/ ...")
+	log.Printf("opening " + url + " ...")
 	_ = exec.Command("open", url).Start()
 }
 
