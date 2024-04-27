@@ -16,6 +16,10 @@ type Session struct {
 	Capabilities []string
 }
 
+func (s Session) Driver() selenium.WebDriver {
+	return s.driver
+}
+
 func (s Session) Close() {
 	if s.driver != nil {
 		s.driver.Quit()
