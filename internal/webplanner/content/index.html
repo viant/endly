@@ -6,73 +6,409 @@
         margin: 0 auto;
         text-align: left;
     }
+
     .error {
         color: red;
     }
+
+    /* styles.css */
+    body, html {
+        height: 100%;
+        margin: 0;
+        font-family: Arial, sans-serif;
+    }
+
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
+        background-color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        margin: 10px;
+    }
+
+    .inner-container {
+        display: flex;
+        flex-direction: column;
+        padding: 10px;
+    }
+
+    .form-row {
+        display: flex;
+        flex-direction: row;
+        margin-bottom: 10px;
+    }
+
+    .form-label {
+        min-width: 100px; /* Fixed width for labels */
+        padding-right: 2px; /* Space between label and input */
+        text-align: start; /* Align text to right for aesthetics */
+        font-weight: bold;
+        align-self: center;
+    }
+
+    .form-input {
+        flex: 1; /* Take up the remaining space */
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    textarea.form-input {
+        height: 100%; /* Takes the full height of its container */
+        resize: vertical; /* Allows resizing only vertically */
+        margin-right: 10px;
+    }
+
+    .form-button {
+        padding: 4px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: #fafafa;
+        color: #333;
+        font-size: 12px;
+        cursor: pointer; /* Makes the mouse cursor a pointer when hovered over the button */
+    }
+
 </style>
 <body>
-
-
 <script>
+    (function () {
+            function buildExpression() {
+                const method = document.querySelector('#method').value
+                let selector = document.querySelector('#selector').value
 
-    function setError(error) {
-        document.querySelector('#errorMsg').innerHTML = error
-    }
-
-    function submit() {
-        const plan = document.querySelector('#plan').value
-
-        const values = {
-            plan: plan
-        }
-        try {
-
-            const URL = window.location.href + "run"
-            const response = fetch(URL, {
-                method: 'POST', // Method you want to use
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(values),
-            })
-                .then(response => response.json())
-                .then((payload) => {
-                    if (payload.Status === "error") {
-                        setError(payload.Message)
+                const arguments = document.querySelector('#arguments').value
+                const variable = document.querySelector('#variable').value
+                let expression = ''
+                if (selector.indexOf('\n') !== -1) {
+                    selector = selector.substring(0, selector.indexOf('\n'))
+                }
+                if (method !== '') {
+                    if (variable !== '') {
+                        expression = variable + ' = '
                     }
-                    if (payload.Status === "ok") {
-                        document.querySelector('#history').value += payload.Plan + "\n"
-                        document.querySelector('#output').value = payload.Output
+                    if (selector !== '') {
+                        const selectorPath = selectorType(selector)
+                        if (method === "sendKeys") {
+                            let prefix = expression
+                            expression = `(${selectorPath}${selector}).clear` + "\n" + prefix
+                            expression += `(${selectorPath}${selector}).sendKeys('${arguments}')`
+                        } else {
+                            expression += `(${selectorPath}${selector}).` + method
+                            if (arguments !== '') {
+                                expression += `('${arguments}')`
+                            }
+                        }
+                    } else {
+                        if (method !== "") {
+                            expression = `${method}(${arguments})`
+                        }
                     }
+                }
+                return expression;
+            }
 
-                }).catch((error) => {
+            function selectorType(expr) {
+                if (expr.startsWith("#") || expr.startsWith(".")) {
+                    return ""
+                }
+                if (expr.startsWith("//")) {
+                    return 'xpath:'
+                }
+                return "xpath://"
+            }
+
+            function updateExpression() {
+                let expression = buildExpression();
+                if (expression === '') {
+                    expression = '&nbsp;'
+                }
+                document.querySelector('#expression').innerHTML = expression
+            }
+
+            function addExpression() {
+                const expression = buildExpression();
+                const plan = document.querySelector('#plan')
+                if (plan.value.endsWith('\n') === false) {
+                    plan.value += '\n'
+                }
+                plan.value += expression
+            }
+
+            let ws = null;
+
+            function updateSelectorSetting() {
+                const exclusion = document.querySelector('#exclusion').value
+                const attributes = document.querySelector('#attributes').value
+
+                if (ws === null) {
+                    return
+                }
+                ws.send(JSON.stringify({
+                    "exclusion": exclusion,
+                    "attributes": attributes,
+                }));
+            }
+
+            function updateSelector() {
+                const selector = document.querySelector('#selectors').value
+                document.querySelector('#selector').value = selector
+                updateExpression()
+            }
+
+            function updateSelectorsOptions(selectors) {
+                // Select the element
+                var selectElement = document.querySelector('#selectors');
+                // Clear existing options
+                selectElement.innerHTML = '<option value=""></option>'
+                // Loop through new options and add them to the select
+                if (selectors.length > 0) {
+                    document.querySelector('#selector').value = selectors[0]
+                }
+                selectors.forEach(function (value) {
+                    var newOptionElement = document.createElement('option');
+                    let optionText = value
+                    if (optionText.length > 50) {
+                        optionText = optionText.substring(0, 50) + '...'
+                    }
+                    newOptionElement.text = optionText
+                    newOptionElement.value = value
+                    selectElement.appendChild(newOptionElement);
+                });
+            }
+
+            function handleAction(data) {
+                const payload = JSON.parse(data)
+                let selectors = payload.Selectors || []
+                document.querySelector('#selector').value = ''
+                updateSelectorsOptions(selectors)
+                document.querySelector('#method').value = payload.Method
+                document.querySelector('#arguments').value = payload.Arguments || ''
+            }
+
+
+            document.addEventListener("DOMContentLoaded", function () {
+                //let URL = window.location.href.replace("http://", "ws://")
+                URL = "http://localhost:8082/"
+
+                URL = URL.replace("http://", "ws://")
+                URL = URL.replace("https://", "ws://")
+                ws = new WebSocket(URL + "ws");
+                ws.onopen = function () {
+                };
+                ws.onmessage = function (evt) {
+                    handleAction(evt.data)
+                };
+
+
+                ws.onerror = function (err) {
+                    console.log("WebSocket error: ", err);
+                };
+
+                window.onbeforeunload = function () {
+                    ws.close();
+                };
+            });
+
+
+            function setError(error) {
+                document.querySelector('#errorMsg').innerHTML = error
+            }
+
+
+            function run() {
+                const plan = document.querySelector('#plan').value
+
+                const values = {
+                    plan: plan
+                }
+                try {
+
+                    //const URL = window.location.href + "run"
+                    const URL = "http://localhost:8082/run"
+                    const response = fetch(URL, {
+                        method: 'POST', // Method you want to use
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(values),
+                    })
+                        .then(response => response.json())
+                        .then((payload) => {
+                            if (payload.Status === "error") {
+                                setError(payload.Message)
+                            } else {
+                                setError('')
+                            }
+                            if (payload.Status === "ok") {
+                                document.querySelector('#history').value += payload.Plan + "\n"
+                                document.querySelector('#output').value = payload.Output
+                            }
+
+                        }).catch((error) => {
+                            setError(error);
+                        })
+
+                } catch (error) {
                     setError(error);
+                }
+            }
+
+            function onLoadHandler() {
+                const expressionElements = document.querySelectorAll('.expression');
+                // Attach the onchange event listener to each element
+                expressionElements.forEach(element => {
+                    element.addEventListener('change', updateExpression);
+                    element.addEventListener('keyup', updateExpression);
+                });
+
+                const selectorElements = document.querySelectorAll('.selector');
+                selectorElements.forEach(element => {
+                    element.addEventListener('change', updateSelectorSetting);
+                    element.addEventListener('keyup', updateSelectorSetting);
                 })
 
-        } catch (error) {
-            setError(error);
+                const runElement = document.querySelector('#run');
+                runElement.addEventListener('click', run);
+                const addElement = document.querySelector('#add');
+                addElement.addEventListener('click', addExpression);
+            }
+
+
+            window.addEventListener('load', onLoadHandler);
         }
 
-    }
+    )
+    ()
+
 </script>
 <div>
-    <fieldset>
-        <legend>Webdriver Planner</legend>
-        <textarea id="plan" name="plan" rows="10" cols="80">get(http://localhost:5173/)</textarea><br>
-        <input value="Submit" type="button" onclick="submit()"><br>
-        <span id="errorMsg" class="error"></span>
-    </fieldset>
+    <div class="form-container">
+        <label class="legend">Endly Webdriver Planner</label>
+        <div class="form-row">
+            <textarea id="plan" name="plan" rows="25" class="form-input">get(http://localhost:8080/)</textarea>
+            <div class="inner-container" style="width:45%">
 
-    <fieldset >
-        <legend>Output</legend>
-        <textarea id="output" name="output" rows="5" cols="80" disabled></textarea><br>
-    </fieldset>
+                <div class="form-row">
+                    <label for="expression" class="form-label">Expression</label>
+                    <span id="expression" style="padding:4px;">&nbsp;</span>
+                </div>
+                <div class="form-row">
+                    <label for="variable" class="form-label">Variable</label>
+                    <input type="text" id="variable" class="form-input expression"
+                           placeholder="expression output variable">
+                </div>
+                <div class="form-row">
+                    <label for="method" class="form-label">Method</label>
+                    <select id="method" class="form-input expression" size=1">
+                        <option value=""></option>
+                        <optgroup label="Element">
+                            <option value="click">Click</option>
+                            <option value="sendKeys">Type</option>
+                            <option value="text">Text</option>
+                            <option value="getAttribute">GetAttribute</option>
+                            <option value="getProperties">GetProperties</option>
+                            <option value="CSSProperty">CSSProperty</option>
+                            <option value="clear">Clear</option>
+                            <option value="tagName">TagName</option>
+                            <option value="submit">Submit</option>
+                            <option value="size">Size</option>
+                            <option value="isDisplayed">IsDisplayed</option>
+                            <option value="isEnabled">IsEnabled</option>
+                            <option value="isSelected">IsSelected</option>
+                            <option value="location">Location</option>
+                            <option value="marshalJSON">MarshalJSON</option>
+                            <option value="moveTo">MoveTo</option>
+                            <option value="moveTo">MoveTo</option>
+                            <option value="findElement">FindElement</option>
+                        </optgroup>
 
-    <fieldset>
-        <legend>History</legend>
-        <textarea id="history" name="history" rows="5" cols="80"></textarea><br>
-    </fieldset>
+                        <optgroup label="Navigation">
+                            <option value="get">Get</option>
+                            <option value="setPageLoadTimeout">SetPageLoadTimeout</option>
+                            <option value="back">Back</option>
+                            <option value="forward">Forward</option>
+                            <option value="refresh">Refresh</option>
+                            <option value="currentURL">CurrentURL</option>
+                            <option value="close">Close</option>
+                            <option value="closeWindow">CloseWindow</option>
+                            <option value="quit">Quit</option>
+                        </optgroup>
 
+                        <optgroup label="Cookies">
+                            <option value="addCookie">AddCookie</option>
+                            <option value="getCookie">GetCookie</option>
+                            <option value="getCookies">GetCookies</option>
+                            <option value="deleteAllCookies">DeleteAllCookies</option>
+                            <option value="deleteCookie">DeleteCookie</option>
+                        </optgroup>
+                        <optgroup label="Window">
+                            <option value="pageSource">PageSource</option>
+                            <option value="title">Title</option>
+                            <option value="maximizeWindow">MaximizeWindow</option>
+                            <option value="minimizeWindow">MinimizeWindow</option>
+
+                            <option value="activeElement">ActiveElement</option>
+                            <option value="alertText">AlertText</option>
+                            <option value="dismissAlert">DismissAlert</option>
+                            <option value="executeScript">ExecuteScript</option>
+                            <option value="keyDown">KeyDown</option>
+                            <option value="keyUp">KeyUp</option>
+                            <option value="sendModifier">SendModifier</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="arguments" class="form-label">Arguments</label>
+                    <textarea id="arguments" class="form-input expression" placeholder="method arguments"></textarea>
+                </div>
+                <div class="form-row">
+                    <label for="selector" class="form-label">Selector</label>
+                    <input id="selector" class="form-input expression" placeholder="element selector">
+                </div>
+                <div class="form-row">
+                    <label for="selectors" class="form-label">Selectors</label>
+                    <select id="selectors" class="form-input expression">
+                        <option value=""></option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <input type="button" class="form-button" id="add" value="Add To Plan"/>
+                </div>
+                <hr/>
+                <div class="form-row">
+                    <label for="exclusion" class="form-label">Exclusion</label>
+                    <input id="exclusion" class="form-input selector" placeholder="selector exclusion fragments">
+                </div>
+                <div class="form-row">
+                    <label for="attributes" class="form-label">Attributes</label>
+                    <input id="attributes" class="form-input selector"
+                           placeholder="selector attribute i.e, -class,test-id">
+                </div>
+            </div>
+        </div>
+        <div class="form-row">
+            <input value="Run" type="button" id="run" class="form-button">
+        </div>
+        <div class="form-row">
+            <span id="errorMsg" class="error"></span>
+        </div>
+        <div class="form-row">
+            <label for="output" class="form-label">Output</label>
+        </div>
+        <div class="form-row">
+            <textarea id="output" class="form-input" rows="5"></textarea>
+        </div>
+        <div class="form-row">
+            <label for="history" class="form-label">History</label>
+        </div>
+        <div class="form-row">
+            <textarea id="history" name="history" class="form-input" rows="10"></textarea>
+        </div>
+
+    </div>
 </div>
 </body>
 </html>
