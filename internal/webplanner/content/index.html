@@ -75,6 +75,7 @@
 <body>
 <script>
     (function () {
+
             function buildExpression() {
                 const method = document.querySelector('#method').value
                 let selector = document.querySelector('#selector').value
@@ -160,7 +161,7 @@
 
             function updateSelectorsOptions(selectors) {
                 // Select the element
-                var selectElement = document.querySelector('#selectors');
+                let selectElement = document.querySelector('#selectors');
                 // Clear existing options
                 selectElement.innerHTML = '<option value=""></option>'
                 // Loop through new options and add them to the select
@@ -168,7 +169,7 @@
                     document.querySelector('#selector').value = selectors[0]
                 }
                 selectors.forEach(function (value) {
-                    var newOptionElement = document.createElement('option');
+                    let newOptionElement = document.createElement('option');
                     let optionText = value
                     if (optionText.length > 50) {
                         optionText = optionText.substring(0, 50) + '...'
@@ -188,6 +189,11 @@
                 document.querySelector('#arguments').value = payload.Arguments || ''
             }
 
+            function updateSelector() {
+                const selector = document.querySelector('#selectors').value
+                document.querySelector('#selector').value = selector
+                updateExpression()
+            }
 
             document.addEventListener("DOMContentLoaded", function () {
                 //let URL = window.location.href.replace("http://", "ws://")
@@ -274,6 +280,9 @@
                 runElement.addEventListener('click', run);
                 const addElement = document.querySelector('#add');
                 addElement.addEventListener('click', addExpression);
+
+                const selector = document.querySelector('#selectors');
+                selector.addEventListener('change', updateSelector);
             }
 
 
@@ -370,7 +379,7 @@
                 </div>
                 <div class="form-row">
                     <label for="selectors" class="form-label">Selectors</label>
-                    <select id="selectors" class="form-input expression">
+                    <select id="selectors" class="form-input">
                         <option value=""></option>
                     </select>
                 </div>
