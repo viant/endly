@@ -2,7 +2,6 @@ package webplanner
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/viant/endly/internal/webplanner/node"
 	"io"
 	"log"
@@ -41,7 +40,6 @@ func (s *Service) handleEvent(writer http.ResponseWriter, request *http.Request)
 	}
 
 	err := s.processEvent(request)
-	fmt.Printf("err: %s\n", err)
 	if err != nil {
 		http.Error(writer, "failed to process event", http.StatusInternalServerError)
 		return
