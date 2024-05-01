@@ -11,12 +11,11 @@ import (
 type binary struct {
 	x, y *operand
 	trim bool
-
 }
 
 func NewBinary(op string, operands ...*Operand) New {
 	switch op {
-	case "!","=", "==", ":/", ":!/", ":~/", ":", ":!", "<>", "!=", "<", ">", "<=", ">=", "contains", "contains!", "&&", "||":
+	case "!", "=", "==", ":/", ":!/", ":~/", ":", ":!", "<>", "!=", "<", ">", "<=", ">=", "contains", "contains!", "&&", "||":
 	default:
 		return func() (eval.Compute, error) {
 			return nil, fmt.Errorf("unsupported operator: %v", op)
@@ -25,8 +24,8 @@ func NewBinary(op string, operands ...*Operand) New {
 
 	return func() (eval.Compute, error) {
 		expr := &binary{
-			x: operands[0].operand(),
-			y: operands[1].operand(),
+			x:    operands[0].operand(),
+			y:    operands[1].operand(),
 			trim: strings.Contains(op, ":/"),
 		}
 		switch op {
@@ -200,7 +199,10 @@ func (b *binary) contains(state data.Map) (interface{}, bool, error) {
 	}
 
 	if !hasX && !hasY {
-		return false, false, nil
+		return true, false, nil
+	}
+	if y == "$" && !hasX { //is variable unexpanded - backward compatiblity
+		return true, true, nil
 	}
 	xText := toolbox.AsString(x)
 	yText := toolbox.AsString(y)
