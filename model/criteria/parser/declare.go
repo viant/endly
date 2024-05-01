@@ -7,7 +7,7 @@ import (
 
 func parseDeclare(input string, err error, cursor *parsly.Cursor, when string, expr string, elseExpr string) (string, string, string, error) {
 	binary := ast.Binary{}
-	err = parseQualify(cursor,   &binary, true)
+	err = parseQualify(cursor, &binary, true)
 	if err != nil {
 		err = nil
 		return "", "", input, nil
@@ -33,4 +33,3 @@ func parseDeclare(input string, err error, cursor *parsly.Cursor, when string, e
 	}
 	return when, expr, elseExpr, nil
 }
-

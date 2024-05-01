@@ -23,6 +23,17 @@ func Test_EvaluateCriteria(t *testing.T) {
 	}{
 
 		{
+			Description:   "selector $key1:1",
+			Expression:    "$checkAngular.Output:!/16.2.1/", //
+			DefaultResult: true,
+			Expected:      true,
+			State: map[string]interface{}{
+				"checkAngular.": map[string]interface{}{
+					"Output": "3",
+				},
+			},
+		},
+		{
 			Description:   "eq $key1:1",
 			Expression:    "$key1:1", //
 			DefaultResult: true,
@@ -161,7 +172,7 @@ func Test_EvaluateCriteria(t *testing.T) {
 		},
 	}
 
-	for i, useCase := range useCases[len(useCases)-1:] {
+	for i, useCase := range useCases[:1] {
 		context := manager.NewContext(toolbox.NewContext())
 		state := context.State()
 		if len(useCase.State) > 0 {

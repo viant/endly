@@ -10,7 +10,7 @@ func parseCriteria(cursor *parsly.Cursor, qualify *ast.Qualify) error {
 	binary := &ast.Binary{}
 	err := parseQualify(cursor, binary, false)
 	if binary.Op == "" && binary.Y == nil && binary.X != nil {
-		if unary, ok := binary.X.(*ast.Unary);ok {
+		if unary, ok := binary.X.(*ast.Unary); ok {
 			qualify.X = unary
 		} else {
 			qualify.X = &ast.Unary{X: binary.X, Op: ""}
@@ -77,20 +77,20 @@ func normalizeBinary(binary *ast.Binary) {
 	case "&&", "||":
 	default:
 		switch yOp := binary.Y.(type) {
-			case *ast.Binary:
-				swap := &ast.Binary{X: binary.X, Op: binary.Op, Y: yOp.X}
-				binary.Op = yOp.Op
-				binary.X = swap
-				binary.Y = yOp.Y
-				if binExpr, ok := binary.Y.(*ast.Binary); ok {
-					normalizeBinary(binExpr)
-				}
+		case *ast.Binary:
+			swap := &ast.Binary{X: binary.X, Op: binary.Op, Y: yOp.X}
+			binary.Op = yOp.Op
+			binary.X = swap
+			binary.Y = yOp.Y
+			if binExpr, ok := binary.Y.(*ast.Binary); ok {
+				normalizeBinary(binExpr)
+			}
 
 		}
 	}
 }
 
-var operands = []*parsly.Token{
+var defaultsOperands = []*parsly.Token{
 	boolLiteralMatcher,
 	doubleQuotedStringLiteralMatcher,
 	singleQuotedStringLiteralMatcher,
@@ -101,13 +101,17 @@ var operands = []*parsly.Token{
 	selectorMatcher,
 	parenthesesMatcher,
 	stringLiteralMatcher,
+	terminatorMatcher,
 }
 
 func expectOperand(cursor *parsly.Cursor) (ast.Node, error) {
+
 	var err error
 	pos := cursor.Pos
-	match := cursor.MatchAfterOptional(whitespaceMatcher, operands...)
+	match := cursor.MatchAfterOptional(whitespaceMatcher, defaultsOperands...)
 	switch match.Code {
+	case terminatorCode:
+		return &ast.Literal{Value: match.Text(cursor), Type: "string"}, nil
 	case boolLiteral:
 		return &ast.Literal{Value: match.Text(cursor), Type: "bool"}, nil
 	case stringLiteral:
@@ -138,11 +142,11 @@ func expectOperand(cursor *parsly.Cursor) (ast.Node, error) {
 		if err != nil || qualify == nil {
 			return nil, err
 		}
-		return &ast.Group{X:qualify.X}, nil
+		return &ast.Group{X: qualify.X}, nil
 	case parsly.EOF:
 		return nil, nil
 	case parsly.Invalid:
-		return nil, cursor.NewError(operands...)
+		return nil, cursor.NewError(defaultsOperands...)
 	default:
 		cursor.Pos = pos
 		return nil, nil
