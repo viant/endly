@@ -59,7 +59,10 @@ type Variable struct {
 func (v *Variable) getValueFromInput(in data.Map) (interface{}, error) {
 	var value interface{}
 	from := v.From
-	if from == "" {
+	if from == "" && v.Value == nil {
+		from = v.Name
+	}
+	if from == "" && v.When != "" {
 		from = v.Name
 	}
 	if from != "" {
