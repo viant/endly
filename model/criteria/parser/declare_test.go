@@ -43,6 +43,7 @@ func TestParseDeclare(t *testing.T) {
 			expectedExpr: "$c",
 			expectedElse: "",
 		},
+
 		// More test cases, especially edge cases and invalid inputs
 	}
 

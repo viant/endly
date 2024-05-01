@@ -22,6 +22,21 @@ func Test_EvaluateCriteria(t *testing.T) {
 		HasError      bool
 	}{
 
+		//$params.profile:/$/?dev:${params.profile}
+
+		{
+			Description: "basic literal expr",
+			Expression:  "on!=on", //
+			State:       map[string]interface{}{},
+			Expected:    false,
+		},
+		{
+			Description: "basic literal expr",
+			Expression:  "on=on", //
+			State:       map[string]interface{}{},
+			Expected:    true,
+		},
+
 		{
 			Description:   "selector $key1:1",
 			Expression:    "$checkAngular.Output:!/16.2.1/", //
@@ -172,7 +187,7 @@ func Test_EvaluateCriteria(t *testing.T) {
 		},
 	}
 
-	for i, useCase := range useCases[:1] {
+	for i, useCase := range useCases {
 		context := manager.NewContext(toolbox.NewContext())
 		state := context.State()
 		if len(useCase.State) > 0 {

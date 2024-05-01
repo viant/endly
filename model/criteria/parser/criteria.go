@@ -50,7 +50,7 @@ func parseQualify(cursor *parsly.Cursor, binary *ast.Binary, withDeclare bool, t
 		}
 	}
 	if binary.Op == "" {
-		match := cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, unaryOperatorMatcher, binaryOperatorMatcher, logicalOperatorMatcher)
+		match := cursor.MatchAfterOptional(whitespaceMatcher, parenthesesMatcher, binaryOperatorMatcher, unaryOperatorMatcher, logicalOperatorMatcher)
 		op := match.Text(cursor)
 		switch match.Code {
 		case unaryOperator:

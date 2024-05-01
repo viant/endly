@@ -27,6 +27,11 @@ func (n *fragment) Match(cursor *parsly.Cursor) (matched int) {
 				matched--
 				return matched
 			}
+			switch input[i] {
+			case ':', '!', '=':
+				matched--
+				return matched
+			}
 		}
 
 		switch input[i] {
