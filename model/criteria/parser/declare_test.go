@@ -14,6 +14,13 @@ func TestParseDeclare(t *testing.T) {
 		expectedElse  string
 		expectedError string
 	}{
+
+		{
+			input:        "$params.profile:/$/?dev:${params.profile}", //
+			expectedWhen: "$params.profile:/$/",
+			expectedExpr: "dev",
+			expectedElse: "${params.profile}",
+		},
 		{
 			name:         "valid declaration with else",
 			input:        "x > 5 ? y : z",

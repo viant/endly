@@ -50,7 +50,6 @@ func (s *service) send(context *endly.Context, sendGroupRequest *SendRequest) (*
 		}
 	}
 	if sendGroupRequest.Expect != nil {
-
 		var actual = map[string]interface{}{
 			"Responses": sendGroupResponse.Responses,
 			"Data":      sendGroupResponse.Data,

@@ -3,12 +3,13 @@ package parser
 import (
 	"github.com/viant/endly/model/criteria/ast"
 	"github.com/viant/parsly"
+	"strings"
 )
 
 // ParseCriteria parses qualify expr
 func parseCriteria(cursor *parsly.Cursor, qualify *ast.Qualify) error {
 	binary := &ast.Binary{}
-	err := parseQualify(cursor, binary, false)
+	err := parseQualify(cursor, binary, false, "")
 	if binary.Op == "" && binary.Y == nil && binary.X != nil {
 		if unary, ok := binary.X.(*ast.Unary); ok {
 			qualify.X = unary
@@ -22,7 +23,7 @@ func parseCriteria(cursor *parsly.Cursor, qualify *ast.Qualify) error {
 	return err
 }
 
-func parseQualify(cursor *parsly.Cursor, binary *ast.Binary, withDeclare bool) (err error) {
+func parseQualify(cursor *parsly.Cursor, binary *ast.Binary, withDeclare bool, terminator string) (err error) {
 
 	if withDeclare {
 		pos := cursor.Pos
@@ -35,7 +36,15 @@ func parseQualify(cursor *parsly.Cursor, binary *ast.Binary, withDeclare bool) (
 	}
 
 	if binary.X == nil {
-		binary.X, err = expectOperand(cursor)
+		var tokens []*parsly.Token
+		if terminator != "" {
+			if withDeclare {
+				tokens = []*parsly.Token{terminatorMatcherInc}
+			} else {
+				tokens = []*parsly.Token{terminatorMatcher}
+			}
+		}
+		binary.X, err = expectOperand(cursor, tokens...)
 		if err != nil || binary == nil {
 			return err
 		}
@@ -50,15 +59,17 @@ func parseQualify(cursor *parsly.Cursor, binary *ast.Binary, withDeclare bool) (
 			binary.Op = op
 		case binaryOperator:
 			binary.Op = op
-
 		default:
 			return nil
 		}
 	}
+	if strings.HasSuffix(binary.Op, "/") {
+		terminator = "/"
+	}
 
 	if binary.Y == nil {
 		yExpr := &ast.Binary{}
-		if err := parseQualify(cursor, yExpr, withDeclare); err != nil {
+		if err := parseQualify(cursor, yExpr, withDeclare, terminator); err != nil {
 			return err
 		}
 		if yExpr.X != nil {
@@ -101,14 +112,16 @@ var defaultsOperands = []*parsly.Token{
 	selectorMatcher,
 	parenthesesMatcher,
 	stringLiteralMatcher,
-	terminatorMatcher,
 }
 
-func expectOperand(cursor *parsly.Cursor) (ast.Node, error) {
+func expectOperand(cursor *parsly.Cursor, operands ...*parsly.Token) (ast.Node, error) {
 
+	if len(operands) == 0 {
+		operands = defaultsOperands
+	}
 	var err error
 	pos := cursor.Pos
-	match := cursor.MatchAfterOptional(whitespaceMatcher, defaultsOperands...)
+	match := cursor.MatchAfterOptional(whitespaceMatcher, operands...)
 	switch match.Code {
 	case terminatorCode:
 		return &ast.Literal{Value: match.Text(cursor), Type: "string"}, nil
