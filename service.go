@@ -14,15 +14,21 @@ import (
 )
 
 // AbstractService represenst an abstract service.
-type AbstractService struct {
-	Service
-	*sync.RWMutex
-	routeByAction  map[string]*Route
-	routeByRequest map[reflect.Type]*Route
-	actions        []string
-	id             string
-	state          data.Map
-}
+type (
+	AbstractService struct {
+		Service
+		*sync.RWMutex
+		routeByAction  map[string]*Route
+		routeByRequest map[reflect.Type]*Route
+		actions        []string
+		id             string
+		state          data.Map
+	}
+
+	Informer interface {
+		Info() string
+	}
+)
 
 // Mutex returns a mutex.
 func (s *AbstractService) Mutex() *sync.RWMutex {
@@ -211,6 +217,13 @@ func (s *AbstractService) RunInBackground(context *Context, handler func() error
 	return err
 }
 
+func (s *AbstractService) Info() string {
+	if description, ok := serviceDescriptor[s.id]; ok {
+		return description
+	}
+	return ""
+}
+
 // NewAbstractService creates a new abstract service.
 func NewAbstractService(id string) *AbstractService {
 	return &AbstractService{
@@ -262,4 +275,53 @@ func newNopService() Service {
 	result.AbstractService.Service = result
 	result.registerRoutes()
 	return result
+}
+
+var serviceDescriptor = map[string]string{
+	"aws/apigateway":       "Manages API endpoints that allow HTTP integration for AWS services.",
+	"aws/cloudwatch":       "Monitors AWS resources and applications in real-time.",
+	"aws/cloudwatchevents": "Triggers AWS Lambda functions, streams, or notifications based on specific events.",
+	"aws/dynamodb":         "Provides operations on DynamoDB databases including CRUD and table management.",
+	"aws/ec2":              "Manages AWS EC2 instances including their lifecycle, configuration, and networking.",
+	"aws/iam":              "Handles AWS Identity and Access Management for securely controlling access to AWS services.",
+	"aws/kinesis":          "Offers operations for Amazon Kinesis handling real-time data streams.",
+	"aws/kms":              "Manages keys and performs cryptographic operations using AWS Key Management Service.",
+	"aws/lambda":           "Automates AWS Lambda functions deployment and management.",
+	"aws/logs":             "Works with CloudWatch Logs for monitoring, storing, and accessing log data.",
+	"aws/rds":              "Manages AWS relational database service instances including setup, operations, and scaling.",
+	"aws/s3":               "Operates on Amazon S3 objects and buckets for storage management.",
+	"aws/ses":              "Integrates with Amazon Simple Email Service for sending emails.",
+	"aws/sns":              "Manages Amazon Simple Notification Service for pub/sub, notifications, and alerts.",
+	"aws/sqs":              "Provides access to Amazon Simple Queue Service for message queuing.",
+	"aws/ssm":              "Manages AWS System Manager for resource grouping, configuration, and automation.",
+	"gcp/bigquery":         "Manages Google BigQuery operations for data querying and storage.",
+	"gcp/cloudfunctions":   "Deploys and manages Google Cloud Functions.",
+	"gcp/cloudscheduler":   "Manages cron jobs in Google Cloud.",
+	"gcp/compute":          "Manages Google Compute Engine resources including VMs and networks.",
+	"gcp/container":        "Operates Google Kubernetes Engine for deploying and managing containers.",
+	"gcp/kms":              "Manages cryptographic keys in Google Cloud.",
+	"gcp/pubsub":           "Handles interactions with Google Cloud Pub/Sub for asynchronous messaging services.",
+	"gcp/run":              "Manages Google Cloud Run applications for containerized apps.",
+	"gcp/storage":          "Provides operations on Google Cloud Storage for object storage management.",
+	"http/endpoint":        "Manages HTTP services including endpoints and requests.",
+	"http/runner":          "Manages HTTP request sending and handling.",
+	"rest/runner":          "Executes RESTful requests.",
+	"docker":               "Manages Docker containers, including lifecycle operations and image management.",
+	"dsunit":               "Handles database operations for testing, including setups, assertions, and data management.",
+	"storage":              "Manages file storage operations across different storage services including local and cloud.",
+	"secret":               "Handles secrets management including secure storage and retrieval.",
+	"smtp":                 "Manages SMTP services for sending and receiving emails.",
+	"validator":            "Provides data validation and log assertion functionalities.",
+	"version/control":      "Manages version control operations including checkouts and commits.",
+	"webdriver":            "Manages browser automation for testing web applications.",
+	"slack":                "Integrates with Slack for messaging and notifications.",
+	"process":              "Manages system processes including starting, stopping, and monitoring.",
+	"msg":                  "Handles message queuing and pub/sub operations.",
+	"migrator":             "Automates the migration of collections and workflows.",
+	"sdk":                  "Manages software development kits within SSH sessions.",
+	"daemon":               "Manages background services on host machines.",
+	"build":                "Handles the build processes of applications according to specified parameters.",
+	"deployment":           "Manages the deployment of applications to various environments.",
+	"udf":                  "Supports user-defined functions for specific operations or processes.",
+	"workflow":             "Manages the execution and lifecycle of defined workflows.",
 }
