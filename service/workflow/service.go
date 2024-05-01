@@ -432,6 +432,9 @@ func (s *Service) runNode(context *endly.Context, nodeType string, process *mode
 		context.Logging = original
 	}()
 	var state = context.State()
+	if strings.Contains(node.When, "Output") {
+		fmt.Printf("here")
+	}
 	canRun, err := criteria.Evaluate(context, context.State(), node.When, node.WhenEval(), fmt.Sprintf("%v.When", nodeType), true)
 	if err != nil || !canRun {
 		return err
