@@ -24,6 +24,10 @@ type service struct {
 	*endly.AbstractService
 }
 
+func (s *service) Info() string {
+	return " Manages API endpoints that allow HTTP integration for AWS services."
+}
+
 func (s *service) getRestApi(context *endly.Context, request *GetRestAPIInput) (*GetRestAPIOutput, error) {
 	client, err := GetClient(context)
 	if err != nil {

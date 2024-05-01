@@ -216,10 +216,13 @@ func (s *execService) rumCommandTemplate(context *endly.Context, session *model.
 
 func (s *execService) applyCommandOptions(context *endly.Context, options *Options, session *model.Session, info *RunResponse) error {
 	if len(options.SystemPaths) > 0 {
-		//session.Path.Unshift(options.SystemPaths...)
-		//if err := s.setEnvVariable(context, session, "PATH", session.Path.EnvValue()); err != nil {
-		//	return err
-		//}
+		value, _, _ := session.Run(context.Background(), "echo $PATH")
+		if value != "" {
+			paths := append(options.SystemPaths, strings.Split(value, ":")...)
+			if err := s.setEnvVariable(context, session, "PATH", strings.Join(paths, ":")); err != nil {
+				return err
+			}
+		}
 	}
 	err := s.setEnvVariables(context, session, options.Env)
 	if err != nil {
@@ -316,11 +319,11 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	command := extractCommand.Command
 	if extractCommand.When != "" {
 		var state = s.buildExecutionState(response, context)
-		 ok, err := criteria.Evaluate(context, state, extractCommand.When, &extractCommand.whenEval, "Cmd.When", true)
-		 if err != nil {
+		ok, err := criteria.Evaluate(context, state, extractCommand.When, &extractCommand.whenEval, "Cmd.When", true)
+		if err != nil {
 			return err
 		}
-		if ! ok {
+		if !ok {
 			command = extractCommand.ElseCommand
 		}
 	}
@@ -331,7 +334,6 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	options := request.Options
 	terminators := getTerminators(options, session, extractCommand)
 	isSuperUserCmd := strings.Contains(securedCommand, "sudo ") || request.SuperUser
-
 
 	if strings.Contains(securedCommand, "$") {
 		var state = s.buildExecutionState(response, context)

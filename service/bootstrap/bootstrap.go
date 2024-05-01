@@ -568,6 +568,21 @@ func printServiceActions() {
 		return
 	}
 
+	if serviceID == "!" {
+		services := endly.Services(manager)
+		fmt.Printf("endly services:\n")
+
+		for id, service := range services {
+			for _, action := range service.Actions() {
+				route, _ := service.Route(action)
+				if strings.HasPrefix(strings.TrimSpace(route.RequestInfo.Description), "*") {
+					continue
+				}
+				fmt.Printf("\t%v:%v - %v\n", id, action, route.RequestInfo.Description)
+			}
+		}
+		return
+	}
 	if serviceID == "*" {
 		services := endly.Services(manager)
 		fmt.Printf("endly services:\n")
@@ -577,7 +592,14 @@ func printServiceActions() {
 		}
 		sort.Strings(ids)
 		for _, k := range ids {
-			fmt.Printf("%v %T\n", k, services[k])
+			service := services[k]
+			informer, ok := service.(endly.Informer)
+			if ok {
+				fmt.Printf("%v: %v\n", k, informer.Info())
+				continue
+			}
+			fmt.Printf("%v: %T\n", k, service)
+
 		}
 		return
 	}
@@ -589,7 +611,7 @@ func printServiceActions() {
 	fmt.Printf("'%v' service actions: \n", serviceID)
 	for _, action := range service.Actions() {
 		route, _ := service.Route(action)
-		fmt.Printf("\t%v - %v\n", action, route.RequestInfo.Description)
+		fmt.Printf("\t%v: - %v\n", action, route.RequestInfo.Description)
 	}
 }
 

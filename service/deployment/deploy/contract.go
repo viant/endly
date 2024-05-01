@@ -27,6 +27,7 @@ func (r *Request) Expand(context *endly.Context) *Request {
 		BaseLocation: r.BaseLocation,
 		Target:       r.Target,
 		Force:        r.Force,
+		Version:      context.Expand(r.Version),
 		MetaURL:      context.Expand(r.MetaURL),
 	}
 	if target, err := context.ExpandResource(r.Target); err != nil {
