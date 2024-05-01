@@ -3,11 +3,12 @@ package parser
 import (
 	"github.com/viant/endly/model/criteria/ast"
 	"github.com/viant/parsly"
+	"strings"
 )
 
 func parseDeclare(input string, err error, cursor *parsly.Cursor, when string, expr string, elseExpr string) (string, string, string, error) {
 	binary := ast.Binary{}
-	err = parseQualify(cursor, &binary, true)
+	err = parseQualify(cursor, &binary, true, "")
 	if err != nil {
 		err = nil
 		return "", "", input, nil
@@ -30,6 +31,13 @@ func parseDeclare(input string, err error, cursor *parsly.Cursor, when string, e
 			return "", input, "", err
 		}
 		elseExpr = elseNode.Stringify()
+	}
+	if when == "<" {
+		return "", "", "", nil
+	}
+	if index := strings.Index(expr, ":"); index != -1 && elseExpr == "" {
+		elseExpr = expr[index+1:]
+		expr = expr[:index]
 	}
 	return when, expr, elseExpr, nil
 }

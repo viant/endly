@@ -13,6 +13,7 @@ func TestParseCriteria(t *testing.T) {
 		expected *ast.Qualify
 		err      string
 	}{
+
 		{
 			name:  "simple equality",
 			input: `a == b`,

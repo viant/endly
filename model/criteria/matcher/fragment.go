@@ -4,9 +4,10 @@ import (
 	"github.com/viant/parsly"
 	"github.com/viant/parsly/matcher"
 )
+
 type fragment struct{}
 
-//Match matches a string
+// Match matches a string
 func (n *fragment) Match(cursor *parsly.Cursor) (matched int) {
 	input := cursor.Input
 	pos := cursor.Pos
@@ -16,8 +17,8 @@ func (n *fragment) Match(cursor *parsly.Cursor) (matched int) {
 	} else {
 		return 0
 	}
-	arrayDepth :=0
-	objectDepth :=0
+	arrayDepth := 0
+	objectDepth := 0
 	size := len(input)
 	for i := pos; i < size; i++ {
 		matched++
@@ -58,8 +59,7 @@ func (n *fragment) Match(cursor *parsly.Cursor) (matched int) {
 	return matched
 }
 
-//NewFragment creates a string matcher
+// NewFragment creates a string matcher
 func NewFragment() *fragment {
 	return &fragment{}
 }
-
