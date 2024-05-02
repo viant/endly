@@ -1,4 +1,4 @@
-package migrator
+package postman
 
 type postmanType int64
 

@@ -1,4 +1,4 @@
-package migrator
+package postman
 
 import (
 	"strings"
@@ -708,7 +708,7 @@ const PostmanRequest = `
 }
 `
 
-//No _postman_id under info node
+// No _postman_id under info node
 const PostmanBadRequest = `
 {
 	"info": {

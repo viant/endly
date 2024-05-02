@@ -1,4 +1,4 @@
-package migrator
+package postman
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-//build to build the objects that will serialize into the run.yaml, send.yaml, request.json and environment json files
+// build to build the objects that will serialize into the run.yaml, send.yaml, request.json and environment json files
 const RunYaml = `
 init:
   {{INIT_PART}}
