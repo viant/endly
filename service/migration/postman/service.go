@@ -1,4 +1,4 @@
-package migrator
+package postman
 
 import (
 	"fmt"
@@ -9,7 +9,8 @@ import (
 	"github.com/viant/endly"
 )
 
-const ServiceID = "migrator"
+// ServiceID service to generate endly workflow from postman
+const ServiceID = "migration/postman"
 
 const (
 	migrateServicePostmanExample = `{

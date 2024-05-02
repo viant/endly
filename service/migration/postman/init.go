@@ -1,4 +1,4 @@
-package migrator
+package postman
 
 import "github.com/viant/endly"
 
