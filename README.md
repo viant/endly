@@ -28,7 +28,6 @@ helping to identify and address potential issues before deployment.
 Endly is a highly versatile automation and orchestration platform that provides a wide range of services to support various aspects of software development, 
 testing, deployment, and operations. 
 
-Endly supports a wide range of service actions, each catering to specific automation and testing needs.
 Below is a summary of the types of services Endly can orchestrate, grouped by their primary functionality:
 
 ### Platform, Infrastructure and Cloud Providers:
