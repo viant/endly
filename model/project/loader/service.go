@@ -13,6 +13,7 @@ import (
 	option "github.com/viant/endly/model/project/option"
 	"github.com/viant/toolbox"
 	"path"
+	"sort"
 	"strings"
 )
 
@@ -26,6 +27,9 @@ func (s *Service) Load(ctx context.Context, URL string, opts ...option.Option) (
 	URL = url.Normalize(URL, file.Scheme)
 	session := newSession(options, URL)
 	workflow, err := s.graph.LoadWorkflow(ctx, URL, options.StorageOptions()...)
+	if err != nil {
+		fmt.Printf("failed to load W: %v, %v\n", URL, err)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -106,11 +110,18 @@ func (s *Service) newWorkflowAsset(ctx context.Context, session *Session, object
 }
 
 func (s *Service) transferDependencies(ctx context.Context, session *Session, URI string, options *option.Options) error {
+	parentURI := ""
+	if ext := path.Ext(URI); strings.ToLower(ext) == ".yaml" {
+		if index := strings.LastIndex(URI, "/"); index != -1 {
+			parentURI = URI[:index]
+		}
+	}
 	for _, scheduled := range session.subWorkflows {
-		subURL := url.Join(session.baseURL, scheduled+".yaml")
-		scheduleURI := url.Join(URI, scheduled)
-		if URI == "" {
+		subURL := url.Join(session.baseURL, parentURI, scheduled+".yaml")
+		scheduleURI := url.Join(parentURI, scheduled)
+		if parentURI == "" || strings.HasPrefix(scheduled, parentURI) {
 			scheduleURI = scheduled
+			subURL = url.Join(session.baseURL, scheduled+".yaml")
 		}
 		subWorkflow, err := s.Load(ctx, subURL, options.Options(
 			option.WithIsRoot(false),
@@ -284,6 +295,11 @@ func (s *Service) transferTempleExpandable(ctx context.Context, session *Session
 		return fmt.Errorf("invalid template subpath: %v, %w", parent, err)
 	}
 	objects, err := s.fs.List(ctx, parent, storageOptions...)
+
+	sort.Slice(objects, func(i, j int) bool {
+		return objects[i].Name() < objects[j].Name()
+	})
+
 	instances := graph.NewInstances(holder.URL(), name, objects)
 
 	if err = s.loadTemplate(ctx, session, task, instances); err != nil {
@@ -335,6 +351,9 @@ func (s *Service) loadTemplateInstance(ctx context.Context, session *Session, ta
 				option.WithBaseURL(session.baseURL),
 				option.WithURI(URI))...,
 			)
+			if err != nil {
+				fmt.Printf("failed to load template: %v, %v\n", candidate, err)
+			}
 			bundle.Workflow.Template = task.Tag
 			bundle.Workflow.InstanceIndex = instance.Index
 			bundle.Workflow.InstanceTag = instance.Tag

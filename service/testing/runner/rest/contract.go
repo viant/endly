@@ -4,6 +4,7 @@ import (
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/service/testing/validator"
 	"github.com/viant/toolbox"
+	"net/http"
 )
 
 // Request represents a send request
@@ -13,6 +14,7 @@ type Request struct {
 	*model.Repeater
 	URL     string
 	Method  string
+	Header  http.Header
 	Request interface{}
 	Expect  interface{} `description:"If specified it will validated response as actual"`
 }

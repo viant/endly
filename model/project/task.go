@@ -112,8 +112,15 @@ func (t *Task) marshalStructured(orig *yaml.Node, key string, literal string) er
 	if err := json.Unmarshal([]byte(literal), &value); err != nil {
 		return err
 	}
+	switch actual := value.(type) {
+	case map[string]interface{}:
+		for k, v := range actual {
+			(*yml.Node)(orig).Put(k, v)
+		}
+	default:
+		(*yml.Node)(orig).Put(key, value)
 
-	(*yml.Node)(orig).Put(key, value)
+	}
 	return nil
 }
 
