@@ -122,7 +122,7 @@ func NewExtractCommand(command, when string, success, errors []string, extractio
 
 // ExtractRequest represents managed command request
 type ExtractRequest struct {
-	Target *location.Resource `required:"true" description:"host where command runs" ` //execution target - destination where to run a command.
+	Target *location.Resource ` description:"host where command are executed" ` //execution target - destination where to run commands.
 	*Options
 	Commands []*ExtractCommand `description:"command with data extraction instruction "` //extract command
 }

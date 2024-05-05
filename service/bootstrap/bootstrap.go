@@ -8,6 +8,9 @@ import (
 	"github.com/viant/afs"
 	"github.com/viant/endly/internal/webplanner"
 	"github.com/viant/endly/model/location"
+	loader "github.com/viant/endly/model/project/loader"
+	"github.com/viant/endly/model/project/markdown"
+	"github.com/viant/endly/model/project/option"
 	"github.com/viant/endly/service/meta"
 	"github.com/viant/scy"
 	"sort"
@@ -39,7 +42,7 @@ import (
 
 	_ "github.com/viant/endly/service/shared" //load external resource like .csv .json files to mem storage
 
-	_ "github.com/viant/endly/service/migrator"
+	_ "github.com/viant/endly/service/migration/postman"
 	_ "github.com/viant/endly/service/workflow"
 	_ "github.com/viant/toolbox/storage/gs"
 	_ "github.com/viant/toolbox/storage/s3"
@@ -132,7 +135,7 @@ func init() {
 	flag.String("l", "logs", "<log directory>")
 	flag.Bool("d", false, "enable logging")
 
-	flag.Bool("p", false, "print workflow  as JSON or YAML")
+	flag.String("p", "", "print workflow ")
 	flag.String("f", "json", "<workflow or request format>, json or yaml")
 
 	flag.Bool("h", false, "print help")
@@ -273,8 +276,8 @@ func Bootstrap() {
 		printHelp()
 		return
 	}
-	if value, ok := flagset["p"]; ok && toolbox.AsBoolean(value) {
-		printWorkflow(request)
+	if value, ok := flagset["p"]; ok && value != "" {
+		printWorkflow(request, value)
 		return
 	}
 	if flagset["t"] == "?" {
@@ -313,7 +316,7 @@ func runAction(ctx context.Context, run string, flagset map[string]string) error
 		return err
 	}
 	if value, ok := flagset["p"]; ok && toolbox.AsBoolean(value) {
-		printWorkflow(request)
+		printWorkflow(request, "")
 		return nil
 	}
 	interactive, ok := flagset["m"]
@@ -624,13 +627,26 @@ func getWorkflow(request *workflow.RunRequest) (*model.Workflow, error) {
 	return nil, fmt.Errorf("only yaml workflow are supported")
 }
 
-func printWorkflow(request *workflow.RunRequest) {
-	workFlow, err := getWorkflow(request)
+func printWorkflow(request *workflow.RunRequest, format string) {
+
+	workflowLoader := loader.New()
+	withAsset := true
+	if strings.Contains(format, "asset:false") {
+		withAsset = false
+	}
+	bundle, err := workflowLoader.Load(context.Background(), request.AssetURL,
+		option.WithDependencies(true),
+		option.WithAssets(withAsset),
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	printInFormat(workFlow, "failed to print workFlow: "+request.URL+", %v", true)
-
+	markdonwService := markdown.New()
+	data, err := markdonwService.Markdown(context.Background(), bundle.Workflow, option.WithDependencies(true), option.WithAssets(true))
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("%s\n", data)
 }
 
 func printInFormat(source interface{}, errorTemplate string, hideEmpty bool) {
