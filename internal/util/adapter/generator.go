@@ -40,7 +40,7 @@ func (r * {{.TypeName}}) Call() (result interface{}, err error) {
 }`,
 	"func": `//GetId returns request id
 func (r * {{.TypeName}}) GetId() string {
-	return "{{.SessionID}}";	
+	return "{{.ID}}";	
 }`,
 	"register": `	register(&{{.TypeName}}{})`,
 
@@ -347,6 +347,9 @@ func (g *Generator) expandTemplate(templateId string, data interface{}) (string,
 	}
 	writer := new(bytes.Buffer)
 	err = tmpl.Execute(writer, data)
+	if err != nil {
+		fmt.Printf("1")
+	}
 	return writer.String(), err
 }
 

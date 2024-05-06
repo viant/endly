@@ -15,8 +15,10 @@ func main() {
 	currentPath := toolbox.CallerDirectory(3)
 	parent, _ := path.Split(string(currentPath[:len(currentPath)-1]))
 	goPath := string(parent[:strings.Index(parent, "/src/")])
-	_ = generateCode(goPath, parent)
-
+	err := generateCode(goPath, parent)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func generateCode(goPath string, parent string) error {
