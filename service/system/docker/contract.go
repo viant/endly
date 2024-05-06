@@ -5,8 +5,10 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
+	network "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
 	"github.com/go-errors/errors"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox"
@@ -15,19 +17,26 @@ import (
 
 // RunRequest represents a docker runAdapter request
 type RunRequest struct {
-	Credentials                 string `description:"credentials"`
-	Name                        string
-	Image                       string            `required:"true" description:"container image to runAdapter" example:"mysql:5.6"`
-	Port                        string            `description:"publish a container’s port(s) to the host, docker -p option"`
-	Env                         map[string]string `description:"set docker container an environment variable, docker -e KEY=VAL  option"`
-	Mount                       map[string]string `description:"bind mount a volume, docker -v option"`
-	Ports                       map[string]string `description:"publish a container’s port(s) to the host, docker -p option"`
-	Workdir                     string            `description:"working directory inside the container, docker -w option"`
-	Reuse                       bool              `description:"reuse existing container if exists, otherwise always removes"`
-	Cmd                         []string
-	Entrypoint                  []string
-	types.ContainerCreateConfig `json:",inline" yaml:",inline"`
-	Secrets                     map[secret.Key]secret.Resource `description:"map of secrets used within env"`
+	Credentials string `description:"credentials"`
+	Name        string
+	Image       string            `required:"true" description:"container image to runAdapter" example:"mysql:5.6"`
+	Port        string            `description:"publish a container’s port(s) to the host, docker -p option"`
+	Env         map[string]string `description:"set docker container an environment variable, docker -e KEY=VAL  option"`
+	Mount       map[string]string `description:"bind mount a volume, docker -v option"`
+	Ports       map[string]string `description:"publish a container’s port(s) to the host, docker -p option"`
+	Workdir     string            `description:"working directory inside the container, docker -w option"`
+	Reuse       bool              `description:"reuse existing container if exists, otherwise always removes"`
+	Cmd         []string
+	Entrypoint  []string
+
+	Config           *container.Config
+	HostConfig       *container.HostConfig
+	NetworkingConfig *network.NetworkingConfig
+	Platform         string
+	PlatformSpec     *ocispec.Platform
+	ContainerName    string
+
+	Secrets map[secret.Key]secret.Resource `description:"map of secrets used within env"`
 	types.ImagePullOptions
 }
 
@@ -138,7 +147,7 @@ type RemoveResponse StatusResponse
 // LogsRequest represents docker runner container logs to take stdout
 type LogsRequest struct {
 	StatusRequest
-	*types.ContainerLogsOptions
+	*container.LogsOptions
 }
 
 // LogsResponse represents docker container logs response
@@ -198,7 +207,6 @@ func (r *RunRequest) Init() error {
 	if r.HostConfig == nil {
 		r.HostConfig = &container.HostConfig{}
 	}
-
 	if r.Image != "" {
 		r.Config.Image = r.Image
 	}
@@ -254,7 +262,7 @@ func (r *RunRequest) Init() error {
 		r.Config.Entrypoint = r.Entrypoint
 	}
 	if r.Name != "" {
-		r.ContainerCreateConfig.Name = r.Name
+		r.ContainerName = r.Name
 	}
 	return nil
 }
@@ -272,9 +280,10 @@ func (r *PullRequest) Init() error {
 
 func (r *RunRequest) CreateContainerRequest() *ContainerCreateRequest {
 	createRequest := &ContainerCreateRequest{}
-	createRequest.Config = r.ContainerCreateConfig.Config
-	createRequest.NetworkingConfig = r.ContainerCreateConfig.NetworkingConfig
-	createRequest.HostConfig = r.ContainerCreateConfig.HostConfig
+	createRequest.Config = r.Config
+	createRequest.NetworkingConfig = r.NetworkingConfig
+	createRequest.HostConfig = r.HostConfig
+	createRequest.Platform = r.PlatformSpec
 	createRequest.ContainerName = r.Name
 	return createRequest
 }
@@ -327,8 +336,8 @@ func (r *LogsRequest) AsStatusRequest() *StatusRequest {
 
 // StatusRequest returns status request
 func (r *LogsRequest) Init() error {
-	if r.ContainerLogsOptions == nil {
-		r.ContainerLogsOptions = &types.ContainerLogsOptions{
+	if r.LogsOptions == nil {
+		r.LogsOptions = &container.LogsOptions{
 			ShowStdout: true,
 			ShowStderr: true,
 		}

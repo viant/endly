@@ -4,15 +4,16 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/docker/docker/api/types"
+	auth "github.com/docker/docker/api/types/registry"
 	"github.com/viant/endly"
 	"github.com/viant/scy/cred"
 	"github.com/viant/scy/cred/secret"
+
 	"strings"
 )
 
 // authConfigToken returns auth token
-func authConfigToken(authConfig *types.AuthConfig) (string, error) {
+func authConfigToken(authConfig *auth.AuthConfig) (string, error) {
 	encodedJSON, err := json.Marshal(authConfig)
 	if err != nil {
 		return "", err
@@ -31,20 +32,19 @@ func authCredentialsToken(context *endly.Context, credentials string) (string, e
 		return "", fmt.Errorf("unsupported secret type: %T, expected: %T", secret.Target, generic)
 	}
 	if generic.Username != "" && generic.Password != "" {
-		return authConfigToken(&types.AuthConfig{
+		return authConfigToken(&auth.AuthConfig{
 			Username: generic.Username,
 			Password: generic.Password,
 		})
 	}
 	if generic.PrivateKeyID != "" {
-		return authConfigToken(&types.AuthConfig{
+		return authConfigToken(&auth.AuthConfig{
 			Username: "_json_key",
 			Password: strings.ReplaceAll(secret.String(), "\n", " "),
 		})
 	}
 	return base64.URLEncoding.EncodeToString([]byte(secret.String())), nil
 }
-
 
 func getAuthToken(context *endly.Context, repository, credentials string) (string, error) {
 	ctxClient, err := GetCtxClient(context)

@@ -18,11 +18,6 @@ var embedFS embed.FS
 func TestNew(t *testing.T) {
 
 	srv := New()
-	//_, err := srv.Load(context.Background(), "embed:///testdata/example.md", option.WithEmbedFS(&embedFS))
-	//if ! assert.Nil(t, err) {
-	//	return
-	//}
-
 	service := loader.New()
 	bundle, err := service.Load(context.Background(), "embed:///testdata/projectx/run.yaml",
 		option.WithDependencies(true),

@@ -14,6 +14,7 @@ import (
 	"github.com/viant/endly/service/meta"
 	"github.com/viant/scy"
 	"sort"
+	"strconv"
 
 	"github.com/viant/endly/internal/util"
 
@@ -516,11 +517,10 @@ func toLowerCaseCamel(req map[string]interface{}) map[string]interface{} {
 }
 
 func structMetaToArray(meta *toolbox.StructMeta) ([]string, [][]string) {
-	var header = []string{"Name", "Type", "Required", "Description"}
+	var header = []string{"Name", "Type", "Required", "Inlined", "Description"}
 	var data = make([][]string, 0)
 	for _, field := range meta.Fields {
-
-		data = append(data, []string{field.Name, field.Type, toolbox.AsString(field.Required), field.Description})
+		data = append(data, []string{field.Name, field.Type, toolbox.AsString(field.Required), strconv.FormatBool(field.Anonymous), field.Description})
 	}
 	return header, data
 
