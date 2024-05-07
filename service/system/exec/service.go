@@ -550,6 +550,7 @@ const (
     "URL": "scp://127.0.0.1/",
     "Credentials": "${env.HOME}/.secret/localhost.json"
   },
+  "CheckError": true,
   "Commands":["mkdir /tmp/app1"]
 }`
 
