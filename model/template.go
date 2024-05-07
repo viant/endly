@@ -75,6 +75,9 @@ func (t *TransientTemplate) Expand(task *Task, parentTag string, inline *Inlined
 		tag.Group = task.Name
 		index := iterator.Index()
 		state := t.buildTagState(index, tag, instances)
+		if state == nil {
+			continue
+		}
 		tagPath := state.GetString("path")
 		t.inline.tagPathURL = tagPath
 		if len(t.Data) > 0 {
@@ -254,6 +257,9 @@ func (t *TransientTemplate) buildTagState(index string, tag *Tag, instances *gra
 	state.Put("index", index)
 	if t.SubPath != "" {
 		instance := instances.Lookup(toolbox.AsInt(index))
+		if instance == nil {
+			return nil
+		}
 		if index := strings.LastIndex(t.SubPath, "/"); index != -1 {
 			parent, _ := path.Split(t.SubPath)
 			tag.Subpath = path.Join(parent, instance.Object.Name())

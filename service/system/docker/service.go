@@ -129,6 +129,7 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 		ImagePullOptions: request.ImagePullOptions,
 	}
 
+	pullRequest.Platform = request.Platform
 	if _, err := s.pull(context, pullRequest); err != nil {
 		return nil, fmt.Errorf("unable to pull %v, %v", request.Image, err)
 	}
@@ -141,7 +142,7 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 		}
 	}
 	createRequest := request.CreateContainerRequest()
-	createResponse := &container.ContainerCreateCreatedBody{}
+	createResponse := &container.CreateResponse{}
 	if err := runAdapter(context, createRequest, createResponse); err != nil {
 		return nil, err
 	}
@@ -523,8 +524,8 @@ func (s *service) logs(context *endly.Context, request *LogsRequest) (*LogsRespo
 	}
 	var reader io.ReadCloser
 	logRequest := &ContainerLogsRequest{
-		ContainerLogsOptions: *request.ContainerLogsOptions,
-		Container:            status.Containers[0].ID,
+		LogsOptions: *request.LogsOptions,
+		Container:   status.Containers[0].ID,
 	}
 	err = runAdapter(context, logRequest, &reader)
 	if err != nil {
