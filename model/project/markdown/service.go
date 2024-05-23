@@ -119,7 +119,7 @@ func (s *Service) workflowStructure(ctx context.Context, workflow *project.Workf
 		addNode(asset.URI)
 	}
 	buffer := &bytes.Buffer{}
-	buffer.WriteString(fmt.Sprintf("## Workflow %s\n### Structure\n```text", workflow.Name))
+	buffer.WriteString(fmt.Sprintf("#### Workflow %s\n##### Structure\n```text", workflow.Name))
 	err := gtree.OutputProgrammably(buffer, root)
 	if err != nil {
 		return "", err
@@ -140,8 +140,8 @@ func (s *Service) markdownWorkflow(ctx context.Context, workflow *project.Workfl
 		return "", err
 	}
 	builder.WriteString(tree)
-	builder.WriteString("### Definition\n")
-	builder.WriteString("#### " + workflow.URI + "\n")
+	builder.WriteString("##### Definition\n")
+	builder.WriteString("###### " + workflow.URI + "\n")
 	builder.WriteString("```yaml\n")
 	data, err := yaml.Marshal(workflow)
 	if err != nil {
@@ -163,11 +163,11 @@ func (s *Service) markdownWorkflow(ctx context.Context, workflow *project.Workfl
 				continue
 			}
 			if assetCount == 0 {
-				builder.WriteString("### Assets\n")
+				builder.WriteString("##### Assets\n")
 			}
 			assetCount++
 			ext := path.Ext(asset.Location)
-			builder.WriteString("#### " + asset.Location + "\n")
+			builder.WriteString("###### " + asset.Location + "\n")
 			contentType := contentType(ext)
 			builder.WriteString(fmt.Sprintf("```%s\n", contentType))
 			builder.Write(asset.Source)
