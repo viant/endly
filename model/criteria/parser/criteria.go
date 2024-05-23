@@ -159,7 +159,7 @@ func expectOperand(cursor *parsly.Cursor, operands ...*parsly.Token) (ast.Node, 
 	case parsly.EOF:
 		return nil, nil
 	case parsly.Invalid:
-		return nil, cursor.NewError(defaultsOperands...)
+		return nil, cursor.NewError(operands...)
 	default:
 		cursor.Pos = pos
 		return nil, nil

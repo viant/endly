@@ -38,6 +38,21 @@ func Test_EvaluateCriteria(t *testing.T) {
 		},
 
 		{
+
+			Expression: "${httpTrips.Response[0].Body}://auctionwon/",
+			State: map[string]interface{}{
+				"httpTrips": map[string]interface{}{
+					"Response": []interface{}{
+						map[string]interface{}{
+							"Body": "http://asdasdasdas/",
+						},
+					},
+				},
+			},
+			Expected: false,
+		},
+
+		{
 			Description: "basic literal expr",
 			Expression:  "on!=on", //
 			State:       map[string]interface{}{},
