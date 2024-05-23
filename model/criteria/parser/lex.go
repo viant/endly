@@ -43,8 +43,8 @@ var doubleQuotedStringLiteralMatcher = parsly.NewToken(doubleQuotedStringLiteral
 var numericLiteralMatcher = parsly.NewToken(numericLiteral, `NUMERIC`, matcher.NewNumber())
 var stringLiteralMatcher = parsly.NewToken(stringLiteral, `STRING`, smatcher.NewFragment())
 var selectorMatcher = parsly.NewToken(selectorCode, "SELECTOR", smatcher.NewSelector())
-var terminatorMatcher = parsly.NewToken(terminatorCode, "/", matcher.NewTerminator('/', false))
-var terminatorMatcherInc = parsly.NewToken(terminatorCode, "/", matcher.NewTerminator('/', true))
+var terminatorMatcher = parsly.NewToken(terminatorCode, "/", smatcher.NewTerminator('/', false))
+var terminatorMatcherInc = parsly.NewToken(terminatorCode, "/", smatcher.NewTerminator('/', true))
 
 var questionMarkMatcher = parsly.NewToken(questionMark, "?", matcher.NewByte('?'))
 var colonMatcher = parsly.NewToken(colon, ":", matcher.NewByte(':'))
