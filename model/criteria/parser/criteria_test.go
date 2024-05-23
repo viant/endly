@@ -26,6 +26,17 @@ func TestParseCriteria(t *testing.T) {
 			},
 		},
 		{
+			name:  "simple equality",
+			input: `a == b`,
+			expected: &ast.Qualify{
+				X: &ast.Binary{
+					X:  &ast.Literal{Value: "a", Type: "string"},
+					Op: "==",
+					Y:  &ast.Literal{Value: "b", Type: "string"},
+				},
+			},
+		},
+		{
 			name:  "simple equation",
 			input: `$a == b`,
 			expected: &ast.Qualify{

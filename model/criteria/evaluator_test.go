@@ -22,7 +22,20 @@ func Test_EvaluateCriteria(t *testing.T) {
 		HasError      bool
 	}{
 
-		//$params.profile:/$/?dev:${params.profile}
+		{
+
+			Expression: "${httpTrips.Response[0].Body}://auctionwon/",
+			State: map[string]interface{}{
+				"httpTrips": map[string]interface{}{
+					"Response": []interface{}{
+						map[string]interface{}{
+							"Body": "http://auctionwon/",
+						},
+					},
+				},
+			},
+			Expected: true,
+		},
 
 		{
 			Description: "basic literal expr",

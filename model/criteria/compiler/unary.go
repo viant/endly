@@ -5,6 +5,7 @@ import (
 	"github.com/viant/endly/model/criteria/eval"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"strings"
 )
 
 func NewUnary(op string, operand *Operand) New {
@@ -34,7 +35,11 @@ func NewUnary(op string, operand *Operand) New {
 				}
 				switch actual := value.(type) {
 				case string:
-					return len(actual) > 0, true, nil
+					switch strings.TrimSpace(actual) {
+					case "false", "0", "":
+						return false, true, nil
+					}
+					return true, true, nil
 				case bool:
 					return actual, true, nil
 				case int:

@@ -18,7 +18,7 @@
         },
         "Transfer": {
           "Source": {
-            "URL": "https://storage.googleapis.com/chrome-for-testing-public/123.0.6312.122/mac-arm64/chromedriver-mac-arm64.zip"
+            "URL": "https://storage.googleapis.com/chrome-for-testing-public/125.0.6422.76/mac-arm64/chromedriver-mac-arm64.zip"
           },
           "Dest": {
             "URL": "${deploy.baseLocation}/webdriver/chromedriver-mac-arm64.zip"
@@ -58,7 +58,7 @@
         },
         "Transfer": {
           "Source": {
-            "URL": "https://storage.googleapis.com/chrome-for-testing-public/123.0.6312.122/mac-x64/chromedriver-mac-x64.zip"
+            "URL": "https://storage.googleapis.com/chrome-for-testing-public/125.0.6422.76/mac-x64/chromedriver-mac-x64.zip"
           },
           "Dest": {
             "URL": "${deploy.baseLocation}/webdriver/chromedriver-mac-x64.zip"
@@ -93,7 +93,7 @@
         },
         "Transfer": {
           "Source": {
-            "URL": "https://storage.googleapis.com/chrome-for-testing-public/125.0.6422.4/linux64/chromedriver-linux64.zip"
+            "URL": "https://storage.googleapis.com/chrome-for-testing-public/125.0.6422.76/linux64/chromedriver-linux64.zip"
           },
           "Dest": {
             "URL": "/{deploy.baseLocation}/webdriver/"

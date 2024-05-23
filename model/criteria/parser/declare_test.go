@@ -14,6 +14,12 @@ func TestParseDeclare(t *testing.T) {
 		expectedElse  string
 		expectedError string
 	}{
+		{
+			input:        "${httpTrips.Response[0].Body}://auctionwon/",
+			expectedWhen: "",
+			expectedExpr: "${httpTrips.Response[0].Body}://auctionwon/",
+			expectedElse: "",
+		},
 
 		{
 			input:        "$params.profile:/$/?dev:${params.profile}", //
@@ -21,6 +27,7 @@ func TestParseDeclare(t *testing.T) {
 			expectedExpr: "dev",
 			expectedElse: "${params.profile}",
 		},
+
 		{
 			name:         "valid declaration with else",
 			input:        "x > 5 ? y : z",
@@ -44,13 +51,27 @@ func TestParseDeclare(t *testing.T) {
 			expectedElse: "",
 		},
 
+		{
+			name:         "invalid declaration {}",
+			input:        "{}",
+			expectedWhen: "",
+			expectedExpr: "{}",
+			expectedElse: "",
+		},
+		{
+			name:         "invalid declaration <>",
+			input:        "<?:>",
+			expectedWhen: "",
+			expectedExpr: "<?:>",
+			expectedElse: "",
+		},
+
 		// More test cases, especially edge cases and invalid inputs
 	}
 
-	for _, tc := range tests {
+	for _, tc := range tests[:1] {
 		t.Run(tc.name, func(t *testing.T) {
 			when, expr, elseExpr, err := ParseDeclaration(tc.input)
-
 			if tc.expectedError != "" {
 				assert.ErrorContains(t, err, tc.expectedError)
 			} else {

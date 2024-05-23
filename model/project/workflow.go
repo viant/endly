@@ -70,7 +70,8 @@ func (w *Workflow) MarshalYAML() (interface{}, error) {
 	workflow.Put("pipeline", (*yaml.Node)(holder))
 	if w.Post != "" {
 		var v interface{}
-		if err := json.Unmarshal([]byte(w.Init), &v); err != nil {
+		v, err := w.marshalVariables(w.Post)
+		if err != nil {
 			return nil, err
 		}
 		workflow.Put("post", v)

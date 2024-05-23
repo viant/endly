@@ -7,11 +7,19 @@ import (
 )
 
 func parseDeclare(input string, err error, cursor *parsly.Cursor, when string, expr string, elseExpr string) (string, string, string, error) {
+	if input == "" {
+		return "", "", "", nil
+	}
+	switch input[0] { //no parsable expressions
+	case '<', '{', '[':
+		return "", input, "", nil
+	}
 	binary := ast.Binary{}
+
 	err = parseQualify(cursor, &binary, true, "")
 	if err != nil {
 		err = nil
-		return "", "", input, nil
+		return "", input, "", nil
 	}
 	when = input[:cursor.Pos]
 
@@ -32,9 +40,7 @@ func parseDeclare(input string, err error, cursor *parsly.Cursor, when string, e
 		}
 		elseExpr = elseNode.Stringify()
 	}
-	if when == "<" {
-		return "", "", "", nil
-	}
+
 	if index := strings.Index(expr, ":"); index != -1 && elseExpr == "" {
 		elseExpr = expr[index+1:]
 		expr = expr[:index]
