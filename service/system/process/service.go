@@ -2,17 +2,20 @@ package process
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
+	"strconv"
+	"strings"
+	"syscall"
+	"time"
+
 	"github.com/lunixbochs/vtclean"
 	"github.com/viant/endly"
 	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model/msg"
 	"github.com/viant/endly/service/system/exec"
 	"github.com/viant/toolbox"
-	"io/ioutil"
-	"os"
-	"path"
-	"strings"
-	"time"
 )
 
 // ServiceID represents a system process service id
@@ -37,6 +40,7 @@ func (s *service) stopAllProcesses(context *endly.Context, request *StopRequest)
 	for _, info := range status.Processes {
 		commandResponse, err := s.stopProcess(context, &StopRequest{
 			Target: target,
+			Signal: request.Signal,
 			Pid:    info.Pid,
 		})
 		if err != nil {
@@ -131,11 +135,15 @@ func (s *service) checkProcess(context *endly.Context, request *StatusRequest) (
 }
 
 func (s *service) stopProcess(context *endly.Context, request *StopRequest) (*StopResponse, error) {
+	if request.Signal == "" {
+		request.Signal = strconv.Itoa(int(syscall.SIGKILL)) // default signal
+	}
 	if request.Pid == 0 && request.Input != "" {
 		return s.stopAllProcesses(context, request)
 	}
+
 	target := exec.GetServiceTarget(request.Target)
-	var extractRequest = exec.NewExtractRequest(target, exec.DefaultOptions(), exec.NewExtractCommand(fmt.Sprintf("kill -9 %v", request.Pid), "", nil, nil))
+	var extractRequest = exec.NewExtractRequest(target, exec.DefaultOptions(), exec.NewExtractCommand(fmt.Sprintf("kill -%s %v", request.Signal, request.Pid), "", nil, nil))
 	extractRequest.AutoSudo = true
 	var runResponse = &exec.RunResponse{}
 	if err := endly.Run(context, extractRequest, runResponse); err != nil {
