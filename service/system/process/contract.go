@@ -58,6 +58,7 @@ type Info struct {
 type StopRequest struct {
 	Target *location.Resource
 	Pid    int
+	Signal string
 	Input  string `description:"if specified, matches all process Pid to stop"`
 }
 
