@@ -72,23 +72,35 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 	return result, nil
 }
 
-const sequencerKey = "dsunitSequencer"
+const (
+	sequencerKey = "dsunitSequencer"
+)
 
 func convertMultiTables(tables map[string]interface{}, state data.Map, prefix string) (map[string][]map[string]interface{}, error) {
 	var result = make(map[string][]map[string]interface{})
 	sequencerMapping := state.GetMap(sequencerKey)
 	var sequencer string
-	if sequencerMapping	 == nil {
+	if sequencerMapping == nil {
 		sequencerMapping = data.NewMap()
 		state.SetValue(sequencerKey, sequencerMapping)
 	} else {
 		for k := range sequencerMapping {
+			if k == "Data" {
+				continue
+			}
 			sequencer = k
 			break
 		}
 	}
-	if prefix != "" && ! strings.HasSuffix(prefix, ".") {
-		prefix +="."
+
+	sequencerMappingData := sequencerMapping.GetMap("Data")
+	if sequencerMappingData == nil {
+		sequencerMappingData = data.NewMap()
+		sequencerMapping.SetValue("Data", sequencerMappingData)
+	}
+
+	if prefix != "" && !strings.HasSuffix(prefix, ".") {
+		prefix += "."
 	}
 
 	for table, tableData := range tables {
@@ -96,14 +108,19 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 		if len(tableDataSlice) == 0 {
 			return nil, fmt.Errorf("table %v has no records", table)
 		}
-
 		for i, item := range tableDataSlice {
 			itemMap, ok := item.(map[string]interface{})
+			for k, v := range itemMap {
+				if text, ok := v.(string); ok && strings.Contains(text, "${uuid") { //expand uuid
+					itemMap[k] = state.ExpandAsText(text)
+				}
+			}
+
 			if !ok {
 				return nil, fmt.Errorf("item %v was not %T", item, itemMap)
 			}
-			if seq := allocateTableSequence(itemMap, table, state, sequencerMapping, prefix); seq != "" {
-				sequencer = seq
+			if sequencerKey := allocateTableSequence(itemMap, table, state, sequencerMapping, sequencerMappingData, prefix); sequencerKey != "" {
+				sequencer = sequencerKey
 			}
 			tableDataSlice[i] = itemMap
 		}
@@ -117,14 +134,19 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 
 		for i, item := range tableDataSlice {
 			itemMap := item.(map[string]interface{})
-			sequencerData := sequencerMapping.GetMap(sequencer)
+			sequencerValues := sequencerMapping.GetMap(sequencer)
+
 			for k, v := range itemMap {
 				value := toolbox.AsString(v)
+
+				if strings.Contains(value, "$Data") || strings.Contains(value, "$uuid") {
+					itemMap[k] = sequencerMapping.Expand(strings.Replace(value, "/", ".", 1))
+				}
 				if strings.Contains(value, "$") {
 					expr, key := getSequencerExpr(value, sequencer)
-					seqValue, ok := sequencerData[key]
+					seqValue, ok := sequencerValues[key]
 					if !ok {
-						seqValue, ok = sequencerData.GetValue(key)
+						seqValue, ok = sequencerValues.GetValue(key)
 					}
 					if ok {
 						itemMap[k] = strings.ReplaceAll(value, expr, toolbox.AsString(seqValue))
@@ -154,11 +176,12 @@ func getSequencerExpr(value string, sequencer string) (string, string) {
 	return expr, value
 }
 
-func allocateTableSequence(values map[string]interface{}, table string, state data.Map, tablesMapping data.Map, prefix string) string {
+func allocateTableSequence(values map[string]interface{}, table string, state data.Map, tablesMapping, sequenceMappingData data.Map, prefix string) string {
 	var seqValue int
 	var seqKey string
 	var stateKey string
 	var sequencer string
+	var sequencerKey string
 	for k, v := range values {
 		value := toolbox.AsString(v)
 		if !hasTableSequence(value, table) {
@@ -182,7 +205,7 @@ func allocateTableSequence(values map[string]interface{}, table string, state da
 		values[k] = sValue
 		key := getKey(value, table)
 		if key != "" {
-			sequencerKey := seqKey + "/" + key
+			sequencerKey = seqKey + "/" + key
 			stateKey = prefix + table + "." + key
 			tablesMapping.SetValue(sequencerKey, seqValue)
 		}
@@ -198,6 +221,14 @@ func allocateTableSequence(values map[string]interface{}, table string, state da
 	if stateKey != "" {
 		state.SetValue(stateKey, values)
 	}
+
+	dataKeySuffix := ""
+	if index := strings.LastIndex(sequencerKey, "/"); index != -1 {
+		dataKeySuffix = sequencerKey[index+1:]
+	}
+	dataKey := prefix + table + "." + dataKeySuffix
+	sequenceMappingData.SetValue(dataKey, values)
+
 	return sequencer
 }
 
