@@ -122,6 +122,7 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 			if sequencerKey := allocateTableSequence(itemMap, table, state, sequencerMapping, sequencerMappingData, prefix); sequencerKey != "" {
 				sequencer = sequencerKey
 			}
+
 			tableDataSlice[i] = itemMap
 		}
 	}
@@ -134,14 +135,20 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 
 		for i, item := range tableDataSlice {
 			itemMap := item.(map[string]interface{})
+
 			sequencerValues := sequencerMapping.GetMap(sequencer)
-
 			for k, v := range itemMap {
+				if v == nil {
+					continue
+				}
+				if _, ok := v.([]string); ok {
+					continue
+				}
 				value := toolbox.AsString(v)
-
 				if strings.Contains(value, "$Data") || strings.Contains(value, "$uuid") {
 					itemMap[k] = sequencerMapping.Expand(strings.Replace(value, "/", ".", 1))
 				}
+
 				if strings.Contains(value, "$") {
 					expr, key := getSequencerExpr(value, sequencer)
 					seqValue, ok := sequencerValues[key]
@@ -153,6 +160,7 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 					}
 				}
 			}
+
 			tableDataSlice[i] = itemMap
 			result[table] = append(result[table], itemMap)
 		}
@@ -182,8 +190,15 @@ func allocateTableSequence(values map[string]interface{}, table string, state da
 	var stateKey string
 	var sequencer string
 	var sequencerKey string
+
 	for k, v := range values {
-		value := toolbox.AsString(v)
+		if v == nil {
+			continue
+		}
+		value, ok := v.(string)
+		if !ok {
+			continue
+		}
 		if !hasTableSequence(value, table) {
 			continue
 		}
@@ -211,12 +226,12 @@ func allocateTableSequence(values map[string]interface{}, table string, state da
 		}
 		break
 	}
+
 	idState := data.NewMap()
 	idState.SetValue(seqKey, seqValue)
 	//seqTextValue := toolbox.AsString(seqValue)
 	for k, v := range values {
-		value := toolbox.AsString(v)
-		values[k] = idState.Expand(value)
+		values[k] = idState.Expand(v)
 	}
 	if stateKey != "" {
 		state.SetValue(stateKey, values)
