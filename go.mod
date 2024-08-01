@@ -51,12 +51,12 @@ require (
 	github.com/viant/afs v1.25.1
 	github.com/viant/afsc v1.9.2-0.20240422173805-b3d0ac5529a7
 	github.com/viant/asc v0.5.0
-	github.com/viant/assertly v0.9.1
+	github.com/viant/assertly v0.9.3-0.20240801181709-c4d200a736e1
 	github.com/viant/bgc v0.9.0
 	github.com/viant/dsc v0.19.0
 	github.com/viant/dsunit v0.11.1-0.20240315154953-016b93c322c2
 	github.com/viant/scy v0.9.1
-	github.com/viant/toolbox v0.37.1-0.20240801170258-b434985a22cf
+	github.com/viant/toolbox v0.37.1-0.20240801181604-f2a6c58315c9
 	github.com/yuin/gopher-lua v0.0.0-20221210110428-332342483e3f // indirect
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/net v0.23.0
