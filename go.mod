@@ -51,12 +51,12 @@ require (
 	github.com/viant/afs v1.25.1
 	github.com/viant/afsc v1.9.2-0.20240422173805-b3d0ac5529a7
 	github.com/viant/asc v0.5.0
-	github.com/viant/assertly v0.9.1-0.20220620174148-bab013f93a60
+	github.com/viant/assertly v0.9.1
 	github.com/viant/bgc v0.9.0
 	github.com/viant/dsc v0.19.0
 	github.com/viant/dsunit v0.11.1-0.20240315154953-016b93c322c2
 	github.com/viant/scy v0.9.1
-	github.com/viant/toolbox v0.37.1-0.20240507184908-f12292b1abfb
+	github.com/viant/toolbox v0.37.1-0.20240801170258-b434985a22cf
 	github.com/yuin/gopher-lua v0.0.0-20221210110428-332342483e3f // indirect
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/net v0.23.0
@@ -204,5 +204,4 @@ require (
 	gopkg.in/src-d/go-billy.v4 v4.3.2 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gotest.tools/v3 v3.5.1 // indirect
 )
