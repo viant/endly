@@ -213,8 +213,8 @@ func allocateTableSequence(values map[string]interface{}, table string, state da
 			seqValue = actual
 		case string:
 			UUID := uuid.New()
-			seqValue = UUID.String()
-			state.SetValue(seqKey, seqValue)
+			seqValue = actual
+			state.SetValue(seqKey, UUID.Version())
 		default:
 
 		}
