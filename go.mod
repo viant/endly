@@ -50,16 +50,16 @@ require (
 	github.com/tebeka/selenium v0.9.10-0.20211105214847-e9100b7f5ac1
 	github.com/viant/afs v1.25.1
 	github.com/viant/afsc v1.9.2-0.20240422173805-b3d0ac5529a7
-	github.com/viant/asc v0.5.0
+	github.com/viant/asc v0.5.1
 	github.com/viant/assertly v0.9.3-0.20240801181709-c4d200a736e1
 	github.com/viant/bgc v0.9.0
 	github.com/viant/dsc v0.19.0
 	github.com/viant/dsunit v0.11.1-0.20240315154953-016b93c322c2
 	github.com/viant/scy v0.9.1
 	github.com/viant/toolbox v0.37.1-0.20240801181604-f2a6c58315c9
-	github.com/yuin/gopher-lua v0.0.0-20221210110428-332342483e3f // indirect
+	github.com/yuin/gopher-lua v1.1.1 // indirect
 	golang.org/x/crypto v0.22.0 // indirect
-	golang.org/x/net v0.23.0
+	golang.org/x/net v0.24.0
 	golang.org/x/oauth2 v0.19.0
 	google.golang.org/api v0.174.0
 	google.golang.org/protobuf v1.33.0
@@ -74,7 +74,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/viant/datly v0.2.15-0.20240319215121-647e49ac4824
 	github.com/viant/gosh v0.0.0-20240315215121-a5efb9835616
-	github.com/viant/parsly v0.3.3-0.20240228194022-a61fc21f83e1
+	github.com/viant/parsly v0.3.3-0.20240717150634-e1afaedb691b
 	github.com/viant/xdatly/handler v0.0.0-20240419222004-9286c64be2bb
 	github.com/viant/xdatly/types/core v0.0.0-20240109065401-9758ebacb4bb
 	github.com/viant/xdatly/types/custom v0.0.0-20230309034540-231985618fc7
@@ -92,6 +92,7 @@ require (
 	cloud.google.com/go/secretmanager v1.11.5 // indirect
 	cloud.google.com/go/storage v1.40.0 // indirect
 	github.com/MicahParks/keyfunc v1.9.0 // indirect
+	github.com/aerospike/aerospike-client-go/v6 v6.15.1 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.26.1 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.27.11 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.11 // indirect
@@ -156,6 +157,7 @@ require (
 	github.com/richardlehane/msoleps v1.0.3 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/src-d/gcfg v1.4.0 // indirect
+	github.com/viant/aerospike v0.2.0 // indirect
 	github.com/viant/bigquery v0.3.3 // indirect
 	github.com/viant/cloudless v1.9.3-0.20240228223042-89d6d7838776 // indirect
 	github.com/viant/dyndb v0.1.4-0.20221214043424-27654ab6ed9c // indirect
@@ -164,17 +166,18 @@ require (
 	github.com/viant/govalidator v0.2.2-0.20230629211659-f2a3f0659b0b // indirect
 	github.com/viant/igo v0.2.1 // indirect
 	github.com/viant/pgo v0.11.0 // indirect
-	github.com/viant/sqlparser v0.6.0 // indirect
-	github.com/viant/sqlx v0.12.1-0.20240215212756-d8cc9d22ff38 // indirect
-	github.com/viant/structology v0.5.6-0.20231127181208-736f8ad06193 // indirect
+	github.com/viant/sqlparser v0.7.1-0.20240805161001-5b3b5b7479ae // indirect
+	github.com/viant/sqlx v0.15.2-0.20240802175425-e8a939a4cf7b // indirect
+	github.com/viant/structology v0.5.6-0.20240802174922-5eb157550455 // indirect
 	github.com/viant/structql v0.4.2-0.20240406183616-cff48e18d922 // indirect
 	github.com/viant/tagly v0.2.1-0.20240417022938-8b3b65de980b // indirect
 	github.com/viant/velty v0.2.1-0.20230927172116-ba56497b5c85 // indirect
+	github.com/viant/x v0.3.0 // indirect
 	github.com/viant/xdatly v0.3.1-0.20240419222004-9286c64be2bb // indirect
 	github.com/viant/xdatly/extension v0.0.0-20231013204918-ecf3c2edf259 // indirect
 	github.com/viant/xlsy v0.3.0 // indirect
 	github.com/viant/xmlify v0.1.1-0.20231127181625-8a6b48ceea12 // indirect
-	github.com/viant/xreflect v0.6.2-0.20240129222322-972307391f16 // indirect
+	github.com/viant/xreflect v0.6.2 // indirect
 	github.com/viant/xunsafe v0.9.2 // indirect
 	github.com/xanzy/ssh-agent v0.2.1 // indirect
 	github.com/xuri/efp v0.0.0-20230802181842-ad255f2331ca // indirect
@@ -188,8 +191,8 @@ require (
 	go.opentelemetry.io/otel/metric v1.26.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.26.0 // indirect
 	go.opentelemetry.io/otel/trace v1.26.0 // indirect
-	golang.org/x/mod v0.14.0 // indirect
-	golang.org/x/sync v0.6.0 // indirect
+	golang.org/x/mod v0.16.0 // indirect
+	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.19.0 // indirect
 	golang.org/x/term v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
@@ -204,4 +207,5 @@ require (
 	gopkg.in/src-d/go-billy.v4 v4.3.2 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
+	gotest.tools/v3 v3.5.1 // indirect
 )
