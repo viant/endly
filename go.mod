@@ -157,7 +157,7 @@ require (
 	github.com/richardlehane/msoleps v1.0.3 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/src-d/gcfg v1.4.0 // indirect
-	github.com/viant/aerospike v0.2.1 // indirect
+	github.com/viant/aerospike v0.2.2 // indirect
 	github.com/viant/bigquery v0.3.3 // indirect
 	github.com/viant/cloudless v1.9.3-0.20240228223042-89d6d7838776 // indirect
 	github.com/viant/dyndb v0.1.4-0.20221214043424-27654ab6ed9c // indirect
