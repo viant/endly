@@ -185,7 +185,7 @@ func getSequencerExpr(value string, sequencer string) (string, string) {
 }
 
 func allocateTableSequence(values map[string]interface{}, table string, state data.Map, tablesMapping, sequenceMappingData data.Map, prefix string) string {
-	var seqValue int
+	var seqValue interface{}
 	var seqKey string
 	var stateKey string
 	var sequencer string
@@ -213,7 +213,8 @@ func allocateTableSequence(values map[string]interface{}, table string, state da
 			seqValue = actual
 		case string:
 			UUID := uuid.New()
-			state.SetValue(seqKey, UUID.String())
+			seqValue = UUID.String()
+			state.SetValue(seqKey, seqValue)
 		default:
 
 		}
@@ -229,7 +230,6 @@ func allocateTableSequence(values map[string]interface{}, table string, state da
 
 	idState := data.NewMap()
 	idState.SetValue(seqKey, seqValue)
-	//seqTextValue := toolbox.AsString(seqValue)
 	for k, v := range values {
 		values[k] = idState.Expand(v)
 	}
