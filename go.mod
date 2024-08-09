@@ -50,7 +50,7 @@ require (
 	github.com/tebeka/selenium v0.9.10-0.20211105214847-e9100b7f5ac1
 	github.com/viant/afs v1.25.1
 	github.com/viant/afsc v1.9.2-0.20240422173805-b3d0ac5529a7
-	github.com/viant/asc v0.5.1
+	github.com/viant/asc v0.5.2-0.20240809124857-b38afc21a5e6
 	github.com/viant/assertly v0.9.3-0.20240801181709-c4d200a736e1
 	github.com/viant/bgc v0.9.0
 	github.com/viant/dsc v0.19.0
@@ -157,7 +157,7 @@ require (
 	github.com/richardlehane/msoleps v1.0.3 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/src-d/gcfg v1.4.0 // indirect
-	github.com/viant/aerospike v0.2.0 // indirect
+	github.com/viant/aerospike v0.2.1 // indirect
 	github.com/viant/bigquery v0.3.3 // indirect
 	github.com/viant/cloudless v1.9.3-0.20240228223042-89d6d7838776 // indirect
 	github.com/viant/dyndb v0.1.4-0.20221214043424-27654ab6ed9c // indirect
