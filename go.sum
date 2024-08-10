@@ -1293,6 +1293,8 @@ github.com/viant/aerospike v0.2.1 h1:bITvOQ5PA9glp01cvTB+qRV5L3ZA0SlbUfLq32qXUDA
 github.com/viant/aerospike v0.2.1/go.mod h1:KqvpFoMh5VqsGB7joznlVzVebiSir/8KjFTMqBvO4po=
 github.com/viant/aerospike v0.2.2 h1:y4kJQno55TLQ1lwDZjW3PXpida9qh23JoqfUQQgg/qI=
 github.com/viant/aerospike v0.2.2/go.mod h1:KqvpFoMh5VqsGB7joznlVzVebiSir/8KjFTMqBvO4po=
+github.com/viant/aerospike v0.2.3 h1:W1VsgBbVx41Wp66dBRsxorrcZczSdwYie+Bv5PhAWZ8=
+github.com/viant/aerospike v0.2.3/go.mod h1:3Xw7jzP8bvJjRdTPV/TsM9lGEIyj3bPxbvmIVhfCU5E=
 github.com/viant/afs v1.25.1 h1:IPcqwzsPUaWqsSkQXoM1vXwQuRI6u7ZgqQHKQZ8Wxyg=
 github.com/viant/afs v1.25.1/go.mod h1:rScbFd9LJPGTM8HOI8Kjwee0AZ+MZMupAvFpPg+Qdj4=
 github.com/viant/afsc v1.9.2-0.20240422173805-b3d0ac5529a7 h1:4Nb9QJvypamIlFPHXn/rSRqEChzoYdkoKX9NRcsvwLk=
@@ -1343,6 +1345,8 @@ github.com/viant/sqlparser v0.6.0 h1:L+0wCa+qiP7etj2TpXnssQbSLiZLDknwHun09b/unHE
 github.com/viant/sqlparser v0.6.0/go.mod h1:Ag/U7jzSnPRcQLl7a0dnn+3Fycod9rSQV9F+SjLuy7Q=
 github.com/viant/sqlparser v0.7.1-0.20240805161001-5b3b5b7479ae h1:TLEFVQ4ffLSYaf1LXxZuJ8nQBNiVMJAfSRP7N6BpzqI=
 github.com/viant/sqlparser v0.7.1-0.20240805161001-5b3b5b7479ae/go.mod h1:2QRGiGZYk2/pjhORGG1zLVQ9JO+bXFhqIVi31mkCRPg=
+github.com/viant/sqlparser v0.7.1 h1:YUBsIOUnY8WaF4sdKDz6MqA1+sP5q5QuewE465W2LAM=
+github.com/viant/sqlparser v0.7.1/go.mod h1:2QRGiGZYk2/pjhORGG1zLVQ9JO+bXFhqIVi31mkCRPg=
 github.com/viant/sqlx v0.12.1-0.20240215212756-d8cc9d22ff38 h1:FLTOImA6NbIm31spHKljjOGWk9sTB94Lzpkdgnf/kgA=
 github.com/viant/sqlx v0.12.1-0.20240215212756-d8cc9d22ff38/go.mod h1:HYtPW5x+z1zVgdZyDrpITI8uhXI53MrrOe6SgOP0SdA=
 github.com/viant/sqlx v0.15.2-0.20240802175425-e8a939a4cf7b h1:tNkwnYy1K5ZYuElmaTP+L/SbJeq7qHbcVM5dglVPlt4=

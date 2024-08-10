@@ -157,7 +157,7 @@ require (
 	github.com/richardlehane/msoleps v1.0.3 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/src-d/gcfg v1.4.0 // indirect
-	github.com/viant/aerospike v0.2.2 // indirect
+	github.com/viant/aerospike v0.2.3 // indirect
 	github.com/viant/bigquery v0.3.3 // indirect
 	github.com/viant/cloudless v1.9.3-0.20240228223042-89d6d7838776 // indirect
 	github.com/viant/dyndb v0.1.4-0.20221214043424-27654ab6ed9c // indirect
@@ -166,7 +166,7 @@ require (
 	github.com/viant/govalidator v0.2.2-0.20230629211659-f2a3f0659b0b // indirect
 	github.com/viant/igo v0.2.1 // indirect
 	github.com/viant/pgo v0.11.0 // indirect
-	github.com/viant/sqlparser v0.7.1-0.20240805161001-5b3b5b7479ae // indirect
+	github.com/viant/sqlparser v0.7.1 // indirect
 	github.com/viant/sqlx v0.15.2-0.20240802175425-e8a939a4cf7b // indirect
 	github.com/viant/structology v0.5.6-0.20240802174922-5eb157550455 // indirect
 	github.com/viant/structql v0.4.2-0.20240406183616-cff48e18d922 // indirect
