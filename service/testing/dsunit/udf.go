@@ -201,10 +201,14 @@ func expandSequenceExpr(value, caseTag string, sequencerMapping data.Map, sequen
 		}
 		value = strings.ReplaceAll(value, expr, toolbox.AsString(seqValue))
 		if strings.Contains(value, "$") {
-			if strings.HasPrefix(value, "$AsInt") {
+			isInt := strings.HasPrefix(value, "$AsInt")
+			if isInt {
 				value = value[7 : len(value)-1]
 			}
 			value = state.ExpandAsText(value)
+			if isInt {
+				return toolbox.AsInt(value), true
+			}
 		}
 		return value, true
 	}
