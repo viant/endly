@@ -3,7 +3,7 @@ package patch
 import (
 	"embed"
 	"github.com/viant/xdatly/types/core"
-	"github.com/viant/xdatly/types/custom/checksum"
+	"github.com/viant/xdatly/types/custom/dependency/checksum"
 	"reflect"
 )
 

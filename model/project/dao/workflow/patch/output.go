@@ -3,7 +3,7 @@ package patch
 import (
 	"github.com/viant/xdatly/handler/response"
 	"github.com/viant/xdatly/types/core"
-	"github.com/viant/xdatly/types/custom/checksum"
+	"github.com/viant/xdatly/types/custom/dependency/checksum"
 	"reflect"
 )
 

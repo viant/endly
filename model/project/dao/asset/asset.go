@@ -9,7 +9,7 @@ import (
 	"github.com/viant/datly/repository/contract"
 	"github.com/viant/xdatly/handler/response"
 	"github.com/viant/xdatly/types/core"
-	"github.com/viant/xdatly/types/custom/checksum"
+	"github.com/viant/xdatly/types/custom/dependency/checksum"
 	"reflect"
 )
 
