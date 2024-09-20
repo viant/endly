@@ -441,6 +441,22 @@ func predefinedRegistry() data.Map {
 		return remainingToday
 	})
 
+	//return fraction of elapsed today in supplied key timezone, i.e  ${remainingToday.Poland}
+	result.Put("remainingToday", func(key string) interface{} {
+		remainingToday, err := toolbox.RemainingToday(key)
+		if err != nil {
+			return nil
+		}
+		return remainingToday
+	})
+
+	result.Put("packIntWithDate", func(key string) interface{} {
+		intValue := toolbox.AsInt(key)
+		now := time.Now()
+		dateKey := now.Year()*10000 + int(now.Month())*100 + now.Day()
+		return dateKey<<32 | intValue
+	})
+
 	//return formatted time with time.RFC3339 yyyy-MM-ddThh:mm:ss.SSS Z  i.e ${tzTime.4daysAgoInUTC}
 
 	result.Put("tzTime", func(key string) interface{} {
@@ -450,6 +466,9 @@ func predefinedRegistry() data.Map {
 		}
 		return timeAt.Format(time.RFC3339)
 	})
+
+	//	dateKey := r.At.Year()*10000 + int(r.At.Month())*100 + r.At.Day()
+	//	r.ID = (dateKey << 32) | r.OrderID
 
 	result.Put("env", func(key string) interface{} {
 		return os.Getenv(key)
