@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/viant/xdatly/handler"
 	"github.com/viant/xdatly/types/core"
-	"github.com/viant/xdatly/types/custom/checksum"
+	"github.com/viant/xdatly/types/custom/dependency/checksum"
 	"reflect"
 )
 
