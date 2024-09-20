@@ -136,6 +136,13 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 		for i, item := range tableDataSlice {
 			itemMap := item.(map[string]interface{})
 
+			caseTag := ""
+			caseTagValue, hasTag := itemMap["!tag"]
+			if hasTag {
+				caseTag = toolbox.AsString(caseTagValue)
+				delete(itemMap, "!tag")
+			}
+
 			sequencerValues := sequencerMapping.GetMap(sequencer)
 			for k, v := range itemMap {
 				if v == nil {
@@ -144,21 +151,30 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 				if _, ok := v.([]string); ok {
 					continue
 				}
-				value := toolbox.AsString(v)
-				if strings.Contains(value, "$Data") || strings.Contains(value, "$uuid") {
-					itemMap[k] = sequencerMapping.Expand(strings.Replace(value, "/", ".", 1))
+				switch value := v.(type) {
+				case string:
+					if strings.Contains(value, "$Data") || strings.Contains(value, "$uuid") {
+						itemMap[k] = sequencerMapping.Expand(strings.Replace(value, "/", ".", 1))
+					} else {
+						expanded, ok := expandSequenceExpr(value, toolbox.AsString(caseTag), sequencerMapping, sequencer, sequencerValues, state)
+						if ok {
+							itemMap[k] = expanded
+						}
+					}
+				case map[interface{}]interface{}:
+					for key, keyValue := range value {
+						stringKey, ok := key.(string)
+						if !ok {
+							continue
+						}
+						expanded, ok := expandSequenceExpr(stringKey, toolbox.AsString(caseTag), sequencerMapping, sequencer, sequencerValues, state)
+						if ok {
+							value[expanded] = keyValue
+							delete(value, key)
+						}
+					}
 				}
 
-				if strings.Contains(value, "$") {
-					expr, key := getSequencerExpr(value, sequencer)
-					seqValue, ok := sequencerValues[key]
-					if !ok {
-						seqValue, ok = sequencerValues.GetValue(key)
-					}
-					if ok {
-						itemMap[k] = strings.ReplaceAll(value, expr, toolbox.AsString(seqValue))
-					}
-				}
 			}
 
 			tableDataSlice[i] = itemMap
@@ -167,6 +183,32 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 	}
 
 	return result, nil
+}
+
+func expandSequenceExpr(value, caseTag string, sequencerMapping data.Map, sequencer string, sequencerValues data.Map, state data.Map) (interface{}, bool) {
+	if caseTag != "" && strings.Contains(value, "${tag}") {
+		value = strings.Replace(value, "${tag}", toolbox.AsString(caseTag), 1)
+	}
+
+	if strings.Contains(value, "$") {
+		expr, key := getSequencerExpr(value, sequencer)
+		seqValue, ok := sequencerValues[key]
+		if !ok {
+			seqValue, ok = sequencerValues.GetValue(key)
+		}
+		if !ok {
+			return value, false
+		}
+		value = strings.ReplaceAll(value, expr, toolbox.AsString(seqValue))
+		if strings.Contains(value, "$") {
+			if strings.HasPrefix(value, "$AsInt") {
+				value = value[7 : len(value)-1]
+			}
+			value = state.ExpandAsText(value)
+		}
+		return value, true
+	}
+	return value, false
 }
 
 func getSequencerExpr(value string, sequencer string) (string, string) {
@@ -181,6 +223,12 @@ func getSequencerExpr(value string, sequencer string) (string, string) {
 	}
 	expr = value[index:]
 	value = value[index+1+len(sequencer+"."):]
+	if idx := strings.Index(value, ")"); idx != -1 {
+		value = value[:idx]
+		if idx = strings.Index(expr, ")"); idx != -1 {
+			expr = expr[:idx]
+		}
+	}
 	return expr, value
 }
 

@@ -1330,8 +1330,8 @@ github.com/viant/parsly v0.3.3-0.20240717150634-e1afaedb691b h1:3q166tV28yFdbFV+
 github.com/viant/parsly v0.3.3-0.20240717150634-e1afaedb691b/go.mod h1:85fneXJbErKMGhSQto3A5ElTQCwl3t74U9cSV0waBHw=
 github.com/viant/pgo v0.11.0 h1:PNuYVhwTfyrAHGBO6lxaMFuHP4NkjKV8ULecz3OWk8c=
 github.com/viant/pgo v0.11.0/go.mod h1:MFzHmkRFZlciugEgUvpl/3grK789PBSH4dUVSLOSo+Q=
-github.com/viant/scy v0.12.0 h1:Fo0DHviM1LHjj2XmtgIERmeh+z4X66AUXnUCTswFXT4=
-github.com/viant/scy v0.12.0/go.mod h1:Lz1VPlmjVi4ydZ5ikP/d5uQS/xYs22HG23++PgLRlKQ=
+github.com/viant/scy v0.12.1 h1:kFtFXexMZrr41laAplKiKwuZo7KRikKgbXVvsXeYsTI=
+github.com/viant/scy v0.12.1/go.mod h1:yHDc9YmfDqhxiMPZcCRS+rb9KUjMNZniWZ9LMQoM0KI=
 github.com/viant/sqlparser v0.7.4 h1:/jXiB2zC9cDXTwR0TgF2evrHC5oQPCAkkf0KZfe9Vks=
 github.com/viant/sqlparser v0.7.4/go.mod h1:2QRGiGZYk2/pjhORGG1zLVQ9JO+bXFhqIVi31mkCRPg=
 github.com/viant/sqlx v0.15.2-0.20240802175425-e8a939a4cf7b h1:tNkwnYy1K5ZYuElmaTP+L/SbJeq7qHbcVM5dglVPlt4=
@@ -1346,6 +1346,8 @@ github.com/viant/toolbox v0.24.0/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMI
 github.com/viant/toolbox v0.34.5/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
 github.com/viant/toolbox v0.37.1-0.20240920190350-4edcb037fba9 h1:ZNZOh2Regsr8YO5ypilU47U7DIkoUKgIx6xofChgjRQ=
 github.com/viant/toolbox v0.37.1-0.20240920190350-4edcb037fba9/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
+github.com/viant/toolbox v0.37.1-0.20240920204202-12309d1bb97c h1:/+EGnMFfdo2cHaFfK0rVf+RYxryMT3RAotLB37HinHs=
+github.com/viant/toolbox v0.37.1-0.20240920204202-12309d1bb97c/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
 github.com/viant/velty v0.2.1-0.20230927172116-ba56497b5c85 h1:zKk+6hqUipkJXCPCHyFXzGtil1sfh80r6UZmloBNEDo=
 github.com/viant/velty v0.2.1-0.20230927172116-ba56497b5c85/go.mod h1:Q/UXviI2Nli8WROEpYd/BELMCSvnulQeyNrbPmMiS/Y=
 github.com/viant/x v0.3.0 h1:/3A0z/uySGxMo6ixH90VAcdjI00w5e3REC1zg5hzhJA=

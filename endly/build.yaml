@@ -19,9 +19,6 @@ pipeline:
       - export GOARCH=amd64
       - go build -ldflags="-X 'main.Version=${Ver}'"
       - tar cvzf endly_linux_${Ver}_amd64.tar.gz endly
-      - export GOOS=windows
-      - go build -ldflags="-X 'main.Version=${Ver}'"
-      - tar cvzf endly_windows_${Ver}_amd64.tar.gz endly
       - export GOOS=darwin
       - go build -ldflags="-X 'main.Version=${Ver}'"
       - tar cvzf endly_darwin_${Ver}_amd64.tar.gz endly
@@ -29,3 +26,6 @@ pipeline:
       - export GOARCH=arm64
       - go build -ldflags="-X 'main.Version=${Ver}'"
       - tar cvzf endly_darwin_${Ver}_arm64.tar.gz endly
+      - export GOOS=windows
+      - go build -ldflags="-X 'main.Version=${Ver}'"
+      - tar cvzf endly_windows_${Ver}_amd64.tar.gz endly

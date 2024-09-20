@@ -53,8 +53,8 @@ require (
 	github.com/viant/bgc v0.9.0
 	github.com/viant/dsc v0.19.0
 	github.com/viant/dsunit v0.11.1-0.20240315154953-016b93c322c2
-	github.com/viant/scy v0.12.0
-	github.com/viant/toolbox v0.37.1-0.20240920190350-4edcb037fba9
+	github.com/viant/scy v0.12.1
+	github.com/viant/toolbox v0.37.1-0.20240920204202-12309d1bb97c
 	github.com/yuin/gopher-lua v1.1.1 // indirect
 	golang.org/x/crypto v0.26.0 // indirect
 	golang.org/x/net v0.28.0
@@ -203,6 +203,7 @@ require (
 	google.golang.org/grpc v1.63.2 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/src-d/go-billy.v4 v4.3.2 // indirect
+	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 )
