@@ -1348,6 +1348,8 @@ github.com/viant/toolbox v0.37.1-0.20240920190350-4edcb037fba9 h1:ZNZOh2Regsr8YO
 github.com/viant/toolbox v0.37.1-0.20240920190350-4edcb037fba9/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
 github.com/viant/toolbox v0.37.1-0.20240920204202-12309d1bb97c h1:/+EGnMFfdo2cHaFfK0rVf+RYxryMT3RAotLB37HinHs=
 github.com/viant/toolbox v0.37.1-0.20240920204202-12309d1bb97c/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
+github.com/viant/toolbox v0.37.1-0.20240924122036-7c1afbc7c02b h1:04bnRUIaxGK7RivGXEZMOKoPhSGeNICHAkgvVOyTGBI=
+github.com/viant/toolbox v0.37.1-0.20240924122036-7c1afbc7c02b/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
 github.com/viant/velty v0.2.1-0.20230927172116-ba56497b5c85 h1:zKk+6hqUipkJXCPCHyFXzGtil1sfh80r6UZmloBNEDo=
 github.com/viant/velty v0.2.1-0.20230927172116-ba56497b5c85/go.mod h1:Q/UXviI2Nli8WROEpYd/BELMCSvnulQeyNrbPmMiS/Y=
 github.com/viant/x v0.3.0 h1:/3A0z/uySGxMo6ixH90VAcdjI00w5e3REC1zg5hzhJA=
