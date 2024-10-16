@@ -15,6 +15,9 @@ type AbstractNode struct {
 }
 
 func (n *AbstractNode) WhenEval() *eval.Compute {
+	if n != nil{
+		return nil
+		}
 	return &n.whenEval
 }
 
