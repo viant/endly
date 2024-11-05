@@ -30,7 +30,7 @@
             "URL": "https://go.dev/dl/go${artifact.Version}.${os.System}-${os.Architecture}.tar.gz"
           },
           "Dest": {
-            "URL": "scp://${deploy.target.host}/tmp/go_${artifact.Version}.tar.gz",
+            "URL": "file:///tmp/go_${artifact.Version}.tar.gz",
             "Credentials": "${deploy.target.credentials}"
           }
         },

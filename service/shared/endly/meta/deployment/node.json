@@ -27,7 +27,7 @@
             "URL": "https://nodejs.org/dist/v${artifact.Version}/node-v${artifact.Version}-${os.System}-${os.Arch}.tar.gz"
           },
           "Dest": {
-            "URL": "scp://${deploy.target.host}/tmp/node_${artifact.Version}.tar.gz",
+            "URL": "file:///tmp/node_${artifact.Version}.tar.gz",
             "Credentials": "${deploy.target.credentials}"
           }
         },
