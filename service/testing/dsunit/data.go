@@ -97,7 +97,9 @@ func (d *TableData) GetValue(state data.Map, source interface{}) map[string]inte
 	//TODO remove this code
 	for k, v := range value {
 		var textValue = toolbox.AsString(v)
-		if strings.HasPrefix(textValue, "$") {
+		if strings.HasPrefix(textValue, "$As") {
+			value[k] = state.Expand(textValue)
+		} else if strings.HasPrefix(textValue, "$") {
 			delete(value, k)
 		} else if strings.HasPrefix(textValue, "\\$") {
 			value[k] = string(textValue[1:])
