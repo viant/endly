@@ -45,6 +45,11 @@ func getUdfFromContext(udfName string, state data.Map) (func(interface{}, data.M
 		udf, ok := candidate.(func(source interface{}, state data.Map) (interface{}, error))
 		return udf, ok
 	}
+	udfStore := state.GetMap(data.UDFKey)
+	if candidate, has := udfStore[udfName]; has {
+		udf, ok := candidate.(func(source interface{}, state data.Map) (interface{}, error))
+		return udf, ok
+	}
 	return nil, false
 }
 
