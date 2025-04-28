@@ -17,7 +17,6 @@ type ErrorEvent struct {
 
 // Messages returns messages
 func (e *ErrorEvent) Messages() []*Message {
-
 	error := NewStyled(fmt.Sprintf("%v\n", e.Error), MessageStyleError)
 	return []*Message{
 		NewMessage(NewStyled("", MessageStyleError), NewStyled("error", MessageStyleError), error)}
