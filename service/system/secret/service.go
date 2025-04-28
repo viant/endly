@@ -163,7 +163,7 @@ func (s *service) signJWT(context *endly.Context, request *SignJWTRequest) (*Sig
 }
 
 func (s *service) verifyJWT(context *endly.Context, request *VerifyJWTRequest) (*VerifyJWTResponse, error) {
-	jwtVerifier := verifier.New(&verifier.Config{RSA: request.PublicKey, CertURL: request.CertURL, HMAC: request.HMAC})
+	jwtVerifier := verifier.New(&verifier.Config{RSA: []*scy.Resource{request.PublicKey}, CertURL: request.CertURL, HMAC: request.HMAC})
 	if err := jwtVerifier.Init(context.Background()); err != nil {
 		return nil, err
 	}

@@ -736,5 +736,5 @@ endly is an open source project and contributors are welcome!
 
 ##  Credits and Acknowledgements
 
-**Library Author:** Adrian Witas
+  **Library Author:** Adrian Witas
 

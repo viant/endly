@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	firebase "firebase.google.com/go/v4"
 	"fmt"
-	sjwt "github.com/golang-jwt/jwt/v4"
+	sjwt "github.com/golang-jwt/jwt/v5"
 	"github.com/viant/afs"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/scy"
