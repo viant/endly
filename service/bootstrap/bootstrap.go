@@ -13,6 +13,7 @@ import (
 	"github.com/viant/endly/model/project/option"
 	"github.com/viant/endly/service/meta"
 	"github.com/viant/scy"
+	_ "modernc.org/sqlite"
 	"sort"
 	"strconv"
 
@@ -141,7 +142,7 @@ func init() {
 	flag.String("t", "*", "<task/s to run>, t='?' to list all tasks for selected workflow")
 
 	flag.String("l", "logs", "<log directory>")
-	flag.Bool("d", false, "enable logging")
+	flag.String("d", "", "enable logging; optional log subfolder name under log directory")
 
 	flag.String("p", "", "print workflow ")
 	flag.String("f", "json", "<workflow or request format>, json or yaml")
@@ -195,11 +196,34 @@ func detectFirstArguments(flagset map[string]string) {
 	}
 }
 
+func normalizeDFlag() {
+	// Ensure backward compatibility: allow `-d` without value
+	// by converting it to `-d=true` unless a value follows.
+	args := os.Args
+	out := make([]string, 0, len(args))
+	for i := 0; i < len(args); i++ {
+		if args[i] == "-d" {
+			// Has value attached next and it's not another flag
+			if i+1 < len(args) && !strings.HasPrefix(args[i+1], "-") {
+				out = append(out, args[i])
+				continue
+			}
+			// Convert bare -d into -d=true
+			out = append(out, "-d=true")
+			continue
+		}
+		out = append(out, args[i])
+	}
+	os.Args = out
+}
+
 func Bootstrap() {
 
 	flagset := make(map[string]string)
 	flag.Usage = printHelp
 
+	// Normalize flags that can be used without explicit values
+	normalizeDFlag()
 	detectFirstArguments(flagset)
 	flag.Parse()
 
@@ -786,8 +810,17 @@ func updateBaseRunWithOptions(request *workflow.RunRequest, flagset map[string]s
 			request.Params[k] = v
 		}
 		if value, ok := flagset["d"]; ok {
-			go enableDiagnostics()
-			request.EnableLogging = toolbox.AsBoolean(value)
+			// Enable diagnostics/logging when -d is present unless explicitly set to false
+			if strings.EqualFold(value, "false") {
+				request.EnableLogging = false
+			} else {
+				request.EnableLogging = true
+				// If a custom name is provided (not a boolean), use it as subfolder
+				if value != "" && !strings.EqualFold(value, "true") {
+					request.LogSubdir = value
+				}
+				go enableDiagnostics()
+			}
 			request.LogDirectory = flag.Lookup("l").Value.String()
 		}
 	}

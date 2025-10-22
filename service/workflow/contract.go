@@ -19,6 +19,7 @@ import (
 type RunRequest struct {
 	EnableLogging     bool                   `description:"flag to enable logging"`
 	LogDirectory      string                 `description:"log directory"`
+	LogSubdir         string                 `description:"optional subfolder name under LogDirectory; defaults to session ID"`
 	FailureCount      int                    `description:"max number of failures CLI reported per validation"`
 	SummaryFormat     string                 `description:"summary format: xml|json|yaml, summary file is not produced if this is empty"`
 	EventFilter       map[string]bool        `description:"optional CLI filter option,key is either package name or package name.request/event prefix "`

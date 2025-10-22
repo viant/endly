@@ -287,7 +287,11 @@ func (s *Service) run(context *endly.Context, request *RunRequest) (response *Ru
 
 func (s *Service) enableLoggingIfNeeded(context *endly.Context, request *RunRequest) {
 	if request.EnableLogging && !context.HasLogger {
-		var logDirectory = path.Join(request.LogDirectory, context.SessionID)
+		subdir := context.SessionID
+		if request.LogSubdir != "" {
+			subdir = request.LogSubdir
+		}
+		var logDirectory = path.Join(request.LogDirectory, subdir)
 		logger := NewLogger(logDirectory, context.Listener)
 		context.Listener = logger.AsEventListener()
 	}
