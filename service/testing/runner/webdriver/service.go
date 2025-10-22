@@ -3,6 +3,9 @@ package webdriver
 import (
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/tebeka/selenium"
 	"github.com/tebeka/selenium/chrome"
 	"github.com/tebeka/selenium/firefox"
@@ -20,8 +23,6 @@ import (
 	"github.com/viant/endly/service/testing/validator"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"strings"
-	"time"
 )
 
 const (
@@ -321,7 +322,7 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 	switch request.Call.Method {
 	case "Click", "SendKeys", "Clear", "Submit":
 		if err = s.ensureVisible(element); err != nil {
-			response.LookupError = fmt.Sprintf("element %s is not visible: %w", request.Selector.Value, err)
+			response.LookupError = fmt.Sprintf("element %s is not visible: %v", request.Selector.Value, err)
 			return nil, err
 		}
 	}
