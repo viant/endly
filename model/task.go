@@ -3,6 +3,7 @@ package model
 // Task represents a group of action
 type Task struct {
 	*AbstractNode `yaml:",inline"` //abstract node
+	*MetaTag      `yaml:",inline"` //optional template tag propagated to task
 	Actions       []*Action        ` yaml:",omitempty"` //actions
 	*TasksNode    ` yaml:",inline"`
 	Fail          bool      ` yaml:",omitempty"` //controls if return fail status workflow on catch task
@@ -34,6 +35,10 @@ func (t *Task) Clone() *Task {
 	}
 	result.TasksNode = t.TasksNode.Clone()
 	result.AbstractNode = t.AbstractNode.Clone()
+	if t.MetaTag != nil {
+		tag := *t.MetaTag
+		result.MetaTag = &tag
+	}
 	return &result
 }
 
