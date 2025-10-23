@@ -288,6 +288,15 @@ func flattenAction(parent *Task, task *Task, tag *Tag, description string) []*Ac
 	if !isRootTask {
 		tag.Group = parent.Name
 	}
+	// propagate template MetaTag to task itself
+	if task.MetaTag == nil {
+		task.MetaTag = &MetaTag{
+			Tag:            tag.Expand(tag.Name),
+			TagIndex:       tag.Iterator.Index(),
+			TagID:          tag.TagID(),
+			TagDescription: description,
+		}
+	}
 	if len(task.Actions) > 0 {
 		result = task.Actions
 		for i := range result {

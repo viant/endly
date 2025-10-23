@@ -141,6 +141,40 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 	var result = data.NewMap()
 	var state = context.State()
 
+	// Determine owner URL for task context
+	var ownerURL string
+	if process != nil && process.Source != nil {
+		ownerURL = process.Source.URL
+	} else if process != nil && process.Workflow != nil && process.Workflow.Source != nil {
+		ownerURL = process.Workflow.Source.URL
+	}
+	// Prefer task.MetaTag, fallback to first non-async action MetaTag
+	var templateTag *model.MetaTag
+	if task.MetaTag != nil {
+		tagCopy := *task.MetaTag
+		templateTag = &tagCopy
+	} else {
+		for _, a := range task.Actions {
+			if a != nil && !a.Async && a.MetaTag != nil {
+				tagCopy := *a.MetaTag
+				templateTag = &tagCopy
+				break
+			}
+		}
+	}
+	// Minimal task path (logger will compose full hierarchy from start/end stacks)
+	taskPath := []string{task.Name}
+	// Publish TaskStartEvent
+	_ = context.Publish(model.NewTaskStartEvent(
+		process.Workflow.Name,
+		ownerURL,
+		task.Name,
+		taskPath,
+		context.SessionID,
+		0,
+		templateTag,
+	))
+
 	asyncGroup := &sync.WaitGroup{}
 	var asyncError error
 	asyncActions := task.AsyncActions()
@@ -152,6 +186,8 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 			}
 		}
 		if len(asyncActions) > 0 {
+			// Publish async start
+			_ = context.Publish(model.NewTaskAsyncStartEvent(taskPath, len(asyncActions), context.SessionID))
 			s.runAsyncActions(context, process, task, asyncActions, asyncGroup, &asyncError)
 		}
 		for i := 0; i < len(task.Actions); i++ {
@@ -198,6 +234,8 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 		_ = s.RunInBackground(context, func() error {
 			context.Publish(msg.NewStdoutEvent("async", "waiting for actions ..."))
 			asyncGroup.Wait()
+			// Publish async done
+			_ = context.Publish(model.NewTaskAsyncDoneEvent(taskPath, len(asyncActions), context.SessionID))
 			return nil
 		})
 		if err == nil && asyncError != nil {
@@ -205,6 +243,23 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 		}
 	}
 	state.Apply(result)
+	// Publish TaskEndEvent
+	status := "ok"
+	errMsg := ""
+	if err != nil {
+		status = "error"
+		errMsg = fmt.Sprintf("%v", err)
+	}
+	_ = context.Publish(model.NewTaskEndEvent(
+		process.Workflow.Name,
+		ownerURL,
+		task.Name,
+		taskPath,
+		context.SessionID,
+		0,
+		status,
+		errMsg,
+	))
 	return result, err
 }
 
@@ -347,6 +402,47 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	if err != nil {
 		return nil, err
 	}
+
+	// Emit WorkflowStartEvent with parent linkage and prepare paired end event
+	var parentName, parentOwnerURL string
+	if parent := LastWorkflow(upstreamContext); parent != nil && parent.Workflow != nil {
+		parentName = parent.Workflow.Name
+		if parent.Source != nil {
+			parentOwnerURL = parent.Source.URL
+		} else if parent.Workflow.Source != nil {
+			parentOwnerURL = parent.Workflow.Source.URL
+		}
+	}
+	var ownerURL string
+	if workflow != nil && workflow.Source != nil {
+		ownerURL = workflow.Source.URL
+	}
+	startWorkflowEvent := upstreamContext.Publish(NewWorkflowStartEvent(
+		workflow.Name,
+		ownerURL,
+		parentName,
+		parentOwnerURL,
+		upstreamContext.SessionID,
+		request.Tasks,
+		request.TagIDs,
+	))
+	defer func() {
+		status := "ok"
+		errMsg := ""
+		if err != nil {
+			status = "error"
+			errMsg = fmt.Sprintf("%v", err)
+		}
+		_ = upstreamContext.PublishWithStartEvent(NewWorkflowEndEvent(
+			workflow.Name,
+			ownerURL,
+			parentName,
+			parentOwnerURL,
+			upstreamContext.SessionID,
+			status,
+			errMsg,
+		), startWorkflowEvent)
+	}()
 
 	defer Pop(upstreamContext)
 
