@@ -2,10 +2,11 @@ package dsunit
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/google/uuid"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"strings"
 )
 
 // AsTableRecords converts data spcified by dataKey into slice of *TableData to create dsunit data as map[string][]map[string]interface{} (table with records)
@@ -24,6 +25,7 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 	source, has := state.GetValue(toolbox.AsString(dataKey))
 
 	if multiTables, ok := source.(data.Map); ok {
+
 		data, err := convertMultiTables(multiTables, state, outputPrefix)
 		return data, err
 	}
@@ -104,6 +106,9 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 	}
 
 	for table, tableData := range tables {
+		if table == "CI_TAXONOMY" {
+			fmt.Println(1)
+		}
 		var tableDataSlice = toolbox.AsSlice(tableData)
 		if len(tableDataSlice) == 0 {
 			return nil, fmt.Errorf("table %v has no records", table)
@@ -128,6 +133,7 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 	}
 
 	for table, tableData := range tables {
+
 		var tableDataSlice = toolbox.AsSlice(tableData)
 		if len(tableDataSlice) == 0 {
 			return nil, fmt.Errorf("table %v has no records", table)
@@ -192,7 +198,15 @@ func expandSequenceExpr(value, caseTag string, sequencerMapping data.Map, sequen
 
 	if strings.Contains(value, "$") {
 		expr, key := getSequencerExpr(value, sequencer)
+
 		seqValue, ok := sequencerValues[key]
+
+		if strings.Contains(value, ".parent") {
+
+			fmt.Println("VV: %v %v %v %v %v\n", expr, value, caseTag, seqValue, ok)
+
+		}
+
 		if !ok {
 			seqValue, ok = sequencerValues.GetValue(key)
 		}
@@ -277,7 +291,6 @@ func allocateTableSequence(values map[string]interface{}, table string, state da
 			stateKey = prefix + table + "." + key
 			tablesMapping.SetValue(sequencerKey, seqValue)
 		}
-		break
 	}
 
 	idState := data.NewMap()
