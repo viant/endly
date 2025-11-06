@@ -3,6 +3,12 @@ package workflow
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
+	"path"
+	"strings"
+	"sync"
+
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
 	"github.com/viant/afs/url"
@@ -13,11 +19,6 @@ import (
 	"github.com/viant/endly/model/msg"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
-	"log"
-	"os"
-	"path"
-	"strings"
-	"sync"
 )
 
 const (
@@ -347,6 +348,11 @@ func (s *Service) enableLoggingIfNeeded(context *endly.Context, request *RunRequ
 			subdir = request.LogSubdir
 		}
 		var logDirectory = path.Join(request.LogDirectory, subdir)
+
+		if ok, _ := s.fs.Exists(context.Background(), logDirectory); strings.Contains(logDirectory, "/logs") && ok {
+			s.fs.Delete(context.Background(), logDirectory)
+		}
+
 		logger := NewLogger(logDirectory, context.Listener)
 		context.Listener = logger.AsEventListener()
 	}
