@@ -3,6 +3,14 @@ package endly
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
+	"path"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	uuid "github.com/satori/go.uuid"
 	"github.com/viant/afs/url"
 	"github.com/viant/endly/internal/debug"
@@ -13,13 +21,6 @@ import (
 	"github.com/viant/toolbox/data"
 	tudf "github.com/viant/toolbox/data/udf"
 	"github.com/viant/toolbox/storage"
-	"os"
-	"os/exec"
-	"path"
-	"strings"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 // EndlyPanic env key name to skip recover in case of panic, export ENDLY_PANIC=true
@@ -472,6 +473,26 @@ func predefinedRegistry() data.Map {
 
 	result.Put("env", func(key string) interface{} {
 		return os.Getenv(key)
+	})
+
+	result.Put("IsDefined", func(expr interface{}, data data.Map) (interface{}, error) {
+		var node = data
+		textExpr := toolbox.AsString(expr)
+		if textExpr == "" {
+			return false, nil
+		}
+		for _, part := range strings.Split(textExpr, ".") {
+			if len(node) == 0 {
+				return false, nil
+			}
+			has := node.Has(toolbox.AsString(part))
+			if !has {
+				return false, nil
+			}
+			node = data.GetMap(part)
+
+		}
+		return true, nil
 	})
 	return result
 }
