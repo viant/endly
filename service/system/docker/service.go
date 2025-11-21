@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	imgt "github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 	"github.com/go-errors/errors"
 	"github.com/viant/endly"
@@ -124,9 +125,9 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 	}
 
 	pullRequest := &PullRequest{
-		Image:            request.Image,
-		Credentials:      request.Credentials,
-		ImagePullOptions: request.ImagePullOptions,
+		Image:       request.Image,
+		Credentials: request.Credentials,
+		PullOptions: request.PullOptions,
 	}
 
 	pullRequest.Platform = request.Platform
@@ -182,7 +183,7 @@ func (s *service) pull(context *endly.Context, request *PullRequest) (*PullRespo
 	}
 	listRequest := &ImageListRequest{}
 	listRequest.All = true
-	listSummary := make([]types.ImageSummary, 0)
+	listSummary := make([]imgt.Summary, 0)
 	if err = runAdapter(context, listRequest, &listSummary); err != nil {
 		return nil, err
 	}
@@ -190,7 +191,7 @@ func (s *service) pull(context *endly.Context, request *PullRequest) (*PullRespo
 		for _, image := range listSummary {
 			for _, tag := range image.RepoTags {
 				if tag == request.Image {
-					response.ImageSummary = image
+					response.Summary = image
 					return response, nil
 				}
 			}
@@ -198,7 +199,7 @@ func (s *service) pull(context *endly.Context, request *PullRequest) (*PullRespo
 	}
 	var reader io.ReadCloser
 	pullRequest := &ImagePullRequest{}
-	pullRequest.ImagePullOptions = request.ImagePullOptions
+	pullRequest.PullOptions = request.PullOptions
 	pullRequest.RefStr = request.Image
 	tag := NewTag(request.Image)
 
