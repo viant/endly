@@ -7,7 +7,9 @@ import (
 	types "github.com/docker/docker/api/types"
 	checkpoint "github.com/docker/docker/api/types/checkpoint"
 	container "github.com/docker/docker/api/types/container"
+	events "github.com/docker/docker/api/types/events"
 	filters "github.com/docker/docker/api/types/filters"
+	image "github.com/docker/docker/api/types/image"
 	network "github.com/docker/docker/api/types/network"
 	auth "github.com/docker/docker/api/types/registry"
 	swarm "github.com/docker/docker/api/types/swarm"
@@ -60,12 +62,12 @@ type ContainerStatPathRequest struct {
 
 // CopyToContainerRequest represents request
 type CopyToContainerRequest struct {
-	service_                     *client.Client
-	ctx                          context.Context
-	ContainerID                  string
-	DstPath                      string
-	Content                      io.Reader
-	types.CopyToContainerOptions `json:",inline" yaml:",inline"`
+	service_                         *client.Client
+	ctx                              context.Context
+	ContainerID                      string
+	DstPath                          string
+	Content                          io.Reader
+	container.CopyToContainerOptions `json:",inline" yaml:",inline"`
 }
 
 // ServerVersionRequest represents request
@@ -190,9 +192,9 @@ type ImageHistoryRequest struct {
 type ImageImportRequest struct {
 	service_ *client.Client
 	ctx      context.Context
-	types.ImageImportSource
+	image.ImportSource
 	Ref     string
-	Options types.ImageImportOptions `json:",inline" yaml:",inline"`
+	Options image.ImportOptions `json:",inline" yaml:",inline"`
 }
 
 // ContainerExecCreateRequest represents request
@@ -200,7 +202,7 @@ type ContainerExecCreateRequest struct {
 	service_  *client.Client
 	ctx       context.Context
 	Container string
-	Config    types.ExecConfig
+	Config    container.ExecOptions
 }
 
 // ContainerExecStartRequest represents request
@@ -208,7 +210,7 @@ type ContainerExecStartRequest struct {
 	service_ *client.Client
 	ctx      context.Context
 	ExecID   string
-	Config   types.ExecStartCheck
+	Config   container.ExecStartOptions
 }
 
 // ContainerExecAttachRequest represents request
@@ -216,7 +218,7 @@ type ContainerExecAttachRequest struct {
 	service_ *client.Client
 	ctx      context.Context
 	ExecID   string
-	Config   types.ExecStartCheck
+	Config   container.ExecStartOptions
 }
 
 // ContainerExecInspectRequest represents request
@@ -325,9 +327,9 @@ type PluginDisableRequest struct {
 
 // ImageListRequest represents request
 type ImageListRequest struct {
-	service_               *client.Client
-	ctx                    context.Context
-	types.ImageListOptions `json:",inline" yaml:",inline"`
+	service_          *client.Client
+	ctx               context.Context
+	image.ListOptions `json:",inline" yaml:",inline"`
 }
 
 // PluginPushRequest represents request
@@ -371,18 +373,18 @@ type PluginUpgradeRequest struct {
 
 // ImagePullRequest represents request
 type ImagePullRequest struct {
-	service_               *client.Client
-	ctx                    context.Context
-	RefStr                 string
-	types.ImagePullOptions `json:",inline" yaml:",inline"`
+	service_          *client.Client
+	ctx               context.Context
+	RefStr            string
+	image.PullOptions `json:",inline" yaml:",inline"`
 }
 
 // NetworkInspectRequest represents request
 type NetworkInspectRequest struct {
-	service_                    *client.Client
-	ctx                         context.Context
-	NetworkID                   string
-	types.NetworkInspectOptions `json:",inline" yaml:",inline"`
+	service_               *client.Client
+	ctx                    context.Context
+	NetworkID              string
+	network.InspectOptions `json:",inline" yaml:",inline"`
 }
 
 // NetworkConnectRequest represents request
@@ -396,10 +398,10 @@ type NetworkConnectRequest struct {
 
 // NetworkCreateRequest represents request
 type NetworkCreateRequest struct {
-	service_            *client.Client
-	ctx                 context.Context
-	Name                string
-	types.NetworkCreate `json:",inline" yaml:",inline"`
+	service_              *client.Client
+	ctx                   context.Context
+	Name                  string
+	network.CreateOptions `json:",inline" yaml:",inline"`
 }
 
 // PluginListRequest represents request
@@ -463,9 +465,9 @@ type PluginEnableRequest struct {
 
 // NetworkListRequest represents request
 type NetworkListRequest struct {
-	service_                 *client.Client
-	ctx                      context.Context
-	types.NetworkListOptions `json:",inline" yaml:",inline"`
+	service_            *client.Client
+	ctx                 context.Context
+	network.ListOptions `json:",inline" yaml:",inline"`
 }
 
 // ContainerWaitRequest represents request
@@ -512,10 +514,10 @@ type ContainerCreateRequest struct {
 
 // ImagePushRequest represents request
 type ImagePushRequest struct {
-	service_               *client.Client
-	ctx                    context.Context
-	Image                  string
-	types.ImagePushOptions `json:",inline" yaml:",inline"`
+	service_          *client.Client
+	ctx               context.Context
+	Image             string
+	image.PushOptions `json:",inline" yaml:",inline"`
 }
 
 // ImagesPruneRequest represents request
@@ -565,9 +567,9 @@ type SwarmJoinRequest struct {
 
 // EventsRequest represents request
 type EventsRequest struct {
-	service_            *client.Client
-	ctx                 context.Context
-	types.EventsOptions `json:",inline" yaml:",inline"`
+	service_           *client.Client
+	ctx                context.Context
+	events.ListOptions `json:",inline" yaml:",inline"`
 }
 
 // DialHijackRequest represents request
@@ -712,10 +714,10 @@ type ContainerStopRequest struct {
 
 // ImageSearchRequest represents request
 type ImageSearchRequest struct {
-	service_                 *client.Client
-	ctx                      context.Context
-	Term                     string
-	types.ImageSearchOptions `json:",inline" yaml:",inline"`
+	service_           *client.Client
+	ctx                context.Context
+	Term               string
+	auth.SearchOptions `json:",inline" yaml:",inline"`
 }
 
 // ContainerUnpauseRequest represents request
@@ -777,10 +779,10 @@ type ContainerLogsRequest struct {
 
 // ImageRemoveRequest represents request
 type ImageRemoveRequest struct {
-	service_                 *client.Client
-	ctx                      context.Context
-	ImageID                  string
-	types.ImageRemoveOptions `json:",inline" yaml:",inline"`
+	service_            *client.Client
+	ctx                 context.Context
+	ImageID             string
+	image.RemoveOptions `json:",inline" yaml:",inline"`
 }
 
 // TaskLogsRequest represents request
@@ -809,10 +811,10 @@ type NodeUpdateRequest struct {
 
 // ImageCreateRequest represents request
 type ImageCreateRequest struct {
-	service_                 *client.Client
-	ctx                      context.Context
-	ParentReference          string
-	types.ImageCreateOptions `json:",inline" yaml:",inline"`
+	service_            *client.Client
+	ctx                 context.Context
+	ParentReference     string
+	image.CreateOptions `json:",inline" yaml:",inline"`
 }
 
 // NewVersionErrorRequest represents request
@@ -1566,7 +1568,7 @@ func (r *ImageImportRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.ImageImport(r.ctx, r.ImageImportSource, r.Ref, r.Options)
+	result, err = r.service_.ImageImport(r.ctx, r.ImportSource, r.Ref, r.Options)
 	return result, err
 }
 
@@ -2070,7 +2072,7 @@ func (r *ImageListRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.ImageList(r.ctx, r.ImageListOptions)
+	result, err = r.service_.ImageList(r.ctx, r.ListOptions)
 	return result, err
 }
 
@@ -2238,7 +2240,7 @@ func (r *ImagePullRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.ImagePull(r.ctx, r.RefStr, r.ImagePullOptions)
+	result, err = r.service_.ImagePull(r.ctx, r.RefStr, r.PullOptions)
 	return result, err
 }
 
@@ -2266,7 +2268,7 @@ func (r *NetworkInspectRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.NetworkInspect(r.ctx, r.NetworkID, r.NetworkInspectOptions)
+	result, err = r.service_.NetworkInspect(r.ctx, r.NetworkID, r.InspectOptions)
 	return result, err
 }
 
@@ -2322,7 +2324,7 @@ func (r *NetworkCreateRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.NetworkCreate(r.ctx, r.Name, r.NetworkCreate)
+	result, err = r.service_.NetworkCreate(r.ctx, r.Name, r.CreateOptions)
 	return result, err
 }
 
@@ -2574,7 +2576,7 @@ func (r *NetworkListRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.NetworkList(r.ctx, r.NetworkListOptions)
+	result, err = r.service_.NetworkList(r.ctx, r.ListOptions)
 	return result, err
 }
 
@@ -2630,7 +2632,7 @@ func (r *ImageLoadRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.ImageLoad(r.ctx, r.Input, r.Quiet)
+	result, err = r.service_.ImageLoad(r.ctx, r.Input, client.ImageLoadWithQuiet(r.Quiet))
 	return result, err
 }
 
@@ -2742,7 +2744,7 @@ func (r *ImagePushRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.ImagePush(r.ctx, r.Image, r.ImagePushOptions)
+	result, err = r.service_.ImagePush(r.ctx, r.Image, r.PushOptions)
 	return result, err
 }
 
@@ -2938,7 +2940,7 @@ func (r *EventsRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, _ = r.service_.Events(r.ctx, r.EventsOptions)
+	result, _ = r.service_.Events(r.ctx, r.ListOptions)
 	return result, err
 }
 
@@ -3470,7 +3472,7 @@ func (r *ImageSearchRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.ImageSearch(r.ctx, r.Term, r.ImageSearchOptions)
+	result, err = r.service_.ImageSearch(r.ctx, r.Term, r.SearchOptions)
 	return result, err
 }
 
@@ -3722,7 +3724,7 @@ func (r *ImageRemoveRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.ImageRemove(r.ctx, r.ImageID, r.ImageRemoveOptions)
+	result, err = r.service_.ImageRemove(r.ctx, r.ImageID, r.RemoveOptions)
 	return result, err
 }
 
@@ -3834,7 +3836,7 @@ func (r *ImageCreateRequest) Call() (result interface{}, err error) {
 	if r.service_ == nil {
 		return nil, errors.New("service was empty")
 	}
-	result, err = r.service_.ImageCreate(r.ctx, r.ParentReference, r.ImageCreateOptions)
+	result, err = r.service_.ImageCreate(r.ctx, r.ParentReference, r.CreateOptions)
 	return result, err
 }
 

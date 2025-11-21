@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
 	network "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
@@ -37,7 +38,7 @@ type RunRequest struct {
 	ContainerName    string
 
 	Secrets map[secret.Key]secret.Resource `description:"map of secrets used within env"`
-	types.ImagePullOptions
+	image.PullOptions
 }
 
 type RunResponse struct {
@@ -157,14 +158,14 @@ type LogsResponse struct {
 
 // PullRequest represents pull request
 type PullRequest struct {
-	Credentials            string
-	Image                  string
-	types.ImagePullOptions `json:",inline" yaml:",inline"`
+	Credentials       string
+	Image             string
+	image.PullOptions `json:",inline" yaml:",inline"`
 }
 
 // PullResponse represents pull response
 type PullResponse struct {
-	types.ImageSummary
+	image.Summary
 	Stdout []string
 }
 
