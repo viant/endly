@@ -295,5 +295,5 @@ pipeline:
 
 ### Global parameters
 
- - APIVersion (default 1.37)
+ - APIVersion (optional). If not set, the client negotiates the API version with the daemon. For modern daemons, minimum supported is 1.44.
  
