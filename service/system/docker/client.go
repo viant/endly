@@ -1,6 +1,9 @@
 package docker
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/docker/docker/client"
 	"github.com/viant/endly"
 	"github.com/viant/endly/internal/util"
@@ -32,12 +35,9 @@ func GetCtxClient(ctx *endly.Context) (*CtxClient, error) {
 		result.AuthToken = make(map[string]string)
 	}
 	result.Context = context.Background()
-	if result.APIVersion == "" {
-		result.APIVersion = "1.37"
-	}
-
-	//TODO extends CtxClient with global parameters to enable https client and other types
-	if result.Client, err = client.NewClientWithOpts(client.FromEnv, client.WithVersion(result.APIVersion)); err != nil {
+	// Prefer API version negotiation with the daemon to avoid hard-coding.
+	// If APIVersion is set later via initClient, we will recreate the client accordingly.
+	if result.Client, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation()); err != nil {
 		return nil, err
 	}
 	err = ctx.Replace(clientKey, result)
@@ -56,7 +56,19 @@ func initClient(context *endly.Context, rawRequest map[string]interface{}) error
 	mappings := util.BuildLowerCaseMapping(rawRequest)
 	if key, ok := mappings["apiversion"]; ok {
 		ctxClient.APIVersion = toolbox.AsString(rawRequest[key])
+		// Ensure minimum supported version 1.44 to prevent daemon rejection.
+		parts := strings.Split(ctxClient.APIVersion, ".")
+		if len(parts) == 2 {
+			if minor, convErr := strconv.Atoi(parts[1]); convErr == nil {
+				if minor < 44 {
+					ctxClient.APIVersion = "1.44"
+				}
+			}
+		}
 		ctxClient.Client, err = client.NewClientWithOpts(client.FromEnv, client.WithVersion(ctxClient.APIVersion))
+		return err
 	}
+	// If no explicit version provided, recreate with negotiation to pick latest compatible.
+	ctxClient.Client, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	return err
 }
