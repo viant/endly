@@ -227,8 +227,30 @@
             function run() {
                 const plan = document.querySelector('#plan').value
 
+                const captureEnabled = document.querySelector('#captureEnabled').checked
+                const captureSinkURL = document.querySelector('#captureSinkURL').value
+                const captureFlushIntervalMs = parseInt(document.querySelector('#captureFlushIntervalMs').value || "0", 10)
+
+                const navTimeoutMs = parseInt(document.querySelector('#navTimeoutMs').value || "0", 10)
+                const navAutoScrollMs = parseInt(document.querySelector('#navAutoScrollMs').value || "0", 10)
+                const navScrollDelayMs = parseInt(document.querySelector('#navScrollDelayMs').value || "0", 10)
+                const navStableWindowMs = parseInt(document.querySelector('#navStableWindowMs').value || "0", 10)
+                const navMaxScrollSteps = parseInt(document.querySelector('#navMaxScrollSteps').value || "0", 10)
+
                 const values = {
-                    plan: plan
+                    plan: plan,
+                    capture: {
+                        enabled: captureEnabled,
+                        sinkURL: captureSinkURL,
+                        flushIntervalMs: captureFlushIntervalMs
+                    },
+                    navigation: {
+                        timeoutMs: navTimeoutMs,
+                        autoScrollMs: navAutoScrollMs,
+                        scrollDelayMs: navScrollDelayMs,
+                        stableWindowMs: navStableWindowMs,
+                        maxScrollSteps: navMaxScrollSteps
+                    }
                 }
                 try {
 
@@ -251,6 +273,15 @@
                             if (payload.Status === "ok") {
                                 document.querySelector('#history').value += payload.Plan + "\n"
                                 document.querySelector('#output').value = payload.Output
+                                if (payload.CaptureSinkURL) {
+                                    let summary = ''
+                                    if (payload.CaptureSummary) {
+                                        summary = ` (${payload.CaptureSummary.RequestsCompleted || 0} requests, ${payload.CaptureSummary.ConsoleEntries || 0} console)`
+                                    }
+                                    document.querySelector('#captureInfo').innerHTML = `Capture: ${payload.CaptureSinkURL}${summary}`
+                                } else {
+                                    document.querySelector('#captureInfo').innerHTML = ''
+                                }
                             }
 
                         }).catch((error) => {
@@ -388,6 +419,35 @@
                 </div>
                 <hr/>
                 <div class="form-row">
+                    <label class="form-label">Capture</label>
+                    <input type="checkbox" id="captureEnabled" style="margin-right:6px;">
+                    <input id="captureSinkURL" class="form-input" value="file:///tmp/endly-webplanner-events.jsonl" placeholder="file://... jsonl sink">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Flush ms</label>
+                    <input id="captureFlushIntervalMs" class="form-input" value="500">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Nav timeout</label>
+                    <input id="navTimeoutMs" class="form-input" value="45000">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Auto scroll</label>
+                    <input id="navAutoScrollMs" class="form-input" value="5000">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Scroll delay</label>
+                    <input id="navScrollDelayMs" class="form-input" value="300">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Stable ms</label>
+                    <input id="navStableWindowMs" class="form-input" value="1500">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">Max steps</label>
+                    <input id="navMaxScrollSteps" class="form-input" value="30">
+                </div>
+                <div class="form-row">
                     <label for="exclusion" class="form-label">Exclusion</label>
                     <input id="exclusion" class="form-input selector" placeholder="selector exclusion fragments">
                 </div>
@@ -400,6 +460,9 @@
         </div>
         <div class="form-row">
             <input value="Run" type="button" id="run" class="form-button">
+        </div>
+        <div class="form-row">
+            <span id="captureInfo" style="font-size:12px;color:#333;"></span>
         </div>
         <div class="form-row">
             <span id="errorMsg" class="error"></span>

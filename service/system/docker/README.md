@@ -84,6 +84,8 @@ Endly workfow implementing described steps.
         action: docker:run
         image: endly/endly:latest-ubuntu16.04
         name: endly
+        # set block to true to wait until container exits
+        block: true
         ports:
           7722: 22
         mount:
@@ -113,6 +115,38 @@ Endly workfow implementing described steps.
         ports:
           8082: 8082
     ```
+
+#### Container exec
+
+The Docker service exposes Container Exec APIs via direct bindings. Example flow:
+
+```yaml
+pipeline:
+  create:
+    action: docker:containerExecCreate
+    container: my-container
+    config:
+      cmd: ["/bin/sh", "-c", "echo hello && sleep 1 && echo done"]
+      attachStdout: true
+      attachStderr: true
+  attach:
+    action: docker:containerExecAttach
+    execID: ${create.Response.ID}
+    config:
+      detach: false
+      tty: false
+  start:
+    action: docker:containerExecStart
+    execID: ${create.Response.ID}
+    config:
+      detach: false
+      tty: false
+  inspect:
+    action: docker:containerExecInspect
+    execID: ${create.Response.ID}
+```
+
+All Docker client methods are available as `docker:<methodName in lowerCamelCase>`, for example `docker:containerExecCreate`, `docker:containerExecStart`, `docker:containerExecAttach`, `docker:containerExecInspect`.
 
 #### Docker container status
 * docker cli

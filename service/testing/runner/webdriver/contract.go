@@ -158,11 +158,23 @@ type WebElementCallResponse struct {
 type RunRequest struct {
 	SessionID      string
 	Browser        string
-	RemoteSelenium string //remote selenium resource
+	RemoteSelenium string             //remote selenium resource
+	Navigation     *NavigationOptions `description:"optional Get(url) navigation guard options"`
 	Actions        []*Action
 	ActionDelaysMs int           `description:"slows down action with specified delay"`
 	Commands       []interface{} `description:"list of selenium command: {web element selector}.WebElementMethod(params),  or WebDriverMethod(params), or wait map "`
 	Expect         interface{}   `description:"If specified it will validated response as actual"`
+}
+
+type NavigationOptions struct {
+	TimeoutMs      int `description:"page load timeout for Get(url); on timeout it warns and continues"`
+	AutoScrollMs   int `description:"if > 0, scrolls down after nav timeout to load lazy content"`
+	ScrollDelayMs  int `description:"delay between scroll steps"`
+	StableWindowMs int `description:"stop autoscroll early if scrollHeight stays unchanged for this long"`
+	MaxScrollSteps int `description:"max number of scroll steps during autoscroll"`
+	IdleThreshold  int `description:"network idle threshold (inflight requests <= threshold)"`
+	IdleWindowMs   int `description:"consider network idle only if threshold holds for this long"`
+	IdleMaxWaitMs  int `description:"max time to wait for network idle during stabilization (0 uses AutoScrollMs/TimeoutMs)"`
 }
 
 func (r *RunRequest) asWaitAction(parser *parser, candidate interface{}) (*Action, error) {
@@ -291,6 +303,64 @@ type RunResponse struct {
 	Data         map[string]interface{}
 	LookupErrors []string
 	Assert       *validator.AssertResponse
+}
+
+type CaptureStartRequest struct {
+	SessionID       string
+	SinkURL         string `description:"optional AFS URL for JSONL event sink (file://...)"` // proposal C
+	FlushIntervalMs int    `description:"optional sink sync interval in ms (file sinks only)"`
+	MaxBodyBytes    int
+	Redact          *bool
+	RedactHeaders   []string
+	EnableConsole   *bool
+	EnableNetwork   *bool
+	IncludeBodies   *bool
+}
+
+type CaptureStartResponse struct {
+	SessionID string
+	Enabled   bool
+	Warning   string
+}
+
+type CaptureStopRequest struct {
+	SessionID string
+}
+
+type CaptureStopResponse struct {
+	SessionID string
+	Summary   *CaptureSummary
+}
+
+type CaptureStatusRequest struct {
+	SessionID string
+}
+
+type CaptureStatusResponse struct {
+	SessionID string
+	Summary   *CaptureSummary
+}
+
+type CaptureClearRequest struct {
+	SessionID string
+}
+
+type CaptureClearResponse struct {
+	SessionID string
+}
+
+type CaptureExportRequest struct {
+	SessionID      string
+	MaxEntries     int
+	IncludeConsole *bool
+	IncludeNetwork *bool
+}
+
+type CaptureExportResponse struct {
+	SessionID string
+	Summary   *CaptureSummary
+	Console   []*ConsoleEntry
+	Network   []*NetworkTransaction
 }
 
 // MethodCall represents selenium call.

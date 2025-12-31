@@ -11,6 +11,9 @@ type Session struct {
 	Browser      string
 	Pid          int
 	Server       string
+	Remote       string
+	Capture      *CaptureState
+	Net          *netTracker
 	driver       selenium.WebDriver
 	service      *selenium.Service
 	Capabilities []string

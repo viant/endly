@@ -3,12 +3,14 @@ package webdriver
 import (
 	"errors"
 	"fmt"
+	"github.com/viant/endly/model/msg"
 	"strings"
 	"time"
 
 	"github.com/tebeka/selenium"
 	"github.com/tebeka/selenium/chrome"
 	"github.com/tebeka/selenium/firefox"
+	selog "github.com/tebeka/selenium/log"
 	"github.com/viant/afs"
 	"github.com/viant/afs/url"
 	"github.com/viant/endly"
@@ -97,6 +99,7 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 		Data:         make(map[string]interface{}),
 		LookupErrors: make([]string, 0),
 	}
+	navigation := navigationWithDefaults(request.Navigation)
 	sessions := Sessions(context)
 	session, hasSession := sessions[request.SessionID]
 
@@ -110,6 +113,8 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 			return nil, err
 		}
 		request.SessionID = openResponse.SessionID
+		sessions = Sessions(context)
+		session = sessions[request.SessionID]
 	}
 	response.SessionID = request.SessionID
 	if len(request.Actions) == 0 {
@@ -126,6 +131,16 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 				}
 			}
 			if action.Selector == nil {
+				if session != nil && isGetMethod(call.Method) && len(call.Parameters) == 1 && toolbox.IsString(call.Parameters[0]) {
+					URL := toolbox.AsString(call.Parameters[0])
+					if err := s.getWithGuard(context, session, URL, navigation); err != nil {
+						return nil, err
+					}
+					if session.Capture != nil {
+						session.Capture.Drain(session)
+					}
+					continue
+				}
 				callResponse, err := s.callWebDriver(context, &WebDriverCallRequest{
 					Key:       action.Key,
 					SessionID: request.SessionID,
@@ -136,6 +151,9 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 					return nil, err
 				}
 				util.MergeMap(response.Data, callResponse.Data)
+				if session != nil && session.Capture != nil {
+					session.Capture.Drain(session)
+				}
 				continue
 			}
 			callResponse, err := s.callWebElement(context, &WebElementCallRequest{
@@ -159,6 +177,9 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 				response.LookupErrors = append(response.LookupErrors, callResponse.LookupError)
 			}
 			util.MergeMap(response.Data, callResponse.Data)
+			if session != nil && session.Capture != nil {
+				session.Capture.Drain(session)
+			}
 			if actionDelay > 0 {
 				time.Sleep(actionDelay)
 			}
@@ -516,7 +537,7 @@ func (s *service) start(context *endly.Context, request *StartRequest) (*StartRe
 			Directory:  defaultTarget,
 			CheckError: true,
 		},
-		Arguments:       []string{"-jar", fmt.Sprintf("-Dwebdriver.gecko.driver=%v", response.DriverPath), "-jar", response.ServerPath, "-port", toolbox.AsString(request.Port)},
+		Arguments:       []string{fmt.Sprintf("-Dwebdriver.gecko.driver=%v", response.DriverPath), "-jar", response.ServerPath, "-port", toolbox.AsString(request.Port)},
 		ImmuneToHangups: true,
 	})
 	if serviceResponse.Error != "" {
@@ -539,6 +560,7 @@ func (s *service) session(context *endly.Context, sessionID string) (*Session, e
 }
 
 func (s *service) openSession(context *endly.Context, request *OpenSessionRequest) (*Session, error) {
+	ensureOpenSessionDefaults(request)
 	sessionID := request.SessionID
 	sessions := Sessions(context)
 	session, ok := sessions[sessionID]
@@ -557,22 +579,14 @@ func (s *service) openSession(context *endly.Context, request *OpenSessionReques
 		switch session.Browser {
 		case ChromeBrowser:
 			caps.AddChrome(chrome.Capabilities{Args: request.Capabilities})
+			caps.SetLogLevel(selog.Performance, selog.All)
+			caps.SetLogLevel(selog.Browser, selog.All)
 		case FirefoxBrowser:
 			caps.AddFirefox(firefox.Capabilities{Args: request.Capabilities})
+			caps.SetLogLevel(selog.Browser, selog.All)
 		}
 	} else {
 		caps["browserName"] = request.Browser
-	}
-
-	if session.Server == "" {
-		driver, err := selenium.NewRemote(caps, request.Remote)
-		if err != nil {
-			return nil, err
-		}
-		session.driver = driver
-		context.Deffer(func() {
-			driver.Quit()
-		})
 	}
 
 	var err error
@@ -580,6 +594,7 @@ func (s *service) openSession(context *endly.Context, request *OpenSessionReques
 	if err != nil {
 		return nil, err
 	}
+	session.Remote = request.Remote
 	sessions[sessionID] = session
 	context.Deffer(func() {
 		session.driver.Quit()
@@ -721,6 +736,106 @@ func (s *service) registerRoutes() {
 		},
 	})
 
+	s.Register(&endly.Route{
+		Action: "capture-start",
+		RequestInfo: &endly.ActionInfo{
+			Description: "start capturing console and network (Chrome/Edge CDP)",
+		},
+		RequestProvider: func() interface{} {
+			return &CaptureStartRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &CaptureStartResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			req, ok := request.(*CaptureStartRequest)
+			if !ok {
+				return nil, fmt.Errorf("unsupported request type: %T", request)
+			}
+			return s.captureStart(context, req)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "capture-stop",
+		RequestInfo: &endly.ActionInfo{
+			Description: "stop capturing console and network (Chrome/Edge CDP)",
+		},
+		RequestProvider: func() interface{} {
+			return &CaptureStopRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &CaptureStopResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			req, ok := request.(*CaptureStopRequest)
+			if !ok {
+				return nil, fmt.Errorf("unsupported request type: %T", request)
+			}
+			return s.captureStop(context, req)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "capture-status",
+		RequestInfo: &endly.ActionInfo{
+			Description: "capture status and counters",
+		},
+		RequestProvider: func() interface{} {
+			return &CaptureStatusRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &CaptureStatusResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			req, ok := request.(*CaptureStatusRequest)
+			if !ok {
+				return nil, fmt.Errorf("unsupported request type: %T", request)
+			}
+			return s.captureStatus(context, req)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "capture-clear",
+		RequestInfo: &endly.ActionInfo{
+			Description: "clear captured console and network buffers",
+		},
+		RequestProvider: func() interface{} {
+			return &CaptureClearRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &CaptureClearResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			req, ok := request.(*CaptureClearRequest)
+			if !ok {
+				return nil, fmt.Errorf("unsupported request type: %T", request)
+			}
+			return s.captureClear(context, req)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "capture-export",
+		RequestInfo: &endly.ActionInfo{
+			Description: "export captured console and network buffers",
+		},
+		RequestProvider: func() interface{} {
+			return &CaptureExportRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &CaptureExportResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			req, ok := request.(*CaptureExportRequest)
+			if !ok {
+				return nil, fmt.Errorf("unsupported request type: %T", request)
+			}
+			return s.captureExport(context, req)
+		},
+	})
+
 }
 
 // New creates a new webdriver service
@@ -740,4 +855,198 @@ func pair(value string) (string, string) {
 		return pair[0], pair[1]
 	}
 	return value, ""
+}
+
+func ensureOpenSessionDefaults(request *OpenSessionRequest) {
+	if request == nil {
+		return
+	}
+	if request.SessionID == "" {
+		request.SessionID = "localhost:4444"
+	}
+	if request.Remote == "" {
+		host, port := pair(request.SessionID)
+		request.Remote = fmt.Sprintf("http://%v:%v/wd/hub", host, port)
+	}
+}
+
+func isGetMethod(method string) bool {
+	return strings.EqualFold(method, "Get")
+}
+
+func navigationWithDefaults(nav *NavigationOptions) NavigationOptions {
+	if nav == nil {
+		nav = &NavigationOptions{}
+	}
+	out := *nav
+	if out.TimeoutMs <= 0 {
+		out.TimeoutMs = 45000
+	}
+	if out.AutoScrollMs < 0 {
+		out.AutoScrollMs = 0
+	}
+	if out.ScrollDelayMs <= 0 {
+		out.ScrollDelayMs = 300
+	}
+	if out.StableWindowMs <= 0 {
+		out.StableWindowMs = 1500
+	}
+	if out.MaxScrollSteps <= 0 {
+		out.MaxScrollSteps = 30
+	}
+	if out.IdleThreshold < 0 {
+		out.IdleThreshold = 0
+	}
+	if out.IdleWindowMs <= 0 {
+		out.IdleWindowMs = 1500
+	}
+	if out.IdleMaxWaitMs < 0 {
+		out.IdleMaxWaitMs = 0
+	}
+	return out
+}
+
+func (s *service) getWithGuard(context *endly.Context, session *Session, URL string, nav NavigationOptions) error {
+	if session == nil || session.driver == nil {
+		return fmt.Errorf("webdriver session not open")
+	}
+	_ = session.driver.SetPageLoadTimeout(time.Duration(nav.TimeoutMs) * time.Millisecond)
+	err := session.driver.Get(URL)
+	if err == nil {
+		return nil
+	}
+	if !isPageLoadTimeout(err) {
+		return err
+	}
+	context.Publish(msg.NewOutputEvent("Navigation timeout (continuing)", "webdriver.get", map[string]any{
+		"url":   URL,
+		"error": err.Error(),
+	}))
+	if nav.AutoScrollMs > 0 {
+		if session.Capture == nil && session.Net == nil && isChromeLike(session.Browser) {
+			session.Net = &netTracker{}
+		}
+		s.autoScrollStabilize(context, session, nav)
+	}
+	return nil
+}
+
+func isPageLoadTimeout(err error) bool {
+	if err == nil {
+		return false
+	}
+	if strings.Contains(strings.ToLower(err.Error()), "timeout") {
+		return true
+	}
+	var sErr *selenium.Error
+	if errors.As(err, &sErr) {
+		if sErr.LegacyCode == 21 { // legacy "timeout"
+			return true
+		}
+		if strings.Contains(strings.ToLower(sErr.Message), "timeout") {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *service) autoScrollStabilize(context *endly.Context, session *Session, nav NavigationOptions) {
+	maxWaitMs := nav.IdleMaxWaitMs
+	if maxWaitMs == 0 {
+		if nav.AutoScrollMs > 0 {
+			maxWaitMs = nav.AutoScrollMs
+		} else {
+			maxWaitMs = nav.TimeoutMs
+		}
+	}
+	deadline := time.Now().Add(time.Duration(maxWaitMs) * time.Millisecond)
+	delay := time.Duration(nav.ScrollDelayMs) * time.Millisecond
+	stableWindow := time.Duration(nav.StableWindowMs) * time.Millisecond
+	idleWindow := time.Duration(nav.IdleWindowMs) * time.Millisecond
+
+	var lastHeight float64 = -1
+	stableSince := time.Now()
+	idleSince := time.Time{}
+
+	for step := 0; step < nav.MaxScrollSteps && time.Now().Before(deadline); step++ {
+		height := s.scrollHeight(session)
+		if height >= 0 && height == lastHeight {
+			if time.Since(stableSince) >= stableWindow {
+				if s.isNetworkIdle(session, nav.IdleThreshold, idleWindow, &idleSince) {
+					return
+				}
+			}
+		} else {
+			stableSince = time.Now()
+			lastHeight = height
+		}
+
+		_, _ = session.driver.ExecuteScript("window.scrollBy(0, window.innerHeight || 800);", nil)
+		time.Sleep(delay)
+		if session.Capture != nil {
+			session.Capture.Drain(session)
+		} else if session.Net != nil {
+			session.Net.Drain(session.driver)
+		}
+		if time.Since(stableSince) >= stableWindow && s.isNetworkIdle(session, nav.IdleThreshold, idleWindow, &idleSince) {
+			return
+		}
+	}
+	_ = context // reserved for potential future warning publishing
+}
+
+func (s *service) isNetworkIdle(session *Session, threshold int, window time.Duration, idleSince *time.Time) bool {
+	if threshold < 0 {
+		threshold = 0
+	}
+	if window <= 0 {
+		window = 1500 * time.Millisecond
+	}
+
+	inflight := -1
+	if session.Capture != nil {
+		inflight = session.Capture.Summary().RequestsInFlight
+	} else if session.Net != nil {
+		inflight = session.Net.Inflight()
+	}
+	if inflight < 0 {
+		return true // cannot observe; do not block
+	}
+	if networkIdle(inflight, threshold) {
+		if idleSince != nil && idleSince.IsZero() {
+			*idleSince = time.Now()
+		}
+		if idleSince == nil {
+			return true
+		}
+		return time.Since(*idleSince) >= window
+	}
+	if idleSince != nil {
+		*idleSince = time.Time{}
+	}
+	return false
+}
+
+func (s *service) scrollHeight(session *Session) float64 {
+	if session == nil || session.driver == nil {
+		return -1
+	}
+	v, err := session.driver.ExecuteScript("return (document.body && document.body.scrollHeight) ? document.body.scrollHeight : 0;", nil)
+	if err != nil {
+		return -1
+	}
+	switch actual := v.(type) {
+	case float64:
+		return actual
+	case int:
+		return float64(actual)
+	case int64:
+		return float64(actual)
+	case uint64:
+		return float64(actual)
+	case string:
+		return toolbox.AsFloat(actual)
+	default:
+		return toolbox.AsFloat(actual)
+	}
 }
