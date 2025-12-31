@@ -37,6 +37,7 @@ type Service struct {
 	Keys       string
 	Target     string
 	started    bool
+	opened     bool
 }
 
 // NewService creates a new instance of Service with the provided config.

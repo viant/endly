@@ -14,13 +14,26 @@ import (
 //go:embed content/tracker.js
 var trackerCode string
 
+type RunResponsePayload struct {
+	Status         string
+	Message        string
+	Plan           string
+	Output         string
+	CaptureSinkURL string
+	CaptureSummary *webdriver.CaptureSummary
+}
+
 func (s *Service) RunCommands(lines []string) (string, error) {
+	return s.RunCommandsWithOptions(lines, nil)
+}
+
+func (s *Service) RunCommandsWithOptions(lines []string, nav *webdriver.NavigationOptions) (string, error) {
 	var commands []interface{}
 	if len(lines) == 0 {
 		return "", nil
 	}
 	if hasGet(lines) {
-		_, err := s.manager.Run(s.context, &webdriver.RunRequest{Commands: []interface{}{lines[0]}})
+		_, err := s.manager.Run(s.context, &webdriver.RunRequest{Commands: []interface{}{lines[0]}, Navigation: nav})
 		if err != nil {
 			return "", err
 		}
@@ -41,7 +54,7 @@ func (s *Service) RunCommands(lines []string) (string, error) {
 	if len(commands) == 0 {
 		return "", nil
 	}
-	ret, err := s.manager.Run(s.context, &webdriver.RunRequest{Commands: commands})
+	ret, err := s.manager.Run(s.context, &webdriver.RunRequest{Commands: commands, Navigation: nav})
 	if err != nil {
 		return "", err
 	}
@@ -84,6 +97,18 @@ func (s *Service) EnsureWebDriver() error {
 	return nil
 }
 
+func (s *Service) EnsureSession() error {
+	if s.opened {
+		return nil
+	}
+	_, err := s.manager.Run(s.context, &webdriver.OpenSessionRequest{})
+	if err != nil {
+		return err
+	}
+	s.opened = true
+	return nil
+}
+
 func (s *Service) handlerRequest(writer http.ResponseWriter, request *http.Request) {
 	enableCors(writer, request)
 	if request.Method == http.MethodOptions {
@@ -94,14 +119,8 @@ func (s *Service) handlerRequest(writer http.ResponseWriter, request *http.Reque
 		http.Error(writer, "invalid method:"+request.Method, http.StatusInternalServerError)
 		return
 	}
-	type Response struct {
-		Status  string
-		Message string
-		Plan    string
-		Output  string
-	}
-	response := &Response{Status: "ok"}
-	plan, output, err := s.runRequest(writer, request)
+	response := &RunResponsePayload{Status: "ok"}
+	plan, output, err := s.runRequest(writer, request, response)
 	if err != nil {
 		response.Status = "error"
 		response.Message = err.Error()
@@ -113,13 +132,19 @@ func (s *Service) handlerRequest(writer http.ResponseWriter, request *http.Reque
 	writer.Write(data)
 }
 
-func (s *Service) runRequest(writer http.ResponseWriter, request *http.Request) (string, string, error) {
+func (s *Service) runRequest(writer http.ResponseWriter, request *http.Request, response *RunResponsePayload) (string, string, error) {
 	data, err := io.ReadAll(request.Body)
 	if err != nil {
 		return "", "", err
 	}
 	type Input struct {
-		Plan string `json:"plan"`
+		Plan    string `json:"plan"`
+		Capture struct {
+			Enabled         bool   `json:"enabled"`
+			SinkURL         string `json:"sinkURL"`
+			FlushIntervalMs int    `json:"flushIntervalMs"`
+		} `json:"capture"`
+		Navigation *webdriver.NavigationOptions `json:"navigation"`
 	}
 	input := &Input{}
 	if err := json.Unmarshal(data, input); err != nil {
@@ -127,7 +152,31 @@ func (s *Service) runRequest(writer http.ResponseWriter, request *http.Request) 
 	}
 	var output string
 	if err = s.EnsureWebDriver(); err == nil {
-		output, err = s.RunCommands(strings.Split(input.Plan, "\n"))
+		if err = s.EnsureSession(); err != nil {
+			return input.Plan, "", err
+		}
+
+		if input.Capture.Enabled {
+			_, err = s.manager.Run(s.context, &webdriver.CaptureStartRequest{
+				SinkURL:         input.Capture.SinkURL,
+				FlushIntervalMs: input.Capture.FlushIntervalMs,
+			})
+			if err != nil {
+				return input.Plan, "", err
+			}
+			response.CaptureSinkURL = input.Capture.SinkURL
+		}
+
+		output, err = s.RunCommandsWithOptions(strings.Split(input.Plan, "\n"), input.Navigation)
+
+		if input.Capture.Enabled {
+			stop, stopErr := s.manager.Run(s.context, &webdriver.CaptureStopRequest{})
+			if stopErr == nil {
+				if stopResp, ok := stop.(*webdriver.CaptureStopResponse); ok {
+					response.CaptureSummary = stopResp.Summary
+				}
+			}
+		}
 	}
 	return input.Plan, output, err
 }

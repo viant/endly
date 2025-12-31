@@ -13,6 +13,11 @@ webdriver runner opens a web session to run a various action on web driver or we
 | webdriver | call-driver | call a method on web driver, i.e wb.GET(url)| [WebDriverCallRequest](contract.go) | [ServiceCallResponse](contract.go) |
 | webdriver | call-element | call a method on a web element, i.e. we.Click() | [WebElementCallRequest](contract.go) | [WebElementCallResponse](contract.go) |
 | webdriver | run | run set of action on a page | [RunRequest](contract.go) | [RunResponse](contract.go) |
+| webdriver | capture-start | start capturing console+network (Chrome/Edge) | [CaptureStartRequest](contract.go) | [CaptureStartResponse](contract.go) |
+| webdriver | capture-stop | stop capturing console+network | [CaptureStopRequest](contract.go) | [CaptureStopResponse](contract.go) |
+| webdriver | capture-status | get capture counters | [CaptureStatusRequest](contract.go) | [CaptureStatusResponse](contract.go) |
+| webdriver | capture-clear | clear capture buffers | [CaptureClearRequest](contract.go) | [CaptureClearResponse](contract.go) |
+| webdriver | capture-export | export buffered capture data | [CaptureExportRequest](contract.go) | [CaptureExportResponse](contract.go) |
 
 call-driver and call-element actions's method and parameters are proxied to stand along webdriver server via [webdriver client](http://github.com/tebeka/webdriver)
 
@@ -56,20 +61,14 @@ Time wait
 endly -r=test
 ```
 
-[@test.yaml](test/example_test.yaml)
+[@run.yaml](test/run.yaml)
  
 ```yaml
-defaults:
-  target:
-     URL: ssh://127.0.0.1/
-     credentials: localhost
 pipeline:
   init:
     action: webdriver:start
   test:
     action: webdriver:run
-    remotewebdriver:
-      URL: http://127.0.0.1:8085
     commands:
       - get(http://play.golang.org/?simple=1)
       - (#code).clear
@@ -82,18 +81,30 @@ pipeline:
           }
         )
       - (#run).click
-      - command: output = (#output).text
-        exit: $output.Text:/Endly/
-        sleepTimeMs: 1000
+      - command: stdout = (.stdout).text
+        exit: $stdout.Text:/Endly/
+        waitTimeMs: 60000
         repeat: 10
       - close
     expect:
-      output:
+      stdout:
         Text: /Hello Endly!/
+
+  defer:
+    action: webdriver:stop
 
 ```
  
 
     
 
+### Capture console + network (Chrome/Edge only)
 
+Capture uses ChromeDriver "performance" logs (CDP events) and can optionally fetch response bodies via ChromeDriver CDP endpoints.
+If `sinkURL` is provided, events are streamed as JSONL using `viant/afs` (for `file://` it appends by default).
+
+[@capture.yaml](test/capture.yaml)
+
+### Navigation guard for Get(url)
+
+`webdriver:run` can set `navigation` options to avoid hanging on pages that never finish loading. On timeout it warns/continues and can optionally autoscroll for a short duration to load lazy content.

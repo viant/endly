@@ -2,11 +2,12 @@ package criteria
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model/criteria/eval"
 	"github.com/viant/toolbox"
-	"testing"
 )
 
 func Test_EvaluateCriteria(t *testing.T) {
@@ -22,6 +23,14 @@ func Test_EvaluateCriteria(t *testing.T) {
 		HasError      bool
 	}{
 
+		{
+			Description: "Left operand expression",
+			Expression:  "${key1.blah}",
+			State: map[string]interface{}{
+				"key1": "123",
+			},
+			Expected: false,
+		},
 		{
 
 			Expression: "${httpTrips.Response[0].Body}://auctionwon/",
@@ -110,6 +119,7 @@ func Test_EvaluateCriteria(t *testing.T) {
 			},
 			Expected: true,
 		},
+
 		{
 			Description: "Simple true expression with ok = false",
 			Expression:  "$ok:true",

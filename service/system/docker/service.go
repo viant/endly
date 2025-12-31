@@ -17,6 +17,7 @@ import (
 	"log"
 	"path"
 	"strings"
+	"time"
 )
 
 const (
@@ -152,6 +153,26 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 
 	if _, err := s.start(context, startRequest); err != nil {
 		return nil, err
+	}
+	// If requested, block until the container is not running anymore
+	if request.Block {
+		for {
+			st, err := s.status(context, startRequest.AsStatusRequest())
+			if err != nil {
+				return nil, err
+			}
+			if len(st.Containers) == 0 || !IsContainerUp(&st.Containers[0]) {
+				break
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+		// Inspect to capture exit code when available
+		var inspect types.ContainerJSON
+		if err := runAdapter(context, &ContainerInspectRequest{ContainerID: createResponse.ID}, &inspect); err == nil {
+			if inspect.State != nil {
+				response.ExitCode = inspect.State.ExitCode
+			}
+		}
 	}
 	status, err := s.status(context, startRequest.AsStatusRequest())
 	if err != nil {

@@ -1,3 +1,4 @@
+.*/
 .DS_Store
 .idea
 .tar.gz
@@ -6,3 +7,5 @@ local_test.go
 .vscode/
 project/
 ui/
+*.gz
+*.exe

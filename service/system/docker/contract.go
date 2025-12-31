@@ -27,6 +27,7 @@ type RunRequest struct {
 	Ports       map[string]string `description:"publish a container’s port(s) to the host, docker -p option"`
 	Workdir     string            `description:"working directory inside the container, docker -w option"`
 	Reuse       bool              `description:"reuse existing container if exists, otherwise always removes"`
+	Block       bool              `description:"block until the container exits (wait for not-running)"`
 	Cmd         []string
 	Entrypoint  []string
 
@@ -45,6 +46,7 @@ type RunResponse struct {
 	ContainerID string
 	Status      string
 	Stdout      string
+	ExitCode    int
 }
 
 // BuildRequest represents docker build request
