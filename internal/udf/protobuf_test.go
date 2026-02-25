@@ -1,12 +1,13 @@
 package udf
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/viant/assertly"
-	"github.com/viant/toolbox"
 	"log"
 	"path"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/assertly"
+	"github.com/viant/toolbox"
 
 	"io/ioutil"
 )
@@ -42,7 +43,7 @@ func TestProtoCodec_AsBinary(t *testing.T) {
 
 	for _, useCase := range useCases {
 
-		codec, err := NewProtoCodec(useCase.protoFile, useCase.importPath, useCase.messageType)
+		codec, err := NewProtoCodec(useCase.protoFile, useCase.importPath, useCase.messageType, true)
 		if !assert.Nil(t, err, useCase.description) {
 			log.Fatal(err)
 		}

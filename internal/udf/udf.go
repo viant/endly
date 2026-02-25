@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"google.golang.org/protobuf/proto"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"google.golang.org/protobuf/proto"
 
 	"github.com/pkg/errors"
 	"github.com/viant/afs/file"
@@ -106,7 +107,7 @@ func LoadData(source interface{}, state data.Map) (interface{}, error) {
 		return c, nil
 	}
 
-	return nil, fmt.Errorf("udf LoadData arguments must be string: v%", source)
+	return nil, fmt.Errorf("udf LoadData arguments must be string: %v", source)
 }
 
 // URLPath return path from URL
