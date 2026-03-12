@@ -171,14 +171,19 @@ func (s *service) stopExistingProcess(context *endly.Context, request *StartRequ
 }
 
 func (s *service) buildStartProcessCommand(request *StartRequest) *exec.RunRequest {
+	if request.Options == nil {
+		request.Options = exec.DefaultOptions()
+	}
 	changeDirCommand := fmt.Sprintf("cd %v ", request.Directory)
-	var startCommand = request.Command + " " + strings.Join(request.Arguments, " ") + " &"
+	startParts := append([]string{request.Command}, request.Arguments...)
+	startBody := strings.TrimSpace(strings.Join(startParts, " "))
 	outputFile := path.Join(request.Directory, "nohup.out")
 	var createNoHup = fmt.Sprintf("touch %v && chmod 666 %v", outputFile, outputFile)
 	if request.ImmuneToHangups {
 		toolbox.RemoveFileIfExist(outputFile)
-		startCommand = fmt.Sprintf("nohup  %v", startCommand)
+		startBody = fmt.Sprintf("nohup %v", startBody)
 	}
+	startCommand := fmt.Sprintf("(%v &)", startBody)
 	var runRequest = exec.NewRunRequest(request.Target, request.AsSuperUser, changeDirCommand, createNoHup, startCommand)
 	if request.Options != nil {
 		runRequest.Options = request.Options

@@ -31,12 +31,18 @@ func parseDeclare(input string, err error, cursor *parsly.Cursor, when string, e
 	if err != nil {
 		return "", input, "", err
 	}
+	if exprNode == nil {
+		return "", input, "", nil
+	}
 	expr = exprNode.Stringify()
 	match = cursor.MatchAfterOptional(whitespaceMatcher, colonMatcher)
 	if match.Code == colon {
 		elseNode, err := expectOperand(cursor)
 		if err != nil {
 			return "", input, "", err
+		}
+		if elseNode == nil {
+			return "", input, "", nil
 		}
 		elseExpr = elseNode.Stringify()
 	}

@@ -1,8 +1,6 @@
 module github.com/viant/endly
 
-go 1.23.4
-
-toolchain go1.23.8
+go 1.25.1
 
 require (
 	cloud.google.com/go/container v1.40.0 // indirect
@@ -45,9 +43,9 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/segmentio/kafka-go v0.3.4
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	github.com/tebeka/selenium v0.9.10-0.20211105214847-e9100b7f5ac1
-	github.com/viant/afs v1.25.1
+	github.com/viant/afs v1.26.2
 	github.com/viant/afsc v1.9.2-0.20240422173805-b3d0ac5529a7
 	github.com/viant/asc v0.5.2-0.20240920195908-e805e6de7865
 	github.com/viant/assertly v0.9.3-0.20240801181709-c4d200a736e1
@@ -57,9 +55,9 @@ require (
 	github.com/viant/scy v0.26.0
 	//github.com/viant/toolbox v0.37.1-0.20240924122036-7c1afbc7c02b
 	github.com/yuin/gopher-lua v1.1.1 // indirect
-	golang.org/x/crypto v0.32.0 // indirect
+	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/net v0.34.0
-	golang.org/x/oauth2 v0.24.0
+	golang.org/x/oauth2 v0.30.0
 	google.golang.org/api v0.205.0
 	google.golang.org/protobuf v1.35.1
 	gopkg.in/linkedin/goavro.v1 v1.0.5 // indirect
@@ -74,10 +72,10 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.18
 	github.com/viant/aerospike v0.2.11-0.20241108195857-ed524b97800d
 	github.com/viant/datly v0.16.1-0.20250428163746-0139a6defa80
-	github.com/viant/gosh v0.2.1
+	github.com/viant/gosh v0.3.0
 	github.com/viant/parsly v0.3.3-0.20240717150634-e1afaedb691b
 	github.com/viant/sqlx v0.16.4-0.20250330143046-7f3b76980252
-	github.com/viant/toolbox v0.37.1-0.20241113185320-77ae97adbba5
+	github.com/viant/toolbox v0.39.0
 	github.com/viant/xdatly/handler v0.0.0-20250418144853-029d9a05ae20
 	github.com/viant/xdatly/types/core v0.0.0-20250307183722-8c84fc717b52
 	github.com/viant/xdatly/types/custom v0.0.0-20240904221257-06e43f22d5f0
@@ -216,10 +214,10 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.29.0 // indirect
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	golang.org/x/mod v0.20.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/term v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/sync v0.14.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/term v0.32.0 // indirect
+	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/time v0.7.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	google.golang.org/appengine v1.6.8 // indirect
