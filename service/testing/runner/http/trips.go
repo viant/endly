@@ -14,6 +14,12 @@ const TripRequests = "Request"
 const TripResponses = "Response"
 const TripData = "Data"
 
+// HttpDefaultsKey is the context state key holding a map of default
+// http client options (e.g. TimeoutMs, RequestTimeoutMs, ResponseHeaderTimeoutMs).
+// Values under this key are merged into every http/runner:send and http/runner:load
+// call, but never override options set on the action itself.
+const HttpDefaultsKey = "httpDefaults"
+
 // Internal structure for managing all requests and responses
 type Trips data.Map
 

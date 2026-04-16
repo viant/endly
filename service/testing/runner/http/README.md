@@ -343,6 +343,30 @@ pipeline:
 - _TimeoutMs_               time.Duration
 
 
+**Global defaults (`httpDefaults`)**
+
+To avoid repeating the same `options:` block on every `http/runner:send` or
+`http/runner:load` action (e.g. across a regression suite), publish a
+`httpDefaults` map into the context state from a parent workflow's `init:`.
+Every `http/runner` call then merges these values into its client options.
+
+```yaml
+init:
+  httpDefaults:
+    TimeoutMs: 300000
+    RequestTimeoutMs: 300000
+    ResponseHeaderTimeoutMs: 180000
+```
+
+Precedence (highest wins):
+
+1. Per-action `options:` on the `http/runner:send` / `http/runner:load` action.
+2. `httpDefaults` in context state.
+3. Built-in 120 s fallback for `TimeoutMs` and `RequestTimeoutMs`.
+
+Omit `httpDefaults` to keep the prior behavior; any key the action sets
+explicitly still wins.
+
 
 <a name="load"></a>
 ## Stress testing
