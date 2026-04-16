@@ -1,3 +1,12 @@
+## Unreleased
+  * http/runner: added `httpDefaults` context state key — workflows can publish a
+    map of default http client options from `init:` and every `http/runner:send`
+    / `http/runner:load` call merges them, letting a regression suite set
+    `TimeoutMs`/`RequestTimeoutMs`/`ResponseHeaderTimeoutMs` once instead of per
+    action. Per-action `options:` still override; the 120 s built-in floor is
+    unchanged. Also fixes a long-standing bug where setting any single option
+    (e.g. `FollowRedirects: false`) silently dropped the timeout defaults.
+
 ## March March 22 2022 0.70
   * Switched toolbox/ssh service to  github.com/viant/gosh
   * Switch toolbox/cred|secret with  github.com/viant/scy

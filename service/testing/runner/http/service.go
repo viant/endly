@@ -26,12 +26,27 @@ import (
 const ServiceID = "http/runner"
 const RunnerID = "HttpRunner"
 
+// configureDefaultTransport raises http.DefaultTransport's per-host idle connection
+// limit once per process. Previously this assignment lived inside
+// applyDefaultTimeoutIfNeeded, which made it an unsynchronized global write on
+// every http/runner call — under stress tests with concurrent load actions that
+// was a data race on http.DefaultTransport.
+var configureDefaultTransport sync.Once
+
+func tuneDefaultTransport() {
+	configureDefaultTransport.Do(func() {
+		if transport, ok := http.DefaultTransport.(*http.Transport); ok {
+			transport.MaxIdleConnsPerHost = 100
+		}
+	})
+}
+
 type service struct {
 	*endly.AbstractService
 }
 
 func (s *service) send(context *endly.Context, sendGroupRequest *SendRequest) (*SendResponse, error) {
-	client, err := toolbox.NewHttpClient(s.applyDefaultTimeoutIfNeeded(sendGroupRequest.httpOptions)...)
+	client, err := toolbox.NewHttpClient(s.applyDefaultTimeoutIfNeeded(context, sendGroupRequest.httpOptions)...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to send req: %v", err)
 	}
@@ -129,22 +144,49 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, reque
 	return nil
 }
 
-func (s *service) applyDefaultTimeoutIfNeeded(options []*toolbox.HttpOptions) []*toolbox.HttpOptions {
-	if len(options) > 0 {
-		return options
+// defaultHttpFloor returns the baseline client options applied when neither the
+// per-action options nor context.State()[HttpDefaultsKey] provide a value.
+// These keep pre-existing behavior: both default to 120s.
+func defaultHttpFloor() map[string]interface{} {
+	return map[string]interface{}{
+		"RequestTimeoutMs": 120000,
+		"TimeoutMs":        120000,
+	}
+}
+
+// applyDefaultTimeoutIfNeeded layers http client options with the following
+// precedence (highest wins): 1) per-action `options` on the SendRequest/LoadRequest,
+// 2) `httpDefaults` map in context state, 3) the hardcoded floor from defaultHttpFloor.
+// A nil context is tolerated so the helper can be unit-tested in isolation.
+func (s *service) applyDefaultTimeoutIfNeeded(context *endly.Context, options []*toolbox.HttpOptions) []*toolbox.HttpOptions {
+	tuneDefaultTransport()
+
+	has := func(key string) bool {
+		for _, o := range options {
+			if o.Key == key {
+				return true
+			}
+		}
+		return false
 	}
 
-	http.DefaultTransport.(*http.Transport).MaxIdleConnsPerHost = 100
-	return []*toolbox.HttpOptions{
-		{
-			Key:   "RequestTimeoutMs",
-			Value: 120000,
-		},
-		{
-			Key:   "TimeoutMs",
-			Value: 120000,
-		},
+	if context != nil {
+		state := context.State()
+		if state.Has(HttpDefaultsKey) {
+			for k, v := range toolbox.AsMap(state.Get(HttpDefaultsKey)) {
+				if !has(k) {
+					options = append(options, &toolbox.HttpOptions{Key: k, Value: v})
+				}
+			}
+		}
 	}
+
+	for k, v := range defaultHttpFloor() {
+		if !has(k) {
+			options = append(options, &toolbox.HttpOptions{Key: k, Value: v})
+		}
+	}
+	return options
 }
 
 // resetContext resets context for variables with Reset flag set, and removes PreviousTripStateKey
@@ -242,7 +284,7 @@ func (s *service) stressTest(context *endly.Context, request *LoadRequest) (*Loa
 	metrics := &runtimeMetric{}
 
 	go s.emitMetrics(context, metrics, &done, request.Message)
-	if _, err := s.initClients(request, sendChannel, metrics, &done); err != nil {
+	if _, err := s.initClients(context, request, sendChannel, metrics, &done); err != nil {
 		return nil, err
 	}
 	partialTrips := newPartialStressTrips(capacity, sendChannel, waitGroup)
@@ -400,12 +442,12 @@ func buildStressTestTrip(request *LoadRequest, context *endly.Context, partials 
 	return trips, nil
 }
 
-func (s *service) initClients(request *LoadRequest, sendChannel chan *stressTestTrip, metric *runtimeMetric, done *uint32) ([]*http.Client, error) {
+func (s *service) initClients(context *endly.Context, request *LoadRequest, sendChannel chan *stressTestTrip, metric *runtimeMetric, done *uint32) ([]*http.Client, error) {
 	var clients = make([]*http.Client, request.ThreadCount)
 	var err error
 	for i := 0; i < request.ThreadCount; i++ {
 		var client *http.Client
-		options := s.applyDefaultTimeoutIfNeeded(request.httpOptions)
+		options := s.applyDefaultTimeoutIfNeeded(context, request.httpOptions)
 		if client, err = toolbox.NewHttpClient(options...); err != nil {
 			return nil, err
 		}
