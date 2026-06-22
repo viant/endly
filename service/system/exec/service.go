@@ -2,6 +2,10 @@ package exec
 
 import (
 	"fmt"
+	"os"
+	"path"
+	"strings"
+
 	"github.com/viant/endly"
 	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model"
@@ -14,9 +18,6 @@ import (
 	"github.com/viant/scy/cred"
 	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox/data"
-	"os"
-	"path"
-	"strings"
 )
 
 // ServiceID represent system executor service id
@@ -159,20 +160,15 @@ func (s *execService) setEnvVariables(context *endly.Context, session *model.Ses
 
 func (s *execService) setEnvVariable(context *endly.Context, session *model.Session, name, newValue string) error {
 	newValue = context.Expand(newValue)
-
 	if actual, has := session.EnvVariables[name]; has {
 		if newValue == actual {
 			return nil
 		}
 	}
 	session.EnvVariables[name] = newValue
-	var err error
-	newValue = strings.TrimSpace(newValue)
-	if strings.Contains(newValue, " ") {
-		_, err = s.rumCommandTemplate(context, session, "export %v='%v'", name, newValue)
-	} else {
-		_, err = s.rumCommandTemplate(context, session, "export %v=%v", name, newValue)
-	}
+	exportVal := strings.TrimSpace(newValue)
+	escaped := strings.ReplaceAll(exportVal, "'", "'\\''")
+	_, err := s.rumCommandTemplate(context, session, "export %v='%v'", name, escaped)
 	return err
 }
 
@@ -492,21 +488,6 @@ func (s *execService) runExtractCommands(context *endly.Context, request *Extrac
 				continue
 			}
 			session.CurrentDirectory = "" //reset path
-		}
-		if strings.HasPrefix(command, "export ") {
-			if !strings.Contains(command, "&&") {
-				envVariable := string(command[7:])
-				keyValuePair := strings.Split(envVariable, "=")
-				if len(keyValuePair) == 2 {
-					key := strings.TrimSpace(keyValuePair[0])
-					value := strings.TrimSpace(keyValuePair[1])
-					value = strings.Trim(value, "'\"")
-					err = s.setEnvVariable(context, session, key, value)
-					response.Add(NewCommandLog(command, "", err))
-					continue
-				}
-			}
-			session.EnvVariables = make(map[string]string) //reset env variables
 		}
 		err = s.executeCommand(context, session, extractCommand, response, request)
 		if err != nil {

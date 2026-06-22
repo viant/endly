@@ -68,6 +68,9 @@ type StopResponse struct {
 }
 
 func (r *StartRequest) Init() error {
+	if r.Options == nil {
+		r.Options = exec.DefaultOptions()
+	}
 	r.Target = exec.GetServiceTarget(r.Target)
 	return nil
 }

@@ -170,7 +170,7 @@ func (s *service) stopExistingProcess(context *endly.Context, request *StartRequ
 	return nil
 }
 
-func (s *service) buildStartProcessCommand(request *StartRequest) *exec.RunRequest {
+func (s *service) buildStartProcessCommand(context *endly.Context, request *StartRequest) *exec.RunRequest {
 	if request.Options == nil {
 		request.Options = exec.DefaultOptions()
 	}
@@ -178,18 +178,26 @@ func (s *service) buildStartProcessCommand(request *StartRequest) *exec.RunReque
 	startParts := append([]string{request.Command}, request.Arguments...)
 	startBody := strings.TrimSpace(strings.Join(startParts, " "))
 	outputFile := path.Join(request.Directory, "nohup.out")
-	var createNoHup = fmt.Sprintf("touch %v && chmod 666 %v", outputFile, outputFile)
+	createNoHup := fmt.Sprintf("touch %v && chmod 666 %v", outputFile, outputFile)
 	if request.ImmuneToHangups {
 		toolbox.RemoveFileIfExist(outputFile)
 		startBody = fmt.Sprintf("nohup %v", startBody)
 	}
 	startCommand := fmt.Sprintf("(%v &)", startBody)
-	var runRequest = exec.NewRunRequest(request.Target, request.AsSuperUser, changeDirCommand, createNoHup, startCommand)
-	if request.Options != nil {
-		runRequest.Options = request.Options
-	} else if runRequest.Options == nil {
-		runRequest.Options = &exec.Options{}
+
+	if len(request.Options.Env) > 0 {
+		exports := make([]string, 0, len(request.Options.Env))
+		for k, v := range request.Options.Env {
+			v = context.Expand(v)
+			exportVal := strings.TrimSpace(v)
+			escaped := strings.ReplaceAll(exportVal, "'", "'\\''")
+			exports = append(exports, fmt.Sprintf("export %s='%s'", k, escaped))
+		}
+		startCommand = strings.Join(exports, " && ") + " && " + startCommand
 	}
+
+	runRequest := exec.NewRunRequest(request.Target, request.AsSuperUser, changeDirCommand, createNoHup, startCommand)
+	runRequest.Options = request.Options
 	runRequest.CheckError = true
 	return runRequest
 }
@@ -201,7 +209,7 @@ func (s *service) startProcess(context *endly.Context, request *StartRequest) (*
 		return nil, err
 	}
 	outputFile := path.Join(request.Directory, "nohup.out")
-	startProcessRequest := s.buildStartProcessCommand(request)
+	startProcessRequest := s.buildStartProcessCommand(context, request)
 	startProcessResponse := &exec.RunResponse{}
 	if err = endly.Run(context, startProcessRequest, startProcessResponse); err != nil {
 		return nil, err
