@@ -1,19 +1,26 @@
 package gcp
 
 import (
-	"github.com/viant/toolbox"
 	"log"
 	"os"
-	"path"
+
+	"github.com/viant/endly/service/credential"
+	"github.com/viant/toolbox"
 )
 
-// HasTestCredentialSetup returns true if e2e test credentials are set
+// HasTestCredentials returns true if e2e GCP credentials can be resolved.
 func HasTestCredentials() bool {
-	secretPath := path.Join(os.Getenv("HOME"), ".secret/gcp-e2e.json")
-	if toolbox.FileExists(path.Join(os.Getenv("HOME"), ".secret/gcp-e2e.json")) {
+	if credential.MappingConfigured() {
+		return true
+	}
+	if os.Getenv("OP_INTEGRATION_REF") != "" {
+		return true
+	}
+	secretPath := os.Getenv("HOME") + "/.secret/gcp-e2e.json"
+	if toolbox.FileExists(secretPath) {
 		return true
 	}
 	log.Print("skipping test")
-	log.Print("Create e2e dedicated project service account credentials and store it in " + secretPath)
+	log.Print("configure e2e GCP credentials via E2E_CREDENTIALS_FILE, resource/e2e-credentials.yaml, or " + secretPath)
 	return false
 }

@@ -46,6 +46,32 @@ On OSX make sure SSH login is enabled.
 ### Google Cloud Credentials
 (BigQuery, Google Storage, GCE)
 
+#### E2e aliases (`viant-e2e`, `gcp-e2e`)
+
+Local e2e workflows can reference short credential aliases instead of a file path. Endly loads the mapping from `resource/e2e-credentials.yaml` (walk up from the working directory) or from the file named by `E2E_CREDENTIALS_FILE`. Each alias resolves to a secret URL (for example an `op://` 1Password reference) that scy loads at runtime.
+
+Example mapping file (owned by the application repo, not endly):
+
+```yaml
+credentials:
+  viant-e2e: op://Private/viant-e2e.json/notesPlain
+  gcp-e2e: op://Private/viant-e2e.json/notesPlain
+```
+
+Prerequisites for `op://` URLs: install the 1Password CLI and run `op signin`. The endly binary must blank-import `github.com/viant/afsc/op` (the CLI bootstrap does this).
+
+Workflows may use `credentials: viant-e2e` or expand secrets in shell steps, for example:
+
+```yaml
+gcr-auth:
+  action: exec:run
+  secrets:
+    gcp: viant-e2e
+  commands:
+    - echo '${gcp.Data}' | docker login -u _json_key --password-stdin https://gcr.io
+```
+
+#### Other GCP credentials
 
 In the [google cloud console](https://console.cloud.google.com/?pli=1)
 
