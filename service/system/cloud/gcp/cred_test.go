@@ -28,6 +28,18 @@ func (s *testCtxClient) Service() interface{} {
 
 var testCtxServiceKey = (*testCtxClient)(nil)
 
+func TestInitCredentials_e2eAliasRequiresMapping(t *testing.T) {
+	t.Setenv("E2E_CREDENTIALS_FILE", "")
+
+	manager := endly.New()
+	context := manager.NewContext(nil)
+	_, err := InitCredentials(context, map[string]interface{}{
+		"Credentials": "viant-e2e",
+	})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "viant-e2e")
+}
+
 func TestGetClient(t *testing.T) {
 
 	if !HasTestCredentials() {
