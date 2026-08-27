@@ -2,13 +2,20 @@ package gcp
 
 import (
 	"log"
+	"os"
+	"path"
 
 	"github.com/viant/endly/service/credential"
+	"github.com/viant/toolbox"
 )
 
 // HasTestCredentials returns true when e2e GCP credentials are available via mapping or ~/.secret.
 func HasTestCredentials() bool {
-	if credential.MappingConfigured() || credential.LegacyE2ECredentialsConfigured() {
+	if credential.MappingConfigured() {
+		return true
+	}
+	secretPath := path.Join(os.Getenv("HOME"), ".secret", "gcp-e2e.json")
+	if toolbox.FileExists(secretPath) {
 		return true
 	}
 	log.Print("skipping test")

@@ -18,7 +18,7 @@ import (
 // Run manually:
 //
 //	op signin
-//	export OP_INTEGRATION_REF='op://Private/viant-e2e.json/notesPlain'
+//	export OP_INTEGRATION_REF='op://Private/gcp-e2e.json/notesPlain'
 //	go test ./service/credential/... -tags=integration -run TestIntegrationResolveOpURL -count=1 -v
 func TestIntegrationResolveOpURL(t *testing.T) {
 	ref := os.Getenv("OP_INTEGRATION_REF")
@@ -36,6 +36,6 @@ func TestIntegrationResolveOpURL(t *testing.T) {
 	svc := NewService()
 	generic, err := svc.GetCredentials(context.Background(), "gcp-e2e")
 	require.NoError(t, err)
-	require.Equal(t, "viant-e2e", generic.ProjectID)
+	require.NotEmpty(t, generic.ProjectID)
 	require.NotEmpty(t, generic.ClientEmail)
 }

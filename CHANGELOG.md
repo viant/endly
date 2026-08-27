@@ -1,5 +1,5 @@
 ## Unreleased
-  * credential: resolve e2e aliases (`viant-e2e`, `gcp-e2e`) from `resource/e2e-credentials.yaml` or `E2E_CREDENTIALS_FILE` before scy lookup; supports `op://` URLs when `github.com/viant/afsc/op` is blank-imported. Requires bumped `github.com/viant/afsc` and `github.com/viant/scy` after their 1Password PRs merge.
+  * credential: resolve e2e GCP aliases (for example `gcp-e2e`) from `resource/e2e-credentials.yaml` or `E2E_CREDENTIALS_FILE` before scy lookup; supports `op://` URLs when `github.com/viant/afsc/op` is blank-imported. Requires bumped `github.com/viant/afsc` and `github.com/viant/scy` after their 1Password PRs merge.
   * http/runner: added `httpDefaults` context state key — workflows can publish a
     map of default http client options from `init:` and every `http/runner:send`
     / `http/runner:load` call merges them, letting a regression suite set
