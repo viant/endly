@@ -245,3 +245,6 @@ require (
 	modernc.org/token v1.0.0 // indirect
 )
 
+replace github.com/viant/afsc => /Users/rprice/project/afsc
+
+replace github.com/viant/scy => /Users/rprice/project/scy

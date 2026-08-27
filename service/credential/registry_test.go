@@ -1,23 +1,20 @@
 package credential
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/viant/scy/cred/secret"
 )
 
 func TestRegistry_Resolve(t *testing.T) {
-	dir := t.TempDir()
-	mapping := filepath.Join(dir, "e2e-credentials.yaml")
-	require.NoError(t, os.WriteFile(mapping, []byte(`credentials:
-  gcp-e2e: op://Private/gcp-e2e.json/notesPlain
-`), 0o600))
-
-	t.Setenv(credentialsFileEnv, mapping)
-
 	registry := NewRegistry()
+	registry.Set(map[string]string{
+		"gcp-e2e": "op://Private/gcp-e2e.json/notesPlain",
+	})
 
 	url, err := registry.Resolve("gcp-e2e")
 	require.NoError(t, err)
@@ -32,56 +29,83 @@ func TestRegistry_Resolve(t *testing.T) {
 	require.Equal(t, "op://already/a/url", url)
 }
 
-func TestRegistry_ResolvePassThroughWhenAliasNotInMapping(t *testing.T) {
-	dir := t.TempDir()
-	mapping := filepath.Join(dir, "e2e-credentials.yaml")
-	require.NoError(t, os.WriteFile(mapping, []byte(`credentials:
-  other: file:///tmp/x.json
-`), 0o600))
-
-	t.Setenv(credentialsFileEnv, mapping)
-
+func TestRegistry_ResolvePassThroughWithoutMap(t *testing.T) {
 	registry := NewRegistry()
 	url, err := registry.Resolve("gcp-e2e")
 	require.NoError(t, err)
 	require.Equal(t, "gcp-e2e", url)
-}
-
-func TestRegistry_ResolvePassThroughWithoutMapping(t *testing.T) {
-	t.Setenv(credentialsFileEnv, "")
-
-	registry := NewRegistry()
-	url, err := registry.Resolve("gcp-e2e")
-	require.NoError(t, err)
-	require.Equal(t, "gcp-e2e", url)
-}
-
-func TestRegistry_ResolveErrorWhenMappingFileInvalid(t *testing.T) {
-	t.Setenv(credentialsFileEnv, filepath.Join(t.TempDir(), "missing.yaml"))
-
-	registry := NewRegistry()
-	_, err := registry.Resolve("gcp-e2e")
-	require.Error(t, err)
-	require.Contains(t, err.Error(), credentialsFileEnv)
+	require.False(t, registry.HasMap())
 }
 
 func TestRegistry_MappingPrecedenceOverLegacySecret(t *testing.T) {
+	registry := NewRegistry()
+	mappedURL := "/tmp/mapped.json"
+	registry.Set(map[string]string{"gcp-e2e": mappedURL})
+	url, err := registry.Resolve("gcp-e2e")
+	require.NoError(t, err)
+	require.Equal(t, mappedURL, url)
+	require.True(t, registry.HasMap())
+}
+
+func TestService_ResolveAliasToFile(t *testing.T) {
+	dir := t.TempDir()
+	credFile := filepath.Join(dir, "gcp.json")
+	require.NoError(t, os.WriteFile(credFile, []byte(`{
+  "type": "service_account",
+  "project_id": "gcp-e2e",
+  "private_key_id": "abc",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----\n",
+  "client_email": "test@gcp-e2e.iam.gserviceaccount.com"
+}`), 0o600))
+
+	svc := NewService()
+	svc.SetCredentialMap(map[string]string{"gcp-e2e": credFile})
+	generic, err := svc.GetCredentials(context.Background(), "gcp-e2e")
+	require.NoError(t, err)
+	require.Equal(t, "gcp-e2e", generic.ProjectID)
+	require.Equal(t, "test@gcp-e2e.iam.gserviceaccount.com", generic.ClientEmail)
+}
+
+func TestService_ExpandAlias(t *testing.T) {
+	dir := t.TempDir()
+	credFile := filepath.Join(dir, "gcp.json")
+	payload := `{"type":"service_account","project_id":"gcp-e2e","client_email":"test@gcp-e2e.iam.gserviceaccount.com"}`
+	require.NoError(t, os.WriteFile(credFile, []byte(payload), 0o600))
+
+	svc := NewService()
+	svc.SetCredentialMap(map[string]string{"gcp-e2e": credFile})
+	expanded, err := svc.Expand(context.Background(), "echo '${gcp.Data}'", map[secret.Key]secret.Resource{
+		"gcp": "gcp-e2e",
+	})
+	require.NoError(t, err)
+	require.Contains(t, expanded, `"project_id":"gcp-e2e"`)
+	require.Contains(t, expanded, `"client_email":"test@gcp-e2e.iam.gserviceaccount.com"`)
+}
+
+func TestService_MappingPrecedenceOverLegacySecret(t *testing.T) {
 	dir := t.TempDir()
 	home := filepath.Join(dir, "home")
 	secretDir := filepath.Join(home, ".secret")
 	require.NoError(t, os.MkdirAll(secretDir, 0o700))
 	t.Setenv("HOME", home)
-	require.NoError(t, os.WriteFile(filepath.Join(secretDir, "gcp-e2e.json"), []byte(`{}`), 0o600))
 
-	mappedURL := filepath.Join(dir, "mapped.json")
-	mapping := filepath.Join(dir, "e2e-credentials.yaml")
-	require.NoError(t, os.WriteFile(mapping, []byte(`credentials:
-  gcp-e2e: `+mappedURL+`
-`), 0o600))
-	t.Setenv(credentialsFileEnv, mapping)
+	require.NoError(t, os.WriteFile(filepath.Join(secretDir, "gcp-e2e.json"), []byte(`{
+  "type": "service_account",
+  "project_id": "legacy-from-secret-dir",
+  "client_email": "legacy@gcp-e2e.iam.gserviceaccount.com"
+}`), 0o600))
 
-	registry := NewRegistry()
-	url, err := registry.Resolve("gcp-e2e")
+	mappedFile := filepath.Join(dir, "mapped.json")
+	require.NoError(t, os.WriteFile(mappedFile, []byte(`{
+  "type": "service_account",
+  "project_id": "from-mapping-file",
+  "client_email": "mapped@gcp-e2e.iam.gserviceaccount.com"
+}`), 0o600))
+
+	svc := NewService()
+	svc.SetCredentialMap(map[string]string{"gcp-e2e": mappedFile})
+	generic, err := svc.GetCredentials(context.Background(), "gcp-e2e")
 	require.NoError(t, err)
-	require.Equal(t, mappedURL, url)
+	require.Equal(t, "from-mapping-file", generic.ProjectID)
+	require.Equal(t, "mapped@gcp-e2e.iam.gserviceaccount.com", generic.ClientEmail)
 }

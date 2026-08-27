@@ -46,24 +46,30 @@ On OSX make sure SSH login is enabled.
 ### Google Cloud Credentials
 (BigQuery, Google Storage, GCE)
 
-#### E2e alias (`gcp-e2e`)
+#### Credential mapping
 
-Local e2e workflows can reference the short credential alias `gcp-e2e` instead of a file path.
+Without a `credentialMap`, a bare credential name is resolved by scy as `$HOME/.secret/<name>.json`.
 
-**Without a mapping file**, the alias behaves as before: endly/scy loads `$HOME/.secret/gcp-e2e.json`.
+For more control, and to keep secrets off the local filesystem, the **root** workflow YAML can define a top-level `credentialMap`. Names listed there resolve to a secret URL (for example an `op://` 1Password reference or a file path). Mapped names take precedence over `~/.secret`. Names not listed still fall back to `~/.secret/<name>.json`.
 
-**With a mapping file**, aliases listed there resolve to a secret URL (for example an `op://` 1Password reference or a file path) that scy loads at runtime. When the mapping file is present, mapped aliases take precedence over `~/.secret`. Aliases not listed in the mapping file still fall back to `~/.secret/<alias>.json`.
+`credentialMap` is only allowed on the root workflow. Nested workflows that define `credentialMap` fail.
 
-Example mapping file (owned by the application repo, not endly):
+Example (root workflow, for example `run.yaml`):
 
 ```yaml
-credentials:
-  gcp-e2e: op://Private/gcp-e2e.json/notesPlain
+credentialMap:
+  gcp-e2e: op://Private/secret.json/notesPlain
+  my-gcp-sa: ~/.secret/custom-sa.json
+
+init:
+  ...
+pipeline:
+  ...
 ```
 
-Prerequisites for `op://` URLs: install the 1Password CLI and run `op signin`. The endly binary must blank-import `github.com/viant/afsc/op` (the CLI bootstrap does this).
+Prerequisites for `op://` URLs: install the 1Password CLI and run `op signin`.
 
-Workflows may use `credentials: gcp-e2e` or expand secrets in shell steps, for example:
+Workflows may use `credentials: gcp-e2e` (or any other name) or expand secrets in shell steps, for example:
 
 ```yaml
 gcr-auth:

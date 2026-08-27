@@ -86,3 +86,18 @@ func (s *Service) Expand(ctx context.Context, input string, secrets map[secret.K
 	}
 	return s.inner.Expand(ctx, input, resolved)
 }
+
+// SetCredentialMap registers alias → URL mappings from the root workflow credentialMap.
+func (s *Service) SetCredentialMap(m map[string]string) {
+	s.registry.Set(m)
+}
+
+// HasCredentialMap reports whether a credential map has been registered.
+func (s *Service) HasCredentialMap() bool {
+	return s.registry.HasMap()
+}
+
+// ResolveAlias returns the mapped URL for alias, or the alias unchanged when unmapped.
+func (s *Service) ResolveAlias(alias string) (string, error) {
+	return s.registry.Resolve(alias)
+}

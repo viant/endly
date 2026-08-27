@@ -5,7 +5,6 @@ package credential
 import (
 	"context"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -26,14 +25,8 @@ func TestIntegrationResolveOpURL(t *testing.T) {
 		t.Skip("set OP_INTEGRATION_REF to an op:// secret reference")
 	}
 
-	dir := t.TempDir()
-	mapping := filepath.Join(dir, "e2e-credentials.yaml")
-	require.NoError(t, os.WriteFile(mapping, []byte(`credentials:
-  gcp-e2e: `+ref+`
-`), 0o600))
-	t.Setenv(credentialsFileEnv, mapping)
-
 	svc := NewService()
+	svc.SetCredentialMap(map[string]string{"gcp-e2e": ref})
 	generic, err := svc.GetCredentials(context.Background(), "gcp-e2e")
 	require.NoError(t, err)
 	require.NotEmpty(t, generic.ProjectID)

@@ -1,91 +1,28 @@
 package credential
 
 import (
-	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"sync"
-
-	"github.com/viant/toolbox"
-	"gopkg.in/yaml.v2"
 )
 
-const (
-	credentialsFileEnv  = "E2E_CREDENTIALS_FILE"
-	defaultRelativePath = "resource/e2e-credentials.yaml"
-)
-
-type fileConfig struct {
-	Credentials map[string]string `yaml:"credentials"`
-}
-
-// Registry maps credential aliases from a YAML file to secret URLs (for example op:// references).
+// Registry maps credential aliases to secret URLs (for example op:// references).
+// The map is populated from the root workflow's credentialMap; it is empty until Set is called.
 type Registry struct {
-	mu          sync.Mutex
+	mu          sync.RWMutex
 	credentials map[string]string
-	path        string
-	loaded      bool
-	loadErr     error
 }
 
-// NewRegistry creates an empty registry. Aliases are resolved on first use.
+// NewRegistry creates an empty registry.
 func NewRegistry() *Registry {
-	return &Registry{}
+	return &Registry{credentials: make(map[string]string)}
 }
 
-// MappingConfigured reports whether an e2e credentials mapping file is available.
-func MappingConfigured() bool {
-	path, err := locateCredentialsFile()
-	return err == nil && path != ""
-}
-
-// Resolve returns the secret URL for alias. URLs and unmapped aliases pass through unchanged.
-// When a mapping file is configured, aliases defined there resolve to the mapped URL; all other
-// aliases fall back to scy ~/.secret lookup.
-func (r *Registry) Resolve(alias string) (string, error) {
-	if alias == "" || strings.Contains(alias, "://") {
-		return alias, nil
-	}
-	r.ensureLoaded()
-	if r.loadErr != nil {
-		return "", fmt.Errorf("e2e credentials mapping: %w", r.loadErr)
-	}
-	if url, ok := r.credentials[alias]; ok {
-		return url, nil
-	}
-	return alias, nil
-}
-
-func (r *Registry) ensureLoaded() {
+// Set replaces the registry contents with m. Empty aliases or URLs are skipped.
+func (r *Registry) Set(m map[string]string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if r.loaded {
-		return
-	}
-	r.loaded = true
-	r.credentials = make(map[string]string)
-
-	path, err := locateCredentialsFile()
-	if err != nil {
-		r.loadErr = err
-		return
-	}
-	if path == "" {
-		return
-	}
-	r.path = path
-	data, err := os.ReadFile(path)
-	if err != nil {
-		r.loadErr = fmt.Errorf("read credentials mapping %s: %w", path, err)
-		return
-	}
-	var config fileConfig
-	if err = yaml.Unmarshal(data, &config); err != nil {
-		r.loadErr = fmt.Errorf("parse credentials mapping %s: %w", path, err)
-		return
-	}
-	for alias, url := range config.Credentials {
+	r.credentials = make(map[string]string, len(m))
+	for alias, url := range m {
 		if alias == "" || url == "" {
 			continue
 		}
@@ -93,28 +30,22 @@ func (r *Registry) ensureLoaded() {
 	}
 }
 
-func locateCredentialsFile() (string, error) {
-	if path := os.Getenv(credentialsFileEnv); path != "" {
-		if !toolbox.FileExists(path) {
-			return "", fmt.Errorf("%s=%q does not exist", credentialsFileEnv, path)
-		}
-		return path, nil
+// HasMap reports whether at least one alias is registered.
+func (r *Registry) HasMap() bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return len(r.credentials) > 0
+}
+
+// Resolve returns the secret URL for alias. URLs and unmapped aliases pass through unchanged.
+func (r *Registry) Resolve(alias string) (string, error) {
+	if alias == "" || strings.Contains(alias, "://") {
+		return alias, nil
 	}
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", nil
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	if url, ok := r.credentials[alias]; ok {
+		return url, nil
 	}
-	dir := cwd
-	for i := 0; i < 8; i++ {
-		candidate := filepath.Join(dir, defaultRelativePath)
-		if toolbox.FileExists(candidate) {
-			return candidate, nil
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			break
-		}
-		dir = parent
-	}
-	return "", nil
+	return alias, nil
 }
