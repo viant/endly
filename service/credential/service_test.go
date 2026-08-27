@@ -56,3 +56,36 @@ func TestService_ExpandAlias(t *testing.T) {
 	require.Contains(t, expanded, `"project_id":"viant-e2e"`)
 	require.Contains(t, expanded, `"client_email":"test@viant-e2e.iam.gserviceaccount.com"`)
 }
+
+func TestService_MappingPrecedenceOverLegacySecret(t *testing.T) {
+	dir := t.TempDir()
+	home := filepath.Join(dir, "home")
+	secretDir := filepath.Join(home, ".secret")
+	require.NoError(t, os.MkdirAll(secretDir, 0o700))
+	t.Setenv("HOME", home)
+
+	require.NoError(t, os.WriteFile(filepath.Join(secretDir, "viant-e2e.json"), []byte(`{
+  "type": "service_account",
+  "project_id": "legacy-from-secret-dir",
+  "client_email": "legacy@viant-e2e.iam.gserviceaccount.com"
+}`), 0o600))
+
+	mappedFile := filepath.Join(dir, "mapped.json")
+	require.NoError(t, os.WriteFile(mappedFile, []byte(`{
+  "type": "service_account",
+  "project_id": "from-mapping-file",
+  "client_email": "mapped@viant-e2e.iam.gserviceaccount.com"
+}`), 0o600))
+
+	mapping := filepath.Join(dir, "e2e-credentials.yaml")
+	require.NoError(t, os.WriteFile(mapping, []byte(`credentials:
+  viant-e2e: `+mappedFile+`
+`), 0o600))
+	t.Setenv(credentialsFileEnv, mapping)
+
+	svc := NewService()
+	generic, err := svc.GetCredentials(context.Background(), "viant-e2e")
+	require.NoError(t, err)
+	require.Equal(t, "from-mapping-file", generic.ProjectID)
+	require.Equal(t, "mapped@viant-e2e.iam.gserviceaccount.com", generic.ClientEmail)
+}

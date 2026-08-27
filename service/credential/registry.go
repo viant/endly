@@ -45,25 +45,56 @@ func MappingConfigured() bool {
 	return err == nil && path != ""
 }
 
+// LegacyE2ECredentialsConfigured reports whether ~/.secret has a viant-e2e or gcp-e2e credential file.
+func LegacyE2ECredentialsConfigured() bool {
+	_, ok := legacyE2ESecretPath("gcp-e2e")
+	return ok
+}
+
 // Resolve returns the secret URL for alias. Bare aliases such as mysql pass through unchanged.
+// When resource/e2e-credentials.yaml (or E2E_CREDENTIALS_FILE) is present, viant-e2e and gcp-e2e
+// resolve through that mapping. Otherwise those aliases pass through to scy ~/.secret lookup.
 func (r *Registry) Resolve(alias string) (string, error) {
 	if alias == "" || strings.Contains(alias, "://") {
 		return alias, nil
 	}
 	r.ensureLoaded()
-	if url, ok := r.credentials[alias]; ok {
-		return url, nil
-	}
-	if _, required := e2eAliases[alias]; required {
-		if r.loadErr != nil {
+	if r.loadErr != nil {
+		if _, required := e2eAliases[alias]; required {
 			return "", fmt.Errorf("e2e credential %q: %w", alias, r.loadErr)
 		}
-		if r.path == "" {
-			return "", fmt.Errorf("e2e credential %q requires %s or %s relative to the app root", alias, credentialsFileEnv, defaultRelativePath)
+		return alias, nil
+	}
+	if r.path != "" {
+		if url, ok := r.credentials[alias]; ok {
+			return url, nil
 		}
-		return "", fmt.Errorf("e2e credential alias %q not defined in %s", alias, r.path)
+		if _, required := e2eAliases[alias]; required {
+			return "", fmt.Errorf("e2e credential alias %q not defined in %s", alias, r.path)
+		}
 	}
 	return alias, nil
+}
+
+func legacyE2ESecretPath(alias string) (string, bool) {
+	if _, ok := e2eAliases[alias]; !ok {
+		return "", false
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", false
+	}
+	candidates := []string{alias}
+	if alias == "gcp-e2e" {
+		candidates = append(candidates, "viant-e2e")
+	}
+	for _, name := range candidates {
+		path := filepath.Join(home, ".secret", name+".json")
+		if toolbox.FileExists(path) {
+			return path, true
+		}
+	}
+	return "", false
 }
 
 func (r *Registry) ensureLoaded() {

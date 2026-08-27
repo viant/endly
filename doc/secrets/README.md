@@ -48,7 +48,11 @@ On OSX make sure SSH login is enabled.
 
 #### E2e aliases (`viant-e2e`, `gcp-e2e`)
 
-Local e2e workflows can reference short credential aliases instead of a file path. Endly loads the mapping from `resource/e2e-credentials.yaml` (walk up from the working directory) or from the file named by `E2E_CREDENTIALS_FILE`. Each alias resolves to a secret URL (for example an `op://` 1Password reference) that scy loads at runtime.
+Local e2e workflows can reference short credential aliases instead of a file path.
+
+**Without a mapping file**, aliases behave as before: endly/scy loads `$HOME/.secret/<alias>.json` (`gcp-e2e` also tries `viant-e2e.json`).
+
+**With a mapping file**, aliases resolve through `resource/e2e-credentials.yaml` (walk up from the working directory) or the file named by `E2E_CREDENTIALS_FILE`. Each alias maps to a secret URL (for example an `op://` 1Password reference or a file path) that scy loads at runtime. When the mapping file is present, it takes precedence over `~/.secret` for those aliases.
 
 Example mapping file (owned by the application repo, not endly):
 

@@ -6,6 +6,7 @@ import (
 	"github.com/viant/endly"
 	"google.golang.org/api/compute/v1"
 	"log"
+	"os"
 	"testing"
 )
 
@@ -28,8 +29,13 @@ func (s *testCtxClient) Service() interface{} {
 
 var testCtxServiceKey = (*testCtxClient)(nil)
 
-func TestInitCredentials_e2eAliasRequiresMapping(t *testing.T) {
-	t.Setenv("E2E_CREDENTIALS_FILE", "")
+func TestInitCredentials_e2eAliasRequiresMappingWhenConfigured(t *testing.T) {
+	dir := t.TempDir()
+	mapping := dir + "/e2e-credentials.yaml"
+	require.NoError(t, os.WriteFile(mapping, []byte(`credentials:
+  other: file:///tmp/x.json
+`), 0o600))
+	t.Setenv("E2E_CREDENTIALS_FILE", mapping)
 
 	manager := endly.New()
 	context := manager.NewContext(nil)
