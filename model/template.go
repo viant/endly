@@ -110,7 +110,9 @@ func (t *TransientTemplate) Expand(task *Task, parentTag string, inline *Inlined
 }
 
 func (t *TransientTemplate) loadWorkflowData(tagPath string, workflowData data.Map, state data.Map) error {
-
+	if tagPath != "" && !strings.Contains(tagPath, "://") {
+		tagPath = url.Normalize(tagPath, file.Scheme)
+	}
 	var baseURLs = []string{tagPath, toolbox.URLPathJoin(t.inline.baseURL, "default"), t.inline.baseURL}
 	var err error
 

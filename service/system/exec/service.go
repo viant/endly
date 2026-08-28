@@ -1,6 +1,7 @@
 package exec
 
 import (
+	"errors"
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/internal/util"
@@ -14,6 +15,7 @@ import (
 	"github.com/viant/scy/cred"
 	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox/data"
+	"io"
 	"os"
 	"path"
 	"strings"
@@ -210,6 +212,9 @@ func (s *execService) rumCommandTemplate(context *endly.Context, session *model.
 	command := fmt.Sprintf(commandTemplate, arguments...)
 	startEvent := s.Begin(context, NewSdtinEvent(session.ID, command))
 	stdout, _, err := session.Run(context.Background(), command, runner.WithTimeout(1000))
+	if errors.Is(err, io.EOF) || (err != nil && strings.Contains(err.Error(), "EOF")) {
+		err = nil
+	}
 	s.End(context)(startEvent, NewStdoutEvent(session.ID, stdout, err))
 	return stdout, err
 }
@@ -378,6 +383,12 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 		timeoutMs = extractCommand.TimeoutMs
 	}
 	stdout, statusCode, err := s.run(context, session, insecureCommand, listener, timeoutMs, terminators...)
+	// The local terminal runner uses io.EOF to signal a command that completed
+	// without writing stdout (for example, export or a no-match process
+	// lookup). That is a successful shell command, not an execution failure.
+	if errors.Is(err, io.EOF) || (err != nil && strings.Contains(err.Error(), "EOF")) {
+		err = nil
+	}
 	if len(response.Output) > 0 {
 		if !strings.HasSuffix(response.Output, "\n") {
 			response.Output += "\n"

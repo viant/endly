@@ -1,7 +1,9 @@
 package process
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -59,9 +61,12 @@ func (s *service) checkProcess(context *endly.Context, request *StatusRequest) (
 		Processes: make([]*Info, 0),
 	}
 
-	command := fmt.Sprintf("ps -ef | grep %v", request.Command)
+	// A missing process is a valid status result. Without the trailing true,
+	// grep exits with 1 and some local runners surface that as EOF instead of
+	// returning an empty process list.
+	command := fmt.Sprintf("ps -ef | grep %v || true", request.Command)
 	if strings.Contains(request.Command, " ") && !strings.Contains(request.Command, "|") {
-		command = fmt.Sprintf("ps -ef | grep '%v'", request.Command)
+		command = fmt.Sprintf("ps -ef | grep '%v' || true", request.Command)
 	}
 
 	var extractRequest = exec.NewExtractRequest(request.Target, exec.DefaultOptions(), exec.NewExtractCommand(command, "", nil, nil))
@@ -158,6 +163,9 @@ func (s *service) stopProcess(context *endly.Context, request *StopRequest) (*St
 func (s *service) stopExistingProcess(context *endly.Context, request *StartRequest) error {
 	origProcesses, err := s.checkProcess(context, NewStatusRequest(request.Command, request.Target))
 	if err != nil {
+		if isEmptyProcessLookup(err) {
+			return nil
+		}
 		return err
 	}
 	for _, process := range origProcesses.Processes {
@@ -211,7 +219,10 @@ func (s *service) startProcess(context *endly.Context, request *StartRequest) (*
 
 	status, err := s.checkProcess(context, NewStatusRequest(request.Command, request.Target))
 	if err != nil {
-		return nil, err
+		if !isEmptyProcessLookup(err) {
+			return nil, err
+		}
+		status = &StatusResponse{Processes: make([]*Info, 0)}
 	}
 	response.Info = status.Processes
 	response.Pid = status.Pid
@@ -228,6 +239,12 @@ func (s *service) startProcess(context *endly.Context, request *StartRequest) (*
 	}
 
 	return response, nil
+}
+
+// The terminal runner currently surfaces a successful command with no stdout
+// as io.EOF. A process lookup with no match is an expected empty result.
+func isEmptyProcessLookup(err error) bool {
+	return errors.Is(err, io.EOF) || strings.Contains(err.Error(), "EOF")
 }
 
 func (s *service) watchOutput(context *endly.Context, location string, position int) {

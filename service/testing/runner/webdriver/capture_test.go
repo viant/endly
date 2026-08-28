@@ -56,3 +56,16 @@ func TestCapture_CapBody(t *testing.T) {
 		t.Fatalf("unexpected cap: %#v", c)
 	}
 }
+
+func TestCapture_URLIncludes(t *testing.T) {
+	state := newCaptureState(&CaptureStartRequest{URLIncludes: []string{"/v1/", "api.example.test"}})
+	if !state.includesURL("http://127.0.0.1:4198/v1/polly/guide") {
+		t.Fatal("expected /v1/ URL to be captured")
+	}
+	if !state.includesURL("https://api.example.test/query") {
+		t.Fatal("expected named API host to be captured")
+	}
+	if state.includesURL("http://127.0.0.1:4198/@vite/client") {
+		t.Fatal("expected Vite module URL to be filtered")
+	}
+}

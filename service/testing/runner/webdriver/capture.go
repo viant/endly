@@ -73,6 +73,7 @@ type CaptureState struct {
 	includeBodies bool
 	enableConsole bool
 	enableNetwork bool
+	urlIncludes   []string
 
 	maxBodyBytes  int
 	redact        bool
@@ -129,7 +130,24 @@ func newCaptureState(req *CaptureStartRequest) *CaptureState {
 	if req.IncludeBodies != nil {
 		state.includeBodies = *req.IncludeBodies
 	}
+	for _, include := range req.URLIncludes {
+		if include = strings.TrimSpace(include); include != "" {
+			state.urlIncludes = append(state.urlIncludes, include)
+		}
+	}
 	return state
+}
+
+func (s *CaptureState) includesURL(URL string) bool {
+	if len(s.urlIncludes) == 0 {
+		return true
+	}
+	for _, include := range s.urlIncludes {
+		if strings.Contains(URL, include) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *CaptureState) Summary() *CaptureSummary {
@@ -317,6 +335,9 @@ func (s *CaptureState) onRequestWillBeSent(params json.RawMessage) {
 		s.appendErr(fmt.Sprintf("requestWillBeSent: %v", err))
 		return
 	}
+	if !s.includesURL(in.Request.URL) {
+		return
+	}
 	tx := &NetworkTransaction{
 		RequestID:      in.RequestID,
 		URL:            in.Request.URL,
@@ -378,6 +399,9 @@ func (s *CaptureState) onResponseReceived(params json.RawMessage) {
 	defer s.mux.Unlock()
 	tx := s.inflight[in.RequestID]
 	if tx == nil {
+		if len(s.urlIncludes) > 0 {
+			return
+		}
 		tx = &NetworkTransaction{RequestID: in.RequestID}
 		s.inflight[in.RequestID] = tx
 	}
@@ -428,6 +452,9 @@ func (s *CaptureState) onLoadingFailed(params json.RawMessage) {
 	defer s.mux.Unlock()
 	tx := s.inflight[in.RequestID]
 	if tx == nil {
+		if len(s.urlIncludes) > 0 {
+			return
+		}
 		tx = &NetworkTransaction{RequestID: in.RequestID}
 		s.inflight[in.RequestID] = tx
 	}
@@ -452,6 +479,10 @@ func (s *CaptureState) onLoadingFinished(sess *Session, params json.RawMessage) 
 	s.mux.Lock()
 	tx = s.inflight[in.RequestID]
 	if tx == nil {
+		if len(s.urlIncludes) > 0 {
+			s.mux.Unlock()
+			return
+		}
 		tx = &NetworkTransaction{RequestID: in.RequestID}
 		s.inflight[in.RequestID] = tx
 	}

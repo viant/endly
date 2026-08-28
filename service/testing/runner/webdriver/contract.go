@@ -8,6 +8,7 @@ import (
 	"github.com/viant/endly/service/testing/validator"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"net/url"
 	"strings"
 )
 
@@ -25,11 +26,16 @@ const (
 // StartRequest represents a selenium server start request
 type StartRequest struct {
 	Target       *location.Resource
+	URL          string
+	BaseLocation string
 	Driver       string
 	Server       string
 	Sdk          string
 	Capabilities []string
-	Port         int
+	// PageLoadStrategy controls how long WebDriver waits for navigation. Use
+	// eager for development servers that intentionally keep a live connection.
+	PageLoadStrategy string
+	Port             int
 }
 
 func (r *StartRequest) Init() error {
@@ -38,6 +44,9 @@ func (r *StartRequest) Init() error {
 	}
 	if r.Driver == "" {
 		r.Driver = ChromeDriver
+	}
+	if r.Target == nil && r.URL != "" {
+		r.Target = location.NewResource(r.URL)
 	}
 	if r.Target == nil {
 		r.Target = location.NewResource(defaultTarget)
@@ -68,6 +77,7 @@ type StartResponse struct {
 // StopRequest represents server stop request
 type StopRequest struct {
 	Target *location.Resource
+	URL    string
 	Port   int
 }
 
@@ -75,7 +85,9 @@ func (r *StopRequest) Init() error {
 	if r.Port == 0 {
 		r.Port = 4444
 	}
-
+	if r.Target == nil && r.URL != "" {
+		r.Target = location.NewResource(r.URL)
+	}
 	if r.Target == nil {
 		r.Target = location.NewResource(defaultTarget)
 	}
@@ -191,12 +203,29 @@ func (r *RunRequest) asWaitAction(parser *parser, candidate interface{}) (*Actio
 			action.PathKind = PathKindSimple
 		}
 		err = toolbox.DefaultConverter.AssignConverted(&action.Calls[0].Wait, aMap)
+		call := action.Calls[0]
+		_, hasExplicitWait := aMap["waitTimeMs"]
+		repeat := toolbox.AsInt(aMap["repeat"])
+		if !hasExplicitWait && repeat > 0 {
+			sleepTimeMs := toolbox.AsInt(aMap["sleepTimeMs"])
+			if sleepTimeMs <= 0 {
+				sleepTimeMs = defaultExitWaitTimeMs
+			}
+			call.WaitTimeMs = repeat * sleepTimeMs
+		} else if call.WaitTimeMs == 0 && strings.TrimSpace(call.Exit) != "" {
+			call.WaitTimeMs = defaultExitWaitTimeMs
+		}
 		return action, err
 	}
 	return nil, fmt.Errorf("sunupported command: %T", candidate)
 }
 
 func (r *RunRequest) Init() error {
+	if r.SessionID == "" && r.RemoteSelenium != "" {
+		if parsed, err := url.Parse(r.RemoteSelenium); err == nil && parsed.Host != "" {
+			r.SessionID = parsed.Host
+		}
+	}
 	if r.SessionID == "" {
 		r.SessionID = "localhost:4444"
 	}
@@ -315,6 +344,7 @@ type CaptureStartRequest struct {
 	EnableConsole   *bool
 	EnableNetwork   *bool
 	IncludeBodies   *bool
+	URLIncludes     []string `description:"optional URL substrings; when set, capture only matching network requests"`
 }
 
 type CaptureStartResponse struct {
@@ -436,11 +466,18 @@ type OpenSessionRequest struct {
 
 // Init  initializes request
 func (r *OpenSessionRequest) Init() error {
+	if r.SessionID == "" && r.Remote != "" {
+		if parsed, err := url.Parse(r.Remote); err == nil && parsed.Host != "" {
+			r.SessionID = parsed.Host
+		}
+	}
 	if r.SessionID == "" {
 		r.SessionID = "localhost:4444"
 	}
-	host, port := pair(r.SessionID)
-	r.Remote = fmt.Sprintf("http://%v:%v/wd/hub", host, port)
+	if r.Remote == "" {
+		host, port := pair(r.SessionID)
+		r.Remote = fmt.Sprintf("http://%v:%v/wd/hub", host, port)
+	}
 	return nil
 }
 

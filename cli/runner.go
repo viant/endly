@@ -17,6 +17,7 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"gopkg.in/yaml.v2"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -732,4 +733,16 @@ func New() *Runner {
 		xUnitSummary: xunit.NewTestsuite(),
 		Style:        NewStyle(),
 	}
+}
+
+// NewEventListener creates a rendering-only listener that uses the same
+// event pipeline and styles as a local Endly run.
+func NewEventListener(writer io.Writer) msg.Listener {
+	runner := New()
+	runner.Renderer = NewRenderer(writer, 120)
+	runner.context = runner.manager.NewContext(nil)
+	runner.report = &ReportSummaryEvent{}
+	runner.filter = WildcardFilter()
+	runner.request = &workflow.RunRequest{}
+	return runner.AsListener()
 }

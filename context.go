@@ -41,6 +41,7 @@ type Context struct {
 	Listener        msg.Listener
 	Source          *location.Resource
 	Debugger        *debug.Debugger
+	actionPolicy    func(service, action string) error
 
 	state   data.Map
 	udfs    data.Map
@@ -56,6 +57,26 @@ func (c *Context) Background() context.Context {
 	}
 	c.context = context.Background()
 	return c.context
+}
+
+// SetBackground sets the standard context used by services for cancellation and deadlines.
+// Callers must not replace it while an operation is executing.
+func (c *Context) SetBackground(ctx context.Context) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	c.context = ctx
+}
+
+func (c *Context) SetActionPolicy(policy func(service, action string) error) {
+	c.actionPolicy = policy
+}
+
+func (c *Context) AuthorizeAction(service, action string) error {
+	if c.actionPolicy == nil {
+		return nil
+	}
+	return c.actionPolicy(service, action)
 }
 
 // Publish publishes event to listeners, it updates current run details like activity workflow name etc ...
@@ -97,6 +118,8 @@ func (c *Context) Clone() *Context {
 		c.cloned = make([]*Context, 0)
 	}
 	result := &Context{}
+	result.context = c.Background()
+	result.actionPolicy = c.actionPolicy
 	result.Wait = &sync.WaitGroup{}
 	result.Context = c.Context.Clone()
 	result.state = NewDefaultState(c)
@@ -325,6 +348,9 @@ It comes with the following registered keys:
 */
 
 func NewDefaultState(ctx *Context) data.Map {
+	if ctx == nil {
+		ctx = &Context{}
+	}
 	var result = data.NewMap()
 	result.Put("ts", time.Now().Unix())
 	if ctx.udfs == nil {

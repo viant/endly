@@ -7,16 +7,17 @@ import (
 
 // Session represents a selenium session
 type Session struct {
-	SessionID    string
-	Browser      string
-	Pid          int
-	Server       string
-	Remote       string
-	Capture      *CaptureState
-	Net          *netTracker
-	driver       selenium.WebDriver
-	service      *selenium.Service
-	Capabilities []string
+	SessionID        string
+	Browser          string
+	Pid              int
+	Server           string
+	Remote           string
+	Capture          *CaptureState
+	Net              *netTracker
+	driver           selenium.WebDriver
+	service          *selenium.Service
+	Capabilities     []string
+	PageLoadStrategy string
 }
 
 func (s Session) Driver() selenium.WebDriver {

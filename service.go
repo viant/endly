@@ -138,19 +138,30 @@ func (s *AbstractService) Sleep(context *Context, sleepTimeMs int) {
 		if context.IsLoggingEnabled() {
 			context.Publish(msg.NewSleepEvent(sleepTimeMs))
 		}
-		time.Sleep(sleepTime)
+		timer := time.NewTimer(sleepTime)
+		defer timer.Stop()
+		select {
+		case <-timer.C:
+		case <-context.Background().Done():
+		}
 		return
 	}
 
-	startTime := time.Now()
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	timer := time.NewTimer(sleepTime)
+	defer timer.Stop()
 	for {
-		if context.IsLoggingEnabled() {
-			context.Publish(msg.NewSleepEvent(1000))
+		select {
+		case <-context.Background().Done():
+			return
+		case <-timer.C:
+			return
+		case <-ticker.C:
+			if context.IsLoggingEnabled() {
+				context.Publish(msg.NewSleepEvent(1000))
+			}
 		}
-		if time.Now().Sub(startTime) >= sleepTime {
-			break
-		}
-		time.Sleep(time.Second)
 	}
 }
 

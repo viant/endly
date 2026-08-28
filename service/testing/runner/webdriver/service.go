@@ -49,6 +49,19 @@ type service struct {
 	fs afs.Service
 }
 
+// expandContextText resolves workflow values that are intentionally composed
+// from other values, such as webdriverURL -> webdriverRoot -> repoPath.
+func expandContextText(context *endly.Context, value string) string {
+	for range 8 {
+		expanded := context.Expand(value)
+		if expanded == value {
+			return value
+		}
+		value = expanded
+	}
+	return value
+}
+
 func (s *service) addResultIfPresent(callResult []interface{}, result data.Map, resultPath ...string) bool {
 	var responseData interface{}
 	var has = false
@@ -110,7 +123,7 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 			SessionID: request.SessionID,
 		})
 		if err != nil {
-			return nil, err
+			return response, fmt.Errorf("open webdriver session %s at %s: %w", request.SessionID, request.RemoteSelenium, err)
 		}
 		request.SessionID = openResponse.SessionID
 		sessions = Sessions(context)
@@ -148,7 +161,7 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 					PathKind:  action.PathKind,
 				})
 				if err != nil {
-					return nil, err
+					return response, err
 				}
 				util.MergeMap(response.Data, callResponse.Data)
 				if session != nil && session.Capture != nil {
@@ -171,7 +184,7 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 				})
 			}
 			if err != nil {
-				return nil, err
+				return response, err
 			}
 			if callResponse.LookupError != "" {
 				response.LookupErrors = append(response.LookupErrors, callResponse.LookupError)
@@ -273,10 +286,25 @@ func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRe
 	return response, s.call(context, session.driver, session.driver, request.Call, response, key)
 }
 
+// missingStringValue normalizes ChromeDriver's JSON null for an optional DOM
+// string. Older Selenium clients report it as an error, which prevents an
+// Endly repeat action from polling until a dynamically-added attribute exists.
+func missingStringValue(call *MethodCall, response *ServiceCallResponse, err error) bool {
+	if err == nil || err.Error() != "nil return value" {
+		return false
+	}
+	switch call.Method {
+	case "Text", "GetAttribute", "GetProperty":
+		response.Result = []interface{}{""}
+		return true
+	}
+	return false
+}
+
 func (s *service) call(context *endly.Context, driver selenium.WebDriver, caller interface{}, call *MethodCall, response *ServiceCallResponse, elementPath ...string) (err error) {
 	if call.WaitTimeMs == 0 {
-		if err = s.callMethod(caller, call.Method, response, call.Parameters); err != nil {
-			return err
+		if err = s.callMethod(caller, call.Method, response, call.Parameters); err != nil && !missingStringValue(call, response, err) {
+			return fmt.Errorf("webdriver call %s: %w", call.Method, err)
 		}
 		s.addResultIfPresent(response.Result, response.Data, elementPath...)
 		if call.ThinkTimeMs > 0 {
@@ -287,8 +315,8 @@ func (s *service) call(context *endly.Context, driver selenium.WebDriver, caller
 
 	err = driver.WaitWithTimeout(func(wd selenium.WebDriver) (bool, error) {
 		err = s.callMethod(caller, call.Method, response, call.Parameters)
-		if err != nil {
-			return false, err
+		if err != nil && !missingStringValue(call, response, err) {
+			return false, fmt.Errorf("webdriver call %s: %w", call.Method, err)
 		}
 		s.addResultIfPresent(response.Result, response.Data, elementPath...)
 		if call.Exit == "" {
@@ -313,18 +341,35 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 	if err != nil {
 		return nil, err
 	}
-	var response = &WebElementCallResponse{
-		Data: make(map[string]interface{}),
-	}
 	err = request.Selector.Validate()
 	if err != nil {
 		return nil, fmt.Errorf("invalid selector: %v", err)
 	}
+	var deadline time.Time
+	if request.Call.WaitTimeMs > 0 {
+		deadline = time.Now().Add(time.Duration(request.Call.WaitTimeMs) * time.Millisecond)
+	}
+	for {
+		response, callErr := s.callWebElementOnce(context, session, request)
+		if callErr == nil || !IsStaleElementError(callErr) || deadline.IsZero() || time.Now().After(deadline) {
+			return response, callErr
+		}
+		// Reactive UIs commonly replace a matched node while a wait command is
+		// reading it. Re-resolve the selector instead of polling the detached
+		// WebElement for the rest of the wait window.
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+func (s *service) callWebElementOnce(context *endly.Context, session *Session, request *WebElementCallRequest) (*WebElementCallResponse, error) {
+	var response = &WebElementCallResponse{
+		Data: make(map[string]interface{}),
+	}
 	var selector = request.Selector
 	var element selenium.WebElement
 
-	err = session.driver.WaitWithTimeout(func(wd selenium.WebDriver) (bool, error) {
-		element, err = session.driver.FindElement(selector.By, selector.Value)
+	err := session.driver.WaitWithTimeout(func(wd selenium.WebDriver) (bool, error) {
+		element, _ = session.driver.FindElement(selector.By, selector.Value)
 		if element != nil {
 			return true, nil
 		}
@@ -343,14 +388,25 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 	switch request.Call.Method {
 	case "Click", "SendKeys", "Clear", "Submit":
 		if err = s.ensureVisible(element); err != nil {
-			response.LookupError = fmt.Sprintf("element %s is not visible: %v", request.Selector.Value, err)
+			// ChromeDriver 150 can return a JSON null for IsDisplayed even
+			// when the element lookup succeeded. Let the actual interaction
+			// report visibility/interactability in that compatibility case.
+			if err.Error() == "nil return value" {
+				err = nil
+			} else {
+				response.LookupError = fmt.Sprintf("element %s is not visible: %v", request.Selector.Value, err)
+				return nil, err
+			}
+		}
+		if err = s.scrollIntoView(element); err != nil {
+			response.LookupError = fmt.Sprintf("element %s could not be scrolled into view: %v", request.Selector.Value, err)
 			return nil, err
 		}
 	}
 
 	err = s.call(context, session.driver, element, request.Call, callResponse, elementPath...)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w; selector=%s; %s", err, request.Selector.Value, s.elementDiagnostics(element))
 	}
 	util.Append(response.Data, callResponse.Data, true)
 	response.Result = callResponse.Result
@@ -369,7 +425,39 @@ func (s *service) ensureVisible(element selenium.WebElement) error {
 		}
 		time.Sleep(time.Millisecond * 200)
 	}
+	if !ok && err == nil {
+		return errors.New("element is not displayed")
+	}
 	return err
+}
+
+// scrollIntoView makes keyboard and pointer actions deterministic for elements
+// that are rendered below the current viewport. ChromeDriver does not always
+// scroll small form controls into view before SendKeys.
+func (s *service) scrollIntoView(element selenium.WebElement) error {
+	_, err := element.LocationInView()
+	if err != nil && err.Error() == "nil return value" {
+		return nil
+	}
+	return err
+}
+
+func (s *service) elementDiagnostics(element selenium.WebElement) string {
+	displayed, displayedErr := element.IsDisplayed()
+	enabled, enabledErr := element.IsEnabled()
+	location, locationErr := element.Location()
+	size, sizeErr := element.Size()
+	return fmt.Sprintf(
+		"displayed=%t displayedErr=%v enabled=%t enabledErr=%v location=%v locationErr=%v size=%v sizeErr=%v",
+		displayed,
+		displayedErr,
+		enabled,
+		enabledErr,
+		location,
+		locationErr,
+		size,
+		sizeErr,
+	)
 }
 
 func (s *service) open(context *endly.Context, request *OpenSessionRequest) (*OpenSessionResponse, error) {
@@ -404,9 +492,10 @@ func (s *service) deployServerIfNeeded(context *endly.Context, request *StartReq
 
 	if !ok {
 		driverResponse := deploymentService.Run(context, &deploy.Request{
-			Target:  target,
-			Version: version,
-			AppName: driver,
+			Target:       target,
+			Version:      version,
+			AppName:      driver,
+			BaseLocation: request.BaseLocation,
 		})
 		if driverResponse.Error != "" {
 			return nil, errors.New(driverResponse.Error)
@@ -420,9 +509,10 @@ func (s *service) deployServerIfNeeded(context *endly.Context, request *StartReq
 		if !ok {
 			_, version = pair(request.Server)
 			driverResponse := deploymentService.Run(context, &deploy.Request{
-				Target:  target,
-				Version: version,
-				AppName: SeleniumServer,
+				Target:       target,
+				Version:      version,
+				AppName:      SeleniumServer,
+				BaseLocation: request.BaseLocation,
 			})
 			if driverResponse.Error != "" {
 				return nil, errors.New(driverResponse.Error)
@@ -477,6 +567,10 @@ func (s *service) stop(context *endly.Context, request *StopRequest) (*StopRespo
 }
 
 func (s *service) start(context *endly.Context, request *StartRequest) (*StartResponse, error) {
+	request.BaseLocation = expandContextText(context, request.BaseLocation)
+	if request.URL != "" {
+		request.Target = location.NewResource(expandContextText(context, request.URL))
+	}
 	target, err := context.ExpandResource(request.Target)
 	if err != nil {
 		return nil, err
@@ -497,6 +591,7 @@ func (s *service) start(context *endly.Context, request *StartRequest) (*StartRe
 	useSelenium := request.Server != ""
 	if !useSelenium {
 		session.Capabilities = request.Capabilities
+		session.PageLoadStrategy = request.PageLoadStrategy
 		switch request.Driver {
 		case ChromeDriver:
 			if session.service, err = selenium.NewChromeDriverService(response.DriverPath, request.Port); err != nil {
@@ -572,6 +667,9 @@ func (s *service) openSession(context *endly.Context, request *OpenSessionReques
 	}
 
 	caps := selenium.Capabilities{}
+	if session.PageLoadStrategy != "" {
+		caps["pageLoadStrategy"] = session.PageLoadStrategy
+	}
 	if session.Pid == 0 {
 		if len(session.Capabilities) > 0 && len(request.Capabilities) == 0 {
 			request.Capabilities = session.Capabilities
@@ -589,15 +687,15 @@ func (s *service) openSession(context *endly.Context, request *OpenSessionReques
 		caps["browserName"] = request.Browser
 	}
 
-	var err error
-	session.driver, err = selenium.NewRemote(caps, request.Remote)
+	driver, err := selenium.NewRemote(caps, request.Remote)
 	if err != nil {
 		return nil, err
 	}
+	session.driver = driver
 	session.Remote = request.Remote
 	sessions[sessionID] = session
 	context.Deffer(func() {
-		session.driver.Quit()
+		driver.Quit()
 	})
 	return session, nil
 }

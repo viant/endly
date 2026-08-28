@@ -13,6 +13,7 @@ import (
 	"github.com/viant/afs"
 	"github.com/viant/afs/url"
 	"github.com/viant/endly"
+	"github.com/viant/endly/internal/debug"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/criteria"
 	"github.com/viant/endly/model/location"
@@ -50,20 +51,35 @@ func (s *Service) Register(workflow *model.Workflow) error {
 	if err != nil {
 		return err
 	}
+	s.Lock()
+	defer s.Unlock()
 	s.registry[workflow.Name] = workflow
 	return nil
 }
 
+// Unregister removes a workflow from this service instance.
+func (s *Service) Unregister(name string) bool {
+	s.Lock()
+	defer s.Unlock()
+	if _, ok := s.registry[name]; !ok {
+		return false
+	}
+	delete(s.registry, name)
+	return true
+}
+
 // HasWorkflow returns true if service has registered workflow.
 func (s *Service) HasWorkflow(name string) bool {
+	s.RLock()
+	defer s.RUnlock()
 	_, found := s.registry[name]
 	return found
 }
 
 // Workflow returns a workflow for supplied name.
 func (s *Service) Workflow(name string) (*model.Workflow, error) {
-	s.Lock()
-	defer s.Unlock()
+	s.RLock()
+	defer s.RUnlock()
 	if result, found := s.registry[name]; found {
 		return result, nil
 	}
@@ -78,6 +94,9 @@ func (s *Service) addVariableEvent(name string, variables model.Variables, conte
 }
 
 func (s *Service) runAction(context *endly.Context, action *model.Action, process *model.Process) (response map[string]interface{}, err error) {
+	if err = context.AuthorizeAction(action.Service, action.Action); err != nil {
+		return nil, err
+	}
 	var state = context.State()
 
 	var activity *model.Activity
@@ -141,6 +160,15 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 	process.SetTask(task)
 	var result = data.NewMap()
 	var state = context.State()
+	if context.Debugger != nil {
+		if err := context.Debugger.Before(context.Background(), debug.Step{
+			Workflow: process.Workflow.Name,
+			TaskName: task.Name,
+			Kind:     "task",
+		}, state.AsEncodableMap()); err != nil {
+			return nil, fmt.Errorf("debug task boundary: %w", err)
+		}
+	}
 
 	// Determine owner URL for task context
 	var ownerURL string
@@ -192,12 +220,30 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 			s.runAsyncActions(context, process, task, asyncActions, asyncGroup, &asyncError)
 		}
 		for i := 0; i < len(task.Actions); i++ {
+			if err := context.Background().Err(); err != nil {
+				return nil, nil, fmt.Errorf("workflow action cancelled: %w", err)
+			}
 			action := task.Actions[i]
 			if action.Async {
 				continue
 			}
 			if process.HasTagID && !process.TagIDs[action.TagID] {
 				continue
+			}
+			if context.Debugger != nil {
+				actionName := action.Name
+				if actionName == "" {
+					actionName = action.Service + ":" + action.Action
+				}
+				if err := context.Debugger.Before(context.Background(), debug.Step{
+					Workflow: process.Workflow.Name,
+					TaskName: task.Name,
+					Action:   actionName,
+					TagID:    action.TagID,
+					Kind:     "action",
+				}, state.AsEncodableMap()); err != nil {
+					return nil, nil, fmt.Errorf("debug action boundary: %w", err)
+				}
 			}
 			var handler = func(action *model.Action) func() (interface{}, error) {
 				return func() (interface{}, error) {
@@ -533,7 +579,9 @@ func (s *Service) runNode(context *endly.Context, nodeType string, process *mode
 		return nil
 	}
 	original := context.Logging
-	context.Logging = node.Logging
+	if node.Logging != nil {
+		context.Logging = node.Logging
+	}
 	defer func() {
 		context.Logging = original
 	}()
@@ -612,6 +660,9 @@ func (s *Service) runTasks(context *endly.Context, process *model.Process, tasks
 		}
 	}()
 	for _, task := range tasks.Tasks {
+		if contextErr := context.Background().Err(); contextErr != nil {
+			return fmt.Errorf("workflow cancelled: %w", contextErr)
+		}
 		if task.Name == tasks.OnErrorTask || task.Name == tasks.DeferredTask {
 			continue
 		}
@@ -983,7 +1034,7 @@ func (s *Service) registerRoutes() {
 		},
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*FailRequest); ok {
-				return nil, fmt.Errorf(req.Message)
+				return nil, errors.New(req.Message)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},

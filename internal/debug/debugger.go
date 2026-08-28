@@ -1,73 +1,196 @@
 package debug
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"sync"
+	"time"
 )
 
-// Debugger is responsible for debugging Endly workflows.
+const (
+	CommandPause    = "pause"
+	CommandStep     = "step"
+	CommandNext     = "next"
+	CommandContinue = "continue"
+	CommandStop     = "stop"
+	StateRunning    = "running"
+	StatePaused     = "paused"
+	StateStopped    = "stopped"
+)
+
+type State struct {
+	Status      string      `json:"status"`
+	Mode        string      `json:"mode"`
+	Point       Step        `json:"point"`
+	Breakpoints []Step      `json:"breakpoints,omitempty"`
+	PausedAt    *time.Time  `json:"pausedAt,omitempty"`
+	Snapshot    interface{} `json:"snapshot,omitempty"`
+}
+
 type Debugger struct {
-	mux          sync.Mutex
-	Breakpoints  map[Step]struct{} // Task names where the debugger will pause execution
-	StepMode     bool              // Flag to step through the workflow one task at a time
-	continueExec chan bool         // Channel used to control execution flow
+	mux            sync.RWMutex
+	Breakpoints    map[Step]struct{}
+	StepMode       bool
+	pauseRequested bool
+	paused         bool
+	stopped        bool
+	nextTask       string
+	point          Step
+	pausedAt       *time.Time
+	snapshot       interface{}
+	commands       chan string
 }
 
-// NewDebugger creates a new debugger instance with initialized channels.
 func NewDebugger() *Debugger {
-	return &Debugger{
-		Breakpoints:  make(map[Step]struct{}),
-		continueExec: make(chan bool),
-	}
+	return &Debugger{Breakpoints: make(map[Step]struct{}), commands: make(chan string, 1)}
 }
 
-// SetBreakpoint sets a breakpoint on a task by its name.
 func (d *Debugger) SetBreakpoint(step Step) {
 	d.mux.Lock()
-	defer d.mux.Unlock()
 	d.Breakpoints[step] = struct{}{}
+	d.mux.Unlock()
 }
 
-// RemoveBreakpoint removes a breakpoint from a task by its name.
-func (d *Debugger) RemoveBreakpoint(breakpoint Step) {
+func (d *Debugger) RemoveBreakpoint(step Step) {
 	d.mux.Lock()
-	defer d.mux.Unlock()
-	delete(d.Breakpoints, breakpoint)
+	delete(d.Breakpoints, step)
+	d.mux.Unlock()
 }
 
-// BeforeTaskExecution is modified to pause at breakpoints or in step mode, waiting for channel input to continue.
-func (d *Debugger) BeforeTaskExecution(step Step, request interface{}) {
-	fmt.Printf("Before executing task %s: request = %+v\n", step, request)
-	hasBreakpoint := false
+func (d *Debugger) EnableStepMode(enable bool) {
 	d.mux.Lock()
-	_, hasBreakpoint = d.Breakpoints[step]
+	d.StepMode = enable
+	d.mux.Unlock()
+}
+
+func (d *Debugger) Before(ctx context.Context, point Step, snapshot interface{}) error {
+	d.mux.Lock()
+	if d.stopped {
+		d.mux.Unlock()
+		return context.Canceled
+	}
+	breakpoint := false
+	for candidate := range d.Breakpoints {
+		if matches(candidate, point) {
+			breakpoint = true
+			break
+		}
+	}
+	nextBoundary := d.nextTask != "" && point.Kind == "task" && point.TaskName != d.nextTask
+	shouldPause := d.StepMode || d.pauseRequested || breakpoint || nextBoundary
+	if !shouldPause {
+		d.point = point
+		d.mux.Unlock()
+		return nil
+	}
+	now := time.Now().UTC()
+	d.pauseRequested = false
+	if nextBoundary {
+		d.nextTask = ""
+	}
+	d.paused = true
+	d.point = point
+	d.pausedAt = &now
+	d.snapshot = snapshot
 	d.mux.Unlock()
 
-	if hasBreakpoint || d.StepMode {
-		fmt.Println("Execution paused. Press enter to continue...")
-		go func() {
-			fmt.Scanln()           // Wait for user input
-			d.continueExec <- true // Signal to continue execution
-		}()
-		<-d.continueExec // Wait for signal to continue
+	select {
+	case <-ctx.Done():
+		d.markStopped()
+		return ctx.Err()
+	case command := <-d.commands:
+		d.mux.Lock()
+		d.paused = false
+		d.pausedAt = nil
+		d.snapshot = nil
+		switch command {
+		case CommandContinue:
+			d.StepMode = false
+			d.nextTask = ""
+		case CommandStep:
+			d.StepMode = true
+			d.nextTask = ""
+		case CommandNext:
+			d.StepMode = false
+			d.nextTask = d.point.TaskName
+		case CommandStop:
+			d.stopped = true
+			d.mux.Unlock()
+			return context.Canceled
+		}
+		d.mux.Unlock()
+		return nil
 	}
 }
 
-// AfterTaskExecution logs task results, similar to the previous implementation.
-func (d *Debugger) AfterTaskExecution(step Step, result interface{}) {
-	fmt.Printf("After executing task %s: result = %+v\n", step, result)
+func matches(candidate, point Step) bool {
+	return (candidate.Workflow == "" || candidate.Workflow == point.Workflow) &&
+		(candidate.TaskName == "" || candidate.TaskName == point.TaskName) &&
+		(candidate.Action == "" || candidate.Action == point.Action) &&
+		(candidate.TagID == "" || candidate.TagID == point.TagID) &&
+		(candidate.Kind == "" || candidate.Kind == point.Kind)
+}
+
+func (d *Debugger) Control(command string) error {
+	d.mux.Lock()
+	switch command {
+	case CommandPause:
+		if !d.paused {
+			d.pauseRequested = true
+		}
+		d.mux.Unlock()
+		return nil
+	case CommandContinue, CommandStep, CommandNext, CommandStop:
+		if !d.paused {
+			d.mux.Unlock()
+			return errors.New("debug operation was not paused")
+		}
+	default:
+		d.mux.Unlock()
+		return fmt.Errorf("unsupported debug command %q", command)
+	}
+	d.mux.Unlock()
+	select {
+	case d.commands <- command:
+		return nil
+	default:
+		return errors.New("a debug command was already pending")
+	}
+}
+
+func (d *Debugger) State() *State {
+	d.mux.RLock()
+	defer d.mux.RUnlock()
+	status := StateRunning
+	if d.paused {
+		status = StatePaused
+	} else if d.stopped {
+		status = StateStopped
+	}
+	mode := CommandContinue
 	if d.StepMode {
-		// In step mode, pause after each task execution.
-		fmt.Println("Step execution paused. Press enter to continue to the next task...")
-		go func() {
-			fmt.Scanln()           // Wait for user input
-			d.continueExec <- true // Signal to continue execution
-		}()
-		<-d.continueExec // Wait for signal to continue
+		mode = CommandStep
 	}
+	result := &State{Status: status, Mode: mode, Point: d.point, PausedAt: d.pausedAt, Snapshot: d.snapshot}
+	for breakpoint := range d.Breakpoints {
+		result.Breakpoints = append(result.Breakpoints, breakpoint)
+	}
+	return result
 }
 
-// EnableStepMode enables or disables step mode.
-func (d *Debugger) EnableStepMode(enable bool) {
-	d.StepMode = enable
+// Legacy methods remain for compatibility; served workflows use Before directly.
+func (d *Debugger) BeforeTaskExecution(step Step, request interface{}) {
+	_ = d.Before(context.Background(), step, request)
+}
+
+func (d *Debugger) AfterTaskExecution(_ Step, _ interface{}) {}
+
+func (d *Debugger) markStopped() {
+	d.mux.Lock()
+	d.paused = false
+	d.stopped = true
+	d.pausedAt = nil
+	d.snapshot = nil
+	d.mux.Unlock()
 }

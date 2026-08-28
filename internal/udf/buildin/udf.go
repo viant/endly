@@ -47,12 +47,7 @@ func HasResource(source interface{}, state data.Map) (interface{}, error) {
 	filename := toolbox.AsString(source)
 
 	if !strings.HasPrefix(filename, "/") {
-		var parentDirectory = ""
-		if state.Has(OwnerURL) {
-			parentDirectory, _ = GetOwnerDirectory(state)
-		}
-		candidate := path.Join(parentDirectory, toolbox.AsString(source))
-		if toolbox.FileExists(candidate) {
+		if candidate := resolveFromOwner(filename, state); candidate != "" {
 			return true, nil
 		}
 	}
@@ -167,11 +162,7 @@ func LoadBinary(source interface{}, state data.Map) (interface{}, error) {
 		filename = candidate.ParsedURL.Path
 	}
 	if !toolbox.FileExists(filename) {
-		var parentDirectory = ""
-		if state.Has(OwnerURL) {
-			parentDirectory, _ = GetOwnerDirectory(state)
-		}
-		filename = path.Join(parentDirectory, toolbox.AsString(source))
+		filename = resolveFromOwner(toolbox.AsString(source), state)
 	}
 	if !toolbox.FileExists(filename) {
 		filename := toolbox.AsString(source)
@@ -199,6 +190,27 @@ func LoadBinary(source interface{}, state data.Map) (interface{}, error) {
 		return nil, err
 	}
 	return content, nil
+}
+
+func resolveFromOwner(filename string, state data.Map) string {
+	if filename == "" || strings.HasPrefix(filename, "/") || !state.Has(OwnerURL) {
+		return ""
+	}
+	directory, err := GetOwnerDirectory(state)
+	if err != nil || directory == "" {
+		return ""
+	}
+	for {
+		candidate := path.Join(directory, filename)
+		if toolbox.FileExists(candidate) {
+			return candidate
+		}
+		parent := path.Dir(directory)
+		if parent == directory || parent == "." {
+			return ""
+		}
+		directory = parent
+	}
 }
 
 // AssetsToMap loads assets into map[string]string, it takes url, with optional list of extension as filter

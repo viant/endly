@@ -1,6 +1,10 @@
 package webdriver
 
-import "github.com/tebeka/selenium"
+import (
+	"errors"
+
+	"github.com/tebeka/selenium"
+)
 
 const (
 	staleElementReferenceException = 10
@@ -10,7 +14,8 @@ func IsStaleElementError(err error) bool {
 	if err == nil {
 		return false
 	}
-	if sErr, ok := err.(*selenium.Error); ok {
+	var sErr *selenium.Error
+	if errors.As(err, &sErr) {
 		return sErr.LegacyCode == staleElementReferenceException
 	}
 	return false

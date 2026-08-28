@@ -19,39 +19,41 @@ func (t *TasksNode) Select(selector TasksSelector) *TasksNode {
 	if selector.RunAll() {
 		return t
 	}
-	var allowed = make(map[string]bool)
-	for _, task := range selector.Tasks() {
-		allowed[task] = true
-	}
 	var result = &TasksNode{
 		OnErrorTask:  t.OnErrorTask,
 		DeferredTask: t.DeferredTask,
 		Tasks:        []*Task{},
 	}
-
-	if result.DeferredTask != "" {
-		allowed[result.DeferredTask] = true
-	}
-	if result.OnErrorTask != "" {
-		allowed[result.OnErrorTask] = true
-	}
-
-	for _, task := range t.Tasks {
-
+	for _, name := range selector.Tasks() {
+		task, err := t.Task(name)
+		if err != nil {
+			continue
+		}
 		if task.TasksNode != nil && len(task.Tasks) > 0 {
-			if allowed[task.Name] {
-				result.Tasks = append(result.Tasks, task.Tasks...)
-			} else {
-				var selected = task.TasksNode.Select(selector)
-				if len(selected.Tasks) > 0 {
-					result.Tasks = append(result.Tasks, selected.Tasks...)
-				}
-			}
-		} else if allowed[task.Name] {
+			result.Tasks = append(result.Tasks, task.Tasks...)
+		} else {
 			result.Tasks = append(result.Tasks, task)
 		}
 	}
+	result.appendControlTask(t, result.OnErrorTask)
+	if result.DeferredTask != result.OnErrorTask {
+		result.appendControlTask(t, result.DeferredTask)
+	}
 	return result
+}
+
+func (t *TasksNode) appendControlTask(source *TasksNode, name string) {
+	if name == "" {
+		return
+	}
+	for _, candidate := range t.Tasks {
+		if candidate.Name == name {
+			return
+		}
+	}
+	if task, err := source.Task(name); err == nil {
+		t.Tasks = append(t.Tasks, task)
+	}
 }
 
 // Task returns a task for supplied name
