@@ -3,11 +3,11 @@ package vc
 import (
 	"errors"
 	"fmt"
-	"github.com/viant/endly/internal/util"
-	"github.com/viant/endly/model/location"
-	"github.com/viant/scy/cred/secret"
 	"path"
 	"strings"
+
+	"github.com/viant/endly/internal/util"
+	"github.com/viant/endly/model/location"
 )
 
 func versionControlRequestInit(resource *location.Resource, vcType *string) error {
@@ -24,21 +24,21 @@ func versionControlRequestInit(resource *location.Resource, vcType *string) erro
 	return nil
 }
 
-var errorRewrites = map[string]func(*secret.Service, *location.Resource) string{
-	"authentication failed": func(service *secret.Service, resource *location.Resource) string {
+var errorRewrites = map[string]func(util.SecretLookup, *location.Resource) string{
+	"authentication failed": func(service util.SecretLookup, resource *location.Resource) string {
 		username, _ := util.GetUsername(service, resource.Credentials)
 		return fmt.Sprintf("failed to authenticate username: %v with %v secret", username, resource.Credentials)
 	},
-	"error validating server certificate": func(service *secret.Service, resource *location.Resource) string {
+	"error validating server certificate": func(service util.SecretLookup, resource *location.Resource) string {
 		return fmt.Sprintf("failed to validate svn certificate: %v", resource.URL)
 	},
-	"username": func(service *secret.Service, resource *location.Resource) string {
+	"username": func(service util.SecretLookup, resource *location.Resource) string {
 		username, _ := util.GetUsername(service, resource.Credentials)
 		return fmt.Sprintf("failed to authenticate username: %v with %v secret", username, resource.Credentials)
 	},
 }
 
-func checkVersionControlAuthErrors(err error, service *secret.Service, resource *location.Resource) error {
+func checkVersionControlAuthErrors(err error, service util.SecretLookup, resource *location.Resource) error {
 	if err != nil {
 		errorMessage := strings.ToLower(err.Error())
 		for candidate, callback := range errorRewrites {

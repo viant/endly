@@ -69,15 +69,14 @@ pipeline:
 
 Prerequisites for `op://` URLs: install the 1Password CLI and run `op signin`.
 
-Workflows may use `credentials: gcp-e2e` (or any other name) or expand secrets in shell steps, for example:
+Workflows may use `credentials: gcp-e2e` (or any other name). Prefer Docker API auth over shell
+`${gcp.Data}` expansion (shell expand is easy to mis-wire and logs still show the placeholder):
 
 ```yaml
 gcr-auth:
-  action: exec:run
-  secrets:
-    gcp: gcp-e2e
-  commands:
-    - echo '${gcp.Data}' | docker login -u _json_key --password-stdin https://gcr.io
+  action: docker:pull
+  credentials: gcp-e2e
+  image: gcr.io/ops-container-registry/skeema-premium:latest
 ```
 
 #### Other GCP credentials
