@@ -1,0 +1,9 @@
+pipeline:
+  doctor:
+    action: android:doctor
+    required:
+      - adb
+      - emulator
+  report:
+    action: print
+    message: $doctor

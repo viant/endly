@@ -67,7 +67,6 @@ import (
 	_ "github.com/viant/endly/service/testing/msg"
 	_ "github.com/viant/endly/service/testing/runner/android"
 	_ "github.com/viant/endly/service/testing/runner/http"
-	_ "github.com/viant/endly/service/testing/runner/ios"
 	_ "github.com/viant/endly/service/testing/runner/rest"
 	_ "github.com/viant/endly/service/testing/runner/webdriver"
 

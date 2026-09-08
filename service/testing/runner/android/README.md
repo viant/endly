@@ -1,0 +1,47 @@
+# Android runner
+
+The `android` Endly service provides Android emulator lifecycle and, incrementally, build/deployment and E2E automation described in [`adntoid.md`](../../../../adntoid.md).
+
+Implemented actions:
+
+| Action | Description |
+| --- | --- |
+| `android:doctor` | Report adb, emulator, Appium, connected devices, and available AVD readiness |
+| `android:build` | Run argv-safe Gradle-wrapper tasks and discover/checksum variant APK/AAB/APKS products |
+| `android:device-start` | Attach to an exact connected serial or start an owned AVD and wait for `sys.boot_completed=1` |
+| `android:device-stop` | Release a fenced lease and stop only an emulator started by this service |
+| `android:server-start` | Health-check/register external Appium or start a loopback-only managed server |
+| `android:server-stop` | Release external registration or idempotently stop an owned server |
+| `android:install` | Apply an explicit fresh/clean/preserve/upgrade policy and install one APK |
+| `android:uninstall` | Remove an exact package through a valid device lease |
+| `android:launch` | Resolve the launch activity and start the exact package |
+| `android:terminate` | Force-stop the exact package through a valid lease |
+| `android:test` | Optionally install app and test APKs, run `am instrument`, and expose failures as assertions |
+| `android:capture-start` | Start owned logcat capture, optionally cleared and filtered to the app PID |
+| `android:capture-stop` | Stop the capture and return sensitive log evidence metadata |
+| `android:open` | Open an Appium UiAutomator2 session against valid device and server handles |
+| `android:run` | Run assigned `app.*`/`device.*` commands and retrying inline expectations |
+| `android:artifact` | Store sensitive screenshot and bounded UI-source evidence through AFS |
+| `android:close` | Idempotently close the Appium session |
+| `android:cleanup` | Run every registered teardown in LIFO order and report all errors |
+
+The implementation uses argv-safe local command execution, the project Gradle wrapper, Android instrumentation, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. Managed Appium and logcat processes are owned by a LIFO context cleanup stack. `open` requires a registered `ServerHandle` and explicit `testIDStrategy`. Remote targets, split APK/APKS deployment, segmented video, and richer failure manifests remain to be implemented.
+
+Run the real host check:
+
+```bash
+endly -r=service/testing/runner/android/test/doctor.yaml
+```
+
+Run the complete emulator integration after provisioning an SDK and AVD:
+
+```bash
+ANDROID_SDK_ROOT=/path/to/android-sdk \
+ENDLY_ANDROID_EMULATOR_INTEGRATION=1 \
+ENDLY_ANDROID_TEST_AVD=endly_api_35 \
+ENDLY_ANDROID_TEST_PROJECT=/path/to/android-project \
+ENDLY_ANDROID_TEST_PACKAGE=com.example.app \
+  go test ./service/testing/runner/android -run '^TestAndroidEmulatorIntegration$' -v -count=1
+```
+
+The gated test builds with the project Gradle wrapper, starts a clean owned AVD, installs and launches the APK, captures logcat and a non-empty screenshot, terminates the app, and stops the emulator. Set the documented Appium environment variables to include UiAutomator2 session and source capture.
