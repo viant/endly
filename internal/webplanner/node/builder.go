@@ -40,6 +40,9 @@ func (b *Builder) Build(holderHTML, targetHTML string) (*Node, error) {
 	root := &Node{Node: holder}
 
 	b.buildXPathForNode(root)
+	if isNodeEqual(holder, target) {
+		return root, nil
+	}
 	targetNode := traverseNode(root, func(n *Node) {
 		b.buildXPathForNode(n)
 	}, target)
@@ -52,11 +55,7 @@ func (b *Builder) parseHTMLFragment(HTMLFragment string) (*html.Node, error) {
 		return nil, err
 	}
 	if len(targetDoc) == 0 {
-		if len(HTMLFragment) > 1000 {
-			HTMLFragment = HTMLFragment[:1000]
-		}
-		fmt.Printf("failed to parse HTML fragment: %s\n", HTMLFragment)
-		return nil, fmt.Errorf("failed to parse HTML fragment: %s", HTMLFragment)
+		return nil, fmt.Errorf("failed to parse HTML fragment")
 
 	}
 	return targetDoc[0], nil
@@ -72,7 +71,7 @@ func (b *Builder) buildXPathForNode(n *Node) {
 	}
 }
 
-var standardAttributes = []string{"id", "aria-label", "aria-labelledby", "text()", "class"}
+var standardAttributes = []string{"id", "data-testid", "data-test", "aria-label", "aria-labelledby", "name", "placeholder", "role", "text()", "class"}
 
 func (b *Builder) Attributes() []string {
 	if len(b.attributes) == 0 {
@@ -104,21 +103,42 @@ func (b *Builder) buildBaseSelector(n *Node) {
 	for _, attr := range b.Attributes() {
 		switch attr {
 		case "class":
-			n.selectors[attr] = fmt.Sprintf("//%s[contains(@class, \"%s\")]", n.Data, attr)
+			className := getAttribute(n.Node, attr)
+			if className != "" {
+				n.selectors[attr] = fmt.Sprintf("//%s[contains(concat(' ', normalize-space(@class), ' '), %s)]", n.Data, xpathLiteral(" "+className+" "))
+			}
 
 		case "text()":
 			if first := n.Node.FirstChild; first != nil {
 				if first.Type == html.TextNode && first.Data != "" {
-					n.selectors[attr] = fmt.Sprintf("//%s[%s=\"%s\"]", n.Data, attr, first.Data)
+					n.selectors[attr] = fmt.Sprintf("//%s[normalize-space(%s)=%s]", n.Data, attr, xpathLiteral(strings.TrimSpace(first.Data)))
 				}
 			}
 		default:
-			ariaLabel := getAttribute(n.Node, attr)
-			if ariaLabel != "" {
-				n.selectors[attr] = fmt.Sprintf("//%s[@%v=\"%s\"]", n.Data, attr, ariaLabel)
+			value := getAttribute(n.Node, attr)
+			if value != "" {
+				n.selectors[attr] = fmt.Sprintf("//%s[@%v=%s]", n.Data, attr, xpathLiteral(value))
 			}
 		}
 	}
+}
+
+func xpathLiteral(value string) string {
+	if !strings.Contains(value, "'") {
+		return "'" + value + "'"
+	}
+	if !strings.Contains(value, `"`) {
+		return `"` + value + `"`
+	}
+	parts := strings.Split(value, "'")
+	quoted := make([]string, 0, len(parts)*2-1)
+	for index, part := range parts {
+		if index > 0 {
+			quoted = append(quoted, `"'"`)
+		}
+		quoted = append(quoted, "'"+part+"'")
+	}
+	return "concat(" + strings.Join(quoted, ",") + ")"
 }
 
 func isNodeEqual(n1, n2 *html.Node) bool {

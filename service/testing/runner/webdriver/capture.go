@@ -20,6 +20,7 @@ import (
 )
 
 type CaptureSummary struct {
+	Enabled           bool
 	StartedAt         time.Time
 	RequestsInFlight  int
 	RequestsCompleted int
@@ -41,6 +42,7 @@ type CapturedBody struct {
 
 type NetworkTransaction struct {
 	RequestID string
+	Sequence  int
 
 	URL    string
 	Method string
@@ -76,6 +78,7 @@ type CaptureState struct {
 	urlIncludes   []string
 
 	maxBodyBytes  int
+	maxEntries    int
 	redact        bool
 	redactHeaders map[string]bool
 
@@ -83,7 +86,9 @@ type CaptureState struct {
 	completed []*NetworkTransaction
 	console   []*ConsoleEntry
 
-	errors []string
+	errors         []string
+	totalCompleted int
+	totalConsole   int
 
 	sink *captureSink
 }
@@ -96,6 +101,7 @@ func newCaptureState(req *CaptureStartRequest) *CaptureState {
 		enableConsole: true,
 		enableNetwork: true,
 		maxBodyBytes:  1_000_000,
+		maxEntries:    10_000,
 		redact:        true,
 		redactHeaders: map[string]bool{},
 		inflight:      map[string]*NetworkTransaction{},
@@ -111,6 +117,9 @@ func newCaptureState(req *CaptureStartRequest) *CaptureState {
 	}
 	if req.MaxBodyBytes > 0 {
 		state.maxBodyBytes = req.MaxBodyBytes
+	}
+	if req.MaxEntries > 0 {
+		state.maxEntries = req.MaxEntries
 	}
 	if req.Redact != nil {
 		state.redact = *req.Redact
@@ -155,12 +164,25 @@ func (s *CaptureState) Summary() *CaptureSummary {
 	defer s.mux.Unlock()
 
 	return &CaptureSummary{
+		Enabled:           s.enabled,
 		StartedAt:         s.started,
 		RequestsInFlight:  len(s.inflight),
-		RequestsCompleted: len(s.completed),
-		ConsoleEntries:    len(s.console),
+		RequestsCompleted: s.totalCompleted,
+		ConsoleEntries:    s.totalConsole,
 		Errors:            append([]string(nil), s.errors...),
 	}
+}
+
+func (s *CaptureState) Stop() {
+	s.mux.Lock()
+	s.enabled = false
+	s.mux.Unlock()
+}
+
+func (s *CaptureState) Enabled() bool {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	return s.enabled
 }
 
 func (s *CaptureState) Clear() {
@@ -170,6 +192,8 @@ func (s *CaptureState) Clear() {
 	s.completed = []*NetworkTransaction{}
 	s.console = []*ConsoleEntry{}
 	s.errors = []string{}
+	s.totalCompleted = 0
+	s.totalConsole = 0
 	s.started = time.Now()
 	s.lastDrain = time.Time{}
 	if s.sink != nil {
@@ -203,6 +227,10 @@ func (s *CaptureState) Drain(sess *Session) {
 	}
 	now := time.Now()
 	s.mux.Lock()
+	if !s.enabled {
+		s.mux.Unlock()
+		return
+	}
 	last := s.lastDrain
 	s.mux.Unlock()
 	if !last.IsZero() && now.Sub(last) < 100*time.Millisecond {
@@ -238,7 +266,7 @@ func (s *CaptureState) drainConsole(driver any) {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	for _, msg := range messages {
-		s.console = append(s.console, &ConsoleEntry{
+		s.appendConsoleLocked(&ConsoleEntry{
 			Timestamp: msg.Timestamp,
 			Level:     string(msg.Level),
 			Message:   msg.Message,
@@ -313,6 +341,9 @@ func (s *CaptureState) appendErr(err string) {
 	s.mux.Lock()
 	defer s.mux.Unlock()
 	s.errors = append(s.errors, err)
+	if len(s.errors) > 100 {
+		s.errors = append([]string(nil), s.errors[len(s.errors)-100:]...)
+	}
 }
 
 func (s *CaptureState) onRequestWillBeSent(params json.RawMessage) {
@@ -517,7 +548,12 @@ func (s *CaptureState) finishLocked(requestID string, tx *NetworkTransaction) {
 	if tx == nil {
 		return
 	}
+	s.totalCompleted++
+	tx.Sequence = s.totalCompleted
 	s.completed = append(s.completed, tx)
+	if s.sink == nil && s.maxEntries > 0 && len(s.completed) > s.maxEntries {
+		s.completed = append([]*NetworkTransaction(nil), s.completed[len(s.completed)-s.maxEntries:]...)
+	}
 	delete(s.inflight, requestID)
 }
 
@@ -553,7 +589,7 @@ func (s *CaptureState) onRuntimeConsole(params json.RawMessage) {
 	}
 	s.mux.Lock()
 	defer s.mux.Unlock()
-	s.console = append(s.console, &ConsoleEntry{
+	s.appendConsoleLocked(&ConsoleEntry{
 		Timestamp: time.Now(),
 		Level:     in.Type,
 		Message:   strings.Join(parts, " "),
@@ -583,11 +619,19 @@ func (s *CaptureState) onRuntimeException(params json.RawMessage) {
 	}
 	s.mux.Lock()
 	defer s.mux.Unlock()
-	s.console = append(s.console, &ConsoleEntry{
+	s.appendConsoleLocked(&ConsoleEntry{
 		Timestamp: time.Now(),
 		Level:     "exception",
 		Message:   msg,
 	})
+}
+
+func (s *CaptureState) appendConsoleLocked(entry *ConsoleEntry) {
+	s.console = append(s.console, entry)
+	s.totalConsole++
+	if s.sink == nil && s.maxEntries > 0 && len(s.console) > s.maxEntries {
+		s.console = append([]*ConsoleEntry(nil), s.console[len(s.console)-s.maxEntries:]...)
+	}
 }
 
 func parsePerformanceLogMessage(raw string) (string, json.RawMessage, error) {
@@ -662,19 +706,14 @@ func capBody(body string, base64Encoded bool, maxBytes int) *CapturedBody {
 }
 
 func getResponseBody(sess *Session, requestID string, maxBytes int) (data string, encoding string, truncated bool, err error) {
-	if sess == nil || sess.driver == nil || sess.Remote == "" {
-		return "", "", false, errors.New("missing session remote")
+	if sess == nil || sess.driver == nil {
+		return "", "", false, errors.New("missing browser session")
 	}
-	wdSession := sess.driver.SessionID()
-	if wdSession == "" {
-		return "", "", false, errors.New("missing webdriver session id")
-	}
-
 	type result struct {
 		Body          string `json:"body"`
 		Base64Encoded bool   `json:"base64Encoded"`
 	}
-	raw, err := cdpExecute(sess.Remote, wdSession, "Network.getResponseBody", map[string]any{"requestId": requestID})
+	raw, err := executeSessionCDP(sess, "Network.getResponseBody", map[string]any{"requestId": requestID})
 	if err != nil {
 		return "", "", false, err
 	}
@@ -684,6 +723,22 @@ func getResponseBody(sess *Session, requestID string, maxBytes int) (data string
 	}
 	capped := capBody(out.Body, out.Base64Encoded, maxBytes)
 	return capped.Data, capped.Encoding, capped.Truncated, nil
+}
+
+func executeSessionCDP(sess *Session, command string, params map[string]any) (json.RawMessage, error) {
+	if sess == nil || sess.driver == nil {
+		return nil, errors.New("missing browser session")
+	}
+	if direct, ok := sess.driver.(interface {
+		CDPCommand(string, map[string]interface{}) (json.RawMessage, error)
+	}); ok {
+		return direct.CDPCommand(command, params)
+	}
+	wdSession := sess.driver.SessionID()
+	if wdSession == "" || sess.Remote == "" {
+		return nil, errors.New("missing webdriver CDP endpoint")
+	}
+	return cdpExecute(sess.Remote, wdSession, command, params)
 }
 
 func cdpExecute(remote, wdSession, cmd string, params map[string]any) (json.RawMessage, error) {
@@ -832,6 +887,14 @@ func (s *CaptureState) FlushSink() error {
 	if s.sink != nil {
 		s.sink.nextConsole += len(pendingConsole)
 		s.sink.nextNetwork += len(pendingNetwork)
+		if s.sink.nextConsole > 0 {
+			s.console = append([]*ConsoleEntry(nil), s.console[s.sink.nextConsole:]...)
+			s.sink.nextConsole = 0
+		}
+		if s.sink.nextNetwork > 0 {
+			s.completed = append([]*NetworkTransaction(nil), s.completed[s.sink.nextNetwork:]...)
+			s.sink.nextNetwork = 0
+		}
 	}
 	shouldSync := s.sink != nil && s.sink.flushInterval > 0 && time.Since(s.sink.lastSync) >= s.sink.flushInterval
 	writer := io.WriteCloser(nil)

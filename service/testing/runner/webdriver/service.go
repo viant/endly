@@ -1,9 +1,12 @@
 package webdriver
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/viant/endly/model/msg"
+	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -80,6 +83,8 @@ func (s *service) addResultIfPresent(callResult []interface{}, result data.Map, 
 			responseData = actual
 		case map[string]interface{}:
 			responseData = actual
+		case bool, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+			responseData = actual
 		default:
 			fmt.Printf("unsupported type: %T\n", actual)
 			continue
@@ -107,47 +112,141 @@ func (s *service) getResultPath(key string, call *MethodCall, kind PathKind) []s
 	return []string{key, method}
 }
 
-func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse, error) {
-	var response = &RunResponse{
+func (s *service) run(context *endly.Context, request *RunRequest) (response *RunResponse, err error) {
+	response = &RunResponse{
 		Data:         make(map[string]interface{}),
 		LookupErrors: make([]string, 0),
+		Navigations:  make([]*NavigationReport, 0),
+		Failures:     make([]*FailureArtifact, 0),
+		Assertions:   make([]*AssertionResult, 0),
 	}
 	navigation := navigationWithDefaults(request.Navigation)
-	sessions := Sessions(context)
-	session, hasSession := sessions[request.SessionID]
+	navigation.ScrollSelector = context.Expand(navigation.ScrollSelector)
+	session, hasSession := lookupSession(context, request.SessionID)
+	autoStart := request.AutoStart == nil || *request.AutoStart
+	if !hasSession && autoStart && request.SessionID == "localhost:4444" && request.RemoteSelenium == "" && request.DebuggerAddress == "" {
+		startRequest := &StartRequest{PageLoadStrategy: request.PageLoadStrategy}
+		if initErr := startRequest.Init(); initErr != nil {
+			return response, initErr
+		}
+		if _, startErr := s.start(context, startRequest); startErr != nil {
+			return response, fmt.Errorf("auto-start webdriver: %w", startErr)
+		}
+		session, hasSession = lookupSession(context, request.SessionID)
+	}
 
 	if !hasSession || session.driver == nil {
 		openResponse, err := s.openSession(context, &OpenSessionRequest{
-			Remote:    request.RemoteSelenium,
-			Browser:   request.Browser,
-			SessionID: request.SessionID,
+			Remote:           request.RemoteSelenium,
+			Browser:          request.Browser,
+			SessionID:        request.SessionID,
+			DebuggerAddress:  request.DebuggerAddress,
+			DirectCDP:        request.DirectCDP,
+			PageLoadStrategy: request.PageLoadStrategy,
+			BlockedURLs:      request.BlockedURLs,
 		})
 		if err != nil {
 			return response, fmt.Errorf("open webdriver session %s at %s: %w", request.SessionID, request.RemoteSelenium, err)
 		}
 		request.SessionID = openResponse.SessionID
-		sessions = Sessions(context)
-		session = sessions[request.SessionID]
+		session, _ = lookupSession(context, request.SessionID)
 	}
 	response.SessionID = request.SessionID
+	response.Backend = session.Backend
+	session.mu.Lock()
+	defer session.mu.Unlock()
+	var currentAction *Action
+	var currentCall *MethodCall
+	defer func() {
+		failureErr := err
+		if failureErr == nil && response.Assert != nil && response.Assert.Validation != nil && response.Assert.Validation.HasFailure() {
+			failureErr = errors.New(response.Assert.Validation.Report())
+		}
+		if failureErr == nil || request.FailureArtifacts == nil {
+			return
+		}
+		if artifact := s.captureFailure(context, session, request.FailureArtifacts, currentAction, currentCall, failureErr, response.Navigations); artifact != nil {
+			response.Failures = append(response.Failures, artifact)
+		}
+	}()
 	if len(request.Actions) == 0 {
 		return response, nil
+	}
+	responseBaseline := 0
+	if hasResponseWait(request.Actions) {
+		if err = s.ensureNetworkCaptureLocked(session); err != nil {
+			return response, err
+		}
+		responseBaseline = session.Capture.Summary().RequestsCompleted
 	}
 	var state = context.State()
 
 	actionDelay := time.Duration(request.ActionDelaysMs) * time.Millisecond
 	for _, action := range request.Actions {
+		currentAction = action
+		actionTimeoutMs := request.ActionTimeoutMs
 		for _, call := range action.Calls {
+			if call.WaitTimeMs > actionTimeoutMs {
+				actionTimeoutMs = call.WaitTimeMs
+			}
+		}
+		actionDeadline := time.Now().Add(time.Duration(actionTimeoutMs) * time.Millisecond)
+		for _, call := range action.Calls {
+			runtimeCall := *call
+			currentCall = &runtimeCall
+			callStarted := time.Now()
 			if len(call.Parameters) > 0 {
+				runtimeCall.Parameters = make([]interface{}, len(call.Parameters))
 				for i, item := range call.Parameters {
-					call.Parameters[i] = state.Expand(item)
+					runtimeCall.Parameters[i] = state.Expand(item)
+				}
+			}
+			if action.Selector != nil {
+				remainingMs := max(1, int(time.Until(actionDeadline)/time.Millisecond))
+				if runtimeCall.WaitTimeMs <= 0 || runtimeCall.WaitTimeMs > remainingMs {
+					runtimeCall.WaitTimeMs = remainingMs
+				}
+				if runtimeCall.PollIntervalMs <= 0 {
+					runtimeCall.PollIntervalMs = request.PollIntervalMs
 				}
 			}
 			if action.Selector == nil {
-				if session != nil && isGetMethod(call.Method) && len(call.Parameters) == 1 && toolbox.IsString(call.Parameters[0]) {
-					URL := toolbox.AsString(call.Parameters[0])
-					if err := s.getWithGuard(context, session, URL, navigation); err != nil {
-						return nil, err
+				if runtimeCall.Method == "StopLoading" {
+					stopResponse, stopErr := s.stopLoading(context, &StopLoadingRequest{SessionID: request.SessionID})
+					if stopErr != nil {
+						return response, stopErr
+					}
+					response.Data["stopLoading"] = stopResponse
+					continue
+				}
+				if runtimeCall.Method == "WaitForResponse" {
+					if len(runtimeCall.Parameters) != 3 {
+						return response, fmt.Errorf("WaitForResponse requires URL pattern, status, and timeout")
+					}
+					pattern := toolbox.AsString(runtimeCall.Parameters[0])
+					status := toolbox.AsInt(runtimeCall.Parameters[1])
+					timeoutMs := toolbox.AsInt(runtimeCall.Parameters[2])
+					transaction, waitErr := s.waitForResponse(context, session, pattern, status, timeoutMs, responseBaseline)
+					if waitErr != nil {
+						return response, waitErr
+					}
+					responseBaseline = transaction.Sequence
+					key := action.Key
+					if key == "" {
+						key = "response"
+					}
+					responseData := data.Map(response.Data)
+					responseData.SetValue(key, transaction)
+					continue
+				}
+				if session != nil && isGetMethod(runtimeCall.Method) && len(runtimeCall.Parameters) == 1 && toolbox.IsString(runtimeCall.Parameters[0]) {
+					URL := toolbox.AsString(runtimeCall.Parameters[0])
+					report, err := s.getWithGuard(context, session, URL, navigation)
+					if report != nil {
+						response.Navigations = append(response.Navigations, report)
+					}
+					if err != nil {
+						return response, err
 					}
 					if session.Capture != nil {
 						session.Capture.Drain(session)
@@ -155,11 +254,17 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 					continue
 				}
 				callResponse, err := s.callWebDriver(context, &WebDriverCallRequest{
-					Key:       action.Key,
-					SessionID: request.SessionID,
-					Call:      call,
-					PathKind:  action.PathKind,
+					Key:           action.Key,
+					SessionID:     request.SessionID,
+					Call:          &runtimeCall,
+					PathKind:      action.PathKind,
+					sessionLocked: true,
 				})
+				var driverResult []interface{}
+				if callResponse != nil {
+					driverResult = callResponse.Result
+				}
+				appendAssertionResult(response, action, &runtimeCall, driverResult, err, callStarted)
 				if err != nil {
 					return response, err
 				}
@@ -170,19 +275,19 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 				continue
 			}
 			callResponse, err := s.callWebElement(context, &WebElementCallRequest{
-				SessionID: request.SessionID,
-				Selector:  action.Selector,
-				Call:      call,
-				PathKind:  action.PathKind,
+				SessionID:            request.SessionID,
+				Selector:             action.Selector,
+				Call:                 &runtimeCall,
+				PathKind:             action.PathKind,
+				AllowJavaScriptClick: request.AllowJavaScriptClick,
+				Strict:               selectorStrictness(action.Strict, request.StrictSelectors),
+				sessionLocked:        true,
 			})
-			if IsStaleElementError(err) {
-				callResponse, err = s.callWebElement(context, &WebElementCallRequest{
-					SessionID: request.SessionID,
-					Selector:  action.Selector,
-					Call:      call,
-					PathKind:  action.PathKind,
-				})
+			var callResult []interface{}
+			if callResponse != nil {
+				callResult = callResponse.Result
 			}
+			appendAssertionResult(response, action, &runtimeCall, callResult, err, callStarted)
 			if err != nil {
 				return response, err
 			}
@@ -194,12 +299,13 @@ func (s *service) run(context *endly.Context, request *RunRequest) (*RunResponse
 				session.Capture.Drain(session)
 			}
 			if actionDelay > 0 {
-				time.Sleep(actionDelay)
+				if err := waitForContext(context.Background(), actionDelay); err != nil {
+					return response, err
+				}
 			}
 		}
 	}
 
-	var err error
 	if request.Expect != nil {
 		response.Assert, err = validator.Assert(context, request, request.Expect, response.Data, "webdriver", "assert webdriver response")
 	}
@@ -248,8 +354,13 @@ func (s *service) Data(webElement selenium.WebElement, format string) (interface
 }
 
 func (s *service) callMethod(owner interface{}, methodName string, response *ServiceCallResponse, parameters []interface{}) (err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			err = fmt.Errorf("webdriver method %s is not supported by %T: %v", methodName, owner, recovered)
+		}
+	}()
 	switch methodName {
-	case "Data":
+	case "Data", "Tabs", "SwitchTab", "NewTab", "CloseTab", "Check", "Uncheck", "SelectOption", "SwitchFrameBySelector", "MainFrame", "ElementCount":
 		parameters = append([]interface{}{owner}, parameters...)
 		owner = s
 	}
@@ -276,6 +387,10 @@ func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRe
 	if err != nil {
 		return nil, err
 	}
+	if !request.sessionLocked {
+		session.mu.Lock()
+		defer session.mu.Unlock()
+	}
 	response := &ServiceCallResponse{
 		Data: make(map[string]interface{}),
 	}
@@ -283,7 +398,7 @@ func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRe
 	if key == "" {
 		key = request.Call.Method
 	}
-	return response, s.call(context, session.driver, session.driver, request.Call, response, key)
+	return response, s.call(context, session.driver, request.Call, response, key)
 }
 
 // missingStringValue normalizes ChromeDriver's JSON null for an optional DOM
@@ -301,39 +416,150 @@ func missingStringValue(call *MethodCall, response *ServiceCallResponse, err err
 	return false
 }
 
-func (s *service) call(context *endly.Context, driver selenium.WebDriver, caller interface{}, call *MethodCall, response *ServiceCallResponse, elementPath ...string) (err error) {
+func (s *service) call(context *endly.Context, caller interface{}, call *MethodCall, response *ServiceCallResponse, elementPath ...string) (err error) {
 	if call.WaitTimeMs == 0 {
 		if err = s.callMethod(caller, call.Method, response, call.Parameters); err != nil && !missingStringValue(call, response, err) {
 			return fmt.Errorf("webdriver call %s: %w", call.Method, err)
 		}
 		s.addResultIfPresent(response.Result, response.Data, elementPath...)
+		if call.Expectation != nil {
+			matched, actual, matchErr := matchesExpectation(response.Result, call.Expectation)
+			if matchErr != nil {
+				return matchErr
+			}
+			if !matched {
+				return fmt.Errorf("webdriver expectation failed: expected %s %v, actual %v", call.Expectation.Matcher, call.Expectation.Value, actual)
+			}
+		}
 		if call.ThinkTimeMs > 0 {
-			time.Sleep(time.Millisecond * time.Duration(call.ThinkTimeMs))
+			if err := waitForContext(context.Background(), time.Millisecond*time.Duration(call.ThinkTimeMs)); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
 
-	err = driver.WaitWithTimeout(func(wd selenium.WebDriver) (bool, error) {
+	deadline := time.Now().Add(time.Duration(call.WaitTimeMs) * time.Millisecond)
+	pollInterval := time.Duration(call.PollIntervalMs) * time.Millisecond
+	if pollInterval <= 0 {
+		pollInterval = 100 * time.Millisecond
+	}
+	for {
+		if contextErr := context.Background().Err(); contextErr != nil {
+			return contextErr
+		}
+		response.Result = nil
 		err = s.callMethod(caller, call.Method, response, call.Parameters)
 		if err != nil && !missingStringValue(call, response, err) {
-			return false, fmt.Errorf("webdriver call %s: %w", call.Method, err)
+			return fmt.Errorf("webdriver call %s: %w", call.Method, err)
 		}
 		s.addResultIfPresent(response.Result, response.Data, elementPath...)
-		if call.Exit == "" {
-			return true, nil
+		matchedExpectation := true
+		var actual interface{}
+		if call.Expectation != nil {
+			var matchErr error
+			matchedExpectation, actual, matchErr = matchesExpectation(response.Result, call.Expectation)
+			if matchErr != nil {
+				return matchErr
+			}
 		}
-		evalData := data.Map{}
-		util.MergeMap(evalData, response.Data)
-		return criteria.Evaluate(context, evalData, call.Exit, &call.criteria, runnerCaller, true)
-	}, time.Duration(call.WaitTimeMs)*time.Millisecond)
+		if call.Exit == "" && matchedExpectation {
+			return nil
+		}
+		if call.Exit != "" {
+			evalData := data.Map{}
+			util.MergeMap(evalData, response.Data)
+			matched, evalErr := criteria.Evaluate(context, evalData, call.Exit, &call.criteria, runnerCaller, true)
+			if evalErr != nil {
+				return evalErr
+			}
+			if matched && matchedExpectation {
+				return nil
+			}
+		}
+		if !time.Now().Before(deadline) {
+			if call.IgnoreTimeout {
+				return nil
+			}
+			if call.Expectation != nil {
+				return fmt.Errorf("webdriver expectation timed out after %dms: expected %s %v, actual %v", call.WaitTimeMs, call.Expectation.Matcher, call.Expectation.Value, actual)
+			}
+			return fmt.Errorf("webdriver call %s timed out after %dms waiting for %q", call.Method, call.WaitTimeMs, call.Exit)
+		}
+		remaining := time.Until(deadline)
+		if pollInterval > remaining {
+			pollInterval = remaining
+		}
+		if err := waitForContext(context.Background(), pollInterval); err != nil {
+			return err
+		}
+	}
+}
 
-	if IsStaleElementError(err) {
-		return err
+func matchesExpectation(results []interface{}, expectation *CallExpectation) (bool, interface{}, error) {
+	actual := firstCallResult(results)
+	if expectation == nil {
+		return true, actual, nil
 	}
-	if call.IgnoreTimeout {
-		return nil
+	switch expectation.Matcher {
+	case "equal":
+		if actualText, ok := actual.(string); ok {
+			expectedText := toolbox.AsString(expectation.Value)
+			if len(expectedText) >= 2 && strings.HasPrefix(expectedText, "/") && strings.HasSuffix(expectedText, "/") {
+				pattern, err := regexp.Compile(expectedText[1 : len(expectedText)-1])
+				if err != nil {
+					return false, actual, fmt.Errorf("invalid expectation regexp %q: %w", expectedText, err)
+				}
+				return pattern.MatchString(actualText), actual, nil
+			}
+			return normalizeDOMText(actualText) == normalizeDOMText(expectedText), actual, nil
+		}
+		return reflect.DeepEqual(actual, expectation.Value), actual, nil
+	case "contains":
+		return strings.Contains(normalizeDOMText(toolbox.AsString(actual)), normalizeDOMText(toolbox.AsString(expectation.Value))), actual, nil
+	default:
+		return false, actual, fmt.Errorf("unsupported expectation matcher %q", expectation.Matcher)
 	}
-	return err
+}
+
+func firstCallResult(results []interface{}) interface{} {
+	for _, candidate := range results {
+		if candidate == nil {
+			continue
+		}
+		if _, isError := candidate.(error); isError {
+			continue
+		}
+		return candidate
+	}
+	return nil
+}
+
+func appendAssertionResult(response *RunResponse, action *Action, call *MethodCall, results []interface{}, err error, started time.Time) {
+	if response == nil || call == nil || call.Expectation == nil {
+		return
+	}
+	selector := "page"
+	if action != nil && action.Selector != nil {
+		selector = action.Selector.By + ":" + action.Selector.Value
+	}
+	result := &AssertionResult{
+		Method:    call.Method,
+		Selector:  selector,
+		Matcher:   call.Expectation.Matcher,
+		Expected:  call.Expectation.Value,
+		Actual:    firstCallResult(results),
+		Passed:    err == nil,
+		ElapsedMs: int(time.Since(started) / time.Millisecond),
+	}
+	if err != nil {
+		result.Error = err.Error()
+	}
+	response.Assertions = append(response.Assertions, result)
+}
+
+func normalizeDOMText(value string) string {
+	return strings.Join(strings.Fields(value), " ")
 }
 
 func (s *service) callWebElement(context *endly.Context, request *WebElementCallRequest) (*WebElementCallResponse, error) {
@@ -345,19 +571,51 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 	if err != nil {
 		return nil, fmt.Errorf("invalid selector: %v", err)
 	}
+	if !request.sessionLocked {
+		session.mu.Lock()
+		defer session.mu.Unlock()
+	}
 	var deadline time.Time
 	if request.Call.WaitTimeMs > 0 {
 		deadline = time.Now().Add(time.Duration(request.Call.WaitTimeMs) * time.Millisecond)
 	}
 	for {
-		response, callErr := s.callWebElementOnce(context, session, request)
-		if callErr == nil || !IsStaleElementError(callErr) || deadline.IsZero() || time.Now().After(deadline) {
+		runtimeRequest := *request
+		runtimeCall := *request.Call
+		if !deadline.IsZero() {
+			remaining := time.Until(deadline)
+			if remaining <= 0 {
+				return nil, fmt.Errorf("webdriver element wait timed out after %dms: %s", request.Call.WaitTimeMs, request.Selector.Value)
+			}
+			runtimeCall.WaitTimeMs = max(1, int(remaining/time.Millisecond))
+		}
+		runtimeRequest.Call = &runtimeCall
+		response, callErr := s.callWebElementOnce(context, session, &runtimeRequest)
+		if response != nil && response.LookupError != "" && request.Call.AllowMissing {
+			response.LookupError = ""
+			return response, nil
+		}
+		lookupPending := response != nil && response.LookupError != "" && !deadline.IsZero()
+		retryTransient := IsRetryableElementError(callErr) && !deadline.IsZero()
+		if !lookupPending && !retryTransient {
 			return response, callErr
 		}
-		// Reactive UIs commonly replace a matched node while a wait command is
-		// reading it. Re-resolve the selector instead of polling the detached
-		// WebElement for the rest of the wait window.
-		time.Sleep(50 * time.Millisecond)
+		if time.Now().After(deadline) {
+			if callErr != nil {
+				return response, callErr
+			}
+			return response, fmt.Errorf("webdriver element wait timed out after %dms: %s", request.Call.WaitTimeMs, response.LookupError)
+		}
+		pollInterval := time.Duration(request.Call.PollIntervalMs) * time.Millisecond
+		if pollInterval <= 0 {
+			pollInterval = 100 * time.Millisecond
+		}
+		if remaining := time.Until(deadline); pollInterval > remaining {
+			pollInterval = remaining
+		}
+		if err := waitForContext(context.Background(), pollInterval); err != nil {
+			return response, err
+		}
 	}
 }
 
@@ -368,13 +626,26 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 	var selector = request.Selector
 	var element selenium.WebElement
 
-	err := session.driver.WaitWithTimeout(func(wd selenium.WebDriver) (bool, error) {
-		element, _ = session.driver.FindElement(selector.By, selector.Value)
-		if element != nil {
-			return true, nil
+	findTimeout := defaultFindElementTimeout
+	if request.Call.WaitTimeMs > 0 {
+		// The outer wait loop owns the total deadline and retries missing or
+		// stale elements without nesting another ten-second wait.
+		findTimeout = 0
+	}
+	var err error
+	if request.Strict {
+		elements, findErr := session.driver.FindElements(selector.By, selector.Value)
+		err = findErr
+		switch len(elements) {
+		case 0:
+		case 1:
+			element = elements[0]
+		default:
+			return response, fmt.Errorf("strict locator matched %d elements: %s:%s", len(elements), selector.By, selector.Value)
 		}
-		return false, nil
-	}, defaultFindElementTimeout)
+	} else {
+		element, err = findElement(context.Background(), session.driver, selector, findTimeout)
+	}
 
 	if err != nil || element == nil {
 		response.LookupError = fmt.Sprintf("failed to lookup element: %v %v, %v", selector.By, selector.Value, err)
@@ -386,8 +657,8 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 		Data: make(map[string]interface{}),
 	}
 	switch request.Call.Method {
-	case "Click", "SendKeys", "Clear", "Submit":
-		if err = s.ensureVisible(element); err != nil {
+	case "Click", "SendKeys", "Clear", "Submit", "Check", "Uncheck", "SelectOption", "MoveTo":
+		if err = s.ensureVisible(context.Background(), element, time.Duration(request.Call.WaitTimeMs)*time.Millisecond); err != nil {
 			// ChromeDriver 150 can return a JSON null for IsDisplayed even
 			// when the element lookup succeeded. Let the actual interaction
 			// report visibility/interactability in that compatibility case.
@@ -395,40 +666,81 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 				err = nil
 			} else {
 				response.LookupError = fmt.Sprintf("element %s is not visible: %v", request.Selector.Value, err)
-				return nil, err
+				return response, err
 			}
 		}
 		if err = s.scrollIntoView(element); err != nil {
 			response.LookupError = fmt.Sprintf("element %s could not be scrolled into view: %v", request.Selector.Value, err)
-			return nil, err
+			return response, err
 		}
 	}
 
-	err = s.call(context, session.driver, element, request.Call, callResponse, elementPath...)
-	if err != nil {
-		return nil, fmt.Errorf("%w; selector=%s; %s", err, request.Selector.Value, s.elementDiagnostics(element))
-	}
-	util.Append(response.Data, callResponse.Data, true)
+	err = s.call(context, element, request.Call, callResponse, elementPath...)
 	response.Result = callResponse.Result
+	util.Append(response.Data, callResponse.Data, true)
+	if err != nil {
+		if request.AllowJavaScriptClick && request.Call.Method == "Click" && isJavaScriptClickCandidate(err) {
+			if _, fallbackErr := session.driver.ExecuteScript("arguments[0].click();", []interface{}{element}); fallbackErr == nil {
+				return response, nil
+			}
+		}
+		return response, fmt.Errorf("%w; selector=%s; %s", err, request.Selector.Value, s.elementDiagnostics(element))
+	}
 	return response, nil
 }
 
-func (s *service) ensureVisible(element selenium.WebElement) error {
-	var err error
-	var ok bool
-	for i := 0; i < 10; i++ {
-		if ok, err = element.IsDisplayed(); ok {
-			break
+func selectorStrictness(actionDefault bool, override *bool) bool {
+	if override != nil {
+		return *override
+	}
+	return actionDefault
+}
+
+func findElement(ctx context.Context, driver selenium.WebDriver, selector *WebElementSelector, timeout time.Duration) (selenium.WebElement, error) {
+	deadline := time.Now().Add(timeout)
+	var lastErr error
+	for {
+		element, err := driver.FindElement(selector.By, selector.Value)
+		if err == nil && element != nil {
+			return element, nil
+		}
+		lastErr = err
+		if timeout <= 0 || !time.Now().Before(deadline) {
+			return nil, lastErr
+		}
+		if err := waitForContext(ctx, 100*time.Millisecond); err != nil {
+			return nil, err
+		}
+	}
+}
+
+func (s *service) ensureVisible(ctx context.Context, element selenium.WebElement, timeout time.Duration) error {
+	if timeout <= 0 || timeout > 2*time.Second {
+		timeout = 2 * time.Second
+	}
+	deadline := time.Now().Add(timeout)
+	for {
+		ok, err := element.IsDisplayed()
+		if ok {
+			return nil
 		}
 		if IsStaleElementError(err) {
 			return err
 		}
-		time.Sleep(time.Millisecond * 200)
+		if !time.Now().Before(deadline) {
+			if err != nil {
+				return err
+			}
+			return errors.New("element is not displayed")
+		}
+		wait := 200 * time.Millisecond
+		if remaining := time.Until(deadline); remaining < wait {
+			wait = remaining
+		}
+		if waitErr := waitForContext(ctx, wait); waitErr != nil {
+			return waitErr
+		}
 	}
-	if !ok && err == nil {
-		return errors.New("element is not displayed")
-	}
-	return err
 }
 
 // scrollIntoView makes keyboard and pointer actions deterministic for elements
@@ -467,6 +779,8 @@ func (s *service) open(context *endly.Context, request *OpenSessionRequest) (*Op
 		return nil, err
 	}
 	response.SessionID = seleniumSession.SessionID
+	response.Attached = seleniumSession.Attached
+	response.Backend = seleniumSession.Backend
 	return response, nil
 }
 
@@ -478,6 +792,8 @@ func (s *service) close(context *endly.Context, request *CloseSessionRequest) (*
 	if err != nil {
 		return nil, err
 	}
+	session.mu.Lock()
+	defer session.mu.Unlock()
 	session.Close()
 	return response, err
 }
@@ -550,6 +866,8 @@ func (s *service) stop(context *endly.Context, request *StopRequest) (*StopRespo
 	if session == nil {
 		return &StopResponse{}, nil
 	}
+	session.mu.Lock()
+	defer session.mu.Unlock()
 	processService, _ := context.Service(process.ServiceID)
 	if session.Pid > 0 {
 		serviceResponse := processService.Run(context, &process.StopRequest{
@@ -580,14 +898,16 @@ func (s *service) start(context *endly.Context, request *StartRequest) (*StartRe
 		return nil, err
 	}
 	sessionID := fmt.Sprintf("localhost:%v", request.Port)
-	sessions := Sessions(context)
-	session, ok := sessions[sessionID]
+	session, ok := lookupSession(context, sessionID)
 	if ok {
+		session.mu.Lock()
 		session.Close()
+		session.mu.Unlock()
 	} else {
 		session = &Session{SessionID: sessionID}
-		sessions[sessionID] = session
+		putSession(context, sessionID, session)
 	}
+	registerSessionCleanup(context, session)
 	useSelenium := request.Server != ""
 	if !useSelenium {
 		session.Capabilities = request.Capabilities
@@ -647,8 +967,7 @@ func (s *service) start(context *endly.Context, request *StartRequest) (*StartRe
 }
 
 func (s *service) session(context *endly.Context, sessionID string) (*Session, error) {
-	sessions := Sessions(context)
-	if seleniumSession, ok := sessions[sessionID]; ok {
+	if seleniumSession, ok := lookupSession(context, sessionID); ok {
 		return seleniumSession, nil
 	}
 	return nil, fmt.Errorf("failed to lookup seleniun session id: %v, make sure you first run SeleniumOpenSessionRequest", sessionID)
@@ -657,18 +976,60 @@ func (s *service) session(context *endly.Context, sessionID string) (*Session, e
 func (s *service) openSession(context *endly.Context, request *OpenSessionRequest) (*Session, error) {
 	ensureOpenSessionDefaults(request)
 	sessionID := request.SessionID
-	sessions := Sessions(context)
-	session, ok := sessions[sessionID]
-	if !ok {
-		return nil, fmt.Errorf("webdriver service not running - start ?")
+	session, ok := lookupSession(context, sessionID)
+	if request.DirectCDP {
+		if !ok {
+			session = &Session{SessionID: sessionID, Browser: ChromeBrowser}
+			putSession(context, sessionID, session)
+		}
+		registerSessionCleanup(context, session)
+		session.mu.Lock()
+		defer session.mu.Unlock()
+		session.Close()
+		driver, err := newDirectCDPDriver(request.DebuggerAddress)
+		if err != nil {
+			return nil, fmt.Errorf("connect direct CDP at %s: %w", request.DebuggerAddress, err)
+		}
+		driver.pageLoadStrategy = request.PageLoadStrategy
+		if len(request.BlockedURLs) > 0 {
+			if _, blockErr := driver.CDPCommand("Network.setBlockedURLs", map[string]interface{}{"urls": request.BlockedURLs}); blockErr != nil {
+				driver.Quit()
+				return nil, fmt.Errorf("configure direct CDP blocked URLs: %w", blockErr)
+			}
+		}
+		session.driver = driver
+		session.Browser = ChromeBrowser
+		session.Attached = true
+		session.Backend = "cdp"
+		session.CDPRemote = driver.address
+		session.DriverSessionID = driver.SessionID()
+		putSession(context, sessionID, session)
+		return session, nil
 	}
+	if !ok {
+		if request.DebuggerAddress == "" {
+			return nil, fmt.Errorf("webdriver service not running - start ?")
+		}
+		session = &Session{SessionID: sessionID, Browser: ChromeBrowser, Attached: true}
+		putSession(context, sessionID, session)
+	}
+	registerSessionCleanup(context, session)
+	session.mu.Lock()
+	defer session.mu.Unlock()
 	if session.driver != nil {
-		_ = session.driver.Close()
+		_ = session.driver.Quit()
+		session.driver = nil
+		session.CDPRemote = ""
+		session.DriverSessionID = ""
 	}
 
 	caps := selenium.Capabilities{}
-	if session.PageLoadStrategy != "" {
-		caps["pageLoadStrategy"] = session.PageLoadStrategy
+	pageLoadStrategy := request.PageLoadStrategy
+	if pageLoadStrategy == "" {
+		pageLoadStrategy = session.PageLoadStrategy
+	}
+	if pageLoadStrategy != "" {
+		caps["pageLoadStrategy"] = pageLoadStrategy
 	}
 	if session.Pid == 0 {
 		if len(session.Capabilities) > 0 && len(request.Capabilities) == 0 {
@@ -676,7 +1037,13 @@ func (s *service) openSession(context *endly.Context, request *OpenSessionReques
 		}
 		switch session.Browser {
 		case ChromeBrowser:
-			caps.AddChrome(chrome.Capabilities{Args: request.Capabilities})
+			chromeCaps := chrome.Capabilities{Args: request.Capabilities, DebuggerAddr: request.DebuggerAddress}
+			if request.DebuggerAddress != "" {
+				detach := true
+				chromeCaps.Detach = &detach
+				session.Attached = true
+			}
+			caps.AddChrome(chromeCaps)
 			caps.SetLogLevel(selog.Performance, selog.All)
 			caps.SetLogLevel(selog.Browser, selog.All)
 		case FirefoxBrowser:
@@ -692,12 +1059,43 @@ func (s *service) openSession(context *endly.Context, request *OpenSessionReques
 		return nil, err
 	}
 	session.driver = driver
+	session.Backend = "selenium"
 	session.Remote = request.Remote
-	sessions[sessionID] = session
-	context.Deffer(func() {
-		driver.Quit()
-	})
+	session.CDPRemote = request.Remote
+	session.DriverSessionID = driver.SessionID()
+	if len(request.BlockedURLs) > 0 {
+		if !isChromeLike(session.Browser) {
+			_ = driver.Quit()
+			session.driver = nil
+			return nil, fmt.Errorf("blockedURLs requires Chrome")
+		}
+		_, _ = cdpExecute(session.Remote, driver.SessionID(), "Network.enable", map[string]any{})
+		if _, blockErr := cdpExecute(session.Remote, driver.SessionID(), "Network.setBlockedURLs", map[string]any{"urls": request.BlockedURLs}); blockErr != nil {
+			_ = driver.Quit()
+			session.driver = nil
+			return nil, fmt.Errorf("configure blocked URLs: %w", blockErr)
+		}
+	}
+	putSession(context, sessionID, session)
 	return session, nil
+}
+
+func registerSessionCleanup(context *endly.Context, session *Session) {
+	if context == nil || session == nil {
+		return
+	}
+	session.mu.Lock()
+	if session.cleanupRegistered {
+		session.mu.Unlock()
+		return
+	}
+	session.cleanupRegistered = true
+	session.mu.Unlock()
+	context.Deffer(func() {
+		session.mu.Lock()
+		session.Close()
+		session.mu.Unlock()
+	})
 }
 
 func (s *service) registerRoutes() {
@@ -772,6 +1170,25 @@ func (s *service) registerRoutes() {
 		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
 			if req, ok := request.(*CloseSessionRequest); ok {
 				return s.close(context, req)
+			}
+			return nil, fmt.Errorf("unsupported request type: %T", request)
+		},
+	})
+
+	s.Register(&endly.Route{
+		Action: "stop-loading",
+		RequestInfo: &endly.ActionInfo{
+			Description: "interrupt an active Chrome page load through CDP",
+		},
+		RequestProvider: func() interface{} {
+			return &StopLoadingRequest{}
+		},
+		ResponseProvider: func() interface{} {
+			return &StopLoadingResponse{}
+		},
+		Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+			if req, ok := request.(*StopLoadingRequest); ok {
+				return s.stopLoading(context, req)
 			}
 			return nil, fmt.Errorf("unsupported request type: %T", request)
 		},
@@ -992,6 +1409,9 @@ func navigationWithDefaults(nav *NavigationOptions) NavigationOptions {
 	if out.MaxScrollSteps <= 0 {
 		out.MaxScrollSteps = 30
 	}
+	if out.MaxScrollGrowthPx <= 0 {
+		out.MaxScrollGrowthPx = 50_000
+	}
 	if out.IdleThreshold < 0 {
 		out.IdleThreshold = 0
 	}
@@ -1004,29 +1424,52 @@ func navigationWithDefaults(nav *NavigationOptions) NavigationOptions {
 	return out
 }
 
-func (s *service) getWithGuard(context *endly.Context, session *Session, URL string, nav NavigationOptions) error {
+func (s *service) getWithGuard(context *endly.Context, session *Session, URL string, nav NavigationOptions) (*NavigationReport, error) {
+	started := time.Now()
+	report := &NavigationReport{URL: URL, StopReason: "loaded"}
+	defer func() {
+		report.ElapsedMs = int(time.Since(started) / time.Millisecond)
+	}()
 	if session == nil || session.driver == nil {
-		return fmt.Errorf("webdriver session not open")
+		return report, fmt.Errorf("webdriver session not open")
 	}
-	_ = session.driver.SetPageLoadTimeout(time.Duration(nav.TimeoutMs) * time.Millisecond)
+	if err := session.driver.SetPageLoadTimeout(time.Duration(nav.TimeoutMs) * time.Millisecond); err != nil {
+		return report, fmt.Errorf("set page-load timeout: %w", err)
+	}
 	err := session.driver.Get(URL)
-	if err == nil {
-		return nil
+	if err != nil {
+		if !isPageLoadTimeout(err) {
+			return report, err
+		}
+		report.TimedOut = true
+		report.StopReason = "timeout-continued"
+		stopLoading := nav.StopLoadingOnTimeout == nil || *nav.StopLoadingOnTimeout
+		if stopLoading {
+			if _, stopErr := session.driver.ExecuteScript("window.stop();", nil); stopErr != nil {
+				report.Warning = "stop loading: " + stopErr.Error()
+			} else {
+				report.LoadingStopped = true
+			}
+		}
+		continueOnTimeout := nav.ContinueOnTimeout == nil || *nav.ContinueOnTimeout
+		if !continueOnTimeout {
+			report.StopReason = "timeout"
+			return report, err
+		}
+		context.Publish(msg.NewOutputEvent("Navigation timeout (continuing)", "webdriver.get", map[string]any{
+			"url":   URL,
+			"error": err.Error(),
+		}))
 	}
-	if !isPageLoadTimeout(err) {
-		return err
-	}
-	context.Publish(msg.NewOutputEvent("Navigation timeout (continuing)", "webdriver.get", map[string]any{
-		"url":   URL,
-		"error": err.Error(),
-	}))
 	if nav.AutoScrollMs > 0 {
 		if session.Capture == nil && session.Net == nil && isChromeLike(session.Browser) {
 			session.Net = &netTracker{}
 		}
-		s.autoScrollStabilize(context, session, nav)
+		if err := s.autoScrollStabilize(context, session, nav, report); err != nil {
+			return report, err
+		}
 	}
-	return nil
+	return report, nil
 }
 
 func isPageLoadTimeout(err error) bool {
@@ -1048,49 +1491,148 @@ func isPageLoadTimeout(err error) bool {
 	return false
 }
 
-func (s *service) autoScrollStabilize(context *endly.Context, session *Session, nav NavigationOptions) {
-	maxWaitMs := nav.IdleMaxWaitMs
-	if maxWaitMs == 0 {
-		if nav.AutoScrollMs > 0 {
-			maxWaitMs = nav.AutoScrollMs
-		} else {
-			maxWaitMs = nav.TimeoutMs
-		}
+func (s *service) autoScrollStabilize(context *endly.Context, session *Session, nav NavigationOptions, report *NavigationReport) error {
+	maxWaitMs := nav.AutoScrollMs
+	if nav.IdleMaxWaitMs > 0 && nav.IdleMaxWaitMs < maxWaitMs {
+		maxWaitMs = nav.IdleMaxWaitMs
 	}
 	deadline := time.Now().Add(time.Duration(maxWaitMs) * time.Millisecond)
 	delay := time.Duration(nav.ScrollDelayMs) * time.Millisecond
 	stableWindow := time.Duration(nav.StableWindowMs) * time.Millisecond
 	idleWindow := time.Duration(nav.IdleWindowMs) * time.Millisecond
 
-	var lastHeight float64 = -1
+	report.ScrollTarget = nav.ScrollSelector
+	if report.ScrollTarget == "" {
+		report.ScrollTarget = "document"
+	}
+	metrics, err := s.pageMetrics(session, nav.ScrollSelector)
+	if err != nil {
+		report.StopReason = "metrics-error"
+		return err
+	}
+	report.Scrolled = true
+	report.StartHeightPx = int(metrics.Height)
+	report.FinalHeightPx = int(metrics.Height)
+	if nav.ReturnToTop {
+		defer func() {
+			_, _ = session.driver.ExecuteScript(`const target = arguments[0] ? document.querySelector(arguments[0]) : null;
+			if (target) target.scrollTo(0, 0); else window.scrollTo(0, 0);`, []interface{}{nav.ScrollSelector})
+		}()
+	}
+	lastHeight := metrics.Height
+	lastY := metrics.Y
+	lastContent := metrics.Content
 	stableSince := time.Now()
 	idleSince := time.Time{}
 
-	for step := 0; step < nav.MaxScrollSteps && time.Now().Before(deadline); step++ {
-		height := s.scrollHeight(session)
-		if height >= 0 && height == lastHeight {
-			if time.Since(stableSince) >= stableWindow {
-				if s.isNetworkIdle(session, nav.IdleThreshold, idleWindow, &idleSince) {
-					return
-				}
-			}
-		} else {
+	for report.Steps < nav.MaxScrollSteps {
+		if err := context.Background().Err(); err != nil {
+			report.StopReason = "cancelled"
+			return err
+		}
+		if !time.Now().Before(deadline) {
+			report.StopReason = "time-budget"
+			return nil
+		}
+		metrics, err = s.pageMetrics(session, nav.ScrollSelector)
+		if err != nil {
+			report.StopReason = "metrics-error"
+			return err
+		}
+		report.FinalHeightPx = int(metrics.Height)
+		if nav.MaxScrollHeightPx > 0 && metrics.Height >= float64(nav.MaxScrollHeightPx) {
+			report.StopReason = "height-limit"
+			return nil
+		}
+		if nav.MaxScrollGrowthPx > 0 && metrics.Height-float64(report.StartHeightPx) >= float64(nav.MaxScrollGrowthPx) {
+			report.StopReason = "growth-limit"
+			return nil
+		}
+		stable := metrics.Height == lastHeight && metrics.Y == lastY && metrics.Content == lastContent
+		if !stable {
 			stableSince = time.Now()
-			lastHeight = height
+			lastHeight = metrics.Height
+			lastY = metrics.Y
+			lastContent = metrics.Content
+		}
+		if stable && metrics.AtBottom() && time.Since(stableSince) >= stableWindow && s.isNetworkIdle(session, nav.IdleThreshold, idleWindow, &idleSince) {
+			report.StopReason = "stable-bottom"
+			return nil
 		}
 
-		_, _ = session.driver.ExecuteScript("window.scrollBy(0, window.innerHeight || 800);", nil)
-		time.Sleep(delay)
+		if _, err := session.driver.ExecuteScript(`const selector = arguments[0];
+		const target = selector ? document.querySelector(selector) : null;
+		if (selector && !target) throw new Error("scroll container not found: " + selector);
+		if (target) target.scrollBy(0, target.clientHeight || 800);
+		else window.scrollBy(0, window.innerHeight || 800);`, []interface{}{nav.ScrollSelector}); err != nil {
+			report.StopReason = "scroll-error"
+			return fmt.Errorf("scroll page: %w", err)
+		}
+		report.Steps++
+		if err := waitForContext(context.Background(), delay); err != nil {
+			report.StopReason = "cancelled"
+			return err
+		}
 		if session.Capture != nil {
 			session.Capture.Drain(session)
 		} else if session.Net != nil {
 			session.Net.Drain(session.driver)
 		}
-		if time.Since(stableSince) >= stableWindow && s.isNetworkIdle(session, nav.IdleThreshold, idleWindow, &idleSince) {
-			return
-		}
 	}
-	_ = context // reserved for potential future warning publishing
+	report.StopReason = "max-steps"
+	return nil
+}
+
+type pageMetrics struct {
+	Y        float64
+	Viewport float64
+	Height   float64
+	Content  string
+}
+
+func (m pageMetrics) AtBottom() bool {
+	return m.Y+m.Viewport >= m.Height-2
+}
+
+func (s *service) pageMetrics(session *Session, selector string) (pageMetrics, error) {
+	if session == nil || session.driver == nil {
+		return pageMetrics{}, fmt.Errorf("webdriver session not open")
+	}
+	value, err := session.driver.ExecuteScript(`const selector = arguments[0];
+	const target = selector ? document.querySelector(selector) : null;
+	if (selector && !target) throw new Error("scroll container not found: " + selector);
+	const root = target || document.scrollingElement || document.documentElement;
+	const last = root && root.lastElementChild;
+	return {
+		y: target ? target.scrollTop : (window.pageYOffset || root.scrollTop || 0),
+		viewport: target ? target.clientHeight : (window.innerHeight || root.clientHeight || 0),
+		height: target ? target.scrollHeight : Math.max(document.body ? document.body.scrollHeight : 0, root ? root.scrollHeight : 0),
+		content: last ? ((last.getAttribute && (last.getAttribute('data-id') || last.id)) || (last.textContent || '').slice(-256)) : ''
+	};`, []interface{}{selector})
+	if err != nil {
+		return pageMetrics{}, fmt.Errorf("read page scroll metrics: %w", err)
+	}
+	values := toolbox.AsMap(value)
+	if len(values) == 0 {
+		return pageMetrics{}, fmt.Errorf("invalid page scroll metrics: %T", value)
+	}
+	return pageMetrics{
+		Y:        toolbox.AsFloat(values["y"]),
+		Viewport: toolbox.AsFloat(values["viewport"]),
+		Height:   toolbox.AsFloat(values["height"]),
+		Content:  toolbox.AsString(values["content"]),
+	}, nil
+}
+
+func waitForContext(ctx context.Context, duration time.Duration) error {
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
+	}
 }
 
 func (s *service) isNetworkIdle(session *Session, threshold int, window time.Duration, idleSince *time.Time) bool {

@@ -1,4 +1,21 @@
 ## Unreleased
+  * webdriver: added a Playwright-inspired `page`/`locator`/`expect` DSL,
+    cancellation-aware polling, explicit validation reporting, existing Chrome
+    attachment through `debuggerAddress`, and tab discovery/switch/new/close
+    commands. Lazy-page scrolling is now bounded by time, step, document-height,
+    and growth limits and returns a navigation stop report. Element actions now
+    auto-wait within one action deadline, retry transient DOM/interactability
+    errors, serialize access per browser session, and optionally capture failure
+    screenshots, bounded HTML, and console/network metadata. Added strict
+    accessibility-first locators, form/frame/dialog actions, positive and
+    negative retrying assertions, inner-container and virtualized-list scroll
+    stabilization, optional Chrome resource blocking, and a loopback-only,
+    token-protected live planner that streams user activity back into DSL steps.
+    Live commands are cancellable, including out-of-band CDP page-load stop;
+    `page.waitForResponse` synchronizes UI actions with sequenced browser HTTP
+    responses; capture buffers are bounded and restart/stop cleanly. Added a
+    native direct-CDP backend for controlling the tabs of an authorized,
+    debug-enabled Chrome without ChromeDriver or Selenium Server.
   * http/runner: added `httpDefaults` context state key — workflows can publish a
     map of default http client options from `init:` and every `http/runner:send`
     / `http/runner:load` call merges them, letting a regression suite set
@@ -610,4 +627,3 @@
     * Added autodiscovery to workflow generator
     * Update big query to support DDL schema file
     * Minor patches
-

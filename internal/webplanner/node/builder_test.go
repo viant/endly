@@ -54,7 +54,24 @@ func TestNewXPathBuilder(t *testing.T) {
 			continue
 		}
 
-		s := node.Selectors("")
+		s := node.Selectors(builder.Attributes(), "")
 		assert.True(t, len(s) > 0)
+	}
+}
+
+func TestBuilderBuildsTargetWhenBodyFragmentCollapsesToRoot(t *testing.T) {
+	builder := NewBuilder("data-testid")
+	node, err := builder.Build(
+		`<body><button data-testid="record">Record me</button></body>`,
+		`<button data-testid="record">Record me</button>`,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if node == nil {
+		t.Fatal("target node was not found")
+	}
+	if selectors := node.Selectors(builder.Attributes()); len(selectors) == 0 {
+		t.Fatal("selectors were empty")
 	}
 }

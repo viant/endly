@@ -3,7 +3,9 @@ package webplanner
 import (
 	_ "embed"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/viant/endly"
 	"github.com/viant/endly/service/testing/runner/webdriver"
 	"io"
 	"net/http"
@@ -28,17 +30,21 @@ func (s *Service) RunCommands(lines []string) (string, error) {
 }
 
 func (s *Service) RunCommandsWithOptions(lines []string, nav *webdriver.NavigationOptions) (string, error) {
+	return s.runCommands(s.context, lines, nav)
+}
+
+func (s *Service) runCommands(runContext *endly.Context, lines []string, nav *webdriver.NavigationOptions) (string, error) {
 	var commands []interface{}
 	if len(lines) == 0 {
 		return "", nil
 	}
 	if hasGet(lines) {
-		_, err := s.manager.Run(s.context, &webdriver.RunRequest{Commands: []interface{}{lines[0]}, Navigation: nav})
+		_, err := s.manager.Run(runContext, &webdriver.RunRequest{Commands: []interface{}{lines[0]}, Navigation: nav})
 		if err != nil {
 			return "", err
 		}
 		lines = lines[1:]
-		if err = s.injectTracker(); err != nil {
+		if err = s.injectTrackerOnContext(runContext); err != nil {
 			return "", err
 		}
 	}
@@ -54,15 +60,18 @@ func (s *Service) RunCommandsWithOptions(lines []string, nav *webdriver.Navigati
 	if len(commands) == 0 {
 		return "", nil
 	}
-	ret, err := s.manager.Run(s.context, &webdriver.RunRequest{Commands: commands, Navigation: nav})
+	ret, err := s.manager.Run(runContext, &webdriver.RunRequest{Commands: commands, Navigation: nav})
 	if err != nil {
 		return "", err
 	}
 
-	response, _ := ret.(*webdriver.RunResponse)
-	data, _ := json.Marshal(response.Data)
+	response, ok := ret.(*webdriver.RunResponse)
+	if !ok || response == nil {
+		return "", fmt.Errorf("unexpected webdriver response %T", ret)
+	}
+	data, _ := json.Marshal(response)
 	if len(response.LookupErrors) > 0 {
-		return "", fmt.Errorf(response.LookupErrors[0])
+		return "", errors.New(response.LookupErrors[0])
 	}
 	return string(data), nil
 }
@@ -71,25 +80,46 @@ func hasGet(lines []string) bool {
 	if len(lines) == 0 {
 		return false
 	}
-	return strings.HasPrefix(strings.ToLower(lines[0]), "get")
+	command := strings.ToLower(strings.TrimSpace(lines[0]))
+	return strings.HasPrefix(command, "get") || strings.HasPrefix(command, "page.goto(")
 }
 
 func (s *Service) injectTracker() error {
+	return s.injectTrackerOnContext(s.context)
+}
+
+func (s *Service) injectTrackerOnContext(runContext *endly.Context) error {
 	jsCode := strings.ReplaceAll(trackerCode, "${port}", strconv.Itoa(s.Config.Port))
-	sessions := webdriver.Sessions(s.context)
-	if session := sessions["localhost:4444"]; session != nil {
-		if _, err := session.Driver().ExecuteScript(jsCode, nil); err != nil {
-			return fmt.Errorf("failed to inject trackerCode: %v", err)
-		}
+	jsCode = strings.ReplaceAll(jsCode, "${host}", s.Config.Host)
+	jsCode = strings.ReplaceAll(jsCode, "${token}", s.Config.Token)
+	_, err := s.manager.Run(runContext, &webdriver.WebDriverCallRequest{
+		SessionID: "localhost:4444",
+		Call: &webdriver.MethodCall{
+			Method:     "ExecuteScript",
+			Parameters: []interface{}{jsCode, []interface{}{}},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to inject trackerCode: %v", err)
 	}
 	return nil
 }
 
 func (s *Service) EnsureWebDriver() error {
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
 	if s.started {
 		return nil
 	}
-	_, err := s.manager.Run(s.context, &webdriver.StartRequest{})
+	s.mux.Lock()
+	pageLoadStrategy := s.Config.PageLoadStrategy
+	directCDP := s.Config.DirectCDP
+	s.mux.Unlock()
+	if directCDP {
+		s.started = true
+		return nil
+	}
+	_, err := s.manager.Run(s.context, &webdriver.StartRequest{PageLoadStrategy: pageLoadStrategy})
 	if err != nil {
 		return err
 	}
@@ -98,10 +128,21 @@ func (s *Service) EnsureWebDriver() error {
 }
 
 func (s *Service) EnsureSession() error {
+	s.lifecycleMu.Lock()
+	defer s.lifecycleMu.Unlock()
 	if s.opened {
 		return nil
 	}
-	_, err := s.manager.Run(s.context, &webdriver.OpenSessionRequest{})
+	s.mux.Lock()
+	config := *s.Config
+	s.mux.Unlock()
+	_, err := s.manager.Run(s.context, &webdriver.OpenSessionRequest{
+		Browser:          config.Browser,
+		Remote:           config.Remote,
+		DebuggerAddress:  config.DebuggerAddress,
+		DirectCDP:        config.DirectCDP,
+		PageLoadStrategy: config.PageLoadStrategy,
+	})
 	if err != nil {
 		return err
 	}
@@ -110,15 +151,20 @@ func (s *Service) EnsureSession() error {
 }
 
 func (s *Service) handlerRequest(writer http.ResponseWriter, request *http.Request) {
-	enableCors(writer, request)
+	if !enableCors(writer, request, false) {
+		http.Error(writer, "origin not allowed", http.StatusForbidden)
+		return
+	}
 	if request.Method == http.MethodOptions {
 		writer.WriteHeader(200)
 		return
 	}
 	if request.Method != http.MethodPost {
-		http.Error(writer, "invalid method:"+request.Method, http.StatusInternalServerError)
+		writer.Header().Set("Allow", http.MethodPost+", "+http.MethodOptions)
+		http.Error(writer, "invalid method:"+request.Method, http.StatusMethodNotAllowed)
 		return
 	}
+	request.Body = http.MaxBytesReader(writer, request.Body, 1<<20)
 	response := &RunResponsePayload{Status: "ok"}
 	plan, output, err := s.runRequest(writer, request, response)
 	if err != nil {

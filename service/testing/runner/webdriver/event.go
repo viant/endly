@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/endly/model/msg"
 	"github.com/viant/toolbox"
+	"strings"
 )
 
 // Messages returns messages
@@ -20,6 +21,32 @@ func (r *RunResponse) Messages() []*msg.Message {
 	}
 	result = append(result,
 		msg.NewMessage(msg.NewStyled("Response", msg.MessageStyleGeneric), msg.NewStyled("selenium", msg.MessageStyleGeneric), dataMessages...))
+	for _, navigation := range r.Navigations {
+		if navigation == nil {
+			continue
+		}
+		result = append(result, msg.NewMessage(
+			msg.NewStyled("Navigation", msg.MessageStyleGeneric),
+			msg.NewStyled(navigation.StopReason, msg.MessageStyleOutput),
+			msg.NewStyled(fmt.Sprintf("%s; target=%s; %dms; %d steps; height %d→%dpx; timedOut=%t; loadingStopped=%t; warning=%s", navigation.URL, navigation.ScrollTarget, navigation.ElapsedMs, navigation.Steps, navigation.StartHeightPx, navigation.FinalHeightPx, navigation.TimedOut, navigation.LoadingStopped, navigation.Warning), msg.MessageStyleOutput),
+		))
+	}
+	for _, failure := range r.Failures {
+		if failure == nil {
+			continue
+		}
+		locations := make([]string, 0, 3)
+		for _, location := range []string{failure.ScreenshotURL, failure.PageSourceURL, failure.MetadataURL} {
+			if location != "" {
+				locations = append(locations, location)
+			}
+		}
+		result = append(result, msg.NewMessage(
+			msg.NewStyled("Failure evidence", msg.MessageStyleError),
+			msg.NewStyled(failure.Method, msg.MessageStyleOutput),
+			msg.NewStyled(strings.Join(locations, ", "), msg.MessageStyleOutput),
+		))
+	}
 	if len(r.LookupErrors) == 0 {
 		return result
 	}

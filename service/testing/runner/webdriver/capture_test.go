@@ -69,3 +69,31 @@ func TestCapture_URLIncludes(t *testing.T) {
 		t.Fatal("expected Vite module URL to be filtered")
 	}
 }
+
+func TestCapture_BoundsRetainedEntriesButKeepsTotals(t *testing.T) {
+	state := newCaptureState(&CaptureStartRequest{MaxEntries: 3})
+	state.mux.Lock()
+	for index := 0; index < 5; index++ {
+		state.appendConsoleLocked(&ConsoleEntry{Message: "entry"})
+		state.finishLocked(string(rune('a'+index)), &NetworkTransaction{RequestID: string(rune('a' + index))})
+	}
+	state.mux.Unlock()
+	if len(state.console) != 3 || len(state.completed) != 3 {
+		t.Fatalf("retained console/network=%d/%d, wanted 3/3", len(state.console), len(state.completed))
+	}
+	summary := state.Summary()
+	if summary.ConsoleEntries != 5 || summary.RequestsCompleted != 5 {
+		t.Fatalf("summary=%#v", summary)
+	}
+}
+
+func TestCapture_StopDisablesFurtherDrain(t *testing.T) {
+	state := newCaptureState(&CaptureStartRequest{})
+	if !state.Summary().Enabled {
+		t.Fatal("capture should start enabled")
+	}
+	state.Stop()
+	if state.Summary().Enabled {
+		t.Fatal("capture should be disabled")
+	}
+}
