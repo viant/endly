@@ -12,6 +12,9 @@ type Workflow struct {
 	Data          data.Map           `yaml:"-"`           //workflow data
 	*AbstractNode `yaml:",inline"`   //workflow node`
 	*TasksNode    `yaml:"pipeline"`  ///workflow tasks
+	// CredentialMap maps credential aliases to secret URLs (for example op://).
+	// Allowed only on the root workflow; nested workflows with this key fail.
+	CredentialMap map[string]string `yaml:"credentialMap,omitempty"`
 }
 
 // Init validates this workflow

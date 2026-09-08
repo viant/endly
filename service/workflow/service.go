@@ -455,6 +455,11 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 		return nil, err
 	}
 
+	isRoot := Last(upstreamContext) == nil
+	if err = applyCredentialMap(upstreamContext, request, workflow, isRoot); err != nil {
+		return nil, err
+	}
+
 	// Emit WorkflowStartEvent with parent linkage and prepare paired end event
 	var parentName, parentOwnerURL string
 	if parent := LastWorkflow(upstreamContext); parent != nil && parent.Workflow != nil {

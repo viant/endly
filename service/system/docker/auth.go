@@ -37,7 +37,8 @@ func authCredentialsToken(context *endly.Context, credentials string) (string, e
 			Password: generic.Password,
 		})
 	}
-	if generic.PrivateKeyID != "" {
+	// GCP SA JSON: use _json_key when private_key_id or private_key is present.
+	if generic.PrivateKeyID != "" || generic.PrivateKey != "" {
 		return authConfigToken(&auth.AuthConfig{
 			Username: "_json_key",
 			Password: strings.ReplaceAll(secret.String(), "\n", " "),
