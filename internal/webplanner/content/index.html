@@ -126,7 +126,7 @@
                 if (expression === '') {
                     expression = '&nbsp;'
                 }
-                document.querySelector('#expression').innerHTML = expression
+                document.querySelector('#expression').textContent = expression === '&nbsp;' ? '' : expression
             }
 
             function addExpression() {
@@ -182,11 +182,40 @@
 
             function handleAction(data) {
                 const payload = JSON.parse(data)
+                if (payload.type) {
+                    if (payload.type === 'commandResult') {
+                        setError(payload.status === 'error' ? payload.error : '')
+                        document.querySelector('#output').value = payload.output || payload.error || ''
+                    } else if (payload.type === 'commandStarted') {
+                        setError('')
+                        document.querySelector('#output').value = 'Running: ' + ((payload.data && payload.data.command) || '')
+                    } else if (payload.type === 'commandCancelled') {
+                        setError(payload.status === 'error' ? payload.error : '')
+                    } else if (payload.type === 'state') {
+                        setError(payload.status === 'error' ? payload.error : '')
+                        document.querySelector('#output').value = JSON.stringify(payload.data || {}, null, 2)
+                    } else if (payload.type === 'recording') {
+                        const enabled = Boolean(payload.data && payload.data.enabled)
+                        document.querySelector('#recordingEnabled').checked = enabled
+                    } else if (payload.type === 'recorder') {
+                        setError(payload.status === 'error' ? payload.error : '')
+                    }
+                    return
+                }
                 let selectors = payload.Selectors || []
                 document.querySelector('#selector').value = ''
                 updateSelectorsOptions(selectors)
                 document.querySelector('#method').value = payload.Method
                 document.querySelector('#arguments').value = payload.Arguments || ''
+                if (payload.Expression) {
+                    document.querySelector('#expression').textContent = payload.Expression
+                    document.querySelector('#history').value += payload.Expression + "\n"
+                    if (document.querySelector('#autoAppendRecorded').checked) {
+                        const plan = document.querySelector('#plan')
+                        if (plan.value && !plan.value.endsWith('\n')) plan.value += '\n'
+                        plan.value += payload.Expression + '\n'
+                    }
+                }
             }
 
             function updateSelector() {
@@ -196,12 +225,8 @@
             }
 
             document.addEventListener("DOMContentLoaded", function () {
-                //let URL = window.location.href.replace("http://", "ws://")
-                URL = "http://localhost:8082/"
-
-                URL = URL.replace("http://", "ws://")
-                URL = URL.replace("https://", "ws://")
-                ws = new WebSocket(URL + "ws");
+                const wsScheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+                ws = new WebSocket(`${wsScheme}//${window.location.host}/ws`);
                 ws.onopen = function () {
                 };
                 ws.onmessage = function (evt) {
@@ -220,7 +245,39 @@
 
 
             function setError(error) {
-                document.querySelector('#errorMsg').innerHTML = error
+                document.querySelector('#errorMsg').textContent = error
+            }
+
+            function sendLive(type, extra) {
+                if (!ws || ws.readyState !== WebSocket.OPEN) {
+                    setError('Live connection is not open')
+                    return
+                }
+                ws.send(JSON.stringify(Object.assign({type: type}, extra || {})))
+            }
+
+            function runLiveCommand() {
+                sendLive('command', {command: document.querySelector('#liveCommand').value})
+            }
+
+            function cancelLiveCommand() {
+                sendLive('cancelCommand')
+            }
+
+            function requestLiveState() {
+                sendLive('state')
+            }
+
+            function attachRecorder() {
+                sendLive('attachRecorder', {
+                    debuggerAddress: document.querySelector('#debuggerAddress').value,
+                    remote: document.querySelector('#webdriverRemote').value,
+                    directCDP: document.querySelector('#directCDP').checked
+                })
+            }
+
+            function updateRecording() {
+                sendLive('recording', {enabled: document.querySelector('#recordingEnabled').checked})
             }
 
 
@@ -255,7 +312,7 @@
                 try {
 
                     //const URL = window.location.href + "run"
-                    const URL = "http://localhost:8082/run"
+                    const URL = window.location.origin + "/run"
                     const response = fetch(URL, {
                         method: 'POST', // Method you want to use
                         headers: {
@@ -314,6 +371,11 @@
 
                 const selector = document.querySelector('#selectors');
                 selector.addEventListener('change', updateSelector);
+                document.querySelector('#liveRun').addEventListener('click', runLiveCommand)
+                document.querySelector('#liveCancel').addEventListener('click', cancelLiveCommand)
+                document.querySelector('#liveState').addEventListener('click', requestLiveState)
+                document.querySelector('#attachRecorder').addEventListener('click', attachRecorder)
+                document.querySelector('#recordingEnabled').addEventListener('change', updateRecording)
             }
 
 
@@ -330,6 +392,33 @@
         <div class="form-row">
             <textarea id="plan" name="plan" rows="25" class="form-input">get(http://localhost:8080/)</textarea>
             <div class="inner-container" style="width:45%">
+
+                <div class="form-row">
+                    <label for="liveCommand" class="form-label">Live command</label>
+                    <input id="liveCommand" class="form-input" value="title = page.title()"
+                           placeholder="one page/locator/expect command">
+                </div>
+                <div class="form-row">
+                    <input type="button" class="form-button" id="liveRun" value="Run step"/>
+                    <input type="button" class="form-button" id="liveCancel" value="Cancel"/>
+                    <input type="button" class="form-button" id="liveState" value="Browser state"/>
+                    <input type="button" class="form-button" id="attachRecorder" value="Attach recorder"/>
+                    <label style="margin-left:8px;">
+                        <input type="checkbox" id="recordingEnabled" checked> Record activity
+                    </label>
+                    <label style="margin-left:8px;">
+                        <input type="checkbox" id="autoAppendRecorded" checked> Append to plan
+                    </label>
+                </div>
+                <div class="form-row">
+                    <label for="debuggerAddress" class="form-label">Chrome debug</label>
+                    <input id="debuggerAddress" class="form-input" placeholder="127.0.0.1:9222 (optional existing Chrome)">
+                    <label style="margin-left:8px;"><input type="checkbox" id="directCDP"> Direct CDP</label>
+                </div>
+                <div class="form-row">
+                    <label for="webdriverRemote" class="form-label">Driver remote</label>
+                    <input id="webdriverRemote" class="form-input" placeholder="http://127.0.0.1:4444/wd/hub">
+                </div>
 
                 <div class="form-row">
                     <label for="expression" class="form-label">Expression</label>

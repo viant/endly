@@ -23,7 +23,7 @@ func TestWebSelector_ByAndValue(t *testing.T) {
 			Description:   "class selector",
 			Selector:      ".red",
 			ExpectedBy:    "class name",
-			ExpectedValue: ".red",
+			ExpectedValue: "red",
 		},
 		{
 			Description:   "tag selector",

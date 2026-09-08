@@ -2,6 +2,7 @@ package webdriver
 
 import (
 	"fmt"
+	"github.com/viant/assertly"
 	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model/criteria/eval"
 	"github.com/viant/endly/model/location"
@@ -10,6 +11,7 @@ import (
 	"github.com/viant/toolbox/data"
 	"net/url"
 	"strings"
+	"time"
 )
 
 const defaultTarget = "/opt/local/webdriver"
@@ -110,6 +112,8 @@ type StopResponse struct {
 // OpenSessionResponse represents open session response.
 type OpenSessionResponse struct {
 	SessionID string
+	Attached  bool
+	Backend   string
 }
 
 // CloseSessionRequest represents close session request.
@@ -130,12 +134,22 @@ type CloseSessionResponse struct {
 	SessionID string
 }
 
+type StopLoadingRequest struct {
+	SessionID string
+}
+
+type StopLoadingResponse struct {
+	SessionID string
+	Stopped   bool
+}
+
 // WebDriverCallRequest represents selenium call driver request
 type WebDriverCallRequest struct {
-	SessionID string
-	Key       string
-	PathKind  PathKind
-	Call      *MethodCall
+	SessionID     string
+	Key           string
+	PathKind      PathKind
+	Call          *MethodCall
+	sessionLocked bool
 }
 
 // ServiceCallResponse represents selenium call response
@@ -153,10 +167,13 @@ type WebElementSelector struct {
 
 // WebElementCallRequest represents a web element call reqesut
 type WebElementCallRequest struct {
-	SessionID string
-	Selector  *WebElementSelector
-	Call      *MethodCall
-	PathKind  PathKind
+	SessionID            string
+	Selector             *WebElementSelector
+	Call                 *MethodCall
+	PathKind             PathKind
+	AllowJavaScriptClick bool
+	Strict               bool
+	sessionLocked        bool
 }
 
 // WebElementCallResponse represents seleniun web element response
@@ -168,25 +185,90 @@ type WebElementCallResponse struct {
 
 // RunRequest represents group of selenium web elements calls
 type RunRequest struct {
-	SessionID      string
-	Browser        string
-	RemoteSelenium string             //remote selenium resource
-	Navigation     *NavigationOptions `description:"optional Get(url) navigation guard options"`
-	Actions        []*Action
-	ActionDelaysMs int           `description:"slows down action with specified delay"`
-	Commands       []interface{} `description:"list of selenium command: {web element selector}.WebElementMethod(params),  or WebDriverMethod(params), or wait map "`
-	Expect         interface{}   `description:"If specified it will validated response as actual"`
+	SessionID            string
+	Browser              string
+	RemoteSelenium       string             //remote selenium resource
+	DebuggerAddress      string             `description:"optional host:port of an existing Chrome started with remote debugging enabled"`
+	DirectCDP            bool               `description:"connect directly to a debug-enabled Chrome without ChromeDriver"`
+	PageLoadStrategy     string             `description:"browser navigation strategy: normal, eager, or none"`
+	BlockedURLs          []string           `description:"optional Chrome URL patterns blocked through CDP to reduce test noise and load"`
+	AutoStart            *bool              `description:"automatically start a local driver for the default session; defaults to true"`
+	Navigation           *NavigationOptions `description:"optional Get(url) navigation guard options"`
+	Actions              []*Action
+	ActionTimeoutMs      int                     `description:"default total deadline for each locator action; defaults to 10000ms"`
+	PollIntervalMs       int                     `description:"default polling interval for locator actions; defaults to 100ms"`
+	AllowJavaScriptClick bool                    `description:"opt-in fallback to DOM click after a native click is intercepted or not interactable"`
+	StrictSelectors      *bool                   `description:"override locator strictness; Playwright-style locators are strict by default"`
+	FailureArtifacts     *FailureArtifactOptions `description:"optional screenshot, page-source, and browser-capture evidence written when the run fails"`
+	ActionDelaysMs       int                     `description:"slows down action with specified delay"`
+	Commands             []interface{}           `description:"list of selenium command: {web element selector}.WebElementMethod(params),  or WebDriverMethod(params), or wait map "`
+	Expect               interface{}             `description:"If specified it will validated response as actual"`
 }
 
 type NavigationOptions struct {
-	TimeoutMs      int `description:"page load timeout for Get(url); on timeout it warns and continues"`
-	AutoScrollMs   int `description:"if > 0, scrolls down after nav timeout to load lazy content"`
-	ScrollDelayMs  int `description:"delay between scroll steps"`
-	StableWindowMs int `description:"stop autoscroll early if scrollHeight stays unchanged for this long"`
-	MaxScrollSteps int `description:"max number of scroll steps during autoscroll"`
-	IdleThreshold  int `description:"network idle threshold (inflight requests <= threshold)"`
-	IdleWindowMs   int `description:"consider network idle only if threshold holds for this long"`
-	IdleMaxWaitMs  int `description:"max time to wait for network idle during stabilization (0 uses AutoScrollMs/TimeoutMs)"`
+	TimeoutMs            int    `description:"page load timeout for Get(url); on timeout it warns and continues"`
+	ContinueOnTimeout    *bool  `description:"continue after a page-load timeout; defaults to true"`
+	StopLoadingOnTimeout *bool  `description:"call window.stop after a page-load timeout; defaults to true"`
+	AutoScrollMs         int    `description:"hard time budget for bounded lazy-content scrolling; zero disables scrolling"`
+	ScrollSelector       string `description:"optional CSS selector for a scroll container; defaults to the document"`
+	ScrollDelayMs        int    `description:"delay between scroll steps"`
+	StableWindowMs       int    `description:"stop autoscroll after height and position remain stable at the bottom"`
+	MaxScrollSteps       int    `description:"hard limit on scroll steps"`
+	MaxScrollGrowthPx    int    `description:"hard limit on document-height growth; protects against infinite feeds"`
+	MaxScrollHeightPx    int    `description:"optional absolute document-height limit"`
+	ReturnToTop          bool   `description:"return to the top after lazy-content scrolling"`
+	IdleThreshold        int    `description:"network idle threshold (inflight requests <= threshold)"`
+	IdleWindowMs         int    `description:"consider network idle only if threshold holds for this long"`
+	IdleMaxWaitMs        int    `description:"optional smaller network-idle budget; never extends AutoScrollMs"`
+}
+
+// NavigationReport explains how navigation stabilization stopped. It makes
+// infinite-feed and slow-page behavior observable instead of silently hiding it.
+type NavigationReport struct {
+	URL            string
+	TimedOut       bool
+	Scrolled       bool
+	Steps          int
+	StartHeightPx  int
+	FinalHeightPx  int
+	ElapsedMs      int
+	StopReason     string
+	ScrollTarget   string
+	LoadingStopped bool
+	Warning        string
+}
+
+type FailureArtifactOptions struct {
+	Directory      string `description:"AFS URL or local directory for failure evidence; required when enabled"`
+	Screenshot     *bool  `description:"capture a PNG screenshot; defaults to true"`
+	PageSource     *bool  `description:"capture current page HTML; defaults to true"`
+	IncludeCapture bool   `description:"include buffered console and network capture in metadata"`
+	MaxSourceBytes int    `description:"maximum page-source bytes; defaults to 2000000"`
+}
+
+type FailureArtifact struct {
+	Timestamp     time.Time
+	Error         string
+	Method        string
+	Selector      string
+	URL           string
+	Title         string
+	ScreenshotURL string
+	PageSourceURL string
+	MetadataURL   string
+	Capture       *CaptureSummary
+	CaptureErrors []string
+}
+
+type AssertionResult struct {
+	Method    string
+	Selector  string
+	Matcher   string
+	Expected  interface{}
+	Actual    interface{}
+	Passed    bool
+	Error     string
+	ElapsedMs int
 }
 
 func (r *RunRequest) asWaitAction(parser *parser, candidate interface{}) (*Action, error) {
@@ -202,7 +284,7 @@ func (r *RunRequest) asWaitAction(parser *parser, candidate interface{}) (*Actio
 		if action.PathKind == PathKindUndefined {
 			action.PathKind = PathKindSimple
 		}
-		err = toolbox.DefaultConverter.AssignConverted(&action.Calls[0].Wait, aMap)
+		applyWaitOverrides(&action.Calls[0].Wait, aMap)
 		call := action.Calls[0]
 		_, hasExplicitWait := aMap["waitTimeMs"]
 		repeat := toolbox.AsInt(aMap["repeat"])
@@ -220,7 +302,41 @@ func (r *RunRequest) asWaitAction(parser *parser, candidate interface{}) (*Actio
 	return nil, fmt.Errorf("sunupported command: %T", candidate)
 }
 
+func applyWaitOverrides(wait *Wait, values map[string]interface{}) {
+	if wait == nil {
+		return
+	}
+	for key, value := range values {
+		switch strings.ToLower(key) {
+		case "waittimems":
+			wait.WaitTimeMs = toolbox.AsInt(value)
+		case "pollintervalms":
+			wait.PollIntervalMs = toolbox.AsInt(value)
+		case "thinktimems":
+			wait.ThinkTimeMs = toolbox.AsInt(value)
+		case "ignoretimeout":
+			wait.IgnoreTimeout = toolbox.AsBoolean(value)
+		case "exit":
+			wait.Exit = toolbox.AsString(value)
+		}
+	}
+}
+
 func (r *RunRequest) Init() error {
+	if r.ActionTimeoutMs <= 0 {
+		r.ActionTimeoutMs = 10_000
+	}
+	if r.PollIntervalMs <= 0 {
+		r.PollIntervalMs = 100
+	}
+	switch strings.ToLower(r.PageLoadStrategy) {
+	case "", "normal", "eager", "none":
+	default:
+		return fmt.Errorf("invalid pageLoadStrategy %q", r.PageLoadStrategy)
+	}
+	if r.DebuggerAddress != "" && r.Browser == "" {
+		r.Browser = ChromeBrowser
+	}
 	if r.SessionID == "" && r.RemoteSelenium != "" {
 		if parsed, err := url.Parse(r.RemoteSelenium); err == nil && parsed.Host != "" {
 			r.SessionID = parsed.Host
@@ -329,9 +445,44 @@ func NewRunRequestFromURL(URL string) (*RunRequest, error) {
 // RunResponse represents selenium call response
 type RunResponse struct {
 	SessionID    string
+	Backend      string
 	Data         map[string]interface{}
 	LookupErrors []string
+	Navigations  []*NavigationReport
+	Failures     []*FailureArtifact
+	Assertions   []*AssertionResult
 	Assert       *validator.AssertResponse
+}
+
+// Assertion exposes webdriver validation to the CLI/xUnit reporting pipeline.
+func (r *RunResponse) Assertion() []*assertly.Validation {
+	result := make([]*assertly.Validation, 0, 2)
+	if r == nil {
+		return result
+	}
+	if len(r.Assertions) > 0 {
+		validation := assertly.NewValidation()
+		validation.Description = "webdriver inline expectations"
+		for _, assertion := range r.Assertions {
+			if assertion == nil {
+				continue
+			}
+			if assertion.Passed {
+				validation.PassedCount++
+				continue
+			}
+			reason := assertly.EqualViolation
+			if assertion.Matcher == "contains" {
+				reason = assertly.ContainsViolation
+			}
+			validation.AddFailure(assertly.NewFailure("webdriver", assertion.Selector, reason, assertion.Expected, assertion.Actual))
+		}
+		result = append(result, validation)
+	}
+	if r.Assert != nil {
+		result = append(result, r.Assert.Assertion()...)
+	}
+	return result
 }
 
 type CaptureStartRequest struct {
@@ -339,6 +490,7 @@ type CaptureStartRequest struct {
 	SinkURL         string `description:"optional AFS URL for JSONL event sink (file://...)"` // proposal C
 	FlushIntervalMs int    `description:"optional sink sync interval in ms (file sinks only)"`
 	MaxBodyBytes    int
+	MaxEntries      int `description:"maximum retained console and completed-network entries; defaults to 10000"`
 	Redact          *bool
 	RedactHeaders   []string
 	EnableConsole   *bool
@@ -396,16 +548,24 @@ type CaptureExportResponse struct {
 // MethodCall represents selenium call.
 type MethodCall struct {
 	Wait
-	Method     string
-	Parameters []interface{}
+	Method       string
+	Parameters   []interface{}
+	AllowMissing bool `yaml:"-" json:"-"`
 }
 
 type Wait struct {
-	WaitTimeMs    int
-	ThinkTimeMs   int
-	IgnoreTimeout bool
-	Exit          string
-	criteria      eval.Compute
+	WaitTimeMs     int
+	PollIntervalMs int `description:"poll interval for wait conditions; defaults to 100ms"`
+	ThinkTimeMs    int
+	IgnoreTimeout  bool
+	Exit           string
+	Expectation    *CallExpectation `yaml:"-" json:"-"`
+	criteria       eval.Compute
+}
+
+type CallExpectation struct {
+	Matcher string
+	Value   interface{}
 }
 
 // Action represents various calls on web element
@@ -414,12 +574,14 @@ type Action struct {
 	PathKind
 	Selector *WebElementSelector
 	Calls    []*MethodCall
+	Strict   bool
 }
 
 // NewAction creates a new action
 func NewAction(key, selector string, method string, params ...interface{}) *Action {
 	var result = &Action{
-		Key: key,
+		Key:      key,
+		PathKind: PathKindSimple,
 		Calls: []*MethodCall{
 			{
 				Method:     method,
@@ -438,6 +600,9 @@ func NewAction(key, selector string, method string, params ...interface{}) *Acti
 
 // Validate validates run request.
 func (r *RunRequest) Validate() error {
+	if r.FailureArtifacts != nil && strings.TrimSpace(r.FailureArtifacts.Directory) == "" {
+		return fmt.Errorf("failureArtifacts.directory was empty")
+	}
 	if r.SessionID == "" {
 		if r.Browser == "" {
 			return fmt.Errorf("both SessionID and Browser were empty")
@@ -458,14 +623,24 @@ func (r *RunRequest) Validate() error {
 
 // OpenSessionRequest represents open session request
 type OpenSessionRequest struct {
-	Browser      string
-	Capabilities []string
-	Remote       string `description:"webdriver server endpoint"`
-	SessionID    string `description:"if specified this SessionID will be used for a sessionID"`
+	Browser          string
+	Capabilities     []string
+	Remote           string   `description:"webdriver server endpoint"`
+	SessionID        string   `description:"if specified this SessionID will be used for a sessionID"`
+	DebuggerAddress  string   `description:"optional host:port of an existing Chrome started with remote debugging enabled"`
+	DirectCDP        bool     `description:"connect directly to a debug-enabled Chrome without ChromeDriver"`
+	PageLoadStrategy string   `description:"browser navigation strategy: normal, eager, or none"`
+	BlockedURLs      []string `description:"optional Chrome URL patterns blocked through CDP"`
 }
 
 // Init  initializes request
 func (r *OpenSessionRequest) Init() error {
+	if r.DirectCDP && strings.TrimSpace(r.DebuggerAddress) == "" {
+		return fmt.Errorf("debuggerAddress was required for directCDP")
+	}
+	if r.DebuggerAddress != "" && r.Browser == "" {
+		r.Browser = ChromeBrowser
+	}
 	if r.SessionID == "" && r.Remote != "" {
 		if parsed, err := url.Parse(r.Remote); err == nil && parsed.Host != "" {
 			r.SessionID = parsed.Host
@@ -477,6 +652,11 @@ func (r *OpenSessionRequest) Init() error {
 	if r.Remote == "" {
 		host, port := pair(r.SessionID)
 		r.Remote = fmt.Sprintf("http://%v:%v/wd/hub", host, port)
+	}
+	switch strings.ToLower(r.PageLoadStrategy) {
+	case "", "normal", "eager", "none":
+	default:
+		return fmt.Errorf("invalid pageLoadStrategy %q", r.PageLoadStrategy)
 	}
 	return nil
 }

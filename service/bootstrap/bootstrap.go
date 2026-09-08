@@ -64,7 +64,9 @@ import (
 	_ "github.com/viant/endly/service/testing/endpoint/http"
 	_ "github.com/viant/endly/service/testing/endpoint/smtp"
 	_ "github.com/viant/endly/service/testing/msg"
+	_ "github.com/viant/endly/service/testing/runner/android"
 	_ "github.com/viant/endly/service/testing/runner/http"
+	_ "github.com/viant/endly/service/testing/runner/ios"
 	_ "github.com/viant/endly/service/testing/runner/rest"
 	_ "github.com/viant/endly/service/testing/runner/webdriver"
 
@@ -241,7 +243,9 @@ func Bootstrap() {
 			time.Sleep(time.Second)
 			openbrowser(fmt.Sprintf("http://localhost:%v/", webplannerPort))
 		}()
-		planner.Start()
+		if err := planner.Start(); err != nil {
+			log.Printf("web planner stopped: %v", err)
+		}
 		return
 	}
 
@@ -389,7 +393,7 @@ func printUDFs() {
 }
 
 func openbrowser(url string) {
-	log.Printf("opening " + url + " ...")
+	log.Printf("opening %s ...", url)
 	_ = exec.Command("open", url).Start()
 }
 
