@@ -407,11 +407,13 @@ func (s *service) install(ctx *endly.Context, request *InstallRequest) (*Install
 		return nil, err
 	}
 	if request.State == "freshInstall" {
-		result, uninstallErr := s.runner.Run(ctx.Background(), mobile.Command{Name: adb, Args: []string{"-s", request.Lease.Serial, "uninstall", request.Package}})
-		if uninstallErr != nil {
-			detail := strings.ToLower(result.Stdout + result.Stderr + uninstallErr.Error())
-			if !strings.Contains(detail, "unknown package") && !strings.Contains(detail, "not installed") {
-				return nil, fmt.Errorf("remove existing Android package %s: %w", request.Package, uninstallErr)
+		installed, listErr := s.runner.Run(ctx.Background(), mobile.Command{Name: adb, Args: []string{"-s", request.Lease.Serial, "shell", "pm", "list", "packages", "--user", "0", request.Package}})
+		if listErr != nil {
+			return nil, fmt.Errorf("check existing Android package %s: %w", request.Package, listErr)
+		}
+		if strings.TrimSpace(installed.Stdout) != "" {
+			if result, uninstallErr := s.runner.Run(ctx.Background(), mobile.Command{Name: adb, Args: []string{"-s", request.Lease.Serial, "uninstall", request.Package}}); uninstallErr != nil {
+				return nil, fmt.Errorf("remove existing Android package %s: %s: %w", request.Package, strings.TrimSpace(result.Stdout+result.Stderr), uninstallErr)
 			}
 		}
 	}
