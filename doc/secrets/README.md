@@ -46,6 +46,40 @@ On OSX make sure SSH login is enabled.
 ### Google Cloud Credentials
 (BigQuery, Google Storage, GCE)
 
+#### Credential mapping
+
+Without a `credentialMap`, a bare credential name is resolved by scy as `$HOME/.secret/<name>.json`.
+
+For more control, and to keep secrets off the local filesystem, the **root** workflow YAML can define a top-level `credentialMap`. Names listed there resolve to a secret URL (for example an `op://` 1Password reference or a file path). Mapped names take precedence over `~/.secret`. Names not listed still fall back to `~/.secret/<name>.json`.
+
+`credentialMap` is only allowed on the root workflow. Nested workflows that define `credentialMap` fail.
+
+Example (root workflow, for example `run.yaml`):
+
+```yaml
+credentialMap:
+  gcp-e2e: op://Private/secret.json/notesPlain
+  my-gcp-sa: ~/.secret/custom-sa.json
+
+init:
+  ...
+pipeline:
+  ...
+```
+
+Prerequisites for `op://` URLs: install the 1Password CLI and run `op signin`.
+
+Workflows may use `credentials: gcp-e2e` (or any other name). Prefer Docker API auth over shell
+`${gcp.Data}` expansion (shell expand is easy to mis-wire and logs still show the placeholder):
+
+```yaml
+gcr-auth:
+  action: docker:pull
+  credentials: gcp-e2e
+  image: gcr.io/ops-container-registry/skeema-premium:latest
+```
+
+#### Other GCP credentials
 
 In the [google cloud console](https://console.cloud.google.com/?pli=1)
 
