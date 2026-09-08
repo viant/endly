@@ -232,6 +232,32 @@ func TestInstallAndUninstallUseExactLeaseAndPackage(t *testing.T) {
 	}
 }
 
+func TestFreshInstallSkipsUninstallWhenPackageIsAbsent(t *testing.T) {
+	runner := &fakeRunner{}
+	service := newService(runner)
+	lease := DeviceLease{ID: "lease-fresh", Fence: 1, Serial: "emulator-5554", AndroidSDKRoot: fakeSDK(t)}
+	service.storeLease(lease)
+	if _, err := service.install(endly.New().NewContext(nil), &InstallRequest{
+		Lease: lease, APKPath: "/tmp/app.apk", Package: "com.example.absent", State: "freshInstall",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	commands := []string{}
+	for _, command := range runner.commands {
+		commands = append(commands, strings.Join(command.Args, " "))
+	}
+	all := strings.Join(commands, "\n")
+	if !strings.Contains(all, "shell pm list packages --user 0 com.example.absent") {
+		t.Fatalf("package existence was not checked:\n%s", all)
+	}
+	if strings.Contains(all, "uninstall com.example.absent") {
+		t.Fatalf("absent package should not be uninstalled:\n%s", all)
+	}
+	if !strings.Contains(all, "install /tmp/app.apk") {
+		t.Fatalf("APK was not installed:\n%s", all)
+	}
+}
+
 func TestAppiumRunnerFlow(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

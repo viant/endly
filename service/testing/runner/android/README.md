@@ -45,3 +45,5 @@ ENDLY_ANDROID_TEST_PACKAGE=com.example.app \
 ```
 
 The gated test builds with the project Gradle wrapper, starts a clean owned AVD, installs and launches the APK, captures logcat and a non-empty screenshot, terminates the app, and stops the emulator. Set the documented Appium environment variables to include UiAutomator2 session and source capture.
+
+The reference validation uses API 35 `endly_api_35` on arm64 with Appium 3.7.0 and UiAutomator2 8.6.1. It additionally opens a managed session, resolves a native view through the DSL, asserts visibility, captures Appium screenshot/source evidence, and verifies that no emulator or Appium process remains.

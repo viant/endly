@@ -57,9 +57,13 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 		}
 	}()
 	variantTask := strings.ToUpper(variant[:1]) + variant[1:]
+	gradleArgs := []string{}
+	if javaHome := os.Getenv("JAVA_HOME"); javaHome != "" {
+		gradleArgs = append(gradleArgs, "-Dorg.gradle.java.home="+javaHome)
+	}
 	built, err := service.build(ctx, &BuildRequest{
 		ProjectDir: projectDir, Module: module, Variant: variant,
-		Tasks: []string{"assemble" + variantTask}, TimeoutMs: 20 * 60 * 1000,
+		Tasks: []string{"assemble" + variantTask}, GradleArgs: gradleArgs, TimeoutMs: 20 * 60 * 1000,
 	})
 	if err != nil {
 		if built == nil {
@@ -104,6 +108,22 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 		})
 		if err != nil {
 			t.Fatal(err)
+		}
+		run, err := service.run(ctx, &RunRequest{
+			SessionID: opened.Session.ID,
+			Commands: []string{
+				`expect(app.getByClass("android.widget.FrameLayout")).toBeVisible(60000)`,
+			},
+			ActionTimeoutMs: 60_000,
+			PollIntervalMs:  200,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, validation := range run.Validations {
+			if validation.HasFailure() {
+				t.Fatalf("Android DSL assertion failed: %s", validation.Report())
+			}
 		}
 		evidence, err := service.artifact(ctx, &ArtifactRequest{
 			SessionID: opened.Session.ID, Directory: t.TempDir(), Screenshot: true, PageSource: true,

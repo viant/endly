@@ -1,6 +1,6 @@
 # Android runner service and DSL proposal
 
-> Status: accepted design contract. The `android` service now implements `doctor`, Gradle-wrapper build/checksum discovery, device lifecycle, managed/external Appium lifecycle, APK deployment and launch/terminate, direct instrumentation with assertion reporting, UI-session `open`/`run`/`close`, on-demand artifacts, owned package-filterable logcat capture, and aggregate LIFO `cleanup`; split-package deployment, segmented video, and real Android-emulator verification remain tracked below.
+> Status: accepted design contract. The `android` service now implements `doctor`, Gradle-wrapper build/checksum discovery, device lifecycle, managed/external Appium lifecycle, APK deployment and launch/terminate, direct instrumentation with assertion reporting, UI-session `open`/`run`/`close`, on-demand artifacts, owned package-filterable logcat capture, and aggregate LIFO `cleanup`. A real API 35 arm64 AVD integration is verified through Appium 3.7.0/UiAutomator2 8.6.1, including build, clean install, launch, DSL assertion, screenshot/source evidence, logcat, termination, and leak-free cleanup; split-package deployment and segmented video remain tracked below.
 >
 > The filename preserves the requested `adntoid.md` spelling. The service ID and Go package are `android`.
 
