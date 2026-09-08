@@ -1,0 +1,9 @@
+pipeline:
+  doctor:
+    action: ios:doctor
+    required:
+      - xcodebuild
+      - simulator-runtime
+  report:
+    action: print
+    message: $doctor
