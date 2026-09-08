@@ -121,8 +121,15 @@ func InitCredentials(context *endly.Context, rawRequest map[string]interface{}) 
 	}
 
 	config := &gcpCredConfig{Generic: &cred.Generic{}}
-	if config.Secret, _ = context.Secrets.Lookup(context.Background(), secret.Resource(secrets.Credentials)); config.Secret != nil {
-		config.Generic, _ = config.Secret.Target.(*cred.Generic)
+	if secrets.Credentials != "" {
+		var err error
+		config.Secret, err = context.Secrets.Lookup(context.Background(), secret.Resource(secrets.Credentials))
+		if err != nil {
+			return nil, err
+		}
+		if config.Secret != nil {
+			config.Generic, _ = config.Secret.Target.(*cred.Generic)
+		}
 	}
 	if scopes, ok := rawRequest["scopes"]; ok {
 		if toolbox.IsString(scopes) {

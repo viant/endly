@@ -16,6 +16,7 @@
     responses; capture buffers are bounded and restart/stop cleanly. Added a
     native direct-CDP backend for controlling the tabs of an authorized,
     debug-enabled Chrome without ChromeDriver or Selenium Server.
+  * credential: root workflow `credentialMap` maps aliases to secret URLs (including `op://` when `github.com/viant/afsc/op` is blank-imported); unmapped aliases still use `~/.secret/<name>.json`. Nested workflows must not define `credentialMap`. Requires bumped `github.com/viant/afsc` and `github.com/viant/scy` after their 1Password PRs merge.
   * http/runner: added `httpDefaults` context state key — workflows can publish a
     map of default http client options from `init:` and every `http/runner:send`
     / `http/runner:load` call merges them, letting a regression suite set
