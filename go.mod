@@ -255,5 +255,5 @@ require (
 )
 
 // Pin below the known regression in xunsafe v0.11.0 (nil-pointer panic in
-// datly's session-Bind path). See mdp's/scy's go.mod for the same pin + root-cause note.
+// datly's session-Bind path).
 replace github.com/viant/xunsafe => github.com/viant/xunsafe v0.10.4-0.20260223225257-275a15956559
