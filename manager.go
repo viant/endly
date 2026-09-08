@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/satori/go.uuid"
-	"github.com/viant/scy/cred/secret"
+	"github.com/viant/endly/service/credential"
 	"github.com/viant/toolbox"
 	"reflect"
 	"strings"
@@ -113,7 +113,7 @@ func (m *manager) NewContext(ctx toolbox.Context) *Context {
 		Context:         ctx,
 		Wait:            &sync.WaitGroup{},
 		AsyncUnsafeKeys: make(map[interface{}]bool),
-		Secrets:         secret.New(),
+		Secrets:         credential.NewService(),
 	}
 	_ = result.Put(serviceManagerKey, m)
 	return result

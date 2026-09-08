@@ -52,9 +52,12 @@ type Inlined struct {
 	Logging    *bool
 	Defaults   map[string]interface{}
 	Data       map[string]interface{}
-	Pipeline   []*MapEntry
-	State      data.Map
-	workflow   *Workflow //inline workflow from pipeline
+	// CredentialMap maps credential aliases to secret URLs (for example op://).
+	// Allowed only on the root workflow; nested workflows with this key fail.
+	CredentialMap map[string]string `yaml:"credentialMap,omitempty"`
+	Pipeline      []*MapEntry
+	State         data.Map
+	workflow      *Workflow //inline workflow from pipeline
 }
 
 func (p Inlined) updatereservedAttributes(aMap map[string]interface{}) {
@@ -244,8 +247,9 @@ func (p *Inlined) AsWorkflow(name string, baseURL string) (*Workflow, error) {
 		TasksNode: &TasksNode{
 			Tasks: []*Task{},
 		},
-		Data:   p.Data,
-		Source: location.NewResource(toolbox.URLPathJoin(baseURL, name+".yaml")),
+		Data:          p.Data,
+		CredentialMap: p.CredentialMap,
+		Source:        location.NewResource(toolbox.URLPathJoin(baseURL, name+".yaml")),
 	}
 	var err error
 	if p.Init != nil {

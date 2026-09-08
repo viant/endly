@@ -41,6 +41,7 @@ import (
 
 	_ "github.com/viant/afsc/aws"
 	_ "github.com/viant/afsc/gcp"
+	_ "github.com/viant/afsc/op"
 	_ "github.com/viant/endly/service/system/secret"
 	"github.com/viant/scy/cred/secret/term"
 	_ "github.com/viant/scy/kms/blowfish"

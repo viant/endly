@@ -16,7 +16,7 @@ import (
 	"github.com/viant/endly/internal/debug"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/model/msg"
-	"github.com/viant/scy/cred/secret"
+	"github.com/viant/endly/service/credential"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	tudf "github.com/viant/toolbox/data/udf"
@@ -36,7 +36,7 @@ type Context struct {
 	CLIEnabled      bool
 	HasLogger       bool
 	AsyncUnsafeKeys map[interface{}]bool
-	Secrets         *secret.Service
+	Secrets         credential.SecretLookup
 	Wait            *sync.WaitGroup
 	Listener        msg.Listener
 	Source          *location.Resource
