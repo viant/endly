@@ -99,6 +99,13 @@ ENDLY_IOS_DEVICE_LIST_INTEGRATION=1 \
   go test ./service/testing/runner/ios -run '^TestPhysicalDeviceListIntegration$' -v -count=1
 ```
 
+Build and checksum a real unsigned archive without requiring signing credentials:
+
+```bash
+ENDLY_IOS_ARCHIVE_INTEGRATION=1 \
+  go test ./service/testing/runner/ios -run '^TestIOSArchiveIntegration$' -v -count=1
+```
+
 Run `test/repl.yaml` to enter the live inspector. Once setup completes, Endly displays an `ios[session]>` prompt:
 
 ```text
