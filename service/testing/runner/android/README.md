@@ -27,7 +27,7 @@ Implemented actions:
 | `android:close` | Idempotently close the Appium session |
 | `android:cleanup` | Run every registered teardown in LIFO order and report all errors |
 
-The implementation uses argv-safe local command execution, the project Gradle wrapper, Android instrumentation, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. The DSL supports strict plural lookup, `first`/`last`/`nth`/`count`, typed and textual commands, pointer gestures, richer element/device assertions, contexts, orientation, location, permissions, alerts, and application lifecycle. Deployment accepts a single APK, split APKs, APKS, or an AAB with file-backed signing secrets; capture can rotate bounded screen-recording segments. Failed runs automatically retain screenshot, bounded source, bounded active-log tail, a checkpointed valid video segment, and a manifest while recording continues. Managed devices and Appium ports use process-shared fenced leases, while owned processes still unwind through the LIFO context cleanup stack. `open` requires a registered `ServerHandle` and explicit `testIDStrategy`. Portable 0600 session descriptors let a second Endly process run `android:attach` or inline `android:repl.attach`; attachment is non-owning unless `takeOwnership` is explicit. Remote workers/cloud farms, parallel stress, and real failing instrumentation suites remain to be implemented.
+The implementation uses argv-safe local command execution, the project Gradle wrapper, Android instrumentation, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. The DSL supports strict plural lookup, `first`/`last`/`nth`/`count`, typed and textual commands, pointer gestures, richer element/device assertions, contexts, orientation, location, permissions, alerts, and application lifecycle. Deployment accepts a single APK, split APKs, APKS, or an AAB with file-backed signing secrets; capture can rotate bounded screen-recording segments. Failed runs automatically retain screenshot, bounded source, bounded active-log tail, a checkpointed valid video segment, and a manifest while recording continues. Managed devices and Appium ports use process-shared fenced leases, while owned processes still unwind through the LIFO context cleanup stack. `open` requires a registered `ServerHandle` and explicit `testIDStrategy`. Portable 0600 session descriptors let a second Endly process run `android:attach` or inline `android:repl.attach`; attachment is non-owning unless `takeOwnership` is explicit. A gated two-AVD stress test verifies distinct emulator/Appium/UiAutomator2/MJPEG resources under concurrent sessions. Remote workers/cloud farms and real failing instrumentation suites remain to be implemented.
 
 Run the real host check:
 
@@ -49,6 +49,14 @@ ENDLY_ANDROID_TEST_PACKAGE=com.example.app \
 The gated test builds with the project Gradle wrapper, starts a clean owned AVD, installs and launches the APK, captures logcat and a non-empty screenshot, terminates the app, and stops the emulator. Set the documented Appium environment variables to include UiAutomator2 session and source capture.
 
 The reference validation uses API 35 `endly_api_35` on arm64 with Appium 3.7.0 and UiAutomator2 8.6.1. It additionally opens a managed session, resolves a native view through the DSL, asserts visibility, captures Appium screenshot/source evidence, and verifies that no emulator or Appium process remains.
+
+Run the two-lane isolation stress test with two provisioned AVD names:
+
+```bash
+ENDLY_ANDROID_PARALLEL_INTEGRATION=1 \
+ENDLY_ANDROID_PARALLEL_AVDS=api35_lane_1,api35_lane_2 \
+  go test ./service/testing/runner/android -run '^TestAndroidParallelEmulatorStress$' -v -count=1
+```
 
 Run a live inspector with `test/repl.yaml`. Once setup completes, Endly displays an `android[session]>` prompt and executes each entered DSL command immediately:
 
