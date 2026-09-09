@@ -191,11 +191,16 @@ func randomLeaseToken() string {
 }
 
 func randomFence() uint64 {
+	const maxJSONSafeInteger = uint64(1<<53 - 1)
 	data := make([]byte, 8)
 	if _, err := rand.Read(data); err == nil {
-		if value := binary.BigEndian.Uint64(data); value != 0 {
+		if value := binary.BigEndian.Uint64(data) & maxJSONSafeInteger; value != 0 {
 			return value
 		}
 	}
-	return uint64(time.Now().UnixNano())
+	value := uint64(time.Now().UnixNano()) & maxJSONSafeInteger
+	if value == 0 {
+		return 1
+	}
+	return value
 }
