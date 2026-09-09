@@ -135,6 +135,24 @@ func (s *service) registerRoutes() {
 		},
 	})
 	s.Register(&endly.Route{
+		Action:           "destination-register",
+		RequestInfo:      &endly.ActionInfo{Description: "register and fence an external/cloud iOS destination"},
+		RequestProvider:  func() interface{} { return &DestinationRegisterRequest{} },
+		ResponseProvider: func() interface{} { return &DestinationRegisterResponse{} },
+		Handler: func(ctx *endly.Context, request interface{}) (interface{}, error) {
+			return s.destinationRegister(ctx, request.(*DestinationRegisterRequest))
+		},
+	})
+	s.Register(&endly.Route{
+		Action:           "destination-release",
+		RequestInfo:      &endly.ActionInfo{Description: "release an external/cloud iOS destination registration"},
+		RequestProvider:  func() interface{} { return &DestinationReleaseRequest{} },
+		ResponseProvider: func() interface{} { return &DestinationReleaseResponse{} },
+		Handler: func(ctx *endly.Context, request interface{}) (interface{}, error) {
+			return s.destinationRelease(ctx, request.(*DestinationReleaseRequest))
+		},
+	})
+	s.Register(&endly.Route{
 		Action:           "open",
 		RequestInfo:      &endly.ActionInfo{Description: "open an iOS XCUITest session"},
 		RequestProvider:  func() interface{} { return &OpenRequest{} },
@@ -386,6 +404,9 @@ func (s *service) launch(ctx *endly.Context, request *LaunchRequest) (*LaunchRes
 	if err := s.validateLease(request.Destination); err != nil {
 		return nil, err
 	}
+	if request.Destination.IsExternal() {
+		return nil, fmt.Errorf("external iOS destinations are launched through Appium open/run")
+	}
 	if request.Destination.IsDevice() {
 		return s.launchPhysicalApp(ctx, request)
 	}
@@ -415,6 +436,9 @@ func (s *service) terminate(ctx *endly.Context, request *TerminateRequest) (*Ter
 	if err := s.validateLease(request.Destination); err != nil {
 		return nil, err
 	}
+	if request.Destination.IsExternal() {
+		return nil, fmt.Errorf("external iOS destinations are terminated through Appium device.terminateApp")
+	}
 	if request.Destination.IsDevice() {
 		return s.terminatePhysicalApp(ctx, request)
 	}
@@ -431,6 +455,9 @@ func (s *service) terminate(ctx *endly.Context, request *TerminateRequest) (*Ter
 func (s *service) captureStart(ctx *endly.Context, request *CaptureStartRequest) (*CaptureStartResponse, error) {
 	if err := s.validateLease(request.Destination); err != nil {
 		return nil, err
+	}
+	if request.Destination.IsExternal() {
+		return nil, fmt.Errorf("external iOS capture must be configured through the provider")
 	}
 	if request.Destination.IsDevice() {
 		return nil, fmt.Errorf("physical-device log/video capture requires an Appium session or external collector")
@@ -572,6 +599,9 @@ func (s *service) artifact(ctx *endly.Context, request *ArtifactRequest) (*Artif
 		if err := s.validateLease(*request.Destination); err != nil {
 			return nil, err
 		}
+		if request.Destination.IsExternal() {
+			return nil, fmt.Errorf("external iOS screenshots require SessionID so Appium/WDA performs capture")
+		}
 		if request.Destination.IsDevice() {
 			return nil, fmt.Errorf("physical-device screenshots require SessionID so Appium/WDA performs capture")
 		}
@@ -651,6 +681,9 @@ func (s *service) install(ctx *endly.Context, request *InstallRequest) (*Install
 	if err := s.validateLease(request.Destination); err != nil {
 		return nil, err
 	}
+	if request.Destination.IsExternal() {
+		return nil, fmt.Errorf("external iOS apps must be uploaded by the provider and supplied as OpenRequest.AppReference")
+	}
 	if request.Destination.IsDevice() {
 		return s.installPhysicalApp(ctx, request)
 	}
@@ -676,6 +709,9 @@ func (s *service) install(ctx *endly.Context, request *InstallRequest) (*Install
 func (s *service) uninstall(ctx *endly.Context, request *UninstallRequest) (*UninstallResponse, error) {
 	if err := s.validateLease(request.Destination); err != nil {
 		return nil, err
+	}
+	if request.Destination.IsExternal() {
+		return nil, fmt.Errorf("external iOS app removal is provider-managed")
 	}
 	if request.Destination.IsDevice() {
 		return s.uninstallPhysicalApp(ctx, request)
@@ -797,6 +833,9 @@ func (s *service) open(ctx *endly.Context, request *OpenRequest) (*OpenResponse,
 			return nil, fmt.Errorf("App.HostPath is required by the Appium worker")
 		}
 		capabilities["appium:app"] = request.App.HostPath
+	}
+	if request.AppReference != "" {
+		capabilities["appium:app"] = ctx.Expand(request.AppReference)
 	}
 	client, err := mobile.NewAppiumClient(ctx.Expand(request.Server.Endpoint), nil)
 	if err != nil {
@@ -1559,6 +1598,9 @@ func (s *service) simulatorStop(ctx *endly.Context, request *SimulatorStopReques
 func (s *service) stopOwned(ctx context.Context, xcrun string, lease DestinationLease) (*SimulatorStopResponse, error) {
 	if lease.IsDevice() {
 		return nil, fmt.Errorf("physical-device leases must be released with ios:device-release")
+	}
+	if lease.IsExternal() {
+		return nil, fmt.Errorf("external destination leases must be released with ios:destination-release")
 	}
 	s.mu.Lock()
 	stored, ok := s.leases[lease.ID]

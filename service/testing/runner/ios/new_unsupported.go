@@ -29,6 +29,8 @@ func New() endly.Service {
 		{"device-list", func() interface{} { return &DeviceListRequest{} }, func() interface{} { return &DeviceListResponse{} }},
 		{"device-lease", func() interface{} { return &DeviceLeaseRequest{} }, func() interface{} { return &DeviceLeaseResponse{} }},
 		{"device-release", func() interface{} { return &DeviceReleaseRequest{} }, func() interface{} { return &DeviceReleaseResponse{} }},
+		{"destination-register", func() interface{} { return &DestinationRegisterRequest{} }, func() interface{} { return &DestinationRegisterResponse{} }},
+		{"destination-release", func() interface{} { return &DestinationReleaseRequest{} }, func() interface{} { return &DestinationReleaseResponse{} }},
 		{"server-start", func() interface{} { return &ServerStartRequest{} }, func() interface{} { return &ServerStartResponse{} }},
 		{"server-stop", func() interface{} { return &ServerStopRequest{} }, func() interface{} { return &ServerStopResponse{} }},
 		{"build", func() interface{} { return &BuildRequest{} }, func() interface{} { return &BuildResponse{} }},

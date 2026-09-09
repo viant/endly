@@ -48,7 +48,8 @@ type DestinationLease struct {
 	ProcessLease      *mobile.LeaseHandle
 }
 
-func (l DestinationLease) IsDevice() bool { return strings.EqualFold(l.Kind, "device") }
+func (l DestinationLease) IsDevice() bool   { return strings.EqualFold(l.Kind, "device") }
+func (l DestinationLease) IsExternal() bool { return strings.EqualFold(l.Kind, "external") }
 
 type PhysicalDevice struct {
 	Identifier    string
@@ -116,6 +117,42 @@ func (r *DeviceReleaseRequest) Validate() error {
 }
 
 type DeviceReleaseResponse struct {
+	Released bool
+	Warning  string
+}
+
+type DestinationRegisterRequest struct {
+	Provider        string
+	DeviceID        string
+	PlatformVersion string
+}
+
+func (r *DestinationRegisterRequest) Validate() error {
+	if strings.TrimSpace(r.Provider) == "" || strings.TrimSpace(r.DeviceID) == "" {
+		return fmt.Errorf("Provider and DeviceID are required")
+	}
+	return nil
+}
+
+type DestinationRegisterResponse struct {
+	Lease DestinationLease
+}
+
+type DestinationReleaseRequest struct {
+	Lease DestinationLease
+}
+
+func (r *DestinationReleaseRequest) Validate() error {
+	if err := (&SimulatorStopRequest{Lease: r.Lease}).Validate(); err != nil {
+		return err
+	}
+	if !r.Lease.IsExternal() {
+		return fmt.Errorf("an external destination lease is required")
+	}
+	return nil
+}
+
+type DestinationReleaseResponse struct {
 	Released bool
 	Warning  string
 }
@@ -300,6 +337,7 @@ type OpenRequest struct {
 	Server         ServerHandle
 	BundleID       string
 	App            *Artifact
+	AppReference   string
 	Capabilities   map[string]interface{}
 	DescriptorPath string
 	KeepSession    bool
@@ -324,8 +362,11 @@ func (r *OpenRequest) Validate() error {
 	if r.Server.Endpoint == "" || (r.Server.Ownership != "external" && r.Server.Ownership != "managed") {
 		return fmt.Errorf("a managed or external Server handle with Endpoint is required")
 	}
-	if r.BundleID == "" && r.App == nil {
-		return fmt.Errorf("BundleID or App is required")
+	if r.BundleID == "" && r.App == nil && r.AppReference == "" {
+		return fmt.Errorf("BundleID, App, or AppReference is required")
+	}
+	if r.App != nil && r.AppReference != "" {
+		return fmt.Errorf("App and AppReference are mutually exclusive")
 	}
 	if r.WDA != nil {
 		r.WDA.Init()

@@ -108,6 +108,24 @@ func (s *service) registerRoutes() {
 		},
 	})
 	s.Register(&endly.Route{
+		Action:           "device-register",
+		RequestInfo:      &endly.ActionInfo{Description: "register and fence an external/cloud Android destination"},
+		RequestProvider:  func() interface{} { return &DeviceRegisterRequest{} },
+		ResponseProvider: func() interface{} { return &DeviceRegisterResponse{} },
+		Handler: func(ctx *endly.Context, request interface{}) (interface{}, error) {
+			return s.deviceRegister(ctx, request.(*DeviceRegisterRequest))
+		},
+	})
+	s.Register(&endly.Route{
+		Action:           "device-release",
+		RequestInfo:      &endly.ActionInfo{Description: "release an external/cloud Android destination registration"},
+		RequestProvider:  func() interface{} { return &DeviceReleaseRequest{} },
+		ResponseProvider: func() interface{} { return &DeviceReleaseResponse{} },
+		Handler: func(ctx *endly.Context, request interface{}) (interface{}, error) {
+			return s.deviceRelease(ctx, request.(*DeviceReleaseRequest))
+		},
+	})
+	s.Register(&endly.Route{
 		Action:           "open",
 		RequestInfo:      &endly.ActionInfo{Description: "open an Android UiAutomator2 session"},
 		RequestProvider:  func() interface{} { return &OpenRequest{} },
@@ -359,6 +377,9 @@ func (s *service) launch(ctx *endly.Context, request *LaunchRequest) (*LaunchRes
 	if err := s.validateLease(request.Lease); err != nil {
 		return nil, err
 	}
+	if request.Lease.External {
+		return nil, fmt.Errorf("external Android destinations are launched through Appium open/run")
+	}
 	adb, err := resolveAndroidTool("adb", request.Lease.AndroidSDKRoot)
 	if err != nil {
 		return nil, err
@@ -384,6 +405,9 @@ func (s *service) terminate(ctx *endly.Context, request *TerminateRequest) (*Ter
 	if err := s.validateLease(request.Lease); err != nil {
 		return nil, err
 	}
+	if request.Lease.External {
+		return nil, fmt.Errorf("external Android destinations are terminated through Appium device.terminateApp")
+	}
 	adb, err := resolveAndroidTool("adb", request.Lease.AndroidSDKRoot)
 	if err != nil {
 		return nil, err
@@ -397,6 +421,9 @@ func (s *service) terminate(ctx *endly.Context, request *TerminateRequest) (*Ter
 func (s *service) captureStart(ctx *endly.Context, request *CaptureStartRequest) (*CaptureStartResponse, error) {
 	if err := s.validateLease(request.Lease); err != nil {
 		return nil, err
+	}
+	if request.Lease.External {
+		return nil, fmt.Errorf("external Android capture must be configured through the provider")
 	}
 	adb, err := resolveAndroidTool("adb", request.Lease.AndroidSDKRoot)
 	if err != nil {
@@ -530,6 +557,9 @@ func (s *service) artifact(ctx *endly.Context, request *ArtifactRequest) (*Artif
 		if err := s.validateLease(*request.Lease); err != nil {
 			return nil, err
 		}
+		if request.Lease.External {
+			return nil, fmt.Errorf("external Android screenshots require SessionID so Appium performs capture")
+		}
 		adb, err := resolveAndroidTool("adb", request.Lease.AndroidSDKRoot)
 		if err != nil {
 			return nil, err
@@ -600,6 +630,9 @@ func safeArtifactPart(value string) string {
 func (s *service) install(ctx *endly.Context, request *InstallRequest) (*InstallResponse, error) {
 	if err := s.validateLease(request.Lease); err != nil {
 		return nil, err
+	}
+	if request.Lease.External {
+		return nil, fmt.Errorf("external Android apps must be uploaded by the provider and supplied as OpenRequest.AppReference")
 	}
 	adb, err := resolveAndroidTool("adb", request.Lease.AndroidSDKRoot)
 	if err != nil {
@@ -721,6 +754,9 @@ func (s *service) uninstall(ctx *endly.Context, request *UninstallRequest) (*Uni
 	if err := s.validateLease(request.Lease); err != nil {
 		return nil, err
 	}
+	if request.Lease.External {
+		return nil, fmt.Errorf("external Android app removal is provider-managed")
+	}
 	adb, err := resolveAndroidTool("adb", request.Lease.AndroidSDKRoot)
 	if err != nil {
 		return nil, err
@@ -817,7 +853,12 @@ func (s *service) open(ctx *endly.Context, request *OpenRequest) (*OpenResponse,
 	capabilities["platformName"] = "Android"
 	capabilities["appium:automationName"] = "UiAutomator2"
 	capabilities["appium:udid"] = request.Lease.Serial
-	capabilities["appium:appPackage"] = request.Package
+	if request.Package != "" {
+		capabilities["appium:appPackage"] = request.Package
+	}
+	if request.AppReference != "" {
+		capabilities["appium:app"] = ctx.Expand(request.AppReference)
+	}
 	if request.Activity != "" {
 		capabilities["appium:appActivity"] = request.Activity
 	}
@@ -1297,7 +1338,7 @@ func optionalFloatCallArg(call mobile.Call, index int, fallback float64) float64
 
 func isProtectedAndroidCapability(key string) bool {
 	switch strings.ToLower(strings.TrimSpace(key)) {
-	case "platformname", "appium:automationname", "appium:udid", "appium:apppackage", "appium:appactivity", "udid", "automationname", "apppackage", "appactivity":
+	case "platformname", "appium:automationname", "appium:udid", "appium:apppackage", "appium:appactivity", "appium:app", "udid", "automationname", "apppackage", "appactivity", "app":
 		return true
 	default:
 		return false
@@ -1451,6 +1492,59 @@ func (s *service) deviceStart(ctx *endly.Context, request *DeviceStartRequest) (
 	return &DeviceStartResponse{Lease: lease}, nil
 }
 
+func (s *service) deviceRegister(ctx *endly.Context, request *DeviceRegisterRequest) (*DeviceRegisterResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, err
+	}
+	key := "android:external:" + strings.ToLower(strings.TrimSpace(request.Provider)) + ":" + strings.TrimSpace(request.DeviceID)
+	processLease, err := s.leaseStore.Acquire(ctx.Background(), key)
+	if err != nil {
+		return nil, err
+	}
+	lease := DeviceLease{
+		ID: uuid.NewString(), Fence: processLease.Fence, Serial: request.DeviceID,
+		External: true, Provider: request.Provider, PlatformVersion: request.PlatformVersion,
+		ProcessLease: processLease,
+	}
+	s.storeLease(lease)
+	s.cleanupStack(ctx).Push("external-device:"+lease.ID, func(cleanupCtx context.Context) error {
+		_, err := s.releaseExternalDevice(cleanupCtx, lease)
+		return err
+	})
+	return &DeviceRegisterResponse{Lease: lease}, nil
+}
+
+func (s *service) deviceRelease(ctx *endly.Context, request *DeviceReleaseRequest) (*DeviceReleaseResponse, error) {
+	return s.releaseExternalDevice(ctx.Background(), request.Lease)
+}
+
+func (s *service) releaseExternalDevice(_ context.Context, lease DeviceLease) (*DeviceReleaseResponse, error) {
+	s.mu.Lock()
+	stored, ok := s.leases[lease.ID]
+	s.mu.Unlock()
+	if !ok {
+		return &DeviceReleaseResponse{Warning: "external-device registration already released or unknown"}, nil
+	}
+	if !stored.External || stored.Fence != lease.Fence || stored.Serial != lease.Serial {
+		return nil, fmt.Errorf("external Android device lease fence mismatch")
+	}
+	if stored.ProcessLease != nil {
+		if lease.ProcessLease == nil || stored.ProcessLease.Token != lease.ProcessLease.Token {
+			return nil, fmt.Errorf("external Android device persistent lease token mismatch")
+		}
+		if err := s.leaseStore.Validate(stored.ProcessLease); err != nil {
+			return nil, err
+		}
+	}
+	s.mu.Lock()
+	delete(s.leases, lease.ID)
+	s.mu.Unlock()
+	if err := s.leaseStore.Release(stored.ProcessLease); err != nil {
+		return nil, err
+	}
+	return &DeviceReleaseResponse{Released: true}, nil
+}
+
 func (s *service) cleanupStack(ctx *endly.Context) *mobile.CleanupStack {
 	holder := &contextCleanup{}
 	if ctx.GetInto(cleanupKey, &holder) && holder.stack != nil {
@@ -1463,6 +1557,17 @@ func (s *service) cleanupStack(ctx *endly.Context) *mobile.CleanupStack {
 }
 
 func (s *service) deviceStop(ctx *endly.Context, request *DeviceStopRequest) (*DeviceStopResponse, error) {
+	if request.Lease.External {
+		released, err := s.releaseExternalDevice(ctx.Background(), request.Lease)
+		if err != nil {
+			return nil, err
+		}
+		warning := "external device registration released; provider infrastructure was not stopped"
+		if released.Warning != "" {
+			warning += ": " + released.Warning
+		}
+		return &DeviceStopResponse{Warning: warning}, nil
+	}
 	adb, err := resolveAndroidTool("adb", request.Lease.AndroidSDKRoot)
 	if err != nil {
 		return nil, err
