@@ -16,54 +16,155 @@ import (
 )
 
 func (s *service) build(ctx *endly.Context, request *BuildRequest) (*BuildResponse, error) {
-	if err := s.validateLease(request.Destination); err != nil {
-		return nil, err
-	}
 	xcodebuild, err := mobile.ResolveExecutable("xcodebuild", "/usr/bin/xcodebuild")
 	if err != nil {
 		return nil, err
 	}
+	buildCtx, cancel := context.WithTimeout(ctx.Background(), time.Duration(request.TimeoutMs)*time.Millisecond)
+	defer cancel()
+	response := &BuildResponse{Artifacts: []Artifact{}}
+	if request.Mode != "export" {
+		if request.Mode == "build" || request.Mode == "buildForTesting" {
+			if err := s.validateLease(request.Destination); err != nil {
+				return response, err
+			}
+		}
+		args := iosBuildArgs(request)
+		result, runErr := s.runner.Run(buildCtx, mobile.Command{Name: xcodebuild, Args: args})
+		response.Stdout += result.Stdout
+		response.Stderr += result.Stderr
+		response.DurationMs += result.DurationMs
+		if runErr != nil {
+			return response, fmt.Errorf("Xcode %s: %w", request.Mode, runErr)
+		}
+		if request.Mode == "build" || request.Mode == "buildForTesting" {
+			artifacts, err := discoverIOSBuildArtifacts(request.DerivedDataPath)
+			if err != nil {
+				return response, err
+			}
+			if len(artifacts) == 0 {
+				return response, fmt.Errorf("Xcode build completed but no app or xctestrun products were found")
+			}
+			response.Artifacts = append(response.Artifacts, artifacts...)
+		} else {
+			artifact, err := iosProductArtifact("xcarchive", request.ArchivePath)
+			if err != nil {
+				return response, err
+			}
+			response.Artifacts = append(response.Artifacts, artifact)
+		}
+	}
+	if request.Mode == "export" || request.Mode == "archiveAndExport" {
+		result, runErr := s.runner.Run(buildCtx, mobile.Command{Name: xcodebuild, Args: []string{
+			"-exportArchive", "-archivePath", request.ArchivePath,
+			"-exportPath", request.ExportPath, "-exportOptionsPlist", request.ExportOptionsPlist,
+		}})
+		response.Stdout += result.Stdout
+		response.Stderr += result.Stderr
+		response.DurationMs += result.DurationMs
+		if runErr != nil {
+			return response, fmt.Errorf("Xcode export: %w", runErr)
+		}
+		artifacts, err := discoverExportedIPAs(request.ExportPath)
+		if err != nil {
+			return response, err
+		}
+		if len(artifacts) == 0 {
+			return response, fmt.Errorf("Xcode export completed but no IPA was found")
+		}
+		response.Artifacts = append(response.Artifacts, artifacts...)
+	}
+	return response, nil
+}
+
+func iosBuildArgs(request *BuildRequest) []string {
 	args := []string{}
 	if request.WorkspacePath != "" {
 		args = append(args, "-workspace", request.WorkspacePath)
 	} else {
 		args = append(args, "-project", request.ProjectPath)
 	}
-	args = append(args,
-		"-scheme", request.Scheme,
-		"-configuration", request.Configuration,
-		"-destination", "platform=iOS Simulator,id="+request.Destination.UDID,
-		"-derivedDataPath", request.DerivedDataPath,
-	)
-	keys := make([]string, 0, len(request.BuildSettings))
-	for key := range request.BuildSettings {
+	args = append(args, "-scheme", request.Scheme, "-configuration", request.Configuration)
+	if request.Mode == "build" || request.Mode == "buildForTesting" {
+		args = append(args, "-destination", "platform=iOS Simulator,id="+request.Destination.UDID, "-derivedDataPath", request.DerivedDataPath)
+	} else {
+		args = append(args, "-destination", "generic/platform=iOS", "-archivePath", request.ArchivePath)
+		if request.SDK != "" {
+			args = append(args, "-sdk", request.SDK)
+		}
+		if request.DerivedDataPath != "" {
+			args = append(args, "-derivedDataPath", request.DerivedDataPath)
+		}
+	}
+	settings := map[string]string{}
+	for key, value := range request.BuildSettings {
+		settings[key] = value
+	}
+	if request.Signing != nil {
+		style := "Automatic"
+		if strings.EqualFold(request.Signing.Style, "manual") {
+			style = "Manual"
+		}
+		settings["CODE_SIGN_STYLE"] = style
+		settings["DEVELOPMENT_TEAM"] = request.Signing.TeamID
+		if request.Signing.Identity != "" {
+			settings["CODE_SIGN_IDENTITY"] = request.Signing.Identity
+		}
+		if request.Signing.ProvisioningProfile != "" {
+			settings["PROVISIONING_PROFILE_SPECIFIER"] = request.Signing.ProvisioningProfile
+		}
+		if request.Signing.KeychainPath != "" {
+			settings["OTHER_CODE_SIGN_FLAGS"] = "--keychain " + request.Signing.KeychainPath
+		}
+	}
+	keys := make([]string, 0, len(settings))
+	for key := range settings {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
 	for _, key := range keys {
-		args = append(args, key+"="+request.BuildSettings[key])
+		args = append(args, key+"="+settings[key])
 	}
-	if request.Mode == "buildForTesting" {
+	switch request.Mode {
+	case "buildForTesting":
 		args = append(args, "build-for-testing")
-	} else {
+	case "archive", "archiveAndExport":
+		args = append(args, "archive")
+	default:
 		args = append(args, "build")
 	}
-	buildCtx, cancel := context.WithTimeout(ctx.Background(), time.Duration(request.TimeoutMs)*time.Millisecond)
-	defer cancel()
-	result, err := s.runner.Run(buildCtx, mobile.Command{Name: xcodebuild, Args: args})
-	response := &BuildResponse{Stdout: result.Stdout, Stderr: result.Stderr, DurationMs: result.DurationMs}
+	return args
+}
+
+func iosProductArtifact(kind, path string) (Artifact, error) {
+	hash, size, err := hashBuildProduct(path)
 	if err != nil {
-		return response, fmt.Errorf("Xcode build: %w", err)
+		return Artifact{}, err
 	}
-	artifacts, err := discoverIOSBuildArtifacts(request.DerivedDataPath)
+	return Artifact{Kind: kind, HostPath: path, SHA256: hash, Size: size}, nil
+}
+
+func discoverExportedIPAs(exportPath string) ([]Artifact, error) {
+	result := []Artifact{}
+	err := filepath.WalkDir(exportPath, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() || !strings.HasSuffix(strings.ToLower(path), ".ipa") {
+			return nil
+		}
+		artifact, err := iosProductArtifact("ipa", path)
+		if err != nil {
+			return err
+		}
+		result = append(result, artifact)
+		return nil
+	})
 	if err != nil {
-		return response, err
+		return nil, fmt.Errorf("discover exported IPAs: %w", err)
 	}
-	if len(artifacts) == 0 {
-		return response, fmt.Errorf("Xcode build completed but no app or xctestrun products were found")
-	}
-	response.Artifacts = artifacts
-	return response, nil
+	sort.Slice(result, func(i, j int) bool { return result[i].HostPath < result[j].HostPath })
+	return result, nil
 }
 
 func discoverIOSBuildArtifacts(derivedDataPath string) ([]Artifact, error) {

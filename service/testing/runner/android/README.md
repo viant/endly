@@ -26,7 +26,7 @@ Implemented actions:
 | `android:close` | Idempotently close the Appium session |
 | `android:cleanup` | Run every registered teardown in LIFO order and report all errors |
 
-The implementation uses argv-safe local command execution, the project Gradle wrapper, Android instrumentation, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. Managed Appium and logcat processes are owned by a LIFO context cleanup stack. `open` requires a registered `ServerHandle` and explicit `testIDStrategy`. Remote targets, split APK/APKS deployment, segmented video, and richer failure manifests remain to be implemented.
+The implementation uses argv-safe local command execution, the project Gradle wrapper, Android instrumentation, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. The DSL supports strict plural lookup, `first`/`last`/`nth`/`count`, typed and textual commands, pointer gestures, richer element/device assertions, contexts, orientation, location, permissions, alerts, and application lifecycle. Deployment accepts a single APK, split APKs, APKS, or an AAB with file-backed signing secrets; capture can rotate bounded screen-recording segments. Failed runs can automatically retain screenshot/source/manifest evidence. Managed devices and Appium ports use process-shared fenced leases, while owned processes still unwind through the LIFO context cleanup stack. `open` requires a registered `ServerHandle` and explicit `testIDStrategy`. Remote workers/cloud farms, cross-process REPL attach, and richer log/video failure manifests remain to be implemented.
 
 Run the real host check:
 

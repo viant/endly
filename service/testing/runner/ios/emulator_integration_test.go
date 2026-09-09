@@ -109,10 +109,22 @@ func TestIOSSimulatorIntegration(t *testing.T) {
 		}
 		run, err := service.run(ctx, &RunRequest{
 			SessionID: appiumSession.Session.ID,
-			Commands: []string{
+			Commands: []interface{}{
 				`expect(app.getByTestId("status")).toHaveText("Endly Mobile Runner", 60000)`,
+				`staticTextCount = app.getByType("XCUIElementTypeStaticText").count()`,
+				`firstStaticText = app.getByType("XCUIElementTypeStaticText").first().text()`,
+				map[string]interface{}{
+					"key":     "typedStatus",
+					"locator": map[string]interface{}{"strategy": "accessibilityId", "value": "status"},
+					"action":  map[string]interface{}{"name": "text"},
+				},
+				`contexts = device.contexts()`,
+				`expect(device.context()).toHaveContext("NATIVE_APP", 10000)`,
+				`expect(device.orientation()).toHaveOrientation("PORTRAIT", 10000)`,
 				`app.getByTestId("increment").tap()`,
 				`expect(app.getByTestId("count")).toHaveText("Count: 1", 10000)`,
+				`app.getByTestId("increment").doubleTap()`,
+				`expect(app.getByTestId("count")).toHaveText("Count: 2", 10000)`,
 			},
 			ActionTimeoutMs: 60_000,
 			PollIntervalMs:  200,
@@ -125,6 +137,9 @@ func TestIOSSimulatorIntegration(t *testing.T) {
 				t.Fatalf("iOS DSL assertion failed: %s\n%s", validation.Report(), readDiagnostic(appiumLog))
 			}
 		}
+		if count, ok := run.Data["staticTextCount"].(int); !ok || count < 2 || run.Data["typedStatus"] != "Endly Mobile Runner" {
+			t.Fatalf("unexpected collection/typed data: %+v", run.Data)
+		}
 		appiumEvidence, err := service.artifact(ctx, &ArtifactRequest{
 			SessionID: appiumSession.Session.ID, Directory: t.TempDir(), Screenshot: true, PageSource: true,
 		})
@@ -132,10 +147,14 @@ func TestIOSSimulatorIntegration(t *testing.T) {
 			t.Fatalf("Appium evidence failed: response=%+v err=%v", appiumEvidence, err)
 		}
 	}
+	videoDirectory := t.TempDir()
 	capture, err := service.captureStart(ctx, &CaptureStartRequest{
-		Destination: started.Lease,
-		Predicate:   `process == "FixtureApp"`,
-		LogPath:     filepath.Join(t.TempDir(), "simulator.ndjson"),
+		Destination:    started.Lease,
+		Predicate:      `process == "FixtureApp"`,
+		LogPath:        filepath.Join(t.TempDir(), "simulator.ndjson"),
+		Video:          true,
+		VideoDirectory: videoDirectory,
+		SegmentMs:      2_000,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -164,9 +183,18 @@ func TestIOSSimulatorIntegration(t *testing.T) {
 	if _, err := service.terminate(ctx, &TerminateRequest{Destination: started.Lease, BundleID: bundleID}); err != nil {
 		t.Fatal(err)
 	}
-	if stopped, err := service.captureStop(context.Background(), &CaptureStopRequest{Capture: capture.Capture}); err != nil || !stopped.Stopped {
+	if stopped, err := service.captureStop(context.Background(), &CaptureStopRequest{Capture: capture.Capture}); err != nil || !stopped.Stopped || !hasVideoEvidence(stopped.Artifacts) {
 		t.Fatalf("capture stop failed: response=%+v err=%v", stopped, err)
 	}
+}
+
+func hasVideoEvidence(artifacts []*mobile.Evidence) bool {
+	for _, artifact := range artifacts {
+		if artifact != nil && artifact.Kind == "video" && artifact.Size > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func readDiagnostic(path string) string {

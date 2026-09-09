@@ -50,6 +50,7 @@ type DeviceLease struct {
 	Owned          bool
 	LogPath        string
 	AndroidSDKRoot string
+	ProcessLease   *mobile.LeaseHandle
 }
 
 type DeviceStartRequest struct {
@@ -123,11 +124,24 @@ type DeviceStopResponse struct {
 type InstallRequest struct {
 	Lease          DeviceLease
 	APKPath        string
+	APKPaths       []string
+	APKSPath       string
+	AABPath        string
+	BundletoolPath string
+	JavaPath       string
+	Signing        *AndroidSigningProfile
 	Package        string
 	State          string
 	GrantAll       bool
 	AllowTest      bool
 	AllowDowngrade bool
+}
+
+type AndroidSigningProfile struct {
+	KeystorePath      string
+	KeyAlias          string
+	StorePasswordFile string
+	KeyPasswordFile   string
 }
 
 func (r *InstallRequest) Init() error {
@@ -141,8 +155,29 @@ func (r *InstallRequest) Validate() error {
 	if err := (&DeviceStopRequest{Lease: r.Lease}).Validate(); err != nil {
 		return err
 	}
-	if r.APKPath == "" || r.Package == "" {
-		return fmt.Errorf("APKPath and Package are required")
+	sources := 0
+	if r.APKPath != "" {
+		sources++
+	}
+	if len(r.APKPaths) > 0 {
+		sources++
+	}
+	if r.APKSPath != "" {
+		sources++
+	}
+	if r.AABPath != "" {
+		sources++
+	}
+	if sources != 1 || r.Package == "" {
+		return fmt.Errorf("exactly one of APKPath, APKPaths, APKSPath, or AABPath and Package are required")
+	}
+	if (r.APKSPath != "" || r.AABPath != "") && r.BundletoolPath == "" {
+		return fmt.Errorf("BundletoolPath is required for APKS or AAB deployment")
+	}
+	if r.Signing != nil {
+		if r.Signing.KeystorePath == "" || r.Signing.KeyAlias == "" || r.Signing.StorePasswordFile == "" {
+			return fmt.Errorf("Signing requires KeystorePath, KeyAlias, and StorePasswordFile")
+		}
 	}
 	switch r.State {
 	case "freshInstall", "cleanData", "preserve", "upgrade":
@@ -156,6 +191,7 @@ type InstallResponse struct {
 	Installed bool
 	Package   string
 	APKPath   string
+	Artifacts []string
 	State     string
 }
 
@@ -254,11 +290,12 @@ type SessionHandle struct {
 }
 
 type ServerHandle struct {
-	ID        string
-	Endpoint  string
-	Ownership string
-	PID       int
-	LogPath   string
+	ID           string
+	Endpoint     string
+	Ownership    string
+	PID          int
+	LogPath      string
+	ProcessLease *mobile.LeaseHandle
 }
 
 type ServerStartRequest struct {
@@ -318,10 +355,11 @@ type OpenResponse struct {
 }
 
 type RunRequest struct {
-	SessionID       string
-	Commands        []string
-	ActionTimeoutMs int
-	PollIntervalMs  int
+	SessionID        string
+	Commands         []interface{}
+	ActionTimeoutMs  int
+	PollIntervalMs   int
+	FailureArtifacts *mobile.FailureArtifactOptions
 }
 
 func (r *RunRequest) Init() error {
@@ -348,6 +386,7 @@ type RunResponse struct {
 	Data        map[string]interface{}
 	Steps       []mobile.ExecutionStep
 	Validations []*assertly.Validation
+	Failures    []*mobile.FailureEvidence
 }
 
 func (r *RunResponse) Assertion() []*assertly.Validation { return r.Validations }
@@ -361,6 +400,8 @@ type REPLRequest struct {
 	MaxSourceBytes    int
 	MaxTreeNodes      int
 	FailOnError       bool
+	HistoryPath       string
+	MaxHistory        int
 }
 
 func (r *REPLRequest) Init() error {
@@ -375,6 +416,9 @@ func (r *REPLRequest) Init() error {
 	}
 	if r.MaxTreeNodes <= 0 {
 		r.MaxTreeNodes = 500
+	}
+	if r.MaxHistory <= 0 {
+		r.MaxHistory = 1000
 	}
 	return nil
 }
@@ -557,18 +601,31 @@ type CaptureHandle struct {
 }
 
 type CaptureStartRequest struct {
-	Lease   DeviceLease
-	Package string
-	LogPath string
-	Clear   bool
+	Lease          DeviceLease
+	Package        string
+	LogPath        string
+	Clear          bool
+	Video          bool
+	VideoDirectory string
+	SegmentMs      int
+}
+
+func (r *CaptureStartRequest) Init() error {
+	if r.SegmentMs <= 0 || r.SegmentMs > 170_000 {
+		r.SegmentMs = 170_000
+	}
+	return nil
 }
 
 func (r *CaptureStartRequest) Validate() error {
 	if err := (&DeviceStopRequest{Lease: r.Lease}).Validate(); err != nil {
 		return err
 	}
-	if r.LogPath == "" {
-		return fmt.Errorf("LogPath is required")
+	if r.LogPath == "" && !r.Video {
+		return fmt.Errorf("LogPath or Video is required")
+	}
+	if r.Video && r.VideoDirectory == "" {
+		return fmt.Errorf("VideoDirectory is required when Video is enabled")
 	}
 	return nil
 }
@@ -585,7 +642,9 @@ func (r *CaptureStopRequest) Validate() error {
 }
 
 type CaptureStopResponse struct {
-	Stopped  bool
-	Artifact *mobile.Evidence
-	Warning  string
+	Stopped   bool
+	Artifact  *mobile.Evidence
+	Artifacts []*mobile.Evidence
+	Errors    []string
+	Warning   string
 }

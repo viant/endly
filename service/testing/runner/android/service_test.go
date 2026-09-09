@@ -116,6 +116,7 @@ func TestLaunchAndTerminateAndroidApp(t *testing.T) {
 func TestLogcatCaptureLifecycle(t *testing.T) {
 	runner := &fakeRunner{}
 	service := newService(runner)
+	service.leaseStore = mobile.NewLeaseStore(t.TempDir())
 	lease := DeviceLease{ID: "lease-capture", Fence: 1, Serial: "emulator-5554", AndroidSDKRoot: fakeSDK(t)}
 	service.storeLease(lease)
 	ctx := endly.New().NewContext(nil)
@@ -244,6 +245,74 @@ func TestInstallAndUninstallUseExactLeaseAndPackage(t *testing.T) {
 	}
 }
 
+func TestInstallSplitAPKs(t *testing.T) {
+	runner := &fakeRunner{}
+	service := newService(runner)
+	lease := DeviceLease{ID: "lease-split", Fence: 1, Serial: "emulator-5554", AndroidSDKRoot: fakeSDK(t)}
+	service.storeLease(lease)
+	response, err := service.install(endly.New().NewContext(nil), &InstallRequest{
+		Lease: lease, APKPaths: []string{"/tmp/base.apk", "/tmp/config.arm64.apk"},
+		Package: "com.example.split", State: "preserve",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(response.Artifacts) != 2 {
+		t.Fatalf("unexpected split response: %+v", response)
+	}
+	all := recordedCommands(runner)
+	if !strings.Contains(all, "install-multiple -r /tmp/base.apk /tmp/config.arm64.apk") {
+		t.Fatalf("split APK command missing:\n%s", all)
+	}
+}
+
+func TestInstallAABUsesPasswordFiles(t *testing.T) {
+	runner := &fakeRunner{}
+	service := newService(runner)
+	lease := DeviceLease{ID: "lease-aab", Fence: 1, Serial: "emulator-5554", AndroidSDKRoot: fakeSDK(t)}
+	service.storeLease(lease)
+	directory := t.TempDir()
+	bundletool := filepath.Join(directory, "bundletool.jar")
+	java := filepath.Join(directory, "java")
+	for path, mode := range map[string]os.FileMode{bundletool: 0o600, java: 0o700} {
+		if err := os.WriteFile(path, []byte("fixture"), mode); err != nil {
+			t.Fatal(err)
+		}
+	}
+	request := &InstallRequest{
+		Lease: lease, AABPath: "/tmp/app.aab", BundletoolPath: bundletool, JavaPath: java,
+		Package: "com.example.bundle", State: "preserve",
+		Signing: &AndroidSigningProfile{
+			KeystorePath: "/secure/release.jks", KeyAlias: "release",
+			StorePasswordFile: "/secure/store.pass", KeyPasswordFile: "/secure/key.pass",
+		},
+	}
+	if err := request.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.install(endly.New().NewContext(nil), request); err != nil {
+		t.Fatal(err)
+	}
+	all := recordedCommands(runner)
+	for _, expected := range []string{
+		"-jar " + bundletool + " build-apks --bundle=/tmp/app.aab",
+		"--ks-pass=file:/secure/store.pass", "--key-pass=file:/secure/key.pass",
+		"-jar " + bundletool + " install-apks", "--device-id=emulator-5554",
+	} {
+		if !strings.Contains(all, expected) {
+			t.Fatalf("missing %q in:\n%s", expected, all)
+		}
+	}
+}
+
+func recordedCommands(runner *fakeRunner) string {
+	lines := []string{}
+	for _, command := range runner.commands {
+		lines = append(lines, command.Name+" "+strings.Join(command.Args, " "))
+	}
+	return strings.Join(lines, "\n")
+}
+
 func TestFreshInstallSkipsUninstallWhenPackageIsAbsent(t *testing.T) {
 	runner := &fakeRunner{}
 	service := newService(runner)
@@ -279,14 +348,20 @@ func TestAppiumRunnerFlow(t *testing.T) {
 			value = map[string]interface{}{"ready": true}
 		case "POST /session":
 			value = map[string]interface{}{"sessionId": "backend-1", "capabilities": map[string]interface{}{}}
-		case "POST /session/backend-1/element":
-			value = map[string]interface{}{"element-6066-11e4-a52e-4f735466cecf": "element-1"}
+		case "POST /session/backend-1/elements":
+			value = []map[string]interface{}{{"element-6066-11e4-a52e-4f735466cecf": "element-1"}}
 		case "GET /session/backend-1/element/element-1/text":
 			value = "Welcome"
 		case "GET /session/backend-1/screenshot":
 			value = base64.StdEncoding.EncodeToString([]byte("png"))
 		case "GET /session/backend-1/source":
 			value = `<hierarchy><node class="android.widget.TextView" text="Welcome"/></hierarchy>`
+		case "GET /session/backend-1/contexts":
+			value = []string{"NATIVE_APP", "WEBVIEW_com.example.app"}
+		case "GET /session/backend-1/context":
+			value = "NATIVE_APP"
+		case "GET /session/backend-1/orientation":
+			value = "PORTRAIT"
 		default:
 			value = nil
 		}
@@ -316,16 +391,44 @@ func TestAppiumRunnerFlow(t *testing.T) {
 		t.Fatalf("unexpected session: %+v", opened.Session)
 	}
 	result, err := service.run(ctx, &RunRequest{
-		SessionID:       opened.Session.ID,
-		Commands:        []string{`greeting = app.getByTestId("greeting").text()`, `expect(app.getByTestId("greeting")).toHaveText("Welcome", 20)`},
+		SessionID: opened.Session.ID,
+		Commands: []interface{}{
+			`greeting = app.getByTestId("greeting").text()`,
+			map[string]interface{}{
+				"key": "typedGreeting", "locator": map[string]interface{}{"strategy": "accessibilityId", "value": "greeting"},
+				"action": map[string]interface{}{"name": "text"},
+			},
+			`expect(app.getByTestId("greeting")).toHaveText("Welcome", 20)`,
+		},
 		ActionTimeoutMs: 50,
 		PollIntervalMs:  1,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.Data["greeting"] != "Welcome" || len(result.Validations) != 1 || result.Validations[0].PassedCount != 1 {
+	if result.Data["greeting"] != "Welcome" || result.Data["typedGreeting"] != "Welcome" || len(result.Validations) != 1 || result.Validations[0].PassedCount != 1 {
 		t.Fatalf("unexpected run response: %+v", result)
+	}
+	deviceResult, err := service.run(ctx, &RunRequest{
+		SessionID: opened.Session.ID,
+		Commands: []interface{}{
+			`contexts = device.contexts()`,
+			`expect(device.context()).toHaveContext("NATIVE_APP", 20)`,
+			`expect(device.orientation()).toHaveOrientation("PORTRAIT", 20)`,
+		},
+		ActionTimeoutMs: 50, PollIntervalMs: 1,
+	})
+	if err != nil || len(deviceResult.Validations) != 2 || len(deviceResult.Data["contexts"].([]string)) != 2 {
+		t.Fatalf("unexpected device result: %+v, err=%v", deviceResult, err)
+	}
+	failureResult, err := service.run(ctx, &RunRequest{
+		SessionID:       opened.Session.ID,
+		Commands:        []interface{}{`expect(app.getByTestId("greeting")).toHaveText("Missing", 5)`},
+		ActionTimeoutMs: 10, PollIntervalMs: 1,
+		FailureArtifacts: &mobile.FailureArtifactOptions{Directory: t.TempDir()},
+	})
+	if err != nil || len(failureResult.Failures) != 1 || len(failureResult.Failures[0].Artifacts) != 3 {
+		t.Fatalf("automatic failure evidence missing: %+v, err=%v", failureResult, err)
 	}
 	evidence, err := service.artifact(ctx, &ArtifactRequest{SessionID: opened.Session.ID, Directory: t.TempDir(), Screenshot: true, PageSource: true, MaxSourceBytes: 100})
 	if err != nil {
@@ -370,6 +473,7 @@ func TestDoctorAndOwnedEmulatorLifecycle(t *testing.T) {
 	sdkRoot := fakeSDK(t)
 	runner := &fakeRunner{}
 	service := newService(runner)
+	service.leaseStore = mobile.NewLeaseStore(t.TempDir())
 	ctx := endly.New().NewContext(nil)
 
 	doctorRequest := &DoctorRequest{AndroidSDKRoot: sdkRoot, Required: []string{"adb", "emulator"}}
@@ -400,7 +504,7 @@ func TestDoctorAndOwnedEmulatorLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !started.Lease.Owned || started.Lease.Serial != "emulator-5554" || started.Lease.PID != 4242 {
+	if !started.Lease.Owned || started.Lease.Serial != "emulator-5554" || started.Lease.PID != 4242 || started.Lease.ProcessLease == nil {
 		t.Fatalf("unexpected lease: %+v", started.Lease)
 	}
 	if len(runner.started) != 1 || !containsArgs(runner.started[0].Args, "-avd", "pixel_api_35", "-port", "5554") {
@@ -413,6 +517,9 @@ func TestDoctorAndOwnedEmulatorLifecycle(t *testing.T) {
 	}
 	if !stopped.Stopped {
 		t.Fatalf("expected owned emulator to stop: %+v", stopped)
+	}
+	if _, err := os.Stat(started.Lease.ProcessLease.Path); !os.IsNotExist(err) {
+		t.Fatalf("persistent device lease remains after stop: %v", err)
 	}
 }
 

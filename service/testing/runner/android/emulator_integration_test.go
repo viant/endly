@@ -86,8 +86,10 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
+	videoDirectory := t.TempDir()
 	capture, err := service.captureStart(ctx, &CaptureStartRequest{
 		Lease: started.Lease, LogPath: filepath.Join(t.TempDir(), "logcat.txt"), Clear: true,
+		Video: true, VideoDirectory: videoDirectory, SegmentMs: 20_000,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -111,8 +113,18 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 		}
 		run, err := service.run(ctx, &RunRequest{
 			SessionID: opened.Session.ID,
-			Commands: []string{
-				`expect(app.getByClass("android.widget.FrameLayout")).toBeVisible(60000)`,
+			Commands: []interface{}{
+				`expect(app.getByClass("android.widget.FrameLayout").first()).toBeVisible(60000)`,
+				`textCount = app.getByClass("android.widget.TextView").count()`,
+				`firstText = app.getByClass("android.widget.TextView").first().text()`,
+				map[string]interface{}{
+					"key":     "rootVisible",
+					"locator": map[string]interface{}{"strategy": "class", "value": "android.widget.FrameLayout", "selection": "first"},
+					"action":  map[string]interface{}{"name": "displayed"},
+				},
+				`contexts = device.contexts()`,
+				`expect(device.context()).toHaveContext("NATIVE_APP", 10000)`,
+				`expect(device.orientation()).toHaveOrientation("PORTRAIT", 10000)`,
 			},
 			ActionTimeoutMs: 60_000,
 			PollIntervalMs:  200,
@@ -124,6 +136,9 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 			if validation.HasFailure() {
 				t.Fatalf("Android DSL assertion failed: %s", validation.Report())
 			}
+		}
+		if count, ok := run.Data["textCount"].(int); !ok || count < 1 || run.Data["rootVisible"] != true {
+			t.Fatalf("unexpected collection/typed data: %+v", run.Data)
 		}
 		evidence, err := service.artifact(ctx, &ArtifactRequest{
 			SessionID: opened.Session.ID, Directory: t.TempDir(), Screenshot: true, PageSource: true,
@@ -146,7 +161,16 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 	if _, err := service.terminate(ctx, &TerminateRequest{Lease: started.Lease, Package: packageName}); err != nil {
 		t.Fatal(err)
 	}
-	if stopped, err := service.captureStop(context.Background(), &CaptureStopRequest{Capture: capture.Capture}); err != nil || !stopped.Stopped {
+	if stopped, err := service.captureStop(context.Background(), &CaptureStopRequest{Capture: capture.Capture}); err != nil || !stopped.Stopped || !hasVideoEvidence(stopped.Artifacts) {
 		t.Fatalf("capture stop failed: response=%+v err=%v", stopped, err)
 	}
+}
+
+func hasVideoEvidence(artifacts []*mobile.Evidence) bool {
+	for _, artifact := range artifacts {
+		if artifact != nil && artifact.Kind == "video" && artifact.Size > 0 {
+			return true
+		}
+	}
+	return false
 }

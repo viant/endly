@@ -25,6 +25,15 @@ type AppiumSession struct {
 	client       *AppiumClient
 }
 
+const W3CElementKey = "element-6066-11e4-a52e-4f735466cecf"
+
+type Rect struct {
+	X      float64 `json:"x"`
+	Y      float64 `json:"y"`
+	Width  float64 `json:"width"`
+	Height float64 `json:"height"`
+}
+
 func NewAppiumClient(endpoint string, client *http.Client) (*AppiumClient, error) {
 	parsed, err := url.Parse(strings.TrimRight(endpoint, "/"))
 	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
@@ -73,12 +82,34 @@ func (s *AppiumSession) FindElement(ctx context.Context, using, value string) (s
 	if err := s.client.do(ctx, http.MethodPost, s.sessionPath("element"), map[string]interface{}{"using": using, "value": value}, &response); err != nil {
 		return "", err
 	}
-	for _, key := range []string{"element-6066-11e4-a52e-4f735466cecf", "ELEMENT"} {
+	for _, key := range []string{W3CElementKey, "ELEMENT"} {
 		if id, ok := response[key].(string); ok && id != "" {
 			return id, nil
 		}
 	}
 	return "", fmt.Errorf("Appium find element response did not contain an element ID")
+}
+
+func (s *AppiumSession) FindElements(ctx context.Context, using, value string) ([]string, error) {
+	var response []map[string]interface{}
+	if err := s.client.do(ctx, http.MethodPost, s.sessionPath("elements"), map[string]interface{}{"using": using, "value": value}, &response); err != nil {
+		return nil, err
+	}
+	result := make([]string, 0, len(response))
+	for index, item := range response {
+		id := ""
+		for _, key := range []string{W3CElementKey, "ELEMENT"} {
+			if candidate, ok := item[key].(string); ok && candidate != "" {
+				id = candidate
+				break
+			}
+		}
+		if id == "" {
+			return nil, fmt.Errorf("Appium element %d did not contain an element ID", index)
+		}
+		result = append(result, id)
+	}
+	return result, nil
 }
 
 func (s *AppiumSession) Click(ctx context.Context, elementID string) error {
@@ -112,6 +143,122 @@ func (s *AppiumSession) ElementBool(ctx context.Context, elementID, property str
 	var value bool
 	err := s.client.do(ctx, http.MethodGet, s.elementPath(elementID, property), nil, &value)
 	return value, err
+}
+
+func (s *AppiumSession) ElementRect(ctx context.Context, elementID string) (Rect, error) {
+	var value Rect
+	err := s.client.do(ctx, http.MethodGet, s.elementPath(elementID, "rect"), nil, &value)
+	return value, err
+}
+
+func (s *AppiumSession) WindowRect(ctx context.Context) (Rect, error) {
+	var value Rect
+	err := s.client.do(ctx, http.MethodGet, s.sessionPath("window/rect"), nil, &value)
+	return value, err
+}
+
+func (s *AppiumSession) Back(ctx context.Context) error {
+	return s.client.do(ctx, http.MethodPost, s.sessionPath("back"), map[string]interface{}{}, nil)
+}
+
+func (s *AppiumSession) HideKeyboard(ctx context.Context) error {
+	return s.client.do(ctx, http.MethodPost, s.sessionPath("appium/device/hide_keyboard"), map[string]interface{}{}, nil)
+}
+
+func (s *AppiumSession) Contexts(ctx context.Context) ([]string, error) {
+	var value []string
+	err := s.client.do(ctx, http.MethodGet, s.sessionPath("contexts"), nil, &value)
+	return value, err
+}
+
+func (s *AppiumSession) CurrentContext(ctx context.Context) (string, error) {
+	var value string
+	err := s.client.do(ctx, http.MethodGet, s.sessionPath("context"), nil, &value)
+	return value, err
+}
+
+func (s *AppiumSession) SetContext(ctx context.Context, name string) error {
+	return s.client.do(ctx, http.MethodPost, s.sessionPath("context"), map[string]interface{}{"name": name}, nil)
+}
+
+func (s *AppiumSession) Orientation(ctx context.Context) (string, error) {
+	var value string
+	err := s.client.do(ctx, http.MethodGet, s.sessionPath("orientation"), nil, &value)
+	return value, err
+}
+
+func (s *AppiumSession) SetOrientation(ctx context.Context, orientation string) error {
+	return s.client.do(ctx, http.MethodPost, s.sessionPath("orientation"), map[string]interface{}{"orientation": orientation}, nil)
+}
+
+func (s *AppiumSession) SetLocation(ctx context.Context, latitude, longitude, altitude float64) error {
+	return s.client.do(ctx, http.MethodPost, s.sessionPath("location"), map[string]interface{}{
+		"location": map[string]interface{}{"latitude": latitude, "longitude": longitude, "altitude": altitude},
+	}, nil)
+}
+
+func (s *AppiumSession) AlertText(ctx context.Context) (string, error) {
+	var value string
+	err := s.client.do(ctx, http.MethodGet, s.sessionPath("alert/text"), nil, &value)
+	return value, err
+}
+
+func (s *AppiumSession) AcceptAlert(ctx context.Context) error {
+	return s.client.do(ctx, http.MethodPost, s.sessionPath("alert/accept"), map[string]interface{}{}, nil)
+}
+
+func (s *AppiumSession) DismissAlert(ctx context.Context) error {
+	return s.client.do(ctx, http.MethodPost, s.sessionPath("alert/dismiss"), map[string]interface{}{}, nil)
+}
+
+func (s *AppiumSession) PerformActions(ctx context.Context, actions []map[string]interface{}) error {
+	return s.client.do(ctx, http.MethodPost, s.sessionPath("actions"), map[string]interface{}{"actions": actions}, nil)
+}
+
+func (s *AppiumSession) ReleaseActions(ctx context.Context) error {
+	return s.client.do(ctx, http.MethodDelete, s.sessionPath("actions"), nil, nil)
+}
+
+func (s *AppiumSession) PointerGesture(ctx context.Context, points []PointerPoint) error {
+	if len(points) < 2 {
+		return fmt.Errorf("pointer gesture requires at least two points")
+	}
+	actions := []map[string]interface{}{{
+		"type":       "pointer",
+		"id":         "finger",
+		"parameters": map[string]interface{}{"pointerType": "touch"},
+		"actions":    pointerActions(points),
+	}}
+	if err := s.PerformActions(ctx, actions); err != nil {
+		return err
+	}
+	return s.ReleaseActions(ctx)
+}
+
+type PointerPoint struct {
+	X          int
+	Y          int
+	DurationMs int
+	Down       bool
+	Up         bool
+}
+
+func pointerActions(points []PointerPoint) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0, len(points)*2)
+	for _, point := range points {
+		move := map[string]interface{}{
+			"type": "pointerMove", "duration": max(point.DurationMs, 0),
+			"origin": "viewport", "x": point.X, "y": point.Y,
+		}
+		result = append(result, move)
+		if point.Down {
+			result = append(result, map[string]interface{}{"type": "pointerDown", "button": 0})
+		}
+		if point.Up {
+			result = append(result, map[string]interface{}{"type": "pointerUp", "button": 0})
+		}
+	}
+	return result
 }
 
 func (s *AppiumSession) PageSource(ctx context.Context) (string, error) {

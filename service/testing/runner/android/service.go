@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -22,15 +23,17 @@ const ServiceID = "android"
 
 type service struct {
 	*endly.AbstractService
-	runner   mobile.Runner
-	mu       sync.Mutex
-	leases   map[string]DeviceLease
-	sessions map[string]*androidSession
-	servers  map[string]*mobile.AppiumServer
-	captures map[string]*mobile.LoggedProcess
-	fs       afs.Service
-	input    io.Reader
-	output   io.Writer
+	runner       mobile.Runner
+	mu           sync.Mutex
+	leases       map[string]DeviceLease
+	sessions     map[string]*androidSession
+	servers      map[string]*mobile.AppiumServer
+	serverLeases map[string]*mobile.LeaseHandle
+	captures     map[string]*androidCapture
+	fs           afs.Service
+	input        io.Reader
+	output       io.Writer
+	leaseStore   *mobile.LeaseStore
 }
 
 type androidSession struct {
@@ -38,6 +41,11 @@ type androidSession struct {
 	appium         *mobile.AppiumSession
 	testIDStrategy string
 	mu             sync.Mutex
+}
+
+type androidCapture struct {
+	log   *mobile.LoggedProcess
+	video *mobile.SegmentedCapture
 }
 
 type contextCleanup struct{ stack *mobile.CleanupStack }
@@ -55,10 +63,12 @@ func newService(runner mobile.Runner) *service {
 		leases:          map[string]DeviceLease{},
 		sessions:        map[string]*androidSession{},
 		servers:         map[string]*mobile.AppiumServer{},
-		captures:        map[string]*mobile.LoggedProcess{},
+		serverLeases:    map[string]*mobile.LeaseHandle{},
+		captures:        map[string]*androidCapture{},
 		fs:              afs.New(),
 		input:           os.Stdin,
 		output:          os.Stdout,
+		leaseStore:      mobile.NewLeaseStore(""),
 	}
 	result.AbstractService.Service = result
 	result.registerRoutes()
@@ -254,16 +264,22 @@ func (s *service) repl(ctx *endly.Context, request *REPLRequest) (*REPLResponse,
 	result, err := mobile.RunREPL(ctx.Background(), s.input, s.output, mobile.REPLConfig{
 		Prompt: prompt, MaxSourceBytes: request.MaxSourceBytes,
 		MaxTreeNodes: request.MaxTreeNodes, FailOnError: request.FailOnError,
+		HistoryPath: ctx.Expand(request.HistoryPath), MaxHistory: request.MaxHistory,
 	}, mobile.REPLCallbacks{
 		Execute: func(replCtx context.Context, command string) (*mobile.ExecutionResult, error) {
+			var failureArtifacts *mobile.FailureArtifactOptions
+			if request.ArtifactDirectory != "" {
+				failureArtifacts = &mobile.FailureArtifactOptions{Directory: request.ArtifactDirectory}
+			}
 			response, err := s.run(ctx, &RunRequest{
-				SessionID: sessionID, Commands: []string{command},
+				SessionID: sessionID, Commands: []interface{}{command},
 				ActionTimeoutMs: request.ActionTimeoutMs, PollIntervalMs: request.PollIntervalMs,
+				FailureArtifacts: failureArtifacts,
 			})
 			if response == nil {
 				return nil, err
 			}
-			return &mobile.ExecutionResult{Data: response.Data, Steps: response.Steps, Validations: response.Validations}, err
+			return &mobile.ExecutionResult{Data: response.Data, Steps: response.Steps, Validations: response.Validations, Failures: response.Failures}, err
 		},
 		Source: func(replCtx context.Context) (string, error) {
 			session.mu.Lock()
@@ -363,26 +379,72 @@ func (s *service) captureStart(ctx *endly.Context, request *CaptureStartRequest)
 	if err != nil {
 		return nil, err
 	}
-	if request.Clear {
+	captureID := "android-capture-" + uuid.NewString()
+	state := &androidCapture{}
+	if request.Clear && request.LogPath != "" {
 		if _, err := s.runner.Run(ctx.Background(), mobile.Command{Name: adb, Args: []string{"-s", request.Lease.Serial, "logcat", "-c"}}); err != nil {
 			return nil, fmt.Errorf("clear logcat: %w", err)
 		}
 	}
-	args := []string{"-s", request.Lease.Serial, "logcat", "-v", "threadtime"}
-	if request.Package != "" {
-		pid, err := s.runner.Run(ctx.Background(), mobile.Command{Name: adb, Args: []string{"-s", request.Lease.Serial, "shell", "pidof", "-s", request.Package}})
-		if err != nil || strings.TrimSpace(pid.Stdout) == "" {
-			return nil, fmt.Errorf("resolve Android package %s process ID", request.Package)
+	if request.LogPath != "" {
+		args := []string{"-s", request.Lease.Serial, "logcat", "-v", "threadtime"}
+		if request.Package != "" {
+			pid, err := s.runner.Run(ctx.Background(), mobile.Command{Name: adb, Args: []string{"-s", request.Lease.Serial, "shell", "pidof", "-s", request.Package}})
+			if err != nil || strings.TrimSpace(pid.Stdout) == "" {
+				return nil, fmt.Errorf("resolve Android package %s process ID", request.Package)
+			}
+			args = append(args, "--pid", strings.TrimSpace(pid.Stdout))
 		}
-		args = append(args, "--pid", strings.TrimSpace(pid.Stdout))
+		state.log, err = mobile.StartLoggedProcess(ctx.Background(), s.runner, mobile.Command{Name: adb, Args: args}, request.LogPath)
+		if err != nil {
+			return nil, err
+		}
 	}
-	process, err := mobile.StartLoggedProcess(ctx.Background(), s.runner, mobile.Command{Name: adb, Args: args}, request.LogPath)
-	if err != nil {
-		return nil, err
+	if request.Video {
+		if err := os.MkdirAll(request.VideoDirectory, 0o700); err != nil {
+			if state.log != nil {
+				_ = state.log.Stop(context.Background())
+			}
+			return nil, err
+		}
+		segmentMs := request.SegmentMs
+		if segmentMs <= 0 || segmentMs > 170_000 {
+			segmentMs = 170_000
+		}
+		remotePrefix := "/sdcard/" + captureID
+		state.video, err = mobile.StartSegmentedCapture(time.Duration(segmentMs)*time.Millisecond,
+			func(segmentCtx context.Context, index int) (*mobile.Process, error) {
+				remote := fmt.Sprintf("%s-%04d.mp4", remotePrefix, index)
+				seconds := max(1, int(math.Ceil(float64(segmentMs)/1000)))
+				return s.runner.Start(segmentCtx, mobile.Command{Name: adb, Args: []string{
+					"-s", request.Lease.Serial, "shell", "screenrecord", "--time-limit", strconv.Itoa(seconds), remote,
+				}}, io.Discard, io.Discard)
+			},
+			func(segmentCtx context.Context, index int) (string, error) {
+				remote := fmt.Sprintf("%s-%04d.mp4", remotePrefix, index)
+				local := filepath.Join(request.VideoDirectory, fmt.Sprintf("segment-%04d.mp4", index))
+				result, pullErr := s.runner.Run(segmentCtx, mobile.Command{Name: adb, Args: []string{"-s", request.Lease.Serial, "pull", remote, local}})
+				_, _ = s.runner.Run(segmentCtx, mobile.Command{Name: adb, Args: []string{"-s", request.Lease.Serial, "shell", "rm", "-f", remote}})
+				if pullErr != nil {
+					return "", fmt.Errorf("pull Android video: %s: %w", strings.TrimSpace(result.Stderr), pullErr)
+				}
+				return local, nil
+			},
+		)
+		if err != nil {
+			if state.log != nil {
+				_ = state.log.Stop(context.Background())
+			}
+			return nil, err
+		}
 	}
-	handle := CaptureHandle{ID: "android-capture-" + uuid.NewString(), Lease: request.Lease, PID: process.PID, LogPath: request.LogPath}
+	pid := 0
+	if state.log != nil {
+		pid = state.log.PID
+	}
+	handle := CaptureHandle{ID: captureID, Lease: request.Lease, PID: pid, LogPath: request.LogPath}
 	s.mu.Lock()
-	s.captures[handle.ID] = process
+	s.captures[handle.ID] = state
 	s.mu.Unlock()
 	s.cleanupStack(ctx).Push("capture:"+handle.ID, func(cleanupCtx context.Context) error {
 		_, err := s.captureStop(cleanupCtx, &CaptureStopRequest{Capture: handle})
@@ -393,10 +455,7 @@ func (s *service) captureStart(ctx *endly.Context, request *CaptureStartRequest)
 
 func (s *service) captureStop(ctx context.Context, request *CaptureStopRequest) (*CaptureStopResponse, error) {
 	s.mu.Lock()
-	process, ok := s.captures[request.Capture.ID]
-	if ok {
-		delete(s.captures, request.Capture.ID)
-	}
+	capture, ok := s.captures[request.Capture.ID]
 	s.mu.Unlock()
 	if !ok {
 		return &CaptureStopResponse{Warning: "capture already stopped or unknown"}, nil
@@ -404,15 +463,39 @@ func (s *service) captureStop(ctx context.Context, request *CaptureStopRequest) 
 	if err := s.validateLease(request.Capture.Lease); err != nil {
 		return nil, err
 	}
-	if err := process.Stop(ctx); err != nil && err != context.DeadlineExceeded {
-		return nil, err
+	response := &CaptureStopResponse{Stopped: true, Artifacts: []*mobile.Evidence{}, Errors: []string{}}
+	if capture.log != nil {
+		if err := capture.log.Stop(ctx); err != nil && err != context.DeadlineExceeded {
+			response.Errors = append(response.Errors, err.Error())
+		}
+		info, _ := os.Stat(capture.log.Path)
+		size := 0
+		if info != nil {
+			size = int(info.Size())
+		}
+		logArtifact := &mobile.Evidence{Kind: "logcat", URL: capture.log.Path, Size: size, Sensitive: true}
+		response.Artifact = logArtifact
+		response.Artifacts = append(response.Artifacts, logArtifact)
 	}
-	info, _ := os.Stat(process.Path)
-	size := 0
-	if info != nil {
-		size = int(info.Size())
+	if capture.video != nil {
+		paths, captureErrors := capture.video.Stop()
+		response.Errors = append(response.Errors, captureErrors...)
+		for _, path := range paths {
+			info, _ := os.Stat(path)
+			size := 0
+			if info != nil {
+				size = int(info.Size())
+			}
+			response.Artifacts = append(response.Artifacts, &mobile.Evidence{Kind: "video", URL: path, Size: size, Sensitive: true})
+		}
 	}
-	return &CaptureStopResponse{Stopped: true, Artifact: &mobile.Evidence{Kind: "logcat", URL: process.Path, Size: size, Sensitive: true}}, nil
+	s.mu.Lock()
+	delete(s.captures, request.Capture.ID)
+	s.mu.Unlock()
+	if len(response.Errors) > 0 {
+		return response, fmt.Errorf("capture cleanup: %s", strings.Join(response.Errors, "; "))
+	}
+	return response, nil
 }
 
 func (s *service) artifact(ctx *endly.Context, request *ArtifactRequest) (*ArtifactResponse, error) {
@@ -507,29 +590,105 @@ func (s *service) install(ctx *endly.Context, request *InstallRequest) (*Install
 			}
 		}
 	}
-	args := []string{"-s", request.Lease.Serial, "install"}
-	if request.State != "freshInstall" {
-		args = append(args, "-r")
-	}
-	if request.GrantAll {
-		args = append(args, "-g")
-	}
-	if request.AllowTest {
-		args = append(args, "-t")
-	}
-	if request.AllowDowngrade {
-		args = append(args, "-d")
-	}
-	args = append(args, request.APKPath)
-	if result, err := s.runner.Run(ctx.Background(), mobile.Command{Name: adb, Args: args}); err != nil {
-		return nil, fmt.Errorf("install Android package %s: %s: %w", request.Package, strings.TrimSpace(result.Stderr), err)
+	artifacts, err := s.installAndroidArtifacts(ctx.Background(), adb, request)
+	if err != nil {
+		return nil, err
 	}
 	if request.State == "cleanData" {
 		if _, err := s.runner.Run(ctx.Background(), mobile.Command{Name: adb, Args: []string{"-s", request.Lease.Serial, "shell", "pm", "clear", request.Package}}); err != nil {
 			return nil, fmt.Errorf("clear Android package %s: %w", request.Package, err)
 		}
 	}
-	return &InstallResponse{Installed: true, Package: request.Package, APKPath: request.APKPath, State: request.State}, nil
+	return &InstallResponse{Installed: true, Package: request.Package, APKPath: request.APKPath, Artifacts: artifacts, State: request.State}, nil
+}
+
+func (s *service) installAndroidArtifacts(ctx context.Context, adb string, request *InstallRequest) ([]string, error) {
+	installFlags := []string{}
+	if request.State != "freshInstall" {
+		installFlags = append(installFlags, "-r")
+	}
+	if request.GrantAll {
+		installFlags = append(installFlags, "-g")
+	}
+	if request.AllowTest {
+		installFlags = append(installFlags, "-t")
+	}
+	if request.AllowDowngrade {
+		installFlags = append(installFlags, "-d")
+	}
+	if request.APKPath != "" {
+		args := append([]string{"-s", request.Lease.Serial, "install"}, installFlags...)
+		args = append(args, request.APKPath)
+		if result, err := s.runner.Run(ctx, mobile.Command{Name: adb, Args: args}); err != nil {
+			return nil, fmt.Errorf("install Android package %s: %s: %w", request.Package, strings.TrimSpace(result.Stderr), err)
+		}
+		return []string{request.APKPath}, nil
+	}
+	if len(request.APKPaths) > 0 {
+		args := append([]string{"-s", request.Lease.Serial, "install-multiple"}, installFlags...)
+		args = append(args, request.APKPaths...)
+		if result, err := s.runner.Run(ctx, mobile.Command{Name: adb, Args: args}); err != nil {
+			return nil, fmt.Errorf("install Android split package %s: %s: %w", request.Package, strings.TrimSpace(result.Stderr), err)
+		}
+		return append([]string(nil), request.APKPaths...), nil
+	}
+	apksPath := request.APKSPath
+	if request.AABPath != "" {
+		file, err := os.CreateTemp("", "endly-bundle-*.apks")
+		if err != nil {
+			return nil, err
+		}
+		apksPath = file.Name()
+		_ = file.Close()
+		_ = os.Remove(apksPath)
+		defer os.Remove(apksPath)
+		args := []string{"build-apks", "--bundle=" + request.AABPath, "--output=" + apksPath, "--overwrite"}
+		if request.Signing != nil {
+			args = append(args,
+				"--ks="+request.Signing.KeystorePath,
+				"--ks-key-alias="+request.Signing.KeyAlias,
+				"--ks-pass=file:"+request.Signing.StorePasswordFile,
+			)
+			if request.Signing.KeyPasswordFile != "" {
+				args = append(args, "--key-pass=file:"+request.Signing.KeyPasswordFile)
+			}
+		}
+		if _, err := s.runBundletool(ctx, request, args); err != nil {
+			return nil, fmt.Errorf("build APK set from AAB: %w", err)
+		}
+	}
+	if _, err := s.runBundletool(ctx, request, []string{"install-apks", "--apks=" + apksPath, "--device-id=" + request.Lease.Serial}); err != nil {
+		return nil, fmt.Errorf("install Android APK set: %w", err)
+	}
+	if request.AABPath != "" {
+		return []string{request.AABPath}, nil
+	}
+	return []string{request.APKSPath}, nil
+}
+
+func (s *service) runBundletool(ctx context.Context, request *InstallRequest, args []string) (mobile.Result, error) {
+	bundletool := request.BundletoolPath
+	if strings.HasSuffix(strings.ToLower(bundletool), ".jar") {
+		if info, err := os.Stat(bundletool); err != nil || info.IsDir() {
+			return mobile.Result{}, fmt.Errorf("bundletool jar %q was not found", bundletool)
+		}
+		java := request.JavaPath
+		if java == "" {
+			if javaHome := os.Getenv("JAVA_HOME"); javaHome != "" {
+				java = filepath.Join(javaHome, "bin", "java")
+			}
+		}
+		resolved, err := mobile.ResolveExecutable("java", java)
+		if err != nil {
+			return mobile.Result{}, err
+		}
+		return s.runner.Run(ctx, mobile.Command{Name: resolved, Args: append([]string{"-jar", bundletool}, args...)})
+	}
+	resolved, err := mobile.ResolveExecutable(bundletool)
+	if err != nil {
+		return mobile.Result{}, err
+	}
+	return s.runner.Run(ctx, mobile.Command{Name: resolved, Args: args})
 }
 
 func (s *service) uninstall(ctx *endly.Context, request *UninstallRequest) (*UninstallResponse, error) {
@@ -550,14 +709,26 @@ func (s *service) serverStart(ctx *endly.Context, request *ServerStartRequest) (
 	if err := s.validateLease(request.Lease); err != nil {
 		return nil, err
 	}
-	server, err := mobile.StartAppium(ctx.Background(), s.runner, request.options())
+	options := request.options()
+	options.Init()
+	var processLease *mobile.LeaseHandle
+	var err error
+	if options.Mode == "managed" {
+		processLease, err = s.leaseStore.Acquire(ctx.Background(), fmt.Sprintf("appium:%s:%d", options.Address, options.Port))
+		if err != nil {
+			return nil, err
+		}
+	}
+	server, err := mobile.StartAppium(ctx.Background(), s.runner, options)
 	if err != nil {
+		_ = s.leaseStore.Release(processLease)
 		return nil, err
 	}
 	server.ID = "android-server-" + uuid.NewString()
-	handle := ServerHandle{ID: server.ID, Endpoint: server.Endpoint, Ownership: server.Ownership, PID: server.PID, LogPath: server.LogPath}
+	handle := ServerHandle{ID: server.ID, Endpoint: server.Endpoint, Ownership: server.Ownership, PID: server.PID, LogPath: server.LogPath, ProcessLease: processLease}
 	s.mu.Lock()
 	s.servers[handle.ID] = server
+	s.serverLeases[handle.ID] = processLease
 	s.mu.Unlock()
 	s.cleanupStack(ctx).Push("server:"+handle.ID, func(cleanupCtx context.Context) error {
 		_, err := s.serverStop(cleanupCtx, &ServerStopRequest{Server: handle})
@@ -569,20 +740,35 @@ func (s *service) serverStart(ctx *endly.Context, request *ServerStartRequest) (
 func (s *service) serverStop(ctx context.Context, request *ServerStopRequest) (*ServerStopResponse, error) {
 	s.mu.Lock()
 	server, ok := s.servers[request.Server.ID]
+	processLease := s.serverLeases[request.Server.ID]
 	if ok {
 		if server.Endpoint != request.Server.Endpoint || server.Ownership != request.Server.Ownership {
 			s.mu.Unlock()
 			return nil, fmt.Errorf("Appium server handle mismatch")
 		}
-		delete(s.servers, request.Server.ID)
 	}
 	s.mu.Unlock()
 	if !ok {
 		return &ServerStopResponse{Warning: "server already stopped or unknown"}, nil
 	}
+	if processLease != nil {
+		if request.Server.ProcessLease == nil || processLease.Token != request.Server.ProcessLease.Token {
+			return nil, fmt.Errorf("Android persistent Appium lease token mismatch")
+		}
+		if err := s.leaseStore.Validate(processLease); err != nil {
+			return nil, err
+		}
+	}
 	stopCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	if err := server.Stop(stopCtx); err != nil && err != context.DeadlineExceeded {
+		return nil, err
+	}
+	s.mu.Lock()
+	delete(s.servers, request.Server.ID)
+	delete(s.serverLeases, request.Server.ID)
+	s.mu.Unlock()
+	if err := s.leaseStore.Release(processLease); err != nil {
 		return nil, err
 	}
 	return &ServerStopResponse{Stopped: server.Ownership == "managed"}, nil
@@ -647,9 +833,14 @@ func (s *service) run(ctx *endly.Context, request *RunRequest) (*RunResponse, er
 	if err := s.validateLease(session.handle.Lease); err != nil {
 		return nil, err
 	}
-	commands := make([]string, len(request.Commands))
+	commands := make([]interface{}, len(request.Commands))
+	state := ctx.State()
 	for i, command := range request.Commands {
-		commands[i] = ctx.Expand(command)
+		if text, ok := command.(string); ok {
+			commands[i] = ctx.Expand(text)
+		} else {
+			commands[i] = state.Expand(command)
+		}
 	}
 	executor := &mobile.Executor{
 		Session:       session.appium,
@@ -659,12 +850,30 @@ func (s *service) run(ctx *endly.Context, request *RunRequest) (*RunResponse, er
 		PollInterval:  time.Duration(request.PollIntervalMs) * time.Millisecond,
 	}
 	session.mu.Lock()
-	result, err := executor.Run(ctx.Background(), commands)
+	result, err := executor.RunAny(ctx.Background(), commands)
 	session.mu.Unlock()
 	if result == nil {
 		return nil, err
 	}
-	return &RunResponse{Data: result.Data, Steps: result.Steps, Validations: result.Validations}, err
+	response := &RunResponse{Data: result.Data, Steps: result.Steps, Validations: result.Validations, Failures: []*mobile.FailureEvidence{}}
+	reason := ""
+	if err != nil {
+		reason = err.Error()
+	} else if validationReason, failed := mobile.ValidationFailureReason(result.Validations); failed {
+		reason = validationReason
+	}
+	if reason != "" && request.FailureArtifacts != nil {
+		options := *request.FailureArtifacts
+		options.Directory = ctx.Expand(options.Directory)
+		prefix := "android-failure-" + safeArtifactPart(request.SessionID) + "-" + uuid.NewString()
+		session.mu.Lock()
+		failure := mobile.CaptureAppiumFailure(ctx.Background(), s.fs, session.appium, prefix, reason, &options)
+		session.mu.Unlock()
+		if failure != nil {
+			response.Failures = append(response.Failures, failure)
+		}
+	}
+	return response, err
 }
 
 func (s *service) close(ctx context.Context, request *CloseRequest) (*CloseResponse, error) {
@@ -688,26 +897,43 @@ func (s *service) close(ctx context.Context, request *CloseRequest) (*CloseRespo
 
 func (s *service) validateLease(lease DeviceLease) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	stored, ok := s.leases[lease.ID]
+	s.mu.Unlock()
 	if !ok {
 		return fmt.Errorf("Android device lease %q was not found", lease.ID)
 	}
 	if stored.Fence != lease.Fence || stored.Serial != lease.Serial {
 		return fmt.Errorf("Android device lease fence mismatch")
 	}
+	if stored.ProcessLease != nil {
+		if lease.ProcessLease == nil || stored.ProcessLease.Token != lease.ProcessLease.Token {
+			return fmt.Errorf("Android persistent device lease token mismatch")
+		}
+		if err := s.leaseStore.Refresh(stored.ProcessLease); err != nil {
+			return fmt.Errorf("validate Android persistent device lease: %w", err)
+		}
+	}
 	return nil
 }
 
 func (s *service) validateServer(handle ServerHandle) error {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	server, ok := s.servers[handle.ID]
+	processLease := s.serverLeases[handle.ID]
+	s.mu.Unlock()
 	if !ok {
 		return fmt.Errorf("Android Appium server %q was not found", handle.ID)
 	}
 	if server.Endpoint != handle.Endpoint || server.Ownership != handle.Ownership {
 		return fmt.Errorf("Android Appium server handle mismatch")
+	}
+	if processLease != nil {
+		if handle.ProcessLease == nil || processLease.Token != handle.ProcessLease.Token {
+			return fmt.Errorf("Android persistent Appium lease token mismatch")
+		}
+		if err := s.leaseStore.Refresh(processLease); err != nil {
+			return fmt.Errorf("validate Android persistent Appium lease: %w", err)
+		}
 	}
 	return nil
 }
@@ -719,6 +945,23 @@ func androidLocatorResolver(testIDStrategy string) mobile.LocatorResolver {
 			return mobile.Locator{}, true, err
 		}
 		switch strings.ToLower(call.Name) {
+		case "locator":
+			if len(call.Args) != 2 {
+				return mobile.Locator{}, true, fmt.Errorf("locator requires strategy and value")
+			}
+			strategy, err := stringCallArg(call, 0)
+			if err != nil {
+				return mobile.Locator{}, true, err
+			}
+			value, err = stringCallArg(call, 1)
+			if err != nil {
+				return mobile.Locator{}, true, err
+			}
+			using, ok := androidLocatorStrategy(strategy)
+			if !ok {
+				return mobile.Locator{}, true, fmt.Errorf("unsupported Android locator strategy %q", strategy)
+			}
+			return mobile.Locator{Using: using, Value: value}, true, nil
 		case "getbytestid":
 			if testIDStrategy == "accessibilityId" {
 				return mobile.Locator{Using: "accessibility id", Value: value}, true, nil
@@ -728,6 +971,8 @@ func androidLocatorResolver(testIDStrategy string) mobile.LocatorResolver {
 			return mobile.Locator{Using: "accessibility id", Value: value}, true, nil
 		case "getbyresourceid":
 			return mobile.Locator{Using: "id", Value: value}, true, nil
+		case "getbyuiautomator":
+			return mobile.Locator{Using: "-android uiautomator", Value: value}, true, nil
 		case "getbytext":
 			return mobile.Locator{Using: "-android uiautomator", Value: "new UiSelector().text(" + strconv.Quote(value) + ")"}, true, nil
 		case "getbyclass":
@@ -740,14 +985,113 @@ func androidLocatorResolver(testIDStrategy string) mobile.LocatorResolver {
 	}
 }
 
+func androidLocatorStrategy(strategy string) (string, bool) {
+	switch strings.ToLower(strings.TrimSpace(strategy)) {
+	case "accessibilityid", "accessibility id":
+		return "accessibility id", true
+	case "resourceid", "id":
+		return "id", true
+	case "class", "classname", "class name":
+		return "class name", true
+	case "xpath":
+		return "xpath", true
+	case "uiautomator", "-android uiautomator":
+		return "-android uiautomator", true
+	case "css", "css selector":
+		return "css selector", true
+	default:
+		return "", false
+	}
+}
+
 func executeAndroidDevice(ctx context.Context, session *mobile.AppiumSession, call mobile.Call) (interface{}, error) {
 	switch strings.ToLower(call.Name) {
 	case "back":
-		return session.Execute(ctx, "mobile: pressKey", map[string]interface{}{"keycode": 4})
+		return nil, session.Back(ctx)
 	case "home":
 		return session.Execute(ctx, "mobile: pressKey", map[string]interface{}{"keycode": 3})
 	case "hidekeyboard":
-		return session.Execute(ctx, "mobile: hideKeyboard")
+		return nil, session.HideKeyboard(ctx)
+	case "presskey":
+		keycode, err := intCallArg(call, 0)
+		if err != nil {
+			return nil, err
+		}
+		return session.Execute(ctx, "mobile: pressKey", map[string]interface{}{"keycode": keycode})
+	case "opennotifications":
+		return session.Execute(ctx, "mobile: openNotifications")
+	case "orientation":
+		return session.Orientation(ctx)
+	case "rotate":
+		orientation, err := stringCallArg(call, 0)
+		if err != nil {
+			return nil, err
+		}
+		orientation = strings.ToUpper(orientation)
+		if orientation != "PORTRAIT" && orientation != "LANDSCAPE" {
+			return nil, fmt.Errorf("orientation must be PORTRAIT or LANDSCAPE")
+		}
+		return orientation, session.SetOrientation(ctx, orientation)
+	case "contexts":
+		return session.Contexts(ctx)
+	case "context":
+		if len(call.Args) == 0 {
+			return session.CurrentContext(ctx)
+		}
+		name, err := stringCallArg(call, 0)
+		if err != nil {
+			return nil, err
+		}
+		return name, session.SetContext(ctx, name)
+	case "setlocation":
+		latitude, err := floatCallArg(call, 0)
+		if err != nil {
+			return nil, err
+		}
+		longitude, err := floatCallArg(call, 1)
+		if err != nil {
+			return nil, err
+		}
+		altitude := optionalFloatCallArg(call, 2, 0)
+		return nil, session.SetLocation(ctx, latitude, longitude, altitude)
+	case "grantpermission", "revokepermission":
+		appPackage, err := stringCallArg(call, 0)
+		if err != nil {
+			return nil, err
+		}
+		permission, err := stringCallArg(call, 1)
+		if err != nil {
+			return nil, err
+		}
+		action := "grant"
+		if strings.EqualFold(call.Name, "revokePermission") {
+			action = "revoke"
+		}
+		return session.Execute(ctx, "mobile: changePermissions", map[string]interface{}{
+			"appPackage": appPackage, "permissions": []string{permission}, "action": action,
+		})
+	case "activateapp", "terminateapp":
+		appPackage, err := stringCallArg(call, 0)
+		if err != nil {
+			return nil, err
+		}
+		script := "mobile: activateApp"
+		if strings.EqualFold(call.Name, "terminateApp") {
+			script = "mobile: terminateApp"
+		}
+		return session.Execute(ctx, script, map[string]interface{}{"appId": appPackage})
+	case "backgroundapp":
+		seconds, err := intCallArg(call, 0)
+		if err != nil {
+			return nil, err
+		}
+		return session.Execute(ctx, "mobile: backgroundApp", map[string]interface{}{"seconds": seconds})
+	case "acceptalert":
+		return nil, session.AcceptAlert(ctx)
+	case "dismissalert":
+		return nil, session.DismissAlert(ctx)
+	case "alerttext":
+		return session.AlertText(ctx)
 	default:
 		return nil, fmt.Errorf("unsupported Android device command %q", call.Name)
 	}
@@ -762,6 +1106,46 @@ func stringCallArg(call mobile.Call, index int) (string, error) {
 		return "", fmt.Errorf("%s argument %d must be a string", call.Name, index+1)
 	}
 	return value, nil
+}
+
+func intCallArg(call mobile.Call, index int) (int, error) {
+	if index >= len(call.Args) {
+		return 0, fmt.Errorf("%s requires argument %d", call.Name, index+1)
+	}
+	switch value := call.Args[index].(type) {
+	case int:
+		return value, nil
+	case int64:
+		return int(value), nil
+	case float64:
+		return int(value), nil
+	default:
+		return 0, fmt.Errorf("%s argument %d must be an integer", call.Name, index+1)
+	}
+}
+
+func floatCallArg(call mobile.Call, index int) (float64, error) {
+	if index >= len(call.Args) {
+		return 0, fmt.Errorf("%s requires argument %d", call.Name, index+1)
+	}
+	switch value := call.Args[index].(type) {
+	case float64:
+		return value, nil
+	case int64:
+		return float64(value), nil
+	case int:
+		return float64(value), nil
+	default:
+		return 0, fmt.Errorf("%s argument %d must be numeric", call.Name, index+1)
+	}
+}
+
+func optionalFloatCallArg(call mobile.Call, index int, fallback float64) float64 {
+	value, err := floatCallArg(call, index)
+	if err != nil {
+		return fallback
+	}
+	return value
 }
 
 func isProtectedAndroidCapability(key string) bool {
@@ -831,6 +1215,20 @@ func (s *service) deviceStart(ctx *endly.Context, request *DeviceStartRequest) (
 	if err != nil {
 		return nil, err
 	}
+	resourceKey := "android:avd:" + request.AVD
+	if request.Serial != "" {
+		resourceKey = "android:device:" + request.Serial
+	}
+	processLease, err := s.leaseStore.Acquire(ctx.Background(), resourceKey)
+	if err != nil {
+		return nil, err
+	}
+	leaseCommitted := false
+	defer func() {
+		if !leaseCommitted {
+			_ = s.leaseStore.Release(processLease)
+		}
+	}()
 	if request.Serial != "" {
 		devices, err := s.adbDevices(ctx.Background(), adb)
 		if err != nil {
@@ -838,8 +1236,13 @@ func (s *service) deviceStart(ctx *endly.Context, request *DeviceStartRequest) (
 		}
 		for _, device := range devices {
 			if device.Serial == request.Serial && device.State == "device" {
-				lease := DeviceLease{ID: uuid.NewString(), Fence: 1, Serial: request.Serial, AndroidSDKRoot: request.AndroidSDKRoot}
+				lease := DeviceLease{ID: uuid.NewString(), Fence: processLease.Fence, Serial: request.Serial, AndroidSDKRoot: request.AndroidSDKRoot, ProcessLease: processLease}
 				s.storeLease(lease)
+				leaseCommitted = true
+				s.cleanupStack(ctx).Push("device:"+lease.ID, func(cleanupCtx context.Context) error {
+					_, err := s.stopOwned(cleanupCtx, adb, lease)
+					return err
+				})
 				return &DeviceStartResponse{Lease: lease}, nil
 			}
 		}
@@ -891,8 +1294,9 @@ func (s *service) deviceStart(ctx *endly.Context, request *DeviceStartRequest) (
 			return nil, err
 		}
 	}
-	lease := DeviceLease{ID: uuid.NewString(), Fence: 1, Serial: serial, AVD: request.AVD, PID: process.PID, Owned: true, LogPath: request.LogPath, AndroidSDKRoot: request.AndroidSDKRoot}
+	lease := DeviceLease{ID: uuid.NewString(), Fence: processLease.Fence, Serial: serial, AVD: request.AVD, PID: process.PID, Owned: true, LogPath: request.LogPath, AndroidSDKRoot: request.AndroidSDKRoot, ProcessLease: processLease}
 	s.storeLease(lease)
+	leaseCommitted = true
 	s.cleanupStack(ctx).Push("device:"+lease.ID, func(cleanupCtx context.Context) error {
 		_, err := s.stopOwned(cleanupCtx, adb, lease)
 		return err
@@ -930,14 +1334,33 @@ func (s *service) stopOwned(ctx context.Context, adb string, lease DeviceLease) 
 		s.mu.Unlock()
 		return nil, fmt.Errorf("device lease fence mismatch")
 	}
-	delete(s.leases, lease.ID)
 	s.mu.Unlock()
+	if stored.ProcessLease != nil {
+		if lease.ProcessLease == nil || stored.ProcessLease.Token != lease.ProcessLease.Token {
+			return nil, fmt.Errorf("Android persistent device lease token mismatch")
+		}
+		if err := s.leaseStore.Validate(stored.ProcessLease); err != nil {
+			return nil, err
+		}
+	}
 	if !stored.Owned {
+		s.mu.Lock()
+		delete(s.leases, lease.ID)
+		s.mu.Unlock()
+		if err := s.leaseStore.Release(stored.ProcessLease); err != nil {
+			return nil, err
+		}
 		return &DeviceStopResponse{Warning: "attached physical/external device was released but not stopped"}, nil
 	}
 	_, err := s.runner.Run(ctx, mobile.Command{Name: adb, Args: []string{"-s", stored.Serial, "emu", "kill"}})
 	if err != nil {
 		return nil, fmt.Errorf("stop emulator %s: %w", stored.Serial, err)
+	}
+	s.mu.Lock()
+	delete(s.leases, lease.ID)
+	s.mu.Unlock()
+	if err := s.leaseStore.Release(stored.ProcessLease); err != nil {
+		return nil, err
 	}
 	return &DeviceStopResponse{Stopped: true}, nil
 }
