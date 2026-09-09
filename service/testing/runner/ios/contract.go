@@ -2,6 +2,7 @@ package ios
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/viant/assertly"
@@ -212,12 +213,17 @@ type OpenRequest struct {
 	Capabilities   map[string]interface{}
 	DescriptorPath string
 	KeepSession    bool
+	WDA            *WDAOptions
 }
 
 func (r *OpenRequest) Init() error {
 	if r.SessionID == "" {
 		r.SessionID = "ios-" + r.Destination.ID
 	}
+	if r.WDA == nil {
+		r.WDA = &WDAOptions{}
+	}
+	r.WDA.Init()
 	return nil
 }
 
@@ -231,12 +237,102 @@ func (r *OpenRequest) Validate() error {
 	if r.BundleID == "" && r.App == nil {
 		return fmt.Errorf("BundleID or App is required")
 	}
+	if r.WDA != nil {
+		r.WDA.Init()
+		if err := r.WDA.Validate(); err != nil {
+			return err
+		}
+	}
 	if r.KeepSession {
 		if r.DescriptorPath == "" {
 			return fmt.Errorf("DescriptorPath is required when KeepSession is enabled")
 		}
 		if r.Server.Ownership != "external" || !r.Destination.PreserveOnRelease {
 			return fmt.Errorf("KeepSession requires an external Appium server and a Simulator lease with KeepBooted enabled")
+		}
+	}
+	return nil
+}
+
+// WDAOptions owns the WebDriverAgent lifecycle capabilities so callers cannot
+// smuggle conflicting raw capabilities into OpenRequest.Capabilities.
+type WDAOptions struct {
+	Mode                  string // managed, prebuilt, preinstalled, external
+	DerivedDataPath       string
+	PrebuiltWDAPath       string
+	WebDriverAgentURL     string
+	UpdatedBundleID       string
+	UpdatedBundleIDSuffix *string
+	XcodeOrgID            string
+	XcodeSigningID        string
+	XcodeConfigFile       string
+	KeychainPath          string
+	KeychainPasswordFile  string
+	LocalPort             int
+	MJPEGServerPort       int
+	UseNewWDA             *bool
+	PrebuildWDA           bool
+	LaunchTimeoutMs       int
+	ConnectionTimeoutMs   int
+	StartupRetries        int
+	StartupRetryMs        int
+}
+
+func (o *WDAOptions) Init() {
+	if o.Mode == "" {
+		o.Mode = "managed"
+	}
+}
+
+func (o *WDAOptions) Validate() error {
+	if o == nil {
+		return nil
+	}
+	o.Init()
+	switch o.Mode {
+	case "managed":
+		if o.PrebuiltWDAPath != "" || o.WebDriverAgentURL != "" {
+			return fmt.Errorf("managed WDA does not accept PrebuiltWDAPath or WebDriverAgentURL")
+		}
+	case "prebuilt":
+		if o.DerivedDataPath == "" || o.PrebuiltWDAPath != "" || o.WebDriverAgentURL != "" {
+			return fmt.Errorf("prebuilt WDA requires DerivedDataPath and does not accept PrebuiltWDAPath or WebDriverAgentURL")
+		}
+	case "preinstalled":
+		if o.DerivedDataPath != "" || o.WebDriverAgentURL != "" {
+			return fmt.Errorf("preinstalled WDA does not accept DerivedDataPath or WebDriverAgentURL")
+		}
+	case "external":
+		if o.WebDriverAgentURL == "" {
+			return fmt.Errorf("external WDA requires WebDriverAgentURL")
+		}
+		parsed, err := url.Parse(o.WebDriverAgentURL)
+		if err != nil || parsed.Host == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") {
+			return fmt.Errorf("external WDA requires an http or https WebDriverAgentURL")
+		}
+		if o.DerivedDataPath != "" || o.PrebuiltWDAPath != "" || o.XcodeOrgID != "" || o.XcodeSigningID != "" || o.XcodeConfigFile != "" || o.KeychainPath != "" || o.KeychainPasswordFile != "" || o.PrebuildWDA {
+			return fmt.Errorf("external WDA cannot include build, signing, or prebuild options")
+		}
+	default:
+		return fmt.Errorf("WDA.Mode must be managed, prebuilt, preinstalled, or external")
+	}
+	if (o.XcodeOrgID == "") != (o.XcodeSigningID == "") {
+		return fmt.Errorf("XcodeOrgID and XcodeSigningID must be supplied together")
+	}
+	if (o.KeychainPath == "") != (o.KeychainPasswordFile == "") {
+		return fmt.Errorf("KeychainPath and KeychainPasswordFile must be supplied together")
+	}
+	for name, port := range map[string]int{"LocalPort": o.LocalPort, "MJPEGServerPort": o.MJPEGServerPort} {
+		if port < 0 || port > 65535 {
+			return fmt.Errorf("WDA.%s must be zero or between 1 and 65535", name)
+		}
+	}
+	for name, value := range map[string]int{
+		"LaunchTimeoutMs": o.LaunchTimeoutMs, "ConnectionTimeoutMs": o.ConnectionTimeoutMs,
+		"StartupRetries": o.StartupRetries, "StartupRetryMs": o.StartupRetryMs,
+	} {
+		if value < 0 {
+			return fmt.Errorf("WDA.%s cannot be negative", name)
 		}
 	}
 	return nil

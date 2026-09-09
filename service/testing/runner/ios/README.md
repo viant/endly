@@ -19,7 +19,7 @@ Implemented actions:
 | `ios:test` | Run XCTest/test-without-building and normalize modern `.xcresult` summaries into assertions |
 | `ios:capture-start` | Start an owned Simulator unified-log stream with an optional predicate |
 | `ios:capture-stop` | Stop the stream and return sensitive log evidence metadata |
-| `ios:open` | Open an Appium XCUITest session against valid Simulator and server handles |
+| `ios:open` | Open an Appium XCUITest session with managed/prebuilt/preinstalled/external WDA |
 | `ios:attach` | Reconnect this process to an existing Appium session or descriptor |
 | `ios:run` | Run assigned `app.*`/`device.*` commands and retrying inline expectations |
 | `ios:repl` | Run a live terminal DSL, hierarchy inspector, screenshot tool, and command history |
@@ -27,7 +27,7 @@ Implemented actions:
 | `ios:close` | Idempotently close the Appium session |
 | `ios:cleanup` | Run every registered teardown in LIFO order and report all errors |
 
-The implementation uses argv-safe local command execution, Xcode Simulator build/test, archive/export signing inputs, and `.xcresult` tooling, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. The DSL supports strict plural lookup, `first`/`last`/`nth`/`count`, typed and textual commands, pointer gestures, richer element/device assertions, contexts, orientation, location, alerts, permissions, appearance, biometrics, and application lifecycle. Simulator capture can rotate bounded video segments; failed runs automatically retain screenshot, bounded source, bounded active-log tail, a checkpointed valid video segment, and a manifest while recording continues. Managed Simulators and Appium ports use process-shared fenced leases, while owned processes still unwind through the LIFO context cleanup stack. Portable 0600 session descriptors let a second Endly process run `ios:attach` or inline `ios:repl.attach`; attachment is non-owning unless `takeOwnership` is explicit. A gated two-Simulator stress test verifies distinct Simulator/Appium/WDA/MJPEG/DerivedData resources under concurrent sessions. The bundled project contains one passing and one intentionally failing UI test; `ios:test` retains and normalizes the real `.xcresult`. `collectDiagnostics` defaults to `never` to avoid Xcode's ten-minute failure sysdiagnose and accepts `on-failure` when those diagnostics are wanted. On non-Darwin hosts, `ios` registers the same action-compatible unsupported-platform stub so Endly still builds and reports a useful error. Remote macOS workers/cloud farms, advanced WDA modes, and physical-device deployment remain to be implemented.
+The implementation uses argv-safe local command execution, Xcode Simulator build/test, archive/export signing inputs, and `.xcresult` tooling, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. The DSL supports strict plural lookup, `first`/`last`/`nth`/`count`, typed and textual commands, pointer gestures, richer element/device assertions, contexts, orientation, location, alerts, permissions, appearance, biometrics, and application lifecycle. Simulator capture can rotate bounded video segments; failed runs automatically retain screenshot, bounded source, bounded active-log tail, a checkpointed valid video segment, and a manifest while recording continues. Managed Simulators and Appium ports use process-shared fenced leases, while owned processes still unwind through the LIFO context cleanup stack. Portable 0600 session descriptors let a second Endly process run `ios:attach` or inline `ios:repl.attach`; attachment is non-owning unless `takeOwnership` is explicit. A gated two-Simulator stress test verifies distinct Simulator/Appium/WDA/MJPEG/DerivedData resources under concurrent sessions. The bundled project contains one passing and one intentionally failing UI test; `ios:test` retains and normalizes the real `.xcresult`. `collectDiagnostics` defaults to `never` to avoid Xcode's ten-minute failure sysdiagnose and accepts `on-failure` when those diagnostics are wanted. `open.wda` owns all WDA lifecycle/signing/port capabilities and supports `managed`, `prebuilt`, `preinstalled`, and `external`; raw conflicting capabilities are rejected. Current compatibility rules reject preinstalled WDA below iOS 17 and on iOS 27+ Simulators, where direct XCTest-runner launch is not viable, with guidance to use another mode. On non-Darwin hosts, `ios` registers the same action-compatible unsupported-platform stub so Endly still builds and reports a useful error. Remote macOS workers/cloud farms and physical-device deployment remain to be implemented.
 
 Run the real host check:
 
@@ -62,6 +62,13 @@ Run the two-lane isolation stress test:
 ```bash
 ENDLY_IOS_PARALLEL_INTEGRATION=1 \
   go test ./service/testing/runner/ios -run '^TestIOSParallelSimulatorStress$' -v -count=1
+```
+
+Run the WDA lifecycle compatibility suite:
+
+```bash
+ENDLY_IOS_WDA_MODES_INTEGRATION=1 \
+  go test ./service/testing/runner/ios -run '^TestIOSWDAModesIntegration$' -v -count=1
 ```
 
 Run `test/repl.yaml` to enter the live inspector. Once setup completes, Endly displays an `ios[session]>` prompt:
