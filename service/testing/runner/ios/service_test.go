@@ -219,7 +219,7 @@ func TestXCTestNormalizesXCResultFailure(t *testing.T) {
 	runner := &fakeRunner{runHook: func(command mobile.Command) (mobile.Result, error) {
 		joined := strings.Join(command.Args, " ")
 		if strings.HasSuffix(command.Name, "xcodebuild") && strings.Contains(joined, "test-without-building") {
-			return mobile.Result{Stdout: "** TEST FAILED **"}, nil
+			return mobile.Result{Stdout: "** TEST FAILED **"}, errors.New("xcodebuild exited 65")
 		}
 		if strings.Contains(joined, "xcresulttool get test-results summary") {
 			return mobile.Result{Stdout: `{
@@ -245,7 +245,8 @@ func TestXCTestNormalizesXCResultFailure(t *testing.T) {
 	service.storeLease(lease)
 	response, err := service.test(endly.New().NewContext(nil), &TestRequest{
 		Destination: lease, WorkspacePath: "/tmp/Shop.xcworkspace", Scheme: "Shop",
-		Mode: "withoutBuilding", ResultBundlePath: "/tmp/Shop.xcresult", TimeoutMs: 1000,
+		Mode: "withoutBuilding", ResultBundlePath: "/tmp/Shop.xcresult", DerivedDataPath: "/tmp/DerivedData",
+		CollectDiagnostics: "never", TimeoutMs: 1000,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -258,7 +259,10 @@ func TestXCTestNormalizesXCResultFailure(t *testing.T) {
 		joined = append(joined, command.Name+" "+strings.Join(command.Args, " "))
 	}
 	all := strings.Join(joined, "\n")
-	for _, expected := range []string{"test-without-building", "xcresulttool get test-results summary --path /tmp/Shop.xcresult --compact"} {
+	for _, expected := range []string{
+		"-collect-test-diagnostics never", "-derivedDataPath /tmp/DerivedData", "test-without-building",
+		"xcresulttool get test-results summary --path /tmp/Shop.xcresult --compact",
+	} {
 		if !strings.Contains(all, expected) {
 			t.Fatalf("missing %q in:\n%s", expected, all)
 		}

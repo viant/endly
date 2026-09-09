@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.viant.endly.failuretest">
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35" />
+    <instrumentation
+        android:name=".FailureInstrumentation"
+        android:functionalTest="true"
+        android:handleProfiling="false"
+        android:label="Endly intentional failure fixture"
+        android:targetPackage="${TARGET_PACKAGE}" />
+</manifest>

@@ -7,15 +7,24 @@
 
 /* Begin PBXBuildFile section */
 		A10000000000000000000001 /* FixtureApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* FixtureApp.swift */; };
+		B10000000000000000000001 /* FixtureAppFailureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000002 /* FixtureAppFailureTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A10000000000000000000002 /* FixtureApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixtureApp.swift; sourceTree = "<group>"; };
 		A10000000000000000000003 /* FixtureApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FixtureApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000000000000000000002 /* FixtureAppFailureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FixtureAppFailureTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000003 /* FixtureAppFailureTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FixtureAppFailureTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A10000000000000000000004 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10000000000000000000004 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = ();
@@ -28,13 +37,17 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000002 /* FixtureApp.swift */,
+				B10000000000000000000002 /* FixtureAppFailureTests.swift */,
 				A10000000000000000000006 /* Products */,
 			);
 		sourceTree = "<group>";
 		};
 		A10000000000000000000006 /* Products */ = {
 			isa = PBXGroup;
-			children = (A10000000000000000000003 /* FixtureApp.app */);
+			children = (
+				A10000000000000000000003 /* FixtureApp.app */,
+				B10000000000000000000003 /* FixtureAppFailureTests.xctest */,
+			);
 			name = Products;
 			sourceTree = "<group>";
 		};
@@ -56,6 +69,21 @@
 			productReference = A10000000000000000000003 /* FixtureApp.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B10000000000000000000007 /* FixtureAppFailureTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B10000000000000000000008 /* Build configuration list for PBXNativeTarget "FixtureAppFailureTests" */;
+			buildPhases = (
+				B10000000000000000000006 /* Sources */,
+				B10000000000000000000004 /* Frameworks */,
+				B10000000000000000000005 /* Resources */,
+			);
+			buildRules = ();
+			dependencies = (B1000000000000000000000C /* PBXTargetDependency */);
+			name = FixtureAppFailureTests;
+			productName = FixtureAppFailureTests;
+			productReference = B10000000000000000000003 /* FixtureAppFailureTests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -67,6 +95,7 @@
 				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					A10000000000000000000007 = {CreatedOnToolsVersion = 27.0; };
+					B10000000000000000000007 = {CreatedOnToolsVersion = 27.0; TestTargetID = A10000000000000000000007; };
 				};
 			};
 			buildConfigurationList = A1000000000000000000000C /* Build configuration list for PBXProject "FixtureApp" */;
@@ -78,12 +107,21 @@
 			productRefGroup = A10000000000000000000006 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
-			targets = (A10000000000000000000007 /* FixtureApp */);
+			targets = (
+				A10000000000000000000007 /* FixtureApp */,
+				B10000000000000000000007 /* FixtureAppFailureTests */,
+			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A1000000000000000000000A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10000000000000000000005 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = ();
@@ -96,6 +134,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (A10000000000000000000001 /* FixtureApp.swift in Sources */);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10000000000000000000006 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (B10000000000000000000001 /* FixtureAppFailureTests.swift in Sources */);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
@@ -163,6 +207,38 @@
 			};
 			name = Release;
 		};
+		B10000000000000000000009 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.viant.endly.mobilefixture.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = FixtureApp;
+			};
+			name = Debug;
+		};
+		B1000000000000000000000A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.viant.endly.mobilefixture.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = FixtureApp;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -178,8 +254,31 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		B10000000000000000000008 /* Build configuration list for PBXNativeTarget "FixtureAppFailureTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (B10000000000000000000009 /* Debug */, B1000000000000000000000A /* Release */);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin PBXContainerItemProxy section */
+		B1000000000000000000000B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1000000000000000000000B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A10000000000000000000007;
+			remoteInfo = FixtureApp;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		B1000000000000000000000C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A10000000000000000000007 /* FixtureApp */;
+			targetProxy = B1000000000000000000000B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 	};
 	rootObject = A1000000000000000000000B /* Project object */;
 }
-

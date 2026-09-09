@@ -52,7 +52,7 @@ func (s *service) test(ctx *endly.Context, request *TestRequest) (*TestResponse,
 	result, runErr := s.runner.Run(testCtx, mobile.Command{Name: adb, Args: args})
 	response := parseInstrumentation(result.Stdout + result.Stderr)
 	response.DurationMs = int(time.Since(started) / time.Millisecond)
-	if runErr != nil {
+	if runErr != nil && response.Failed == 0 {
 		return response, fmt.Errorf("run Android instrumentation: %w", runErr)
 	}
 	return response, nil

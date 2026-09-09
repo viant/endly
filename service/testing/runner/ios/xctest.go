@@ -31,10 +31,18 @@ func (s *service) test(ctx *endly.Context, request *TestRequest) (*TestResponse,
 	if request.Mode != "xctestrun" {
 		args = append(args, "-scheme", request.Scheme)
 	}
+	collectDiagnostics := request.CollectDiagnostics
+	if collectDiagnostics == "" {
+		collectDiagnostics = "never"
+	}
 	args = append(args,
 		"-destination", "platform=iOS Simulator,id="+request.Destination.UDID,
 		"-resultBundlePath", request.ResultBundlePath,
+		"-collect-test-diagnostics", collectDiagnostics,
 	)
+	if request.DerivedDataPath != "" {
+		args = append(args, "-derivedDataPath", request.DerivedDataPath)
+	}
 	for _, identifier := range request.OnlyTesting {
 		args = append(args, "-only-testing:"+identifier)
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -80,6 +81,15 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 	}
 	if APK.Path == "" {
 		t.Fatalf("no application APK in artifacts: %+v", built.Artifacts)
+	}
+	failureTestAPK := buildIntentionalFailureInstrumentation(t, sdkRoot, packageName)
+	instrumentation, err := service.test(ctx, &TestRequest{
+		Lease: started.Lease, AppAPKPath: APK.Path, TestAPKPath: failureTestAPK,
+		TestPackage: "com.viant.endly.failuretest", Runner: ".FailureInstrumentation",
+		GrantAll: true, TimeoutMs: 60_000,
+	})
+	if err != nil || instrumentation.Failed != 1 || len(instrumentation.Validations) != 1 || !instrumentation.Validations[0].HasFailure() {
+		t.Fatalf("intentional instrumentation failure was not normalized: response=%+v err=%v", instrumentation, err)
 	}
 	if _, err := service.install(ctx, &InstallRequest{
 		Lease: started.Lease, APKPath: APK.Path, Package: packageName, State: "freshInstall", GrantAll: true,
@@ -190,6 +200,115 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 	if stopped, err := service.captureStop(context.Background(), &CaptureStopRequest{Capture: capture.Capture}); err != nil || !stopped.Stopped || !hasVideoEvidence(stopped.Artifacts) {
 		t.Fatalf("capture stop failed: response=%+v err=%v", stopped, err)
 	}
+}
+
+func buildIntentionalFailureInstrumentation(t *testing.T, sdkRoot, targetPackage string) string {
+	t.Helper()
+	buildToolsRoot := filepath.Join(sdkRoot, "build-tools")
+	entries, err := os.ReadDir(buildToolsRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	versions := []string{}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			versions = append(versions, entry.Name())
+		}
+	}
+	sort.Sort(sort.Reverse(sort.StringSlice(versions)))
+	buildTools := ""
+	for _, version := range versions {
+		candidate := filepath.Join(buildToolsRoot, version)
+		if fixtureExecutable(filepath.Join(candidate, "aapt2")) && fixtureExecutable(filepath.Join(candidate, "d8")) && fixtureExecutable(filepath.Join(candidate, "zipalign")) && fixtureExecutable(filepath.Join(candidate, "apksigner")) {
+			buildTools = candidate
+			break
+		}
+	}
+	if buildTools == "" {
+		t.Fatal("aapt2, d8, zipalign, and apksigner are required in one Android build-tools version")
+	}
+	javaHome := os.Getenv("JAVA_HOME")
+	if javaHome == "" {
+		t.Fatal("JAVA_HOME is required to build the instrumentation failure fixture")
+	}
+	javac := filepath.Join(javaHome, "bin", "javac")
+	jar := filepath.Join(javaHome, "bin", "jar")
+	for _, executable := range []string{javac, jar} {
+		if !fixtureExecutable(executable) {
+			t.Fatalf("fixture build executable is missing: %s", executable)
+		}
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	keystore := os.Getenv("ENDLY_ANDROID_TEST_KEYSTORE")
+	if keystore == "" {
+		keystore = filepath.Join(home, ".android", "debug.keystore")
+	}
+	if info, err := os.Stat(keystore); err != nil || info.IsDir() {
+		t.Fatalf("debug keystore is required at %s: %v", keystore, err)
+	}
+	root := t.TempDir()
+	classes := filepath.Join(root, "classes")
+	dex := filepath.Join(root, "dex")
+	if err := os.MkdirAll(classes, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(dex, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	manifestTemplate, err := os.ReadFile(filepath.Join("test", "fixture", "instrumentation", "AndroidManifest.xml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest := filepath.Join(root, "AndroidManifest.xml")
+	if err := os.WriteFile(manifest, []byte(strings.ReplaceAll(string(manifestTemplate), "${TARGET_PACKAGE}", targetPackage)), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	source := filepath.Join("test", "fixture", "instrumentation", "FailureInstrumentation.java")
+	androidJar := filepath.Join(sdkRoot, "platforms", "android-35", "android.jar")
+	commands := []mobile.Command{
+		{Name: javac, Args: []string{"-source", "8", "-target", "8", "-classpath", androidJar, "-d", classes, source}},
+		{Name: filepath.Join(buildTools, "d8"), Args: []string{"--min-api", "26", "--output", dex, filepath.Join(classes, "com", "viant", "endly", "failuretest", "FailureInstrumentation.class")}},
+	}
+	for _, command := range commands {
+		if result, err := (mobile.OSRunner{}).Run(context.Background(), command); err != nil {
+			t.Fatalf("build failure instrumentation with %s: %v\n%s%s", command.Name, err, result.Stdout, result.Stderr)
+		}
+	}
+	unsignedAPK := filepath.Join(root, "failure-unsigned.apk")
+	if result, err := (mobile.OSRunner{}).Run(context.Background(), mobile.Command{
+		Name: filepath.Join(buildTools, "aapt2"), Args: []string{"link", "-o", unsignedAPK, "--manifest", manifest, "-I", androidJar},
+	}); err != nil {
+		t.Fatalf("link failure instrumentation: %v\n%s%s", err, result.Stdout, result.Stderr)
+	}
+	if result, err := (mobile.OSRunner{}).Run(context.Background(), mobile.Command{
+		Name: jar, Args: []string{"uf", unsignedAPK, "-C", dex, "classes.dex"},
+	}); err != nil {
+		t.Fatalf("package failure instrumentation dex: %v\n%s%s", err, result.Stdout, result.Stderr)
+	}
+	alignedAPK := filepath.Join(root, "failure-aligned.apk")
+	if result, err := (mobile.OSRunner{}).Run(context.Background(), mobile.Command{
+		Name: filepath.Join(buildTools, "zipalign"), Args: []string{"-f", "4", unsignedAPK, alignedAPK},
+	}); err != nil {
+		t.Fatalf("align failure instrumentation: %v\n%s%s", err, result.Stdout, result.Stderr)
+	}
+	signedAPK := filepath.Join(root, "failure-test.apk")
+	if result, err := (mobile.OSRunner{}).Run(context.Background(), mobile.Command{
+		Name: filepath.Join(buildTools, "apksigner"), Args: []string{
+			"sign", "--ks", keystore, "--ks-key-alias", "androiddebugkey",
+			"--ks-pass", "pass:android", "--key-pass", "pass:android", "--out", signedAPK, alignedAPK,
+		},
+	}); err != nil {
+		t.Fatalf("sign failure instrumentation: %v\n%s%s", err, result.Stdout, result.Stderr)
+	}
+	return signedAPK
+}
+
+func fixtureExecutable(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir() && info.Mode()&0o111 != 0
 }
 
 func hasFailureKinds(failure *mobile.FailureEvidence, kinds ...string) bool {
