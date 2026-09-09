@@ -1,6 +1,7 @@
 package mobile
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -17,6 +18,160 @@ type DSLCommand struct {
 	Namespace   string
 	Calls       []Call
 	Expectation bool
+}
+
+type TypedLocator struct {
+	Strategy  string `json:"strategy"`
+	Value     string `json:"value"`
+	Selection string `json:"selection,omitempty"`
+	Index     int    `json:"index,omitempty"`
+}
+
+type TypedCall struct {
+	Name string        `json:"name"`
+	Args []interface{} `json:"args,omitempty"`
+}
+
+type TypedExpectation struct {
+	Locator   *TypedLocator `json:"locator,omitempty"`
+	Device    *TypedCall    `json:"device,omitempty"`
+	Matcher   TypedCall     `json:"matcher"`
+	TimeoutMs int           `json:"timeoutMs,omitempty"`
+}
+
+// TypedCommand is the structured alternative to the textual DSL. Exactly one
+// of Locator+Action, Device, or Expect must be configured.
+type TypedCommand struct {
+	Key     string            `json:"key,omitempty"`
+	Locator *TypedLocator     `json:"locator,omitempty"`
+	Action  *TypedCall        `json:"action,omitempty"`
+	Device  *TypedCall        `json:"device,omitempty"`
+	Expect  *TypedExpectation `json:"expect,omitempty"`
+}
+
+func ParseInstruction(candidate interface{}) (*DSLCommand, string, error) {
+	switch actual := candidate.(type) {
+	case string:
+		parsed, err := ParseDSL(actual)
+		return parsed, actual, err
+	case *DSLCommand:
+		if actual == nil {
+			return nil, "", fmt.Errorf("command was nil")
+		}
+		return actual, fmt.Sprintf("%v", actual), nil
+	case DSLCommand:
+		return &actual, fmt.Sprintf("%v", actual), nil
+	case *TypedCommand:
+		if actual == nil {
+			return nil, "", fmt.Errorf("typed command was nil")
+		}
+		return actual.DSL()
+	case TypedCommand:
+		return actual.DSL()
+	default:
+		data, err := json.Marshal(candidate)
+		if err != nil {
+			return nil, "", fmt.Errorf("encode typed command: %w", err)
+		}
+		command := &TypedCommand{}
+		if err := json.Unmarshal(data, command); err != nil {
+			return nil, "", fmt.Errorf("decode typed command: %w", err)
+		}
+		parsed, _, err := command.DSL()
+		return parsed, string(data), err
+	}
+}
+
+func (c *TypedCommand) DSL() (*DSLCommand, string, error) {
+	data, _ := json.Marshal(c)
+	source := string(data)
+	configured := 0
+	if c.Locator != nil || c.Action != nil {
+		configured++
+	}
+	if c.Device != nil {
+		configured++
+	}
+	if c.Expect != nil {
+		configured++
+	}
+	if configured != 1 {
+		return nil, source, fmt.Errorf("typed command requires exactly one locator action, device call, or expectation")
+	}
+	if c.Locator != nil || c.Action != nil {
+		if c.Locator == nil || c.Action == nil {
+			return nil, source, fmt.Errorf("typed locator command requires Locator and Action")
+		}
+		calls, err := typedLocatorCalls(c.Locator)
+		if err != nil {
+			return nil, source, err
+		}
+		if err := validateTypedCall(*c.Action); err != nil {
+			return nil, source, err
+		}
+		calls = append(calls, Call{Name: c.Action.Name, Args: c.Action.Args})
+		return &DSLCommand{Key: c.Key, Namespace: "app", Calls: calls}, source, nil
+	}
+	if c.Device != nil {
+		if err := validateTypedCall(*c.Device); err != nil {
+			return nil, source, err
+		}
+		return &DSLCommand{Key: c.Key, Namespace: "device", Calls: []Call{{Name: c.Device.Name, Args: c.Device.Args}}}, source, nil
+	}
+	expect := c.Expect
+	if expect.Matcher.Name == "" {
+		return nil, source, fmt.Errorf("typed expectation matcher name is required")
+	}
+	matcherArgs := append([]interface{}{}, expect.Matcher.Args...)
+	if expect.TimeoutMs > 0 {
+		matcherArgs = append(matcherArgs, int64(expect.TimeoutMs))
+	}
+	matcher := Call{Name: expect.Matcher.Name, Args: matcherArgs}
+	if expect.Locator != nil && expect.Device != nil {
+		return nil, source, fmt.Errorf("typed expectation Locator and Device are mutually exclusive")
+	}
+	if expect.Locator != nil {
+		calls, err := typedLocatorCalls(expect.Locator)
+		if err != nil {
+			return nil, source, err
+		}
+		calls = append(calls, matcher)
+		return &DSLCommand{Key: c.Key, Namespace: "app", Calls: calls, Expectation: true}, source, nil
+	}
+	if expect.Device != nil {
+		if err := validateTypedCall(*expect.Device); err != nil {
+			return nil, source, err
+		}
+		return &DSLCommand{Key: c.Key, Namespace: "device", Calls: []Call{{Name: expect.Device.Name, Args: expect.Device.Args}, matcher}, Expectation: true}, source, nil
+	}
+	return nil, source, fmt.Errorf("typed expectation requires Locator or Device")
+}
+
+func typedLocatorCalls(locator *TypedLocator) ([]Call, error) {
+	if locator == nil || strings.TrimSpace(locator.Strategy) == "" || strings.TrimSpace(locator.Value) == "" {
+		return nil, fmt.Errorf("typed locator strategy and value are required")
+	}
+	result := []Call{{Name: "locator", Args: []interface{}{locator.Strategy, locator.Value}}}
+	switch strings.ToLower(locator.Selection) {
+	case "":
+	case "first", "last":
+		result = append(result, Call{Name: locator.Selection})
+	case "nth":
+		if locator.Index < 0 {
+			return nil, fmt.Errorf("typed locator nth index must be non-negative")
+		}
+		result = append(result, Call{Name: "nth", Args: []interface{}{int64(locator.Index)}})
+	default:
+		return nil, fmt.Errorf("unsupported typed locator selection %q", locator.Selection)
+	}
+	return result, nil
+}
+
+func validateTypedCall(call TypedCall) error {
+	if !isIdentifier(call.Name) {
+		return fmt.Errorf("invalid typed call name %q", call.Name)
+	}
+	return nil
 }
 
 func ParseDSL(source string) (*DSLCommand, error) {

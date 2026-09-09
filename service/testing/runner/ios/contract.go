@@ -35,12 +35,13 @@ type DoctorResponse struct {
 }
 
 type DestinationLease struct {
-	ID         string
-	Fence      uint64
-	UDID       string
-	Name       string
-	Runtime    string
-	OwnedClone bool
+	ID           string
+	Fence        uint64
+	UDID         string
+	Name         string
+	Runtime      string
+	OwnedClone   bool
+	ProcessLease *mobile.LeaseHandle
 }
 
 type SimulatorStartRequest struct {
@@ -234,11 +235,12 @@ type SessionHandle struct {
 }
 
 type ServerHandle struct {
-	ID        string
-	Endpoint  string
-	Ownership string
-	PID       int
-	LogPath   string
+	ID           string
+	Endpoint     string
+	Ownership    string
+	PID          int
+	LogPath      string
+	ProcessLease *mobile.LeaseHandle
 }
 
 type ServerStartRequest struct {
@@ -307,10 +309,11 @@ type OpenResponse struct {
 }
 
 type RunRequest struct {
-	SessionID       string
-	Commands        []string
-	ActionTimeoutMs int
-	PollIntervalMs  int
+	SessionID        string
+	Commands         []interface{}
+	ActionTimeoutMs  int
+	PollIntervalMs   int
+	FailureArtifacts *mobile.FailureArtifactOptions
 }
 
 func (r *RunRequest) Init() error {
@@ -337,6 +340,7 @@ type RunResponse struct {
 	Data        map[string]interface{}
 	Steps       []mobile.ExecutionStep
 	Validations []*assertly.Validation
+	Failures    []*mobile.FailureEvidence
 }
 
 func (r *RunResponse) Assertion() []*assertly.Validation { return r.Validations }
@@ -350,6 +354,8 @@ type REPLRequest struct {
 	MaxSourceBytes    int
 	MaxTreeNodes      int
 	FailOnError       bool
+	HistoryPath       string
+	MaxHistory        int
 }
 
 func (r *REPLRequest) Init() error {
@@ -364,6 +370,9 @@ func (r *REPLRequest) Init() error {
 	}
 	if r.MaxTreeNodes <= 0 {
 		r.MaxTreeNodes = 500
+	}
+	if r.MaxHistory <= 0 {
+		r.MaxHistory = 1000
 	}
 	return nil
 }
@@ -423,15 +432,28 @@ type ArtifactResponse struct {
 }
 
 type BuildRequest struct {
-	ProjectPath     string
-	WorkspacePath   string
-	Scheme          string
-	Configuration   string
-	Destination     DestinationLease
-	DerivedDataPath string
-	Mode            string
-	BuildSettings   map[string]string
-	TimeoutMs       int
+	ProjectPath        string
+	WorkspacePath      string
+	Scheme             string
+	Configuration      string
+	Destination        DestinationLease
+	DerivedDataPath    string
+	Mode               string
+	SDK                string
+	ArchivePath        string
+	ExportPath         string
+	ExportOptionsPlist string
+	Signing            *IOSSigningProfile
+	BuildSettings      map[string]string
+	TimeoutMs          int
+}
+
+type IOSSigningProfile struct {
+	Style               string // automatic or manual
+	TeamID              string
+	Identity            string
+	ProvisioningProfile string
+	KeychainPath        string // must already be unlocked by the worker
 }
 
 func (r *BuildRequest) Init() error {
@@ -448,17 +470,35 @@ func (r *BuildRequest) Init() error {
 }
 
 func (r *BuildRequest) Validate() error {
-	if (r.ProjectPath == "") == (r.WorkspacePath == "") {
-		return fmt.Errorf("exactly one of ProjectPath or WorkspacePath is required")
+	switch r.Mode {
+	case "build", "buildForTesting":
+		if (r.ProjectPath == "") == (r.WorkspacePath == "") || r.Scheme == "" || r.DerivedDataPath == "" {
+			return fmt.Errorf("Simulator build modes require one project/workspace, Scheme, and DerivedDataPath")
+		}
+		if err := (&SimulatorStopRequest{Lease: r.Destination}).Validate(); err != nil {
+			return err
+		}
+	case "archive", "archiveAndExport":
+		if (r.ProjectPath == "") == (r.WorkspacePath == "") || r.Scheme == "" || r.ArchivePath == "" {
+			return fmt.Errorf("archive modes require one project/workspace, Scheme, and ArchivePath")
+		}
+		if r.Mode == "archiveAndExport" && (r.ExportPath == "" || r.ExportOptionsPlist == "") {
+			return fmt.Errorf("archiveAndExport requires ExportPath and ExportOptionsPlist")
+		}
+	case "export":
+		if r.ArchivePath == "" || r.ExportPath == "" || r.ExportOptionsPlist == "" {
+			return fmt.Errorf("export requires ArchivePath, ExportPath, and ExportOptionsPlist")
+		}
+	default:
+		return fmt.Errorf("Mode must be build, buildForTesting, archive, export, or archiveAndExport")
 	}
-	if r.Scheme == "" || r.DerivedDataPath == "" {
-		return fmt.Errorf("Scheme and DerivedDataPath are required")
-	}
-	if err := (&SimulatorStopRequest{Lease: r.Destination}).Validate(); err != nil {
-		return err
-	}
-	if r.Mode != "build" && r.Mode != "buildForTesting" {
-		return fmt.Errorf("Mode must be build or buildForTesting")
+	if r.Signing != nil {
+		if r.Signing.Style != "automatic" && r.Signing.Style != "manual" {
+			return fmt.Errorf("Signing.Style must be automatic or manual")
+		}
+		if r.Signing.TeamID == "" {
+			return fmt.Errorf("Signing.TeamID is required")
+		}
 	}
 	for key, value := range r.BuildSettings {
 		if strings.ContainsRune(key+value, '\x00') || strings.ContainsAny(key, " \t=") {
@@ -565,17 +605,30 @@ type CaptureHandle struct {
 }
 
 type CaptureStartRequest struct {
-	Destination DestinationLease
-	Predicate   string
-	LogPath     string
+	Destination    DestinationLease
+	Predicate      string
+	LogPath        string
+	Video          bool
+	VideoDirectory string
+	SegmentMs      int
+}
+
+func (r *CaptureStartRequest) Init() error {
+	if r.SegmentMs <= 0 {
+		r.SegmentMs = 300_000
+	}
+	return nil
 }
 
 func (r *CaptureStartRequest) Validate() error {
 	if err := (&SimulatorStopRequest{Lease: r.Destination}).Validate(); err != nil {
 		return err
 	}
-	if r.LogPath == "" {
-		return fmt.Errorf("LogPath is required")
+	if r.LogPath == "" && !r.Video {
+		return fmt.Errorf("LogPath or Video is required")
+	}
+	if r.Video && r.VideoDirectory == "" {
+		return fmt.Errorf("VideoDirectory is required when Video is enabled")
 	}
 	return nil
 }
@@ -592,7 +645,9 @@ func (r *CaptureStopRequest) Validate() error {
 }
 
 type CaptureStopResponse struct {
-	Stopped  bool
-	Artifact *mobile.Evidence
-	Warning  string
+	Stopped   bool
+	Artifact  *mobile.Evidence
+	Artifacts []*mobile.Evidence
+	Errors    []string
+	Warning   string
 }

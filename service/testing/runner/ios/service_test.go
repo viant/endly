@@ -71,6 +71,16 @@ func (f *fakeRunner) Start(_ context.Context, _ mobile.Command, _, _ io.Writer) 
 	return &mobile.Process{PID: 1, Done: done}, nil
 }
 
+func recordedCommands(runner *fakeRunner) string {
+	runner.mu.Lock()
+	defer runner.mu.Unlock()
+	commands := make([]string, 0, len(runner.commands))
+	for _, command := range runner.commands {
+		commands = append(commands, command.Name+" "+strings.Join(command.Args, " "))
+	}
+	return strings.Join(commands, "\n")
+}
+
 func TestParseSimulators(t *testing.T) {
 	simulators, err := parseSimulators(devicesJSON)
 	if err != nil {
@@ -160,6 +170,7 @@ func TestLaunchAndTerminateIOSApp(t *testing.T) {
 func TestUnifiedLogCaptureLifecycle(t *testing.T) {
 	runner := &fakeRunner{}
 	service := newService(runner)
+	service.leaseStore = mobile.NewLeaseStore(t.TempDir())
 	lease := DestinationLease{ID: "lease-capture", Fence: 1, UDID: "SIM-UDID"}
 	service.storeLease(lease)
 	ctx := endly.New().NewContext(nil)
@@ -268,6 +279,69 @@ func TestBuildUsesXcodebuildAndDiscoversSimulatorProducts(t *testing.T) {
 	}
 }
 
+func TestArchiveAndExportUseSigningSettingsAndDiscoverIPA(t *testing.T) {
+	directory := t.TempDir()
+	archivePath := filepath.Join(directory, "Fixture.xcarchive")
+	exportPath := filepath.Join(directory, "export")
+	exportOptions := filepath.Join(directory, "ExportOptions.plist")
+	if err := os.WriteFile(exportOptions, []byte("<plist/>"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	runner := &fakeRunner{runHook: func(command mobile.Command) (mobile.Result, error) {
+		joined := strings.Join(command.Args, " ")
+		if !strings.HasSuffix(command.Name, "xcodebuild") {
+			return mobile.Result{}, nil
+		}
+		if strings.Contains(joined, " archive") {
+			if err := os.MkdirAll(filepath.Join(archivePath, "Products", "Applications", "Fixture.app"), 0o755); err != nil {
+				return mobile.Result{}, err
+			}
+			if err := os.WriteFile(filepath.Join(archivePath, "Info.plist"), []byte("archive"), 0o600); err != nil {
+				return mobile.Result{}, err
+			}
+		}
+		if strings.Contains(joined, "-exportArchive") {
+			if err := os.MkdirAll(exportPath, 0o755); err != nil {
+				return mobile.Result{}, err
+			}
+			if err := os.WriteFile(filepath.Join(exportPath, "Fixture.ipa"), []byte("ipa"), 0o600); err != nil {
+				return mobile.Result{}, err
+			}
+		}
+		return mobile.Result{Stdout: "ok", DurationMs: 2}, nil
+	}}
+	service := newService(runner)
+	request := &BuildRequest{
+		ProjectPath: "/tmp/Fixture.xcodeproj", Scheme: "Fixture", Configuration: "Release",
+		Mode: "archiveAndExport", ArchivePath: archivePath, ExportPath: exportPath,
+		ExportOptionsPlist: exportOptions, TimeoutMs: 1000,
+		Signing: &IOSSigningProfile{
+			Style: "manual", TeamID: "TEAM123", Identity: "Apple Distribution",
+			ProvisioningProfile: "Fixture Distribution", KeychainPath: "/secure/ci.keychain-db",
+		},
+	}
+	if err := request.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	response, err := service.build(endly.New().NewContext(nil), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(response.Artifacts) != 2 || response.Artifacts[0].Kind != "xcarchive" || response.Artifacts[1].Kind != "ipa" {
+		t.Fatalf("unexpected archive artifacts: %+v", response.Artifacts)
+	}
+	all := recordedCommands(runner)
+	for _, expected := range []string{
+		"-destination generic/platform=iOS", "CODE_SIGN_STYLE=Manual", "DEVELOPMENT_TEAM=TEAM123",
+		"CODE_SIGN_IDENTITY=Apple Distribution", "PROVISIONING_PROFILE_SPECIFIER=Fixture Distribution",
+		"OTHER_CODE_SIGN_FLAGS=--keychain /secure/ci.keychain-db", "-exportArchive", "-exportOptionsPlist " + exportOptions,
+	} {
+		if !strings.Contains(all, expected) {
+			t.Fatalf("missing %q in:\n%s", expected, all)
+		}
+	}
+}
+
 func TestInstallAndUninstallUseExactDestinationAndBundle(t *testing.T) {
 	runner := &fakeRunner{}
 	service := newService(runner)
@@ -313,14 +387,20 @@ func TestAppiumRunnerFlow(t *testing.T) {
 			value = map[string]interface{}{"ready": true}
 		case "POST /session":
 			value = map[string]interface{}{"sessionId": "backend-1", "capabilities": map[string]interface{}{}}
-		case "POST /session/backend-1/element":
-			value = map[string]interface{}{"element-6066-11e4-a52e-4f735466cecf": "element-1"}
+		case "POST /session/backend-1/elements":
+			value = []map[string]interface{}{{"element-6066-11e4-a52e-4f735466cecf": "element-1"}}
 		case "GET /session/backend-1/element/element-1/text":
 			value = "Welcome"
 		case "GET /session/backend-1/screenshot":
 			value = base64.StdEncoding.EncodeToString([]byte("png"))
 		case "GET /session/backend-1/source":
 			value = `<AppiumAUT><XCUIElementTypeStaticText name="greeting" label="Welcome"/></AppiumAUT>`
+		case "GET /session/backend-1/contexts":
+			value = []string{"NATIVE_APP", "WEBVIEW_com.example.app"}
+		case "GET /session/backend-1/context":
+			value = "NATIVE_APP"
+		case "GET /session/backend-1/orientation":
+			value = "PORTRAIT"
 		default:
 			value = nil
 		}
@@ -349,16 +429,44 @@ func TestAppiumRunnerFlow(t *testing.T) {
 		t.Fatalf("unexpected session: %+v", opened.Session)
 	}
 	result, err := service.run(ctx, &RunRequest{
-		SessionID:       opened.Session.ID,
-		Commands:        []string{`greeting = app.getByTestId("greeting").text()`, `expect(app.getByTestId("greeting")).toHaveText("Welcome", 20)`},
+		SessionID: opened.Session.ID,
+		Commands: []interface{}{
+			`greeting = app.getByTestId("greeting").text()`,
+			map[string]interface{}{
+				"key": "typedGreeting", "locator": map[string]interface{}{"strategy": "accessibilityId", "value": "greeting"},
+				"action": map[string]interface{}{"name": "text"},
+			},
+			`expect(app.getByTestId("greeting")).toHaveText("Welcome", 20)`,
+		},
 		ActionTimeoutMs: 50,
 		PollIntervalMs:  1,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.Data["greeting"] != "Welcome" || len(result.Validations) != 1 || result.Validations[0].PassedCount != 1 {
+	if result.Data["greeting"] != "Welcome" || result.Data["typedGreeting"] != "Welcome" || len(result.Validations) != 1 || result.Validations[0].PassedCount != 1 {
 		t.Fatalf("unexpected run response: %+v", result)
+	}
+	deviceResult, err := service.run(ctx, &RunRequest{
+		SessionID: opened.Session.ID,
+		Commands: []interface{}{
+			`contexts = device.contexts()`,
+			`expect(device.context()).toHaveContext("NATIVE_APP", 20)`,
+			`expect(device.orientation()).toHaveOrientation("PORTRAIT", 20)`,
+		},
+		ActionTimeoutMs: 50, PollIntervalMs: 1,
+	})
+	if err != nil || len(deviceResult.Validations) != 2 || len(deviceResult.Data["contexts"].([]string)) != 2 {
+		t.Fatalf("unexpected device result: %+v, err=%v", deviceResult, err)
+	}
+	failureResult, err := service.run(ctx, &RunRequest{
+		SessionID:       opened.Session.ID,
+		Commands:        []interface{}{`expect(app.getByTestId("greeting")).toHaveText("Missing", 5)`},
+		ActionTimeoutMs: 10, PollIntervalMs: 1,
+		FailureArtifacts: &mobile.FailureArtifactOptions{Directory: t.TempDir()},
+	})
+	if err != nil || len(failureResult.Failures) != 1 || len(failureResult.Failures[0].Artifacts) != 3 {
+		t.Fatalf("automatic failure evidence missing: %+v, err=%v", failureResult, err)
 	}
 	evidence, err := service.artifact(ctx, &ArtifactRequest{SessionID: opened.Session.ID, Directory: t.TempDir(), Screenshot: true, PageSource: true, MaxSourceBytes: 100})
 	if err != nil {
@@ -402,6 +510,7 @@ func TestAppiumRunnerFlow(t *testing.T) {
 func TestDoctorAndOwnedCloneLifecycle(t *testing.T) {
 	runner := &fakeRunner{}
 	service := newService(runner)
+	service.leaseStore = mobile.NewLeaseStore(t.TempDir())
 	ctx := endly.New().NewContext(nil)
 	doctor, err := service.doctor(ctx, &DoctorRequest{Required: []string{"xcodebuild", "simulator-runtime"}})
 	if err != nil {
@@ -419,7 +528,7 @@ func TestDoctorAndOwnedCloneLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !started.Lease.OwnedClone || started.Lease.UDID != "CLONE-UDID" {
+	if !started.Lease.OwnedClone || started.Lease.UDID != "CLONE-UDID" || started.Lease.ProcessLease == nil {
 		t.Fatalf("unexpected lease: %+v", started.Lease)
 	}
 	stopped, err := service.simulatorStop(ctx, &SimulatorStopRequest{Lease: started.Lease})
@@ -428,6 +537,9 @@ func TestDoctorAndOwnedCloneLifecycle(t *testing.T) {
 	}
 	if !stopped.Shutdown || !stopped.Deleted {
 		t.Fatalf("expected owned clone shutdown+delete: %+v", stopped)
+	}
+	if _, err := os.Stat(started.Lease.ProcessLease.Path); !os.IsNotExist(err) {
+		t.Fatalf("persistent destination lease remains after stop: %v", err)
 	}
 }
 

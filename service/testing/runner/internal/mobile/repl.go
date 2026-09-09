@@ -17,6 +17,8 @@ type REPLConfig struct {
 	MaxSourceBytes int
 	MaxTreeNodes   int
 	FailOnError    bool
+	HistoryPath    string
+	MaxHistory     int
 }
 
 type REPLCallbacks struct {
@@ -55,7 +57,11 @@ func RunREPL(ctx context.Context, input io.Reader, output io.Writer, config REPL
 	if config.MaxTreeNodes <= 0 {
 		config.MaxTreeNodes = 500
 	}
-	result := &REPLResult{History: []string{}, Data: map[string]interface{}{}, Artifacts: []*Evidence{}}
+	history, err := LoadHistory(config.HistoryPath, config.MaxHistory)
+	if err != nil {
+		return nil, err
+	}
+	result := &REPLResult{History: history, Data: map[string]interface{}{}, Artifacts: []*Evidence{}}
 	scanner := bufio.NewScanner(input)
 	scanner.Buffer(make([]byte, 4096), 1_000_000)
 	replCtx, stopSignals := signal.NotifyContext(ctx, os.Interrupt)
@@ -118,6 +124,13 @@ func RunREPL(ctx context.Context, input io.Reader, output io.Writer, config REPL
 			_, _ = fmt.Fprintf(writer, "%s\n", line)
 		}
 		result.History = append(result.History, line)
+		if !strings.EqualFold(line, ":clear-history") {
+			if err := AppendHistory(config.HistoryPath, line); err != nil {
+				if stopErr := replError(writer, result, config, err); stopErr != nil {
+					return result, stopErr
+				}
+			}
+		}
 		if strings.HasPrefix(line, ":") {
 			exit, err := runMetaCommand(ctx, writer, line, config, callbacks, result)
 			if err != nil {
@@ -158,6 +171,15 @@ func RunREPL(ctx context.Context, input io.Reader, output io.Writer, config REPL
 				}
 			} else {
 				_, _ = fmt.Fprintf(writer, "PASS: %s\n", validation.Description)
+			}
+		}
+		for _, failure := range execution.Failures {
+			for _, artifact := range failure.Artifacts {
+				result.Artifacts = append(result.Artifacts, artifact)
+				_, _ = fmt.Fprintf(writer, "failure evidence: %s (%s)\n", artifact.URL, artifact.Kind)
+			}
+			for _, captureErr := range failure.Errors {
+				_, _ = fmt.Fprintf(writer, "failure evidence error: %s\n", captureErr)
 			}
 		}
 	}
@@ -224,6 +246,12 @@ func runMetaCommand(ctx context.Context, writer io.Writer, line string, config R
 		for index, entry := range result.History[:len(result.History)-1] {
 			_, _ = fmt.Fprintf(writer, "%d  %s\n", index+1, entry)
 		}
+	case ":clear-history":
+		if err := ClearHistory(config.HistoryPath); err != nil {
+			return "", err
+		}
+		result.History = []string{}
+		_, _ = fmt.Fprintln(writer, "history cleared")
 	default:
 		return "", fmt.Errorf("unknown REPL command %q; use :help", command)
 	}
@@ -233,7 +261,7 @@ func runMetaCommand(ctx context.Context, writer io.Writer, line string, config R
 func writeREPLHelp(writer io.Writer) {
 	_, _ = fmt.Fprintln(writer, "Mobile REPL: enter one app.* or device.* DSL command per line.")
 	_, _ = fmt.Fprintln(writer, "  :status  :source  :tree [filter]  :find <text>  :screenshot")
-	_, _ = fmt.Fprintln(writer, "  :history  !<number>  :help  :close  :quit")
+	_, _ = fmt.Fprintln(writer, "  :history  :clear-history  !<number>  :help  :close  :quit")
 }
 
 func splitMetaCommand(line string) (string, string) {
