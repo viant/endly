@@ -1,6 +1,6 @@
 # Android runner service and DSL proposal
 
-> Status: accepted design contract. The `android` service implements the emulator/connected-device, build/deploy/session/test/capture/REPL lifecycle plus strict collections, W3C gestures, typed commands, hybrid contexts, richer element/device assertions, permissions/location/orientation/alerts, split APK/APKS/AAB deployment and signing inputs, process-shared leases, segmented video, automatic screenshot/source/log/video failure evidence, portable session descriptors, cross-process attach/reconnect, terminal completion, arrow-key editing, and persistent history. The core paths, reconnect, intentional DSL and device-side instrumentation failures, checkpointed video, two concurrent isolated emulator/Appium lanes, and leak-free cleanup are verified on real API 35 arm64 AVDs through Appium 3.7.0/UiAutomator2 8.6.1; split-package signing currently has deterministic protocol tests. Endly cross-builds for Darwin, Linux, and Windows. Remote workers/cloud farms remain tracked below.
+> Status: accepted design contract. The `android` service implements the emulator/connected-device, build/deploy/session/test/capture/REPL lifecycle plus strict collections, W3C gestures, typed commands, hybrid contexts, richer element/device assertions, permissions/location/orientation/alerts, split APK/APKS/AAB deployment and signing inputs, process-shared leases, segmented video, automatic screenshot/source/log/video failure evidence, portable session descriptors, cross-process attach/reconnect, terminal completion, arrow-key editing, persistent history, and provider-neutral external Appium/cloud-destination registration. The core paths, reconnect, intentional DSL and device-side instrumentation failures, checkpointed video, two concurrent isolated emulator/Appium lanes, and leak-free cleanup are verified on real API 35 arm64 AVDs through Appium 3.7.0/UiAutomator2 8.6.1; split-package signing and cloud capability handoff currently have deterministic protocol tests. Endly cross-builds for Darwin, Linux, and Windows. Managed SSH worker execution/staging and provider-specific farm upload APIs remain tracked below.
 >
 > The filename preserves the requested `adntoid.md` spelling. The service ID and Go package are `android`.
 
@@ -92,6 +92,8 @@ Rules:
 | `android:server-stop` | owned server handle | stop/cleanup report |
 | `android:device-start` | target and device profile/serial | fenced `DeviceLease` |
 | `android:device-stop` | fenced lease | release/cleanup report |
+| `android:device-register` | provider and external device ID | fenced external `DeviceLease` |
+| `android:device-release` | fenced external lease | non-mutating release report |
 | `android:build` | target, project, module, variant, tasks | `[]Artifact` and reports |
 | `android:install` | fenced lease, artifacts, package, state | installed package metadata |
 | `android:uninstall` | fenced lease and exact package | removal status |

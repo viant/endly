@@ -16,6 +16,9 @@ func (s *service) test(ctx *endly.Context, request *TestRequest) (*TestResponse,
 	if err := s.validateLease(request.Destination); err != nil {
 		return nil, err
 	}
+	if request.Destination.IsExternal() {
+		return nil, fmt.Errorf("external iOS XCTest execution must be configured through the provider")
+	}
 	xcodebuild, err := mobile.ResolveExecutable("xcodebuild", "/usr/bin/xcodebuild")
 	if err != nil {
 		return nil, err

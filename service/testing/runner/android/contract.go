@@ -42,15 +42,54 @@ type DoctorResponse struct {
 }
 
 type DeviceLease struct {
-	ID             string
-	Fence          uint64
-	Serial         string
-	AVD            string
-	PID            int
-	Owned          bool
-	LogPath        string
-	AndroidSDKRoot string
-	ProcessLease   *mobile.LeaseHandle
+	ID              string
+	Fence           uint64
+	Serial          string
+	AVD             string
+	PID             int
+	Owned           bool
+	LogPath         string
+	AndroidSDKRoot  string
+	External        bool
+	Provider        string
+	PlatformVersion string
+	ProcessLease    *mobile.LeaseHandle
+}
+
+type DeviceRegisterRequest struct {
+	Provider        string
+	DeviceID        string
+	PlatformVersion string
+}
+
+func (r *DeviceRegisterRequest) Validate() error {
+	if strings.TrimSpace(r.Provider) == "" || strings.TrimSpace(r.DeviceID) == "" {
+		return fmt.Errorf("Provider and DeviceID are required")
+	}
+	return nil
+}
+
+type DeviceRegisterResponse struct {
+	Lease DeviceLease
+}
+
+type DeviceReleaseRequest struct {
+	Lease DeviceLease
+}
+
+func (r *DeviceReleaseRequest) Validate() error {
+	if err := (&DeviceStopRequest{Lease: r.Lease}).Validate(); err != nil {
+		return err
+	}
+	if !r.Lease.External {
+		return fmt.Errorf("an external device lease is required")
+	}
+	return nil
+}
+
+type DeviceReleaseResponse struct {
+	Released bool
+	Warning  string
 }
 
 type DeviceStartRequest struct {
@@ -253,6 +292,7 @@ type OpenRequest struct {
 	Server         ServerHandle
 	Package        string
 	Activity       string
+	AppReference   string
 	TestIDStrategy string
 	Capabilities   map[string]interface{}
 	DescriptorPath string
@@ -273,8 +313,8 @@ func (r *OpenRequest) Validate() error {
 	if r.Server.Endpoint == "" || (r.Server.Ownership != "external" && r.Server.Ownership != "managed") {
 		return fmt.Errorf("a managed or external Server handle with Endpoint is required")
 	}
-	if r.Package == "" {
-		return fmt.Errorf("Package is required")
+	if r.Package == "" && r.AppReference == "" {
+		return fmt.Errorf("Package or AppReference is required")
 	}
 	if r.KeepSession {
 		if r.DescriptorPath == "" {

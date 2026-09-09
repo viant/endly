@@ -16,6 +16,9 @@ import (
 )
 
 func (s *service) build(ctx *endly.Context, request *BuildRequest) (*BuildResponse, error) {
+	if request.Destination.IsExternal() {
+		return nil, fmt.Errorf("external iOS destination builds run on the provider/worker before registration")
+	}
 	xcodebuild, err := mobile.ResolveExecutable("xcodebuild", "/usr/bin/xcodebuild")
 	if err != nil {
 		return nil, err

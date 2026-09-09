@@ -10,6 +10,8 @@ Implemented actions:
 | `android:build` | Run argv-safe Gradle-wrapper tasks and discover/checksum variant APK/AAB/APKS products |
 | `android:device-start` | Attach to an exact connected serial or start an owned AVD and wait for `sys.boot_completed=1` |
 | `android:device-stop` | Release a fenced lease and stop only an emulator started by this service |
+| `android:device-register` | Fence a provider/cloud device ID without local adb mutation |
+| `android:device-release` | Release an external registration without stopping provider infrastructure |
 | `android:server-start` | Health-check/register external Appium or start a loopback-only managed server |
 | `android:server-stop` | Release external registration or idempotently stop an owned server |
 | `android:install` | Apply an explicit state policy and install an APK, split APKs, APKS, or AAB |
@@ -27,7 +29,24 @@ Implemented actions:
 | `android:close` | Idempotently close the Appium session |
 | `android:cleanup` | Run every registered teardown in LIFO order and report all errors |
 
-The implementation uses argv-safe local command execution, the project Gradle wrapper, Android instrumentation, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. The DSL supports strict plural lookup, `first`/`last`/`nth`/`count`, typed and textual commands, pointer gestures, richer element/device assertions, contexts, orientation, location, permissions, alerts, and application lifecycle. Deployment accepts a single APK, split APKs, APKS, or an AAB with file-backed signing secrets; capture can rotate bounded screen-recording segments. Failed runs automatically retain screenshot, bounded source, bounded active-log tail, a checkpointed valid video segment, and a manifest while recording continues. Managed devices and Appium ports use process-shared fenced leases, while owned processes still unwind through the LIFO context cleanup stack. `open` requires a registered `ServerHandle` and explicit `testIDStrategy`. Portable 0600 session descriptors let a second Endly process run `android:attach` or inline `android:repl.attach`; attachment is non-owning unless `takeOwnership` is explicit. A gated two-AVD stress test verifies distinct emulator/Appium/UiAutomator2/MJPEG resources under concurrent sessions. The real integration also installs a minimal device-side instrumentation APK and verifies that its intentional assertion failure is normalized rather than returned as infrastructure failure. Remote workers/cloud farms remain to be implemented.
+The implementation uses argv-safe local command execution, the project Gradle wrapper, Android instrumentation, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. The DSL supports strict plural lookup, `first`/`last`/`nth`/`count`, typed and textual commands, pointer gestures, richer element/device assertions, contexts, orientation, location, permissions, alerts, and application lifecycle. Deployment accepts a single APK, split APKs, APKS, or an AAB with file-backed signing secrets; capture can rotate bounded screen-recording segments. Failed runs automatically retain screenshot, bounded source, bounded active-log tail, a checkpointed valid video segment, and a manifest while recording continues. Managed devices and Appium ports use process-shared fenced leases, while owned processes still unwind through the LIFO context cleanup stack. `open` requires a registered `ServerHandle` and explicit `testIDStrategy`. Portable 0600 session descriptors let a second Endly process run `android:attach` or inline `android:repl.attach`; attachment is non-owning unless `takeOwnership` is explicit. A gated two-AVD stress test verifies distinct emulator/Appium/UiAutomator2/MJPEG resources under concurrent sessions. The real integration also installs a minimal device-side instrumentation APK and verifies that its intentional assertion failure is normalized rather than returned as infrastructure failure. Provider-neutral cloud mode fences an external device ID, health-checks external Appium, supplies `appReference` plus namespaced provider capabilities, and never runs adb install/capture/stop against farm infrastructure. Managed SSH worker execution/staging and provider-specific upload APIs remain to be implemented.
+
+External farm shape:
+
+```yaml
+- action: android:device-register
+  request: {provider: example-farm, deviceID: pixel-remote, platformVersion: "15"}
+- action: android:server-start
+  request: {lease: $deviceRegister.Lease, mode: external, serverURL: $secureAppiumURL}
+- action: android:open
+  request:
+    lease: $deviceRegister.Lease
+    server: $serverStart.Server
+    appReference: farm://apps/build-123
+    testIDStrategy: accessibilityId
+    capabilities:
+      farm:options: {project: endly}
+```
 
 Run the real host check:
 

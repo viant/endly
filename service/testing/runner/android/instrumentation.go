@@ -17,6 +17,9 @@ func (s *service) test(ctx *endly.Context, request *TestRequest) (*TestResponse,
 	if err := s.validateLease(request.Lease); err != nil {
 		return nil, err
 	}
+	if request.Lease.External {
+		return nil, fmt.Errorf("external Android instrumentation must be configured through the provider")
+	}
 	adb, err := resolveAndroidTool("adb", request.Lease.AndroidSDKRoot)
 	if err != nil {
 		return nil, err

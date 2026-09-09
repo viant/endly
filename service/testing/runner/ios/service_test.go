@@ -95,7 +95,7 @@ func TestParseSimulators(t *testing.T) {
 
 func TestRoutes(t *testing.T) {
 	service := newService(&fakeRunner{})
-	for _, action := range []string{"doctor", "simulator-start", "simulator-stop", "device-list", "device-lease", "device-release", "server-start", "server-stop", "build", "install", "uninstall", "launch", "terminate", "test", "capture-start", "capture-stop", "open", "attach", "run", "repl", "artifact", "close", "cleanup"} {
+	for _, action := range []string{"doctor", "simulator-start", "simulator-stop", "device-list", "device-lease", "device-release", "destination-register", "destination-release", "server-start", "server-stop", "build", "install", "uninstall", "launch", "terminate", "test", "capture-start", "capture-stop", "open", "attach", "run", "repl", "artifact", "close", "cleanup"} {
 		if _, err := service.Route(action); err != nil {
 			t.Fatalf("route %q was not registered: %v", action, err)
 		}
@@ -638,6 +638,61 @@ func TestAttachReconnectsAcrossServiceInstances(t *testing.T) {
 	}
 	if _, err := os.Stat(descriptorPath); !os.IsNotExist(err) {
 		t.Fatalf("owned close left descriptor behind: %v", err)
+	}
+}
+
+func TestExternalCloudDestinationUsesProviderAppReference(t *testing.T) {
+	var sessionPayload map[string]interface{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		value := interface{}(nil)
+		switch r.Method + " " + r.URL.Path {
+		case "GET /status":
+			value = map[string]interface{}{"ready": true}
+		case "POST /session":
+			if err := json.NewDecoder(r.Body).Decode(&sessionPayload); err != nil {
+				t.Fatal(err)
+			}
+			value = map[string]interface{}{"sessionId": "cloud-backend", "capabilities": map[string]interface{}{}}
+		}
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"value": value})
+	}))
+	defer server.Close()
+	service := newService(&fakeRunner{})
+	service.leaseStore = mobile.NewLeaseStore(t.TempDir())
+	ctx := endly.New().NewContext(nil)
+	registered, err := service.destinationRegister(ctx, &DestinationRegisterRequest{Provider: "example-farm", DeviceID: "iphone-remote", PlatformVersion: "18.5"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	appium, err := service.serverStart(ctx, &ServerStartRequest{Destination: registered.Lease, Mode: "external", ServerURL: server.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	opened, err := service.open(ctx, &OpenRequest{
+		SessionID: "cloud-ios", Destination: registered.Lease, Server: appium.Server,
+		AppReference: "farm://apps/build-456",
+		Capabilities: map[string]interface{}{"farm:options": map[string]interface{}{"project": "endly"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	alwaysMatch := sessionPayload["capabilities"].(map[string]interface{})["alwaysMatch"].(map[string]interface{})
+	if alwaysMatch["appium:app"] != "farm://apps/build-456" || alwaysMatch["appium:udid"] != "iphone-remote" || alwaysMatch["farm:options"] == nil {
+		t.Fatalf("unexpected cloud capabilities: %+v", alwaysMatch)
+	}
+	if _, err := service.close(context.Background(), &CloseRequest{SessionID: opened.Session.ID}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := service.serverStop(context.Background(), &ServerStopRequest{Server: appium.Server}); err != nil {
+		t.Fatal(err)
+	}
+	released, err := service.destinationRelease(ctx, &DestinationReleaseRequest{Lease: registered.Lease})
+	if err != nil || !released.Released {
+		t.Fatalf("cloud release=%+v err=%v", released, err)
+	}
+	if _, err := os.Stat(registered.Lease.ProcessLease.Path); !os.IsNotExist(err) {
+		t.Fatalf("cloud destination lease remains: %v", err)
 	}
 }
 
