@@ -21,6 +21,7 @@ Implemented actions:
 | `android:capture-stop` | Stop the capture and return sensitive log evidence metadata |
 | `android:open` | Open an Appium UiAutomator2 session against valid device and server handles |
 | `android:run` | Run assigned `app.*`/`device.*` commands and retrying inline expectations |
+| `android:repl` | Run a live terminal DSL, hierarchy inspector, screenshot tool, and command history |
 | `android:artifact` | Store sensitive screenshot and bounded UI-source evidence through AFS |
 | `android:close` | Idempotently close the Appium session |
 | `android:cleanup` | Run every registered teardown in LIFO order and report all errors |
@@ -47,3 +48,18 @@ ENDLY_ANDROID_TEST_PACKAGE=com.example.app \
 The gated test builds with the project Gradle wrapper, starts a clean owned AVD, installs and launches the APK, captures logcat and a non-empty screenshot, terminates the app, and stops the emulator. Set the documented Appium environment variables to include UiAutomator2 session and source capture.
 
 The reference validation uses API 35 `endly_api_35` on arm64 with Appium 3.7.0 and UiAutomator2 8.6.1. It additionally opens a managed session, resolves a native view through the DSL, asserts visibility, captures Appium screenshot/source evidence, and verifies that no emulator or Appium process remains.
+
+Run a live inspector with `test/repl.yaml`. Once setup completes, Endly displays an `android[session]>` prompt and executes each entered DSL command immediately:
+
+```text
+:status
+:tree workspace
+heading = app.getByText("Choose your workspace").text()
+app.getByClass("android.widget.EditText").fill("https://example.test")
+expect(app.getByClass("android.widget.EditText")).toHaveText("https://example.test", 10000)
+:screenshot
+:history
+:quit
+```
+
+Inspector commands are `:status`, `:source`, `:tree [filter]`, `:find <text>`, `:screenshot`, `:history`, `!<number>`, `:help`, `:close`, and `:quit`. Command errors are printed and the prompt continues unless `failOnError` is enabled. Ctrl-C returns to the workflow so deferred cleanup runs.

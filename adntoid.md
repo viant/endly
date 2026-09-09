@@ -1,6 +1,6 @@
 # Android runner service and DSL proposal
 
-> Status: accepted design contract. The `android` service now implements `doctor`, Gradle-wrapper build/checksum discovery, device lifecycle, managed/external Appium lifecycle, APK deployment and launch/terminate, direct instrumentation with assertion reporting, UI-session `open`/`run`/`close`, on-demand artifacts, owned package-filterable logcat capture, and aggregate LIFO `cleanup`. A real API 35 arm64 AVD integration is verified through Appium 3.7.0/UiAutomator2 8.6.1, including build, clean install, launch, DSL assertion, screenshot/source evidence, logcat, termination, and leak-free cleanup; split-package deployment and segmented video remain tracked below.
+> Status: accepted design contract. The `android` service now implements `doctor`, Gradle-wrapper build/checksum discovery, device lifecycle, managed/external Appium lifecycle, APK deployment and launch/terminate, direct instrumentation with assertion reporting, UI-session `open`/`run`/`repl`/`close`, on-demand artifacts, owned package-filterable logcat capture, and aggregate LIFO `cleanup`. The live REPL/inspector is verified in a real API 35 arm64 AVD through Appium 3.7.0/UiAutomator2 8.6.1, including incremental commands, hierarchy filtering, field input, assertions, screenshot/source evidence, history, and leak-free cleanup; split-package deployment and segmented video remain tracked below.
 >
 > The filename preserves the requested `adntoid.md` spelling. The service ID and Go package are `android`.
 
@@ -102,6 +102,7 @@ Rules:
 | `android:close` | session handle | close/cleanup report |
 | `android:cleanup` | acquired session/capture/device/server handles | aggregate LIFO cleanup report |
 | `android:run` | session handle, commands, expectations | data, validations, steps, failures |
+| `android:repl` | optional session ID, terminal and inspector options | interactive history/data/artifacts summary |
 | `android:artifact` | session or fenced lease, artifact kinds | artifact manifest |
 
 Device lifecycle, Appium lifecycle, capture lifecycle, and automation-session lifecycle are separate. A suite may reuse a booted emulator and server while resetting the application between tests.

@@ -217,8 +217,8 @@ func (r *OpenRequest) Validate() error {
 	if err := (&SimulatorStopRequest{Lease: r.Destination}).Validate(); err != nil {
 		return err
 	}
-	if r.Server.Endpoint == "" || r.Server.Ownership != "external" {
-		return fmt.Errorf("an external Server handle with Endpoint is required")
+	if r.Server.Endpoint == "" || (r.Server.Ownership != "external" && r.Server.Ownership != "managed") {
+		return fmt.Errorf("a managed or external Server handle with Endpoint is required")
 	}
 	if r.BundleID == "" && r.App == nil {
 		return fmt.Errorf("BundleID or App is required")
@@ -340,6 +340,38 @@ type RunResponse struct {
 }
 
 func (r *RunResponse) Assertion() []*assertly.Validation { return r.Validations }
+
+type REPLRequest struct {
+	SessionID         string
+	Prompt            string
+	ArtifactDirectory string
+	ActionTimeoutMs   int
+	PollIntervalMs    int
+	MaxSourceBytes    int
+	MaxTreeNodes      int
+	FailOnError       bool
+}
+
+func (r *REPLRequest) Init() error {
+	if r.ActionTimeoutMs <= 0 {
+		r.ActionTimeoutMs = 10_000
+	}
+	if r.PollIntervalMs <= 0 {
+		r.PollIntervalMs = 100
+	}
+	if r.MaxSourceBytes <= 0 {
+		r.MaxSourceBytes = 2_000_000
+	}
+	if r.MaxTreeNodes <= 0 {
+		r.MaxTreeNodes = 500
+	}
+	return nil
+}
+
+type REPLResponse struct {
+	SessionID string
+	Result    *mobile.REPLResult
+}
 
 type CloseRequest struct {
 	SessionID string

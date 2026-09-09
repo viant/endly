@@ -1,6 +1,6 @@
 # iOS runner service and DSL proposal
 
-> Status: accepted design contract. The `ios` service now implements `doctor`, Xcode Simulator build/build-for-testing product discovery, Simulator lifecycle, managed/external Appium lifecycle, Simulator deployment and launch/terminate, XCTest/test-without-building with modern `xcresulttool` normalization, UI-session `open`/`run`/`close`, on-demand artifacts, owned predicate-filterable unified-log capture, and aggregate LIFO `cleanup`. A real iOS 27 create-to-delete integration is verified with the bundled fixture, including managed Appium 3.7.0/XCUITest 12.11.1 semantic locators, tap, retrying assertions, screenshot, and hierarchy capture; signing/archive, physical-device deployment, advanced WDA modes, and video remain tracked below.
+> Status: accepted design contract. The `ios` service now implements `doctor`, Xcode Simulator build/build-for-testing product discovery, Simulator lifecycle, managed/external Appium lifecycle, Simulator deployment and launch/terminate, XCTest/test-without-building with modern `xcresulttool` normalization, UI-session `open`/`run`/`repl`/`close`, on-demand artifacts, owned predicate-filterable unified-log capture, and aggregate LIFO `cleanup`. The live REPL/inspector is verified in a real iOS 27 Simulator with managed Appium 3.7.0/XCUITest 12.11.1, including incremental commands, hierarchy filtering, read/tap/assert, screenshot/source evidence, history, and leak-free cleanup; signing/archive, physical-device deployment, advanced WDA modes, and video remain tracked below.
 
 ## Decision
 
@@ -96,6 +96,7 @@ Rules:
 | `ios:close` | session handle | close/cleanup report |
 | `ios:cleanup` | acquired session/capture/destination/server handles | aggregate LIFO cleanup report |
 | `ios:run` | session handle, commands, expectations | data, validations, steps, failures |
+| `ios:repl` | optional session ID, terminal and inspector options | interactive history/data/artifacts summary |
 | `ios:artifact` | session or fenced destination, artifact kinds | artifact manifest |
 
 Build, test, destination, Appium, WDA, capture, and automation session are distinct lifecycles.

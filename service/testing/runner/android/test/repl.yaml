@@ -1,0 +1,62 @@
+init:
+  runID: ${uuid.next}
+  artifactRoot: /tmp/endly/android-repl/$runID
+
+pipeline:
+  deviceStart:
+    action: android:device-start
+    androidSDKRoot: ${env.ANDROID_SDK_ROOT}
+    avd: ${env.ENDLY_ANDROID_TEST_AVD}
+    wipeData: true
+    noSnapshot: true
+    bootTimeoutMs: 180000
+    logPath: $artifactRoot/emulator.log
+
+  build:
+    action: android:build
+    projectDir: ${env.ENDLY_ANDROID_TEST_PROJECT}
+    module: app
+    variant: debug
+    tasks: [assembleDebug]
+    gradleArgs:
+      - -Dorg.gradle.java.home=${env.JAVA_HOME}
+
+  install:
+    action: android:install
+    lease: $deviceStart.Lease
+    apkPath: $build.Artifacts[0].Path
+    package: ${env.ENDLY_ANDROID_TEST_PACKAGE}
+    state: freshInstall
+    grantAll: true
+
+  serverStart:
+    action: android:server-start
+    lease: $deviceStart.Lease
+    mode: managed
+    executable: ${env.ENDLY_ANDROID_APPIUM_EXECUTABLE}
+    appiumHome: ${env.ENDLY_ANDROID_APPIUM_HOME}
+    address: 127.0.0.1
+    port: 4723
+    logPath: $artifactRoot/appium.log
+
+  open:
+    action: android:open
+    sessionID: android-repl-$runID
+    lease: $deviceStart.Lease
+    server: $serverStart.Server
+    package: ${env.ENDLY_ANDROID_TEST_PACKAGE}
+    activity: ${env.ENDLY_ANDROID_TEST_ACTIVITY}
+    testIDStrategy: resourceId
+
+  inspect:
+    action: android:repl
+    sessionID: $open.Session.ID
+    artifactDirectory: $artifactRoot/evidence
+    actionTimeoutMs: 30000
+    pollIntervalMs: 200
+
+  defer:
+    action: android:cleanup
+    session: $open.Session
+    server: $serverStart.Server
+    lease: $deviceStart.Lease
