@@ -1,6 +1,6 @@
 # iOS runner service and DSL proposal
 
-> Status: accepted design contract. The `ios` service implements the Simulator/build/deploy/session/test/capture/REPL lifecycle plus strict collections, W3C gestures, typed commands, hybrid contexts, richer element/device assertions, location/orientation/alerts/permissions/appearance/biometrics, archive/export signing inputs, process-shared leases, segmented video, and automatic failure evidence. The core paths and video are verified in a real iOS 27 Simulator through managed Appium 3.7.0/XCUITest 12.11.1; archive/export signing currently has deterministic protocol tests. Non-Darwin Endly builds register an action-compatible iOS stub. Physical-device deployment, advanced WDA modes, remote macOS workers/cloud farms, cross-process REPL attach/reconnect, and automatic inclusion of logs/video in failure manifests remain tracked below.
+> Status: accepted design contract. The `ios` service implements the Simulator/build/deploy/session/test/capture/REPL lifecycle plus strict collections, W3C gestures, typed commands, hybrid contexts, richer element/device assertions, location/orientation/alerts/permissions/appearance/biometrics, archive/export signing inputs, process-shared leases, segmented video, automatic failure evidence, portable session descriptors, cross-process attach/reconnect, terminal completion, arrow-key editing, and persistent history. The core paths and video are verified in a real iOS 27 Simulator through managed Appium 3.7.0/XCUITest 12.11.1; archive/export signing currently has deterministic protocol tests. Non-Darwin Endly builds register an action-compatible iOS stub. Physical-device deployment, advanced WDA modes, remote macOS workers/cloud farms, and automatic inclusion of logs/video in failure manifests remain tracked below.
 
 ## Decision
 
@@ -93,6 +93,7 @@ Rules:
 | `ios:capture-start` | fenced destination and options | `CaptureHandle` |
 | `ios:capture-stop` | capture handle | artifact manifest |
 | `ios:open` | fenced destination, server, WDA mode, app identity | `SessionHandle` |
+| `ios:attach` | descriptor or endpoint/backend session ID | reconnected `SessionHandle` |
 | `ios:close` | session handle | close/cleanup report |
 | `ios:cleanup` | acquired session/capture/destination/server handles | aggregate LIFO cleanup report |
 | `ios:run` | session handle, commands, expectations | data, validations, steps, failures |

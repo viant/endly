@@ -72,7 +72,7 @@ func TestParseADBDevices(t *testing.T) {
 
 func TestRoutes(t *testing.T) {
 	service := newService(&fakeRunner{})
-	for _, action := range []string{"doctor", "device-start", "device-stop", "server-start", "server-stop", "build", "install", "uninstall", "launch", "terminate", "test", "capture-start", "capture-stop", "open", "run", "repl", "artifact", "close", "cleanup"} {
+	for _, action := range []string{"doctor", "device-start", "device-stop", "server-start", "server-stop", "build", "install", "uninstall", "launch", "terminate", "test", "capture-start", "capture-stop", "open", "attach", "run", "repl", "artifact", "close", "cleanup"} {
 		if _, err := service.Route(action); err != nil {
 			t.Fatalf("route %q was not registered: %v", action, err)
 		}
@@ -87,6 +87,22 @@ func TestOpenRequestAcceptsManagedServer(t *testing.T) {
 	}
 	if err := request.Validate(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestKeepSessionRequiresExternalDurableResources(t *testing.T) {
+	request := &OpenRequest{
+		Lease:   DeviceLease{ID: "lease", Fence: 1, Serial: "device-1"},
+		Server:  ServerHandle{Endpoint: "http://127.0.0.1:4723", Ownership: "external"},
+		Package: "com.example.app", TestIDStrategy: "accessibilityId",
+		DescriptorPath: "/tmp/android-session.json", KeepSession: true,
+	}
+	if err := request.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	request.Lease.Owned = true
+	if err := request.Validate(); err == nil {
+		t.Fatal("expected owned emulator to be rejected for session handoff")
 	}
 }
 
@@ -377,18 +393,23 @@ func TestAppiumRunnerFlow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	descriptorPath := filepath.Join(t.TempDir(), "opened-session.json")
 	opened, err := service.open(ctx, &OpenRequest{
 		SessionID:      "android-test",
 		Lease:          lease,
 		Server:         serverResponse.Server,
 		Package:        "com.example.app",
 		TestIDStrategy: "accessibilityId",
+		DescriptorPath: descriptorPath,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if opened.Session.BackendSessionID != "backend-1" {
 		t.Fatalf("unexpected session: %+v", opened.Session)
+	}
+	if descriptor, err := mobile.ReadSessionDescriptor(descriptorPath, "android"); err != nil || descriptor.BackendSessionID != "backend-1" {
+		t.Fatalf("open did not publish a usable descriptor: %+v err=%v", descriptor, err)
 	}
 	result, err := service.run(ctx, &RunRequest{
 		SessionID: opened.Session.ID,
@@ -464,8 +485,78 @@ func TestAppiumRunnerFlow(t *testing.T) {
 	if err != nil || !closed.Closed {
 		t.Fatalf("unexpected close response: %+v, err=%v", closed, err)
 	}
+	if _, err := os.Stat(descriptorPath); !os.IsNotExist(err) {
+		t.Fatalf("closed session descriptor remains: %v", err)
+	}
 	if _, err := service.serverStop(context.Background(), &ServerStopRequest{Server: serverResponse.Server}); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestAttachReconnectsAcrossServiceInstances(t *testing.T) {
+	deleteCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		var value interface{}
+		switch r.Method + " " + r.URL.Path {
+		case "GET /session/backend-remote":
+			value = map[string]interface{}{"capabilities": map[string]interface{}{"platformName": "Android", "appium:udid": "device-1"}}
+		case "POST /session/backend-remote/elements":
+			value = []map[string]interface{}{{mobile.W3CElementKey: "element-1"}}
+		case "GET /session/backend-remote/element/element-1/text":
+			value = "Remote"
+		case "DELETE /session/backend-remote":
+			deleteCount++
+		}
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"value": value})
+	}))
+	defer server.Close()
+	descriptorPath := filepath.Join(t.TempDir(), "android-session.json")
+	if err := mobile.WriteSessionDescriptor(descriptorPath, &mobile.SessionDescriptor{
+		Platform: "android", SessionID: "remote", BackendSessionID: "backend-remote",
+		Endpoint: server.URL, TargetID: "device-1", TestIDStrategy: "accessibilityId",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	firstProcess := newService(&fakeRunner{})
+	firstContext := endly.New().NewContext(nil)
+	attached, err := firstProcess.attach(firstContext, &AttachRequest{DescriptorPath: descriptorPath})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := firstProcess.run(firstContext, &RunRequest{
+		SessionID: attached.Session.ID, Commands: []interface{}{`remote = app.getByTestId("title").text()`},
+		ActionTimeoutMs: 20, PollIntervalMs: 1,
+	})
+	if err != nil || result.Data["remote"] != "Remote" {
+		t.Fatalf("attached run failed: result=%+v err=%v", result, err)
+	}
+	detached, err := firstProcess.close(context.Background(), &CloseRequest{SessionID: attached.Session.ID})
+	if err != nil || !strings.Contains(detached.Warning, "backend session remains open") || deleteCount != 0 {
+		t.Fatalf("safe detach failed: response=%+v deletes=%d err=%v", detached, deleteCount, err)
+	}
+
+	secondProcess := newService(&fakeRunner{})
+	secondContext := endly.New().NewContext(nil)
+	secondProcess.input = strings.NewReader(":status\n:quit\n")
+	secondOutput := &bytes.Buffer{}
+	secondProcess.output = secondOutput
+	reconnected, err := secondProcess.repl(secondContext, &REPLRequest{
+		Attach: &AttachRequest{DescriptorPath: descriptorPath, SessionID: "remote-owner", TakeOwnership: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(secondOutput.String(), `"attached": true`) {
+		t.Fatalf("inline attached REPL did not report attachment:\n%s", secondOutput.String())
+	}
+	closed, err := secondProcess.close(context.Background(), &CloseRequest{SessionID: reconnected.SessionID})
+	if err != nil || !closed.Closed || deleteCount != 1 {
+		t.Fatalf("owned reconnect close failed: response=%+v deletes=%d err=%v", closed, deleteCount, err)
+	}
+	if _, err := os.Stat(descriptorPath); !os.IsNotExist(err) {
+		t.Fatalf("owned close left descriptor behind: %v", err)
 	}
 }
 

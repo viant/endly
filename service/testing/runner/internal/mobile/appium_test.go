@@ -92,6 +92,29 @@ func TestAppiumClientReturnsProtocolError(t *testing.T) {
 	}
 }
 
+func TestAppiumClientAttachesExistingSession(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet || r.URL.Path != "/session/backend-1" {
+			t.Fatalf("unexpected attach request %s %s", r.Method, r.URL.Path)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"value": map[string]interface{}{
+			"capabilities": map[string]interface{}{"platformName": "Android", "appium:udid": "emulator-5554"},
+		}})
+	}))
+	defer server.Close()
+	client, err := NewAppiumClient(server.URL, server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	session, err := client.AttachSession(context.Background(), "backend-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if session.ID != "backend-1" || session.Capabilities["platformName"] != "Android" {
+		t.Fatalf("unexpected attached session: %+v", session)
+	}
+}
+
 func TestAppiumSessionDeviceAndCollectionEndpoints(t *testing.T) {
 	requests := []string{}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

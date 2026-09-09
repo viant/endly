@@ -1,6 +1,6 @@
 # Android runner service and DSL proposal
 
-> Status: accepted design contract. The `android` service implements the emulator/connected-device, build/deploy/session/test/capture/REPL lifecycle plus strict collections, W3C gestures, typed commands, hybrid contexts, richer element/device assertions, permissions/location/orientation/alerts, split APK/APKS/AAB deployment and signing inputs, process-shared leases, segmented video, and automatic failure evidence. The core paths and video are verified in a real API 35 arm64 AVD through Appium 3.7.0/UiAutomator2 8.6.1; split-package signing currently has deterministic protocol tests. Endly cross-builds for Darwin, Linux, and Windows. Remote workers/cloud farms, cross-process REPL attach/reconnect, and automatic inclusion of logs/video in failure manifests remain tracked below.
+> Status: accepted design contract. The `android` service implements the emulator/connected-device, build/deploy/session/test/capture/REPL lifecycle plus strict collections, W3C gestures, typed commands, hybrid contexts, richer element/device assertions, permissions/location/orientation/alerts, split APK/APKS/AAB deployment and signing inputs, process-shared leases, segmented video, automatic failure evidence, portable session descriptors, cross-process attach/reconnect, terminal completion, arrow-key editing, and persistent history. The core paths and video are verified in a real API 35 arm64 AVD through Appium 3.7.0/UiAutomator2 8.6.1; split-package signing currently has deterministic protocol tests. Endly cross-builds for Darwin, Linux, and Windows. Remote workers/cloud farms and automatic inclusion of logs/video in failure manifests remain tracked below.
 >
 > The filename preserves the requested `adntoid.md` spelling. The service ID and Go package are `android`.
 
@@ -99,6 +99,7 @@ Rules:
 | `android:capture-start` | fenced lease and capture options | `CaptureHandle` |
 | `android:capture-stop` | capture handle | artifact manifest |
 | `android:open` | fenced lease, server handle, app identity | `SessionHandle` |
+| `android:attach` | descriptor or endpoint/backend session ID | reconnected `SessionHandle` |
 | `android:close` | session handle | close/cleanup report |
 | `android:cleanup` | acquired session/capture/device/server handles | aggregate LIFO cleanup report |
 | `android:run` | session handle, commands, expectations | data, validations, steps, failures |

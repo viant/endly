@@ -82,6 +82,7 @@ require (
 	github.com/viant/xdatly/types/core v0.0.0-20250307183722-8c84fc717b52
 	github.com/viant/xdatly/types/custom v0.0.0-20240904221257-06e43f22d5f0
 	github.com/yuin/goldmark v1.4.13
+	golang.org/x/term v0.43.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.18.1
 )
@@ -228,7 +229,6 @@ require (
 	golang.org/x/mod v0.35.0 // indirect
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
-	golang.org/x/term v0.43.0 // indirect
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.44.0 // indirect

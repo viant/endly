@@ -36,9 +36,12 @@ type service struct {
 }
 
 type iosSession struct {
-	handle SessionHandle
-	appium *mobile.AppiumSession
-	mu     sync.Mutex
+	handle         SessionHandle
+	appium         *mobile.AppiumSession
+	attached       bool
+	ownsBackend    bool
+	descriptorPath string
+	mu             sync.Mutex
 }
 
 type iosCapture struct {
@@ -110,6 +113,15 @@ func (s *service) registerRoutes() {
 		ResponseProvider: func() interface{} { return &OpenResponse{} },
 		Handler: func(ctx *endly.Context, request interface{}) (interface{}, error) {
 			return s.open(ctx, request.(*OpenRequest))
+		},
+	})
+	s.Register(&endly.Route{
+		Action:           "attach",
+		RequestInfo:      &endly.ActionInfo{Description: "attach to an existing iOS Appium session"},
+		RequestProvider:  func() interface{} { return &AttachRequest{} },
+		ResponseProvider: func() interface{} { return &AttachResponse{} },
+		Handler: func(ctx *endly.Context, request interface{}) (interface{}, error) {
+			return s.attach(ctx, request.(*AttachRequest))
 		},
 	})
 	s.Register(&endly.Route{
@@ -250,12 +262,21 @@ func (s *service) registerRoutes() {
 }
 
 func (s *service) repl(ctx *endly.Context, request *REPLRequest) (*REPLResponse, error) {
+	if request.Attach != nil {
+		attached, err := s.attach(ctx, request.Attach)
+		if err != nil {
+			return nil, err
+		}
+		request.SessionID = attached.Session.ID
+	}
 	sessionID, session, err := s.resolveREPLSession(request.SessionID)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateLease(session.handle.Destination); err != nil {
-		return nil, err
+	if !session.attached {
+		if err := s.validateLease(session.handle.Destination); err != nil {
+			return nil, err
+		}
 	}
 	prompt := request.Prompt
 	if prompt == "" {
@@ -303,6 +324,7 @@ func (s *service) repl(ctx *endly.Context, request *REPLRequest) (*REPLResponse,
 				"platform": "ios", "sessionID": session.handle.ID,
 				"backendSessionID": session.handle.BackendSessionID,
 				"udid":             session.handle.Destination.UDID, "server": session.handle.Server.Endpoint,
+				"attached": session.attached, "ownsBackend": session.ownsBackend,
 			}
 		},
 		Close: func(replCtx context.Context) error {
@@ -519,8 +541,10 @@ func (s *service) artifact(ctx *endly.Context, request *ArtifactRequest) (*Artif
 	if !ok {
 		return nil, fmt.Errorf("iOS session %q was not found", request.SessionID)
 	}
-	if err := s.validateLease(session.handle.Destination); err != nil {
-		return nil, err
+	if !session.attached {
+		if err := s.validateLease(session.handle.Destination); err != nil {
+			return nil, err
+		}
 	}
 	result := &ArtifactResponse{Artifacts: []*mobile.Evidence{}}
 	prefix := "ios-" + safeArtifactPart(request.SessionID) + "-" + uuid.NewString()
@@ -709,20 +733,94 @@ func (s *service) open(ctx *endly.Context, request *OpenRequest) (*OpenResponse,
 		return nil, err
 	}
 	handle := SessionHandle{ID: request.SessionID, BackendSessionID: appiumSession.ID, Destination: request.Destination, Server: request.Server}
-	owned := &iosSession{handle: handle, appium: appiumSession}
+	descriptorPath := ctx.Expand(request.DescriptorPath)
+	if descriptorPath != "" {
+		descriptor := &mobile.SessionDescriptor{
+			Platform: "ios", SessionID: handle.ID, BackendSessionID: handle.BackendSessionID,
+			Endpoint: ctx.Expand(handle.Server.Endpoint), TargetID: handle.Destination.UDID,
+		}
+		if err := mobile.WriteSessionDescriptor(descriptorPath, descriptor); err != nil {
+			_ = appiumSession.Close(context.Background())
+			return nil, err
+		}
+	}
+	owned := &iosSession{
+		handle: handle, appium: appiumSession, ownsBackend: true, descriptorPath: descriptorPath,
+	}
 	s.mu.Lock()
 	if _, exists := s.sessions[handle.ID]; exists {
 		s.mu.Unlock()
 		_ = appiumSession.Close(context.Background())
+		_ = mobile.RemoveSessionDescriptor(descriptorPath)
 		return nil, fmt.Errorf("iOS session %q already exists", handle.ID)
 	}
 	s.sessions[handle.ID] = owned
 	s.mu.Unlock()
-	s.cleanupStack(ctx).Push("session:"+handle.ID, func(cleanupCtx context.Context) error {
+	if !request.KeepSession {
+		s.cleanupStack(ctx).Push("session:"+handle.ID, func(cleanupCtx context.Context) error {
+			_, err := s.close(cleanupCtx, &CloseRequest{SessionID: handle.ID})
+			return err
+		})
+	}
+	return &OpenResponse{Session: handle}, nil
+}
+
+func (s *service) attach(ctx *endly.Context, request *AttachRequest) (*AttachResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, err
+	}
+	descriptorPath := ctx.Expand(request.DescriptorPath)
+	descriptor := &mobile.SessionDescriptor{
+		Platform: "ios", SessionID: request.SessionID, BackendSessionID: request.BackendSessionID,
+		Endpoint: ctx.Expand(request.ServerURL), TargetID: request.TargetID,
+	}
+	if descriptorPath != "" {
+		loaded, err := mobile.ReadSessionDescriptor(descriptorPath, "ios")
+		if err != nil {
+			return nil, err
+		}
+		descriptor = loaded
+		if request.SessionID != "" {
+			descriptor.SessionID = request.SessionID
+		}
+	} else {
+		descriptor.Init()
+		if err := descriptor.Validate("ios"); err != nil {
+			return nil, err
+		}
+	}
+	if descriptor.SessionID == "" {
+		descriptor.SessionID = "ios-attached-" + descriptor.BackendSessionID
+	}
+	client, err := mobile.NewAppiumClient(descriptor.Endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	appiumSession, err := client.AttachSession(ctx.Background(), descriptor.BackendSessionID)
+	if err != nil {
+		return nil, err
+	}
+	handle := SessionHandle{
+		ID: descriptor.SessionID, BackendSessionID: descriptor.BackendSessionID,
+		Destination: DestinationLease{UDID: descriptor.TargetID},
+		Server:      ServerHandle{Endpoint: descriptor.Endpoint, Ownership: "external"},
+	}
+	attached := &iosSession{
+		handle: handle, appium: appiumSession, attached: true,
+		ownsBackend: request.TakeOwnership, descriptorPath: descriptorPath,
+	}
+	s.mu.Lock()
+	if _, exists := s.sessions[handle.ID]; exists {
+		s.mu.Unlock()
+		return nil, fmt.Errorf("iOS session %q already exists", handle.ID)
+	}
+	s.sessions[handle.ID] = attached
+	s.mu.Unlock()
+	s.cleanupStack(ctx).Push("attached-session:"+handle.ID, func(cleanupCtx context.Context) error {
 		_, err := s.close(cleanupCtx, &CloseRequest{SessionID: handle.ID})
 		return err
 	})
-	return &OpenResponse{Session: handle}, nil
+	return &AttachResponse{Session: handle}, nil
 }
 
 func (s *service) run(ctx *endly.Context, request *RunRequest) (*RunResponse, error) {
@@ -732,8 +830,10 @@ func (s *service) run(ctx *endly.Context, request *RunRequest) (*RunResponse, er
 	if !ok {
 		return nil, fmt.Errorf("iOS session %q was not found", request.SessionID)
 	}
-	if err := s.validateLease(session.handle.Destination); err != nil {
-		return nil, err
+	if !session.attached {
+		if err := s.validateLease(session.handle.Destination); err != nil {
+			return nil, err
+		}
 	}
 	commands := make([]interface{}, len(request.Commands))
 	state := ctx.State()
@@ -788,10 +888,16 @@ func (s *service) close(ctx context.Context, request *CloseRequest) (*CloseRespo
 	if !ok {
 		return &CloseResponse{Warning: "session already closed or unknown"}, nil
 	}
+	if !session.ownsBackend {
+		return &CloseResponse{Closed: true, Warning: "detached from external Appium session; backend session remains open"}, nil
+	}
 	session.mu.Lock()
 	err := session.appium.Close(ctx)
 	session.mu.Unlock()
 	if err != nil {
+		return nil, err
+	}
+	if err := mobile.RemoveSessionDescriptor(session.descriptorPath); err != nil {
 		return nil, err
 	}
 	return &CloseResponse{Closed: true}, nil
@@ -1232,7 +1338,7 @@ func (s *service) simulatorStart(ctx *endly.Context, request *SimulatorStartRequ
 	if err != nil {
 		return nil, err
 	}
-	lease := DestinationLease{ID: uuid.NewString(), Fence: processLease.Fence, ProcessLease: processLease}
+	lease := DestinationLease{ID: uuid.NewString(), Fence: processLease.Fence, ProcessLease: processLease, PreserveOnRelease: request.KeepBooted}
 	state := ""
 	switch {
 	case request.UDID != "":
@@ -1344,6 +1450,16 @@ func (s *service) stopOwned(ctx context.Context, xcrun string, lease Destination
 		}
 	}
 	response := &SimulatorStopResponse{}
+	if stored.PreserveOnRelease {
+		s.mu.Lock()
+		delete(s.leases, lease.ID)
+		s.mu.Unlock()
+		if err := s.leaseStore.Release(stored.ProcessLease); err != nil {
+			return response, err
+		}
+		response.Warning = "attached Simulator lease was released and left booted"
+		return response, nil
+	}
 	if _, err := s.runner.Run(ctx, mobile.Command{Name: xcrun, Args: []string{"simctl", "shutdown", stored.UDID}}); err != nil {
 		return nil, fmt.Errorf("shutdown iOS Simulator: %w", err)
 	}

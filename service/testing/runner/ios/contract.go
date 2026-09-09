@@ -35,13 +35,14 @@ type DoctorResponse struct {
 }
 
 type DestinationLease struct {
-	ID           string
-	Fence        uint64
-	UDID         string
-	Name         string
-	Runtime      string
-	OwnedClone   bool
-	ProcessLease *mobile.LeaseHandle
+	ID                string
+	Fence             uint64
+	UDID              string
+	Name              string
+	Runtime           string
+	OwnedClone        bool
+	PreserveOnRelease bool
+	ProcessLease      *mobile.LeaseHandle
 }
 
 type SimulatorStartRequest struct {
@@ -51,6 +52,7 @@ type SimulatorStartRequest struct {
 	DeviceType    string
 	Runtime       string
 	Erase         bool
+	KeepBooted    bool
 	BootTimeoutMs int
 }
 
@@ -83,6 +85,9 @@ func (r *SimulatorStartRequest) Validate() error {
 	}
 	if strings.TrimSpace(r.CloneName) == strings.TrimSpace(r.BaseName) && r.CloneName != "" {
 		return fmt.Errorf("CloneName must differ from BaseName")
+	}
+	if r.KeepBooted && (r.CloneName != "" || r.DeviceType != "") {
+		return fmt.Errorf("KeepBooted is supported only when attaching an existing Simulator by UDID or BaseName")
 	}
 	return nil
 }
@@ -199,12 +204,14 @@ func (r *TerminateRequest) Validate() error {
 type TerminateResponse struct{ Terminated bool }
 
 type OpenRequest struct {
-	SessionID    string
-	Destination  DestinationLease
-	Server       ServerHandle
-	BundleID     string
-	App          *Artifact
-	Capabilities map[string]interface{}
+	SessionID      string
+	Destination    DestinationLease
+	Server         ServerHandle
+	BundleID       string
+	App            *Artifact
+	Capabilities   map[string]interface{}
+	DescriptorPath string
+	KeepSession    bool
 }
 
 func (r *OpenRequest) Init() error {
@@ -223,6 +230,14 @@ func (r *OpenRequest) Validate() error {
 	}
 	if r.BundleID == "" && r.App == nil {
 		return fmt.Errorf("BundleID or App is required")
+	}
+	if r.KeepSession {
+		if r.DescriptorPath == "" {
+			return fmt.Errorf("DescriptorPath is required when KeepSession is enabled")
+		}
+		if r.Server.Ownership != "external" || !r.Destination.PreserveOnRelease {
+			return fmt.Errorf("KeepSession requires an external Appium server and a Simulator lease with KeepBooted enabled")
+		}
 	}
 	return nil
 }
@@ -308,6 +323,32 @@ type OpenResponse struct {
 	Session SessionHandle
 }
 
+type AttachRequest struct {
+	SessionID        string
+	DescriptorPath   string
+	BackendSessionID string
+	ServerURL        string
+	TargetID         string
+	TakeOwnership    bool
+}
+
+func (r *AttachRequest) Validate() error {
+	if r.DescriptorPath != "" {
+		if r.BackendSessionID != "" || r.ServerURL != "" || r.TargetID != "" {
+			return fmt.Errorf("DescriptorPath is mutually exclusive with explicit backend fields")
+		}
+		return nil
+	}
+	if r.BackendSessionID == "" || r.ServerURL == "" {
+		return fmt.Errorf("DescriptorPath or BackendSessionID and ServerURL are required")
+	}
+	return nil
+}
+
+type AttachResponse struct {
+	Session SessionHandle
+}
+
 type RunRequest struct {
 	SessionID        string
 	Commands         []interface{}
@@ -347,6 +388,7 @@ func (r *RunResponse) Assertion() []*assertly.Validation { return r.Validations 
 
 type REPLRequest struct {
 	SessionID         string
+	Attach            *AttachRequest
 	Prompt            string
 	ArtifactDirectory string
 	ActionTimeoutMs   int
@@ -373,6 +415,16 @@ func (r *REPLRequest) Init() error {
 	}
 	if r.MaxHistory <= 0 {
 		r.MaxHistory = 1000
+	}
+	return nil
+}
+
+func (r *REPLRequest) Validate() error {
+	if r.Attach != nil {
+		if r.SessionID != "" {
+			return fmt.Errorf("SessionID and Attach are mutually exclusive")
+		}
+		return r.Attach.Validate()
 	}
 	return nil
 }

@@ -37,6 +37,7 @@ func New() endly.Service {
 		{"capture-start", func() interface{} { return &CaptureStartRequest{} }, func() interface{} { return &CaptureStartResponse{} }},
 		{"capture-stop", func() interface{} { return &CaptureStopRequest{} }, func() interface{} { return &CaptureStopResponse{} }},
 		{"open", func() interface{} { return &OpenRequest{} }, func() interface{} { return &OpenResponse{} }},
+		{"attach", func() interface{} { return &AttachRequest{} }, func() interface{} { return &AttachResponse{} }},
 		{"run", func() interface{} { return &RunRequest{} }, func() interface{} { return &RunResponse{} }},
 		{"repl", func() interface{} { return &REPLRequest{} }, func() interface{} { return &REPLResponse{} }},
 		{"artifact", func() interface{} { return &ArtifactRequest{} }, func() interface{} { return &ArtifactResponse{} }},

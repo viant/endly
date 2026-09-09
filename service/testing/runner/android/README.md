@@ -12,21 +12,22 @@ Implemented actions:
 | `android:device-stop` | Release a fenced lease and stop only an emulator started by this service |
 | `android:server-start` | Health-check/register external Appium or start a loopback-only managed server |
 | `android:server-stop` | Release external registration or idempotently stop an owned server |
-| `android:install` | Apply an explicit fresh/clean/preserve/upgrade policy and install one APK |
+| `android:install` | Apply an explicit state policy and install an APK, split APKs, APKS, or AAB |
 | `android:uninstall` | Remove an exact package through a valid device lease |
 | `android:launch` | Resolve the launch activity and start the exact package |
 | `android:terminate` | Force-stop the exact package through a valid lease |
 | `android:test` | Optionally install app and test APKs, run `am instrument`, and expose failures as assertions |
-| `android:capture-start` | Start owned logcat capture, optionally cleared and filtered to the app PID |
-| `android:capture-stop` | Stop the capture and return sensitive log evidence metadata |
+| `android:capture-start` | Start owned logcat and optional segmented video capture |
+| `android:capture-stop` | Stop capture and return sensitive log/video evidence metadata |
 | `android:open` | Open an Appium UiAutomator2 session against valid device and server handles |
+| `android:attach` | Reconnect this process to an existing Appium session or descriptor |
 | `android:run` | Run assigned `app.*`/`device.*` commands and retrying inline expectations |
 | `android:repl` | Run a live terminal DSL, hierarchy inspector, screenshot tool, and command history |
 | `android:artifact` | Store sensitive screenshot and bounded UI-source evidence through AFS |
 | `android:close` | Idempotently close the Appium session |
 | `android:cleanup` | Run every registered teardown in LIFO order and report all errors |
 
-The implementation uses argv-safe local command execution, the project Gradle wrapper, Android instrumentation, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. The DSL supports strict plural lookup, `first`/`last`/`nth`/`count`, typed and textual commands, pointer gestures, richer element/device assertions, contexts, orientation, location, permissions, alerts, and application lifecycle. Deployment accepts a single APK, split APKs, APKS, or an AAB with file-backed signing secrets; capture can rotate bounded screen-recording segments. Failed runs can automatically retain screenshot/source/manifest evidence. Managed devices and Appium ports use process-shared fenced leases, while owned processes still unwind through the LIFO context cleanup stack. `open` requires a registered `ServerHandle` and explicit `testIDStrategy`. Remote workers/cloud farms, cross-process REPL attach, and richer log/video failure manifests remain to be implemented.
+The implementation uses argv-safe local command execution, the project Gradle wrapper, Android instrumentation, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. The DSL supports strict plural lookup, `first`/`last`/`nth`/`count`, typed and textual commands, pointer gestures, richer element/device assertions, contexts, orientation, location, permissions, alerts, and application lifecycle. Deployment accepts a single APK, split APKs, APKS, or an AAB with file-backed signing secrets; capture can rotate bounded screen-recording segments. Failed runs can automatically retain screenshot/source/manifest evidence. Managed devices and Appium ports use process-shared fenced leases, while owned processes still unwind through the LIFO context cleanup stack. `open` requires a registered `ServerHandle` and explicit `testIDStrategy`. Portable 0600 session descriptors let a second Endly process run `android:attach` or inline `android:repl.attach`; attachment is non-owning unless `takeOwnership` is explicit. Remote workers/cloud farms and richer log/video failure manifests remain to be implemented.
 
 Run the real host check:
 
@@ -62,4 +63,17 @@ expect(app.getByClass("android.widget.EditText")).toHaveText("https://example.te
 :quit
 ```
 
-Inspector commands are `:status`, `:source`, `:tree [filter]`, `:find <text>`, `:screenshot`, `:history`, `!<number>`, `:help`, `:close`, and `:quit`. Command errors are printed and the prompt continues unless `failOnError` is enabled. Ctrl-C returns to the workflow so deferred cleanup runs.
+Inspector commands are `:status`, `:source`, `:tree [filter]`, `:find <text>`, `:screenshot`, `:history`, `!<number>`, `:help`, `:close`, and `:quit`. In a real terminal, Tab completes DSL/meta commands and Up/Down navigate persistent history. Command errors are printed and the prompt continues unless `failOnError` is enabled. Ctrl-C returns to the workflow so deferred cleanup runs.
+
+For a deliberate cross-process handoff, create the session on an attached device and external Appium server with `descriptorPath` plus `keepSession: true`. A later process can enter the inspector directly:
+
+```yaml
+action: android:repl
+request:
+  attach:
+    descriptorPath: /secure/run/android-session.json
+    takeOwnership: false
+  historyPath: /secure/run/android-history.jsonl
+```
+
+Use `takeOwnership: true` only when `:close` or cleanup should delete the remote Appium session and its descriptor.

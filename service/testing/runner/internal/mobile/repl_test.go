@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -142,5 +143,60 @@ func TestREPLCloseClosesSessionAndExits(t *testing.T) {
 	})
 	if err != nil || !closed || result.ExitedBy != "close" {
 		t.Fatalf("close failed: result=%+v closed=%t err=%v", result, closed, err)
+	}
+}
+
+func TestCompleteREPLLine(t *testing.T) {
+	tests := []struct {
+		line string
+		want string
+	}{
+		{line: ":stat", want: ":status"},
+		{line: "app.getByTes", want: "app.getByTestId("},
+		{line: `app.getByText("Next").ta`, want: `app.getByText("Next").tap()`},
+		{line: "device.ori", want: "device.orientation()"},
+		{line: `expect(app.getByText("Done")).toHaveCou`, want: `expect(app.getByText("Done")).toHaveCount(`},
+	}
+	for _, test := range tests {
+		completed, position, matches := CompleteREPLLine(test.line, len(test.line), nil)
+		if completed != test.want || position != len(test.want) || len(matches) == 0 {
+			t.Errorf("complete %q = %q at %d (%v), want %q", test.line, completed, position, matches, test.want)
+		}
+	}
+}
+
+func TestCompleteREPLLineReportsAmbiguity(t *testing.T) {
+	line := "app.getBy"
+	completed, position, matches := CompleteREPLLine(line, len(line), nil)
+	if completed != line || position != len(line) || len(matches) < 5 {
+		t.Fatalf("expected ambiguous locator candidates, got line=%q position=%d matches=%v", completed, position, matches)
+	}
+}
+
+func TestTerminalHistoryUsesNewestFirstAndBoundsEntries(t *testing.T) {
+	history := newTerminalHistory([]string{"one", "two", "three"}, 2)
+	if history.Len() != 2 || history.At(0) != "three" || history.At(1) != "two" {
+		t.Fatalf("unexpected terminal history: len=%d newest=%q older=%q", history.Len(), history.At(0), history.At(1))
+	}
+}
+
+func TestREPLTTYIntegration(t *testing.T) {
+	if os.Getenv("ENDLY_REPL_TTY_INTEGRATION") != "1" {
+		t.Skip("set ENDLY_REPL_TTY_INTEGRATION=1 and run under a PTY")
+	}
+	executed := []string{}
+	result, err := RunREPL(context.Background(), os.Stdin, os.Stdout, REPLConfig{Prompt: "tty> ", MaxHistory: 10}, REPLCallbacks{
+		Execute: func(_ context.Context, command string) (*ExecutionResult, error) {
+			executed = append(executed, command)
+			return &ExecutionResult{Steps: []ExecutionStep{{Attempts: 1}}}, nil
+		},
+		Source: func(context.Context) (string, error) { return "<root/>", nil },
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `app.getByTestId("title").text()`
+	if result.ExitedBy != "quit" || len(executed) != 2 || executed[0] != want || executed[1] != want {
+		t.Fatalf("TTY editing/completion failed: result=%+v executed=%q", result, executed)
 	}
 }

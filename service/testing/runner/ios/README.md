@@ -20,13 +20,14 @@ Implemented actions:
 | `ios:capture-start` | Start an owned Simulator unified-log stream with an optional predicate |
 | `ios:capture-stop` | Stop the stream and return sensitive log evidence metadata |
 | `ios:open` | Open an Appium XCUITest session against valid Simulator and server handles |
+| `ios:attach` | Reconnect this process to an existing Appium session or descriptor |
 | `ios:run` | Run assigned `app.*`/`device.*` commands and retrying inline expectations |
 | `ios:repl` | Run a live terminal DSL, hierarchy inspector, screenshot tool, and command history |
 | `ios:artifact` | Store sensitive screenshot and bounded accessibility-source evidence through AFS |
 | `ios:close` | Idempotently close the Appium session |
 | `ios:cleanup` | Run every registered teardown in LIFO order and report all errors |
 
-The implementation uses argv-safe local command execution, Xcode Simulator build/test, archive/export signing inputs, and `.xcresult` tooling, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. The DSL supports strict plural lookup, `first`/`last`/`nth`/`count`, typed and textual commands, pointer gestures, richer element/device assertions, contexts, orientation, location, alerts, permissions, appearance, biometrics, and application lifecycle. Simulator capture can rotate bounded video segments, and failed runs can automatically retain screenshot/source/manifest evidence. Managed Simulators and Appium ports use process-shared fenced leases, while owned processes still unwind through the LIFO context cleanup stack. On non-Darwin hosts, `ios` registers an action-compatible unsupported-platform stub so Endly still builds and reports a useful error. Remote macOS workers/cloud farms, advanced WDA modes, physical-device deployment, cross-process REPL attach, and richer log/video failure manifests remain to be implemented.
+The implementation uses argv-safe local command execution, Xcode Simulator build/test, archive/export signing inputs, and `.xcresult` tooling, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. The DSL supports strict plural lookup, `first`/`last`/`nth`/`count`, typed and textual commands, pointer gestures, richer element/device assertions, contexts, orientation, location, alerts, permissions, appearance, biometrics, and application lifecycle. Simulator capture can rotate bounded video segments, and failed runs can automatically retain screenshot/source/manifest evidence. Managed Simulators and Appium ports use process-shared fenced leases, while owned processes still unwind through the LIFO context cleanup stack. Portable 0600 session descriptors let a second Endly process run `ios:attach` or inline `ios:repl.attach`; attachment is non-owning unless `takeOwnership` is explicit. On non-Darwin hosts, `ios` registers the same action-compatible unsupported-platform stub so Endly still builds and reports a useful error. Remote macOS workers/cloud farms, advanced WDA modes, physical-device deployment, and richer log/video failure manifests remain to be implemented.
 
 Run the real host check:
 
@@ -69,4 +70,17 @@ expect(app.getByTestId("count")).toHaveText("Count: 1", 10000)
 :quit
 ```
 
-Inspector commands are `:status`, `:source`, `:tree [filter]`, `:find <text>`, `:screenshot`, `:history`, `!<number>`, `:help`, `:close`, and `:quit`. Command errors are printed and the prompt continues unless `failOnError` is enabled. Ctrl-C returns to the workflow so deferred cleanup runs.
+Inspector commands are `:status`, `:source`, `:tree [filter]`, `:find <text>`, `:screenshot`, `:history`, `!<number>`, `:help`, `:close`, and `:quit`. In a real terminal, Tab completes DSL/meta commands and Up/Down navigate persistent history. Command errors are printed and the prompt continues unless `failOnError` is enabled. Ctrl-C returns to the workflow so deferred cleanup runs.
+
+For a deliberate cross-process handoff, select an existing Simulator with `keepBooted: true`, use an external Appium server, and open with `descriptorPath` plus `keepSession: true`. A later process can enter the inspector directly:
+
+```yaml
+action: ios:repl
+request:
+  attach:
+    descriptorPath: /secure/run/ios-session.json
+    takeOwnership: false
+  historyPath: /secure/run/ios-history.jsonl
+```
+
+Use `takeOwnership: true` only when `:close` or cleanup should delete the remote Appium session and its descriptor.

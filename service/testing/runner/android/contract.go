@@ -255,6 +255,8 @@ type OpenRequest struct {
 	Activity       string
 	TestIDStrategy string
 	Capabilities   map[string]interface{}
+	DescriptorPath string
+	KeepSession    bool
 }
 
 func (r *OpenRequest) Init() error {
@@ -273,6 +275,14 @@ func (r *OpenRequest) Validate() error {
 	}
 	if r.Package == "" {
 		return fmt.Errorf("Package is required")
+	}
+	if r.KeepSession {
+		if r.DescriptorPath == "" {
+			return fmt.Errorf("DescriptorPath is required when KeepSession is enabled")
+		}
+		if r.Server.Ownership != "external" || r.Lease.Owned {
+			return fmt.Errorf("KeepSession requires an external Appium server and an attached device")
+		}
 	}
 	switch r.TestIDStrategy {
 	case "accessibilityId", "resourceId", "composeResourceId":
@@ -354,6 +364,41 @@ type OpenResponse struct {
 	Session SessionHandle
 }
 
+// AttachRequest reconnects this Endly process to an Appium session created by
+// another process. DescriptorPath is mutually exclusive with the explicit
+// backend fields.
+type AttachRequest struct {
+	SessionID        string
+	DescriptorPath   string
+	BackendSessionID string
+	ServerURL        string
+	TargetID         string
+	TestIDStrategy   string
+	TakeOwnership    bool
+}
+
+func (r *AttachRequest) Validate() error {
+	if r.DescriptorPath != "" {
+		if r.BackendSessionID != "" || r.ServerURL != "" || r.TargetID != "" || r.TestIDStrategy != "" {
+			return fmt.Errorf("DescriptorPath is mutually exclusive with explicit backend fields")
+		}
+		return nil
+	}
+	if r.BackendSessionID == "" || r.ServerURL == "" {
+		return fmt.Errorf("DescriptorPath or BackendSessionID and ServerURL are required")
+	}
+	switch r.TestIDStrategy {
+	case "accessibilityId", "resourceId", "composeResourceId":
+	default:
+		return fmt.Errorf("TestIDStrategy must be accessibilityId, resourceId, or composeResourceId")
+	}
+	return nil
+}
+
+type AttachResponse struct {
+	Session SessionHandle
+}
+
 type RunRequest struct {
 	SessionID        string
 	Commands         []interface{}
@@ -393,6 +438,7 @@ func (r *RunResponse) Assertion() []*assertly.Validation { return r.Validations 
 
 type REPLRequest struct {
 	SessionID         string
+	Attach            *AttachRequest
 	Prompt            string
 	ArtifactDirectory string
 	ActionTimeoutMs   int
@@ -419,6 +465,16 @@ func (r *REPLRequest) Init() error {
 	}
 	if r.MaxHistory <= 0 {
 		r.MaxHistory = 1000
+	}
+	return nil
+}
+
+func (r *REPLRequest) Validate() error {
+	if r.Attach != nil {
+		if r.SessionID != "" {
+			return fmt.Errorf("SessionID and Attach are mutually exclusive")
+		}
+		return r.Attach.Validate()
 	}
 	return nil
 }
