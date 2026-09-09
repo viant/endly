@@ -93,7 +93,7 @@ func TestParseSimulators(t *testing.T) {
 
 func TestRoutes(t *testing.T) {
 	service := newService(&fakeRunner{})
-	for _, action := range []string{"doctor", "simulator-start", "simulator-stop", "server-start", "server-stop", "build", "install", "uninstall", "launch", "terminate", "test", "capture-start", "capture-stop", "open", "run", "repl", "artifact", "close", "cleanup"} {
+	for _, action := range []string{"doctor", "simulator-start", "simulator-stop", "server-start", "server-stop", "build", "install", "uninstall", "launch", "terminate", "test", "capture-start", "capture-stop", "open", "attach", "run", "repl", "artifact", "close", "cleanup"} {
 		if _, err := service.Route(action); err != nil {
 			t.Fatalf("route %q was not registered: %v", action, err)
 		}
@@ -108,6 +108,24 @@ func TestOpenRequestAcceptsManagedServer(t *testing.T) {
 	}
 	if err := request.Validate(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestKeepSessionRequiresExternalDurableResources(t *testing.T) {
+	request := &OpenRequest{
+		Destination: DestinationLease{ID: "lease", Fence: 1, UDID: "SIM-1", PreserveOnRelease: true},
+		Server:      ServerHandle{Endpoint: "http://127.0.0.1:4723", Ownership: "external"},
+		BundleID:    "com.example.app", DescriptorPath: "/tmp/ios-session.json", KeepSession: true,
+	}
+	if err := request.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	request.Destination.PreserveOnRelease = false
+	if err := request.Validate(); err == nil {
+		t.Fatal("expected non-persistent Simulator lease to be rejected for session handoff")
+	}
+	if err := (&SimulatorStartRequest{BaseName: "Base", CloneName: "Clone", KeepBooted: true}).Validate(); err == nil {
+		t.Fatal("expected owned clone to be rejected for KeepBooted")
 	}
 }
 
@@ -416,17 +434,22 @@ func TestAppiumRunnerFlow(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	descriptorPath := filepath.Join(t.TempDir(), "opened-session.json")
 	opened, err := service.open(ctx, &OpenRequest{
-		SessionID:   "ios-test",
-		Destination: lease,
-		Server:      serverResponse.Server,
-		BundleID:    "com.example.app",
+		SessionID:      "ios-test",
+		Destination:    lease,
+		Server:         serverResponse.Server,
+		BundleID:       "com.example.app",
+		DescriptorPath: descriptorPath,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if opened.Session.BackendSessionID != "backend-1" {
 		t.Fatalf("unexpected session: %+v", opened.Session)
+	}
+	if descriptor, err := mobile.ReadSessionDescriptor(descriptorPath, "ios"); err != nil || descriptor.BackendSessionID != "backend-1" {
+		t.Fatalf("open did not publish a usable descriptor: %+v err=%v", descriptor, err)
 	}
 	result, err := service.run(ctx, &RunRequest{
 		SessionID: opened.Session.ID,
@@ -502,8 +525,78 @@ func TestAppiumRunnerFlow(t *testing.T) {
 	if err != nil || !closed.Closed {
 		t.Fatalf("unexpected close response: %+v, err=%v", closed, err)
 	}
+	if _, err := os.Stat(descriptorPath); !os.IsNotExist(err) {
+		t.Fatalf("closed session descriptor remains: %v", err)
+	}
 	if _, err := service.serverStop(context.Background(), &ServerStopRequest{Server: serverResponse.Server}); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestAttachReconnectsAcrossServiceInstances(t *testing.T) {
+	deleteCount := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		var value interface{}
+		switch r.Method + " " + r.URL.Path {
+		case "GET /session/backend-remote":
+			value = map[string]interface{}{"capabilities": map[string]interface{}{"platformName": "iOS", "appium:udid": "SIM-REMOTE"}}
+		case "POST /session/backend-remote/elements":
+			value = []map[string]interface{}{{mobile.W3CElementKey: "element-1"}}
+		case "GET /session/backend-remote/element/element-1/text":
+			value = "Remote"
+		case "DELETE /session/backend-remote":
+			deleteCount++
+		}
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"value": value})
+	}))
+	defer server.Close()
+	descriptorPath := filepath.Join(t.TempDir(), "ios-session.json")
+	if err := mobile.WriteSessionDescriptor(descriptorPath, &mobile.SessionDescriptor{
+		Platform: "ios", SessionID: "remote", BackendSessionID: "backend-remote",
+		Endpoint: server.URL, TargetID: "SIM-REMOTE",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	firstProcess := newService(&fakeRunner{})
+	firstContext := endly.New().NewContext(nil)
+	attached, err := firstProcess.attach(firstContext, &AttachRequest{DescriptorPath: descriptorPath})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := firstProcess.run(firstContext, &RunRequest{
+		SessionID: attached.Session.ID, Commands: []interface{}{`remote = app.getByTestId("title").text()`},
+		ActionTimeoutMs: 20, PollIntervalMs: 1,
+	})
+	if err != nil || result.Data["remote"] != "Remote" {
+		t.Fatalf("attached run failed: result=%+v err=%v", result, err)
+	}
+	detached, err := firstProcess.close(context.Background(), &CloseRequest{SessionID: attached.Session.ID})
+	if err != nil || !strings.Contains(detached.Warning, "backend session remains open") || deleteCount != 0 {
+		t.Fatalf("safe detach failed: response=%+v deletes=%d err=%v", detached, deleteCount, err)
+	}
+
+	secondProcess := newService(&fakeRunner{})
+	secondContext := endly.New().NewContext(nil)
+	secondProcess.input = strings.NewReader(":status\n:quit\n")
+	secondOutput := &bytes.Buffer{}
+	secondProcess.output = secondOutput
+	reconnected, err := secondProcess.repl(secondContext, &REPLRequest{
+		Attach: &AttachRequest{DescriptorPath: descriptorPath, SessionID: "remote-owner", TakeOwnership: true},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(secondOutput.String(), `"attached": true`) {
+		t.Fatalf("inline attached REPL did not report attachment:\n%s", secondOutput.String())
+	}
+	closed, err := secondProcess.close(context.Background(), &CloseRequest{SessionID: reconnected.SessionID})
+	if err != nil || !closed.Closed || deleteCount != 1 {
+		t.Fatalf("owned reconnect close failed: response=%+v deletes=%d err=%v", closed, deleteCount, err)
+	}
+	if _, err := os.Stat(descriptorPath); !os.IsNotExist(err) {
+		t.Fatalf("owned close left descriptor behind: %v", err)
 	}
 }
 
@@ -540,6 +633,34 @@ func TestDoctorAndOwnedCloneLifecycle(t *testing.T) {
 	}
 	if _, err := os.Stat(started.Lease.ProcessLease.Path); !os.IsNotExist(err) {
 		t.Fatalf("persistent destination lease remains after stop: %v", err)
+	}
+}
+
+func TestExistingSimulatorCanRemainBootedForSessionHandoff(t *testing.T) {
+	runner := &fakeRunner{}
+	service := newService(runner)
+	service.leaseStore = mobile.NewLeaseStore(t.TempDir())
+	ctx := endly.New().NewContext(nil)
+	request := &SimulatorStartRequest{BaseName: "Endly Base", KeepBooted: true, BootTimeoutMs: 1000}
+	if err := request.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	started, err := service.simulatorStart(ctx, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !started.Lease.PreserveOnRelease || started.Lease.OwnedClone {
+		t.Fatalf("unexpected handoff lease: %+v", started.Lease)
+	}
+	stopped, err := service.simulatorStop(ctx, &SimulatorStopRequest{Lease: started.Lease})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stopped.Shutdown || !strings.Contains(stopped.Warning, "left booted") {
+		t.Fatalf("Simulator was not preserved: %+v", stopped)
+	}
+	if strings.Contains(recordedCommands(runner), "simctl shutdown BASE-UDID") {
+		t.Fatalf("preserved Simulator was shut down:\n%s", recordedCommands(runner))
 	}
 }
 

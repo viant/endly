@@ -19,6 +19,7 @@ type REPLConfig struct {
 	FailOnError    bool
 	HistoryPath    string
 	MaxHistory     int
+	Completions    []string
 }
 
 type REPLCallbacks struct {
@@ -62,32 +63,27 @@ func RunREPL(ctx context.Context, input io.Reader, output io.Writer, config REPL
 		return nil, err
 	}
 	result := &REPLResult{History: history, Data: map[string]interface{}{}, Artifacts: []*Evidence{}}
-	scanner := bufio.NewScanner(input)
-	scanner.Buffer(make([]byte, 4096), 1_000_000)
+	lineReader, outputTarget, restoreTerminal, err := newREPLLineReader(input, output, config, history)
+	if err != nil {
+		return nil, err
+	}
+	defer restoreTerminal()
 	replCtx, stopSignals := signal.NotifyContext(ctx, os.Interrupt)
 	defer stopSignals()
-	inputs := make(chan replInput)
-	go func() {
-		for scanner.Scan() {
-			select {
-			case inputs <- replInput{line: scanner.Text()}:
-			case <-replCtx.Done():
-				return
-			}
-		}
-		entry := replInput{eof: true, err: scanner.Err()}
-		select {
-		case inputs <- entry:
-		case <-replCtx.Done():
-		}
-		close(inputs)
-	}()
-	writer := bufio.NewWriter(output)
+	writer := bufio.NewWriter(outputTarget)
 	defer writer.Flush()
 	writeREPLHelp(writer)
+	_ = writer.Flush()
 	for {
-		_, _ = fmt.Fprint(writer, config.Prompt)
+		if !lineReader.OwnsPrompt() {
+			_, _ = fmt.Fprint(writer, config.Prompt)
+		}
 		_ = writer.Flush()
+		inputs := make(chan replInput, 1)
+		go func() {
+			line, readErr := lineReader.ReadLine()
+			inputs <- replInput{line: line, err: readErr, eof: readErr == io.EOF}
+		}()
 		var inputEntry replInput
 		select {
 		case <-replCtx.Done():
@@ -98,12 +94,16 @@ func RunREPL(ctx context.Context, input io.Reader, output io.Writer, config REPL
 			result.ExitedBy = "interrupt"
 			_, _ = fmt.Fprintln(writer, "\ninterrupted")
 			return result, nil
-		case entry, ok := <-inputs:
-			if !ok || entry.eof {
-				result.ExitedBy = "eof"
-				if entry.err != nil {
-					return result, fmt.Errorf("read REPL input: %w", entry.err)
+		case entry := <-inputs:
+			if entry.err != nil {
+				if entry.eof {
+					result.ExitedBy = "eof"
+					return result, nil
 				}
+				return result, fmt.Errorf("read REPL input: %w", entry.err)
+			}
+			if entry.eof {
+				result.ExitedBy = "eof"
 				return result, nil
 			}
 			inputEntry = entry

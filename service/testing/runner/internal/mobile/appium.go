@@ -73,6 +73,25 @@ func (c *AppiumClient) NewSession(ctx context.Context, capabilities map[string]i
 	return &AppiumSession{ID: value.SessionID, Capabilities: value.Capabilities, client: c}, nil
 }
 
+// AttachSession reconnects a client to an existing W3C session without creating
+// or taking ownership of it. The caller decides whether Close should eventually
+// be issued for the returned session.
+func (c *AppiumClient) AttachSession(ctx context.Context, sessionID string) (*AppiumSession, error) {
+	if strings.TrimSpace(sessionID) == "" {
+		return nil, fmt.Errorf("Appium backend session ID is required")
+	}
+	var value map[string]interface{}
+	session := &AppiumSession{ID: sessionID, client: c}
+	if err := c.do(ctx, http.MethodGet, session.sessionPath(""), nil, &value); err != nil {
+		return nil, fmt.Errorf("attach Appium session %q: %w", sessionID, err)
+	}
+	if capabilities, ok := value["capabilities"].(map[string]interface{}); ok {
+		value = capabilities
+	}
+	session.Capabilities = value
+	return session, nil
+}
+
 func (s *AppiumSession) Close(ctx context.Context) error {
 	return s.client.do(ctx, http.MethodDelete, s.sessionPath(""), nil, nil)
 }

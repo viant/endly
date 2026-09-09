@@ -95,6 +95,7 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 		t.Fatal(err)
 	}
 	if os.Getenv("ENDLY_ANDROID_APPIUM_INTEGRATION") == "1" {
+		descriptorPath := filepath.Join(t.TempDir(), "android-appium-session.json")
 		executable := os.Getenv("ENDLY_ANDROID_APPIUM_EXECUTABLE")
 		appiumHome := os.Getenv("ENDLY_ANDROID_APPIUM_HOME")
 		server, err := service.serverStart(ctx, &ServerStartRequest{
@@ -106,7 +107,7 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 		}
 		opened, err := service.open(ctx, &OpenRequest{
 			SessionID: "android-fixture", Lease: started.Lease, Server: server.Server,
-			Package: packageName, Activity: activity, TestIDStrategy: "resourceId",
+			Package: packageName, Activity: activity, TestIDStrategy: "resourceId", DescriptorPath: descriptorPath,
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -145,6 +146,22 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 		})
 		if err != nil || len(evidence.Artifacts) != 2 {
 			t.Fatalf("Appium evidence failed: response=%+v err=%v", evidence, err)
+		}
+		attachedService := newService(mobile.OSRunner{})
+		attachedContext := endly.New().NewContext(nil)
+		attached, err := attachedService.attach(attachedContext, &AttachRequest{DescriptorPath: descriptorPath})
+		if err != nil {
+			t.Fatalf("attach existing Appium session: %v", err)
+		}
+		attachedRun, err := attachedService.run(attachedContext, &RunRequest{
+			SessionID: attached.Session.ID, Commands: []interface{}{`attachedContext = device.context()`},
+			ActionTimeoutMs: 10_000, PollIntervalMs: 200,
+		})
+		if err != nil || attachedRun.Data["attachedContext"] != "NATIVE_APP" {
+			t.Fatalf("attached Appium session failed: response=%+v err=%v", attachedRun, err)
+		}
+		if closed, err := attachedService.close(context.Background(), &CloseRequest{SessionID: attached.Session.ID}); err != nil || !strings.Contains(closed.Warning, "remains open") {
+			t.Fatalf("safe attached-session close failed: response=%+v err=%v", closed, err)
 		}
 	} else {
 		if _, err := service.launch(ctx, &LaunchRequest{Lease: started.Lease, Package: packageName, Activity: activity}); err != nil {

@@ -87,6 +87,7 @@ func TestIOSSimulatorIntegration(t *testing.T) {
 	appiumEnabled := os.Getenv("ENDLY_IOS_APPIUM_INTEGRATION") == "1"
 	var appiumSession *OpenResponse
 	if appiumEnabled {
+		descriptorPath := filepath.Join(t.TempDir(), "ios-appium-session.json")
 		appiumExecutable := os.Getenv("ENDLY_IOS_APPIUM_EXECUTABLE")
 		appiumHome := os.Getenv("ENDLY_IOS_APPIUM_HOME")
 		if appiumExecutable == "" || appiumHome == "" {
@@ -102,7 +103,7 @@ func TestIOSSimulatorIntegration(t *testing.T) {
 			t.Fatalf("start Appium: %v\n%s", err, readDiagnostic(appiumLog))
 		}
 		appiumSession, err = service.open(ctx, &OpenRequest{
-			SessionID: "ios-fixture", Destination: started.Lease, Server: server.Server, BundleID: bundleID,
+			SessionID: "ios-fixture", Destination: started.Lease, Server: server.Server, BundleID: bundleID, DescriptorPath: descriptorPath,
 		})
 		if err != nil {
 			t.Fatalf("open XCUITest session: %v\n%s", err, readDiagnostic(appiumLog))
@@ -145,6 +146,22 @@ func TestIOSSimulatorIntegration(t *testing.T) {
 		})
 		if err != nil || len(appiumEvidence.Artifacts) != 2 {
 			t.Fatalf("Appium evidence failed: response=%+v err=%v", appiumEvidence, err)
+		}
+		attachedService := newService(mobile.OSRunner{})
+		attachedContext := endly.New().NewContext(nil)
+		attached, err := attachedService.attach(attachedContext, &AttachRequest{DescriptorPath: descriptorPath})
+		if err != nil {
+			t.Fatalf("attach existing Appium session: %v", err)
+		}
+		attachedRun, err := attachedService.run(attachedContext, &RunRequest{
+			SessionID: attached.Session.ID, Commands: []interface{}{`attachedContext = device.context()`},
+			ActionTimeoutMs: 10_000, PollIntervalMs: 200,
+		})
+		if err != nil || attachedRun.Data["attachedContext"] != "NATIVE_APP" {
+			t.Fatalf("attached Appium session failed: response=%+v err=%v", attachedRun, err)
+		}
+		if closed, err := attachedService.close(context.Background(), &CloseRequest{SessionID: attached.Session.ID}); err != nil || !strings.Contains(closed.Warning, "remains open") {
+			t.Fatalf("safe attached-session close failed: response=%+v err=%v", closed, err)
 		}
 	}
 	videoDirectory := t.TempDir()

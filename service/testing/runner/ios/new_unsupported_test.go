@@ -12,7 +12,7 @@ import (
 func TestUnsupportedServicePreservesActionSurface(t *testing.T) {
 	service := New()
 	ctx := endly.New().NewContext(nil)
-	for _, action := range []string{"doctor", "build", "open", "run", "repl", "cleanup"} {
+	for _, action := range []string{"doctor", "build", "open", "attach", "run", "repl", "cleanup"} {
 		route, err := service.Route(action)
 		if err != nil {
 			t.Fatalf("missing stub route %q: %v", action, err)

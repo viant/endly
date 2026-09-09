@@ -40,6 +40,9 @@ type androidSession struct {
 	handle         SessionHandle
 	appium         *mobile.AppiumSession
 	testIDStrategy string
+	attached       bool
+	ownsBackend    bool
+	descriptorPath string
 	mu             sync.Mutex
 }
 
@@ -110,6 +113,15 @@ func (s *service) registerRoutes() {
 		ResponseProvider: func() interface{} { return &OpenResponse{} },
 		Handler: func(ctx *endly.Context, request interface{}) (interface{}, error) {
 			return s.open(ctx, request.(*OpenRequest))
+		},
+	})
+	s.Register(&endly.Route{
+		Action:           "attach",
+		RequestInfo:      &endly.ActionInfo{Description: "attach to an existing Android Appium session"},
+		RequestProvider:  func() interface{} { return &AttachRequest{} },
+		ResponseProvider: func() interface{} { return &AttachResponse{} },
+		Handler: func(ctx *endly.Context, request interface{}) (interface{}, error) {
+			return s.attach(ctx, request.(*AttachRequest))
 		},
 	})
 	s.Register(&endly.Route{
@@ -250,12 +262,21 @@ func (s *service) registerRoutes() {
 }
 
 func (s *service) repl(ctx *endly.Context, request *REPLRequest) (*REPLResponse, error) {
+	if request.Attach != nil {
+		attached, err := s.attach(ctx, request.Attach)
+		if err != nil {
+			return nil, err
+		}
+		request.SessionID = attached.Session.ID
+	}
 	sessionID, session, err := s.resolveREPLSession(request.SessionID)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateLease(session.handle.Lease); err != nil {
-		return nil, err
+	if !session.attached {
+		if err := s.validateLease(session.handle.Lease); err != nil {
+			return nil, err
+		}
 	}
 	prompt := request.Prompt
 	if prompt == "" {
@@ -303,6 +324,7 @@ func (s *service) repl(ctx *endly.Context, request *REPLRequest) (*REPLResponse,
 				"platform": "android", "sessionID": session.handle.ID,
 				"backendSessionID": session.handle.BackendSessionID,
 				"serial":           session.handle.Lease.Serial, "server": session.handle.Server.Endpoint,
+				"attached": session.attached, "ownsBackend": session.ownsBackend,
 			}
 		},
 		Close: func(replCtx context.Context) error {
@@ -527,8 +549,10 @@ func (s *service) artifact(ctx *endly.Context, request *ArtifactRequest) (*Artif
 	if !ok {
 		return nil, fmt.Errorf("Android session %q was not found", request.SessionID)
 	}
-	if err := s.validateLease(session.handle.Lease); err != nil {
-		return nil, err
+	if !session.attached {
+		if err := s.validateLease(session.handle.Lease); err != nil {
+			return nil, err
+		}
 	}
 	result := &ArtifactResponse{Artifacts: []*mobile.Evidence{}}
 	prefix := "android-" + safeArtifactPart(request.SessionID) + "-" + uuid.NewString()
@@ -807,20 +831,100 @@ func (s *service) open(ctx *endly.Context, request *OpenRequest) (*OpenResponse,
 		return nil, err
 	}
 	handle := SessionHandle{ID: request.SessionID, BackendSessionID: appiumSession.ID, Lease: request.Lease, Server: request.Server}
-	owned := &androidSession{handle: handle, appium: appiumSession, testIDStrategy: request.TestIDStrategy}
+	descriptorPath := ctx.Expand(request.DescriptorPath)
+	if descriptorPath != "" {
+		descriptor := &mobile.SessionDescriptor{
+			Platform: "android", SessionID: handle.ID, BackendSessionID: handle.BackendSessionID,
+			Endpoint: ctx.Expand(handle.Server.Endpoint), TargetID: handle.Lease.Serial, TestIDStrategy: request.TestIDStrategy,
+		}
+		if err := mobile.WriteSessionDescriptor(descriptorPath, descriptor); err != nil {
+			_ = appiumSession.Close(context.Background())
+			return nil, err
+		}
+	}
+	owned := &androidSession{
+		handle: handle, appium: appiumSession, testIDStrategy: request.TestIDStrategy,
+		ownsBackend: true, descriptorPath: descriptorPath,
+	}
 	s.mu.Lock()
 	if _, exists := s.sessions[handle.ID]; exists {
 		s.mu.Unlock()
 		_ = appiumSession.Close(context.Background())
+		_ = mobile.RemoveSessionDescriptor(descriptorPath)
 		return nil, fmt.Errorf("Android session %q already exists", handle.ID)
 	}
 	s.sessions[handle.ID] = owned
 	s.mu.Unlock()
-	s.cleanupStack(ctx).Push("session:"+handle.ID, func(cleanupCtx context.Context) error {
+	if !request.KeepSession {
+		s.cleanupStack(ctx).Push("session:"+handle.ID, func(cleanupCtx context.Context) error {
+			_, err := s.close(cleanupCtx, &CloseRequest{SessionID: handle.ID})
+			return err
+		})
+	}
+	return &OpenResponse{Session: handle}, nil
+}
+
+func (s *service) attach(ctx *endly.Context, request *AttachRequest) (*AttachResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, err
+	}
+	descriptorPath := ctx.Expand(request.DescriptorPath)
+	descriptor := &mobile.SessionDescriptor{
+		Platform: "android", SessionID: request.SessionID, BackendSessionID: request.BackendSessionID,
+		Endpoint: ctx.Expand(request.ServerURL), TargetID: request.TargetID, TestIDStrategy: request.TestIDStrategy,
+	}
+	if descriptorPath != "" {
+		loaded, err := mobile.ReadSessionDescriptor(descriptorPath, "android")
+		if err != nil {
+			return nil, err
+		}
+		descriptor = loaded
+		if request.SessionID != "" {
+			descriptor.SessionID = request.SessionID
+		}
+	} else {
+		descriptor.Init()
+		if err := descriptor.Validate("android"); err != nil {
+			return nil, err
+		}
+	}
+	switch descriptor.TestIDStrategy {
+	case "accessibilityId", "resourceId", "composeResourceId":
+	default:
+		return nil, fmt.Errorf("attached Android session requires a valid TestIDStrategy")
+	}
+	if descriptor.SessionID == "" {
+		descriptor.SessionID = "android-attached-" + descriptor.BackendSessionID
+	}
+	client, err := mobile.NewAppiumClient(descriptor.Endpoint, nil)
+	if err != nil {
+		return nil, err
+	}
+	appiumSession, err := client.AttachSession(ctx.Background(), descriptor.BackendSessionID)
+	if err != nil {
+		return nil, err
+	}
+	handle := SessionHandle{
+		ID: descriptor.SessionID, BackendSessionID: descriptor.BackendSessionID,
+		Lease:  DeviceLease{Serial: descriptor.TargetID},
+		Server: ServerHandle{Endpoint: descriptor.Endpoint, Ownership: "external"},
+	}
+	attached := &androidSession{
+		handle: handle, appium: appiumSession, testIDStrategy: descriptor.TestIDStrategy,
+		attached: true, ownsBackend: request.TakeOwnership, descriptorPath: descriptorPath,
+	}
+	s.mu.Lock()
+	if _, exists := s.sessions[handle.ID]; exists {
+		s.mu.Unlock()
+		return nil, fmt.Errorf("Android session %q already exists", handle.ID)
+	}
+	s.sessions[handle.ID] = attached
+	s.mu.Unlock()
+	s.cleanupStack(ctx).Push("attached-session:"+handle.ID, func(cleanupCtx context.Context) error {
 		_, err := s.close(cleanupCtx, &CloseRequest{SessionID: handle.ID})
 		return err
 	})
-	return &OpenResponse{Session: handle}, nil
+	return &AttachResponse{Session: handle}, nil
 }
 
 func (s *service) run(ctx *endly.Context, request *RunRequest) (*RunResponse, error) {
@@ -830,8 +934,10 @@ func (s *service) run(ctx *endly.Context, request *RunRequest) (*RunResponse, er
 	if !ok {
 		return nil, fmt.Errorf("Android session %q was not found", request.SessionID)
 	}
-	if err := s.validateLease(session.handle.Lease); err != nil {
-		return nil, err
+	if !session.attached {
+		if err := s.validateLease(session.handle.Lease); err != nil {
+			return nil, err
+		}
 	}
 	commands := make([]interface{}, len(request.Commands))
 	state := ctx.State()
@@ -886,10 +992,16 @@ func (s *service) close(ctx context.Context, request *CloseRequest) (*CloseRespo
 	if !ok {
 		return &CloseResponse{Warning: "session already closed or unknown"}, nil
 	}
+	if !session.ownsBackend {
+		return &CloseResponse{Closed: true, Warning: "detached from external Appium session; backend session remains open"}, nil
+	}
 	session.mu.Lock()
 	err := session.appium.Close(ctx)
 	session.mu.Unlock()
 	if err != nil {
+		return nil, err
+	}
+	if err := mobile.RemoveSessionDescriptor(session.descriptorPath); err != nil {
 		return nil, err
 	}
 	return &CloseResponse{Closed: true}, nil
