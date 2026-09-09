@@ -712,12 +712,12 @@ func (s *service) installAndroidArtifacts(ctx context.Context, adb string, reque
 				args = append(args, "--key-pass=file:"+request.Signing.KeyPasswordFile)
 			}
 		}
-		if _, err := s.runBundletool(ctx, request, args); err != nil {
-			return nil, fmt.Errorf("build APK set from AAB: %w", err)
+		if result, err := s.runBundletool(ctx, request, args); err != nil {
+			return nil, fmt.Errorf("build APK set from AAB: %s: %w", strings.TrimSpace(result.Stdout+result.Stderr), err)
 		}
 	}
-	if _, err := s.runBundletool(ctx, request, []string{"install-apks", "--apks=" + apksPath, "--device-id=" + request.Lease.Serial}); err != nil {
-		return nil, fmt.Errorf("install Android APK set: %w", err)
+	if result, err := s.runBundletool(ctx, request, []string{"install-apks", "--apks=" + apksPath, "--device-id=" + request.Lease.Serial, "--adb=" + adb}); err != nil {
+		return nil, fmt.Errorf("install Android APK set: %s: %w", strings.TrimSpace(result.Stdout+result.Stderr), err)
 	}
 	if request.AABPath != "" {
 		return []string{request.AABPath}, nil

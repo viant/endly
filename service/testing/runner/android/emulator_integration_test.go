@@ -58,13 +58,17 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 		}
 	}()
 	variantTask := strings.ToUpper(variant[:1]) + variant[1:]
+	buildTasks := []string{"assemble" + variantTask}
+	if os.Getenv("ENDLY_ANDROID_AAB_INTEGRATION") == "1" {
+		buildTasks = append(buildTasks, "bundle"+variantTask)
+	}
 	gradleArgs := []string{}
 	if javaHome := os.Getenv("JAVA_HOME"); javaHome != "" {
 		gradleArgs = append(gradleArgs, "-Dorg.gradle.java.home="+javaHome)
 	}
 	built, err := service.build(ctx, &BuildRequest{
 		ProjectDir: projectDir, Module: module, Variant: variant,
-		Tasks: []string{"assemble" + variantTask}, GradleArgs: gradleArgs, TimeoutMs: 20 * 60 * 1000,
+		Tasks: buildTasks, GradleArgs: gradleArgs, TimeoutMs: 20 * 60 * 1000,
 	})
 	if err != nil {
 		if built == nil {
@@ -72,15 +76,53 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 		}
 		t.Fatalf("%v\nstdout:\n%s\nstderr:\n%s", err, built.Stdout, built.Stderr)
 	}
-	var APK BuildArtifact
+	var APK, AAB BuildArtifact
 	for _, candidate := range built.Artifacts {
 		if candidate.Kind == "appAPK" {
 			APK = candidate
-			break
+		}
+		if candidate.Kind == "aab" {
+			AAB = candidate
 		}
 	}
 	if APK.Path == "" {
 		t.Fatalf("no application APK in artifacts: %+v", built.Artifacts)
+	}
+	if os.Getenv("ENDLY_ANDROID_AAB_INTEGRATION") == "1" {
+		if AAB.Path == "" {
+			t.Fatalf("no AAB in artifacts: %+v", built.Artifacts)
+		}
+		bundletool := os.Getenv("ENDLY_ANDROID_BUNDLETOOL")
+		if bundletool == "" {
+			t.Fatal("ENDLY_ANDROID_BUNDLETOOL is required for AAB integration")
+		}
+		home, err := os.UserHomeDir()
+		if err != nil {
+			t.Fatal(err)
+		}
+		keystore := os.Getenv("ENDLY_ANDROID_TEST_KEYSTORE")
+		if keystore == "" {
+			keystore = filepath.Join(home, ".android", "debug.keystore")
+		}
+		storePassword := filepath.Join(t.TempDir(), "store.pass")
+		keyPassword := filepath.Join(t.TempDir(), "key.pass")
+		for _, path := range []string{storePassword, keyPassword} {
+			if err := os.WriteFile(path, []byte("android\n"), 0o600); err != nil {
+				t.Fatal(err)
+			}
+		}
+		installed, err := service.install(ctx, &InstallRequest{
+			Lease: started.Lease, AABPath: AAB.Path, BundletoolPath: bundletool,
+			JavaPath: filepath.Join(os.Getenv("JAVA_HOME"), "bin", "java"),
+			Package:  packageName, State: "freshInstall", GrantAll: true,
+			Signing: &AndroidSigningProfile{
+				KeystorePath: keystore, KeyAlias: "androiddebugkey",
+				StorePasswordFile: storePassword, KeyPasswordFile: keyPassword,
+			},
+		})
+		if err != nil || !installed.Installed || len(installed.Artifacts) != 1 || installed.Artifacts[0] != AAB.Path {
+			t.Fatalf("real AAB/APKS deployment failed: response=%+v err=%v", installed, err)
+		}
 	}
 	failureTestAPK := buildIntentionalFailureInstrumentation(t, sdkRoot, packageName)
 	instrumentation, err := service.test(ctx, &TestRequest{
