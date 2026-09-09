@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -12,10 +13,19 @@ import (
 )
 
 type FailureArtifactOptions struct {
-	Directory      string
-	Screenshot     *bool
-	PageSource     *bool
-	MaxSourceBytes int
+	Directory        string
+	Screenshot       *bool
+	PageSource       *bool
+	MaxSourceBytes   int
+	Files            []FailureArtifactFile
+	CollectionErrors []string
+}
+
+type FailureArtifactFile struct {
+	Path     string
+	Kind     string
+	MaxBytes int64
+	Tail     bool
 }
 
 type FailureEvidence struct {
@@ -39,7 +49,10 @@ func CaptureAppiumFailure(ctx context.Context, fs afs.Service, session *AppiumSe
 	if options == nil || session == nil || strings.TrimSpace(options.Directory) == "" {
 		return nil
 	}
-	result := &FailureEvidence{Timestamp: time.Now().UTC(), Reason: reason, Artifacts: []*Evidence{}, Errors: []string{}}
+	result := &FailureEvidence{
+		Timestamp: time.Now().UTC(), Reason: reason, Artifacts: []*Evidence{},
+		Errors: append([]string(nil), options.CollectionErrors...),
+	}
 	if options.Screenshot == nil || *options.Screenshot {
 		if data, err := session.Screenshot(ctx); err != nil {
 			result.Errors = append(result.Errors, "screenshot: "+err.Error())
@@ -67,6 +80,23 @@ func CaptureAppiumFailure(ctx context.Context, fs afs.Service, session *AppiumSe
 			}
 		}
 	}
+	for index, file := range options.Files {
+		if strings.TrimSpace(file.Path) == "" || strings.TrimSpace(file.Kind) == "" {
+			result.Errors = append(result.Errors, fmt.Sprintf("capture file %d: Path and Kind are required", index))
+			continue
+		}
+		extension := filepath.Ext(file.Path)
+		if len(extension) > 12 || strings.ContainsAny(extension, `/\\`) {
+			extension = ""
+		}
+		name := fmt.Sprintf("%s-%s-%02d%s", prefix, safeEvidencePart(file.Kind), index+1, extension)
+		evidence, err := CopyEvidenceFile(ctx, fs, options.Directory, name, file.Kind, file.Path, file.MaxBytes, file.Tail, true)
+		if err != nil {
+			result.Errors = append(result.Errors, file.Kind+": "+err.Error())
+			continue
+		}
+		result.Artifacts = append(result.Artifacts, evidence)
+	}
 	manifest, err := json.MarshalIndent(result, "", "  ")
 	if err != nil {
 		result.Errors = append(result.Errors, "manifest: "+err.Error())
@@ -77,6 +107,20 @@ func CaptureAppiumFailure(ctx context.Context, fs afs.Service, session *AppiumSe
 		result.Errors = append(result.Errors, fmt.Sprintf("manifest: %v", err))
 	} else {
 		result.Artifacts = append(result.Artifacts, evidence)
+	}
+	return result
+}
+
+func safeEvidencePart(value string) string {
+	result := strings.Map(func(r rune) rune {
+		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_' {
+			return r
+		}
+		return '-'
+	}, value)
+	result = strings.Trim(result, "-")
+	if result == "" {
+		return "capture"
 	}
 	return result
 }

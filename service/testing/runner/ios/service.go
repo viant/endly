@@ -45,8 +45,9 @@ type iosSession struct {
 }
 
 type iosCapture struct {
-	log   *mobile.LoggedProcess
-	video *mobile.SegmentedCapture
+	handle CaptureHandle
+	log    *mobile.LoggedProcess
+	video  *mobile.SegmentedCapture
 }
 
 type iosServer struct {
@@ -428,9 +429,28 @@ func (s *service) captureStart(ctx *endly.Context, request *CaptureStartRequest)
 		state.video, err = mobile.StartSegmentedCapture(time.Duration(segmentMs)*time.Millisecond,
 			func(segmentCtx context.Context, index int) (*mobile.Process, error) {
 				path := filepath.Join(request.VideoDirectory, fmt.Sprintf("segment-%04d.mp4", index))
-				return s.runner.Start(segmentCtx, mobile.Command{Name: xcrun, Args: []string{
+				process, err := s.runner.Start(segmentCtx, mobile.Command{Name: xcrun, Args: []string{
 					"simctl", "io", request.Destination.UDID, "recordVideo", "--codec=h264", "--force", path,
 				}}, io.Discard, io.Discard)
+				if err != nil {
+					return nil, err
+				}
+				ready := time.NewTimer(time.Second)
+				defer ready.Stop()
+				select {
+				case <-ready.C:
+					return process, nil
+				case processErr := <-process.Done:
+					if processErr == nil {
+						processErr = fmt.Errorf("recordVideo exited before initialization")
+					}
+					return nil, processErr
+				case <-segmentCtx.Done():
+					if process.Stop != nil {
+						_ = process.Stop(context.Background())
+					}
+					return nil, segmentCtx.Err()
+				}
 			},
 			func(_ context.Context, index int) (string, error) {
 				path := filepath.Join(request.VideoDirectory, fmt.Sprintf("segment-%04d.mp4", index))
@@ -452,6 +472,7 @@ func (s *service) captureStart(ctx *endly.Context, request *CaptureStartRequest)
 		pid = state.log.PID
 	}
 	handle := CaptureHandle{ID: captureID, Destination: request.Destination, PID: pid, LogPath: request.LogPath}
+	state.handle = handle
 	s.mu.Lock()
 	s.captures[handle.ID] = state
 	s.mu.Unlock()
@@ -867,6 +888,9 @@ func (s *service) run(ctx *endly.Context, request *RunRequest) (*RunResponse, er
 	if reason != "" && request.FailureArtifacts != nil {
 		options := *request.FailureArtifacts
 		options.Directory = ctx.Expand(options.Directory)
+		files, collectionErrors := s.failureCaptureFiles(ctx.Background(), session)
+		options.Files = append(options.Files, files...)
+		options.CollectionErrors = append(options.CollectionErrors, collectionErrors...)
 		prefix := "ios-failure-" + safeArtifactPart(request.SessionID) + "-" + uuid.NewString()
 		session.mu.Lock()
 		failure := mobile.CaptureAppiumFailure(ctx.Background(), s.fs, session.appium, prefix, reason, &options)
@@ -876,6 +900,36 @@ func (s *service) run(ctx *endly.Context, request *RunRequest) (*RunResponse, er
 		}
 	}
 	return response, err
+}
+
+func (s *service) failureCaptureFiles(ctx context.Context, session *iosSession) ([]mobile.FailureArtifactFile, []string) {
+	s.mu.Lock()
+	captures := make([]*iosCapture, 0)
+	for _, capture := range s.captures {
+		if capture != nil && capture.handle.Destination.ID != "" && capture.handle.Destination.ID == session.handle.Destination.ID {
+			captures = append(captures, capture)
+		}
+	}
+	s.mu.Unlock()
+	files := []mobile.FailureArtifactFile{}
+	errors := []string{}
+	for _, capture := range captures {
+		if capture.log != nil && capture.log.Path != "" {
+			files = append(files, mobile.FailureArtifactFile{Path: capture.log.Path, Kind: "unifiedLog", MaxBytes: 2 << 20, Tail: true})
+		}
+		if capture.video != nil {
+			checkpointCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+			paths, checkpointErrors := capture.video.Checkpoint(checkpointCtx)
+			cancel()
+			for _, checkpointError := range checkpointErrors {
+				errors = append(errors, "video checkpoint: "+checkpointError)
+			}
+			if len(paths) > 0 {
+				files = append(files, mobile.FailureArtifactFile{Path: paths[len(paths)-1], Kind: "video", MaxBytes: 100 << 20})
+			}
+		}
+	}
+	return files, errors
 }
 
 func (s *service) close(ctx context.Context, request *CloseRequest) (*CloseResponse, error) {

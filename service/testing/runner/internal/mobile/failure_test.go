@@ -30,10 +30,22 @@ func TestCaptureAppiumFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 	directory := t.TempDir()
+	logPath := directory + "/active.log"
+	videoPath := directory + "/segment.mp4"
+	if err := os.WriteFile(logPath, []byte("old-new-log"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(videoPath, []byte("video"), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	failure := CaptureAppiumFailure(context.Background(), afs.New(), session, "failed-step", "assertion failed", &FailureArtifactOptions{
 		Directory: directory, MaxSourceBytes: 6,
+		Files: []FailureArtifactFile{
+			{Path: logPath, Kind: "logcat", MaxBytes: 7, Tail: true},
+			{Path: videoPath, Kind: "video", MaxBytes: 100},
+		},
 	})
-	if failure == nil || len(failure.Artifacts) != 3 || len(failure.Errors) != 0 {
+	if failure == nil || len(failure.Artifacts) != 5 || len(failure.Errors) != 0 {
 		t.Fatalf("unexpected failure evidence: %+v", failure)
 	}
 	for _, artifact := range failure.Artifacts {

@@ -47,8 +47,9 @@ type androidSession struct {
 }
 
 type androidCapture struct {
-	log   *mobile.LoggedProcess
-	video *mobile.SegmentedCapture
+	handle CaptureHandle
+	log    *mobile.LoggedProcess
+	video  *mobile.SegmentedCapture
 }
 
 type contextCleanup struct{ stack *mobile.CleanupStack }
@@ -465,6 +466,7 @@ func (s *service) captureStart(ctx *endly.Context, request *CaptureStartRequest)
 		pid = state.log.PID
 	}
 	handle := CaptureHandle{ID: captureID, Lease: request.Lease, PID: pid, LogPath: request.LogPath}
+	state.handle = handle
 	s.mu.Lock()
 	s.captures[handle.ID] = state
 	s.mu.Unlock()
@@ -971,6 +973,9 @@ func (s *service) run(ctx *endly.Context, request *RunRequest) (*RunResponse, er
 	if reason != "" && request.FailureArtifacts != nil {
 		options := *request.FailureArtifacts
 		options.Directory = ctx.Expand(options.Directory)
+		files, collectionErrors := s.failureCaptureFiles(ctx.Background(), session)
+		options.Files = append(options.Files, files...)
+		options.CollectionErrors = append(options.CollectionErrors, collectionErrors...)
 		prefix := "android-failure-" + safeArtifactPart(request.SessionID) + "-" + uuid.NewString()
 		session.mu.Lock()
 		failure := mobile.CaptureAppiumFailure(ctx.Background(), s.fs, session.appium, prefix, reason, &options)
@@ -980,6 +985,36 @@ func (s *service) run(ctx *endly.Context, request *RunRequest) (*RunResponse, er
 		}
 	}
 	return response, err
+}
+
+func (s *service) failureCaptureFiles(ctx context.Context, session *androidSession) ([]mobile.FailureArtifactFile, []string) {
+	s.mu.Lock()
+	captures := make([]*androidCapture, 0)
+	for _, capture := range s.captures {
+		if capture != nil && capture.handle.Lease.ID != "" && capture.handle.Lease.ID == session.handle.Lease.ID {
+			captures = append(captures, capture)
+		}
+	}
+	s.mu.Unlock()
+	files := []mobile.FailureArtifactFile{}
+	errors := []string{}
+	for _, capture := range captures {
+		if capture.log != nil && capture.log.Path != "" {
+			files = append(files, mobile.FailureArtifactFile{Path: capture.log.Path, Kind: "logcat", MaxBytes: 2 << 20, Tail: true})
+		}
+		if capture.video != nil {
+			checkpointCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
+			paths, checkpointErrors := capture.video.Checkpoint(checkpointCtx)
+			cancel()
+			for _, checkpointError := range checkpointErrors {
+				errors = append(errors, "video checkpoint: "+checkpointError)
+			}
+			if len(paths) > 0 {
+				files = append(files, mobile.FailureArtifactFile{Path: paths[len(paths)-1], Kind: "video", MaxBytes: 100 << 20})
+			}
+		}
+	}
+	return files, errors
 }
 
 func (s *service) close(ctx context.Context, request *CloseRequest) (*CloseResponse, error) {
