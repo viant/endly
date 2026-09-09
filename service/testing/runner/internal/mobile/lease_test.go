@@ -2,12 +2,40 @@ package mobile
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"os"
 	"sync"
 	"testing"
 	"time"
 )
+
+func TestLeaseFenceSurvivesGenericJSONRoundTrip(t *testing.T) {
+	store := NewLeaseStore(t.TempDir())
+	handle, err := store.Acquire(context.Background(), "json-safe")
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := json.Marshal(handle)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var generic map[string]interface{}
+	if err := json.Unmarshal(data, &generic); err != nil {
+		t.Fatal(err)
+	}
+	reencoded, err := json.Marshal(generic)
+	if err != nil {
+		t.Fatal(err)
+	}
+	decoded := &LeaseHandle{}
+	if err := json.Unmarshal(reencoded, decoded); err != nil {
+		t.Fatal(err)
+	}
+	if decoded.Fence != handle.Fence || handle.Fence > 1<<53-1 {
+		t.Fatalf("fence changed across JSON: before=%d after=%d", handle.Fence, decoded.Fence)
+	}
+}
 
 func TestLeaseStoreAcquireValidateRefreshRelease(t *testing.T) {
 	store := NewLeaseStore(t.TempDir())
