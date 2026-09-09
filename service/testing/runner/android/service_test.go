@@ -1,6 +1,7 @@
 package android
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -71,10 +72,21 @@ func TestParseADBDevices(t *testing.T) {
 
 func TestRoutes(t *testing.T) {
 	service := newService(&fakeRunner{})
-	for _, action := range []string{"doctor", "device-start", "device-stop", "server-start", "server-stop", "build", "install", "uninstall", "launch", "terminate", "test", "capture-start", "capture-stop", "open", "run", "artifact", "close", "cleanup"} {
+	for _, action := range []string{"doctor", "device-start", "device-stop", "server-start", "server-stop", "build", "install", "uninstall", "launch", "terminate", "test", "capture-start", "capture-stop", "open", "run", "repl", "artifact", "close", "cleanup"} {
 		if _, err := service.Route(action); err != nil {
 			t.Fatalf("route %q was not registered: %v", action, err)
 		}
+	}
+}
+
+func TestOpenRequestAcceptsManagedServer(t *testing.T) {
+	request := &OpenRequest{
+		Lease:   DeviceLease{ID: "lease", Fence: 1, Serial: "emulator-5554"},
+		Server:  ServerHandle{ID: "server", Endpoint: "http://127.0.0.1:4723", Ownership: "managed"},
+		Package: "com.example.app", TestIDStrategy: "resourceId",
+	}
+	if err := request.Validate(); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -274,7 +286,7 @@ func TestAppiumRunnerFlow(t *testing.T) {
 		case "GET /session/backend-1/screenshot":
 			value = base64.StdEncoding.EncodeToString([]byte("png"))
 		case "GET /session/backend-1/source":
-			value = "<hierarchy/>"
+			value = `<hierarchy><node class="android.widget.TextView" text="Welcome"/></hierarchy>`
 		default:
 			value = nil
 		}
@@ -325,6 +337,24 @@ func TestAppiumRunnerFlow(t *testing.T) {
 	for _, item := range evidence.Artifacts {
 		if _, err := os.Stat(item.URL); err != nil {
 			t.Fatalf("evidence %s was not written: %v", item.URL, err)
+		}
+	}
+	service.input = strings.NewReader(":status\n:tree Welcome\nreplValue = app.getByTestId(\"greeting\").text()\n:screenshot\n:quit\n")
+	replOutput := &bytes.Buffer{}
+	service.output = replOutput
+	repl, err := service.repl(ctx, &REPLRequest{
+		SessionID: opened.Session.ID, ArtifactDirectory: t.TempDir(),
+		ActionTimeoutMs: 50, PollIntervalMs: 1, MaxSourceBytes: 1000, MaxTreeNodes: 20,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if repl.Result.Commands != 1 || len(repl.Result.Artifacts) != 1 || repl.Result.Data["replValue"] != "Welcome" {
+		t.Fatalf("unexpected REPL response: %+v", repl)
+	}
+	for _, expected := range []string{"android[android-test]>", `text="Welcome"`, "replValue = Welcome"} {
+		if !strings.Contains(replOutput.String(), expected) {
+			t.Fatalf("missing %q in REPL output:\n%s", expected, replOutput.String())
 		}
 	}
 	closed, err := service.close(context.Background(), &CloseRequest{SessionID: opened.Session.ID})

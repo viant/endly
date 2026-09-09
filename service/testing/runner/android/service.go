@@ -29,6 +29,8 @@ type service struct {
 	servers  map[string]*mobile.AppiumServer
 	captures map[string]*mobile.LoggedProcess
 	fs       afs.Service
+	input    io.Reader
+	output   io.Writer
 }
 
 type androidSession struct {
@@ -55,6 +57,8 @@ func newService(runner mobile.Runner) *service {
 		servers:         map[string]*mobile.AppiumServer{},
 		captures:        map[string]*mobile.LoggedProcess{},
 		fs:              afs.New(),
+		input:           os.Stdin,
+		output:          os.Stdout,
 	}
 	result.AbstractService.Service = result
 	result.registerRoutes()
@@ -224,6 +228,92 @@ func (s *service) registerRoutes() {
 			return s.captureStop(ctx.Background(), request.(*CaptureStopRequest))
 		},
 	})
+	s.Register(&endly.Route{
+		Action:           "repl",
+		RequestInfo:      &endly.ActionInfo{Description: "open a live Android DSL and hierarchy inspector"},
+		RequestProvider:  func() interface{} { return &REPLRequest{} },
+		ResponseProvider: func() interface{} { return &REPLResponse{} },
+		Handler: func(ctx *endly.Context, request interface{}) (interface{}, error) {
+			return s.repl(ctx, request.(*REPLRequest))
+		},
+	})
+}
+
+func (s *service) repl(ctx *endly.Context, request *REPLRequest) (*REPLResponse, error) {
+	sessionID, session, err := s.resolveREPLSession(request.SessionID)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.validateLease(session.handle.Lease); err != nil {
+		return nil, err
+	}
+	prompt := request.Prompt
+	if prompt == "" {
+		prompt = "android[" + sessionID + "]> "
+	}
+	result, err := mobile.RunREPL(ctx.Background(), s.input, s.output, mobile.REPLConfig{
+		Prompt: prompt, MaxSourceBytes: request.MaxSourceBytes,
+		MaxTreeNodes: request.MaxTreeNodes, FailOnError: request.FailOnError,
+	}, mobile.REPLCallbacks{
+		Execute: func(replCtx context.Context, command string) (*mobile.ExecutionResult, error) {
+			response, err := s.run(ctx, &RunRequest{
+				SessionID: sessionID, Commands: []string{command},
+				ActionTimeoutMs: request.ActionTimeoutMs, PollIntervalMs: request.PollIntervalMs,
+			})
+			if response == nil {
+				return nil, err
+			}
+			return &mobile.ExecutionResult{Data: response.Data, Steps: response.Steps, Validations: response.Validations}, err
+		},
+		Source: func(replCtx context.Context) (string, error) {
+			session.mu.Lock()
+			defer session.mu.Unlock()
+			return session.appium.PageSource(replCtx)
+		},
+		Screenshot: func(context.Context) (*mobile.Evidence, error) {
+			if request.ArtifactDirectory == "" {
+				return nil, fmt.Errorf("ArtifactDirectory is required for :screenshot")
+			}
+			response, err := s.artifact(ctx, &ArtifactRequest{
+				SessionID: sessionID, Directory: request.ArtifactDirectory, Screenshot: true,
+			})
+			if err != nil {
+				return nil, err
+			}
+			return response.Artifacts[0], nil
+		},
+		Status: func(context.Context) interface{} {
+			return map[string]interface{}{
+				"platform": "android", "sessionID": session.handle.ID,
+				"backendSessionID": session.handle.BackendSessionID,
+				"serial":           session.handle.Lease.Serial, "server": session.handle.Server.Endpoint,
+			}
+		},
+		Close: func(replCtx context.Context) error {
+			_, err := s.close(replCtx, &CloseRequest{SessionID: sessionID})
+			return err
+		},
+	})
+	return &REPLResponse{SessionID: sessionID, Result: result}, err
+}
+
+func (s *service) resolveREPLSession(requested string) (string, *androidSession, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if requested != "" {
+		session, ok := s.sessions[requested]
+		if !ok {
+			return "", nil, fmt.Errorf("Android session %q was not found", requested)
+		}
+		return requested, session, nil
+	}
+	if len(s.sessions) != 1 {
+		return "", nil, fmt.Errorf("SessionID is required when %d Android sessions are open", len(s.sessions))
+	}
+	for id, session := range s.sessions {
+		return id, session, nil
+	}
+	return "", nil, fmt.Errorf("no Android session is open")
 }
 
 func (s *service) launch(ctx *endly.Context, request *LaunchRequest) (*LaunchResponse, error) {

@@ -21,6 +21,7 @@ Implemented actions:
 | `ios:capture-stop` | Stop the stream and return sensitive log evidence metadata |
 | `ios:open` | Open an Appium XCUITest session against valid Simulator and server handles |
 | `ios:run` | Run assigned `app.*`/`device.*` commands and retrying inline expectations |
+| `ios:repl` | Run a live terminal DSL, hierarchy inspector, screenshot tool, and command history |
 | `ios:artifact` | Store sensitive screenshot and bounded accessibility-source evidence through AFS |
 | `ios:close` | Idempotently close the Appium session |
 | `ios:cleanup` | Run every registered teardown in LIFO order and report all errors |
@@ -54,3 +55,18 @@ ENDLY_IOS_APPIUM_HOME=/path/to/appium-home \
 ```
 
 That path additionally starts owned Appium/WDA processes, locates the fixture by accessibility identifier, verifies its initial text, taps the increment button, waits for `Count: 1`, captures Appium screenshot/source evidence, and verifies complete cleanup.
+
+Run `test/repl.yaml` to enter the live inspector. Once setup completes, Endly displays an `ios[session]>` prompt:
+
+```text
+:status
+:tree increment
+count = app.getByTestId("count").text()
+app.getByTestId("increment").tap()
+expect(app.getByTestId("count")).toHaveText("Count: 1", 10000)
+:screenshot
+:history
+:quit
+```
+
+Inspector commands are `:status`, `:source`, `:tree [filter]`, `:find <text>`, `:screenshot`, `:history`, `!<number>`, `:help`, `:close`, and `:quit`. Command errors are printed and the prompt continues unless `failOnError` is enabled. Ctrl-C returns to the workflow so deferred cleanup runs.

@@ -1,0 +1,57 @@
+init:
+  runID: ${uuid.next}
+  artifactRoot: /tmp/endly/ios-repl/$runID
+  bundleID: com.viant.endly.mobilefixture
+
+pipeline:
+  simulatorStart:
+    action: ios:simulator-start
+    deviceType: com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro
+    runtime: com.apple.CoreSimulator.SimRuntime.iOS-27-0
+    bootTimeoutMs: 180000
+
+  build:
+    action: ios:build
+    projectPath: $WorkingDirectory(service/testing/runner/ios/test/fixture/FixtureApp.xcodeproj)
+    scheme: FixtureApp
+    configuration: Debug
+    destination: $simulatorStart.Lease
+    derivedDataPath: $artifactRoot/DerivedData
+    mode: build
+
+  install:
+    action: ios:install
+    destination: $simulatorStart.Lease
+    app: $build.Artifacts[0]
+    bundleID: $bundleID
+    state: freshInstall
+
+  serverStart:
+    action: ios:server-start
+    destination: $simulatorStart.Lease
+    mode: managed
+    executable: ${env.ENDLY_IOS_APPIUM_EXECUTABLE}
+    appiumHome: ${env.ENDLY_IOS_APPIUM_HOME}
+    address: 127.0.0.1
+    port: 4723
+    logPath: $artifactRoot/appium.log
+
+  open:
+    action: ios:open
+    sessionID: ios-repl-$runID
+    destination: $simulatorStart.Lease
+    server: $serverStart.Server
+    bundleID: $bundleID
+
+  inspect:
+    action: ios:repl
+    sessionID: $open.Session.ID
+    artifactDirectory: $artifactRoot/evidence
+    actionTimeoutMs: 30000
+    pollIntervalMs: 200
+
+  defer:
+    action: ios:cleanup
+    session: $open.Session
+    server: $serverStart.Server
+    destination: $simulatorStart.Lease
