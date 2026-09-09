@@ -730,6 +730,17 @@ func (s *service) open(ctx *endly.Context, request *OpenRequest) (*OpenResponse,
 		}
 		capabilities[key] = value
 	}
+	if err := validateWDACompatibility(request.WDA, request.Destination); err != nil {
+		return nil, err
+	}
+	WDA, err := wdaCapabilities(ctx, request.WDA)
+	if err != nil {
+		return nil, err
+	}
+	for key, value := range WDA {
+		capabilities[key] = value
+	}
+	defer delete(capabilities, "appium:keychainPassword")
 	capabilities["platformName"] = "iOS"
 	capabilities["appium:automationName"] = "XCUITest"
 	capabilities["appium:udid"] = request.Destination.UDID
@@ -1302,7 +1313,17 @@ func escapePredicate(value string) string {
 
 func isProtectedIOSCapability(key string) bool {
 	switch strings.ToLower(strings.TrimSpace(key)) {
-	case "platformname", "appium:automationname", "appium:udid", "appium:bundleid", "appium:app", "udid", "automationname", "bundleid", "app":
+	case "platformname", "appium:automationname", "appium:udid", "appium:bundleid", "appium:app", "udid", "automationname", "bundleid", "app",
+		"appium:useprebuiltwda", "useprebuiltwda", "appium:usepreinstalledwda", "usepreinstalledwda",
+		"appium:prebuiltwdapath", "prebuiltwdapath", "appium:webdriveragenturl", "webdriveragenturl",
+		"appium:deriveddatapath", "deriveddatapath", "appium:updatedwdabundleid", "updatedwdabundleid",
+		"appium:updatedwdabundleidsuffix", "updatedwdabundleidsuffix", "appium:xcodeorgid", "xcodeorgid",
+		"appium:xcodesigningid", "xcodesigningid", "appium:xcodeconfigfile", "xcodeconfigfile",
+		"appium:keychainpath", "keychainpath", "appium:keychainpassword", "keychainpassword",
+		"appium:wdalocalport", "wdalocalport", "appium:mjpegserverport", "mjpegserverport",
+		"appium:usenewwda", "usenewwda", "appium:prebuildwda", "prebuildwda",
+		"appium:wdalaunchtimeout", "wdalaunchtimeout", "appium:wdaconnectiontimeout", "wdaconnectiontimeout",
+		"appium:wdastartupretries", "wdastartupretries", "appium:wdastartupretryinterval", "wdastartupretryinterval":
 		return true
 	default:
 		return false
