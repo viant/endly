@@ -84,6 +84,18 @@ func TestIOSSimulatorIntegration(t *testing.T) {
 	if _, err := service.install(ctx, &InstallRequest{Destination: started.Lease, App: app, BundleID: bundleID, State: "freshInstall"}); err != nil {
 		t.Fatal(err)
 	}
+	xcResultPath := filepath.Join(t.TempDir(), "IntentionalFailure.xcresult")
+	xcTest, err := service.test(ctx, &TestRequest{
+		Destination: started.Lease, ProjectPath: projectPath, Scheme: scheme,
+		Mode: "scheme", ResultBundlePath: xcResultPath, DerivedDataPath: filepath.Join(t.TempDir(), "XCTestDerivedData"),
+		CollectDiagnostics: "never", TimeoutMs: 10 * 60 * 1000,
+	})
+	if err != nil || xcTest.Summary.FailedTests != 1 || xcTest.Summary.PassedTests != 1 || len(xcTest.Validations) != 1 || !xcTest.Validations[0].HasFailure() {
+		t.Fatalf("intentional XCTest failure was not normalized: response=%+v err=%v", xcTest, err)
+	}
+	if info, err := os.Stat(xcResultPath); err != nil || !info.IsDir() {
+		t.Fatalf("XCTest result bundle missing: %v", err)
+	}
 	appiumEnabled := os.Getenv("ENDLY_IOS_APPIUM_INTEGRATION") == "1"
 	var appiumSession *OpenResponse
 	if appiumEnabled {

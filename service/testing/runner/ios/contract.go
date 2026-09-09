@@ -578,16 +578,18 @@ type CleanupResponse struct {
 }
 
 type TestRequest struct {
-	Destination      DestinationLease
-	ProjectPath      string
-	WorkspacePath    string
-	Scheme           string
-	XCTestRunPath    string
-	Mode             string
-	OnlyTesting      []string
-	SkipTesting      []string
-	ResultBundlePath string
-	TimeoutMs        int
+	Destination        DestinationLease
+	ProjectPath        string
+	WorkspacePath      string
+	Scheme             string
+	XCTestRunPath      string
+	Mode               string
+	OnlyTesting        []string
+	SkipTesting        []string
+	ResultBundlePath   string
+	DerivedDataPath    string
+	CollectDiagnostics string
+	TimeoutMs          int
 }
 
 func (r *TestRequest) Init() error {
@@ -596,6 +598,9 @@ func (r *TestRequest) Init() error {
 	}
 	if r.TimeoutMs <= 0 {
 		r.TimeoutMs = 20 * 60 * 1000
+	}
+	if r.CollectDiagnostics == "" {
+		r.CollectDiagnostics = "never"
 	}
 	return nil
 }
@@ -606,6 +611,9 @@ func (r *TestRequest) Validate() error {
 	}
 	if r.ResultBundlePath == "" {
 		return fmt.Errorf("ResultBundlePath is required")
+	}
+	if r.CollectDiagnostics != "never" && r.CollectDiagnostics != "on-failure" {
+		return fmt.Errorf("CollectDiagnostics must be never or on-failure")
 	}
 	switch r.Mode {
 	case "scheme", "withoutBuilding":

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -163,7 +164,7 @@ func TestInstrumentationInstallsBothPackagesAndReportsFailure(t *testing.T) {
 				"INSTRUMENTATION_STATUS: stack=expected confirmation",
 				"INSTRUMENTATION_STATUS_CODE: -2",
 				"INSTRUMENTATION_CODE: -1",
-			}, "\n")}, nil
+			}, "\n")}, errors.New("adb reported instrumentation failure")
 		}
 		return mobile.Result{}, nil
 	}}
