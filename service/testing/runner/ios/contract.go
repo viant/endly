@@ -33,6 +33,7 @@ type DoctorResponse struct {
 	Checks     []mobile.Check
 	Runtimes   []string
 	Simulators []IOSSimulator
+	Devices    []PhysicalDevice
 }
 
 type DestinationLease struct {
@@ -41,9 +42,82 @@ type DestinationLease struct {
 	UDID              string
 	Name              string
 	Runtime           string
+	Kind              string // simulator or device; empty is legacy simulator
 	OwnedClone        bool
 	PreserveOnRelease bool
 	ProcessLease      *mobile.LeaseHandle
+}
+
+func (l DestinationLease) IsDevice() bool { return strings.EqualFold(l.Kind, "device") }
+
+type PhysicalDevice struct {
+	Identifier    string
+	UDID          string
+	Name          string
+	Platform      string
+	OSVersion     string
+	State         string
+	Connection    string
+	PairingState  string
+	DeveloperMode string
+}
+
+type DeviceListRequest struct {
+	TimeoutMs int
+}
+
+func (r *DeviceListRequest) Init() error {
+	if r.TimeoutMs <= 0 {
+		r.TimeoutMs = 30_000
+	}
+	return nil
+}
+
+type DeviceListResponse struct {
+	Devices []PhysicalDevice
+}
+
+type DeviceLeaseRequest struct {
+	UDID      string
+	TimeoutMs int
+}
+
+func (r *DeviceLeaseRequest) Init() error {
+	if r.TimeoutMs <= 0 {
+		r.TimeoutMs = 30_000
+	}
+	return nil
+}
+
+func (r *DeviceLeaseRequest) Validate() error {
+	if strings.TrimSpace(r.UDID) == "" {
+		return fmt.Errorf("UDID is required")
+	}
+	return nil
+}
+
+type DeviceLeaseResponse struct {
+	Lease  DestinationLease
+	Device PhysicalDevice
+}
+
+type DeviceReleaseRequest struct {
+	Lease DestinationLease
+}
+
+func (r *DeviceReleaseRequest) Validate() error {
+	if err := (&SimulatorStopRequest{Lease: r.Lease}).Validate(); err != nil {
+		return err
+	}
+	if !r.Lease.IsDevice() {
+		return fmt.Errorf("a physical-device lease is required")
+	}
+	return nil
+}
+
+type DeviceReleaseResponse struct {
+	Released bool
+	Warning  string
 }
 
 type SimulatorStartRequest struct {
@@ -135,8 +209,14 @@ func (r *InstallRequest) Validate() error {
 	if r.App.HostPath == "" || r.BundleID == "" {
 		return fmt.Errorf("App.HostPath and BundleID are required")
 	}
-	if r.App.Kind != "" && r.App.Kind != "simulatorApp" {
-		return fmt.Errorf("current Simulator install requires a simulatorApp artifact")
+	expectedKind := "simulatorApp"
+	destinationLabel := "Simulator"
+	if r.Destination.IsDevice() {
+		expectedKind = "deviceApp"
+		destinationLabel = "physical-device"
+	}
+	if r.App.Kind != "" && r.App.Kind != expectedKind {
+		return fmt.Errorf("%s install requires a %s artifact", destinationLabel, expectedKind)
 	}
 	if r.State != "freshInstall" && r.State != "preserve" {
 		return fmt.Errorf("State must be freshInstall or preserve")
@@ -196,9 +276,19 @@ type LaunchResponse struct {
 type TerminateRequest struct {
 	Destination DestinationLease
 	BundleID    string
+	PID         int
 }
 
 func (r *TerminateRequest) Validate() error {
+	if err := (&SimulatorStopRequest{Lease: r.Destination}).Validate(); err != nil {
+		return err
+	}
+	if r.Destination.IsDevice() {
+		if r.PID <= 0 {
+			return fmt.Errorf("PID is required for physical-device termination")
+		}
+		return nil
+	}
 	return (&LaunchRequest{Destination: r.Destination, BundleID: r.BundleID}).Validate()
 }
 
@@ -621,7 +711,7 @@ func (r *BuildRequest) Validate() error {
 	switch r.Mode {
 	case "build", "buildForTesting":
 		if (r.ProjectPath == "") == (r.WorkspacePath == "") || r.Scheme == "" || r.DerivedDataPath == "" {
-			return fmt.Errorf("Simulator build modes require one project/workspace, Scheme, and DerivedDataPath")
+			return fmt.Errorf("destination build modes require one project/workspace, Scheme, and DerivedDataPath")
 		}
 		if err := (&SimulatorStopRequest{Lease: r.Destination}).Validate(); err != nil {
 			return err

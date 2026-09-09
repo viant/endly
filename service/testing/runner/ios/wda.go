@@ -23,6 +23,9 @@ func validateWDACompatibility(options *WDAOptions, destination DestinationLease)
 		return fmt.Errorf("preinstalled WDA requires iOS 17 or newer; use managed, prebuilt, or external WDA")
 	}
 	if major >= 27 {
+		if destination.IsDevice() {
+			return fmt.Errorf("preinstalled WDA on iOS 27+ physical devices requires a working RemoteXPC tunnel, which this local runner does not configure; use managed, prebuilt, or external WDA")
+		}
 		return fmt.Errorf("preinstalled WDA is unavailable for iOS 27+ Simulator runtimes because direct XCTest runner launch cannot remain active; use managed, prebuilt, or external WDA")
 	}
 	return nil

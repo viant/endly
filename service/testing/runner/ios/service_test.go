@@ -95,7 +95,7 @@ func TestParseSimulators(t *testing.T) {
 
 func TestRoutes(t *testing.T) {
 	service := newService(&fakeRunner{})
-	for _, action := range []string{"doctor", "simulator-start", "simulator-stop", "server-start", "server-stop", "build", "install", "uninstall", "launch", "terminate", "test", "capture-start", "capture-stop", "open", "attach", "run", "repl", "artifact", "close", "cleanup"} {
+	for _, action := range []string{"doctor", "simulator-start", "simulator-stop", "device-list", "device-lease", "device-release", "server-start", "server-stop", "build", "install", "uninstall", "launch", "terminate", "test", "capture-start", "capture-stop", "open", "attach", "run", "repl", "artifact", "close", "cleanup"} {
 		if _, err := service.Route(action); err != nil {
 			t.Fatalf("route %q was not registered: %v", action, err)
 		}

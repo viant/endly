@@ -108,6 +108,33 @@ func (s *service) registerRoutes() {
 		},
 	})
 	s.Register(&endly.Route{
+		Action:           "device-list",
+		RequestInfo:      &endly.ActionInfo{Description: "list paired Apple physical devices known to CoreDevice"},
+		RequestProvider:  func() interface{} { return &DeviceListRequest{} },
+		ResponseProvider: func() interface{} { return &DeviceListResponse{} },
+		Handler: func(ctx *endly.Context, request interface{}) (interface{}, error) {
+			return s.deviceList(ctx, request.(*DeviceListRequest))
+		},
+	})
+	s.Register(&endly.Route{
+		Action:           "device-lease",
+		RequestInfo:      &endly.ActionInfo{Description: "lease one exact paired Apple physical device"},
+		RequestProvider:  func() interface{} { return &DeviceLeaseRequest{} },
+		ResponseProvider: func() interface{} { return &DeviceLeaseResponse{} },
+		Handler: func(ctx *endly.Context, request interface{}) (interface{}, error) {
+			return s.deviceLease(ctx, request.(*DeviceLeaseRequest))
+		},
+	})
+	s.Register(&endly.Route{
+		Action:           "device-release",
+		RequestInfo:      &endly.ActionInfo{Description: "release a physical-device lease without erasing or shutting down the device"},
+		RequestProvider:  func() interface{} { return &DeviceReleaseRequest{} },
+		ResponseProvider: func() interface{} { return &DeviceReleaseResponse{} },
+		Handler: func(ctx *endly.Context, request interface{}) (interface{}, error) {
+			return s.deviceRelease(ctx, request.(*DeviceReleaseRequest))
+		},
+	})
+	s.Register(&endly.Route{
 		Action:           "open",
 		RequestInfo:      &endly.ActionInfo{Description: "open an iOS XCUITest session"},
 		RequestProvider:  func() interface{} { return &OpenRequest{} },
@@ -359,6 +386,9 @@ func (s *service) launch(ctx *endly.Context, request *LaunchRequest) (*LaunchRes
 	if err := s.validateLease(request.Destination); err != nil {
 		return nil, err
 	}
+	if request.Destination.IsDevice() {
+		return s.launchPhysicalApp(ctx, request)
+	}
 	xcrun, err := mobile.ResolveExecutable("xcrun", "/usr/bin/xcrun")
 	if err != nil {
 		return nil, err
@@ -385,6 +415,9 @@ func (s *service) terminate(ctx *endly.Context, request *TerminateRequest) (*Ter
 	if err := s.validateLease(request.Destination); err != nil {
 		return nil, err
 	}
+	if request.Destination.IsDevice() {
+		return s.terminatePhysicalApp(ctx, request)
+	}
 	xcrun, err := mobile.ResolveExecutable("xcrun", "/usr/bin/xcrun")
 	if err != nil {
 		return nil, err
@@ -398,6 +431,9 @@ func (s *service) terminate(ctx *endly.Context, request *TerminateRequest) (*Ter
 func (s *service) captureStart(ctx *endly.Context, request *CaptureStartRequest) (*CaptureStartResponse, error) {
 	if err := s.validateLease(request.Destination); err != nil {
 		return nil, err
+	}
+	if request.Destination.IsDevice() {
+		return nil, fmt.Errorf("physical-device log/video capture requires an Appium session or external collector")
 	}
 	xcrun, err := mobile.ResolveExecutable("xcrun", "/usr/bin/xcrun")
 	if err != nil {
@@ -536,6 +572,9 @@ func (s *service) artifact(ctx *endly.Context, request *ArtifactRequest) (*Artif
 		if err := s.validateLease(*request.Destination); err != nil {
 			return nil, err
 		}
+		if request.Destination.IsDevice() {
+			return nil, fmt.Errorf("physical-device screenshots require SessionID so Appium/WDA performs capture")
+		}
 		xcrun, err := mobile.ResolveExecutable("xcrun", "/usr/bin/xcrun")
 		if err != nil {
 			return nil, err
@@ -612,6 +651,9 @@ func (s *service) install(ctx *endly.Context, request *InstallRequest) (*Install
 	if err := s.validateLease(request.Destination); err != nil {
 		return nil, err
 	}
+	if request.Destination.IsDevice() {
+		return s.installPhysicalApp(ctx, request)
+	}
 	xcrun, err := mobile.ResolveExecutable("xcrun", "/usr/bin/xcrun")
 	if err != nil {
 		return nil, err
@@ -634,6 +676,9 @@ func (s *service) install(ctx *endly.Context, request *InstallRequest) (*Install
 func (s *service) uninstall(ctx *endly.Context, request *UninstallRequest) (*UninstallResponse, error) {
 	if err := s.validateLease(request.Destination); err != nil {
 		return nil, err
+	}
+	if request.Destination.IsDevice() {
+		return s.uninstallPhysicalApp(ctx, request)
 	}
 	xcrun, err := mobile.ResolveExecutable("xcrun", "/usr/bin/xcrun")
 	if err != nil {
@@ -1358,6 +1403,13 @@ func (s *service) doctor(ctx *endly.Context, request *DoctorRequest) (*DoctorRes
 		}
 	}
 	response.Checks = append(response.Checks, runtimeCheck)
+	deviceCtlCheck := s.toolCheck(ctx.Background(), "devicectl", xcrun, xcrunErr, []string{"devicectl", "--version"}, "install full Xcode with CoreDevice/devicectl support")
+	response.Checks = append(response.Checks, deviceCtlCheck)
+	if deviceCtlCheck.Status == "ok" {
+		if devices, err := s.listPhysicalDevices(ctx.Background(), 30_000); err == nil {
+			response.Devices = devices
+		}
+	}
 	response.Ready = mobile.ChecksReady(response.Checks, required)
 	return response, nil
 }
@@ -1413,7 +1465,7 @@ func (s *service) simulatorStart(ctx *endly.Context, request *SimulatorStartRequ
 	if err != nil {
 		return nil, err
 	}
-	lease := DestinationLease{ID: uuid.NewString(), Fence: processLease.Fence, ProcessLease: processLease, PreserveOnRelease: request.KeepBooted}
+	lease := DestinationLease{ID: uuid.NewString(), Fence: processLease.Fence, Kind: "simulator", ProcessLease: processLease, PreserveOnRelease: request.KeepBooted}
 	state := ""
 	switch {
 	case request.UDID != "":
@@ -1505,6 +1557,9 @@ func (s *service) simulatorStop(ctx *endly.Context, request *SimulatorStopReques
 }
 
 func (s *service) stopOwned(ctx context.Context, xcrun string, lease DestinationLease) (*SimulatorStopResponse, error) {
+	if lease.IsDevice() {
+		return nil, fmt.Errorf("physical-device leases must be released with ios:device-release")
+	}
 	s.mu.Lock()
 	stored, ok := s.leases[lease.ID]
 	if !ok {

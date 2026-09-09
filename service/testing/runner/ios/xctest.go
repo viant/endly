@@ -35,8 +35,12 @@ func (s *service) test(ctx *endly.Context, request *TestRequest) (*TestResponse,
 	if collectDiagnostics == "" {
 		collectDiagnostics = "never"
 	}
+	destination := "platform=iOS Simulator,id=" + request.Destination.UDID
+	if request.Destination.IsDevice() {
+		destination = "platform=iOS,id=" + request.Destination.UDID
+	}
 	args = append(args,
-		"-destination", "platform=iOS Simulator,id="+request.Destination.UDID,
+		"-destination", destination,
 		"-resultBundlePath", request.ResultBundlePath,
 		"-collect-test-diagnostics", collectDiagnostics,
 	)

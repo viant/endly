@@ -86,7 +86,11 @@ func iosBuildArgs(request *BuildRequest) []string {
 	}
 	args = append(args, "-scheme", request.Scheme, "-configuration", request.Configuration)
 	if request.Mode == "build" || request.Mode == "buildForTesting" {
-		args = append(args, "-destination", "platform=iOS Simulator,id="+request.Destination.UDID, "-derivedDataPath", request.DerivedDataPath)
+		destination := "platform=iOS Simulator,id=" + request.Destination.UDID
+		if request.Destination.IsDevice() {
+			destination = "platform=iOS,id=" + request.Destination.UDID
+		}
+		args = append(args, "-destination", destination, "-derivedDataPath", request.DerivedDataPath)
 	} else {
 		args = append(args, "-destination", "generic/platform=iOS", "-archivePath", request.ArchivePath)
 		if request.SDK != "" {
