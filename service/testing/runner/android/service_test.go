@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/viant/endly"
 	"github.com/viant/endly/service/testing/runner/internal/mobile"
@@ -442,13 +444,22 @@ func TestAppiumRunnerFlow(t *testing.T) {
 	if err != nil || len(deviceResult.Validations) != 2 || len(deviceResult.Data["contexts"].([]string)) != 2 {
 		t.Fatalf("unexpected device result: %+v, err=%v", deviceResult, err)
 	}
+	captureLog := filepath.Join(t.TempDir(), "active-logcat.txt")
+	if err := os.WriteFile(captureLog, []byte("failure log tail"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	failureVideo := newFailureVideoCapture(t)
+	service.captures["failure-capture"] = &androidCapture{
+		handle: CaptureHandle{ID: "failure-capture", Lease: lease},
+		log:    &mobile.LoggedProcess{Path: captureLog}, video: failureVideo,
+	}
 	failureResult, err := service.run(ctx, &RunRequest{
 		SessionID:       opened.Session.ID,
 		Commands:        []interface{}{`expect(app.getByTestId("greeting")).toHaveText("Missing", 5)`},
 		ActionTimeoutMs: 10, PollIntervalMs: 1,
 		FailureArtifacts: &mobile.FailureArtifactOptions{Directory: t.TempDir()},
 	})
-	if err != nil || len(failureResult.Failures) != 1 || len(failureResult.Failures[0].Artifacts) != 3 {
+	if err != nil || len(failureResult.Failures) != 1 || len(failureResult.Failures[0].Artifacts) != 5 {
 		t.Fatalf("automatic failure evidence missing: %+v, err=%v", failureResult, err)
 	}
 	evidence, err := service.artifact(ctx, &ArtifactRequest{SessionID: opened.Session.ID, Directory: t.TempDir(), Screenshot: true, PageSource: true, MaxSourceBytes: 100})
@@ -491,6 +502,32 @@ func TestAppiumRunnerFlow(t *testing.T) {
 	if _, err := service.serverStop(context.Background(), &ServerStopRequest{Server: serverResponse.Server}); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func newFailureVideoCapture(t *testing.T) *mobile.SegmentedCapture {
+	t.Helper()
+	directory := t.TempDir()
+	capture, err := mobile.StartSegmentedCapture(time.Hour,
+		func(_ context.Context, index int) (*mobile.Process, error) {
+			done := make(chan error)
+			return &mobile.Process{PID: index + 1, Done: done, Stop: func(context.Context) error {
+				close(done)
+				return nil
+			}}, nil
+		},
+		func(_ context.Context, index int) (string, error) {
+			path := filepath.Join(directory, fmt.Sprintf("segment-%d.mp4", index))
+			if err := os.WriteFile(path, []byte("video"), 0o600); err != nil {
+				return "", err
+			}
+			return path, nil
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { capture.Stop() })
+	return capture
 }
 
 func TestAttachReconnectsAcrossServiceInstances(t *testing.T) {

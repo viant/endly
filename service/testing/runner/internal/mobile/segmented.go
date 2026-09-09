@@ -11,15 +11,21 @@ type SegmentStarter func(context.Context, int) (*Process, error)
 type SegmentFinalizer func(context.Context, int) (string, error)
 
 type SegmentedCapture struct {
-	duration time.Duration
-	start    SegmentStarter
-	finish   SegmentFinalizer
-	stop     chan struct{}
-	done     chan struct{}
-	once     sync.Once
-	mu       sync.Mutex
-	paths    []string
-	errors   []string
+	duration   time.Duration
+	start      SegmentStarter
+	finish     SegmentFinalizer
+	stop       chan struct{}
+	done       chan struct{}
+	checkpoint chan chan segmentedSnapshot
+	once       sync.Once
+	mu         sync.Mutex
+	paths      []string
+	errors     []string
+}
+
+type segmentedSnapshot struct {
+	paths  []string
+	errors []string
 }
 
 func StartSegmentedCapture(duration time.Duration, start SegmentStarter, finish SegmentFinalizer) (*SegmentedCapture, error) {
@@ -28,7 +34,8 @@ func StartSegmentedCapture(duration time.Duration, start SegmentStarter, finish 
 	}
 	result := &SegmentedCapture{
 		duration: duration, start: start, finish: finish,
-		stop: make(chan struct{}), done: make(chan struct{}), paths: []string{}, errors: []string{},
+		stop: make(chan struct{}), done: make(chan struct{}), checkpoint: make(chan chan segmentedSnapshot),
+		paths: []string{}, errors: []string{},
 	}
 	started := make(chan error, 1)
 	go result.run(started)
@@ -52,9 +59,11 @@ func (s *SegmentedCapture) run(started chan<- error) {
 		}
 		timer := time.NewTimer(s.duration)
 		stopping := false
+		var checkpoint chan segmentedSnapshot
 		select {
 		case <-s.stop:
 			stopping = true
+		case checkpoint = <-s.checkpoint:
 		case <-timer.C:
 		case processErr := <-process.Done:
 			if processErr != nil {
@@ -82,6 +91,11 @@ func (s *SegmentedCapture) run(started chan<- error) {
 			s.paths = append(s.paths, path)
 			s.mu.Unlock()
 		}
+		if checkpoint != nil {
+			paths, errors := s.Snapshot()
+			checkpoint <- segmentedSnapshot{paths: paths, errors: errors}
+			close(checkpoint)
+		}
 		if stopping {
 			return
 		}
@@ -93,15 +107,46 @@ func (s *SegmentedCapture) run(started chan<- error) {
 	}
 }
 
+// Checkpoint finalizes the segment currently being recorded and immediately
+// starts the next one. It does not transfer ownership or stop the capture.
+func (s *SegmentedCapture) Checkpoint(ctx context.Context) ([]string, []string) {
+	if s == nil {
+		return nil, nil
+	}
+	response := make(chan segmentedSnapshot, 1)
+	select {
+	case s.checkpoint <- response:
+	case <-s.done:
+		return s.Snapshot()
+	case <-ctx.Done():
+		return nil, []string{ctx.Err().Error()}
+	}
+	select {
+	case snapshot := <-response:
+		return snapshot.paths, snapshot.errors
+	case <-s.done:
+		return s.Snapshot()
+	case <-ctx.Done():
+		return nil, []string{ctx.Err().Error()}
+	}
+}
+
+func (s *SegmentedCapture) Snapshot() ([]string, []string) {
+	if s == nil {
+		return nil, nil
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]string(nil), s.paths...), append([]string(nil), s.errors...)
+}
+
 func (s *SegmentedCapture) Stop() ([]string, []string) {
 	if s == nil {
 		return nil, nil
 	}
 	s.once.Do(func() { close(s.stop) })
 	<-s.done
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return append([]string(nil), s.paths...), append([]string(nil), s.errors...)
+	return s.Snapshot()
 }
 
 func (s *SegmentedCapture) appendError(value string) {

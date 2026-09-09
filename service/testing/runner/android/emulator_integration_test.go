@@ -163,6 +163,15 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 		if closed, err := attachedService.close(context.Background(), &CloseRequest{SessionID: attached.Session.ID}); err != nil || !strings.Contains(closed.Warning, "remains open") {
 			t.Fatalf("safe attached-session close failed: response=%+v err=%v", closed, err)
 		}
+		failureResult, err := service.run(ctx, &RunRequest{
+			SessionID:       opened.Session.ID,
+			Commands:        []interface{}{`expect(device.orientation()).toHaveOrientation("LANDSCAPE", 100)`},
+			ActionTimeoutMs: 1_000, PollIntervalMs: 50,
+			FailureArtifacts: &mobile.FailureArtifactOptions{Directory: t.TempDir()},
+		})
+		if err != nil || len(failureResult.Failures) != 1 || !hasFailureKinds(failureResult.Failures[0], "screenshot", "pageSource", "logcat", "video", "failureManifest") {
+			t.Fatalf("real automatic failure evidence incomplete: response=%+v err=%v", failureResult, err)
+		}
 	} else {
 		if _, err := service.launch(ctx, &LaunchRequest{Lease: started.Lease, Package: packageName, Activity: activity}); err != nil {
 			t.Fatal(err)
@@ -181,6 +190,24 @@ func TestAndroidEmulatorIntegration(t *testing.T) {
 	if stopped, err := service.captureStop(context.Background(), &CaptureStopRequest{Capture: capture.Capture}); err != nil || !stopped.Stopped || !hasVideoEvidence(stopped.Artifacts) {
 		t.Fatalf("capture stop failed: response=%+v err=%v", stopped, err)
 	}
+}
+
+func hasFailureKinds(failure *mobile.FailureEvidence, kinds ...string) bool {
+	if failure == nil || len(failure.Errors) > 0 {
+		return false
+	}
+	found := map[string]bool{}
+	for _, artifact := range failure.Artifacts {
+		if artifact != nil && (artifact.Kind != "video" || artifact.Size > 0) {
+			found[artifact.Kind] = true
+		}
+	}
+	for _, kind := range kinds {
+		if !found[kind] {
+			return false
+		}
+	}
+	return true
 }
 
 func hasVideoEvidence(artifacts []*mobile.Evidence) bool {
