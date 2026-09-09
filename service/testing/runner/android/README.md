@@ -69,6 +69,8 @@ The gated test builds with the project Gradle wrapper, starts a clean owned AVD,
 
 The reference validation uses API 35 `endly_api_35` on arm64 with Appium 3.7.0 and UiAutomator2 8.6.1. It additionally opens a managed session, resolves a native view through the DSL, asserts visibility, captures Appium screenshot/source evidence, and verifies that no emulator or Appium process remains.
 
+Add `ENDLY_ANDROID_AAB_INTEGRATION=1` and point `ENDLY_ANDROID_BUNDLETOOL` at the official `bundletool-all` JAR to build an AAB, generate device-targeted signed APKS using file-backed passwords, and install it on the real emulator before the remaining suite runs. This path is verified with bundletool 1.18.3; Endly passes its already-resolved adb path explicitly rather than relying on `ANDROID_HOME` or PATH.
+
 Run the two-lane isolation stress test with two provisioned AVD names:
 
 ```bash

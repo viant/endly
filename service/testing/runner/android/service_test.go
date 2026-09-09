@@ -316,7 +316,7 @@ func TestInstallAABUsesPasswordFiles(t *testing.T) {
 	for _, expected := range []string{
 		"-jar " + bundletool + " build-apks --bundle=/tmp/app.aab",
 		"--ks-pass=file:/secure/store.pass", "--key-pass=file:/secure/key.pass",
-		"-jar " + bundletool + " install-apks", "--device-id=emulator-5554",
+		"-jar " + bundletool + " install-apks", "--device-id=emulator-5554", "--adb=" + filepath.Join(lease.AndroidSDKRoot, "platform-tools", "adb"),
 	} {
 		if !strings.Contains(all, expected) {
 			t.Fatalf("missing %q in:\n%s", expected, all)
