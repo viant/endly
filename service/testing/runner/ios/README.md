@@ -27,7 +27,7 @@ Implemented actions:
 | `ios:close` | Idempotently close the Appium session |
 | `ios:cleanup` | Run every registered teardown in LIFO order and report all errors |
 
-The implementation uses argv-safe local command execution, Xcode Simulator build/test, archive/export signing inputs, and `.xcresult` tooling, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. The DSL supports strict plural lookup, `first`/`last`/`nth`/`count`, typed and textual commands, pointer gestures, richer element/device assertions, contexts, orientation, location, alerts, permissions, appearance, biometrics, and application lifecycle. Simulator capture can rotate bounded video segments; failed runs automatically retain screenshot, bounded source, bounded active-log tail, a checkpointed valid video segment, and a manifest while recording continues. Managed Simulators and Appium ports use process-shared fenced leases, while owned processes still unwind through the LIFO context cleanup stack. Portable 0600 session descriptors let a second Endly process run `ios:attach` or inline `ios:repl.attach`; attachment is non-owning unless `takeOwnership` is explicit. On non-Darwin hosts, `ios` registers the same action-compatible unsupported-platform stub so Endly still builds and reports a useful error. Remote macOS workers/cloud farms, advanced WDA modes, physical-device deployment, parallel stress, and real failing XCTest suites remain to be implemented.
+The implementation uses argv-safe local command execution, Xcode Simulator build/test, archive/export signing inputs, and `.xcresult` tooling, a small W3C/Appium client, a closed mobile DSL AST, and injectable backends for deterministic lifecycle/protocol tests. The DSL supports strict plural lookup, `first`/`last`/`nth`/`count`, typed and textual commands, pointer gestures, richer element/device assertions, contexts, orientation, location, alerts, permissions, appearance, biometrics, and application lifecycle. Simulator capture can rotate bounded video segments; failed runs automatically retain screenshot, bounded source, bounded active-log tail, a checkpointed valid video segment, and a manifest while recording continues. Managed Simulators and Appium ports use process-shared fenced leases, while owned processes still unwind through the LIFO context cleanup stack. Portable 0600 session descriptors let a second Endly process run `ios:attach` or inline `ios:repl.attach`; attachment is non-owning unless `takeOwnership` is explicit. A gated two-Simulator stress test verifies distinct Simulator/Appium/WDA/MJPEG/DerivedData resources under concurrent sessions. On non-Darwin hosts, `ios` registers the same action-compatible unsupported-platform stub so Endly still builds and reports a useful error. Remote macOS workers/cloud farms, advanced WDA modes, physical-device deployment, and real failing XCTest suites remain to be implemented.
 
 Run the real host check:
 
@@ -56,6 +56,13 @@ ENDLY_IOS_APPIUM_HOME=/path/to/appium-home \
 ```
 
 That path additionally starts owned Appium/WDA processes, locates the fixture by accessibility identifier, verifies its initial text, taps the increment button, waits for `Count: 1`, captures Appium screenshot/source evidence, and verifies complete cleanup.
+
+Run the two-lane isolation stress test:
+
+```bash
+ENDLY_IOS_PARALLEL_INTEGRATION=1 \
+  go test ./service/testing/runner/ios -run '^TestIOSParallelSimulatorStress$' -v -count=1
+```
 
 Run `test/repl.yaml` to enter the live inspector. Once setup completes, Endly displays an `ios[session]>` prompt:
 
