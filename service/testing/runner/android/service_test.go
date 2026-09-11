@@ -73,6 +73,41 @@ func TestParseADBDevices(t *testing.T) {
 	}
 }
 
+func TestPortReservationsExcludeConcurrentLanesAndSerialAttach(t *testing.T) {
+	directory := t.TempDir()
+	a, b := newService(&fakeRunner{}), newService(&fakeRunner{})
+	a.leaseStore, b.leaseStore = mobile.NewLeaseStore(directory), mobile.NewLeaseStore(directory)
+	var ports [2]int
+	var handles [2]*mobile.LeaseHandle
+	var wait sync.WaitGroup
+	for index, svc := range []*service{a, b} {
+		wait.Add(1)
+		go func(index int, svc *service) {
+			defer wait.Done()
+			var err error
+			ports[index], handles[index], err = svc.reservePort(context.Background(), "adb", 0)
+			if err != nil {
+				t.Error(err)
+			}
+		}(index, svc)
+	}
+	wait.Wait()
+	if ports[0] == ports[1] {
+		t.Fatalf("shared port %d", ports[0])
+	}
+	for _, handle := range handles {
+		if handle == nil {
+			t.Fatal("missing reservation")
+		}
+		if _, err := mobile.NewLeaseStore(directory).Acquire(context.Background(), handle.Key); !errors.Is(err, mobile.ErrLeaseHeld) {
+			t.Fatalf("serial attach was not excluded: %v", err)
+		}
+		if err := a.leaseStore.Release(handle); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestRoutes(t *testing.T) {
 	service := newService(&fakeRunner{})
 	for _, action := range []string{"doctor", "device-start", "device-stop", "device-register", "device-release", "server-start", "server-stop", "build", "install", "uninstall", "launch", "terminate", "test", "capture-start", "capture-stop", "open", "attach", "run", "repl", "artifact", "close", "cleanup"} {

@@ -125,15 +125,15 @@ func TestIOSParallelSimulatorStress(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := runIOSStressLanes(lanes, func(lane *iosStressLane) error {
+		useNewWDA := true
 		opened, err := service.open(ctx, &OpenRequest{
 			SessionID: fmt.Sprintf("ios-parallel-%d", lane.index), Destination: lane.destination.Lease,
 			Server: lane.server.Server, BundleID: bundleID,
-			Capabilities: map[string]interface{}{
-				"appium:wdaLocalPort":      8100 + lane.index,
-				"appium:mjpegServerPort":   9100 + lane.index,
-				"appium:derivedDataPath":   filepath.Join(lane.root, "WDA"),
-				"appium:useNewWDA":         true,
-				"appium:wdaStartupRetries": 2,
+			WDA: &WDAOptions{
+				LocalPort:       8100 + lane.index,
+				MJPEGServerPort: 9100 + lane.index,
+				DerivedDataPath: filepath.Join(lane.root, "WDA"),
+				UseNewWDA:       &useNewWDA, StartupRetries: 2,
 			},
 		})
 		lane.session = opened

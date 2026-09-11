@@ -53,3 +53,27 @@ func TestChecksReady(t *testing.T) {
 		t.Fatal("expected optional missing check not to affect readiness")
 	}
 }
+
+func TestStartedProcessSurvivesActionCancellation(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("uses POSIX sleep")
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	process, err := (OSRunner{}).Start(ctx, Command{Name: "sleep", Args: []string{"30"}}, io.Discard, io.Discard)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		stopCtx, stop := context.WithTimeout(context.Background(), time.Second)
+		defer stop()
+		if err := process.Stop(stopCtx); err != nil {
+			t.Error(err)
+		}
+	}()
+	cancel()
+	select {
+	case <-process.Done:
+		t.Fatal("operation cancellation killed persistent process")
+	case <-time.After(100 * time.Millisecond):
+	}
+}

@@ -68,7 +68,11 @@ func (OSRunner) Run(ctx context.Context, command Command) (Result, error) {
 }
 
 func (OSRunner) Start(ctx context.Context, command Command, stdout, stderr io.Writer) (*Process, error) {
-	cmd := exec.CommandContext(ctx, command.Name, command.Args...)
+	// Started processes belong to their cleanup owner, not the transient action.
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	cmd := exec.Command(command.Name, command.Args...)
 	cmd.Dir = command.Dir
 	cmd.Env = commandEnv(command.Env)
 	cmd.Stdout = stdout
@@ -78,13 +82,17 @@ func (OSRunner) Start(ctx context.Context, command Command, stdout, stderr io.Wr
 		return nil, fmt.Errorf("start %s: %w", command.Name, err)
 	}
 	done := make(chan error, 1)
+	exited := make(chan struct{})
 	go func() {
 		done <- cmd.Wait()
+		close(exited)
 		close(done)
 	}()
 	stop := func(stopCtx context.Context) error {
-		if cmd.ProcessState != nil && cmd.ProcessState.Exited() {
+		select {
+		case <-exited:
 			return nil
+		default:
 		}
 		_ = interruptProcessGroup(cmd)
 		select {
