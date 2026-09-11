@@ -40,6 +40,7 @@ type iosSession struct {
 	appium         *mobile.AppiumSession
 	attached       bool
 	ownsBackend    bool
+	backendClosed  bool
 	descriptorPath string
 	mu             sync.Mutex
 }
@@ -1030,25 +1031,32 @@ func (s *service) failureCaptureFiles(ctx context.Context, session *iosSession) 
 func (s *service) close(ctx context.Context, request *CloseRequest) (*CloseResponse, error) {
 	s.mu.Lock()
 	session, ok := s.sessions[request.SessionID]
-	if ok {
-		delete(s.sessions, request.SessionID)
-	}
 	s.mu.Unlock()
 	if !ok {
 		return &CloseResponse{Warning: "session already closed or unknown"}, nil
 	}
+	session.mu.Lock()
+	defer session.mu.Unlock()
 	if !session.ownsBackend {
+		s.mu.Lock()
+		delete(s.sessions, request.SessionID)
+		s.mu.Unlock()
 		return &CloseResponse{Closed: true, Warning: "detached from external Appium session; backend session remains open"}, nil
 	}
-	session.mu.Lock()
-	err := session.appium.Close(ctx)
-	session.mu.Unlock()
-	if err != nil {
-		return nil, err
+	if !session.backendClosed {
+		if err := session.appium.Close(ctx); err != nil {
+			return nil, err
+		}
+		session.backendClosed = true
 	}
 	if err := mobile.RemoveSessionDescriptor(session.descriptorPath); err != nil {
 		return nil, err
 	}
+	s.mu.Lock()
+	if s.sessions[request.SessionID] == session {
+		delete(s.sessions, request.SessionID)
+	}
+	s.mu.Unlock()
 	return &CloseResponse{Closed: true}, nil
 }
 

@@ -2,6 +2,7 @@ package android
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -42,6 +43,7 @@ type androidSession struct {
 	testIDStrategy string
 	attached       bool
 	ownsBackend    bool
+	backendClosed  bool
 	descriptorPath string
 	mu             sync.Mutex
 }
@@ -1061,25 +1063,32 @@ func (s *service) failureCaptureFiles(ctx context.Context, session *androidSessi
 func (s *service) close(ctx context.Context, request *CloseRequest) (*CloseResponse, error) {
 	s.mu.Lock()
 	session, ok := s.sessions[request.SessionID]
-	if ok {
-		delete(s.sessions, request.SessionID)
-	}
 	s.mu.Unlock()
 	if !ok {
 		return &CloseResponse{Warning: "session already closed or unknown"}, nil
 	}
+	session.mu.Lock()
+	defer session.mu.Unlock()
 	if !session.ownsBackend {
+		s.mu.Lock()
+		delete(s.sessions, request.SessionID)
+		s.mu.Unlock()
 		return &CloseResponse{Closed: true, Warning: "detached from external Appium session; backend session remains open"}, nil
 	}
-	session.mu.Lock()
-	err := session.appium.Close(ctx)
-	session.mu.Unlock()
-	if err != nil {
-		return nil, err
+	if !session.backendClosed {
+		if err := session.appium.Close(ctx); err != nil {
+			return nil, err
+		}
+		session.backendClosed = true
 	}
 	if err := mobile.RemoveSessionDescriptor(session.descriptorPath); err != nil {
 		return nil, err
 	}
+	s.mu.Lock()
+	if s.sessions[request.SessionID] == session {
+		delete(s.sessions, request.SessionID)
+	}
+	s.mu.Unlock()
 	return &CloseResponse{Closed: true}, nil
 }
 
@@ -1092,6 +1101,11 @@ func (s *service) validateLease(lease DeviceLease) error {
 	}
 	if stored.Fence != lease.Fence || stored.Serial != lease.Serial {
 		return fmt.Errorf("Android device lease fence mismatch")
+	}
+	if stored.SerialLease != nil {
+		if err := s.leaseStore.Validate(stored.SerialLease); err != nil {
+			return err
+		}
 	}
 	if stored.ProcessLease != nil {
 		if lease.ProcessLease == nil || stored.ProcessLease.Token != lease.ProcessLease.Token {
@@ -1441,10 +1455,15 @@ func (s *service) deviceStart(ctx *endly.Context, request *DeviceStartRequest) (
 	if err != nil {
 		return nil, err
 	}
-	port, err := s.selectPort(ctx.Background(), adb, request.Port)
+	port, serialLease, err := s.reservePort(ctx.Background(), adb, request.Port)
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if !leaseCommitted {
+			_ = s.leaseStore.Release(serialLease)
+		}
+	}()
 	serial := "emulator-" + strconv.Itoa(port)
 	args := []string{"-avd", request.AVD, "-port", strconv.Itoa(port)}
 	if request.WipeData {
@@ -1473,16 +1492,25 @@ func (s *service) deviceStart(ctx *endly.Context, request *DeviceStartRequest) (
 	}()
 
 	if err := s.waitForBoot(ctx.Background(), adb, serial, request.BootTimeoutMs, request.PollIntervalMs); err != nil {
-		_, _ = s.runner.Run(context.Background(), mobile.Command{Name: adb, Args: []string{"-s", serial, "emu", "kill"}})
+		if process.Stop != nil {
+			stopCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			_ = process.Stop(stopCtx)
+		}
 		return nil, err
 	}
 	if request.Animations != nil && !*request.Animations {
 		if err := s.setAnimations(ctx.Background(), adb, serial, false); err != nil {
-			_, _ = s.runner.Run(context.Background(), mobile.Command{Name: adb, Args: []string{"-s", serial, "emu", "kill"}})
+			if process.Stop != nil {
+				stopCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				_ = process.Stop(stopCtx)
+			}
 			return nil, err
 		}
 	}
 	lease := DeviceLease{ID: uuid.NewString(), Fence: processLease.Fence, Serial: serial, AVD: request.AVD, PID: process.PID, Owned: true, LogPath: request.LogPath, AndroidSDKRoot: request.AndroidSDKRoot, ProcessLease: processLease}
+	lease.SerialLease = serialLease
 	s.storeLease(lease)
 	leaseCommitted = true
 	s.cleanupStack(ctx).Push("device:"+lease.ID, func(cleanupCtx context.Context) error {
@@ -1604,6 +1632,11 @@ func (s *service) stopOwned(ctx context.Context, adb string, lease DeviceLease) 
 		}
 		return &DeviceStopResponse{Warning: "attached physical/external device was released but not stopped"}, nil
 	}
+	if stored.SerialLease != nil {
+		if err := s.leaseStore.Validate(stored.SerialLease); err != nil {
+			return nil, err
+		}
+	}
 	_, err := s.runner.Run(ctx, mobile.Command{Name: adb, Args: []string{"-s", stored.Serial, "emu", "kill"}})
 	if err != nil {
 		return nil, fmt.Errorf("stop emulator %s: %w", stored.Serial, err)
@@ -1614,7 +1647,38 @@ func (s *service) stopOwned(ctx context.Context, adb string, lease DeviceLease) 
 	if err := s.leaseStore.Release(stored.ProcessLease); err != nil {
 		return nil, err
 	}
+	if err := s.leaseStore.Release(stored.SerialLease); err != nil {
+		return nil, err
+	}
 	return &DeviceStopResponse{Stopped: true}, nil
+}
+
+func (s *service) reservePort(ctx context.Context, adb string, requested int) (int, *mobile.LeaseHandle, error) {
+	first, last := 5554, 5682
+	if requested != 0 {
+		first, last = requested, requested
+	}
+	for port := first; port <= last; port += 2 {
+		lease, err := s.leaseStore.Acquire(ctx, "android:device:emulator-"+strconv.Itoa(port))
+		if err != nil {
+			if requested != 0 {
+				return 0, nil, err
+			}
+			if errors.Is(err, mobile.ErrLeaseHeld) {
+				continue
+			}
+			return 0, nil, err
+		}
+		if _, err := s.selectPort(ctx, adb, port); err != nil {
+			_ = s.leaseStore.Release(lease)
+			if requested != 0 {
+				return 0, nil, err
+			}
+			continue
+		}
+		return port, lease, nil
+	}
+	return 0, nil, fmt.Errorf("no free Android emulator console port")
 }
 
 func (s *service) storeLease(lease DeviceLease) {

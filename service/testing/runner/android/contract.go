@@ -54,6 +54,7 @@ type DeviceLease struct {
 	Provider        string
 	PlatformVersion string
 	ProcessLease    *mobile.LeaseHandle
+	SerialLease     *mobile.LeaseHandle
 }
 
 type DeviceRegisterRequest struct {

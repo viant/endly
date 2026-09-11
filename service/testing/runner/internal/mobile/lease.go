@@ -57,6 +57,11 @@ func (s *LeaseStore) Acquire(ctx context.Context, key string) (*LeaseHandle, err
 		return nil, fmt.Errorf("create mobile lease directory: %w", err)
 	}
 	path := s.leasePath(key)
+	unlock, err := s.lock()
+	if err != nil {
+		return nil, err
+	}
+	defer unlock()
 	for attempts := 0; attempts < 4; attempts++ {
 		if err := ctx.Err(); err != nil {
 			return nil, err
@@ -103,6 +108,11 @@ func (s *LeaseStore) Acquire(ctx context.Context, key string) (*LeaseHandle, err
 func (s *LeaseStore) Validate(handle *LeaseHandle) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	unlock, err := s.lock()
+	if err != nil {
+		return err
+	}
+	defer unlock()
 	return s.validateUnlocked(handle)
 }
 
@@ -126,6 +136,11 @@ func (s *LeaseStore) validateUnlocked(handle *LeaseHandle) error {
 func (s *LeaseStore) Refresh(handle *LeaseHandle) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	unlock, err := s.lock()
+	if err != nil {
+		return err
+	}
+	defer unlock()
 	if err := s.validateUnlocked(handle); err != nil {
 		return err
 	}
@@ -153,6 +168,11 @@ func (s *LeaseStore) Release(handle *LeaseHandle) error {
 	if handle == nil {
 		return nil
 	}
+	unlock, err := s.lock()
+	if err != nil {
+		return err
+	}
+	defer unlock()
 	if err := s.validateUnlocked(handle); err != nil {
 		if os.IsNotExist(errors.Unwrap(err)) {
 			return nil
@@ -168,6 +188,22 @@ func (s *LeaseStore) Release(handle *LeaseHandle) error {
 func (s *LeaseStore) leasePath(key string) string {
 	hash := sha256.Sum256([]byte(key))
 	return filepath.Join(s.Directory, hex.EncodeToString(hash[:16])+".json")
+}
+
+// The lock file is never removed: replacing its inode would split the lock.
+func (s *LeaseStore) lock() (func(), error) {
+	if err := os.MkdirAll(s.Directory, 0700); err != nil {
+		return nil, err
+	}
+	file, err := os.OpenFile(filepath.Join(s.Directory, ".lock"), os.O_CREATE|os.O_RDWR, 0600)
+	if err != nil {
+		return nil, err
+	}
+	if err = lockLeaseFile(file); err != nil {
+		file.Close()
+		return nil, err
+	}
+	return func() { unlockLeaseFile(file); file.Close() }, nil
 }
 
 func readLease(path string) (*LeaseHandle, error) {
