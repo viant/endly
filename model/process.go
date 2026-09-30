@@ -10,13 +10,15 @@ import (
 
 // Process represents a running instance of workflow/pipeline process.
 type Process struct {
-	Source   *location.Resource
-	Owner    string
-	TagIDs   map[string]bool
-	HasTagID bool
-	Workflow *Workflow
-	Task     *Task
-	TaskNode *TasksNode
+	Source          *location.Resource
+	Owner           string
+	TagIDs          map[string]bool
+	HasTagID        bool
+	StrictTagIDs    bool
+	SelectedTagHits *int64
+	Workflow        *Workflow
+	Task            *Task
+	TaskNode        *TasksNode
 	*Activities
 	State      data.Map
 	Terminated int32
@@ -59,6 +61,9 @@ func (p *Process) Push(activity *Activity) {
 // Push adds a workflow to the workflow stack.
 func (p *Process) AddTagIDs(tagIDs ...string) {
 	for _, tagID := range tagIDs {
+		if tagID == "" {
+			continue
+		}
 		p.TagIDs[tagID] = true
 	}
 }
@@ -75,6 +80,11 @@ func NewProcess(source *location.Resource, workflow *Workflow, upstream *Process
 		_, process.Owner = toolbox.URLSplit(source.URL)
 	}
 	process.TagIDs = map[string]bool{}
+	process.SelectedTagHits = new(int64)
+	if upstream != nil {
+		process.StrictTagIDs = upstream.StrictTagIDs
+		process.SelectedTagHits = upstream.SelectedTagHits
+	}
 	if upstream != nil && len(upstream.TagIDs) > 0 {
 		for k := range upstream.TagIDs {
 			process.TagIDs[k] = true

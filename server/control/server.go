@@ -252,6 +252,15 @@ func (s *Server) session(writer http.ResponseWriter, request *http.Request, sess
 }
 
 func (s *Server) workflows(writer http.ResponseWriter, request *http.Request, sessionID string, parts []string) {
+	if len(parts) == 2 && parts[1] == "tasks" && request.Method == http.MethodGet {
+		result, err := s.service.ListTasks(&managerservice.ListTasksRequest{SessionID: sessionID, Workflow: parts[0], Path: request.URL.Query().Get("path")})
+		if err != nil {
+			writeError(writer, http.StatusNotFound, err)
+			return
+		}
+		writeJSON(writer, http.StatusOK, result)
+		return
+	}
 	if len(parts) == 0 {
 		switch request.Method {
 		case http.MethodGet:

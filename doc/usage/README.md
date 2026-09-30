@@ -83,3 +83,15 @@ In this method, a workflow runs with command runner similarly to 'endly' command
     }
 
 ```         
+
+### Ordered nested task selection
+
+Use `endly -selector-mode=path -t=group.child,other` for exact dotted task paths
+executed in selector order. Ancestors retain init/post/conditions and catch/defer
+control tasks; repeated selections rerun ancestors. A selected parent includes
+its subtree. Paths belong to the current workflow, not a referenced run workflow.
+With `-i`, path mode also excludes unmatched template instances across groups;
+untagged setup still runs. Legacy mode remains the default.
+
+`endly mcp` exposes stateful orchestration, discovery, debugging and skills; see
+[the MCP guide](../../server/mcp/README.md).
