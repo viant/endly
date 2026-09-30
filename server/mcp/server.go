@@ -219,6 +219,9 @@ func NewHandler(ctx context.Context, runtime *manager.Service, factory manager.M
 		}
 		return toolResult(result, nil)
 	})
+	if err := registerSourceTools(h, runtime, controlManager); err != nil {
+		return nil, err
+	}
 	if err := registerServiceInfo(h, controlManager); err != nil {
 		return nil, err
 	}

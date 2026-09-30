@@ -14,3 +14,5 @@ Preserve parent/child keys and uniqueness across associations. MappingResponse.T
 is the physical table inventory for subsequent dsunit:sequence lookup; publish
 its values under the sequence namespace expected by the fixture before conversion.
 For the full setup/hydration dependency chain retrieve endly-dsunit-hydration.
+
+Dispatch mapping directly with endly_dsunit_mapping; its request is the native MappingRequest. Observe MappingResponse through the resulting operation.
