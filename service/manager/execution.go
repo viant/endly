@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/viant/assertly"
 	"github.com/viant/endly"
 	"github.com/viant/endly/internal/debug"
 	"github.com/viant/endly/model"
@@ -14,13 +15,15 @@ import (
 )
 
 type queuedEvent struct {
-	Type        string
-	EndlyType   string
-	Timestamp   time.Time
-	Value       interface{}
-	Messages    []*msg.Message
-	Activity    *model.Activity
-	ActivityEnd bool
+	PassedAssertions int
+	FailedAssertions int
+	Type             string
+	EndlyType        string
+	Timestamp        time.Time
+	Value            interface{}
+	Messages         []*msg.Message
+	Activity         *model.Activity
+	ActivityEnd      bool
 }
 
 func (s *Service) executeWorkflow(session *Session, operationID string, input *RunWorkflowRequest) {
@@ -86,6 +89,7 @@ func (s *Service) executeWorkflow(session *Session, operationID string, input *R
 		Name:              input.Workflow,
 		URL:               input.Workflow,
 		Tasks:             input.Tasks,
+		SelectorMode:      input.SelectorMode,
 		TagIDs:            input.TagIDs,
 		Params:            input.Params,
 		PublishParameters: publishParameters,
@@ -112,6 +116,11 @@ func (s *Service) executeWorkflow(session *Session, operationID string, input *R
 	if err != nil {
 		operation.Status = OperationFailed
 		operation.Error = err.Error()
+		return
+	}
+	if operation.FailedAssertions > 0 {
+		operation.Status = OperationFailed
+		operation.Error = fmt.Sprintf("%d assertions failed", operation.FailedAssertions)
 		return
 	}
 	operation.Status = OperationSucceeded
@@ -182,6 +191,11 @@ func (s *Service) executeAction(session *Session, operationID string, input *Run
 		operation.Error = err.Error()
 		return
 	}
+	if operation.FailedAssertions > 0 {
+		operation.Status = OperationFailed
+		operation.Error = fmt.Sprintf("%d assertions failed", operation.FailedAssertions)
+		return
+	}
 	operation.Status = OperationSucceeded
 	operation.Result = map[string]interface{}{"response": encodable(response), "sessionId": session.info.SessionID}
 }
@@ -205,8 +219,14 @@ func (s *Service) startEventPump(session *Session, operation *Operation, origina
 			}
 			session.mu.Lock()
 			current := session.operations[operation.ID]
-			if current != nil && len(current.Events) < s.maxEvents {
-				current.Events = append(current.Events, operationEvent)
+			if current != nil {
+				if len(current.Events) < s.maxEvents {
+					current.Events = append(current.Events, operationEvent)
+				} else {
+					copy(current.Events, current.Events[1:])
+					current.Events[len(current.Events)-1] = operationEvent
+					atomic.AddInt64(&current.droppedEvents, 1)
+				}
 			}
 			session.mu.Unlock()
 			for _, callback := range callbacks {
@@ -219,6 +239,14 @@ func (s *Service) startEventPump(session *Session, operation *Operation, origina
 	}()
 	session.context.SetListener(func(event msg.Event) {
 		immutable := snapshotEvent(event)
+		if immutable.PassedAssertions+immutable.FailedAssertions > 0 {
+			session.mu.Lock()
+			if current := session.operations[operation.ID]; current != nil {
+				current.PassedAssertions += immutable.PassedAssertions
+				current.FailedAssertions += immutable.FailedAssertions
+			}
+			session.mu.Unlock()
+		}
 		select {
 		case operation.eventQueue <- immutable:
 		default:
@@ -268,6 +296,16 @@ func snapshotEvent(event msg.Event) *queuedEvent {
 		result.Value = map[string]interface{}{"Response": encodable(value.Response)}
 	default:
 		result.Value = nil
+	}
+	if asserted, ok := event.Value().(interface{ Assertion() []*assertly.Validation }); ok {
+		validations := asserted.Assertion()
+		for _, validation := range validations {
+			if validation != nil {
+				result.PassedAssertions += validation.PassedCount
+				result.FailedAssertions += validation.FailedCount
+			}
+		}
+		result.Value = encodable(validations)
 	}
 	return result
 }

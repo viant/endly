@@ -1,14 +1,18 @@
 package model
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
 	"gopkg.in/yaml.v2"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestTemplate_Expand(t *testing.T) {
@@ -94,4 +98,45 @@ func loadInlineWorkflow(URL string) (*Inlined, error) {
 	inline := &Inlined{}
 	err = toolbox.DefaultConverter.AssignConverted(inline, aMap)
 	return inline, err
+}
+
+func TestTemplateSparseInstances(t *testing.T) {
+	root := t.TempDir()
+	for _, name := range []string{"001_one", "003_three"} {
+		if err := os.MkdirAll(filepath.Join(root, "cases", name), 0755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	request := &Inlined{}
+	source := `pipeline:
+  tests:
+    subPath: cases/${index}_*
+    range: 1..003
+    template:
+      check:
+        action: nop
+`
+	ordered := yaml.MapSlice{}
+	if err := toolbox.NewYamlDecoderFactory().Create(strings.NewReader(source)).Decode(&ordered); err != nil {
+		t.Fatal(err)
+	}
+	if err := toolbox.DefaultConverter.AssignConverted(request, ordered); err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan error, 1)
+	go func() {
+		workflow, err := request.AsWorkflow("sparse", root)
+		if err == nil && len(workflow.Tasks[0].Actions) != 2 {
+			err = fmt.Errorf("expected two instances, got %d", len(workflow.Tasks[0].Actions))
+		}
+		done <- err
+	}()
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("missing index did not advance")
+	}
 }

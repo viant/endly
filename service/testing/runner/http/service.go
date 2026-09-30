@@ -43,13 +43,16 @@ func tuneDefaultTransport() {
 
 type service struct {
 	*endly.AbstractService
+	clientMutex sync.Mutex
+	clients     map[string]*http.Client
 }
 
 func (s *service) send(context *endly.Context, sendGroupRequest *SendRequest) (*SendResponse, error) {
-	client, err := toolbox.NewHttpClient(s.applyDefaultTimeoutIfNeeded(context, sendGroupRequest.httpOptions)...)
+	client, cleanup, err := s.clientFor(context, s.applyDefaultTimeoutIfNeeded(context, sendGroupRequest.httpOptions))
 	if err != nil {
 		return nil, fmt.Errorf("failed to send req: %v", err)
 	}
+	defer cleanup()
 	initializeContext(context)
 	defer s.resetContext(context, sendGroupRequest)
 
@@ -97,6 +100,7 @@ func (s *service) sendRequest(context *endly.Context, client *http.Client, reque
 	bodyProvider, err := getRequestBodyReader(httpRequest, repeater.Repeat)
 
 	handler := func() (interface{}, error) {
+		httpRequest = httpRequest.WithContext(context.Background())
 		httpRequest.Body = bodyProvider()
 		httpResponse, err := client.Do(httpRequest)
 		if err != nil {

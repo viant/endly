@@ -76,6 +76,9 @@ func (t *TransientTemplate) Expand(task *Task, parentTag string, inline *Inlined
 		index := iterator.Index()
 		state := t.buildTagState(index, tag, instances)
 		if state == nil {
+			if !iterator.Next() {
+				break
+			}
 			continue
 		}
 		tagPath := state.GetString("path")

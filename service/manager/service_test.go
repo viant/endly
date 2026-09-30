@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/viant/endly"
+	_ "github.com/viant/endly/service/testing/validator"
 )
 
 type callbackTransport struct{ count atomic.Int64 }
@@ -251,4 +253,55 @@ func TestServiceRunWorkflowPreservesSelectedTaskOrderAndDuplicates(t *testing.T)
 		}
 	}
 	require.Equal(t, []string{"task1", "task2", "task1"}, actual)
+}
+
+func TestRetainedEventsIncludeTerminalResult(t *testing.T) {
+	service := New(endly.New, WithMaxEvents(2))
+	defer service.Shutdown(context.Background())
+	session, err := service.Open(context.Background(), &OpenRequest{})
+	require.NoError(t, err)
+	_, err = service.LoadWorkflow(context.Background(), &LoadWorkflowRequest{SessionID: session.SessionID, URL: "tail.yaml", Content: `pipeline:
+  first:
+    action: nop
+  second:
+    action: nop
+`})
+	require.NoError(t, err)
+	operation, err := service.StartWorkflow(&RunWorkflowRequest{SessionID: session.SessionID, Workflow: "tail"})
+	require.NoError(t, err)
+	operation, err = service.WaitOperation(context.Background(), session.SessionID, operation.ID)
+	require.NoError(t, err)
+	require.Len(t, operation.Events, 2)
+	require.Greater(t, operation.DroppedEvents, int64(0))
+	require.Equal(t, "workflow_RunResponse", operation.Events[1].Type)
+	require.Greater(t, operation.Events[0].Sequence, int64(2))
+}
+
+func TestWorkflowAssertionFailureStatus(t *testing.T) {
+	service := New(endly.New)
+	defer service.Shutdown(context.Background())
+	session, err := service.Open(context.Background(), &OpenRequest{})
+	require.NoError(t, err)
+	_, err = service.LoadWorkflow(context.Background(), &LoadWorkflowRequest{SessionID: session.SessionID, URL: "assert.yaml", Content: `pipeline:
+  check:
+    action: validator:assert
+    expect: expected
+    actual: wrong
+`})
+	require.NoError(t, err)
+	operation, err := service.StartWorkflow(&RunWorkflowRequest{SessionID: session.SessionID, Workflow: "assert"})
+	require.NoError(t, err)
+	operation, err = service.WaitOperation(context.Background(), session.SessionID, operation.ID)
+	require.NoError(t, err)
+	require.Equal(t, OperationFailed, operation.Status)
+	require.Greater(t, operation.FailedAssertions, 0)
+}
+
+func TestDiagnosticRedactionIncludesNestedEvents(t *testing.T) {
+	source := map[string]interface{}{"messages": []interface{}{map[string]interface{}{"text": "Bearer abc.def.xyz", "Authorization": []interface{}{"secret-value"}, "nested": map[string]interface{}{"token": "secret-value"}}}}
+	redacted := encodable(source)
+	text := fmt.Sprint(redacted)
+	require.NotContains(t, text, "abc.def.xyz")
+	require.NotContains(t, text, "secret-value")
+	require.Contains(t, text, "[REDACTED]")
 }
