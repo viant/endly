@@ -34,6 +34,7 @@ type RunRequest struct {
 	AssetURL          string
 	TagIDs            string `description:"coma separated TagID list, if present in a task, only matched runs, other task runWorkflow as normal"`
 	Tasks             string `required:"true" description:"coma separated task list, if empty or '*' runs all tasks sequentially"` //tasks to runWorkflow with coma separated list or '*', or empty string for all tasks
+	SelectorMode      string `description:"task selector mode: legacy or path (exact dotted paths in selector order)"`
 	Interactive       bool
 	*model.Inlined
 	workflow *model.Workflow //inline workflow from pipeline
@@ -95,6 +96,9 @@ func (r *RunRequest) Init() (err error) {
 
 // Validate checks if request is valid
 func (r *RunRequest) Validate() error {
+	if r.SelectorMode != "" && r.SelectorMode != "legacy" && r.SelectorMode != "path" {
+		return fmt.Errorf("unknown selector mode: %s", r.SelectorMode)
+	}
 	if r.workflow != nil {
 		return r.workflow.Validate()
 	}
