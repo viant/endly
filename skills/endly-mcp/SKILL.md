@@ -45,3 +45,5 @@ Prefer endly_listInstances(filter, offset, limit) over full task dumps. Poll con
 endly_getOperation, then request only relevant event pages or state paths. A
 zero-assertion or skipped run is not an e2e success. For stalled Go operations
 retrieve endly-go-diagnostics and enable -diagnostics for gops stacks.
+
+Native source service tools are available for dsunit, HTTP runner/endpoints and validators. They accept sessionId, request and optional timeoutMillis; request schemas come from registered Endly routes. Poll the returned operation, filter/page its events, and inspect targeted state paths.

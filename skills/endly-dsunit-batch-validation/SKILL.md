@@ -33,3 +33,5 @@ When the listener can fall back to FIFO before a correlation ID is indexed, use
 a case-specific inclusion rule or queue so it cannot consume an unrelated earlier
 record. Preserve that rule in a focused run; a longer wait alone does not repair
 ambiguous matching.
+
+Dispatch database checks with endly_dsunit_expect/query/compare and correlated log checks with endly_validator_log_listen/reset/assert. Each action returns an operation; check status and assertion counts before continuing.

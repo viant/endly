@@ -55,3 +55,17 @@ passing repeatable `-skill-dir /path/to/local-skill` options; each directory con
 SKILL.md and its own resources. Local skills are sealed and served at startup,
 and duplicate names fail registration. endly_service_info exposes live service
 IDs/actions/request schemas without example payloads.
+
+### Native service tools
+
+Extended tools dispatch registered source actions directly through the session
+manager. Their request schemas come from Endly's live routes, without example
+payloads. Available families are `endly_dsunit_<action>`,
+`endly_http_runner_<action>`, `endly_http_endpoint_<action>`,
+`endly_validator_<action>` and `endly_validator_log_<action>`.
+Each takes `sessionId`, `request`, and optional `timeoutMillis`, and returns a
+concise asynchronous operation summary. Use getOperation, operation_events and
+inspectContext to observe it. This preserves shared state, source initialization
+and validation, cancellation and action authorization. Omitted services in a
+custom registry do not produce tools. The generic runAction dispatcher remains
+available for all other registered service actions.

@@ -21,3 +21,5 @@ mock when both are part of the behavior. A request that never reaches the mock,
 an unexpected key, and a wrong response payload are different failures. Preserve
 correlation IDs so batch log assertions identify the originating use case.
 For response-driven follow-up traffic, retrieve endly-http-followup.
+
+Dispatch source endpoint actions with endly_http_endpoint_listen, endly_http_endpoint_append and endly_http_endpoint_shutdown. Use an existing session and native request fields.

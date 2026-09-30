@@ -38,3 +38,5 @@ both the published fixture state and observed API/database results.
 
 Retrieve endly-dsunit-mapping, endly-dsunit-sequences and endly-dsunit-prepare for
 the relevant contracts via endly_service_info; use endly-testing for methodology.
+
+Use endly_dsunit_register/init for connection/schema setup, then endly_dsunit_prepare for dictionary data, endly_dsunit_mapping for mappings, endly_dsunit_sequence for physical sequences, and endly_dsunit_prepare for converted case records. Use a loaded workflow when init/post/UDF composition is needed.

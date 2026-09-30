@@ -33,3 +33,5 @@ resource overlays supply case values to a shared request template. Preserve over
 order, defaults and escaping. Publish its Responses under the action name, validate
 against the selected expectation resource, then carry the same case/correlation ID
 into subsequent service calls and collected batch expectations.
+
+Dispatch HTTP requests with endly_http_runner_send and assertions with endly_validator_assert. Use a loaded workflow for response extraction, init/post and ordered follow-up composition; direct tools preserve the same session state.
