@@ -142,6 +142,7 @@ func init() {
 	flag.String("r", "run", "<path/url to workflow run request in YAML or JSON format>")
 	flag.String("i", "", "<coma separated tagID list> to filter")
 
+	flag.String("selector-mode", "legacy", "task selector mode: legacy or path (dotted paths in selector order)")
 	flag.String("t", "*", "<task/s to run>, t='?' to list all tasks for selected workflow")
 
 	flag.String("l", "logs", "<log directory>")
@@ -762,6 +763,9 @@ func getRunRequestWithOptions(flagset map[string]string) (*workflow.RunRequest, 
 	}
 	if value, ok := flagset["t"]; ok {
 		request.Tasks = value
+	}
+	if value, ok := flagset["selector-mode"]; ok {
+		request.SelectorMode = value
 	}
 	if value, ok := flagset["x"]; ok {
 		request.SummaryFormat = value

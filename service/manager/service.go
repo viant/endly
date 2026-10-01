@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -758,23 +759,26 @@ func cloneOperation(source *Operation) *Operation {
 		return nil
 	}
 	copy := &Operation{
-		ID:            source.ID,
-		SessionID:     source.SessionID,
-		Status:        source.Status,
-		Kind:          source.Kind,
-		Workflow:      source.Workflow,
-		Service:       source.Service,
-		Action:        source.Action,
-		Tasks:         source.Tasks,
-		TagIDs:        source.TagIDs,
-		CreatedAt:     source.CreatedAt,
-		StartedAt:     source.StartedAt,
-		FinishedAt:    source.FinishedAt,
-		Error:         source.Error,
-		DroppedEvents: atomic.LoadInt64(&source.droppedEvents),
+		ID:               source.ID,
+		SessionID:        source.SessionID,
+		Status:           source.Status,
+		Kind:             source.Kind,
+		Workflow:         source.Workflow,
+		Service:          source.Service,
+		Action:           source.Action,
+		Tasks:            source.Tasks,
+		TagIDs:           source.TagIDs,
+		CreatedAt:        source.CreatedAt,
+		StartedAt:        source.StartedAt,
+		FinishedAt:       source.FinishedAt,
+		Error:            source.Error,
+		PassedAssertions: source.PassedAssertions,
+		FailedAssertions: source.FailedAssertions,
+		DroppedEvents:    atomic.LoadInt64(&source.droppedEvents),
 	}
 	if source.debugger != nil {
 		copy.Debug = source.debugger.State()
+		copy.Debug.Snapshot = redactValue("", copy.Debug.Snapshot)
 		if copy.Debug.Status == "paused" && copy.Status == OperationRunning {
 			copy.Status = "paused"
 		}
@@ -783,7 +787,7 @@ func cloneOperation(source *Operation) *Operation {
 	if source.Result != nil {
 		copy.Result = map[string]interface{}{}
 		for key, value := range source.Result {
-			copy.Result[key] = value
+			copy.Result[key] = redactValue(key, value)
 		}
 	}
 	return copy
@@ -799,47 +803,63 @@ func validReadPath(path string) bool {
 func redactMap(source map[string]interface{}) map[string]interface{} {
 	result := make(map[string]interface{}, len(source))
 	for key, value := range source {
-		if isSecretKey(key) {
-			result[key] = "[REDACTED]"
-			continue
-		}
-		if nested, ok := value.(map[string]interface{}); ok {
-			result[key] = redactMap(nested)
-			continue
-		}
-		result[key] = value
+		result[key] = redactValue(key, value)
 	}
 	return result
 }
 
+var bearerPattern = regexp.MustCompile(`(?i)Bearer[\t ]+[A-Za-z0-9._~+/=-]+`)
+var jwtPattern = regexp.MustCompile(`eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`)
+
 func redactValue(path string, value interface{}) interface{} {
+	// Process lease tokens are concurrency fences required by remote worker operations.
+	if strings.HasSuffix(strings.ToLower(path), "processlease.token") {
+		return value
+	}
 	fragments := strings.FieldsFunc(path, func(r rune) bool { return r == '.' || r == '[' || r == ']' })
 	for _, fragment := range fragments {
 		if isSecretKey(fragment) {
 			return "[REDACTED]"
 		}
 	}
-	if nested, ok := value.(map[string]interface{}); ok {
-		return redactMap(nested)
+	switch actual := value.(type) {
+	case map[string]interface{}:
+		result := make(map[string]interface{}, len(actual))
+		for key, nested := range actual {
+			nestedPath := key
+			if path != "" {
+				nestedPath = path + "." + key
+			}
+			result[key] = redactValue(nestedPath, nested)
+		}
+		return result
+	case []interface{}:
+		result := make([]interface{}, len(actual))
+		for i, item := range actual {
+			result[i] = redactValue(path, item)
+		}
+		return result
+	case string:
+		return jwtPattern.ReplaceAllString(bearerPattern.ReplaceAllString(actual, "Bearer [REDACTED]"), "[REDACTED]")
 	}
 	return value
 }
 
 func isSecretKey(key string) bool {
 	key = strings.ToLower(key)
-	return strings.Contains(key, "secret") || strings.Contains(key, "password") || strings.Contains(key, "token") || strings.Contains(key, "credential")
+	return strings.Contains(key, "secret") || strings.Contains(key, "password") || strings.Contains(key, "token") || strings.Contains(key, "credential") || strings.Contains(key, "authorization") || strings.Contains(key, "privatekey") || strings.Contains(key, "apikey")
 }
 
 func encodable(value interface{}) interface{} {
 	data, err := json.Marshal(value)
 	if err != nil {
-		return fmt.Sprintf("%v", value)
+		return "[unavailable: non-JSON value]"
 	}
 	var result interface{}
 	if err = json.Unmarshal(data, &result); err != nil {
-		return fmt.Sprintf("%v", value)
+		return "[unavailable: non-JSON value]"
 	}
-	return result
+	return redactValue("", result)
 }
 
 func callbackEventName(event msg.Event) string {

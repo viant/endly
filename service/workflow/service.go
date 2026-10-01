@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/pkg/errors"
 	"github.com/viant/afs"
@@ -96,6 +97,9 @@ func (s *Service) addVariableEvent(name string, variables model.Variables, conte
 func (s *Service) runAction(context *endly.Context, action *model.Action, process *model.Process) (response map[string]interface{}, err error) {
 	if err = context.AuthorizeAction(action.Service, action.Action); err != nil {
 		return nil, err
+	}
+	if process.SelectedTagHits != nil && process.TagIDs[action.TagID] {
+		atomic.AddInt64(process.SelectedTagHits, 1)
 	}
 	var state = context.State()
 
@@ -207,6 +211,15 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 	asyncGroup := &sync.WaitGroup{}
 	var asyncError error
 	asyncActions := task.AsyncActions()
+	if process.StrictTagIDs && len(process.TagIDs) > 0 {
+		filtered := make([]*model.Action, 0, len(asyncActions))
+		for _, action := range asyncActions {
+			if action.TagIndex == "" || process.TagIDs[action.TagID] {
+				filtered = append(filtered, action)
+			}
+		}
+		asyncActions = filtered
+	}
 
 	err := s.runNode(context, "task", process, task.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
 		if task.TasksNode != nil && len(task.Tasks) > 0 {
@@ -225,6 +238,9 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 			}
 			action := task.Actions[i]
 			if action.Async {
+				continue
+			}
+			if process.StrictTagIDs && action.TagIndex != "" && len(process.TagIDs) > 0 && !process.TagIDs[action.TagID] {
 				continue
 			}
 			if process.HasTagID && !process.TagIDs[action.TagID] {
@@ -506,6 +522,7 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 	upstreamProcess := Last(upstreamContext)
 	process := model.NewProcess(workflow.Source, workflow, upstreamProcess)
 	process.AddTagIDs(strings.Split(request.TagIDs, ",")...)
+	process.StrictTagIDs = process.StrictTagIDs || request.SelectorMode == "path"
 	Push(upstreamContext, process)
 
 	process.State = data.NewMap()
@@ -554,7 +571,7 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 
 	taskSelector := model.TasksSelector(request.Tasks)
 
-	if !taskSelector.RunAll() {
+	if request.SelectorMode != "path" && !taskSelector.RunAll() {
 		for _, task := range taskSelector.Tasks() {
 			if !workflow.TasksNode.Has(task) {
 				if hasUpstreamTasks && request.Tasks == toolbox.AsString(upstreamTasks) {
@@ -565,12 +582,18 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 			}
 		}
 	}
-	filteredTasks := workflow.TasksNode.Select(taskSelector)
+	filteredTasks, selectErr := workflow.TasksNode.SelectWithMode(taskSelector, request.SelectorMode)
+	if selectErr != nil {
+		return nil, selectErr
+	}
 	err = s.runNode(context, "workflow", process, workflow.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
 		err = s.runTasks(context, process, filteredTasks)
 		return state, response.Data, err
 	})
 
+	if err == nil && request.SelectorMode == "path" && request.TagIDs != "" && atomic.LoadInt64(process.SelectedTagHits) == 0 {
+		err = fmt.Errorf("no actions matched tag IDs: %s", request.TagIDs)
+	}
 	if len(response.Data) > 0 {
 		for k, v := range response.Data {
 			upstreamState.Put(k, v)

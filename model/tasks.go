@@ -88,3 +88,59 @@ func (t *TasksNode) Clone() *TasksNode {
 	ret := *t
 	return &ret
 }
+
+// SelectWithMode retains the legacy selector by default. Path mode resolves
+// exact dotted paths and runs each selection in the supplied order, retaining
+// ancestor nodes so their state, conditions and lifecycle hooks still apply.
+func (t *TasksNode) SelectWithMode(selector TasksSelector, mode string) (*TasksNode, error) {
+	if mode == "" || mode == "legacy" {
+		return t.Select(selector), nil
+	}
+	if mode != "path" {
+		return nil, fmt.Errorf("unknown selector mode: %s", mode)
+	}
+	if selector.RunAll() {
+		return t, nil
+	}
+	result := &TasksNode{OnErrorTask: t.OnErrorTask, DeferredTask: t.DeferredTask}
+	for _, name := range selector.Tasks() {
+		task, err := t.selectPath(strings.Split(name, "."))
+		if err != nil {
+			return nil, fmt.Errorf("task path %q: %w", name, err)
+		}
+		result.Tasks = append(result.Tasks, task)
+	}
+	result.appendControlTask(t, result.OnErrorTask)
+	if result.DeferredTask != result.OnErrorTask {
+		result.appendControlTask(t, result.DeferredTask)
+	}
+	return result, nil
+}
+
+func (t *TasksNode) selectPath(parts []string) (*Task, error) {
+	if t == nil || len(parts) == 0 || parts[0] == "" {
+		return nil, fmt.Errorf("empty task path segment")
+	}
+	for _, candidate := range t.Tasks {
+		if candidate.Name != parts[0] {
+			continue
+		}
+		if len(parts) == 1 {
+			return candidate, nil
+		}
+		child, err := candidate.TasksNode.selectPath(parts[1:])
+		if err != nil {
+			return nil, err
+		}
+		copy := *candidate
+		node := *candidate.TasksNode
+		node.Tasks = Tasks{child}
+		node.appendControlTask(candidate.TasksNode, node.OnErrorTask)
+		if node.DeferredTask != node.OnErrorTask {
+			node.appendControlTask(candidate.TasksNode, node.DeferredTask)
+		}
+		copy.TasksNode = &node
+		return &copy, nil
+	}
+	return nil, fmt.Errorf("task %q not found", parts[0])
+}
