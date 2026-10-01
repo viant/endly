@@ -77,6 +77,7 @@ type RunWorkflowRequest struct {
 	Workflow          string                 `json:"workflow"`
 	Tasks             string                 `json:"tasks,omitempty"`
 	TagIDs            string                 `json:"tagIds,omitempty"`
+	SelectorMode      string                 `json:"selectorMode,omitempty"`
 	Params            map[string]interface{} `json:"params,omitempty"`
 	SharedState       *bool                  `json:"sharedState,omitempty"`
 	Callbacks         []Callback             `json:"callbacks,omitempty"`
@@ -109,23 +110,25 @@ type Callback struct {
 }
 
 type Operation struct {
-	ID            string                 `json:"id"`
-	SessionID     string                 `json:"sessionId"`
-	Status        string                 `json:"status"`
-	Kind          string                 `json:"kind"`
-	Workflow      string                 `json:"workflow"`
-	Service       string                 `json:"service,omitempty"`
-	Action        string                 `json:"action,omitempty"`
-	Tasks         string                 `json:"tasks"`
-	TagIDs        string                 `json:"tagIds,omitempty"`
-	CreatedAt     time.Time              `json:"createdAt"`
-	StartedAt     *time.Time             `json:"startedAt,omitempty"`
-	FinishedAt    *time.Time             `json:"finishedAt,omitempty"`
-	Result        map[string]interface{} `json:"result,omitempty"`
-	Error         string                 `json:"error,omitempty"`
-	Events        []*OperationEvent      `json:"events,omitempty"`
-	Debug         *DebugState            `json:"debug,omitempty"`
-	DroppedEvents int64                  `json:"droppedEvents,omitempty"`
+	ID               string                 `json:"id"`
+	SessionID        string                 `json:"sessionId"`
+	Status           string                 `json:"status"`
+	Kind             string                 `json:"kind"`
+	Workflow         string                 `json:"workflow"`
+	Service          string                 `json:"service,omitempty"`
+	Action           string                 `json:"action,omitempty"`
+	Tasks            string                 `json:"tasks"`
+	TagIDs           string                 `json:"tagIds,omitempty"`
+	CreatedAt        time.Time              `json:"createdAt"`
+	StartedAt        *time.Time             `json:"startedAt,omitempty"`
+	FinishedAt       *time.Time             `json:"finishedAt,omitempty"`
+	Result           map[string]interface{} `json:"result,omitempty"`
+	Error            string                 `json:"error,omitempty"`
+	Events           []*OperationEvent      `json:"events,omitempty"`
+	Debug            *DebugState            `json:"debug,omitempty"`
+	PassedAssertions int                    `json:"passedAssertions,omitempty"`
+	FailedAssertions int                    `json:"failedAssertions,omitempty"`
+	DroppedEvents    int64                  `json:"droppedEvents,omitempty"`
 
 	cancel        func()
 	debugger      *debug.Debugger
@@ -197,3 +200,49 @@ type DebugCommandRequest struct {
 }
 
 type DebugState = debug.State
+
+// ListTasksRequest discovers task paths and expanded template instances without execution.
+type ListTasksRequest struct {
+	SessionID       string `json:"sessionId"`
+	Workflow        string `json:"workflow"`
+	Path            string `json:"path,omitempty"`
+	ExpandWorkflows bool   `json:"expandWorkflows,omitempty"`
+}
+
+type TaskActionInfo struct {
+	Name    string `json:"name"`
+	Service string `json:"service"`
+	Action  string `json:"action"`
+	TagID   string `json:"tagId,omitempty"`
+	Skip    string `json:"skip,omitempty"`
+}
+
+type TemplateInstanceInfo struct {
+	TagID       string           `json:"tagId"`
+	Index       string           `json:"index,omitempty"`
+	Tag         string           `json:"tag,omitempty"`
+	Description string           `json:"description,omitempty"`
+	Actions     []TaskActionInfo `json:"actions"`
+}
+
+type TaskInfo struct {
+	Name      string                  `json:"name"`
+	Path      string                  `json:"path"`
+	Tasks     []*TaskInfo             `json:"tasks,omitempty"`
+	Actions   []TaskActionInfo        `json:"actions,omitempty"`
+	Instances []*TemplateInstanceInfo `json:"instances,omitempty"`
+	Workflows []*WorkflowTaskInfo     `json:"workflows,omitempty"`
+}
+
+type ListTasksResponse struct {
+	SessionID string      `json:"sessionId"`
+	Workflow  string      `json:"workflow"`
+	Tasks     []*TaskInfo `json:"tasks"`
+}
+
+// WorkflowTaskInfo identifies a nested run boundary, whose paths belong to its workflow.
+type WorkflowTaskInfo struct {
+	Name   string      `json:"name"`
+	Source string      `json:"source"`
+	Tasks  []*TaskInfo `json:"tasks"`
+}

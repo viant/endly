@@ -7,12 +7,18 @@ import (
 	"github.com/viant/endly"
 	endlyclient "github.com/viant/endly/client"
 	"github.com/viant/endly/server/control"
+	endlymcp "github.com/viant/endly/server/mcp"
 	"github.com/viant/endly/service/bootstrap"
 )
 
 func main() {
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
+		case "mcp":
+			if err := endlymcp.Run(os.Args[2:], endly.New); err != nil {
+				log.Fatal(err)
+			}
+			return
 		case "serve":
 			if err := control.Run(os.Args[2:], endly.New); err != nil {
 				log.Fatal(err)

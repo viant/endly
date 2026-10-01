@@ -152,6 +152,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
@@ -196,15 +197,16 @@ require (
 	github.com/viant/godiff v0.4.1 // indirect
 	github.com/viant/govalidator v0.3.1 // indirect
 	github.com/viant/igo v0.2.1 // indirect
-	github.com/viant/jsonrpc v0.2.0 // indirect
-	github.com/viant/mcp v0.1.0 // indirect
+	github.com/viant/jsonrpc v0.24.0
+	github.com/viant/mcp v0.24.0
+	github.com/viant/mcp-protocol v0.19.0
 	github.com/viant/pgo v0.11.0 // indirect
 	github.com/viant/sqlparser v0.8.1 // indirect
 	github.com/viant/structology v0.6.1 // indirect
 	github.com/viant/structql v0.5.2 // indirect
 	github.com/viant/tagly v0.2.1-0.20240521205717-55de744e893c // indirect
 	github.com/viant/velty v0.2.1-0.20230927172116-ba56497b5c85 // indirect
-	github.com/viant/x v0.3.0 // indirect
+	github.com/viant/x v0.4.1-0.20260914174450-0e043f24aec5 // indirect
 	github.com/viant/xdatly v0.5.4-0.20250418144853-029d9a05ae20 // indirect
 	github.com/viant/xdatly/extension v0.0.0-20231013204918-ecf3c2edf259 // indirect
 	github.com/viant/xlsy v0.3.1 // indirect

@@ -8,6 +8,9 @@ import (
 
 func (s *Service) registerRoutes() {
 	s.Register(
+		s.route("listTasks", func() interface{} { return &ListTasksRequest{} }, func() interface{} { return &ListTasksResponse{} }, func(_ *endly.Context, request interface{}) (interface{}, error) {
+			return s.ListTasks(request.(*ListTasksRequest))
+		}),
 		s.route("open", func() interface{} { return &OpenRequest{} }, func() interface{} { return &SessionInfo{} }, func(ctx *endly.Context, request interface{}) (interface{}, error) {
 			return s.Open(ctx.Background(), request.(*OpenRequest))
 		}),
