@@ -74,7 +74,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.18
 	github.com/viant/aerospike v0.2.11-0.20241108195857-ed524b97800d
 	github.com/viant/datly v0.16.1-0.20250428163746-0139a6defa80
-	github.com/viant/gosh v0.3.0
+	github.com/viant/gosh v0.3.1-0.20261007222529-b829eaaf687b
 	github.com/viant/parsly v0.3.3-0.20240717150634-e1afaedb691b
 	github.com/viant/sqlx v0.16.4-0.20250330143046-7f3b76980252
 	github.com/viant/toolbox v0.39.0
