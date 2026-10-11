@@ -49,7 +49,7 @@ require (
 	github.com/viant/afsc v1.18.0
 	// replace with bumped, released ^ afsc, will not work now
 	github.com/viant/asc v0.5.2-0.20240920195908-e805e6de7865
-	github.com/viant/assertly v0.9.3-0.20261011185153-f366a457ff7e
+	github.com/viant/assertly v0.9.3-0.20261011205943-1a3e4cfdb4b6
 	github.com/viant/bgc v0.9.0
 	github.com/viant/dsc v0.23.0
 	github.com/viant/dsunit v0.15.0
