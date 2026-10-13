@@ -45,6 +45,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 		}
 		writer.Header().Set("Content-Type", "text/html")
 		_, _ = fmt.Fprint(writer, `<!doctype html><html><body>
+<select id="late-options" aria-label="Late options"><option value="">Loading</option></select><script>setTimeout(()=>document.querySelector("#late-options").add(new Option("Ready","ready")),300)</script>
 <label for="email">Email</label><input id="email" data-testid="email">
 <button data-testid="submit" onclick="fetch('/api/orders',{method:'POST'}).then(()=>document.querySelector('#status').textContent='Signed in')">Submit</button>
 <label>Enabled option<input id="hidden-toggle" type="checkbox" style="display:none"></label><input id="nickname" aria-label="Nickname"><div id="status">Pending</div>
@@ -78,6 +79,8 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 		AutoStart: &autoStart,
 		Commands: []interface{}{
 			`page.goto("` + page.URL + `")`,
+			`page.getByLabel("Late options").selectOption("ready")`,
+			`expect("#late-options").toHaveValue("ready")`,
 			`page.getByLabel("Enabled option").check()`,
 			`page.getByLabel("Enabled option").check()`,
 			`expect("#hidden-toggle").toBeChecked()`,
@@ -99,7 +102,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(response.Assertions) != 4 || !response.Assertions[0].Passed || !response.Assertions[1].Passed || !response.Assertions[2].Passed || !response.Assertions[3].Passed {
+	if len(response.Assertions) != 5 || !response.Assertions[4].Passed || !response.Assertions[0].Passed || !response.Assertions[1].Passed || !response.Assertions[2].Passed || !response.Assertions[3].Passed {
 		t.Fatalf("assertions=%#v", response.Assertions)
 	}
 	if response.Data["createResponse"] == nil {

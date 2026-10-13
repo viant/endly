@@ -28,6 +28,10 @@ func IsStaleElementError(err error) bool {
 // IsRetryableElementError identifies transient DOM/layout failures that can
 // disappear after a framework render, animation, or overlay transition.
 func IsRetryableElementError(err error) bool {
+	var optionError *optionUnavailableError
+	if errors.As(err, &optionError) {
+		return true
+	}
 	if err == nil {
 		return false
 	}
