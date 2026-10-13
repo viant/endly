@@ -285,3 +285,27 @@ arguments:
 		t.Fatalf("source was altered: type %T, value %v", request.Arguments["source"], request.Arguments["source"])
 	}
 }
+
+func TestAllowProtocolErrorPreservesCodeWithoutRemoteText(t *testing.T) {
+	server := mockServer(t, func(w http.ResponseWriter, r *http.Request, method string, params map[string]interface{}) {
+		rw := w.(responseWriter)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"jsonrpc": "2.0", "id": rw.id, "error": map[string]interface{}{"code": -32600, "message": "denied private-token", "data": "private-token"}})
+	})
+	defer server.Close()
+	ctx := endly.New().NewContext(nil)
+	defer ctx.Close()
+	s := New().(*service)
+	request := &CallRequest{Request: Request{URL: server.URL}, Name: "protected", AllowProtocolError: true}
+	response, err := s.call(ctx, request)
+	if err != nil || response == nil || !response.IsError || response.ProtocolErrorCode == nil || *response.ProtocolErrorCode != -32600 {
+		t.Fatalf("response=%+v err=%v", response, err)
+	}
+	encoded, _ := json.Marshal(response)
+	if strings.Contains(string(encoded), "private-token") {
+		t.Fatal("remote credentials escaped into diagnostic")
+	}
+	request.AllowProtocolError = false
+	if _, err = s.call(ctx, request); err == nil {
+		t.Fatal("default swallowed protocol error")
+	}
+}

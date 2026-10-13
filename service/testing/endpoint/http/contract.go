@@ -7,6 +7,7 @@ import (
 
 // ListenRequest represent HTTP endpoint listen request
 type ListenRequest struct {
+	Host             string `description:"optional bind host; use 127.0.0.1 for local mocks; empty preserves all-interface binding"`
 	Port             int
 	Rotate           bool
 	RequestTemplate  string   `description:"request file loading template, default: %02d-req.json"`

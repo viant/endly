@@ -12,9 +12,19 @@ func HeaderProvider(header string) HTTPRequestKeyProvider {
 	return func(source interface{}) (string, error) {
 		switch request := source.(type) {
 		case *bridge.HttpRequest:
-			return strings.Join(request.Header[header], "\n"), nil
+			for name, values := range request.Header {
+				if strings.EqualFold(name, header) {
+					return strings.Join(values, "\n"), nil
+				}
+			}
+			return "", nil
 		case *http.Request:
-			return strings.Join(request.Header[header], "\n"), nil
+			for name, values := range request.Header {
+				if strings.EqualFold(name, header) {
+					return strings.Join(values, "\n"), nil
+				}
+			}
+			return "", nil
 		}
 		return "", fmt.Errorf("unsupported request type %T", source)
 	}

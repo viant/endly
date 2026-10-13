@@ -47,3 +47,8 @@ require interactive input. `timeoutMs` bounds authorization and the MCP call
 together. OAuth and bearer token references are mutually exclusive. No OAuth
 provider is contacted by the unit tests; they inject a local authorizer and
 mock HTTP server.
+
+For negative invocation tests, `allowProtocolError: true` captures a JSON-RPC
+error as `IsError: true` and `ProtocolErrorCode`. It preserves only the numeric
+code; remote error messages/data are omitted because they may contain credentials.
+Transport failures still fail the action. The default remains false.

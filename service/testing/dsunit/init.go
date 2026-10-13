@@ -1,7 +1,6 @@
 package dsunit
 
 import (
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/viant/endly"
 )
 
