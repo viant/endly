@@ -2,6 +2,7 @@ package dsunit_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/endly"
 	"github.com/viant/endly/service/testing/dsunit"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -78,7 +79,7 @@ func Test_DsUnitUdfGetTableRecords2(t *testing.T) {
 }
 
 func Test_DsUnitUdfGetTableRecords(t *testing.T) {
-	var state = data.NewMap()
+	var state = endly.NewDefaultState(nil)
 
 	collection := data.NewCollection()
 	var referenceMap = data.NewMap()
@@ -87,7 +88,7 @@ func Test_DsUnitUdfGetTableRecords(t *testing.T) {
 	collection.Push(referenceMap)
 	state.SetValue("dsunit.AAAA.SSSSS", collection)
 	//state.Put("AsInt", neatly.AsInt)
-	state.SetValue("uuid.next", 1)
+	state.SetValue("_udf.uuid.next", 1)
 	var records = []interface{}{}
 	err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(JSON)).Decode(&records)
 	if err != nil {
@@ -95,6 +96,9 @@ func Test_DsUnitUdfGetTableRecords(t *testing.T) {
 	}
 	state.Put("test", records)
 	result, err := dsunit.AsTableRecords("test", state)
+	if !assert.NoError(t, err) {
+		return
+	}
 	tables := toolbox.AsMap(result)
 	rows := tables["abc"]
 	row := toolbox.AsMap(toolbox.AsSlice(rows)[0])
