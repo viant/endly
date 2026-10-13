@@ -3,13 +3,11 @@ package dsunit
 import (
 	"errors"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/dsc"
 	"github.com/viant/dsunit"
-	durl "github.com/viant/dsunit/url"
+	dlocation "github.com/viant/dsunit/url"
 	"github.com/viant/endly"
-	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -23,10 +21,7 @@ func getRegisteredDsUnitService(manager endly.Manager, context *endly.Context, d
 	var baseDir = "/tmp/test/endly/dsunit/"
 	exec.Command("rm", "-rf", baseDir)
 	toolbox.CreateDirIfNotExist(baseDir)
-	credentials, err := util.GetDummyCredential()
-	if err != nil {
-		return nil, err
-	}
+	credentials := "" // SQLite fixtures do not require a secret.
 	service, err := manager.Service(ServiceID)
 	if err != nil {
 		return nil, err
