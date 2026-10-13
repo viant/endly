@@ -24,10 +24,12 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 	}
 	source, has := state.GetValue(toolbox.AsString(dataKey))
 
-	if multiTables, ok := source.(data.Map); ok {
-
-		data, err := convertMultiTables(multiTables, state, outputPrefix)
-		return data, err
+	switch multiTables := source.(type) {
+	case data.Map:
+		return convertMultiTables(multiTables, state, outputPrefix)
+	case map[string]interface{}:
+		// Workflow initialization uses ordinary maps; collected datasets use data.Map.
+		return convertMultiTables(multiTables, state, outputPrefix)
 	}
 
 	if !has || source == nil {

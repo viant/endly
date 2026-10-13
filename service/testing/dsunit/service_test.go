@@ -9,7 +9,6 @@ import (
 	"github.com/viant/dsunit"
 	durl "github.com/viant/dsunit/url"
 	"github.com/viant/endly"
-	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -23,10 +22,7 @@ func getRegisteredDsUnitService(manager endly.Manager, context *endly.Context, d
 	var baseDir = "/tmp/test/endly/dsunit/"
 	exec.Command("rm", "-rf", baseDir)
 	toolbox.CreateDirIfNotExist(baseDir)
-	credentials, err := util.GetDummyCredential()
-	if err != nil {
-		return nil, err
-	}
+	credentials := "" // SQLite fixtures do not require credentials.
 	service, err := manager.Service(ServiceID)
 	if err != nil {
 		return nil, err
@@ -46,7 +42,7 @@ func getRegisteredDsUnitService(manager endly.Manager, context *endly.Context, d
 		dsunit.NewRegisterRequest(dbname, config),
 		nil,
 		nil,
-		dsunit.NewRunScriptRequest(dbname, dlocation.NewResource(fmt.Sprintf("test/%v.sql", dbname)))))
+		dsunit.NewRunScriptRequest(dbname, durl.NewResource(fmt.Sprintf("test/%v.sql", dbname)))))
 
 	if response.Error != "" {
 		return nil, errors.New(response.Error)
@@ -74,7 +70,7 @@ func TestDsUnitService(t *testing.T) {
 		serviceResponse = service.Run(context, &dsunit.MappingRequest{
 			Mappings: []*dsunit.Mapping{
 				{
-					Resource: dlocation.NewResource("test/user_account.json"),
+					Resource: durl.NewResource("test/user_account.json"),
 				},
 			},
 		})
@@ -107,8 +103,8 @@ func TestDsUnitService(t *testing.T) {
 
 		serviceResponse = service.Run(context, &dsunit.RunScriptRequest{
 			Datastore: "mydb1",
-			Scripts: []*dlocation.Resource{
-				dlocation.NewResource("test/mydb1.sql"),
+			Scripts: []*durl.Resource{
+				durl.NewResource("test/mydb1.sql"),
 			},
 		})
 		{
