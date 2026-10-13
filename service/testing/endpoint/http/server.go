@@ -2,10 +2,10 @@ package http
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
-	"time"
 )
 
 // HTTPRequestKeyProvider represents request key provider to extract a request field.
@@ -28,6 +28,8 @@ type Server struct {
 func (s *Server) Append(trips *HTTPServerTrips) {
 	s.mux.Lock()
 	defer s.mux.Unlock()
+	s.httpHandler.mu.Lock()
+	defer s.httpHandler.mu.Unlock()
 	if len(s.trips) > 0 {
 		for k, v := range s.trips {
 			if _, ok := trips.Trips[k]; ok {
@@ -36,11 +38,16 @@ func (s *Server) Append(trips *HTTPServerTrips) {
 			trips.Trips[k] = v
 		}
 	}
+	s.trips = trips.Trips
 	s.httpHandler.handler = getServerHandler(&s.Server, s.httpHandler, trips)
 }
 
 // StartServer starts http request, the server has ability to replay recorded  HTTP trips with https://github.com/viant/toolbox/blob/master/bridge/http_bridge_recording_util.go#L82
 func StartServer(port int, trips *HTTPServerTrips, reqTemplate, respTemplate string) (*Server, error) {
+	return startServer("", port, trips, reqTemplate, respTemplate)
+}
+
+func startServer(host string, port int, trips *HTTPServerTrips, reqTemplate, respTemplate string) (*Server, error) {
 	err := trips.Init(reqTemplate, respTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start http server :%v, %v", port, err)
@@ -55,27 +62,20 @@ func StartServer(port int, trips *HTTPServerTrips, reqTemplate, respTemplate str
 		indexKeys:        trips.IndexKeys,
 		httpHandler:      httpHandler,
 		trips:            trips.Trips,
-		Server:           http.Server{Addr: fmt.Sprintf(":%v", port), Handler: httpHandler},
+		Server:           http.Server{Addr: net.JoinHostPort(host, fmt.Sprint(port)), Handler: httpHandler},
 		requestTemplate:  reqTemplate,
 		responseTemplate: respTemplate,
 	}
 	httpHandler.handler = getServerHandler(&server.Server, httpHandler, trips)
 
-	errorNotification := make(chan bool, 1)
-	go func() {
-		fmt.Printf("Starting server on %v\n", port)
-		err = server.Server.ListenAndServe()
-		atomic.StoreInt32(&httpHandler.running, 0)
-		errorNotification <- true
-		if err != nil {
-			err = fmt.Errorf("failed to start http server on port %v, %v", port, err)
-		}
-	}()
-
-	//if there is error in starting server quite immediately
-	select {
-	case <-errorNotification:
-	case <-time.After(time.Second * 2):
+	listener, err := net.Listen("tcp", server.Addr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start http server on port %v: %w", port, err)
 	}
-	return server, err
+	server.Addr = listener.Addr().String()
+	go func() {
+		_ = server.Server.Serve(listener)
+		atomic.StoreInt32(&httpHandler.running, 0)
+	}()
+	return server, nil
 }

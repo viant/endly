@@ -47,7 +47,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 		_, _ = fmt.Fprint(writer, `<!doctype html><html><body>
 <label for="email">Email</label><input id="email" data-testid="email">
 <button data-testid="submit" onclick="fetch('/api/orders',{method:'POST'}).then(()=>document.querySelector('#status').textContent='Signed in')">Submit</button>
-<input id="nickname" aria-label="Nickname"><div id="status">Pending</div>
+<label>Enabled option<input id="hidden-toggle" type="checkbox" style="display:none"></label><input id="nickname" aria-label="Nickname"><div id="status">Pending</div>
 </body></html>`)
 	}))
 	defer page.Close()
@@ -78,6 +78,11 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 		AutoStart: &autoStart,
 		Commands: []interface{}{
 			`page.goto("` + page.URL + `")`,
+			`page.getByLabel("Enabled option").check()`,
+			`page.getByLabel("Enabled option").check()`,
+			`expect("#hidden-toggle").toBeChecked()`,
+			`page.getByLabel("Enabled option").uncheck()`,
+			`expect("#hidden-toggle").toBeUnchecked()`,
 			`page.getByLabel("Email").fill("qa@example.test")`,
 			`page.getByLabel("Nickname").fill("Endly")`,
 			`expect("#nickname").toHaveValue("Endly", 5000)`,
@@ -94,7 +99,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(response.Assertions) != 2 || !response.Assertions[0].Passed || !response.Assertions[1].Passed {
+	if len(response.Assertions) != 4 || !response.Assertions[0].Passed || !response.Assertions[1].Passed || !response.Assertions[2].Passed || !response.Assertions[3].Passed {
 		t.Fatalf("assertions=%#v", response.Assertions)
 	}
 	if response.Data["createResponse"] == nil {

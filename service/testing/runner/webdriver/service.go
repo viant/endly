@@ -657,7 +657,7 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 		Data: make(map[string]interface{}),
 	}
 	switch request.Call.Method {
-	case "Click", "SendKeys", "Clear", "Submit", "Check", "Uncheck", "SelectOption", "MoveTo":
+	case "Click", "SendKeys", "Clear", "Submit", "SelectOption", "MoveTo":
 		if err = s.ensureVisible(context.Background(), element, time.Duration(request.Call.WaitTimeMs)*time.Millisecond); err != nil {
 			// ChromeDriver 150 can return a JSON null for IsDisplayed even
 			// when the element lookup succeeded. Let the actual interaction

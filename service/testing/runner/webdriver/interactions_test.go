@@ -13,7 +13,9 @@ type interactionElement struct {
 	children []selenium.WebElement
 }
 
-func (e *interactionElement) IsSelected() (bool, error) { return e.selected, nil }
+func (e *interactionElement) IsEnabled() (bool, error)   { return true, nil }
+func (e *interactionElement) IsDisplayed() (bool, error) { return true, nil }
+func (e *interactionElement) IsSelected() (bool, error)  { return e.selected, nil }
 func (e *interactionElement) Click() error {
 	e.clicks++
 	e.selected = !e.selected

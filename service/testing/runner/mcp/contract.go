@@ -86,6 +86,8 @@ type CallRequest struct {
 	// AllowToolError returns an MCP isError result as a successful Endly action
 	// so a workflow can inspect the complete diagnostic content.
 	AllowToolError bool `json:"allowToolError,omitempty" yaml:"allowToolError,omitempty"`
+	// AllowProtocolError captures only the numeric JSON-RPC error code for negative tests.
+	AllowProtocolError bool `json:"allowProtocolError,omitempty" yaml:"allowProtocolError,omitempty"`
 }
 
 func (r *CallRequest) Validate() error {
@@ -101,6 +103,7 @@ func (r *CallRequest) Validate() error {
 // CallResponse preserves the full MCP result, including content and isError.
 // StructuredContent is the decoded JSON object returned by tools that provide it.
 type CallResponse struct {
+	ProtocolErrorCode *int `json:",omitempty"`
 	Result            *schema.CallToolResult
 	StructuredContent interface{}
 	Content           []schema.CallToolResultContentElem

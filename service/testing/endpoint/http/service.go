@@ -26,6 +26,11 @@ func (s *service) shutdown(context *endly.Context, req *ShutdownRequest) (interf
 		return nil, fmt.Errorf("ednpoint at %v, not found", req.Port)
 	}
 	err := server.Shutdown(context.Background())
+	if err == nil {
+		delete(s.servers, req.Port)
+		state := s.State()
+		state.Put(ServiceID+":"+strconv.Itoa(req.Port), nil)
+	}
 	return &struct{}{}, err
 }
 
@@ -47,7 +52,7 @@ func (s *service) listen(context *endly.Context, request *ListenRequest) (*Liste
 	}
 	trips := request.AsHTTPServerTrips()
 
-	server, err := StartServer(request.Port, trips, request.RequestTemplate, request.ResponseTemplate)
+	server, err := startServer(request.Host, request.Port, trips, request.RequestTemplate, request.ResponseTemplate)
 	if err != nil {
 		return nil, err
 	}
@@ -57,6 +62,16 @@ func (s *service) listen(context *endly.Context, request *ListenRequest) (*Liste
 		Trips: trips.Trips,
 	}
 	serviceState.Put(key, response)
+	context.Deffer(func() {
+		s.Mutex().Lock()
+		defer s.Mutex().Unlock()
+		if s.servers[request.Port] == server {
+			_ = server.Close()
+			delete(s.servers, request.Port)
+			state := s.State()
+			state.Put(key, nil)
+		}
+	})
 	return response, nil
 }
 

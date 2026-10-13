@@ -738,3 +738,11 @@ endly is an open source project and contributors are welcome!
 
   **Library Author:** Adrian Witas
 
+
+### SQL drivers without CGO
+
+Endly links MySQL (`mysql`), BigQuery (`bigquery`), Oracle (`oracle`, go-ora/v2),
+and pure-Go SQLite (`sqlite`, modernc.org/sqlite). DSUnit's legacy `sqlite3` name
+is retained as a pure-Go alias when an embedding host has not registered it.
+The standard binary can be built with `CGO_ENABLED=0 go build -o endly-bin ./endly`.
+Database services and credentials are still required for remote database tests.

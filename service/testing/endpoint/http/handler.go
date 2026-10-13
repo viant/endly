@@ -6,7 +6,7 @@ import (
 	"github.com/viant/toolbox"
 	"log"
 	"net/http"
-	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -14,7 +14,8 @@ import (
 type httpHandler struct {
 	running   int32
 	handler   func(writer http.ResponseWriter, request *http.Request)
-	thinkTime time.Duration
+	thinkTime int64
+	mu        sync.RWMutex
 }
 
 const (
@@ -23,9 +24,10 @@ const (
 
 func (h *httpHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	if thinkTime := request.Header.Get(thinkTimeHeaderMs); thinkTime != "" {
-		h.thinkTime = time.Duration(toolbox.AsInt(thinkTime)) * time.Millisecond
-		fmt.Printf("Updated think time: %s\n", h.thinkTime)
+		atomic.StoreInt64(&h.thinkTime, int64(time.Duration(toolbox.AsInt(thinkTime))*time.Millisecond))
 	}
+	h.mu.RLock()
+	defer h.mu.RUnlock()
 	h.handler(writer, request)
 }
 
@@ -44,28 +46,19 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 		}
 
 		responses, ok := trips.Trips[key]
-		if !ok {
-			var errorMessage = fmt.Sprintf("key: %v not found, available: \n%v", key, strings.Join(toolbox.MapKeysToStringSlice(trips.Trips), ",\n"))
-			fmt.Println(errorMessage)
-			http.Error(writer, errorMessage, http.StatusNotFound)
+		if !ok || len(responses.Responses) == 0 {
+			http.Error(writer, "mock request did not match a recorded response", http.StatusNotFound)
 			return
 		}
-
-		var index uint32
-		for {
-			index := atomic.LoadUint32(&responses.Index)
-			if atomic.CompareAndSwapUint32(&responses.Index, index, index+1) {
-				if int(index) >= len(trips.Trips) {
-					if !trips.Rotate {
-						http.NotFound(writer, request)
-						return
-					}
-				}
-				atomic.StoreUint32(&responses.Index, 0)
-				index = 0
-				break
+		index := responses.Index
+		if int(index) >= len(responses.Responses) {
+			if !trips.Rotate {
+				http.NotFound(writer, request)
+				return
 			}
+			index = 0
 		}
+		responses.Index = index + 1
 
 		response := responses.Responses[index]
 		for k, headerValues := range response.Header {
@@ -74,8 +67,14 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 			}
 		}
 
-		if httpHandler.thinkTime > 0 {
-			time.Sleep(httpHandler.thinkTime)
+		if delay := time.Duration(atomic.LoadInt64(&httpHandler.thinkTime)); delay > 0 {
+			timer := time.NewTimer(delay)
+			defer timer.Stop()
+			select {
+			case <-timer.C:
+			case <-request.Context().Done():
+				return
+			}
 		}
 		writer.WriteHeader(response.Code)
 		if response.Body != "" {
@@ -86,15 +85,5 @@ func getServerHandler(httpServer *http.Server, httpHandler *httpHandler, trips *
 			}
 		}
 
-		if len(trips.Trips) == 0 {
-			func() { _ = httpServer.Close() }()
-			go func() {
-				time.Sleep(time.Second)
-				if atomic.LoadInt32(&httpHandler.running) == 0 {
-					_ = httpServer.Shutdown(nil)
-				}
-			}()
-
-		}
 	}
 }
