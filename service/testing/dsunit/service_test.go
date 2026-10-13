@@ -27,7 +27,7 @@ func getRegisteredDsUnitService(manager endly.Manager, context *endly.Context, d
 		return nil, err
 	}
 
-	config, err := dsc.NewConfigWithParameters("sqlite3", "[url]", credentials, map[string]interface{}{
+	config, err := dsc.NewConfigWithParameters("sqlite", "[url]", credentials, map[string]interface{}{
 		"url": path.Join(baseDir, dbname),
 	})
 
