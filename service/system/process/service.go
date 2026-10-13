@@ -140,6 +140,9 @@ func (s *service) checkProcess(context *endly.Context, request *StatusRequest) (
 }
 
 func (s *service) stopProcess(context *endly.Context, request *StopRequest) (*StopResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, err
+	}
 	if request.Signal == "" {
 		request.Signal = strconv.Itoa(int(syscall.SIGKILL)) // default signal
 	}

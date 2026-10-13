@@ -1,8 +1,10 @@
 package process
 
 import (
+	"fmt"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/service/system/exec"
+	"strings"
 )
 
 // StartRequest represents a start request
@@ -79,4 +81,18 @@ func NewStopRequest(pid int, target *location.Resource) *StopRequest {
 
 func NewStatusRequest(command string, target *location.Resource) *StatusRequest {
 	return &StatusRequest{Target: target, Command: command}
+}
+
+// Validate prevents an omitted PID from becoming kill(0), which signals the
+// runner's entire process group rather than one requested process.
+func (r *StopRequest) Validate() error {
+	if r.Pid < 0 || r.Pid == 0 && strings.TrimSpace(r.Input) == "" {
+		return fmt.Errorf("stop requires a positive PID or a nonempty process selector")
+	}
+	for _, c := range r.Signal {
+		if !(c >= '0' && c <= '9' || c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z') {
+			return fmt.Errorf("invalid process signal")
+		}
+	}
+	return nil
 }
