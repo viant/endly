@@ -121,7 +121,11 @@ func (p Inlined) loadRequest(actionAttributes, actionRequest map[string]interfac
 	if req, ok := actionAttributes[requestKey]; ok {
 		request := toolbox.AsString(actionAttributes[requestKey])
 		if strings.HasPrefix(request, "@") {
-			requestMap, err = util.LoadMap([]string{p.tagPathURL, toolbox.URLPathJoin(p.baseURL, defaultPath), p.baseURL}, request)
+			baseURLs := []string{toolbox.URLPathJoin(p.baseURL, defaultPath), p.baseURL}
+			if p.tagPathURL != "" {
+				baseURLs = append([]string{p.tagPathURL}, baseURLs...)
+			}
+			requestMap, err = util.LoadMap(baseURLs, request)
 			if err == nil {
 				delete(actionAttributes, requestKey)
 				delete(actionRequest, requestKey)

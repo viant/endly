@@ -20,8 +20,11 @@ type TableData struct {
 // AutoGenerateIfNeeded retrieves auto generated values
 func (d *TableData) AutoGenerateIfNeeded(state data.Map) error {
 	for k, v := range d.AutoGenerate {
+		if strings.TrimSpace(v) == "" {
+			return fmt.Errorf("empty autogenerate expression for %s", k)
+		}
 		var value interface{}
-		if v[0:2] == "${" && v[len(v)-1:] == "}" {
+		if strings.HasPrefix(v, "${") && strings.HasSuffix(v, "}") {
 			value = state.Expand(v)
 		} else {
 			var has bool

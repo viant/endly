@@ -323,9 +323,10 @@ func LoadResource(baseURL, URI string, result interface{}) (*location.Resource, 
 	for _, ext := range []string{".json", ".yaml", ".yml", ".txt", ""} {
 		resource := location.NewResource(URI + ext)
 		if stringPointer, ok := result.(*string); ok {
-			data, err := fs.DownloadWithURL(context.Background(), resource.URL)
+			var payload []byte
+			payload, err = fs.DownloadWithURL(context.Background(), resource.URL)
 			if err == nil {
-				*stringPointer = string(data)
+				*stringPointer = string(payload)
 				return resource, nil
 			}
 		} else {
