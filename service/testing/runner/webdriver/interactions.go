@@ -74,6 +74,12 @@ func setChecked(element selenium.WebElement, want bool) error {
 	return nil
 }
 
+type optionUnavailableError struct{ value string }
+
+func (e *optionUnavailableError) Error() string {
+	return fmt.Sprintf("option %q was not found", e.value)
+}
+
 // SelectOption selects an option by value first and visible text second.
 func (s *service) SelectOption(element selenium.WebElement, value string) error {
 	selector := ".//option[@value=" + xpathLiteral(value) + " or normalize-space(.)=" + xpathLiteral(value) + "]"
@@ -82,7 +88,7 @@ func (s *service) SelectOption(element selenium.WebElement, value string) error 
 		return err
 	}
 	if len(options) == 0 {
-		return fmt.Errorf("option %q was not found", value)
+		return &optionUnavailableError{value: value}
 	}
 	return options[0].Click()
 }
