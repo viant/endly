@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/tebeka/selenium"
 	"github.com/tebeka/selenium/chrome"
@@ -76,7 +77,15 @@ func (s *service) addResultIfPresent(callResult []interface{}, result data.Map, 
 		case string:
 			responseData = actual
 		case []byte:
-			responseData = string(actual)
+			if utf8.Valid(actual) {
+				responseData = string(actual)
+			} else {
+				// Preserve binary screenshots/PDFs so JSON transports encode
+				// them losslessly instead of replacing invalid UTF-8 bytes.
+				responseData = append([]byte(nil), actual...)
+			}
+		case []string:
+			responseData = actual
 		case []interface{}:
 			responseData = actual
 		case []map[string]interface{}:
