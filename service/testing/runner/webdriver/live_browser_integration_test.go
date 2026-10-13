@@ -1,7 +1,9 @@
 package webdriver
 
 import (
+	"bytes"
 	"fmt"
+	"image/png"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -93,6 +95,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 			`page.getByTestId("submit").click()`,
 			`createResponse = page.waitForResponse("/api/orders", 201, 5000)`,
 			`expect("#status").toHaveText("Signed in", 5000)`,
+			`screenshot = Screenshot()`,
 		},
 		Navigation: &NavigationOptions{TimeoutMs: 10_000},
 	}
@@ -105,6 +108,13 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 	}
 	if len(response.Assertions) != 5 || !response.Assertions[4].Passed || !response.Assertions[0].Passed || !response.Assertions[1].Passed || !response.Assertions[2].Passed || !response.Assertions[3].Passed {
 		t.Fatalf("assertions=%#v", response.Assertions)
+	}
+	shot, ok := response.Data["screenshot"].([]byte)
+	if !ok {
+		t.Fatalf("screenshot lost binary type: %T", response.Data["screenshot"])
+	}
+	if picture, err := png.Decode(bytes.NewReader(shot)); err != nil || picture.Bounds().Dx() == 0 {
+		t.Fatalf("invalid browser PNG: %v", err)
 	}
 	if response.Data["createResponse"] == nil {
 		t.Fatalf("browser response was not captured: %#v", response.Data)
