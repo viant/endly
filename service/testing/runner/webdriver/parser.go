@@ -371,7 +371,7 @@ func pageSelector(name string, args []string) (string, bool, error) {
 			return "", true, fmt.Errorf("page.getByLabel expects one value")
 		}
 		label := xpathLiteral(args[0])
-		return "xpath://*[@id = //label[normalize-space(.)=" + label + "]/@for] | //label[normalize-space(.)=" + label + "]//*[self::input or self::textarea or self::select]", true, nil
+		return "xpath://*[@aria-label=" + label + "] | //*[@id = //label[normalize-space(.)=" + label + "]/@for] | //label[normalize-space(.)=" + label + "]//*[self::input or self::textarea or self::select]", true, nil
 	case "getbyplaceholder":
 		if len(args) != 1 {
 			return "", true, fmt.Errorf("page.getByPlaceholder expects one value")

@@ -122,7 +122,7 @@ func TestParser_ParsePageCommands(t *testing.T) {
 		{
 			command:    `page.getByLabel("Email").fill("qa@example.test")`,
 			selectorBy: "xpath",
-			selector:   `//*[@id = //label[normalize-space(.)='Email']/@for] | //label[normalize-space(.)='Email']//*[self::input or self::textarea or self::select]`,
+			selector:   `//*[@aria-label='Email'] | //*[@id = //label[normalize-space(.)='Email']/@for] | //label[normalize-space(.)='Email']//*[self::input or self::textarea or self::select]`,
 			methods:    []string{"Clear", "SendKeys"},
 			parameters: [][]interface{}{nil, {"qa@example.test"}},
 		},
