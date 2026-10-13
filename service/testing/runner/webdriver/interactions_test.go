@@ -59,3 +59,23 @@ func TestSelectOptionClicksFirstMatch(t *testing.T) {
 		t.Fatalf("option clicks=%d, wanted 1", option.clicks)
 	}
 }
+
+// A framework can defer a controlled input update until after Click returns.
+// A retry must accept the settled state without toggling it back off.
+type deferredCheckbox struct{ interactionElement }
+
+func (e *deferredCheckbox) Click() error { e.clicks++; return nil }
+func TestCheckWaitsForControlledStateWithoutDoubleToggle(t *testing.T) {
+	element := &deferredCheckbox{}
+	err := setChecked(element, true)
+	if err == nil || !IsRetryableElementError(err) || isJavaScriptClickCandidate(err) {
+		t.Fatalf("expected native retry for pending checkbox state, got %v", err)
+	}
+	element.selected = true
+	if err = setChecked(element, true); err != nil {
+		t.Fatal(err)
+	}
+	if element.clicks != 1 {
+		t.Fatalf("settled checkbox was clicked again: %d", element.clicks)
+	}
+}

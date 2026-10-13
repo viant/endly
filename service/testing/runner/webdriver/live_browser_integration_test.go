@@ -48,6 +48,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 		writer.Header().Set("Content-Type", "text/html")
 		_, _ = fmt.Fprint(writer, `<!doctype html><html><body>
 <select id="late-options" aria-label="Late options"><option value="">Loading</option></select><script>setTimeout(()=>document.querySelector("#late-options").add(new Option("Ready","ready")),300)</script>
+<label onclick="event.preventDefault();setTimeout(()=>document.querySelector('#controlled-check').checked=true,150)">Deferred option<input id="controlled-check" type="checkbox" style="display:none"></label>
 <label for="email">Email</label><input id="email" data-testid="email">
 <button data-testid="submit" onclick="fetch('/api/orders',{method:'POST'}).then(()=>document.querySelector('#status').textContent='Signed in')">Submit</button>
 <button id="show-toggle" onclick="document.querySelector('#toggle-label').style.display='none';setTimeout(()=>document.querySelector('#toggle-label').style.display='block',300)">Animate checkbox</button><label id="toggle-label">Enabled option<input id="hidden-toggle" type="checkbox" style="display:none"></label><input id="nickname" aria-label="Nickname"><div id="status">Pending</div>
@@ -89,6 +90,9 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 			`expect("#hidden-toggle").toBeChecked()`,
 			`page.getByLabel("Enabled option").uncheck()`,
 			`expect("#hidden-toggle").toBeUnchecked()`,
+			`page.getByLabel("Deferred option").check()`,
+			`page.getByLabel("Deferred option").check()`,
+			`expect("#controlled-check").toBeChecked()`,
 			`page.getByLabel("Email").fill("qa@example.test")`,
 			`page.getByLabel("Nickname").fill("Endly")`,
 			`expect("#nickname").toHaveValue("Endly", 5000)`,
@@ -106,7 +110,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(response.Assertions) != 5 || !response.Assertions[4].Passed || !response.Assertions[0].Passed || !response.Assertions[1].Passed || !response.Assertions[2].Passed || !response.Assertions[3].Passed {
+	if len(response.Assertions) != 6 || !response.Assertions[5].Passed || !response.Assertions[4].Passed || !response.Assertions[0].Passed || !response.Assertions[1].Passed || !response.Assertions[2].Passed || !response.Assertions[3].Passed {
 		t.Fatalf("assertions=%#v", response.Assertions)
 	}
 	shot, ok := response.Data["screenshot"].([]byte)

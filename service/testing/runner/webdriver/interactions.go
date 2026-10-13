@@ -74,9 +74,18 @@ func setChecked(element selenium.WebElement, want bool) error {
 		return err
 	}
 	if selected != want {
-		return fmt.Errorf("checkbox state did not change after click")
+		return &checkboxStatePendingError{}
 	}
 	return nil
+}
+
+// A successful native click may precede a controlled input's render. The
+// bounded element retry re-resolves the input and checks its state before
+// deciding whether another click is needed.
+type checkboxStatePendingError struct{}
+
+func (*checkboxStatePendingError) Error() string {
+	return "checkbox state did not change after click"
 }
 
 type optionUnavailableError struct{ value string }
