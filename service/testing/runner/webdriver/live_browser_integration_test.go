@@ -47,7 +47,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 		_, _ = fmt.Fprint(writer, `<!doctype html><html><body>
 <label for="email">Email</label><input id="email" data-testid="email">
 <button data-testid="submit" onclick="fetch('/api/orders',{method:'POST'}).then(()=>document.querySelector('#status').textContent='Signed in')">Submit</button>
-<div id="status">Pending</div>
+<input id="nickname" aria-label="Nickname"><div id="status">Pending</div>
 </body></html>`)
 	}))
 	defer page.Close()
@@ -79,6 +79,8 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 		Commands: []interface{}{
 			`page.goto("` + page.URL + `")`,
 			`page.getByLabel("Email").fill("qa@example.test")`,
+			`page.getByLabel("Nickname").fill("Endly")`,
+			`expect("#nickname").toHaveValue("Endly", 5000)`,
 			`page.getByTestId("submit").click()`,
 			`createResponse = page.waitForResponse("/api/orders", 201, 5000)`,
 			`expect("#status").toHaveText("Signed in", 5000)`,
@@ -92,7 +94,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(response.Assertions) != 1 || !response.Assertions[0].Passed {
+	if len(response.Assertions) != 2 || !response.Assertions[0].Passed || !response.Assertions[1].Passed {
 		t.Fatalf("assertions=%#v", response.Assertions)
 	}
 	if response.Data["createResponse"] == nil {
