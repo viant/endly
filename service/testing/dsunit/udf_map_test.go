@@ -25,3 +25,24 @@ func TestAsTableRecordsMultiTableMapRepresentations(t *testing.T) {
 		})
 	}
 }
+
+func TestAsTableRecordsMalformedTablesReturnErrors(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		records interface{}
+		want    string
+	}{
+		{"nil records", nil, "records must be a slice"},
+		{"object instead of rows", map[string]interface{}{}, "records must be a slice"},
+		{"scalar row", []interface{}{1}, "record 0 must be a map"},
+		{"nil row", []interface{}{nil}, "record 0 must be a map"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			state := data.NewMap()
+			state.Put("fixtures", map[string]interface{}{"GENERIC_RECORD": tc.records})
+			result, err := dsunit.AsTableRecords("fixtures", state)
+			require.ErrorContains(t, err, tc.want)
+			require.Nil(t, result)
+		})
+	}
+}
