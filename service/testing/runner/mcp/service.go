@@ -36,6 +36,7 @@ func New() endly.Service {
 }
 
 func (s *service) registerRoutes() {
+	s.registerResourceRoutes()
 	s.Register(&endly.Route{
 		Action:           "listTools",
 		RequestInfo:      &endly.ActionInfo{Description: "List tools on an external MCP server"},
@@ -133,6 +134,13 @@ func routeHeaders(_ context.Context, body []byte, header http.Header) error {
 			return err
 		}
 		header.Set(schema.HeaderName, name)
+	}
+	if request.Method == schema.MethodResourcesRead || request.Method == schema.MethodSkillsGet {
+		var uri string
+		if err := json.Unmarshal(request.Params["uri"], &uri); err != nil {
+			return err
+		}
+		header.Set(schema.HeaderName, uri)
 	}
 	return nil
 }
