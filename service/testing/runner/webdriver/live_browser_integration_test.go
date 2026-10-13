@@ -48,7 +48,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 <select id="late-options" aria-label="Late options"><option value="">Loading</option></select><script>setTimeout(()=>document.querySelector("#late-options").add(new Option("Ready","ready")),300)</script>
 <label for="email">Email</label><input id="email" data-testid="email">
 <button data-testid="submit" onclick="fetch('/api/orders',{method:'POST'}).then(()=>document.querySelector('#status').textContent='Signed in')">Submit</button>
-<label>Enabled option<input id="hidden-toggle" type="checkbox" style="display:none"></label><input id="nickname" aria-label="Nickname"><div id="status">Pending</div>
+<button id="show-toggle" onclick="document.querySelector('#toggle-label').style.display='none';setTimeout(()=>document.querySelector('#toggle-label').style.display='block',300)">Animate checkbox</button><label id="toggle-label">Enabled option<input id="hidden-toggle" type="checkbox" style="display:none"></label><input id="nickname" aria-label="Nickname"><div id="status">Pending</div>
 </body></html>`)
 	}))
 	defer page.Close()
@@ -81,6 +81,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 			`page.goto("` + page.URL + `")`,
 			`page.getByLabel("Late options").selectOption("ready")`,
 			`expect("#late-options").toHaveValue("ready")`,
+			`page.locator("#show-toggle").click()`,
 			`page.getByLabel("Enabled option").check()`,
 			`page.getByLabel("Enabled option").check()`,
 			`expect("#hidden-toggle").toBeChecked()`,

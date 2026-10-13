@@ -56,6 +56,11 @@ func setChecked(element selenium.WebElement, want bool) error {
 				visible = append(visible, label)
 			}
 		}
+		if len(visible) == 0 {
+			// Dialog transitions can temporarily hide both the native input
+			// and its label. Let the bounded element wait resolve them again.
+			return &selenium.Error{LegacyCode: elementNotVisibleException, Err: "element not visible", Message: "checkbox label is not displayed"}
+		}
 		if len(visible) != 1 {
 			return fmt.Errorf("hidden checkbox requires one visible associated label")
 		}
