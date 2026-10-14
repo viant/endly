@@ -39,6 +39,22 @@ rotate: true
 baseDirectory: /recorded_traffic_location/
 ```
 
+Calling `listen` again on the same port reuses the existing recording by default.
+For a new fixture in a retained MCP session, set `replace: true`. Endly loads and
+validates the new recording before replacing it on the existing socket, resets
+replay positions, and applies the new `rotate`, `indexKeys`, and file templates.
+The bind host must remain the same. A failed load leaves the previous recording
+available; session cleanup still closes the listener.
+
+```yaml
+action: http/endpoint:listen
+host: 127.0.0.1
+port: 8080
+replace: true
+rotate: true
+baseDirectory: /next_fixture/
+```
+
 Start testing endpoint in standalone mode
 
 ```bash
