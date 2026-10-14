@@ -297,8 +297,24 @@ func (c *Context) NewRequest(serviceName, action string, rawRequest map[string]i
 // AsRequest converts a source map into request for provided service and action.
 func (c *Context) AsRequest(serviceName, action string, source map[string]interface{}) (request interface{}, err error) {
 
-	expanded := c.state.Expand(source)
+	expansionSource := source
+	deferred := map[string]interface{}{}
+	if serviceName == "workflow" && action == "run" {
+		expansionSource = make(map[string]interface{}, len(source))
+		for key, value := range source {
+			switch strings.ToLower(key) {
+			case "pipeline", "init", "post", "data", "defaults":
+				deferred[key] = value
+			default:
+				expansionSource[key] = value
+			}
+		}
+	}
+	expanded := c.state.Expand(expansionSource)
 	source = toolbox.AsMap(expanded)
+	for key, value := range deferred {
+		source[key] = value
+	}
 	if request, err = c.NewRequest(serviceName, action, source); err != nil {
 		return request, fmt.Errorf("unable to create %v request %v", serviceName+":"+action, err)
 	}

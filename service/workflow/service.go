@@ -715,6 +715,13 @@ func (s *Service) runTasks(context *endly.Context, process *model.Process, tasks
 func buildParamsMap(request *RunRequest, context *endly.Context) data.Map {
 	var params = data.NewMap()
 	var state = context.State()
+	if request.Params == nil {
+		if inherited, ok := state.GetValue(paramsStateKey); ok && toolbox.IsMap(inherited) {
+			for key, value := range toolbox.AsMap(inherited) {
+				params[key] = value
+			}
+		}
+	}
 	if len(request.Params) > 0 {
 		for k, v := range request.Params {
 			params[k] = state.Expand(v)
