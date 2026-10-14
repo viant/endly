@@ -693,6 +693,14 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 			return insertErr
 		})
 	} else {
+		if request.Call.Method == "Click" {
+			if err = s.waitForElementState(context.Background(), element.IsEnabled, 2*time.Second, "element is not enabled"); err != nil && err.Error() != "nil return value" {
+				return response, err
+			}
+			if err = waitForElementMotion(session.driver, element, 2*time.Second); err != nil {
+				return response, err
+			}
+		}
 		err = s.call(context, element, request.Call, callResponse, elementPath...)
 	}
 	response.Result = callResponse.Result
@@ -734,12 +742,16 @@ func findElement(ctx context.Context, driver selenium.WebDriver, selector *WebEl
 }
 
 func (s *service) ensureVisible(ctx context.Context, element selenium.WebElement, timeout time.Duration) error {
+	return s.waitForElementState(ctx, element.IsDisplayed, timeout, "element is not displayed")
+}
+
+func (s *service) waitForElementState(ctx context.Context, state func() (bool, error), timeout time.Duration, message string) error {
 	if timeout <= 0 || timeout > 2*time.Second {
 		timeout = 2 * time.Second
 	}
 	deadline := time.Now().Add(timeout)
 	for {
-		ok, err := element.IsDisplayed()
+		ok, err := state()
 		if ok {
 			return nil
 		}
@@ -750,7 +762,7 @@ func (s *service) ensureVisible(ctx context.Context, element selenium.WebElement
 			if err != nil {
 				return err
 			}
-			return errors.New("element is not displayed")
+			return errors.New(message)
 		}
 		wait := 200 * time.Millisecond
 		if remaining := time.Until(deadline); remaining < wait {

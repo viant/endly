@@ -81,6 +81,8 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 				kind := "boolean"
 				result.mu.Lock()
 				switch {
+				case strings.Contains(expression, "getAnimations"):
+					value = false
 				case strings.Contains(expression, "document.readyState"):
 					value, kind = result.readyState, "string"
 				case strings.Contains(expression, "document.title"):
