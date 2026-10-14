@@ -18,10 +18,35 @@ func (d *fillTestDriver) ExecuteScript(_ string, args []interface{}) (interface{
 	if d.err != nil {
 		return nil, d.err
 	}
-	if d.mode == "selected" {
+	if len(args) == 2 {
+		args[0].(*fillTestElement).value = args[1].(string)
+		return true, nil
+	}
+	if d.mode == "selected" || d.mode == "contenteditable" {
 		args[0].(*fillTestElement).selected = true
 	}
 	return d.mode, nil
+}
+
+func TestFillEditableDocumentPreservesMultilineIndentation(t *testing.T) {
+	element := &fillTestElement{value: "previous document"}
+	document := "schemaVersion: 1\nprofile:\n  id: customer-intent\n  instructions: Read approved data.\n"
+	require.NoError(t, fillElement(&fillTestDriver{mode: "contenteditable"}, element, document))
+	require.Equal(t, document, element.value)
+}
+
+func TestFillEditableDocumentUsesNativeInsertionWhenAvailable(t *testing.T) {
+	element := &fillTestElement{value: "previous document"}
+	document := "profile:\n  id: customer-intent\n  instructions: Read approved data.\n"
+	called := false
+	require.NoError(t, fillElement(&fillTestDriver{mode: "contenteditable"}, element, document, func(text string) error {
+		called = true
+		require.Equal(t, document, text)
+		element.value = text
+		return nil
+	}))
+	require.True(t, called)
+	require.Equal(t, document, element.value)
 }
 
 type fillTestElement struct {
