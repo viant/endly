@@ -666,7 +666,7 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 		Data: make(map[string]interface{}),
 	}
 	switch request.Call.Method {
-	case "Click", "SendKeys", "Clear", "Submit", "SelectOption", "MoveTo":
+	case "Click", "SendKeys", "Clear", "Fill", "Submit", "SelectOption", "MoveTo":
 		if err = s.ensureVisible(context.Background(), element, time.Duration(request.Call.WaitTimeMs)*time.Millisecond); err != nil {
 			// ChromeDriver 150 can return a JSON null for IsDisplayed even
 			// when the element lookup succeeded. Let the actual interaction
@@ -684,7 +684,14 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 		}
 	}
 
-	err = s.call(context, element, request.Call, callResponse, elementPath...)
+	if request.Call.Method == "Fill" {
+		if len(request.Call.Parameters) != 1 {
+			return response, fmt.Errorf("Fill requires one value")
+		}
+		err = fillElement(session.driver, element, toolbox.AsString(request.Call.Parameters[0]))
+	} else {
+		err = s.call(context, element, request.Call, callResponse, elementPath...)
+	}
 	response.Result = callResponse.Result
 	util.Append(response.Data, callResponse.Data, true)
 	if err != nil {

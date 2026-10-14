@@ -555,7 +555,7 @@ func locatorAction(key, selector, method string, args []string) (*Action, bool, 
 		if len(args) != 1 {
 			return nil, true, fmt.Errorf("fill expects one value")
 		}
-		action.Calls = []*MethodCall{newCall("Clear"), newCall("SendKeys", args[0])}
+		action.Calls = []*MethodCall{newCall("Fill", args[0])}
 	case "type", "press":
 		if len(args) != 1 {
 			return nil, true, fmt.Errorf("%s expects one value", method)

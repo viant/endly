@@ -84,8 +84,8 @@ func TestParser_ParsePageCommands(t *testing.T) {
 			command:    `page.locator("#email").fill("qa@example.test")`,
 			selectorBy: "css selector",
 			selector:   "#email",
-			methods:    []string{"Clear", "SendKeys"},
-			parameters: [][]interface{}{nil, {"qa@example.test"}},
+			methods:    []string{"Fill"},
+			parameters: [][]interface{}{{"qa@example.test"}},
 		},
 		{
 			command:    `page.locator(".card > button.primary").click()`,
@@ -123,8 +123,8 @@ func TestParser_ParsePageCommands(t *testing.T) {
 			command:    `page.getByLabel("Email").fill("qa@example.test")`,
 			selectorBy: "xpath",
 			selector:   `//*[@aria-label='Email'] | //*[@id = //label[normalize-space(.)='Email']/@for] | //label[normalize-space(.)='Email']//*[self::input or self::textarea or self::select]`,
-			methods:    []string{"Clear", "SendKeys"},
-			parameters: [][]interface{}{nil, {"qa@example.test"}},
+			methods:    []string{"Fill"},
+			parameters: [][]interface{}{{"qa@example.test"}},
 		},
 		{
 			command:    `page.getByRole("button", "Save").click()`,
@@ -136,8 +136,8 @@ func TestParser_ParsePageCommands(t *testing.T) {
 			command:    `page.getByPlaceholder("Search").fill("endly")`,
 			selectorBy: "xpath",
 			selector:   `//*[@placeholder='Search']`,
-			methods:    []string{"Clear", "SendKeys"},
-			parameters: [][]interface{}{nil, {"endly"}},
+			methods:    []string{"Fill"},
+			parameters: [][]interface{}{{"endly"}},
 		},
 		{
 			command: `tabs = page.tabs()`,
