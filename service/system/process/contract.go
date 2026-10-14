@@ -12,6 +12,7 @@ type StartRequest struct {
 	Target  *location.Resource `required:"true" description:"host where process will be started"`
 	Command string             `required:"true" description:"command to start process"`
 	*exec.Options
+	QuoteArguments  bool `description:"quote command and arguments for a POSIX shell; false preserves legacy shell command assembly"`
 	Arguments       []string
 	AsSuperUser     bool
 	ImmuneToHangups bool `description:"start process as nohup"`
