@@ -195,7 +195,9 @@ func expectationAction(selector, matcher string, args []string) (*Action, bool, 
 		}
 		call.Method = "Text"
 		if strings.EqualFold(matcher, "toHaveValue") {
-			call.Method = "GetAttribute"
+			// Controlled inputs and selected options update the DOM property;
+			// their original HTML value attribute may remain absent or stale.
+			call.Method = "GetProperty"
 			call.Parameters = []interface{}{"value"}
 		}
 		matchKind := "equal"

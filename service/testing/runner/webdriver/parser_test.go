@@ -235,7 +235,7 @@ func TestParser_ParseExpectCommands(t *testing.T) {
 		{`expect("#submit").toBeEnabled(1200)`, "IsEnabled", "equal", true, 1200, nil},
 		{`expect("#spinner").toBeHidden(1200)`, "IsDisplayed", "equal", false, 1200, nil},
 		{`expect("#submit").toBeDisabled()`, "IsEnabled", "equal", false, 10000, nil},
-		{`expect("#email").toHaveValue("qa@example.test")`, "GetAttribute", "equal", "qa@example.test", 10000, []interface{}{"value"}},
+		{`expect("#email").toHaveValue("qa@example.test")`, "GetProperty", "equal", "qa@example.test", 10000, []interface{}{"value"}},
 		{`expect("#status").toHaveAttribute("data-state", "ready")`, "GetAttribute", "equal", "ready", 10000, []interface{}{"data-state"}},
 		{`expect(page.getByTestId("terms")).toBeChecked()`, "IsSelected", "equal", true, 10000, nil},
 		{`expect(page.getByTestId("terms")).toBeUnchecked()`, "IsSelected", "equal", false, 10000, nil},
