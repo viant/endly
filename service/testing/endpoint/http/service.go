@@ -47,6 +47,19 @@ func (s *service) listen(context *endly.Context, request *ListenRequest) (*Liste
 	value := serviceState.Get(key)
 	if value != nil {
 		if response = value.(*ListenResponse); response != nil {
+			if request.Replace {
+				server := s.servers[request.Port]
+				if server == nil || server.bindHost != request.Host {
+					return nil, fmt.Errorf("replacement requires the existing listener bind host")
+				}
+				trips := request.AsHTTPServerTrips()
+				if err := trips.Init(request.RequestTemplate, request.ResponseTemplate); err != nil {
+					return nil, err
+				}
+				server.Replace(trips, request.RequestTemplate, request.ResponseTemplate)
+				response = &ListenResponse{Trips: trips.Trips}
+				serviceState.Put(key, response)
+			}
 			return response, nil
 		}
 	}

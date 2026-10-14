@@ -23,6 +23,20 @@ type Server struct {
 	indexKeys        []string
 	requestTemplate  string
 	responseTemplate string
+	bindHost         string
+}
+
+// Replace installs a fully loaded recording without releasing the listening
+// socket. In-flight requests finish against the previous recording.
+func (s *Server) Replace(trips *HTTPServerTrips, requestTemplate, responseTemplate string) {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	s.httpHandler.mu.Lock()
+	defer s.httpHandler.mu.Unlock()
+	s.trips, s.rotate, s.indexKeys = trips.Trips, trips.Rotate, trips.IndexKeys
+	s.requestTemplate, s.responseTemplate = requestTemplate, responseTemplate
+	atomic.StoreInt64(&s.httpHandler.thinkTime, 0)
+	s.httpHandler.handler = getServerHandler(&s.Server, s.httpHandler, trips)
 }
 
 func (s *Server) Append(trips *HTTPServerTrips) {
@@ -58,6 +72,7 @@ func startServer(host string, port int, trips *HTTPServerTrips, reqTemplate, res
 	}
 
 	server := &Server{
+		bindHost:         host,
 		rotate:           trips.Rotate,
 		indexKeys:        trips.IndexKeys,
 		httpHandler:      httpHandler,

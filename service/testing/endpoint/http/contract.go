@@ -10,6 +10,7 @@ type ListenRequest struct {
 	Host             string `description:"optional bind host; use 127.0.0.1 for local mocks; empty preserves all-interface binding"`
 	Port             int
 	Rotate           bool
+	Replace          bool     `description:"replace recorded trips and reset replay positions on an existing listener; default false preserves idempotent reuse; bind host cannot change"`
 	RequestTemplate  string   `description:"request file loading template, default: %02d-req.json"`
 	ResponseTemplate string   `description:"response file loading template, default: %02d-resp.json"`
 	BaseDirectory    string   `required:"true" description:"location with replay files (could be generate by https://github.com/viant/toolbox/blob/master/bridge/http_bridge_recording_util.go#L81"`
