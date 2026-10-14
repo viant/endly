@@ -366,7 +366,11 @@ func (d *directCDPDriver) evaluate(script string, args []interface{}) (interface
 		if strings.HasPrefix(result.Exception.Exception.Description, "EndlyStaleElementError:") {
 			return nil, &selenium.Error{Err: "stale element reference", Message: "element is no longer available", LegacyCode: 10}
 		}
-		return nil, errors.New(result.Exception.Text)
+		description := strings.TrimSpace(result.Exception.Exception.Description)
+		if description == "" {
+			description = result.Exception.Text
+		}
+		return nil, errors.New(description)
 	}
 	if result.Result.Subtype == "null" || result.Result.Type == "undefined" {
 		return nil, nil
@@ -807,6 +811,10 @@ func toFloat64(value interface{}) float64 {
 }
 
 func directCDPNodesExpression(by, value, root string) string {
+	// Child elements retain their parent locator. A render can remove that
+	// parent between option lookup and interaction; classify it before DOM
+	// APIs turn the missing root into an opaque JavaScript exception.
+	root = `(()=>{const root=(` + root + `);if(!root||!root.isConnected){const error=new Error('element is no longer available');error.name='EndlyStaleElementError';throw error;}return root;})()`
 	encoded, _ := json.Marshal(value)
 	selector := string(encoded)
 	switch by {
