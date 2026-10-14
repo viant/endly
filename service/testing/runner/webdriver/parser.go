@@ -570,7 +570,7 @@ func locatorAction(key, selector, method string, args []string) (*Action, bool, 
 	case "text", "textcontent":
 		action.Calls = []*MethodCall{newCall("Text")}
 	case "inputvalue":
-		action.Calls = []*MethodCall{newCall("GetAttribute", "value")}
+		action.Calls = []*MethodCall{newCall("GetProperty", "value")}
 	case "attribute", "getattribute":
 		if len(args) != 1 {
 			return nil, true, fmt.Errorf("%s expects one attribute name", method)
