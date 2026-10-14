@@ -121,6 +121,32 @@ func TestMCPControlLifecycleAndSkills(t *testing.T) {
 	call(t, h, "endly_close", map[string]interface{}{"sessionId": session})
 }
 
+func TestMissingSessionReturnsToolErrorBeforeCompaction(t *testing.T) {
+	runtime := manager.New(endly.New)
+	defer runtime.Shutdown(context.Background())
+	h, err := NewHandler(context.Background(), runtime, endly.New)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"endly_getOperation", "endly_listOperations", "endly_listTasks"} {
+		t.Run(name, func(t *testing.T) {
+			entry, ok := h.ToolRegistry.Get(name)
+			if !ok {
+				t.Fatalf("missing tool %s", name)
+			}
+			req := &schema.CallToolRequest{}
+			req.Params.Arguments = map[string]interface{}{"sessionId": "expired-session"}
+			if name == "endly_getOperation" {
+				req.Params.Arguments["operationId"] = "missing-operation"
+			}
+			result, rpcErr := entry.Handler(context.Background(), req)
+			if rpcErr != nil || result == nil || result.IsError == nil || !*result.IsError {
+				t.Fatalf("expected a tool error, got result=%+v rpcError=%v", result, rpcErr)
+			}
+		})
+	}
+}
+
 func TestMCPDebugStateAndResume(t *testing.T) {
 	runtime := manager.New(endly.New)
 	defer runtime.Shutdown(context.Background())
