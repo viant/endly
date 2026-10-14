@@ -46,13 +46,26 @@ return /Mac/.test(navigator.platform)?'meta':'control';`, []interface{}{element,
 	// Replace editable documents as one native input, rather than typing Enter
 	// keys that activate editor indentation and other keyboard commands.
 	if strings.HasPrefix(fmt.Sprint(selection), "contenteditable") && value != "" {
+		settle := func() error {
+			if _, direct := driver.(*directCDPDriver); direct {
+				// Rich editors can defer their DOM-observer transaction until
+				// rendering. Finish that rendering before a following click can
+				// submit the previous controlled value or unmount the editor.
+				_, err := driver.ExecuteScript(`return new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true)))));`, nil)
+				return err
+			}
+			return nil
+		}
 		if len(insertText) > 0 {
 			if err = insertText[0](value); err == nil {
-				return nil
+				return settle()
 			}
 		}
 		if _, direct := driver.(*directCDPDriver); direct {
-			return element.SendKeys(value)
+			if err = element.SendKeys(value); err != nil {
+				return err
+			}
+			return settle()
 		}
 		_, err = driver.ExecuteScript(`if(!document.execCommand('insertText',false,arguments[1]))throw new Error('native editable text insertion failed');`, []interface{}{element, value})
 		return err
