@@ -12,11 +12,16 @@ func fillElement(driver selenium.WebDriver, element selenium.WebElement, value s
 if(e.disabled||e.readOnly||(!e.isContentEditable&&!['INPUT','TEXTAREA'].includes(e.tagName)))throw new Error('fill requires an editable text control');
 if(e.tagName==='INPUT'&&['checkbox','radio','file','button','submit','reset','range','color','hidden'].includes(e.type))throw new Error('fill requires a text input');
 e.focus();
-if(e.isContentEditable){const r=document.createRange();r.selectNodeContents(e);const s=window.getSelection();s.removeAllRanges();s.addRange(r);return 'contenteditable';}
+if(e.isContentEditable){const r=document.createRange();r.selectNodeContents(e);const s=window.getSelection();s.removeAllRanges();s.addRange(r);if(arguments[1]!==''&&document.execCommand('insertText',false,arguments[1]))return 'filled';return 'contenteditable';}
 if(typeof e.select==='function'){e.select();if(e.selectionStart===0&&e.selectionEnd===e.value.length)return 'selected';}
-return /Mac/.test(navigator.platform)?'meta':'control';`, []interface{}{element})
+return /Mac/.test(navigator.platform)?'meta':'control';`, []interface{}{element, value})
 	if err != nil {
 		return err
+	}
+	// Keep selection and replacement in one browser task. Rich editors can
+	// restore their own selection between separate CDP calls.
+	if selection == "filled" {
+		return nil
 	}
 	// Replace editable documents as one native input, rather than typing Enter
 	// keys that activate editor indentation and other keyboard commands.

@@ -2,6 +2,7 @@ package webdriver
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -14,11 +15,11 @@ type fillTestDriver struct {
 	err  error
 }
 
-func (d *fillTestDriver) ExecuteScript(_ string, args []interface{}) (interface{}, error) {
+func (d *fillTestDriver) ExecuteScript(script string, args []interface{}) (interface{}, error) {
 	if d.err != nil {
 		return nil, d.err
 	}
-	if len(args) == 2 {
+	if len(args) == 2 && !strings.Contains(script, "fill requires") {
 		args[0].(*fillTestElement).value = args[1].(string)
 		return true, nil
 	}
