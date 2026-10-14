@@ -176,6 +176,22 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 		t.Fatalf("removed control did not return a retryable stale-element error: %v", err)
 	}
 
+	// A child lookup must also classify a removed parent as stale.
+	selectElement, err := session.driver.FindElement(selenium.ByCSSSelector, "#late-options")
+	if err != nil {
+		t.Fatal(err)
+	}
+	option, err := selectElement.FindElement(selenium.ByXPATH, ".//option[@value='ready']")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = session.driver.ExecuteScript(`arguments[0].remove();`, []interface{}{selectElement}); err != nil {
+		t.Fatal(err)
+	}
+	if err = option.Click(); !IsRetryableElementError(err) {
+		t.Fatalf("removed select parent did not return a retryable error: %v", err)
+	}
+
 	tabRequest := &RunRequest{
 		SessionID: request.SessionID,
 		AutoStart: &autoStart,
