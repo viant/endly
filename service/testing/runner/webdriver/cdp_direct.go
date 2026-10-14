@@ -353,13 +353,19 @@ func (d *directCDPDriver) evaluate(script string, args []interface{}) (interface
 			Description string      `json:"description"`
 		} `json:"result"`
 		Exception *struct {
-			Text string `json:"text"`
+			Text      string `json:"text"`
+			Exception struct {
+				Description string `json:"description"`
+			} `json:"exception"`
 		} `json:"exceptionDetails"`
 	}
 	if err := json.Unmarshal(raw, &result); err != nil {
 		return nil, err
 	}
 	if result.Exception != nil {
+		if strings.HasPrefix(result.Exception.Exception.Description, "EndlyStaleElementError:") {
+			return nil, &selenium.Error{Err: "stale element reference", Message: "element is no longer available", LegacyCode: 10}
+		}
 		return nil, errors.New(result.Exception.Text)
 	}
 	if result.Result.Subtype == "null" || result.Result.Type == "undefined" {
@@ -851,7 +857,7 @@ func (e *directCDPElement) evaluate(body string, args ...interface{}) (interface
 		encodedArgs[index] = string(data)
 	}
 	expression := e.nodeExpression()
-	script := `const __element=` + expression + `;if(!__element)throw new Error('element is no longer available');const __args=[` + strings.Join(encodedArgs, ",") + `];return (function(){` + body + `}).apply(__element,__args);`
+	script := `const __element=` + expression + `;if(!__element){const error=new Error('element is no longer available');error.name='EndlyStaleElementError';throw error;}const __args=[` + strings.Join(encodedArgs, ",") + `];return (function(){` + body + `}).apply(__element,__args);`
 	return e.driver.evaluate(script, nil)
 }
 
@@ -970,6 +976,9 @@ func (e *directCDPElement) IsDisplayed() (bool, error) {
 }
 func (e *directCDPElement) GetAttribute(name string) (string, error) {
 	value, err := e.evaluate(`return this.getAttribute(arguments[0]);`, name)
+	if err != nil {
+		return "", err
+	}
 	if value == nil {
 		return "", nil
 	}
@@ -977,6 +986,9 @@ func (e *directCDPElement) GetAttribute(name string) (string, error) {
 }
 func (e *directCDPElement) GetProperty(name string) (string, error) {
 	value, err := e.evaluate(`return this[arguments[0]];`, name)
+	if err != nil {
+		return "", err
+	}
 	if value == nil {
 		return "", nil
 	}

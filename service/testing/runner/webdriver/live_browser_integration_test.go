@@ -2,6 +2,7 @@ package webdriver
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"image/png"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/tebeka/selenium"
 	"github.com/viant/endly"
 )
 
@@ -73,7 +75,8 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 		putSession(ctx, request.SessionID, &Session{SessionID: request.SessionID, Browser: ChromeBrowser})
 	}
 	service := New().(*service)
-	if _, err := service.openSession(ctx, request); err != nil {
+	session, err := service.openSession(ctx, request)
+	if err != nil {
 		t.Fatal(err)
 	}
 	autoStart := false
@@ -96,6 +99,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 			`page.getByLabel("Email").fill("qa@example.test")`,
 			`page.getByLabel("Nickname").fill("Endly")`,
 			`expect("#nickname").toHaveValue("Endly", 5000)`,
+			`nicknameValue = page.getByLabel("Nickname").inputValue()`,
 			`page.getByTestId("submit").click()`,
 			`createResponse = page.waitForResponse("/api/orders", 201, 5000)`,
 			`expect("#status").toHaveText("Signed in", 5000)`,
@@ -122,6 +126,23 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 	}
 	if response.Data["createResponse"] == nil {
 		t.Fatalf("browser response was not captured: %#v", response.Data)
+	}
+	if response.Data["nicknameValue"] != "Endly" {
+		t.Fatalf("inputValue did not return the live DOM value: %v", response.Data["nicknameValue"])
+	}
+	// A control removed by a render must report a retryable element error,
+	// rather than an opaque JavaScript exception that aborts the workflow.
+	element, err := session.driver.FindElement(selenium.ByCSSSelector, "#nickname")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = session.driver.ExecuteScript(`arguments[0].remove();`, []interface{}{element}); err != nil {
+		t.Fatal(err)
+	}
+	_, err = element.GetProperty("value")
+	var stale *selenium.Error
+	if !errors.As(err, &stale) || stale.Err != "stale element reference" || !IsRetryableElementError(err) {
+		t.Fatalf("removed control did not return a retryable stale-element error: %v", err)
 	}
 
 	tabRequest := &RunRequest{
