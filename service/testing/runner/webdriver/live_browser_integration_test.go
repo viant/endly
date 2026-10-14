@@ -59,6 +59,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 <label for="email">Email</label><input id="email" data-testid="email">
 <div id="editor" contenteditable="true">Original query</div>
 <div id="rich-editor"></div><script src="/editor.js"></script>
+<button data-testid="save-editor" onclick="document.querySelector('#saved-editor').textContent=window.endlyRichEditorValue">Save editor</button><div id="saved-editor"></div>
 <button data-testid="submit" onclick="fetch('/api/orders',{method:'POST'}).then(()=>document.querySelector('#status').textContent='Signed in')">Submit</button>
 <button id="show-toggle" onclick="document.querySelector('#toggle-label').style.display='none';setTimeout(()=>document.querySelector('#toggle-label').style.display='block',300)">Animate checkbox</button><label id="toggle-label">Enabled option<input id="hidden-toggle" type="checkbox" style="display:none"></label><input id="nickname" aria-label="Nickname"><div id="status">Pending</div>
 </body></html>`)
@@ -121,9 +122,11 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 	if richEditorBundle != "" {
 		runRequest.Commands = append(runRequest.Commands,
 			`page.locator(".cm-content").fill("SELECT region FROM sales")`,
-			`expect(".cm-content").toHaveText("SELECT region FROM sales", 5000)`,
+			`page.getByTestId("save-editor").click()`,
+			`expect("#saved-editor").toHaveText("SELECT region FROM sales", 5000)`,
 			`page.locator(".cm-content").fill("SELECT total FROM sales")`,
-			`expect(".cm-content").toHaveText("SELECT total FROM sales", 5000)`,
+			`page.getByTestId("save-editor").click()`,
+			`expect("#saved-editor").toHaveText("SELECT total FROM sales", 5000)`,
 		)
 	}
 	if err := runRequest.Init(); err != nil {
