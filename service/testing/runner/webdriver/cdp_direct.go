@@ -856,6 +856,23 @@ func (e *directCDPElement) evaluate(body string, args ...interface{}) (interface
 }
 
 func (e *directCDPElement) Click() error {
+	// Native select popups are outside the page's clickable viewport. An
+	// option's rectangle is therefore not a reliable CDP mouse target.
+	if tag, err := e.TagName(); err != nil {
+		return err
+	} else if tag == "option" {
+		_, err = e.evaluate(`
+const select=this.closest('select');
+if(!select)throw new Error('option has no select');
+if(select.disabled||this.disabled||this.parentElement?.disabled)throw new Error('option is disabled');
+if(!this.selected){
+  this.selected=true;
+  select.dispatchEvent(new Event('input',{bubbles:true}));
+  select.dispatchEvent(new Event('change',{bubbles:true}));
+}
+return true;`)
+		return err
+	}
 	x, y, err := e.center()
 	if err != nil {
 		return err
