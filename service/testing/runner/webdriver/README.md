@@ -184,6 +184,11 @@ Supported page commands include `goto`, `reload`, `back`, `forward`, `stopLoadin
 
 Locators include `locator`, `getByTestId`, `getByText`, `getByLabel`, `getByPlaceholder`, `getByAltText`, `getByTitle`, and `getByRole`. Locator actions include `click`, `fill`, `type`, `press`, `text`, `inputValue`, `attribute`, `clear`, `submit`, `check`, `uncheck`, `selectOption`, `hover`, `setInputFiles`, and `waitForVisible`.
 
+`fill` selects the existing text and replaces it through browser input events,
+including controlled form inputs and content-editable editors. An empty value
+clears the selection. Legacy `Clear` and `SendKeys` method calls remain available
+with their original behavior; `type` appends text.
+
 Like Playwright, `page.locator(...)` treats its value as CSS unless it starts with `xpath:` or `//`. This avoids misclassifying compound CSS selectors containing spaces or attribute expressions.
 
 Retrying locator expectations include `toHaveText`, `toContainText`, `toHaveValue`, `toHaveAttribute`, `toHaveCount`, `toBeVisible`, `toBeHidden`, `toBeEnabled`, `toBeDisabled`, `toBeChecked`, and `toBeUnchecked`. Page expectations include `toHaveURL` and `toHaveTitle`. Their final argument may be a timeout in milliseconds. Text comparisons normalize browser whitespace, and `/regular expressions/` are accepted by equality checks. `toBeHidden` succeeds when the element is either absent or not displayed.
