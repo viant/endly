@@ -688,7 +688,10 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 		if len(request.Call.Parameters) != 1 {
 			return response, fmt.Errorf("Fill requires one value")
 		}
-		err = fillElement(session.driver, element, toolbox.AsString(request.Call.Parameters[0]))
+		err = fillElement(session.driver, element, toolbox.AsString(request.Call.Parameters[0]), func(value string) error {
+			_, insertErr := executeSessionCDP(session, "Input.insertText", map[string]any{"text": value})
+			return insertErr
+		})
 	} else {
 		err = s.call(context, element, request.Call, callResponse, elementPath...)
 	}
