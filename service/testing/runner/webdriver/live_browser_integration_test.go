@@ -21,10 +21,15 @@ func TestLiveBrowserFlow(t *testing.T) {
 	remote := os.Getenv("ENDLY_WEBDRIVER_REMOTE")
 	debuggerAddress := os.Getenv("ENDLY_CHROME_DEBUGGER_ADDRESS")
 	directCDP := remote == "" && debuggerAddress != ""
+	richEditorBundle := os.Getenv("ENDLY_RICH_EDITOR_BUNDLE")
 	if remote == "" && debuggerAddress == "" {
 		t.Skip("ENDLY_WEBDRIVER_REMOTE or ENDLY_CHROME_DEBUGGER_ADDRESS was not set")
 	}
 	page := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.URL.Path == "/editor.js" && richEditorBundle != "" {
+			http.ServeFile(writer, request, richEditorBundle)
+			return
+		}
 		if request.URL.Path == "/never" {
 			writer.Header().Set("Content-Type", "text/html")
 			_, _ = writer.Write([]byte(`<!doctype html><html><body><div>Streaming forever</div>`))
@@ -53,6 +58,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 <label onclick="event.preventDefault();setTimeout(()=>document.querySelector('#controlled-check').checked=true,150)">Deferred option<input id="controlled-check" type="checkbox" style="display:none"></label>
 <label for="email">Email</label><input id="email" data-testid="email">
 <div id="editor" contenteditable="true">Original query</div>
+<div id="rich-editor"></div><script src="/editor.js"></script>
 <button data-testid="submit" onclick="fetch('/api/orders',{method:'POST'}).then(()=>document.querySelector('#status').textContent='Signed in')">Submit</button>
 <button id="show-toggle" onclick="document.querySelector('#toggle-label').style.display='none';setTimeout(()=>document.querySelector('#toggle-label').style.display='block',300)">Animate checkbox</button><label id="toggle-label">Enabled option<input id="hidden-toggle" type="checkbox" style="display:none"></label><input id="nickname" aria-label="Nickname"><div id="status">Pending</div>
 </body></html>`)
@@ -112,6 +118,14 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 		},
 		Navigation: &NavigationOptions{TimeoutMs: 10_000},
 	}
+	if richEditorBundle != "" {
+		runRequest.Commands = append(runRequest.Commands,
+			`page.locator(".cm-content").fill("SELECT region FROM sales")`,
+			`expect(".cm-content").toHaveText("SELECT region FROM sales", 5000)`,
+			`page.locator(".cm-content").fill("SELECT total FROM sales")`,
+			`expect(".cm-content").toHaveText("SELECT total FROM sales", 5000)`,
+		)
+	}
 	if err := runRequest.Init(); err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +133,11 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(response.Assertions) != 8 {
+	expectedAssertions := 8
+	if richEditorBundle != "" {
+		expectedAssertions += 2
+	}
+	if len(response.Assertions) != expectedAssertions {
 		t.Fatalf("assertions=%#v", response.Assertions)
 	}
 	for _, assertion := range response.Assertions {
