@@ -336,6 +336,13 @@ func LoadResource(baseURL, URI string, result interface{}) (*location.Resource, 
 		}
 		if err != nil {
 			err = ClassifyErrorIfMatched(err)
+			// A directory in a more-specific fallback location is not a
+			// workflow file. Keep searching without masking real file errors.
+			if !IsNotSuchResourceError(err) {
+				if object, objectErr := fs.Object(context.Background(), resource.URL); objectErr == nil && object.IsDir() {
+					err = NewNotSuchResourceError(resource.URL)
+				}
+			}
 		}
 		if !IsNotSuchResourceError(err) {
 			loadError = err
