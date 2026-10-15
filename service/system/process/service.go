@@ -205,7 +205,9 @@ func (s *service) buildStartProcessCommand(request *StartRequest) *exec.RunReque
 	var createNoHup = fmt.Sprintf("touch %v && chmod 666 %v", quotedOutput, quotedOutput)
 	if request.ImmuneToHangups {
 		toolbox.RemoveFileIfExist(outputFile)
-		startBody = fmt.Sprintf("nohup %v", startBody)
+		// Detached processes must not inherit a non-interactive exec pipe: it
+		// closes when the launch command ends, causing later writes to fail.
+		startBody = fmt.Sprintf("nohup %v </dev/null >%v 2>&1", startBody, quotedOutput)
 	}
 	startCommand := fmt.Sprintf("(%v &)", startBody)
 	var runRequest = exec.NewRunRequest(request.Target, request.AsSuperUser, changeDirCommand, createNoHup, startCommand)
