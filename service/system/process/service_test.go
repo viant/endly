@@ -39,7 +39,7 @@ func TestService_buildStartProcessCommand(t *testing.T) {
 			expectedCommands: []string{
 				"cd /tmp/agently ",
 				"touch /tmp/agently/nohup.out && chmod 666 /tmp/agently/nohup.out",
-				"(nohup /tmp/agently-app serve --addr :9001 &)",
+				"(nohup /tmp/agently-app serve --addr :9001 </dev/null >/tmp/agently/nohup.out 2>&1 &)",
 			},
 		},
 	}

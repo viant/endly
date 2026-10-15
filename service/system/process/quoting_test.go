@@ -51,3 +51,36 @@ func TestQuotedProcessArgumentsAreLiteral(t *testing.T) {
 		t.Fatal("argument executed as shell code")
 	}
 }
+
+func TestDetachedProcessRetainsOutputAfterLaunchShellExits(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX shell")
+	}
+	dir := filepath.Join(t.TempDir(), "directory with spaces")
+	if err := os.Mkdir(dir, 0700); err != nil {
+		t.Fatal(err)
+	}
+	request := &StartRequest{Command: "/bin/sh", Arguments: []string{"-c", "sleep 0.1; printf stdout; printf stderr >&2"}, QuoteArguments: true, ImmuneToHangups: true}
+	request.Options = systemexec.DefaultOptions()
+	request.Directory = dir
+	commands := (&service{}).buildStartProcessCommand(request).Commands
+	var parts []string
+	for _, command := range commands {
+		parts = append(parts, string(command))
+	}
+	if data, err := exec.Command("/bin/sh", "-c", strings.Join(parts, "\n")).CombinedOutput(); err != nil {
+		t.Fatalf("launch: %v %s", err, data)
+	}
+	deadline := time.Now().Add(3 * time.Second)
+	output := filepath.Join(dir, "nohup.out")
+	for {
+		data, err := os.ReadFile(output)
+		if err == nil && string(data) == "stdoutstderr" {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("detached stdout/stderr missing: %q %v", data, err)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
