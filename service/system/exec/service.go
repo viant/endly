@@ -182,7 +182,16 @@ func (s *execService) changeDirectory(context *endly.Context, session *model.Ses
 	}
 	parent, name := path.Split(directory)
 	if path.Ext(name) != "" {
-		directory = parent
+		// Legacy callers may pass a file whose parent should be used. A
+		// directory can also contain dots; test on the active (possibly SSH)
+		// session before applying that fallback. Keep the caller's shell quoting.
+		actualDirectory, err := s.rumCommandTemplate(context, session, "if [ -d %v ]; then printf '1'; else printf '0'; fi", directory)
+		if err != nil {
+			return "", err
+		}
+		if strings.TrimSpace(actualDirectory) != "1" {
+			directory = parent
+		}
 	}
 	if len(directory) > 1 && strings.HasSuffix(directory, "/") {
 		directory = string(directory[:len(directory)-1])
