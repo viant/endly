@@ -62,6 +62,8 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 <button data-testid="save-editor" onclick="document.querySelector('#saved-editor').textContent=window.endlyRichEditorValue">Save editor</button><div id="saved-editor"></div>
 <button data-testid="submit" onclick="fetch('/api/orders',{method:'POST'}).then(()=>document.querySelector('#status').textContent='Signed in')">Submit</button>
 <button id="show-toggle" onclick="document.querySelector('#toggle-label').style.display='none';setTimeout(()=>document.querySelector('#toggle-label').style.display='block',300)">Animate checkbox</button><label id="toggle-label">Enabled option<input id="hidden-toggle" type="checkbox" style="display:none"></label><input id="nickname" aria-label="Nickname"><div id="status">Pending</div>
+<button id="move-panel" onclick="document.querySelector('#moving-panel').animate([{transform:'translateX(0)'},{transform:'translateX(10px)'}],{duration:1000})">Move dialog</button>
+<div id="moving-panel"><label>Moving option<input id="moving-option" type="checkbox" style="display:none" onchange="document.querySelector('#motion-status').textContent=document.querySelector('#moving-panel').getAnimations().some(a=>a.playState==='running')?'moving':'settled'"></label></div><div id="motion-status">Pending</div>
 </body></html>`)
 	}))
 	defer page.Close()
@@ -104,6 +106,10 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 			`page.getByLabel("Deferred option").check()`,
 			`page.getByLabel("Deferred option").check()`,
 			`expect("#controlled-check").toBeChecked()`,
+			`page.locator("#move-panel").click()`,
+			`page.getByLabel("Moving option").check()`,
+			`expect("#moving-option").toBeChecked()`,
+			`expect("#motion-status").toHaveText("settled", 2000)`,
 			`page.getByLabel("Email").fill("qa@example.test")`,
 			`page.locator("#editor").fill("SELECT region FROM sales")`,
 			`expect("#editor").toHaveText("SELECT region FROM sales", 5000)`,
@@ -136,7 +142,7 @@ window.addEventListener('scroll',()=>{const item=document.createElement('div');i
 	if err != nil {
 		t.Fatal(err)
 	}
-	expectedAssertions := 8
+	expectedAssertions := 10
 	if richEditorBundle != "" {
 		expectedAssertions += 2
 	}

@@ -887,6 +887,11 @@ if(!this.selected){
 return true;`)
 		return err
 	}
+	// Checkbox helpers click associated labels directly, bypassing the service's
+	// ordinary Click path. Every coordinate click must wait for ancestor motion.
+	if err := waitForElementMotion(e.driver, e, 2*time.Second); err != nil {
+		return err
+	}
 	x, y, err := e.center()
 	if err != nil {
 		return err
