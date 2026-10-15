@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/viant/afs"
+	"github.com/viant/afs/url"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -85,7 +86,7 @@ func ListResource(baseURLs []string, URI string) ([]string, error) {
 			regExprText = ".+" + regExprText
 		}
 		regExpression := regexp.MustCompile(regExprText)
-		resource := location.NewResource(baseURL)
+		resource := location.NewResource(url.Normalize(baseURL, "file"))
 		storageService, err := storage.NewServiceForURL(resource.URL, "")
 		if err != nil {
 			return nil, err
