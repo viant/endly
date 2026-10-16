@@ -91,3 +91,11 @@ func TestFillStopsWhenSelectionFails(t *testing.T) {
 	require.ErrorIs(t, fillElement(&fillTestDriver{err: err}, element, "new title"), err)
 	require.Equal(t, "previous title", element.value)
 }
+
+func TestFillTemporalControlUsesDOMEditEvents(t *testing.T) {
+	for _, value := range []string{"2026-10-13", ""} {
+		element := &fillTestElement{value: "2026-01-01"}
+		require.NoError(t, fillElement(&fillTestDriver{mode: "temporal"}, element, value))
+		require.Equal(t, value, element.value)
+	}
+}

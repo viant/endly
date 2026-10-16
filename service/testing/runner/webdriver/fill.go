@@ -14,10 +14,26 @@ func fillElement(driver selenium.WebDriver, element selenium.WebElement, value s
 if(e.disabled||e.readOnly||(!e.isContentEditable&&!['INPUT','TEXTAREA'].includes(e.tagName)))throw new Error('fill requires an editable text control');
 if(e.tagName==='INPUT'&&['checkbox','radio','file','button','submit','reset','range','color','hidden'].includes(e.type))throw new Error('fill requires a text input');
 e.focus();
+if(e.tagName==='INPUT'&&['date','datetime-local','time','month','week'].includes(e.type))return 'temporal';
 if(e.isContentEditable)return /Mac/.test(navigator.platform)?'contenteditable-meta':'contenteditable-control';
 if(typeof e.select==='function'){e.select();if(e.selectionStart===0&&e.selectionEnd===e.value.length)return 'selected';}
 return /Mac/.test(navigator.platform)?'meta':'control';`, []interface{}{element, value})
 	if err != nil {
+		return err
+	}
+	// Temporal controls do not expose a text selection and ignore insertText.
+	// Use the browser's native value setter and normal DOM edit events, as
+	// browser automation does for segmented date/time controls. Calling the
+	// prototype setter also lets controlled frameworks observe the new value.
+	if selection == "temporal" {
+		_, err = driver.ExecuteScript(`const e=arguments[0],value=arguments[1];
+const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;
+const previous=e.value;
+setter.call(e,value);
+if(e.value!==value){setter.call(e,previous);throw new Error('invalid value for '+e.type+' input');}
+e.dispatchEvent(new Event('input',{bubbles:true}));
+e.dispatchEvent(new Event('change',{bubbles:true}));
+return true;`, []interface{}{element, value})
 		return err
 	}
 	if selection != "selected" {
