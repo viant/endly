@@ -14,11 +14,25 @@ func fillElement(driver selenium.WebDriver, element selenium.WebElement, value s
 if(e.disabled||e.readOnly||(!e.isContentEditable&&!['INPUT','TEXTAREA'].includes(e.tagName)))throw new Error('fill requires an editable text control');
 if(e.tagName==='INPUT'&&['checkbox','radio','file','button','submit','reset','range','color','hidden'].includes(e.type))throw new Error('fill requires a text input');
 e.focus();
+// Date-like controls have segmented native editors; selectAll + insertText
+// does not replace their value. Use the native setter and normal input events.
+if(e.tagName==='INPUT'&&['date','datetime-local','month','time','week'].includes(e.type)){
+ const value=String(arguments[1]);
+ const setter=Object.getOwnPropertyDescriptor(e.ownerDocument.defaultView.HTMLInputElement.prototype,'value').set;
+ setter.call(e,value);
+ if(e.value!==value)throw new Error('fill value is invalid for '+e.type);
+ e.dispatchEvent(new Event('input',{bubbles:true}));
+ e.dispatchEvent(new Event('change',{bubbles:true}));
+ return 'filled-native';
+}
 if(e.isContentEditable)return /Mac/.test(navigator.platform)?'contenteditable-meta':'contenteditable-control';
 if(typeof e.select==='function'){e.select();if(e.selectionStart===0&&e.selectionEnd===e.value.length)return 'selected';}
 return /Mac/.test(navigator.platform)?'meta':'control';`, []interface{}{element, value})
 	if err != nil {
 		return err
+	}
+	if selection == "filled-native" {
+		return nil
 	}
 	if selection != "selected" {
 		modifier := selenium.ControlKey

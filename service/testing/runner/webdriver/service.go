@@ -368,6 +368,9 @@ func (s *service) callMethod(owner interface{}, methodName string, response *Ser
 			err = fmt.Errorf("webdriver method %s is not supported by %T: %v", methodName, owner, recovered)
 		}
 	}()
+	if methodName == "TableData" {
+		methodName = "Data"
+	}
 	switch methodName {
 	case "Data", "Tabs", "SwitchTab", "NewTab", "CloseTab", "Check", "Uncheck", "SelectOption", "SwitchFrameBySelector", "MainFrame", "ElementCount":
 		parameters = append([]interface{}{owner}, parameters...)
