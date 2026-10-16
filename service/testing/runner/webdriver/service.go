@@ -347,7 +347,7 @@ func (s *service) Data(webElement selenium.WebElement, format string) (interface
 	if tagName != "table" {
 		return nil, fmt.Errorf("element is not a table")
 	}
-	tableHtml, err := webElement.GetAttribute("outerHTML")
+	tableHtml, err := webElement.GetProperty("outerHTML")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get table html: %v", err)
 	}
@@ -368,6 +368,9 @@ func (s *service) callMethod(owner interface{}, methodName string, response *Ser
 			err = fmt.Errorf("webdriver method %s is not supported by %T: %v", methodName, owner, recovered)
 		}
 	}()
+	if methodName == "TableData" {
+		methodName = "Data"
+	}
 	switch methodName {
 	case "Data", "Tabs", "SwitchTab", "NewTab", "CloseTab", "Check", "Uncheck", "SelectOption", "SwitchFrameBySelector", "MainFrame", "ElementCount":
 		parameters = append([]interface{}{owner}, parameters...)
