@@ -42,7 +42,7 @@ func (s *service) captureStart(context *endly.Context, request *CaptureStartRequ
 
 	// Best-effort CDP enable (Chrome/Edge chromedriver only).
 	if strings.EqualFold(sess.Browser, ChromeBrowser) {
-		_, _ = executeSessionCDP(sess, "Network.enable", map[string]any{})
+		_, _ = executeSessionCDP(sess, "Network.enable", map[string]any{"maxPostDataSize": sess.Capture.maxBodyBytes})
 		_, _ = executeSessionCDP(sess, "Runtime.enable", map[string]any{})
 		// Verify performance logging is enabled; otherwise we won't see events.
 		if sess.Backend != "cdp" {

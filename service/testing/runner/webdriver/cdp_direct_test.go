@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"github.com/stretchr/testify/require"
+	"github.com/tebeka/selenium"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -16,14 +18,16 @@ import (
 )
 
 type fakeCDPServer struct {
-	server      *httptest.Server
-	mu          sync.Mutex
-	URL         string
-	title       string
-	stopped     bool
-	readyState  string
-	navigated   chan struct{}
-	inputEvents int
+	server        *httptest.Server
+	mu            sync.Mutex
+	URL           string
+	title         string
+	stopped       bool
+	readyState    string
+	navigated     chan struct{}
+	inputEvents   int
+	keyEvents     []map[string]interface{}
+	insertedTexts []string
 }
 
 func newFakeCDPServer(t *testing.T) *fakeCDPServer {
@@ -106,6 +110,13 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 			case "Input.dispatchMouseEvent", "Input.dispatchKeyEvent", "Input.insertText":
 				result.mu.Lock()
 				result.inputEvents++
+				if command.Method == "Input.dispatchKeyEvent" {
+					result.keyEvents = append(result.keyEvents, command.Params)
+				}
+				if command.Method == "Input.insertText" {
+					text, _ := command.Params["text"].(string)
+					result.insertedTexts = append(result.insertedTexts, text)
+				}
 				result.mu.Unlock()
 			}
 			if err := connection.WriteJSON(response); err != nil {
@@ -231,4 +242,40 @@ func TestRunWithDirectCDPBackend(t *testing.T) {
 	if response.Data["title"] != "Direct CDP" || len(response.Assertions) != 1 || !response.Assertions[0].Passed {
 		t.Fatalf("response=%#v", response)
 	}
+}
+
+func TestDirectCDPNativeEditingKeys(t *testing.T) {
+	fake := newFakeCDPServer(t)
+	driver, err := newDirectCDPDriver(fake.server.URL)
+	require.NoError(t, err)
+	defer driver.Quit()
+	element, err := driver.FindElement("css selector", "#field")
+	require.NoError(t, err)
+	for _, key := range []string{selenium.BackspaceKey, selenium.DeleteKey, selenium.LeftArrowKey, selenium.EnterKey, selenium.SpaceKey} {
+		require.NoError(t, element.SendKeys(key))
+	}
+	fake.mu.Lock()
+	events := append([]map[string]interface{}(nil), fake.keyEvents...)
+	fake.mu.Unlock()
+	require.Len(t, events, 10)
+	for i := 0; i < len(events); i += 2 {
+		down, up := events[i], events[i+1]
+		require.Equal(t, "keyDown", down["type"])
+		require.Equal(t, "keyUp", up["type"])
+		require.NotEmpty(t, down["code"])
+		require.NotZero(t, down["windowsVirtualKeyCode"])
+		require.Equal(t, down["code"], up["code"])
+		require.Equal(t, down["windowsVirtualKeyCode"], up["windowsVirtualKeyCode"])
+		require.NotContains(t, up, "text", "keyUp must not insert another character")
+	}
+	require.Equal(t, float64(8), events[0]["windowsVirtualKeyCode"])
+	require.Equal(t, float64(46), events[2]["windowsVirtualKeyCode"])
+	require.Equal(t, "\r", events[6]["text"])
+	require.Equal(t, " ", events[8]["text"])
+	document := "profile:\n  id: customer-intent\n"
+	require.NoError(t, element.SendKeys(document))
+	fake.mu.Lock()
+	defer fake.mu.Unlock()
+	require.Equal(t, []string{document}, fake.insertedTexts, "multiline text remains one native insertText transaction")
+	require.Len(t, fake.keyEvents, 10)
 }
