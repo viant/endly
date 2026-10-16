@@ -262,3 +262,24 @@ go test ./service/testing/runner/webdriver -run TestLiveBrowserFlow -v
 ```
 
 Alternatively, set only `ENDLY_CHROME_DEBUGGER_ADDRESS=127.0.0.1:9222` to run the same integration flow using direct CDP without ChromeDriver. This test navigates the selected browser tab and should only be run against a disposable test profile.
+
+### Extract table data
+
+`Data()` and its alias `TableData()` extract a native HTML table's mounted DOM:
+
+```yaml
+commands:
+  - rows = (css selector:table.report).TableData('objects')
+  - rows = (css selector:table.report).TableData('objects:date,campaign,impressions,spend')
+```
+
+Formats: `objects` (structured records), `json`, `csv`, and `tabular` (all rows,
+including headers). Object/JSON/CSV exports infer names from the first row,
+including `<th>` headers, or accept explicit comma-separated names. Explicit
+names skip leading header rows. Empty names and `_` omit positional columns.
+Empty tables return an empty collection; duplicate column names and mismatched
+row widths fail rather than silently overwrite or discard data. Nested tables
+are excluded. Cell values are strings; numeric/date conversion belongs to the
+assertion. Spanning/grouped headers may require explicit names; irregular spans
+are not expanded. This is DOM extraction, not a backend export: traverse pages
+and virtualized rows explicitly, and select native tables rather than ARIA grids.

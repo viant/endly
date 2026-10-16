@@ -5,88 +5,87 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
-type Exporter struct {
-	parser *Parser
-}
+type Exporter struct{ parser *Parser }
 
-// Export exports the data in the specified format ("json" or "csv")
+// Export supports inferred table headers or explicit positional column names.
+// Blank and underscore names omit a column. Irregular rows fail rather than vanish.
 func (e *Exporter) Export(headers []string, format string) (interface{}, error) {
-	data := e.parser.ParseTable()
-	switch format {
-	case "json":
-		return e.exportJSON(headers, data)
-	case "csv":
-		return e.exportCSV(headers, data)
-	case "objects":
-		return e.exportObjects(headers, data), nil
-	case "tabular":
-		return data, nil
-	default:
-		return "", fmt.Errorf("unsupported format: %s", format)
+	if format == "tabular" {
+		return e.parser.ParseTable(), nil
 	}
-}
-
-// exportJSON converts the table data into JSON format
-func (e *Exporter) exportJSON(headers []string, data [][]string) (string, error) {
-	if len(data) < 1 {
-		return "[]", nil // return empty JSON array if no data
+	if format != "objects" && format != "json" && format != "csv" {
+		return nil, fmt.Errorf("unsupported format: %s", format)
 	}
-	objects := e.exportObjects(headers, data)
-	jsonData, err := json.MarshalIndent(objects, "", "  ")
-	if err != nil {
-		return "", err
+	rows := e.parser.rows()
+	headers = append([]string(nil), headers...)
+	if len(headers) == 0 && len(rows) > 0 {
+		headers = append(headers, rows[0].cells...)
+		rows = rows[1:]
 	}
-	return string(jsonData), nil
-}
-
-func (e *Exporter) exportObjects(headers []string, data [][]string) []map[string]interface{} {
-	offset := 0
-	if len(headers) == 0 {
-		headers = data[0]
-		offset++
+	for len(rows) > 0 && rows[0].header {
+		rows = rows[1:]
 	}
-	var objects []map[string]interface{}
-	for _, row := range data[offset:] {
-		if len(row) != len(headers) {
-			continue // skip rows that do not match header length
+	seen := map[string]bool{}
+	for i, h := range headers {
+		h = strings.TrimSpace(h)
+		headers[i] = h
+		if h == "" || h == "_" {
+			continue
 		}
-		obj := make(map[string]interface{})
-		for i, header := range headers {
-			if header == "" {
+		if seen[h] {
+			return nil, fmt.Errorf("duplicate table header %q; specify unique column names", h)
+		}
+		seen[h] = true
+	}
+	objects := make([]map[string]interface{}, 0, len(rows))
+	var records [][]string
+	for index, row := range rows {
+		if len(row.cells) != len(headers) {
+			return nil, fmt.Errorf("table row %d has %d cells; expected %d", index+1, len(row.cells), len(headers))
+		}
+		object := map[string]interface{}{}
+		var record []string
+		for i, h := range headers {
+			if h == "" || h == "_" {
 				continue
 			}
-			obj[header] = row[i]
-
+			object[h] = row.cells[i]
+			record = append(record, row.cells[i])
 		}
-		objects = append(objects, obj)
+		objects = append(objects, object)
+		records = append(records, record)
 	}
-	return objects
-}
-
-// exportCSV converts the table data into CSV format
-func (e *Exporter) exportCSV(headers []string, data [][]string) (string, error) {
-	buffer := new(bytes.Buffer)
-	writer := csv.NewWriter(buffer)
-	if err := writer.Write(headers); err != nil {
-		return "", err
-	}
-	for _, record := range data {
-		if err := writer.Write(record); err != nil {
-			return "", err
+	switch format {
+	case "objects":
+		return objects, nil
+	case "json":
+		raw, err := json.MarshalIndent(objects, "", "  ")
+		return string(raw), err
+	default:
+		var buf bytes.Buffer
+		writer := csv.NewWriter(&buf)
+		var names []string
+		for _, h := range headers {
+			if h != "" && h != "_" {
+				names = append(names, h)
+			}
 		}
+		if len(names) > 0 {
+			if err := writer.Write(names); err != nil {
+				return nil, err
+			}
+		}
+		if err := writer.WriteAll(records); err != nil {
+			return nil, err
+		}
+		return buf.String(), writer.Error()
 	}
-	writer.Flush()
-	if err := writer.Error(); err != nil {
-		return "", err
-	}
-	return buffer.String(), nil
 }
-
-// NewExporter creates a new exporter instance
-func NewExporter(htmlContent string) (*Exporter, error) {
-	parser, err := NewParser(htmlContent)
+func NewExporter(content string) (*Exporter, error) {
+	parser, err := NewParser(content)
 	if err != nil {
 		return nil, err
 	}
