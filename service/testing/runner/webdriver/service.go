@@ -347,7 +347,7 @@ func (s *service) Data(webElement selenium.WebElement, format string) (interface
 	if tagName != "table" {
 		return nil, fmt.Errorf("element is not a table")
 	}
-	tableHtml, err := webElement.GetAttribute("outerHTML")
+	tableHtml, err := webElement.GetProperty("outerHTML")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get table html: %v", err)
 	}
