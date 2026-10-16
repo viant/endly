@@ -3,6 +3,7 @@ package webdriver
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -301,7 +302,7 @@ func (s *CaptureState) drainPerformance(sess *Session) {
 			if !s.enableNetwork {
 				continue
 			}
-			s.onRequestWillBeSent(params)
+			s.onRequestWillBeSent(params, sess)
 		case "Network.requestWillBeSentExtraInfo":
 			if !s.enableNetwork {
 				continue
@@ -346,12 +347,16 @@ func (s *CaptureState) appendErr(err string) {
 	}
 }
 
-func (s *CaptureState) onRequestWillBeSent(params json.RawMessage) {
+func (s *CaptureState) onRequestWillBeSent(params json.RawMessage, sessions ...*Session) {
 	type request struct {
-		URL      string         `json:"url"`
-		Method   string         `json:"method"`
-		Headers  map[string]any `json:"headers"`
-		PostData string         `json:"postData,omitempty"`
+		URL             string         `json:"url"`
+		Method          string         `json:"method"`
+		Headers         map[string]any `json:"headers"`
+		PostData        string         `json:"postData,omitempty"`
+		HasPostData     bool           `json:"hasPostData"`
+		PostDataEntries []struct {
+			Bytes string `json:"bytes"`
+		} `json:"postDataEntries"`
 	}
 	type input struct {
 		RequestID string         `json:"requestId"`
@@ -378,8 +383,43 @@ func (s *CaptureState) onRequestWillBeSent(params json.RawMessage) {
 		Initiator:      in.Initiator,
 		StartTimestamp: in.Timestamp,
 	}
-	if s.includeBodies && in.Request.PostData != "" {
-		tx.RequestBody = capBody(in.Request.PostData, false, s.maxBodyBytes)
+	if s.includeBodies {
+		body := in.Request.PostData
+		if body == "" && len(in.Request.PostDataEntries) > 0 {
+			var joined strings.Builder
+			complete := true
+			for _, entry := range in.Request.PostDataEntries {
+				decoded, err := base64.StdEncoding.DecodeString(entry.Bytes)
+				if err != nil || entry.Bytes == "" {
+					complete = false
+					break
+				}
+				joined.Write(decoded)
+				if s.maxBodyBytes > 0 && joined.Len() > s.maxBodyBytes {
+					break // capBody preserves the explicit truncation marker.
+				}
+			}
+			if complete {
+				body = joined.String()
+			}
+		}
+		if body == "" && in.Request.HasPostData && len(sessions) > 0 {
+			payload, err := executeSessionCDP(sessions[0], "Network.getRequestPostData", map[string]any{"requestId": in.RequestID})
+			var result struct {
+				PostData string `json:"postData"`
+			}
+			if err == nil {
+				err = json.Unmarshal(payload, &result)
+			}
+			if err != nil {
+				s.appendErr(fmt.Sprintf("request body %s: %v", in.RequestID, err))
+			} else {
+				body = result.PostData
+			}
+		}
+		if body != "" {
+			tx.RequestBody = capBody(body, false, s.maxBodyBytes)
+		}
 	}
 	s.mux.Lock()
 	defer s.mux.Unlock()

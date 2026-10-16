@@ -896,6 +896,13 @@ return true;`)
 	if err != nil {
 		return err
 	}
+	receivesEvents, err := e.evaluate(`const hit=document.elementFromPoint(arguments[0],arguments[1]);return Boolean(hit&&(hit===this||this.contains(hit)));`, x, y)
+	if err != nil {
+		return err
+	}
+	if receivesEvents != true {
+		return &selenium.Error{LegacyCode: elementClickInterceptedException, Err: "element click intercepted", Message: "another element would receive the native click"}
+	}
 	for _, event := range []map[string]interface{}{
 		{"type": "mouseMoved", "x": x, "y": y},
 		{"type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1},
@@ -911,6 +918,35 @@ func (e *directCDPElement) Clear() error {
 	_, err := e.evaluate(`this.focus();this.value='';this.dispatchEvent(new Event('input',{bubbles:true}));this.dispatchEvent(new Event('change',{bubbles:true}));return true;`)
 	return err
 }
+
+// Blink needs the physical code and Windows virtual key identity to perform
+// native editing/navigation default actions. A DOM key name alone can emit
+// keyboard events without deleting a selection in a controlled input.
+// nativeVirtualKeyCode is platform-specific; leave its translation to Chrome.
+type directCDPSpecialKey struct {
+	key, code      string
+	virtualKeyCode int
+	text           string
+}
+
+var directCDPSpecialKeys = map[string]directCDPSpecialKey{
+	selenium.BackspaceKey:  {"Backspace", "Backspace", 8, ""},
+	selenium.TabKey:        {"Tab", "Tab", 9, ""},
+	selenium.ReturnKey:     {"Enter", "Enter", 13, "\r"},
+	selenium.EnterKey:      {"Enter", "Enter", 13, "\r"},
+	selenium.EscapeKey:     {"Escape", "Escape", 27, ""},
+	selenium.SpaceKey:      {" ", "Space", 32, " "},
+	selenium.PageUpKey:     {"PageUp", "PageUp", 33, ""},
+	selenium.PageDownKey:   {"PageDown", "PageDown", 34, ""},
+	selenium.EndKey:        {"End", "End", 35, ""},
+	selenium.HomeKey:       {"Home", "Home", 36, ""},
+	selenium.LeftArrowKey:  {"ArrowLeft", "ArrowLeft", 37, ""},
+	selenium.UpArrowKey:    {"ArrowUp", "ArrowUp", 38, ""},
+	selenium.RightArrowKey: {"ArrowRight", "ArrowRight", 39, ""},
+	selenium.DownArrowKey:  {"ArrowDown", "ArrowDown", 40, ""},
+	selenium.DeleteKey:     {"Delete", "Delete", 46, ""},
+}
+
 func (e *directCDPElement) SendKeys(keys string) error {
 	inputType, typeErr := e.evaluate(`return (this.type||'').toLowerCase();`)
 	if typeErr == nil && fmt.Sprint(inputType) == "file" {
@@ -925,16 +961,14 @@ func (e *directCDPElement) SendKeys(keys string) error {
 	if _, err := e.evaluate(`this.focus();return true;`); err != nil {
 		return err
 	}
-	names := map[string]string{
-		selenium.BackspaceKey: "Backspace", selenium.TabKey: "Tab", selenium.EnterKey: "Enter",
-		selenium.EscapeKey: "Escape", selenium.SpaceKey: " ", selenium.PageUpKey: "PageUp",
-		selenium.PageDownKey: "PageDown", selenium.EndKey: "End", selenium.HomeKey: "Home",
-		selenium.LeftArrowKey: "ArrowLeft", selenium.UpArrowKey: "ArrowUp",
-		selenium.RightArrowKey: "ArrowRight", selenium.DownArrowKey: "ArrowDown", selenium.DeleteKey: "Delete",
-	}
-	if key := names[keys]; key != "" {
+	if key, ok := directCDPSpecialKeys[keys]; ok {
 		for _, kind := range []string{"keyDown", "keyUp"} {
-			if _, err := e.driver.CDPCommand("Input.dispatchKeyEvent", map[string]interface{}{"type": kind, "key": key}); err != nil {
+			params := map[string]interface{}{"type": kind, "key": key.key, "code": key.code, "windowsVirtualKeyCode": key.virtualKeyCode}
+			if kind == "keyDown" && key.text != "" {
+				params["text"] = key.text
+				params["unmodifiedText"] = key.text
+			}
+			if _, err := e.driver.CDPCommand("Input.dispatchKeyEvent", params); err != nil {
 				return err
 			}
 		}
@@ -957,7 +991,7 @@ func (e *directCDPElement) MoveTo(xOffset, yOffset int) error {
 }
 
 func (e *directCDPElement) center() (float64, float64, error) {
-	value, err := e.evaluate(`this.scrollIntoView({block:'center',inline:'center'});const r=this.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};`)
+	value, err := e.evaluate(`this.scrollIntoView({block:'center',inline:'center',behavior:'instant'});const r=this.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};`)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -973,7 +1007,7 @@ func (e *directCDPElement) TagName() (string, error) {
 	return fmt.Sprint(value), err
 }
 func (e *directCDPElement) IsSelected() (bool, error) {
-	value, err := e.evaluate(`return Boolean(this.checked||this.selected);`)
+	value, err := e.evaluate(`const role=(this.getAttribute('role')||'').toLowerCase();if(['switch','checkbox','radio'].includes(role)&&this.hasAttribute('aria-checked'))return this.getAttribute('aria-checked')==='true';return Boolean(this.checked||this.selected);`)
 	result, _ := value.(bool)
 	return result, err
 }
@@ -1017,7 +1051,7 @@ func (e *directCDPElement) Location() (*selenium.Point, error) {
 	return &selenium.Point{X: int(toFloat64(values["x"])), Y: int(toFloat64(values["y"]))}, err
 }
 func (e *directCDPElement) LocationInView() (*selenium.Point, error) {
-	if _, err := e.evaluate(`this.scrollIntoView({block:'center',inline:'center'});return true;`); err != nil {
+	if _, err := e.evaluate(`this.scrollIntoView({block:'center',inline:'center',behavior:'instant'});return true;`); err != nil {
 		return nil, err
 	}
 	return e.Location()
@@ -1052,7 +1086,7 @@ func (e *directCDPElement) FindElement(by, value string) (selenium.WebElement, e
 }
 func (e *directCDPElement) Screenshot(scroll bool) ([]byte, error) {
 	if scroll {
-		_, _ = e.evaluate(`this.scrollIntoView({block:'center',inline:'center'});return true;`)
+		_, _ = e.evaluate(`this.scrollIntoView({block:'center',inline:'center',behavior:'instant'});return true;`)
 	}
 	return e.driver.Screenshot()
 }
