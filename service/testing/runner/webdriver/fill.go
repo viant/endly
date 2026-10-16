@@ -27,7 +27,7 @@ return /Mac/.test(navigator.platform)?'meta':'control';`, []interface{}{element,
 	// prototype setter also lets controlled frameworks observe the new value.
 	if selection == "temporal" {
 		_, err = driver.ExecuteScript(`const e=arguments[0],value=arguments[1];
-const setter=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set;
+const setter=Object.getOwnPropertyDescriptor(e.ownerDocument.defaultView.HTMLInputElement.prototype,'value').set;
 const previous=e.value;
 setter.call(e,value);
 if(e.value!==value){setter.call(e,previous);throw new Error('invalid value for '+e.type+' input');}
