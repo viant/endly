@@ -892,20 +892,36 @@ return true;`)
 	if err := waitForElementMotion(e.driver, e, 2*time.Second); err != nil {
 		return err
 	}
-	x, y, err := e.clickableCenter(2 * time.Second)
-	if err != nil {
-		return err
-	}
-	for _, event := range []map[string]interface{}{
-		{"type": "mouseMoved", "x": x, "y": y},
-		{"type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1},
-		{"type": "mouseReleased", "x": x, "y": y, "button": "left", "clickCount": 1},
-	} {
-		if _, err := e.driver.CDPCommand("Input.dispatchMouseEvent", event); err != nil {
+	for attempt := 0; attempt < 3; attempt++ {
+		x, y, err := e.clickableCenter(2 * time.Second)
+		if err != nil {
 			return err
 		}
+		// A chart or nested scroller can shift after the hit test. A native
+		// pointer dispatch only counts when this element receives its click.
+		marker := fmt.Sprintf("__endlyClickTarget%d", time.Now().UnixNano())
+		if _, err := e.evaluate(fmt.Sprintf(`const key=%q;this.addEventListener('click',()=>{window[key]=true},{once:true,capture:true});return true;`, marker)); err != nil {
+			return err
+		}
+		for _, event := range []map[string]interface{}{
+			{"type": "mouseMoved", "x": x, "y": y},
+			{"type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1},
+			{"type": "mouseReleased", "x": x, "y": y, "button": "left", "clickCount": 1},
+		} {
+			if _, err := e.driver.CDPCommand("Input.dispatchMouseEvent", event); err != nil {
+				return err
+			}
+		}
+		seen, err := e.driver.evaluate(fmt.Sprintf(`const key=%q;const seen=window[key]===true;delete window[key];return seen;`, marker), nil)
+		if err != nil {
+			return err
+		}
+		if seen == true {
+			return nil
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
-	return nil
+	return fmt.Errorf("native click did not reach target")
 }
 
 // A preceding tab change or scroll can move the target after its first
