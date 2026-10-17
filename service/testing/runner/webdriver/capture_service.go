@@ -23,7 +23,7 @@ func (s *service) captureStart(context *endly.Context, request *CaptureStartRequ
 	}
 
 	if sess.Capture != nil {
-		sess.Capture.Drain(sess)
+		sess.Capture.DrainNow(sess)
 		sess.Capture.Stop()
 		_ = sess.Capture.CloseSink()
 	}
@@ -76,7 +76,7 @@ func (s *service) captureStop(context *endly.Context, request *CaptureStopReques
 	sess.mu.Lock()
 	defer sess.mu.Unlock()
 	if sess.Capture != nil {
-		sess.Capture.Drain(sess)
+		sess.Capture.DrainNow(sess)
 		sess.Capture.Stop()
 		_ = sess.Capture.CloseSink()
 	}
@@ -138,7 +138,7 @@ func (s *service) captureExport(context *endly.Context, request *CaptureExportRe
 	if sess.Capture == nil {
 		return nil, fmt.Errorf("capture not started for session: %s", sess.SessionID)
 	}
-	sess.Capture.Drain(sess)
+	sess.Capture.DrainNow(sess)
 
 	includeConsole := true
 	includeNetwork := true

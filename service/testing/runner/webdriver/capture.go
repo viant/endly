@@ -223,6 +223,16 @@ func (s *CaptureState) Snapshot(maxEntries int, includeConsole, includeNetwork b
 }
 
 func (s *CaptureState) Drain(sess *Session) {
+	s.drain(sess, false)
+}
+
+// DrainNow is used at explicit capture boundaries. Periodic polling may be
+// throttled, but stop/export must not discard a newly completed transaction.
+func (s *CaptureState) DrainNow(sess *Session) {
+	s.drain(sess, true)
+}
+
+func (s *CaptureState) drain(sess *Session, force bool) {
 	if sess == nil || sess.driver == nil {
 		return
 	}
@@ -234,7 +244,7 @@ func (s *CaptureState) Drain(sess *Session) {
 	}
 	last := s.lastDrain
 	s.mux.Unlock()
-	if !last.IsZero() && now.Sub(last) < 100*time.Millisecond {
+	if !force && !last.IsZero() && now.Sub(last) < 100*time.Millisecond {
 		return
 	}
 	s.mux.Lock()
