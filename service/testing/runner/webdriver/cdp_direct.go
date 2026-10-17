@@ -892,7 +892,7 @@ return true;`)
 	if err := waitForElementMotion(e.driver, e, 2*time.Second); err != nil {
 		return err
 	}
-	x, y, err := e.center()
+	x, y, err := e.clickableCenter(2 * time.Second)
 	if err != nil {
 		return err
 	}
@@ -907,6 +907,35 @@ return true;`)
 	}
 	return nil
 }
+
+// A preceding tab change or scroll can move the target after its first
+// rectangle is measured. Dispatch only when the element owns a stable point.
+func (e *directCDPElement) clickableCenter(timeout time.Duration) (float64, float64, error) {
+	deadline := time.Now().Add(timeout)
+	var previousX, previousY float64
+	stable := false
+	for {
+		value, err := e.evaluate(`this.scrollIntoView({block:'center',inline:'center',behavior:'instant'});const r=this.getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;const hit=document.elementFromPoint(x,y);return {x,y,hit:Boolean(hit&&(hit===this||this.contains(hit)))};`)
+		if err != nil {
+			return 0, 0, err
+		}
+		point, ok := value.(map[string]interface{})
+		if !ok {
+			return 0, 0, fmt.Errorf("click target point unavailable")
+		}
+		x, y := toFloat64(point["x"]), toFloat64(point["y"])
+		owns, _ := point["hit"].(bool)
+		if owns && stable && x == previousX && y == previousY {
+			return x, y, nil
+		}
+		stable, previousX, previousY = owns, x, y
+		if !time.Now().Before(deadline) {
+			return 0, 0, fmt.Errorf("click target remained covered or moving")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}
+
 func (e *directCDPElement) Clear() error {
 	_, err := e.evaluate(`this.focus();this.value='';this.dispatchEvent(new Event('input',{bubbles:true}));this.dispatchEvent(new Event('change',{bubbles:true}));return true;`)
 	return err
