@@ -125,6 +125,8 @@ func (p Inlined) loadRequest(actionAttributes, actionRequest map[string]interfac
 			if p.tagPathURL != "" {
 				baseURLs = append([]string{p.tagPathURL}, baseURLs...)
 			}
+			// Root-relative workflow requests retain the working-directory fallback.
+			baseURLs = append(baseURLs, "")
 			requestMap, err = util.LoadMap(baseURLs, request)
 			if err == nil {
 				delete(actionAttributes, requestKey)
