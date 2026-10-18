@@ -892,28 +892,66 @@ return true;`)
 	if err := waitForElementMotion(e.driver, e, 2*time.Second); err != nil {
 		return err
 	}
-	x, y, err := e.center()
-	if err != nil {
-		return err
-	}
-	receivesEvents, err := e.evaluate(`const hit=document.elementFromPoint(arguments[0],arguments[1]);return Boolean(hit&&(hit===this||this.contains(hit)));`, x, y)
-	if err != nil {
-		return err
-	}
-	if receivesEvents != true {
-		return &selenium.Error{LegacyCode: elementClickInterceptedException, Err: "element click intercepted", Message: "another element would receive the native click"}
-	}
-	for _, event := range []map[string]interface{}{
-		{"type": "mouseMoved", "x": x, "y": y},
-		{"type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1},
-		{"type": "mouseReleased", "x": x, "y": y, "button": "left", "clickCount": 1},
-	} {
-		if _, err := e.driver.CDPCommand("Input.dispatchMouseEvent", event); err != nil {
+	for attempt := 0; attempt < 3; attempt++ {
+		x, y, err := e.clickableCenter(2 * time.Second)
+		if err != nil {
 			return err
 		}
+		// A chart or nested scroller can shift after the hit test. A native
+		// pointer dispatch only counts when this element receives its click.
+		marker := fmt.Sprintf("__endlyClickTarget%d", time.Now().UnixNano())
+		if _, err := e.evaluate(fmt.Sprintf(`const key=%q;this.addEventListener('click',()=>{window[key]=true},{once:true,capture:true});return true;`, marker)); err != nil {
+			return err
+		}
+		for _, event := range []map[string]interface{}{
+			{"type": "mouseMoved", "x": x, "y": y},
+			{"type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1},
+			{"type": "mouseReleased", "x": x, "y": y, "button": "left", "clickCount": 1},
+		} {
+			if _, err := e.driver.CDPCommand("Input.dispatchMouseEvent", event); err != nil {
+				return err
+			}
+		}
+		seen, err := e.driver.evaluate(fmt.Sprintf(`const key=%q;const seen=window[key]===true;delete window[key];return seen;`, marker), nil)
+		if err != nil {
+			return err
+		}
+		if seen == true {
+			return nil
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
-	return nil
+	return fmt.Errorf("native click did not reach target")
 }
+
+// A preceding tab change or scroll can move the target after its first
+// rectangle is measured. Dispatch only when the element owns a stable point.
+func (e *directCDPElement) clickableCenter(timeout time.Duration) (float64, float64, error) {
+	deadline := time.Now().Add(timeout)
+	var previousX, previousY float64
+	stable := false
+	for {
+		value, err := e.evaluate(`this.scrollIntoView({block:'center',inline:'center',behavior:'instant'});const r=this.getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;const hit=document.elementFromPoint(x,y);return {x,y,hit:Boolean(hit&&(hit===this||this.contains(hit)))};`)
+		if err != nil {
+			return 0, 0, err
+		}
+		point, ok := value.(map[string]interface{})
+		if !ok {
+			return 0, 0, fmt.Errorf("click target point unavailable")
+		}
+		x, y := toFloat64(point["x"]), toFloat64(point["y"])
+		owns, _ := point["hit"].(bool)
+		if owns && stable && x == previousX && y == previousY {
+			return x, y, nil
+		}
+		stable, previousX, previousY = owns, x, y
+		if !time.Now().Before(deadline) {
+			return 0, 0, fmt.Errorf("click target remained covered or moving")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}
+
 func (e *directCDPElement) Clear() error {
 	_, err := e.evaluate(`this.focus();this.value='';this.dispatchEvent(new Event('input',{bubbles:true}));this.dispatchEvent(new Event('change',{bubbles:true}));return true;`)
 	return err
