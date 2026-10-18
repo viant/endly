@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model/criteria"
 	"github.com/viant/endly/model/criteria/eval"
 	"github.com/viant/endly/model/criteria/parser"
@@ -129,8 +130,30 @@ func (v *Variable) getValue(in data.Map) interface{} {
 	value := v.Value
 	if value != nil {
 		value = in.Expand(value)
+		// UDF-produced data follows the same native expansion path as a
+		// referenced map/list, once, using the current invocation state.
+		if source, ok := v.Value.(string); ok && isSingleExpression(source, true) && util.IsContainer(value) {
+			value = util.ExpandReturnedContainer(in, value)
+		}
+		// Resolve one scalar expression returned by explicit variable indirection
+		// at invocation time. Workflow compilation must not freeze task outputs.
+		if source, ok := v.Value.(string); ok && isSingleVariableReference(source) {
+			if scalar, ok := value.(string); ok && scalar != source && strings.HasPrefix(scalar, "$") {
+				value = in.Expand(scalar)
+			}
+		}
 	}
 	return value
+}
+
+// isSingleVariableReference uses native expression boundaries for both $name
+// and ${name}; interpolated strings and UDF calls are not variable references.
+func isSingleVariableReference(source string) bool {
+	return isSingleExpression(source, false)
+}
+
+func isSingleExpression(source string, udf bool) bool {
+	return util.IsSingleExpression(source, udf)
 }
 
 func (v *Variable) getElse(in data.Map) interface{} {

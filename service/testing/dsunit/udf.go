@@ -24,10 +24,12 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 	}
 	source, has := state.GetValue(toolbox.AsString(dataKey))
 
-	if multiTables, ok := source.(data.Map); ok {
-
-		data, err := convertMultiTables(multiTables, state, outputPrefix)
-		return data, err
+	switch multiTables := source.(type) {
+	case data.Map:
+		return convertMultiTables(multiTables, state, outputPrefix)
+	case map[string]interface{}:
+		// Workflow initialization uses ordinary maps; collected datasets use data.Map.
+		return convertMultiTables(multiTables, state, outputPrefix)
 	}
 
 	if !has || source == nil {
@@ -106,21 +108,24 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 	}
 
 	for table, tableData := range tables {
+		if tableData == nil || !toolbox.IsSlice(tableData) {
+			return nil, fmt.Errorf("table %v records must be a slice, got %T", table, tableData)
+		}
 		var tableDataSlice = toolbox.AsSlice(tableData)
 		if len(tableDataSlice) == 0 {
 			return nil, fmt.Errorf("table %v has no records", table)
 		}
 		for i, item := range tableDataSlice {
 			itemMap, ok := item.(map[string]interface{})
+			if !ok {
+				return nil, fmt.Errorf("table %v record %v must be a map, got %T", table, i, item)
+			}
 			for k, v := range itemMap {
 				if text, ok := v.(string); ok && strings.Contains(text, "${uuid") { //expand uuid
 					itemMap[k] = state.ExpandAsText(text)
 				}
 			}
 
-			if !ok {
-				return nil, fmt.Errorf("item %v was not %T", item, itemMap)
-			}
 			if sequencerKey := allocateTableSequence(itemMap, table, state, sequencerMapping, sequencerMappingData, prefix); sequencerKey != "" {
 				sequencer = sequencerKey
 			}
