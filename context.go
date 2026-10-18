@@ -14,6 +14,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/viant/afs/url"
 	"github.com/viant/endly/internal/debug"
+	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/model/msg"
 	"github.com/viant/endly/service/credential"
@@ -311,6 +312,7 @@ func (c *Context) AsRequest(serviceName, action string, source map[string]interf
 		}
 	}
 	expanded := c.state.Expand(expansionSource)
+	expanded = util.ExpandRequestContainers(c.state, expansionSource, expanded)
 	source = toolbox.AsMap(expanded)
 	for key, value := range deferred {
 		source[key] = value
