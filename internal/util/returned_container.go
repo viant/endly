@@ -3,6 +3,7 @@ package util
 import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"reflect"
 )
 
 // IsSingleExpression uses native expression boundaries, excluding interpolation.
@@ -18,9 +19,28 @@ func IsSingleExpression(source string, udf bool) bool {
 	return ok && value == marker
 }
 
+// IsContainer excludes nil and typed-nil values before native reflection helpers.
+func IsContainer(value interface{}) bool {
+	return !isNilValue(value) && (toolbox.IsMap(value) || toolbox.IsSlice(value))
+}
+
+func isNilValue(value interface{}) bool {
+	if value == nil {
+		return true
+	}
+	switch reflected := reflect.ValueOf(value); reflected.Kind() {
+	case reflect.Map, reflect.Slice, reflect.Pointer, reflect.Interface, reflect.Func, reflect.Chan:
+		return reflected.IsNil()
+	}
+	return false
+}
+
 // ExpandReturnedContainer restores native non-string variable normalization for
 // data produced by a deferred expression, without mutating its retained source.
 func ExpandReturnedContainer(state data.Map, value interface{}) interface{} {
+	if !IsContainer(value) {
+		return value
+	}
 	copyState := data.NewMap()
 	value = copyState.Expand(value)
 	if normalized, err := toolbox.NormalizeKVPairs(value); err == nil {
@@ -32,8 +52,11 @@ func ExpandReturnedContainer(state data.Map, value interface{}) interface{} {
 // ExpandRequestContainers revisits only exact UDF leaves from the unexpanded
 // request. Other already-expanded values retain their original evaluation count.
 func ExpandRequestContainers(state data.Map, source, expanded interface{}) interface{} {
+	if isNilValue(source) || isNilValue(expanded) {
+		return expanded
+	}
 	if expression, ok := source.(string); ok {
-		if IsSingleExpression(expression, true) && (toolbox.IsMap(expanded) || toolbox.IsSlice(expanded)) {
+		if IsSingleExpression(expression, true) && IsContainer(expanded) {
 			return ExpandReturnedContainer(state, expanded)
 		}
 		return expanded
