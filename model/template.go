@@ -281,6 +281,10 @@ func (t *TransientTemplate) buildTagState(index string, tag *Tag, instances *gra
 	state.Put("tagId", tag.TagID())
 	state.Put("subPath", tag.Subpath)
 	state.Put("pathMatch", tag.PathMatch)
+	if t.SubPath != "" && strings.Contains(t.Tag, "$pathMatch") {
+		// Fixture expansion and action metadata must share the effective tag.
+		state.Put("tag", tag.Expand(tag.Name))
+	}
 	state.Put("URL", tagPathURL)
 	state.Put("path", location.NewResource(tagPathURL).Path())
 
