@@ -2,6 +2,7 @@ package http_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/viant/endly"
 	endpoint "github.com/viant/endly/service/testing/endpoint/http"
 	"github.com/viant/toolbox"
@@ -17,30 +18,36 @@ func TestHTTPEndpointService_Run(t *testing.T) {
 	var httpTripBaseDir = path.Join(parent, "test", "send")
 	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
+	defer context.Close()
 	service, _ := context.Service(endpoint.ServiceID)
 
 	response := service.Run(context, &endpoint.ListenRequest{
-		BaseDirectory: httpTripBaseDir,
-		Port:          7718,
+		BaseDirectory:    httpTripBaseDir,
+		RequestTemplate:  "bridge.HttpRequest-%v.json",
+		ResponseTemplate: "bridge.HttpResponse-%v.json",
+		Port:             7718,
 	})
-	assert.Equal(t, "", response.Error)
+	require.Equal(t, "", response.Error)
 	listenResponse, ok := response.Response.(*endpoint.ListenResponse)
 	if assert.True(t, ok) {
 		assert.Equal(t, 2, len(listenResponse.Trips))
 		client := http.DefaultClient
 		{
 			response, err := client.Post("http://127.0.0.1:7718/send1", "", strings.NewReader("0123456789"))
-			assert.Nil(t, err)
+			require.NoError(t, err)
+			defer response.Body.Close()
 			assert.Equal(t, 200, response.StatusCode)
 		}
 		{
 			response, err := client.Post("http://127.0.0.1:7718/send1", "", strings.NewReader("0123456789"))
-			assert.Nil(t, err)
+			require.NoError(t, err)
+			defer response.Body.Close()
 			assert.Equal(t, 200, response.StatusCode)
 		}
 		{
 			response, err := client.Post("http://127.0.0.1:7718/send2", "", strings.NewReader("xc"))
-			assert.Nil(t, err)
+			require.NoError(t, err)
+			defer response.Body.Close()
 			assert.Equal(t, 200, response.StatusCode)
 		}
 	}
@@ -52,11 +59,14 @@ func TestHTTPEndpointService_Run_WithError(t *testing.T) {
 	var httpTripBaseDir = path.Join(parent, "test", "send")
 	manager := endly.New()
 	context := manager.NewContext(toolbox.NewContext())
+	defer context.Close()
 	service, _ := context.Service(endpoint.ServiceID)
 
 	{ //no port error
 		response := service.Run(context, &endpoint.ListenRequest{
-			BaseDirectory: httpTripBaseDir,
+			BaseDirectory:    httpTripBaseDir,
+			RequestTemplate:  "bridge.HttpRequest-%v.json",
+			ResponseTemplate: "bridge.HttpResponse-%v.json",
 		})
 		assert.True(t, response.Error != "")
 	}

@@ -39,6 +39,22 @@ rotate: true
 baseDirectory: /recorded_traffic_location/
 ```
 
+Calling `listen` again on the same port reuses the existing recording by default.
+For a new fixture in a retained MCP session, set `replace: true`. Endly loads and
+validates the new recording before replacing it on the existing socket, resets
+replay positions, and applies the new `rotate`, `indexKeys`, and file templates.
+The bind host must remain the same. A failed load leaves the previous recording
+available; session cleanup still closes the listener.
+
+```yaml
+action: http/endpoint:listen
+host: 127.0.0.1
+port: 8080
+replace: true
+rotate: true
+baseDirectory: /next_fixture/
+```
+
 Start testing endpoint in standalone mode
 
 ```bash
@@ -65,3 +81,21 @@ Start your workflow
 ```bash
 endly -r=inline -m=true
 ```
+
+### Identity-provider mocks
+
+`indexKeys: [Method, URL, Header.Authorization]` matches separate identities
+without comparing changing bodies or incidental headers. Header names are case
+insensitive. Unmatched requests return 404 without disclosing recorded headers.
+Responses for the same key are replayed in file order. `rotate: false` returns
+404 after exhaustion; `rotate: true` wraps to the first response. `append`
+replaces matching keys and retains other keys, including earlier appends.
+
+Use `host: 127.0.0.1` for a local mock. Omitting `host` preserves the existing
+all-interface binding. `shutdown` releases the port and permits a later `listen`
+on the same port. Closing the Endly context also stops its mock servers.
+
+This service replays HTTP contracts; it does not implement an OAuth issuer or
+role database. Generate synthetic signed tokens and captured request/response
+files in the test fixture. The application should still verify identity and
+use its actual authorization engine for decisions.

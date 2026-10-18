@@ -7,6 +7,8 @@ import (
 )
 
 func (s *service) append(context *endly.Context, req *AppendRequest) (*AppendResponse, error) {
+	s.Mutex().Lock()
+	defer s.Mutex().Unlock()
 	resp := &AppendResponse{}
 	server, ok := s.servers[req.Port]
 	if !ok {

@@ -184,6 +184,11 @@ Supported page commands include `goto`, `reload`, `back`, `forward`, `stopLoadin
 
 Locators include `locator`, `getByTestId`, `getByText`, `getByLabel`, `getByPlaceholder`, `getByAltText`, `getByTitle`, and `getByRole`. Locator actions include `click`, `fill`, `type`, `press`, `text`, `inputValue`, `attribute`, `clear`, `submit`, `check`, `uncheck`, `selectOption`, `hover`, `setInputFiles`, and `waitForVisible`.
 
+`fill` selects the existing text and replaces it through browser input events,
+including controlled form inputs and content-editable editors. An empty value
+clears the selection. Legacy `Clear` and `SendKeys` method calls remain available
+with their original behavior; `type` appends text.
+
 Like Playwright, `page.locator(...)` treats its value as CSS unless it starts with `xpath:` or `//`. This avoids misclassifying compound CSS selectors containing spaces or attribute expressions.
 
 Retrying locator expectations include `toHaveText`, `toContainText`, `toHaveValue`, `toHaveAttribute`, `toHaveCount`, `toBeVisible`, `toBeHidden`, `toBeEnabled`, `toBeDisabled`, `toBeChecked`, and `toBeUnchecked`. Page expectations include `toHaveURL` and `toHaveTitle`. Their final argument may be a timeout in milliseconds. Text comparisons normalize browser whitespace, and `/regular expressions/` are accepted by equality checks. `toBeHidden` succeeds when the element is either absent or not displayed.
@@ -257,3 +262,24 @@ go test ./service/testing/runner/webdriver -run TestLiveBrowserFlow -v
 ```
 
 Alternatively, set only `ENDLY_CHROME_DEBUGGER_ADDRESS=127.0.0.1:9222` to run the same integration flow using direct CDP without ChromeDriver. This test navigates the selected browser tab and should only be run against a disposable test profile.
+
+### Extract table data
+
+`Data()` and its alias `TableData()` extract a native HTML table's mounted DOM:
+
+```yaml
+commands:
+  - rows = (css selector:table.report).TableData('objects')
+  - rows = (css selector:table.report).TableData('objects:date,campaign,impressions,spend')
+```
+
+Formats: `objects` (structured records), `json`, `csv`, and `tabular` (all rows,
+including headers). Object/JSON/CSV exports infer names from the first row,
+including `<th>` headers, or accept explicit comma-separated names. Explicit
+names skip leading header rows. Empty names and `_` omit positional columns.
+Empty tables return an empty collection; duplicate column names and mismatched
+row widths fail rather than silently overwrite or discard data. Nested tables
+are excluded. Cell values are strings; numeric/date conversion belongs to the
+assertion. Spanning/grouped headers may require explicit names; irregular spans
+are not expanded. This is DOM extraction, not a backend export: traverse pages
+and virtualized rows explicitly, and select native tables rather than ARIA grids.

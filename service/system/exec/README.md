@@ -524,3 +524,22 @@ a test SSHService, use location of stored SSH conversation  as parameter, then c
         log.Fatal(err)
     }
 ```
+### Strict shell completion (optional)
+
+Set `strictCompletion: true` on `exec:run` or `exec:extract` to require the
+shell's exit-status marker and apply `timeoutMs` as an absolute command deadline,
+including while output is arriving. The default remains `false` for compatibility.
+Use this for noninteractive commands; password prompts and custom terminators
+cannot signal successful completion in strict mode. Use noninteractive sudo when
+needed. A timeout, cancellation, or missing completion marker closes the shell;
+close the Endly exec session before starting a fresh one. Commands are never
+replayed automatically after an incomplete result.
+
+```yaml
+action: exec:run
+strictCompletion: true
+timeoutMs: 10000
+checkError: true
+commands:
+  - go test ./...
+```

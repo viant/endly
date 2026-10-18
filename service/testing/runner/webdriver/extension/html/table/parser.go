@@ -6,62 +6,93 @@ import (
 	"strings"
 )
 
-// Parser handles parsing of HTML tables
-type Parser struct {
-	Document *html.Node
+type Parser struct{ Document *html.Node }
+type parsedRow struct {
+	cells  []string
+	header bool
 }
 
-// NewParser creates a new parser instance
-func NewParser(htmlContent string) (*Parser, error) {
-	if strings.HasPrefix(htmlContent, "<table") {
-		htmlContent = "<html><body>" + htmlContent + "</body></html>"
+func NewParser(content string) (*Parser, error) {
+	if strings.HasPrefix(strings.TrimSpace(content), "<table") {
+		content = "<html><body>" + content + "</body></html>"
 	}
-	doc, err := html.Parse(strings.NewReader(htmlContent))
+	doc, err := html.Parse(strings.NewReader(content))
 	if err != nil {
 		return nil, err
 	}
 	return &Parser{Document: doc}, nil
 }
-
-// ParseTable parses the HTML table and returns a 2D array of strings
-func (p *Parser) ParseTable() [][]string {
-	var tableRows [][]string
-	var f func(*html.Node)
-	f = func(n *html.Node) {
-		if n.Type == html.ElementNode && n.Data == "tr" {
-			row := p.parseTableRow(n)
-			if len(row) > 0 {
-				tableRows = append(tableRows, row)
-			}
+func (p *Parser) rows() []parsedRow {
+	var root *html.Node
+	var find func(*html.Node)
+	find = func(n *html.Node) {
+		if root != nil {
+			return
+		}
+		if n.Type == html.ElementNode && n.Data == "table" {
+			root = n
+			return
 		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
+			find(c)
 		}
 	}
-	f(p.Document)
-	return tableRows
-}
-
-// parseTableRow extracts cells from a table row
-func (p *Parser) parseTableRow(tr *html.Node) []string {
-	var row []string
-	for cell := tr.FirstChild; cell != nil; cell = cell.NextSibling {
-		if cell.Type == html.ElementNode && cell.Data == "td" {
-			text := p.extractText(cell)
-			row = append(row, text)
+	find(p.Document)
+	if root == nil {
+		return nil
+	}
+	var result []parsedRow
+	var walk func(*html.Node, bool)
+	walk = func(n *html.Node, inHead bool) {
+		if n != root && n.Type == html.ElementNode && n.Data == "table" {
+			return
+		}
+		inHead = inHead || n.Type == html.ElementNode && n.Data == "thead"
+		if n.Type == html.ElementNode && n.Data == "tr" {
+			row := parsedRow{header: true}
+			for cell := n.FirstChild; cell != nil; cell = cell.NextSibling {
+				if cell.Type != html.ElementNode || (cell.Data != "td" && cell.Data != "th") {
+					continue
+				}
+				row.cells = append(row.cells, p.extractText(cell))
+				if cell.Data == "td" && !inHead {
+					row.header = false
+				}
+			}
+			if len(row.cells) > 0 {
+				result = append(result, row)
+			}
+			return
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c, inHead)
 		}
 	}
-	return row
+	walk(root, false)
+	return result
 }
 
-// extractText recursively extracts text from a node
+// ParseTable returns rendered cell text, including header rows, from one table.
+func (p *Parser) ParseTable() [][]string {
+	var result [][]string
+	for _, row := range p.rows() {
+		result = append(result, row.cells)
+	}
+	return result
+}
 func (p *Parser) extractText(n *html.Node) string {
 	if n.Type == html.TextNode {
 		return n.Data
 	}
-	var buf bytes.Buffer
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		buf.WriteString(p.extractText(c))
+	if n.Type == html.ElementNode && (n.Data == "table" || n.Data == "script" || n.Data == "style") {
+		return ""
 	}
-	return strings.TrimSpace(buf.String())
+	if n.Type == html.ElementNode && n.Data == "br" {
+		return "\n"
+	}
+	var b bytes.Buffer
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		b.WriteString(p.extractText(c))
+	}
+	return strings.TrimSpace(b.String())
 }

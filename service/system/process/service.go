@@ -140,6 +140,9 @@ func (s *service) checkProcess(context *endly.Context, request *StatusRequest) (
 }
 
 func (s *service) stopProcess(context *endly.Context, request *StopRequest) (*StopResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, err
+	}
 	if request.Signal == "" {
 		request.Signal = strconv.Itoa(int(syscall.SIGKILL)) // default signal
 	}
@@ -182,14 +185,29 @@ func (s *service) buildStartProcessCommand(request *StartRequest) *exec.RunReque
 	if request.Options == nil {
 		request.Options = exec.DefaultOptions()
 	}
-	changeDirCommand := fmt.Sprintf("cd %v ", request.Directory)
+	directory := request.Directory
+	if request.QuoteArguments {
+		directory = quoteProcessArgument(directory)
+	}
+	changeDirCommand := fmt.Sprintf("cd %v ", directory)
 	startParts := append([]string{request.Command}, request.Arguments...)
+	if request.QuoteArguments {
+		for i := range startParts {
+			startParts[i] = quoteProcessArgument(startParts[i])
+		}
+	}
 	startBody := strings.TrimSpace(strings.Join(startParts, " "))
 	outputFile := path.Join(request.Directory, "nohup.out")
-	var createNoHup = fmt.Sprintf("touch %v && chmod 666 %v", outputFile, outputFile)
+	quotedOutput := outputFile
+	if request.QuoteArguments {
+		quotedOutput = quoteProcessArgument(outputFile)
+	}
+	var createNoHup = fmt.Sprintf("touch %v && chmod 666 %v", quotedOutput, quotedOutput)
 	if request.ImmuneToHangups {
 		toolbox.RemoveFileIfExist(outputFile)
-		startBody = fmt.Sprintf("nohup %v", startBody)
+		// Detached processes must not inherit a non-interactive exec pipe: it
+		// closes when the launch command ends, causing later writes to fail.
+		startBody = fmt.Sprintf("nohup %v </dev/null >%v 2>&1", startBody, quotedOutput)
 	}
 	startCommand := fmt.Sprintf("(%v &)", startBody)
 	var runRequest = exec.NewRunRequest(request.Target, request.AsSuperUser, changeDirCommand, createNoHup, startCommand)
@@ -347,4 +365,8 @@ func New() endly.Service {
 func buildSeparator(text string) (string, bool) {
 	hasCR := strings.Contains(text, "\r")
 	return "\n", hasCR
+}
+
+func quoteProcessArgument(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }

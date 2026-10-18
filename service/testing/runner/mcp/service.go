@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/viant/endly"
+	"github.com/viant/jsonrpc"
 	"github.com/viant/jsonrpc/transport/client/http/streamable"
 	"github.com/viant/mcp-protocol/schema"
 	"github.com/viant/mcp/client"
@@ -35,6 +36,7 @@ func New() endly.Service {
 }
 
 func (s *service) registerRoutes() {
+	s.registerResourceRoutes()
 	s.Register(&endly.Route{
 		Action:           "listTools",
 		RequestInfo:      &endly.ActionInfo{Description: "List tools on an external MCP server"},
@@ -133,6 +135,13 @@ func routeHeaders(_ context.Context, body []byte, header http.Header) error {
 		}
 		header.Set(schema.HeaderName, name)
 	}
+	if request.Method == schema.MethodResourcesRead || request.Method == schema.MethodSkillsGet {
+		var uri string
+		if err := json.Unmarshal(request.Params["uri"], &uri); err != nil {
+			return err
+		}
+		header.Set(schema.HeaderName, uri)
+	}
 	return nil
 }
 
@@ -198,6 +207,12 @@ func (s *service) call(ctx *endly.Context, request *CallRequest) (*CallResponse,
 	err := s.withClient(ctx, &request.Request, func(opCtx context.Context, cli *client.Client) error {
 		result, err := cli.CallTool(opCtx, &schema.CallToolRequestParams{Name: request.Name, Arguments: request.Arguments})
 		if err != nil {
+			var protocolError *jsonrpc.Error
+			if request.AllowProtocolError && opCtx.Err() == nil && errors.As(err, &protocolError) {
+				code := protocolError.Code
+				response = &CallResponse{IsError: true, ProtocolErrorCode: &code}
+				return nil
+			}
 			return safeError("MCP call failed", opCtx, err)
 		}
 		response = &CallResponse{Result: result, StructuredContent: result.StructuredContent, Content: result.Content, IsError: result.IsError != nil && *result.IsError}

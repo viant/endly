@@ -48,8 +48,10 @@ func (r *RunRequest) Init() (err error) {
 		}
 	}()
 
-	if r.Params, err = util.NormalizeMap(r.Params, true); err != nil {
-		return err
+	if r.Params != nil {
+		if r.Params, err = util.NormalizeMap(r.Params, true); err != nil {
+			return err
+		}
 	}
 	if r.Tasks == "" || r.Tasks == "$tasks" {
 		r.Tasks = "*"

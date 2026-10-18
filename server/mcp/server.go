@@ -138,6 +138,9 @@ func NewHandler(ctx context.Context, runtime *manager.Service, factory manager.M
 			execution.SetBackground(ctx)
 			defer execution.Close()
 			response, err := route.Handler(execution, input)
+			if err != nil {
+				return toolResult(nil, err)
+			}
 			if paged {
 				response = pageList(response, filter, offset, limit)
 			} else if !detail {

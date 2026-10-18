@@ -2,10 +2,10 @@ package dsunit_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.com/viant/endly"
 	"github.com/viant/endly/service/testing/dsunit"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"github.com/viant/toolbox/data/udf"
 	"log"
 	"strings"
 	"testing"
@@ -24,7 +24,7 @@ var JSON = `
          }
       ],
       "AutoGenerate":{
-         "id":"uuid.next"
+         "id":"fixture.next"
       }
    }
 ]
@@ -48,6 +48,7 @@ var JSON2 = `
 
 func Test_DsUnitUdfGetTableRecords2(t *testing.T) {
 	var state = data.NewMap()
+	udf.Register(state)
 
 	var records = []interface{}{}
 	err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(JSON2)).Decode(&records)
@@ -67,6 +68,9 @@ func Test_DsUnitUdfGetTableRecords2(t *testing.T) {
 	state.Put("featureAggData", featureAggData)
 	state.Put("test", records)
 	result, err := dsunit.AsTableRecords("test", state)
+	if !assert.NoError(t, err) {
+		return
+	}
 	assert.NotNil(t, result)
 	tables := toolbox.AsMap(result)
 	rows := tables["xyz"]
@@ -79,7 +83,8 @@ func Test_DsUnitUdfGetTableRecords2(t *testing.T) {
 }
 
 func Test_DsUnitUdfGetTableRecords(t *testing.T) {
-	var state = endly.NewDefaultState(nil)
+	var state = data.NewMap()
+	udf.Register(state)
 
 	collection := data.NewCollection()
 	var referenceMap = data.NewMap()
@@ -88,7 +93,7 @@ func Test_DsUnitUdfGetTableRecords(t *testing.T) {
 	collection.Push(referenceMap)
 	state.SetValue("dsunit.AAAA.SSSSS", collection)
 	//state.Put("AsInt", neatly.AsInt)
-	state.SetValue("_udf.uuid.next", 1)
+	state.SetValue("fixture.next", 1)
 	var records = []interface{}{}
 	err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(JSON)).Decode(&records)
 	if err != nil {

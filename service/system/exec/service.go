@@ -1,7 +1,6 @@
 package exec
 
 import (
-	"errors"
 	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/internal/util"
@@ -15,7 +14,6 @@ import (
 	"github.com/viant/scy/cred"
 	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox/data"
-	"io"
 	"os"
 	"path"
 	"strings"
@@ -184,7 +182,16 @@ func (s *execService) changeDirectory(context *endly.Context, session *model.Ses
 	}
 	parent, name := path.Split(directory)
 	if path.Ext(name) != "" {
-		directory = parent
+		// Legacy callers may pass a file whose parent should be used. A
+		// directory can also contain dots; test on the active (possibly SSH)
+		// session before applying that fallback. Keep the caller's shell quoting.
+		actualDirectory, err := s.rumCommandTemplate(context, session, "if [ -d %v ]; then printf '1'; else printf '0'; fi", directory)
+		if err != nil {
+			return "", err
+		}
+		if strings.TrimSpace(actualDirectory) != "1" {
+			directory = parent
+		}
 	}
 	if len(directory) > 1 && strings.HasSuffix(directory, "/") {
 		directory = string(directory[:len(directory)-1])
@@ -204,17 +211,14 @@ func (s *execService) changeDirectory(context *endly.Context, session *model.Ses
 	return result, err
 }
 
-func (s *execService) run(context *endly.Context, session *model.Session, command string, listener runner.Listener, timeoutMs int, terminators ...string) (stdout string, code int, err error) {
-	return session.Run(context.Background(), command, runner.WithListener(listener), runner.WithTimeout(timeoutMs), runner.WithTerminators(terminators))
+func (s *execService) run(context *endly.Context, session *model.Session, command string, listener runner.Listener, timeoutMs int, strictCompletion bool, terminators ...string) (stdout string, code int, err error) {
+	return session.Run(context.Background(), command, runner.WithListener(listener), runner.WithTimeout(timeoutMs), runner.WithTerminators(terminators), runner.WithStrictCompletion(strictCompletion))
 }
 
 func (s *execService) rumCommandTemplate(context *endly.Context, session *model.Session, commandTemplate string, arguments ...interface{}) (string, error) {
 	command := fmt.Sprintf(commandTemplate, arguments...)
 	startEvent := s.Begin(context, NewSdtinEvent(session.ID, command))
 	stdout, _, err := session.Run(context.Background(), command, runner.WithTimeout(1000))
-	if errors.Is(err, io.EOF) || (err != nil && strings.Contains(err.Error(), "EOF")) {
-		err = nil
-	}
 	s.End(context)(startEvent, NewStdoutEvent(session.ID, stdout, err))
 	return stdout, err
 }
@@ -382,28 +386,22 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	if extractCommand.TimeoutMs > 0 {
 		timeoutMs = extractCommand.TimeoutMs
 	}
-	stdout, statusCode, err := s.run(context, session, insecureCommand, listener, timeoutMs, terminators...)
-	// The local terminal runner uses io.EOF to signal a command that completed
-	// without writing stdout (for example, export or a no-match process
-	// lookup). That is a successful shell command, not an execution failure.
-	if errors.Is(err, io.EOF) || (err != nil && strings.Contains(err.Error(), "EOF")) {
-		err = nil
-	}
+	stdout, statusCode, err := s.run(context, session, insecureCommand, listener, timeoutMs, options.StrictCompletion, terminators...)
 	if len(response.Output) > 0 {
 		if !strings.HasSuffix(response.Output, "\n") {
 			response.Output += "\n"
 		}
 	}
 
-	if request.AutoSudo && !util.IsPermitted(stdout) {
+	if err == nil && request.AutoSudo && !util.IsPermitted(stdout) {
 		commandRetry = true
 		if session.Username != "root" && !strings.HasPrefix(securedCommand, "sudo") {
-			stdout, statusCode, err = s.retryWithSudo(context, session, insecureCommand, listener, options.TimeoutMs, terminators...)
+			stdout, statusCode, err = s.retryWithSudo(context, session, insecureCommand, listener, timeoutMs, options.StrictCompletion, terminators...)
 			isSuperUserCmd = true
 		}
 	}
 
-	if isSuperUserCmd {
+	if err == nil && isSuperUserCmd {
 		err = s.authSuperUserIfNeeded(stdout, context, session, extractCommand, response, request)
 		if err != nil {
 			return err
@@ -438,10 +436,10 @@ func (s *execService) updateSystemInfo(state data.Map, session *model.Session) {
 	state.SetValue("os.architecture", session.Service.HardwareInfo().Architecture)
 }
 
-func (s *execService) retryWithSudo(context *endly.Context, session *model.Session, command string, listener runner.Listener, timeoutMs int, terminators ...string) (string, int, error) {
+func (s *execService) retryWithSudo(context *endly.Context, session *model.Session, command string, listener runner.Listener, timeoutMs int, strictCompletion bool, terminators ...string) (string, int, error) {
 	terminators = append(terminators, "Password")
 	command = s.commandAsSuperUser(session, command)
-	return s.run(context, session, command, listener, timeoutMs, terminators...)
+	return s.run(context, session, command, listener, timeoutMs, strictCompletion, terminators...)
 }
 
 func getTerminators(options *Options, session *model.Session, execution *ExtractCommand) []string {

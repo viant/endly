@@ -121,7 +121,11 @@ func (p Inlined) loadRequest(actionAttributes, actionRequest map[string]interfac
 	if req, ok := actionAttributes[requestKey]; ok {
 		request := toolbox.AsString(actionAttributes[requestKey])
 		if strings.HasPrefix(request, "@") {
-			requestMap, err = util.LoadMap([]string{p.tagPathURL, toolbox.URLPathJoin(p.baseURL, defaultPath), p.baseURL}, request)
+			baseURLs := []string{toolbox.URLPathJoin(p.baseURL, defaultPath), p.baseURL}
+			if p.tagPathURL != "" {
+				baseURLs = append([]string{p.tagPathURL}, baseURLs...)
+			}
+			requestMap, err = util.LoadMap(baseURLs, request)
 			if err == nil {
 				delete(actionAttributes, requestKey)
 				delete(actionRequest, requestKey)
@@ -265,9 +269,21 @@ func (p *Inlined) AsWorkflow(name string, baseURL string) (*Workflow, error) {
 	root := p.buildTask("", map[string]interface{}{})
 	tagID := name
 
+	// A task output belongs to this invocation. An earlier run's output must
+	// not be substituted into later task requests while compiling the graph.
+	compilationState := p.State
+	if p.State != nil {
+		compilationState = data.NewMap()
+		for key, value := range p.State {
+			compilationState[key] = value
+		}
+		for _, entry := range p.Pipeline {
+			compilationState.Delete(entry.Key)
+		}
+	}
 	if len(p.Pipeline) > 0 {
 		for _, entry := range p.Pipeline {
-			if err = p.buildWorkflowNodes(entry.Key, entry.Value, root, tagID, p.State); err != nil {
+			if err = p.buildWorkflowNodes(entry.Key, entry.Value, root, tagID, compilationState); err != nil {
 				return nil, err
 			}
 		}

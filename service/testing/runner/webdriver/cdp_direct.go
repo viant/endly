@@ -353,14 +353,24 @@ func (d *directCDPDriver) evaluate(script string, args []interface{}) (interface
 			Description string      `json:"description"`
 		} `json:"result"`
 		Exception *struct {
-			Text string `json:"text"`
+			Text      string `json:"text"`
+			Exception struct {
+				Description string `json:"description"`
+			} `json:"exception"`
 		} `json:"exceptionDetails"`
 	}
 	if err := json.Unmarshal(raw, &result); err != nil {
 		return nil, err
 	}
 	if result.Exception != nil {
-		return nil, errors.New(result.Exception.Text)
+		if strings.HasPrefix(result.Exception.Exception.Description, "EndlyStaleElementError:") {
+			return nil, &selenium.Error{Err: "stale element reference", Message: "element is no longer available", LegacyCode: 10}
+		}
+		description := strings.TrimSpace(result.Exception.Exception.Description)
+		if description == "" {
+			description = result.Exception.Text
+		}
+		return nil, errors.New(description)
 	}
 	if result.Result.Subtype == "null" || result.Result.Type == "undefined" {
 		return nil, nil
@@ -801,6 +811,10 @@ func toFloat64(value interface{}) float64 {
 }
 
 func directCDPNodesExpression(by, value, root string) string {
+	// Child elements retain their parent locator. A render can remove that
+	// parent between option lookup and interaction; classify it before DOM
+	// APIs turn the missing root into an opaque JavaScript exception.
+	root = `(()=>{const root=(` + root + `);if(!root||!root.isConnected){const error=new Error('element is no longer available');error.name='EndlyStaleElementError';throw error;}return root;})()`
 	encoded, _ := json.Marshal(value)
 	selector := string(encoded)
 	switch by {
@@ -851,26 +865,93 @@ func (e *directCDPElement) evaluate(body string, args ...interface{}) (interface
 		encodedArgs[index] = string(data)
 	}
 	expression := e.nodeExpression()
-	script := `const __element=` + expression + `;if(!__element)throw new Error('element is no longer available');const __args=[` + strings.Join(encodedArgs, ",") + `];return (function(){` + body + `}).apply(__element,__args);`
+	script := `const __element=` + expression + `;if(!__element){const error=new Error('element is no longer available');error.name='EndlyStaleElementError';throw error;}const __args=[` + strings.Join(encodedArgs, ",") + `];return (function(){` + body + `}).apply(__element,__args);`
 	return e.driver.evaluate(script, nil)
 }
 
 func (e *directCDPElement) Click() error {
-	x, y, err := e.center()
-	if err != nil {
+	// Native select popups are outside the page's clickable viewport. An
+	// option's rectangle is therefore not a reliable CDP mouse target.
+	if tag, err := e.TagName(); err != nil {
+		return err
+	} else if tag == "option" {
+		_, err = e.evaluate(`
+const select=this.closest('select');
+if(!select)throw new Error('option has no select');
+if(select.disabled||this.disabled||this.parentElement?.disabled)throw new Error('option is disabled');
+if(!this.selected){
+  this.selected=true;
+  select.dispatchEvent(new Event('input',{bubbles:true}));
+  select.dispatchEvent(new Event('change',{bubbles:true}));
+}
+return true;`)
 		return err
 	}
-	for _, event := range []map[string]interface{}{
-		{"type": "mouseMoved", "x": x, "y": y},
-		{"type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1},
-		{"type": "mouseReleased", "x": x, "y": y, "button": "left", "clickCount": 1},
-	} {
-		if _, err := e.driver.CDPCommand("Input.dispatchMouseEvent", event); err != nil {
+	// Checkbox helpers click associated labels directly, bypassing the service's
+	// ordinary Click path. Every coordinate click must wait for ancestor motion.
+	if err := waitForElementMotion(e.driver, e, 2*time.Second); err != nil {
+		return err
+	}
+	for attempt := 0; attempt < 3; attempt++ {
+		x, y, err := e.clickableCenter(2 * time.Second)
+		if err != nil {
 			return err
 		}
+		// A chart or nested scroller can shift after the hit test. A native
+		// pointer dispatch only counts when this element receives its click.
+		marker := fmt.Sprintf("__endlyClickTarget%d", time.Now().UnixNano())
+		if _, err := e.evaluate(fmt.Sprintf(`const key=%q;this.addEventListener('click',()=>{window[key]=true},{once:true,capture:true});return true;`, marker)); err != nil {
+			return err
+		}
+		for _, event := range []map[string]interface{}{
+			{"type": "mouseMoved", "x": x, "y": y},
+			{"type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1},
+			{"type": "mouseReleased", "x": x, "y": y, "button": "left", "clickCount": 1},
+		} {
+			if _, err := e.driver.CDPCommand("Input.dispatchMouseEvent", event); err != nil {
+				return err
+			}
+		}
+		seen, err := e.driver.evaluate(fmt.Sprintf(`const key=%q;const seen=window[key]===true;delete window[key];return seen;`, marker), nil)
+		if err != nil {
+			return err
+		}
+		if seen == true {
+			return nil
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
-	return nil
+	return fmt.Errorf("native click did not reach target")
 }
+
+// A preceding tab change or scroll can move the target after its first
+// rectangle is measured. Dispatch only when the element owns a stable point.
+func (e *directCDPElement) clickableCenter(timeout time.Duration) (float64, float64, error) {
+	deadline := time.Now().Add(timeout)
+	var previousX, previousY float64
+	stable := false
+	for {
+		value, err := e.evaluate(`this.scrollIntoView({block:'center',inline:'center',behavior:'instant'});const r=this.getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;const hit=document.elementFromPoint(x,y);return {x,y,hit:Boolean(hit&&(hit===this||this.contains(hit)))};`)
+		if err != nil {
+			return 0, 0, err
+		}
+		point, ok := value.(map[string]interface{})
+		if !ok {
+			return 0, 0, fmt.Errorf("click target point unavailable")
+		}
+		x, y := toFloat64(point["x"]), toFloat64(point["y"])
+		owns, _ := point["hit"].(bool)
+		if owns && stable && x == previousX && y == previousY {
+			return x, y, nil
+		}
+		stable, previousX, previousY = owns, x, y
+		if !time.Now().Before(deadline) {
+			return 0, 0, fmt.Errorf("click target remained covered or moving")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}
+
 func (e *directCDPElement) Clear() error {
 	_, err := e.evaluate(`this.focus();this.value='';this.dispatchEvent(new Event('input',{bubbles:true}));this.dispatchEvent(new Event('change',{bubbles:true}));return true;`)
 	return err
@@ -953,6 +1034,9 @@ func (e *directCDPElement) IsDisplayed() (bool, error) {
 }
 func (e *directCDPElement) GetAttribute(name string) (string, error) {
 	value, err := e.evaluate(`return this.getAttribute(arguments[0]);`, name)
+	if err != nil {
+		return "", err
+	}
 	if value == nil {
 		return "", nil
 	}
@@ -960,6 +1044,9 @@ func (e *directCDPElement) GetAttribute(name string) (string, error) {
 }
 func (e *directCDPElement) GetProperty(name string) (string, error) {
 	value, err := e.evaluate(`return this[arguments[0]];`, name)
+	if err != nil {
+		return "", err
+	}
 	if value == nil {
 		return "", nil
 	}

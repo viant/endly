@@ -27,16 +27,17 @@ func GetServiceTarget(target *location.Resource) *location.Resource {
 
 // Options represents an execution options
 type Options struct {
-	SystemPaths []string          `description:"path that will be appended to the current SSH execution session the current and future commands"`                                                //path that will be added to the system paths
-	Terminators []string          `description:"fragment that helps identify that command has been completed - the best is to leave it empty, which is the detected bash prompt"`                //fragment that helps identify that command has been completed - the best is to leave it empty, which is the detected bash prompt
-	Errors      []string          `description:"fragments that will terminate execution with error if matched with standard output, in most cases leave empty"`                                  //fragments that will terminate execution with error if matched with standard output
-	TimeoutMs   int               `description:"time after command was issued for waiting for command output if expect fragment were not matched"`                                               //time after command was issued for waiting for command output if expect fragment were not matched.
-	Directory   string            `description:"directory where this command should start - if does not exists there is no exception"`                                                           //directory where command should run
-	Env         map[string]string `description:"environment variables to be set before command runs"`                                                                                            //environment variables to be set before command runs
-	SuperUser   bool              `description:"flag to run as super user, in this case sudo will be added to all individual commands unless present, and Target.Secrets password will be used"` ///flag to run it as super user
-	Secrets     secret.Secrets    `description:"secrets map see https://github.com/viant/toolbox/tree/master/secret"`
-	CheckError  bool              `description:"check after command execution if status is <> 0, then throws error"`
-	AutoSudo    bool              `description:"when this flag is set, in case of permission denied error for non root user retry command with sudo"`
+	StrictCompletion bool              `description:"require shell exit-status marker and enforce an absolute command timeout; opt-in, noninteractive commands only"`
+	SystemPaths      []string          `description:"path that will be appended to the current SSH execution session the current and future commands"`                                                //path that will be added to the system paths
+	Terminators      []string          `description:"fragment that helps identify that command has been completed - the best is to leave it empty, which is the detected bash prompt"`                //fragment that helps identify that command has been completed - the best is to leave it empty, which is the detected bash prompt
+	Errors           []string          `description:"fragments that will terminate execution with error if matched with standard output, in most cases leave empty"`                                  //fragments that will terminate execution with error if matched with standard output
+	TimeoutMs        int               `description:"time after command was issued for waiting for command output if expect fragment were not matched"`                                               //time after command was issued for waiting for command output if expect fragment were not matched.
+	Directory        string            `description:"directory where this command should start - if does not exists there is no exception"`                                                           //directory where command should run
+	Env              map[string]string `description:"environment variables to be set before command runs"`                                                                                            //environment variables to be set before command runs
+	SuperUser        bool              `description:"flag to run as super user, in this case sudo will be added to all individual commands unless present, and Target.Secrets password will be used"` ///flag to run it as super user
+	Secrets          secret.Secrets    `description:"secrets map see https://github.com/viant/toolbox/tree/master/secret"`
+	CheckError       bool              `description:"check after command execution if status is <> 0, then throws error"`
+	AutoSudo         bool              `description:"when this flag is set, in case of permission denied error for non root user retry command with sudo"`
 }
 
 // DefaultOptions creates a default execution options
