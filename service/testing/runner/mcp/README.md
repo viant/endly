@@ -47,3 +47,32 @@ require interactive input. `timeoutMs` bounds authorization and the MCP call
 together. OAuth and bearer token references are mutually exclusive. No OAuth
 provider is contacted by the unit tests; they inject a local authorizer and
 mock HTTP server.
+
+For negative invocation tests, `allowProtocolError: true` captures a JSON-RPC
+error as `IsError: true` and `ProtocolErrorCode`. It preserves only the numeric
+code; remote error messages/data are omitted because they may contain credentials.
+Transport failures still fail the action. The default remains false.
+
+Native resources and skills use `listResources`, `readResource`, `listSkills`
+and `getSkill`. Listing accepts an optional `cursor`; reads accept `uri`.
+They share the same endpoint, SCY authentication and timeout options as tools.
+Read operations optionally capture redacted protocol errors with
+`allowProtocolError: true`. Skills listing never prefetches skill content.
+
+```yaml
+pipeline:
+  catalog:
+    action: mcp/runner:listSkills
+    url: $namespaceMCP
+    bearerTokenSecret: $userToken
+  skill:
+    action: mcp/runner:getSkill
+    url: $namespaceMCP
+    bearerTokenSecret: $userToken
+    uri: $catalog.Skills[0].Uri
+  definition:
+    action: mcp/runner:readResource
+    url: $namespaceMCP
+    bearerTokenSecret: $userToken
+    uri: mcp://ns/sales
+```

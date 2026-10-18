@@ -10,7 +10,7 @@ import (
 )
 
 func ExampleCopy() {
-	request := storage.NewCopyRequest(nil, copy.New(location.NewResource("/tmp/folde"), location.NewResource("s3://mybucket/data", "aws-e2e"), false, true, nil))
+	request := storage.NewCopyRequest(nil, copy.New(location.NewResource("/tmp/folde"), location.NewResource("s3://mybucket/data", location.WithCredentials("aws-e2e")), false, true, nil))
 	response := &storage.CopyResponse{}
 	err := endly.Run(nil, request, response)
 	if err != nil {

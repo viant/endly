@@ -47,3 +47,9 @@ pipeline:
 | process | start | start provided application | [StartRequest](service_contract.go) | [StartResponse](service_contract.go) | 
 | process | stop | kill requested application | [StopRequest](service_contract.go) | [RunResponse](../exec/service_contract.go) | 
 
+
+For POSIX processes whose arguments contain DSNs, spaces or shell metacharacters,
+set `quoteArguments: true` on `process:start`. Command and argument strings are
+then passed as literal shell arguments; the directory and output path are quoted
+as well. The default remains false for existing workflows that intentionally
+compose shell command text.

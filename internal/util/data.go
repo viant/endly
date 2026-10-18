@@ -323,9 +323,10 @@ func LoadResource(baseURL, URI string, result interface{}) (*location.Resource, 
 	for _, ext := range []string{".json", ".yaml", ".yml", ".txt", ""} {
 		resource := location.NewResource(URI + ext)
 		if stringPointer, ok := result.(*string); ok {
-			data, err := fs.DownloadWithURL(context.Background(), resource.URL)
+			var payload []byte
+			payload, err = fs.DownloadWithURL(context.Background(), resource.URL)
 			if err == nil {
-				*stringPointer = string(data)
+				*stringPointer = string(payload)
 				return resource, nil
 			}
 		} else {
@@ -335,6 +336,13 @@ func LoadResource(baseURL, URI string, result interface{}) (*location.Resource, 
 		}
 		if err != nil {
 			err = ClassifyErrorIfMatched(err)
+			// A directory in a more-specific fallback location is not a
+			// workflow file. Keep searching without masking real file errors.
+			if !IsNotSuchResourceError(err) {
+				if object, objectErr := fs.Object(context.Background(), resource.URL); objectErr == nil && object.IsDir() {
+					err = NewNotSuchResourceError(resource.URL)
+				}
+			}
 		}
 		if !IsNotSuchResourceError(err) {
 			loadError = err

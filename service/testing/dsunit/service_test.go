@@ -3,11 +3,10 @@ package dsunit
 import (
 	"errors"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/dsc"
 	"github.com/viant/dsunit"
-	durl "github.com/viant/dsunit/url"
+	dlocation "github.com/viant/dsunit/url"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
@@ -22,13 +21,13 @@ func getRegisteredDsUnitService(manager endly.Manager, context *endly.Context, d
 	var baseDir = "/tmp/test/endly/dsunit/"
 	exec.Command("rm", "-rf", baseDir)
 	toolbox.CreateDirIfNotExist(baseDir)
-	credentials := "" // SQLite fixtures do not require credentials.
+	credentials := "" // SQLite fixtures do not require a secret.
 	service, err := manager.Service(ServiceID)
 	if err != nil {
 		return nil, err
 	}
 
-	config, err := dsc.NewConfigWithParameters("sqlite3", "[url]", credentials, map[string]interface{}{
+	config, err := dsc.NewConfigWithParameters("sqlite", "[url]", credentials, map[string]interface{}{
 		"url": path.Join(baseDir, dbname),
 	})
 
@@ -42,7 +41,7 @@ func getRegisteredDsUnitService(manager endly.Manager, context *endly.Context, d
 		dsunit.NewRegisterRequest(dbname, config),
 		nil,
 		nil,
-		dsunit.NewRunScriptRequest(dbname, durl.NewResource(fmt.Sprintf("test/%v.sql", dbname)))))
+		dsunit.NewRunScriptRequest(dbname, dlocation.NewResource(fmt.Sprintf("test/%v.sql", dbname)))))
 
 	if response.Error != "" {
 		return nil, errors.New(response.Error)
@@ -70,7 +69,7 @@ func TestDsUnitService(t *testing.T) {
 		serviceResponse = service.Run(context, &dsunit.MappingRequest{
 			Mappings: []*dsunit.Mapping{
 				{
-					Resource: durl.NewResource("test/user_account.json"),
+					Resource: dlocation.NewResource("test/user_account.json"),
 				},
 			},
 		})
@@ -103,8 +102,8 @@ func TestDsUnitService(t *testing.T) {
 
 		serviceResponse = service.Run(context, &dsunit.RunScriptRequest{
 			Datastore: "mydb1",
-			Scripts: []*durl.Resource{
-				durl.NewResource("test/mydb1.sql"),
+			Scripts: []*dlocation.Resource{
+				dlocation.NewResource("test/mydb1.sql"),
 			},
 		})
 		{

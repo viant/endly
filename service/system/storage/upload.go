@@ -55,9 +55,17 @@ func (s *service) upload(context *endly.Context, request *UploadRequest, respons
 	if !state.Has(request.SourceKey) {
 		return fmt.Errorf("sourcekey %v value was empty", request.SourceKey)
 	}
-	data := state.GetString(request.SourceKey)
-	data = context.Expand(data)
-	var reader io.Reader = strings.NewReader(data)
+	value, _ := state.GetValue(request.SourceKey)
+	var payload []byte
+	if binary, ok := value.([]byte); ok {
+		// Screenshots and other binary assets are literal content, not workflow
+		// templates. Converting them to text corrupts bytes and expands '$' data.
+		payload = binary
+	} else {
+		payload = []byte(context.Expand(state.GetString(request.SourceKey)))
+	}
+	data := string(payload)
+	var reader io.Reader = bytes.NewReader(payload)
 	if request.Udf != "" {
 		transformed, err := udf.TransformWithUDF(context, request.Udf, request.SourceKey, string(data))
 		if err != nil {

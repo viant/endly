@@ -195,7 +195,9 @@ func expectationAction(selector, matcher string, args []string) (*Action, bool, 
 		}
 		call.Method = "Text"
 		if strings.EqualFold(matcher, "toHaveValue") {
-			call.Method = "GetAttribute"
+			// Controlled inputs and selected options update the DOM property;
+			// their original HTML value attribute may remain absent or stale.
+			call.Method = "GetProperty"
 			call.Parameters = []interface{}{"value"}
 		}
 		matchKind := "equal"
@@ -371,7 +373,7 @@ func pageSelector(name string, args []string) (string, bool, error) {
 			return "", true, fmt.Errorf("page.getByLabel expects one value")
 		}
 		label := xpathLiteral(args[0])
-		return "xpath://*[@id = //label[normalize-space(.)=" + label + "]/@for] | //label[normalize-space(.)=" + label + "]//*[self::input or self::textarea or self::select]", true, nil
+		return "xpath://*[@aria-label=" + label + "] | //*[@id = //label[normalize-space(.)=" + label + "]/@for] | //label[normalize-space(.)=" + label + "]//*[self::input or self::textarea or self::select]", true, nil
 	case "getbyplaceholder":
 		if len(args) != 1 {
 			return "", true, fmt.Errorf("page.getByPlaceholder expects one value")
@@ -555,7 +557,7 @@ func locatorAction(key, selector, method string, args []string) (*Action, bool, 
 		if len(args) != 1 {
 			return nil, true, fmt.Errorf("fill expects one value")
 		}
-		action.Calls = []*MethodCall{newCall("Clear"), newCall("SendKeys", args[0])}
+		action.Calls = []*MethodCall{newCall("Fill", args[0])}
 	case "type", "press":
 		if len(args) != 1 {
 			return nil, true, fmt.Errorf("%s expects one value", method)
@@ -568,7 +570,7 @@ func locatorAction(key, selector, method string, args []string) (*Action, bool, 
 	case "text", "textcontent":
 		action.Calls = []*MethodCall{newCall("Text")}
 	case "inputvalue":
-		action.Calls = []*MethodCall{newCall("GetAttribute", "value")}
+		action.Calls = []*MethodCall{newCall("GetProperty", "value")}
 	case "attribute", "getattribute":
 		if len(args) != 1 {
 			return nil, true, fmt.Errorf("%s expects one attribute name", method)

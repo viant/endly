@@ -84,8 +84,8 @@ func TestParser_ParsePageCommands(t *testing.T) {
 			command:    `page.locator("#email").fill("qa@example.test")`,
 			selectorBy: "css selector",
 			selector:   "#email",
-			methods:    []string{"Clear", "SendKeys"},
-			parameters: [][]interface{}{nil, {"qa@example.test"}},
+			methods:    []string{"Fill"},
+			parameters: [][]interface{}{{"qa@example.test"}},
 		},
 		{
 			command:    `page.locator(".card > button.primary").click()`,
@@ -122,9 +122,9 @@ func TestParser_ParsePageCommands(t *testing.T) {
 		{
 			command:    `page.getByLabel("Email").fill("qa@example.test")`,
 			selectorBy: "xpath",
-			selector:   `//*[@id = //label[normalize-space(.)='Email']/@for] | //label[normalize-space(.)='Email']//*[self::input or self::textarea or self::select]`,
-			methods:    []string{"Clear", "SendKeys"},
-			parameters: [][]interface{}{nil, {"qa@example.test"}},
+			selector:   `//*[@aria-label='Email'] | //*[@id = //label[normalize-space(.)='Email']/@for] | //label[normalize-space(.)='Email']//*[self::input or self::textarea or self::select]`,
+			methods:    []string{"Fill"},
+			parameters: [][]interface{}{{"qa@example.test"}},
 		},
 		{
 			command:    `page.getByRole("button", "Save").click()`,
@@ -136,8 +136,8 @@ func TestParser_ParsePageCommands(t *testing.T) {
 			command:    `page.getByPlaceholder("Search").fill("endly")`,
 			selectorBy: "xpath",
 			selector:   `//*[@placeholder='Search']`,
-			methods:    []string{"Clear", "SendKeys"},
-			parameters: [][]interface{}{nil, {"endly"}},
+			methods:    []string{"Fill"},
+			parameters: [][]interface{}{{"endly"}},
 		},
 		{
 			command: `tabs = page.tabs()`,
@@ -235,7 +235,7 @@ func TestParser_ParseExpectCommands(t *testing.T) {
 		{`expect("#submit").toBeEnabled(1200)`, "IsEnabled", "equal", true, 1200, nil},
 		{`expect("#spinner").toBeHidden(1200)`, "IsDisplayed", "equal", false, 1200, nil},
 		{`expect("#submit").toBeDisabled()`, "IsEnabled", "equal", false, 10000, nil},
-		{`expect("#email").toHaveValue("qa@example.test")`, "GetAttribute", "equal", "qa@example.test", 10000, []interface{}{"value"}},
+		{`expect("#email").toHaveValue("qa@example.test")`, "GetProperty", "equal", "qa@example.test", 10000, []interface{}{"value"}},
 		{`expect("#status").toHaveAttribute("data-state", "ready")`, "GetAttribute", "equal", "ready", 10000, []interface{}{"data-state"}},
 		{`expect(page.getByTestId("terms")).toBeChecked()`, "IsSelected", "equal", true, 10000, nil},
 		{`expect(page.getByTestId("terms")).toBeUnchecked()`, "IsSelected", "equal", false, 10000, nil},

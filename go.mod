@@ -74,7 +74,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.18
 	github.com/viant/aerospike v0.2.11-0.20241108195857-ed524b97800d
 	github.com/viant/datly v0.16.1-0.20250428163746-0139a6defa80
-	github.com/viant/gosh v0.3.1-0.20261007222529-b829eaaf687b
+	github.com/viant/gosh v0.3.1-0.20261013193746-35150777a1dc
 	github.com/viant/parsly v0.3.3-0.20240717150634-e1afaedb691b
 	github.com/viant/sqlx v0.16.4-0.20250330143046-7f3b76980252
 	github.com/viant/toolbox v0.39.0
@@ -86,6 +86,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.18.1
 )
+
+require github.com/sijms/go-ora/v2 v2.9.0
 
 require (
 	cel.dev/expr v0.25.2 // indirect
@@ -142,7 +144,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/emersion/go-sasl v0.0.0-20161116183048-7e096a0a6197 // indirect
-	github.com/emirpasic/gods v1.12.0 // indirect
+	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.37.0 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.3.3 // indirect
 	github.com/fatih/color v1.16.0 // indirect

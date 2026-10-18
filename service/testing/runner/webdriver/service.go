@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/tebeka/selenium"
 	"github.com/tebeka/selenium/chrome"
@@ -76,7 +77,15 @@ func (s *service) addResultIfPresent(callResult []interface{}, result data.Map, 
 		case string:
 			responseData = actual
 		case []byte:
-			responseData = string(actual)
+			if utf8.Valid(actual) {
+				responseData = string(actual)
+			} else {
+				// Preserve binary screenshots/PDFs so JSON transports encode
+				// them losslessly instead of replacing invalid UTF-8 bytes.
+				responseData = append([]byte(nil), actual...)
+			}
+		case []string:
+			responseData = actual
 		case []interface{}:
 			responseData = actual
 		case []map[string]interface{}:
@@ -338,7 +347,7 @@ func (s *service) Data(webElement selenium.WebElement, format string) (interface
 	if tagName != "table" {
 		return nil, fmt.Errorf("element is not a table")
 	}
-	tableHtml, err := webElement.GetAttribute("outerHTML")
+	tableHtml, err := webElement.GetProperty("outerHTML")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get table html: %v", err)
 	}
@@ -359,6 +368,9 @@ func (s *service) callMethod(owner interface{}, methodName string, response *Ser
 			err = fmt.Errorf("webdriver method %s is not supported by %T: %v", methodName, owner, recovered)
 		}
 	}()
+	if methodName == "TableData" {
+		methodName = "Data"
+	}
 	switch methodName {
 	case "Data", "Tabs", "SwitchTab", "NewTab", "CloseTab", "Check", "Uncheck", "SelectOption", "SwitchFrameBySelector", "MainFrame", "ElementCount":
 		parameters = append([]interface{}{owner}, parameters...)
@@ -657,7 +669,7 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 		Data: make(map[string]interface{}),
 	}
 	switch request.Call.Method {
-	case "Click", "SendKeys", "Clear", "Submit", "Check", "Uncheck", "SelectOption", "MoveTo":
+	case "Click", "SendKeys", "Clear", "Fill", "Submit", "SelectOption", "MoveTo":
 		if err = s.ensureVisible(context.Background(), element, time.Duration(request.Call.WaitTimeMs)*time.Millisecond); err != nil {
 			// ChromeDriver 150 can return a JSON null for IsDisplayed even
 			// when the element lookup succeeded. Let the actual interaction
@@ -675,7 +687,25 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 		}
 	}
 
-	err = s.call(context, element, request.Call, callResponse, elementPath...)
+	if request.Call.Method == "Fill" {
+		if len(request.Call.Parameters) != 1 {
+			return response, fmt.Errorf("Fill requires one value")
+		}
+		err = fillElement(session.driver, element, toolbox.AsString(request.Call.Parameters[0]), func(value string) error {
+			_, insertErr := executeSessionCDP(session, "Input.insertText", map[string]any{"text": value})
+			return insertErr
+		})
+	} else {
+		if request.Call.Method == "Click" {
+			if err = s.waitForElementState(context.Background(), element.IsEnabled, 2*time.Second, "element is not enabled"); err != nil && err.Error() != "nil return value" {
+				return response, err
+			}
+			if err = waitForElementMotion(session.driver, element, 2*time.Second); err != nil {
+				return response, err
+			}
+		}
+		err = s.call(context, element, request.Call, callResponse, elementPath...)
+	}
 	response.Result = callResponse.Result
 	util.Append(response.Data, callResponse.Data, true)
 	if err != nil {
@@ -715,12 +745,16 @@ func findElement(ctx context.Context, driver selenium.WebDriver, selector *WebEl
 }
 
 func (s *service) ensureVisible(ctx context.Context, element selenium.WebElement, timeout time.Duration) error {
+	return s.waitForElementState(ctx, element.IsDisplayed, timeout, "element is not displayed")
+}
+
+func (s *service) waitForElementState(ctx context.Context, state func() (bool, error), timeout time.Duration, message string) error {
 	if timeout <= 0 || timeout > 2*time.Second {
 		timeout = 2 * time.Second
 	}
 	deadline := time.Now().Add(timeout)
 	for {
-		ok, err := element.IsDisplayed()
+		ok, err := state()
 		if ok {
 			return nil
 		}
@@ -731,7 +765,7 @@ func (s *service) ensureVisible(ctx context.Context, element selenium.WebElement
 			if err != nil {
 				return err
 			}
-			return errors.New("element is not displayed")
+			return errors.New(message)
 		}
 		wait := 200 * time.Millisecond
 		if remaining := time.Until(deadline); remaining < wait {

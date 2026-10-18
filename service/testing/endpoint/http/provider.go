@@ -72,8 +72,7 @@ func buildKeyValue(keys []string, request interface{}) (string, error) {
 		provider, has := HTTPRequestKeyProviders[key]
 		if !has {
 			if strings.HasPrefix(key, "Header.") {
-				HTTPRequestKeyProviders[key] = HeaderProvider(strings.Replace(key, "Header.", "", 1))
-				provider = HTTPRequestKeyProviders[key]
+				provider = HeaderProvider(strings.TrimPrefix(key, "Header."))
 			} else {
 				return "", fmt.Errorf("unsupported key: %v, available, [%v]", key, strings.Join(toolbox.MapKeysToStringSlice(HTTPRequestKeyProviders), ","))
 			}
