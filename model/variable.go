@@ -129,8 +129,45 @@ func (v *Variable) getValue(in data.Map) interface{} {
 	value := v.Value
 	if value != nil {
 		value = in.Expand(value)
+		// UDF-produced data follows the same native expansion path as a
+		// referenced map/list, once, using the current invocation state.
+		if source, ok := v.Value.(string); ok && isSingleExpression(source, true) && (toolbox.IsMap(value) || toolbox.IsSlice(value)) {
+			// Match non-string variable construction after a deferred UDF
+			// produces data. Detach first: the native normalizer may rewrite lists.
+			copyState := data.NewMap()
+			value = copyState.Expand(value)
+			if normalized, err := toolbox.NormalizeKVPairs(value); err == nil {
+				value = normalized
+			}
+			value = in.Expand(value)
+		}
+		// Resolve one scalar expression returned by explicit variable indirection
+		// at invocation time. Workflow compilation must not freeze task outputs.
+		if source, ok := v.Value.(string); ok && isSingleVariableReference(source) {
+			if scalar, ok := value.(string); ok && scalar != source && strings.HasPrefix(scalar, "$") {
+				value = in.Expand(scalar)
+			}
+		}
 	}
 	return value
+}
+
+// isSingleVariableReference uses native expression boundaries for both $name
+// and ${name}; interpolated strings and UDF calls are not variable references.
+func isSingleVariableReference(source string) bool {
+	return isSingleExpression(source, false)
+}
+
+func isSingleExpression(source string, udf bool) bool {
+	const marker = 987654321
+	parsed := data.Parse(source, func(expression string, isUDF bool, _ interface{}) (interface{}, bool) {
+		if isUDF != udf {
+			return nil, false
+		}
+		return marker, true
+	})
+	value, ok := parsed.(int)
+	return ok && value == marker
 }
 
 func (v *Variable) getElse(in data.Map) interface{} {
