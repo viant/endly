@@ -26,6 +26,7 @@ type fakeCDPServer struct {
 	readyState    string
 	navigated     chan struct{}
 	inputEvents   int
+	clickObserved bool
 	keyEvents     []map[string]interface{}
 	insertedTexts []string
 }
@@ -87,6 +88,13 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 				switch {
 				case strings.Contains(expression, "getAnimations"):
 					value = false
+				case strings.Contains(expression, "return {x,y,hit:"):
+					value, kind = map[string]interface{}{"x": 10, "y": 20, "hit": true}, "object"
+				case strings.Contains(expression, "this.addEventListener('click'"):
+					result.clickObserved = false
+				case strings.Contains(expression, "const seen=window[key]===true"):
+					value = result.clickObserved
+					result.clickObserved = false
 				case strings.Contains(expression, "document.readyState"):
 					value, kind = result.readyState, "string"
 				case strings.Contains(expression, "document.title"):
@@ -110,6 +118,9 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 			case "Input.dispatchMouseEvent", "Input.dispatchKeyEvent", "Input.insertText":
 				result.mu.Lock()
 				result.inputEvents++
+				if command.Method == "Input.dispatchMouseEvent" && command.Params["type"] == "mouseReleased" {
+					result.clickObserved = true
+				}
 				if command.Method == "Input.dispatchKeyEvent" {
 					result.keyEvents = append(result.keyEvents, command.Params)
 				}
