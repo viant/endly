@@ -132,7 +132,7 @@ func (v *Variable) getValue(in data.Map) interface{} {
 		value = in.Expand(value)
 		// UDF-produced data follows the same native expansion path as a
 		// referenced map/list, once, using the current invocation state.
-		if source, ok := v.Value.(string); ok && isSingleExpression(source, true) && (toolbox.IsMap(value) || toolbox.IsSlice(value)) {
+		if source, ok := v.Value.(string); ok && isSingleExpression(source, true) && util.IsContainer(value) {
 			value = util.ExpandReturnedContainer(in, value)
 		}
 		// Resolve one scalar expression returned by explicit variable indirection
