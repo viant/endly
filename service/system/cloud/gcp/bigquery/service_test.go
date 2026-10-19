@@ -5,8 +5,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model/location"
+	"github.com/viant/endly/service/system/cloud/gcp"
 	"github.com/viant/toolbox"
-	"os"
 	"path"
 	"testing"
 )
