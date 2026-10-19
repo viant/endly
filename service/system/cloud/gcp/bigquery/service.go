@@ -30,6 +30,7 @@ func (s *service) registerRoutes() {
 		route.OnRawRequest = InitRequest
 		s.Register(route)
 	}
+	s.Register(datasetGetRoute(s))
 
 	s.Register(&endly.Route{
 		Action: "query",
