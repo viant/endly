@@ -77,7 +77,7 @@ require (
 	github.com/viant/gosh v0.3.1-0.20261013193746-35150777a1dc
 	github.com/viant/parsly v0.3.3-0.20240717150634-e1afaedb691b
 	github.com/viant/sqlx v0.16.4-0.20250330143046-7f3b76980252
-	github.com/viant/toolbox v0.39.0
+	github.com/viant/toolbox v0.39.1-0.20261021204653-94cd583a4f4a
 	github.com/viant/xdatly/handler v0.0.0-20250418144853-029d9a05ae20
 	github.com/viant/xdatly/types/core v0.0.0-20250307183722-8c84fc717b52
 	github.com/viant/xdatly/types/custom v0.0.0-20240904221257-06e43f22d5f0
