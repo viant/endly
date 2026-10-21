@@ -482,9 +482,8 @@ func (r *Runner) reportAssertion(event msg.Event, validations ...*assertly.Valid
 		if validation.HasFailure() {
 			r.hasValidationFailures = true
 			eventTag.FailedCount += validation.FailedCount
-		} else if validation.PassedCount > 0 {
-			eventTag.PassedCount += validation.PassedCount
 		}
+		eventTag.PassedCount += validation.PassedCount
 		eventTag.AddEvent(msg.NewEventWithInit(validation, event.Init()))
 		messageInfo := "OK"
 		messageType := msg.MessageStyleSuccess

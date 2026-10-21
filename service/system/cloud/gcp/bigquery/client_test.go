@@ -3,10 +3,8 @@ package bigquery
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/endly"
-	"github.com/viant/toolbox"
+	"github.com/viant/endly/service/system/cloud/gcp"
 	"google.golang.org/api/bigquery/v2"
-	"os"
-	"path"
 	"testing"
 )
 

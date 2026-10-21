@@ -164,7 +164,20 @@ func (s *Service) executeAction(session *Session, operationID string, input *Run
 		session.context.SetBackground(context.Background())
 	}()
 
-	typedRequest, err := session.context.NewRequest(input.Service, input.Action, input.Request)
+	var typedRequest interface{}
+	var err error
+	registered, err := session.manager.Service(input.Service)
+	if err == nil {
+		var route *endly.Route
+		route, err = registered.Route(input.Action)
+		if err == nil {
+			if route.ExpandRequest {
+				typedRequest, err = session.context.AsRequest(input.Service, input.Action, input.Request)
+			} else {
+				typedRequest, err = session.context.NewRequest(input.Service, input.Action, input.Request)
+			}
+		}
+	}
 	var response interface{}
 	if err == nil {
 		err = endly.Run(session.context, typedRequest, &response)
