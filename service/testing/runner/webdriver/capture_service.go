@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	selog "github.com/tebeka/selenium/log"
 	"github.com/viant/endly"
 )
 
@@ -27,6 +28,20 @@ func (s *service) captureStart(context *endly.Context, request *CaptureStartRequ
 		sess.Capture.Stop()
 		_ = sess.Capture.CloseSink()
 	}
+	// CDP starts buffering events when the browser attaches, which may be long
+	// before this operation. A new capture owns only events after this boundary.
+	if sess.Backend == "cdp" {
+		if logs, ok := sess.driver.(interface {
+			Log(selog.Type) ([]selog.Message, error)
+		}); ok {
+			for _, kind := range []selog.Type{selog.Browser, selog.Performance} {
+				if _, err := logs.Log(kind); err != nil {
+					return nil, fmt.Errorf("capture boundary %s log: %w", kind, err)
+				}
+			}
+		}
+	}
+
 	sess.Capture = newCaptureState(request)
 	if request.SinkURL != "" {
 		if err := sess.Capture.StartSink(s.fs, request.SinkURL, request.FlushIntervalMs); err != nil {
