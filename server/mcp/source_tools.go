@@ -16,7 +16,7 @@ import (
 
 // Source actions dispatch through the same stateful manager as runAction.
 // Request schemas come from registered Endly routes, without example payloads.
-var extendedServices = []string{"dsunit", "http/runner", "http/endpoint", "validator", "validator/log"}
+var extendedServices = []string{"dbunit", "dsunit", "http/runner", "http/endpoint", "validator", "validator/log"}
 
 type sourceActionRequest struct {
 	SessionID     string                 `json:"sessionId"`

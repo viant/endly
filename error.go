@@ -33,3 +33,6 @@ func NewError(service, action string, err error) error {
 		error: err,
 	}
 }
+
+// Unwrap preserves the original action error for errors.Is and errors.As.
+func (e *Error) Unwrap() error { return e.error }
