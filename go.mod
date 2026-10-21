@@ -29,7 +29,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.4.0
 	github.com/jhump/protoreflect v1.15.6
-	github.com/klauspost/compress v1.16.7 // indirect
+	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/pgzip v1.2.5
 	github.com/lib/pq v1.10.6
 	github.com/linkedin/goavro v2.1.0+incompatible
@@ -45,7 +45,7 @@ require (
 	github.com/segmentio/kafka-go v0.3.4
 	github.com/stretchr/testify v1.11.1
 	github.com/tebeka/selenium v0.9.10-0.20211105214847-e9100b7f5ac1
-	github.com/viant/afs v1.30.0
+	github.com/viant/afs v1.30.1-0.20260914155934-90e95d483861
 	github.com/viant/afsc v1.18.0
 	// replace with bumped, released ^ afsc, will not work now
 	github.com/viant/asc v0.5.2-0.20240920195908-e805e6de7865
@@ -57,7 +57,7 @@ require (
 	// replace with bumped, released scy ^ will not work now
 	//github.com/viant/toolbox v0.37.1-0.20240924122036-7c1afbc7c02b
 	github.com/yuin/gopher-lua v1.1.1 // indirect
-	golang.org/x/crypto v0.52.0 // indirect
+	golang.org/x/crypto v0.53.0 // indirect
 	golang.org/x/net v0.55.0
 	golang.org/x/oauth2 v0.36.0
 	google.golang.org/api v0.283.0
@@ -75,19 +75,24 @@ require (
 	github.com/viant/aerospike v0.2.11-0.20241108195857-ed524b97800d
 	github.com/viant/datly v0.16.1-0.20250428163746-0139a6defa80
 	github.com/viant/gosh v0.3.1-0.20261013193746-35150777a1dc
-	github.com/viant/parsly v0.3.3-0.20240717150634-e1afaedb691b
-	github.com/viant/sqlx v0.16.4-0.20250330143046-7f3b76980252
-	github.com/viant/toolbox v0.39.0
+	github.com/viant/parsly v0.3.3
+	github.com/viant/sqlx v0.26.1-0.20261020143731-b6b291346945
+	github.com/viant/toolbox v0.39.1-0.20261021204653-94cd583a4f4a
 	github.com/viant/xdatly/handler v0.0.0-20250418144853-029d9a05ae20
 	github.com/viant/xdatly/types/core v0.0.0-20250307183722-8c84fc717b52
 	github.com/viant/xdatly/types/custom v0.0.0-20240904221257-06e43f22d5f0
 	github.com/yuin/goldmark v1.4.13
-	golang.org/x/term v0.43.0
+	golang.org/x/term v0.44.0
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.18.1
+	modernc.org/sqlite v1.21.2
 )
 
 require github.com/sijms/go-ora/v2 v2.9.0
+
+require (
+	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/viant/dbunit v0.0.0-20261021143110-ecb95506e8cb
+)
 
 require (
 	cel.dev/expr v0.25.2 // indirect
@@ -185,13 +190,13 @@ require (
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/richardlehane/mscfb v1.0.4 // indirect
 	github.com/richardlehane/msoleps v1.0.3 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
 	github.com/src-d/gcfg v1.4.0 // indirect
-	github.com/viant/bigquery v0.4.1 // indirect
+	github.com/viant/bigquery v0.5.4-0.20260927120042-a47888f8d2cc
 	github.com/viant/cloudless v1.12.0 // indirect
 	github.com/viant/dyndb v0.1.4-0.20221214043424-27654ab6ed9c // indirect
 	github.com/viant/firebase v0.1.1 // indirect
@@ -203,17 +208,17 @@ require (
 	github.com/viant/mcp v0.24.0
 	github.com/viant/mcp-protocol v0.19.0
 	github.com/viant/pgo v0.11.0 // indirect
-	github.com/viant/sqlparser v0.8.1 // indirect
-	github.com/viant/structology v0.6.1 // indirect
+	github.com/viant/sqlparser v0.13.1-0.20261005175605-18369aade19d // indirect
+	github.com/viant/structology v0.10.1-0.20261020182740-3fac6f36235c // indirect
 	github.com/viant/structql v0.5.2 // indirect
-	github.com/viant/tagly v0.2.1-0.20240521205717-55de744e893c // indirect
+	github.com/viant/tagly v0.3.1-0.20260914020630-eadee36c3630 // indirect
 	github.com/viant/velty v0.2.1-0.20230927172116-ba56497b5c85 // indirect
-	github.com/viant/x v0.4.1-0.20260914174450-0e043f24aec5 // indirect
+	github.com/viant/x v0.5.1-0.20260915043005-1bc42b9eef47 // indirect
 	github.com/viant/xdatly v0.5.4-0.20250418144853-029d9a05ae20 // indirect
 	github.com/viant/xdatly/extension v0.0.0-20231013204918-ecf3c2edf259 // indirect
 	github.com/viant/xlsy v0.3.1 // indirect
 	github.com/viant/xmlify v0.1.1 // indirect
-	github.com/viant/xreflect v0.7.2 // indirect
+	github.com/viant/xreflect v0.7.5-0.20260314170600-13f09f37d46e // indirect
 	github.com/viant/xunsafe v0.11.0 // indirect
 	github.com/xanzy/ssh-agent v0.2.1 // indirect
 	github.com/xuri/efp v0.0.0-20230802181842-ad255f2331ca // indirect
@@ -230,12 +235,12 @@ require (
 	go.opentelemetry.io/otel/sdk v1.44.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.44.0 // indirect
 	go.opentelemetry.io/otel/trace v1.44.0 // indirect
-	golang.org/x/mod v0.35.0 // indirect
-	golang.org/x/sync v0.20.0 // indirect
-	golang.org/x/sys v0.45.0 // indirect
-	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/mod v0.36.0 // indirect
+	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	golang.org/x/tools v0.44.0 // indirect
+	golang.org/x/tools v0.45.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/appengine/v2 v2.0.2 // indirect
 	google.golang.org/genproto v0.0.0-20260526163538-3dc84a4a5aaa // indirect
@@ -247,15 +252,15 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
-	lukechampine.com/uint128 v1.2.0 // indirect
-	modernc.org/cc/v3 v3.36.3 // indirect
-	modernc.org/ccgo/v3 v3.16.9 // indirect
-	modernc.org/libc v1.17.1 // indirect
+	lukechampine.com/uint128 v1.3.0 // indirect
+	modernc.org/cc/v3 v3.40.0 // indirect
+	modernc.org/ccgo/v3 v3.16.13 // indirect
+	modernc.org/libc v1.22.4 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
-	modernc.org/memory v1.2.1 // indirect
+	modernc.org/memory v1.5.0 // indirect
 	modernc.org/opt v0.1.3 // indirect
 	modernc.org/strutil v1.1.3 // indirect
-	modernc.org/token v1.0.0 // indirect
+	modernc.org/token v1.1.0 // indirect
 )
 
 // Pin below the known regression in xunsafe v0.11.0 (nil-pointer panic in

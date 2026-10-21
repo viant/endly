@@ -56,7 +56,7 @@ func (s *service) Table(context *endly.Context, request *TableRequest) (*TableRe
 		if err != nil {
 			return nil, err
 		}
-		key := fmt.Sprintf("%v_%v", tableKey+request.TableId)
+		key := fmt.Sprintf("%v_%v", tableKey, request.TableId)
 		state := context.State()
 		state.Put(key, data)
 		if err = endly.Run(context, &storage.UploadRequest{SourceKey: key, Dest: dest}, nil); err != nil {
