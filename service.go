@@ -51,11 +51,13 @@ func (s *AbstractService) addRouteIfConvertible(request interface{}) *Route {
 			if requestType.Kind() == reflect.Ptr && requestType.Elem().ConvertibleTo(k.Elem()) {
 
 				s.routeByRequest[requestType] = &Route{
-					Action:           v.Action,
-					RequestInfo:      v.RequestInfo,
-					ResponseInfo:     v.ResponseInfo,
-					RequestProvider:  v.RequestProvider,
-					ResponseProvider: v.ResponseProvider,
+					Action:                v.Action,
+					DeferredRequestFields: v.DeferredRequestFields,
+					ExpandRequest:         v.ExpandRequest,
+					RequestInfo:           v.RequestInfo,
+					ResponseInfo:          v.ResponseInfo,
+					RequestProvider:       v.RequestProvider,
+					ResponseProvider:      v.ResponseProvider,
 					Handler: func(context *Context, convertibleRequest interface{}) (interface{}, error) {
 						var request = v.RequestProvider()
 						var requestValue = reflect.ValueOf(request)

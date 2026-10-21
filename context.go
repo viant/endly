@@ -300,19 +300,36 @@ func (c *Context) AsRequest(serviceName, action string, source map[string]interf
 
 	expansionSource := source
 	deferred := map[string]interface{}{}
+	service, err := c.Service(serviceName)
+	if err != nil {
+		return nil, err
+	}
+	route, err := service.Route(action)
+	if err != nil {
+		return nil, err
+	}
+	deferFields := map[string]bool{}
+	for _, field := range route.DeferredRequestFields {
+		deferFields[strings.ToLower(field)] = true
+	}
 	if serviceName == "workflow" && action == "run" {
+		for _, field := range []string{"pipeline", "init", "post", "data", "defaults"} {
+			deferFields[field] = true
+		}
+	}
+	if len(deferFields) > 0 {
 		expansionSource = make(map[string]interface{}, len(source))
 		for key, value := range source {
-			switch strings.ToLower(key) {
-			case "pipeline", "init", "post", "data", "defaults":
+			if deferFields[strings.ToLower(key)] {
 				deferred[key] = value
-			default:
+			} else {
 				expansionSource[key] = value
 			}
 		}
 	}
-	expanded := c.state.Expand(expansionSource)
-	expanded = util.ExpandRequestContainers(c.state, expansionSource, expanded)
+	state := c.State()
+	expanded := state.Expand(expansionSource)
+	expanded = util.ExpandRequestContainers(state, expansionSource, expanded)
 	source = toolbox.AsMap(expanded)
 	for key, value := range deferred {
 		source[key] = value

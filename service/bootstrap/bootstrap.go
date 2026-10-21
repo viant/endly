@@ -58,6 +58,7 @@ import (
 	_ "github.com/viant/toolbox/storage/s3"
 	_ "github.com/viant/toolbox/storage/scp"
 
+	_ "github.com/viant/endly/service/testing/dbunit"
 	_ "github.com/viant/endly/service/testing/dsunit"
 	_ "github.com/viant/endly/service/testing/log"
 	_ "github.com/viant/endly/service/testing/validator"

@@ -11,6 +11,8 @@ for source in sorted((root / 'service').rglob('service.go')):
         continue
     service = match[1]
     name = 'endly-' + service.replace('/', '-')
+    if service == 'dbunit':
+        continue  # Maintained skill includes fixture expansion and connection lifecycle contracts.
     folder = root / 'skills' / name
     folder.mkdir(exist_ok=True)
     action_source = text + '\n' + (source.parent / 'routes.go').read_text() if (source.parent / 'routes.go').exists() else text

@@ -72,6 +72,10 @@ type ServiceResponse struct {
 
 // Route represents service action route
 type Route struct {
+	// DeferredRequestFields preserves top-level template fields until the handler expands them.
+	DeferredRequestFields []string
+	// ExpandRequest opts direct manager actions into the AsRequest expansion contract.
+	ExpandRequest    bool
 	Action           string
 	RequestInfo      *ActionInfo
 	ResponseInfo     *ActionInfo

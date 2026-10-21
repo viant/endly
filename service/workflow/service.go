@@ -127,7 +127,9 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 					Value: response,
 				},
 			}
-			_ = variables.Apply(state, state)
+			// An action response is completed data. Publishing it must not evaluate
+			// expressions returned by a service; explicit post variables own that choice.
+			state.SetValue(resultKey, response)
 			context.Publish(model.NewModifiedStateEvent(variables, state, state))
 		}
 	}()
