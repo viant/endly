@@ -2,6 +2,7 @@ package validator
 
 import (
 	"fmt"
+	"github.com/viant/assertly"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model/criteria"
 	"github.com/viant/toolbox"
@@ -31,6 +32,28 @@ func (s *service) Assert(context *endly.Context, request *AssertRequest) (respon
 		if actualValue, ok := state.GetValue(toolbox.AsString(request.Actual)); ok {
 			actual = actualValue
 		}
+	}
+	if request.Each {
+		if actual == nil || !toolbox.IsSlice(actual) {
+			return nil, fmt.Errorf("validator each requires a nonempty collection, got %T", actual)
+		}
+		items := toolbox.AsSlice(actual)
+		if len(items) == 0 {
+			return nil, fmt.Errorf("validator each requires a nonempty collection")
+		}
+		response.Validation = assertly.NewValidation()
+		for i, item := range items {
+			child := *request
+			child.Each = false
+			child.Actual = item
+			child.Name = fmt.Sprintf("%s[%d]", request.Name, i)
+			checked, err := s.Assert(context, &child)
+			if err != nil {
+				return nil, fmt.Errorf("validator each item %d: %w", i, err)
+			}
+			response.Validation.MergeFrom(checked.Validation)
+		}
+		return response, nil
 	}
 	name := request.Name
 	if name == "" {
