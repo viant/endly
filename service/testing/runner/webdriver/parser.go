@@ -438,6 +438,16 @@ func nativeRoleTag(role string) string {
 		return "input[@type='radio']"
 	case "option":
 		return "option"
+	case "table":
+		return "table"
+	case "row":
+		return "tr"
+	case "cell":
+		return "td"
+	case "columnheader":
+		return "th[not(@scope='row' or @scope='rowgroup')]"
+	case "rowheader":
+		return "th[@scope='row' or @scope='rowgroup']"
 	default:
 		return ""
 	}

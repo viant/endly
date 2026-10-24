@@ -133,6 +133,36 @@ func TestParser_ParsePageCommands(t *testing.T) {
 			methods:    []string{"Click"},
 		},
 		{
+			command:    `page.getByRole("columnheader", "User/Group").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='columnheader'] | //th[not(@scope='row' or @scope='rowgroup')])[normalize-space(.)='User/Group' or @aria-label='User/Group']`,
+			methods:    []string{"Click"},
+		},
+		{
+			command:    `page.getByRole("rowheader", "Project").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='rowheader'] | //th[@scope='row' or @scope='rowgroup'])[normalize-space(.)='Project' or @aria-label='Project']`,
+			methods:    []string{"Click"},
+		},
+		{
+			command:    `page.getByRole("cell", "Job Viewer").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='cell'] | //td)[normalize-space(.)='Job Viewer' or @aria-label='Job Viewer']`,
+			methods:    []string{"Click"},
+		},
+		{
+			command:    `page.getByRole("table").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='table'] | //table)`,
+			methods:    []string{"Click"},
+		},
+		{
+			command:    `page.getByRole("row", "Project Owner").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='row'] | //tr)[normalize-space(.)='Project Owner' or @aria-label='Project Owner']`,
+			methods:    []string{"Click"},
+		},
+		{
 			command:    `page.getByPlaceholder("Search").fill("endly")`,
 			selectorBy: "xpath",
 			selector:   `//*[@placeholder='Search']`,
