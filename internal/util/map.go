@@ -17,7 +17,7 @@ func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{},
 		//inline map key
 		result[key] = value
 		if deep {
-			if normalized, err := toolbox.NormalizeKVPairs(value); err == nil {
+			if normalized, err := normalizeKVPairs(value); err == nil {
 				result[key] = normalized
 			}
 
@@ -25,6 +25,44 @@ func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{},
 		return true
 	})
 	return result, err
+}
+
+// normalizeKVPairs retains the difference between an empty YAML/JSON list and
+// an empty object. toolbox.NormalizeKVPairs treats an empty slice as a map of
+// zero key-value pairs, which changes an expanded expectation such as roles: []
+// into roles: {}. Nonempty key-value lists keep their existing normalization.
+func normalizeKVPairs(source interface{}) (interface{}, error) {
+	if source == nil {
+		return nil, nil
+	}
+	if toolbox.IsSlice(source) && len(toolbox.AsSlice(source)) == 0 {
+		return source, nil
+	}
+	if !toolbox.IsMap(source) && !toolbox.IsStruct(source) && !toolbox.IsSlice(source) {
+		return source, nil
+	}
+	aMap := make(map[string]interface{})
+	err := toolbox.ProcessMap(source, func(k, value interface{}) bool {
+		key := toolbox.AsString(k)
+		aMap[key] = value
+		if normalized, normalizeErr := normalizeKVPairs(value); normalizeErr == nil {
+			aMap[key] = normalized
+		}
+		return true
+	})
+	if err == nil {
+		return aMap, nil
+	}
+	if toolbox.IsSlice(source) {
+		items := toolbox.AsSlice(source)
+		for i, item := range items {
+			if normalized, normalizeErr := normalizeKVPairs(item); normalizeErr == nil {
+				items[i] = normalized
+			}
+		}
+		return items, nil
+	}
+	return source, err
 }
 
 // Append source to dest map
