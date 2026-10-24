@@ -133,6 +133,36 @@ func TestParser_ParsePageCommands(t *testing.T) {
 			methods:    []string{"Click"},
 		},
 		{
+			command:    `page.getByRole("columnheader", "User/Group").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='columnheader'] | //th[not(@scope='row' or @scope='rowgroup')])[normalize-space(.)='User/Group' or @aria-label='User/Group']`,
+			methods:    []string{"Click"},
+		},
+		{
+			command:    `page.getByRole("rowheader", "Advertiser").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='rowheader'] | //th[@scope='row' or @scope='rowgroup'])[normalize-space(.)='Advertiser' or @aria-label='Advertiser']`,
+			methods:    []string{"Click"},
+		},
+		{
+			command:    `page.getByRole("cell", "Campaign Viewer").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='cell'] | //td)[normalize-space(.)='Campaign Viewer' or @aria-label='Campaign Viewer']`,
+			methods:    []string{"Click"},
+		},
+		{
+			command:    `page.getByRole("table").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='table'] | //table)`,
+			methods:    []string{"Click"},
+		},
+		{
+			command:    `page.getByRole("row", "Advertiser Owner").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='row'] | //tr)[normalize-space(.)='Advertiser Owner' or @aria-label='Advertiser Owner']`,
+			methods:    []string{"Click"},
+		},
+		{
 			command:    `page.getByPlaceholder("Search").fill("endly")`,
 			selectorBy: "xpath",
 			selector:   `//*[@placeholder='Search']`,
