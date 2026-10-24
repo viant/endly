@@ -135,6 +135,7 @@ The original Endly commands remain supported. The following aliases offer a smal
 ```yaml
 commands:
   - page.goto("https://example.test/login")
+  - page.setViewportSize(1280, 720)
   - page.locator("#email").fill("qa@example.test")
   - page.locator("#password").fill("$testPassword")
   - page.getByTestId("submit").click()
@@ -178,7 +179,9 @@ blockedURLs:
 
 Blocking is explicit and disabled by default because images, fonts, analytics, or media may be part of the behavior under test. `blockedURLs` currently requires Chrome.
 
-Supported page commands include `goto`, `reload`, `back`, `forward`, `stopLoading`, `title`, `url`, `tabs`, `switchTab`, `newTab`, `closeTab`, `frame`, `mainFrame`, `acceptDialog`, `dismissDialog`, `dialogText`, and `setDialogText`.
+Supported page commands include `goto`, `reload`, `back`, `forward`, `stopLoading`, `setViewportSize`, `title`, `url`, `tabs`, `switchTab`, `newTab`, `closeTab`, `frame`, `mainFrame`, `acceptDialog`, `dismissDialog`, `dialogText`, and `setDialogText`.
+
+`page.setViewportSize(width, height)` requires a direct CDP session and sets the selected page's CSS viewport to the exact requested `window.innerWidth` and `window.innerHeight`. Dimensions must be positive integers no larger than 16,384. It does not resize the host's outer browser window or change other page targets.
 
 `page.waitForResponse(URLPattern, status, timeoutMs)` starts bounded Chrome network capture before the run's first action and waits on observed browser traffic rather than an arbitrary sleep. The URL pattern may be a substring or `/regular expression/`; status `0` accepts any status. The captured transaction—including timing, headers, status, and any configured captured body—is stored under the assigned result key.
 

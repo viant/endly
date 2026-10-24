@@ -18,17 +18,20 @@ import (
 )
 
 type fakeCDPServer struct {
-	server        *httptest.Server
-	mu            sync.Mutex
-	URL           string
-	title         string
-	stopped       bool
-	readyState    string
-	navigated     chan struct{}
-	inputEvents   int
-	clickObserved bool
-	keyEvents     []map[string]interface{}
-	insertedTexts []string
+	server         *httptest.Server
+	mu             sync.Mutex
+	URL            string
+	title          string
+	stopped        bool
+	readyState     string
+	navigated      chan struct{}
+	inputEvents    int
+	clickObserved  bool
+	keyEvents      []map[string]interface{}
+	insertedTexts  []string
+	viewportWidth  int
+	viewportHeight int
+	viewportParams map[string]interface{}
 }
 
 func newFakeCDPServer(t *testing.T) *fakeCDPServer {
@@ -66,6 +69,12 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 			response := map[string]interface{}{"id": command.ID, "result": map[string]interface{}{}}
 			emitConsole := false
 			switch command.Method {
+			case "Emulation.setDeviceMetricsOverride":
+				result.mu.Lock()
+				result.viewportWidth = int(command.Params["width"].(float64))
+				result.viewportHeight = int(command.Params["height"].(float64))
+				result.viewportParams = command.Params
+				result.mu.Unlock()
 			case "Page.navigate":
 				result.mu.Lock()
 				result.URL = command.Params["url"].(string)
@@ -101,6 +110,8 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 					value, kind = result.title, "string"
 				case strings.Contains(expression, "window.location.href"):
 					value, kind = result.URL, "string"
+				case strings.Contains(expression, "window.innerWidth") && strings.Contains(expression, "window.innerHeight"):
+					value, kind = map[string]interface{}{"width": result.viewportWidth, "height": result.viewportHeight}, "object"
 				case strings.Contains(expression, "document.documentElement.outerHTML"):
 					value, kind = "<html><body>Direct</body></html>", "string"
 				case strings.Contains(expression, ").length"):
@@ -216,6 +227,22 @@ func TestDirectCDPDriver(t *testing.T) {
 	}
 }
 
+func TestDirectCDPSetViewportSize(t *testing.T) {
+	fake := newFakeCDPServer(t)
+	driver, err := newDirectCDPDriver(fake.server.URL)
+	require.NoError(t, err)
+	defer driver.Quit()
+	require.Error(t, driver.SetViewportSize(0, 720))
+	require.Error(t, driver.SetViewportSize(1280, 16385))
+	require.NoError(t, driver.SetViewportSize(1280, 720))
+	fake.mu.Lock()
+	defer fake.mu.Unlock()
+	require.Equal(t, 1280, fake.viewportWidth)
+	require.Equal(t, 720, fake.viewportHeight)
+	require.Equal(t, float64(1), fake.viewportParams["deviceScaleFactor"])
+	require.Equal(t, false, fake.viewportParams["mobile"])
+}
+
 func TestRunWithDirectCDPBackend(t *testing.T) {
 	fake := newFakeCDPServer(t)
 	manager := endly.New()
@@ -239,6 +266,7 @@ func TestRunWithDirectCDPBackend(t *testing.T) {
 		AutoStart: &autoStart,
 		Commands: []interface{}{
 			`title = page.title()`,
+			`page.setViewportSize(1280, 720)`,
 			`page.locator("#submit").click()`,
 			`expect(page).toHaveTitle("Direct CDP", 500)`,
 		},
@@ -252,6 +280,11 @@ func TestRunWithDirectCDPBackend(t *testing.T) {
 	}
 	if response.Data["title"] != "Direct CDP" || len(response.Assertions) != 1 || !response.Assertions[0].Passed {
 		t.Fatalf("response=%#v", response)
+	}
+	fake.mu.Lock()
+	defer fake.mu.Unlock()
+	if fake.viewportWidth != 1280 || fake.viewportHeight != 720 {
+		t.Fatalf("viewport=%dx%d, wanted 1280x720", fake.viewportWidth, fake.viewportHeight)
 	}
 }
 
