@@ -1393,6 +1393,8 @@ github.com/viant/assertly v0.9.3-0.20261011185153-f366a457ff7e h1:jhS5kcE+KkTLw7
 github.com/viant/assertly v0.9.3-0.20261011185153-f366a457ff7e/go.mod h1:aGifi++jvCrUaklKEKT0BU95igDNaqkvz+49uaYMPRU=
 github.com/viant/assertly v0.9.3-0.20261011205943-1a3e4cfdb4b6 h1:F1l5kfzOS4S7G+T0tTVlFVLdnL4GPht+Cd8ztosPR5A=
 github.com/viant/assertly v0.9.3-0.20261011205943-1a3e4cfdb4b6/go.mod h1:aGifi++jvCrUaklKEKT0BU95igDNaqkvz+49uaYMPRU=
+github.com/viant/assertly v0.9.3-0.20261024221101-954df6145afa h1:btzGrHjujIALIX9++ZA8wvoELx/qCcLmGHcWw9Qx87Q=
+github.com/viant/assertly v0.9.3-0.20261024221101-954df6145afa/go.mod h1:aGifi++jvCrUaklKEKT0BU95igDNaqkvz+49uaYMPRU=
 github.com/viant/bgc v0.9.0 h1:xSU0iIuJ1pk79Lfm7jDiJOnzRFN3VLSDvxxXHrYCARM=
 github.com/viant/bgc v0.9.0/go.mod h1:8NBDie9FoNJIZaXbhBUOGgf/36QlNT78wEMZT4wX7O4=
 github.com/viant/bigquery v0.4.1 h1:O3/7G+F6ZH3wAeYhIB1OGYxVGP/VXF0xwRyNCHnpa9w=
