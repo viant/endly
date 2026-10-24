@@ -53,7 +53,7 @@ require (
 	github.com/viant/bgc v0.9.0
 	github.com/viant/dsc v0.23.0
 	github.com/viant/dsunit v0.15.0
-	github.com/viant/scy v0.35.0
+	github.com/viant/scy v0.35.1-0.20261024041815-3effbe45d11a
 	// replace with bumped, released scy ^ will not work now
 	//github.com/viant/toolbox v0.37.1-0.20240924122036-7c1afbc7c02b
 	github.com/yuin/gopher-lua v1.1.1 // indirect

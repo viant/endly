@@ -18,7 +18,7 @@ type SecretLookup interface {
 
 // Service wraps scy secret lookup with e2e alias resolution.
 type Service struct {
-	inner    *secret.Service
+	inner    SecretLookup
 	registry *Registry
 }
 
@@ -49,6 +49,21 @@ func (s *Service) Lookup(ctx context.Context, resource secret.Resource) (*scy.Se
 	resolved, err := s.resolveResource(resource)
 	if err != nil {
 		return nil, err
+	}
+	return s.inner.Lookup(ctx, resolved)
+}
+
+// LookupFresh resolves the same alias and requests a fresh resource load when
+// supported by Scy. Older providers retain their existing lookup behavior.
+func (s *Service) LookupFresh(ctx context.Context, resource secret.Resource) (*scy.Secret, error) {
+	resolved, err := s.resolveResource(resource)
+	if err != nil {
+		return nil, err
+	}
+	if fresh, ok := s.inner.(interface {
+		LookupFresh(context.Context, secret.Resource) (*scy.Secret, error)
+	}); ok {
+		return fresh.LookupFresh(ctx, resolved)
 	}
 	return s.inner.Lookup(ctx, resolved)
 }
