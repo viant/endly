@@ -16,6 +16,7 @@ type AssertRequest struct {
 	Ignore           interface{}
 	OmitEmpty        bool
 	NormalizeKVPairs bool //flag to normalize kv pairs into map if possible (i.e, when using yaml)
+	Each             bool `description:"validate every actual collection item against Expect; empty collections fail"`
 }
 
 func (r *AssertRequest) IgnoreKeys() []interface{} {
