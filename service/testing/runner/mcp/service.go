@@ -14,6 +14,7 @@ import (
 	"github.com/viant/jsonrpc/transport/client/http/streamable"
 	"github.com/viant/mcp-protocol/schema"
 	"github.com/viant/mcp/client"
+	"github.com/viant/scy"
 	"github.com/viant/scy/auth/authorizer"
 	"github.com/viant/scy/cred/secret"
 	"golang.org/x/oauth2"
@@ -57,6 +58,14 @@ func (s *service) registerRoutes() {
 	})
 }
 
+// Fresh lookup is optional so custom SecretLookup implementations remain valid.
+// Only bearer operations opt in; signing keys and other static consumers retain
+// their normal secret cache. Published Scy versions providing LookupFresh avoid
+// reusing an expired token after the resource is rotated in the same session.
+type freshSecretLookup interface {
+	LookupFresh(context.Context, secret.Resource) (*scy.Secret, error)
+}
+
 func (s *service) operationContext(ctx *endly.Context, request *Request) (context.Context, context.CancelFunc, string, error) {
 	timeout := defaultTimeout
 	if request.TimeoutMs > 0 {
@@ -87,7 +96,11 @@ func (s *service) operationContext(ctx *endly.Context, request *Request) (contex
 		cancel()
 		return nil, nil, "", fmt.Errorf("MCP bearer token secret lookup is unavailable")
 	}
-	value, err := ctx.Secrets.Lookup(opCtx, secret.Resource(request.BearerTokenSecret))
+	lookup := ctx.Secrets.Lookup
+	if fresh, ok := ctx.Secrets.(freshSecretLookup); ok {
+		lookup = fresh.LookupFresh
+	}
+	value, err := lookup(opCtx, secret.Resource(request.BearerTokenSecret))
 	if err != nil {
 		cancel()
 		return nil, nil, "", fmt.Errorf("MCP bearer token secret lookup failed")
