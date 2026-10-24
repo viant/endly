@@ -43,7 +43,7 @@ func ExpandReturnedContainer(state data.Map, value interface{}) interface{} {
 	}
 	copyState := data.NewMap()
 	value = copyState.Expand(value)
-	if normalized, err := toolbox.NormalizeKVPairs(value); err == nil {
+	if normalized, err := normalizeKVPairs(value); err == nil {
 		value = normalized
 	}
 	return state.Expand(value)
