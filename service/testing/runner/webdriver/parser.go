@@ -486,6 +486,16 @@ func pageAction(key, method string, args []string) (*Action, bool, error) {
 		return noArgumentPageAction(key, method, args, "MainFrame")
 	case "stoploading":
 		return noArgumentPageAction(key, method, args, "StopLoading")
+	case "setviewportsize":
+		if len(args) != 2 {
+			return nil, true, fmt.Errorf("page.setViewportSize expects width and height")
+		}
+		width, widthErr := strconv.Atoi(args[0])
+		height, heightErr := strconv.Atoi(args[1])
+		if widthErr != nil || heightErr != nil || width <= 0 || height <= 0 || width > 16384 || height > 16384 {
+			return nil, true, fmt.Errorf("page.setViewportSize requires dimensions from 1 to 16384")
+		}
+		return NewAction(key, "", "SetViewportSize", width, height), true, nil
 	case "waitforresponse":
 		if len(args) < 1 || len(args) > 3 {
 			return nil, true, fmt.Errorf("page.waitForResponse expects URL pattern, optional status, and optional timeout")

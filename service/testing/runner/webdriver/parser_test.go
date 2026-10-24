@@ -172,6 +172,11 @@ func TestParser_ParsePageCommands(t *testing.T) {
 			methods: []string{"StopLoading"},
 		},
 		{
+			command:    `page.setViewportSize(1280, 720)`,
+			methods:    []string{"SetViewportSize"},
+			parameters: [][]interface{}{{1280, 720}},
+		},
+		{
 			command:    `api = page.waitForResponse("/api/orders", 201, 5000)`,
 			key:        "api",
 			methods:    []string{"WaitForResponse"},
@@ -212,6 +217,10 @@ func TestParser_ParsePageCommandErrors(t *testing.T) {
 		`page.locator("#email").fill()`,
 		`page.goto()`,
 		`page.unknown()`,
+		`page.setViewportSize(0, 720)`,
+		`page.setViewportSize(1280, -1)`,
+		`page.setViewportSize(1280)`,
+		`page.setViewportSize(1280, 720, 1)`,
 		`page.locator("#email")`,
 	} {
 		_, err := parser.Parse(command)

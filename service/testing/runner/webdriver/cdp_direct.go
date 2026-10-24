@@ -514,6 +514,29 @@ func (d *directCDPDriver) CDPCommand(method string, params map[string]interface{
 	return connection.command(context.Background(), method, params)
 }
 
+// SetViewportSize sets the CSS viewport of the selected page target. Window
+// decoration sizes are deliberately excluded: callers assert innerWidth and
+// innerHeight, not the outer browser window dimensions.
+func (d *directCDPDriver) SetViewportSize(width, height int) error {
+	if width <= 0 || height <= 0 || width > 16384 || height > 16384 {
+		return fmt.Errorf("viewport dimensions must be from 1 to 16384")
+	}
+	if _, err := d.CDPCommand("Emulation.setDeviceMetricsOverride", map[string]interface{}{
+		"width": width, "height": height, "deviceScaleFactor": 1, "mobile": false,
+	}); err != nil {
+		return fmt.Errorf("set viewport size: %w", err)
+	}
+	actual, err := d.evaluate("return {width: window.innerWidth, height: window.innerHeight};", nil)
+	if err != nil {
+		return fmt.Errorf("read viewport size: %w", err)
+	}
+	measured, ok := actual.(map[string]interface{})
+	if !ok || measured["width"] != float64(width) || measured["height"] != float64(height) {
+		return fmt.Errorf("viewport size did not take effect: requested %dx%d, measured %v", width, height, actual)
+	}
+	return nil
+}
+
 func (d *directCDPDriver) Back() error {
 	_, err := d.evaluate("history.back(); return true;", nil)
 	return err
