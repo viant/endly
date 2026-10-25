@@ -79,7 +79,7 @@ func TestService_PushPull(t *testing.T) {
 		var credentialFile = path.Join(os.Getenv("HOME"), ".secret", useCase.dest.Credentials+".json")
 		if !toolbox.FileExists(credentialFile) {
 			//no secret file define skip the use case
-			log.Printf("skipping test no credentials: " + credentialFile)
+			log.Printf("skipping test no credentials: %s", credentialFile)
 			continue
 		}
 		var pushResponse = &PushResponse{}

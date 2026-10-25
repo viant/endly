@@ -187,16 +187,10 @@ func (s *gcpClient) PullN(ctx context.Context, source *Resource, max int, nack b
 		return nil, err
 	}
 	var pulledCounter int32 = 0
-	ctx, cancel := context.WithCancel(s.ctx)
-	go func() {
-		time.Sleep(s.timeout)
-
-		pulledCount := int(atomic.AddInt32(&pulledCounter, 1))
-		if pulledCount != max && max > 0 {
-			log.Printf("publish ready timeout reached: %s", s.timeout)
-			cancel()
-		}
-	}()
+	// A timeout is independent of the delivery count. Incrementing that count
+	// in the timeout goroutine left an empty count=1 pull uncancelled forever.
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
 	mutex := &sync.Mutex{}
 	var messages = make([]*Message, 0)
 	err = subscription.Receive(ctx, func(ctx context2.Context, msg *pubsub.Message) {
