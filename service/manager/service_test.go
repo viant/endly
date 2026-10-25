@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -304,4 +305,24 @@ func TestDiagnosticRedactionIncludesNestedEvents(t *testing.T) {
 	require.NotContains(t, text, "abc.def.xyz")
 	require.NotContains(t, text, "secret-value")
 	require.Contains(t, text, "[REDACTED]")
+}
+
+func TestDiagnosticRedactionIncludesCredentialMapKeysWithoutCollapsingEntries(t *testing.T) {
+	first, second := "PATCH,/resource,Bearer private-first", "PATCH,/resource,Bearer private-second"
+	source := map[string]interface{}{first: map[string]interface{}{"id": 1}, second: map[string]interface{}{"id": 2}, "ordinary": false}
+	before, _ := json.Marshal(source)
+	redacted := redactMap(source)
+	nested := redactValue("events", map[string]interface{}{"Trips": source})
+	for _, value := range []interface{}{redacted, nested} {
+		encoded, err := json.Marshal(value)
+		require.NoError(t, err)
+		require.NotContains(t, string(encoded), "private-first")
+		require.NotContains(t, string(encoded), "private-second")
+	}
+	require.Len(t, redacted, 3)
+	require.Equal(t, false, redacted["ordinary"])
+	require.NotEqual(t, redactedMapKey(first), redactedMapKey(second))
+	require.Equal(t, redactedMapKey(first), redactedMapKey(first))
+	after, _ := json.Marshal(source)
+	require.Equal(t, string(before), string(after), "diagnostic redaction must not mutate replay authorization keys")
 }

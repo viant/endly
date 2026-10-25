@@ -163,7 +163,7 @@ func newVariableFromKeyValuePair(key string, value interface{}) (*Variable, erro
 	extractFromKey(key, variable)
 	textValue, isText := value.(string)
 	if !isText {
-		if normalized, err := toolbox.NormalizeKVPairs(value); err == nil {
+		if normalized, err := util.NormalizeValue(value); err == nil {
 			value = normalized
 		}
 		variable.Value = value

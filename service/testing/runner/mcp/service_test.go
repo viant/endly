@@ -309,3 +309,48 @@ func TestAllowProtocolErrorPreservesCodeWithoutRemoteText(t *testing.T) {
 		t.Fatal("default swallowed protocol error")
 	}
 }
+
+func TestExactJSONArgumentsSurviveWorkflowAndWire(t *testing.T) {
+	server := mockServer(t, func(w http.ResponseWriter, r *http.Request, method string, params map[string]interface{}) {
+		args := params["arguments"].(map[string]interface{})
+		patch := args["patch"].(map[string]interface{})
+		if ids, ok := patch["ids"].([]interface{}); !ok || len(ids) != 0 {
+			t.Fatalf("empty array changed: %#v", patch["ids"])
+		}
+		if object, ok := patch["object"].(map[string]interface{}); !ok || len(object) != 0 {
+			t.Fatalf("empty object changed: %#v", patch["object"])
+		}
+		if patch["nullable"] != nil {
+			t.Fatal("null changed")
+		}
+		w.(responseWriter).result(map[string]interface{}{"content": []interface{}{}, "structuredContent": map[string]interface{}{"ok": true}})
+	})
+	defer server.Close()
+	raw := map[string]interface{}{"url": server.URL, "name": "clear", "argumentsJSON": `{"patch":{"ids":[],"object":{},"nullable":null}}`}
+	ctx := endly.New().NewContext(toolbox.NewContext())
+	value, err := ctx.AsRequest(ServiceID, "call", raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = New().(*service).call(ctx, value.(*CallRequest)); err != nil {
+		t.Fatal(err)
+	}
+}
+func TestExactJSONArgumentsValidation(t *testing.T) {
+	for _, raw := range []string{"[]", "null", "{", "{} {}", "{\"secret\":not-json}"} {
+		_, err := (&CallRequest{ArgumentsJSON: raw}).toolArguments()
+		if err == nil || strings.Contains(err.Error(), "secret") {
+			t.Fatalf("invalid JSON error: %v", err)
+		}
+	}
+	if _, err := (&CallRequest{Arguments: map[string]interface{}{}, ArgumentsJSON: "{}"}).toolArguments(); err == nil {
+		t.Fatal("ambiguous arguments accepted")
+	}
+	args, err := (&CallRequest{ArgumentsJSON: `{"id":9007199254740993}`}).toolArguments()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if args["id"] != json.Number("9007199254740993") {
+		t.Fatalf("number precision lost: %v", args)
+	}
+}

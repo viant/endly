@@ -1,7 +1,9 @@
 package mcp
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"net/url"
 	"strings"
@@ -83,6 +85,8 @@ type CallRequest struct {
 	Request
 	Name      string                 `json:"name" yaml:"name"`
 	Arguments map[string]interface{} `json:"arguments,omitempty" yaml:"arguments,omitempty"`
+	// ArgumentsJSON preserves JSON array/object/null distinctions through workflow conversion.
+	ArgumentsJSON string `json:"argumentsJSON,omitempty" yaml:"argumentsJSON,omitempty"`
 	// AllowToolError returns an MCP isError result as a successful Endly action
 	// so a workflow can inspect the complete diagnostic content.
 	AllowToolError bool `json:"allowToolError,omitempty" yaml:"allowToolError,omitempty"`
@@ -97,7 +101,8 @@ func (r *CallRequest) Validate() error {
 	if r.Name == "" {
 		return fmt.Errorf("Name is required")
 	}
-	return nil
+	_, err := r.toolArguments()
+	return err
 }
 
 // CallResponse preserves the full MCP result, including content and isError.
@@ -108,4 +113,24 @@ type CallResponse struct {
 	StructuredContent interface{}
 	Content           []schema.CallToolResultContentElem
 	IsError           bool
+}
+
+func (r *CallRequest) toolArguments() (map[string]interface{}, error) {
+	if r.ArgumentsJSON == "" {
+		return r.Arguments, nil
+	}
+	if r.Arguments != nil {
+		return nil, fmt.Errorf("use arguments or argumentsJSON, not both")
+	}
+	decoder := json.NewDecoder(strings.NewReader(r.ArgumentsJSON))
+	decoder.UseNumber()
+	var value map[string]interface{}
+	if err := decoder.Decode(&value); err != nil || value == nil {
+		return nil, fmt.Errorf("argumentsJSON must contain one JSON object")
+	}
+	var extra interface{}
+	if err := decoder.Decode(&extra); err != io.EOF {
+		return nil, fmt.Errorf("argumentsJSON must contain one JSON object")
+	}
+	return value, nil
 }
