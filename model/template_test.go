@@ -140,3 +140,104 @@ func TestTemplateSparseInstances(t *testing.T) {
 		t.Fatal("missing index did not advance")
 	}
 }
+
+func TestTemplateInvalidSubPathReturnsDiagnostic(t *testing.T) {
+	cases := []struct {
+		name, subpath, expected string
+		directories             []string
+	}{
+		{name: "reported fixture without index", subpath: "db/fixtures", expected: "no indexed instances", directories: []string{"db/fixtures"}},
+		{name: "missing parent", subpath: "missing/${index}_*", expected: "lookup parent"},
+		{name: "empty indexed parent", subpath: "cases/${index}_*", expected: "no indexed instances", directories: []string{"cases"}},
+		{name: "no indexed matches", subpath: "cases/${index}_*", expected: "no indexed instances", directories: []string{"cases/notes"}},
+		{name: "invalid pattern", subpath: "cases/[${index}", expected: "invalid template instance pattern", directories: []string{"cases"}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			for _, dir := range tc.directories {
+				if err := os.MkdirAll(filepath.Join(root, dir), 0755); err != nil {
+					t.Fatal(err)
+				}
+			}
+			source := fmt.Sprintf("pipeline:\n  collect:\n    subPath: %s\n    data: {'[]rows': '@ci_ads.json'}\n    template:\n      collected: {action: nop}\n", tc.subpath)
+			input := filepath.Join(root, "invalid.yaml")
+			if err := os.WriteFile(input, []byte(source), 0600); err != nil {
+				t.Fatal(err)
+			}
+			request, err := loadInlineWorkflow(input)
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, err = request.AsWorkflow("invalid", root)
+			if err == nil || !strings.Contains(err.Error(), tc.expected) || !strings.Contains(err.Error(), "collect") || !strings.Contains(err.Error(), tc.subpath) {
+				t.Fatalf("expected contextual %q diagnostic, got %v", tc.expected, err)
+			}
+		})
+	}
+}
+
+func TestTemplateAutomaticRangePreservesPadding(t *testing.T) {
+	root := t.TempDir()
+	for _, name := range []string{"001_one", "003_three"} {
+		if err := os.MkdirAll(filepath.Join(root, "cases", name), 0755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	input := filepath.Join(root, "valid.yaml")
+	source := `pipeline:
+  tests:
+    subPath: cases/${index}_*
+    template:
+      check: {action: nop}
+`
+	if err := os.WriteFile(input, []byte(source), 0600); err != nil {
+		t.Fatal(err)
+	}
+	request, err := loadInlineWorkflow(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow, err := request.AsWorkflow("valid", root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(workflow.Tasks) != 1 || len(workflow.Tasks[0].Actions) != 2 {
+		t.Fatalf("automatic indexed instances changed: %#v", workflow.Tasks)
+	}
+	if got := workflow.Tasks[0].Actions[0].TagIndex; got != "001" {
+		t.Fatalf("first instance padding changed: %q", got)
+	}
+	if got := workflow.Tasks[0].Actions[1].TagIndex; got != "003" {
+		t.Fatalf("last instance padding changed: %q", got)
+	}
+}
+
+func TestTemplateExplicitRangeWithoutMatchesKeepsEmptyResult(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "cases"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	input := filepath.Join(root, "valid.yaml")
+	source := `pipeline:
+  tests:
+    subPath: cases/${index}_*
+    range: 1..003
+    template:
+      check: {action: nop}
+`
+	if err := os.WriteFile(input, []byte(source), 0600); err != nil {
+		t.Fatal(err)
+	}
+	request, err := loadInlineWorkflow(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow, err := request.AsWorkflow("valid", root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(workflow.Tasks) != 1 || len(workflow.Tasks[0].Actions) != 0 {
+		t.Fatalf("explicit absent instances changed: %#v", workflow.Tasks)
+	}
+}
