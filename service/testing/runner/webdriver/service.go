@@ -384,6 +384,15 @@ func (s *service) callMethod(owner interface{}, methodName string, response *Ser
 		parameters = append([]interface{}{owner}, parameters...)
 		owner = s
 	}
+	// Workflow decoding can turn an empty nested YAML object into an empty
+	// slice. CDP requires an object even for commands without parameters.
+	// Only normalize that empty form; retain errors for nonempty arrays.
+	if methodName == "CDPCommand" && len(parameters) == 2 {
+		if value, ok := parameters[1].([]interface{}); ok && len(value) == 0 {
+			parameters = append([]interface{}(nil), parameters...)
+			parameters[1] = map[string]interface{}{}
+		}
+	}
 	method, err := toolbox.GetFunction(owner, methodName)
 	if err != nil {
 		return err
