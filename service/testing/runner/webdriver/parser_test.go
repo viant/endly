@@ -116,7 +116,7 @@ func TestParser_ParsePageCommands(t *testing.T) {
 		{
 			command:    `page.getByText("Save changes").click()`,
 			selectorBy: "xpath",
-			selector:   `//*[normalize-space(.)='Save changes']`,
+			selector:   `//*[normalize-space(.)='Save changes' and not(.//*[normalize-space(.)='Save changes'])]`,
 			methods:    []string{"Click"},
 		},
 		{

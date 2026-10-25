@@ -367,7 +367,10 @@ func pageSelector(name string, args []string) (string, bool, error) {
 		if len(args) != 1 {
 			return "", true, fmt.Errorf("page.getByText expects one value")
 		}
-		return "xpath://*[normalize-space(.)=" + xpathLiteral(args[0]) + "]", true, nil
+		text := xpathLiteral(args[0])
+		// Match the innermost exact text element. A cell and its text span are
+		// one target; two separate matching cells must remain ambiguous.
+		return "xpath://*[normalize-space(.)=" + text + " and not(.//*[normalize-space(.)=" + text + "])]", true, nil
 	case "getbylabel":
 		if len(args) != 1 {
 			return "", true, fmt.Errorf("page.getByLabel expects one value")
