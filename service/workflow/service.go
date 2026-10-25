@@ -453,12 +453,55 @@ func (s *Service) getWorkflow(context *endly.Context, request *RunRequest) (*mod
 		context.Publish(NewLoadedEvent(request.workflow))
 		return request.workflow, nil
 	}
+	// An explicit URL can share a basename with its caller. Resolve that
+	// source directly and keep it local to this invocation, rather than
+	// reusing or replacing a different registered workflow of the same name.
+	if strings.Contains(request.URL, "/") || path.Ext(request.URL) == ".yaml" || path.Ext(request.URL) == ".yml" || path.Ext(request.URL) == ".json" {
+		workflow, err := s.loadRuntimeWorkflow(context, request)
+		if err != nil {
+			return nil, err
+		}
+		context.Publish(NewLoadedEvent(workflow))
+		return workflow, nil
+	}
 	workflow, err := s.Workflow(request.Name)
 	if err != nil {
-		return nil, err
+		workflow, err = s.loadRuntimeWorkflow(context, request)
+		if err != nil {
+			return nil, err
+		}
 	}
 	context.Publish(NewLoadedEvent(workflow))
 	return workflow, err
+}
+
+// loadRuntimeWorkflow resolves an explicitly requested workflow URL after earlier
+// tasks have materialized it. Decode through the standard model loader so child
+// request references retain the ordinary instance/default/resource fallback.
+func (s *Service) loadRuntimeWorkflow(ctx *endly.Context, request *RunRequest) (*model.Workflow, error) {
+	if request.URL == "" || strings.Contains(request.URL, "$") {
+		return nil, fmt.Errorf("failed to lookup workflow: %s", request.Name)
+	}
+	resource := location.NewResource(request.URL)
+	loaded := &RunRequest{}
+	var err error
+	extension := strings.ToLower(path.Ext(request.URL))
+	if extension == ".yaml" || extension == ".yml" {
+		err = resource.YAMLDecode(ctx.Background(), s.fs, loaded)
+	} else {
+		err = resource.DecodeWith(ctx.Background(), s.fs, loaded, resource.DecoderFactory())
+	}
+	if err != nil {
+		return nil, fmt.Errorf("load runtime workflow %q: %w", request.URL, err)
+	}
+	loaded.Name, loaded.AssetURL, loaded.Source = request.Name, request.URL, resource
+	if err = loaded.Init(); err != nil {
+		return nil, err
+	}
+	if loaded.workflow == nil {
+		return nil, fmt.Errorf("runtime workflow %q has no pipeline", request.URL)
+	}
+	return loaded.workflow, nil
 }
 
 func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunRequest) (response *RunResponse, err error) {
@@ -467,6 +510,11 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 		SessionID: upstreamContext.SessionID,
 	}
 
+	var assertionScope *workflowAssertionScope
+	if request.FailOnAssertion {
+		assertionScope = newWorkflowAssertionScope(upstreamContext)
+		upstreamContext = assertionScope.context
+	}
 	s.enableLoggingIfNeeded(upstreamContext, request)
 	workflow, err := s.getWorkflow(upstreamContext, request)
 	if err != nil {
@@ -502,6 +550,9 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 		request.TagIDs,
 	))
 	defer func() {
+		if assertionScope != nil {
+			err = assertionScope.finish(response, err)
+		}
 		status := "ok"
 		errMsg := ""
 		if err != nil {
