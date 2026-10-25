@@ -10,6 +10,21 @@ import (
 // Native Clear can blur the field and restore its old controlled value before
 // SendKeys runs, causing the new value to be appended.
 func fillElement(driver selenium.WebDriver, element selenium.WebElement, value string, insertText ...func(string) error) error {
+	if direct, ok := driver.(*directCDPDriver); ok {
+		if err := direct.bringToFront(); err != nil {
+			return err
+		}
+	}
+	if direct, ok := driver.(*directCDPDriver); ok && value != "" {
+		kind, err := element.GetAttribute("type")
+		if err != nil {
+			return err
+		}
+		if kind == "date" {
+			return fillDate(direct, element, value)
+		}
+	}
+
 	selection, err := driver.ExecuteScript(`const e=arguments[0];
 if(e.disabled||e.readOnly||(!e.isContentEditable&&!['INPUT','TEXTAREA'].includes(e.tagName)))throw new Error('fill requires an editable text control');
 if(e.tagName==='INPUT'&&['checkbox','radio','file','button','submit','reset','range','color','hidden'].includes(e.type))throw new Error('fill requires a text input');

@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/stretchr/testify/require"
-	"github.com/tebeka/selenium"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/websocket"
+	"github.com/tebeka/selenium"
 	"github.com/viant/endly"
 )
 
@@ -32,6 +32,7 @@ type fakeCDPServer struct {
 	viewportWidth  int
 	viewportHeight int
 	viewportParams map[string]interface{}
+	foreground     bool
 }
 
 func newFakeCDPServer(t *testing.T) *fakeCDPServer {
@@ -69,6 +70,10 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 			response := map[string]interface{}{"id": command.ID, "result": map[string]interface{}{}}
 			emitConsole := false
 			switch command.Method {
+			case "Page.bringToFront":
+				result.mu.Lock()
+				result.foreground = true
+				result.mu.Unlock()
 			case "Emulation.setDeviceMetricsOverride":
 				result.mu.Lock()
 				result.viewportWidth = int(command.Params["width"].(float64))
@@ -95,6 +100,10 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 				kind := "boolean"
 				result.mu.Lock()
 				switch {
+				case strings.Contains(expression, "click target did not settle"):
+					if result.foreground {
+						value, kind = map[string]interface{}{"x": 12, "y": 34}, "object"
+					}
 				case strings.Contains(expression, "getAnimations"):
 					value = false
 				case strings.Contains(expression, "return {x,y,hit:"):
@@ -155,6 +164,33 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 	result.server = httptest.NewServer(mux)
 	t.Cleanup(result.server.Close)
 	return result
+}
+
+func TestDirectCDPBackspaceUsesNativeEditingKeyCode(t *testing.T) {
+	fake := newFakeCDPServer(t)
+	driver, err := newDirectCDPDriver(fake.server.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer driver.Quit()
+	element, err := driver.FindElement("css selector", "#submit")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = element.SendKeys(selenium.BackspaceKey); err != nil {
+		t.Fatal(err)
+	}
+	fake.mu.Lock()
+	defer fake.mu.Unlock()
+	if len(fake.keyEvents) != 2 {
+		t.Fatalf("expected keyDown/keyUp, got %v", fake.keyEvents)
+	}
+	for i, kind := range []string{"keyDown", "keyUp"} {
+		event := fake.keyEvents[i]
+		if event["type"] != kind || event["key"] != "Backspace" || event["windowsVirtualKeyCode"] != float64(8) {
+			t.Fatalf("native Backspace event missing: %v", event)
+		}
+	}
 }
 
 func TestDirectCDPDriver(t *testing.T) {
@@ -322,4 +358,21 @@ func TestDirectCDPNativeEditingKeys(t *testing.T) {
 	defer fake.mu.Unlock()
 	require.Equal(t, []string{document}, fake.insertedTexts, "multiline text remains one native insertText transaction")
 	require.Len(t, fake.keyEvents, 10)
+}
+
+func TestDirectClickGeometryForegroundsTarget(t *testing.T) {
+	fake := newFakeCDPServer(t)
+	driver, err := newDirectCDPDriver(fake.server.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer driver.Quit()
+	element, err := driver.FindElement(selenium.ByCSSSelector, "#submit")
+	if err != nil {
+		t.Fatal(err)
+	}
+	x, y, err := element.(*directCDPElement).center()
+	if err != nil || x != 12 || y != 34 {
+		t.Fatalf("background geometry: %v %v %v", x, y, err)
+	}
 }

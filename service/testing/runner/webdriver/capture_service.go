@@ -197,3 +197,12 @@ func hasPerformanceLogging(caps map[string]any) bool {
 	}
 	return false
 }
+
+func discardCaptureBacklog(driver any) {
+	if logs, ok := driver.(interface {
+		Log(selog.Type) ([]selog.Message, error)
+	}); ok {
+		_, _ = logs.Log(selog.Browser)
+		_, _ = logs.Log(selog.Performance)
+	}
+}

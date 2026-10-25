@@ -2,14 +2,17 @@ package http
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/viant/endly"
 	"github.com/viant/endly/internal/udf"
 	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/criteria/eval"
+	"github.com/viant/scy/cred/secret"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 )
@@ -17,19 +20,20 @@ import (
 // ServiceRequest represents an http request
 type Request struct {
 	*model.Repeater
-	When        string `description:"criteria to send this request"`
-	whenEval eval.Compute
-	Method      string `required:"true" description:"HTTP Method"`
-	URL         string
-	Header      http.Header
-	Cookies     Cookies
-	Body        string
-	JSONBody    interface{}            `description:"body JSON representation"`
-	Replace     map[string]string      `description:"response body key value pair replacement"`
-	RequestUdf  string                 `description:"user defined function in context.state key, i,e, json to protobuf"`
-	ResponseUdf string                 `description:"user defined function in context.state key, i,e, protobuf to json"`
-	DataSource  string                 `description:"variable input: response or response.body by default"`
-	Expect      map[string]interface{} `description:"desired http response"`
+	When              string `description:"criteria to send this request"`
+	whenEval          eval.Compute
+	Method            string `required:"true" description:"HTTP Method"`
+	URL               string
+	BearerTokenSecret string `json:"bearerTokenSecret,omitempty" yaml:"bearerTokenSecret,omitempty" description:"Scy bearer-token secret reference; resolved only on the outbound request"`
+	Header            http.Header
+	Cookies           Cookies
+	Body              string
+	JSONBody          interface{}            `description:"body JSON representation"`
+	Replace           map[string]string      `description:"response body key value pair replacement"`
+	RequestUdf        string                 `description:"user defined function in context.state key, i,e, json to protobuf"`
+	ResponseUdf       string                 `description:"user defined function in context.state key, i,e, protobuf to json"`
+	DataSource        string                 `description:"variable input: response or response.body by default"`
+	Expect            map[string]interface{} `description:"desired http response"`
 }
 
 // Clone substitute request data with matching context map state.
@@ -37,18 +41,19 @@ func (r *Request) Clone(context *endly.Context) *Request {
 	header := make(map[string][]string)
 	copyExpandedHeaders(r.Header, header, context)
 	return &Request{
-		When:        context.Expand(r.When),
-		Method:      r.Method,
-		URL:         context.Expand(r.URL),
-		Body:        context.Expand(r.Body),
-		JSONBody:    r.JSONBody,
-		Cookies:     r.Cookies,
-		Header:      header,
-		Repeater:    r.Repeater,
-		Replace:     r.Replace,
-		RequestUdf:  r.RequestUdf,
-		ResponseUdf: r.ResponseUdf,
-		DataSource:  r.DataSource,
+		When:              context.Expand(r.When),
+		Method:            r.Method,
+		URL:               context.Expand(r.URL),
+		BearerTokenSecret: context.Expand(r.BearerTokenSecret),
+		Body:              context.Expand(r.Body),
+		JSONBody:          r.JSONBody,
+		Cookies:           r.Cookies,
+		Header:            header,
+		Repeater:          r.Repeater,
+		Replace:           r.Replace,
+		RequestUdf:        r.RequestUdf,
+		ResponseUdf:       r.ResponseUdf,
+		DataSource:        r.DataSource,
 	}
 }
 
@@ -101,5 +106,50 @@ func (r *Request) Build(context *endly.Context, sessionCookies Cookies) (*http.R
 	SetCookies(sessionCookies, request.Header)
 	//Set cookies from user http request
 	SetCookies(request.Cookies, httpRequest.Header)
+	if err := request.applyBearer(context, httpRequest); err != nil {
+		return nil, expectBinary, err
+	}
 	return httpRequest, expectBinary, nil
+}
+
+// Resolve credentials after expansion without copying them into workflow state,
+// the public Request, or its recorded headers.
+func (r *Request) applyBearer(ctx *endly.Context, request *http.Request) error {
+	if r.BearerTokenSecret == "" {
+		return nil
+	}
+	host := request.URL.Hostname()
+	local := host == "localhost"
+	if ip := net.ParseIP(host); ip != nil {
+		local = ip.IsLoopback()
+	}
+	if request.URL.Scheme != "https" && !(request.URL.Scheme == "http" && local) {
+		return fmt.Errorf("HTTP bearer credentials require HTTPS or loopback HTTP")
+	}
+	if request.URL.User != nil {
+		return fmt.Errorf("HTTP bearer credentials cannot be combined with URL credentials")
+	}
+	for name, values := range request.Header {
+		if strings.EqualFold(name, "Authorization") && len(values) > 0 {
+			return fmt.Errorf("HTTP bearer credentials cannot be combined with an Authorization header")
+		}
+	}
+	if ctx == nil || ctx.Secrets == nil {
+		return fmt.Errorf("HTTP bearer token secret lookup is unavailable")
+	}
+	value, err := ctx.Secrets.Lookup(ctx.Background(), secret.Resource(r.BearerTokenSecret))
+	if err != nil {
+		return fmt.Errorf("HTTP bearer token secret lookup failed")
+	}
+	if value == nil || strings.TrimSpace(value.String()) == "" {
+		return fmt.Errorf("HTTP bearer token secret is empty")
+	}
+	token := strings.TrimSpace(value.String())
+	for _, ch := range token {
+		if ch <= 0x20 || ch >= 0x7f {
+			return fmt.Errorf("HTTP bearer token secret contains invalid characters")
+		}
+	}
+	request.Header.Set("Authorization", "Bearer "+token)
+	return nil
 }

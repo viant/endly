@@ -1,6 +1,7 @@
 package webdriver
 
 import (
+	"encoding/base64"
 	"fmt"
 	"regexp"
 	"strings"
@@ -8,6 +9,19 @@ import (
 
 	"github.com/viant/endly"
 )
+
+func hasResponseBodyWait(actions []*Action) bool {
+	for _, action := range actions {
+		for _, call := range action.Calls {
+			if call != nil && call.Method == "WaitForResponse" && len(call.Parameters) == 4 {
+				if body, ok := call.Parameters[3].(string); ok && body != "" {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
 
 func hasResponseWait(actions []*Action) bool {
 	for _, action := range actions {
@@ -22,7 +36,7 @@ func hasResponseWait(actions []*Action) bool {
 
 // ensureNetworkCaptureLocked prepares capture before the action that triggers
 // a request. The caller owns the session command lock.
-func (s *service) ensureNetworkCaptureLocked(session *Session) error {
+func (s *service) ensureNetworkCaptureLocked(session *Session, needsBodies ...bool) error {
 	if session == nil || session.driver == nil {
 		return fmt.Errorf("webdriver session not open")
 	}
@@ -32,7 +46,7 @@ func (s *service) ensureNetworkCaptureLocked(session *Session) error {
 	if session.Capture == nil || !session.Capture.Enabled() {
 		enableConsole := false
 		enableNetwork := true
-		includeBodies := false
+		includeBodies := len(needsBodies) > 0 && needsBodies[0]
 		session.Capture = newCaptureState(&CaptureStartRequest{
 			EnableConsole: &enableConsole,
 			EnableNetwork: &enableNetwork,
@@ -42,6 +56,9 @@ func (s *service) ensureNetworkCaptureLocked(session *Session) error {
 	} else {
 		session.Capture.mux.Lock()
 		session.Capture.enableNetwork = true
+		if len(needsBodies) > 0 && needsBodies[0] {
+			session.Capture.includeBodies = true
+		}
 		session.Capture.mux.Unlock()
 	}
 	if session.Remote == "" && session.Backend != "cdp" {
@@ -52,7 +69,7 @@ func (s *service) ensureNetworkCaptureLocked(session *Session) error {
 	return nil
 }
 
-func (s *service) waitForResponse(context *endly.Context, session *Session, pattern string, status, timeoutMs, afterSequence int) (*NetworkTransaction, error) {
+func (s *service) waitForResponse(context *endly.Context, session *Session, pattern string, status, timeoutMs, afterSequence int, requestBodyIncludes ...string) (*NetworkTransaction, error) {
 	if timeoutMs <= 0 {
 		timeoutMs = 10_000
 	}
@@ -61,6 +78,10 @@ func (s *service) waitForResponse(context *endly.Context, session *Session, patt
 		return nil, err
 	}
 	deadline := time.Now().Add(time.Duration(timeoutMs) * time.Millisecond)
+	bodyFilter := ""
+	if len(requestBodyIncludes) > 0 {
+		bodyFilter = requestBodyIncludes[0]
+	}
 	for {
 		if err := context.Background().Err(); err != nil {
 			return nil, err
@@ -69,7 +90,7 @@ func (s *service) waitForResponse(context *endly.Context, session *Session, patt
 		_, network := session.Capture.Snapshot(10_000, false, true)
 		for index := len(network) - 1; index >= 0; index-- {
 			transaction := network[index]
-			if transaction == nil || transaction.Sequence <= afterSequence || !match(transaction.URL) || status > 0 && transaction.Status != status {
+			if transaction == nil || transaction.Sequence <= afterSequence || !match(transaction.URL) || status > 0 && transaction.Status != status || !matchesResponseRequestBody(transaction, bodyFilter) {
 				continue
 			}
 			return transaction, nil
@@ -86,6 +107,29 @@ func (s *service) waitForResponse(context *endly.Context, session *Session, patt
 			return nil, err
 		}
 	}
+}
+
+func matchesResponseRequestBody(transaction *NetworkTransaction, substring string) bool {
+	if substring == "" {
+		return true
+	}
+	if transaction == nil || transaction.RequestBody == nil || transaction.RequestBody.Truncated {
+		return false
+	}
+	body := transaction.RequestBody
+	text := body.Data
+	switch body.Encoding {
+	case "", "utf8":
+	case "base64":
+		decoded, err := base64.StdEncoding.DecodeString(text)
+		if err != nil {
+			return false
+		}
+		text = string(decoded)
+	default:
+		return false
+	}
+	return strings.Contains(text, substring)
 }
 
 func responseURLMatcher(pattern string) (func(string) bool, error) {

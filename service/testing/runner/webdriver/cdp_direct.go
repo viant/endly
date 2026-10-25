@@ -920,6 +920,13 @@ return true;`)
 		if err != nil {
 			return err
 		}
+		if _, err = e.driver.CDPCommand("Input.dispatchMouseEvent", map[string]interface{}{"type": "mouseMoved", "x": x, "y": y}); err != nil {
+			return err
+		}
+		x, y, err = e.clickableCenter(2 * time.Second)
+		if err != nil {
+			return err
+		}
 		// A chart or nested scroller can shift after the hit test. A native
 		// pointer dispatch only counts when this element receives its click.
 		marker := fmt.Sprintf("__endlyClickTarget%d", time.Now().UnixNano())
@@ -927,7 +934,6 @@ return true;`)
 			return err
 		}
 		for _, event := range []map[string]interface{}{
-			{"type": "mouseMoved", "x": x, "y": y},
 			{"type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1},
 			{"type": "mouseReleased", "x": x, "y": y, "button": "left", "clickCount": 1},
 		} {
@@ -950,6 +956,9 @@ return true;`)
 // A preceding tab change or scroll can move the target after its first
 // rectangle is measured. Dispatch only when the element owns a stable point.
 func (e *directCDPElement) clickableCenter(timeout time.Duration) (float64, float64, error) {
+	if err := e.driver.bringToFront(); err != nil {
+		return 0, 0, err
+	}
 	deadline := time.Now().Add(timeout)
 	var previousX, previousY float64
 	stable := false
@@ -969,7 +978,7 @@ func (e *directCDPElement) clickableCenter(timeout time.Duration) (float64, floa
 		}
 		stable, previousX, previousY = owns, x, y
 		if !time.Now().Before(deadline) {
-			return 0, 0, fmt.Errorf("click target remained covered or moving")
+			return 0, 0, fmt.Errorf("click target remained obscured or moving")
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
@@ -1052,7 +1061,31 @@ func (e *directCDPElement) MoveTo(xOffset, yOffset int) error {
 }
 
 func (e *directCDPElement) center() (float64, float64, error) {
-	value, err := e.evaluate(`this.scrollIntoView({block:'center',inline:'center',behavior:'instant'});const r=this.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};`)
+	if err := e.driver.bringToFront(); err != nil {
+		return 0, 0, err
+	}
+	value, err := e.evaluate(`this.scrollIntoView({block:'center',inline:'center'});
+const element=this;
+return new Promise((resolve,reject)=>{
+ const deadline=performance.now()+2000;let previous=null,stable=0;
+ const check=()=>{
+  if(!element.isConnected)return reject(new Error('click target detached while settling'));
+  const r=element.getBoundingClientRect();let moving=false;
+  for(let e=element;e;e=e.parentElement)for(const a of e.getAnimations?.()||[]){
+   if(a.playState==='running'&&a.effect&&Number.isFinite(a.effect.getComputedTiming().endTime))moving=true;
+  }
+  const box=[r.x,r.y,r.width,r.height];
+  stable=!moving&&previous&&box.every((value,i)=>Math.abs(value-previous[i])<0.25)?stable+1:0;
+  previous=box;
+  const x=r.left+r.width/2,y=r.top+r.height/2,hit=document.elementFromPoint(x,y);
+  const label=hit?.closest?.('label');
+  const receives=!!hit&&(element===hit||element.contains(hit)||(element.tagName==='INPUT'&&label?.control===element));
+  if(stable>=2&&receives)return resolve({x,y});
+  if(performance.now()>deadline)return reject(new Error(receives?'click target did not settle':'click target is obscured'));
+  requestAnimationFrame(check);
+ };
+ requestAnimationFrame(check);
+});`)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -1150,4 +1183,11 @@ func (e *directCDPElement) Screenshot(scroll bool) ([]byte, error) {
 		_, _ = e.evaluate(`this.scrollIntoView({block:'center',inline:'center',behavior:'instant'});return true;`)
 	}
 	return e.driver.Screenshot()
+}
+
+// Background pages suspend animation frames after an opened popup takes focus.
+// Native input must target a visible page before waiting for stable geometry.
+func (d *directCDPDriver) bringToFront() error {
+	_, err := d.CDPCommand("Page.bringToFront", map[string]interface{}{})
+	return err
 }
