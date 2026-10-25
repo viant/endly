@@ -1,6 +1,8 @@
 package webdriver
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -44,5 +46,48 @@ func TestCapture_SinkWritesJSONL(t *testing.T) {
 	}
 	if !strings.Contains(out, "\"type\":\"network\"") {
 		t.Fatalf("expected network event, got: %s", out)
+	}
+}
+
+func TestCaptureSinkRetainsBoundedResponsesWithoutDuplicateWrites(t *testing.T) {
+	file := t.TempDir() + "/capture.jsonl"
+	state := newCaptureState(&CaptureStartRequest{MaxEntries: 2})
+	if err := state.StartSink(afs.New(), "file://"+file, 1); err != nil {
+		t.Fatal(err)
+	}
+	for i := 1; i <= 5; i++ {
+		state.mux.Lock()
+		state.finishLocked(fmt.Sprint(i), &NetworkTransaction{RequestID: fmt.Sprint(i), URL: "https://example.test/rpc", Status: 200})
+		state.mux.Unlock()
+		if err := state.FlushSink(); err != nil {
+			t.Fatal(err)
+		}
+		if err := state.FlushSink(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	_, retained := state.Snapshot(10, false, true)
+	if len(retained) != 2 || retained[0].Sequence != 4 || retained[1].Sequence != 5 {
+		t.Fatalf("unexpected retained response history: %+v", retained)
+	}
+	if err := state.CloseSink(); err != nil {
+		t.Fatal(err)
+	}
+	bytes, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(strings.TrimSpace(string(bytes)), "\n")
+	if len(lines) != 5 {
+		t.Fatalf("sink wrote %d records, want 5", len(lines))
+	}
+	for i, line := range lines {
+		var event struct{ Tx NetworkTransaction }
+		if err := json.Unmarshal([]byte(line), &event); err != nil {
+			t.Fatal(err)
+		}
+		if event.Tx.Sequence != i+1 {
+			t.Fatalf("duplicate/missing sink response at %d", i)
+		}
 	}
 }

@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -787,7 +788,7 @@ func cloneOperation(source *Operation) *Operation {
 	if source.Result != nil {
 		copy.Result = map[string]interface{}{}
 		for key, value := range source.Result {
-			copy.Result[key] = redactValue(key, value)
+			copy.Result[redactedMapKey(key)] = redactValue(key, value)
 		}
 	}
 	return copy
@@ -803,13 +804,24 @@ func validReadPath(path string) bool {
 func redactMap(source map[string]interface{}) map[string]interface{} {
 	result := make(map[string]interface{}, len(source))
 	for key, value := range source {
-		result[key] = redactValue(key, value)
+		result[redactedMapKey(key)] = redactValue(key, value)
 	}
 	return result
 }
 
 var bearerPattern = regexp.MustCompile(`(?i)Bearer[\t ]+[A-Za-z0-9._~+/=-]+`)
 var jwtPattern = regexp.MustCompile(`eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`)
+
+// Diagnostic index keys can contain credentials too. A stable opaque suffix
+// preserves distinct entries without changing the original runtime map.
+func redactedMapKey(key string) string {
+	safe := jwtPattern.ReplaceAllString(bearerPattern.ReplaceAllString(key, "Bearer [REDACTED]"), "[REDACTED]")
+	if safe == key {
+		return key
+	}
+	digest := sha256.Sum256([]byte(key))
+	return fmt.Sprintf("%s [entry:%x]", safe, digest[:8])
+}
 
 func redactValue(path string, value interface{}) interface{} {
 	// Process lease tokens are concurrency fences required by remote worker operations.
@@ -830,7 +842,7 @@ func redactValue(path string, value interface{}) interface{} {
 			if path != "" {
 				nestedPath = path + "." + key
 			}
-			result[key] = redactValue(nestedPath, nested)
+			result[redactedMapKey(key)] = redactValue(nestedPath, nested)
 		}
 		return result
 	case []interface{}:

@@ -15,3 +15,9 @@ Read [the service reference](references/service.md) for live contract discovery 
 
 Source: `service/testing/runner/http/service.go`. Treat the live contract as authoritative when documentation differs.
 Run only the actions and environments covered by the user request. A skill documents execution; it does not grant additional authorization. For workflow selection and test design, retrieve the `endly-authoring` and `endly-testing` skills from the same catalog.
+
+Each request may set `bearerTokenSecret` to a Scy secret reference. The runner
+resolves it only on the outbound request, without copying the token into workflow
+state or recorded headers. Use HTTPS or literal loopback HTTP. Do not combine it
+with inline Authorization or URL credentials. Native `Expect.Code` and
+`Expect.JSONBody` retain actual HTTP status/body verification.
