@@ -367,7 +367,10 @@ func pageSelector(name string, args []string) (string, bool, error) {
 		if len(args) != 1 {
 			return "", true, fmt.Errorf("page.getByText expects one value")
 		}
-		return "xpath://*[normalize-space(.)=" + xpathLiteral(args[0]) + "]", true, nil
+		text := xpathLiteral(args[0])
+		// Match the innermost exact text element. A cell and its text span are
+		// one target; two separate matching cells must remain ambiguous.
+		return "xpath://*[normalize-space(.)=" + text + " and not(.//*[normalize-space(.)=" + text + "])]", true, nil
 	case "getbylabel":
 		if len(args) != 1 {
 			return "", true, fmt.Errorf("page.getByLabel expects one value")
@@ -400,7 +403,9 @@ func pageSelector(name string, args []string) (string, bool, error) {
 		}
 		if len(args) == 2 {
 			name := xpathLiteral(args[1])
-			base += "[normalize-space(.)=" + name + " or @aria-label=" + name + "]"
+			// Dialogs and forms commonly name themselves through a separate
+			// heading. Resolve its ID instead of comparing all descendant text.
+			base += "[normalize-space(.)=" + name + " or @aria-label=" + name + " or normalize-space(@aria-labelledby)=//*[normalize-space(.)=" + name + "]/@id]"
 		}
 		return "xpath:" + base, true, nil
 	default:
@@ -438,6 +443,16 @@ func nativeRoleTag(role string) string {
 		return "input[@type='radio']"
 	case "option":
 		return "option"
+	case "table":
+		return "table"
+	case "row":
+		return "tr"
+	case "cell":
+		return "td"
+	case "columnheader":
+		return "th[not(@scope='row' or @scope='rowgroup')]"
+	case "rowheader":
+		return "th[@scope='row' or @scope='rowgroup']"
 	default:
 		return ""
 	}
