@@ -47,8 +47,12 @@ func BuildRoutes(service interface{}, clientProvider func(context *endly.Context
 				return reflect.New(method.Type.Out(0)).Interface()
 			},
 			Handler: func(context *endly.Context, request interface{}) (interface{}, error) {
+				adapter, ok := request.(ContractAdapter)
+				if !ok {
+					return nil, fmt.Errorf("unsupported Docker request type: %T", request)
+				}
 				var result interface{}
-				err := runAdapter(context, adaper, &result)
+				err := runAdapter(context, adapter, &result)
 				if err == nil {
 					publishEvent(context, method.Name, result)
 				}
