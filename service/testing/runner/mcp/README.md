@@ -76,3 +76,17 @@ pipeline:
     bearerTokenSecret: $userToken
     uri: mcp://ns/sales
 ```
+
+For exact JSON shape preservation, `argumentsJSON` accepts a JSON object string
+instead of `arguments`. This is useful when workflow map conversion would turn
+an empty array into an empty object. The runner parses it immediately before the
+MCP call, preserving empty arrays, objects, nulls and large integer tokens. Do not
+set both options. Invalid JSON errors omit the supplied content; authentication
+still uses the normal secret/OAuth fields.
+
+```yaml
+action: mcp/runner:call
+url: http://127.0.0.1:8080/mcp
+name: update_record
+argumentsJSON: '{"recordId":123,"labels":[]}'
+```

@@ -65,6 +65,11 @@ func normalizeKVPairs(source interface{}) (interface{}, error) {
 	return source, err
 }
 
+// NormalizeValue normalizes native variable containers without converting empty lists to objects.
+func NormalizeValue(source interface{}) (interface{}, error) {
+	return normalizeKVPairs(source)
+}
+
 // Append source to dest map
 func Append(dest, source map[string]interface{}, override bool) {
 	for k, v := range source {

@@ -11,6 +11,11 @@ import (
 // ancestor can move that target after ChromeDriver computes its click point.
 // Wait only for relevant finite animations; unrelated spinners do not block.
 func waitForElementMotion(driver selenium.WebDriver, element selenium.WebElement, timeout time.Duration) error {
+	if direct, ok := driver.(*directCDPDriver); ok {
+		if err := direct.bringToFront(); err != nil {
+			return err
+		}
+	}
 	deadline := time.Now().Add(timeout)
 	for {
 		moving, err := driver.ExecuteScript(`for(let e=arguments[0];e;e=e.parentElement){if(typeof e.getAnimations!=='function')continue;for(const a of e.getAnimations()){if(a.playState!=='running'||!a.effect)continue;const timing=a.effect.getComputedTiming();if(Number.isFinite(timing.endTime))return true;}}return false;`, []interface{}{element})

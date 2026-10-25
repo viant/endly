@@ -2,12 +2,40 @@ package webdriver
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/tebeka/selenium"
 )
 
 func (s *service) Check(element selenium.WebElement) error   { return setChecked(element, true) }
 func (s *service) Uncheck(element selenium.WebElement) error { return setChecked(element, false) }
+
+// File controls are commonly hidden behind a styled label. WebDriver file
+// selection does not require a visible click target, unlike ordinary typing.
+func (s *service) SetInputFiles(element selenium.WebElement, path string) error {
+	tag, err := element.TagName()
+	if err != nil {
+		return err
+	}
+	kind, err := element.GetAttribute("type")
+	if err != nil {
+		return err
+	}
+	if !strings.EqualFold(tag, "input") || !strings.EqualFold(kind, "file") {
+		return fmt.Errorf("setInputFiles requires a file input")
+	}
+	enabled, err := element.IsEnabled()
+	if err != nil {
+		return err
+	}
+	if !enabled {
+		return fmt.Errorf("file input is disabled")
+	}
+	if strings.TrimSpace(path) == "" {
+		return fmt.Errorf("setInputFiles requires a file path")
+	}
+	return element.SendKeys(path)
+}
 
 func setChecked(element selenium.WebElement, want bool) error {
 	selected, err := element.IsSelected()

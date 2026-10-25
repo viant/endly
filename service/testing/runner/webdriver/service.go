@@ -183,7 +183,7 @@ func (s *service) run(context *endly.Context, request *RunRequest) (response *Ru
 	}
 	responseBaseline := 0
 	if hasResponseWait(request.Actions) {
-		if err = s.ensureNetworkCaptureLocked(session); err != nil {
+		if err = s.ensureNetworkCaptureLocked(session, hasResponseBodyWait(request.Actions)); err != nil {
 			return response, err
 		}
 		responseBaseline = session.Capture.Summary().RequestsCompleted
@@ -229,13 +229,21 @@ func (s *service) run(context *endly.Context, request *RunRequest) (response *Ru
 					continue
 				}
 				if runtimeCall.Method == "WaitForResponse" {
-					if len(runtimeCall.Parameters) != 3 {
-						return response, fmt.Errorf("WaitForResponse requires URL pattern, status, and timeout")
+					if len(runtimeCall.Parameters) < 3 || len(runtimeCall.Parameters) > 4 {
+						return response, fmt.Errorf("WaitForResponse requires URL pattern, status, timeout, and optional request body substring")
 					}
 					pattern := toolbox.AsString(runtimeCall.Parameters[0])
 					status := toolbox.AsInt(runtimeCall.Parameters[1])
 					timeoutMs := toolbox.AsInt(runtimeCall.Parameters[2])
-					transaction, waitErr := s.waitForResponse(context, session, pattern, status, timeoutMs, responseBaseline)
+					bodyFilter := ""
+					if len(runtimeCall.Parameters) == 4 {
+						value, ok := runtimeCall.Parameters[3].(string)
+						if !ok {
+							return response, fmt.Errorf("WaitForResponse request body substring must be a string")
+						}
+						bodyFilter = value
+					}
+					transaction, waitErr := s.waitForResponse(context, session, pattern, status, timeoutMs, responseBaseline, bodyFilter)
 					if waitErr != nil {
 						return response, waitErr
 					}
@@ -372,7 +380,7 @@ func (s *service) callMethod(owner interface{}, methodName string, response *Ser
 		methodName = "Data"
 	}
 	switch methodName {
-	case "Data", "Tabs", "SwitchTab", "NewTab", "CloseTab", "Check", "Uncheck", "SelectOption", "SwitchFrameBySelector", "MainFrame", "ElementCount":
+	case "Data", "Tabs", "SwitchTab", "NewTab", "CloseTab", "Check", "Uncheck", "SelectOption", "SetInputFiles", "SwitchFrameBySelector", "MainFrame", "ElementCount":
 		parameters = append([]interface{}{owner}, parameters...)
 		owner = s
 	}

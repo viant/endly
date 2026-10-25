@@ -512,8 +512,8 @@ func pageAction(key, method string, args []string) (*Action, bool, error) {
 		}
 		return NewAction(key, "", "SetViewportSize", width, height), true, nil
 	case "waitforresponse":
-		if len(args) < 1 || len(args) > 3 {
-			return nil, true, fmt.Errorf("page.waitForResponse expects URL pattern, optional status, and optional timeout")
+		if len(args) < 1 || len(args) > 4 {
+			return nil, true, fmt.Errorf("page.waitForResponse expects URL pattern, optional status, timeout, and request body substring")
 		}
 		status := 0
 		timeoutMs := 10_000
@@ -524,11 +524,14 @@ func pageAction(key, method string, args []string) (*Action, bool, error) {
 				return nil, true, fmt.Errorf("invalid response status %q", args[1])
 			}
 		}
-		if len(args) == 3 {
+		if len(args) >= 3 {
 			timeoutMs, err = strconv.Atoi(args[2])
 			if err != nil || timeoutMs <= 0 {
 				return nil, true, fmt.Errorf("invalid response timeout %q", args[2])
 			}
+		}
+		if len(args) == 4 {
+			return NewAction(key, "", "WaitForResponse", args[0], status, timeoutMs, args[3]), true, nil
 		}
 		return NewAction(key, "", "WaitForResponse", args[0], status, timeoutMs), true, nil
 	case "switchtab":
@@ -620,7 +623,7 @@ func locatorAction(key, selector, method string, args []string) (*Action, bool, 
 		if len(args) != 1 {
 			return nil, true, fmt.Errorf("setInputFiles expects one path")
 		}
-		action.Calls = []*MethodCall{newCall("SendKeys", args[0])}
+		action.Calls = []*MethodCall{newCall("SetInputFiles", args[0])}
 	case "waitforvisible":
 		timeoutMs := 10_000
 		if len(args) > 1 {

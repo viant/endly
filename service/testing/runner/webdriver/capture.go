@@ -937,13 +937,16 @@ func (s *CaptureState) FlushSink() error {
 	if s.sink != nil {
 		s.sink.nextConsole += len(pendingConsole)
 		s.sink.nextNetwork += len(pendingNetwork)
-		if s.sink.nextConsole > 0 {
-			s.console = append([]*ConsoleEntry(nil), s.console[s.sink.nextConsole:]...)
-			s.sink.nextConsole = 0
+		// Flushing persists events; it must not make completed responses
+		// disappear from live waits and capture-export. Keep a bounded tail,
+		// trimming only acknowledged entries so unsent events are never lost.
+		if trim := min(s.sink.nextConsole, max(0, len(s.console)-s.maxEntries)); trim > 0 {
+			s.console = append([]*ConsoleEntry(nil), s.console[trim:]...)
+			s.sink.nextConsole -= trim
 		}
-		if s.sink.nextNetwork > 0 {
-			s.completed = append([]*NetworkTransaction(nil), s.completed[s.sink.nextNetwork:]...)
-			s.sink.nextNetwork = 0
+		if trim := min(s.sink.nextNetwork, max(0, len(s.completed)-s.maxEntries)); trim > 0 {
+			s.completed = append([]*NetworkTransaction(nil), s.completed[trim:]...)
+			s.sink.nextNetwork -= trim
 		}
 	}
 	shouldSync := s.sink != nil && s.sink.flushInterval > 0 && time.Since(s.sink.lastSync) >= s.sink.flushInterval

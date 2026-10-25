@@ -216,9 +216,13 @@ func (s *service) listTools(ctx *endly.Context, request *ListToolsRequest) (*Lis
 }
 
 func (s *service) call(ctx *endly.Context, request *CallRequest) (*CallResponse, error) {
+	arguments, argumentErr := request.toolArguments()
+	if argumentErr != nil {
+		return nil, argumentErr
+	}
 	var response *CallResponse
 	err := s.withClient(ctx, &request.Request, func(opCtx context.Context, cli *client.Client) error {
-		result, err := cli.CallTool(opCtx, &schema.CallToolRequestParams{Name: request.Name, Arguments: request.Arguments})
+		result, err := cli.CallTool(opCtx, &schema.CallToolRequestParams{Name: request.Name, Arguments: arguments})
 		if err != nil {
 			var protocolError *jsonrpc.Error
 			if request.AllowProtocolError && opCtx.Err() == nil && errors.As(err, &protocolError) {

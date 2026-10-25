@@ -183,7 +183,7 @@ Supported page commands include `goto`, `reload`, `back`, `forward`, `stopLoadin
 
 `page.setViewportSize(width, height)` requires a direct CDP session and sets the selected page's CSS viewport to the exact requested `window.innerWidth` and `window.innerHeight`. Dimensions must be positive integers no larger than 16,384. It does not resize the host's outer browser window or change other page targets.
 
-`page.waitForResponse(URLPattern, status, timeoutMs)` starts bounded Chrome network capture before the run's first action and waits on observed browser traffic rather than an arbitrary sleep. The URL pattern may be a substring or `/regular expression/`; status `0` accepts any status. The captured transaction—including timing, headers, status, and any configured captured body—is stored under the assigned result key.
+`page.waitForResponse(URLPattern, status, timeoutMs, requestBodyIncludes?)` starts bounded Chrome network capture before the run's first action and waits on observed browser traffic rather than an arbitrary sleep. The URL pattern may be a substring or `/regular expression/`; status `0` accepts any status. The captured transaction—including timing, headers, status, and any configured captured body—is stored under the assigned result key.
 
 Locators include `locator`, `getByTestId`, `getByText`, `getByLabel`, `getByPlaceholder`, `getByAltText`, `getByTitle`, and `getByRole`. Locator actions include `click`, `fill`, `type`, `press`, `text`, `inputValue`, `attribute`, `clear`, `submit`, `check`, `uncheck`, `selectOption`, `hover`, `setInputFiles`, and `waitForVisible`.
 
@@ -286,3 +286,5 @@ are excluded. Cell values are strings; numeric/date conversion belongs to the
 assertion. Spanning/grouped headers may require explicit names; irregular spans
 are not expanded. This is DOM extraction, not a backend export: traverse pages
 and virtualized rows explicitly, and select native tables rather than ARIA grids.
+
+When several calls share one URL, the optional fourth string matches the captured request body. The wait enables request-body capture before the first action and checks completed browser transactions. Missing, truncated, or undecodable bodies cannot satisfy this filter. Keep payload/identity assertions on the returned response; a matching HTTP response alone is not a business success.
