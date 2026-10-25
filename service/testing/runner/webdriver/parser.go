@@ -403,7 +403,9 @@ func pageSelector(name string, args []string) (string, bool, error) {
 		}
 		if len(args) == 2 {
 			name := xpathLiteral(args[1])
-			base += "[normalize-space(.)=" + name + " or @aria-label=" + name + "]"
+			// Dialogs and forms commonly name themselves through a separate
+			// heading. Resolve its ID instead of comparing all descendant text.
+			base += "[normalize-space(.)=" + name + " or @aria-label=" + name + " or normalize-space(@aria-labelledby)=//*[normalize-space(.)=" + name + "]/@id]"
 		}
 		return "xpath:" + base, true, nil
 	default:
