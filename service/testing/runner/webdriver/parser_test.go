@@ -116,7 +116,7 @@ func TestParser_ParsePageCommands(t *testing.T) {
 		{
 			command:    `page.getByText("Save changes").click()`,
 			selectorBy: "xpath",
-			selector:   `//*[normalize-space(.)='Save changes']`,
+			selector:   `//*[normalize-space(.)='Save changes' and not(.//*[normalize-space(.)='Save changes'])]`,
 			methods:    []string{"Click"},
 		},
 		{
@@ -127,9 +127,45 @@ func TestParser_ParsePageCommands(t *testing.T) {
 			parameters: [][]interface{}{{"qa@example.test"}},
 		},
 		{
+			command:    `page.getByRole("dialog", "Edit Project Permission").click()`,
+			selectorBy: "xpath",
+			selector:   `//*[@role='dialog'][normalize-space(.)='Edit Project Permission' or @aria-label='Edit Project Permission' or normalize-space(@aria-labelledby)=//*[normalize-space(.)='Edit Project Permission']/@id]`,
+			methods:    []string{"Click"},
+		},
+		{
 			command:    `page.getByRole("button", "Save").click()`,
 			selectorBy: "xpath",
-			selector:   `(//*[@role='button'] | //button)[normalize-space(.)='Save' or @aria-label='Save']`,
+			selector:   `(//*[@role='button'] | //button)[normalize-space(.)='Save' or @aria-label='Save' or normalize-space(@aria-labelledby)=//*[normalize-space(.)='Save']/@id]`,
+			methods:    []string{"Click"},
+		},
+		{
+			command:    `page.getByRole("columnheader", "User/Group").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='columnheader'] | //th[not(@scope='row' or @scope='rowgroup')])[normalize-space(.)='User/Group' or @aria-label='User/Group' or normalize-space(@aria-labelledby)=//*[normalize-space(.)='User/Group']/@id]`,
+			methods:    []string{"Click"},
+		},
+		{
+			command:    `page.getByRole("rowheader", "Project").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='rowheader'] | //th[@scope='row' or @scope='rowgroup'])[normalize-space(.)='Project' or @aria-label='Project' or normalize-space(@aria-labelledby)=//*[normalize-space(.)='Project']/@id]`,
+			methods:    []string{"Click"},
+		},
+		{
+			command:    `page.getByRole("cell", "Job Viewer").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='cell'] | //td)[normalize-space(.)='Job Viewer' or @aria-label='Job Viewer' or normalize-space(@aria-labelledby)=//*[normalize-space(.)='Job Viewer']/@id]`,
+			methods:    []string{"Click"},
+		},
+		{
+			command:    `page.getByRole("table").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='table'] | //table)`,
+			methods:    []string{"Click"},
+		},
+		{
+			command:    `page.getByRole("row", "Project Owner").click()`,
+			selectorBy: "xpath",
+			selector:   `(//*[@role='row'] | //tr)[normalize-space(.)='Project Owner' or @aria-label='Project Owner' or normalize-space(@aria-labelledby)=//*[normalize-space(.)='Project Owner']/@id]`,
 			methods:    []string{"Click"},
 		},
 		{
