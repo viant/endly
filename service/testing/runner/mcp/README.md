@@ -7,7 +7,9 @@ by JSON-RPC ID within each network transaction, so reused IDs after navigation
 cannot pair with an earlier page's response. JSON batches, base64 bodies, and
 SSE messages are supported. Missing, truncated, malformed, ambiguous, or empty
 tool-call evidence fails with an event/stage diagnostic that omits body contents
-and headers. `Methods` optionally filters returned tool names; all captured tool
+and headers. `Methods` optionally filters returned tool names. `Arguments` can
+select a recursive exact subset, including a resource URI or preview session ID;
+arrays match exactly, and omitted fields differ from explicit null. All captured tool
 calls are still checked. `MaxTransactions` defaults to 10000 and fails rather than
 silently dropping excess calls. Use explicit counts and `validator:assert` with
 `each: true` so an empty filtered collection cannot become a passing assertion.
@@ -18,6 +20,7 @@ pipeline:
     action: mcp/runner:readCapture
     source: {URL: '${runDir}/browser.jsonl'}
     methods: [namespaces/preview]
+    arguments: {resource: {uri: 'window://platform/advertiser'}}
   check:
     action: validator:assert
     each: true

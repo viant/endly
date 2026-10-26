@@ -135,3 +135,36 @@ func TestReadCaptureNativeRoute(t *testing.T) {
 		t.Fatal("native route lost transaction")
 	}
 }
+
+func TestReadCaptureArgumentSubsetPreservesScopeAndTypes(t *testing.T) {
+	request := `{"jsonrpc":"2.0","id":7,"method":"tools/call","params":{"name":"namespaces/preview","arguments":{"resource":{"uri":"window://platform/advertiser","revision":"working"},"ids":[7],"flag":false,"cleared":null}}}`
+	line := captureLine(t, textBody(request), textBody(captureResponse))
+	for _, tc := range []struct {
+		name      string
+		arguments map[string]interface{}
+		count     int
+	}{
+		{"nested URI", map[string]interface{}{"resource": map[string]interface{}{"uri": "window://platform/advertiser"}}, 1},
+		{"different URI", map[string]interface{}{"resource": map[string]interface{}{"uri": "window://platform/campaign"}}, 0},
+		{"numeric array", map[string]interface{}{"ids": []interface{}{7}}, 1},
+		{"string array", map[string]interface{}{"ids": []interface{}{"7"}}, 0},
+		{"false", map[string]interface{}{"flag": false}, 1},
+		{"null", map[string]interface{}{"cleared": nil}, 1},
+		{"missing is not null", map[string]interface{}{"missing": nil}, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			out, err := readCapture(strings.NewReader(line), &ReadCaptureRequest{Arguments: tc.arguments})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(out.Transactions) != tc.count {
+				t.Fatalf("calls=%d,want%d", len(out.Transactions), tc.count)
+			}
+		})
+	}
+	// A filter must not conceal broken evidence from another tool call.
+	broken := captureLine(t, textBody(captureRequest), textBody(strings.ReplaceAll(captureResponse, `"id":7`, `"id":8`)))
+	if _, err := readCapture(strings.NewReader(broken), &ReadCaptureRequest{Methods: []string{"unrelated"}}); err == nil {
+		t.Fatal("method filter concealed a mismatched response")
+	}
+}

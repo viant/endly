@@ -16,8 +16,10 @@ import (
 
 // ReadCaptureRequest reads a browser capture without making an MCP request.
 type ReadCaptureRequest struct {
-	Source          *location.Resource
-	Methods         []string
+	Source  *location.Resource
+	Methods []string
+	// Arguments optionally selects a recursive exact subset of tool arguments.
+	Arguments       map[string]interface{}
 	MaxTransactions int
 }
 
@@ -177,7 +179,7 @@ func readCapture(reader io.Reader, request *ReadCaptureRequest) (*ReadCaptureRes
 			if total > limit {
 				return nil, fmt.Errorf("MCP capture exceeds MaxTransactions (%d)", limit)
 			}
-			if len(methods) == 0 || methods[name] {
+			if (len(methods) == 0 || methods[name]) && captureArgumentsMatch(args, request.Arguments) {
 				out.Transactions = append(out.Transactions, &CapturedCall{Method: name, Args: args, Status: tx.Status, Response: response, RequestID: call["id"], DurationMs: tx.DurationMs})
 			}
 		}
@@ -189,6 +191,29 @@ func readCapture(reader io.Reader, request *ReadCaptureRequest) (*ReadCaptureRes
 		return nil, fmt.Errorf("MCP capture contains no complete tool calls")
 	}
 	return out, nil
+}
+
+func captureArgumentsMatch(actual, expected map[string]interface{}) bool {
+	for key, want := range expected {
+		got, present := actual[key]
+		if !present {
+			return false
+		}
+		if object, ok := want.(map[string]interface{}); ok {
+			candidate, ok := got.(map[string]interface{})
+			if !ok || !captureArgumentsMatch(candidate, object) {
+				return false
+			}
+			continue
+		}
+		// JSON keeps numeric values, strings, false and explicit null distinct.
+		left, leftErr := json.Marshal(got)
+		right, rightErr := json.Marshal(want)
+		if leftErr != nil || rightErr != nil || !bytes.Equal(left, right) {
+			return false
+		}
+	}
+	return true
 }
 
 func captureID(message map[string]interface{}) (string, error) {
