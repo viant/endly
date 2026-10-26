@@ -34,12 +34,12 @@ func (r *ReadCaptureRequest) Validate() error {
 }
 
 type CapturedCall struct {
-	Method     string                 `json:"method"`
-	Args       map[string]interface{} `json:"args"`
-	Status     int                    `json:"status"`
-	Response   map[string]interface{} `json:"response"`
-	RequestID  interface{}            `json:"requestId"`
-	DurationMs float64                `json:"durationMs"`
+	Method     string                 `json:"method" name:"method"`
+	Args       map[string]interface{} `json:"args" name:"args"`
+	Status     int                    `json:"status" name:"status"`
+	Response   map[string]interface{} `json:"response" name:"response"`
+	RequestID  interface{}            `json:"requestId" name:"requestId"`
+	DurationMs float64                `json:"durationMs" name:"durationMs"`
 }
 
 type ReadCaptureResponse struct{ Transactions []*CapturedCall }
