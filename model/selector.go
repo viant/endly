@@ -31,7 +31,7 @@ func (s WorkflowSelector) split() (URL, name, tasks string) {
 	if protoPosition != -1 {
 		taskPosition = -1
 		selWithoutProto := string(sel[protoPosition+3:])
-		if position := strings.LastIndex(selWithoutProto, ":"); position != -1 {
+		if position := strings.LastIndex(selWithoutProto, ":"); strings.Contains(selWithoutProto, "/") && position > strings.LastIndex(selWithoutProto, "/") {
 			taskPosition = protoPosition + 3 + position
 		}
 	}

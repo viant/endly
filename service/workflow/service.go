@@ -453,12 +453,20 @@ func (s *Service) getWorkflow(context *endly.Context, request *RunRequest) (*mod
 		context.Publish(NewLoadedEvent(request.workflow))
 		return request.workflow, nil
 	}
-	workflow, err := s.Workflow(request.Name)
+	// Explicit resources are invocation-local: a same-basename registry entry
+	// must neither shadow their bytes nor be replaced by their graph.
+	if !runtimeWorkflowURLExplicit(request) {
+		if workflow, err := s.Workflow(request.Name); err == nil {
+			context.Publish(NewLoadedEvent(workflow))
+			return workflow, nil
+		}
+	}
+	workflow, err := s.loadRuntimeWorkflow(context, request)
 	if err != nil {
 		return nil, err
 	}
 	context.Publish(NewLoadedEvent(workflow))
-	return workflow, err
+	return workflow, nil
 }
 
 func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunRequest) (response *RunResponse, err error) {
