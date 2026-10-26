@@ -421,6 +421,9 @@ func (s *service) callMethod(owner interface{}, methodName string, response *Ser
 			return err
 		}
 	}
+	if methodName == "CDPCommand" {
+		return normalizeCDPResult(response.Result)
+	}
 	return nil
 }
 
