@@ -119,6 +119,24 @@ Partial `prepare` failure can leave earlier tables populated. Inspect the failed
 action and read back owned fixture tables before a scoped reset/retry. Do not
 reset unrelated services or silently adopt another suite's rows.
 
+## Authenticate with the fixture identities
+
+Endly's `secret` service delegates signing and secret handling to SCY. Use
+`secret:signJWT` with the allocated fixture user's identifiers and the owned test
+signing key; use the exact claim names required by the target authority. The
+Platform workflow passes the returned token through the ordinary HTTP request:
+
+```yaml
+Header:
+  Authorization: ["Bearer ${signed.TokenString}"]
+```
+
+Do not assume a newer `bearerTokenSecret` HTTP field exists in the installed
+runner: inspect `endly_service_info` first. For supported native JWT test flows,
+use the normal header rather than diagnosing an omitted header as an IdP failure.
+Keep credentials out of displayed diagnostics. Validate the actual identity/roles
+returned by the application; fixture claims alone do not prove authorization.
+
 ## Verify actual hydration
 
 Check published per-case IDs, stored primary/foreign-key relationships, and
