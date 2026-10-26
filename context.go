@@ -542,22 +542,8 @@ func predefinedRegistry() data.Map {
 		if textExpr == "" {
 			return false, nil
 		}
-		parts := strings.Split(textExpr, ".")
-		for index, part := range parts {
-			if len(node) == 0 {
-				return false, nil
-			}
-			has := node.Has(toolbox.AsString(part))
-			if !has {
-				return false, nil
-			}
-			if index < len(parts)-1 {
-				// Descend from the current node without converting or replacing
-				// the value in the caller's state. A present leaf may be empty or nil.
-				node = toolbox.AsMap(node.Get(part))
-			}
-		}
-		return true, nil
+		_, found := node.LookupValue(textExpr)
+		return found, nil
 	})
 	return result
 }
