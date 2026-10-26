@@ -18,21 +18,25 @@ import (
 )
 
 type fakeCDPServer struct {
-	server         *httptest.Server
-	mu             sync.Mutex
-	URL            string
-	title          string
-	stopped        bool
-	readyState     string
-	navigated      chan struct{}
-	inputEvents    int
-	clickObserved  bool
-	keyEvents      []map[string]interface{}
-	insertedTexts  []string
-	viewportWidth  int
-	viewportHeight int
-	viewportParams map[string]interface{}
-	foreground     bool
+	server           *httptest.Server
+	mu               sync.Mutex
+	URL              string
+	title            string
+	stopped          bool
+	readyState       string
+	navigated        chan struct{}
+	inputEvents      int
+	clickObserved    bool
+	clickBinding     string
+	loseClickMarker  bool
+	acknowledgeClick bool
+	mouseReleases    int
+	keyEvents        []map[string]interface{}
+	insertedTexts    []string
+	viewportWidth    int
+	viewportHeight   int
+	viewportParams   map[string]interface{}
+	foreground       bool
 }
 
 func newFakeCDPServer(t *testing.T) *fakeCDPServer {
@@ -69,7 +73,16 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 			}
 			response := map[string]interface{}{"id": command.ID, "result": map[string]interface{}{}}
 			emitConsole := false
+			emitBinding := ""
 			switch command.Method {
+			case "Runtime.addBinding":
+				result.mu.Lock()
+				result.clickBinding, _ = command.Params["name"].(string)
+				result.mu.Unlock()
+			case "Runtime.removeBinding":
+				result.mu.Lock()
+				result.clickBinding = ""
+				result.mu.Unlock()
 			case "Page.bringToFront":
 				result.mu.Lock()
 				result.foreground = true
@@ -108,6 +121,10 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 					value = false
 				case strings.Contains(expression, "return {x,y,hit:"):
 					value, kind = map[string]interface{}{"x": 10, "y": 20, "hit": true}, "object"
+				case strings.Contains(expression, "const state={seen:false}"):
+					result.clickObserved = false
+				case strings.Contains(expression, "return state.seen===true"):
+					value = result.clickObserved
 				case strings.Contains(expression, "this.addEventListener('click'"):
 					result.clickObserved = false
 				case strings.Contains(expression, "const seen=window[key]===true"):
@@ -140,6 +157,14 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 				result.inputEvents++
 				if command.Method == "Input.dispatchMouseEvent" && command.Params["type"] == "mouseReleased" {
 					result.clickObserved = true
+					result.mouseReleases++
+					if result.acknowledgeClick {
+						emitBinding = result.clickBinding
+					}
+					if result.loseClickMarker {
+						result.clickObserved = false
+						result.URL = "https://example.test/after"
+					}
 				}
 				if command.Method == "Input.dispatchKeyEvent" {
 					result.keyEvents = append(result.keyEvents, command.Params)
@@ -149,6 +174,9 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 					result.insertedTexts = append(result.insertedTexts, text)
 				}
 				result.mu.Unlock()
+			}
+			if emitBinding != "" {
+				_ = connection.WriteJSON(map[string]interface{}{"method": "Runtime.bindingCalled", "params": map[string]interface{}{"name": emitBinding, "payload": "click", "executionContextId": 1}})
 			}
 			if err := connection.WriteJSON(response); err != nil {
 				return
@@ -375,4 +403,33 @@ func TestDirectClickGeometryForegroundsTarget(t *testing.T) {
 	if err != nil || x != 12 || y != 34 {
 		t.Fatalf("background geometry: %v %v %v", x, y, err)
 	}
+}
+
+func TestDirectClickProofSurvivesReplacedDocument(t *testing.T) {
+	fake := newFakeCDPServer(t)
+	fake.loseClickMarker = true
+	fake.acknowledgeClick = true
+	driver, err := newDirectCDPDriver(fake.server.URL)
+	require.NoError(t, err)
+	defer driver.Quit()
+	element, err := driver.FindElement(selenium.ByCSSSelector, "#submit")
+	require.NoError(t, err)
+	require.NoError(t, element.Click())
+	fake.mu.Lock()
+	defer fake.mu.Unlock()
+	require.Equal(t, 1, fake.mouseReleases, "must never click again after acknowledged navigation")
+	require.Empty(t, fake.clickBinding)
+}
+func TestDirectClickProofDoesNotAcceptNavigationWithoutAcknowledgement(t *testing.T) {
+	fake := newFakeCDPServer(t)
+	fake.loseClickMarker = true
+	driver, err := newDirectCDPDriver(fake.server.URL)
+	require.NoError(t, err)
+	defer driver.Quit()
+	element, err := driver.FindElement(selenium.ByCSSSelector, "#submit")
+	require.NoError(t, err)
+	require.Error(t, element.Click())
+	fake.mu.Lock()
+	defer fake.mu.Unlock()
+	require.Empty(t, fake.clickBinding)
 }
