@@ -428,6 +428,9 @@ func (s *service) callMethod(owner interface{}, methodName string, response *Ser
 }
 
 func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRequest) (*ServiceCallResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, err
+	}
 	session, err := s.session(context, request.SessionID)
 	if err != nil {
 		return nil, err
