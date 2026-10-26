@@ -16,6 +16,21 @@ func TestWorkflowSelector(t *testing.T) {
 		ExpectedRelative bool
 	}{
 		{
+			Description: "network workflow port is not a task suffix",
+			Selector:    "http://127.0.0.1:8090/generated.yaml",
+			ExpectedURL: "http://127.0.0.1:8090/generated.yaml", ExpectedName: "generated", ExpectedTaks: "*",
+		},
+		{
+			Description: "network workflow port and explicit tasks",
+			Selector:    "http://127.0.0.1:8090/generated.yaml:check",
+			ExpectedURL: "http://127.0.0.1:8090/generated.yaml", ExpectedName: "generated", ExpectedTaks: "check",
+		},
+		{
+			Description: "IPv6 workflow port is not a task suffix",
+			Selector:    "http://[::1]:8090/generated.json",
+			ExpectedURL: "http://[::1]:8090/generated.json", ExpectedName: "generated", ExpectedTaks: "*",
+		},
+		{
 			Description:      "relative selector with wildcard",
 			Selector:         "go/build.csv:*",
 			ExpectedURL:      "go/build.csv",

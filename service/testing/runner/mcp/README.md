@@ -1,5 +1,35 @@
 # MCP runner
 
+`readCapture` reads an existing WebDriver JSONL network capture; it makes no
+remote call. It returns `Transactions` with `method`, `args`, HTTP `status`, the
+complete JSON-RPC `response`, `requestId`, and `durationMs`. Responses are paired
+by JSON-RPC ID within each network transaction, so reused IDs after navigation
+cannot pair with an earlier page's response. JSON batches, base64 bodies, and
+SSE messages are supported. Missing, truncated, malformed, ambiguous, or empty
+tool-call evidence fails with an event/stage diagnostic that omits body contents
+and headers. `Methods` optionally filters returned tool names. `Arguments` can
+select a recursive exact subset, including a resource URI or preview session ID;
+arrays match exactly, and omitted fields differ from explicit null. All captured tool
+calls are still checked. `MaxTransactions` defaults to 10000 and fails rather than
+silently dropping excess calls. Use explicit counts and `validator:assert` with
+`each: true` so an empty filtered collection cannot become a passing assertion.
+
+```yaml
+pipeline:
+  captured:
+    action: mcp/runner:readCapture
+    source: {URL: '${runDir}/browser.jsonl'}
+    methods: [namespaces/preview]
+    arguments: {resource: {uri: 'window://platform/advertiser'}}
+  check:
+    action: validator:assert
+    each: true
+    actual: $captured.Transactions
+    expect:
+      method: namespaces/preview
+      status: 200
+```
+
 `mcp/runner` calls an external MCP server over stateless Streamable HTTP with the
 2026-07-28 protocol. It opens a fresh connection for each Endly action. Tool
 calls are sent once; transport failures are returned without replaying a call.

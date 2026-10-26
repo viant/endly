@@ -1,0 +1,31 @@
+pipeline:
+  fixture:
+    action: nop
+    init:
+      allowed:
+        body:
+          data: [1]
+          empty: []
+          nilLeaf: null
+      denied:
+        StructuredContent: {}
+      StructuredContent:
+        data: unrelated-root-value
+  assertions:
+    action: validator:assert
+    actual:
+      nonempty: $IsDefined(allowed.body.data)
+      empty: $IsDefined(allowed.body.empty)
+      nilLeaf: $IsDefined(allowed.body.nilLeaf)
+      missing: $IsDefined(denied.StructuredContent.data)
+      missingRoot: $IsDefined(absent)
+    expect:
+      nonempty: true
+      empty: true
+      nilLeaf: true
+      missing: false
+      missingRoot: false
+  rejectMismatch:
+    when: $assertions.FailedCount > 0
+    action: workflow:fail
+    message: IsDefined nested presence regression detected
