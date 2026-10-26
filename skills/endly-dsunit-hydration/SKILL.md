@@ -10,7 +10,7 @@ repopulate dictionary rows if the reset also affects them. Preloaded data is par
 of a focused case's prerequisites even when the infrastructure task is omitted.
 
 Template `data` references can aggregate case fixtures into workflow data before
-setup runs. Preserve each case's tag/Key so hydration publishes rows back to the
+setup runs. Select datastores explicitly: accumulated `data.*_dbsetup` keys do not identify the selected module. Preserve each case's tag/Key so hydration publishes rows back to the
 correct case. For table-keyed fixtures, query dsunit:sequence before AsTableRecords;
 use symbolic sequence keys and a namespace suffix to publish records by case.
 For TableData fixtures, preserve Table, Data, Key, AutoGenerate and PostIncrement.
@@ -40,3 +40,5 @@ Retrieve endly-dsunit-mapping, endly-dsunit-sequences and endly-dsunit-prepare f
 the relevant contracts via endly_service_info; use endly-testing for methodology.
 
 Use endly_dsunit_register/init for connection/schema setup, then endly_dsunit_prepare for dictionary data, endly_dsunit_mapping for mappings, endly_dsunit_sequence for physical sequences, and endly_dsunit_prepare for converted case records. Use a loaded workflow when init/post/UDF composition is needed.
+
+For the worked allocation pattern and empty-table checks, retrieve `endly-dsunit` and read `references/fixtures-and-sequences.md`. Keep sequence-bearing fixture rows out of eager ordinary `init` expansion.
