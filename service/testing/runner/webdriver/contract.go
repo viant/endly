@@ -185,6 +185,7 @@ type WebElementCallResponse struct {
 
 // RunRequest represents group of selenium web elements calls
 type RunRequest struct {
+	CaptureTimings       bool `description:"retain fixed-phase driver timing spans; no DOM, selectors, scripts or payload values are recorded"`
 	SessionID            string
 	Browser              string
 	RemoteSelenium       string             //remote selenium resource
@@ -444,6 +445,7 @@ func NewRunRequestFromURL(URL string) (*RunRequest, error) {
 
 // RunResponse represents selenium call response
 type RunResponse struct {
+	Timings      []*InteractionTiming `json:",omitempty"`
 	SessionID    string
 	Backend      string
 	Data         map[string]interface{}
