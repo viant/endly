@@ -124,8 +124,14 @@ func (b *binary) lessThan(state data.Map) (interface{}, bool, error) {
 	if !hasX && !hasY {
 		return false, false, nil
 	}
-	xNum := toolbox.AsFloat(x)
-	yNum := toolbox.AsFloat(y)
+	xNum, err := numericOperand(x)
+	if err != nil {
+		return false, true, err
+	}
+	yNum, err := numericOperand(y)
+	if err != nil {
+		return false, true, err
+	}
 	return xNum < yNum, true, nil
 }
 
@@ -143,8 +149,14 @@ func (b *binary) lessThanEqual(state data.Map) (interface{}, bool, error) {
 	if !hasX && !hasY {
 		return false, false, nil
 	}
-	xNum := toolbox.AsFloat(x)
-	yNum := toolbox.AsFloat(y)
+	xNum, err := numericOperand(x)
+	if err != nil {
+		return false, true, err
+	}
+	yNum, err := numericOperand(y)
+	if err != nil {
+		return false, true, err
+	}
 	return xNum <= yNum, true, nil
 
 }
@@ -163,8 +175,14 @@ func (b *binary) greaterThanEqual(state data.Map) (interface{}, bool, error) {
 	if !hasX && !hasY {
 		return false, false, nil
 	}
-	xNum := toolbox.AsFloat(x)
-	yNum := toolbox.AsFloat(y)
+	xNum, err := numericOperand(x)
+	if err != nil {
+		return false, true, err
+	}
+	yNum, err := numericOperand(y)
+	if err != nil {
+		return false, true, err
+	}
 	return xNum >= yNum, true, nil
 }
 
@@ -182,8 +200,14 @@ func (b *binary) greaterThan(state data.Map) (interface{}, bool, error) {
 	if !hasX && !hasY {
 		return nil, false, nil
 	}
-	xNum := toolbox.AsFloat(x)
-	yNum := toolbox.AsFloat(y)
+	xNum, err := numericOperand(x)
+	if err != nil {
+		return false, true, err
+	}
+	yNum, err := numericOperand(y)
+	if err != nil {
+		return false, true, err
+	}
 	return xNum > yNum, true, nil
 }
 
@@ -273,4 +297,17 @@ func (b *binary) or(state data.Map) (interface{}, bool, error) {
 
 	yBool := toolbox.AsBoolean(y)
 	return xBool || yBool, true, nil
+}
+
+// Numeric comparisons retain legacy nil/boolean numeric semantics, but an
+// unresolved UDF or other nonnumeric string is never silently converted to zero.
+func numericOperand(value interface{}) (float64, error) {
+	if value == nil {
+		return 0, nil
+	}
+	number, err := toolbox.ToFloat(value)
+	if err != nil {
+		return 0, fmt.Errorf("numeric comparison operand is not numeric (%T)", value)
+	}
+	return number, nil
 }
