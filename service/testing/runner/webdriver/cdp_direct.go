@@ -48,6 +48,7 @@ type directCDPConnection struct {
 	pending     map[int64]chan *directCDPEnvelope
 	performance []selog.Message
 	browser     []selog.Message
+	clickProofs map[string]chan struct{}
 	dialogText  string
 	closed      chan struct{}
 	closeOnce   sync.Once
@@ -144,6 +145,21 @@ func (c *directCDPConnection) appendEvent(envelope *directCDPEnvelope) {
 		"message": map[string]interface{}{"method": envelope.Method, "params": json.RawMessage(envelope.Params)},
 	})
 	c.mu.Lock()
+	if envelope.Method == "Runtime.bindingCalled" {
+		var params struct {
+			Name    string `json:"name"`
+			Payload string `json:"payload"`
+		}
+		if json.Unmarshal(envelope.Params, &params) == nil && params.Payload == "click" {
+			if proof := c.clickProofs[params.Name]; proof != nil {
+				select {
+				case <-proof:
+				default:
+					close(proof)
+				}
+			}
+		}
+	}
 	if envelope.Method != "Runtime.consoleAPICalled" {
 		c.performance = append(c.performance, selog.Message{Timestamp: now, Level: selog.Info, Message: string(inner)})
 		if len(c.performance) > 10_000 {
@@ -922,6 +938,10 @@ return true;`)
 	if err := waitForElementMotion(e.driver, e, 2*time.Second); err != nil {
 		return err
 	}
+	connection, err := e.driver.currentConnection()
+	if err != nil {
+		return err
+	}
 	for attempt := 0; attempt < 3; attempt++ {
 		x, y, err := e.clickableCenter(2 * time.Second)
 		if err != nil {
@@ -937,7 +957,13 @@ return true;`)
 		// A chart or nested scroller can shift after the hit test. A native
 		// pointer dispatch only counts when this element receives its click.
 		marker := fmt.Sprintf("__endlyClickTarget%d", time.Now().UnixNano())
-		if _, err := e.evaluate(fmt.Sprintf(`const key=%q, target=this;const state={seen:false};state.guard=event=>{if(!event.composedPath().includes(target)){event.preventDefault();event.stopImmediatePropagation();return;}if(event.type==='click')state.seen=true;};window[key]=state;for(const type of ['pointerdown','mousedown','mouseup','click'])window.addEventListener(type,state.guard,true);return true;`, marker)); err != nil {
+		binding := marker + "Ack"
+		proof, release, err := connection.beginClickProof(binding)
+		if err != nil {
+			return err
+		}
+		if _, err := e.evaluate(fmt.Sprintf(`const key=%q, binding=%q, target=this;const state={seen:false};state.guard=event=>{if(!event.composedPath().includes(target)){event.preventDefault();event.stopImmediatePropagation();return;}if(event.type==='click'){state.seen=true;window[binding]('click');}};window[key]=state;for(const type of ['pointerdown','mousedown','mouseup','click'])window.addEventListener(type,state.guard,true);return true;`, marker, binding)); err != nil {
+			release()
 			return err
 		}
 		cleanup := func() (interface{}, error) {
@@ -949,15 +975,25 @@ return true;`)
 		} {
 			if _, err := e.driver.CDPCommand("Input.dispatchMouseEvent", event); err != nil {
 				_, _ = cleanup()
+				acknowledged := clickProofSeen(proof, 0)
+				release()
+				if acknowledged {
+					return nil
+				}
 				return err
 			}
 		}
 		seen, err := cleanup()
+		// The click capture listener reports through CDP before the default
+		// action can replace the document. Its acknowledgement survives both
+		// lost window state and execution-context destruction after navigation.
+		acknowledged := seen == true || clickProofSeen(proof, time.Second)
+		release()
+		if acknowledged {
+			return nil
+		}
 		if err != nil {
 			return err
-		}
-		if seen == true {
-			return nil
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
