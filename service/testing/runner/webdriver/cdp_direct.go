@@ -930,18 +930,22 @@ return true;`)
 		// A chart or nested scroller can shift after the hit test. A native
 		// pointer dispatch only counts when this element receives its click.
 		marker := fmt.Sprintf("__endlyClickTarget%d", time.Now().UnixNano())
-		if _, err := e.evaluate(fmt.Sprintf(`const key=%q;this.addEventListener('click',()=>{window[key]=true},{once:true,capture:true});return true;`, marker)); err != nil {
+		if _, err := e.evaluate(fmt.Sprintf(`const key=%q, target=this;const state={seen:false};state.guard=event=>{if(!event.composedPath().includes(target)){event.preventDefault();event.stopImmediatePropagation();return;}if(event.type==='click')state.seen=true;};window[key]=state;for(const type of ['pointerdown','mousedown','mouseup','click'])window.addEventListener(type,state.guard,true);return true;`, marker)); err != nil {
 			return err
+		}
+		cleanup := func() (interface{}, error) {
+			return e.driver.evaluate(fmt.Sprintf(`const key=%q,state=window[key];if(!state)return false;for(const type of ['pointerdown','mousedown','mouseup','click'])window.removeEventListener(type,state.guard,true);delete window[key];return state.seen===true;`, marker), nil)
 		}
 		for _, event := range []map[string]interface{}{
 			{"type": "mousePressed", "x": x, "y": y, "button": "left", "clickCount": 1},
 			{"type": "mouseReleased", "x": x, "y": y, "button": "left", "clickCount": 1},
 		} {
 			if _, err := e.driver.CDPCommand("Input.dispatchMouseEvent", event); err != nil {
+				_, _ = cleanup()
 				return err
 			}
 		}
-		seen, err := e.driver.evaluate(fmt.Sprintf(`const key=%q;const seen=window[key]===true;delete window[key];return seen;`, marker), nil)
+		seen, err := cleanup()
 		if err != nil {
 			return err
 		}
