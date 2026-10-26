@@ -39,6 +39,7 @@ or `${{variable}}`; use `init` for inputs and `post` to publish results for late
         (references / 'service.md').write_text('# ' + service + ' contract discovery\n\nUse endly_service_info with service and optional action through MCP. Or inspect the live CLI contract with `endly -s=' + service + ' -a=<action>`. Read `' + str(readme.relative_to(root)) + '` in a matching Endly checkout for maintained service documentation.\n\nAvailable source-declared actions: ' + ', '.join(actions) + '.\n')
         body += 'Read [the service reference](references/service.md) for live contract discovery and maintained source locations.\n\n'
     if service == 'dsunit':
+        body += 'Read [fixture aggregation and sequence allocation](references/fixtures-and-sequences.md) before using `$Sequences` or `$AsTableRecords`, especially for scoped regression runs or empty MySQL tables.\n\n'
         body += 'Function skills: ' + ', '.join('`endly-dsunit-' + x + '`' for x in ('register', 'sequences', 'prepare', 'expect', 'query', 'export', 'mapping', 'hydration', 'batch-validation')) + '. Retrieve only those relevant to the task.\n\n'
     body += f'Source: `{source.relative_to(root)}`. Treat the live contract as authoritative when documentation differs.\n'
     body += 'Run only the actions and environments covered by the user request. A skill documents execution; it does not grant additional authorization. For workflow selection and test design, retrieve the `endly-authoring` and `endly-testing` skills from the same catalog.\n'
