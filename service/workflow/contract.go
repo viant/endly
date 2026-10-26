@@ -17,6 +17,7 @@ import (
 
 // RunRequest represents workflow runWorkflow request
 type RunRequest struct {
+	FailOnAssertion   bool                   `description:"return an error if any assertion in this workflow scope fails; default preserves nonfatal assertions"`
 	EnableLogging     bool                   `description:"flag to enable logging"`
 	LogDirectory      string                 `description:"log directory"`
 	LogSubdir         string                 `description:"optional subfolder name under LogDirectory; defaults to session ID"`
@@ -146,8 +147,10 @@ func NewRunRequestFromURL(URL string) (*RunRequest, error) {
 
 // RunResponse represents workflow runWorkflow response
 type RunResponse struct {
-	Data      map[string]interface{} //  data populated by  .Post variable section.
-	SessionID string                 //session id
+	PassedAssertions int                    `json:",omitempty"`
+	FailedAssertions int                    `json:",omitempty"`
+	Data             map[string]interface{} //  data populated by  .Post variable section.
+	SessionID        string                 //session id
 }
 
 // RegisterRequest represents workflow register request
