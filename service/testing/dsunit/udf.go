@@ -300,6 +300,12 @@ func allocateTableSequence(values map[string]interface{}, table string, state da
 	idState := data.NewMap()
 	idState.SetValue(seqKey, seqValue)
 	for k, v := range values {
+		// Logical aliases must survive until the second pass, after every
+		// table's IDs are allocated. Expanding only the table counter here
+		// turns "prefix-$Sequences.TABLE/case.id" into "prefix-101/case.id".
+		if text, ok := v.(string); ok && (strings.Contains(text, "$"+seqKey+"/") || strings.Contains(text, "${"+seqKey+"/")) {
+			continue
+		}
 		values[k] = idState.Expand(v)
 	}
 	if stateKey != "" {

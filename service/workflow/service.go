@@ -475,6 +475,11 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 		SessionID: upstreamContext.SessionID,
 	}
 
+	var assertionScope *workflowAssertionScope
+	if request.FailOnAssertion {
+		assertionScope = newWorkflowAssertionScope(upstreamContext)
+		upstreamContext = assertionScope.context
+	}
 	s.enableLoggingIfNeeded(upstreamContext, request)
 	workflow, err := s.getWorkflow(upstreamContext, request)
 	if err != nil {
@@ -510,6 +515,9 @@ func (s *Service) runWorkflow(upstreamContext *endly.Context, request *RunReques
 		request.TagIDs,
 	))
 	defer func() {
+		if assertionScope != nil {
+			err = assertionScope.finish(response, err)
+		}
 		status := "ok"
 		errMsg := ""
 		if err != nil {
