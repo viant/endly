@@ -213,6 +213,7 @@ func (c *directCDPConnection) close() {
 }
 
 type directCDPDriver struct {
+	timings atomic.Pointer[interactionTimings]
 	selenium.WebDriver
 	address          string
 	client           *http.Client
@@ -321,6 +322,8 @@ func (d *directCDPDriver) currentConnection() (*directCDPConnection, error) {
 }
 
 func (d *directCDPDriver) evaluate(script string, args []interface{}) (interface{}, error) {
+	endTiming := startInteractionPhase(d.timings.Load(), "cdp.Runtime.evaluate")
+	defer endTiming()
 	connection, err := d.currentConnection()
 	if err != nil {
 		return nil, err
@@ -507,6 +510,8 @@ func (d *directCDPDriver) StopLoading() error {
 }
 
 func (d *directCDPDriver) CDPCommand(method string, params map[string]interface{}) (json.RawMessage, error) {
+	endTiming := startInteractionPhase(d.timings.Load(), cdpTimingPhase(method))
+	defer endTiming()
 	connection, err := d.currentConnection()
 	if err != nil {
 		return nil, err
@@ -893,6 +898,8 @@ func (e *directCDPElement) evaluate(body string, args ...interface{}) (interface
 }
 
 func (e *directCDPElement) Click() error {
+	endTiming := startInteractionPhase(e.driver.timings.Load(), "native.click")
+	defer endTiming()
 	// Native select popups are outside the page's clickable viewport. An
 	// option's rectangle is therefore not a reliable CDP mouse target.
 	if tag, err := e.TagName(); err != nil {
@@ -956,6 +963,8 @@ return true;`)
 // A preceding tab change or scroll can move the target after its first
 // rectangle is measured. Dispatch only when the element owns a stable point.
 func (e *directCDPElement) clickableCenter(timeout time.Duration) (float64, float64, error) {
+	endTiming := startInteractionPhase(e.driver.timings.Load(), "native.hit_test")
+	defer endTiming()
 	if err := e.driver.bringToFront(); err != nil {
 		return 0, 0, err
 	}
