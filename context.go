@@ -542,7 +542,8 @@ func predefinedRegistry() data.Map {
 		if textExpr == "" {
 			return false, nil
 		}
-		for _, part := range strings.Split(textExpr, ".") {
+		parts := strings.Split(textExpr, ".")
+		for index, part := range parts {
 			if len(node) == 0 {
 				return false, nil
 			}
@@ -550,8 +551,11 @@ func predefinedRegistry() data.Map {
 			if !has {
 				return false, nil
 			}
-			node = data.GetMap(part)
-
+			if index < len(parts)-1 {
+				// Descend from the current node without converting or replacing
+				// the value in the caller's state. A present leaf may be empty or nil.
+				node = toolbox.AsMap(node.Get(part))
+			}
 		}
 		return true, nil
 	})

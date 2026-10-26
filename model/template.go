@@ -54,15 +54,21 @@ func (t *TransientTemplate) Expand(task *Task, parentTag string, inline *Inlined
 		parent, name := url.Split(templateURL, file.Scheme)
 		holder, err := fs.Object(context.Background(), parent)
 		if err != nil {
-			err = fmt.Errorf("failed to LookupValueNode parent: %v, %v", parent, err)
+			return fmt.Errorf("template task %q subPath %q: lookup parent %q: %w", task.Name, t.SubPath, parent, err)
 		}
 		objects, err := fs.List(context.Background(), parent)
 		if err != nil {
-			return err
+			return fmt.Errorf("template task %q subPath %q: list parent %q: %w", task.Name, t.SubPath, parent, err)
 		}
-		instances = graph.NewInstances(holder.URL(), name, objects)
+		instances, err = graph.NewInstancesChecked(holder.URL(), name, objects)
+		if err != nil {
+			return fmt.Errorf("template task %q subPath %q: %w", task.Name, t.SubPath, err)
+		}
 		if t.Range == "" {
 			t.Range = instances.Range()
+			if t.Range == "" {
+				return fmt.Errorf("template task %q subPath %q: no indexed instances found; use an indexed pattern such as ${index}_* matching existing resources", task.Name, t.SubPath)
+			}
 		}
 	}
 

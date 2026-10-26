@@ -10,6 +10,9 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"gopkg.in/yaml.v3"
+	"net/url"
+	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -76,39 +79,94 @@ func (v *Variable) getValueFromInput(in data.Map) (interface{}, error) {
 	return value, nil
 }
 
-func (v *Variable) formatStateInfo(state data.Map) string {
-	var aMap = state.AsEncodableMap()
-	var result = map[string]interface{}{}
-	for k, v := range aMap {
-		if "func()" == v {
+// Required-variable diagnostics must never encode or traverse state values.
+// Keep the lexically first keys with bounded memory, even for a huge state map.
+func (v *Variable) formatAvailableKeys(state data.Map) string {
+	const maxKeys = 16
+	keys := make([]string, 0, maxKeys+1)
+	for key := range state {
+		if !diagnosticKey(key) {
 			continue
 		}
-		if toolbox.IsStruct(result) || toolbox.IsSlice(result) {
-			JSONVal, _ := toolbox.AsJSONText(v)
-			if len(JSONVal) < 250 {
-				result[k] = v
-			} else if toolbox.IsSlice(result) {
-				result[k] = "[..large array..]"
-			} else {
-				result[k] = "{..large object..}"
-			}
+		if len(keys) == maxKeys && key >= keys[len(keys)-1] {
 			continue
 		}
-		result[k] = v
+		keys = append(keys, key)
+		sort.Strings(keys)
+		if len(keys) > maxKeys {
+			keys = keys[:maxKeys]
+		}
 	}
-	JSONResult, _ := toolbox.AsIndentJSONText(result)
-	return JSONResult
+	result := strings.Join(keys, ", ")
+	if omitted := len(state) - len(keys); omitted > 0 {
+		if result != "" {
+			result += "; "
+		}
+		result += strconv.Itoa(omitted) + " more keys omitted"
+	}
+	return "[" + result + "]"
+}
+
+func diagnosticKey(key string) bool {
+	if len(key) == 0 || len(key) > 48 {
+		return false
+	}
+	for _, c := range key {
+		if !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '_' || c == '.' || c == '-') {
+			return false
+		}
+	}
+	return true
+}
+
+func boundedDiagnosticName(name string) string {
+	if len(name) > 64 {
+		name = name[:64] + "..."
+	}
+	return strings.Map(func(c rune) rune {
+		if c < 32 || c > 126 || c == '\'' || c == '"' {
+			return '_'
+		}
+		return c
+	}, name)
+}
+
+func diagnosticOwner(state data.Map) string {
+	raw, _ := state[OwnerURL].(string)
+	if raw == "" || len(raw) > 2048 {
+		return "(workflow unavailable)"
+	}
+	owner, err := url.Parse(raw)
+	if err != nil || owner.Opaque != "" {
+		return "(workflow unavailable)"
+	}
+	owner.User = nil
+	owner.RawQuery = ""
+	owner.ForceQuery = false
+	owner.Fragment = ""
+	owner.RawFragment = ""
+	result := owner.String()
+	result = strings.Map(func(c rune) rune {
+		if c < 32 || c > 126 {
+			return '_'
+		}
+		return c
+	}, result)
+	if len(result) > 192 {
+		result = result[:192] + "..."
+	}
+	return result
 }
 
 func (v *Variable) validate(value interface{}, in data.Map) error {
 	val := toolbox.AsString(value)
 	if v.Required {
-		source := in.GetString(OwnerURL)
+		source := diagnosticOwner(in)
 		if value == nil || toolbox.AsString(value) == "" {
-			return fmt.Errorf("variable '%v' is required by %v, but was empty,  \n\tstate dump: %v", v.Name, source, v.formatStateInfo(in))
+			return fmt.Errorf("variable '%s' is required by %s, but was empty; supply the required workflow parameter; available keys: %s", boundedDiagnosticName(v.Name), source, v.formatAvailableKeys(in))
 		}
 		if v.EmptyIfUnexpanded && val == v.Value && strings.HasPrefix(val, "$") {
-			return fmt.Errorf("variable '%v' is required by %v, but %v was not expanded,\n\tstate dump:%v", v.Name, source, v.Value, v.formatStateInfo(in))
+			return fmt.Errorf("variable '%s' is required by %s, but its default expression was not expanded; supply the required workflow parameter or its referenced input; available keys: %s", boundedDiagnosticName(v.Name), source, v.formatAvailableKeys(in))
 		}
 	}
 	return nil

@@ -37,6 +37,7 @@ func New() endly.Service {
 }
 
 func (s *service) registerRoutes() {
+	s.registerCaptureRoute()
 	s.registerResourceRoutes()
 	s.Register(&endly.Route{
 		Action:           "listTools",

@@ -30,26 +30,44 @@ type (
 )
 
 func (i *Instances) Range() string {
+	if i == nil {
+		return ""
+	}
 	max := i.Lookup(i.Max)
+	if max == nil {
+		return ""
+	}
 	return fmt.Sprintf("%v..%v", i.Min, max.Match)
 }
 
 func (i *Instances) Lookup(index int) *Instance {
+	if i == nil {
+		return nil
+	}
 	pos, ok := i.ByIdx[index]
-	if !ok {
+	if !ok || pos < 0 || pos >= len(i.Instances) {
 		return nil
 	}
 	return i.Instances[pos]
 }
 
 func NewInstances(holderURL string, match string, objects []storage.Object) *Instances {
+	result, _ := NewInstancesChecked(holderURL, match, objects)
+	return result
+}
+
+// NewInstancesChecked reports invalid template patterns instead of panicking.
+func NewInstancesChecked(holderURL string, match string, objects []storage.Object) (*Instances, error) {
 	result := &Instances{
 		ByIdx: map[int]int{},
 		Min:   math.MaxInt,
 	}
 	matchExpr := strings.Replace(match, "${index}", "(\\d+)", 1)
 	matchExpr = strings.Replace(matchExpr, "*", ".+", 1)
-	expr := regexp.MustCompile(matchExpr)
+	expr, err := regexp.Compile(matchExpr)
+	if err != nil {
+		return result, fmt.Errorf("invalid template instance pattern %q: %w", match, err)
+	}
 	for i, object := range objects {
 		if url.Equals(object.URL(), holderURL) {
 			continue
@@ -76,5 +94,5 @@ func NewInstances(holderURL string, match string, objects []storage.Object) *Ins
 			result.Min = instance.Index
 		}
 	}
-	return result
+	return result, nil
 }

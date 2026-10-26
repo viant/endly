@@ -24,6 +24,7 @@ type Session struct {
 	Attached          bool
 	Backend           string
 	mu                sync.Mutex
+	timings           *interactionTimings
 	cleanupRegistered bool
 }
 

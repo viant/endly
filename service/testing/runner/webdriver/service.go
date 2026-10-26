@@ -122,6 +122,11 @@ func (s *service) getResultPath(key string, call *MethodCall, kind PathKind) []s
 }
 
 func (s *service) run(context *endly.Context, request *RunRequest) (response *RunResponse, err error) {
+	var timings *interactionTimings
+	if request.CaptureTimings {
+		timings = newInteractionTimings(time.Now)
+		defer func() { response.Timings = timings.snapshot() }()
+	}
 	response = &RunResponse{
 		Data:         make(map[string]interface{}),
 		LookupErrors: make([]string, 0),
@@ -162,8 +167,16 @@ func (s *service) run(context *endly.Context, request *RunRequest) (response *Ru
 	}
 	response.SessionID = request.SessionID
 	response.Backend = session.Backend
+	endLock := startInteractionPhase(timings, "session.lock")
 	session.mu.Lock()
+	endLock()
 	defer session.mu.Unlock()
+	session.timings = timings
+	if direct, ok := session.driver.(*directCDPDriver); ok {
+		direct.timings.Store(timings)
+		defer direct.timings.Store(nil)
+	}
+	defer func() { session.timings = nil }()
 	var currentAction *Action
 	var currentCall *MethodCall
 	defer func() {
@@ -662,6 +675,7 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 		findTimeout = 0
 	}
 	var err error
+	endLookup := startInteractionPhase(session.timings, "element.lookup")
 	if request.Strict {
 		elements, findErr := session.driver.FindElements(selector.By, selector.Value)
 		err = findErr
@@ -670,11 +684,14 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 		case 1:
 			element = elements[0]
 		default:
+			endLookup()
 			return response, fmt.Errorf("strict locator matched %d elements: %s:%s", len(elements), selector.By, selector.Value)
 		}
 	} else {
 		element, err = findElement(context.Background(), session.driver, selector, findTimeout)
 	}
+
+	endLookup()
 
 	if err != nil || element == nil {
 		response.LookupError = fmt.Sprintf("failed to lookup element: %v %v, %v", selector.By, selector.Value, err)
@@ -687,7 +704,9 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 	}
 	switch request.Call.Method {
 	case "Click", "SendKeys", "Clear", "Fill", "Submit", "SelectOption", "MoveTo":
-		if err = s.ensureVisible(context.Background(), element, time.Duration(request.Call.WaitTimeMs)*time.Millisecond); err != nil {
+		if err = timedInteraction(session.timings, "element.visible", func() error {
+			return s.ensureVisible(context.Background(), element, time.Duration(request.Call.WaitTimeMs)*time.Millisecond)
+		}); err != nil {
 			// ChromeDriver 150 can return a JSON null for IsDisplayed even
 			// when the element lookup succeeded. Let the actual interaction
 			// report visibility/interactability in that compatibility case.
@@ -698,7 +717,7 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 				return response, err
 			}
 		}
-		if err = s.scrollIntoView(element); err != nil {
+		if err = timedInteraction(session.timings, "element.scroll", func() error { return s.scrollIntoView(element) }); err != nil {
 			response.LookupError = fmt.Sprintf("element %s could not be scrolled into view: %v", request.Selector.Value, err)
 			return response, err
 		}
@@ -714,14 +733,16 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 		})
 	} else {
 		if request.Call.Method == "Click" {
-			if err = s.waitForElementState(context.Background(), element.IsEnabled, 2*time.Second, "element is not enabled"); err != nil && err.Error() != "nil return value" {
+			if err = timedInteraction(session.timings, "element.enabled", func() error {
+				return s.waitForElementState(context.Background(), element.IsEnabled, 2*time.Second, "element is not enabled")
+			}); err != nil && err.Error() != "nil return value" {
 				return response, err
 			}
-			if err = waitForElementMotion(session.driver, element, 2*time.Second); err != nil {
+			if err = timedInteraction(session.timings, "element.motion", func() error { return waitForElementMotion(session.driver, element, 2*time.Second) }); err != nil {
 				return response, err
 			}
 		}
-		err = s.call(context, element, request.Call, callResponse, elementPath...)
+		err = timedInteraction(session.timings, "element.invoke", func() error { return s.call(context, element, request.Call, callResponse, elementPath...) })
 	}
 	response.Result = callResponse.Result
 	util.Append(response.Data, callResponse.Data, true)
