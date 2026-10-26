@@ -446,7 +446,9 @@ func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRe
 	if key == "" {
 		key = request.Call.Method
 	}
-	return response, s.call(context, session.driver, request.Call, response, key)
+	return response, s.callBefore(context, session.driver, request.Call, response, func() {
+		drainBeforeNavigation(session, request.Call.Method, request.Call.Parameters)
+	}, key)
 }
 
 // missingStringValue normalizes ChromeDriver's JSON null for an optional DOM
@@ -465,7 +467,14 @@ func missingStringValue(call *MethodCall, response *ServiceCallResponse, err err
 }
 
 func (s *service) call(context *endly.Context, caller interface{}, call *MethodCall, response *ServiceCallResponse, elementPath ...string) (err error) {
+	return s.callBefore(context, caller, call, response, nil, elementPath...)
+}
+
+func (s *service) callBefore(context *endly.Context, caller interface{}, call *MethodCall, response *ServiceCallResponse, before func(), elementPath ...string) (err error) {
 	if call.WaitTimeMs == 0 {
+		if before != nil {
+			before()
+		}
 		if err = s.callMethod(caller, call.Method, response, call.Parameters); err != nil && !missingStringValue(call, response, err) {
 			return fmt.Errorf("webdriver call %s: %w", call.Method, err)
 		}
@@ -497,6 +506,9 @@ func (s *service) call(context *endly.Context, caller interface{}, call *MethodC
 			return contextErr
 		}
 		response.Result = nil
+		if before != nil {
+			before()
+		}
 		err = s.callMethod(caller, call.Method, response, call.Parameters)
 		if err != nil && !missingStringValue(call, response, err) {
 			return fmt.Errorf("webdriver call %s: %w", call.Method, err)
@@ -1514,6 +1526,7 @@ func (s *service) getWithGuard(context *endly.Context, session *Session, URL str
 	if err := session.driver.SetPageLoadTimeout(time.Duration(nav.TimeoutMs) * time.Millisecond); err != nil {
 		return report, fmt.Errorf("set page-load timeout: %w", err)
 	}
+	drainBeforeNavigation(session, "Get", nil)
 	err := session.driver.Get(URL)
 	if err != nil {
 		if !isPageLoadTimeout(err) {
