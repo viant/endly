@@ -37,11 +37,22 @@ type RunRequest struct {
 	SelectorMode      string `description:"task selector mode: legacy or path (exact dotted paths in selector order)"`
 	Interactive       bool
 	*model.Inlined
-	workflow *model.Workflow //inline workflow from pipeline
+	workflow        *model.Workflow //inline workflow from pipeline
+	requestedURL    string
+	requestedURLSet bool
 }
 
 // Init initialises request
 func (r *RunRequest) Init() (err error) {
+	// Keep the authored source separate from WorkflowSelector's legacy .csv
+	// registry-name normalization. Init may be invoked more than once.
+	if !r.requestedURLSet || r.URL == "" || r.URL != model.WorkflowSelector(r.requestedURL).URL() {
+		r.requestedURL = r.URL
+		if r.requestedURL == "" {
+			r.requestedURL = r.Name
+		}
+		r.requestedURLSet = true
+	}
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("%v (%v)", err, r.AssetURL)
