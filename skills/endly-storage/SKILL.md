@@ -11,6 +11,23 @@ or `${variable}`; use `init` for inputs and `post` to publish results for later 
 
 Source-declared actions: `copy`, `create`, `download`, `exists`, `generate`, `list`, `remove`, `upload`.
 
+When a downloaded YAML, JSON or Markdown file is needed as text, declare
+`udf: AsString`. The default payload representation encodes non-ASCII content as
+`base64:...`; valid UTF-8 punctuation can therefore change an otherwise working
+ASCII-only workflow. Do not pass that encoded payload to an API expecting text.
+
+```yaml
+sourceDocument:
+  action: storage:download
+  source: {URL: '${workPath}/document.yaml'}
+  destKey: sourceText
+  udf: AsString
+```
+
+Keep binary downloads explicit (`Base64Encode`, for example, when an API expects
+an archive). `IsJSON` takes a file/resource name, not an in-memory JSON payload.
+Validate payload structure with native validators before writes.
+
 Read [the service reference](references/service.md) for live contract discovery and maintained source locations.
 
 Source: `service/system/storage/service.go`. Treat the live contract as authoritative when documentation differs.
