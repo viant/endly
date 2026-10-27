@@ -624,3 +624,22 @@ pipeline:
 
 
 - TODO add UDF (i.e to compress)
+## Generating large literal fixtures
+
+`storage:generate` streams literal templates in size mode without allocating the
+entire output. `size` is the total byte count, including an optional literal
+`prefix` written once. This supports headers followed by repeated records:
+
+```yaml
+action: storage:generate
+prefix: "column\n"
+template: "value\n"
+size: 6000007
+dest:
+  URL: fixtures/large.csv
+```
+
+A prefix longer than the requested size is rejected. Existing line-count and
+interpolated-template behavior remains unchanged; those modes still materialize
+content. Streaming literal generation does not qualify a consuming service's
+large-file support by itself.
