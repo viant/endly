@@ -43,6 +43,17 @@ func WithMaxEvents(limit int) Option {
 	}
 }
 
+// WithEventQueueSize sets the bounded in-flight event queue capacity. When the
+// queue fills, event publishers apply backpressure until the event pump catches
+// up instead of silently discarding events.
+func WithEventQueueSize(limit int) Option {
+	return func(service *Service) {
+		if limit > 0 {
+			service.eventQueueSize = limit
+		}
+	}
+}
+
 func WithCallbackHosts(hosts ...string) Option {
 	return func(service *Service) {
 		for _, host := range hosts {

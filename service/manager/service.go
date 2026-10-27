@@ -40,6 +40,7 @@ type Service struct {
 	sessionTTL            time.Duration
 	operationRetention    time.Duration
 	maxEvents             int
+	eventQueueSize        int
 	callbackHosts         map[string]bool
 	allowPrivateCallbacks bool
 	callbackClient        *http.Client
@@ -70,6 +71,7 @@ func New(factory ManagerFactory, options ...Option) *Service {
 		sessionTTL:         30 * time.Minute,
 		operationRetention: time.Hour,
 		maxEvents:          1000,
+		eventQueueSize:     1024,
 		callbackHosts:      map[string]bool{},
 		callbackClient:     &http.Client{Timeout: 10 * time.Second},
 		allowedActions:     map[string]bool{},

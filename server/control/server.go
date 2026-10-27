@@ -87,6 +87,7 @@ func Run(args []string, factory managerservice.ManagerFactory) error {
 	sessionTTL := flags.Duration("session-ttl", 30*time.Minute, "idle session lifetime")
 	operationRetention := flags.Duration("operation-retention", time.Hour, "terminal operation retention")
 	maxEvents := flags.Int("max-events", 1000, "maximum retained events per operation")
+	eventQueueSize := flags.Int("event-queue-size", 1024, "bounded in-flight event queue capacity; publishers wait when full")
 	var callbackHosts stringList
 	flags.Var(&callbackHosts, "allow-callback-host", "allowed callback hostname (repeatable)")
 	var allowedActions stringList
@@ -119,6 +120,7 @@ func Run(args []string, factory managerservice.ManagerFactory) error {
 		managerservice.WithSessionTTL(*sessionTTL),
 		managerservice.WithOperationRetention(*operationRetention),
 		managerservice.WithMaxEvents(*maxEvents),
+		managerservice.WithEventQueueSize(*eventQueueSize),
 		managerservice.WithCallbackHosts(callbackHosts...),
 		managerservice.WithPrivateCallbacks(*allowPrivateCallbacks),
 		managerservice.WithAllowedActions(allowedActions...),

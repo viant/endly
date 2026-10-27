@@ -278,6 +278,37 @@ func TestRetainedEventsIncludeTerminalResult(t *testing.T) {
 	require.Greater(t, operation.Events[0].Sequence, int64(2))
 }
 
+func TestEventQueueAppliesBackpressureWithoutDroppingEvents(t *testing.T) {
+	service := New(endly.New, WithMaxEvents(10000), WithEventQueueSize(1))
+	defer service.Shutdown(context.Background())
+	session, err := service.Open(context.Background(), &OpenRequest{})
+	require.NoError(t, err)
+	var workflow strings.Builder
+	workflow.WriteString("pipeline:\n")
+	for i := 0; i < 80; i++ {
+		fmt.Fprintf(&workflow, "  task%d:\n    action: nop\n", i)
+	}
+	_, err = service.LoadWorkflow(context.Background(), &LoadWorkflowRequest{
+		SessionID: session.SessionID,
+		URL:       "event-backpressure.yaml",
+		Content:   workflow.String(),
+	})
+	require.NoError(t, err)
+	operation, err := service.StartWorkflow(&RunWorkflowRequest{SessionID: session.SessionID, Workflow: "event-backpressure"})
+	require.NoError(t, err)
+	operation, err = service.WaitOperation(context.Background(), session.SessionID, operation.ID)
+	require.NoError(t, err)
+	require.Equal(t, OperationSucceeded, operation.Status)
+	require.Zero(t, operation.DroppedEvents)
+	var started int
+	for _, event := range operation.Events {
+		if event.Type == "task.started" {
+			started++
+		}
+	}
+	require.Equal(t, 80, started)
+}
+
 func TestWorkflowAssertionFailureStatus(t *testing.T) {
 	service := New(endly.New)
 	defer service.Shutdown(context.Background())
