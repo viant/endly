@@ -206,7 +206,7 @@ require (
 	github.com/viant/igo v0.2.1 // indirect
 	github.com/viant/jsonrpc v0.24.0
 	github.com/viant/mcp v0.24.0
-	github.com/viant/mcp-protocol v0.19.0
+	github.com/viant/mcp-protocol v0.19.2-0.20261027035052-af12d4f1eeb3
 	github.com/viant/pgo v0.11.0 // indirect
 	github.com/viant/sqlparser v0.13.1-0.20261005175605-18369aade19d // indirect
 	github.com/viant/structology v0.10.1-0.20261020182740-3fac6f36235c // indirect
