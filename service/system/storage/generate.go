@@ -20,6 +20,7 @@ const (
 
 // CreateRequest represents a resources Upload request, it takes context state key to Upload to target destination.
 type GenerateRequest struct {
+	Prefix        string `description:"Literal bytes written once before the template; included in Size"`
 	Template      string
 	LineTemplate  string
 	Lines         int
@@ -27,7 +28,7 @@ type GenerateRequest struct {
 	SizeInMb      int
 	Index         int
 	IndexVariable string
-	Mode          int           `description:"os.FileMode"`
+	Mode          int                `description:"os.FileMode"`
 	Dest          *location.Resource `required:"true" description:"destination asset or directory"` //target URL with credentials
 	FileCount     int
 	InBackground  bool
@@ -93,6 +94,41 @@ func (s *service) generate(context *endly.Context, request *GenerateRequest, res
 }
 
 func generateContent(context *endly.Context, request *GenerateRequest) io.Reader {
+	if request.Prefix == "" {
+		return generateBody(context, request)
+	}
+	bodyRequest := *request
+	bodyRequest.Prefix = ""
+	if request.Lines == 0 && request.Size > 0 {
+		bodyRequest.Size -= len(request.Prefix)
+		if bodyRequest.Size <= 0 {
+			return strings.NewReader(request.Prefix[:request.Size])
+		}
+	}
+	body := generateBody(context, &bodyRequest)
+	request.Index = bodyRequest.Index
+	return io.MultiReader(strings.NewReader(request.Prefix), body)
+}
+
+// repeatedContent streams a non-empty literal without allocating the output.
+type repeatedContent struct {
+	pattern string
+	offset  int
+}
+
+func (r *repeatedContent) Read(p []byte) (int, error) {
+	n := copy(p, r.pattern[r.offset:])
+	if n < len(p) {
+		n += copy(p[n:], r.pattern[:r.offset])
+	}
+	for n < len(p) {
+		n += copy(p[n:], p[:n])
+	}
+	r.offset = (r.offset + n) % len(r.pattern)
+	return n, nil
+}
+
+func generateBody(context *endly.Context, request *GenerateRequest) io.Reader {
 	if request.Template == "" {
 		request.Template = " "
 	}
@@ -106,6 +142,9 @@ func generateContent(context *endly.Context, request *GenerateRequest) io.Reader
 	}
 
 	if !strings.Contains(request.Template, "$") {
+		if request.Lines == 0 && request.Size > 0 {
+			return io.LimitReader(&repeatedContent{pattern: request.Template}, int64(request.Size))
+		}
 		text := strings.Repeat(request.Template+separator, repeat)
 		if request.Lines == 0 && request.Size > 0 {
 			text = string(text[:request.Size])
@@ -157,6 +196,12 @@ func (r *GenerateRequest) Init() error {
 
 // Validate checks if request is valid
 func (r *GenerateRequest) Validate() error {
+	if r.Size < 0 || r.SizeInMb < 0 || r.Lines < 0 || r.FileCount < 0 {
+		return errors.New("size, line count and file count must be nonnegative")
+	}
+	if r.Lines == 0 && r.Size > 0 && len(r.Prefix) > r.Size {
+		return errors.New("prefix exceeds requested size")
+	}
 	if r.Dest == nil {
 		return errors.New("dest was empty")
 	}
