@@ -192,7 +192,6 @@ func expandTablesIfNeeded(context *endly.Context, req *InitRequest) {
 }
 
 func (s *service) registerRoutes() {
-	s.registerExpectedBatchRoute()
 
 	s.Register(&endly.Route{
 		Action: "register",
