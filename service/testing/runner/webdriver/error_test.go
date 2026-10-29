@@ -30,3 +30,13 @@ func TestJavaScriptClickCandidateExcludesStaleElement(t *testing.T) {
 		t.Fatal("expected interaction failure to be eligible")
 	}
 }
+
+func TestUndeliveredNativeClickCanRetryButCannotUseJavaScript(t *testing.T) {
+	err := errors.New("native click did not reach target")
+	if !IsRetryableElementError(err) {
+		t.Fatal("undelivered native click should retry within the action deadline")
+	}
+	if isJavaScriptClickCandidate(err) {
+		t.Fatal("undelivered native clicks must not bypass disabled or refreshed controls with JavaScript")
+	}
+}
