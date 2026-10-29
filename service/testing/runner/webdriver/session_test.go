@@ -73,3 +73,22 @@ func TestRunCanDisableAutoStart(t *testing.T) {
 		t.Fatal("expected missing driver error")
 	}
 }
+
+func TestSessionCloseDiscardsCaptureAndNetworkObservationState(t *testing.T) {
+	driver := &quitCountingDriver{}
+	capture := newCaptureState(nil)
+	capture.enableConsole = false
+	capture.enableNetwork = false
+	session := &Session{driver: driver, Capture: capture, Net: &netTracker{}}
+	session.Close()
+	if capture.Enabled() {
+		t.Fatal("closed session left capture enabled")
+	}
+	if session.Capture != nil || session.Net != nil {
+		t.Fatal("closed session retained observation state for the next browser group")
+	}
+	session.Close()
+	if driver.quits != 1 {
+		t.Fatalf("quits=%d, wanted 1", driver.quits)
+	}
+}
