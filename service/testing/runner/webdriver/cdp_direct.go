@@ -442,12 +442,18 @@ func (d *directCDPDriver) SwitchWindow(name string) error {
 		return err
 	}
 	d.mu.Lock()
-	defer d.mu.Unlock()
 	if _, ok := d.targets[name]; !ok {
+		d.mu.Unlock()
 		return fmt.Errorf("Chrome target %q was not found", name)
 	}
 	d.current = name
 	d.frameRoot = ""
+	d.mu.Unlock()
+	// Selecting a protocol connection alone leaves the browser tab hidden.
+	// Activate it before callers observe visibility or issue native input.
+	if _, err := d.CDPCommand("Page.bringToFront", map[string]interface{}{}); err != nil {
+		return fmt.Errorf("activate Chrome target %q: %w", name, err)
+	}
 	return nil
 }
 
