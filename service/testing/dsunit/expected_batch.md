@@ -9,8 +9,8 @@ cases must not mutate the same fixture identities.
 ```yaml
 collect:
   action: dsunit:collectExpected
-  bucket: groupExpected.delivery
-  datastore: app_db
+  bucket: groupExpected.example
+  datastore: example_store
   URL: ${path}/expect
 ```
 
@@ -19,9 +19,9 @@ After all group cases have executed, use the existing DSUnit expectation action:
 ```yaml
 verifyGroup:
   action: dsunit:expect
-  datastore: app_db
+  datastore: example_store
   checkPolicy: 1
-  data: $groupExpected.delivery.app_db
+  data: $groupExpected.example.example_store
 ```
 
 Collection is not verification. The caller must retain UI failures, require the
