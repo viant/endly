@@ -409,15 +409,14 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	}
 
 	response.Output += stdout
-	if request.CheckError {
-		if statusCode != 0 {
-			return fmt.Errorf("exit code: %v, command: %v", statusCode, securedCommand)
-		}
-	}
-
 	response.Add(NewCommandLog(securedCommand, stdout, err))
+	// A completion failure is not a command exit status. Preserve timeout,
+	// cancellation and closed-shell causes even when exit checking is enabled.
 	if err != nil {
-		return err
+		return fmt.Errorf("exit code: %v, command: %v: %w", statusCode, securedCommand, err)
+	}
+	if request.CheckError && statusCode != 0 {
+		return fmt.Errorf("exit code: %v, command: %v", statusCode, securedCommand)
 	}
 	if err = s.validateStdout(stdout, securedCommand, extractCommand); err != nil {
 		return err
