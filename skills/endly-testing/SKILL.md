@@ -16,6 +16,11 @@ match a failure without checking the contract. Use deterministic timestamps or
 bounded comparisons where the application generates time. Preserve cleanup and
 error tasks; avoid concurrent runs sharing mutable databases or sequence state.
 
+For grouped database tests, retrieve `endly-dsunit-batch-validation`: hydrate
+case-owned fixtures, accumulate resolved expectations with existing native Endly
+primitives, and validate persisted results after group operations finish. Keep
+case success provisional until its final database batch succeeds.
+
 Start with a focused case (`-t=test -i=<exact-tag-id>`), inspect emitted case IDs and
 assertion counts, then broaden to affected groups and the complete suite. A zero
 exit code without executed assertions does not demonstrate success. Separate
