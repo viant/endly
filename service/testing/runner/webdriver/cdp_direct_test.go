@@ -376,3 +376,17 @@ func TestDirectClickGeometryForegroundsTarget(t *testing.T) {
 		t.Fatalf("background geometry: %v %v %v", x, y, err)
 	}
 }
+
+func TestDirectCDPSwitchWindowActivatesSelectedTab(t *testing.T) {
+	fake := newFakeCDPServer(t)
+	driver, err := newDirectCDPDriver(fake.server.URL)
+	require.NoError(t, err)
+	defer driver.Quit()
+	fake.mu.Lock()
+	fake.foreground = false
+	fake.mu.Unlock()
+	require.NoError(t, driver.SwitchWindow("one"))
+	fake.mu.Lock()
+	defer fake.mu.Unlock()
+	require.True(t, fake.foreground, "a switched tab must be active before assertions or native input")
+}
