@@ -1,6 +1,7 @@
 package webdriver
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
@@ -12,6 +13,7 @@ import (
 )
 
 type runtimeElement struct {
+	clickErr error
 	selenium.WebElement
 	mu             sync.Mutex
 	clicks         int
@@ -30,6 +32,9 @@ func (e *runtimeElement) Click() error {
 	defer e.mu.Unlock()
 	e.clicks++
 	if e.clicks <= e.interceptCount {
+		if e.clickErr != nil {
+			return e.clickErr
+		}
 		return &selenium.Error{LegacyCode: elementClickInterceptedException, Message: "element click intercepted"}
 	}
 	return nil
@@ -306,5 +311,26 @@ func TestResponseURLMatcher(t *testing.T) {
 	regex, err := responseURLMatcher(`/api/(orders|users)/`)
 	if err != nil || !regex("https://example.test/api/users") {
 		t.Fatalf("regex matcher err=%v", err)
+	}
+}
+
+// A refresh may disable a control between the enabled check and dispatch. No
+// click event was delivered, so the action may re-resolve within its deadline.
+func TestRunRetriesUndeliveredNativeClickWithoutJavaScript(t *testing.T) {
+	ctx := endly.New().NewContext(nil)
+	defer ctx.Close()
+	element := &runtimeElement{interceptCount: 1, clickErr: fmt.Errorf("native click did not reach target")}
+	driver := &runtimeDriver{element: element}
+	putSession(ctx, "fake", &Session{SessionID: "fake", Browser: ChromeBrowser, driver: driver})
+	request := &RunRequest{SessionID: "fake", Commands: []interface{}{`page.locator("#submit").click()`}, ActionTimeoutMs: 500, PollIntervalMs: 1, AllowJavaScriptClick: true}
+	if err := request.Init(); err != nil {
+		t.Fatal(err)
+	}
+	service := &service{AbstractService: endly.NewAbstractService(ServiceID)}
+	if _, err := service.run(ctx, request); err != nil {
+		t.Fatal(err)
+	}
+	if element.clicks != 2 || driver.findAllCalls != 2 || driver.jsClickCalls != 0 {
+		t.Fatalf("click attempts=%d lookups=%d JavaScript clicks=%d, wanted 2/2/0", element.clicks, driver.findAllCalls, driver.jsClickCalls)
 	}
 }
