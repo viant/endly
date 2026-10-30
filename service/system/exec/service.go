@@ -427,12 +427,20 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 }
 
 func (s *execService) updateSystemInfo(state data.Map, session *model.Session) {
-	state.SetValue("os.user", session.Username)
-	state.SetValue("os.arch", session.Service.HardwareInfo().Arch)
-	state.SetValue("os.system", session.Service.OsInfo().System)
-	state.SetValue("os.name", session.Service.OsInfo().Name)
-	state.SetValue("os.hardware", session.Service.HardwareInfo().Hardware)
-	state.SetValue("os.architecture", session.Service.HardwareInfo().Architecture)
+	// Context clones inherit nested state values by reference. A warmed parent's
+	// os map must remain read-only when async commands publish their metadata.
+	// Detach only this owned metadata namespace, retaining caller custom fields.
+	info := make(data.Map)
+	for key, value := range state.GetMap("os") {
+		info[key] = value
+	}
+	info["user"] = session.Username
+	info["arch"] = session.Service.HardwareInfo().Arch
+	info["system"] = session.Service.OsInfo().System
+	info["name"] = session.Service.OsInfo().Name
+	info["hardware"] = session.Service.HardwareInfo().Hardware
+	info["architecture"] = session.Service.HardwareInfo().Architecture
+	state.Put("os", info)
 }
 
 func (s *execService) retryWithSudo(context *endly.Context, session *model.Session, command string, listener runner.Listener, timeoutMs int, strictCompletion bool, terminators ...string) (string, int, error) {
