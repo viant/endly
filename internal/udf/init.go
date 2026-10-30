@@ -10,6 +10,7 @@ func init() {
 	_ = endly.Registry.Register(func() endly.Service {
 		return New()
 	})
+	endly.PredefinedUdfs["AsMap"] = AsMap
 	endly.PredefinedUdfs["LoadData"] = LoadData
 	endly.PredefinedUdfs["Dob"] = DateOfBirth
 	endly.PredefinedUdfs["URLJoin"] = URLJoin
