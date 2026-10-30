@@ -66,6 +66,10 @@ func (t *TasksNode) Task(name string) (*Task, error) {
 		if candidate.Name == name {
 			return candidate, nil
 		}
+	}
+	// Resolve this scope before descending. Lifecycle tasks commonly share
+	// names with child scopes; a child's catch/defer must not shadow its parent.
+	for _, candidate := range t.Tasks {
 		if candidate.TasksNode != nil {
 			if result, err := candidate.Task(name); err == nil {
 				return result, nil
