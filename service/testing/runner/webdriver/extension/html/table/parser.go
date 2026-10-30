@@ -3,6 +3,7 @@ package table
 import (
 	"bytes"
 	"golang.org/x/net/html"
+	"strconv"
 	"strings"
 )
 
@@ -55,6 +56,22 @@ func (p *Parser) rows() []parsedRow {
 					continue
 				}
 				row.cells = append(row.cells, p.extractText(cell))
+				// A valid colspan still occupies physical table columns (for
+				// example an empty grid's placeholder row). Keep its value in
+				// the first column and preserve the remaining column positions.
+				for _, attribute := range cell.Attr {
+					if attribute.Key != "colspan" {
+						continue
+					}
+					span, _ := strconv.Atoi(attribute.Val)
+					if span > 1000 {
+						span = 1000
+					}
+					for i := 1; i < span; i++ {
+						row.cells = append(row.cells, "")
+					}
+					break
+				}
 				if cell.Data == "td" && !inHead {
 					row.header = false
 				}

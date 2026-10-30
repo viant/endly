@@ -5,6 +5,18 @@ import (
 	"testing"
 )
 
+func TestExportPreservesColspanColumnPositions(t *testing.T) {
+	e, err := NewExporter(`<table><thead><tr><th>Name</th><th>Count</th><th>Status</th></tr></thead><tbody><tr><td>Aurora</td><td>12</td><td>Ready</td></tr><tr><td colspan="3"></td></tr><tr><td colspan="2">Summary</td><td>Ready</td></tr></tbody></table>`)
+	require.NoError(t, err)
+	got, err := e.Export(nil, "objects")
+	require.NoError(t, err)
+	require.Equal(t, []map[string]interface{}{
+		{"Name": "Aurora", "Count": "12", "Status": "Ready"},
+		{"Name": "", "Count": "", "Status": ""},
+		{"Name": "Summary", "Count": "", "Status": "Ready"},
+	}, got)
+}
+
 func TestExportSemanticHeadersAndExplicitNames(t *testing.T) {
 	e, err := NewExporter(`<table><thead><tr><th>Name</th><th>Count</th></tr></thead><tbody><tr><th scope="row">Aurora</th><td>12</td></tr><tr><td>Cedar</td><td>7</td></tr></tbody></table>`)
 	require.NoError(t, err)
