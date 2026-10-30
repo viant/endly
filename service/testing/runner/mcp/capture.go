@@ -19,6 +19,7 @@ type ReadCaptureRequest struct {
 	Source  *location.Resource
 	Methods []string
 	// Arguments optionally selects a recursive exact subset of tool arguments.
+	// Requests remain strict; response evidence is required only for selected calls.
 	Arguments       map[string]interface{}
 	MaxTransactions int
 }
@@ -130,9 +131,9 @@ func readCapture(reader io.Reader, request *ReadCaptureRequest) (*ReadCaptureRes
 		if len(calls) == 0 {
 			continue
 		}
-		responses, err := captureMessages(tx.ResponseBody)
-		if err != nil {
-			return nil, fmt.Errorf("MCP capture event %d: response %s", line, err)
+		var selected []struct {
+			id   string
+			call *CapturedCall
 		}
 		seen := map[string]bool{}
 		for _, call := range calls {
@@ -153,10 +154,32 @@ func readCapture(reader io.Reader, request *ReadCaptureRequest) (*ReadCaptureRes
 			if params["arguments"] != nil && !ok {
 				return nil, fmt.Errorf("MCP capture event %d: tool arguments must be an object", line)
 			}
+			total++
+			if total > limit {
+				return nil, fmt.Errorf("MCP capture exceeds MaxTransactions (%d)", limit)
+			}
+			// Validate the request before excluding it. An unrelated unfinished
+			// response cannot invalidate evidence selected by method/arguments.
+			if (len(methods) > 0 && !methods[name]) || !captureArgumentsMatch(args, request.Arguments) {
+				continue
+			}
+			selected = append(selected, struct {
+				id   string
+				call *CapturedCall
+			}{id, &CapturedCall{Method: name, Args: args, Status: tx.Status, RequestID: call["id"], DurationMs: tx.DurationMs}})
+		}
+		if len(selected) == 0 {
+			continue
+		}
+		responses, err := captureMessages(tx.ResponseBody)
+		if err != nil {
+			return nil, fmt.Errorf("MCP capture event %d: response %s", line, err)
+		}
+		for _, pending := range selected {
 			var response map[string]interface{}
 			for _, candidate := range responses {
 				candidateID, e := captureID(candidate)
-				if e != nil || candidateID != id {
+				if e != nil || candidateID != pending.id {
 					continue
 				}
 				_, result := candidate["result"]
@@ -175,13 +198,8 @@ func readCapture(reader io.Reader, request *ReadCaptureRequest) (*ReadCaptureRes
 			if response == nil {
 				return nil, fmt.Errorf("MCP capture event %d: no matching response ID", line)
 			}
-			total++
-			if total > limit {
-				return nil, fmt.Errorf("MCP capture exceeds MaxTransactions (%d)", limit)
-			}
-			if (len(methods) == 0 || methods[name]) && captureArgumentsMatch(args, request.Arguments) {
-				out.Transactions = append(out.Transactions, &CapturedCall{Method: name, Args: args, Status: tx.Status, Response: response, RequestID: call["id"], DurationMs: tx.DurationMs})
-			}
+			pending.call.Response = response
+			out.Transactions = append(out.Transactions, pending.call)
 		}
 	}
 	if scan.Err() != nil {
