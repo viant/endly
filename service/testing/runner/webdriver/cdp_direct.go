@@ -943,7 +943,9 @@ return true;`)
 		// A chart or nested scroller can shift after the hit test. A native
 		// pointer dispatch only counts when this element receives its click.
 		marker := fmt.Sprintf("__endlyClickTarget%d", time.Now().UnixNano())
-		if _, err := e.evaluate(fmt.Sprintf(`const key=%q, target=this;const state={seen:false};state.guard=event=>{if(!event.composedPath().includes(target)){event.preventDefault();event.stopImmediatePropagation();return;}if(event.type==='click')state.seen=true;};window[key]=state;for(const type of ['pointerdown','mousedown','mouseup','click'])window.addEventListener(type,state.guard,true);return true;`, marker)); err != nil {
+		// Application handlers may synchronously click another control, such as
+		// a download anchor. Only guard the trusted input dispatched by CDP.
+		if _, err := e.evaluate(fmt.Sprintf(`const key=%q, target=this;const state={seen:false};state.guard=event=>{if(!event.isTrusted)return;if(!event.composedPath().includes(target)){event.preventDefault();event.stopImmediatePropagation();return;}if(event.type==='click')state.seen=true;};window[key]=state;for(const type of ['pointerdown','mousedown','mouseup','click'])window.addEventListener(type,state.guard,true);return true;`, marker)); err != nil {
 			return err
 		}
 		cleanup := func() (interface{}, error) {
