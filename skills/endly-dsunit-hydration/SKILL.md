@@ -10,7 +10,12 @@ repopulate dictionary rows if the reset also affects them. Preloaded data is par
 of a focused case's prerequisites even when the infrastructure task is omitted.
 
 Template `data` references can aggregate case fixtures into workflow data before
-setup runs. Select datastores explicitly: accumulated `data.*_dbsetup` keys do not identify the selected module. Preserve each case's tag/Key so hydration publishes rows back to the
+setup runs. For a grouped regression, aggregate all selected cases first, then
+query sequences, convert once and call prepare once per selected datastore,
+outside the case template. Case-owned fixtures use distinct tags/identities;
+they do not require one hydration call per case. Select datastores explicitly:
+accumulated `data.*_dbsetup` keys do not identify the selected module.
+Preserve each case's tag/Key so hydration publishes rows back to the
 correct case. For table-keyed fixtures, query dsunit:sequence before AsTableRecords;
 use symbolic sequence keys and a namespace suffix to publish records by case.
 For TableData fixtures, preserve Table, Data, Key, AutoGenerate and PostIncrement.
@@ -23,8 +28,9 @@ once with AsTableRecords, then dsunit:prepare. Mapping precedes sequence discove
 and population. Do not replace logical dataset names with physical table names
 or discard associations/default values to work around a failed setup.
 
-Use case init to hydrate the published rows, load case-specific request/expectation
-resources, and derive IDs/foreign keys. Read defaults through the ordinary Endly
+Use case init to bind already-published setup rows, load case-specific
+request/expectation resources, and derive IDs/foreign keys. Do not repopulate
+group fixtures or reset sequence state at each case. Read defaults through the ordinary Endly
 instance -> workflow/default -> workflow fallback. A missing optional fixture is
 different from a missing required resource. A fresh rerun must use original fixture
 expressions; AsTableRecords mutates source records and some forms are cached.

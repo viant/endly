@@ -3,7 +3,22 @@ name: endly-dsunit-sequences
 description: "Allocate Endly dsunit sequence-backed fixture IDs and resolve AsTableRecords references across tables."
 ---
 
-Query `dsunit:sequence` after datastore registration and any resets that affect IDs. Supply fixture table names and publish the response with `post: {Sequences: $Sequences}`. Aggregate case fixtures before conversion. Call `$AsTableRecords('data.ci_ads_dbsetup/ci_ads')`: the prefix publishes records under ci_ads.TABLE.tag.label; the returned map is input to prepare. Allocation tokens use `$Sequences.TABLE/${tag}.label`, and cross-table foreign keys can use the same symbolic token. Same-table references need the verified self-reference convention; another allocation token can allocate another ID. Conversion first allocates sequence IDs across tables, then expands references. `!tag` can set a per-record tag. The UDF mutates source records and caches some input forms: do not repeatedly convert a fixture expecting fresh IDs. This is an Endly UDF, not a dsunit action. Inspect `service/testing/dsunit/udf.go` and its sequence/data tests for unusual formats.
+Query `dsunit:sequence` after datastore registration and any resets that affect
+IDs. For a grouped regression, aggregate all selected cases first, then perform
+one sequence lookup, one conversion and one prepare per selected datastore,
+outside the case template. Publish the response with `post: {Sequences: $Sequences}`.
+Call `$AsTableRecords('data.sample_dbsetup/sample')`; the prefix publishes
+`sample.TABLE.tag.label` models for case init and supplies the prepare records.
+Case-owned data means distinct identities, not repeated hydration per case.
+
+Allocation tokens use `$Sequences.TABLE/${tag}.label`; cross-table foreign keys
+can use the same symbolic token. Same-table references need the verified
+self-reference convention; another allocation token can allocate another ID.
+Conversion allocates IDs across tables before expanding references. `!tag` sets
+a per-record case tag. Reset `dsunitSequencer` once per new batch, not between
+cases or dependent tables. The UDF mutates rows and caches some forms: reload
+original symbolic fixtures for a fresh allocation. It is not a dsunit action.
+Inspect `service/testing/dsunit/udf.go` and sequence/data tests for unusual formats.
 
 Inspect `endly -s=dsunit -a=<action>` for the installed contract. Retrieve `endly-dsunit` for the full reference through MCP skills/get or endly_skill_get; its resource inventory includes references/service.md, readable with resources/read. Use endly-testing for test methodology.
 

@@ -1,7 +1,11 @@
 # Fixture aggregation and sequence allocation
 
 Read this before authoring sequence-backed regression setup. The order is:
-**schema/connection → static dictionaries → selected-table reset → mapping (if used) → sequence lookup → one conversion → prepare → case assertions**.
+**schema/connection → static dictionaries → selected-table reset → mapping (if used) → sequence lookup → one conversion → prepare → case operations → final group expectations**.
+
+For grouped regressions, lookup/conversion/prepare run once per selected datastore
+over all collected case fixtures. Case init binds the published setup records; it
+does not run database hydration again. Distinct tags preserve case isolation.
 
 ## Collect case data before setup
 
