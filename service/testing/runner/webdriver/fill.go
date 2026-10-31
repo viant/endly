@@ -31,7 +31,7 @@ if(e.tagName==='INPUT'&&['checkbox','radio','file','button','submit','reset','ra
 e.focus();
 if(e.tagName==='INPUT'&&['date','datetime-local','time','month','week'].includes(e.type))return 'temporal';
 if(e.isContentEditable)return /Mac/.test(navigator.platform)?'contenteditable-meta':'contenteditable-control';
-if(typeof e.select==='function'){e.select();if(e.selectionStart===0&&e.selectionEnd===e.value.length)return 'selected';}
+if(typeof e.select==='function'){e.select();if(e.selectionStart===0&&e.selectionEnd===e.value.length)return /Mac/.test(navigator.platform)?'selected-meta':'selected-control';}
 return /Mac/.test(navigator.platform)?'meta':'control';`, []interface{}{element, value})
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ e.dispatchEvent(new Event('change',{bubbles:true}));
 return true;`, []interface{}{element, value})
 		return err
 	}
-	if selection != "selected" {
+	if !strings.HasPrefix(fmt.Sprint(selection), "selected") {
 		modifier := selenium.ControlKey
 		if selection == "meta" || selection == "contenteditable-meta" {
 			modifier = selenium.MetaKey
@@ -70,8 +70,10 @@ return true;`, []interface{}{element, value})
 					return err
 				}
 			}
-		} else if err = element.SendKeys(modifier + "a" + selenium.NullKey); err != nil {
-			return err
+		} else if strings.HasPrefix(fmt.Sprint(selection), "contenteditable") {
+			if err = element.SendKeys(modifier + "a" + selenium.NullKey); err != nil {
+				return err
+			}
 		}
 	}
 	// Replace editable documents as one native input, rather than typing Enter
@@ -103,6 +105,15 @@ return true;`, []interface{}{element, value})
 	}
 	if value == "" {
 		value = selenium.BackspaceKey
+	}
+	// Element SendKeys can move the caret to the end before dispatching keys.
+	// Keep select-all and replacement in that same native WebDriver operation.
+	if _, direct := driver.(*directCDPDriver); !direct {
+		modifier := selenium.ControlKey
+		if strings.HasSuffix(fmt.Sprint(selection), "meta") {
+			modifier = selenium.MetaKey
+		}
+		return element.SendKeys(modifier + "a" + selenium.NullKey + value)
 	}
 	return element.SendKeys(value)
 }

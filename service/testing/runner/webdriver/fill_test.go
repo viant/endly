@@ -52,14 +52,26 @@ func TestFillEditableDocumentUsesNativeInsertionWhenAvailable(t *testing.T) {
 
 type fillTestElement struct {
 	selenium.WebElement
-	value    string
-	selected bool
+	value                string
+	selected             bool
+	resetSelectionOnSend bool
 }
 
 func (e *fillTestElement) Clear() error {
 	panic("fill must not blur a controlled input through native Clear")
 }
 func (e *fillTestElement) SendKeys(keys string) error {
+	if e.resetSelectionOnSend {
+		e.selected = false
+	}
+	for _, modifier := range []string{selenium.ControlKey, selenium.MetaKey} {
+		prefix := modifier + "a" + selenium.NullKey
+		if strings.HasPrefix(keys, prefix) && len(keys) > len(prefix) {
+			e.selected = true
+			keys = strings.TrimPrefix(keys, prefix)
+			break
+		}
+	}
 	if keys == selenium.ControlKey+"a"+selenium.NullKey || keys == selenium.MetaKey+"a"+selenium.NullKey {
 		e.selected = true
 		return nil
@@ -97,5 +109,18 @@ func TestFillTemporalControlUsesDOMEditEvents(t *testing.T) {
 		element := &fillTestElement{value: "2026-01-01"}
 		require.NoError(t, fillElement(&fillTestDriver{mode: "temporal"}, element, value))
 		require.Equal(t, value, element.value)
+	}
+}
+
+func TestFillReplacesWhenWebDriverResetsSelectionOnSend(t *testing.T) {
+	for _, mode := range []string{"selected", "selected-meta", "selected-control", "meta", "control"} {
+		t.Run(mode, func(t *testing.T) {
+			element := &fillTestElement{value: "Previous", resetSelectionOnSend: true}
+			driver := &fillTestDriver{mode: mode}
+			require.NoError(t, fillElement(driver, element, "Replacement"))
+			require.Equal(t, "Replacement", element.value)
+			require.NoError(t, fillElement(driver, element, ""))
+			require.Empty(t, element.value)
+		})
 	}
 }
