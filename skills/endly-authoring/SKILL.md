@@ -37,6 +37,14 @@ and `service/testing/dsunit/udf.go` in the Endly checkout for implementation det
 Use the service-specific skill for each action. For testing methodology retrieve
 `endly-testing`; retrieve the local project skill when one is explicitly configured.
 
+When a JSON field must be an object, use the existing `$AsMap(..)` expression to
+retain that type through workflow expansion. For example, `params: $AsMap('{}')`
+represents an empty object, and `JSONBody: $AsMap($requestJSON)` retains an entire
+JSON object loaded as text. Nested empty arrays, objects, booleans, zero and null
+keep their JSON types. Do not replace an object with an array, relax the receiving
+API, or concatenate strings to work around a request-shape failure. Assert the
+actual outgoing request when a protocol distinguishes `{}` from `[]`.
+
 In path mode, tag filtering excludes unmatched template instances across groups
 while retaining untagged setup. Discover IDs in the actual root/nested run context
 with endly_listInstances; standalone loading can change the workflow name prefix.
