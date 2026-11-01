@@ -399,3 +399,52 @@ func TestWorkflowArgumentsPreserveJSONValues(t *testing.T) {
 		})
 	}
 }
+
+func TestOAuthExplicitIDToken(t *testing.T) {
+	server := mockServer(t, func(w http.ResponseWriter, r *http.Request, _ string, _ map[string]interface{}) {
+		if got := r.Header.Get("Authorization"); got != "Bearer synthetic-id-token" {
+			t.Errorf("unexpected token selection: %q", got)
+		}
+		w.(responseWriter).result(map[string]interface{}{"content": []interface{}{}, "resultType": "complete"})
+	})
+	defer server.Close()
+	s := New().(*service)
+	s.authorizeOAuth = func(context.Context, *authorizer.Command) (*oauth2.Token, error) {
+		return (&oauth2.Token{AccessToken: "synthetic-access-token"}).WithExtra(map[string]interface{}{"id_token": "synthetic-id-token"}), nil
+	}
+	_, err := s.call(&endly.Context{}, &CallRequest{Request: Request{URL: server.URL, OAuth: &OAuthRequest{ConfigURL: "config-ref", SecretsURL: "user-ref", TokenType: "id"}}, Name: "secured"})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestOAuthIDTokenNeverFallsBack(t *testing.T) {
+	for name, extra := range map[string]interface{}{"missing": nil, "empty": " ", "wrong-type": 42} {
+		t.Run(name, func(t *testing.T) {
+			s := New().(*service)
+			s.authorizeOAuth = func(context.Context, *authorizer.Command) (*oauth2.Token, error) {
+				return (&oauth2.Token{AccessToken: "synthetic-access-token"}).WithExtra(map[string]interface{}{"id_token": extra}), nil
+			}
+			_, cancel, token, err := s.operationContext(&endly.Context{}, &Request{OAuth: &OAuthRequest{ConfigURL: "config-ref", SecretsURL: "user-ref", TokenType: "id"}})
+			if cancel != nil {
+				cancel()
+			}
+			if err == nil || token != "" || strings.Contains(err.Error(), "synthetic-access-token") {
+				t.Fatalf("expected safe authorization failure, token=%q error=%v", token, err)
+			}
+		})
+	}
+}
+
+func TestOAuthTokenTypeValidation(t *testing.T) {
+	for _, typ := range []string{"", "access", "id"} {
+		r := &Request{URL: "https://example.invalid/mcp", OAuth: &OAuthRequest{ConfigURL: "config-ref", SecretsURL: "user-ref", TokenType: typ}}
+		if err := r.Validate(); err != nil {
+			t.Fatalf("%q: %v", typ, err)
+		}
+	}
+	r := &Request{URL: "https://example.invalid/mcp", OAuth: &OAuthRequest{ConfigURL: "config-ref", SecretsURL: "user-ref", TokenType: "refresh"}}
+	if err := r.Validate(); err == nil {
+		t.Fatal("unsupported token type accepted")
+	}
+}

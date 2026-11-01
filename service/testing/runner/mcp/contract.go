@@ -29,6 +29,7 @@ type OAuthRequest struct {
 	AuthFlow   string   `json:"authFlow,omitempty" yaml:"authFlow,omitempty"`
 	Scopes     []string `json:"scopes,omitempty" yaml:"scopes,omitempty"`
 	UsePKCE    bool     `json:"usePKCE,omitempty" yaml:"usePKCE,omitempty"`
+	TokenType  string   `json:"tokenType,omitempty" yaml:"tokenType,omitempty"`
 }
 
 func (r *Request) Validate() error {
@@ -43,6 +44,9 @@ func (r *Request) Validate() error {
 		return fmt.Errorf("TimeoutMs must not exceed one day")
 	}
 	if r.OAuth != nil {
+		if r.OAuth.TokenType != "" && r.OAuth.TokenType != "access" && r.OAuth.TokenType != "id" {
+			return fmt.Errorf("OAuth TokenType must be access or id")
+		}
 		if r.BearerTokenSecret != "" {
 			return fmt.Errorf("OAuth and BearerTokenSecret are mutually exclusive")
 		}
