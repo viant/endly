@@ -12,6 +12,7 @@ func TestIsRetryableElementError(t *testing.T) {
 		&selenium.Error{LegacyCode: staleElementReferenceException},
 		&selenium.Error{LegacyCode: elementNotInteractableException},
 		errors.New("element click intercepted: other element would receive the click"),
+		errors.New("javascript error: element is not editable"),
 	} {
 		if !IsRetryableElementError(err) {
 			t.Fatalf("expected retryable error: %v", err)
@@ -19,6 +20,9 @@ func TestIsRetryableElementError(t *testing.T) {
 	}
 	if IsRetryableElementError(errors.New("invalid selector")) {
 		t.Fatal("invalid selector must not be retried")
+	}
+	if IsRetryableElementError(errors.New("fill requires a text input")) {
+		t.Fatal("an unsupported control type must not be retried")
 	}
 }
 
