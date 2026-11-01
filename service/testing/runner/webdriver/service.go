@@ -446,7 +446,11 @@ func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRe
 	if key == "" {
 		key = request.Call.Method
 	}
-	return response, s.callBefore(context, session.driver, request.Call, response, func() {
+	var caller interface{} = session.driver
+	if request.Call.Method == "CDPCommand" {
+		caller = sessionCDPCommands{session: session}
+	}
+	return response, s.callBefore(context, caller, request.Call, response, func() {
 		drainBeforeNavigation(session, request.Call.Method, request.Call.Parameters)
 	}, key)
 }
