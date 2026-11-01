@@ -104,6 +104,30 @@ func TestFillStopsWhenSelectionFails(t *testing.T) {
 	require.Equal(t, "previous title", element.value)
 }
 
+func TestFillControlledTextUsesSingleNativeInsertion(t *testing.T) {
+	for _, mode := range []string{"selected-meta", "selected-control"} {
+		t.Run(mode, func(t *testing.T) {
+			element := &fillTestElement{value: "previous"}
+			calls := 0
+			require.NoError(t, fillElement(&fillTestDriver{mode: mode}, element, "child.parent_id=parent.id", func(value string) error {
+				calls++
+				element.value = value
+				return nil
+			}))
+			require.Equal(t, 1, calls)
+			require.Equal(t, "child.parent_id=parent.id", element.value)
+		})
+	}
+}
+
+func TestFillControlledTextRetainsNonCDPFallback(t *testing.T) {
+	element := &fillTestElement{value: "previous", resetSelectionOnSend: true}
+	require.NoError(t, fillElement(&fillTestDriver{mode: "selected-control"}, element, "replacement", func(string) error {
+		return errors.New("CDP unavailable")
+	}))
+	require.Equal(t, "replacement", element.value)
+}
+
 func TestFillTemporalControlUsesDOMEditEvents(t *testing.T) {
 	for _, value := range []string{"2026-10-13", ""} {
 		element := &fillTestElement{value: "2026-01-01"}

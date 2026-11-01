@@ -51,6 +51,14 @@ e.dispatchEvent(new Event('change',{bubbles:true}));
 return true;`, []interface{}{element, value})
 		return err
 	}
+	// A controlled input may replace its DOM node after the first keystroke.
+	// Insert the selected replacement in one native input event when supported,
+	// instead of letting a WebDriver key sequence continue against the old node.
+	if value != "" && strings.HasPrefix(fmt.Sprint(selection), "selected") && len(insertText) > 0 {
+		if err = insertText[0](value); err == nil {
+			return nil
+		}
+	}
 	if !strings.HasPrefix(fmt.Sprint(selection), "selected") {
 		modifier := selenium.ControlKey
 		if selection == "meta" || selection == "contenteditable-meta" {
