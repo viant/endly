@@ -280,6 +280,9 @@ func TestRunReturnsStructuredInlineAssertionFailure(t *testing.T) {
 		t.Fatal("expected assertion failure")
 	}
 	if len(response.Assertions) != 1 || response.Assertions[0].Passed || response.Assertions[0].Actual != "Pending" {
+		for _, assertion := range response.Assertions {
+			t.Logf("assertion: %+v", assertion)
+		}
 		t.Fatalf("assertions=%#v", response.Assertions)
 	}
 	validations := response.Assertion()

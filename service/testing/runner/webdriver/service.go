@@ -658,13 +658,18 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 	if request.Call.WaitTimeMs > 0 {
 		deadline = time.Now().Add(time.Duration(request.Call.WaitTimeMs) * time.Millisecond)
 	}
+	var lastResponse *WebElementCallResponse
+	var lastError error
 	for {
 		runtimeRequest := *request
 		runtimeCall := *request.Call
 		if !deadline.IsZero() {
 			remaining := time.Until(deadline)
 			if remaining <= 0 {
-				return nil, fmt.Errorf("webdriver element wait timed out after %dms: %s", request.Call.WaitTimeMs, request.Selector.Value)
+				if lastError != nil {
+					return lastResponse, lastError
+				}
+				return lastResponse, fmt.Errorf("webdriver element wait timed out after %dms: %s", request.Call.WaitTimeMs, request.Selector.Value)
 			}
 			runtimeCall.WaitTimeMs = max(1, int(remaining/time.Millisecond))
 		}
@@ -673,6 +678,7 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 		}
 		runtimeRequest.Call = &runtimeCall
 		response, callErr := s.callWebElementOnce(context, session, &runtimeRequest)
+		lastResponse, lastError = response, callErr
 		if response != nil && response.LookupError != "" && request.Call.AllowMissing {
 			response.LookupError = ""
 			return response, nil
@@ -767,6 +773,18 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 	if request.Call.Method == "Fill" {
 		if len(request.Call.Parameters) != 1 {
 			return response, fmt.Errorf("Fill requires one value")
+		}
+		if err = timedInteraction(session.timings, "element.editable", func() error {
+			return s.waitForElementState(context.Background(), func() (bool, error) {
+				enabled, err := element.IsEnabled()
+				if err != nil || !enabled {
+					return false, err
+				}
+				readOnly, err := element.GetAttribute("readonly")
+				return readOnly == "" || readOnly == "false", err
+			}, time.Duration(request.Call.WaitTimeMs)*time.Millisecond, "element is not editable")
+		}); err != nil {
+			return response, err
 		}
 		err = fillElement(session.driver, element, toolbox.AsString(request.Call.Parameters[0]), func(value string) error {
 			_, insertErr := executeSessionCDP(session, "Input.insertText", map[string]any{"text": value})

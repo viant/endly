@@ -26,7 +26,7 @@ func fillElement(driver selenium.WebDriver, element selenium.WebElement, value s
 	}
 
 	selection, err := driver.ExecuteScript(`const e=arguments[0];
-if(e.disabled||e.readOnly)throw new Error('element is not editable');
+if(e.matches(':disabled')||e.readOnly)throw new Error('element is not editable');
 if(!e.isContentEditable&&!['INPUT','TEXTAREA'].includes(e.tagName))throw new Error('fill requires an editable text control');
 if(e.tagName==='INPUT'&&['checkbox','radio','file','button','submit','reset','range','color','hidden'].includes(e.type))throw new Error('fill requires a text input');
 e.focus();
