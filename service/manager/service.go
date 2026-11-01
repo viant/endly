@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -19,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/viant/afs"
 	"github.com/viant/endly"
+	"github.com/viant/endly/internal/redact"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/model/msg"
@@ -811,13 +811,10 @@ func redactMap(source map[string]interface{}) map[string]interface{} {
 	return result
 }
 
-var bearerPattern = regexp.MustCompile(`(?i)Bearer[\t ]+[A-Za-z0-9._~+/=-]+`)
-var jwtPattern = regexp.MustCompile(`eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`)
-
 // Diagnostic index keys can contain credentials too. A stable opaque suffix
 // preserves distinct entries without changing the original runtime map.
 func redactedMapKey(key string) string {
-	safe := jwtPattern.ReplaceAllString(bearerPattern.ReplaceAllString(key, "Bearer [REDACTED]"), "[REDACTED]")
+	safe := redact.Text(key)
 	if safe == key {
 		return key
 	}
@@ -854,7 +851,7 @@ func redactValue(path string, value interface{}) interface{} {
 		}
 		return result
 	case string:
-		return jwtPattern.ReplaceAllString(bearerPattern.ReplaceAllString(actual, "Bearer [REDACTED]"), "[REDACTED]")
+		return redact.Text(actual)
 	}
 	return value
 }
