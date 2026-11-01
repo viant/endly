@@ -80,7 +80,14 @@ func (s *service) operationContext(ctx *endly.Context, request *Request) (contex
 			Scopes: request.OAuth.Scopes, UsePKCE: request.OAuth.UsePKCE,
 		}
 		value, err := s.authorizeOAuth(opCtx, command)
-		if err != nil || value == nil || strings.TrimSpace(value.AccessToken) == "" {
+		var bearer string
+		if err == nil && value != nil {
+			bearer = value.AccessToken
+			if request.OAuth.TokenType == "id" {
+				bearer, _ = value.Extra("id_token").(string)
+			}
+		}
+		if strings.TrimSpace(bearer) == "" {
 			ctxErr := opCtx.Err()
 			cancel()
 			if ctxErr != nil {
@@ -88,7 +95,7 @@ func (s *service) operationContext(ctx *endly.Context, request *Request) (contex
 			}
 			return nil, nil, "", fmt.Errorf("MCP OAuth authorization failed")
 		}
-		return opCtx, cancel, strings.TrimSpace(value.AccessToken), nil
+		return opCtx, cancel, strings.TrimSpace(bearer), nil
 	}
 	if request.BearerTokenSecret == "" {
 		return opCtx, cancel, "", nil
