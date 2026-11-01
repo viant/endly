@@ -204,14 +204,14 @@ require (
 	github.com/viant/godiff v0.4.1 // indirect
 	github.com/viant/govalidator v0.3.1 // indirect
 	github.com/viant/igo v0.2.1 // indirect
-	github.com/viant/jsonrpc v0.24.0
-	github.com/viant/mcp v0.24.0
-	github.com/viant/mcp-protocol v0.19.2-0.20261027035052-af12d4f1eeb3
+	github.com/viant/jsonrpc v0.25.1
+	github.com/viant/mcp v0.24.2-0.20261029235301-7885d52f196b
+	github.com/viant/mcp-protocol v0.19.2-0.20261029232114-446f89dc454b
 	github.com/viant/pgo v0.11.0 // indirect
 	github.com/viant/sqlparser v0.13.1-0.20261005175605-18369aade19d // indirect
 	github.com/viant/structology v0.10.1-0.20261020182740-3fac6f36235c // indirect
 	github.com/viant/structql v0.5.2 // indirect
-	github.com/viant/tagly v0.3.1-0.20260914020630-eadee36c3630 // indirect
+	github.com/viant/tagly v0.4.2-0.20261028223500-81e046a19ef9 // indirect
 	github.com/viant/velty v0.2.1-0.20230927172116-ba56497b5c85 // indirect
 	github.com/viant/x v0.5.1-0.20260915043005-1bc42b9eef47 // indirect
 	github.com/viant/xdatly v0.5.4-0.20250418144853-029d9a05ae20 // indirect
