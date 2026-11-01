@@ -470,6 +470,21 @@ func missingStringValue(call *MethodCall, response *ServiceCallResponse, err err
 	return false
 }
 
+var errElementExpectation = errors.New("webdriver expectation failed")
+
+// Only read-only element observations may re-resolve a changing selector.
+// Driver calls and explicit element references keep their existing semantics.
+func selectorExpectation(call *MethodCall) bool {
+	if call == nil || call.Expectation == nil {
+		return false
+	}
+	switch call.Method {
+	case "Text", "GetAttribute", "GetProperty", "IsDisplayed", "IsEnabled", "IsSelected", "CSSProperty":
+		return true
+	}
+	return false
+}
+
 func (s *service) call(context *endly.Context, caller interface{}, call *MethodCall, response *ServiceCallResponse, elementPath ...string) (err error) {
 	return s.callBefore(context, caller, call, response, nil, elementPath...)
 }
@@ -489,7 +504,7 @@ func (s *service) callBefore(context *endly.Context, caller interface{}, call *M
 				return matchErr
 			}
 			if !matched {
-				return fmt.Errorf("webdriver expectation failed: expected %s %v, actual %v", call.Expectation.Matcher, call.Expectation.Value, actual)
+				return fmt.Errorf("%w: expected %s %v, actual %v", errElementExpectation, call.Expectation.Matcher, call.Expectation.Value, actual)
 			}
 		}
 		if call.ThinkTimeMs > 0 {
@@ -653,6 +668,9 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 			}
 			runtimeCall.WaitTimeMs = max(1, int(remaining/time.Millisecond))
 		}
+		if selectorExpectation(request.Call) {
+			runtimeCall.WaitTimeMs = 0
+		}
 		runtimeRequest.Call = &runtimeCall
 		response, callErr := s.callWebElementOnce(context, session, &runtimeRequest)
 		if response != nil && response.LookupError != "" && request.Call.AllowMissing {
@@ -661,7 +679,8 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 		}
 		lookupPending := response != nil && response.LookupError != "" && !deadline.IsZero()
 		retryTransient := IsRetryableElementError(callErr) && !deadline.IsZero()
-		if !lookupPending && !retryTransient {
+		retryExpectation := selectorExpectation(request.Call) && errors.Is(callErr, errElementExpectation) && !deadline.IsZero()
+		if !lookupPending && !retryTransient && !retryExpectation {
 			return response, callErr
 		}
 		if time.Now().After(deadline) {
@@ -691,7 +710,7 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 	var element selenium.WebElement
 
 	findTimeout := defaultFindElementTimeout
-	if request.Call.WaitTimeMs > 0 {
+	if request.Call.WaitTimeMs > 0 || selectorExpectation(request.Call) {
 		// The outer wait loop owns the total deadline and retries missing or
 		// stale elements without nesting another ten-second wait.
 		findTimeout = 0
