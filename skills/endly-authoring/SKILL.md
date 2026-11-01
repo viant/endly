@@ -37,6 +37,11 @@ and `service/testing/dsunit/udf.go` in the Endly checkout for implementation det
 Use the service-specific skill for each action. For testing methodology retrieve
 `endly-testing`; retrieve the local project skill when one is explicitly configured.
 
+For bounded API batches, use native collection push/shift and loops. `Len` counts
+collection members; `JSONSize($value)` counts the encoded JSON bytes, including
+UTF-8 and escaping. Reserve space for the request envelope and respect the
+destination's item and byte limits. Keep authorization in the destination API.
+
 When a JSON field must be an object, use the existing `$AsMap(..)` expression to
 retain that type through workflow expansion. For example, `params: $AsMap('{}')`
 represents an empty object, and `JSONBody: $AsMap($requestJSON)` retains an entire
