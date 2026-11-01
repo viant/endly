@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"github.com/logrusorgru/aurora"
 	"github.com/viant/toolbox"
+	"golang.org/x/term"
 	"io"
-	"os"
-	"os/exec"
-	"strconv"
 	"strings"
 )
 
 var minColumns = 120
+var terminalSize = term.GetSize
 
 var colors = map[string]func(arg interface{}) aurora.Value{
 	"red":   aurora.Red,
@@ -79,24 +78,16 @@ func (r *Renderer) ColorText(text string, textColors ...string) string {
 	return text
 }
 
-// Columns reutnrs terminal column count
+// Columns returns the output terminal width, with the existing minimum for
+// redirected output or unavailable dimensions. Querying each call tracks resize.
 func (r *Renderer) Columns() int {
-	cmd := exec.Command("stty", "size")
-	cmd.Stdin = os.Stdin
-	output, err := cmd.Output()
-	if err == nil && len(output) > 0 {
-		parts := strings.Split(string(output), " ")
-		if len(parts) > 1 {
-			r.lines, err = strconv.Atoi(strings.TrimSpace(parts[1]))
-			if err != nil {
-				r.lines = minColumns
-			}
+	columns := minColumns
+	if output, ok := r.writer.(interface{ Fd() uintptr }); ok {
+		if width, _, err := terminalSize(int(output.Fd())); err == nil && width > minColumns {
+			columns = width
 		}
 	}
-	if r.lines < minColumns {
-		r.lines = minColumns
-	}
-	return r.lines
+	return columns
 }
 
 func (r *Renderer) getColumnSize(headers []string, data [][]string, maxSize int) (int, []int) {
