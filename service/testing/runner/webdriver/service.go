@@ -752,7 +752,7 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 	} else {
 		if request.Call.Method == "Click" {
 			if err = timedInteraction(session.timings, "element.enabled", func() error {
-				return s.waitForElementState(context.Background(), element.IsEnabled, 2*time.Second, "element is not enabled")
+				return s.waitForElementState(context.Background(), element.IsEnabled, time.Duration(request.Call.WaitTimeMs)*time.Millisecond, "element is not enabled")
 			}); err != nil && err.Error() != "nil return value" {
 				return response, err
 			}
