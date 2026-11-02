@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/viant/endly"
 )
 
 type cdpParameterRecorder struct {
@@ -18,7 +19,7 @@ func (r *cdpParameterRecorder) CDPCommand(method string, params map[string]inter
 }
 
 func TestCallMethodCDPEmptyWorkflowObject(t *testing.T) {
-	for _, params := range []interface{}{map[string]interface{}{}, []interface{}{}} {
+	for _, params := range []interface{}{nil, map[string]interface{}{}, []interface{}{}} {
 		recorder := &cdpParameterRecorder{}
 		original := []interface{}{"Network.clearBrowserCache", params}
 		response := &ServiceCallResponse{}
@@ -27,6 +28,19 @@ func TestCallMethodCDPEmptyWorkflowObject(t *testing.T) {
 		require.NotNil(t, recorder.params)
 		require.Empty(t, recorder.params)
 		require.IsType(t, params, original[1], "normalization must not mutate the authored call")
+	}
+}
+
+func TestRunCDPDecodedEmptyParameters(t *testing.T) {
+	for _, params := range []interface{}{nil, []interface{}{}, map[string]interface{}{}} {
+		ctx, session, driver := navigationCaptureFixture(t)
+		session.Capture = nil
+		request := &RunRequest{SessionID: session.SessionID, Actions: []*Action{{Key: "clear", Calls: []*MethodCall{{Method: "CDPCommand", Parameters: []interface{}{"Network.clearBrowserCache", params}}}}}}
+		require.NoError(t, request.Init())
+		svc := &service{AbstractService: endly.NewAbstractService(ServiceID)}
+		_, err := svc.run(ctx, request)
+		require.NoError(t, err)
+		require.True(t, driver.navigated, "the command must reach the native driver")
 	}
 }
 
