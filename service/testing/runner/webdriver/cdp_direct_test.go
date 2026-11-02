@@ -17,6 +17,13 @@ import (
 	"github.com/viant/endly"
 )
 
+type controlledCDPEditState struct {
+	selectionMode string
+	value         string
+	selected      bool
+	edits         []string
+}
+
 type fakeCDPServer struct {
 	server         *httptest.Server
 	mu             sync.Mutex
@@ -33,6 +40,7 @@ type fakeCDPServer struct {
 	viewportHeight int
 	viewportParams map[string]interface{}
 	foreground     bool
+	controlledEdit *controlledCDPEditState
 }
 
 func newFakeCDPServer(t *testing.T) *fakeCDPServer {
@@ -100,6 +108,19 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 				kind := "boolean"
 				result.mu.Lock()
 				switch {
+				case result.controlledEdit != nil && strings.Contains(expression, "fill requires"):
+					value, kind = "control", "string" // Number controls do not expose selectionStart.
+					if mode := result.controlledEdit.selectionMode; mode != "" {
+						value = mode
+					}
+				case result.controlledEdit != nil && strings.Contains(expression, "this.getAttribute(arguments[0])"):
+					value, kind = "number", "string"
+				case result.controlledEdit != nil && strings.Contains(expression, "this.focus();return true;"):
+					// A focus/controlled rerender between selectAll and deletion
+					// can collapse the native selection to the trailing caret.
+					result.controlledEdit.selected = false
+				case result.controlledEdit != nil && strings.Contains(expression, "return this[arguments[0]];"):
+					value, kind = result.controlledEdit.value, "string"
 				case strings.Contains(expression, "click target did not settle"):
 					if result.foreground {
 						value, kind = map[string]interface{}{"x": 12, "y": 34}, "object"
@@ -143,6 +164,20 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 				}
 				if command.Method == "Input.dispatchKeyEvent" {
 					result.keyEvents = append(result.keyEvents, command.Params)
+				}
+				if state := result.controlledEdit; state != nil && command.Method == "Input.dispatchKeyEvent" && command.Params["type"] == "keyDown" {
+					if command.Params["key"] == "a" {
+						state.selected = true
+					}
+					if command.Params["key"] == "Backspace" {
+						if state.selected {
+							state.value = ""
+						} else if len(state.value) > 0 {
+							state.value = state.value[:len(state.value)-1]
+						}
+						state.selected = false
+						state.edits = append(state.edits, state.value)
+					}
 				}
 				if command.Method == "Input.insertText" {
 					text, _ := command.Params["text"].(string)
@@ -389,4 +424,52 @@ func TestDirectCDPSwitchWindowActivatesSelectedTab(t *testing.T) {
 	fake.mu.Lock()
 	defer fake.mu.Unlock()
 	require.True(t, fake.foreground, "a switched tab must be active before assertions or native input")
+}
+
+func TestDirectCDPFillEmptyPreservesControlledNumberSelection(t *testing.T) {
+	for _, initial := range []string{"101", "100"} {
+		t.Run(initial, func(t *testing.T) {
+			fake := newFakeCDPServer(t)
+			fake.mu.Lock()
+			fake.controlledEdit = &controlledCDPEditState{value: initial}
+			fake.mu.Unlock()
+			driver, err := newDirectCDPDriver(fake.server.URL)
+			require.NoError(t, err)
+			defer driver.Quit()
+			element, err := driver.FindElement(selenium.ByCSSSelector, "#number")
+			require.NoError(t, err)
+			require.NoError(t, fillElement(driver, element, ""))
+			fake.mu.Lock()
+			defer fake.mu.Unlock()
+			require.Empty(t, fake.controlledEdit.value, "trusted deletion must replace the complete numeric draft")
+			require.Equal(t, []string{""}, fake.controlledEdit.edits)
+		})
+	}
+}
+
+func TestDirectCDPEmptyFillUsesPlatformSelectAll(t *testing.T) {
+	for _, test := range []struct {
+		mode string
+		mask float64
+	}{{"selected-meta", 4}, {"meta", 4}, {"selected-control", 2}, {"control", 2}} {
+		t.Run(test.mode, func(t *testing.T) {
+			fake := newFakeCDPServer(t)
+			fake.mu.Lock()
+			fake.controlledEdit = &controlledCDPEditState{value: "101", selectionMode: test.mode}
+			fake.mu.Unlock()
+			driver, err := newDirectCDPDriver(fake.server.URL)
+			require.NoError(t, err)
+			defer driver.Quit()
+			element, err := driver.FindElement(selenium.ByCSSSelector, "#field")
+			require.NoError(t, err)
+			require.NoError(t, fillElement(driver, element, ""))
+			fake.mu.Lock()
+			defer fake.mu.Unlock()
+			require.Len(t, fake.keyEvents, 4)
+			require.Equal(t, "a", fake.keyEvents[0]["key"])
+			require.Equal(t, test.mask, fake.keyEvents[0]["modifiers"])
+			require.Equal(t, "Backspace", fake.keyEvents[2]["key"])
+			require.Empty(t, fake.controlledEdit.value)
+		})
+	}
 }

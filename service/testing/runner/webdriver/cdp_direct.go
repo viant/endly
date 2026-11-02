@@ -1053,21 +1053,28 @@ func (e *directCDPElement) SendKeys(keys string) error {
 		return err
 	}
 	if key, ok := directCDPSpecialKeys[keys]; ok {
-		for _, kind := range []string{"keyDown", "keyUp"} {
-			params := map[string]interface{}{"type": kind, "key": key.key, "code": key.code, "windowsVirtualKeyCode": key.virtualKeyCode}
-			if kind == "keyDown" && key.text != "" {
-				params["text"] = key.text
-				params["unmodifiedText"] = key.text
-			}
-			if _, err := e.driver.CDPCommand("Input.dispatchKeyEvent", params); err != nil {
-				return err
-			}
-		}
-		return nil
+		return e.driver.dispatchSpecialKey(key)
 	}
 	_, err := e.driver.CDPCommand("Input.insertText", map[string]interface{}{"text": keys})
 	return err
 }
+
+// dispatchSpecialKey edits the current focus without a second element focus.
+// Callers that selected text must retain that selection until its default edit.
+func (d *directCDPDriver) dispatchSpecialKey(key directCDPSpecialKey) error {
+	for _, kind := range []string{"keyDown", "keyUp"} {
+		params := map[string]interface{}{"type": kind, "key": key.key, "code": key.code, "windowsVirtualKeyCode": key.virtualKeyCode}
+		if kind == "keyDown" && key.text != "" {
+			params["text"] = key.text
+			params["unmodifiedText"] = key.text
+		}
+		if _, err := d.CDPCommand("Input.dispatchKeyEvent", params); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (e *directCDPElement) Submit() error {
 	_, err := e.evaluate(`const f=this.form||this.closest('form');if(!f)throw new Error('form not found');if(f.requestSubmit)f.requestSubmit();else f.submit();return true;`)
 	return err
