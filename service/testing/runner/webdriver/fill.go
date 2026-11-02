@@ -10,7 +10,8 @@ import (
 // Native Clear can blur the field and restore its old controlled value before
 // SendKeys runs, causing the new value to be appended.
 func fillElement(driver selenium.WebDriver, element selenium.WebElement, value string, insertText ...func(string) error) error {
-	if direct, ok := driver.(*directCDPDriver); ok {
+	direct, isDirect := driver.(*directCDPDriver)
+	if isDirect {
 		if err := direct.bringToFront(); err != nil {
 			return err
 		}
@@ -60,9 +61,9 @@ return true;`, []interface{}{element, value})
 			return nil
 		}
 	}
-	if !strings.HasPrefix(fmt.Sprint(selection), "selected") {
+	if !strings.HasPrefix(fmt.Sprint(selection), "selected") || isDirect && value == "" {
 		modifier := selenium.ControlKey
-		if selection == "meta" || selection == "contenteditable-meta" {
+		if strings.HasSuffix(fmt.Sprint(selection), "meta") {
 			modifier = selenium.MetaKey
 		}
 		if direct, ok := driver.(*directCDPDriver); ok {
@@ -113,6 +114,11 @@ return true;`, []interface{}{element, value})
 		return err
 	}
 	if value == "" {
+		if isDirect {
+			// Select-all and deletion are one trusted edit sequence. SendKeys
+			// would refocus the element and can collapse a numeric selection.
+			return direct.dispatchSpecialKey(directCDPSpecialKeys[selenium.BackspaceKey])
+		}
 		value = selenium.BackspaceKey
 	}
 	// Element SendKeys can move the caret to the end before dispatching keys.
