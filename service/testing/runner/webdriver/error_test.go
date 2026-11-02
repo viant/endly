@@ -44,3 +44,13 @@ func TestUndeliveredNativeClickCanRetryButCannotUseJavaScript(t *testing.T) {
 		t.Fatal("undelivered native clicks must not bypass disabled or refreshed controls with JavaScript")
 	}
 }
+
+func TestObscuredNativeClickCanRetryButCannotUseJavaScript(t *testing.T) {
+	err := errors.New("click target remained obscured or moving")
+	if !IsRetryableElementError(err) {
+		t.Fatal("native hit testing should retry within the action deadline")
+	}
+	if isJavaScriptClickCandidate(err) {
+		t.Fatal("native hit testing must not bypass occlusion with JavaScript")
+	}
+}

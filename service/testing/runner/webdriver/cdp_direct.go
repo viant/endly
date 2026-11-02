@@ -972,8 +972,37 @@ return true;`)
 	return fmt.Errorf("native click did not reach target")
 }
 
+// Prefer the bounding-box center, preserving ordinary HTML hit testing. SVG
+// geometry can have a hole or concavity at that center. Search its local bounds
+// at bounded, increasing resolution, then transform a painted point into the
+// viewport. Geometry alone never grants actionability: browser hit testing must
+// still confirm the target owns that point (including clipping and overlays).
+const directCDPClickablePoint = `this.scrollIntoView({block:'center',inline:'center',behavior:'instant'});
+const r=this.getBoundingClientRect();
+const x=r.left+r.width/2,y=r.top+r.height/2;
+const owns=(x,y)=>{
+  if(x<0||y<0||x>=innerWidth||y>=innerHeight)return false;
+  const hit=document.elementFromPoint(x,y);
+  return Boolean(hit&&(hit===this||this.contains(hit)));
+};
+if(owns(x,y))return {x,y,hit:true};
+if(this instanceof SVGGeometryElement){
+  const bounds=this.getBBox(),matrix=this.getScreenCTM();
+  if(matrix&&bounds.width>0&&bounds.height>0){
+    for(const divisions of [4,8,16,32]){
+      for(let row=0;row<divisions;row++)for(let column=0;column<divisions;column++){
+        const point=new DOMPoint(bounds.x+bounds.width*(column+0.5)/divisions,bounds.y+bounds.height*(row+0.5)/divisions);
+        if(!this.isPointInFill(point)&&!this.isPointInStroke(point))continue;
+        const viewport=point.matrixTransform(matrix);
+        if(owns(viewport.x,viewport.y))return {x:viewport.x,y:viewport.y,hit:true};
+      }
+    }
+  }
+}
+return {x,y,hit:false};`
+
 // A preceding tab change or scroll can move the target after its first
-// rectangle is measured. Dispatch only when the element owns a stable point.
+// measurement. Recompute geometry and ownership until the point is stable.
 func (e *directCDPElement) clickableCenter(timeout time.Duration) (float64, float64, error) {
 	endTiming := startInteractionPhase(e.driver.timings.Load(), "native.hit_test")
 	defer endTiming()
@@ -984,7 +1013,7 @@ func (e *directCDPElement) clickableCenter(timeout time.Duration) (float64, floa
 	var previousX, previousY float64
 	stable := false
 	for {
-		value, err := e.evaluate(`this.scrollIntoView({block:'center',inline:'center',behavior:'instant'});const r=this.getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;const hit=document.elementFromPoint(x,y);return {x,y,hit:Boolean(hit&&(hit===this||this.contains(hit)))};`)
+		value, err := e.evaluate(directCDPClickablePoint)
 		if err != nil {
 			return 0, 0, err
 		}

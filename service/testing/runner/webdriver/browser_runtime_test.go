@@ -325,21 +325,46 @@ func TestResponseURLMatcher(t *testing.T) {
 // A refresh may disable a control between the enabled check and dispatch. No
 // click event was delivered, so the action may re-resolve within its deadline.
 func TestRunRetriesUndeliveredNativeClickWithoutJavaScript(t *testing.T) {
+	for _, message := range []string{"native click did not reach target", "click target remained obscured or moving"} {
+		t.Run(message, func(t *testing.T) {
+			ctx := endly.New().NewContext(nil)
+			defer ctx.Close()
+			element := &runtimeElement{interceptCount: 1, clickErr: fmt.Errorf("%s", message)}
+			driver := &runtimeDriver{element: element}
+			putSession(ctx, "fake", &Session{SessionID: "fake", Browser: ChromeBrowser, driver: driver})
+			request := &RunRequest{SessionID: "fake", Commands: []interface{}{`page.locator("#submit").click()`}, ActionTimeoutMs: 500, PollIntervalMs: 1, AllowJavaScriptClick: true}
+			if err := request.Init(); err != nil {
+				t.Fatal(err)
+			}
+			service := &service{AbstractService: endly.NewAbstractService(ServiceID)}
+			if _, err := service.run(ctx, request); err != nil {
+				t.Fatal(err)
+			}
+			if element.clicks != 2 || driver.findAllCalls != 2 || driver.jsClickCalls != 0 {
+				t.Fatalf("click attempts=%d lookups=%d JavaScript clicks=%d, wanted 2/2/0", element.clicks, driver.findAllCalls, driver.jsClickCalls)
+			}
+		})
+	}
+}
+
+func TestRunObscuredNativeClickRespectsDeadlineWithoutJavaScript(t *testing.T) {
 	ctx := endly.New().NewContext(nil)
 	defer ctx.Close()
-	element := &runtimeElement{interceptCount: 1, clickErr: fmt.Errorf("native click did not reach target")}
+	element := &runtimeElement{interceptCount: 100000, clickErr: fmt.Errorf("click target remained obscured or moving")}
 	driver := &runtimeDriver{element: element}
 	putSession(ctx, "fake", &Session{SessionID: "fake", Browser: ChromeBrowser, driver: driver})
-	request := &RunRequest{SessionID: "fake", Commands: []interface{}{`page.locator("#submit").click()`}, ActionTimeoutMs: 500, PollIntervalMs: 1, AllowJavaScriptClick: true}
+	request := &RunRequest{SessionID: "fake", Commands: []interface{}{`page.locator("#submit").click()`}, ActionTimeoutMs: 50, PollIntervalMs: 1, AllowJavaScriptClick: true}
 	if err := request.Init(); err != nil {
 		t.Fatal(err)
 	}
 	service := &service{AbstractService: endly.NewAbstractService(ServiceID)}
-	if _, err := service.run(ctx, request); err != nil {
-		t.Fatal(err)
+	start := time.Now()
+	_, err := service.run(ctx, request)
+	if err == nil || element.clicks < 2 || driver.jsClickCalls != 0 {
+		t.Fatalf("error=%v native clicks=%d javascript clicks=%d", err, element.clicks, driver.jsClickCalls)
 	}
-	if element.clicks != 2 || driver.findAllCalls != 2 || driver.jsClickCalls != 0 {
-		t.Fatalf("click attempts=%d lookups=%d JavaScript clicks=%d, wanted 2/2/0", element.clicks, driver.findAllCalls, driver.jsClickCalls)
+	if time.Since(start) > time.Second {
+		t.Fatal("native retries exceeded action deadline")
 	}
 }
 
