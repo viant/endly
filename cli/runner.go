@@ -23,6 +23,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -60,6 +61,7 @@ type Runner struct {
 	hasValidationFailures bool
 	err                   error
 	group                 *MessageGroup
+	listenerMu            sync.Mutex
 }
 
 func (r *Runner) printInput(output string) {
@@ -596,6 +598,9 @@ func (r *Runner) reportEvent(context *endly.Context, event msg.Event, filter map
 func (r *Runner) AsListener() msg.Listener {
 	var firstEvent, lastEvent msg.Event
 	return func(event msg.Event) {
+		// Workflow startup and worker callbacks may publish concurrently.
+		r.listenerMu.Lock()
+		defer r.listenerMu.Unlock()
 		if firstEvent == nil {
 			firstEvent = event
 		} else {
