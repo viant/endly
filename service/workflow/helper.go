@@ -43,14 +43,22 @@ func Pop(context *endly.Context) *model.Process {
 
 // Last returns last process
 func Last(context *endly.Context) *model.Process {
-	var processes = processes(context)
-	return processes.Last()
+	if !context.Contains(processesKey) {
+		return nil
+	}
+	var stack *model.Processes
+	context.GetInto(processesKey, &stack)
+	return stack.Last()
 }
 
 // LastWorkflow returns last workflow
 func LastWorkflow(context *endly.Context) *model.Process {
-	var processes = processes(context)
-	return processes.LastWorkflow()
+	if !context.Contains(processesKey) {
+		return nil
+	}
+	var stack *model.Processes
+	context.GetInto(processesKey, &stack)
+	return stack.LastWorkflow()
 }
 
 func isWorkflowRunAction(action *model.Action) bool {
