@@ -392,11 +392,12 @@ func (s *Service) run(context *endly.Context, request *RunRequest) (response *Ru
 	if request.Async {
 		context.Wait.Add(1)
 		go func() {
-			defer context.Publish(NewEndEvent(context.SessionID))
 			defer context.Wait.Done()
-			_, err = s.runWorkflow(context, request)
-			if err != nil {
-				context.Publish(msg.NewErrorEvent(fmt.Sprintf("%v", err)))
+			// Completion includes delivery of the final event to synchronous listeners.
+			defer context.Publish(NewEndEvent(context.SessionID))
+			_, runErr := s.runWorkflow(context, request)
+			if runErr != nil {
+				context.Publish(msg.NewErrorEvent(fmt.Sprintf("%v", runErr)))
 			}
 		}()
 		return &RunResponse{}, nil
