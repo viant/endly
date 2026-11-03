@@ -213,7 +213,7 @@ func (s *AbstractService) RunInBackground(context *Context, handler func() error
 	var done uint32 = 0
 	go func() {
 		for {
-			if atomic.LoadUint32(&done) == 1 {
+			if atomic.LoadUint32(&done) == 1 || context.Background().Err() != nil {
 				break
 			}
 			s.Sleep(context, 2000)

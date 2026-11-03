@@ -1,13 +1,17 @@
 package endly_test
 
 import (
+	"context"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/endly"
 	"github.com/viant/endly/model/location"
+	"github.com/viant/endly/model/msg"
+	"sync"
 	"testing"
+	"time"
 )
 
 func TestAbstractService_Run(t *testing.T) {
@@ -119,6 +123,58 @@ func TestAbstractService_Sleep(t *testing.T) {
 	context := manager.NewContext(nil)
 	srv := newService()
 	srv.Sleep(context, 1)
+}
+
+func TestRunInBackgroundCancellationStopsHeartbeatAndJoinsHandler(t *testing.T) {
+	runContext := endly.New().NewContext(nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	runContext.SetBackground(ctx)
+	logging := true
+	runContext.Logging = &logging
+	heartbeats := make(chan struct{}, 100)
+	runContext.Listener = func(event msg.Event) {
+		if event.Type() == "msg_SleepEvent" {
+			select {
+			case heartbeats <- struct{}{}:
+			default:
+			}
+		}
+	}
+	started, release, finished := make(chan struct{}), make(chan struct{}), make(chan error, 1)
+	var releaseOnce sync.Once
+	releaseHandler := func() { releaseOnce.Do(func() { close(release) }) }
+	want := errors.New("handler result")
+	go func() {
+		finished <- newService().RunInBackground(runContext, func() error {
+			close(started)
+			<-release
+			return want
+		})
+	}()
+	defer releaseHandler()
+	<-started
+	select {
+	case <-heartbeats:
+	case <-time.After(time.Second):
+		t.Fatal("missing wait heartbeat")
+	}
+	cancel()
+	select {
+	case <-heartbeats:
+		t.Fatal("cancelled wait continued publishing heartbeats")
+	case err := <-finished:
+		t.Fatalf("handler was not joined: %v", err)
+	case <-time.After(50 * time.Millisecond):
+	}
+	// Releasing the handler must return its error, even after cancellation.
+	releaseHandler()
+	select {
+	case err := <-finished:
+		assert.Same(t, want, err)
+	case <-time.After(time.Second):
+		t.Fatal("finished handler was not joined")
+	}
 }
 
 func TestAbstractService_Actions(t *testing.T) {
