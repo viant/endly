@@ -19,8 +19,12 @@ func IsSingleExpression(source string, udf bool) bool {
 	return ok && value == marker
 }
 
-// IsContainer excludes nil and typed-nil values before native reflection helpers.
+// IsContainer excludes nil, typed nil and literal binary data before native
+// container normalization. A byte payload is not a list of workflow expressions.
 func IsContainer(value interface{}) bool {
+	if _, binary := value.([]byte); binary {
+		return false
+	}
 	return !isNilValue(value) && (toolbox.IsMap(value) || toolbox.IsSlice(value))
 }
 

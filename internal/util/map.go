@@ -35,6 +35,9 @@ func normalizeKVPairs(source interface{}) (interface{}, error) {
 	if source == nil {
 		return nil, nil
 	}
+	if _, binary := source.([]byte); binary {
+		return source, nil
+	}
 	if toolbox.IsSlice(source) && len(toolbox.AsSlice(source)) == 0 {
 		return source, nil
 	}

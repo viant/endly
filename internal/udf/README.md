@@ -89,6 +89,55 @@ pipeline:
 | --- | --- | --- | --- | --- |
 | udf | register | register custom UDF with udf provider | [RegisterRequest](service_contract.go) | [RegisterResponse](service_contract.go) |
 
+### Literal state JSON bytes
+
+`$StateJSONBytes('result')` resolves one literal state key/path through the
+native state lookup, serializes the stored value, and returns `[]byte`. Dotted
+paths such as `'result.StructuredContent'` select a stored subtree. Pass the
+key/path string, not `$result`: ordinary UDF arguments may expand referenced
+map fields before the UDF sees them.
+
+```yaml
+pipeline:
+  retainResult:
+    action: storage:upload
+    init:
+      - name: retainedBytes
+        value: $StateJSONBytes('result')
+        required: true
+        emptyIfUnexpanded: true
+    sourceKey: retainedBytes
+    dest:
+      URL: ${outputDirectory}/result.json
+```
+
+The JSON uses the same tab-indented formatting as `AsJSON`, preserving literal
+code/templates, UTF-8, numeric values, zero, false, null and empty arrays/objects.
+Stored values are not expanded or mutated. Empty, missing, non-string or
+expression-like keys and unsupported JSON values fail with payload-free errors.
+Keep required/unexpanded validation when retaining a receipt: a failed UDF must
+not be saved as an unevaluated expression.
+
+Binary upload content remains literal. String uploads retain their existing
+workflow-template expansion; `AsJSON` and authored variable/fixture interpolation
+are unchanged. Computed results should first be staged under a state key and
+then serialized with `StateJSONBytes`.
+
+For literal JSON comparisons, stage the bytes before applying existing UDFs;
+embedded nested UDF calls are not a literal-data boundary:
+
+```yaml
+init:
+  - sourceBytes = $StateJSONBytes('response.definition')
+  - sourceFingerprint = $Base64Encode($sourceBytes)
+```
+
+`Base64Encode` receives bytes and preserves the exact JSON encoding. Staged
+`$AsString($sourceBytes)` also preserves JSON text; the native validator may
+compare bare JSON strings structurally. For exact text comparison, use
+`actual: definition:${actualJSON}` and `expect: definition:${expectedJSON}`
+after staging each text with `AsString`, or compare the base64 form. Do not pass serialized code back through a string-template upload.
+
 ### JSON Lines captures
 
 `$LoadJSONLines('capture.jsonl')` always returns a collection, including zero or
