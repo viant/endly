@@ -13,6 +13,9 @@ func processes(context *endly.Context) *model.Processes {
 	if !context.Contains(processesKey) {
 		result = model.NewProcesses()
 		_ = context.Put(processesKey, result)
+		// A workflow stack is execution-local. Async children must create their
+		// own stack rather than changing the parent's or a sibling's active task.
+		context.AsyncUnsafeKeys[processesKey] = true
 	} else {
 		context.GetInto(processesKey, &result)
 	}
