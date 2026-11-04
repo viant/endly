@@ -8,7 +8,16 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/tebeka/selenium"
+	"github.com/viant/endly"
 )
+
+const directCDPNestedMenuFixture = `<!doctype html><title>Nested menu hit target</title><style>
+body{margin:0}#rail{position:fixed;right:0;top:0;width:300px;height:700px;overflow:auto}
+#menu{margin-top:300px;height:300px;overflow:auto}#content{height:1200px;padding-top:240px}
+#target{display:block;margin:0 0 0 40px;width:13px;height:13px}#tail{height:1400px}
+#toolbar{position:fixed;right:0;top:0;width:300px;height:400px;z-index:10;background:#ddd}
+</style><div id="rail"><div id="menu"><div id="content"><input id="target" type="checkbox" aria-label="Nested choice"></div></div><div id="tail"></div></div><div id="toolbar">Toolbar</div>
+<script>window.clicks=[];target.addEventListener('click',e=>clicks.push(e.isTrusted));</script>`
 
 // Centering every ancestor can hide an already actionable menu control behind
 // fixed page chrome. The checkbox starts visible inside two independent scrollers.
@@ -20,14 +29,7 @@ func TestDirectCDPClickPreservesVisibleNestedMenuLive(t *testing.T) {
 	driver, err := newDirectCDPDriver(address)
 	require.NoError(t, err)
 	defer driver.Quit()
-	page := `<!doctype html><title>Nested menu hit target</title><style>
-body{margin:0}#rail{position:fixed;right:0;top:0;width:300px;height:700px;overflow:auto}
-#menu{margin-top:300px;height:300px;overflow:auto}#content{height:1200px;padding-top:240px}
-#target{display:block;margin:0 0 0 40px;width:13px;height:13px}#tail{height:1400px}
-#toolbar{position:fixed;right:0;top:0;width:300px;height:400px;z-index:10;background:#ddd}
-</style><div id="rail"><div id="menu"><div id="content"><input id="target" type="checkbox"></div></div><div id="tail"></div></div><div id="toolbar">Toolbar</div>
-<script>window.clicks=[];target.addEventListener('click',e=>clicks.push(e.isTrusted));</script>`
-	_, err = driver.OpenTab("data:text/html," + url.PathEscape(page))
+	_, err = driver.OpenTab("data:text/html," + url.PathEscape(directCDPNestedMenuFixture))
 	require.NoError(t, err)
 	defer driver.Close()
 	_, err = driver.CDPCommand("Emulation.setDeviceMetricsOverride", map[string]interface{}{"width": 1280, "height": 900, "deviceScaleFactor": 1, "mobile": false})
@@ -38,6 +40,46 @@ body{margin:0}#rail{position:fixed;right:0;top:0;width:300px;height:700px;overfl
 	require.NoError(t, err)
 	require.Equal(t, true, value, "fixture must start with the checkbox owning its center")
 	require.NoError(t, target.Click())
+	value, err = driver.ExecuteScript(`return {checked:target.checked,clicks:window.clicks,rail:rail.scrollTop,menu:menu.scrollTop};`, nil)
+	require.NoError(t, err)
+	require.Equal(t, map[string]interface{}{"checked": true, "clicks": []interface{}{true}, "rail": float64(0), "menu": float64(0)}, value)
+}
+
+// The public run path must preserve the same native click actionability as
+// direct element.Click; a service pre-scroll must not hide the visible input.
+func TestDirectCDPRunClickPreservesVisibleNestedMenuLive(t *testing.T) {
+	address := os.Getenv("ENDLY_DIRECT_CDP_TEST_ADDRESS")
+	if address == "" {
+		t.Skip("owned Chrome CDP endpoint required")
+	}
+	driver, err := newDirectCDPDriver(address)
+	require.NoError(t, err)
+	defer driver.Quit()
+	_, err = driver.OpenTab("data:text/html," + url.PathEscape(directCDPNestedMenuFixture))
+	require.NoError(t, err)
+	defer driver.Close()
+	_, err = driver.CDPCommand("Emulation.setDeviceMetricsOverride", map[string]interface{}{"width": 1280, "height": 900, "deviceScaleFactor": 1, "mobile": false})
+	require.NoError(t, err)
+	value, err := driver.ExecuteScript(`const r=target.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===target;`, nil)
+	require.NoError(t, err)
+	require.Equal(t, true, value, "fixture must start with the checkbox owning its center")
+	ctx := endly.New().NewContext(nil)
+	defer ctx.Close()
+	putSession(ctx, "nested-menu", &Session{SessionID: "nested-menu", Browser: ChromeBrowser, Backend: "cdp", Attached: true, driver: driver})
+	autoStart := false
+	request := &RunRequest{SessionID: "nested-menu", AutoStart: &autoStart, ActionTimeoutMs: 500, Commands: []interface{}{
+		`expect("#target").toBeVisible()`,
+		`expect("#target").toBeEnabled()`,
+		`page.getByLabel("Nested choice").click()`,
+		`expect("#target").toBeChecked()`,
+	}}
+	require.NoError(t, request.Init())
+	response, err := New().(*service).run(ctx, request)
+	require.NoError(t, err)
+	require.Len(t, response.Assertions, 3)
+	for _, assertion := range response.Assertions {
+		require.True(t, assertion.Passed)
+	}
 	value, err = driver.ExecuteScript(`return {checked:target.checked,clicks:window.clicks,rail:rail.scrollTop,menu:menu.scrollTop};`, nil)
 	require.NoError(t, err)
 	require.Equal(t, map[string]interface{}{"checked": true, "clicks": []interface{}{true}, "rail": float64(0), "menu": float64(0)}, value)
