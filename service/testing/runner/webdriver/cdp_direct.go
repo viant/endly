@@ -977,14 +977,14 @@ return true;`)
 // at bounded, increasing resolution, then transform a painted point into the
 // viewport. Geometry alone never grants actionability: browser hit testing must
 // still confirm the target owns that point (including clipping and overlays).
-const directCDPClickablePoint = `this.scrollIntoView({block:'center',inline:'center',behavior:'instant'});
-const r=this.getBoundingClientRect();
-const x=r.left+r.width/2,y=r.top+r.height/2;
-const owns=(x,y)=>{
+const directCDPClickablePoint = `const owns=(x,y)=>{
   if(x<0||y<0||x>=innerWidth||y>=innerHeight)return false;
   const hit=document.elementFromPoint(x,y);
   return Boolean(hit&&(hit===this||this.contains(hit)));
 };
+const point=()=>{
+const r=this.getBoundingClientRect();
+const x=r.left+r.width/2,y=r.top+r.height/2;
 if(owns(x,y))return {x,y,hit:true};
 if(this instanceof SVGGeometryElement){
   const bounds=this.getBBox(),matrix=this.getScreenCTM();
@@ -999,7 +999,14 @@ if(this instanceof SVGGeometryElement){
     }
   }
 }
-return {x,y,hit:false};`
+return {x,y,hit:false};
+};
+// Preserve an already actionable point: recentering nested scrollers can move
+// a visible control behind fixed page chrome or disturb a positioned menu.
+const current=point();
+if(current.hit)return current;
+this.scrollIntoView({block:'center',inline:'center',behavior:'instant'});
+return point();`
 
 // A preceding tab change or scroll can move the target after its first
 // measurement. Recompute geometry and ownership until the point is stable.
