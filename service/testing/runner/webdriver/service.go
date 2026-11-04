@@ -768,9 +768,15 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 				return response, err
 			}
 		}
-		if err = timedInteraction(session.timings, "element.scroll", func() error { return s.scrollIntoView(element) }); err != nil {
-			response.LookupError = fmt.Sprintf("element %s could not be scrolled into view: %v", request.Selector.Value, err)
-			return response, err
+		// Direct CDP Click preserves an already owned hit point and scrolls
+		// when needed. A preceding LocationInView can hide that visible point
+		// by recentering a nested menu before its native actionability check.
+		_, directClick := element.(*directCDPElement)
+		if request.Call.Method != "Click" || !directClick {
+			if err = timedInteraction(session.timings, "element.scroll", func() error { return s.scrollIntoView(element) }); err != nil {
+				response.LookupError = fmt.Sprintf("element %s could not be scrolled into view: %v", request.Selector.Value, err)
+				return response, err
+			}
 		}
 	}
 
