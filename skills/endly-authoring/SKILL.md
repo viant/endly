@@ -75,3 +75,8 @@ For a literal shell argument, store its string in state and use
 not `$state.key`; this preserves JSON-shaped strings and shell metacharacters.
 The surrounding command retains normal shell behavior. Bind required workflow
 inputs once with `init`/`from` before nested workflows can change their parameters.
+
+Use `- {name: selected, from: response.entries, keyFrom: requestedKey, required: true}`
+to read a map entry using a string already stored in state. Both paths are read
+without evaluation, and the string is used exactly as stored, including dots,
+brackets and dollar signs. A missing entry follows the normal variable fallback.

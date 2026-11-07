@@ -14,6 +14,18 @@ import (
 type Variables []*Variable
 
 func (v Variables) MarshalYAML() (interface{}, error) {
+	for _, variable := range v {
+		if variable != nil && variable.KeyFrom != "" {
+			// The short form cannot represent the two paths of a keyed lookup.
+			fields := make([]*variableFields, 0, len(v))
+			for _, item := range v {
+				if item != nil {
+					fields = append(fields, (*variableFields)(item))
+				}
+			}
+			return fields, nil
+		}
+	}
 	type variables Variables
 	customVar := variables(v)
 	orig := &yaml.Node{}
