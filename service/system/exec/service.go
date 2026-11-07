@@ -513,10 +513,11 @@ func (s *execService) runExtractCommands(context *endly.Context, request *Extrac
 			if !strings.Contains(command, "&&") {
 				envVariable := string(command[7:])
 				keyValuePair := strings.Split(envVariable, "=")
-				if len(keyValuePair) == 2 {
+				// An explicitly quoted assignment is already shell syntax. The
+				// legacy environment setter cannot reconstruct its quoting.
+				if len(keyValuePair) == 2 && !strings.ContainsAny(keyValuePair[1], "'\"") {
 					key := strings.TrimSpace(keyValuePair[0])
 					value := strings.TrimSpace(keyValuePair[1])
-					value = strings.Trim(value, "'\"")
 					err = s.setEnvVariable(context, session, key, value)
 					response.Add(NewCommandLog(command, "", err))
 					continue

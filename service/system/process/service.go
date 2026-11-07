@@ -187,20 +187,20 @@ func (s *service) buildStartProcessCommand(request *StartRequest) *exec.RunReque
 	}
 	directory := request.Directory
 	if request.QuoteArguments {
-		directory = quoteProcessArgument(directory)
+		directory = util.QuoteShellArgument(directory)
 	}
 	changeDirCommand := fmt.Sprintf("cd %v ", directory)
 	startParts := append([]string{request.Command}, request.Arguments...)
 	if request.QuoteArguments {
 		for i := range startParts {
-			startParts[i] = quoteProcessArgument(startParts[i])
+			startParts[i] = util.QuoteShellArgument(startParts[i])
 		}
 	}
 	startBody := strings.TrimSpace(strings.Join(startParts, " "))
 	outputFile := path.Join(request.Directory, "nohup.out")
 	quotedOutput := outputFile
 	if request.QuoteArguments {
-		quotedOutput = quoteProcessArgument(outputFile)
+		quotedOutput = util.QuoteShellArgument(outputFile)
 	}
 	var createNoHup = fmt.Sprintf("touch %v && chmod 666 %v", quotedOutput, quotedOutput)
 	if request.ImmuneToHangups {
@@ -365,8 +365,4 @@ func New() endly.Service {
 func buildSeparator(text string) (string, bool) {
 	hasCR := strings.Contains(text, "\r")
 	return "\n", hasCR
-}
-
-func quoteProcessArgument(value string) string {
-	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }

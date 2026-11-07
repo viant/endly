@@ -53,3 +53,17 @@ actual outgoing request when a protocol distinguishes `{}` from `[]`.
 In path mode, tag filtering excludes unmatched template instances across groups
 while retaining untagged setup. Discover IDs in the actual root/nested run context
 with endly_listInstances; standalone loading can change the workflow name prefix.
+
+For CSV artifact checks, register the existing `CsvReader` provider through
+`udf:register` with `params: [{output: rows}]`, then use that registered UDF in
+`storage:download`. It returns the observed header and every record as ordered
+string arrays, retaining blank records and trailing empty cells. Validate headers,
+record widths, complete row counts and values against independent expectations;
+do not infer missing rows from the expected data. Use native validator state paths
+without recursive `$` expansion when comparing literal artifact contents.
+
+For a literal shell argument, store its string in state and use
+`$ShellQuote('state.key')` in an `exec:run` command. Pass the literal key/path,
+not `$state.key`; this preserves JSON-shaped strings and shell metacharacters.
+The surrounding command retains normal shell behavior. Bind required workflow
+inputs once with `init`/`from` before nested workflows can change their parameters.

@@ -38,6 +38,7 @@ func init() {
 	endly.PredefinedUdfs["LoadBinary"] = buildin.LoadBinary
 	endly.PredefinedUdfs["LoadJSONLines"] = buildin.LoadJSONLines
 	endly.PredefinedUdfs["StateJSONBytes"] = buildin.StateJSONBytes
+	endly.PredefinedUdfs["ShellQuote"] = buildin.ShellQuote
 	endly.PredefinedUdfs["AssetsToMap"] = buildin.AssetsToMap
 	endly.PredefinedUdfs["BinaryAssetsToMap"] = buildin.BinaryAssetsToMap
 	endly.PredefinedUdfs["CurrentHour"] = buildin.CurrentHour

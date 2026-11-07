@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+// QuoteShellArgument renders a value as one literal POSIX shell argument.
+func QuoteShellArgument(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
+}
+
 // GetArguments extract cli arguments into a map
 func GetArguments(baseURLs ...string) (map[string]interface{}, error) {
 	var args = data.NewMap()
