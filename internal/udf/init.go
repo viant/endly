@@ -24,6 +24,7 @@ func init() {
 	endly.UdfRegistryProvider["ProtoReader"] = NewProtoReader
 	endly.UdfRegistryProvider["ProtoWriter"] = NewProtoWriter
 	endly.UdfRegistryProvider["CsvReader"] = NewCsvReader
+	endly.UdfRegistryProvider["XlsxReader"] = NewXlsxReader
 
 	endly.PredefinedUdfs["IsJSON"] = buildin.IsJSON
 	endly.PredefinedUdfs["WorkingDirectory"] = buildin.WorkingDirectory

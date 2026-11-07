@@ -62,6 +62,14 @@ record widths, complete row counts and values against independent expectations;
 do not infer missing rows from the expected data. Use native validator state paths
 without recursive `$` expansion when comparing literal artifact contents.
 
+For static XLSX grids, register `XlsxReader` with
+`params: [{sheet: Worksheet name, range: autoFilter}]` and pass its registered
+ID to `storage:download`. The result includes the observed worksheet AutoFilter
+range, original byte count, rectangular values and parallel cell types. Check
+range, cell types, and complete values against an independent oracle. Do not
+substitute the sheet dimension for missing AutoFilter metadata. The reader
+does not evaluate formulas or inspect charts.
+
 For a literal shell argument, store its string in state and use
 `$ShellQuote('state.key')` in an `exec:run` command. Pass the literal key/path,
 not `$state.key`; this preserves JSON-shaped strings and shell metacharacters.

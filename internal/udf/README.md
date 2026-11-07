@@ -79,6 +79,7 @@ pipeline:
 | ProtoReader | schemaFile, messageType, importPath |
 | AvroWriter | avroSchema/URL, compression |
 | CsvReader | `headerFields, delimiter` or `{output: rows, delimiter: ','}` |
+| XlsxReader | `{sheet: Worksheet name, range: autoFilter}` |
 
 Register `CsvReader` with `output: rows` to verify positional CSV records.
 
@@ -104,6 +105,43 @@ width, including trailing empty fields. Blank lines remain zero-width records.
 An initial UTF-8 BOM is ignored. The
 delimiter defaults to a comma. Malformed CSV or invalid UTF-8 fails the action.
 The positional header arguments still produce the existing log reader output.
+
+Register `XlsxReader` to read a static grid from a named worksheet in an XLSX
+download:
+
+```yaml
+pipeline:
+  register:
+    action: udf:register
+    udfs:
+      - id: ReadInventoryGrid
+        provider: XlsxReader
+        params: [{sheet: Inventory, range: autoFilter}]
+  read:
+    action: storage:download
+    source: {URL: 'fixtures/inventory.xlsx'}
+    udf: ReadInventoryGrid
+    destKey: observedGrid
+```
+
+The result contains `sheet`, the observed worksheet AutoFilter `range`, the
+original `byteCount`, and rectangular `rows` and `types` grids, including the
+first row and all trailing blank positions inside the range. Cell types are
+`blank`, `string`, `number`, `boolean`, and `date`. A blank has a null value;
+an explicit empty string has a string value. Numbers use their raw numeric
+value, including numbers displayed with a date or percentage format. Native
+OOXML date cells retain their date text. Validate the observed range, cell
+types and values against independent expectations.
+
+The reader requires one worksheet AutoFilter and does not infer a range from
+the worksheet dimension, filter the rows, or inspect charts. Formula cells
+and Excel error cells in the range fail the read; formulas are never evaluated
+and cached formula values are not returned as data. Merged cells intersecting
+the grid are unsupported. The workbook is limited to 64 MiB before and after
+unpacking, the grid to 100,000 cells and its decoded text to 16 MiB. The
+selected worksheet must have explicit, ordered cell coordinates and at most
+100,000 slots after expanding its sparse rows and columns. Use a distinct
+UDF ID for each registration with different worksheet options.
 
 `$ShellQuote('value')` reads a string from a literal state key or path and
 produces one literal POSIX shell argument for `exec:run`. Use it for values such
