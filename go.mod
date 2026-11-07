@@ -45,7 +45,7 @@ require (
 	github.com/segmentio/kafka-go v0.3.4
 	github.com/stretchr/testify v1.11.1
 	github.com/tebeka/selenium v0.9.10-0.20211105214847-e9100b7f5ac1
-	github.com/viant/afs v1.30.1-0.20260914155934-90e95d483861
+	github.com/viant/afs v1.30.2-0.20261107183859-0b3aa046bde9
 	github.com/viant/afsc v1.18.0
 	// replace with bumped, released ^ afsc, will not work now
 	github.com/viant/asc v0.5.2-0.20240920195908-e805e6de7865
