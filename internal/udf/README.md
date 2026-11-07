@@ -78,7 +78,42 @@ pipeline:
 | ProtoReader |  schemaFile, messageType, importPath |
 | ProtoReader | schemaFile, messageType, importPath |
 | AvroWriter | avroSchema/URL, compression |
-| CsvReader | headerFields, delimiter |
+| CsvReader | `headerFields, delimiter` or `{output: rows, delimiter: ','}` |
+
+Register `CsvReader` with `output: rows` to verify positional CSV records.
+
+```yaml
+pipeline:
+  register:
+    action: udf:register
+    udfs:
+      - id: ReadCSVRows
+        provider: CsvReader
+        params:
+          - output: rows
+  read:
+    action: storage:download
+    source: {URL: 'fixtures/export.csv'}
+    udf: ReadCSVRows
+    destKey: observedRows
+```
+
+The result contains every parsed record in order, including the observed header
+as the first record. Cells remain strings and each record retains its original
+width, including trailing empty fields. Blank lines remain zero-width records.
+An initial UTF-8 BOM is ignored. The
+delimiter defaults to a comma. Malformed CSV or invalid UTF-8 fails the action.
+The positional header arguments still produce the existing log reader output.
+
+`$ShellQuote('value')` reads a string from a literal state key or path and
+produces one literal POSIX shell argument for `exec:run`. Use it for values such
+as paths that may contain spaces, quotes or shell syntax.
+The surrounding command and environment keep their normal expansion behavior.
+
+```yaml
+commands:
+  - "printf '%s' $ShellQuote('value')"
+```
 
 
 ### Service actions

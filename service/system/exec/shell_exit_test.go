@@ -1,11 +1,14 @@
 package exec
 
 import (
+	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"github.com/viant/endly"
+	"github.com/viant/endly/internal/util"
 )
 
 func TestRunDoesNotSucceedAfterShellExit(t *testing.T) {
@@ -32,6 +35,33 @@ func TestRunDoesNotSucceedAfterShellExit(t *testing.T) {
 			require.Error(t, result.Err)
 		})
 	}
+}
+
+func TestRunPreservesQuotedExportAndUnquotedPATH(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("requires POSIX shell")
+	}
+	ctx := endly.New().NewContext(nil)
+	t.Cleanup(ctx.Close)
+	marker := filepath.Join(t.TempDir(), "marker")
+	value := "ok;>" + marker
+	request := NewRunRequest(nil, false,
+		"export ENDLY_LITERAL_EXPORT="+util.QuoteShellArgument(value),
+		"printf '%s\\n' \"$ENDLY_LITERAL_EXPORT\"",
+		"export PATH=/endly-test-prefix:$PATH",
+		"printf '%s' \"$PATH\"",
+	)
+	request.StrictCompletion = true
+	request.CheckError = true
+	request.TimeoutMs = 1000
+	result := New().Run(ctx, request)
+	require.NoError(t, result.Err)
+	lines := strings.Split(result.Response.(*RunResponse).Output, "\n")
+	require.GreaterOrEqual(t, len(lines), 2)
+	require.Equal(t, value, lines[0])
+	require.True(t, strings.HasPrefix(lines[1], "/endly-test-prefix:"), lines[1])
+	require.NotContains(t, lines[1], "$PATH")
+	require.NoFileExists(t, marker)
 }
 
 func TestRunPreservesSilentCompletionAndUncheckedExitCode(t *testing.T) {
