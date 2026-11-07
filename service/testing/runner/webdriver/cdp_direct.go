@@ -322,6 +322,10 @@ func (d *directCDPDriver) currentConnection() (*directCDPConnection, error) {
 }
 
 func (d *directCDPDriver) evaluate(script string, args []interface{}) (interface{}, error) {
+	return d.evaluateWithContext(context.Background(), script, args)
+}
+
+func (d *directCDPDriver) evaluateWithContext(ctx context.Context, script string, args []interface{}) (interface{}, error) {
 	endTiming := startInteractionPhase(d.timings.Load(), "cdp.Runtime.evaluate")
 	defer endTiming()
 	connection, err := d.currentConnection()
@@ -342,7 +346,7 @@ func (d *directCDPDriver) evaluate(script string, args []interface{}) (interface
 		}
 	}
 	expression := `(function(){const __args=[` + strings.Join(argumentExpressions, ",") + `];return (function(){` + script + `}).apply(null,__args);})()`
-	raw, err := connection.command(context.Background(), "Runtime.evaluate", map[string]interface{}{
+	raw, err := connection.command(ctx, "Runtime.evaluate", map[string]interface{}{
 		"expression": expression, "returnByValue": true, "awaitPromise": true,
 	})
 	if err != nil {
@@ -537,15 +541,28 @@ func (d *directCDPDriver) SetViewportSize(width, height int) error {
 	}); err != nil {
 		return fmt.Errorf("set viewport size: %w", err)
 	}
-	actual, err := d.evaluate("return {width: window.innerWidth, height: window.innerHeight};", nil)
-	if err != nil {
-		return fmt.Errorf("read viewport size: %w", err)
+	return d.waitForViewportSize(width, height, 2*time.Second)
+}
+
+func (d *directCDPDriver) waitForViewportSize(width, height int, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	for {
+		actual, err := d.evaluateWithContext(ctx, "return {width: window.innerWidth, height: window.innerHeight};", nil)
+		if err != nil {
+			return fmt.Errorf("read viewport size: %w", err)
+		}
+		measured, ok := actual.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("viewport size did not take effect: requested %dx%d, measured %v", width, height, actual)
+		}
+		if measured["width"] == float64(width) && measured["height"] == float64(height) {
+			return nil
+		}
+		if err := waitForContext(ctx, 20*time.Millisecond); err != nil {
+			return fmt.Errorf("viewport size did not take effect: requested %dx%d, measured %v: %w", width, height, actual, err)
+		}
 	}
-	measured, ok := actual.(map[string]interface{})
-	if !ok || measured["width"] != float64(width) || measured["height"] != float64(height) {
-		return fmt.Errorf("viewport size did not take effect: requested %dx%d, measured %v", width, height, actual)
-	}
-	return nil
 }
 
 func (d *directCDPDriver) Back() error {

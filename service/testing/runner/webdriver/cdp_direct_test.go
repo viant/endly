@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/tebeka/selenium"
@@ -25,22 +26,23 @@ type controlledCDPEditState struct {
 }
 
 type fakeCDPServer struct {
-	server         *httptest.Server
-	mu             sync.Mutex
-	URL            string
-	title          string
-	stopped        bool
-	readyState     string
-	navigated      chan struct{}
-	inputEvents    int
-	clickObserved  bool
-	keyEvents      []map[string]interface{}
-	insertedTexts  []string
-	viewportWidth  int
-	viewportHeight int
-	viewportParams map[string]interface{}
-	foreground     bool
-	controlledEdit *controlledCDPEditState
+	server             *httptest.Server
+	mu                 sync.Mutex
+	URL                string
+	title              string
+	stopped            bool
+	readyState         string
+	navigated          chan struct{}
+	inputEvents        int
+	clickObserved      bool
+	keyEvents          []map[string]interface{}
+	insertedTexts      []string
+	viewportWidth      int
+	viewportHeight     int
+	viewportParams     map[string]interface{}
+	viewportStaleReads int
+	foreground         bool
+	controlledEdit     *controlledCDPEditState
 }
 
 func newFakeCDPServer(t *testing.T) *fakeCDPServer {
@@ -142,6 +144,10 @@ func newFakeCDPServer(t *testing.T) *fakeCDPServer {
 					value, kind = result.URL, "string"
 				case strings.Contains(expression, "window.innerWidth") && strings.Contains(expression, "window.innerHeight"):
 					value, kind = map[string]interface{}{"width": result.viewportWidth, "height": result.viewportHeight}, "object"
+					if result.viewportStaleReads > 0 {
+						result.viewportStaleReads--
+						value = map[string]interface{}{"width": 768, "height": 1024}
+					}
 				case strings.Contains(expression, "document.documentElement.outerHTML"):
 					value, kind = "<html><body>Direct</body></html>", "string"
 				case strings.Contains(expression, ").length"):
@@ -312,6 +318,34 @@ func TestDirectCDPSetViewportSize(t *testing.T) {
 	require.Equal(t, 720, fake.viewportHeight)
 	require.Equal(t, float64(1), fake.viewportParams["deviceScaleFactor"])
 	require.Equal(t, false, fake.viewportParams["mobile"])
+}
+
+func TestDirectCDPSetViewportSizeWaitsForAppliedMetrics(t *testing.T) {
+	fake := newFakeCDPServer(t)
+	driver, err := newDirectCDPDriver(fake.server.URL)
+	require.NoError(t, err)
+	defer driver.Quit()
+	fake.mu.Lock()
+	fake.viewportStaleReads = 2
+	fake.mu.Unlock()
+	require.NoError(t, driver.SetViewportSize(390, 844))
+	fake.mu.Lock()
+	defer fake.mu.Unlock()
+	require.Zero(t, fake.viewportStaleReads)
+	require.Equal(t, 390, fake.viewportWidth)
+	require.Equal(t, 844, fake.viewportHeight)
+}
+
+func TestDirectCDPViewportWaitFailsWhenMetricsNeverApply(t *testing.T) {
+	fake := newFakeCDPServer(t)
+	driver, err := newDirectCDPDriver(fake.server.URL)
+	require.NoError(t, err)
+	defer driver.Quit()
+	fake.mu.Lock()
+	fake.viewportStaleReads = 10000
+	fake.mu.Unlock()
+	err = driver.waitForViewportSize(390, 844, 30*time.Millisecond)
+	require.ErrorIs(t, err, context.DeadlineExceeded)
 }
 
 func TestRunWithDirectCDPBackend(t *testing.T) {
