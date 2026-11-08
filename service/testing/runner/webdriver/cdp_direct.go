@@ -1163,9 +1163,12 @@ return new Promise((resolve,reject)=>{
   const receives=!!hit&&(element===hit||element.contains(hit)||(element.tagName==='INPUT'&&label?.control===element));
   if(stable>=2&&receives)return resolve({x,y});
   if(performance.now()>deadline)return reject(new Error(receives?'click target did not settle':'click target is obscured'));
-  requestAnimationFrame(check);
+  // Hidden headless pages can suspend animation frames even after bringToFront.
+  // Sample on a timer if the next frame is suspended; only one sample can win.
+  const frame=requestAnimationFrame(()=>{clearTimeout(timer);check();});
+  const timer=setTimeout(()=>{cancelAnimationFrame(frame);check();},100);
  };
- requestAnimationFrame(check);
+ check();
 });`)
 	if err != nil {
 		return 0, 0, err

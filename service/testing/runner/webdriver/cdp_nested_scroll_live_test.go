@@ -159,3 +159,24 @@ body{margin:0;height:2600px}#rail{margin-top:1300px;height:300px;overflow:auto}
 	require.NoError(t, err)
 	require.Equal(t, []interface{}{true}, value, "unsafe targets must not receive further clicks")
 }
+
+func TestDirectCDPHoverWithoutAnimationFramesLive(t *testing.T) {
+	address := os.Getenv("ENDLY_DIRECT_CDP_TEST_ADDRESS")
+	if address == "" {
+		t.Skip("owned Chrome CDP endpoint required")
+	}
+	driver, err := newDirectCDPDriver(address)
+	require.NoError(t, err)
+	defer driver.Quit()
+	page := `<svg width="200" height="100"><circle id="mark" cx="100" cy="50" r="6"/></svg>
+<script>window.requestAnimationFrame=()=>0;mark.onmousemove=e=>window.hovered=e.isTrusted</script>`
+	_, err = driver.OpenTab("data:text/html," + url.PathEscape(page))
+	require.NoError(t, err)
+	defer driver.Close()
+	mark, err := driver.FindElement(selenium.ByCSSSelector, "#mark")
+	require.NoError(t, err)
+	require.NoError(t, mark.MoveTo(0, 0))
+	value, err := driver.ExecuteScript("return window.hovered", nil)
+	require.NoError(t, err)
+	require.Equal(t, true, value)
+}
