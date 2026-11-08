@@ -19,6 +19,30 @@ the expected requests occurred. Do not apply this shortcut to `expect`, whose
 authored variables still need expansion. With `ignore`/`omitEmpty`, inspect the
 service's filtering order before changing an existing request to a state path.
 
+For an independently specified decimal precision, reuse Assertly's existing
+`@numericPrecisionPoint@` directive instead of adding a numeric export parser.
+Keep the captured values unchanged. For example:
+
+```yaml
+init:
+  - name: observed
+    value: {value: 0.2436781609195402}
+pipeline:
+  compare:
+    action: validator:assert
+    normalizeKVPairs: true
+    actual: observed
+    expect:
+      '@numericPrecisionPoint@': 6
+      value: 0.24367816091954023
+```
+
+The directive rounds numeric comparisons to the declared decimal places; it is
+not an absolute-error bound. `normalizeKVPairs` preserves this authored YAML map
+as a directive-bearing expectation. Keep row order, count, null and cell-type
+checks separate. Do not lower precision to hide a mismatch or apply it to JSON
+strings: `json:0.24` is a literal string, not a numeric value.
+
 Source-declared actions: `assert`.
 
 Read [the service reference](references/service.md) for live contract discovery and maintained source locations.
