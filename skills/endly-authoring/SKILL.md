@@ -76,6 +76,27 @@ not `$state.key`; this preserves JSON-shaped strings and shell metacharacters.
 The surrounding command retains normal shell behavior. Bind required workflow
 inputs once with `init`/`from` before nested workflows can change their parameters.
 
+A nested `run` inherits the parent's `params` only when its `params` field is
+omitted. An explicit map replaces that input map; it does not merge missing keys.
+`sharedState: true` does not change this rule. Forward every input the child
+needs, especially an overridden destination:
+
+```yaml
+init:
+  - {name: outputDirectory, from: params.outputDirectory, required: true}
+pipeline:
+  publish:
+    action: run
+    request: '@publish'
+    sharedState: true
+    params: {outputDirectory: '$outputDirectory', mode: preview}
+```
+
+With `sharedState: false`, the child starts with a cloned upstream state, not an
+empty state. Prefer explicit child inputs over relying on ambient state. Verify
+parameter forwarding through the nested action using a nondefault destination;
+checking only the parent's initialized value misses dropped child inputs.
+
 Use `- {name: selected, from: response.entries, keyFrom: requestedKey, required: true}`
 to read a map entry using a string already stored in state. Both paths are read
 without evaluation, and the string is used exactly as stored, including dots,
