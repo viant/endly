@@ -81,6 +81,7 @@ const (
 )
 
 func convertMultiTables(tables map[string]interface{}, state data.Map, prefix string) (map[string][]map[string]interface{}, error) {
+	rowSequences := make(map[string][]data.Map)
 	var result = make(map[string][]map[string]interface{})
 	sequencerMapping := state.GetMap(sequencerKey)
 	var sequencer string
@@ -112,6 +113,7 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 			return nil, fmt.Errorf("table %v records must be a slice, got %T", table, tableData)
 		}
 		var tableDataSlice = toolbox.AsSlice(tableData)
+		rowSequences[table] = make([]data.Map, len(tableDataSlice))
 		// An empty fixture contributes no records. In particular, do not
 		// synthesize an empty row or a table entry that could imply deletion.
 		for i, item := range tableDataSlice {
@@ -125,7 +127,9 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 				}
 			}
 
-			if sequencerKey := allocateTableSequence(itemMap, table, state, sequencerMapping, sequencerMappingData, prefix); sequencerKey != "" {
+			rowSequencer, rowState := allocateTableSequence(itemMap, table, state, sequencerMapping, sequencerMappingData, prefix)
+			rowSequences[table][i] = rowState
+			if sequencerKey := rowSequencer; sequencerKey != "" {
 				sequencer = sequencerKey
 			}
 
@@ -160,7 +164,7 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 					if strings.Contains(value, "$Data") || strings.Contains(value, "$uuid") {
 						itemMap[k] = sequencerMapping.Expand(strings.Replace(value, "/", ".", 1))
 					} else {
-						expanded, ok := expandSequenceExpr(value, toolbox.AsString(caseTag), sequencerMapping, sequencer, sequencerValues, state)
+						expanded, ok := expandSequenceExpr(value, toolbox.AsString(caseTag), sequencerMapping, sequencer, sequencerValues, state, rowSequences[table][i])
 						if ok {
 							itemMap[k] = expanded
 						}
@@ -171,7 +175,7 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 						if !ok {
 							continue
 						}
-						expanded, ok := expandSequenceExpr(stringKey, toolbox.AsString(caseTag), sequencerMapping, sequencer, sequencerValues, state)
+						expanded, ok := expandSequenceExpr(stringKey, toolbox.AsString(caseTag), sequencerMapping, sequencer, sequencerValues, state, rowSequences[table][i])
 						if ok {
 							value[expanded] = keyValue
 							delete(value, key)
@@ -189,7 +193,7 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 	return result, nil
 }
 
-func expandSequenceExpr(value, caseTag string, sequencerMapping data.Map, sequencer string, sequencerValues data.Map, state data.Map) (interface{}, bool) {
+func expandSequenceExpr(value, caseTag string, sequencerMapping data.Map, sequencer string, sequencerValues data.Map, state data.Map, rowState data.Map) (interface{}, bool) {
 	if caseTag != "" && strings.Contains(value, "${tag}") {
 		value = strings.Replace(value, "${tag}", toolbox.AsString(caseTag), 1)
 	}
@@ -202,6 +206,14 @@ func expandSequenceExpr(value, caseTag string, sequencerMapping data.Map, sequen
 			seqValue, ok = sequencerValues.GetValue(key)
 		}
 		if !ok {
+			return value, false
+		}
+		// A namespace is not a scalar alias. Preserve the legacy row-counter
+		// expansion (for example a$Sequences.TABLE/case -> a101/case).
+		if toolbox.IsMap(seqValue) {
+			if expanded := rowState.ExpandAsText(value); expanded != value {
+				return state.ExpandAsText(expanded), true
+			}
 			return value, false
 		}
 		value = strings.ReplaceAll(value, expr, toolbox.AsString(seqValue))
@@ -241,7 +253,7 @@ func getSequencerExpr(value string, sequencer string) (string, string) {
 	return expr, value
 }
 
-func allocateTableSequence(values map[string]interface{}, table string, state data.Map, tablesMapping, sequenceMappingData data.Map, prefix string) string {
+func allocateTableSequence(values map[string]interface{}, table string, state data.Map, tablesMapping, sequenceMappingData data.Map, prefix string) (string, data.Map) {
 	var seqValue interface{}
 	var seqKey string
 	var stateKey string
@@ -315,7 +327,7 @@ func allocateTableSequence(values map[string]interface{}, table string, state da
 	dataKey := prefix + table + "." + dataKeySuffix
 	sequenceMappingData.SetValue(dataKey, values)
 
-	return sequencer
+	return sequencer, idState
 }
 
 func getKey(value string, table string) string {
