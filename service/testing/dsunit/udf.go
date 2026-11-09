@@ -112,9 +112,8 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 			return nil, fmt.Errorf("table %v records must be a slice, got %T", table, tableData)
 		}
 		var tableDataSlice = toolbox.AsSlice(tableData)
-		if len(tableDataSlice) == 0 {
-			return nil, fmt.Errorf("table %v has no records", table)
-		}
+		// An empty fixture contributes no records. In particular, do not
+		// synthesize an empty row or a table entry that could imply deletion.
 		for i, item := range tableDataSlice {
 			itemMap, ok := item.(map[string]interface{})
 			if !ok {
@@ -137,9 +136,6 @@ func convertMultiTables(tables map[string]interface{}, state data.Map, prefix st
 	for table, tableData := range tables {
 
 		var tableDataSlice = toolbox.AsSlice(tableData)
-		if len(tableDataSlice) == 0 {
-			return nil, fmt.Errorf("table %v has no records", table)
-		}
 
 		for i, item := range tableDataSlice {
 			itemMap := item.(map[string]interface{})
