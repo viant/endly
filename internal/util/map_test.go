@@ -5,7 +5,24 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/viant/toolbox/data"
+	"gopkg.in/yaml.v2"
 )
+
+func TestNormalizeValueDistinguishesOrderedYAMLObjectsFromLists(t *testing.T) {
+	var source yaml.MapSlice
+	require.NoError(t, yaml.Unmarshal([]byte("ci_ads: {}\nroles: []\nnested:\n  object: {}\n  list: []\n"), &source))
+	actual, err := NormalizeValue(source)
+	require.NoError(t, err)
+	require.Equal(t, map[string]interface{}{
+		"ci_ads": map[string]interface{}{}, "roles": []interface{}{},
+		"nested": map[string]interface{}{"object": map[string]interface{}{}, "list": []interface{}{}},
+	}, actual)
+	for _, object := range []yaml.MapSlice{nil, {}} {
+		actual, err := NormalizeValue(object)
+		require.NoError(t, err)
+		require.Equal(t, map[string]interface{}{}, actual)
+	}
+}
 
 func TestNormalizeMapKeepsEmptyListsInNestedWorkflowInputs(t *testing.T) {
 	source := map[string]interface{}{
