@@ -205,12 +205,9 @@ func expandSequenceExpr(value, caseTag string, sequencerMapping data.Map, sequen
 		if !ok {
 			seqValue, ok = sequencerValues.GetValue(key)
 		}
-		if !ok {
-			return value, false
-		}
-		// A namespace is not a scalar alias. Preserve the legacy row-counter
+		// A missing alias or namespace is not a scalar alias. Preserve the legacy row-counter
 		// expansion (for example a$Sequences.TABLE/case -> a101/case).
-		if toolbox.IsMap(seqValue) {
+		if !ok || toolbox.IsMap(seqValue) {
 			if expanded := rowState.ExpandAsText(value); expanded != value {
 				return state.ExpandAsText(expanded), true
 			}
