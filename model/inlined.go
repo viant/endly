@@ -134,11 +134,11 @@ func (p Inlined) loadRequest(actionAttributes, actionRequest map[string]interfac
 				delete(actionRequest, requestKey)
 			}
 			if state != nil && normalizable {
-				requestMap = toolbox.AsMap(state.Expand(requestMap))
+				requestMap = toolbox.AsMap(state.Expand(preserveEmptyYAMLObjects(requestMap)))
 			} else {
 				parentState := data.NewMap()
 				parentState.Put(parentKey, state)
-				requestMap = toolbox.AsMap(parentState.Expand(requestMap))
+				requestMap = toolbox.AsMap(parentState.Expand(preserveEmptyYAMLObjects(requestMap)))
 			}
 		} else {
 			requestMap, err = util.NormalizeMap(req, true)
@@ -151,7 +151,7 @@ func (p Inlined) loadRequest(actionAttributes, actionRequest map[string]interfac
 	}
 
 	if len(dataRequest) > 0 {
-		requestMap = toolbox.AsMap(dataRequest.Expand(requestMap))
+		requestMap = toolbox.AsMap(dataRequest.Expand(preserveEmptyYAMLObjects(requestMap)))
 	}
 
 	if normalizable {
