@@ -32,3 +32,32 @@ func TestAsTableRecordsEmbeddedSequenceAliases(t *testing.T) {
 		})
 	}
 }
+
+func TestAsTableRecordsSequenceNamespaceKeepsRowCounter(t *testing.T) {
+	state := data.NewMap()
+	state.Put("tag", "case")
+	state.Put("Sequences", data.Map{"RECORD": 101})
+	state.Put("fixtures", data.Map{"RECORD": []interface{}{
+		map[string]interface{}{"ID": "$Sequences.RECORD/case.1", "STR_ID": "a$Sequences.RECORD/case"},
+		map[string]interface{}{"ID": "$Sequences.RECORD/case.2", "STR_ID": "a$Sequences.RECORD/case"},
+	}})
+	actual, err := dsunit.AsTableRecords("fixtures/owned", state)
+	require.NoError(t, err)
+	rows := actual.(map[string][]map[string]interface{})["RECORD"]
+	require.Equal(t, "a101/case", rows[0]["STR_ID"])
+	require.Equal(t, "a102/case", rows[1]["STR_ID"])
+}
+
+func TestAsTableRecordsSequenceLeafAliasesStillResolveBothDirections(t *testing.T) {
+	state := data.NewMap()
+	state.Put("Sequences", data.Map{"RECORD": 101})
+	state.Put("fixtures", data.Map{"RECORD": []interface{}{
+		map[string]interface{}{"ID": "$Sequences.RECORD/case.1", "REFERENCE": "ref-$Sequences.RECORD/case.2"},
+		map[string]interface{}{"ID": "$Sequences.RECORD/case.2", "REFERENCE": "ref-$Sequences.RECORD/case.1"},
+	}})
+	actual, err := dsunit.AsTableRecords("fixtures/owned", state)
+	require.NoError(t, err)
+	rows := actual.(map[string][]map[string]interface{})["RECORD"]
+	require.Equal(t, "ref-102", rows[0]["REFERENCE"])
+	require.Equal(t, "ref-101", rows[1]["REFERENCE"])
+}
