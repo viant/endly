@@ -5,6 +5,7 @@ import (
 	"github.com/viant/endly/model/location"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"gopkg.in/yaml.v2"
 	"strings"
 )
 
@@ -422,7 +423,7 @@ func (p *Inlined) hasActionNode(source interface{}) bool {
 
 func (p *Inlined) buildWorkflowNodes(name string, source interface{}, parentTask *Task, tagID string, state data.Map) error {
 	if state != nil {
-		source = state.Expand(source)
+		source = state.Expand(preserveEmptyYAMLObjects(source))
 	}
 	actionAttributes, actionRequest, err := p.groupAttributes(source, state)
 	if err != nil {
@@ -532,4 +533,45 @@ func flagAsMultiActionIfMatched(textKey string, task *Task, value interface{}) {
 			break
 		}
 	}
+}
+
+// preserveEmptyYAMLObjects retains empty object identity before state expansion
+// treats yaml.MapSlice as a generic slice. Nonempty ordered nodes stay ordered.
+func preserveEmptyYAMLObjects(source interface{}) interface{} {
+	switch value := source.(type) {
+	case yaml.MapSlice:
+		if len(value) == 0 {
+			return map[string]interface{}{}
+		}
+		result := make(yaml.MapSlice, len(value))
+		for i, entry := range value {
+			result[i] = yaml.MapItem{Key: entry.Key, Value: preserveEmptyYAMLObjects(entry.Value)}
+		}
+		return result
+	case []map[string]interface{}:
+		result := make([]map[string]interface{}, len(value))
+		for i, item := range value {
+			result[i] = preserveEmptyYAMLObjects(item).(map[string]interface{})
+		}
+		return result
+	case []interface{}:
+		result := make([]interface{}, len(value))
+		for i, item := range value {
+			result[i] = preserveEmptyYAMLObjects(item)
+		}
+		return result
+	case map[string]interface{}:
+		result := make(map[string]interface{}, len(value))
+		for key, item := range value {
+			result[key] = preserveEmptyYAMLObjects(item)
+		}
+		return result
+	case map[interface{}]interface{}:
+		result := make(map[interface{}]interface{}, len(value))
+		for key, item := range value {
+			result[key] = preserveEmptyYAMLObjects(item)
+		}
+		return result
+	}
+	return source
 }
