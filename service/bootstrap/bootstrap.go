@@ -375,7 +375,8 @@ func runWorkflow(request *workflow.RunRequest, interactive bool) {
 		log.Printf("terminate by ctr-c\n")
 		makeInteractive()
 	}
-	time.Sleep(time.Second)
+	// Runner.Run waits for workflow completion, writes the summary and closes
+	// non-interactive resources before returning; no exit grace period is needed.
 }
 
 func printUDFs() {
