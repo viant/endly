@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"io"
 	"math"
 	"net/url"
 	"path"
@@ -25,32 +24,37 @@ const (
 	xlsxRelationshipsNS = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
 )
 
-// NewXlsxReader builds a reader for a static grid delimited by a worksheet AutoFilter.
+// NewXlsxReader builds a reader for static grids and optional workbook metadata.
 func NewXlsxReader(args ...interface{}) (func(interface{}, data.Map) (interface{}, error), error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("XlsxReader requires one options map")
 	}
 	options, ok := args[0].(map[string]interface{})
-	sheet, _ := options["sheet"].(string)
-	if !ok || len(options) != 2 || strings.TrimSpace(sheet) == "" || options["range"] != "autoFilter" {
-		return nil, fmt.Errorf("XlsxReader requires a worksheet name and range: autoFilter")
+	if !ok {
+		return nil, fmt.Errorf("XlsxReader requires one options map")
+	}
+	request, err := newXlsxRequest(options)
+	if err != nil {
+		return nil, err
 	}
 	return func(source interface{}, _ data.Map) (interface{}, error) {
 		content, ok := source.([]byte)
 		if !ok || len(content) > xlsxZipLimit {
 			return nil, fmt.Errorf("XlsxReader requires XLSX bytes (at most %d)", xlsxZipLimit)
 		}
-		return readXlsxGrid(content, sheet)
+		return readXlsxWorkbook(content, request)
 	}, nil
 }
 
+type xlsxRelation struct {
+	ID     string `xml:"Id,attr"`
+	Type   string `xml:"Type,attr"`
+	Target string `xml:"Target,attr"`
+	Mode   string `xml:"TargetMode,attr"`
+}
+
 type xlsxRelations struct {
-	Items []struct {
-		ID     string `xml:"Id,attr"`
-		Type   string `xml:"Type,attr"`
-		Target string `xml:"Target,attr"`
-		Mode   string `xml:"TargetMode,attr"`
-	} `xml:"Relationship"`
+	Items []xlsxRelation `xml:"Relationship"`
 }
 
 func xlsxPartBytes(book *excelize.File, name string) ([]byte, error) {
@@ -61,81 +65,89 @@ func xlsxPartBytes(book *excelize.File, name string) ([]byte, error) {
 	return content.([]byte), nil
 }
 
-func xlsxRelatedPart(book *excelize.File, owner, kind, id string) (string, error) {
+func loadXlsxRelations(book *excelize.File, owner string) (xlsxRelations, error) {
 	relsPath := "_rels/.rels"
-	base := ""
 	if owner != "" {
-		base = path.Dir(owner)
-		relsPath = path.Join(base, "_rels", path.Base(owner)+".rels")
+		relsPath = path.Join(path.Dir(owner), "_rels", path.Base(owner)+".rels")
 	}
-	// Use the relationship records Excelize already decoded and used to
-	// bind its worksheet names. Its concrete relationship type is private.
-	parsed, ok := book.Relationships.Load(relsPath)
-	if !ok {
-		return "", fmt.Errorf("missing XLSX relationships %q", relsPath)
+	// Use the relationships already decoded by Excelize when available.
+	// Excelize does not load drawing relationships when opening the workbook.
+	var raw []byte
+	var err error
+	if parsed, ok := book.Relationships.Load(relsPath); ok {
+		raw, err = xml.Marshal(parsed)
+	} else {
+		raw, err = xlsxPartBytes(book, relsPath)
 	}
-	data, err := xml.Marshal(parsed)
 	if err != nil {
-		return "", err
+		return xlsxRelations{}, err
 	}
 	var rels xlsxRelations
-	if err := xml.Unmarshal(data, &rels); err != nil {
-		return "", err
+	if err := xml.Unmarshal(raw, &rels); err != nil {
+		return xlsxRelations{}, fmt.Errorf("decode XLSX relationships %q: %w", relsPath, err)
 	}
-	var part string
-	relType := xlsxRelationshipsNS + "/" + kind
-	for _, item := range rels.Items {
-		if (id != "" && item.ID != id) || (id == "" && item.Type != relType) {
+	return rels, nil
+}
+
+func (rels xlsxRelations) index(relevant map[string]bool) (map[string]xlsxRelation, error) {
+	index := make(map[string]xlsxRelation, len(rels.Items))
+	for _, relation := range rels.Items {
+		if relevant != nil && !relevant[relation.ID] {
 			continue
 		}
-		if part != "" || item.Type != relType || (item.Mode != "" && item.Mode != "Internal") {
-			return "", fmt.Errorf("invalid or ambiguous XLSX %s relationship", kind)
+		if _, exists := index[relation.ID]; exists || relation.ID == "" {
+			return nil, fmt.Errorf("invalid or ambiguous XLSX relationship ID %q", relation.ID)
 		}
-		// Resolve only paths inside the package, never external URLs.
-		target, err := url.Parse(item.Target)
-		if err != nil || target.Path == "" || target.Path != item.Target || target.IsAbs() || target.Opaque != "" || target.Host != "" ||
-			target.RawQuery != "" || target.ForceQuery || target.Fragment != "" ||
-			strings.ContainsAny(target.Path, "\\\x00") {
-			return "", fmt.Errorf("invalid XLSX %s target", kind)
-		}
-		if strings.HasPrefix(target.Path, "/") {
-			part = path.Clean(strings.TrimPrefix(target.Path, "/"))
-		} else {
-			part = path.Join(base, target.Path)
-		}
-		if part == "." || part == ".." || strings.HasPrefix(part, "../") {
-			return "", fmt.Errorf("XLSX %s target is outside the package", kind)
-		}
-		if owner == "" && part != strings.TrimPrefix(item.Target, "/") {
-			return "", fmt.Errorf("invalid XLSX %s target", kind)
-		}
+		index[relation.ID] = relation
 	}
-	if part == "" {
-		return "", fmt.Errorf("missing XLSX %s relationship", kind)
+	return index, nil
+}
+
+func (item xlsxRelation) internalPart(owner, kind string) (string, error) {
+	if item.Type != xlsxRelationshipsNS+"/"+kind || (item.Mode != "" && item.Mode != "Internal") {
+		return "", fmt.Errorf("invalid or ambiguous XLSX %s relationship", kind)
+	}
+	target, err := url.Parse(item.Target)
+	if err != nil || target.Path == "" || target.Path != item.Target || target.IsAbs() || target.Opaque != "" || target.Host != "" ||
+		target.RawQuery != "" || target.ForceQuery || target.Fragment != "" ||
+		strings.ContainsRune(target.Path, '\\') || strings.ContainsRune(target.Path, 0) {
+		return "", fmt.Errorf("invalid XLSX %s target", kind)
+	}
+	part := path.Join(path.Dir(owner), target.Path)
+	if strings.HasPrefix(target.Path, "/") {
+		part = path.Clean(strings.TrimPrefix(target.Path, "/"))
+	}
+	if part == "." || part == ".." || strings.HasPrefix(part, "../") {
+		return "", fmt.Errorf("XLSX %s target is outside the package", kind)
+	}
+	if owner == "" && part != strings.TrimPrefix(item.Target, "/") {
+		return "", fmt.Errorf("invalid XLSX %s target", kind)
 	}
 	return part, nil
 }
 
-func xlsxSheetPart(book *excelize.File, sheet string) (string, error) {
-	owner, err := xlsxRelatedPart(book, "", "officeDocument", "")
+func xlsxWorkbookPart(book *excelize.File) (string, error) {
+	rels, err := loadXlsxRelations(book, "")
 	if err != nil {
 		return "", err
 	}
-	var id string
-	for _, candidate := range book.WorkBook.Sheets.Sheet {
-		// Excelize looks up sheets case-insensitively, so exclude case-only
-		// collisions while requiring the requested name to match exactly.
-		if strings.EqualFold(candidate.Name, sheet) {
-			if candidate.Name != sheet || id != "" || candidate.ID == "" {
-				return "", fmt.Errorf("invalid or ambiguous XLSX worksheet %q", sheet)
-			}
-			id = candidate.ID
+	var owner string
+	for _, rel := range rels.Items {
+		if rel.Type != xlsxRelationshipsNS+"/officeDocument" {
+			continue
+		}
+		if owner != "" {
+			return "", fmt.Errorf("ambiguous XLSX officeDocument relationship")
+		}
+		owner, err = rel.internalPart("", "officeDocument")
+		if err != nil {
+			return "", err
 		}
 	}
-	if id == "" {
-		return "", fmt.Errorf("missing XLSX worksheet %q", sheet)
+	if owner == "" {
+		return "", fmt.Errorf("missing XLSX officeDocument relationship")
 	}
-	return xlsxRelatedPart(book, owner, "worksheet", id)
+	return owner, nil
 }
 
 type xlsxRange struct{ left, top, right, bottom int }
@@ -162,12 +174,10 @@ func parseXlsxRange(ref string) (xlsxRange, error) {
 }
 
 type xlsxCellMetadata struct {
-	Ref     string    `xml:"r,attr"`
-	Type    string    `xml:"t,attr"`
-	Formula *struct{} `xml:"f"`
-	Value   *string   `xml:"v"` // Only used to validate shared-string indices before Excelize indexes its table.
-	col     int
-	row     int
+	Ref, Type string
+	Formula   *string
+	Value     *string // Retains cache presence and guards shared-string lookups.
+	problem   error   // A value-level ambiguity only matters when this cell is read.
 }
 
 func checkXlsxZip(content []byte) error {
@@ -213,30 +223,9 @@ func scanXlsxElements(d *xml.Decoder, visit func(xml.StartElement) error) error 
 
 func scanXlsxWorksheet(source []byte, visit func(*xml.Decoder, xml.StartElement) error) error {
 	d := xml.NewDecoder(bytes.NewReader(source))
-	root := false
-	for {
-		token, err := d.Token()
-		if err == io.EOF && root {
-			return nil
-		}
-		if err != nil {
-			return fmt.Errorf("invalid XLSX worksheet XML: %w", err)
-		}
-		switch element := token.(type) {
-		case xml.StartElement:
-			if root || element.Name != (xml.Name{Space: xlsxSpreadsheetNS, Local: "worksheet"}) {
-				return fmt.Errorf("unsupported XLSX worksheet root")
-			}
-			root = true
-			if err := scanXlsxElements(d, func(child xml.StartElement) error { return visit(d, child) }); err != nil {
-				return err
-			}
-		case xml.CharData:
-			if strings.TrimSpace(string(element)) != "" {
-				return fmt.Errorf("invalid text outside XLSX worksheet root")
-			}
-		}
-	}
+	return scanXlsxPart(d, xml.Name{Space: xlsxSpreadsheetNS, Local: "worksheet"}, func(d *xml.Decoder, _ xml.StartElement) error {
+		return scanXlsxElements(d, func(child xml.StartElement) error { return visit(d, child) })
+	})
 }
 
 func xlsxAttribute(element xml.StartElement, name string) (string, error) {
@@ -254,215 +243,48 @@ func xlsxAttribute(element xml.StartElement, name string) (string, error) {
 	return result, nil
 }
 
-func xlsxAutoFilter(worksheet []byte) (string, xlsxRange, error) {
-	var ref string
-	err := scanXlsxWorksheet(worksheet, func(d *xml.Decoder, element xml.StartElement) error {
-		if element.Name == (xml.Name{Space: xlsxSpreadsheetNS, Local: "autoFilter"}) {
-			if ref != "" {
-				return fmt.Errorf("ambiguous XLSX worksheet AutoFilter range")
-			}
-			var err error
-			if ref, err = xlsxAttribute(element, "ref"); err != nil {
-				return err
-			}
-			if ref == "" {
-				return fmt.Errorf("missing XLSX worksheet AutoFilter range")
-			}
-		}
-		return d.Skip()
-	})
-	if err != nil {
-		return "", xlsxRange{}, err
+func readXlsxCell(book *excelize.File, sheet string, cell xlsxCellMetadata, budget *xlsxBudget) (interface{}, string, error) {
+	if cell.problem != nil {
+		return nil, "", cell.problem
 	}
-	if ref == "" {
-		return "", xlsxRange{}, fmt.Errorf("missing XLSX worksheet AutoFilter range")
-	}
-	extent, err := parseXlsxRange(ref)
-	return ref, extent, err
-}
-
-// Excelize's cell getters expand sparse worksheets. Bound the highest row
-// and each row's highest column before any getter can allocate those slots.
-// Only retain metadata for the selected cells; Excelize decodes their values.
-func selectedXlsxCells(worksheet []byte, extent xlsxRange) ([]xlsxCellMetadata, error) {
-	var cells []xlsxCellMetadata
-	previousRow, columns := 0, 0
-	sheetData := false
-	err := scanXlsxWorksheet(worksheet, func(d *xml.Decoder, element xml.StartElement) error {
-		switch element.Name.Local {
-		case "sheetData":
-			if sheetData {
-				return fmt.Errorf("ambiguous XLSX worksheet sheetData")
-			}
-			sheetData = true
-			return scanXlsxElements(d, func(row xml.StartElement) error {
-				if row.Name.Local != "row" {
-					return d.Skip()
-				}
-				ref, err := xlsxAttribute(row, "r")
-				if err != nil {
-					return err
-				}
-				rowIndex, err := strconv.Atoi(ref)
-				if err != nil || rowIndex <= previousRow || ref != strconv.Itoa(rowIndex) {
-					return fmt.Errorf("invalid or out-of-order XLSX row %q", ref)
-				}
-				previousRow = rowIndex
-				if rowIndex > xlsxCellLimit-columns {
-					return fmt.Errorf("expanded XLSX worksheet exceeds %d row and cell slots", xlsxCellLimit)
-				}
-				lastColumn := 0
-				err = scanXlsxElements(d, func(element xml.StartElement) error {
-					if element.Name.Local != "c" {
-						return d.Skip()
-					}
-					ref, err := xlsxAttribute(element, "r")
-					if err != nil {
-						return err
-					}
-					column, cellRow, err := excelize.CellNameToCoordinates(ref)
-					if err != nil || column <= lastColumn || cellRow != rowIndex {
-						return fmt.Errorf("invalid or out-of-order XLSX worksheet cell %q", ref)
-					}
-					canonical, err := excelize.CoordinatesToCellName(column, cellRow)
-					if err != nil || canonical != ref {
-						return fmt.Errorf("invalid XLSX worksheet cell reference %q", ref)
-					}
-					lastColumn = column
-					if column > xlsxCellLimit-rowIndex-columns {
-						return fmt.Errorf("expanded XLSX worksheet exceeds %d row and cell slots", xlsxCellLimit)
-					}
-					if rowIndex < extent.top || rowIndex > extent.bottom || column < extent.left || column > extent.right {
-						return d.Skip()
-					}
-					cell := xlsxCellMetadata{col: column, row: rowIndex}
-					if err := d.DecodeElement(&cell, &element); err != nil {
-						return err
-					}
-					cells = append(cells, cell)
-					return nil
-				})
-				columns += lastColumn
-				return err
-			})
-		case "mergeCells":
-			return scanXlsxElements(d, func(merge xml.StartElement) error {
-				if merge.Name.Local != "mergeCell" {
-					return d.Skip()
-				}
-				ref, err := xlsxAttribute(merge, "ref")
-				if err != nil {
-					return err
-				}
-				m, err := parseXlsxRange(ref)
-				if err != nil {
-					return err
-				}
-				if m.left <= extent.right && m.right >= extent.left && m.top <= extent.bottom && m.bottom >= extent.top {
-					return fmt.Errorf("merged XLSX cells intersect AutoFilter range: %s", ref)
-				}
-				return d.Skip()
-			})
-		default:
-			return d.Skip()
-		}
-	})
-	if err != nil {
-		return nil, err
-	}
-	if !sheetData {
-		return nil, fmt.Errorf("missing XLSX worksheet sheetData")
-	}
-	return cells, nil
-}
-
-func readXlsxGrid(content []byte, sheet string) (map[string]interface{}, error) {
-	if err := checkXlsxZip(content); err != nil {
-		return nil, fmt.Errorf("open XLSX workbook: %w", err)
-	}
-	book, err := excelize.OpenReader(bytes.NewReader(content), excelize.Options{
-		RawCellValue: true, UnzipSizeLimit: xlsxZipLimit, UnzipXMLSizeLimit: xlsxZipLimit,
-	})
-	if book != nil {
-		defer book.Close()
-	}
-	if err != nil {
-		return nil, fmt.Errorf("open XLSX workbook: %w", err)
-	}
-	part, err := xlsxSheetPart(book, sheet)
-	if err != nil {
-		return nil, err
-	}
-	worksheet, err := xlsxPartBytes(book, part)
-	if err != nil {
-		return nil, err
-	}
-	ref, extent, err := xlsxAutoFilter(worksheet)
-	if err != nil {
-		return nil, err
-	}
-	width, height := extent.right-extent.left+1, extent.bottom-extent.top+1
-	if height > xlsxCellLimit/width {
-		return nil, fmt.Errorf("XLSX AutoFilter range exceeds %d cells", xlsxCellLimit)
-	}
-	cells, err := selectedXlsxCells(worksheet, extent)
-	if err != nil {
-		return nil, err
-	}
-	rows := make([][]interface{}, height)
-	types := make([][]string, height)
-	for i := range rows {
-		rows[i] = make([]interface{}, width)
-		types[i] = make([]string, width)
-		for j := range types[i] {
-			types[i][j] = "blank"
-		}
-	}
-	textRemaining := xlsxTextLimit
-	for _, cell := range cells {
-		value, typ, err := readXlsxCell(book, sheet, cell)
-		if err != nil {
-			return nil, err
-		}
-		if text, ok := value.(string); ok {
-			if len(text) > textRemaining {
-				return nil, fmt.Errorf("decoded XLSX cell text exceeds %d bytes", xlsxTextLimit)
-			}
-			textRemaining -= len(text)
-		}
-		rows[cell.row-extent.top][cell.col-extent.left] = value
-		types[cell.row-extent.top][cell.col-extent.left] = typ
-	}
-	return map[string]interface{}{"sheet": sheet, "range": ref, "byteCount": len(content), "rows": rows, "types": types}, nil
-}
-
-func readXlsxCell(book *excelize.File, sheet string, cell xlsxCellMetadata) (interface{}, string, error) {
 	if cell.Formula != nil {
 		return nil, "", fmt.Errorf("formula XLSX cell %s is unsupported", cell.Ref)
 	}
 	if cell.Type == "e" {
 		return nil, "", fmt.Errorf("error XLSX cell %s is unsupported", cell.Ref)
 	}
+	if (cell.Type == "" || cell.Type == "n") && (cell.Value == nil || *cell.Value == "") {
+		return nil, "blank", nil
+	}
 	var index int
 	if cell.Type == "s" {
 		var err error
-		if cell.Value == nil {
-			return nil, "", fmt.Errorf("missing shared string index in XLSX cell %s", cell.Ref)
-		}
-		index, err = strconv.Atoi(strings.TrimSpace(*cell.Value))
-		if err != nil || index < 0 {
-			return nil, "", fmt.Errorf("invalid shared string index in XLSX cell %s", cell.Ref)
+		index, _, err = budget.consumeSharedString(book, cell)
+		if err != nil {
+			return nil, "", err
 		}
 	}
 	raw, err := book.GetCellValue(sheet, cell.Ref, excelize.Options{RawCellValue: true})
 	if err != nil {
 		return nil, "", fmt.Errorf("read XLSX cell %s: %w", cell.Ref, err)
 	}
-	switch cell.Type {
-	case "s":
+	if cell.Type == "s" {
 		if book.SharedStrings == nil || index >= len(book.SharedStrings.SI) {
 			return nil, "", fmt.Errorf("shared string index is out of range in XLSX cell %s", cell.Ref)
 		}
+	}
+	return typedXlsxCell(cell, raw)
+}
+
+func typedXlsxCell(cell xlsxCellMetadata, raw string) (interface{}, string, error) {
+	if cell.Formula != nil {
+		return nil, "", fmt.Errorf("formula XLSX cell %s is unsupported", cell.Ref)
+	}
+	if cell.Type == "e" {
+		return nil, "", fmt.Errorf("error XLSX cell %s is unsupported", cell.Ref)
+	}
+	switch cell.Type {
+	case "s":
 		return raw, "string", nil
 	case "str", "inlineStr":
 		return raw, "string", nil

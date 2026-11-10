@@ -65,10 +65,16 @@ without recursive `$` expansion when comparing literal artifact contents.
 For static XLSX grids, register `XlsxReader` with
 `params: [{sheet: Worksheet name, range: autoFilter}]` and pass its registered
 ID to `storage:download`. The result includes the observed worksheet AutoFilter
-range, original byte count, rectangular values and parallel cell types. Check
-range, cell types, and complete values against an independent oracle. Do not
-substitute the sheet dimension for missing AutoFilter metadata. The reader
-does not evaluate formulas or inspect charts.
+range, original byte count, rectangular values and parallel cell types. A
+literal A1 range such as `A4:A4` reads a fixed grid, including header-only
+exports. Check range, cell types, and complete values against an independent
+oracle. Do not substitute the sheet dimension for missing AutoFilter metadata.
+For several ranges, register `params: [{ranges: [{id: table, sheet: Data,
+range: autoFilter}], metadata: true}]` and read once via `storage:download`.
+The result includes `grids` keyed by ID. Optional workbook metadata reports
+sheet order, defined names, panes, hyperlinks, cell and formula observations,
+and chart references with series roles and legend presence. Formula or error
+cells fail grid reads. Workbook inventory records their metadata separately.
 
 For a literal shell argument, store its string in state and use
 `$ShellQuote('state.key')` in an `exec:run` command. Pass the literal key/path,

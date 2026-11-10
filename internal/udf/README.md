@@ -79,7 +79,7 @@ pipeline:
 | ProtoReader | schemaFile, messageType, importPath |
 | AvroWriter | avroSchema/URL, compression |
 | CsvReader | `headerFields, delimiter` or `{output: rows, delimiter: ','}` |
-| XlsxReader | `{sheet: Worksheet name, range: autoFilter}` |
+| XlsxReader | `{sheet: Worksheet name, range: autoFilter or A1 range}` or `{ranges: [{id, sheet, range}], metadata: true}` |
 
 Register `CsvReader` with `output: rows` to verify positional CSV records.
 
@@ -133,15 +133,59 @@ value, including numbers displayed with a date or percentage format. Native
 OOXML date cells retain their date text. Validate the observed range, cell
 types and values against independent expectations.
 
-The reader requires one worksheet AutoFilter and does not infer a range from
-the worksheet dimension, filter the rows, or inspect charts. Formula cells
-and Excel error cells in the range fail the read; formulas are never evaluated
-and cached formula values are not returned as data. Merged cells intersecting
-the grid are unsupported. The workbook is limited to 64 MiB before and after
-unpacking, the grid to 100,000 cells and its decoded text to 16 MiB. The
-selected worksheet must have explicit, ordered cell coordinates and at most
-100,000 slots after expanding its sparse rows and columns. Use a distinct
-UDF ID for each registration with different worksheet options.
+Use an explicit A1 range such as `A4:A4` for a one-cell grid. With
+`range: autoFilter`, the worksheet must declare its AutoFilter. The reader
+uses the complete range without applying the filter.
+
+Read several ranges and workbook metadata in one download by registering
+this provider configuration:
+
+```yaml
+- id: ReadInventory
+  provider: XlsxReader
+  params:
+    - ranges:
+        - {id: inventory, sheet: Inventory, range: autoFilter}
+        - {id: heading, sheet: Summary, range: A4:A4}
+      metadata: true
+```
+
+The batch result includes `byteCount` and `grids` keyed by range ID. Each
+grid contains `sheet`, `range`, `rows`, and `types`. `metadata: true`
+adds `workbook`, and can also be used by itself. The workbook inventory
+contains ordered `sheetNames`, `sheetCount`, `definedNames` and
+`definedNamesBySheet` (global scope uses `*`). Each defined name includes its
+original XML `attributes`. The inventory also contains `sheets` keyed by
+name and `charts` keyed by package part, with `chartCount`.
+
+Each worksheet entry contains `kind`, `autoFilter`, `pane`, `hyperlinks`, its chart
+part references, `maxRow`, and sparse `cells`, `types`, `formulas`, and
+`errors` maps keyed by cell reference. Formula metadata records the observed
+`expression` and `cachedValue` separately. Formula and error cells have
+null data values and both are rejected inside a requested grid. Charts
+contain `references`, `legendPresent`, and `series` with chart type,
+direction, grouping, label, category and value references, and signed fill
+presence. The reader records external hyperlink targets as text and never
+follows them or evaluates formulas.
+Standalone chart tabs appear in sheet order with `kind: chartsheet`, their
+chart part references, and no cell grid.
+
+Merged cells intersecting a requested grid are unsupported. The workbook is
+limited to 64 MiB before and after unpacking. The cumulative grid and
+inventory output is limited to 100,000 cells and 16 MiB of decoded text,
+including repeated ranges. Worksheets must have explicit ordered coordinates.
+Selected tabs must resolve to distinct workbook parts. Shared strings have a
+workbook-wide materialization limit of 2,000,000 rich-text run visits, charged
+before each native read.
+Reads without inventory decode only selected values and limit each selected
+worksheet to 100,000 slots after expanding sparse rows and columns. A batch
+without inventory reuses overlapping observations and limits native sheet,
+row, and column lookup work to 2,000,000 comparisons per workbook. The
+single-grid form keeps its existing lookup behavior. Inventory streams values,
+skips style-only padding, and limits total padded row and column work to
+2,000,000 slots. Requests with merged cells are limited to
+1,000,000 merge intersection checks per workbook. Use a distinct UDF ID for
+each registration with different worksheet options.
 
 `$ShellQuote('value')` reads a string from a literal state key or path and
 produces one literal POSIX shell argument for `exec:run`. Use it for values such
