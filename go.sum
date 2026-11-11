@@ -1495,6 +1495,8 @@ github.com/viant/toolbox v0.39.1-0.20261101051521-41e03f9a2625 h1:ev3g2NXVQO3XBF
 github.com/viant/toolbox v0.39.1-0.20261101051521-41e03f9a2625/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
 github.com/viant/toolbox v0.39.1-0.20261107211454-ebb9415a663d h1:14O2agi6/jGftymUsR9fmjS3z15RV/PA4ethCUsAhBc=
 github.com/viant/toolbox v0.39.1-0.20261107211454-ebb9415a663d/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
+github.com/viant/toolbox v0.39.1-0.20261111180132-2e010411f9da h1:FAOqHzEYF9ZyNmE3hDwMqLCfMgmtsYVDD/O/fuuGwtY=
+github.com/viant/toolbox v0.39.1-0.20261111180132-2e010411f9da/go.mod h1:OxMCG57V0PXuIP2HNQrtJf2CjqdmbrOx5EkMILuUhzM=
 github.com/viant/velty v0.2.1-0.20230927172116-ba56497b5c85 h1:zKk+6hqUipkJXCPCHyFXzGtil1sfh80r6UZmloBNEDo=
 github.com/viant/velty v0.2.1-0.20230927172116-ba56497b5c85/go.mod h1:Q/UXviI2Nli8WROEpYd/BELMCSvnulQeyNrbPmMiS/Y=
 github.com/viant/x v0.3.0 h1:/3A0z/uySGxMo6ixH90VAcdjI00w5e3REC1zg5hzhJA=
