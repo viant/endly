@@ -337,6 +337,10 @@ func (s *Service) StartWorkflow(request *RunWorkflowRequest) (*Operation, error)
 		return nil, err
 	}
 	session.mu.Lock()
+	if session.closed {
+		session.mu.Unlock()
+		return nil, fmt.Errorf("session %q was closed", request.SessionID)
+	}
 	alias, loaded := session.resolveLoaded(request.Workflow)
 	if loaded == nil {
 		session.mu.Unlock()

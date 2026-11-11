@@ -109,6 +109,7 @@ func (s *Service) executeWorkflow(session *Session, operationID string, input *R
 	}
 	operation.cancel = nil
 	operation.FinishedAt = &finished
+	session.lastAccess = finished
 	if operationContext.Err() != nil || operation.Status == OperationCancelling {
 		operation.Status = OperationCancelled
 		operation.Error = operationContext.Err().Error()
@@ -193,6 +194,7 @@ func (s *Service) executeAction(session *Session, operationID string, input *Run
 	}
 	operation.cancel = nil
 	operation.FinishedAt = &finished
+	session.lastAccess = finished
 	if operationContext.Err() != nil || operation.Status == OperationCancelling {
 		operation.Status = OperationCancelled
 		if operationContext.Err() != nil {
