@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -74,6 +75,43 @@ func URLJoin(source interface{}, state data.Map) (interface{}, error) {
 	var baseURL = strings.Trim(toolbox.AsString(args[0]), " '\"")
 	var URI = strings.Trim(toolbox.AsString(args[1]), " '\"")
 	return toolbox.URLPathJoin(baseURL, URI), nil
+}
+
+// URLSetQuery sets one query key to a string value, replacing its duplicates.
+// Unrelated values and the fragment are retained; query encoding/order are
+// normalized by net/url. Invalid query escapes and unescaped semicolons fail
+// without returning a partially modified URL.
+func URLSetQuery(source interface{}, state data.Map) (interface{}, error) {
+	if !toolbox.IsSlice(source) {
+		return nil, fmt.Errorf("URLSetQuery requires three string arguments (URL, key, value)")
+	}
+	args := toolbox.AsSlice(source)
+	if len(args) != 3 {
+		return nil, fmt.Errorf("URLSetQuery requires three string arguments (URL, key, value)")
+	}
+	values := make([]string, 3)
+	for i, arg := range args {
+		value, ok := arg.(string)
+		if !ok {
+			return nil, fmt.Errorf("URLSetQuery argument %d must be a string", i+1)
+		}
+		values[i] = value
+	}
+	parsed, err := url.Parse(values[0])
+	if err != nil {
+		// url.Error contains the complete input, which may carry credentials.
+		if cause, ok := err.(*url.Error); ok {
+			err = cause.Err
+		}
+		return nil, fmt.Errorf("URLSetQuery parse URL: %w", err)
+	}
+	query, err := url.ParseQuery(parsed.RawQuery)
+	if err != nil {
+		return nil, fmt.Errorf("URLSetQuery parse query: %w", err)
+	}
+	query.Set(values[1], values[2])
+	parsed.RawQuery = query.Encode()
+	return parsed.String(), nil
 }
 
 func LoadData(source interface{}, state data.Map) (interface{}, error) {

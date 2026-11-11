@@ -14,6 +14,7 @@ func init() {
 	endly.PredefinedUdfs["LoadData"] = LoadData
 	endly.PredefinedUdfs["Dob"] = DateOfBirth
 	endly.PredefinedUdfs["URLJoin"] = URLJoin
+	endly.PredefinedUdfs["URLSetQuery"] = URLSetQuery
 	endly.PredefinedUdfs["URLPath"] = URLPath
 	endly.PredefinedUdfs["Hostname"] = Hostname
 	endly.PredefinedUdfs["GZipper"] = GZipper
