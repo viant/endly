@@ -7,19 +7,21 @@ import (
 	"github.com/viant/endly/model/msg"
 	"github.com/viant/endly/service/workflow"
 	"sync"
+	"time"
 )
 
 // Event represents an tagged event
 type Event struct {
-	Description string
-	Caller      string
-	TagID       string
-	Index       string
-	Events      []msg.Event
-	Validation  []*assertly.Validation
-	PassedCount int
-	FailedCount int
-	subEvent    *Event
+	Description    string
+	Caller         string
+	TagID          string
+	Index          string
+	Events         []msg.Event
+	Validation     []*assertly.Validation
+	PassedCount    int
+	FailedCount    int
+	firstTimestamp time.Time
+	subEvent       *Event
 }
 
 // AddEvent add provided event

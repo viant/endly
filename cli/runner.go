@@ -22,6 +22,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -346,6 +347,9 @@ func (r *Runner) extractRunnerLogs(candidates []msg.Event, offset, maxIndex int)
 	var result = make(map[string][]*runnerLog)
 	for i := offset; i < len(candidates); i++ {
 		var candidate = candidates[i]
+		if candidate == nil {
+			continue
+		}
 		var eventValue = candidate.Value()
 		if eventValue == nil {
 			continue
@@ -463,6 +467,9 @@ func (r *Runner) reportSummaryEvent() {
 }
 
 func (r *Runner) getValidation(event msg.Event) *assertly.Validation {
+	if event == nil {
+		return nil
+	}
 	var eventValue = event.Value()
 	validation, ok := eventValue.(*assertly.Validation)
 	if !ok {
@@ -486,7 +493,7 @@ func (r *Runner) reportAssertion(event msg.Event, validations ...*assertly.Valid
 			eventTag.FailedCount += validation.FailedCount
 		}
 		eventTag.PassedCount += validation.PassedCount
-		eventTag.AddEvent(msg.NewEventWithInit(validation, event.Init()))
+		r.recordSummaryEvent(eventTag, msg.NewEvent(validation))
 		messageInfo := "OK"
 		messageType := msg.MessageStyleSuccess
 		if validation.FailedCount > 0 {
@@ -565,7 +572,11 @@ func (r *Runner) reportTagSummary() {
 			useCase.FailuresDetail = validation.Report()
 		}
 		if len(tag.Events) > 0 {
-			useCase.Time = tag.Events[0].Timestamp().String()
+			timestamp := tag.firstTimestamp
+			if timestamp.IsZero() && tag.Events[0] != nil {
+				timestamp = tag.Events[0].Timestamp()
+			}
+			useCase.Time = timestamp.String()
 		}
 		if failureLog != nil {
 			useCase.Sysout = failureLog.JSONOutput
@@ -588,24 +599,61 @@ func (r *Runner) reportTagSummary() {
 	}
 }
 
+// nativeEventType is prepared once; custom Event implementations keep their
+// identity and initiating chains even when they wrap a native payload type.
+var nativeEventType = reflect.TypeOf(msg.NewEvent(nil))
+
+// summaryDiagnosticEvent owns a fresh native event, never the original event.
+// The wrapper preserves its original timestamp without changing msg constructors.
+type summaryDiagnosticEvent struct {
+	msg.Event
+	timestamp time.Time
+}
+
+func (e *summaryDiagnosticEvent) Timestamp() time.Time { return e.timestamp }
+
+// recordSummaryEvent retains CLI summary inputs without changing Event.AddEvent.
+func (r *Runner) recordSummaryEvent(tag *Event, event msg.Event) {
+	if len(tag.Events) == 0 && event != nil {
+		tag.firstTimestamp = event.Timestamp()
+	}
+	retained := event
+	if event != nil && reflect.TypeOf(event) == nativeEventType {
+		switch event.Value().(type) {
+		case *workflow.LoadedEvent, *workflow.InitEvent, *model.Activity, *model.ActivityEndEvent:
+			// These payload graphs are not read by summary generation. A nil slot
+			// keeps original offsets, including offsets into subEvent candidates.
+			retained = nil
+		case msg.RunnerInput, msg.RunnerOutput, *assertly.Validation, Asserted:
+			// Keep complete diagnostic values and event identity without retaining
+			// the initiating event and its unrelated request/state graph.
+			copy := msg.NewEvent(event.Value())
+			copy.SetLoggable(event.IsLoggable())
+			retained = &summaryDiagnosticEvent{Event: copy, timestamp: event.Timestamp()}
+		}
+	}
+	tag.AddEvent(retained)
+}
+
 func (r *Runner) reportEvent(context *endly.Context, event msg.Event, filter map[string]bool) error {
 	eventTag := r.EventTag()
 	r.processEvent(event, filter)
-	eventTag.AddEvent(event)
+	r.recordSummaryEvent(eventTag, event)
 	return nil
 }
 
 func (r *Runner) AsListener() msg.Listener {
-	var firstEvent, lastEvent msg.Event
+	var firstTimestamp time.Time
+	var hasFirstTimestamp bool
 	return func(event msg.Event) {
 		// Workflow startup and worker callbacks may publish concurrently.
 		r.listenerMu.Lock()
 		defer r.listenerMu.Unlock()
-		if firstEvent == nil {
-			firstEvent = event
+		if !hasFirstTimestamp {
+			firstTimestamp = event.Timestamp()
+			hasFirstTimestamp = true
 		} else {
-			lastEvent = event
-			r.report.ElapsedMs = int(lastEvent.Timestamp().UnixNano()-firstEvent.Timestamp().UnixNano()) / int(time.Millisecond)
+			r.report.ElapsedMs = int(event.Timestamp().UnixNano()-firstTimestamp.UnixNano()) / int(time.Millisecond)
 		}
 		_ = r.reportEvent(r.context, event, r.filter)
 	}
