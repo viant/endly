@@ -76,6 +76,21 @@ func loadVariablesFromResource(baseURLs []string, resourceURI string) (Variables
 	loaded, err := util.LoadData(baseURLs, resourceURI)
 	if err == nil {
 		err = toolbox.DefaultConverter.AssignConverted(&result, loaded)
+		if err == nil {
+			// Retain resource conversion semantics while preparing containers with
+			// the same native normalization used for inline variable declarations.
+			for _, variable := range result {
+				if variable == nil {
+					continue
+				}
+				if normalized, normalizeErr := util.NormalizeValue(variable.Value); normalizeErr == nil {
+					variable.Value = normalized
+				}
+				if normalized, normalizeErr := util.NormalizeValue(variable.Else); normalizeErr == nil {
+					variable.Else = normalized
+				}
+			}
+		}
 	}
 	return result, err
 }
