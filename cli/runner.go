@@ -342,7 +342,7 @@ func (r *Runner) createRunnerLogIfNeeded(logs map[string][]*runnerLog, key strin
 
 func (r *Runner) extractRunnerLogs(candidates []msg.Event, offset, maxIndex int) map[string][]*runnerLog {
 	var result = make(map[string][]*runnerLog)
-	for i := offset; i < len(candidates); i++ {
+	for i := offset; i < len(candidates) && i <= maxIndex; i++ {
 		var candidate = candidates[i]
 		var eventValue = candidate.Value()
 		if eventValue == nil {
@@ -367,7 +367,7 @@ func (r *Runner) extractRunnerLogs(candidates []msg.Event, offset, maxIndex int)
 				continue
 			}
 			result[key][lastIndex].Out = candidate
-			result[key][lastIndex].JSONOutput, _ = toolbox.AsJSONText(candidate.Value)
+			result[key][lastIndex].JSONOutput, _ = toolbox.AsJSONText(candidate.Value())
 			continue
 		}
 	}
@@ -378,6 +378,9 @@ func (r *Runner) hasFailureMatch(failure *assertly.Failure, runnerLogs map[strin
 	var leafKey = failure.LeafKey()
 	for _, logs := range runnerLogs {
 		for _, log := range logs {
+			if log.Out == nil {
+				continue
+			}
 			var matchable = log.JSONOutput
 			if matchable == "" {
 				var value = log.Out.Value()
@@ -500,6 +503,21 @@ func (r *Runner) reportAssertion(event msg.Event, validations ...*assertly.Valid
 
 }
 
+// validationEventWindow maps a parent's assertion window onto a child event
+// stream without treating parent indices as child indices.
+func validationEventWindow(events []msg.Event, previous, current msg.Event) (int, int) {
+	start, end := 0, -1
+	for i, event := range events {
+		if previous != nil && !event.Timestamp().After(previous.Timestamp()) {
+			start = i + 1
+		}
+		if !event.Timestamp().After(current.Timestamp()) {
+			end = i
+		}
+	}
+	return start, end
+}
+
 func (r *Runner) reportTagSummary() {
 	var useCaseCount = 0
 	for _, tag := range r.tags {
@@ -526,6 +544,7 @@ func (r *Runner) reportTagSummary() {
 			var eventTag = tag.TagID
 			r.printMessage(r.ColorText(eventTag, "red"), messageTypeTagDescription, tag.Description, msg.MessageStyleError, fmt.Sprintf("failed %v/%v", tag.FailedCount, (tag.FailedCount+tag.PassedCount)))
 			var offset = 0
+			var previousValidation msg.Event
 			for i, event := range tag.Events {
 				validation = r.getValidation(event)
 				if validation == nil {
@@ -533,15 +552,17 @@ func (r *Runner) reportTagSummary() {
 				}
 				if validation.HasFailure() {
 					var maxIndex = i - 1
+					startIndex := offset
 					candidates := tag.Events
 					if tag.subEvent != nil {
 						candidates = tag.subEvent.Events
+						// Parent assertion and child runner events have different indices.
+						startIndex, maxIndex = validationEventWindow(candidates, previousValidation, event)
 					}
-					runnerLog := r.reportFailureWithMatchSource(tag, event, validation, candidates, offset, maxIndex)
+					runnerLog := r.reportFailureWithMatchSource(tag, event, validation, candidates, startIndex, maxIndex)
 					if runnerLog != nil {
 						failureLog = runnerLog
 					}
-					offset = i + 1
 					nodes := xunit.NewNodes()
 					useCase.Nodes = nodes
 					nodes.Expected = "/"
@@ -557,6 +578,9 @@ func (r *Runner) reportTagSummary() {
 						nodes.Nodes = append(nodes.Nodes, node)
 					}
 				}
+				// Response indices restart for each action, even after a passing assertion.
+				offset = i + 1
+				previousValidation = event
 			}
 		}
 		if validation != nil {
