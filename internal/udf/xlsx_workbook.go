@@ -18,15 +18,16 @@ type xlsxGridRequest struct {
 }
 
 type xlsxRequest struct {
-	single, metadata bool
-	grids            []xlsxGridRequest
+	single, metadata   bool
+	grids              []xlsxGridRequest
+	metadataTextSheets map[string]bool
 }
 
 func newXlsxRequest(options map[string]interface{}) (xlsxRequest, error) {
 	var result xlsxRequest
 	for key := range options {
 		switch key {
-		case "sheet", "range", "ranges", "metadata":
+		case "sheet", "range", "ranges", "metadata", "metadataTextSheets":
 		default:
 			return result, fmt.Errorf("unknown XlsxReader option %q", key)
 		}
@@ -35,6 +36,25 @@ func newXlsxRequest(options map[string]interface{}) (xlsxRequest, error) {
 		result.metadata, ok = value.(bool)
 		if !ok {
 			return result, fmt.Errorf("XlsxReader metadata must be a boolean")
+		}
+	}
+	if value, exists := options["metadataTextSheets"]; exists {
+		items, ok := value.([]interface{})
+		if !result.metadata || !ok || len(items) == 0 || len(items) > xlsxCellLimit {
+			return result, fmt.Errorf("XlsxReader metadataTextSheets requires metadata: true and between 1 and %d worksheet names", xlsxCellLimit)
+		}
+		result.metadataTextSheets = make(map[string]bool, len(items))
+		folded := make(map[string]bool, len(items))
+		for _, item := range items {
+			name, ok := item.(string)
+			if !ok || strings.TrimSpace(name) == "" {
+				return result, fmt.Errorf("XlsxReader metadataTextSheets requires nonempty worksheet names")
+			}
+			key := foldXlsxSheetName(name)
+			if folded[key] {
+				return result, fmt.Errorf("duplicate XlsxReader metadataTextSheets worksheet %q", name)
+			}
+			folded[key], result.metadataTextSheets[name] = true, true
 		}
 	}
 	rawRanges, hasRanges := options["ranges"]
@@ -532,6 +552,11 @@ func readXlsxWorkbook(content []byte, request xlsxRequest) (result map[string]in
 		}
 		relevant[sheetIDs[sheet]] = true
 	}
+	for sheet := range request.metadataTextSheets {
+		if sheetIDs[sheet] == "" {
+			return nil, fmt.Errorf("missing XLSX worksheet %q", sheet)
+		}
+	}
 	if request.metadata {
 		relevant = nil
 	}
@@ -549,7 +574,7 @@ func readXlsxWorkbook(content []byte, request xlsxRequest) (result map[string]in
 		relation := byID[sheetIDs[sheet]]
 		kind := "worksheet"
 		if relation.Type == xlsxRelationshipsNS+"/chartsheet" {
-			if len(bySheet[sheet]) != 0 {
+			if len(bySheet[sheet]) != 0 || request.metadataTextSheets[sheet] {
 				return nil, fmt.Errorf("XLSX sheet %q is a chart sheet and has no cell grid", sheet)
 			}
 			kind = "chartsheet"
@@ -619,6 +644,13 @@ func readXlsxWorkbook(content []byte, request xlsxRequest) (result map[string]in
 		if request.metadata {
 			if err := inventory.readSheet(book, sheet, part, kind, &contents, values, budget); err != nil {
 				return nil, fmt.Errorf("XLSX worksheet %q metadata: %w", sheet, err)
+			}
+			if request.metadataTextSheets[sheet] {
+				text, err := xlsxSheetText(values, budget)
+				if err != nil {
+					return nil, fmt.Errorf("XLSX worksheet %q metadata text: %w", sheet, err)
+				}
+				inventory.sheets[sheet].(map[string]interface{})["text"] = text
 			}
 		}
 	}

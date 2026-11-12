@@ -170,6 +170,17 @@ follows them or evaluates formulas.
 Standalone chart tabs appear in sheet order with `kind: chartsheet`, their
 chart part references, and no cell grid.
 
+With `metadata: true`, optionally set `metadataTextSheets: [Sheet1, Notes]`
+to add `text` only to those worksheet entries. Names must match authored
+worksheet names exactly; missing names, duplicate names (including case
+variants), and chart tabs are rejected. Text joins non-null observed values
+in row/column order with spaces, preserving strings and formatting native
+numbers and booleans as text. Formula caches, error cells, and style-only
+padding are excluded. Existing decoded values are reused; no additional
+workbook read occurs. Duplicated text and separators count toward the same
+16 MiB output text limit. Omitting this option preserves the existing output
+and performs no text sorting or concatenation.
+
 Merged cells intersecting a requested grid are unsupported. The workbook is
 limited to 64 MiB before and after unpacking. The cumulative grid and
 inventory output is limited to 100,000 cells and 16 MiB of decoded text,

@@ -5,10 +5,43 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 
 	"github.com/xuri/excelize/v2"
 )
+
+// xlsxSheetText reuses the native decoded values. Formula caches and errors
+// remain separate metadata and never become authored worksheet text.
+func xlsxSheetText(values map[xlsxPosition]xlsxObservedCell, budget *xlsxBudget) (string, error) {
+	positions := make([]xlsxPosition, 0, len(values))
+	for pos, value := range values {
+		if value.value != nil && value.kind != "formula" && value.kind != "error" {
+			positions = append(positions, pos)
+		}
+	}
+	sort.Slice(positions, func(a, b int) bool {
+		if positions[a].row != positions[b].row {
+			return positions[a].row < positions[b].row
+		}
+		return positions[a].col < positions[b].col
+	})
+	var text strings.Builder
+	for index, pos := range positions {
+		value := fmt.Sprint(values[pos].value)
+		separator := ""
+		if index != 0 {
+			separator = " "
+		}
+		// Count duplicated output and separators before allocating the result.
+		if err := budget.consumeText(separator, value); err != nil {
+			return "", err
+		}
+		text.WriteString(separator)
+		text.WriteString(value)
+	}
+	return text.String(), nil
+}
 
 const (
 	xlsxDrawingNS        = "http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing"
