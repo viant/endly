@@ -9,3 +9,4 @@ project/
 ui/
 *.gz
 *.exe
+/graphify-out/
