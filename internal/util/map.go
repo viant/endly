@@ -3,8 +3,23 @@ package util
 import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"gopkg.in/yaml.v2"
 	"strings"
 )
+
+// ProcessMap preserves YAML's ordered-map values before generic struct
+// conversion can erase the distinction between an empty object and a list.
+func ProcessMap(source interface{}, handler func(key, value interface{}) bool) error {
+	if entries, ok := source.(yaml.MapSlice); ok {
+		for _, entry := range entries {
+			if !handler(entry.Key, entry.Value) {
+				break
+			}
+		}
+		return nil
+	}
+	return toolbox.ProcessMap(source, handler)
+}
 
 // NormalizeMap normalizes keyValuePairs from map or slice (map with preserved key order)
 func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{}, error) {
@@ -12,7 +27,7 @@ func NormalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{},
 	if keyValuePairs == nil {
 		return result, nil
 	}
-	err := toolbox.ProcessMap(keyValuePairs, func(k, value interface{}) bool {
+	err := ProcessMap(keyValuePairs, func(k, value interface{}) bool {
 		var key = toolbox.AsString(k)
 		//inline map key
 		result[key] = value
@@ -38,6 +53,9 @@ func normalizeKVPairs(source interface{}) (interface{}, error) {
 	if _, binary := source.([]byte); binary {
 		return source, nil
 	}
+	if object, ok := source.(yaml.MapSlice); ok && len(object) == 0 {
+		return map[string]interface{}{}, nil
+	}
 	if toolbox.IsSlice(source) && len(toolbox.AsSlice(source)) == 0 {
 		return source, nil
 	}
@@ -45,7 +63,7 @@ func normalizeKVPairs(source interface{}) (interface{}, error) {
 		return source, nil
 	}
 	aMap := make(map[string]interface{})
-	err := toolbox.ProcessMap(source, func(k, value interface{}) bool {
+	err := ProcessMap(source, func(k, value interface{}) bool {
 		key := toolbox.AsString(k)
 		aMap[key] = value
 		if normalized, normalizeErr := normalizeKVPairs(value); normalizeErr == nil {

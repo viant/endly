@@ -104,7 +104,7 @@ func loadVariablesFromMap(source interface{}) (Variables, error) {
 	var result = make([]*Variable, 0)
 	var err error
 	var variable *Variable
-	e := toolbox.ProcessMap(source, func(key, value interface{}) bool {
+	e := util.ProcessMap(source, func(key, value interface{}) bool {
 		if variable, err = newVariableFromKeyValuePair(toolbox.AsString(key), value); err != nil {
 			return false
 		}

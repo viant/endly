@@ -32,3 +32,63 @@ func TestAsTableRecordsEmbeddedSequenceAliases(t *testing.T) {
 		})
 	}
 }
+
+func TestAsTableRecordsSequenceNamespaceKeepsRowCounter(t *testing.T) {
+	state := data.NewMap()
+	state.Put("tag", "case")
+	state.Put("Sequences", data.Map{"RECORD": 101})
+	state.Put("fixtures", data.Map{"RECORD": []interface{}{
+		map[string]interface{}{"ID": "$Sequences.RECORD/case.1", "STR_ID": "a$Sequences.RECORD/case"},
+		map[string]interface{}{"ID": "$Sequences.RECORD/case.2", "STR_ID": "a$Sequences.RECORD/case"},
+	}})
+	actual, err := dsunit.AsTableRecords("fixtures/owned", state)
+	require.NoError(t, err)
+	rows := actual.(map[string][]map[string]interface{})["RECORD"]
+	require.Equal(t, "a101/case", rows[0]["STR_ID"])
+	require.Equal(t, "a102/case", rows[1]["STR_ID"])
+}
+
+func TestAsTableRecordsSequenceLeafAliasesStillResolveBothDirections(t *testing.T) {
+	state := data.NewMap()
+	state.Put("Sequences", data.Map{"RECORD": 101})
+	state.Put("fixtures", data.Map{"RECORD": []interface{}{
+		map[string]interface{}{"ID": "$Sequences.RECORD/case.1", "REFERENCE": "ref-$Sequences.RECORD/case.2"},
+		map[string]interface{}{"ID": "$Sequences.RECORD/case.2", "REFERENCE": "ref-$Sequences.RECORD/case.1"},
+	}})
+	actual, err := dsunit.AsTableRecords("fixtures/owned", state)
+	require.NoError(t, err)
+	rows := actual.(map[string][]map[string]interface{})["RECORD"]
+	require.Equal(t, "ref-102", rows[0]["REFERENCE"])
+	require.Equal(t, "ref-101", rows[1]["REFERENCE"])
+}
+
+func TestAsTableRecordsSpreadsheetRowStrings(t *testing.T) {
+	for _, tagged := range []bool{false, true} {
+		t.Run(fmt.Sprint(tagged), func(t *testing.T) {
+			state := data.NewMap()
+			tag := "spreadsheet_direct_bulkimport"
+			state.Put("tag", tag)
+			state.Put("Sequences", data.Map{"APP_ORDER": 1})
+			var fixtures []interface{}
+			for i, suffix := range []string{"", "", "", ".cpsv", ".cpsv_preserve"} {
+				rowTag := tag
+				if tagged {
+					rowTag = "${tag}"
+				}
+				row := map[string]interface{}{"ID": fmt.Sprintf("$Sequences.APP_ORDER/%s.%d", rowTag, i+1), "STR_ID": "a$Sequences.APP_ORDER/" + rowTag + suffix}
+				if tagged {
+					row["!tag"] = tag
+				}
+				fixtures = append(fixtures, row)
+			}
+			state.Put("fixtures", data.Map{"APP_ORDER": fixtures})
+			actual, err := dsunit.AsTableRecords("fixtures/owned", state)
+			require.NoError(t, err)
+			rows := actual.(map[string][]map[string]interface{})["APP_ORDER"]
+			for i, suffix := range []string{"", "", "", ".cpsv", ".cpsv_preserve"} {
+				require.EqualValues(t, i+1, rows[i]["ID"])
+				require.Equal(t, fmt.Sprintf("a%d/%s%s", i+1, tag, suffix), state.ExpandAsText(rows[i]["STR_ID"].(string)))
+			}
+		})
+	}
+}
