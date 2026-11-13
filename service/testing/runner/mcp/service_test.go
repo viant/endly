@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/viant/endly"
+	"github.com/viant/endly/internal/udf"
 	"github.com/viant/mcp-protocol/schema"
 	"github.com/viant/scy"
 	"github.com/viant/scy/auth/authorizer"
@@ -352,5 +353,98 @@ func TestExactJSONArgumentsValidation(t *testing.T) {
 	}
 	if args["id"] != json.Number("9007199254740993") {
 		t.Fatalf("number precision lost: %v", args)
+	}
+}
+
+// TestWorkflowArgumentsPreserveJSONValues exercises the ordinary arguments map,
+// including data supplied by storage:download's AsMap UDF.
+func TestWorkflowArgumentsPreserveJSONValues(t *testing.T) {
+	const source = `{"definition":{"dataSources":[{"name":"JobID","trial":false,"limit":0,"optional":null,"emptyArray":[],"emptyObject":{},"schema":{"properties":{"jobId":{"type":"integer"}},"required":["jobId"]}}]},"Name":"CaseSensitive","values":[false,0,null,[],{}]}`
+	var expected map[string]interface{}
+	decoder := json.NewDecoder(strings.NewReader(source))
+	decoder.UseNumber()
+	if err := decoder.Decode(&expected); err != nil {
+		t.Fatal(err)
+	}
+	server := mockServer(t, func(w http.ResponseWriter, _ *http.Request, _ string, params map[string]interface{}) {
+		actual, err := json.Marshal(params["arguments"])
+		if err != nil {
+			t.Error(err)
+		}
+		want, _ := json.Marshal(expected)
+		if string(actual) != string(want) {
+			t.Errorf("arguments changed\nwant: %s\n got: %s", want, actual)
+		}
+		w.(responseWriter).result(map[string]interface{}{"content": []interface{}{}, "structuredContent": map[string]interface{}{"ok": true}})
+	})
+	defer server.Close()
+	ctx := endly.New().NewContext(toolbox.NewContext())
+	defer ctx.Close()
+	state := ctx.State()
+	downloaded, err := udf.TransformWithUDF(ctx, "AsMap", "input.json", []byte(source))
+	if err != nil {
+		t.Fatal(err)
+	}
+	state.Put("updateInput", downloaded)
+	state.Put("inputJSON", source)
+	for _, expression := range []string{"$updateInput", "$AsMap($inputJSON)"} {
+		t.Run(expression, func(t *testing.T) {
+			value, err := ctx.AsRequest(ServiceID, "call", map[string]interface{}{"url": server.URL, "name": "echo", "arguments": expression})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err = New().(*service).call(ctx, value.(*CallRequest)); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestOAuthExplicitIDToken(t *testing.T) {
+	server := mockServer(t, func(w http.ResponseWriter, r *http.Request, _ string, _ map[string]interface{}) {
+		if got := r.Header.Get("Authorization"); got != "Bearer synthetic-id-token" {
+			t.Errorf("unexpected token selection: %q", got)
+		}
+		w.(responseWriter).result(map[string]interface{}{"content": []interface{}{}, "resultType": "complete"})
+	})
+	defer server.Close()
+	s := New().(*service)
+	s.authorizeOAuth = func(context.Context, *authorizer.Command) (*oauth2.Token, error) {
+		return (&oauth2.Token{AccessToken: "synthetic-access-token"}).WithExtra(map[string]interface{}{"id_token": "synthetic-id-token"}), nil
+	}
+	_, err := s.call(&endly.Context{}, &CallRequest{Request: Request{URL: server.URL, OAuth: &OAuthRequest{ConfigURL: "config-ref", SecretsURL: "user-ref", TokenType: "id"}}, Name: "secured"})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestOAuthIDTokenNeverFallsBack(t *testing.T) {
+	for name, extra := range map[string]interface{}{"missing": nil, "empty": " ", "wrong-type": 42} {
+		t.Run(name, func(t *testing.T) {
+			s := New().(*service)
+			s.authorizeOAuth = func(context.Context, *authorizer.Command) (*oauth2.Token, error) {
+				return (&oauth2.Token{AccessToken: "synthetic-access-token"}).WithExtra(map[string]interface{}{"id_token": extra}), nil
+			}
+			_, cancel, token, err := s.operationContext(&endly.Context{}, &Request{OAuth: &OAuthRequest{ConfigURL: "config-ref", SecretsURL: "user-ref", TokenType: "id"}})
+			if cancel != nil {
+				cancel()
+			}
+			if err == nil || token != "" || strings.Contains(err.Error(), "synthetic-access-token") {
+				t.Fatalf("expected safe authorization failure, token=%q error=%v", token, err)
+			}
+		})
+	}
+}
+
+func TestOAuthTokenTypeValidation(t *testing.T) {
+	for _, typ := range []string{"", "access", "id"} {
+		r := &Request{URL: "https://example.invalid/mcp", OAuth: &OAuthRequest{ConfigURL: "config-ref", SecretsURL: "user-ref", TokenType: typ}}
+		if err := r.Validate(); err != nil {
+			t.Fatalf("%q: %v", typ, err)
+		}
+	}
+	r := &Request{URL: "https://example.invalid/mcp", OAuth: &OAuthRequest{ConfigURL: "config-ref", SecretsURL: "user-ref", TokenType: "refresh"}}
+	if err := r.Validate(); err == nil {
+		t.Fatal("unsupported token type accepted")
 	}
 }

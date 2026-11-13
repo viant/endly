@@ -16,6 +16,15 @@ match a failure without checking the contract. Use deterministic timestamps or
 bounded comparisons where the application generates time. Preserve cleanup and
 error tasks; avoid concurrent runs sharing mutable databases or sequence state.
 
+For grouped database tests, retrieve `endly-dsunit-hydration`,
+`endly-dsunit-sequences` and `endly-dsunit-batch-validation`. Read the existing
+repository's setup/template flow before changing the harness. Aggregate selected
+case fixtures first; query sequences, convert and hydrate once per datastore
+before operations. Case init binds those published models. Accumulate resolved
+expectations with existing native Endly primitives and validate persisted results
+after group operations finish. Keep
+case success provisional until its final database batch succeeds.
+
 Start with a focused case (`-t=test -i=<exact-tag-id>`), inspect emitted case IDs and
 assertion counts, then broaden to affected groups and the complete suite. A zero
 exit code without executed assertions does not demonstrate success. Separate
@@ -24,7 +33,7 @@ cases, summary, and failure evidence; redact tokens and credentials from reports
 For nested tasks use `-selector-mode=path` and order paths to satisfy dependencies.
 
 Keep capture loading and assertions inside Endly rather than creating external
-verification scripts. `LoadJSON` reads JSON or newline-delimited JSON captures;
+verification scripts. Use `LoadJSON` for JSON and `LoadJSONLines` for JSONL captures;
 stage `Select` and `Len` results in named variables before asserting them.
 `validator:assert` with `each: true` applies the same expectation to every actual
 collection item and reports indexed failures. It rejects empty or non-collection
@@ -32,6 +41,12 @@ input, so a missing capture cannot become a vacuous pass. Use
 `normalizeKVPairs: true` for structured YAML expectations. Assert required pages
 separately, then validate every matching request and response; checking only the
 first matching record can miss later scope or paging regressions.
+
+For large captured graphs, `actual: captured.Transactions` uses the validator's
+native state lookup; adding `$` recursively expands/copies that data and can
+reinterpret captured text. Keep authored expectation variables, count checks and
+all negative cases intact. Consult `endly-validator` before changing requests
+that use `ignore` or `omitEmpty`.
 
 A request to run a suite authorizes its documented setup and test effects in the
 chosen test environment. Stop if the configuration unexpectedly targets production,

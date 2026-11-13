@@ -2,6 +2,7 @@ package dsunit
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/google/uuid"
@@ -40,7 +41,11 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 		}
 	}
 
-	if state.Has(recordsKey) {
+	// A managed session can assign a fresh batch under the same key. Reuse a
+	// conversion only for the original collection, preserving one-time fixture
+	// allocation while preventing an earlier operation's datasets from leaking.
+	sourceKey := recordsKey + ".source"
+	if state.Has(recordsKey) && sameTableRecordSource(state.Get(sourceKey), source) {
 		var records = state.Get(recordsKey)
 		if result, ok := records.(map[string][]map[string]interface{}); ok {
 			return result, nil
@@ -73,7 +78,46 @@ func AsTableRecords(dataKey interface{}, state data.Map) (interface{}, error) {
 		}
 	}
 	state.Put(recordsKey, result)
+	state.Put(sourceKey, snapshotTableRecordSource(source))
 	return result, nil
+}
+
+// Retain references as well as the immutable slice shape: a data.Collection
+// pointer can grow while keeping its object identity.
+type tableRecordSource struct {
+	source, backing  interface{}
+	typeOf           reflect.Type
+	object, array    uintptr
+	length, capacity int
+}
+
+func snapshotTableRecordSource(source interface{}) *tableRecordSource {
+	if source == nil {
+		return nil
+	}
+	value := reflect.ValueOf(source)
+	result := &tableRecordSource{source: source, typeOf: value.Type()}
+	if value.Kind() == reflect.Ptr {
+		if value.IsNil() {
+			return nil
+		}
+		result.object = value.Pointer()
+		value = value.Elem()
+	}
+	if value.Kind() != reflect.Slice {
+		return nil
+	}
+	result.backing = value.Interface()
+	result.array, result.length, result.capacity = value.Pointer(), value.Len(), value.Cap()
+	return result
+}
+
+func sameTableRecordSource(cached, current interface{}) bool {
+	previous, ok := cached.(*tableRecordSource)
+	next := snapshotTableRecordSource(current)
+	return ok && previous != nil && next != nil && previous.typeOf == next.typeOf &&
+		previous.object == next.object && previous.array == next.array &&
+		previous.length == next.length && previous.capacity == next.capacity
 }
 
 const (

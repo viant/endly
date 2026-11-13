@@ -1,6 +1,7 @@
 package webdriver
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
@@ -12,6 +13,8 @@ import (
 )
 
 type runtimeElement struct {
+	clickErr error
+	disabled bool
 	selenium.WebElement
 	mu             sync.Mutex
 	clicks         int
@@ -20,7 +23,7 @@ type runtimeElement struct {
 }
 
 func (e *runtimeElement) IsDisplayed() (bool, error)               { return true, nil }
-func (e *runtimeElement) IsEnabled() (bool, error)                 { return true, nil }
+func (e *runtimeElement) IsEnabled() (bool, error)                 { return !e.disabled, nil }
 func (e *runtimeElement) LocationInView() (*selenium.Point, error) { return &selenium.Point{}, nil }
 func (e *runtimeElement) Location() (*selenium.Point, error)       { return &selenium.Point{}, nil }
 func (e *runtimeElement) Size() (*selenium.Size, error)            { return &selenium.Size{}, nil }
@@ -30,6 +33,9 @@ func (e *runtimeElement) Click() error {
 	defer e.mu.Unlock()
 	e.clicks++
 	if e.clicks <= e.interceptCount {
+		if e.clickErr != nil {
+			return e.clickErr
+		}
 		return &selenium.Error{LegacyCode: elementClickInterceptedException, Message: "element click intercepted"}
 	}
 	return nil
@@ -37,18 +43,19 @@ func (e *runtimeElement) Click() error {
 
 type runtimeDriver struct {
 	selenium.WebDriver
-	element       *runtimeElement
-	findCalls     int
-	findAllCalls  int
-	metrics       []map[string]interface{}
-	metricIndex   int
-	scrollCalls   int
-	jsClickCalls  int
-	elementCount  int
-	getErr        error
-	stopCalls     int
-	capture       *CaptureState
-	responseOnGet *NetworkTransaction
+	element             *runtimeElement
+	findCalls           int
+	findAllCalls        int
+	disabledUntilLookup int
+	metrics             []map[string]interface{}
+	metricIndex         int
+	scrollCalls         int
+	jsClickCalls        int
+	elementCount        int
+	getErr              error
+	stopCalls           int
+	capture             *CaptureState
+	responseOnGet       *NetworkTransaction
 }
 
 func (d *runtimeDriver) FindElement(by, value string) (selenium.WebElement, error) {
@@ -60,6 +67,9 @@ func (d *runtimeDriver) FindElement(by, value string) (selenium.WebElement, erro
 }
 func (d *runtimeDriver) FindElements(by, value string) ([]selenium.WebElement, error) {
 	d.findAllCalls++
+	if d.element != nil {
+		d.element.disabled = d.findAllCalls <= d.disabledUntilLookup
+	}
 	if d.elementCount == 0 && d.element != nil {
 		return []selenium.WebElement{d.element}, nil
 	}
@@ -270,6 +280,9 @@ func TestRunReturnsStructuredInlineAssertionFailure(t *testing.T) {
 		t.Fatal("expected assertion failure")
 	}
 	if len(response.Assertions) != 1 || response.Assertions[0].Passed || response.Assertions[0].Actual != "Pending" {
+		for _, assertion := range response.Assertions {
+			t.Logf("assertion: %+v", assertion)
+		}
 		t.Fatalf("assertions=%#v", response.Assertions)
 	}
 	validations := response.Assertion()
@@ -306,5 +319,91 @@ func TestResponseURLMatcher(t *testing.T) {
 	regex, err := responseURLMatcher(`/api/(orders|users)/`)
 	if err != nil || !regex("https://example.test/api/users") {
 		t.Fatalf("regex matcher err=%v", err)
+	}
+}
+
+// A refresh may disable a control between the enabled check and dispatch. No
+// click event was delivered, so the action may re-resolve within its deadline.
+func TestRunRetriesUndeliveredNativeClickWithoutJavaScript(t *testing.T) {
+	for _, message := range []string{"native click did not reach target", "click target remained obscured or moving"} {
+		t.Run(message, func(t *testing.T) {
+			ctx := endly.New().NewContext(nil)
+			defer ctx.Close()
+			element := &runtimeElement{interceptCount: 1, clickErr: fmt.Errorf("%s", message)}
+			driver := &runtimeDriver{element: element}
+			putSession(ctx, "fake", &Session{SessionID: "fake", Browser: ChromeBrowser, driver: driver})
+			request := &RunRequest{SessionID: "fake", Commands: []interface{}{`page.locator("#submit").click()`}, ActionTimeoutMs: 500, PollIntervalMs: 1, AllowJavaScriptClick: true}
+			if err := request.Init(); err != nil {
+				t.Fatal(err)
+			}
+			service := &service{AbstractService: endly.NewAbstractService(ServiceID)}
+			if _, err := service.run(ctx, request); err != nil {
+				t.Fatal(err)
+			}
+			if element.clicks != 2 || driver.findAllCalls != 2 || driver.jsClickCalls != 0 {
+				t.Fatalf("click attempts=%d lookups=%d JavaScript clicks=%d, wanted 2/2/0", element.clicks, driver.findAllCalls, driver.jsClickCalls)
+			}
+		})
+	}
+}
+
+func TestRunObscuredNativeClickRespectsDeadlineWithoutJavaScript(t *testing.T) {
+	ctx := endly.New().NewContext(nil)
+	defer ctx.Close()
+	element := &runtimeElement{interceptCount: 100000, clickErr: fmt.Errorf("click target remained obscured or moving")}
+	driver := &runtimeDriver{element: element}
+	putSession(ctx, "fake", &Session{SessionID: "fake", Browser: ChromeBrowser, driver: driver})
+	request := &RunRequest{SessionID: "fake", Commands: []interface{}{`page.locator("#submit").click()`}, ActionTimeoutMs: 50, PollIntervalMs: 1, AllowJavaScriptClick: true}
+	if err := request.Init(); err != nil {
+		t.Fatal(err)
+	}
+	service := &service{AbstractService: endly.NewAbstractService(ServiceID)}
+	start := time.Now()
+	_, err := service.run(ctx, request)
+	if err == nil || element.clicks < 2 || driver.jsClickCalls != 0 {
+		t.Fatalf("error=%v native clicks=%d javascript clicks=%d", err, element.clicks, driver.jsClickCalls)
+	}
+	if time.Since(start) > time.Second {
+		t.Fatal("native retries exceeded action deadline")
+	}
+}
+
+func TestRunReresolvesDisabledControlWithinActionDeadline(t *testing.T) {
+	ctx := endly.New().NewContext(nil)
+	defer ctx.Close()
+	element := &runtimeElement{}
+	driver := &runtimeDriver{element: element, disabledUntilLookup: 1}
+	putSession(ctx, "fake", &Session{SessionID: "fake", Browser: ChromeBrowser, driver: driver})
+	request := &RunRequest{SessionID: "fake", Commands: []interface{}{`page.locator("#submit").click()`}, ActionTimeoutMs: 3500, PollIntervalMs: 1, AllowJavaScriptClick: true}
+	if err := request.Init(); err != nil {
+		t.Fatal(err)
+	}
+	service := &service{AbstractService: endly.NewAbstractService(ServiceID)}
+	if _, err := service.run(ctx, request); err != nil {
+		t.Fatal(err)
+	}
+	if element.clicks != 1 || driver.findAllCalls != 2 || driver.jsClickCalls != 0 {
+		t.Fatalf("native clicks=%d lookups=%d javascript clicks=%d", element.clicks, driver.findAllCalls, driver.jsClickCalls)
+	}
+}
+
+func TestRunDisabledControlRespectsDeadlineWithoutBypass(t *testing.T) {
+	ctx := endly.New().NewContext(nil)
+	defer ctx.Close()
+	element := &runtimeElement{}
+	driver := &runtimeDriver{element: element, disabledUntilLookup: 100}
+	putSession(ctx, "fake", &Session{SessionID: "fake", Browser: ChromeBrowser, driver: driver})
+	request := &RunRequest{SessionID: "fake", Commands: []interface{}{`page.locator("#submit").click()`}, ActionTimeoutMs: 50, PollIntervalMs: 1, AllowJavaScriptClick: true}
+	if err := request.Init(); err != nil {
+		t.Fatal(err)
+	}
+	service := &service{AbstractService: endly.NewAbstractService(ServiceID)}
+	start := time.Now()
+	_, err := service.run(ctx, request)
+	if err == nil || element.clicks != 0 || driver.jsClickCalls != 0 {
+		t.Fatalf("error=%v native clicks=%d javascript clicks=%d", err, element.clicks, driver.jsClickCalls)
+	}
+	if time.Since(start) > time.Second {
+		t.Fatal("inner enabled wait exceeded action deadline")
 	}
 }

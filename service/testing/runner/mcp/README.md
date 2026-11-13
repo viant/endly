@@ -68,11 +68,17 @@ oauth:
   authFlow: OOB
   scopes: [read]
   usePKCE: true
+  tokenType: access
 ```
 
 The OAuth config and Basic credentials must be stored as Scy resources. The
-runner passes these references to `scy/auth/authorizer`, receives an access
-token, and uses it only for the current MCP operation. OOB authorization may
+runner passes these references to `scy/auth/authorizer` and uses the selected
+token only for the current MCP operation. `tokenType` defaults to `access` for
+backward compatibility. Set `tokenType: id` only when the target explicitly
+requires an ID token and the configured provider/scopes return `id_token`.
+Missing, empty or non-string ID tokens fail authorization; the runner does not
+fall back to the access token. Tokens are not returned as workflow output.
+OOB authorization may
 require interactive input. `timeoutMs` bounds authorization and the MCP call
 together. OAuth and bearer token references are mutually exclusive. No OAuth
 provider is contacted by the unit tests; they inject a local authorizer and

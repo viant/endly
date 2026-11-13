@@ -45,7 +45,7 @@ require (
 	github.com/segmentio/kafka-go v0.3.4
 	github.com/stretchr/testify v1.11.1
 	github.com/tebeka/selenium v0.9.10-0.20211105214847-e9100b7f5ac1
-	github.com/viant/afs v1.30.1-0.20260914155934-90e95d483861
+	github.com/viant/afs v1.30.2-0.20261107183859-0b3aa046bde9
 	github.com/viant/afsc v1.18.0
 	// replace with bumped, released ^ afsc, will not work now
 	github.com/viant/asc v0.5.2-0.20240920195908-e805e6de7865
@@ -77,7 +77,7 @@ require (
 	github.com/viant/gosh v0.3.1-0.20261013193746-35150777a1dc
 	github.com/viant/parsly v0.3.3
 	github.com/viant/sqlx v0.26.1-0.20261020143731-b6b291346945
-	github.com/viant/toolbox v0.39.1-0.20261021204653-94cd583a4f4a
+	github.com/viant/toolbox v0.39.1-0.20261111180132-2e010411f9da
 	github.com/viant/xdatly/handler v0.0.0-20250418144853-029d9a05ae20
 	github.com/viant/xdatly/types/core v0.0.0-20250307183722-8c84fc717b52
 	github.com/viant/xdatly/types/custom v0.0.0-20240904221257-06e43f22d5f0
@@ -204,14 +204,14 @@ require (
 	github.com/viant/godiff v0.4.1 // indirect
 	github.com/viant/govalidator v0.3.1 // indirect
 	github.com/viant/igo v0.2.1 // indirect
-	github.com/viant/jsonrpc v0.24.0
-	github.com/viant/mcp v0.24.0
-	github.com/viant/mcp-protocol v0.19.0
+	github.com/viant/jsonrpc v0.25.1
+	github.com/viant/mcp v0.24.2-0.20261029235301-7885d52f196b
+	github.com/viant/mcp-protocol v0.19.2-0.20261103190019-f320d8d700fa
 	github.com/viant/pgo v0.11.0 // indirect
 	github.com/viant/sqlparser v0.13.1-0.20261005175605-18369aade19d // indirect
 	github.com/viant/structology v0.10.1-0.20261020182740-3fac6f36235c // indirect
 	github.com/viant/structql v0.5.2 // indirect
-	github.com/viant/tagly v0.3.1-0.20260914020630-eadee36c3630 // indirect
+	github.com/viant/tagly v0.4.2-0.20261028223500-81e046a19ef9 // indirect
 	github.com/viant/velty v0.2.1-0.20230927172116-ba56497b5c85 // indirect
 	github.com/viant/x v0.5.1-0.20260915043005-1bc42b9eef47 // indirect
 	github.com/viant/xdatly v0.5.4-0.20250418144853-029d9a05ae20 // indirect
@@ -222,7 +222,7 @@ require (
 	github.com/viant/xunsafe v0.11.0 // indirect
 	github.com/xanzy/ssh-agent v0.2.1 // indirect
 	github.com/xuri/efp v0.0.0-20230802181842-ad255f2331ca // indirect
-	github.com/xuri/excelize/v2 v2.8.0 // indirect
+	github.com/xuri/excelize/v2 v2.8.0
 	github.com/xuri/nfp v0.0.0-20230819163627-dc951e3ffe1a // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect

@@ -14,6 +14,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"github.com/viant/afs/url"
 	"github.com/viant/endly/internal/debug"
+	"github.com/viant/endly/internal/redact"
 	"github.com/viant/endly/internal/util"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/model/msg"
@@ -278,11 +279,7 @@ func (c *Context) NewRequest(serviceName, action string, rawRequest map[string]i
 			return
 		}
 		if r := recover(); r != nil {
-			var info = toolbox.AsString(rawRequest)
-			if JSONSource, err := toolbox.AsJSONText(rawRequest); err == nil {
-				info = JSONSource
-			}
-			err = fmt.Errorf("unable to create %v request: %v, %v", serviceName+":"+action, r, info)
+			err = fmt.Errorf("unable to create %v request: %s", serviceName+":"+action, redact.RequestError(fmt.Sprint(r), rawRequest))
 		}
 	}()
 	request := route.RequestProvider()
@@ -292,6 +289,9 @@ func (c *Context) NewRequest(serviceName, action string, rawRequest map[string]i
 		}
 	}
 	err = toolbox.DefaultConverter.AssignConverted(request, rawRequest)
+	if err != nil {
+		err = fmt.Errorf("request conversion from %T to %T failed: %s", rawRequest, request, redact.RequestError(err.Error(), rawRequest))
+	}
 	return request, err
 }
 
@@ -542,22 +542,8 @@ func predefinedRegistry() data.Map {
 		if textExpr == "" {
 			return false, nil
 		}
-		parts := strings.Split(textExpr, ".")
-		for index, part := range parts {
-			if len(node) == 0 {
-				return false, nil
-			}
-			has := node.Has(toolbox.AsString(part))
-			if !has {
-				return false, nil
-			}
-			if index < len(parts)-1 {
-				// Descend from the current node without converting or replacing
-				// the value in the caller's state. A present leaf may be empty or nil.
-				node = toolbox.AsMap(node.Get(part))
-			}
-		}
-		return true, nil
+		_, found := node.LookupValue(textExpr)
+		return found, nil
 	})
 	return result
 }

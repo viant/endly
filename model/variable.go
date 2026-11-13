@@ -11,6 +11,7 @@ import (
 	"github.com/viant/toolbox/data"
 	"gopkg.in/yaml.v3"
 	"net/url"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -20,10 +21,13 @@ const (
 	OwnerURL = "ownerURL"
 )
 
-func (v *Variable) MarshalYAML() (interface{}, error) {
-	type variable Variable
+type variableFields Variable
 
-	customVar := variable(*v)
+func (v *Variable) MarshalYAML() (interface{}, error) {
+	if v.KeyFrom != "" {
+		return (*variableFields)(v), nil
+	}
+	customVar := variableFields(*v)
 	orig := &yaml.Node{}
 	err := orig.Encode(&customVar)
 	if err != nil {
@@ -52,6 +56,7 @@ type Variable struct {
 	Name              string            `description:"name"`
 	Value             interface{}       `description:"default value"`
 	From              string            `description:"context state map key to pull data"`
+	KeyFrom           string            `json:"KeyFrom,omitempty" yaml:"keyFrom,omitempty" description:"state path to the literal string key in the map at From"`
 	When              string            `description:"criteria if specified this variable will be set only if evaluated criteria is true (it can use $in, and $out state variables)"`
 	Else              interface{}       `description:"if when criteria is not met then else can provide variable value alternative"`
 	Required          bool              `description:"flag that validates that from returns non empty value or error is generated"`
@@ -61,6 +66,9 @@ type Variable struct {
 }
 
 func (v *Variable) getValueFromInput(in data.Map) (interface{}, error) {
+	if v.KeyFrom != "" {
+		return v.getValueFromMap(in)
+	}
 	var value interface{}
 	from := v.From
 	if from == "" && v.Value == nil {
@@ -77,6 +85,39 @@ func (v *Variable) getValueFromInput(in data.Map) (interface{}, error) {
 		}
 	}
 	return value, nil
+}
+
+func (v *Variable) getValueFromMap(in data.Map) (interface{}, error) {
+	if v.From == "" {
+		return nil, fmt.Errorf("keyFrom requires from to name a map in workflow state")
+	}
+	source, found := in.LookupValue(v.From)
+	if !found || source == nil {
+		return nil, nil
+	}
+	entries := reflect.ValueOf(source)
+	for entries.Kind() == reflect.Pointer {
+		entries = entries.Elem()
+	}
+	if !entries.IsValid() {
+		return nil, nil
+	}
+	if entries.Kind() != reflect.Map || entries.Type().Key().Kind() != reflect.String {
+		return nil, fmt.Errorf("keyFrom requires from to resolve to a map with string keys")
+	}
+	key, found := in.LookupValue(v.KeyFrom)
+	if !found || key == nil {
+		return nil, nil
+	}
+	literal := reflect.ValueOf(key)
+	if literal.Kind() != reflect.String {
+		return nil, fmt.Errorf("keyFrom requires a string key")
+	}
+	value := entries.MapIndex(literal.Convert(entries.Type().Key()))
+	if !value.IsValid() {
+		return nil, nil
+	}
+	return value.Interface(), nil
 }
 
 // Required-variable diagnostics must never encode or traverse state values.

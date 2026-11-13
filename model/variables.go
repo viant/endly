@@ -14,6 +14,18 @@ import (
 type Variables []*Variable
 
 func (v Variables) MarshalYAML() (interface{}, error) {
+	for _, variable := range v {
+		if variable != nil && variable.KeyFrom != "" {
+			// The short form cannot represent the two paths of a keyed lookup.
+			fields := make([]*variableFields, 0, len(v))
+			for _, item := range v {
+				if item != nil {
+					fields = append(fields, (*variableFields)(item))
+				}
+			}
+			return fields, nil
+		}
+	}
 	type variables Variables
 	customVar := variables(v)
 	orig := &yaml.Node{}
@@ -64,6 +76,21 @@ func loadVariablesFromResource(baseURLs []string, resourceURI string) (Variables
 	loaded, err := util.LoadData(baseURLs, resourceURI)
 	if err == nil {
 		err = toolbox.DefaultConverter.AssignConverted(&result, loaded)
+		if err == nil {
+			// Retain resource conversion semantics while preparing containers with
+			// the same native normalization used for inline variable declarations.
+			for _, variable := range result {
+				if variable == nil {
+					continue
+				}
+				if normalized, normalizeErr := util.NormalizeValue(variable.Value); normalizeErr == nil {
+					variable.Value = normalized
+				}
+				if normalized, normalizeErr := util.NormalizeValue(variable.Else); normalizeErr == nil {
+					variable.Else = normalized
+				}
+			}
+		}
 	}
 	return result, err
 }

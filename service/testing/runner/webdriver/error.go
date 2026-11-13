@@ -52,7 +52,12 @@ func IsRetryableElementError(err error) bool {
 		"element is not attached",
 		"element not interactable",
 		"element is not displayed",
+		"element is not enabled",
+		"element is not editable",
 		"element click intercepted",
+		// The CDP event guard verified that no click reached the target.
+		"native click did not reach target",
+		"click target remained obscured or moving",
 		"not clickable at point",
 		"other element would receive",
 	} {

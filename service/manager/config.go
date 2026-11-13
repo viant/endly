@@ -43,6 +43,17 @@ func WithMaxEvents(limit int) Option {
 	}
 }
 
+// WithEventQueueSize sets the bounded in-flight event queue capacity. When the
+// queue fills, event publishers apply backpressure until the event pump catches
+// up instead of silently discarding events.
+func WithEventQueueSize(limit int) Option {
+	return func(service *Service) {
+		if limit > 0 {
+			service.eventQueueSize = limit
+		}
+	}
+}
+
 func WithCallbackHosts(hosts ...string) Option {
 	return func(service *Service) {
 		for _, host := range hosts {
@@ -125,12 +136,21 @@ func (s *Service) cleanup(now time.Time) {
 	s.mu.RUnlock()
 	for _, session := range sessions {
 		session.mu.Lock()
+		active := false
 		for id, operation := range session.operations {
+			if operation.Status == OperationQueued || operation.Status == OperationRunning || operation.Status == OperationCancelling {
+				active = true
+			}
 			if operation.FinishedAt != nil && now.Sub(*operation.FinishedAt) > s.operationRetention {
 				delete(session.operations, id)
 			}
 		}
-		expired := now.Sub(session.lastAccess) > s.sessionTTL
+		expired := !session.closed && !active && now.Sub(session.lastAccess) > s.sessionTTL
+		if expired {
+			// Claim expiry under the same lock as operation admission. A lookup
+			// cannot revive this session between this check and Close.
+			session.closed = true
+		}
 		id := session.info.SessionID
 		session.mu.Unlock()
 		if expired {

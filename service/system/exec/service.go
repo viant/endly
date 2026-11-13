@@ -409,15 +409,14 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 	}
 
 	response.Output += stdout
-	if request.CheckError {
-		if statusCode != 0 {
-			return fmt.Errorf("exit code: %v, command: %v", statusCode, securedCommand)
-		}
-	}
-
 	response.Add(NewCommandLog(securedCommand, stdout, err))
+	// A completion failure is not a command exit status. Preserve timeout,
+	// cancellation and closed-shell causes even when exit checking is enabled.
 	if err != nil {
-		return err
+		return fmt.Errorf("exit code: %v, command: %v: %w", statusCode, securedCommand, err)
+	}
+	if request.CheckError && statusCode != 0 {
+		return fmt.Errorf("exit code: %v, command: %v", statusCode, securedCommand)
 	}
 	if err = s.validateStdout(stdout, securedCommand, extractCommand); err != nil {
 		return err
@@ -428,12 +427,20 @@ func (s *execService) executeCommand(context *endly.Context, session *model.Sess
 }
 
 func (s *execService) updateSystemInfo(state data.Map, session *model.Session) {
-	state.SetValue("os.user", session.Username)
-	state.SetValue("os.arch", session.Service.HardwareInfo().Arch)
-	state.SetValue("os.system", session.Service.OsInfo().System)
-	state.SetValue("os.name", session.Service.OsInfo().Name)
-	state.SetValue("os.hardware", session.Service.HardwareInfo().Hardware)
-	state.SetValue("os.architecture", session.Service.HardwareInfo().Architecture)
+	// Context clones inherit nested state values by reference. A warmed parent's
+	// os map must remain read-only when async commands publish their metadata.
+	// Detach only this owned metadata namespace, retaining caller custom fields.
+	info := make(data.Map)
+	for key, value := range state.GetMap("os") {
+		info[key] = value
+	}
+	info["user"] = session.Username
+	info["arch"] = session.Service.HardwareInfo().Arch
+	info["system"] = session.Service.OsInfo().System
+	info["name"] = session.Service.OsInfo().Name
+	info["hardware"] = session.Service.HardwareInfo().Hardware
+	info["architecture"] = session.Service.HardwareInfo().Architecture
+	state.Put("os", info)
 }
 
 func (s *execService) retryWithSudo(context *endly.Context, session *model.Session, command string, listener runner.Listener, timeoutMs int, strictCompletion bool, terminators ...string) (string, int, error) {
@@ -506,10 +513,11 @@ func (s *execService) runExtractCommands(context *endly.Context, request *Extrac
 			if !strings.Contains(command, "&&") {
 				envVariable := string(command[7:])
 				keyValuePair := strings.Split(envVariable, "=")
-				if len(keyValuePair) == 2 {
+				// An explicitly quoted assignment is already shell syntax. The
+				// legacy environment setter cannot reconstruct its quoting.
+				if len(keyValuePair) == 2 && !strings.ContainsAny(keyValuePair[1], "'\"") {
 					key := strings.TrimSpace(keyValuePair[0])
 					value := strings.TrimSpace(keyValuePair[1])
-					value = strings.Trim(value, "'\"")
 					err = s.setEnvVariable(context, session, key, value)
 					response.Add(NewCommandLog(command, "", err))
 					continue

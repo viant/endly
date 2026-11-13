@@ -3,6 +3,7 @@ package manager
 import (
 	"context"
 	"fmt"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -108,6 +109,7 @@ func (s *Service) executeWorkflow(session *Session, operationID string, input *R
 	}
 	operation.cancel = nil
 	operation.FinishedAt = &finished
+	session.lastAccess = finished
 	if operationContext.Err() != nil || operation.Status == OperationCancelling {
 		operation.Status = OperationCancelled
 		operation.Error = operationContext.Err().Error()
@@ -192,6 +194,7 @@ func (s *Service) executeAction(session *Session, operationID string, input *Run
 	}
 	operation.cancel = nil
 	operation.FinishedAt = &finished
+	session.lastAccess = finished
 	if operationContext.Err() != nil || operation.Status == OperationCancelling {
 		operation.Status = OperationCancelled
 		if operationContext.Err() != nil {
@@ -214,7 +217,7 @@ func (s *Service) executeAction(session *Session, operationID string, input *Run
 }
 
 func (s *Service) startEventPump(session *Session, operation *Operation, original msg.Listener, callbacks []Callback) func() {
-	operation.eventQueue = make(chan *queuedEvent, 256)
+	operation.eventQueue = make(chan *queuedEvent, s.eventQueueSize)
 	operation.eventDone = make(chan struct{})
 	var sequence int64
 	go func() {
@@ -250,7 +253,19 @@ func (s *Service) startEventPump(session *Session, operation *Operation, origina
 			}
 		}
 	}()
+	var publishMu sync.Mutex
+	var publishing sync.WaitGroup
+	listenerStopped := false
 	session.context.SetListener(func(event msg.Event) {
+		publishMu.Lock()
+		if listenerStopped {
+			publishMu.Unlock()
+			return
+		}
+		publishing.Add(1)
+		publishMu.Unlock()
+		defer publishing.Done()
+
 		immutable := snapshotEvent(event)
 		if immutable.PassedAssertions+immutable.FailedAssertions > 0 {
 			session.mu.Lock()
@@ -260,11 +275,10 @@ func (s *Service) startEventPump(session *Session, operation *Operation, origina
 			}
 			session.mu.Unlock()
 		}
-		select {
-		case operation.eventQueue <- immutable:
-		default:
-			atomic.AddInt64(&operation.droppedEvents, 1)
-		}
+		// The queue is deliberately bounded, but publishers wait for the pump
+		// when it fills. This preserves event order and delivery without an
+		// unbounded allocation or silent loss.
+		operation.eventQueue <- immutable
 	})
 	var stopped atomic.Bool
 	return func() {
@@ -272,6 +286,10 @@ func (s *Service) startEventPump(session *Session, operation *Operation, origina
 			return
 		}
 		session.context.SetListener(original)
+		publishMu.Lock()
+		listenerStopped = true
+		publishMu.Unlock()
+		publishing.Wait()
 		close(operation.eventQueue)
 		<-operation.eventDone
 	}

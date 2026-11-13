@@ -91,8 +91,15 @@ In data substitution case if UDF returns error data will NOT be expanded with co
 |---|----|----|
 | DateOfBirth | provides formatted date of birth, it take  desired age, optionally month, day and timeformat | $Dob(yeaysAgo,monthsAgo,daysAgo,"yyyy") |
 | URLJoin | joins base URL and URI path | $URLJoin($baseURL, $URI) |
+| URLSetQuery | sets one query key, replacing its duplicates; requires URL, key and value strings | $URLSetQuery($URL, 'parameters', $parametersJSON) |
 | Hostname | extracts host from URL | $Hostname($URL) |
 | AvroReader | Avro reader | n/a | 
+
+`URLSetQuery` retains unrelated query values (including duplicate keys) and the
+fragment. It normalizes query encoding and key order with Go's `net/url` package.
+Serialize structured values with `AsJSON` first; the UDF accepts strings only.
+Malformed URL/query escapes and unescaped query semicolons return an error and
+no partial URL. This strict query validation applies only to this new UDF.
 
 **Defined in [dsunit project](./../../testing/dsunit/udf.go)**
 

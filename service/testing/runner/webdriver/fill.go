@@ -10,7 +10,8 @@ import (
 // Native Clear can blur the field and restore its old controlled value before
 // SendKeys runs, causing the new value to be appended.
 func fillElement(driver selenium.WebDriver, element selenium.WebElement, value string, insertText ...func(string) error) error {
-	if direct, ok := driver.(*directCDPDriver); ok {
+	direct, isDirect := driver.(*directCDPDriver)
+	if isDirect {
 		if err := direct.bringToFront(); err != nil {
 			return err
 		}
@@ -26,12 +27,13 @@ func fillElement(driver selenium.WebDriver, element selenium.WebElement, value s
 	}
 
 	selection, err := driver.ExecuteScript(`const e=arguments[0];
-if(e.disabled||e.readOnly||(!e.isContentEditable&&!['INPUT','TEXTAREA'].includes(e.tagName)))throw new Error('fill requires an editable text control');
+if(e.matches(':disabled')||e.readOnly)throw new Error('element is not editable');
+if(!e.isContentEditable&&!['INPUT','TEXTAREA'].includes(e.tagName))throw new Error('fill requires an editable text control');
 if(e.tagName==='INPUT'&&['checkbox','radio','file','button','submit','reset','range','color','hidden'].includes(e.type))throw new Error('fill requires a text input');
 e.focus();
 if(e.tagName==='INPUT'&&['date','datetime-local','time','month','week'].includes(e.type))return 'temporal';
 if(e.isContentEditable)return /Mac/.test(navigator.platform)?'contenteditable-meta':'contenteditable-control';
-if(typeof e.select==='function'){e.select();if(e.selectionStart===0&&e.selectionEnd===e.value.length)return 'selected';}
+if(typeof e.select==='function'){e.select();if(e.selectionStart===0&&e.selectionEnd===e.value.length)return /Mac/.test(navigator.platform)?'selected-meta':'selected-control';}
 return /Mac/.test(navigator.platform)?'meta':'control';`, []interface{}{element, value})
 	if err != nil {
 		return err
@@ -51,9 +53,17 @@ e.dispatchEvent(new Event('change',{bubbles:true}));
 return true;`, []interface{}{element, value})
 		return err
 	}
-	if selection != "selected" {
+	// A controlled input may replace its DOM node after the first keystroke.
+	// Insert the selected replacement in one native input event when supported,
+	// instead of letting a WebDriver key sequence continue against the old node.
+	if value != "" && strings.HasPrefix(fmt.Sprint(selection), "selected") && len(insertText) > 0 {
+		if err = insertText[0](value); err == nil {
+			return nil
+		}
+	}
+	if !strings.HasPrefix(fmt.Sprint(selection), "selected") || isDirect && value == "" {
 		modifier := selenium.ControlKey
-		if selection == "meta" || selection == "contenteditable-meta" {
+		if strings.HasSuffix(fmt.Sprint(selection), "meta") {
 			modifier = selenium.MetaKey
 		}
 		if direct, ok := driver.(*directCDPDriver); ok {
@@ -70,8 +80,10 @@ return true;`, []interface{}{element, value})
 					return err
 				}
 			}
-		} else if err = element.SendKeys(modifier + "a" + selenium.NullKey); err != nil {
-			return err
+		} else if strings.HasPrefix(fmt.Sprint(selection), "contenteditable") {
+			if err = element.SendKeys(modifier + "a" + selenium.NullKey); err != nil {
+				return err
+			}
 		}
 	}
 	// Replace editable documents as one native input, rather than typing Enter
@@ -102,7 +114,21 @@ return true;`, []interface{}{element, value})
 		return err
 	}
 	if value == "" {
+		if isDirect {
+			// Select-all and deletion are one trusted edit sequence. SendKeys
+			// would refocus the element and can collapse a numeric selection.
+			return direct.dispatchSpecialKey(directCDPSpecialKeys[selenium.BackspaceKey])
+		}
 		value = selenium.BackspaceKey
+	}
+	// Element SendKeys can move the caret to the end before dispatching keys.
+	// Keep select-all and replacement in that same native WebDriver operation.
+	if _, direct := driver.(*directCDPDriver); !direct {
+		modifier := selenium.ControlKey
+		if strings.HasSuffix(fmt.Sprint(selection), "meta") {
+			modifier = selenium.MetaKey
+		}
+		return element.SendKeys(modifier + "a" + selenium.NullKey + value)
 	}
 	return element.SendKeys(value)
 }

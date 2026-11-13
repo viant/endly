@@ -13,6 +13,8 @@ Source-declared actions: `checkSchema`, `compare`, `create`, `dump`, `expect`, `
 
 Read [the service reference](references/service.md) for live contract discovery and maintained source locations.
 
+Read [fixture aggregation and sequence allocation](references/fixtures-and-sequences.md) before using `$Sequences` or `$AsTableRecords`, especially for scoped regression runs or empty MySQL tables.
+
 Function skills: `endly-dsunit-register`, `endly-dsunit-sequences`, `endly-dsunit-prepare`, `endly-dsunit-expect`, `endly-dsunit-query`, `endly-dsunit-export`, `endly-dsunit-mapping`, `endly-dsunit-hydration`, `endly-dsunit-batch-validation`. Retrieve only those relevant to the task.
 
 Source: `service/testing/dsunit/service.go`. Treat the live contract as authoritative when documentation differs.

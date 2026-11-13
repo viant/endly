@@ -50,6 +50,9 @@ func normalizeKVPairs(source interface{}) (interface{}, error) {
 	if source == nil {
 		return nil, nil
 	}
+	if _, binary := source.([]byte); binary {
+		return source, nil
+	}
 	if object, ok := source.(yaml.MapSlice); ok && len(object) == 0 {
 		return map[string]interface{}{}, nil
 	}

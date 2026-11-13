@@ -37,6 +37,73 @@ and `service/testing/dsunit/udf.go` in the Endly checkout for implementation det
 Use the service-specific skill for each action. For testing methodology retrieve
 `endly-testing`; retrieve the local project skill when one is explicitly configured.
 
+For bounded API batches, use native collection push/shift and loops. `Len` counts
+collection members; `JSONSize($value)` counts the encoded JSON bytes, including
+UTF-8 and escaping. Reserve space for the request envelope and respect the
+destination's item and byte limits. Keep authorization in the destination API.
+
+When a JSON field must be an object, use the existing `$AsMap(..)` expression to
+retain that type through workflow expansion. For example, `params: $AsMap('{}')`
+represents an empty object, and `JSONBody: $AsMap($requestJSON)` retains an entire
+JSON object loaded as text. Nested empty arrays, objects, booleans, zero and null
+keep their JSON types. Do not replace an object with an array, relax the receiving
+API, or concatenate strings to work around a request-shape failure. Assert the
+actual outgoing request when a protocol distinguishes `{}` from `[]`.
+
 In path mode, tag filtering excludes unmatched template instances across groups
 while retaining untagged setup. Discover IDs in the actual root/nested run context
 with endly_listInstances; standalone loading can change the workflow name prefix.
+
+For CSV artifact checks, register the existing `CsvReader` provider through
+`udf:register` with `params: [{output: rows}]`, then use that registered UDF in
+`storage:download`. It returns the observed header and every record as ordered
+string arrays, retaining blank records and trailing empty cells. Validate headers,
+record widths, complete row counts and values against independent expectations;
+do not infer missing rows from the expected data. Use native validator state paths
+without recursive `$` expansion when comparing literal artifact contents.
+
+For static XLSX grids, register `XlsxReader` with
+`params: [{sheet: Worksheet name, range: autoFilter}]` and pass its registered
+ID to `storage:download`. The result includes the observed worksheet AutoFilter
+range, original byte count, rectangular values and parallel cell types. A
+literal A1 range such as `A4:A4` reads a fixed grid, including header-only
+exports. Check range, cell types, and complete values against an independent
+oracle. Do not substitute the sheet dimension for missing AutoFilter metadata.
+For several ranges, register `params: [{ranges: [{id: table, sheet: Data,
+range: autoFilter}], metadata: true}]` and read once via `storage:download`.
+The result includes `grids` keyed by ID. Optional workbook metadata reports
+sheet order, defined names, panes, hyperlinks, cell and formula observations,
+and chart references with series roles and legend presence. Formula or error
+cells fail grid reads. Workbook inventory records their metadata separately.
+
+For a literal shell argument, store its string in state and use
+`$ShellQuote('state.key')` in an `exec:run` command. Pass the literal key/path,
+not `$state.key`; this preserves JSON-shaped strings and shell metacharacters.
+The surrounding command retains normal shell behavior. Bind required workflow
+inputs once with `init`/`from` before nested workflows can change their parameters.
+
+A nested `run` inherits the parent's `params` only when its `params` field is
+omitted. An explicit map replaces that input map; it does not merge missing keys.
+`sharedState: true` does not change this rule. Forward every input the child
+needs, especially an overridden destination:
+
+```yaml
+init:
+  - {name: outputDirectory, from: params.outputDirectory, required: true}
+pipeline:
+  publish:
+    action: run
+    request: '@publish'
+    sharedState: true
+    params: {outputDirectory: '$outputDirectory', mode: preview}
+```
+
+With `sharedState: false`, the child starts with a cloned upstream state, not an
+empty state. Prefer explicit child inputs over relying on ambient state. Verify
+parameter forwarding through the nested action using a nondefault destination;
+checking only the parent's initialized value misses dropped child inputs.
+
+Use `- {name: selected, from: response.entries, keyFrom: requestedKey, required: true}`
+to read a map entry using a string already stored in state. Both paths are read
+without evaluation, and the string is used exactly as stored, including dots,
+brackets and dollar signs. A missing entry follows the normal variable fallback.

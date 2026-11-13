@@ -397,11 +397,15 @@ func (s *service) callMethod(owner interface{}, methodName string, response *Ser
 		parameters = append([]interface{}{owner}, parameters...)
 		owner = s
 	}
-	// Workflow decoding can turn an empty nested YAML object into an empty
-	// slice. CDP requires an object even for commands without parameters.
+	// Workflow decoding can turn an empty nested YAML object into nil or an
+	// empty slice. CDP requires an object even for commands without parameters.
 	// Only normalize that empty form; retain errors for nonempty arrays.
 	if methodName == "CDPCommand" && len(parameters) == 2 {
+		empty := parameters[1] == nil
 		if value, ok := parameters[1].([]interface{}); ok && len(value) == 0 {
+			empty = true
+		}
+		if empty {
 			parameters = append([]interface{}(nil), parameters...)
 			parameters[1] = map[string]interface{}{}
 		}
@@ -421,10 +425,16 @@ func (s *service) callMethod(owner interface{}, methodName string, response *Ser
 			return err
 		}
 	}
+	if methodName == "CDPCommand" {
+		return normalizeCDPResult(response.Result)
+	}
 	return nil
 }
 
 func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRequest) (*ServiceCallResponse, error) {
+	if err := request.Validate(); err != nil {
+		return nil, err
+	}
 	session, err := s.session(context, request.SessionID)
 	if err != nil {
 		return nil, err
@@ -440,7 +450,13 @@ func (s *service) callWebDriver(context *endly.Context, request *WebDriverCallRe
 	if key == "" {
 		key = request.Call.Method
 	}
-	return response, s.call(context, session.driver, request.Call, response, key)
+	var caller interface{} = session.driver
+	if request.Call.Method == "CDPCommand" {
+		caller = sessionCDPCommands{session: session}
+	}
+	return response, s.callBefore(context, caller, request.Call, response, func() {
+		drainBeforeNavigation(session, request.Call.Method, request.Call.Parameters)
+	}, key)
 }
 
 // missingStringValue normalizes ChromeDriver's JSON null for an optional DOM
@@ -458,8 +474,30 @@ func missingStringValue(call *MethodCall, response *ServiceCallResponse, err err
 	return false
 }
 
+var errElementExpectation = errors.New("webdriver expectation failed")
+
+// Only read-only element observations may re-resolve a changing selector.
+// Driver calls and explicit element references keep their existing semantics.
+func selectorExpectation(call *MethodCall) bool {
+	if call == nil || call.Expectation == nil {
+		return false
+	}
+	switch call.Method {
+	case "Text", "GetAttribute", "GetProperty", "IsDisplayed", "IsEnabled", "IsSelected", "CSSProperty":
+		return true
+	}
+	return false
+}
+
 func (s *service) call(context *endly.Context, caller interface{}, call *MethodCall, response *ServiceCallResponse, elementPath ...string) (err error) {
+	return s.callBefore(context, caller, call, response, nil, elementPath...)
+}
+
+func (s *service) callBefore(context *endly.Context, caller interface{}, call *MethodCall, response *ServiceCallResponse, before func(), elementPath ...string) (err error) {
 	if call.WaitTimeMs == 0 {
+		if before != nil {
+			before()
+		}
 		if err = s.callMethod(caller, call.Method, response, call.Parameters); err != nil && !missingStringValue(call, response, err) {
 			return fmt.Errorf("webdriver call %s: %w", call.Method, err)
 		}
@@ -470,7 +508,7 @@ func (s *service) call(context *endly.Context, caller interface{}, call *MethodC
 				return matchErr
 			}
 			if !matched {
-				return fmt.Errorf("webdriver expectation failed: expected %s %v, actual %v", call.Expectation.Matcher, call.Expectation.Value, actual)
+				return fmt.Errorf("%w: expected %s %v, actual %v", errElementExpectation, call.Expectation.Matcher, call.Expectation.Value, actual)
 			}
 		}
 		if call.ThinkTimeMs > 0 {
@@ -491,6 +529,9 @@ func (s *service) call(context *endly.Context, caller interface{}, call *MethodC
 			return contextErr
 		}
 		response.Result = nil
+		if before != nil {
+			before()
+		}
 		err = s.callMethod(caller, call.Method, response, call.Parameters)
 		if err != nil && !missingStringValue(call, response, err) {
 			return fmt.Errorf("webdriver call %s: %w", call.Method, err)
@@ -621,25 +662,35 @@ func (s *service) callWebElement(context *endly.Context, request *WebElementCall
 	if request.Call.WaitTimeMs > 0 {
 		deadline = time.Now().Add(time.Duration(request.Call.WaitTimeMs) * time.Millisecond)
 	}
+	var lastResponse *WebElementCallResponse
+	var lastError error
 	for {
 		runtimeRequest := *request
 		runtimeCall := *request.Call
 		if !deadline.IsZero() {
 			remaining := time.Until(deadline)
 			if remaining <= 0 {
-				return nil, fmt.Errorf("webdriver element wait timed out after %dms: %s", request.Call.WaitTimeMs, request.Selector.Value)
+				if lastError != nil {
+					return lastResponse, lastError
+				}
+				return lastResponse, fmt.Errorf("webdriver element wait timed out after %dms: %s", request.Call.WaitTimeMs, request.Selector.Value)
 			}
 			runtimeCall.WaitTimeMs = max(1, int(remaining/time.Millisecond))
 		}
+		if selectorExpectation(request.Call) {
+			runtimeCall.WaitTimeMs = 0
+		}
 		runtimeRequest.Call = &runtimeCall
 		response, callErr := s.callWebElementOnce(context, session, &runtimeRequest)
+		lastResponse, lastError = response, callErr
 		if response != nil && response.LookupError != "" && request.Call.AllowMissing {
 			response.LookupError = ""
 			return response, nil
 		}
 		lookupPending := response != nil && response.LookupError != "" && !deadline.IsZero()
 		retryTransient := IsRetryableElementError(callErr) && !deadline.IsZero()
-		if !lookupPending && !retryTransient {
+		retryExpectation := selectorExpectation(request.Call) && errors.Is(callErr, errElementExpectation) && !deadline.IsZero()
+		if !lookupPending && !retryTransient && !retryExpectation {
 			return response, callErr
 		}
 		if time.Now().After(deadline) {
@@ -669,7 +720,7 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 	var element selenium.WebElement
 
 	findTimeout := defaultFindElementTimeout
-	if request.Call.WaitTimeMs > 0 {
+	if request.Call.WaitTimeMs > 0 || selectorExpectation(request.Call) {
 		// The outer wait loop owns the total deadline and retries missing or
 		// stale elements without nesting another ten-second wait.
 		findTimeout = 0
@@ -717,15 +768,33 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 				return response, err
 			}
 		}
-		if err = timedInteraction(session.timings, "element.scroll", func() error { return s.scrollIntoView(element) }); err != nil {
-			response.LookupError = fmt.Sprintf("element %s could not be scrolled into view: %v", request.Selector.Value, err)
-			return response, err
+		// Direct CDP Click preserves an already owned hit point and scrolls
+		// when needed. A preceding LocationInView can hide that visible point
+		// by recentering a nested menu before its native actionability check.
+		_, directClick := element.(*directCDPElement)
+		if request.Call.Method != "Click" || !directClick {
+			if err = timedInteraction(session.timings, "element.scroll", func() error { return s.scrollIntoView(element) }); err != nil {
+				response.LookupError = fmt.Sprintf("element %s could not be scrolled into view: %v", request.Selector.Value, err)
+				return response, err
+			}
 		}
 	}
 
 	if request.Call.Method == "Fill" {
 		if len(request.Call.Parameters) != 1 {
 			return response, fmt.Errorf("Fill requires one value")
+		}
+		if err = timedInteraction(session.timings, "element.editable", func() error {
+			return s.waitForElementState(context.Background(), func() (bool, error) {
+				enabled, err := element.IsEnabled()
+				if err != nil || !enabled {
+					return false, err
+				}
+				readOnly, err := element.GetAttribute("readonly")
+				return readOnly == "" || readOnly == "false", err
+			}, time.Duration(request.Call.WaitTimeMs)*time.Millisecond, "element is not editable")
+		}); err != nil {
+			return response, err
 		}
 		err = fillElement(session.driver, element, toolbox.AsString(request.Call.Parameters[0]), func(value string) error {
 			_, insertErr := executeSessionCDP(session, "Input.insertText", map[string]any{"text": value})
@@ -734,7 +803,7 @@ func (s *service) callWebElementOnce(context *endly.Context, session *Session, r
 	} else {
 		if request.Call.Method == "Click" {
 			if err = timedInteraction(session.timings, "element.enabled", func() error {
-				return s.waitForElementState(context.Background(), element.IsEnabled, 2*time.Second, "element is not enabled")
+				return s.waitForElementState(context.Background(), element.IsEnabled, time.Duration(request.Call.WaitTimeMs)*time.Millisecond, "element is not enabled")
 			}); err != nil && err.Error() != "nil return value" {
 				return response, err
 			}
@@ -1508,6 +1577,7 @@ func (s *service) getWithGuard(context *endly.Context, session *Session, URL str
 	if err := session.driver.SetPageLoadTimeout(time.Duration(nav.TimeoutMs) * time.Millisecond); err != nil {
 		return report, fmt.Errorf("set page-load timeout: %w", err)
 	}
+	drainBeforeNavigation(session, "Get", nil)
 	err := session.driver.Get(URL)
 	if err != nil {
 		if !isPageLoadTimeout(err) {

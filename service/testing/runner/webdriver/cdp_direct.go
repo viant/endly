@@ -338,6 +338,10 @@ func (d *directCDPDriver) currentConnection() (*directCDPConnection, error) {
 }
 
 func (d *directCDPDriver) evaluate(script string, args []interface{}) (interface{}, error) {
+	return d.evaluateWithContext(context.Background(), script, args)
+}
+
+func (d *directCDPDriver) evaluateWithContext(ctx context.Context, script string, args []interface{}) (interface{}, error) {
 	endTiming := startInteractionPhase(d.timings.Load(), "cdp.Runtime.evaluate")
 	defer endTiming()
 	connection, err := d.currentConnection()
@@ -358,7 +362,7 @@ func (d *directCDPDriver) evaluate(script string, args []interface{}) (interface
 		}
 	}
 	expression := `(function(){const __args=[` + strings.Join(argumentExpressions, ",") + `];return (function(){` + script + `}).apply(null,__args);})()`
-	raw, err := connection.command(context.Background(), "Runtime.evaluate", map[string]interface{}{
+	raw, err := connection.command(ctx, "Runtime.evaluate", map[string]interface{}{
 		"expression": expression, "returnByValue": true, "awaitPromise": true,
 	})
 	if err != nil {
@@ -458,12 +462,18 @@ func (d *directCDPDriver) SwitchWindow(name string) error {
 		return err
 	}
 	d.mu.Lock()
-	defer d.mu.Unlock()
 	if _, ok := d.targets[name]; !ok {
+		d.mu.Unlock()
 		return fmt.Errorf("Chrome target %q was not found", name)
 	}
 	d.current = name
 	d.frameRoot = ""
+	d.mu.Unlock()
+	// Selecting a protocol connection alone leaves the browser tab hidden.
+	// Activate it before callers observe visibility or issue native input.
+	if _, err := d.CDPCommand("Page.bringToFront", map[string]interface{}{}); err != nil {
+		return fmt.Errorf("activate Chrome target %q: %w", name, err)
+	}
 	return nil
 }
 
@@ -547,15 +557,28 @@ func (d *directCDPDriver) SetViewportSize(width, height int) error {
 	}); err != nil {
 		return fmt.Errorf("set viewport size: %w", err)
 	}
-	actual, err := d.evaluate("return {width: window.innerWidth, height: window.innerHeight};", nil)
-	if err != nil {
-		return fmt.Errorf("read viewport size: %w", err)
+	return d.waitForViewportSize(width, height, 2*time.Second)
+}
+
+func (d *directCDPDriver) waitForViewportSize(width, height int, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	for {
+		actual, err := d.evaluateWithContext(ctx, "return {width: window.innerWidth, height: window.innerHeight};", nil)
+		if err != nil {
+			return fmt.Errorf("read viewport size: %w", err)
+		}
+		measured, ok := actual.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("viewport size did not take effect: requested %dx%d, measured %v", width, height, actual)
+		}
+		if measured["width"] == float64(width) && measured["height"] == float64(height) {
+			return nil
+		}
+		if err := waitForContext(ctx, 20*time.Millisecond); err != nil {
+			return fmt.Errorf("viewport size did not take effect: requested %dx%d, measured %v: %w", width, height, actual, err)
+		}
 	}
-	measured, ok := actual.(map[string]interface{})
-	if !ok || measured["width"] != float64(width) || measured["height"] != float64(height) {
-		return fmt.Errorf("viewport size did not take effect: requested %dx%d, measured %v", width, height, actual)
-	}
-	return nil
 }
 
 func (d *directCDPDriver) Back() error {
@@ -962,7 +985,9 @@ return true;`)
 		if err != nil {
 			return err
 		}
-		if _, err := e.evaluate(fmt.Sprintf(`const key=%q, binding=%q, target=this;const state={seen:false};state.guard=event=>{if(!event.composedPath().includes(target)){event.preventDefault();event.stopImmediatePropagation();return;}if(event.type==='click'){state.seen=true;window[binding]('click');}};window[key]=state;for(const type of ['pointerdown','mousedown','mouseup','click'])window.addEventListener(type,state.guard,true);return true;`, marker, binding)); err != nil {
+		// Application handlers may synchronously click another control, such as
+		// a download anchor. Only guard the trusted input dispatched by CDP.
+		if _, err := e.evaluate(fmt.Sprintf(`const key=%q, binding=%q, target=this;const state={seen:false};state.guard=event=>{if(!event.isTrusted)return;if(!event.composedPath().includes(target)){event.preventDefault();event.stopImmediatePropagation();return;}if(event.type==='click'){state.seen=true;window[binding]('click');}};window[key]=state;for(const type of ['pointerdown','mousedown','mouseup','click'])window.addEventListener(type,state.guard,true);return true;`, marker, binding)); err != nil {
 			release()
 			return err
 		}
@@ -1000,8 +1025,44 @@ return true;`)
 	return fmt.Errorf("native click did not reach target")
 }
 
+// Prefer the bounding-box center, preserving ordinary HTML hit testing. SVG
+// geometry can have a hole or concavity at that center. Search its local bounds
+// at bounded, increasing resolution, then transform a painted point into the
+// viewport. Geometry alone never grants actionability: browser hit testing must
+// still confirm the target owns that point (including clipping and overlays).
+const directCDPClickablePoint = `const owns=(x,y)=>{
+  if(x<0||y<0||x>=innerWidth||y>=innerHeight)return false;
+  const hit=document.elementFromPoint(x,y);
+  return Boolean(hit&&(hit===this||this.contains(hit)));
+};
+const point=()=>{
+const r=this.getBoundingClientRect();
+const x=r.left+r.width/2,y=r.top+r.height/2;
+if(owns(x,y))return {x,y,hit:true};
+if(this instanceof SVGGeometryElement){
+  const bounds=this.getBBox(),matrix=this.getScreenCTM();
+  if(matrix&&bounds.width>0&&bounds.height>0){
+    for(const divisions of [4,8,16,32]){
+      for(let row=0;row<divisions;row++)for(let column=0;column<divisions;column++){
+        const point=new DOMPoint(bounds.x+bounds.width*(column+0.5)/divisions,bounds.y+bounds.height*(row+0.5)/divisions);
+        if(!this.isPointInFill(point)&&!this.isPointInStroke(point))continue;
+        const viewport=point.matrixTransform(matrix);
+        if(owns(viewport.x,viewport.y))return {x:viewport.x,y:viewport.y,hit:true};
+      }
+    }
+  }
+}
+return {x,y,hit:false};
+};
+// Preserve an already actionable point: recentering nested scrollers can move
+// a visible control behind fixed page chrome or disturb a positioned menu.
+const current=point();
+if(current.hit)return current;
+this.scrollIntoView({block:'center',inline:'center',behavior:'instant'});
+return point();`
+
 // A preceding tab change or scroll can move the target after its first
-// rectangle is measured. Dispatch only when the element owns a stable point.
+// measurement. Recompute geometry and ownership until the point is stable.
 func (e *directCDPElement) clickableCenter(timeout time.Duration) (float64, float64, error) {
 	endTiming := startInteractionPhase(e.driver.timings.Load(), "native.hit_test")
 	defer endTiming()
@@ -1012,7 +1073,7 @@ func (e *directCDPElement) clickableCenter(timeout time.Duration) (float64, floa
 	var previousX, previousY float64
 	stable := false
 	for {
-		value, err := e.evaluate(`this.scrollIntoView({block:'center',inline:'center',behavior:'instant'});const r=this.getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;const hit=document.elementFromPoint(x,y);return {x,y,hit:Boolean(hit&&(hit===this||this.contains(hit)))};`)
+		value, err := e.evaluate(directCDPClickablePoint)
 		if err != nil {
 			return 0, 0, err
 		}
@@ -1081,21 +1142,28 @@ func (e *directCDPElement) SendKeys(keys string) error {
 		return err
 	}
 	if key, ok := directCDPSpecialKeys[keys]; ok {
-		for _, kind := range []string{"keyDown", "keyUp"} {
-			params := map[string]interface{}{"type": kind, "key": key.key, "code": key.code, "windowsVirtualKeyCode": key.virtualKeyCode}
-			if kind == "keyDown" && key.text != "" {
-				params["text"] = key.text
-				params["unmodifiedText"] = key.text
-			}
-			if _, err := e.driver.CDPCommand("Input.dispatchKeyEvent", params); err != nil {
-				return err
-			}
-		}
-		return nil
+		return e.driver.dispatchSpecialKey(key)
 	}
 	_, err := e.driver.CDPCommand("Input.insertText", map[string]interface{}{"text": keys})
 	return err
 }
+
+// dispatchSpecialKey edits the current focus without a second element focus.
+// Callers that selected text must retain that selection until its default edit.
+func (d *directCDPDriver) dispatchSpecialKey(key directCDPSpecialKey) error {
+	for _, kind := range []string{"keyDown", "keyUp"} {
+		params := map[string]interface{}{"type": kind, "key": key.key, "code": key.code, "windowsVirtualKeyCode": key.virtualKeyCode}
+		if kind == "keyDown" && key.text != "" {
+			params["text"] = key.text
+			params["unmodifiedText"] = key.text
+		}
+		if _, err := d.CDPCommand("Input.dispatchKeyEvent", params); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (e *directCDPElement) Submit() error {
 	_, err := e.evaluate(`const f=this.form||this.closest('form');if(!f)throw new Error('form not found');if(f.requestSubmit)f.requestSubmit();else f.submit();return true;`)
 	return err
@@ -1131,9 +1199,12 @@ return new Promise((resolve,reject)=>{
   const receives=!!hit&&(element===hit||element.contains(hit)||(element.tagName==='INPUT'&&label?.control===element));
   if(stable>=2&&receives)return resolve({x,y});
   if(performance.now()>deadline)return reject(new Error(receives?'click target did not settle':'click target is obscured'));
-  requestAnimationFrame(check);
+  // Hidden headless pages can suspend animation frames even after bringToFront.
+  // Sample on a timer if the next frame is suspended; only one sample can win.
+  const frame=requestAnimationFrame(()=>{clearTimeout(timer);check();});
+  const timer=setTimeout(()=>{cancelAnimationFrame(frame);check();},100);
  };
- requestAnimationFrame(check);
+ check();
 });`)
 	if err != nil {
 		return 0, 0, err

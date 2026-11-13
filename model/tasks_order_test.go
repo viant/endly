@@ -6,6 +6,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestTaskLookupPrefersOwningScope(t *testing.T) {
+	for _, name := range []string{"catch", "defer", "run"} {
+		t.Run(name, func(t *testing.T) {
+			nested := NewTask(name, false)
+			child := NewTask("child", false)
+			child.TasksNode = &TasksNode{Tasks: []*Task{nested}}
+			local := NewTask(name, false)
+			root := &TasksNode{Tasks: []*Task{child, local}}
+			got, err := root.Task(name)
+			require.NoError(t, err)
+			require.Same(t, local, got)
+			root.Tasks = root.Tasks[:1]
+			got, err = root.Task(name)
+			require.NoError(t, err)
+			require.Same(t, nested, got, "retain descendant fallback when no local task exists")
+		})
+	}
+}
+
 func TestTasksNodeSelectPreservesOrderAndDuplicates(t *testing.T) {
 	node := &TasksNode{Tasks: []*Task{
 		NewTask("task1", false),

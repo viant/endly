@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	stderrors "errors"
 	"fmt"
 	"log"
 	"os"
@@ -118,7 +119,7 @@ func (s *Service) runAction(context *endly.Context, action *model.Action, proces
 			resultKey = action.Action
 		}
 		if err != nil {
-			err = fmt.Errorf("%v: %v", action.TagID, err)
+			err = fmt.Errorf("%v: %w", action.TagID, err)
 		} else if len(response) > 0 {
 			state.Put(resultKey, response)
 			var variables = model.Variables{
@@ -211,8 +212,9 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 	))
 
 	asyncGroup := &sync.WaitGroup{}
-	var asyncError error
 	asyncActions := task.AsyncActions()
+	var asyncErrors []error
+	var asyncEvents []*msg.Events
 	if process.StrictTagIDs && len(process.TagIDs) > 0 {
 		filtered := make([]*model.Action, 0, len(asyncActions))
 		for _, action := range asyncActions {
@@ -224,6 +226,24 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 	}
 
 	err := s.runNode(context, "task", process, task.AbstractNode, func(context *endly.Context, process *model.Process) (in, out data.Map, err error) {
+		defer func() {
+			if len(asyncErrors) == 0 {
+				return
+			}
+			context.Publish(msg.NewStdoutEvent("async", "waiting for actions ..."))
+			asyncGroup.Wait()
+			// Replay the existing per-worker event buffers on the joined owner.
+			// Workers must not read mutable parent logging during sync siblings.
+			for _, buffered := range asyncEvents {
+				if buffered != nil {
+					for _, event := range buffered.Events {
+						_ = context.Publish(event)
+					}
+				}
+			}
+			_ = context.Publish(model.NewTaskAsyncDoneEvent(taskPath, len(asyncActions), context.SessionID))
+			err = stderrors.Join(err, stderrors.Join(asyncErrors...))
+		}()
 		if task.TasksNode != nil && len(task.Tasks) > 0 {
 			if err := s.runTasks(context, process, task.TasksNode); err != nil || len(task.Actions) == 0 {
 				return state, result, err
@@ -232,7 +252,7 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 		if len(asyncActions) > 0 {
 			// Publish async start
 			_ = context.Publish(model.NewTaskAsyncStartEvent(taskPath, len(asyncActions), context.SessionID))
-			s.runAsyncActions(context, process, task, asyncActions, asyncGroup, &asyncError)
+			asyncErrors, asyncEvents = s.runAsyncActions(context, process, asyncActions, asyncGroup)
 		}
 		for i := 0; i < len(task.Actions); i++ {
 			if err := context.Background().Err(); err != nil {
@@ -295,18 +315,6 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 		return state, result, nil
 	})
 
-	if len(asyncActions) > 0 {
-		_ = s.RunInBackground(context, func() error {
-			context.Publish(msg.NewStdoutEvent("async", "waiting for actions ..."))
-			asyncGroup.Wait()
-			// Publish async done
-			_ = context.Publish(model.NewTaskAsyncDoneEvent(taskPath, len(asyncActions), context.SessionID))
-			return nil
-		})
-		if err == nil && asyncError != nil {
-			err = asyncError
-		}
-	}
 	state.Apply(result)
 	// Publish TaskEndEvent
 	status := "ok"
@@ -328,14 +336,9 @@ func (s *Service) runTask(context *endly.Context, process *model.Process, task *
 	return result, err
 }
 
-func (s *Service) runAsyncAction(parent, context *endly.Context, process *model.Process, action *model.Action, group *sync.WaitGroup) error {
-	defer group.Done()
+func (s *Service) runAsyncAction(context *endly.Context, process *model.Process, action *model.Action) (*msg.Events, error) {
 	events := context.MakeAsyncSafe()
-	defer func() {
-		for _, event := range events.Events {
-			parent.Publish(event)
-		}
-	}()
+
 	var result = make(map[string]interface{})
 	var handler = func(action *model.Action) func() (interface{}, error) {
 		return func() (interface{}, error) {
@@ -353,27 +356,25 @@ func (s *Service) runAsyncAction(parent, context *endly.Context, process *model.
 	var extractable = make(map[string]interface{})
 	err := action.Repeater.Run(context, "action", s.AbstractService, handler(action), extractable)
 	if err != nil {
-		return err
+		return events, err
 	}
-	return nil
+	return events, nil
 }
 
-func (s *Service) runAsyncActions(context *endly.Context, process *model.Process, task *model.Task, asyncAction []*model.Action, group *sync.WaitGroup, asyncError *error) {
+func (s *Service) runAsyncActions(context *endly.Context, process *model.Process, asyncAction []*model.Action, group *sync.WaitGroup) ([]error, []*msg.Events) {
+	results := make([]error, len(asyncAction))
+	events := make([]*msg.Events, len(asyncAction))
 	if len(asyncAction) > 0 {
 		group.Add(len(asyncAction))
-		var groupErr error
 		for i := range asyncAction {
 			context.Publish(NewAsyncEvent(asyncAction[i]))
-			go func(action *model.Action, actionContext *endly.Context) {
-				if err := s.runAsyncAction(context, actionContext, process, action, group); err != nil {
-					groupErr = err
-				}
-			}(asyncAction[i], context.Clone())
-		}
-		if groupErr != nil {
-			*asyncError = groupErr
+			go func(index int, action *model.Action, actionContext *endly.Context) {
+				defer group.Done()
+				events[index], results[index] = s.runAsyncAction(actionContext, process, action)
+			}(i, asyncAction[i], context.Clone())
 		}
 	}
+	return results, events
 }
 
 func (s *Service) applyVariables(candidates interface{}, process *model.Process, in data.Map, context *endly.Context) error {
@@ -392,11 +393,12 @@ func (s *Service) run(context *endly.Context, request *RunRequest) (response *Ru
 	if request.Async {
 		context.Wait.Add(1)
 		go func() {
-			defer context.Publish(NewEndEvent(context.SessionID))
 			defer context.Wait.Done()
-			_, err = s.runWorkflow(context, request)
-			if err != nil {
-				context.Publish(msg.NewErrorEvent(fmt.Sprintf("%v", err)))
+			// Completion includes delivery of the final event to synchronous listeners.
+			defer context.Publish(NewEndEvent(context.SessionID))
+			_, runErr := s.runWorkflow(context, request)
+			if runErr != nil {
+				context.Publish(msg.NewErrorEvent(fmt.Sprintf("%v", runErr)))
 			}
 		}()
 		return &RunResponse{}, nil

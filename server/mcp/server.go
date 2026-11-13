@@ -336,6 +336,7 @@ func Run(args []string, factory manager.ManagerFactory) error {
 	var skillDirs stringList
 	flags.Var(&skillDirs, "skill-dir", "additional local skill folder (repeatable)")
 	maxEvents := flags.Int("max-events", 1000, "retained tail events per operation")
+	eventQueueSize := flags.Int("event-queue-size", 1024, "bounded in-flight event queue capacity; publishers wait when full")
 	address := flags.String("addr", "127.0.0.1:4981", "loopback HTTP address")
 	if err := flags.Parse(args); err != nil {
 		return err
@@ -359,7 +360,7 @@ func Run(args []string, factory manager.ManagerFactory) error {
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
-	runtime := manager.New(factory, manager.WithMaxEvents(*maxEvents))
+	runtime := manager.New(factory, manager.WithMaxEvents(*maxEvents), manager.WithEventQueueSize(*eventQueueSize))
 	defer func() {
 		shutdown, stop := context.WithTimeout(context.Background(), 10*time.Second)
 		defer stop()

@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -19,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/viant/afs"
 	"github.com/viant/endly"
+	"github.com/viant/endly/internal/redact"
 	"github.com/viant/endly/model"
 	"github.com/viant/endly/model/location"
 	"github.com/viant/endly/model/msg"
@@ -40,6 +40,7 @@ type Service struct {
 	sessionTTL            time.Duration
 	operationRetention    time.Duration
 	maxEvents             int
+	eventQueueSize        int
 	callbackHosts         map[string]bool
 	allowPrivateCallbacks bool
 	callbackClient        *http.Client
@@ -70,6 +71,7 @@ func New(factory ManagerFactory, options ...Option) *Service {
 		sessionTTL:         30 * time.Minute,
 		operationRetention: time.Hour,
 		maxEvents:          1000,
+		eventQueueSize:     1024,
 		callbackHosts:      map[string]bool{},
 		callbackClient:     &http.Client{Timeout: 10 * time.Second},
 		allowedActions:     map[string]bool{},
@@ -335,6 +337,10 @@ func (s *Service) StartWorkflow(request *RunWorkflowRequest) (*Operation, error)
 		return nil, err
 	}
 	session.mu.Lock()
+	if session.closed {
+		session.mu.Unlock()
+		return nil, fmt.Errorf("session %q was closed", request.SessionID)
+	}
 	alias, loaded := session.resolveLoaded(request.Workflow)
 	if loaded == nil {
 		session.mu.Unlock()
@@ -809,13 +815,10 @@ func redactMap(source map[string]interface{}) map[string]interface{} {
 	return result
 }
 
-var bearerPattern = regexp.MustCompile(`(?i)Bearer[\t ]+[A-Za-z0-9._~+/=-]+`)
-var jwtPattern = regexp.MustCompile(`eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+`)
-
 // Diagnostic index keys can contain credentials too. A stable opaque suffix
 // preserves distinct entries without changing the original runtime map.
 func redactedMapKey(key string) string {
-	safe := jwtPattern.ReplaceAllString(bearerPattern.ReplaceAllString(key, "Bearer [REDACTED]"), "[REDACTED]")
+	safe := redact.Text(key)
 	if safe == key {
 		return key
 	}
@@ -852,7 +855,7 @@ func redactValue(path string, value interface{}) interface{} {
 		}
 		return result
 	case string:
-		return jwtPattern.ReplaceAllString(bearerPattern.ReplaceAllString(actual, "Bearer [REDACTED]"), "[REDACTED]")
+		return redact.Text(actual)
 	}
 	return value
 }

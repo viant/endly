@@ -152,6 +152,17 @@ type WebDriverCallRequest struct {
 	sessionLocked bool
 }
 
+// Validate rejects malformed calls before acquiring a browser session.
+func (r *WebDriverCallRequest) Validate() error {
+	if r == nil || r.Call == nil {
+		return fmt.Errorf("webdriver call-driver requires call.method; nest method and parameters under call")
+	}
+	if strings.TrimSpace(r.Call.Method) == "" {
+		return fmt.Errorf("webdriver call-driver requires a non-empty call.method")
+	}
+	return nil
+}
+
 // ServiceCallResponse represents selenium call response
 type ServiceCallResponse struct {
 	Result []interface{}

@@ -33,6 +33,14 @@ func (s *Session) Driver() selenium.WebDriver {
 }
 
 func (s *Session) Close() {
+	if s.Capture != nil {
+		s.Capture.DrainNow(s)
+		s.Capture.Stop()
+		_ = s.Capture.CloseSink()
+		s.Capture = nil
+	}
+	s.Net = nil
+	s.timings = nil
 	driver := s.driver
 	s.driver = nil
 	s.CDPRemote = ""

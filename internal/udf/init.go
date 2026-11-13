@@ -10,9 +10,11 @@ func init() {
 	_ = endly.Registry.Register(func() endly.Service {
 		return New()
 	})
+	endly.PredefinedUdfs["AsMap"] = AsMap
 	endly.PredefinedUdfs["LoadData"] = LoadData
 	endly.PredefinedUdfs["Dob"] = DateOfBirth
 	endly.PredefinedUdfs["URLJoin"] = URLJoin
+	endly.PredefinedUdfs["URLSetQuery"] = URLSetQuery
 	endly.PredefinedUdfs["URLPath"] = URLPath
 	endly.PredefinedUdfs["Hostname"] = Hostname
 	endly.PredefinedUdfs["GZipper"] = GZipper
@@ -23,6 +25,7 @@ func init() {
 	endly.UdfRegistryProvider["ProtoReader"] = NewProtoReader
 	endly.UdfRegistryProvider["ProtoWriter"] = NewProtoWriter
 	endly.UdfRegistryProvider["CsvReader"] = NewCsvReader
+	endly.UdfRegistryProvider["XlsxReader"] = NewXlsxReader
 
 	endly.PredefinedUdfs["IsJSON"] = buildin.IsJSON
 	endly.PredefinedUdfs["WorkingDirectory"] = buildin.WorkingDirectory
@@ -36,6 +39,8 @@ func init() {
 	endly.PredefinedUdfs["Cat"] = buildin.Cat
 	endly.PredefinedUdfs["LoadBinary"] = buildin.LoadBinary
 	endly.PredefinedUdfs["LoadJSONLines"] = buildin.LoadJSONLines
+	endly.PredefinedUdfs["StateJSONBytes"] = buildin.StateJSONBytes
+	endly.PredefinedUdfs["ShellQuote"] = buildin.ShellQuote
 	endly.PredefinedUdfs["AssetsToMap"] = buildin.AssetsToMap
 	endly.PredefinedUdfs["BinaryAssetsToMap"] = buildin.BinaryAssetsToMap
 	endly.PredefinedUdfs["CurrentHour"] = buildin.CurrentHour

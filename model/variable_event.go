@@ -20,9 +20,13 @@ func NewModifiedStateEvent(variables Variables, in, out data.Map) *ModifiedState
 	}
 
 	for _, variable := range variables {
+		name := data.ExtractPath(variable.Name)
+		if variable.KeyFrom != "" {
+			result.Modified[name], _ = out.LookupValue(name)
+			continue
+		}
 		from := data.ExtractPath(variable.From)
 		result.In[from], _ = in.GetValue(from)
-		name := data.ExtractPath(variable.Name)
 		result.Modified[name], _ = out.GetValue(name)
 	}
 	return result

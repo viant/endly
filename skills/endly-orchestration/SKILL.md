@@ -10,6 +10,24 @@ load their referenced workflows when invoked. Keep the MCP process working direc
 the same as the CLI workflow directory when workflows use `$WorkingDirectory`.
 Loading discovers definitions and fixture assets; running executes service effects.
 
+Before a mutating setup, run any project-provided read-only controller capability
+probe. A connected MCP process can still execute an older binary after the CLI
+checkout is upgraded. Record the actual execution binary/revision; a newer
+checkout or a successful workflow load does not establish runtime compatibility.
+If the probe fails, keep that failure visible and use a qualified Endly runtime
+for the same native workflow. Do not bypass guards, coerce arrays into objects or
+rewrite orchestration in another language to accommodate the stale controller.
+Keep active operation handles intact; changing a runner is for a new execution,
+not a reason to restart a live operation. Changing client MCP configuration is a
+separate user-authorized setup action.
+
+Inspect nested workflow `init` before reusing a group's root workflow for a leaf
+action. Hardcoded defaults can overwrite supplied runtime paths or profiles and
+target another group's services. Prefer a reusable parameterized leaf workflow,
+and verify its resolved service/container identifiers before mutation. Set each
+service's intended environment explicitly; a shared execution shell can retain
+environment from a prior command.
+
 Use `endly_listTasks` to discover current task paths and instances. Load a referenced
 regression workflow in the same session to inspect its expanded template instances
 before running a root test task. Do not execute setup merely to discover test IDs.

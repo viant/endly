@@ -15,6 +15,13 @@ encode/decode protocol data, and DataSource selects the repeater's extraction in
 Use the existing UDF and extraction contract rather than substituting arbitrary
 string concatenation for a required encoding or URL-escaping step.
 
+For object-valued JSON request fields, author `params: $AsMap('{}')` when an empty
+object is required. To send an object from JSON text, use
+`JSONBody: $AsMap($requestJSON)`. This preserves nested `{}` versus `[]`, false,
+zero and null during native expansion and HTTP serialization. A plain YAML empty
+mapping is not sufficient evidence of the eventual JSON wire shape. Verify the
+sent body; do not weaken the server's object-type validation.
+
 A dependency may return a follow-up URL or list of callbacks. Delegate only the
 response fields required for the next request; preserve correlation/session IDs,
 method, body and encoding. Distinguish application follow-up traffic from HTTP

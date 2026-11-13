@@ -407,6 +407,9 @@ func pageSelector(name string, args []string) (string, bool, error) {
 			// heading. Resolve its ID instead of comparing all descendant text.
 			base += "[normalize-space(.)=" + name + " or @aria-label=" + name + " or (@aria-labelledby and normalize-space(@aria-labelledby)=//*[@id and normalize-space(.)=" + name + "]/@id)]"
 		}
+		// Role locators exclude elements removed from the accessibility tree,
+		// including controls retained in inactive workspace panels.
+		base += "[not(ancestor-or-self::*[@hidden or @aria-hidden='true' or @inert])]"
 		return "xpath:" + base, true, nil
 	default:
 		return "", false, nil
